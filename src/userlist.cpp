@@ -435,13 +435,13 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
     }
 
     str += "<table cellspacing=\"3\"><tr>";
-    str += "<td>";
 
     if (useAvatar) {
-        str += QString(R"(<icon name="avatars/%1" size="original">)").arg(mucItem ? jid().full() : jid().bare());
+        str += QString("<td width=\"%1\">").arg(QFontInfo(QApplication::font()).pixelSize() * 5);
+        str += QString(R"(<icon name="avatars/%1" size="-5">)").arg(mucItem ? jid().full() : jid().bare());
         str += "</td><td width=\"10\"></td>";
-        str += "<td>";
     }
+    str += "<td>";
 
     QString nick = JIDUtil::nickOrJid(name(), jid().full());
     if (!mucItem) {

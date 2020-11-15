@@ -344,7 +344,9 @@ void MultiFileTransferDlg::addTransferContent(MultiFileTransferItem *item)
     // compute file hash
     XMPP::Hash hash(XMPP::Hash::Sha1); // use Blake2 when we have optimized implementation
     QFile      f(item->filePath());
+    f.open(QIODevice::ReadOnly);
     hash.compute(&f); // FIXME it will freeze Psi for awhile on large files
+    f.close();
 
     // take thumbnail
     XMPP::Thumbnail thumb;

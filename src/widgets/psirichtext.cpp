@@ -120,14 +120,10 @@ QSizeF TextIconHandler::intrinsicSize(QTextDocument *doc, int posInDocument, con
     if (!icon) {
         qWarning("invalid icon: %s", qPrintable(iconName));
         ret = QSizeF();
-    } else
-
-        if (htmlSize > 0) {
+    } else if (htmlSize > 0) {
         auto pxSize = pointToPixel(htmlSize);
         ret         = icon->size(QSize(pxSize, pxSize));
-    } else
-
-        if (htmlSize == 0) {
+    } else if (htmlSize == 0) {
         ret = icon->size();
     } else {
         auto relSize = QFontInfo(charFormat.font()).pixelSize() * std::fabs(double(htmlSize));
@@ -157,13 +153,12 @@ void TextIconHandler::drawObject(QPainter *painter, const QRectF &rect, QTextDoc
         return;
     }
 
-    auto pixmap = IconsetFactory::iconPixmap(iconName, rect.size().toSize());
-    if (rect.size() == pixmap.size()) {
-        painter->drawPixmap(rect, pixmap, pixmap.rect());
+    auto pixmap      = IconsetFactory::iconPixmap(iconName, rect.size().toSize());
+    auto alignedSize = rect.size().toSize();
+    if (alignedSize != pixmap.size()) {
+        pixmap = pixmap.scaled(alignedSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     }
-
-    auto sp = pixmap.scaled(rect.size().toSize(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    painter->drawPixmap(rect, sp, sp.rect());
+    painter->drawPixmap(rect, pixmap, pixmap.rect());
 }
 #endif // WIDGET_PLUGIN
 
