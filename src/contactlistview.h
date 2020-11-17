@@ -49,7 +49,7 @@ public:
     void ensureVisible(const QModelIndex &index);
 
     // reimplemented
-    void setModel(QAbstractItemModel *model);
+    void setModel(QAbstractItemModel *model) override;
 
 public slots:
     virtual void rename();
@@ -61,8 +61,8 @@ signals:
 
 protected:
     // reimplemented
-    bool viewportEvent(QEvent *event);
-    void closeEditor(QWidget *editor, QAbstractItemDelegate::EndEditHint hint);
+    bool viewportEvent(QEvent *event) override;
+    void closeEditor(QWidget *editor, QAbstractItemDelegate::EndEditHint hint) override;
 
     virtual void showToolTip(const QModelIndex &index, const QPoint &globalPos) const;
 
@@ -73,16 +73,16 @@ protected slots:
     void         updateGroupExpandedState();
 
     // reimplamented
-    virtual void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
-    virtual void focusInEvent(QFocusEvent *event);
-    virtual void focusOutEvent(QFocusEvent *event);
+    void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected) override;
+    void focusInEvent(QFocusEvent *event) override;
+    void focusOutEvent(QFocusEvent *event) override;
 
 protected:
     // reimplamented
-    void contextMenuEvent(QContextMenuEvent *);
-    void drawBranches(QPainter *, const QRect &, const QModelIndex &) const;
-    void keyPressEvent(QKeyEvent *);
-    void resizeEvent(QResizeEvent *);
+    void contextMenuEvent(QContextMenuEvent *) override;
+    void drawBranches(QPainter *, const QRect &, const QModelIndex &) const override;
+    void keyPressEvent(QKeyEvent *) override;
+    void resizeEvent(QResizeEvent *) override;
     void rowsInserted(const QModelIndex &parent, int start, int end) override;
 
     QLineEdit *currentEditor() const;
