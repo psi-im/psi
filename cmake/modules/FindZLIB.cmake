@@ -55,6 +55,7 @@ set(ZLIB_NAMES
     lz${D}
     zlib${D}
     zlib1
+    z
 )
 find_library(
     ZLIB_LIBRARY
