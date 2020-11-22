@@ -49,41 +49,41 @@ foreach(submodule ${SBM_LIST})
 endforeach()
 
 # Common options
+set( CHAT_TYPE "BASIC" CACHE STRING "Type of chatlog engine. WEBKIT | WEBENGINE | BASIC" )
+option( PRODUCTION "Build production version" OFF )
+option( VERBOSE_PROGRAM_NAME "Verbose output binary name" OFF )
 option( BUNDLED_IRIS "Build iris library bundled" ON )
-option( ONLY_PLUGINS "Build psi plugins only" OFF )
+option( BUILD_PSIMEDIA "Build psimedia plugin if its code is found in sources tree. Works only with ENABLE_PLUGINS=ON" OFF )
+option( ENABLE_PLUGINS "Enable plugins" OFF )
 option( USE_HUNSPELL "Build psi with hunspell spellcheck" ON )
 option( USE_ENCHANT "Build psi with enchant spellcheck" OFF )
 option( USE_ASPELL "Build psi with aspell spellcheck" OFF )
-option( ENABLE_PLUGINS "Enable plugins" OFF )
-set( CHAT_TYPE "BASIC" CACHE STRING "Type of chatlog engine. WEBKIT | WEBENGINE | BASIC")
 option( USE_CCACHE "Use ccache utility if found" ON )
-option( VERBOSE_PROGRAM_NAME "Verbose output binary name" OFF ) #Experimental
 option( USE_CRASH "Enable builtin sigsegv handling" OFF )
+option( USE_DBUS "Enable DBUS support" ON )
 option( USE_KEYCHAIN "Enable Qt5Keychain support" ON )
-option( BUILD_PSIMEDIA "Build psimedia plugin if its code is found in sources tree. Works only with ENABLE_PLUGINS=ON" OFF )
 option( ONLY_BINARY "Build and install only binary file" OFF )
+option( ONLY_PLUGINS "Build psi plugins only" OFF )
 option( INSTALL_EXTRA_FILES "Install sounds, iconsets, certs, client_icons.txt, themes" ON )
 option( INSTALL_PLUGINS_SDK "Install sdk files to build plugins outside of project" OFF )
-option( DEV_MODE "Enable prepare-bin-libs target for Windows OS only. Set PSI_DATADIR and PSI_LIBDIR to CMAKE_RUNTIME_OUTPUT_DIRECTORY to debug plugins for Linux only" OFF )
-option( USE_DBUS "Enable DBUS support" ON )
+# Developers options
+option( DEV_MODE "Enable prepare-bin-libs target for MS Windows only. Set PSI_DATADIR and PSI_LIBDIR to CMAKE_RUNTIME_OUTPUT_DIRECTORY to debug plugins for Linux only" OFF )
 # Iris options
-option( BUNDLED_QCA "Adds: DTLS, Blake2b and other useful for XMPP crypto-stuff" OFF)
-option( BUNDLED_USRSCTP "Compile compatible usrsctp lib when system one is not available or uncompatible (required for p2p file transfer)" OFF)
+option( BUNDLED_QCA "Adds: DTLS, Blake2b and other useful for XMPP crypto-stuff" OFF )
+option( BUNDLED_USRSCTP "Compile compatible usrsctp lib when system one is not available or uncompatible (required for p2p file transfer)" OFF )
 option( USE_QJDNS "Use qjdns/jdns library. Disabled by default for Qt5" OFF )
 option( SEPARATE_QJDNS "Build qjdns as separate lib" OFF )
 
-option( PRODUCTION "Build production version" OFF )
+# Cross-compilation and native builds for MS Windows
+option( ENABLE_PORTABLE "Create portable version of Psi+ for MS Windows" OFF )
+option( USE_MXE "Use MXE (cross-compilation build environment for MS Windows)" OFF )
 
-# Windows or MXE only
-option( USE_MXE "Use MXE cross-compilation" OFF )
-option( ENABLE_PORTABLE "Create portable version of Psi+ in win32" OFF )
+# Other systems
 if(LINUX)
     option( USE_X11 "Enable X11 features support" ON )
     option( USE_XSS "Enable Xscreensaver support" ON )
     option( LIMIT_X11_USAGE "Disable usage of X11 features which may crash program" OFF )
-endif()
-# Apple only
-if(APPLE)
+elseif(APPLE)
     option( USE_SPARKLE "Use Sparkle for APPLE builds" ON )
     option( USE_GROWL "Use growl for macOS builds" OFF )
     option( USE_MAC_DOC "Use macOS dock" OFF )
@@ -91,7 +91,7 @@ endif()
 
 
 if(WIN32 AND ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" OR ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")))
-    option( NO_DEBUG_OPTIMIZATION "Disable optimization for debug builds" OFF)
+    option( NO_DEBUG_OPTIMIZATION "Disable optimization for debug builds" OFF )
 endif()
 
 if( USE_HUNSPELL AND (USE_ENCHANT AND USE_ASPELL) )
