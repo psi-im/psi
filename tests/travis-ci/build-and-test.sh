@@ -10,6 +10,7 @@ set -x
 if [ "${TARGET}" = "linux64" ]
 then
     ./tests/travis-ci/build-in-ubuntu.sh
+    cd builddir && sudo make install -j 1
 
     ls -alp /usr/bin/psi*
     ls -alp /usr/share/applications/psi*

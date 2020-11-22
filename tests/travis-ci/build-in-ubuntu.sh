@@ -29,6 +29,8 @@ BUILD_OPTIONS="-DCMAKE_INSTALL_PREFIX=/usr \
                -DUSE_KEYCHAIN=ON \
                -DUSE_SPARKLE=OFF \
                -DUSE_QJDNS=OFF \
+               -DBUNDLED_QCA=OFF \
+               -DBUNDLED_USRSCTP=ON \
                -DBUILD_DEV_PLUGINS=OFF \
                -DVERBOSE_PROGRAM_NAME=ON \
                "
@@ -41,4 +43,3 @@ cmake .. ${BUILD_OPTIONS} \
       -DCMAKE_SHARED_LINKER_FLAGS="${LDFLAGS}" \
       -DCMAKE_EXE_LINKER_FLAGS="${LDFLAGS}"
 make -k -j $(nproc) VERBOSE=1
-sudo make install -j 1
