@@ -154,11 +154,17 @@ if(WIN32)
         #
         find_psi_lib(qtaudio_windows${D}.dll "${QT_PLUGINS_DIR}/audio/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/audio/")
         set(PLATFORMS_PLUGS
+            qdirect2d${D}.dll
             qminimal${D}.dll
             qoffscreen${D}.dll
             qwindows${D}.dll
             )
         find_psi_lib("${PLATFORMS_PLUGS}" "${QT_PLUGINS_DIR}/platforms/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/platforms/")
+        #
+        set(PLATFORMTHEMES_PLUGS
+            qxdgdesktopportal${D}.dll
+            )
+        find_psi_lib("${PLATFORMTHEMES_PLUGS}" "${QT_PLUGINS_DIR}/platformthemes/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/platformthemes/")
         #
         set(STYLES_PLUGS
             qwindowsvistastyle${D}.dll
