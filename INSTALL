@@ -1,33 +1,41 @@
 Installation
 ------------
 
--=[ Linux / Unix ]=-
-
-  For instructions on how to build and install Psi on Unix systems, see
-  the 'Compiling' section below.
-
--=[ Windows ]=-
-
-  No installation required for Windows.  You can simply just
-  run the Psi executable.  You might want to move everything into
-  C:\Program Files\Psi
-
--=[ MacOS X ]=-
-
-  Drag the Psi application file from the disk image into the Applications dir.
+See "Packages and installers" section in README.html or README.md
 
 
-Compiling
----------
 
-Requirements:
-  - Qt 5.x.x
-  - QCA 2.1.3 or higher.
+Build from sources
+------------------
 
-You can obtain Qt at https://www.qt.io/download/
+[ Common ]
 
-You can obtain QCA at https://userbase.kde.org/QCA
+To be written...
 
-For information about building Psi on Unix, see doc/build-unix.txt.
-For information about building Psi on Mac OS X, see doc/build-mac.txt.
-For information about building Psi on Windows, see doc/build-win.txt.
+[ Linux ]
+
+To be written...
+
+[ macOS ]
+
+See: mac/build-using-homebrew.sh
+
+[ Windows ]
+
+To be written...
+
+
+
+Useful links
+------------
+
+* Build scripts for packages in Debian:
+  https://salsa.debian.org/xmpp-team/psi
+  https://salsa.debian.org/xmpp-team/psi-plus
+
+* Build scripts for package in Haiku:
+  https://github.com/haikuports/haikuports/tree/master/net-im/psi_plus
+
+* Scripts for building of portable builds for Windows:
+  https://github.com/psi-plus/maintenance/tree/master/scripts/win32/cross-compilation-using-mxe
+
