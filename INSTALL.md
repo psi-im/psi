@@ -14,7 +14,7 @@ See "Packages and installers" section in [README.md](README.md) or [README.html]
 * QtWebKit (optional)
 * QtWebEngine (optional)
 * QCA (from [upstream](https://api.kde.org/qca/html/) or from our [fork](https://github.com/psi-im/qca))
-* Qt5Keychain (optional)
+* QtKeychain (optional)
 * OpenSSL (required)
 * zlib (required)
 * Minizip (optional)
