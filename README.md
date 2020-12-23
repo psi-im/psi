@@ -28,7 +28,25 @@ See [CHANGELOG](https://github.com/psi-im/psi/blob/master/CHANGELOG) file.
 
 ## Installation
 
-See [INSTALL](https://github.com/psi-im/psi/blob/master/INSTALL) file.
+For build from sources see [INSTALL](https://github.com/psi-im/psi/blob/master/INSTALL.md) file.
+
+GNU/Linux and FreeBSD users may install [packages](https://github.com/psi-im/psi#packages-and-installers) from official and unofficial repositories, ports, etc.
+
+macOS users may install and update official builds using [Homebrew](https://brew.sh/) cask:
+
+```
+brew cask install psi-plus
+```
+
+or download app bundles from [SourceForge](https://github.com/psi-im/psi#packages-and-installers) and install them manually. Program doesn't have embedded mechanism of updates, so in this case users should monitor updates themselves.
+
+Haiku users may install official package from HaikuPorts:
+
+```
+pkgman install psi_plus
+```
+
+MS Windows users may download official installers and portable builds from [SourceForge](https://github.com/psi-im/psi#packages-and-installers). Program doesn't have embedded mechanism of updates, so users should monitor updates themselves.
 
 ## Development
 
@@ -48,7 +66,7 @@ Currently the development model looks like this:
 All changes are tested on Continuous Integration services:
 
 * Travis CI: [psi](https://travis-ci.org/psi-im/psi), [plugins](https://travis-ci.org/psi-im/plugins), [psimedia](https://travis-ci.org/psi-im/psimedia), [psi-plus](https://travis-ci.org/psi-plus/psi-plus-snapshots).
-* Sibuserv CI: [psi](https://sibuserv-ci.org/projects/psi), [plugins](https://sibuserv-ci.org/projects/psi-plugins), [psi-plus](https://sibuserv-ci.org/projects/psi-plus-snapshots), [psimedia](https://sibuserv-ci.org/projects/psimedia), [qconf](https://sibuserv-ci.org/projects/qconf).
+* Sibuserv CI: [psi](https://sibuserv-ci.org/projects/psi), [plugins](https://sibuserv-ci.org/projects/psi-plugins), [psi-plus](https://sibuserv-ci.org/projects/psi-plus-snapshots), [psimedia](https://sibuserv-ci.org/projects/psimedia).
 
 ## Developers
 

@@ -30,7 +30,25 @@ Sources: https://github.com/psi-im</p>
 
 <h2>Installation</h2>
 
-<p>See <a href="https://github.com/psi-im/psi/blob/master/INSTALL">INSTALL</a> file.</p>
+<p>For build from sources see <a href="https://github.com/psi-im/psi/blob/master/INSTALL.md">INSTALL</a> file.</p>
+
+<p>GNU/Linux and FreeBSD users may install <a href="https://github.com/psi-im/psi#packages-and-installers">packages</a> from official and unofficial repositories, ports, etc.</p>
+
+<p>macOS users may install and update official builds using <a href="https://brew.sh/">Homebrew</a> cask:</p>
+
+<p><code>
+brew cask install psi-plus
+</code></p>
+
+<p>or download app bundles from <a href="https://github.com/psi-im/psi#packages-and-installers">SourceForge</a> and install them manually. Program doesn't have embedded mechanism of updates, so in this case users should monitor updates themselves.</p>
+
+<p>Haiku users may install official package from HaikuPorts:</p>
+
+<p><code>
+pkgman install psi_plus
+</code></p>
+
+<p>MS Windows users may download official installers and portable builds from <a href="https://github.com/psi-im/psi#packages-and-installers">SourceForge</a>. Program doesn't have embedded mechanism of updates, so users should monitor updates themselves.</p>
 
 <h2>Development</h2>
 
@@ -53,7 +71,7 @@ Sources: https://github.com/psi-im</p>
 
 <ul>
 <li>Travis CI: <a href="https://travis-ci.org/psi-im/psi">psi</a>, <a href="https://travis-ci.org/psi-im/plugins">plugins</a>, <a href="https://travis-ci.org/psi-im/psimedia">psimedia</a>, <a href="https://travis-ci.org/psi-plus/psi-plus-snapshots">psi-plus</a>.</li>
-<li>Sibuserv CI: <a href="https://sibuserv-ci.org/projects/psi">psi</a>, <a href="https://sibuserv-ci.org/projects/psi-plugins">plugins</a>, <a href="https://sibuserv-ci.org/projects/psi-plus-snapshots">psi-plus</a>, <a href="https://sibuserv-ci.org/projects/psimedia">psimedia</a>, <a href="https://sibuserv-ci.org/projects/qconf">qconf</a>.</li>
+<li>Sibuserv CI: <a href="https://sibuserv-ci.org/projects/psi">psi</a>, <a href="https://sibuserv-ci.org/projects/psi-plugins">plugins</a>, <a href="https://sibuserv-ci.org/projects/psi-plus-snapshots">psi-plus</a>, <a href="https://sibuserv-ci.org/projects/psimedia">psimedia</a>.</li>
 </ul>
 
 <h2>Developers</h2>
@@ -61,11 +79,11 @@ Sources: https://github.com/psi-im</p>
 <h3>Lead developers</h3>
 
 <ul>
-<li>2017-now,  Sergey Ilinykh &lt;<a href="&#x6D;&#x61;&#x69;&#x6C;t&#x6F;:&#x72;&#105;&#111;&#110;&#52;&#x69;&#x6B;&#64;g&#x6D;&#97;&#x69;&#x6C;&#46;&#99;&#x6F;&#109;">&#x72;&#105;&#111;&#110;&#52;&#x69;&#x6B;&#64;g&#x6D;&#97;&#x69;&#x6C;&#46;&#99;&#x6F;&#109;</a>>, Psi and Psi+ projects</li>
-<li>2010-2017, Sergey Ilinykh &lt;<a href="&#x6D;&#x61;&#x69;&#x6C;t&#x6F;:&#x72;&#105;&#111;&#110;&#52;&#x69;&#x6B;&#64;g&#x6D;&#97;&#x69;&#x6C;&#46;&#99;&#x6F;&#109;">&#x72;&#105;&#111;&#110;&#52;&#x69;&#x6B;&#64;g&#x6D;&#97;&#x69;&#x6C;&#46;&#99;&#x6F;&#109;</a>>, Psi+ project</li>
-<li>2009-2010, <a href="https://jblog.andbit.net/">Justin Karneges</a> &lt;<a href="&#x6D;&#x61;&#x69;&#x6C;t&#x6F;:&#x6A;&#117;&#115;&#116;&#105;&#x6E;&#64;&#107;a&#x72;&#110;&#x65;&#x67;&#101;&#115;&#x2E;&#99;&#111;&#109;">&#x6A;&#117;&#115;&#116;&#105;&#x6E;&#64;&#107;a&#x72;&#110;&#x65;&#x67;&#101;&#115;&#x2E;&#99;&#111;&#109;</a>>, Psi project</li>
-<li>2004-2009, <a href="https://doomsong.co.uk/">Kevin Smith</a> &lt;<a href="&#x6D;&#x61;&#x69;&#x6C;t&#x6F;:&#x6B;&#101;&#118;&#105;&#110;&#64;&#x6B;&#105;s&#x6D;&#105;&#x74;&#x68;&#46;&#99;&#x6F;&#46;&#117;&#107;">&#x6B;&#101;&#118;&#105;&#110;&#64;&#x6B;&#105;s&#x6D;&#105;&#x74;&#x68;&#46;&#99;&#x6F;&#46;&#117;&#107;</a>>, Psi project</li>
-<li>2001-2004, <a href="https://jblog.andbit.net/">Justin Karneges</a> &lt;<a href="&#x6D;&#x61;&#x69;&#x6C;t&#x6F;:&#x6A;&#117;&#115;&#116;&#105;&#x6E;&#64;&#107;a&#x72;&#110;&#x65;&#x67;&#101;&#115;&#x2E;&#99;&#111;&#109;">&#x6A;&#117;&#115;&#116;&#105;&#x6E;&#64;&#107;a&#x72;&#110;&#x65;&#x67;&#101;&#115;&#x2E;&#99;&#111;&#109;</a>>, Psi project</li>
+<li>2017-now,  Sergey Ilinykh &lt;<a href="m&#97;&#105;&#x6C;&#116;&#x6F;:&#x72;&#x69;on&#x34;&#105;&#x6B;&#64;&#103;&#x6D;&#97;&#105;&#x6C;&#x2E;&#x63;&#x6F;&#x6D;">&#x72;&#x69;on&#x34;&#105;&#x6B;&#64;&#103;&#x6D;&#97;&#105;&#x6C;&#x2E;&#x63;&#x6F;&#x6D;</a>>, Psi and Psi+ projects</li>
+<li>2010-2017, Sergey Ilinykh &lt;<a href="m&#97;&#105;&#x6C;&#116;&#x6F;:&#x72;&#x69;on&#x34;&#105;&#x6B;&#64;&#103;&#x6D;&#97;&#105;&#x6C;&#x2E;&#x63;&#x6F;&#x6D;">&#x72;&#x69;on&#x34;&#105;&#x6B;&#64;&#103;&#x6D;&#97;&#105;&#x6C;&#x2E;&#x63;&#x6F;&#x6D;</a>>, Psi+ project</li>
+<li>2009-2010, <a href="https://jblog.andbit.net/">Justin Karneges</a> &lt;<a href="m&#97;&#105;&#x6C;&#116;&#x6F;:&#x6A;&#x75;st&#x69;&#110;&#64;&#107;&#97;&#x72;&#110;&#101;&#x67;&#x65;&#x73;&#x2E;&#x63;o&#109;">&#x6A;&#x75;st&#x69;&#110;&#64;&#107;&#97;&#x72;&#110;&#101;&#x67;&#x65;&#x73;&#x2E;&#x63;o&#109;</a>>, Psi project</li>
+<li>2004-2009, <a href="https://doomsong.co.uk/">Kevin Smith</a> &lt;<a href="m&#97;&#105;&#x6C;&#116;&#x6F;:&#x6B;&#x65;vi&#x6E;&#64;&#x6B;&#105;&#115;&#x6D;&#105;&#116;&#x68;&#x2E;&#x63;&#x6F;&#x2E;u&#107;">&#x6B;&#x65;vi&#x6E;&#64;&#x6B;&#105;&#115;&#x6D;&#105;&#116;&#x68;&#x2E;&#x63;&#x6F;&#x2E;u&#107;</a>>, Psi project</li>
+<li>2001-2004, <a href="https://jblog.andbit.net/">Justin Karneges</a> &lt;<a href="m&#97;&#105;&#x6C;&#116;&#x6F;:&#x6A;&#x75;st&#x69;&#110;&#64;&#107;&#97;&#x72;&#110;&#101;&#x67;&#x65;&#x73;&#x2E;&#x63;o&#109;">&#x6A;&#x75;st&#x69;&#110;&#64;&#107;&#97;&#x72;&#110;&#101;&#x67;&#x65;&#x73;&#x2E;&#x63;o&#109;</a>>, Psi project</li>
 </ul>
 
 <h3>Other contributors</h3>
