@@ -1,4 +1,5 @@
 New in 2.0 (UNRELEASED)
+- Removed support of qmake based builds. Use cmake for building of project.
 - Program now requires Qt >= 5.5.x and compilers with support of C++14
 - Rewritten code related to spell checkers support (hunspell, aspell)
 - Improved saving of program settings on exit

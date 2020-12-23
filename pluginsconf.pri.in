@@ -1,4 +1,0 @@
-psi_plugins_dir="@plugins_dir@"
-psi_data_dir="@data_dir@"
-psi_plugins_include_dir="@plugins_include_dir@"
-psi_features=@features@

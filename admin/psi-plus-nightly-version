@@ -1,0 +1,35 @@
+#!/bin/sh
+
+show_help()
+{
+    echo "Usage: ${0} [--webkit|--webengine]"
+    echo ""
+    echo "* first argument is optional"
+    echo "* second and next arguments are ignored"
+    echo "* script works only when sources were get using git"
+}
+
+cd "$(dirname "$0")" || exit 1
+
+[ "${1}" = "-h" ] && { show_help; exit 0; }
+[ "${1}" = "--help" ] && { show_help; exit 0; }
+
+# test git
+[ ! -d "../.git" ] && { show_help; exit 1; }
+[ -z "$(which git)" ] && { show_help; exit 1; }
+
+# version
+PSI_TAG=$(git describe --tags | cut -d - -f1)
+PSI_HASH="$(git rev-parse --short HEAD)"
+PATCHES_NUM=$(./git_revnumber.sh "${PSI_TAG}")
+
+# date
+DATE_STR="$(git log -n1 --date=short --pretty=format:'%ad')"
+
+# features list
+FEATURES=""
+[ "${1}" = "--webkit" ] && FEATURES=", webkit"
+[ "${1}" = "--webengine" ] && FEATURES=", webengine"
+
+echo "${PSI_TAG}.${PATCHES_NUM} (${DATE_STR}, ${PSI_HASH}${FEATURES})"
+
