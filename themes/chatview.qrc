@@ -1,5 +1,5 @@
 <RCC>
-    <qresource prefix="/">
+    <qresource prefix="/themes/">
         <file>chatview/adium/Template.html</file>
         <file>chatview/adium/adapter.js</file>
         <file>chatview/psi/psi.css</file>
