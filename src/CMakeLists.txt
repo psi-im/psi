@@ -334,7 +334,7 @@ set(RESOURCES
     ${ICONSETSQRC_OUTPUT_FILE}
 )
 if(IS_WEBKIT OR IS_WEBENGINE)
-    list(APPEND RESOURCES ${PROJECT_SOURCE_DIR}/webkit.qrc)
+    list(APPEND RESOURCES ${PROJECT_SOURCE_DIR}/themes/chatview.qrc)
 endif()
 
 qt5_add_resources(QRC_SOURCES ${RESOURCES})
@@ -505,7 +505,7 @@ set(DOC_FILES
 )
 
 set(APP_DATA_FILE
-    "${PROJECT_SOURCE_DIR}/${PROJECT_NAME}.appdata.xml"
+    "${PROJECT_SOURCE_DIR}/linux/${PROJECT_NAME}.appdata.xml"
 )
 
 #PREPARE SECTION

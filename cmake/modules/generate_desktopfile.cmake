@@ -1,7 +1,7 @@
 cmake_minimum_required( VERSION 3.2.0 )
 
-set(DESKTOP_FILE "${PROJECT_SOURCE_DIR}/psi.desktop")
-set(DESKTOP_FILE_SEC_PART "${PROJECT_SOURCE_DIR}/psi-extra-action1.desktop")
+set(DESKTOP_FILE "${PROJECT_SOURCE_DIR}/linux/psi.desktop")
+set(DESKTOP_FILE_SEC_PART "${PROJECT_SOURCE_DIR}/linux/psi-extra-action1.desktop")
 file(READ ${DESKTOP_FILE} DESK_FILE_CONTENTS)
 file(READ ${DESKTOP_FILE_SEC_PART} PART2_CONTENTS)
 set(OUT_DESK_FILE "${CMAKE_BINARY_DIR}/${VERBOSED_NAME}.desktop")
