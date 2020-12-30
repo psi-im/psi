@@ -1658,7 +1658,15 @@ void MainWin::updateTray()
     } else if (d->lastStatus == -1) {
         d->tray->setAlert(IconsetFactory::iconPtr("psi/connect"));
     } else {
-        d->tray->setIcon(PsiIconset::instance()->statusPtr(d->lastStatus));
+        auto           status = d->lastStatus;
+        const PsiIcon *icon   = nullptr;
+        if (status == STATUS_ONLINE) {
+            auto d = QDateTime::currentDateTime();
+            if ((d.date().month() == 12 && d.date().day() >= 24) || (d.date().month() == 1 && d.date().day() <= 7)) {
+                icon = IconsetFactory::iconPtr(QLatin1String("status/online-christmas"));
+            }
+        }
+        d->tray->setIcon(icon ? icon : PsiIconset::instance()->statusPtr(d->lastStatus));
     }
 
     buildTrayMenu();

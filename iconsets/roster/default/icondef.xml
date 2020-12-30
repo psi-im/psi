@@ -23,6 +23,11 @@
     </icon>
 
     <icon>
+        <x xmlns='name'>status/online-christmas</x>
+        <object mime='image/png'>online-christmas.png</object>
+    </icon>
+
+    <icon>
         <x xmlns='name'>status/offline</x>
         <object mime='image/png'>offline.png</object>
     </icon>
