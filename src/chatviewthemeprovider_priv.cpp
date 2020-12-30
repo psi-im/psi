@@ -266,6 +266,8 @@ ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
         int     w      = QUrlQuery(url.query()).queryItemValue("w").toInt();
         int     h      = QUrlQuery(url.query()).queryItemValue("h").toInt();
         auto    icon   = IconsetFactory::iconPtr(iconId);
+        if (!icon)
+            return false;
         if (w && h && !icon->isAnimated() && !icon->isScalable()) {
             QBuffer buffer(&data);
             buffer.open(QIODevice::WriteOnly);
