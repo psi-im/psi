@@ -49,6 +49,9 @@ ShowTextDlg::ShowTextDlg(const QString &fname, bool rich, QWidget *parent)
 	te->setReadOnly(true);
 	te->setAcceptRichText(rich);
 	te->setText(text);
+	if (rich) {
+		te->setTextInteractionFlags(Qt::TextBrowserInteraction);
+	}
 
 	vb1->addWidget(te);
 
@@ -76,6 +79,9 @@ ShowTextDlg::ShowTextDlg(const QString &text, bool nonfile, bool rich, QWidget *
 	te->setReadOnly(true);
 	te->setAcceptRichText(rich);
 	te->setText(text);
+	if (rich) {
+		te->setTextInteractionFlags(Qt::TextBrowserInteraction);
+	}
 
 	vb1->addWidget(te);
 

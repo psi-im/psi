@@ -1,0 +1,73 @@
+New in 1.6 (UNRELEASED)
+- Update documentation (backported from Psi-2.0)
+- Improvements in cmake build system (backported from Psi-2.0)
+
+New in 1.5
+- Backported fixes to various bugs/crashes from the master branch
+- Fixed compatibility with Qt 5.15
+
+New in 1.4
+- Fixed reconnection on Stream Management resume failure
+- Fixed compatibility with Qt >= 5.10
+- Improved media contents previews for WebKit version (YouTube and files)
+- CMake-based build fixes
+
+New in 1.3
+- Fixed connection to Openfire server
+- Fixed connections by IP (fixes socks file transfer as well)
+- Fixed compilation with new version of Enchant
+- Fixed broken file transfer after reconnection
+- Minor UI fixes
+
+New in 1.2
+- Removed AIM and MSN icons.
+- Fixed debug build on Visual Studio.
+- Font and windows sizes adjusted for regular fullhd displays.
+- Fixed crashes online account remove and contact delete from another resource.
+- History DB and dialog improvements.
+- Fixed crash on unrecognized dictionary encodings in hunspell checker.
+- Added option to disable previews in webkit builds.
+- Fixed Youtube links recognition.
+
+New in 1.1
+- Fixed a few crashes. Seems to be pretty stable now.
+- Contact list was rewritten once again.
+- Improved stream management (no more disconnects).
+- Better support for HIDPI displays.
+- More Psi+ patches merged.
+- JDNS was replaced with QDnsLookup for Qt5 builds.
+- CMake support.
+- A lot of minor UI fixes.
+
+New in 1.0
+- Almost all Psi+ patches were merged (a lot of features).
+- Plugins support is enabled by default.
+
+New in 0.15
+- Merge many changes from Psi+.
+- New message history browser.
+- New, fast contact list window.
+- TURN proxying for voice calls.
+- Store data in more standardized locations based on the platform.
+- No longer dependent on the Qt3Support library.
+- Domains ending in .local now always work, whether via DNS server or mdns.
+- Windows 64-bit and Mac 64-bit now supported. Mac PPC deprecated.
+- Legacy SSL port probe feature removed.
+- Various small features and bugfixes.
+
+New in 0.14
+- Added color options to the chat window.
+- Can now specify a reason for kick/ban in groupchat.
+- Improved User Info window, to show more fields and photo view/save.
+- Support for Enchant as an alternative to Aspell.
+- Commandline interface now supports choosing profile and setting status.
+- D-BUS interface now supports setting status and indicating sleep/wake.
+- Fixed voice calling compatibility bugs with Pidgin and Empathy.
+- Various other minor improvements and bugfixes.
+
+New in 0.13
+- Voice calls (Jingle RTP).
+- Basic XMPP URI handler.
+- Ability to permanently trust certificates at connect time.
+- Mini command system (Ctrl+7 in chat window).
+- Various bugfixes.
