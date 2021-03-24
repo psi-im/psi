@@ -628,11 +628,11 @@ void ChatEdit::insertAsQuote(const QString &text)
     QString prevLine = toPlainText().left(pos - 1);
     prevLine         = prevLine.mid(prevLine.lastIndexOf("\n") + 1);
 
-    QString quote = QString::fromUtf8("» ") + text;
-    quote.replace("\n", QString::fromUtf8("\n» "));
+    QString quote = QString::fromUtf8(u8"» ") + text;
+    quote.replace("\n", QString::fromUtf8(u8"\n» "));
 
     // Check for previous quote and merge if true
-    if (!prevLine.startsWith(QString::fromUtf8("»"))) {
+    if (!prevLine.startsWith(QString::fromUtf8(u8"»"))) {
         quote.prepend("\n");
     }
     quote.append("\n");
