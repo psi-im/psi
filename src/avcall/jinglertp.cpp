@@ -996,8 +996,7 @@ private:
         //   candidates on the fly.
 
         if (types & JingleRtp::Audio && iceA) {
-            iceA->setPeerUfrag(iceA_status.remoteUfrag);
-            iceA->setPeerPassword(iceA_status.remotePassword);
+            iceA->setRemoteCredentials(iceA_status.remoteUfrag, iceA_status.remotePassword);
             if (!iceA_status.remoteCandidates.isEmpty()) {
                 iceA->addRemoteCandidates(iceA_status.remoteCandidates);
                 iceA_status.remoteCandidates.clear();
@@ -1009,8 +1008,7 @@ private:
         }
 
         if (types & JingleRtp::Video && iceV) {
-            iceV->setPeerUfrag(iceV_status.remoteUfrag);
-            iceV->setPeerPassword(iceV_status.remotePassword);
+            iceV->setRemoteCredentials(iceA_status.remoteUfrag, iceA_status.remotePassword);
             if (!iceV_status.remoteCandidates.isEmpty()) {
                 iceV->addRemoteCandidates(iceV_status.remoteCandidates);
                 iceV_status.remoteCandidates.clear();
