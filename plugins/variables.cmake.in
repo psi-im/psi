@@ -4,4 +4,4 @@ set( PLUGINS_DATA_PATH "${CMAKE_INSTALL_PREFIX}/@data_dir_sfx@" CACHE STRING "Pa
 set( MAIN_PROGRAM_NAME "@SHARE_SUFF@" CACHE STRING "Name of main client" )
 add_definitions( -DQT_PLUGIN )
 include_directories("@plugins_includes_dir@")
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)

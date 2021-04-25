@@ -10,7 +10,7 @@ endif()
 
 get_filename_component(ABS_INCLUDES_DIR "${CMAKE_CURRENT_LIST_DIR}/../include" ABSOLUTE)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 if( NOT WIN32 )
     set( LIB_SUFFIX "" CACHE STRING "Define suffix of directory name (32/64)" )
