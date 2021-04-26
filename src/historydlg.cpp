@@ -992,7 +992,7 @@ void HistoryDlg::exportHistory()
             PsiEvent::Ptr e(item->event());
             QString       txt;
 
-            QString ts = e->timeStamp().toString(Qt::LocalDate);
+            QString ts = QLocale().toString(e->timeStamp(), QLocale::ShortFormat);
 
             QString nick;
             if (e->originLocal()) {

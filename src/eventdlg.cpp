@@ -1595,7 +1595,8 @@ void EventDlg::setTime(const QDateTime &t, bool late)
     QString str;
     // str.sprintf("<nobr>%02d/%02d %02d:%02d:%02d</nobr>", t.date().month(), t.date().day(), t.time().hour(),
     // t.time().minute(), t.time().second());
-    str = QString("<nobr>") + t.toString(Qt::LocalDate) + "</nobr>";
+    str = QString("<nobr>") + QLocale().toString(t, QLocale::ShortFormat);
+    +"</nobr>";
     if (late)
         str = QString("<font color=\"red\">") + str + "</font>";
 

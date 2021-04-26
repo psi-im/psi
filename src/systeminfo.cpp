@@ -52,7 +52,7 @@ static QString lsbRelease(const QStringList &args)
     QStringList path = QString(qgetenv("PATH")).split(':');
     QString     found;
 
-    for (const QString &dirname : path) {
+    for (const QString &dirname : qAsConst(path)) {
         QDir      dir(dirname);
         QFileInfo cand(dir.filePath("lsb_release"));
         if (cand.isExecutable()) {

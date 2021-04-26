@@ -676,7 +676,7 @@ void GCUserView::mousePressEvent(QMouseEvent *event)
 {
     QModelIndex index = indexAt(event->pos());
     if (index.parent().isValid()) {
-        if (event->button() == Qt::MidButton
+        if (event->button() == Qt::MiddleButton
             || (event->button() == Qt::LeftButton && qApp->keyboardModifiers() == Qt::ShiftModifier)) {
             emit insertNick(index.data().toString());
             return;

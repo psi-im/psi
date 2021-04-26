@@ -319,11 +319,11 @@ QString UserListItem::tooltipPgpData(const UserResource &ur, const QString &imgT
     if (v == PGPUtil::SecureMessageSignature::Valid || v == PGPUtil::SecureMessageSignature::InvalidSignature
         || v == PGPUtil::SecureMessageSignature::InvalidKey || v == PGPUtil::SecureMessageSignature::NoKey) {
         if (v == PGPUtil::SecureMessageSignature::Valid) {
-            QString d = ur.sigTimestamp().toString(Qt::DefaultLocaleShortDate);
+            QString d = QLocale().toString(ur.sigTimestamp(), QLocale::ShortFormat);
             out += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag, "psi/gpg-yes") + QObject::tr("Signed") + ": "
                 + "<font color=\"#2A993B\">" + d + "</font>";
         } else if (v == PGPUtil::SecureMessageSignature::NoKey) {
-            QString d = ur.sigTimestamp().toString(Qt::DefaultLocaleShortDate);
+            QString d = QLocale().toString(ur.sigTimestamp(), QLocale::ShortFormat);
             out += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag, "psi/keyUnknown") + QObject::tr("Signed")
                 + ": " + d;
         } else if (v == PGPUtil::SecureMessageSignature::InvalidSignature
@@ -571,7 +571,9 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
             if (r.timezoneOffset().hasValue()) {
                 QDateTime dt = QDateTime::currentDateTime().toUTC().addSecs(r.timezoneOffset().value() * 60);
                 str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag, "psi/time") + QObject::tr("Time")
-                    + QString(": %1 (%2)").arg(dt.toString(Qt::DefaultLocaleShortDate)).arg(r.timezoneOffsetString())
+                    + QString(": %1 (%2)")
+                          .arg(QLocale().toString(dt, QLocale::ShortFormat))
+                          .arg(r.timezoneOffsetString())
                     + "</div>";
             }
 
@@ -607,7 +609,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
             // last status
             if (r.status().timeStamp().isValid()
                 && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.last-status").toBool()) {
-                QString d = r.status().timeStamp().toString(Qt::DefaultLocaleShortDate);
+                QString d = QLocale().toString(r.status().timeStamp(), QLocale::ShortFormat);
                 str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag, "psi/info") + QObject::tr("Last Status")
                     + ": " + d + "</div>";
             }
@@ -635,7 +637,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
     } else {
         // last available
         if (!lastAvailable().isNull()) {
-            QString d = lastAvailable().toString(Qt::DefaultLocaleShortDate);
+            QString d = QLocale().toString(lastAvailable(), QLocale::ShortFormat);
             str += QString("<div style='white-space:pre'><%1=\"%2\"> ").arg(imgTag, "psi/info")
                 + QObject::tr("Last Available") + ": " + d + "</div>";
         }

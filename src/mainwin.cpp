@@ -1564,7 +1564,7 @@ void MainWin::trayClicked(const QPoint &, int button)
     }
 #endif
 
-    if (button == Qt::MidButton) {
+    if (button == Qt::MiddleButton) {
         doRecvNextEvent();
         return;
     }
@@ -1673,12 +1673,12 @@ void MainWin::updateTray()
     d->tray->setContextMenu(d->trayMenu);
 }
 
-void MainWin::doRecvNextEvent() { recvNextEvent(); }
+void MainWin::doRecvNextEvent() { emit recvNextEvent(); }
 
 void MainWin::statusClicked(int x)
 {
-    if (x == Qt::MidButton) {
-        recvNextEvent();
+    if (x == Qt::MiddleButton) {
+        emit recvNextEvent();
     }
 }
 

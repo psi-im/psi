@@ -114,7 +114,7 @@ public:
             lb_date2->hide();
         } else {
             QDate date = QDate::fromString(is.creation(), Qt::ISODate);
-            lb_date->setText(date.toString(Qt::LocalDate));
+            lb_date->setText(QLocale().toString(date, QLocale::ShortFormat));
         }
 
         if (is.authors().count() == 0) {

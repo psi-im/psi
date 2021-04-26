@@ -585,7 +585,7 @@ FileRequestDlg::FileRequestDlg(const QDateTime &ts, FileTransfer *ft, PsiAccount
     d->lb_ident->setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
     hbLayout->addWidget(d->lb_ident);
     hbLayout->addWidget(new QLabel(tr("Time:")));
-    d->lb_time = new QLabel(ts.time().toString(Qt::LocalDate), hb);
+    d->lb_time = new QLabel(QLocale().toString(ts.time(), QLocale::ShortFormat), hb);
     d->lb_time->setFrameStyle(QFrame::Panel | QFrame::Sunken);
     hbLayout->addWidget(d->lb_time);
     connect(d->pa->psi(), SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
