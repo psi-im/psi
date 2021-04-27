@@ -7,7 +7,7 @@ See "Packages and installers" section in [README.md](README.md) or [README.html]
 
 ### Build dependencies
 
-* compiler with C++14 support
+* compiler with C++17 support
 * ccache (optional)
 * cmake >= 3.2.0
 * Qt >= 5.6.0

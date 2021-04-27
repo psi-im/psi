@@ -3,7 +3,7 @@
 include($$PWD/pluginsconf.pri)
 
 TEMPLATE = lib
-CONFIG += plugin c++14
+CONFIG += plugin c++17
 QT += xml widgets
 
 MOC_DIR = .moc/
