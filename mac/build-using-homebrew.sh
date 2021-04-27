@@ -3,7 +3,7 @@
 # Authors: Boris Pek
 # License: Public Domain
 # Created: 2018-10-07
-# Updated: 2021-03-25
+# Updated: 2021-04-27
 # Version: N/A
 #
 # Description: script for building of app bundles for macOS
@@ -24,10 +24,6 @@
 # export HOMEBREW_NO_BOTTLE_SOURCE_FALLBACK=1
 # brew install ccache coreutils cmake
 # brew install openssl@1.1 libusrsctp minizip hunspell qt@5 qtkeychain
-#
-# Build qca with enabled qca-gnupg plugin:
-# brew install --build-bottle https://raw.githubusercontent.com/tehnick/homebrew-core/hobby/Formula/qca.rb
-# end
 #
 # Build dependencies for Psi plugins:
 # brew install tidy-html5 libotr libsignal-protocol-c
@@ -86,5 +82,5 @@ cpack -G DragNDrop
 cp -a Psi*.dmg "${MAIN_DIR}/../"
 echo
 
-echo "App bundle is successfully built!"
+echo "App bundle is built successfully!"
 echo
