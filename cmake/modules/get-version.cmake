@@ -4,7 +4,7 @@ set(VER_FILE ${PROJECT_SOURCE_DIR}/version)
 unset(APP_VERSION)
 unset(PSI_REVISION)
 unset(PSI_PLUS_REVISION)
-set(DEFAULT_VER "1.4")
+set(DEFAULT_VER "1.5")
 
 if(NOT Git_FOUND)
     include(FindGit)
