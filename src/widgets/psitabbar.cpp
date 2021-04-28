@@ -85,13 +85,13 @@ void PsiTabBar::mousePressEvent(QMouseEvent *event)
 
 void PsiTabBar::mouseReleaseEvent(QMouseEvent *event)
 {
-    if (event->button() == Qt::MidButton && findTabUnder(event->pos()) != -1) {
+    if (event->button() == Qt::MiddleButton && findTabUnder(event->pos()) != -1) {
         emit mouseMiddleClickTab(findTabUnder(event->pos()));
         event->accept();
     }
     TabBar::mouseReleaseEvent(event);
 
-    if (event->button() != Qt::MidButton) {
+    if (event->button() != Qt::MiddleButton) {
         this->setCurrentIndex(currentIndex());
     }
 };

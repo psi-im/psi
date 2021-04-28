@@ -943,7 +943,7 @@ void TabBar::paintEvent(QPaintEvent *event)
                 // Draw tab shape
                 // Use red color as tab frame
                 QPalette oldPalette = tab.palette;
-                tab.palette.setColor(QPalette::Foreground, Qt::red);
+                tab.palette.setColor(QPalette::WindowText, Qt::red);
                 tab.palette.setColor(QPalette::Light, Qt::red);
                 tab.palette.setColor(QPalette::Dark, Qt::red);
                 pp.drawControl(QStyle::CE_TabBarTabShape, tab);

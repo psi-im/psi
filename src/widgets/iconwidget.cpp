@@ -213,7 +213,7 @@ public:
             o.rect = QRect(r.topLeft() + margin, r.bottomRight() - margin);
             o.state |= QStyle::State_KeyboardFocusChange;
             o.backgroundColor = option.palette.color(
-                cg, (option.state & QStyle::State_Selected) ? QPalette::Highlight : QPalette::Background);
+                cg, (option.state & QStyle::State_Selected) ? QPalette::Highlight : QPalette::Window);
             QApplication::style()->drawPrimitive(QStyle::PE_FrameFocusRect, &o, painter);
         }
     }
