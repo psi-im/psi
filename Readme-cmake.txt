@@ -37,6 +37,10 @@ or
 
 ## Usefull CMAKE FLAGS:
 
+> -PSI_PLUS=OFF
+
+  Build Psi+ client instead of Psi (default OFF)
+
 > -DPSI_LIBDIR=${path}
 
   Path to Psi/Psi+ libraries directory. Path to the directory
@@ -51,46 +55,61 @@ or
 
   to set installation prefix
 
->  -DBUNDLED_IRIS=ON
+> -DBUNDLED_IRIS=ON
 
   to build iris library bundled (default ON)
 
->  -DUSE_ENCHANT=ON
+> -DBUNDLED_QCA=ON
 
-  to use Enchant spellchecker (default OFF)
+  to build qca library from https://github.com/psi-im/qca with Psi
+  Adds: DTLS, Blake2b and other useful for XMPP crypto-stuff
 
->  -DUSE_HUNSPELL=ON
+> -DBUNDLED_USRSCTP=ON
 
-  to use Hunspell spellchecker (default ON)
+  to build usrsctp library from official github repository
+  Compile compatible usrsctp lib when system one is not available or
+  uncompatible (required for p2p file transfer)
 
->  -DUSE_HUNSPELL=ON
+> -DUSE_ASPELL=OFF
 
   to use Aspell spellchecker (default OFF)
 
->  -DSEPARATE_QJDNS=ON
+> -DUSE_ENCHANT=ON
 
-  to build qjdns library as separate library (default OFF)
+  to use Enchant spellchecker (default OFF)
 
->  -DCHAT_TYPE = BASIC
+> -DUSE_HUNSPELL=ON
+
+  to use Hunspell spellchecker (default ON)
+
+> -DUSE_HUNSPELL=ON
+
+  to use Aspell spellchecker (default OFF)
+
+> -DSEPARATE_QJDNS=ON
+
+  use qjdns library as separate library (default OFF)
+
+> -DCHAT_TYPE = BASIC
 
    to set type of chatlog engine. Possible values: WEBKIT, WEBENGINE, BASIC
    default value - BASIC
 
->  -DPSI_VERSION=${version}
+> -DPSI_VERSION=${version}
 
   to set Psi/Psi+ version manually
   ( Example for Psi+: 1.0.40 (2017-06-05, Psi:a7d2d7b8, Psi+:055e945, webkit) ).
   Script sets this flag automatically from "version" file if it exists in sources directory
 
->  -DCMAKE_BUILD_TYPE=Release (default: Release)
+> -DCMAKE_BUILD_TYPE=Release (default: Release)
 
   to set build type. Possible values: DEBUG, RELEASE, RELWITHDEBINFO, MINSIZEREL
 
->  -USE_CCACHE=ON (default: ON)
+> -USE_CCACHE=ON (default: ON)
 
   to enable ccache utility support
 
->  -DUSE_MXE=ON (default: OFF)
+> -DUSE_MXE=ON (default: OFF)
 
   Enables MXE (M cross environment) support.
   Disables USE_CCACHE. Script can automatically detect MXE.
@@ -98,7 +117,7 @@ or
 > -DVERBOSE_PROGRAM_NAME=ON
 
   Verbose output program name. (default OFF)
-  Experimental flag. Exmaple of output name: psi-plus-webkit-sql
+  Experimental flag. Exmaple of output name: psi-plus-webkit
 
 > -DPRODUCTION=ON
 
@@ -112,16 +131,16 @@ or
 
   build psimedia plugin if sources found in project folder
 
->  -DONLY_BINARY=OFF
+> -DONLY_BINARY=OFF
 
   If ON - only binary file will be installed
 
->  -DINSTALL_EXTRA_FILES=ON
+> -DINSTALL_EXTRA_FILES=ON
 
   If OFF - sounds, certificates, iconsets, themes and cilent_icons.txt
   file will not be installed
 
->  -DINSTALL_PLUGINS_SDK=ON
+> -DINSTALL_PLUGINS_SDK=ON
 
   If this flag ON than with psi will be installed PluginsAPI that needed
   to build plugins separately of main program sources
@@ -131,17 +150,17 @@ or
 
   to build psi plugins (default OFF)
 
->  -DONLY_PLUGINS=ON
+> -DONLY_PLUGINS=ON
 
   to build only psi plugins (default OFF). On enabling this flag
   ENABLE_PLUGINS flag turns on automatically
 
->  -DDEV_MODE=ON
+> -DDEV_MODE=ON
 
   In OS Windows enables prepare-bin-libs target. Allows to copy needed libraries to run Psi/Psi+.
   In Linux sets PSI_DATA directory to current binary direrctory (Usefull to debug plugins)
 
->  -DUSE_XSS=ON
+> -DUSE_XSS=ON
 
   In Linux OS adds XScreensaver support (default ON).
 
@@ -149,11 +168,19 @@ or
 
   In Linux OS enables DBus support for client management, notifications, tunes (default ON).
 
+> -DUSE_X11=ON
+
+  Enable X11 features support (default ON)
+
+> -DLIMIT_X11_USAGE=ON
+
+  Disable usage of X11 features which may crash program (default OFF)
+
 ## Work with plugins:
 
 ### Next flags are working only if ENABLE_PLUGINS or ONLY_PLUGINS are enabled
 
->  -DBUILD_PLUGINS=${plugins}
+> -DBUILD_PLUGINS=${plugins}
 
   set list of plugins to build. To build all plugins:  -DBUILD_PLUGINS="ALL" or do not set this flag
 
@@ -180,12 +207,12 @@ or
 
     ATTENTION! Mixing white and black lists is not allowed.
 
->  -DPLUGINS_ROOT_DIR=${path}
+> -DPLUGINS_ROOT_DIR=${path}
 
   Path to the include directory to build plugins outside of Psi/Psi+
   sources (path to the plugins.cmake file)
 
->  -DPLUGINS_PATH=${path}
+> -DPLUGINS_PATH=${path}
 
   to install plugins into ${path}. To install into default suffix:
 
@@ -201,22 +228,26 @@ or
 
 ## Win32 or MXE Section:
 
->  -DQCA_DIR=DIRECTORY
+> -DQCA_DIR=DIRECTORY
 
   to set Qca library root directory
 
->  -DZLIB_ROOT=DIRECTORY
+> -DZLIB_ROOT=DIRECTORY
 
   to set Zlib library root directory
 
->  -DHUNSPELL_ROOT=DIRECTORY
+> -DHUNSPELL_ROOT=DIRECTORY
 
   to set Hunspell library root directory
 
->  -DENABLE_PORTABLE=ON
+> -DENABLE_PORTABLE=ON
 
   to build portable version (not need to rename binary).
   Enables prepare-bin-libs target.
+
+> -DNO_DEBUG_OPTIMIZATION=OFF
+
+  Disable optimization for debug builds. Windows only (default OFF)
 
 ### To build OTRPLUGIN in OS WINDOWS you need to set additional variables
 
@@ -242,4 +273,18 @@ or
 
 ### If you using Psi+ SDK you need to set SDK_PATH:
 
->  -DSDK_PATH=path
+> -DSDK_PATH=path
+
+### macOS specific flags
+
+> -DUSE_SPARKLE=ON
+
+  Use Sparkle for macOS builds (default ON)
+
+> -DUSE_GROWL=OFF
+
+  Use growl for macOS builds (default OFF)
+
+> -DUSE_MAC_DOC=OFF
+
+  Use macOS dock (default OFF)
