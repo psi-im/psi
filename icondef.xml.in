@@ -317,7 +317,7 @@
 
         <icon>
                 <x xmlns='name'>psi/topic</x>
-        <object mime='image/png'>topic.svg</object>
+        <object mime='image/svg+xml'>topic.svg</object>
         </icon>
 
         <icon>
@@ -721,7 +721,7 @@
 
         <icon>
                 <x xmlns='name'>psi/xmpp</x>
-        <object mime='image/png'>xmpp.svg</object>
+        <object mime='image/svg+xml'>xmpp.svg</object>
         </icon>
     <icon>
                 <x xmlns='name'>psi/mic</x>

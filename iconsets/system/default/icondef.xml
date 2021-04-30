@@ -716,7 +716,7 @@
 
     <icon>
         <x xmlns='name'>psi/xmpp</x>
-        <object mime='image/png'>xmpp.svg</object>
+        <object mime='image/xml+svg'>xmpp.svg</object>
     </icon>
     <icon>
         <x xmlns='name'>psi/mic</x>
