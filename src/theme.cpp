@@ -81,7 +81,7 @@ bool Theme::isCompressed(const QFileInfo &fi)
 {
     QString sfx = fi.suffix();
     return fi.isDir()
-        && (sfx == QLatin1Literal("jisp") || sfx == QLatin1Literal("zip") || sfx == QLatin1Literal("theme"));
+        && (sfx == QLatin1String("jisp") || sfx == QLatin1String("zip") || sfx == QLatin1String("theme"));
 }
 
 bool Theme::isCompressed() const { return isCompressed(QFileInfo(d->filepath)); }
