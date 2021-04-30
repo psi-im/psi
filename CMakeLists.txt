@@ -48,6 +48,11 @@ foreach(submodule ${SBM_LIST})
     endif()
 endforeach()
 
+set( DEFAULT_BUNDLED_QCA OFF )
+if (APPLE)
+    set( DEFAULT_BUNDLED_QCA ON )
+endif()
+
 # Common options
 set( CHAT_TYPE "BASIC" CACHE STRING "Type of chatlog engine. WEBKIT | WEBENGINE | BASIC" )
 option( PRODUCTION "Build production version" OFF )
@@ -69,7 +74,7 @@ option( INSTALL_PLUGINS_SDK "Install sdk files to build plugins outside of proje
 # Developers options
 option( DEV_MODE "Enable prepare-bin-libs target for MS Windows only. Set PSI_DATADIR and PSI_LIBDIR to CMAKE_RUNTIME_OUTPUT_DIRECTORY to debug plugins for Linux only" OFF )
 # Iris options
-option( BUNDLED_QCA "Adds: DTLS, Blake2b and other useful for XMPP crypto-stuff" OFF )
+option( BUNDLED_QCA "Adds: DTLS, Blake2b and other useful for XMPP crypto-stuff" ${DEFAULT_BUNDLED_QCA} )
 option( BUNDLED_USRSCTP "Compile compatible usrsctp lib when system one is not available or uncompatible (required for p2p file transfer)" OFF )
 option( USE_QJDNS "Use qjdns/jdns library. Disabled by default for Qt5" OFF )
 option( SEPARATE_QJDNS "Build qjdns as separate lib" OFF )
@@ -84,7 +89,7 @@ if(LINUX)
     option( USE_XSS "Enable Xscreensaver support" ON )
     option( LIMIT_X11_USAGE "Disable usage of X11 features which may crash program" OFF )
 elseif(APPLE)
-    option( USE_SPARKLE "Use Sparkle for APPLE builds" ON )
+    option( USE_SPARKLE "Use Sparkle for APPLE builds" OFF )
     option( USE_GROWL "Use growl for macOS builds" OFF )
     option( USE_MAC_DOC "Use macOS dock" OFF )
 endif()
