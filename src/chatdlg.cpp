@@ -468,7 +468,7 @@ void ChatDlg::ensureTabbedCorrectly()
 
 void ChatDlg::updateContact(const Jid &j, bool fromPresence)
 {
-    if (account()->groupchats().contains(j.full()))
+    if ((j.resource().isEmpty() || j.resource() == QLatin1String("Muc")) && account()->groupchats().contains(j.bare()))
         return;
     // if groupchat, only update if the resource matches
     if (account()->findGCContact(j) && !jid().compare(j)) {

@@ -1187,11 +1187,13 @@ void PsiCon::showStatusDialog(const QString &presetName)
     int           priority = preset.priority().hasValue() ? preset.priority().value() : 0;
     Status        status(preset.status(), preset.message(), priority);
     StatusSetDlg *w = new StatusSetDlg(this, status, preset.priority().hasValue());
-    connect(w, SIGNAL(set(const XMPP::Status &, bool, bool)), SLOT(setGlobalStatus(const XMPP::Status &, bool, bool)));
-    connect(w, SIGNAL(cancelled()), SLOT(updateMainwinStatus()));
+    connect(w, &StatusSetDlg::set, this, &PsiCon::setGlobalStatus);
+    connect(w, &StatusSetDlg::cancelled, this, &PsiCon::updateMainwinStatus);
     if (PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool())
-        connect(w, SIGNAL(set(const XMPP::Status &, bool, bool)), d->mainwin,
-                SLOT(setTrayToolTip(const XMPP::Status &, bool, bool)));
+        connect(w, &StatusSetDlg::set, d->mainwin,
+                [this](const XMPP::Status &s, bool withPriority, bool isManualStatus) {
+                    d->mainwin->setTrayToolTip(s, withPriority, isManualStatus);
+                });
     w->show();
 }
 
@@ -1471,9 +1473,10 @@ void PsiCon::slotApplyOptions()
 #ifndef Q_OS_MAC
     if (!o->getOption("options.ui.contactlist.show-menubar").toBool()) {
         // check if all toolbars are disabled
-        bool toolbarsVisible = false;
-        for (QString base : o->getChildOptionNames("options.ui.contactlist.toolbars", true, true)) {
-            if (o->getOption(base + ".visible").toBool()) {
+        bool        toolbarsVisible = false;
+        auto const &directChildren  = o->getChildOptionNames("options.ui.contactlist.toolbars", true, true);
+        for (const QString &base : directChildren) {
+            if (o->getOption(base + QLatin1String(".visible")).toBool()) {
                 toolbarsVisible = true;
                 break;
             }
@@ -1646,7 +1649,7 @@ const QStringList &PsiCon::recentNodeList() const { return d->recentNodeList; }
 void PsiCon::recentNodeAdd(const QString &str)
 {
     // remove it if we have it
-    for (const QString &s : d->recentNodeList) {
+    for (const QString &s : qAsConst(d->recentNodeList)) {
         if (s == str) {
             d->recentNodeList.removeAll(s);
             break;
@@ -1680,7 +1683,7 @@ void PsiCon::processEvent(const PsiEvent::Ptr &e, ActivationType activationType)
 
     if (e->type() == PsiEvent::PGP) {
         e->account()->eventQueue()->dequeue(e);
-        e->account()->queueChanged();
+        emit e->account()->queueChanged();
         return;
     }
 
@@ -1689,7 +1692,7 @@ void PsiCon::processEvent(const PsiEvent::Ptr &e, ActivationType activationType)
         qWarning("SYSTEM MESSAGE: Bug #1. Contact the developers and tell them what you did to make this message "
                  "appear. Thank you.");
         e->account()->eventQueue()->dequeue(e);
-        e->account()->queueChanged();
+        emit e->account()->queueChanged();
         return;
     }
 
@@ -1699,7 +1702,7 @@ void PsiCon::processEvent(const PsiEvent::Ptr &e, ActivationType activationType)
         FileTransfer * ft   = fe->takeFileTransfer();
         auto *         sess = fe->takeJingleSession();
         e->account()->eventQueue()->dequeue(e);
-        e->account()->queueChanged();
+        emit e->account()->queueChanged();
         e->account()->cpUpdate(*u);
         if (ft) {
             FileRequestDlg *w = new FileRequestDlg(fe->timeStamp(), ft, e->account());
@@ -1719,7 +1722,7 @@ void PsiCon::processEvent(const PsiEvent::Ptr &e, ActivationType activationType)
         AvCallEvent::Ptr ae   = e.staticCast<AvCallEvent>();
         AvCall *         sess = ae->takeAvCall();
         e->account()->eventQueue()->dequeue(e);
-        e->account()->queueChanged();
+        emit e->account()->queueChanged();
         e->account()->cpUpdate(*u);
         if (sess) {
             if (!sess->jid().isEmpty()) {
@@ -1782,7 +1785,7 @@ void PsiCon::processEvent(const PsiEvent::Ptr &e, ActivationType activationType)
 #ifdef WHITEBOARDING
     else if (e->type() == PsiEvent::Sxe) {
         e->account()->eventQueue()->dequeue(e);
-        e->account()->queueChanged();
+        emit e->account()->queueChanged();
         e->account()->cpUpdate(*u);
         e->account()->wbManager()->requestActivated((e.staticCast<SxeEvent>())->id());
         return;
@@ -1823,7 +1826,7 @@ void PsiCon::removeEvent(const PsiEvent::Ptr &e)
         return;
     UserListItem *u = account->find(e->jid());
     account->eventQueue()->dequeue(e);
-    account->queueChanged();
+    emit account->queueChanged();
     if (u)
         account->cpUpdate(*u);
 }

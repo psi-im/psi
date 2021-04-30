@@ -22,6 +22,7 @@
 #include "accountadddlg.h"
 #include "psiaccount.h"
 #include "psicon.h"
+#include "psicontact.h"
 #include "psievent.h"
 #include "psioptions.h"
 #include "xmpp_serverinfomanager.h"
@@ -60,7 +61,7 @@ void PsiContactList::gracefulDeinit()
     deinitAccCounter_ = 0;
     decltype(accounts_) loggedAccs;
 
-    for (auto account : enabledAccounts_) {
+    for (auto account : qAsConst(enabledAccounts_)) {
         if (account->isAvailable()) {
             deinitAccCounter_++;
             loggedAccs.append(account);
@@ -425,7 +426,7 @@ PsiAccount *PsiContactList::tryQueueLowestEventId(bool includeDND)
     int         low_id    = 0;
     int         low_prior = EventPriorityDontCare;
 
-    for (PsiAccount *account : enabledAccounts_) {
+    for (PsiAccount *account : qAsConst(enabledAccounts_)) {
         int n = account->eventQueue()->nextId();
         if (n == -1)
             continue;
@@ -479,8 +480,8 @@ void PsiContactList::addEnabledAccount(PsiAccount *account)
         return;
 
     enabledAccounts_.append(account);
-    connect(account, SIGNAL(addedContact(PsiContact *)), SLOT(accountAddedContact(PsiContact *)));
-    connect(account, SIGNAL(removedContact(PsiContact *)), SLOT(accountRemovedContact(PsiContact *)));
+    connect(account, &PsiAccount::addedContact, this, &PsiContactList::accountAddedContact);
+    connect(account, &PsiAccount::removedContact, this, &PsiContactList::accountRemovedContact);
 
     emit beginBulkContactUpdate();
     accountAddedContact(account->selfContact());

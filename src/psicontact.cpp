@@ -349,7 +349,8 @@ bool PsiContact::groupOperationPermitted(const QString &oldGroupName, const QStr
 
 bool PsiContact::isRemovable() const
 {
-    for (const QString &group : groups()) {
+    const auto &gl = groups();
+    for (const QString &group : gl) {
         if (!groupOperationPermitted(group, QString()))
             return false;
     }
