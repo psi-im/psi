@@ -1028,6 +1028,7 @@ void PsiChatDlg::buildMenu()
     pm_settings_->addAction(actions_->action("chat_icon"));
     pm_settings_->addAction(actions_->action("chat_templates"));
     pm_settings_->addAction(act_pastesend_);
+    pm_settings_->addAction(actions_->action("chat_share_files"));
     pm_settings_->addAction(actions_->action("chat_file"));
     if (AvCallManager::isSupported()) {
         pm_settings_->addAction(actions_->action("chat_voice"));
