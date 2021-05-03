@@ -112,7 +112,8 @@ public:
     QString iconsetPath(QString name, Iconset::Format format = Iconset::Format::Psi)
     {
         if (format == Iconset::Format::Psi) {
-            for (const QString &d : ApplicationInfo::dataDirs()) {
+            const auto &dataDirs = ApplicationInfo::dataDirs();
+            for (const QString &d : dataDirs) {
                 QString   fileName = d + "/iconsets/" + name;
                 QFileInfo fi(fileName);
                 if (fi.exists()) {
@@ -120,9 +121,9 @@ public:
                 }
             }
         } else if (format == Iconset::Format::KdeEmoticons) {
-            for (const QString &d :
-                 QStandardPaths::locateAll(QStandardPaths::GenericDataLocation, QLatin1String("emoticons"),
-                                           QStandardPaths::LocateDirectory)) {
+            const auto &dataDirs = QStandardPaths::locateAll(
+                QStandardPaths::GenericDataLocation, QLatin1String("emoticons"), QStandardPaths::LocateDirectory);
+            for (const QString &d : dataDirs) {
                 QString   fileName = d + "/" + name;
                 QFileInfo fi(fileName);
                 if (fi.exists()) {
