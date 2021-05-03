@@ -61,9 +61,8 @@ void ChatViewUrlRequestInterceptor::interceptRequest(QWebEngineUrlRequestInfo &i
         } else if (parentQ.startsWith(param)) {
             info.setHttpHeader(QByteArray("PsiId"), parentQ.mid(sizeof("psiId=") - 1).toUtf8());
         }
-    } else if (host.endsWith(QLatin1String("imgur.com"))) {  // imgur doesn't like localhost
-        info.setHttpHeader("Referer", "https://google.com"); // most of pictures are found in google
     }
+    info.setHttpHeader("Referer", ""); // various image services don't like hotlinks
 }
 #endif
 
