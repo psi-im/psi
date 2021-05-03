@@ -191,7 +191,7 @@ bool FileSharingItem::initFromCache(FileCacheItem *cache)
 
     QString httpScheme(QString::fromLatin1("http"));
     QString xmppScheme(QString::fromLatin1("xmpp")); // jingle ?
-    for (const auto &u : _uris) {
+    for (const auto &u : qAsConst(_uris)) {
         QUrl url(u);
         auto scheme = url.scheme();
         if (scheme.startsWith(httpScheme)) {
