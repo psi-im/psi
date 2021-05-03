@@ -88,9 +88,9 @@ public:
             wv->findText(str, wkOptions, [this](bool found) { updateFoundStyle(found); });
 #else
             QWebPage::FindFlags wkOptions;
-            wkOptions |= options & QTextDocument::FindBackward ? QWebPage::FindBackward : (QWebPage::FindFlags)0;
-            wkOptions |= options & QTextDocument::FindCaseSensitively ? QWebPage::FindCaseSensitively
-                                                                      : (QWebPage::FindFlags)0;
+            wkOptions |= options & QTextDocument::FindBackward ? QWebPage::FindBackward : QWebPage::FindFlags();
+            wkOptions
+                |= options & QTextDocument::FindCaseSensitively ? QWebPage::FindCaseSensitively : QWebPage::FindFlags();
             updateFoundStyle(wv->findText(str, wkOptions));
 #endif
 #else
