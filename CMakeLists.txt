@@ -78,6 +78,9 @@ option( BUNDLED_QCA "Adds: DTLS, Blake2b and other useful for XMPP crypto-stuff"
 option( BUNDLED_USRSCTP "Compile compatible usrsctp lib when system one is not available or uncompatible (required for p2p file transfer)" OFF )
 option( USE_QJDNS "Use qjdns/jdns library. Disabled by default for Qt5" OFF )
 option( SEPARATE_QJDNS "Build qjdns as separate lib" OFF )
+if (UNIX AND "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    option( ENABLE_ASAN "Enable compilation with address sanitizer" OFF )
+endif()
 
 # Cross-compilation and native builds for MS Windows
 option( ENABLE_PORTABLE "Create portable version of Psi+ for MS Windows" OFF )
@@ -222,6 +225,11 @@ if(APPLE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-overloaded-virtual")
 elseif(WIN32)
     include("${CMAKE_CURRENT_SOURCE_DIR}/win32/win32_definitions.cmake")
+endif()
+
+if (${ENABLE_ASAN})
+    set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+    set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
 endif()
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
