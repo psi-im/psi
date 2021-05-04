@@ -25,7 +25,7 @@ if(APPLE AND NOT PSI_LIBDIR)
     endif()
 endif()
 
-set(TRANSLATIONS_DIR "${PROJECT_SOURCE_DIR}/translations")
+set(TRANSLATIONS_DIR "${PROJECT_SOURCE_DIR}/translations" CACHE STRING "Path to Psi/Psi+ translations directory")
 
 #Work with external packages
 find_package(Qt5 COMPONENTS Widgets Core Gui Xml Network Concurrent Multimedia Svg Sql REQUIRED)

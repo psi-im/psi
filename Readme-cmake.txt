@@ -64,11 +64,17 @@ or
   to build qca library from https://github.com/psi-im/qca with Psi
   Adds: DTLS, Blake2b and other useful for XMPP crypto-stuff
 
+> -DJINGLE_SCTP=ON
+
+  enable SCTP over ICE Jingle transport / data channels
+  adds BUNDLED_USRSCTP option if ON (default ON)
+
 > -DBUNDLED_USRSCTP=ON
 
   to build usrsctp library from official github repository
   Compile compatible usrsctp lib when system one is not available or
-  uncompatible (required for p2p file transfer)
+  uncompatible (required for p2p file transfer. Available only if
+  JINGLE_SCTP flag set to ON)
 
 > -DUSE_ASPELL=OFF
 
