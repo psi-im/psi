@@ -535,14 +535,14 @@
           <iconset type="QString">crystal-gadu.jisp</iconset>
           <key type="QString">gadugadu</key>
         </m0>
-        <m2>
+        <m1>
           <iconset type="QString">crystal-sms.jisp</iconset>
           <key type="QString">sms</key>
-        </m2>
-        <m3>
+        </m1>
+        <m2>
           <iconset type="QString">crystal-service.jisp</iconset>
           <key type="QString">transport</key>
-        </m3>
+        </m2>
    </service-status>
    <custom-status/>
    <status type="QString">default</status>
