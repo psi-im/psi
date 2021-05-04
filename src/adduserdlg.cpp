@@ -287,10 +287,8 @@ void AddUserDlg::errorGateway(const QString &str, const QString &err)
                                 "to add.  Examples:<br>"
                                 "<br>"
                                 "&nbsp;&nbsp;xmppUser@somehost.com<br>"
-                                "&nbsp;&nbsp;aolUser@[XMPP address of AIM Transport]<br>"
-                                "&nbsp;&nbsp;1234567@[XMPP address of ICQ Transport]<br>"
-                                "&nbsp;&nbsp;joe%hotmail.com@[XMPP address of MSN Transport]<br>"
-                                "&nbsp;&nbsp;yahooUser@[XMPP address of Yahoo Transport]<br>"
+                                "&nbsp;&nbsp;1234567@[XMPP address of Transport]<br>"
+                                "&nbsp;&nbsp;joe%gmail.com@[XMPP address of Transport]<br>"
                                 "</qt>")
                                  .arg(str, QString(err).replace('\n', "<br>")));
 }

@@ -535,10 +535,6 @@
           <iconset type="QString">crystal-gadu.jisp</iconset>
           <key type="QString">gadugadu</key>
         </m0>
-        <m1>
-          <iconset type="QString">crystal-icq.jisp</iconset>
-          <key type="QString">icq</key>
-        </m1>
         <m2>
           <iconset type="QString">crystal-sms.jisp</iconset>
           <key type="QString">sms</key>
@@ -547,10 +543,6 @@
           <iconset type="QString">crystal-service.jisp</iconset>
           <key type="QString">transport</key>
         </m3>
-        <m4>
-          <iconset type="QString">crystal-yahoo.jisp</iconset>
-          <key type="QString">yahoo</key>
-        </m4>
    </service-status>
    <custom-status/>
    <status type="QString">default</status>

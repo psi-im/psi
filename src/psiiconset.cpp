@@ -595,22 +595,20 @@ void PsiIconset::loadStatusIconDefinitions()
         QString                                          service = serviceV.toString();
         PsiIconset::Private::StatusIconsets::IconsetItem item;
         bool                                             find = true;
-        if (service == "aim")
-            item.regexp = QRegExp("^aim");
-        else if (service == "disk")
+        if (service == "disk")
             item.regexp = QRegExp("^disk");
         else if (service == "gadugadu")
             item.regexp = QRegExp("^gg");
-        else if (service == "icq")
-            item.regexp = QRegExp("^icq|^jit");
+        else if (service == "telegram")
+            item.regexp = QRegExp("^telegram");
         else if (service == "irc")
             item.regexp = QRegExp("^irc");
         else if (service == "xmpp")
             item.regexp = QRegExp("^j2j|^xmpp\\.[a-z1-9]+\\..*");
         else if (service == "mrim")
             item.regexp = QRegExp("^mrim");
-        else if (service == "msn")
-            item.regexp = QRegExp("^msn");
+        else if (service == "skype")
+            item.regexp = QRegExp("^skype");
         else if (service == "muc")
             item.regexp = QRegExp("^conference|^rooms");
         else if (service == "rss")
@@ -623,8 +621,6 @@ void PsiIconset::loadStatusIconDefinitions()
             item.regexp = QRegExp("^vk.com|^vkontakte|^vk-t");
         else if (service == "weather")
             item.regexp = QRegExp("^weather|^gism");
-        else if (service == "yahoo")
-            item.regexp = QRegExp("^yahoo");
         else
             find = false;
 

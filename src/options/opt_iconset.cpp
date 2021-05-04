@@ -1275,22 +1275,20 @@ QWidget *OptionsTabIconsetRoster::widget()
     IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
 
     // Initialize transport iconsets
-    addService("aim", "AIM");
     addService("muc", "Chat (MUC)");
     addService("gadugadu", "Gadu-Gadu");
-    addService("icq", "ICQ");
+    addService("telegram", "Telegram");
     addService("irc", "IRC");
+    addService("xmpp", "XMPP");
     addService("disk", "Jabber Disk");
     addService("mrim", "Mail.Ru-IM");
-    addService("msn", "MSN");
+    addService("skype", "Skype");
     addService("rss", "RSS");
     addService("sms", "SMS");
     addService("smtp", "SMTP");
     addService("transport", tr("Transport"));
     addService("vkontakte", tr("vk.com"));
     addService("weather", tr("Weather"));
-    addService("xmpp", "XMPP");
-    addService("yahoo", "Yahoo!");
 
     d->tw_isServices->resizeColumnToContents(0);
 
