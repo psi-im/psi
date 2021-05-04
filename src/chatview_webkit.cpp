@@ -278,10 +278,8 @@ public slots:
     void getUrlHeaders(const QString &tId, const QString url)
     {
         QNetworkRequest req(QUrl::fromEncoded(url.toLatin1()));
-#if QT_VERSION >= QT_VERSION_CHECK(5, 6, 0)
-        req.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+        req.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
         req.setMaximumRedirectsAllowed(2);
-#endif
         auto reply = _view->d->account_->psi()->networkAccessManager()->head(req);
         reply->setProperty("tranId", tId);
         connect(reply, SIGNAL(finished()), SLOT(onUrlHeadersReady()));
@@ -515,7 +513,7 @@ void ChatView::contextMenuEvent(QContextMenuEvent *e)
     Q_UNUSED(e)
     qDebug("Can't check menu hit point. Calling default handler");
 #else
-    QUrl linkUrl;
+    QUrl                      linkUrl;
 #ifdef WEBENGINE
     QWebEngineContextMenuData cmd = d->webView->page()->contextMenuData();
     linkUrl                       = cmd.linkUrl();
