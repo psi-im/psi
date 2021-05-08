@@ -125,7 +125,6 @@ If you want to donate some money for development of Psi and Psi+ project, it is 
 * [Officially supported plugins](https://github.com/psi-im/plugins) (sources)
 * [Multimedia plugin for audio and video calls](https://github.com/psi-im/psimedia) (sources)
 * [Extra resources](https://github.com/psi-im/resources) (iconsets, sounds, skins, themes, etc.)
-* [Qt configuration tool](https://github.com/psi-plus/qconf) (sources)
 * [Psi+ project](https://psi-plus.com/) (official website)
 * [Psi+ snapshots](https://github.com/psi-plus/psi-plus-snapshots) (sources)
 * [Psi+ translations](https://github.com/psi-plus/psi-plus-l10n) (sources)

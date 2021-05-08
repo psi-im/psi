@@ -10,7 +10,7 @@ See "Packages and installers" section in [README.md](README.md) or [README.html]
 * compiler with C++17 support
 * ccache (optional)
 * cmake >= 3.2.0
-* Qt >= 5.6.0
+* Qt >= 5.9.0
 * QtWebKit (optional)
 * QtWebEngine (optional)
 * QCA (from [upstream](https://api.kde.org/qca/html/) or from our [fork](https://github.com/psi-im/qca))
