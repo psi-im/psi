@@ -182,6 +182,34 @@ void MultiFileTransferDlg::initOutgoing(const XMPP::Jid &jid, const QStringList 
         }
         d->session->initiate();
     });
+
+    ui->lblPeerAvatar->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->lblPeerAvatar, &QLabel::customContextMenuRequested, this, [this](const QPoint &pos) {
+        if (d->account->findGCContact(d->peer))
+            return;
+        auto contact = d->account->findContact(d->peer.withResource(QString()));
+        if (!contact || contact->userResourceList().size() < 2 || d->session)
+            return;
+        QMenu menu;
+        for (auto const &r : contact->userResourceList()) {
+            auto     client = contact->userListItem().findClient(r);
+            QAction *action;
+            if (client.isEmpty()) { // quite weird. no caps? why do we ever start this dlg then?
+                action = menu.addAction(r.name());
+            } else {
+                auto icon = IconsetFactory::iconPtr(QLatin1String("clients/") + client);
+                if (icon)
+                    action = menu.addAction(icon->icon(), r.name());
+                else
+                    action = menu.addAction(client + QLatin1String(" / ") + r.name());
+            }
+            connect(action, &QAction::triggered, this, [this, rname = r.name()]() {
+                d->peer = d->peer.withResource(rname);
+                updatePeerVisuals();
+            });
+        }
+        menu.exec(ui->lblPeerAvatar->mapToGlobal(pos));
+    });
 }
 
 void MultiFileTransferDlg::setupCommonSignals(Jingle::FileTransfer::Application *app, MultiFileTransferItem *item)
