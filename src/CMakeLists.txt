@@ -630,7 +630,7 @@ elseif(APPLE)
     install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION "bin" BUNDLE DESTINATION ".")
 
     # Special hack for qca package from Homebrew
-    if(HOMEBREW)
+    if(HOMEBREW AND NOT BUNDLED_QCA)
         install(DIRECTORY "${HOMEBREW}/opt/qca/lib/qt5/plugins/crypto"
                 DESTINATION "${CLIENT_NAME}.app/Contents/PlugIns")
     endif()
