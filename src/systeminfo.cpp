@@ -33,17 +33,15 @@
 #include <sys/utsname.h>
 #endif
 
-#if defined(Q_OS_WIN) || defined(Q_OS_MAC) // QSysInfo for Mac and Windows systems is obsolete for Qt>=5.9
-#if QT_VERSION >= QT_VERSION_CHECK(5, 9, 0)
+#if defined(Q_OS_WIN) || defined(Q_OS_MAC)
 #include <QOperatingSystemVersion>
 #if defined(Q_OS_WIN)
 #include <versionhelpers.h>
 #endif
 #endif
-#endif
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 5, 0)
-#error "Minimal supported version of Qt in this file is 5.5.0"
+#if QT_VERSION < QT_VERSION_CHECK(5, 9, 0)
+#error "Minimal supported version of Qt in this file is 5.9.0"
 #endif
 
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MAC)
@@ -282,40 +280,6 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 #if defined(Q_OS_WIN)
     os_name_str_ = "Windows";
     os_str_      = os_name_str_;
-#if QT_VERSION < QT_VERSION_CHECK(5, 9, 0)
-    QSysInfo::WinVersion v = QSysInfo::WindowsVersion;
-    switch (v) {
-    case QSysInfo::WV_2000:
-        os_version_str_ = "2000";
-        break;
-    case QSysInfo::WV_XP:
-        os_version_str_ = "XP";
-        break;
-    case QSysInfo::WV_2003:
-        os_version_str_ = "Server 2003";
-        break;
-    case QSysInfo::WV_VISTA:
-        os_version_str_ = "Vista";
-        break;
-    case QSysInfo::WV_WINDOWS7:
-        os_version_str_ = "7";
-        break;
-    case 0x00a0: // QSysInfo::WV_WINDOWS8 should not be used for compatibility reasons
-        os_version_str_ = "8";
-        break;
-    case 0x00b0: // QSysInfo::WV_WINDOWS8_1 should not be used for compatibility reasons
-        os_version_str_ = "8.1";
-        break;
-    case 0x00c0: // QSysInfo::WV_WINDOWS10 should not be used for compatibility reasons
-        os_version_str_ = "10";
-        break;
-    case QSysInfo::WV_NT_based:
-        os_version_str_ = "NT";
-        break;
-    default: // make compiler happy with unsupported Windows versions
-        break;
-    }
-#else
     auto current = QOperatingSystemVersion::current();
     if (IsWindowsServer()) {
         os_name_str_ = "Windows Server";
@@ -374,8 +338,6 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
             }
         }
     }
-#endif
-
     if (!os_version_str_.isEmpty()) {
         os_str_ += (" " + os_version_str_);
     }
