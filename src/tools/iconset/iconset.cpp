@@ -247,14 +247,13 @@ public:
     {
         moveToMainThread(this);
 
-        anim           = nullptr;
         icon           = nullptr;
         activatedCount = 0;
     }
 
     ~Private()
     {
-        unloadAnim();
+        anim.reset();
         if (icon) {
             delete icon;
         }
@@ -265,26 +264,18 @@ public:
     {
         moveToMainThread(this);
 
-        name           = from.name;
-        mime           = from.mime;
-        regExp         = from.regExp;
-        text           = from.text;
-        sound          = from.sound;
-        impix          = from.impix;
-        rawData        = from.rawData;
-        scalable       = from.scalable;
-        svgRenderer    = from.svgRenderer;
-        anim           = from.anim ? new Anim(*from.anim) : nullptr;
+        name        = from.name;
+        mime        = from.mime;
+        regExp      = from.regExp;
+        text        = from.text;
+        sound       = from.sound;
+        impix       = from.impix;
+        rawData     = from.rawData;
+        scalable    = from.scalable;
+        svgRenderer = from.svgRenderer;
+        anim.reset(from.anim ? new Anim(*from.anim) : nullptr);
         icon           = nullptr;
         activatedCount = from.activatedCount;
-    }
-
-    void unloadAnim()
-    {
-        if (anim) {
-            delete anim;
-        }
-        anim = nullptr;
     }
 
     void connectInstance(PsiIcon *icon)
@@ -333,7 +324,7 @@ public:
     QString         mime;
 
     Impix                         impix;
-    Anim *                        anim = nullptr;
+    std::unique_ptr<Anim>         anim;
     std::shared_ptr<QSvgRenderer> svgRenderer;
     QIcon *                       icon = nullptr;
     mutable QByteArray            rawData;
@@ -524,7 +515,7 @@ void PsiIcon::setImpix(const Impix &impix, bool doDetach)
 /**
  * Returns pointer to Anim object, or \a 0 if PsiIcon doesn't contain an animation.
  */
-const Anim *PsiIcon::anim() const { return d->anim; }
+const Anim *PsiIcon::anim() const { return d->anim.get(); }
 
 /**
  * Sets the animation for icon to \a anim. Also sets Impix to be the first frame of animation.
@@ -537,16 +528,14 @@ void PsiIcon::setAnim(const Anim &anim, bool doDetach)
         detach();
     }
 
-    d->unloadAnim();
-    d->anim = new Anim(anim);
+    d->anim.reset(new Anim(anim));
 
     if (d->anim->numFrames() > 0) {
         setImpix(d->anim->frame(0));
     }
 
     if (d->anim->numFrames() < 2) {
-        delete d->anim;
-        d->anim = nullptr;
+        d->anim.reset();
     }
 
     if (d->anim && d->activatedCount > 0) {
@@ -575,8 +564,7 @@ void PsiIcon::removeAnim(bool doDetach)
     d->activatedCount = 0;
     stop();
 
-    delete d->anim;
-    d->anim = nullptr;
+    d->anim.reset();
 
     emit d->pixmapChanged();
     // emit d->iconModified();
@@ -666,7 +654,7 @@ QString PsiIcon::defaultText() const
     QString               str;
     QStringList::Iterator it = lang.begin();
     for (; it != lang.end(); ++it) {
-        for (IconText t : text()) {
+        for (const IconText &t : text()) {
             if (t.lang == *it) {
                 str = t.text;
                 break;
@@ -676,7 +664,7 @@ QString PsiIcon::defaultText() const
 
     // if all fails, just get the first text
     if (str.isEmpty()) {
-        for (IconText t : text()) {
+        for (const IconText &t : text()) {
             if (!t.text.isEmpty()) {
                 str = t.text;
                 break;
@@ -873,7 +861,7 @@ public:
     {
         QStringList list;
 
-        for (const Iconset *iconset : *iconsets_) {
+        for (const Iconset *iconset : qAsConst(*iconsets_)) {
             QListIterator<PsiIcon *> it = iconset->iterator();
             while (it.hasNext()) {
                 list << it.next()->name();
@@ -932,7 +920,7 @@ const PsiIcon *IconsetFactoryPrivate::icon(const QString &name) const
     }
 
     const PsiIcon *out = nullptr;
-    for (const Iconset *const iconset : *iconsets_) {
+    for (const Iconset *const iconset : qAsConst(*iconsets_)) {
         if (iconset) {
             out = iconset->icon(name);
         }
@@ -1240,7 +1228,7 @@ public:
         // construct RegExp
         if (text.count()) {
             QStringList regexp;
-            for (PsiIcon::IconText t : text) {
+            for (const PsiIcon::IconText &t : qAsConst(text)) {
                 regexp += QRegExp::escape(t.text);
             }
 
@@ -1414,7 +1402,7 @@ public:
         // construct RegExp
         if (text.count()) {
             QStringList regexp;
-            for (PsiIcon::IconText t : text) {
+            for (const PsiIcon::IconText &t : qAsConst(text)) {
                 regexp += QRegExp::escape(t.text);
             }
 

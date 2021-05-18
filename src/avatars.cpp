@@ -59,8 +59,6 @@
 #define MAX_AVATAR_SIZE 96
 //#define MAX_AVATAR_DISPLAY_SIZE 64
 
-using namespace QCA;
-
 //------------------------------------------------------------------------------
 
 static QByteArray scaleAvatar(const QByteArray &b)

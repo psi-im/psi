@@ -363,7 +363,7 @@ QString TextUtil::linkify(const QString &in)
                     || linkify_pmatch(out, x2, "&lt;")) {
                     break;
                 }
-                if (brackets.keys().contains(out.at(x2))) {
+                if (brackets.contains(out.at(x2))) {
                     ++brackets[out.at(x2)];
                 }
             }
@@ -379,7 +379,7 @@ QString TextUtil::linkify(const QString &in)
                     && brackets[pre.at(cutoff)] - brackets[openingBracket[pre.at(cutoff)]] <= 0) {
                     break; // in theory, there could be == above, but these are urls, not math ;)
                 }
-                if (brackets.keys().contains(pre.at(cutoff))) {
+                if (brackets.contains(pre.at(cutoff))) {
                     --brackets[pre.at(cutoff)];
                 }
             }
@@ -460,7 +460,7 @@ QString TextUtil::emoticonify(const QString &in)
 
             int foundPos = -1, foundLen = -1;
 
-            for (const Iconset *iconset : PsiIconset::instance()->emoticons) {
+            for (const Iconset *iconset : qAsConst(PsiIconset::instance()->emoticons)) {
                 QListIterator<PsiIcon *> it = iconset->iterator();
                 while (it.hasNext()) {
                     PsiIcon *icon = it.next();
