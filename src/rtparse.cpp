@@ -44,32 +44,30 @@ QString RTParse::next()
 
     // if we're at a tag, append it to the output
     if (in.at(v_at) == '<') {
-        QString s;
-        int     n = in.indexOf('>', v_at);
+        QStringRef s;
+        int        n = in.indexOf('>', v_at);
         if (n == -1) {
-            s = in.mid(v_at);
+            s = in.midRef(v_at);
         } else {
             ++n;
-            s = in.mid(v_at, n - v_at);
+            s = in.midRef(v_at, n - v_at);
         }
         v_at += s.length();
         out += s;
     }
 
     // now find the next tag, and grab the text in between
-    QString s;
-    int     x = in.indexOf('<', v_at);
+    QStringRef s;
+    int        x = in.indexOf('<', v_at);
     if (x == -1) {
-        s       = in.mid(v_at);
+        s       = in.midRef(v_at);
         v_atEnd = true;
     } else {
-        s = in.mid(v_at, x - v_at);
+        s = in.midRef(v_at, x - v_at);
     }
     v_at += s.length();
     // printf("chunk = '%s'\n", s.latin1());
-    s = TextUtil::resolveEntities(s);
-    // printf("resolved = '%s'\n", s.latin1());
-    return s;
+    return TextUtil::resolveEntities(s);
 }
 
 bool RTParse::atEnd() const { return v_atEnd; }

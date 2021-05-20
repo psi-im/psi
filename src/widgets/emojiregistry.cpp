@@ -28,25 +28,86 @@ const EmojiRegistry &EmojiRegistry::instance()
 
 bool EmojiRegistry::isEmoji(const QString &code) const
 {
-    if (code.isEmpty())
-        return false;
-    uint ucs = 0;
-    if (code[0].isHighSurrogate()) {
-        if (code.length() < 2)
-            return false;
-        ucs = QChar::surrogateToUcs4(code[0], code[1]);
+    auto cat = startCategory(&code);
+    return cat == Category::Emoji || cat == Category::SkinTone;
+    // TODO check the whole code is emoji. not just start
+}
+
+EmojiRegistry::Category EmojiRegistry::startCategory(QStringRef in) const
+{
+    if (in.isEmpty())
+        return Category::None;
+    std::uint32_t ucs;
+    if (in[0].isHighSurrogate()) {
+        if (in.length() == 1)
+            return Category::None;
+        ucs = QChar::surrogateToUcs4(in[0], in[1]);
     } else {
-        ucs = code[0].unicode();
-        if (ucs < 256 && (code.size() < 2 || code[1].unicode() != 0xfe0f)) {
-            return false; // allow only full-qualified emojis from low range
+        ucs = in[0].unicode();
+        if (ucs < 256 && (in.length() == 1 || in[1].unicode() != 0xfe0f)) {
+            return Category::None; // allow only full-qualified emojis from low range
         }
     }
-    auto lb = ranges_.lower_bound(ucs);
+    if (ucs == 0x200d)
+        return Category::ZWJ;
+    if (ucs == 0xfe0f)
+        return Category::FullQualify;
+
+    bool found = false;
+    auto lb    = ranges_.lower_bound(ucs);
     if (lb == ranges_.end() || lb->first != ucs) {
         --lb;
-        return (ucs > lb->first && ucs <= lb->second); // if this is a final range
+        found = (ucs > lb->first && ucs <= lb->second); // if this is a final range
+    } else
+        found = lb->first == ucs;
+    if (found) {
+        if (ucs >= 0x1f3fb && ucs <= 0x1f3ff)
+            return Category::SkinTone;
+        return Category::Emoji; // there more cases to review. like emoji tags/flags etc
     }
-    return lb->first == ucs;
+    return Category::None;
+}
+
+QStringRef EmojiRegistry::findEmoji(const QString &in, int idx) const
+{
+    int emojiStart = -1;
+
+    bool gotEmoji = false;
+    bool gotSkin  = false;
+    bool gotFQ    = false;
+    for (; idx < in.size(); idx++) {
+        auto category = startCategory(QStringRef(&in, idx, in.size() - idx));
+        if (gotEmoji && category != Category::None) {
+            if (category == Category::ZWJ) { // zero-width joiner
+                gotEmoji = false;
+                gotSkin  = false;
+                gotFQ    = false;
+            } else if (category == Category::FullQualify) {
+                if (gotFQ)
+                    break;      // double qualification is an error
+                gotSkin = true; // we can't get skin false after fill qualification
+                gotFQ   = true;
+            } else if (category == Category::SkinTone) {
+                if (gotSkin)
+                    break; // can't have 2 skin tones in the same time
+                gotSkin = true;
+            } else
+                break; // TODO review other categories when implemented
+        } else if (!gotEmoji && (category == Category::Emoji || category == Category::SkinTone)) {
+            if (emojiStart == -1)
+                emojiStart = idx;
+            if (in[idx].isHighSurrogate())
+                idx++;
+            gotEmoji = true;
+            if (category == Category::SkinTone) { // if we start from skin modifier then just draw colored rect
+                idx++;
+                break;
+            }
+        } else if (emojiStart != -1) { // seems got end of emoji sequence
+            break;
+        }
+    }
+    return emojiStart == -1 ? QStringRef() : QStringRef(&in, emojiStart, idx - emojiStart);
 }
 
 EmojiRegistry::EmojiRegistry() : groups(std::move(db)), ranges_(std::move(ranges)) { }

@@ -104,3 +104,8 @@ img.psi-smiley {
     max-height: 1.5em;
     vertical-align:bottom;
 }
+
+span.emojis {
+    font-family: 'Apple Color Emoji', 'Noto Color Emoji', 'Segoe UI Emoji';
+    font-size: 1.5em;
+}

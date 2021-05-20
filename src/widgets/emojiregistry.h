@@ -27,6 +27,8 @@
 
 class EmojiRegistry {
 public:
+    enum class Category { None, Emoji, SkinTone, ZWJ, FullQualify };
+
     struct Emoji {
         const QString code;
         const QString name; // latin1
@@ -48,6 +50,15 @@ public:
 
     // const QList<Group> &groups() const { return groups_; }
     bool isEmoji(const QString &code) const;
+
+    QStringRef findEmoji(const QString &in, int startPos = -1) const;
+
+    /*!
+     * \brief startCategory returns category of what the string starts with if the sequence looks valida for emoji
+     * \param in
+     * \return category
+     */
+    Category startCategory(QStringRef in) const;
 
 private:
     EmojiRegistry();

@@ -2,12 +2,14 @@
 
 #include "coloropt.h"
 #include "common.h"
+#include "emojiregistry.h"
 #include "psiiconset.h"
 #include "psioptions.h"
 #include "rtparse.h"
 
 #include <QTextDocument> // for escape()
 
+// With Qt4 this func was more complex. Now we don't need it
 QString TextUtil::escape(const QString &plain) { return plain.toHtmlEscaped(); }
 
 QString TextUtil::unescape(const QString &escaped)
@@ -190,7 +192,7 @@ QString TextUtil::rich2plain(const QString &in, bool collapseSpaces)
     return out;
 }
 
-QString TextUtil::resolveEntities(const QString &in)
+QString TextUtil::resolveEntities(const QStringRef &in)
 {
     QString out;
 
@@ -201,8 +203,9 @@ QString TextUtil::resolveEntities(const QString &in)
             int n = in.indexOf(';', i);
             if (n == -1)
                 break;
-            QString type = in.mid(i, (n - i));
-            i            = n; // should be n+1, but we'll let the loop increment do it
+            QStringRef type = in.mid(i, (n - i));
+
+            i = n; // should be n+1, but we'll let the loop increment do it
 
             if (type == "amp")
                 out += '&';
@@ -280,6 +283,36 @@ static bool linkify_okEmail(const QString &addy)
     if ((addy.length() - 1) - d <= 0)
         return false;
     return addy.indexOf("..") == -1;
+}
+
+static void emojiconifyPlainText(RTParse &p, const QString &in)
+{
+    const auto &reg            = EmojiRegistry::instance();
+    int         idx            = 0;
+    int         emojisStartIdx = -1;
+    QStringRef  ref;
+
+    auto dump_emoji = [&p, &emojisStartIdx, &in, &idx]() {
+        p.putRich(QLatin1String("<span class=\"emojis\">") + in.midRef(emojisStartIdx, idx - emojisStartIdx)
+                  + QLatin1String("</span>"));
+    };
+    while (!(ref = reg.findEmoji(in, idx)).isEmpty()) {
+        if (emojisStartIdx == -1) {
+            emojisStartIdx = ref.position();
+            p.putPlain(in.left(ref.position()));
+        } else if (ref.position() != idx) { // a text gap
+            dump_emoji();
+            emojisStartIdx = ref.position();
+            p.putPlain(in.mid(idx, ref.position() - idx));
+        }
+        idx = ref.position() + ref.size();
+    }
+    if (emojisStartIdx == -1)
+        p.putPlain(in);
+    else {
+        dump_emoji();
+        p.putPlain(in.right(in.size() - idx));
+    }
 }
 
 /**
@@ -368,7 +401,8 @@ QString TextUtil::linkify(const QString &in)
                 }
             }
             int     len = x2 - x1;
-            QString pre = resolveEntities(out.mid(x1, x2 - x1));
+            QString pre = out.mid(x1, x2 - x1);
+            pre         = resolveEntities(&pre);
 
             // go backward hacking off unwanted punctuation
             int cutoff;
@@ -471,6 +505,8 @@ QString TextUtil::emoticonify(const QString &in)
                     int  iii = i;
                     bool searchAgain;
 
+                    // search the first occurance of the emoticon in the remaining text
+                    // which is surronded with at least one space
                     do {
                         searchAgain = false;
 
@@ -508,7 +544,8 @@ QString TextUtil::emoticonify(const QString &in)
                 s = str.mid(i);
             else
                 s = str.mid(i, ePos - i);
-            p.putPlain(s);
+            emojiconifyPlainText(p, s);
+            // p.putPlain(s);
 
             if (!closest)
                 break;
