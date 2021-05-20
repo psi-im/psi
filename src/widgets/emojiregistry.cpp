@@ -96,8 +96,6 @@ QStringRef EmojiRegistry::findEmoji(const QString &in, int idx) const
         } else if (!gotEmoji && (category == Category::Emoji || category == Category::SkinTone)) {
             if (emojiStart == -1)
                 emojiStart = idx;
-            if (in[idx].isHighSurrogate())
-                idx++;
             gotEmoji = true;
             if (category == Category::SkinTone) { // if we start from skin modifier then just draw colored rect
                 idx++;
@@ -106,6 +104,8 @@ QStringRef EmojiRegistry::findEmoji(const QString &in, int idx) const
         } else if (emojiStart != -1) { // seems got end of emoji sequence
             break;
         }
+        if (in[idx].isHighSurrogate())
+            idx++;
     }
     return emojiStart == -1 ? QStringRef() : QStringRef(&in, emojiStart, idx - emojiStart);
 }

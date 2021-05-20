@@ -293,8 +293,15 @@ static void emojiconifyPlainText(RTParse &p, const QString &in)
     QStringRef  ref;
 
     auto dump_emoji = [&p, &emojisStartIdx, &in, &idx]() {
-        p.putRich(QLatin1String("<span class=\"emojis\">") + in.midRef(emojisStartIdx, idx - emojisStartIdx)
-                  + QLatin1String("</span>"));
+#if defined(WEBKIT) || defined(WEBENGINE)
+        p.putRich(QLatin1String(R"html(<span class="emojis">)html")
+#else
+        // FIXME custom style here is a hack. This supposed to be handled via style resource in PsiTextView
+        p.putRich(
+            QLatin1String(
+                R"html(<span style="font-family: 'Apple Color Emoji', 'Noto Color Emoji', 'Segoe UI Emoji'; font-size:1.5em">)html")
+#endif
+                  + in.midRef(emojisStartIdx, idx - emojisStartIdx) + QLatin1String("</span>"));
     };
     while (!(ref = reg.findEmoji(in, idx)).isEmpty()) {
         if (emojisStartIdx == -1) {

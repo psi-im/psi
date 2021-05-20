@@ -90,6 +90,15 @@ PsiTextView::PsiTextView(QWidget *parent) : QTextEdit(parent)
 
     setReadOnly(true);
     PsiRichText::install(document());
+    /* TODO For some reason this doesn't work. please reveiw and fix
+
+    document()->addResource(QTextDocument::StyleSheetResource, QUrl(QLatin1String("psi.css")), R"style(
+span.emojis {
+    font-family: 'Apple Color Emoji', 'Noto Color Emoji', 'Segoe UI Emoji';
+    font-size: 20px;
+}
+)style");
+    */
 
     viewport()->setMouseTracking(true); // we want to get all mouseMoveEvents
 
