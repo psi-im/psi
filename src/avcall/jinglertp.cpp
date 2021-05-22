@@ -34,70 +34,6 @@
 // TODO: support candidate negotiations over the JingleRtpChannel thread
 //   boundary, so we can change candidates after the stream is active
 
-// scope values: 0 = local, 1 = link-local, 2 = private, 3 = public
-static int getAddressScope(const QHostAddress &a)
-{
-    if (a.protocol() == QAbstractSocket::IPv6Protocol) {
-        if (a == QHostAddress(QHostAddress::LocalHostIPv6))
-            return 0;
-        else if (XMPP::Ice176::isIPv6LinkLocalAddress(a))
-            return 1;
-    } else if (a.protocol() == QAbstractSocket::IPv4Protocol) {
-        quint32 v4 = a.toIPv4Address();
-        quint8  a0 = v4 >> 24;
-        quint8  a1 = (v4 >> 16) & 0xff;
-        if (a0 == 127)
-            return 0;
-        else if (a0 == 169 && a1 == 254)
-            return 1;
-        else if (a0 == 10)
-            return 2;
-        else if (a0 == 172 && a1 >= 16 && a1 <= 31)
-            return 2;
-        else if (a0 == 192 && a1 == 168)
-            return 2;
-    }
-
-    return 3;
-}
-
-// -1 = a is higher priority, 1 = b is higher priority, 0 = equal
-static int comparePriority(const QHostAddress &a, const QHostAddress &b)
-{
-    // prefer closer scope
-    int a_scope = getAddressScope(a);
-    int b_scope = getAddressScope(b);
-    if (a_scope < b_scope)
-        return -1;
-    else if (a_scope > b_scope)
-        return 1;
-
-    // prefer ipv6
-    if (a.protocol() == QAbstractSocket::IPv6Protocol && b.protocol() != QAbstractSocket::IPv6Protocol)
-        return -1;
-    else if (b.protocol() == QAbstractSocket::IPv6Protocol && a.protocol() != QAbstractSocket::IPv6Protocol)
-        return 1;
-
-    return 0;
-}
-
-static QList<QHostAddress> sortAddrs(const QList<QHostAddress> &in)
-{
-    QList<QHostAddress> out;
-
-    for (const QHostAddress &a : in) {
-        int at;
-        for (at = 0; at < out.count(); ++at) {
-            if (comparePriority(a, out[at]) < 0)
-                break;
-        }
-
-        out.insert(at, a);
-    }
-
-    return out;
-}
-
 // resolve external address and stun server
 // TODO: resolve hosts and start ice engine simultaneously
 // FIXME: when/if our ICE engine supports adding these dynamically, we should
@@ -124,21 +60,17 @@ public:
     explicit Resolver(QObject *parent = nullptr) :
         QObject(parent), dnsA(parent), dnsB(parent), dnsC(parent), dnsD(parent)
     {
-        connect(&dnsA, SIGNAL(resultsReady(const QList<XMPP::NameRecord> &)),
-                SLOT(dns_resultsReady(const QList<XMPP::NameRecord> &)));
-        connect(&dnsA, SIGNAL(error(XMPP::NameResolver::Error)), SLOT(dns_error(XMPP::NameResolver::Error)));
+        connect(&dnsA, &XMPP::NameResolver::resultsReady, this, &Resolver::dns_resultsReady);
+        connect(&dnsA, &XMPP::NameResolver::error, this, &Resolver::dns_error);
 
-        connect(&dnsB, SIGNAL(resultsReady(const QList<XMPP::NameRecord> &)),
-                SLOT(dns_resultsReady(const QList<XMPP::NameRecord> &)));
-        connect(&dnsB, SIGNAL(error(XMPP::NameResolver::Error)), SLOT(dns_error(XMPP::NameResolver::Error)));
+        connect(&dnsB, &XMPP::NameResolver::resultsReady, this, &Resolver::dns_resultsReady);
+        connect(&dnsB, &XMPP::NameResolver::error, this, &Resolver::dns_error);
 
-        connect(&dnsC, SIGNAL(resultsReady(const QList<XMPP::NameRecord> &)),
-                SLOT(dns_resultsReady(const QList<XMPP::NameRecord> &)));
-        connect(&dnsC, SIGNAL(error(XMPP::NameResolver::Error)), SLOT(dns_error(XMPP::NameResolver::Error)));
+        connect(&dnsC, &XMPP::NameResolver::resultsReady, this, &Resolver::dns_resultsReady);
+        connect(&dnsC, &XMPP::NameResolver::error, this, &Resolver::dns_error);
 
-        connect(&dnsD, SIGNAL(resultsReady(const QList<XMPP::NameRecord> &)),
-                SLOT(dns_resultsReady(const QList<XMPP::NameRecord> &)));
-        connect(&dnsD, SIGNAL(error(XMPP::NameResolver::Error)), SLOT(dns_error(XMPP::NameResolver::Error)));
+        connect(&dnsD, &XMPP::NameResolver::resultsReady, this, &Resolver::dns_resultsReady);
+        connect(&dnsD, &XMPP::NameResolver::error, this, &Resolver::dns_error);
     }
 
     void start(const QString &_extHost, const QString &_stunBindHost, const QString &_stunRelayUdpHost,
@@ -267,7 +199,7 @@ public:
         }
         left = iceList;
 
-        for (XMPP::Ice176 *ice : left) {
+        for (XMPP::Ice176 *ice : qAsConst(left)) {
             ice->setParent(this);
             if (ice->isStopped()) {
                 ice_stopped(ice);
@@ -415,7 +347,7 @@ public:
 
     bool local_media_ready   = false;
     bool prov_accepted       = false; // remote knows of the session
-    bool ice_started         = false; // for all streams
+    bool all_ice_started     = false; // for all streams
     bool ice_connected       = false; // for all streams
     bool session_accept_sent = false;
     bool session_activated   = false;
@@ -778,37 +710,11 @@ private:
         if (!stunRelayTcpAddr.isNull() && stunRelayTcpPort > 0 && !manager->stunRelayTcpUser.isEmpty())
             printf("TURN w/ TCP service: %s;%d\n", qPrintable(stunRelayTcpAddr.toString()), stunRelayTcpPort);
 
-        QList<QHostAddress> listenAddrs;
-        auto const          interfaces = QNetworkInterface::allInterfaces();
-        for (const QNetworkInterface &ni : interfaces) {
-            const auto entries = ni.addressEntries();
-            for (const QNetworkAddressEntry &na : entries) {
-                QHostAddress h = na.ip();
-
-                // skip localhost
-                if (getAddressScope(h) == 0)
-                    continue;
-
-                // don't put the same address in twice.
-                //   this also means that if there are
-                //   two link-local ipv6 interfaces
-                //   with the exact same address, we
-                //   only use the first one
-                if (listenAddrs.contains(h))
-                    continue;
-
-                if (h.protocol() == QAbstractSocket::IPv6Protocol && XMPP::Ice176::isIPv6LinkLocalAddress(h))
-                    h.setScopeId(ni.name());
-                listenAddrs += h;
-            }
-        }
-
-        listenAddrs = sortAddrs(listenAddrs);
-
+        auto const &                      listenAddrs = XMPP::Ice176::availableNetworkAddresses();
         QList<XMPP::Ice176::LocalAddress> localAddrs;
+        QStringList                       strList;
 
-        QStringList strList;
-        for (const auto &h : listenAddrs) {
+        for (const auto &h : qAsConst(listenAddrs)) {
             localAddrs += XMPP::Ice176::LocalAddress { h };
             strList += h.toString();
         }
@@ -821,7 +727,7 @@ private:
 
         if (!strList.isEmpty()) {
             printf("Host addresses:\n");
-            for (const QString &s : strList)
+            for (const QString &s : qAsConst(strList))
                 printf("  %s\n", qPrintable(s));
         }
 
@@ -858,10 +764,9 @@ private:
 
     void setup_ice(XMPP::Ice176 *ice, const QList<XMPP::Ice176::LocalAddress> &localAddrs)
     {
-        connect(ice, SIGNAL(started()), SLOT(on_ice_started()));
-        connect(ice, SIGNAL(error(XMPP::Ice176::Error)), SLOT(ice_error(XMPP::Ice176::Error)));
-        connect(ice, SIGNAL(localCandidatesReady(const QList<XMPP::Ice176::Candidate> &)),
-                SLOT(ice_localCandidatesReady(const QList<XMPP::Ice176::Candidate> &)));
+        connect(ice, &XMPP::Ice176::started, this, &JingleRtpPrivate::ice_started);
+        connect(ice, &XMPP::Ice176::error, this, &JingleRtpPrivate::ice_error);
+        connect(ice, &XMPP::Ice176::localCandidatesReady, this, &JingleRtpPrivate::ice_localCandidatesReady);
         connect(ice, &XMPP::Ice176::readyToSendMedia, this, &JingleRtpPrivate::ice_readyToSendMedia,
                 Qt::QueuedConnection);
         connect(ice, &XMPP::Ice176::localGatheringComplete, this, &JingleRtpPrivate::ice_localGatheringComplete);
@@ -1084,7 +989,7 @@ private:
 
     void tryAccept()
     {
-        if (!local_media_ready || !ice_started || session_accept_sent)
+        if (!local_media_ready || !all_ice_started || session_accept_sent)
             return;
 
         JingleRtpEnvelope envelope;
@@ -1193,7 +1098,7 @@ private slots:
     }
 
     // this happens when when we are ready to send offer/answer to remote. It's already accepted by the user
-    void on_ice_started()
+    void ice_started()
     {
         XMPP::Ice176 *ice = static_cast<XMPP::Ice176 *>(sender());
 
@@ -1213,13 +1118,13 @@ private slots:
             iceV->flagComponentAsLowOverhead(1);
         }
 
-        ice_started = true;
+        all_ice_started = true;
         if ((types & JingleRtp::Audio) && !iceA_status.started)
-            ice_started = false;
+            all_ice_started = false;
         if ((types & JingleRtp::Video) && !iceV_status.started)
-            ice_started = false;
+            all_ice_started = false;
 
-        if (!ice_started)
+        if (!all_ice_started)
             return;
 
         // for outbound, send the session-initiate

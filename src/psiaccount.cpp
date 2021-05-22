@@ -122,6 +122,7 @@
 #include "filetransdlg.h"
 #include "filetransfer.h"
 #include "jingle-ft.h"
+#include "jingle-ice.h"
 #include "jingle-s5b.h"
 #endif
 #ifdef GROUPCHAT
@@ -1117,6 +1118,13 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
     // Caps manager
     d->client->capsManager()->setEnabled(
         PsiOptions::instance()->getOption("options.service-discovery.enable-entity-capabilities").toBool());
+
+    bool ok;
+    int  ftPort
+        = PsiOptions::instance()->getOption(QString::fromLatin1("options.p2p.bytestreams.listen-port")).toInt(&ok);
+    if (ok && ftPort > 0 && ftPort < 65536) {
+        d->client->jingleICEManager()->setBasePort(quint16(ftPort));
+    }
 
     // Roster item exchange task
     d->rosterItemExchangeTask = new RosterItemExchangeTask(d->client->rootTask());
@@ -2531,9 +2539,10 @@ void PsiAccount::client_resourceAvailable(const Jid &j, const Resource &r)
     if (j.node().isEmpty())
         new BlockTransportPopup(d->blockTransportPopupList, j);
 
-    bool doSound = false;
-    bool doPopup = false;
-    for (UserListItem *u : findRelevant(j)) {
+    bool        doSound = false;
+    bool        doPopup = false;
+    auto const &users   = findRelevant(j);
+    for (UserListItem *u : users) {
         bool doAnim = false;
         bool local  = false;
         if (u->isSelf() && r.name() == d->client->resource())
@@ -6168,6 +6177,12 @@ void PsiAccount::optionsUpdate()
 
     // Caps manager
     d->client->capsManager()->setEnabled(o->getOption("options.service-discovery.enable-entity-capabilities").toBool());
+
+    bool ok;
+    int  ftPort = o->getOption(QString::fromLatin1("options.p2p.bytestreams.listen-port")).toInt(&ok);
+    if (ok && ftPort > 0 && ftPort < 65536) {
+        d->client->jingleICEManager()->setBasePort(quint16(ftPort));
+    }
 
     updateFeatures();
 
