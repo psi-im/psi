@@ -384,7 +384,7 @@ FileShareDownloader *FileSharingItem::download(bool isRanged, qint64 start, qint
     file.setName(_fileName);
     if (_flags & SizeKnown)
         file.setSize(_fileSize);
-    for (auto const &h : _sums) {
+    for (auto const &h : qAsConst(_sums)) {
         file.addHash(h);
     }
 

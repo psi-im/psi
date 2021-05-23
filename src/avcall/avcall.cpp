@@ -688,6 +688,12 @@ void AvCallManagerPrivate::unlink(AvCall *call) { sessions.removeAll(call); }
 
 void AvCallManagerPrivate::rtp_incomingReady()
 {
+    if (!PsiMedia::isSupported()) {
+        auto sess = rtpManager->takeIncoming();
+        sess->reject();
+        delete sess;
+        return;
+    }
     AvCall *call      = new AvCall;
     call->d->manager  = this;
     call->d->incoming = true;
