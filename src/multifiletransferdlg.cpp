@@ -380,7 +380,8 @@ void MultiFileTransferDlg::addTransferContent(MultiFileTransferItem *item)
     XMPP::Thumbnail thumb;
     auto            icon = item->thumbnail();
     if (!icon.isNull()) {
-        QPixmap    p = icon.pixmap(icon.availableSizes()[0]);
+        auto       sz = QFontInfo(font()).pixelSize() * 4;
+        QPixmap    p  = icon.pixmap(QSize(sz, sz));
         QByteArray ba;
         QBuffer    buffer(&ba);
         buffer.open(QIODevice::WriteOnly);
