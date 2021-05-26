@@ -29,6 +29,7 @@
 #include "webserver.h"
 
 #include <QTcpSocket>
+#include <cinttypes>
 #include <tuple>
 
 #define HTTP_CHUNK (512 * 1024 * 1024)
@@ -45,7 +46,7 @@ FileSharingHttpProxy::FileSharingHttpProxy(PsiAccount *acc, const QString &sourc
 
     if (!item) {
         res->setStatusCode(qhttp::ESTATUS_NOT_FOUND);
-        req->end();
+        emit req->end();
         return;
     }
 
@@ -53,7 +54,7 @@ FileSharingHttpProxy::FileSharingHttpProxy(PsiAccount *acc, const QString &sourc
     if (status != qhttp::ESTATUS_OK) {
         res->setStatusCode(status);
         qWarning("http range parse failed: %d", status);
-        req->end();
+        emit req->end();
         return; // handled with error
     }
 
@@ -184,7 +185,7 @@ void FileSharingHttpProxy::proxyCache()
     if (status != qhttp::ESTATUS_OK) {
         response->setStatusCode(status);
         qWarning("http range parse failed: %d", status);
-        request->end();
+        emit request->end();
         return; // handled with error
     }
     QFile *   file = new QFile(item->fileName(), response);
@@ -192,7 +193,7 @@ void FileSharingHttpProxy::proxyCache()
     if (!file->open(QIODevice::ReadOnly)) {
         response->setStatusCode(qhttp::ESTATUS_NOT_FOUND);
         qWarning("FSP failed to open cached file: %s", qPrintable(file->errorString()));
-        request->end();
+        emit request->end();
         return; // handled with error
     }
     qint64 size = fi.size();
@@ -223,15 +224,15 @@ void FileSharingHttpProxy::proxyCache()
 
 void FileSharingHttpProxy::onMetadataChanged()
 {
-    qint64 start;
-    qint64 size;
+    qint64  start;
+    quint64 size;
     std::tie(start, size) = downloader->range();
     auto const file       = downloader->jingleFile();
 
     if (downloader->isRanged())
         qDebug("FSP metaDataChanged: rangeStart=%lld rangeSize=%lld", start, size);
     else if (downloader->jingleFile().hasSize())
-        qDebug("FSP metaDataChanged: size=%lld", downloader->jingleFile().size());
+        qDebug("FSP metaDataChanged: size=%" PRIu64, downloader->jingleFile().size());
     else
         qDebug("FSP metaDataChanged: unknown size or range");
 

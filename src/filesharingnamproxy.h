@@ -35,7 +35,7 @@ class FileSharingNAMReply : public QNetworkReply {
     PsiAccount *                  acc;
     QPointer<FileShareDownloader> downloader;
     qint64                        requestedStart = 0;
-    qint64                        requestedSize  = 0;  // if == 0 then all the remaining
+    quint64                       requestedSize  = 0;  // if == 0 then all the remaining
     qint64                        bytesLeft      = -1; // -1 - unknown
     bool                          isRanged       = false;
     bool                          headersSent    = false;

@@ -25,6 +25,7 @@
 #include "psiaccount.h"
 #include "psicon.h"
 
+#include <cinttypes>
 #include <tuple>
 
 FileSharingNAMReply::FileSharingNAMReply(PsiAccount *acc, const QString &sourceIdHex, const QNetworkRequest &req) :
@@ -92,7 +93,8 @@ void FileSharingNAMReply::init()
         qint64 size = fi.size();
         if (isRanged) {
             if (requestedSize)
-                size = (requestedStart + requestedSize) > fi.size() ? fi.size() - requestedStart : requestedSize;
+                size = (requestedStart + requestedSize) > quint64(fi.size()) ? fi.size() - requestedStart
+                                                                             : requestedSize;
             else // remaining part
                 size = fi.size() - requestedStart;
             cachedFile->seek(requestedStart);
@@ -180,8 +182,10 @@ void FileSharingNAMReply::setupHeaders(qint64 fileSize, QString contentType, QDa
     setOpenMode(QIODevice::ReadOnly);
 
     qDebug() << "FS-NAM headers sent";
-    for (auto const &h : rawHeaderList())
-        qDebug("  %s: %s", h.data(), rawHeader(h).data());
+    auto const &headers = rawHeaderList();
+    for (auto const &h : headers) {
+        qDebug("  %s: %s", h.constData(), rawHeader(h).constData());
+    }
 
     emit metaDataChanged();
 }
@@ -196,7 +200,7 @@ void FileSharingNAMReply::onMetadataChanged()
     if (downloader->isRanged())
         qDebug("FSP metaDataChanged: rangeStart=%lld rangeSize=%lld", start, size);
     else if (downloader->jingleFile().hasSize())
-        qDebug("FSP metaDataChanged: size=%lld", downloader->jingleFile().size());
+        qDebug("FSP metaDataChanged: size=%" PRIu64, downloader->jingleFile().size());
     else
         qDebug("FSP metaDataChanged: unknown size or range");
 

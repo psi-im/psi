@@ -80,7 +80,7 @@ public:
     inline const QString &    mimeType() const { return _mimeType; }
     inline const HashSums &   sums() const { return _sums; }
     inline QVariantMap        metaData() const { return _metaData; }
-    inline qint64             fileSize() const { return _fileSize; }
+    inline quint64            fileSize() const { return _fileSize; }
     inline bool               isSizeKnown() const { return bool(_flags & SizeKnown); }
     inline const QStringList &uris() const { return _uris; }
 
@@ -103,7 +103,7 @@ public:
      *
      * It's responsibility of the caller to delete downloader when it's done, or one can call setSelfDelete(true)
      */
-    FileShareDownloader *download(bool isRanged = false, qint64 start = 0, qint64 size = 0);
+    FileShareDownloader *download(bool isRanged = false, qint64 start = 0, quint64 size = 0);
 
     // accept public internet uri and returns it's type
     static SourceType  sourceType(const QString &uri);
@@ -126,7 +126,7 @@ private:
     FileShareDownloader *_downloader = nullptr;
     FileType             _fileType;
     Flags                _flags;
-    qint64               _fileSize = 0;
+    quint64              _fileSize = 0;
     QDateTime            _modifyTime; // utc
     QStringList          _uris;
     QString              _fileName; // file name with path

@@ -47,7 +47,7 @@ public:
     };
 
     FileCacheItem(FileCache *parent, const QList<XMPP::Hash> &sums, const QVariantMap &metadata, const QDateTime &dt,
-                  unsigned int maxAge, qint64 size, const QByteArray &data = QByteArray());
+                  unsigned int maxAge, quint64 size, const QByteArray &data = QByteArray());
     inline FileCacheItem(FileCache *parent, const XMPP::Hash &id, const QVariantMap &metadata, const QDateTime &dt,
                          unsigned int maxAge, qint64 size, const QByteArray &data = QByteArray()) :
         FileCacheItem(parent, QList<XMPP::Hash>() << id, metadata, dt, maxAge, size, data)
@@ -79,7 +79,7 @@ public:
     inline QDateTime    created() const { return _ctime; }
     inline void         reborn() { _ctime = QDateTime::currentDateTime(); }
     inline unsigned int maxAge() const { return _maxAge; }
-    inline qint64       size() const { return _size; }
+    inline quint64      size() const { return _size; }
     QByteArray          data();
     inline QString      fileName() const { return _fileName; }
 
@@ -100,7 +100,7 @@ private:
     QVariantMap       _metadata;
     QDateTime         _ctime;
     unsigned int      _maxAge;
-    qint64            _size;
+    quint64           _size;
     QByteArray        _data;
 
     quint16 _flags;

@@ -31,7 +31,7 @@
 #define FC_META_PERSISTENT QStringLiteral("fc_persistent")
 
 FileCacheItem::FileCacheItem(FileCache *parent, const QList<XMPP::Hash> &sums, const QVariantMap &metadata,
-                             const QDateTime &dt, unsigned int maxAge, qint64 size, const QByteArray &data) :
+                             const QDateTime &dt, unsigned int maxAge, quint64 size, const QByteArray &data) :
     QObject(parent),
     _sums(sums), _metadata(metadata), _ctime(dt), _maxAge(maxAge), _size(size), _data(data),
     _flags(quint16(size > 0 ? 0 : OnDisk)) /* empty is never saved to disk. let's say it's there already */

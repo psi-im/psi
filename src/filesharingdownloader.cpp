@@ -63,7 +63,8 @@ protected:
         for (auto const &j : jids) {
             if (j == acc->client()->jid()) // skip self
                 continue;
-            for (UserListItem *u : acc->findRelevant(j)) {
+            const auto &users = acc->findRelevant(j);
+            for (UserListItem *u : users) {
                 UserResourceList::Iterator rit = u->userResourceList().find(j.resource());
                 if (rit != u->userResourceList().end())
                     return j;
@@ -404,7 +405,7 @@ public:
     QString                      dstFileName;
     QString                      lastError;
     qint64                       rangeStart  = 0;
-    qint64                       rangeSize   = 0; // 0 - all the remaining
+    quint64                      rangeSize   = 0; // 0 - all the remaining
     qint64                       bytesLeft   = -1;
     AbstractFileShareDownloader *downloader  = nullptr;
     bool                         metaReady   = false;
@@ -580,9 +581,9 @@ void FileShareDownloader::setRange(qint64 start, qint64 size)
 
 bool FileShareDownloader::isRanged() const { return d->rangeStart > 0 || d->rangeSize > 0; }
 
-std::tuple<qint64, qint64> FileShareDownloader::range() const
+std::tuple<qint64, quint64> FileShareDownloader::range() const
 {
-    return std::tuple<qint64, qint64>(d->rangeStart, d->rangeSize);
+    return std::tuple<quint64, qint64>(d->rangeStart, d->rangeSize);
 }
 
 QString FileShareDownloader::takeFile() const

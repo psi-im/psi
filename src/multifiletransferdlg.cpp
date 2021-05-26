@@ -369,13 +369,6 @@ void MultiFileTransferDlg::addTransferContent(MultiFileTransferItem *item)
     });
     setupCommonSignals(app, item);
 
-    // compute file hash
-    XMPP::Hash hash(XMPP::Hash::Sha1); // use Blake2 when we have optimized implementation
-    QFile      f(item->filePath());
-    f.open(QIODevice::ReadOnly);
-    hash.compute(&f); // FIXME it will freeze Psi for awhile on large files
-    f.close();
-
     // take thumbnail
     XMPP::Thumbnail thumb;
     auto            icon = item->thumbnail();
@@ -388,19 +381,8 @@ void MultiFileTransferDlg::addTransferContent(MultiFileTransferItem *item)
         p.save(&buffer, "PNG");
         thumb = XMPP::Thumbnail(ba, "image/png", quint32(p.width()), quint32(p.height()));
     }
+    app->setFile(item->filePath(), item->description(), thumb);
 
-    Jingle::FileTransfer::File file;
-    QFileInfo                  fi(item->filePath());
-    file.setDate(fi.lastModified());
-    file.setDescription(item->description());
-    file.addHash(hash);
-    file.setMediaType(mimeDb.mimeTypeForFile(fi).name());
-    file.setName(fi.fileName());
-    file.setRange(); // indicate range support
-    file.setSize(quint64(fi.size()));
-    file.setThumbnail(thumb);
-
-    app->setFile(file);
     d->session->addContent(app);
 }
 

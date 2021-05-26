@@ -42,13 +42,13 @@ public:
                         const QList<XMPP::Jid> &jids, const QStringList &uris, QObject *manager);
     ~FileShareDownloader();
 
-    bool                       isSuccess() const;
-    bool                       isConnected() const;
-    bool                       open(QIODevice::OpenMode mode = QIODevice::ReadOnly) override;
-    void                       abort();
-    void                       setRange(qint64 start, qint64 size);
-    bool                       isRanged() const;
-    std::tuple<qint64, qint64> range() const;
+    bool                        isSuccess() const;
+    bool                        isConnected() const;
+    bool                        open(QIODevice::OpenMode mode = QIODevice::ReadOnly) override;
+    void                        abort();
+    void                        setRange(qint64 start, qint64 size);
+    bool                        isRanged() const;
+    std::tuple<qint64, quint64> range() const;
 
     QString                                 takeFile() const;
     const XMPP::Jingle::FileTransfer::File &jingleFile() const;
