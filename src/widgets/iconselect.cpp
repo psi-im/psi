@@ -346,7 +346,13 @@ void IconSelect::setIconset(const Iconset &iconset)
             font.setPixelSize(font.pixelSize() * 1.5);
         else
             font.setPointSize(font.pointSize() * 1.5);
+#if defined(Q_OS_WIN)
+        font.setFamily("Segoe UI Emoji");
+#elif defined(Q_OS_MAC)
+        font.setFamily("Apple Color Emoji");
+#else
         font.setFamily("Noto Color Emoji");
+#endif
         int cnt = 0;
         for (auto const &emoji : EmojiRegistry::instance()) {
             IconSelectButton *b = new IconSelectButton(this);
