@@ -450,6 +450,7 @@ void PsiIconset::loadEmoticons()
         emoticons = d->emoticons();
 
         d->cur_emoticons = cur_emoticons;
+        emit emoticonsChanged();
     } else if (cur_emoticons.isEmpty()) // enable emoji font emoticons
         emit emoticonsChanged();
 }
