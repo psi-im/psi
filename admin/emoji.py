@@ -73,10 +73,21 @@ def parse(f):
         elif not line.strip() or line.startswith("#"):
             continue
         else:
-            match = re.match(r'^(.+);.*# .* E\d+\.\d+ (.*)', line)
+            if "skin tone" in line:
+                continue  # will be implemented later
+            match = re.match(r'^(.+); fully-qualified.*# .* E\d+\.\d+ (.*)', line)
+            if not match:
+                continue
             desc = match.group(2).split(':')
             code = "".join([chr(int(c, 16)) for c in match.group(1).strip().split()])
             subgroup["emojis"].append((code, desc[0].strip()))
+
+
+def cleanup_empty():
+    global data
+    for group in data:
+        group["subgroups"] = [s for s in group["subgroups"] if len(s["emojis"])]
+    data = [g for g in data if len(g["subgroups"])]
 
 
 def generate_ranges():
@@ -113,5 +124,6 @@ def generate_cpp_db():
 with open("emoji-test.txt") as f:
     reset()
     parse(f)
+    cleanup_empty()
     generate_ranges()
     generate_cpp_db()

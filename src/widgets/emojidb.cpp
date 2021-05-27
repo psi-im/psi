@@ -89,10 +89,6 @@ static std::vector<EmojiRegistry::Group> db = {
                         "smiling face"
                     },
                     {
-                        "☺",
-                        "smiling face"
-                    },
-                    {
                         "😚",
                         "kissing face with closed eyes"
                     },
@@ -329,10 +325,6 @@ static std::vector<EmojiRegistry::Group> db = {
                         "frowning face"
                     },
                     {
-                        "☹",
-                        "frowning face"
-                    },
-                    {
                         "😮",
                         "face with open mouth"
                     },
@@ -447,10 +439,6 @@ static std::vector<EmojiRegistry::Group> db = {
                     },
                     {
                         "☠️",
-                        "skull and crossbones"
-                    },
-                    {
-                        "☠",
                         "skull and crossbones"
                     }
                 }
@@ -598,19 +586,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "heart exclamation"
                     },
                     {
-                        "❣",
-                        "heart exclamation"
-                    },
-                    {
                         "💔",
                         "broken heart"
                     },
                     {
                         "❤️",
-                        "red heart"
-                    },
-                    {
-                        "❤",
                         "red heart"
                     },
                     {
@@ -674,10 +654,6 @@ static std::vector<EmojiRegistry::Group> db = {
                         "hole"
                     },
                     {
-                        "🕳",
-                        "hole"
-                    },
-                    {
                         "💣",
                         "bomb"
                     },
@@ -690,31 +666,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "eye in speech bubble"
                     },
                     {
-                        "👁‍🗨️",
-                        "eye in speech bubble"
-                    },
-                    {
-                        "👁️‍🗨",
-                        "eye in speech bubble"
-                    },
-                    {
-                        "👁‍🗨",
-                        "eye in speech bubble"
-                    },
-                    {
                         "🗨️",
                         "left speech bubble"
                     },
                     {
-                        "🗨",
-                        "left speech bubble"
-                    },
-                    {
                         "🗯️",
-                        "right anger bubble"
-                    },
-                    {
-                        "🗯",
                         "right anger bubble"
                     },
                     {
@@ -740,47 +696,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "waving hand"
                     },
                     {
-                        "👋🏻",
-                        "waving hand"
-                    },
-                    {
-                        "👋🏼",
-                        "waving hand"
-                    },
-                    {
-                        "👋🏽",
-                        "waving hand"
-                    },
-                    {
-                        "👋🏾",
-                        "waving hand"
-                    },
-                    {
-                        "👋🏿",
-                        "waving hand"
-                    },
-                    {
                         "🤚",
-                        "raised back of hand"
-                    },
-                    {
-                        "🤚🏻",
-                        "raised back of hand"
-                    },
-                    {
-                        "🤚🏼",
-                        "raised back of hand"
-                    },
-                    {
-                        "🤚🏽",
-                        "raised back of hand"
-                    },
-                    {
-                        "🤚🏾",
-                        "raised back of hand"
-                    },
-                    {
-                        "🤚🏿",
                         "raised back of hand"
                     },
                     {
@@ -788,75 +704,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "hand with fingers splayed"
                     },
                     {
-                        "🖐",
-                        "hand with fingers splayed"
-                    },
-                    {
-                        "🖐🏻",
-                        "hand with fingers splayed"
-                    },
-                    {
-                        "🖐🏼",
-                        "hand with fingers splayed"
-                    },
-                    {
-                        "🖐🏽",
-                        "hand with fingers splayed"
-                    },
-                    {
-                        "🖐🏾",
-                        "hand with fingers splayed"
-                    },
-                    {
-                        "🖐🏿",
-                        "hand with fingers splayed"
-                    },
-                    {
                         "✋",
                         "raised hand"
                     },
                     {
-                        "✋🏻",
-                        "raised hand"
-                    },
-                    {
-                        "✋🏼",
-                        "raised hand"
-                    },
-                    {
-                        "✋🏽",
-                        "raised hand"
-                    },
-                    {
-                        "✋🏾",
-                        "raised hand"
-                    },
-                    {
-                        "✋🏿",
-                        "raised hand"
-                    },
-                    {
                         "🖖",
-                        "vulcan salute"
-                    },
-                    {
-                        "🖖🏻",
-                        "vulcan salute"
-                    },
-                    {
-                        "🖖🏼",
-                        "vulcan salute"
-                    },
-                    {
-                        "🖖🏽",
-                        "vulcan salute"
-                    },
-                    {
-                        "🖖🏾",
-                        "vulcan salute"
-                    },
-                    {
-                        "🖖🏿",
                         "vulcan salute"
                     }
                 }
@@ -869,47 +721,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "OK hand"
                     },
                     {
-                        "👌🏻",
-                        "OK hand"
-                    },
-                    {
-                        "👌🏼",
-                        "OK hand"
-                    },
-                    {
-                        "👌🏽",
-                        "OK hand"
-                    },
-                    {
-                        "👌🏾",
-                        "OK hand"
-                    },
-                    {
-                        "👌🏿",
-                        "OK hand"
-                    },
-                    {
                         "🤌",
-                        "pinched fingers"
-                    },
-                    {
-                        "🤌🏻",
-                        "pinched fingers"
-                    },
-                    {
-                        "🤌🏼",
-                        "pinched fingers"
-                    },
-                    {
-                        "🤌🏽",
-                        "pinched fingers"
-                    },
-                    {
-                        "🤌🏾",
-                        "pinched fingers"
-                    },
-                    {
-                        "🤌🏿",
                         "pinched fingers"
                     },
                     {
@@ -917,51 +729,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "pinching hand"
                     },
                     {
-                        "🤏🏻",
-                        "pinching hand"
-                    },
-                    {
-                        "🤏🏼",
-                        "pinching hand"
-                    },
-                    {
-                        "🤏🏽",
-                        "pinching hand"
-                    },
-                    {
-                        "🤏🏾",
-                        "pinching hand"
-                    },
-                    {
-                        "🤏🏿",
-                        "pinching hand"
-                    },
-                    {
                         "✌️",
-                        "victory hand"
-                    },
-                    {
-                        "✌",
-                        "victory hand"
-                    },
-                    {
-                        "✌🏻",
-                        "victory hand"
-                    },
-                    {
-                        "✌🏼",
-                        "victory hand"
-                    },
-                    {
-                        "✌🏽",
-                        "victory hand"
-                    },
-                    {
-                        "✌🏾",
-                        "victory hand"
-                    },
-                    {
-                        "✌🏿",
                         "victory hand"
                     },
                     {
@@ -969,47 +737,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "crossed fingers"
                     },
                     {
-                        "🤞🏻",
-                        "crossed fingers"
-                    },
-                    {
-                        "🤞🏼",
-                        "crossed fingers"
-                    },
-                    {
-                        "🤞🏽",
-                        "crossed fingers"
-                    },
-                    {
-                        "🤞🏾",
-                        "crossed fingers"
-                    },
-                    {
-                        "🤞🏿",
-                        "crossed fingers"
-                    },
-                    {
                         "🤟",
-                        "love-you gesture"
-                    },
-                    {
-                        "🤟🏻",
-                        "love-you gesture"
-                    },
-                    {
-                        "🤟🏼",
-                        "love-you gesture"
-                    },
-                    {
-                        "🤟🏽",
-                        "love-you gesture"
-                    },
-                    {
-                        "🤟🏾",
-                        "love-you gesture"
-                    },
-                    {
-                        "🤟🏿",
                         "love-you gesture"
                     },
                     {
@@ -1017,47 +745,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "sign of the horns"
                     },
                     {
-                        "🤘🏻",
-                        "sign of the horns"
-                    },
-                    {
-                        "🤘🏼",
-                        "sign of the horns"
-                    },
-                    {
-                        "🤘🏽",
-                        "sign of the horns"
-                    },
-                    {
-                        "🤘🏾",
-                        "sign of the horns"
-                    },
-                    {
-                        "🤘🏿",
-                        "sign of the horns"
-                    },
-                    {
                         "🤙",
-                        "call me hand"
-                    },
-                    {
-                        "🤙🏻",
-                        "call me hand"
-                    },
-                    {
-                        "🤙🏼",
-                        "call me hand"
-                    },
-                    {
-                        "🤙🏽",
-                        "call me hand"
-                    },
-                    {
-                        "🤙🏾",
-                        "call me hand"
-                    },
-                    {
-                        "🤙🏿",
                         "call me hand"
                     }
                 }
@@ -1070,47 +758,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "backhand index pointing left"
                     },
                     {
-                        "👈🏻",
-                        "backhand index pointing left"
-                    },
-                    {
-                        "👈🏼",
-                        "backhand index pointing left"
-                    },
-                    {
-                        "👈🏽",
-                        "backhand index pointing left"
-                    },
-                    {
-                        "👈🏾",
-                        "backhand index pointing left"
-                    },
-                    {
-                        "👈🏿",
-                        "backhand index pointing left"
-                    },
-                    {
                         "👉",
-                        "backhand index pointing right"
-                    },
-                    {
-                        "👉🏻",
-                        "backhand index pointing right"
-                    },
-                    {
-                        "👉🏼",
-                        "backhand index pointing right"
-                    },
-                    {
-                        "👉🏽",
-                        "backhand index pointing right"
-                    },
-                    {
-                        "👉🏾",
-                        "backhand index pointing right"
-                    },
-                    {
-                        "👉🏿",
                         "backhand index pointing right"
                     },
                     {
@@ -1118,47 +766,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "backhand index pointing up"
                     },
                     {
-                        "👆🏻",
-                        "backhand index pointing up"
-                    },
-                    {
-                        "👆🏼",
-                        "backhand index pointing up"
-                    },
-                    {
-                        "👆🏽",
-                        "backhand index pointing up"
-                    },
-                    {
-                        "👆🏾",
-                        "backhand index pointing up"
-                    },
-                    {
-                        "👆🏿",
-                        "backhand index pointing up"
-                    },
-                    {
                         "🖕",
-                        "middle finger"
-                    },
-                    {
-                        "🖕🏻",
-                        "middle finger"
-                    },
-                    {
-                        "🖕🏼",
-                        "middle finger"
-                    },
-                    {
-                        "🖕🏽",
-                        "middle finger"
-                    },
-                    {
-                        "🖕🏾",
-                        "middle finger"
-                    },
-                    {
-                        "🖕🏿",
                         "middle finger"
                     },
                     {
@@ -1166,51 +774,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "backhand index pointing down"
                     },
                     {
-                        "👇🏻",
-                        "backhand index pointing down"
-                    },
-                    {
-                        "👇🏼",
-                        "backhand index pointing down"
-                    },
-                    {
-                        "👇🏽",
-                        "backhand index pointing down"
-                    },
-                    {
-                        "👇🏾",
-                        "backhand index pointing down"
-                    },
-                    {
-                        "👇🏿",
-                        "backhand index pointing down"
-                    },
-                    {
                         "☝️",
-                        "index pointing up"
-                    },
-                    {
-                        "☝",
-                        "index pointing up"
-                    },
-                    {
-                        "☝🏻",
-                        "index pointing up"
-                    },
-                    {
-                        "☝🏼",
-                        "index pointing up"
-                    },
-                    {
-                        "☝🏽",
-                        "index pointing up"
-                    },
-                    {
-                        "☝🏾",
-                        "index pointing up"
-                    },
-                    {
-                        "☝🏿",
                         "index pointing up"
                     }
                 }
@@ -1223,47 +787,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "thumbs up"
                     },
                     {
-                        "👍🏻",
-                        "thumbs up"
-                    },
-                    {
-                        "👍🏼",
-                        "thumbs up"
-                    },
-                    {
-                        "👍🏽",
-                        "thumbs up"
-                    },
-                    {
-                        "👍🏾",
-                        "thumbs up"
-                    },
-                    {
-                        "👍🏿",
-                        "thumbs up"
-                    },
-                    {
                         "👎",
-                        "thumbs down"
-                    },
-                    {
-                        "👎🏻",
-                        "thumbs down"
-                    },
-                    {
-                        "👎🏼",
-                        "thumbs down"
-                    },
-                    {
-                        "👎🏽",
-                        "thumbs down"
-                    },
-                    {
-                        "👎🏾",
-                        "thumbs down"
-                    },
-                    {
-                        "👎🏿",
                         "thumbs down"
                     },
                     {
@@ -1271,47 +795,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "raised fist"
                     },
                     {
-                        "✊🏻",
-                        "raised fist"
-                    },
-                    {
-                        "✊🏼",
-                        "raised fist"
-                    },
-                    {
-                        "✊🏽",
-                        "raised fist"
-                    },
-                    {
-                        "✊🏾",
-                        "raised fist"
-                    },
-                    {
-                        "✊🏿",
-                        "raised fist"
-                    },
-                    {
                         "👊",
-                        "oncoming fist"
-                    },
-                    {
-                        "👊🏻",
-                        "oncoming fist"
-                    },
-                    {
-                        "👊🏼",
-                        "oncoming fist"
-                    },
-                    {
-                        "👊🏽",
-                        "oncoming fist"
-                    },
-                    {
-                        "👊🏾",
-                        "oncoming fist"
-                    },
-                    {
-                        "👊🏿",
                         "oncoming fist"
                     },
                     {
@@ -1319,47 +803,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "left-facing fist"
                     },
                     {
-                        "🤛🏻",
-                        "left-facing fist"
-                    },
-                    {
-                        "🤛🏼",
-                        "left-facing fist"
-                    },
-                    {
-                        "🤛🏽",
-                        "left-facing fist"
-                    },
-                    {
-                        "🤛🏾",
-                        "left-facing fist"
-                    },
-                    {
-                        "🤛🏿",
-                        "left-facing fist"
-                    },
-                    {
                         "🤜",
-                        "right-facing fist"
-                    },
-                    {
-                        "🤜🏻",
-                        "right-facing fist"
-                    },
-                    {
-                        "🤜🏼",
-                        "right-facing fist"
-                    },
-                    {
-                        "🤜🏽",
-                        "right-facing fist"
-                    },
-                    {
-                        "🤜🏾",
-                        "right-facing fist"
-                    },
-                    {
-                        "🤜🏿",
                         "right-facing fist"
                     }
                 }
@@ -1372,47 +816,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "clapping hands"
                     },
                     {
-                        "👏🏻",
-                        "clapping hands"
-                    },
-                    {
-                        "👏🏼",
-                        "clapping hands"
-                    },
-                    {
-                        "👏🏽",
-                        "clapping hands"
-                    },
-                    {
-                        "👏🏾",
-                        "clapping hands"
-                    },
-                    {
-                        "👏🏿",
-                        "clapping hands"
-                    },
-                    {
                         "🙌",
-                        "raising hands"
-                    },
-                    {
-                        "🙌🏻",
-                        "raising hands"
-                    },
-                    {
-                        "🙌🏼",
-                        "raising hands"
-                    },
-                    {
-                        "🙌🏽",
-                        "raising hands"
-                    },
-                    {
-                        "🙌🏾",
-                        "raising hands"
-                    },
-                    {
-                        "🙌🏿",
                         "raising hands"
                     },
                     {
@@ -1420,47 +824,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "open hands"
                     },
                     {
-                        "👐🏻",
-                        "open hands"
-                    },
-                    {
-                        "👐🏼",
-                        "open hands"
-                    },
-                    {
-                        "👐🏽",
-                        "open hands"
-                    },
-                    {
-                        "👐🏾",
-                        "open hands"
-                    },
-                    {
-                        "👐🏿",
-                        "open hands"
-                    },
-                    {
                         "🤲",
-                        "palms up together"
-                    },
-                    {
-                        "🤲🏻",
-                        "palms up together"
-                    },
-                    {
-                        "🤲🏼",
-                        "palms up together"
-                    },
-                    {
-                        "🤲🏽",
-                        "palms up together"
-                    },
-                    {
-                        "🤲🏾",
-                        "palms up together"
-                    },
-                    {
-                        "🤲🏿",
                         "palms up together"
                     },
                     {
@@ -1469,26 +833,6 @@ static std::vector<EmojiRegistry::Group> db = {
                     },
                     {
                         "🙏",
-                        "folded hands"
-                    },
-                    {
-                        "🙏🏻",
-                        "folded hands"
-                    },
-                    {
-                        "🙏🏼",
-                        "folded hands"
-                    },
-                    {
-                        "🙏🏽",
-                        "folded hands"
-                    },
-                    {
-                        "🙏🏾",
-                        "folded hands"
-                    },
-                    {
-                        "🙏🏿",
                         "folded hands"
                     }
                 }
@@ -1501,75 +845,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "writing hand"
                     },
                     {
-                        "✍",
-                        "writing hand"
-                    },
-                    {
-                        "✍🏻",
-                        "writing hand"
-                    },
-                    {
-                        "✍🏼",
-                        "writing hand"
-                    },
-                    {
-                        "✍🏽",
-                        "writing hand"
-                    },
-                    {
-                        "✍🏾",
-                        "writing hand"
-                    },
-                    {
-                        "✍🏿",
-                        "writing hand"
-                    },
-                    {
                         "💅",
                         "nail polish"
                     },
                     {
-                        "💅🏻",
-                        "nail polish"
-                    },
-                    {
-                        "💅🏼",
-                        "nail polish"
-                    },
-                    {
-                        "💅🏽",
-                        "nail polish"
-                    },
-                    {
-                        "💅🏾",
-                        "nail polish"
-                    },
-                    {
-                        "💅🏿",
-                        "nail polish"
-                    },
-                    {
                         "🤳",
-                        "selfie"
-                    },
-                    {
-                        "🤳🏻",
-                        "selfie"
-                    },
-                    {
-                        "🤳🏼",
-                        "selfie"
-                    },
-                    {
-                        "🤳🏽",
-                        "selfie"
-                    },
-                    {
-                        "🤳🏾",
-                        "selfie"
-                    },
-                    {
-                        "🤳🏿",
                         "selfie"
                     }
                 }
@@ -1579,26 +859,6 @@ static std::vector<EmojiRegistry::Group> db = {
                 {
                     {
                         "💪",
-                        "flexed biceps"
-                    },
-                    {
-                        "💪🏻",
-                        "flexed biceps"
-                    },
-                    {
-                        "💪🏼",
-                        "flexed biceps"
-                    },
-                    {
-                        "💪🏽",
-                        "flexed biceps"
-                    },
-                    {
-                        "💪🏾",
-                        "flexed biceps"
-                    },
-                    {
-                        "💪🏿",
                         "flexed biceps"
                     },
                     {
@@ -1614,47 +874,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "leg"
                     },
                     {
-                        "🦵🏻",
-                        "leg"
-                    },
-                    {
-                        "🦵🏼",
-                        "leg"
-                    },
-                    {
-                        "🦵🏽",
-                        "leg"
-                    },
-                    {
-                        "🦵🏾",
-                        "leg"
-                    },
-                    {
-                        "🦵🏿",
-                        "leg"
-                    },
-                    {
                         "🦶",
-                        "foot"
-                    },
-                    {
-                        "🦶🏻",
-                        "foot"
-                    },
-                    {
-                        "🦶🏼",
-                        "foot"
-                    },
-                    {
-                        "🦶🏽",
-                        "foot"
-                    },
-                    {
-                        "🦶🏾",
-                        "foot"
-                    },
-                    {
-                        "🦶🏿",
                         "foot"
                     },
                     {
@@ -1662,71 +882,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "ear"
                     },
                     {
-                        "👂🏻",
-                        "ear"
-                    },
-                    {
-                        "👂🏼",
-                        "ear"
-                    },
-                    {
-                        "👂🏽",
-                        "ear"
-                    },
-                    {
-                        "👂🏾",
-                        "ear"
-                    },
-                    {
-                        "👂🏿",
-                        "ear"
-                    },
-                    {
                         "🦻",
                         "ear with hearing aid"
                     },
                     {
-                        "🦻🏻",
-                        "ear with hearing aid"
-                    },
-                    {
-                        "🦻🏼",
-                        "ear with hearing aid"
-                    },
-                    {
-                        "🦻🏽",
-                        "ear with hearing aid"
-                    },
-                    {
-                        "🦻🏾",
-                        "ear with hearing aid"
-                    },
-                    {
-                        "🦻🏿",
-                        "ear with hearing aid"
-                    },
-                    {
                         "👃",
-                        "nose"
-                    },
-                    {
-                        "👃🏻",
-                        "nose"
-                    },
-                    {
-                        "👃🏼",
-                        "nose"
-                    },
-                    {
-                        "👃🏽",
-                        "nose"
-                    },
-                    {
-                        "👃🏾",
-                        "nose"
-                    },
-                    {
-                        "👃🏿",
                         "nose"
                     },
                     {
@@ -1758,10 +918,6 @@ static std::vector<EmojiRegistry::Group> db = {
                         "eye"
                     },
                     {
-                        "👁",
-                        "eye"
-                    },
-                    {
                         "👅",
                         "tongue"
                     },
@@ -1779,47 +935,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "baby"
                     },
                     {
-                        "👶🏻",
-                        "baby"
-                    },
-                    {
-                        "👶🏼",
-                        "baby"
-                    },
-                    {
-                        "👶🏽",
-                        "baby"
-                    },
-                    {
-                        "👶🏾",
-                        "baby"
-                    },
-                    {
-                        "👶🏿",
-                        "baby"
-                    },
-                    {
                         "🧒",
-                        "child"
-                    },
-                    {
-                        "🧒🏻",
-                        "child"
-                    },
-                    {
-                        "🧒🏼",
-                        "child"
-                    },
-                    {
-                        "🧒🏽",
-                        "child"
-                    },
-                    {
-                        "🧒🏾",
-                        "child"
-                    },
-                    {
-                        "🧒🏿",
                         "child"
                     },
                     {
@@ -1827,47 +943,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "boy"
                     },
                     {
-                        "👦🏻",
-                        "boy"
-                    },
-                    {
-                        "👦🏼",
-                        "boy"
-                    },
-                    {
-                        "👦🏽",
-                        "boy"
-                    },
-                    {
-                        "👦🏾",
-                        "boy"
-                    },
-                    {
-                        "👦🏿",
-                        "boy"
-                    },
-                    {
                         "👧",
-                        "girl"
-                    },
-                    {
-                        "👧🏻",
-                        "girl"
-                    },
-                    {
-                        "👧🏼",
-                        "girl"
-                    },
-                    {
-                        "👧🏽",
-                        "girl"
-                    },
-                    {
-                        "👧🏾",
-                        "girl"
-                    },
-                    {
-                        "👧🏿",
                         "girl"
                     },
                     {
@@ -1875,47 +951,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "person"
                     },
                     {
-                        "🧑🏻",
-                        "person"
-                    },
-                    {
-                        "🧑🏼",
-                        "person"
-                    },
-                    {
-                        "🧑🏽",
-                        "person"
-                    },
-                    {
-                        "🧑🏾",
-                        "person"
-                    },
-                    {
-                        "🧑🏿",
-                        "person"
-                    },
-                    {
                         "👱",
-                        "person"
-                    },
-                    {
-                        "👱🏻",
-                        "person"
-                    },
-                    {
-                        "👱🏼",
-                        "person"
-                    },
-                    {
-                        "👱🏽",
-                        "person"
-                    },
-                    {
-                        "👱🏾",
-                        "person"
-                    },
-                    {
-                        "👱🏿",
                         "person"
                     },
                     {
@@ -1923,47 +959,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man"
                     },
                     {
-                        "👨🏻",
-                        "man"
-                    },
-                    {
-                        "👨🏼",
-                        "man"
-                    },
-                    {
-                        "👨🏽",
-                        "man"
-                    },
-                    {
-                        "👨🏾",
-                        "man"
-                    },
-                    {
-                        "👨🏿",
-                        "man"
-                    },
-                    {
                         "🧔",
-                        "man"
-                    },
-                    {
-                        "🧔🏻",
-                        "man"
-                    },
-                    {
-                        "🧔🏼",
-                        "man"
-                    },
-                    {
-                        "🧔🏽",
-                        "man"
-                    },
-                    {
-                        "🧔🏾",
-                        "man"
-                    },
-                    {
-                        "🧔🏿",
                         "man"
                     },
                     {
@@ -1971,47 +967,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man"
                     },
                     {
-                        "👨🏻‍🦰",
-                        "man"
-                    },
-                    {
-                        "👨🏼‍🦰",
-                        "man"
-                    },
-                    {
-                        "👨🏽‍🦰",
-                        "man"
-                    },
-                    {
-                        "👨🏾‍🦰",
-                        "man"
-                    },
-                    {
-                        "👨🏿‍🦰",
-                        "man"
-                    },
-                    {
                         "👨‍🦱",
-                        "man"
-                    },
-                    {
-                        "👨🏻‍🦱",
-                        "man"
-                    },
-                    {
-                        "👨🏼‍🦱",
-                        "man"
-                    },
-                    {
-                        "👨🏽‍🦱",
-                        "man"
-                    },
-                    {
-                        "👨🏾‍🦱",
-                        "man"
-                    },
-                    {
-                        "👨🏿‍🦱",
                         "man"
                     },
                     {
@@ -2019,47 +975,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man"
                     },
                     {
-                        "👨🏻‍🦳",
-                        "man"
-                    },
-                    {
-                        "👨🏼‍🦳",
-                        "man"
-                    },
-                    {
-                        "👨🏽‍🦳",
-                        "man"
-                    },
-                    {
-                        "👨🏾‍🦳",
-                        "man"
-                    },
-                    {
-                        "👨🏿‍🦳",
-                        "man"
-                    },
-                    {
                         "👨‍🦲",
-                        "man"
-                    },
-                    {
-                        "👨🏻‍🦲",
-                        "man"
-                    },
-                    {
-                        "👨🏼‍🦲",
-                        "man"
-                    },
-                    {
-                        "👨🏽‍🦲",
-                        "man"
-                    },
-                    {
-                        "👨🏾‍🦲",
-                        "man"
-                    },
-                    {
-                        "👨🏿‍🦲",
                         "man"
                     },
                     {
@@ -2067,47 +983,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman"
                     },
                     {
-                        "👩🏻",
-                        "woman"
-                    },
-                    {
-                        "👩🏼",
-                        "woman"
-                    },
-                    {
-                        "👩🏽",
-                        "woman"
-                    },
-                    {
-                        "👩🏾",
-                        "woman"
-                    },
-                    {
-                        "👩🏿",
-                        "woman"
-                    },
-                    {
                         "👩‍🦰",
-                        "woman"
-                    },
-                    {
-                        "👩🏻‍🦰",
-                        "woman"
-                    },
-                    {
-                        "👩🏼‍🦰",
-                        "woman"
-                    },
-                    {
-                        "👩🏽‍🦰",
-                        "woman"
-                    },
-                    {
-                        "👩🏾‍🦰",
-                        "woman"
-                    },
-                    {
-                        "👩🏿‍🦰",
                         "woman"
                     },
                     {
@@ -2115,47 +991,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "person"
                     },
                     {
-                        "🧑🏻‍🦰",
-                        "person"
-                    },
-                    {
-                        "🧑🏼‍🦰",
-                        "person"
-                    },
-                    {
-                        "🧑🏽‍🦰",
-                        "person"
-                    },
-                    {
-                        "🧑🏾‍🦰",
-                        "person"
-                    },
-                    {
-                        "🧑🏿‍🦰",
-                        "person"
-                    },
-                    {
                         "👩‍🦱",
-                        "woman"
-                    },
-                    {
-                        "👩🏻‍🦱",
-                        "woman"
-                    },
-                    {
-                        "👩🏼‍🦱",
-                        "woman"
-                    },
-                    {
-                        "👩🏽‍🦱",
-                        "woman"
-                    },
-                    {
-                        "👩🏾‍🦱",
-                        "woman"
-                    },
-                    {
-                        "👩🏿‍🦱",
                         "woman"
                     },
                     {
@@ -2163,47 +999,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "person"
                     },
                     {
-                        "🧑🏻‍🦱",
-                        "person"
-                    },
-                    {
-                        "🧑🏼‍🦱",
-                        "person"
-                    },
-                    {
-                        "🧑🏽‍🦱",
-                        "person"
-                    },
-                    {
-                        "🧑🏾‍🦱",
-                        "person"
-                    },
-                    {
-                        "🧑🏿‍🦱",
-                        "person"
-                    },
-                    {
                         "👩‍🦳",
-                        "woman"
-                    },
-                    {
-                        "👩🏻‍🦳",
-                        "woman"
-                    },
-                    {
-                        "👩🏼‍🦳",
-                        "woman"
-                    },
-                    {
-                        "👩🏽‍🦳",
-                        "woman"
-                    },
-                    {
-                        "👩🏾‍🦳",
-                        "woman"
-                    },
-                    {
-                        "👩🏿‍🦳",
                         "woman"
                     },
                     {
@@ -2211,47 +1007,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "person"
                     },
                     {
-                        "🧑🏻‍🦳",
-                        "person"
-                    },
-                    {
-                        "🧑🏼‍🦳",
-                        "person"
-                    },
-                    {
-                        "🧑🏽‍🦳",
-                        "person"
-                    },
-                    {
-                        "🧑🏾‍🦳",
-                        "person"
-                    },
-                    {
-                        "🧑🏿‍🦳",
-                        "person"
-                    },
-                    {
                         "👩‍🦲",
-                        "woman"
-                    },
-                    {
-                        "👩🏻‍🦲",
-                        "woman"
-                    },
-                    {
-                        "👩🏼‍🦲",
-                        "woman"
-                    },
-                    {
-                        "👩🏽‍🦲",
-                        "woman"
-                    },
-                    {
-                        "👩🏾‍🦲",
-                        "woman"
-                    },
-                    {
-                        "👩🏿‍🦲",
                         "woman"
                     },
                     {
@@ -2259,71 +1015,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "person"
                     },
                     {
-                        "🧑🏻‍🦲",
-                        "person"
-                    },
-                    {
-                        "🧑🏼‍🦲",
-                        "person"
-                    },
-                    {
-                        "🧑🏽‍🦲",
-                        "person"
-                    },
-                    {
-                        "🧑🏾‍🦲",
-                        "person"
-                    },
-                    {
-                        "🧑🏿‍🦲",
-                        "person"
-                    },
-                    {
                         "👱‍♀️",
-                        "woman"
-                    },
-                    {
-                        "👱‍♀",
-                        "woman"
-                    },
-                    {
-                        "👱🏻‍♀️",
-                        "woman"
-                    },
-                    {
-                        "👱🏻‍♀",
-                        "woman"
-                    },
-                    {
-                        "👱🏼‍♀️",
-                        "woman"
-                    },
-                    {
-                        "👱🏼‍♀",
-                        "woman"
-                    },
-                    {
-                        "👱🏽‍♀️",
-                        "woman"
-                    },
-                    {
-                        "👱🏽‍♀",
-                        "woman"
-                    },
-                    {
-                        "👱🏾‍♀️",
-                        "woman"
-                    },
-                    {
-                        "👱🏾‍♀",
-                        "woman"
-                    },
-                    {
-                        "👱🏿‍♀️",
-                        "woman"
-                    },
-                    {
-                        "👱🏿‍♀",
                         "woman"
                     },
                     {
@@ -2331,71 +1023,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man"
                     },
                     {
-                        "👱‍♂",
-                        "man"
-                    },
-                    {
-                        "👱🏻‍♂️",
-                        "man"
-                    },
-                    {
-                        "👱🏻‍♂",
-                        "man"
-                    },
-                    {
-                        "👱🏼‍♂️",
-                        "man"
-                    },
-                    {
-                        "👱🏼‍♂",
-                        "man"
-                    },
-                    {
-                        "👱🏽‍♂️",
-                        "man"
-                    },
-                    {
-                        "👱🏽‍♂",
-                        "man"
-                    },
-                    {
-                        "👱🏾‍♂️",
-                        "man"
-                    },
-                    {
-                        "👱🏾‍♂",
-                        "man"
-                    },
-                    {
-                        "👱🏿‍♂️",
-                        "man"
-                    },
-                    {
-                        "👱🏿‍♂",
-                        "man"
-                    },
-                    {
                         "🧓",
-                        "older person"
-                    },
-                    {
-                        "🧓🏻",
-                        "older person"
-                    },
-                    {
-                        "🧓🏼",
-                        "older person"
-                    },
-                    {
-                        "🧓🏽",
-                        "older person"
-                    },
-                    {
-                        "🧓🏾",
-                        "older person"
-                    },
-                    {
-                        "🧓🏿",
                         "older person"
                     },
                     {
@@ -2403,47 +1031,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "old man"
                     },
                     {
-                        "👴🏻",
-                        "old man"
-                    },
-                    {
-                        "👴🏼",
-                        "old man"
-                    },
-                    {
-                        "👴🏽",
-                        "old man"
-                    },
-                    {
-                        "👴🏾",
-                        "old man"
-                    },
-                    {
-                        "👴🏿",
-                        "old man"
-                    },
-                    {
                         "👵",
-                        "old woman"
-                    },
-                    {
-                        "👵🏻",
-                        "old woman"
-                    },
-                    {
-                        "👵🏼",
-                        "old woman"
-                    },
-                    {
-                        "👵🏽",
-                        "old woman"
-                    },
-                    {
-                        "👵🏾",
-                        "old woman"
-                    },
-                    {
-                        "👵🏿",
                         "old woman"
                     }
                 }
@@ -2456,71 +1044,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "person frowning"
                     },
                     {
-                        "🙍🏻",
-                        "person frowning"
-                    },
-                    {
-                        "🙍🏼",
-                        "person frowning"
-                    },
-                    {
-                        "🙍🏽",
-                        "person frowning"
-                    },
-                    {
-                        "🙍🏾",
-                        "person frowning"
-                    },
-                    {
-                        "🙍🏿",
-                        "person frowning"
-                    },
-                    {
                         "🙍‍♂️",
-                        "man frowning"
-                    },
-                    {
-                        "🙍‍♂",
-                        "man frowning"
-                    },
-                    {
-                        "🙍🏻‍♂️",
-                        "man frowning"
-                    },
-                    {
-                        "🙍🏻‍♂",
-                        "man frowning"
-                    },
-                    {
-                        "🙍🏼‍♂️",
-                        "man frowning"
-                    },
-                    {
-                        "🙍🏼‍♂",
-                        "man frowning"
-                    },
-                    {
-                        "🙍🏽‍♂️",
-                        "man frowning"
-                    },
-                    {
-                        "🙍🏽‍♂",
-                        "man frowning"
-                    },
-                    {
-                        "🙍🏾‍♂️",
-                        "man frowning"
-                    },
-                    {
-                        "🙍🏾‍♂",
-                        "man frowning"
-                    },
-                    {
-                        "🙍🏿‍♂️",
-                        "man frowning"
-                    },
-                    {
-                        "🙍🏿‍♂",
                         "man frowning"
                     },
                     {
@@ -2528,71 +1052,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman frowning"
                     },
                     {
-                        "🙍‍♀",
-                        "woman frowning"
-                    },
-                    {
-                        "🙍🏻‍♀️",
-                        "woman frowning"
-                    },
-                    {
-                        "🙍🏻‍♀",
-                        "woman frowning"
-                    },
-                    {
-                        "🙍🏼‍♀️",
-                        "woman frowning"
-                    },
-                    {
-                        "🙍🏼‍♀",
-                        "woman frowning"
-                    },
-                    {
-                        "🙍🏽‍♀️",
-                        "woman frowning"
-                    },
-                    {
-                        "🙍🏽‍♀",
-                        "woman frowning"
-                    },
-                    {
-                        "🙍🏾‍♀️",
-                        "woman frowning"
-                    },
-                    {
-                        "🙍🏾‍♀",
-                        "woman frowning"
-                    },
-                    {
-                        "🙍🏿‍♀️",
-                        "woman frowning"
-                    },
-                    {
-                        "🙍🏿‍♀",
-                        "woman frowning"
-                    },
-                    {
                         "🙎",
-                        "person pouting"
-                    },
-                    {
-                        "🙎🏻",
-                        "person pouting"
-                    },
-                    {
-                        "🙎🏼",
-                        "person pouting"
-                    },
-                    {
-                        "🙎🏽",
-                        "person pouting"
-                    },
-                    {
-                        "🙎🏾",
-                        "person pouting"
-                    },
-                    {
-                        "🙎🏿",
                         "person pouting"
                     },
                     {
@@ -2600,95 +1060,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man pouting"
                     },
                     {
-                        "🙎‍♂",
-                        "man pouting"
-                    },
-                    {
-                        "🙎🏻‍♂️",
-                        "man pouting"
-                    },
-                    {
-                        "🙎🏻‍♂",
-                        "man pouting"
-                    },
-                    {
-                        "🙎🏼‍♂️",
-                        "man pouting"
-                    },
-                    {
-                        "🙎🏼‍♂",
-                        "man pouting"
-                    },
-                    {
-                        "🙎🏽‍♂️",
-                        "man pouting"
-                    },
-                    {
-                        "🙎🏽‍♂",
-                        "man pouting"
-                    },
-                    {
-                        "🙎🏾‍♂️",
-                        "man pouting"
-                    },
-                    {
-                        "🙎🏾‍♂",
-                        "man pouting"
-                    },
-                    {
-                        "🙎🏿‍♂️",
-                        "man pouting"
-                    },
-                    {
-                        "🙎🏿‍♂",
-                        "man pouting"
-                    },
-                    {
                         "🙎‍♀️",
-                        "woman pouting"
-                    },
-                    {
-                        "🙎‍♀",
-                        "woman pouting"
-                    },
-                    {
-                        "🙎🏻‍♀️",
-                        "woman pouting"
-                    },
-                    {
-                        "🙎🏻‍♀",
-                        "woman pouting"
-                    },
-                    {
-                        "🙎🏼‍♀️",
-                        "woman pouting"
-                    },
-                    {
-                        "🙎🏼‍♀",
-                        "woman pouting"
-                    },
-                    {
-                        "🙎🏽‍♀️",
-                        "woman pouting"
-                    },
-                    {
-                        "🙎🏽‍♀",
-                        "woman pouting"
-                    },
-                    {
-                        "🙎🏾‍♀️",
-                        "woman pouting"
-                    },
-                    {
-                        "🙎🏾‍♀",
-                        "woman pouting"
-                    },
-                    {
-                        "🙎🏿‍♀️",
-                        "woman pouting"
-                    },
-                    {
-                        "🙎🏿‍♀",
                         "woman pouting"
                     },
                     {
@@ -2696,71 +1068,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "person gesturing NO"
                     },
                     {
-                        "🙅🏻",
-                        "person gesturing NO"
-                    },
-                    {
-                        "🙅🏼",
-                        "person gesturing NO"
-                    },
-                    {
-                        "🙅🏽",
-                        "person gesturing NO"
-                    },
-                    {
-                        "🙅🏾",
-                        "person gesturing NO"
-                    },
-                    {
-                        "🙅🏿",
-                        "person gesturing NO"
-                    },
-                    {
                         "🙅‍♂️",
-                        "man gesturing NO"
-                    },
-                    {
-                        "🙅‍♂",
-                        "man gesturing NO"
-                    },
-                    {
-                        "🙅🏻‍♂️",
-                        "man gesturing NO"
-                    },
-                    {
-                        "🙅🏻‍♂",
-                        "man gesturing NO"
-                    },
-                    {
-                        "🙅🏼‍♂️",
-                        "man gesturing NO"
-                    },
-                    {
-                        "🙅🏼‍♂",
-                        "man gesturing NO"
-                    },
-                    {
-                        "🙅🏽‍♂️",
-                        "man gesturing NO"
-                    },
-                    {
-                        "🙅🏽‍♂",
-                        "man gesturing NO"
-                    },
-                    {
-                        "🙅🏾‍♂️",
-                        "man gesturing NO"
-                    },
-                    {
-                        "🙅🏾‍♂",
-                        "man gesturing NO"
-                    },
-                    {
-                        "🙅🏿‍♂️",
-                        "man gesturing NO"
-                    },
-                    {
-                        "🙅🏿‍♂",
                         "man gesturing NO"
                     },
                     {
@@ -2768,71 +1076,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman gesturing NO"
                     },
                     {
-                        "🙅‍♀",
-                        "woman gesturing NO"
-                    },
-                    {
-                        "🙅🏻‍♀️",
-                        "woman gesturing NO"
-                    },
-                    {
-                        "🙅🏻‍♀",
-                        "woman gesturing NO"
-                    },
-                    {
-                        "🙅🏼‍♀️",
-                        "woman gesturing NO"
-                    },
-                    {
-                        "🙅🏼‍♀",
-                        "woman gesturing NO"
-                    },
-                    {
-                        "🙅🏽‍♀️",
-                        "woman gesturing NO"
-                    },
-                    {
-                        "🙅🏽‍♀",
-                        "woman gesturing NO"
-                    },
-                    {
-                        "🙅🏾‍♀️",
-                        "woman gesturing NO"
-                    },
-                    {
-                        "🙅🏾‍♀",
-                        "woman gesturing NO"
-                    },
-                    {
-                        "🙅🏿‍♀️",
-                        "woman gesturing NO"
-                    },
-                    {
-                        "🙅🏿‍♀",
-                        "woman gesturing NO"
-                    },
-                    {
                         "🙆",
-                        "person gesturing OK"
-                    },
-                    {
-                        "🙆🏻",
-                        "person gesturing OK"
-                    },
-                    {
-                        "🙆🏼",
-                        "person gesturing OK"
-                    },
-                    {
-                        "🙆🏽",
-                        "person gesturing OK"
-                    },
-                    {
-                        "🙆🏾",
-                        "person gesturing OK"
-                    },
-                    {
-                        "🙆🏿",
                         "person gesturing OK"
                     },
                     {
@@ -2840,95 +1084,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man gesturing OK"
                     },
                     {
-                        "🙆‍♂",
-                        "man gesturing OK"
-                    },
-                    {
-                        "🙆🏻‍♂️",
-                        "man gesturing OK"
-                    },
-                    {
-                        "🙆🏻‍♂",
-                        "man gesturing OK"
-                    },
-                    {
-                        "🙆🏼‍♂️",
-                        "man gesturing OK"
-                    },
-                    {
-                        "🙆🏼‍♂",
-                        "man gesturing OK"
-                    },
-                    {
-                        "🙆🏽‍♂️",
-                        "man gesturing OK"
-                    },
-                    {
-                        "🙆🏽‍♂",
-                        "man gesturing OK"
-                    },
-                    {
-                        "🙆🏾‍♂️",
-                        "man gesturing OK"
-                    },
-                    {
-                        "🙆🏾‍♂",
-                        "man gesturing OK"
-                    },
-                    {
-                        "🙆🏿‍♂️",
-                        "man gesturing OK"
-                    },
-                    {
-                        "🙆🏿‍♂",
-                        "man gesturing OK"
-                    },
-                    {
                         "🙆‍♀️",
-                        "woman gesturing OK"
-                    },
-                    {
-                        "🙆‍♀",
-                        "woman gesturing OK"
-                    },
-                    {
-                        "🙆🏻‍♀️",
-                        "woman gesturing OK"
-                    },
-                    {
-                        "🙆🏻‍♀",
-                        "woman gesturing OK"
-                    },
-                    {
-                        "🙆🏼‍♀️",
-                        "woman gesturing OK"
-                    },
-                    {
-                        "🙆🏼‍♀",
-                        "woman gesturing OK"
-                    },
-                    {
-                        "🙆🏽‍♀️",
-                        "woman gesturing OK"
-                    },
-                    {
-                        "🙆🏽‍♀",
-                        "woman gesturing OK"
-                    },
-                    {
-                        "🙆🏾‍♀️",
-                        "woman gesturing OK"
-                    },
-                    {
-                        "🙆🏾‍♀",
-                        "woman gesturing OK"
-                    },
-                    {
-                        "🙆🏿‍♀️",
-                        "woman gesturing OK"
-                    },
-                    {
-                        "🙆🏿‍♀",
                         "woman gesturing OK"
                     },
                     {
@@ -2936,71 +1092,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "person tipping hand"
                     },
                     {
-                        "💁🏻",
-                        "person tipping hand"
-                    },
-                    {
-                        "💁🏼",
-                        "person tipping hand"
-                    },
-                    {
-                        "💁🏽",
-                        "person tipping hand"
-                    },
-                    {
-                        "💁🏾",
-                        "person tipping hand"
-                    },
-                    {
-                        "💁🏿",
-                        "person tipping hand"
-                    },
-                    {
                         "💁‍♂️",
-                        "man tipping hand"
-                    },
-                    {
-                        "💁‍♂",
-                        "man tipping hand"
-                    },
-                    {
-                        "💁🏻‍♂️",
-                        "man tipping hand"
-                    },
-                    {
-                        "💁🏻‍♂",
-                        "man tipping hand"
-                    },
-                    {
-                        "💁🏼‍♂️",
-                        "man tipping hand"
-                    },
-                    {
-                        "💁🏼‍♂",
-                        "man tipping hand"
-                    },
-                    {
-                        "💁🏽‍♂️",
-                        "man tipping hand"
-                    },
-                    {
-                        "💁🏽‍♂",
-                        "man tipping hand"
-                    },
-                    {
-                        "💁🏾‍♂️",
-                        "man tipping hand"
-                    },
-                    {
-                        "💁🏾‍♂",
-                        "man tipping hand"
-                    },
-                    {
-                        "💁🏿‍♂️",
-                        "man tipping hand"
-                    },
-                    {
-                        "💁🏿‍♂",
                         "man tipping hand"
                     },
                     {
@@ -3008,71 +1100,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman tipping hand"
                     },
                     {
-                        "💁‍♀",
-                        "woman tipping hand"
-                    },
-                    {
-                        "💁🏻‍♀️",
-                        "woman tipping hand"
-                    },
-                    {
-                        "💁🏻‍♀",
-                        "woman tipping hand"
-                    },
-                    {
-                        "💁🏼‍♀️",
-                        "woman tipping hand"
-                    },
-                    {
-                        "💁🏼‍♀",
-                        "woman tipping hand"
-                    },
-                    {
-                        "💁🏽‍♀️",
-                        "woman tipping hand"
-                    },
-                    {
-                        "💁🏽‍♀",
-                        "woman tipping hand"
-                    },
-                    {
-                        "💁🏾‍♀️",
-                        "woman tipping hand"
-                    },
-                    {
-                        "💁🏾‍♀",
-                        "woman tipping hand"
-                    },
-                    {
-                        "💁🏿‍♀️",
-                        "woman tipping hand"
-                    },
-                    {
-                        "💁🏿‍♀",
-                        "woman tipping hand"
-                    },
-                    {
                         "🙋",
-                        "person raising hand"
-                    },
-                    {
-                        "🙋🏻",
-                        "person raising hand"
-                    },
-                    {
-                        "🙋🏼",
-                        "person raising hand"
-                    },
-                    {
-                        "🙋🏽",
-                        "person raising hand"
-                    },
-                    {
-                        "🙋🏾",
-                        "person raising hand"
-                    },
-                    {
-                        "🙋🏿",
                         "person raising hand"
                     },
                     {
@@ -3080,95 +1108,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man raising hand"
                     },
                     {
-                        "🙋‍♂",
-                        "man raising hand"
-                    },
-                    {
-                        "🙋🏻‍♂️",
-                        "man raising hand"
-                    },
-                    {
-                        "🙋🏻‍♂",
-                        "man raising hand"
-                    },
-                    {
-                        "🙋🏼‍♂️",
-                        "man raising hand"
-                    },
-                    {
-                        "🙋🏼‍♂",
-                        "man raising hand"
-                    },
-                    {
-                        "🙋🏽‍♂️",
-                        "man raising hand"
-                    },
-                    {
-                        "🙋🏽‍♂",
-                        "man raising hand"
-                    },
-                    {
-                        "🙋🏾‍♂️",
-                        "man raising hand"
-                    },
-                    {
-                        "🙋🏾‍♂",
-                        "man raising hand"
-                    },
-                    {
-                        "🙋🏿‍♂️",
-                        "man raising hand"
-                    },
-                    {
-                        "🙋🏿‍♂",
-                        "man raising hand"
-                    },
-                    {
                         "🙋‍♀️",
-                        "woman raising hand"
-                    },
-                    {
-                        "🙋‍♀",
-                        "woman raising hand"
-                    },
-                    {
-                        "🙋🏻‍♀️",
-                        "woman raising hand"
-                    },
-                    {
-                        "🙋🏻‍♀",
-                        "woman raising hand"
-                    },
-                    {
-                        "🙋🏼‍♀️",
-                        "woman raising hand"
-                    },
-                    {
-                        "🙋🏼‍♀",
-                        "woman raising hand"
-                    },
-                    {
-                        "🙋🏽‍♀️",
-                        "woman raising hand"
-                    },
-                    {
-                        "🙋🏽‍♀",
-                        "woman raising hand"
-                    },
-                    {
-                        "🙋🏾‍♀️",
-                        "woman raising hand"
-                    },
-                    {
-                        "🙋🏾‍♀",
-                        "woman raising hand"
-                    },
-                    {
-                        "🙋🏿‍♀️",
-                        "woman raising hand"
-                    },
-                    {
-                        "🙋🏿‍♀",
                         "woman raising hand"
                     },
                     {
@@ -3176,71 +1116,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "deaf person"
                     },
                     {
-                        "🧏🏻",
-                        "deaf person"
-                    },
-                    {
-                        "🧏🏼",
-                        "deaf person"
-                    },
-                    {
-                        "🧏🏽",
-                        "deaf person"
-                    },
-                    {
-                        "🧏🏾",
-                        "deaf person"
-                    },
-                    {
-                        "🧏🏿",
-                        "deaf person"
-                    },
-                    {
                         "🧏‍♂️",
-                        "deaf man"
-                    },
-                    {
-                        "🧏‍♂",
-                        "deaf man"
-                    },
-                    {
-                        "🧏🏻‍♂️",
-                        "deaf man"
-                    },
-                    {
-                        "🧏🏻‍♂",
-                        "deaf man"
-                    },
-                    {
-                        "🧏🏼‍♂️",
-                        "deaf man"
-                    },
-                    {
-                        "🧏🏼‍♂",
-                        "deaf man"
-                    },
-                    {
-                        "🧏🏽‍♂️",
-                        "deaf man"
-                    },
-                    {
-                        "🧏🏽‍♂",
-                        "deaf man"
-                    },
-                    {
-                        "🧏🏾‍♂️",
-                        "deaf man"
-                    },
-                    {
-                        "🧏🏾‍♂",
-                        "deaf man"
-                    },
-                    {
-                        "🧏🏿‍♂️",
-                        "deaf man"
-                    },
-                    {
-                        "🧏🏿‍♂",
                         "deaf man"
                     },
                     {
@@ -3248,71 +1124,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "deaf woman"
                     },
                     {
-                        "🧏‍♀",
-                        "deaf woman"
-                    },
-                    {
-                        "🧏🏻‍♀️",
-                        "deaf woman"
-                    },
-                    {
-                        "🧏🏻‍♀",
-                        "deaf woman"
-                    },
-                    {
-                        "🧏🏼‍♀️",
-                        "deaf woman"
-                    },
-                    {
-                        "🧏🏼‍♀",
-                        "deaf woman"
-                    },
-                    {
-                        "🧏🏽‍♀️",
-                        "deaf woman"
-                    },
-                    {
-                        "🧏🏽‍♀",
-                        "deaf woman"
-                    },
-                    {
-                        "🧏🏾‍♀️",
-                        "deaf woman"
-                    },
-                    {
-                        "🧏🏾‍♀",
-                        "deaf woman"
-                    },
-                    {
-                        "🧏🏿‍♀️",
-                        "deaf woman"
-                    },
-                    {
-                        "🧏🏿‍♀",
-                        "deaf woman"
-                    },
-                    {
                         "🙇",
-                        "person bowing"
-                    },
-                    {
-                        "🙇🏻",
-                        "person bowing"
-                    },
-                    {
-                        "🙇🏼",
-                        "person bowing"
-                    },
-                    {
-                        "🙇🏽",
-                        "person bowing"
-                    },
-                    {
-                        "🙇🏾",
-                        "person bowing"
-                    },
-                    {
-                        "🙇🏿",
                         "person bowing"
                     },
                     {
@@ -3320,95 +1132,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man bowing"
                     },
                     {
-                        "🙇‍♂",
-                        "man bowing"
-                    },
-                    {
-                        "🙇🏻‍♂️",
-                        "man bowing"
-                    },
-                    {
-                        "🙇🏻‍♂",
-                        "man bowing"
-                    },
-                    {
-                        "🙇🏼‍♂️",
-                        "man bowing"
-                    },
-                    {
-                        "🙇🏼‍♂",
-                        "man bowing"
-                    },
-                    {
-                        "🙇🏽‍♂️",
-                        "man bowing"
-                    },
-                    {
-                        "🙇🏽‍♂",
-                        "man bowing"
-                    },
-                    {
-                        "🙇🏾‍♂️",
-                        "man bowing"
-                    },
-                    {
-                        "🙇🏾‍♂",
-                        "man bowing"
-                    },
-                    {
-                        "🙇🏿‍♂️",
-                        "man bowing"
-                    },
-                    {
-                        "🙇🏿‍♂",
-                        "man bowing"
-                    },
-                    {
                         "🙇‍♀️",
-                        "woman bowing"
-                    },
-                    {
-                        "🙇‍♀",
-                        "woman bowing"
-                    },
-                    {
-                        "🙇🏻‍♀️",
-                        "woman bowing"
-                    },
-                    {
-                        "🙇🏻‍♀",
-                        "woman bowing"
-                    },
-                    {
-                        "🙇🏼‍♀️",
-                        "woman bowing"
-                    },
-                    {
-                        "🙇🏼‍♀",
-                        "woman bowing"
-                    },
-                    {
-                        "🙇🏽‍♀️",
-                        "woman bowing"
-                    },
-                    {
-                        "🙇🏽‍♀",
-                        "woman bowing"
-                    },
-                    {
-                        "🙇🏾‍♀️",
-                        "woman bowing"
-                    },
-                    {
-                        "🙇🏾‍♀",
-                        "woman bowing"
-                    },
-                    {
-                        "🙇🏿‍♀️",
-                        "woman bowing"
-                    },
-                    {
-                        "🙇🏿‍♀",
                         "woman bowing"
                     },
                     {
@@ -3416,71 +1140,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "person facepalming"
                     },
                     {
-                        "🤦🏻",
-                        "person facepalming"
-                    },
-                    {
-                        "🤦🏼",
-                        "person facepalming"
-                    },
-                    {
-                        "🤦🏽",
-                        "person facepalming"
-                    },
-                    {
-                        "🤦🏾",
-                        "person facepalming"
-                    },
-                    {
-                        "🤦🏿",
-                        "person facepalming"
-                    },
-                    {
                         "🤦‍♂️",
-                        "man facepalming"
-                    },
-                    {
-                        "🤦‍♂",
-                        "man facepalming"
-                    },
-                    {
-                        "🤦🏻‍♂️",
-                        "man facepalming"
-                    },
-                    {
-                        "🤦🏻‍♂",
-                        "man facepalming"
-                    },
-                    {
-                        "🤦🏼‍♂️",
-                        "man facepalming"
-                    },
-                    {
-                        "🤦🏼‍♂",
-                        "man facepalming"
-                    },
-                    {
-                        "🤦🏽‍♂️",
-                        "man facepalming"
-                    },
-                    {
-                        "🤦🏽‍♂",
-                        "man facepalming"
-                    },
-                    {
-                        "🤦🏾‍♂️",
-                        "man facepalming"
-                    },
-                    {
-                        "🤦🏾‍♂",
-                        "man facepalming"
-                    },
-                    {
-                        "🤦🏿‍♂️",
-                        "man facepalming"
-                    },
-                    {
-                        "🤦🏿‍♂",
                         "man facepalming"
                     },
                     {
@@ -3488,71 +1148,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman facepalming"
                     },
                     {
-                        "🤦‍♀",
-                        "woman facepalming"
-                    },
-                    {
-                        "🤦🏻‍♀️",
-                        "woman facepalming"
-                    },
-                    {
-                        "🤦🏻‍♀",
-                        "woman facepalming"
-                    },
-                    {
-                        "🤦🏼‍♀️",
-                        "woman facepalming"
-                    },
-                    {
-                        "🤦🏼‍♀",
-                        "woman facepalming"
-                    },
-                    {
-                        "🤦🏽‍♀️",
-                        "woman facepalming"
-                    },
-                    {
-                        "🤦🏽‍♀",
-                        "woman facepalming"
-                    },
-                    {
-                        "🤦🏾‍♀️",
-                        "woman facepalming"
-                    },
-                    {
-                        "🤦🏾‍♀",
-                        "woman facepalming"
-                    },
-                    {
-                        "🤦🏿‍♀️",
-                        "woman facepalming"
-                    },
-                    {
-                        "🤦🏿‍♀",
-                        "woman facepalming"
-                    },
-                    {
                         "🤷",
-                        "person shrugging"
-                    },
-                    {
-                        "🤷🏻",
-                        "person shrugging"
-                    },
-                    {
-                        "🤷🏼",
-                        "person shrugging"
-                    },
-                    {
-                        "🤷🏽",
-                        "person shrugging"
-                    },
-                    {
-                        "🤷🏾",
-                        "person shrugging"
-                    },
-                    {
-                        "🤷🏿",
                         "person shrugging"
                     },
                     {
@@ -3560,95 +1156,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man shrugging"
                     },
                     {
-                        "🤷‍♂",
-                        "man shrugging"
-                    },
-                    {
-                        "🤷🏻‍♂️",
-                        "man shrugging"
-                    },
-                    {
-                        "🤷🏻‍♂",
-                        "man shrugging"
-                    },
-                    {
-                        "🤷🏼‍♂️",
-                        "man shrugging"
-                    },
-                    {
-                        "🤷🏼‍♂",
-                        "man shrugging"
-                    },
-                    {
-                        "🤷🏽‍♂️",
-                        "man shrugging"
-                    },
-                    {
-                        "🤷🏽‍♂",
-                        "man shrugging"
-                    },
-                    {
-                        "🤷🏾‍♂️",
-                        "man shrugging"
-                    },
-                    {
-                        "🤷🏾‍♂",
-                        "man shrugging"
-                    },
-                    {
-                        "🤷🏿‍♂️",
-                        "man shrugging"
-                    },
-                    {
-                        "🤷🏿‍♂",
-                        "man shrugging"
-                    },
-                    {
                         "🤷‍♀️",
-                        "woman shrugging"
-                    },
-                    {
-                        "🤷‍♀",
-                        "woman shrugging"
-                    },
-                    {
-                        "🤷🏻‍♀️",
-                        "woman shrugging"
-                    },
-                    {
-                        "🤷🏻‍♀",
-                        "woman shrugging"
-                    },
-                    {
-                        "🤷🏼‍♀️",
-                        "woman shrugging"
-                    },
-                    {
-                        "🤷🏼‍♀",
-                        "woman shrugging"
-                    },
-                    {
-                        "🤷🏽‍♀️",
-                        "woman shrugging"
-                    },
-                    {
-                        "🤷🏽‍♀",
-                        "woman shrugging"
-                    },
-                    {
-                        "🤷🏾‍♀️",
-                        "woman shrugging"
-                    },
-                    {
-                        "🤷🏾‍♀",
-                        "woman shrugging"
-                    },
-                    {
-                        "🤷🏿‍♀️",
-                        "woman shrugging"
-                    },
-                    {
-                        "🤷🏿‍♀",
                         "woman shrugging"
                     }
                 }
@@ -3661,95 +1169,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "health worker"
                     },
                     {
-                        "🧑‍⚕",
-                        "health worker"
-                    },
-                    {
-                        "🧑🏻‍⚕️",
-                        "health worker"
-                    },
-                    {
-                        "🧑🏻‍⚕",
-                        "health worker"
-                    },
-                    {
-                        "🧑🏼‍⚕️",
-                        "health worker"
-                    },
-                    {
-                        "🧑🏼‍⚕",
-                        "health worker"
-                    },
-                    {
-                        "🧑🏽‍⚕️",
-                        "health worker"
-                    },
-                    {
-                        "🧑🏽‍⚕",
-                        "health worker"
-                    },
-                    {
-                        "🧑🏾‍⚕️",
-                        "health worker"
-                    },
-                    {
-                        "🧑🏾‍⚕",
-                        "health worker"
-                    },
-                    {
-                        "🧑🏿‍⚕️",
-                        "health worker"
-                    },
-                    {
-                        "🧑🏿‍⚕",
-                        "health worker"
-                    },
-                    {
                         "👨‍⚕️",
-                        "man health worker"
-                    },
-                    {
-                        "👨‍⚕",
-                        "man health worker"
-                    },
-                    {
-                        "👨🏻‍⚕️",
-                        "man health worker"
-                    },
-                    {
-                        "👨🏻‍⚕",
-                        "man health worker"
-                    },
-                    {
-                        "👨🏼‍⚕️",
-                        "man health worker"
-                    },
-                    {
-                        "👨🏼‍⚕",
-                        "man health worker"
-                    },
-                    {
-                        "👨🏽‍⚕️",
-                        "man health worker"
-                    },
-                    {
-                        "👨🏽‍⚕",
-                        "man health worker"
-                    },
-                    {
-                        "👨🏾‍⚕️",
-                        "man health worker"
-                    },
-                    {
-                        "👨🏾‍⚕",
-                        "man health worker"
-                    },
-                    {
-                        "👨🏿‍⚕️",
-                        "man health worker"
-                    },
-                    {
-                        "👨🏿‍⚕",
                         "man health worker"
                     },
                     {
@@ -3757,71 +1177,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman health worker"
                     },
                     {
-                        "👩‍⚕",
-                        "woman health worker"
-                    },
-                    {
-                        "👩🏻‍⚕️",
-                        "woman health worker"
-                    },
-                    {
-                        "👩🏻‍⚕",
-                        "woman health worker"
-                    },
-                    {
-                        "👩🏼‍⚕️",
-                        "woman health worker"
-                    },
-                    {
-                        "👩🏼‍⚕",
-                        "woman health worker"
-                    },
-                    {
-                        "👩🏽‍⚕️",
-                        "woman health worker"
-                    },
-                    {
-                        "👩🏽‍⚕",
-                        "woman health worker"
-                    },
-                    {
-                        "👩🏾‍⚕️",
-                        "woman health worker"
-                    },
-                    {
-                        "👩🏾‍⚕",
-                        "woman health worker"
-                    },
-                    {
-                        "👩🏿‍⚕️",
-                        "woman health worker"
-                    },
-                    {
-                        "👩🏿‍⚕",
-                        "woman health worker"
-                    },
-                    {
                         "🧑‍🎓",
-                        "student"
-                    },
-                    {
-                        "🧑🏻‍🎓",
-                        "student"
-                    },
-                    {
-                        "🧑🏼‍🎓",
-                        "student"
-                    },
-                    {
-                        "🧑🏽‍🎓",
-                        "student"
-                    },
-                    {
-                        "🧑🏾‍🎓",
-                        "student"
-                    },
-                    {
-                        "🧑🏿‍🎓",
                         "student"
                     },
                     {
@@ -3829,47 +1185,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man student"
                     },
                     {
-                        "👨🏻‍🎓",
-                        "man student"
-                    },
-                    {
-                        "👨🏼‍🎓",
-                        "man student"
-                    },
-                    {
-                        "👨🏽‍🎓",
-                        "man student"
-                    },
-                    {
-                        "👨🏾‍🎓",
-                        "man student"
-                    },
-                    {
-                        "👨🏿‍🎓",
-                        "man student"
-                    },
-                    {
                         "👩‍🎓",
-                        "woman student"
-                    },
-                    {
-                        "👩🏻‍🎓",
-                        "woman student"
-                    },
-                    {
-                        "👩🏼‍🎓",
-                        "woman student"
-                    },
-                    {
-                        "👩🏽‍🎓",
-                        "woman student"
-                    },
-                    {
-                        "👩🏾‍🎓",
-                        "woman student"
-                    },
-                    {
-                        "👩🏿‍🎓",
                         "woman student"
                     },
                     {
@@ -3877,47 +1193,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "teacher"
                     },
                     {
-                        "🧑🏻‍🏫",
-                        "teacher"
-                    },
-                    {
-                        "🧑🏼‍🏫",
-                        "teacher"
-                    },
-                    {
-                        "🧑🏽‍🏫",
-                        "teacher"
-                    },
-                    {
-                        "🧑🏾‍🏫",
-                        "teacher"
-                    },
-                    {
-                        "🧑🏿‍🏫",
-                        "teacher"
-                    },
-                    {
                         "👨‍🏫",
-                        "man teacher"
-                    },
-                    {
-                        "👨🏻‍🏫",
-                        "man teacher"
-                    },
-                    {
-                        "👨🏼‍🏫",
-                        "man teacher"
-                    },
-                    {
-                        "👨🏽‍🏫",
-                        "man teacher"
-                    },
-                    {
-                        "👨🏾‍🏫",
-                        "man teacher"
-                    },
-                    {
-                        "👨🏿‍🏫",
                         "man teacher"
                     },
                     {
@@ -3925,71 +1201,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman teacher"
                     },
                     {
-                        "👩🏻‍🏫",
-                        "woman teacher"
-                    },
-                    {
-                        "👩🏼‍🏫",
-                        "woman teacher"
-                    },
-                    {
-                        "👩🏽‍🏫",
-                        "woman teacher"
-                    },
-                    {
-                        "👩🏾‍🏫",
-                        "woman teacher"
-                    },
-                    {
-                        "👩🏿‍🏫",
-                        "woman teacher"
-                    },
-                    {
                         "🧑‍⚖️",
-                        "judge"
-                    },
-                    {
-                        "🧑‍⚖",
-                        "judge"
-                    },
-                    {
-                        "🧑🏻‍⚖️",
-                        "judge"
-                    },
-                    {
-                        "🧑🏻‍⚖",
-                        "judge"
-                    },
-                    {
-                        "🧑🏼‍⚖️",
-                        "judge"
-                    },
-                    {
-                        "🧑🏼‍⚖",
-                        "judge"
-                    },
-                    {
-                        "🧑🏽‍⚖️",
-                        "judge"
-                    },
-                    {
-                        "🧑🏽‍⚖",
-                        "judge"
-                    },
-                    {
-                        "🧑🏾‍⚖️",
-                        "judge"
-                    },
-                    {
-                        "🧑🏾‍⚖",
-                        "judge"
-                    },
-                    {
-                        "🧑🏿‍⚖️",
-                        "judge"
-                    },
-                    {
-                        "🧑🏿‍⚖",
                         "judge"
                     },
                     {
@@ -3997,95 +1209,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man judge"
                     },
                     {
-                        "👨‍⚖",
-                        "man judge"
-                    },
-                    {
-                        "👨🏻‍⚖️",
-                        "man judge"
-                    },
-                    {
-                        "👨🏻‍⚖",
-                        "man judge"
-                    },
-                    {
-                        "👨🏼‍⚖️",
-                        "man judge"
-                    },
-                    {
-                        "👨🏼‍⚖",
-                        "man judge"
-                    },
-                    {
-                        "👨🏽‍⚖️",
-                        "man judge"
-                    },
-                    {
-                        "👨🏽‍⚖",
-                        "man judge"
-                    },
-                    {
-                        "👨🏾‍⚖️",
-                        "man judge"
-                    },
-                    {
-                        "👨🏾‍⚖",
-                        "man judge"
-                    },
-                    {
-                        "👨🏿‍⚖️",
-                        "man judge"
-                    },
-                    {
-                        "👨🏿‍⚖",
-                        "man judge"
-                    },
-                    {
                         "👩‍⚖️",
-                        "woman judge"
-                    },
-                    {
-                        "👩‍⚖",
-                        "woman judge"
-                    },
-                    {
-                        "👩🏻‍⚖️",
-                        "woman judge"
-                    },
-                    {
-                        "👩🏻‍⚖",
-                        "woman judge"
-                    },
-                    {
-                        "👩🏼‍⚖️",
-                        "woman judge"
-                    },
-                    {
-                        "👩🏼‍⚖",
-                        "woman judge"
-                    },
-                    {
-                        "👩🏽‍⚖️",
-                        "woman judge"
-                    },
-                    {
-                        "👩🏽‍⚖",
-                        "woman judge"
-                    },
-                    {
-                        "👩🏾‍⚖️",
-                        "woman judge"
-                    },
-                    {
-                        "👩🏾‍⚖",
-                        "woman judge"
-                    },
-                    {
-                        "👩🏿‍⚖️",
-                        "woman judge"
-                    },
-                    {
-                        "👩🏿‍⚖",
                         "woman judge"
                     },
                     {
@@ -4093,47 +1217,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "farmer"
                     },
                     {
-                        "🧑🏻‍🌾",
-                        "farmer"
-                    },
-                    {
-                        "🧑🏼‍🌾",
-                        "farmer"
-                    },
-                    {
-                        "🧑🏽‍🌾",
-                        "farmer"
-                    },
-                    {
-                        "🧑🏾‍🌾",
-                        "farmer"
-                    },
-                    {
-                        "🧑🏿‍🌾",
-                        "farmer"
-                    },
-                    {
                         "👨‍🌾",
-                        "man farmer"
-                    },
-                    {
-                        "👨🏻‍🌾",
-                        "man farmer"
-                    },
-                    {
-                        "👨🏼‍🌾",
-                        "man farmer"
-                    },
-                    {
-                        "👨🏽‍🌾",
-                        "man farmer"
-                    },
-                    {
-                        "👨🏾‍🌾",
-                        "man farmer"
-                    },
-                    {
-                        "👨🏿‍🌾",
                         "man farmer"
                     },
                     {
@@ -4141,47 +1225,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman farmer"
                     },
                     {
-                        "👩🏻‍🌾",
-                        "woman farmer"
-                    },
-                    {
-                        "👩🏼‍🌾",
-                        "woman farmer"
-                    },
-                    {
-                        "👩🏽‍🌾",
-                        "woman farmer"
-                    },
-                    {
-                        "👩🏾‍🌾",
-                        "woman farmer"
-                    },
-                    {
-                        "👩🏿‍🌾",
-                        "woman farmer"
-                    },
-                    {
                         "🧑‍🍳",
-                        "cook"
-                    },
-                    {
-                        "🧑🏻‍🍳",
-                        "cook"
-                    },
-                    {
-                        "🧑🏼‍🍳",
-                        "cook"
-                    },
-                    {
-                        "🧑🏽‍🍳",
-                        "cook"
-                    },
-                    {
-                        "🧑🏾‍🍳",
-                        "cook"
-                    },
-                    {
-                        "🧑🏿‍🍳",
                         "cook"
                     },
                     {
@@ -4189,47 +1233,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man cook"
                     },
                     {
-                        "👨🏻‍🍳",
-                        "man cook"
-                    },
-                    {
-                        "👨🏼‍🍳",
-                        "man cook"
-                    },
-                    {
-                        "👨🏽‍🍳",
-                        "man cook"
-                    },
-                    {
-                        "👨🏾‍🍳",
-                        "man cook"
-                    },
-                    {
-                        "👨🏿‍🍳",
-                        "man cook"
-                    },
-                    {
                         "👩‍🍳",
-                        "woman cook"
-                    },
-                    {
-                        "👩🏻‍🍳",
-                        "woman cook"
-                    },
-                    {
-                        "👩🏼‍🍳",
-                        "woman cook"
-                    },
-                    {
-                        "👩🏽‍🍳",
-                        "woman cook"
-                    },
-                    {
-                        "👩🏾‍🍳",
-                        "woman cook"
-                    },
-                    {
-                        "👩🏿‍🍳",
                         "woman cook"
                     },
                     {
@@ -4237,47 +1241,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "mechanic"
                     },
                     {
-                        "🧑🏻‍🔧",
-                        "mechanic"
-                    },
-                    {
-                        "🧑🏼‍🔧",
-                        "mechanic"
-                    },
-                    {
-                        "🧑🏽‍🔧",
-                        "mechanic"
-                    },
-                    {
-                        "🧑🏾‍🔧",
-                        "mechanic"
-                    },
-                    {
-                        "🧑🏿‍🔧",
-                        "mechanic"
-                    },
-                    {
                         "👨‍🔧",
-                        "man mechanic"
-                    },
-                    {
-                        "👨🏻‍🔧",
-                        "man mechanic"
-                    },
-                    {
-                        "👨🏼‍🔧",
-                        "man mechanic"
-                    },
-                    {
-                        "👨🏽‍🔧",
-                        "man mechanic"
-                    },
-                    {
-                        "👨🏾‍🔧",
-                        "man mechanic"
-                    },
-                    {
-                        "👨🏿‍🔧",
                         "man mechanic"
                     },
                     {
@@ -4285,47 +1249,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman mechanic"
                     },
                     {
-                        "👩🏻‍🔧",
-                        "woman mechanic"
-                    },
-                    {
-                        "👩🏼‍🔧",
-                        "woman mechanic"
-                    },
-                    {
-                        "👩🏽‍🔧",
-                        "woman mechanic"
-                    },
-                    {
-                        "👩🏾‍🔧",
-                        "woman mechanic"
-                    },
-                    {
-                        "👩🏿‍🔧",
-                        "woman mechanic"
-                    },
-                    {
                         "🧑‍🏭",
-                        "factory worker"
-                    },
-                    {
-                        "🧑🏻‍🏭",
-                        "factory worker"
-                    },
-                    {
-                        "🧑🏼‍🏭",
-                        "factory worker"
-                    },
-                    {
-                        "🧑🏽‍🏭",
-                        "factory worker"
-                    },
-                    {
-                        "🧑🏾‍🏭",
-                        "factory worker"
-                    },
-                    {
-                        "🧑🏿‍🏭",
                         "factory worker"
                     },
                     {
@@ -4333,47 +1257,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man factory worker"
                     },
                     {
-                        "👨🏻‍🏭",
-                        "man factory worker"
-                    },
-                    {
-                        "👨🏼‍🏭",
-                        "man factory worker"
-                    },
-                    {
-                        "👨🏽‍🏭",
-                        "man factory worker"
-                    },
-                    {
-                        "👨🏾‍🏭",
-                        "man factory worker"
-                    },
-                    {
-                        "👨🏿‍🏭",
-                        "man factory worker"
-                    },
-                    {
                         "👩‍🏭",
-                        "woman factory worker"
-                    },
-                    {
-                        "👩🏻‍🏭",
-                        "woman factory worker"
-                    },
-                    {
-                        "👩🏼‍🏭",
-                        "woman factory worker"
-                    },
-                    {
-                        "👩🏽‍🏭",
-                        "woman factory worker"
-                    },
-                    {
-                        "👩🏾‍🏭",
-                        "woman factory worker"
-                    },
-                    {
-                        "👩🏿‍🏭",
                         "woman factory worker"
                     },
                     {
@@ -4381,47 +1265,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "office worker"
                     },
                     {
-                        "🧑🏻‍💼",
-                        "office worker"
-                    },
-                    {
-                        "🧑🏼‍💼",
-                        "office worker"
-                    },
-                    {
-                        "🧑🏽‍💼",
-                        "office worker"
-                    },
-                    {
-                        "🧑🏾‍💼",
-                        "office worker"
-                    },
-                    {
-                        "🧑🏿‍💼",
-                        "office worker"
-                    },
-                    {
                         "👨‍💼",
-                        "man office worker"
-                    },
-                    {
-                        "👨🏻‍💼",
-                        "man office worker"
-                    },
-                    {
-                        "👨🏼‍💼",
-                        "man office worker"
-                    },
-                    {
-                        "👨🏽‍💼",
-                        "man office worker"
-                    },
-                    {
-                        "👨🏾‍💼",
-                        "man office worker"
-                    },
-                    {
-                        "👨🏿‍💼",
                         "man office worker"
                     },
                     {
@@ -4429,47 +1273,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman office worker"
                     },
                     {
-                        "👩🏻‍💼",
-                        "woman office worker"
-                    },
-                    {
-                        "👩🏼‍💼",
-                        "woman office worker"
-                    },
-                    {
-                        "👩🏽‍💼",
-                        "woman office worker"
-                    },
-                    {
-                        "👩🏾‍💼",
-                        "woman office worker"
-                    },
-                    {
-                        "👩🏿‍💼",
-                        "woman office worker"
-                    },
-                    {
                         "🧑‍🔬",
-                        "scientist"
-                    },
-                    {
-                        "🧑🏻‍🔬",
-                        "scientist"
-                    },
-                    {
-                        "🧑🏼‍🔬",
-                        "scientist"
-                    },
-                    {
-                        "🧑🏽‍🔬",
-                        "scientist"
-                    },
-                    {
-                        "🧑🏾‍🔬",
-                        "scientist"
-                    },
-                    {
-                        "🧑🏿‍🔬",
                         "scientist"
                     },
                     {
@@ -4477,47 +1281,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man scientist"
                     },
                     {
-                        "👨🏻‍🔬",
-                        "man scientist"
-                    },
-                    {
-                        "👨🏼‍🔬",
-                        "man scientist"
-                    },
-                    {
-                        "👨🏽‍🔬",
-                        "man scientist"
-                    },
-                    {
-                        "👨🏾‍🔬",
-                        "man scientist"
-                    },
-                    {
-                        "👨🏿‍🔬",
-                        "man scientist"
-                    },
-                    {
                         "👩‍🔬",
-                        "woman scientist"
-                    },
-                    {
-                        "👩🏻‍🔬",
-                        "woman scientist"
-                    },
-                    {
-                        "👩🏼‍🔬",
-                        "woman scientist"
-                    },
-                    {
-                        "👩🏽‍🔬",
-                        "woman scientist"
-                    },
-                    {
-                        "👩🏾‍🔬",
-                        "woman scientist"
-                    },
-                    {
-                        "👩🏿‍🔬",
                         "woman scientist"
                     },
                     {
@@ -4525,47 +1289,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "technologist"
                     },
                     {
-                        "🧑🏻‍💻",
-                        "technologist"
-                    },
-                    {
-                        "🧑🏼‍💻",
-                        "technologist"
-                    },
-                    {
-                        "🧑🏽‍💻",
-                        "technologist"
-                    },
-                    {
-                        "🧑🏾‍💻",
-                        "technologist"
-                    },
-                    {
-                        "🧑🏿‍💻",
-                        "technologist"
-                    },
-                    {
                         "👨‍💻",
-                        "man technologist"
-                    },
-                    {
-                        "👨🏻‍💻",
-                        "man technologist"
-                    },
-                    {
-                        "👨🏼‍💻",
-                        "man technologist"
-                    },
-                    {
-                        "👨🏽‍💻",
-                        "man technologist"
-                    },
-                    {
-                        "👨🏾‍💻",
-                        "man technologist"
-                    },
-                    {
-                        "👨🏿‍💻",
                         "man technologist"
                     },
                     {
@@ -4573,47 +1297,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman technologist"
                     },
                     {
-                        "👩🏻‍💻",
-                        "woman technologist"
-                    },
-                    {
-                        "👩🏼‍💻",
-                        "woman technologist"
-                    },
-                    {
-                        "👩🏽‍💻",
-                        "woman technologist"
-                    },
-                    {
-                        "👩🏾‍💻",
-                        "woman technologist"
-                    },
-                    {
-                        "👩🏿‍💻",
-                        "woman technologist"
-                    },
-                    {
                         "🧑‍🎤",
-                        "singer"
-                    },
-                    {
-                        "🧑🏻‍🎤",
-                        "singer"
-                    },
-                    {
-                        "🧑🏼‍🎤",
-                        "singer"
-                    },
-                    {
-                        "🧑🏽‍🎤",
-                        "singer"
-                    },
-                    {
-                        "🧑🏾‍🎤",
-                        "singer"
-                    },
-                    {
-                        "🧑🏿‍🎤",
                         "singer"
                     },
                     {
@@ -4621,47 +1305,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man singer"
                     },
                     {
-                        "👨🏻‍🎤",
-                        "man singer"
-                    },
-                    {
-                        "👨🏼‍🎤",
-                        "man singer"
-                    },
-                    {
-                        "👨🏽‍🎤",
-                        "man singer"
-                    },
-                    {
-                        "👨🏾‍🎤",
-                        "man singer"
-                    },
-                    {
-                        "👨🏿‍🎤",
-                        "man singer"
-                    },
-                    {
                         "👩‍🎤",
-                        "woman singer"
-                    },
-                    {
-                        "👩🏻‍🎤",
-                        "woman singer"
-                    },
-                    {
-                        "👩🏼‍🎤",
-                        "woman singer"
-                    },
-                    {
-                        "👩🏽‍🎤",
-                        "woman singer"
-                    },
-                    {
-                        "👩🏾‍🎤",
-                        "woman singer"
-                    },
-                    {
-                        "👩🏿‍🎤",
                         "woman singer"
                     },
                     {
@@ -4669,47 +1313,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "artist"
                     },
                     {
-                        "🧑🏻‍🎨",
-                        "artist"
-                    },
-                    {
-                        "🧑🏼‍🎨",
-                        "artist"
-                    },
-                    {
-                        "🧑🏽‍🎨",
-                        "artist"
-                    },
-                    {
-                        "🧑🏾‍🎨",
-                        "artist"
-                    },
-                    {
-                        "🧑🏿‍🎨",
-                        "artist"
-                    },
-                    {
                         "👨‍🎨",
-                        "man artist"
-                    },
-                    {
-                        "👨🏻‍🎨",
-                        "man artist"
-                    },
-                    {
-                        "👨🏼‍🎨",
-                        "man artist"
-                    },
-                    {
-                        "👨🏽‍🎨",
-                        "man artist"
-                    },
-                    {
-                        "👨🏾‍🎨",
-                        "man artist"
-                    },
-                    {
-                        "👨🏿‍🎨",
                         "man artist"
                     },
                     {
@@ -4717,71 +1321,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman artist"
                     },
                     {
-                        "👩🏻‍🎨",
-                        "woman artist"
-                    },
-                    {
-                        "👩🏼‍🎨",
-                        "woman artist"
-                    },
-                    {
-                        "👩🏽‍🎨",
-                        "woman artist"
-                    },
-                    {
-                        "👩🏾‍🎨",
-                        "woman artist"
-                    },
-                    {
-                        "👩🏿‍🎨",
-                        "woman artist"
-                    },
-                    {
                         "🧑‍✈️",
-                        "pilot"
-                    },
-                    {
-                        "🧑‍✈",
-                        "pilot"
-                    },
-                    {
-                        "🧑🏻‍✈️",
-                        "pilot"
-                    },
-                    {
-                        "🧑🏻‍✈",
-                        "pilot"
-                    },
-                    {
-                        "🧑🏼‍✈️",
-                        "pilot"
-                    },
-                    {
-                        "🧑🏼‍✈",
-                        "pilot"
-                    },
-                    {
-                        "🧑🏽‍✈️",
-                        "pilot"
-                    },
-                    {
-                        "🧑🏽‍✈",
-                        "pilot"
-                    },
-                    {
-                        "🧑🏾‍✈️",
-                        "pilot"
-                    },
-                    {
-                        "🧑🏾‍✈",
-                        "pilot"
-                    },
-                    {
-                        "🧑🏿‍✈️",
-                        "pilot"
-                    },
-                    {
-                        "🧑🏿‍✈",
                         "pilot"
                     },
                     {
@@ -4789,95 +1329,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man pilot"
                     },
                     {
-                        "👨‍✈",
-                        "man pilot"
-                    },
-                    {
-                        "👨🏻‍✈️",
-                        "man pilot"
-                    },
-                    {
-                        "👨🏻‍✈",
-                        "man pilot"
-                    },
-                    {
-                        "👨🏼‍✈️",
-                        "man pilot"
-                    },
-                    {
-                        "👨🏼‍✈",
-                        "man pilot"
-                    },
-                    {
-                        "👨🏽‍✈️",
-                        "man pilot"
-                    },
-                    {
-                        "👨🏽‍✈",
-                        "man pilot"
-                    },
-                    {
-                        "👨🏾‍✈️",
-                        "man pilot"
-                    },
-                    {
-                        "👨🏾‍✈",
-                        "man pilot"
-                    },
-                    {
-                        "👨🏿‍✈️",
-                        "man pilot"
-                    },
-                    {
-                        "👨🏿‍✈",
-                        "man pilot"
-                    },
-                    {
                         "👩‍✈️",
-                        "woman pilot"
-                    },
-                    {
-                        "👩‍✈",
-                        "woman pilot"
-                    },
-                    {
-                        "👩🏻‍✈️",
-                        "woman pilot"
-                    },
-                    {
-                        "👩🏻‍✈",
-                        "woman pilot"
-                    },
-                    {
-                        "👩🏼‍✈️",
-                        "woman pilot"
-                    },
-                    {
-                        "👩🏼‍✈",
-                        "woman pilot"
-                    },
-                    {
-                        "👩🏽‍✈️",
-                        "woman pilot"
-                    },
-                    {
-                        "👩🏽‍✈",
-                        "woman pilot"
-                    },
-                    {
-                        "👩🏾‍✈️",
-                        "woman pilot"
-                    },
-                    {
-                        "👩🏾‍✈",
-                        "woman pilot"
-                    },
-                    {
-                        "👩🏿‍✈️",
-                        "woman pilot"
-                    },
-                    {
-                        "👩🏿‍✈",
                         "woman pilot"
                     },
                     {
@@ -4885,47 +1337,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "astronaut"
                     },
                     {
-                        "🧑🏻‍🚀",
-                        "astronaut"
-                    },
-                    {
-                        "🧑🏼‍🚀",
-                        "astronaut"
-                    },
-                    {
-                        "🧑🏽‍🚀",
-                        "astronaut"
-                    },
-                    {
-                        "🧑🏾‍🚀",
-                        "astronaut"
-                    },
-                    {
-                        "🧑🏿‍🚀",
-                        "astronaut"
-                    },
-                    {
                         "👨‍🚀",
-                        "man astronaut"
-                    },
-                    {
-                        "👨🏻‍🚀",
-                        "man astronaut"
-                    },
-                    {
-                        "👨🏼‍🚀",
-                        "man astronaut"
-                    },
-                    {
-                        "👨🏽‍🚀",
-                        "man astronaut"
-                    },
-                    {
-                        "👨🏾‍🚀",
-                        "man astronaut"
-                    },
-                    {
-                        "👨🏿‍🚀",
                         "man astronaut"
                     },
                     {
@@ -4933,47 +1345,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman astronaut"
                     },
                     {
-                        "👩🏻‍🚀",
-                        "woman astronaut"
-                    },
-                    {
-                        "👩🏼‍🚀",
-                        "woman astronaut"
-                    },
-                    {
-                        "👩🏽‍🚀",
-                        "woman astronaut"
-                    },
-                    {
-                        "👩🏾‍🚀",
-                        "woman astronaut"
-                    },
-                    {
-                        "👩🏿‍🚀",
-                        "woman astronaut"
-                    },
-                    {
                         "🧑‍🚒",
-                        "firefighter"
-                    },
-                    {
-                        "🧑🏻‍🚒",
-                        "firefighter"
-                    },
-                    {
-                        "🧑🏼‍🚒",
-                        "firefighter"
-                    },
-                    {
-                        "🧑🏽‍🚒",
-                        "firefighter"
-                    },
-                    {
-                        "🧑🏾‍🚒",
-                        "firefighter"
-                    },
-                    {
-                        "🧑🏿‍🚒",
                         "firefighter"
                     },
                     {
@@ -4981,47 +1353,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man firefighter"
                     },
                     {
-                        "👨🏻‍🚒",
-                        "man firefighter"
-                    },
-                    {
-                        "👨🏼‍🚒",
-                        "man firefighter"
-                    },
-                    {
-                        "👨🏽‍🚒",
-                        "man firefighter"
-                    },
-                    {
-                        "👨🏾‍🚒",
-                        "man firefighter"
-                    },
-                    {
-                        "👨🏿‍🚒",
-                        "man firefighter"
-                    },
-                    {
                         "👩‍🚒",
-                        "woman firefighter"
-                    },
-                    {
-                        "👩🏻‍🚒",
-                        "woman firefighter"
-                    },
-                    {
-                        "👩🏼‍🚒",
-                        "woman firefighter"
-                    },
-                    {
-                        "👩🏽‍🚒",
-                        "woman firefighter"
-                    },
-                    {
-                        "👩🏾‍🚒",
-                        "woman firefighter"
-                    },
-                    {
-                        "👩🏿‍🚒",
                         "woman firefighter"
                     },
                     {
@@ -5029,71 +1361,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "police officer"
                     },
                     {
-                        "👮🏻",
-                        "police officer"
-                    },
-                    {
-                        "👮🏼",
-                        "police officer"
-                    },
-                    {
-                        "👮🏽",
-                        "police officer"
-                    },
-                    {
-                        "👮🏾",
-                        "police officer"
-                    },
-                    {
-                        "👮🏿",
-                        "police officer"
-                    },
-                    {
                         "👮‍♂️",
-                        "man police officer"
-                    },
-                    {
-                        "👮‍♂",
-                        "man police officer"
-                    },
-                    {
-                        "👮🏻‍♂️",
-                        "man police officer"
-                    },
-                    {
-                        "👮🏻‍♂",
-                        "man police officer"
-                    },
-                    {
-                        "👮🏼‍♂️",
-                        "man police officer"
-                    },
-                    {
-                        "👮🏼‍♂",
-                        "man police officer"
-                    },
-                    {
-                        "👮🏽‍♂️",
-                        "man police officer"
-                    },
-                    {
-                        "👮🏽‍♂",
-                        "man police officer"
-                    },
-                    {
-                        "👮🏾‍♂️",
-                        "man police officer"
-                    },
-                    {
-                        "👮🏾‍♂",
-                        "man police officer"
-                    },
-                    {
-                        "👮🏿‍♂️",
-                        "man police officer"
-                    },
-                    {
-                        "👮🏿‍♂",
                         "man police officer"
                     },
                     {
@@ -5101,75 +1369,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman police officer"
                     },
                     {
-                        "👮‍♀",
-                        "woman police officer"
-                    },
-                    {
-                        "👮🏻‍♀️",
-                        "woman police officer"
-                    },
-                    {
-                        "👮🏻‍♀",
-                        "woman police officer"
-                    },
-                    {
-                        "👮🏼‍♀️",
-                        "woman police officer"
-                    },
-                    {
-                        "👮🏼‍♀",
-                        "woman police officer"
-                    },
-                    {
-                        "👮🏽‍♀️",
-                        "woman police officer"
-                    },
-                    {
-                        "👮🏽‍♀",
-                        "woman police officer"
-                    },
-                    {
-                        "👮🏾‍♀️",
-                        "woman police officer"
-                    },
-                    {
-                        "👮🏾‍♀",
-                        "woman police officer"
-                    },
-                    {
-                        "👮🏿‍♀️",
-                        "woman police officer"
-                    },
-                    {
-                        "👮🏿‍♀",
-                        "woman police officer"
-                    },
-                    {
                         "🕵️",
-                        "detective"
-                    },
-                    {
-                        "🕵",
-                        "detective"
-                    },
-                    {
-                        "🕵🏻",
-                        "detective"
-                    },
-                    {
-                        "🕵🏼",
-                        "detective"
-                    },
-                    {
-                        "🕵🏽",
-                        "detective"
-                    },
-                    {
-                        "🕵🏾",
-                        "detective"
-                    },
-                    {
-                        "🕵🏿",
                         "detective"
                     },
                     {
@@ -5177,111 +1377,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man detective"
                     },
                     {
-                        "🕵‍♂️",
-                        "man detective"
-                    },
-                    {
-                        "🕵️‍♂",
-                        "man detective"
-                    },
-                    {
-                        "🕵‍♂",
-                        "man detective"
-                    },
-                    {
-                        "🕵🏻‍♂️",
-                        "man detective"
-                    },
-                    {
-                        "🕵🏻‍♂",
-                        "man detective"
-                    },
-                    {
-                        "🕵🏼‍♂️",
-                        "man detective"
-                    },
-                    {
-                        "🕵🏼‍♂",
-                        "man detective"
-                    },
-                    {
-                        "🕵🏽‍♂️",
-                        "man detective"
-                    },
-                    {
-                        "🕵🏽‍♂",
-                        "man detective"
-                    },
-                    {
-                        "🕵🏾‍♂️",
-                        "man detective"
-                    },
-                    {
-                        "🕵🏾‍♂",
-                        "man detective"
-                    },
-                    {
-                        "🕵🏿‍♂️",
-                        "man detective"
-                    },
-                    {
-                        "🕵🏿‍♂",
-                        "man detective"
-                    },
-                    {
                         "🕵️‍♀️",
-                        "woman detective"
-                    },
-                    {
-                        "🕵‍♀️",
-                        "woman detective"
-                    },
-                    {
-                        "🕵️‍♀",
-                        "woman detective"
-                    },
-                    {
-                        "🕵‍♀",
-                        "woman detective"
-                    },
-                    {
-                        "🕵🏻‍♀️",
-                        "woman detective"
-                    },
-                    {
-                        "🕵🏻‍♀",
-                        "woman detective"
-                    },
-                    {
-                        "🕵🏼‍♀️",
-                        "woman detective"
-                    },
-                    {
-                        "🕵🏼‍♀",
-                        "woman detective"
-                    },
-                    {
-                        "🕵🏽‍♀️",
-                        "woman detective"
-                    },
-                    {
-                        "🕵🏽‍♀",
-                        "woman detective"
-                    },
-                    {
-                        "🕵🏾‍♀️",
-                        "woman detective"
-                    },
-                    {
-                        "🕵🏾‍♀",
-                        "woman detective"
-                    },
-                    {
-                        "🕵🏿‍♀️",
-                        "woman detective"
-                    },
-                    {
-                        "🕵🏿‍♀",
                         "woman detective"
                     },
                     {
@@ -5289,71 +1385,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "guard"
                     },
                     {
-                        "💂🏻",
-                        "guard"
-                    },
-                    {
-                        "💂🏼",
-                        "guard"
-                    },
-                    {
-                        "💂🏽",
-                        "guard"
-                    },
-                    {
-                        "💂🏾",
-                        "guard"
-                    },
-                    {
-                        "💂🏿",
-                        "guard"
-                    },
-                    {
                         "💂‍♂️",
-                        "man guard"
-                    },
-                    {
-                        "💂‍♂",
-                        "man guard"
-                    },
-                    {
-                        "💂🏻‍♂️",
-                        "man guard"
-                    },
-                    {
-                        "💂🏻‍♂",
-                        "man guard"
-                    },
-                    {
-                        "💂🏼‍♂️",
-                        "man guard"
-                    },
-                    {
-                        "💂🏼‍♂",
-                        "man guard"
-                    },
-                    {
-                        "💂🏽‍♂️",
-                        "man guard"
-                    },
-                    {
-                        "💂🏽‍♂",
-                        "man guard"
-                    },
-                    {
-                        "💂🏾‍♂️",
-                        "man guard"
-                    },
-                    {
-                        "💂🏾‍♂",
-                        "man guard"
-                    },
-                    {
-                        "💂🏿‍♂️",
-                        "man guard"
-                    },
-                    {
-                        "💂🏿‍♂",
                         "man guard"
                     },
                     {
@@ -5361,71 +1393,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman guard"
                     },
                     {
-                        "💂‍♀",
-                        "woman guard"
-                    },
-                    {
-                        "💂🏻‍♀️",
-                        "woman guard"
-                    },
-                    {
-                        "💂🏻‍♀",
-                        "woman guard"
-                    },
-                    {
-                        "💂🏼‍♀️",
-                        "woman guard"
-                    },
-                    {
-                        "💂🏼‍♀",
-                        "woman guard"
-                    },
-                    {
-                        "💂🏽‍♀️",
-                        "woman guard"
-                    },
-                    {
-                        "💂🏽‍♀",
-                        "woman guard"
-                    },
-                    {
-                        "💂🏾‍♀️",
-                        "woman guard"
-                    },
-                    {
-                        "💂🏾‍♀",
-                        "woman guard"
-                    },
-                    {
-                        "💂🏿‍♀️",
-                        "woman guard"
-                    },
-                    {
-                        "💂🏿‍♀",
-                        "woman guard"
-                    },
-                    {
                         "🥷",
-                        "ninja"
-                    },
-                    {
-                        "🥷🏻",
-                        "ninja"
-                    },
-                    {
-                        "🥷🏼",
-                        "ninja"
-                    },
-                    {
-                        "🥷🏽",
-                        "ninja"
-                    },
-                    {
-                        "🥷🏾",
-                        "ninja"
-                    },
-                    {
-                        "🥷🏿",
                         "ninja"
                     },
                     {
@@ -5433,71 +1401,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "construction worker"
                     },
                     {
-                        "👷🏻",
-                        "construction worker"
-                    },
-                    {
-                        "👷🏼",
-                        "construction worker"
-                    },
-                    {
-                        "👷🏽",
-                        "construction worker"
-                    },
-                    {
-                        "👷🏾",
-                        "construction worker"
-                    },
-                    {
-                        "👷🏿",
-                        "construction worker"
-                    },
-                    {
                         "👷‍♂️",
-                        "man construction worker"
-                    },
-                    {
-                        "👷‍♂",
-                        "man construction worker"
-                    },
-                    {
-                        "👷🏻‍♂️",
-                        "man construction worker"
-                    },
-                    {
-                        "👷🏻‍♂",
-                        "man construction worker"
-                    },
-                    {
-                        "👷🏼‍♂️",
-                        "man construction worker"
-                    },
-                    {
-                        "👷🏼‍♂",
-                        "man construction worker"
-                    },
-                    {
-                        "👷🏽‍♂️",
-                        "man construction worker"
-                    },
-                    {
-                        "👷🏽‍♂",
-                        "man construction worker"
-                    },
-                    {
-                        "👷🏾‍♂️",
-                        "man construction worker"
-                    },
-                    {
-                        "👷🏾‍♂",
-                        "man construction worker"
-                    },
-                    {
-                        "👷🏿‍♂️",
-                        "man construction worker"
-                    },
-                    {
-                        "👷🏿‍♂",
                         "man construction worker"
                     },
                     {
@@ -5505,71 +1409,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman construction worker"
                     },
                     {
-                        "👷‍♀",
-                        "woman construction worker"
-                    },
-                    {
-                        "👷🏻‍♀️",
-                        "woman construction worker"
-                    },
-                    {
-                        "👷🏻‍♀",
-                        "woman construction worker"
-                    },
-                    {
-                        "👷🏼‍♀️",
-                        "woman construction worker"
-                    },
-                    {
-                        "👷🏼‍♀",
-                        "woman construction worker"
-                    },
-                    {
-                        "👷🏽‍♀️",
-                        "woman construction worker"
-                    },
-                    {
-                        "👷🏽‍♀",
-                        "woman construction worker"
-                    },
-                    {
-                        "👷🏾‍♀️",
-                        "woman construction worker"
-                    },
-                    {
-                        "👷🏾‍♀",
-                        "woman construction worker"
-                    },
-                    {
-                        "👷🏿‍♀️",
-                        "woman construction worker"
-                    },
-                    {
-                        "👷🏿‍♀",
-                        "woman construction worker"
-                    },
-                    {
                         "🤴",
-                        "prince"
-                    },
-                    {
-                        "🤴🏻",
-                        "prince"
-                    },
-                    {
-                        "🤴🏼",
-                        "prince"
-                    },
-                    {
-                        "🤴🏽",
-                        "prince"
-                    },
-                    {
-                        "🤴🏾",
-                        "prince"
-                    },
-                    {
-                        "🤴🏿",
                         "prince"
                     },
                     {
@@ -5577,47 +1417,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "princess"
                     },
                     {
-                        "👸🏻",
-                        "princess"
-                    },
-                    {
-                        "👸🏼",
-                        "princess"
-                    },
-                    {
-                        "👸🏽",
-                        "princess"
-                    },
-                    {
-                        "👸🏾",
-                        "princess"
-                    },
-                    {
-                        "👸🏿",
-                        "princess"
-                    },
-                    {
                         "👳",
-                        "person wearing turban"
-                    },
-                    {
-                        "👳🏻",
-                        "person wearing turban"
-                    },
-                    {
-                        "👳🏼",
-                        "person wearing turban"
-                    },
-                    {
-                        "👳🏽",
-                        "person wearing turban"
-                    },
-                    {
-                        "👳🏾",
-                        "person wearing turban"
-                    },
-                    {
-                        "👳🏿",
                         "person wearing turban"
                     },
                     {
@@ -5625,95 +1425,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man wearing turban"
                     },
                     {
-                        "👳‍♂",
-                        "man wearing turban"
-                    },
-                    {
-                        "👳🏻‍♂️",
-                        "man wearing turban"
-                    },
-                    {
-                        "👳🏻‍♂",
-                        "man wearing turban"
-                    },
-                    {
-                        "👳🏼‍♂️",
-                        "man wearing turban"
-                    },
-                    {
-                        "👳🏼‍♂",
-                        "man wearing turban"
-                    },
-                    {
-                        "👳🏽‍♂️",
-                        "man wearing turban"
-                    },
-                    {
-                        "👳🏽‍♂",
-                        "man wearing turban"
-                    },
-                    {
-                        "👳🏾‍♂️",
-                        "man wearing turban"
-                    },
-                    {
-                        "👳🏾‍♂",
-                        "man wearing turban"
-                    },
-                    {
-                        "👳🏿‍♂️",
-                        "man wearing turban"
-                    },
-                    {
-                        "👳🏿‍♂",
-                        "man wearing turban"
-                    },
-                    {
                         "👳‍♀️",
-                        "woman wearing turban"
-                    },
-                    {
-                        "👳‍♀",
-                        "woman wearing turban"
-                    },
-                    {
-                        "👳🏻‍♀️",
-                        "woman wearing turban"
-                    },
-                    {
-                        "👳🏻‍♀",
-                        "woman wearing turban"
-                    },
-                    {
-                        "👳🏼‍♀️",
-                        "woman wearing turban"
-                    },
-                    {
-                        "👳🏼‍♀",
-                        "woman wearing turban"
-                    },
-                    {
-                        "👳🏽‍♀️",
-                        "woman wearing turban"
-                    },
-                    {
-                        "👳🏽‍♀",
-                        "woman wearing turban"
-                    },
-                    {
-                        "👳🏾‍♀️",
-                        "woman wearing turban"
-                    },
-                    {
-                        "👳🏾‍♀",
-                        "woman wearing turban"
-                    },
-                    {
-                        "👳🏿‍♀️",
-                        "woman wearing turban"
-                    },
-                    {
-                        "👳🏿‍♀",
                         "woman wearing turban"
                     },
                     {
@@ -5721,47 +1433,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "person with skullcap"
                     },
                     {
-                        "👲🏻",
-                        "person with skullcap"
-                    },
-                    {
-                        "👲🏼",
-                        "person with skullcap"
-                    },
-                    {
-                        "👲🏽",
-                        "person with skullcap"
-                    },
-                    {
-                        "👲🏾",
-                        "person with skullcap"
-                    },
-                    {
-                        "👲🏿",
-                        "person with skullcap"
-                    },
-                    {
                         "🧕",
-                        "woman with headscarf"
-                    },
-                    {
-                        "🧕🏻",
-                        "woman with headscarf"
-                    },
-                    {
-                        "🧕🏼",
-                        "woman with headscarf"
-                    },
-                    {
-                        "🧕🏽",
-                        "woman with headscarf"
-                    },
-                    {
-                        "🧕🏾",
-                        "woman with headscarf"
-                    },
-                    {
-                        "🧕🏿",
                         "woman with headscarf"
                     },
                     {
@@ -5769,71 +1441,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "person in tuxedo"
                     },
                     {
-                        "🤵🏻",
-                        "person in tuxedo"
-                    },
-                    {
-                        "🤵🏼",
-                        "person in tuxedo"
-                    },
-                    {
-                        "🤵🏽",
-                        "person in tuxedo"
-                    },
-                    {
-                        "🤵🏾",
-                        "person in tuxedo"
-                    },
-                    {
-                        "🤵🏿",
-                        "person in tuxedo"
-                    },
-                    {
                         "🤵‍♂️",
-                        "man in tuxedo"
-                    },
-                    {
-                        "🤵‍♂",
-                        "man in tuxedo"
-                    },
-                    {
-                        "🤵🏻‍♂️",
-                        "man in tuxedo"
-                    },
-                    {
-                        "🤵🏻‍♂",
-                        "man in tuxedo"
-                    },
-                    {
-                        "🤵🏼‍♂️",
-                        "man in tuxedo"
-                    },
-                    {
-                        "🤵🏼‍♂",
-                        "man in tuxedo"
-                    },
-                    {
-                        "🤵🏽‍♂️",
-                        "man in tuxedo"
-                    },
-                    {
-                        "🤵🏽‍♂",
-                        "man in tuxedo"
-                    },
-                    {
-                        "🤵🏾‍♂️",
-                        "man in tuxedo"
-                    },
-                    {
-                        "🤵🏾‍♂",
-                        "man in tuxedo"
-                    },
-                    {
-                        "🤵🏿‍♂️",
-                        "man in tuxedo"
-                    },
-                    {
-                        "🤵🏿‍♂",
                         "man in tuxedo"
                     },
                     {
@@ -5841,71 +1449,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman in tuxedo"
                     },
                     {
-                        "🤵‍♀",
-                        "woman in tuxedo"
-                    },
-                    {
-                        "🤵🏻‍♀️",
-                        "woman in tuxedo"
-                    },
-                    {
-                        "🤵🏻‍♀",
-                        "woman in tuxedo"
-                    },
-                    {
-                        "🤵🏼‍♀️",
-                        "woman in tuxedo"
-                    },
-                    {
-                        "🤵🏼‍♀",
-                        "woman in tuxedo"
-                    },
-                    {
-                        "🤵🏽‍♀️",
-                        "woman in tuxedo"
-                    },
-                    {
-                        "🤵🏽‍♀",
-                        "woman in tuxedo"
-                    },
-                    {
-                        "🤵🏾‍♀️",
-                        "woman in tuxedo"
-                    },
-                    {
-                        "🤵🏾‍♀",
-                        "woman in tuxedo"
-                    },
-                    {
-                        "🤵🏿‍♀️",
-                        "woman in tuxedo"
-                    },
-                    {
-                        "🤵🏿‍♀",
-                        "woman in tuxedo"
-                    },
-                    {
                         "👰",
-                        "person with veil"
-                    },
-                    {
-                        "👰🏻",
-                        "person with veil"
-                    },
-                    {
-                        "👰🏼",
-                        "person with veil"
-                    },
-                    {
-                        "👰🏽",
-                        "person with veil"
-                    },
-                    {
-                        "👰🏾",
-                        "person with veil"
-                    },
-                    {
-                        "👰🏿",
                         "person with veil"
                     },
                     {
@@ -5913,95 +1457,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man with veil"
                     },
                     {
-                        "👰‍♂",
-                        "man with veil"
-                    },
-                    {
-                        "👰🏻‍♂️",
-                        "man with veil"
-                    },
-                    {
-                        "👰🏻‍♂",
-                        "man with veil"
-                    },
-                    {
-                        "👰🏼‍♂️",
-                        "man with veil"
-                    },
-                    {
-                        "👰🏼‍♂",
-                        "man with veil"
-                    },
-                    {
-                        "👰🏽‍♂️",
-                        "man with veil"
-                    },
-                    {
-                        "👰🏽‍♂",
-                        "man with veil"
-                    },
-                    {
-                        "👰🏾‍♂️",
-                        "man with veil"
-                    },
-                    {
-                        "👰🏾‍♂",
-                        "man with veil"
-                    },
-                    {
-                        "👰🏿‍♂️",
-                        "man with veil"
-                    },
-                    {
-                        "👰🏿‍♂",
-                        "man with veil"
-                    },
-                    {
                         "👰‍♀️",
-                        "woman with veil"
-                    },
-                    {
-                        "👰‍♀",
-                        "woman with veil"
-                    },
-                    {
-                        "👰🏻‍♀️",
-                        "woman with veil"
-                    },
-                    {
-                        "👰🏻‍♀",
-                        "woman with veil"
-                    },
-                    {
-                        "👰🏼‍♀️",
-                        "woman with veil"
-                    },
-                    {
-                        "👰🏼‍♀",
-                        "woman with veil"
-                    },
-                    {
-                        "👰🏽‍♀️",
-                        "woman with veil"
-                    },
-                    {
-                        "👰🏽‍♀",
-                        "woman with veil"
-                    },
-                    {
-                        "👰🏾‍♀️",
-                        "woman with veil"
-                    },
-                    {
-                        "👰🏾‍♀",
-                        "woman with veil"
-                    },
-                    {
-                        "👰🏿‍♀️",
-                        "woman with veil"
-                    },
-                    {
-                        "👰🏿‍♀",
                         "woman with veil"
                     },
                     {
@@ -6009,47 +1465,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "pregnant woman"
                     },
                     {
-                        "🤰🏻",
-                        "pregnant woman"
-                    },
-                    {
-                        "🤰🏼",
-                        "pregnant woman"
-                    },
-                    {
-                        "🤰🏽",
-                        "pregnant woman"
-                    },
-                    {
-                        "🤰🏾",
-                        "pregnant woman"
-                    },
-                    {
-                        "🤰🏿",
-                        "pregnant woman"
-                    },
-                    {
                         "🤱",
-                        "breast-feeding"
-                    },
-                    {
-                        "🤱🏻",
-                        "breast-feeding"
-                    },
-                    {
-                        "🤱🏼",
-                        "breast-feeding"
-                    },
-                    {
-                        "🤱🏽",
-                        "breast-feeding"
-                    },
-                    {
-                        "🤱🏾",
-                        "breast-feeding"
-                    },
-                    {
-                        "🤱🏿",
                         "breast-feeding"
                     },
                     {
@@ -6057,71 +1473,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman feeding baby"
                     },
                     {
-                        "👩🏻‍🍼",
-                        "woman feeding baby"
-                    },
-                    {
-                        "👩🏼‍🍼",
-                        "woman feeding baby"
-                    },
-                    {
-                        "👩🏽‍🍼",
-                        "woman feeding baby"
-                    },
-                    {
-                        "👩🏾‍🍼",
-                        "woman feeding baby"
-                    },
-                    {
-                        "👩🏿‍🍼",
-                        "woman feeding baby"
-                    },
-                    {
                         "👨‍🍼",
                         "man feeding baby"
                     },
                     {
-                        "👨🏻‍🍼",
-                        "man feeding baby"
-                    },
-                    {
-                        "👨🏼‍🍼",
-                        "man feeding baby"
-                    },
-                    {
-                        "👨🏽‍🍼",
-                        "man feeding baby"
-                    },
-                    {
-                        "👨🏾‍🍼",
-                        "man feeding baby"
-                    },
-                    {
-                        "👨🏿‍🍼",
-                        "man feeding baby"
-                    },
-                    {
                         "🧑‍🍼",
-                        "person feeding baby"
-                    },
-                    {
-                        "🧑🏻‍🍼",
-                        "person feeding baby"
-                    },
-                    {
-                        "🧑🏼‍🍼",
-                        "person feeding baby"
-                    },
-                    {
-                        "🧑🏽‍🍼",
-                        "person feeding baby"
-                    },
-                    {
-                        "🧑🏾‍🍼",
-                        "person feeding baby"
-                    },
-                    {
-                        "🧑🏿‍🍼",
                         "person feeding baby"
                     }
                 }
@@ -6134,47 +1490,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "baby angel"
                     },
                     {
-                        "👼🏻",
-                        "baby angel"
-                    },
-                    {
-                        "👼🏼",
-                        "baby angel"
-                    },
-                    {
-                        "👼🏽",
-                        "baby angel"
-                    },
-                    {
-                        "👼🏾",
-                        "baby angel"
-                    },
-                    {
-                        "👼🏿",
-                        "baby angel"
-                    },
-                    {
                         "🎅",
-                        "Santa Claus"
-                    },
-                    {
-                        "🎅🏻",
-                        "Santa Claus"
-                    },
-                    {
-                        "🎅🏼",
-                        "Santa Claus"
-                    },
-                    {
-                        "🎅🏽",
-                        "Santa Claus"
-                    },
-                    {
-                        "🎅🏾",
-                        "Santa Claus"
-                    },
-                    {
-                        "🎅🏿",
                         "Santa Claus"
                     },
                     {
@@ -6182,47 +1498,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "Mrs. Claus"
                     },
                     {
-                        "🤶🏻",
-                        "Mrs. Claus"
-                    },
-                    {
-                        "🤶🏼",
-                        "Mrs. Claus"
-                    },
-                    {
-                        "🤶🏽",
-                        "Mrs. Claus"
-                    },
-                    {
-                        "🤶🏾",
-                        "Mrs. Claus"
-                    },
-                    {
-                        "🤶🏿",
-                        "Mrs. Claus"
-                    },
-                    {
                         "🧑‍🎄",
-                        "mx claus"
-                    },
-                    {
-                        "🧑🏻‍🎄",
-                        "mx claus"
-                    },
-                    {
-                        "🧑🏼‍🎄",
-                        "mx claus"
-                    },
-                    {
-                        "🧑🏽‍🎄",
-                        "mx claus"
-                    },
-                    {
-                        "🧑🏾‍🎄",
-                        "mx claus"
-                    },
-                    {
-                        "🧑🏿‍🎄",
                         "mx claus"
                     },
                     {
@@ -6230,71 +1506,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "superhero"
                     },
                     {
-                        "🦸🏻",
-                        "superhero"
-                    },
-                    {
-                        "🦸🏼",
-                        "superhero"
-                    },
-                    {
-                        "🦸🏽",
-                        "superhero"
-                    },
-                    {
-                        "🦸🏾",
-                        "superhero"
-                    },
-                    {
-                        "🦸🏿",
-                        "superhero"
-                    },
-                    {
                         "🦸‍♂️",
-                        "man superhero"
-                    },
-                    {
-                        "🦸‍♂",
-                        "man superhero"
-                    },
-                    {
-                        "🦸🏻‍♂️",
-                        "man superhero"
-                    },
-                    {
-                        "🦸🏻‍♂",
-                        "man superhero"
-                    },
-                    {
-                        "🦸🏼‍♂️",
-                        "man superhero"
-                    },
-                    {
-                        "🦸🏼‍♂",
-                        "man superhero"
-                    },
-                    {
-                        "🦸🏽‍♂️",
-                        "man superhero"
-                    },
-                    {
-                        "🦸🏽‍♂",
-                        "man superhero"
-                    },
-                    {
-                        "🦸🏾‍♂️",
-                        "man superhero"
-                    },
-                    {
-                        "🦸🏾‍♂",
-                        "man superhero"
-                    },
-                    {
-                        "🦸🏿‍♂️",
-                        "man superhero"
-                    },
-                    {
-                        "🦸🏿‍♂",
                         "man superhero"
                     },
                     {
@@ -6302,71 +1514,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman superhero"
                     },
                     {
-                        "🦸‍♀",
-                        "woman superhero"
-                    },
-                    {
-                        "🦸🏻‍♀️",
-                        "woman superhero"
-                    },
-                    {
-                        "🦸🏻‍♀",
-                        "woman superhero"
-                    },
-                    {
-                        "🦸🏼‍♀️",
-                        "woman superhero"
-                    },
-                    {
-                        "🦸🏼‍♀",
-                        "woman superhero"
-                    },
-                    {
-                        "🦸🏽‍♀️",
-                        "woman superhero"
-                    },
-                    {
-                        "🦸🏽‍♀",
-                        "woman superhero"
-                    },
-                    {
-                        "🦸🏾‍♀️",
-                        "woman superhero"
-                    },
-                    {
-                        "🦸🏾‍♀",
-                        "woman superhero"
-                    },
-                    {
-                        "🦸🏿‍♀️",
-                        "woman superhero"
-                    },
-                    {
-                        "🦸🏿‍♀",
-                        "woman superhero"
-                    },
-                    {
                         "🦹",
-                        "supervillain"
-                    },
-                    {
-                        "🦹🏻",
-                        "supervillain"
-                    },
-                    {
-                        "🦹🏼",
-                        "supervillain"
-                    },
-                    {
-                        "🦹🏽",
-                        "supervillain"
-                    },
-                    {
-                        "🦹🏾",
-                        "supervillain"
-                    },
-                    {
-                        "🦹🏿",
                         "supervillain"
                     },
                     {
@@ -6374,95 +1522,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man supervillain"
                     },
                     {
-                        "🦹‍♂",
-                        "man supervillain"
-                    },
-                    {
-                        "🦹🏻‍♂️",
-                        "man supervillain"
-                    },
-                    {
-                        "🦹🏻‍♂",
-                        "man supervillain"
-                    },
-                    {
-                        "🦹🏼‍♂️",
-                        "man supervillain"
-                    },
-                    {
-                        "🦹🏼‍♂",
-                        "man supervillain"
-                    },
-                    {
-                        "🦹🏽‍♂️",
-                        "man supervillain"
-                    },
-                    {
-                        "🦹🏽‍♂",
-                        "man supervillain"
-                    },
-                    {
-                        "🦹🏾‍♂️",
-                        "man supervillain"
-                    },
-                    {
-                        "🦹🏾‍♂",
-                        "man supervillain"
-                    },
-                    {
-                        "🦹🏿‍♂️",
-                        "man supervillain"
-                    },
-                    {
-                        "🦹🏿‍♂",
-                        "man supervillain"
-                    },
-                    {
                         "🦹‍♀️",
-                        "woman supervillain"
-                    },
-                    {
-                        "🦹‍♀",
-                        "woman supervillain"
-                    },
-                    {
-                        "🦹🏻‍♀️",
-                        "woman supervillain"
-                    },
-                    {
-                        "🦹🏻‍♀",
-                        "woman supervillain"
-                    },
-                    {
-                        "🦹🏼‍♀️",
-                        "woman supervillain"
-                    },
-                    {
-                        "🦹🏼‍♀",
-                        "woman supervillain"
-                    },
-                    {
-                        "🦹🏽‍♀️",
-                        "woman supervillain"
-                    },
-                    {
-                        "🦹🏽‍♀",
-                        "woman supervillain"
-                    },
-                    {
-                        "🦹🏾‍♀️",
-                        "woman supervillain"
-                    },
-                    {
-                        "🦹🏾‍♀",
-                        "woman supervillain"
-                    },
-                    {
-                        "🦹🏿‍♀️",
-                        "woman supervillain"
-                    },
-                    {
-                        "🦹🏿‍♀",
                         "woman supervillain"
                     },
                     {
@@ -6470,71 +1530,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "mage"
                     },
                     {
-                        "🧙🏻",
-                        "mage"
-                    },
-                    {
-                        "🧙🏼",
-                        "mage"
-                    },
-                    {
-                        "🧙🏽",
-                        "mage"
-                    },
-                    {
-                        "🧙🏾",
-                        "mage"
-                    },
-                    {
-                        "🧙🏿",
-                        "mage"
-                    },
-                    {
                         "🧙‍♂️",
-                        "man mage"
-                    },
-                    {
-                        "🧙‍♂",
-                        "man mage"
-                    },
-                    {
-                        "🧙🏻‍♂️",
-                        "man mage"
-                    },
-                    {
-                        "🧙🏻‍♂",
-                        "man mage"
-                    },
-                    {
-                        "🧙🏼‍♂️",
-                        "man mage"
-                    },
-                    {
-                        "🧙🏼‍♂",
-                        "man mage"
-                    },
-                    {
-                        "🧙🏽‍♂️",
-                        "man mage"
-                    },
-                    {
-                        "🧙🏽‍♂",
-                        "man mage"
-                    },
-                    {
-                        "🧙🏾‍♂️",
-                        "man mage"
-                    },
-                    {
-                        "🧙🏾‍♂",
-                        "man mage"
-                    },
-                    {
-                        "🧙🏿‍♂️",
-                        "man mage"
-                    },
-                    {
-                        "🧙🏿‍♂",
                         "man mage"
                     },
                     {
@@ -6542,71 +1538,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman mage"
                     },
                     {
-                        "🧙‍♀",
-                        "woman mage"
-                    },
-                    {
-                        "🧙🏻‍♀️",
-                        "woman mage"
-                    },
-                    {
-                        "🧙🏻‍♀",
-                        "woman mage"
-                    },
-                    {
-                        "🧙🏼‍♀️",
-                        "woman mage"
-                    },
-                    {
-                        "🧙🏼‍♀",
-                        "woman mage"
-                    },
-                    {
-                        "🧙🏽‍♀️",
-                        "woman mage"
-                    },
-                    {
-                        "🧙🏽‍♀",
-                        "woman mage"
-                    },
-                    {
-                        "🧙🏾‍♀️",
-                        "woman mage"
-                    },
-                    {
-                        "🧙🏾‍♀",
-                        "woman mage"
-                    },
-                    {
-                        "🧙🏿‍♀️",
-                        "woman mage"
-                    },
-                    {
-                        "🧙🏿‍♀",
-                        "woman mage"
-                    },
-                    {
                         "🧚",
-                        "fairy"
-                    },
-                    {
-                        "🧚🏻",
-                        "fairy"
-                    },
-                    {
-                        "🧚🏼",
-                        "fairy"
-                    },
-                    {
-                        "🧚🏽",
-                        "fairy"
-                    },
-                    {
-                        "🧚🏾",
-                        "fairy"
-                    },
-                    {
-                        "🧚🏿",
                         "fairy"
                     },
                     {
@@ -6614,95 +1546,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man fairy"
                     },
                     {
-                        "🧚‍♂",
-                        "man fairy"
-                    },
-                    {
-                        "🧚🏻‍♂️",
-                        "man fairy"
-                    },
-                    {
-                        "🧚🏻‍♂",
-                        "man fairy"
-                    },
-                    {
-                        "🧚🏼‍♂️",
-                        "man fairy"
-                    },
-                    {
-                        "🧚🏼‍♂",
-                        "man fairy"
-                    },
-                    {
-                        "🧚🏽‍♂️",
-                        "man fairy"
-                    },
-                    {
-                        "🧚🏽‍♂",
-                        "man fairy"
-                    },
-                    {
-                        "🧚🏾‍♂️",
-                        "man fairy"
-                    },
-                    {
-                        "🧚🏾‍♂",
-                        "man fairy"
-                    },
-                    {
-                        "🧚🏿‍♂️",
-                        "man fairy"
-                    },
-                    {
-                        "🧚🏿‍♂",
-                        "man fairy"
-                    },
-                    {
                         "🧚‍♀️",
-                        "woman fairy"
-                    },
-                    {
-                        "🧚‍♀",
-                        "woman fairy"
-                    },
-                    {
-                        "🧚🏻‍♀️",
-                        "woman fairy"
-                    },
-                    {
-                        "🧚🏻‍♀",
-                        "woman fairy"
-                    },
-                    {
-                        "🧚🏼‍♀️",
-                        "woman fairy"
-                    },
-                    {
-                        "🧚🏼‍♀",
-                        "woman fairy"
-                    },
-                    {
-                        "🧚🏽‍♀️",
-                        "woman fairy"
-                    },
-                    {
-                        "🧚🏽‍♀",
-                        "woman fairy"
-                    },
-                    {
-                        "🧚🏾‍♀️",
-                        "woman fairy"
-                    },
-                    {
-                        "🧚🏾‍♀",
-                        "woman fairy"
-                    },
-                    {
-                        "🧚🏿‍♀️",
-                        "woman fairy"
-                    },
-                    {
-                        "🧚🏿‍♀",
                         "woman fairy"
                     },
                     {
@@ -6710,71 +1554,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "vampire"
                     },
                     {
-                        "🧛🏻",
-                        "vampire"
-                    },
-                    {
-                        "🧛🏼",
-                        "vampire"
-                    },
-                    {
-                        "🧛🏽",
-                        "vampire"
-                    },
-                    {
-                        "🧛🏾",
-                        "vampire"
-                    },
-                    {
-                        "🧛🏿",
-                        "vampire"
-                    },
-                    {
                         "🧛‍♂️",
-                        "man vampire"
-                    },
-                    {
-                        "🧛‍♂",
-                        "man vampire"
-                    },
-                    {
-                        "🧛🏻‍♂️",
-                        "man vampire"
-                    },
-                    {
-                        "🧛🏻‍♂",
-                        "man vampire"
-                    },
-                    {
-                        "🧛🏼‍♂️",
-                        "man vampire"
-                    },
-                    {
-                        "🧛🏼‍♂",
-                        "man vampire"
-                    },
-                    {
-                        "🧛🏽‍♂️",
-                        "man vampire"
-                    },
-                    {
-                        "🧛🏽‍♂",
-                        "man vampire"
-                    },
-                    {
-                        "🧛🏾‍♂️",
-                        "man vampire"
-                    },
-                    {
-                        "🧛🏾‍♂",
-                        "man vampire"
-                    },
-                    {
-                        "🧛🏿‍♂️",
-                        "man vampire"
-                    },
-                    {
-                        "🧛🏿‍♂",
                         "man vampire"
                     },
                     {
@@ -6782,71 +1562,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman vampire"
                     },
                     {
-                        "🧛‍♀",
-                        "woman vampire"
-                    },
-                    {
-                        "🧛🏻‍♀️",
-                        "woman vampire"
-                    },
-                    {
-                        "🧛🏻‍♀",
-                        "woman vampire"
-                    },
-                    {
-                        "🧛🏼‍♀️",
-                        "woman vampire"
-                    },
-                    {
-                        "🧛🏼‍♀",
-                        "woman vampire"
-                    },
-                    {
-                        "🧛🏽‍♀️",
-                        "woman vampire"
-                    },
-                    {
-                        "🧛🏽‍♀",
-                        "woman vampire"
-                    },
-                    {
-                        "🧛🏾‍♀️",
-                        "woman vampire"
-                    },
-                    {
-                        "🧛🏾‍♀",
-                        "woman vampire"
-                    },
-                    {
-                        "🧛🏿‍♀️",
-                        "woman vampire"
-                    },
-                    {
-                        "🧛🏿‍♀",
-                        "woman vampire"
-                    },
-                    {
                         "🧜",
-                        "merperson"
-                    },
-                    {
-                        "🧜🏻",
-                        "merperson"
-                    },
-                    {
-                        "🧜🏼",
-                        "merperson"
-                    },
-                    {
-                        "🧜🏽",
-                        "merperson"
-                    },
-                    {
-                        "🧜🏾",
-                        "merperson"
-                    },
-                    {
-                        "🧜🏿",
                         "merperson"
                     },
                     {
@@ -6854,95 +1570,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "merman"
                     },
                     {
-                        "🧜‍♂",
-                        "merman"
-                    },
-                    {
-                        "🧜🏻‍♂️",
-                        "merman"
-                    },
-                    {
-                        "🧜🏻‍♂",
-                        "merman"
-                    },
-                    {
-                        "🧜🏼‍♂️",
-                        "merman"
-                    },
-                    {
-                        "🧜🏼‍♂",
-                        "merman"
-                    },
-                    {
-                        "🧜🏽‍♂️",
-                        "merman"
-                    },
-                    {
-                        "🧜🏽‍♂",
-                        "merman"
-                    },
-                    {
-                        "🧜🏾‍♂️",
-                        "merman"
-                    },
-                    {
-                        "🧜🏾‍♂",
-                        "merman"
-                    },
-                    {
-                        "🧜🏿‍♂️",
-                        "merman"
-                    },
-                    {
-                        "🧜🏿‍♂",
-                        "merman"
-                    },
-                    {
                         "🧜‍♀️",
-                        "mermaid"
-                    },
-                    {
-                        "🧜‍♀",
-                        "mermaid"
-                    },
-                    {
-                        "🧜🏻‍♀️",
-                        "mermaid"
-                    },
-                    {
-                        "🧜🏻‍♀",
-                        "mermaid"
-                    },
-                    {
-                        "🧜🏼‍♀️",
-                        "mermaid"
-                    },
-                    {
-                        "🧜🏼‍♀",
-                        "mermaid"
-                    },
-                    {
-                        "🧜🏽‍♀️",
-                        "mermaid"
-                    },
-                    {
-                        "🧜🏽‍♀",
-                        "mermaid"
-                    },
-                    {
-                        "🧜🏾‍♀️",
-                        "mermaid"
-                    },
-                    {
-                        "🧜🏾‍♀",
-                        "mermaid"
-                    },
-                    {
-                        "🧜🏿‍♀️",
-                        "mermaid"
-                    },
-                    {
-                        "🧜🏿‍♀",
                         "mermaid"
                     },
                     {
@@ -6950,119 +1578,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "elf"
                     },
                     {
-                        "🧝🏻",
-                        "elf"
-                    },
-                    {
-                        "🧝🏼",
-                        "elf"
-                    },
-                    {
-                        "🧝🏽",
-                        "elf"
-                    },
-                    {
-                        "🧝🏾",
-                        "elf"
-                    },
-                    {
-                        "🧝🏿",
-                        "elf"
-                    },
-                    {
                         "🧝‍♂️",
                         "man elf"
                     },
                     {
-                        "🧝‍♂",
-                        "man elf"
-                    },
-                    {
-                        "🧝🏻‍♂️",
-                        "man elf"
-                    },
-                    {
-                        "🧝🏻‍♂",
-                        "man elf"
-                    },
-                    {
-                        "🧝🏼‍♂️",
-                        "man elf"
-                    },
-                    {
-                        "🧝🏼‍♂",
-                        "man elf"
-                    },
-                    {
-                        "🧝🏽‍♂️",
-                        "man elf"
-                    },
-                    {
-                        "🧝🏽‍♂",
-                        "man elf"
-                    },
-                    {
-                        "🧝🏾‍♂️",
-                        "man elf"
-                    },
-                    {
-                        "🧝🏾‍♂",
-                        "man elf"
-                    },
-                    {
-                        "🧝🏿‍♂️",
-                        "man elf"
-                    },
-                    {
-                        "🧝🏿‍♂",
-                        "man elf"
-                    },
-                    {
                         "🧝‍♀️",
-                        "woman elf"
-                    },
-                    {
-                        "🧝‍♀",
-                        "woman elf"
-                    },
-                    {
-                        "🧝🏻‍♀️",
-                        "woman elf"
-                    },
-                    {
-                        "🧝🏻‍♀",
-                        "woman elf"
-                    },
-                    {
-                        "🧝🏼‍♀️",
-                        "woman elf"
-                    },
-                    {
-                        "🧝🏼‍♀",
-                        "woman elf"
-                    },
-                    {
-                        "🧝🏽‍♀️",
-                        "woman elf"
-                    },
-                    {
-                        "🧝🏽‍♀",
-                        "woman elf"
-                    },
-                    {
-                        "🧝🏾‍♀️",
-                        "woman elf"
-                    },
-                    {
-                        "🧝🏾‍♀",
-                        "woman elf"
-                    },
-                    {
-                        "🧝🏿‍♀️",
-                        "woman elf"
-                    },
-                    {
-                        "🧝🏿‍♀",
                         "woman elf"
                     },
                     {
@@ -7074,15 +1594,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man genie"
                     },
                     {
-                        "🧞‍♂",
-                        "man genie"
-                    },
-                    {
                         "🧞‍♀️",
-                        "woman genie"
-                    },
-                    {
-                        "🧞‍♀",
                         "woman genie"
                     },
                     {
@@ -7094,15 +1606,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man zombie"
                     },
                     {
-                        "🧟‍♂",
-                        "man zombie"
-                    },
-                    {
                         "🧟‍♀️",
-                        "woman zombie"
-                    },
-                    {
-                        "🧟‍♀",
                         "woman zombie"
                     }
                 }
@@ -7115,71 +1619,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "person getting massage"
                     },
                     {
-                        "💆🏻",
-                        "person getting massage"
-                    },
-                    {
-                        "💆🏼",
-                        "person getting massage"
-                    },
-                    {
-                        "💆🏽",
-                        "person getting massage"
-                    },
-                    {
-                        "💆🏾",
-                        "person getting massage"
-                    },
-                    {
-                        "💆🏿",
-                        "person getting massage"
-                    },
-                    {
                         "💆‍♂️",
-                        "man getting massage"
-                    },
-                    {
-                        "💆‍♂",
-                        "man getting massage"
-                    },
-                    {
-                        "💆🏻‍♂️",
-                        "man getting massage"
-                    },
-                    {
-                        "💆🏻‍♂",
-                        "man getting massage"
-                    },
-                    {
-                        "💆🏼‍♂️",
-                        "man getting massage"
-                    },
-                    {
-                        "💆🏼‍♂",
-                        "man getting massage"
-                    },
-                    {
-                        "💆🏽‍♂️",
-                        "man getting massage"
-                    },
-                    {
-                        "💆🏽‍♂",
-                        "man getting massage"
-                    },
-                    {
-                        "💆🏾‍♂️",
-                        "man getting massage"
-                    },
-                    {
-                        "💆🏾‍♂",
-                        "man getting massage"
-                    },
-                    {
-                        "💆🏿‍♂️",
-                        "man getting massage"
-                    },
-                    {
-                        "💆🏿‍♂",
                         "man getting massage"
                     },
                     {
@@ -7187,71 +1627,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman getting massage"
                     },
                     {
-                        "💆‍♀",
-                        "woman getting massage"
-                    },
-                    {
-                        "💆🏻‍♀️",
-                        "woman getting massage"
-                    },
-                    {
-                        "💆🏻‍♀",
-                        "woman getting massage"
-                    },
-                    {
-                        "💆🏼‍♀️",
-                        "woman getting massage"
-                    },
-                    {
-                        "💆🏼‍♀",
-                        "woman getting massage"
-                    },
-                    {
-                        "💆🏽‍♀️",
-                        "woman getting massage"
-                    },
-                    {
-                        "💆🏽‍♀",
-                        "woman getting massage"
-                    },
-                    {
-                        "💆🏾‍♀️",
-                        "woman getting massage"
-                    },
-                    {
-                        "💆🏾‍♀",
-                        "woman getting massage"
-                    },
-                    {
-                        "💆🏿‍♀️",
-                        "woman getting massage"
-                    },
-                    {
-                        "💆🏿‍♀",
-                        "woman getting massage"
-                    },
-                    {
                         "💇",
-                        "person getting haircut"
-                    },
-                    {
-                        "💇🏻",
-                        "person getting haircut"
-                    },
-                    {
-                        "💇🏼",
-                        "person getting haircut"
-                    },
-                    {
-                        "💇🏽",
-                        "person getting haircut"
-                    },
-                    {
-                        "💇🏾",
-                        "person getting haircut"
-                    },
-                    {
-                        "💇🏿",
                         "person getting haircut"
                     },
                     {
@@ -7259,95 +1635,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man getting haircut"
                     },
                     {
-                        "💇‍♂",
-                        "man getting haircut"
-                    },
-                    {
-                        "💇🏻‍♂️",
-                        "man getting haircut"
-                    },
-                    {
-                        "💇🏻‍♂",
-                        "man getting haircut"
-                    },
-                    {
-                        "💇🏼‍♂️",
-                        "man getting haircut"
-                    },
-                    {
-                        "💇🏼‍♂",
-                        "man getting haircut"
-                    },
-                    {
-                        "💇🏽‍♂️",
-                        "man getting haircut"
-                    },
-                    {
-                        "💇🏽‍♂",
-                        "man getting haircut"
-                    },
-                    {
-                        "💇🏾‍♂️",
-                        "man getting haircut"
-                    },
-                    {
-                        "💇🏾‍♂",
-                        "man getting haircut"
-                    },
-                    {
-                        "💇🏿‍♂️",
-                        "man getting haircut"
-                    },
-                    {
-                        "💇🏿‍♂",
-                        "man getting haircut"
-                    },
-                    {
                         "💇‍♀️",
-                        "woman getting haircut"
-                    },
-                    {
-                        "💇‍♀",
-                        "woman getting haircut"
-                    },
-                    {
-                        "💇🏻‍♀️",
-                        "woman getting haircut"
-                    },
-                    {
-                        "💇🏻‍♀",
-                        "woman getting haircut"
-                    },
-                    {
-                        "💇🏼‍♀️",
-                        "woman getting haircut"
-                    },
-                    {
-                        "💇🏼‍♀",
-                        "woman getting haircut"
-                    },
-                    {
-                        "💇🏽‍♀️",
-                        "woman getting haircut"
-                    },
-                    {
-                        "💇🏽‍♀",
-                        "woman getting haircut"
-                    },
-                    {
-                        "💇🏾‍♀️",
-                        "woman getting haircut"
-                    },
-                    {
-                        "💇🏾‍♀",
-                        "woman getting haircut"
-                    },
-                    {
-                        "💇🏿‍♀️",
-                        "woman getting haircut"
-                    },
-                    {
-                        "💇🏿‍♀",
                         "woman getting haircut"
                     },
                     {
@@ -7355,71 +1643,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "person walking"
                     },
                     {
-                        "🚶🏻",
-                        "person walking"
-                    },
-                    {
-                        "🚶🏼",
-                        "person walking"
-                    },
-                    {
-                        "🚶🏽",
-                        "person walking"
-                    },
-                    {
-                        "🚶🏾",
-                        "person walking"
-                    },
-                    {
-                        "🚶🏿",
-                        "person walking"
-                    },
-                    {
                         "🚶‍♂️",
-                        "man walking"
-                    },
-                    {
-                        "🚶‍♂",
-                        "man walking"
-                    },
-                    {
-                        "🚶🏻‍♂️",
-                        "man walking"
-                    },
-                    {
-                        "🚶🏻‍♂",
-                        "man walking"
-                    },
-                    {
-                        "🚶🏼‍♂️",
-                        "man walking"
-                    },
-                    {
-                        "🚶🏼‍♂",
-                        "man walking"
-                    },
-                    {
-                        "🚶🏽‍♂️",
-                        "man walking"
-                    },
-                    {
-                        "🚶🏽‍♂",
-                        "man walking"
-                    },
-                    {
-                        "🚶🏾‍♂️",
-                        "man walking"
-                    },
-                    {
-                        "🚶🏾‍♂",
-                        "man walking"
-                    },
-                    {
-                        "🚶🏿‍♂️",
-                        "man walking"
-                    },
-                    {
-                        "🚶🏿‍♂",
                         "man walking"
                     },
                     {
@@ -7427,71 +1651,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman walking"
                     },
                     {
-                        "🚶‍♀",
-                        "woman walking"
-                    },
-                    {
-                        "🚶🏻‍♀️",
-                        "woman walking"
-                    },
-                    {
-                        "🚶🏻‍♀",
-                        "woman walking"
-                    },
-                    {
-                        "🚶🏼‍♀️",
-                        "woman walking"
-                    },
-                    {
-                        "🚶🏼‍♀",
-                        "woman walking"
-                    },
-                    {
-                        "🚶🏽‍♀️",
-                        "woman walking"
-                    },
-                    {
-                        "🚶🏽‍♀",
-                        "woman walking"
-                    },
-                    {
-                        "🚶🏾‍♀️",
-                        "woman walking"
-                    },
-                    {
-                        "🚶🏾‍♀",
-                        "woman walking"
-                    },
-                    {
-                        "🚶🏿‍♀️",
-                        "woman walking"
-                    },
-                    {
-                        "🚶🏿‍♀",
-                        "woman walking"
-                    },
-                    {
                         "🧍",
-                        "person standing"
-                    },
-                    {
-                        "🧍🏻",
-                        "person standing"
-                    },
-                    {
-                        "🧍🏼",
-                        "person standing"
-                    },
-                    {
-                        "🧍🏽",
-                        "person standing"
-                    },
-                    {
-                        "🧍🏾",
-                        "person standing"
-                    },
-                    {
-                        "🧍🏿",
                         "person standing"
                     },
                     {
@@ -7499,95 +1659,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man standing"
                     },
                     {
-                        "🧍‍♂",
-                        "man standing"
-                    },
-                    {
-                        "🧍🏻‍♂️",
-                        "man standing"
-                    },
-                    {
-                        "🧍🏻‍♂",
-                        "man standing"
-                    },
-                    {
-                        "🧍🏼‍♂️",
-                        "man standing"
-                    },
-                    {
-                        "🧍🏼‍♂",
-                        "man standing"
-                    },
-                    {
-                        "🧍🏽‍♂️",
-                        "man standing"
-                    },
-                    {
-                        "🧍🏽‍♂",
-                        "man standing"
-                    },
-                    {
-                        "🧍🏾‍♂️",
-                        "man standing"
-                    },
-                    {
-                        "🧍🏾‍♂",
-                        "man standing"
-                    },
-                    {
-                        "🧍🏿‍♂️",
-                        "man standing"
-                    },
-                    {
-                        "🧍🏿‍♂",
-                        "man standing"
-                    },
-                    {
                         "🧍‍♀️",
-                        "woman standing"
-                    },
-                    {
-                        "🧍‍♀",
-                        "woman standing"
-                    },
-                    {
-                        "🧍🏻‍♀️",
-                        "woman standing"
-                    },
-                    {
-                        "🧍🏻‍♀",
-                        "woman standing"
-                    },
-                    {
-                        "🧍🏼‍♀️",
-                        "woman standing"
-                    },
-                    {
-                        "🧍🏼‍♀",
-                        "woman standing"
-                    },
-                    {
-                        "🧍🏽‍♀️",
-                        "woman standing"
-                    },
-                    {
-                        "🧍🏽‍♀",
-                        "woman standing"
-                    },
-                    {
-                        "🧍🏾‍♀️",
-                        "woman standing"
-                    },
-                    {
-                        "🧍🏾‍♀",
-                        "woman standing"
-                    },
-                    {
-                        "🧍🏿‍♀️",
-                        "woman standing"
-                    },
-                    {
-                        "🧍🏿‍♀",
                         "woman standing"
                     },
                     {
@@ -7595,71 +1667,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "person kneeling"
                     },
                     {
-                        "🧎🏻",
-                        "person kneeling"
-                    },
-                    {
-                        "🧎🏼",
-                        "person kneeling"
-                    },
-                    {
-                        "🧎🏽",
-                        "person kneeling"
-                    },
-                    {
-                        "🧎🏾",
-                        "person kneeling"
-                    },
-                    {
-                        "🧎🏿",
-                        "person kneeling"
-                    },
-                    {
                         "🧎‍♂️",
-                        "man kneeling"
-                    },
-                    {
-                        "🧎‍♂",
-                        "man kneeling"
-                    },
-                    {
-                        "🧎🏻‍♂️",
-                        "man kneeling"
-                    },
-                    {
-                        "🧎🏻‍♂",
-                        "man kneeling"
-                    },
-                    {
-                        "🧎🏼‍♂️",
-                        "man kneeling"
-                    },
-                    {
-                        "🧎🏼‍♂",
-                        "man kneeling"
-                    },
-                    {
-                        "🧎🏽‍♂️",
-                        "man kneeling"
-                    },
-                    {
-                        "🧎🏽‍♂",
-                        "man kneeling"
-                    },
-                    {
-                        "🧎🏾‍♂️",
-                        "man kneeling"
-                    },
-                    {
-                        "🧎🏾‍♂",
-                        "man kneeling"
-                    },
-                    {
-                        "🧎🏿‍♂️",
-                        "man kneeling"
-                    },
-                    {
-                        "🧎🏿‍♂",
                         "man kneeling"
                     },
                     {
@@ -7667,71 +1675,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman kneeling"
                     },
                     {
-                        "🧎‍♀",
-                        "woman kneeling"
-                    },
-                    {
-                        "🧎🏻‍♀️",
-                        "woman kneeling"
-                    },
-                    {
-                        "🧎🏻‍♀",
-                        "woman kneeling"
-                    },
-                    {
-                        "🧎🏼‍♀️",
-                        "woman kneeling"
-                    },
-                    {
-                        "🧎🏼‍♀",
-                        "woman kneeling"
-                    },
-                    {
-                        "🧎🏽‍♀️",
-                        "woman kneeling"
-                    },
-                    {
-                        "🧎🏽‍♀",
-                        "woman kneeling"
-                    },
-                    {
-                        "🧎🏾‍♀️",
-                        "woman kneeling"
-                    },
-                    {
-                        "🧎🏾‍♀",
-                        "woman kneeling"
-                    },
-                    {
-                        "🧎🏿‍♀️",
-                        "woman kneeling"
-                    },
-                    {
-                        "🧎🏿‍♀",
-                        "woman kneeling"
-                    },
-                    {
                         "🧑‍🦯",
-                        "person with white cane"
-                    },
-                    {
-                        "🧑🏻‍🦯",
-                        "person with white cane"
-                    },
-                    {
-                        "🧑🏼‍🦯",
-                        "person with white cane"
-                    },
-                    {
-                        "🧑🏽‍🦯",
-                        "person with white cane"
-                    },
-                    {
-                        "🧑🏾‍🦯",
-                        "person with white cane"
-                    },
-                    {
-                        "🧑🏿‍🦯",
                         "person with white cane"
                     },
                     {
@@ -7739,47 +1683,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man with white cane"
                     },
                     {
-                        "👨🏻‍🦯",
-                        "man with white cane"
-                    },
-                    {
-                        "👨🏼‍🦯",
-                        "man with white cane"
-                    },
-                    {
-                        "👨🏽‍🦯",
-                        "man with white cane"
-                    },
-                    {
-                        "👨🏾‍🦯",
-                        "man with white cane"
-                    },
-                    {
-                        "👨🏿‍🦯",
-                        "man with white cane"
-                    },
-                    {
                         "👩‍🦯",
-                        "woman with white cane"
-                    },
-                    {
-                        "👩🏻‍🦯",
-                        "woman with white cane"
-                    },
-                    {
-                        "👩🏼‍🦯",
-                        "woman with white cane"
-                    },
-                    {
-                        "👩🏽‍🦯",
-                        "woman with white cane"
-                    },
-                    {
-                        "👩🏾‍🦯",
-                        "woman with white cane"
-                    },
-                    {
-                        "👩🏿‍🦯",
                         "woman with white cane"
                     },
                     {
@@ -7787,47 +1691,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "person in motorized wheelchair"
                     },
                     {
-                        "🧑🏻‍🦼",
-                        "person in motorized wheelchair"
-                    },
-                    {
-                        "🧑🏼‍🦼",
-                        "person in motorized wheelchair"
-                    },
-                    {
-                        "🧑🏽‍🦼",
-                        "person in motorized wheelchair"
-                    },
-                    {
-                        "🧑🏾‍🦼",
-                        "person in motorized wheelchair"
-                    },
-                    {
-                        "🧑🏿‍🦼",
-                        "person in motorized wheelchair"
-                    },
-                    {
                         "👨‍🦼",
-                        "man in motorized wheelchair"
-                    },
-                    {
-                        "👨🏻‍🦼",
-                        "man in motorized wheelchair"
-                    },
-                    {
-                        "👨🏼‍🦼",
-                        "man in motorized wheelchair"
-                    },
-                    {
-                        "👨🏽‍🦼",
-                        "man in motorized wheelchair"
-                    },
-                    {
-                        "👨🏾‍🦼",
-                        "man in motorized wheelchair"
-                    },
-                    {
-                        "👨🏿‍🦼",
                         "man in motorized wheelchair"
                     },
                     {
@@ -7835,47 +1699,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman in motorized wheelchair"
                     },
                     {
-                        "👩🏻‍🦼",
-                        "woman in motorized wheelchair"
-                    },
-                    {
-                        "👩🏼‍🦼",
-                        "woman in motorized wheelchair"
-                    },
-                    {
-                        "👩🏽‍🦼",
-                        "woman in motorized wheelchair"
-                    },
-                    {
-                        "👩🏾‍🦼",
-                        "woman in motorized wheelchair"
-                    },
-                    {
-                        "👩🏿‍🦼",
-                        "woman in motorized wheelchair"
-                    },
-                    {
                         "🧑‍🦽",
-                        "person in manual wheelchair"
-                    },
-                    {
-                        "🧑🏻‍🦽",
-                        "person in manual wheelchair"
-                    },
-                    {
-                        "🧑🏼‍🦽",
-                        "person in manual wheelchair"
-                    },
-                    {
-                        "🧑🏽‍🦽",
-                        "person in manual wheelchair"
-                    },
-                    {
-                        "🧑🏾‍🦽",
-                        "person in manual wheelchair"
-                    },
-                    {
-                        "🧑🏿‍🦽",
                         "person in manual wheelchair"
                     },
                     {
@@ -7883,47 +1707,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man in manual wheelchair"
                     },
                     {
-                        "👨🏻‍🦽",
-                        "man in manual wheelchair"
-                    },
-                    {
-                        "👨🏼‍🦽",
-                        "man in manual wheelchair"
-                    },
-                    {
-                        "👨🏽‍🦽",
-                        "man in manual wheelchair"
-                    },
-                    {
-                        "👨🏾‍🦽",
-                        "man in manual wheelchair"
-                    },
-                    {
-                        "👨🏿‍🦽",
-                        "man in manual wheelchair"
-                    },
-                    {
                         "👩‍🦽",
-                        "woman in manual wheelchair"
-                    },
-                    {
-                        "👩🏻‍🦽",
-                        "woman in manual wheelchair"
-                    },
-                    {
-                        "👩🏼‍🦽",
-                        "woman in manual wheelchair"
-                    },
-                    {
-                        "👩🏽‍🦽",
-                        "woman in manual wheelchair"
-                    },
-                    {
-                        "👩🏾‍🦽",
-                        "woman in manual wheelchair"
-                    },
-                    {
-                        "👩🏿‍🦽",
                         "woman in manual wheelchair"
                     },
                     {
@@ -7931,71 +1715,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "person running"
                     },
                     {
-                        "🏃🏻",
-                        "person running"
-                    },
-                    {
-                        "🏃🏼",
-                        "person running"
-                    },
-                    {
-                        "🏃🏽",
-                        "person running"
-                    },
-                    {
-                        "🏃🏾",
-                        "person running"
-                    },
-                    {
-                        "🏃🏿",
-                        "person running"
-                    },
-                    {
                         "🏃‍♂️",
-                        "man running"
-                    },
-                    {
-                        "🏃‍♂",
-                        "man running"
-                    },
-                    {
-                        "🏃🏻‍♂️",
-                        "man running"
-                    },
-                    {
-                        "🏃🏻‍♂",
-                        "man running"
-                    },
-                    {
-                        "🏃🏼‍♂️",
-                        "man running"
-                    },
-                    {
-                        "🏃🏼‍♂",
-                        "man running"
-                    },
-                    {
-                        "🏃🏽‍♂️",
-                        "man running"
-                    },
-                    {
-                        "🏃🏽‍♂",
-                        "man running"
-                    },
-                    {
-                        "🏃🏾‍♂️",
-                        "man running"
-                    },
-                    {
-                        "🏃🏾‍♂",
-                        "man running"
-                    },
-                    {
-                        "🏃🏿‍♂️",
-                        "man running"
-                    },
-                    {
-                        "🏃🏿‍♂",
                         "man running"
                     },
                     {
@@ -8003,71 +1723,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman running"
                     },
                     {
-                        "🏃‍♀",
-                        "woman running"
-                    },
-                    {
-                        "🏃🏻‍♀️",
-                        "woman running"
-                    },
-                    {
-                        "🏃🏻‍♀",
-                        "woman running"
-                    },
-                    {
-                        "🏃🏼‍♀️",
-                        "woman running"
-                    },
-                    {
-                        "🏃🏼‍♀",
-                        "woman running"
-                    },
-                    {
-                        "🏃🏽‍♀️",
-                        "woman running"
-                    },
-                    {
-                        "🏃🏽‍♀",
-                        "woman running"
-                    },
-                    {
-                        "🏃🏾‍♀️",
-                        "woman running"
-                    },
-                    {
-                        "🏃🏾‍♀",
-                        "woman running"
-                    },
-                    {
-                        "🏃🏿‍♀️",
-                        "woman running"
-                    },
-                    {
-                        "🏃🏿‍♀",
-                        "woman running"
-                    },
-                    {
                         "💃",
-                        "woman dancing"
-                    },
-                    {
-                        "💃🏻",
-                        "woman dancing"
-                    },
-                    {
-                        "💃🏼",
-                        "woman dancing"
-                    },
-                    {
-                        "💃🏽",
-                        "woman dancing"
-                    },
-                    {
-                        "💃🏾",
-                        "woman dancing"
-                    },
-                    {
-                        "💃🏿",
                         "woman dancing"
                     },
                     {
@@ -8075,51 +1731,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man dancing"
                     },
                     {
-                        "🕺🏻",
-                        "man dancing"
-                    },
-                    {
-                        "🕺🏼",
-                        "man dancing"
-                    },
-                    {
-                        "🕺🏽",
-                        "man dancing"
-                    },
-                    {
-                        "🕺🏾",
-                        "man dancing"
-                    },
-                    {
-                        "🕺🏿",
-                        "man dancing"
-                    },
-                    {
                         "🕴️",
-                        "person in suit levitating"
-                    },
-                    {
-                        "🕴",
-                        "person in suit levitating"
-                    },
-                    {
-                        "🕴🏻",
-                        "person in suit levitating"
-                    },
-                    {
-                        "🕴🏼",
-                        "person in suit levitating"
-                    },
-                    {
-                        "🕴🏽",
-                        "person in suit levitating"
-                    },
-                    {
-                        "🕴🏾",
-                        "person in suit levitating"
-                    },
-                    {
-                        "🕴🏿",
                         "person in suit levitating"
                     },
                     {
@@ -8131,15 +1743,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "men with bunny ears"
                     },
                     {
-                        "👯‍♂",
-                        "men with bunny ears"
-                    },
-                    {
                         "👯‍♀️",
-                        "women with bunny ears"
-                    },
-                    {
-                        "👯‍♀",
                         "women with bunny ears"
                     },
                     {
@@ -8147,71 +1751,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "person in steamy room"
                     },
                     {
-                        "🧖🏻",
-                        "person in steamy room"
-                    },
-                    {
-                        "🧖🏼",
-                        "person in steamy room"
-                    },
-                    {
-                        "🧖🏽",
-                        "person in steamy room"
-                    },
-                    {
-                        "🧖🏾",
-                        "person in steamy room"
-                    },
-                    {
-                        "🧖🏿",
-                        "person in steamy room"
-                    },
-                    {
                         "🧖‍♂️",
-                        "man in steamy room"
-                    },
-                    {
-                        "🧖‍♂",
-                        "man in steamy room"
-                    },
-                    {
-                        "🧖🏻‍♂️",
-                        "man in steamy room"
-                    },
-                    {
-                        "🧖🏻‍♂",
-                        "man in steamy room"
-                    },
-                    {
-                        "🧖🏼‍♂️",
-                        "man in steamy room"
-                    },
-                    {
-                        "🧖🏼‍♂",
-                        "man in steamy room"
-                    },
-                    {
-                        "🧖🏽‍♂️",
-                        "man in steamy room"
-                    },
-                    {
-                        "🧖🏽‍♂",
-                        "man in steamy room"
-                    },
-                    {
-                        "🧖🏾‍♂️",
-                        "man in steamy room"
-                    },
-                    {
-                        "🧖🏾‍♂",
-                        "man in steamy room"
-                    },
-                    {
-                        "🧖🏿‍♂️",
-                        "man in steamy room"
-                    },
-                    {
-                        "🧖🏿‍♂",
                         "man in steamy room"
                     },
                     {
@@ -8219,71 +1759,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman in steamy room"
                     },
                     {
-                        "🧖‍♀",
-                        "woman in steamy room"
-                    },
-                    {
-                        "🧖🏻‍♀️",
-                        "woman in steamy room"
-                    },
-                    {
-                        "🧖🏻‍♀",
-                        "woman in steamy room"
-                    },
-                    {
-                        "🧖🏼‍♀️",
-                        "woman in steamy room"
-                    },
-                    {
-                        "🧖🏼‍♀",
-                        "woman in steamy room"
-                    },
-                    {
-                        "🧖🏽‍♀️",
-                        "woman in steamy room"
-                    },
-                    {
-                        "🧖🏽‍♀",
-                        "woman in steamy room"
-                    },
-                    {
-                        "🧖🏾‍♀️",
-                        "woman in steamy room"
-                    },
-                    {
-                        "🧖🏾‍♀",
-                        "woman in steamy room"
-                    },
-                    {
-                        "🧖🏿‍♀️",
-                        "woman in steamy room"
-                    },
-                    {
-                        "🧖🏿‍♀",
-                        "woman in steamy room"
-                    },
-                    {
                         "🧗",
-                        "person climbing"
-                    },
-                    {
-                        "🧗🏻",
-                        "person climbing"
-                    },
-                    {
-                        "🧗🏼",
-                        "person climbing"
-                    },
-                    {
-                        "🧗🏽",
-                        "person climbing"
-                    },
-                    {
-                        "🧗🏾",
-                        "person climbing"
-                    },
-                    {
-                        "🧗🏿",
                         "person climbing"
                     },
                     {
@@ -8291,95 +1767,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man climbing"
                     },
                     {
-                        "🧗‍♂",
-                        "man climbing"
-                    },
-                    {
-                        "🧗🏻‍♂️",
-                        "man climbing"
-                    },
-                    {
-                        "🧗🏻‍♂",
-                        "man climbing"
-                    },
-                    {
-                        "🧗🏼‍♂️",
-                        "man climbing"
-                    },
-                    {
-                        "🧗🏼‍♂",
-                        "man climbing"
-                    },
-                    {
-                        "🧗🏽‍♂️",
-                        "man climbing"
-                    },
-                    {
-                        "🧗🏽‍♂",
-                        "man climbing"
-                    },
-                    {
-                        "🧗🏾‍♂️",
-                        "man climbing"
-                    },
-                    {
-                        "🧗🏾‍♂",
-                        "man climbing"
-                    },
-                    {
-                        "🧗🏿‍♂️",
-                        "man climbing"
-                    },
-                    {
-                        "🧗🏿‍♂",
-                        "man climbing"
-                    },
-                    {
                         "🧗‍♀️",
-                        "woman climbing"
-                    },
-                    {
-                        "🧗‍♀",
-                        "woman climbing"
-                    },
-                    {
-                        "🧗🏻‍♀️",
-                        "woman climbing"
-                    },
-                    {
-                        "🧗🏻‍♀",
-                        "woman climbing"
-                    },
-                    {
-                        "🧗🏼‍♀️",
-                        "woman climbing"
-                    },
-                    {
-                        "🧗🏼‍♀",
-                        "woman climbing"
-                    },
-                    {
-                        "🧗🏽‍♀️",
-                        "woman climbing"
-                    },
-                    {
-                        "🧗🏽‍♀",
-                        "woman climbing"
-                    },
-                    {
-                        "🧗🏾‍♀️",
-                        "woman climbing"
-                    },
-                    {
-                        "🧗🏾‍♀",
-                        "woman climbing"
-                    },
-                    {
-                        "🧗🏿‍♀️",
-                        "woman climbing"
-                    },
-                    {
-                        "🧗🏿‍♀",
                         "woman climbing"
                     }
                 }
@@ -8396,31 +1784,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "horse racing"
                     },
                     {
-                        "🏇🏻",
-                        "horse racing"
-                    },
-                    {
-                        "🏇🏼",
-                        "horse racing"
-                    },
-                    {
-                        "🏇🏽",
-                        "horse racing"
-                    },
-                    {
-                        "🏇🏾",
-                        "horse racing"
-                    },
-                    {
-                        "🏇🏿",
-                        "horse racing"
-                    },
-                    {
                         "⛷️",
-                        "skier"
-                    },
-                    {
-                        "⛷",
                         "skier"
                     },
                     {
@@ -8428,51 +1792,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "snowboarder"
                     },
                     {
-                        "🏂🏻",
-                        "snowboarder"
-                    },
-                    {
-                        "🏂🏼",
-                        "snowboarder"
-                    },
-                    {
-                        "🏂🏽",
-                        "snowboarder"
-                    },
-                    {
-                        "🏂🏾",
-                        "snowboarder"
-                    },
-                    {
-                        "🏂🏿",
-                        "snowboarder"
-                    },
-                    {
                         "🏌️",
-                        "person golfing"
-                    },
-                    {
-                        "🏌",
-                        "person golfing"
-                    },
-                    {
-                        "🏌🏻",
-                        "person golfing"
-                    },
-                    {
-                        "🏌🏼",
-                        "person golfing"
-                    },
-                    {
-                        "🏌🏽",
-                        "person golfing"
-                    },
-                    {
-                        "🏌🏾",
-                        "person golfing"
-                    },
-                    {
-                        "🏌🏿",
                         "person golfing"
                     },
                     {
@@ -8480,111 +1800,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man golfing"
                     },
                     {
-                        "🏌‍♂️",
-                        "man golfing"
-                    },
-                    {
-                        "🏌️‍♂",
-                        "man golfing"
-                    },
-                    {
-                        "🏌‍♂",
-                        "man golfing"
-                    },
-                    {
-                        "🏌🏻‍♂️",
-                        "man golfing"
-                    },
-                    {
-                        "🏌🏻‍♂",
-                        "man golfing"
-                    },
-                    {
-                        "🏌🏼‍♂️",
-                        "man golfing"
-                    },
-                    {
-                        "🏌🏼‍♂",
-                        "man golfing"
-                    },
-                    {
-                        "🏌🏽‍♂️",
-                        "man golfing"
-                    },
-                    {
-                        "🏌🏽‍♂",
-                        "man golfing"
-                    },
-                    {
-                        "🏌🏾‍♂️",
-                        "man golfing"
-                    },
-                    {
-                        "🏌🏾‍♂",
-                        "man golfing"
-                    },
-                    {
-                        "🏌🏿‍♂️",
-                        "man golfing"
-                    },
-                    {
-                        "🏌🏿‍♂",
-                        "man golfing"
-                    },
-                    {
                         "🏌️‍♀️",
-                        "woman golfing"
-                    },
-                    {
-                        "🏌‍♀️",
-                        "woman golfing"
-                    },
-                    {
-                        "🏌️‍♀",
-                        "woman golfing"
-                    },
-                    {
-                        "🏌‍♀",
-                        "woman golfing"
-                    },
-                    {
-                        "🏌🏻‍♀️",
-                        "woman golfing"
-                    },
-                    {
-                        "🏌🏻‍♀",
-                        "woman golfing"
-                    },
-                    {
-                        "🏌🏼‍♀️",
-                        "woman golfing"
-                    },
-                    {
-                        "🏌🏼‍♀",
-                        "woman golfing"
-                    },
-                    {
-                        "🏌🏽‍♀️",
-                        "woman golfing"
-                    },
-                    {
-                        "🏌🏽‍♀",
-                        "woman golfing"
-                    },
-                    {
-                        "🏌🏾‍♀️",
-                        "woman golfing"
-                    },
-                    {
-                        "🏌🏾‍♀",
-                        "woman golfing"
-                    },
-                    {
-                        "🏌🏿‍♀️",
-                        "woman golfing"
-                    },
-                    {
-                        "🏌🏿‍♀",
                         "woman golfing"
                     },
                     {
@@ -8592,71 +1808,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "person surfing"
                     },
                     {
-                        "🏄🏻",
-                        "person surfing"
-                    },
-                    {
-                        "🏄🏼",
-                        "person surfing"
-                    },
-                    {
-                        "🏄🏽",
-                        "person surfing"
-                    },
-                    {
-                        "🏄🏾",
-                        "person surfing"
-                    },
-                    {
-                        "🏄🏿",
-                        "person surfing"
-                    },
-                    {
                         "🏄‍♂️",
-                        "man surfing"
-                    },
-                    {
-                        "🏄‍♂",
-                        "man surfing"
-                    },
-                    {
-                        "🏄🏻‍♂️",
-                        "man surfing"
-                    },
-                    {
-                        "🏄🏻‍♂",
-                        "man surfing"
-                    },
-                    {
-                        "🏄🏼‍♂️",
-                        "man surfing"
-                    },
-                    {
-                        "🏄🏼‍♂",
-                        "man surfing"
-                    },
-                    {
-                        "🏄🏽‍♂️",
-                        "man surfing"
-                    },
-                    {
-                        "🏄🏽‍♂",
-                        "man surfing"
-                    },
-                    {
-                        "🏄🏾‍♂️",
-                        "man surfing"
-                    },
-                    {
-                        "🏄🏾‍♂",
-                        "man surfing"
-                    },
-                    {
-                        "🏄🏿‍♂️",
-                        "man surfing"
-                    },
-                    {
-                        "🏄🏿‍♂",
                         "man surfing"
                     },
                     {
@@ -8664,71 +1816,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman surfing"
                     },
                     {
-                        "🏄‍♀",
-                        "woman surfing"
-                    },
-                    {
-                        "🏄🏻‍♀️",
-                        "woman surfing"
-                    },
-                    {
-                        "🏄🏻‍♀",
-                        "woman surfing"
-                    },
-                    {
-                        "🏄🏼‍♀️",
-                        "woman surfing"
-                    },
-                    {
-                        "🏄🏼‍♀",
-                        "woman surfing"
-                    },
-                    {
-                        "🏄🏽‍♀️",
-                        "woman surfing"
-                    },
-                    {
-                        "🏄🏽‍♀",
-                        "woman surfing"
-                    },
-                    {
-                        "🏄🏾‍♀️",
-                        "woman surfing"
-                    },
-                    {
-                        "🏄🏾‍♀",
-                        "woman surfing"
-                    },
-                    {
-                        "🏄🏿‍♀️",
-                        "woman surfing"
-                    },
-                    {
-                        "🏄🏿‍♀",
-                        "woman surfing"
-                    },
-                    {
                         "🚣",
-                        "person rowing boat"
-                    },
-                    {
-                        "🚣🏻",
-                        "person rowing boat"
-                    },
-                    {
-                        "🚣🏼",
-                        "person rowing boat"
-                    },
-                    {
-                        "🚣🏽",
-                        "person rowing boat"
-                    },
-                    {
-                        "🚣🏾",
-                        "person rowing boat"
-                    },
-                    {
-                        "🚣🏿",
                         "person rowing boat"
                     },
                     {
@@ -8736,95 +1824,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man rowing boat"
                     },
                     {
-                        "🚣‍♂",
-                        "man rowing boat"
-                    },
-                    {
-                        "🚣🏻‍♂️",
-                        "man rowing boat"
-                    },
-                    {
-                        "🚣🏻‍♂",
-                        "man rowing boat"
-                    },
-                    {
-                        "🚣🏼‍♂️",
-                        "man rowing boat"
-                    },
-                    {
-                        "🚣🏼‍♂",
-                        "man rowing boat"
-                    },
-                    {
-                        "🚣🏽‍♂️",
-                        "man rowing boat"
-                    },
-                    {
-                        "🚣🏽‍♂",
-                        "man rowing boat"
-                    },
-                    {
-                        "🚣🏾‍♂️",
-                        "man rowing boat"
-                    },
-                    {
-                        "🚣🏾‍♂",
-                        "man rowing boat"
-                    },
-                    {
-                        "🚣🏿‍♂️",
-                        "man rowing boat"
-                    },
-                    {
-                        "🚣🏿‍♂",
-                        "man rowing boat"
-                    },
-                    {
                         "🚣‍♀️",
-                        "woman rowing boat"
-                    },
-                    {
-                        "🚣‍♀",
-                        "woman rowing boat"
-                    },
-                    {
-                        "🚣🏻‍♀️",
-                        "woman rowing boat"
-                    },
-                    {
-                        "🚣🏻‍♀",
-                        "woman rowing boat"
-                    },
-                    {
-                        "🚣🏼‍♀️",
-                        "woman rowing boat"
-                    },
-                    {
-                        "🚣🏼‍♀",
-                        "woman rowing boat"
-                    },
-                    {
-                        "🚣🏽‍♀️",
-                        "woman rowing boat"
-                    },
-                    {
-                        "🚣🏽‍♀",
-                        "woman rowing boat"
-                    },
-                    {
-                        "🚣🏾‍♀️",
-                        "woman rowing boat"
-                    },
-                    {
-                        "🚣🏾‍♀",
-                        "woman rowing boat"
-                    },
-                    {
-                        "🚣🏿‍♀️",
-                        "woman rowing boat"
-                    },
-                    {
-                        "🚣🏿‍♀",
                         "woman rowing boat"
                     },
                     {
@@ -8832,71 +1832,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "person swimming"
                     },
                     {
-                        "🏊🏻",
-                        "person swimming"
-                    },
-                    {
-                        "🏊🏼",
-                        "person swimming"
-                    },
-                    {
-                        "🏊🏽",
-                        "person swimming"
-                    },
-                    {
-                        "🏊🏾",
-                        "person swimming"
-                    },
-                    {
-                        "🏊🏿",
-                        "person swimming"
-                    },
-                    {
                         "🏊‍♂️",
-                        "man swimming"
-                    },
-                    {
-                        "🏊‍♂",
-                        "man swimming"
-                    },
-                    {
-                        "🏊🏻‍♂️",
-                        "man swimming"
-                    },
-                    {
-                        "🏊🏻‍♂",
-                        "man swimming"
-                    },
-                    {
-                        "🏊🏼‍♂️",
-                        "man swimming"
-                    },
-                    {
-                        "🏊🏼‍♂",
-                        "man swimming"
-                    },
-                    {
-                        "🏊🏽‍♂️",
-                        "man swimming"
-                    },
-                    {
-                        "🏊🏽‍♂",
-                        "man swimming"
-                    },
-                    {
-                        "🏊🏾‍♂️",
-                        "man swimming"
-                    },
-                    {
-                        "🏊🏾‍♂",
-                        "man swimming"
-                    },
-                    {
-                        "🏊🏿‍♂️",
-                        "man swimming"
-                    },
-                    {
-                        "🏊🏿‍♂",
                         "man swimming"
                     },
                     {
@@ -8904,75 +1840,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman swimming"
                     },
                     {
-                        "🏊‍♀",
-                        "woman swimming"
-                    },
-                    {
-                        "🏊🏻‍♀️",
-                        "woman swimming"
-                    },
-                    {
-                        "🏊🏻‍♀",
-                        "woman swimming"
-                    },
-                    {
-                        "🏊🏼‍♀️",
-                        "woman swimming"
-                    },
-                    {
-                        "🏊🏼‍♀",
-                        "woman swimming"
-                    },
-                    {
-                        "🏊🏽‍♀️",
-                        "woman swimming"
-                    },
-                    {
-                        "🏊🏽‍♀",
-                        "woman swimming"
-                    },
-                    {
-                        "🏊🏾‍♀️",
-                        "woman swimming"
-                    },
-                    {
-                        "🏊🏾‍♀",
-                        "woman swimming"
-                    },
-                    {
-                        "🏊🏿‍♀️",
-                        "woman swimming"
-                    },
-                    {
-                        "🏊🏿‍♀",
-                        "woman swimming"
-                    },
-                    {
                         "⛹️",
-                        "person bouncing ball"
-                    },
-                    {
-                        "⛹",
-                        "person bouncing ball"
-                    },
-                    {
-                        "⛹🏻",
-                        "person bouncing ball"
-                    },
-                    {
-                        "⛹🏼",
-                        "person bouncing ball"
-                    },
-                    {
-                        "⛹🏽",
-                        "person bouncing ball"
-                    },
-                    {
-                        "⛹🏾",
-                        "person bouncing ball"
-                    },
-                    {
-                        "⛹🏿",
                         "person bouncing ball"
                     },
                     {
@@ -8980,111 +1848,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man bouncing ball"
                     },
                     {
-                        "⛹‍♂️",
-                        "man bouncing ball"
-                    },
-                    {
-                        "⛹️‍♂",
-                        "man bouncing ball"
-                    },
-                    {
-                        "⛹‍♂",
-                        "man bouncing ball"
-                    },
-                    {
-                        "⛹🏻‍♂️",
-                        "man bouncing ball"
-                    },
-                    {
-                        "⛹🏻‍♂",
-                        "man bouncing ball"
-                    },
-                    {
-                        "⛹🏼‍♂️",
-                        "man bouncing ball"
-                    },
-                    {
-                        "⛹🏼‍♂",
-                        "man bouncing ball"
-                    },
-                    {
-                        "⛹🏽‍♂️",
-                        "man bouncing ball"
-                    },
-                    {
-                        "⛹🏽‍♂",
-                        "man bouncing ball"
-                    },
-                    {
-                        "⛹🏾‍♂️",
-                        "man bouncing ball"
-                    },
-                    {
-                        "⛹🏾‍♂",
-                        "man bouncing ball"
-                    },
-                    {
-                        "⛹🏿‍♂️",
-                        "man bouncing ball"
-                    },
-                    {
-                        "⛹🏿‍♂",
-                        "man bouncing ball"
-                    },
-                    {
                         "⛹️‍♀️",
-                        "woman bouncing ball"
-                    },
-                    {
-                        "⛹‍♀️",
-                        "woman bouncing ball"
-                    },
-                    {
-                        "⛹️‍♀",
-                        "woman bouncing ball"
-                    },
-                    {
-                        "⛹‍♀",
-                        "woman bouncing ball"
-                    },
-                    {
-                        "⛹🏻‍♀️",
-                        "woman bouncing ball"
-                    },
-                    {
-                        "⛹🏻‍♀",
-                        "woman bouncing ball"
-                    },
-                    {
-                        "⛹🏼‍♀️",
-                        "woman bouncing ball"
-                    },
-                    {
-                        "⛹🏼‍♀",
-                        "woman bouncing ball"
-                    },
-                    {
-                        "⛹🏽‍♀️",
-                        "woman bouncing ball"
-                    },
-                    {
-                        "⛹🏽‍♀",
-                        "woman bouncing ball"
-                    },
-                    {
-                        "⛹🏾‍♀️",
-                        "woman bouncing ball"
-                    },
-                    {
-                        "⛹🏾‍♀",
-                        "woman bouncing ball"
-                    },
-                    {
-                        "⛹🏿‍♀️",
-                        "woman bouncing ball"
-                    },
-                    {
-                        "⛹🏿‍♀",
                         "woman bouncing ball"
                     },
                     {
@@ -9092,83 +1856,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "person lifting weights"
                     },
                     {
-                        "🏋",
-                        "person lifting weights"
-                    },
-                    {
-                        "🏋🏻",
-                        "person lifting weights"
-                    },
-                    {
-                        "🏋🏼",
-                        "person lifting weights"
-                    },
-                    {
-                        "🏋🏽",
-                        "person lifting weights"
-                    },
-                    {
-                        "🏋🏾",
-                        "person lifting weights"
-                    },
-                    {
-                        "🏋🏿",
-                        "person lifting weights"
-                    },
-                    {
                         "🏋️‍♂️",
-                        "man lifting weights"
-                    },
-                    {
-                        "🏋‍♂️",
-                        "man lifting weights"
-                    },
-                    {
-                        "🏋️‍♂",
-                        "man lifting weights"
-                    },
-                    {
-                        "🏋‍♂",
-                        "man lifting weights"
-                    },
-                    {
-                        "🏋🏻‍♂️",
-                        "man lifting weights"
-                    },
-                    {
-                        "🏋🏻‍♂",
-                        "man lifting weights"
-                    },
-                    {
-                        "🏋🏼‍♂️",
-                        "man lifting weights"
-                    },
-                    {
-                        "🏋🏼‍♂",
-                        "man lifting weights"
-                    },
-                    {
-                        "🏋🏽‍♂️",
-                        "man lifting weights"
-                    },
-                    {
-                        "🏋🏽‍♂",
-                        "man lifting weights"
-                    },
-                    {
-                        "🏋🏾‍♂️",
-                        "man lifting weights"
-                    },
-                    {
-                        "🏋🏾‍♂",
-                        "man lifting weights"
-                    },
-                    {
-                        "🏋🏿‍♂️",
-                        "man lifting weights"
-                    },
-                    {
-                        "🏋🏿‍♂",
                         "man lifting weights"
                     },
                     {
@@ -9176,79 +1864,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman lifting weights"
                     },
                     {
-                        "🏋‍♀️",
-                        "woman lifting weights"
-                    },
-                    {
-                        "🏋️‍♀",
-                        "woman lifting weights"
-                    },
-                    {
-                        "🏋‍♀",
-                        "woman lifting weights"
-                    },
-                    {
-                        "🏋🏻‍♀️",
-                        "woman lifting weights"
-                    },
-                    {
-                        "🏋🏻‍♀",
-                        "woman lifting weights"
-                    },
-                    {
-                        "🏋🏼‍♀️",
-                        "woman lifting weights"
-                    },
-                    {
-                        "🏋🏼‍♀",
-                        "woman lifting weights"
-                    },
-                    {
-                        "🏋🏽‍♀️",
-                        "woman lifting weights"
-                    },
-                    {
-                        "🏋🏽‍♀",
-                        "woman lifting weights"
-                    },
-                    {
-                        "🏋🏾‍♀️",
-                        "woman lifting weights"
-                    },
-                    {
-                        "🏋🏾‍♀",
-                        "woman lifting weights"
-                    },
-                    {
-                        "🏋🏿‍♀️",
-                        "woman lifting weights"
-                    },
-                    {
-                        "🏋🏿‍♀",
-                        "woman lifting weights"
-                    },
-                    {
                         "🚴",
-                        "person biking"
-                    },
-                    {
-                        "🚴🏻",
-                        "person biking"
-                    },
-                    {
-                        "🚴🏼",
-                        "person biking"
-                    },
-                    {
-                        "🚴🏽",
-                        "person biking"
-                    },
-                    {
-                        "🚴🏾",
-                        "person biking"
-                    },
-                    {
-                        "🚴🏿",
                         "person biking"
                     },
                     {
@@ -9256,95 +1872,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man biking"
                     },
                     {
-                        "🚴‍♂",
-                        "man biking"
-                    },
-                    {
-                        "🚴🏻‍♂️",
-                        "man biking"
-                    },
-                    {
-                        "🚴🏻‍♂",
-                        "man biking"
-                    },
-                    {
-                        "🚴🏼‍♂️",
-                        "man biking"
-                    },
-                    {
-                        "🚴🏼‍♂",
-                        "man biking"
-                    },
-                    {
-                        "🚴🏽‍♂️",
-                        "man biking"
-                    },
-                    {
-                        "🚴🏽‍♂",
-                        "man biking"
-                    },
-                    {
-                        "🚴🏾‍♂️",
-                        "man biking"
-                    },
-                    {
-                        "🚴🏾‍♂",
-                        "man biking"
-                    },
-                    {
-                        "🚴🏿‍♂️",
-                        "man biking"
-                    },
-                    {
-                        "🚴🏿‍♂",
-                        "man biking"
-                    },
-                    {
                         "🚴‍♀️",
-                        "woman biking"
-                    },
-                    {
-                        "🚴‍♀",
-                        "woman biking"
-                    },
-                    {
-                        "🚴🏻‍♀️",
-                        "woman biking"
-                    },
-                    {
-                        "🚴🏻‍♀",
-                        "woman biking"
-                    },
-                    {
-                        "🚴🏼‍♀️",
-                        "woman biking"
-                    },
-                    {
-                        "🚴🏼‍♀",
-                        "woman biking"
-                    },
-                    {
-                        "🚴🏽‍♀️",
-                        "woman biking"
-                    },
-                    {
-                        "🚴🏽‍♀",
-                        "woman biking"
-                    },
-                    {
-                        "🚴🏾‍♀️",
-                        "woman biking"
-                    },
-                    {
-                        "🚴🏾‍♀",
-                        "woman biking"
-                    },
-                    {
-                        "🚴🏿‍♀️",
-                        "woman biking"
-                    },
-                    {
-                        "🚴🏿‍♀",
                         "woman biking"
                     },
                     {
@@ -9352,71 +1880,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "person mountain biking"
                     },
                     {
-                        "🚵🏻",
-                        "person mountain biking"
-                    },
-                    {
-                        "🚵🏼",
-                        "person mountain biking"
-                    },
-                    {
-                        "🚵🏽",
-                        "person mountain biking"
-                    },
-                    {
-                        "🚵🏾",
-                        "person mountain biking"
-                    },
-                    {
-                        "🚵🏿",
-                        "person mountain biking"
-                    },
-                    {
                         "🚵‍♂️",
-                        "man mountain biking"
-                    },
-                    {
-                        "🚵‍♂",
-                        "man mountain biking"
-                    },
-                    {
-                        "🚵🏻‍♂️",
-                        "man mountain biking"
-                    },
-                    {
-                        "🚵🏻‍♂",
-                        "man mountain biking"
-                    },
-                    {
-                        "🚵🏼‍♂️",
-                        "man mountain biking"
-                    },
-                    {
-                        "🚵🏼‍♂",
-                        "man mountain biking"
-                    },
-                    {
-                        "🚵🏽‍♂️",
-                        "man mountain biking"
-                    },
-                    {
-                        "🚵🏽‍♂",
-                        "man mountain biking"
-                    },
-                    {
-                        "🚵🏾‍♂️",
-                        "man mountain biking"
-                    },
-                    {
-                        "🚵🏾‍♂",
-                        "man mountain biking"
-                    },
-                    {
-                        "🚵🏿‍♂️",
-                        "man mountain biking"
-                    },
-                    {
-                        "🚵🏿‍♂",
                         "man mountain biking"
                     },
                     {
@@ -9424,71 +1888,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman mountain biking"
                     },
                     {
-                        "🚵‍♀",
-                        "woman mountain biking"
-                    },
-                    {
-                        "🚵🏻‍♀️",
-                        "woman mountain biking"
-                    },
-                    {
-                        "🚵🏻‍♀",
-                        "woman mountain biking"
-                    },
-                    {
-                        "🚵🏼‍♀️",
-                        "woman mountain biking"
-                    },
-                    {
-                        "🚵🏼‍♀",
-                        "woman mountain biking"
-                    },
-                    {
-                        "🚵🏽‍♀️",
-                        "woman mountain biking"
-                    },
-                    {
-                        "🚵🏽‍♀",
-                        "woman mountain biking"
-                    },
-                    {
-                        "🚵🏾‍♀️",
-                        "woman mountain biking"
-                    },
-                    {
-                        "🚵🏾‍♀",
-                        "woman mountain biking"
-                    },
-                    {
-                        "🚵🏿‍♀️",
-                        "woman mountain biking"
-                    },
-                    {
-                        "🚵🏿‍♀",
-                        "woman mountain biking"
-                    },
-                    {
                         "🤸",
-                        "person cartwheeling"
-                    },
-                    {
-                        "🤸🏻",
-                        "person cartwheeling"
-                    },
-                    {
-                        "🤸🏼",
-                        "person cartwheeling"
-                    },
-                    {
-                        "🤸🏽",
-                        "person cartwheeling"
-                    },
-                    {
-                        "🤸🏾",
-                        "person cartwheeling"
-                    },
-                    {
-                        "🤸🏿",
                         "person cartwheeling"
                     },
                     {
@@ -9496,95 +1896,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man cartwheeling"
                     },
                     {
-                        "🤸‍♂",
-                        "man cartwheeling"
-                    },
-                    {
-                        "🤸🏻‍♂️",
-                        "man cartwheeling"
-                    },
-                    {
-                        "🤸🏻‍♂",
-                        "man cartwheeling"
-                    },
-                    {
-                        "🤸🏼‍♂️",
-                        "man cartwheeling"
-                    },
-                    {
-                        "🤸🏼‍♂",
-                        "man cartwheeling"
-                    },
-                    {
-                        "🤸🏽‍♂️",
-                        "man cartwheeling"
-                    },
-                    {
-                        "🤸🏽‍♂",
-                        "man cartwheeling"
-                    },
-                    {
-                        "🤸🏾‍♂️",
-                        "man cartwheeling"
-                    },
-                    {
-                        "🤸🏾‍♂",
-                        "man cartwheeling"
-                    },
-                    {
-                        "🤸🏿‍♂️",
-                        "man cartwheeling"
-                    },
-                    {
-                        "🤸🏿‍♂",
-                        "man cartwheeling"
-                    },
-                    {
                         "🤸‍♀️",
-                        "woman cartwheeling"
-                    },
-                    {
-                        "🤸‍♀",
-                        "woman cartwheeling"
-                    },
-                    {
-                        "🤸🏻‍♀️",
-                        "woman cartwheeling"
-                    },
-                    {
-                        "🤸🏻‍♀",
-                        "woman cartwheeling"
-                    },
-                    {
-                        "🤸🏼‍♀️",
-                        "woman cartwheeling"
-                    },
-                    {
-                        "🤸🏼‍♀",
-                        "woman cartwheeling"
-                    },
-                    {
-                        "🤸🏽‍♀️",
-                        "woman cartwheeling"
-                    },
-                    {
-                        "🤸🏽‍♀",
-                        "woman cartwheeling"
-                    },
-                    {
-                        "🤸🏾‍♀️",
-                        "woman cartwheeling"
-                    },
-                    {
-                        "🤸🏾‍♀",
-                        "woman cartwheeling"
-                    },
-                    {
-                        "🤸🏿‍♀️",
-                        "woman cartwheeling"
-                    },
-                    {
-                        "🤸🏿‍♀",
                         "woman cartwheeling"
                     },
                     {
@@ -9596,15 +1908,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "men wrestling"
                     },
                     {
-                        "🤼‍♂",
-                        "men wrestling"
-                    },
-                    {
                         "🤼‍♀️",
-                        "women wrestling"
-                    },
-                    {
-                        "🤼‍♀",
                         "women wrestling"
                     },
                     {
@@ -9612,71 +1916,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "person playing water polo"
                     },
                     {
-                        "🤽🏻",
-                        "person playing water polo"
-                    },
-                    {
-                        "🤽🏼",
-                        "person playing water polo"
-                    },
-                    {
-                        "🤽🏽",
-                        "person playing water polo"
-                    },
-                    {
-                        "🤽🏾",
-                        "person playing water polo"
-                    },
-                    {
-                        "🤽🏿",
-                        "person playing water polo"
-                    },
-                    {
                         "🤽‍♂️",
-                        "man playing water polo"
-                    },
-                    {
-                        "🤽‍♂",
-                        "man playing water polo"
-                    },
-                    {
-                        "🤽🏻‍♂️",
-                        "man playing water polo"
-                    },
-                    {
-                        "🤽🏻‍♂",
-                        "man playing water polo"
-                    },
-                    {
-                        "🤽🏼‍♂️",
-                        "man playing water polo"
-                    },
-                    {
-                        "🤽🏼‍♂",
-                        "man playing water polo"
-                    },
-                    {
-                        "🤽🏽‍♂️",
-                        "man playing water polo"
-                    },
-                    {
-                        "🤽🏽‍♂",
-                        "man playing water polo"
-                    },
-                    {
-                        "🤽🏾‍♂️",
-                        "man playing water polo"
-                    },
-                    {
-                        "🤽🏾‍♂",
-                        "man playing water polo"
-                    },
-                    {
-                        "🤽🏿‍♂️",
-                        "man playing water polo"
-                    },
-                    {
-                        "🤽🏿‍♂",
                         "man playing water polo"
                     },
                     {
@@ -9684,71 +1924,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman playing water polo"
                     },
                     {
-                        "🤽‍♀",
-                        "woman playing water polo"
-                    },
-                    {
-                        "🤽🏻‍♀️",
-                        "woman playing water polo"
-                    },
-                    {
-                        "🤽🏻‍♀",
-                        "woman playing water polo"
-                    },
-                    {
-                        "🤽🏼‍♀️",
-                        "woman playing water polo"
-                    },
-                    {
-                        "🤽🏼‍♀",
-                        "woman playing water polo"
-                    },
-                    {
-                        "🤽🏽‍♀️",
-                        "woman playing water polo"
-                    },
-                    {
-                        "🤽🏽‍♀",
-                        "woman playing water polo"
-                    },
-                    {
-                        "🤽🏾‍♀️",
-                        "woman playing water polo"
-                    },
-                    {
-                        "🤽🏾‍♀",
-                        "woman playing water polo"
-                    },
-                    {
-                        "🤽🏿‍♀️",
-                        "woman playing water polo"
-                    },
-                    {
-                        "🤽🏿‍♀",
-                        "woman playing water polo"
-                    },
-                    {
                         "🤾",
-                        "person playing handball"
-                    },
-                    {
-                        "🤾🏻",
-                        "person playing handball"
-                    },
-                    {
-                        "🤾🏼",
-                        "person playing handball"
-                    },
-                    {
-                        "🤾🏽",
-                        "person playing handball"
-                    },
-                    {
-                        "🤾🏾",
-                        "person playing handball"
-                    },
-                    {
-                        "🤾🏿",
                         "person playing handball"
                     },
                     {
@@ -9756,95 +1932,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "man playing handball"
                     },
                     {
-                        "🤾‍♂",
-                        "man playing handball"
-                    },
-                    {
-                        "🤾🏻‍♂️",
-                        "man playing handball"
-                    },
-                    {
-                        "🤾🏻‍♂",
-                        "man playing handball"
-                    },
-                    {
-                        "🤾🏼‍♂️",
-                        "man playing handball"
-                    },
-                    {
-                        "🤾🏼‍♂",
-                        "man playing handball"
-                    },
-                    {
-                        "🤾🏽‍♂️",
-                        "man playing handball"
-                    },
-                    {
-                        "🤾🏽‍♂",
-                        "man playing handball"
-                    },
-                    {
-                        "🤾🏾‍♂️",
-                        "man playing handball"
-                    },
-                    {
-                        "🤾🏾‍♂",
-                        "man playing handball"
-                    },
-                    {
-                        "🤾🏿‍♂️",
-                        "man playing handball"
-                    },
-                    {
-                        "🤾🏿‍♂",
-                        "man playing handball"
-                    },
-                    {
                         "🤾‍♀️",
-                        "woman playing handball"
-                    },
-                    {
-                        "🤾‍♀",
-                        "woman playing handball"
-                    },
-                    {
-                        "🤾🏻‍♀️",
-                        "woman playing handball"
-                    },
-                    {
-                        "🤾🏻‍♀",
-                        "woman playing handball"
-                    },
-                    {
-                        "🤾🏼‍♀️",
-                        "woman playing handball"
-                    },
-                    {
-                        "🤾🏼‍♀",
-                        "woman playing handball"
-                    },
-                    {
-                        "🤾🏽‍♀️",
-                        "woman playing handball"
-                    },
-                    {
-                        "🤾🏽‍♀",
-                        "woman playing handball"
-                    },
-                    {
-                        "🤾🏾‍♀️",
-                        "woman playing handball"
-                    },
-                    {
-                        "🤾🏾‍♀",
-                        "woman playing handball"
-                    },
-                    {
-                        "🤾🏿‍♀️",
-                        "woman playing handball"
-                    },
-                    {
-                        "🤾🏿‍♀",
                         "woman playing handball"
                     },
                     {
@@ -9852,119 +1940,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "person juggling"
                     },
                     {
-                        "🤹🏻",
-                        "person juggling"
-                    },
-                    {
-                        "🤹🏼",
-                        "person juggling"
-                    },
-                    {
-                        "🤹🏽",
-                        "person juggling"
-                    },
-                    {
-                        "🤹🏾",
-                        "person juggling"
-                    },
-                    {
-                        "🤹🏿",
-                        "person juggling"
-                    },
-                    {
                         "🤹‍♂️",
                         "man juggling"
                     },
                     {
-                        "🤹‍♂",
-                        "man juggling"
-                    },
-                    {
-                        "🤹🏻‍♂️",
-                        "man juggling"
-                    },
-                    {
-                        "🤹🏻‍♂",
-                        "man juggling"
-                    },
-                    {
-                        "🤹🏼‍♂️",
-                        "man juggling"
-                    },
-                    {
-                        "🤹🏼‍♂",
-                        "man juggling"
-                    },
-                    {
-                        "🤹🏽‍♂️",
-                        "man juggling"
-                    },
-                    {
-                        "🤹🏽‍♂",
-                        "man juggling"
-                    },
-                    {
-                        "🤹🏾‍♂️",
-                        "man juggling"
-                    },
-                    {
-                        "🤹🏾‍♂",
-                        "man juggling"
-                    },
-                    {
-                        "🤹🏿‍♂️",
-                        "man juggling"
-                    },
-                    {
-                        "🤹🏿‍♂",
-                        "man juggling"
-                    },
-                    {
                         "🤹‍♀️",
-                        "woman juggling"
-                    },
-                    {
-                        "🤹‍♀",
-                        "woman juggling"
-                    },
-                    {
-                        "🤹🏻‍♀️",
-                        "woman juggling"
-                    },
-                    {
-                        "🤹🏻‍♀",
-                        "woman juggling"
-                    },
-                    {
-                        "🤹🏼‍♀️",
-                        "woman juggling"
-                    },
-                    {
-                        "🤹🏼‍♀",
-                        "woman juggling"
-                    },
-                    {
-                        "🤹🏽‍♀️",
-                        "woman juggling"
-                    },
-                    {
-                        "🤹🏽‍♀",
-                        "woman juggling"
-                    },
-                    {
-                        "🤹🏾‍♀️",
-                        "woman juggling"
-                    },
-                    {
-                        "🤹🏾‍♀",
-                        "woman juggling"
-                    },
-                    {
-                        "🤹🏿‍♀️",
-                        "woman juggling"
-                    },
-                    {
-                        "🤹🏿‍♀",
                         "woman juggling"
                     }
                 }
@@ -9977,71 +1957,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "person in lotus position"
                     },
                     {
-                        "🧘🏻",
-                        "person in lotus position"
-                    },
-                    {
-                        "🧘🏼",
-                        "person in lotus position"
-                    },
-                    {
-                        "🧘🏽",
-                        "person in lotus position"
-                    },
-                    {
-                        "🧘🏾",
-                        "person in lotus position"
-                    },
-                    {
-                        "🧘🏿",
-                        "person in lotus position"
-                    },
-                    {
                         "🧘‍♂️",
-                        "man in lotus position"
-                    },
-                    {
-                        "🧘‍♂",
-                        "man in lotus position"
-                    },
-                    {
-                        "🧘🏻‍♂️",
-                        "man in lotus position"
-                    },
-                    {
-                        "🧘🏻‍♂",
-                        "man in lotus position"
-                    },
-                    {
-                        "🧘🏼‍♂️",
-                        "man in lotus position"
-                    },
-                    {
-                        "🧘🏼‍♂",
-                        "man in lotus position"
-                    },
-                    {
-                        "🧘🏽‍♂️",
-                        "man in lotus position"
-                    },
-                    {
-                        "🧘🏽‍♂",
-                        "man in lotus position"
-                    },
-                    {
-                        "🧘🏾‍♂️",
-                        "man in lotus position"
-                    },
-                    {
-                        "🧘🏾‍♂",
-                        "man in lotus position"
-                    },
-                    {
-                        "🧘🏿‍♂️",
-                        "man in lotus position"
-                    },
-                    {
-                        "🧘🏿‍♂",
                         "man in lotus position"
                     },
                     {
@@ -10049,95 +1965,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman in lotus position"
                     },
                     {
-                        "🧘‍♀",
-                        "woman in lotus position"
-                    },
-                    {
-                        "🧘🏻‍♀️",
-                        "woman in lotus position"
-                    },
-                    {
-                        "🧘🏻‍♀",
-                        "woman in lotus position"
-                    },
-                    {
-                        "🧘🏼‍♀️",
-                        "woman in lotus position"
-                    },
-                    {
-                        "🧘🏼‍♀",
-                        "woman in lotus position"
-                    },
-                    {
-                        "🧘🏽‍♀️",
-                        "woman in lotus position"
-                    },
-                    {
-                        "🧘🏽‍♀",
-                        "woman in lotus position"
-                    },
-                    {
-                        "🧘🏾‍♀️",
-                        "woman in lotus position"
-                    },
-                    {
-                        "🧘🏾‍♀",
-                        "woman in lotus position"
-                    },
-                    {
-                        "🧘🏿‍♀️",
-                        "woman in lotus position"
-                    },
-                    {
-                        "🧘🏿‍♀",
-                        "woman in lotus position"
-                    },
-                    {
                         "🛀",
                         "person taking bath"
                     },
                     {
-                        "🛀🏻",
-                        "person taking bath"
-                    },
-                    {
-                        "🛀🏼",
-                        "person taking bath"
-                    },
-                    {
-                        "🛀🏽",
-                        "person taking bath"
-                    },
-                    {
-                        "🛀🏾",
-                        "person taking bath"
-                    },
-                    {
-                        "🛀🏿",
-                        "person taking bath"
-                    },
-                    {
                         "🛌",
-                        "person in bed"
-                    },
-                    {
-                        "🛌🏻",
-                        "person in bed"
-                    },
-                    {
-                        "🛌🏼",
-                        "person in bed"
-                    },
-                    {
-                        "🛌🏽",
-                        "person in bed"
-                    },
-                    {
-                        "🛌🏾",
-                        "person in bed"
-                    },
-                    {
-                        "🛌🏿",
                         "person in bed"
                     }
                 }
@@ -10150,207 +1982,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "people holding hands"
                     },
                     {
-                        "🧑🏻‍🤝‍🧑🏻",
-                        "people holding hands"
-                    },
-                    {
-                        "🧑🏻‍🤝‍🧑🏼",
-                        "people holding hands"
-                    },
-                    {
-                        "🧑🏻‍🤝‍🧑🏽",
-                        "people holding hands"
-                    },
-                    {
-                        "🧑🏻‍🤝‍🧑🏾",
-                        "people holding hands"
-                    },
-                    {
-                        "🧑🏻‍🤝‍🧑🏿",
-                        "people holding hands"
-                    },
-                    {
-                        "🧑🏼‍🤝‍🧑🏻",
-                        "people holding hands"
-                    },
-                    {
-                        "🧑🏼‍🤝‍🧑🏼",
-                        "people holding hands"
-                    },
-                    {
-                        "🧑🏼‍🤝‍🧑🏽",
-                        "people holding hands"
-                    },
-                    {
-                        "🧑🏼‍🤝‍🧑🏾",
-                        "people holding hands"
-                    },
-                    {
-                        "🧑🏼‍🤝‍🧑🏿",
-                        "people holding hands"
-                    },
-                    {
-                        "🧑🏽‍🤝‍🧑🏻",
-                        "people holding hands"
-                    },
-                    {
-                        "🧑🏽‍🤝‍🧑🏼",
-                        "people holding hands"
-                    },
-                    {
-                        "🧑🏽‍🤝‍🧑🏽",
-                        "people holding hands"
-                    },
-                    {
-                        "🧑🏽‍🤝‍🧑🏾",
-                        "people holding hands"
-                    },
-                    {
-                        "🧑🏽‍🤝‍🧑🏿",
-                        "people holding hands"
-                    },
-                    {
-                        "🧑🏾‍🤝‍🧑🏻",
-                        "people holding hands"
-                    },
-                    {
-                        "🧑🏾‍🤝‍🧑🏼",
-                        "people holding hands"
-                    },
-                    {
-                        "🧑🏾‍🤝‍🧑🏽",
-                        "people holding hands"
-                    },
-                    {
-                        "🧑🏾‍🤝‍🧑🏾",
-                        "people holding hands"
-                    },
-                    {
-                        "🧑🏾‍🤝‍🧑🏿",
-                        "people holding hands"
-                    },
-                    {
-                        "🧑🏿‍🤝‍🧑🏻",
-                        "people holding hands"
-                    },
-                    {
-                        "🧑🏿‍🤝‍🧑🏼",
-                        "people holding hands"
-                    },
-                    {
-                        "🧑🏿‍🤝‍🧑🏽",
-                        "people holding hands"
-                    },
-                    {
-                        "🧑🏿‍🤝‍🧑🏾",
-                        "people holding hands"
-                    },
-                    {
-                        "🧑🏿‍🤝‍🧑🏿",
-                        "people holding hands"
-                    },
-                    {
                         "👭",
-                        "women holding hands"
-                    },
-                    {
-                        "👭🏻",
-                        "women holding hands"
-                    },
-                    {
-                        "👩🏻‍🤝‍👩🏼",
-                        "women holding hands"
-                    },
-                    {
-                        "👩🏻‍🤝‍👩🏽",
-                        "women holding hands"
-                    },
-                    {
-                        "👩🏻‍🤝‍👩🏾",
-                        "women holding hands"
-                    },
-                    {
-                        "👩🏻‍🤝‍👩🏿",
-                        "women holding hands"
-                    },
-                    {
-                        "👩🏼‍🤝‍👩🏻",
-                        "women holding hands"
-                    },
-                    {
-                        "👭🏼",
-                        "women holding hands"
-                    },
-                    {
-                        "👩🏼‍🤝‍👩🏽",
-                        "women holding hands"
-                    },
-                    {
-                        "👩🏼‍🤝‍👩🏾",
-                        "women holding hands"
-                    },
-                    {
-                        "👩🏼‍🤝‍👩🏿",
-                        "women holding hands"
-                    },
-                    {
-                        "👩🏽‍🤝‍👩🏻",
-                        "women holding hands"
-                    },
-                    {
-                        "👩🏽‍🤝‍👩🏼",
-                        "women holding hands"
-                    },
-                    {
-                        "👭🏽",
-                        "women holding hands"
-                    },
-                    {
-                        "👩🏽‍🤝‍👩🏾",
-                        "women holding hands"
-                    },
-                    {
-                        "👩🏽‍🤝‍👩🏿",
-                        "women holding hands"
-                    },
-                    {
-                        "👩🏾‍🤝‍👩🏻",
-                        "women holding hands"
-                    },
-                    {
-                        "👩🏾‍🤝‍👩🏼",
-                        "women holding hands"
-                    },
-                    {
-                        "👩🏾‍🤝‍👩🏽",
-                        "women holding hands"
-                    },
-                    {
-                        "👭🏾",
-                        "women holding hands"
-                    },
-                    {
-                        "👩🏾‍🤝‍👩🏿",
-                        "women holding hands"
-                    },
-                    {
-                        "👩🏿‍🤝‍👩🏻",
-                        "women holding hands"
-                    },
-                    {
-                        "👩🏿‍🤝‍👩🏼",
-                        "women holding hands"
-                    },
-                    {
-                        "👩🏿‍🤝‍👩🏽",
-                        "women holding hands"
-                    },
-                    {
-                        "👩🏿‍🤝‍👩🏾",
-                        "women holding hands"
-                    },
-                    {
-                        "👭🏿",
                         "women holding hands"
                     },
                     {
@@ -10358,207 +1990,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman and man holding hands"
                     },
                     {
-                        "👫🏻",
-                        "woman and man holding hands"
-                    },
-                    {
-                        "👩🏻‍🤝‍👨🏼",
-                        "woman and man holding hands"
-                    },
-                    {
-                        "👩🏻‍🤝‍👨🏽",
-                        "woman and man holding hands"
-                    },
-                    {
-                        "👩🏻‍🤝‍👨🏾",
-                        "woman and man holding hands"
-                    },
-                    {
-                        "👩🏻‍🤝‍👨🏿",
-                        "woman and man holding hands"
-                    },
-                    {
-                        "👩🏼‍🤝‍👨🏻",
-                        "woman and man holding hands"
-                    },
-                    {
-                        "👫🏼",
-                        "woman and man holding hands"
-                    },
-                    {
-                        "👩🏼‍🤝‍👨🏽",
-                        "woman and man holding hands"
-                    },
-                    {
-                        "👩🏼‍🤝‍👨🏾",
-                        "woman and man holding hands"
-                    },
-                    {
-                        "👩🏼‍🤝‍👨🏿",
-                        "woman and man holding hands"
-                    },
-                    {
-                        "👩🏽‍🤝‍👨🏻",
-                        "woman and man holding hands"
-                    },
-                    {
-                        "👩🏽‍🤝‍👨🏼",
-                        "woman and man holding hands"
-                    },
-                    {
-                        "👫🏽",
-                        "woman and man holding hands"
-                    },
-                    {
-                        "👩🏽‍🤝‍👨🏾",
-                        "woman and man holding hands"
-                    },
-                    {
-                        "👩🏽‍🤝‍👨🏿",
-                        "woman and man holding hands"
-                    },
-                    {
-                        "👩🏾‍🤝‍👨🏻",
-                        "woman and man holding hands"
-                    },
-                    {
-                        "👩🏾‍🤝‍👨🏼",
-                        "woman and man holding hands"
-                    },
-                    {
-                        "👩🏾‍🤝‍👨🏽",
-                        "woman and man holding hands"
-                    },
-                    {
-                        "👫🏾",
-                        "woman and man holding hands"
-                    },
-                    {
-                        "👩🏾‍🤝‍👨🏿",
-                        "woman and man holding hands"
-                    },
-                    {
-                        "👩🏿‍🤝‍👨🏻",
-                        "woman and man holding hands"
-                    },
-                    {
-                        "👩🏿‍🤝‍👨🏼",
-                        "woman and man holding hands"
-                    },
-                    {
-                        "👩🏿‍🤝‍👨🏽",
-                        "woman and man holding hands"
-                    },
-                    {
-                        "👩🏿‍🤝‍👨🏾",
-                        "woman and man holding hands"
-                    },
-                    {
-                        "👫🏿",
-                        "woman and man holding hands"
-                    },
-                    {
                         "👬",
-                        "men holding hands"
-                    },
-                    {
-                        "👬🏻",
-                        "men holding hands"
-                    },
-                    {
-                        "👨🏻‍🤝‍👨🏼",
-                        "men holding hands"
-                    },
-                    {
-                        "👨🏻‍🤝‍👨🏽",
-                        "men holding hands"
-                    },
-                    {
-                        "👨🏻‍🤝‍👨🏾",
-                        "men holding hands"
-                    },
-                    {
-                        "👨🏻‍🤝‍👨🏿",
-                        "men holding hands"
-                    },
-                    {
-                        "👨🏼‍🤝‍👨🏻",
-                        "men holding hands"
-                    },
-                    {
-                        "👬🏼",
-                        "men holding hands"
-                    },
-                    {
-                        "👨🏼‍🤝‍👨🏽",
-                        "men holding hands"
-                    },
-                    {
-                        "👨🏼‍🤝‍👨🏾",
-                        "men holding hands"
-                    },
-                    {
-                        "👨🏼‍🤝‍👨🏿",
-                        "men holding hands"
-                    },
-                    {
-                        "👨🏽‍🤝‍👨🏻",
-                        "men holding hands"
-                    },
-                    {
-                        "👨🏽‍🤝‍👨🏼",
-                        "men holding hands"
-                    },
-                    {
-                        "👬🏽",
-                        "men holding hands"
-                    },
-                    {
-                        "👨🏽‍🤝‍👨🏾",
-                        "men holding hands"
-                    },
-                    {
-                        "👨🏽‍🤝‍👨🏿",
-                        "men holding hands"
-                    },
-                    {
-                        "👨🏾‍🤝‍👨🏻",
-                        "men holding hands"
-                    },
-                    {
-                        "👨🏾‍🤝‍👨🏼",
-                        "men holding hands"
-                    },
-                    {
-                        "👨🏾‍🤝‍👨🏽",
-                        "men holding hands"
-                    },
-                    {
-                        "👬🏾",
-                        "men holding hands"
-                    },
-                    {
-                        "👨🏾‍🤝‍👨🏿",
-                        "men holding hands"
-                    },
-                    {
-                        "👨🏿‍🤝‍👨🏻",
-                        "men holding hands"
-                    },
-                    {
-                        "👨🏿‍🤝‍👨🏼",
-                        "men holding hands"
-                    },
-                    {
-                        "👨🏿‍🤝‍👨🏽",
-                        "men holding hands"
-                    },
-                    {
-                        "👨🏿‍🤝‍👨🏾",
-                        "men holding hands"
-                    },
-                    {
-                        "👬🏿",
                         "men holding hands"
                     },
                     {
@@ -10570,23 +2002,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "kiss"
                     },
                     {
-                        "👩‍❤‍💋‍👨",
-                        "kiss"
-                    },
-                    {
                         "👨‍❤️‍💋‍👨",
                         "kiss"
                     },
                     {
-                        "👨‍❤‍💋‍👨",
-                        "kiss"
-                    },
-                    {
                         "👩‍❤️‍💋‍👩",
-                        "kiss"
-                    },
-                    {
-                        "👩‍❤‍💋‍👩",
                         "kiss"
                     },
                     {
@@ -10598,23 +2018,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "couple with heart"
                     },
                     {
-                        "👩‍❤‍👨",
-                        "couple with heart"
-                    },
-                    {
                         "👨‍❤️‍👨",
                         "couple with heart"
                     },
                     {
-                        "👨‍❤‍👨",
-                        "couple with heart"
-                    },
-                    {
                         "👩‍❤️‍👩",
-                        "couple with heart"
-                    },
-                    {
-                        "👩‍❤‍👩",
                         "couple with heart"
                     },
                     {
@@ -10731,10 +2139,6 @@ static std::vector<EmojiRegistry::Group> db = {
                         "speaking head"
                     },
                     {
-                        "🗣",
-                        "speaking head"
-                    },
-                    {
                         "👤",
                         "bust in silhouette"
                     },
@@ -10749,57 +2153,6 @@ static std::vector<EmojiRegistry::Group> db = {
                     {
                         "👣",
                         "footprints"
-                    }
-                }
-            }
-        }
-    },
-    {
-        QT_TR_NOOP("Component"),
-        {
-            {
-                "skin-tone",
-                {
-                    {
-                        "🏻",
-                        "light skin tone"
-                    },
-                    {
-                        "🏼",
-                        "medium-light skin tone"
-                    },
-                    {
-                        "🏽",
-                        "medium skin tone"
-                    },
-                    {
-                        "🏾",
-                        "medium-dark skin tone"
-                    },
-                    {
-                        "🏿",
-                        "dark skin tone"
-                    }
-                }
-            },
-            {
-                "hair-style",
-                {
-                    {
-                        "🦰",
-                        "red hair"
-                    },
-                    {
-                        "🦱",
-                        "curly hair"
-                    },
-                    {
-                        "🦳",
-                        "white hair"
-                    },
-                    {
-                        "🦲",
-                        "bald"
                     }
                 }
             }
@@ -11016,10 +2369,6 @@ static std::vector<EmojiRegistry::Group> db = {
                         "chipmunk"
                     },
                     {
-                        "🐿",
-                        "chipmunk"
-                    },
-                    {
                         "🦫",
                         "beaver"
                     },
@@ -11037,10 +2386,6 @@ static std::vector<EmojiRegistry::Group> db = {
                     },
                     {
                         "🐻‍❄️",
-                        "polar bear"
-                    },
-                    {
-                        "🐻‍❄",
                         "polar bear"
                     },
                     {
@@ -11114,10 +2459,6 @@ static std::vector<EmojiRegistry::Group> db = {
                     },
                     {
                         "🕊️",
-                        "dove"
-                    },
-                    {
-                        "🕊",
                         "dove"
                     },
                     {
@@ -11293,15 +2634,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "spider"
                     },
                     {
-                        "🕷",
-                        "spider"
-                    },
-                    {
                         "🕸️",
-                        "spider web"
-                    },
-                    {
-                        "🕸",
                         "spider web"
                     },
                     {
@@ -11343,10 +2676,6 @@ static std::vector<EmojiRegistry::Group> db = {
                     },
                     {
                         "🏵️",
-                        "rosette"
-                    },
-                    {
-                        "🏵",
                         "rosette"
                     },
                     {
@@ -11412,10 +2741,6 @@ static std::vector<EmojiRegistry::Group> db = {
                     },
                     {
                         "☘️",
-                        "shamrock"
-                    },
-                    {
-                        "☘",
                         "shamrock"
                     },
                     {
@@ -11547,10 +2872,6 @@ static std::vector<EmojiRegistry::Group> db = {
                     },
                     {
                         "🌶️",
-                        "hot pepper"
-                    },
-                    {
-                        "🌶",
                         "hot pepper"
                     },
                     {
@@ -11984,10 +3305,6 @@ static std::vector<EmojiRegistry::Group> db = {
                         "fork and knife with plate"
                     },
                     {
-                        "🍽",
-                        "fork and knife with plate"
-                    },
-                    {
                         "🍴",
                         "fork and knife"
                     },
@@ -12034,10 +3351,6 @@ static std::vector<EmojiRegistry::Group> db = {
                         "world map"
                     },
                     {
-                        "🗺",
-                        "world map"
-                    },
-                    {
                         "🗾",
                         "map of Japan"
                     },
@@ -12055,15 +3368,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "snow-capped mountain"
                     },
                     {
-                        "🏔",
-                        "snow-capped mountain"
-                    },
-                    {
                         "⛰️",
-                        "mountain"
-                    },
-                    {
-                        "⛰",
                         "mountain"
                     },
                     {
@@ -12079,15 +3384,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "camping"
                     },
                     {
-                        "🏕",
-                        "camping"
-                    },
-                    {
                         "🏖️",
-                        "beach with umbrella"
-                    },
-                    {
-                        "🏖",
                         "beach with umbrella"
                     },
                     {
@@ -12095,23 +3392,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "desert"
                     },
                     {
-                        "🏜",
-                        "desert"
-                    },
-                    {
                         "🏝️",
                         "desert island"
                     },
                     {
-                        "🏝",
-                        "desert island"
-                    },
-                    {
                         "🏞️",
-                        "national park"
-                    },
-                    {
-                        "🏞",
                         "national park"
                     }
                 }
@@ -12124,23 +3409,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "stadium"
                     },
                     {
-                        "🏟",
-                        "stadium"
-                    },
-                    {
                         "🏛️",
                         "classical building"
                     },
                     {
-                        "🏛",
-                        "classical building"
-                    },
-                    {
                         "🏗️",
-                        "building construction"
-                    },
-                    {
-                        "🏗",
                         "building construction"
                     },
                     {
@@ -12164,15 +3437,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "houses"
                     },
                     {
-                        "🏘",
-                        "houses"
-                    },
-                    {
                         "🏚️",
-                        "derelict house"
-                    },
-                    {
-                        "🏚",
                         "derelict house"
                     },
                     {
@@ -12273,10 +3538,6 @@ static std::vector<EmojiRegistry::Group> db = {
                         "shinto shrine"
                     },
                     {
-                        "⛩",
-                        "shinto shrine"
-                    },
-                    {
                         "🕋",
                         "kaaba"
                     }
@@ -12306,10 +3567,6 @@ static std::vector<EmojiRegistry::Group> db = {
                         "cityscape"
                     },
                     {
-                        "🏙",
-                        "cityscape"
-                    },
-                    {
                         "🌄",
                         "sunrise over mountains"
                     },
@@ -12331,10 +3588,6 @@ static std::vector<EmojiRegistry::Group> db = {
                     },
                     {
                         "♨️",
-                        "hot springs"
-                    },
-                    {
-                        "♨",
                         "hot springs"
                     },
                     {
@@ -12483,15 +3736,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "racing car"
                     },
                     {
-                        "🏎",
-                        "racing car"
-                    },
-                    {
                         "🏍️",
-                        "motorcycle"
-                    },
-                    {
-                        "🏍",
                         "motorcycle"
                     },
                     {
@@ -12535,23 +3780,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "motorway"
                     },
                     {
-                        "🛣",
-                        "motorway"
-                    },
-                    {
                         "🛤️",
                         "railway track"
                     },
                     {
-                        "🛤",
-                        "railway track"
-                    },
-                    {
                         "🛢️",
-                        "oil drum"
-                    },
-                    {
-                        "🛢",
                         "oil drum"
                     },
                     {
@@ -12604,23 +3837,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "passenger ship"
                     },
                     {
-                        "🛳",
-                        "passenger ship"
-                    },
-                    {
                         "⛴️",
                         "ferry"
                     },
                     {
-                        "⛴",
-                        "ferry"
-                    },
-                    {
                         "🛥️",
-                        "motor boat"
-                    },
-                    {
-                        "🛥",
                         "motor boat"
                     },
                     {
@@ -12637,15 +3858,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "airplane"
                     },
                     {
-                        "✈",
-                        "airplane"
-                    },
-                    {
                         "🛩️",
-                        "small airplane"
-                    },
-                    {
-                        "🛩",
                         "small airplane"
                     },
                     {
@@ -12685,10 +3898,6 @@ static std::vector<EmojiRegistry::Group> db = {
                         "satellite"
                     },
                     {
-                        "🛰",
-                        "satellite"
-                    },
-                    {
                         "🚀",
                         "rocket"
                     },
@@ -12703,10 +3912,6 @@ static std::vector<EmojiRegistry::Group> db = {
                 {
                     {
                         "🛎️",
-                        "bellhop bell"
-                    },
-                    {
-                        "🛎",
                         "bellhop bell"
                     },
                     {
@@ -12739,23 +3944,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "stopwatch"
                     },
                     {
-                        "⏱",
-                        "stopwatch"
-                    },
-                    {
                         "⏲️",
                         "timer clock"
                     },
                     {
-                        "⏲",
-                        "timer clock"
-                    },
-                    {
                         "🕰️",
-                        "mantelpiece clock"
-                    },
-                    {
-                        "🕰",
                         "mantelpiece clock"
                     },
                     {
@@ -12912,15 +4105,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "thermometer"
                     },
                     {
-                        "🌡",
-                        "thermometer"
-                    },
-                    {
                         "☀️",
-                        "sun"
-                    },
-                    {
-                        "☀",
                         "sun"
                     },
                     {
@@ -12956,10 +4141,6 @@ static std::vector<EmojiRegistry::Group> db = {
                         "cloud"
                     },
                     {
-                        "☁",
-                        "cloud"
-                    },
-                    {
                         "⛅",
                         "sun behind cloud"
                     },
@@ -12968,15 +4149,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "cloud with lightning and rain"
                     },
                     {
-                        "⛈",
-                        "cloud with lightning and rain"
-                    },
-                    {
                         "🌤️",
-                        "sun behind small cloud"
-                    },
-                    {
-                        "🌤",
                         "sun behind small cloud"
                     },
                     {
@@ -12984,15 +4157,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "sun behind large cloud"
                     },
                     {
-                        "🌥",
-                        "sun behind large cloud"
-                    },
-                    {
                         "🌦️",
-                        "sun behind rain cloud"
-                    },
-                    {
-                        "🌦",
                         "sun behind rain cloud"
                     },
                     {
@@ -13000,15 +4165,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "cloud with rain"
                     },
                     {
-                        "🌧",
-                        "cloud with rain"
-                    },
-                    {
                         "🌨️",
-                        "cloud with snow"
-                    },
-                    {
-                        "🌨",
                         "cloud with snow"
                     },
                     {
@@ -13016,15 +4173,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "cloud with lightning"
                     },
                     {
-                        "🌩",
-                        "cloud with lightning"
-                    },
-                    {
                         "🌪️",
-                        "tornado"
-                    },
-                    {
-                        "🌪",
                         "tornado"
                     },
                     {
@@ -13032,15 +4181,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "fog"
                     },
                     {
-                        "🌫",
-                        "fog"
-                    },
-                    {
                         "🌬️",
-                        "wind face"
-                    },
-                    {
-                        "🌬",
                         "wind face"
                     },
                     {
@@ -13060,19 +4201,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "umbrella"
                     },
                     {
-                        "☂",
-                        "umbrella"
-                    },
-                    {
                         "☔",
                         "umbrella with rain drops"
                     },
                     {
                         "⛱️",
-                        "umbrella on ground"
-                    },
-                    {
-                        "⛱",
                         "umbrella on ground"
                     },
                     {
@@ -13084,15 +4217,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "snowflake"
                     },
                     {
-                        "❄",
-                        "snowflake"
-                    },
-                    {
                         "☃️",
-                        "snowman"
-                    },
-                    {
-                        "☃",
                         "snowman"
                     },
                     {
@@ -13101,10 +4226,6 @@ static std::vector<EmojiRegistry::Group> db = {
                     },
                     {
                         "☄️",
-                        "comet"
-                    },
-                    {
-                        "☄",
                         "comet"
                     },
                     {
@@ -13206,15 +4327,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "reminder ribbon"
                     },
                     {
-                        "🎗",
-                        "reminder ribbon"
-                    },
-                    {
                         "🎟️",
-                        "admission tickets"
-                    },
-                    {
-                        "🎟",
                         "admission tickets"
                     },
                     {
@@ -13228,10 +4341,6 @@ static std::vector<EmojiRegistry::Group> db = {
                 {
                     {
                         "🎖️",
-                        "military medal"
-                    },
-                    {
-                        "🎖",
                         "military medal"
                     },
                     {
@@ -13344,10 +4453,6 @@ static std::vector<EmojiRegistry::Group> db = {
                         "ice skate"
                     },
                     {
-                        "⛸",
-                        "ice skate"
-                    },
-                    {
                         "🎣",
                         "fishing pole"
                     },
@@ -13413,10 +4518,6 @@ static std::vector<EmojiRegistry::Group> db = {
                         "joystick"
                     },
                     {
-                        "🕹",
-                        "joystick"
-                    },
-                    {
                         "🎰",
                         "slot machine"
                     },
@@ -13445,15 +4546,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "spade suit"
                     },
                     {
-                        "♠",
-                        "spade suit"
-                    },
-                    {
                         "♥️",
-                        "heart suit"
-                    },
-                    {
-                        "♥",
                         "heart suit"
                     },
                     {
@@ -13461,23 +4554,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "diamond suit"
                     },
                     {
-                        "♦",
-                        "diamond suit"
-                    },
-                    {
                         "♣️",
                         "club suit"
                     },
                     {
-                        "♣",
-                        "club suit"
-                    },
-                    {
                         "♟️",
-                        "chess pawn"
-                    },
-                    {
-                        "♟",
                         "chess pawn"
                     },
                     {
@@ -13503,10 +4584,6 @@ static std::vector<EmojiRegistry::Group> db = {
                     },
                     {
                         "🖼️",
-                        "framed picture"
-                    },
-                    {
-                        "🖼",
                         "framed picture"
                     },
                     {
@@ -13545,10 +4622,6 @@ static std::vector<EmojiRegistry::Group> db = {
                     },
                     {
                         "🕶️",
-                        "sunglasses"
-                    },
-                    {
-                        "🕶",
                         "sunglasses"
                     },
                     {
@@ -13640,10 +4713,6 @@ static std::vector<EmojiRegistry::Group> db = {
                         "shopping bags"
                     },
                     {
-                        "🛍",
-                        "shopping bags"
-                    },
-                    {
                         "🎒",
                         "backpack"
                     },
@@ -13709,10 +4778,6 @@ static std::vector<EmojiRegistry::Group> db = {
                     },
                     {
                         "⛑️",
-                        "rescue worker’s helmet"
-                    },
-                    {
-                        "⛑",
                         "rescue worker’s helmet"
                     },
                     {
@@ -13794,23 +4859,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "studio microphone"
                     },
                     {
-                        "🎙",
-                        "studio microphone"
-                    },
-                    {
                         "🎚️",
                         "level slider"
                     },
                     {
-                        "🎚",
-                        "level slider"
-                    },
-                    {
                         "🎛️",
-                        "control knobs"
-                    },
-                    {
-                        "🎛",
                         "control knobs"
                     },
                     {
@@ -13884,10 +4937,6 @@ static std::vector<EmojiRegistry::Group> db = {
                         "telephone"
                     },
                     {
-                        "☎",
-                        "telephone"
-                    },
-                    {
                         "📞",
                         "telephone receiver"
                     },
@@ -13921,15 +4970,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "desktop computer"
                     },
                     {
-                        "🖥",
-                        "desktop computer"
-                    },
-                    {
                         "🖨️",
-                        "printer"
-                    },
-                    {
-                        "🖨",
                         "printer"
                     },
                     {
@@ -13937,23 +4978,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "keyboard"
                     },
                     {
-                        "⌨",
-                        "keyboard"
-                    },
-                    {
                         "🖱️",
                         "computer mouse"
                     },
                     {
-                        "🖱",
-                        "computer mouse"
-                    },
-                    {
                         "🖲️",
-                        "trackball"
-                    },
-                    {
-                        "🖲",
                         "trackball"
                     },
                     {
@@ -13990,15 +5019,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "film frames"
                     },
                     {
-                        "🎞",
-                        "film frames"
-                    },
-                    {
                         "📽️",
-                        "film projector"
-                    },
-                    {
-                        "📽",
                         "film projector"
                     },
                     {
@@ -14035,10 +5056,6 @@ static std::vector<EmojiRegistry::Group> db = {
                     },
                     {
                         "🕯️",
-                        "candle"
-                    },
-                    {
-                        "🕯",
                         "candle"
                     },
                     {
@@ -14119,10 +5136,6 @@ static std::vector<EmojiRegistry::Group> db = {
                         "rolled-up newspaper"
                     },
                     {
-                        "🗞",
-                        "rolled-up newspaper"
-                    },
-                    {
                         "📑",
                         "bookmark tabs"
                     },
@@ -14132,10 +5145,6 @@ static std::vector<EmojiRegistry::Group> db = {
                     },
                     {
                         "🏷️",
-                        "label"
-                    },
-                    {
-                        "🏷",
                         "label"
                     }
                 }
@@ -14193,10 +5202,6 @@ static std::vector<EmojiRegistry::Group> db = {
                         "envelope"
                     },
                     {
-                        "✉",
-                        "envelope"
-                    },
-                    {
                         "📧",
                         "e-mail"
                     },
@@ -14243,10 +5248,6 @@ static std::vector<EmojiRegistry::Group> db = {
                     {
                         "🗳️",
                         "ballot box with ballot"
-                    },
-                    {
-                        "🗳",
-                        "ballot box with ballot"
                     }
                 }
             },
@@ -14258,15 +5259,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "pencil"
                     },
                     {
-                        "✏",
-                        "pencil"
-                    },
-                    {
                         "✒️",
-                        "black nib"
-                    },
-                    {
-                        "✒",
                         "black nib"
                     },
                     {
@@ -14274,15 +5267,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "fountain pen"
                     },
                     {
-                        "🖋",
-                        "fountain pen"
-                    },
-                    {
                         "🖊️",
-                        "pen"
-                    },
-                    {
-                        "🖊",
                         "pen"
                     },
                     {
@@ -14290,15 +5275,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "paintbrush"
                     },
                     {
-                        "🖌",
-                        "paintbrush"
-                    },
-                    {
                         "🖍️",
-                        "crayon"
-                    },
-                    {
-                        "🖍",
                         "crayon"
                     },
                     {
@@ -14327,10 +5304,6 @@ static std::vector<EmojiRegistry::Group> db = {
                         "card index dividers"
                     },
                     {
-                        "🗂",
-                        "card index dividers"
-                    },
-                    {
                         "📅",
                         "calendar"
                     },
@@ -14343,15 +5316,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "spiral notepad"
                     },
                     {
-                        "🗒",
-                        "spiral notepad"
-                    },
-                    {
                         "🗓️",
-                        "spiral calendar"
-                    },
-                    {
-                        "🗓",
                         "spiral calendar"
                     },
                     {
@@ -14391,10 +5356,6 @@ static std::vector<EmojiRegistry::Group> db = {
                         "linked paperclips"
                     },
                     {
-                        "🖇",
-                        "linked paperclips"
-                    },
-                    {
                         "📏",
                         "straight ruler"
                     },
@@ -14407,15 +5368,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "scissors"
                     },
                     {
-                        "✂",
-                        "scissors"
-                    },
-                    {
                         "🗃️",
-                        "card file box"
-                    },
-                    {
-                        "🗃",
                         "card file box"
                     },
                     {
@@ -14423,15 +5376,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "file cabinet"
                     },
                     {
-                        "🗄",
-                        "file cabinet"
-                    },
-                    {
                         "🗑️",
-                        "wastebasket"
-                    },
-                    {
-                        "🗑",
                         "wastebasket"
                     }
                 }
@@ -14462,10 +5407,6 @@ static std::vector<EmojiRegistry::Group> db = {
                     {
                         "🗝️",
                         "old key"
-                    },
-                    {
-                        "🗝",
-                        "old key"
                     }
                 }
             },
@@ -14485,15 +5426,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "pick"
                     },
                     {
-                        "⛏",
-                        "pick"
-                    },
-                    {
                         "⚒️",
-                        "hammer and pick"
-                    },
-                    {
-                        "⚒",
                         "hammer and pick"
                     },
                     {
@@ -14501,23 +5434,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "hammer and wrench"
                     },
                     {
-                        "🛠",
-                        "hammer and wrench"
-                    },
-                    {
                         "🗡️",
                         "dagger"
                     },
                     {
-                        "🗡",
-                        "dagger"
-                    },
-                    {
                         "⚔️",
-                        "crossed swords"
-                    },
-                    {
-                        "⚔",
                         "crossed swords"
                     },
                     {
@@ -14534,10 +5455,6 @@ static std::vector<EmojiRegistry::Group> db = {
                     },
                     {
                         "🛡️",
-                        "shield"
-                    },
-                    {
-                        "🛡",
                         "shield"
                     },
                     {
@@ -14561,23 +5478,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "gear"
                     },
                     {
-                        "⚙",
-                        "gear"
-                    },
-                    {
                         "🗜️",
                         "clamp"
                     },
                     {
-                        "🗜",
-                        "clamp"
-                    },
-                    {
                         "⚖️",
-                        "balance scale"
-                    },
-                    {
-                        "⚖",
                         "balance scale"
                     },
                     {
@@ -14590,10 +5495,6 @@ static std::vector<EmojiRegistry::Group> db = {
                     },
                     {
                         "⛓️",
-                        "chains"
-                    },
-                    {
-                        "⛓",
                         "chains"
                     },
                     {
@@ -14619,10 +5520,6 @@ static std::vector<EmojiRegistry::Group> db = {
                 {
                     {
                         "⚗️",
-                        "alembic"
-                    },
-                    {
-                        "⚗",
                         "alembic"
                     },
                     {
@@ -14700,15 +5597,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "bed"
                     },
                     {
-                        "🛏",
-                        "bed"
-                    },
-                    {
                         "🛋️",
-                        "couch and lamp"
-                    },
-                    {
-                        "🛋",
                         "couch and lamp"
                     },
                     {
@@ -14797,19 +5686,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "coffin"
                     },
                     {
-                        "⚰",
-                        "coffin"
-                    },
-                    {
                         "🪦",
                         "headstone"
                     },
                     {
                         "⚱️",
-                        "funeral urn"
-                    },
-                    {
-                        "⚱",
                         "funeral urn"
                     },
                     {
@@ -14892,10 +5773,6 @@ static std::vector<EmojiRegistry::Group> db = {
                         "warning"
                     },
                     {
-                        "⚠",
-                        "warning"
-                    },
-                    {
                         "🚸",
                         "children crossing"
                     },
@@ -14940,15 +5817,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "radioactive"
                     },
                     {
-                        "☢",
-                        "radioactive"
-                    },
-                    {
                         "☣️",
-                        "biohazard"
-                    },
-                    {
-                        "☣",
                         "biohazard"
                     }
                 }
@@ -14961,15 +5830,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "up arrow"
                     },
                     {
-                        "⬆",
-                        "up arrow"
-                    },
-                    {
                         "↗️",
-                        "up-right arrow"
-                    },
-                    {
-                        "↗",
                         "up-right arrow"
                     },
                     {
@@ -14977,15 +5838,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "right arrow"
                     },
                     {
-                        "➡",
-                        "right arrow"
-                    },
-                    {
                         "↘️",
-                        "down-right arrow"
-                    },
-                    {
-                        "↘",
                         "down-right arrow"
                     },
                     {
@@ -14993,15 +5846,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "down arrow"
                     },
                     {
-                        "⬇",
-                        "down arrow"
-                    },
-                    {
                         "↙️",
-                        "down-left arrow"
-                    },
-                    {
-                        "↙",
                         "down-left arrow"
                     },
                     {
@@ -15009,15 +5854,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "left arrow"
                     },
                     {
-                        "⬅",
-                        "left arrow"
-                    },
-                    {
                         "↖️",
-                        "up-left arrow"
-                    },
-                    {
-                        "↖",
                         "up-left arrow"
                     },
                     {
@@ -15025,15 +5862,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "up-down arrow"
                     },
                     {
-                        "↕",
-                        "up-down arrow"
-                    },
-                    {
                         "↔️",
-                        "left-right arrow"
-                    },
-                    {
-                        "↔",
                         "left-right arrow"
                     },
                     {
@@ -15041,15 +5870,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "right arrow curving left"
                     },
                     {
-                        "↩",
-                        "right arrow curving left"
-                    },
-                    {
                         "↪️",
-                        "left arrow curving right"
-                    },
-                    {
-                        "↪",
                         "left arrow curving right"
                     },
                     {
@@ -15057,15 +5878,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "right arrow curving up"
                     },
                     {
-                        "⤴",
-                        "right arrow curving up"
-                    },
-                    {
                         "⤵️",
-                        "right arrow curving down"
-                    },
-                    {
-                        "⤵",
                         "right arrow curving down"
                     },
                     {
@@ -15110,15 +5923,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "atom symbol"
                     },
                     {
-                        "⚛",
-                        "atom symbol"
-                    },
-                    {
                         "🕉️",
-                        "om"
-                    },
-                    {
-                        "🕉",
                         "om"
                     },
                     {
@@ -15126,15 +5931,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "star of David"
                     },
                     {
-                        "✡",
-                        "star of David"
-                    },
-                    {
                         "☸️",
-                        "wheel of dharma"
-                    },
-                    {
-                        "☸",
                         "wheel of dharma"
                     },
                     {
@@ -15142,15 +5939,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "yin yang"
                     },
                     {
-                        "☯",
-                        "yin yang"
-                    },
-                    {
                         "✝️",
-                        "latin cross"
-                    },
-                    {
-                        "✝",
                         "latin cross"
                     },
                     {
@@ -15158,23 +5947,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "orthodox cross"
                     },
                     {
-                        "☦",
-                        "orthodox cross"
-                    },
-                    {
                         "☪️",
                         "star and crescent"
                     },
                     {
-                        "☪",
-                        "star and crescent"
-                    },
-                    {
                         "☮️",
-                        "peace symbol"
-                    },
-                    {
-                        "☮",
                         "peace symbol"
                     },
                     {
@@ -15264,10 +6041,6 @@ static std::vector<EmojiRegistry::Group> db = {
                         "play button"
                     },
                     {
-                        "▶",
-                        "play button"
-                    },
-                    {
                         "⏩",
                         "fast-forward button"
                     },
@@ -15276,23 +6049,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "next track button"
                     },
                     {
-                        "⏭",
-                        "next track button"
-                    },
-                    {
                         "⏯️",
                         "play or pause button"
                     },
                     {
-                        "⏯",
-                        "play or pause button"
-                    },
-                    {
                         "◀️",
-                        "reverse button"
-                    },
-                    {
-                        "◀",
                         "reverse button"
                     },
                     {
@@ -15301,10 +6062,6 @@ static std::vector<EmojiRegistry::Group> db = {
                     },
                     {
                         "⏮️",
-                        "last track button"
-                    },
-                    {
-                        "⏮",
                         "last track button"
                     },
                     {
@@ -15328,15 +6085,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "pause button"
                     },
                     {
-                        "⏸",
-                        "pause button"
-                    },
-                    {
                         "⏹️",
-                        "stop button"
-                    },
-                    {
-                        "⏹",
                         "stop button"
                     },
                     {
@@ -15344,15 +6093,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "record button"
                     },
                     {
-                        "⏺",
-                        "record button"
-                    },
-                    {
                         "⏏️",
-                        "eject button"
-                    },
-                    {
-                        "⏏",
                         "eject button"
                     },
                     {
@@ -15389,23 +6130,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "female sign"
                     },
                     {
-                        "♀",
-                        "female sign"
-                    },
-                    {
                         "♂️",
                         "male sign"
                     },
                     {
-                        "♂",
-                        "male sign"
-                    },
-                    {
                         "⚧️",
-                        "transgender symbol"
-                    },
-                    {
-                        "⚧",
                         "transgender symbol"
                     }
                 }
@@ -15415,10 +6144,6 @@ static std::vector<EmojiRegistry::Group> db = {
                 {
                     {
                         "✖️",
-                        "multiply"
-                    },
-                    {
-                        "✖",
                         "multiply"
                     },
                     {
@@ -15436,10 +6161,6 @@ static std::vector<EmojiRegistry::Group> db = {
                     {
                         "♾️",
                         "infinity"
-                    },
-                    {
-                        "♾",
-                        "infinity"
                     }
                 }
             },
@@ -15451,15 +6172,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "double exclamation mark"
                     },
                     {
-                        "‼",
-                        "double exclamation mark"
-                    },
-                    {
                         "⁉️",
-                        "exclamation question mark"
-                    },
-                    {
-                        "⁉",
                         "exclamation question mark"
                     },
                     {
@@ -15480,10 +6193,6 @@ static std::vector<EmojiRegistry::Group> db = {
                     },
                     {
                         "〰️",
-                        "wavy dash"
-                    },
-                    {
-                        "〰",
                         "wavy dash"
                     }
                 }
@@ -15509,23 +6218,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "medical symbol"
                     },
                     {
-                        "⚕",
-                        "medical symbol"
-                    },
-                    {
                         "♻️",
                         "recycling symbol"
                     },
                     {
-                        "♻",
-                        "recycling symbol"
-                    },
-                    {
                         "⚜️",
-                        "fleur-de-lis"
-                    },
-                    {
-                        "⚜",
                         "fleur-de-lis"
                     },
                     {
@@ -15553,15 +6250,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "check box with check"
                     },
                     {
-                        "☑",
-                        "check box with check"
-                    },
-                    {
                         "✔️",
-                        "check mark"
-                    },
-                    {
-                        "✔",
                         "check mark"
                     },
                     {
@@ -15585,15 +6274,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "part alternation mark"
                     },
                     {
-                        "〽",
-                        "part alternation mark"
-                    },
-                    {
                         "✳️",
-                        "eight-spoked asterisk"
-                    },
-                    {
-                        "✳",
                         "eight-spoked asterisk"
                     },
                     {
@@ -15601,15 +6282,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "eight-pointed star"
                     },
                     {
-                        "✴",
-                        "eight-pointed star"
-                    },
-                    {
                         "❇️",
-                        "sparkle"
-                    },
-                    {
-                        "❇",
                         "sparkle"
                     },
                     {
@@ -15617,23 +6290,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "copyright"
                     },
                     {
-                        "©",
-                        "copyright"
-                    },
-                    {
                         "®️",
                         "registered"
                     },
                     {
-                        "®",
-                        "registered"
-                    },
-                    {
                         "™️",
-                        "trade mark"
-                    },
-                    {
-                        "™",
                         "trade mark"
                     }
                 }
@@ -15646,15 +6307,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "keycap"
                     },
                     {
-                        "#⃣",
-                        "keycap"
-                    },
-                    {
                         "*️⃣",
-                        "keycap"
-                    },
-                    {
-                        "*⃣",
                         "keycap"
                     },
                     {
@@ -15662,15 +6315,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "keycap"
                     },
                     {
-                        "0⃣",
-                        "keycap"
-                    },
-                    {
                         "1️⃣",
-                        "keycap"
-                    },
-                    {
-                        "1⃣",
                         "keycap"
                     },
                     {
@@ -15678,15 +6323,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "keycap"
                     },
                     {
-                        "2⃣",
-                        "keycap"
-                    },
-                    {
                         "3️⃣",
-                        "keycap"
-                    },
-                    {
-                        "3⃣",
                         "keycap"
                     },
                     {
@@ -15694,15 +6331,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "keycap"
                     },
                     {
-                        "4⃣",
-                        "keycap"
-                    },
-                    {
                         "5️⃣",
-                        "keycap"
-                    },
-                    {
-                        "5⃣",
                         "keycap"
                     },
                     {
@@ -15710,15 +6339,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "keycap"
                     },
                     {
-                        "6⃣",
-                        "keycap"
-                    },
-                    {
                         "7️⃣",
-                        "keycap"
-                    },
-                    {
-                        "7⃣",
                         "keycap"
                     },
                     {
@@ -15726,15 +6347,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "keycap"
                     },
                     {
-                        "8⃣",
-                        "keycap"
-                    },
-                    {
                         "9️⃣",
-                        "keycap"
-                    },
-                    {
-                        "9⃣",
                         "keycap"
                     },
                     {
@@ -15771,19 +6384,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "A button (blood type)"
                     },
                     {
-                        "🅰",
-                        "A button (blood type)"
-                    },
-                    {
                         "🆎",
                         "AB button (blood type)"
                     },
                     {
                         "🅱️",
-                        "B button (blood type)"
-                    },
-                    {
-                        "🅱",
                         "B button (blood type)"
                     },
                     {
@@ -15803,19 +6408,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "information"
                     },
                     {
-                        "ℹ",
-                        "information"
-                    },
-                    {
                         "🆔",
                         "ID button"
                     },
                     {
                         "Ⓜ️",
-                        "circled M"
-                    },
-                    {
-                        "Ⓜ",
                         "circled M"
                     },
                     {
@@ -15831,19 +6428,11 @@ static std::vector<EmojiRegistry::Group> db = {
                         "O button (blood type)"
                     },
                     {
-                        "🅾",
-                        "O button (blood type)"
-                    },
-                    {
                         "🆗",
                         "OK button"
                     },
                     {
                         "🅿️",
-                        "P button"
-                    },
-                    {
-                        "🅿",
                         "P button"
                     },
                     {
@@ -15867,15 +6456,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "Japanese “service charge” button"
                     },
                     {
-                        "🈂",
-                        "Japanese “service charge” button"
-                    },
-                    {
                         "🈷️",
-                        "Japanese “monthly amount” button"
-                    },
-                    {
-                        "🈷",
                         "Japanese “monthly amount” button"
                     },
                     {
@@ -15923,15 +6504,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "Japanese “congratulations” button"
                     },
                     {
-                        "㊗",
-                        "Japanese “congratulations” button"
-                    },
-                    {
                         "㊙️",
-                        "Japanese “secret” button"
-                    },
-                    {
-                        "㊙",
                         "Japanese “secret” button"
                     },
                     {
@@ -16024,15 +6597,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "black medium square"
                     },
                     {
-                        "◼",
-                        "black medium square"
-                    },
-                    {
                         "◻️",
-                        "white medium square"
-                    },
-                    {
-                        "◻",
                         "white medium square"
                     },
                     {
@@ -16048,15 +6613,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "black small square"
                     },
                     {
-                        "▪",
-                        "black small square"
-                    },
-                    {
                         "▫️",
-                        "white small square"
-                    },
-                    {
-                        "▫",
                         "white small square"
                     },
                     {
@@ -16130,15 +6687,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "white flag"
                     },
                     {
-                        "🏳",
-                        "white flag"
-                    },
-                    {
                         "🏳️‍🌈",
-                        "rainbow flag"
-                    },
-                    {
-                        "🏳‍🌈",
                         "rainbow flag"
                     },
                     {
@@ -16146,23 +6695,7 @@ static std::vector<EmojiRegistry::Group> db = {
                         "transgender flag"
                     },
                     {
-                        "🏳‍⚧️",
-                        "transgender flag"
-                    },
-                    {
-                        "🏳️‍⚧",
-                        "transgender flag"
-                    },
-                    {
-                        "🏳‍⚧",
-                        "transgender flag"
-                    },
-                    {
                         "🏴‍☠️",
-                        "pirate flag"
-                    },
-                    {
-                        "🏴‍☠",
                         "pirate flag"
                     }
                 }
@@ -17334,7 +7867,8 @@ static std::map<quint32, quint32> ranges = {
     {127897, 127899},
     {127902, 127984},
     {127987, 127989},
-    {127991, 128253},
+    {127991, 127994},
+    {128000, 128253},
     {128255, 128317},
     {128329, 128334},
     {128336, 128359},
@@ -17369,7 +7903,8 @@ static std::map<quint32, quint32> ranges = {
     {129292, 129338},
     {129340, 129349},
     {129351, 129400},
-    {129402, 129483},
+    {129402, 129455},
+    {129460, 129483},
     {129485, 129535},
     {129648, 129652},
     {129656, 129658},

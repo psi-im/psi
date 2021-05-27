@@ -353,7 +353,6 @@ void IconSelect::setIconset(const Iconset &iconset)
 #else
         font.setFamily("Noto Color Emoji");
 #endif
-        int cnt = 0;
         for (auto const &emoji : EmojiRegistry::instance()) {
             IconSelectButton *b = new IconSelectButton(this);
             b->setFont(font);
@@ -369,9 +368,7 @@ void IconSelect::setIconset(const Iconset &iconset)
                 ++row;
                 column = 0;
             }
-            cnt++;
         }
-        qDebug("%d smiley", cnt);
     } else {
         QListIterator<PsiIcon *> it = is.iterator();
         QList<PsiIcon *>         sortIcons;
