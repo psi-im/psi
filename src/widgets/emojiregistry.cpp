@@ -68,6 +68,17 @@ EmojiRegistry::Category EmojiRegistry::startCategory(QStringRef in) const
     return Category::None;
 }
 
+int EmojiRegistry::count() const
+{
+    int count = 0;
+    for (auto const &g : groups) {
+        for (auto const &s : g.subGroups) {
+            count += s.emojis.size();
+        }
+    }
+    return count;
+}
+
 QStringRef EmojiRegistry::findEmoji(const QString &in, int idx) const
 {
     int emojiStart = -1;
@@ -111,3 +122,20 @@ QStringRef EmojiRegistry::findEmoji(const QString &in, int idx) const
 }
 
 EmojiRegistry::EmojiRegistry() : groups(std::move(db)), ranges_(std::move(ranges)) { }
+
+EmojiRegistry::iterator &EmojiRegistry::iterator::operator++()
+{
+    auto const &inst = EmojiRegistry::instance();
+    if (std::size_t(emoji_idx) < inst.groups[group_idx].subGroups[subgroup_idx].emojis.size() - 1) {
+        emoji_idx++;
+        return *this;
+    }
+    emoji_idx = 0;
+    if (std::size_t(subgroup_idx) < inst.groups[group_idx].subGroups.size() - 1) {
+        subgroup_idx++;
+        return *this;
+    }
+    subgroup_idx = 0;
+    group_idx++;
+    return *this;
+}

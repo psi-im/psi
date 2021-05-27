@@ -275,7 +275,7 @@ private slots:
     void updateIconSelect()
     {
         Iconset iss;
-        for (Iconset *iconset : PsiIconset::instance()->emoticons) {
+        for (Iconset *iconset : qAsConst(PsiIconset::instance()->emoticons)) {
             iss += *iconset;
         }
 

@@ -63,7 +63,7 @@ public:
     {
         ic       = nullptr;
         animated = false;
-        connect(this, SIGNAL(clicked()), SLOT(iconSelected()));
+        connect(this, SIGNAL(clicked()), SLOT(iconClicked()));
     }
 
     ~IconSelectButton()
@@ -114,7 +114,7 @@ private:
             if (!ic->text().isEmpty()) {
                 // and list of possible variants in the ToolTip
                 QStringList toolTip;
-                for (PsiIcon::IconText t : ic->text()) {
+                for (const PsiIcon::IconText &t : ic->text()) {
                     toolTip += t.text;
                 }
 
@@ -154,12 +154,14 @@ private:
 private slots:
     void iconUpdated() { update(); }
 
-    void iconSelected()
+    void iconClicked()
     {
         clearFocus();
         if (ic) {
             emit iconSelected(ic);
             emit textSelected(ic->defaultText());
+        } else {
+            emit textSelected(text());
         }
     }
 
@@ -186,6 +188,8 @@ private:
                 pix = pix.scaled(maxIconSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
             }
             p.drawPixmap((width() - pix.width()) / 2, (height() - pix.height()) / 2, pix);
+        } else {
+            p.drawText(opt.rect, Qt::AlignVCenter | Qt::AlignCenter, text());
         }
     }
 };
@@ -290,31 +294,35 @@ void IconSelect::setIconset(const Iconset &iconset)
         qDeleteAll(list);
     }
 
-    if (!is.count()) {
-        noIcons();
-        return;
-    }
+    bool fontEmojiMode = is.count() == 0;
 
     // first we need to find optimal size for elements and don't forget about
     // taking too much screen space
     float w = 0, h = 0;
-    int   maxPrefTileHeight = fontInfo().pixelSize() * 2;
+    auto  fontSz            = qApp->fontMetrics().height();
+    int   maxPrefTileHeight = fontSz * 2;
     auto  maxPrefSize       = QSize(maxPrefTileHeight, maxPrefTileHeight);
 
-    double                   count; // the 'double' type is somewhat important for MSVC.NET here
-    QListIterator<PsiIcon *> it = is.iterator();
-    for (count = 0; it.hasNext(); count++) {
-        PsiIcon *icon    = it.next();
-        auto     pix     = icon->pixmap(maxPrefSize);
-        auto     pixSize = pix.size();
-        if (pix.width() > maxPrefSize.width() || pix.height() > maxPrefSize.height()) {
-            pixSize.scale(maxPrefSize, Qt::KeepAspectRatio);
+    double count; // the 'double' type is somewhat important for MSVC.NET here
+    if (fontEmojiMode) {
+        count = EmojiRegistry::instance().count();
+        w     = fontSz * 1.5;
+        h     = fontSz * 1.5;
+    } else {
+        QListIterator<PsiIcon *> it = is.iterator();
+        for (count = 0; it.hasNext(); count++) {
+            PsiIcon *icon    = it.next();
+            auto     pix     = icon->pixmap(maxPrefSize);
+            auto     pixSize = pix.size();
+            if (pix.width() > maxPrefSize.width() || pix.height() > maxPrefSize.height()) {
+                pixSize.scale(maxPrefSize, Qt::KeepAspectRatio);
+            }
+            w += pixSize.width();
+            h += pixSize.height();
         }
-        w += pixSize.width();
-        h += pixSize.height();
+        w /= float(count);
+        h /= float(count);
     }
-    w /= float(count);
-    h /= float(count);
 
     const int margin   = 2;
     int       tileSize = int(qMax(w, h)) + 2 * margin;
@@ -328,28 +336,56 @@ void IconSelect::setIconset(const Iconset &iconset)
 
     // now, fill grid with elements
     createLayout();
-    count = 0;
 
     int row    = 0;
     int column = 0;
 
-    QList<PsiIcon *> sortIcons;
-    if (emojiSorting) {
-        sortIcons = sortEmojis();
-        it        = QListIterator<PsiIcon *>(sortIcons);
-    } else
-        it = is.iterator();
-    while (it.hasNext()) {
-        IconSelectButton *b = new IconSelectButton(this);
-        grid->addWidget(b, row, column);
-        b->setIcon(it.next(), maxPrefSize);
-        b->setSizeHint(QSize(tileSize, tileSize));
-        connect(b, SIGNAL(iconSelected(const PsiIcon *)), menu, SIGNAL(iconSelected(const PsiIcon *)));
-        connect(b, &IconSelectButton::textSelected, menu, &IconSelectPopup::textSelected);
+    if (fontEmojiMode) {
+        auto font = qApp->font();
+        if (font.pointSize() == -1)
+            font.setPixelSize(font.pixelSize() * 1.5);
+        else
+            font.setPointSize(font.pointSize() * 1.5);
+        font.setFamily("Noto Color Emoji");
+        int cnt = 0;
+        for (auto const &emoji : EmojiRegistry::instance()) {
+            IconSelectButton *b = new IconSelectButton(this);
+            b->setFont(font);
+            grid->addWidget(b, row, column);
+            b->setText(emoji.code);
+            b->setToolTip(emoji.name);
+            b->setSizeHint(QSize(tileSize, tileSize));
+            connect(b, qOverload<const PsiIcon *>(&IconSelectButton::iconSelected), menu,
+                    &IconSelectPopup::iconSelected);
+            connect(b, &IconSelectButton::textSelected, menu, &IconSelectPopup::textSelected);
 
-        if (++column >= size) {
-            ++row;
-            column = 0;
+            if (++column >= size) {
+                ++row;
+                column = 0;
+            }
+            cnt++;
+        }
+        qDebug("%d smiley", cnt);
+    } else {
+        QListIterator<PsiIcon *> it = is.iterator();
+        QList<PsiIcon *>         sortIcons;
+        if (emojiSorting) {
+            sortIcons = sortEmojis();
+            it        = QListIterator<PsiIcon *>(sortIcons);
+        }
+        while (it.hasNext()) {
+            IconSelectButton *b = new IconSelectButton(this);
+            grid->addWidget(b, row, column);
+            b->setIcon(it.next(), maxPrefSize);
+            b->setSizeHint(QSize(tileSize, tileSize));
+            connect(b, qOverload<const PsiIcon *>(&IconSelectButton::iconSelected), menu,
+                    &IconSelectPopup::iconSelected);
+            connect(b, &IconSelectButton::textSelected, menu, &IconSelectPopup::textSelected);
+
+            if (++column >= size) {
+                ++row;
+                column = 0;
+            }
         }
     }
     emit updatedGeometry();
