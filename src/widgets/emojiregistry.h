@@ -27,7 +27,7 @@
 
 class EmojiRegistry {
 public:
-    enum class Category { None, Emoji, SkinTone, ZWJ, FullQualify };
+    enum class Category { None, Emoji, SkinTone, ZWJ, FullQualify, SimpleKeycap };
 
     struct Emoji {
         const QString code;

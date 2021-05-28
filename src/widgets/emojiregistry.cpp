@@ -52,6 +52,10 @@ EmojiRegistry::Category EmojiRegistry::startCategory(QStringRef in) const
         return Category::ZWJ;
     if (ucs == 0xfe0f)
         return Category::FullQualify;
+    if (ucs <= 0x39 && in.length() > 2 && (ucs >= 0x30 || ucs == 0x2a || ucs == 0x23) && in[1].unicode() == 0xfe0f
+        && in[2].unicode() == 0x20e3)
+        // number, * or #. excludes 10 keycap
+        return Category::SimpleKeycap;
 
     bool found = false;
     auto lb    = ranges_.lower_bound(ucs);
@@ -104,13 +108,19 @@ QStringRef EmojiRegistry::findEmoji(const QString &in, int idx) const
                 gotSkin = true;
             } else
                 break; // TODO review other categories when implemented
-        } else if (!gotEmoji && (category == Category::Emoji || category == Category::SkinTone)) {
+        } else if (!gotEmoji
+                   && (category == Category::Emoji || category == Category::SkinTone
+                       || category == Category::SimpleKeycap)) {
             if (emojiStart == -1)
                 emojiStart = idx;
-            gotEmoji = true;
-            if (category == Category::SkinTone) { // if we start from skin modifier then just draw colored rect
-                idx++;
-                break;
+            if (category == Category::SimpleKeycap) {
+                idx += 2;
+            } else {
+                gotEmoji = true;
+                if (category == Category::SkinTone) { // if we start from skin modifier then just draw colored rect
+                    idx++;
+                    break;
+                }
             }
         } else if (emojiStart != -1) { // seems got end of emoji sequence
             break;
