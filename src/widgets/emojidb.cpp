@@ -176,6 +176,10 @@ static std::vector<EmojiRegistry::Group> db = {
                         "face without mouth"
                     },
                     {
+                        "😶‍🌫️",
+                        "face in clouds"
+                    },
+                    {
                         "😏",
                         "smirking face"
                     },
@@ -190,6 +194,10 @@ static std::vector<EmojiRegistry::Group> db = {
                     {
                         "😬",
                         "grimacing face"
+                    },
+                    {
+                        "😮‍💨",
+                        "face exhaling"
                     },
                     {
                         "🤥",
@@ -263,7 +271,11 @@ static std::vector<EmojiRegistry::Group> db = {
                     },
                     {
                         "😵",
-                        "dizzy face"
+                        "knocked-out face"
+                    },
+                    {
+                        "😵‍💫",
+                        "face with spiral eyes"
                     },
                     {
                         "🤯",
@@ -588,6 +600,14 @@ static std::vector<EmojiRegistry::Group> db = {
                     {
                         "💔",
                         "broken heart"
+                    },
+                    {
+                        "❤️‍🔥",
+                        "heart on fire"
+                    },
+                    {
+                        "❤️‍🩹",
+                        "mending heart"
                     },
                     {
                         "❤️",
@@ -960,7 +980,15 @@ static std::vector<EmojiRegistry::Group> db = {
                     },
                     {
                         "🧔",
+                        "person"
+                    },
+                    {
+                        "🧔‍♂️",
                         "man"
+                    },
+                    {
+                        "🧔‍♀️",
+                        "woman"
                     },
                     {
                         "👨‍🦰",
@@ -4483,7 +4511,7 @@ static std::vector<EmojiRegistry::Group> db = {
                 {
                     {
                         "🎯",
-                        "direct hit"
+                        "bullseye"
                     },
                     {
                         "🪀",
@@ -5443,7 +5471,7 @@ static std::vector<EmojiRegistry::Group> db = {
                     },
                     {
                         "🔫",
-                        "pistol"
+                        "water pistol"
                     },
                     {
                         "🪃",
@@ -6177,7 +6205,7 @@ static std::vector<EmojiRegistry::Group> db = {
                     },
                     {
                         "❓",
-                        "question mark"
+                        "red question mark"
                     },
                     {
                         "❔",
@@ -6189,7 +6217,7 @@ static std::vector<EmojiRegistry::Group> db = {
                     },
                     {
                         "❗",
-                        "exclamation mark"
+                        "red exclamation mark"
                     },
                     {
                         "〰️",
