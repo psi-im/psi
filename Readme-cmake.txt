@@ -92,10 +92,6 @@ or
 
   to use Aspell spellchecker (default OFF)
 
-> -DSEPARATE_QJDNS=ON
-
-  use qjdns library as separate library (default OFF)
-
 > -DCHAT_TYPE = BASIC
 
    to set type of chatlog engine. Possible values: WEBKIT, WEBENGINE, BASIC

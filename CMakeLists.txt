@@ -49,7 +49,7 @@ foreach(submodule ${SBM_LIST})
 endforeach()
 
 set( DEFAULT_BUNDLED_QCA OFF )
-if (APPLE)
+if (APPLE OR MSVC)
     set( DEFAULT_BUNDLED_QCA ON )
 endif()
 
@@ -76,8 +76,6 @@ option( DEV_MODE "Enable prepare-bin-libs target for MS Windows only. Set PSI_DA
 # Iris options
 option( BUNDLED_QCA "Adds: DTLS, Blake2b and other useful for XMPP crypto-stuff" ${DEFAULT_BUNDLED_QCA} )
 option( BUNDLED_USRSCTP "Compile compatible usrsctp lib when system one is not available or uncompatible (required for p2p file transfer)" OFF )
-option( USE_QJDNS "Use qjdns/jdns library. Disabled by default for Qt5" OFF )
-option( SEPARATE_QJDNS "Build qjdns as separate lib" OFF )
 if (UNIX AND "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     option( ENABLE_ASAN "Enable compilation with address sanitizer" OFF )
 endif()
