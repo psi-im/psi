@@ -113,9 +113,9 @@ QStringRef EmojiRegistry::findEmoji(const QString &in, int idx) const
                        || category == Category::SimpleKeycap)) {
             if (emojiStart == -1)
                 emojiStart = idx;
-            if (category == Category::SimpleKeycap) {
+            if (category == Category::SimpleKeycap) // keycap is ascii in a box. 3 symbols
                 idx += 2;
-            } else {
+            else {
                 gotEmoji = true;
                 if (category == Category::SkinTone) { // if we start from skin modifier then just draw colored rect
                     idx++;
