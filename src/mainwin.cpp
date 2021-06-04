@@ -510,6 +510,17 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
 
     buildToolbars();
     // setUnifiedTitleAndToolBarOnMac(true);
+#ifdef Q_OS_WIN
+    thumbnailToolBar_ = new PsiThumbnailToolBar(this, windowHandle());
+    connect(thumbnailToolBar_, &PsiThumbnailToolBar::openOptions, this, &MainWin::doOptions);
+    connect(thumbnailToolBar_, &PsiThumbnailToolBar::setOnline, this,
+            [this]() { d->getAction("status_online")->trigger(); });
+    connect(thumbnailToolBar_, &PsiThumbnailToolBar::setOffline, this,
+            [this]() { d->getAction("status_offline")->trigger(); });
+    connect(thumbnailToolBar_, &PsiThumbnailToolBar::runActiveEvent, this, &MainWin::doRecvNextEvent);
+    connect(psi->contactList(), &PsiContactList::queueChanged, this,
+            [this]() { thumbnailToolBar_->updateToolBar(d->nextAmount > 0); });
+#endif
 
     connect(qApp, SIGNAL(dockActivated()), SLOT(dockActivated()));
     qApp->installEventFilter(this);

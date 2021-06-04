@@ -58,6 +58,19 @@ set(HEADERS
     stretchwidget.h
 )
 
+if(WIN32)
+    find_package(Qt5 COMPONENTS WinExtras REQUIRED)
+    list(APPEND QT_LIBRARIES
+        Qt5::WinExtras
+    )
+    list(APPEND SOURCES
+        thumbnailtoolbar.cpp
+    )
+    list(APPEND HEADERS
+        thumbnailtoolbar.h
+    )
+endif()
+
 set(FORMS
     fancypopup.ui
 )
