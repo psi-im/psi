@@ -65,7 +65,7 @@ Currently the development model looks like this:
 
 All changes are tested on Continuous Integration services:
 
-* Travis CI: [psi](https://travis-ci.org/psi-im/psi), [plugins](https://travis-ci.org/psi-im/plugins), [psimedia](https://travis-ci.org/psi-im/psimedia), [psi-plus](https://travis-ci.org/psi-plus/psi-plus-snapshots).
+* Travis CI: [psi](https://travis-ci.com/github/psi-im/psi), [plugins](https://travis-ci.com/github/psi-im/plugins), [psimedia](https://travis-ci.com/github/psi-im/psimedia), [psi-plus](https://travis-ci.com/github/psi-plus/psi-plus-snapshots).
 * Sibuserv CI: [psi](https://sibuserv-ci.org/projects/psi), [plugins](https://sibuserv-ci.org/projects/psi-plugins), [psi-plus](https://sibuserv-ci.org/projects/psi-plus-snapshots), [psimedia](https://sibuserv-ci.org/projects/psimedia).
 
 ## Developers
