@@ -974,7 +974,7 @@ void ContactListViewDelegate::Private::drawGroup(QPainter *painter, const QModel
 #if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
         int x = r.left() + fontMetrics_.horizontalAdvance(text) + 8;
 #else
-        int x = r.left() + fontMetrics_.width(text) + 8;
+        int x    = r.left() + fontMetrics_.width(text) + 8;
 #endif
         painter->setPen(QPen(_headerBackgroundColor, 2));
         painter->drawLine(x, h, r.right(), h);

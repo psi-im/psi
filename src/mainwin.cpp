@@ -70,6 +70,7 @@
 #include <QVBoxLayout>
 #include <QtAlgorithms>
 #ifdef Q_OS_WIN
+#include "widgets/thumbnailtoolbar.h"
 #include <windows.h>
 #endif
 #ifdef HAVE_X11
@@ -153,7 +154,8 @@ public:
     PsiRosterWidget *rosterWidget_;
 
 #ifdef Q_OS_WIN
-    DWORD deactivationTickCount;
+    DWORD                         deactivationTickCount;
+    QPointer<PsiThumbnailToolBar> thumbnailToolBar_;
 #endif
 
     void        registerActions();
@@ -510,16 +512,9 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
 
     buildToolbars();
     // setUnifiedTitleAndToolBarOnMac(true);
+
 #ifdef Q_OS_WIN
-    thumbnailToolBar_ = new PsiThumbnailToolBar(this, windowHandle());
-    connect(thumbnailToolBar_, &PsiThumbnailToolBar::openOptions, this, &MainWin::doOptions);
-    connect(thumbnailToolBar_, &PsiThumbnailToolBar::setOnline, this,
-            [this]() { d->getAction("status_online")->trigger(); });
-    connect(thumbnailToolBar_, &PsiThumbnailToolBar::setOffline, this,
-            [this]() { d->getAction("status_offline")->trigger(); });
-    connect(thumbnailToolBar_, &PsiThumbnailToolBar::runActiveEvent, this, &MainWin::doRecvNextEvent);
-    connect(psi->contactList(), &PsiContactList::queueChanged, this,
-            [this]() { thumbnailToolBar_->updateToolBar(d->nextAmount > 0); });
+    updateWinTaskbar(_asTool);
 #endif
 
     connect(qApp, SIGNAL(dockActivated()), SLOT(dockActivated()));
@@ -752,6 +747,9 @@ void MainWin::setWindowOpts(bool _onTop, bool _asTool)
 
     setWindowFlags(flags);
     show();
+#ifdef Q_OS_WIN
+    updateWinTaskbar(_asTool);
+#endif
 }
 
 void MainWin::setUseDock(bool use)
@@ -1477,6 +1475,25 @@ bool MainWin::nativeEvent(const QByteArray &eventType, MSG *msg, long *result)
         return true; // don't let Qt process this event
     }
     return false;
+}
+
+void MainWin::updateWinTaskbar(bool enabled)
+{
+    if (!enabled) {
+        if (!d->thumbnailToolBar_) {
+            d->thumbnailToolBar_ = new PsiThumbnailToolBar(this, windowHandle());
+            connect(d->thumbnailToolBar_, &PsiThumbnailToolBar::openOptions, this, &MainWin::doOptions);
+            connect(d->thumbnailToolBar_, &PsiThumbnailToolBar::setOnline, this,
+                    [this]() { d->getAction("status_online")->trigger(); });
+            connect(d->thumbnailToolBar_, &PsiThumbnailToolBar::setOffline, this,
+                    [this]() { d->getAction("status_offline")->trigger(); });
+            connect(d->thumbnailToolBar_, &PsiThumbnailToolBar::runActiveEvent, this, &MainWin::doRecvNextEvent);
+            connect(d->psi->contactList(), &PsiContactList::queueChanged, this,
+                    [this]() { d->thumbnailToolBar_->updateToolBar(d->nextAmount > 0); });
+        }
+    } else {
+        delete d->thumbnailToolBar_;
+    }
 }
 #endif
 

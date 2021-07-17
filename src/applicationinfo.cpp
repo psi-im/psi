@@ -151,9 +151,9 @@ QString ApplicationInfo::resourcesDir()
     // System routine locates resource files. We "know" that Psi.icns is
     // in the Resources directory.
     QString     resourcePath;
-    CFBundleRef mainBundle = CFBundleGetMainBundle();
+    CFBundleRef mainBundle          = CFBundleGetMainBundle();
 #ifdef PSI_PLUS
-    const char *appIconName = "application-plus.icns";
+    const char *appIconName         = "application-plus.icns";
 #else
     const char *appIconName = "application.icns";
 #endif

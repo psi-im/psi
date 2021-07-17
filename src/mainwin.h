@@ -22,9 +22,6 @@
 
 #include "advwidget.h"
 #include "xmpp_status.h"
-#ifdef Q_OS_WIN
-#include "widgets/thumbnailtoolbar.h"
-#endif
 
 #include <QList>
 #include <QMainWindow>
@@ -188,14 +185,15 @@ private:
 
     void buildStatusMenu(GlobalStatusMenu *statusMenu);
 
+#ifdef Q_OS_WIN
+    void updateWinTaskbar(bool enabled);
+#endif
+
 private:
     class Private;
     Private *d;
     friend class Private;
     QList<PsiToolBar *> toolbars_;
-#ifdef Q_OS_WIN
-    PsiThumbnailToolBar *thumbnailToolBar_;
-#endif
 };
 
 #endif // MAINWIN_H

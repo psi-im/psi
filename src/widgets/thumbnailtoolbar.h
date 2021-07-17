@@ -20,6 +20,7 @@
 #define THUMBNAIL_TOOLBAR_H
 
 #include <QObject>
+#include <QWinTaskbarButton>
 #include <QWinThumbnailToolBar>
 
 class QWindow;
@@ -41,5 +42,6 @@ private:
     QWinThumbnailToolButton *onlineStatusBtn_;
     QWinThumbnailToolButton *offlineStatusBtn_;
     QWinThumbnailToolButton *eventsBtn_;
+    QWinTaskbarButton *      taskbarBtn_;
 };
 #endif // THUMBNAIL_TOOLBAR_H

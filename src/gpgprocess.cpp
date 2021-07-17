@@ -120,12 +120,12 @@ QString GpgProcess::findBin() const
 #ifdef Q_OS_WIN
     QString pathSep = ";";
 #else
-    QString pathSep = ":";
+    QString     pathSep = ":";
 #endif
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
     QStringList paths = QString::fromLocal8Bit(qgetenv("PATH")).split(pathSep, Qt::SkipEmptyParts);
 #else
-    QStringList paths = QString::fromLocal8Bit(qgetenv("PATH")).split(pathSep, QString::SkipEmptyParts);
+    QStringList paths   = QString::fromLocal8Bit(qgetenv("PATH")).split(pathSep, QString::SkipEmptyParts);
 #endif
 #ifdef Q_OS_MAC
     // On Mac OS bundled always uses system default PATH

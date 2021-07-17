@@ -26,7 +26,7 @@
 PsiThumbnailToolBar::PsiThumbnailToolBar(QObject *parent, QWindow *parentWindow) :
     QWinThumbnailToolBar(parent), optionsBtn_(new QWinThumbnailToolButton(this)),
     onlineStatusBtn_(new QWinThumbnailToolButton(this)), offlineStatusBtn_(new QWinThumbnailToolButton(this)),
-    eventsBtn_(new QWinThumbnailToolButton(this))
+    eventsBtn_(new QWinThumbnailToolButton(this)), taskbarBtn_(new QWinTaskbarButton(this))
 {
     // ToolTips
     optionsBtn_->setToolTip(tr("Options"));
@@ -58,6 +58,7 @@ PsiThumbnailToolBar::PsiThumbnailToolBar(QObject *parent, QWindow *parentWindow)
     addButton(offlineStatusBtn_);
     addButton(optionsBtn_);
     setWindow(parentWindow);
+    taskbarBtn_->setWindow(parentWindow);
 }
 
 void PsiThumbnailToolBar::updateToolBar(bool hasEvents) { eventsBtn_->setEnabled(hasEvents); }
