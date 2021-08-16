@@ -187,6 +187,7 @@ private:
     QString     statusMessage(int account, const QString &jid) const;
     QStringList resources(int account, const QString &jid) const;
     QString     realJid(int account, const QString &jid) const;
+    QString     mucNick(int account, const QString &mucJid) const;
     QStringList mucNicks(int account, const QString &mucJid) const;
     bool        hasCaps(int account, const QString &jid, const QStringList &caps);
 

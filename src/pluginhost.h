@@ -194,6 +194,7 @@ public:
     QString     statusMessage(int account, const QString &jid) override;
     QStringList resources(int account, const QString &jid) override;
     QString     realJid(int account, const QString &jid) override;
+    QString     mucNick(int account, const QString &mucJid) override;
     QStringList mucNicks(int account, const QString &mucJid) override;
     bool        hasCaps(int account, const QString &jid, const QStringList &caps) override;
 

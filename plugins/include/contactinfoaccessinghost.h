@@ -22,6 +22,7 @@ public:
     virtual QString     statusMessage(int account, const QString &jid)                    = 0;
     virtual QStringList resources(int account, const QString &jid)                        = 0;
     virtual QString     realJid(int account, const QString &jid)                          = 0;
+    virtual QString     mucNick(int account, const QString &mucJid)                       = 0;
     virtual QStringList mucNicks(int account, const QString &mucJid)                      = 0;
     virtual bool        hasCaps(int account, const QString &jid, const QStringList &caps) = 0;
 };
