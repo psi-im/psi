@@ -1198,6 +1198,18 @@ QString PluginManager::realJid(int account, const QString &jid) const
     return jid;
 }
 
+QString PluginManager::mucNick(int account, const QString &mucJid) const
+{
+    PsiAccount *acc = accountIds_.account(account);
+    if (acc) {
+      auto gcDlg = acc->findDialog<GCMainDlg *>(mucJid);
+      if (gcDlg) {
+        return gcDlg->nick();
+      }
+    }
+    return "";
+}
+
 QStringList PluginManager::mucNicks(int account, const QString &mucJid) const
 {
     PsiAccount *acc = accountIds_.account(account);

@@ -1297,6 +1297,8 @@ QStringList PluginHost::resources(int account, const QString &jid) { return mana
 
 QString PluginHost::realJid(int account, const QString &jid) { return manager_->realJid(account, jid); }
 
+QString PluginHost::mucNick(int account, const QString &mucJid) { return manager_->mucNick(account, mucJid); }
+
 QStringList PluginHost::mucNicks(int account, const QString &mucJid) { return manager_->mucNicks(account, mucJid); }
 
 bool PluginHost::hasCaps(int account, const QString &jid, const QStringList &caps)
