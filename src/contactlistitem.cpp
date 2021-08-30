@@ -263,10 +263,10 @@ PsiAccount *ContactListItem::account() const
 
 bool ContactListItem::shouldBeVisible() const { return _shouldBeVisible; }
 
-void ContactListItem::setHidden(bool hidden)
+void ContactListItem::setHidden(bool hidden, bool notifyModel)
 {
     _hidden = hidden;
-    _model->updateItem(this);
+    _model->updateItem(this, notifyModel);
 }
 
 bool ContactListItem::isHidden() const { return _hidden; }

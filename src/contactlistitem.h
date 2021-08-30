@@ -90,7 +90,8 @@ public:
 
     bool shouldBeVisible() const;
 
-    void setHidden(bool hidden);
+    // if we notify dataChanged during incomplete layout change the app will crash (Qt bug?)
+    void setHidden(bool hidden, bool notifyModel = true);
     bool isHidden() const;
 
     QList<PsiContact *> contacts();

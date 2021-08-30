@@ -132,7 +132,7 @@ protected slots:
     void rosterRequestFinished();
 
 private:
-    void updateItem(ContactListItem *item);
+    void updateItem(ContactListItem *item, bool notifyModel = true);
 
     class Private;
     Private *d;

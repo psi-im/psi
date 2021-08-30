@@ -106,7 +106,7 @@ void ContactListModel::Private::realAddContact(PsiContact *contact)
 
                 root->appendChild(groupItem);
                 groupItem->setExpanded(!collapsed.contains(groupItem->internalName()));
-                groupItem->setHidden(hidden.contains(groupItem->internalName()));
+                groupItem->setHidden(hidden.contains(groupItem->internalName()), false);
             }
             groupItem->appendChild(item);
 
@@ -679,12 +679,13 @@ PsiContactList *ContactListModel::contactList() const { return d->contactList; }
 
 void ContactListModel::renameSelectedItem() { emit inPlaceRename(); }
 
-void ContactListModel::updateItem(ContactListItem *item)
+void ContactListModel::updateItem(ContactListItem *item, bool notifyModel)
 {
     Q_ASSERT(item);
 
     QModelIndex index = toModelIndex(item);
-    emit        dataChanged(index, index);
+    if (notifyModel)
+        emit dataChanged(index, index);
 }
 
 bool ContactListModel::showOffline() const
