@@ -73,9 +73,9 @@ FileSharingManager::~FileSharingManager() { }
 
 QString FileSharingManager::cacheDir()
 {
-    QDir shares(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation) + "/shares");
+    QDir shares(ApplicationInfo::homeDir(ApplicationInfo::DataLocation) + "/shares");
     if (!shares.exists()) {
-        QDir home(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation));
+        QDir home(ApplicationInfo::homeDir(ApplicationInfo::DataLocation));
         home.mkdir("shares");
     }
     return shares.path();
