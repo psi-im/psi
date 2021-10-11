@@ -12,11 +12,19 @@ if(CLF_BIN)
         *.h
         *.mm
         ../qcm/*.qcm
+        ../plugins/*.cpp
+        ../plugins/*.h
     )
     foreach(src_file ${SRC_LIST})
         #Exclude libpsi
         if("${src_file}" MATCHES ".*/libpsi/.*")
             list(REMOVE_ITEM SRC_LIST ${src_file})
+        endif()
+        #Exclude plugins if no ENABLE_PLUGINS flag enabled
+        if(NOT ENABLE_PLUGINS)
+            if("${src_file}" MATCHES ".*/plugins/.*")
+                list(REMOVE_ITEM SRC_LIST ${src_file})
+            endif()
         endif()
     endforeach()
     add_custom_target(fix-codestyle

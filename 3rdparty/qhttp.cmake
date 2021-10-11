@@ -24,7 +24,7 @@ include_directories(
     ./qhttp/src/private
 )
 
-find_package(Qt5 REQUIRED Core Network)
+find_package(Qt5 COMPONENTS Core Network REQUIRED)
 find_package(HttpParser 2.2 QUIET)
 
 if(NOT HttpParser_FOUND)

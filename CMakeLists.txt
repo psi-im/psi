@@ -172,7 +172,7 @@ if(BUNDLED_QCA)
 endif()
 
 # Detect MXE cross-compilation
-if( (CMAKE_CROSSCOMPILING) AND (DEFINED MSYS) )
+if( CMAKE_CROSSCOMPILING AND (DEFINED MSYS) )
     message(STATUS "MXE environment detected")
     set(USE_MXE ON)
     message(STATUS "MXE root path: ${CMAKE_PREFIX_PATH}")
@@ -208,6 +208,7 @@ endif()
 # Detect *BSD systems
 STRING (REGEX MATCH "BSD" PROJECT_OS_BSD ${CMAKE_SYSTEM_NAME})
 if(PROJECT_OS_BSD)
+    message(STATUS "BSD-like system detected")
     add_definitions(-DIOAPI_NO_64)
 endif()
 
@@ -225,7 +226,7 @@ elseif(WIN32)
     include("${CMAKE_CURRENT_SOURCE_DIR}/win32/win32_definitions.cmake")
 endif()
 
-if (${ENABLE_ASAN})
+if(ENABLE_ASAN)
     set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
     set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
 endif()

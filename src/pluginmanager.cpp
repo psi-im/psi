@@ -1202,10 +1202,10 @@ QString PluginManager::mucNick(int account, const QString &mucJid) const
 {
     PsiAccount *acc = accountIds_.account(account);
     if (acc) {
-      auto gcDlg = acc->findDialog<GCMainDlg *>(mucJid);
-      if (gcDlg) {
-        return gcDlg->nick();
-      }
+        auto gcDlg = acc->findDialog<GCMainDlg *>(mucJid);
+        if (gcDlg) {
+            return gcDlg->nick();
+        }
     }
     return "";
 }
