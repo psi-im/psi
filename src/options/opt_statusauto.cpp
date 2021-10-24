@@ -27,6 +27,7 @@ QWidget *OptionsTabStatusAuto::widget()
     w                  = new OptStatusAutoUI();
     OptStatusAutoUI *d = static_cast<OptStatusAutoUI *>(w);
 
+    d->te_asMessage->removeSoundRecButton(); // Delete sound rec button
     PriorityValidator *prValidator = new PriorityValidator(d->le_asPriority);
     d->le_asPriority->setValidator(prValidator);
     prValidator = new PriorityValidator(d->le_asXaPriority);

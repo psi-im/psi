@@ -67,6 +67,15 @@ ContactManagerDlg::ContactManagerDlg(PsiAccount *pa) : QDialog(nullptr, Qt::Wind
 
     connect(pa_->client(), SIGNAL(rosterRequestFinished(bool, int, QString)), this,
             SLOT(client_rosterUpdated(bool, int, QString)));
+    connect(ui_.usersView, &ContactManagerView::doubleClicked, this, [this](const QModelIndex &index) {
+        ContactManagerView *v = ui_.usersView;
+        bool itemCS           = v->model()->data(v->model()->index(index.row(), 0), Qt::CheckStateRole) == Qt::Checked;
+        for (int i = 0; i < v->model()->rowCount(); ++i) {
+            if (v->model()->data(v->model()->index(i, index.column())) == index.data()) {
+                v->model()->setData(v->model()->index(i, 0), !itemCS, ContactManagerModel::CheckRole);
+            }
+        }
+    });
 }
 
 ContactManagerDlg::~ContactManagerDlg() { pa_->dialogUnregister(this); }
@@ -141,7 +150,7 @@ void ContactManagerDlg::executeCurrent()
         changeDomain(users);
         break;
     case 6: // resolve nicks
-        for (UserListItem *u : users) {
+        for (UserListItem *u : qAsConst(users)) {
             pa_->resolveContactName(u->jid());
         }
         break;
@@ -288,7 +297,7 @@ void ContactManagerDlg::importRoster()
                     groups[jid].append(el.text());
                 }
             }
-            labelContent.append(QString("%1 (%2)").arg(jid).arg(nicks[jid]));
+            labelContent.append(QString("%1 (%2)").arg(jid, nicks[jid]));
         }
 
         QMessageBox confirmDlg(QMessageBox::Question, tr("Confirm contacts importing"),

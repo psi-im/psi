@@ -29,6 +29,7 @@ QWidget *OptionsTabStatusGeneral::widget()
     w                     = new OptStatusGeneralUI();
     OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
 
+    d->te_sp->removeSoundRecButton(); // Delete sound rec button
     connect(d->lw_presets, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)),
             SLOT(currentItemChanged(QListWidgetItem *, QListWidgetItem *)));
     connect(d->lw_presets, SIGNAL(doubleClicked(const QModelIndex &)), SLOT(presetDoubleClicked(const QModelIndex &)));

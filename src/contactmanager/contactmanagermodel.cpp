@@ -231,7 +231,7 @@ bool ContactManagerModel::sortLessThan(UserListItem *u1, UserListItem *u2)
 QList<UserListItem *> ContactManagerModel::checkedUsers()
 {
     QList<UserListItem *> users;
-    for (UserListItem *u : _userList) {
+    for (UserListItem *u : qAsConst(_userList)) {
         if (checks.contains(u->jid().full())) {
             users.append(u);
         }
@@ -248,7 +248,7 @@ void ContactManagerModel::invertByMatch(int columnIndex, int matchType, const QS
     if (matchType == ContactManagerModel::RegexpMatch) {
         reg = QRegExp(str);
     }
-    for (UserListItem *u : _userList) {
+    for (UserListItem *u : qAsConst(_userList)) {
         data = userFieldString(u, columnRole);
         if ((matchType == ContactManagerModel::SimpleMatch && str == data)
             || (matchType == ContactManagerModel::RegexpMatch && reg.indexIn(data) != -1)) {
@@ -270,9 +270,9 @@ void ContactManagerModel::client_rosterItemUpdated(const RosterItem &item) { con
 void ContactManagerModel::contactUpdated(const Jid &jid)
 {
     int i = 0;
-    for (UserListItem *lu : _userList) {
+    for (UserListItem *lu : qAsConst(_userList)) {
         if (lu->jid() == jid) {
-            dataChanged(index(i, 1), index(i, columnNames.count() - 1));
+            emit dataChanged(index(i, 1), index(i, columnNames.count() - 1));
         }
         i++;
     }
