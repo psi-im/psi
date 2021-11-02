@@ -39,7 +39,7 @@ CertificateCollection CertificateHelpers::allCertificates(const QStringList &sto
         // Read in PEM certificates
         store.setNameFilters(QStringList("*.crt") + QStringList("*.pem"));
         QStringList cert_files = store.entryList();
-        for (QStringList::ConstIterator c = cert_files.begin(); c != cert_files.end(); ++c) {
+        for (QStringList::ConstIterator c = cert_files.constBegin(); c != cert_files.constEnd(); ++c) {
             // qDebug() << "certutil.cpp: Reading " << store.filePath(*c);
             ConvertResult result;
             Certificate   cert = Certificate::fromPEMFile(store.filePath(*c), &result);
@@ -53,7 +53,7 @@ CertificateCollection CertificateHelpers::allCertificates(const QStringList &sto
         // Read in old XML format certificates (DEPRECATED)
         store.setNameFilters(QStringList("*.xml"));
         cert_files = store.entryList();
-        for (QStringList::ConstIterator it = cert_files.begin(); it != cert_files.end(); ++it) {
+        for (QStringList::ConstIterator it = cert_files.constBegin(); it != cert_files.constEnd(); ++it) {
             qWarning() << "Loading certificate in obsolete XML format: " << store.filePath(*it);
             QFile f(store.filePath(*it));
             if (!f.open(QIODevice::ReadOnly))

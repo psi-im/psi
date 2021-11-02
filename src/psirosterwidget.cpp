@@ -78,7 +78,7 @@ protected:
             data << index.data(Qt::DisplayRole).toString() << index.data(ContactListModel::JidRole).toString();
         }
 
-        for (const QString &str : data) {
+        for (const QString &str : qAsConst(data)) {
             if (str.contains(filterRegExp()))
                 return true;
         }

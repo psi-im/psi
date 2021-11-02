@@ -184,7 +184,7 @@ public:
 
         // second level -- transport icon
         if (jid.node().isEmpty() || status_icons.useServicesIcons) {
-            for (const StatusIconsets::IconsetItem &item : status_icons.list) {
+            for (const StatusIconsets::IconsetItem &item : qAsConst(status_icons.list)) {
                 if (item.regexp.isEmpty() ? jid.node().isEmpty() : (item.regexp.indexIn(jid.domain()) != -1)) {
                     const Iconset *is = psi->roster.value(item.iconset);
                     if (is) {
@@ -199,7 +199,7 @@ public:
         }
 
         // third level -- custom icons
-        for (const StatusIconsets::IconsetItem &item : status_icons.customList) {
+        for (const StatusIconsets::IconsetItem &item : qAsConst(status_icons.customList)) {
             if (item.regexp.indexIn(jid.bare()) != -1) {
                 const Iconset *is = psi->roster.value(item.iconset);
                 if (is) {
@@ -403,7 +403,8 @@ bool PsiIconset::loadRoster()
     QSet<QString> rosterIconsets;
     d->cur_service_status.clear();
 
-    for (QVariant service : PsiOptions::instance()->mapKeyList("options.iconsets.service-status")) {
+    const auto &services = PsiOptions::instance()->mapKeyList("options.iconsets.service-status");
+    for (const QVariant &service : services) {
         QString val = PsiOptions::instance()
                           ->getOption(PsiOptions::instance()->mapLookup("options.iconsets.service-status", service)
                                       + ".iconset")
@@ -423,7 +424,7 @@ bool PsiIconset::loadRoster()
         d->cur_custom_status.insert(regexp, iconset);
     }
 
-    for (const QString &it2 : rosterIconsets) {
+    for (const QString &it2 : qAsConst(rosterIconsets)) {
         if (it2 == PsiOptions::instance()->getOption("options.iconsets.status").toString()) {
             continue;
         }
@@ -522,10 +523,11 @@ bool PsiIconset::loadClients()
                 ClientIconCheck ic   = { iconName, QStringList() };
                 QString         caps = line.mid(iconName.length());
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
-                for (const QString &c : caps.split(QLatin1Char(','), Qt::SkipEmptyParts)) {
+                const auto &cList = caps.split(QLatin1Char(','), Qt::SkipEmptyParts);
 #else
-                for (const QString &c : caps.split(QLatin1Char(','), QString::SkipEmptyParts)) {
+                const auto &cList = caps.split(QLatin1Char(','), QString::SkipEmptyParts);
 #endif
+                for (const QString &c : cList) {
                     QString ct = c.trimmed();
                     if (ct.length()) {
                         QStringList spec = ct.split('#');
@@ -592,7 +594,8 @@ void PsiIconset::loadStatusIconDefinitions()
 {
     d->status_icons.list.clear();
     d->status_icons.customList.clear();
-    for (const QVariant &serviceV : PsiOptions::instance()->mapKeyList("options.iconsets.service-status")) {
+    const auto &servicesV = PsiOptions::instance()->mapKeyList("options.iconsets.service-status");
+    for (const QVariant &serviceV : servicesV) {
         QString                                          service = serviceV.toString();
         PsiIconset::Private::StatusIconsets::IconsetItem item;
         bool                                             find = true;
@@ -723,7 +726,8 @@ void PsiIconset::reloadRoster()
     QMap<QString, QString> cur_service_status;
     QMap<QString, QString> cur_custom_status;
 
-    for (QVariant service : PsiOptions::instance()->mapKeyList("options.iconsets.service-status")) {
+    const auto &services = PsiOptions::instance()->mapKeyList("options.iconsets.service-status");
+    for (const QVariant &service : services) {
         QString val = PsiOptions::instance()
                           ->getOption(PsiOptions::instance()->mapLookup("options.iconsets.service-status", service)
                                       + ".iconset")
@@ -1006,10 +1010,11 @@ QString PsiIconset::caps2client(const QString &name)
 
     auto it = d->client2icon.lowerBound(name);
     // if name starts with found key or with key of previous item
-    if ((it != d->client2icon.constEnd() && name.startsWith(it.key()))
-        || (it != d->client2icon.constBegin() && name.startsWith((--it).key()))) {
+    if ((it != d->client2icon.end() && name.startsWith(it.key()))
+        || (it != d->client2icon.begin() && name.startsWith((--it).key()))) {
 
-        for (const ClientIconCheck &ic : it.value()) {
+        const auto &ics = it.value();
+        for (const ClientIconCheck &ic : ics) {
             if (ic.inside.isEmpty()) {
                 return ic.icon;
             }

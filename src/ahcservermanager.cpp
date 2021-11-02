@@ -138,7 +138,8 @@ void JT_AHCServer::sendCommandList(const QString &to, const QString &from, const
     iq.appendChild(query);
 
     // Add all commands
-    for (AHCommandServer *c : manager_->commands(Jid(to))) {
+    const auto &commands = manager_->commands(Jid(to));
+    for (AHCommandServer *c : commands) {
         QDomElement command = doc()->createElement("item");
         command.setAttribute("jid", from);
         command.setAttribute("name", c->name());

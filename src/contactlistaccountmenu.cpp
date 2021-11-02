@@ -209,7 +209,7 @@ private slots:
         if (account->bookmarkManager()->isAvailable()) {
             bookmarksManageAction_->setEnabled(true);
             bookmarksMenu_->addSeparator();
-            for (ConferenceBookmark c : account->bookmarkManager()->conferences()) {
+            for (const ConferenceBookmark &c : account->bookmarkManager()->conferences()) {
                 QAction *joinAction = new QAction(c.name(), this);
                 joinAction->setProperty("bookmark", bookmarksJoinActions_.count());
                 connect(joinAction, SIGNAL(triggered()), SLOT(bookmarksJoin()));

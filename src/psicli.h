@@ -72,7 +72,7 @@ public:
 
     void showVersion()
     {
-        show(QString("%1 %2\nQt %3\n").arg(ApplicationInfo::name()).arg(ApplicationInfo::version()).arg(qVersion())
+        show(QString("%1 %2\nQt %3\n").arg(ApplicationInfo::name()).arg(ApplicationInfo::version(), qVersion())
              + QString(tr("Compiled with Qt %1", "%1 will contain Qt version number")).arg(QT_VERSION_STR));
     }
 

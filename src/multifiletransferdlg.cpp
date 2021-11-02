@@ -76,7 +76,7 @@ MultiFileTransferDlg::MultiFileTransferDlg(PsiAccount *acc, QWidget *parent) :
 
     ui->lblMyAvatar->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->lblMyAvatar, &QLabel::customContextMenuRequested, this, [this](const QPoint &p) {
-        QList<QPair<Jid, PsiAccount *>> accs;
+        QVector<QPair<Jid, PsiAccount *>> accs;
         for (auto const &a : d->account->psi()->contactList()->enabledAccounts()) {
             if (a->isAvailable()) {
                 accs.append({ a->selfContact()->jid(), a });
@@ -296,7 +296,7 @@ void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
                     auto item = app->property("mftitem").value<MultiFileTransferItem *>();
                     if (item)
                         item->setFileName(fn);
-                    connect(app, &Jingle::FileTransfer::Application::deviceRequested,
+                    connect(app, &Jingle::FileTransfer::Application::deviceRequested, this,
                             [fn, app](quint64 offset, quint64 size) {
                                 auto f = new QFile(fn, app);
                                 f->open(QIODevice::WriteOnly);
@@ -318,7 +318,7 @@ void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
                 auto item = app->property("mftitem").value<MultiFileTransferItem *>();
                 if (item)
                     item->setFileName(fn);
-                connect(app, &Jingle::FileTransfer::Application::deviceRequested,
+                connect(app, &Jingle::FileTransfer::Application::deviceRequested, this,
                         [fn, app](quint64 offset, quint64 size) {
                             auto f = new QFile(fn, app);
                             f->open(QIODevice::WriteOnly);
@@ -507,7 +507,8 @@ void MultiFileTransferDlg::dropEvent(QDropEvent *event)
     QStringList      dragFiles;
     const QMimeData *mimeData = event->mimeData();
     if (mimeData->hasUrls()) {
-        for (const QUrl &url_ : mimeData->urls()) {
+        const auto &urls = mimeData->urls();
+        for (const QUrl &url_ : urls) {
             dragFiles << url_.toLocalFile();
         }
     }
@@ -539,7 +540,7 @@ BinaryUriLoader::BinaryUriLoader(PsiAccount *acc, const Jid &peer, const QUrl &u
             reply, &QNetworkReply::finished, this,
             [this]() {
                 QNetworkReply *reply = dynamic_cast<QNetworkReply *>(sender());
-                ready(reply->readAll());
+                emit           ready(reply->readAll());
                 reply->deleteLater();
                 deleteLater();
             },

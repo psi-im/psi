@@ -195,7 +195,7 @@ void MUCJoinDlg::updateFavorites()
     QHash<QString, QListWidgetItem *>     bmMap; // jid to item
     QMultiMap<QString, QListWidgetItem *> nmMap; // name to item
     if (account_ && account_->bookmarkManager()->isAvailable()) {
-        for (ConferenceBookmark c : account_->bookmarkManager()->conferences()) {
+        for (const ConferenceBookmark &c : account_->bookmarkManager()->conferences()) {
             if (!c.jid().isValid()) {
                 continue;
             }
@@ -217,7 +217,8 @@ void MUCJoinDlg::updateFavorites()
         ui_.lwFavorites->addItem(item);
     }
 
-    for (const QString &j : controller_->recentGCList()) {
+    const auto &jids = controller_->recentGCList();
+    for (const QString &j : jids) {
         Jid jid(j);
         if (!jid.isValid()) {
             continue;
@@ -225,7 +226,7 @@ void MUCJoinDlg::updateFavorites()
         QString bareJid = jid.bare();
         lwi             = bmMap.value(bareJid);
         if (!lwi) {
-            QString s = tr("%1 on %2").arg(jid.resource()).arg(JIDUtil::toString(jid, false));
+            QString s = tr("%1 on %2").arg(jid.resource(), JIDUtil::toString(jid, false));
             lwi       = new QListWidgetItem(IconsetFactory::icon(QLatin1String("psi/history")).icon(), s);
             lwi->setData(FavoritesJidRole, j);
             lwi->setData(FavoritesIsBookmark, false);

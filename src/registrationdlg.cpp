@@ -291,7 +291,7 @@ void RegistrationDlg::processLegacyForm(const XMPP::Form &form)
 {
     setInstructions(d->jid.full(), form.instructions());
 
-    for (Form::ConstIterator it = d->form.begin(); it != d->form.end(); ++it) {
+    for (Form::ConstIterator it = d->form.constBegin(); it != d->form.constEnd(); ++it) {
         const FormField &f = *it;
 
         QLabel *   lb = new QLabel(f.fieldName(), d->gr_form);

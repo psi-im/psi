@@ -37,8 +37,9 @@ WbItemMenu::WbItemMenu(QWidget *parent) : QMenu(parent) { connect(this, SIGNAL(a
 
 WbItemMenu::~WbItemMenu()
 {
-    for (QActionGroup *g : groups_) {
-        for (QAction *a : g->actions()) {
+    for (QActionGroup *g : qAsConst(groups_)) {
+        const auto &acts = g->actions();
+        for (QAction *a : acts) {
             a->deleteLater();
         }
         g->deleteLater();
@@ -112,7 +113,8 @@ void WbItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
         if (widget_->mode() == WbWidget::Mode::Translate) {
 
             // Translate each selected item
-            for (QGraphicsItem *graphicsitem : scene()->selectedItems()) {
+            const auto &gItems = scene()->selectedItems();
+            for (QGraphicsItem *graphicsitem : gItems) {
                 if (!graphicsitem->parentItem() || !graphicsitem->parentItem()->isSelected()) {
                     QPointF d = graphicsitem->mapFromScene(event->scenePos())
                         - graphicsitem->mapFromScene(event->lastScenePos());
@@ -149,7 +151,8 @@ void WbItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
                 delta.rotate((difference.x() + difference.y()) / 2);
             }
 
-            for (QGraphicsItem *graphicsitem : scene()->selectedItems()) {
+            const auto &gItems = scene()->selectedItems();
+            for (QGraphicsItem *graphicsitem : gItems) {
                 if (!graphicsitem->parentItem() || !graphicsitem->parentItem()->isSelected()) {
                     QMatrix translation;
                     // get center coordinates of selected items in item coordinates
@@ -169,7 +172,8 @@ void WbItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
         } else if (widget_->mode() == WbWidget::Mode::Scale) {
 
             // Scale each selected item
-            for (QGraphicsItem *graphicsitem : scene()->selectedItems()) {
+            const auto &gItems = scene()->selectedItems();
+            for (QGraphicsItem *graphicsitem : gItems) {
                 if (!graphicsitem->parentItem() || !graphicsitem->parentItem()->isSelected()) {
 
                     // get center coordinates in item coordinates
@@ -311,7 +315,7 @@ WbItemMenu *WbItem::constructContextMenu()
         // Add the default actions
         QActionGroup *group;
         // QAction* qaction;
-        QPixmap pixmap;
+        [[maybe_unused]] QPixmap pixmap;
 
         // group = new QActionGroup(0);
         // pixmap(2, 2);

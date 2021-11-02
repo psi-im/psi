@@ -193,7 +193,8 @@ void WbWidget::setStrokeWidth(int width) { strokeWidth_ = width; }
 
 void WbWidget::clear()
 {
-    for (QGraphicsItem *graphicsitem : scene_->items()) {
+    const auto &gItems = scene_->items();
+    for (QGraphicsItem *graphicsitem : gItems) {
         WbItem *wbitem = dynamic_cast<WbItem *>(graphicsitem);
         if (wbitem)
             session_->removeNode(wbitem->node());
@@ -295,7 +296,8 @@ void WbWidget::mouseMoveEvent(QMouseEvent *event)
         QPointF            p = mapToScene(mapFromGlobal(event->globalPos()));
         QGraphicsRectItem *eraseRect
             = scene_->addRect(QRectF(p.x() - strokeWidth_, p.y() - strokeWidth_, 2 * strokeWidth_, 2 * strokeWidth_));
-        for (QGraphicsItem *item : eraseRect->collidingItems()) {
+        const auto &gItems = eraseRect->collidingItems();
+        for (QGraphicsItem *item : gItems) {
             WbItem *wbitem = dynamic_cast<WbItem *>(item);
             if (wbitem)
                 session_->removeNode(wbitem->node());
@@ -330,7 +332,7 @@ void WbWidget::mouseReleaseEvent(QMouseEvent *event)
 
 WbItem *WbWidget::wbItem(const QDomNode &node)
 {
-    for (WbItem *wbitem : items_) {
+    for (WbItem *wbitem : qAsConst(items_)) {
         if (wbitem->node() == node)
             return wbitem;
     }
@@ -444,7 +446,7 @@ void WbWidget::rerender()
     renderer_.load(xmldump.toLatin1());
 
     // Update all positions if changed
-    for (WbItem *wbitem : items_) {
+    for (WbItem *wbitem : qAsConst(items_)) {
         // resetting elementId is necessary for rendering some updates to the element (e.g. adding child elements to
         // <g/>)
         wbitem->setElementId(wbitem->id());

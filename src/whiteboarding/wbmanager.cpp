@@ -142,7 +142,7 @@ void WbManager::removeDialog(WbDlg *dialog)
 WbDlg *WbManager::findWbDlg(const Jid &jid)
 {
     // find if a dialog for the jid already exists
-    for (WbDlg *w : dialogs_) {
+    for (WbDlg *w : qAsConst(dialogs_)) {
         // does the jid match?
         if (w->session()->target().compare(jid)) {
             return w;
@@ -199,7 +199,7 @@ void WbManager::checkInvitation(const Jid &peer, const QList<QString> &features,
 
 void WbManager::requestActivated(int id)
 {
-    for (WbRequest *wr : requests_) {
+    for (WbRequest *wr : qAsConst(requests_)) {
         if (wr->id() == id) {
             wr->stopLoop();
             return;

@@ -263,7 +263,8 @@ QString MessageEvent::description() const
         result << v_m.subject();
     if (!v_m.body().isEmpty())
         result << v_m.body();
-    for (Url url : v_m.urlList()) {
+    const auto &urls = v_m.urlList();
+    for (const Url &url : urls) {
         QString text = url.url();
         if (!url.desc().isEmpty())
             text += QString("(%1)").arg(url.desc());
@@ -676,7 +677,7 @@ void EventQueue::enqueue(const PsiEvent::Ptr &e)
     bool found = false;
 
     // skip all with higher or equal priority
-    for (EventItem *ei : list_) {
+    for (EventItem *ei : qAsConst(list_)) {
         if (ei && ei->event()->priority() < prior) {
             list_.insert(list_.indexOf(ei), i);
             found = true;
@@ -696,7 +697,7 @@ void EventQueue::dequeue(const PsiEvent::Ptr &e)
     if (!e)
         return;
 
-    for (EventItem *i : list_) {
+    for (EventItem *i : qAsConst(list_)) {
         if (e == i->event()) {
             list_.removeAll(i);
             emit queueChanged();
@@ -708,7 +709,7 @@ void EventQueue::dequeue(const PsiEvent::Ptr &e)
 
 PsiEvent::Ptr EventQueue::dequeue(const Jid &j, bool compareRes)
 {
-    for (EventItem *i : list_) {
+    for (EventItem *i : qAsConst(list_)) {
         PsiEvent::Ptr e = i->event();
         Jid           j2(e->jid());
         if (j.compare(j2, compareRes)) {
@@ -912,7 +913,7 @@ bool EventQueue::fromXml(const QDomElement *q)
     if (q->attribute("version") != "1.0")
         return false;
 
-    QString progver = subTagText(*q, "progver");
+    [[maybe_unused]] QString progver = subTagText(*q, "progver");
 
     for (QDomNode n = q->firstChild(); !n.isNull(); n = n.nextSibling()) {
         QDomElement e = n.toElement();
@@ -949,7 +950,7 @@ QList<EventQueue::PsiEventId> EventQueue::eventsFor(const XMPP::Jid &jid, bool c
 {
     QList<PsiEventId> result;
 
-    for (EventItem *i : list_) {
+    for (EventItem *i : qAsConst(list_)) {
         if (i->event()->from().compare(jid, compareRes))
             result << QPair<int, PsiEvent::Ptr>(i->id(), i->event());
     }

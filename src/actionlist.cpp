@@ -142,7 +142,7 @@ MetaActionList::~MetaActionList()
 
 ActionList *MetaActionList::actionList(const QString &name) const
 {
-    for (ActionList *a : d->lists) {
+    for (ActionList *a : qAsConst(d->lists)) {
         if (a->name() == name)
             return a;
     }
@@ -167,7 +167,7 @@ QList<ActionList *> MetaActionList::actionLists(const unsigned int id) const
         if (!(id & (1u << i)))
             continue;
 
-        for (ActionList *a : d->lists) {
+        for (ActionList *a : qAsConst(d->lists)) {
             if (uint(a->id()) & (1u << i))
                 list.append(a);
         }
@@ -195,7 +195,7 @@ QStringList MetaActionList::actionLists() const
 {
     QStringList names;
 
-    for (ActionList *l : d->lists)
+    for (ActionList *l : qAsConst(d->lists))
         names << l->name();
 
     return names;
@@ -209,7 +209,7 @@ void MetaActionList::addList(ActionList *list)
 
 void MetaActionList::clear()
 {
-    for (ActionList *l : d->lists) {
+    for (ActionList *l : qAsConst(d->lists)) {
         l->clear();
     }
 }

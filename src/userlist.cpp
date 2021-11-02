@@ -233,7 +233,7 @@ QStringList UserListItem::clients() const
         UserResourceList srl = userResourceList();
         srl.sort();
 
-        for (UserResourceList::ConstIterator rit = srl.begin(); rit != srl.end(); ++rit) {
+        for (UserResourceList::ConstIterator rit = srl.constBegin(); rit != srl.constEnd(); ++rit) {
             QString client(findClient(*rit));
             if (!client.isEmpty()) {
                 res += client;
@@ -447,8 +447,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
     if (!mucItem) {
         if (jid().full() != nick)
             str += QString("<div style='white-space:pre'>%1 &lt;%2&gt;</div>")
-                       .arg(TextUtil::escape(nick))
-                       .arg(TextUtil::escape(JIDUtil::toString(jid(), true)));
+                       .arg(TextUtil::escape(nick), TextUtil::escape(JIDUtil::toString(jid(), true)));
         else
             str += QString("<div style='white-space:pre'>%1</div>").arg(TextUtil::escape(nick));
     }
@@ -467,7 +466,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 
     // User Mood
     if (!mood().isNull()) {
-        str += QString("<div style='white-space:pre'><%1=\"mood/%2\"> ").arg(imgTag).arg(mood().typeValue())
+        str += QString("<div style='white-space:pre'><%1=\"mood/%2\"> ").arg(imgTag, mood().typeValue())
             + QObject::tr("Mood") + ": " + mood().typeText();
         if (!mood().text().isEmpty())
             str += QString(" (") + TextUtil::escape(mood().text()) + QString(")");
@@ -476,7 +475,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 
     // User Activity
     if (!activity().isNull()) {
-        str += QString("<div style='white-space:pre'><%1=\"%2\"> ").arg(imgTag).arg(activityIconName(activity()))
+        str += QString("<div style='white-space:pre'><%1=\"%2\"> ").arg(imgTag, activityIconName(activity()))
             + QObject::tr("Activity") + ": " + activity().typeText();
         if (activity().specificType() != Activity::UnknownSpecific) {
             str += QString(" - ") + activity().specificTypeText();
@@ -508,7 +507,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
         UserResourceList srl = userResourceList();
         srl.sort();
 
-        for (UserResourceList::ConstIterator rit = srl.begin(); rit != srl.end(); ++rit) {
+        for (UserResourceList::ConstIterator rit = srl.constBegin(); rit != srl.constEnd(); ++rit) {
             const UserResource &r = *rit;
 
             QString name;
@@ -569,11 +568,9 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 
             // Entity Time
             if (r.timezoneOffset().hasValue()) {
-                QDateTime dt = QDateTime::currentDateTime().toUTC().addSecs(r.timezoneOffset().value() * 60);
+                QDateTime dt = QDateTime::currentDateTimeUtc().addSecs(r.timezoneOffset().value() * 60);
                 str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag, "psi/time") + QObject::tr("Time")
-                    + QString(": %1 (%2)")
-                          .arg(QLocale().toString(dt, QLocale::ShortFormat))
-                          .arg(r.timezoneOffsetString())
+                    + QString(": %1 (%2)").arg(QLocale().toString(dt, QLocale::ShortFormat), r.timezoneOffsetString())
                     + "</div>";
             }
 
@@ -594,8 +591,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 
                 if (r.status().mucItem().role() != MUCItem::NoRole) {
                     str += QString(R"(<div class='layer2'><table cellspacing="0"><tr><td><%1="%2"> </td><td>)")
-                               .arg(imgTag)
-                               .arg(aff);
+                               .arg(imgTag, aff);
                     str += QString("<div style='white-space:pre'>")
                         + QObject::tr("Role: %1").arg(MUCManager::roleToString(r.status().mucItem().role()))
                         + QString("</div>");
@@ -648,7 +644,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
             str += QString("<div style='white-space:pre'>") + QObject::tr("Presence Error")
                 + QString(": %1").arg(TextUtil::escape(err[0])) + "</div>";
             err.pop_front();
-            for (const QString &line : err)
+            for (const QString &line : qAsConst(err))
                 str += "<div>" + TextUtil::escape(line) + "</div>";
         }
 
@@ -687,7 +683,7 @@ bool UserListItem::isSecure(const QString &rname) const { return secList.contain
 
 void UserListItem::setSecure(const QString &rname, bool b)
 {
-    for (const QString &s : secList) {
+    for (const QString &s : qAsConst(secList)) {
         if (s == rname) {
             if (!b)
                 secList.removeAll(s);
@@ -707,7 +703,7 @@ void UserListItem::setPublicKeyID(const QString &k) { v_keyID = k; }
 //----------------------------------------------------------------------------
 UserListItem *UserList::find(const XMPP::Jid &j)
 {
-    for (UserListItem *i : *this) {
+    for (UserListItem *i : qAsConst(*this)) {
         if (i->jid().compare(j))
             return i;
     }

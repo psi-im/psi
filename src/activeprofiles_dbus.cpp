@@ -164,7 +164,7 @@ bool ActiveProfiles::setThisProfile(const QString &profile)
 void ActiveProfiles::unsetThisProfile()
 {
     QDBusConnectionInterface *dbusIface = QDBusConnection::sessionBus().interface();
-    for (const QString &name : d->busNames) {
+    for (const QString &name : qAsConst(d->busNames)) {
         dbusIface->unregisterService(name);
     }
     d->busNames.clear();

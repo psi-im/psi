@@ -183,7 +183,8 @@ bool PsiContactListView::acceptableDragOperation(QDropEvent *e)
     if (!contact)
         return false;
 
-    for (const QUrl &url : e->mimeData()->urls()) {
+    const auto &urls = e->mimeData()->urls();
+    for (const QUrl &url : urls) {
         const QFileInfo fi(url.toLocalFile());
         if (!fi.isDir() && fi.exists()) {
             return true;
@@ -228,7 +229,8 @@ void PsiContactListView::dropEvent(QDropEvent *e)
         return;
 
     QStringList files;
-    for (const QUrl &url : e->mimeData()->urls()) {
+    const auto &urls = e->mimeData()->urls();
+    for (const QUrl &url : urls) {
         const QFileInfo fi(url.toLocalFile());
         if (!fi.isDir() && fi.exists()) {
             const QString fileName

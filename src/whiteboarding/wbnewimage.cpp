@@ -50,10 +50,10 @@ QDomNode WbNewImage::serializeToSvg(QDomDocument *doc)
         image.setAttribute("x", graphicsitem_.x());
         image.setAttribute("y", graphicsitem_.y());
         image.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
-        image.setAttribute("xlink:href",
-                           QString("data:image/%1;base64,%2")
-                               .arg(filename_.mid(filename_.lastIndexOf(".") + 1).toLower())
-                               .arg(file.readAll().toBase64().constData()));
+        image.setAttribute(
+            "xlink:href",
+            QString("data:image/%1;base64,%2")
+                .arg(filename_.mid(filename_.lastIndexOf(".") + 1).toLower(), file.readAll().toBase64().constData()));
 
         // QDomElement g = QDomDocument().createElement("g");
         // g.setAttribute("id", "e" + SxeSession::generateUUID());

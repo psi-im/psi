@@ -145,8 +145,9 @@ FileCache::FileCache(const QString &cacheDir, QObject *parent) :
 
     _registry->loadOptions(_cacheDir + "/cache.xml", "items", ApplicationInfo::fileCacheNS());
 
-    bool needCleanup = false;
-    for (const QString &prefix : _registry->getChildOptionNames("", true, true)) {
+    bool        needCleanup = false;
+    const auto &prefixes    = _registry->getChildOptionNames("", true, true);
+    for (const QString &prefix : prefixes) {
         QByteArray id = QByteArray::fromHex(prefix.section('.', -1).midRef(1).toLatin1());
         if (id.isEmpty())
             continue;
@@ -197,8 +198,9 @@ FileCache::~FileCache()
 
 void FileCache::gc()
 {
-    QDir dir(_cacheDir);
-    for (const XMPP::Hash &id : _items.keys()) {
+    QDir        dir(_cacheDir);
+    const auto &ids = _items.keys();
+    for (const XMPP::Hash &id : ids) {
         FileCacheItem *item = _items.value(id);
         // remove broken cache items
         if (item->isOnDisk() && item->size() && !dir.exists(item->fileName())) {

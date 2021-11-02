@@ -172,7 +172,7 @@ void IconAction::setPsiIcon(const PsiIcon *i)
 
     QAction::setIcon(is);
 
-    for (IconToolButton *btn : d->buttons)
+    for (IconToolButton *btn : qAsConst(d->buttons))
         btn->setPsiIcon(d->icon);
 #endif
 }
@@ -255,7 +255,7 @@ void IconAction::objectDestroyed()
 void IconAction::setChecked(bool b)
 {
     QAction::setChecked(b);
-    for (IconToolButton *btn : d->buttons)
+    for (IconToolButton *btn : qAsConst(d->buttons))
         btn->setChecked(b);
 }
 
@@ -264,14 +264,14 @@ void IconAction::toolButtonToggled(bool b) { setChecked(b); }
 void IconAction::setEnabled(bool e)
 {
     QAction::setEnabled(e);
-    for (IconToolButton *btn : d->buttons)
+    for (IconToolButton *btn : qAsConst(d->buttons))
         btn->setEnabled(e);
 }
 
 void IconAction::setText(const QString &t)
 {
     QAction::setText(t);
-    for (IconToolButton *btn : d->buttons)
+    for (IconToolButton *btn : qAsConst(d->buttons))
         btn->setText(t);
 }
 
@@ -295,7 +295,7 @@ void IconAction::doSetMenu(QMenu *p)
 {
     QAction::setMenu(p);
 
-    for (IconToolButton *btn : d->buttons) {
+    for (IconToolButton *btn : qAsConst(d->buttons)) {
         btn->setMenu(nullptr);
 
         if (menu())
@@ -307,7 +307,7 @@ void IconAction::setIcon(const QIcon &ic)
 {
     QAction::setIcon(ic);
 
-    for (IconToolButton *btn : d->buttons)
+    for (IconToolButton *btn : qAsConst(d->buttons))
         btn->setIcon(ic);
 }
 
@@ -315,7 +315,7 @@ void IconAction::setVisible(bool b)
 {
     QAction::setVisible(b);
 
-    for (IconToolButton *btn : d->buttons) {
+    for (IconToolButton *btn : qAsConst(d->buttons)) {
         if (b)
             btn->show();
         else

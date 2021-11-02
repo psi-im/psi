@@ -681,7 +681,7 @@ AvatarFactory::AvatarData AvatarFactory::avatarDataByHash(const QByteArray &hash
 {
     FileCacheItem *item = AvatarCache::instance()->get({ XMPP::Hash::Sha1, hash }, true);
     if (item) {
-        return AvatarData { item->data(), item->metadata()["type"].toString() };
+        return AvatarData { item->data(), item->metadata().value("type").toString() };
     }
     return AvatarData();
 }

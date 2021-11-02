@@ -775,7 +775,7 @@ bool HistoryDlg::selectContact(const QStringList &ids)
 
 void HistoryDlg::selectDefaultContact(const QModelIndex &prefer_parent, int prefer_row)
 {
-    QList<QModelIndex> ilist;
+    QVector<QModelIndex> ilist;
     ilist.append(prefer_parent);
     ilist.append(ui_.contactList->model()->index(0, 0));
     for (const QModelIndex &parent : ilist) {

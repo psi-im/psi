@@ -218,7 +218,7 @@ bool PsiOptions::newProfile()
 
         QList<ToolbarPrefs> toolbars;
         toolbars << chatToolbar << groupchatToolbar << buttons << showContacts << eventNotifier;
-        for (ToolbarPrefs tb : toolbars) {
+        for (ToolbarPrefs tb : qAsConst(toolbars)) {
             tb.locked = true;
             PsiToolBar::structToOptions(this, tb);
         }

@@ -54,14 +54,14 @@ const QStringList ChatViewThemeProvider::themeIds() const
     dirs << ApplicationInfo::resourcesDir();
 
     QSet<QString> ret;
-    for (const QString &dir : dirs) {
+    for (const QString &dir : qAsConst(dirs)) {
         foreach (QFileInfo tDirInfo,
                  QDir(dir + "/themes/chatview/").entryInfoList(QDir::AllDirs | QDir::NoDotAndDotDot)) {
             QString typeName = tDirInfo.fileName();
             foreach (QFileInfo themeInfo,
                      QDir(tDirInfo.absoluteFilePath()).entryInfoList(QDir::AllDirs | QDir::NoDotAndDotDot)
                          + QDir(tDirInfo.absoluteFilePath()).entryInfoList(QStringList("*.theme"), QDir::Files)) {
-                ret << (QString("%1/%2").arg(typeName).arg(themeInfo.fileName()));
+                ret << (QString("%1/%2").arg(typeName, themeInfo.fileName()));
                 // qDebug("found theme: %s", qPrintable(QString("%1/%2").arg(typeName).arg(themeInfo.fileName())));
             }
         }

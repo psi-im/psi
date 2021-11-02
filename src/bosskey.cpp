@@ -73,7 +73,7 @@ void BossKey::doHide()
 
 void BossKey::doShow()
 {
-    for (QPointer<QWidget> p : hiddenWidgets_) {
+    for (QPointer<QWidget> p : qAsConst(hiddenWidgets_)) {
         if (p) {
             p->show();
         }
@@ -85,7 +85,8 @@ void BossKey::doShow()
             ico->show();
         }
     }
-    for (const QString &key : tmpOptions_.keys()) {
+    const auto &keys = tmpOptions_.keys();
+    for (const QString &key : keys) {
         psiOptions->setOption(key, tmpOptions_.value(key));
     }
     tmpOptions_.clear();

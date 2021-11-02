@@ -307,17 +307,17 @@ static QString convertIconsToObjectReplacementCharacters(const QStringRef &text,
             auto       matchName = rxName.match(fragment);
             if (matchName.hasMatch()) {
 #ifndef WIDGET_PLUGIN
-                QString iconName = TextUtil::unescape(matchName.capturedTexts()[1]);
+                QString iconName = TextUtil::unescape(matchName.capturedTexts().at(1));
                 QString iconText;
                 auto    matchText = rxText.match(fragment);
                 if (matchText.hasMatch()) {
-                    iconText = TextUtil::unescape(matchText.capturedTexts()[1]);
+                    iconText = TextUtil::unescape(matchText.capturedTexts().at(1));
                 }
 
                 double iconSize  = -1; // not defined. will be resized to be aligned with text if necessary
                 auto   matchSize = rxSize.match(fragment);
                 if (matchSize.hasMatch()) {
-                    auto szText = matchSize.capturedTexts()[1];
+                    auto szText = matchSize.capturedTexts().at(1);
                     if (szText == QLatin1String("original"))
                         iconSize = 0; // use original size
                     else
@@ -439,7 +439,7 @@ static void appendTextHelper(QTextDocument *doc, QString text, QTextCursor &curs
                 QString path
                     = QFileInfo(imgSrcUrl.scheme() == "file" ? imgSrcUrl.toLocalFile() : imgSrc).absoluteFilePath();
                 bool baseDirFound = false;
-                for (const QString &baseDir : allowedImageDirs) {
+                for (const QString &baseDir : qAsConst(allowedImageDirs)) {
                     if (path.startsWith(baseDir)) {
                         baseDirFound = true;
                         break;

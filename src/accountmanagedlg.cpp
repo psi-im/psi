@@ -295,7 +295,8 @@ void AccountManageTree::dropEvent(QDropEvent *event)
 
     if (tree) {
         QList<PsiAccount *> accountsList;
-        for (QTreeWidgetItem *ami : tree->findItems("*", Qt::MatchWildcard)) {
+        const auto &        items = tree->findItems("*", Qt::MatchWildcard);
+        for (QTreeWidgetItem *ami : items) {
             accountsList.append(static_cast<AccountManageItem *>(ami)->pa.data());
         }
         emit orderChanged(accountsList);

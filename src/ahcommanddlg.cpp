@@ -160,7 +160,7 @@ void AHCommandDlg::refreshCommands()
 void AHCommandDlg::listReceived()
 {
     JT_AHCGetList *task_list = static_cast<JT_AHCGetList *>(sender());
-    for (AHCommandItem i : task_list->commands()) {
+    for (const AHCommandItem &i : task_list->commands()) {
         ui_.cb_commands->addItem(i.name);
         commands_.append(i);
     }

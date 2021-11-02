@@ -162,7 +162,7 @@ QPoint FancyPopup::Private::position()
     if (destination.y() < 0)
         destination.setY(0);
 
-    for (FancyPopup *p : prevPopups)
+    for (FancyPopup *p : qAsConst(prevPopups))
         destination.setY(destination.y() + popupLayout * p->height());
 
     return destination;

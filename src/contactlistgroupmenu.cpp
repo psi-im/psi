@@ -101,10 +101,10 @@ void ContactListGroupMenu::Private::updateActions()
         return;
 
     sendMessageAction_->setVisible(true);
-    sendMessageAction_->setEnabled(group->contacts().first()->account()->isAvailable());
-    actionCustomStatus_->setEnabled(group->contacts().first()->account()->isAvailable());
+    sendMessageAction_->setEnabled(group->contacts().constFirst()->account()->isAvailable());
+    actionCustomStatus_->setEnabled(group->contacts().constFirst()->account()->isAvailable());
     if (authMenu_)
-        authMenu_->setEnabled(group->contacts().first()->account()->isAvailable());
+        authMenu_->setEnabled(group->contacts().constFirst()->account()->isAvailable());
     renameAction_->setEnabled(group->isEditable());
     removeGroupAndContactsAction_->setEnabled(group->isRemovable());
     removeGroupWithoutContactsAction_->setEnabled(group->isRemovable());
@@ -113,7 +113,7 @@ void ContactListGroupMenu::Private::updateActions()
 
 void ContactListGroupMenu::Private::mucHide()
 {
-    PsiAccount *pa = group->contacts().first()->account();
+    PsiAccount *pa = group->contacts().constFirst()->account();
     for (const QString &gc : pa->groupchats()) {
         Jid        j(gc);
         GCMainDlg *gcDlg = pa->findDialog<GCMainDlg *>(j.bare());
@@ -124,7 +124,7 @@ void ContactListGroupMenu::Private::mucHide()
 
 void ContactListGroupMenu::Private::mucShow()
 {
-    PsiAccount *pa = group->contacts().first()->account();
+    PsiAccount *pa = group->contacts().constFirst()->account();
     for (const QString &gc : pa->groupchats()) {
         Jid        j(gc);
         GCMainDlg *gcDlg = pa->findDialog<GCMainDlg *>(j.bare());
@@ -137,7 +137,7 @@ void ContactListGroupMenu::Private::mucShow()
 
 void ContactListGroupMenu::Private::mucLeave()
 {
-    PsiAccount *pa = group->contacts().first()->account();
+    PsiAccount *pa = group->contacts().constFirst()->account();
     for (const QString &gc : pa->groupchats()) {
         Jid        j(gc);
         GCMainDlg *gcDlg = pa->findDialog<GCMainDlg *>(j.bare());
@@ -206,10 +206,11 @@ void ContactListGroupMenu::Private::customStatus()
     if (!group)
         return;
 
-    PsiAccount *     pa = group->contacts().first()->account();
+    PsiAccount *     pa = group->contacts().constFirst()->account();
     StatusSetDlg *   w  = new StatusSetDlg(pa->psi(), makeLastStatus(pa->status().type()), lastPriorityNotEmpty());
     QList<XMPP::Jid> list;
-    for (PsiContact *contact : group->contacts()) {
+    const auto &     contacts = group->contacts();
+    for (PsiContact *contact : contacts) {
         if (contact->isPrivate())
             continue;
         list << contact->jid();
@@ -222,7 +223,7 @@ void ContactListGroupMenu::Private::customStatus()
 
 void ContactListGroupMenu::Private::setStatusFromDialog(const QList<XMPP::Jid> &j, const Status &s)
 {
-    PsiAccount *pa = group->contacts().first()->account();
+    PsiAccount *pa = group->contacts().constFirst()->account();
     for (QList<Jid>::const_iterator it = j.begin(); it != j.end(); ++it) {
         JT_Presence *p = new JT_Presence(pa->client()->rootTask());
         p->pres(*it, s);

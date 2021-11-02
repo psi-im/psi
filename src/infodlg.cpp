@@ -121,15 +121,17 @@ AddressTypeDlg::AddressTypeDlg(AddrTypes allowedTypes, QWidget *parent) : QFrame
 void AddressTypeDlg::setTypes(AddrTypes types)
 {
 
-    for (auto w : findChildren<QCheckBox *>()) {
+    const auto &widgets = findChildren<QCheckBox *>();
+    for (auto w : widgets) {
         w->setChecked(bool(types & w->property("addrtype").toInt()));
     }
 }
 
 AddressTypeDlg::AddrTypes AddressTypeDlg::types() const
 {
-    AddrTypes t;
-    for (auto w : findChildren<QCheckBox *>()) {
+    AddrTypes   t;
+    const auto &widgets = findChildren<QCheckBox *>();
+    for (auto w : widgets) {
         t |= (w->isChecked() ? AddrType(w->property("addrtype").toInt()) : None);
     }
     return t;
@@ -316,8 +318,10 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
     m_ui.te_status->setAcceptRichText(true);
     PsiRichText::install(m_ui.te_status->document());
     updateStatus();
-    for (UserListItem *u : d->findRelevant(j)) {
-        for (UserResource r : u->userResourceList()) {
+    const auto &items = d->findRelevant(j);
+    for (UserListItem *u : items) {
+        const auto &rList = u->userResourceList();
+        for (const UserResource &r : rList) {
             requestResourceInfo(d->jid.withResource(r.name()));
         }
         if (u->userResourceList().isEmpty() && u->lastAvailable().isNull()) {
@@ -436,7 +440,7 @@ void InfoWidget::setData(const VCard &i)
     }
     const QString fullName = i.fullName();
     if (d->type != Self && d->type != MucAdm && fullName.isEmpty()) {
-        m_ui.le_fullname->setText(QString("%1 %2 %3").arg(i.givenName()).arg(i.middleName()).arg(i.familyName()));
+        m_ui.le_fullname->setText(QString("%1 %2 %3").arg(i.givenName(), i.middleName(), i.familyName()));
     } else {
         m_ui.le_fullname->setText(fullName);
     }
@@ -937,7 +941,8 @@ void InfoWidget::clientVersionFinished()
 {
     JT_ClientVersion *j = static_cast<JT_ClientVersion *>(sender());
     if (j->success()) {
-        for (UserListItem *u : d->findRelevant(j->jid())) {
+        const auto &uList = d->findRelevant(j->jid());
+        for (UserListItem *u : uList) {
             UserResourceList::Iterator rit   = u->userResourceList().find(j->jid().resource());
             bool                       found = !(rit == u->userResourceList().end());
             if (!found) {
@@ -955,7 +960,8 @@ void InfoWidget::entityTimeFinished()
 {
     JT_EntityTime *j = static_cast<JT_EntityTime *>(sender());
     if (j->success()) {
-        for (UserListItem *u : d->findRelevant(j->jid())) {
+        const auto uList = d->findRelevant(j->jid());
+        for (UserListItem *u : uList) {
             UserResourceList::Iterator rit   = u->userResourceList().find(j->jid().resource());
             bool                       found = !(rit == u->userResourceList().end());
             if (!found)
@@ -979,7 +985,8 @@ void InfoWidget::requestLastActivityFinished()
 {
     LastActivityTask *j = static_cast<LastActivityTask *>(sender());
     if (j->success()) {
-        for (UserListItem *u : d->findRelevant(d->jid)) {
+        const auto &uList = d->findRelevant(d->jid);
+        for (UserListItem *u : uList) {
             u->setLastUnavailableStatus(makeStatus(STATUS_OFFLINE, j->status()));
             u->setLastAvailable(j->time());
             d->updateEntry(*u);

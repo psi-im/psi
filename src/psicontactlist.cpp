@@ -274,7 +274,7 @@ void PsiContactList::loadAccounts(const UserAccountList &_list)
 {
     UserAccountList list = _list;
     emit            beginBulkContactUpdate();
-    for (UserAccount account : list)
+    for (const UserAccount &account : list)
         loadAccount(account);
     emit endBulkContactUpdate();
 

@@ -44,7 +44,8 @@ OptionsTabAppearanceThemes::OptionsTabAppearanceThemes(QObject *parent) :
 
 void OptionsTabAppearanceThemes::setData(PsiCon *psi, QWidget *w)
 {
-    for (PsiThemeProvider *provider : psi->themeManager()->registeredProviders()) {
+    const auto &providers = psi->themeManager()->registeredProviders();
+    for (PsiThemeProvider *provider : providers) {
         addTab(new OptionsTabAppearanceTheme(this, provider));
     }
     MetaOptionsTab::setData(psi, w);
@@ -104,8 +105,8 @@ void OptionsTabAppearanceTheme::modelRowsInserted(const QModelIndex &parent, int
         OptAppearanceThemeUI *d = static_cast<OptAppearanceThemeUI *>(w);
         // const QSize buttonSize = QSize(21,21);
         for (int i = first; i <= last; i++) {
-            const QModelIndex index = themesModel->index(i, 0);
-            const QString     id    = themesModel->data(index, PsiThemeModel::IdRole).toString();
+            const QModelIndex              index = themesModel->index(i, 0);
+            [[maybe_unused]] const QString id    = themesModel->data(index, PsiThemeModel::IdRole).toString();
             if (themesModel->data(index, PsiThemeModel::IsCurrent).toBool()) {
                 d->themeView->setCurrentIndex(index);
             }

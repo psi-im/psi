@@ -157,8 +157,8 @@ public:
     ~PsiConObject()
     {
         // removing temp dirs
-        QDir p(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation));
-        QDir v(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation) + "/tmp-sounds");
+        [[maybe_unused]] QDir p(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation));
+        QDir                  v(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation) + "/tmp-sounds");
         folderRemove(v);
     }
 
@@ -484,7 +484,7 @@ bool PsiCon::init()
     if (!accountsFile.exists()) {
         accountMigration = true;
         int idx          = 0;
-        for (UserAccount a : d->optionsMigration.accMigration) {
+        for (UserAccount a : qAsConst(d->optionsMigration.accMigration)) {
             QString base = "accounts.a" + QString::number(idx++);
             a.toOptions(&d->accountTree, base);
         }
@@ -869,7 +869,7 @@ QStringList PsiCon::xmppFatures() const
                          QStringList() << "http://jabber.org/protocol/chatstates")
         << OptFeatureMap("options.ui.notifications.send-receipts", QStringList() << "urn:xmpp:receipts");
 
-    for (const OptFeatureMap &f : fmap) {
+    for (const OptFeatureMap &f : qAsConst(fmap)) {
         if (PsiOptions::instance()->getOption(f.option).toBool()) {
             features << f.feature;
         }
@@ -965,7 +965,7 @@ EventDlg *PsiCon::createEventDlg(const QString &to, PsiAccount *pa)
 // FIXME: WTF? Refactor! Refactor!
 void PsiCon::updateContactGlobal(PsiAccount *pa, const Jid &j)
 {
-    for (item_dialog *i : d->dialogList) {
+    for (item_dialog *i : qAsConst(d->dialogList)) {
         if (i->className == "EventDlg") {
             EventDlg *e = qobject_cast<EventDlg *>(i->widget);
             if (e->psiAccount() == pa)
@@ -977,7 +977,7 @@ void PsiCon::updateContactGlobal(PsiAccount *pa, const Jid &j)
 // FIXME: make it work like QObject::findChildren<ChildName>()
 QWidget *PsiCon::dialogFind(const char *className)
 {
-    for (item_dialog *i : d->dialogList) {
+    for (item_dialog *i : qAsConst(d->dialogList)) {
         // does the classname and jid match?
         if (i->className == className) {
             return i->widget;

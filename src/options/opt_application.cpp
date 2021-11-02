@@ -140,10 +140,11 @@ void OptionsTabApplication::applyOptions()
     ProxyManager::instance()->proxyForObject()->save();
 
     // Language
-    QString curLang = TranslationManager::instance()->currentLanguage();
-    QString lang    = d->cb_lang->currentText();
-    QString itemData;
-    for (VarListItem it : TranslationManager::instance()->availableTranslations()) {
+    QString     curLang = TranslationManager::instance()->currentLanguage();
+    QString     lang    = d->cb_lang->currentText();
+    QString     itemData;
+    const auto &items = TranslationManager::instance()->availableTranslations();
+    for (const VarListItem &it : items) {
         if (it.data() == lang) {
             itemData = it.key();
             break;

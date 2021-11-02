@@ -208,7 +208,7 @@ bool PsiThemeModel::setData(const QModelIndex &index, const QVariant &value, int
 int PsiThemeModel::themeRow(const QString &id)
 {
     int i = 0;
-    for (const ThemeItemInfo &tii : themesInfo) {
+    for (const ThemeItemInfo &tii : qAsConst(themesInfo)) {
         if (tii.id == id) {
             return i;
         }

@@ -92,9 +92,9 @@ QVariant OptionsTreeReader::readVariant(const QString &type)
             result = readElementText();
             result.convert(int(varianttype));
         } else {
-            QString    result;
-            QByteArray ba;
-            QBuffer    buffer(&ba);
+            [[maybe_unused]] QString result;
+            QByteArray               ba;
+            QBuffer                  buffer(&ba);
             buffer.open(QIODevice::WriteOnly);
             QXmlStreamWriter writer;
             writer.setDevice(&buffer);
@@ -195,7 +195,8 @@ void OptionsTreeReader::readUnknownElement(QXmlStreamWriter *writer)
 {
     Q_ASSERT(isStartElement());
     writer->writeStartElement(name().toString());
-    for (QXmlStreamAttribute attr : attributes()) {
+    const auto &attrs = attributes();
+    for (const QXmlStreamAttribute &attr : attrs) {
         writer->writeAttribute(attr.name().toString(), attr.value().toString());
     }
 

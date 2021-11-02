@@ -150,7 +150,8 @@ void ChangePasswordDlg::restoreWidgets() { setWidgetsEnabled(true); }
 
 void ChangePasswordDlg::setWidgetsEnabled(bool enabled)
 {
-    for (QWidget *w : findChildren<QWidget *>()) {
+    const auto &widgets = findChildren<QWidget *>();
+    for (QWidget *w : widgets) {
         w->setEnabled(enabled);
     }
 }

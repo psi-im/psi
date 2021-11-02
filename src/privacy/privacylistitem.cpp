@@ -60,14 +60,14 @@ QString PrivacyListItem::toString() const
 
     QString txt;
     if (type() == PrivacyListItem::FallthroughType) {
-        txt = QString(QObject::tr("Else %1 %2")).arg(act).arg(what);
+        txt = QString(QObject::tr("Else %1 %2")).arg(act, what);
     } else {
         if (type() == PrivacyListItem::JidType) {
-            txt = QString(QObject::tr("If JID is '%1' then %2 %3")).arg(value()).arg(act).arg(what);
+            txt = QString(QObject::tr("If JID is '%1' then %2 %3")).arg(value(), act, what);
         } else if (type() == PrivacyListItem::GroupType) {
-            txt = QString(QObject::tr("If Group is '%1' then %2 %3")).arg(value()).arg(act).arg(what);
+            txt = QString(QObject::tr("If Group is '%1' then %2 %3")).arg(value(), act, what);
         } else if (type() == PrivacyListItem::SubscriptionType) {
-            txt = QString(QObject::tr("If Subscription is '%1' then %2 %3")).arg(value()).arg(act).arg(what);
+            txt = QString(QObject::tr("If Subscription is '%1' then %2 %3")).arg(value(), act, what);
         }
     }
 

@@ -36,8 +36,9 @@ GroupchatTopicDlg::GroupchatTopicDlg(GCMainDlg *parent) :
 
             m_addLangUi->cmbLang->addItem(tr("Any Language"), 0);
             QMap<QString, QLocale::Language> langs;
-            for (auto const &loc :
-                 QLocale::matchingLocales(QLocale::AnyLanguage, QLocale::AnyScript, QLocale::AnyCountry)) {
+            const auto &                     locales
+                = QLocale::matchingLocales(QLocale::AnyLanguage, QLocale::AnyScript, QLocale::AnyCountry);
+            for (auto const &loc : locales) {
                 if (loc != QLocale::c()) {
                     langs.insert(QLocale::languageToString(loc.language()), loc.language());
                 }
@@ -134,7 +135,8 @@ void GroupchatTopicDlg::populateCountryAndScript()
     m_addLangUi->cmbCountry->addItem(tr("Any Country"), 0);
     m_addLangUi->cmbScript->addItem(tr("Any Script"), 0);
     if (lang) {
-        for (auto const &loc : QLocale::matchingLocales(lang, QLocale::AnyScript, QLocale::AnyCountry)) {
+        const auto &locales = QLocale::matchingLocales(lang, QLocale::AnyScript, QLocale::AnyCountry);
+        for (auto const &loc : locales) {
             if (loc != QLocale::c()) {
                 scripts.insert(QLocale::scriptToString(loc.script()), loc.script());
                 countries.insert(QLocale::countryToString(loc.country()), loc.country());

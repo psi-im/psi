@@ -34,7 +34,7 @@ MCmdManager::MCmdManager(MCmdUiSiteIface *site_) : state_(nullptr), uiSite_(site
 
 MCmdManager::~MCmdManager()
 {
-    for (MCmdProviderIface *prov : providers_) {
+    for (MCmdProviderIface *prov : qAsConst(providers_)) {
         prov->mCmdSiteDestroyed();
     }
 }
@@ -134,7 +134,7 @@ bool MCmdManager::processCommand(QString command)
         char    tmp_3;
         items = parseCommand(command, -1, tmp_1, tmp_2, tmp_1, tmp_1, tmp_3);
     }
-    for (MCmdProviderIface *prov : providers_) {
+    for (MCmdProviderIface *prov : qAsConst(providers_)) {
         if (prov->mCmdTryStateTransit(state_, items, tmpstate, preset)) {
             state_ = tmpstate;
             if (state_ != nullptr) {
@@ -198,14 +198,14 @@ QStringList MCmdManager::completeCommand(QString &command, int pos, int &start, 
     }
 
     QStringList res;
-    for (MCmdProviderIface *prov : providers_) {
+    for (MCmdProviderIface *prov : qAsConst(providers_)) {
         res += prov->mCmdTryCompleteCommand(state_, query, all, part);
     }
     res.sort();
 
     QStringList quoted;
     if ((state_->getFlags() & MCMDSTATE_UNPARSED) == 0) {
-        for (QString str : res) {
+        for (QString str : qAsConst(res)) {
             QString trail;
             if (str.size() > 1 && str.at(str.size() - 1) == QChar(0)) {
                 str.chop(1);

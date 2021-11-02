@@ -431,7 +431,7 @@ public:
         h             = icon.pixmap(QSize(iconSize, iconSize)).height();
 
         QStringList str;
-        for (PsiIcon::IconText t : icon.text())
+        for (const PsiIcon::IconText &t : icon.text())
             str += t.text;
 
         if (!str.isEmpty())

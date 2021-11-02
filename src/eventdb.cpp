@@ -122,7 +122,7 @@ void EDBHandle::edb_resultReady(EDBResult r)
     d->busy         = false;
     d->r            = r;
     d->listeningFor = -1;
-    finished();
+    emit finished();
 }
 
 void EDBHandle::edb_writeFinished(bool b)
@@ -130,7 +130,7 @@ void EDBHandle::edb_writeFinished(bool b)
     d->busy         = false;
     d->writeSuccess = b;
     d->listeningFor = -1;
-    finished();
+    emit finished();
 }
 
 int EDBHandle::listeningFor() const { return d->listeningFor; }
@@ -191,7 +191,7 @@ int EDB::op_erase(const QString &accId, const Jid &j) { return erase(accId, j); 
 void EDB::resultReady(int req, EDBResult r, int begin_row)
 {
     // deliver
-    for (EDBHandle *h : d->list) {
+    for (EDBHandle *h : qAsConst(d->list)) {
         if (h->listeningFor() == req) {
             h->d->beginRow_ = begin_row;
             h->edb_resultReady(r);
@@ -203,7 +203,7 @@ void EDB::resultReady(int req, EDBResult r, int begin_row)
 void EDB::writeFinished(int req, bool b)
 {
     // deliver
-    for (EDBHandle *h : d->list) {
+    for (EDBHandle *h : qAsConst(d->list)) {
         if (h->listeningFor() == req) {
             h->edb_writeFinished(b);
             return;

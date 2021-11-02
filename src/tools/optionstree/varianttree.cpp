@@ -45,7 +45,8 @@ VariantTree::VariantTree(QObject *parent) : QObject(parent) { }
  */
 VariantTree::~VariantTree()
 {
-    for (VariantTree *vt : trees_.values()) {
+    const auto &vTrees = trees_.values();
+    for (VariantTree *vt : vTrees) {
         delete vt;
     }
 }
@@ -276,7 +277,7 @@ QStringList VariantTree::nodeChildren(const QString &node, bool direct, bool int
         return children;
     } else {
         QStringList long_children;
-        for (const QString &child : children) {
+        for (const QString &child : qAsConst(children)) {
             QString long_child = QString("%1.%2").arg(key, child);
             long_children << long_child;
         }
@@ -313,7 +314,7 @@ void VariantTree::toXml(QDomDocument &doc, QDomElement &ele) const
     }
 
     // unknown types passthrough
-    for (QDomDocumentFragment df : unknowns_) {
+    for (const QDomDocumentFragment &df : unknowns_) {
         ele.appendChild(doc.importNode(df, true));
     }
 }
@@ -506,13 +507,15 @@ QVariant VariantTree::elementToVariant(const QDomElement &e)
 void VariantTree::variantToElement(const QVariant &var, QDomElement &e)
 {
     switch (var.type()) {
-    case QVariant::List:
-        for (QVariant v : var.toList()) {
+    case QVariant::List: {
+        const auto &variants = var.toList();
+        for (const QVariant &v : variants) {
             QDomElement item_element = e.ownerDocument().createElement(QLatin1String("item"));
             variantToElement(v, item_element);
             e.appendChild(item_element);
         }
         break;
+    }
     case QVariant::Map: {
         QVariantMap                map = var.toMap();
         QVariantMap::ConstIterator it  = map.constBegin();
@@ -533,14 +536,16 @@ void VariantTree::variantToElement(const QVariant &var, QDomElement &e)
         }
         break;
     }
-    case QVariant::StringList:
-        for (const QString &s : var.toStringList()) {
+    case QVariant::StringList: {
+        const auto &strings = var.toStringList();
+        for (const QString &s : strings) {
             QDomElement item_element = e.ownerDocument().createElement(QLatin1String("item"));
             QDomText    text         = e.ownerDocument().createTextNode(s);
             item_element.appendChild(text);
             e.appendChild(item_element);
         }
         break;
+    }
     case QVariant::Size: {
         QSize       size          = var.toSize();
         QDomElement width_element = e.ownerDocument().createElement(QLatin1String("width"));

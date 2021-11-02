@@ -502,7 +502,7 @@ void TabDlg::updateCaption()
 
 void TabDlg::closeEvent(QCloseEvent *closeEvent)
 {
-    for (TabbableWidget *tab : tabs_) {
+    for (TabbableWidget *tab : qAsConst(tabs_)) {
         if (!tab->readyToHide()) {
             closeEvent->ignore();
             return;
@@ -521,7 +521,7 @@ TabbableWidget *TabDlg::getTab(int i) const { return static_cast<TabbableWidget 
 
 TabbableWidget *TabDlg::getTabPointer(PsiAccount *account, QString fullJid)
 {
-    for (TabbableWidget *tab : tabs_) {
+    for (TabbableWidget *tab : qAsConst(tabs_)) {
         if (tab->jid().full() == fullJid && tab->account() == account) {
             return tab;
         }
@@ -635,7 +635,7 @@ void TabDlg::dropEvent(QDropEvent *event)
 
 void TabDlg::extinguishFlashingTabs()
 {
-    for (TabbableWidget *tab : tabs_) {
+    for (TabbableWidget *tab : qAsConst(tabs_)) {
         if (tab->flashing()) {
             tab->blockSignals(true);
             tab->doFlash(false);
@@ -804,7 +804,7 @@ bool TabDlg::isTabPinned(QWidget *page) { return tabWidget_->isPagePinned(page);
 
 void TabDlg::updateVSplitters(int log, int chat)
 {
-    for (TabbableWidget *w : tabs_) {
+    for (TabbableWidget *w : qAsConst(tabs_)) {
         w->setVSplitterPosition(log, chat);
     }
 }

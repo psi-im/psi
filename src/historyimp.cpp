@@ -99,7 +99,8 @@ int HistoryImport::exec()
     if (!srcEdb)
         srcEdb = new EDBFlatFile(psi_);
 
-    for (const EDB::ContactItem &ci : srcEdb->contacts(QString(), EDB::Contact)) {
+    const auto &cis = srcEdb->contacts(QString(), EDB::Contact);
+    for (const EDB::ContactItem &ci : cis) {
         const XMPP::Jid &jid = ci.jid;
         QStringList      accIds;
         for (PsiAccount *acc : psi_->contactList()->accounts()) {

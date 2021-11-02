@@ -521,7 +521,7 @@ void ChatView::contextMenuEvent(QContextMenuEvent *e)
     linkUrl = d->webView->page()->mainFrame()->hitTestContent(e->pos()).linkUrl();
 #endif
     if (linkUrl.scheme() == "addnick") {
-        showNM(linkUrl.path().mid(1));
+        emit showNM(linkUrl.path().mid(1));
         e->accept();
     }
 #endif
@@ -561,7 +561,7 @@ void ChatView::checkJsBuffer()
 {
     if (d->sessionReady_) {
         while (!d->jsBuffer_.isEmpty()) {
-            d->jsObject->newMessage(d->jsBuffer_.takeFirst());
+            emit d->jsObject->newMessage(d->jsBuffer_.takeFirst());
         }
     }
 }

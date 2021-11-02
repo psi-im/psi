@@ -125,7 +125,8 @@ public:
             }
         }
 
-        for (QTreeWidgetItem *i : dlg->lv_results->selectedItems()) {
+        const auto &items = dlg->lv_results->selectedItems();
+        for (QTreeWidgetItem *i : items) {
             NickAndJid nickJid;
             nickJid.jid  = XMPP::Jid(i->text(jid));
             nickJid.nick = i->text(nick);
@@ -339,7 +340,7 @@ void SearchDlg::jt_finished()
                 QString str = TextUtil::plain2rich(d->form.instructions());
                 lb_instructions->setText(str);
 
-                for (Form::ConstIterator it = d->form.begin(); it != d->form.end(); ++it) {
+                for (Form::ConstIterator it = d->form.constBegin(); it != d->form.constEnd(); ++it) {
                     const FormField &f = *it;
 
                     QLabel *   lb = new QLabel(f.fieldName(), d->gr_form);
@@ -391,7 +392,7 @@ void SearchDlg::jt_finished()
                 }
 
                 QStringList header_labels;
-                for (XData::ReportField report : form.report()) {
+                for (const XData::ReportField &report : form.report()) {
                     header_labels << report.label;
                 }
 
@@ -402,7 +403,7 @@ void SearchDlg::jt_finished()
                 for (XData::ReportItem ri : form.reportItems()) {
                     int              i   = 0;
                     QTreeWidgetItem *lvi = new QTreeWidgetItem(lv_results);
-                    for (XData::ReportField report : form.report()) {
+                    for (const XData::ReportField &report : form.report()) {
                         lvi->setText(i++, ri[report.name]);
                     }
                 }
@@ -471,7 +472,7 @@ void SearchDlg::doAdd()
     if (nicksAndJids.isEmpty())
         return;
 
-    for (Private::NickAndJid nickJid : nicksAndJids)
+    for (const Private::NickAndJid &nickJid : nicksAndJids)
         emit add(nickJid.jid, nickJid.nick, QStringList(), true);
 
     if (nicksAndJids.count() > 1) {
@@ -491,7 +492,7 @@ void SearchDlg::doInfo()
     if (nicksAndJids.isEmpty())
         return;
 
-    for (Private::NickAndJid nickJid : nicksAndJids)
+    for (const Private::NickAndJid &nickJid : nicksAndJids)
         emit aInfo(nickJid.jid);
 }
 

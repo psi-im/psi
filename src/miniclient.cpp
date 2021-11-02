@@ -166,7 +166,7 @@ void MiniClient::tls_handshaken()
         tlsHandler->continueAfterHandshake();
     } else {
         close();
-        error();
+        emit error();
     }
 }
 
@@ -194,7 +194,7 @@ void MiniClient::cs_authenticated()
         connect(j, SIGNAL(finished()), SLOT(sessionStart_finished()));
         j->go(true);
     } else {
-        handshaken();
+        emit handshaken();
     }
 }
 
@@ -202,7 +202,7 @@ void MiniClient::sessionStart_finished()
 {
     JT_Session *j = static_cast<JT_Session *>(sender());
     if (j->success()) {
-        handshaken();
+        emit handshaken();
     } else {
         cs_error(-1);
     }
@@ -244,5 +244,5 @@ void MiniClient::cs_error(int err)
     if (needAlert)
         QMessageBox::critical(nullptr, tr("Server Error"),
                               tr("There was an error communicating with the XMPP server.\nDetails: %1").arg(str));
-    error();
+    emit error();
 }

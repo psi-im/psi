@@ -179,7 +179,7 @@ public:
         int  row     = grid->rowCount();
         bool checked = false;
         if (f.value().count()) {
-            QString s = f.value().first();
+            QString s = f.value().constFirst();
             if (s == "1" || s == "true" || s == "yes")
                 checked = true;
         }
@@ -266,7 +266,7 @@ public:
 
         QString text;
         if (f.value().count())
-            text = f.value().first();
+            text = f.value().constFirst();
         QVBoxLayout *layout = new QVBoxLayout;
 
         QLabel *label = new QLabel(labelText(), xdw);
@@ -344,7 +344,7 @@ public:
 
         QString sel;
         if (!f.value().isEmpty())
-            sel = f.value().first();
+            sel = f.value().constFirst();
 
         XData::Field::OptionList           opts = f.options();
         XData::Field::OptionList::Iterator it   = opts.begin();

@@ -61,9 +61,9 @@ public:
         channels      = img->isGrayscale() ? 1 : hasAlpha ? 4 : 3;
         bitsPerSample = img->depth() / channels;
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
-        image.append((char *)img->rgbSwapped().bits(), int(img->sizeInBytes()));
+        image.append((char *)img->rgbSwapped().constBits(), int(img->sizeInBytes()));
 #else
-        image.append((char *)img->rgbSwapped().bits(), img->byteCount());
+        image.append((char *)img->rgbSwapped().constBits(), img->byteCount());
 #endif
     }
     iiibiiay() { }
@@ -130,7 +130,7 @@ bool PsiDBusNotifier::checkServer()
     QDBusMessage m   = createMessage("GetCapabilities");
     QDBusMessage ret = QDBusConnection::sessionBus().call(m);
     if (ret.type() != QDBusMessage::InvalidMessage && !ret.arguments().isEmpty()) {
-        QVariant v = ret.arguments().first();
+        QVariant v = ret.arguments().constFirst();
         if (v.type() == QVariant::StringList)
             caps_ = v.toStringList();
     }
@@ -220,19 +220,19 @@ void PsiDBusNotifier::popup(PsiAccount *account, PopupManager::PopupType type, c
 
     switch (type) {
     case PopupManager::AlertOnline:
-        text = QString("%1 (%2)").arg(contact).arg(statusTxt);
+        text = QString("%1 (%2)").arg(contact, statusTxt);
         desc = statusMsg;
         break;
     case PopupManager::AlertOffline:
-        text = QString("%1 (%2)").arg(contact).arg(statusTxt);
+        text = QString("%1 (%2)").arg(contact, statusTxt);
         desc = statusMsg;
         break;
     case PopupManager::AlertStatusChange:
-        text = QString("%1 (%2)").arg(contact).arg(statusTxt);
+        text = QString("%1 (%2)").arg(contact, statusTxt);
         desc = statusMsg;
         break;
     case PopupManager::AlertComposing:
-        text = QString("%1%2").arg(contact).arg(QObject::tr(" is typing..."));
+        text = QString("%1%2").arg(contact, QObject::tr(" is typing..."));
         desc = "";
         break;
     case PopupManager::AlertMessage:
@@ -349,7 +349,7 @@ void PsiDBusNotifier::asyncCallFinished(QDBusPendingCallWatcher *watcher)
         return;
     }
 
-    QVariant repl = m.arguments().first();
+    QVariant repl = m.arguments().constFirst();
     if (repl.type() != QVariant::UInt || repl.toUInt() == 0) {
         readyToDie();
     } else {

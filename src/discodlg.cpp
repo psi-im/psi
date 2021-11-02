@@ -464,8 +464,7 @@ void DiscoListItem::discoItemsFinished()
         QString error = jt->statusString();
         QMessageBox::critical(dlg(), tr("Error"),
                               tr("There was an error getting items for <b>%1</b>.<br>Reason: %2")
-                                  .arg(di.jid().full())
-                                  .arg(QString(error).replace('\n', "<br>")));
+                                  .arg(di.jid().full(), QString(error).replace('\n', "<br>")));
     }
 
     alreadyItems = true;
@@ -604,8 +603,7 @@ void DiscoListItem::discoInfoFinished()
         if (!autoInfo) {
             QMessageBox::critical(dlg(), tr("Error"),
                                   tr("There was an error getting item's info for <b>%1</b>.<br>Reason: %2")
-                                      .arg(di.jid().full())
-                                      .arg(QString(error_str).replace('\n', "<br>")));
+                                      .arg(di.jid().full(), QString(error_str).replace('\n', "<br>")));
         }
     }
 
@@ -760,7 +758,7 @@ bool DiscoListView::maybeTip(const QPoint &pos)
 
         QStringList                features = item.features().list();
         QStringList::ConstIterator it       = features.begin();
-        for (; it != features.end(); ++it) {
+        for (; it != features.constEnd(); ++it) {
             Features f(*it);
             text += "\n<br>";
             if (f.id() > Features::FID_None)

@@ -201,7 +201,7 @@ WbDlg::WbDlg(SxeSession *session, PsiAccount *pa)
     X11WM_CLASS("whiteboard");
 
     // set the Jid -> le_jid.
-    le_jid_->setText(QString("%1 (session: %2)").arg(session->target().full()).arg(session->session()));
+    le_jid_->setText(QString("%1 (session: %2)").arg(session->target().full(), session->session()));
     le_jid_->setCursorPosition(0);
     le_jid_->setToolTip(session->target().full());
 
@@ -231,7 +231,7 @@ void WbDlg::setAllowEdits(bool a)
 
 void WbDlg::peerLeftSession(const Jid &peer)
 {
-    le_jid_->setText(tr("%1 left (session: %2).").arg(peer.full()).arg(session()->session()));
+    le_jid_->setText(tr("%1 left (session: %2).").arg(peer.full(), session()->session()));
 }
 
 void WbDlg::endSession()

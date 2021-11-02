@@ -640,7 +640,8 @@ void RtpSession::stop() { d->c->stop(); }
 QList<PayloadInfo> RtpSession::localAudioPayloadInfo() const
 {
     QList<PayloadInfo> out;
-    for (const PPayloadInfo &pp : d->c->localAudioPayloadInfo())
+    const auto &       lAPInfo = d->c->localAudioPayloadInfo();
+    for (const PPayloadInfo &pp : lAPInfo)
         out += importPayloadInfo(pp);
     return out;
 }
@@ -648,7 +649,8 @@ QList<PayloadInfo> RtpSession::localAudioPayloadInfo() const
 QList<PayloadInfo> RtpSession::localVideoPayloadInfo() const
 {
     QList<PayloadInfo> out;
-    for (const PPayloadInfo &pp : d->c->localVideoPayloadInfo())
+    const auto &       lVPInfo = d->c->localVideoPayloadInfo();
+    for (const PPayloadInfo &pp : lVPInfo)
         out += importPayloadInfo(pp);
     return out;
 }
@@ -656,7 +658,8 @@ QList<PayloadInfo> RtpSession::localVideoPayloadInfo() const
 QList<PayloadInfo> RtpSession::remoteAudioPayloadInfo() const
 {
     QList<PayloadInfo> out;
-    for (const PPayloadInfo &pp : d->c->remoteAudioPayloadInfo())
+    const auto &       rAPInfo = d->c->remoteAudioPayloadInfo();
+    for (const PPayloadInfo &pp : rAPInfo)
         out += importPayloadInfo(pp);
     return out;
 }
@@ -664,7 +667,8 @@ QList<PayloadInfo> RtpSession::remoteAudioPayloadInfo() const
 QList<PayloadInfo> RtpSession::remoteVideoPayloadInfo() const
 {
     QList<PayloadInfo> out;
-    for (const PPayloadInfo &pp : d->c->remoteVideoPayloadInfo())
+    const auto &       rVPInfo = d->c->remoteVideoPayloadInfo();
+    for (const PPayloadInfo &pp : rVPInfo)
         out += importPayloadInfo(pp);
     return out;
 }
@@ -672,7 +676,8 @@ QList<PayloadInfo> RtpSession::remoteVideoPayloadInfo() const
 QList<AudioParams> RtpSession::audioParams() const
 {
     QList<AudioParams> out;
-    for (const PAudioParams &pp : d->c->audioParams())
+    const auto &       audioParams = d->c->audioParams();
+    for (const PAudioParams &pp : audioParams)
         out += importAudioParams(pp);
     return out;
 }
@@ -680,7 +685,8 @@ QList<AudioParams> RtpSession::audioParams() const
 QList<VideoParams> RtpSession::videoParams() const
 {
     QList<VideoParams> out;
-    for (const PVideoParams &pp : d->c->videoParams())
+    const auto &       videoParams = d->c->videoParams();
+    for (const PVideoParams &pp : videoParams)
         out += importVideoParams(pp);
     return out;
 }

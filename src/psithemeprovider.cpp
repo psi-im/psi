@@ -29,11 +29,8 @@ PsiThemeProvider::PsiThemeProvider(PsiCon *parent) : QObject(parent), _psi(paren
 
 QString PsiThemeProvider::themePath(const QString &name)
 {
-    QStringList dirs;
-    dirs << ":";
-    dirs << ".";
-    dirs << ApplicationInfo::homeDir(ApplicationInfo::DataLocation);
-    dirs << ApplicationInfo::resourcesDir();
+    const QStringList dirs
+        = { ":", ".", ApplicationInfo::homeDir(ApplicationInfo::DataLocation), ApplicationInfo::resourcesDir() };
 
     for (const QString &dir : dirs) {
         QString fileName = dir + "/themes/" + name;

@@ -601,7 +601,8 @@ bool PluginHost::incomingXml(int account, const QDomElement &e)
 
         if (handler) {
             // normal filters
-            for (IqNamespaceFilter *f : iqNsFilters_.values(ns)) {
+            const auto &items = iqNsFilters_.values(ns);
+            for (IqNamespaceFilter *f : items) {
                 if ((f->*handler)(account, e)) {
                     handled = true;
                     break;
@@ -748,10 +749,7 @@ void PluginHost::sendMessage(int account, const QString &to, const QString &body
     // TODO(mck): yeah, that's sick..
     manager_->sendXml(account,
                       QString("<message to='%1' type='%4'><subject>%3</subject><body>%2</body></message>")
-                          .arg(escape(to))
-                          .arg(escape(body))
-                          .arg(escape(subject))
-                          .arg(escape(type)));
+                          .arg(escape(to), escape(body), escape(subject), escape(type)));
 }
 
 /**
@@ -867,7 +865,7 @@ void PluginHost::setPluginOption(const QString &option, const QVariant &value)
     //
     // if (!plugin)
     //    return;
-    QString optionKey = QString("%1.%2.%3").arg(PluginManager::pluginOptionPrefix).arg(shortName()).arg(option);
+    QString optionKey = QString("%1.%2.%3").arg(PluginManager::pluginOptionPrefix, shortName(), option);
     PsiOptions::instance()->setOption(optionKey, value);
 }
 
@@ -884,7 +882,7 @@ void PluginHost::setPluginOption(const QString &option, const QVariant &value)
 QVariant PluginHost::getPluginOption(const QString &option, const QVariant &defValue)
 {
     QString pluginName = name();
-    QString optionKey  = QString("%1.%2.%3").arg(PluginManager::pluginOptionPrefix).arg(shortName()).arg(option);
+    QString optionKey  = QString("%1.%2.%3").arg(PluginManager::pluginOptionPrefix, shortName(), option);
     return PsiOptions::instance()->getOption(optionKey, defValue);
 }
 
@@ -1360,7 +1358,7 @@ bool PluginHost::encryptMessageElement(int account, QDomElement &message)
 
 QObject *PluginHost::getPlugin(const QString &shortName)
 {
-    for (PluginHost *plugin : manager_->pluginsByPriority_) {
+    for (PluginHost *plugin : qAsConst(manager_->pluginsByPriority_)) {
         if (plugin->shortName() == shortName || plugin->name() == shortName) {
             return plugin->plugin_;
         }

@@ -36,7 +36,8 @@
 
 TuneControllerManager::TuneControllerManager()
 {
-    for (QObject *plugin : QPluginLoader::staticInstances()) {
+    const auto &plugins = QPluginLoader::staticInstances();
+    for (QObject *plugin : plugins) {
         loadPlugin(plugin);
     }
 }
@@ -45,8 +46,9 @@ TuneControllerManager::~TuneControllerManager() { }
 
 void TuneControllerManager::updateControllers(const QStringList &blacklist)
 {
-    bool isInBlacklist;
-    for (const QString &name : plugins_.keys()) {
+    bool        isInBlacklist;
+    const auto &names = plugins_.keys();
+    for (const QString &name : names) {
         TuneControllerPtr c = controllers_.value(name);
         isInBlacklist       = blacklist.contains(name);
         if (!c && !isInBlacklist) {
@@ -67,7 +69,8 @@ void TuneControllerManager::updateControllers(const QStringList &blacklist)
 
 Tune TuneControllerManager::currentTune() const
 {
-    for (const TuneControllerPtr &c : controllers_.values()) {
+    const auto &controllers = controllers_.values();
+    for (const TuneControllerPtr &c : controllers) {
         Tune t = c->currentTune();
         if (!t.isNull() && checkTune(t)) {
             return t;

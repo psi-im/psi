@@ -83,11 +83,13 @@ void ContactListDragView::addContextMenuAction(QAction *action)
     QMenu *menu = action->menu();
     if (menu) {
         // if the action contains a menu, add the menu's actions instead
-        for (QAction *subact : menu->actions()) {
+        const auto &actions = menu->actions();
+        for (QAction *subact : actions) {
             addContextMenuAction(subact);
         }
     } else {
-        for (QAction *act : findChildren<QAction *>()) {
+        const auto &actions = findChildren<QAction *>();
+        for (QAction *act : actions) {
             // TODO: maybe check individual shortcuts too?
             if (act->shortcuts() == action->shortcuts()) {
                 return;
@@ -640,7 +642,7 @@ void ContactListDragView::removeSelection()
         return;
 
     // Ask for deleting only some contacts. Exclude private contacts and not in list contacts
-    for (PsiContact *contact : contacts) {
+    for (PsiContact *contact : qAsConst(contacts)) {
         QString name = contact->name();
         if (name != contact->jid().full()) {
             name = QString("%1 (%2)").arg(name, TextUtil::escape(contact->jid().full()));
@@ -666,7 +668,7 @@ void ContactListDragView::removeSelection()
     }
 
     if (doRemove) {
-        for (PsiContact *contact : contacts) {
+        for (PsiContact *contact : qAsConst(contacts)) {
             contact->remove();
         }
     }

@@ -113,7 +113,7 @@ void ContactListView::updateContextMenu()
 
     // FIXME: need to implement context menu merging
     if (selectedIndexes().count() == 1) {
-        QModelIndex      index = realIndex(selectedIndexes().first());
+        QModelIndex      index = realIndex(selectedIndexes().constFirst());
         ContactListItem *item  = realModel()->toItem(index);
         if (item) {
             contextMenu_ = createContextMenuFor(item);
@@ -145,7 +145,8 @@ void ContactListView::focusOutEvent(QFocusEvent *event)
 void ContactListView::addContextMenuActions()
 {
     if (contextMenu_) {
-        for (QAction *action : contextMenu_->availableActions()) {
+        const auto &acts = contextMenu_->availableActions();
+        for (QAction *action : acts) {
             addContextMenuAction(action);
         }
     }
@@ -155,9 +156,11 @@ void ContactListView::addContextMenuAction(QAction *action) { addAction(action);
 
 void ContactListView::removeContextMenuActions()
 {
-    if (contextMenu_)
-        for (QAction *action : contextMenu_->availableActions())
+    if (contextMenu_) {
+        const auto &acts = contextMenu_->availableActions();
+        for (QAction *action : acts)
             removeAction(action);
+    }
 }
 
 void ContactListView::contextMenuEvent(QContextMenuEvent *e)

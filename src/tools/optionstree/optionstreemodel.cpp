@@ -256,7 +256,7 @@ void OptionsTreeModel::optionAboutToBeInserted(const QString &option)
         flatCache = options;
         int row   = options.indexOf(option);
 
-        emit beginInsertRows(QModelIndex(), row, row);
+        beginInsertRows(QModelIndex(), row, row);
         return;
     }
 
@@ -271,7 +271,7 @@ void OptionsTreeModel::optionAboutToBeInserted(const QString &option)
     children.sort();
     int row = children.indexOf(option);
 
-    emit beginInsertRows(parent, row, row);
+    beginInsertRows(parent, row, row);
 }
 
 void OptionsTreeModel::optionInserted(const QString &option)
@@ -287,7 +287,7 @@ void OptionsTreeModel::optionAboutToBeRemoved(const QString &option)
         auto row     = options.indexOf(option);
         if (row != -1) {
             realRemove.push(true);
-            emit beginRemoveRows(QModelIndex(), row, row);
+            beginRemoveRows(QModelIndex(), row, row);
             flatCache.removeAt(row);
         } else {
             realRemove.push(false);
@@ -304,7 +304,7 @@ void OptionsTreeModel::optionAboutToBeRemoved(const QString &option)
 
     if (row != -1) {
         realRemove.push(true);
-        emit beginRemoveRows(parent, row, row);
+        beginRemoveRows(parent, row, row);
     } else {
         realRemove.push(false);
     }

@@ -180,7 +180,8 @@ bool SxeRecord::applySxeRecordEdit(SxeRecordEdit *edit)
 void SxeRecord::processInOrderRecordEdit(const SxeRecordEdit *edit)
 {
 
-    for (SxeRecordEdit::Key key : edit->keys()) {
+    const auto &keys = edit->keys();
+    for (SxeRecordEdit::Key key : keys) {
 
         if (key == SxeRecordEdit::Parent && edit->value(key) != parent()) {
 

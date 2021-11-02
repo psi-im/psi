@@ -277,7 +277,7 @@ void ContactManagerDlg::importRoster()
 
         QHash<QString, QString>     nicks;
         QHash<QString, QStringList> groups;
-        QString                     jid, nick;
+        [[maybe_unused]] QString    jid, nick;
         QStringList                 jids;
         QStringList                 labelContent;
         for (int i = 0; i < static_cast<int>(domContacts.length()); i++) {

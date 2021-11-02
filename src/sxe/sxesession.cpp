@@ -58,8 +58,9 @@ void SxeSession::initializeDocument(const QDomDocument &doc)
     importing_ = true;
 
     // reset the document
-    doc_ = QDomDocument();
-    for (SxeRecord *meta : recordByNodeId_.values())
+    doc_              = QDomDocument();
+    const auto &metas = recordByNodeId_.values();
+    for (SxeRecord *meta : metas)
         meta->deleteLater();
     // recordByNode_.clear();
     recordByNodeId_.clear();
@@ -110,7 +111,7 @@ bool SxeSession::processSxe(const QDomElement &sxe, const QString &id)
     // store incoming edits when queueing
     if (queueing_) {
         // Make sure the element is not already in the queue.
-        for (IncomingEdit i : queuedIncomingEdits_)
+        for (const IncomingEdit &i : qAsConst(queuedIncomingEdits_))
             if (i.xml == sxe)
                 return false;
 
@@ -180,7 +181,8 @@ QList<const SxeEdit *> SxeSession::startQueueing()
     QMultiHash<QString, QString> ridByParent;
 
     // first collect all nodes into a hash by their parent
-    for (SxeRecord *m : recordByNodeId_.values()) {
+    const auto &mList = recordByNodeId_.values();
+    for (SxeRecord *m : mList) {
         if (!m->parent().isEmpty()) {
             ridByParent.insert(m->parent(), m->rid());
         } else if (!m->node().isElement()) {
@@ -332,7 +334,7 @@ const QDomNode SxeSession::insertNodeAfter(const QDomNode &node, const QDomNode 
 
 const QDomNode SxeSession::insertNode(const QDomNode &node, const QString &parentId, double primaryWeight)
 {
-    QDomNode newNode;
+    [[maybe_unused]] QDomNode newNode;
 
     SxeRecord *meta = record(node);
     if (meta) {
@@ -361,7 +363,7 @@ const QDomNode SxeSession::insertNode(const QDomNode &node, const QString &paren
 
     } else {
 
-        QList<SxeEdit *> edits;
+        [[maybe_unused]] QList<SxeEdit *> edits;
         // create a new node
         QDomNode result = generateNewNode(node, parentId, primaryWeight);
 
@@ -748,7 +750,8 @@ SxeRecord *SxeSession::record(const QDomNode &node) const
         return nullptr;
 
     // go through all the SxeRecord's
-    for (SxeRecord *meta : recordByNodeId_.values()) {
+    const auto &metas = recordByNodeId_.values();
+    for (SxeRecord *meta : metas) {
         // qDebug() << QString("id: %1").arg(meta->rid()).toLatin1();
         if (node == meta->node())
             return meta;

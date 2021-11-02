@@ -143,7 +143,7 @@ public slots:
 
         QListWidgetItem *firstItem   = nullptr;
         QListWidgetItem *currentItem = nullptr;
-        for (ProxyItem i : list) {
+        for (const ProxyItem &i : qAsConst(list)) {
             QListWidgetItem *item = new QListWidgetItem(i.name);
             addItem(item);
 
@@ -210,7 +210,7 @@ public slots:
         QList<QWidget *> editors = QList<QWidget *>()
             << q->ui_.cb_type << q->ui_.le_host << q->ui_.le_port << q->ui_.le_user << q->ui_.le_pass << q->ui_.le_url
             << q->ui_.gr_auth;
-        for (QWidget *w : editors) {
+        for (QWidget *w : qAsConst(editors)) {
             w->blockSignals(true);
             w->setEnabled(bool(current));
             if (!current) {
@@ -231,7 +231,7 @@ public slots:
             q->ui_.gr_auth->setChecked(current->data(AuthRole).toBool());
         }
 
-        for (QWidget *w : editors) {
+        for (QWidget *w : qAsConst(editors)) {
             w->blockSignals(false);
         }
 
@@ -388,7 +388,7 @@ void ProxyChooser::buildComboBox()
     d->cb_proxy->clear();
     d->cb_proxy->addItem(tr("None"), "");
     ProxyItemList list = d->m->itemList();
-    for (ProxyItem pi : list) {
+    for (const ProxyItem &pi : list) {
         d->cb_proxy->addItem(pi.name, pi.id);
     }
 }
@@ -419,9 +419,10 @@ QString ProxyForObject::itemForObject(const QString &obj)
 
 void ProxyForObject::save()
 {
-    items_       = tmp_;
-    QString base = "proxy.";
-    for (const QString &obj : items_.keys()) {
+    items_           = tmp_;
+    QString     base = "proxy.";
+    const auto &keys = items_.keys();
+    for (const QString &obj : keys) {
         QString val = items_.value(obj);
         ot_->setOption(base + obj, QVariant(val));
     }
@@ -528,7 +529,7 @@ QString ProxyManager::lastEdited() const { return d->lastEdited; }
 
 void ProxyManager::migrateItemList(const ProxyItemList &list)
 {
-    for (ProxyItem pi : list) {
+    for (const ProxyItem &pi : list) {
         d->itemToOptions(pi);
     }
 }
@@ -572,16 +573,16 @@ void ProxyManager::pd_applyList(const ProxyItemList &list, int x)
 
     // and remove removed
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
-    auto oldSet = QSet<QString>(old.begin(), old.end());
+    const auto keys = QSet<QString>(old.begin(), old.end()) - current;
 #else
-    auto oldSet = old.toSet();
+    const auto keys = old.toSet() - current;
 #endif
-    for (const QString &key : oldSet - current) {
+    for (const QString &key : keys) {
         d->o->removeOption("proxies." + key, true);
         emit proxyRemoved(key);
     }
 
-    settingsChanged();
+    emit settingsChanged();
 }
 
 ProxyItem ProxyManager::getItemForObject(const QString &obj)

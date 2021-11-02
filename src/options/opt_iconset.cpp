@@ -151,10 +151,12 @@ static int countIconsets(QString addDir, QStringList excludeList)
 {
     int count = 0;
 
-    for (const QString &dataDir : ApplicationInfo::dataDirs()) {
+    const auto &dirs = ApplicationInfo::dataDirs();
+    for (const QString &dataDir : dirs) {
         QDir dir(dataDir + "/iconsets" + addDir);
 
-        for (const QFileInfo &fi : dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries)) {
+        const auto &fiList = dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries);
+        for (const QFileInfo &fi : fiList) {
             QString iconsetId = fi.absoluteFilePath().section('/', -2);
             if (excludeList.contains(iconsetId) || !Iconset::isSourceAllowed(fi))
                 continue;
@@ -171,10 +173,12 @@ static int countKdeEmoticonsIconsets(QStringList excludeList)
 {
     int count = 0;
 
-    for (const QString &d : QStandardPaths::locateAll(QStandardPaths::GenericDataLocation, QLatin1String("emoticons"),
-                                                      QStandardPaths::LocateDirectory)) {
-        QDir dir(d);
-        for (const QFileInfo &fi : dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllDirs)) {
+    const auto &dirs = QStandardPaths::locateAll(QStandardPaths::GenericDataLocation, QLatin1String("emoticons"),
+                                                 QStandardPaths::LocateDirectory);
+    for (const QString &d : dirs) {
+        QDir        dir(d);
+        const auto &fiList = dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllDirs);
+        for (const QFileInfo &fi : fiList) {
             QString iconsetId = fi.fileName();
             if (excludeList.contains(iconsetId))
                 continue;
@@ -294,10 +298,12 @@ void IconsetLoadThread::run()
 void IconsetLoadThread::loadKdeEmoticons()
 {
     QStringList failedList;
-    for (const QString &d : QStandardPaths::locateAll(QStandardPaths::GenericDataLocation, QLatin1String("emoticons"),
-                                                      QStandardPaths::LocateDirectory)) {
-        QDir dir(d);
-        for (const QFileInfo &fi : dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllDirs)) {
+    const auto &dirs = QStandardPaths::locateAll(QStandardPaths::GenericDataLocation, QLatin1String("emoticons"),
+                                                 QStandardPaths::LocateDirectory);
+    for (const QString &d : dirs) {
+        QDir        dir(d);
+        const auto &fiList = dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllDirs);
+        for (const QFileInfo &fi : fiList) {
 
             threadCancelled.lock();
             bool cancel = cancelled;
@@ -333,8 +339,9 @@ void IconsetLoadThread::loadPsiIconsets()
     threadMutex.unlock();
 
     for (const QString &dataDir : dirs) {
-        QDir dir(dataDir + "/iconsets" + addPath);
-        for (const QFileInfo &iconsetFI : dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries)) {
+        QDir       dir(dataDir + "/iconsets" + addPath);
+        const auto icsFiList = dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries);
+        for (const QFileInfo &iconsetFI : icsFiList) {
             if (!Iconset::isSourceAllowed(iconsetFI))
                 continue;
 
@@ -571,7 +578,7 @@ void OptionsTabIconsetEmoticons::restoreOptions()
     d->iss_emoticons->clear();
 
     {
-        for (Iconset *is : PsiIconset::instance()->emoticons) {
+        for (Iconset *is : qAsConst(PsiIconset::instance()->emoticons)) {
             d->iss_emoticons->insert(*is);
             d->iss_emoticons->lastItem()->setSelected(true);
         }
@@ -580,7 +587,7 @@ void OptionsTabIconsetEmoticons::restoreOptions()
     {
         QStringList loaded;
         {
-            for (Iconset *tmp : PsiIconset::instance()->emoticons) {
+            for (Iconset *tmp : qAsConst(PsiIconset::instance()->emoticons)) {
                 loaded << tmp->id();
             }
         }

@@ -94,7 +94,7 @@ QString JIDUtil::nickOrJid(const QString &nick, const QString &jid)
 
 QString JIDUtil::accountToString(const Jid &j, bool withResource)
 {
-    QString s = j.node();
+    [[maybe_unused]] QString s = j.node();
     if (!defaultDomain().isEmpty()) {
         return (withResource && !j.resource().isEmpty() ? j.node() + "/" + j.resource() : j.node());
     } else {

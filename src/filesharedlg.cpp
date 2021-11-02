@@ -146,7 +146,7 @@ void FileShareDlg::finish()
     QString          desc = ui->lineEdit->text();
 
     // append reference main links to description and setup their range
-    for (auto const &i : readyPublishers) {
+    for (auto const &i : qAsConst(readyPublishers)) {
         auto r = i->toReference(myJid);
         if (r.isValid()) {
             auto    uri = i->simpleSource();
