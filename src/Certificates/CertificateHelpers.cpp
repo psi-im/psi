@@ -33,29 +33,29 @@ using namespace QCA;
 CertificateCollection CertificateHelpers::allCertificates(const QStringList &storeDirs)
 {
     CertificateCollection certs(systemStore());
-    for (QStringList::ConstIterator s = storeDirs.begin(); s != storeDirs.end(); ++s) {
-        QDir store(*s);
+    for (const auto &s : storeDirs) {
+        QDir store(s);
 
         // Read in PEM certificates
         store.setNameFilters(QStringList("*.crt") + QStringList("*.pem"));
         QStringList cert_files = store.entryList();
-        for (QStringList::ConstIterator c = cert_files.constBegin(); c != cert_files.constEnd(); ++c) {
+        for (const auto &c : cert_files) {
             // qDebug() << "certutil.cpp: Reading " << store.filePath(*c);
             ConvertResult result;
-            Certificate   cert = Certificate::fromPEMFile(store.filePath(*c), &result);
+            Certificate   cert = Certificate::fromPEMFile(store.filePath(c), &result);
             if (result == ConvertGood) {
                 certs.addCertificate(cert);
             } else {
-                qWarning() << QString("certutil.cpp: Invalid PEM certificate: %1").arg(store.filePath(*c));
+                qWarning() << QString("certutil.cpp: Invalid PEM certificate: %1").arg(store.filePath(c));
             }
         }
 
         // Read in old XML format certificates (DEPRECATED)
         store.setNameFilters(QStringList("*.xml"));
         cert_files = store.entryList();
-        for (QStringList::ConstIterator it = cert_files.constBegin(); it != cert_files.constEnd(); ++it) {
-            qWarning() << "Loading certificate in obsolete XML format: " << store.filePath(*it);
-            QFile f(store.filePath(*it));
+        for (const auto &cf : qAsConst(cert_files)) {
+            qWarning() << "Loading certificate in obsolete XML format: " << store.filePath(cf);
+            QFile f(store.filePath(cf));
             if (!f.open(QIODevice::ReadOnly))
                 continue;
             QDomDocument doc;
@@ -77,7 +77,7 @@ CertificateCollection CertificateHelpers::allCertificates(const QStringList &sto
                     if (result == ConvertGood) {
                         certs.addCertificate(cert);
                     } else {
-                        qWarning() << "certutil.cpp: Invalid XML certificate: %1" << store.filePath(*it);
+                        qWarning() << "certutil.cpp: Invalid XML certificate: %1" << store.filePath(cf);
                     }
                 }
             }

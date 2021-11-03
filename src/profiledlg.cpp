@@ -99,9 +99,9 @@ ProfileOpenDlg::ProfileOpenDlg(const QString &def, const VarList &_langs, const 
 
     int x   = 0;
     langSel = x;
-    for (VarList::ConstIterator it = langs.constBegin(); it != langs.constEnd(); ++it) {
-        cb_lang->addItem((*it).data());
-        if ((curLang.isEmpty() && x == 0) || (curLang == (*it).key())) {
+    for (const auto &lang : qAsConst(langs)) {
+        cb_lang->addItem(lang.data());
+        if ((curLang.isEmpty() && x == 0) || (curLang == lang.key())) {
             cb_lang->setCurrentIndex(x);
             langSel = x;
         }
@@ -131,9 +131,9 @@ void ProfileOpenDlg::reload(const QString &choose)
         pb_profiles->setFocus();
     } else {
         int x = 0;
-        for (QStringList::ConstIterator it = list.constBegin(); it != list.constEnd(); ++it) {
-            cb_profile->addItem(*it);
-            if ((choose.isEmpty() && x == 0) || (choose == *it)) {
+        for (const auto &it : list) {
+            cb_profile->addItem(it);
+            if ((choose.isEmpty() && x == 0) || (choose == it)) {
                 cb_profile->setCurrentIndex(x);
             }
             ++x;
@@ -185,9 +185,9 @@ ProfileManageDlg::ProfileManageDlg(const QString &choose, QWidget *parent) : QDi
     // load the listing
     QStringList list = getProfilesList();
     int         x    = 0;
-    for (QStringList::ConstIterator it = list.constBegin(); it != list.constEnd(); ++it) {
-        lbx_profiles->addItem(*it);
-        if (*it == choose)
+    for (const auto &it : list) {
+        lbx_profiles->addItem(it);
+        if (it == choose)
             lbx_profiles->setCurrentRow(x);
         ++x;
     }

@@ -636,8 +636,8 @@ XData::FieldList XDataWidget::fields() const
 {
     XData::FieldList f;
 
-    for (QList<XDataField *>::ConstIterator it = fields_.begin(); it != fields_.end(); it++) {
-        f.append((*it)->field());
+    for (const auto &field : fields_) {
+        f.append(field->field());
     }
 
     return f;

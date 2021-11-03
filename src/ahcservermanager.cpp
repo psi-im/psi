@@ -177,9 +177,9 @@ void AHCServerManager::removeServer(AHCommandServer *server) { servers_.removeAl
 AHCServerManager::ServerList AHCServerManager::commands(const Jid &j) const
 {
     ServerList list;
-    for (ServerList::ConstIterator it = servers_.begin(); it != servers_.end(); ++it) {
-        if ((*it)->isAllowed(j))
-            list.append(*it);
+    for (const auto &server : servers_) {
+        if (server->isAllowed(j))
+            list.append(server);
     }
     return list;
 }
@@ -216,9 +216,9 @@ bool AHCServerManager::hasServer(const QString &node, const Jid &requester) cons
 
 AHCommandServer *AHCServerManager::findServer(const QString &node) const
 {
-    for (ServerList::ConstIterator it = servers_.begin(); it != servers_.end(); ++it) {
-        if ((*it)->node() == node)
-            return (*it);
+    for (const auto &server : servers_) {
+        if (server->node() == node)
+            return server;
     }
     return nullptr;
 }

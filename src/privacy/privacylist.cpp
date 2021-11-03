@@ -124,8 +124,8 @@ QDomElement PrivacyList::toXml(QDomDocument &doc) const
     QDomElement list = doc.createElement("list");
     list.setAttribute("name", name());
 
-    for (QList<PrivacyListItem>::ConstIterator it = items_.begin(); it != items_.end(); it++) {
-        list.appendChild((*it).toXml(doc));
+    for (const auto &item : items_) {
+        list.appendChild((item).toXml(doc));
     }
 
     return list;
@@ -152,8 +152,8 @@ void PrivacyList::fromXml(const QDomElement &el)
 QString PrivacyList::toString() const
 {
     QString s;
-    for (QList<PrivacyListItem>::ConstIterator it = items_.begin(); it != items_.end(); it++) {
-        s += QString("%1 (%2)\n").arg((*it).toString()).arg((*it).order());
+    for (const auto &item : items_) {
+        s += QString("%1 (%2)\n").arg(item.toString()).arg(item.order());
     }
     return s;
 }

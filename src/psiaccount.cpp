@@ -1187,8 +1187,8 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
     d->selfContact = new PsiContact(d->self, this, true);
 
     // restore cached roster
-    for (Roster::ConstIterator it = acc.roster.begin(); it != acc.roster.end(); ++it)
-        client_rosterItemUpdated(*it);
+    for (const auto &it : qAsConst(acc.roster))
+        client_rosterItemUpdated(it);
 
     // restore pgp key bindings
     setKnownPgpKeys(acc.pgpKnownKeys);
@@ -1415,8 +1415,8 @@ QHostAddress *PsiAccount::localAddress() const
 
 void PsiAccount::setKnownPgpKeys(const VarList &list)
 {
-    for (VarList::ConstIterator kit = list.begin(); kit != list.end(); ++kit) {
-        const VarListItem &i = *kit;
+    for (const auto &kit : list) {
+        const VarListItem &i = kit;
         UserListItem *     u = find(Jid(i.key()));
         if (u) {
             u->setPublicKeyID(i.data());
@@ -3096,9 +3096,7 @@ void PsiAccount::setStatus(const Status &_s, bool withPriority, bool isManualSta
 
     // Block all transports' contacts' status change popups from popping
     {
-        Roster::ConstIterator rit = d->acc.roster.constBegin();
-        for (; rit != d->acc.roster.constEnd(); ++rit) {
-            const RosterItem &i = *rit;
+        for (const auto &i : qAsConst(d->acc.roster)) {
             if (i.jid()
                     .node()
                     .isEmpty() /*&& i.jid().resource() == "registered"*/) // it is very likely then, that it's transport
@@ -3699,9 +3697,8 @@ void PsiAccount::simulateContactOffline(UserListItem *u)
     UserResourceList rl = u->userResourceList();
     u->setPresenceError("");
     if (!rl.isEmpty()) {
-        for (UserResourceList::ConstIterator rit = rl.constBegin(); rit != rl.constEnd(); ++rit) {
-            const UserResource &r = *rit;
-            Jid                 j = u->jid();
+        for (const auto &r : rl) {
+            Jid j = u->jid();
             if (u->isConference()) {
                 userListItemUnavailable(u, j, r);
             } else {
@@ -4245,12 +4242,12 @@ void PsiAccount::actionSendMessage(const QList<XMPP::Jid> &j)
 {
     QString str;
     bool    first = true;
-    for (QList<Jid>::ConstIterator it = j.begin(); it != j.end(); ++it) {
+    for (const auto &jid : j) {
         if (!first)
             str += ", ";
         first = false;
 
-        str += (*it).full();
+        str += jid.full();
     }
 
     EventDlg *w = d->psi->createMessageDlg(str, this);
@@ -6344,8 +6341,7 @@ bool PsiAccount::ensureKey(const Jid &j)
         // does the user have any presence signed with a key?
         QString                 akey;
         const UserResourceList &rl = u->userResourceList();
-        for (UserResourceList::ConstIterator it = rl.begin(); it != rl.end(); ++it) {
-            const UserResource &r = *it;
+        for (const auto &r : rl) {
             if (!r.publicKeyID().isEmpty()) {
                 akey = r.publicKeyID();
                 break;

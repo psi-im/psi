@@ -629,11 +629,9 @@ QStringList getProfilesList()
 
 bool profileExists(const QString &_name)
 {
-    QString name = _name.toLower();
-
-    QStringList list = getProfilesList();
-    for (QStringList::ConstIterator it = list.constBegin(); it != list.constEnd(); ++it) {
-        if ((*it).toLower() == name)
+    const QStringList &list = getProfilesList();
+    for (const auto &profile : list) {
+        if (profile.toLower() == _name.toLower())
             return true;
     }
     return false;

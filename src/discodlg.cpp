@@ -341,10 +341,10 @@ void DiscoListItem::copyItem(const DiscoItem &it)
             di.setFeatures(features);
         }
 
-        bool                                 found = false;
-        DiscoItem::Identities::ConstIterator it    = di.identities().begin();
-        for (; it != di.identities().end(); ++it) {
-            if ((*it).category == "service" && (*it).type == "jud") {
+        bool        found  = false;
+        const auto &idents = di.identities();
+        for (const auto &id : idents) {
+            if (id.category == "service" && id.type == "jud") {
                 found = true;
                 break;
             }
@@ -500,9 +500,7 @@ void DiscoListItem::updateItemsFinished(const DiscoList &list)
     }
 
     // add/update items
-    for (DiscoList::ConstIterator it = list.begin(); it != list.end(); ++it) {
-        const DiscoItem a = *it;
-
+    for (const auto &a : list) {
         QString key = computeHash(a.jid().full(), a.node());
         item        = children[key];
 
@@ -738,14 +736,14 @@ bool DiscoListView::maybeTip(const QPoint &pos)
     if (!item.identities().isEmpty()) {
         text += "<br>\n<b>" + tr("Identities:") + "</b>\n";
 
-        DiscoItem::Identities::ConstIterator it = item.identities().begin();
-        for (; it != item.identities().end(); ++it) {
+        const auto &idents = item.identities();
+        for (const auto &id : idents) {
             text += "<br>";
-            PsiIcon icon(category2icon(dlg->account(), item.jid(), (*it).category, (*it).type));
+            PsiIcon icon(category2icon(dlg->account(), item.jid(), id.category, id.type));
             if (!icon.name().isEmpty())
                 text += "<icon name=\"" + icon.name() + "\"> ";
-            text += (*it).name;
-            text += " (" + tr("Category") + " \"" + (*it).category + "\"; " + tr("Type") + " \"" + (*it).type + "\")\n";
+            text += id.name;
+            text += " (" + tr("Category") + " \"" + id.category + "\"; " + tr("Type") + " \"" + id.type + "\")\n";
         }
 
         if (!item.features().list().isEmpty())
@@ -756,14 +754,13 @@ bool DiscoListView::maybeTip(const QPoint &pos)
     if (!item.features().list().isEmpty()) {
         text += "<br>\n<b>" + tr("Features:") + "</b>\n";
 
-        QStringList                features = item.features().list();
-        QStringList::ConstIterator it       = features.begin();
-        for (; it != features.constEnd(); ++it) {
-            Features f(*it);
+        const QStringList features = item.features().list();
+        for (const auto &feature : features) {
+            Features f(feature);
             text += "\n<br>";
             if (f.id() > Features::FID_None)
                 text += f.name() + " (";
-            text += *it;
+            text += feature;
             if (f.id() > Features::FID_None)
                 text += ")";
         }

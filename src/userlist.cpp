@@ -233,8 +233,8 @@ QStringList UserListItem::clients() const
         UserResourceList srl = userResourceList();
         srl.sort();
 
-        for (UserResourceList::ConstIterator rit = srl.constBegin(); rit != srl.constEnd(); ++rit) {
-            QString client(findClient(*rit));
+        for (const auto &rit : srl) {
+            QString client(findClient(rit));
             if (!client.isEmpty()) {
                 res += client;
             }
@@ -507,9 +507,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
         UserResourceList srl = userResourceList();
         srl.sort();
 
-        for (UserResourceList::ConstIterator rit = srl.constBegin(); rit != srl.constEnd(); ++rit) {
-            const UserResource &r = *rit;
-
+        for (const auto &r : srl) {
             QString name;
             if (!r.name().isEmpty())
                 name = r.name();

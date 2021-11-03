@@ -121,12 +121,12 @@ public:
             ptv_authors->hide();
             lb_authors->hide();
         } else {
-            QString                    authors;
-            QStringList::ConstIterator it = is.authors().begin();
-            for (; it != is.authors().end(); ++it) {
+            QString    authors;
+            const auto aList = is.authors();
+            for (const auto &it : aList) {
                 if (!authors.isEmpty())
                     authors += "<br><br>";
-                authors += *it;
+                authors += it;
             }
             ptv_authors->setText("<qt><nobr>" + authors + "</nobr></qt>");
         }

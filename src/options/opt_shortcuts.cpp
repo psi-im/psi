@@ -96,16 +96,13 @@ void OptionsTabShortcuts::applyOptions()
     OptShortcutsUI *d       = static_cast<OptShortcutsUI *>(w);
     PsiOptions *    options = PsiOptions::instance();
 
-    int                                  toplevelItemsCount = d->treeShortcuts->topLevelItemCount();
-    int                                  shortcutItemsCount;
-    int                                  keyItemsCount;
-    QTreeWidgetItem *                    topLevelItem;
-    QTreeWidgetItem *                    shortcutItem;
-    QTreeWidgetItem *                    keyItem;
-    QString                              optionsPath;
-    [[maybe_unused]] QString             comment;
-    [[maybe_unused]] QList<QString>      children;
-    [[maybe_unused]] QList<QKeySequence> keys;
+    int              toplevelItemsCount = d->treeShortcuts->topLevelItemCount();
+    int              shortcutItemsCount;
+    int              keyItemsCount;
+    QTreeWidgetItem *topLevelItem;
+    QTreeWidgetItem *shortcutItem;
+    QTreeWidgetItem *keyItem;
+    QString          optionsPath;
 
     /* step through the Toplevel Items */
     for (int topLevelIndex = 0; topLevelIndex < toplevelItemsCount; topLevelIndex++) {
@@ -241,7 +238,6 @@ void OptionsTabShortcuts::onAdd()
     QTreeWidgetItem *shortcutItem;
 
     QList<QTreeWidgetItem *> selectedItems = d->treeShortcuts->selectedItems();
-    [[maybe_unused]] QString optionsPath;
     Kind                     itemKind;
 
     if (selectedItems.count() == 0)
@@ -430,7 +426,6 @@ void OptionsTabShortcuts::onNewShortcutKey(const QKeySequence &key)
     OptShortcutsUI *         d = static_cast<OptShortcutsUI *>(w);
     QTreeWidgetItem *        keyItem;
     QList<QTreeWidgetItem *> selectedItems = d->treeShortcuts->selectedItems();
-    [[maybe_unused]] QString optionsPath;
     Kind                     itemKind;
 
     if (selectedItems.count() == 0)

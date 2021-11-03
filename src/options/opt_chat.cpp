@@ -59,8 +59,6 @@ QWidget *OptionsTabChat::widget()
         tr("Makes Psi switch tab on active tabbed window when you receive a new message."
            " It does not take the keyboard focus, so it will not interfere with your work."));
     d->ck_smallChats->setToolTip(tr("Makes Psi open chat windows in compact mode."));
-    [[maybe_unused]] QString s = tr("<P>Controls how long the chat log will be kept in memory after the"
-                                    " chat window is closed.</P>");
 
     return w;
 }

@@ -717,8 +717,8 @@ void PsiChatDlg::updateJidWidget(const QList<UserListItem *> &ul, int status, bo
             setJidComboItem(0, makeContactName(name, u->jid().bare()), u->jid().bare(), iconStr);
             int new_index  = -1;
             int curr_index = 1;
-            for (UserResourceList::ConstIterator it = resList.constBegin(); it != resList.constEnd(); it++) {
-                UserResource r = *it;
+            for (const auto &resource : resList) {
+                UserResource r = resource;
                 if (!r.name().isEmpty()) {
                     Jid     tmp_jid(u->jid().withResource(r.name()));
                     QString client(u->findClient(r));

@@ -385,8 +385,7 @@ UrlList AttachView::urlList() const
 
 void AttachView::addUrlList(const UrlList &list)
 {
-    for (QList<Url>::ConstIterator it = list.begin(); it != list.end(); ++it) {
-        const Url &u = *it;
+    for (const auto &u : list) {
         urlAdd(u.url(), u.desc());
     }
 }
@@ -1028,12 +1027,12 @@ QString EventDlg::expandAddresses(const QString &in, bool enc) const
     QString     str;
     QStringList list  = stringToList(in, enc);
     bool        first = true;
-    for (QStringList::ConstIterator it = list.constBegin(); it != list.constEnd(); ++it) {
+    for (const auto &item : list) {
         if (!first)
             str += ", ";
         first = false;
 
-        Jid                   j(*it);
+        Jid                   j(item);
         QList<UserListItem *> ul = d->pa->findRelevant(j);
         if (ul.isEmpty()) {
             str += j.full();
@@ -1109,8 +1108,7 @@ void EventDlg::to_tryComplete()
     if (s.length() < 1 || x != p2)
         return;
 
-    for (QStringList::ConstIterator it = d->completionList.constBegin(); it != d->completionList.constEnd(); ++it) {
-        QString name = *it;
+    for (auto name : qAsConst(d->completionList)) {
         if (s.length() > name.length())
             continue;
 
@@ -1336,8 +1334,8 @@ void EventDlg::doSend()
         }
         d->pa->dj_sendMessage(m, true);
     } else {
-        for (QStringList::ConstIterator it = list.constBegin(); it != list.constEnd(); ++it) {
-            m.setTo(Jid(*it));
+        for (const auto &item : list) {
+            m.setTo(Jid(item));
             d->pa->dj_sendMessage(m, true);
         }
     }

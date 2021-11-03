@@ -105,12 +105,12 @@ void OptionsTabAppearanceTheme::modelRowsInserted(const QModelIndex &parent, int
         OptAppearanceThemeUI *d = static_cast<OptAppearanceThemeUI *>(w);
         // const QSize buttonSize = QSize(21,21);
         for (int i = first; i <= last; i++) {
-            const QModelIndex              index = themesModel->index(i, 0);
-            [[maybe_unused]] const QString id    = themesModel->data(index, PsiThemeModel::IdRole).toString();
+            const QModelIndex index = themesModel->index(i, 0);
             if (themesModel->data(index, PsiThemeModel::IsCurrent).toBool()) {
                 d->themeView->setCurrentIndex(index);
             }
 #if 0
+            const QString id    = themesModel->data(index, PsiThemeModel::IdRole).toString();
             const QString themeName = themesModel->data(index, PsiThemeModel::TitleRole).toString();
             bool isPsi = id.startsWith("psi");
             const QPixmap client = isPsi ? IconsetFactory::iconPtr("clients/psi")->icon()

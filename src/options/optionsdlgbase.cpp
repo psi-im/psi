@@ -121,9 +121,9 @@ public:
     // reimplemented
     virtual QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
     {
-        [[maybe_unused]] QIcon icon = index.data(Qt::DecorationRole).value<QIcon>();
-        QSize                  iconSize;
+        QSize iconSize;
 #if 0
+        QIcon icon = index.data(Qt::DecorationRole).value<QIcon>();
         if (!icon.availableSizes().isEmpty())
             iconSize = icon.availableSizes().first();
         else

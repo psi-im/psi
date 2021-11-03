@@ -291,9 +291,7 @@ void RegistrationDlg::processLegacyForm(const XMPP::Form &form)
 {
     setInstructions(d->jid.full(), form.instructions());
 
-    for (Form::ConstIterator it = d->form.constBegin(); it != d->form.constEnd(); ++it) {
-        const FormField &f = *it;
-
+    for (const auto &f : qAsConst(d->form)) {
         QLabel *   lb = new QLabel(f.fieldName(), d->gr_form);
         QLineEdit *le = new QLineEdit(d->gr_form);
         d->gr_form_layout->addWidget(lb); // FIXME
