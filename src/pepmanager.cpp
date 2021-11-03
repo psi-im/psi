@@ -562,9 +562,7 @@ void PEPManager::publishFinished()
         emit publish_success(task->node(), task->item());
     } else {
         qWarning() << QString("[%3] PEP Publish failed: '%1' (%2)")
-                          .arg(task->statusString())
-                          .arg(QString::number(task->statusCode()))
-                          .arg(client_->jid().full());
+                          .arg(task->statusString(), QString::number(task->statusCode()), client_->jid().full());
         emit publish_error(task->node(), task->item());
     }
 }
@@ -579,10 +577,12 @@ void PEPManager::get(const Jid &jid, const QString &node, const QString &id)
 void PEPManager::messageReceived(const Message &m)
 {
     if (m.type() != "error") {
-        for (PubSubRetraction i : m.pubsubRetractions()) {
+        const auto &psrItems = m.pubsubRetractions();
+        for (const PubSubRetraction &i : psrItems) {
             emit itemRetracted(m.from(), m.pubsubNode(), i);
         }
-        for (PubSubItem i : m.pubsubItems()) {
+        const auto &psItems = m.pubsubItems();
+        for (const PubSubItem &i : psItems) {
             emit itemPublished(m.from(), m.pubsubNode(), i);
         }
     }
@@ -612,9 +612,7 @@ void PEPManager::getFinished()
         }
     } else {
         qWarning() << QString("[%3] PEP Get failed: '%1' (%2)")
-                          .arg(task->statusString())
-                          .arg(QString::number(task->statusCode()))
-                          .arg(client_->jid().full());
+                          .arg(task->statusString(), QString::number(task->statusCode()), client_->jid().full());
     }
 }
 

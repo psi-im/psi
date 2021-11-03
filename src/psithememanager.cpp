@@ -63,7 +63,8 @@ QList<PsiThemeProvider *> PsiThemeManager::registeredProviders() const { return 
 
 bool PsiThemeManager::loadAll()
 {
-    for (const QString &type : d->providers.keys()) {
+    const auto &types = d->providers.keys();
+    for (const QString &type : types) {
         if (!d->providers[type]->loadCurrent() && d->required.contains(type)) {
             return false;
         }

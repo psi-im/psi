@@ -513,8 +513,9 @@ void ChatEdit::insertFromMimeData(const QMimeData *source)
     };
     if (source->hasImage() || source->hasUrls()) {
         // Check that source doesn't contains a local files and paste data as a text
-        bool isLocalFile = false;
-        for (const QUrl &url : source->urls()) {
+        bool        isLocalFile = false;
+        const auto &urls        = source->urls();
+        for (const QUrl &url : urls) {
             if (url.isLocalFile())
                 isLocalFile = true;
         }

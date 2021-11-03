@@ -166,7 +166,7 @@ public:
             }
         }
         QStringList res;
-        for (const QString &cmd : all) {
+        for (const QString &cmd : qAsConst(all)) {
             if (cmd.startsWith(query)) {
                 res << cmd;
             }
@@ -628,7 +628,7 @@ void PsiChatDlg::showOwnFingerprint()
 #ifdef HAVE_PGPUTIL
     const QString &&fingerprint = PGPUtil::getFingerprint(account()->pgpKeyId());
     if (!fingerprint.isEmpty()) {
-        const QString &&msg = tr("Fingerprint for account \"%1\": %2").arg(account()->name()).arg(fingerprint);
+        const QString &&msg = tr("Fingerprint for account \"%1\": %2").arg(account()->name(), fingerprint);
         appendSysMsg(msg);
     }
 #endif // HAVE_PGPUTIL
@@ -671,10 +671,8 @@ void PsiChatDlg::sendMessage(const QString &body)
     // Copy-paste from PluginHost::sendMessage()!
     // TODO(mck): yeah, that's sick..
     const QString &&xml = QString("<message to='%1' type='%4'><subject>%3</subject><body>%2</body></message>")
-                              .arg(TextUtil::escape(jid().bare()))
-                              .arg(TextUtil::escape(body))
-                              .arg(TextUtil::escape(""))
-                              .arg(TextUtil::escape("chat"));
+                              .arg(TextUtil::escape(jid().bare()), TextUtil::escape(body), TextUtil::escape(""),
+                                   TextUtil::escape("chat"));
 
     account()->client()->send(xml);
 }
@@ -708,7 +706,7 @@ void PsiChatDlg::updateJidWidget(const QList<UserListItem *> &ul, int status, bo
             const int resCnt = resList.size();
             if (resCnt == 1) {
                 UserResourceList::ConstIterator it = resList.begin();
-                if (it != resList.end() && (*it).name().isEmpty()) {
+                if (it != resList.constEnd() && (*it).name().isEmpty()) {
                     // Empty resource,  but online. Transport?
                     QString client(u->findClient(*it));
                     if (!client.isEmpty()) {
@@ -719,8 +717,8 @@ void PsiChatDlg::updateJidWidget(const QList<UserListItem *> &ul, int status, bo
             setJidComboItem(0, makeContactName(name, u->jid().bare()), u->jid().bare(), iconStr);
             int new_index  = -1;
             int curr_index = 1;
-            for (UserResourceList::ConstIterator it = resList.begin(); it != resList.end(); it++) {
-                UserResource r = *it;
+            for (const auto &resource : resList) {
+                UserResource r = resource;
                 if (!r.name().isEmpty()) {
                     Jid     tmp_jid(u->jid().withResource(r.name()));
                     QString client(u->findClient(r));
@@ -768,7 +766,7 @@ void PsiChatDlg::updateJidWidget(const QList<UserListItem *> &ul, int status, bo
             QString                         iconStr;
             Jid                             tmp_jid = jid();
             UserResourceList::ConstIterator it      = resList.begin();
-            if (it != resList.end()) {
+            if (it != resList.constEnd()) {
                 QString client(u->findClient(*it));
                 if (!client.isEmpty()) {
                     iconStr = "clients/" + client;
@@ -824,7 +822,7 @@ void PsiChatDlg::contactUpdated(UserListItem *u, int status, const QString &stat
             if (!jid().resource().isEmpty()) {
                 QString                         res = jid().resource();
                 UserResourceList::ConstIterator it  = srl.find(res);
-                if (it != srl.end())
+                if (it != srl.constEnd())
                     r = *it;
             }
             if (r.clientName().isEmpty()) {

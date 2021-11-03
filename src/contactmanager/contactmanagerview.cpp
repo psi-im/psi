@@ -50,8 +50,9 @@ void ContactManagerView::contextMenuEvent(QContextMenuEvent *e)
     int      iresult;
     if (result) {
         iresult = actions.indexOf(result);
-        const QVariant value(2);
-        for (const QModelIndex &check : selectionModel()->selectedRows(0)) {
+        [[maybe_unused]] const QVariant value(2);
+        const auto &                    checks = selectionModel()->selectedRows(0);
+        for (const QModelIndex &check : checks) {
             switch (iresult) {
             case 0: // check
                 model()->setData(check, 2);
@@ -77,7 +78,8 @@ void ContactManagerView::keyPressEvent(QKeyEvent *e)
         } else if (e->modifiers() & Qt::ShiftModifier) {
             data = 0; // uncheck
         }
-        for (const QModelIndex &check : selectionModel()->selectedRows(0)) {
+        const auto &checks = selectionModel()->selectedRows(0);
+        for (const QModelIndex &check : checks) {
             model()->setData(check, data);
         }
         e->accept();

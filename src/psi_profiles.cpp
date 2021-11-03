@@ -257,7 +257,7 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 
     groupState.clear();
     QVariantList states = o->mapKeyList(base + ".group-state");
-    for (QVariant k : states) {
+    for (const QVariant &k : states) {
         GroupData gd;
         QString   sbase = o->mapLookup(base + ".group-state", k);
         gd.open         = o->getOption(sbase + ".open").toBool();
@@ -388,7 +388,7 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
     }
 
     int idx = 0;
-    for (RosterItem ri : roster) {
+    for (const RosterItem &ri : qAsConst(roster)) {
         QString rbase = base + ".roster-cache.a" + QString::number(idx++);
         o->setOption(rbase + ".jid", ri.jid().full());
         o->setOption(rbase + ".name", ri.name());
@@ -407,24 +407,26 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
     groupList << qApp->translate("ContactProfile", "Agents/Transports");
 
     // first, add all groups' names to groupList
-    for (RosterItem i : roster) {
+    for (const RosterItem &i : qAsConst(roster)) {
         groupList += i.groups();
     }
 
     // now, check if there's groupState name entry in groupList
-    for (const QString &group : groupState.keys()) {
+    const auto &groups = groupState.keys();
+    for (const QString &group : groups) {
         if (!groupList.contains(group)) {
             removeList << group;
         }
     }
 
     // remove redundant groups
-    for (const QString &group : removeList) {
+    for (const QString &group : qAsConst(removeList)) {
         groupState.remove(group);
     }
 
     // and finally, save the data
-    for (const QString &group : groupState.keys()) {
+    const auto &keys = groupState.keys();
+    for (const QString &group : keys) {
         QString groupBase = o->mapPut(base + ".group-state", group);
         o->setOption(groupBase + ".open", groupState[group].open);
         o->setOption(groupBase + ".rank", groupState[group].rank);
@@ -564,7 +566,7 @@ void OptionsMigration::lateMigration()
 
         PsiOptions::instance()->removeOption("options.ui.contactlist.toolbars", true);
 
-        for (ToolbarPrefs tb : toolbars) {
+        for (ToolbarPrefs tb : qAsConst(toolbars)) {
             tb.locked = true;
             PsiToolBar::structToOptions(PsiOptions::instance(), tb);
         }
@@ -627,11 +629,9 @@ QStringList getProfilesList()
 
 bool profileExists(const QString &_name)
 {
-    QString name = _name.toLower();
-
-    QStringList list = getProfilesList();
-    for (QStringList::ConstIterator it = list.begin(); it != list.end(); ++it) {
-        if ((*it).toLower() == name)
+    const QStringList &list = getProfilesList();
+    for (const auto &profile : list) {
+        if (profile.toLower() == _name.toLower())
             return true;
     }
     return false;
@@ -705,7 +705,7 @@ bool profileRename(const QString &oldname, const QString &name)
         return false;
 
     // and if all ok we may rename it.
-    for (const QString &path : paths) {
+    for (const QString &path : qAsConst(paths)) {
         QDir d(path);
         if (!d.exists() || !d.exists(oldname))
             continue;

@@ -45,9 +45,9 @@ public:
         QDomElement storage = doc()->createElementNS("storage:bookmarks", "storage");
         prvt.appendChild(storage);
 
-        for (URLBookmark u : urls)
+        for (const URLBookmark &u : urls)
             storage.appendChild(u.toXml(*doc()));
-        for (ConferenceBookmark c : conferences)
+        for (const ConferenceBookmark &c : conferences)
             storage.appendChild(c.toXml(*doc()));
     }
 
@@ -145,7 +145,7 @@ void BookmarkManager::removeConference(const XMPP::Jid &j)
 {
     if (isAvailable_) {
         QList<ConferenceBookmark> confs;
-        for (ConferenceBookmark c : conferences_) {
+        for (const ConferenceBookmark &c : qAsConst(conferences_)) {
             if (!c.jid().compare(j, false)) {
                 confs.push_back(c);
             }
@@ -162,7 +162,7 @@ int BookmarkManager::indexOfConference(const XMPP::Jid &j) const
 {
     if (isAvailable_) {
         int i = 0;
-        for (ConferenceBookmark c : conferences_) {
+        for (const ConferenceBookmark &c : conferences_) {
             if (c.jid().compare(j, false)) {
                 return i;
             }
@@ -264,7 +264,7 @@ void BookmarkManager::setBookmarks_finished()
         QStringList localMucs;
         QStringList ignoreMucs;
 
-        for (const ConferenceBookmark &cb : conferences_) {
+        for (const ConferenceBookmark &cb : qAsConst(conferences_)) {
             if (cb.autoJoin() == ConferenceBookmark::OnlyThisComputer) {
                 localMucs.append(cb.jid().withResource(cb.nick()).full());
             }

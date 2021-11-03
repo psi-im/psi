@@ -38,7 +38,8 @@ bool OptionsTreeWriter::write(QIODevice *device)
 
 void OptionsTreeWriter::writeTree(const VariantTree *tree)
 {
-    for (const QString &node : tree->trees_.keys()) {
+    const auto &nodes = tree->trees_.keys();
+    for (const QString &node : nodes) {
         Q_ASSERT(!node.isEmpty());
         writeStartElement(node);
         if (tree->comments_.contains(node))
@@ -48,7 +49,8 @@ void OptionsTreeWriter::writeTree(const VariantTree *tree)
         writeEndElement();
     }
 
-    for (const QString &child : tree->values_.keys()) {
+    const auto &children = tree->values_.keys();
+    for (const QString &child : children) {
         Q_ASSERT(!child.isEmpty());
         writeStartElement(child);
         if (tree->comments_.contains(child))
@@ -58,7 +60,8 @@ void OptionsTreeWriter::writeTree(const VariantTree *tree)
         writeEndElement();
     }
 
-    for (const QString &unknown : tree->unknowns2_.keys()) {
+    const auto &unknowns = tree->unknowns2_.keys();
+    for (const QString &unknown : unknowns) {
         writeUnknown(tree->unknowns2_[unknown]);
     }
 }
@@ -67,13 +70,15 @@ void OptionsTreeWriter::writeVariant(const QVariant &variant)
 {
     writeAttribute("type", variant.typeName());
     if (variant.type() == QVariant::StringList) {
-        for (const QString &s : variant.toStringList()) {
+        const auto &sList = variant.toStringList();
+        for (const QString &s : sList) {
             writeStartElement("item");
             writeCharacters(s);
             writeEndElement();
         }
     } else if (variant.type() == QVariant::List) {
-        for (QVariant v : variant.toList()) {
+        const auto &variants = variant.toList();
+        for (const QVariant &v : variants) {
             writeStartElement("item");
             writeVariant(v);
             writeEndElement();
@@ -117,7 +122,8 @@ void OptionsTreeWriter::readUnknownTree(QXmlStreamReader *reader)
 {
     Q_ASSERT(reader->isStartElement());
     writeStartElement(reader->name().toString());
-    for (QXmlStreamAttribute attr : reader->attributes()) {
+    const auto &attrs = reader->attributes();
+    for (const QXmlStreamAttribute &attr : attrs) {
         writeAttribute(attr.name().toString(), attr.value().toString());
     }
 

@@ -94,7 +94,7 @@ public:
     bool fileExists(const QString &fileName)
     {
         QString base = baseDir.path() + QLatin1Char('/');
-        if (QFileInfo(base + fileName).exists()) {
+        if (QFileInfo::exists(base + fileName)) {
             return true;
         }
         if (caseInsensetive) {
@@ -102,7 +102,7 @@ public:
                 updateCiFsCache();
             }
             QString realFN = ciFSCache.value(fileName.toLower());
-            if (!realFN.isEmpty() && QFileInfo(base + realFN).exists()) {
+            if (!realFN.isEmpty() && QFileInfo::exists(base + realFN)) {
                 return true;
             }
         }

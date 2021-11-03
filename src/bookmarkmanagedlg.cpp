@@ -99,7 +99,7 @@ void BookmarkManageDlg::loadBookmarks()
 {
     model_->clear();
 
-    for (ConferenceBookmark c : account_->bookmarkManager()->conferences()) {
+    for (const ConferenceBookmark &c : account_->bookmarkManager()->conferences()) {
         QStandardItem *item = new QStandardItem(c.name());
         item->setData(QVariant(c.jid().full()), JidRole);
         item->setData(QVariant(c.autoJoin()), AutoJoinRole);
@@ -145,7 +145,7 @@ void BookmarkManageDlg::closeEditor(QWidget *editor, QAbstractItemDelegate::EndE
     if (hint == QAbstractItemDelegate::SubmitModelCache) {
         QList<QLineEdit *> lineEdits;
         lineEdits << ui_.host << ui_.room << ui_.nickname;
-        for (QLineEdit *lineEdit : lineEdits) {
+        for (QLineEdit *lineEdit : qAsConst(lineEdits)) {
             if (lineEdit->text().isEmpty()) {
                 lineEdit->setFocus();
                 break;
@@ -175,7 +175,7 @@ void BookmarkManageDlg::selectionChanged(const QItemSelection &selected, const Q
     ui_.autoJoin->setCurrentIndex(current.data(AutoJoinRole).toInt());
     QList<QWidget *> editors;
     editors << ui_.host << ui_.room << ui_.nickname << ui_.password << ui_.autoJoin;
-    for (QWidget *w : editors) {
+    for (QWidget *w : qAsConst(editors)) {
         w->setEnabled(current.isValid());
     }
 

@@ -109,7 +109,7 @@ public:
     void renderPixmap()
     {
         pix = QPixmap(busy->width(), busy->height());
-        pix.fill(QColor("#406080"));
+        pix.fill(QColor(0x40, 0x60, 0x80));
 
         QPainter p(&pix);
 

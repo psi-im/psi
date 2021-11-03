@@ -59,8 +59,6 @@ QWidget *OptionsTabChat::widget()
         tr("Makes Psi switch tab on active tabbed window when you receive a new message."
            " It does not take the keyboard focus, so it will not interfere with your work."));
     d->ck_smallChats->setToolTip(tr("Makes Psi open chat windows in compact mode."));
-    QString s = tr("<P>Controls how long the chat log will be kept in memory after the"
-                   " chat window is closed.</P>");
 
     return w;
 }
@@ -107,7 +105,8 @@ void OptionsTabChat::restoreOptions()
     OptChatUI *d = static_cast<OptChatUI *>(w);
 
     PsiOptions *o = PsiOptions::instance();
-    bg_defAct->buttons()[o->getOption("options.messages.default-outgoing-message-type").toString() == "message" ? 0 : 1]
+    bg_defAct->buttons()
+        .at(o->getOption("options.messages.default-outgoing-message-type").toString() == "message" ? 0 : 1)
         ->setChecked(true);
     d->ck_alertOpenChats->setChecked(o->getOption("options.ui.chat.alert-for-already-open-chats").toBool());
     d->ck_raiseChatWindow->setChecked(o->getOption("options.ui.chat.raise-chat-windows-on-new-messages").toBool());

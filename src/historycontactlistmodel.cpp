@@ -148,7 +148,7 @@ void HistoryContactListModel::loadContacts(PsiCon *psi, const QString &acc_id)
     QHash<QString, bool>       c_list;
     QHash<QString, TreeItem *> groups;
     // Roster contacts
-    for (PsiContact *contact : contactList) {
+    for (PsiContact *contact : qAsConst(contactList)) {
         if (contact->isConference() || contact->isPrivate())
             continue;
         QString cId = contact->account()->id() + "|" + contact->jid().bare();
@@ -190,7 +190,8 @@ void HistoryContactListModel::loadContacts(PsiCon *psi, const QString &acc_id)
         }
     }
     // Not in roster list
-    for (const EDB::ContactItem &ci : psi->edb()->contacts(acc_id, EDB::Contact)) {
+    const auto &cis = psi->edb()->contacts(acc_id, EDB::Contact);
+    for (const EDB::ContactItem &ci : cis) {
         QString cId = ci.accId + "|" + ci.jid.bare();
         if (c_list.value(cId))
             continue;
@@ -205,7 +206,8 @@ void HistoryContactListModel::loadContacts(PsiCon *psi, const QString &acc_id)
     }
     // Private messages
     if (dispPrivateContacts) {
-        for (const EDB::ContactItem &ci : psi->edb()->contacts(acc_id, EDB::GroupChatContact)) {
+        const auto &cis = psi->edb()->contacts(acc_id, EDB::GroupChatContact);
+        for (const EDB::ContactItem &ci : cis) {
             if (!confPrivate) {
                 confPrivate = new TreeItem(Group, tr("Private messages"), "conf-private", 11);
                 rootItem->appendChild(confPrivate);
@@ -249,7 +251,7 @@ QString HistoryContactListModel::makeContactToolTip(PsiCon *psi, const QString &
                                                     bool bare) const
 {
     PsiAccount *pa = psi->contactList()->getAccount(accId);
-    return QString("%1 [%2]").arg(JIDUtil::toString(jid, !bare)).arg((pa) ? pa->name() : tr("deleted"));
+    return QString("%1 [%2]").arg(JIDUtil::toString(jid, !bare), (pa) ? pa->name() : tr("deleted"));
 }
 
 HistoryContactListModel::TreeItem::TreeItem(ItemType type, const QString &text, const QString &id, int pos) :

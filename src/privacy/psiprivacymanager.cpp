@@ -548,7 +548,7 @@ void PsiPrivacyManager::newListReceived(const PrivacyList &list)
     updatedContacts += findDifferences(previouslyBlockedContacts, currentlyBlockedContacts);
     updatedContacts += findDifferences(currentlyBlockedContacts, previouslyBlockedContacts);
 
-    for (const QString &contact : updatedContacts) {
+    for (const QString &contact : qAsConst(updatedContacts)) {
         // emit simulateContactOffline(contact);
 
         if (!isContactBlocked(contact)) {
@@ -623,7 +623,7 @@ QStringList PsiPrivacyManager::blockedContacts() const
 {
     QStringList result;
     if (blockedList()) {
-        for (PrivacyListItem item : blockedList()->items()) {
+        for (const PrivacyListItem &item : blockedList()->items()) {
             if (item.type() == PrivacyListItem::JidType && item.action() == PrivacyListItem::Deny) {
                 result << processJid(item.value()).full();
             }
@@ -639,7 +639,7 @@ void PsiPrivacyManager::invalidateBlockedListCache()
     if (!blockedList())
         return;
 
-    for (PrivacyListItem item : blockedList()->items()) {
+    for (const PrivacyListItem &item : blockedList()->items()) {
         if (item.type() == PrivacyListItem::JidType && item.action() == PrivacyListItem::Deny) {
             isBlocked_[processJid(item.value()).full()] = true;
         }
@@ -684,7 +684,7 @@ void PsiPrivacyManager::setContactBlocked(const XMPP::Jid &jid, bool blocked)
     PrivacyList newList(*blockedList());
     newList.clear();
 
-    for (PrivacyListItem item : blockedList()->items()) {
+    for (const PrivacyListItem &item : blockedList()->items()) {
         if (privacyListItemForJid(item, jid))
             continue;
 

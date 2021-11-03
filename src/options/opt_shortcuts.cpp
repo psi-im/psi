@@ -96,16 +96,13 @@ void OptionsTabShortcuts::applyOptions()
     OptShortcutsUI *d       = static_cast<OptShortcutsUI *>(w);
     PsiOptions *    options = PsiOptions::instance();
 
-    int                 toplevelItemsCount = d->treeShortcuts->topLevelItemCount();
-    int                 shortcutItemsCount;
-    int                 keyItemsCount;
-    QTreeWidgetItem *   topLevelItem;
-    QTreeWidgetItem *   shortcutItem;
-    QTreeWidgetItem *   keyItem;
-    QString             optionsPath;
-    QString             comment;
-    QList<QString>      children;
-    QList<QKeySequence> keys;
+    int              toplevelItemsCount = d->treeShortcuts->topLevelItemCount();
+    int              shortcutItemsCount;
+    int              keyItemsCount;
+    QTreeWidgetItem *topLevelItem;
+    QTreeWidgetItem *shortcutItem;
+    QTreeWidgetItem *keyItem;
+    QString          optionsPath;
 
     /* step through the Toplevel Items */
     for (int topLevelIndex = 0; topLevelIndex < toplevelItemsCount; topLevelIndex++) {
@@ -164,7 +161,7 @@ void OptionsTabShortcuts::readShortcuts(const PsiOptions *options)
     QList<QString>   shortcutGroups = options->getChildOptionNames("options.shortcuts", true, true);
 
     /* step through the shortcut groups e.g. chatdlg */
-    for (const QString &shortcutGroup : shortcutGroups) {
+    for (const QString &shortcutGroup : qAsConst(shortcutGroups)) {
         topLevelItem = new QTreeWidgetItem(d->treeShortcuts);
 
         QString comment = options->getComment(shortcutGroup);
@@ -199,7 +196,7 @@ void OptionsTabShortcuts::readShortcuts(const PsiOptions *options)
 
             shortcuts = options->getChildOptionNames(optionsPath, true, true);
             /* step through the shortcuts */
-            for (const QString &shortcut : shortcuts) {
+            for (const QString &shortcut : qAsConst(shortcuts)) {
 
                 keys = ShortcutManager::readShortcutsFromOptions(
                     shortcut.mid(QString("options.shortcuts").length() + 1), options);
@@ -219,7 +216,7 @@ void OptionsTabShortcuts::readShortcuts(const PsiOptions *options)
 
                 /* step through this shortcut's keys and create 'Key XXXX' entries for them */
                 keyItemsCount = 1;
-                for (QKeySequence key : keys) {
+                for (const QKeySequence &key : qAsConst(keys)) {
                     keyItem = new QTreeWidgetItem(shortcutItem);
                     keyItem->setText(0, QString(tr("Key %1")).arg(keyItemsCount++));
                     keyItem->setData(0, ITEMKIND, QVariant(int(OptionsTabShortcuts::KeyItem)));
@@ -241,7 +238,6 @@ void OptionsTabShortcuts::onAdd()
     QTreeWidgetItem *shortcutItem;
 
     QList<QTreeWidgetItem *> selectedItems = d->treeShortcuts->selectedItems();
-    QString                  optionsPath;
     Kind                     itemKind;
 
     if (selectedItems.count() == 0)
@@ -430,7 +426,6 @@ void OptionsTabShortcuts::onNewShortcutKey(const QKeySequence &key)
     OptShortcutsUI *         d = static_cast<OptShortcutsUI *>(w);
     QTreeWidgetItem *        keyItem;
     QList<QTreeWidgetItem *> selectedItems = d->treeShortcuts->selectedItems();
-    QString                  optionsPath;
     Kind                     itemKind;
 
     if (selectedItems.count() == 0)

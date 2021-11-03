@@ -280,7 +280,7 @@ QString OptionsTabPlugins::formatVendorText(const QString &text, const bool remo
                 email.remove("<");
                 email.remove(">");
                 author = TextUtil::escape(words.join(" "));
-                author = QString("<a href=\"mailto:%2\">%1</a>").arg(author).arg(TextUtil::escape(email));
+                author = QString("<a href=\"mailto:%2\">%1</a>").arg(author, TextUtil::escape(email));
             }
         }
     }

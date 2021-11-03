@@ -499,7 +499,7 @@ join <channel>{,<channel>} [pass{,<pass>}
             }
         }
         QStringList res;
-        for (const QString &cmd : all) {
+        for (const QString &cmd : qAsConst(all)) {
             if (cmd.startsWith(query, Qt::CaseInsensitive)) {
                 res << cmd;
             }
@@ -521,7 +521,7 @@ public:
         m.setType("groupchat");
         m.setReferences(refs);
         m.setBody(desc);
-        dlg->aSend(m);
+        emit dlg->aSend(m);
     }
 
 public:
@@ -1216,7 +1216,7 @@ void GCMainDlg::activated()
             u->setPending(d->pending, d->hPending);
             account()->updateEntry(*u);
         }
-        messagesRead(jid());
+        emit messagesRead(jid());
         invalidateTab();
     }
     doFlash(false);
@@ -1438,9 +1438,9 @@ void GCMainDlg::mle_returnPressed()
         m.setHTML(html);
 
     m.setTimeStamp(QDateTime::currentDateTime());
-    emit d->mle()->appendMessageHistory(m.body());
+    d->mle()->appendMessageHistory(m.body());
 
-    aSend(m);
+    emit aSend(m);
 
     d->histAt = 0;
     d->hist.prepend(str);
@@ -1488,7 +1488,7 @@ void GCMainDlg::sendNewTopic(const QMap<LanguageManager::LangId, QString> &topic
         m.setSubject(it.value(), LanguageManager::toString(it.key()));
     }
     m.setTimeStamp(QDateTime::currentDateTime());
-    aSend(m);
+    emit aSend(m);
 }
 
 void GCMainDlg::doShowInfo()

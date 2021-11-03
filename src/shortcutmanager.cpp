@@ -90,7 +90,8 @@ QList<QKeySequence> ShortcutManager::readShortcutsFromOptions(const QString &nam
     QVariant            variant = options->getOption(QString("options.shortcuts.%1").arg(name));
     QString             type    = variant.typeName();
     if (type == "QVariantList") {
-        for (QVariant variant : variant.toList()) {
+        const auto &variants = variant.toList();
+        for (const QVariant &variant : variants) {
             QKeySequence k = variant.value<QKeySequence>();
             if (!k.isEmpty() && !list.contains(k))
                 list += k;
@@ -130,7 +131,8 @@ void ShortcutManager::connect(const QString &path, QObject *parent, const char *
             parent->connect(act, SIGNAL(triggered()), slot);
         }
     } else {
-        for (QKeySequence sequence : ShortcutManager::instance()->shortcuts(path)) {
+        const auto &sequences = ShortcutManager::instance()->shortcuts(path);
+        for (const QKeySequence &sequence : sequences) {
             if (!sequence.isEmpty()) {
                 GlobalShortcutManager::instance()->connect(sequence, parent, slot);
             }

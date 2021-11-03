@@ -71,7 +71,8 @@ void ContactListItemMenu::setLabelTitle(const QString &title)
 void ContactListItemMenu::removeActions(QStringList actionNames)
 {
     for (const QString &actionName : actionNames) {
-        for (QAction *action : actions()) {
+        const auto &acts = actions();
+        for (QAction *action : acts) {
             if (action->objectName() == actionName) {
                 delete action;
                 break;
@@ -83,7 +84,8 @@ void ContactListItemMenu::removeActions(QStringList actionNames)
 QList<QAction *> ContactListItemMenu::availableActions() const
 {
     QList<QAction *> result;
-    for (QAction *action : actions())
+    const auto &     acts = actions();
+    for (QAction *action : acts)
         if (!action->isSeparator())
             result << action;
     return result;

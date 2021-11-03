@@ -149,7 +149,8 @@ void OptionsTabPopups::restoreOptions()
     qDeleteAll(d->gb_type->children());
     QHBoxLayout *l = new QHBoxLayout(d->gb_type);
 
-    for (const QString &type_ : popup_->availableTypes()) {
+    const auto &types_ = popup_->availableTypes();
+    for (const QString &type_ : types_) {
         QRadioButton *rb = new QRadioButton(type_);
         rb->setObjectName(type_);
         d->gb_type->layout()->addWidget(rb);

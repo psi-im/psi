@@ -170,7 +170,7 @@ void PsiMain::useLocalInstance()
         QTimer::singleShot(0, this, SLOT(chooseProfile()));
     } else if (getProfilesList().count() == 1) {
         // Open the (only) profile
-        activeProfile = getProfilesList()[0];
+        activeProfile = getProfilesList().at(0);
         QTimer::singleShot(0, this, SLOT(sessionStart()));
     } else if (!getProfilesList().isEmpty()) {
         // Select a profile
@@ -231,7 +231,7 @@ void PsiMain::chooseProfile()
                         lastProfile = str;
                         saveSettings();
                         ActiveProfiles::instance()->raise(str, true);
-                        quit();
+                        emit quit();
                         return;
                     }
                 }
@@ -245,7 +245,7 @@ void PsiMain::chooseProfile()
     }
 
     if (str.isEmpty()) {
-        quit();
+        emit quit();
         return;
     }
 
@@ -264,7 +264,7 @@ void PsiMain::sessionStart()
             QMessageBox::critical(nullptr, tr("Error"),
                                   tr("Cannot open this profile - it is already running, but not responding"));
         }
-        quit();
+        emit quit();
         return;
     }
 
@@ -275,17 +275,17 @@ void PsiMain::sessionStart()
     if (!pcon->init()) {
         delete pcon;
         pcon = nullptr;
-        quit();
+        emit quit();
         return;
     }
     connect(pcon, SIGNAL(quit(int)), SLOT(sessionQuit(int)));
 
     if (cmdline.contains("uri")) {
-        ActiveProfiles::instance()->openUriRequested(cmdline.value("uri"));
+        emit ActiveProfiles::instance()->openUriRequested(cmdline.value("uri"));
         cmdline.remove("uri");
     }
     if (cmdline.contains("status") || cmdline.contains("status-message")) {
-        ActiveProfiles::instance()->setStatusRequested(cmdline.value("status"), cmdline.value("status-message"));
+        emit ActiveProfiles::instance()->setStatusRequested(cmdline.value("status"), cmdline.value("status-message"));
         cmdline.remove("status");
         cmdline.remove("status-message");
     }
@@ -309,7 +309,7 @@ void PsiMain::bail()
             quit();
         });
     } else {
-        quit();
+        emit quit();
     }
 }
 

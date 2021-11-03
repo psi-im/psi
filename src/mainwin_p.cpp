@@ -284,7 +284,7 @@ void PopupAction::setIcon(const PsiIcon *icon, bool showText, bool alert)
         IconAction::setIcon(QIcon());
     }
 
-    for (PopupActionButton *btn : d->buttons) {
+    for (PopupActionButton *btn : qAsConst(d->buttons)) {
         btn->setIcon(d->icon, showText);
     }
 
@@ -295,7 +295,7 @@ void PopupAction::setIcon(const PsiIcon *icon, bool showText, bool alert)
 
 void PopupAction::setText(const QString &text)
 {
-    for (PopupActionButton *btn : d->buttons) {
+    for (PopupActionButton *btn : qAsConst(d->buttons)) {
         btn->setLabel(text);
     }
 }
@@ -327,7 +327,7 @@ void PopupAction::objectDestroyed() { d->buttons.removeAll(static_cast<PopupActi
 void PopupAction::setEnabled(bool e)
 {
     IconAction::setEnabled(e);
-    for (PopupActionButton *btn : d->buttons) {
+    for (PopupActionButton *btn : qAsConst(d->buttons)) {
         btn->setEnabled(e);
     }
 }
@@ -417,7 +417,7 @@ QList<PsiAccount *> MAction::accounts() const { return controller_->contactList(
 void MAction::slotActivated()
 {
     if (accounts().count() > 0) {
-        emit activated(accounts().first(), id_);
+        emit activated(accounts().constFirst(), id_);
     }
 }
 
@@ -436,7 +436,8 @@ void MAction::numAccountsChanged()
 
     qDeleteAll(findChildren<QAction *>());
 
-    for (PsiAccount *account : accounts()) {
+    const auto &accs = accounts();
+    for (PsiAccount *account : accs) {
         QAction *act = new QAction(account->name(), this);
         act->setProperty("id", accounts().indexOf(account));
         connect(act, SIGNAL(triggered()), SLOT(actionActivated()));
@@ -568,7 +569,7 @@ void EventNotifierAction::setMessage(const QString &m)
 {
     d->message = m;
 
-    for (MLabel *label : d->labels) {
+    for (MLabel *label : qAsConst(d->labels)) {
         label->setText(d->message);
     }
 }
@@ -583,12 +584,13 @@ void EventNotifierAction::hide()
 {
     d->hide = true;
 
-    for (MLabel *label : d->labels) {
+    for (MLabel *label : qAsConst(d->labels)) {
         label->hide();
         PsiToolBar *toolBar = dynamic_cast<PsiToolBar *>(label->parent());
         if (toolBar) {
-            int found = 0;
-            for (QWidget *widget : toolBar->findChildren<QWidget *>()) {
+            int         found   = 0;
+            const auto &widgets = toolBar->findChildren<QWidget *>();
+            for (QWidget *widget : widgets) {
                 if (!widget->objectName().startsWith("qt_")
                     && !QString(widget->metaObject()->className()).startsWith("QToolBar")
                     && !QString(widget->metaObject()->className()).startsWith("QMenu")
@@ -610,7 +612,7 @@ void EventNotifierAction::show()
 {
     d->hide = false;
 
-    for (MLabel *label : d->labels) {
+    for (MLabel *label : qAsConst(d->labels)) {
         label->show();
         QToolBar *toolBar = dynamic_cast<QToolBar *>(label->parent());
         if (toolBar)

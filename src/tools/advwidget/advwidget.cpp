@@ -127,7 +127,7 @@ void GAdvancedWidget::Private::posChanging(int *x, int *y, int *width, int *heig
     if (stickToWindows)
         list = QApplication::topLevelWidgets();
 
-    for (QWidget *w : list) {
+    for (QWidget *w : qAsConst(list)) {
         QRect rect;
         bool  dockWidget = false;
 

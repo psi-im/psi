@@ -94,7 +94,7 @@ QString CertificateDisplayDialog::makePropTable(const QString &heading, const QC
 void CertificateDisplayDialog::setLabelStatus(QLabel &l, bool ok)
 {
     QPalette palette;
-    palette.setColor(l.foregroundRole(), ok ? QColor("#2A993B") : QColor("#810000"));
+    palette.setColor(l.foregroundRole(), ok ? QColor(0x2A, 0x99, 0x3B) : QColor(0x81, 0, 0));
     l.setPalette(palette);
 }
 

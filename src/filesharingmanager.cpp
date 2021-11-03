@@ -135,7 +135,8 @@ QList<FileSharingItem *> FileSharingManager::fromMimeData(const QMimeData *data,
     QImage img(qvariant_cast<QImage>(data->imageData()));
     bool   hasVoice = data->hasFormat(voiceAmplitudesMime);
     if (hasVoice) {
-        for (auto const &f : data->formats()) {
+        const auto &formats = data->formats();
+        for (auto const &f : formats) {
             if (f.startsWith("audio/") || f.startsWith("video/")) { // video container may contain just audio
                 voiceMsgMime = f;
                 break;
@@ -144,7 +145,8 @@ QList<FileSharingItem *> FileSharingManager::fromMimeData(const QMimeData *data,
         hasVoice = !voiceMsgMime.isEmpty();
     }
     if (data->hasUrls()) {
-        for (auto const &url : data->urls()) {
+        const auto &urls = data->urls();
+        for (auto const &url : urls) {
             if (!url.isLocalFile()) {
                 continue;
             }
@@ -215,8 +217,9 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
 
         std::sort(refs.begin(), refs.end(), [](auto &a, auto &b) { return a.begin() < b.begin(); });
 
-        int lastEnd = 0;
-        for (auto const &r : m.references()) {
+        int         lastEnd = 0;
+        const auto &refs    = m.references();
+        for (auto const &r : refs) {
             MediaSharing ms = r.mediaSharing();
             // qDebug() << "BEGIN:" << r.begin() << "END:" << r.end();
             // only audio and image supported for now
@@ -260,7 +263,7 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
 
 bool FileSharingManager::jingleAutoAcceptIncomingDownloadRequest(Jingle::Session *session)
 {
-    QList<QPair<Jingle::FileTransfer::Application *, FileCacheItem *>> toAccept;
+    QVector<QPair<Jingle::FileTransfer::Application *, FileCacheItem *>> toAccept;
     // check if we can accept the session immediately w/o user interaction
     for (auto const &a : session->contentList()) {
         auto ft = static_cast<Jingle::FileTransfer::Application *>(a);

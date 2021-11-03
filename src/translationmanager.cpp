@@ -32,8 +32,8 @@
 TranslationManager::TranslationManager()
 {
     // Initialize
-    currentLanguage_            = "en";
-    QString currentLanguageName = QT_TR_NOOP("language_name");
+    currentLanguage_                             = "en";
+    [[maybe_unused]] QString currentLanguageName = QT_TR_NOOP("language_name");
 
     // The application translator
     translator_ = new QTranslator(nullptr);
@@ -83,7 +83,8 @@ bool loadQtTranslationHelper(const QString &language, const QString &dir, QTrans
 
 bool TranslationManager::loadQtTranslation(const QString &language)
 {
-    for (const QString &dir : translationDirs()) {
+    const auto &dirs = translationDirs();
+    for (const QString &dir : dirs) {
         if (!QFile::exists(dir))
             continue;
         if (loadQtTranslationHelper(language, dir, qt_translator_)) {
@@ -106,7 +107,8 @@ void TranslationManager::loadTranslation(const QString &language)
     }
 
     // Try loading the translation file
-    for (const QString &dir : translationDirs()) {
+    const auto &dirs = translationDirs();
+    for (const QString &dir : dirs) {
         if (!QFile::exists(dir))
             continue;
         if (translator_->load("psi_" + language, dir)) {
@@ -130,12 +132,14 @@ VarList TranslationManager::availableTranslations()
     langs.set("en", "English");
 
     // Search the paths
-    for (const QString &dirName : translationDirs()) {
+    const auto &dirs = translationDirs();
+    for (const QString &dirName : dirs) {
         if (!QFile::exists(dirName))
             continue;
 
-        QDir d(dirName);
-        for (const QString &str : d.entryList()) {
+        QDir        d(dirName);
+        const auto &files = d.entryList();
+        for (const QString &str : files) {
             // verify that it is a language file
             if (str.left(4) != "psi_")
                 continue;

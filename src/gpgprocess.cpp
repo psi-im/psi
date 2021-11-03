@@ -163,9 +163,7 @@ bool GpgProcess::info(QString &message)
             message = tr("Can't start ") + m_bin;
         } else {
             message = QString("%1 %2\n%3")
-                          .arg(QDir::toNativeSeparators(m_bin))
-                          .arg(arguments.join(" "))
-                          .arg(QString::fromLocal8Bit(readAll()));
+                          .arg(QDir::toNativeSeparators(m_bin), arguments.join(" "), QString::fromLocal8Bit(readAll()));
             res = true;
         }
     } else {

@@ -159,15 +159,17 @@ quint64 EDBFlatFile::eventsCount(const QString &accId, const XMPP::Jid &jid)
     quint64 res = 0;
     if (!jid.isEmpty())
         res = quint64(ensureFile(jid)->total());
-    else
-        for (const ContactItem &ci : contacts(accId, Contact))
+    else {
+        const auto &cts = contacts(accId, Contact);
+        for (const ContactItem &ci : cts)
             res += quint64(ensureFile(ci.jid)->total());
+    }
     return res;
 }
 
 EDBFlatFile::File *EDBFlatFile::findFile(const Jid &j) const
 {
-    for (File *i : d->flist) {
+    for (File *i : qAsConst(d->flist)) {
         if (i->j.compare(j, false))
             return i;
     }
@@ -492,7 +494,7 @@ int EDBFlatFile::File::findNearestDate(const QDateTime &date)
 
 void EDBFlatFile::File::touch() { t->start(30000); }
 
-void EDBFlatFile::File::timer_timeout() { timeout(); }
+void EDBFlatFile::File::timer_timeout() { emit timeout(); }
 
 PsiEvent::Ptr EDBFlatFile::File::get(int id)
 {

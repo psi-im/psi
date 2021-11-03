@@ -236,25 +236,25 @@ void FileTransferHandler::accept(const QString &saveName, const QString &fileNam
     d->ft->accept(offset);
 }
 
-void FileTransferHandler::s5b_proxyQuery() { statusMessage(tr("Querying proxy...")); }
+void FileTransferHandler::s5b_proxyQuery() { emit statusMessage(tr("Querying proxy...")); }
 
 void FileTransferHandler::s5b_proxyResult(bool b)
 {
     if (b)
-        statusMessage(tr("Proxy query successful."));
+        emit statusMessage(tr("Proxy query successful."));
     else
-        statusMessage(tr("Proxy query failed!"));
+        emit statusMessage(tr("Proxy query failed!"));
 }
 
-void FileTransferHandler::s5b_requesting() { statusMessage(tr("Requesting data transfer channel...")); }
+void FileTransferHandler::s5b_requesting() { emit statusMessage(tr("Requesting data transfer channel...")); }
 
-void FileTransferHandler::s5b_accepted() { statusMessage(tr("Peer accepted request.")); }
+void FileTransferHandler::s5b_accepted() { emit statusMessage(tr("Peer accepted request.")); }
 
-void FileTransferHandler::s5b_tryingHosts(const StreamHostList &) { statusMessage(tr("Connecting to peer...")); }
+void FileTransferHandler::s5b_tryingHosts(const StreamHostList &) { emit statusMessage(tr("Connecting to peer...")); }
 
-void FileTransferHandler::s5b_proxyConnect() { statusMessage(tr("Connecting to proxy...")); }
+void FileTransferHandler::s5b_proxyConnect() { emit statusMessage(tr("Connecting to proxy...")); }
 
-void FileTransferHandler::s5b_waitingForActivation() { statusMessage(tr("Waiting for peer activation...")); }
+void FileTransferHandler::s5b_waitingForActivation() { emit statusMessage(tr("Waiting for peer activation...")); }
 
 void FileTransferHandler::ft_accepted()
 {
@@ -274,9 +274,9 @@ void FileTransferHandler::ft_accepted()
     }
 
     if (d->sending)
-        accepted();
+        emit accepted();
     else
-        statusMessage(QString());
+        emit statusMessage(QString());
 }
 
 void FileTransferHandler::ft_connected()
@@ -297,7 +297,7 @@ void FileTransferHandler::ft_connected()
         if (!ok) {
             delete d->ft;
             d->ft = nullptr;
-            error(ErrFile, 0, d->f.errorString());
+            emit error(ErrFile, 0, d->f.errorString());
             return;
         }
 
@@ -322,7 +322,7 @@ void FileTransferHandler::ft_connected()
         if (!ok) {
             delete d->ft;
             d->ft = nullptr;
-            error(ErrFile, 0, d->f.errorString());
+            emit error(ErrFile, 0, d->f.errorString());
             return;
         }
 
@@ -346,7 +346,7 @@ void FileTransferHandler::ft_readyRead(const QByteArray &a)
             d->f.close();
             delete d->ft;
             d->ft = nullptr;
-            error(ErrFile, 0, d->f.errorString());
+            emit error(ErrFile, 0, d->f.errorString());
             return;
         }
         d->sent += a.size();
@@ -365,7 +365,7 @@ void FileTransferHandler::ft_bytesWritten(qint64 x)
             d->ft = nullptr;
         } else
             QTimer::singleShot(0, this, SLOT(trySend()));
-        progress(calcProgressStep(d->sent, d->complement, d->shift), d->sent);
+        emit progress(calcProgressStep(d->sent, d->complement, d->shift), d->sent);
     }
 }
 
@@ -377,15 +377,15 @@ void FileTransferHandler::ft_error(int x)
     d->ft = nullptr;
 
     if (x == FileTransfer::ErrReject)
-        error(ErrReject, x, "");
+        emit error(ErrReject, x, "");
     else if (x == FileTransfer::ErrNeg)
-        error(ErrTransfer, x, tr("Unable to negotiate transfer."));
+        emit error(ErrTransfer, x, tr("Unable to negotiate transfer."));
     else if (x == FileTransfer::ErrConnect)
-        error(ErrTransfer, x, tr("Unable to connect to peer for data transfer."));
+        emit error(ErrTransfer, x, tr("Unable to connect to peer for data transfer."));
     else if (x == FileTransfer::ErrProxy)
-        error(ErrTransfer, x, tr("Unable to connect to proxy for data transfer."));
+        emit error(ErrTransfer, x, tr("Unable to connect to proxy for data transfer."));
     else if (x == FileTransfer::ErrStream)
-        error(ErrTransfer, x, tr("Lost connection / Cancelled."));
+        emit error(ErrTransfer, x, tr("Lost connection / Cancelled."));
 }
 
 void FileTransferHandler::trySend()
@@ -416,7 +416,7 @@ void FileTransferHandler::trySend()
         d->f.close();
         delete d->ft;
         d->ft = nullptr;
-        error(ErrFile, 0, d->f.errorString());
+        emit error(ErrFile, 0, d->f.errorString());
         return;
     }
     if (r < int(a.size()))
@@ -431,7 +431,7 @@ void FileTransferHandler::doFinish()
         delete d->ft;
         d->ft = nullptr;
     }
-    progress(calcProgressStep(d->sent, d->complement, d->shift), d->sent);
+    emit progress(calcProgressStep(d->sent, d->complement, d->shift), d->sent);
 }
 
 void FileTransferHandler::mapSignals()
@@ -1081,7 +1081,7 @@ public:
                 s += QString(" ") + FileTransDlg::tr("[Stalled]");
             else {
                 unit = TextUtil::sizeUnit(bps, &div);
-                s += QString(" @ ") + FileTransDlg::tr("%1%2/s").arg(roundedNumber(bps, div)).arg(unit);
+                s += QString(" @ ") + FileTransDlg::tr("%1%2/s").arg(roundedNumber(bps, div), unit);
 
                 s += ", ";
                 QTime t = QTime().addSecs(timeRemaining);
@@ -1738,9 +1738,8 @@ void FileTransDlg::setError(int id, const QString &reason)
         d->lv->viewport()->update();
         show();
         d->lv->scrollToItem(i);
-        QMessageBox::information(
-            this, tr("Transfer Error"),
-            tr("Transfer of %1 with %2 failed.\nReason: %3").arg(i->name).arg(i->peer).arg(reason));
+        QMessageBox::information(this, tr("Transfer Error"),
+                                 tr("Transfer of %1 with %2 failed.\nReason: %3").arg(i->name, i->peer, reason));
     }
 }
 
@@ -1817,7 +1816,7 @@ void FileTransDlg::ft_error(int x, int, const QString &s)
 
 void FileTransDlg::updateItems()
 {
-    for (TransferMapping *i : d->transferList) {
+    for (TransferMapping *i : qAsConst(d->transferList)) {
         if (i->h) {
             i->logSent();
             d->updateProgress(i);

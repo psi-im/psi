@@ -82,11 +82,12 @@ void AccountsComboBox::updateAccounts()
 {
     clear();
 
-    for (PsiAccount *account : accounts())
+    const auto accs = accounts();
+    for (PsiAccount *account : accs)
         addItem(account->nameWithJid());
 
     if (accounts().indexOf(account_) == -1) {
-        account_ = accounts().isEmpty() ? nullptr : accounts().first();
+        account_ = accounts().isEmpty() ? nullptr : accounts().constFirst();
         emit activated(account_);
     }
     setCurrentIndex(accounts().indexOf(account_));

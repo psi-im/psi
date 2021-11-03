@@ -739,7 +739,8 @@ EDBSqLite::QueryStorage::QueryStorage() { }
 
 EDBSqLite::QueryStorage::~QueryStorage()
 {
-    for (EDBSqLite::PreparedQuery *q : queryList.values()) {
+    const auto &qList = queryList.values();
+    for (EDBSqLite::PreparedQuery *q : qList) {
         if (q)
             delete q;
     }

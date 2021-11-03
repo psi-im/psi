@@ -67,8 +67,8 @@ public:
     QList<UserListItem *> checkedUsers();
     void                  invertByMatch(int columnIndex, int matchType, const QString &str);
 
-    void startBatch() { layoutAboutToBeChanged(); }
-    void stopBatch() { layoutChanged(); }
+    void startBatch() { emit layoutAboutToBeChanged(); }
+    void stopBatch() { emit layoutChanged(); }
 
 private:
     PsiAccount *          pa_;

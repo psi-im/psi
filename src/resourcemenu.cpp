@@ -91,7 +91,8 @@ void ResourceMenu::contactUpdated()
         for (const UserResource &resource : contact_->userResourceList())
             addResource(resource);
     } else {
-        for (const QString &resourceName : contact_->account()->hiddenChats(contact_->jid())) {
+        const auto &names = contact_->account()->hiddenChats(contact_->jid());
+        for (const QString &resourceName : names) {
             XMPP::Status::Type              status;
             const UserResourceList &        rl  = contact_->userResourceList();
             UserResourceList::ConstIterator uit = rl.find(resourceName);

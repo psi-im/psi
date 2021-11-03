@@ -180,7 +180,7 @@ void AddUserDlg::ok()
         list += gname;
     }
 
-    add(jid(), le_nick->text(), list, ck_authreq->isChecked());
+    emit add(jid(), le_nick->text(), list, ck_authreq->isChecked());
 
     QMessageBox::information(this, tr("Add User: Success"), tr("Added %1 to your roster.").arg(jid().full()));
     le_jid->setText("");

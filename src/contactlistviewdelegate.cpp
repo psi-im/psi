@@ -649,7 +649,7 @@ void ContactListViewDelegate::Private::drawContact(QPainter *painter, const QMod
     QString text       = index.data(Qt::DisplayRole).toString();
     QString statusText = index.data(ContactListModel::StatusTextRole).toString();
     if (showStatusMessages_ && !statusText.isEmpty() && !statusSingle_) {
-        text = QString("%1 (%2)").arg(text).arg(statusText);
+        text = QString("%1 (%2)").arg(text, statusText);
     }
     drawText(painter, opt, nickRect, text);
 

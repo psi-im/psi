@@ -55,9 +55,10 @@ bool TabManager::shouldBeTabbed(QWidget *widget)
 
 TabDlg *TabManager::newTabs(QWidget *widget)
 {
-    QChar   kind = tabKind(widget);
-    QString group, grouping = PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString();
-    for (const QString &g : grouping.split(':')) {
+    QChar       kind = tabKind(widget);
+    QString     group, grouping = PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString();
+    const auto &items = grouping.split(':');
+    for (const QString &g : items) {
         if (g.contains(kind)) {
             group = g;
             break;
@@ -94,7 +95,7 @@ void TabManager::tabDestroyed(QObject *obj)
         if (preferedTabsetForKind_[it.key()] != obj)
             continue;
         bool ok = false;
-        for (TabDlg *tabDlg : tabs_) {
+        for (TabDlg *tabDlg : qAsConst(tabs_)) {
             // currently destroyed tab is removed from the list a few lines above
             if (tabsetToKinds_[tabDlg].contains(it.key())) {
                 preferedTabsetForKind_[it.key()] = tabDlg;
@@ -154,7 +155,7 @@ void TabManager::setUserManagementEnabled(bool enabled)
     }
 
     userManagement_ = enabled;
-    for (TabDlg *tab : tabs_) {
+    for (TabDlg *tab : qAsConst(tabs_)) {
         tab->setUserManagementEnabled(enabled);
     }
 }
@@ -166,7 +167,7 @@ void TabManager::setTabBarShownForSingles(bool enabled)
     }
 
     tabSingles_ = enabled;
-    for (TabDlg *tab : tabs_) {
+    for (TabDlg *tab : qAsConst(tabs_)) {
         tab->setTabBarShownForSingles(enabled);
     }
 }
@@ -178,7 +179,7 @@ void TabManager::setSimplifiedCaptionEnabled(bool enabled)
     }
 
     simplifiedCaption_ = enabled;
-    for (TabDlg *tab : tabs_) {
+    for (TabDlg *tab : qAsConst(tabs_)) {
         tab->setSimplifiedCaptionEnabled(enabled);
     }
 }

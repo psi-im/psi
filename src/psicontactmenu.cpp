@@ -662,7 +662,8 @@ PsiContactMenu::~PsiContactMenu() { delete d; }
 QList<QAction *> PsiContactMenu::availableActions() const
 {
     QList<QAction *> result;
-    for (QAction *a : ContactListItemMenu::availableActions()) {
+    const auto &     acts = ContactListItemMenu::availableActions();
+    for (QAction *a : acts) {
         // if (a != d->removeAction_)
         result << a;
     }

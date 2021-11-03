@@ -74,7 +74,8 @@ void ContactUpdatesManager::removeAuthRequestEventsFor(PsiAccount *account, cons
     if (!account || !controller_)
         return;
 
-    for (EventQueue::PsiEventId p : account->eventQueue()->eventsFor(jid, false)) {
+    const auto &eventIds = account->eventQueue()->eventsFor(jid, false);
+    for (const EventQueue::PsiEventId &p : eventIds) {
         PsiEvent::Ptr e = p.second;
         if (e->type() == PsiEvent::Auth) {
             AuthEvent::Ptr authEvent = e.staticCast<AuthEvent>();
@@ -94,7 +95,8 @@ void ContactUpdatesManager::removeToastersFor(PsiAccount *account, const XMPP::J
     if (!account || !controller_)
         return;
 
-    for (EventQueue::PsiEventId p : account->eventQueue()->eventsFor(jid, false)) {
+    const auto &eventIds = account->eventQueue()->eventsFor(jid, false);
+    for (const EventQueue::PsiEventId &p : eventIds) {
         PsiEvent::Ptr e = p.second;
         if (e->type() == PsiEvent::Message) {
             account->eventQueue()->dequeue(e);
@@ -108,7 +110,8 @@ void ContactUpdatesManager::removeNotInListContacts(PsiAccount *account, const X
     if (!account)
         return;
 
-    for (UserListItem *u : account->findRelevant(jid)) {
+    const auto &uItems = account->findRelevant(jid);
+    for (UserListItem *u : uItems) {
         if (u && !u->inList()) {
             account->actionRemove(u->jid());
         }

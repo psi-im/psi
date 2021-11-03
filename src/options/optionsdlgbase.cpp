@@ -121,9 +121,9 @@ public:
     // reimplemented
     virtual QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
     {
-        QIcon icon = index.data(Qt::DecorationRole).value<QIcon>();
         QSize iconSize;
 #if 0
+        QIcon icon = index.data(Qt::DecorationRole).value<QIcon>();
         if (!icon.availableSizes().isEmpty())
             iconSize = icon.availableSizes().first();
         else
@@ -316,7 +316,7 @@ void OptionsDlgBase::Private::openTab(const QString &id)
     QWidget *tab = id2widget.value(id);
     if (!tab) {
         bool found = false;
-        for (OptionsTab *opttab : tabs) {
+        for (OptionsTab *opttab : qAsConst(tabs)) {
             if (opttab->id() == id) {
                 tab = opttab->widget(); // create the widget
                 if (!tab)
@@ -358,7 +358,7 @@ void OptionsDlgBase::Private::openTab(const QString &id)
         }
     }
 
-    for (OptionsTab *opttab : tabs) {
+    for (OptionsTab *opttab : qAsConst(tabs)) {
         if (opttab->id() == id) {
             dlg->lb_pageTitle->setText(opttab->name());
             dlg->lb_pageTitle->setHelp(opttab->desc());
@@ -388,8 +388,8 @@ void OptionsDlgBase::Private::removeTab(const QString &id)
     QWidget *widget = id2widget.take(id);
 
     // clean up side list widget
-    QString tabToSwitch;
-    auto    lwItem = dlg->lv_tabs->currentItem();
+    [[maybe_unused]] QString tabToSwitch;
+    auto                     lwItem = dlg->lv_tabs->currentItem();
     if (lwItem && lwItem->data(Qt::UserRole).toString() == id) {
         auto cr = dlg->lv_tabs->currentRow();
         dlg->lv_tabs->setCurrentRow(cr == (dlg->lv_tabs->count() - 1) ? cr - 1 : cr + 1);
@@ -419,7 +419,8 @@ void OptionsDlgBase::Private::enableCommonControls(bool enable)
 
 void OptionsDlgBase::Private::connectDataChanged(QWidget *widget)
 {
-    for (QWidget *w : widget->findChildren<QWidget *>()) {
+    const auto &widgets = widget->findChildren<QWidget *>();
+    for (QWidget *w : widgets) {
         QVariant isOption = w->property("isOption"); // set to false for ignored widgets
         if (isOption.isValid() && !isOption.toBool()) {
             continue;
@@ -458,7 +459,7 @@ void OptionsDlgBase::Private::doApply()
     if (!dirty)
         return;
 
-    for (OptionsTab *opttab : tabs) {
+    for (OptionsTab *opttab : qAsConst(tabs)) {
         opttab->applyOptions();
     }
 

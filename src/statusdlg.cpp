@@ -175,7 +175,8 @@ void StatusSetDlg::init()
     hb1->addWidget(l);
     d->cb_preset = new QComboBox(this);
     d->cb_preset->addItem(tr("<None>"));
-    for (QVariant name : PsiOptions::instance()->mapKeyList("options.status.presets", true)) {
+    const auto &names = PsiOptions::instance()->mapKeyList("options.status.presets", true);
+    for (const QVariant &name : names) {
         StatusPreset sp;
         sp.fromOptions(PsiOptions::instance(), name.toString());
         sp.filterStatus();

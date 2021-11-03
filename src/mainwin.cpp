@@ -220,7 +220,7 @@ void MainWin::Private::registerActions()
                 action->setChecked(it != statusActions.constEnd() && *it == id);
             }
 
-            mainWin->statusChanged(static_cast<XMPP::Status::Type>(id));
+            emit mainWin->statusChanged(static_cast<XMPP::Status::Type>(id));
         });
 
         statusActions[action] = id;
@@ -369,8 +369,9 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
     d->vb_roster->setSpacing(layoutMargin);
 
     if (allInOne) {
-        QString toolOpt = "options.ui.contactlist.toolbars";
-        for (QString base : PsiOptions::instance()->getChildOptionNames(toolOpt, true, true)) {
+        QString     toolOpt = "options.ui.contactlist.toolbars";
+        const auto &bases   = PsiOptions::instance()->getChildOptionNames(toolOpt, true, true);
+        for (const QString &base : bases) {
             // toolbar "Show contacts" is fourth, so check m3
             if (base == toolOpt + ".m3") {
                 d->viewToolBar = new PsiToolBar(base, rosterBar, d->psi->actionList());
@@ -839,7 +840,8 @@ void MainWin::buildToolbars()
 
     PsiOptions *options  = PsiOptions::instance();
     bool        allInOne = options->getOption("options.ui.tabs.grouping").toString().contains('A');
-    for (const QString &base : options->getChildOptionNames("options.ui.contactlist.toolbars", true, true)) {
+    const auto &bases    = options->getChildOptionNames("options.ui.contactlist.toolbars", true, true);
+    for (const QString &base : bases) {
         QString toolbarName = options->getOption(base + ".name").toString();
         if (toolbarName == "Chat" || toolbarName == "Groupchat") {
             continue;
@@ -867,7 +869,7 @@ void MainWin::buildToolbars()
 
     // loadToolbarsState also restores correct toolbar visibility,
     // we might want to override that
-    for (PsiToolBar *tb : toolbars_) {
+    for (PsiToolBar *tb : qAsConst(toolbars_)) {
         tb->updateVisibility();
     }
 
@@ -876,7 +878,7 @@ void MainWin::buildToolbars()
 
     // in case we have floating toolbars, they have inherited the 'no updates enabled'
     // state. now we need to explicitly re-enable updates.
-    for (PsiToolBar *tb : toolbars_) {
+    for (PsiToolBar *tb : qAsConst(toolbars_)) {
         tb->setUpdatesEnabled(true);
     }
 
@@ -1252,15 +1254,14 @@ void MainWin::setTrayToolTip()
             istr = "status/chat";
         else if (status == STATUS_INVISIBLE)
             istr = "status/invisible";
-        Tip += QString("<div style='white-space:pre'>") + QString("<%1=\"%2\"> ").arg(imgTag).arg(istr)
+        Tip += QString("<div style='white-space:pre'>") + QString("<%1=\"%2\"> ").arg(imgTag, istr)
             + QString("<b>%1</b>").arg(TextUtil::escape(pa->name())) + "</div>";
         TipPlain += "\n" + pa->name() + " (" + stat.typeString() + ")";
         QString text = stat.status();
         if (!text.isEmpty()) {
             text = clipStatus(text, 40, 1);
             Tip += QString("<div style='white-space:pre'>%1: %2</div>")
-                       .arg(tr("Status Message"))
-                       .arg(TextUtil::escape(text));
+                       .arg(tr("Status Message"), TextUtil::escape(text));
         }
 
         PsiEvent::Ptr e;
@@ -1360,7 +1361,7 @@ void MainWin::try2tryCloseProgram() { QTimer::singleShot(0, this, SLOT(tryCloseP
 void MainWin::tryCloseProgram()
 {
     if (askQuit()) {
-        closeProgram();
+        emit closeProgram();
     }
 }
 
@@ -1385,7 +1386,7 @@ void MainWin::closeEvent(QCloseEvent *e)
         return;
     }
 
-    closeProgram();
+    emit closeProgram();
 
     e->accept();
 #endif

@@ -66,22 +66,22 @@ QString PGPUtil::stripHeaderFooter(const QString &str)
     QStringList::ConstIterator it    = lines.begin();
     // skip the first line
     ++it;
-    if (it == lines.end())
+    if (it == lines.constEnd())
         return str;
 
     // skip the header
-    for (; it != lines.end(); ++it) {
+    for (; it != lines.constEnd(); ++it) {
         if ((*it).isEmpty())
             break;
     }
-    if (it == lines.end())
+    if (it == lines.constEnd())
         return str;
     ++it;
-    if (it == lines.end())
+    if (it == lines.constEnd())
         return str;
 
     bool first = true;
-    for (; it != lines.end(); ++it) {
+    for (; it != lines.constEnd(); ++it) {
         if ((*it).at(0) == '-')
             break;
         if (!first)

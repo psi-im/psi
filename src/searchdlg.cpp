@@ -113,10 +113,10 @@ public:
             jid  = 0;
             nick = 0;
 
-            int                                      i  = 0;
-            QList<XData::ReportField>::ConstIterator it = xdata_form.report().begin();
-            for (; it != xdata_form.report().end(); ++it, ++i) {
-                QString name = (*it).name;
+            int         i       = 0;
+            const auto &reports = xdata_form.report();
+            for (const auto &report : reports) {
+                QString name = report.name;
                 if (name == "jid")
                     jid = i;
 
@@ -125,7 +125,8 @@ public:
             }
         }
 
-        for (QTreeWidgetItem *i : dlg->lv_results->selectedItems()) {
+        const auto &items = dlg->lv_results->selectedItems();
+        for (QTreeWidgetItem *i : items) {
             NickAndJid nickJid;
             nickJid.jid  = XMPP::Jid(i->text(jid));
             nickJid.nick = i->text(nick);
@@ -339,9 +340,7 @@ void SearchDlg::jt_finished()
                 QString str = TextUtil::plain2rich(d->form.instructions());
                 lb_instructions->setText(str);
 
-                for (Form::ConstIterator it = d->form.begin(); it != d->form.end(); ++it) {
-                    const FormField &f = *it;
-
+                for (const auto &f : qAsConst(d->form)) {
                     QLabel *   lb = new QLabel(f.fieldName(), d->gr_form);
                     QLineEdit *le = new QLineEdit(d->gr_form);
                     d->gr_form_layout->addWidget(lb); // FIXME
@@ -371,8 +370,7 @@ void SearchDlg::jt_finished()
                 if (list.isEmpty())
                     QMessageBox::information(this, tr("Search Results"), tr("Search returned 0 results."));
                 else {
-                    for (QList<SearchResult>::ConstIterator it = list.begin(); it != list.end(); ++it) {
-                        const SearchResult &r = *it;
+                    for (const auto &r : list) {
                         addEntry(r.jid().full(), r.nick(), r.first(), r.last(), r.email());
                     }
                 }
@@ -391,7 +389,7 @@ void SearchDlg::jt_finished()
                 }
 
                 QStringList header_labels;
-                for (XData::ReportField report : form.report()) {
+                for (const XData::ReportField &report : form.report()) {
                     header_labels << report.label;
                 }
 
@@ -402,7 +400,7 @@ void SearchDlg::jt_finished()
                 for (XData::ReportItem ri : form.reportItems()) {
                     int              i   = 0;
                     QTreeWidgetItem *lvi = new QTreeWidgetItem(lv_results);
-                    for (XData::ReportField report : form.report()) {
+                    for (const XData::ReportField &report : form.report()) {
                         lvi->setText(i++, ri[report.name]);
                     }
                 }
@@ -471,7 +469,7 @@ void SearchDlg::doAdd()
     if (nicksAndJids.isEmpty())
         return;
 
-    for (Private::NickAndJid nickJid : nicksAndJids)
+    for (const Private::NickAndJid &nickJid : nicksAndJids)
         emit add(nickJid.jid, nickJid.nick, QStringList(), true);
 
     if (nicksAndJids.count() > 1) {
@@ -491,7 +489,7 @@ void SearchDlg::doInfo()
     if (nicksAndJids.isEmpty())
         return;
 
-    for (Private::NickAndJid nickJid : nicksAndJids)
+    for (const Private::NickAndJid &nickJid : nicksAndJids)
         emit aInfo(nickJid.jid);
 }
 

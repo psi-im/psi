@@ -303,7 +303,7 @@ void PsiPopup::setData(const Jid &j, const Resource &r, const UserListItem *u, c
     QString contactText = "<font size=\"+1\">" + name + "</font>" + statusString;
 
     // hack for duplicate "Contact Online"/"Status Change" popups
-    for (PsiPopup *pp : *psiPopupList) {
+    for (PsiPopup *pp : qAsConst(*psiPopupList)) {
         if (d->jid.full() == pp->d->jid.full() && d->status.show() == pp->d->status.show()
             && d->status.status() == d->status.status()) {
             if (d->popupType == PopupManager::AlertStatusChange && pp->d->popupType == PopupManager::AlertOnline) {
@@ -385,7 +385,7 @@ void PsiPopup::show()
     }
 
     if (!d->id.isEmpty() /*&& LEGOPTS.ppNoDupes*/) {
-        for (PsiPopup *pp : *psiPopupList) {
+        for (PsiPopup *pp : qAsConst(*psiPopupList)) {
             if (d->id == pp->id() && pp->popup()) {
                 pp->popup()->restartHideTimer();
 

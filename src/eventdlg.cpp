@@ -171,8 +171,8 @@ void ELineEdit::dropEvent(QDropEvent *e)
 void ELineEdit::keyPressEvent(QKeyEvent *e)
 {
     QLineEdit::keyPressEvent(e);
-    if (e->text().length() == 1 && e->text()[0].isLetterOrNumber())
-        tryComplete();
+    if (e->text().length() == 1 && e->text().at(0).isLetterOrNumber())
+        emit tryComplete();
 }
 
 // QMenu *ELineEdit::createPopupMenu()
@@ -231,7 +231,7 @@ void ELineEdit::resourceMenuActivated(QAction *x)
         return;
 
     url.clear();
-    changeResource(x->data().toString());
+    emit changeResource(x->data().toString());
 }
 
 //----------------------------------------------------------------------------
@@ -261,7 +261,7 @@ public:
         setIcon(IconsetFactory::icon("psi/groupChat").icon());
         QString text;
         if (!from.isEmpty())
-            text = QObject::tr("Invitation to %1 from %2").arg(gc).arg(from);
+            text = QObject::tr("Invitation to %1 from %2").arg(gc, from);
         else
             text = QObject::tr("Invitation to %1").arg(gc);
         if (!reason.isEmpty()) {
@@ -294,13 +294,13 @@ void AttachView::setReadOnly(bool b) { v_readOnly = b; }
 void AttachView::urlAdd(const QString &url, const QString &desc)
 {
     new AttachViewItem(url, desc, this);
-    childCountChanged();
+    emit childCountChanged();
 }
 
 void AttachView::gcAdd(const QString &gc, const QString &from, const QString &reason, const QString &password)
 {
     new AttachViewItem(gc, from, reason, password, this);
-    childCountChanged();
+    emit childCountChanged();
 }
 
 void AttachView::contextMenuEvent(QContextMenuEvent *e)
@@ -335,7 +335,7 @@ void AttachView::contextMenuEvent(QContextMenuEvent *e)
     if (n == goToUrlAction) {
         goURL(i->url);
     } else if (n == joinGroupChatAction) {
-        actionGCJoin(i->gc, i->password);
+        emit actionGCJoin(i->gc, i->password);
     } else if (n == copyLocationAction) {
         QApplication::clipboard()->setText(i->url, QClipboard::Clipboard);
         if (QApplication::clipboard()->supportsSelection())
@@ -343,7 +343,7 @@ void AttachView::contextMenuEvent(QContextMenuEvent *e)
     } else if (n == removeAction) {
         takeItem(row(i));
         delete i;
-        childCountChanged();
+        emit childCountChanged();
     }
 }
 
@@ -356,7 +356,7 @@ void AttachView::qlv_doubleClicked(QListWidgetItem *lvi)
     if (i->type == 0)
         goURL(i->url);
     else
-        actionGCJoin(i->gc, i->password);
+        emit actionGCJoin(i->gc, i->password);
 }
 
 void AttachView::goURL(const QString &_url)
@@ -385,8 +385,7 @@ UrlList AttachView::urlList() const
 
 void AttachView::addUrlList(const UrlList &list)
 {
-    for (QList<Url>::ConstIterator it = list.begin(); it != list.end(); ++it) {
-        const Url &u = *it;
+    for (const auto &u : list) {
         urlAdd(u.url(), u.desc());
     }
 }
@@ -709,7 +708,7 @@ void EventDlg::init()
     QList<IconToolButton *> toolButtons;
     toolButtons << d->tb_url << d->tb_info << d->tb_history;
     toolButtons << d->tb_icon;
-    for (IconToolButton *toolButton : toolButtons)
+    for (IconToolButton *toolButton : qAsConst(toolButtons))
         if (toolButton)
             toolButton->setFocusPolicy(Qt::NoFocus);
 
@@ -1028,12 +1027,12 @@ QString EventDlg::expandAddresses(const QString &in, bool enc) const
     QString     str;
     QStringList list  = stringToList(in, enc);
     bool        first = true;
-    for (QStringList::ConstIterator it = list.begin(); it != list.end(); ++it) {
+    for (const auto &item : list) {
         if (!first)
             str += ", ";
         first = false;
 
-        Jid                   j(*it);
+        Jid                   j(item);
         QList<UserListItem *> ul = d->pa->findRelevant(j);
         if (ul.isEmpty()) {
             str += j.full();
@@ -1109,8 +1108,7 @@ void EventDlg::to_tryComplete()
     if (s.length() < 1 || x != p2)
         return;
 
-    for (QStringList::ConstIterator it = d->completionList.begin(); it != d->completionList.end(); ++it) {
-        QString name = *it;
+    for (auto name : qAsConst(d->completionList)) {
         if (s.length() > name.length())
             continue;
 
@@ -1138,7 +1136,8 @@ void EventDlg::buildCompletionList()
 
     d->completionList += d->pa->jid().full();
 
-    for (UserListItem *u : *d->pa->userList()) {
+    const auto &list = *d->pa->userList();
+    for (UserListItem *u : list) {
         QString j = u->jid().full();
         if (!u->name().isEmpty())
             d->completionList += u->name() + " <" + j + '>';
@@ -1335,8 +1334,8 @@ void EventDlg::doSend()
         }
         d->pa->dj_sendMessage(m, true);
     } else {
-        for (QStringList::ConstIterator it = list.begin(); it != list.end(); ++it) {
-            m.setTo(Jid(*it));
+        for (const auto &item : list) {
+            m.setTo(Jid(item));
             d->pa->dj_sendMessage(m, true);
         }
     }
@@ -1345,7 +1344,7 @@ void EventDlg::doSend()
 
 void EventDlg::doneSend() { close(); }
 
-void EventDlg::doReadNext() { aReadNext(d->realJid); }
+void EventDlg::doReadNext() { emit aReadNext(d->realJid); }
 
 void EventDlg::doChat()
 {
@@ -1353,8 +1352,8 @@ void EventDlg::doChat()
     if (list.isEmpty())
         return;
 
-    Jid j(list[0]);
-    aChat(j);
+    Jid  j(list[0]);
+    emit aChat(j);
 }
 
 void EventDlg::doReply()
@@ -1362,8 +1361,8 @@ void EventDlg::doReply()
     QStringList list = stringToList(d->le_from->text());
     if (list.isEmpty())
         return;
-    Jid j(list[0]);
-    aReply(j, "", d->le_subj->text(), d->thread);
+    Jid  j(list[0]);
+    emit aReply(j, "", d->le_subj->text(), d->thread);
 }
 
 void EventDlg::doQuote()
@@ -1374,7 +1373,7 @@ void EventDlg::doQuote()
     Jid j(list[0]);
 
     QString body = TextUtil::rich2plain(d->mle->getHtml());
-    aReply(j, body, d->le_subj->text(), d->thread);
+    emit    aReply(j, body, d->le_subj->text(), d->thread);
 }
 
 void EventDlg::doDeny()
@@ -1403,10 +1402,10 @@ void EventDlg::doAuth()
         QStringList list = stringToList(d->le_from->text());
         if (list.isEmpty())
             return;
-        Jid j(list[0]);
-        aAuth(j);
+        Jid  j(list[0]);
+        emit aAuth(j);
     } else {
-        aRosterExchange(d->rosterExchangeItems);
+        emit aRosterExchange(d->rosterExchangeItems);
         d->rosterExchangeItems.clear();
     }
     d->pb_auth->setEnabled(false);
@@ -1432,7 +1431,7 @@ void EventDlg::doHttpConfirm()
         }
     }
 
-    aHttpConfirm(d->httpAuthRequest);
+    emit aHttpConfirm(d->httpAuthRequest);
 
     d->le_http_id->setEnabled(false);
     d->pb_http_confirm->setEnabled(false);
@@ -1453,7 +1452,7 @@ void EventDlg::doHttpDeny()
         return;
     Jid j(list[0]);
 
-    aHttpDeny(d->httpAuthRequest);
+    emit aHttpDeny(d->httpAuthRequest);
 
     d->le_http_id->setEnabled(false);
     d->pb_http_confirm->setEnabled(false);
@@ -1484,7 +1483,7 @@ void EventDlg::doFormSubmit()
     }
 
     data.setType(XData::Data_Submit);
-    aFormSubmit(data, d->thread, j);
+    emit aFormSubmit(data, d->thread, j);
 
     d->pb_form_submit->setEnabled(false);
     d->pb_form_cancel->setEnabled(false);
@@ -1505,7 +1504,7 @@ void EventDlg::doFormCancel()
 
     XData data;
     data.setType(XData::Data_Cancel);
-    aFormCancel(data, d->thread, j);
+    emit aFormCancel(data, d->thread, j);
 
     d->pb_form_submit->setEnabled(false);
     d->pb_form_cancel->setEnabled(false);
@@ -1568,7 +1567,7 @@ void EventDlg::updateContact(const Jid &jid)
             } else {
                 // use specific
                 UserResourceList::ConstIterator rit = u->userResourceList().find(rname);
-                if (rit != u->userResourceList().end())
+                if (rit != u->userResourceList().constEnd())
                     status = makeSTATUS((*rit).status());
                 else
                     status = STATUS_OFFLINE;
@@ -1641,8 +1640,7 @@ void EventDlg::updateEvent(const PsiEvent::Ptr &e)
         QString body(tr("Someone (maybe you) has requested access to the following resource:\n"
                         "URL: %1\n"
                         "Method: %2\n")
-                         .arg(confirm.url())
-                         .arg(confirm.method()));
+                         .arg(confirm.url(), confirm.method()));
 
         if (!confirm.hasId()) {
             body += tr("\n"
@@ -1745,7 +1743,7 @@ void EventDlg::updateEvent(const PsiEvent::Ptr &e)
         d->attachView->addUrlList(m.urlList());
 
         if (!m.mucInvites().isEmpty()) {
-            MUCInvite i = m.mucInvites().first();
+            MUCInvite i = m.mucInvites().constFirst();
             d->attachView->gcAdd(m.from().full(), i.from().bare(), i.reason(), m.mucPassword());
         } else if (!m.invite().isEmpty())
             d->attachView->gcAdd(m.invite());
@@ -1801,7 +1799,7 @@ void EventDlg::updateEvent(const PsiEvent::Ptr &e)
     } else if (e->type() == PsiEvent::RosterExchange) {
         RosterExchangeEvent::Ptr re        = e.staticCast<RosterExchangeEvent>();
         int                      additions = 0, deletions = 0, modifications = 0;
-        for (RosterExchangeItem item : re->rosterExchangeItems()) {
+        for (const RosterExchangeItem &item : re->rosterExchangeItems()) {
             switch (item.action()) {
             case RosterExchangeItem::Add:
                 additions++;

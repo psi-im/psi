@@ -106,7 +106,7 @@ void StatusMenu::addPresets(IconActionGroup *parent)
     if ((showEditPresets || presets.count() > 0) && !parent)
         this->addSeparator();
     if (presets.count() > 0) {
-        for (QVariant name : presets) {
+        for (const QVariant &name : presets) {
             StatusPreset preset;
             preset.fromOptions(o, name.toString());
             preset.filterStatus();
@@ -139,7 +139,7 @@ void StatusMenu::presetsChanged()
 void StatusMenu::statusChanged(const Status &status)
 {
     bool presetFound = false;
-    for (IconAction *action : presetActs) {
+    for (IconAction *action : qAsConst(presetActs)) {
         // Maybe we should compare with priority too
         int     st      = static_cast<int>(status.type());
         QString message = action->property("message").toString();
@@ -150,7 +150,7 @@ void StatusMenu::statusChanged(const Status &status)
             action->setChecked(false);
     }
     bool statusFound = false;
-    for (IconAction *action : statusActs) {
+    for (IconAction *action : qAsConst(statusActs)) {
         if (!statusFound && !presetFound && action->property("type").toInt() == static_cast<int>(status.type())) {
             action->setChecked(true);
             statusFound = true;

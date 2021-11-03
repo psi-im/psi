@@ -109,7 +109,7 @@ void PsiTrayIcon::animate()
 bool PsiTrayIcon::eventFilter(QObject *obj, QEvent *event)
 {
     if (obj == trayicon_ && event->type() == QEvent::ToolTip) {
-        doToolTip(obj, (static_cast<QHelpEvent *>(event))->globalPos());
+        emit doToolTip(obj, (static_cast<QHelpEvent *>(event))->globalPos());
         return true;
     }
     return QObject::eventFilter(obj, event);

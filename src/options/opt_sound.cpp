@@ -101,9 +101,9 @@ QWidget *OptionsTabSound::widget()
     // set up proper tool button icons
     int n;
     for (n = 0; n < 11; n++) {
-        IconToolButton *tb = static_cast<IconToolButton *>(bg_se->buttons()[n]);
+        IconToolButton *tb = static_cast<IconToolButton *>(bg_se->buttons().at(n));
         tb->setPsiIcon(IconsetFactory::iconPtr("psi/browse"));
-        tb = static_cast<IconToolButton *>(bg_sePlay->buttons()[n]);
+        tb = static_cast<IconToolButton *>(bg_sePlay->buttons().at(n));
         tb->setPsiIcon(IconsetFactory::iconPtr("psi/play"));
     }
 

@@ -564,7 +564,7 @@ void GCUserModel::updateEntry(const QString &nick, const Status &s)
             emit dataChanged(newParentIndex, newParentIndex,
                              QVector<int>() << Qt::DisplayRole); // TODO check if necessary
         } else {                                                 // new contact
-            emit beginInsertRows(newParentIndex, insertRowNum, insertRowNum);
+            beginInsertRows(newParentIndex, insertRowNum, insertRowNum);
             auto contact    = MUCContact::Ptr(new MUCContact);
             contact->name   = nick;
             contact->status = s;
@@ -573,7 +573,7 @@ void GCUserModel::updateEntry(const QString &nick, const Status &s)
             if (nick == _selfJid.resource()) {
                 _selfContact = contact;
             }
-            emit endInsertRows();
+            endInsertRows();
         }
     } else {
         // just changed status. delegate will decide how to redraw properly
@@ -597,15 +597,16 @@ void GCUserModel::clear()
 
 void GCUserModel::updateAll()
 {
-    layoutAboutToBeChanged();
+    emit layoutAboutToBeChanged();
     // TODO sort contacts here? convert all icons to pixmaps for caching purposes?
-    layoutChanged();
+    emit layoutChanged();
 }
 
 bool GCUserModel::hasJid(const Jid &jid)
 {
     for (int gr = 0; gr < LastGroupRole; gr++) {
-        for (auto const &c : contacts[gr]) {
+        const auto &cts = contacts[gr];
+        for (auto const &c : cts) {
             auto const &cj = c->status.mucItem().jid();
             if (!cj.isEmpty() && cj.compare(jid, false)) {
                 return true;
@@ -694,9 +695,9 @@ void GCUserView::qlv_doubleClicked(const QModelIndex &index)
     Status  status = index.data(GCUserModel::StatusRole).value<Status>();
     if (PsiOptions::instance()->getOption(QLatin1String("options.messages.default-outgoing-message-type")).toString()
         == QLatin1String("message"))
-        action(nick, status, 0); // message
+        emit action(nick, status, 0); // message
     else
-        action(nick, status, 1); // chat
+        emit action(nick, status, 1); // chat
 }
 
 void GCUserView::contextMenuEvent(QContextMenuEvent *cm)

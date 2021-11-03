@@ -570,7 +570,7 @@ public:
 
         for (PsiContact *contact : contacts) {
             const auto groups = contact->userListItem().groups();
-            for (QString group : groups)
+            for (const QString &group : groups)
                 if (!groupList.contains(group))
                     groupList.append(group);
         }
@@ -589,7 +589,7 @@ private slots:
     void updateOnlineContactsCountTimeout()
     {
         int newOnlineContactsCount = 0;
-        for (const PsiContact *c : contacts) {
+        for (const PsiContact *c : qAsConst(contacts)) {
             if ((c->isPrivate() || (c->inList() && c->status().type() != XMPP::Status::Offline)) && !c->isSelf()) {
                 ++newOnlineContactsCount;
             }
@@ -821,7 +821,7 @@ public:
 
     void dialogUnregister(QWidget *w)
     {
-        for (item_dialog2 *i : dialogList) {
+        for (item_dialog2 *i : qAsConst(dialogList)) {
             if (i->widget == w) {
                 dialogList.removeAll(i);
                 delete i;
@@ -906,14 +906,14 @@ public:
     void updateContacts()
     {
         QStringList jids;
-        for (PsiContact *pc : contacts) {
+        for (PsiContact *pc : qAsConst(contacts)) {
             const Jid jid = pc->jid();
             jids.append(jid.bare());
             bool vis = isAlwaysVisibleContact(jid);
             if (vis != pc->isAlwaysVisible())
                 pc->setAlwaysVisible(vis);
         }
-        for (const QString &j : acc.alwaysVisibleContacts) {
+        for (const QString &j : qAsConst(acc.alwaysVisibleContacts)) {
             if (!jids.contains(j))
                 acc.alwaysVisibleContacts.removeAll(j);
         }
@@ -967,7 +967,7 @@ public slots:
         reconnectData_++;
         Q_ASSERT(::reconnectData().count());
         reconnectData_     = qMax(0, qMin(reconnectData_, ::reconnectData().count() - 1));
-        ReconnectData data = ::reconnectData()[reconnectData_];
+        ReconnectData data = ::reconnectData().at(reconnectData_);
 
         int delay = data.delay * 1000;
         reconnectTimeoutTimer_->stop();
@@ -977,7 +977,7 @@ public slots:
         reconnectScheduledAt_ = QDateTime::currentDateTime();
         reconnectScheduledAt_ = reconnectScheduledAt_.addSecs(data.delay);
         QTimer::singleShot(delay, account, SLOT(reconnect()));
-        emit account->stateChanged();
+        account->stateChanged();
     }
 
     void startReconnectTimeout()
@@ -1187,8 +1187,8 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
     d->selfContact = new PsiContact(d->self, this, true);
 
     // restore cached roster
-    for (Roster::ConstIterator it = acc.roster.begin(); it != acc.roster.end(); ++it)
-        client_rosterItemUpdated(*it);
+    for (const auto &it : qAsConst(acc.roster))
+        client_rosterItemUpdated(it);
 
     // restore pgp key bindings
     setKnownPgpKeys(acc.pgpKnownKeys);
@@ -1370,7 +1370,7 @@ const UserAccount &PsiAccount::userAccount() const
     // save the roster and pgp key bindings
     d->acc.roster.clear();
     d->acc.pgpKnownKeys.clear();
-    for (UserListItem *u : d->userList) {
+    for (UserListItem *u : qAsConst(d->userList)) {
         if (u->inList())
             d->acc.roster += *u;
 
@@ -1415,8 +1415,8 @@ QHostAddress *PsiAccount::localAddress() const
 
 void PsiAccount::setKnownPgpKeys(const VarList &list)
 {
-    for (VarList::ConstIterator kit = list.begin(); kit != list.end(); ++kit) {
-        const VarListItem &i = *kit;
+    for (const auto &kit : list) {
+        const VarListItem &i = kit;
         UserListItem *     u = find(Jid(i.key()));
         if (u) {
             u->setPublicKeyID(i.data());
@@ -1482,7 +1482,7 @@ void PsiAccount::setUserAccount(const UserAccount &_acc)
     if (PGPUtil::instance().pgpAvailable()) {
         bool updateStatus   = !PGPUtil::instance().equals(d->acc.pgpSecretKey, d->cur_pgpSecretKey) && loggedIn();
         d->cur_pgpSecretKey = d->acc.pgpSecretKey;
-        pgpKeyChanged();
+        emit pgpKeyChanged();
         if (updateStatus) {
             d->loginStatus.setXSigned("");
             setStatusDirect(d->loginStatus);
@@ -1973,7 +1973,7 @@ void PsiAccount::sessionStarted()
         d->voiceCaller->initialize();
 
     // flag roster for delete
-    for (UserListItem *u : d->userList) {
+    for (UserListItem *u : qAsConst(d->userList)) {
         if (u->inList())
             u->setFlagForDelete(true);
     }
@@ -2009,7 +2009,7 @@ void PsiAccount::cs_warning(int w)
         v_isActive     = false;
         d->loginStatus = Status(Status::Offline);
         stateChanged();
-        disconnected();
+        emit disconnected();
     }
 
     if (showNoTlsWarning) {
@@ -2446,7 +2446,7 @@ void PsiAccount::bookmarksAvailabilityChanged()
     }
 
 #ifdef GROUPCHAT
-    for (ConferenceBookmark c : d->bookmarkManager->conferences()) {
+    for (const ConferenceBookmark &c : d->bookmarkManager->conferences()) {
         Jid cj = c.jid().withResource(QString());
         if (!findDialog<GCMainDlg *>(cj) && c.needJoin()) {
             auto ul = findRelevant(Jid(QString(), cj.domain()));
@@ -2602,7 +2602,7 @@ void PsiAccount::client_resourceAvailable(const Jid &j, const Resource &r)
 
 #ifdef GROUPCHAT
         if (u->isTransport()) {
-            for (ConferenceBookmark c : d->bookmarkManager->conferences()) {
+            for (const ConferenceBookmark &c : d->bookmarkManager->conferences()) {
                 Jid cj = c.jid().withResource(QString());
                 if (u->jid().domain() == cj.domain() && !findDialog<GCMainDlg *>(cj) && c.needJoin()) {
                     // now join MUCs on connected transport
@@ -2651,7 +2651,8 @@ void PsiAccount::client_resourceAvailable(const Jid &j, const Resource &r)
         CapsManager *cm = client()->capsManager();
 
         // Update the client version
-        for (UserListItem *u : findRelevant(j)) {
+        const auto &items = findRelevant(j);
+        for (UserListItem *u : items) {
             UserResourceList::Iterator rit = u->userResourceList().find(j.resource());
             if (rit != u->userResourceList().end()) {
                 if (cm->capsSpec(j).isValid()) {
@@ -2724,7 +2725,8 @@ void PsiAccount::client_resourceUnavailable(const Jid &j, const Resource &r)
     if (j.node().isEmpty())
         new BlockTransportPopup(d->blockTransportPopupList, j);
 
-    for (UserListItem *u : findRelevant(j)) {
+    const auto &items = findRelevant(j);
+    for (UserListItem *u : items) {
         userListItemUnavailable(u, j, r, &doSound, &doPopup);
     }
     if (doSound)
@@ -2743,7 +2745,8 @@ void PsiAccount::client_resourceUnavailable(const Jid &j, const Resource &r)
 
 void PsiAccount::client_presenceError(const Jid &j, int, const QString &str)
 {
-    for (UserListItem *u : findRelevant(j)) {
+    const auto &items = findRelevant(j);
+    for (UserListItem *u : items) {
         simulateContactOffline(u);
         u->setPresenceError(str);
         cpUpdate(*u, j.resource(), false);
@@ -2759,7 +2762,7 @@ void PsiAccount::client_messageReceived(const Message &m)
     }
 
     // if the sender is already in the queue, then queue this message also
-    for (Message mi : d->messageQueue) {
+    for (const Message &mi : qAsConst(d->messageQueue)) {
         if (mi.from().compare(_m.from())) {
             d->messageQueue.append(_m);
             return;
@@ -2928,8 +2931,9 @@ void PsiAccount::processIncomingMessage(const Message &_m)
             else if (type == "chat")
                 m.setType("chat");
             else if (type == "current-open") {
-                c = nullptr;
-                for (ChatDlg *cl : findChatDialogs(m.from(), false)) {
+                c                = nullptr;
+                const auto &dlgs = findChatDialogs(m.from(), false);
+                for (ChatDlg *cl : dlgs) {
                     if (cl->autoSelectContact() || cl->jid().resource().isEmpty()
                         || m.from().resource() == cl->jid().resource()) {
                         c = cl;
@@ -3092,9 +3096,7 @@ void PsiAccount::setStatus(const Status &_s, bool withPriority, bool isManualSta
 
     // Block all transports' contacts' status change popups from popping
     {
-        Roster::ConstIterator rit = d->acc.roster.constBegin();
-        for (; rit != d->acc.roster.constEnd(); ++rit) {
-            const RosterItem &i = *rit;
+        for (const auto &i : qAsConst(d->acc.roster)) {
             if (i.jid()
                     .node()
                     .isEmpty() /*&& i.jid().resource() == "registered"*/) // it is very likely then, that it's transport
@@ -3136,7 +3138,7 @@ void PsiAccount::setStatus(const Status &_s, bool withPriority, bool isManualSta
             if (s.isInvisible()) { //&&Pass invis to transports KEVIN
                 // this is a nasty hack to let the transports know we're invisible, since they get an offline packet
                 // when we go invisible
-                for (UserListItem *u : d->userList) {
+                for (UserListItem *u : qAsConst(d->userList)) {
                     if (u->isTransport()) {
                         JT_Presence *j = new JT_Presence(d->client->rootTask());
                         j->pres(u->jid(), s);
@@ -3291,7 +3293,8 @@ void PsiAccount::capsChanged(const Jid &j)
         os      = cm->osVersion(j);
     }
 
-    for (UserListItem *u : findRelevant(j)) {
+    const auto &items = findRelevant(j);
+    for (UserListItem *u : items) {
         UserResourceList::Iterator rit   = u->userResourceList().find(j.resource());
         bool                       found = !(rit == u->userResourceList().end());
         if (!found)
@@ -3438,9 +3441,10 @@ ChatDlg *PsiAccount::findChatDialog(const Jid &jid, bool compareResource) const
 
 ChatDlg *PsiAccount::findChatDialogEx(const Jid &jid, bool ignoreResource) const
 {
-    ChatDlg *cm1 = nullptr;
-    ChatDlg *cm2 = nullptr;
-    for (ChatDlg *cl : findChatDialogs(jid, false)) {
+    ChatDlg *   cm1     = nullptr;
+    ChatDlg *   cm2     = nullptr;
+    const auto &dialogs = findChatDialogs(jid, false);
+    for (ChatDlg *cl : dialogs) {
         if (cl->autoSelectContact() || ignoreResource)
             return cl;
         if (!cm1 && jid.resource() == cl->jid().resource()) {
@@ -3546,7 +3550,7 @@ void PsiAccount::openAddUserDlg(const Jid &jid, const QString &nick, const QStri
 {
     QStringList gl, services, names;
     UserListIt  it(d->userList);
-    for (UserListItem *u : d->userList) {
+    for (UserListItem *u : qAsConst(d->userList)) {
         if (u->isTransport()) {
             services += u->jid().full();
             names += JIDUtil::nickOrJid(u->name(), u->jid().full());
@@ -3682,7 +3686,8 @@ void PsiAccount::stateChanged()
 
 void PsiAccount::simulateContactOffline(const XMPP::Jid &contact)
 {
-    for (UserListItem *u : findRelevant(contact)) {
+    const auto &items = findRelevant(contact);
+    for (UserListItem *u : items) {
         simulateContactOffline(u);
     }
 }
@@ -3692,9 +3697,8 @@ void PsiAccount::simulateContactOffline(UserListItem *u)
     UserResourceList rl = u->userResourceList();
     u->setPresenceError("");
     if (!rl.isEmpty()) {
-        for (UserResourceList::ConstIterator rit = rl.begin(); rit != rl.end(); ++rit) {
-            const UserResource &r = *rit;
-            Jid                 j = u->jid();
+        for (const auto &r : rl) {
+            Jid j = u->jid();
             if (u->isConference()) {
                 userListItemUnavailable(u, j, r);
             } else {
@@ -3715,7 +3719,7 @@ void PsiAccount::simulateRosterOffline()
     emit beginBulkContactUpdate();
 
     notifyOnlineOk = false;
-    for (UserListItem *u : d->userList)
+    for (UserListItem *u : qAsConst(d->userList))
         simulateContactOffline(u);
 
     // self
@@ -3754,7 +3758,8 @@ void PsiAccount::itemRetracted(const Jid &j, const QString &n, const PubSubRetra
     // User Tune
     if (n == "http://jabber.org/protocol/tune") {
         // Parse tune
-        for (UserListItem *u : findRelevant(j)) {
+        const auto &items = findRelevant(j);
+        for (UserListItem *u : items) {
             // FIXME: try to find the right resource using XEP-33 'replyto'
             // UserResourceList::Iterator rit = u->userResourceList().find(<resource>);
             // bool found = (rit == u->userResourceList().end()) ? false: true;
@@ -3764,19 +3769,22 @@ void PsiAccount::itemRetracted(const Jid &j, const QString &n, const PubSubRetra
             cpUpdate(*u);
         }
     } else if (n == "http://jabber.org/protocol/mood") {
-        for (UserListItem *u : findRelevant(j)) {
+        const auto &items = findRelevant(j);
+        for (UserListItem *u : items) {
             u->setMood(Mood());
             cpUpdate(*u);
         }
     } else if (n == "http://jabber.org/protocol/activity") {
-        for (UserListItem *u : findRelevant(j)) {
+        const auto &items = findRelevant(j);
+        for (UserListItem *u : items) {
             u->setActivity(Activity());
             cpUpdate(*u);
         }
     } else if (n == "http://jabber.org/protocol/geoloc") {
         // FIXME: try to find the right resource using XEP-33 'replyto'
         // see tune case above
-        for (UserListItem *u : findRelevant(j)) {
+        const auto &items = findRelevant(j);
+        for (UserListItem *u : items) {
             u->setGeoLocation(GeoLocation());
             cpUpdate(*u);
         }
@@ -3800,7 +3808,8 @@ void PsiAccount::itemPublished(const Jid &j, const QString &n, const PubSubItem 
         if (!e.isNull())
             tune += e.text();
 
-        for (UserListItem *u : findRelevant(j)) {
+        const auto &items = findRelevant(j);
+        for (UserListItem *u : items) {
             // FIXME: try to find the right resource using XEP-33 'replyto'
             // UserResourceList::Iterator rit = u->userResourceList().find(<resource>);
             // bool found = (rit == u->userResourceList().end()) ? false: true;
@@ -3810,14 +3819,16 @@ void PsiAccount::itemPublished(const Jid &j, const QString &n, const PubSubItem 
             cpUpdate(*u);
         }
     } else if (n == "http://jabber.org/protocol/mood") {
-        Mood mood(item.payload());
-        for (UserListItem *u : findRelevant(j)) {
+        Mood        mood(item.payload());
+        const auto &items = findRelevant(j);
+        for (UserListItem *u : items) {
             u->setMood(mood);
             cpUpdate(*u);
         }
     } else if (n == "http://jabber.org/protocol/activity") {
-        Activity activity(item.payload());
-        for (UserListItem *u : findRelevant(j)) {
+        Activity    activity(item.payload());
+        const auto &items = findRelevant(j);
+        for (UserListItem *u : items) {
             u->setActivity(activity);
             cpUpdate(*u);
         }
@@ -3825,7 +3836,8 @@ void PsiAccount::itemPublished(const Jid &j, const QString &n, const PubSubItem 
         // FIXME: try to find the right resource using XEP-33 'replyto'
         // see tune case above
         GeoLocation geoloc(item.payload());
-        for (UserListItem *u : findRelevant(j)) {
+        const auto &items = findRelevant(j);
+        for (UserListItem *u : items) {
             u->setGeoLocation(geoloc);
             cpUpdate(*u);
         }
@@ -3854,7 +3866,7 @@ QList<UserListItem *> PsiAccount::findRelevant(const Jid &j) const
     if (j.compare(d->self.jid(), false))
         list.append(&d->self);
     else {
-        for (UserListItem *u : d->userList) {
+        for (UserListItem *u : qAsConst(d->userList)) {
             if (!u->jid().compare(j, false))
                 continue;
 
@@ -4230,12 +4242,12 @@ void PsiAccount::actionSendMessage(const QList<XMPP::Jid> &j)
 {
     QString str;
     bool    first = true;
-    for (QList<Jid>::ConstIterator it = j.begin(); it != j.end(); ++it) {
+    for (const auto &jid : j) {
         if (!first)
             str += ", ";
         first = false;
 
-        str += (*it).full();
+        str += jid.full();
     }
 
     EventDlg *w = d->psi->createMessageDlg(str, this);
@@ -4264,7 +4276,7 @@ void PsiAccount::actionRename(const Jid &j, const QString &name) { dj_rename(j, 
 void PsiAccount::actionGroupRename(const QString &oldname, const QString &newname)
 {
     QList<UserListItem *> nu;
-    for (UserListItem *u : d->userList) {
+    for (UserListItem *u : qAsConst(d->userList)) {
         if (u->inGroup(oldname)) {
             u->removeGroup(oldname);
             u->addGroup(newname);
@@ -4924,7 +4936,7 @@ void PsiAccount::dj_remove(const Jid &j)
 
 void PsiAccount::dj_rosterExchange(const RosterExchangeItems &items)
 {
-    for (RosterExchangeItem item : items) {
+    for (const RosterExchangeItem &item : items) {
         if (!validRosterExchangeItem(item))
             continue;
 
@@ -5065,7 +5077,8 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 #endif
         if (m.messageReceipt() == ReceiptReceived) {
             if (o->getOption("options.ui.notifications.request-receipts").toBool()) {
-                for (ChatDlg *c : findChatDialogs(e->from(), false)) {
+                const auto &dialogs = findChatDialogs(e->from(), false);
+                for (ChatDlg *c : dialogs) {
                     if (c->autoSelectContact() || c->jid().resource().isEmpty()
                         || e->from().resource() == c->jid().resource()) {
                         c->incomingMessage(m);
@@ -5196,7 +5209,7 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
     } else if (e->type() == PsiEvent::RosterExchange) {
         RosterExchangeEvent::Ptr re = e.staticCast<RosterExchangeEvent>();
         RosterExchangeItems      items;
-        for (RosterExchangeItem item : re->rosterExchangeItems()) {
+        for (const RosterExchangeItem &item : re->rosterExchangeItems()) {
             if (validRosterExchangeItem(item))
                 items += item;
         }
@@ -5310,7 +5323,7 @@ UserListItem *PsiAccount::addUserListItem(const Jid &jid, const QString &nick)
         // make a resource so the contact appears online
         QString      name = j.node();
         UserResource ur;
-        for (ConferenceBookmark c : d->bookmarkManager->conferences()) {
+        for (const ConferenceBookmark &c : d->bookmarkManager->conferences()) {
             if (c.jid().full() == j.bare())
                 name = c.name();
         }
@@ -5433,7 +5446,7 @@ void PsiAccount::openNextEvent(const UserListItem &u, ActivationType activationT
         PluginEvent::Ptr pe = e.staticCast<PluginEvent>();
         pe->activate();
         eventQueue()->dequeue(e);
-        queueChanged();
+        emit          queueChanged();
         UserListItem *u = e->account()->find(e->jid());
         if (u)
             e->account()->cpUpdate(*u);
@@ -5469,7 +5482,7 @@ int PsiAccount::forwardPendingEvents(const Jid &jid)
 {
     QList<PsiEvent::Ptr> chatList;
     d->eventQueue->extractMessages(&chatList);
-    for (const PsiEvent::Ptr &e : chatList) {
+    for (const PsiEvent::Ptr &e : qAsConst(chatList)) {
         MessageEvent::Ptr me = e.staticCast<MessageEvent>();
         Message           m  = me->message();
 
@@ -5512,7 +5525,7 @@ void PsiAccount::updateReadNext(const Jid &j)
         w->updateReadNext(nextAnim, nextAmount);
     }
 
-    queueChanged();
+    emit queueChanged();
 }
 
 void PsiAccount::processReadNext(const Jid &j)
@@ -5602,7 +5615,7 @@ void PsiAccount::processChatsHelper(const Jid &j, bool removeEvents)
         // 15:15 *mblsha is Offline
         // 15:10 <mblsha> hello!
 
-        for (const PsiEvent::Ptr &e : chatList) {
+        for (const PsiEvent::Ptr &e : qAsConst(chatList)) {
             if (e->type() == PsiEvent::Message) {
                 MessageEvent::Ptr me = e.staticCast<MessageEvent>();
                 const Message &   m  = me->message();
@@ -5773,7 +5786,7 @@ void PsiAccount::shareImage(const Jid &target, const QImage &image, const QStrin
 
 GCContact *PsiAccount::findGCContact(const Jid &j) const
 {
-    for (GCContact *c : d->gcbank) {
+    for (GCContact *c : qAsConst(d->gcbank)) {
         if (c->jid.compare(j))
             return c;
     }
@@ -5899,7 +5912,8 @@ QStringList PsiAccount::hiddenChats(const Jid &j) const
 {
     QStringList list;
 
-    for (ChatDlg *chat : findDialogs<ChatDlg *>(j, false))
+    const auto &chats = findDialogs<ChatDlg *>(j, false);
+    for (ChatDlg *chat : chats)
         list += chat->jid().resource();
 
     return list;
@@ -5909,7 +5923,7 @@ void PsiAccount::setNick(const QString &nick)
 {
     d->self.setName(nick);
     cpUpdate(d->self);
-    nickChanged();
+    emit nickChanged();
 }
 
 QString PsiAccount::nick() const { return d->self.name(); }
@@ -5938,8 +5952,9 @@ void PsiAccount::pgp_verifyFinished()
 #ifdef HAVE_PGPUTIL
     GpgTransaction *transaction = static_cast<GpgTransaction *>(sender());
 
-    const Jid &j = transaction->jid();
-    for (UserListItem *u : findRelevant(j)) {
+    const Jid & j     = transaction->jid();
+    const auto &items = findRelevant(j);
+    for (UserListItem *u : items) {
         UserResourceList::Iterator rit   = u->userResourceList().find(j.resource());
         bool                       found = !(rit == u->userResourceList().end());
         if (!found)
@@ -6326,8 +6341,7 @@ bool PsiAccount::ensureKey(const Jid &j)
         // does the user have any presence signed with a key?
         QString                 akey;
         const UserResourceList &rl = u->userResourceList();
-        for (UserResourceList::ConstIterator it = rl.begin(); it != rl.end(); ++it) {
-            const UserResource &r = *it;
+        for (const auto &r : rl) {
             if (!r.publicKeyID().isEmpty()) {
                 akey = r.publicKeyID();
                 break;
@@ -6429,7 +6443,7 @@ void PsiAccount::ed_addAuth(const Jid &j)
     if (static_cast<EventDlg *>(sender())->isForAll()) {
         QList<PsiEvent::Ptr> events;
         d->eventQueue->extractByType(PsiEvent::Auth, &events);
-        for (PsiEvent::Ptr e : events) {
+        for (const PsiEvent::Ptr &e : qAsConst(events)) {
             dj_addAuth(e->jid());
         }
     }
@@ -6441,7 +6455,7 @@ void PsiAccount::ed_deny(const Jid &j)
     if (static_cast<EventDlg *>(sender())->isForAll()) {
         QList<PsiEvent::Ptr> events;
         d->eventQueue->extractByType(PsiEvent::Auth, &events);
-        for (PsiEvent::Ptr e : events) {
+        for (const PsiEvent::Ptr &e : qAsConst(events)) {
             dj_deny(e->jid());
         }
     }

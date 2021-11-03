@@ -154,7 +154,7 @@ void ContactListModel::Private::updateContacts(const QList<PsiContact *> &contac
         QModelIndexList indexes2 = q->indexesFor(contact);
         indexes += indexes2;
 
-        for (const QModelIndex &index : indexes2) {
+        for (const QModelIndex &index : qAsConst(indexes2)) {
             QModelIndex parent = index.parent();
             int         row    = index.row();
             if (ranges.contains(parent)) {
@@ -278,7 +278,8 @@ void ContactListModel::Private::clear()
     q->beginResetModel();
 
     // disconnect accounts. they have nothing to update here after clear
-    for (const auto &child : q->root()->children()) {
+    const auto &children = q->root()->children();
+    for (const auto &child : children) {
         ContactListItem *item = static_cast<ContactListItem *>(child);
         if (item->isAccount()) {
             cleanUpAccount(item->account());
@@ -358,7 +359,8 @@ void ContactListModel::Private::contactUpdated()
     // Check for groups changing
     // Maybe very difficult and should be simplified?
     QList<ContactListItem *> groupItems;
-    for (const QPersistentModelIndex &index : monitoredContacts.values(contact)) {
+    const auto &             indexes = monitoredContacts.values(contact);
+    for (const QPersistentModelIndex &index : indexes) {
         ContactListItem *item   = q->toItem(index);
         ContactListItem *parent = item->parent();
         if (parent && parent->isGroup()) {
@@ -370,7 +372,7 @@ void ContactListModel::Private::contactUpdated()
     ContactListItem::SpecialGroupType specialGroupType = specialGroupFor(contact);
     if (specialGroupType == ContactListItem::SpecialGroupType::NoneSpecialGroupType) {
         QStringList groups1;
-        for (ContactListItem *item : groupItems) {
+        for (ContactListItem *item : qAsConst(groupItems)) {
             groups1 << item->name();
         }
         groups1.sort();
@@ -543,7 +545,8 @@ QModelIndexList ContactListModel::indexesFor(const PsiContact *contact) const
 {
     Q_ASSERT(contact);
     QModelIndexList result;
-    for (const auto &index : d->monitoredContacts.values(const_cast<PsiContact *>(contact))) {
+    const auto &    indexes = d->monitoredContacts.values(const_cast<PsiContact *>(contact));
+    for (const auto &index : indexes) {
         result << index;
     }
     return result;
@@ -614,7 +617,7 @@ bool ContactListModel::setData(const QModelIndex &index, const QVariant &data, i
                     contacts << item->child(i)->contact();
             }
 
-            for (PsiContact *contact : contacts) {
+            for (PsiContact *contact : qAsConst(contacts)) {
                 QStringList groups = contact->groups();
                 groups.removeOne(oldName);
                 groups << name;

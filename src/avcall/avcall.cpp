@@ -513,7 +513,8 @@ private slots:
 
         if (transmitAudio && !rtp.localAudioPayloadInfo().isEmpty()) {
             QList<JingleRtpPayloadType> pis;
-            for (PsiMedia::PayloadInfo pi : rtp.localAudioPayloadInfo()) {
+            const auto &                lAPInfo = rtp.localAudioPayloadInfo();
+            for (const PsiMedia::PayloadInfo &pi : lAPInfo) {
                 JingleRtpPayloadType pt = payloadInfoToPayloadType(pi);
                 pis << pt;
             }
@@ -523,7 +524,8 @@ private slots:
 
         if (transmitVideo && !rtp.localVideoPayloadInfo().isEmpty()) {
             QList<JingleRtpPayloadType> pis;
-            for (PsiMedia::PayloadInfo pi : rtp.localVideoPayloadInfo()) {
+            const auto &                lVPInfo = rtp.localVideoPayloadInfo();
+            for (const PsiMedia::PayloadInfo &pi : lVPInfo) {
                 JingleRtpPayloadType pt = payloadInfoToPayloadType(pi);
                 pis << pt;
             }

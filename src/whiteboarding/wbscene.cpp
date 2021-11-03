@@ -29,7 +29,7 @@ void WbScene::queueTransformationRegeneration(WbItem *item)
 
 void WbScene::regenerateTransformations()
 {
-    for (QPointer<WbItem> item : pendingTranformations_) {
+    for (QPointer<WbItem> item : qAsConst(pendingTranformations_)) {
         if (item) {
             // qDebug() << QString("Regenerating %1 transform.").arg((unsigned int) &(*item)).toLatin1();
             item->regenerateTransform();
@@ -93,7 +93,8 @@ void WbScene::group()
 
 void WbScene::ungroup()
 {
-    for (QGraphicsItem *item : selectedItems()) {
+    const auto &gItems = selectedItems();
+    for (QGraphicsItem *item : gItems) {
         // find the QDomElement matching the selected item
         WbItem *wbitem = dynamic_cast<WbItem *>(item);
         if (wbitem) {
@@ -136,7 +137,8 @@ void WbScene::bring(int n, bool toExtremum)
         return;
 
     // bring each selected item
-    for (QGraphicsItem *selecteditem : selectedItems()) {
+    const auto &gItems = selectedItems();
+    for (QGraphicsItem *selecteditem : gItems) {
 
         if (!(selecteditem->parentItem() && selecteditem->parentItem()->isSelected())) {
 

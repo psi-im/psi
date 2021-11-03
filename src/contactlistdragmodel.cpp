@@ -103,7 +103,7 @@ void ContactListModelOperationList::removeAccidentalContactMoveOperations()
     QList<PsiContact *> contacts = operations_.keys();
     for (PsiContact *psiContact : contacts) {
         bool remove = false;
-        for (Operation op : operations_[psiContact]) {
+        for (const Operation &op : qAsConst(operations_[psiContact])) {
             if (psiContact->groups().contains(op.groupTo)) {
                 remove = true;
                 break;
@@ -175,7 +175,8 @@ QModelIndexList ContactListDragModel::indexesFor(const QMimeData *data) const
     if (!selection.haveRosterSelection() || !contactList())
         return result;
 
-    for (ContactListModelSelection::Contact contact : selection.contacts()) {
+    const auto &contacts = selection.contacts();
+    for (const ContactListModelSelection::Contact &contact : contacts) {
         PsiAccount *account = contactList()->getAccount(contact.account);
         if (!account)
             continue;
@@ -192,7 +193,8 @@ QModelIndexList ContactListDragModel::indexesFor(const QMimeData *data) const
         result += indexes;
     }
 
-    for (ContactListModelSelection::Group group : selection.groups()) {
+    const auto &groups = selection.groups();
+    for (const ContactListModelSelection::Group &group : groups) {
         ContactListItem *item  = static_cast<ContactListItem *>(root())->findGroup(group.fullName);
         QModelIndex      index = this->toModelIndex(item);
         if (!result.contains(index))
@@ -233,7 +235,8 @@ bool ContactListDragModel::supportsMimeDataOnIndex(const QMimeData *data, const 
     if (group && !group->isEditable())
         return false;
 
-    for (const QModelIndex &index : indexesFor(data)) {
+    const auto &indexes = indexesFor(data);
+    for (const QModelIndex &index : indexes) {
         if (index == parent) {
             return false;
         }
@@ -273,7 +276,8 @@ bool ContactListDragModel::dropMimeData(const QMimeData *data, Qt::DropAction ac
     if (!selection.haveRosterSelection() || !contactList())
         return false;
 
-    for (const ContactListModelSelection::Contact &contact : selection.contacts()) {
+    const auto &contacts = selection.contacts();
+    for (const ContactListModelSelection::Contact &contact : contacts) {
         PsiAccount *account    = contactList()->getAccount(contact.account);
         PsiContact *psiContact = account ? account->findContact(contact.jid) : nullptr;
 

@@ -359,7 +359,8 @@ void ChatDlg::dragEnterEvent(QDragEnterEvent *event)
     Q_ASSERT(event);
     // bool accept = false;
     if (account()->loggedIn() && event->mimeData()->hasUrls()) {
-        for (QUrl url : event->mimeData()->urls()) {
+        const auto &urls = event->mimeData()->urls();
+        for (const QUrl &url : urls) {
             if (!url.toLocalFile().isEmpty()) {
                 event->accept();
                 break;
@@ -925,11 +926,11 @@ void ChatDlg::holdMessages(bool hold)
         if (!delayedMessages)
             delayedMessages = new QList<MessageView>();
     } else if (delayedMessages) {
-        for (const MessageView &mv : *delayedMessages) {
+        for (const MessageView &mv : qAsConst(*delayedMessages)) {
             if (mv.isSpooled())
                 displayMessage(mv);
         }
-        for (const MessageView &mv : *delayedMessages) {
+        for (const MessageView &mv : qAsConst(*delayedMessages)) {
             if (!mv.isSpooled())
                 displayMessage(mv);
         }

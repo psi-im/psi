@@ -120,7 +120,7 @@ void ChatSplitter::setSplitterEnabled(bool enable)
  */
 void ChatSplitter::updateLayout()
 {
-    for (QWidget *child : children_)
+    for (QWidget *child : qAsConst(children_))
         child->setParent(this);
 
     delete splitter_;
@@ -132,7 +132,7 @@ void ChatSplitter::updateLayout()
     splitter_->setOrientation(Qt::Vertical);
     splitter_->setVisible(splitterEnabled());
 
-    for (QWidget *child : children_)
+    for (QWidget *child : qAsConst(children_))
         updateChildLayout(child);
 
     connect(splitter_, SIGNAL(splitterMoved(int, int)), SIGNAL(splitterMoved(int, int)));
