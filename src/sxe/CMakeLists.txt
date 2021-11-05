@@ -6,6 +6,13 @@ unset(EXTRA_LDFLAGS)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
+if(ISDEBUG)
+    option(SXE_NO_DEBUG "Add -DNDEBUG definition" ON)
+    if(NOT SXE_NDEBUG)
+        add_definitions(-DNDEBUG)
+    endif()
+endif()
+
 set(SOURCES
     sxeedit.cpp
     sxemanager.cpp

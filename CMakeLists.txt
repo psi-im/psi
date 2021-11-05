@@ -71,6 +71,7 @@ option( ONLY_BINARY "Build and install only binary file" OFF )
 option( ONLY_PLUGINS "Build psi plugins only" OFF )
 option( INSTALL_EXTRA_FILES "Install sounds, iconsets, certs, client_icons.txt, themes" ON )
 option( INSTALL_PLUGINS_SDK "Install sdk files to build plugins outside of project" OFF )
+option( PLUGINS_NO_DEBUG "Add -DPLUGINS_NO_DEBUG definition" OFF )
 # Developers options
 option( DEV_MODE "Enable prepare-bin-libs target for MS Windows only. Set PSI_DATADIR and PSI_LIBDIR to CMAKE_RUNTIME_OUTPUT_DIRECTORY to debug plugins for Linux only" OFF )
 # Iris options
@@ -146,6 +147,18 @@ message(STATUS "System name - ${CMAKE_SYSTEM_NAME}")
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" OR ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo"))
     set(ISDEBUG ON)
+    option(PLUGIN_INSTALL_PATH_DEBUG "Add -DPLUGIN_INSTALL_PATH_DEBUG definition" OFF)
+    option(CHATVIEW_CORRECTION_DEBUG "Add -DCORRECTION_DEBUG definition" OFF)
+    if(PLUGIN_INSTALL_PATH_DEBUG)
+        add_definitions(-DPLUGIN_INSTALL_PATH_DEBUG)
+    endif()
+    if(CHATVIEW_CORRECTION_DEBUG)
+        add_definitions(-DCORRECTION_DEBUG)
+    endif()
+endif()
+
+if(PLUGINS_NO_DEBUG)
+    add_definitions(-DPLUGINS_NO_DEBUG)
 endif()
 
 if(ONLY_PLUGINS)
@@ -179,6 +192,7 @@ if( CMAKE_CROSSCOMPILING AND (DEFINED MSYS) )
     if(IS_WEBENGINE)
         message(FATAL_ERROR "Webengine is not available in MXE. Please set the CHAT_TYPE variable to Webkit or Basic")
     endif()
+    set(BUNDLED_USRSCTP ON)
 endif()
 
 # For GNU/Linux and *BSD systems:
