@@ -1349,7 +1349,7 @@ public:
             return false;
         });
 
-        std::any_of(preferredSound.begin(), preferredSound.end(), [&, this](const auto &mime) {
+        loadSuccess = loadSuccess && std::any_of(preferredSound.begin(), preferredSound.end(), [&, this](const auto &mime) {
             QFileInfo fi(dir);
             QString   fileName = sound[mime];
             if (!fi.isDir()) { // it is a .zip file then

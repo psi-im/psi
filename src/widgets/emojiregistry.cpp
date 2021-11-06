@@ -77,7 +77,7 @@ int EmojiRegistry::count() const
     int count = 0;
     for (auto const &g : groups) {
         for (auto const &s : g.subGroups) {
-            count += s.emojis.size();
+            count += int(s.emojis.size());
         }
     }
     return count;

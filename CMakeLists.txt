@@ -53,6 +53,12 @@ if (APPLE OR MSVC)
     set( DEFAULT_BUNDLED_QCA ON )
 endif()
 
+set( DEFAULT_BUNDLED_USRSCTP OFF )
+if (APPLE OR (MSVC OR USE_MXE))
+    set( DEFAULT_BUNDLED_USRSCTP ON )
+endif()
+
+
 # Common options
 set( CHAT_TYPE "BASIC" CACHE STRING "Type of chatlog engine. WEBKIT | WEBENGINE | BASIC" )
 option( PRODUCTION "Build production version" OFF )
@@ -76,7 +82,7 @@ option( PLUGINS_NO_DEBUG "Add -DPLUGINS_NO_DEBUG definition" OFF )
 option( DEV_MODE "Enable prepare-bin-libs target for MS Windows only. Set PSI_DATADIR and PSI_LIBDIR to CMAKE_RUNTIME_OUTPUT_DIRECTORY to debug plugins for Linux only" OFF )
 # Iris options
 option( BUNDLED_QCA "Adds: DTLS, Blake2b and other useful for XMPP crypto-stuff" ${DEFAULT_BUNDLED_QCA} )
-option( BUNDLED_USRSCTP "Compile compatible usrsctp lib when system one is not available or uncompatible (required for p2p file transfer)" OFF )
+option( BUNDLED_USRSCTP "Compile compatible usrsctp lib when system one is not available or uncompatible (required for p2p file transfer)" ${DEFAULT_BUNDLED_USRSCTP} )
 if (UNIX AND "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     option( ENABLE_ASAN "Enable compilation with address sanitizer" OFF )
 endif()

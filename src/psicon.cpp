@@ -126,7 +126,6 @@
 #include <QList>
 #include <QMenuBar>
 #include <QMessageBox>
-#include <QNetworkConfigurationManager>
 #include <QNetworkReply>
 #include <QPixmap>
 #include <QPixmapCache>
