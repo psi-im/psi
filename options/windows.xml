@@ -6,6 +6,15 @@
                 <enable type="bool">true</enable>
                 <use-double-click type="bool">true</use-double-click>
             </systemtray>
+            <look>
+                <font>
+                    <chat type="QString">Arial,12,-1,5,50,0,0,0,0,0</chat>
+                    <contactlist type="QString">Arial,12,-1,5,50,0,0,0,0,0</contactlist>
+                    <message type="QString">Arial,12,-1,5,50,0,0,0,0,0</message>
+                    <passive-popup type="QString">Arial,10,-1,5,50,0,0,0,0,0</passive-popup>
+                </font>
+                <css type="QString" />
+            </look>
         </ui>
     </options>
 </psi>
