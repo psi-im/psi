@@ -330,8 +330,8 @@ QLineEdit#le_status_text {
                 <theme comment="The theme used for groupchat messages rendering" type="QString">psi/classic</theme>
                 <highlight-words type="QStringList" />
                 <size comment="Remembered window size" type="QSize">
-                    <width>580</width>
-                    <height>420</height>
+                    <width>960</width>
+                    <height>620</height>
                 </size>
                 <use-highlighting type="bool">true</use-highlighting><use-nick-coloring type="bool">true</use-nick-coloring><use-hash-nick-coloring type="bool">true</use-hash-nick-coloring><colored-history type="bool">true</colored-history>
                 <allow-highlight-events type="bool">false</allow-highlight-events>
@@ -504,7 +504,25 @@ QLineEdit#le_status_text {
                 <mouse-doubleclick-action type="QString">detach</mouse-doubleclick-action>
                 <size type="QString"></size> <!-- will be invalid when converted to QSize so we can detect first load -->
                 <grouping type="QString" comment="A ':' seperated list of groups of kinds of tabs to keep in the same tabset. 'C' for chat and 'M' for mucs. 'A' means using all in one window patch.">CM</grouping>
-                <group-state comment="Saved state data of the tabsets defined by options.ui.tabs.grouping"/>
+                <group-state comment="Saved state data of the tabsets defined by options.ui.tabs.grouping">
+                    <CM>
+                        <size-frame type="QRect">
+                            <x>300</x>
+                            <y>200</y>
+                            <width>963</width>
+                            <height>658</height>
+                        </size-frame>
+                        <size-maximized type="bool">false</size-maximized>
+                        <size-fullscreen type="bool">false</size-fullscreen>
+                        <size type="QRect">
+                            <x>301</x>
+                            <y>231</y>
+                            <width>961</width>
+                            <height>626</height>
+                        </size>
+                        <size-screen type="int">0</size-screen>
+                    </CM>
+                </group-state>
                 <tab-singles type="QString" comment="Tab types that would have been untabbed are given their own tabset. 'C' for chat and 'M' for mucs"/>
                 <use-tab-shortcuts type="bool">true</use-tab-shortcuts>
                 <show-tab-buttons type="bool">true</show-tab-buttons>
