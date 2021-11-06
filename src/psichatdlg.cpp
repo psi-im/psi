@@ -311,7 +311,7 @@ void PsiChatDlg::initUi()
     chateditHeight = PsiOptions::instance()->getOption("options.ui.chat.chatedit-height").toInt();
     setVSplitterPosition(logHeight, chateditHeight);
 
-    connect(ui_.splitter, SIGNAL(splitterMoved(int, int)), this, SLOT(verticalSplitterMoved(int, int)));
+    connect(ui_.splitter, &ChatSplitter::splitterMoved, this, &PsiChatDlg::verticalSplitterMoved);
 
     smallChat_ = PsiOptions::instance()->getOption("options.ui.chat.use-small-chats").toBool();
     ui_.pb_send->setIcon(IconsetFactory::icon("psi/action_button_send").icon());
@@ -323,8 +323,7 @@ void PsiChatDlg::initUi()
     connect(act_mini_cmd_, SIGNAL(triggered()), SLOT(doMiniCmd()));
     addAction(act_mini_cmd_);
 
-    connect(ui_.log->textWidget(), SIGNAL(quote(const QString &)), ui_.mle->chatEdit(),
-            SLOT(insertAsQuote(const QString &)));
+    connect(ui_.log->textWidget(), &ChatView::quote, ui_.mle->chatEdit(), &ChatEdit::insertAsQuote);
 
     act_pastesend_ = new IconAction(tr("Paste and Send"), "psi/action_paste_and_send", tr("Paste and Send"), 0, this);
     connect(act_pastesend_, SIGNAL(triggered()), SLOT(doPasteAndSend()));
@@ -739,7 +738,6 @@ void PsiChatDlg::updateJidWidget(const QList<UserListItem *> &ul, int status, bo
                     new_auto_jid = jid().bare();
                 } else {
                     if (!jid().resource().isEmpty()) {
-                        new_index = jidCombo->count();
                         setJidComboItem(curr_index, makeContactName(name, jid()), jid(), iconStr);
                         new_index = curr_index++;
                     }
@@ -931,36 +929,30 @@ void PsiChatDlg::actPgpToggled(bool b)
     if (!account()->hasPgp() || !PGPUtil::instance().pgpAvailable())
         return;
 
-    QMenu *  menu                  = new QMenu();
-    QAction *actEnablePgp          = new QAction(tr("Enable OpenPGP encryption"), this);
-    QAction *actDisablePgp         = new QAction(tr("Disable OpenPGP encryption"), this);
-    QAction *actAssignKey          = new QAction(tr("Assign Open&PGP Key"), this);
-    QAction *actUnassignKey        = new QAction(tr("Unassign Open&PGP Key"), this);
-    QAction *actShowOwnFingerprint = new QAction(tr("Show own &fingerprint"), this);
-    QAction *actSendOwnPublicKey   = new QAction(tr("Send own public key"), this);
-    QAction *actSendPublicKey      = new QAction(tr("Send public key..."), this);
+    QMenu menu;
+    QAction *actAssignKey    = nullptr;
+    QAction *actUnassignKey  = nullptr;
+
+    auto actEnablePgp = menu.addAction(tr("Enable OpenPGP encryption"));
+    auto actDisablePgp = menu.addAction(tr("Disable OpenPGP encryption"));
 
     actEnablePgp->setVisible(b);
     actDisablePgp->setVisible(!b);
 
-    menu->addAction(actEnablePgp);
-    menu->addAction(actDisablePgp);
-
     UserListItem *item = account()->findFirstRelevant(jid());
     if (item) {
+        menu.addSeparator();
+        actAssignKey = menu.addAction(tr("Assign Open&PGP Key"));
+        actUnassignKey = menu.addAction(tr("Unassign Open&PGP Key"));
         actAssignKey->setVisible(item->publicKeyID().isEmpty());
         actUnassignKey->setVisible(!item->publicKeyID().isEmpty());
-
-        menu->addSeparator();
-        menu->addAction(actAssignKey);
-        menu->addAction(actUnassignKey);
     }
-    menu->addAction(actShowOwnFingerprint);
-    menu->addSeparator();
-    menu->addAction(actSendOwnPublicKey);
-    menu->addAction(actSendPublicKey);
+    auto actShowOwnFingerprint = menu.addAction(tr("Show own &fingerprint"));
+    menu.addSeparator();
+    auto actSendOwnPublicKey = menu.addAction(tr("Send own public key"));
+    auto actSendPublicKey = menu.addAction(tr("Send public key..."));
 
-    QAction *act = menu->exec(QCursor::pos());
+    QAction *act = menu.exec(QCursor::pos());
     if (act == actEnablePgp) {
         actions_->action("chat_pgp")->setChecked(true);
         account()->setPgpEnabled(jid(), true);
@@ -982,8 +974,6 @@ void PsiChatDlg::actPgpToggled(bool b)
     } else if (act == actSendPublicKey) {
         sendPublicKey();
     }
-
-    delete menu;
 #endif // HAVE_PGPUTIL
 }
 
