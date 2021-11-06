@@ -403,8 +403,8 @@ bool PsiCon::init()
 
     d->contactList = new PsiContactList(this);
 
-    connect(d->contactList, SIGNAL(accountAdded(PsiAccount *)), SIGNAL(accountAdded(PsiAccount *)));
-    connect(d->contactList, SIGNAL(accountRemoved(PsiAccount *)), SIGNAL(accountRemoved(PsiAccount *)));
+    connect(d->contactList, &PsiContactList::accountAdded, this, &PsiCon::accountAdded);
+    connect(d->contactList, &PsiContactList::accountRemoved, this, &PsiCon::accountRemoved);
     connect(d->contactList, SIGNAL(accountCountChanged()), SIGNAL(accountCountChanged()));
     connect(d->contactList, SIGNAL(accountActivityChanged()), SIGNAL(accountActivityChanged()));
     connect(d->contactList, SIGNAL(saveAccounts()), SLOT(saveAccounts()));
@@ -499,7 +499,7 @@ bool PsiCon::init()
         proxy->migrateItemList(d->optionsMigration.proxyMigration);
     connect(proxy, SIGNAL(settingsChanged()), SLOT(proxy_settingsChanged()));
 
-    connect(options, SIGNAL(optionChanged(const QString &)), SLOT(optionChanged(const QString &)));
+    connect(options, &PsiOptions::optionChanged, this, &PsiCon::optionChanged);
 
     contactUpdatesManager_ = new ContactUpdatesManager(this);
 

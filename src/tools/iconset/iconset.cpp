@@ -1349,11 +1349,11 @@ public:
             return false;
         });
 
-        loadSuccess = loadSuccess && std::any_of(preferredSound.begin(), preferredSound.end(), [&, this](const auto &mime) {
+#ifdef ICONSET_SOUND
+        loadSuccess = loadSuccess && (sound.isEmpty() || std::any_of(preferredSound.begin(), preferredSound.end(), [&, this](const auto &mime) {
             QFileInfo fi(dir);
             QString   fileName = sound[mime];
             if (!fi.isDir()) { // it is a .zip file then
-#ifdef ICONSET_SOUND
                 if (!iconSharedObject) {
                     iconSharedObject = new IconSharedObject();
                 }
@@ -1385,7 +1385,6 @@ public:
                 out.writeRawData(data, data.size());
                 icon.setSound(path);
                 return true;
-#endif
             } else {
                 QString absFN = fi.absoluteFilePath() + '/' + fileName;
                 if (QFileInfo(absFN).isReadable()) {
@@ -1397,7 +1396,8 @@ public:
                        qPrintable(mime), qPrintable(fileName), qPrintable(name), qPrintable(this->name));
                 return false;
             }
-        });
+        }));
+#endif
 
         // construct RegExp
         if (text.count()) {
