@@ -99,7 +99,7 @@ public:
     static const DWORD stringListMessage = 1;
 
     bool sendMessage(const QString &to, UINT message, WPARAM wParam, LPARAM lParam) const;
-    bool winEvent(MSG *msg, long *result);
+    bool nativeEvent(const QByteArray &eventType, void *message, long *result) override;
 
     bool sendStringList(const QString &to, const QStringList &list) const;
 
@@ -163,8 +163,12 @@ bool ActiveProfiles::Private::sendStringList(const QString &to, const QStringLis
     return sendMessage(to, WM_COPYDATA, (WPARAM)winId(), (LPARAM)(LPVOID)&cd);
 }
 
-bool ActiveProfiles::Private::winEvent(MSG *msg, long *result)
+bool ActiveProfiles::Private::nativeEvent(const QByteArray &eventType, void *message, long *result)
 {
+    [[maybe_unused]] static const auto expectedType = QByteArray("windows_generic_MSG");
+    Q_ASSERT(eventType == expectedType);
+    auto msg = static_cast<MSG*>(message);
+
     if (msg->message == WM_COPYDATA) {
         *result            = FALSE;
         COPYDATASTRUCT *cd = (COPYDATASTRUCT *)msg->lParam;
