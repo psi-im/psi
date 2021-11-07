@@ -633,11 +633,12 @@ void ChatEdit::insertAsQuote(const QString &text)
     quote.replace("\n", QString::fromUtf8(u8"\n» "));
 
     // Check for previous quote and merge if true
-    if (!prevLine.startsWith(QString::fromUtf8(u8"»"))) {
+    if (!prevLine.isEmpty() && !prevLine.startsWith(QString::fromUtf8(u8"»"))) {
         quote.prepend("\n");
     }
     quote.append("\n");
     insertPlainText(quote);
+    setFocus(Qt::OtherFocusReason);
 }
 
 void ChatEdit::addSoundRecButton()
