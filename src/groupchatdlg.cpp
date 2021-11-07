@@ -1047,7 +1047,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     // resize the vertical splitter
     d->logHeight      = PsiOptions::instance()->getOption("options.ui.chat.log-height").toInt();
     d->chateditHeight = PsiOptions::instance()->getOption("options.ui.chat.chatedit-height").toInt();
-    setVSplitterPosition(d->logHeight, d->chateditHeight);
+    QTimer::singleShot(0, this, [this]() { setVSplitterPosition(d->logHeight, d->chateditHeight); });
 
     X11WM_CLASS("groupchat");
 
@@ -1055,8 +1055,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     ui_.log->realTextWidget()->installEventFilter(d);
 
     // Connect signals from MUC manager
-    connect(d->mucManager, SIGNAL(action_error(MUCManager::Action, int, const QString &)),
-            SLOT(action_error(MUCManager::Action, int, const QString &)));
+    connect(d->mucManager, &MUCManager::action_error, this, &GCMainDlg::action_error);
     connect(d->mucManager, SIGNAL(action_success(MUCManager::Action)), d->usersModel, SLOT(updateAll()));
 
     updateMucName();
