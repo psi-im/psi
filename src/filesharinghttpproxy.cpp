@@ -61,7 +61,7 @@ FileSharingHttpProxy::FileSharingHttpProxy(PsiAccount *acc, const QString &sourc
     if (isRanged && item->isSizeKnown()) {
         if (requestedStart == 0 && requestedSize == item->fileSize())
             isRanged = false;
-        else if (requestedStart + requestedSize > item->fileSize())
+        else if (quint64(requestedStart) + requestedSize > item->fileSize())
             requestedSize = item->fileSize() - requestedStart; // don't request more than declared in share
     }
 
@@ -105,25 +105,25 @@ int FileSharingHttpProxy::parseHttpRangeRequest()
 
     auto ba = QByteArray::fromRawData(rangesBa.data() + sizeof("bytes"), rangesBa.size() - int(sizeof("bytes")));
 
-    auto l = ba.trimmed().split('-');
-    if (l.size() != 2) {
+    auto rangeBounds = ba.trimmed().split('-');
+    if (rangeBounds.size() != 2) {
         return qhttp::ESTATUS_BAD_REQUEST;
     }
 
     bool   ok;
-    qint64 start;
-    qint64 end;
+    quint64 start;
+    quint64 end;
 
-    if (!l[0].size()) { // bytes from the end are requested. Jingle-ft doesn't support this
+    if (rangeBounds[0].isEmpty()) { // bytes from the end are requested. Jingle-ft doesn't support this
         return qhttp::ESTATUS_NOT_IMPLEMENTED;
     }
 
-    start = l[0].toLongLong(&ok);
+    start = rangeBounds[0].toULongLong(&ok);
     if (!ok) {
         return qhttp::ESTATUS_BAD_REQUEST;
     }
-    if (l[1].size()) {              // if we have end
-        end = l[1].toLongLong(&ok); // then parse it
+    if (rangeBounds[1].size()) {              // if we have end
+        end = rangeBounds[1].toLongLong(&ok); // then parse it
         if (!ok || start > end) {   // if something not parsed or range is invalid
             return qhttp::ESTATUS_BAD_REQUEST;
         }

@@ -70,7 +70,7 @@ public:
 public slots:
     void scrollUp();
     void scrollDown();
-    void updateAvatar(const XMPP::Jid &jid, UserType utype);
+    void updateAvatar(const XMPP::Jid &jid, ChatViewCommon::UserType utype);
 
     void setEncryptionEnabled(bool enabled);
 
@@ -94,6 +94,7 @@ private slots:
 signals:
     void showNM(const QString &);
     void nickInsertClick(const QString &nick);
+    void quote(const QString &text);
 
 private:
     friend class ChatViewPrivate;

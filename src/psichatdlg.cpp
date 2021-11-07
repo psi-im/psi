@@ -323,7 +323,7 @@ void PsiChatDlg::initUi()
     connect(act_mini_cmd_, SIGNAL(triggered()), SLOT(doMiniCmd()));
     addAction(act_mini_cmd_);
 
-    connect(ui_.log->textWidget(), &ChatView::quote, ui_.mle->chatEdit(), &ChatEdit::insertAsQuote);
+    connect(ui_.log, &ChatView::quote, ui_.mle->chatEdit(), &ChatEdit::insertAsQuote);
 
     act_pastesend_ = new IconAction(tr("Paste and Send"), "psi/action_paste_and_send", tr("Paste and Send"), 0, this);
     connect(act_pastesend_, SIGNAL(triggered()), SLOT(doPasteAndSend()));
@@ -686,7 +686,7 @@ void PsiChatDlg::updateJidWidget(const QList<UserListItem *> &ul, int status, bo
             return;
         UserResourceList resList  = u->userResourceList();
         const QString    name     = u->name();
-        QComboBox *      jidCombo = ui_.le_jid;
+        QComboBox       *jidCombo = ui_.le_jid;
         if (!u->isPrivate()) {
             // If no conference private chat
             const int combo_idx = jidCombo->currentIndex();
@@ -929,11 +929,11 @@ void PsiChatDlg::actPgpToggled(bool b)
     if (!account()->hasPgp() || !PGPUtil::instance().pgpAvailable())
         return;
 
-    QMenu menu;
-    QAction *actAssignKey    = nullptr;
-    QAction *actUnassignKey  = nullptr;
+    QMenu    menu;
+    QAction *actAssignKey   = nullptr;
+    QAction *actUnassignKey = nullptr;
 
-    auto actEnablePgp = menu.addAction(tr("Enable OpenPGP encryption"));
+    auto actEnablePgp  = menu.addAction(tr("Enable OpenPGP encryption"));
     auto actDisablePgp = menu.addAction(tr("Disable OpenPGP encryption"));
 
     actEnablePgp->setVisible(b);
@@ -942,7 +942,7 @@ void PsiChatDlg::actPgpToggled(bool b)
     UserListItem *item = account()->findFirstRelevant(jid());
     if (item) {
         menu.addSeparator();
-        actAssignKey = menu.addAction(tr("Assign Open&PGP Key"));
+        actAssignKey   = menu.addAction(tr("Assign Open&PGP Key"));
         actUnassignKey = menu.addAction(tr("Unassign Open&PGP Key"));
         actAssignKey->setVisible(item->publicKeyID().isEmpty());
         actUnassignKey->setVisible(!item->publicKeyID().isEmpty());
@@ -950,7 +950,7 @@ void PsiChatDlg::actPgpToggled(bool b)
     auto actShowOwnFingerprint = menu.addAction(tr("Show own &fingerprint"));
     menu.addSeparator();
     auto actSendOwnPublicKey = menu.addAction(tr("Send own public key"));
-    auto actSendPublicKey = menu.addAction(tr("Send public key..."));
+    auto actSendPublicKey    = menu.addAction(tr("Send public key..."));
 
     QAction *act = menu.exec(QCursor::pos());
     if (act == actEnablePgp) {

@@ -61,6 +61,7 @@ endif()
 
 # Common options
 set( CHAT_TYPE "BASIC" CACHE STRING "Type of chatlog engine. WEBKIT | WEBENGINE | BASIC" )
+set_property(CACHE CHAT_TYPE PROPERTY STRINGS WEBKIT WEBENGINE BASIC)
 option( PRODUCTION "Build production version" OFF )
 option( VERBOSE_PROGRAM_NAME "Verbose output binary name" OFF )
 option( BUNDLED_IRIS "Build iris library bundled" ON )

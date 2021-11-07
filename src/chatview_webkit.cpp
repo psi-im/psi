@@ -74,8 +74,9 @@ public:
 
     Theme theme;
 
-    WebView *                 webView  = nullptr;
-    ChatViewJSObject *        jsObject = nullptr;
+    WebView                  *webView     = nullptr;
+    QAction                  *quoteAction = nullptr;
+    ChatViewJSObject         *jsObject    = nullptr;
     QList<QVariantMap>        jsBuffer_;
     bool                      sessionReady_ = false;
     QPointer<QWidget>         dialog_;
@@ -84,10 +85,10 @@ public:
     bool                      isEncryptionEnabled_ = false;
     Jid                       jid_;
     QString                   name_;
-    PsiAccount *              account_ = nullptr;
+    PsiAccount               *account_ = nullptr;
     AvatarFactory::UserHashes remoteIcons;
     AvatarFactory::UserHashes localIcons;
-    ChatViewThemeProvider *   themeProvider = nullptr;
+    ChatViewThemeProvider    *themeProvider = nullptr;
 
     static QString closeIconTags(const QString &richText)
     {
@@ -143,7 +144,8 @@ public:
 class ChatViewJSObject : public ChatViewThemeSession {
     Q_OBJECT
 
-    friend class ChatView; // we have a lot of suc hacks. time to think about redesign
+    friend class ChatView; // we have a lot of suc hacks. time to think about
+                           // redesign
     ChatView *_view;
 
     Q_PROPERTY(bool isMuc READ isMuc CONSTANT)
@@ -164,7 +166,7 @@ public:
     // accepts url of http request from chatlog.
     // returns to callback data and content-type.
     // if data is null then it's 404
-    bool getContents(const QUrl &                                                              url,
+    bool getContents(const QUrl                                                               &url,
                      std::function<void(bool success, const QByteArray &, const QByteArray &)> callback)
     {
         if (url.path().startsWith("/psibob/")) {
@@ -213,12 +215,11 @@ public:
         emit localUserImageChanged(hash.isEmpty() ? QString() : avatarUrl(hash));
     }
 
-public slots:
-    QString mucNickColor(QString nick, bool isSelf) const { return _view->getMucNickColor(nick, isSelf); }
+    Q_INVOKABLE QString mucNickColor(QString nick, bool isSelf) const { return _view->getMucNickColor(nick, isSelf); }
 
-    void signalInited() { emit inited(); }
+    Q_INVOKABLE void signalInited() { emit inited(); }
 
-    QString getFont() const
+    Q_INVOKABLE QString getFont() const
     {
         QFont   f      = static_cast<ChatView *>(parent())->font();
         QString weight = "normal";
@@ -241,14 +242,15 @@ public slots:
         // Need to convert point size to pixel size
         int pixelSize = pointToPixel(f.pointSize());
 
-        return QString("{fontFamily:'%1',fontSize:'%2px',fontStyle:'%3',fontVariant:'%4',fontWeight:'%5'}")
+        return QString("{fontFamily:'%1',fontSize:'%2px',fontStyle:'%3',"
+                       "fontVariant:'%4',fontWeight:'%5'}")
             .arg(f.family())
             .arg(pixelSize)
             .arg(f.style() == QFont::StyleNormal ? "normal" : (f.style() == QFont::StyleItalic ? "italic" : "oblique"),
                  f.capitalization() == QFont::SmallCaps ? "small-caps" : "normal", weight);
     }
 
-    QString getPaletteColor(const QString &name) const
+    Q_INVOKABLE QString getPaletteColor(const QString &name) const
     {
         QPalette::ColorRole cr = QPalette::NoRole;
 
@@ -273,9 +275,9 @@ public slots:
         return _view->palette().color(cr).name();
     }
 
-    void nickInsertClick(const QString &nick) { emit _view->nickInsertClick(nick); }
+    Q_INVOKABLE void nickInsertClick(const QString &nick) { emit _view->nickInsertClick(nick); }
 
-    void getUrlHeaders(const QString &tId, const QString url)
+    Q_INVOKABLE void getUrlHeaders(const QString &tId, const QString &url)
     {
         QNetworkRequest req(QUrl::fromEncoded(url.toLatin1()));
         req.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
@@ -298,8 +300,9 @@ private slots:
             QString value;
 #if QT_VERSION < QT_VERSION_CHECK(5, 9, 3)
             if (key == QLatin1String("content-type")) {
-                // workaround for qt bug #61300 which put headers from origial request and redirect request in one hash
-                // other headers most likely are invalid too, but this one is important for us.
+                // workaround for qt bug #61300 which put headers from origial request
+                // and redirect request in one hash other headers most likely are
+                // invalid too, but this one is important for us.
                 value = QString::fromLatin1(p.second).section(',', -1).trimmed();
             } else
 #endif
@@ -377,33 +380,19 @@ protected:
 #endif
 
 //----------------------------------------------------------------------------
-// ChatWebView
-//----------------------------------------------------------------------------
-class ChatWebView : public WebView {
-    Q_OBJECT
-
-public:
-    ChatWebView(QWidget *parent) : WebView(parent)
-    {
-        auto act = new QAction(tr("Quote"), this);
-        act->setShortcut(QKeySequence(tr("Ctrl+S")));
-        addContextMenuAction(act);
-        connect(act, &QAction::triggered, this, [this](bool) { emit quote(selectedText()); });
-    }
-
-signals:
-    void quote(const QString &text);
-};
-
-//----------------------------------------------------------------------------
 // ChatView
 //----------------------------------------------------------------------------
 ChatView::ChatView(QWidget *parent) : QFrame(parent), d(new ChatViewPrivate)
 {
     d->jsObject = new ChatViewJSObject(this); /* It's a session bridge between html and c++ part */
-    d->webView  = new ChatWebView(this);
+    d->webView  = new WebView(this);
     d->webView->setFocusPolicy(Qt::NoFocus);
     d->webView->setPage(new ChatViewPage(d->webView));
+
+    d->quoteAction = new QAction(tr("Quote"), this);
+    d->quoteAction->setShortcut(QKeySequence(tr("Ctrl+S")));
+    d->webView->addContextMenuAction(d->quoteAction);
+    connect(d->quoteAction, &QAction::triggered, this, [this](bool) { emit quote(d->webView->selectedText()); });
 #ifndef WEBENGINE
     d->webView->settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
 #endif
@@ -417,7 +406,8 @@ ChatView::ChatView(QWidget *parent) : QFrame(parent), d(new ChatViewPrivate)
 #ifndef HAVE_X11 // linux has this feature built-in
     connect(PsiOptions::instance(), SIGNAL(optionChanged(QString)),
             SLOT(psiOptionChanged(QString)));                        // needed only for save autocopy state atm
-    psiOptionChanged("options.ui.automatically-copy-selected-text"); // init autocopy connection
+    psiOptionChanged("options.ui.automatically-copy-selected-text"); // init autocopy
+                                                                     // connection
 #endif
     connect(d->jsObject, &ChatViewJSObject::inited, this, &ChatView::sessionInited);
 
@@ -638,7 +628,7 @@ void ChatView::scrollUp() { emit d->jsObject->scrollRequested(-50); }
 
 void ChatView::scrollDown() { emit d->jsObject->scrollRequested(50); }
 
-void ChatView::updateAvatar(const Jid &jid, ChatViewCommon::UserType utype)
+void ChatView::updateAvatar(const Jid &jid, UserType utype)
 {
     bool avatarChanged = false;
     bool vcardChanged  = false;
