@@ -8,10 +8,10 @@
             </systemtray>
             <look>
                 <font>
-                    <chat type="QString">Arial,12,-1,5,50,0,0,0,0,0</chat>
-                    <contactlist type="QString">Arial,12,-1,5,50,0,0,0,0,0</contactlist>
-                    <message type="QString">Arial,12,-1,5,50,0,0,0,0,0</message>
-                    <passive-popup type="QString">Arial,10,-1,5,50,0,0,0,0,0</passive-popup>
+                    <chat type="QString">Segoe UI,11,-1,5,50,0,0,0,0,0,Обычный</chat>
+                    <contactlist type="QString">Segoe UI,11,-1,5,50,0,0,0,0,0,Обычный</contactlist>
+                    <passive-popup type="QString">Segoe UI,10,-1,5,50,0,0,0,0,0,Обычный</passive-popup>
+                    <message type="QString">Segoe UI,11,-1,5,50,0,0,0,0,0,Обычный</message>
                 </font>
                 <css type="QString" />
             </look>
