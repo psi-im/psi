@@ -212,19 +212,19 @@ public:
 
     ~Private() { delete actions; }
 
-    GCMainDlg *                            dlg;
+    GCMainDlg                             *dlg;
     int                                    state;
     int                                    mucNameSource;
-    MUCManager *                           mucManager;
-    GCUserModel *                          usersModel;
+    MUCManager                            *mucManager;
+    GCUserModel                           *usersModel;
     QString                                self, prev_self;
     QString                                mucName, discoMucName, discoMucDescription, vcardMucName;
     QString                                password;
     QMap<LanguageManager::LangId, QString> subjectMap;
     bool                                   nonAnonymous; // got status code 100 ?
-    ActionList *                           actions;
-    IconAction *                           act_bookmark, *act_pastesend;
-    TypeAheadFindBar *                     typeahead;
+    ActionList                            *actions;
+    IconAction                            *act_bookmark, *act_pastesend;
+    TypeAheadFindBar                      *typeahead;
     //#ifdef WHITEBOARDING
     //    IconAction *act_whiteboard;
     //#endif
@@ -688,7 +688,7 @@ void GCMainDlg::doContactContextMenu(const QString &nick)
 
     bool     self = d->self == itm->name;
     QAction *act;
-    QMenu *  pm = new QMenu();
+    QMenu   *pm = new QMenu();
     act         = new QAction(IconsetFactory::icon("psi/sendMessage").icon(), tr("Send &Message"), pm);
     pm->addAction(act);
     act->setData(0);
@@ -1073,8 +1073,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     invalidateTab();
     setConnecting();
 
-    connect(ui_.log->textWidget(), SIGNAL(quote(const QString &)), ui_.mle->chatEdit(),
-            SLOT(insertAsQuote(const QString &)));
+    connect(ui_.log, &ChatView::quote, ui_.mle->chatEdit(), &ChatEdit::insertAsQuote);
     connect(pa->avatarFactory(), &AvatarFactory::avatarChanged, this, &GCMainDlg::avatarUpdated);
 
 #ifdef PSI_PLUGINS
@@ -1312,7 +1311,7 @@ void GCMainDlg::updateMucName()
 
 void GCMainDlg::discoInfoFinished()
 {
-    JT_DiscoInfo *               t = static_cast<JT_DiscoInfo *>(sender());
+    JT_DiscoInfo                *t = static_cast<JT_DiscoInfo *>(sender());
     const DiscoItem::Identities &i = t->item().identities();
     if (i.count() > 0) {
         d->discoMucName = i.first().name;
@@ -1543,12 +1542,12 @@ void GCMainDlg::doBookmark()
         return;
     }
     ConferenceBookmark &b          = confs[confInd];
-    QDialog *           dlg        = new QDialog(this);
-    QVBoxLayout *       layout     = new QVBoxLayout;
-    QHBoxLayout *       blayout    = new QHBoxLayout;
-    QFormLayout *       formLayout = new QFormLayout;
-    QLineEdit *         txtName    = new QLineEdit;
-    QLineEdit *         txtNick    = new QLineEdit;
+    QDialog            *dlg        = new QDialog(this);
+    QVBoxLayout        *layout     = new QVBoxLayout;
+    QHBoxLayout        *blayout    = new QHBoxLayout;
+    QFormLayout        *formLayout = new QFormLayout;
+    QLineEdit          *txtName    = new QLineEdit;
+    QLineEdit          *txtNick    = new QLineEdit;
     // QCheckBox *chkAJoin = new QCheckBox;
     QComboBox *cbAutoJoin = new QComboBox;
     cbAutoJoin->addItems(ConferenceBookmark::joinTypeNames());
@@ -1951,12 +1950,12 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
             suppressDefault = true;
         } else // 333 and 307 can come together. so "else" is here
             if (s.getMUCStatuses().contains(307)) {
-            // Kick
-            mucKickMsgHelper(nick, s, nickJid, tr("Kicked"), tr("You have been kicked from the room"),
-                             tr("You have been kicked from the room by %1"), tr("%1 has been kicked"),
-                             tr("%1 has been kicked by %2"));
-            suppressDefault = true;
-        }
+                // Kick
+                mucKickMsgHelper(nick, s, nickJid, tr("Kicked"), tr("You have been kicked from the room"),
+                                 tr("You have been kicked from the room by %1"), tr("%1 has been kicked"),
+                                 tr("%1 has been kicked by %2"));
+                suppressDefault = true;
+            }
         if (s.getMUCStatuses().contains(321)) {
             // Remove due to affiliation change
             mucKickMsgHelper(nick, s, nickJid, tr("Removed"),
