@@ -35,7 +35,7 @@ GNU/Linux and FreeBSD users may install [packages](https://github.com/psi-im/psi
 macOS users may install and update official builds using [Homebrew](https://brew.sh/) cask:
 
 ```
-brew cask install psi-plus
+brew install --cask psi-plus
 ```
 
 or download app bundles from [SourceForge](https://github.com/psi-im/psi#packages-and-installers) and install them manually. Program doesn't have embedded mechanism of updates, so in this case users should monitor updates themselves.
