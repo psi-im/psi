@@ -60,7 +60,7 @@ public:
                   .replace('\t', ' '); // non-breakable space ;)
 
         output += '\n';
-        output += tr("Psi is a cross-platform XMPP client aimed at experienced users.");
+        output += tr("Psi is a cross-platform XMPP client designed for experienced users.");
         output += "\n\n";
         output += tr("Options:");
         output += '\n';
