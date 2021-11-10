@@ -75,7 +75,7 @@ QWidget *OptionsTabStatusGeneral::widget()
     d->le_sp_priority->setToolTip(tr("Fill in the priority that will be assigned to this preset."
                                      " If no priority is given, the default account priority will be used."));
 
-    d->ck_askOnline->setToolTip(tr("Jabber allows you to put extended status messages on"
+    d->ck_askOnline->setToolTip(tr("XMPP allows you to put extended status messages on"
                                    " all status types.  Normally, Psi does not prompt you for"
                                    " an extended message when you set your status to \"online\"."
                                    "  Check this option if you want to have this prompt."));
