@@ -3,5 +3,5 @@ srvLoader.setMetaData({
     version: "1.2",
     authors: ["majik <maksim.maj@gmail.com>","Sergey Ilinykh <rion4ik@gmail.com>"],
     description: "Classic dark theme with nice background.",
-    url: "http://psi-im.org"
+    url: "https://psi-im.org"
 });
