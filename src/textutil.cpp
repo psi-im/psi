@@ -354,8 +354,20 @@ QString TextUtil::linkify(const QString &in)
             n += 8;
             isUrl = true;
             href  = "";
+        } else if (linkify_pmatch(out, n, "git://")) {
+            n += 6;
+            isUrl = true;
+            href  = "";
         } else if (linkify_pmatch(out, n, "ftp://")) {
             n += 6;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "ftps://")) {
+            n += 7;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "sftp://")) {
+            n += 7;
             isUrl = true;
             href  = "";
         } else if (linkify_pmatch(out, n, "news://")) {
@@ -376,7 +388,7 @@ QString TextUtil::linkify(const QString &in)
             href  = "";
         } else if (linkify_pmatch(out, n, "www.")) {
             isUrl = true;
-            href  = "http://";
+            href  = "https://";
         } else if (linkify_pmatch(out, n, "ftp.")) {
             isUrl = true;
             href  = "ftp://";
