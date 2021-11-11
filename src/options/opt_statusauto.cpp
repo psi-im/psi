@@ -43,7 +43,7 @@ QWidget *OptionsTabStatusAuto::widget()
     d->sb_asXa->setToolTip(s);
     s                   = tr("Makes Psi automatically set your status to \"offline\" if your"
            " computer is idle for the specified amount of time."
-           "  This will disconnect you from the Jabber server.");
+           "  This will disconnect you from the XMPP server.");
     PsiOptions *o       = PsiOptions::instance();
     int         dpCount = 6;
     if (!o->getOption("options.ui.menu.status.chat").toBool()) {
