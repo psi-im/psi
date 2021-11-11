@@ -129,12 +129,22 @@
         </widget>
        </item>
        <item>
-        <widget class="URLLabel" name="uRLLabel1" native="true">
+        <widget class="URLLabel" name="lb_website" native="true">
          <property name="url" stdset="0">
           <string>https://psi-im.org</string>
          </property>
          <property name="title" stdset="0">
-          <string>https://psi-im.org</string>
+          <string>Website: https://psi-im.org</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="URLLabel" name="lb_mucroom" native="true">
+         <property name="url" stdset="0">
+          <string>xmpp:psi-dev@conference.jabber.ru?join</string>
+         </property>
+         <property name="title" stdset="0">
+          <string>MUC Room: psi-dev@conference.jabber.ru</string>
          </property>
         </widget>
        </item>
