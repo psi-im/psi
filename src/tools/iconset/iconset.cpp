@@ -1143,9 +1143,9 @@ public:
                     QString s = e.attribute("email");
                     n += tmp + QString("Email: <a href='mailto:%1'>%2</a>").arg(s, s);
                 }
-                if (!e.attribute("jid").isEmpty()) {
-                    QString s = e.attribute("jid");
-                    n += tmp + QString("JID: <a href='xmpp:%1'>%2</a>").arg(s, s);
+                if (!e.attribute("xmpp").isEmpty()) {
+                    QString s = e.attribute("xmpp");
+                    n += tmp + QString("XMPP: <a href='xmpp:%1'>%2</a>").arg(s, s);
                 }
                 if (!e.attribute("www").isEmpty()) {
                     QString s = e.attribute("www");

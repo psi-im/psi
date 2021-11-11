@@ -323,7 +323,7 @@ void DiscoListItem::copyItem(const DiscoItem &it)
     if (!(!di.name().isEmpty() && it.name().isEmpty()))
         di.setName(it.name());
 
-    if (di.name().isEmpty() && !di.jid().full().isEmpty()) // use JID in the Name column
+    if (di.name().isEmpty() && !di.jid().full().isEmpty()) // use XMPP Address in the Name column
         di.setName(di.jid().full());
 
     di.setAction(it.action());
@@ -667,7 +667,7 @@ DiscoListView::DiscoListView(DiscoDlg *parent) : QTreeWidget(parent)
 {
     dlg = parent;
     installEventFilter(this);
-    setHeaderLabels(QStringList() << tr("Name") << tr("JID") << tr("Node"));
+    setHeaderLabels(QStringList() << tr("Name") << tr("XMPP Address") << tr("Node"));
     //    header()->setResizeMode(0, QHeaderView::Stretch);
     //    header()->setResizeMode(1, QHeaderView::ResizeToContents);
     //    header()->setResizeMode(2, QHeaderView::ResizeToContents);
@@ -705,7 +705,7 @@ bool DiscoListView::maybeTip(const QPoint &pos)
 
     DiscoListItem *i = static_cast<DiscoListItem *>(twi);
 
-    // NAME <JID> (Node "NODE")
+    // NAME <XMPP Address> (Node "NODE")
     //
     // Identities:
     // (icon) NAME (Category "CATEGORY"; Type "TYPE")

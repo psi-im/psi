@@ -90,7 +90,7 @@
       <item>
        <widget class="QLabel" name="label" >
         <property name="text" >
-         <string>JID:</string>
+         <string>XMPP Address:</string>
         </property>
        </widget>
       </item>

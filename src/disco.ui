@@ -124,7 +124,7 @@
      <item>
       <widget class="QLabel" name="label">
        <property name="text">
-        <string>Filter by JID:</string>
+        <string>Filter by XMPP Address:</string>
        </property>
       </widget>
      </item>
