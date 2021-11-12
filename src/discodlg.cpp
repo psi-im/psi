@@ -58,7 +58,7 @@
 PsiIcon category2icon(PsiAccount *acc, const Jid &jid, const QString &category, const QString &type,
                       int status = STATUS_ONLINE)
 {
-    // TODO: update this to http://www.jabber.org/registrar/disco-categories.html#gateway
+    // TODO: update this to https://xmpp.org/registrar/disco-categories.html#gateway
 
     // still have to add more options...
     if (category == "service" || category == "gateway") {
