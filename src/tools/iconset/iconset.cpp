@@ -1290,7 +1290,7 @@ public:
                     }
                 }
             }
-            // leaved for compatibility with old JEP
+            // leaved for compatibility with old XEP
             else if (tag == "graphic") {
                 graphic[e.attribute("mime")] = e.text();
             } else if (tag == "sound") {
