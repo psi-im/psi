@@ -375,7 +375,7 @@ private:
 
     /**
      * @brief updates hash in icons corresponding to iconType and returns previous hash
-     *     We come this this function only after checks canAdd/Del. So it's fine to not check again.
+     *     We come this this function only after checks canAdd/canDel. So it's fine to not check again.
      *
      * @param icons    - user icons hashes
      * @param hash     - a new hash corresponding to iconType
