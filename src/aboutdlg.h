@@ -32,7 +32,7 @@ public:
 
 protected:
     QString loadText(const QString &fileName);
-    QString details(QString name, QString email, QString jabber, QString www, QString desc);
+    QString details(QString name, QString email, QString xmppAddress, QString www, QString desc);
 
 private:
     Ui::AboutDlg ui_;

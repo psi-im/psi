@@ -170,18 +170,18 @@ QString AboutDlg::loadText(const QString &fileName)
     return text;
 }
 
-QString AboutDlg::details(QString name, QString email, QString jabber, QString www, QString desc)
+QString AboutDlg::details(QString name, QString email, QString xmppAddress, QString www, QString desc)
 {
     QString       ret;
     const QString nbsp = "&nbsp;&nbsp;";
     ret += name + "<br>\n";
     if (!email.isEmpty())
         ret += nbsp + "E-mail: " + "<a href=\"mailto:" + email + "\">" + email + "</a><br>\n";
-    if (!jabber.isEmpty())
+    if (!xmppAddress.isEmpty())
 #ifndef PSI_PLUS
-        ret += nbsp + "XMPP: " + "<a href=\"xmpp:" + jabber + "\">" + jabber + "</a><br>\n";
+        ret += nbsp + "XMPP: " + "<a href=\"xmpp:" + xmppAddress + "\">" + xmppAddress + "</a><br>\n";
 #else
-        ret += nbsp + "XMPP: " + "<a href=\"xmpp:" + jabber + "?join\">" + jabber + "</a><br>\n";
+        ret += nbsp + "XMPP: " + "<a href=\"xmpp:" + xmppAddress + "?join\">" + xmppAddress + "</a><br>\n";
 #endif
     if (!www.isEmpty())
         ret += nbsp + "WWW: " + "<a href=\"" + www + "\">" + www + "</a><br>\n";
