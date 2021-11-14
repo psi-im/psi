@@ -505,13 +505,13 @@ void OptionsMigration::lateMigration()
                          << "chat_find"
                          << "chat_html_text"
                          << "chat_add_contact"
-                         << "chat_share_files";
+                         << "chat_vcard"
+                         << "chat_share_files"
         chatToolbar.keys += pluginsKeys;
         chatToolbar.keys << "spacer"
                          << "chat_icon"
                          << "chat_file"
                          << "chat_pgp"
-                         << "chat_info"
                          << "chat_history"
                          << "chat_voice"
                          << "chat_active_contacts"
@@ -525,11 +525,12 @@ void OptionsMigration::lateMigration()
         groupchatToolbar.on = chatToolbar.on;
 
         groupchatToolbar.name = "Groupchat";
-        groupchatToolbar.keys << "gchat_info"
+        groupchatToolbar.keys << "gchat_infos"
                               << "gchat_clear"
                               << "gchat_find"
                               << "gchat_html_text"
                               << "gchat_configure"
+                              << "gchat_vcard"
                               << "gchat_share_files"
                               << "gchat_templates";
         groupchatToolbar.keys += pluginsKeys;

@@ -155,10 +155,10 @@ class ChatViewJSObject : public ChatViewThemeSession {
     Q_PROPERTY(QString remoteUserImage READ remoteUserImage NOTIFY
                    remoteUserImageChanged) // associated with chat(e.g. MUC's own avatar)
     Q_PROPERTY(QString remoteUserAvatar READ remoteUserAvatar NOTIFY
-                   remoteUserAvatarChanged) // remote avatar. resized vcard or PEP.
-    Q_PROPERTY(QString localUserImage READ localUserImage NOTIFY localUserImageChanged) // local image. from vcard
+                   remoteUserAvatarChanged) // remote avatar. resized vCard or PEP.
+    Q_PROPERTY(QString localUserImage READ localUserImage NOTIFY localUserImageChanged) // local image. from vCard
     Q_PROPERTY(QString localUserAvatar READ localUserAvatar NOTIFY
-                   localUserAvatarChanged) // local avatar. resized vcard or PEP.
+                   localUserAvatarChanged) // local avatar. resized vCard or PEP.
 
 public:
     ChatViewJSObject(ChatView *view) : ChatViewThemeSession(view), _view(view) { }

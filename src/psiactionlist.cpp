@@ -489,12 +489,12 @@ void PsiActionList::Private::createChat()
         IconAction *actHtmlText = new IconAction(tr("Set Text Format"), "psi/text", tr("Set Text Format"), 0, this);
         IconAction *actAddContact
             = new IconAction(tr("Add Contact To Roster"), "psi/addContact", tr("Add Contact"), 0, this);
+        IconAction *actVCard    = new IconAction(tr("vCard"), "psi/vCard", tr("vCard"), 0, this);
         IconAction *actIcon  = new IconAction(tr("Select Icon"), "psi/smile", tr("Select Icon"), 0, this);
         IconAction *actVoice = new IconAction(tr("Voice Call"), "psi/avcall", tr("Voice Call"), 0, this);
         IconAction *actFile  = new IconAction(tr("Send File"), "psi/upload", tr("Send File"), 0, this);
         IconAction *actPgp
             = new IconAction(QString("OpenPGP"), "psi/cryptoYes", QString("OpenPGP"), 0, this, nullptr, true);
-        IconAction *actInfo    = new IconAction(tr("User Info"), "psi/vCard", tr("User Info"), 0, this);
         IconAction *actHistory = new IconAction(tr("Message History"), "psi/history", tr("Message History"), 0, this);
         IconAction *actCompact
             = new IconAction(tr("Toggle Compact/Full Size"), "psi/compact", tr("Toggle Compact/Full Size"), 0, this);
@@ -508,11 +508,11 @@ void PsiActionList::Private::createChat()
                                   { "chat_find", actFind },
                                   { "chat_html_text", actHtmlText },
                                   { "chat_add_contact", actAddContact },
+                                  { "chat_vcard", actVCard },
                                   { "chat_icon", actIcon },
                                   { "chat_voice", actVoice },
                                   { "chat_file", actFile },
                                   { "chat_pgp", actPgp },
-                                  { "chat_info", actInfo },
                                   { "chat_history", actHistory },
                                   { "chat_compact", actCompact },
                                   { "chat_active_contacts", actActiveContacts },
@@ -530,7 +530,7 @@ void PsiActionList::Private::createChat()
 void PsiActionList::Private::createGroupchat()
 {
     {
-        IconAction *actInfo = new IconAction(tr("Information"), QLatin1String("psi/info"), tr("Information"), 0, this);
+        IconAction *actInfos = new IconAction(tr("Informations"), QLatin1String("psi/info"), tr("Informations"), 0, this);
         IconAction *actClear
             = new IconAction(tr("Clear Chat Window"), "psi/clearChat", tr("Clear Chat Window"), 0, this);
         IconAction *actFind     = new IconAction(tr("Find"), "psi/search", tr("&Find"), 0, this, "", true);
@@ -538,6 +538,7 @@ void PsiActionList::Private::createGroupchat()
         IconAction *actConfigure
             = new IconAction(tr("Configure Room"), "psi/configure-room", tr("Configure Room"), 0, this);
         IconAction *actIcon       = new IconAction(tr("Select Icon"), "psi/smile", tr("Select Icon"), 0, this);
+        IconAction *actVCard       = new IconAction(tr("vCard"), "psi/vCard", tr("vCard"), 0, this);
         IconAction *actShareFiles = new IconAction(tr("Share Files"), "psi/share_file", tr("Share Files"), 0, this);
         IconAction *actPinTab     = new IconAction(tr("Pin/UnPin Tab"), "psi/pin", tr("Pin/UnPin Tab"), 0, this);
         IconAction *actTemplates  = new IconAction(tr("Templates"), "psi/action_templates", tr("Templates"), 0, this);
@@ -546,13 +547,14 @@ void PsiActionList::Private::createGroupchat()
         IconAction *actSetTopic  = new IconAction(setTopicText, QLatin1String("psi/topic"), setTopicText, 0, this);
         actSetTopic->setToolTip(setTopicText);
 
-        ActionNames actions[] = { { "gchat_info", actInfo },
+        ActionNames actions[] = { { "gchat_infos", actInfos },
                                   { "gchat_clear", actClear },
                                   { "gchat_find", actFind },
                                   { "gchat_html_text", actHtmlText },
                                   { "gchat_configure", actConfigure },
-                                  { "gchat_icon", actIcon },
+                                  { "gchat_vcard", actVCard },
                                   { "gchat_share_files", actShareFiles },
+                                  { "gchat_icon", actIcon },
                                   { "gchat_pin_tab", actPinTab },
                                   { "gchat_templates", actTemplates },
                                   { "gchat_set_topic", actSetTopic },

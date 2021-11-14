@@ -805,7 +805,7 @@ void GCMainDlg::doContactContextMenu(const QString &nick)
     // pm->insertSeparator();
     // pm->insertItem(tr("Check &Status"), 2);
 
-    act = new QAction(IconsetFactory::icon("psi/vCard").icon(), tr("User &Info"), pm);
+    act = new QAction(IconsetFactory::icon("psi/vCard").icon(), tr("&vCard"), pm);
     pm->addAction(act);
     act->setData(3);
 
@@ -905,8 +905,8 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
         auto action = actList->copyAction(name, this);
         d->actions->addAction(name, action);
 
-        if (name == QString::fromLatin1("gchat_info")) {
-            connect(action, &IconAction::triggered, this, &GCMainDlg::doShowInfo);
+        if (name == QString::fromLatin1("gchat_infos")) {
+            connect(action, &IconAction::triggered, this, &GCMainDlg::doShowMucInfos);
         } else if (name == QString::fromLatin1("gchat_clear")) {
             connect(action, SIGNAL(triggered()), SLOT(doClearButton()));
         } else if (name == QString::fromLatin1("gchat_find")) {
@@ -915,14 +915,14 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
             // -- typeahead
         } else if (name == QString::fromLatin1("gchat_configure")) {
             connect(action, SIGNAL(triggered()), SLOT(configureRoom()));
+        } else if (name == QString::fromLatin1("gchat_vcard")) {
+            connect(action, SIGNAL(triggered()), SLOT(doInfo()));
         } else if (name == QString::fromLatin1("gchat_html_text")) {
             connect(action, &QAction::triggered, d->mle(), &ChatEdit::doHTMLTextMenu);
         } else if (name == QString::fromLatin1("gchat_icon")) {
             connect(account()->psi()->iconSelectPopup(), SIGNAL(textSelected(QString)), d, SLOT(addEmoticon(QString)));
             action->setMenu(pa->psi()->iconSelectPopup());
             ui_.tb_emoticons->setMenu(pa->psi()->iconSelectPopup());
-        } else if (name == QString::fromLatin1("gchat_info")) {
-            connect(action, SIGNAL(triggered()), SLOT(doInfo()));
         } else if (name == QString::fromLatin1("gchat_share_files")) {
             connect(action, &QAction::triggered, account(), [this]() {
                 FileShareDlg::shareFiles(
@@ -1171,6 +1171,7 @@ void GCMainDlg::setShortcuts()
 
     d->actions->action("gchat_clear")->setShortcuts(ShortcutManager::instance()->shortcuts("chat.clear"));
     d->actions->action("gchat_find")->setShortcuts(ShortcutManager::instance()->shortcuts("chat.find"));
+    d->actions->action("gchat_vcard")->setShortcuts(ShortcutManager::instance()->shortcuts("common.user-info"));
     d->act_send->setShortcuts(ShortcutManager::instance()->shortcuts("chat.send"));
     if (!isTabbed()) {
         d->act_close->setShortcuts(ShortcutManager::instance()->shortcuts("common.close"));
@@ -1489,7 +1490,7 @@ void GCMainDlg::sendNewTopic(const QMap<LanguageManager::LangId, QString> &topic
     emit aSend(m);
 }
 
-void GCMainDlg::doShowInfo()
+void GCMainDlg::doShowMucInfos()
 {
     auto        dlg = new QDialog(this);
     Ui::MucInfo ui;
@@ -2481,11 +2482,12 @@ void GCMainDlg::buildMenu()
     // Dialog menu
     d->pm_settings->clear();
 
-    d->actions->action("gchat_info")->addTo(d->pm_settings);
-    d->actions->action("gchat_clear")->addTo(d->pm_settings);
-    d->actions->action("gchat_configure")->addTo(d->pm_settings);
+    d->pm_settings->addAction(d->actions->action("gchat_infos"));
+    d->pm_settings->addAction(d->actions->action("gchat_clear"));
+    d->pm_settings->addAction(d->actions->action("gchat_configure"));
+    d->pm_settings->addAction(d->actions->action("gchat_vcard"));
     //#ifdef WHITEBOARDING
-    //    d->act_whiteboard->addTo( d->pm_settings );
+    //    d->pm_settings->addAction(d->actions->action("act_whiteboard"));
     //#endif
     d->pm_settings->addSeparator();
 
@@ -2499,6 +2501,7 @@ void GCMainDlg::buildMenu()
         d->pm_settings->addSeparator();
         d->pm_settings->addAction(d->actions->action("gchat_pin_tab"));
     }
+
 #ifdef PSI_PLUGINS
     if (!PsiOptions::instance()->getOption("options.ui.contactlist.toolbars.m1.visible").toBool()) {
         d->pm_settings->addSeparator();

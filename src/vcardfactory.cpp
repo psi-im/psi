@@ -38,12 +38,12 @@
 #include <functional>
 
 /**
- * \brief Factory for retrieving and changing VCards.
+ * \brief Factory for retrieving and changing vCards.
  */
 VCardFactory::VCardFactory() : QObject(qApp), dictSize_(5) { }
 
 /**
- * \brief Destroys all cached VCards.
+ * \brief Destroys all cached vCards.
  */
 VCardFactory::~VCardFactory() { }
 
@@ -59,7 +59,7 @@ VCardFactory *VCardFactory::instance()
 }
 
 /**
- * Adds a vcard to the cache (and removes other items if necessary)
+ * Adds a vCard to the cache (and removes other items if necessary)
  */
 void VCardFactory::checkLimit(const QString &jid, const VCard &vcard)
 {
@@ -118,7 +118,7 @@ void VCardFactory::saveVCard(const Jid &j, const VCard &vcard, bool notifyPhoto)
 
     // save vCard to disk
 
-    // ensure that there's a vcard directory to save into
+    // ensure that there's a vCard directory to save into
     QDir p(pathToProfile(activeProfile, ApplicationInfo::CacheLocation));
     QDir v(pathToProfile(activeProfile, ApplicationInfo::CacheLocation) + "/vcard");
     if (!v.exists())

@@ -593,23 +593,24 @@ QLineEdit#le_status_text {
                 <chat_history type="QKeySequence"></chat_history>
                 <chat_html_text type="QKeySequence"></chat_html_text>
                 <chat_icon type="QKeySequence"></chat_icon>
-                <chat_info type="QKeySequence"></chat_info>
                 <chat_pin_tab type="QKeySequence"></chat_pin_tab>
                 <chat_ps type="QKeySequence"></chat_ps>
                 <chat_share_files type="QKeySequence"></chat_share_files>
                 <chat_templates type="QKeySequence"></chat_templates>
+                <chat_vcard type="QKeySequence"></chat_vcard>
                 <chat_voice type="QKeySequence"></chat_voice>
-                <gchat_info type="QKeySequence"></gchat_info>
                 <gchat_clear type="QKeySequence"></gchat_clear>
                 <gchat_configure type="QKeySequence"></gchat_configure>
                 <gchat_find type="QKeySequence"></gchat_find>
                 <gchat_html_text type="QKeySequence"></gchat_html_text>
                 <gchat_icon type="QKeySequence"></gchat_icon>
+                <gchat_infos type="QKeySequence"></gchat_infos>
                 <gchat_pin_tab type="QKeySequence"></gchat_pin_tab>
                 <gchat_ps type="QKeySequence"></gchat_ps>
+                <gchat_set_topic type="QKeySequence" comment="Set chat topic"/>
                 <gchat_share_files type="QKeySequence"></gchat_share_files>
                 <gchat_templates type="QKeySequence"></gchat_templates>
-                <gchat_set_topic type="QKeySequence" comment="Set chat topic"/>
+                <gchat_vcard type="QKeySequence"></gchat_vcard>
             </alist>
             <chat comment="Shortcuts in the chat dialog">
                 <next-tab type="QVariantList" comment="Switch to the next tab">
@@ -658,7 +659,7 @@ QLineEdit#le_status_text {
                     <item type="QKeySequence">Alt+H</item>
                 </hide>
                 <history type="QKeySequence" comment="Open the message history">Ctrl+H</history>
-                <user-info type="QKeySequence" comment="Show the user info of the contact">Ctrl+I</user-info>
+                <user-info type="QKeySequence" comment="Show contact's vCard">Ctrl+I</user-info>
             </common>
             <global comment="Shortcuts available from outside of the application">
                 <event type="QKeySequence" comment="Receive incoming event"/>

@@ -700,7 +700,7 @@ void EventDlg::init()
     d->tb_url->setToolTip(tr("Add URL"));
     d->tb_info = new IconToolButton(this);
     connect(d->tb_info, SIGNAL(clicked()), SLOT(doInfo()));
-    d->tb_info->setToolTip(tr("User info"));
+    d->tb_info->setToolTip(tr("vCard"));
     d->tb_history = new IconToolButton(this);
     connect(d->tb_history, SIGNAL(clicked()), SLOT(doHistory()));
     d->tb_history->setToolTip(tr("Message history"));

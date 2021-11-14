@@ -27,7 +27,7 @@ psi/clearChat      - Clear chat
 psi/groupChat      - GroupChat
 psi/help           - Help menu
 psi/history        - Chat history
-psi/vCard          - vCard/User info
+psi/vCard          - vCard
 psi/info           - Info icon
 psi/jabber         - Jabber icon
 psi/options        - Options

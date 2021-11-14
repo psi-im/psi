@@ -87,7 +87,7 @@ New in 0.15
 New in 0.14
 - Added color options to the chat window.
 - Can now specify a reason for kick/ban in groupchat.
-- Improved User Info window, to show more fields and photo view/save.
+- Improved vCard window, to show more fields and photo view/save.
 - Support for Enchant as an alternative to Aspell.
 - Commandline interface now supports choosing profile and setting status.
 - D-BUS interface now supports setting status and indicating sleep/wake.

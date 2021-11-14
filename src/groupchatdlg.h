@@ -115,7 +115,7 @@ private slots:
     void goConn();
     void goForcedLeave();
     void lv_action(const QString &, const Status &, int);
-    void doShowInfo();
+    void doShowMucInfos();
     void doClear();
     void doClearButton();
     void copyMucJid();

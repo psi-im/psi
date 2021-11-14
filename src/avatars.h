@@ -53,7 +53,7 @@ using namespace XMPP;
 class AvatarFactory : public QObject {
     Q_OBJECT
 
-    static const int VcardReqInterval = 500; // query vcard avatars once per half second
+    static const int VcardReqInterval = 500; // query vCard avatars once per half second
 
 public:
     struct UserHashes {

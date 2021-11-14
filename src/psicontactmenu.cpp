@@ -121,7 +121,7 @@ PsiContactMenu::Private::Private(PsiContactMenu *menu, PsiContact *_contact) :
     connect(pictureClearAction_, SIGNAL(triggered()), SLOT(pictureClear()));
     pictureClearAction_->setShortcuts(ShortcutManager::instance()->shortcuts("contactlist.clear-custom-avatar"));
 
-    vcardAction_ = new IconAction(tr("User &Info"), this, "psi/vCard");
+    vcardAction_ = new IconAction(tr("&vCard"), this, "psi/vCard");
     connect(vcardAction_, SIGNAL(triggered()), SLOT(vcard()));
     vcardAction_->setShortcuts(ShortcutManager::instance()->shortcuts("common.user-info"));
 

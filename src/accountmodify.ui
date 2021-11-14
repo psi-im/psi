@@ -280,7 +280,7 @@
           <item>
            <widget class="QLabel" name="TextLabel3">
             <property name="text">
-             <string>&lt;qt&gt;Information about you is stored as a VCard on the server, which other people can retrieve at any time.&lt;/qt&gt;</string>
+             <string>&lt;qt&gt;Information about you is stored as a vCard on the server, which other people can retrieve at any time.&lt;/qt&gt;</string>
             </property>
             <property name="wordWrap">
              <bool>true</bool>
