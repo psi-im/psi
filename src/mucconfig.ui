@@ -265,7 +265,7 @@
      </widget>
      <widget class="QWidget" name="tab_vcard">
       <attribute name="title">
-       <string>&amp;VCard</string>
+       <string>&amp;vCard</string>
       </attribute>
      </widget>
     </widget>

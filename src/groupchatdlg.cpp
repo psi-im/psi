@@ -2039,7 +2039,7 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
         d->nonAnonymous = false;
     }
     if (m.getMUCStatuses().contains(104)) {
-        // new MUC vcard available
+        // new MUC vCard available
         if (!d->gcSelfPresenceSupported) {
             // we had to handle avatar hash from presence already
             VCardFactory::instance()->getVCard(

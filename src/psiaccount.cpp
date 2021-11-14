@@ -733,7 +733,7 @@ public slots:
 
     void vcardChanged(const Jid &j)
     {
-        // our own vcard?
+        // our own vCard?
         if (j.compare(jid, false)) {
             const VCard vcard = VCardFactory::instance()->vcard(j);
             if (vcard) {
@@ -2373,7 +2373,7 @@ void PsiAccount::serverFeaturesChanged()
     }
 
     if (d->client->serverInfoManager()->features().hasVCard() && !d->vcardChecked) {
-        // Get the vcard
+        // Get the vCard
         const VCard vcard = VCardFactory::instance()->vcard(d->jid);
         if (PsiOptions::instance()->getOption("options.vcard.query-own-vcard-on-login").toBool() || vcard.isEmpty()
             || (vcard.nickName().isEmpty() && vcard.fullName().isEmpty())) {
@@ -3255,7 +3255,7 @@ void PsiAccount::setStatusActual(const Status &_s)
         simulateRosterOffline();
     }
 
-    // Add vcard photo hash if available
+    // Add vCard photo hash if available
     if (!d->photoHash.isEmpty()) {
         s.setPhotoHash(d->photoHash);
     }
@@ -3874,7 +3874,7 @@ QList<UserListItem *> PsiAccount::findRelevant(const Jid &j) const
                 if (u->jid().resource() != j.resource())
                     continue;
             } else {
-                // skip status changes from muc participants
+                // skip status changes from MUC participants
                 // if the MUC somehow got into userList.
                 if (!j.resource().isEmpty() && d->groupchats.contains(j.bare()))
                     continue;

@@ -108,7 +108,7 @@ public:
     struct JidIcons {
         // avatar's photo (posibly much bigger than 64x64 regardless of recommended max 96px)
         FileCacheItem *vcard           = nullptr;
-        FileCacheItem *avatar          = nullptr; // pubsub or vcard avatar (64x64 or less. TODO consider retina)
+        FileCacheItem *avatar          = nullptr; // pubsub or vCard avatar (64x64 or less. TODO consider retina)
         FileCacheItem *customAvatar    = nullptr; // set by you
         bool           avatarFromVCard = false;
     };
@@ -211,7 +211,7 @@ public:
             removeUser(prevItem, iconType, jid);
         }
         if (icons.avatarFromVCard && iconType == VCardType) {
-            icons.avatar = nullptr; // we have to regenerate it from new vcard
+            icons.avatar = nullptr; // we have to regenerate it from new vCard
         }
 
         FileCacheItem *newActiveItem = ensureHasAvatar(icons, jid);
@@ -244,7 +244,7 @@ public:
 
         FileCacheItem *newActiveIcon;
         if (iconType == AvatarFromVCardType) {
-            newActiveIcon = activeAvatarIcon(*it); // we can't restore avatar from vcard. so just get new hash.
+            newActiveIcon = activeAvatarIcon(*it); // we can't restore avatar from vCard. so just get new hash.
         } else {
             newActiveIcon = ensureHasAvatar(*it, jid);
         }
@@ -282,7 +282,7 @@ public:
             removeUser(prevIcon, iconType, jid);
         }
         if (icons.avatarFromVCard && iconType == VCardType) {
-            icons.avatar = nullptr; // we have to regenerate it from new vcard
+            icons.avatar = nullptr; // we have to regenerate it from new vCard
         }
 
         FileCacheItem *newActiveIcon
@@ -687,7 +687,7 @@ AvatarFactory::AvatarData AvatarFactory::avatarDataByHash(const QByteArray &hash
 }
 
 /*!
- * \brief return current active avatar and vcard images hashes
+ * \brief return current active avatar and vCard images hashes
  *    It's expected only for MUC the passed jid will have not empty resource
  *
  * \param jid
@@ -696,8 +696,8 @@ AvatarFactory::AvatarData AvatarFactory::avatarDataByHash(const QByteArray &hash
 AvatarFactory::UserHashes AvatarFactory::userHashes(const Jid &jid) const
 {
     auto icons = AvatarCache::instance()->icons(jid.full());
-    if (!icons.vcard) { // hm try to get from vcard factory then
-        // we don't call this method often. so it's fine to query vcard factory every time.
+    if (!icons.vcard) { // hm try to get from vCard factory then
+        // we don't call this method often. so it's fine to query vCard factory every time.
         bool  isMuc = !jid.resource().isEmpty();
         VCard vcard;
         if (isMuc) {
@@ -747,7 +747,7 @@ QPixmap AvatarFactory::getMucAvatar(const Jid &_jid)
         data = icons.avatar->data();
     }
 
-    // for mucs icons.avatar is always made of vcard and anything else is not supported. at least for now.
+    // for mucs icons.avatar is always made of vCard and anything else is not supported. at least for now.
     QImage img(QImage::fromData(data));
 
     if (img.isNull()) {

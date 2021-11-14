@@ -344,7 +344,7 @@ void AddUserDlg::resolveNickActivated()
 }
 
 /**
- * Called when the Jid changes to enable the vcard and nick resolution buttons.
+ * Called when the Jid changes to enable the vCard and nick resolution buttons.
  */
 void AddUserDlg::jid_Changed()
 {

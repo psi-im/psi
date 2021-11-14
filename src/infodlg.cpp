@@ -1,5 +1,5 @@
 /*
- * infodlg.cpp - handle vcard
+ * infodlg.cpp - handle vCard
  * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
