@@ -112,7 +112,7 @@ public slots:
     void popupAction(QString lnk)
     {
         if (lnk.startsWith("x-psi-atstyle:")) {
-            lnk.replace(0, 13, "mailto");
+            lnk.replace(0, 13, "xmpp");
         }
         emit urlObject->openURL(lnk);
     }
@@ -189,21 +189,21 @@ QMenu *URLObject::createPopupMenu(const QString &lnk)
     QMenu *m = new QMenu;
 
     bool needGenericOpen = true;
-    if (service == "mailto" || service == "x-psi-atstyle") {
-        needGenericOpen = false;
-        m->addAction(d->act_mailto);
-    }
     if (service == "jabber" || service == "jid" || service == "xmpp" || service == "x-psi-atstyle") {
         needGenericOpen = false;
-        if (service == "x-psi-atstyle") {
-            m->addSeparator();
-        }
-        m->addAction(d->act_info);
         m->addAction(d->act_xmpp);
         m->addAction(d->act_chat);
         m->addAction(d->act_send_message);
         m->addAction(d->act_join_groupchat);
         m->addAction(d->act_add_to_roster);
+        m->addAction(d->act_info);
+        if (service == "x-psi-atstyle") {
+            m->addSeparator();
+        }
+    }
+    if (service == "mailto" || service == "x-psi-atstyle") {
+        needGenericOpen = false;
+        m->addAction(d->act_mailto);
         if (service == "x-psi-atstyle") {
             m->addSeparator();
         }
