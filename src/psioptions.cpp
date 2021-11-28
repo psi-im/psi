@@ -177,7 +177,7 @@ bool PsiOptions::newProfile()
                          << "chat_voice"
                          << "chat_share_files"
                          << "chat_active_contacts"
-                         << "gchat_templates";
+                         << "chat_templates";
 
         ToolbarPrefs groupchatToolbar;
         groupchatToolbar.on   = true;
