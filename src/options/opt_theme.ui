@@ -56,7 +56,7 @@
       </spacer>
      </item>
      <item>
-      <widget class="URLLabel" name="lbl_morethemes">
+      <widget class="URLLabel" name="lb_morethemes">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
          <horstretch>0</horstretch>

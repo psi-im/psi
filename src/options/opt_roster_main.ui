@@ -220,7 +220,7 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
-         <widget class="QLabel" name="lbl_avatarsSize">
+         <widget class="QLabel" name="lb_avatarsSize">
           <property name="text">
            <string>Size</string>
           </property>
@@ -256,7 +256,7 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
-         <widget class="QLabel" name="lbl_avatarsRadius">
+         <widget class="QLabel" name="lb_avatarsRadius">
           <property name="text">
            <string>Radius of corners</string>
           </property>

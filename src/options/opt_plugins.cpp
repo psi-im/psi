@@ -204,13 +204,13 @@ void OptionsTabPlugins::showPluginInfo(QTreeWidgetItem *item)
     const QString &shortName = item->data(C_NAME, Qt::UserRole).toString();
     ui_.tb_info->setText(PluginManager::instance()->pluginInfo(shortName));
     auto vendor   = formatVendorText(PluginManager::instance()->vendor(shortName), false);
-    int  iconSize = ui_.lbl_icon->fontInfo().pixelSize() * 2.5;
-    ui_.lbl_icon->setPixmap(PluginManager::instance()->icon(shortName).pixmap(iconSize, QIcon::Normal, QIcon::On));
+    int  iconSize = ui_.lb_icon->fontInfo().pixelSize() * 2.5;
+    ui_.lb_icon->setPixmap(PluginManager::instance()->icon(shortName).pixmap(iconSize, QIcon::Normal, QIcon::On));
 
     auto name = PluginManager::instance()->pluginName(shortName);
-    ui_.lbl_meta->setText(QString("<b>%1 %2</b><br/><b>%3:</b> %4")
+    ui_.lb_meta->setText(QString("<b>%1 %2</b><br/><b>%3:</b> %4")
                               .arg(name, PluginManager::instance()->version(shortName), tr("Authors"), vendor));
-    ui_.lbl_file->setText(
+    ui_.lb_file->setText(
         QString("<b>%1:</b> %2")
             .arg(tr("Plugin Path"), TextUtil::escape(PluginManager::instance()->pathToPlugin(shortName))));
     infoDialog->resize(dialogSize);
