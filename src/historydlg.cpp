@@ -633,8 +633,8 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa) :
     connect(ui_.buttonNext, SIGNAL(released()), SLOT(getNext()));
     connect(ui_.buttonRefresh, SIGNAL(released()), SLOT(refresh()));
     connect(ui_.contactList, SIGNAL(clicked(QModelIndex)), SLOT(openSelectedContact()));
-    connect(ui_.tbFindForward, SIGNAL(clicked()), SLOT(findMessages()));
     connect(ui_.tbFindBackward, SIGNAL(clicked()), SLOT(findMessages()));
+    connect(ui_.tbFindForward, SIGNAL(clicked()), SLOT(findMessages()));
     connect(ui_.buttonLast, SIGNAL(released()), SLOT(getLatest()));
     connect(ui_.buttonFirst, SIGNAL(released()), SLOT(getEarliest()));
     connect(ui_.calendar, SIGNAL(selectionChanged()), SLOT(getDate()));

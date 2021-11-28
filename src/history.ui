@@ -174,10 +174,10 @@
               </widget>
              </item>
              <item>
-              <widget class="QToolButton" name="tbFindForward"/>
+              <widget class="QToolButton" name="tbFindBackward"/>
              </item>
              <item>
-              <widget class="QToolButton" name="tbFindBackward"/>
+              <widget class="QToolButton" name="tbFindForward"/>
              </item>
             </layout>
            </item>
