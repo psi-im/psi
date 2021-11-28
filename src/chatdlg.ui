@@ -356,7 +356,7 @@
           </widget>
          </item>
          <item>
-          <widget class="PixmapRatioLabel" name="avatar">
+          <widget class="PixmapRatioLabel" name="lb_avatar">
            <property name="text">
             <string>Avatar</string>
            </property>

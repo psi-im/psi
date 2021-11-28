@@ -34,14 +34,14 @@
             <widget class="QLineEdit" name="le_desc" />
           </item>
           <item row="0" column="0" >
-            <widget class="QLabel" name="TextLabel1" >
+            <widget class="QLabel" name="lb_url" >
               <property name="text" >
                 <string>URL:</string>
               </property>
             </widget>
           </item>
           <item row="1" column="0" >
-            <widget class="QLabel" name="TextLabel2" >
+            <widget class="QLabel" name="lb_desc" >
               <property name="text" >
                 <string>Description:</string>
               </property>

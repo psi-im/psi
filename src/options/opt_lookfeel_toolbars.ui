@@ -29,14 +29,14 @@
       <number>0</number>
      </property>
      <item>
-      <widget class="QLabel" name="textLabel1">
+      <widget class="QLabel" name="lb_toolbar">
        <property name="text">
         <string>Toolbar:</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QComboBox" name="cb_toolbars">
+      <widget class="QComboBox" name="cb_toolbar">
        <property name="sizePolicy">
         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -106,7 +106,7 @@
        <number>1</number>
       </property>
       <item>
-       <widget class="QLabel" name="textLabel20">
+       <widget class="QLabel" name="lb_toolbarName">
         <property name="text">
          <string>Name:</string>
         </property>
@@ -276,7 +276,7 @@
       </spacer>
      </item>
      <item row="0" column="0">
-      <widget class="QLabel" name="textLabel25">
+      <widget class="QLabel" name="lb_availActions">
        <property name="text">
         <string>A&amp;vailable actions:</string>
        </property>
@@ -323,7 +323,7 @@
       </widget>
      </item>
      <item row="0" column="2">
-      <widget class="QLabel" name="textLabel24">
+      <widget class="QLabel" name="lb_selectedActions">
        <property name="text">
         <string>Curr&amp;ent actions:</string>
        </property>
@@ -350,7 +350,7 @@
   </customwidget>
  </customwidgets>
  <tabstops>
-  <tabstop>cb_toolbars</tabstop>
+  <tabstop>cb_toolbar</tabstop>
   <tabstop>pb_addToolbar</tabstop>
   <tabstop>pb_deleteToolbar</tabstop>
   <tabstop>le_toolbarName</tabstop>

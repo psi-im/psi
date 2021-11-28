@@ -94,7 +94,7 @@
     </layout>
    </item>
    <item>
-    <widget class="QLabel" name="textLabel1">
+    <widget class="QLabel" name="lb_desc">
      <property name="text">
       <string>Description:</string>
      </property>

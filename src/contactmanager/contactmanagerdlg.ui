@@ -36,7 +36,7 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QLabel" name="lblField">
+      <widget class="QLabel" name="lb_field">
        <property name="text">
         <string>Field</string>
        </property>
@@ -82,7 +82,7 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
-      <widget class="QLabel" name="lblAction">
+      <widget class="QLabel" name="lb_action">
        <property name="text">
         <string>Action</string>
        </property>

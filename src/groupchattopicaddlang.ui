@@ -17,21 +17,21 @@
    <item>
     <layout class="QFormLayout" name="formLayout">
      <item row="0" column="0">
-      <widget class="QLabel" name="lblLang">
+      <widget class="QLabel" name="lb_lang">
        <property name="text">
         <string>Language</string>
        </property>
       </widget>
      </item>
      <item row="1" column="0">
-      <widget class="QLabel" name="lblScript">
+      <widget class="QLabel" name="lb_script">
        <property name="text">
         <string>Script</string>
        </property>
       </widget>
      </item>
      <item row="2" column="0">
-      <widget class="QLabel" name="lblCountry">
+      <widget class="QLabel" name="lb_country">
        <property name="text">
         <string>Country</string>
        </property>

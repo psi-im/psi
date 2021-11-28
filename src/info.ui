@@ -81,7 +81,7 @@
         </spacer>
        </item>
        <item row="5" column="0">
-        <widget class="QLabel" name="TextLabel1_2_2_2_2">
+        <widget class="QLabel" name="lb_email">
          <property name="text">
           <string>E-Mail:</string>
          </property>
@@ -91,7 +91,7 @@
         <widget class="ActionLineEdit" name="le_fullname"/>
        </item>
        <item row="2" column="0">
-        <widget class="QLabel" name="TextLabel1_3_2_3_2">
+        <widget class="QLabel" name="lb_bday">
          <property name="text">
           <string>Birthday:</string>
          </property>
@@ -205,28 +205,28 @@
         </layout>
        </item>
        <item row="0" column="0">
-        <widget class="QLabel" name="TextLabel1_2_2">
+        <widget class="QLabel" name="lb_fullname">
          <property name="text">
           <string>Full Name:</string>
          </property>
         </widget>
        </item>
        <item row="3" column="0">
-        <widget class="QLabel" name="TextLabel1_3_2_2_2_2">
+        <widget class="QLabel" name="lb_phone">
          <property name="text">
           <string>Phone #:</string>
          </property>
         </widget>
        </item>
        <item row="4" column="0">
-        <widget class="QLabel" name="TextLabel1_2_3_2">
+        <widget class="QLabel" name="lb_homepage">
          <property name="text">
           <string>Homepage:</string>
          </property>
         </widget>
        </item>
        <item row="1" column="0">
-        <widget class="QLabel" name="TextLabel1_2">
+        <widget class="QLabel" name="lb_nickname">
          <property name="text">
           <string>Nickname:</string>
          </property>
@@ -291,14 +291,14 @@
           <widget class="QLineEdit" name="le_title"/>
          </item>
          <item row="0" column="0">
-          <widget class="QLabel" name="TextLabel1_2_2_2_3">
+          <widget class="QLabel" name="lb_orgName">
            <property name="text">
             <string>Company:</string>
            </property>
           </widget>
          </item>
          <item row="2" column="0">
-          <widget class="QLabel" name="TextLabel1_3_2_2_2_3_2">
+          <widget class="QLabel" name="lb_title">
            <property name="text">
             <string>Position:</string>
            </property>
@@ -308,7 +308,7 @@
           <widget class="QLineEdit" name="le_orgName"/>
          </item>
          <item row="1" column="0">
-          <widget class="QLabel" name="TextLabel1_2_3_3">
+          <widget class="QLabel" name="lb_orgUnit">
            <property name="text">
             <string>Department:</string>
            </property>
@@ -321,7 +321,7 @@
           <widget class="QLineEdit" name="le_role"/>
          </item>
          <item row="3" column="0">
-          <widget class="QLabel" name="TextLabel1_3_2_2_2_4">
+          <widget class="QLabel" name="lb_role">
            <property name="text">
             <string>Role:</string>
            </property>
@@ -385,14 +385,14 @@
           <number>6</number>
          </property>
          <item row="5" column="0">
-          <widget class="QLabel" name="TextLabel1_3_2_2_2">
+          <widget class="QLabel" name="lb_country">
            <property name="text">
             <string>Country:</string>
            </property>
           </widget>
          </item>
          <item row="4" column="0">
-          <widget class="QLabel" name="TextLabel1_3_2_2_2_3">
+          <widget class="QLabel" name="lb_pcode">
            <property name="text">
             <string>Postal Code:</string>
            </property>
@@ -408,14 +408,14 @@
           <widget class="QLineEdit" name="le_pcode"/>
          </item>
          <item row="3" column="0">
-          <widget class="QLabel" name="TextLabel1_2_3">
+          <widget class="QLabel" name="lb_state">
            <property name="text">
             <string>State:</string>
            </property>
           </widget>
          </item>
          <item row="2" column="0">
-          <widget class="QLabel" name="TextLabel1_2_2_2">
+          <widget class="QLabel" name="lb_city">
            <property name="text">
             <string>City:</string>
            </property>
@@ -425,7 +425,7 @@
           <widget class="QLineEdit" name="le_street"/>
          </item>
          <item row="0" column="0">
-          <widget class="QLabel" name="TextLabel1_3_2_3">
+          <widget class="QLabel" name="lb_street">
            <property name="text">
             <string>Street:</string>
            </property>

@@ -20,7 +20,7 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="PixmapRatioLabel" name="lblMyAvatar">
+      <widget class="PixmapRatioLabel" name="lb_MyAvatar">
        <property name="minimumSize">
         <size>
          <width>24</width>
@@ -38,7 +38,7 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="QLabel" name="lblMyName">
+        <widget class="QLabel" name="lb_MyName">
          <property name="palette">
           <palette>
            <active>
@@ -100,7 +100,7 @@
           </spacer>
          </item>
          <item>
-          <widget class="QLabel" name="lblStatus">
+          <widget class="QLabel" name="lb_Status">
            <property name="font">
             <font>
              <weight>75</weight>
@@ -146,7 +146,7 @@
           </spacer>
          </item>
          <item>
-          <widget class="QLabel" name="lblPeerName">
+          <widget class="QLabel" name="lb_PeerName">
            <property name="palette">
             <palette>
              <active>
@@ -194,7 +194,7 @@
       </layout>
      </item>
      <item>
-      <widget class="PixmapRatioLabel" name="lblPeerAvatar">
+      <widget class="PixmapRatioLabel" name="lb_PeerAvatar">
        <property name="minimumSize">
         <size>
          <width>24</width>

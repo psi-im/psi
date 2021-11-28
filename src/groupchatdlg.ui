@@ -282,7 +282,7 @@
           </widget>
          </item>
          <item>
-          <widget class="PixmapRatioLabel" name="lblAvatar">
+          <widget class="PixmapRatioLabel" name="lb_avatar">
            <property name="text">
             <string notr="true"/>
            </property>

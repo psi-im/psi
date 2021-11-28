@@ -117,7 +117,7 @@
       </widget>
      </item>
      <item row="4" column="0">
-      <widget class="QLabel" name="TextLabel_Headline">
+      <widget class="QLabel" name="lb_headline">
        <property name="text">
         <string>Headline:</string>
        </property>

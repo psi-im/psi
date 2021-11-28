@@ -79,7 +79,7 @@
                       <number>6</number>
                     </property>
                     <item>
-                      <widget class="QLabel" name="TextLabel4" >
+                      <widget class="QLabel" name="lb_profile" >
                         <property name="text" >
                           <string>Profile:</string>
                         </property>

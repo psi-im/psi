@@ -60,9 +60,9 @@ public:
         PsiActionList::ActionsType type;
         LookFeelToolbarsUI *       d = static_cast<LookFeelToolbarsUI *>(q->w);
 
-        if (d->cb_toolbars->currentIndex() == CHAT_TOOLBAR) {
+        if (d->cb_toolbar->currentIndex() == CHAT_TOOLBAR) {
             type = class2idChat();
-        } else if (d->cb_toolbars->currentIndex() == GROUPCHAT_TOOLBAR) {
+        } else if (d->cb_toolbar->currentIndex() == GROUPCHAT_TOOLBAR) {
             type = class2idGroupchat();
         } else {
             type = class2id();
@@ -81,7 +81,7 @@ public:
             delete root->takeChild(root->indexOfChild(item));
             LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(q->w);
 
-            if (root->data(0, Qt::UserRole + 1) == d->cb_toolbars->currentIndex()) {
+            if (root->data(0, Qt::UserRole + 1) == d->cb_toolbar->currentIndex()) {
                 for (int i = 0; i < d->lw_selectedActions->count(); i++) {
                     if (d->lw_selectedActions->item(i)->data(Qt::UserRole).toString() == actionName) {
                         delete d->lw_selectedActions->takeItem(i);
@@ -122,7 +122,7 @@ QWidget *OptionsTabToolbars::widget()
 
     connect(d->pb_addToolbar, SIGNAL(clicked()), SLOT(toolbarAdd()));
     connect(d->pb_deleteToolbar, SIGNAL(clicked()), SLOT(toolbarDelete()));
-    connect(d->cb_toolbars, SIGNAL(activated(int)), SLOT(toolbarSelectionChanged(int)));
+    connect(d->cb_toolbar, SIGNAL(activated(int)), SLOT(toolbarSelectionChanged(int)));
     connect(d->le_toolbarName, SIGNAL(textChanged(const QString &)), SLOT(toolbarNameChanged()));
     // connect(d->pb_toolbarPosition, SIGNAL(clicked()), SLOT(toolbarPosition()));
     connect(d->tb_up, SIGNAL(clicked()), SLOT(toolbarActionUp()));
@@ -212,7 +212,7 @@ void OptionsTabToolbars::setData(PsiCon *psi_, QWidget *parent_)
     QMap<int, Private::ToolbarItem>::Iterator it = p->toolbars.begin();
     for ( ; it != p->toolbars.end(); ++it ) {
         if ( it.data().group == t->group() && it.data().index == t->groupIndex() ) {
-            d->cb_toolbars->setCurrentIndex( it.key() );
+            d->cb_toolbar->setCurrentIndex( it.key() );
             toolbarSelectionChanged( it.key() );
             break;
         }
@@ -275,15 +275,15 @@ void OptionsTabToolbars::restoreOptions()
 
         p->toolbars << tb;
         if (tb.name == "Chat") {
-            d->cb_toolbars->addItem(chatToolbarName);
+            d->cb_toolbar->addItem(chatToolbarName);
         } else if (tb.name == "Groupchat") {
-            d->cb_toolbars->addItem(groupchatToolbarName);
+            d->cb_toolbar->addItem(groupchatToolbarName);
         } else {
-            d->cb_toolbars->addItem(tb.name);
+            d->cb_toolbar->addItem(tb.name);
         }
     }
 
-    d->cb_toolbars->setCurrentIndex(0);
+    d->cb_toolbar->setCurrentIndex(0);
     toolbarSelectionChanged(0);
 }
 
@@ -321,10 +321,10 @@ void OptionsTabToolbars::toolbarAdd()
 
     p->toolbars << tb;
 
-    d->cb_toolbars->addItem(tb.name);
+    d->cb_toolbar->addItem(tb.name);
 
-    d->cb_toolbars->setCurrentIndex(d->cb_toolbars->count() - 1);
-    toolbarSelectionChanged(d->cb_toolbars->currentIndex());
+    d->cb_toolbar->setCurrentIndex(d->cb_toolbar->count() - 1);
+    toolbarSelectionChanged(d->cb_toolbar->currentIndex());
 
     d->le_toolbarName->setFocus();
 }
@@ -332,17 +332,17 @@ void OptionsTabToolbars::toolbarAdd()
 void OptionsTabToolbars::toolbarDelete()
 {
     LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(w);
-    int                 n = d->cb_toolbars->currentIndex();
+    int                 n = d->cb_toolbar->currentIndex();
 
     noDirty = true;
     toolbarSelectionChanged(-1);
 
     p->toolbars.removeAt(n);
 
-    d->cb_toolbars->removeItem(n);
+    d->cb_toolbar->removeItem(n);
 
     noDirty = false;
-    toolbarSelectionChanged(d->cb_toolbars->currentIndex());
+    toolbarSelectionChanged(d->cb_toolbar->currentIndex());
 }
 
 void OptionsTabToolbars::addToolbarAction(QListWidget *parent, QString name, int toolbarId)
@@ -403,7 +403,7 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
     d->tb_left->setEnabled(enable && customizeable);
     d->tb_right->setEnabled(enable && customizeable);
     d->pb_deleteToolbar->setEnabled((item >= CHAT_TOOLBAR && item < ROSTER_TOOLBAR) ? false : enable);
-    d->cb_toolbars->setEnabled(enable);
+    d->cb_toolbar->setEnabled(enable);
     d->w_toolbarName->setVisible(item >= ROSTER_TOOLBAR || item < CHAT_TOOLBAR);
 
     d->tw_availActions->clear();
@@ -486,7 +486,7 @@ void OptionsTabToolbars::onActionAdded(IconAction *action)
         return;
 
     ToolbarPrefs tb;
-    int          n = d->cb_toolbars->currentIndex();
+    int          n = d->cb_toolbar->currentIndex();
     tb             = p->toolbars[n];
     int pos        = tb.keys.indexOf(action->objectName());
     if (pos == -1)
@@ -499,9 +499,9 @@ void OptionsTabToolbars::onActionAdded(IconAction *action)
 void OptionsTabToolbars::rebuildToolbarKeys()
 {
     LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(w);
-    if (!d->cb_toolbars->count())
+    if (!d->cb_toolbar->count())
         return;
-    int n = d->cb_toolbars->currentIndex();
+    int n = d->cb_toolbar->currentIndex();
 
     QStringList keys;
 
@@ -556,15 +556,15 @@ void OptionsTabToolbars::updateArrows()
 void OptionsTabToolbars::toolbarNameChanged()
 {
     LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(w);
-    if (!d->cb_toolbars->count())
+    if (!d->cb_toolbar->count())
         return;
 
     QString name = d->le_toolbarName->text();
 
-    int n               = d->cb_toolbars->currentIndex();
+    int n               = d->cb_toolbar->currentIndex();
     p->toolbars[n].name = name;
 
-    d->cb_toolbars->setItemText(n, name);
+    d->cb_toolbar->setItemText(n, name);
 
     emit dataChanged();
 }
@@ -644,9 +644,9 @@ void OptionsTabToolbars::toolbarDataChanged()
         return;
 
     LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(w);
-    if (!d->cb_toolbars->count())
+    if (!d->cb_toolbar->count())
         return;
-    int n = d->cb_toolbars->currentIndex();
+    int n = d->cb_toolbar->currentIndex();
 
     ToolbarPrefs tb = p->toolbars[n];
 
@@ -683,9 +683,9 @@ void OptionsTabToolbars::toolbarPosition()
 #if 0
     LEGOPTFIXME
     LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(w);
-    if (!d->cb_toolbars->count())
+    if (!d->cb_toolbar->count())
         return;
-    int n = d->cb_toolbars->currentIndex();
+    int n = d->cb_toolbar->currentIndex();
 
     PositionOptionsTabToolbars *posTbDlg = new PositionOptionsTabToolbars(w, &LEGOPTS.toolbars["mainWin"][n], n);
     connect(posTbDlg, SIGNAL(applyPressed()), SLOT(toolbarPositionApply()));

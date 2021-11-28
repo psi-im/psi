@@ -17,28 +17,28 @@
    <item>
     <layout class="QFormLayout" name="formLayout">
      <item row="0" column="0">
-      <widget class="QLabel" name="lblAccountTitle">
+      <widget class="QLabel" name="lb_AccountTitle">
        <property name="text">
         <string>Account:</string>
        </property>
       </widget>
      </item>
      <item row="0" column="1">
-      <widget class="AccountLabel" name="lblAccount">
+      <widget class="AccountLabel" name="lb_Account">
        <property name="textInteractionFlags">
         <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
        </property>
       </widget>
      </item>
      <item row="1" column="0">
-      <widget class="QLabel" name="lblMucJidTitile">
+      <widget class="QLabel" name="lb_MucJidTitile">
        <property name="text">
         <string>ID:</string>
        </property>
       </widget>
      </item>
      <item row="1" column="1">
-      <widget class="QLabel" name="lblMucJid">
+      <widget class="QLabel" name="lb_MucJid">
        <property name="text">
         <string notr="true"/>
        </property>
@@ -48,14 +48,14 @@
       </widget>
      </item>
      <item row="2" column="0">
-      <widget class="QLabel" name="lblDiscoNameTitile">
+      <widget class="QLabel" name="lb_DiscoNameTitile">
        <property name="text">
         <string>Name:</string>
        </property>
       </widget>
      </item>
      <item row="2" column="1">
-      <widget class="QLabel" name="lblDiscoName">
+      <widget class="QLabel" name="lb_DiscoName">
        <property name="text">
         <string notr="true"/>
        </property>
@@ -68,14 +68,14 @@
       </widget>
      </item>
      <item row="3" column="0">
-      <widget class="QLabel" name="lblMucDescTitle">
+      <widget class="QLabel" name="lb_MucDescTitle">
        <property name="text">
         <string>Description:</string>
        </property>
       </widget>
      </item>
      <item row="3" column="1">
-      <widget class="QLabel" name="lblMucDesc">
+      <widget class="QLabel" name="lb_MucDesc">
        <property name="text">
         <string notr="true"/>
        </property>
