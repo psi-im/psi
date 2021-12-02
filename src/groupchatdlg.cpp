@@ -2481,9 +2481,9 @@ void GCMainDlg::buildMenu()
     // Dialog menu
     d->pm_settings->clear();
 
-    d->actions->action("gchat_info")->addTo(d->pm_settings);
-    d->actions->action("gchat_clear")->addTo(d->pm_settings);
-    d->actions->action("gchat_configure")->addTo(d->pm_settings);
+    d->pm_settings->addAction(d->actions->action("gchat_info"));
+    d->pm_settings->addAction(d->actions->action("gchat_clear"));
+    d->pm_settings->addAction(d->actions->action("gchat_configure"));
     //#ifdef WHITEBOARDING
     //    d->act_whiteboard->addTo( d->pm_settings );
     //#endif
@@ -2499,6 +2499,7 @@ void GCMainDlg::buildMenu()
         d->pm_settings->addSeparator();
         d->pm_settings->addAction(d->actions->action("gchat_pin_tab"));
     }
+
 #ifdef PSI_PLUGINS
     if (!PsiOptions::instance()->getOption("options.ui.contactlist.toolbars.m1.visible").toBool()) {
         d->pm_settings->addSeparator();
