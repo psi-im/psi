@@ -530,7 +530,7 @@ void PsiActionList::Private::createChat()
 void PsiActionList::Private::createGroupchat()
 {
     {
-        IconAction *actInfo = new IconAction(tr("Informations"), QLatin1String("psi/info"), tr("Informations"), 0, this);
+        IconAction *actInfos = new IconAction(tr("Informations"), QLatin1String("psi/info"), tr("Informations"), 0, this);
         IconAction *actClear
             = new IconAction(tr("Clear Chat Window"), "psi/clearChat", tr("Clear Chat Window"), 0, this);
         IconAction *actFind     = new IconAction(tr("Find"), "psi/search", tr("&Find"), 0, this, "", true);
@@ -546,7 +546,7 @@ void PsiActionList::Private::createGroupchat()
         IconAction *actSetTopic  = new IconAction(setTopicText, QLatin1String("psi/topic"), setTopicText, 0, this);
         actSetTopic->setToolTip(setTopicText);
 
-        ActionNames actions[] = { { "gchat_infos", actInfo },
+        ActionNames actions[] = { { "gchat_infos", actInfos },
                                   { "gchat_clear", actClear },
                                   { "gchat_find", actFind },
                                   { "gchat_html_text", actHtmlText },
