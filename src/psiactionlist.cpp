@@ -530,7 +530,7 @@ void PsiActionList::Private::createChat()
 void PsiActionList::Private::createGroupchat()
 {
     {
-        IconAction *actInfo = new IconAction(tr("Information"), QLatin1String("psi/info"), tr("Information"), 0, this);
+        IconAction *actInfo = new IconAction(tr("Informations"), QLatin1String("psi/info"), tr("Informations"), 0, this);
         IconAction *actClear
             = new IconAction(tr("Clear Chat Window"), "psi/clearChat", tr("Clear Chat Window"), 0, this);
         IconAction *actFind     = new IconAction(tr("Find"), "psi/search", tr("&Find"), 0, this, "", true);
