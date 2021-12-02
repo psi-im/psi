@@ -915,14 +915,14 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
             // -- typeahead
         } else if (name == QString::fromLatin1("gchat_configure")) {
             connect(action, SIGNAL(triggered()), SLOT(configureRoom()));
+        } else if (name == QString::fromLatin1("gchat_vcard")) {
+            connect(action, SIGNAL(triggered()), SLOT(doInfo()));
         } else if (name == QString::fromLatin1("gchat_html_text")) {
             connect(action, &QAction::triggered, d->mle(), &ChatEdit::doHTMLTextMenu);
         } else if (name == QString::fromLatin1("gchat_icon")) {
             connect(account()->psi()->iconSelectPopup(), SIGNAL(textSelected(QString)), d, SLOT(addEmoticon(QString)));
             action->setMenu(pa->psi()->iconSelectPopup());
             ui_.tb_emoticons->setMenu(pa->psi()->iconSelectPopup());
-        } else if (name == QString::fromLatin1("gchat_vcard")) {
-            connect(action, SIGNAL(triggered()), SLOT(doInfo()));
         } else if (name == QString::fromLatin1("gchat_share_files")) {
             connect(action, &QAction::triggered, account(), [this]() {
                 FileShareDlg::shareFiles(

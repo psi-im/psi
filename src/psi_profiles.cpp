@@ -505,13 +505,13 @@ void OptionsMigration::lateMigration()
                          << "chat_find"
                          << "chat_html_text"
                          << "chat_add_contact"
+                         << "chat_vcard"
                          << "chat_share_files";
         chatToolbar.keys += pluginsKeys;
         chatToolbar.keys << "spacer"
                          << "chat_icon"
                          << "chat_file"
                          << "chat_pgp"
-                         << "chat_vcard"
                          << "chat_history"
                          << "chat_voice"
                          << "chat_active_contacts"

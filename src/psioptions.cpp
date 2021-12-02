@@ -166,13 +166,13 @@ bool PsiOptions::newProfile()
         chatToolbar.keys << "chat_clear"
                          << "chat_find"
                          << "chat_html_text"
-                         << "chat_add_contact";
+                         << "chat_add_contact"
+                         << "chat_vcard";
         chatToolbar.keys += pluginsKeys;
         chatToolbar.keys << "spacer"
                          << "chat_icon"
                          << "chat_file"
                          << "chat_pgp"
-                         << "chat_vcard"
                          << "chat_history"
                          << "chat_voice"
                          << "chat_share_files"

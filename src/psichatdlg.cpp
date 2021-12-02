@@ -540,6 +540,8 @@ void PsiChatDlg::initToolButtons()
             connect(action, SIGNAL(triggered()), chatEdit(), SLOT(doHTMLTextMenu()));
         } else if (name == QString::fromLatin1("chat_add_contact")) {
             connect(action, SIGNAL(triggered()), SLOT(addContact()));
+        } else if (name == QString::fromLatin1("chat_vcard")) {
+            connect(action, SIGNAL(triggered()), SLOT(doInfo()));
         } else if (name == QString::fromLatin1("chat_icon")) {
             connect(account()->psi()->iconSelectPopup(), SIGNAL(textSelected(QString)), this,
                     SLOT(addEmoticon(QString)));
@@ -554,8 +556,6 @@ void PsiChatDlg::initToolButtons()
         } else if (name == QString::fromLatin1("chat_pgp")) {
             ui_.tb_pgp->setDefaultAction(actions_->action("chat_pgp"));
             connect(action, SIGNAL(triggered(bool)), SLOT(actPgpToggled(bool)));
-        } else if (name == QString::fromLatin1("chat_vcard")) {
-            connect(action, SIGNAL(triggered()), SLOT(doInfo()));
         } else if (name == QString::fromLatin1("chat_history")) {
             connect(action, SIGNAL(triggered()), SLOT(doHistory()));
         } else if (name == QString::fromLatin1("chat_compact")) {
