@@ -512,7 +512,7 @@ void PsiActionList::Private::createChat()
                                   { "chat_voice", actVoice },
                                   { "chat_file", actFile },
                                   { "chat_pgp", actPgp },
-                                  { "chat_info", actInfo },
+                                  { "chat_vcard", actInfo },
                                   { "chat_history", actHistory },
                                   { "chat_compact", actCompact },
                                   { "chat_active_contacts", actActiveContacts },

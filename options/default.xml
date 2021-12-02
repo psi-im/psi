@@ -593,7 +593,7 @@ QLineEdit#le_status_text {
                 <chat_history type="QKeySequence"></chat_history>
                 <chat_html_text type="QKeySequence"></chat_html_text>
                 <chat_icon type="QKeySequence"></chat_icon>
-                <chat_info type="QKeySequence"></chat_info>
+                <chat_vcard type="QKeySequence"></chat_vcard>
                 <chat_pin_tab type="QKeySequence"></chat_pin_tab>
                 <chat_ps type="QKeySequence"></chat_ps>
                 <chat_share_files type="QKeySequence"></chat_share_files>

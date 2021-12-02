@@ -430,7 +430,7 @@ void PsiChatDlg::setShortcuts()
     // typeahead find bar
     actions_->action("chat_find")->setShortcuts(ShortcutManager::instance()->shortcuts("chat.find"));
     // -- typeahead
-    actions_->action("chat_info")->setShortcuts(ShortcutManager::instance()->shortcuts("common.user-info"));
+    actions_->action("chat_vcard")->setShortcuts(ShortcutManager::instance()->shortcuts("common.user-info"));
     actions_->action("chat_history")->setShortcuts(ShortcutManager::instance()->shortcuts("common.history"));
 
     act_mini_cmd_->setShortcuts(ShortcutManager::instance()->shortcuts("chat.quick-command"));
@@ -554,7 +554,7 @@ void PsiChatDlg::initToolButtons()
         } else if (name == QString::fromLatin1("chat_pgp")) {
             ui_.tb_pgp->setDefaultAction(actions_->action("chat_pgp"));
             connect(action, SIGNAL(triggered(bool)), SLOT(actPgpToggled(bool)));
-        } else if (name == QString::fromLatin1("chat_info")) {
+        } else if (name == QString::fromLatin1("chat_vcard")) {
             connect(action, SIGNAL(triggered()), SLOT(doInfo()));
         } else if (name == QString::fromLatin1("chat_history")) {
             connect(action, SIGNAL(triggered()), SLOT(doHistory()));
@@ -1024,7 +1024,7 @@ void PsiChatDlg::buildMenu()
     pm_settings_->addAction(actions_->action("chat_pgp"));
     pm_settings_->addSeparator();
 
-    pm_settings_->addAction(actions_->action("chat_info"));
+    pm_settings_->addAction(actions_->action("chat_vcard"));
     pm_settings_->addAction(actions_->action("chat_history"));
     auto dlg = getManagingTabDlg();
     if (dlg && PsiOptions::instance()->getOption("options.ui.tabs.multi-rows").toBool()) {

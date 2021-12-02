@@ -172,7 +172,7 @@ bool PsiOptions::newProfile()
                          << "chat_icon"
                          << "chat_file"
                          << "chat_pgp"
-                         << "chat_info"
+                         << "chat_vcard"
                          << "chat_history"
                          << "chat_voice"
                          << "chat_share_files"
