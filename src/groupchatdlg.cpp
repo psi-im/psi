@@ -2499,6 +2499,7 @@ void GCMainDlg::buildMenu()
         d->pm_settings->addSeparator();
         d->pm_settings->addAction(d->actions->action("gchat_pin_tab"));
     }
+
 #ifdef PSI_PLUGINS
     if (!PsiOptions::instance()->getOption("options.ui.contactlist.toolbars.m1.visible").toBool()) {
         d->pm_settings->addSeparator();
