@@ -906,7 +906,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
         d->actions->addAction(name, action);
 
         if (name == QString::fromLatin1("gchat_infos")) {
-            connect(action, &IconAction::triggered, this, &GCMainDlg::doShowInfo);
+            connect(action, &IconAction::triggered, this, &GCMainDlg::doShowMucInfos);
         } else if (name == QString::fromLatin1("gchat_clear")) {
             connect(action, SIGNAL(triggered()), SLOT(doClearButton()));
         } else if (name == QString::fromLatin1("gchat_find")) {
@@ -1489,7 +1489,7 @@ void GCMainDlg::sendNewTopic(const QMap<LanguageManager::LangId, QString> &topic
     emit aSend(m);
 }
 
-void GCMainDlg::doShowInfo()
+void GCMainDlg::doShowMucInfos()
 {
     auto        dlg = new QDialog(this);
     Ui::MucInfo ui;
