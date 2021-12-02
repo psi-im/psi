@@ -905,7 +905,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
         auto action = actList->copyAction(name, this);
         d->actions->addAction(name, action);
 
-        if (name == QString::fromLatin1("gchat_info")) {
+        if (name == QString::fromLatin1("gchat_infos")) {
             connect(action, &IconAction::triggered, this, &GCMainDlg::doShowInfo);
         } else if (name == QString::fromLatin1("gchat_clear")) {
             connect(action, SIGNAL(triggered()), SLOT(doClearButton()));

@@ -604,7 +604,7 @@ QLineEdit#le_status_text {
                 <gchat_find type="QKeySequence"></gchat_find>
                 <gchat_html_text type="QKeySequence"></gchat_html_text>
                 <gchat_icon type="QKeySequence"></gchat_icon>
-                <gchat_info type="QKeySequence"></gchat_info>
+                <gchat_infos type="QKeySequence"></gchat_infos>
                 <gchat_pin_tab type="QKeySequence"></gchat_pin_tab>
                 <gchat_ps type="QKeySequence"></gchat_ps>
                 <gchat_set_topic type="QKeySequence" comment="Set chat topic"/>

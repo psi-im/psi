@@ -525,7 +525,7 @@ void OptionsMigration::lateMigration()
         groupchatToolbar.on = chatToolbar.on;
 
         groupchatToolbar.name = "Groupchat";
-        groupchatToolbar.keys << "gchat_info"
+        groupchatToolbar.keys << "gchat_infos"
                               << "gchat_clear"
                               << "gchat_find"
                               << "gchat_html_text"

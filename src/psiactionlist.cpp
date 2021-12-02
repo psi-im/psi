@@ -546,7 +546,7 @@ void PsiActionList::Private::createGroupchat()
         IconAction *actSetTopic  = new IconAction(setTopicText, QLatin1String("psi/topic"), setTopicText, 0, this);
         actSetTopic->setToolTip(setTopicText);
 
-        ActionNames actions[] = { { "gchat_info", actInfo },
+        ActionNames actions[] = { { "gchat_infos", actInfo },
                                   { "gchat_clear", actClear },
                                   { "gchat_find", actFind },
                                   { "gchat_html_text", actHtmlText },
