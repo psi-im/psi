@@ -921,7 +921,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
             connect(account()->psi()->iconSelectPopup(), SIGNAL(textSelected(QString)), d, SLOT(addEmoticon(QString)));
             action->setMenu(pa->psi()->iconSelectPopup());
             ui_.tb_emoticons->setMenu(pa->psi()->iconSelectPopup());
-        } else if (name == QString::fromLatin1("gchat_info")) {
+        } else if (name == QString::fromLatin1("gchat_vcard")) {
             connect(action, SIGNAL(triggered()), SLOT(doInfo()));
         } else if (name == QString::fromLatin1("gchat_share_files")) {
             connect(action, &QAction::triggered, account(), [this]() {
