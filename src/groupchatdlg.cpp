@@ -1941,11 +1941,12 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
             suppressDefault = true;
         }
         if (s.getMUCStatuses().contains(333)) {
-            mucKickMsgHelper(nick, s, nickJid, tr("Removed"),
-                             tr("You have been removed from the room due to technical problem"),
-                             tr("You have been removed from the room by %1 due to technical problem"),
-                             tr("%1 has been removed from the room due to technical problem"),
-                             tr("%1 has been removed from the room by %2 due to technical problem"));
+            if (nick == d->self || options_->getOption("options.ui.muc.show-technical-kicks").toBool())
+                mucKickMsgHelper(nick, s, nickJid, tr("Removed"),
+                                 tr("You have been removed from the room due to technical problem"),
+                                 tr("You have been removed from the room by %1 due to technical problem"),
+                                 tr("%1 has been removed from the room due to technical problem"),
+                                 tr("%1 has been removed from the room by %2 due to technical problem"));
             suppressDefault = true;
         } else // 333 and 307 can come together. so "else" is here
             if (s.getMUCStatuses().contains(307)) {

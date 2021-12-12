@@ -324,6 +324,7 @@ QLineEdit#le_status_text {
                 </userlist>
                 <status-with-priority comment="Show priority with status change" type="bool">false</status-with-priority>
                 <show-initial-joins comment="Show joins on your MUC join (with status and priority, depends on options)" type="bool">false</show-initial-joins>
+                <show-technical-kicks comment="Show technical MUC kicks (a result of connection loss for example)" type="bool">false</show-technical-kicks>
                 <log-width type="int">500</log-width>
                 <roster-width type="int">150</roster-width>
                 <roster-at-left type="bool">false</roster-at-left>

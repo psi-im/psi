@@ -62,7 +62,7 @@ void OptionsTabGroupchat::applyOptions()
         return;
 
     GeneralGroupchatUI *d = static_cast<GeneralGroupchatUI *>(w);
-    PsiOptions *        o = PsiOptions::instance();
+    PsiOptions         *o = PsiOptions::instance();
     o->setOption("options.ui.muc.use-highlighting", d->alertGroupBox->isChecked());
     const int index = d->cb_coloringType->currentIndex();
     o->setOption("options.ui.muc.use-nick-coloring", index != NONE);
@@ -70,6 +70,7 @@ void OptionsTabGroupchat::applyOptions()
     o->setOption("options.muc.show-joins", d->ck_showJoins->isChecked());
     o->setOption("options.ui.muc.show-initial-joins", d->ck_showInitialJoins->isChecked());
     o->setOption("options.muc.show-status-changes", d->ck_showStatusChanges->isChecked());
+    o->setOption("options.muc.show-technical-kicks", d->ck_showTechnicalKicks->isChecked());
     o->setOption("options.ui.muc.status-with-priority", d->ck_showStatusPriority->isChecked());
 
     QStringList highlight;
@@ -90,7 +91,7 @@ void OptionsTabGroupchat::restoreOptions()
         return;
 
     GeneralGroupchatUI *d = static_cast<GeneralGroupchatUI *>(w);
-    PsiOptions *        o = PsiOptions::instance();
+    PsiOptions         *o = PsiOptions::instance();
 
     d->cb_coloringType->setCurrentIndex(-1); // deselect combobox items
     // no need to call dataChanged() when these widgets are modified
@@ -110,6 +111,7 @@ void OptionsTabGroupchat::restoreOptions()
     d->lw_nickColors->clear();
     d->ck_showJoins->setChecked(o->getOption("options.muc.show-joins").toBool());
     d->ck_showInitialJoins->setChecked(o->getOption("options.ui.muc.show-initial-joins").toBool());
+    d->ck_showTechnicalKicks->setChecked(o->getOption("options.ui.muc.show-technical-kicks").toBool());
     d->ck_showStatusChanges->setChecked(o->getOption("options.muc.show-status-changes").toBool());
     d->ck_showStatusPriority->setChecked(o->getOption("options.ui.muc.status-with-priority").toBool());
 
