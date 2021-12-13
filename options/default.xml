@@ -599,17 +599,17 @@ QLineEdit#le_status_text {
                 <chat_share_files type="QKeySequence"></chat_share_files>
                 <chat_templates type="QKeySequence"></chat_templates>
                 <chat_voice type="QKeySequence"></chat_voice>
-                <gchat_info type="QKeySequence"></gchat_info>
                 <gchat_clear type="QKeySequence"></gchat_clear>
                 <gchat_configure type="QKeySequence"></gchat_configure>
                 <gchat_find type="QKeySequence"></gchat_find>
                 <gchat_html_text type="QKeySequence"></gchat_html_text>
                 <gchat_icon type="QKeySequence"></gchat_icon>
+                <gchat_info type="QKeySequence"></gchat_info>
                 <gchat_pin_tab type="QKeySequence"></gchat_pin_tab>
                 <gchat_ps type="QKeySequence"></gchat_ps>
+                <gchat_set_topic type="QKeySequence" comment="Set chat topic"></gchat_set_topic>
                 <gchat_share_files type="QKeySequence"></gchat_share_files>
                 <gchat_templates type="QKeySequence"></gchat_templates>
-                <gchat_set_topic type="QKeySequence" comment="Set chat topic"/>
             </alist>
             <chat comment="Shortcuts in the chat dialog">
                 <next-tab type="QVariantList" comment="Switch to the next tab">
