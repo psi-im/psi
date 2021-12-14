@@ -126,18 +126,18 @@ public:
     const UserAccount &userAccount() const;
     UserAccount        accountOptions() const;
     virtual void       setUserAccount(const UserAccount &);
-    const Jid &        jid() const;
+    const Jid         &jid() const;
     QString            nameWithJid() const;
 
     void                    updateFeatures();
-    XMPP::Client *          client() const;
+    XMPP::Client           *client() const;
     virtual ContactProfile *contactProfile() const;
-    EventQueue *            eventQueue() const;
-    EDB *                   edb() const;
-    PsiCon *                psi() const;
-    AvatarFactory *         avatarFactory() const;
-    PrivacyManager *        privacyManager() const;
-    VoiceCaller *           voiceCaller() const;
+    EventQueue             *eventQueue() const;
+    EDB                    *edb() const;
+    PsiCon                 *psi() const;
+    AvatarFactory          *avatarFactory() const;
+    PrivacyManager         *privacyManager() const;
+    VoiceCaller            *voiceCaller() const;
 #ifdef WHITEBOARDING
     WbManager *wbManager() const;
 #endif
@@ -155,17 +155,17 @@ public:
     bool               loggedIn() const;
     void               setNick(const QString &);
     QString            nick() const;
-    const Mood &       mood() const;
-    const Activity &   activity() const;
+    const Mood        &mood() const;
+    const Activity    &activity() const;
     const GeoLocation &geolocation() const;
     bool               hasPgp() const;
     QString            pgpKeyId() const;
-    QHostAddress *     localAddress() const;
+    QHostAddress      *localAddress() const;
     void               setKnownPgpKeys(const VarList &list);
     void               removeKnownPgpKey(const QString &jid);
 
-    ChatDlg *        findChatDialog(const Jid &jid, bool compareResource = true) const;
-    ChatDlg *        findChatDialogEx(const Jid &jid, bool ignoreResource = false) const;
+    ChatDlg         *findChatDialog(const Jid &jid, bool compareResource = true) const;
+    ChatDlg         *findChatDialogEx(const Jid &jid, bool ignoreResource = false) const;
     QList<ChatDlg *> findChatDialogs(const Jid &jid, bool compareResource = true) const;
 
     QList<PsiContact *> activeContacts() const;
@@ -220,14 +220,14 @@ public:
                     std::function<void(const QString &getUrl)> callback = std::function<void(const QString &getUrl)>());
 
     Jid                        realJid(const Jid &j) const;
-    PsiContact *               selfContact() const;
+    PsiContact                *selfContact() const;
     const QList<PsiContact *> &contactList() const;
     int                        onlineContactsCount() const;
-    PsiContact *               findContact(const Jid &jid) const;
-    UserListItem *             find(const Jid &) const;
+    PsiContact                *findContact(const Jid &jid) const;
+    UserListItem              *find(const Jid &) const;
     QList<UserListItem *>      findRelevant(const Jid &) const;
-    UserListItem *             findFirstRelevant(const Jid &) const;
-    UserList *                 userList() const;
+    UserListItem              *findFirstRelevant(const Jid &) const;
+    UserList                  *userList() const;
     bool                       usingSSL() const;
 
     bool checkConnected(QWidget *parent = nullptr);
@@ -263,7 +263,7 @@ public:
     int  sendPgpEncryptedMessage(const Message &);
 
     // sucks sucks sucks sucks sucks sucks sucks
-    GCContact *        findGCContact(const Jid &j) const;
+    GCContact         *findGCContact(const Jid &j) const;
     XMPP::Status       gcContactStatus(const Jid &j);
     const QStringList &groupchats() const;
 
@@ -277,10 +277,10 @@ public:
 
     void deleteQueueFile();
 
-    PEPManager *       pepManager();
+    PEPManager        *pepManager();
     ServerInfoManager *serverInfoManager();
-    BookmarkManager *  bookmarkManager();
-    AvCallManager *    avCallManager();
+    BookmarkManager   *bookmarkManager();
+    AvCallManager     *avCallManager();
 
     void    clearCurrentConnectionError();
     QString currentConnectionError() const;
@@ -358,7 +358,7 @@ public slots:
     void dj_sendMessage(Message &, bool log = true);
     void dj_newMessage(const Jid &jid, const QString &body, const QString &subject, const QString &thread);
     void dj_replyMessage(const Jid &jid, const QString &body);
-    void dj_replyMessage(const Jid &jid, const QString &body, const QString &subject, const QString &thread);
+    void dj_replyMessage(const XMPP::Jid &jid, const QString &body, const QString &subject, const QString &thread);
     void dj_addAuth(const Jid &);
     void dj_addAuth(const Jid &, const QString &);
     void dj_add(const XMPP::Jid &, const QString &, const QStringList &, bool authReq);
@@ -483,7 +483,6 @@ private slots:
 #ifdef GROUPCHAT
     void groupChatMessagesRead(const Jid &);
 #endif
-    void edb_finished();
 
     void pgp_verifyFinished();
     void pgp_encryptFinished();
@@ -536,7 +535,7 @@ private:
     void          queueEvent(const PsiEvent::Ptr &e, ActivationType activationType);
     void          openNextEvent(const UserListItem &, ActivationType activationType);
     void          updateReadNext(const Jid &);
-    ChatDlg *     ensureChatDlg(const Jid &);
+    ChatDlg      *ensureChatDlg(const Jid &);
     void          lastStepLogin();
     void          processIncomingMessage(const Message &);
     void          processMessageQueue();
@@ -550,7 +549,7 @@ private:
 
     void      processChatsHelper(const Jid &jid, bool removeEvents);
     void      processChats(const Jid &);
-    ChatDlg * openChat(const Jid &, ActivationType activationType);
+    ChatDlg  *openChat(const Jid &, ActivationType activationType);
     EventDlg *createEventDlg(const Jid &);
     friend class PsiCon;
 

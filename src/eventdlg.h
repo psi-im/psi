@@ -126,7 +126,7 @@ public:
 
 signals:
     void aChat(const Jid &jid);
-    void aReply(const Jid &jid, const QString &body, const QString &subject, const QString &thread);
+    void aReply(const XMPP::Jid &jid, const QString &body, const QString &subject, const QString &thread);
     void aReadNext(const Jid &);
     void aDeny(const Jid &);
     void aAuth(const Jid &);
