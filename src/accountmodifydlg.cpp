@@ -150,6 +150,7 @@ void AccountModifyDlg::init()
     le_authid->setText(acc.authid);
     le_realm->setText(acc.realm);
 
+    ck_useProxyForUpload->setChecked(acc.opt_useProxyForUpload);
     ck_compress->setChecked(acc.opt_compress);
     ck_auto->setChecked(acc.opt_auto);
     ck_reconn->setChecked(acc.opt_reconn);
@@ -253,6 +254,7 @@ void AccountModifyDlg::init()
                           "server supports it and if you have the necessary qca-ossl "
                           "plugin installed.  For more information, check the "
                           "Psi homepage."));
+    ck_useProxyForUpload->setToolTip(tr("Use the same proxy for HTTP upload as one configured for XMPP connection"));
     ck_compress->setToolTip(tr("Check this option to use a compressed connection to "
                                "the XMPP server, if the server supports it."));
     ck_host->setToolTip(tr("Use this option for manual configuration of your XMPP host "
@@ -494,6 +496,7 @@ void AccountModifyDlg::save()
     acc.ssl                    = UserAccount::SSLFlag(cb_ssl->itemData(cb_ssl->currentIndex()).toInt());
     acc.allow_plain            = ClientStream::AllowPlainType(cb_plain->itemData(cb_plain->currentIndex()).toInt());
     acc.opt_compress           = ck_compress->isChecked();
+    acc.opt_useProxyForUpload  = ck_useProxyForUpload->isChecked();
     acc.opt_auto               = ck_auto->isChecked();
     acc.opt_connectAfterSleep  = ck_connectAfterSleep->isChecked();
     acc.opt_autoSameStatus     = ck_autoSameStatus->isChecked();

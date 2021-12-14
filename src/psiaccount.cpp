@@ -430,8 +430,7 @@ public:
     QByteArray     photoHash;
 
     // Voice Call
-    VoiceCaller *voiceCaller = nullptr;
-
+    VoiceCaller   *voiceCaller   = nullptr;
     AvCallManager *avCallManager = nullptr;
 
     TabManager *tabManager = nullptr;
@@ -456,6 +455,8 @@ public:
 
     // HttpAuth
     HttpAuthManager *httpAuthManager = nullptr;
+
+    QPointer<QNetworkAccessManager> httpUploadNAM;
 
     QList<GCContact *> gcbank;
     QStringList        groupchats;
@@ -1480,6 +1481,16 @@ void PsiAccount::setUserAccount(const UserAccount &_acc)
 
     if (d->avCallManager)
         d->updateAvCallSettings(d->acc);
+
+    if (d->acc.opt_useProxyForUpload && !d->acc.proxyID.isEmpty()) {
+        if (!d->httpUploadNAM)
+            d->httpUploadNAM = new QNetworkAccessManager(this);
+        auto proxy = convert_proxy(acc, d->jid);
+        d->httpUploadNAM->setProxy(proxy);
+        d->client->httpFileUploadManager()->setNetworkAccessManager(d->httpUploadNAM);
+    } else {
+        delete d->httpUploadNAM;
+    }
 
     cpUpdate(d->self);
     emit updatedAccount();

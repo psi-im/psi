@@ -91,6 +91,7 @@ void UserAccount::reset()
     opt_keepAlive             = true;
     opt_sm                    = true;
     allow_plain               = XMPP::ClientStream::AllowPlainOverTLS;
+    opt_useProxyForUpload     = true;
     opt_compress              = true;
     opt_log                   = true;
     opt_reconn                = true;
@@ -154,6 +155,7 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
     opt_auto               = o->getOption(base + ".auto").toBool();
     opt_keepAlive          = o->getOption(base + ".keep-alive").toBool();
     opt_sm                 = o->getOption(base + ".enable-sm", true).toBool();
+    opt_useProxyForUpload  = o->getOption(base + ".use-proxy-for-upload", true).toBool();
     opt_compress           = o->getOption(base + ".compress").toBool();
     req_mutual_auth        = o->getOption(base + ".require-mutual-auth").toBool();
     legacy_ssl_probe       = o->getOption(base + ".legacy-ssl-probe").toBool();
@@ -312,6 +314,7 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
     o->setOption(base + ".auto", opt_auto);
     o->setOption(base + ".keep-alive", opt_keepAlive);
     o->setOption(base + ".enable-sm", opt_sm);
+    o->setOption(base + ".use-proxy-for-upload", opt_useProxyForUpload);
     o->setOption(base + ".compress", opt_compress);
     o->setOption(base + ".require-mutual-auth", req_mutual_auth);
     o->setOption(base + ".legacy-ssl-probe", legacy_ssl_probe);

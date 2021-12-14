@@ -51,17 +51,18 @@ public:
     QString id;
     QString name;
     QString jid, pass, host, resource, authid, realm;
+    QString scramSaltedHashPassword;
     bool    customAuth;
     bool    storeSaltedHashedPassword;
-    QString scramSaltedHashPassword;
     quint16 port;
     int     priority;
     bool opt_enabled, opt_pass, opt_host, opt_auto, opt_keepAlive, opt_log, opt_connectAfterSleep, opt_autoSameStatus,
-        opt_reconn, opt_ignoreSSLWarnings, opt_compress, opt_sm;
-    XMPP::ClientStream::AllowPlainType allow_plain;
+        opt_reconn, opt_ignoreSSLWarnings, opt_useProxyForUpload, opt_compress, opt_sm;
+
     bool                               req_mutual_auth;
     bool                               legacy_ssl_probe;
     bool                               opt_automatic_resource, priority_dep_on_status, ignore_global_actions;
+    XMPP::ClientStream::AllowPlainType allow_plain;
     int                                security_level;
     enum SSLFlag { SSL_No = 0, SSL_Yes = 1, SSL_Auto = 2, SSL_Legacy = 3 } ssl;
 

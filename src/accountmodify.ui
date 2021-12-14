@@ -629,6 +629,13 @@
         </layout>
        </item>
        <item>
+        <widget class="QCheckBox" name="ck_useProxyForUpload">
+         <property name="text">
+          <string>Use this proxy server for HTTP file upload</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QCheckBox" name="ck_compress">
          <property name="text">
           <string>Compress traffic (if possible)</string>
@@ -1223,6 +1230,7 @@ When you enable this option you will not be able to find your password in config
   <tabstop>pb_changepw</tabstop>
   <tabstop>ck_auto</tabstop>
   <tabstop>ck_connectAfterSleep</tabstop>
+  <tabstop>ck_autoSameStatus</tabstop>
   <tabstop>ck_reconn</tabstop>
   <tabstop>ck_log</tabstop>
   <tabstop>pb_vcard</tabstop>
@@ -1230,23 +1238,31 @@ When you enable this option you will not be able to find your password in config
   <tabstop>pb_addBlock</tabstop>
   <tabstop>pb_removeBlock</tabstop>
   <tabstop>pb_privacy</tabstop>
+  <tabstop>ck_useProxyForUpload</tabstop>
   <tabstop>ck_compress</tabstop>
   <tabstop>ck_keepAlive</tabstop>
   <tabstop>ck_enableSM</tabstop>
   <tabstop>ck_host</tabstop>
   <tabstop>le_host</tabstop>
-  <tabstop>le_port</tabstop>
   <tabstop>cb_ssl</tabstop>
+  <tabstop>le_port</tabstop>
   <tabstop>cb_plain</tabstop>
   <tabstop>ck_req_mutual</tabstop>
   <tabstop>cb_security_level</tabstop>
+  <tabstop>cb_resource</tabstop>
+  <tabstop>le_resource</tabstop>
+  <tabstop>cb_priority</tabstop>
+  <tabstop>sb_priority</tabstop>
+  <tabstop>ck_ibbOnly</tabstop>
   <tabstop>le_dtProxy</tabstop>
+  <tabstop>cb_stunHost</tabstop>
   <tabstop>le_stunUser</tabstop>
   <tabstop>le_stunPass</tabstop>
+  <tabstop>cb_onlyMyTurn</tabstop>
   <tabstop>ck_custom_auth</tabstop>
   <tabstop>le_authid</tabstop>
   <tabstop>le_realm</tabstop>
-  <tabstop>buttonBox</tabstop>
+  <tabstop>ck_scram_salted_password</tabstop>
  </tabstops>
  <resources/>
  <connections>
