@@ -34,6 +34,7 @@
 #include "iconaction.h"
 #include "iconselect.h"
 #include "iconwidget.h"
+#include "infodlg.h"
 #include "languagemanager.h"
 #include "lastactivitytask.h"
 #include "mcmdmanager.h"
@@ -1500,6 +1501,18 @@ void GCMainDlg::doShowInfo()
     ui.lblMucJid->setText(QString("<a href=\"xmpp:%1?join\">%1</a>").arg(jid().bare()));
     ui.lblDiscoName->setText(d->discoMucName);
     ui.lblMucDesc->setText(d->discoMucDescription);
+
+    {
+        QVBoxLayout *layout = new QVBoxLayout;
+        const VCard  vcard  = VCardFactory::instance()->vcard(jid());
+        auto         info   = new InfoWidget(InfoWidget::Contact, jid(), vcard, account());
+        layout->addWidget(info);
+        ui.tab_vcard->setLayout(layout);
+        // connect(vcard_, SIGNAL(busy()), ui_.busy, SLOT(start()));
+        // connect(vcard_, SIGNAL(released()), ui_.busy, SLOT(stop()));
+        info->doRefresh();
+    }
+
     dlg->setAttribute(Qt::WA_DeleteOnClose);
     dlg->show();
 }
