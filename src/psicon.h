@@ -74,15 +74,15 @@ public:
     void deinit();
     void gracefulDeinit(std::function<void()> callback);
 
-    PsiContactList *       contactList() const;
-    EDB *                  edb() const;
+    PsiContactList        *contactList() const;
+    EDB                   *edb() const;
     TuneControllerManager *tuneManager() const;
-    FileTransDlg *         ftdlg();
-    TabManager *           tabManager() const;
-    NetworkAccessManager * networkAccessManager() const;
-    FileSharingManager *   fileSharingManager() const;
-    PsiThemeManager *      themeManager() const;
-    WebServer *            webServer() const;
+    FileTransDlg          *ftdlg();
+    TabManager            *tabManager() const;
+    NetworkAccessManager  *networkAccessManager() const;
+    FileSharingManager    *fileSharingManager() const;
+    PsiThemeManager       *themeManager() const;
+    WebServer             *webServer() const;
 
     AlertManager *alertManager() const;
 
@@ -204,6 +204,7 @@ private:
     void    promptUserToCreateAccount();
     QString optionsFile() const;
     void    doQuit(int);
+    void    updateNAMOptions();
 };
 
 #endif // PSICON_H

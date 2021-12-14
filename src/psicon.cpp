@@ -283,21 +283,21 @@ private slots:
     }
 
 public:
-    PsiCon *              psi         = nullptr;
-    PsiContactList *      contactList = nullptr;
+    PsiCon               *psi         = nullptr;
+    PsiContactList       *contactList = nullptr;
     OptionsMigration      optionsMigration;
     OptionsTree           accountTree;
-    MainWin *             mainwin = nullptr;
+    MainWin              *mainwin = nullptr;
     Idle                  idle;
     QList<item_dialog *>  dialogList;
     int                   eventId = 0;
     QStringList           recentNodeList; // FIXME move this to options system?
-    EDB *                 edb                = nullptr;
-    TcpPortReserver *     tcpPortReserver    = nullptr;
-    IconSelectPopup *     iconSelect         = nullptr;
+    EDB                  *edb                = nullptr;
+    TcpPortReserver      *tcpPortReserver    = nullptr;
+    IconSelectPopup      *iconSelect         = nullptr;
     NetworkAccessManager *nam                = nullptr;
-    FileSharingManager *  fileSharingManager = nullptr;
-    PsiThemeManager *     themeManager       = nullptr;
+    FileSharingManager   *fileSharingManager = nullptr;
+    PsiThemeManager      *themeManager       = nullptr;
 #ifdef HAVE_WEBSERVER
     WebServer *webServer = nullptr;
 #endif
@@ -307,15 +307,15 @@ public:
     PsiActionList *actionList = nullptr;
     // GlobalAccelManager *globalAccelManager;
     TuneControllerManager *tuneManager          = nullptr;
-    QMenuBar *             defaultMenuBar       = nullptr;
-    TabManager *           tabManager           = nullptr;
+    QMenuBar              *defaultMenuBar       = nullptr;
+    TabManager            *tabManager           = nullptr;
     bool                   quitting             = false;
     bool                   wakeupPending        = false;
-    QTimer *               updatedAccountTimer_ = nullptr;
-    AutoUpdater *          autoUpdater          = nullptr;
+    QTimer                *updatedAccountTimer_ = nullptr;
+    AutoUpdater           *autoUpdater          = nullptr;
     AlertManager           alertManager;
-    BossKey *              bossKey         = nullptr;
-    PopupManager *         popupManager    = nullptr;
+    BossKey               *bossKey         = nullptr;
+    PopupManager          *popupManager    = nullptr;
     quint16                byteStreamsPort = 0;
     QString                externalByteStreamsAddress;
 
@@ -525,7 +525,8 @@ bool PsiCon::init()
         //}
     }
 
-    d->nam                = new NetworkAccessManager(this);
+    d->nam = new NetworkAccessManager(this);
+    updateNAMOptions();
     d->fileSharingManager = new FileSharingManager(this);
 #ifdef HAVE_WEBSERVER
     d->webServer = new WebServer(this);
@@ -905,7 +906,7 @@ void PsiCon::changeProfile()
     ActiveProfiles::instance()->unsetThisProfile();
     if (d->contactList->haveActiveAccounts()) {
         QMessageBox  messageBox(QMessageBox::Information, CAP(tr("Error")),
-                               tr("Please disconnect before changing the profile."));
+                                tr("Please disconnect before changing the profile."));
         QPushButton *cancel     = messageBox.addButton(QMessageBox::Cancel);
         QPushButton *disconnect = messageBox.addButton(tr("&Disconnect"), QMessageBox::AcceptRole);
         messageBox.setDefaultButton(disconnect);
@@ -1462,6 +1463,20 @@ void PsiCon::optionChanged(const QString &option)
         }
     }
 #endif
+    updateNAMOptions();
+}
+
+void PsiCon::updateNAMOptions()
+{
+    auto proxyItem = ProxyManager::instance()->getItemForObject("Default");
+    if (!proxyItem.type.isEmpty()) {
+        QNetworkProxy netProxy(proxyItem.type == "socks" ? QNetworkProxy::Socks5Proxy : QNetworkProxy::HttpProxy,
+                               proxyItem.settings.host, proxyItem.settings.port, proxyItem.settings.user,
+                               proxyItem.settings.pass);
+        d->nam->setProxy(netProxy);
+    } else {
+        d->nam->setProxy(QNetworkProxy::NoProxy);
+    }
 }
 
 void PsiCon::slotApplyOptions()
@@ -1507,7 +1522,7 @@ void PsiCon::slotApplyOptions()
 
 void PsiCon::queueChanged()
 {
-    PsiIcon *   nextAnim   = nullptr;
+    PsiIcon    *nextAnim   = nullptr;
     int         nextAmount = d->contactList->queueCount();
     PsiAccount *pa         = d->contactList->queueLowestEventId();
     if (pa)
@@ -1698,8 +1713,8 @@ void PsiCon::processEvent(const PsiEvent::Ptr &e, ActivationType activationType)
 #ifdef FILETRANSFER
     if (e->type() == PsiEvent::File) {
         FileEvent::Ptr fe   = e.staticCast<FileEvent>();
-        FileTransfer * ft   = fe->takeFileTransfer();
-        auto *         sess = fe->takeJingleSession();
+        FileTransfer  *ft   = fe->takeFileTransfer();
+        auto          *sess = fe->takeJingleSession();
         e->account()->eventQueue()->dequeue(e);
         emit e->account()->queueChanged();
         e->account()->cpUpdate(*u);
@@ -1719,7 +1734,7 @@ void PsiCon::processEvent(const PsiEvent::Ptr &e, ActivationType activationType)
 
     if (e->type() == PsiEvent::AvCallType) {
         AvCallEvent::Ptr ae   = e.staticCast<AvCallEvent>();
-        AvCall *         sess = ae->takeAvCall();
+        AvCall          *sess = ae->takeAvCall();
         e->account()->eventQueue()->dequeue(e);
         emit e->account()->queueChanged();
         e->account()->cpUpdate(*u);
@@ -1744,7 +1759,7 @@ void PsiCon::processEvent(const PsiEvent::Ptr &e, ActivationType activationType)
     bool sentToChatWindow = false;
     if (e->type() == PsiEvent::Message) {
         MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-        const Message &   m  = me->message();
+        const Message    &m  = me->message();
 #ifdef GROUPCHAT
         if (m.type() == "groupchat") {
             isMuc = true;
@@ -1794,7 +1809,7 @@ void PsiCon::processEvent(const PsiEvent::Ptr &e, ActivationType activationType)
 #ifdef GROUPCHAT
         if (isMuc) {
             PsiAccount *account = e->account();
-            GCMainDlg * c       = account->findDialog<GCMainDlg *>(e->from());
+            GCMainDlg  *c       = account->findDialog<GCMainDlg *>(e->from());
             if (c) {
                 c->ensureTabbedCorrectly();
                 c->bringToFront(true);
@@ -1867,8 +1882,8 @@ PsiActionList *PsiCon::actionList() const { return d->actionList; }
 void PsiCon::promptUserToCreateAccount()
 {
     QMessageBox  msgBox(QMessageBox::Question, tr("Account setup"),
-                       tr("You need to set up an account to start. Would you like to register a new account, or use an "
-                          "existing account?"));
+                        tr("You need to set up an account to start. Would you like to register a new account, or use an "
+                            "existing account?"));
     QPushButton *registerButton = msgBox.addButton(tr("Register new account"), QMessageBox::AcceptRole);
     QPushButton *existingButton = msgBox.addButton(tr("Use existing account"), QMessageBox::AcceptRole);
     msgBox.addButton(QMessageBox::Cancel);

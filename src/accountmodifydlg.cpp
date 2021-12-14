@@ -254,7 +254,8 @@ void AccountModifyDlg::init()
                           "server supports it and if you have the necessary qca-ossl "
                           "plugin installed.  For more information, check the "
                           "Psi homepage."));
-    ck_useProxyForUpload->setToolTip(tr("Use the same proxy for HTTP upload as one configured for XMPP connection"));
+    ck_useProxyForUpload->setToolTip(tr("Use the same proxy for HTTP upload as one configured for XMPP connection."
+                                        " Otherwise use application default proxy."));
     ck_compress->setToolTip(tr("Check this option to use a compressed connection to "
                                "the XMPP server, if the server supports it."));
     ck_host->setToolTip(tr("Use this option for manual configuration of your XMPP host "
