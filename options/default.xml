@@ -658,7 +658,7 @@ QLineEdit#le_status_text {
                     <item type="QKeySequence">Alt+H</item>
                 </hide>
                 <history type="QKeySequence" comment="Open the message history">Ctrl+H</history>
-                <user-info type="QKeySequence" comment="Show the user info of the contact">Ctrl+I</user-info>
+                <user-info type="QKeySequence" comment="Show contact's vCard">Ctrl+I</user-info>
             </common>
             <global comment="Shortcuts available from outside of the application">
                 <event type="QKeySequence" comment="Receive incoming event"/>

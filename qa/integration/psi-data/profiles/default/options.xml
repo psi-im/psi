@@ -504,7 +504,7 @@
      <item type="QKeySequence">Ctrl+W</item>
     </close>
     <scroll-up type="QKeySequence" comment="Scroll up">Shift+PgUp</scroll-up>
-    <user-info type="QKeySequence" comment="Show the user info of the contact">Ctrl+I</user-info>
+    <user-info type="QKeySequence" comment="Show contact's vCard">Ctrl+I</user-info>
     <scroll-down type="QKeySequence" comment="Scroll down">Shift+PgDown</scroll-down>
     <history type="QKeySequence" comment="Open the message history">Ctrl+Shift+H</history>
    </common>
