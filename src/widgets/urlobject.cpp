@@ -82,7 +82,7 @@ public:
         act_copy = new IconAction(tr, tr, 0, this);
         connect(act_copy, SIGNAL(triggered()), SLOT(popupCopy()));
 
-        tr       = qApp->translate("URLLabel", "User Info");
+        tr       = qApp->translate("URLLabel", "vCard");
         act_info = new IconAction(tr, "psi/vCard", tr, 0, this);
         connectXmppAction(act_info, "vcard");
     }

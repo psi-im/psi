@@ -805,7 +805,7 @@ void GCMainDlg::doContactContextMenu(const QString &nick)
     // pm->insertSeparator();
     // pm->insertItem(tr("Check &Status"), 2);
 
-    act = new QAction(IconsetFactory::icon("psi/vCard").icon(), tr("User &Info"), pm);
+    act = new QAction(IconsetFactory::icon("psi/vCard").icon(), tr("&vCard"), pm);
     pm->addAction(act);
     act->setData(3);
 
