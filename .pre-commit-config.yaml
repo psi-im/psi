@@ -4,7 +4,7 @@
 exclude: '^3rdparty|COPYING|.gitmodules'
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.5.0
+    rev: v4.1.0
     hooks:
     -   id: trailing-whitespace
     -   id: end-of-file-fixer
@@ -13,12 +13,12 @@ repos:
     -   id: check-merge-conflict
 -   repo: https://github.com/doublify/pre-commit-clang-format
     # for clang-tidy we can take github.com/pocc/pre-commit-hooks
-    rev: f4c4ac5948aff384af2b439bfabb2bdd65d2b3ac
+    rev: 62302476d0da01515660132d76902359bed0f782
     hooks:
     -   id: clang-format
         files: \.(cpp|h)$
 -   repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.1.7
+    rev: v1.1.10
     hooks:
     -   id: forbid-crlf
     -   id: remove-crlf
