@@ -112,7 +112,6 @@ private slots:
     void trayHideShow();
 
     void doRecvNextEvent();
-    void statusClicked(int);
     void try2tryCloseProgram();
     void tryCloseProgram();
 

@@ -7,6 +7,7 @@ unset(EXTRA_LDFLAGS)
 set(SOURCES
     busywidget.cpp
     emojiregistry.cpp
+    eventnotifier.cpp
     fancylabel.cpp
     fancypopup.cpp
     iconaction.cpp
@@ -31,6 +32,7 @@ set(HEADERS
     actionlineedit.h
     busywidget.h
     emojiregistry.h
+    eventnotifier.h
     fancylabel.h
     fancypopup.h
     fancypopuplist.h

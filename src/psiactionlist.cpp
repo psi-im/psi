@@ -45,8 +45,8 @@ public:
     ~Private();
 
 private:
-    PsiActionList *            list;
-    PsiCon *                   psi;
+    PsiActionList             *list;
+    PsiCon                    *psi;
     QPointer<ActionList>       statusActionList;
     map<QString, IconAction *> actionmap;
 
@@ -228,9 +228,6 @@ void PsiActionList::Private::createMainWin()
         statusButton->setToolTip(tr("Provides a convenient way to change and to get information about current status"));
         statusButton->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding));
 
-        IconAction *eventNotifier = new EventNotifierAction(this, "EventNotifierAction");
-        eventNotifier->setToolTip(tr("Special item that displays number of pending events"));
-
         IconAction *actActiveContacts
             = new IconAction(tr("Active contacts"), "psi/jabber", tr("Active contacts"), 0, this);
         actActiveContacts->setToolTip(tr("Simple way to find contacts with opened chats"));
@@ -238,7 +235,6 @@ void PsiActionList::Private::createMainWin()
         ActionNames actions[] = { { "button_options", optionsButton },
                                   { "button_status", statusButton },
                                   { "active_contacts", actActiveContacts },
-                                  { "event_notifier", eventNotifier },
                                   { "", nullptr } };
 
         createActionList(tr("Buttons"), Actions_MainWin, actions);

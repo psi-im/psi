@@ -211,13 +211,7 @@ bool PsiOptions::newProfile()
                           << "menu_play_sounds"
                           << "menu_xml_console";
 
-        ToolbarPrefs eventNotifier;
-        eventNotifier.name = tr("Event notifier");
-        eventNotifier.keys << "event_notifier";
-        eventNotifier.dock = Qt3Dock_Bottom;
-
-        QList<ToolbarPrefs> toolbars;
-        toolbars << chatToolbar << groupchatToolbar << buttons << showContacts << eventNotifier;
+        QList<ToolbarPrefs> toolbars = { chatToolbar, groupchatToolbar, buttons, showContacts };
         for (ToolbarPrefs tb : qAsConst(toolbars)) {
             tb.locked = true;
             PsiToolBar::structToOptions(this, tb);

@@ -233,7 +233,7 @@ class PopupAction::Private : public QObject {
 public:
     QSizePolicy                size;
     QList<PopupActionButton *> buttons;
-    PsiIcon *                  icon;
+    PsiIcon                   *icon;
     bool                       showText;
 
     Private(QObject *parent) : QObject(parent)
@@ -350,32 +350,6 @@ PopupAction &PopupAction::operator=(const PopupAction &from)
     d->showText = from.d->showText;
 
     return *this;
-}
-
-//----------------------------------------------------------------------------
-// MLabel -- a clickable label
-//----------------------------------------------------------------------------
-
-MLabel::MLabel(QWidget *parent, const char *name) : QLabel(parent)
-{
-    setObjectName(name);
-    setMinimumWidth(48);
-    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    setFrameStyle(QFrame::Panel | QFrame::Sunken);
-}
-
-void MLabel::mouseReleaseEvent(QMouseEvent *e)
-{
-    emit clicked(int(e->button()));
-    e->ignore();
-}
-
-void MLabel::mouseDoubleClickEvent(QMouseEvent *e)
-{
-    if (e->button() == Qt::LeftButton)
-        emit doubleClicked();
-
-    e->ignore();
 }
 
 //----------------------------------------------------------------------------
@@ -514,136 +488,5 @@ bool SeparatorAction::addTo(QWidget *w)
 }
 
 IconAction *SeparatorAction::copy() const { return new SeparatorAction(nullptr); }
-
-//----------------------------------------------------------------------------
-// EventNotifierAction
-//----------------------------------------------------------------------------
-
-class EventNotifierAction::Private {
-public:
-    Private() = default;
-
-    QList<MLabel *> labels;
-    bool            hide = false;
-    QString         message;
-};
-
-EventNotifierAction::EventNotifierAction(QObject *parent, const char *name) : IconAction(parent, name)
-{
-    d = new Private;
-    setText(tr("<Event notifier>"));
-    d->hide = true;
-}
-
-EventNotifierAction::~EventNotifierAction() { delete d; }
-
-bool EventNotifierAction::addTo(QWidget *w)
-{
-    if (w) {
-        MLabel *label = new MLabel(w, "EventNotifierAction::MLabel");
-        label->setText(d->message);
-        d->labels.append(label);
-        connect(label, SIGNAL(destroyed()), SLOT(objectDestroyed()));
-        connect(label, SIGNAL(doubleClicked()), SIGNAL(triggered()));
-        connect(label, SIGNAL(clicked(int)), SIGNAL(clicked(int)));
-
-        QToolBar *toolbar = dynamic_cast<QToolBar *>(w);
-        if (!toolbar) {
-            QLayout *layout = w->layout();
-            if (layout)
-                layout->addWidget(label);
-        } else {
-            toolbar->addWidget(label);
-        }
-
-        if (d->hide)
-            hide();
-
-        return true;
-    }
-
-    return false;
-}
-
-void EventNotifierAction::setMessage(const QString &m)
-{
-    d->message = m;
-
-    for (MLabel *label : qAsConst(d->labels)) {
-        label->setText(d->message);
-    }
-}
-
-void EventNotifierAction::objectDestroyed()
-{
-    MLabel *label = static_cast<MLabel *>(sender());
-    d->labels.removeAll(label);
-}
-
-void EventNotifierAction::hide()
-{
-    d->hide = true;
-
-    for (MLabel *label : qAsConst(d->labels)) {
-        label->hide();
-        PsiToolBar *toolBar = dynamic_cast<PsiToolBar *>(label->parent());
-        if (toolBar) {
-            int         found   = 0;
-            const auto &widgets = toolBar->findChildren<QWidget *>();
-            for (QWidget *widget : widgets) {
-                if (!widget->objectName().startsWith("qt_")
-                    && !QString(widget->metaObject()->className()).startsWith("QToolBar")
-                    && !QString(widget->metaObject()->className()).startsWith("QMenu")
-                    && QString(widget->metaObject()->className()) != "Oxygen::TransitionWidget") // dirty hack
-                {
-                    found++;
-                }
-            }
-
-            if (found == 1) // only MLabel is on ToolBar
-                // We should not hide toolbar, if it should be visible (user set `enabled` in options)
-                // toolBar->hide();
-                toolBar->updateVisibility();
-        }
-    }
-}
-
-void EventNotifierAction::show()
-{
-    d->hide = false;
-
-    for (MLabel *label : qAsConst(d->labels)) {
-        label->show();
-        QToolBar *toolBar = dynamic_cast<QToolBar *>(label->parent());
-        if (toolBar)
-            toolBar->show();
-    }
-}
-
-void EventNotifierAction::updateVisibility()
-{
-    if (d->hide)
-        hide();
-    else
-        show();
-}
-
-IconAction *EventNotifierAction::copy() const
-{
-    EventNotifierAction *act = new EventNotifierAction(nullptr);
-
-    *act = *this;
-
-    return act;
-}
-
-EventNotifierAction &EventNotifierAction::operator=(const EventNotifierAction &from)
-{
-    *(static_cast<IconAction *>(this)) = from;
-
-    d->hide = from.d->hide;
-
-    return *this;
-}
 
 #include "mainwin_p.moc"

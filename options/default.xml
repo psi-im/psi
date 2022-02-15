@@ -549,7 +549,6 @@ QLineEdit#le_status_text {
                 <button_options type="QKeySequence" comment="Options"></button_options>
                 <button_status type="QKeySequence" comment="Status"></button_status>
                 <enable_groups type="QKeySequence" comment="Enable Groups"></enable_groups>
-                <event_notifier type="QKeySequence" comment="Event Notifier"></event_notifier>
                 <view_groups type="QKeySequence" comment="View Groups"></view_groups>
                 <show_offline type="QKeySequence" comment="Show Offline Contacts"></show_offline>
                 <show_away type="QKeySequence" comment="Show Away Contacts"></show_away>

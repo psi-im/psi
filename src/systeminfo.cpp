@@ -310,7 +310,10 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
         }
     } else {
         if (current >= QOperatingSystemVersion::Windows10) {
-            os_version_str_ = "10";
+            if (current.microVersion() >= 22000) // Hack to detect Win11
+                os_version_str_ = "11";
+            else
+                os_version_str_ = "10";
         } else if (current >= QOperatingSystemVersion::Windows8_1) {
             os_version_str_ = "8.1";
         } else if (current >= QOperatingSystemVersion::Windows8) {

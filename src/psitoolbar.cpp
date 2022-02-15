@@ -91,11 +91,7 @@ void PsiToolBar::initialize()
     setWindowTitle(o->getOption(base_ + ".name").toString());
 
     ActionList actions = actionList_->suitableActions(PsiActionList::Actions_MainWin | PsiActionList::Actions_Common);
-    QList<QString> skipList;
-    skipList << "button_options"
-             << "button_status"
-             << "event_notifier"
-             << "spacer";
+    QList<QString> skipList = { "button_options", "button_status", "spacer" };
 
     const auto actionNames = o->getOption(base_ + ".actions").toStringList();
     for (const QString &actionName : actionNames) {

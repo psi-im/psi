@@ -28,6 +28,7 @@
 #include "avcall/avcall.h"
 #include "common.h"
 #include "desktoputil.h"
+#include "eventnotifier.h"
 #include "geolocationdlg.h"
 #include "globalstatusmenu.h"
 #include "mainwin_p.h"
@@ -104,7 +105,7 @@ public:
     ~Private();
 
     bool              onTop, asTool;
-    QMenu *           mainMenu, *optionsMenu, *toolsMenu;
+    QMenu            *mainMenu, *optionsMenu, *toolsMenu;
     GlobalStatusMenu *statusMenu;
 #ifdef Q_OS_LINUX
     // Status menu for MenuBar.
@@ -114,31 +115,31 @@ public:
     int          sbState;
     QString      nickname;
     PsiTrayIcon *tray;
-    QMenu *      trayMenu;
+    QMenu       *trayMenu;
 #ifdef Q_OS_MAC
     QMenu *dockMenu;
 #endif
     QVBoxLayout *vb_roster;
-    QSplitter *  splitter;
-    TabDlg *     mainTabs;
+    QSplitter   *splitter;
+    TabDlg      *mainTabs;
     QString      statusTip;
-    PsiToolBar * viewToolBar;
+    PsiToolBar  *viewToolBar;
     int          tabsSize;
     int          rosterSize;
     bool         isLeftRoster;
 
-    PopupAction *        optionsButton, *statusButton;
-    IconActionGroup *    statusGroup, *viewGroups;
-    IconAction *         statusSmallerAlt;
-    EventNotifierAction *eventNotifier;
-    PsiCon *             psi;
-    MainWin *            mainWin;
-    RosterAvatarFrame *  rosterAvatar;
+    PopupAction         *optionsButton, *statusButton;
+    IconActionGroup     *statusGroup, *viewGroups;
+    IconAction          *statusSmallerAlt;
+    EventNotifier       *eventNotifier;
+    PsiCon              *psi;
+    MainWin             *mainWin;
+    RosterAvatarFrame   *rosterAvatar;
     QPointer<PsiAccount> defaultAccount;
 
-    QLineEdit *  searchText;
+    QLineEdit   *searchText;
     QToolButton *searchPb;
-    QWidget *    searchWidget;
+    QWidget     *searchWidget;
 
     QTimer *hideTimer;
 
@@ -182,7 +183,7 @@ MainWin::Private::Private(PsiCon *_psi, MainWin *_mainWin) :
 
     statusGroup   = static_cast<IconActionGroup *>(getAction("status_group"));
     viewGroups    = static_cast<IconActionGroup *>(getAction("view_groups"));
-    eventNotifier = static_cast<EventNotifierAction *>(getAction("event_notifier"));
+    eventNotifier = nullptr;
 
     optionsButton    = static_cast<PopupAction *>(getAction("button_options"));
     statusButton     = static_cast<PopupAction *>(getAction("button_status"));
@@ -514,6 +515,16 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
     buildToolbars();
     // setUnifiedTitleAndToolBarOnMac(true);
 
+    d->eventNotifier = new EventNotifier(this, "EventNotifier");
+    d->eventNotifier->setText("");
+    d->vb_roster->addWidget(d->eventNotifier);
+    connect(d->eventNotifier, &EventNotifier::clicked, this, [this](int btn) {
+        if (btn == Qt::MiddleButton)
+            emit recvNextEvent();
+        if (btn == Qt::LeftButton)
+            doRecvNextEvent();
+    });
+
 #ifdef Q_OS_WIN
     updateWinTaskbar(_asTool);
 #endif
@@ -578,7 +589,7 @@ void MainWin::registerAction(IconAction *action)
     struct MenuAction {
         const char *name;
         const char *signal;
-        QObject *   receiver;
+        QObject    *receiver;
         const char *slot;
     };
     std::vector<MenuAction> actionlist = {
@@ -616,9 +627,6 @@ void MainWin::registerAction(IconAction *action)
         { "set_activity", activated, this, SLOT(actSetActivityActivated()) },
         { "set_geoloc", activated, this, SLOT(actSetGeolocActivated()) },
 #endif
-
-        { "event_notifier", SIGNAL(clicked(int)), this, SLOT(statusClicked(int)) },
-        { "event_notifier", activated, this, SLOT(doRecvNextEvent()) },
 
         { "help_readme", activated, this, SLOT(actReadmeActivated()) },
         { "help_online_wiki", activated, this, SLOT(actOnlineWikiActivated()) },
@@ -663,7 +671,7 @@ void MainWin::registerAction(IconAction *action)
 
     struct {
         const char *name;
-        QObject *   sender;
+        QObject    *sender;
         const char *signal;
         const char *slot;
         bool        checked;
@@ -873,7 +881,6 @@ void MainWin::buildToolbars()
         tb->updateVisibility();
     }
 
-    // d->eventNotifier->updateVisibility();
     setUpdatesEnabled(true);
 
     // in case we have floating toolbars, they have inherited the 'no updates enabled'
@@ -1057,7 +1064,7 @@ void MainWin::actDiagQCAKeyStoreActivated()
 
 void MainWin::actChooseStatusActivated()
 {
-    PsiOptions *       o = PsiOptions::instance();
+    PsiOptions        *o = PsiOptions::instance();
     XMPP::Status::Type lastStatus
         = XMPP::Status::txt2type(PsiOptions::instance()->getOption("options.status.last-status").toString());
     StatusSetDlg *w = new StatusSetDlg(d->psi, makeLastStatus(lastStatus), lastPriorityNotEmpty());
@@ -1649,9 +1656,11 @@ void MainWin::updateReadNext(PsiIcon *anim, int amount)
 
     if (d->nextAmount <= 0) {
         d->eventNotifier->hide();
-        d->eventNotifier->setMessage("");
+        d->eventNotifier->setText("");
+        d->eventNotifier->setPsiIcon("");
     } else {
-        d->eventNotifier->setMessage(QString("<b>") + numEventsString(d->nextAmount) + "</b>");
+        d->eventNotifier->setPsiIcon(anim);
+        d->eventNotifier->setText(QString("<b>") + numEventsString(d->nextAmount) + "</b>");
         d->eventNotifier->show();
         // make sure it shows
         // qApp->processEvents();
@@ -1703,13 +1712,6 @@ void MainWin::updateTray()
 }
 
 void MainWin::doRecvNextEvent() { emit recvNextEvent(); }
-
-void MainWin::statusClicked(int x)
-{
-    if (x == Qt::MiddleButton) {
-        emit recvNextEvent();
-    }
-}
 
 PsiTrayIcon *MainWin::psiTrayIcon() { return d->tray; }
 

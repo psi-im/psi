@@ -54,33 +54,6 @@ public:
     virtual IconAction *copy() const;
 };
 
-class EventNotifierAction : public IconAction {
-    Q_OBJECT
-public:
-    EventNotifierAction(QObject *parent, const char *name = nullptr);
-    ~EventNotifierAction();
-
-    void setMessage(const QString &);
-    bool addTo(QWidget *w);
-
-    void hide();
-    void show();
-    void updateVisibility();
-
-    virtual IconAction *         copy() const;
-    virtual EventNotifierAction &operator=(const EventNotifierAction &);
-
-signals:
-    void clicked(int);
-
-private slots:
-    void objectDestroyed();
-
-private:
-    class Private;
-    Private *d;
-};
-
 class PopupAction : public IconAction {
     Q_OBJECT
 private:
@@ -101,23 +74,8 @@ public:
     void setText(const QString &text);
     bool addTo(QWidget *w);
 
-    virtual IconAction * copy() const;
+    virtual IconAction  *copy() const;
     virtual PopupAction &operator=(const PopupAction &);
-};
-
-class MLabel : public QLabel {
-    Q_OBJECT
-public:
-    MLabel(QWidget *parent = nullptr, const char *name = nullptr);
-
-protected:
-    // reimplemented
-    void mouseReleaseEvent(QMouseEvent *);
-    void mouseDoubleClickEvent(QMouseEvent *);
-
-signals:
-    void clicked(int);
-    void doubleClicked();
 };
 
 class MAction : public IconActionGroup {
@@ -131,7 +89,7 @@ public:
     virtual bool addTo(QWidget *);
 
     virtual IconAction *copy() const;
-    virtual MAction &   operator=(const MAction &);
+    virtual MAction    &operator=(const MAction &);
 
 signals:
     void activated(PsiAccount *, int);
