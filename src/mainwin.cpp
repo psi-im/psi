@@ -127,6 +127,7 @@ public:
     int          tabsSize;
     int          rosterSize;
     bool         isLeftRoster;
+    bool         allInOne;
 
     PopupAction         *optionsButton, *statusButton;
     IconActionGroup     *statusGroup, *viewGroups;
@@ -320,15 +321,14 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
     d->defaultAccount = nullptr;
 
     QWidget *rosterBar = new QWidget(this);
-    bool     allInOne  = false;
+    d->allInOne        = PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool()
+        && PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString().contains('A');
 
-    if (PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool()
-        && PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString().contains('A')) {
+    if (d->allInOne) {
         d->splitter = new QSplitter(this);
         d->splitter->setObjectName("onewindowsplitter");
         connect(d->splitter, SIGNAL(splitterMoved(int, int)), this, SLOT(splitterMoved()));
         setCentralWidget(d->splitter);
-        allInOne = true;
 
         d->mainTabs = d->psi->tabManager()->newTabs(nullptr);
         d->psi->tabManager()->setPreferredTabsForKind('C', d->mainTabs);
@@ -369,7 +369,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
     d->vb_roster->setMargin(layoutMargin);
     d->vb_roster->setSpacing(layoutMargin);
 
-    if (allInOne) {
+    if (d->allInOne) {
         QString     toolOpt = "options.ui.contactlist.toolbars";
         const auto &bases   = PsiOptions::instance()->getChildOptionNames(toolOpt, true, true);
         for (const QString &base : bases) {
@@ -1496,8 +1496,11 @@ void MainWin::updateWinTaskbar(bool enabled)
             connect(d->thumbnailToolBar_, &PsiThumbnailToolBar::setOffline, this,
                     [this]() { d->getAction("status_offline")->trigger(); });
             connect(d->thumbnailToolBar_, &PsiThumbnailToolBar::runActiveEvent, this, &MainWin::doRecvNextEvent);
-            connect(d->psi->contactList(), &PsiContactList::queueChanged, this,
-                    [this]() { d->thumbnailToolBar_->updateToolBar(d->nextAmount > 0); });
+            connect(d->psi->contactList(), &PsiContactList::queueChanged, this, [this]() {
+                d->thumbnailToolBar_->updateToolBar(d->nextAmount > 0);
+                if (!isActiveWindow() && d->allInOne)
+                    qApp->alert(this, 0);
+            });
         }
     } else {
         delete d->thumbnailToolBar_;
