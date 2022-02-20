@@ -1,13 +1,14 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <icondef>
     <meta>
-        <name>silk</name>
+        <name>Silk - System (default)</name>
         <version>1.2</version>
-        <description>Silk iconset</description>
+        <description>Silk Iconset</description>
         <creation>2010-11-16</creation>
-        <author www='http://www.famfamfam.com/lab/icons/silk/'>Famfamfam (Base icons)</author>
+        <home>https://psi-im.org/</home>
         <author email='maksim.maj@gmail.com'>maj</author>
         <author email='ky6uk@jabber.ufanet.ru'>Ky6uk</author>
+        <author www='http://www.famfamfam.com/lab/icons/silk/'>Famfamfam (Base icons)</author>
     </meta>
 
     <icon>
@@ -409,4 +410,5 @@
         <x xmlns='name'>mood/worried</x>
         <object mime='image/png'>Worried.png</object>
     </icon>
+
 </icondef>

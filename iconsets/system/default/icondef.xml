@@ -3,7 +3,7 @@
     <meta>
         <name>Crystal - System (default)</name>
         <version>1.0</version>
-        <description>Crystal System Iconset</description>
+        <description>Crystal Iconset</description>
         <creation>2005-11-23</creation>
         <home>https://psi-im.org/</home>
         <author email='jmkim@uci.edu'>Jason Kim (Logo and misc. icons)</author>
@@ -734,4 +734,5 @@
         <x xmlns='name'>psi/mic_rec</x>
         <object mime='image/png'>mic_rec.png</object>
     </icon>
+
 </icondef>

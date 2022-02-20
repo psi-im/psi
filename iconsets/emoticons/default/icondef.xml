@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <icondef>
     <meta>
-        <name>Telegram icon pack</name>
+        <name>Telegram - System (default)</name>
         <version>1.1</version>
-        <description>Default Psi 1.4 iconset</description>
+        <description>Telegram Iconset</description>
         <creation>2019-10-30</creation>
         <home>https://telegram.org/</home>
         <author email='info@telegram.org'>Telegram LLC</author>
@@ -226,4 +226,5 @@
         <text>:kazakhstan:</text>
         <object mime='image/png'>country-kz.png</object>
     </icon>
+
 </icondef>

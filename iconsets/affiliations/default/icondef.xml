@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <icondef>
     <meta>
-        <name>Medals</name>
+        <name>Medals - System (default)</name>
         <version>0.1</version>
-        <description>Adium Affiliations</description>
+        <description>Medals Iconset</description>
         <creation>2010-06-10</creation>
         <home>https://psi-im.org/</home>
         <author jid='tuxden@psi-plus.com'>tux-den</author>

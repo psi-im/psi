@@ -1,19 +1,20 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <icondef>
     <meta>
-        <name>Stellar3</name>
-        <description>Stellar3 Iconset</description>
+        <name>Stellar3 - System (default)</name>
         <version>0.1</version>
-         <creation>2006-08-30</creation>
+        <description>Stellar3 Iconset</description>
+        <creation>2006-08-30</creation>
+        <home>https://psi-im.org/</home>
         <author>Jason Kim (Base icon)</author>
         <author www='http://el-tramo.be'>Remko Tronçon</author>
         <author www='http://www.everaldo.com'>Everaldo Coelho (Base icons)</author>
-    <copyright>
-        The icons in this iconset are copyright by Remko Tronçon, and
-        are made available under the terms of Lesser General Public License.
-        They are based on the "Crystal project icons", copyright 2006-2007
-        Everaldo Coelho, under the same license.
-    </copyright>
+        <copyright>
+            The icons in this iconset are copyright by Remko Tronçon, and
+            are made available under the terms of Lesser General Public License.
+            They are based on the "Crystal project icons", copyright 2006-2007
+            Everaldo Coelho, under the same license.
+        </copyright>
     </meta>
 
     <!-- Normal status icons -->
@@ -133,4 +134,5 @@
         <x xmlns='name'>psi/typing</x>
         <object mime='image/png'>typing.png</object>
     </icon>
+
 </icondef>
