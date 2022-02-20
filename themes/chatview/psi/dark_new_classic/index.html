@@ -5,55 +5,55 @@
   %scripts%
   <style type="text/css" media="screen,print" id="themeStyle">
 
-/* скролл-бар*/
+/* scrollbar */
 body::-webkit-scrollbar {
-  width:15px;
-  height:15px;}
+    width:15px;
+    height:15px;
+}
 
-/* скролл-бар, кнопки перемотки*/
+/* scrollbar, rewind buttons */
 body::-webkit-scrollbar-button {
-  display: block;
-  width: 15px;
-  height: 15px;}
+    display: none;
+}
 
-/* скролл-бар, вверху стрелка вверх*/
+/* scrollbar, top area up arrow */
 body::-webkit-scrollbar-button:decrement:start {
-    background-color: #2D2D2D;
-    border: 1px outset #444444;
-    border-radius: 3px;
-    padding: 2px;}
+    display: none;
+}
 
-/* скролл-бар, вверху стрелка вниз*/
+/* scrollbar, top area down arrow */
 body::-webkit-scrollbar-button:increment:start {
-height: 0px;}
+    display: none;
+}
 
-/* скролл-бар, внизу стрелка вверх*/
+/* scrollbar, bottom area up arrow */
 body::-webkit-scrollbar-button:decrement:end {
-    background-color: #2D2D2D;
-    border: 1px outset #444444;
-    border-radius: 3px;
-    padding: 2px;}
+    display: none;
+}
 
-/* скролл-бар, внизу стрелка вниз*/
+/* scrollbar, bottom area down arrow */
 body::-webkit-scrollbar-button:increment:end {
-    background-color: #2D2D2D;
-    border: 1px outset #444444;
-    border-radius: 3px;
-    padding: 2px;}
+    display: none;
+}
 
-/* скролл-бар, ползунок*/
+/* scrollbar, slider */
 body::-webkit-scrollbar-thumb {
     background-color: #2D2D2D;
     border: 1px outset #444444;
-    border-radius: 2px;}
+    border-radius: 7px;
+}
 
-/* скролл-бар, подложка*/
+/* scrollbar, slider mouse hover */
+body::-webkit-scrollbar-thumb:hover {
+    background: #5B5B5B;
+}
+
+/* scrollbar, slider track */
 body::-webkit-scrollbar-track-piece {
-    margin-top: 1px;
-    margin-bottom: 1px;
     background-color: #212121;
     border: 1px inset #444444;
-    border-radius: 2px;}
+    border-radius: 2px;
+}
 
 body {padding:0; margin:0; width:100%;}
 body > div {
