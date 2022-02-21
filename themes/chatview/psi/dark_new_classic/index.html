@@ -5,12 +5,6 @@
   %scripts%
   <style type="text/css" media="screen,print" id="themeStyle">
 
-/* scrollbar */
-body::-webkit-scrollbar {
-    width:15px;
-    height:15px;
-}
-
 /* scrollbar, rewind buttons */
 body::-webkit-scrollbar-button {
     display: none;
@@ -34,25 +28,6 @@ body::-webkit-scrollbar-button:decrement:end {
 /* scrollbar, bottom area down arrow */
 body::-webkit-scrollbar-button:increment:end {
     display: none;
-}
-
-/* scrollbar, slider */
-body::-webkit-scrollbar-thumb {
-    background-color: #2D2D2D;
-    border: 1px outset #444444;
-    border-radius: 7px;
-}
-
-/* scrollbar, slider mouse hover */
-body::-webkit-scrollbar-thumb:hover {
-    background: #5B5B5B;
-}
-
-/* scrollbar, slider track */
-body::-webkit-scrollbar-track-piece {
-    background-color: #212121;
-    border: 1px inset #444444;
-    border-radius: 2px;
 }
 
 body {padding:0; margin:0; width:100%;}
@@ -162,6 +137,55 @@ function startPsiTheme(shared) {
             }
         });
     }
+
+    // This function converts string to CSSStyleSheet
+    function CSSString2CSSStyleSheet ( css ) {
+        const style = document.createElement ( 'style' );
+        style.innerText = css;
+        document.head.appendChild ( style );
+        const {sheet} = style;
+        document.head.removeChild ( style );
+        return sheet;
+    }
+
+    function setScrollBarElemStyle(element, style) {
+        return element + " { background-color: " + style.backgroundColor +"; border: " + style.border + "; border-radius: " + style.borderRadius + "; }";
+    }
+
+    //set chat scrollbar style from qstylesheet
+    util.psiOption("options.ui.chat.css", function(val) {
+        if (!val) { return; }
+        //replace :: symbols by _ to parse qss
+        var fixedText = val.replace(/::/g, "_");
+        const opCSSRules = CSSString2CSSStyleSheet(fixedText.toLowerCase());
+        for (let i=0; i < opCSSRules.cssRules.length; i++) {
+            const rule = opCSSRules.cssRules[i];
+            const ruleText = rule.cssText;
+            const ruleStyle = rule.style;
+            if (ruleText.startsWith("qscrollbar_handle:hover")) {
+                var newRule = setScrollBarElemStyle("body::-webkit-scrollbar-thumb:hover", ruleStyle);
+                themeStyle.insertRule(newRule, themeStyle.cssRules.length);
+            } else
+            if (ruleText.startsWith("qscrollbar_handle") && !ruleText.includes("hover")) {
+                var newRule = setScrollBarElemStyle("body::-webkit-scrollbar-thumb", ruleStyle);
+                themeStyle.insertRule(newRule, themeStyle.cssRules.length);
+            } else
+            if (ruleText.startsWith("qscrollbar:vertical") && !ruleText.includes("hover")) {
+                //count scrollbar width in pexels: width - left margin - right margin
+                var cssWidth = parseInt(ruleStyle.width) - (parseInt(ruleStyle.marginLeft) + parseInt(ruleStyle.marginRight));
+                var newRule = "body::-webkit-scrollbar { width: " + cssWidth + "px; }";
+                themeStyle.insertRule(newRule, themeStyle.cssRules.length);
+            } else
+            if (ruleText.startsWith("qscrollbar:vertical:hover")) {
+                var newRule = setScrollBarElemStyle("body::-webkit-scrollbar-track:hover", ruleStyle);
+                themeStyle.insertRule(newRule, themeStyle.cssRules.length);
+            } else
+            if (ruleText.startsWith("qscrollbar") && !ruleText.includes("horizontal") && !ruleText.includes("_")) {
+                var newRule = setScrollBarElemStyle("body::-webkit-scrollbar-track, body::-webkit-scrollbar", ruleStyle);
+                themeStyle.insertRule(newRule, themeStyle.cssRules.length);
+            }
+        }
+    });
 
     shared.initTheme({
         chatElement : document.body,
