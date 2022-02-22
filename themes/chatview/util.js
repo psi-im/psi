@@ -521,6 +521,15 @@ function initPsiTheme() {
                     return true;
                 }
                 return false;
+            },
+
+            CSSString2CSSStyleSheet : function(css) {
+                const style = document.createElement ( 'style' );
+                style.innerText = css;
+                document.head.appendChild ( style );
+                const {sheet} = style;
+                document.head.removeChild ( style );
+                return sheet;
             }
         },
 

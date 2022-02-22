@@ -112,6 +112,18 @@ function startPsiTheme(shared) {
         "options.ui.look.colors.messages.link-visited" : cssLinkVisited
     }
 
+    var sstyle = document.getElementById('scrollStyle');
+    if (sstyle && document.body.contains(sstyle)) {
+        document.body.removeChild(sstyle);
+    }
+    var scrollStyle = document.createElement('style');
+    scrollStyle.type = 'text/css';
+    scrollStyle.id = 'scrollStyle';
+
+    function setScrollBarElemStyle(element, style) {
+        return element + " { background-color: " + style.backgroundColor +"; border: " + style.border + "; border-radius: " + style.borderRadius + "; } ";
+    }
+
     var applyPsiSettings = function() {
         util.getFont(function(cssFont){util.updateObject(cssBody, cssFont)});
         util.getPaletteColor("Base", function(color){cssBody.backgroundColor = color});
@@ -136,56 +148,47 @@ function startPsiTheme(shared) {
                 shared.chatElement.removeChild(d);
             }
         });
-    }
 
-    // This function converts string to CSSStyleSheet
-    function CSSString2CSSStyleSheet ( css ) {
-        const style = document.createElement ( 'style' );
-        style.innerText = css;
-        document.head.appendChild ( style );
-        const {sheet} = style;
-        document.head.removeChild ( style );
-        return sheet;
-    }
-
-    function setScrollBarElemStyle(element, style) {
-        return element + " { background-color: " + style.backgroundColor +"; border: " + style.border + "; border-radius: " + style.borderRadius + "; }";
-    }
-
-    //set chat scrollbar style from qstylesheet
-    util.psiOption("options.ui.chat.css", function(val) {
-        if (!val) { return; }
-        //replace :: symbols by _ to parse qss
-        var fixedText = val.replace(/::/g, "_");
-        const opCSSRules = CSSString2CSSStyleSheet(fixedText.toLowerCase());
-        for (let i=0; i < opCSSRules.cssRules.length; i++) {
-            const rule = opCSSRules.cssRules[i];
-            const ruleText = rule.cssText;
-            const ruleStyle = rule.style;
-            if (ruleText.startsWith("qscrollbar_handle:hover")) {
-                var newRule = setScrollBarElemStyle("body::-webkit-scrollbar-thumb:hover", ruleStyle);
-                themeStyle.insertRule(newRule, themeStyle.cssRules.length);
-            } else
-            if (ruleText.startsWith("qscrollbar_handle") && !ruleText.includes("hover")) {
-                var newRule = setScrollBarElemStyle("body::-webkit-scrollbar-thumb", ruleStyle);
-                themeStyle.insertRule(newRule, themeStyle.cssRules.length);
-            } else
-            if (ruleText.startsWith("qscrollbar:vertical") && !ruleText.includes("hover")) {
-                //count scrollbar width in pexels: width - left margin - right margin
-                var cssWidth = parseInt(ruleStyle.width) - (parseInt(ruleStyle.marginLeft) + parseInt(ruleStyle.marginRight));
-                var newRule = "body::-webkit-scrollbar { width: " + cssWidth + "px; }";
-                themeStyle.insertRule(newRule, themeStyle.cssRules.length);
-            } else
-            if (ruleText.startsWith("qscrollbar:vertical:hover")) {
-                var newRule = setScrollBarElemStyle("body::-webkit-scrollbar-track:hover", ruleStyle);
-                themeStyle.insertRule(newRule, themeStyle.cssRules.length);
-            } else
-            if (ruleText.startsWith("qscrollbar") && !ruleText.includes("horizontal") && !ruleText.includes("_")) {
-                var newRule = setScrollBarElemStyle("body::-webkit-scrollbar-track, body::-webkit-scrollbar", ruleStyle);
-                themeStyle.insertRule(newRule, themeStyle.cssRules.length);
+        //set chat scrollbar style from qstylesheet
+        util.psiOption("options.ui.chat.css", function(val) {
+            scrollStyle.innerText = "";
+            if (!val) { return; }
+            //replace :: symbols by _ to parse qss
+            var tmpText = val.replace(/::/g, "_");
+            var fixedText = tmpText.replace(/qframe#log/gi, "qframe_log");
+            const opCSSRules = util.CSSString2CSSStyleSheet(fixedText.toLowerCase());
+            var scrollCSS = "";
+            for (let i=0; i < opCSSRules.cssRules.length; i++) {
+                const rule = opCSSRules.cssRules[i];
+                const ruleText = rule.cssText;
+                const ruleStyle = rule.style;
+                if (ruleText.startsWith("qscrollbar_handle:hover")) {
+                    scrollCSS += setScrollBarElemStyle("body::-webkit-scrollbar-thumb:hover", ruleStyle);
+                } else
+                if (ruleText.startsWith("qscrollbar_handle") && !ruleText.includes("hover")) {
+                    scrollCSS += setScrollBarElemStyle("body::-webkit-scrollbar-thumb", ruleStyle);
+                } else
+                if (ruleText.startsWith("qscrollbar:vertical") && !ruleText.includes("hover")) {
+                    //count scrollbar width in pexels: width - left margin - right margin
+                    var cssWidth = parseInt(ruleStyle.width) - (parseInt(ruleStyle.marginLeft) + parseInt(ruleStyle.marginRight));
+                    scrollCSS += "body::-webkit-scrollbar { width: " + cssWidth + "px; } ";
+                } else
+                if (ruleText.startsWith("qscrollbar:vertical:hover")) {
+                    scrollCSS += setScrollBarElemStyle("body::-webkit-scrollbar-track:hover", ruleStyle);
+                } else
+                if (ruleText.startsWith("qscrollbar") && !ruleText.includes("horizontal") && !ruleText.includes("_")) {
+                    scrollCSS += setScrollBarElemStyle("body::-webkit-scrollbar-track, body::-webkit-scrollbar", ruleStyle);
+                }
+                if (ruleText.startsWith("qframe_log")) {
+                    var chatBgColor = ruleStyle.backgroundColor;
+                    var chatBrdColor = ruleStyle.borderColor;
+                    var trackbarTmp = "hr { height:1px; border:1px solid black; border-color:" + chatBgColor + " " + chatBrdColor + " " + chatBrdColor + " " + chatBgColor + ";} ";
+                    scrollCSS += trackbarTmp;
+                }
             }
-        }
-    });
+            scrollStyle.innerText = scrollCSS;
+        });
+    }
 
     shared.initTheme({
         chatElement : document.body,
@@ -275,6 +278,7 @@ function startPsiTheme(shared) {
     });
 
     applyPsiSettings();
+    document.body.appendChild(scrollStyle);
 
     shared.session.signalInited();
 

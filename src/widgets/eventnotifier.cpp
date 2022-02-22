@@ -18,8 +18,16 @@
  */
 
 #include "eventnotifier.h"
+#include <QAction>
 #include <QHBoxLayout>
+#include <QLabel>
+#include <QMenu>
+#include <QMouseEvent>
 
+/**
+ * \class ClickableLabel
+ * \brief QLabel that reacts on mouse click events.
+ */
 ClickableLabel::ClickableLabel(QWidget *parent) : QLabel(parent)
 {
     setMinimumWidth(48);
@@ -32,6 +40,10 @@ void ClickableLabel::mouseReleaseEvent(QMouseEvent *e)
     e->ignore();
 }
 
+/**
+ * \class EventNotifier
+ * \brief A widget that appears at the bottom of roster to control incoming events.
+ */
 EventNotifier::EventNotifier(QWidget *parent, const char *name) :
     QFrame { parent }, eventIcon(new IconLabel(this)), eventLabel(new ClickableLabel(this))
 {
@@ -49,6 +61,19 @@ void EventNotifier::mouseReleaseEvent(QMouseEvent *e)
 {
     emit clicked(int(e->button()));
     e->ignore();
+}
+
+void EventNotifier::contextMenuEvent(QContextMenuEvent *e)
+{
+    // create popup menu
+    QMenu    popupMenu;
+    QAction *clearEventsAct   = new QAction(tr("Clear all events"), &popupMenu);
+    QAction *readNextEventAct = new QAction(tr("Read next event"), &popupMenu);
+    connect(clearEventsAct, &QAction::triggered, this, [this]() { emit clearEventQueue(); });
+    connect(readNextEventAct, &QAction::triggered, this, [this]() { emit clicked(Qt::LeftButton); });
+    popupMenu.addActions({ readNextEventAct, clearEventsAct });
+    popupMenu.exec(e->globalPos());
+    e->accept();
 }
 
 void EventNotifier::setPsiIcon(PsiIcon *icon) { eventIcon->setPsiIcon(icon); }

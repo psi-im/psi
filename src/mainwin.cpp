@@ -519,10 +519,17 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
     d->eventNotifier->setText("");
     d->vb_roster->addWidget(d->eventNotifier);
     connect(d->eventNotifier, &EventNotifier::clicked, this, [this](int btn) {
-        if (btn == Qt::MiddleButton)
+        if (btn == Qt::MiddleButton || btn == Qt::LeftButton)
             emit recvNextEvent();
-        if (btn == Qt::LeftButton)
-            doRecvNextEvent();
+    });
+    connect(d->eventNotifier, &EventNotifier::clearEventQueue, this, [this]() {
+        if (QMessageBox::question(this, tr("Question"), tr("Are you sure you want to clear all events?"))
+            == QMessageBox::Yes) {
+            auto accounts = d->psi->contactList()->accounts();
+            for (const auto &account : accounts) {
+                account->eventQueue()->clear();
+            }
+        }
     });
 
 #ifdef Q_OS_WIN

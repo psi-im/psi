@@ -22,9 +22,10 @@
 
 #include "iconlabel.h"
 #include "iconset.h"
-#include <QLabel>
-#include <QMouseEvent>
 #include <QWidget>
+
+class QLabel;
+class QMouseEvent;
 
 class ClickableLabel : public QLabel {
     Q_OBJECT
@@ -49,9 +50,11 @@ public:
 
 signals:
     void clicked(int);
+    void clearEventQueue();
 
 protected:
     void mouseReleaseEvent(QMouseEvent *);
+    void contextMenuEvent(QContextMenuEvent *e);
 
 private:
     IconLabel      *eventIcon;
