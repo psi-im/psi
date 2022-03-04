@@ -48,7 +48,9 @@ Available configuration options for cmake are described in [Readme-cmake.txt](Re
 
 ### Linux
 
-Installation of Psi build dependencies in Debian and Ubuntu:
+#### Debian based
+
+General build dependencies:
 
 ```shell
 sudo apt install -qq \
@@ -66,7 +68,7 @@ sudo apt install -qq \
         zlib1g-dev
 ```
 
-Installation of additional build dependencies (for plugins) in Debian and Ubuntu:
+Plugin build dependencies:
 
 ```shell
 sudo apt install -qq \
@@ -75,6 +77,41 @@ sudo apt install -qq \
         libsignal-protocol-c-dev \
         libtidy-dev
 ```
+
+#### openSUSE
+
+General build dependencies:
+
+```shell
+sudo zypper in hunspell-devel \
+        libXScrnSaver-devel \
+        libidn-devel \
+        libgpg-error-devel \
+        libproxy-devel \
+        "cmake(Qt5Concurrent)" \
+        "cmake(Qt5Core)" \
+        "cmake(Qt5DBus)" \
+        "cmake(Qt5Gui)" \
+        "cmake(Qt5Keychain)" \
+        "cmake(Qt5LinguistTools)" \
+        "cmake(Qt5Multimedia)" \
+        "cmake(Qt5PrintSupport)" \
+        "cmake(Qt5Sql)" \
+        "cmake(Qt5Svg)" \
+        "cmake(Qt5WebEngine)" \
+        "cmake(Qt5X11Extras)" \
+        "cmake(Qt5Xml)" \
+        "pkgconfig(qca2-qt5)"
+```
+
+Plugin build dependencies:
+
+```shell
+sudo zypper in libotr-devel \
+        libsignal-protocol-c-devel \
+        libtidy-devel
+```
+
 
 ### macOS
 
