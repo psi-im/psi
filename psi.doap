@@ -1,0 +1,79 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'
+         xmlns='http://usefulinc.com/ns/doap#'
+         xmlns:xmpp='https://linkmauve.fr/ns/xmpp-doap#'
+         xmlns:schema='https://schema.org'>
+  <Project>
+    <name>psi</name>
+
+    <created>2007-04-08</created>
+
+    <shortdesc xml:lang='en'>Qt-based XMPP client</shortdesc>
+
+    <description xml:lang='en'>Psi is an XMPP client designed for experienced users. It is highly portable and runs on GNU/Linux, MS Windows, macOS, FreeBSD and Haiku.</description>
+
+    <homepage rdf:resource='https://psi-im.org/'/>
+    <download-page rdf:resource='https://github.com/psi-im/psi/releases'/>
+    <bug-database rdf:resource='https://github.com/psi-im/psi/issues'/>
+    <developer-forum rdf:resource='https://github.com/psi-im/psi/issues'/>
+
+    <license rdf:resource='https://www.gnu.org/licenses/gpl.html'/>
+
+    <language>en</language>
+
+    <schema:screenshot rdf:resource='https://psi-im.org/content/home/feature_linux.png'/>
+
+    <programming-language>C++</programming-language>
+
+    <os>Linux</os>
+    <os>macOS</os>
+    <os>BSD</os>
+    <os>Windows</os>
+    <os>Haiku</os>
+
+    <category rdf:resource='https://linkmauve.fr/ns/xmpp-doap#category-client'/>
+
+    <implements rdf:resource='https://datatracker.ietf.org/doc/html/rfc6120'/>
+    <implements rdf:resource='https://datatracker.ietf.org/doc/html/rfc6121'/>
+    <implements rdf:resource='https://datatracker.ietf.org/doc/html/rfc6122'/>
+    <implements rdf:resource='https://datatracker.ietf.org/doc/html/rfc7590'/>
+
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0363.html'/>
+        <xmpp:status>complete</xmpp:status>
+        <xmpp:version>1.1.0</xmpp:version>
+        <xmpp:since>2.0</xmpp:since>
+        <xmpp:note xml:lang='en'></xmpp:note>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0059.html'/>
+        <xmpp:status>complete</xmpp:status>
+        <xmpp:version>1.0</xmpp:version>
+        <xmpp:since>2.0</xmpp:since>
+        <xmpp:note xml:lang='en'></xmpp:note>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0234.html'/>
+        <xmpp:status>complete</xmpp:status>
+        <xmpp:version>0.19.1</xmpp:version>
+        <xmpp:since>2.0</xmpp:since>
+        <xmpp:note xml:lang='en'></xmpp:note>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <release>
+      <Version>
+        <revision>0.1.5</revision>
+        <created>2020-09-06</created>
+        <file-release rdf:resource='https://github.com/psi-im/psi/releases/download/1.5/psi-1.5.tar.xz'/>
+      </Version>
+    </release>
+  </Project>
+</rdf:RDF>
