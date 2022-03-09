@@ -6,7 +6,7 @@
   <Project>
     <name>psi</name>
 
-    <created>2007-04-08</created>
+    <created>2001-07-07</created>
 
     <shortdesc xml:lang='en'>Qt-based XMPP client</shortdesc>
 
