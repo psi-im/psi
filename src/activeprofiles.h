@@ -36,6 +36,7 @@ public:
     bool isActive(const QString &profile) const;
     bool isAnyActive() const;
 
+    bool recvNextEvent(const QString &profile) const;
     bool setStatus(const QString &profile, const QString &status, const QString &message) const;
     bool openUri(const QString &profile, const QString &uri) const;
     bool raise(const QString &profile, bool withUI) const;

@@ -83,3 +83,4 @@ src/plugins/unix/
 
 .idea
 cmake-build-*
+compile_commands.json
