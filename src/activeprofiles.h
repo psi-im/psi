@@ -44,6 +44,7 @@ public:
     ~ActiveProfiles();
 
 signals:
+    void recvNextEventRequested();
     void setStatusRequested(const QString &status, const QString &message);
     void openUriRequested(const QString &uri);
     void raiseRequested();
