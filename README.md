@@ -26,6 +26,8 @@ WebEngine version of Psi is identical to WebKit version of Psi in supporting of 
 
 See [CHANGELOG](https://github.com/psi-im/psi/blob/master/CHANGELOG) file.
 
+<u>For the current scenario</u> : Qt <=5.9 with compiler support of C++17.
+
 ## Installation
 
 For build from sources see [INSTALL](https://github.com/psi-im/psi/blob/master/INSTALL.md) file.
