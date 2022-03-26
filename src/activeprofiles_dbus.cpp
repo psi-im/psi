@@ -181,6 +181,12 @@ ActiveProfiles::~ActiveProfiles()
     d = nullptr;
 }
 
+bool ActiveProfiles::recvNextEvent(const QString &profile) const
+{
+    QDBusInterface(d->dbusName(profile), "/Main", PSIDBUSMAINIF).call(QDBus::NoBlock, "recvNextEvent");
+    return true;
+}
+
 bool ActiveProfiles::setStatus(const QString &profile, const QString &status, const QString &message) const
 {
     QDBusInterface(d->dbusName(profile), "/Main", PSIDBUSMAINIF).call(QDBus::NoBlock, "setStatus", status, message);

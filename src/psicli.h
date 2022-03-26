@@ -19,6 +19,8 @@ public:
                        "(unless used together with --remote).",
                        "do not translate --remote"));
 
+        defineSwitch("receive-next-event", tr("Receive next pending event."));
+
         defineSwitch("remote",
                      tr("Force remote-control mode. "
                         "If there is no running instance, "
