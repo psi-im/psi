@@ -1,7 +1,6 @@
 set(CMAKE_CXX_STANDARD 17)
 
-set( CMAKE_MODULE_PATH
-    "${CMAKE_MODULE_PATH}"
+list(APPEND CMAKE_MODULE_PATH
     "${CMAKE_CURRENT_SOURCE_DIR}"
     "${PROJECT_SOURCE_DIR}/cmake/modules" )
 set(CMAKE_AUTOMOC ON)
@@ -370,29 +369,25 @@ if(WIN32)
     configure_file(${PROJECT_SOURCE_DIR}/win32/psi.manifest.in ${CMAKE_CURRENT_BINARY_DIR}/psi.manifest @ONLY)
     # win resource compilation
     function(compile_rc_file RC_FILE_NAME RC_OUTPUT_NAME)
-        set(_RC_FILE_NAME ${RC_FILE_NAME})
-        set(_RC_OUTPUT_NAME ${RC_OUTPUT_NAME})
         if(NOT MSVC)
             set(CMD_ARG
                 --include=${CMAKE_CURRENT_SOURCE_DIR}
-                --input=${_RC_FILE_NAME}
-                --output=${_RC_OUTPUT_NAME}
+                --input=${RC_FILE_NAME}
+                --output=${RC_OUTPUT_NAME}
         )
         else()
             set(CMD_ARG
                 /fo
-                ${_RC_OUTPUT_NAME}
-                ${_RC_FILE_NAME}
+                ${RC_OUTPUT_NAME}
+                ${RC_FILE_NAME}
             )
         endif()
-        add_custom_command(OUTPUT ${_RC_OUTPUT_NAME}
+        add_custom_command(OUTPUT ${RC_OUTPUT_NAME}
             COMMAND ${CMAKE_RC_COMPILER}
             ARGS ${CMD_ARG}
             WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/win32
             VERBATIM
         )
-        set(_RC_FILE_NAME "")
-        set(_RC_OUTPUT_NAME "")
     endfunction()
 
     set(DECS_RC_NAME ${CMAKE_CURRENT_BINARY_DIR}/psi_win.rc)
@@ -429,9 +424,9 @@ if(ENABLE_PORTABLE OR VERBOSE_PROGRAM_NAME)
     endif()
     set(VERBOSED_NAME "${PROJECT_NAME}${VERBOSE_SUFFIX}${PORTABLE_SUFFIX}")
     set_target_properties(${PROJECT_NAME}
-                PROPERTIES
-                OUTPUT_NAME
-                ${VERBOSED_NAME}
+        PROPERTIES
+        OUTPUT_NAME
+        ${VERBOSED_NAME}
     )
 endif()
 

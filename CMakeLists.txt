@@ -124,10 +124,10 @@ endif()
 
 set( GLOBAL_DEPENDS_DEBUG_MODE ON )
 
-set( CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules" )
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules" )
 
-set(IS_WEBKIT OFF CACHE BOOL "Use webkit. Internal variable")
-set(IS_WEBENGINE OFF CACHE BOOL "Use webengine. Internal variable")
+set(IS_WEBKIT OFF CACHE INTERNAL "Use webkit. Internal variable")
+set(IS_WEBENGINE OFF CACHE INTERNAL "Use webengine. Internal variable")
 string(TOLOWER "${CHAT_TYPE}" LCHAT_TYPE)
 
 if("${LCHAT_TYPE}" STREQUAL "webkit")
