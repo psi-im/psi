@@ -531,6 +531,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
             }
         }
     });
+    d->eventNotifier->hide();
 
 #ifdef Q_OS_WIN
     updateWinTaskbar(_asTool);
