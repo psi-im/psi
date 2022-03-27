@@ -1,785 +1,360 @@
-# Created by and for Qt Creator This file was created for editing the project sources only.
-# You may attempt to use it for building too, by modifying this file here.
+cmake_minimum_required(VERSION 3.2.0)
+# Set automoc and autouic policy
+if(POLICY CMP0071)
+    if(${CMAKE_VERSION} VERSION_LESS "3.10.0")
+        cmake_policy(SET CMP0071 OLD)
+        message(STATUS "CMP0071 policy set to OLD")
+    else()
+        cmake_policy(SET CMP0071 NEW)
+        message(STATUS "CMP0071 policy set to NEW")
+    endif()
+endif()
+if(POLICY CMP0074)
+    cmake_policy(SET CMP0074 NEW)
+    message(STATUS "CMP0074 policy set to NEW")
+endif()
 
-cmake_minimum_required(VERSION 3.5)
-project(psii)
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "")
+endif()
 
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-find_package(Qt5 COMPONENTS Core Gui Widgets REQUIRED)
+# Psi or Psi+ detection
+option(PSI_PLUS "Build Psi+ client instead of Psi" OFF)
+if(PSI_PLUS)
+    add_definitions(-DPSI_PLUS)
+    project(psi-plus)
+    message(STATUS "===Building Psi+===")
+else()
+    project(psi)
+    message(STATUS "===Building Psi===")
+endif()
 
-include_directories(
-    plugins/include
-    qa/guitest
-    src
-    src/AutoUpdater
-    src/avcall
-    src/Certificates
-    src/CocoaUtilities
-    src/contactmanager
-    src/irisprotocol
-    src/MockQCA
-    src/options
-    src/privacy
-    src/privacy/guitest
-    src/protocol
-    src/psimedia
-    src/sxe
-    src/tabs
-    src/tools/advwidget
-    src/tools/crash
-    src/tools/iconset
-    src/tools/optionstree
-    src/tools/tunecontroller
-    src/tools/tunecontroller/plugins/aimp/third-party
-    src/tools/tunecontroller/plugins/psifile
-    src/tools/tunecontroller/plugins/winamp
-    src/tools/tunecontroller/plugins/winamp/third-party
-    src/whiteboarding
-    src/widgets
-    src/widgets/private
+# Define LINUX on Linux like as WIN32 on Windows and APPLE on macOS
+if(UNIX AND NOT (APPLE OR HAIKU))
+    set(LINUX ON)
+endif()
+
+# Check for submodules
+set(SBM_LIST
+    ${PROJECT_SOURCE_DIR}/3rdparty/http-parser/http_parser.h
+    ${PROJECT_SOURCE_DIR}/3rdparty/qhttp/qhttp.pro
+    ${PROJECT_SOURCE_DIR}/3rdparty/qite/qite.pro
+    ${PROJECT_SOURCE_DIR}/iris/CMakeLists.txt
+    ${PROJECT_SOURCE_DIR}/src/libpsi/tools/CMakeLists.txt
 )
+foreach(submodule ${SBM_LIST})
+    if(NOT EXISTS "${submodule}")
+        message(FATAL_ERROR "Psi submodules not found.\nPlease run:\n====\ncd ${PROJECT_SOURCE_DIR}\ngit submodule init\ngit submodule update\n====\nbefore run cmake again")
+    endif()
+endforeach()
 
-set (SRCS
-    plugins/include/accountinfoaccessinghost.h
-    plugins/include/accountinfoaccessor.h
-    plugins/include/activetabaccessinghost.h
-    plugins/include/activetabaccessor.h
-    plugins/include/applicationinfoaccessinghost.h
-    plugins/include/applicationinfoaccessor.h
-    plugins/include/chattabaccessor.h
-    plugins/include/commandexecutor.h
-    plugins/include/contactinfoaccessinghost.h
-    plugins/include/contactinfoaccessor.h
-    plugins/include/contactstateaccessinghost.h
-    plugins/include/contactstateaccessor.h
-    plugins/include/encryptionsupport.h
-    plugins/include/eventcreatinghost.h
-    plugins/include/eventcreator.h
-    plugins/include/eventfilter.h
-    plugins/include/gctoolbariconaccessor.h
-    plugins/include/iconfactoryaccessinghost.h
-    plugins/include/iconfactoryaccessor.h
-    plugins/include/iqfilter.h
-    plugins/include/iqfilteringhost.h
-    plugins/include/iqnamespacefilter.h
-    plugins/include/menuaccessor.h
-    plugins/include/optionaccessinghost.h
-    plugins/include/optionaccessor.h
-    plugins/include/pluginaccessinghost.h
-    plugins/include/pluginaccessor.h
-    plugins/include/plugininfoprovider.h
-    plugins/include/popupaccessinghost.h
-    plugins/include/popupaccessor.h
-    plugins/include/psiaccountcontroller.h
-    plugins/include/psiaccountcontrollinghost.h
-    plugins/include/psimediaaccessor.h
-    plugins/include/psimediahost.h
-    plugins/include/psimediaprovider.h
-    plugins/include/psiplugin.h
-    plugins/include/shortcutaccessinghost.h
-    plugins/include/shortcutaccessor.h
-    plugins/include/soundaccessinghost.h
-    plugins/include/soundaccessor.h
-    plugins/include/stanzafilter.h
-    plugins/include/stanzasender.h
-    plugins/include/stanzasendinghost.h
-    plugins/include/toolbariconaccessor.h
-    plugins/include/webkitaccessinghost.h
-    plugins/include/webkitaccessor.h
-    qa/guitest/guitest.cpp
-    qa/guitest/guitest.h
-    qa/guitest/guitestmanager.cpp
-    qa/guitest/guitestmanager.h
-    src/AutoUpdater/guitest/testapp/main.cpp
-    src/AutoUpdater/guitest/testapp-2.0/main.cpp
-    src/AutoUpdater/AutoUpdater.cpp
-    src/AutoUpdater/AutoUpdater.h
-    src/AutoUpdater/SparkleAutoUpdater.h
-    src/avcall/avcall.cpp
-    src/avcall/avcall.h
-    src/avcall/calldlg.cpp
-    src/avcall/calldlg.h
-    src/avcall/jinglertp.cpp
-    src/avcall/jinglertp.h
-    src/avcall/jinglertptasks.cpp
-    src/avcall/jinglertptasks.h
-    src/avcall/mediadevicewatcher.cpp
-    src/avcall/mediadevicewatcher.h
-    src/Certificates/guitest/main.cpp
-    src/Certificates/unittest/CertificateHelpersTest.cpp
-    src/Certificates/CertificateDisplayDialog.cpp
-    src/Certificates/CertificateDisplayDialog.h
-    src/Certificates/CertificateErrorDialog.cpp
-    src/Certificates/CertificateErrorDialog.h
-    src/Certificates/CertificateHelpers.cpp
-    src/Certificates/CertificateHelpers.h
-    src/CocoaUtilities/cocoacommon.h
-    src/CocoaUtilities/CocoaInitializer.h
-    src/CocoaUtilities/CocoaTrayClick.cpp
-    src/CocoaUtilities/CocoaTrayClick.h
-    src/contactmanager/contactmanagerdlg.cpp
-    src/contactmanager/contactmanagerdlg.h
-    src/contactmanager/contactmanagermodel.cpp
-    src/contactmanager/contactmanagermodel.h
-    src/contactmanager/contactmanagerview.cpp
-    src/contactmanager/contactmanagerview.h
-    src/irisprotocol/iris_discoinfoquerier.cpp
-    src/irisprotocol/iris_discoinfoquerier.h
-    src/MockQCA/MockQCA.cpp
-    src/MockQCA/QtCrypto.h
-    src/options/opt_accounts.cpp
-    src/options/opt_accounts.h
-    src/options/opt_advanced.cpp
-    src/options/opt_advanced.h
-    src/options/opt_appearance.cpp
-    src/options/opt_appearance.h
-    src/options/opt_application.cpp
-    src/options/opt_application.h
-    src/options/opt_chat.cpp
-    src/options/opt_chat.h
-    src/options/opt_events.cpp
-    src/options/opt_events.h
-    src/options/opt_groupchat.cpp
-    src/options/opt_groupchat.h
-    src/options/opt_iconset.cpp
-    src/options/opt_iconset.h
-    src/options/opt_input.cpp
-    src/options/opt_input.h
-    src/options/opt_messages.cpp
-    src/options/opt_messages.h
-    src/options/opt_messages_common.cpp
-    src/options/opt_messages_common.h
-    src/options/opt_plugins.cpp
-    src/options/opt_plugins.h
-    src/options/opt_pluginwrapper.cpp
-    src/options/opt_pluginwrapper.h
-    src/options/opt_popups.cpp
-    src/options/opt_popups.h
-    src/options/opt_roster.cpp
-    src/options/opt_roster.h
-    src/options/opt_roster_main.cpp
-    src/options/opt_roster_main.h
-    src/options/opt_roster_muc.cpp
-    src/options/opt_roster_muc.h
-    src/options/opt_shortcuts.cpp
-    src/options/opt_shortcuts.h
-    src/options/opt_sound.cpp
-    src/options/opt_sound.h
-    src/options/opt_status.cpp
-    src/options/opt_status.h
-    src/options/opt_statusauto.cpp
-    src/options/opt_statusauto.h
-    src/options/opt_statusgeneral.cpp
-    src/options/opt_statusgeneral.h
-    src/options/opt_statuspep.cpp
-    src/options/opt_statuspep.h
-    src/options/opt_theme.cpp
-    src/options/opt_theme.h
-    src/options/opt_toolbars.cpp
-    src/options/opt_toolbars.h
-    src/options/opt_tree.cpp
-    src/options/opt_tree.h
-    src/options/optionsdlg.cpp
-    src/options/optionsdlg.h
-    src/options/optionsdlgbase.cpp
-    src/options/optionsdlgbase.h
-    src/options/optionsdlgiface.h
-    src/options/optionstab.cpp
-    src/options/optionstab.h
-    src/privacy/guitest/mockprivacymanager.cpp
-    src/privacy/guitest/mockprivacymanager.h
-    src/privacy/guitest/privacydlgtest.cpp
-    src/privacy/guitest/privacyruledlgtest.cpp
-    src/privacy/unittest/privacylistitemtest.cpp
-    src/privacy/privacydlg.cpp
-    src/privacy/privacydlg.h
-    src/privacy/privacylist.cpp
-    src/privacy/privacylist.h
-    src/privacy/privacylistblockedmodel.cpp
-    src/privacy/privacylistblockedmodel.h
-    src/privacy/privacylistitem.cpp
-    src/privacy/privacylistitem.h
-    src/privacy/privacylistmodel.cpp
-    src/privacy/privacylistmodel.h
-    src/privacy/privacymanager.h
-    src/privacy/privacyruledlg.cpp
-    src/privacy/privacyruledlg.h
-    src/privacy/psiprivacymanager.cpp
-    src/privacy/psiprivacymanager.h
-    src/protocol/discoinfoquerier.h
-    src/psimedia/psimedia.cpp
-    src/psimedia/psimedia.h
-    src/psimedia/psimedia_p.h
-    src/sxe/sxeedit.cpp
-    src/sxe/sxeedit.h
-    src/sxe/sxemanager.cpp
-    src/sxe/sxemanager.h
-    src/sxe/sxenewedit.cpp
-    src/sxe/sxenewedit.h
-    src/sxe/sxerecord.cpp
-    src/sxe/sxerecord.h
-    src/sxe/sxerecordedit.cpp
-    src/sxe/sxerecordedit.h
-    src/sxe/sxeremoveedit.cpp
-    src/sxe/sxeremoveedit.h
-    src/sxe/sxesession.cpp
-    src/sxe/sxesession.h
-    src/tabs/tabbablewidget.cpp
-    src/tabs/tabbablewidget.h
-    src/tabs/tabdlg.cpp
-    src/tabs/tabdlg.h
-    src/tabs/tabmanager.cpp
-    src/tabs/tabmanager.h
-    src/tools/advwidget/movetest/main.cpp
-    src/tools/advwidget/advwidget.cpp
-    src/tools/advwidget/advwidget.h
-    src/tools/crash/crash.cpp
-    src/tools/crash/crash.h
-    src/tools/crash/crash_dummy.cpp
-    src/tools/crash/crash_kde.cpp
-    src/tools/crash/crash_sigsegv.cpp
-    src/tools/crash/crash_sigsegv.h
-    src/tools/iconset/unittest/testiconset.cpp
-    src/tools/iconset/anim.cpp
-    src/tools/iconset/anim.h
-    src/tools/iconset/iconset.cpp
-    src/tools/iconset/iconset.h
-    src/tools/optionstree/optionstest/optionstest.cpp
-    src/tools/optionstree/optionstreeviewtest/optionstreeviewtest.cpp
-    src/tools/optionstree/unittest/OptionsTreeMainTest.cpp
-    src/tools/optionstree/optionstree.cpp
-    src/tools/optionstree/optionstree.h
-    src/tools/optionstree/optionstreemodel.cpp
-    src/tools/optionstree/optionstreemodel.h
-    src/tools/optionstree/optionstreereader.cpp
-    src/tools/optionstree/optionstreereader.h
-    src/tools/optionstree/optionstreewriter.cpp
-    src/tools/optionstree/optionstreewriter.h
-    src/tools/optionstree/varianttree.cpp
-    src/tools/optionstree/varianttree.h
-    src/tools/tunecontroller/plugins/aimp/third-party/apiRemote.h
-    src/tools/tunecontroller/plugins/aimp/aimpplugin.cpp
-    src/tools/tunecontroller/plugins/itunes/itunesplugin.cpp
-    src/tools/tunecontroller/plugins/mpris/mprisplugin.cpp
-    src/tools/tunecontroller/plugins/psifile/psifileplugin.cpp
-    src/tools/tunecontroller/plugins/psifile/psifileplugin.h
-    src/tools/tunecontroller/plugins/winamp/third-party/wa_ipc.h
-    src/tools/tunecontroller/plugins/winamp/winampplugin.cpp
-    src/tools/tunecontroller/plugins/winamp/winampplugin.h
-    src/tools/tunecontroller/aimptunecontroller.cpp
-    src/tools/tunecontroller/aimptunecontroller.h
-    src/tools/tunecontroller/combinedtunecontroller.cpp
-    src/tools/tunecontroller/combinedtunecontroller.h
-    src/tools/tunecontroller/filetunecontroller.cpp
-    src/tools/tunecontroller/filetunecontroller.h
-    src/tools/tunecontroller/itunestunecontroller.cpp
-    src/tools/tunecontroller/itunestunecontroller.h
-    src/tools/tunecontroller/mpristunecontroller.cpp
-    src/tools/tunecontroller/mpristunecontroller.h
-    src/tools/tunecontroller/pollingtunecontroller.cpp
-    src/tools/tunecontroller/pollingtunecontroller.h
-    src/tools/tunecontroller/tune.h
-    src/tools/tunecontroller/tunecontroller.h
-    src/tools/tunecontroller/tunecontrollerinterface.h
-    src/tools/tunecontroller/tunecontrollermanager.cpp
-    src/tools/tunecontroller/tunecontrollermanager.h
-    src/tools/tunecontroller/tunecontrollerplugin.h
-    src/tools/tunecontroller/winamptunecontroller.cpp
-    src/tools/tunecontroller/winamptunecontroller.h
-    src/unittest/psiiconset/testpsiiconset.cpp
-    src/unittest/psipopup/testpsipopup.cpp
-    src/unittest/commontest.cpp
-    src/whiteboarding/wbdlg.cpp
-    src/whiteboarding/wbdlg.h
-    src/whiteboarding/wbitem.cpp
-    src/whiteboarding/wbitem.h
-    src/whiteboarding/wbmanager.cpp
-    src/whiteboarding/wbmanager.h
-    src/whiteboarding/wbnewimage.cpp
-    src/whiteboarding/wbnewimage.h
-    src/whiteboarding/wbnewitem.cpp
-    src/whiteboarding/wbnewitem.h
-    src/whiteboarding/wbnewpath.cpp
-    src/whiteboarding/wbnewpath.h
-    src/whiteboarding/wbscene.cpp
-    src/whiteboarding/wbscene.h
-    src/whiteboarding/wbwidget.cpp
-    src/whiteboarding/wbwidget.h
-    src/widgets/private/qeffects_p.h
-    src/widgets/unittest/iconaction/testiconaction.cpp
-    src/widgets/unittest/richtext/main.cpp
-    src/widgets/actionlineedit.cpp
-    src/widgets/actionlineedit.h
-    src/widgets/busywidget.cpp
-    src/widgets/busywidget.h
-    src/widgets/emojidb.cpp
-    src/widgets/emojiregistry.cpp
-    src/widgets/emojiregistry.h
-    src/widgets/eventnotifier.cpp
-    src/widgets/eventnotifier.h
-    src/widgets/fancylabel.cpp
-    src/widgets/fancylabel.h
-    src/widgets/fancypopup.cpp
-    src/widgets/fancypopup.h
-    src/widgets/fancypopuplist.h
-    src/widgets/iconaction.cpp
-    src/widgets/iconaction.h
-    src/widgets/iconbutton.h
-    src/widgets/iconlabel.h
-    src/widgets/iconselect.cpp
-    src/widgets/iconselect.h
-    src/widgets/iconsetdisplay.h
-    src/widgets/iconsetselect.h
-    src/widgets/icontoolbutton.h
-    src/widgets/iconwidget.cpp
-    src/widgets/iconwidget.h
-    src/widgets/pixmapratiolabel.cpp
-    src/widgets/pixmapratiolabel.h
-    src/widgets/psirichtext.cpp
-    src/widgets/psirichtext.h
-    src/widgets/psitabbar.cpp
-    src/widgets/psitabbar.h
-    src/widgets/psitabwidget.cpp
-    src/widgets/psitabwidget.h
-    src/widgets/psitextview.cpp
-    src/widgets/psitextview.h
-    src/widgets/psitiplabel.cpp
-    src/widgets/psitiplabel.h
-    src/widgets/psitooltip.cpp
-    src/widgets/psitooltip.h
-    src/widgets/psiwidgets.cpp
-    src/widgets/psiwidgets.h
-    src/widgets/stretchwidget.h
-    src/widgets/tabbar.cpp
-    src/widgets/tabbar.h
-    src/widgets/thumbnailtoolbar.cpp
-    src/widgets/thumbnailtoolbar.h
-    src/widgets/typeaheadfind.cpp
-    src/widgets/typeaheadfind.h
-    src/widgets/updatingcombobox.h
-    src/widgets/urllabel.cpp
-    src/widgets/urllabel.h
-    src/widgets/urlobject.cpp
-    src/widgets/urlobject.h
-    src/aboutdlg.cpp
-    src/aboutdlg.h
-    src/abstracttreeitem.cpp
-    src/abstracttreeitem.h
-    src/abstracttreemodel.cpp
-    src/abstracttreemodel.h
-    src/accountadddlg.cpp
-    src/accountadddlg.h
-    src/accountlabel.cpp
-    src/accountlabel.h
-    src/accountmanagedlg.cpp
-    src/accountmanagedlg.h
-    src/accountmodifydlg.cpp
-    src/accountmodifydlg.h
-    src/accountregdlg.cpp
-    src/accountregdlg.h
-    src/accountscombobox.cpp
-    src/accountscombobox.h
-    src/accountstatusmenu.cpp
-    src/accountstatusmenu.h
-    src/actionlist.cpp
-    src/actionlist.h
-    src/activecontactsmenu.cpp
-    src/activecontactsmenu.h
-    src/activeprofiles.cpp
-    src/activeprofiles.h
-    src/activeprofiles_dbus.cpp
-    src/activeprofiles_stub.cpp
-    src/activeprofiles_win.cpp
-    src/activity.cpp
-    src/activity.h
-    src/activitycatalog.cpp
-    src/activitycatalog.h
-    src/activitydlg.cpp
-    src/activitydlg.h
-    src/adduserdlg.cpp
-    src/adduserdlg.h
-    src/adhoc_fileserver.cpp
-    src/adhoc_fileserver.h
-    src/ahcexecutetask.cpp
-    src/ahcexecutetask.h
-    src/ahcformdlg.cpp
-    src/ahcformdlg.h
-    src/ahcommand.cpp
-    src/ahcommand.h
-    src/ahcommanddlg.cpp
-    src/ahcommanddlg.h
-    src/ahcommandserver.cpp
-    src/ahcommandserver.h
-    src/ahcservermanager.cpp
-    src/ahcservermanager.h
-    src/alertable.cpp
-    src/alertable.h
-    src/alerticon.cpp
-    src/alerticon.h
-    src/alertmanager.cpp
-    src/alertmanager.h
-    src/applicationinfo.cpp
-    src/applicationinfo.h
-    src/avatars.cpp
-    src/avatars.h
-    src/bobfilecache.cpp
-    src/bobfilecache.h
-    src/bookmarkmanagedlg.cpp
-    src/bookmarkmanagedlg.h
-    src/bookmarkmanager.cpp
-    src/bookmarkmanager.h
-    src/bosskey.cpp
-    src/bosskey.h
-    src/bytearrayreply.cpp
-    src/bytearrayreply.h
-    src/captchadlg.cpp
-    src/captchadlg.h
-    src/changepwdlg.cpp
-    src/changepwdlg.h
-    src/chatdlg.cpp
-    src/chatdlg.h
-    src/chateditproxy.cpp
-    src/chateditproxy.h
-    src/chatsplitter.cpp
-    src/chatsplitter.h
-    src/chatview.h
-    src/chatview_te.cpp
-    src/chatview_te.h
-    src/chatview_webkit.cpp
-    src/chatview_webkit.h
-    src/chatviewcommon.cpp
-    src/chatviewcommon.h
-    src/chatviewtheme.cpp
-    src/chatviewtheme.h
-    src/chatviewtheme_p.h
-    src/chatviewthemeprovider.cpp
-    src/chatviewthemeprovider.h
-    src/chatviewthemeprovider_priv.cpp
-    src/chatviewthemeprovider_priv.h
-    src/coloropt.cpp
-    src/coloropt.h
-    src/common.cpp
-    src/common.h
-    src/conferencebookmark.cpp
-    src/conferencebookmark.h
-    src/contactlistaccountmenu.cpp
-    src/contactlistaccountmenu.h
-    src/contactlistdragmodel.cpp
-    src/contactlistdragmodel.h
-    src/contactlistdragview.cpp
-    src/contactlistdragview.h
-    src/contactlistgroupmenu.cpp
-    src/contactlistgroupmenu.h
-    src/contactlistgroupmenu_p.h
-    src/contactlistitem.cpp
-    src/contactlistitem.h
-    src/contactlistitemmenu.cpp
-    src/contactlistitemmenu.h
-    src/contactlistmodel.cpp
-    src/contactlistmodel.h
-    src/contactlistmodel_p.h
-    src/contactlistmodelselection.cpp
-    src/contactlistmodelselection.h
-    src/contactlistproxymodel.cpp
-    src/contactlistproxymodel.h
-    src/contactlistview.cpp
-    src/contactlistview.h
-    src/contactlistviewdelegate.cpp
-    src/contactlistviewdelegate.h
-    src/contactlistviewdelegate_p.h
-    src/contactupdatesmanager.cpp
-    src/contactupdatesmanager.h
-    src/dbus.cpp
-    src/dbus.h
-    src/debug.cpp
-    src/debug.h
-    src/desktoputil.cpp
-    src/desktoputil.h
-    src/discodlg.cpp
-    src/discodlg.h
-    src/dummystream.cpp
-    src/dummystream.h
-    src/edbflatfile.cpp
-    src/edbflatfile.h
-    src/edbsqlite.cpp
-    src/edbsqlite.h
-    src/eventdb.cpp
-    src/eventdb.h
-    src/eventdlg.cpp
-    src/eventdlg.h
-    src/filecache.cpp
-    src/filecache.h
-    src/filesharedlg.cpp
-    src/filesharedlg.h
-    src/filesharingdownloader.cpp
-    src/filesharingdownloader.h
-    src/filesharinghttpproxy.cpp
-    src/filesharinghttpproxy.h
-    src/filesharingitem.cpp
-    src/filesharingitem.h
-    src/filesharingmanager.cpp
-    src/filesharingmanager.h
-    src/filesharingnamproxy.cpp
-    src/filesharingnamproxy.h
-    src/filetransdlg.cpp
-    src/filetransdlg.h
-    src/fileutil.cpp
-    src/fileutil.h
-    src/gcuserview.cpp
-    src/gcuserview.h
-    src/geolocation.cpp
-    src/geolocation.h
-    src/geolocationdlg.cpp
-    src/geolocationdlg.h
-    src/globaleventqueue.cpp
-    src/globaleventqueue.h
-    src/globalstatusmenu.cpp
-    src/globalstatusmenu.h
-    src/googleftmanager.cpp
-    src/googleftmanager.h
-    src/gpgprocess.cpp
-    src/gpgprocess.h
-    src/gpgtransaction.cpp
-    src/gpgtransaction.h
-    src/groupchatdlg.cpp
-    src/groupchatdlg.h
-    src/groupchattopicdlg.cpp
-    src/groupchattopicdlg.h
-    src/groupmenu.cpp
-    src/groupmenu.h
-    src/historycontactlistmodel.cpp
-    src/historycontactlistmodel.h
-    src/historydlg.cpp
-    src/historydlg.h
-    src/historyimp.cpp
-    src/historyimp.h
-    src/hoverabletreeview.cpp
-    src/hoverabletreeview.h
-    src/htmltextcontroller.cpp
-    src/htmltextcontroller.h
-    src/httpauthmanager.cpp
-    src/httpauthmanager.h
-    src/httputil.cpp
-    src/httputil.h
-    src/infodlg.cpp
-    src/infodlg.h
-    src/invitetogroupchatmenu.cpp
-    src/invitetogroupchatmenu.h
-    src/jidutil.cpp
-    src/jidutil.h
-    src/jinglevoicecaller.cpp
-    src/jinglevoicecaller.h
-    src/jsutil.cpp
-    src/jsutil.h
-    src/lastactivitytask.cpp
-    src/lastactivitytask.h
-    src/main.cpp
-    src/main.h
-    src/mainwin.cpp
-    src/mainwin.h
-    src/mainwin_p.cpp
-    src/mainwin_p.h
-    src/mcmdcompletion.cpp
-    src/mcmdcompletion.h
-    src/mcmdmanager.cpp
-    src/mcmdmanager.h
-    src/mcmdsimplesite.cpp
-    src/mcmdsimplesite.h
-    src/messageview.cpp
-    src/messageview.h
-    src/miniclient.cpp
-    src/miniclient.h
-    src/minicmd.h
-    src/mood.cpp
-    src/mood.h
-    src/moodcatalog.cpp
-    src/moodcatalog.h
-    src/mooddlg.cpp
-    src/mooddlg.h
-    src/msgmle.cpp
-    src/msgmle.h
-    src/mucaffiliationsmodel.cpp
-    src/mucaffiliationsmodel.h
-    src/mucaffiliationsproxymodel.cpp
-    src/mucaffiliationsproxymodel.h
-    src/mucaffiliationsview.cpp
-    src/mucaffiliationsview.h
-    src/mucconfigdlg.cpp
-    src/mucconfigdlg.h
-    src/mucjoindlg.cpp
-    src/mucjoindlg.h
-    src/mucmanager.cpp
-    src/mucmanager.h
-    src/mucreasonseditor.cpp
-    src/mucreasonseditor.h
-    src/multifiletransferdelegate.cpp
-    src/multifiletransferdelegate.h
-    src/multifiletransferdlg.cpp
-    src/multifiletransferdlg.h
-    src/multifiletransferitem.cpp
-    src/multifiletransferitem.h
-    src/multifiletransfermodel.cpp
-    src/multifiletransfermodel.h
-    src/networkaccessmanager.cpp
-    src/networkaccessmanager.h
-    src/passdialog.cpp
-    src/passdialog.h
-    src/pepmanager.cpp
-    src/pepmanager.h
-    src/pgpkeydlg.cpp
-    src/pgpkeydlg.h
-    src/pgputil.cpp
-    src/pgputil.h
-    src/pixmaputil.cpp
-    src/pixmaputil.h
-    src/pluginhost.cpp
-    src/pluginhost.h
-    src/pluginmanager.cpp
-    src/pluginmanager.h
-    src/popupmanager.cpp
-    src/popupmanager.h
-    src/profiledlg.cpp
-    src/profiledlg.h
-    src/profiles.h
-    src/proxy.cpp
-    src/proxy.h
-    src/psi_profiles.cpp
-    src/psiaccount.cpp
-    src/psiaccount.h
-    src/psiactionlist.cpp
-    src/psiactionlist.h
-    src/psiactions.h
-    src/psiapplication.cpp
-    src/psiapplication.h
-    src/psicapsregsitry.cpp
-    src/psicapsregsitry.h
-    src/psichatdlg.cpp
-    src/psichatdlg.h
-    src/psicli.h
-    src/psicon.cpp
-    src/psicon.h
-    src/psicontact.cpp
-    src/psicontact.h
-    src/psicontactlist.cpp
-    src/psicontactlist.h
-    src/psicontactlistview.cpp
-    src/psicontactlistview.h
-    src/psicontactmenu.cpp
-    src/psicontactmenu.h
-    src/psicontactmenu_p.h
-    src/psidbusnotifier.cpp
-    src/psidbusnotifier.h
-    src/psievent.cpp
-    src/psievent.h
-    src/psifilteredcontactlistview.cpp
-    src/psifilteredcontactlistview.h
-    src/psigrowlnotifier.cpp
-    src/psigrowlnotifier.h
-    src/psihttpauthrequest.h
-    src/psiiconset.cpp
-    src/psiiconset.h
-    src/psioptions.cpp
-    src/psioptions.h
-    src/psioptionseditor.cpp
-    src/psioptionseditor.h
-    src/psipopup.cpp
-    src/psipopup.h
-    src/psipopupinterface.cpp
-    src/psipopupinterface.h
-    src/psirosterwidget.cpp
-    src/psirosterwidget.h
-    src/psiselfcontact.h
-    src/psithememanager.cpp
-    src/psithememanager.h
-    src/psithememodel.cpp
-    src/psithememodel.h
-    src/psithemeprovider.cpp
-    src/psithemeprovider.h
-    src/psitoolbar.cpp
-    src/psitoolbar.h
-    src/psitrayicon.cpp
-    src/psitrayicon.h
-    src/pubsubsubscription.cpp
-    src/pubsubsubscription.h
-    src/qwextend.cpp
-    src/qwextend.h
-    src/rc.cpp
-    src/rc.h
-    src/registrationdlg.cpp
-    src/registrationdlg.h
-    src/resourcemenu.cpp
-    src/resourcemenu.h
-    src/rosteravatarframe.cpp
-    src/rosteravatarframe.h
-    src/rosteritemexchangetask.cpp
-    src/rosteritemexchangetask.h
-    src/rtparse.cpp
-    src/rtparse.h
-    src/searchdlg.cpp
-    src/searchdlg.h
-    src/sendbuttonmenu.cpp
-    src/sendbuttonmenu.h
-    src/serverlistquerier.cpp
-    src/serverlistquerier.h
-    src/shortcutmanager.cpp
-    src/shortcutmanager.h
-    src/showtextdlg.cpp
-    src/showtextdlg.h
-    src/statuscombobox.cpp
-    src/statuscombobox.h
-    src/statusdlg.cpp
-    src/statusdlg.h
-    src/statusmenu.cpp
-    src/statusmenu.h
-    src/statuspreset.cpp
-    src/statuspreset.h
-    src/svgiconengine.cpp
-    src/svgiconengine.h
-    src/systeminfo.cpp
-    src/systeminfo.h
-    src/tabcompletion.cpp
-    src/tabcompletion.h
-    src/tasklist.h
-    src/textutil.cpp
-    src/textutil.h
-    src/theme.cpp
-    src/theme.h
-    src/theme_p.cpp
-    src/theme_p.h
-    src/tipdlg.cpp
-    src/translationmanager.cpp
-    src/translationmanager.h
-    src/urlbookmark.cpp
-    src/urlbookmark.h
-    src/userlist.cpp
-    src/userlist.h
-    src/varlist.cpp
-    src/varlist.h
-    src/vcardfactory.cpp
-    src/vcardfactory.h
-    src/vcardphotodlg.cpp
-    src/vcardphotodlg.h
-    src/voicecalldlg.cpp
-    src/voicecalldlg.h
-    src/voicecaller.h
-    src/webserver.cpp
-    src/webserver.h
-    src/webview.cpp
-    src/webview.h
-    src/x11windowsystem.cpp
-    src/x11windowsystem.h
-    src/xdata_widget.cpp
-    src/xdata_widget.h
-    src/xmlconsole.cpp
-    src/xmlconsole.h
-)
+set( DEFAULT_BUNDLED_QCA OFF )
+if (APPLE OR MSVC)
+    set( DEFAULT_BUNDLED_QCA ON )
+endif()
+
+set( DEFAULT_BUNDLED_USRSCTP OFF )
+if (APPLE OR (MSVC OR USE_MXE))
+    set( DEFAULT_BUNDLED_USRSCTP ON )
+endif()
 
 
-add_executable(${CMAKE_PROJECT_NAME} ${SRCS})
+# Common options
+set( CHAT_TYPE "BASIC" CACHE STRING "Type of chatlog engine. WEBKIT | WEBENGINE | BASIC" )
+set_property(CACHE CHAT_TYPE PROPERTY STRINGS WEBKIT WEBENGINE BASIC)
+option( PRODUCTION "Build production version" OFF )
+option( VERBOSE_PROGRAM_NAME "Verbose output binary name" OFF )
+option( BUNDLED_IRIS "Build iris library bundled" ON )
+option( BUILD_PSIMEDIA "Build psimedia plugin if its code is found in sources tree. Works only with ENABLE_PLUGINS=ON" OFF )
+option( ENABLE_PLUGINS "Enable plugins" OFF )
+option( USE_HUNSPELL "Build psi with hunspell spellcheck" ON )
+option( USE_ENCHANT "Build psi with enchant spellcheck" OFF )
+option( USE_ASPELL "Build psi with aspell spellcheck" OFF )
+option( USE_CCACHE "Use ccache utility if found" ON )
+option( USE_CRASH "Enable builtin sigsegv handling" OFF )
+option( USE_DBUS "Enable DBUS support" ON )
+option( USE_KEYCHAIN "Enable Qt5Keychain support" ON )
+option( ONLY_BINARY "Build and install only binary file" OFF )
+option( ONLY_PLUGINS "Build psi plugins only" OFF )
+option( INSTALL_EXTRA_FILES "Install sounds, iconsets, certs, client_icons.txt, themes" ON )
+option( INSTALL_PLUGINS_SDK "Install sdk files to build plugins outside of project" OFF )
+option( PLUGINS_NO_DEBUG "Add -DPLUGINS_NO_DEBUG definition" OFF )
+# Developers options
+option( DEV_MODE "Enable prepare-bin-libs target for MS Windows only. Set PSI_DATADIR and PSI_LIBDIR to CMAKE_RUNTIME_OUTPUT_DIRECTORY to debug plugins for Linux only" OFF )
+# Iris options
+option( BUNDLED_QCA "Adds: DTLS, Blake2b and other useful for XMPP crypto-stuff" ${DEFAULT_BUNDLED_QCA} )
+option( BUNDLED_USRSCTP "Compile compatible usrsctp lib when system one is not available or uncompatible (required for p2p file transfer)" ${DEFAULT_BUNDLED_USRSCTP} )
+if (UNIX AND "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    option( ENABLE_ASAN "Enable compilation with address sanitizer" OFF )
+endif()
 
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt5::Core Qt5::Gui Qt5::Widgets)
+# Cross-compilation and native builds for MS Windows
+option( ENABLE_PORTABLE "Create portable version of Psi+ for MS Windows" OFF )
+option( USE_MXE "Use MXE (cross-compilation build environment for MS Windows)" OFF )
+
+# Other systems
+if(LINUX)
+    option( USE_X11 "Enable X11 features support" ON )
+    option( USE_XSS "Enable Xscreensaver support" ON )
+    option( LIMIT_X11_USAGE "Disable usage of X11 features which may crash program" OFF )
+elseif(APPLE)
+    option( USE_SPARKLE "Use Sparkle for APPLE builds" OFF )
+    option( USE_GROWL "Use growl for macOS builds" OFF )
+    option( USE_MAC_DOC "Use macOS dock" OFF )
+endif()
+
+
+if(WIN32 AND ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" OR ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")))
+    option( NO_DEBUG_OPTIMIZATION "Disable optimization for debug builds" OFF )
+endif()
+
+if( USE_HUNSPELL AND (USE_ENCHANT AND USE_ASPELL) )
+    message(FATAL_ERROR "Flags USE_HUNSPELL, USE_ASPELL and USE_ENCHANT cannot be enabled at the same time.\nPlease enable only one of them")
+elseif( USE_HUNSPELL AND USE_ASPELL )
+    message(FATAL_ERROR "Both flags USE_HUNSPELL and USE_ASPELL cannot be enabled at the same time.\nPlease enable only one of them")
+elseif( USE_ASPELL AND USE_ENCHANT )
+    message(FATAL_ERROR "Both flags USE_ASPELL and USE_ENCHANT cannot be enabled at the same time.\nPlease enable only one of them")
+elseif( USE_HUNSPELL AND USE_ENCHANT )
+    message(FATAL_ERROR "Both flags USE_HUNSPELL and USE_ENCHANT cannot be enabled at the same time.\nPlease enable only one of them")
+endif()
+
+if( ONLY_BINARY AND INSTALL_EXTRA_FILES )
+    message(FATAL_ERROR "Both flags ONLY_BINARY and INSTALL_EXTRA_FILES cannot be enabled at the same time.\nPlease enable only one of them")
+endif()
+
+set( GLOBAL_DEPENDS_DEBUG_MODE ON )
+
+set( CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules" )
+
+set(IS_WEBKIT OFF CACHE BOOL "Use webkit. Internal variable")
+set(IS_WEBENGINE OFF CACHE BOOL "Use webengine. Internal variable")
+string(TOLOWER "${CHAT_TYPE}" LCHAT_TYPE)
+
+if("${LCHAT_TYPE}" STREQUAL "webkit")
+    add_definitions(
+        -DWEBKIT
+    )
+    set(IS_WEBKIT ON)
+    message(STATUS "Chatlog type - QtWebKit")
+elseif("${LCHAT_TYPE}" STREQUAL "webengine")
+    set(IS_WEBENGINE ON)
+    find_package( Qt5Core 5.6.0 REQUIRED )
+    add_definitions(
+        -DWEBKIT
+        -DWEBENGINE=1
+    )
+    message(STATUS "Chatlog type - QtWebEngine")
+else()
+    set(IS_WEBKIT OFF)
+    set(IS_WEBENGINE OFF)
+    message(STATUS "Chatlog type - Basic")
+endif()
+
+message(STATUS "System name - ${CMAKE_SYSTEM_NAME}")
+
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" OR ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo"))
+    set(ISDEBUG ON)
+    option(PLUGIN_INSTALL_PATH_DEBUG "Add -DPLUGIN_INSTALL_PATH_DEBUG definition" OFF)
+    option(CHATVIEW_CORRECTION_DEBUG "Add -DCORRECTION_DEBUG definition" OFF)
+    if(PLUGIN_INSTALL_PATH_DEBUG)
+        add_definitions(-DPLUGIN_INSTALL_PATH_DEBUG)
+    endif()
+    if(CHATVIEW_CORRECTION_DEBUG)
+        add_definitions(-DCORRECTION_DEBUG)
+    endif()
+endif()
+
+if(PLUGINS_NO_DEBUG)
+    add_definitions(-DPLUGINS_NO_DEBUG)
+endif()
+
+if(ONLY_PLUGINS)
+    set(ENABLE_PLUGINS ON)
+endif()
+
+if(ENABLE_PLUGINS AND BUILD_PSIMEDIA)
+    if(PSI_PLUS)
+        option(USE_PSI "use psi" OFF)
+    else()
+        option(USE_PSI "use psi" ON)
+    endif()
+    option(BUILD_DEMO "build demo" OFF)
+elseif(NOT ENABLE_PLUGINS AND BUILD_PSIMEDIA)
+    message(FATAL_ERROR "BUILD_PSIMEDIA flag not works without ENABLE_PLUGINS flag.\nPlease enable ENABLE_PLUGINS flag or disable BUILD_PSIMEDIA flag")
+endif()
+
+if(USE_CRASH)
+    add_definitions(-DUSE_CRASH)
+endif()
+
+if(BUNDLED_QCA)
+    add_definitions(-DQCA_STATIC)
+endif()
+
+# Detect MXE cross-compilation
+if( CMAKE_CROSSCOMPILING AND (DEFINED MSYS) )
+    message(STATUS "MXE environment detected")
+    set(USE_MXE ON)
+    message(STATUS "MXE root path: ${CMAKE_PREFIX_PATH}")
+    if(IS_WEBENGINE)
+        message(FATAL_ERROR "Webengine is not available in MXE. Please set the CHAT_TYPE variable to Webkit or Basic")
+    endif()
+    set(BUNDLED_USRSCTP ON)
+endif()
+
+# For GNU/Linux and *BSD systems:
+if(UNIX AND NOT (APPLE OR HAIKU))
+    if(USE_X11)
+        add_definitions( -DHAVE_X11 )
+        message(STATUS "X11 features support - ENABLED")
+    endif()
+    if(LIMIT_X11_USAGE)
+        add_definitions( -DLIMIT_X11_USAGE )
+        message(STATUS "Unsafe X11 features support - DISABLED")
+    endif()
+    add_definitions(
+        -DHAVE_FREEDESKTOP
+        -DAPP_PREFIX=${CMAKE_INSTALL_PREFIX}
+        -DAPP_BIN_NAME=${PROJECT_NAME}
+    )
+    if(USE_XSS)
+        add_definitions( -DHAVE_XSS )
+        message(STATUS "Xscreensaver support - ENABLED")
+    endif()
+    if(USE_DBUS)
+        message(STATUS "DBus support - ENABLED")
+    endif()
+endif()
+
+# Detect *BSD systems
+STRING (REGEX MATCH "BSD" PROJECT_OS_BSD ${CMAKE_SYSTEM_NAME})
+if(PROJECT_OS_BSD)
+    message(STATUS "BSD-like system detected")
+    add_definitions(-DIOAPI_NO_64)
+endif()
+
+# Qt dependencies make building very slow
+# Track only .h files
+include_regular_expression("^.*\\.h$")
+
+# Put executable in build root dir
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/psi" )
+
+# Set CXX and C Flags
+if(APPLE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-overloaded-virtual")
+elseif(WIN32)
+    include("${CMAKE_CURRENT_SOURCE_DIR}/win32/win32_definitions.cmake")
+endif()
+
+if(ENABLE_ASAN)
+    set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+    set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+endif()
+
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    message(STATUS "CXX debug flags: ${CMAKE_CXX_FLAGS_DEBUG}")
+    message(STATUS "C debug flags: ${CMAKE_C_FLAGS_DEBUG}")
+elseif("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
+    message(STATUS "CXX debug flags: ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+    message(STATUS "C debug flags: ${CMAKE_C_FLAGS_RELWITHDEBINFO}")
+else()
+    message(STATUS "CXX flags: ${CMAKE_CXX_FLAGS}")
+    message(STATUS "C flags: ${CMAKE_C_FLAGS}")
+endif()
+
+if(NOT WIN32 AND ENABLE_PORTABLE)
+    message(WARNING "Portable version creation possible only for Windows OS")
+    set(ENABLE_PORTABLE OFF)
+elseif(WIN32 AND ENABLE_PORTABLE)
+    message(STATUS "Portable version - ENABLED")
+endif()
+
+if( PRODUCTION )
+    message(STATUS "Production version - ENABLED")
+endif()
+
+if( DEV_MODE OR ENABLE_PORTABLE )
+    message(STATUS "prepare-bin-libs target - ENABLED")
+endif()
+
+# Copy a list of files from one directory to another. Only full paths.
+function(copy SOURCE DEST TARGET)
+    if(EXISTS ${SOURCE})
+        set(OUT_TARGET_FILE "${CMAKE_BINARY_DIR}/${TARGET}.cmake")
+
+        string(REGEX REPLACE "\\\\+" "/" DEST "${DEST}")
+        string(REGEX REPLACE "\\\\+" "/" SOURCE "${SOURCE}")
+
+        if(NOT TARGET ${TARGET})
+            file(REMOVE "${OUT_TARGET_FILE}")
+            add_custom_target(${TARGET} COMMAND ${CMAKE_COMMAND} -P "${OUT_TARGET_FILE}")
+        endif()
+
+        if(IS_DIRECTORY ${SOURCE})
+            # copy directory
+            file(GLOB_RECURSE FILES "${SOURCE}/*")
+            get_filename_component(SOURCE_DIR_NAME ${SOURCE} NAME)
+
+            foreach(FILE ${FILES})
+                file(RELATIVE_PATH REL_PATH ${SOURCE} ${FILE})
+                set(REL_PATH "${SOURCE_DIR_NAME}/${REL_PATH}")
+                get_filename_component(REL_PATH ${REL_PATH} DIRECTORY)
+                set(DESTIN "${DEST}/${REL_PATH}")
+
+                string(REGEX REPLACE "/+" "/" DESTIN ${DESTIN})
+                string(REGEX REPLACE "/+" "/" FILE ${FILE})
+
+                file(APPEND
+                    "${OUT_TARGET_FILE}"
+                    "file(INSTALL \"${FILE}\" DESTINATION \"${DESTIN}\" USE_SOURCE_PERMISSIONS)\n")
+            endforeach()
+        else()
+            string(REPLACE "//" "/" DEST ${DEST})
+            if(DEST MATCHES "/$")
+                set(DIR "${DEST}")
+                string(REGEX REPLACE "^(.+)/$" "\\1" DIR ${DIR})
+            else()
+                # need to copy and rename
+                get_filename_component(DIR ${DEST} DIRECTORY)
+                get_filename_component(FILENAME ${DEST} NAME)
+                get_filename_component(SOURCE_FILENAME ${SOURCE} NAME)
+            endif()
+            file(APPEND
+                "${OUT_TARGET_FILE}"
+                "file(INSTALL \"${SOURCE}\" DESTINATION \"${DIR}\" USE_SOURCE_PERMISSIONS)\n")
+            if(DEFINED FILENAME)
+                file(APPEND
+                    "${OUT_TARGET_FILE}"
+                    "file(RENAME \"${DIR}/${SOURCE_FILENAME}\" \"${DIR}/${FILENAME}\")\n")
+            endif()
+        endif()
+    endif()
+endfunction()
+
+if(USE_CCACHE)
+    # Configure CCache if available
+    find_program(CCACHE_PATH ccache DOC "Path to ccache")
+    if(CCACHE_PATH)
+        message(STATUS "Found ccache at ${CCACHE_PATH}")
+        set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ${CCACHE_PATH})
+        set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ${CCACHE_PATH})
+    endif()
+endif()
+
+if(NOT ONLY_PLUGINS)
+    add_subdirectory( 3rdparty )
+    if(BUNDLED_IRIS)
+        add_subdirectory( iris )
+    else()
+        find_package( Iris REQUIRED )
+        include_directories(${Iris_INCLUDE_DIR})
+    endif()
+    set( iris_LIB iris )
+    add_subdirectory(src)
+    if(ENABLE_PLUGINS)
+        add_subdirectory(plugins)
+    endif()
+else()
+    add_subdirectory(plugins)
+endif()
