@@ -53,6 +53,12 @@ bool ActiveProfiles::setStatus(const QString &profile, const QString &status, co
     return true;
 }
 
+bool ActiveProfiles::recvNextEvent(const QString &profile) const
+{
+    Q_UNUSED(profile);
+    return true;
+}
+
 bool ActiveProfiles::openUri(const QString &profile, const QString &uri) const
 {
     Q_UNUSED(uri);

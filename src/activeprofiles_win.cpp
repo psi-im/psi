@@ -196,6 +196,9 @@ bool ActiveProfiles::Private::nativeEvent(const QByteArray &eventType, void *mes
                 } else if (list[0] == "setStatus") {
                     emit ap->setStatusRequested(list.value(1), list.value(2));
                     *result = TRUE;
+                } else if (list[0] == "recvNextEvent") {
+                    emit ap->recvNextEventRequested();
+                    *result = TRUE;
                 }
             }
         }
@@ -315,6 +318,13 @@ bool ActiveProfiles::openUri(const QString &profile, const QString &uri) const
 {
     QStringList list;
     list << "openUri" << uri;
+    return d->sendStringList(profile.isEmpty() ? d->pickProfile() : profile, list);
+}
+
+bool ActiveProfiles::recvNextEvent(const QString &profile) const
+{
+    QStringList list;
+    list << "recvNextEvent";
     return d->sendStringList(profile.isEmpty() ? d->pickProfile() : profile, list);
 }
 
