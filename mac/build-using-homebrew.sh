@@ -3,7 +3,7 @@
 # Authors: Boris Pek
 # License: Public Domain
 # Created: 2018-10-07
-# Updated: 2021-05-11
+# Updated: 2022-04-04
 # Version: N/A
 #
 # Description: script for building of app bundles for macOS
@@ -23,7 +23,7 @@
 # Build dependencies for Psi and useful tools:
 # export HOMEBREW_NO_BOTTLE_SOURCE_FALLBACK=1
 # brew install ccache coreutils cmake
-# brew install openssl@1.1 libusrsctp minizip hunspell qt@5 qtkeychain
+# brew install hunspell minizip qt@5 qtkeychain
 #
 # Build dependencies for Psi plugins:
 # brew install tidy-html5 libotr libsignal-protocol-c
@@ -45,8 +45,7 @@ TOOLCHAIN_FILE="${CUR_DIR}/homebrew-toolchain.cmake"
     ENABLE_PLUGINS="ON" || \
     ENABLE_PLUGINS="OFF"
 
-[ "${ENABLE_WEBENGINE}" = "ON" ] && \
-    CHAT_TYPE="webengine" || \
+[ -z "${CHAT_TYPE}" ] && \
     CHAT_TYPE="basic"
 
 [ "${ENABLE_DEV_PLUGINS}" != "ON" ] && \
@@ -62,7 +61,6 @@ BUILD_OPTIONS="-DCMAKE_BUILD_TYPE=Release \
                -DENABLE_PLUGINS=${ENABLE_PLUGINS} \
                -DUSE_HUNSPELL=ON \
                -DUSE_KEYCHAIN=ON \
-               -DUSE_QJDNS=OFF \
                -DUSE_SPARKLE=OFF \
                -DBUNDLED_QCA=ON \
                -DBUNDLED_USRSCTP=ON \

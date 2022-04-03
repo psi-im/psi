@@ -7,36 +7,21 @@ if: tag IS blank
 
 jobs:
   include:
-    - env: TARGET=linux64 ENABLE_WEBKIT=OFF DIST=bionic
-      os: linux
+    - os: linux
       dist: bionic
-    - env: TARGET=linux64 ENABLE_WEBKIT=OFF DIST=focal
-      os: linux
-      dist: focal
-    - env: TARGET=linux64 ENABLE_WEBKIT=ON DIST=bionic
-      os: linux
+      env: TARGET=linux64 CHAT_TYPE=basic DIST=bionic
+      
+    - os: linux
       dist: bionic
-    - env: TARGET=linux64 ENABLE_WEBKIT=ON DIST=focal
-      os: linux
-      dist: focal
-    - env: TARGET=macos64 ENABLE_WEBENGINE=OFF
-      os: osx
-      osx_image: xcode10.2
-    - env: TARGET=macos64 ENABLE_WEBENGINE=OFF
-      os: osx
-      osx_image: xcode11.3
-    - env: TARGET=macos64 ENABLE_WEBENGINE=OFF
-      os: osx
-      osx_image: xcode12.2
-    - env: TARGET=macos64 ENABLE_WEBENGINE=ON
-      os: osx
-      osx_image: xcode10.2
-    - env: TARGET=macos64 ENABLE_WEBENGINE=ON
-      os: osx
-      osx_image: xcode11.3
-    - env: TARGET=macos64 ENABLE_WEBENGINE=ON
-      os: osx
-      osx_image: xcode12.2
+      env: TARGET=linux64 CHAT_TYPE=webkit DIST=bionic
+      
+    - os: linux
+      dist: bionic
+      env: TARGET=linux64 CHAT_TYPE=webengine DIST=bionic
+      
+    - os: osx
+      osx_image: xcode12.3
+      env: TARGET=macos64 CHAT_TYPE=basic macOS=11.1
 
 install:
   - ./tests/travis-ci/install-build-depends.sh

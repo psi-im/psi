@@ -17,19 +17,25 @@ LDFLAGS="$(dpkg-buildflags --get LDFLAGS) -Wl,--as-needed"
     ENABLE_PLUGINS="ON" || \
     ENABLE_PLUGINS="OFF"
 
-[ "${ENABLE_WEBKIT}" = "OFF" ] && \
-    CHAT_TYPE="basic" || \
-    CHAT_TYPE="webkit"
+[ -z "${CHAT_TYPE}" ] && \
+    CHAT_TYPE="basic"
+
+[ "${ENABLE_DEV_PLUGINS}" != "ON" ] && \
+    ENABLE_DEV_PLUGINS="OFF"
+
+[ "${ENABLE_PSIMEDIA}" != "ON" ] && \
+    ENABLE_PSIMEDIA="OFF"
 
 BUILD_OPTIONS="-DCMAKE_INSTALL_PREFIX=/usr \
                -DCMAKE_BUILD_TYPE=Release \
-               -DENABLE_PLUGINS=${ENABLE_PLUGINS} \
                -DCHAT_TYPE=${CHAT_TYPE} \
+               -DBUILD_DEV_PLUGINS=${ENABLE_DEV_PLUGINS} \
+               -DBUILD_PSIMEDIA=${ENABLE_PSIMEDIA} \
+               -DENABLE_PLUGINS=${ENABLE_PLUGINS} \
                -DUSE_HUNSPELL=ON \
                -DUSE_KEYCHAIN=ON \
                -DUSE_SPARKLE=OFF \
-               -DUSE_QJDNS=OFF \
-               -DBUNDLED_QCA=OFF \
+               -DBUNDLED_QCA=ON \
                -DBUNDLED_USRSCTP=ON \
                -DBUILD_DEV_PLUGINS=OFF \
                -DVERBOSE_PROGRAM_NAME=ON \
