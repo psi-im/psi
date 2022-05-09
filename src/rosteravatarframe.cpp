@@ -39,6 +39,9 @@ RosterAvatarFrame::RosterAvatarFrame(QWidget *parent) : QFrame(parent), statusMe
     connect(ui_.tb_mood, SIGNAL(pressed()), this, SIGNAL(setMood()));
     connect(ui_.tb_activity, SIGNAL(pressed()), this, SIGNAL(setActivity()));
     connect(PsiOptions::instance(), SIGNAL(optionChanged(QString)), this, SLOT(optionChanged(QString)));
+
+    bool publishingEnabled = PsiOptions::instance()->getOption("options.extended-presence.tune.publish").toBool();
+    ui_.tb_tune->setChecked(publishingEnabled);
 }
 
 void RosterAvatarFrame::setStatusMessage(const QString &message)
@@ -140,6 +143,9 @@ void RosterAvatarFrame::optionChanged(QString option)
     else if (option == "options.ui.look.font.contactlist")
         setFont();
     else if (option == "options.ui.contactlist.roster-avatar-frame.avatar.margin")
-        layout()->setMargin(
-            PsiOptions::instance()->getOption("options.ui.contactlist.roster-avatar-frame.avatar.margin").toInt());
+        layout()->setMargin(PsiOptions::instance()->getOption(option).toInt());
+    else if (option == "options.extended-presence.tune.publish") {
+        bool publishingEnabled = PsiOptions::instance()->getOption(option).toBool();
+        ui_.tb_tune->setChecked(publishingEnabled);
+    }
 }
