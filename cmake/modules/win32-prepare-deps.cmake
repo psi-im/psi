@@ -383,7 +383,9 @@ if(WIN32)
     set( LIBRARIES_LIST
         gpg.exe
         libcrypto-1_1-x64.dll
+        libcrypto-3-x64.dll
         libcrypto-1_1.dll
+        libcrypto-3.dll
         libeay32.dll
         libgcc_s_dw2-1.dll
         libgcc_s_seh-1.dll
@@ -396,7 +398,9 @@ if(WIN32)
         libotr.dll
         libsignal-protocol-c.dll
         libssl-1_1-x64.dll
+        libssl-3-x64.dll
         libssl-1_1.dll
+        libssl-3.dll
         libstdc++-6.dll
         libtidy.dll
         libwinpthread-1.dll
