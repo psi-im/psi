@@ -3,7 +3,9 @@ unset(FORMS)
 unset(SOURCES)
 unset(UI_FORMS)
 
-include_directories(..)
+get_filename_component(ABS_PARENT_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
+
+include_directories(${ABS_PARENT_DIR})
 
 list(APPEND HEADERS
     optionsdlg.h

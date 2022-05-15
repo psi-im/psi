@@ -9,8 +9,10 @@ if(WIN32 AND PSI_PLUS)
     endif()
 endif()
 
+get_filename_component(ABS_PARENT_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
+
 include_directories(
-    ../
+    ${ABS_PARENT_DIR}
 )
 
 list(APPEND HEADERS

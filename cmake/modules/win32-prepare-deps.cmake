@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1.0)
+cmake_minimum_required(VERSION 3.10.0)
 if(WIN32)
     set(LIBS_TARGET prepare-bin-libs)
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")

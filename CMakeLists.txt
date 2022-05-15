@@ -1,18 +1,4 @@
-cmake_minimum_required(VERSION 3.2.0)
-# Set automoc and autouic policy
-if(POLICY CMP0071)
-    if(${CMAKE_VERSION} VERSION_LESS "3.10.0")
-        cmake_policy(SET CMP0071 OLD)
-        message(STATUS "CMP0071 policy set to OLD")
-    else()
-        cmake_policy(SET CMP0071 NEW)
-        message(STATUS "CMP0071 policy set to NEW")
-    endif()
-endif()
-if(POLICY CMP0074)
-    cmake_policy(SET CMP0074 NEW)
-    message(STATUS "CMP0074 policy set to NEW")
-endif()
+cmake_minimum_required(VERSION 3.10.0)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "")
@@ -125,6 +111,8 @@ set( GLOBAL_DEPENDS_DEBUG_MODE ON )
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules" )
 
+include(policyRules)
+
 set(IS_WEBKIT OFF CACHE INTERNAL "Use webkit. Internal variable")
 set(IS_WEBENGINE OFF CACHE INTERNAL "Use webengine. Internal variable")
 string(TOLOWER "${CHAT_TYPE}" LCHAT_TYPE)
@@ -137,7 +125,7 @@ if("${LCHAT_TYPE}" STREQUAL "webkit")
     message(STATUS "Chatlog type - QtWebKit")
 elseif("${LCHAT_TYPE}" STREQUAL "webengine")
     set(IS_WEBENGINE ON)
-    find_package( Qt5Core 5.6.0 REQUIRED )
+    find_package( Qt5Core 5.9.0 REQUIRED )
     add_definitions(
         -DWEBKIT
         -DWEBENGINE=1

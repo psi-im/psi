@@ -9,7 +9,7 @@ See "Packages and installers" section in [README.md](README.md) or [README.html]
 
 * compiler with C++17 support
 * ccache (optional)
-* cmake >= 3.2.0
+* cmake >= 3.10.0
 * Qt >= 5.9.0 && Qt < 6.0
 * QtWebKit (optional)
 * QtWebEngine (optional)
@@ -134,4 +134,3 @@ To be written...
 [cross-compilation-using-mxe](https://github.com/psi-plus/maintenance/tree/master/scripts/win32/cross-compilation-using-mxe)
 
 To be continued...
-

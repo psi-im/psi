@@ -1,4 +1,4 @@
-cmake_minimum_required( VERSION 3.2.0 )
+cmake_minimum_required( VERSION 3.10.0 )
 
 #Find clang-format binary
 find_program(CLF_BIN clang-format DOC "Path to clang-format binary")
