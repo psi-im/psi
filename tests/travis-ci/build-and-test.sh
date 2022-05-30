@@ -27,12 +27,17 @@ then
         ls -alp /usr/lib/psi*/plugins/*
         du -shc /usr/lib/psi*/plugins/*
     fi
-fi
-
-if [ "${TARGET}" = "macos64" ]
+elif [ "${TARGET}" = "macos64" ]
 then
     ./mac/build-using-homebrew.sh
 
     ls -alp ../Psi*.dmg
     du -shc ../Psi*.dmg
+elif [ "${TARGET}" = "windows64" ]
+then
+    ./win32/build-using-mxe.sh
+else
+    echo "Unknown target!"
+    exit 1
 fi
+

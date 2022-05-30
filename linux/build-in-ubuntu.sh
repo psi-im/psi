@@ -35,7 +35,7 @@ BUILD_OPTIONS="-DCMAKE_INSTALL_PREFIX=/usr \
                -DUSE_HUNSPELL=ON \
                -DUSE_KEYCHAIN=ON \
                -DUSE_SPARKLE=OFF \
-               -DBUNDLED_QCA=ON \
+               -DBUNDLED_QCA=OFF \
                -DBUNDLED_USRSCTP=ON \
                -DBUILD_DEV_PLUGINS=OFF \
                -DVERBOSE_PROGRAM_NAME=ON \

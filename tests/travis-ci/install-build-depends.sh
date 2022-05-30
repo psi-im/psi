@@ -38,9 +38,7 @@ then
     then
         sudo apt-get install -qq qtwebengine5-dev
     fi
-fi
-
-if [ "${TARGET}" = "macos64" ]
+elif [ "${TARGET}" = "macos64" ]
 then
     # export HOMEBREW_NO_AUTO_UPDATE=1
     export HOMEBREW_NO_BOTTLE_SOURCE_FALLBACK=1
@@ -55,5 +53,32 @@ then
                      libsignal-protocol-c \
                     "
     brew install ${PACKAGES}
+elif [ "${TARGET}" = "windows64" ]
+then
+    # Add MXE repository:
+    sudo apt-get -y install software-properties-common lsb-release
+    sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 86B72ED9
+    sudo add-apt-repository \
+        "deb [arch=amd64] https://pkg.mxe.cc/repos/apt `lsb_release -sc` main"
+
+    export PREFIX="mxe-x86-64-w64-mingw32.shared"
+    sudo apt-get update  -qq
+    sudo apt-get install -qq cmake \
+                             ${PREFIX}-hunspell \
+                             ${PREFIX}-minizip \
+                             ${PREFIX}-libotr \
+                             ${PREFIX}-libsignal-protocol-c \
+                             ${PREFIX}-tidy-html5 \
+                             ${PREFIX}-qtbase \
+                             ${PREFIX}-qttools \
+                             ${PREFIX}-qttranslations \
+                             ${PREFIX}-qtmultimedia \
+                             ${PREFIX}-qtwebkit \
+                             ${PREFIX}-gstreamer \
+                             ${PREFIX}-gst-plugins-bad \
+                             ${PREFIX}-gst-plugins-good
+else
+    echo "Unknown target!"
+    exit 1
 fi
 
