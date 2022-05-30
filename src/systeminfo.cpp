@@ -213,27 +213,26 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 #elif defined(Q_OS_MAC)
     os_str_.clear();
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 5)
-    auto current = QOperatingSystemVersion::current();
-    if (current.type() == QOperatingSystemVersion::MacOS && current.minorVersion() > 12) {
-        os_name_str_ = "macOS";
-    } else {
-        os_name_str_ = "Mac OS X";
-    }
+    const auto current = QOperatingSystemVersion::current();
+    os_name_str_ = current.name();
+    os_version_str_ = QString::number(current.majorVersion());
+    if (current.minorVersion() >= 0)
+        os_version_str_ += "." + QString::number(current.minorVersion());
+    if (current.microVersion() > 0)
+        os_version_str_ += "." + QString::number(current.microVersion());
+    
     if (current > QOperatingSystemVersion::MacOSCatalina) {
-        os_version_str_ = "> 10.15 (unknown)";
+        // Unknown name
     } else if (current >= QOperatingSystemVersion::MacOSCatalina) {
-        os_version_str_ = "10.15 (Catalina)";
+        os_version_str_ += " (Catalina)";
     } else if (current >= QOperatingSystemVersion::MacOSMojave) {
-        os_version_str_ = "10.14 (Mojave)";
+        os_version_str_ += " (Mojave)";
     } else if (current >= QOperatingSystemVersion::MacOSHighSierra) {
-        os_version_str_ = "10.13 (High Sierra)";
+        os_version_str_ += " (High Sierra)";
     } else if (current >= QOperatingSystemVersion::MacOSSierra) {
-        os_version_str_ = "10.12 (Sierra)";
+        os_version_str_ += " (Sierra)";
     } else if (current >= QOperatingSystemVersion::OSXElCapitan) {
-        os_version_str_ = "10.11 (El Capitan)";
-    } else {
-        os_version_str_ = QString("%1.%2").arg(current.majorVersion()).arg(current.minorVersion());
-        os_name_str_    = current.name();
+        os_version_str_ += " (El Capitan)";
     }
 #else
     QSysInfo::MacVersion v = QSysInfo::MacintoshVersion;
