@@ -229,8 +229,8 @@ endif()
 STRING (REGEX MATCH "NetBSD" PROJECT_OS_NETBSD ${CMAKE_SYSTEM_NAME})
 if(PROJECT_OS_BSD)
 	message(STATUS "NetBSD detected")
-	set(CMAKE_C_FLAGS "-Wl,-rpath,/usr/X11R7/lib")
-	set(CMAKE_CXX_FLAGS "-Wl,-rpath,/usr/X11R7/lib")
+	set(CMAKE_C_FLAGS "-Wl,-rpath,/usr/X11R7/lib -Wl,-rpath,/usr/pkg/lib")
+	set(CMAKE_CXX_FLAGS "-Wl,-rpath,/usr/X11R7/lib -Wl,-rpath,/usr/pkg/lib")
 endif()
 
 # Qt dependencies make building very slow
