@@ -225,6 +225,13 @@ if(PROJECT_OS_BSD)
     add_definitions(-DIOAPI_NO_64)
 endif()
 
+# Detect NetBSD and handle library path accordingly
+STRING (REGEX MATCH "NetBSD" PROJECT_OS_NETBSD ${CMAKE_SYSTEM_NAME})
+if(PROJECT_OS_BSD)
+	message(STATUS "NetBSD detected")
+	link_directories(/usr/X11R7/lib)
+endif()
+
 # Qt dependencies make building very slow
 # Track only .h files
 include_regular_expression("^.*\\.h$")
