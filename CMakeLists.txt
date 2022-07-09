@@ -227,7 +227,7 @@ endif()
 
 # Detect NetBSD and handle library path accordingly
 STRING (REGEX MATCH "NetBSD" PROJECT_OS_NETBSD ${CMAKE_SYSTEM_NAME})
-if(PROJECT_OS_BSD)
+if(PROJECT_OS_NETBSD)
 	message(STATUS "NetBSD detected")
 	set(CMAKE_C_FLAGS "-Wl,-rpath,/usr/X11R7/lib -Wl,-rpath,/usr/pkg/lib -Wl,-rpath,/usr/pkg/qt5/lib")
 	set(CMAKE_CXX_FLAGS "-Wl,-rpath,/usr/X11R7/lib -Wl,-rpath,/usr/pkg/lib -Wl,-rpath,/usr/pkg/qt5/lib")
