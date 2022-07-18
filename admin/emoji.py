@@ -120,7 +120,7 @@ def generate_cpp_db():
     ]), ranges=",\n    ".join([f"{{{r[0]}, {r[1]}}}" for r in ranges])))
 
 
-# https://unicode.org/Public/emoji/13.0/emoji-test.txt
+# https://unicode.org/Public/emoji/15.0/emoji-test.txt
 with open("emoji-test.txt") as f:
     reset()
     parse(f)
