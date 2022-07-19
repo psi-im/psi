@@ -18,7 +18,10 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v2.4.0
+      - name: Checking out and fetching submodules
+        uses: actions/checkout@v2.4.0
+        with:
+          submodules: recursive
 
       - name: Install Nix
         uses: cachix/install-nix-action@v15
