@@ -39,3 +39,7 @@ jobs:
             --argstr version "$ver" \
             --argstr chatType ${{ matrix.chatType }} \
             -o result-ci-test-"$ver"-${{ matrix.chatType }}-built-on-${{ matrix.os }}
+
+          # Final check
+          set -o xtrace
+          [[ -x result-ci-test-"$ver"-${{ matrix.chatType }}-built-on-${{ matrix.os }}/bin/psi ]]
