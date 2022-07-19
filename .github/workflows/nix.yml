@@ -34,10 +34,8 @@ jobs:
         run: |
           ver=$(git tag --contains "$(git rev-parse @)" | head -1)
           if [[ -z $ver ]]; then ver=git-$(git rev-parse --short @); fi
+
           nix-build \
             --argstr version "$ver" \
             --argstr chatType ${{ matrix.chatType }} \
             -o result-ci-test-"$ver"-${{ matrix.chatType }}-built-on-${{ matrix.os }}
-
-          # Smoke test
-          result-ci-test-"$ver"-${{ matrix.chatType }}-built-on-${{ matrix.os }}/bin/psi --version
