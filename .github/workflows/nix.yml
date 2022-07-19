@@ -1,0 +1,39 @@
+name: Nix CI
+
+on:
+  pull_request:
+    branches: [ "master" ]
+  push:
+    branches: [ "master" ]
+
+jobs:
+  nix-build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        chatType: [basic, webkit, webengine]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2.4.0
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v15
+        with:
+          extra_nix_config: |
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+            system-features = nixos-test benchmark big-parallel kvm
+
+      - name: Test Nix build for “${{ matrix.chatType }}” chat type on ${{ matrix.os }}
+        run: |
+          ver=$(git tag --contains "$(git rev-parse @)" | head -1)
+          if [[ -z $ver ]]; then ver=git-$(git rev-parse --short @); fi
+          nix-build \
+            --argstr version "$ver" \
+            --argstr chatType ${{ matrix.chatType }} \
+            -o result-ci-test-"$ver"-${{ matrix.chatType }}-built-on-${{ matrix.os }}
+
+      - name: Call “psi --version”
+        run: |
+          result-ci-test-"$ver"-${{ matrix.chatType }}-built-on-${{ matrix.os }}/bin/psi --version
