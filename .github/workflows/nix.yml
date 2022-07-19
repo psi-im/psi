@@ -1,10 +1,12 @@
 name: Nix CI
 
 on:
-  pull_request:
-    branches: [ "master" ]
   push:
-    branches: [ "master" ]
+    branches:
+    - '*'
+  pull_request:
+    branches:
+    - '*'
 
 jobs:
   nix-build:
