@@ -49,16 +49,19 @@ if(USE_KEYCHAIN)
 endif()
 
 if(LINUX)
-    find_package(Qt5 COMPONENTS X11Extras REQUIRED)
     if(USE_DBUS)
         find_package(Qt5 COMPONENTS DBus REQUIRED)
     endif()
-    find_package(XCB REQUIRED)
-    set(EXTRA_LIBS
-        ${XCB_LIBRARY}
-    )
-    include_directories(${LIBXCB_INCLUDE_DIR})
-    add_definitions(${LIBXCB_DEFINITIONS})
+    if(USE_X11 OR LIMIT_X11_USAGE)
+        find_package(Qt5 COMPONENTS X11Extras REQUIRED)
+        find_package(XCB REQUIRED)
+        set(EXTRA_LIBS
+            ${XCB_LIBRARY}
+        )
+        include_directories(${LIBXCB_INCLUDE_DIR})
+        add_definitions(${LIBXCB_DEFINITIONS})
+        list(APPEND QT_LIBRARIES Qt5::X11Extras ${LIBXCB_LIBRARIES})
+    endif()
 endif()
 
 if(APPLE)
@@ -80,7 +83,6 @@ endif()
 set(QT_LIBRARIES Qt5::Widgets Qt5::Core Qt5::Network Qt5::Xml ${WEBKIT_LIBS} Qt5::Concurrent Qt5::Multimedia Qt5::Svg Qt5::Sql ${KEYCHAIN_LIBS})
 
 if(LINUX)
-    list(APPEND QT_LIBRARIES Qt5::X11Extras ${LIBXCB_LIBRARIES})
     if(USE_DBUS)
         list(APPEND QT_LIBRARIES Qt5::DBus)
     endif()
@@ -109,7 +111,7 @@ else()
     endif()
 endif()
 
-if(LINUX)
+if(LINUX AND (USE_X11 OR LIMIT_X11_USAGE))
     find_package(X11 REQUIRED)
     include_directories(${X11_INCLUDE_DIR})
 endif()
