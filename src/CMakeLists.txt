@@ -154,8 +154,8 @@ else()
 endif()
 
 #Prepare and generate config.h file
-string(TIMESTAMP PSI_COMPILATION_DATE "%Y-%m-%d")
-string(TIMESTAMP PSI_COMPILATION_TIME "%H:%M:%S")
+string(TIMESTAMP PSI_COMPILATION_DATE "%Y-%m-%d" UTC)
+string(TIMESTAMP PSI_COMPILATION_TIME "%H:%M:%S" UTC)
 
 if(IS_WEBKIT)
     set(PSI_VER_SUFFIX ", webkit")
