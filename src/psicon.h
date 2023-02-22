@@ -153,6 +153,7 @@ public slots:
     void setGlobalStatus(const XMPP::Status &, bool withPriority = false, bool isManualStatus = false);
     void showStatusDialog(const QString &presetName);
     void doToolbars();
+    void doAccounts();
     void doStatusPresets();
     void checkAccountsEmpty();
     void setAccountsOrder(QList<PsiAccount *>);

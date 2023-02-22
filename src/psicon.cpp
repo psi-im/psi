@@ -588,6 +588,7 @@ bool PsiCon::init()
     connect(d->mainwin, SIGNAL(statusMessageChanged(QString)), SLOT(setStatusMessage(QString)));
     connect(d->mainwin, SIGNAL(doOptions()), SLOT(doOptions()));
     connect(d->mainwin, SIGNAL(doToolbars()), SLOT(doToolbars()));
+    connect(d->mainwin, SIGNAL(doAccounts()), SLOT(doAccounts()));
     connect(d->mainwin, SIGNAL(doFileTransDlg()), SLOT(doFileTransDlg()));
     connect(d->mainwin, SIGNAL(recvNextEvent()), SLOT(recvNextEvent()));
     connect(this, SIGNAL(emitOptionsUpdate()), d->mainwin, SLOT(optionsUpdate()));
@@ -1363,6 +1364,20 @@ void PsiCon::doToolbars()
         w = new OptionsDlg(this);
         connect(w, SIGNAL(applyOptions()), SLOT(slotApplyOptions()));
         w->openTab("toolbars");
+        w->show();
+    }
+}
+
+void PsiCon::doAccounts()
+{
+    OptionsDlg *w = qobject_cast<OptionsDlg *>(dialogFind("OptionsDlg"));
+    if (w) {
+        w->openTab("accounts");
+        bringToFront(w);
+    } else {
+        w = new OptionsDlg(this);
+        connect(w, SIGNAL(applyOptions()), SLOT(slotApplyOptions()));
+        w->openTab("accounts");
         w->show();
     }
 }

@@ -273,6 +273,8 @@ void PsiActionList::Private::createMainWin()
 
         IconAction *actToolbars
             = new IconAction(tr("Configure Toolbars"), "psi/toolbars", tr("Configure Tool&bars"), 0, this);
+        IconAction *actAccounts
+            = new IconAction(tr("Manage Accounts"), "psi/account", tr("&Manage Accounts"), 0, this);
         IconAction *actChangeProfile
             = new IconAction(tr("Change Profile"), "psi/profile", tr("&Change Profile"), 0, this);
 
@@ -296,6 +298,7 @@ void PsiActionList::Private::createMainWin()
                                   { "menu_options", actOptions },
                                   { "menu_file_transfer", actFileTrans },
                                   { "menu_toolbars", actToolbars },
+                                  { "menu_accounts", actAccounts },
                                   { "menu_xml_console", lw_act },
                                   { "menu_change_profile", actChangeProfile },
                                   { "menu_play_sounds", actPlaySounds },

@@ -626,6 +626,7 @@ void MainWin::registerAction(IconAction *action)
         { "menu_options", activated, this, SIGNAL(doOptions()) },
         { "menu_file_transfer", activated, this, SIGNAL(doFileTransDlg()) },
         { "menu_toolbars", activated, this, SIGNAL(doToolbars()) },
+        { "menu_accounts", activated, this, SIGNAL(doAccounts()) },
         { "menu_change_profile", activated, this, SIGNAL(changeProfile()) },
         { "menu_quit", activated, this, SLOT(try2tryCloseProgram()) },
         { "menu_play_sounds", toggled, this, SLOT(actPlaySoundsActivated(bool)) },

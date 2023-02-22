@@ -91,6 +91,7 @@ signals:
     void closeProgram();
     void doOptions();
     void doToolbars();
+    void doAccounts();
     void doGroupChat();
     void doFileTransDlg();
     void accountInfo();
