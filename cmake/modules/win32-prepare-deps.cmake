@@ -422,6 +422,8 @@ if(WIN32)
     if(USE_MXE)
         list(APPEND LIBRARIES_LIST
             libbz2.dll
+            libdl.dll
+            libffi-7.dll
             libfreetype-6.dll
             libglib-2.0-0.dll
             libgpg-error6-0.dll
@@ -441,9 +443,11 @@ if(WIN32)
             libpcre16-0.dll
             libpcre2-16-0.dll
             libpng16-16.dll
+            libsharpyuv-0.dll
             libsqlite3-0.dll
             libssp-0.dll
             libtiff-5.dll
+            libtiff-6.dll
             libwebp-5.dll
             libwebp-7.dll
             libwebpdecoder-1.dll
