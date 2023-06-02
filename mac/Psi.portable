@@ -9,4 +9,4 @@ echo "BIN_DIR = ${BIN_DIR}"
 echo "DATA_DIR = ${DATA_DIR}"
 
 export PSIDATADIR="${DATA_DIR}"
-"${BIN_DIR}/Psi.exe"
+"${BIN_DIR}/Psi.exe" ${@}
