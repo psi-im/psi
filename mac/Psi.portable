@@ -1,0 +1,12 @@
+#!/bin/sh
+
+export BIN_DIR="$(dirname ${0})"
+export MAIN_DIR="$(cd "${BIN_DIR}/../../.." ; pwd -P)"
+export DATA_DIR="${MAIN_DIR}/Psi.data"
+
+echo "MAIN_DIR = ${MAIN_DIR}"
+echo "BIN_DIR = ${BIN_DIR}"
+echo "DATA_DIR = ${DATA_DIR}"
+
+export PSIDATADIR="${DATA_DIR}"
+"${BIN_DIR}/Psi.exe"
