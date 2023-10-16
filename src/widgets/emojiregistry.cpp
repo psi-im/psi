@@ -17,6 +17,8 @@
  *
  */
 
+#include <cstdint>
+
 #include "emojiregistry.h"
 #include "emojidb.cpp"
 
