@@ -421,6 +421,8 @@ if(WIN32)
 
     if(USE_MXE)
         list(APPEND LIBRARIES_LIST
+            libbrotlicommon.dll
+            libbrotlidec.dll
             libbz2.dll
             libdl.dll
             libffi-7.dll
