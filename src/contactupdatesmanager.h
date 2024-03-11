@@ -20,7 +20,7 @@
 #ifndef CONTACTUPDATESMANAGER_H
 #define CONTACTUPDATESMANAGER_H
 
-#include "xmpp_jid.h"
+#include "iris/xmpp_jid.h"
 
 #include <QObject>
 #include <QPointer>

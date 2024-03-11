@@ -21,7 +21,7 @@
 #define DISCODLG_H
 
 #include "ui_disco.h"
-#include "xmpp_jid.h"
+#include "iris/xmpp_jid.h"
 
 #include <QDialog>
 

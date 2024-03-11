@@ -1,7 +1,7 @@
 #ifndef CAPTCHADLG_H
 #define CAPTCHADLG_H
 
-#include "xmpp_captcha.h"
+#include "iris/xmpp_captcha.h"
 
 #include <QDialog>
 

@@ -31,7 +31,7 @@
 #include "psitooltip.h"
 #include "stretchwidget.h"
 #include "tasklist.h"
-#include "xmpp_tasks.h"
+#include "iris/xmpp_tasks.h"
 
 #include <QAction>
 #include <QActionGroup>

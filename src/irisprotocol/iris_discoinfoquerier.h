@@ -2,7 +2,7 @@
 #define IRIS_DISCOINFOQUERIER_H
 
 #include "protocol/discoinfoquerier.h"
-#include "xmpp_client.h"
+#include "iris/xmpp_client.h"
 
 #include <QObject>
 #include <QPointer>

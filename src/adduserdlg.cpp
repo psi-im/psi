@@ -21,15 +21,14 @@
 
 #include "busywidget.h"
 #include "common.h"
-#include "iconwidget.h"
 #include "infodlg.h"
 #include "psiaccount.h"
 #include "psiiconset.h"
 #include "tasklist.h"
 #include "vcardfactory.h"
-#include "xmpp_client.h"
-#include "xmpp_tasks.h"
-#include "xmpp_vcard.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_tasks.h"
+#include "iris/xmpp_vcard.h"
 
 #include <QCheckBox>
 #include <QComboBox>

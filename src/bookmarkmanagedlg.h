@@ -21,7 +21,7 @@
 #define BOOKMARKMANAGEDLG_H
 
 #include "ui_bookmarkmanage.h"
-#include "xmpp_jid.h"
+#include "iris/xmpp_jid.h"
 
 #include <QDialog>
 

@@ -21,7 +21,7 @@
 
 #include "ahcformdlg.h"
 #include "psiaccount.h"
-#include "xmpp_xmlcommon.h"
+#include "iris/xmpp_xmlcommon.h"
 
 using namespace XMPP;
 

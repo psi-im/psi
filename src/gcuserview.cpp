@@ -29,8 +29,8 @@
 #include "psioptions.h"
 #include "psitooltip.h"
 #include "userlist.h"
-#include "xmpp_caps.h"
-#include "xmpp_muc.h"
+#include "iris/xmpp_caps.h"
+#include "iris/xmpp_muc.h"
 
 #include <QItemDelegate>
 #include <QMenu>

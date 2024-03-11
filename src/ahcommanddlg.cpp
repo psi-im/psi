@@ -23,8 +23,8 @@
 #include "ahcformdlg.h"
 #include "busywidget.h"
 #include "psiaccount.h"
-#include "xmpp_client.h"
-#include "xmpp_xmlcommon.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_xmlcommon.h"
 
 #include <QComboBox>
 #include <QLabel>

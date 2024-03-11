@@ -21,7 +21,7 @@
 #define TABBABLEWIDGET_H
 
 #include "advwidget.h"
-#include "im.h" // ChatState
+#include "iris/im.h" // ChatState
 #include "sendbuttonmenu.h"
 
 #include <QIcon>

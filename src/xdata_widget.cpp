@@ -22,9 +22,9 @@
 #include "desktoputil.h"
 #include "networkaccessmanager.h"
 #include "psicon.h"
-#include "xmpp_client.h"
-#include "xmpp_tasks.h"
-#include "xmpp_xdata.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_tasks.h"
+#include "iris/xmpp_xdata.h"
 
 #include <QCheckBox>
 #include <QComboBox>

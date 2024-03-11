@@ -22,7 +22,7 @@
 
 #include "iconaction.h"
 #include "psicon.h"
-#include "xmpp_status.h"
+#include "iris/xmpp_status.h"
 
 #include <QMenu>
 #include <QMouseEvent>

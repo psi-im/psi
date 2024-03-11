@@ -31,16 +31,15 @@
 #include "iconset.h"
 #include "pepmanager.h"
 #include "pixmaputil.h"
-#include "profiles.h"
 #include "psiaccount.h"
 #include "vcardfactory.h"
-#include "xmpp_client.h"
-#include "xmpp_hash.h"
-#include "xmpp_pubsubitem.h"
-#include "xmpp_resource.h"
-#include "xmpp_tasks.h"
-#include "xmpp_vcard.h"
-#include "xmpp_xmlcommon.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_hash.h"
+#include "iris/xmpp_pubsubitem.h"
+#include "iris/xmpp_resource.h"
+#include "iris/xmpp_tasks.h"
+#include "iris/xmpp_vcard.h"
+#include "iris/xmpp_xmlcommon.h"
 
 #include <QBuffer>
 #include <QDateTime>

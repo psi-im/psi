@@ -26,10 +26,10 @@
 #include "psiplugin.h"
 #include "stanzafilter.h"
 #include "stanzasender.h"
-#include "xmpp_caps.h"
-#include "xmpp_client.h"
-#include "xmpp_message.h"
-#include "xmpp_task.h"
+#include "iris/xmpp_caps.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_message.h"
+#include "iris/xmpp_task.h"
 
 #include <QLabel>
 #include <QMetaObject>

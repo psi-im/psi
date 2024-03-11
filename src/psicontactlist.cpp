@@ -25,7 +25,7 @@
 #include "psicontact.h"
 #include "psievent.h"
 #include "psioptions.h"
-#include "xmpp_serverinfomanager.h"
+#include "iris/xmpp_serverinfomanager.h"
 
 #include <QTimer>
 

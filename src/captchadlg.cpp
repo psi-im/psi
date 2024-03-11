@@ -3,9 +3,9 @@
 #include "psiaccount.h"
 #include "ui_captchadlg.h"
 #include "xdata_widget.h"
-#include "xmpp_captcha.h"
-#include "xmpp_client.h"
-#include "xmpp_tasks.h"
+#include "iris/xmpp_captcha.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_tasks.h"
 
 using namespace XMPP;
 

@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "xmpp_hash.h"
-#include "xmpp_reference.h"
+#include "iris/xmpp_hash.h"
+#include "iris/xmpp_reference.h"
 
 #include <QDateTime>
 #include <QObject>

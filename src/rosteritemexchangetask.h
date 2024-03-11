@@ -20,8 +20,8 @@
 #ifndef ROSTERITEMEXCHANGETASK_H
 #define ROSTERITEMEXCHANGETASK_H
 
-#include "xmpp_rosterx.h"
-#include "xmpp_task.h"
+#include "iris/xmpp_rosterx.h"
+#include "iris/xmpp_task.h"
 
 #include <QDomElement>
 

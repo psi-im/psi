@@ -25,8 +25,8 @@
 #include "profiles.h"
 #include "psiaccount.h"
 #include "psioptions.h"
-#include "xmpp_client.h"
-#include "xmpp_tasks.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_tasks.h"
 
 #include <QFormLayout>
 #include <QLabel>

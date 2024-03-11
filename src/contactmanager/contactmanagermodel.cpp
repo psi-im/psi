@@ -22,8 +22,8 @@
 #include "QDebug"
 #include "psiaccount.h"
 #include "userlist.h"
-#include "xmpp_client.h"
-#include "xmpp_tasks.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_tasks.h"
 
 ContactManagerModel::ContactManagerModel(QObject *parent, PsiAccount *pa) : QAbstractTableModel(parent), pa_(pa)
 {

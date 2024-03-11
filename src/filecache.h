@@ -20,7 +20,7 @@
 #ifndef FILECACHE_H
 #define FILECACHE_H
 
-#include "xmpp_hash.h"
+#include "iris/xmpp_hash.h"
 
 #include <QDateTime>
 #include <QFile>

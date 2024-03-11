@@ -20,8 +20,8 @@
 #ifndef MUCMANAGER_H
 #define MUCMANAGER_H
 
-#include "xmpp_jid.h"
-#include "xmpp_muc.h"
+#include "iris/xmpp_jid.h"
+#include "iris/xmpp_muc.h"
 
 #include <QObject>
 

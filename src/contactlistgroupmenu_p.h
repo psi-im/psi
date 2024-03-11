@@ -23,15 +23,9 @@
 #include "contactlistgroupmenu.h"
 #include "contactlistitem.h"
 #include "contactlistmodel.h"
-#include "groupchatdlg.h"
-#include "iconaction.h"
-#include "iconset.h"
-#include "psicontact.h"
 #include "psicontactlist.h"
-#include "psioptions.h"
-#include "shortcutmanager.h"
 #include "statusdlg.h"
-#include "xmpp_tasks.h"
+#include "iris/xmpp_tasks.h"
 
 #include <QObject>
 

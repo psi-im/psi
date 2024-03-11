@@ -20,7 +20,7 @@
 #ifndef CONFERENCEBOOKMARK_H
 #define CONFERENCEBOOKMARK_H
 
-#include "xmpp_jid.h"
+#include "iris/xmpp_jid.h"
 
 #include <QString>
 

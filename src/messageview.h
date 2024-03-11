@@ -21,7 +21,7 @@
 #define MESSAGEVIEW_H
 
 #include "filesharingitem.h"
-#include "xmpp_message.h"
+#include "iris/xmpp_message.h"
 
 #include <QDateTime>
 #include <QVariantMap>

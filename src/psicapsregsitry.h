@@ -1,7 +1,7 @@
 #ifndef PSICAPSREGSITRY_H
 #define PSICAPSREGSITRY_H
 
-#include "xmpp_caps.h"
+#include "iris/xmpp_caps.h"
 
 class PsiCapsRegistry : public XMPP::CapsRegistry {
     Q_OBJECT

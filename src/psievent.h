@@ -21,9 +21,9 @@
 #define PSIEVENT_H
 
 #include "psihttpauthrequest.h"
-#include "xmpp_jid.h"
-#include "xmpp_message.h"
-#include "xmpp_rosterx.h"
+#include "iris/xmpp_jid.h"
+#include "iris/xmpp_message.h"
+#include "iris/xmpp_rosterx.h"
 
 #include <QDateTime>
 #include <QDomDocument>

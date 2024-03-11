@@ -20,7 +20,7 @@
 #ifndef SXDESESSION_H
 #define SXDESESSION_H
 
-#include "im.h"
+#include "iris/im.h"
 #include "sxerecord.h"
 
 #include <QDomNode>

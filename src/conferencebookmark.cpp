@@ -19,7 +19,7 @@
 
 #include "conferencebookmark.h"
 
-#include "xmpp_xmlcommon.h"
+#include "iris/xmpp_xmlcommon.h"
 
 #include <QDomDocument>
 #include <QDomElement>

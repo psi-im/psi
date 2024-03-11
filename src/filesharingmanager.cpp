@@ -22,24 +22,19 @@
 #include "applicationinfo.h"
 #include "filecache.h"
 #include "filesharingdownloader.h"
-#include "fileutil.h"
 #include "httputil.h"
 #include "psiaccount.h"
 #include "psicon.h"
-#ifndef WEBKIT
-#include "qiteaudio.h"
-#endif
 
-#include "jingle-session.h"
-#include "xmpp_client.h"
-#include "xmpp_hash.h"
-#include "xmpp_jid.h"
-#include "xmpp_message.h"
-#include "xmpp_reference.h"
-#include "xmpp_vcard.h"
+#include "iris/jingle-session.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_hash.h"
+#include "iris/xmpp_jid.h"
+#include "iris/xmpp_message.h"
+#include "iris/xmpp_reference.h"
+#include "iris/xmpp_vcard.h"
 #ifdef HAVE_WEBSERVER
 #include "filesharinghttpproxy.h"
-#include "qhttpserverconnection.hpp"
 #include "webserver.h"
 #endif
 #include "messageview.h"

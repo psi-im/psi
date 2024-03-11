@@ -30,7 +30,7 @@
 #endif
 
 #include "psipopupinterface.h"
-#include "xmpp_jid.h"
+#include "iris/xmpp_jid.h"
 
 class QDBusPendingCallWatcher;
 class QTimer;

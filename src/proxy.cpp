@@ -22,7 +22,7 @@
 #include "common.h"
 #include "iconwidget.h"
 #include "psioptions.h"
-#include "xmpp_xmlcommon.h"
+#include "iris/xmpp_xmlcommon.h"
 
 #include <QApplication>
 #include <QCheckBox>

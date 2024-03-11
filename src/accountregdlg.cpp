@@ -27,7 +27,7 @@
 #include "serverlistquerier.h"
 #include "textutil.h"
 #include "xdata_widget.h"
-#include "xmpp_tasks.h"
+#include "iris/xmpp_tasks.h"
 
 #include <QMessageBox>
 #include <QScrollArea>

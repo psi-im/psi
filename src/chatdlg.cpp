@@ -43,15 +43,13 @@
 #include "psiiconset.h"
 #include "psioptions.h"
 #include "psirichtext.h"
-#include "psitooltip.h"
 #include "shortcutmanager.h"
-#include "stretchwidget.h"
 #include "tabdlg.h"
 #include "textutil.h"
 #include "userlist.h"
-#include "xmpp_caps.h"
-#include "xmpp_htmlelement.h"
-#include "xmpp_message.h"
+#include "iris/xmpp_caps.h"
+#include "iris/xmpp_htmlelement.h"
+#include "iris/xmpp_message.h"
 
 #include <QCloseEvent>
 #include <QColor>

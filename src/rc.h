@@ -21,7 +21,7 @@
 #define RC_H
 
 #include "ahcommandserver.h"
-#include "xmpp_jid.h"
+#include "iris/xmpp_jid.h"
 
 class PsiCon;
 

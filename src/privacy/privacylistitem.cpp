@@ -19,8 +19,8 @@
 
 #include "privacylistitem.h"
 
-#include "xmpp_jid.h"
-#include "xmpp_xmlcommon.h"
+#include "iris/xmpp_jid.h"
+#include "iris/xmpp_xmlcommon.h"
 
 #include <QDomElement>
 #include <QObject>

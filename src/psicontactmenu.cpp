@@ -34,7 +34,7 @@
 #include "psiprivacymanager.h"
 #include "shortcutmanager.h"
 #include "userlist.h"
-#include "xmpp_tasks.h"
+#include "iris/xmpp_tasks.h"
 
 #include <QApplication>
 #include <QClipboard>

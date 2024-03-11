@@ -20,7 +20,7 @@
 #ifndef TASKLIST_H
 #define TASKLIST_H
 
-#include "xmpp_task.h"
+#include "iris/xmpp_task.h"
 
 #include <QObject>
 

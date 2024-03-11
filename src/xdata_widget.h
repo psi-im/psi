@@ -20,9 +20,9 @@
 #ifndef XDATAWIDGET_H
 #define XDATAWIDGET_H
 
-#include "xmpp_jid.h"
-#include "xmpp_stanza.h"
-#include "xmpp_xdata.h"
+#include "iris/xmpp_jid.h"
+#include "iris/xmpp_stanza.h"
+#include "iris/xmpp_xdata.h"
 
 #include <QList>
 #include <QString>

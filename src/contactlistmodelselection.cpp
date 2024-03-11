@@ -23,7 +23,7 @@
 #include "psiaccount.h"
 #include "psicontact.h"
 #include "textutil.h"
-#include "xmpp_xmlcommon.h"
+#include "iris/xmpp_xmlcommon.h"
 
 #include <QDomElement>
 #include <QStringList>

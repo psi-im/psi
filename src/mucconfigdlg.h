@@ -21,7 +21,7 @@
 #define MUCCONFIG_H
 
 #include "ui_mucconfig.h"
-#include "xmpp_muc.h"
+#include "iris/xmpp_muc.h"
 
 #include <QDialog>
 

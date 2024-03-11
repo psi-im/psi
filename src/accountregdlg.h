@@ -22,7 +22,7 @@
 
 #include "profiles.h"
 #include "ui_accountreg.h"
-#include "xmpp_jid.h"
+#include "iris/xmpp_jid.h"
 
 #include <QDialog>
 #include <QString>

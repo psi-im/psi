@@ -69,9 +69,9 @@
 #include "urlobject.h"
 #include "userlist.h"
 #include "vcardfactory.h"
-#include "xmpp_caps.h"
-#include "xmpp_message.h"
-#include "xmpp_tasks.h"
+#include "iris/xmpp_caps.h"
+#include "iris/xmpp_message.h"
+#include "iris/xmpp_tasks.h"
 
 #include <QAction>
 #include <QCheckBox>
@@ -117,7 +117,7 @@ static const QString geometryOption = "options.ui.muc.size";
 // StatusPingTask
 //----------------------------------------------------------------------------
 #include "filesharedlg.h"
-#include "xmpp_xmlcommon.h"
+#include "iris/xmpp_xmlcommon.h"
 
 class StatusPingTask : public Task {
     Q_OBJECT

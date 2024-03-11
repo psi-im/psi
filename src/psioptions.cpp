@@ -26,10 +26,10 @@
 #endif
 #include "psitoolbar.h"
 #include "statuspreset.h"
-#include "xmpp_client.h"
-#include "xmpp_jid.h"
-#include "xmpp_task.h"
-#include "xmpp_xmlcommon.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_jid.h"
+#include "iris/xmpp_task.h"
+#include "iris/xmpp_xmlcommon.h"
 
 #include <QCoreApplication>
 #include <QTimer>

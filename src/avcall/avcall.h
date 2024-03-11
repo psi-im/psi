@@ -19,7 +19,7 @@
 #ifndef AVCALL_H
 #define AVCALL_H
 
-#include "xmpp.h"
+#include "iris/xmpp.h"
 
 #include <QObject>
 

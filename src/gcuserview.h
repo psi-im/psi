@@ -21,7 +21,7 @@
 #ifndef GCUSERVIEW_H
 #define GCUSERVIEW_H
 
-#include "xmpp_status.h"
+#include "iris/xmpp_status.h"
 
 #include <QAbstractItemModel>
 #include <QTreeView>

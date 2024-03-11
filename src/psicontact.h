@@ -21,7 +21,7 @@
 
 #include "contactlistitemmenu.h"
 #include "psicontactlist.h"
-#include "xmpp_vcard.h"
+#include "iris/xmpp_vcard.h"
 
 #include <QObject>
 

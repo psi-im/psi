@@ -29,7 +29,6 @@
 #include "iconlabel.h"
 #include "iconselect.h"
 #include "icontoolbutton.h"
-#include "iconwidget.h"
 #include "jidutil.h"
 #include "psiaccount.h"
 #include "psicon.h"
@@ -44,8 +43,8 @@
 #include "textutil.h"
 #include "userlist.h"
 #include "xdata_widget.h"
-#include "xmpp_htmlelement.h"
-#include "xmpp_serverinfomanager.h"
+#include "iris/xmpp_htmlelement.h"
+#include "iris/xmpp_serverinfomanager.h"
 
 #include <QApplication>
 #include <QCheckBox>

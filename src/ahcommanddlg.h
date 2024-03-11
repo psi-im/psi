@@ -21,7 +21,7 @@
 #define AHCOMMANDDLG_H
 
 #include "ui_ahcommanddlg.h"
-#include "xmpp_jid.h"
+#include "iris/xmpp_jid.h"
 
 #include <QDialog>
 #include <QList>

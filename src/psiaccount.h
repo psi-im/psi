@@ -31,10 +31,10 @@
 #include "mood.h"
 #include "psiactions.h"
 #include "psievent.h"
-#include "xmpp_encryptionhandler.h"
-#include "xmpp_reference.h"
-#include "xmpp_rosterx.h"
-#include "xmpp_status.h"
+#include "iris/xmpp_encryptionhandler.h"
+#include "iris/xmpp_reference.h"
+#include "iris/xmpp_rosterx.h"
+#include "iris/xmpp_status.h"
 
 #include <QList>
 #include <QUrl>

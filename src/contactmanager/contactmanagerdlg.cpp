@@ -24,8 +24,8 @@
 #include "psiiconset.h"
 #include "userlist.h"
 #include "vcardfactory.h"
-#include "xmpp_client.h"
-#include "xmpp_tasks.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_tasks.h"
 
 #include <QCheckBox>
 #include <QFile>

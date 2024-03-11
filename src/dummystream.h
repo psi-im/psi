@@ -20,8 +20,8 @@
 #ifndef DUMMYSTREAM_H
 #define DUMMYSTREAM_H
 
-#include "xmpp_stanza.h"
-#include "xmpp_stream.h"
+#include "iris/xmpp_stanza.h"
+#include "iris/xmpp_stream.h"
 
 class DummyStream : public XMPP::Stream {
 public:

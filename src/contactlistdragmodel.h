@@ -21,7 +21,7 @@
 #define CONTACTLISTDRAGMODEL_H
 
 #include "contactlistmodel.h"
-#include "xmpp_jid.h"
+#include "iris/xmpp_jid.h"
 
 #include <QHash>
 

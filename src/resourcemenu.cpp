@@ -23,7 +23,7 @@
 #include "psicontact.h"
 #include "psiiconset.h"
 #include "userlist.h"
-#include "xmpp_status.h"
+#include "iris/xmpp_status.h"
 
 /**
  * \class ResourceMenu

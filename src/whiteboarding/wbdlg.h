@@ -26,8 +26,7 @@
 
 #include "advwidget.h"
 #include "common.h"
-#include "iconlabel.h"
-#include "im.h"
+#include "iris/im.h"
 #include "psioptions.h"
 #include "wbwidget.h"
 

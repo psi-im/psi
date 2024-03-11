@@ -23,9 +23,9 @@
 #include "pepmanager.h"
 #include "psiaccount.h"
 #include "psiiconset.h"
-#include "xmpp_client.h"
-#include "xmpp_pubsubitem.h"
-#include "xmpp_task.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_pubsubitem.h"
+#include "iris/xmpp_task.h"
 
 MoodDlg::MoodDlg(QList<PsiAccount *> list) : QDialog(nullptr), pa_(list)
 {

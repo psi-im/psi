@@ -20,7 +20,7 @@
 #ifndef STATUSCOMBOBOX_H
 #define STATUSCOMBOBOX_H
 
-#include "xmpp_status.h"
+#include "iris/xmpp_status.h"
 
 #include <QComboBox>
 

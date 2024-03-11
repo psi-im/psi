@@ -25,9 +25,7 @@
 
 #include "psiaccount.h"
 
-#include "../iris/src/xmpp/xmpp-core/protocol.h"
 #include "Certificates/CertificateDisplayDialog.h"
-#include "Certificates/CertificateErrorDialog.h"
 #include "Certificates/CertificateHelpers.h"
 #include "accountmanagedlg.h"
 #include "accountmodifydlg.h"
@@ -46,7 +44,7 @@
 #include "bobfilecache.h"
 #include "bookmarkmanagedlg.h"
 #include "bookmarkmanager.h"
-#include "bsocket.h"
+#include "iris/bsocket.h"
 #include "captchadlg.h"
 #include "changepwdlg.h"
 #include "chatdlg.h"
@@ -64,15 +62,14 @@
 #include "gpgtransaction.h"
 #include "historydlg.h"
 #include "httpauthmanager.h"
-#include "httpfileupload.h"
-#include "iconwidget.h"
+#include "iris/httpfileupload.h"
 #include "infodlg.h"
 #include "irisprotocol/iris_discoinfoquerier.h"
 #include "jidutil.h"
 #ifdef HAVE_JINGLE
 #include "jinglevoicecaller.h"
 #endif
-#include "jingle-session.h"
+#include "iris/jingle-session.h"
 #include "mood.h"
 #include "mooddlg.h"
 #include "networkaccessmanager.h"
@@ -90,16 +87,14 @@
 #include "psicontactlist.h"
 #include "psievent.h"
 #include "psiiconset.h"
-#include "psimedia/psimedia.h"
 #include "psioptions.h"
 #include "psiprivacymanager.h"
-#include "psiselfcontact.h"
 #include "qwextend.h"
 //#include "qssl.h"
 #include "rc.h"
 #include "registrationdlg.h"
 #include "rosteritemexchangetask.h"
-#include "s5b.h"
+#include "iris/s5b.h"
 #include "searchdlg.h"
 #include "statusdlg.h"
 #include "systeminfo.h"
@@ -113,17 +108,17 @@
 #include "voicecalldlg.h"
 #include "voicecaller.h"
 #include "xmlconsole.h"
-#include "xmpp_caps.h"
-#include "xmpp_captcha.h"
-#include "xmpp_serverinfomanager.h"
-#include "xmpp_tasks.h"
-#include "xmpp_xmlcommon.h"
+#include "iris/xmpp_caps.h"
+#include "iris/xmpp_captcha.h"
+#include "iris/xmpp_serverinfomanager.h"
+#include "iris/xmpp_tasks.h"
+#include "iris/xmpp_xmlcommon.h"
 #ifdef FILETRANSFER
 #include "filetransdlg.h"
-#include "filetransfer.h"
-#include "jingle-ft.h"
-#include "jingle-ice.h"
-#include "jingle-s5b.h"
+#include "iris/filetransfer.h"
+#include "iris/jingle-ft.h"
+#include "iris/jingle-ice.h"
+#include "iris/jingle-s5b.h"
 #endif
 #ifdef GROUPCHAT
 #include "groupchatdlg.h"
@@ -149,6 +144,7 @@
 #include <QList>
 #include <QMap>
 #include <QMessageBox>
+#include <QNetworkProxy>
 #include <QObject>
 #include <QPixmap>
 #include <QPointer>

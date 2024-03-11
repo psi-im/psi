@@ -19,7 +19,7 @@
 
 #include "ahcommand.h"
 
-#include "xmpp_xdata.h"
+#include "iris/xmpp_xdata.h"
 
 #include <QDomDocument>
 #include <QDomElement>

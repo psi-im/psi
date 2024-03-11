@@ -32,7 +32,6 @@
 #include "applicationinfo.h"
 #include "avcall/avcall.h"
 #include "avcall/calldlg.h"
-#include "avcall/mediadevicewatcher.h"
 #include "bosskey.h"
 #include "chatdlg.h"
 #include "common.h"
@@ -50,7 +49,7 @@
 #include "iris/processquit.h"
 #include "iris/tcpportreserver.h"
 #include "jidutil.h"
-#include "jingle-s5b.h"
+#include "iris/jingle-s5b.h"
 #include "mainwin.h"
 #include "mucjoindlg.h"
 #include "networkaccessmanager.h"
@@ -75,9 +74,9 @@
 #include "psirichtext.h"
 #include "psithememanager.h"
 #include "psitoolbar.h"
-#include "s5b.h"
+#include "iris/s5b.h"
 #include "shortcutmanager.h"
-#include "spellchecker/aspellchecker.h"
+#include "spellchecker/spellchecker.h"
 #include "statusdlg.h"
 #include "systemwatch/systemwatch.h"
 #include "tabdlg.h"
@@ -88,14 +87,14 @@
 #ifdef HAVE_WEBSERVER
 #include "webserver.h"
 #endif
-#include "xmpp_caps.h"
-#include "xmpp_xmlcommon.h"
+#include "iris/xmpp_caps.h"
+#include "iris/xmpp_xmlcommon.h"
 #ifdef WHITEBOARDING
 #include "whiteboarding/wbmanager.h"
 #endif
 #ifdef FILETRANSFER
 #include "filetransdlg.h"
-#include "filetransfer.h"
+#include "iris/filetransfer.h"
 #include "multifiletransferdlg.h"
 #endif
 #ifdef PSI_PLUGINS

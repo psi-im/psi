@@ -3,7 +3,7 @@
 #include "accountlabel.h"
 #include "accountscombobox.h"
 #include "busywidget.h"
-#include "filetransfer.h"
+#include "iris/filetransfer.h"
 #include "fileutil.h"
 #include "jidutil.h"
 #include "psiaccount.h"
@@ -13,10 +13,10 @@
 #include "psioptions.h"
 #include "psitextview.h"
 #include "psitooltip.h"
-#include "s5b.h"
+#include "iris/s5b.h"
 #include "textutil.h"
 #include "userlist.h"
-#include "xmpp_tasks.h"
+#include "iris/xmpp_tasks.h"
 
 #include <QBuffer>
 #include <QDesktopServices>

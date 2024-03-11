@@ -19,9 +19,9 @@
 
 #include "rosteritemexchangetask.h"
 
-#include "xmpp_client.h"
-#include "xmpp_liveroster.h"
-#include "xmpp_xmlcommon.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_liveroster.h"
+#include "iris/xmpp_xmlcommon.h"
 
 RosterItemExchangeTask::RosterItemExchangeTask(Task *parent) : Task(parent), ignoreNonRoster_(false) { }
 

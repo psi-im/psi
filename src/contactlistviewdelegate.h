@@ -20,7 +20,7 @@
 #pragma once
 
 #include "hoverabletreeview.h"
-#include "xmpp_status.h"
+#include "iris/xmpp_status.h"
 
 #include <QItemDelegate>
 

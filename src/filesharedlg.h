@@ -21,7 +21,7 @@
 #define FILESHAREDLG_H
 
 #include "xmpp/jid/jid.h"
-#include "xmpp_reference.h"
+#include "iris/xmpp_reference.h"
 
 #include <QDialog>
 

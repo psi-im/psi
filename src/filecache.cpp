@@ -22,7 +22,7 @@
 #include "applicationinfo.h"
 #include "fileutil.h"
 #include "optionstree.h"
-#include "xmpp_hash.h"
+#include "iris/xmpp_hash.h"
 
 #include <QDebug>
 #include <QDir>

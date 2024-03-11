@@ -22,7 +22,7 @@
 
 #include "maybe.h"
 #include "optionstree.h"
-#include "xmpp_status.h"
+#include "iris/xmpp_status.h"
 
 #include <QString>
 

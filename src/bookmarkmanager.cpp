@@ -21,9 +21,9 @@
 
 #include "psiaccount.h"
 #include "psioptions.h"
-#include "xmpp_client.h"
-#include "xmpp_task.h"
-#include "xmpp_xmlcommon.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_task.h"
+#include "iris/xmpp_xmlcommon.h"
 
 // -----------------------------------------------------------------------------
 

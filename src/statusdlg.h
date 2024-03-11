@@ -20,7 +20,7 @@
 #ifndef STATUSDLG_H
 #define STATUSDLG_H
 
-#include "xmpp_jid.h"
+#include "iris/xmpp_jid.h"
 
 #include <QDialog>
 #include <QList>

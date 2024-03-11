@@ -22,9 +22,9 @@
 #include "avatars.h"
 #include "fileutil.h"
 #include "iconset.h"
-#include "jingle-ft.h"
-#include "jingle-session.h"
-#include "jingle.h"
+#include "iris/jingle-ft.h"
+#include "iris/jingle-session.h"
+#include "iris/jingle.h"
 #include "multifiletransferdelegate.h"
 #include "multifiletransferitem.h"
 #include "multifiletransfermodel.h"
@@ -35,6 +35,7 @@
 #include "ui_multifiletransferdlg.h"
 #include "userlist.h"
 #include "xmpp/jid/jid.h"
+#include "iris/xmpp_tasks.h"
 
 #include <QBuffer>
 #include <QDragEnterEvent>
@@ -48,7 +49,7 @@
 #include <QMimeDatabase>
 #include <QNetworkReply>
 #include <QPainter>
-#include <xmpp_tasks.h>
+
 
 using namespace XMPP;
 

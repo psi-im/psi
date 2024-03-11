@@ -19,16 +19,10 @@
 
 #include "profiles.h"
 
-#include "advwidget.h"
 #include "applicationinfo.h"
-#include "atomicxmlfile/atomicxmlfile.h"
 #include "chatdlg.h"
 #include "common.h"
-#include "fancylabel.h"
 #include "optionstree.h"
-#ifdef HAVE_PGPUTIL
-#include "pgputil.h"
-#endif
 #ifdef PSI_PLUGINS
 #include "pluginmanager.h"
 #endif
@@ -36,7 +30,7 @@
 #include "psitoolbar.h"
 #include "shortcutmanager.h"
 #include "varlist.h"
-#include "xmpp_xmlcommon.h"
+#include "iris/xmpp_xmlcommon.h"
 
 #include <QApplication>
 #include <QDesktopWidget>

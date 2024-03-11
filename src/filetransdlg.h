@@ -2,7 +2,7 @@
 #define FILETRANSDLG_H
 
 #include "advwidget.h"
-#include "s5b.h"
+#include "iris/s5b.h"
 #include "ui_filetrans.h"
 
 #include <QItemDelegate>

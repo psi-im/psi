@@ -30,7 +30,7 @@
 #include "psiaccount.h"
 #include "psiiconset.h"
 #include "psioptions.h"
-#include "xmpp_serverinfomanager.h"
+#include "iris/xmpp_serverinfomanager.h"
 
 #include <QPointer>
 

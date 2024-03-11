@@ -27,7 +27,7 @@
 #include "psiactionlist.h"
 #include "psicon.h"
 #include "psioptions.h"
-#include "xmpp_xdata.h"
+#include "iris/xmpp_xdata.h"
 
 using namespace XMPP;
 

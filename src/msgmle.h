@@ -20,7 +20,7 @@
 #ifndef MSGMLE_H
 #define MSGMLE_H
 
-#include "xmpp_htmlelement.h"
+#include "iris/xmpp_htmlelement.h"
 
 #include <QPointer>
 #include <QTextEdit>

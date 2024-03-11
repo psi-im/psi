@@ -19,9 +19,9 @@
 
 #include "lastactivitytask.h"
 
-#include "xmpp_jid.h"
-#include "xmpp_task.h"
-#include "xmpp_xmlcommon.h"
+#include "iris/xmpp_jid.h"
+#include "iris/xmpp_task.h"
+#include "iris/xmpp_xmlcommon.h"
 
 using namespace XMPP;
 

@@ -21,7 +21,7 @@
 #define MUCJOINDLG_H
 
 #include "ui_mucjoin.h"
-#include "xmpp_jid.h"
+#include "iris/xmpp_jid.h"
 
 #include <QDialog>
 #include <QTimer>

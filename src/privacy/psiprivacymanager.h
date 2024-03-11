@@ -21,7 +21,7 @@
 #define PSIPRIVACYMANAGER_H
 
 #include "privacymanager.h"
-#include "xmpp_jid.h"
+#include "iris/xmpp_jid.h"
 
 #include <QHash>
 #include <QObject>

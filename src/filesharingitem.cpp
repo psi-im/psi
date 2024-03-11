@@ -21,12 +21,12 @@
 #include "filecache.h"
 #include "filesharingmanager.h"
 #include "fileutil.h"
-#include "httpfileupload.h"
+#include "iris/httpfileupload.h"
 #include "psiaccount.h"
 #include "userlist.h"
-#include "xmpp_client.h"
-#include "xmpp_reference.h"
-#include "xmpp_thumbs.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_reference.h"
+#include "iris/xmpp_thumbs.h"
 
 #include <QBuffer>
 #include <QCryptographicHash>

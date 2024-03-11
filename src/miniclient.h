@@ -20,7 +20,7 @@
 #ifndef MINICLIENT_H
 #define MINICLIENT_H
 
-#include "xmpp_jid.h"
+#include "iris/xmpp_jid.h"
 
 #include <QObject>
 #include <QString>

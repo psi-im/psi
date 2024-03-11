@@ -24,7 +24,7 @@
 #include "busywidget.h"
 #include "psiaccount.h"
 #include "xdata_widget.h"
-#include "xmpp_client.h"
+#include "iris/xmpp_client.h"
 
 #include <QLabel>
 #include <QLayout>

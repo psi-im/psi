@@ -51,13 +51,12 @@
 #include "psioptions.h"
 #include "psitooltip.h"
 #include "shortcutmanager.h"
-#include "stretchwidget.h"
 #include "tabdlg.h"
 #include "textutil.h"
 #include "userlist.h"
 #include "widgets/pixmapratiolabel.h"
-#include "xmpp_caps.h"
-#include "xmpp_tasks.h"
+#include "iris/xmpp_caps.h"
+#include "iris/xmpp_tasks.h"
 #ifdef PSI_PLUGINS
 #include "filesharedlg.h"
 #include "pluginmanager.h"
@@ -82,7 +81,6 @@
 #include <QToolBar>
 #include <QToolButton>
 #include <QVBoxLayout>
-#include <functional>
 
 #define MCMDCHAT "https://psi-im.org/ids/mcmd#chatmain"
 

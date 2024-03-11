@@ -100,7 +100,7 @@ if(APPLE)
     list(APPEND EXTRA_LDFLAGS "-framework Carbon" "-framework AppKit" "-framework IOKit" "-framework CoreAudio" "-framework AudioToolbox")
 endif()
 
-if (NOT BUNDLED_QCA)
+if (NOT IRIS_BUNDLED_QCA)
     find_package( Qca REQUIRED )
     include_directories(${Qca_INCLUDE_DIR})
 else()
@@ -146,11 +146,11 @@ include_directories(
 )
 
 if(BUNDLED_IRIS)
-    include_directories(
-        ${PROJECT_SOURCE_DIR}/iris/src
-        ${PROJECT_SOURCE_DIR}/iris/include
-        ${PROJECT_SOURCE_DIR}/iris/include/iris
-    )
+    # include_directories(
+    #     ${PROJECT_SOURCE_DIR}/iris/src
+    #     ${PROJECT_SOURCE_DIR}/iris/include
+    #     ${PROJECT_SOURCE_DIR}/iris/include/iris
+    # )
 else()
     include_directories(${Iris_INCLUDE_DIR})
 endif()
@@ -631,7 +631,7 @@ elseif(APPLE)
     install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION "bin" BUNDLE DESTINATION ".")
 
     # Special hack for qca package from Homebrew
-    if(HOMEBREW AND NOT BUNDLED_QCA)
+    if(HOMEBREW AND NOT IRIS_BUNDLED_QCA)
         install(DIRECTORY "${HOMEBREW}/opt/qca/lib/qt5/plugins/crypto"
                 DESTINATION "${CLIENT_NAME}.app/Contents/PlugIns")
     endif()

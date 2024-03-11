@@ -1,5 +1,5 @@
 #include "irisprotocol/iris_discoinfoquerier.h"
-#include "xmpp_discoinfotask.h"
+#include "iris/xmpp_discoinfotask.h"
 
 using namespace XMPP;
 

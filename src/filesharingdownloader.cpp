@@ -23,14 +23,14 @@
 #include "fileutil.h"
 #include "httputil.h"
 #include "jidutil.h"
-#include "jingle-session.h"
+#include "iris/jingle-session.h"
 #include "networkaccessmanager.h"
 #include "psiaccount.h"
 #include "psicon.h"
 #include "userlist.h"
-#include "xmpp_client.h"
-#include "xmpp_hash.h"
-#include "xmpp_jid.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_hash.h"
+#include "iris/xmpp_jid.h"
 
 #include <QByteArray>
 #include <QDir>

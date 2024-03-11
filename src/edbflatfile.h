@@ -22,7 +22,7 @@
 
 #include "eventdb.h"
 #include "psievent.h"
-#include "xmpp_jid.h"
+#include "iris/xmpp_jid.h"
 
 #include <QDateTime>
 #include <QFile>

@@ -22,10 +22,10 @@
 #include "activitycatalog.h"
 #include "pepmanager.h"
 #include "psiaccount.h"
-#include "psiiconset.h"
-#include "xmpp_client.h"
-#include "xmpp_pubsubitem.h"
-#include "xmpp_task.h"
+#include "iconset.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_pubsubitem.h"
+#include "iris/xmpp_task.h"
 
 ActivityDlg::ActivityDlg(QList<PsiAccount *> list) : QDialog(nullptr), pa_(list)
 {

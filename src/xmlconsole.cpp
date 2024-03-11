@@ -24,7 +24,7 @@
 #include "psicon.h"
 #include "psicontactlist.h"
 #include "textutil.h"
-#include "xmpp_client.h"
+#include "iris/xmpp_client.h"
 
 #include <QCheckBox>
 #include <QHBoxLayout>

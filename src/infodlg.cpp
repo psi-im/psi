@@ -35,10 +35,10 @@
 #include "userlist.h"
 #include "vcardfactory.h"
 #include "vcardphotodlg.h"
-#include "xmpp_client.h"
-#include "xmpp_serverinfomanager.h"
-#include "xmpp_tasks.h"
-#include "xmpp_vcard.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_serverinfomanager.h"
+#include "iris/xmpp_tasks.h"
+#include "iris/xmpp_vcard.h"
 
 #include <QAction>
 #include <QCalendarWidget>

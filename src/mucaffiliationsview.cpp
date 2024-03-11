@@ -19,7 +19,7 @@
 
 #include "mucaffiliationsview.h"
 
-#include "xmpp_jid.h"
+#include "iris/xmpp_jid.h"
 
 #include <QHeaderView>
 

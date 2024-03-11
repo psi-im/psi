@@ -26,7 +26,7 @@
 #include "psiaccount.h"
 #include "vcardfactory.h"
 #include "xdata_widget.h"
-#include "xmpp_vcard.h"
+#include "iris/xmpp_vcard.h"
 
 #include <QInputDialog>
 #include <QMap>

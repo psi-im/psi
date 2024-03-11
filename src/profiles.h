@@ -24,9 +24,9 @@
 #include "common.h"
 #include "proxy.h"
 #include "varlist.h"
-#include "xmpp_clientstream.h"
-#include "xmpp_jid.h"
-#include "xmpp_roster.h"
+#include "iris/xmpp_clientstream.h"
+#include "iris/xmpp_jid.h"
+#include "iris/xmpp_roster.h"
 
 #include <QByteArray>
 #include <QList>

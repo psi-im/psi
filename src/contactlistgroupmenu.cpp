@@ -19,6 +19,10 @@
 
 #include "contactlistgroupmenu_p.h"
 #include "psiaccount.h"
+#include "iconaction.h"
+#include "shortcutmanager.h"
+#include "psicontact.h"
+#include "groupchatdlg.h"
 
 #include <QMessageBox>
 

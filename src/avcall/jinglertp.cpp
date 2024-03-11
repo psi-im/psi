@@ -18,7 +18,6 @@
 
 #include "jinglertp.h"
 
-#include "iceagent.h"
 #include "iris/iceagent.h"
 #include "iris/netnames.h"
 #include "iris/turnclient.h"

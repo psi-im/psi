@@ -24,8 +24,8 @@
 #include "geolocation.h"
 #include "maybe.h"
 #include "mood.h"
-#include "xmpp_liverosteritem.h"
-#include "xmpp_resource.h"
+#include "iris/xmpp_liverosteritem.h"
+#include "iris/xmpp_resource.h"
 
 #include <QDateTime>
 #include <QList>

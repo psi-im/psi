@@ -23,10 +23,10 @@
 #include "ahcommandserver.h"
 #include "psiaccount.h"
 #include "xdata_widget.h"
-#include "xmpp_client.h"
-#include "xmpp_tasks.h"
-#include "xmpp_xdata.h"
-#include "xmpp_xmlcommon.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_tasks.h"
+#include "iris/xmpp_xdata.h"
+#include "iris/xmpp_xmlcommon.h"
 
 #include <QComboBox>
 #include <QLayout>

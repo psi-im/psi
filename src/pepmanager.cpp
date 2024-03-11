@@ -19,12 +19,12 @@
 
 #include "pepmanager.h"
 
-#include "xmpp_client.h"
-#include "xmpp_pubsubitem.h"
-#include "xmpp_pubsubretraction.h"
-#include "xmpp_serverinfomanager.h"
-#include "xmpp_tasks.h"
-#include "xmpp_xmlcommon.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_pubsubitem.h"
+#include "iris/xmpp_pubsubretraction.h"
+#include "iris/xmpp_serverinfomanager.h"
+#include "iris/xmpp_tasks.h"
+#include "iris/xmpp_xmlcommon.h"
 
 #include <QtDebug>
 

@@ -24,8 +24,8 @@
 #include "psievent.h"
 #include "ui_addurl.h"
 #include "userlist.h"
-#include "xmpp_rosterx.h"
-#include "xmpp_url.h"
+#include "iris/xmpp_rosterx.h"
+#include "iris/xmpp_url.h"
 
 #include <QLineEdit>
 #include <QListWidget>

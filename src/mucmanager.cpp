@@ -29,10 +29,10 @@
 #include "mucmanager.h"
 
 #include "psiaccount.h"
-#include "xmpp_client.h"
-#include "xmpp_task.h"
-#include "xmpp_xdata.h"
-#include "xmpp_xmlcommon.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_task.h"
+#include "iris/xmpp_xdata.h"
+#include "iris/xmpp_xmlcommon.h"
 
 #include <QObject>
 

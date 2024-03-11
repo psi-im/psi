@@ -22,7 +22,7 @@
 #include "filecache.h"
 #include "filesharingmanager.h"
 #include "fileutil.h"
-#include "httpfileupload.h"
+#include "iris/httpfileupload.h"
 #include "multifiletransferdelegate.h"
 #include "multifiletransferitem.h"
 #include "multifiletransfermodel.h"
@@ -30,8 +30,8 @@
 #include "psicon.h"
 #include "textutil.h"
 #include "ui_filesharedlg.h"
-#include "xmpp_client.h"
-#include "xmpp_message.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_message.h"
 
 #include <QApplication>
 #include <QDesktopWidget>

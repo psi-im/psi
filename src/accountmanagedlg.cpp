@@ -23,14 +23,13 @@
 #include "common.h"
 #include "iconaction.h"
 #include "miniclient.h"
-#include "proxy.h"
 #include "psiaccount.h"
 #include "psicon.h"
 #include "psicontactlist.h"
 #include "psiiconset.h"
 #include "shortcutmanager.h"
 #include "ui_accountremove.h"
-#include "xmpp_tasks.h"
+#include "iris/xmpp_tasks.h"
 
 #include <QButtonGroup>
 #include <QDropEvent>

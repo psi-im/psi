@@ -21,8 +21,8 @@
 #define AHCFORMDLG_H
 
 #include "ui_ahcformdlg.h"
-#include "xmpp_jid.h"
-#include "xmpp_xdata.h"
+#include "iris/xmpp_jid.h"
+#include "iris/xmpp_xdata.h"
 
 #include <QDialog>
 #include <QObject>

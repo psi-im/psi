@@ -19,16 +19,15 @@
 
 #include "miniclient.h"
 
-#include "Certificates/CertificateErrorDialog.h"
 #include "Certificates/CertificateHelpers.h"
 #include "applicationinfo.h"
 #include "bobfilecache.h"
 #include "proxy.h"
 #include "psiaccount.h"
-#include "xmpp.h"
-#include "xmpp_client.h"
-#include "xmpp_clientstream.h"
-#include "xmpp_tasks.h"
+#include "iris/xmpp.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_clientstream.h"
+#include "iris/xmpp_tasks.h"
 
 #include <QMessageBox>
 #include <QUrl>

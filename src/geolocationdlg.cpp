@@ -23,9 +23,9 @@
 #include "iconset.h"
 #include "pepmanager.h"
 #include "psiaccount.h"
-#include "xmpp_client.h"
-#include "xmpp_pubsubitem.h"
-#include "xmpp_task.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_pubsubitem.h"
+#include "iris/xmpp_task.h"
 
 #include <QLineEdit>
 

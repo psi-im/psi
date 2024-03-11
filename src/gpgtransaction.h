@@ -25,8 +25,8 @@
 #pragma once
 
 #include "gpgprocess.h"
-#include "xmpp_jid.h"
-#include "xmpp_message.h"
+#include "iris/xmpp_jid.h"
+#include "iris/xmpp_message.h"
 #include <QByteArray>
 #include <QStringList>
 

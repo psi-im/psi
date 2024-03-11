@@ -23,7 +23,7 @@
 #include "psiaccount.h"
 #include "psiiconset.h"
 #include "psioptions.h"
-#include "xmpp_status.h"
+#include "iris/xmpp_status.h"
 
 #include <cassert>
 

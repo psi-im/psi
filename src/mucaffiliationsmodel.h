@@ -20,7 +20,7 @@
 #ifndef MUCAFFILIATIONSMODEL_H
 #define MUCAFFILIATIONSMODEL_H
 
-#include "xmpp_muc.h"
+#include "iris/xmpp_muc.h"
 
 #include <QList>
 #include <QMap>

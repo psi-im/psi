@@ -23,13 +23,13 @@
 #include "atomicxmlfile/atomicxmlfile.h"
 #include "avcall/avcall.h"
 #include "dummystream.h"
-#include "filetransfer.h"
-#include "jingle-session.h"
+#include "iris/filetransfer.h"
+#include "iris/jingle-session.h"
 #include "psiaccount.h"
 #include "psicon.h"
 #include "psicontactlist.h"
 #include "psioptions.h"
-#include "xmpp_xmlcommon.h"
+#include "iris/xmpp_xmlcommon.h"
 
 #include <QCoreApplication>
 #include <QDomElement>

@@ -51,7 +51,7 @@
 #include "tabdlg.h"
 #include "tabmanager.h"
 #include "textutil.h"
-#include "xmpp_serverinfomanager.h"
+#include "iris/xmpp_serverinfomanager.h"
 
 #include <QApplication>
 #include <QCloseEvent>

@@ -21,7 +21,7 @@
 #define MAINWIN_H
 
 #include "advwidget.h"
-#include "xmpp_status.h"
+#include "iris/xmpp_status.h"
 
 #include <QList>
 #include <QMainWindow>
