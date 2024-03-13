@@ -370,7 +370,7 @@ if(WIN32)
     endif()
     # win resource creation
     configure_file(${PROJECT_SOURCE_DIR}/win32/psi_win.rc.in ${CMAKE_CURRENT_BINARY_DIR}/psi_win.rc @ONLY)
-    configure_file(${PROJECT_SOURCE_DIR}/win32/psi.manifest.in ${CMAKE_CURRENT_BINARY_DIR}/psi.manifest @ONLY)
+    #configure_file(${PROJECT_SOURCE_DIR}/win32/psi.manifest.in ${CMAKE_CURRENT_BINARY_DIR}/psi.manifest @ONLY)
     # win resource compilation
     function(compile_rc_file RC_FILE_NAME RC_OUTPUT_NAME)
         if(NOT MSVC)

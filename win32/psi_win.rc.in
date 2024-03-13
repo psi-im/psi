@@ -1,8 +1,8 @@
 #include <windows.h>
 #define IDC_STATIC -1
 
-IDI_ICON1 ICON DISCARDABLE "@APP_ICON@"
-1 24 "psi.manifest"
+IDI_ICON1 ICON "@APP_ICON@"
+//1 24 "psi.manifest"
 
 VS_VERSION_INFO VERSIONINFO
 FILEVERSION @FILE_VERSION@
