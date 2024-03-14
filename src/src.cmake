@@ -506,6 +506,7 @@ list(APPEND HEADERS ${qite_HEADERS})
 list(APPEND SOURCES ${qite_SOURCES})
 
 if(IS_WEBKIT OR IS_WEBENGINE)
+    include_directories(${PROJECT_SOURCE_DIR}/iris/include/iris)
     list(APPEND HEADERS
         chatview_webkit.h
         chatviewtheme.h
