@@ -22,6 +22,7 @@
 #include <QDesktopServices>
 #include <QFileInfo>
 #include <QProcess>
+#include <QRegularExpression>
 #include <QSet>
 #include <QSettings>
 #include <QUrl>
@@ -33,11 +34,12 @@
 #ifdef Q_OS_WIN
 QString defaultBrowser()
 {
-    QSettings settings("HKEY_CLASSES_ROOT\\HTTP\\shell\\open\\command", QSettings::NativeFormat);
-    QString   command = settings.value(".").toString();
-    QRegularExpression   rx("\"(.+)\"");
-    if (rx.indexIn(command) != -1)
-        return rx.capturedTexts()[1];
+    QSettings          settings("HKEY_CLASSES_ROOT\\HTTP\\shell\\open\\command", QSettings::NativeFormat);
+    QString            command = settings.value(".").toString();
+    QRegularExpression rx("\"(.+)\"");
+    auto               match = rx.match(command);
+    if (match.hasMatch())
+        return match.capturedTexts()[1];
     return command;
 }
 #endif
