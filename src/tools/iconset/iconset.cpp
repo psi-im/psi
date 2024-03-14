@@ -45,7 +45,7 @@
 #include <QLocale>
 #include <QObject>
 #include <QPainter>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QSharedData>
 #include <QSharedDataPointer>
 #include <QSvgRenderer>
@@ -236,7 +236,7 @@ static IconSharedObject *iconSharedObject = nullptr;
  * Icons can contain animation, associated sound files, its own names.
  *
  * For implementing emoticon functionality, PsiIcon can have associated text
- * values and QRegExp for easy searching.
+ * values and QRegularExpression for easy searching.
  */
 
 //! \if _hide_doc_
@@ -318,7 +318,7 @@ public slots:
 
 public:
     QString         name;
-    QRegExp         regExp;
+    QRegularExpression regExp;
     QList<IconText> text;
     QString         sound;
     QString         mime;
@@ -601,17 +601,17 @@ void PsiIcon::setName(const QString &name)
 }
 
 /**
- * Returns PsiIcon's QRegExp. It is used to store information for emoticons.
+ * Returns PsiIcon's QRegularExpression. It is used to store information for emoticons.
  * \sa setRegExp()
  */
-const QRegExp &PsiIcon::regExp() const { return d->regExp; }
+const QRegularExpression &PsiIcon::regExp() const { return d->regExp; }
 
 /**
- * Sets the PsiIcon QRegExp to \a regExp.
+ * Sets the PsiIcon QRegularExpression to \a regExp.
  * \sa regExp()
  * \sa text()
  */
-void PsiIcon::setRegExp(const QRegExp &regExp)
+void PsiIcon::setRegExp(const QRegularExpression &regExp)
 {
     detach();
 
@@ -1229,12 +1229,12 @@ public:
         if (text.count()) {
             QStringList regexp;
             for (const PsiIcon::IconText &t : qAsConst(text)) {
-                regexp += QRegExp::escape(t.text);
+                regexp += QRegularExpression::escape(t.text);
             }
 
             // make sure there is some form of whitespace on at least one side of the text string
             // regexp = QString("(\\b(%1))|((%2)\\b)").arg(regexp).arg(regexp);
-            icon.setRegExp(QRegExp(regexp.join("|")));
+            icon.setRegExp(QRegularExpression(regexp.join("|")));
         }
         size = icon.size();
 
@@ -1403,12 +1403,12 @@ public:
         if (text.count()) {
             QStringList regexp;
             for (const PsiIcon::IconText &t : qAsConst(text)) {
-                regexp += QRegExp::escape(t.text);
+                regexp += QRegularExpression::escape(t.text);
             }
 
             // make sure there is some form of whitespace on at least one side of the text string
             // regexp = QString("(\\b(%1))|((%2)\\b)").arg(regexp).arg(regexp);
-            icon.setRegExp(QRegExp(regexp.join("|")));
+            icon.setRegExp(QRegularExpression(regexp.join("|")));
         }
 
         icon.blockSignals(false);

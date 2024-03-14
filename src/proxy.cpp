@@ -588,7 +588,7 @@ void ProxyManager::pd_applyList(const ProxyItemList &list, int x)
 ProxyItem ProxyManager::getItemForObject(const QString &obj)
 {
     QString str = obj;
-    return getItem(d->po->itemForObject(str.replace(QRegExp("\\s+"), "_")));
+    return getItem(d->po->itemForObject(str.replace(QRegularExpression("\\s+"), "_")));
 }
 
 ProxyForObject *ProxyManager::proxyForObject() { return d->po; }

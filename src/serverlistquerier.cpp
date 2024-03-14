@@ -78,7 +78,7 @@ void ServerListQuerier::get_finished()
             QStringList servers;
             QString     contents = QString::fromUtf8(reply->readAll());
             int         index    = 0;
-            QRegExp     re("data-original-title=\"([^\"]+)\"");
+            QRegularExpression     re("data-original-title=\"([^\"]+)\"");
             while ((index = contents.indexOf(re, index + 1)) != -1) {
                 servers.append(re.cap(1));
             }

@@ -24,7 +24,7 @@ include_directories(
     ./qhttp/src/private
 )
 
-find_package(Qt5 COMPONENTS Core Network REQUIRED)
+find_package(Qt${QT_DEFAULT_MAJOR_VERSION} COMPONENTS Core Network REQUIRED)
 find_package(HttpParser 2.2 QUIET)
 
 if(NOT HttpParser_FOUND)
@@ -77,7 +77,7 @@ set(qhttp_priv_hdrs
     qhttp/src/private/qsocket.hpp
 )
 
-qt5_wrap_cpp(MOCS
+qt_wrap_cpp(MOCS
     qhttp/src/qhttpabstracts.hpp
     qhttp/src/qhttpserverconnection.hpp
     qhttp/src/qhttpserver.hpp
@@ -95,11 +95,11 @@ add_library(qhttp
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-if(NOT MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
-endif()
+# if(NOT MSVC)
+#     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+# endif()
 
-target_link_libraries(qhttp Qt5::Core Qt5::Network ${EXTRA_LIBS})
+target_link_libraries(qhttp Qt${QT_DEFAULT_MAJOR_VERSION}::Core Qt${QT_DEFAULT_MAJOR_VERSION}::Network ${EXTRA_LIBS})
 target_include_directories(qhttp
     PUBLIC
     ./qhttp/src

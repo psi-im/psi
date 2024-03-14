@@ -14,7 +14,7 @@
 #include <QEvent>
 #include <QLineEdit>
 #include <QPushButton>
-#include <QRegExp>
+#include <QRegularExpression>
 
 #define CHAT_TOOLBAR 0
 #define GROUPCHAT_TOOLBAR 1
@@ -246,7 +246,7 @@ void OptionsTabToolbars::restoreOptions()
     // toolbarBases is chaotic. Need to sort before do anything.
     QStringList sortedToolbarBases;
     for (int i = 0; !toolbarBases.isEmpty(); ++i) {
-        int index = toolbarBases.indexOf(QRegExp(QString(".*m%1$").arg(i)));
+        int index = toolbarBases.indexOf(QRegularExpression(QString(".*m%1$").arg(i)));
         if (index >= 0) {
             sortedToolbarBases << toolbarBases.takeAt(index);
         }

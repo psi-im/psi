@@ -56,7 +56,7 @@
 #include <QKeySequence>
 #include <QObject>
 #include <QPluginLoader>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QSplitter>
 #include <QString>
 #include <QStringList>
@@ -610,7 +610,7 @@ bool PluginHost::incomingXml(int account, const QDomElement &e)
             }
 
             // regex filters
-            QMapIterator<QRegExp, IqNamespaceFilter *> i(iqNsxFilters_);
+            QMapIterator<QRegularExpression, IqNamespaceFilter *> i(iqNsxFilters_);
             while (!handled && i.hasNext()) {
                 if (i.key().indexIn(ns) >= 0 && (i.value()->*handler)(account, e)) {
                     handled = true;
@@ -809,7 +809,7 @@ void PluginHost::addIqNamespaceFilter(const QString &ns, IqNamespaceFilter *filt
  * \param ns Iq namespace defined by a regular expression
  * \param filter Filter to be registered
  */
-void PluginHost::addIqNamespaceFilter(const QRegExp &ns, IqNamespaceFilter *filter)
+void PluginHost::addIqNamespaceFilter(const QRegularExpression &ns, IqNamespaceFilter *filter)
 {
 #ifndef PLUGINS_NO_DEBUG
     qDebug("add nsx");
@@ -840,7 +840,7 @@ void PluginHost::removeIqNamespaceFilter(const QString &ns, IqNamespaceFilter *f
  * Breaks connection made by addIqNamespaceFilter().
  * Note that \a filter object is never deleted by this function.
  */
-void PluginHost::removeIqNamespaceFilter(const QRegExp &ns, IqNamespaceFilter *filter)
+void PluginHost::removeIqNamespaceFilter(const QRegularExpression &ns, IqNamespaceFilter *filter)
 {
     iqNsxFilters_.remove(ns, filter);
 }
@@ -1428,4 +1428,4 @@ void PluginHost::setMediaProvider(PsiMedia::Provider *provider)
 
 //-- helpers --------------------------------------------------------
 
-static bool operator<(const QRegExp &a, const QRegExp &b) { return a.pattern() < b.pattern(); }
+static bool operator<(const QRegularExpression &a, const QRegularExpression &b) { return a.pattern() < b.pattern(); }

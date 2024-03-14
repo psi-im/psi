@@ -49,7 +49,7 @@ void OptionsTabStatusPep::applyOptions()
     bool            publishTune = d->groupBox->isChecked();
     o->setOption(tunePublishOptionPath, publishTune);
     if (publishTune) {
-        QStringList newTuneFilters = d->tuneExtensions->text().split(QRegExp("\\W+"));
+        QStringList newTuneFilters = d->tuneExtensions->text().split(QRegularExpression("\\W+"));
         QString     tuneExstensionsFilter;
         if (!newTuneFilters.isEmpty()) {
             newTuneFilters.removeDuplicates();
@@ -80,9 +80,9 @@ void OptionsTabStatusPep::restoreOptions()
     QStringList controllers = psi_->tuneManager()->controllerNames();
     QString     tmpBL       = o->getOption(tuneControllerFilterOptionPath).toString();
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
-    blackList_ = tmpBL.split(QRegExp("[,]\\s*"), Qt::SkipEmptyParts);
+    blackList_ = tmpBL.split(QRegularExpression("[,]\\s*"), Qt::SkipEmptyParts);
 #else
-    blackList_ = tmpBL.split(QRegExp("[,]\\s*"), QString::SkipEmptyParts);
+    blackList_ = tmpBL.split(QRegularExpression("[,]\\s*"), QString::SkipEmptyParts);
 #endif
     for (const QString &name : controllers) {
         QCheckBox *cb      = new QCheckBox(name);

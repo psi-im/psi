@@ -2102,7 +2102,7 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
         tv.setDateTime(m.timeStamp());
 
         ui_.le_topic->setText(
-            topic.replace("\n\n", " || ").replace("\n", " | ").replace("\t", " ").replace(QRegExp("\\s{2,}"), " "));
+            topic.replace("\n\n", " || ").replace("\n", " | ").replace("\t", " ").replace(QRegularExpression("\\s{2,}"), " "));
         ui_.le_topic->setCursorPosition(0);
         ui_.le_topic->setToolTip(QString("<qt><p>%1</p></qt>").arg(subjectTooltip));
 

@@ -25,7 +25,7 @@ list(APPEND SOURCES
     CertificateHelpers.cpp
 )
 
-qt5_wrap_ui(UI_FORMS ${FORMS})
+qt_wrap_ui(UI_FORMS ${FORMS})
 add_library(Certificates STATIC ${HEADERS} ${SOURCES} ${UI_FORMS})
 target_link_libraries(Certificates ${QT_LIBRARIES} ${iris_LIB})
 target_include_directories(Certificates PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})

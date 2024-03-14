@@ -22,7 +22,7 @@
 #include <QAbstractTextDocumentLayout>
 #include <QMenu>
 #include <QMimeData>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QRegularExpression>
 #include <QScrollBar>
 #include <QTextDocumentFragment>
@@ -227,8 +227,8 @@ QMenu *PsiTextView::createStandardContextMenu(const QPoint &position)
 
         int     posInBlock = textcursor.position() - textcursor.block().position();
         QString textblock  = textcursor.block().text();
-        int     begin      = textcursor.block().position() + textblock.lastIndexOf(QRegExp("\\s|^"), posInBlock) + 1;
-        int     end        = textcursor.block().position() + textblock.indexOf(QRegExp("\\s|$"), posInBlock);
+        int     begin      = textcursor.block().position() + textblock.lastIndexOf(QRegularExpression("\\s|^"), posInBlock) + 1;
+        int     end        = textcursor.block().position() + textblock.indexOf(QRegularExpression("\\s|$"), posInBlock);
         textcursor.setPosition(begin);
         textcursor.setPosition(end, QTextCursor::KeepAnchor);
         setTextCursor(textcursor);

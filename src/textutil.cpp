@@ -28,16 +28,16 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
 
     QString quoted = "> " + toquote; // quote first line
     QString rxs    = quoteEmpty ? "\n" : "\n(?!\\s*\n)";
-    QRegExp rx(rxs); // quote following lines
+    QRegularExpression rx(rxs); // quote following lines
     quoted.replace(rx, "\n> ");
     rx.setPattern("> +>"); // compress > > > > quotes to >>>>
     quoted.replace(rx, ">>");
     quoted.replace(rx, ">>");
-    quoted.replace(QRegExp(" +\n"), "\n"); // remove trailing spaces
+    quoted.replace(QRegularExpression(" +\n"), "\n"); // remove trailing spaces
 
     if (!quoteEmpty) {
-        quoted.replace(QRegExp("^>+\n"), "\n\n"); // unquote empty lines
-        quoted.replace(QRegExp("\n>+\n"), "\n\n");
+        quoted.replace(QRegularExpression("^>+\n"), "\n\n"); // unquote empty lines
+        quoted.replace(QRegularExpression("\n>+\n"), "\n\n");
     }
 
     for (int i = 0; i < int(quoted.length()); i++) {
@@ -530,7 +530,7 @@ QString TextUtil::emoticonify(const QString &in)
                         searchAgain = false;
 
                         // find the closest match
-                        const QRegExp &rx = icon->regExp();
+                        const QRegularExpression &rx = icon->regExp();
                         int            n  = rx.indexIn(str, iii);
                         if (n == -1)
                             continue;
@@ -583,7 +583,7 @@ QString TextUtil::emoticonify(const QString &in)
 QString TextUtil::img2title(const QString &in)
 {
     QString ret = in;
-    QRegExp rxq("<img[^>]+title\\s*=\\s*'([^']+)'[^>]*>"), rxdq("<img[^>]+title\\s*=\\s*\"([^\"]+)\"[^>]*>");
+    QRegularExpression rxq("<img[^>]+title\\s*=\\s*'([^']+)'[^>]*>"), rxdq("<img[^>]+title\\s*=\\s*\"([^\"]+)\"[^>]*>");
     ret.replace(rxq, "\\1");
     ret.replace(rxdq, "\\1");
     return ret;
@@ -594,14 +594,14 @@ QString TextUtil::legacyFormat(const QString &in)
 
     // enable *bold* stuff
     // //old code
-    // out=out.replace(QRegExp("(^[^<>\\s]*|\\s[^<>\\s]*)\\*(\\S+)\\*([^<>\\s]*\\s|[^<>\\s]*$)"),"\\1<b>*\\2*</b>\\3");
-    // out=out.replace(QRegExp("(^[^<>\\s\\/]*|\\s[^<>\\s\\/]*)\\/([^\\/\\s]+)\\/([^<>\\s\\/]*\\s|[^<>\\s\\/]*$)"),"\\1<i>/\\2/</i>\\3");
-    // out=out.replace(QRegExp("(^[^<>\\s]*|\\s[^<>\\s]*)_(\\S+)_([^<>\\s]*\\s|[^<>\\s]*$)"),"\\1<u>_\\2_</u>\\3");
+    // out=out.replace(QRegularExpression("(^[^<>\\s]*|\\s[^<>\\s]*)\\*(\\S+)\\*([^<>\\s]*\\s|[^<>\\s]*$)"),"\\1<b>*\\2*</b>\\3");
+    // out=out.replace(QRegularExpression("(^[^<>\\s\\/]*|\\s[^<>\\s\\/]*)\\/([^\\/\\s]+)\\/([^<>\\s\\/]*\\s|[^<>\\s\\/]*$)"),"\\1<i>/\\2/</i>\\3");
+    // out=out.replace(QRegularExpression("(^[^<>\\s]*|\\s[^<>\\s]*)_(\\S+)_([^<>\\s]*\\s|[^<>\\s]*$)"),"\\1<u>_\\2_</u>\\3");
 
     QString out = in;
-    out         = out.replace(QRegExp("(^|\\s|>)_(\\S+)_(?=<|\\s|$)"), "\\1<u>_\\2_</u>"); // underline inside _text_
-    out         = out.replace(QRegExp("(^|\\s|>)\\*(\\S+)\\*(?=<|\\s|$)"), "\\1<b>*\\2*</b>"); // bold *text*
-    out         = out.replace(QRegExp("(^|\\s|>)\\/(\\S+)\\/(?=<|\\s|$)"), "\\1<i>/\\2/</i>"); // italic /text/
+    out         = out.replace(QRegularExpression("(^|\\s|>)_(\\S+)_(?=<|\\s|$)"), "\\1<u>_\\2_</u>"); // underline inside _text_
+    out         = out.replace(QRegularExpression("(^|\\s|>)\\*(\\S+)\\*(?=<|\\s|$)"), "\\1<b>*\\2*</b>"); // bold *text*
+    out         = out.replace(QRegularExpression("(^|\\s|>)\\/(\\S+)\\/(?=<|\\s|$)"), "\\1<i>/\\2/</i>"); // italic /text/
 
     return out;
 }

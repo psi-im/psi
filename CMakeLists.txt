@@ -44,6 +44,10 @@ if (APPLE OR (MSVC OR USE_MXE))
     set( DEFAULT_BUNDLED_USRSCTP ON )
 endif()
 
+if(QT_DEFAULT_MAJOR_VERSION STREQUAL "")
+    set(QT_DEFAULT_MAJOR_VERSION 6)
+endif()
+
 
 # Common options
 set( CHAT_TYPE "BASIC" CACHE STRING "Type of chatlog engine. WEBKIT | WEBENGINE | BASIC" )
@@ -59,7 +63,7 @@ option( USE_ASPELL "Build psi with aspell spellcheck" OFF )
 option( USE_CCACHE "Use ccache utility if found" ON )
 option( USE_CRASH "Enable builtin sigsegv handling" OFF )
 option( USE_DBUS "Enable DBUS support" ON )
-option( USE_KEYCHAIN "Enable Qt5Keychain support" ON )
+option( USE_KEYCHAIN "Enable QtKeychain support" ON )
 option( ONLY_BINARY "Build and install only binary file" OFF )
 option( ONLY_PLUGINS "Build psi plugins only" OFF )
 option( INSTALL_EXTRA_FILES "Install sounds, iconsets, certs, client_icons.txt, themes" ON )
@@ -113,6 +117,10 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules" )
 
 include(policyRules)
 
+if(QT_DEFAULT_MAJOR_VERSION STREQUAL "")
+    set(QT_DEFAULT_MAJOR_VERSION 5)
+endif()
+
 set(IS_WEBKIT OFF CACHE INTERNAL "Use webkit. Internal variable")
 set(IS_WEBENGINE OFF CACHE INTERNAL "Use webengine. Internal variable")
 string(TOLOWER "${CHAT_TYPE}" LCHAT_TYPE)
@@ -125,7 +133,6 @@ if("${LCHAT_TYPE}" STREQUAL "webkit")
     message(STATUS "Chatlog type - QtWebKit")
 elseif("${LCHAT_TYPE}" STREQUAL "webengine")
     set(IS_WEBENGINE ON)
-    find_package( Qt5Core 5.9.0 REQUIRED )
     add_definitions(
         -DWEBKIT
         -DWEBENGINE=1
@@ -231,8 +238,8 @@ endif()
 STRING (REGEX MATCH "NetBSD" PROJECT_OS_NETBSD ${CMAKE_SYSTEM_NAME})
 if(PROJECT_OS_NETBSD)
     message(STATUS "NetBSD detected")
-    set(CMAKE_C_FLAGS "-Wl,-rpath,/usr/X11R7/lib -Wl,-rpath,/usr/pkg/lib -Wl,-rpath,/usr/pkg/qt5/lib")
-    set(CMAKE_CXX_FLAGS "-Wl,-rpath,/usr/X11R7/lib -Wl,-rpath,/usr/pkg/lib -Wl,-rpath,/usr/pkg/qt5/lib")
+    set(CMAKE_C_FLAGS "-Wl,-rpath,/usr/X11R7/lib -Wl,-rpath,/usr/pkg/lib -Wl,-rpath,/usr/pkg/qt${QT_DEFAULT_MAJOR_VERSION}/lib")
+    set(CMAKE_CXX_FLAGS "-Wl,-rpath,/usr/X11R7/lib -Wl,-rpath,/usr/pkg/lib -Wl,-rpath,/usr/pkg/qt${QT_DEFAULT_MAJOR_VERSION}/lib")
 endif()
 
 # Qt dependencies make building very slow

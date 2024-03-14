@@ -33,7 +33,7 @@
 #include <QDomElement>
 #include <QMultiMap>
 #include <QPointer>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QTextEdit>
 #include <QVariant>
 
@@ -124,9 +124,9 @@ public:
 
     // IqFilteringHost
     void addIqNamespaceFilter(const QString &ns, IqNamespaceFilter *filter) override;
-    void addIqNamespaceFilter(const QRegExp &ns, IqNamespaceFilter *filter) override;
+    void addIqNamespaceFilter(const QRegularExpression &ns, IqNamespaceFilter *filter) override;
     void removeIqNamespaceFilter(const QString &ns, IqNamespaceFilter *filter) override;
-    void removeIqNamespaceFilter(const QRegExp &ns, IqNamespaceFilter *filter) override;
+    void removeIqNamespaceFilter(const QRegularExpression &ns, IqNamespaceFilter *filter) override;
 
     // OptionAccessingHost
     void     setPluginOption(const QString &option, const QVariant &value) override;
@@ -303,7 +303,7 @@ private:
     QString infoString_;
 
     QMultiMap<QString, IqNamespaceFilter *> iqNsFilters_;
-    QMultiMap<QRegExp, IqNamespaceFilter *> iqNsxFilters_;
+    QMultiMap<QRegularExpression, IqNamespaceFilter *> iqNsxFilters_;
     QList<QVariantHash>                     buttons_;
     QList<QVariantHash>                     gcbuttons_;
 

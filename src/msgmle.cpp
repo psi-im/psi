@@ -104,7 +104,7 @@ public slots:
             } else if (charsAdded > 1) { // Insert a piece of text
                 return;
             } else {
-                QRegExp capitalizeAfter("(?:^[^.][.]+\\s+)|(?:\\s*[^.]{2,}[.]+\\s+)|(?:[!?]\\s+)");
+                QRegularExpression capitalizeAfter("(?:^[^.][.]+\\s+)|(?:\\s*[^.]{2,}[.]+\\s+)|(?:[!?]\\s+)");
                 int     index = te_->toPlainText().lastIndexOf(capitalizeAfter);
                 if (index != -1 && index == pos - capitalizeAfter.matchedLength()) {
                     capitalizeNext_ = true;
@@ -330,7 +330,7 @@ void ChatEdit::contextMenuEvent(QContextMenuEvent *e)
         tc.movePosition(QTextCursor::StartOfWord, QTextCursor::MoveAnchor);
         tc.movePosition(QTextCursor::EndOfWord, QTextCursor::KeepAnchor);
         QString selected_word = tc.selectedText();
-        if (!selected_word.isEmpty() && !QRegExp("\\d+").exactMatch(selected_word)
+        if (!selected_word.isEmpty() && !QRegularExpression("\\d+").exactMatch(selected_word)
             && !SpellChecker::instance()->isCorrect(selected_word)) {
             QList<QString> suggestions = SpellChecker::instance()->suggestions(selected_word);
             if (!suggestions.isEmpty() || SpellChecker::instance()->writable()) {

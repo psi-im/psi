@@ -1465,13 +1465,13 @@ void PsiCon::optionChanged(const QString &option)
 #ifdef USE_PEP
     if (option == tuneUrlFilterOptionPath || option == tuneTitleFilterOptionPath) {
         d->tuneManager->setTuneFilters(
-            PsiOptions::instance()->getOption(tuneUrlFilterOptionPath).toString().split(QRegExp("\\W+")),
+            PsiOptions::instance()->getOption(tuneUrlFilterOptionPath).toString().split(QRegularExpression("\\W+")),
             PsiOptions::instance()->getOption(tuneTitleFilterOptionPath).toString());
     }
     if (option == tuneControllerFilterOptionPath || option == tunePublishOptionPath) {
         if (PsiOptions::instance()->getOption(tunePublishOptionPath).toBool()) {
             d->tuneManager->updateControllers(
-                PsiOptions::instance()->getOption(tuneControllerFilterOptionPath).toString().split(QRegExp("[,]\\s*")));
+                PsiOptions::instance()->getOption(tuneControllerFilterOptionPath).toString().split(QRegularExpression("[,]\\s*")));
         } else {
             d->tuneManager->updateControllers(d->tuneManager->controllerNames());
         }

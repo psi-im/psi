@@ -244,9 +244,9 @@ void ContactManagerModel::invertByMatch(int columnIndex, int matchType, const QS
     emit    layoutAboutToBeChanged();
     Role    columnRole = roles[columnIndex];
     QString data;
-    QRegExp reg;
+    QRegularExpression reg;
     if (matchType == ContactManagerModel::RegexpMatch) {
-        reg = QRegExp(str);
+        reg = QRegularExpression(str);
     }
     for (UserListItem *u : qAsConst(_userList)) {
         data = userFieldString(u, columnRole);

@@ -92,7 +92,7 @@ public:
 
     static QString closeIconTags(const QString &richText)
     {
-        static QRegExp mIcon("(<icon [^>]+>)");
+        static QRegularExpression mIcon("(<icon [^>]+>)");
         QString        s(richText);
         s.replace(mIcon, "\\1</icon>");
         return s;

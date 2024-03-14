@@ -23,6 +23,7 @@
 #include <QDateTime>
 #include <QLabel>
 #include <QPushButton>
+#include <QRegularExpression>
 #include <QtCrypto>
 
 CertificateDisplayDialog::CertificateDisplayDialog(const QCA::Certificate &cert, int result, QCA::Validity validity,
@@ -66,7 +67,7 @@ CertificateDisplayDialog::CertificateDisplayDialog(const QCA::Certificate &cert,
         QString hashstr = QCA::Hash(i == 0 ? "md5" : "sha1")
                               .hashToString(cert.toDER())
                               .toUpper()
-                              .replace(QRegExp("(..)"), ":\\1")
+                              .replace(QRegularExpression("(..)"), ":\\1")
                               .mid(1);
         str += QString("Fingerprint(%1): %2<br>").arg(i == 0 ? "MD5" : "SHA-1", hashstr);
     }

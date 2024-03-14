@@ -61,9 +61,9 @@ set(HEADERS
 )
 
 if(WIN32)
-    find_package(Qt5 COMPONENTS WinExtras REQUIRED)
+    find_package(Qt${QT_DEFAULT_MAJOR_VERSION} COMPONENTS WinExtras REQUIRED)
     list(APPEND QT_LIBRARIES
-        Qt5::WinExtras
+        Qt${QT_DEFAULT_MAJOR_VERSION}::WinExtras
     )
     list(APPEND SOURCES
         thumbnailtoolbar.cpp
@@ -89,7 +89,7 @@ if(PSI_PLUS AND (EXISTS "${CMAKE_CURRENT_LIST_DIR}/psiwindowheader.cpp"))
     )
 endif()
 
-qt5_wrap_ui(UI_FORMS ${FORMS})
+qt_wrap_ui(UI_FORMS ${FORMS})
 add_library(widgets STATIC ${SOURCES} ${HEADERS} ${UI_FORMS})
 target_link_libraries(widgets ${QT_LIBRARIES} ${iris_LIB} libpsi_tools)
 target_include_directories(widgets PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})

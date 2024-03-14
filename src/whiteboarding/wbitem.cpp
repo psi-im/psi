@@ -23,7 +23,7 @@
 #include "wbwidget.h"
 
 #include <QDebug>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QSvgRenderer>
 #include <math.h>
 

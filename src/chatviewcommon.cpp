@@ -22,7 +22,7 @@
 #include "psioptions.h"
 
 #include <QApplication>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QWidget>
 #include <math.h>
 
@@ -49,7 +49,7 @@ QString ChatViewCommon::getMucNickColor(const QString &nick, bool isSelf)
         }
 
         QString nickwoun = nick; // nick without underscores
-        nickwoun.remove(QRegExp("(^_*|_*$)"));
+        nickwoun.remove(QRegularExpression("(^_*|_*$)"));
 
         if (PsiOptions::instance()->getOption("options.ui.muc.use-hash-nick-coloring").toBool()) {
             /* Hash-driven colors */

@@ -108,7 +108,7 @@ QString MCmdManager::serializeCommand(const QStringList &list)
 {
     QString retval;
     bool    needspace = false;
-    QRegExp specials("([\"\'\\\\ ])");
+    QRegularExpression specials("([\"\'\\\\ ])");
     for (QString item : list) {
         item.replace(specials, "\\\\1");
         if (item == "")

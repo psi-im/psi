@@ -126,7 +126,7 @@ void TuneControllerManager::setTuneFilters(const QStringList &filters, const QSt
 bool TuneControllerManager::checkTune(const Tune &tune) const
 {
     if (!tuneTitleFilterPattern_.isEmpty() && !tune.name().isEmpty()) {
-        QRegExp tuneTitleFilter(tuneTitleFilterPattern_);
+        QRegularExpression tuneTitleFilter(tuneTitleFilterPattern_);
         if (tuneTitleFilter.isValid() && tuneTitleFilter.exactMatch(tune.name())) {
             return false;
         }

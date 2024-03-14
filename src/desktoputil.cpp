@@ -35,7 +35,7 @@ QString defaultBrowser()
 {
     QSettings settings("HKEY_CLASSES_ROOT\\HTTP\\shell\\open\\command", QSettings::NativeFormat);
     QString   command = settings.value(".").toString();
-    QRegExp   rx("\"(.+)\"");
+    QRegularExpression   rx("\"(.+)\"");
     if (rx.indexIn(command) != -1)
         return rx.capturedTexts()[1];
     return command;

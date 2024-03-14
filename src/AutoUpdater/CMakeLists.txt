@@ -56,7 +56,7 @@ if(USE_QDCHECKER)
     )
 endif()
 
-qt5_wrap_ui(UI_FORMS ${FORMS})
+qt_wrap_ui(UI_FORMS ${FORMS})
 add_library(AutoUpdater STATIC ${HEADERS} ${SOURCES} ${UI_FORMS})
 if(USE_QDCHECKER)
     add_dependencies(AutoUpdater build_ui_files tools widgets)

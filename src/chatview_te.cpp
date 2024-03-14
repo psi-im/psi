@@ -46,8 +46,8 @@
 //#define CORRECTION_DEBUG
 
 static const char *  informationalColorOpt = "options.ui.look.colors.messages.informational";
-static const QRegExp underlineFixRE("(<a href=\"addnick://psi/[^\"]*\"><span style=\")");
-static const QRegExp removeTagsRE("<[^>]*>");
+static const QRegularExpression underlineFixRE("(<a href=\"addnick://psi/[^\"]*\"><span style=\")");
+static const QRegularExpression removeTagsRE("<[^>]*>");
 
 //----------------------------------------------------------------------------
 // ChatView

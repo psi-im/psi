@@ -238,7 +238,7 @@ void PsiRosterWidget::setShowStatusMsg(bool enabled)
 void PsiRosterWidget::filterEditTextChanged(const QString &text)
 {
     if (filterModel_)
-        filterModel_->setFilterRegExp(QRegExp::escape(text));
+        filterModel_->setFilterRegExp(QRegularExpression::escape(text));
 }
 
 void PsiRosterWidget::quitFilteringMode() { setFilterModeEnabled(false); }

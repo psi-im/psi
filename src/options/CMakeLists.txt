@@ -106,7 +106,7 @@ list(APPEND FORMS
     ui_options.ui
 )
 
-qt5_wrap_ui(UI_FORMS ${FORMS})
+qt_wrap_ui(UI_FORMS ${FORMS})
 add_library(options STATIC ${SOURCES} ${HEADERS} ${UI_FORMS})
 target_link_libraries(options ${QT_LIBRARIES} tools widgets tabs libpsi_dialogs)
 target_include_directories(options PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})

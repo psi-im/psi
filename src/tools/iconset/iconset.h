@@ -25,7 +25,7 @@
 #include <QList>
 #include <QObject>
 #include <QPixmap>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QSharedData>
 #include <QString>
 #include <QStringList>
@@ -136,8 +136,8 @@ public:
     virtual const QString &name() const;
     void                   setName(const QString &);
 
-    const QRegExp &regExp() const;
-    void           setRegExp(const QRegExp &);
+    const QRegularExpression &regExp() const;
+    void           setRegExp(const QRegularExpression &);
 
     struct IconText {
         IconText(QString _lang, QString _text) : lang(_lang), text(_text) { }

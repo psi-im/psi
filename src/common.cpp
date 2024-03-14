@@ -45,7 +45,7 @@
 #include <QObject>
 #include <QPaintDevice>
 #include <QProcess>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QSound>
 #include <QUrl>
 #include <QUuid>
@@ -192,9 +192,9 @@ QString status2txt(int status)
 
 QString logencode(QString str)
 {
-    str.replace(QRegExp("\\\\"), "\\\\"); // backslash to double-backslash
-    str.replace(QRegExp("\\|"), "\\p");   // pipe to \p
-    str.replace(QRegExp("\n"), "\\n");    // newline to \n
+    str.replace(QRegularExpression("\\\\"), "\\\\"); // backslash to double-backslash
+    str.replace(QRegularExpression("\\|"), "\\p");   // pipe to \p
+    str.replace(QRegularExpression("\n"), "\\n");    // newline to \n
     return str;
 }
 

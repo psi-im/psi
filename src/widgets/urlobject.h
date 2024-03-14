@@ -25,11 +25,11 @@
 class QMenu;
 
 // TODO: This class should be further refactored into more modular system.
-// It should allow registering/unregistering of QRegExps corresponding to
+// It should allow registering/unregistering of QRegularExpressions corresponding to
 // different actions. Also class's base API should be made public.
 //
 // Examples of future use:
-// URLObject::getInstance()::registerAction(QRegExp("^http:\/\/"), act_open_browser);
+// URLObject::getInstance()::registerAction(QRegularExpression("^http:\/\/"), act_open_browser);
 
 class URLObject : public QObject {
     Q_OBJECT

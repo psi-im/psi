@@ -99,7 +99,7 @@ public:
     QMap<QString, QString> cur_custom_status;
     struct StatusIconsets {
         struct IconsetItem {
-            QRegExp regexp;
+            QRegularExpression regexp;
             QString iconset;
         };
         bool               useServicesIcons = false;
@@ -600,31 +600,31 @@ void PsiIconset::loadStatusIconDefinitions()
         PsiIconset::Private::StatusIconsets::IconsetItem item;
         bool                                             find = true;
         if (service == "disk")
-            item.regexp = QRegExp("^disk");
+            item.regexp = QRegularExpression("^disk");
         else if (service == "gadugadu")
-            item.regexp = QRegExp("^gg");
+            item.regexp = QRegularExpression("^gg");
         else if (service == "telegram")
-            item.regexp = QRegExp("^telegram");
+            item.regexp = QRegularExpression("^telegram");
         else if (service == "irc")
-            item.regexp = QRegExp("^irc");
+            item.regexp = QRegularExpression("^irc");
         else if (service == "xmpp")
-            item.regexp = QRegExp("^j2j|^xmpp\\.[a-z1-9]+\\..*");
+            item.regexp = QRegularExpression("^j2j|^xmpp\\.[a-z1-9]+\\..*");
         else if (service == "mrim")
-            item.regexp = QRegExp("^mrim");
+            item.regexp = QRegularExpression("^mrim");
         else if (service == "skype")
-            item.regexp = QRegExp("^skype");
+            item.regexp = QRegularExpression("^skype");
         else if (service == "muc")
-            item.regexp = QRegExp("^conference|^rooms");
+            item.regexp = QRegularExpression("^conference|^rooms");
         else if (service == "rss")
-            item.regexp = QRegExp("^rss");
+            item.regexp = QRegularExpression("^rss");
         else if (service == "sms")
-            item.regexp = QRegExp("^sms");
+            item.regexp = QRegularExpression("^sms");
         else if (service == "smtp")
-            item.regexp = QRegExp("^smtp");
+            item.regexp = QRegularExpression("^smtp");
         else if (service == "vkontakte")
-            item.regexp = QRegExp("^vk.com|^vkontakte|^vk-t");
+            item.regexp = QRegularExpression("^vk.com|^vkontakte|^vk-t");
         else if (service == "weather")
-            item.regexp = QRegExp("^weather|^gism");
+            item.regexp = QRegularExpression("^weather|^gism");
         else
             find = false;
 
@@ -649,7 +649,7 @@ void PsiIconset::loadStatusIconDefinitions()
     foreach (const QString &base,
              PsiOptions::instance()->getChildOptionNames("options.iconsets.custom-status", true, true)) {
         PsiIconset::Private::StatusIconsets::IconsetItem item;
-        item.regexp = QRegExp(PsiOptions::instance()->getOption(base + ".regexp").toString());
+        item.regexp = QRegularExpression(PsiOptions::instance()->getOption(base + ".regexp").toString());
         if (item.regexp.isValid()) {
             item.iconset = PsiOptions::instance()->getOption(base + ".iconset").toString();
             d->status_icons.customList.append(item);
