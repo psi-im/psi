@@ -301,18 +301,19 @@ static void emojiconifyPlainText(RTParse &p, const QString &in)
             QLatin1String(
                 R"html(<span style="font-family: 'Apple Color Emoji', 'Noto Color Emoji', 'Segoe UI Emoji'; font-size:1.5em">)html")
 #endif
-                  + QStringView{in}.mid(emojisStartIdx, idx - emojisStartIdx) + QLatin1String("</span>"));
+                  + QStringView{in}.mid(emojisStartIdx, idx - emojisStartIdx).toString() + QLatin1String("</span>"));
     };
-    while (!(ref = reg.findEmoji(in, idx)).isEmpty()) {
+    int position;
+    while (std::tie(ref, position) = reg.findEmoji(in, idx), !ref.isEmpty()) {
         if (emojisStartIdx == -1) {
-            emojisStartIdx = ref.position();
-            p.putPlain(in.left(ref.position()));
-        } else if (ref.position() != idx) { // a text gap
+            emojisStartIdx = position;
+            p.putPlain(in.left(position));
+        } else if (position != idx) { // a text gap
             dump_emoji();
-            emojisStartIdx = ref.position();
-            p.putPlain(in.mid(idx, ref.position() - idx));
+            emojisStartIdx = position;
+            p.putPlain(in.mid(idx, position - idx));
         }
-        idx = ref.position() + ref.size();
+        idx = position + ref.size();
     }
     if (emojisStartIdx == -1)
         p.putPlain(in);
@@ -421,7 +422,7 @@ QString TextUtil::linkify(const QString &in)
             }
             int     len = x2 - x1;
             QString pre = out.mid(x1, x2 - x1);
-            pre         = resolveEntities(&pre);
+            pre         = resolveEntities(pre);
 
             // go backward hacking off unwanted punctuation
             int cutoff;
@@ -517,7 +518,7 @@ QString TextUtil::emoticonify(const QString &in)
                 QListIterator<PsiIcon *> it = iconset->iterator();
                 while (it.hasNext()) {
                     PsiIcon *icon = it.next();
-                    if (icon->regExp().isEmpty())
+                    if (icon->regExp().pattern().isEmpty())
                         continue;
 
                     // some hackery

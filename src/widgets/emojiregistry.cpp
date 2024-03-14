@@ -85,7 +85,7 @@ int EmojiRegistry::count() const
     return count;
 }
 
-QStringView EmojiRegistry::findEmoji(const QString &in, int idx) const
+std::pair<QStringView,int> EmojiRegistry::findEmoji(const QString &in, int idx) const
 {
     int emojiStart = -1;
 
@@ -130,7 +130,7 @@ QStringView EmojiRegistry::findEmoji(const QString &in, int idx) const
         if (in[idx].isHighSurrogate())
             idx++;
     }
-    return emojiStart == -1 ? QStringView() : QStringView{in}.mid(emojiStart, idx - emojiStart);
+    return emojiStart == -1 ? std::make_pair(QStringView(),-1) : std::make_pair(QStringView{in}.mid(emojiStart, idx - emojiStart), emojiStart);
 }
 
 EmojiRegistry::EmojiRegistry() : groups(std::move(db)), ranges_(std::move(ranges)) { }
