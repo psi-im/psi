@@ -21,6 +21,7 @@
 #include "mcmdmanager.h"
 
 #include <QDebug>
+#include <QRegularExpression>
 
 MCmdSimpleState::MCmdSimpleState(QString name, QString prompt) : name_(name), prompt_(prompt), flags_(0) { }
 

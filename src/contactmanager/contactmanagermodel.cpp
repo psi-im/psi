@@ -251,7 +251,7 @@ void ContactManagerModel::invertByMatch(int columnIndex, int matchType, const QS
     for (UserListItem *u : std::as_const(_userList)) {
         data = userFieldString(u, columnRole);
         if ((matchType == ContactManagerModel::SimpleMatch && str == data)
-            || (matchType == ContactManagerModel::RegexpMatch && reg.indexIn(data) != -1)) {
+            || (matchType == ContactManagerModel::RegexpMatch && reg.match(data).hasMatch())) {
             QString jid = u->jid().full();
             if (checks.contains(jid)) {
                 checks.remove(jid);

@@ -105,8 +105,9 @@ public slots:
                 return;
             } else {
                 QRegularExpression capitalizeAfter("(?:^[^.][.]+\\s+)|(?:\\s*[^.]{2,}[.]+\\s+)|(?:[!?]\\s+)");
-                int     index = te_->toPlainText().lastIndexOf(capitalizeAfter);
-                if (index != -1 && index == pos - capitalizeAfter.matchedLength()) {
+                QRegularExpressionMatch match;
+                int     index = te_->toPlainText().lastIndexOf(capitalizeAfter, 0, &match);
+                if (index != -1 && index == pos - match.capturedLength()) {
                     capitalizeNext_ = true;
                 }
             }

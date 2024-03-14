@@ -165,8 +165,7 @@ TabbableWidget *findActiveTab();
 #include "x11windowsystem.h"
 #define X11WM_CLASS(x)                                                                                                 \
     {                                                                                                                  \
-        if (QX11Info::isPlatformX11())                                                                                 \
-            X11WindowSystem::instance()->x11wmClass(winId(), (x));                                                     \
+        X11WindowSystem::instance()->x11wmClass(winId(), (x));                                                     \
     };
 #else
 #define X11WM_CLASS(x) /* dummy */

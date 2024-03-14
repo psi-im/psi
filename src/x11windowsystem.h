@@ -4,7 +4,6 @@
 #include <QRect>
 #include <QSet>
 #include <QWidget>
-//#include <QX11Info>
 #include <QtCore>
 
 // TODO: Find a way to include Xlib here and not redefine Atom and Window types
@@ -36,6 +35,7 @@ private:
 
 public:
     static X11WindowSystem *instance();
+    bool                    isValid() const;
     QRect                   windowRect(Window win);
     bool                    isWindowObscured(QWidget *widget, bool alwaysOnTop);
     bool                    windowHasOnlyTypes(Window win, const QSet<Atom> &allowedTypes);
@@ -43,6 +43,7 @@ public:
     bool                    currentDesktop(long *desktop);
     bool                    desktopOfWindow(Window *window, long *desktop);
     void                    x11wmClass(WId wid, QString resName);
+    void                    bringToFront(QWidget *w);
 };
 
 #endif // X11WINDOWSYSTEM_H

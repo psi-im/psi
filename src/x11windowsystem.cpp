@@ -7,6 +7,10 @@
 const long       MAX_PROP_SIZE              = 100000;
 X11WindowSystem *X11WindowSystem::_instance = nullptr;
 
+bool X11WindowSystem::isValid() const {
+    return QX11Info::isPlatformX11();
+}
+
 void X11WindowSystem::x11wmClass(WId wid, QString resName)
 {
 #if defined(LIMIT_X11_USAGE)
@@ -28,6 +32,24 @@ void X11WindowSystem::x11wmClass(WId wid, QString resName)
     XSetClassHint(QX11Info::display(), wid, &classhint);                     // set the class hints
 
     XFree(classhint.res_class);
+}
+
+void X11WindowSystem::bringToFront(QWidget *w)
+{
+    if (QX11Info::isPlatformX11()) {
+        // If we're not on the current desktop, do the hide/show trick
+        long   dsk, curr_dsk;
+        Window win = w->winId();
+        if (X11WindowSystem::instance()->desktopOfWindow(&win, &dsk)
+            && X11WindowSystem::instance()->currentDesktop(&curr_dsk)) {
+            // qDebug() << "bringToFront current desktop=" << curr_dsk << " windowDesktop=" << dsk;
+            if ((dsk != curr_dsk) && (dsk != -1)) { // second condition for sticky windows
+                w->hide();
+            }
+        }
+    }
+
+    // FIXME: multi-desktop hacks for Win and Mac required
 }
 
 //>>>-- Nathaniel Gray -- Caltech Computer Science ------>

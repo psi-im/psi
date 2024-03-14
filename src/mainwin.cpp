@@ -1578,9 +1578,10 @@ void MainWin::toggleVisible(bool fromTray)
         }
 #elif defined(HAVE_X11)
         Q_UNUSED(fromTray);
-        if (QX11Info::isPlatformX11()) {
+        auto x11 = X11WindowSystem::instance();
+        if (x11->isValid()) {
             hidden = isHidden()
-                || X11WindowSystem::instance()->isWindowObscured(
+                || x11->isWindowObscured(
                     this, PsiOptions::instance()->getOption("options.ui.contactlist.always-on-top").toBool());
         } else {
             hidden = isHidden() || !isActiveWindow();
