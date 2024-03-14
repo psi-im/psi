@@ -192,7 +192,7 @@ QString TextUtil::rich2plain(const QString &in, bool collapseSpaces)
     return out;
 }
 
-QString TextUtil::resolveEntities(const QStringRef &in)
+QString TextUtil::resolveEntities(const QStringView &in)
 {
     QString out;
 
@@ -203,7 +203,7 @@ QString TextUtil::resolveEntities(const QStringRef &in)
             int n = in.indexOf(';', i);
             if (n == -1)
                 break;
-            QStringRef type = in.mid(i, (n - i));
+            auto type = in.mid(i, (n - i));
 
             i = n; // should be n+1, but we'll let the loop increment do it
 
@@ -290,7 +290,7 @@ static void emojiconifyPlainText(RTParse &p, const QString &in)
     const auto &reg            = EmojiRegistry::instance();
     int         idx            = 0;
     int         emojisStartIdx = -1;
-    QStringRef  ref;
+    QStringView ref;
 
     auto dump_emoji = [&p, &emojisStartIdx, &in, &idx]() {
 #if defined(WEBKIT) || defined(WEBENGINE)

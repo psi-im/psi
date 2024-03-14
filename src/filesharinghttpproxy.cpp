@@ -37,7 +37,7 @@
 FileSharingHttpProxy::FileSharingHttpProxy(PsiAccount *acc, const QString &sourceIdHex,
                                            qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse *res) :
     QObject(res),
-    item(acc->psi()->fileSharingManager()->item(XMPP::Hash::from(QStringRef(&sourceIdHex)))), acc(acc), request(req),
+    item(acc->psi()->fileSharingManager()->item(XMPP::Hash::from(sourceIdHex))), acc(acc), request(req),
     response(res)
 {
     auto baseUrl = acc->psi()->webServer()->serverUrl().toString();

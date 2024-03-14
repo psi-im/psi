@@ -108,7 +108,7 @@ public:
             auto match = it.next();
             auto idStr = match.captured(1);
             auto text  = match.captured(2);
-            auto id    = XMPP::Hash::from(QStringRef(&idStr));
+            auto id    = XMPP::Hash::from(idStr);
             auto item  = account_->psi()->fileSharingManager()->item(id);
 
             ret.append(QStringView{msg}.mid(post, match.capturedStart(0) - post));

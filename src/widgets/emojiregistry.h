@@ -52,14 +52,14 @@ public:
     bool isEmoji(const QString &code) const;
 
     /// Find emoji in a string starting from the specified position
-    QStringRef findEmoji(const QString &in, int startPos = 0) const;
+    QStringView findEmoji(const QString &in, int startPos = 0) const;
 
     /*!
      * \brief startCategory returns category of what the string starts with if the sequence looks valida for emoji
      * \param in
      * \return category
      */
-    Category startCategory(QStringRef in) const;
+    Category startCategory(QStringView in) const;
     int      count() const;
 
     struct iterator {

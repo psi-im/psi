@@ -152,7 +152,7 @@ FileCache::FileCache(const QString &cacheDir, QObject *parent) :
         if (id.isEmpty())
             continue;
         auto hAlgo = _registry->getOption(prefix + ".ha", QString()).toString();
-        auto hash  = XMPP::Hash(QStringRef(&hAlgo));
+        auto hash  = XMPP::Hash(hAlgo);
         if (!hash.isValid()) {
             needCleanup = true;
             continue;

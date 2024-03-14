@@ -258,7 +258,7 @@ typedef QQueue<QTextCharFormat *> TextCharFormatQueue;
  * Adds null format to queue for all ObjectReplacementCharacters that were
  * already in the text. Returns passed \param text to save some code.
  */
-static QStringRef preserveOriginalObjectReplacementCharacters(const QStringRef &text, TextCharFormatQueue *queue)
+static QStringView preserveOriginalObjectReplacementCharacters(const QStringView &text, TextCharFormatQueue *queue)
 {
     int objReplChars = 0;
     objReplChars += text.count(QChar::ObjectReplacementCharacter);
@@ -267,7 +267,7 @@ static QStringRef preserveOriginalObjectReplacementCharacters(const QStringRef &
     // But we must be careful if some other character instead of
     // 0x20 is used immediately after tag opening, this could
     // create a hole. ejabberd protects us from it though.
-    objReplChars += text.count("<img ");
+    objReplChars += text.count(QLatin1StringView{"<img "});
     for (int i = objReplChars; i; i--) {
         queue->enqueue(nullptr);
     }
@@ -280,19 +280,19 @@ static QStringRef preserveOriginalObjectReplacementCharacters(const QStringRef &
  * adds appropriate format to the \param queue. Returns processed
  * \param text.
  */
-static QString convertIconsToObjectReplacementCharacters(const QStringRef &text, TextCharFormatQueue *queue,
+static QString convertIconsToObjectReplacementCharacters(const QStringView &text, TextCharFormatQueue *queue,
                                                          int insertedAfter, const PsiRichText::ParsersMap &parsers)
 {
     QString    result;
-    QStringRef work(text);
+    QStringView work(text);
 
     int start = -1;
     forever
     {
-        start = work.indexOf("<", start + 1);
+        start = work.indexOf(QLatin1Char('<'), start + 1);
         if (start == -1)
             break;
-        if (work.mid(start + 1, 4) == "icon") {
+        if (work.mid(start + 1, 4) == QLatin1StringView{"icon"}) {
             // Format: <icon name="" text="">
             static QRegularExpression rxName("name=\"([^\"]+)\"");
             static QRegularExpression rxText("text=\"([^\"]+)\"");
@@ -300,10 +300,10 @@ static QString convertIconsToObjectReplacementCharacters(const QStringRef &text,
 
             result += preserveOriginalObjectReplacementCharacters(work.left(start), queue);
 
-            int end = work.indexOf(">", start);
+            int end = work.indexOf(QLatin1Char{'>'}, start);
             Q_ASSERT(end != -1);
 
-            QStringRef fragment  = work.mid(start, end - start);
+            QStringView fragment  = work.mid(start, end - start);
             auto       matchName = rxName.match(fragment);
             if (matchName.hasMatch()) {
 #ifndef WIDGET_PLUGIN
@@ -341,17 +341,17 @@ static QString convertIconsToObjectReplacementCharacters(const QStringRef &text,
                     // if parsers key matches with html element name
                     result += preserveOriginalObjectReplacementCharacters(work.left(start), queue);
 
-                    int end = work.indexOf(">", start);
+                    int end = work.indexOf(QLatin1Char{'>'}, start);
                     Q_ASSERT(end != -1);
 
                     // take attributes part of the tag
-                    QStringRef fragment = work.mid(start + it.key().length() + 1, end - start - it.key().length() - 1);
+                    auto       fragment = work.mid(start + it.key().length() + 1, end - start - it.key().length() - 1);
                     QString    replaceHtml;
                     QTextCharFormat charFormat;
 
                     std::tie(charFormat, replaceHtml) = it.value()(fragment, insertedAfter);
                     if (replaceHtml.size()) {
-                        result += convertIconsToObjectReplacementCharacters(QStringRef(&replaceHtml), queue,
+                        result += convertIconsToObjectReplacementCharacters(replaceHtml, queue,
                                                                             insertedAfter, parsers);
                     }
                     if (charFormat.isValid()) {
@@ -464,7 +464,7 @@ static void appendTextHelper(QTextDocument *doc, QString text, QTextCursor &curs
     }
 
     cursor.insertFragment(QTextDocumentFragment::fromHtml(
-        convertIconsToObjectReplacementCharacters(QStringRef(&text), &queue, cursor.position(), parsers)));
+        convertIconsToObjectReplacementCharacters(text, &queue, cursor.position(), parsers)));
     cursor.setPosition(initialpos);
 
     applyFormatToIcons(doc, &queue, cursor);

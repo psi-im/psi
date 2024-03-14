@@ -35,7 +35,7 @@ bool EmojiRegistry::isEmoji(const QString &code) const
     // TODO check the whole code is emoji. not just start
 }
 
-EmojiRegistry::Category EmojiRegistry::startCategory(QStringRef in) const
+EmojiRegistry::Category EmojiRegistry::startCategory(QStringView in) const
 {
     if (in.isEmpty())
         return Category::None;
@@ -85,7 +85,7 @@ int EmojiRegistry::count() const
     return count;
 }
 
-QStringRef EmojiRegistry::findEmoji(const QString &in, int idx) const
+QStringView EmojiRegistry::findEmoji(const QString &in, int idx) const
 {
     int emojiStart = -1;
 
@@ -93,7 +93,7 @@ QStringRef EmojiRegistry::findEmoji(const QString &in, int idx) const
     bool gotSkin  = false;
     bool gotFQ    = false;
     for (; idx < in.size(); idx++) {
-        auto category = startCategory(QStringRef(&in, idx, in.size() - idx));
+        auto category = startCategory(QStringView{in}.mid(idx, in.size() - idx));
         if (gotEmoji && category != Category::None) {
             if (category == Category::ZWJ) { // zero-width joiner
                 gotEmoji = false;
@@ -130,7 +130,7 @@ QStringRef EmojiRegistry::findEmoji(const QString &in, int idx) const
         if (in[idx].isHighSurrogate())
             idx++;
     }
-    return emojiStart == -1 ? QStringRef() : QStringRef(&in, emojiStart, idx - emojiStart);
+    return emojiStart == -1 ? QStringView() : QStringView{in}.mid(emojiStart, idx - emojiStart);
 }
 
 EmojiRegistry::EmojiRegistry() : groups(std::move(db)), ranges_(std::move(ranges)) { }

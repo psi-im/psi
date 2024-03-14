@@ -28,7 +28,7 @@ class ITEMediaOpener;
 class PsiRichText {
 public:
     using ParserRet  = std::pair<QTextCharFormat, QString>;
-    using Parser     = std::function<ParserRet(const QStringRef &htmlElement, int insertAfter)>;
+    using Parser     = std::function<ParserRet(const QStringView &htmlElement, int insertAfter)>;
     using ParsersMap = QMap<QString, Parser>;
 
     static void install(QTextDocument *doc);

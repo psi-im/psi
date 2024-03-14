@@ -313,7 +313,7 @@ XMPP::Hash FileSharingDeviceOpener::urlToSourceId(const QUrl &url)
         return XMPP::Hash();
 
     QString    path = url.path();
-    QStringRef sourceId(&path);
+    auto sourceId = QStringView{path};
     if (sourceId.startsWith('/'))
         sourceId = sourceId.mid(1);
     return XMPP::Hash::from(sourceId);
@@ -389,5 +389,5 @@ QVariant FileSharingDeviceOpener::metadata(const QUrl &url)
 
 FileSharingItem *FileSharingDeviceOpener::sharedItem(const QString &id)
 {
-    return acc->psi()->fileSharingManager()->item(XMPP::Hash::from(QStringRef(&id)));
+    return acc->psi()->fileSharingManager()->item(XMPP::Hash::from(id));
 }

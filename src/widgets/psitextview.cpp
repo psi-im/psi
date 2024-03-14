@@ -55,7 +55,7 @@ public:
     // handler function accepts everything after tag name upto but exluding final ">"
     PsiRichText::ParsersMap objectParsers;
 
-    QMap<QString, QString> parseHtmlAttrs(const QStringRef &html)
+    QMap<QString, QString> parseHtmlAttrs(const QStringView &html)
     {
         static QRegularExpression attrStart("([a-zA-Z0-9]+)=([\"'])((.(?!\\2))*.)\\2");
         // static QRegularExpression attrStart("([a-zA-Z0-9]+)=([\"'])([^\"']*)\\2");
@@ -108,7 +108,7 @@ span.emojis {
 
     d->objectParsers = PsiRichText::ParsersMap {
         { "share",
-          [this](const QStringRef &html, int insertAfter) -> PsiRichText::ParserRet {
+          [this](const QStringView &html, int insertAfter) -> PsiRichText::ParserRet {
               if (!d->mediaOpener)
                   return { QTextCharFormat(), "" };
               auto    attrs = d->parseHtmlAttrs(html);
@@ -199,7 +199,7 @@ span.emojis {
               return { QTextCharFormat(), "" };
           } },
         { "marker",
-          [this](const QStringRef &html, int) -> PsiRichText::ParserRet {
+          [this](const QStringView &html, int) -> PsiRichText::ParserRet {
               auto attrs = d->parseHtmlAttrs(html);
               auto id    = attrs.value("id");
               return { PsiRichText::markerFormat(id), QString() };

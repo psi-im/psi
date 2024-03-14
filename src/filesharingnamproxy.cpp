@@ -29,7 +29,7 @@
 #include <tuple>
 
 FileSharingNAMReply::FileSharingNAMReply(PsiAccount *acc, const QString &sourceIdHex, const QNetworkRequest &req) :
-    item(acc->psi()->fileSharingManager()->item(XMPP::Hash::from(QStringRef(&sourceIdHex)))), acc(acc)
+    item(acc->psi()->fileSharingManager()->item(XMPP::Hash::from(sourceIdHex))), acc(acc)
 {
     setRequest(req);
     setOperation(QNetworkAccessManager::GetOperation); // TODO rewrite when we have others
