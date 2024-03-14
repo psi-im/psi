@@ -207,17 +207,17 @@ QString TextUtil::resolveEntities(const QStringView &in)
 
             i = n; // should be n+1, but we'll let the loop increment do it
 
-            if (type == "amp")
+            if (type == QLatin1String{"amp"})
                 out += '&';
-            else if (type == "lt")
+            else if (type == QLatin1String{"lt"})
                 out += '<';
-            else if (type == "gt")
+            else if (type == QLatin1String{"gt"})
                 out += '>';
-            else if (type == "quot")
+            else if (type == QLatin1String{"quot"})
                 out += '\"';
-            else if (type == "apos")
+            else if (type == QLatin1String{"apos"})
                 out += '\'';
-            else if (type == "nbsp")
+            else if (type == QLatin1String{"nbsp"})
                 out += char(0xa0);
         } else {
             out += in[i];
@@ -531,29 +531,31 @@ QString TextUtil::emoticonify(const QString &in)
 
                         // find the closest match
                         const QRegularExpression &rx = icon->regExp();
-                        int            n  = rx.indexIn(str, iii);
-                        if (n == -1)
+                        auto match = rx.match(str, iii);
+
+                        if (!match.hasMatch())
                             continue;
 
-                        if (ePos == -1 || n < ePos || (rx.matchedLength() > foundLen && n < ePos + foundLen)) {
+                        int n  = match.capturedStart();
+                        if (ePos == -1 || n < ePos || (match.capturedLength() > foundLen && n < ePos + foundLen)) {
                             bool leftSpace  = n == 0 || (n > 0 && str[n - 1].isSpace());
-                            bool rightSpace = (n + rx.matchedLength() == int(str.length()))
-                                || (n + rx.matchedLength() < int(str.length())
-                                    && str[n + rx.matchedLength()].isSpace());
+                            bool rightSpace = (n + match.capturedLength() == int(str.length()))
+                                || (n + match.capturedLength() < int(str.length())
+                                    && str[n + match.capturedLength()].isSpace());
                             // there must be whitespace at least on one side of the emoticon
                             if (leftSpace || rightSpace) {
                                 ePos    = n;
                                 closest = icon;
 
                                 foundPos = n;
-                                foundLen = rx.matchedLength();
+                                foundLen = match.capturedLength();
                                 break;
                             }
 
                             searchAgain = true;
                         }
 
-                        iii = n + rx.matchedLength();
+                        iii = n + match.capturedLength();
                     } while (searchAgain);
                 }
             }

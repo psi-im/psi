@@ -331,7 +331,8 @@ void ChatEdit::contextMenuEvent(QContextMenuEvent *e)
         tc.movePosition(QTextCursor::StartOfWord, QTextCursor::MoveAnchor);
         tc.movePosition(QTextCursor::EndOfWord, QTextCursor::KeepAnchor);
         QString selected_word = tc.selectedText();
-        if (!selected_word.isEmpty() && !QRegularExpression("\\d+").exactMatch(selected_word)
+        static QRegularExpression numbers("^\\d+$");
+        if (!selected_word.isEmpty() && !numbers.match(selected_word).hasMatch()
             && !SpellChecker::instance()->isCorrect(selected_word)) {
             QList<QString> suggestions = SpellChecker::instance()->suggestions(selected_word);
             if (!suggestions.isEmpty() || SpellChecker::instance()->writable()) {

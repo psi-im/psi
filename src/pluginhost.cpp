@@ -612,7 +612,7 @@ bool PluginHost::incomingXml(int account, const QDomElement &e)
             // regex filters
             QMapIterator<QRegularExpression, IqNamespaceFilter *> i(iqNsxFilters_);
             while (!handled && i.hasNext()) {
-                if (i.key().indexIn(ns) >= 0 && (i.value()->*handler)(account, e)) {
+                if (i.key().match(ns).hasMatch() && (i.value()->*handler)(account, e)) {
                     handled = true;
                 }
             }

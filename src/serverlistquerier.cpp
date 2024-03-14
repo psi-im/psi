@@ -25,6 +25,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QRegularExpression>
 #include <QStringList>
 #include <QUrl>
 
@@ -79,8 +80,9 @@ void ServerListQuerier::get_finished()
             QString     contents = QString::fromUtf8(reply->readAll());
             int         index    = 0;
             QRegularExpression     re("data-original-title=\"([^\"]+)\"");
-            while ((index = contents.indexOf(re, index + 1)) != -1) {
-                servers.append(re.cap(1));
+            QRegularExpressionMatch match;
+            while ((index = contents.indexOf(re, index + 1, &match)) != -1) {
+                servers.append(match.captured(1));
             }
 #endif
             emit listReceived(servers);
