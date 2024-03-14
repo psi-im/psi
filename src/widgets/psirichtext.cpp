@@ -414,15 +414,17 @@ static void appendTextHelper(QTextDocument *doc, QString text, QTextCursor &curs
     // prepare images and remove insecure images
     static QRegularExpression imgRe("<img[^>]+src\\s*=\\s*(\"[^\"]*\"|'[^']*')[^>]*>");
     QString        replace;
-    for (int pos = 0; (pos = imgRe.indexIn(text, pos)) != -1;) {
+    QRegularExpressionMatch match;
+    for (int pos = 0; (match = imgRe.match(text, pos)).hasMatch();) {
         replace.clear();
-        QString imgSrc    = imgRe.cap(1).mid(1, imgRe.cap(1).size() - 2);
+        QString imgSrc    = match.captured(1).mid(1, match.captured(1).size() - 2);
         QUrl    imgSrcUrl = QUrl::fromEncoded(imgSrc.toLatin1());
         if (imgSrcUrl.isValid()) {
             if (imgSrcUrl.scheme() == "data") {
                 static QRegularExpression dataRe("^[a-zA-Z]+/[a-zA-Z]+;base64,([a-zA-Z0-9/=+%]+)$");
-                if (dataRe.indexIn(imgSrcUrl.path()) != -1) {
-                    const QByteArray ba = QByteArray::fromBase64(dataRe.cap(1).toLatin1());
+                auto dataMatch = dataRe.match(imgSrcUrl.path());
+                if (dataMatch.hasMatch()) {
+                    const QByteArray ba = QByteArray::fromBase64(dataMatch.captured(1).toLatin1());
                     if (!ba.isNull()) {
                         QImage image;
                         if (image.loadFromData(ba)) {
@@ -432,7 +434,7 @@ static void appendTextHelper(QTextDocument *doc, QString text, QTextCursor &curs
                     }
                 }
             } else if (imgSrc.startsWith(":/") || (!imgSrcUrl.scheme().isEmpty() && imgSrcUrl.scheme() != "file")) {
-                pos += imgRe.matchedLength();
+                pos = match.capturedEnd();
                 continue;
             } else {
                 // go here when  scheme in ["", "file"] and its not resource
@@ -449,16 +451,16 @@ static void appendTextHelper(QTextDocument *doc, QString text, QTextCursor &curs
                     if (imgSrcUrl.scheme() == "file") {
                         replace = path;
                     } else {
-                        pos += imgRe.matchedLength();
+                        pos = match.capturedEnd();
                         continue;
                     }
                 }
             }
         }
         if (replace.isEmpty()) {
-            text.remove(pos, imgRe.matchedLength());
+            text.remove(match.capturedStart(), match.capturedLength());
         } else {
-            text.replace(imgRe.pos(1) + 1, imgSrc.size(), replace);
+            text.replace(match.capturedStart(1) + 1, imgSrc.size(), replace);
             pos += replace.size() + 1;
         }
     }

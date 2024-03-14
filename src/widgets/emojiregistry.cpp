@@ -30,7 +30,7 @@ const EmojiRegistry &EmojiRegistry::instance()
 
 bool EmojiRegistry::isEmoji(const QString &code) const
 {
-    auto cat = startCategory(&code);
+    auto cat = startCategory(code);
     return cat == Category::Emoji || cat == Category::SkinTone;
     // TODO check the whole code is emoji. not just start
 }
