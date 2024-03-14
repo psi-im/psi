@@ -154,7 +154,7 @@ void ContactListModel::Private::updateContacts(const QList<PsiContact *> &contac
         QModelIndexList indexes2 = q->indexesFor(contact);
         indexes += indexes2;
 
-        for (const QModelIndex &index : qAsConst(indexes2)) {
+        for (const QModelIndex &index : std::as_const(indexes2)) {
             QModelIndex parent = index.parent();
             int         row    = index.row();
             if (ranges.contains(parent)) {
@@ -372,7 +372,7 @@ void ContactListModel::Private::contactUpdated()
     ContactListItem::SpecialGroupType specialGroupType = specialGroupFor(contact);
     if (specialGroupType == ContactListItem::SpecialGroupType::NoneSpecialGroupType) {
         QStringList groups1;
-        for (ContactListItem *item : qAsConst(groupItems)) {
+        for (ContactListItem *item : std::as_const(groupItems)) {
             groups1 << item->name();
         }
         groups1.sort();
@@ -617,7 +617,7 @@ bool ContactListModel::setData(const QModelIndex &index, const QVariant &data, i
                     contacts << item->child(i)->contact();
             }
 
-            for (PsiContact *contact : qAsConst(contacts)) {
+            for (PsiContact *contact : std::as_const(contacts)) {
                 QStringList groups = contact->groups();
                 groups.removeOne(oldName);
                 groups << name;

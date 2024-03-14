@@ -68,7 +68,7 @@ void AlertManager::dialogUnregister(QWidget *w)
         return;
     }
 
-    for (Item *i : qAsConst(list_)) {
+    for (Item *i : std::as_const(list_)) {
         if (i->widget == w) {
             list_.removeAll(i);
             delete i;

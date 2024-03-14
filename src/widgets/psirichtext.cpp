@@ -439,7 +439,7 @@ static void appendTextHelper(QTextDocument *doc, QString text, QTextCursor &curs
                 QString path
                     = QFileInfo(imgSrcUrl.scheme() == "file" ? imgSrcUrl.toLocalFile() : imgSrc).absoluteFilePath();
                 bool baseDirFound = false;
-                for (const QString &baseDir : qAsConst(allowedImageDirs)) {
+                for (const QString &baseDir : std::as_const(allowedImageDirs)) {
                     if (path.startsWith(baseDir)) {
                         baseDirFound = true;
                         break;

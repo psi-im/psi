@@ -37,7 +37,7 @@ WbItemMenu::WbItemMenu(QWidget *parent) : QMenu(parent) { connect(this, SIGNAL(a
 
 WbItemMenu::~WbItemMenu()
 {
-    for (QActionGroup *g : qAsConst(groups_)) {
+    for (QActionGroup *g : std::as_const(groups_)) {
         const auto &acts = g->actions();
         for (QAction *a : acts) {
             a->deleteLater();

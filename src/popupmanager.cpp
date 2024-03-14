@@ -151,7 +151,7 @@ PopupManager::~PopupManager() { delete d; }
 
 int PopupManager::registerOption(const QString &name, int initValue, const QString &path)
 {
-    for (const OptionValue &v : qAsConst(d->options_)) {
+    for (const OptionValue &v : std::as_const(d->options_)) {
         if (v.optionName == name)
             return v.id;
     }
@@ -180,7 +180,7 @@ void PopupManager::setValue(const QString &name, int value)
 
 int PopupManager::value(const QString &name) const
 {
-    for (const OptionValue &v : qAsConst(d->options_)) {
+    for (const OptionValue &v : std::as_const(d->options_)) {
         if (v.optionName == name)
             return v.optionValue;
     }
@@ -190,7 +190,7 @@ int PopupManager::value(const QString &name) const
 
 const QString PopupManager::optionPath(const QString &name) const
 {
-    for (const OptionValue &v : qAsConst(d->options_)) {
+    for (const OptionValue &v : std::as_const(d->options_)) {
         if (v.optionName == name)
             return v.optionPath;
     }
@@ -201,7 +201,7 @@ const QString PopupManager::optionPath(const QString &name) const
 const QStringList PopupManager::optionsNamesList() const
 {
     QStringList ret;
-    for (const OptionValue &v : qAsConst(d->options_))
+    for (const OptionValue &v : std::as_const(d->options_))
         ret.append(v.optionName);
 
     return ret;

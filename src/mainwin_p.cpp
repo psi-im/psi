@@ -284,7 +284,7 @@ void PopupAction::setIcon(const PsiIcon *icon, bool showText, bool alert)
         IconAction::setIcon(QIcon());
     }
 
-    for (PopupActionButton *btn : qAsConst(d->buttons)) {
+    for (PopupActionButton *btn : std::as_const(d->buttons)) {
         btn->setIcon(d->icon, showText);
     }
 
@@ -295,7 +295,7 @@ void PopupAction::setIcon(const PsiIcon *icon, bool showText, bool alert)
 
 void PopupAction::setText(const QString &text)
 {
-    for (PopupActionButton *btn : qAsConst(d->buttons)) {
+    for (PopupActionButton *btn : std::as_const(d->buttons)) {
         btn->setLabel(text);
     }
 }
@@ -327,7 +327,7 @@ void PopupAction::objectDestroyed() { d->buttons.removeAll(static_cast<PopupActi
 void PopupAction::setEnabled(bool e)
 {
     IconAction::setEnabled(e);
-    for (PopupActionButton *btn : qAsConst(d->buttons)) {
+    for (PopupActionButton *btn : std::as_const(d->buttons)) {
         btn->setEnabled(e);
     }
 }

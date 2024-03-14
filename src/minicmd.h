@@ -31,7 +31,6 @@
 
 class MCmdProviderIface;
 class QString;
-class QStringList;
 
 /** This interface models the methods common to all mini command states.
  */

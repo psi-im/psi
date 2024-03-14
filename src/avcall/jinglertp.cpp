@@ -198,7 +198,7 @@ public:
         }
         left = iceList;
 
-        for (XMPP::Ice176 *ice : qAsConst(left)) {
+        for (XMPP::Ice176 *ice : std::as_const(left)) {
             ice->setParent(this);
             if (ice->isStopped()) {
                 ice_stopped(ice);
@@ -713,7 +713,7 @@ private:
         QList<XMPP::Ice176::LocalAddress> localAddrs;
         QStringList                       strList;
 
-        for (const auto &h : qAsConst(listenAddrs)) {
+        for (const auto &h : std::as_const(listenAddrs)) {
             localAddrs += XMPP::Ice176::LocalAddress { h };
             strList += h.toString();
         }
@@ -726,7 +726,7 @@ private:
 
         if (!strList.isEmpty()) {
             printf("Host addresses:\n");
-            for (const QString &s : qAsConst(strList))
+            for (const QString &s : std::as_const(strList))
                 printf("  %s\n", qPrintable(s));
         }
 

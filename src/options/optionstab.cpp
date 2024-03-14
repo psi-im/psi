@@ -232,7 +232,7 @@ QWidget *MetaOptionsTab::widget()
     connect(w, SIGNAL(connectDataChanged(QWidget *)), SIGNAL(connectDataChanged(QWidget *)));
     connect(w, SIGNAL(noDirty(bool)), SIGNAL(noDirty(bool)));
 
-    for (OptionsTab *tab : qAsConst(tabs)) {
+    for (OptionsTab *tab : std::as_const(tabs)) {
         t->addTab(tab);
     }
 
@@ -244,7 +244,7 @@ QWidget *MetaOptionsTab::widget()
 
 void MetaOptionsTab::applyOptions()
 {
-    for (OptionsTab *tab : qAsConst(tabs)) {
+    for (OptionsTab *tab : std::as_const(tabs)) {
         tab->applyOptions();
     }
 }
@@ -256,14 +256,14 @@ void MetaOptionsTab::restoreOptions()
         d->restoreOptions();
     }
 
-    for (OptionsTab *tab : qAsConst(tabs)) {
+    for (OptionsTab *tab : std::as_const(tabs)) {
         tab->restoreOptions();
     }
 }
 
 void MetaOptionsTab::setData(PsiCon *psi, QWidget *w)
 {
-    for (OptionsTab *tab : qAsConst(tabs)) {
+    for (OptionsTab *tab : std::as_const(tabs)) {
         tab->setData(psi, w);
     }
 }

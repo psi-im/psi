@@ -53,7 +53,7 @@ CertificateCollection CertificateHelpers::allCertificates(const QStringList &sto
         // Read in old XML format certificates (DEPRECATED)
         store.setNameFilters(QStringList("*.xml"));
         cert_files = store.entryList();
-        for (const auto &cf : qAsConst(cert_files)) {
+        for (const auto &cf : std::as_const(cert_files)) {
             qWarning() << "Loading certificate in obsolete XML format: " << store.filePath(cf);
             QFile f(store.filePath(cf));
             if (!f.open(QIODevice::ReadOnly))

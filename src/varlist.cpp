@@ -49,7 +49,7 @@ void VarList::fromOptions(OptionsTree *o, QString base)
 void VarList::toOptions(OptionsTree *o, QString base)
 {
     o->removeOption(base, true);
-    for (const VarListItem &item : qAsConst(*this)) {
+    for (const VarListItem &item : std::as_const(*this)) {
         QString ibase = o->mapPut(base, item.key());
         o->setOption(ibase + ".data", item.data());
     }

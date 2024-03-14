@@ -49,7 +49,6 @@
 #include <QSharedData>
 #include <QSharedDataPointer>
 #include <QSvgRenderer>
-#include <QTextCodec>
 #include <QThread>
 #include <QTimer>
 #ifdef ICONSET_SOUND
@@ -861,7 +860,7 @@ public:
     {
         QStringList list;
 
-        for (const Iconset *iconset : qAsConst(*iconsets_)) {
+        for (const Iconset *iconset : std::as_const(*iconsets_)) {
             QListIterator<PsiIcon *> it = iconset->iterator();
             while (it.hasNext()) {
                 list << it.next()->name();
@@ -920,7 +919,7 @@ const PsiIcon *IconsetFactoryPrivate::icon(const QString &name) const
     }
 
     const PsiIcon *out = nullptr;
-    for (const Iconset *const iconset : qAsConst(*iconsets_)) {
+    for (const Iconset *const iconset : std::as_const(*iconsets_)) {
         if (iconset) {
             out = iconset->icon(name);
         }
@@ -1228,7 +1227,7 @@ public:
         // construct RegExp
         if (text.count()) {
             QStringList regexp;
-            for (const PsiIcon::IconText &t : qAsConst(text)) {
+            for (const PsiIcon::IconText &t : std::as_const(text)) {
                 regexp += QRegularExpression::escape(t.text);
             }
 
@@ -1402,7 +1401,7 @@ public:
         // construct RegExp
         if (text.count()) {
             QStringList regexp;
-            for (const PsiIcon::IconText &t : qAsConst(text)) {
+            for (const PsiIcon::IconText &t : std::as_const(text)) {
                 regexp += QRegularExpression::escape(t.text);
             }
 

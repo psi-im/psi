@@ -273,7 +273,7 @@ private slots:
     void updateIconSelect()
     {
         Iconset iss;
-        for (Iconset *iconset : qAsConst(PsiIconset::instance()->emoticons)) {
+        for (Iconset *iconset : std::as_const(PsiIconset::instance()->emoticons)) {
             iss += *iconset;
         }
 
@@ -482,7 +482,7 @@ bool PsiCon::init()
     if (!accountsFile.exists()) {
         accountMigration = true;
         int idx          = 0;
-        for (UserAccount a : qAsConst(d->optionsMigration.accMigration)) {
+        for (UserAccount a : std::as_const(d->optionsMigration.accMigration)) {
             QString base = "accounts.a" + QString::number(idx++);
             a.toOptions(&d->accountTree, base);
         }
@@ -869,7 +869,7 @@ QStringList PsiCon::xmppFatures() const
                          QStringList() << "http://jabber.org/protocol/chatstates")
         << OptFeatureMap("options.ui.notifications.send-receipts", QStringList() << "urn:xmpp:receipts");
 
-    for (const OptFeatureMap &f : qAsConst(fmap)) {
+    for (const OptFeatureMap &f : std::as_const(fmap)) {
         if (PsiOptions::instance()->getOption(f.option).toBool()) {
             features << f.feature;
         }
@@ -965,7 +965,7 @@ EventDlg *PsiCon::createEventDlg(const QString &to, PsiAccount *pa)
 // FIXME: WTF? Refactor! Refactor!
 void PsiCon::updateContactGlobal(PsiAccount *pa, const Jid &j)
 {
-    for (item_dialog *i : qAsConst(d->dialogList)) {
+    for (item_dialog *i : std::as_const(d->dialogList)) {
         if (i->className == "EventDlg") {
             EventDlg *e = qobject_cast<EventDlg *>(i->widget);
             if (e->psiAccount() == pa)
@@ -977,7 +977,7 @@ void PsiCon::updateContactGlobal(PsiAccount *pa, const Jid &j)
 // FIXME: make it work like QObject::findChildren<ChildName>()
 QWidget *PsiCon::dialogFind(const char *className)
 {
-    for (item_dialog *i : qAsConst(d->dialogList)) {
+    for (item_dialog *i : std::as_const(d->dialogList)) {
         // does the classname and jid match?
         if (i->className == className) {
             return i->widget;
@@ -1677,7 +1677,7 @@ const QStringList &PsiCon::recentNodeList() const { return d->recentNodeList; }
 void PsiCon::recentNodeAdd(const QString &str)
 {
     // remove it if we have it
-    for (const QString &s : qAsConst(d->recentNodeList)) {
+    for (const QString &s : std::as_const(d->recentNodeList)) {
         if (s == str) {
             d->recentNodeList.removeAll(s);
             break;

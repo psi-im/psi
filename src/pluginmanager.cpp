@@ -190,7 +190,7 @@ void PluginManager::loadEnabledPlugins()
 #ifndef PLUGINS_NO_DEBUG
     qDebug("Loading enabled plugins");
 #endif
-    for (PluginHost *plugin : qAsConst(pluginsByPriority_)) {
+    for (PluginHost *plugin : std::as_const(pluginsByPriority_)) {
         loadPluginIfEnabled(plugin);
     }
 }
@@ -216,7 +216,7 @@ void PluginManager::optionChanged(const QString &option)
 {
     bool          pluginOpt = option.startsWith(loadOptionPrefix);
     const QString shortName = option.split(".").last();
-    for (PluginHost *plugin : qAsConst(pluginByFile_)) {
+    for (PluginHost *plugin : std::as_const(pluginByFile_)) {
         plugin->optionChanged(option);
         if (pluginOpt && plugin->shortName() == shortName) {
             bool shouldUpdateFeatures;
@@ -261,7 +261,7 @@ void PluginManager::loadAllPlugins()
     }*/
 
     // Now look for external plugins
-    for (PluginHost *plugin : qAsConst(hosts_)) {
+    for (PluginHost *plugin : std::as_const(hosts_)) {
         plugin->load();
         if (plugin->enable())
             emit pluginEnabled(plugin->shortName());
@@ -279,7 +279,7 @@ bool PluginManager::unloadAllPlugins()
     qDebug("Unloading all plugins");
 #endif
     bool ok = true;
-    for (PluginHost *plugin : qAsConst(hosts_)) {
+    for (PluginHost *plugin : std::as_const(hosts_)) {
         if (!plugin->unload()) {
             ok = false;
         }
@@ -392,7 +392,7 @@ QWidget *PluginManager::optionsWidget(const QString &plugin)
  */
 void PluginManager::setShortcuts()
 {
-    for (PluginHost *host : qAsConst(pluginByFile_)) {
+    for (PluginHost *host : std::as_const(pluginByFile_)) {
         host->setShortcuts();
     }
 }
@@ -411,7 +411,7 @@ bool PluginManager::processMessage(PsiAccount *account, const QString &jidFrom, 
                                    const QString &subject)
 {
     bool handled = false;
-    for (PluginHost *host : qAsConst(pluginsByPriority_)) {
+    for (PluginHost *host : std::as_const(pluginsByPriority_)) {
         if (host->processMessage(accountIds_.id(account), jidFrom, body, subject)) {
             handled = true;
             break;
@@ -434,7 +434,7 @@ bool PluginManager::processEvent(PsiAccount *account, QDomElement &event)
 {
     bool      handled = false;
     const int acc_id  = accountIds_.id(account);
-    for (PluginHost *host : qAsConst(pluginsByPriority_)) {
+    for (PluginHost *host : std::as_const(pluginsByPriority_)) {
         if (host->processEvent(acc_id, event)) {
             handled = true;
             break;
@@ -451,7 +451,7 @@ bool PluginManager::processOutgoingMessage(PsiAccount *account, const QString &j
 {
     bool      handled = false;
     const int acc_id  = accountIds_.id(account);
-    for (PluginHost *host : qAsConst(pluginByFile_)) {
+    for (PluginHost *host : std::as_const(pluginByFile_)) {
         if (host->processOutgoingMessage(acc_id, jidTo, body, type, subject)) {
             handled = true;
             break;
@@ -463,7 +463,7 @@ bool PluginManager::processOutgoingMessage(PsiAccount *account, const QString &j
 void PluginManager::processOutgoingStanza(PsiAccount *account, QDomElement &stanza)
 {
     const int acc_id = accountIds_.id(account);
-    for (PluginHost *host : qAsConst(pluginByFile_)) {
+    for (PluginHost *host : std::as_const(pluginByFile_)) {
         if (host->outgoingXml(acc_id, stanza)) {
             break;
         }
@@ -476,7 +476,7 @@ void PluginManager::processOutgoingStanza(PsiAccount *account, QDomElement &stan
 void PluginManager::startLogin(PsiAccount *account)
 {
     const int acc_id = accountIds_.id(account);
-    for (PluginHost *host : qAsConst(pluginByFile_)) {
+    for (PluginHost *host : std::as_const(pluginByFile_)) {
         host->logout(acc_id);
         emit accountBeforeLogin(acc_id);
     }
@@ -488,7 +488,7 @@ void PluginManager::startLogin(PsiAccount *account)
 void PluginManager::logout(PsiAccount *account)
 {
     const int acc_id = accountIds_.id(account);
-    for (PluginHost *host : qAsConst(pluginByFile_)) {
+    for (PluginHost *host : std::as_const(pluginByFile_)) {
         host->logout(acc_id);
         emit accountLoggedOut(acc_id);
     }
@@ -529,7 +529,7 @@ QList<OAH_PluginOptionsTab *> PluginManager::settingsPages() const { return sett
 bool PluginManager::incomingXml(int account, const QDomElement &xml)
 {
     bool handled = false;
-    for (PluginHost *host : qAsConst(pluginsByPriority_)) {
+    for (PluginHost *host : std::as_const(pluginsByPriority_)) {
         if (host->incomingXml(account, xml)) {
             handled = true;
             break;
@@ -695,7 +695,7 @@ QMap<QString, QString> PluginManager::getKnownPgpKeys(int account) const
     PsiAccount *           pa = accountIds_.account(account);
     if (pa) {
         UserAccount acc = pa->userAccount();
-        for (const auto &item : qAsConst(acc.pgpKnownKeys)) {
+        for (const auto &item : std::as_const(acc.pgpKnownKeys)) {
             out[item.key()] = item.data();
         }
     }
@@ -805,7 +805,7 @@ void PluginManager::setPopupDuration(const QString &name, int value) { psi_->pop
 void PluginManager::addAccountMenu(QMenu *menu, PsiAccount *account)
 {
     int i = accountIds_.id(account);
-    for (PluginHost *host : qAsConst(pluginsByPriority_)) {
+    for (PluginHost *host : std::as_const(pluginsByPriority_)) {
         host->addAccountMenu(menu, i);
     }
 }
@@ -813,7 +813,7 @@ void PluginManager::addAccountMenu(QMenu *menu, PsiAccount *account)
 void PluginManager::addContactMenu(QMenu *menu, PsiAccount *account, QString jid)
 {
     int i = accountIds_.id(account);
-    for (PluginHost *host : qAsConst(pluginsByPriority_)) {
+    for (PluginHost *host : std::as_const(pluginsByPriority_)) {
         host->addContactMenu(menu, i, jid);
     }
 }
@@ -821,7 +821,7 @@ void PluginManager::addContactMenu(QMenu *menu, PsiAccount *account, QString jid
 void PluginManager::setupChatTab(QWidget *tab, PsiAccount *account, const QString &contact)
 {
     int i = accountIds_.id(account);
-    for (PluginHost *host : qAsConst(pluginsByPriority_)) {
+    for (PluginHost *host : std::as_const(pluginsByPriority_)) {
         host->setupChatTab(tab, i, contact);
     }
 }
@@ -829,7 +829,7 @@ void PluginManager::setupChatTab(QWidget *tab, PsiAccount *account, const QStrin
 void PluginManager::setupGCTab(QWidget *tab, PsiAccount *account, const QString &contact)
 {
     int i = accountIds_.id(account);
-    for (PluginHost *host : qAsConst(pluginsByPriority_)) {
+    for (PluginHost *host : std::as_const(pluginsByPriority_)) {
         host->setupGCTab(tab, i, contact);
     }
 }
@@ -838,7 +838,7 @@ bool PluginManager::appendingChatMessage(PsiAccount *account, const QString &con
                                          bool local)
 {
     bool handled = false;
-    for (PluginHost *host : qAsConst(pluginsByPriority_)) {
+    for (PluginHost *host : std::as_const(pluginsByPriority_)) {
         if (host->appendingChatMessage(accountIds_.id(account), contact, body, html, local)) {
             handled = true;
             break;
@@ -927,7 +927,7 @@ void PluginManager::addToolBarButton(QObject *parent, QWidget *toolbar, PsiAccou
                                      const QString &plugin)
 {
     const int acc_id = accountIds_.id(account);
-    for (PluginHost *host : qAsConst(pluginsByPriority_)) {
+    for (PluginHost *host : std::as_const(pluginsByPriority_)) {
         if ((plugin.isEmpty() || (host->shortName() == plugin)) && host->isEnabled()) {
             host->addToolBarButton(parent, toolbar, acc_id, contact);
         }
@@ -946,7 +946,7 @@ void PluginManager::addGCToolBarButton(QObject *parent, QWidget *toolbar, PsiAcc
                                        const QString &plugin)
 {
     const int acc_id = accountIds_.id(account);
-    for (PluginHost *host : qAsConst(pluginsByPriority_)) {
+    for (PluginHost *host : std::as_const(pluginsByPriority_)) {
         if ((plugin.isEmpty() || (host->shortName() == plugin)) && host->isEnabled()) {
             host->addGCToolBarButton(parent, toolbar, acc_id, contact);
         }

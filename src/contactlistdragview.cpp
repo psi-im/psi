@@ -642,7 +642,7 @@ void ContactListDragView::removeSelection()
         return;
 
     // Ask for deleting only some contacts. Exclude private contacts and not in list contacts
-    for (PsiContact *contact : qAsConst(contacts)) {
+    for (PsiContact *contact : std::as_const(contacts)) {
         QString name = contact->name();
         if (name != contact->jid().full()) {
             name = QString("%1 (%2)").arg(name, TextUtil::escape(contact->jid().full()));
@@ -668,7 +668,7 @@ void ContactListDragView::removeSelection()
     }
 
     if (doRemove) {
-        for (PsiContact *contact : qAsConst(contacts)) {
+        for (PsiContact *contact : std::as_const(contacts)) {
             contact->remove();
         }
     }

@@ -143,7 +143,7 @@ public slots:
 
         QListWidgetItem *firstItem   = nullptr;
         QListWidgetItem *currentItem = nullptr;
-        for (const ProxyItem &i : qAsConst(list)) {
+        for (const ProxyItem &i : std::as_const(list)) {
             QListWidgetItem *item = new QListWidgetItem(i.name);
             addItem(item);
 
@@ -210,7 +210,7 @@ public slots:
         QList<QWidget *> editors = QList<QWidget *>()
             << q->ui_.cb_type << q->ui_.le_host << q->ui_.le_port << q->ui_.le_user << q->ui_.le_pass << q->ui_.le_url
             << q->ui_.gr_auth;
-        for (QWidget *w : qAsConst(editors)) {
+        for (QWidget *w : std::as_const(editors)) {
             w->blockSignals(true);
             w->setEnabled(bool(current));
             if (!current) {
@@ -231,7 +231,7 @@ public slots:
             q->ui_.gr_auth->setChecked(current->data(AuthRole).toBool());
         }
 
-        for (QWidget *w : qAsConst(editors)) {
+        for (QWidget *w : std::as_const(editors)) {
             w->blockSignals(false);
         }
 

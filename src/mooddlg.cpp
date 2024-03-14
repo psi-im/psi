@@ -56,7 +56,7 @@ MoodDlg::MoodDlg(QList<PsiAccount *> list) : QDialog(nullptr), pa_(list)
 void MoodDlg::setMood()
 {
     QString moodstr = ui_.cb_type->currentText();
-    for (PsiAccount *pa : qAsConst(pa_)) {
+    for (PsiAccount *pa : std::as_const(pa_)) {
         if (moodstr == tr("<unset>")) {
             pa->pepManager()->disable("mood", PEP_MOOD_NS, "current");
         } else {

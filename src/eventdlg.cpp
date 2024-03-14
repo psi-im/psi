@@ -707,7 +707,7 @@ void EventDlg::init()
     QList<IconToolButton *> toolButtons;
     toolButtons << d->tb_url << d->tb_info << d->tb_history;
     toolButtons << d->tb_icon;
-    for (IconToolButton *toolButton : qAsConst(toolButtons))
+    for (IconToolButton *toolButton : std::as_const(toolButtons))
         if (toolButton)
             toolButton->setFocusPolicy(Qt::NoFocus);
 
@@ -1107,7 +1107,7 @@ void EventDlg::to_tryComplete()
     if (s.length() < 1 || x != p2)
         return;
 
-    for (auto name : qAsConst(d->completionList)) {
+    for (auto name : std::as_const(d->completionList)) {
         if (s.length() > name.length())
             continue;
 

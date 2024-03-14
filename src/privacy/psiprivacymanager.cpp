@@ -548,7 +548,7 @@ void PsiPrivacyManager::newListReceived(const PrivacyList &list)
     updatedContacts += findDifferences(previouslyBlockedContacts, currentlyBlockedContacts);
     updatedContacts += findDifferences(currentlyBlockedContacts, previouslyBlockedContacts);
 
-    for (const QString &contact : qAsConst(updatedContacts)) {
+    for (const QString &contact : std::as_const(updatedContacts)) {
         // emit simulateContactOffline(contact);
 
         if (!isContactBlocked(contact)) {

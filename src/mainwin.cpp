@@ -886,7 +886,7 @@ void MainWin::buildToolbars()
 
     // loadToolbarsState also restores correct toolbar visibility,
     // we might want to override that
-    for (PsiToolBar *tb : qAsConst(toolbars_)) {
+    for (PsiToolBar *tb : std::as_const(toolbars_)) {
         tb->updateVisibility();
     }
 
@@ -894,7 +894,7 @@ void MainWin::buildToolbars()
 
     // in case we have floating toolbars, they have inherited the 'no updates enabled'
     // state. now we need to explicitly re-enable updates.
-    for (PsiToolBar *tb : qAsConst(toolbars_)) {
+    for (PsiToolBar *tb : std::as_const(toolbars_)) {
         tb->setUpdatesEnabled(true);
     }
 

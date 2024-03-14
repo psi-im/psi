@@ -212,7 +212,7 @@ bool PsiOptions::newProfile()
                           << "menu_xml_console";
 
         QList<ToolbarPrefs> toolbars = { chatToolbar, groupchatToolbar, buttons, showContacts };
-        for (ToolbarPrefs tb : qAsConst(toolbars)) {
+        for (ToolbarPrefs tb : std::as_const(toolbars)) {
             tb.locked = true;
             PsiToolBar::structToOptions(this, tb);
         }

@@ -924,11 +924,11 @@ void ChatDlg::holdMessages(bool hold)
         if (!delayedMessages)
             delayedMessages = new QList<MessageView>();
     } else if (delayedMessages) {
-        for (const MessageView &mv : qAsConst(*delayedMessages)) {
+        for (const MessageView &mv : std::as_const(*delayedMessages)) {
             if (mv.isSpooled())
                 displayMessage(mv);
         }
-        for (const MessageView &mv : qAsConst(*delayedMessages)) {
+        for (const MessageView &mv : std::as_const(*delayedMessages)) {
             if (!mv.isSpooled())
                 displayMessage(mv);
         }

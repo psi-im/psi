@@ -148,7 +148,7 @@ void HistoryContactListModel::loadContacts(PsiCon *psi, const QString &acc_id)
     QHash<QString, bool>       c_list;
     QHash<QString, TreeItem *> groups;
     // Roster contacts
-    for (PsiContact *contact : qAsConst(contactList)) {
+    for (PsiContact *contact : std::as_const(contactList)) {
         if (contact->isConference() || contact->isPrivate())
             continue;
         QString cId = contact->account()->id() + "|" + contact->jid().bare();

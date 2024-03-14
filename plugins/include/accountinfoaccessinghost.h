@@ -5,7 +5,6 @@
 #include <QtPlugin>
 
 class QString;
-class QStringList;
 
 class AccountInfoAccessingHost {
 public:

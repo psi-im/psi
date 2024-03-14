@@ -4,7 +4,6 @@
 #include <QtPlugin>
 
 class QString;
-class QStringList;
 
 class ContactInfoAccessingHost {
 public:

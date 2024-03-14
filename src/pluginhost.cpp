@@ -1358,7 +1358,7 @@ bool PluginHost::encryptMessageElement(int account, QDomElement &message)
 
 QObject *PluginHost::getPlugin(const QString &shortName)
 {
-    for (PluginHost *plugin : qAsConst(manager_->pluginsByPriority_)) {
+    for (PluginHost *plugin : std::as_const(manager_->pluginsByPriority_)) {
         if (plugin->shortName() == shortName || plugin->name() == shortName) {
             return plugin->plugin_;
         }

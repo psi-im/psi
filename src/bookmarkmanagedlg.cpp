@@ -145,7 +145,7 @@ void BookmarkManageDlg::closeEditor(QWidget *editor, QAbstractItemDelegate::EndE
     if (hint == QAbstractItemDelegate::SubmitModelCache) {
         QList<QLineEdit *> lineEdits;
         lineEdits << ui_.host << ui_.room << ui_.nickname;
-        for (QLineEdit *lineEdit : qAsConst(lineEdits)) {
+        for (QLineEdit *lineEdit : std::as_const(lineEdits)) {
             if (lineEdit->text().isEmpty()) {
                 lineEdit->setFocus();
                 break;
@@ -175,7 +175,7 @@ void BookmarkManageDlg::selectionChanged(const QItemSelection &selected, const Q
     ui_.autoJoin->setCurrentIndex(current.data(AutoJoinRole).toInt());
     QList<QWidget *> editors;
     editors << ui_.host << ui_.room << ui_.nickname << ui_.password << ui_.autoJoin;
-    for (QWidget *w : qAsConst(editors)) {
+    for (QWidget *w : std::as_const(editors)) {
         w->setEnabled(current.isValid());
     }
 

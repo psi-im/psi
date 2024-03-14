@@ -150,7 +150,7 @@ void ContactManagerDlg::executeCurrent()
         changeDomain(users);
         break;
     case 6: // resolve nicks
-        for (UserListItem *u : qAsConst(users)) {
+        for (UserListItem *u : std::as_const(users)) {
             pa_->resolveContactName(u->jid());
         }
         break;

@@ -33,7 +33,6 @@ class ProxyManager;
 class PsiCon;
 class QByteArray;
 class QScrollArea;
-class QStringList;
 class QWidget;
 class ServerListQuerier;
 class XDataWidget;

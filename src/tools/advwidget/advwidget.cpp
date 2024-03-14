@@ -23,7 +23,7 @@
 
 #include <QApplication>
 #include <QDebug>
-#include <QDesktopWidget>
+#include <QIODevice>
 #include <QScreen>
 #include <QTimer>
 #include <QWidget>
@@ -110,7 +110,7 @@ GAdvancedWidget::Private::Private(QWidget *parent) : QObject(parent), parentWidg
 
 void GAdvancedWidget::Private::posChanging(int *x, int *y, int *width, int *height)
 {
-    if (stickAt <= 0 || !stickEnabled || !parentWidget_->isTopLevel() || parentWidget_->isMaximized()
+    if (stickAt <= 0 || !stickEnabled || !parentWidget_->isWindow() || parentWidget_->isMaximized()
         || !parentWidget_->updatesEnabled()) {
         return;
     }
@@ -121,20 +121,20 @@ void GAdvancedWidget::Private::posChanging(int *x, int *y, int *width, int *heig
 
     bool resizing = p->frameSize() != QSize(*width, *height);
 
-    QDesktopWidget *desktop = qApp->desktop();
+    auto parentScreen = p->screen();
     QWidgetList     list;
 
     if (stickToWindows)
         list = QApplication::topLevelWidgets();
 
-    for (QWidget *w : qAsConst(list)) {
+    for (QWidget *w : std::as_const(list)) {
         QRect rect;
         bool  dockWidget = false;
 
         if (w->windowType() == Qt::Desktop)
-            rect = (static_cast<QDesktopWidget *>(w))->availableGeometry(static_cast<QWidget *>(parent()));
+            rect = w->frameGeometry();
         else {
-            if (w == p || desktop->screenNumber(p) != desktop->screenNumber(w))
+            if (w == p || parentScreen != w->screen())
                 continue;
 
             if (!w->isVisible())
@@ -262,7 +262,7 @@ void GAdvancedWidget::Private::saveGeometry()
                                       isMaximized ? normalGeometry_ : parentWidget_->normalGeometry());
     PsiOptions::instance()->setOption(geometryOptionPath_ + "-frame", parentWidget_->frameGeometry());
     PsiOptions::instance()->setOption(geometryOptionPath_ + "-screen",
-                                      QApplication::desktop()->screenNumber(parentWidget_));
+                                      QGuiApplication::screens().indexOf(parentWidget_->screen()));
     PsiOptions::instance()->setOption(geometryOptionPath_ + "-maximized", isMaximized);
     PsiOptions::instance()->setOption(geometryOptionPath_ + "-fullscreen",
                                       bool(parentWidget_->windowState() & Qt::WindowFullScreen));
@@ -273,7 +273,7 @@ void GAdvancedWidget::Private::restoreGeometry()
     PsiOptions *o = PsiOptions::instance();
     QVariant    v(o->getOption(geometryOptionPath_));
 
-    if (v.type() == QVariant::ByteArray) {
+    if (v.typeId() == QVariant::ByteArray) {
         // migrate options back from format used for a short time before
         // 0.12-RC2. This can be removed later.
         parentWidget_->restoreGeometry(v.toByteArray());
@@ -288,6 +288,9 @@ void GAdvancedWidget::Private::restoreGeometry()
         QByteArray  array;
         QDataStream stream(&array, QIODevice::WriteOnly);
         stream.setVersion(QDataStream::Qt_4_0);
+        // see https://github.com/qt/qtbase/blob/6.7/src/widgets/kernel/qwidget.cpp
+        // TODO 2024. update to version 3 or get rid of text form at all since the format
+        // looks pretty much forward and backward compatible
         const quint32 magicNumber           = 0x1D9D0CB;
         quint16       majorVersion          = 1;
         quint16       minorVersion          = 0;

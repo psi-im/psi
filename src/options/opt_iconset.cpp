@@ -578,7 +578,7 @@ void OptionsTabIconsetEmoticons::restoreOptions()
     d->iss_emoticons->clear();
 
     {
-        for (Iconset *is : qAsConst(PsiIconset::instance()->emoticons)) {
+        for (Iconset *is : std::as_const(PsiIconset::instance()->emoticons)) {
             d->iss_emoticons->insert(*is);
             d->iss_emoticons->lastItem()->setSelected(true);
         }
@@ -587,7 +587,7 @@ void OptionsTabIconsetEmoticons::restoreOptions()
     {
         QStringList loaded;
         {
-            for (Iconset *tmp : qAsConst(PsiIconset::instance()->emoticons)) {
+            for (Iconset *tmp : std::as_const(PsiIconset::instance()->emoticons)) {
                 loaded << tmp->id();
             }
         }

@@ -586,7 +586,7 @@ private slots:
     void updateOnlineContactsCountTimeout()
     {
         int newOnlineContactsCount = 0;
-        for (const PsiContact *c : qAsConst(contacts)) {
+        for (const PsiContact *c : std::as_const(contacts)) {
             if ((c->isPrivate() || (c->inList() && c->status().type() != XMPP::Status::Offline)) && !c->isSelf()) {
                 ++newOnlineContactsCount;
             }
@@ -818,7 +818,7 @@ public:
 
     void dialogUnregister(QWidget *w)
     {
-        for (item_dialog2 *i : qAsConst(dialogList)) {
+        for (item_dialog2 *i : std::as_const(dialogList)) {
             if (i->widget == w) {
                 dialogList.removeAll(i);
                 delete i;
@@ -903,14 +903,14 @@ public:
     void updateContacts()
     {
         QStringList jids;
-        for (PsiContact *pc : qAsConst(contacts)) {
+        for (PsiContact *pc : std::as_const(contacts)) {
             const Jid jid = pc->jid();
             jids.append(jid.bare());
             bool vis = isAlwaysVisibleContact(jid);
             if (vis != pc->isAlwaysVisible())
                 pc->setAlwaysVisible(vis);
         }
-        for (const QString &j : qAsConst(acc.alwaysVisibleContacts)) {
+        for (const QString &j : std::as_const(acc.alwaysVisibleContacts)) {
             if (!jids.contains(j))
                 acc.alwaysVisibleContacts.removeAll(j);
         }
@@ -1172,7 +1172,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
     d->selfContact = new PsiContact(d->self, this, true);
 
     // restore cached roster
-    for (const auto &it : qAsConst(acc.roster))
+    for (const auto &it : std::as_const(acc.roster))
         client_rosterItemUpdated(it);
 
     // restore pgp key bindings
@@ -1355,7 +1355,7 @@ const UserAccount &PsiAccount::userAccount() const
     // save the roster and pgp key bindings
     d->acc.roster.clear();
     d->acc.pgpKnownKeys.clear();
-    for (UserListItem *u : qAsConst(d->userList)) {
+    for (UserListItem *u : std::as_const(d->userList)) {
         if (u->inList())
             d->acc.roster += *u;
 
@@ -1968,7 +1968,7 @@ void PsiAccount::sessionStarted()
         d->voiceCaller->initialize();
 
     // flag roster for delete
-    for (UserListItem *u : qAsConst(d->userList)) {
+    for (UserListItem *u : std::as_const(d->userList)) {
         if (u->inList())
             u->setFlagForDelete(true);
     }
@@ -2757,7 +2757,7 @@ void PsiAccount::client_messageReceived(const Message &m)
     }
 
     // if the sender is already in the queue, then queue this message also
-    for (const Message &mi : qAsConst(d->messageQueue)) {
+    for (const Message &mi : std::as_const(d->messageQueue)) {
         if (mi.from().compare(_m.from())) {
             d->messageQueue.append(_m);
             return;
@@ -3091,7 +3091,7 @@ void PsiAccount::setStatus(const Status &_s, bool withPriority, bool isManualSta
 
     // Block all transports' contacts' status change popups from popping
     {
-        for (const auto &i : qAsConst(d->acc.roster)) {
+        for (const auto &i : std::as_const(d->acc.roster)) {
             if (i.jid()
                     .node()
                     .isEmpty() /*&& i.jid().resource() == "registered"*/) // it is very likely then, that it's transport
@@ -3133,7 +3133,7 @@ void PsiAccount::setStatus(const Status &_s, bool withPriority, bool isManualSta
             if (s.isInvisible()) { //&&Pass invis to transports KEVIN
                 // this is a nasty hack to let the transports know we're invisible, since they get an offline packet
                 // when we go invisible
-                for (UserListItem *u : qAsConst(d->userList)) {
+                for (UserListItem *u : std::as_const(d->userList)) {
                     if (u->isTransport()) {
                         JT_Presence *j = new JT_Presence(d->client->rootTask());
                         j->pres(u->jid(), s);
@@ -3545,7 +3545,7 @@ void PsiAccount::openAddUserDlg(const Jid &jid, const QString &nick, const QStri
 {
     QStringList gl, services, names;
     UserListIt  it(d->userList);
-    for (UserListItem *u : qAsConst(d->userList)) {
+    for (UserListItem *u : std::as_const(d->userList)) {
         if (u->isTransport()) {
             services += u->jid().full();
             names += JIDUtil::nickOrJid(u->name(), u->jid().full());
@@ -3718,7 +3718,7 @@ void PsiAccount::simulateRosterOffline()
     emit beginBulkContactUpdate();
 
     notifyOnlineOk = false;
-    for (UserListItem *u : qAsConst(d->userList))
+    for (UserListItem *u : std::as_const(d->userList))
         simulateContactOffline(u);
 
     // self
@@ -3865,7 +3865,7 @@ QList<UserListItem *> PsiAccount::findRelevant(const Jid &j) const
     if (j.compare(d->self.jid(), false))
         list.append(&d->self);
     else {
-        for (UserListItem *u : qAsConst(d->userList)) {
+        for (UserListItem *u : std::as_const(d->userList)) {
             if (!u->jid().compare(j, false))
                 continue;
 
@@ -4272,7 +4272,7 @@ void PsiAccount::actionRename(const Jid &j, const QString &name) { dj_rename(j, 
 void PsiAccount::actionGroupRename(const QString &oldname, const QString &newname)
 {
     QList<UserListItem *> nu;
-    for (UserListItem *u : qAsConst(d->userList)) {
+    for (UserListItem *u : std::as_const(d->userList)) {
         if (u->inGroup(oldname)) {
             u->removeGroup(oldname);
             u->addGroup(newname);
@@ -5480,7 +5480,7 @@ int PsiAccount::forwardPendingEvents(const Jid &jid)
 {
     QList<PsiEvent::Ptr> chatList;
     d->eventQueue->extractMessages(&chatList);
-    for (const PsiEvent::Ptr &e : qAsConst(chatList)) {
+    for (const PsiEvent::Ptr &e : std::as_const(chatList)) {
         MessageEvent::Ptr me = e.staticCast<MessageEvent>();
         Message           m  = me->message();
 
@@ -5613,7 +5613,7 @@ void PsiAccount::processChatsHelper(const Jid &j, bool removeEvents)
         // 15:15 *mblsha is Offline
         // 15:10 <mblsha> hello!
 
-        for (const PsiEvent::Ptr &e : qAsConst(chatList)) {
+        for (const PsiEvent::Ptr &e : std::as_const(chatList)) {
             if (e->type() == PsiEvent::Message) {
                 MessageEvent::Ptr me = e.staticCast<MessageEvent>();
                 const Message    &m  = me->message();
@@ -5778,7 +5778,7 @@ void PsiAccount::shareImage(const Jid &target, const QImage &image, const QStrin
 
 GCContact *PsiAccount::findGCContact(const Jid &j) const
 {
-    for (GCContact *c : qAsConst(d->gcbank)) {
+    for (GCContact *c : std::as_const(d->gcbank)) {
         if (c->jid.compare(j))
             return c;
     }
@@ -6435,7 +6435,7 @@ void PsiAccount::ed_addAuth(const Jid &j)
     if (static_cast<EventDlg *>(sender())->isForAll()) {
         QList<PsiEvent::Ptr> events;
         d->eventQueue->extractByType(PsiEvent::Auth, &events);
-        for (const PsiEvent::Ptr &e : qAsConst(events)) {
+        for (const PsiEvent::Ptr &e : std::as_const(events)) {
             dj_addAuth(e->jid());
         }
     }
@@ -6447,7 +6447,7 @@ void PsiAccount::ed_deny(const Jid &j)
     if (static_cast<EventDlg *>(sender())->isForAll()) {
         QList<PsiEvent::Ptr> events;
         d->eventQueue->extractByType(PsiEvent::Auth, &events);
-        for (const PsiEvent::Ptr &e : qAsConst(events)) {
+        for (const PsiEvent::Ptr &e : std::as_const(events)) {
             dj_deny(e->jid());
         }
     }

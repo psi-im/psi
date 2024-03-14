@@ -277,7 +277,7 @@ QStringList VariantTree::nodeChildren(const QString &node, bool direct, bool int
         return children;
     } else {
         QStringList long_children;
-        for (const QString &child : qAsConst(children)) {
+        for (const QString &child : std::as_const(children)) {
             QString long_child = QString("%1.%2").arg(key, child);
             long_children << long_child;
         }

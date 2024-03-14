@@ -169,7 +169,7 @@ quint64 EDBFlatFile::eventsCount(const QString &accId, const XMPP::Jid &jid)
 
 EDBFlatFile::File *EDBFlatFile::findFile(const Jid &j) const
 {
-    for (File *i : qAsConst(d->flist)) {
+    for (File *i : std::as_const(d->flist)) {
         if (i->j.compare(j, false))
             return i;
     }

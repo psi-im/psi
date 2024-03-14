@@ -75,7 +75,7 @@ void OptionsTabInput::applyOptions()
         d->groupBoxDicts->setEnabled(isEnabled);
         s->setActiveLanguages(loadedDicts_);
         QStringList loaded;
-        for (auto const &id : qAsConst(loadedDicts_)) {
+        for (auto const &id : std::as_const(loadedDicts_)) {
             loaded.append(LanguageManager::toString(id));
         }
         o->setOption(DICTS_OPTION, QVariant(loaded.join(" ")));
@@ -154,7 +154,7 @@ void OptionsTabInput::fillList()
     if (!availableDicts_.isEmpty()) {
         d->availDicts->disconnect();
         d->availDicts->clear();
-        for (auto const &id : qAsConst(availableDicts_)) {
+        for (auto const &id : std::as_const(availableDicts_)) {
             QTreeWidgetItem *dic = new QTreeWidgetItem(d->availDicts, QTreeWidgetItem::Type);
             dic->setText(FullName, LanguageManager::languageName(id));
             dic->setData(FullName, Qt::UserRole, QVariant::fromValue<LanguageManager::LangId>(id));

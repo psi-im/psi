@@ -129,7 +129,7 @@ void WebView::contextMenuEvent(QContextMenuEvent *event)
         if (!page()->selectedText().isEmpty()) {
 #ifdef WEBENGINE
             menu->addAction(pageAction(QWebEnginePage::Copy));
-            for (auto act : qAsConst(contextMenuActions_)) {
+            for (auto act : std::as_const(contextMenuActions_)) {
                 menu->addAction(act);
             }
         } else {

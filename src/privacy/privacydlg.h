@@ -28,7 +28,6 @@
 
 class PrivacyManager;
 class QString;
-class QStringList;
 class QWidget;
 
 class PrivacyDlg : public QDialog {

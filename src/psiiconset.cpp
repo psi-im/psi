@@ -184,7 +184,7 @@ public:
 
         // second level -- transport icon
         if (jid.node().isEmpty() || status_icons.useServicesIcons) {
-            for (const StatusIconsets::IconsetItem &item : qAsConst(status_icons.list)) {
+            for (const StatusIconsets::IconsetItem &item : std::as_const(status_icons.list)) {
                 if (item.regexp.isEmpty() ? jid.node().isEmpty() : (item.regexp.indexIn(jid.domain()) != -1)) {
                     const Iconset *is = psi->roster.value(item.iconset);
                     if (is) {
@@ -199,7 +199,7 @@ public:
         }
 
         // third level -- custom icons
-        for (const StatusIconsets::IconsetItem &item : qAsConst(status_icons.customList)) {
+        for (const StatusIconsets::IconsetItem &item : std::as_const(status_icons.customList)) {
             if (item.regexp.indexIn(jid.bare()) != -1) {
                 const Iconset *is = psi->roster.value(item.iconset);
                 if (is) {
@@ -424,7 +424,7 @@ bool PsiIconset::loadRoster()
         d->cur_custom_status.insert(regexp, iconset);
     }
 
-    for (const QString &it2 : qAsConst(rosterIconsets)) {
+    for (const QString &it2 : std::as_const(rosterIconsets)) {
         if (it2 == PsiOptions::instance()->getOption("options.iconsets.status").toString()) {
             continue;
         }

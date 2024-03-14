@@ -95,7 +95,7 @@ void TabManager::tabDestroyed(QObject *obj)
         if (preferedTabsetForKind_[it.key()] != obj)
             continue;
         bool ok = false;
-        for (TabDlg *tabDlg : qAsConst(tabs_)) {
+        for (TabDlg *tabDlg : std::as_const(tabs_)) {
             // currently destroyed tab is removed from the list a few lines above
             if (tabsetToKinds_[tabDlg].contains(it.key())) {
                 preferedTabsetForKind_[it.key()] = tabDlg;
@@ -155,7 +155,7 @@ void TabManager::setUserManagementEnabled(bool enabled)
     }
 
     userManagement_ = enabled;
-    for (TabDlg *tab : qAsConst(tabs_)) {
+    for (TabDlg *tab : std::as_const(tabs_)) {
         tab->setUserManagementEnabled(enabled);
     }
 }
@@ -167,7 +167,7 @@ void TabManager::setTabBarShownForSingles(bool enabled)
     }
 
     tabSingles_ = enabled;
-    for (TabDlg *tab : qAsConst(tabs_)) {
+    for (TabDlg *tab : std::as_const(tabs_)) {
         tab->setTabBarShownForSingles(enabled);
     }
 }
@@ -179,7 +179,7 @@ void TabManager::setSimplifiedCaptionEnabled(bool enabled)
     }
 
     simplifiedCaption_ = enabled;
-    for (TabDlg *tab : qAsConst(tabs_)) {
+    for (TabDlg *tab : std::as_const(tabs_)) {
         tab->setSimplifiedCaptionEnabled(enabled);
     }
 }

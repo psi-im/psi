@@ -99,7 +99,7 @@ ProfileOpenDlg::ProfileOpenDlg(const QString &def, const VarList &_langs, const 
 
     int x   = 0;
     langSel = x;
-    for (const auto &lang : qAsConst(langs)) {
+    for (const auto &lang : std::as_const(langs)) {
         cb_lang->addItem(lang.data());
         if ((curLang.isEmpty() && x == 0) || (curLang == lang.key())) {
             cb_lang->setCurrentIndex(x);

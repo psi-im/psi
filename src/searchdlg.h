@@ -26,7 +26,6 @@
 
 class PsiAccount;
 class QString;
-class QStringList;
 
 namespace XMPP {
 class Jid;

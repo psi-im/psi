@@ -61,7 +61,7 @@ void PsiContactList::gracefulDeinit()
     deinitAccCounter_ = 0;
     decltype(accounts_) loggedAccs;
 
-    for (auto account : qAsConst(enabledAccounts_)) {
+    for (auto account : std::as_const(enabledAccounts_)) {
         if (account->isAvailable()) {
             deinitAccCounter_++;
             loggedAccs.append(account);
@@ -426,7 +426,7 @@ PsiAccount *PsiContactList::tryQueueLowestEventId(bool includeDND)
     int         low_id    = 0;
     int         low_prior = EventPriorityDontCare;
 
-    for (PsiAccount *account : qAsConst(enabledAccounts_)) {
+    for (PsiAccount *account : std::as_const(enabledAccounts_)) {
         int n = account->eventQueue()->nextId();
         if (n == -1)
             continue;

@@ -111,7 +111,7 @@ bool SxeSession::processSxe(const QDomElement &sxe, const QString &id)
     // store incoming edits when queueing
     if (queueing_) {
         // Make sure the element is not already in the queue.
-        for (const IncomingEdit &i : qAsConst(queuedIncomingEdits_))
+        for (const IncomingEdit &i : std::as_const(queuedIncomingEdits_))
             if (i.xml == sxe)
                 return false;
 

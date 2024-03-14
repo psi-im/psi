@@ -73,7 +73,7 @@ void BossKey::doHide()
 
 void BossKey::doShow()
 {
-    for (QPointer<QWidget> p : qAsConst(hiddenWidgets_)) {
+    for (QPointer<QWidget> p : std::as_const(hiddenWidgets_)) {
         if (p) {
             p->show();
         }

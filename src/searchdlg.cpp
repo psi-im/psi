@@ -338,7 +338,7 @@ void SearchDlg::jt_finished()
                 QString str = TextUtil::plain2rich(d->form.instructions());
                 lb_instructions->setText(str);
 
-                for (const auto &f : qAsConst(d->form)) {
+                for (const auto &f : std::as_const(d->form)) {
                     QLabel *   lb = new QLabel(f.fieldName(), d->gr_form);
                     QLineEdit *le = new QLineEdit(d->gr_form);
                     d->gr_form_layout->addWidget(lb); // FIXME

@@ -316,7 +316,7 @@ void OptionsDlgBase::Private::openTab(const QString &id)
     QWidget *tab = id2widget.value(id);
     if (!tab) {
         bool found = false;
-        for (OptionsTab *opttab : qAsConst(tabs)) {
+        for (OptionsTab *opttab : std::as_const(tabs)) {
             if (opttab->id() == id) {
                 tab = opttab->widget(); // create the widget
                 if (!tab)
@@ -358,7 +358,7 @@ void OptionsDlgBase::Private::openTab(const QString &id)
         }
     }
 
-    for (OptionsTab *opttab : qAsConst(tabs)) {
+    for (OptionsTab *opttab : std::as_const(tabs)) {
         if (opttab->id() == id) {
             dlg->lb_pageTitle->setText(opttab->name());
             dlg->lb_pageTitle->setHelp(opttab->desc());
@@ -459,7 +459,7 @@ void OptionsDlgBase::Private::doApply()
     if (!dirty)
         return;
 
-    for (OptionsTab *opttab : qAsConst(tabs)) {
+    for (OptionsTab *opttab : std::as_const(tabs)) {
         opttab->applyOptions();
     }
 

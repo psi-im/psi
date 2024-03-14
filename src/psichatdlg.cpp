@@ -164,7 +164,7 @@ public:
             }
         }
         QStringList res;
-        for (const QString &cmd : qAsConst(all)) {
+        for (const QString &cmd : std::as_const(all)) {
             if (cmd.startsWith(query)) {
                 res << cmd;
             }

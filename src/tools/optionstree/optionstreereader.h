@@ -8,7 +8,6 @@
 class OptionsTree;
 class QRect;
 class QSize;
-class QStringList;
 class VariantTree;
 
 class OptionsTreeReader : public AtomicXmlFileReader {

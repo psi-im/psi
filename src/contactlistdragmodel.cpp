@@ -103,7 +103,7 @@ void ContactListModelOperationList::removeAccidentalContactMoveOperations()
     QList<PsiContact *> contacts = operations_.keys();
     for (PsiContact *psiContact : contacts) {
         bool remove = false;
-        for (const Operation &op : qAsConst(operations_[psiContact])) {
+        for (const Operation &op : std::as_const(operations_[psiContact])) {
             if (psiContact->groups().contains(op.groupTo)) {
                 remove = true;
                 break;

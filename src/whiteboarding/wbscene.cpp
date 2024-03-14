@@ -29,7 +29,7 @@ void WbScene::queueTransformationRegeneration(WbItem *item)
 
 void WbScene::regenerateTransformations()
 {
-    for (QPointer<WbItem> item : qAsConst(pendingTranformations_)) {
+    for (QPointer<WbItem> item : std::as_const(pendingTranformations_)) {
         if (item) {
             // qDebug() << QString("Regenerating %1 transform.").arg((unsigned int) &(*item)).toLatin1();
             item->regenerateTransform();

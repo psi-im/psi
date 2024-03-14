@@ -191,7 +191,7 @@ bool FileSharingItem::initFromCache(FileCacheItem *cache)
 
     QString httpScheme(QString::fromLatin1("http"));
     QString xmppScheme(QString::fromLatin1("xmpp")); // jingle ?
-    for (const auto &u : qAsConst(_uris)) {
+    for (const auto &u : std::as_const(_uris)) {
         QUrl url(u);
         auto scheme = url.scheme();
         if (scheme.startsWith(httpScheme)) {
@@ -384,7 +384,7 @@ FileShareDownloader *FileSharingItem::download(bool isRanged, qint64 start, quin
     file.setName(_fileName);
     if (_flags & SizeKnown)
         file.setSize(_fileSize);
-    for (auto const &h : qAsConst(_sums)) {
+    for (auto const &h : std::as_const(_sums)) {
         file.addHash(h);
     }
 

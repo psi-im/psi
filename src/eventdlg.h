@@ -36,7 +36,6 @@ class PsiCon;
 class PsiHttpAuthRequest;
 class PsiIcon;
 class QDateTime;
-class QStringList;
 
 namespace XMPP {
 class Jid;

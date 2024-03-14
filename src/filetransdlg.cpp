@@ -1816,7 +1816,7 @@ void FileTransDlg::ft_error(int x, int, const QString &s)
 
 void FileTransDlg::updateItems()
 {
-    for (TransferMapping *i : qAsConst(d->transferList)) {
+    for (TransferMapping *i : std::as_const(d->transferList)) {
         if (i->h) {
             i->logSent();
             d->updateProgress(i);

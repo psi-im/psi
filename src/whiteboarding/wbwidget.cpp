@@ -332,7 +332,7 @@ void WbWidget::mouseReleaseEvent(QMouseEvent *event)
 
 WbItem *WbWidget::wbItem(const QDomNode &node)
 {
-    for (WbItem *wbitem : qAsConst(items_)) {
+    for (WbItem *wbitem : std::as_const(items_)) {
         if (wbitem->node() == node)
             return wbitem;
     }
@@ -446,7 +446,7 @@ void WbWidget::rerender()
     renderer_.load(xmldump.toLatin1());
 
     // Update all positions if changed
-    for (WbItem *wbitem : qAsConst(items_)) {
+    for (WbItem *wbitem : std::as_const(items_)) {
         // resetting elementId is necessary for rendering some updates to the element (e.g. adding child elements to
         // <g/>)
         wbitem->setElementId(wbitem->id());

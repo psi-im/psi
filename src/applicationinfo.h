@@ -3,7 +3,6 @@
 
 class QLatin1String;
 class QString;
-class QStringList;
 
 class ApplicationInfo {
 public:

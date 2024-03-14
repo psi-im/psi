@@ -104,7 +104,7 @@ bool MUCAffiliationsModel::dropMimeData(const QMimeData *data, Qt::DropAction ac
 
     // Insert the data
     insertRows(real_row, nb_rows, real_index);
-    for (const QString &text : qAsConst(newItems)) {
+    for (const QString &text : std::as_const(newItems)) {
         QModelIndex idx = index(real_row, 0, real_index);
         setData(idx, text);
         real_row++;
@@ -251,7 +251,7 @@ QList<MUCItem> MUCAffiliationsModel::changes() const
     // Remove all old items not present in the delta
     for (const MUCItem &item_old : items_old) {
         bool found = false;
-        for (const MUCItem &item_new : qAsConst(items_delta)) {
+        for (const MUCItem &item_new : std::as_const(items_delta)) {
             if (item_new.jid().compare(item_old.jid(), false)) {
                 found = true;
                 break;

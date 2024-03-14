@@ -145,7 +145,7 @@ void BookmarkManager::removeConference(const XMPP::Jid &j)
 {
     if (isAvailable_) {
         QList<ConferenceBookmark> confs;
-        for (const ConferenceBookmark &c : qAsConst(conferences_)) {
+        for (const ConferenceBookmark &c : std::as_const(conferences_)) {
             if (!c.jid().compare(j, false)) {
                 confs.push_back(c);
             }
@@ -264,7 +264,7 @@ void BookmarkManager::setBookmarks_finished()
         QStringList localMucs;
         QStringList ignoreMucs;
 
-        for (const ConferenceBookmark &cb : qAsConst(conferences_)) {
+        for (const ConferenceBookmark &cb : std::as_const(conferences_)) {
             if (cb.autoJoin() == ConferenceBookmark::OnlyThisComputer) {
                 localMucs.append(cb.jid().withResource(cb.nick()).full());
             }

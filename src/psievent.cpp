@@ -677,7 +677,7 @@ void EventQueue::enqueue(const PsiEvent::Ptr &e)
     bool found = false;
 
     // skip all with higher or equal priority
-    for (EventItem *ei : qAsConst(list_)) {
+    for (EventItem *ei : std::as_const(list_)) {
         if (ei && ei->event()->priority() < prior) {
             list_.insert(list_.indexOf(ei), i);
             found = true;
@@ -697,7 +697,7 @@ void EventQueue::dequeue(const PsiEvent::Ptr &e)
     if (!e)
         return;
 
-    for (EventItem *i : qAsConst(list_)) {
+    for (EventItem *i : std::as_const(list_)) {
         if (e == i->event()) {
             list_.removeAll(i);
             emit queueChanged();
@@ -709,7 +709,7 @@ void EventQueue::dequeue(const PsiEvent::Ptr &e)
 
 PsiEvent::Ptr EventQueue::dequeue(const Jid &j, bool compareRes)
 {
-    for (EventItem *i : qAsConst(list_)) {
+    for (EventItem *i : std::as_const(list_)) {
         PsiEvent::Ptr e = i->event();
         Jid           j2(e->jid());
         if (j.compare(j2, compareRes)) {
@@ -950,7 +950,7 @@ QList<EventQueue::PsiEventId> EventQueue::eventsFor(const XMPP::Jid &jid, bool c
 {
     QList<PsiEventId> result;
 
-    for (EventItem *i : qAsConst(list_)) {
+    for (EventItem *i : std::as_const(list_)) {
         if (i->event()->from().compare(jid, compareRes))
             result << QPair<int, PsiEvent::Ptr>(i->id(), i->event());
     }

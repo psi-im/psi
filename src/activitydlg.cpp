@@ -95,7 +95,7 @@ void ActivityDlg::setActivity()
     QString generalActivityStr  = ui_.cb_general_type->currentText();
     QString specificActivityStr = ui_.cb_specific_type->currentText();
 
-    for (PsiAccount *pa : qAsConst(pa_)) {
+    for (PsiAccount *pa : std::as_const(pa_)) {
         if (generalActivityStr == tr("<unset>")) {
             pa->pepManager()->disable(PEP_ACTIVITY_TN, PEP_ACTIVITY_NS, "current");
         } else {

@@ -385,7 +385,7 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
     }
 
     int idx = 0;
-    for (const RosterItem &ri : qAsConst(roster)) {
+    for (const RosterItem &ri : std::as_const(roster)) {
         QString rbase = base + ".roster-cache.a" + QString::number(idx++);
         o->setOption(rbase + ".jid", ri.jid().full());
         o->setOption(rbase + ".name", ri.name());
@@ -404,7 +404,7 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
     groupList << qApp->translate("ContactProfile", "Agents/Transports");
 
     // first, add all groups' names to groupList
-    for (const RosterItem &i : qAsConst(roster)) {
+    for (const RosterItem &i : std::as_const(roster)) {
         groupList += i.groups();
     }
 
@@ -417,7 +417,7 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
     }
 
     // remove redundant groups
-    for (const QString &group : qAsConst(removeList)) {
+    for (const QString &group : std::as_const(removeList)) {
         groupState.remove(group);
     }
 
@@ -563,7 +563,7 @@ void OptionsMigration::lateMigration()
 
         PsiOptions::instance()->removeOption("options.ui.contactlist.toolbars", true);
 
-        for (ToolbarPrefs tb : qAsConst(toolbars)) {
+        for (ToolbarPrefs tb : std::as_const(toolbars)) {
             tb.locked = true;
             PsiToolBar::structToOptions(PsiOptions::instance(), tb);
         }
@@ -702,7 +702,7 @@ bool profileRename(const QString &oldname, const QString &name)
         return false;
 
     // and if all ok we may rename it.
-    for (const QString &path : qAsConst(paths)) {
+    for (const QString &path : std::as_const(paths)) {
         QDir d(path);
         if (!d.exists() || !d.exists(oldname))
             continue;

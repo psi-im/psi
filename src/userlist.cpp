@@ -642,7 +642,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
             str += QString("<div style='white-space:pre'>") + QObject::tr("Presence Error")
                 + QString(": %1").arg(TextUtil::escape(err[0])) + "</div>";
             err.pop_front();
-            for (const QString &line : qAsConst(err))
+            for (const QString &line : std::as_const(err))
                 str += "<div>" + TextUtil::escape(line) + "</div>";
         }
 
@@ -681,7 +681,7 @@ bool UserListItem::isSecure(const QString &rname) const { return secList.contain
 
 void UserListItem::setSecure(const QString &rname, bool b)
 {
-    for (const QString &s : qAsConst(secList)) {
+    for (const QString &s : std::as_const(secList)) {
         if (s == rname) {
             if (!b)
                 secList.removeAll(s);
@@ -701,7 +701,7 @@ void UserListItem::setPublicKeyID(const QString &k) { v_keyID = k; }
 //----------------------------------------------------------------------------
 UserListItem *UserList::find(const XMPP::Jid &j)
 {
-    for (UserListItem *i : qAsConst(*this)) {
+    for (UserListItem *i : std::as_const(*this)) {
         if (i->jid().compare(j))
             return i;
     }

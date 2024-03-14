@@ -89,7 +89,7 @@ void SxeManager::messageReceived(const Message &message)
 void SxeManager::recordDetectedSession(const Message &message)
 {
     // check if a record of the session exists
-    for (const DetectedSession &d : qAsConst(DetectedSessions_)) {
+    for (const DetectedSession &d : std::as_const(DetectedSessions_)) {
         if (d.session == message.sxe().attribute("session")
             && d.jid.compare(message.from(), message.type() != "groupchat"))
             return;
@@ -540,7 +540,7 @@ SxeManager::SxeNegotiation *SxeManager::createNegotiation(const Message &message
             // ownJid is determined based on the bare part of ownJids_
 
             negotiation->groupChat = true;
-            for (const QString &j : qAsConst(ownJids_)) {
+            for (const QString &j : std::as_const(ownJids_)) {
                 if (message.from().bare() == j.left(j.indexOf("/"))) {
                     negotiation->ownJid = j;
                     break;
@@ -620,7 +620,7 @@ void SxeManager::startNewSession(const Jid &target, const Jid &ownJid, bool grou
     QDomElement negotiationElement = doc.createElementNS(SXENS, "negotiation");
     QDomElement request            = doc.createElementNS(SXENS, "invitation");
     QDomElement feature            = doc.createElementNS(SXENS, "feature");
-    for (const QString &f : qAsConst(features)) {
+    for (const QString &f : std::as_const(features)) {
         feature = feature.cloneNode(false).toElement();
         feature.appendChild(doc.createTextNode(f));
         request.appendChild(feature);
@@ -696,7 +696,7 @@ QList<QPointer<SxeSession>> SxeManager::findSession(const Jid &jid)
 {
     // find if a session for the jid already exists
     QList<QPointer<SxeSession>> matching;
-    for (const QPointer<SxeSession> &w : qAsConst(sessions_)) {
+    for (const QPointer<SxeSession> &w : std::as_const(sessions_)) {
         // does the jid match?
         if (w->target().compare(jid)) {
             matching.append(w);
@@ -708,7 +708,7 @@ QList<QPointer<SxeSession>> SxeManager::findSession(const Jid &jid)
 QPointer<SxeSession> SxeManager::findSession(const QString &session)
 {
     // find if a session for the session already exists
-    for (SxeSession *w : qAsConst(sessions_)) {
+    for (SxeSession *w : std::as_const(sessions_)) {
         // does the session match?
         if (w->session() == session)
             return w;

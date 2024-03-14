@@ -226,7 +226,7 @@ void OptionsTabToolbars::applyOptions()
 
     PsiOptions *o = PsiOptions::instance();
     o->removeOption("options.ui.contactlist.toolbars", true);
-    for (const ToolbarPrefs &toolbar : qAsConst(p->toolbars)) {
+    for (const ToolbarPrefs &toolbar : std::as_const(p->toolbars)) {
         PsiToolBar::structToOptions(o, toolbar);
     }
 }
@@ -255,7 +255,7 @@ void OptionsTabToolbars::restoreOptions()
     QString chatToolbarName      = tr("Chat");
     QString groupchatToolbarName = tr("Groupchat");
 
-    for (const QString &base : qAsConst(sortedToolbarBases)) {
+    for (const QString &base : std::as_const(sortedToolbarBases)) {
         ToolbarPrefs tb;
 
         tb.id = o->getOption(base + ".key").toString();
@@ -299,7 +299,7 @@ void OptionsTabToolbars::toolbarAdd()
     do {
         ok      = true;
         tb.name = QObject::tr("<unnamed%1>").arg(j++);
-        for (const ToolbarPrefs &other : qAsConst(p->toolbars)) {
+        for (const ToolbarPrefs &other : std::as_const(p->toolbars)) {
             if (other.name == tb.name) {
                 ok = false;
                 break;
@@ -459,7 +459,7 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
         tw->resizeColumnToContents(0);
     }
 
-    for (auto const &name : qAsConst(tb.keys)) {
+    for (auto const &name : std::as_const(tb.keys)) {
         addToolbarAction(d->lw_selectedActions, name, p->currentType());
     }
     updateArrows();

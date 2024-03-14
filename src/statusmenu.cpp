@@ -139,7 +139,7 @@ void StatusMenu::presetsChanged()
 void StatusMenu::statusChanged(const Status &status)
 {
     bool presetFound = false;
-    for (IconAction *action : qAsConst(presetActs)) {
+    for (IconAction *action : std::as_const(presetActs)) {
         // Maybe we should compare with priority too
         int     st      = static_cast<int>(status.type());
         QString message = action->property("message").toString();
@@ -150,7 +150,7 @@ void StatusMenu::statusChanged(const Status &status)
             action->setChecked(false);
     }
     bool statusFound = false;
-    for (IconAction *action : qAsConst(statusActs)) {
+    for (IconAction *action : std::as_const(statusActs)) {
         if (!statusFound && !presetFound && action->property("type").toInt() == static_cast<int>(status.type())) {
             action->setChecked(true);
             statusFound = true;

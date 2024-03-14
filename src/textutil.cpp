@@ -513,7 +513,7 @@ QString TextUtil::emoticonify(const QString &in)
 
             int foundPos = -1, foundLen = -1;
 
-            for (const Iconset *iconset : qAsConst(PsiIconset::instance()->emoticons)) {
+            for (const Iconset *iconset : std::as_const(PsiIconset::instance()->emoticons)) {
                 QListIterator<PsiIcon *> it = iconset->iterator();
                 while (it.hasNext()) {
                     PsiIcon *icon = it.next();

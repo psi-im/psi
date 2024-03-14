@@ -26,7 +26,6 @@
 class OptionsTree;
 class QDomDocument;
 class QDomElement;
-class QStringList;
 
 class VarListItem {
 public:
