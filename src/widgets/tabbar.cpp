@@ -279,7 +279,7 @@ void TabBar::Private::layoutTabs()
         tab.rect.setSize(tabSizeHint(tab));
         // Make pinned tab if need
         if (i < pinnedTabs) {
-            tab.text = tab.text.left(tab.text.leftRef(PINNED_CHARS).contains("&") ? (PINNED_CHARS + 1) : PINNED_CHARS);
+            tab.text = tab.text.left(QStringView{tab.text}.left(PINNED_CHARS).contains("&") ? (PINNED_CHARS + 1) : PINNED_CHARS);
             tab.rect.setWidth(pinnedTabWidth);
         }
         hackedTabs << tab;

@@ -111,7 +111,7 @@ public:
             auto id    = XMPP::Hash::from(QStringRef(&idStr));
             auto item  = account_->psi()->fileSharingManager()->item(id);
 
-            ret.append(msg.midRef(post, match.capturedStart(0) - post));
+            ret.append(QStringView{msg}.mid(post, match.capturedStart(0) - post));
             if (item) {
                 auto    vm = item->metaData();
                 QString attrs;
@@ -132,7 +132,7 @@ public:
             }
             post = match.capturedEnd(0);
         }
-        ret.append(msg.midRef(post));
+        ret.append(QStringView{msg}.mid(post));
         return ret;
     }
 };

@@ -255,7 +255,7 @@ public:
 
     std::pair<PsiAccount *, QString> uriToShareSource(const QString &path)
     {
-        auto pathParts = path.midRef(sizeof("/psi/account")).split('/');
+        auto pathParts = QStringView{path}.mid(sizeof("/psi/account")).split('/');
         if (pathParts.size() < 3 || pathParts[1] != QLatin1String("sharedfile")
             || pathParts[2].isEmpty()) // <acoount_uuid>/sharedfile/<file_hash>
             return { nullptr, QString() };

@@ -169,8 +169,8 @@ FileCache::FileCache(const QString &cacheDir, QObject *parent) :
             auto ind = s.indexOf('+');
             if (ind == -1)
                 continue;
-            auto       type = XMPP::Hash::parseType(s.leftRef(ind));
-            auto       ba   = QByteArray::fromHex(s.midRef(ind + 1).toLatin1());
+            auto       type = XMPP::Hash::parseType(QStringView{s}.left(ind));
+            auto       ba   = QByteArray::fromHex(QStringView{s}.mid(ind + 1).toLatin1());
             XMPP::Hash hash(type, ba);
             if (hash.isValid() && ba.size()) {
                 item->addHashSum(hash);

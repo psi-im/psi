@@ -47,10 +47,10 @@ QString RTParse::next()
         QStringRef s;
         int        n = in.indexOf('>', v_at);
         if (n == -1) {
-            s = in.midRef(v_at);
+            s = QStringView{in}.mid(v_at);
         } else {
             ++n;
-            s = in.midRef(v_at, n - v_at);
+            s = QStringView{in}.mid(v_at, n - v_at);
         }
         v_at += s.length();
         out += s;
@@ -60,10 +60,10 @@ QString RTParse::next()
     QStringRef s;
     int        x = in.indexOf('<', v_at);
     if (x == -1) {
-        s       = in.midRef(v_at);
+        s       = QStringView{in}.mid(v_at);
         v_atEnd = true;
     } else {
-        s = in.midRef(v_at, x - v_at);
+        s = QStringView{in}.mid(v_at, x - v_at);
     }
     v_at += s.length();
     // printf("chunk = '%s'\n", s.latin1());

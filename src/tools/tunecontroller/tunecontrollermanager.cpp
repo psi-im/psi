@@ -28,6 +28,7 @@
 
 #include <QPluginLoader>
 #include <QtCore>
+#include <QLatin1Char>
 
 /**
  * \class TuneControllerManager
@@ -127,7 +128,7 @@ bool TuneControllerManager::checkTune(const Tune &tune) const
 {
     if (!tuneTitleFilterPattern_.isEmpty() && !tune.name().isEmpty()) {
         QRegularExpression tuneTitleFilter(tuneTitleFilterPattern_);
-        if (tuneTitleFilter.isValid() && tuneTitleFilter.exactMatch(tune.name())) {
+        if (tuneTitleFilter.isValid() && tuneTitleFilter.match(QLatin1Char('^') + tune.name() + QLatin1Char('^')).hasMatch()) {
             return false;
         }
     }

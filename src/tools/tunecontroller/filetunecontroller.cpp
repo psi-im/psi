@@ -77,7 +77,11 @@ void FileTuneController::check()
         QFile file(_songFile);
         if (file.open(QIODevice::ReadOnly)) {
             QTextStream stream(&file);
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
             stream.setCodec("UTF-8");
+#else
+            stream.setEncoding(QStringConverter::Utf8);
+#endif
             stream.setAutoDetectUnicode(true);
             _currentTune.setName(stream.readLine());
             _currentTune.setArtist(stream.readLine());

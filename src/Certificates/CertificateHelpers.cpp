@@ -59,7 +59,7 @@ CertificateCollection CertificateHelpers::allCertificates(const QStringList &sto
             if (!f.open(QIODevice::ReadOnly))
                 continue;
             QDomDocument doc;
-            bool         ok = doc.setContent(&f);
+            bool         ok = bool(doc.setContent(&f));
             f.close();
             if (!ok)
                 continue;

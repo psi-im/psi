@@ -4,7 +4,7 @@
 #include <QRect>
 #include <QSet>
 #include <QWidget>
-#include <QX11Info>
+//#include <QX11Info>
 #include <QtCore>
 
 // TODO: Find a way to include Xlib here and not redefine Atom and Window types

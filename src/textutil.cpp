@@ -301,7 +301,7 @@ static void emojiconifyPlainText(RTParse &p, const QString &in)
             QLatin1String(
                 R"html(<span style="font-family: 'Apple Color Emoji', 'Noto Color Emoji', 'Segoe UI Emoji'; font-size:1.5em">)html")
 #endif
-                  + in.midRef(emojisStartIdx, idx - emojisStartIdx) + QLatin1String("</span>"));
+                  + QStringView{in}.mid(emojisStartIdx, idx - emojisStartIdx) + QLatin1String("</span>"));
     };
     while (!(ref = reg.findEmoji(in, idx)).isEmpty()) {
         if (emojisStartIdx == -1) {
