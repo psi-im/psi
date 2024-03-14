@@ -303,7 +303,7 @@ public:
     int height() const
     {
         int hh = listWidget()->fontMetrics().lineSpacing() + h;
-        return qMax(hh, QApplication::globalStrut().height());
+        return qMax(hh, 16);
     }
 
     int width() const
@@ -313,7 +313,7 @@ public:
 #else
         int ww = qMax(listWidget()->fontMetrics().width(text()) + 6 + 15, w + 10);
 #endif
-        return qMax(ww, QApplication::globalStrut().width());
+        return qMax(ww, 16);
     }
 
     void paint(QPainter *painter) const
@@ -399,7 +399,12 @@ QListWidgetItem *IconsetSelect::lastItem() const { return item(count() - 1); }
 
 QStyleOptionViewItem IconsetSelect::viewOptions() const
 {
-    QStyleOptionViewItem o   = QListWidget::viewOptions();
+    QStyleOptionViewItem o;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    initViewItemOption(&o);
+#else
+    o = QListWidget::viewOptions();
+#endif
     o.showDecorationSelected = true;
     return o;
 }
@@ -454,7 +459,7 @@ public:
     int height() const
     {
         int hh = qMax(h + 2 * margin, listWidget()->fontMetrics().lineSpacing() + 2);
-        return qMax(hh, QApplication::globalStrut().height());
+        return qMax(hh, 16);
     }
 
     int width() const
@@ -464,7 +469,7 @@ public:
 #else
         int ww = listWidget()->fontMetrics().width(text()) + w + 3 * margin + 15;
 #endif
-        return qMax(ww, QApplication::globalStrut().width());
+        return qMax(ww, 16);
     }
 
     void paint(QPainter *painter) const

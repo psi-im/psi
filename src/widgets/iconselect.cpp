@@ -25,7 +25,7 @@
 
 #include <QAbstractButton>
 #include <QApplication>
-#include <QDesktopWidget>
+//#include <QDesktopWidget>
 #include <QEvent>
 #include <QLabel>
 #include <QLayout>
@@ -37,6 +37,7 @@
 #include <QStyleOption>
 #include <QTextCodec>
 #include <QWidgetAction>
+#include <QScreen>
 
 #include <cmath>
 
@@ -268,7 +269,8 @@ void IconSelect::createLayout()
 {
     Q_ASSERT(!grid);
     grid = new QGridLayout(this);
-    grid->setMargin(style()->pixelMetric(QStyle::PM_MenuPanelWidth, nullptr, this));
+    auto margin = style()->pixelMetric(QStyle::PM_MenuPanelWidth, nullptr, this);
+    grid->setContentsMargins(margin, margin, margin, margin);
     grid->setSpacing(1);
 }
 
@@ -327,7 +329,7 @@ void IconSelect::setIconset(const Iconset &iconset)
     const int margin   = 2;
     int       tileSize = int(qMax(w, h)) + 2 * margin;
 
-    QRect r       = QApplication::desktop()->availableGeometry(menu);
+    QRect r       = menu->screen()->availableGeometry();
     int   maxSize = qMin(r.width(), r.height()) / 3;
 
     int size       = int(ceil(std::sqrt(count)));
@@ -453,7 +455,7 @@ public slots:
     void updatedGeometry()
     {
         widgetAction_->setDefaultWidget(scrollArea_);
-        QRect r       = QApplication::desktop()->availableGeometry(scrollArea_);
+        QRect r       = scrollArea_->screen()->availableGeometry();
         int   maxSize = qMin(r.width(), r.height()) / 3;
         int   vBarWidth
             = scrollArea_->verticalScrollBar()->isEnabled() ? scrollArea_->verticalScrollBar()->sizeHint().rwidth() : 0;

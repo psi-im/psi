@@ -249,17 +249,17 @@ public:
     {
         QHBoxLayout *mainbox = new QHBoxLayout(parent);
         mainbox->setSpacing(0);
-        mainbox->setMargin(0);
+        mainbox->setContentsMargins(0, 0, 0, 0);
 
         frame = new MyFancyFrame(parent, &from, &to);
         frame->setFrameShape(QFrame::StyledPanel);
         frame->setFrameShadow(QFrame::Raised);
 
         QHBoxLayout *frameLayout = new QHBoxLayout(frame);
-        frameLayout->setMargin(0);
+        frameLayout->setContentsMargins(0, 0, 0, 0);
         frameLayout->setSpacing(0);
         QVBoxLayout *layout = new QVBoxLayout;
-        layout->setMargin(0);
+        layout->setContentsMargins(0, 0, 0, 0);
         layout->setSpacing(0);
         frameLayout->addLayout(layout);
 

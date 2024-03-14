@@ -27,11 +27,12 @@
 #include "ui_fancypopup.h"
 
 #include <QApplication>
-#include <QDesktopWidget>
+//#include <QDesktopWidget>
 #include <QList>
 #include <QMouseEvent>
 #include <QStyle>
 #include <QTimer>
+#include <QScreen>
 
 #define BUTTON_WIDTH 16
 #define BUTTON_HEIGHT 14
@@ -136,7 +137,7 @@ void FancyPopup::Private::popupDestroyed(QObject *obj)
 
 QPoint FancyPopup::Private::position()
 {
-    QRect geom = qApp->desktop()->availableGeometry(popup);
+    QRect geom = popup->screen()->availableGeometry();
     bool  topToBottom
         = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.top-to-bottom").toBool();
     bool atLeft = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.at-left-corner").toBool();

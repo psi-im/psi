@@ -136,7 +136,7 @@ ActionLineEdit::ActionLineEdit(QWidget *parent) : QLineEdit(parent), toolButtonS
     QHBoxLayout *layout = new QHBoxLayout;
     setLayout(layout);
     layout->setSpacing(0);
-    layout->setMargin(0);
+    layout->setContentsMargins(0, 0, 0, 0);
     layout->insertStretch(0);
 }
 

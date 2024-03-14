@@ -273,7 +273,11 @@ void GAdvancedWidget::Private::restoreGeometry()
     PsiOptions *o = PsiOptions::instance();
     QVariant    v(o->getOption(geometryOptionPath_));
 
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+    if (v.type() == QVariant::ByteArray) {
+#else
     if (v.typeId() == QVariant::ByteArray) {
+#endif
         // migrate options back from format used for a short time before
         // 0.12-RC2. This can be removed later.
         parentWidget_->restoreGeometry(v.toByteArray());

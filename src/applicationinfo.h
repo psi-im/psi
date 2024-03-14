@@ -1,6 +1,8 @@
 #ifndef APPLICATIONINFO_H
 #define APPLICATIONINFO_H
 
+#include <QStringList>
+
 class QLatin1String;
 class QString;
 

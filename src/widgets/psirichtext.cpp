@@ -267,7 +267,7 @@ static QStringView preserveOriginalObjectReplacementCharacters(const QStringView
     // But we must be careful if some other character instead of
     // 0x20 is used immediately after tag opening, this could
     // create a hole. ejabberd protects us from it though.
-    objReplChars += text.count(QLatin1StringView{"<img "});
+    objReplChars += text.count(QStringLiteral(u"<img "));
     for (int i = objReplChars; i; i--) {
         queue->enqueue(nullptr);
     }
@@ -292,7 +292,7 @@ static QString convertIconsToObjectReplacementCharacters(const QStringView &text
         start = work.indexOf(QLatin1Char('<'), start + 1);
         if (start == -1)
             break;
-        if (work.mid(start + 1, 4) == QLatin1StringView{"icon"}) {
+        if (work.mid(start + 1, 4) == QLatin1String{"icon"}) {
             // Format: <icon name="" text="">
             static QRegularExpression rxName("name=\"([^\"]+)\"");
             static QRegularExpression rxText("text=\"([^\"]+)\"");

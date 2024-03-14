@@ -23,7 +23,7 @@
 #include "psitiplabel.h"
 
 #include <QApplication>
-#include <QDesktopWidget>
+//#include <QDesktopWidget>
 #include <QHash>
 #include <QKeyEvent>
 #include <QPointer>
@@ -181,7 +181,7 @@ void PsiToolTip::doShowText(const QPoint &pos, const QString &text, const QWidge
     bool preventAnimation = (PsiTipLabel::instance() != nullptr);
 
     installPsiToolTipFont();
-    QFrame *label = createTipLabel(text, QApplication::desktop());
+    QFrame *label = createTipLabel(text, nullptr);
     label->move(calc->calculateTipPosition(label));
 
     if (QApplication::isEffectEnabled(Qt::UI_AnimateTooltip) == false || preventAnimation)

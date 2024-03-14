@@ -4,6 +4,10 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "")
 endif()
 
+if("${QT_DEFAULT_MAJOR_VERSION}" STREQUAL "")
+    set(QT_DEFAULT_MAJOR_VERSION 5)
+endif()
+
 # Psi or Psi+ detection
 option(PSI_PLUS "Build Psi+ client instead of Psi" OFF)
 if(PSI_PLUS)
@@ -43,11 +47,6 @@ set( DEFAULT_BUNDLED_USRSCTP OFF )
 if (APPLE OR (MSVC OR USE_MXE))
     set( DEFAULT_BUNDLED_USRSCTP ON )
 endif()
-
-if(QT_DEFAULT_MAJOR_VERSION STREQUAL "")
-    set(QT_DEFAULT_MAJOR_VERSION 6)
-endif()
-
 
 # Common options
 set( CHAT_TYPE "BASIC" CACHE STRING "Type of chatlog engine. WEBKIT | WEBENGINE | BASIC" )
@@ -116,10 +115,6 @@ set( GLOBAL_DEPENDS_DEBUG_MODE ON )
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules" )
 
 include(policyRules)
-
-if(QT_DEFAULT_MAJOR_VERSION STREQUAL "")
-    set(QT_DEFAULT_MAJOR_VERSION 5)
-endif()
 
 set(IS_WEBKIT OFF CACHE INTERNAL "Use webkit. Internal variable")
 set(IS_WEBENGINE OFF CACHE INTERNAL "Use webengine. Internal variable")
