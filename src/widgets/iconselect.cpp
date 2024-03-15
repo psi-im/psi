@@ -21,11 +21,9 @@
 
 #include "emojiregistry.h"
 #include "iconset.h"
-#include "psitooltip.h"
 
 #include <QAbstractButton>
 #include <QApplication>
-//#include <QDesktopWidget>
 #include <QEvent>
 #include <QLabel>
 #include <QLayout>
@@ -35,7 +33,6 @@
 #include <QScrollBar>
 #include <QStyle>
 #include <QStyleOption>
-#include <QTextCodec>
 #include <QWidgetAction>
 #include <QScreen>
 

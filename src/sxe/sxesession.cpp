@@ -200,7 +200,7 @@ QList<const SxeEdit *> SxeSession::startQueueing()
     return nonDocElementEdits + edits;
 }
 
-void SxeSession::arrangeEdits(QHash<QString, QString> &ridByParent, QList<const SxeEdit *> &output,
+void SxeSession::arrangeEdits(QMultiHash<QString, QString> &ridByParent, QList<const SxeEdit *> &output,
                               const QString &iterator)
 {
     // add the edits to this node

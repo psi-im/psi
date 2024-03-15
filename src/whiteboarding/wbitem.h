@@ -21,12 +21,12 @@
 #define WBITEM_H
 
 #include "../sxe/sxesession.h"
-#include "iconaction.h"
 
 #include <QGraphicsScene>
 #include <QGraphicsSceneMouseEvent>
 #include <QGraphicsSvgItem>
 #include <QMenu>
+#include <QTransform>
 
 class WbScene;
 class WbWidget;
@@ -88,9 +88,9 @@ public:
     void resetPos();
 
     /*! \brief Returns a QTransform based on \a string provided in the SVG 'transform' attribute format.*/
-    static QMatrix parseSvgTransform(QString string);
+    static QTransform parseSvgTransform(QString string);
     /*! \brief Returns a QString in the SVG 'transform' attribute format based on \a matrix.*/
-    static QString toSvgTransform(const QMatrix &matrix);
+    static QString toSvgTransform(const QTransform &matrix);
 
 protected:
     /*! \brief Constructs and popsup the default context menu.*/

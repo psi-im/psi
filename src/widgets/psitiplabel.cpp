@@ -164,7 +164,7 @@ void PsiTipLabel::paintEvent(QPaintEvent *)
 {
     QStylePainter     p(this);
     QStyleOptionFrame opt;
-    opt.init(this);
+    opt.initFrom(this);
     if (enableColoring_) {
         p.drawPrimitive(QStyle::PE_Frame, opt);
     } else {

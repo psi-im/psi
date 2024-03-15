@@ -203,7 +203,7 @@ private:
     /*! \brief Generates SxeRemoveEdits for \a node and its children. */
     void generateRemoves(const QDomNode &node);
     /*! \brief Recursive helper method for arranging edits for the snapshot. */
-    void arrangeEdits(QHash<QString, QString> &ridByParent, QList<const SxeEdit *> &output, const QString &iterator);
+    void arrangeEdits(QMultiHash<QString, QString> &ridByParent, QList<const SxeEdit *> &output, const QString &iterator);
     /*! \brief Insert node with the given primaryWeight.
      *  Returns node if the node was already in the document. Otherwise returns the created node. */
     const QDomNode insertNode(const QDomNode &node, const QString &parentId, double primaryWeight);

@@ -21,13 +21,16 @@
 
 #include "wbscene.h"
 #include "wbwidget.h"
+#include <iconaction.h>
 
 #include <QDebug>
 #include <QRegularExpression>
 #include <QSvgRenderer>
+#include <QActionGroup>
+
 #include <math.h>
 
-static QMatrix parseTransformationMatrix(const QString &value);
+static QTransform parseTransformationMatrix(const QString &value);
 
 /*
  *    WbItemMenu
@@ -140,7 +143,7 @@ void WbItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
             //          qDebug() << QString("d: %1 %2 = %3 %4 + %5
             //          %6").arg(difference.x()).arg(difference.y()).arg(event->scenePos().x()).arg(event->scenePos().y()).arg(event->lastScenePos().x()).arg(event->lastScenePos().y());
             QPointF p = event->scenePos();
-            QMatrix delta;
+            QTransform delta;
             if (p.x() >= scenePivot.x() && p.y() >= scenePivot.y()) {
                 delta.rotate((-difference.x() + difference.y()) / 2);
             } else if (p.x() < scenePivot.x() && p.y() >= scenePivot.y()) {
@@ -154,7 +157,7 @@ void WbItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
             const auto &gItems = scene()->selectedItems();
             for (QGraphicsItem *graphicsitem : gItems) {
                 if (!graphicsitem->parentItem() || !graphicsitem->parentItem()->isSelected()) {
-                    QMatrix translation;
+                    QTransform translation;
                     // get center coordinates of selected items in item coordinates
                     QPointF itemPivot = graphicsitem->mapFromScene(scenePivot);
                     // translates the the item's center to the origin of the item coordinates
@@ -178,7 +181,7 @@ void WbItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 
                     // get center coordinates in item coordinates
                     QPointF c = center();
-                    QMatrix translation, delta;
+                    QTransform translation, delta;
                     // translates the the item's center to the origin of the item coordinates
                     translation.translate(-c.x(), -c.y());
                     // Scale.
@@ -188,7 +191,7 @@ void WbItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
                     // Note: the y axis points downwards in scene coordinates
                     delta.scale(1 + difference.x() / 50, 1 - difference.y() / 50);
                     // set the matrix
-                    setTransform(QTransform(translation * delta * translation.inverted()), true);
+                    setTransform(translation * delta * translation.inverted(), true);
 
                     // Regenerate the SVG transformation matrix later
                     scene_->queueTransformationRegeneration(dynamic_cast<WbItem *>(graphicsitem));
@@ -205,16 +208,16 @@ void WbItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
     scene_->regenerateTransformations();
 }
 
-QMatrix WbItem::parseSvgTransform(QString string)
+QTransform WbItem::parseSvgTransform(QString string)
 {
     string = string.trimmed();
     if (string.isEmpty())
-        return QMatrix();
+        return {};
 
     return parseTransformationMatrix(string);
 }
 
-QString WbItem::toSvgTransform(const QMatrix &m)
+QString WbItem::toSvgTransform(const QTransform &m)
 {
     return QString("matrix(%1 %2 %3 %4 %5 %6)")
         .arg(m.m11())
@@ -231,16 +234,16 @@ void WbItem::regenerateTransform()
     // Possible as long as no perspective transformations have been applied.
 
     // delta is the new transformation to be applied
-    QMatrix delta = transform().toAffine();
+    QTransform delta = transform();
     if (delta.isIdentity())
         return;
 
     // get the existing SVG transformation
     QString oldValue     = node_.attribute("transform");
-    QMatrix oldTransform = parseSvgTransform(oldValue);
+    QTransform oldTransform = parseSvgTransform(oldValue);
 
     // construct a translation that translates the item to (0,0) in scene coordinates
-    QMatrix translation;
+    QTransform translation;
     // translates the the item's center to the origin of the item coordinates
     translation.translate(-pos().x(), -pos().y());
 
@@ -533,9 +536,9 @@ static QVector<qreal> parseNumbersList(const QChar *&str)
     return points;
 }
 
-static QMatrix parseTransformationMatrix(const QString &value)
+static QTransform parseTransformationMatrix(const QString &value)
 {
-    QMatrix      matrix;
+    QTransform      matrix;
     const QChar *str = value.constData();
 
     while (*str != QLatin1Char(0)) {
@@ -614,7 +617,7 @@ static QMatrix parseTransformationMatrix(const QString &value)
             if (points.count() != 6) {
                 goto error;
             }
-            matrix = matrix * QMatrix(points[0], points[1], points[2], points[3], points[4], points[5]);
+            matrix = matrix * QTransform(points[0], points[1], points[2], points[3], points[4], points[5]);
         } else if (state == State::Translate) {
             if (points.count() == 1)
                 matrix.translate(points[0], 0);

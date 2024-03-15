@@ -223,7 +223,7 @@ void GAdvancedWidget::Private::doFlash(bool yes)
 
 void GAdvancedWidget::Private::moveEvent(QMoveEvent *)
 {
-    if (!parentWidget_->isTopLevel())
+    if (!parentWidget_->isWindow())
         return;
 #ifdef Q_OS_MAC
     QRect r = qApp->desktop()->availableGeometry(parentWidget_);

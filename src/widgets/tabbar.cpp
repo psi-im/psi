@@ -44,7 +44,7 @@ public:
 
     QSize        sizeHint() const;
     inline QSize minimumSizeHint() const { return sizeHint(); }
-    void         enterEvent(QEvent *event);
+    void         enterEvent(QEnterEvent *event);
     void         leaveEvent(QEvent *event);
     void         paintEvent(QPaintEvent *event);
 };
@@ -838,7 +838,7 @@ static void initStyleBaseOption(QStyleOptionTabBarBase *optTabBase, QTabBar *tab
     tabOverlap.shape   = tabbar->shape();
     int      overlap   = tabbar->style()->pixelMetric(QStyle::PM_TabBarBaseOverlap, &tabOverlap, tabbar);
     QWidget *theParent = tabbar->parentWidget();
-    optTabBase->init(tabbar);
+    optTabBase->initFrom(tabbar);
     optTabBase->shape        = tabbar->shape();
     optTabBase->documentMode = tabbar->documentMode();
     if (theParent && overlap > 0) {
@@ -1222,7 +1222,7 @@ QSize CloseButton::sizeHint() const
     return { width, height };
 }
 
-void CloseButton::enterEvent(QEvent *event)
+void CloseButton::enterEvent(QEnterEvent *event)
 {
     if (isEnabled())
         update();

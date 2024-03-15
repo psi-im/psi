@@ -36,13 +36,13 @@
 #include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
-// #include <QMessageBoxEx>
 #include <QResizeEvent>
 #include <QShowEvent>
 #include <QToolBar>
 
 class AccountLabel;
 class PsiAccount;
+class IconAction;
 
 using namespace XMPP;
 

@@ -29,7 +29,7 @@ TabDlg *TabManager::getTabs(QWidget *widget)
 
 QChar TabManager::tabKind(QWidget *widget)
 {
-    QChar retval = 0;
+    QChar retval;
     if (widget) {
         const QString name = widget->objectName();
         if (name == "ChatDlg") {
