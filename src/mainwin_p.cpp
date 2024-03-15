@@ -163,7 +163,7 @@ void PopupActionButton::paintEvent(QPaintEvent *p)
 
     if (showText) {
         QStyleOptionButton style_option;
-        style_option.init(this);
+        style_option.initFrom(this);
         QRect r = style()->subElementRect(QStyle::SE_PushButtonContents, &style_option, this);
 
         if (menu())

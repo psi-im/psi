@@ -26,7 +26,7 @@ class Certificate {
 public:
     Certificate(const QString &id = "") { id_ = id; }
 
-    bool operator==(const Certificate &other) { return other.id_ == id_; }
+    bool operator==(const Certificate &other) const { return other.id_ == id_; }
 
     static Certificate fromPEMFile(const QString &, ConvertResult *result)
     {

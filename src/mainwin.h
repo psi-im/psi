@@ -75,7 +75,11 @@ protected:
     void      resizeEvent(QResizeEvent *e);
     void      closeEvent(QCloseEvent *);
     void      changeEvent(QEvent *event);
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
     void      enterEvent(QEvent *e);
+#else
+    void      enterEvent(QEnterEvent *e);
+#endif
     void      leaveEvent(QEvent *e);
     void      keyPressEvent(QKeyEvent *);
     QMenuBar *mainMenuBar() const;

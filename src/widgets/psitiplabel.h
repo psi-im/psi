@@ -29,7 +29,11 @@ public:
     void hideTip();
 
 protected:
-    void enterEvent(QEvent *);
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+    void enterEvent(QEvent *e);
+#else
+    void enterEvent(QEnterEvent *e);
+#endif
     void timerEvent(QTimerEvent *e);
     void paintEvent(QPaintEvent *e);
     // QSize sizeForWidth(int w) const;

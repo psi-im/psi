@@ -523,7 +523,11 @@ bool EDBFlatFile::File::append(const PsiEvent::Ptr &e)
 
     QTextStream t;
     t.setDevice(&f);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    t.setEncoding(QStringConverter::Utf8);
+#else
     t.setCodec("UTF-8");
+#endif
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
     t << line << Qt::endl;
 #else
@@ -730,7 +734,11 @@ QString EDBFlatFile::File::getLine(int id)
 
     QTextStream t;
     t.setDevice(&f);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    t.setEncoding(QStringConverter::Utf8);
+#else
     t.setCodec("UTF-8");
+#endif
     return t.readLine();
 }
 

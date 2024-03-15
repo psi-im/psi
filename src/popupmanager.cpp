@@ -42,7 +42,7 @@ struct OptionValue {
     int     optionValue; // value in secconds
     int     id;
 
-    bool operator==(const OptionValue &other) { return optionName == other.optionName; }
+    bool operator==(const OptionValue &other) const { return optionName == other.optionName; }
 };
 
 class PopupManager::Private {

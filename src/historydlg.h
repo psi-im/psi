@@ -68,7 +68,7 @@ private:
     bool              active;
     int               direction;
     QString           s_string;
-    QHash<uint, int>  map;
+    QHash<qint64, int>  map;
     QVector<Position> list;
     PsiCon *          psi;
     DisplayProxy *    dp;

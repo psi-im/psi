@@ -169,7 +169,7 @@ EDBHandle *SearchProxy::getEDBHandle()
 
 void SearchProxy::movePosition(int dir)
 {
-    int idx = map.value(position.date.toTime_t(), -1);
+    int idx = map.value(position.date.toSecsSinceEpoch(), -1);
     Q_ASSERT(idx >= 0 && idx < list.count());
     if (dir == EDB::Forward) {
         if (list.at(idx).num == position.num) {
@@ -199,7 +199,7 @@ int SearchProxy::invertSearchPosition(const Position &pos, int dir)
 {
     int num = pos.num;
     if (dir == EDB::Backward) {
-        int idx = map.value(pos.date.toTime_t(), -1);
+        int idx = map.value(pos.date.toSecsSinceEpoch(), -1);
         Q_ASSERT(idx >= 0 && idx < list.count());
         num = list.at(idx).num - pos.num + 1;
         Q_ASSERT(num > 0);
@@ -226,7 +226,7 @@ void SearchProxy::handleFoundData(const EDBResult &r)
         int               m  = me->message().body().count(s_string, Qt::CaseInsensitive);
         Position          pos;
         pos.date = me->timeStamp();
-        uint t   = pos.date.toTime_t();
+        auto t   = pos.date.toSecsSinceEpoch();
         int  idx = map.value(t, -1);
         if (idx == -1) {
             pos.num = m;
@@ -259,7 +259,7 @@ void SearchProxy::handlePadding(const EDBResult &r)
     EDBItemPtr    item = r.value(cnt - 1);
     PsiEvent::Ptr e(item->event());
     QDateTime     s_date = e->timeStamp();
-    int           idx    = map.value(position.date.toTime_t());
+    int           idx    = map.value(position.date.toSecsSinceEpoch());
     int           off    = (direction == EDB::Forward) ? -1 : 1;
     idx += off;
     while (idx >= 0 && idx < list.count()) {
@@ -403,9 +403,11 @@ void DisplayProxy::displayWithSearchCursor(const QString &acc_id, const Jid &jid
 bool DisplayProxy::isMessage(const QTextCursor &cursor) const
 {
     int pos = cursor.positionInBlock();
-    if (pos > 22)                                                       // the timestamp length
-        if (cursor.block().text().leftRef(pos - 1).indexOf("> ") != -1) // skip nickname
+    if (pos > 22) {                                                      // the timestamp length
+        auto text = cursor.block().text();
+        if (QStringView{text}.left(pos - 1).indexOf(QLatin1String{"> "}) != -1) // skip nickname
             return true;
+    }
     return false;
 }
 

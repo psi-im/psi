@@ -186,7 +186,11 @@ bool FileSharingItem::initFromCache(FileCacheItem *cache)
 
     _sums       = cache->sums();
     auto urisvl = md.value(QString::fromLatin1("uris"));
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
     if (urisvl.type() == QVariant::StringList)
+#else
+    if (urisvl.typeId() == QMetaType::QStringList)
+#endif
         _uris = urisvl.toStringList();
 
     QString httpScheme(QString::fromLatin1("http"));
@@ -271,7 +275,7 @@ QIcon FileSharingItem::thumbnail(const QSize &size) const
         painter.drawImage(imgRect, img);
         return QIcon(QPixmap::fromImage(std::move(back)));
     }
-    return QFileIconProvider().icon(_fileName);
+    return QFileIconProvider().icon(QFileInfo(_fileName));
 }
 
 QImage FileSharingItem::preview(const QSize &maxSize) const
@@ -325,7 +329,7 @@ void FileSharingItem::publish(const XMPP::Jid &myJid)
                 // like http
                 meta["uris"] = _uris;
             if (_fileType == FileType::TempFile) {
-                auto cache = _manager->moveToCache(_sums, _fileName, meta, TEMP_TTL);
+                auto cache = _manager->moveToCache(_sums, QFileInfo(_fileName), meta, TEMP_TTL);
                 if (cache) {
                     _fileType = FileType::LocalFile;
                     _fileName = _manager->cacheDir() + "/" + cache->fileName();
@@ -423,7 +427,7 @@ FileShareDownloader *FileSharingItem::download(bool isRanged, qint64 start, quin
             vm.insert(QString::fromLatin1("amplitudes"), amplitudes);
         }
 
-        auto cache = _manager->moveToCache(_sums, dlFileName, vm, FILE_TTL);
+        auto cache = _manager->moveToCache(_sums, QFileInfo(dlFileName), vm, FILE_TTL);
         if (cache) {
             // TODO set some item flags?
             _fileType = FileType::LocalFile;

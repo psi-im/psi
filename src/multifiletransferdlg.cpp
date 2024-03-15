@@ -382,7 +382,7 @@ void MultiFileTransferDlg::addTransferContent(MultiFileTransferItem *item)
         p.save(&buffer, "PNG");
         thumb = XMPP::Thumbnail(ba, "image/png", quint32(p.width()), quint32(p.height()));
     }
-    app->setFile(item->filePath(), item->description(), thumb);
+    app->setFile(QFileInfo{item->filePath()}, item->description(), thumb);
 
     d->session->addContent(app);
 }

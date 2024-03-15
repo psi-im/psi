@@ -20,6 +20,7 @@
 #include "mucaffiliationsmodel.h"
 
 #include <QFont>
+#include <QIODevice>
 #include <QMimeData>
 #include <QVariant>
 

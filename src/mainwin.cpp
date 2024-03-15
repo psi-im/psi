@@ -1458,7 +1458,11 @@ void MainWin::keyPressEvent(QKeyEvent *e)
     QWidget::keyPressEvent(e);
 }
 
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
 void MainWin::enterEvent(QEvent *e)
+#else
+void MainWin::enterEvent(QEnterEvent *e)
+#endif
 {
     if (d->hideTimer)
         d->hideTimer->stop();

@@ -36,7 +36,6 @@
 
 #include <QApplication>
 #include <QBoxLayout>
-#include <QDesktopWidget>
 #include <QDir>
 #include <QFile>
 #include <QLibrary>
@@ -46,16 +45,22 @@
 #include <QPaintDevice>
 #include <QProcess>
 #include <QRegularExpression>
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
 #include <QSound>
+#else
+#include <QSoundEffect>
+#endif
 #include <QUrl>
 #include <QUuid>
+#include <QScreen>
+
 #ifdef __GLIBC__
 #include <langinfo.h>
 #endif
 #ifdef HAVE_KEYCHAIN
 #include <qt5keychain/keychain.h>
 #endif
-#include <stdio.h>
+//#include <stdio.h>
 #ifdef Q_OS_MAC
 #include <Carbon/Carbon.h> // for HIToolbox/InternetConfig
 #include <CoreServices/CoreServices.h>
@@ -536,7 +541,7 @@ ToolbarPrefs::ToolbarPrefs() :
     id = QUuid::createUuid().toString();
 }
 
-bool ToolbarPrefs::operator==(const ToolbarPrefs &other)
+bool ToolbarPrefs::operator==(const ToolbarPrefs &other) const
 {
     return id == other.id && name == other.name && keys == other.keys && dock == other.dock &&
         // dirty == other.dirty &&
@@ -769,7 +774,7 @@ int pointToPixel(qreal points)
     // is 1/72 of an inch
     static const double postScriptPoint = 1 / 72.;
 
-    return qRound(points * (qApp->desktop()->logicalDpiX() * postScriptPoint));
+    return qRound(points * (qApp->primaryScreen()->logicalDotsPerInch() * postScriptPoint));
 }
 
 int computeScaleFactor(QPaintDevice *pd)
@@ -779,7 +784,7 @@ int computeScaleFactor(QPaintDevice *pd)
         if (pd->devicePixelRatio() > 1) {
             factor = 1; // It's autodetected by Qt. it will scale everything on it's own.
         } else {
-            factor = qApp->desktop()->logicalDpiX() / 90;
+            factor = qApp->primaryScreen()->logicalDotsPerInch() / 90;
             if (!factor) {
                 factor = 1;
             }

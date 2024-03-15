@@ -1525,7 +1525,7 @@ void GCMainDlg::doClearButton()
         switch (QMessageBox::warning(
             this, tr("Warning"),
             tr("Are you sure you want to clear the chat window?\n(note: does not affect saved history)"),
-            QMessageBox::Yes, QMessageBox::YesAll, QMessageBox::No)) {
+            QMessageBox::Yes | QMessageBox::YesAll | QMessageBox::No)) {
         case QMessageBox::No:
             break;
         case QMessageBox::YesAll:

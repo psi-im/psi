@@ -497,7 +497,7 @@ public slots:
         PsiRichText::addEmoticon(mle, text);
     }
 
-    void updateCounter() { lb_count->setNum(mle->getPlainText().length()); }
+    void updateCounter() { lb_count->setNum(int(mle->getPlainText().length())); }
 };
 
 EventDlg::EventDlg(const QString &to, PsiCon *psi, PsiAccount *pa) : AdvancedWidget<QWidget>(nullptr)

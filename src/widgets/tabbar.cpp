@@ -44,7 +44,11 @@ public:
 
     QSize        sizeHint() const;
     inline QSize minimumSizeHint() const { return sizeHint(); }
-    void         enterEvent(QEnterEvent *event);
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+    void enterEvent(QEvent *e);
+#else
+    void enterEvent(QEnterEvent *e);
+#endif
     void         leaveEvent(QEvent *event);
     void         paintEvent(QPaintEvent *event);
 };
@@ -1222,7 +1226,11 @@ QSize CloseButton::sizeHint() const
     return { width, height };
 }
 
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+void CloseButton::enterEvent(QEvent *event)
+#else
 void CloseButton::enterEvent(QEnterEvent *event)
+#endif
 {
     if (isEnabled())
         update();

@@ -31,9 +31,7 @@
 #include <QAbstractTextDocumentLayout>
 #include <QAction>
 #include <QApplication>
-#include <QAudioRecorder>
 #include <QClipboard>
-#include <QDesktopWidget>
 #include <QEvent>
 #include <QKeyEvent>
 #include <QLabel>

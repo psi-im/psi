@@ -47,7 +47,6 @@
 #include <QMessageBox>
 #include <QProcess>
 #include <QSettings>
-#include <QTextCodec>
 #include <QTime>
 #include <QTimer>
 #include <QTranslator>

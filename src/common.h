@@ -74,7 +74,7 @@ public:
     bool nl;
     // int extraOffset;
 
-    bool operator==(const ToolbarPrefs &other);
+    bool operator==(const ToolbarPrefs &other) const;
 };
 
 struct lateMigrationOptions {

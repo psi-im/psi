@@ -33,7 +33,6 @@
 #include "iris/xmpp_xmlcommon.h"
 
 #include <QApplication>
-#include <QDesktopWidget>
 #include <QDir>
 #include <QDomElement>
 #include <QFileInfo>

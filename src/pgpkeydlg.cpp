@@ -58,7 +58,11 @@ public:
     {
         for (int column = 0; column <= 1; ++column) {
             QModelIndex index = sourceModel()->index(sourceRow, column, sourceParent);
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
             if (index.data(Qt::DisplayRole).toString().contains(filterRegExp()))
+#else
+            if (index.data(Qt::DisplayRole).toString().contains(filterRegularExpression()))
+#endif
                 return true;
         }
         return false;

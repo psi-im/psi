@@ -31,7 +31,6 @@
 #include "psioptions.h"
 
 #include <QApplication>
-#include <QDesktopWidget>
 #include <QKeyEvent>
 #include <QLineEdit>
 #include <QMutableSetIterator>

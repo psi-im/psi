@@ -34,12 +34,12 @@
 #include "iris/xmpp_message.h"
 
 #include <QApplication>
-#include <QDesktopWidget>
 #include <QFileIconProvider>
 #include <QFileInfo>
 #include <QMimeData>
 #include <QPainter>
 #include <QPushButton>
+#include <QScreen>
 #include <QUrl>
 
 FileShareDlg::FileShareDlg(PsiAccount *acc, const XMPP::Jid &myJid, const QList<FileSharingItem *> &items,
@@ -74,7 +74,7 @@ FileShareDlg::FileShareDlg(PsiAccount *acc, const XMPP::Jid &myJid, const QList<
 
     QImage preview;
     if (items.count() > 1
-        || (preview = items[0]->preview(QApplication::desktop()->screenGeometry(this).size() / 2)).isNull()) {
+        || (preview = items[0]->preview(this->screen()->geometry().size() / 2)).isNull()) {
         ui->lv_files->show();
         ui->pixmapRatioLabel->hide();
     } else {
@@ -86,7 +86,7 @@ void FileShareDlg::showImage(const QImage &img)
 {
     auto pix = QPixmap::fromImage(img);
 
-    const auto sg = QApplication::desktop()->screenGeometry(this);
+    const auto sg = this->screen()->geometry();
     if (pix.size().boundedTo(sg.size() / 2) != pix.size()) {
         pix = pix.scaled(sg.size() / 2, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     }

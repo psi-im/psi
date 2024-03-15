@@ -206,7 +206,14 @@ void PsiTipLabel::hideTip()
     deleteTimer.start(250, this);
 }
 
-void PsiTipLabel::enterEvent(QEvent *) { hideTip(); }
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+void PsiTipLabel::enterEvent(QEvent *e)
+#else
+void PsiTipLabel::enterEvent(QEnterEvent *e)
+#endif
+{
+    hideTip();
+}
 
 void PsiTipLabel::timerEvent(QTimerEvent *e)
 {

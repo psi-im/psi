@@ -367,8 +367,8 @@ public:
 
     qint64 read(char *data, qint64 maxSize)
     {
-        if (maxSize >= receivedData.count()) {
-            qint64 ret = receivedData.count();
+        if (maxSize >= receivedData.size()) {
+            qint64 ret = receivedData.size();
             memcpy(data, receivedData.data(), size_t(ret));
             receivedData.clear();
             return ret;

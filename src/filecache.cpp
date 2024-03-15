@@ -148,7 +148,8 @@ FileCache::FileCache(const QString &cacheDir, QObject *parent) :
     bool        needCleanup = false;
     const auto &prefixes    = _registry->getChildOptionNames("", true, true);
     for (const QString &prefix : prefixes) {
-        QByteArray id = QByteArray::fromHex(prefix.section('.', -1).midRef(1).toLatin1());
+        auto section = prefix.section('.', -1);
+        QByteArray id = QByteArray::fromHex(QStringView{section}.mid(1).toLatin1());
         if (id.isEmpty())
             continue;
         auto hAlgo = _registry->getOption(prefix + ".ha", QString()).toString();
