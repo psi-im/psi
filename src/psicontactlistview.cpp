@@ -34,6 +34,7 @@
 #include <QHelpEvent>
 #include <QLayout>
 #include <QMimeData>
+#include <QScreen>
 #include <QTimer>
 
 static const int           recalculateTimerTimeout = 500;

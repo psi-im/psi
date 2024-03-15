@@ -290,7 +290,11 @@ void ContactListModel::Private::clear()
 
     operationQueue.clear();
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    QHashIterator<PsiContact *, QPersistentModelIndex> it(monitoredContacts);
+#else
     QMultiHashIterator<PsiContact *, QPersistentModelIndex> it(monitoredContacts);
+#endif
     while (it.hasNext()) {
         it.next();
         disconnect(it.key(), nullptr, this, nullptr);

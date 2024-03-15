@@ -1,5 +1,8 @@
 // This is a generated file. See emoji.py for details
 // clang-format off
+#include "qglobal.h"
+#include "emojiregistry.h"
+#include <vector>
 static std::vector<EmojiRegistry::Group> db = {
     {
         QT_TR_NOOP("Smileys & Emotion"),

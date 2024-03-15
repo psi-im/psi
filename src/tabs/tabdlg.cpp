@@ -39,6 +39,7 @@
 #include <QSignalMapper>
 #include <QTimer>
 #include <QVBoxLayout>
+#include <QVariant>
 #ifdef Q_OS_WIN
 #include <windows.h>
 #endif
@@ -254,7 +255,11 @@ void TabDlg::tab_aboutToShowMenu(QMenu *menu)
     int tabDlgMetaType = qRegisterMetaType<TabDlg *>("TabDlg*");
     for (TabDlg *tabSet : tabManager_->tabSets()) {
         QAction *act = sendTo->addAction(tabSet->desiredCaption());
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        act->setData(QVariant(tabDlgMetaType, &tabSet));
+#else
         act->setData(QVariant(QMetaType(tabDlgMetaType), &tabSet));
+#endif
         act->setEnabled(tabSet != this);
     }
     connect(sendTo, SIGNAL(triggered(QAction *)), SLOT(menu_sendTabTo(QAction *)));

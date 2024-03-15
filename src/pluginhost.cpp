@@ -610,7 +610,11 @@ bool PluginHost::incomingXml(int account, const QDomElement &e)
             }
 
             // regex filters
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+            QMapIterator<QRegularExpression, IqNamespaceFilter *> i(iqNsxFilters_);
+#else
             QMultiMapIterator<QRegularExpression, IqNamespaceFilter *> i(iqNsxFilters_);
+#endif
             while (!handled && i.hasNext()) {
                 if (i.key().match(ns).hasMatch() && (i.value()->*handler)(account, e)) {
                     handled = true;

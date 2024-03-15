@@ -1055,7 +1055,11 @@ QString PluginManager::installChatLogJSDataFilter(const QString &js, PsiPlugin::
 
 void PluginManager::uninstallChatLogJSDataFilter(const QString &id)
 {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    QMutableMapIterator<PsiPlugin::Priority, std::pair<QString, QString>> it(_messageViewJSFilters);
+#else
     QMutableMultiMapIterator<PsiPlugin::Priority, std::pair<QString, QString>> it(_messageViewJSFilters);
+#endif
 
     while (it.hasNext()) {
         if (it.next().value().first == id) {

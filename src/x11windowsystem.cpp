@@ -16,7 +16,7 @@ namespace {
 bool isPlatformX11()
 {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    return QX11Info::isPlatformX11());
+    return QX11Info::isPlatformX11();
 #else
     auto x11app = qApp->nativeInterface<QNativeInterface::QX11Application>();
     return !!x11app;
@@ -73,7 +73,7 @@ static bool getCardinal32Prop(Display *display, Window win, char *propName, long
 auto getDisplay()
 {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    return QX11Info::display());
+    return QX11Info::display();
 #else
     auto x11app = qApp->nativeInterface<QNativeInterface::QX11Application>();
     return x11app->display();
