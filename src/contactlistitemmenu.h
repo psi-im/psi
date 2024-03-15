@@ -43,12 +43,12 @@ public:
 protected:
     QKeySequence        shortcut(const QString &name) const;
     QList<QKeySequence> shortcuts(const QString &name) const;
-    ContactListModel *  model() const;
+    ContactListModel   *model() const;
 
 private:
-    ContactListItem * item_;
+    ContactListItem  *item_;
     ContactListModel *model_;
-    QLabel *          _lblTitle;
+    QLabel           *_lblTitle;
 };
 
 #endif // CONTACTLISTITEMMENU_H

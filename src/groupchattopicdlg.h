@@ -25,7 +25,7 @@ protected:
     void changeEvent(QEvent *e);
 
 private:
-    Ui::GroupchatTopicDlg *       m_ui;
+    Ui::GroupchatTopicDlg        *m_ui;
     Ui::GroupChatTopicAddLangDlg *m_addLangUi;
     QPointer<QDialog>             addLangDlg;
 

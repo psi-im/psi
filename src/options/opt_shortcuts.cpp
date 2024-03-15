@@ -94,7 +94,7 @@ void OptionsTabShortcuts::applyOptions()
         return;
 
     OptShortcutsUI *d       = static_cast<OptShortcutsUI *>(w);
-    PsiOptions *    options = PsiOptions::instance();
+    PsiOptions     *options = PsiOptions::instance();
 
     int              toplevelItemsCount = d->treeShortcuts->topLevelItemCount();
     int              shortcutItemsCount;
@@ -178,8 +178,8 @@ void OptionsTabShortcuts::readShortcuts(const PsiOptions *options)
     }
 
     int                 toplevelItemsCount = d->treeShortcuts->topLevelItemCount();
-    QTreeWidgetItem *   shortcutItem;
-    QTreeWidgetItem *   keyItem;
+    QTreeWidgetItem    *shortcutItem;
+    QTreeWidgetItem    *keyItem;
     QString             optionsPath;
     QString             comment;
     QList<QString>      shortcuts;
@@ -266,7 +266,7 @@ void OptionsTabShortcuts::onAdd()
  */
 void OptionsTabShortcuts::addTo(QTreeWidgetItem *shortcutItem)
 {
-    OptShortcutsUI *         d             = static_cast<OptShortcutsUI *>(w);
+    OptShortcutsUI          *d             = static_cast<OptShortcutsUI *>(w);
     QList<QTreeWidgetItem *> selectedItems = d->treeShortcuts->selectedItems();
 
     QTreeWidgetItem *newKeyItem = new QTreeWidgetItem(shortcutItem);
@@ -286,7 +286,7 @@ void OptionsTabShortcuts::addTo(QTreeWidgetItem *shortcutItem)
  */
 void OptionsTabShortcuts::onRemove()
 {
-    OptShortcutsUI *         d             = static_cast<OptShortcutsUI *>(w);
+    OptShortcutsUI          *d             = static_cast<OptShortcutsUI *>(w);
     QList<QTreeWidgetItem *> selectedItems = d->treeShortcuts->selectedItems();
 
     if (selectedItems.count() == 0)
@@ -319,7 +319,7 @@ void OptionsTabShortcuts::onRemove()
  */
 void OptionsTabShortcuts::onEdit()
 {
-    OptShortcutsUI *         d             = static_cast<OptShortcutsUI *>(w);
+    OptShortcutsUI          *d             = static_cast<OptShortcutsUI *>(w);
     QList<QTreeWidgetItem *> selectedItems = d->treeShortcuts->selectedItems();
 
     if (selectedItems.count() == 0)
@@ -364,7 +364,7 @@ void OptionsTabShortcuts::grep()
  */
 void OptionsTabShortcuts::onItemSelectionChanged()
 {
-    OptShortcutsUI *         d             = static_cast<OptShortcutsUI *>(w);
+    OptShortcutsUI          *d             = static_cast<OptShortcutsUI *>(w);
     QList<QTreeWidgetItem *> selectedItems = d->treeShortcuts->selectedItems();
     Kind                     itemKind;
 
@@ -423,8 +423,8 @@ void OptionsTabShortcuts::onItemDoubleClicked(QTreeWidgetItem *item, int column)
  */
 void OptionsTabShortcuts::onNewShortcutKey(const QKeySequence &key)
 {
-    OptShortcutsUI *         d = static_cast<OptShortcutsUI *>(w);
-    QTreeWidgetItem *        keyItem;
+    OptShortcutsUI          *d = static_cast<OptShortcutsUI *>(w);
+    QTreeWidgetItem         *keyItem;
     QList<QTreeWidgetItem *> selectedItems = d->treeShortcuts->selectedItems();
     Kind                     itemKind;
 

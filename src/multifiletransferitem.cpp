@@ -45,9 +45,7 @@ struct MultiFileTransferItem::Private {
 };
 
 MultiFileTransferItem::MultiFileTransferItem(MultiFileTransferModel::Direction direction, const QString &displayName,
-                                             quint64 fullSize, QObject *parent) :
-    QObject(parent),
-    d(new Private)
+                                             quint64 fullSize, QObject *parent) : QObject(parent), d(new Private)
 {
     d->direction   = direction;
     d->displayName = displayName;

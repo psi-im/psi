@@ -57,7 +57,7 @@ private:
 
     bool      lineEditEnabled_;
     ChatEdit *textEdit_;
-    QLayout * layout_;
+    QLayout  *layout_;
 };
 
 #endif // CHATEDITPROXY_H

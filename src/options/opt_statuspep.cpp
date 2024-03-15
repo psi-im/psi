@@ -45,7 +45,7 @@ void OptionsTabStatusPep::applyOptions()
     }
 
     OptStatusPepUI *d           = static_cast<OptStatusPepUI *>(w_);
-    PsiOptions *    o           = PsiOptions::instance();
+    PsiOptions     *o           = PsiOptions::instance();
     bool            publishTune = d->groupBox->isChecked();
     o->setOption(tunePublishOptionPath, publishTune);
     if (publishTune) {
@@ -74,7 +74,7 @@ void OptionsTabStatusPep::restoreOptions()
     }
 
     OptStatusPepUI *d = static_cast<OptStatusPepUI *>(w_);
-    PsiOptions *    o = PsiOptions::instance();
+    PsiOptions     *o = PsiOptions::instance();
     tuneFilters_      = o->getOption(tuneUrlFilterOptionPath).toString();
     d->tuneExtensions->setText(tuneFilters_);
     QStringList controllers = psi_->tuneManager()->controllerNames();

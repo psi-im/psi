@@ -47,7 +47,7 @@ public:
     Iconset                   activities;
     Iconset                   clients;
     Iconset                   affiliations;
-    const Iconset &           system() const;
+    const Iconset            &system() const;
     void                      stripFirstAnimFrame(Iconset *);
     static void               removeAnimation(Iconset *);
 

@@ -21,11 +21,11 @@
 
 #include "geolocation.h"
 #include "iconset.h"
-#include "pepmanager.h"
-#include "psiaccount.h"
 #include "iris/xmpp_client.h"
 #include "iris/xmpp_pubsubitem.h"
 #include "iris/xmpp_task.h"
+#include "pepmanager.h"
+#include "psiaccount.h"
 
 #include <QLineEdit>
 

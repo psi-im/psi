@@ -22,11 +22,11 @@
 #include "filesharingmanager.h"
 #include "fileutil.h"
 #include "iris/httpfileupload.h"
-#include "psiaccount.h"
-#include "userlist.h"
 #include "iris/xmpp_client.h"
 #include "iris/xmpp_reference.h"
 #include "iris/xmpp_thumbs.h"
+#include "psiaccount.h"
+#include "userlist.h"
 
 #include <QBuffer>
 #include <QCryptographicHash>
@@ -53,8 +53,7 @@ FileSharingItem::FileSharingItem(FileCacheItem *cache, PsiAccount *acc, FileShar
 
 FileSharingItem::FileSharingItem(const MediaSharing &ms, const Jid &from, PsiAccount *acc,
                                  FileSharingManager *manager) :
-    _acc(acc),
-    _manager(manager), _fileType(FileType::RemoteFile)
+    _acc(acc), _manager(manager), _fileType(FileType::RemoteFile)
 {
     _sums = ms.file.computedHashes();
     if (initFromCache()) {
@@ -130,8 +129,7 @@ FileSharingItem::FileSharingItem(const QString &fileName, PsiAccount *acc, FileS
 
 FileSharingItem::FileSharingItem(const QString &mime, const QByteArray &data, const QVariantMap &metaData,
                                  PsiAccount *acc, FileSharingManager *manager) :
-    QObject(manager),
-    _acc(acc), _manager(manager), _fileType(FileType::TempFile), _flags(SizeKnown),
+    QObject(manager), _acc(acc), _manager(manager), _fileType(FileType::TempFile), _flags(SizeKnown),
     _modifyTime(QDateTime::currentDateTimeUtc()), _metaData(metaData)
 {
     _sums.append(Hash::from(Hash::Sha1, data));
@@ -186,7 +184,7 @@ bool FileSharingItem::initFromCache(FileCacheItem *cache)
 
     _sums       = cache->sums();
     auto urisvl = md.value(QString::fromLatin1("uris"));
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     if (urisvl.type() == QVariant::StringList)
 #else
     if (urisvl.typeId() == QMetaType::QStringList)

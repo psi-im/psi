@@ -37,8 +37,8 @@ public:
     QString name() const;
     int     id() const;
 
-    IconAction *       action(const QString &name) const;
-    IconAction *       copyAction(const QString &name, QObject *parent = nullptr) const;
+    IconAction        *action(const QString &name) const;
+    IconAction        *copyAction(const QString &name, QObject *parent = nullptr) const;
     const QStringList &actions() const;
 
     void addAction(const QString &name, IconAction *action);
@@ -61,8 +61,8 @@ public:
     MetaActionList();
     ~MetaActionList();
 
-    ActionList *        actionList(const QString &name) const;
-    ActionList *        actionList(const QString &name, int id) const;
+    ActionList         *actionList(const QString &name) const;
+    ActionList         *actionList(const QString &name, int id) const;
     QList<ActionList *> actionLists(const unsigned int id) const;
     QStringList         actionLists() const;
 

@@ -19,8 +19,8 @@
 
 #include <cstdint>
 
-#include "emojiregistry.h"
 #include "emojidb.cpp"
+#include "emojiregistry.h"
 
 const EmojiRegistry &EmojiRegistry::instance()
 {
@@ -85,7 +85,7 @@ int EmojiRegistry::count() const
     return count;
 }
 
-std::pair<QStringView,int> EmojiRegistry::findEmoji(const QString &in, int idx) const
+std::pair<QStringView, int> EmojiRegistry::findEmoji(const QString &in, int idx) const
 {
     int emojiStart = -1;
 
@@ -93,7 +93,7 @@ std::pair<QStringView,int> EmojiRegistry::findEmoji(const QString &in, int idx) 
     bool gotSkin  = false;
     bool gotFQ    = false;
     for (; idx < in.size(); idx++) {
-        auto category = startCategory(QStringView{in}.mid(idx, in.size() - idx));
+        auto category = startCategory(QStringView { in }.mid(idx, in.size() - idx));
         if (gotEmoji && category != Category::None) {
             if (category == Category::ZWJ) { // zero-width joiner
                 gotEmoji = false;
@@ -130,7 +130,8 @@ std::pair<QStringView,int> EmojiRegistry::findEmoji(const QString &in, int idx) 
         if (in[idx].isHighSurrogate())
             idx++;
     }
-    return emojiStart == -1 ? std::make_pair(QStringView(),-1) : std::make_pair(QStringView{in}.mid(emojiStart, idx - emojiStart), emojiStart);
+    return emojiStart == -1 ? std::make_pair(QStringView(), -1)
+                            : std::make_pair(QStringView { in }.mid(emojiStart, idx - emojiStart), emojiStart);
 }
 
 EmojiRegistry::EmojiRegistry() : groups(std::move(db)), ranges_(std::move(ranges)) { }

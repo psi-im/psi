@@ -119,15 +119,15 @@ private:
 
     QMenu *pm_settings_;
 
-    ActionList *      actions_;
-    QAction *         act_mini_cmd_;
-    QAction *         act_minimize_;
+    ActionList       *actions_;
+    QAction          *act_mini_cmd_;
+    QAction          *act_minimize_;
     TypeAheadFindBar *typeahead_;
 
     ActionLineEdit *le_autojid;
-    IconAction *    act_autojid;
-    IconAction *    act_active_contacts;
-    IconAction *    act_pastesend_;
+    IconAction     *act_autojid;
+    IconAction     *act_active_contacts;
+    IconAction     *act_pastesend_;
 
     MCmdManager    mCmdManager_;
     MCmdSimpleSite mCmdSite_;

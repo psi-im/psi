@@ -27,7 +27,7 @@ protected slots:
 
 protected:
     struct supportedType {
-        const char *   name;
+        const char    *name;
         QVariant::Type typ;
     };
     static supportedType supportedTypes[];

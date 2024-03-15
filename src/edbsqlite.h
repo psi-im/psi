@@ -22,8 +22,8 @@
 
 #include "edbflatfile.h"
 #include "eventdb.h"
-#include "psievent.h"
 #include "iris/xmpp_jid.h"
+#include "psievent.h"
 
 #include <QDateTime>
 #include <QHash>
@@ -141,8 +141,8 @@ private:
     unsigned int            maxUncommitedRecs;
     int                     maxUncommitedSecs;
     unsigned int            commitByTimeoutSecs;
-    QTimer *                commitTimer;
-    EDBFlatFile *           mirror_;
+    QTimer                 *commitTimer;
+    EDBFlatFile            *mirror_;
     QList<item_query_req *> rlist;
     QHash<QString, qint64>  jidsCache;
     QueryStorage            queryes;

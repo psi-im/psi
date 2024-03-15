@@ -44,12 +44,12 @@ public:
     bool isNull() const;
 
     const QPixmap &pixmap() const;
-    const QImage & image() const;
+    const QImage  &image() const;
     void           setPixmap(const QPixmap &);
     void           setImage(const QImage &);
 
-           operator const QPixmap &() const { return pixmap(); }
-           operator const QImage &() const { return image(); }
+    operator const QPixmap &() const { return pixmap(); }
+    operator const QImage &() const { return image(); }
     Impix &operator=(const QPixmap &from)
     {
         setPixmap(from);
@@ -121,7 +121,7 @@ public:
     const QByteArray &raw() const;
     QSize             size(const QSize &desiredSize = QSize()) const;
     bool              isScalable() const;
-    const QString &   mimeType() const;
+    const QString    &mimeType() const;
 
     virtual const Impix &impix() const;
     virtual const Impix &frameImpix() const;
@@ -137,7 +137,7 @@ public:
     void                   setName(const QString &);
 
     const QRegularExpression &regExp() const;
-    void           setRegExp(const QRegularExpression &);
+    void                      setRegExp(const QRegularExpression &);
 
     struct IconText {
         IconText(QString _lang, QString _text) : lang(_lang), text(_text) { }
@@ -199,14 +199,14 @@ public:
     void           setIcon(const QString &, const PsiIcon &);
     void           removeIcon(const QString &);
 
-    const QString &    id() const;
-    const QString &    name() const;
-    const QString &    version() const;
-    const QString &    description() const;
+    const QString     &id() const;
+    const QString     &name() const;
+    const QString     &version() const;
+    const QString     &description() const;
     const QStringList &authors() const;
-    const QString &    creation() const;
-    const QString &    homeUrl() const;
-    const int &        iconSize() const;
+    const QString     &creation() const;
+    const QString     &homeUrl() const;
+    const int         &iconSize() const;
 
     const QString &fileName() const;
     void           setFileName(const QString &);
@@ -246,7 +246,7 @@ public:
         return iconPixmap(name, QSize(desiredSize, desiredSize));
     }
 
-    static const PsiIcon *   iconPtr(const QString &name);
+    static const PsiIcon    *iconPtr(const QString &name);
     static const QStringList icons();
 
     static const QByteArray raw(const QString &name);

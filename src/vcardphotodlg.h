@@ -11,12 +11,12 @@ public:
     ShowPhotoDlg(QWidget *parent, QPixmap &pixmap);
 
 private:
-    QDialog * showPhotoDlg;
-    QLabel *  label;
+    QDialog  *showPhotoDlg;
+    QLabel   *label;
     QPixmap   photoPixmap;
     QToolBar *toolbar;
-    QAction * saveAct;
-    QAction * restoreAct;
+    QAction  *saveAct;
+    QAction  *restoreAct;
     bool      initSize;
     void      createActions();
     void      updatePhoto(const QSize size);

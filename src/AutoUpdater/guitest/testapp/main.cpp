@@ -76,7 +76,7 @@ public slots:
     }
 
 private:
-    QTcpServer *              tcpServer_;
+    QTcpServer               *tcpServer_;
     QMap<QString, QByteArray> pages_;
 };
 
@@ -168,7 +168,7 @@ public slots:
     }
 
 private:
-    AutoUpdater *     updater_;
+    AutoUpdater      *updater_;
     SimpleHTTPServer *server_;
     QString           appCastURL_, releaseNotesURL_, releaseURL_;
 };

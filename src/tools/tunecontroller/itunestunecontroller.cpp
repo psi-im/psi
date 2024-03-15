@@ -36,7 +36,7 @@ static QString CFStringToQString(CFStringRef s)
 
     if (s != NULL) {
         CFIndex length = CFStringGetMaximumSizeForEncoding(CFStringGetLength(s), kCFStringEncodingUTF8) + 1;
-        char *  buffer = new char[length];
+        char   *buffer = new char[length];
         if (CFStringGetCString(s, buffer, length, kCFStringEncodingUTF8)) {
             result = QString::fromUtf8(buffer);
         } else {

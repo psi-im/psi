@@ -79,7 +79,7 @@ protected:
         }
 
         for (const QString &str : std::as_const(data)) {
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
             if (str.contains(filterRegExp()))
 #else
             if (str.contains(filterRegularExpression()))

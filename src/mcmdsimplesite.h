@@ -41,7 +41,7 @@ public:
     void         setInput(QTextEdit *i);
 
 protected:
-    QLabel *   promptWidget;
+    QLabel    *promptWidget;
     QTextEdit *inputWidget;
     bool       open;
     QString    mini_msg_swap;

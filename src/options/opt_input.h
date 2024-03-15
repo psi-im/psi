@@ -32,8 +32,8 @@ private slots:
     void itemChanged(QTreeWidgetItem *item, int column);
 
 private:
-    QWidget *                     w_;
-    PsiCon *                      psi_;
+    QWidget                      *w_;
+    PsiCon                       *psi_;
     QSet<LanguageManager::LangId> availableDicts_;
     QSet<LanguageManager::LangId> loadedDicts_;
     QSet<LanguageManager::LangId> defaultLangs_;

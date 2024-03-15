@@ -403,9 +403,9 @@ void DisplayProxy::displayWithSearchCursor(const QString &acc_id, const Jid &jid
 bool DisplayProxy::isMessage(const QTextCursor &cursor) const
 {
     int pos = cursor.positionInBlock();
-    if (pos > 22) {                                                      // the timestamp length
+    if (pos > 22) { // the timestamp length
         auto text = cursor.block().text();
-        if (QStringView{text}.left(pos - 1).indexOf(QLatin1String{"> "}) != -1) // skip nickname
+        if (QStringView { text }.left(pos - 1).indexOf(QLatin1String { "> " }) != -1) // skip nickname
             return true;
     }
     return false;
@@ -534,7 +534,7 @@ void DisplayProxy::displayResult(const EDBResult &r, int dir)
         EDBItemPtr    item = r.value(i);
         PsiEvent::Ptr e(item->event());
         if (e->type() == PsiEvent::Message) {
-            PsiAccount *      pa   = (acc) ? acc : e->account();
+            PsiAccount       *pa   = (acc) ? acc : e->account();
             QString           from = getNick(e->account(), e->from());
             MessageEvent::Ptr me   = e.staticCast<MessageEvent>();
             QString           msg  = me->message().body();
@@ -582,7 +582,7 @@ class HistoryDlg::Private {
 public:
     Jid         jid;
     PsiAccount *pa;
-    PsiCon *    psi;
+    PsiCon     *psi;
 #ifndef Q_OS_LINUX
     bool autoCopyText;
 #endif
@@ -948,7 +948,7 @@ void HistoryDlg::exportHistory()
     }
     QTextStream stream(&f);
 
-    EDB *   edb = nullptr;
+    EDB    *edb = nullptr;
     QString us;
     // PsiAccount *pa = nullptr;
     if (d->pa) {
@@ -1059,7 +1059,7 @@ void HistoryDlg::doMenu()
         return;
 
     openSelectedContact();
-    QMenu *  m    = new QMenu();
+    QMenu   *m    = new QMenu();
     QAction *chat = m->addAction(IconsetFactory::icon("psi/chat").icon(), tr("&Open chat"), this, SLOT(openChat()));
     QAction *exp
         = m->addAction(IconsetFactory::icon("psi/save").icon(), tr("&Export history"), this, SLOT(exportHistory()));

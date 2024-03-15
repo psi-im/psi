@@ -27,10 +27,10 @@ public:
     bool     stretchable() const;
 
 private:
-    QWidget *            w = nullptr;
+    QWidget             *w = nullptr;
     QPointer<QDialog>    infoDialog;
     Ui::PluginInfoDialog ui_;
-    PsiCon *             psi = nullptr;
+    PsiCon              *psi = nullptr;
 
 private slots:
     void listPlugins();

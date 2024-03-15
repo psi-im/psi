@@ -130,7 +130,7 @@ TabbableWidget::~TabbableWidget()
 }
 
 int                                 TabbableWidget::chatsCount      = 0;
-SendButtonTemplatesMenu *           TabbableWidget::templateMenu    = nullptr;
+SendButtonTemplatesMenu            *TabbableWidget::templateMenu    = nullptr;
 QPointer<SendButtonTemplatesEditor> TabbableWidget::templateEditDlg = nullptr;
 
 SendButtonTemplatesMenu *TabbableWidget::getTemplateMenu() { return TabbableWidget::templateMenu; }

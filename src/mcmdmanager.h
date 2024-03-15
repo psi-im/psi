@@ -80,7 +80,7 @@ protected:
     QString     serializeCommand(const QStringList &list);
 
     QList<MCmdProviderIface *> providers_;
-    MCmdStateIface *           state_;
+    MCmdStateIface            *state_;
 
     MCmdUiSiteIface *uiSite_;
 };

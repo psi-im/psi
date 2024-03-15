@@ -51,9 +51,9 @@ private slots:
 private:
     void updateArrows();
 
-    QWidget *   w      = nullptr;
-    QWidget *   parent = nullptr;
-    PsiCon *    psi    = nullptr;
+    QWidget    *w      = nullptr;
+    QWidget    *parent = nullptr;
+    PsiCon     *psi    = nullptr;
     bool        noDirty;
     IconButton *pb_apply = nullptr;
 

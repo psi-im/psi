@@ -31,7 +31,7 @@ private:
     X11WindowSystem();
     ~X11WindowSystem() { }
     X11WindowSystem(const X11WindowSystem &) = default;
-    X11WindowSystem &operator                =(const X11WindowSystem &);
+    X11WindowSystem &operator=(const X11WindowSystem &);
 
 public:
     static X11WindowSystem *instance();

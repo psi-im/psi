@@ -19,15 +19,15 @@
 #include "psiprivacymanager.h"
 
 #include "contactupdatesmanager.h"
+#include "iris/xmpp_jid.h"
+#include "iris/xmpp_task.h"
+#include "iris/xmpp_tasks.h"
+#include "iris/xmpp_xmlcommon.h"
 #include "privacylist.h"
 #include "privacymanager.h"
 #include "psiaccount.h"
 #include "psicon.h"
 #include "userlist.h"
-#include "iris/xmpp_jid.h"
-#include "iris/xmpp_task.h"
-#include "iris/xmpp_tasks.h"
-#include "iris/xmpp_xmlcommon.h"
 
 #include <QDebug>
 #include <QObject>

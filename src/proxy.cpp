@@ -21,8 +21,8 @@
 
 #include "common.h"
 #include "iconwidget.h"
-#include "psioptions.h"
 #include "iris/xmpp_xmlcommon.h"
+#include "psioptions.h"
 
 #include <QApplication>
 #include <QCheckBox>
@@ -107,7 +107,7 @@ public:
         TypeRole = Qt::UserRole + 8
     };
 
-    ProxyDlg *    q;
+    ProxyDlg     *q;
     ProxyItemList list;
 
     Private(ProxyDlg *dialog) : QObject(dialog), q(dialog)
@@ -327,8 +327,8 @@ class ProxyChooser::Private {
 public:
     Private() = default;
 
-    QComboBox *   cb_proxy = nullptr;
-    QPushButton * pb_edit  = nullptr;
+    QComboBox    *cb_proxy = nullptr;
+    QPushButton  *pb_edit  = nullptr;
     ProxyManager *m        = nullptr;
 };
 
@@ -469,8 +469,8 @@ public:
     QPointer<ProxyDlg> pd;
     QList<int>         prevMap;
     QString            lastEdited;
-    OptionsTree *      o  = nullptr;
-    ProxyForObject *   po = nullptr;
+    OptionsTree       *o  = nullptr;
+    ProxyForObject    *po = nullptr;
 
     void itemToOptions(ProxyItem pi)
     {

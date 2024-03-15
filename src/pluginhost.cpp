@@ -48,7 +48,7 @@
 #include "translationmanager.h"
 #include "webkitaccessor.h"
 #include "widgets/iconaction.h"
-//#include "xmpp_message.h"
+// #include "xmpp_message.h"
 
 #include <QAction>
 #include <QByteArray>
@@ -214,7 +214,7 @@ void PluginHost::updateMetadata()
 
     QString data = md.value(QLatin1String("icon")).toString();
     if (data.startsWith("base64:")) {
-        rawIcon_ = QByteArray::fromBase64(QStringView{data}.mid(6).toLatin1());
+        rawIcon_ = QByteArray::fromBase64(QStringView { data }.mid(6).toLatin1());
         QPixmap pix;
         pix.loadFromData(rawIcon_);
         icon_ = QIcon(pix);
@@ -983,7 +983,7 @@ void PluginHost::addIcon(const QString &name, const QByteArray &ba)
 
 QTextEdit *PluginHost::getEditBox()
 {
-    QTextEdit *     ed = nullptr;
+    QTextEdit      *ed = nullptr;
     TabbableWidget *tw = findActiveTab();
     if (tw) {
         QWidget *chatEditProxy = tw->findChild<QWidget *>("mle");
@@ -1141,7 +1141,7 @@ void PluginHost::addToolBarButton(QObject *parent, QWidget *toolbar, int account
             for (int i = 0; i < buttons_.size(); ++i) {
                 QVariantHash param  = buttons_.at(i);
                 QString      th     = param.value("tooltip").value<QString>();
-                IconAction * button = new IconAction(th, param.value("icon").value<QString>(), th, 0, parent);
+                IconAction  *button = new IconAction(th, param.value("icon").value<QString>(), th, 0, parent);
                 connect(button, SIGNAL(triggered()), param.value("reciver").value<QObject *>(),
                         param.value("slot").value<QString>().toLatin1());
                 connect(enableHandler, &QObject::destroyed, button, &QObject::deleteLater);
@@ -1167,7 +1167,7 @@ void PluginHost::addGCToolBarButton(QObject *parent, QWidget *toolbar, int accou
             for (int i = 0; i < gcbuttons_.size(); ++i) {
                 QVariantHash param  = gcbuttons_.at(i);
                 QString      th     = param.value("tooltip").value<QString>();
-                IconAction * button = new IconAction(th, param.value("icon").value<QString>(), th, 0, parent);
+                IconAction  *button = new IconAction(th, param.value("icon").value<QString>(), th, 0, parent);
                 connect(button, SIGNAL(triggered()), param.value("reciver").value<QObject *>(),
                         param.value("slot").value<QString>().toLatin1());
                 connect(enableHandler, &QObject::destroyed, button, &QObject::deleteLater);
@@ -1214,7 +1214,7 @@ void PluginHost::addAccountMenu(QMenu *menu, int account)
         if (!accMenu_.isEmpty()) {
             for (int i = 0; i < accMenu_.size(); ++i) {
                 QVariantHash param = accMenu_.at(i);
-                IconAction * act
+                IconAction  *act
                     = new IconAction(param.value("name").value<QString>(), menu, param.value("icon").value<QString>());
                 act->setProperty("account", QVariant(account));
                 connect(act, SIGNAL(triggered()), param.value("reciver").value<QObject *>(),
@@ -1235,7 +1235,7 @@ void PluginHost::addContactMenu(QMenu *menu, int account, const QString &jid)
         if (!contactMenu_.isEmpty()) {
             for (int i = 0; i < contactMenu_.size(); ++i) {
                 QVariantHash param = contactMenu_.at(i);
-                IconAction * act
+                IconAction  *act
                     = new IconAction(param.value("name").value<QString>(), menu, param.value("icon").value<QString>());
                 act->setProperty("account", QVariant(account));
                 act->setProperty("jid", QVariant(jid));

@@ -20,11 +20,11 @@
 #include "xdata_widget.h"
 
 #include "desktoputil.h"
-#include "networkaccessmanager.h"
-#include "psicon.h"
 #include "iris/xmpp_client.h"
 #include "iris/xmpp_tasks.h"
 #include "iris/xmpp_xdata.h"
+#include "networkaccessmanager.h"
+#include "psicon.h"
 
 #include <QCheckBox>
 #include <QComboBox>
@@ -571,14 +571,8 @@ void XDataWidget::setForm(const XMPP::XData &d, bool withInstructions)
     if (registrarType_ == "urn:xmpp:captcha") {
         QStringList supportedMedia = XDataMediaWidget::supportedMedia();
         QStringList mediaVars;
-        mediaVars << "audio_recog"
-                  << "ocr"
-                  << "picture_q"
-                  << "picture_recog"
-                  << "speech_q"
-                  << "speech_recog"
-                  << "video_q"
-                  << "video_recog";
+        mediaVars << "audio_recog" << "ocr" << "picture_q" << "picture_recog" << "speech_q" << "speech_recog"
+                  << "video_q" << "video_recog";
         short maxAnswers       = 0;
         short requestedAnswers = 0;
         Jid   from;

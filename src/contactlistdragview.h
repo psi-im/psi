@@ -107,17 +107,17 @@ private slots:
     void finishedEditing();
 
 private:
-    QMimeData *           backedUpSelection_;
+    QMimeData            *backedUpSelection_;
     QString               backedUpEditorValue_;
-    QAction *             removeAction_;
+    QAction              *removeAction_;
     QRect                 dropIndicatorRect_;
     DropIndicatorPosition dropIndicatorPosition_;
     Qt::KeyboardModifiers keyboardModifiers_;
     bool                  dirty_;
-    QMimeData *           pressedIndex_;
+    QMimeData            *pressedIndex_;
     QPoint                pressPosition_;
     bool                  pressedIndexWasSelected_;
-    QMenu *               viewportMenu_;
+    QMenu                *viewportMenu_;
     bool                  editing;
 
     void backupCurrentSelection();

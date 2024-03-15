@@ -45,12 +45,12 @@ QString RTParse::next()
     // if we're at a tag, append it to the output
     if (in.at(v_at) == '<') {
         QStringView s;
-        int        n = in.indexOf('>', v_at);
+        int         n = in.indexOf('>', v_at);
         if (n == -1) {
-            s = QStringView{in}.mid(v_at);
+            s = QStringView { in }.mid(v_at);
         } else {
             ++n;
-            s = QStringView{in}.mid(v_at, n - v_at);
+            s = QStringView { in }.mid(v_at, n - v_at);
         }
         v_at += s.length();
         out += s;
@@ -58,12 +58,12 @@ QString RTParse::next()
 
     // now find the next tag, and grab the text in between
     QStringView s;
-    int        x = in.indexOf('<', v_at);
+    int         x = in.indexOf('<', v_at);
     if (x == -1) {
-        s       = QStringView{in}.mid(v_at);
+        s       = QStringView { in }.mid(v_at);
         v_atEnd = true;
     } else {
-        s = QStringView{in}.mid(v_at, x - v_at);
+        s = QStringView { in }.mid(v_at, x - v_at);
     }
     v_at += s.length();
     // printf("chunk = '%s'\n", s.latin1());

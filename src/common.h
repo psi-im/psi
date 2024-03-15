@@ -20,8 +20,8 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#include "statuspreset.h"
 #include "iris/xmpp_status.h"
+#include "statuspreset.h"
 
 #include <QColor>
 #include <QGridLayout>
@@ -165,7 +165,7 @@ TabbableWidget *findActiveTab();
 #include "x11windowsystem.h"
 #define X11WM_CLASS(x)                                                                                                 \
     {                                                                                                                  \
-        X11WindowSystem::instance()->x11wmClass(winId(), (x));                                                     \
+        X11WindowSystem::instance()->x11wmClass(winId(), (x));                                                         \
     };
 #else
 #define X11WM_CLASS(x) /* dummy */

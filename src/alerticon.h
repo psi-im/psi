@@ -39,7 +39,7 @@ public:
     QPixmap        pixmap(const QSize &desiredSize = QSize()) const override;
     QImage         image(const QSize &desiredSize = QSize()) const override;
     QIcon          icon() const override;
-    const Impix &  impix() const override;
+    const Impix   &impix() const override;
     int            frameNumber() const override;
     const QString &name() const override;
 

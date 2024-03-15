@@ -19,12 +19,12 @@
 
 #include "httpauthmanager.h"
 
-#include "psihttpauthrequest.h"
 #include "iris/xmpp_client.h"
 #include "iris/xmpp_message.h"
 #include "iris/xmpp_stream.h"
 #include "iris/xmpp_task.h"
 #include "iris/xmpp_xmlcommon.h"
+#include "psihttpauthrequest.h"
 
 class HttpAuthListener : public XMPP::Task {
     Q_OBJECT

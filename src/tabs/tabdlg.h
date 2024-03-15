@@ -144,17 +144,17 @@ private slots:
     void updateVSplitters(int log, int chat);
 
 private:
-    TabDlgDelegate *         delegate_;
+    TabDlgDelegate          *delegate_;
     QList<TabbableWidget *>  tabs_;
-    PsiTabWidget *           tabWidget_;
-    QPushButton *            detachButton_;
-    QPushButton *            closeButton_;
-    QPushButton *            closeCross_;
-    QMenu *                  tabMenu_;
-    QAction *                act_close_;
-    QAction *                act_next_;
-    QAction *                act_prev_;
-    TabManager *             tabManager_;
+    PsiTabWidget            *tabWidget_;
+    QPushButton             *detachButton_;
+    QPushButton             *closeButton_;
+    QPushButton             *closeCross_;
+    QMenu                   *tabMenu_;
+    QAction                 *act_close_;
+    QAction                 *act_next_;
+    QAction                 *act_prev_;
+    TabManager              *tabManager_;
     QPointer<TabbableWidget> selectedTab_;
     bool                     userManagement_;
     bool                     tabBarSingles_;

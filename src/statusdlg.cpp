@@ -84,15 +84,15 @@ class StatusSetDlg::Private {
 public:
     Private() = default;
 
-    PsiCon *         psi = nullptr;
-    PsiAccount *     pa  = nullptr;
+    PsiCon          *psi = nullptr;
+    PsiAccount      *pa  = nullptr;
     Status           s;
     bool             withPriority = false;
-    ChatEdit *       te           = nullptr;
-    StatusComboBox * cb_type      = nullptr;
-    QComboBox *      cb_preset    = nullptr;
-    QLineEdit *      le_priority  = nullptr;
-    QCheckBox *      save         = nullptr;
+    ChatEdit        *te           = nullptr;
+    StatusComboBox  *cb_type      = nullptr;
+    QComboBox       *cb_preset    = nullptr;
+    QLineEdit       *le_priority  = nullptr;
+    QCheckBox       *save         = nullptr;
     Jid              j;
     QList<XMPP::Jid> jl;
     setStatusEnum    setStatusMode;
@@ -244,8 +244,8 @@ void StatusSetDlg::doButton()
             // Get preset
             bool ok = false;
             text    = QInputDialog::getText(this, CAP(tr("New Status Preset")),
-                                         tr("Please enter a name for the new status preset:"), QLineEdit::Normal, text,
-                                         &ok);
+                                            tr("Please enter a name for the new status preset:"), QLineEdit::Normal, text,
+                                            &ok);
             if (!ok)
                 return;
 

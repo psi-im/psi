@@ -23,7 +23,6 @@
 #include <QMenu>
 #include <QMimeData>
 #include <QRegularExpression>
-#include <QRegularExpression>
 #include <QScrollBar>
 #include <QTextDocumentFragment>
 #include <QTextFragment>
@@ -50,7 +49,7 @@ public:
     QString                  anchorOnMousePress;
     bool                     hadSelectionOnMousePress = false;
     FileSharingDeviceOpener *mediaOpener              = nullptr;
-    ITEAudioController *     voiceMsgCtrl             = nullptr;
+    ITEAudioController      *voiceMsgCtrl             = nullptr;
 
     // handler function accepts everything after tag name upto but exluding final ">"
     PsiRichText::ParsersMap objectParsers;
@@ -220,15 +219,15 @@ PsiTextView::~PsiTextView()
 QMenu *PsiTextView::createStandardContextMenu(const QPoint &position)
 {
     QTextCursor textcursor = cursorForPosition(position);
-    QMenu *     menu;
+    QMenu      *menu;
     QString     anc = anchorAt(position);
     if (!anc.isEmpty()) {
         menu = URLObject::getInstance()->createPopupMenu(anc);
 
         int     posInBlock = textcursor.position() - textcursor.block().position();
         QString textblock  = textcursor.block().text();
-        int     begin      = textcursor.block().position() + textblock.lastIndexOf(QRegularExpression("\\s|^"), posInBlock) + 1;
-        int     end        = textcursor.block().position() + textblock.indexOf(QRegularExpression("\\s|$"), posInBlock);
+        int begin = textcursor.block().position() + textblock.lastIndexOf(QRegularExpression("\\s|^"), posInBlock) + 1;
+        int end   = textcursor.block().position() + textblock.indexOf(QRegularExpression("\\s|$"), posInBlock);
         textcursor.setPosition(begin);
         textcursor.setPosition(end, QTextCursor::KeepAnchor);
         setTextCursor(textcursor);
@@ -251,7 +250,7 @@ bool PsiTextView::isSelectedBlock()
 {
     if (textCursor().hasSelection()) {
         const QTextCursor &cursor = textCursor();
-        const QTextBlock & block  = cursor.block();
+        const QTextBlock  &block  = cursor.block();
         int                start  = cursor.selectionStart();
         if (block.position() == start && block.length() == cursor.selectionEnd() - start + 1)
             return true;
@@ -376,7 +375,7 @@ void PsiTextView::mousePressEvent(QMouseEvent *e)
     if (!textCursor().hasSelection() && !d->anchorOnMousePress.isEmpty()) {
         QTextCursor cursor    = textCursor();
         QPoint      mapped    = QPoint(e->pos().x() + horizontalScrollBar()->value(),
-                               e->pos().y() + verticalScrollBar()->value()); // from QTextEditPrivate::mapToContents
+                                       e->pos().y() + verticalScrollBar()->value()); // from QTextEditPrivate::mapToContents
         const int   cursorPos = document()->documentLayout()->hitTest(mapped, Qt::FuzzyHit);
         if (cursorPos != -1)
             cursor.setPosition(cursorPos);

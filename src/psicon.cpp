@@ -46,10 +46,10 @@
 #endif
 #include "iconselect.h"
 #include "idle/idle.h"
+#include "iris/jingle-s5b.h"
 #include "iris/processquit.h"
 #include "iris/tcpportreserver.h"
 #include "jidutil.h"
-#include "iris/jingle-s5b.h"
 #include "mainwin.h"
 #include "mucjoindlg.h"
 #include "networkaccessmanager.h"
@@ -70,11 +70,11 @@
 #ifdef PSIMNG
 #include "psimng.h"
 #endif
+#include "iris/s5b.h"
 #include "psioptions.h"
 #include "psirichtext.h"
 #include "psithememanager.h"
 #include "psitoolbar.h"
-#include "iris/s5b.h"
 #include "shortcutmanager.h"
 #include "spellchecker/spellchecker.h"
 #include "statusdlg.h"
@@ -116,7 +116,6 @@
 
 #include <QApplication>
 #include <QColor>
-#include <QDesktopWidget>
 #include <QDir>
 #include <QFile>
 #include <QIcon>
@@ -255,7 +254,7 @@ public:
 
     std::pair<PsiAccount *, QString> uriToShareSource(const QString &path)
     {
-        auto pathParts = QStringView{path}.mid(sizeof("/psi/account")).split('/');
+        auto pathParts = QStringView { path }.mid(sizeof("/psi/account")).split('/');
         if (pathParts.size() < 3 || pathParts[1] != QLatin1String("sharedfile")
             || pathParts[2].isEmpty()) // <acoount_uuid>/sharedfile/<file_hash>
             return { nullptr, QString() };
@@ -384,7 +383,7 @@ bool PsiCon::init()
     if (!ActiveProfiles::instance()->setThisProfile(activeProfile))
         return false;
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+#if QT_VERSION >= QT_VERSION_CHECK(5, 6, 0) && QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     qApp->setFallbackSessionManagementEnabled(false);
 #endif
     connect(qApp, SIGNAL(commitDataRequest(QSessionManager &)), SLOT(forceSavePreferences(QSessionManager &)));
@@ -849,12 +848,9 @@ QStringList PsiCon::xmppFatures() const
 #ifdef GROUPCHAT
                                          << "http://jabber.org/protocol/muc"
 #endif
-                                         << "http://jabber.org/protocol/mood"
-                                         << "http://jabber.org/protocol/activity"
-                                         << "http://jabber.org/protocol/tune"
-                                         << "http://jabber.org/protocol/geoloc"
-                                         << "urn:xmpp:avatar:data"
-                                         << "urn:xmpp:avatar:metadata";
+                                         << "http://jabber.org/protocol/mood" << "http://jabber.org/protocol/activity"
+                                         << "http://jabber.org/protocol/tune" << "http://jabber.org/protocol/geoloc"
+                                         << "urn:xmpp:avatar:data" << "urn:xmpp:avatar:metadata";
 
     static QList<OptFeatureMap> fmap = QList<OptFeatureMap>()
         << OptFeatureMap("options.service-discovery.last-activity", QStringList() << "jabber:iq:last")
@@ -1470,8 +1466,10 @@ void PsiCon::optionChanged(const QString &option)
     }
     if (option == tuneControllerFilterOptionPath || option == tunePublishOptionPath) {
         if (PsiOptions::instance()->getOption(tunePublishOptionPath).toBool()) {
-            d->tuneManager->updateControllers(
-                PsiOptions::instance()->getOption(tuneControllerFilterOptionPath).toString().split(QRegularExpression("[,]\\s*")));
+            d->tuneManager->updateControllers(PsiOptions::instance()
+                                                  ->getOption(tuneControllerFilterOptionPath)
+                                                  .toString()
+                                                  .split(QRegularExpression("[,]\\s*")));
         } else {
             d->tuneManager->updateControllers(d->tuneManager->controllerNames());
         }

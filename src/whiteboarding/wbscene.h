@@ -72,7 +72,7 @@ private:
      */
     void bring(int n, bool toExtremum);
 
-    SxeSession *            session_;
+    SxeSession             *session_;
     QList<QPointer<WbItem>> pendingTranformations_;
 
     QPointF selectionCenter_;

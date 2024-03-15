@@ -20,8 +20,8 @@
 #pragma once
 
 #include "contactlistitemmenu.h"
-#include "psicontactlist.h"
 #include "iris/xmpp_vcard.h"
+#include "psicontactlist.h"
 
 #include <QObject>
 
@@ -44,8 +44,8 @@ public:
     PsiContact(const UserListItem &u, PsiAccount *account, bool isSelf = false);
     ~PsiContact();
 
-    PsiAccount *            account() const;
-    const UserListItem &    userListItem() const;
+    PsiAccount             *account() const;
+    const UserListItem     &userListItem() const;
     const UserResourceList &userResourceList() const;
     void                    update(const UserListItem &u);
 
@@ -80,7 +80,7 @@ public:
     bool isFake() const;
 
     // reimplemented
-    const QString &      name() const;
+    const QString       &name() const;
     QString              comparisonName() const;
     void                 setName(const QString &name);
     ContactListItemMenu *contextMenu(ContactListModel *model);

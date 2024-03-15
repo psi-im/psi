@@ -23,8 +23,8 @@ protected slots:
     void changeVisibleState(bool state);
 
 private:
-    QWidget *   w_;
-    PsiCon *    psi_;
+    QWidget    *w_;
+    PsiCon     *psi_;
     QStringList blackList_;
     QString     tuneFilters_;
     bool        controllersChanged_;

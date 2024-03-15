@@ -25,6 +25,7 @@
 #include "iris/jingle-ft.h"
 #include "iris/jingle-session.h"
 #include "iris/jingle.h"
+#include "iris/xmpp_tasks.h"
 #include "multifiletransferdelegate.h"
 #include "multifiletransferitem.h"
 #include "multifiletransfermodel.h"
@@ -35,7 +36,6 @@
 #include "ui_multifiletransferdlg.h"
 #include "userlist.h"
 #include "xmpp/jid/jid.h"
-#include "iris/xmpp_tasks.h"
 
 #include <QBuffer>
 #include <QDragEnterEvent>
@@ -50,15 +50,14 @@
 #include <QNetworkReply>
 #include <QPainter>
 
-
 using namespace XMPP;
 
 class MultiFileTransferDlg::Private {
 public:
-    PsiAccount *                    account;
+    PsiAccount                     *account;
     Jid                             peer;
     QPointer<XMPP::Jingle::Session> session;
-    MultiFileTransferModel *        model      = nullptr;
+    MultiFileTransferModel         *model      = nullptr;
     bool                            isOutgoing = false;
 };
 
@@ -310,7 +309,7 @@ void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
         } else if (appToAccept.size()) {
             auto app = appToAccept.first();
             auto fn  = FileUtil::getSaveFileName(this, tr("Save As"), FileUtil::cleanFileName(app->file().name()),
-                                                tr("All files (*)"));
+                                                 tr("All files (*)"));
             if (!fn.isEmpty()) {
                 QFileInfo fi(fn);
                 if (fi.exists()) {
@@ -382,7 +381,7 @@ void MultiFileTransferDlg::addTransferContent(MultiFileTransferItem *item)
         p.save(&buffer, "PNG");
         thumb = XMPP::Thumbnail(ba, "image/png", quint32(p.width()), quint32(p.height()));
     }
-    app->setFile(QFileInfo{item->filePath()}, item->description(), thumb);
+    app->setFile(QFileInfo { item->filePath() }, item->description(), thumb);
 
     d->session->addContent(app);
 }

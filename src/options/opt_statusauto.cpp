@@ -42,8 +42,8 @@ QWidget *OptionsTabStatusAuto::widget()
     d->ck_asXa->setToolTip(s);
     d->sb_asXa->setToolTip(s);
     s                   = tr("Makes Psi automatically set your status to \"offline\" if your"
-           " computer is idle for the specified amount of time."
-           "  This will disconnect you from the XMPP server.");
+                                               " computer is idle for the specified amount of time."
+                                               "  This will disconnect you from the XMPP server.");
     PsiOptions *o       = PsiOptions::instance();
     int         dpCount = 6;
     if (!o->getOption("options.ui.menu.status.chat").toBool()) {
@@ -88,7 +88,7 @@ void OptionsTabStatusAuto::applyOptions()
         return;
 
     OptStatusAutoUI *d = static_cast<OptStatusAutoUI *>(w);
-    PsiOptions *     o = PsiOptions::instance();
+    PsiOptions      *o = PsiOptions::instance();
 
     o->setOption("options.status.auto-away.away-after", d->sb_asAway->value());
     o->setOption("options.status.auto-away.not-availible-after", d->sb_asXa->value());
@@ -118,7 +118,7 @@ void OptionsTabStatusAuto::restoreOptions()
         return;
 
     OptStatusAutoUI *d = static_cast<OptStatusAutoUI *>(w);
-    PsiOptions *     o = PsiOptions::instance();
+    PsiOptions      *o = PsiOptions::instance();
 
     d->sb_asAway->setMinimum(0);
     d->sb_asAway->setMaximum(INT_MAX);

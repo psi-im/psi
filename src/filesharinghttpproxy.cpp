@@ -36,8 +36,7 @@
 
 FileSharingHttpProxy::FileSharingHttpProxy(PsiAccount *acc, const QString &sourceIdHex,
                                            qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse *res) :
-    QObject(res),
-    item(acc->psi()->fileSharingManager()->item(XMPP::Hash::from(sourceIdHex))), acc(acc), request(req),
+    QObject(res), item(acc->psi()->fileSharingManager()->item(XMPP::Hash::from(sourceIdHex))), acc(acc), request(req),
     response(res)
 {
     auto baseUrl = acc->psi()->webServer()->serverUrl().toString();
@@ -110,7 +109,7 @@ int FileSharingHttpProxy::parseHttpRangeRequest()
         return qhttp::ESTATUS_BAD_REQUEST;
     }
 
-    bool   ok;
+    bool    ok;
     quint64 start;
     quint64 end;
 
@@ -124,7 +123,7 @@ int FileSharingHttpProxy::parseHttpRangeRequest()
     }
     if (rangeBounds[1].size()) {              // if we have end
         end = rangeBounds[1].toLongLong(&ok); // then parse it
-        if (!ok || start > end) {   // if something not parsed or range is invalid
+        if (!ok || start > end) {             // if something not parsed or range is invalid
             return qhttp::ESTATUS_BAD_REQUEST;
         }
 
@@ -188,7 +187,7 @@ void FileSharingHttpProxy::proxyCache()
         emit request->end();
         return; // handled with error
     }
-    QFile *   file = new QFile(item->fileName(), response);
+    QFile    *file = new QFile(item->fileName(), response);
     QFileInfo fi(*file);
     if (!file->open(QIODevice::ReadOnly)) {
         response->setStatusCode(qhttp::ESTATUS_NOT_FOUND);

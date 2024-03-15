@@ -61,7 +61,7 @@ void ContactListModel::Private::realAddContact(PsiContact *contact)
     ContactListItem *root = static_cast<ContactListItem *>(q->root());
     ;
     if (accountsEnabled) {
-        PsiAccount *     account     = contact->account();
+        PsiAccount      *account     = contact->account();
         ContactListItem *accountItem = root->findAccount(account);
 
         if (!accountItem) {
@@ -359,7 +359,7 @@ void ContactListModel::Private::contactUpdated()
     // Check for groups changing
     // Maybe very difficult and should be simplified?
     QList<ContactListItem *> groupItems;
-    const auto &             indexes = monitoredContacts.values(contact);
+    const auto              &indexes = monitoredContacts.values(contact);
     for (const QPersistentModelIndex &index : indexes) {
         ContactListItem *item   = q->toItem(index);
         ContactListItem *parent = item->parent();
@@ -545,7 +545,7 @@ QModelIndexList ContactListModel::indexesFor(const PsiContact *contact) const
 {
     Q_ASSERT(contact);
     QModelIndexList result;
-    const auto &    indexes = d->monitoredContacts.values(const_cast<PsiContact *>(contact));
+    const auto     &indexes = d->monitoredContacts.values(const_cast<PsiContact *>(contact));
     for (const auto &index : indexes) {
         result << index;
     }

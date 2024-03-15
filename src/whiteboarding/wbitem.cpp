@@ -23,10 +23,10 @@
 #include "wbwidget.h"
 #include <iconaction.h>
 
+#include <QActionGroup>
 #include <QDebug>
 #include <QRegularExpression>
 #include <QSvgRenderer>
-#include <QActionGroup>
 
 #include <math.h>
 
@@ -142,7 +142,7 @@ void WbItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
             QPointF difference = event->scenePos() - event->lastScenePos();
             //          qDebug() << QString("d: %1 %2 = %3 %4 + %5
             //          %6").arg(difference.x()).arg(difference.y()).arg(event->scenePos().x()).arg(event->scenePos().y()).arg(event->lastScenePos().x()).arg(event->lastScenePos().y());
-            QPointF p = event->scenePos();
+            QPointF    p = event->scenePos();
             QTransform delta;
             if (p.x() >= scenePivot.x() && p.y() >= scenePivot.y()) {
                 delta.rotate((-difference.x() + difference.y()) / 2);
@@ -180,7 +180,7 @@ void WbItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
                 if (!graphicsitem->parentItem() || !graphicsitem->parentItem()->isSelected()) {
 
                     // get center coordinates in item coordinates
-                    QPointF c = center();
+                    QPointF    c = center();
                     QTransform translation, delta;
                     // translates the the item's center to the origin of the item coordinates
                     translation.translate(-c.x(), -c.y());
@@ -239,7 +239,7 @@ void WbItem::regenerateTransform()
         return;
 
     // get the existing SVG transformation
-    QString oldValue     = node_.attribute("transform");
+    QString    oldValue     = node_.attribute("transform");
     QTransform oldTransform = parseSvgTransform(oldValue);
 
     // construct a translation that translates the item to (0,0) in scene coordinates
@@ -538,7 +538,7 @@ static QVector<qreal> parseNumbersList(const QChar *&str)
 
 static QTransform parseTransformationMatrix(const QString &value)
 {
-    QTransform      matrix;
+    QTransform   matrix;
     const QChar *str = value.constData();
 
     while (*str != QLatin1Char(0)) {

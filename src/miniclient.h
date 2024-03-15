@@ -74,10 +74,10 @@ private slots:
 
 private:
     XMPP::AdvancedConnector *conn;
-    XMPP::ClientStream *     stream;
-    QCA::TLS *               tls;
-    XMPP::QCATLSHandler *    tlsHandler;
-    XMPP::Client *           _client;
+    XMPP::ClientStream      *stream;
+    QCA::TLS                *tls;
+    XMPP::QCATLSHandler     *tlsHandler;
+    XMPP::Client            *_client;
     XMPP::Jid                j;
     QString                  pass;
     bool                     auth, force_ssl, error_disconnect;

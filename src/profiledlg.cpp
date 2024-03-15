@@ -226,9 +226,9 @@ void ProfileManageDlg::slotProfileRename()
     while (1) {
         bool ok = false;
         name    = QInputDialog::getText(this, CAP(tr("Rename Profile")),
-                                     tr("Please enter a new name for the profile.  Keep it simple.\nOnly use letters "
-                                        "or numbers.  No punctuation or spaces."),
-                                     QLineEdit::Normal, name, &ok);
+                                        tr("Please enter a new name for the profile.  Keep it simple.\nOnly use letters "
+                                              "or numbers.  No punctuation or spaces."),
+                                        QLineEdit::Normal, name, &ok);
         if (!ok)
             return;
 

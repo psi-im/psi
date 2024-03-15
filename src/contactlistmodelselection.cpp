@@ -20,10 +20,10 @@
 #include "contactlistmodelselection.h"
 
 #include "contactlistitem.h"
+#include "iris/xmpp_xmlcommon.h"
 #include "psiaccount.h"
 #include "psicontact.h"
 #include "textutil.h"
-#include "iris/xmpp_xmlcommon.h"
 
 #include <QDomElement>
 #include <QStringList>
@@ -198,7 +198,7 @@ void ContactListModelSelection::debugSelection(const QMimeData *data, const QStr
 {
     qWarning("*** debugSelection %s", qPrintable(name));
     ContactListModelSelection selection(data);
-    const auto &              contacts = selection.contacts();
+    const auto               &contacts = selection.contacts();
     for (const ContactListModelSelection::Contact &c : contacts) {
         qWarning("\tc: '%s' group: '%s' account: '%s'", qPrintable(c.jid), qPrintable(c.group), qPrintable(c.account));
     }

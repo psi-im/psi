@@ -23,7 +23,7 @@
 #include "psitiplabel.h"
 
 #include <QApplication>
-//#include <QDesktopWidget>
+// #include <QDesktopWidget>
 #include <QHash>
 #include <QKeyEvent>
 #include <QPointer>

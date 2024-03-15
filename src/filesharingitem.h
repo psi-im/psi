@@ -77,17 +77,17 @@ public:
     QImage                    preview(const QSize &maxSize) const;
     QString                   displayName() const;
     QString                   fileName() const;
-    inline const QString &    mimeType() const { return _mimeType; }
-    inline const HashSums &   sums() const { return _sums; }
+    inline const QString     &mimeType() const { return _mimeType; }
+    inline const HashSums    &sums() const { return _sums; }
     inline QVariantMap        metaData() const { return _metaData; }
     inline quint64            fileSize() const { return _fileSize; }
     inline bool               isSizeKnown() const { return bool(_flags & SizeKnown); }
     inline const QStringList &uris() const { return _uris; }
 
     // reborn flag updates ttl for the item
-    FileCacheItem *          cache(bool reborn = false) const;
+    FileCacheItem           *cache(bool reborn = false) const;
     inline bool              isCached() const { return cache() != nullptr; }
-    PsiAccount *             account() const;
+    PsiAccount              *account() const;
     inline const QStringList log() const { return _log; }
 
     XMPP::Reference toReference(const XMPP::Jid &selfJid) const;
@@ -121,8 +121,8 @@ signals:
     void logChanged();
 
 private:
-    PsiAccount *         _acc        = nullptr;
-    FileSharingManager * _manager    = nullptr;
+    PsiAccount          *_acc        = nullptr;
+    FileSharingManager  *_manager    = nullptr;
     FileShareDownloader *_downloader = nullptr;
     FileType             _fileType;
     Flags                _flags;

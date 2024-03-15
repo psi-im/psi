@@ -21,7 +21,7 @@
 #define PROXYDLG_H
 
 #include "ui_proxy.h"
-//#include "ui_proxyedit.h"
+// #include "ui_proxyedit.h"
 
 #include <QGroupBox>
 #include <QList>
@@ -64,7 +64,7 @@ public:
     friend class Private;
 
 private:
-    Private * d;
+    Private  *d;
     Ui::Proxy ui_;
 };
 
@@ -120,8 +120,8 @@ private slots:
 private:
     void loadItem(const QString &obj);
 
-    OptionsTree *          ot_;
-    ProxyChooser *         pc_;
+    OptionsTree           *ot_;
+    ProxyChooser          *pc_;
     QPointer<QComboBox>    cb_;
     QMap<QString, QString> items_;
     QMap<QString, QString> tmp_;

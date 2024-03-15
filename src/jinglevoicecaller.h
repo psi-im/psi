@@ -73,14 +73,14 @@ protected slots:
 
 private:
     bool                                initialized_;
-    static cricket::SocketServer *      socket_server_;
-    static cricket::Thread *            thread_;
-    static cricket::NetworkManager *    network_manager_;
+    static cricket::SocketServer       *socket_server_;
+    static cricket::Thread             *thread_;
+    static cricket::NetworkManager     *network_manager_;
     static cricket::BasicPortAllocator *port_allocator_;
-    static cricket::SocketAddress *     stun_addr_;
-    cricket::SessionManager *           session_manager_;
-    cricket::PhoneSessionClient *       phone_client_;
-    JingleClientSlots *                 slots_;
+    static cricket::SocketAddress      *stun_addr_;
+    cricket::SessionManager            *session_manager_;
+    cricket::PhoneSessionClient        *phone_client_;
+    JingleClientSlots                  *slots_;
     QMap<QString, cricket::Call *>      calls_;
 };
 

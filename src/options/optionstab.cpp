@@ -14,8 +14,7 @@
 OptionsTab::OptionsTab(QObject *parent, const char *name) : QObject(parent) { setObjectName(name); }
 
 OptionsTab::OptionsTab(QObject *parent, QByteArray _id, QByteArray _parentId, QString _name, QString _desc,
-                       QString _tabIconName, QString _iconName) :
-    QObject(parent)
+                       QString _tabIconName, QString _iconName) : QObject(parent)
 {
     setObjectName(_name);
     v_id          = _id;

@@ -190,11 +190,11 @@ void OptionsTree::mapPut(const QString &basename, const QVariant &key, const QSt
 bool mapKeyListLessThanByNumber(const QString &s1, const QString &s2)
 {
     int dotpos = s1.lastIndexOf('.');
-    if (QStringView{s1}.left(dotpos + 1).compare(QStringView{s2}.left(dotpos + 1)) == 0) {
+    if (QStringView { s1 }.left(dotpos + 1).compare(QStringView { s2 }.left(dotpos + 1)) == 0) {
         QString name1 = s1.mid(dotpos + 1), name2 = s2.mid(dotpos + 1);
         if (name1[0] == 'm' && name2[0] == 'm') {
             bool         ok1 = false, ok2 = false;
-            unsigned int n1 = QStringView{name1}.mid(1).toUInt(&ok1), n2 = QStringView{name2}.mid(1).toUInt(&ok2);
+            unsigned int n1 = QStringView { name1 }.mid(1).toUInt(&ok1), n2 = QStringView { name2 }.mid(1).toUInt(&ok2);
             if (ok1 && ok2) {
                 return n1 < n2;
             }

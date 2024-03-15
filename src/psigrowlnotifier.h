@@ -67,8 +67,8 @@ private:
     PsiGrowlNotifier();
     void tryDeleteContext(NotificationContext *context);
 
-    static PsiGrowlNotifier *    instance_;
-    GrowlNotifier *              gn_;
+    static PsiGrowlNotifier     *instance_;
+    GrowlNotifier               *gn_;
     QList<NotificationContext *> contexts_;
 };
 

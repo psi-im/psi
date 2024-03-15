@@ -121,8 +121,8 @@ private:
     QMap<TabDlg *, QString> tabsetToKinds_;
     QList<TabDlg *>         tabs_;
     QList<TabbableWidget *> tabControlledChats_;
-    PsiCon *                psiCon_;
-    TabDlgDelegate *        tabDlgDelegate_;
+    PsiCon                 *psiCon_;
+    TabDlgDelegate         *tabDlgDelegate_;
     bool                    userManagement_;
     bool                    tabSingles_;
     bool                    simplifiedCaption_;

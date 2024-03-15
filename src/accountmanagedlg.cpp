@@ -22,6 +22,7 @@
 #include "accountadddlg.h"
 #include "common.h"
 #include "iconaction.h"
+#include "iris/xmpp_tasks.h"
 #include "miniclient.h"
 #include "psiaccount.h"
 #include "psicon.h"
@@ -29,7 +30,6 @@
 #include "psiiconset.h"
 #include "shortcutmanager.h"
 #include "ui_accountremove.h"
-#include "iris/xmpp_tasks.h"
 
 #include <QButtonGroup>
 #include <QDropEvent>
@@ -75,7 +75,7 @@ private:
     class Private;
     Private *d;
 
-    MiniClient * client;
+    MiniClient  *client;
     QPushButton *pb_close_;
     QPushButton *pb_remove_;
 };
@@ -135,7 +135,7 @@ void AccountRemoveDlg::done(int r)
 {
     if (busy->isActive()) {
         QMessageBox  messageBox(QMessageBox::Information, CAP(tr("Warning")),
-                               tr("Are you sure you want to cancel the unregistration?"));
+                                tr("Are you sure you want to cancel the unregistration?"));
         QPushButton *cancel = messageBox.addButton(tr("&No"), QMessageBox::RejectRole);
         QPushButton *accept = messageBox.addButton(tr("&Yes"), QMessageBox::AcceptRole);
         messageBox.setDefaultButton(accept);
@@ -171,7 +171,7 @@ void AccountRemoveDlg::remove()
     }
 
     QMessageBox  messageBox(QMessageBox::Information, CAP(tr("Warning")),
-                           tr("Are you sure you want to remove <b>%1</b> ?").arg(d->acc.name));
+                            tr("Are you sure you want to remove <b>%1</b> ?").arg(d->acc.name));
     QPushButton *cancel = messageBox.addButton(QMessageBox::Cancel);
     QPushButton *remove = messageBox.addButton(tr("&Remove"), QMessageBox::AcceptRole);
     messageBox.setDefaultButton(remove);
@@ -294,7 +294,7 @@ void AccountManageTree::dropEvent(QDropEvent *event)
 
     if (tree) {
         QList<PsiAccount *> accountsList;
-        const auto &        items = tree->findItems("*", Qt::MatchWildcard);
+        const auto         &items = tree->findItems("*", Qt::MatchWildcard);
         for (QTreeWidgetItem *ami : items) {
             accountsList.append(static_cast<AccountManageItem *>(ami)->pa.data());
         }
@@ -387,7 +387,7 @@ void AccountManageDlg::remove()
 
     if (i->pa->isActive()) {
         QMessageBox  messageBox(QMessageBox::Information, CAP(tr("Error")),
-                               tr("Please disconnect before removing the account."));
+                                tr("Please disconnect before removing the account."));
         QPushButton *cancel     = messageBox.addButton(QMessageBox::Cancel);
         QPushButton *disconnect = messageBox.addButton(tr("&Disconnect"), QMessageBox::AcceptRole);
         messageBox.setDefaultButton(disconnect);

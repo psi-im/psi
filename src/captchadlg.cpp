@@ -1,11 +1,11 @@
 #include "captchadlg.h"
 
-#include "psiaccount.h"
-#include "ui_captchadlg.h"
-#include "xdata_widget.h"
 #include "iris/xmpp_captcha.h"
 #include "iris/xmpp_client.h"
 #include "iris/xmpp_tasks.h"
+#include "psiaccount.h"
+#include "ui_captchadlg.h"
+#include "xdata_widget.h"
 
 using namespace XMPP;
 

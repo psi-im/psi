@@ -34,22 +34,22 @@ protected:
     void keyPressEvent(QKeyEvent *e);
 
 private:
-    PsiOptions *           o_;
-    QTreeView *            tv_;
+    PsiOptions            *o_;
+    QTreeView             *tv_;
     int                    tv_colWidth;
-    OptionsTreeModel *     tm_;
+    OptionsTreeModel      *tm_;
     QSortFilterProxyModel *tpm_;
-    QCheckBox *            cb_;
-    QLabel *               lb_type;
-    QLabel *               lb_path;
-    QLabel *               lb_comment;
-    QLabel *               lb_filter;
-    QPushButton *          pb_delete;
-    QPushButton *          pb_reset;
-    QPushButton *          pb_edit;
-    QPushButton *          pb_new;
-    QToolButton *          pb_detach;
-    QLineEdit *            le_filter;
+    QCheckBox             *cb_;
+    QLabel                *lb_type;
+    QLabel                *lb_path;
+    QLabel                *lb_comment;
+    QLabel                *lb_filter;
+    QPushButton           *pb_delete;
+    QPushButton           *pb_reset;
+    QPushButton           *pb_edit;
+    QPushButton           *pb_new;
+    QToolButton           *pb_detach;
+    QLineEdit             *le_filter;
 };
 
 #endif // PSIOPTIONSEDITOR_H

@@ -52,5 +52,5 @@ void InviteToGroupChatMenu::actionActivated()
 {
     QAction *action = static_cast<QAction *>(sender());
     emit     inviteToGroupchat(controller_->contactList()->getAccount(action->property("account").toString()),
-                           action->property("groupChat").toString());
+                               action->property("groupChat").toString());
 }

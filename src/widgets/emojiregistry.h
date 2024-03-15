@@ -72,7 +72,7 @@ public:
             return other.group_idx != group_idx || other.subgroup_idx != subgroup_idx || other.emoji_idx != emoji_idx;
         }
 
-        iterator &                  operator++();
+        iterator                   &operator++();
         const EmojiRegistry::Emoji &operator*() const
         {
             return EmojiRegistry::instance().groups[group_idx].subGroups[subgroup_idx].emojis[emoji_idx];
@@ -84,7 +84,7 @@ public:
 
 private:
     EmojiRegistry();
-    EmojiRegistry(const EmojiRegistry &) = delete;
+    EmojiRegistry(const EmojiRegistry &)            = delete;
     EmojiRegistry &operator=(const EmojiRegistry &) = delete;
 
     const std::map<quint32, quint32> ranges_; // start to end range mapping

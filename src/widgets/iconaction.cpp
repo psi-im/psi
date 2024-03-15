@@ -42,7 +42,7 @@ class IconAction::Private : public QObject {
     Q_OBJECT
 public:
     QList<IconToolButton *> buttons;
-    PsiIcon *               icon;
+    PsiIcon                *icon;
 #ifdef WIDGET_PLUGIN
     QString iconName;
 #endif
@@ -88,8 +88,7 @@ IconAction::IconAction(QObject *parent, const QString &name) : QAction(parent)
 }
 
 IconAction::IconAction(const QString &statusTip, const QString &icon, const QString &text, QKeySequence accel,
-                       QObject *parent, const QString &name, bool checkable) :
-    QAction(text, parent)
+                       QObject *parent, const QString &name, bool checkable) : QAction(text, parent)
 {
     d = new Private(this, parent);
     d->init(name, statusTip, accel, checkable);
@@ -98,8 +97,7 @@ IconAction::IconAction(const QString &statusTip, const QString &icon, const QStr
 }
 
 IconAction::IconAction(const QString &statusTip, const QString &icon, const QString &text, QList<QKeySequence> accel,
-                       QObject *parent, const QString &name, bool checkable) :
-    QAction(text, parent)
+                       QObject *parent, const QString &name, bool checkable) : QAction(text, parent)
 {
     d = new Private(this, parent);
     d->init(name, statusTip, QKeySequence(), checkable);
@@ -109,16 +107,14 @@ IconAction::IconAction(const QString &statusTip, const QString &icon, const QStr
 }
 
 IconAction::IconAction(const QString &statusTip, const QString &text, QKeySequence accel, QObject *parent,
-                       const QString &name, bool checkable) :
-    QAction(text, parent)
+                       const QString &name, bool checkable) : QAction(text, parent)
 {
     d = new Private(this, parent);
     d->init(name, statusTip, accel, checkable);
 }
 
 IconAction::IconAction(const QString &statusTip, const QString &text, QList<QKeySequence> accel, QObject *parent,
-                       const QString &name, bool checkable) :
-    QAction(text, parent)
+                       const QString &name, bool checkable) : QAction(text, parent)
 {
     d = new Private(this, parent);
     d->init(name, statusTip, QKeySequence(), checkable);
@@ -371,7 +367,7 @@ public:
     explicit Private(IconActionGroup *_group) { group = _group; }
 
     IconActionGroup *group = nullptr;
-    QMenu *          popup = nullptr;
+    QMenu           *popup = nullptr;
 
     bool exclusive    = false;
     bool usesDropDown = false;

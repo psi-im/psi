@@ -58,7 +58,7 @@ void OptionsTabMsgCommon::applyOptions()
     }
 
     OptMsgCommonUI *d = static_cast<OptMsgCommonUI *>(w_);
-    PsiOptions *    o = PsiOptions::instance();
+    PsiOptions     *o = PsiOptions::instance();
     o->setOption("options.ui.message.show-character-count", d->ck_showCounter->isChecked());
     o->setOption("options.html.chat.render", d->ck_contactsMessageFormatting->isChecked());
     o->setOption("options.media.audio-message", d->ck_audioMessage->isChecked());
@@ -111,7 +111,7 @@ void OptionsTabMsgCommon::restoreOptions()
     }
 
     OptMsgCommonUI *d = static_cast<OptMsgCommonUI *>(w_);
-    PsiOptions *    o = PsiOptions::instance();
+    PsiOptions     *o = PsiOptions::instance();
     d->ck_showCounter->setChecked(o->getOption("options.ui.message.show-character-count").toBool());
     d->ck_contactsMessageFormatting->setChecked(o->getOption("options.html.chat.render").toBool());
     d->ck_showTabButtons->setChecked(o->getOption("options.ui.tabs.show-tab-buttons").toBool());

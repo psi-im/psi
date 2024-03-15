@@ -31,15 +31,15 @@ class QFile;
 class FileSharingNAMReply : public QNetworkReply {
     Q_OBJECT
 
-    FileSharingItem *             item = nullptr;
-    PsiAccount *                  acc;
+    FileSharingItem              *item = nullptr;
+    PsiAccount                   *acc;
     QPointer<FileShareDownloader> downloader;
     qint64                        requestedStart = 0;
     quint64                       requestedSize  = 0;  // if == 0 then all the remaining
     qint64                        bytesLeft      = -1; // -1 - unknown
     bool                          isRanged       = false;
     bool                          headersSent    = false;
-    QFile *                       cachedFile     = nullptr;
+    QFile                        *cachedFile     = nullptr;
 
 public:
     FileSharingNAMReply(PsiAccount *acc, const QString &sourceIdHex, const QNetworkRequest &req);

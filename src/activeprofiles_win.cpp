@@ -167,13 +167,13 @@ bool ActiveProfiles::Private::nativeEvent(const QByteArray &eventType, void *mes
 {
     [[maybe_unused]] static const auto expectedType = QByteArray("windows_generic_MSG");
     Q_ASSERT(eventType == expectedType);
-    auto msg = static_cast<MSG*>(message);
+    auto msg = static_cast<MSG *>(message);
 
     if (msg->message == WM_COPYDATA) {
         *result            = FALSE;
         COPYDATASTRUCT *cd = (COPYDATASTRUCT *)msg->lParam;
         if (cd->dwData == stringListMessage) {
-            char *      data = (char *)cd->lpData;
+            char       *data = (char *)cd->lpData;
             const char *end  = data + cd->cbData - 1;
 
             // handle this error here, not to worry later

@@ -20,10 +20,10 @@
 #ifndef PSIEVENT_H
 #define PSIEVENT_H
 
-#include "psihttpauthrequest.h"
 #include "iris/xmpp_jid.h"
 #include "iris/xmpp_message.h"
 #include "iris/xmpp_rosterx.h"
+#include "psihttpauthrequest.h"
 
 #include <QDateTime>
 #include <QDomDocument>
@@ -234,8 +234,8 @@ public:
     int                               type() const { return File; }
     XMPP::Jid                         from() const;
     void                              setFrom(const XMPP::Jid &);
-    XMPP::FileTransfer *              takeFileTransfer();
-    XMPP::Jingle::Session *           takeJingleSession();
+    XMPP::FileTransfer               *takeFileTransfer();
+    XMPP::Jingle::Session            *takeJingleSession();
 
     virtual int priority() const;
 
@@ -259,9 +259,9 @@ public:
     int                                         type() const { return RosterExchange; }
     XMPP::Jid                                   from() const;
     void                                        setFrom(const XMPP::Jid &);
-    const XMPP::RosterExchangeItems &           rosterExchangeItems() const;
+    const XMPP::RosterExchangeItems            &rosterExchangeItems() const;
     void                                        setRosterExchangeItems(const XMPP::RosterExchangeItems &);
-    const QString &                             text() const;
+    const QString                              &text() const;
     void                                        setText(const QString &text);
 
     virtual int priority() const;
@@ -323,7 +323,7 @@ public:
     int                                 type() const { return AvCallType; }
     XMPP::Jid                           from() const;
     void                                setFrom(const XMPP::Jid &);
-    AvCall *                            takeAvCall();
+    AvCall                             *takeAvCall();
 
     virtual int priority() const;
 
@@ -397,8 +397,8 @@ signals:
 
 private:
     QList<EventItem *> list_;
-    PsiCon *           psi_;
-    PsiAccount *       account_;
+    PsiCon            *psi_;
+    PsiAccount        *account_;
     bool               enabled_;
 };
 

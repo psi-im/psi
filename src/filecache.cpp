@@ -21,8 +21,8 @@
 
 #include "applicationinfo.h"
 #include "fileutil.h"
-#include "optionstree.h"
 #include "iris/xmpp_hash.h"
+#include "optionstree.h"
 
 #include <QDebug>
 #include <QDir>
@@ -32,8 +32,7 @@
 
 FileCacheItem::FileCacheItem(FileCache *parent, const QList<XMPP::Hash> &sums, const QVariantMap &metadata,
                              const QDateTime &dt, unsigned int maxAge, quint64 size, const QByteArray &data) :
-    QObject(parent),
-    _sums(sums), _metadata(metadata), _ctime(dt), _maxAge(maxAge), _size(size), _data(data),
+    QObject(parent), _sums(sums), _metadata(metadata), _ctime(dt), _maxAge(maxAge), _size(size), _data(data),
     _flags(quint16(size > 0 ? 0 : OnDisk)) /* empty is never saved to disk. let's say it's there already */
 {
     Q_ASSERT(sums.size() > 0);
@@ -148,8 +147,8 @@ FileCache::FileCache(const QString &cacheDir, QObject *parent) :
     bool        needCleanup = false;
     const auto &prefixes    = _registry->getChildOptionNames("", true, true);
     for (const QString &prefix : prefixes) {
-        auto section = prefix.section('.', -1);
-        QByteArray id = QByteArray::fromHex(QStringView{section}.mid(1).toLatin1());
+        auto       section = prefix.section('.', -1);
+        QByteArray id      = QByteArray::fromHex(QStringView { section }.mid(1).toLatin1());
         if (id.isEmpty())
             continue;
         auto hAlgo = _registry->getOption(prefix + ".ha", QString()).toString();
@@ -170,8 +169,8 @@ FileCache::FileCache(const QString &cacheDir, QObject *parent) :
             auto ind = s.indexOf('+');
             if (ind == -1)
                 continue;
-            auto       type = XMPP::Hash::parseType(QStringView{s}.left(ind));
-            auto       ba   = QByteArray::fromHex(QStringView{s}.mid(ind + 1).toLatin1());
+            auto       type = XMPP::Hash::parseType(QStringView { s }.left(ind));
+            auto       ba   = QByteArray::fromHex(QStringView { s }.mid(ind + 1).toLatin1());
             XMPP::Hash hash(type, ba);
             if (hash.isValid() && ba.size()) {
                 item->addHashSum(hash);
@@ -314,7 +313,7 @@ void FileCache::sync(bool finishSession)
     QList<FileCacheItem *> onDiskItems;
     qint64                 sumMemorySize = 0;
     qint64                 sumFileSize   = 0;
-    FileCacheItem *        item;
+    FileCacheItem         *item;
 
     QHashIterator<XMPP::Hash, FileCacheItem *> it(_items);
     while (it.hasNext()) {

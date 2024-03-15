@@ -56,23 +56,23 @@ public:
     int  importDuration();
 
 private:
-    PsiCon *          psi_;
+    PsiCon           *psi_;
     QList<ImportItem> importList;
-    EDB *             srcEdb;
-    EDB *             dstEdb;
-    EDBHandle *       hErase;
-    EDBHandle *       hRead;
-    EDBHandle *       hWrite;
+    EDB              *srcEdb;
+    EDB              *dstEdb;
+    EDBHandle        *hErase;
+    EDBHandle        *hRead;
+    EDBHandle        *hWrite;
     QDateTime         startTime;
     QDateTime         stopTime;
     bool              active;
     int               result_;
     quint64           recordsCount;
-    QDialog *         dlg;
-    QLabel *          lbStatus;
-    QProgressBar *    progressBar;
-    QStackedWidget *  stackedWidget;
-    QPushButton *     btnOk;
+    QDialog          *dlg;
+    QLabel           *lbStatus;
+    QProgressBar     *progressBar;
+    QStackedWidget   *stackedWidget;
+    QPushButton      *btnOk;
 
 private:
     void clear();

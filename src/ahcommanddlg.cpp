@@ -22,9 +22,9 @@
 #include "ahcexecutetask.h"
 #include "ahcformdlg.h"
 #include "busywidget.h"
-#include "psiaccount.h"
 #include "iris/xmpp_client.h"
 #include "iris/xmpp_xmlcommon.h"
+#include "psiaccount.h"
 
 #include <QComboBox>
 #include <QLabel>
@@ -105,7 +105,7 @@ bool JT_AHCGetList::take(const QDomElement &e)
 class AHCExecuteTaskWrapper : public QObject {
     Q_OBJECT
 
-    PsiCon *        psi;
+    PsiCon         *psi;
     AHCExecuteTask *task;
 
 public:

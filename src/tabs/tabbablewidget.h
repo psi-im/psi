@@ -43,7 +43,7 @@ public:
     TabbableWidget(const Jid &, PsiAccount *, TabManager *tabManager);
     ~TabbableWidget();
 
-    PsiAccount * account() const;
+    PsiAccount  *account() const;
     void         setTabIcon(const QIcon &);
     const QIcon &icon() const;
 
@@ -51,7 +51,7 @@ public:
     virtual const QString &getDisplayName() const;
 
     virtual bool readyToHide();
-    TabDlg *     getManagingTabDlg();
+    TabDlg      *getManagingTabDlg();
 
     bool isTabbed();
     bool isActiveTab();
@@ -104,7 +104,7 @@ private:
     QIcon       icon_;
     // Templates
     static int                                 chatsCount;
-    static SendButtonTemplatesMenu *           templateMenu;
+    static SendButtonTemplatesMenu            *templateMenu;
     static QPointer<SendButtonTemplatesEditor> templateEditDlg;
     // ---
 };

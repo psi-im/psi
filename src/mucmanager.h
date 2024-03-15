@@ -67,7 +67,7 @@ public:
     void          getItemsByAffiliation(MUCItem::Affiliation);
     void          destroy(const QString &reason = QString(), const Jid &venue = Jid());
     XMPP::Client *client() const;
-    PsiAccount *  account() const;
+    PsiAccount   *account() const;
 
     // Basic operations
     void kick(const QString &, const QString & = QString());

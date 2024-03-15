@@ -42,6 +42,6 @@ private:
     QWinThumbnailToolButton *onlineStatusBtn_;
     QWinThumbnailToolButton *offlineStatusBtn_;
     QWinThumbnailToolButton *eventsBtn_;
-    QWinTaskbarButton *      taskbarBtn_;
+    QWinTaskbarButton       *taskbarBtn_;
 };
 #endif // THUMBNAIL_TOOLBAR_H

@@ -22,12 +22,12 @@
 #include "Certificates/CertificateHelpers.h"
 #include "applicationinfo.h"
 #include "bobfilecache.h"
-#include "proxy.h"
-#include "psiaccount.h"
 #include "iris/xmpp.h"
 #include "iris/xmpp_client.h"
 #include "iris/xmpp_clientstream.h"
 #include "iris/xmpp_tasks.h"
+#include "proxy.h"
+#include "psiaccount.h"
 
 #include <QMessageBox>
 #include <QUrl>

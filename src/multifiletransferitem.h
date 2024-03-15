@@ -31,7 +31,7 @@ public:
                           QObject *parent);
     ~MultiFileTransferItem();
 
-    const QString &                   displayName() const;
+    const QString                    &displayName() const;
     quint64                           fullSize() const;
     quint64                           currentSize() const;
     quint64                           offset() const; // initial offset

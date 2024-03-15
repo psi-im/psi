@@ -28,13 +28,13 @@
 #include "activity.h"
 #include "filesharingdownloader.h"
 #include "geolocation.h"
-#include "mood.h"
-#include "psiactions.h"
-#include "psievent.h"
 #include "iris/xmpp_encryptionhandler.h"
 #include "iris/xmpp_reference.h"
 #include "iris/xmpp_rosterx.h"
 #include "iris/xmpp_status.h"
+#include "mood.h"
+#include "psiactions.h"
+#include "psievent.h"
 
 #include <QList>
 #include <QUrl>

@@ -624,9 +624,9 @@ void TabDlg::dropEvent(QDropEvent *event)
         PsiTabWidget *barParent = source->psiTabWidget();
         if (remoteTab >= barParent->count())
             return;
-        QWidget *       widget = barParent->widget(remoteTab);
+        QWidget        *widget = barParent->widget(remoteTab);
         TabbableWidget *chat   = dynamic_cast<TabbableWidget *>(widget);
-        TabDlg *        dlg    = tabManager_->getManagingTabs(chat);
+        TabDlg         *dlg    = tabManager_->getManagingTabs(chat);
         if (!chat || !dlg)
             return;
         dlg->queuedSendTabTo(chat, this);

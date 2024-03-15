@@ -29,7 +29,7 @@ public:
     void hideTip();
 
 protected:
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     void enterEvent(QEvent *e);
 #else
     void enterEvent(QEnterEvent *e);

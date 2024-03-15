@@ -42,7 +42,7 @@ protected:
     QDateTime _lastMsgTime;
 
 private:
-    QList<QColor> &    generatePalette();
+    QList<QColor>     &generatePalette();
     bool               compatibleColors(const QColor &, const QColor &);
     int                _nickNumber;
     QMap<QString, int> _nicks;

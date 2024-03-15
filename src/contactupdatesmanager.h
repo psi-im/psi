@@ -53,7 +53,7 @@ private:
         XMPP::Jid               jid;
     };
     QList<ContactUpdateAction> updates_;
-    QTimer *                   updateTimer_;
+    QTimer                    *updateTimer_;
 
     void removeAuthRequestEventsFor(PsiAccount *account, const XMPP::Jid &jid, bool denyAuthRequests);
     void removeToastersFor(PsiAccount *account, const XMPP::Jid &jid);

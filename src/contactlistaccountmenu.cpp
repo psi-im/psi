@@ -24,45 +24,45 @@
 #include "common.h"
 #include "contactmanager/contactmanagerdlg.h"
 #include "iconaction.h"
+#include "iris/xmpp_serverinfomanager.h"
 #include "mucjoindlg.h"
 #include "pluginmanager.h"
 #include "privacy/privacydlg.h"
 #include "psiaccount.h"
 #include "psiiconset.h"
 #include "psioptions.h"
-#include "iris/xmpp_serverinfomanager.h"
 
 #include <QPointer>
 
 class ContactListAccountMenu::Private : public QObject {
     Q_OBJECT
 
-    PsiAccount *       account;
+    PsiAccount        *account;
     AccountStatusMenu *statusMenu_;
-    QAction *          moodAction_;
-    QAction *          activityAction_;
-    QAction *          geolocationAction_;
-    QAction *          setAvatarAction_;
-    QMenu *            avatarMenu_;
-    QAction *          unsetAvatarAction_;
-    QAction *          contactManagerAction_;
-    QMenu *            bookmarksMenu_;
-    QAction *          bookmarksManageAction_;
+    QAction           *moodAction_;
+    QAction           *activityAction_;
+    QAction           *geolocationAction_;
+    QAction           *setAvatarAction_;
+    QMenu             *avatarMenu_;
+    QAction           *unsetAvatarAction_;
+    QAction           *contactManagerAction_;
+    QMenu             *bookmarksMenu_;
+    QAction           *bookmarksManageAction_;
     QList<QAction *>   bookmarksJoinActions_;
-    QAction *          addContactAction_;
-    QAction *          serviceDiscoveryAction_;
-    QAction *          newMessageAction_;
-    QAction *          xmlConsoleAction_;
-    QAction *          privacyListsAction_;
-    QAction *          modifyAccountAction_;
-    QMenu *            adminMenu_;
-    QAction *          adminOnlineUsersAction_;
-    QAction *          adminSendServerMessageAction_;
-    QAction *          adminSetMotdAction_;
-    QAction *          adminUpdateMotdAction_;
-    QAction *          adminDeleteMotdAction_;
-    QAction *          doGroupChatAction_;
-    QMenu *            pluginsMenu_;
+    QAction           *addContactAction_;
+    QAction           *serviceDiscoveryAction_;
+    QAction           *newMessageAction_;
+    QAction           *xmlConsoleAction_;
+    QAction           *privacyListsAction_;
+    QAction           *modifyAccountAction_;
+    QMenu             *adminMenu_;
+    QAction           *adminOnlineUsersAction_;
+    QAction           *adminSendServerMessageAction_;
+    QAction           *adminSetMotdAction_;
+    QAction           *adminUpdateMotdAction_;
+    QAction           *adminDeleteMotdAction_;
+    QAction           *doGroupChatAction_;
+    QMenu             *pluginsMenu_;
 
 public:
     Private(ContactListAccountMenu *menu, PsiAccount *_account) : QObject(nullptr), account(_account)
@@ -312,7 +312,7 @@ private slots:
         if (!account)
             return;
 
-        QAction *          joinAction = static_cast<QAction *>(sender());
+        QAction           *joinAction = static_cast<QAction *>(sender());
         ConferenceBookmark c = account->bookmarkManager()->conferences()[joinAction->property("bookmark").toInt()];
         account->actionJoin(c, true);
     }

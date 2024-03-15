@@ -22,10 +22,10 @@
 
 #include "activity.h"
 #include "geolocation.h"
-#include "maybe.h"
-#include "mood.h"
 #include "iris/xmpp_liverosteritem.h"
 #include "iris/xmpp_resource.h"
+#include "maybe.h"
+#include "mood.h"
 
 #include <QDateTime>
 #include <QList>
@@ -64,7 +64,7 @@ public:
     void           setSigTimestamp(const QDateTime &);
 
     void               setTune(const QString &);
-    const QString &    tune() const;
+    const QString     &tune() const;
     void               setGeoLocation(const GeoLocation &);
     const GeoLocation &geoLocation() const;
     // void setPhysicalLocation(const PhysicalLocation&);
@@ -115,13 +115,13 @@ public:
     QDateTime       lastAvailable() const;
     int             lastMessageType() const;
     void            setLastMessageType(const int mtype);
-    const QString & presenceError() const;
+    const QString  &presenceError() const;
     bool            isSelf() const;
     QString         makeTip(bool trim = true, bool doLinkify = true) const;
     QString         makeBareTip(bool trim, bool doLinkify) const;
     QString         makeDesc() const;
     bool            isPrivate() const;
-    const Mood &    mood() const;
+    const Mood     &mood() const;
     QStringList     clients() const;
     QString         findClient(const UserResource &ur) const;
     const Activity &activity() const;
@@ -138,16 +138,16 @@ public:
     void               setTune(const QString &);
     void               setConference(bool);
     void               setPending(int p, int h);
-    const QString &    tune() const;
+    const QString     &tune() const;
     void               setGeoLocation(const GeoLocation &);
     const GeoLocation &geoLocation() const;
     // void setPhysicalLocation(const PhysicalLocation&);
     // const PhysicalLocation& physicalLocation() const;
     void setAvatarFactory(AvatarFactory *);
 
-    UserResourceList &              userResourceList();
+    UserResourceList               &userResourceList();
     UserResourceList::Iterator      priority();
-    const UserResourceList &        userResourceList() const;
+    const UserResourceList         &userResourceList() const;
     UserResourceList::ConstIterator priority() const;
     void                            removeAllResources();
     void                            removeResource(const QString &resource);

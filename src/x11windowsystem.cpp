@@ -1,6 +1,6 @@
 #include "x11windowsystem.h"
 
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 #include <QX11Info>
 #else
 #include <QGuiApplication>
@@ -11,11 +11,11 @@
 const long       MAX_PROP_SIZE              = 100000;
 X11WindowSystem *X11WindowSystem::_instance = nullptr;
 
-
 namespace {
 
-bool isPlatformX11() {
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+bool isPlatformX11()
+{
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     return QX11Info::isPlatformX11());
 #else
     auto x11app = qApp->nativeInterface<QNativeInterface::QX11Application>();
@@ -40,7 +40,7 @@ static bool getCardinal32Prop(Display *display, Window win, char *propName, long
     Atom          nameAtom, typeAtom, actual_type_return;
     int           actual_format_return, result;
     unsigned long nitems_return, bytes_after_return;
-    long *        result_array = nullptr;
+    long         *result_array = nullptr;
 
     nameAtom = XInternAtom(display, propName, False);
     typeAtom = XInternAtom(display, "CARDINAL", False);
@@ -49,7 +49,7 @@ static bool getCardinal32Prop(Display *display, Window win, char *propName, long
         return false;
     }
 
-           // Try to get the property
+    // Try to get the property
     result
         = XGetWindowProperty(display, win, nameAtom, 0, 1, False, typeAtom, &actual_type_return, &actual_format_return,
                              &nitems_return, &bytes_after_return, reinterpret_cast<unsigned char **>(&result_array));
@@ -70,8 +70,9 @@ static bool getCardinal32Prop(Display *display, Window win, char *propName, long
     return true;
 }
 
-auto getDisplay() {
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+auto getDisplay()
+{
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     return QX11Info::display());
 #else
     auto x11app = qApp->nativeInterface<QNativeInterface::QX11Application>();
@@ -79,8 +80,9 @@ auto getDisplay() {
 #endif
 }
 
-auto getRootWindow() {
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+auto getRootWindow()
+{
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     return QX11Info::appRootWindow();
 #else
     auto x11app = qApp->nativeInterface<QNativeInterface::QX11Application>();
@@ -90,9 +92,7 @@ auto getRootWindow() {
 
 }
 
-bool X11WindowSystem::isValid() const {
-    return ::isPlatformX11();
-}
+bool X11WindowSystem::isValid() const { return ::isPlatformX11(); }
 
 void X11WindowSystem::x11wmClass(WId wid, QString resName)
 {
@@ -103,7 +103,7 @@ void X11WindowSystem::x11wmClass(WId wid, QString resName)
     if (!isValid()) // Avoid crashes if launched in Wayland
         return;
 
-    Display *dsp = getDisplay();                 // get the display
+    Display *dsp = getDisplay(); // get the display
     // WId win = winId();                           // get the window
     XClassHint classhint; // class hints
     // Get old class hint. It is important to save old class name
@@ -112,7 +112,7 @@ void X11WindowSystem::x11wmClass(WId wid, QString resName)
 
     const QByteArray latinResName = resName.toLatin1();
     classhint.res_name            = const_cast<char *>(latinResName.data()); // res_name
-    XSetClassHint(dsp, wid, &classhint);                     // set the class hints
+    XSetClassHint(dsp, wid, &classhint);                                     // set the class hints
 
     XFree(classhint.res_class);
 }
@@ -227,7 +227,7 @@ QRect X11WindowSystem::windowRect(Window win)
     Window       w_unused;
     int          x, y;
     unsigned int w, h, junk;
-    Display *display = getDisplay();
+    Display     *display = getDisplay();
     XGetGeometry(display, win, &w_unused, &x, &y, &w, &h, &junk, &junk);
     XTranslateCoordinates(display, win, getRootWindow(), 0, 0, &x, &y, &w_unused);
 
@@ -237,8 +237,8 @@ QRect X11WindowSystem::windowRect(Window win)
     unsigned long  nitems_ret, unused;
     const Atom     XA_CARDINAL = Atom(6);
     if (net_frame_extents != None
-        && XGetWindowProperty(display, win, net_frame_extents, 0l, 4l, False, XA_CARDINAL, &type_ret,
-                              &format_ret, &nitems_ret, &unused, &data_ret)
+        && XGetWindowProperty(display, win, net_frame_extents, 0l, 4l, False, XA_CARDINAL, &type_ret, &format_ret,
+                              &nitems_ret, &unused, &data_ret)
             == Success) {
         if (type_ret == XA_CARDINAL && format_ret == 32 && nitems_ret == 4) {
             // Struts array: 0 - left, 1 - right, 2 - top, 3 - bottom
@@ -281,8 +281,8 @@ bool X11WindowSystem::isWindowObscured(QWidget *widget, bool alwaysOnTop)
 
     if (net_client_list_stacking != None) {
         QRect winRect = windowRect(win);
-        if (XGetWindowProperty(display, getRootWindow(), net_client_list_stacking, 0,
-                               MAX_PROP_SIZE, False, XA_WINDOW, &type_ret, &format_ret, &nitems_ret, &unused, &data_ret)
+        if (XGetWindowProperty(display, getRootWindow(), net_client_list_stacking, 0, MAX_PROP_SIZE, False, XA_WINDOW,
+                               &type_ret, &format_ret, &nitems_ret, &unused, &data_ret)
             == Success) {
             if (type_ret == XA_WINDOW && format_ret == 32) {
                 Window *wins = reinterpret_cast<Window *>(data_ret);
@@ -329,11 +329,11 @@ bool X11WindowSystem::windowHasOnlyTypes(Window win, const QSet<Atom> &allowedTy
     int            format_ret;
     unsigned char *data_ret;
     unsigned long  nitems_ret, unused;
-    Display *display = getDisplay();
+    Display       *display = getDisplay();
 
     if (net_wm_window_type != None
-        && XGetWindowProperty(display, win, net_wm_window_type, 0l, 2048l, False, XA_ATOM, &type_ret,
-                              &format_ret, &nitems_ret, &unused, &data_ret)
+        && XGetWindowProperty(display, win, net_wm_window_type, 0l, 2048l, False, XA_ATOM, &type_ret, &format_ret,
+                              &nitems_ret, &unused, &data_ret)
             == Success) {
         if (type_ret == XA_ATOM && format_ret == 32 && nitems_ret > 0) {
             Atom *types = reinterpret_cast<Atom *>(data_ret);
@@ -358,7 +358,7 @@ bool X11WindowSystem::windowHasAnyOfStates(Window win, const QSet<Atom> &filtere
     int            format_ret;
     unsigned char *data_ret;
     unsigned long  nitems_ret, unused;
-    Display *display = getDisplay();
+    Display       *display = getDisplay();
 
     if (net_wm_state != None
         && XGetWindowProperty(display, win, net_wm_state, 0l, 2048l, False, XA_ATOM, &type_ret, &format_ret,

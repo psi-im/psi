@@ -26,11 +26,11 @@
 #ifdef PSI_PLUGINS
 #include "pluginmanager.h"
 #endif
+#include "iris/xmpp_xmlcommon.h"
 #include "psioptions.h"
 #include "psitoolbar.h"
 #include "shortcutmanager.h"
 #include "varlist.h"
-#include "iris/xmpp_xmlcommon.h"
 
 #include <QApplication>
 #include <QDir>
@@ -101,25 +101,11 @@ void UserAccount::reset()
     proxy_pass  = "";
 
     stunHosts.clear();
-    stunHosts << "stun.l.google.com:19302"
-              << "stun.ekiga.net"
-              << "provserver.televolution.net"
-              << "stun1.voiceeclipse.net"
-              << "stun.callwithus.com"
-              << "stun.counterpath.net"
-              << "stun.endigovoip.com"
-              << "stun.ideasip.com"
-              << "stun.internetcalls.com"
-              << "stun.noc.ams-ix.net"
-              << "stun.phonepower.com"
-              << "stun.phoneserve.com"
-              << "stun.rnktel.com"
-              << "stun.softjoys.com"
-              << "stun.sipgate.net"
-              << "stun.sipgate.net:10000"
-              << "stun.stunprotocol.org"
-              << "stun.voipbuster.com"
-              << "stun.voxgratia.org";
+    stunHosts << "stun.l.google.com:19302" << "stun.ekiga.net" << "provserver.televolution.net"
+              << "stun1.voiceeclipse.net" << "stun.callwithus.com" << "stun.counterpath.net" << "stun.endigovoip.com"
+              << "stun.ideasip.com" << "stun.internetcalls.com" << "stun.noc.ams-ix.net" << "stun.phonepower.com"
+              << "stun.phoneserve.com" << "stun.rnktel.com" << "stun.softjoys.com" << "stun.sipgate.net"
+              << "stun.sipgate.net:10000" << "stun.stunprotocol.org" << "stun.voipbuster.com" << "stun.voxgratia.org";
 
     stunHost = stunHosts[0];
 
@@ -497,21 +483,10 @@ void OptionsMigration::lateMigration()
         chatToolbar.on = PsiOptions::instance()->getOption("options.ui.chat.central-toolbar").toBool();
         PsiOptions::instance()->removeOption("options.ui.chat.central-toolbar");
         chatToolbar.name = "Chat";
-        chatToolbar.keys << "chat_clear"
-                         << "chat_find"
-                         << "chat_html_text"
-                         << "chat_add_contact"
-                         << "chat_share_files";
+        chatToolbar.keys << "chat_clear" << "chat_find" << "chat_html_text" << "chat_add_contact" << "chat_share_files";
         chatToolbar.keys += pluginsKeys;
-        chatToolbar.keys << "spacer"
-                         << "chat_icon"
-                         << "chat_file"
-                         << "chat_pgp"
-                         << "chat_info"
-                         << "chat_history"
-                         << "chat_voice"
-                         << "chat_active_contacts"
-                         << "chat_templates";
+        chatToolbar.keys << "spacer" << "chat_icon" << "chat_file" << "chat_pgp" << "chat_info" << "chat_history"
+                         << "chat_voice" << "chat_active_contacts" << "chat_templates";
 
         if (PsiOptions::instance()->getOption("options.ui.chat.disable-paste-send").toBool()) {
             chatToolbar.keys.removeAt(chatToolbar.keys.indexOf("chat_ps"));
@@ -521,16 +496,10 @@ void OptionsMigration::lateMigration()
         groupchatToolbar.on = chatToolbar.on;
 
         groupchatToolbar.name = "Groupchat";
-        groupchatToolbar.keys << "gchat_info"
-                              << "gchat_clear"
-                              << "gchat_find"
-                              << "gchat_html_text"
-                              << "gchat_configure"
-                              << "gchat_share_files"
-                              << "gchat_templates";
+        groupchatToolbar.keys << "gchat_info" << "gchat_clear" << "gchat_find" << "gchat_html_text" << "gchat_configure"
+                              << "gchat_share_files" << "gchat_templates";
         groupchatToolbar.keys += pluginsKeys;
-        groupchatToolbar.keys << "spacer"
-                              << "gchat_icon";
+        groupchatToolbar.keys << "spacer" << "gchat_icon";
 
         if (PsiOptions::instance()->getOption("options.ui.chat.disable-paste-send").toBool()) {
             groupchatToolbar.keys.removeAt(groupchatToolbar.keys.indexOf("gchat_ps"));

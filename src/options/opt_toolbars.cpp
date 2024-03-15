@@ -58,7 +58,7 @@ public:
     PsiActionList::ActionsType currentType()
     {
         PsiActionList::ActionsType type;
-        LookFeelToolbarsUI *       d = static_cast<LookFeelToolbarsUI *>(q->w);
+        LookFeelToolbarsUI        *d = static_cast<LookFeelToolbarsUI *>(q->w);
 
         if (d->cb_toolbars->currentIndex() == CHAT_TOOLBAR) {
             type = class2idChat();
@@ -428,7 +428,7 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
 
     {
         // Fill the TreeWidget with toolbar-specific actions
-        QTreeWidget *    tw       = d->tw_availActions;
+        QTreeWidget     *tw       = d->tw_availActions;
         QTreeWidgetItem *lastRoot = nullptr;
 
         QList<ActionList *> lists = psi->actionList()->actionLists(p->currentType());
@@ -572,7 +572,7 @@ void OptionsTabToolbars::toolbarNameChanged()
 void OptionsTabToolbars::toolbarActionUp()
 {
     LookFeelToolbarsUI *d    = static_cast<LookFeelToolbarsUI *>(w);
-    QListWidgetItem *   item = d->lw_selectedActions->currentItem();
+    QListWidgetItem    *item = d->lw_selectedActions->currentItem();
     if (!item)
         return;
 
@@ -594,7 +594,7 @@ void OptionsTabToolbars::toolbarActionUp()
 void OptionsTabToolbars::toolbarActionDown()
 {
     LookFeelToolbarsUI *d    = static_cast<LookFeelToolbarsUI *>(w);
-    QListWidgetItem *   item = d->lw_selectedActions->currentItem();
+    QListWidgetItem    *item = d->lw_selectedActions->currentItem();
     if (!item)
         return;
 
@@ -616,7 +616,7 @@ void OptionsTabToolbars::toolbarActionDown()
 void OptionsTabToolbars::toolbarAddAction()
 {
     LookFeelToolbarsUI *d    = static_cast<LookFeelToolbarsUI *>(w);
-    QTreeWidgetItem *   item = d->tw_availActions->currentItem();
+    QTreeWidgetItem    *item = d->tw_availActions->currentItem();
     if (!item || item->data(0, Qt::UserRole).toString().isEmpty())
         return;
 
@@ -628,7 +628,7 @@ void OptionsTabToolbars::toolbarAddAction()
 void OptionsTabToolbars::toolbarRemoveAction()
 {
     LookFeelToolbarsUI *d    = static_cast<LookFeelToolbarsUI *>(w);
-    QListWidgetItem *   item = d->lw_selectedActions->currentItem();
+    QListWidgetItem    *item = d->lw_selectedActions->currentItem();
     if (!item)
         return;
 

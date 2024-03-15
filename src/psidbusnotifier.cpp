@@ -69,17 +69,17 @@ public:
     iiibiiay() { }
     static const decltype(qDBusRegisterMetaType<iiibiiay>()) id;
 
-    int              width;
-    int              height;
-    int              rowstride;
-    bool             hasAlpha;
-    int              bitsPerSample;
-    int              channels;
-    QByteArray       image;
+    int        width;
+    int        height;
+    int        rowstride;
+    bool       hasAlpha;
+    int        bitsPerSample;
+    int        channels;
+    QByteArray image;
 };
 Q_DECLARE_METATYPE(iiibiiay)
 
-const decltype(qDBusRegisterMetaType<iiibiiay>()) iiibiiay::id{qDBusRegisterMetaType<iiibiiay>()};
+const decltype(qDBusRegisterMetaType<iiibiiay>()) iiibiiay::id { qDBusRegisterMetaType<iiibiiay>() };
 
 QDBusArgument &operator<<(QDBusArgument &a, const iiibiiay &i)
 {

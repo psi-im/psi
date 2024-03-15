@@ -20,8 +20,8 @@
 #ifndef MUCCONFIG_H
 #define MUCCONFIG_H
 
-#include "ui_mucconfig.h"
 #include "iris/xmpp_muc.h"
+#include "ui_mucconfig.h"
 
 #include <QDialog>
 
@@ -76,12 +76,12 @@ private:
     Ui::MUCConfig               ui_;
     MUCItem::Role               role_;
     MUCItem::Affiliation        affiliation_;
-    MUCManager *                manager_;
-    QScrollArea *               data_container_;
-    XDataWidget *               data_;
-    InfoWidget *                vcard_;
-    MUCAffiliationsModel *      affiliations_model_;
-    MUCAffiliationsProxyModel * affiliations_proxy_model_;
+    MUCManager                 *manager_;
+    QScrollArea                *data_container_;
+    XDataWidget                *data_;
+    InfoWidget                 *vcard_;
+    MUCAffiliationsModel       *affiliations_model_;
+    MUCAffiliationsProxyModel  *affiliations_proxy_model_;
     QList<MUCItem::Affiliation> pending_requests_;
 };
 

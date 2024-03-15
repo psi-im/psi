@@ -237,7 +237,7 @@ void OptionsTabPlugins::settingsClicked(QTreeWidgetItem *item)
     OptPluginsUI *d = static_cast<OptPluginsUI *>(w);
     const QSize   dialogSize
         = PsiOptions::instance()->getOption("options.ui.save.plugin-settings-dialog-size", QSize(600, 400)).toSize();
-    const QString &    shortName = item->data(C_NAME, Qt::UserRole).toString();
+    const QString     &shortName = item->data(C_NAME, Qt::UserRole).toString();
     PluginsOptionsDlg *sw        = d->findChild<PluginsOptionsDlg *>(shortName);
     if (!sw) {
         sw = new PluginsOptionsDlg(shortName, psi, d);

@@ -10,15 +10,15 @@ jobs:
     - os: linux
       dist: bionic
       env: TARGET=linux64 CHAT_TYPE=basic DIST=bionic
-      
+
     - os: linux
       dist: bionic
       env: TARGET=linux64 CHAT_TYPE=webkit DIST=bionic
-      
+
     - os: linux
       dist: bionic
       env: TARGET=linux64 CHAT_TYPE=webengine DIST=bionic
-      
+
     - os: osx
       osx_image: xcode12.3
       env: TARGET=macos64 CHAT_TYPE=basic macOS=11.1

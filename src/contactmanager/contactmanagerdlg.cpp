@@ -19,13 +19,13 @@
 
 #include "contactmanagerdlg.h"
 
-//#include "contactview.h"
+// #include "contactview.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_tasks.h"
 #include "psiaccount.h"
 #include "psiiconset.h"
 #include "userlist.h"
 #include "vcardfactory.h"
-#include "iris/xmpp_client.h"
-#include "iris/xmpp_tasks.h"
 
 #include <QCheckBox>
 #include <QFile>

@@ -19,11 +19,11 @@
 
 #include "popupmanager.h"
 
+#include "iris/xmpp_jid.h"
 #include "psiaccount.h"
 #include "psicon.h"
 #include "psioptions.h"
 #include "psipopupinterface.h"
-#include "iris/xmpp_jid.h"
 
 #include <QPluginLoader>
 #include <QtPlugin>
@@ -52,7 +52,7 @@ public:
 
     PsiPopupInterface *popup(const QString &name)
     {
-        PsiPopupInterface *      ppi    = nullptr;
+        PsiPopupInterface       *ppi    = nullptr;
         PsiPopupPluginInterface *plugin = nullptr;
         if (popups_.contains(name)) {
             plugin = popups_.value(name);
@@ -99,7 +99,7 @@ public:
         return defaultTimeout * 1000;
     }
 
-    PsiCon *                                 psi_;
+    PsiCon                                  *psi_;
     int                                      lastCustomType_;
     QList<OptionValue>                       options_;
     QMap<QString, PsiPopupPluginInterface *> popups_;

@@ -74,12 +74,12 @@ public:
     PluginHost(PluginManager *manager, const QString &pluginFile);
     virtual ~PluginHost();
 
-    PluginHost(const PluginHost &) = delete;
+    PluginHost(const PluginHost &)            = delete;
     PluginHost &operator=(const PluginHost &) = delete;
 
     bool           isValid() const;
     const QString &path() const;
-    QWidget *      optionsWidget() const;
+    QWidget       *optionsWidget() const;
 
     // cached basic info
     const QString &name() const;
@@ -88,7 +88,7 @@ public:
     const QString &vendor() const;
     const QString &description() const;
     int            priority() const;
-    const QIcon &  icon() const;
+    const QIcon   &icon() const;
 
     QStringList pluginFeatures() const;
 
@@ -257,12 +257,12 @@ public:
 
     // PluginAccessingHost
 
-    QObject *   getPlugin(const QString &name) override;
+    QObject    *getPlugin(const QString &name) override;
     QVariantMap selfMetadata() const override;
 
     // WebkitAccessingHost
     RenderType chatLogRenderType() const override;
-    QString    installChatLogJSDataFilter(const QString &     js,
+    QString    installChatLogJSDataFilter(const QString      &js,
                                           PsiPlugin::Priority priority = PsiPlugin::PriorityNormal) override;
     void       uninstallChatLogJSDataFilter(const QString &id) override;
     void       executeChatLogJavaScript(QWidget *log, const QString &js) override;
@@ -279,7 +279,7 @@ signals:
     void disabled();
 
 private:
-    PluginManager *   manager_ = nullptr;
+    PluginManager    *manager_ = nullptr;
     QPointer<QObject> plugin_;
     QString           file_;
     QString           name_;
@@ -290,9 +290,9 @@ private:
     int               priority_ = 0;
     QByteArray        rawIcon_;
     QIcon             icon_;
-    QPluginLoader *   loader_             = nullptr;
+    QPluginLoader    *loader_             = nullptr;
     QPointer<QObject> enableHandler       = nullptr;
-    Iconset *         iconset_            = nullptr;
+    Iconset          *iconset_            = nullptr;
     bool              hasToolBarButton_   = false;
     bool              hasGCToolBarButton_ = false;
 
@@ -302,10 +302,10 @@ private:
     bool    hasInfo_   = false;
     QString infoString_;
 
-    QMultiMap<QString, IqNamespaceFilter *> iqNsFilters_;
+    QMultiMap<QString, IqNamespaceFilter *>            iqNsFilters_;
     QMultiMap<QRegularExpression, IqNamespaceFilter *> iqNsxFilters_;
-    QList<QVariantHash>                     buttons_;
-    QList<QVariantHash>                     gcbuttons_;
+    QList<QVariantHash>                                buttons_;
+    QList<QVariantHash>                                gcbuttons_;
 
     QList<QVariantHash> accMenu_;
     QList<QVariantHash> contactMenu_;

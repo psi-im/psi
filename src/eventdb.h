@@ -20,9 +20,9 @@
 #ifndef EVENTDB_H
 #define EVENTDB_H
 
+#include "iris/xmpp_jid.h"
 #include "psicon.h"
 #include "psievent.h"
-#include "iris/xmpp_jid.h"
 
 #include <QDateTime>
 #include <QFile>
@@ -112,7 +112,7 @@ protected:
     virtual int erase(const QString &accId, const XMPP::Jid &)                                                      = 0;
     void        resultReady(int, EDBResult, int);
     void        writeFinished(int, bool);
-    PsiCon *    psi();
+    PsiCon     *psi();
 
 private:
     class Private;

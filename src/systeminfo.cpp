@@ -182,16 +182,14 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
     // Detect
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MAC) && !defined(Q_OS_HAIKU)
     // attempt to get LSB version before trying the distro-specific approach
-    os_str_ = lsbRelease(QStringList() << "--description"
-                                       << "--short");
+    os_str_ = lsbRelease(QStringList() << "--description" << "--short");
 
     if (os_str_.isEmpty()) {
         os_str_ = unixHeuristicDetect();
     }
     os_name_str_ = os_str_;
 
-    os_version_str_ = lsbRelease(QStringList() << "--release"
-                                               << "--short");
+    os_version_str_ = lsbRelease(QStringList() << "--release" << "--short");
 
     if (os_version_str_.isEmpty()) {
         os_version_str_ = QSysInfo::productVersion();
@@ -214,13 +212,13 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
     os_str_.clear();
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 5)
     const auto current = QOperatingSystemVersion::current();
-    os_name_str_ = current.name();
-    os_version_str_ = QString::number(current.majorVersion());
+    os_name_str_       = current.name();
+    os_version_str_    = QString::number(current.majorVersion());
     if (current.minorVersion() >= 0)
         os_version_str_ += "." + QString::number(current.minorVersion());
     if (current.microVersion() > 0)
         os_version_str_ += "." + QString::number(current.microVersion());
-    
+
     if (current > QOperatingSystemVersion::MacOSCatalina) {
         // Unknown name
     } else if (current >= QOperatingSystemVersion::MacOSCatalina) {

@@ -22,15 +22,15 @@
 #include "filesharingmanager.h"
 #include "fileutil.h"
 #include "httputil.h"
-#include "jidutil.h"
 #include "iris/jingle-session.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_hash.h"
+#include "iris/xmpp_jid.h"
+#include "jidutil.h"
 #include "networkaccessmanager.h"
 #include "psiaccount.h"
 #include "psicon.h"
 #include "userlist.h"
-#include "iris/xmpp_client.h"
-#include "iris/xmpp_hash.h"
-#include "iris/xmpp_jid.h"
 
 #include <QByteArray>
 #include <QDir>
@@ -118,8 +118,7 @@ class JingleFileShareDownloader : public AbstractFileShareDownloader {
 public:
     JingleFileShareDownloader(PsiAccount *acc_, const QString &uri, const XMPP::Jingle::FileTransfer::File &file,
                               const QList<Jid> &jids, QObject *parent) :
-        AbstractFileShareDownloader(acc_, uri, parent),
-        file(file), jids(jids)
+        AbstractFileShareDownloader(acc_, uri, parent), file(file), jids(jids)
     {
     }
 
@@ -395,8 +394,8 @@ public:
 class FileShareDownloader::Private : public QObject {
     Q_OBJECT
 public:
-    FileShareDownloader *        q   = nullptr;
-    PsiAccount *                 acc = nullptr;
+    FileShareDownloader         *q   = nullptr;
+    PsiAccount                  *acc = nullptr;
     QList<XMPP::Hash>            sums;
     Jingle::FileTransfer::File   file;
     QList<Jid>                   jids;
@@ -529,9 +528,7 @@ public:
 
 FileShareDownloader::FileShareDownloader(PsiAccount *acc, const QList<XMPP::Hash> &sums,
                                          const Jingle::FileTransfer::File &file, const QList<Jid> &jids,
-                                         const QStringList &uris, QObject *parent) :
-    QIODevice(parent),
-    d(new Private)
+                                         const QStringList &uris, QObject *parent) : QIODevice(parent), d(new Private)
 {
     d->q    = this;
     d->acc  = acc;

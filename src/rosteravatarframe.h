@@ -54,7 +54,7 @@ public slots:
 private:
     Ui::RosterAvatarFrame ui_;
     QString               statusMessage_;
-    QMenu *               statusMenu_;
+    QMenu                *statusMenu_;
     QPixmap               avatarPixmap;
 
     void drawAvatar();

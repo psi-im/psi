@@ -24,13 +24,13 @@
 #include "coloropt.h"
 #include "common.h"
 #include "groupchatdlg.h"
+#include "iris/xmpp_caps.h"
+#include "iris/xmpp_muc.h"
 #include "psiaccount.h"
 #include "psiiconset.h"
 #include "psioptions.h"
 #include "psitooltip.h"
 #include "userlist.h"
-#include "iris/xmpp_caps.h"
-#include "iris/xmpp_muc.h"
 
 #include <QItemDelegate>
 #include <QMenu>

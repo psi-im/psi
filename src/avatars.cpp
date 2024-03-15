@@ -29,10 +29,6 @@
 #include "applicationinfo.h"
 #include "filecache.h"
 #include "iconset.h"
-#include "pepmanager.h"
-#include "pixmaputil.h"
-#include "psiaccount.h"
-#include "vcardfactory.h"
 #include "iris/xmpp_client.h"
 #include "iris/xmpp_hash.h"
 #include "iris/xmpp_pubsubitem.h"
@@ -40,6 +36,10 @@
 #include "iris/xmpp_tasks.h"
 #include "iris/xmpp_vcard.h"
 #include "iris/xmpp_xmlcommon.h"
+#include "pepmanager.h"
+#include "pixmaputil.h"
+#include "psiaccount.h"
+#include "vcardfactory.h"
 
 #include <QBuffer>
 #include <QDateTime>
@@ -56,7 +56,7 @@
 // we have retine nowdays and various other huge resolutions.96px is not that big already.
 // it would be better to scale images according to monitor properties
 #define MAX_AVATAR_SIZE 96
-//#define MAX_AVATAR_DISPLAY_SIZE 64
+// #define MAX_AVATAR_DISPLAY_SIZE 64
 
 //------------------------------------------------------------------------------
 
@@ -924,7 +924,7 @@ void AvatarFactory::vcardUpdated(const Jid &j, bool isMuc)
 
 void AvatarFactory::itemPublished(const Jid &jid, const QString &n, const PubSubItem &item)
 {
-    AvatarCache *         cache   = AvatarCache::instance();
+    AvatarCache          *cache   = AvatarCache::instance();
     QString               jidFull = jid.full(); // it's always bare
     AvatarCache::OpResult result  = AvatarCache::Changed;
 

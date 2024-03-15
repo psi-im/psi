@@ -121,8 +121,8 @@ void GAdvancedWidget::Private::posChanging(int *x, int *y, int *width, int *heig
 
     bool resizing = p->frameSize() != QSize(*width, *height);
 
-    auto parentScreen = p->screen();
-    QWidgetList     list;
+    auto        parentScreen = p->screen();
+    QWidgetList list;
 
     if (stickToWindows)
         list = QApplication::topLevelWidgets();
@@ -273,7 +273,7 @@ void GAdvancedWidget::Private::restoreGeometry()
     PsiOptions *o = PsiOptions::instance();
     QVariant    v(o->getOption(geometryOptionPath_));
 
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     if (v.type() == QVariant::ByteArray) {
 #else
     if (v.typeId() == QVariant::ByteArray) {

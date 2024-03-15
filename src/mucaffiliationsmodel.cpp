@@ -124,7 +124,7 @@ QStringList MUCAffiliationsModel::mimeTypes() const
 
 QMimeData *MUCAffiliationsModel::mimeData(const QModelIndexList &indexes) const
 {
-    QMimeData * mimeData = new QMimeData();
+    QMimeData  *mimeData = new QMimeData();
     QByteArray  encodedData;
     QDataStream stream(&encodedData, QIODevice::WriteOnly);
     for (const QModelIndex &index : indexes) {

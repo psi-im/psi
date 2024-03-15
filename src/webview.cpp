@@ -206,7 +206,7 @@ void WebView::mouseMoveEvent(QMouseEvent *event)
     if ((event->pos() - dragStartPosition).manhattanLength() < QApplication::startDragDistance())
         return;
 
-    QDrag *    drag     = new QDrag(this);
+    QDrag     *drag     = new QDrag(this);
     QMimeData *mimeData = new QMimeData;
 
     QString html = TextUtil::img2title(selectedHtml());
@@ -221,7 +221,7 @@ void WebView::convertClipboardHtmlImages(QClipboard::Mode mode)
 {
     QClipboard *cb   = QApplication::clipboard();
     QString     html = TextUtil::img2title(selectedHtml());
-    QMimeData * data = new QMimeData;
+    QMimeData  *data = new QMimeData;
     data->setHtml(html);
     data->setText(TextUtil::rich2plain(html, false));
     cb->setMimeData(data, mode);

@@ -40,7 +40,7 @@ public slots:
     virtual void setData(PsiCon *psi, QWidget *);
 
 private:
-    QWidget *     w;
+    QWidget      *w;
     PopupManager *popup_;
 };
 

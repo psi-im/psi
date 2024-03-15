@@ -38,7 +38,7 @@ public:
     virtual Qt::DropActions supportedDropActions() const;
     bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
     QStringList mimeTypes() const;
-    QMimeData * mimeData(const QModelIndexList &indexes) const;
+    QMimeData  *mimeData(const QModelIndexList &indexes) const;
 
     void                 resetAffiliationLists();
     void                 setAffiliationListEnabled(XMPP::MUCItem::Affiliation, bool = true);

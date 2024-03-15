@@ -33,12 +33,12 @@ public:
     PrivacyList(const QString &name, const QList<PrivacyListItem> &items = QList<PrivacyListItem>());
     PrivacyList(const QDomElement &);
 
-    const QString &               name() const { return name_; }
+    const QString                &name() const { return name_; }
     void                          setName(const QString &name) { name_ = name; }
     bool                          isEmpty() const { return items_.isEmpty(); }
     void                          clear() { items_.clear(); }
     const QList<PrivacyListItem> &items() const { return items_; }
-    const PrivacyListItem &       item(int index) const { return items_.at(index); }
+    const PrivacyListItem        &item(int index) const { return items_.at(index); }
     void                          removeItem(int index) { items_.removeAt(index); }
     void                          insertItem(int index, const PrivacyListItem &item);
     void                          appendItem(const PrivacyListItem &item);

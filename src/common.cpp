@@ -45,14 +45,14 @@
 #include <QPaintDevice>
 #include <QProcess>
 #include <QRegularExpression>
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 #include <QSound>
 #else
 #include <QSoundEffect>
 #endif
+#include <QScreen>
 #include <QUrl>
 #include <QUuid>
-#include <QScreen>
 
 #ifdef __GLIBC__
 #include <langinfo.h>
@@ -60,7 +60,7 @@
 #ifdef HAVE_KEYCHAIN
 #include <qt5keychain/keychain.h>
 #endif
-//#include <stdio.h>
+// #include <stdio.h>
 #ifdef Q_OS_MAC
 #include <Carbon/Carbon.h> // for HIToolbox/InternetConfig
 #include <CoreServices/CoreServices.h>
@@ -425,7 +425,7 @@ void reorderGridLayout(QGridLayout *layout, int maxCols)
 
 TabbableWidget *findActiveTab()
 {
-    QWidget *       chat = QApplication::activeWindow();
+    QWidget        *chat = QApplication::activeWindow();
     TabbableWidget *tw   = nullptr;
     if (chat) {
         TabDlg *td = qobject_cast<TabDlg *>(chat);

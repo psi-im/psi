@@ -21,8 +21,8 @@
 #define EDBFLATFILE_H
 
 #include "eventdb.h"
-#include "psievent.h"
 #include "iris/xmpp_jid.h"
+#include "psievent.h"
 
 #include <QDateTime>
 #include <QFile>
@@ -87,7 +87,7 @@ public:
     QString   fname;
     QFile     f;
     bool      valid;
-    QTimer *  t;
+    QTimer   *t;
 
     class Private;
     Private *d;

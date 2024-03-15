@@ -219,10 +219,7 @@ void PrivacyListItemTest::testFromXml_IQChild()
 void PrivacyListItemTest::testFromXml_AllChildren()
 {
     QStringList children;
-    children << "message"
-             << "presence-in"
-             << "presence-out"
-             << "iq";
+    children << "message" << "presence-in" << "presence-out" << "iq";
 
     PrivacyListItem item = createItemFromXmlWithChildren(children);
 

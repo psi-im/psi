@@ -32,4 +32,3 @@ FEATURES=""
 [ "${1}" = "--webengine" ] && FEATURES=", webengine"
 
 echo "${PSI_TAG}.${PATCHES_NUM} (${DATE_STR}, ${PSI_HASH}${FEATURES})"
-

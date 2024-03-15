@@ -65,7 +65,7 @@ private:
         QString   text(bool tooltip = false) const { return tooltip ? _tooltip : _text; }
 
     private:
-        TreeItem *        _parent;
+        TreeItem         *_parent;
         ItemType          _type;
         QString           _text;
         QString           _tooltip;

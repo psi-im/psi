@@ -32,9 +32,9 @@ public:
 
 private:
     OptionsTree       o_;
-    QTreeView *       tv_;
+    QTreeView        *tv_;
     OptionsTreeModel *tm_;
-    QCheckBox *       cb_;
+    QCheckBox        *cb_;
 };
 
 int main(int argc, char *argv[])

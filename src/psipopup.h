@@ -44,7 +44,7 @@ public:
     static void deleteAll();
 
 private:
-    void        setData(const Jid &, const Resource &, const UserListItem * = nullptr,
+    void        setData(const Jid &, const Resource &, const UserListItem        * = nullptr,
                         const PsiEvent::Ptr &event = PsiEvent::Ptr());
     void        setData(const QPixmap &avatar, const PsiIcon *icon, const QString &text);
     void        setJid(const Jid &j);

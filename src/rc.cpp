@@ -23,11 +23,11 @@
 #include "ahcservermanager.h"
 #include "groupchatdlg.h"
 #include "iconaction.h"
+#include "iris/xmpp_xdata.h"
 #include "psiaccount.h"
 #include "psiactionlist.h"
 #include "psicon.h"
 #include "psioptions.h"
-#include "iris/xmpp_xdata.h"
 
 using namespace XMPP;
 

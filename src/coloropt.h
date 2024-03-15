@@ -35,7 +35,7 @@ public:
 class ColorOpt : public QObject {
     Q_OBJECT
 public:
-    static ColorOpt *   instance();
+    static ColorOpt    *instance();
     QColor              color(const QString &opt, const QColor &defaultColor = QColor()) const;
     QPalette::ColorRole colorRole(const QString &opt) const;
 

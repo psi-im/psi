@@ -21,8 +21,8 @@
 #define STATUSMENU_H
 
 #include "iconaction.h"
-#include "psicon.h"
 #include "iris/xmpp_status.h"
+#include "psicon.h"
 
 #include <QMenu>
 #include <QMouseEvent>
@@ -30,7 +30,7 @@
 class StatusMenu : public QMenu {
     Q_OBJECT
 protected:
-    PsiCon *            psi;
+    PsiCon             *psi;
     QList<IconAction *> statusActs, presetActs;
 
     bool eventFilter(QObject *obj, QEvent *event);

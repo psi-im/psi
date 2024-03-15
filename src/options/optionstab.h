@@ -70,7 +70,7 @@ public slots:
 
 private:
     void                init();
-    QWidget *           w;
+    QWidget            *w;
     QList<OptionsTab *> tabs;
 };
 

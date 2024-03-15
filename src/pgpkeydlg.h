@@ -55,8 +55,8 @@ protected:
 private:
     Ui::PGPKey             m_ui;
     QString                m_keyId;
-    QPushButton *          m_pb_dtext;
-    QStandardItemModel *   m_model;
+    QPushButton           *m_pb_dtext;
+    QStandardItemModel    *m_model;
     QSortFilterProxyModel *m_proxy;
 };
 

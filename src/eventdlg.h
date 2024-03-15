@@ -21,11 +21,11 @@
 #define EVENTDLG_H
 
 #include "advwidget.h"
+#include "iris/xmpp_rosterx.h"
+#include "iris/xmpp_url.h"
 #include "psievent.h"
 #include "ui_addurl.h"
 #include "userlist.h"
-#include "iris/xmpp_rosterx.h"
-#include "iris/xmpp_url.h"
 
 #include <QLineEdit>
 #include <QListWidget>

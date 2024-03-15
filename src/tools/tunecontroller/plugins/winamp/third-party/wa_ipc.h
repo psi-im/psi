@@ -503,7 +503,7 @@ typedef struct {
 typedef struct _prefsDlgRec {
     HINSTANCE hInst;
     int       dlgID;
-    void *    proc;
+    void     *proc;
 
     char *name;
     int   where; // 0 for options, 1 for plugins, 2 for skins, 3 for bookmarks, 4 for prefs
@@ -664,7 +664,7 @@ typedef struct {
 #define IPC_SETPLEDITCOLORS 920
 typedef struct {
     int     numElems;
-    int *   elems;
+    int    *elems;
     HBITMAP bm; // set if you want to override
 } waSetPlColorsStruct;
 

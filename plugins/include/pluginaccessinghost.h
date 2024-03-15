@@ -9,7 +9,7 @@ class PluginAccessingHost {
 public:
     virtual ~PluginAccessingHost() { }
 
-    virtual QObject *   getPlugin(const QString &name) = 0;
+    virtual QObject    *getPlugin(const QString &name) = 0;
     virtual QVariantMap selfMetadata() const           = 0;
 };
 

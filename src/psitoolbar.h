@@ -49,7 +49,7 @@ protected:
 
 private:
     MetaActionList *actionList_;
-    QAction *       customizeAction_;
+    QAction        *customizeAction_;
     QString         base_;
 };
 

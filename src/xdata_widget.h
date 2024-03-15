@@ -43,8 +43,8 @@ public:
     XDataWidget(PsiCon *psi, QWidget *parent, XMPP::Client *client, XMPP::Jid owner);
     ~XDataWidget();
 
-    PsiCon *            psi() const;
-    XMPP::Client *      client() const;
+    PsiCon             *psi() const;
+    XMPP::Client       *client() const;
     QString             registrarType() const;
     XMPP::Jid           owner() const;
     XMPP::Stanza::Error consistencyError() const;
@@ -52,7 +52,7 @@ public:
     void setForm(const XMPP::XData &, bool withInstructions = true);
 
     XMPP::XData::FieldList fields() const;
-    XDataField *           fieldByVar(const QString &) const;
+    XDataField            *fieldByVar(const QString &) const;
 
 protected slots:
     void linkActivated(const QString &);
@@ -65,9 +65,9 @@ private:
     typedef QList<XDataField *> XDataFieldList;
     XDataFieldList              fields_;
     QString                     registrarType_;
-    QVBoxLayout *               layout_;
-    PsiCon *                    psi_;
-    XMPP::Client *              client_;
+    QVBoxLayout                *layout_;
+    PsiCon                     *psi_;
+    XMPP::Client               *client_;
     XMPP::Jid                   owner_;
     bool                        consistent_;
     XMPP::Stanza::Error         consistencyError_;

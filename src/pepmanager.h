@@ -83,7 +83,7 @@ protected:
     // void saveSubscriptions();
 
 private:
-    XMPP::Client *     client_;
+    XMPP::Client      *client_;
     ServerInfoManager *serverInfo_;
 
     // QStringList nodes_, ensured_nodes_;

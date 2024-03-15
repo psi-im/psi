@@ -100,8 +100,7 @@ QString ActiveProfiles::Private::dbusName(QString prof)
 {
     QString name = PSIDBUSNAME;
     name += ".";
-    name
-        += encodeAlNumD(ApplicationInfo::homeDir(ApplicationInfo::ConfigLocation)).right(qMax(0, 200 - name.size()));
+    name += encodeAlNumD(ApplicationInfo::homeDir(ApplicationInfo::ConfigLocation)).right(qMax(0, 200 - name.size()));
     if (!prof.isEmpty()) {
         name += ".";
         name += encodeAlNumD(prof).right(qMax(0, 250 - name.size()));
@@ -201,7 +200,7 @@ bool ActiveProfiles::openUri(const QString &profile, const QString &uri) const
 
 bool ActiveProfiles::raise(const QString &profile, bool withUI) const
 {
-    QLabel *     lab = nullptr;
+    QLabel      *lab = nullptr;
     QDBusMessage msg = QDBusMessage::createMethodCall(d->dbusName(profile), "/Main", PSIDBUSMAINIF, "raise");
     if (withUI) {
         lab = new QLabel(tr("This psi profile is already running...<br>please wait..."));

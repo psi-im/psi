@@ -20,8 +20,8 @@
 #ifndef VOICECALLDLG_H
 #define VOICECALLDLG_H
 
-#include "ui_voicecall.h"
 #include "iris/xmpp_jid.h"
+#include "ui_voicecall.h"
 
 #include <QDialog>
 
@@ -71,7 +71,7 @@ protected:
 private:
     Jid           jid_;
     CallStatus    status_;
-    VoiceCaller * voiceCaller_;
+    VoiceCaller  *voiceCaller_;
     Ui::VoiceCall ui_;
 };
 

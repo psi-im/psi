@@ -43,9 +43,9 @@ private:
     void switchPresetMode(bool toEdit);
     void cleanupSelectedPresetGroup();
 
-    QWidget *                   w = nullptr, *parentWidget = nullptr;
+    QWidget                    *w = nullptr, *parentWidget = nullptr;
     QMap<QString, StatusPreset> presets;
-    QMenu *                     spContextMenu = nullptr;
+    QMenu                      *spContextMenu = nullptr;
 };
 
 #endif // OPT_STATUSGENERAL_H

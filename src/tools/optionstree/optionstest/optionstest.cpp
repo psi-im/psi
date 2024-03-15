@@ -28,8 +28,7 @@ int main(int argc, char const *argv[])
     QVariantList l;
     l << QVariant(QString("item1")) << qVariantFromValue(QKeySequence("CTRL+L"));
     QStringList sl;
-    sl << "String 1"
-       << "String 2";
+    sl << "String 1" << "String 2";
 
     tree.setOption("paris", QVariant(QString("sirap")));
     tree.setOption("Benvolio", QVariant(QString("Benvolio")));

@@ -46,7 +46,7 @@ public:
     static QTextCharFormat markerFormat(const QString &uniqueId);
     static void            insertMarker(QTextCursor &cursor, const QString &uniqueId);
     static QTextCursor     findMarker(const QTextCursor &cursor,
-                                      const QString &    uniqueId); // will modify cursor to stay right after marker.
+                                      const QString     &uniqueId); // will modify cursor to stay right after marker.
 
     struct Selection {
         int start, end;

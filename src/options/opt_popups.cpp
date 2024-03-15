@@ -24,7 +24,7 @@
 #include "psioptions.h"
 #include "ui_opt_popups.h"
 
-//#include <QHBoxLayout>
+// #include <QHBoxLayout>
 #include <QRadioButton>
 
 class OptPopupsUI : public QWidget, public Ui::OptPopups {
@@ -128,7 +128,7 @@ void OptionsTabPopups::restoreOptions()
     d->ck_everyMucMessage->setChecked(
         o->getOption("options.ui.notifications.passive-popups.notify-every-muc-message").toBool());
 
-    QWidget *    areaWidget = new QWidget(w);
+    QWidget     *areaWidget = new QWidget(w);
     QVBoxLayout *vBox       = new QVBoxLayout(areaWidget);
     for (const QString &option : popup_->optionsNamesList()) {
         QHBoxLayout *l = new QHBoxLayout;

@@ -77,8 +77,8 @@ private:
     bool checkSSL();
 
 private:
-    PsiCon *      psi;
-    PsiAccount *  pa;
+    PsiCon       *psi;
+    PsiAccount   *pa;
     ProxyChooser *pc;
     UserAccount   acc;
 

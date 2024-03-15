@@ -20,11 +20,11 @@
 #include "xmlconsole.h"
 
 #include "iconset.h"
+#include "iris/xmpp_client.h"
 #include "psiaccount.h"
 #include "psicon.h"
 #include "psicontactlist.h"
 #include "textutil.h"
-#include "iris/xmpp_client.h"
 
 #include <QCheckBox>
 #include <QHBoxLayout>

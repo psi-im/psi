@@ -22,11 +22,11 @@
 #include "accountmodifydlg.h"
 #include "busywidget.h"
 #include "iconwidget.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_tasks.h"
 #include "profiles.h"
 #include "psiaccount.h"
 #include "psioptions.h"
-#include "iris/xmpp_client.h"
-#include "iris/xmpp_tasks.h"
 
 #include <QFormLayout>
 #include <QLabel>

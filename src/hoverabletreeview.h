@@ -39,7 +39,7 @@ public:
         *this = other;
     }
     HoverableStyleOptionViewItem(const QStyleOptionViewItem &other);
-    HoverableStyleOptionViewItem &       operator=(const QStyleOptionViewItem &other);
+    HoverableStyleOptionViewItem        &operator=(const QStyleOptionViewItem &other);
     inline HoverableStyleOptionViewItem &operator=(const HoverableStyleOptionViewItem &other)
     {
         return *this = static_cast<QStyleOptionViewItem>(other);

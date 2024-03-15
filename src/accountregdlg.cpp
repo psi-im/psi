@@ -19,6 +19,7 @@
 
 #include "accountregdlg.h"
 
+#include "iris/xmpp_tasks.h"
 #include "jidutil.h"
 #include "miniclient.h"
 #include "proxy.h"
@@ -27,7 +28,6 @@
 #include "serverlistquerier.h"
 #include "textutil.h"
 #include "xdata_widget.h"
-#include "iris/xmpp_tasks.h"
 
 #include <QMessageBox>
 #include <QScrollArea>

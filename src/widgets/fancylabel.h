@@ -50,9 +50,9 @@ public:
     const QString &text() const;
     const QString &help() const;
     QPixmap        pixmap() const;
-    const QColor & colorFrom() const;
-    const QColor & colorTo() const;
-    const QColor & colorFont() const;
+    const QColor  &colorFrom() const;
+    const QColor  &colorTo() const;
+    const QColor  &colorFont() const;
     const PsiIcon *psiIcon() const;
     QString        psiIconName() const;
     void           setText(const QString &);

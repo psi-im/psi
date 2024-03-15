@@ -183,7 +183,7 @@ QString PGPUtil::getFingerprint(const QString &key)
     gpg.waitForFinished();
 
     QString             fingerprint;
-    const QString &&    out   = QString::fromUtf8(gpg.readAllStandardOutput());
+    const QString     &&out   = QString::fromUtf8(gpg.readAllStandardOutput());
     const QStringList &&lines = out.split("\n");
     for (const QString &line : lines) {
         const QString &&type = line.section(':', 0, 0);
@@ -217,7 +217,7 @@ QString PGPUtil::chooseKey(PGPKeyDlg::Type type, const QString &key, const QStri
 PGPUtil::SecureMessageSignature PGPUtil::parseSecureMessageSignature(const QString &stdOutString)
 {
     SecureMessageSignature out;
-    const QStringList &&   strings = stdOutString.split("\n");
+    const QStringList    &&strings = stdOutString.split("\n");
     for (const QString &line : strings) {
         const QString &&type = line.section(' ', 1, 1);
         if (type == QStringLiteral("GOODSIG")) {

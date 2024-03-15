@@ -89,7 +89,7 @@ void OptionsTabStatusGeneral::applyOptions()
         return;
 
     OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
-    OptionsTree *       o = PsiOptions::instance();
+    OptionsTree        *o = PsiOptions::instance();
 
     if (d->gbSelectedPreset->isEnabled()) {
         statusPresetRejected();
@@ -134,7 +134,7 @@ void OptionsTabStatusGeneral::restoreOptions()
         return;
 
     OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
-    OptionsTree *       o = PsiOptions::instance();
+    OptionsTree        *o = PsiOptions::instance();
 
     // TODO: Restore function is calling 3 times! Do something with it! Or maybe it's normal?
     d->lw_presets->clear();
@@ -285,7 +285,7 @@ void OptionsTabStatusGeneral::statusMenusIndexChanged(int index)
 void OptionsTabStatusGeneral::showMenuForPreset(const QPoint &point)
 {
     OptStatusGeneralUI *d    = static_cast<OptStatusGeneralUI *>(w);
-    QListWidgetItem *   item = d->lw_presets->itemAt(point);
+    QListWidgetItem    *item = d->lw_presets->itemAt(point);
     if (item) {
         // paranoia: we must be sure item is selected
         d->lw_presets->setCurrentItem(item);
@@ -319,7 +319,7 @@ void OptionsTabStatusGeneral::cleanupSelectedPresetGroup()
 void OptionsTabStatusGeneral::statusPresetAccepted()
 {
     OptStatusGeneralUI *d    = static_cast<OptStatusGeneralUI *>(w);
-    QListWidgetItem *   item = d->lw_presets->currentItem();
+    QListWidgetItem    *item = d->lw_presets->currentItem();
     if (!item)
         return;
 

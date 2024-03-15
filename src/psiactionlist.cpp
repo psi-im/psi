@@ -136,8 +136,7 @@ PsiActionList::Private::~Private() { list->clear(); }
 
 ActionList *PsiActionList::Private::createActionList(QString name, int id, ActionNames *actionlist)
 {
-    static const QStringList skipList = QStringList() << "separator"
-                                                      << "spacer";
+    static const QStringList skipList = QStringList() << "separator" << "spacer";
 
     ActionList *actions = new ActionList(name, id, false);
 
@@ -273,8 +272,7 @@ void PsiActionList::Private::createMainWin()
 
         IconAction *actToolbars
             = new IconAction(tr("Configure Toolbars"), "psi/toolbars", tr("Configure Tool&bars"), 0, this);
-        IconAction *actAccounts
-            = new IconAction(tr("Manage Accounts"), "psi/account", tr("&Manage Accounts"), 0, this);
+        IconAction *actAccounts = new IconAction(tr("Manage Accounts"), "psi/account", tr("&Manage Accounts"), 0, this);
         IconAction *actChangeProfile
             = new IconAction(tr("Change Profile"), "psi/profile", tr("&Change Profile"), 0, this);
 

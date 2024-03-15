@@ -57,7 +57,7 @@ public:
     void             message(const Message &, const PsiEvent::Ptr &e = PsiEvent::Ptr());
     void             joined();
     void             setPassword(const QString &);
-    const QString &  nick() const;
+    const QString   &nick() const;
     const QDateTime &lastMsgTime() const;
     bool             isLastMessageAlert() const;
 
@@ -71,7 +71,7 @@ public:
     // reimplemented
     virtual TabbableWidget::State state() const;
     virtual int                   unreadMessageCount() const;
-    const QString &               getDisplayName() const;
+    const QString                &getDisplayName() const;
     virtual QString               desiredCaption() const;
     virtual void                  setVSplitterPosition(int log, int chat);
 
@@ -149,7 +149,7 @@ public:
     friend class Private;
 
 private:
-    Private *        d;
+    Private         *d;
     Ui::GroupChatDlg ui_;
 
     bool lastWasEncrypted_ = false;

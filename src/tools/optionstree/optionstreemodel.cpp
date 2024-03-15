@@ -26,7 +26,7 @@
 // Enable this if you have Trolltech Labs' ModelTest and are not going
 // to distribute the source or binary. You need to include modeltest.pri
 // somewhere too.
-//#define HAVE_MODELTEST
+// #define HAVE_MODELTEST
 #ifdef HAVE_MODELTEST
 #include <modeltest.h>
 #endif

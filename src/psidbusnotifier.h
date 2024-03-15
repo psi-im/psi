@@ -29,8 +29,8 @@
 #define QT_STATICPLUGIN
 #endif
 
-#include "psipopupinterface.h"
 #include "iris/xmpp_jid.h"
+#include "psipopupinterface.h"
 
 class QDBusPendingCallWatcher;
 class QTimer;
@@ -60,9 +60,9 @@ private:
 private:
     Jid                jid_;
     uint               id_;
-    PsiAccount *       account_;
+    PsiAccount        *account_;
     PsiEvent::Ptr      event_;
-    QTimer *           lifeTimer_;
+    QTimer            *lifeTimer_;
     static QStringList caps_;
 };
 

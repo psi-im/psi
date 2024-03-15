@@ -8175,4 +8175,3 @@ static std::map<quint32, quint32> ranges = {
 };
 
 // clang-format on
-

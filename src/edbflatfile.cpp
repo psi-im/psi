@@ -21,11 +21,11 @@
 
 #include "applicationinfo.h"
 #include "common.h"
+#include "iris/xmpp_jid.h"
 #include "jidutil.h"
 #include "psiaccount.h"
 #include "psicon.h"
 #include "psicontactlist.h"
-#include "iris/xmpp_jid.h"
 
 #include <QDateTime>
 #include <QDir>
@@ -271,7 +271,7 @@ void EDBFlatFile::performRequests()
             if (e) {
                 if (e->type() == PsiEvent::Message) {
                     MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-                    const Message &   m  = me->message();
+                    const Message    &m  = me->message();
                     if (m.body().indexOf(r->findStr, 0, Qt::CaseInsensitive) != -1) {
                         EDBItemPtr ei = EDBItemPtr(new EDBItem(e, QString::number(id)));
                         result.append(ei);
@@ -655,7 +655,7 @@ QString EDBFlatFile::File::eventToLine(const PsiEvent::Ptr &e)
 
     if (e->type() == PsiEvent::Message) {
         MessageEvent::Ptr me   = e.staticCast<MessageEvent>();
-        const Message &   m    = me->message();
+        const Message    &m    = me->message();
         const UrlList     urls = m.urlList();
 
         if (!m.subject().isEmpty())

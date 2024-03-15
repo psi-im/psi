@@ -40,8 +40,7 @@ private slots:
         QVariantList l;
         l << QVariant(QString("item1")) << qVariantFromValue(QKeySequence("CTRL+L"));
         QStringList sl;
-        sl << "String 1"
-           << "String 2";
+        sl << "String 1" << "String 2";
         l << sl;
         l << QRect(10, 20, 30, -666);
         l << l;

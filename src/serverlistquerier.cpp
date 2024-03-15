@@ -76,10 +76,10 @@ void ServerListQuerier::get_finished()
                 }
             }
 #else
-            QStringList servers;
-            QString     contents = QString::fromUtf8(reply->readAll());
-            int         index    = 0;
-            QRegularExpression     re("data-original-title=\"([^\"]+)\"");
+            QStringList             servers;
+            QString                 contents = QString::fromUtf8(reply->readAll());
+            int                     index    = 0;
+            QRegularExpression      re("data-original-title=\"([^\"]+)\"");
             QRegularExpressionMatch match;
             while ((index = contents.indexOf(re, index + 1, &match)) != -1) {
                 servers.append(match.captured(1));

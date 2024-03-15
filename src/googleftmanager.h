@@ -71,8 +71,8 @@ signals:
     void progressChanged(qlonglong, const QString &);
 
 private:
-    cricket::FileShareSession * session_;
-    GoogleFTManager *           manager_;
+    cricket::FileShareSession  *session_;
+    GoogleFTManager            *manager_;
     GoogleFileTransferListener *listener_;
 };
 
@@ -99,12 +99,12 @@ protected slots:
 
 private:
     bool                   initialized_;
-    XMPP::Client *         client_;
+    XMPP::Client          *client_;
     GoogleSessionListener *listener_;
 
-    static talk_base::PhysicalSocketServer *                 socket_server_;
-    static talk_base::Thread *                               thread_;
-    static talk_base::NetworkManager *                       network_manager_;
+    static talk_base::PhysicalSocketServer                  *socket_server_;
+    static talk_base::Thread                                *thread_;
+    static talk_base::NetworkManager                        *network_manager_;
     static talk_base::scoped_ptr<cricket::HttpPortAllocator> port_allocator_;
     talk_base::scoped_ptr<cricket::SessionManager>           session_manager_;
     talk_base::scoped_ptr<cricket::FileShareSessionClient>   file_share_session_client_;

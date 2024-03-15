@@ -60,14 +60,14 @@ protected:
 
 private:
     QPointer<PsiContactList>    contactList_;
-    QStackedWidget *            stackedWidget_;
-    QWidget *                   contactListPage_;
-    QWidget *                   filterPage_;
-    PsiContactListView *        contactListPageView_;
+    QStackedWidget             *stackedWidget_;
+    QWidget                    *contactListPage_;
+    QWidget                    *filterPage_;
+    PsiContactListView         *contactListPageView_;
     PsiFilteredContactListView *filterPageView_;
-    QLineEdit *                 filterEdit_;
+    QLineEdit                  *filterEdit_;
 
-    ContactListDragModel * contactListModel_;
+    ContactListDragModel  *contactListModel_;
     QSortFilterProxyModel *filterModel_;
 };
 

@@ -25,6 +25,7 @@
 #include "iconaction.h"
 #include "iconset.h"
 #include "invitetogroupchatmenu.h"
+#include "iris/xmpp_tasks.h"
 #include "pluginmanager.h"
 #include "psiaccount.h"
 #include "psicon.h"
@@ -34,7 +35,6 @@
 #include "psiprivacymanager.h"
 #include "shortcutmanager.h"
 #include "userlist.h"
-#include "iris/xmpp_tasks.h"
 
 #include <QApplication>
 #include <QClipboard>
@@ -534,8 +534,8 @@ void PsiContactMenu::Private::authRemove()
 
     int n = QMessageBox::information(
         nullptr, tr("Remove"),
-        tr("Are you sure you want to remove authorization from <b>%1</b>?").arg(contact_->name()), tr("&Yes"),
-        tr("&No"));
+        tr("Are you sure you want to remove authorization from <b>%1</b>?").arg(contact_->name()),
+        QMessageBox::Yes | QMessageBox::No);
 
     if (n == 0)
         contact_->account()->actionAuthRemove(contact_->jid());
@@ -662,7 +662,7 @@ PsiContactMenu::~PsiContactMenu() { delete d; }
 QList<QAction *> PsiContactMenu::availableActions() const
 {
     QList<QAction *> result;
-    const auto &     acts = ContactListItemMenu::availableActions();
+    const auto      &acts = ContactListItemMenu::availableActions();
     for (QAction *a : acts) {
         // if (a != d->removeAction_)
         result << a;

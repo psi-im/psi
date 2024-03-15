@@ -21,12 +21,12 @@
 
 #include "ahcommand.h"
 #include "ahcommandserver.h"
-#include "psiaccount.h"
-#include "xdata_widget.h"
 #include "iris/xmpp_client.h"
 #include "iris/xmpp_tasks.h"
 #include "iris/xmpp_xdata.h"
 #include "iris/xmpp_xmlcommon.h"
+#include "psiaccount.h"
+#include "xdata_widget.h"
 
 #include <QComboBox>
 #include <QLayout>

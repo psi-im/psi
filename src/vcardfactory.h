@@ -67,7 +67,7 @@ private:
     VCardFactory();
     ~VCardFactory();
 
-    static VCardFactory *                instance_;
+    static VCardFactory                 *instance_;
     const int                            dictSize_;
     QStringList                          vcardList_;
     QMap<QString, VCard>                 vcardDict_;

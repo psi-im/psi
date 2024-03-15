@@ -41,7 +41,7 @@ public:
     QModelIndex       realIndex(const QModelIndex &index) const;
     QModelIndexList   proxyIndexes(const QModelIndexList &indexes) const;
     QModelIndex       proxyIndex(const QModelIndex &index) const;
-    ContactListItem * itemProxy(const QModelIndex &index) const;
+    ContactListItem  *itemProxy(const QModelIndex &index) const;
     void              setEditingIndex(const QModelIndex &index, bool editing) const;
 
     void activate(const QModelIndex &index);

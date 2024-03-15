@@ -40,7 +40,7 @@ public:
     void appendChild(AbstractTreeItem *child);
     void removeChild(AbstractTreeItem *child);
 
-    AbstractTreeItem *   child(int row) const;
+    AbstractTreeItem    *child(int row) const;
     int                  childCount() const;
     AbstractTreeItemList children() const;
 
@@ -49,6 +49,6 @@ public:
     virtual QString           toString() const { return QString(); /* no default implementation */ }
 
 private:
-    AbstractTreeItem *   _parent;
+    AbstractTreeItem    *_parent;
     AbstractTreeItemList _children;
 };

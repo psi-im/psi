@@ -71,7 +71,7 @@ public:
     // reimplemented
     QModelIndex     index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
     QVariant        data(const QModelIndex &index, int role = Qt::DisplayRole) const;
-    QMimeData *     mimeData(const QModelIndexList &indexes) const;
+    QMimeData      *mimeData(const QModelIndexList &indexes) const;
     Qt::DropActions supportedDragActions() const;
     QModelIndex     parent(const QModelIndex &child) const;
     int             rowCount(const QModelIndex &parent) const;
@@ -88,7 +88,7 @@ private:
 private:
     QList<MUCContact::Ptr> contacts[LastGroupRole]; // splitted into groups
 
-    PsiAccount *    _account;
+    PsiAccount     *_account;
     Jid             _selfJid;
     QString         _selfNick;
     MUCContact::Ptr _selfContact;

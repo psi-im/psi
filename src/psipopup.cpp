@@ -73,16 +73,16 @@ private slots:
     void popupClicked(int);
 
 public:
-    PsiCon *                psi;
-    PsiAccount *            account;
-    FancyPopup *            popup;
-    PsiPopup *              psiPopup;
+    PsiCon                 *psi;
+    PsiAccount             *account;
+    FancyPopup             *popup;
+    PsiPopup               *psiPopup;
     QString                 id;
     PopupManager::PopupType popupType;
     Jid                     jid;
     Status                  status;
     PsiEvent::Ptr           event;
-    PsiIcon *               titleIcon;
+    PsiIcon                *titleIcon;
     bool                    display;
     bool                    doAlertIcon;
 };

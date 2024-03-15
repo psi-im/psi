@@ -102,9 +102,9 @@ public slots:
             } else if (charsAdded > 1) { // Insert a piece of text
                 return;
             } else {
-                QRegularExpression capitalizeAfter("(?:^[^.][.]+\\s+)|(?:\\s*[^.]{2,}[.]+\\s+)|(?:[!?]\\s+)");
+                QRegularExpression      capitalizeAfter("(?:^[^.][.]+\\s+)|(?:\\s*[^.]{2,}[.]+\\s+)|(?:[!?]\\s+)");
                 QRegularExpressionMatch match;
-                int     index = te_->toPlainText().lastIndexOf(capitalizeAfter, 0, &match);
+                int                     index = te_->toPlainText().lastIndexOf(capitalizeAfter, 0, &match);
                 if (index != -1 && index == pos - match.capturedLength()) {
                     capitalizeNext_ = true;
                 }
@@ -328,7 +328,7 @@ void ChatEdit::contextMenuEvent(QContextMenuEvent *e)
         QTextCursor tc = cursorForPosition(last_click_);
         tc.movePosition(QTextCursor::StartOfWord, QTextCursor::MoveAnchor);
         tc.movePosition(QTextCursor::EndOfWord, QTextCursor::KeepAnchor);
-        QString selected_word = tc.selectedText();
+        QString                   selected_word = tc.selectedText();
         static QRegularExpression numbers("^\\d+$");
         if (!selected_word.isEmpty() && !numbers.match(selected_word).hasMatch()
             && !SpellChecker::instance()->isCorrect(selected_word)) {

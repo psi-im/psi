@@ -26,8 +26,7 @@
 //----------------------------------------------------------------------------
 
 SxeNewEdit::SxeNewEdit(const QString rid, const QDomNode &node, const QString parent, double primaryWeight,
-                       bool remote) :
-    SxeEdit(rid, remote)
+                       bool remote) : SxeEdit(rid, remote)
 {
     parent_        = parent;
     primaryWeight_ = primaryWeight;

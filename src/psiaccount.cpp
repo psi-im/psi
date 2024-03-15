@@ -44,7 +44,6 @@
 #include "bobfilecache.h"
 #include "bookmarkmanagedlg.h"
 #include "bookmarkmanager.h"
-#include "iris/bsocket.h"
 #include "captchadlg.h"
 #include "changepwdlg.h"
 #include "chatdlg.h"
@@ -56,14 +55,15 @@
 #include "filesharingmanager.h"
 #include "fileutil.h"
 #include "geolocationdlg.h"
+#include "iris/bsocket.h"
 #ifdef GOOGLE_FT
 #include "googleftmanager.h"
 #endif
 #include "gpgtransaction.h"
 #include "historydlg.h"
 #include "httpauthmanager.h"
-#include "iris/httpfileupload.h"
 #include "infodlg.h"
+#include "iris/httpfileupload.h"
 #include "irisprotocol/iris_discoinfoquerier.h"
 #include "jidutil.h"
 #ifdef HAVE_JINGLE
@@ -75,7 +75,7 @@
 #include "networkaccessmanager.h"
 #include "passdialog.h"
 #include "pepmanager.h"
-//#include "physicallocation.h"
+// #include "physicallocation.h"
 #ifdef PSI_PLUGINS
 #include "pluginmanager.h"
 #endif
@@ -90,11 +90,16 @@
 #include "psioptions.h"
 #include "psiprivacymanager.h"
 #include "qwextend.h"
-//#include "qssl.h"
+// #include "qssl.h"
+#include "iris/s5b.h"
+#include "iris/xmpp_caps.h"
+#include "iris/xmpp_captcha.h"
+#include "iris/xmpp_serverinfomanager.h"
+#include "iris/xmpp_tasks.h"
+#include "iris/xmpp_xmlcommon.h"
 #include "rc.h"
 #include "registrationdlg.h"
 #include "rosteritemexchangetask.h"
-#include "iris/s5b.h"
 #include "searchdlg.h"
 #include "statusdlg.h"
 #include "systeminfo.h"
@@ -108,11 +113,6 @@
 #include "voicecalldlg.h"
 #include "voicecaller.h"
 #include "xmlconsole.h"
-#include "iris/xmpp_caps.h"
-#include "iris/xmpp_captcha.h"
-#include "iris/xmpp_serverinfomanager.h"
-#include "iris/xmpp_tasks.h"
-#include "iris/xmpp_xmlcommon.h"
 #ifdef FILETRANSFER
 #include "filetransdlg.h"
 #include "iris/filetransfer.h"
@@ -1538,12 +1538,9 @@ void PsiAccount::updateFeatures()
 #endif
 
 #ifdef USE_PEP
-    features << "http://jabber.org/protocol/mood"
-             << "http://jabber.org/protocol/activity";
-    features << "http://jabber.org/protocol/tune"
-             << "http://jabber.org/protocol/geoloc";
-    features << "urn:xmpp:avatar:data"
-             << "urn:xmpp:avatar:metadata";
+    features << "http://jabber.org/protocol/mood" << "http://jabber.org/protocol/activity";
+    features << "http://jabber.org/protocol/tune" << "http://jabber.org/protocol/geoloc";
+    features << "urn:xmpp:avatar:data" << "urn:xmpp:avatar:metadata";
 #endif
     if (AvCallManager::isSupported()) {
         features << "urn:xmpp:jingle:transports:ice-udp:1";
@@ -4085,7 +4082,7 @@ void PsiAccount::sendFiles(const Jid &j, const QStringList &fileList)
         if (u && u->isAvailable())
             j2 = j2.withResource((*u->userResourceList().priority()).name());
     }
-    //#if 0
+    // #if 0
     Features f = client()->capsManager()->features(j2);
 
     if (f.hasJingleFT()) { // we have to check supported transprts as well. but s5b is mandatory
@@ -4094,9 +4091,9 @@ void PsiAccount::sendFiles(const Jid &j, const QStringList &fileList)
         w->show();
         return;
     }
-    //#endif
-    // Create a dialog for each file in the list. Once the xfer dialog itself
-    // supports multiple files, only the 'else' branch needs to stay.
+    // #endif
+    //  Create a dialog for each file in the list. Once the xfer dialog itself
+    //  supports multiple files, only the 'else' branch needs to stay.
     if (!fileList.isEmpty()) {
         for (auto const &f : fileList) {
             FileRequestDlg *w = new FileRequestDlg(j2, d->psi, this, QStringList(f));

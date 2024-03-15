@@ -36,7 +36,7 @@ GroupchatTopicDlg::GroupchatTopicDlg(GCMainDlg *parent) :
 
             m_addLangUi->cmbLang->addItem(tr("Any Language"), 0);
             QMap<QString, QLocale::Language> langs;
-            const auto &                     locales
+            const auto                      &locales
                 = QLocale::matchingLocales(QLocale::AnyLanguage, QLocale::AnyScript, QLocale::AnyCountry);
             for (auto const &loc : locales) {
                 if (loc != QLocale::c()) {
@@ -61,7 +61,7 @@ GroupchatTopicDlg::GroupchatTopicDlg(GCMainDlg *parent) :
                 id.country  = quint16(m_addLangUi->cmbCountry->currentData().toInt());
                 bool found  = false;
                 for (int i = 0; i < m_ui->twLang->count(); i++) {
-                    QPlainTextEdit *        edit  = static_cast<QPlainTextEdit *>(m_ui->twLang->widget(i));
+                    QPlainTextEdit         *edit  = static_cast<QPlainTextEdit *>(m_ui->twLang->widget(i));
                     LanguageManager::LangId tabId = edit->property("langId").value<LanguageManager::LangId>();
                     if (id == tabId) {
                         m_ui->twLang->setCurrentIndex(i);
@@ -96,7 +96,7 @@ QMap<LanguageManager::LangId, QString> GroupchatTopicDlg::subjectMap() const
 {
     QMap<LanguageManager::LangId, QString> ret;
     for (int i = 0; i < m_ui->twLang->count(); i++) {
-        QPlainTextEdit *        edit = static_cast<QPlainTextEdit *>(m_ui->twLang->widget(i));
+        QPlainTextEdit         *edit = static_cast<QPlainTextEdit *>(m_ui->twLang->widget(i));
         LanguageManager::LangId id   = edit->property("langId").value<LanguageManager::LangId>();
         QString                 text = edit->toPlainText();
         ret.insert(id, text);

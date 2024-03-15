@@ -19,7 +19,7 @@ public:
 
 private:
     QWidget *w_;
-    PsiCon * psi_;
+    PsiCon  *psi_;
 };
 
 #endif // OPT_ACCOUNTS_H

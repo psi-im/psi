@@ -20,9 +20,9 @@
 #ifndef AHCFORMDLG_H
 #define AHCFORMDLG_H
 
-#include "ui_ahcformdlg.h"
 #include "iris/xmpp_jid.h"
 #include "iris/xmpp_xdata.h"
+#include "ui_ahcformdlg.h"
 
 #include <QDialog>
 #include <QObject>
@@ -57,12 +57,12 @@ protected slots:
 
 private:
     Ui::AHCFormDlg _ui;
-    PsiCon *       _psi;
-    QPushButton *  _pb_prev;
-    QPushButton *  _pb_next;
-    QPushButton *  _pb_complete;
-    QPushButton *  _pb_cancel;
-    XDataWidget *  _xdata;
+    PsiCon        *_psi;
+    QPushButton   *_pb_prev;
+    QPushButton   *_pb_next;
+    QPushButton   *_pb_complete;
+    QPushButton   *_pb_cancel;
+    XDataWidget   *_xdata;
 
     XMPP::Jid     _receiver;
     QString       node_;

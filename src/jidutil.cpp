@@ -19,8 +19,8 @@
 
 #include "jidutil.h"
 
-#include "psioptions.h"
 #include "iris/xmpp_jid.h"
+#include "psioptions.h"
 
 using namespace XMPP;
 

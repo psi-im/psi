@@ -20,8 +20,8 @@
 #ifndef PSIPRIVACYMANAGER_H
 #define PSIPRIVACYMANAGER_H
 
-#include "privacymanager.h"
 #include "iris/xmpp_jid.h"
+#include "privacymanager.h"
 
 #include <QHash>
 #include <QObject>
@@ -74,7 +74,7 @@ protected slots:
     void block_getDefaultList_error();
 
 private:
-    XMPP::Task *         rootTask_;
+    XMPP::Task          *rootTask_;
     PrivacyListListener *listener_;
 
     bool    getDefault_waiting_;
@@ -111,7 +111,7 @@ private slots:
     void privacyListChanged(const QString &name);
 
 private:
-    PsiAccount *                  account_;
+    PsiAccount                   *account_;
     bool                          accountAvailable_;
     bool                          isAvailable_;
     QHash<QString, PrivacyList *> lists_;
@@ -121,7 +121,7 @@ private:
     void setIsAvailable(bool available);
 
     void            createBlockedList();
-    PrivacyList *   blockedList() const;
+    PrivacyList    *blockedList() const;
     PrivacyListItem blockItemFor(const XMPP::Jid &jid) const;
 
     QStringList blockedContacts() const;

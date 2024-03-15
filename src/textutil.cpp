@@ -26,8 +26,8 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
 {
     int ql = 0, col = 0, atstart = 1, ls = 0;
 
-    QString quoted = "> " + toquote; // quote first line
-    QString rxs    = quoteEmpty ? "\n" : "\n(?!\\s*\n)";
+    QString            quoted = "> " + toquote; // quote first line
+    QString            rxs    = quoteEmpty ? "\n" : "\n(?!\\s*\n)";
     QRegularExpression rx(rxs); // quote following lines
     quoted.replace(rx, "\n> ");
     rx.setPattern("> +>"); // compress > > > > quotes to >>>>
@@ -207,17 +207,17 @@ QString TextUtil::resolveEntities(const QStringView &in)
 
             i = n; // should be n+1, but we'll let the loop increment do it
 
-            if (type == QLatin1String{"amp"})
+            if (type == QLatin1String { "amp" })
                 out += '&';
-            else if (type == QLatin1String{"lt"})
+            else if (type == QLatin1String { "lt" })
                 out += '<';
-            else if (type == QLatin1String{"gt"})
+            else if (type == QLatin1String { "gt" })
                 out += '>';
-            else if (type == QLatin1String{"quot"})
+            else if (type == QLatin1String { "quot" })
                 out += '\"';
-            else if (type == QLatin1String{"apos"})
+            else if (type == QLatin1String { "apos" })
                 out += '\'';
-            else if (type == QLatin1String{"nbsp"})
+            else if (type == QLatin1String { "nbsp" })
                 out += char(0xa0);
         } else {
             out += in[i];
@@ -301,7 +301,7 @@ static void emojiconifyPlainText(RTParse &p, const QString &in)
             QLatin1String(
                 R"html(<span style="font-family: 'Apple Color Emoji', 'Noto Color Emoji', 'Segoe UI Emoji'; font-size:1.5em">)html")
 #endif
-                  + QStringView{in}.mid(emojisStartIdx, idx - emojisStartIdx).toString() + QLatin1String("</span>"));
+                  + QStringView { in }.mid(emojisStartIdx, idx - emojisStartIdx).toString() + QLatin1String("</span>"));
     };
     int position;
     while (std::tie(ref, position) = reg.findEmoji(in, idx), !ref.isEmpty()) {
@@ -531,13 +531,13 @@ QString TextUtil::emoticonify(const QString &in)
                         searchAgain = false;
 
                         // find the closest match
-                        const QRegularExpression &rx = icon->regExp();
-                        auto match = rx.match(str, iii);
+                        const QRegularExpression &rx    = icon->regExp();
+                        auto                      match = rx.match(str, iii);
 
                         if (!match.hasMatch())
                             continue;
 
-                        int n  = match.capturedStart();
+                        int n = match.capturedStart();
                         if (ePos == -1 || n < ePos || (match.capturedLength() > foundLen && n < ePos + foundLen)) {
                             bool leftSpace  = n == 0 || (n > 0 && str[n - 1].isSpace());
                             bool rightSpace = (n + match.capturedLength() == int(str.length()))
@@ -585,7 +585,7 @@ QString TextUtil::emoticonify(const QString &in)
 
 QString TextUtil::img2title(const QString &in)
 {
-    QString ret = in;
+    QString            ret = in;
     QRegularExpression rxq("<img[^>]+title\\s*=\\s*'([^']+)'[^>]*>"), rxdq("<img[^>]+title\\s*=\\s*\"([^\"]+)\"[^>]*>");
     ret.replace(rxq, "\\1");
     ret.replace(rxdq, "\\1");
@@ -602,9 +602,9 @@ QString TextUtil::legacyFormat(const QString &in)
     // out=out.replace(QRegularExpression("(^[^<>\\s]*|\\s[^<>\\s]*)_(\\S+)_([^<>\\s]*\\s|[^<>\\s]*$)"),"\\1<u>_\\2_</u>\\3");
 
     QString out = in;
-    out         = out.replace(QRegularExpression("(^|\\s|>)_(\\S+)_(?=<|\\s|$)"), "\\1<u>_\\2_</u>"); // underline inside _text_
-    out         = out.replace(QRegularExpression("(^|\\s|>)\\*(\\S+)\\*(?=<|\\s|$)"), "\\1<b>*\\2*</b>"); // bold *text*
-    out         = out.replace(QRegularExpression("(^|\\s|>)\\/(\\S+)\\/(?=<|\\s|$)"), "\\1<i>/\\2/</i>"); // italic /text/
+    out = out.replace(QRegularExpression("(^|\\s|>)_(\\S+)_(?=<|\\s|$)"), "\\1<u>_\\2_</u>"); // underline inside _text_
+    out = out.replace(QRegularExpression("(^|\\s|>)\\*(\\S+)\\*(?=<|\\s|$)"), "\\1<b>*\\2*</b>"); // bold *text*
+    out = out.replace(QRegularExpression("(^|\\s|>)\\/(\\S+)\\/(?=<|\\s|$)"), "\\1<i>/\\2/</i>"); // italic /text/
 
     return out;
 }

@@ -105,8 +105,8 @@ public slots:
     void pixmapChanged();
 
 public:
-    AlertIcon *    ai;
-    PsiIcon *      real;
+    AlertIcon     *ai;
+    PsiIcon       *real;
     bool           isActivated;
     Impix          impix;
     static QString alertStyle;

@@ -43,9 +43,9 @@
 #include <QDebug>
 #endif
 
-//#define CORRECTION_DEBUG
+// #define CORRECTION_DEBUG
 
-static const char *  informationalColorOpt = "options.ui.look.colors.messages.informational";
+static const char              *informationalColorOpt = "options.ui.look.colors.messages.informational";
 static const QRegularExpression underlineFixRE("(<a href=\"addnick://psi/[^\"]*\"><span style=\")");
 static const QRegularExpression removeTagsRE("<[^>]*>");
 

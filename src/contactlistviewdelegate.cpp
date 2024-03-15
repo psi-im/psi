@@ -42,7 +42,7 @@
 #define ANIM_INTERVAL 300  /* msecs */
 
 #define PSI_HIDPI computeScaleFactor(contactList)
-//#define PSI_HIDPI (2) // for testing purposes
+// #define PSI_HIDPI (2) // for testing purposes
 
 static const QString contactListFontOptionPath(QStringLiteral("options.ui.look.font.contactlist"));
 static const QString slimGroupsOptionPath(QStringLiteral("options.ui.look.contactlist.use-slim-group-headings"));
@@ -428,7 +428,7 @@ void ContactListViewDelegate::Private::rosterIconsSizeChanged(int size)
 
 QPixmap ContactListViewDelegate::Private::statusPixmap(const QModelIndex &index, const QSize &desiredSize)
 {
-    ContactListItem *     item = qvariant_cast<ContactListItem *>(index.data(ContactListModel::ContactListItemRole));
+    ContactListItem      *item = qvariant_cast<ContactListItem *>(index.data(ContactListModel::ContactListItemRole));
     ContactListItem::Type type = item->type();
 
     if (type == ContactListItem::Type::ContactType || type == ContactListItem::Type::AccountType) {
@@ -973,7 +973,7 @@ void ContactListViewDelegate::Private::drawGroup(QPainter *painter, const QModel
 #if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
         int x = r.left() + fontMetrics_.horizontalAdvance(text) + 8;
 #else
-        int x    = r.left() + fontMetrics_.width(text) + 8;
+        int x = r.left() + fontMetrics_.width(text) + 8;
 #endif
         painter->setPen(QPen(_headerBackgroundColor, 2));
         painter->drawLine(x, h, r.right(), h);
@@ -1158,7 +1158,7 @@ QRect ContactListViewDelegate::Private::getEditorGeometry(const QStyleOptionView
 {
     QRect rect;
 
-    ContactListItem *     item = qvariant_cast<ContactListItem *>(index.data(ContactListModel::ContactListItemRole));
+    ContactListItem      *item = qvariant_cast<ContactListItem *>(index.data(ContactListModel::ContactListItemRole));
     ContactListItem::Type type = item->type();
 
     switch (type) {
@@ -1233,7 +1233,7 @@ void ContactListViewDelegate::paint(QPainter *painter, const QStyleOptionViewIte
 
     d->iconState = d->opt.state & QStyle::State_Open ? QIcon::On : QIcon::Off;
 
-    ContactListItem *     item = qvariant_cast<ContactListItem *>(index.data(ContactListModel::ContactListItemRole));
+    ContactListItem      *item = qvariant_cast<ContactListItem *>(index.data(ContactListModel::ContactListItemRole));
     ContactListItem::Type type = item->type();
 
     switch (type) {
@@ -1344,7 +1344,7 @@ void ContactListViewDelegate::setModelData(QWidget *editor, QAbstractItemModel *
 bool ContactListViewDelegate::eventFilter(QObject *object, QEvent *event)
 {
     if (event->type() == QEvent::KeyPress) {
-        QWidget *  editor   = qobject_cast<QWidget *>(object);
+        QWidget   *editor   = qobject_cast<QWidget *>(object);
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
         if (keyEvent->key() == Qt::Key_Up) {
             d->setEditorCursorPosition(editor, 0);

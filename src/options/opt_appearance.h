@@ -75,9 +75,9 @@ private slots:
     void chooseFont(QAbstractButton *button);
 
 private:
-    QWidget *     w = nullptr, *parentWidget = nullptr;
+    QWidget      *w = nullptr, *parentWidget = nullptr;
     QButtonGroup *bg_color   = nullptr;
-    FontLabel *   le_font[4] = { nullptr, nullptr, nullptr, nullptr };
+    FontLabel    *le_font[4] = { nullptr, nullptr, nullptr, nullptr };
     QButtonGroup *bg_font    = nullptr;
 
     typedef QHash<QCheckBox *, QPair<QAbstractButton *, QString>> ColorWidgetsMap;

@@ -22,11 +22,11 @@
 
 #include "applicationinfo.h"
 #include "common.h"
-#include "proxy.h"
-#include "varlist.h"
 #include "iris/xmpp_clientstream.h"
 #include "iris/xmpp_jid.h"
 #include "iris/xmpp_roster.h"
+#include "proxy.h"
+#include "varlist.h"
 
 #include <QByteArray>
 #include <QList>

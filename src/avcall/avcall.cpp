@@ -40,7 +40,7 @@
 
 // threaded mode is unstable. Enable it at your own risk.
 // most likely moveToThread below has to be handled carefully to call changeThread of Ice176
-//#define USE_THREAD
+// #define USE_THREAD
 
 static MediaConfiguration *g_config = new MediaConfiguration;
 
@@ -87,12 +87,10 @@ class AvTransmit : public QObject {
 
 public:
     PsiMedia::RtpChannel *audio, *video;
-    JingleRtpChannel *    transport;
+    JingleRtpChannel     *transport;
 
     AvTransmit(PsiMedia::RtpChannel *_audio, PsiMedia::RtpChannel *_video, JingleRtpChannel *_transport,
-               QObject *parent = nullptr) :
-        QObject(parent),
-        audio(_audio), video(_video), transport(_transport)
+               QObject *parent = nullptr) : QObject(parent), audio(_audio), video(_video), transport(_transport)
     {
         if (audio) {
             audio->setParent(this);
@@ -173,7 +171,7 @@ class AvTransmitHandler : public QObject {
 
 public:
     AvTransmit *avTransmit;
-    QThread *   previousThread;
+    QThread    *previousThread;
 
     explicit AvTransmitHandler(QObject *parent = nullptr) :
         QObject(parent), avTransmit(nullptr), previousThread(nullptr)
@@ -227,9 +225,9 @@ class AvCallManagerPrivate : public QObject {
     Q_OBJECT
 
 public:
-    AvCallManager *             q                    = nullptr;
-    PsiAccount *                pa                   = nullptr;
-    JingleRtpManager *          rtpManager           = nullptr;
+    AvCallManager              *q                    = nullptr;
+    PsiAccount                 *pa                   = nullptr;
+    JingleRtpManager           *rtpManager           = nullptr;
     XMPP::Jingle::ICE::Manager *irisJingleICEManager = nullptr;
     QList<AvCall *>             sessions;
     QList<AvCall *>             pending;
@@ -247,10 +245,10 @@ class AvCallPrivate : public QObject {
     Q_OBJECT
 
 public:
-    AvCall *              q;
+    AvCall               *q;
     AvCallManagerPrivate *manager;
     bool                  incoming;
-    JingleRtp *           sess;
+    JingleRtp            *sess;
     PsiMedia::RtpSession  rtp;
     XMPP::Jid             peer;
     AvCall::Mode          mode;
@@ -260,8 +258,8 @@ public:
     bool                  transmitAudio;
     bool                  transmitVideo;
     bool                  transmitting;
-    AvTransmit *          avTransmit;
-    AvTransmitThread *    avTransmitThread;
+    AvTransmit           *avTransmit;
+    AvTransmitThread     *avTransmitThread;
 
     explicit AvCallPrivate(AvCall *_q) :
         QObject(_q), q(_q), manager(nullptr), sess(nullptr), transmitAudio(false), transmitVideo(false),
@@ -513,7 +511,7 @@ private slots:
 
         if (transmitAudio && !rtp.localAudioPayloadInfo().isEmpty()) {
             QList<JingleRtpPayloadType> pis;
-            const auto &                lAPInfo = rtp.localAudioPayloadInfo();
+            const auto                 &lAPInfo = rtp.localAudioPayloadInfo();
             for (const PsiMedia::PayloadInfo &pi : lAPInfo) {
                 JingleRtpPayloadType pt = payloadInfoToPayloadType(pi);
                 pis << pt;
@@ -524,7 +522,7 @@ private slots:
 
         if (transmitVideo && !rtp.localVideoPayloadInfo().isEmpty()) {
             QList<JingleRtpPayloadType> pis;
-            const auto &                lVPInfo = rtp.localVideoPayloadInfo();
+            const auto                 &lVPInfo = rtp.localVideoPayloadInfo();
             for (const PsiMedia::PayloadInfo &pi : lVPInfo) {
                 JingleRtpPayloadType pt = payloadInfoToPayloadType(pi);
                 pis << pt;

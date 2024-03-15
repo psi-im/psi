@@ -22,9 +22,9 @@
 #include "ahcexecutetask.h"
 #include "ahcommand.h"
 #include "busywidget.h"
+#include "iris/xmpp_client.h"
 #include "psiaccount.h"
 #include "xdata_widget.h"
-#include "iris/xmpp_client.h"
 
 #include <QLabel>
 #include <QLayout>

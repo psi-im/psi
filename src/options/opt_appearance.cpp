@@ -206,7 +206,7 @@ QWidget *OptionsTabAppearanceGeneral::widget()
 
     QString s = tr("Specifies the text color for a contact name in the main window when that user is \"%1\".");
     struct ColorWidgetData {
-        QCheckBox *  cbox;
+        QCheckBox   *cbox;
         QToolButton *button;
         QString      option;
         QString      descr;

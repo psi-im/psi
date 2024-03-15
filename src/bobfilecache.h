@@ -37,7 +37,7 @@ public:
 private:
     BoBFileCache();
 
-    FileCache *          _fileCache;
+    FileCache           *_fileCache;
     static BoBFileCache *_instance;
 };
 

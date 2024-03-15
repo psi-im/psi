@@ -37,15 +37,15 @@ class CallDlg::Private : public QObject {
     Q_OBJECT
 
 public:
-    CallDlg *              q;
+    CallDlg               *q;
     Ui::Call               ui;
-    PsiAccount *           pa;
+    PsiAccount            *pa;
     bool                   incoming;
     bool                   active;
     bool                   activated;
-    AvCall *               sess;
+    AvCall                *sess;
     PsiMedia::VideoWidget *vw_remote;
-    QTimer *               timer;
+    QTimer                *timer;
     QTime                  call_duration;
 
     explicit Private(CallDlg *_q) : QObject(_q), q(_q), active(false), activated(false), sess(nullptr), timer(nullptr)

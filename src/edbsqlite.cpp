@@ -18,7 +18,7 @@
  */
 
 #include "applicationinfo.h"
-//#include "common.h"
+// #include "common.h"
 #include "edbsqlite.h"
 #include "historyimp.h"
 #include "jidutil.h"
@@ -412,7 +412,7 @@ bool EDBSqLite::appendEvent(const QString &accId, const XMPP::Jid &jid, const Ps
 
     if (e->type() == PsiEvent::Message) {
         MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-        const Message &   m  = me->message();
+        const Message    &m  = me->message();
         dTime                = m.timeStamp();
         if (m.type() == "chat")
             nType = 1;
@@ -448,7 +448,7 @@ bool EDBSqLite::appendEvent(const QString &accId, const XMPP::Jid &jid, const Ps
     query->bindValue(":direction", nDirection);
     if (nType == 0 || nType == 1 || nType == 4 || nType == 5) {
         MessageEvent::Ptr me   = e.staticCast<MessageEvent>();
-        const Message &   m    = me->message();
+        const Message    &m    = me->message();
         QString           lang = m.lang();
         query->bindValue(":subject", m.subject(lang));
         query->bindValue(":m_text", m.body(lang));

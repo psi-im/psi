@@ -22,13 +22,13 @@
 #include "busywidget.h"
 #include "common.h"
 #include "infodlg.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_tasks.h"
+#include "iris/xmpp_vcard.h"
 #include "psiaccount.h"
 #include "psiiconset.h"
 #include "tasklist.h"
 #include "vcardfactory.h"
-#include "iris/xmpp_client.h"
-#include "iris/xmpp_tasks.h"
-#include "iris/xmpp_vcard.h"
 
 #include <QCheckBox>
 #include <QComboBox>
@@ -46,14 +46,13 @@ public:
     PsiAccount *pa    = nullptr;
     BusyWidget *busy  = nullptr;
     JT_Gateway *jt    = nullptr;
-    TaskList *  tasks = nullptr;
+    TaskList   *tasks = nullptr;
 
     QStringList services;
 };
 
 AddUserDlg::AddUserDlg(const QStringList &services, const QStringList &names, const QStringList &groups,
-                       PsiAccount *pa) :
-    QDialog(nullptr)
+                       PsiAccount *pa) : QDialog(nullptr)
 {
     init(groups, pa);
     d->services = services;

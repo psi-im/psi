@@ -37,7 +37,7 @@ public:
     bool isAvailable() const;
     bool isBookmarked(const XMPP::Jid &);
 
-    const QList<URLBookmark> &       urls() const;
+    const QList<URLBookmark>        &urls() const;
     const QList<ConferenceBookmark> &conferences() const;
     int                              indexOfConference(const XMPP::Jid &) const;
     QString                          conferenceName(const XMPP::Jid &) const; // convenient method
@@ -64,7 +64,7 @@ private:
     void setIsAvailable(bool available);
 
 private:
-    PsiAccount *              account_;
+    PsiAccount               *account_;
     bool                      accountAvailable_;
     bool                      isAvailable_;
     QList<URLBookmark>        urls_;

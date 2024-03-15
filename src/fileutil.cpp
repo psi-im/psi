@@ -194,7 +194,7 @@ QString FileUtil::mimeToFileExt(const QString &mime)
 
 QString FileUtil::cleanFileName(const QString &s)
 {
-    //#ifdef Q_OS_WIN
+    // #ifdef Q_OS_WIN
     QString badchars = "\\/|?*:\"<>";
     QString str;
     str.reserve(s.size());
@@ -207,9 +207,9 @@ QString FileUtil::cleanFileName(const QString &s)
     if (str.isEmpty())
         str = "unnamed";
     return str;
-    //#else
-    //    return s;
-    //#endif
+    // #else
+    //     return s;
+    // #endif
 }
 
 void FileUtil::openFolder(const QString &path)
@@ -221,9 +221,7 @@ void FileUtil::openFolder(const QString &path)
     QProcess::execute("/usr/bin/osascript",
                       QStringList() << "-e"
                                     << QString("tell application \"Finder\" to reveal POSIX file \"%1\"").arg(path));
-    QProcess::execute("/usr/bin/osascript",
-                      QStringList() << "-e"
-                                    << "tell application \"Finder\" to activate");
+    QProcess::execute("/usr/bin/osascript", QStringList() << "-e" << "tell application \"Finder\" to activate");
 #else
     // we cannot select a file here, because no file browser really supports it...
     const QFileInfo fileInfo(path);
@@ -237,7 +235,7 @@ void FileUtil::setModificationTime(const QString &filename, const QDateTime &mti
 #if QT_VERSION >= QT_VERSION_CHECK(5, 8, 0)
     qint64 secs = mtime.toSecsSinceEpoch();
 #else
-    qint64  secs = mtime.toTime_t();
+    qint64 secs = mtime.toTime_t();
 #endif
 #ifdef Q_OS_WIN
     _utimbuf t;

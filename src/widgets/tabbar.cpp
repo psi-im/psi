@@ -24,7 +24,7 @@
 
 #include <QAbstractButton>
 #include <QApplication>
-//#include <QDebug>
+// #include <QDebug>
 #include <QDrag>
 #include <QLine>
 #include <QMimeData>
@@ -44,13 +44,13 @@ public:
 
     QSize        sizeHint() const;
     inline QSize minimumSizeHint() const { return sizeHint(); }
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     void enterEvent(QEvent *e);
 #else
     void enterEvent(QEnterEvent *e);
 #endif
-    void         leaveEvent(QEvent *event);
-    void         paintEvent(QPaintEvent *event);
+    void leaveEvent(QEvent *event);
+    void paintEvent(QPaintEvent *event);
 };
 
 struct RowSf {
@@ -72,7 +72,7 @@ public:
     void  balanseCloseButtons();
     bool  indexAtBottom(int index) const;
 
-    TabBar *                 q;
+    TabBar                  *q;
     QVector<QStyleOptionTab> hackedTabs;
     QVector<CloseButton *>   closeButtons;
     bool                     tabsClosable;
@@ -142,7 +142,7 @@ LayoutSf possibleLayouts2(const QList<int> &tabs, int barWidth, int rows, double
         pLayout += rows;
     }
 
-    int *  pGoodLayout = nullptr;
+    int   *pGoodLayout = nullptr;
     double minDSf      = 10000.; // Just huge number
 
     for (pPrevLayout = &layouts[0]; pPrevLayout < pLayout; pPrevLayout += rows) {
@@ -283,7 +283,9 @@ void TabBar::Private::layoutTabs()
         tab.rect.setSize(tabSizeHint(tab));
         // Make pinned tab if need
         if (i < pinnedTabs) {
-            tab.text = tab.text.left(QStringView{tab.text}.left(PINNED_CHARS).contains(QLatin1Char{'&'}) ? (PINNED_CHARS + 1) : PINNED_CHARS);
+            tab.text = tab.text.left(QStringView { tab.text }.left(PINNED_CHARS).contains(QLatin1Char { '&' })
+                                         ? (PINNED_CHARS + 1)
+                                         : PINNED_CHARS);
             tab.rect.setWidth(pinnedTabWidth);
         }
         hackedTabs << tab;
@@ -1226,7 +1228,7 @@ QSize CloseButton::sizeHint() const
     return { width, height };
 }
 
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 void CloseButton::enterEvent(QEvent *event)
 #else
 void CloseButton::enterEvent(QEnterEvent *event)

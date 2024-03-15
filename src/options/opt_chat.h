@@ -17,7 +17,7 @@ public:
     void     restoreOptions();
 
 private:
-    QWidget *     w;
+    QWidget      *w;
     QButtonGroup *bg_defAct;
 };
 

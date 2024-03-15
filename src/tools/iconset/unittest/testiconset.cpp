@@ -80,9 +80,9 @@ private slots:
         QVERIFY(chat->anim() != 0);
 
         const Anim *anim  = chat->anim();
-        Anim *      copy1 = new Anim(*anim);
-        Anim *      copy2 = new Anim(*copy1);
-        Anim *      copy3 = new Anim(*copy2);
+        Anim       *copy1 = new Anim(*anim);
+        Anim       *copy2 = new Anim(*copy1);
+        Anim       *copy3 = new Anim(*copy2);
 
         // at first, all animations should contain 15 frames
         QCOMPARE(copy3->numFrames(), 15);

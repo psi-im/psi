@@ -40,8 +40,8 @@ public:
     const Maybe<float> &error() const;
     const Maybe<float> &lat() const;
     const Maybe<float> &lon() const;
-    const QString &     datum() const;
-    const QString &     description() const;
+    const QString      &datum() const;
+    const QString      &description() const;
 
     bool isNull() const;
 

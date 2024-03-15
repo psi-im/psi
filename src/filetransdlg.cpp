@@ -3,8 +3,10 @@
 #include "accountlabel.h"
 #include "accountscombobox.h"
 #include "busywidget.h"
-#include "iris/filetransfer.h"
 #include "fileutil.h"
+#include "iris/filetransfer.h"
+#include "iris/s5b.h"
+#include "iris/xmpp_tasks.h"
 #include "jidutil.h"
 #include "psiaccount.h"
 #include "psicon.h"
@@ -13,10 +15,8 @@
 #include "psioptions.h"
 #include "psitextview.h"
 #include "psitooltip.h"
-#include "iris/s5b.h"
 #include "textutil.h"
 #include "userlist.h"
-#include "iris/xmpp_tasks.h"
 
 #include <QBuffer>
 #include <QDesktopServices>
@@ -94,7 +94,7 @@ static bool active_file_check(const QString &s)
 //----------------------------------------------------------------------------
 class FileTransferHandler::Private {
 public:
-    PsiAccount *  pa;
+    PsiAccount   *pa;
     FileTransfer *ft;
     BSConnection *c;
     Jid           peer;
@@ -449,13 +449,13 @@ void FileTransferHandler::mapSignals()
 
 class FileRequestDlg::Private {
 public:
-    PsiCon *             psi;
-    PsiAccount *         pa;
-    AccountsComboBox *   cb_ident;
-    QLabel *             lb_identity;
-    AccountLabel *       lb_ident;
-    QLabel *             lb_time;
-    PsiTextView *        te;
+    PsiCon              *psi;
+    PsiAccount          *pa;
+    AccountsComboBox    *cb_ident;
+    QLabel              *lb_identity;
+    AccountLabel        *lb_ident;
+    QLabel              *lb_time;
+    PsiTextView         *te;
     Jid                  jid;
     FileTransferHandler *ft;
     QString              fileName;
@@ -488,7 +488,7 @@ FileRequestDlg::FileRequestDlg(const Jid &jid, PsiCon *psi, PsiAccount *pa, cons
     d->lb_ident = nullptr;
     updateIdentity(pa);
 
-    QFrame *     hb       = new QFrame(this);
+    QFrame      *hb       = new QFrame(this);
     QHBoxLayout *hbLayout = new QHBoxLayout(hb);
     hbLayout->setContentsMargins(0, 0, 0, 0);
     d->lb_identity = new QLabel(tr("Identity: "), hb);
@@ -575,7 +575,7 @@ FileRequestDlg::FileRequestDlg(const QDateTime &ts, FileTransfer *ft, PsiAccount
     d->fileSize = ft->fileSize();
 
     d->cb_ident           = nullptr;
-    QFrame *     hb       = new QFrame(this);
+    QFrame      *hb       = new QFrame(this);
     QHBoxLayout *hbLayout = new QHBoxLayout(hb);
     hbLayout->setContentsMargins(0, 0, 0, 0);
     d->lb_identity = new QLabel(tr("Identity: "), hb);
@@ -833,7 +833,7 @@ void FileRequestDlg::ft_connected()
 {
     d->t.stop();
     busy->stop();
-    FileTransDlg *       w = d->pa->psi()->ftdlg();
+    FileTransDlg        *w = d->pa->psi()->ftdlg();
     FileTransferHandler *h = d->ft;
     d->ft                  = nullptr;
     closeDialogs(this);
@@ -1003,8 +1003,7 @@ public:
     ColumnWidthManager *cm;
 
     FileTransItem(QListWidget *parent, const QString &_name, const QString &_path, qlonglong _size,
-                  const QString &_peer, bool _sending) :
-        QListWidgetItem(parent)
+                  const QString &_peer, bool _sending) : QListWidgetItem(parent)
     {
         done          = false;
         sending       = _sending;
@@ -1498,9 +1497,9 @@ public:
 
 class FileTransDlg::Private {
 public:
-    FileTransDlg *           parent;
-    PsiCon *                 psi;
-    FileTransView *          lv;
+    FileTransDlg            *parent;
+    PsiCon                  *psi;
+    FileTransView           *lv;
     QList<TransferMapping *> transferList;
     QTimer                   t;
 
@@ -1515,7 +1514,7 @@ public:
             bool found = false;
             for (int i = 0; i < lv->count(); i++) {
                 QListWidgetItem *it = lv->item(i);
-                FileTransItem *  fi = static_cast<FileTransItem *>(it);
+                FileTransItem   *fi = static_cast<FileTransItem *>(it);
                 if (fi->id == n) {
                     found = true;
                     break;
@@ -1532,7 +1531,7 @@ public:
     {
         for (int i = 0; i < lv->count(); i++) {
             QListWidgetItem *it = lv->item(i);
-            FileTransItem *  fi = static_cast<FileTransItem *>(it);
+            FileTransItem   *fi = static_cast<FileTransItem *>(it);
             if (fi->id == id)
                 return fi;
         }
@@ -1544,7 +1543,7 @@ public:
         QList<FileTransItem *> list;
         for (int i = 0; i < lv->count(); i++) {
             QListWidgetItem *it = lv->item(i);
-            FileTransItem *  fi = static_cast<FileTransItem *>(it);
+            FileTransItem   *fi = static_cast<FileTransItem *>(it);
             if (fi->done)
                 list.append(fi);
         }
@@ -1755,7 +1754,7 @@ void FileTransDlg::takeTransfer(FileTransferHandler *h, int p, qlonglong sent)
     TransferMapping *i = new TransferMapping;
     i->h               = h;
     i->id              = addItem(h->fileName(), h->filePath(), h->fileIcon(), h->fileSize(), peer,
-                    (h->mode() == FileTransferHandler::Sending));
+                                 (h->mode() == FileTransferHandler::Sending));
     i->p               = p;
     i->sent            = sent;
     d->transferList.append(i);
@@ -1778,7 +1777,7 @@ void FileTransDlg::clearFinished()
         // remove related transfer mappings
         QList<FileTransItem *>::iterator it = list.begin();
         for (; it != list.end(); ++it) {
-            FileTransItem *  fi = *it;
+            FileTransItem   *fi = *it;
             TransferMapping *i  = d->findMapping(fi->id);
             d->transferList.removeAll(i);
             delete i;
@@ -1826,7 +1825,7 @@ void FileTransDlg::updateItems()
 
 void FileTransDlg::itemCancel(int id)
 {
-    FileTransItem *  fi = d->findItem(id);
+    FileTransItem   *fi = d->findItem(id);
     TransferMapping *i  = d->findMapping(id);
     d->transferList.removeAll(i);
     delete i;
@@ -1841,7 +1840,7 @@ void FileTransDlg::itemOpenDest(int id)
 
 void FileTransDlg::itemClear(int id)
 {
-    FileTransItem *  fi = d->findItem(id);
+    FileTransItem   *fi = d->findItem(id);
     TransferMapping *i  = d->findMapping(id);
     d->transferList.removeAll(i);
     delete i;

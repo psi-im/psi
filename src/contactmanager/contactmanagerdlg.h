@@ -48,8 +48,8 @@ private:
     void importRoster();
 
     Ui::ContactManagerDlg ui_;
-    PsiAccount *          pa_;
-    ContactManagerModel * um;
+    PsiAccount           *pa_;
+    ContactManagerModel  *um;
 
 private slots:
     void doSelect();

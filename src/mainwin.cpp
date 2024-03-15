@@ -31,6 +31,7 @@
 #include "eventnotifier.h"
 #include "geolocationdlg.h"
 #include "globalstatusmenu.h"
+#include "iris/xmpp_serverinfomanager.h"
 #include "mainwin_p.h"
 #include "mooddlg.h"
 #include "mucjoindlg.h"
@@ -51,7 +52,6 @@
 #include "tabdlg.h"
 #include "tabmanager.h"
 #include "textutil.h"
-#include "iris/xmpp_serverinfomanager.h"
 
 #include <QApplication>
 #include <QCloseEvent>
@@ -917,17 +917,8 @@ void MainWin::buildOptionsMenu()
     helpMenu->setIcon(IconsetFactory::icon("psi/help").icon());
 
     QStringList actions;
-    actions << "help_readme"
-            << "separator"
-            << "help_online_wiki"
-            << "help_online_home"
-            << "help_online_forum"
-            << "help_psi_muc"
-            << "help_report_bug"
-            << "diagnostics"
-            << "separator"
-            << "help_about"
-            << "help_about_qt";
+    actions << "help_readme" << "separator" << "help_online_wiki" << "help_online_home" << "help_online_forum"
+            << "help_psi_muc" << "help_report_bug" << "diagnostics" << "separator" << "help_about" << "help_about_qt";
 
     d->updateMenu(actions, helpMenu);
 
@@ -964,9 +955,7 @@ void MainWin::buildMainMenu()
 void MainWin::buildToolsMenu()
 {
     QStringList actions;
-    actions << "menu_file_transfer"
-            << "separator"
-            << "menu_xml_console";
+    actions << "menu_file_transfer" << "separator" << "menu_xml_console";
 
     d->updateMenu(actions, d->toolsMenu);
 }
@@ -983,8 +972,7 @@ void MainWin::buildGeneralMenu(QMenu *menu)
 #ifdef GROUPCHAT
             << "menu_join_groupchat"
 #endif
-            << "menu_options"
-            << "menu_file_transfer";
+            << "menu_options" << "menu_file_transfer";
     if (PsiOptions::instance()->getOption("options.ui.menu.main.change-profile").toBool()) {
         actions << "menu_change_profile";
     }
@@ -1458,7 +1446,7 @@ void MainWin::keyPressEvent(QKeyEvent *e)
     QWidget::keyPressEvent(e);
 }
 
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 void MainWin::enterEvent(QEvent *e)
 #else
 void MainWin::enterEvent(QEnterEvent *e)
@@ -1965,4 +1953,4 @@ void MainWin::resizeEvent(QResizeEvent *e)
     }
 }
 
-//#endif
+// #endif

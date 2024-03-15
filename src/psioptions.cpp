@@ -24,12 +24,12 @@
 #ifdef PSI_PLUGINS
 #include "pluginmanager.h"
 #endif
-#include "psitoolbar.h"
-#include "statuspreset.h"
 #include "iris/xmpp_client.h"
 #include "iris/xmpp_jid.h"
 #include "iris/xmpp_task.h"
 #include "iris/xmpp_xmlcommon.h"
+#include "psitoolbar.h"
+#include "statuspreset.h"
 
 #include <QCoreApplication>
 #include <QTimer>
@@ -163,52 +163,29 @@ bool PsiOptions::newProfile()
         ToolbarPrefs chatToolbar;
         chatToolbar.on   = true;
         chatToolbar.name = "Chat";
-        chatToolbar.keys << "chat_clear"
-                         << "chat_find"
-                         << "chat_html_text"
-                         << "chat_add_contact";
+        chatToolbar.keys << "chat_clear" << "chat_find" << "chat_html_text" << "chat_add_contact";
         chatToolbar.keys += pluginsKeys;
-        chatToolbar.keys << "spacer"
-                         << "chat_icon"
-                         << "chat_file"
-                         << "chat_pgp"
-                         << "chat_info"
-                         << "chat_history"
-                         << "chat_voice"
-                         << "chat_share_files"
-                         << "chat_active_contacts"
-                         << "chat_templates";
+        chatToolbar.keys << "spacer" << "chat_icon" << "chat_file" << "chat_pgp" << "chat_info" << "chat_history"
+                         << "chat_voice" << "chat_share_files" << "chat_active_contacts" << "chat_templates";
 
         ToolbarPrefs groupchatToolbar;
         groupchatToolbar.on   = true;
         groupchatToolbar.name = "Groupchat";
-        groupchatToolbar.keys << "gchat_info"
-                              << "gchat_clear"
-                              << "gchat_find"
-                              << "gchat_html_text"
-                              << "gchat_configure"
-                              << "gchat_set_topic"
-                              << "gchat_templates"
-                              << "gchat_share_files";
+        groupchatToolbar.keys << "gchat_info" << "gchat_clear" << "gchat_find" << "gchat_html_text" << "gchat_configure"
+                              << "gchat_set_topic" << "gchat_templates" << "gchat_share_files";
         groupchatToolbar.keys += pluginsKeys;
-        groupchatToolbar.keys << "spacer"
-                              << "gchat_icon";
+        groupchatToolbar.keys << "spacer" << "gchat_icon";
 
         ToolbarPrefs buttons;
         buttons.name = tr("Buttons");
         buttons.on   = true;
-        buttons.keys << "button_options"
-                     << "button_status";
+        buttons.keys << "button_options" << "button_status";
         buttons.dock = Qt3Dock_Bottom;
 
         ToolbarPrefs showContacts;
         showContacts.on   = true;
         showContacts.name = tr("Show contacts");
-        showContacts.keys << "menu_options"
-                          << "menu_add_contact"
-                          << "view_groups"
-                          << "menu_disco"
-                          << "menu_play_sounds"
+        showContacts.keys << "menu_options" << "menu_add_contact" << "view_groups" << "menu_disco" << "menu_play_sounds"
                           << "menu_xml_console";
 
         QList<ToolbarPrefs> toolbars = { chatToolbar, groupchatToolbar, buttons, showContacts };

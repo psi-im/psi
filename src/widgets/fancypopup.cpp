@@ -20,19 +20,19 @@
 #include "fancypopup.h"
 
 #include "fancylabel.h"
-//#include "iconlabel.h"
+// #include "iconlabel.h"
 #include "iconset.h"
 #include "psioptions.h"
 #include "psitooltip.h"
 #include "ui_fancypopup.h"
 
 #include <QApplication>
-//#include <QDesktopWidget>
+// #include <QDesktopWidget>
 #include <QList>
 #include <QMouseEvent>
+#include <QScreen>
 #include <QStyle>
 #include <QTimer>
-#include <QScreen>
 
 #define BUTTON_WIDTH 16
 #define BUTTON_HEIGHT 14
@@ -110,7 +110,7 @@ public:
     QList<FancyPopup *> prevPopups;
     // QBoxLayout *layout;
     FancyPopup *popup;
-    QTimer *    hideTimer;
+    QTimer     *hideTimer;
     Ui::Frame   ui_;
 };
 

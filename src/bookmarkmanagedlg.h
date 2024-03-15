@@ -20,8 +20,8 @@
 #ifndef BOOKMARKMANAGEDLG_H
 #define BOOKMARKMANAGEDLG_H
 
-#include "ui_bookmarkmanage.h"
 #include "iris/xmpp_jid.h"
+#include "ui_bookmarkmanage.h"
 
 #include <QDialog>
 
@@ -70,11 +70,11 @@ private slots:
 
 private:
     Ui::BookmarkManage  ui_;
-    PsiAccount *        account_;
+    PsiAccount         *account_;
     QStandardItemModel *model_;
-    QPushButton *       addButton_;
-    QPushButton *       removeButton_;
-    QPushButton *       joinButton_;
+    QPushButton        *addButton_;
+    QPushButton        *removeButton_;
+    QPushButton        *joinButton_;
 
     ConferenceBookmark bookmarkFor(const QModelIndex &index) const;
 };

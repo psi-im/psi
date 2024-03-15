@@ -20,9 +20,9 @@
 #ifndef STATUSPRESET_H
 #define STATUSPRESET_H
 
+#include "iris/xmpp_status.h"
 #include "maybe.h"
 #include "optionstree.h"
-#include "iris/xmpp_status.h"
 
 #include <QString>
 

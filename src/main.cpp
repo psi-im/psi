@@ -283,11 +283,11 @@ void PsiMain::sessionStart()
     connect(pcon, SIGNAL(quit(int)), SLOT(sessionQuit(int)));
 
     if (cmdline.contains("uri")) {
-        emit ActiveProfiles::instance()->openUriRequested(cmdline.value("uri"));
+        emit ActiveProfiles::instance() -> openUriRequested(cmdline.value("uri"));
         cmdline.remove("uri");
     }
     if (cmdline.contains("status") || cmdline.contains("status-message")) {
-        emit ActiveProfiles::instance()->setStatusRequested(cmdline.value("status"), cmdline.value("status-message"));
+        emit ActiveProfiles::instance() -> setStatusRequested(cmdline.value("status"), cmdline.value("status-message"));
         cmdline.remove("status");
         cmdline.remove("status-message");
     }
@@ -596,7 +596,7 @@ PSI_EXPORT_FUNC int main(int argc, char *argv[])
 Q_IMPORT_PLUGIN(qca_ossl)
 #endif
 
-//#if defined(Q_OS_WIN) && defined(QT_STATICPLUGIN)
-//    Q_IMPORT_PLUGIN(qjpeg)
-//    Q_IMPORT_PLUGIN(qgif)
-//#endif
+// #if defined(Q_OS_WIN) && defined(QT_STATICPLUGIN)
+//     Q_IMPORT_PLUGIN(qjpeg)
+//     Q_IMPORT_PLUGIN(qgif)
+// #endif

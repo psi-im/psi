@@ -148,7 +148,7 @@ public:
      * @param maxAge Session/Forever or just seconds to live
      * @return a new cache item. Not yet synchronized to disk
      */
-    FileCacheItem *       append(const QList<XMPP::Hash> &sums, const QByteArray &data,
+    FileCacheItem        *append(const QList<XMPP::Hash> &sums, const QByteArray &data,
                                  const QVariantMap &metadata = QVariantMap(), unsigned int maxAge = Forever);
     inline FileCacheItem *append(const XMPP::Hash &id, const QByteArray &data,
                                  const QVariantMap &metadata = QVariantMap(), unsigned int maxAge = Forever)
@@ -157,7 +157,7 @@ public:
     }
 
     // similar to append but instead of `data` moves file to the cache directory
-    FileCacheItem *       moveToCache(const QList<XMPP::Hash> &sums, const QFileInfo &file,
+    FileCacheItem        *moveToCache(const QList<XMPP::Hash> &sums, const QFileInfo &file,
                                       const QVariantMap &metadata = QVariantMap(), unsigned int maxAge = Forever);
     inline FileCacheItem *moveToCache(const XMPP::Hash &id, const QFileInfo &file,
                                       const QVariantMap &metadata = QVariantMap(), unsigned int maxAge = Forever)
@@ -200,8 +200,8 @@ private:
     unsigned int                       _fileCacheSize;
     unsigned int                       _defaultMaxAge;
     SyncPolicy                         _syncPolicy;
-    QTimer *                           _syncTimer;
-    OptionsTree *                      _registry;
+    QTimer                            *_syncTimer;
+    OptionsTree                       *_registry;
     QHash<XMPP::Hash, FileCacheItem *> _pendingRegisterItems;
 
     bool _registryChanged;

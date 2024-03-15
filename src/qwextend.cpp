@@ -70,7 +70,7 @@ void reparent_good(QWidget *that, Qt::WindowFlags f, bool showIt)
     bool            enable = that->isEnabled(); // remember status
     Qt::FocusPolicy fp     = that->focusPolicy();
     QSize           s      = that->size();
-    QPixmap *       bgp    = (QPixmap *)that->backgroundPixmap();
+    QPixmap        *bgp    = (QPixmap *)that->backgroundPixmap();
     QColor          bgc    = that->bg_col; // save colors
     QString         capt   = that->caption();
     that->widget_flags     = f;
@@ -82,7 +82,7 @@ void reparent_good(QWidget *that, Qt::WindowFlags f, bool showIt)
     const QObjectList *chlist = that->children();
     if (chlist) { // reparent children
         QObjectListIt it(*chlist);
-        QObject *     obj;
+        QObject      *obj;
         while ((obj = it.current())) {
             if (obj->isWidgetType()) {
                 QWidget *w = (QWidget *)obj;

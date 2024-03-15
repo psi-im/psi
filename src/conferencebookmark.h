@@ -37,13 +37,13 @@ public:
 
     static QStringList joinTypeNames();
 
-    const QString &  name() const;
+    const QString   &name() const;
     const XMPP::Jid &jid() const;
     JoinType         autoJoin() const;
     bool             needJoin() const;
     void             setAutoJoin(JoinType type);
-    const QString &  nick() const;
-    const QString &  password() const;
+    const QString   &nick() const;
+    const QString   &password() const;
 
     bool isNull() const;
 

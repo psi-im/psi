@@ -20,7 +20,7 @@ public:
 
 private:
     QWidget *w_;
-    PsiCon * psi_;
+    PsiCon  *psi_;
 };
 
 #endif // OPT_MESSAGES_COMMON_H

@@ -49,7 +49,7 @@ using namespace XMPP;
 
 struct UserStatus {
     UserStatus() : userListItem(nullptr), statusType(XMPP::Status::Offline) { }
-    UserListItem *     userListItem;
+    UserListItem      *userListItem;
     XMPP::Status::Type statusType;
     QString            status;
     int                priority = 0;
@@ -78,7 +78,7 @@ public:
     void                  ensureTabbedCorrectly() override;
 
 public:
-    PsiAccount *      account() const;
+    PsiAccount       *account() const;
     void              setInputText(const QString &text);
     Jid               realJid() const;
     bool              autoSelectContact() const { return autoSelectContact_; }
@@ -208,7 +208,7 @@ private:
     Jid     realJid_;
 
     // Message Events & Chat States
-    QTimer *            composingTimer_;
+    QTimer             *composingTimer_;
     bool                isComposing_;
     bool                sendComposingEvents_;
     bool                historyState;

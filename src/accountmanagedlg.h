@@ -64,7 +64,7 @@ private slots:
     void accountRemoved(PsiAccount *);
 
 private:
-    PsiCon * psi;
+    PsiCon  *psi;
     QAction *removeAction_;
 };
 

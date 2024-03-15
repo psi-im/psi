@@ -24,6 +24,7 @@
 #include "busywidget.h"
 #include "common.h"
 #include "iconaction.h"
+#include "iris/xmpp_tasks.h"
 #include "psiaccount.h"
 #include "psicon.h"
 #include "psiiconset.h"
@@ -31,7 +32,6 @@
 #include "psitooltip.h"
 #include "stretchwidget.h"
 #include "tasklist.h"
-#include "iris/xmpp_tasks.h"
 
 #include <QAction>
 #include <QActionGroup>
@@ -166,8 +166,8 @@ private:
 };
 
 struct DiscoData {
-    PsiAccount *    pa;
-    TaskList *      tasks;
+    PsiAccount     *pa;
+    TaskList       *tasks;
     DiscoConnector *d;
 };
 
@@ -251,13 +251,13 @@ private slots:
 
 private:
     DiscoItem            di;
-    DiscoData *          d;
+    DiscoData           *d;
     bool                 isRoot;
     bool                 alreadyItems, alreadyInfo;
     bool                 autoItems; // used in updateItemsFinished
     bool                 autoInfo;
     QString              errorInfo;
-    DiscoExtraItem *     moreItem;
+    DiscoExtraItem      *moreItem;
     SubsetsClientManager subsets;
 
     void    copyItem(const DiscoItem &);
@@ -489,8 +489,8 @@ void DiscoListItem::updateItemsFinished(const DiscoList &list)
     treeWidget()->setUpdatesEnabled(false);
 
     QHash<QString, DiscoListItem *> children;
-    DiscoBaseItem *                 child = static_cast<DiscoBaseItem *>(QTreeWidgetItem::child(0));
-    DiscoListItem *                 item;
+    DiscoBaseItem                  *child = static_cast<DiscoBaseItem *>(QTreeWidgetItem::child(0));
+    DiscoListItem                  *item;
     for (int i = 1; child; ++i) {
         if (!moreItem && child->type() != MoreItemsType) {
             item = static_cast<DiscoListItem *>(child);
@@ -781,7 +781,7 @@ bool DiscoListView::maybeTip(const QPoint &pos)
 bool DiscoListView::eventFilter(QObject *o, QEvent *e)
 {
     if (e->type() == QEvent::ToolTip && o->isWidgetType()) {
-        QWidget *   w  = static_cast<QWidget *>(o);
+        QWidget    *w  = static_cast<QWidget *>(o);
         QHelpEvent *he = static_cast<QHelpEvent *>(e);
         maybeTip(w->mapToGlobal(he->pos()));
         return true;
@@ -844,7 +844,7 @@ public: // data
 
     DiscoData data;
 
-    QToolBar *  toolBar;
+    QToolBar   *toolBar;
     IconAction *actBrowse, *actBack, *actForward, *actRefresh, *actStop;
 
     // custom actions, that will be added to toolbar and context menu
@@ -1185,7 +1185,7 @@ void DiscoDlg::Private::itemDoubleclicked(QTreeWidgetItem *item)
     if (!item || item->type() == MoreItemsType)
         return;
 
-    DiscoListItem * it = static_cast<DiscoListItem *>(item);
+    DiscoListItem  *it = static_cast<DiscoListItem *>(item);
     const DiscoItem d  = it->item();
     const Features &f  = d.features();
 
@@ -1287,7 +1287,7 @@ bool DiscoDlg::Private::eventFilter(QObject *object, QEvent *event)
             actQueryVersion->addTo(&p);
 
             // popup with all available features
-            QMenu *               fm = new QMenu(&p);
+            QMenu                *fm = new QMenu(&p);
             QHash<QAction *, int> actions;
             {
                 QList<long>::Iterator it = ids.begin();

@@ -65,8 +65,8 @@ private slots:
 
 private:
     struct Loader;
-    Loader *                      loader   = nullptr;
-    PsiThemeProvider *            provider = nullptr;
+    Loader                       *loader   = nullptr;
+    PsiThemeProvider             *provider = nullptr;
     QFutureWatcher<ThemeItemInfo> themeWatcher;
     QFuture<ThemeItemInfo>        themesFuture;
     QList<ThemeItemInfo>          themesInfo;

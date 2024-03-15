@@ -261,8 +261,7 @@ HistoryContactListModel::TreeItem::TreeItem(ItemType type, const QString &text, 
 
 HistoryContactListModel::TreeItem::TreeItem(ItemType type, const QString &text, const QString &tooltip,
                                             const QString &id, int pos) :
-    _parent(nullptr),
-    _type(type), _text(text), _tooltip(tooltip), _id(id), _position(pos)
+    _parent(nullptr), _type(type), _text(text), _tooltip(tooltip), _id(id), _position(pos)
 {
 }
 

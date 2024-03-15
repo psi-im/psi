@@ -25,11 +25,11 @@
 #include "dummystream.h"
 #include "iris/filetransfer.h"
 #include "iris/jingle-session.h"
+#include "iris/xmpp_xmlcommon.h"
 #include "psiaccount.h"
 #include "psicon.h"
 #include "psicontactlist.h"
 #include "psioptions.h"
-#include "iris/xmpp_xmlcommon.h"
 
 #include <QCoreApplication>
 #include <QDomElement>
@@ -429,8 +429,7 @@ QString HttpAuthEvent::description() const { return tr("HTTP Authentication Requ
 // RosterExchangeEvent
 //----------------------------------------------------------------------------
 RosterExchangeEvent::RosterExchangeEvent(const Jid &j, const RosterExchangeItems &i, const QString &text,
-                                         PsiAccount *acc) :
-    PsiEvent(acc)
+                                         PsiAccount *acc) : PsiEvent(acc)
 {
     v_from  = j;
     v_items = i;

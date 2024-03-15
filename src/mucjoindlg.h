@@ -20,8 +20,8 @@
 #ifndef MUCJOINDLG_H
 #define MUCJOINDLG_H
 
-#include "ui_mucjoin.h"
 #include "iris/xmpp_jid.h"
+#include "ui_mucjoin.h"
 
 #include <QDialog>
 #include <QTimer>
@@ -66,12 +66,12 @@ private slots:
 
 private:
     Ui::MUCJoin   ui_;
-    PsiCon *      controller_;
-    PsiAccount *  account_;
-    QPushButton * joinButton_;
+    PsiCon       *controller_;
+    PsiAccount   *account_;
+    QPushButton  *joinButton_;
     XMPP::Jid     jid_;
     MucJoinReason reason_;
-    QTimer *      timer_;
+    QTimer       *timer_;
     bool          nickAlreadyCompleted_;
 
     void disableWidgets();

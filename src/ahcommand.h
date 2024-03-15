@@ -82,17 +82,17 @@ public:
     AHCommand &operator=(const AHCommand &other);
 
     // Inspectors
-    const QString &    node() const;
+    const QString     &node() const;
     bool               hasData() const;
     const XMPP::XData &data() const;
-    const ActionList & actions() const;
+    const ActionList  &actions() const;
     Action             defaultAction() const;
     Status             status() const;
     Action             action() const;
-    const QString &    sessionId() const;
-    const AHCError &   error() const;
+    const QString     &sessionId() const;
+    const AHCError    &error() const;
     bool               hasNote() const;
-    const Note &       note() const;
+    const Note        &note() const;
 
     // XML conversion
     QDomElement toXml(QDomDocument *doc, bool submit) const;

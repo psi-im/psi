@@ -29,7 +29,6 @@
 #include <QPainter>
 #include <QQueue>
 #include <QRegularExpression>
-#include <QRegularExpression>
 #include <QTextCharFormat>
 #include <QTextCursor>
 #include <QTextDocumentFragment>
@@ -283,7 +282,7 @@ static QStringView preserveOriginalObjectReplacementCharacters(const QStringView
 static QString convertIconsToObjectReplacementCharacters(const QStringView &text, TextCharFormatQueue *queue,
                                                          int insertedAfter, const PsiRichText::ParsersMap &parsers)
 {
-    QString    result;
+    QString     result;
     QStringView work(text);
 
     int start = -1;
@@ -292,7 +291,7 @@ static QString convertIconsToObjectReplacementCharacters(const QStringView &text
         start = work.indexOf(QLatin1Char('<'), start + 1);
         if (start == -1)
             break;
-        if (work.mid(start + 1, 4) == QLatin1String{"icon"}) {
+        if (work.mid(start + 1, 4) == QLatin1String { "icon" }) {
             // Format: <icon name="" text="">
             static QRegularExpression rxName("name=\"([^\"]+)\"");
             static QRegularExpression rxText("text=\"([^\"]+)\"");
@@ -300,11 +299,11 @@ static QString convertIconsToObjectReplacementCharacters(const QStringView &text
 
             result += preserveOriginalObjectReplacementCharacters(work.left(start), queue);
 
-            int end = work.indexOf(QLatin1Char{'>'}, start);
+            int end = work.indexOf(QLatin1Char { '>' }, start);
             Q_ASSERT(end != -1);
 
             QStringView fragment  = work.mid(start, end - start);
-            auto       matchName = rxName.match(fragment);
+            auto        matchName = rxName.match(fragment);
             if (matchName.hasMatch()) {
 #ifndef WIDGET_PLUGIN
                 QString iconName = TextUtil::unescape(matchName.capturedTexts().at(1));
@@ -341,18 +340,17 @@ static QString convertIconsToObjectReplacementCharacters(const QStringView &text
                     // if parsers key matches with html element name
                     result += preserveOriginalObjectReplacementCharacters(work.left(start), queue);
 
-                    int end = work.indexOf(QLatin1Char{'>'}, start);
+                    int end = work.indexOf(QLatin1Char { '>' }, start);
                     Q_ASSERT(end != -1);
 
                     // take attributes part of the tag
-                    auto       fragment = work.mid(start + it.key().length() + 1, end - start - it.key().length() - 1);
-                    QString    replaceHtml;
+                    auto    fragment = work.mid(start + it.key().length() + 1, end - start - it.key().length() - 1);
+                    QString replaceHtml;
                     QTextCharFormat charFormat;
 
                     std::tie(charFormat, replaceHtml) = it.value()(fragment, insertedAfter);
                     if (replaceHtml.size()) {
-                        result += convertIconsToObjectReplacementCharacters(replaceHtml, queue,
-                                                                            insertedAfter, parsers);
+                        result += convertIconsToObjectReplacementCharacters(replaceHtml, queue, insertedAfter, parsers);
                     }
                     if (charFormat.isValid()) {
                         queue->enqueue(new QTextCharFormat(charFormat));
@@ -413,8 +411,8 @@ static void appendTextHelper(QTextDocument *doc, QString text, QTextCursor &curs
 
     // prepare images and remove insecure images
     static QRegularExpression imgRe("<img[^>]+src\\s*=\\s*(\"[^\"]*\"|'[^']*')[^>]*>");
-    QString        replace;
-    QRegularExpressionMatch match;
+    QString                   replace;
+    QRegularExpressionMatch   match;
     for (int pos = 0; (match = imgRe.match(text, pos)).hasMatch();) {
         replace.clear();
         QString imgSrc    = match.captured(1).mid(1, match.captured(1).size() - 2);
@@ -422,7 +420,7 @@ static void appendTextHelper(QTextDocument *doc, QString text, QTextCursor &curs
         if (imgSrcUrl.isValid()) {
             if (imgSrcUrl.scheme() == "data") {
                 static QRegularExpression dataRe("^[a-zA-Z]+/[a-zA-Z]+;base64,([a-zA-Z0-9/=+%]+)$");
-                auto dataMatch = dataRe.match(imgSrcUrl.path());
+                auto                      dataMatch = dataRe.match(imgSrcUrl.path());
                 if (dataMatch.hasMatch()) {
                     const QByteArray ba = QByteArray::fromBase64(dataMatch.captured(1).toLatin1());
                     if (!ba.isNull()) {

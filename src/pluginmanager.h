@@ -15,7 +15,7 @@
 #include <QMenu>
 #include <QtCore>
 
-//#define PLUGINS_NO_DEBUG
+// #define PLUGINS_NO_DEBUG
 
 class MessageView;
 class PluginHost;
@@ -128,7 +128,7 @@ signals:
 
 private:
     PluginManager();
-    PsiCon *            psi_;
+    PsiCon             *psi_;
     void                loadAllPlugins();
     bool                verifyStanza(const QString &stanza);
     QList<PluginHost *> updatePluginsList();
@@ -156,7 +156,7 @@ private:
     QList<OAH_PluginOptionsTab *> settingsTabs_; // to be inserted into global list
 
     QMultiMap<PsiPlugin::Priority, std::pair<QString, QString>> _messageViewJSFilters; // priority -> <js, uuid>
-    QTimer *                                                    _messageViewJSFiltersTimer = nullptr;
+    QTimer                                                     *_messageViewJSFiltersTimer = nullptr;
 
     class StreamWatcher;
     bool    incomingXml(int account, const QDomElement &eventXml);

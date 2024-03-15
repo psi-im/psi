@@ -29,9 +29,7 @@ void MockPrivacyManager::requestListNames()
 {
     qDebug() << "requestListNames()";
     QStringList lists;
-    lists << "a"
-          << "b"
-          << "c";
+    lists << "a" << "b" << "c";
     emit listsReceived("a", "c", lists);
 }
 

@@ -21,14 +21,14 @@
 
 #include "busywidget.h"
 #include "common.h"
-#include "jidutil.h"
-#include "psiaccount.h"
-#include "textutil.h"
-#include "xdata_widget.h"
 #include "iris/xmpp_client.h"
 #include "iris/xmpp_tasks.h"
 #include "iris/xmpp_xdata.h"
 #include "iris/xmpp_xmlcommon.h"
+#include "jidutil.h"
+#include "psiaccount.h"
+#include "textutil.h"
+#include "xdata_widget.h"
 
 #include <QApplication>
 #include <QDomElement>
@@ -120,18 +120,18 @@ public:
     Jid         jid;
     PsiAccount *pa = nullptr;
 
-    QPushButton *          pb_close = nullptr, *pb_reg = nullptr;
+    QPushButton           *pb_close = nullptr, *pb_reg = nullptr;
     QPointer<JT_XRegister> jt;
     int                    type           = 0;
-    BusyWidget *           busy           = nullptr;
-    QLabel *               lb_top         = nullptr;
-    QWidget *              gr_form        = nullptr;
-    QGridLayout *          gr_form_layout = nullptr;
+    BusyWidget            *busy           = nullptr;
+    QLabel                *lb_top         = nullptr;
+    QWidget               *gr_form        = nullptr;
+    QGridLayout           *gr_form_layout = nullptr;
     Form                   form;
 
     QList<QLabel *>    lb_field;
     QList<QLineEdit *> le_field;
-    XDataWidget *      xdata = nullptr;
+    XDataWidget       *xdata = nullptr;
 };
 
 RegistrationDlg::RegistrationDlg(const Jid &jid, PsiAccount *pa) : QDialog(nullptr)
@@ -292,7 +292,7 @@ void RegistrationDlg::processLegacyForm(const XMPP::Form &form)
     setInstructions(d->jid.full(), form.instructions());
 
     for (const auto &f : std::as_const(d->form)) {
-        QLabel *   lb = new QLabel(f.fieldName(), d->gr_form);
+        QLabel    *lb = new QLabel(f.fieldName(), d->gr_form);
         QLineEdit *le = new QLineEdit(d->gr_form);
         d->gr_form_layout->addWidget(lb); // FIXME
         d->gr_form_layout->addWidget(le); // FIXME

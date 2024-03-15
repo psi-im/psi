@@ -20,12 +20,12 @@
 #include "activitydlg.h"
 
 #include "activitycatalog.h"
-#include "pepmanager.h"
-#include "psiaccount.h"
 #include "iconset.h"
 #include "iris/xmpp_client.h"
 #include "iris/xmpp_pubsubitem.h"
 #include "iris/xmpp_task.h"
+#include "pepmanager.h"
+#include "psiaccount.h"
 
 ActivityDlg::ActivityDlg(QList<PsiAccount *> list) : QDialog(nullptr), pa_(list)
 {
@@ -42,7 +42,7 @@ ActivityDlg::ActivityDlg(QList<PsiAccount *> list) : QDialog(nullptr), pa_(list)
     connect(ui_.pb_ok, SIGNAL(clicked()), SLOT(setActivity()));
 
     ui_.cb_general_type->addItem(tr("<unset>"));
-    PsiAccount *   pa = pa_.first();
+    PsiAccount    *pa = pa_.first();
     Activity::Type at = pa->activity().type();
     int            i  = 1;
     for (const ActivityCatalog::Entry &e : ActivityCatalog::instance()->entries()) {
@@ -67,10 +67,10 @@ void ActivityDlg::loadSpecificActivities(const QString &generalActivityStr)
         return;
     } else {
         ui_.cb_specific_type->addItem(tr("<unset>"));
-        PsiAccount *           pa = pa_.first();
+        PsiAccount            *pa = pa_.first();
         Activity::SpecificType at = pa->activity().specificType();
         int                    i  = 1;
-        ActivityCatalog *      ac = ActivityCatalog::instance();
+        ActivityCatalog       *ac = ActivityCatalog::instance();
         for (const ActivityCatalog::Entry &e : ac->entries()) {
             if (e.specificType() != Activity::UnknownSpecific) {
                 // The entry e is for a 'specific' type.

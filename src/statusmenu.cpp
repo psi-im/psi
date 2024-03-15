@@ -20,10 +20,10 @@
 #include "statusmenu.h"
 
 #include "common.h"
+#include "iris/xmpp_status.h"
 #include "psiaccount.h"
 #include "psiiconset.h"
 #include "psioptions.h"
-#include "iris/xmpp_status.h"
 
 #include <cassert>
 
@@ -99,8 +99,8 @@ void StatusMenu::clear()
 
 void StatusMenu::addPresets(IconActionGroup *parent)
 {
-    QObject *    parentMenu      = parent ? parent : static_cast<QObject *>(this);
-    PsiOptions * o               = PsiOptions::instance();
+    QObject     *parentMenu      = parent ? parent : static_cast<QObject *>(this);
+    PsiOptions  *o               = PsiOptions::instance();
     QVariantList presets         = o->mapKeyList("options.status.presets", true);
     bool         showEditPresets = o->getOption("options.status.show-edit-presets").toBool();
     if ((showEditPresets || presets.count() > 0) && !parent)
@@ -161,9 +161,9 @@ void StatusMenu::statusChanged(const Status &status)
 
 void StatusMenu::presetActivated()
 {
-    QAction *    action = static_cast<QAction *>(sender());
+    QAction     *action = static_cast<QAction *>(sender());
     QString      name   = action->property("preset").toString();
-    PsiOptions * o      = PsiOptions::instance();
+    PsiOptions  *o      = PsiOptions::instance();
     QString      base   = o->mapLookup("options.status.presets", name);
     XMPP::Status status;
     status.setType(o->getOption(base + ".status").toString());
@@ -200,7 +200,7 @@ XMPP::Status::Type StatusMenu::actionStatus(const QAction *action) const
 
 void StatusMenu::statusActivated()
 {
-    QAction *          action = static_cast<QAction *>(sender());
+    QAction           *action = static_cast<QAction *>(sender());
     XMPP::Status::Type status = actionStatus(action);
     emit               statusSelected(status, false);
 }
@@ -209,7 +209,7 @@ bool StatusMenu::eventFilter(QObject *obj, QEvent *event)
 {
     if (event->type() == QEvent::MouseButtonRelease) {
         QMouseEvent *e    = static_cast<QMouseEvent *>(event); // We sure event is QMouseEvent
-        QMenu *      menu = dynamic_cast<QMenu *>(obj); // Event filter can be installed on anything, so do dynamic_cast
+        QMenu       *menu = dynamic_cast<QMenu *>(obj); // Event filter can be installed on anything, so do dynamic_cast
         assert(menu != nullptr);                        // Dynamic cast on wrong type will return 0
         QAction *action = menu->actionAt(e->pos());
         if (action && e->button() == Qt::RightButton) {

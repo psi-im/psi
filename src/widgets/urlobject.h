@@ -39,7 +39,7 @@ protected:
 
 public:
     static URLObject *getInstance();
-    QMenu *           createPopupMenu(const QString &lnk);
+    QMenu            *createPopupMenu(const QString &lnk);
 
     void popupAction(QString lnk);
 

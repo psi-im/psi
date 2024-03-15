@@ -24,7 +24,7 @@
 #include <objc/message.h>
 #include <objc/runtime.h>
 
-//#define DEBUG_OUTPUT
+// #define DEBUG_OUTPUT
 
 bool dockClickHandler(id /*self*/, SEL /*_cmd*/, ...)
 {
@@ -42,7 +42,7 @@ CocoaTrayClick *CocoaTrayClick::instance()
 
 CocoaTrayClick::CocoaTrayClick() : QObject(qApp)
 {
-    typedef objc_object *(*object_type)(struct objc_object * self, SEL _cmd);
+    typedef objc_object *(*object_type)(struct objc_object *self, SEL _cmd);
     object_type objc_msgSendObject = (object_type)objc_msgSend;
 
     Class        cls     = objc_getClass("NSApplication");

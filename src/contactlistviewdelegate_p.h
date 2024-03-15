@@ -66,8 +66,8 @@ public:
     static const int NickConcealerWidth       = 10;
     static const int PepIconsGap              = 1;
 
-    ContactListViewDelegate *    q;
-    ContactListView *            contactList;
+    ContactListViewDelegate     *q;
+    ContactListView             *contactList;
     HoverableStyleOptionViewItem opt;
     QIcon::Mode                  iconMode;
     QIcon::State                 iconState;
@@ -77,8 +77,8 @@ public:
     int statusIconSize_;
     int avatarRadius_;
 
-    QTimer *     alertTimer_;
-    QTimer *     animTimer;
+    QTimer      *alertTimer_;
+    QTimer      *animTimer;
     QFont        font_, statusFont_;
     QFontMetrics fontMetrics_, statusFontMetrics_;
     bool         statusSingle_;

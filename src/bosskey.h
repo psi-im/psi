@@ -40,6 +40,6 @@ private:
     bool                     isHidden_;
     QList<QPointer<QWidget>> hiddenWidgets_;
     QVariantHash             tmpOptions_;
-    PsiOptions *             psiOptions;
-    MainWin *                win_;
+    PsiOptions              *psiOptions;
+    MainWin                 *win_;
 };

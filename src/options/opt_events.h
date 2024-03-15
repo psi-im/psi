@@ -17,7 +17,7 @@ public:
     bool     stretchable() const;
 
 private:
-    QWidget *             w;
+    QWidget              *w;
     QList<QRadioButton *> list_alerts;
 };
 

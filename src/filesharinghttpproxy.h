@@ -54,9 +54,9 @@ private:
     void proxyCache();
 
 private:
-    FileSharingItem *             item = nullptr;
-    PsiAccount *                  acc;
-    qhttp::server::QHttpRequest * request;
+    FileSharingItem              *item = nullptr;
+    PsiAccount                   *acc;
+    qhttp::server::QHttpRequest  *request;
     qhttp::server::QHttpResponse *response;
     QPointer<FileShareDownloader> downloader;
     qint64                        requestedStart = 0;

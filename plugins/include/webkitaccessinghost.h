@@ -26,7 +26,7 @@ public:
     // reloading.
 
     // installs global chat log data filter, where data is all the possible message types added to chatlog
-    virtual QString installChatLogJSDataFilter(const QString &     js,
+    virtual QString installChatLogJSDataFilter(const QString      &js,
                                                PsiPlugin::Priority priority = PsiPlugin::PriorityNormal)
         = 0;
     // uninstall global chat log data filter

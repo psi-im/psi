@@ -20,12 +20,12 @@
 #include "psicontactlist.h"
 
 #include "accountadddlg.h"
+#include "iris/xmpp_serverinfomanager.h"
 #include "psiaccount.h"
 #include "psicon.h"
 #include "psicontact.h"
 #include "psievent.h"
 #include "psioptions.h"
-#include "iris/xmpp_serverinfomanager.h"
 
 #include <QTimer>
 

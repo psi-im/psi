@@ -48,7 +48,7 @@ private slots:
     void updateAccounts();
 
 private:
-    PsiCon *    controller_;
+    PsiCon     *controller_;
     PsiAccount *account_;
     bool        onlineOnly_;
 

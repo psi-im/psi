@@ -146,7 +146,6 @@ void ContactUpdatesManager::update()
 
 ContactUpdatesManager::ContactUpdateAction::ContactUpdateAction(ContactUpdatesManager::ContactUpdateActionType _type,
                                                                 PsiAccount *_account, const Jid &_jid) :
-    type(_type),
-    account(_account), jid(_jid)
+    type(_type), account(_account), jid(_jid)
 {
 }

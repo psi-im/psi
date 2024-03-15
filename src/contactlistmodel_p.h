@@ -48,11 +48,11 @@ private:
     void cleanUpAccount(PsiAccount *account);
 
 public:
-    ContactListModel *                              q;
+    ContactListModel                               *q;
     bool                                            groupsEnabled;
     bool                                            accountsEnabled;
-    PsiContactList *                                contactList;
-    QTimer *                                        commitTimer;
+    PsiContactList                                 *contactList;
+    QTimer                                         *commitTimer;
     QDateTime                                       commitTimerStartTime;
     QMultiHash<PsiContact *, QPersistentModelIndex> monitoredContacts; // always keeps all the contacts
     QHash<PsiContact *, int>                        operationQueue;

@@ -18,14 +18,14 @@
  */
 
 #include "searchdlg.h"
-#include "jidutil.h"
-#include "psiaccount.h"
-#include "textutil.h"
-#include "xdata_widget.h"
 #include "iris/xmpp_client.h"
 #include "iris/xmpp_tasks.h"
 #include "iris/xmpp_xdata.h"
 #include "iris/xmpp_xmlcommon.h"
+#include "jidutil.h"
+#include "psiaccount.h"
+#include "textutil.h"
+#include "xdata_widget.h"
 
 #include <QDomElement>
 #include <QLineEdit>
@@ -134,21 +134,21 @@ public:
         return result;
     }
 
-    SearchDlg *          dlg;
-    PsiAccount *         pa = nullptr;
+    SearchDlg           *dlg;
+    PsiAccount          *pa = nullptr;
     Jid                  jid;
     Form                 form;
-    BusyWidget *         busy = nullptr;
+    BusyWidget          *busy = nullptr;
     QPointer<JT_XSearch> jt;
-    QWidget *            gr_form        = nullptr;
-    QGridLayout *        gr_form_layout = nullptr;
+    QWidget             *gr_form        = nullptr;
+    QGridLayout         *gr_form_layout = nullptr;
     int                  type           = 0;
 
     QList<QLabel *>    lb_field;
     QList<QLineEdit *> le_field;
-    XDataWidget *      xdata = nullptr;
+    XDataWidget       *xdata = nullptr;
     XData              xdata_form;
-    QScrollArea *      scrollArea = nullptr;
+    QScrollArea       *scrollArea = nullptr;
 };
 
 SearchDlg::SearchDlg(const Jid &jid, PsiAccount *pa) : QDialog(nullptr)
@@ -339,7 +339,7 @@ void SearchDlg::jt_finished()
                 lb_instructions->setText(str);
 
                 for (const auto &f : std::as_const(d->form)) {
-                    QLabel *   lb = new QLabel(f.fieldName(), d->gr_form);
+                    QLabel    *lb = new QLabel(f.fieldName(), d->gr_form);
                     QLineEdit *le = new QLineEdit(d->gr_form);
                     d->gr_form_layout->addWidget(lb); // FIXME
                     d->gr_form_layout->addWidget(le); // FIXME

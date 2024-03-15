@@ -66,7 +66,7 @@ public:
     void      deferredScroll();
     void      doTrackBar();
     ChatView *textWidget();
-    QWidget * realTextWidget();
+    QWidget  *realTextWidget();
 
     void updateAvatar(const XMPP::Jid &jid, ChatViewCommon::UserType utype);
 public slots:
@@ -111,7 +111,7 @@ private:
     XMPP::Jid         jid_;
     QString           name_;
     QPointer<QWidget> dialog_;
-    QAction *         actQuote_;
+    QAction          *actQuote_;
 };
 
 #endif // CHATVIEW_TE_H

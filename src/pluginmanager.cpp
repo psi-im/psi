@@ -12,6 +12,10 @@
 #include "groupchatdlg.h"
 #include "iqfilter.h"
 #include "iqnamespacefilter.h"
+#include "iris/xmpp_caps.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_message.h"
+#include "iris/xmpp_task.h"
 #include "messageview.h"
 #include "optionaccessor.h"
 #include "optionsdlg.h"
@@ -26,10 +30,6 @@
 #include "psiplugin.h"
 #include "stanzafilter.h"
 #include "stanzasender.h"
-#include "iris/xmpp_caps.h"
-#include "iris/xmpp_client.h"
-#include "iris/xmpp_message.h"
-#include "iris/xmpp_task.h"
 
 #include <QLabel>
 #include <QMetaObject>
@@ -692,7 +692,7 @@ QString PluginManager::getPgpKey(int account) const
 QMap<QString, QString> PluginManager::getKnownPgpKeys(int account) const
 {
     QMap<QString, QString> out;
-    PsiAccount *           pa = accountIds_.account(account);
+    PsiAccount            *pa = accountIds_.account(account);
     if (pa) {
         UserAccount acc = pa->userAccount();
         for (const auto &item : std::as_const(acc.pgpKnownKeys)) {
@@ -779,10 +779,10 @@ void PluginManager::initPopupForJid(int account, const QString &jid, const QStri
 {
     XMPP::Jid      j(jid);
     const PsiIcon *ico = IconsetFactory::iconPtr(icon);
-    PsiAccount *   pa  = accountIds_.account(account);
+    PsiAccount    *pa  = accountIds_.account(account);
     if (pa) {
         UserListItem *i         = pa->findFirstRelevant(j);
-        PsiIcon *     statusIco = PsiIconset::instance()->statusPtr(i);
+        PsiIcon      *statusIco = PsiIconset::instance()->statusPtr(i);
         const QPixmap pix       = pa->avatarFactory()->getAvatar(j);
         psi_->popupManager()->doPopup(pa, j, ico, title, pix, statusIco, text, true, PopupManager::PopupType(type));
         return;
@@ -1011,7 +1011,7 @@ bool PluginManager::appendMsgView(int account, const QString &jid, const Message
     PsiAccount *acc = accountIds_.account(account);
     if (acc) {
         XMPP::Jid j(jid);
-        ChatDlg * chatDlg = acc->findChatDialogEx(j);
+        ChatDlg  *chatDlg = acc->findChatDialogEx(j);
         if (!chatDlg) {
             chatDlg = acc->findChatDialog(j, false);
         }

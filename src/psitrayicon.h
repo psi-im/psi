@@ -39,7 +39,7 @@ protected:
     bool    eventFilter(QObject *, QEvent *);
 
 private:
-    PsiIcon *        icon_;
+    PsiIcon         *icon_;
     QSystemTrayIcon *trayicon_;
     quintptr         realIcon_;
 };

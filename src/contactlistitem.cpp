@@ -290,7 +290,7 @@ QList<PsiContact *> ContactListItem::contacts()
 ContactListItem *ContactListItem::findAccount(PsiAccount *account)
 {
     AbstractTreeItemList children = AbstractTreeItem::children();
-    ContactListItem *    res      = nullptr;
+    ContactListItem     *res      = nullptr;
     for (const auto &child : children) {
         ContactListItem *item = static_cast<ContactListItem *>(child);
         if (item->isAccount() && item->account() == account) {
@@ -313,7 +313,7 @@ ContactListItem *ContactListItem::findGroup(const QString &groupName)
     }
 
     AbstractTreeItemList children = AbstractTreeItem::children();
-    ContactListItem *    res      = nullptr;
+    ContactListItem     *res      = nullptr;
 
     for (const auto &child : children) {
         ContactListItem *item = static_cast<ContactListItem *>(child);
@@ -336,7 +336,7 @@ ContactListItem *ContactListItem::findGroup(const QString &groupName)
 ContactListItem *ContactListItem::findGroup(ContactListItem::SpecialGroupType specialGroupType)
 {
     AbstractTreeItemList children = AbstractTreeItem::children();
-    ContactListItem *    res      = nullptr;
+    ContactListItem     *res      = nullptr;
     for (const auto &child : children) {
         ContactListItem *item = static_cast<ContactListItem *>(child);
         if (item->isGroup() && item->specialGroupType() == specialGroupType) {
@@ -351,7 +351,7 @@ ContactListItem *ContactListItem::findGroup(ContactListItem::SpecialGroupType sp
 ContactListItem *ContactListItem::findContact(PsiContact *contact)
 {
     AbstractTreeItemList children = AbstractTreeItem::children();
-    ContactListItem *    res      = nullptr;
+    ContactListItem     *res      = nullptr;
     for (const auto &child : children) {
         ContactListItem *item = static_cast<ContactListItem *>(child);
         if (item->contact() == contact) {

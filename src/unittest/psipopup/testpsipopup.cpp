@@ -15,8 +15,8 @@
 class TestPsiPopup : public QObject {
     Q_OBJECT
 private:
-    PsiCon *          psi;
-    PsiAccount *      account;
+    PsiCon           *psi;
+    PsiAccount       *account;
     bool              timeout;
     QCA::Initializer *qca_init;
 
@@ -66,7 +66,7 @@ private slots:
         option.ppBorderColor = Qt::blue;
         option.ppIsOn        = true;
 
-        PsiPopup *   popup = new PsiPopup(PsiPopup::AlertChat, account);
+        PsiPopup    *popup = new PsiPopup(PsiPopup::AlertChat, account);
         Jid          jid("mblsha@jabber.ru");
         Resource     resource("PowerBook");
         UserListItem userListItem;

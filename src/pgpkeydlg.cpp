@@ -58,7 +58,7 @@ public:
     {
         for (int column = 0; column <= 1; ++column) {
             QModelIndex index = sourceModel()->index(sourceRow, column, sourceParent);
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
             if (index.data(Qt::DisplayRole).toString().contains(filterRegExp()))
 #else
             if (index.data(Qt::DisplayRole).toString().contains(filterRegularExpression()))
@@ -119,7 +119,7 @@ PGPKeyDlg::PGPKeyDlg(Type t, const QString &defaultKeyID, QWidget *parent) : QDi
     const QStringList &&keysList = keysRaw.split("\n");
     for (const QString &line : keysList) {
         const QString &&type = line.section(':', 0, 0);
-        QStandardItem * root = m_model->invisibleRootItem();
+        QStandardItem  *root = m_model->invisibleRootItem();
 
         if (type == "pub" || type == "sec") {
             uid                     = line.section(':', 9, 9);           // Used ID
@@ -194,7 +194,7 @@ void PGPKeyDlg::do_accept()
     QModelIndex realIndex = m_proxy->mapToSource(fakeIndex);
 
     QStandardItem *item = m_model->itemFromIndex(realIndex);
-    KeyViewItem *  i    = dynamic_cast<KeyViewItem *>(item);
+    KeyViewItem   *i    = dynamic_cast<KeyViewItem *>(item);
     if (!i) {
         QMessageBox::information(this, tr("Error"), tr("Please select a key."));
         return;

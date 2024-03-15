@@ -35,9 +35,8 @@ enum { MAXCHDATA = 1024 };
 
 SxeSession::SxeSession(SxeManager *manager, const Jid &target, const QString &session, const Jid &ownJid,
                        bool groupChat, bool serverSupport, const QList<QString> &features) :
-    QObject(manager),
-    session_(session), target_(target), ownJid_(ownJid), groupChat_(groupChat), serverSupport_(serverSupport),
-    queueing_(false), importing_(false), features_(features), uuidMaxPostfix_(0)
+    QObject(manager), session_(session), target_(target), ownJid_(ownJid), groupChat_(groupChat),
+    serverSupport_(serverSupport), queueing_(false), importing_(false), features_(features), uuidMaxPostfix_(0)
 
 {
     setUUIDPrefix();

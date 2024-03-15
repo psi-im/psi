@@ -63,17 +63,17 @@ private:
     void       handlePadding(const EDBResult &r);
 
 private:
-    int               general_pos;
-    int               total_found;
-    bool              active;
-    int               direction;
-    QString           s_string;
-    QHash<qint64, int>  map;
-    QVector<Position> list;
-    PsiCon *          psi;
-    DisplayProxy *    dp;
-    QString           acc_;
-    XMPP::Jid         jid_;
+    int                general_pos;
+    int                total_found;
+    bool               active;
+    int                direction;
+    QString            s_string;
+    QHash<qint64, int> map;
+    QVector<Position>  list;
+    PsiCon            *psi;
+    DisplayProxy      *dp;
+    QString            acc_;
+    XMPP::Jid          jid_;
     enum RequestType { ReqFind, ReqPadding };
     RequestType reqType;
 };
@@ -132,7 +132,7 @@ private:
     } searchParams;
     enum RequestType { ReqNone, ReqDate, ReqEarliest, ReqLatest, ReqNext, ReqPrevious };
     RequestType  reqType;
-    PsiCon *     psi;
+    PsiCon      *psi;
     PsiTextView *viewWid;
     bool         formatting;
     bool         emoticons;
@@ -183,7 +183,7 @@ private:
     QFont                    fontForOption(const QString &option);
     void                     resetWidgets();
     void                     listAccounts();
-    UserListItem *           currentUserListItem() const;
+    UserListItem            *currentUserListItem() const;
     void                     stopRequest();
     void                     showProgress(int max);
     void                     incrementProgress();
@@ -192,18 +192,18 @@ private:
     void                     selectDefaultContact(const QModelIndex &prefer_parent = QModelIndex(), int prefer_row = 0);
     void                     saveFocus();
     void                     restoreFocus();
-    EDBHandle *              getEDBHandle();
+    EDBHandle               *getEDBHandle();
     QString                  getCurrentAccountId() const;
     HistoryContactListModel *contactListModel();
     void                     setShortcuts();
 
     class Private;
-    Private *                d;
+    Private                 *d;
     Ui::HistoryDlg           ui_;
     HistoryContactListModel *_contactListModel;
-    QWidget *                lastFocus;
-    DisplayProxy *           displayProxy;
-    SearchProxy *            searchProxy;
+    QWidget                 *lastFocus;
+    DisplayProxy            *displayProxy;
+    SearchProxy             *searchProxy;
 };
 
 #endif // HISTORYDLG_H

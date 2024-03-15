@@ -29,6 +29,8 @@
 #include "iconlabel.h"
 #include "iconselect.h"
 #include "icontoolbutton.h"
+#include "iris/xmpp_htmlelement.h"
+#include "iris/xmpp_serverinfomanager.h"
 #include "jidutil.h"
 #include "psiaccount.h"
 #include "psicon.h"
@@ -43,8 +45,6 @@
 #include "textutil.h"
 #include "userlist.h"
 #include "xdata_widget.h"
-#include "iris/xmpp_htmlelement.h"
-#include "iris/xmpp_serverinfomanager.h"
 
 #include <QApplication>
 #include <QCheckBox>
@@ -250,8 +250,7 @@ public:
     }
 
     AttachViewItem(const QString &_gc, const QString &from, const QString &reason, const QString &_password,
-                   AttachView *par) :
-        QListWidgetItem(par)
+                   AttachView *par) : QListWidgetItem(par)
     {
         type     = 1;
         gc       = _gc;
@@ -430,34 +429,34 @@ public:
 
     PsiIcon *nextAnim() const { return nextAnim_; }
 
-    EventDlg *  dlg = nullptr;
-    PsiCon *    psi = nullptr;
+    EventDlg   *dlg = nullptr;
+    PsiCon     *psi = nullptr;
     PsiAccount *pa  = nullptr;
 
-    QLabel *          lb_identity = nullptr;
-    QLabel *          lb_time     = nullptr;
-    QLabel *          lb_count    = nullptr;
+    QLabel           *lb_identity = nullptr;
+    QLabel           *lb_time     = nullptr;
+    QLabel           *lb_count    = nullptr;
     AccountsComboBox *cb_ident    = nullptr;
-    QComboBox *       cb_type     = nullptr;
-    AccountLabel *    lb_ident    = nullptr;
-    IconLabel *       lb_status   = nullptr;
-    ELineEdit *       le_to       = nullptr;
-    QLineEdit *       le_from     = nullptr;
-    QLineEdit *       le_subj     = nullptr;
-    IconToolButton *  tb_url = nullptr, *tb_info = nullptr, *tb_history = nullptr, *tb_icon = nullptr;
+    QComboBox        *cb_type     = nullptr;
+    AccountLabel     *lb_ident    = nullptr;
+    IconLabel        *lb_status   = nullptr;
+    ELineEdit        *le_to       = nullptr;
+    QLineEdit        *le_from     = nullptr;
+    QLineEdit        *le_subj     = nullptr;
+    IconToolButton   *tb_url = nullptr, *tb_info = nullptr, *tb_history = nullptr, *tb_icon = nullptr;
     IconButton *pb_next = nullptr, *pb_close = nullptr, *pb_quote = nullptr, *pb_deny = nullptr, *pb_send = nullptr,
                *pb_reply = nullptr, *pb_chat = nullptr, *pb_auth = nullptr, *pb_http_confirm = nullptr,
                *pb_http_deny = nullptr, *pb_form_submit = nullptr, *pb_form_cancel = nullptr;
-    QCheckBox *  ck_all_auth       = nullptr;
+    QCheckBox   *ck_all_auth       = nullptr;
     PsiTextView *mle               = nullptr;
-    AttachView * attachView        = nullptr;
-    QTimer *     whois             = nullptr;
-    PsiIcon *    anim              = nullptr;
-    QWidget *    w_http_id         = nullptr;
-    QLineEdit *  le_http_id        = nullptr;
-    QWidget *    xdata_form        = nullptr;
+    AttachView  *attachView        = nullptr;
+    QTimer      *whois             = nullptr;
+    PsiIcon     *anim              = nullptr;
+    QWidget     *w_http_id         = nullptr;
+    QLineEdit   *le_http_id        = nullptr;
+    QWidget     *xdata_form        = nullptr;
     XDataWidget *xdata             = nullptr;
-    QLabel *     xdata_instruction = nullptr;
+    QLabel      *xdata_instruction = nullptr;
 
     PsiHttpAuthRequest  httpAuthRequest;
     RosterExchangeItems rosterExchangeItems;
@@ -1553,7 +1552,7 @@ void EventDlg::updateContact(const Jid &jid)
     if (d->jid.compare(jid, false)) {
         QString               rname  = d->jid.resource();
         QList<UserListItem *> ul     = d->pa->findRelevant(d->jid);
-        UserListItem *        u      = nullptr;
+        UserListItem         *u      = nullptr;
         int                   status = -1;
         if (!ul.isEmpty()) {
             u = ul.first();
@@ -1672,7 +1671,7 @@ void EventDlg::updateEvent(const PsiEvent::Ptr &e)
 
     if (e->type() == PsiEvent::Message || e->type() == PsiEvent::HttpAuth) {
         MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-        const Message &   m  = me->message();
+        const Message    &m  = me->message();
 
         // HTTP auth request buttons
         if (e->type() == PsiEvent::HttpAuth) {

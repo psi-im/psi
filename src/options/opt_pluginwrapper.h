@@ -40,7 +40,7 @@ public:
 
     QIcon tabIcon() const override;
 
-    QWidget *             w = nullptr;
+    QWidget              *w = nullptr;
     OAH_PluginOptionsTab *plugin;
 };
 

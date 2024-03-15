@@ -53,7 +53,7 @@ protected:
 
 private:
     Ui::XMLConsole      ui_;
-    PsiAccount *        pa;
+    PsiAccount         *pa;
     QPointer<XmlPrompt> prompt;
 };
 

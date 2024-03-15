@@ -84,7 +84,7 @@ void ContactListItemMenu::removeActions(QStringList actionNames)
 QList<QAction *> ContactListItemMenu::availableActions() const
 {
     QList<QAction *> result;
-    const auto &     acts = actions();
+    const auto      &acts = actions();
     for (QAction *action : acts)
         if (!action->isSeparator())
             result << action;

@@ -15,7 +15,7 @@ bool MUCAffiliationsProxyModel::filterAcceptsRow(int sourceRow, const QModelInde
     if (!idx.parent().isValid())
         return true;
 
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     return filterRegExp().indexIn(idx.data().toString()) >= 0;
 #else
     return filterRegularExpression().match(idx.data().toString()).hasMatch();

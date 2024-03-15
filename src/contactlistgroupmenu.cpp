@@ -18,11 +18,11 @@
  */
 
 #include "contactlistgroupmenu_p.h"
-#include "psiaccount.h"
-#include "iconaction.h"
-#include "shortcutmanager.h"
-#include "psicontact.h"
 #include "groupchatdlg.h"
+#include "iconaction.h"
+#include "psiaccount.h"
+#include "psicontact.h"
+#include "shortcutmanager.h"
 
 #include <QMessageBox>
 
@@ -210,10 +210,10 @@ void ContactListGroupMenu::Private::customStatus()
     if (!group)
         return;
 
-    PsiAccount *     pa = group->contacts().constFirst()->account();
-    StatusSetDlg *   w  = new StatusSetDlg(pa->psi(), makeLastStatus(pa->status().type()), lastPriorityNotEmpty());
+    PsiAccount      *pa = group->contacts().constFirst()->account();
+    StatusSetDlg    *w  = new StatusSetDlg(pa->psi(), makeLastStatus(pa->status().type()), lastPriorityNotEmpty());
     QList<XMPP::Jid> list;
-    const auto &     contacts = group->contacts();
+    const auto      &contacts = group->contacts();
     for (PsiContact *contact : contacts) {
         if (contact->isPrivate())
             continue;

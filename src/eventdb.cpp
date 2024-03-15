@@ -53,7 +53,7 @@ class EDBHandle::Private {
 public:
     Private() = default;
 
-    EDB *     edb       = nullptr;
+    EDB      *edb       = nullptr;
     int       beginRow_ = 0;
     EDBResult r;
     bool      busy            = false;
@@ -148,7 +148,7 @@ public:
 
     QList<EDBHandle *> list;
     int                reqid_base = 0;
-    PsiCon *           psi        = nullptr;
+    PsiCon            *psi        = nullptr;
 };
 
 EDB::EDB(PsiCon *psi)

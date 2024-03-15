@@ -165,7 +165,7 @@ private:
     PsiAccount *loadAccount(const UserAccount &);
     PsiAccount *tryQueueLowestEventId(bool includeDND);
 
-    PsiCon *            psi_;
+    PsiCon             *psi_;
     QList<PsiAccount *> accounts_, enabledAccounts_;
     QList<PsiContact *> contacts_;
 

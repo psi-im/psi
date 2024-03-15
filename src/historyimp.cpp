@@ -215,15 +215,15 @@ void HistoryImport::showDialog()
     QVBoxLayout *mainLayout = new QVBoxLayout(dlg);
     stackedWidget           = new QStackedWidget(dlg);
 
-    QWidget *    page1       = new QWidget();
+    QWidget     *page1       = new QWidget();
     QGridLayout *page1Layout = new QGridLayout(page1);
-    QLabel *     lbMessage   = new QLabel(page1);
+    QLabel      *lbMessage   = new QLabel(page1);
     lbMessage->setWordWrap(true);
     lbMessage->setText(tr("Found %1 files for import.\nContinue?").arg(importList.size()));
     page1Layout->addWidget(lbMessage, 0, 0, 1, 1);
     stackedWidget->addWidget(page1);
 
-    QWidget *    page2           = new QWidget();
+    QWidget     *page2           = new QWidget();
     QHBoxLayout *page2Layout     = new QHBoxLayout(page2);
     QGridLayout *page2GridLayout = new QGridLayout();
     page2GridLayout->addWidget(new QLabel(tr("Status:"), page2), 0, 0, 1, 1);

@@ -39,7 +39,7 @@ public:
     void dialogRegister(QWidget *w, int prio);
     void dialogUnregister(QWidget *w);
 
-    QWidget *                      findDialog(const QMetaObject &mo) const;
+    QWidget                       *findDialog(const QMetaObject &mo) const;
     template <typename T> inline T findDialog() const { return static_cast<T>(findDialog(((T)0)->staticMetaObject)); }
 
     void                                  findDialogs(const QMetaObject &mo, QList<void *> *list) const;
@@ -63,7 +63,7 @@ public:
         QWidget *widget;
         int      priority;
     };
-    PsiCon *      psi_;
+    PsiCon       *psi_;
     QList<Item *> list_;
 };
 

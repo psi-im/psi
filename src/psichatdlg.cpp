@@ -37,6 +37,8 @@
 #include "iconlabel.h"
 #include "iconselect.h"
 #include "iconwidget.h"
+#include "iris/xmpp_caps.h"
+#include "iris/xmpp_tasks.h"
 #include "jidutil.h"
 #include "lastactivitytask.h"
 #include "messageview.h"
@@ -55,8 +57,6 @@
 #include "textutil.h"
 #include "userlist.h"
 #include "widgets/pixmapratiolabel.h"
-#include "iris/xmpp_caps.h"
-#include "iris/xmpp_tasks.h"
 #ifdef PSI_PLUGINS
 #include "filesharedlg.h"
 #include "pluginmanager.h"
@@ -155,12 +155,7 @@ public:
         QStringList all;
         if (state->getName() == MCMDCHAT) {
             if (item == 0) {
-                all << "version"
-                    << "idle"
-                    << "clear"
-                    << "vcard"
-                    << "auth"
-                    << "compact";
+                all << "version" << "idle" << "clear" << "vcard" << "auth" << "compact";
             }
         }
         QStringList res;
@@ -981,7 +976,7 @@ void PsiChatDlg::doClearButton()
         switch (QMessageBox::warning(
             this, tr("Warning"),
             tr("Are you sure you want to clear the chat window?\n(note: does not affect saved history)"),
-            QMessageBox::Yes, QMessageBox::YesAll, QMessageBox::No)) {
+            QMessageBox::Yes | QMessageBox::YesAll | QMessageBox::No)) {
         case QMessageBox::No:
             break;
         case QMessageBox::YesAll:
@@ -1037,7 +1032,7 @@ void PsiChatDlg::buildMenu()
 #endif
 }
 
-void PsiChatDlg::updateCounter() { ui_.lb_count->setNum(chatEdit()->toPlainText().length()); }
+void PsiChatDlg::updateCounter() { ui_.lb_count->setNum(int(chatEdit()->toPlainText().length())); }
 
 bool PsiChatDlg::isPgpEncryptionEnabled() const { return actions_->action("chat_pgp")->isChecked(); }
 

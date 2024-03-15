@@ -37,8 +37,8 @@ public:
     ~Anim();
 
     const QPixmap &framePixmap() const;
-    const QImage & frameImage() const;
-    const Impix &  frameImpix() const;
+    const QImage  &frameImage() const;
+    const Impix   &frameImpix() const;
     bool           isNull() const;
 
     int          frameNumber() const;

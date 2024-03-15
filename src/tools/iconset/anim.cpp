@@ -21,7 +21,7 @@
 
 #include "iconset.h"
 
-//#include <QApplication>
+// #include <QApplication>
 #include <QBuffer>
 #include <QImage>
 #include <QImageReader>

@@ -18,9 +18,9 @@
  */
 
 #include "sxemanager.h"
+#include "iris/xmpp_caps.h"
 #include "psiaccount.h"
 #include "psioptions.h"
-#include "iris/xmpp_caps.h"
 
 #include <QUrl>
 

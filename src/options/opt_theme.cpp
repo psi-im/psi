@@ -150,7 +150,7 @@ void OptionsTabAppearanceTheme::showThemeScreenshot()
     if (!w || !sender()->inherits("QToolButton"))
         return;
     OptAppearanceThemeUI *d   = static_cast<OptAppearanceThemeUI *>(w);
-    QToolButton *         btn = static_cast<QToolButton *>(sender());
+    QToolButton          *btn = static_cast<QToolButton *>(sender());
     if (btn) {
         if (screenshotDialog)
             delete (screenshotDialog);
@@ -168,7 +168,7 @@ void OptionsTabAppearanceTheme::showThemeScreenshot()
         screenshotDialog->setWindowIcon(QIcon(IconsetFactory::iconPtr("psi/logo_128")->icon()));
 
         QBoxLayout *box   = new QBoxLayout(QBoxLayout::LeftToRight, screenshotDialog);
-        QLabel *    image = new QLabel(screenshotDialog);
+        QLabel     *image = new QLabel(screenshotDialog);
         if (!scr.isNull()) {
             image->setPixmap(scr);
         } else {

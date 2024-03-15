@@ -20,12 +20,12 @@
 #include "vcardfactory.h"
 
 #include "applicationinfo.h"
-#include "jidutil.h"
-#include "profiles.h"
-#include "psiaccount.h"
 #include "iris/xmpp_client.h"
 #include "iris/xmpp_tasks.h"
 #include "iris/xmpp_vcard.h"
+#include "jidutil.h"
+#include "profiles.h"
+#include "psiaccount.h"
 
 #include <QApplication>
 #include <QDir>

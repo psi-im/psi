@@ -26,6 +26,10 @@
 #include "fileutil.h"
 #include "iconset.h"
 #include "iconwidget.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_serverinfomanager.h"
+#include "iris/xmpp_tasks.h"
+#include "iris/xmpp_vcard.h"
 #include "lastactivitytask.h"
 #include "msgmle.h"
 #include "psiaccount.h"
@@ -35,10 +39,6 @@
 #include "userlist.h"
 #include "vcardfactory.h"
 #include "vcardphotodlg.h"
-#include "iris/xmpp_client.h"
-#include "iris/xmpp_serverinfomanager.h"
-#include "iris/xmpp_tasks.h"
-#include "iris/xmpp_vcard.h"
 
 #include <QAction>
 #include <QCalendarWidget>
@@ -145,11 +145,11 @@ public:
     int                       actionType = 0;
     Jid                       jid;
     VCard                     vcard;
-    PsiAccount *              pa         = nullptr;
+    PsiAccount               *pa         = nullptr;
     bool                      busy       = false;
     bool                      te_edited  = false;
     bool                      cacheVCard = false;
-    JT_VCard *                jt         = nullptr;
+    JT_VCard                 *jt         = nullptr;
     QByteArray                photo;
     QDate                     bday;
     QString                   dateTextFormat;
@@ -160,10 +160,10 @@ public:
     QPointer<QPushButton>     noBdayButton;
     QPointer<QFrame>          bdayPopup;
     QPointer<QCalendarWidget> calendar;
-    QLineEdit *               le_givenname   = nullptr;
-    QLineEdit *               le_middlename  = nullptr;
-    QLineEdit *               le_familyname  = nullptr;
-    QAction *                 homepageAction = nullptr;
+    QLineEdit                *le_givenname   = nullptr;
+    QLineEdit                *le_middlename  = nullptr;
+    QLineEdit                *le_familyname  = nullptr;
+    QAction                  *homepageAction = nullptr;
 
     // Fake UserListItem for groupchat contacts.
     // One day this dialog should be rewritten not to talk directly to psiaccount,

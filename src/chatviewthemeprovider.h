@@ -33,7 +33,7 @@ class ChatViewThemeProvider : public PsiThemeProvider {
 public:
     ChatViewThemeProvider(PsiCon *);
 
-    const char *      type() const { return "chatview"; }
+    const char       *type() const { return "chatview"; }
     const QStringList themeIds() const;
     Theme             theme(const QString &id);
 

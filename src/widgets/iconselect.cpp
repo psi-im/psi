@@ -29,12 +29,12 @@
 #include <QLayout>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QScreen>
 #include <QScrollArea>
 #include <QScrollBar>
 #include <QStyle>
 #include <QStyleOption>
 #include <QWidgetAction>
-#include <QScreen>
 
 #include <cmath>
 
@@ -136,7 +136,7 @@ private:
         }
     }
 
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     void enterEvent(QEvent *)
 #else
     void enterEvent(QEnterEvent *)
@@ -207,7 +207,7 @@ class IconSelect : public QWidget {
 private:
     IconSelectPopup *menu;
     Iconset          is;
-    QGridLayout *    grid;
+    QGridLayout     *grid;
     bool             shown;
     bool             emojiSorting;
 
@@ -269,7 +269,7 @@ void IconSelect::closeMenu()
 void IconSelect::createLayout()
 {
     Q_ASSERT(!grid);
-    grid = new QGridLayout(this);
+    grid        = new QGridLayout(this);
     auto margin = style()->pixelMetric(QStyle::PM_MenuPanelWidth, nullptr, this);
     grid->setContentsMargins(margin, margin, margin, margin);
     grid->setSpacing(1);
@@ -448,9 +448,9 @@ public:
     Private(IconSelectPopup *parent) : QObject(parent), parent_(parent), icsel_(nullptr), widgetAction_(nullptr) { }
 
     IconSelectPopup *parent_;
-    IconSelect *     icsel_;
-    QWidgetAction *  widgetAction_;
-    QScrollArea *    scrollArea_;
+    IconSelect      *icsel_;
+    QWidgetAction   *widgetAction_;
+    QScrollArea     *scrollArea_;
 
 public slots:
     void updatedGeometry()

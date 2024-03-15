@@ -21,16 +21,15 @@ CertificateErrorDialog::CertificateErrorDialog(const QString &title, const QStri
                                                int result, QCA::Validity validity, const QString &domainOverride,
                                                QString &tlsOverrideDomain, QByteArray &tlsOverrideCert,
                                                QWidget *parent) :
-    QDialog(parent),
-    certificate_(cert), result_(result), validity_(validity), tlsOverrideDomain_(tlsOverrideDomain),
+    QDialog(parent), certificate_(cert), result_(result), validity_(validity), tlsOverrideDomain_(tlsOverrideDomain),
     tlsOverrideCert_(tlsOverrideCert), domainOverride_(domainOverride), host_(host)
 {
     setWindowTitle(title);
-    QVBoxLayout *     _layout        = new QVBoxLayout(this);
+    QVBoxLayout      *_layout        = new QVBoxLayout(this);
     QDialogButtonBox *btnBox         = new QDialogButtonBox(this);
-    QPushButton *     detailsButton  = new QPushButton(QObject::tr("&Details..."), this);
-    QPushButton *     continueButton = new QPushButton(QObject::tr("&Connect anyway"), this);
-    QPushButton *     saveButton     = new QPushButton(
+    QPushButton      *detailsButton  = new QPushButton(QObject::tr("&Details..."), this);
+    QPushButton      *continueButton = new QPushButton(QObject::tr("&Connect anyway"), this);
+    QPushButton      *saveButton     = new QPushButton(
         domainOverride.isEmpty() ? QObject::tr("&Trust this certificate") : QObject::tr("&Trust this domain"), this);
     btnBox->addButton(detailsButton, QDialogButtonBox::NoRole);
     btnBox->addButton(continueButton, QDialogButtonBox::AcceptRole);

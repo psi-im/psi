@@ -61,10 +61,10 @@ private:
     QString getThemeId(const QString &objName) const;
 
 private:
-    QWidget *              w             = nullptr;
-    PsiThemeModel *        unsortedModel = nullptr;
+    QWidget               *w             = nullptr;
+    PsiThemeModel         *unsortedModel = nullptr;
     QSortFilterProxyModel *themesModel   = nullptr;
-    PsiThemeProvider *     provider      = nullptr;
+    PsiThemeProvider      *provider      = nullptr;
     QPointer<QDialog>      screenshotDialog;
 };
 

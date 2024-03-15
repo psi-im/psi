@@ -23,9 +23,9 @@
 #include "contactlistgroupmenu.h"
 #include "contactlistitem.h"
 #include "contactlistmodel.h"
+#include "iris/xmpp_tasks.h"
 #include "psicontactlist.h"
 #include "statusdlg.h"
-#include "iris/xmpp_tasks.h"
 
 #include <QObject>
 
@@ -53,18 +53,18 @@ public slots:
 
 public:
     ContactListGroupMenu *q;
-    ContactListItem *     group;
-    QAction *             renameAction_;
-    QAction *             removeGroupAndContactsAction_;
-    QAction *             sendMessageAction_;
-    QAction *             removeGroupWithoutContactsAction_;
-    QMenu *               authMenu_;
-    QAction *             actionAuth_;
-    QAction *             actionAuthRequest_;
-    QAction *             actionAuthRemove_;
-    QAction *             actionCustomStatus_;
-    QAction *             actionMucHide_;
-    QAction *             actionMucShow_;
-    QAction *             actionMucLeave_;
-    QAction *             actionHide_;
+    ContactListItem      *group;
+    QAction              *renameAction_;
+    QAction              *removeGroupAndContactsAction_;
+    QAction              *sendMessageAction_;
+    QAction              *removeGroupWithoutContactsAction_;
+    QMenu                *authMenu_;
+    QAction              *actionAuth_;
+    QAction              *actionAuthRequest_;
+    QAction              *actionAuthRemove_;
+    QAction              *actionCustomStatus_;
+    QAction              *actionMucHide_;
+    QAction              *actionMucShow_;
+    QAction              *actionMucLeave_;
+    QAction              *actionHide_;
 };

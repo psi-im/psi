@@ -109,8 +109,8 @@ public:
     {
         if (option.state & QStyle::State_HasFocus && rect.isValid()) {
             QStyleOptionFocusRect o;
-            o.QStyleOption::      operator=(option);
-            o.rect                        = rect.adjusted(0, 0, 0, -1);
+            o.QStyleOption::operator=(option);
+            o.rect                  = rect.adjusted(0, 0, 0, -1);
             QPalette::ColorGroup cg = (option.state & QStyle::State_Enabled) ? QPalette::Normal : QPalette::Disabled;
             o.backgroundColor       = option.palette.color(
                 cg, (option.state & QStyle::State_Selected) ? QPalette::Highlight : QPalette::Window);
@@ -179,8 +179,8 @@ private slots:
     void connectDataChanged(QWidget *);
 
 public:
-    OptionsDlgBase *          dlg;
-    PsiCon *                  psi;
+    OptionsDlgBase           *dlg;
+    PsiCon                   *psi;
     bool                      dirty, noDirty;
     QHash<QString, QWidget *> id2widget;
     QList<OptionsTab *>       tabs;

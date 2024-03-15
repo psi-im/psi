@@ -23,9 +23,9 @@ public slots:
     void done(int r);
 
 private:
-    Ui::CaptchaDlg *       ui;
+    Ui::CaptchaDlg        *ui;
     XMPP::CaptchaChallenge challenge;
-    XDataWidget *          dataWidget;
+    XDataWidget           *dataWidget;
 };
 
 #endif // CAPTCHADLG_H

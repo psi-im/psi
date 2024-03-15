@@ -236,10 +236,10 @@ public:
     JingleRtpChannel *q;
 
     QMutex                      m;
-    XMPP::UdpPortReserver *     portReserver;
-    XMPP::Ice176 *              iceA;
-    XMPP::Ice176 *              iceV;
-    QTimer *                    rtpActivityTimer;
+    XMPP::UdpPortReserver      *portReserver;
+    XMPP::Ice176               *iceA;
+    XMPP::Ice176               *iceV;
+    QTimer                     *rtpActivityTimer;
     QList<JingleRtp::RtpPacket> in;
 
     explicit JingleRtpChannelPrivate(JingleRtpChannel *_q);
@@ -261,7 +261,7 @@ class JingleRtpManagerPrivate : public QObject {
 public:
     JingleRtpManager *q;
 
-    XMPP::Client *          client;
+    XMPP::Client           *client;
     QHostAddress            selfAddr;
     QString                 extHost;
     QString                 stunBindHost;
@@ -279,7 +279,7 @@ public:
     int                     basePort;
     QList<JingleRtp *>      sessions;
     QList<JingleRtp *>      pending;
-    JT_PushJingleRtp *      push_task;
+    JT_PushJingleRtp       *push_task;
 
     JingleRtpManagerPrivate(XMPP::Client *_client, JingleRtpManager *_q);
     ~JingleRtpManagerPrivate() override;
@@ -321,8 +321,8 @@ public:
     QHostAddress      extAddr;
     QHostAddress      stunBindAddr, stunRelayUdpAddr, stunRelayTcpAddr;
     int               stunBindPort = 0, stunRelayUdpPort = 0, stunRelayTcpPort = 0;
-    XMPP::Ice176 *    iceA       = nullptr;
-    XMPP::Ice176 *    iceV       = nullptr;
+    XMPP::Ice176     *iceA       = nullptr;
+    XMPP::Ice176     *iceV       = nullptr;
     JingleRtpChannel *rtpChannel = nullptr;
 
     class IceStatus {
@@ -709,7 +709,7 @@ private:
         if (!stunRelayTcpAddr.isNull() && stunRelayTcpPort > 0 && !manager->stunRelayTcpUser.isEmpty())
             printf("TURN w/ TCP service: %s;%d\n", qPrintable(stunRelayTcpAddr.toString()), stunRelayTcpPort);
 
-        auto const &                      listenAddrs = XMPP::Ice176::availableNetworkAddresses();
+        auto const                       &listenAddrs = XMPP::Ice176::availableNetworkAddresses();
         QList<XMPP::Ice176::LocalAddress> localAddrs;
         QStringList                       strList;
 

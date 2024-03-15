@@ -46,17 +46,16 @@ PsiTabWidget::PsiTabWidget(QWidget *parent) : QWidget(parent)
     tabBar_->setUsesScrollButtons(!multiRow);
     tabBar_->setCurrentIndexAlwaysAtBottom(currentIndexAlwaysAtBottom);
     layout_ = new QVBoxLayout(this);
-    layout_->setContentsMargins(0,0,0,0);
+    layout_->setContentsMargins(0, 0, 0, 0);
     layout_->setSpacing(0);
     barLayout_ = new QHBoxLayout;
     layout_->addLayout(barLayout_);
-    barLayout_->setContentsMargins(0,0,0,0);
+    barLayout_->setContentsMargins(0, 0, 0, 0);
     barLayout_->setSpacing(0);
     barLayout_->addWidget(tabBar_, 2);
     barLayout_->setAlignment(Qt::AlignLeft);
 
-    int buttonwidth = qMax(tabBar_->style()->pixelMetric(QStyle::PM_TabBarScrollButtonWidth, nullptr, tabBar_),
-                           16);
+    int buttonwidth = qMax(tabBar_->style()->pixelMetric(QStyle::PM_TabBarScrollButtonWidth, nullptr, tabBar_), 16);
 
     downButton_ = new QToolButton(this);
     downButton_->setMinimumSize(3, 3);

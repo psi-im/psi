@@ -15,12 +15,12 @@ public:
 private:
     Ui::SendButtonTemplatesEditor ui_;
     // QString t;
-    QAction *   addChildTemplAction;
-    QAction *   addChildSeparatorAction;
-    QAction *   editAction;
-    QAction *   removeAction;
-    QAction *   upAction;
-    QAction *   downAction;
+    QAction    *addChildTemplAction;
+    QAction    *addChildSeparatorAction;
+    QAction    *editAction;
+    QAction    *removeAction;
+    QAction    *upAction;
+    QAction    *downAction;
     void        swapItem(int);
     QStringList genTemplatesList(QTreeWidgetItem *item, QString base_path = "");
 

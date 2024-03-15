@@ -33,7 +33,7 @@
 #include "pluginmanager.h"
 #endif
 #include "psiaccount.h"
-//#include "psiapplication.h"
+// #include "psiapplication.h"
 #include "psicon.h"
 #include "psioptions.h"
 #include "psithememanager.h"
@@ -93,7 +93,7 @@ public:
     static QString closeIconTags(const QString &richText)
     {
         static QRegularExpression mIcon("(<icon [^>]+>)");
-        QString        s(richText);
+        QString                   s(richText);
         s.replace(mIcon, "\\1</icon>");
         return s;
     }
@@ -111,7 +111,7 @@ public:
             auto id    = XMPP::Hash::from(idStr);
             auto item  = account_->psi()->fileSharingManager()->item(id);
 
-            ret.append(QStringView{msg}.mid(post, match.capturedStart(0) - post));
+            ret.append(QStringView { msg }.mid(post, match.capturedStart(0) - post));
             if (item) {
                 auto    vm = item->metaData();
                 QString attrs;
@@ -132,7 +132,7 @@ public:
             }
             post = match.capturedEnd(0);
         }
-        ret.append(QStringView{msg}.mid(post));
+        ret.append(QStringView { msg }.mid(post));
         return ret;
     }
 };
@@ -503,7 +503,7 @@ void ChatView::contextMenuEvent(QContextMenuEvent *e)
     Q_UNUSED(e)
     qDebug("Can't check menu hit point. Calling default handler");
 #else
-    QUrl                      linkUrl;
+    QUrl linkUrl;
 #ifdef WEBENGINE
     QWebEngineContextMenuData cmd = d->webView->page()->contextMenuData();
     linkUrl                       = cmd.linkUrl();

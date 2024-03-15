@@ -65,7 +65,7 @@ protected slots:
     void optionRemoved(const QString &option);
 
 private:
-    OptionsTree *               tree_;
+    OptionsTree                *tree_;
     bool                        flat_;
     mutable QHash<int, QString> indexMap; // option index (seq number) to option.name mapping
     mutable QHash<QString, int> nameMap;  // option.name to option index mapping

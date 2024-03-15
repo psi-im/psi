@@ -48,6 +48,9 @@
 #ifdef PSI_PLUGINS
 #include "pluginmanager.h"
 #endif
+#include "iris/xmpp_caps.h"
+#include "iris/xmpp_message.h"
+#include "iris/xmpp_tasks.h"
 #include "popupmanager.h"
 #include "psiaccount.h"
 #include "psiactionlist.h"
@@ -69,9 +72,6 @@
 #include "urlobject.h"
 #include "userlist.h"
 #include "vcardfactory.h"
-#include "iris/xmpp_caps.h"
-#include "iris/xmpp_message.h"
-#include "iris/xmpp_tasks.h"
 
 #include <QAction>
 #include <QCheckBox>
@@ -226,9 +226,9 @@ public:
     ActionList                            *actions;
     IconAction                            *act_bookmark, *act_pastesend;
     TypeAheadFindBar                      *typeahead;
-    //#ifdef WHITEBOARDING
-    //    IconAction *act_whiteboard;
-    //#endif
+    // #ifdef WHITEBOARDING
+    //     IconAction *act_whiteboard;
+    // #endif
     QAction *act_send, *act_scrollup, *act_scrolldown, *act_close;
     QAction *act_mini_cmd, *act_nick, *act_hide, *act_copy_muc_jid;
     QAction *act_minimize;
@@ -946,10 +946,10 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
         d->actions->addAction(name, action);
     }
 
-    //#ifdef WHITEBOARDING
-    //    d->act_whiteboard = new IconAction(tr("Open a Whiteboard"), "psi/whiteboard", tr("Open a &Whiteboard"), 0,
-    //    this); connect(d->act_whiteboard, SIGNAL(triggered()), SLOT(openWhiteboard()));
-    //#endif
+    // #ifdef WHITEBOARDING
+    //     d->act_whiteboard = new IconAction(tr("Open a Whiteboard"), "psi/whiteboard", tr("Open a &Whiteboard"), 0,
+    //     this); connect(d->act_whiteboard, SIGNAL(triggered()), SLOT(openWhiteboard()));
+    // #endif
 
     d->act_nick = new QAction(this);
     d->act_nick->setText(tr("Change Nickname..."));
@@ -991,9 +991,9 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     int s = PsiIconset::instance()->system().iconSize();
     ui_.toolbar->setIconSize(QSize(s, s));
 
-    //#ifdef WHITEBOARDING
-    //    ui_.toolbar->addAction(d->act_whiteboard);
-    //#endif
+    // #ifdef WHITEBOARDING
+    //     ui_.toolbar->addAction(d->act_whiteboard);
+    // #endif
     ui_.toolbar->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum);
 
     // Common actions
@@ -2101,8 +2101,10 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
         MessageView tv = MessageView::subjectMessage(topic, sysMsg);
         tv.setDateTime(m.timeStamp());
 
-        ui_.le_topic->setText(
-            topic.replace("\n\n", " || ").replace("\n", " | ").replace("\t", " ").replace(QRegularExpression("\\s{2,}"), " "));
+        ui_.le_topic->setText(topic.replace("\n\n", " || ")
+                                  .replace("\n", " | ")
+                                  .replace("\t", " ")
+                                  .replace(QRegularExpression("\\s{2,}"), " "));
         ui_.le_topic->setCursorPosition(0);
         ui_.le_topic->setToolTip(QString("<qt><p>%1</p></qt>").arg(subjectTooltip));
 
@@ -2498,9 +2500,9 @@ void GCMainDlg::buildMenu()
     d->pm_settings->addAction(d->actions->action("gchat_info"));
     d->pm_settings->addAction(d->actions->action("gchat_clear"));
     d->pm_settings->addAction(d->actions->action("gchat_configure"));
-    //#ifdef WHITEBOARDING
-    //    d->act_whiteboard->addTo( d->pm_settings );
-    //#endif
+    // #ifdef WHITEBOARDING
+    //     d->act_whiteboard->addTo( d->pm_settings );
+    // #endif
     d->pm_settings->addSeparator();
 
     d->pm_settings->addAction(d->actions->action("gchat_icon"));

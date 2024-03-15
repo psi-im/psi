@@ -30,7 +30,6 @@
 #include "psitooltip.h"
 
 #include <QApplication>
-#include <QDesktopWidget>
 #include <QFileInfo>
 #include <QHelpEvent>
 #include <QLayout>
@@ -84,7 +83,7 @@ private slots:
             topParent->layout()->setEnabled(false); // try to reduce some flicker
 
             const QRect topParentRect = topParent->frameGeometry();
-            const QRect desktop       = qApp->desktop()->availableGeometry(topParent);
+            const QRect desktop       = topParent->screen()->availableGeometry();
 
             int newHeight = topParent->height() + dh;
             if (newHeight > desktop.height()) {
@@ -123,7 +122,7 @@ private:
     bool determineAutoRosterSizeGrowSide()
     {
         const QRect topParent = lv->window()->frameGeometry();
-        const QRect desktop   = qApp->desktop()->availableGeometry(lv->window());
+        const QRect desktop   = lv->window()->screen()->availableGeometry();
 
         int top_offs    = abs(desktop.top() - topParent.top());
         int bottom_offs = abs(desktop.bottom() - topParent.bottom());
@@ -134,7 +133,7 @@ private:
 public:
     bool                allowAutoresize;
     PsiContactListView *lv;
-    QTimer *            recalculateSizeTimer;
+    QTimer             *recalculateSizeTimer;
 };
 
 PsiContactListView::PsiContactListView(QWidget *parent) : ContactListDragView(parent)

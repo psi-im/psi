@@ -39,15 +39,15 @@ PsiConAdapter::PsiConAdapter(PsiCon *psicon_) : QDBusAbstractAdaptor(psicon_) { 
 
 PsiConAdapter::~PsiConAdapter() { }
 
-void PsiConAdapter::openURI(QString uri) { emit ActiveProfiles::instance()->openUriRequested(uri); }
+void PsiConAdapter::openURI(QString uri) { emit ActiveProfiles::instance() -> openUriRequested(uri); }
 
 void PsiConAdapter::setStatus(QString status, QString message)
 {
-    emit ActiveProfiles::instance()->setStatusRequested(status, message);
+    emit ActiveProfiles::instance() -> setStatusRequested(status, message);
 }
 
 // FIXME libguniqueapp uses activate
-void PsiConAdapter::raise() { emit ActiveProfiles::instance()->raiseRequested(); }
+void PsiConAdapter::raise() { emit ActiveProfiles::instance() -> raiseRequested(); }
 
 void PsiConAdapter::sleep() { psicon->doSleep(); }
 

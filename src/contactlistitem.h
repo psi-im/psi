@@ -122,7 +122,7 @@ private:
     bool              _editing;
     bool _selfValid; // hack hack! just to find one crash in roster. remove this and QPointer wrapper below when fixed
     QPointer<PsiContact> _contact;
-    PsiAccount *         _account;
+    PsiAccount          *_account;
     bool                 _expanded;
     QString              _internalName;
     QString              _displayName;

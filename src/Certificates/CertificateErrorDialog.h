@@ -22,8 +22,8 @@ private:
     QCA::Certificate certificate_;
     int              result_;
     QCA::Validity    validity_;
-    QString &        tlsOverrideDomain_;
-    QByteArray &     tlsOverrideCert_;
+    QString         &tlsOverrideDomain_;
+    QByteArray      &tlsOverrideCert_;
     QString          domainOverride_;
     QString          host_;
 };

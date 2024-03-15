@@ -101,7 +101,7 @@ public:
 
     void renameSelectedItem();
 
-    PsiContact *    contactFor(const QModelIndex &index) const;
+    PsiContact     *contactFor(const QModelIndex &index) const;
     QModelIndexList indexesFor(const PsiContact *contact) const;
 
     // reimplemented

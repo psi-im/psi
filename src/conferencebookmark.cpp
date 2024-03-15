@@ -29,8 +29,7 @@
 
 ConferenceBookmark::ConferenceBookmark(const QString &name, const XMPP::Jid &jid, JoinType auto_join,
                                        const QString &nick, const QString &password) :
-    name_(name),
-    jid_(jid), auto_join_(auto_join), nick_(nick), password_(password)
+    name_(name), jid_(jid), auto_join_(auto_join), nick_(nick), password_(password)
 {
 }
 

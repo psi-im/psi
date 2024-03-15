@@ -47,7 +47,7 @@ private:
     void setWidgetsEnabled(bool enabled);
 
     Ui::ChangePassword ui_;
-    PsiAccount *       pa;
+    PsiAccount        *pa;
 };
 
 #endif // CHANGEPWDLG_H

@@ -28,7 +28,7 @@
  * \brief A common controller class for MPRIS compilant players.
  */
 
-const char *         MPRISTuneController::MPRIS_PREFIX = "org.mpris";
+const char          *MPRISTuneController::MPRIS_PREFIX = "org.mpris";
 static const QString busName                           = "SessionBus";
 
 QDBusArgument &operator<<(QDBusArgument &arg, const PlayerStatus &ps)

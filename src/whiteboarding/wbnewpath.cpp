@@ -26,8 +26,7 @@
 #include <QPainterPath>
 
 WbNewPath::WbNewPath(QGraphicsScene *s, QPointF startPos, int strokeWidth, const QColor &strokeColor,
-                     const QColor &fillColor) :
-    WbNewItem(s)
+                     const QColor &fillColor) : WbNewItem(s)
 {
     controlPoint_ = nullptr;
 

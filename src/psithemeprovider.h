@@ -37,7 +37,7 @@ public:
 
     inline PsiCon *psi() const { return _psi; }
 
-    virtual const char *      type() const                     = 0;
+    virtual const char       *type() const                     = 0;
     virtual Theme             theme(const QString &id)         = 0; // make new theme
     virtual const QStringList themeIds() const                 = 0;
     virtual bool              loadCurrent()                    = 0;

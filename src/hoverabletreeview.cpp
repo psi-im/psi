@@ -57,10 +57,10 @@ HoverableStyleOptionViewItem::HoverableStyleOptionViewItem(const QStyleOptionVie
 
 HoverableStyleOptionViewItem &HoverableStyleOptionViewItem::operator=(const QStyleOptionViewItem &other)
 {
-    HoverableStyleOptionViewItemBaseClass::operator  =(other);
-    const HoverableStyleOptionViewItem *   hoverable = qstyleoption_cast<const HoverableStyleOptionViewItem *>(&other);
-    this->hovered                                    = hoverable ? hoverable->hovered : false;
-    this->hoveredPosition                            = hoverable ? hoverable->hoveredPosition : QPoint();
+    HoverableStyleOptionViewItemBaseClass::operator=(other);
+    const HoverableStyleOptionViewItem *hoverable = qstyleoption_cast<const HoverableStyleOptionViewItem *>(&other);
+    this->hovered                                 = hoverable ? hoverable->hovered : false;
+    this->hoveredPosition                         = hoverable ? hoverable->hoveredPosition : QPoint();
     return *this;
 }
 

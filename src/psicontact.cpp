@@ -56,10 +56,10 @@ public:
         delete animTimer_;
     }
 
-    PsiContact * q;
-    PsiAccount * account_;
-    QTimer *     statusTimer_;
-    QTimer *     animTimer_;
+    PsiContact  *q;
+    PsiAccount  *account_;
+    QTimer      *statusTimer_;
+    QTimer      *animTimer_;
     UserListItem u_;
     QString      name_;
     Status       status_;

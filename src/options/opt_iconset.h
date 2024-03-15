@@ -31,7 +31,7 @@ protected:
 
 private:
     QWidget *w, *parentWidget;
-    PsiCon * psi;
+    PsiCon  *psi;
 
     int                numIconsets, iconsetsLoaded;
     IconsetLoadThread *thread;
@@ -58,7 +58,7 @@ protected:
 
 private:
     QWidget *w, *parentWidget;
-    PsiCon * psi;
+    PsiCon  *psi;
 
     int                numIconsets, iconsetsLoaded;
     IconsetLoadThread *thread;
@@ -85,7 +85,7 @@ protected:
 
 private:
     QWidget *w, *parentWidget;
-    PsiCon * psi;
+    PsiCon  *psi;
 
     int                numIconsets, iconsetsLoaded;
     IconsetLoadThread *thread;
@@ -112,7 +112,7 @@ protected:
 
 private:
     QWidget *w, *parentWidget;
-    PsiCon * psi;
+    PsiCon  *psi;
 
     int                numIconsets, iconsetsLoaded;
     IconsetLoadThread *thread;
@@ -139,7 +139,7 @@ protected:
 
 private:
     QWidget *w, *parentWidget;
-    PsiCon * psi;
+    PsiCon  *psi;
 
     int                numIconsets, iconsetsLoaded;
     IconsetLoadThread *thread;
@@ -166,7 +166,7 @@ protected:
 
 private:
     QWidget *w, *parentWidget;
-    PsiCon * psi;
+    PsiCon  *psi;
 
     int                numIconsets, iconsetsLoaded;
     IconsetLoadThread *thread;
@@ -205,9 +205,9 @@ protected:
     void cancelThread();
 
 private:
-    QWidget *          w;
-    QWidget *          parentWidget;
-    PsiCon *           psi;
+    QWidget           *w;
+    QWidget           *parentWidget;
+    PsiCon            *psi;
     int                numIconsets, iconsetsLoaded;
     IconsetLoadThread *thread;
 

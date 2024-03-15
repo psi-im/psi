@@ -107,8 +107,8 @@ QStringList MCmdManager::parseCommand(const QString command, int pos, int &part,
 
 QString MCmdManager::serializeCommand(const QStringList &list)
 {
-    QString retval;
-    bool    needspace = false;
+    QString            retval;
+    bool               needspace = false;
     QRegularExpression specials("([\"\'\\\\ ])");
     for (QString item : list) {
         item.replace(specials, "\\\\1");

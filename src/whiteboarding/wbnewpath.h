@@ -35,7 +35,7 @@ protected:
 
 private:
     QGraphicsPathItem graphicsitem_;
-    QPointF *         controlPoint_;
+    QPointF          *controlPoint_;
 };
 
 #endif // WBNEWPATH_H

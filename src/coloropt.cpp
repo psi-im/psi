@@ -29,7 +29,7 @@ ColorOpt::ColorOpt() : QObject(nullptr)
     connect(PsiOptions::instance(), SIGNAL(destroyed()), SLOT(reset()));
 
     typedef struct {
-        const char *        opt;
+        const char         *opt;
         QPalette::ColorRole role;
     } SourceType;
     SourceType source[] = { { "contactlist.status.online", QPalette::Text },

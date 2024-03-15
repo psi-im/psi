@@ -358,7 +358,7 @@ void GoogleFTManager::receiveStanza(const QString &sstanza)
     session_manager_->OnIncomingMessage(e);
 }
 
-talk_base::PhysicalSocketServer *                 GoogleFTManager::socket_server_   = NULL;
-talk_base::Thread *                               GoogleFTManager::thread_          = NULL;
-talk_base::NetworkManager *                       GoogleFTManager::network_manager_ = NULL;
+talk_base::PhysicalSocketServer                  *GoogleFTManager::socket_server_   = NULL;
+talk_base::Thread                                *GoogleFTManager::thread_          = NULL;
+talk_base::NetworkManager                        *GoogleFTManager::network_manager_ = NULL;
 talk_base::scoped_ptr<cricket::HttpPortAllocator> GoogleFTManager::port_allocator_;

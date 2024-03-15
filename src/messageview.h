@@ -117,16 +117,16 @@ public:
     inline int  statusPriority() const { return _statusPriority; }
 
     inline void                            setNick(const QString &nick) { _nick = nick; }
-    inline const QString &                 nick() const { return _nick; }
+    inline const QString                  &nick() const { return _nick; }
     inline void                            setMessageId(const QString &id) { _messageId = id; }
-    inline const QString &                 messageId() const { return _messageId; }
+    inline const QString                  &messageId() const { return _messageId; }
     inline void                            setUserId(const QString &id) { _userId = id; }
-    inline const QString &                 userId() const { return _userId; }
+    inline const QString                  &userId() const { return _userId; }
     inline void                            setDateTime(const QDateTime &dt) { _dateTime = dt; }
-    inline const QDateTime &               dateTime() const { return _dateTime; }
+    inline const QDateTime                &dateTime() const { return _dateTime; }
     inline QMap<QString, QString>          urls() const { return _urls; }
     inline void                            setReplaceId(const QString &id) { _replaceId = id; }
-    inline const QString &                 replaceId() const { return _replaceId; }
+    inline const QString                  &replaceId() const { return _replaceId; }
     inline void                            setCarbonDirection(XMPP::Message::CarbonDir c) { _carbon = c; }
     inline XMPP::Message::CarbonDir        carbonDirection() const { return _carbon; }
     inline void                            addReference(FileSharingItem *fsi) { _references.append(fsi); }

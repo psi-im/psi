@@ -57,8 +57,8 @@ private:
 
     bool             splitterEnabled_;
     QList<QWidget *> children_;
-    QSplitter *      splitter_;
-    QLayout *        layout_;
+    QSplitter       *splitter_;
+    QLayout         *layout_;
 };
 
 #endif // CHATSPLITTER_H

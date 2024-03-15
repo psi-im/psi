@@ -40,7 +40,7 @@ class WebView;
 class ChatViewJSLoader : public QObject {
     Q_OBJECT
 
-    ChatViewThemePrivate *    theme;
+    ChatViewThemePrivate     *theme;
     QString                   _loadError;
     QHash<QString, QObject *> _sessions;
 

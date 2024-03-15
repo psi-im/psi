@@ -109,7 +109,7 @@ public:
     virtual ~FileSharingDeviceOpener() { }
 
     static XMPP::Hash urlToSourceId(const QUrl &url);
-    QIODevice *       open(QUrl &url) override;
+    QIODevice        *open(QUrl &url) override;
     void              close(QIODevice *dev) override;
     QVariant          metadata(const QUrl &url) override;
 

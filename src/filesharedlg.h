@@ -20,8 +20,8 @@
 #ifndef FILESHAREDLG_H
 #define FILESHAREDLG_H
 
-#include "xmpp/jid/jid.h"
 #include "iris/xmpp_reference.h"
+#include "xmpp/jid/jid.h"
 
 #include <QDialog>
 
@@ -58,11 +58,11 @@ private:
     void showImage(const QImage &img);
     void finish();
 
-    Ui::FileShareDlg *       ui;
-    PsiAccount *             account;
+    Ui::FileShareDlg        *ui;
+    PsiAccount              *account;
     XMPP::Jid                myJid;
     QImage                   image;
-    MultiFileTransferModel * filesModel;
+    MultiFileTransferModel  *filesModel;
     QList<FileSharingItem *> readyPublishers;
     Callback                 publishedCallback;
     int                      inProgressCount = 0;

@@ -62,7 +62,7 @@ public:
     XMPP::HTMLElement toHTMLElement();
     bool              isCorrection() { return correction; }
     void              setLastMessageId(const QString &id) { lastId = id; }
-    const QString &   lastMessageId() { return lastId; }
+    const QString    &lastMessageId() { return lastId; }
     void              resetCorrection()
     {
         correction = false;
@@ -114,22 +114,22 @@ private:
     void setRecButtonIcon();
 
 private:
-    QWidget *                         dialog_         = nullptr;
+    QWidget                          *dialog_         = nullptr;
     bool                              check_spelling_ = false;
     std::unique_ptr<SpellHighlighter> spellhighlighter_;
     QPoint                            last_click_;
     int                               previous_position_ = 0;
     QStringList                       typedMsgsHistory;
     int                               typedMsgsIndex       = 0;
-    QAction *                         act_showMessagePrev  = nullptr;
-    QAction *                         act_showMessageNext  = nullptr;
-    QAction *                         act_showMessageFirst = nullptr;
-    QAction *                         act_showMessageLast  = nullptr;
-    QAction *                         act_changeCase       = nullptr;
-    QAction *                         actPasteAsQuote_     = nullptr;
+    QAction                          *act_showMessagePrev  = nullptr;
+    QAction                          *act_showMessageNext  = nullptr;
+    QAction                          *act_showMessageFirst = nullptr;
+    QAction                          *act_showMessageLast  = nullptr;
+    QAction                          *act_changeCase       = nullptr;
+    QAction                          *actPasteAsQuote_     = nullptr;
     QString                           currentText;
-    HTMLTextController *              controller_  = nullptr;
-    CapitalLettersController *        capitalizer_ = nullptr;
+    HTMLTextController               *controller_  = nullptr;
+    CapitalLettersController         *capitalizer_ = nullptr;
     bool                              correction   = false;
     QString                           lastId;
     QPointer<QLayout>                 layout_;

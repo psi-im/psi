@@ -80,20 +80,20 @@ public:
     static QByteArray loadData(const QString &fileName, const QString &themePath, bool caseInsensetive = false,
                                bool *loaded = nullptr);
     QByteArray        loadData(const QString &fileName, bool *loaded = nullptr) const;
-    ResourceLoader *  resourceLoader() const;
+    ResourceLoader   *resourceLoader() const;
 
     const QString      id() const;
     void               setId(const QString &id);
-    const QString &    name() const;
+    const QString     &name() const;
     void               setName(const QString &name);
-    const QString &    version() const;
-    const QString &    description() const;
+    const QString     &version() const;
+    const QString     &description() const;
     const QStringList &authors() const;
-    const QString &    creation() const;
-    const QString &    homeUrl() const;
+    const QString     &creation() const;
+    const QString     &homeUrl() const;
 
-    PsiThemeProvider *            themeProvider() const;
-    const QString &               filePath() const;
+    PsiThemeProvider             *themeProvider() const;
+    const QString                &filePath() const;
     void                          setFilePath(const QString &f);
     const QHash<QString, QString> info() const;
     void                          setInfo(const QHash<QString, QString> &i);

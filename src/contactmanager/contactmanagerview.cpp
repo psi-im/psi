@@ -40,7 +40,7 @@ void ContactManagerView::init()
 
 void ContactManagerView::contextMenuEvent(QContextMenuEvent *e)
 {
-    QMenu *          popup = new QMenu(this);
+    QMenu           *popup = new QMenu(this);
     QList<QAction *> actions;
     actions << new QAction(IconsetFactory::icon("psi/cm_check").icon(), tr("Check"), popup)
             << new QAction(IconsetFactory::icon("psi/cm_uncheck").icon(), tr("Uncheck"), popup)
@@ -51,7 +51,7 @@ void ContactManagerView::contextMenuEvent(QContextMenuEvent *e)
     if (result) {
         iresult = actions.indexOf(result);
         [[maybe_unused]] const QVariant value(2);
-        const auto &                    checks = selectionModel()->selectedRows(0);
+        const auto                     &checks = selectionModel()->selectedRows(0);
         for (const QModelIndex &check : checks) {
             switch (iresult) {
             case 0: // check

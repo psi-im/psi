@@ -176,10 +176,10 @@ static char *get_path_from_pid(char *buff, size_t nbuff, pid_t pid)
 
 static void sigsegv_libc_dump(int (*myprint)(const char *format, ...))
 {
-    void *         array[48] = { 0 };
+    void          *array[48] = { 0 };
     unsigned short i;
     int            n;
-    char **        res;
+    char         **res;
 
 #ifdef HAVE_BACKTRACE
     (*myprint)("Backtrace:%c", needs_cr ? "\n" : "");

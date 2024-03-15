@@ -48,7 +48,7 @@
 // ======================================================================
 class FileSharingManager::Private {
 public:
-    FileCache *                          cache;
+    FileCache                           *cache;
     QHash<XMPP::Hash, FileSharingItem *> items;
 
     void rememberItem(FileSharingItem *item)
@@ -312,8 +312,8 @@ XMPP::Hash FileSharingDeviceOpener::urlToSourceId(const QUrl &url)
     if (url.scheme() != QLatin1String("share"))
         return XMPP::Hash();
 
-    QString    path = url.path();
-    auto sourceId = QStringView{path};
+    QString path     = url.path();
+    auto    sourceId = QStringView { path };
     if (sourceId.startsWith('/'))
         sourceId = sourceId.mid(1);
     return XMPP::Hash::from(sourceId);

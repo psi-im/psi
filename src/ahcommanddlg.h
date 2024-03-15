@@ -20,8 +20,8 @@
 #ifndef AHCOMMANDDLG_H
 #define AHCOMMANDDLG_H
 
-#include "ui_ahcommanddlg.h"
 #include "iris/xmpp_jid.h"
+#include "ui_ahcommanddlg.h"
 
 #include <QDialog>
 #include <QList>
@@ -56,11 +56,11 @@ protected slots:
 
 private:
     Ui::AHCommandDlg     ui_;
-    PsiAccount *         pa_;
+    PsiAccount          *pa_;
     XMPP::Jid            receiver_;
     QList<AHCommandItem> commands_;
-    QPushButton *        pb_close;
-    QPushButton *        pb_execute;
+    QPushButton         *pb_close;
+    QPushButton         *pb_execute;
 };
 
 #endif // AHCOMMANDDLG_H

@@ -203,8 +203,7 @@ class IconSharedObject : public QObject {
 public:
     IconSharedObject()
 #ifdef ICONSET_SOUND
-        :
-        QObject(qApp)
+        : QObject(qApp)
 #endif
     {
         setObjectName("IconSharedObject");
@@ -316,16 +315,16 @@ public slots:
     void animUpdate() { emit pixmapChanged(); }
 
 public:
-    QString         name;
+    QString            name;
     QRegularExpression regExp;
-    QList<IconText> text;
-    QString         sound;
-    QString         mime;
+    QList<IconText>    text;
+    QString            sound;
+    QString            mime;
 
     Impix                         impix;
     std::unique_ptr<Anim>         anim;
     std::shared_ptr<QSvgRenderer> svgRenderer;
-    QIcon *                       icon = nullptr;
+    QIcon                        *icon = nullptr;
     mutable QByteArray            rawData;
     bool                          scalable = false;
 
@@ -844,8 +843,8 @@ private:
     }
 
     static IconsetFactoryPrivate *instance_;
-    QList<Iconset *> *            iconsets_;
-    mutable QPixmap *             emptyPixmap_;
+    QList<Iconset *>             *iconsets_;
+    mutable QPixmap              *emptyPixmap_;
 
 public:
     const QPixmap &emptyPixmap() const
@@ -1349,53 +1348,59 @@ public:
         });
 
 #ifdef ICONSET_SOUND
-        loadSuccess = loadSuccess && (sound.isEmpty() || std::any_of(preferredSound.begin(), preferredSound.end(), [&, this](const auto &mime) {
-            QFileInfo fi(dir);
-            QString   fileName = sound[mime];
-            if (!fi.isDir()) { // it is a .zip file then
-                if (!iconSharedObject) {
-                    iconSharedObject = new IconSharedObject();
-                }
+        loadSuccess = loadSuccess
+            && (sound.isEmpty()
+                || std::any_of(preferredSound.begin(), preferredSound.end(), [&, this](const auto &mime) {
+                       QFileInfo fi(dir);
+                       QString   fileName = sound[mime];
+                       if (!fi.isDir()) { // it is a .zip file then
+                           if (!iconSharedObject) {
+                               iconSharedObject = new IconSharedObject();
+                           }
 
-                QString path = iconSharedObject->unpackPath;
-                if (path.isEmpty()) {
-                    qDebug("Iconset::load(): Couldn't load %s (%s) audio for the %s icon for the %s iconset. "
-                           "unpack path is empty",
-                           qPrintable(mime), qPrintable(fileName), qPrintable(name), qPrintable(this->name));
-                    return false;
-                }
+                           QString path = iconSharedObject->unpackPath;
+                           if (path.isEmpty()) {
+                               qDebug(
+                                   "Iconset::load(): Couldn't load %s (%s) audio for the %s icon for the %s iconset. "
+                                   "unpack path is empty",
+                                   qPrintable(mime), qPrintable(fileName), qPrintable(name), qPrintable(this->name));
+                               return false;
+                           }
 
-                QFileInfo ext(fileName);
-                path += "/" + QCA::Hash("sha1").hashToString(QString(fi.absoluteFilePath() + '/' + fileName).toUtf8())
-                    + '.' + ext.suffix();
+                           QFileInfo ext(fileName);
+                           path += "/"
+                               + QCA::Hash("sha1").hashToString(
+                                   QString(fi.absoluteFilePath() + '/' + fileName).toUtf8())
+                               + '.' + ext.suffix();
 
-                QFile file(path);
-                file.open(QIODevice::WriteOnly);
-                QDataStream out(&file);
+                           QFile file(path);
+                           file.open(QIODevice::WriteOnly);
+                           QDataStream out(&file);
 
-                QByteArray data = this->loadData(fileName, dir); // "this" for compatibility with old gcc
-                if (data.isEmpty()) {
-                    qDebug("Iconset::load(): Couldn't load %s (%s) audio for the %s icon for the %s iconset. "
-                           "file is empty",
-                           qPrintable(mime), qPrintable(fileName), qPrintable(name), qPrintable(this->name));
-                    return false;
-                }
+                           QByteArray data = this->loadData(fileName, dir); // "this" for compatibility with old gcc
+                           if (data.isEmpty()) {
+                               qDebug(
+                                   "Iconset::load(): Couldn't load %s (%s) audio for the %s icon for the %s iconset. "
+                                   "file is empty",
+                                   qPrintable(mime), qPrintable(fileName), qPrintable(name), qPrintable(this->name));
+                               return false;
+                           }
 
-                out.writeRawData(data, data.size());
-                icon.setSound(path);
-                return true;
-            } else {
-                QString absFN = fi.absoluteFilePath() + '/' + fileName;
-                if (QFileInfo(absFN).isReadable()) {
-                    icon.setSound(absFN);
-                    return true;
-                }
-                qDebug("Iconset::load(): Couldn't load %s (%s) audio for the %s icon for the %s iconset. "
-                       "not readable",
-                       qPrintable(mime), qPrintable(fileName), qPrintable(name), qPrintable(this->name));
-                return false;
-            }
-        }));
+                           out.writeRawData(data, data.size());
+                           icon.setSound(path);
+                           return true;
+                       } else {
+                           QString absFN = fi.absoluteFilePath() + '/' + fileName;
+                           if (QFileInfo(absFN).isReadable()) {
+                               icon.setSound(absFN);
+                               return true;
+                           }
+                           qDebug("Iconset::load(): Couldn't load %s (%s) audio for the %s icon for the %s iconset. "
+                                  "not readable",
+                                  qPrintable(mime), qPrintable(fileName), qPrintable(name), qPrintable(this->name));
+                           return false;
+                       }
+                   }));
 #endif
 
         // construct RegExp

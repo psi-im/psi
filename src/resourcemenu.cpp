@@ -19,11 +19,11 @@
 
 #include "resourcemenu.h"
 
+#include "iris/xmpp_status.h"
 #include "psiaccount.h"
 #include "psicontact.h"
 #include "psiiconset.h"
 #include "userlist.h"
-#include "iris/xmpp_status.h"
 
 /**
  * \class ResourceMenu
@@ -94,7 +94,7 @@ void ResourceMenu::contactUpdated()
         const auto &names = contact_->account()->hiddenChats(contact_->jid());
         for (const QString &resourceName : names) {
             XMPP::Status::Type              status;
-            const UserResourceList &        rl  = contact_->userResourceList();
+            const UserResourceList         &rl  = contact_->userResourceList();
             UserResourceList::ConstIterator uit = rl.find(resourceName);
             if (uit != rl.end() || (uit = rl.priority()) != rl.end())
                 status = makeSTATUS((*uit).status());

@@ -20,10 +20,10 @@
 #include "contactmanagermodel.h"
 
 #include "QDebug"
-#include "psiaccount.h"
-#include "userlist.h"
 #include "iris/xmpp_client.h"
 #include "iris/xmpp_tasks.h"
+#include "psiaccount.h"
+#include "userlist.h"
 
 ContactManagerModel::ContactManagerModel(QObject *parent, PsiAccount *pa) : QAbstractTableModel(parent), pa_(pa)
 {
@@ -241,9 +241,9 @@ QList<UserListItem *> ContactManagerModel::checkedUsers()
 
 void ContactManagerModel::invertByMatch(int columnIndex, int matchType, const QString &str)
 {
-    emit    layoutAboutToBeChanged();
-    Role    columnRole = roles[columnIndex];
-    QString data;
+    emit               layoutAboutToBeChanged();
+    Role               columnRole = roles[columnIndex];
+    QString            data;
     QRegularExpression reg;
     if (matchType == ContactManagerModel::RegexpMatch) {
         reg = QRegularExpression(str);

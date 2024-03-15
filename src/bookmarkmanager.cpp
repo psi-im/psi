@@ -19,11 +19,11 @@
 
 #include "bookmarkmanager.h"
 
-#include "psiaccount.h"
-#include "psioptions.h"
 #include "iris/xmpp_client.h"
 #include "iris/xmpp_task.h"
 #include "iris/xmpp_xmlcommon.h"
+#include "psiaccount.h"
+#include "psioptions.h"
 
 // -----------------------------------------------------------------------------
 

@@ -23,6 +23,8 @@
 #include "filesharingmanager.h"
 #include "fileutil.h"
 #include "iris/httpfileupload.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_message.h"
 #include "multifiletransferdelegate.h"
 #include "multifiletransferitem.h"
 #include "multifiletransfermodel.h"
@@ -30,8 +32,6 @@
 #include "psicon.h"
 #include "textutil.h"
 #include "ui_filesharedlg.h"
-#include "iris/xmpp_client.h"
-#include "iris/xmpp_message.h"
 
 #include <QApplication>
 #include <QFileIconProvider>
@@ -44,8 +44,7 @@
 
 FileShareDlg::FileShareDlg(PsiAccount *acc, const XMPP::Jid &myJid, const QList<FileSharingItem *> &items,
                            const Callback &callback, QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::FileShareDlg), account(acc), myJid(myJid), publishedCallback(callback)
+    QDialog(parent), ui(new Ui::FileShareDlg), account(acc), myJid(myJid), publishedCallback(callback)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     ui->setupUi(this);
@@ -73,8 +72,7 @@ FileShareDlg::FileShareDlg(PsiAccount *acc, const XMPP::Jid &myJid, const QList<
     }
 
     QImage preview;
-    if (items.count() > 1
-        || (preview = items[0]->preview(this->screen()->geometry().size() / 2)).isNull()) {
+    if (items.count() > 1 || (preview = items[0]->preview(this->screen()->geometry().size() / 2)).isNull()) {
         ui->lv_files->show();
         ui->pixmapRatioLabel->hide();
     } else {

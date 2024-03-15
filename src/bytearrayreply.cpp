@@ -22,9 +22,7 @@
 #include <QTimer>
 
 ByteArrayReply::ByteArrayReply(const QNetworkRequest &request, const QByteArray &ba, const QString &mimeType,
-                               QObject *parent) :
-    QNetworkReply(parent),
-    origLen(ba.size()), data(ba), buffer(&data)
+                               QObject *parent) : QNetworkReply(parent), origLen(ba.size()), data(ba), buffer(&data)
 {
     setRequest(request);
     setOpenMode(QIODevice::ReadOnly);

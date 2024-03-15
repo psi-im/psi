@@ -20,9 +20,9 @@
 #ifndef ACCOUNTREGDLG_H
 #define ACCOUNTREGDLG_H
 
+#include "iris/xmpp_jid.h"
 #include "profiles.h"
 #include "ui_accountreg.h"
-#include "iris/xmpp_jid.h"
 
 #include <QDialog>
 #include <QString>
@@ -48,10 +48,10 @@ public:
     AccountRegDlg(PsiCon *psi, QWidget *parent = nullptr);
     ~AccountRegDlg();
 
-    const XMPP::Jid &    jid() const { return jid_; }
-    const QString &      pass() const { return pass_; }
+    const XMPP::Jid     &jid() const { return jid_; }
+    const QString       &pass() const { return pass_; }
     bool                 useHost() const { return opt_host_; }
-    const QString &      host() const { return host_; }
+    const QString       &host() const { return host_; }
     int                  port() const { return port_; }
     UserAccount::SSLFlag ssl() const { return ssl_; }
     QString              proxy() const { return proxy_; }
@@ -86,12 +86,12 @@ protected slots:
 
 private:
     Ui::AccountReg     ui_;
-    PsiCon *           psi;
-    QScrollArea *      fields_container_;
-    XDataWidget *      fields_;
-    ProxyChooser *     proxy_chooser_;
+    PsiCon            *psi;
+    QScrollArea       *fields_container_;
+    XDataWidget       *fields_;
+    ProxyChooser      *proxy_chooser_;
     ServerListQuerier *serverlist_querier_;
-    MiniClient *       client_;
+    MiniClient        *client_;
     bool               isOld_;
 
     // Account settings

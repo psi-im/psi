@@ -51,7 +51,7 @@ protected:
     void                     doShowText(const QPoint &pos, const QString &text, const QWidget *w = nullptr);
     void                     doInstall(QWidget *w);
     virtual ToolTipPosition *createTipPosition(const QPoint &cursorPos, const QWidget *parentWidget);
-    virtual PsiTipLabel *    createTipLabel(const QString &text, QWidget *parent);
+    virtual PsiTipLabel     *createTipLabel(const QString &text, QWidget *parent);
     virtual bool             moveAndUpdateTipLabel(PsiTipLabel *label, const QString &text);
     virtual void             updateTipLabel(PsiTipLabel *label, const QString &text);
 

@@ -61,8 +61,8 @@ void OptionsTabInput::applyOptions()
         return;
     }
 
-    OptInputUI *  d = static_cast<OptInputUI *>(w_);
-    PsiOptions *  o = PsiOptions::instance();
+    OptInputUI   *d = static_cast<OptInputUI *>(w_);
+    PsiOptions   *o = PsiOptions::instance();
     SpellChecker *s = SpellChecker::instance();
 
     bool isEnabled = d->isSpellCheck->isChecked();
@@ -176,10 +176,10 @@ void OptionsTabInput::setChecked()
         return;
     }
 
-    OptInputUI *            d = static_cast<OptInputUI *>(w_);
+    OptInputUI             *d = static_cast<OptInputUI *>(w_);
     QTreeWidgetItemIterator it(d->availDicts);
     while (*it) {
-        QTreeWidgetItem *       item   = *it;
+        QTreeWidgetItem        *item   = *it;
         LanguageManager::LangId langId = item->data(FullName, Qt::UserRole).value<LanguageManager::LangId>();
         Qt::CheckState          state  = loadedDicts_.contains(langId) ? Qt::Checked : Qt::Unchecked;
         if (state != item->checkState(FullName)) {
@@ -224,7 +224,7 @@ bool OptionsTabInput::isTreeViewEmpty()
 {
     if (!w_)
         return true;
-    OptInputUI *            d = static_cast<OptInputUI *>(w_);
+    OptInputUI             *d = static_cast<OptInputUI *>(w_);
     QTreeWidgetItemIterator it(d->availDicts);
     return !bool(*it);
 }

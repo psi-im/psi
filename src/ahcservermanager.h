@@ -41,14 +41,14 @@ public:
     typedef QList<AHCommandServer *> ServerList;
     ServerList                       commands(const XMPP::Jid &) const;
     void                             execute(const AHCommand &command, const XMPP::Jid &requester, QString id);
-    PsiAccount *                     account() const { return pa_; }
+    PsiAccount                      *account() const { return pa_; }
     bool                             hasServer(const QString &node, const XMPP::Jid &) const;
 
 protected:
     AHCommandServer *findServer(const QString &node) const;
 
 private:
-    PsiAccount *  pa_;
+    PsiAccount   *pa_;
     JT_AHCServer *server_task_;
     ServerList    servers_;
 };

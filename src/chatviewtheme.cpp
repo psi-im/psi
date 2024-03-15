@@ -236,7 +236,7 @@ bool ChatViewThemePrivate::applyToSession(ChatViewThemeSession *session)
     }
 
     QWebChannel *channel = page->webChannel();
-    QObject *    oldUtil = nullptr;
+    QObject     *oldUtil = nullptr;
     if (channel) {
         oldUtil = channel->registeredObjects().value(QLatin1String("srvUtil"));
         oldUtil->deleteLater();

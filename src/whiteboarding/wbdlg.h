@@ -151,8 +151,8 @@ private:
     /*! \brief The menu for widths.*/
     QMenu *menu_widths_;
     /*! \brief The menu for modes.*/
-    QMenu *     menu_modes_;
-    QAction *   act_color_, *act_fill_;
+    QMenu      *menu_modes_;
+    QAction    *act_color_, *act_fill_;
     IconAction *act_end_, *act_clear_, *act_save_, *act_geometry_, *act_widths_, *act_modes_;
     /*! \brief True if the target is a groupchat.*/
     bool groupChat_;

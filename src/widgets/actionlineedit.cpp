@@ -92,7 +92,7 @@ void ActionLineEditButton::paintEvent(QPaintEvent *event)
     Q_UNUSED(event)
 
     QPainter            painter(this);
-    ActionLineEdit *    p    = static_cast<ActionLineEdit *>(parent());
+    ActionLineEdit     *p    = static_cast<ActionLineEdit *>(parent());
     Qt::ToolButtonStyle tbs  = p->toolButtonStyle();
     int                 lpos = 0;
     // int h = height();
@@ -113,7 +113,7 @@ void ActionLineEditButton::paintEvent(QPaintEvent *event)
 
 QSize ActionLineEditButton::sizeHint() const
 {
-    ActionLineEdit *    p   = static_cast<ActionLineEdit *>(parent());
+    ActionLineEdit     *p   = static_cast<ActionLineEdit *>(parent());
     Qt::ToolButtonStyle tbs = p->toolButtonStyle();
     int                 w = 0, h = p->height();
     int                 ih = static_cast<QLineEdit *>(parent())->minimumSizeHint().height() * IconScaleFactor;
@@ -142,7 +142,7 @@ ActionLineEdit::ActionLineEdit(QWidget *parent) : QLineEdit(parent), toolButtonS
 
 ActionLineEditButton *ActionLineEdit::widgetForAction(QAction *action)
 {
-    QHBoxLayout *         lo = static_cast<QHBoxLayout *>(layout());
+    QHBoxLayout          *lo = static_cast<QHBoxLayout *>(layout());
     ActionLineEditButton *btn;
     for (int i = 1, count = lo->count(); i < count; i++) {
         btn = static_cast<ActionLineEditButton *>(lo->itemAt(i)->widget());
@@ -155,8 +155,8 @@ ActionLineEditButton *ActionLineEdit::widgetForAction(QAction *action)
 
 void ActionLineEdit::actionEvent(QActionEvent *event)
 {
-    QHBoxLayout *         lo  = static_cast<QHBoxLayout *>(layout());
-    QAction *             act = event->action();
+    QHBoxLayout          *lo  = static_cast<QHBoxLayout *>(layout());
+    QAction              *act = event->action();
     ActionLineEditButton *btn;
     if (event->type() == QEvent::ActionAdded) {
         btn                = new ActionLineEditButton(this);

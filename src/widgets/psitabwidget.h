@@ -99,14 +99,14 @@ private slots:
 
 private:
     QVector<QWidget *>      widgets_;
-    PsiTabBar *             tabBar_;
-    QVBoxLayout *           layout_;
-    QHBoxLayout *           barLayout_;
-    QStackedLayout *        stacked_;
-    QToolButton *           closeButton_;
-    QToolButton *           downButton_;
+    PsiTabBar              *tabBar_;
+    QVBoxLayout            *layout_;
+    QHBoxLayout            *barLayout_;
+    QStackedLayout         *stacked_;
+    QToolButton            *closeButton_;
+    QToolButton            *downButton_;
     QTabWidget::TabPosition tabsPosition_;
-    QMenu *                 menu_;
+    QMenu                  *menu_;
 };
 
 #endif // PSITABWIDGET_H

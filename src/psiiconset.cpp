@@ -100,7 +100,7 @@ public:
     struct StatusIconsets {
         struct IconsetItem {
             QRegularExpression regexp;
-            QString iconset;
+            QString            iconset;
         };
         bool               useServicesIcons = false;
         QList<IconsetItem> list;
@@ -185,7 +185,8 @@ public:
         // second level -- transport icon
         if (jid.node().isEmpty() || status_icons.useServicesIcons) {
             for (const StatusIconsets::IconsetItem &item : std::as_const(status_icons.list)) {
-                if (item.regexp.pattern().isEmpty() ? jid.node().isEmpty() : (item.regexp.match(jid.domain()).hasMatch())) {
+                if (item.regexp.pattern().isEmpty() ? jid.node().isEmpty()
+                                                    : (item.regexp.match(jid.domain()).hasMatch())) {
                     const Iconset *is = psi->roster.value(item.iconset);
                     if (is) {
                         PsiIcon *i = const_cast<PsiIcon *>(is->icon(iconName));
@@ -809,7 +810,7 @@ PsiIcon *PsiIconset::event2icon(const PsiEvent::Ptr &e)
     QString icon;
     if (e->type() == PsiEvent::Message) {
         MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-        const Message &   m  = me->message();
+        const Message    &m  = me->message();
         if (m.type() == "headline")
             icon = "psi/headline";
         else if (m.type() == "chat" || m.type() == "groupchat")

@@ -45,7 +45,7 @@ class IconLabel::Private : public QObject {
 
 public:
     IconLabel *label;
-    PsiIcon *  icon;
+    PsiIcon   *icon;
     bool       copyIcon;
 #ifdef WIDGET_PLUGIN
     QString iconName;
@@ -240,7 +240,7 @@ public:
 class FancyLabel::Private : public QObject {
 public:
     MyFancyFrame *frame;
-    IconLabel *   text, *help, *pix;
+    IconLabel    *text, *help, *pix;
     QColor        from, to, font;
     QString       textStr, helpStr;
     static int    smallFontSize;

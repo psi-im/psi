@@ -41,7 +41,7 @@ public:
     ~InfoWidget();
     bool        aboutToClose(); /* call this when you are going to close parent dialog */
     PsiAccount *account() const;
-    const Jid & jid() const;
+    const Jid  &jid() const;
 
 protected:
     // reimplemented

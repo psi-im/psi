@@ -288,7 +288,7 @@ bool ContactListDragView::supportsDropOnIndex(QDropEvent *e, const QModelIndex &
     }
 
     ContactListModelSelection selection(e->mimeData());
-    ContactListDragModel *    model = qobject_cast<ContactListDragModel *>(realModel());
+    ContactListDragModel     *model = qobject_cast<ContactListDragModel *>(realModel());
     if (!selection.haveRosterSelection())
         model = nullptr;
 
@@ -396,9 +396,9 @@ void ContactListDragView::dropEvent(QDropEvent *e)
     viewport()->update();
 }
 
-QAbstractItemView::DropIndicatorPosition ContactListDragView::dropPosition(QDropEvent *                     e,
+QAbstractItemView::DropIndicatorPosition ContactListDragView::dropPosition(QDropEvent                      *e,
                                                                            const ContactListModelSelection &selection,
-                                                                           const QModelIndex &              index) const
+                                                                           const QModelIndex               &index) const
 {
     if ((selection.groups().count() > 0 || selection.accounts().count() > 0) && selection.contacts().count() == 0) {
         // TODO: return OnItem in case the special modifiers are pressed
@@ -474,7 +474,7 @@ void ContactListDragView::reorderGroups(QDropEvent *e, const QModelIndex &index)
 }
 
 QModelIndex ContactListDragView::itemToReorderGroup(const ContactListModelSelection &selection,
-                                                    const QModelIndex &              index) const
+                                                    const QModelIndex               &index) const
 {
     ContactListDragModel *model = qobject_cast<ContactListDragModel *>(realModel());
     Q_ASSERT(model);
@@ -520,7 +520,7 @@ QModelIndex ContactListDragView::itemToReorderGroup(const ContactListModelSelect
 
 QRect ContactListDragView::groupReorderDropRect(DropIndicatorPosition            dropIndicatorPosition,
                                                 const ContactListModelSelection &selection,
-                                                const QModelIndex &              index) const
+                                                const QModelIndex               &index) const
 {
     QModelIndex group = itemToReorderGroup(selection, index);
     QRect       r(groupVisualRect(group));
@@ -625,7 +625,7 @@ void ContactListDragView::removeSelection()
     QList<PsiContact *> contacts;
     QStringList         contactNames;
 
-    QMimeData *     mimeData = selection();
+    QMimeData      *mimeData = selection();
     QModelIndexList indexes  = qobject_cast<ContactListDragModel *>(realModel())->indexesFor(mimeData);
     delete mimeData;
 

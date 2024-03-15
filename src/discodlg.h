@@ -20,8 +20,8 @@
 #ifndef DISCODLG_H
 #define DISCODLG_H
 
-#include "ui_disco.h"
 #include "iris/xmpp_jid.h"
+#include "ui_disco.h"
 
 #include <QDialog>
 

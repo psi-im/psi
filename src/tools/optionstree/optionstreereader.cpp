@@ -121,7 +121,7 @@ QStringList OptionsTreeReader::readStringList()
             break;
 
         if (isStartElement()) {
-            if (name() == QLatin1String{"item"}) {
+            if (name() == QLatin1String { "item" }) {
                 list << readElementText();
             }
         }
@@ -139,7 +139,7 @@ QVariantList OptionsTreeReader::readVariantList()
             break;
 
         if (isStartElement()) {
-            if (name() == QLatin1String{"item"}) {
+            if (name() == QLatin1String { "item" }) {
                 list << readVariant(attributes().value("type").toString());
             }
         }
@@ -157,9 +157,9 @@ QSize OptionsTreeReader::readSize()
             break;
 
         if (isStartElement()) {
-            if (name() == QLatin1String{"width"}) {
+            if (name() == QLatin1String { "width" }) {
                 width = readElementText().toInt();
-            } else if (name() == QLatin1String{"height"}) {
+            } else if (name() == QLatin1String { "height" }) {
                 height = readElementText().toInt();
             }
         }
@@ -177,13 +177,13 @@ QRect OptionsTreeReader::readRect()
             break;
 
         if (isStartElement()) {
-            if (name() == QLatin1String{"width"}) {
+            if (name() == QLatin1String { "width" }) {
                 width = readElementText().toInt();
-            } else if (name() == QLatin1String{"height"}) {
+            } else if (name() == QLatin1String { "height" }) {
                 height = readElementText().toInt();
-            } else if (name() == QLatin1String{"x"}) {
+            } else if (name() == QLatin1String { "x" }) {
                 x = readElementText().toInt();
-            } else if (name() == QLatin1String{"y"}) {
+            } else if (name() == QLatin1String { "y" }) {
                 y = readElementText().toInt();
             }
         }

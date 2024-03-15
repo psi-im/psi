@@ -207,9 +207,9 @@ public:
 
         if (option.state & QStyle::State_HasFocus) {
             QStyleOptionFocusRect o;
-            o.QStyleOption::      operator=(option);
-            QRect                 r       = option.rect;
-            QPoint                margin(1, 1);
+            o.QStyleOption::operator=(option);
+            QRect  r = option.rect;
+            QPoint margin(1, 1);
             o.rect = QRect(r.topLeft() + margin, r.bottomRight() - margin);
             o.state |= QStyle::State_KeyboardFocusChange;
             o.backgroundColor = option.palette.color(
@@ -520,7 +520,7 @@ void IconsetDisplay::setIconset(const Iconset &iconset)
 class IconButton::Private : public QObject {
     Q_OBJECT
 public:
-    PsiIcon *   icon;
+    PsiIcon    *icon;
     IconButton *button;
     bool        textVisible;
     bool        activate, forced;
@@ -673,7 +673,7 @@ void IconButton::setTextVisible(bool v)
 class IconToolButton::Private : public QObject {
     Q_OBJECT
 public:
-    PsiIcon *       icon;
+    PsiIcon        *icon;
     IconToolButton *button;
     bool            activate;
 #ifdef WIDGET_PLUGIN

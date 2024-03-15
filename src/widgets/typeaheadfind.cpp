@@ -125,8 +125,8 @@ public:
     WebView *wv;
 #endif
     QLineEdit *le_find;
-    QAction *  act_prev;
-    QAction *  act_next;
+    QAction   *act_prev;
+    QAction   *act_next;
     QCheckBox *cb_case;
 };
 

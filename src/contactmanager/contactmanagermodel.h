@@ -71,7 +71,7 @@ public:
     void stopBatch() { emit layoutChanged(); }
 
 private:
-    PsiAccount *          pa_;
+    PsiAccount           *pa_;
     QList<UserListItem *> _userList;
     QStringList           columnNames;
     QList<Role>           roles;

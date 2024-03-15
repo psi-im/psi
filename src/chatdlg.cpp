@@ -36,6 +36,9 @@
 #ifdef PSI_PLUGINS
 #include "pluginmanager.h"
 #endif
+#include "iris/xmpp_caps.h"
+#include "iris/xmpp_htmlelement.h"
+#include "iris/xmpp_message.h"
 #include "psiaccount.h"
 #include "psichatdlg.h"
 #include "psicon.h"
@@ -47,9 +50,6 @@
 #include "tabdlg.h"
 #include "textutil.h"
 #include "userlist.h"
-#include "iris/xmpp_caps.h"
-#include "iris/xmpp_htmlelement.h"
-#include "iris/xmpp_message.h"
 
 #include <QCloseEvent>
 #include <QColor>
@@ -668,9 +668,9 @@ void ChatDlg::doSend()
     if (warnSend_) {
         warnSend_ = false;
         int n     = QMessageBox::information(this, tr("Warning"),
-                                         tr("<p>Encryption was recently disabled by the remote contact.  "
-                                            "Are you sure you want to send this message without encryption?</p>"),
-                                         QMessageBox::Yes | QMessageBox::No);
+                                             tr("<p>Encryption was recently disabled by the remote contact.  "
+                                                    "Are you sure you want to send this message without encryption?</p>"),
+                                             QMessageBox::Yes | QMessageBox::No);
         if (n != 0) {
             return;
         }

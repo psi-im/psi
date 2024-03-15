@@ -20,13 +20,13 @@
 #include "mucconfigdlg.h"
 
 #include "infodlg.h"
+#include "iris/xmpp_vcard.h"
 #include "mucaffiliationsmodel.h"
 #include "mucaffiliationsproxymodel.h"
 #include "mucmanager.h"
 #include "psiaccount.h"
 #include "vcardfactory.h"
 #include "xdata_widget.h"
-#include "iris/xmpp_vcard.h"
 
 #include <QInputDialog>
 #include <QMap>

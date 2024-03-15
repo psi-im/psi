@@ -36,8 +36,8 @@ public:
         Entry(Activity::Type, Activity::SpecificType, const QString &, const QString &);
         Activity::Type         type() const;
         Activity::SpecificType specificType() const;
-        const QString &        value() const;
-        const QString &        text() const;
+        const QString         &value() const;
+        const QString         &text() const;
         bool                   isNull() const;
 
     private:
