@@ -330,7 +330,7 @@ void OptionsDlgBase::Private::openTab(const QString &id)
 
                 QVBoxLayout *vbox = new QVBoxLayout(w);
                 vbox->setSpacing(0);
-                vbox->setMargin(0);
+                vbox->setContentsMargins(0, 0, 0, 0);
 
                 tab->setParent(w);
                 vbox->addWidget(tab);

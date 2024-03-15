@@ -147,7 +147,7 @@ RegistrationDlg::RegistrationDlg(const Jid &jid, PsiAccount *pa) : QDialog(nullp
     setWindowTitle(tr("Registration: %1").arg(d->jid.full()));
 
     QVBoxLayout *vb1 = new QVBoxLayout(this);
-    vb1->setMargin(4);
+    vb1->setContentsMargins(4, 4, 4, 4);
     d->lb_top = new QLabel(this);
     d->lb_top->setWordWrap(true);
     d->lb_top->setFrameStyle(QFrame::Panel | QFrame::Sunken);

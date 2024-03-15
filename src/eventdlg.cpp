@@ -602,7 +602,7 @@ EventDlg::~EventDlg()
 void EventDlg::init()
 {
     QVBoxLayout *vb1 = new QVBoxLayout(this);
-    vb1->setMargin(4);
+    vb1->setContentsMargins(4, 4, 4, 4);
     vb1->setSpacing(4);
 
     // first row
@@ -775,7 +775,7 @@ void EventDlg::init()
     // http auth transaction id
     d->w_http_id            = new QWidget(this);
     QHBoxLayout *hb_http_id = new QHBoxLayout(d->w_http_id);
-    hb_http_id->setMargin(0);
+    hb_http_id->setContentsMargins(0, 0, 0, 0);
     hb_http_id->setSpacing(4);
     d->le_http_id = new QLineEdit(d->w_http_id);
     l             = new QLabel(tr("Transaction &identifier:"), d->w_http_id);

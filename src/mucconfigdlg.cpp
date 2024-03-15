@@ -43,7 +43,7 @@ MUCConfigDlg::MUCConfigDlg(MUCManager *manager, QWidget *parent) : QDialog(paren
     setModal(false);
 
     QVBoxLayout *data_layout = new QVBoxLayout(ui_.pg_general_data);
-    data_layout->setMargin(0);
+    data_layout->setContentsMargins(0, 0, 0, 0);
 
     data_container_ = new QScrollArea(ui_.pg_general_data);
     data_layout->addWidget(data_container_);

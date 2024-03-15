@@ -490,7 +490,7 @@ FileRequestDlg::FileRequestDlg(const Jid &jid, PsiCon *psi, PsiAccount *pa, cons
 
     QFrame *     hb       = new QFrame(this);
     QHBoxLayout *hbLayout = new QHBoxLayout(hb);
-    hbLayout->setMargin(0);
+    hbLayout->setContentsMargins(0, 0, 0, 0);
     d->lb_identity = new QLabel(tr("Identity: "), hb);
     hbLayout->addWidget(d->lb_identity);
     d->cb_ident = d->psi->accountsComboBox(hb);
@@ -577,7 +577,7 @@ FileRequestDlg::FileRequestDlg(const QDateTime &ts, FileTransfer *ft, PsiAccount
     d->cb_ident           = nullptr;
     QFrame *     hb       = new QFrame(this);
     QHBoxLayout *hbLayout = new QHBoxLayout(hb);
-    hbLayout->setMargin(0);
+    hbLayout->setContentsMargins(0, 0, 0, 0);
     d->lb_identity = new QLabel(tr("Identity: "), hb);
     hbLayout->addWidget(d->lb_identity);
     d->lb_ident = new AccountLabel(hb);

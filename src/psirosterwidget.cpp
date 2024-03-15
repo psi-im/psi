@@ -106,7 +106,7 @@ PsiRosterWidget::PsiRosterWidget(QWidget *parent) :
     contactListPageView_(nullptr), filterPageView_(nullptr), contactListModel_(nullptr), filterModel_(nullptr)
 {
     QVBoxLayout *layout = new QVBoxLayout(this);
-    layout->setMargin(0);
+    layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
     stackedWidget_ = new QStackedWidget(this);
@@ -119,7 +119,7 @@ PsiRosterWidget::PsiRosterWidget(QWidget *parent) :
     stackedWidget_->addWidget(contactListPage_);
 
     QVBoxLayout *contactListPageLayout = new QVBoxLayout(contactListPage_);
-    contactListPageLayout->setMargin(0);
+    contactListPageLayout->setContentsMargins(0, 0, 0, 0);
     contactListPageView_ = new PsiContactListView(contactListPage_);
     contactListPageView_->installEventFilter(this);
     contactListPageView_->setObjectName("contactListView");
@@ -132,7 +132,7 @@ PsiRosterWidget::PsiRosterWidget(QWidget *parent) :
     stackedWidget_->addWidget(filterPage_);
 
     QVBoxLayout *filterPageLayout = new QVBoxLayout(filterPage_);
-    filterPageLayout->setMargin(0);
+    filterPageLayout->setContentsMargins(0, 0, 0, 0);
     filterPageLayout->setSpacing(0);
 
     filterEdit_          = new ActionLineEdit(filterPage_);

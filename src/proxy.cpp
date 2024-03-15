@@ -338,7 +338,7 @@ ProxyChooser::ProxyChooser(ProxyManager *m, QWidget *parent) : QWidget(parent)
     d->m = m;
     connect(m, SIGNAL(settingsChanged()), SLOT(pm_settingsChanged()));
     QHBoxLayout *hb = new QHBoxLayout(this);
-    hb->setMargin(0);
+    hb->setContentsMargins(0, 0, 0, 0);
     hb->setSpacing(4);
     d->cb_proxy = new QComboBox(this);
     d->cb_proxy->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, d->cb_proxy->sizePolicy().verticalPolicy()));

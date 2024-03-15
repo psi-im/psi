@@ -53,7 +53,7 @@ StatusShowDlg::StatusShowDlg(const UserListItem &u) : QDialog(nullptr)
     setAttribute(Qt::WA_DeleteOnClose);
     // build the dialog
     QVBoxLayout *vb = new QVBoxLayout(this);
-    vb->setMargin(8);
+    vb->setContentsMargins(8, 8, 8, 8);
     PsiTextView *te = new PsiTextView(this);
     vb->addWidget(te);
     QHBoxLayout *hb = new QHBoxLayout;
@@ -150,7 +150,7 @@ void StatusSetDlg::init()
 
     // build the dialog
     QVBoxLayout *vb = new QVBoxLayout(this);
-    vb->setMargin(8);
+    vb->setContentsMargins(8, 8, 8, 8);
     QHBoxLayout *hb1 = new QHBoxLayout;
     vb->addLayout(hb1);
 

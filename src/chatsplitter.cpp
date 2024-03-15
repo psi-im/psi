@@ -127,7 +127,7 @@ void ChatSplitter::updateLayout()
     delete layout_;
     splitter_ = new QSplitter(this);
     layout_   = new QVBoxLayout(this);
-    layout_->setMargin(0);
+    layout_->setContentsMargins(0, 0, 0, 0);
     layout_->addWidget(splitter_);
     splitter_->setOrientation(Qt::Vertical);
     splitter_->setVisible(splitterEnabled());

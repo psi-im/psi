@@ -103,7 +103,7 @@ void WbScene::ungroup()
             if (group.nodeName() == "g") {
                 QDomNodeList children = group.childNodes();
 
-                QMatrix groupTransform = WbItem::parseSvgTransform(group.attribute("transform"));
+                QTransform groupTransform = WbItem::parseSvgTransform(group.attribute("transform"));
 
                 for (int i = children.size() - 1; i >= 0; i--) {
                     QDomElement child = children.at(i).toElement();
@@ -111,7 +111,7 @@ void WbScene::ungroup()
 
                         if (!groupTransform.isIdentity()) {
                             // combine the transformations of the group and the child
-                            QMatrix childTransform = WbItem::parseSvgTransform(child.attribute("transform"));
+                            QTransform childTransform = WbItem::parseSvgTransform(child.attribute("transform"));
                             session_->setAttribute(child, "transform",
                                                    WbItem::toSvgTransform(childTransform * groupTransform));
                         }

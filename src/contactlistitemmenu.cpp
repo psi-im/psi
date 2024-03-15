@@ -45,7 +45,7 @@ ContactListItemMenu::ContactListItemMenu(ContactListItem *item, ContactListModel
         _lblTitle->setPalette(palette);
         _lblTitle->setAutoFillBackground(true);
         _lblTitle->setAlignment(Qt::AlignCenter);
-        _lblTitle->setMargin(6);
+        _lblTitle->setContentsMargins(6, 6, 6, 6);
         _lblTitle->setFont(font);
 
         QWidgetAction *waContextMenuTitle = new QWidgetAction(this);

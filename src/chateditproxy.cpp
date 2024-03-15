@@ -30,7 +30,7 @@ ChatEditProxy::ChatEditProxy(QWidget *parent) :
     QWidget(parent), lineEditEnabled_(false), textEdit_(nullptr), layout_(nullptr)
 {
     layout_ = new QVBoxLayout(this);
-    layout_->setMargin(0);
+    layout_->setContentsMargins(0, 0, 0, 0);
     layout_->setSpacing(0);
 
     connect(PsiOptions::instance(), &PsiOptions::optionChanged, this, &ChatEditProxy::optionsChanged);

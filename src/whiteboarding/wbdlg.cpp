@@ -24,10 +24,12 @@
 #include "wbdlg.h"
 
 #include "accountlabel.h"
+#include "iconaction.h"
 #include "iconset.h"
 #include "psiaccount.h"
 #include "stretchwidget.h"
 
+#include <QActionGroup>
 #include <QColorDialog>
 #include <QHBoxLayout>
 #include <QMessageBox>

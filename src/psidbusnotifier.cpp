@@ -67,7 +67,8 @@ public:
 #endif
     }
     iiibiiay() { }
-    static const int id;
+    static const decltype(qDBusRegisterMetaType<iiibiiay>()) id;
+
     int              width;
     int              height;
     int              rowstride;
@@ -78,7 +79,7 @@ public:
 };
 Q_DECLARE_METATYPE(iiibiiay)
 
-const int iiibiiay::id(qDBusRegisterMetaType<iiibiiay>());
+const decltype(qDBusRegisterMetaType<iiibiiay>()) iiibiiay::id{qDBusRegisterMetaType<iiibiiay>()};
 
 QDBusArgument &operator<<(QDBusArgument &a, const iiibiiay &i)
 {

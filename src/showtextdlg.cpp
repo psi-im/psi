@@ -42,7 +42,7 @@ ShowTextDlg::ShowTextDlg(const QString &fname, bool rich, QWidget *parent) : QDi
     }
 
     QVBoxLayout *vb1 = new QVBoxLayout(this);
-    vb1->setMargin(8);
+    vb1->setContentsMargins(8, 8, 8, 8);
     QTextEdit *te = new QTextEdit(this);
     te->setReadOnly(true);
     te->setAcceptRichText(rich);
@@ -71,7 +71,7 @@ ShowTextDlg::ShowTextDlg(const QString &text, bool nonfile, bool rich, QWidget *
     setAttribute(Qt::WA_DeleteOnClose);
 
     QVBoxLayout *vb1 = new QVBoxLayout(this);
-    vb1->setMargin(8);
+    vb1->setContentsMargins(8, 8, 8, 8);
     QTextEdit *te = new QTextEdit(this);
     te->setReadOnly(true);
     te->setAcceptRichText(rich);

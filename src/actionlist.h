@@ -22,10 +22,10 @@
 
 #include <QList>
 #include <QObject>
+#include <QStringList>
 
 class IconAction;
 class QString;
-class QStringList;
 
 class ActionList : public QObject {
     Q_OBJECT

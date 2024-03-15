@@ -28,8 +28,8 @@
 RosterAvatarFrame::RosterAvatarFrame(QWidget *parent) : QFrame(parent), statusMessage_("")
 {
     ui_.setupUi(this);
-    layout()->setMargin(
-        PsiOptions::instance()->getOption("options.ui.contactlist.roster-avatar-frame.avatar.margin").toInt());
+    auto margin = PsiOptions::instance()->getOption("options.ui.contactlist.roster-avatar-frame.avatar.margin").toInt();
+    layout()->setContentsMargins(margin, margin, margin, margin);
     layout()->setSpacing(0);
     setMoodIcon("pep/mood");
     setActivityIcon("pep/activities");
@@ -142,9 +142,10 @@ void RosterAvatarFrame::optionChanged(QString option)
         drawAvatar();
     else if (option == "options.ui.look.font.contactlist")
         setFont();
-    else if (option == "options.ui.contactlist.roster-avatar-frame.avatar.margin")
-        layout()->setMargin(PsiOptions::instance()->getOption(option).toInt());
-    else if (option == "options.extended-presence.tune.publish") {
+    else if (option == "options.ui.contactlist.roster-avatar-frame.avatar.margin") {
+        auto margin = PsiOptions::instance()->getOption(option).toInt();
+        layout()->setContentsMargins(margin, margin, margin, margin);
+    } else if (option == "options.extended-presence.tune.publish") {
         bool publishingEnabled = PsiOptions::instance()->getOption(option).toBool();
         ui_.tb_tune->setChecked(publishingEnabled);
     }

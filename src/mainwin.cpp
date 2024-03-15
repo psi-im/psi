@@ -366,7 +366,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
 #endif
     QMenu *viewMenu = new QMenu(tr("View"), this);
 
-    d->vb_roster->setMargin(layoutMargin);
+    d->vb_roster->setContentsMargins(layoutMargin, layoutMargin, layoutMargin, layoutMargin);
     d->vb_roster->setSpacing(layoutMargin);
 
     if (d->allInOne) {

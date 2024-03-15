@@ -116,7 +116,7 @@ TabDlg::TabDlg(TabManager *tabManager, const QString &geometryOption, TabDlgDele
         delegate_->tabWidgetCreated(this, tabWidget_);
 
     QVBoxLayout *vert1 = new QVBoxLayout(this);
-    vert1->setMargin(1);
+    vert1->setContentsMargins(1, 1, 1, 1);
     vert1->addWidget(tabWidget_);
 
     setAcceptDrops(true);
@@ -254,7 +254,7 @@ void TabDlg::tab_aboutToShowMenu(QMenu *menu)
     int tabDlgMetaType = qRegisterMetaType<TabDlg *>("TabDlg*");
     for (TabDlg *tabSet : tabManager_->tabSets()) {
         QAction *act = sendTo->addAction(tabSet->desiredCaption());
-        act->setData(QVariant(tabDlgMetaType, &tabSet));
+        act->setData(QVariant(QMetaType(tabDlgMetaType), &tabSet));
         act->setEnabled(tabSet != this);
     }
     connect(sendTo, SIGNAL(triggered(QAction *)), SLOT(menu_sendTabTo(QAction *)));

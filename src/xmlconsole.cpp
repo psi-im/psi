@@ -181,7 +181,7 @@ XmlPrompt::XmlPrompt(QWidget *parent) : QDialog(parent)
     setWindowTitle(tr("XML Input"));
 
     QVBoxLayout *vb1 = new QVBoxLayout(this);
-    vb1->setMargin(8);
+    vb1->setContentsMargins(8, 8, 8, 8);
 
     te = new QTextEdit(this);
     te->setAcceptRichText(false);

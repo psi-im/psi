@@ -25,7 +25,7 @@ ShowPhotoDlg::ShowPhotoDlg(QWidget *parent, QPixmap &pixmap) : QDialog(parent), 
     toolbar             = new QToolBar(this);
     toolbar->setToolButtonStyle(Qt::ToolButtonIconOnly);
     layout->setSpacing(0);
-    layout->setMargin(0);
+    layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(toolbar);
     layout->addWidget(label);
 

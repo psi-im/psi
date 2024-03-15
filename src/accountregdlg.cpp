@@ -79,7 +79,7 @@ AccountRegDlg::AccountRegDlg(PsiCon *psi, QWidget *parent) : QDialog(parent), ps
 
     // Fields pane
     QVBoxLayout *fields_layout = new QVBoxLayout(ui_.page_fields);
-    fields_layout->setMargin(0);
+    fields_layout->setContentsMargins(0, 0, 0, 0);
     fields_container_ = new QScrollArea(ui_.page_fields);
     fields_layout->addWidget(fields_container_);
     fields_container_->setWidgetResizable(true);

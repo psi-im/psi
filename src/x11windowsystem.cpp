@@ -1,55 +1,26 @@
 #include "x11windowsystem.h"
 
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
 #include <QX11Info>
+#else
+#include <QGuiApplication>
+#endif
 #include <X11/Xlib.h>
 #include <X11/Xutil.h> // needed for WM_CLASS hinting
 
 const long       MAX_PROP_SIZE              = 100000;
 X11WindowSystem *X11WindowSystem::_instance = nullptr;
 
-bool X11WindowSystem::isValid() const {
-    return QX11Info::isPlatformX11();
-}
 
-void X11WindowSystem::x11wmClass(WId wid, QString resName)
-{
-#if defined(LIMIT_X11_USAGE)
-    return;
+namespace {
+
+bool isPlatformX11() {
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+    return QX11Info::isPlatformX11());
+#else
+    auto x11app = qApp->nativeInterface<QNativeInterface::QX11Application>();
+    return !!x11app;
 #endif
-
-    if (!QX11Info::isPlatformX11()) // Avoid crashes if launched in Wayland
-        return;
-
-    // Display *dsp = x11Display();                 // get the display
-    // WId win = winId();                           // get the window
-    XClassHint classhint; // class hints
-    // Get old class hint. It is important to save old class name
-    XGetClassHint(QX11Info::display(), wid, &classhint);
-    XFree(classhint.res_name);
-
-    const QByteArray latinResName = resName.toLatin1();
-    classhint.res_name            = const_cast<char *>(latinResName.data()); // res_name
-    XSetClassHint(QX11Info::display(), wid, &classhint);                     // set the class hints
-
-    XFree(classhint.res_class);
-}
-
-void X11WindowSystem::bringToFront(QWidget *w)
-{
-    if (QX11Info::isPlatformX11()) {
-        // If we're not on the current desktop, do the hide/show trick
-        long   dsk, curr_dsk;
-        Window win = w->winId();
-        if (X11WindowSystem::instance()->desktopOfWindow(&win, &dsk)
-            && X11WindowSystem::instance()->currentDesktop(&curr_dsk)) {
-            // qDebug() << "bringToFront current desktop=" << curr_dsk << " windowDesktop=" << dsk;
-            if ((dsk != curr_dsk) && (dsk != -1)) { // second condition for sticky windows
-                w->hide();
-            }
-        }
-    }
-
-    // FIXME: multi-desktop hacks for Win and Mac required
 }
 
 //>>>-- Nathaniel Gray -- Caltech Computer Science ------>
@@ -63,7 +34,7 @@ static bool getCardinal32Prop(Display *display, Window win, char *propName, long
     return false;
 #endif
 
-    if (!QX11Info::isPlatformX11()) // Avoid crashes if launched in Wayland
+    if (!isPlatformX11()) // Avoid crashes if launched in Wayland
         return false;
 
     Atom          nameAtom, typeAtom, actual_type_return;
@@ -78,7 +49,7 @@ static bool getCardinal32Prop(Display *display, Window win, char *propName, long
         return false;
     }
 
-    // Try to get the property
+           // Try to get the property
     result
         = XGetWindowProperty(display, win, nameAtom, 0, 1, False, typeAtom, &actual_type_return, &actual_format_return,
                              &nitems_return, &bytes_after_return, reinterpret_cast<unsigned char **>(&result_array));
@@ -99,10 +70,75 @@ static bool getCardinal32Prop(Display *display, Window win, char *propName, long
     return true;
 }
 
+auto getDisplay() {
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+    return QX11Info::display());
+#else
+    auto x11app = qApp->nativeInterface<QNativeInterface::QX11Application>();
+    return x11app->display();
+#endif
+}
+
+auto getRootWindow() {
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+    return QX11Info::appRootWindow();
+#else
+    auto x11app = qApp->nativeInterface<QNativeInterface::QX11Application>();
+    return DefaultRootWindow(x11app->display());
+#endif
+}
+
+}
+
+bool X11WindowSystem::isValid() const {
+    return ::isPlatformX11();
+}
+
+void X11WindowSystem::x11wmClass(WId wid, QString resName)
+{
+#if defined(LIMIT_X11_USAGE)
+    return;
+#endif
+
+    if (!isValid()) // Avoid crashes if launched in Wayland
+        return;
+
+    Display *dsp = getDisplay();                 // get the display
+    // WId win = winId();                           // get the window
+    XClassHint classhint; // class hints
+    // Get old class hint. It is important to save old class name
+    XGetClassHint(dsp, wid, &classhint);
+    XFree(classhint.res_name);
+
+    const QByteArray latinResName = resName.toLatin1();
+    classhint.res_name            = const_cast<char *>(latinResName.data()); // res_name
+    XSetClassHint(dsp, wid, &classhint);                     // set the class hints
+
+    XFree(classhint.res_class);
+}
+
+void X11WindowSystem::bringToFront(QWidget *w)
+{
+    if (isValid()) {
+        // If we're not on the current desktop, do the hide/show trick
+        long   dsk, curr_dsk;
+        Window win = w->winId();
+        if (X11WindowSystem::instance()->desktopOfWindow(&win, &dsk)
+            && X11WindowSystem::instance()->currentDesktop(&curr_dsk)) {
+            // qDebug() << "bringToFront current desktop=" << curr_dsk << " windowDesktop=" << dsk;
+            if ((dsk != curr_dsk) && (dsk != -1)) { // second condition for sticky windows
+                w->hide();
+            }
+        }
+    }
+
+    // FIXME: multi-desktop hacks for Win and Mac required
+}
+
 // Get the desktop number that a window is on
 bool X11WindowSystem::desktopOfWindow(Window *window, long *desktop)
 {
-    Display *display = QX11Info::display();
+    Display *display = getDisplay();
     bool     result  = getCardinal32Prop(display, *window, const_cast<char *>("_NET_WM_DESKTOP"), desktop);
     // if( result )
     //    qDebug("Desktop: " + QString::number(*desktop));
@@ -113,10 +149,10 @@ bool X11WindowSystem::desktopOfWindow(Window *window, long *desktop)
 bool X11WindowSystem::currentDesktop(long *desktop)
 {
     Window   rootWin;
-    Display *display = QX11Info::display();
+    Display *display = getDisplay();
     bool     result;
 
-    rootWin = RootWindow(QX11Info::display(), XDefaultScreen(QX11Info::display()));
+    rootWin = RootWindow(display, XDefaultScreen(display));
     result  = getCardinal32Prop(display, rootWin, const_cast<char *>("_NET_CURRENT_DESKTOP"), desktop);
     // if( result )
     //    qDebug("Current Desktop: " + QString::number(*desktop));
@@ -156,7 +192,7 @@ X11WindowSystem::X11WindowSystem()
         atoms[i] = 0;
 
 #if !defined(LIMIT_X11_USAGE)
-    XInternAtoms(QX11Info::display(), const_cast<char **>(names), atomsCount, true, atoms);
+    XInternAtoms(getDisplay(), const_cast<char **>(names), atomsCount, true, atoms);
 #endif
 
     i = atomsCount;
@@ -191,8 +227,9 @@ QRect X11WindowSystem::windowRect(Window win)
     Window       w_unused;
     int          x, y;
     unsigned int w, h, junk;
-    XGetGeometry(QX11Info::display(), win, &w_unused, &x, &y, &w, &h, &junk, &junk);
-    XTranslateCoordinates(QX11Info::display(), win, QX11Info::appRootWindow(), 0, 0, &x, &y, &w_unused);
+    Display *display = getDisplay();
+    XGetGeometry(display, win, &w_unused, &x, &y, &w, &h, &junk, &junk);
+    XTranslateCoordinates(display, win, getRootWindow(), 0, 0, &x, &y, &w_unused);
 
     Atom           type_ret;
     int            format_ret;
@@ -200,7 +237,7 @@ QRect X11WindowSystem::windowRect(Window win)
     unsigned long  nitems_ret, unused;
     const Atom     XA_CARDINAL = Atom(6);
     if (net_frame_extents != None
-        && XGetWindowProperty(QX11Info::display(), win, net_frame_extents, 0l, 4l, False, XA_CARDINAL, &type_ret,
+        && XGetWindowProperty(display, win, net_frame_extents, 0l, 4l, False, XA_CARDINAL, &type_ret,
                               &format_ret, &nitems_ret, &unused, &data_ret)
             == Success) {
         if (type_ret == XA_CARDINAL && format_ret == 32 && nitems_ret == 4) {
@@ -221,6 +258,7 @@ QRect X11WindowSystem::windowRect(Window win)
 // Determine if window is obscured by other windows
 bool X11WindowSystem::isWindowObscured(QWidget *widget, bool alwaysOnTop)
 {
+    Display *display = getDisplay();
     if (net_wm_state_above != None) {
         if (!alwaysOnTop)
             ignoredWindowStates.insert(net_wm_state_above);
@@ -243,7 +281,7 @@ bool X11WindowSystem::isWindowObscured(QWidget *widget, bool alwaysOnTop)
 
     if (net_client_list_stacking != None) {
         QRect winRect = windowRect(win);
-        if (XGetWindowProperty(QX11Info::display(), QX11Info::appRootWindow(), net_client_list_stacking, 0,
+        if (XGetWindowProperty(display, getRootWindow(), net_client_list_stacking, 0,
                                MAX_PROP_SIZE, False, XA_WINDOW, &type_ret, &format_ret, &nitems_ret, &unused, &data_ret)
             == Success) {
             if (type_ret == XA_WINDOW && format_ret == 32) {
@@ -291,9 +329,10 @@ bool X11WindowSystem::windowHasOnlyTypes(Window win, const QSet<Atom> &allowedTy
     int            format_ret;
     unsigned char *data_ret;
     unsigned long  nitems_ret, unused;
+    Display *display = getDisplay();
 
     if (net_wm_window_type != None
-        && XGetWindowProperty(QX11Info::display(), win, net_wm_window_type, 0l, 2048l, False, XA_ATOM, &type_ret,
+        && XGetWindowProperty(display, win, net_wm_window_type, 0l, 2048l, False, XA_ATOM, &type_ret,
                               &format_ret, &nitems_ret, &unused, &data_ret)
             == Success) {
         if (type_ret == XA_ATOM && format_ret == 32 && nitems_ret > 0) {
@@ -319,8 +358,10 @@ bool X11WindowSystem::windowHasAnyOfStates(Window win, const QSet<Atom> &filtere
     int            format_ret;
     unsigned char *data_ret;
     unsigned long  nitems_ret, unused;
+    Display *display = getDisplay();
+
     if (net_wm_state != None
-        && XGetWindowProperty(QX11Info::display(), win, net_wm_state, 0l, 2048l, False, XA_ATOM, &type_ret, &format_ret,
+        && XGetWindowProperty(display, win, net_wm_state, 0l, 2048l, False, XA_ATOM, &type_ret, &format_ret,
                               &nitems_ret, &unused, &data_ret)
             == Success) {
         if (type_ret == XA_ATOM && format_ret == 32 && nitems_ret > 0) {

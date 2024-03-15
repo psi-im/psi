@@ -22,7 +22,7 @@ QWidget *OptionsTabTree::widget()
 
     QVBoxLayout *layout = new QVBoxLayout(w);
     // layout->setSpacing(0);
-    layout->setMargin(0);
+    layout->setContentsMargins(0, 0, 0, 0);
 
     QLabel *lb = new QLabel(tr("Please note: This editor will change the options "
                                "directly. Pressing Cancel will not revert these changes."),

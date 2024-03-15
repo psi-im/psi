@@ -141,7 +141,7 @@ void OptionsTabWidget::updateCurrent(int index)
     QWidget *w = currentWidget();
     if (!w2tab[w].initialized) {
         QVBoxLayout *vbox = new QVBoxLayout(w);
-        vbox->setMargin(5);
+        vbox->setContentsMargins(5, 5, 5, 5);
         OptionsTab *opttab = w2tab[w].tab;
 
         QWidget *tab = opttab->widget();
