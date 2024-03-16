@@ -21,6 +21,7 @@
 #define OPTIONSTREE_H
 
 #include "varianttree.h"
+#include <optional>
 
 /**
  * \class OptionsTree
