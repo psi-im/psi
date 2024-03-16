@@ -146,11 +146,13 @@ void StatusPreset::toOptions(OptionsTree *o)
 
 void StatusPreset::fromOptions(OptionsTree *o, QString name)
 {
-    QString path       = o->mapLookup("options.status.presets", name);
-    name_              = name;
-    bool forcePriority = o->getOption(path + ".force-priority").toBool();
-    message_           = o->getOption(path + ".message").toString();
-    status_            = XMPP::Status::txt2type(o->getOption(path + ".status").toString());
-    if (forcePriority)
-        priority_ = o->getOption(path + ".priority").toInt();
+    auto path = o->mapLookup("options.status.presets", name);
+    if (path) {
+        name_              = name;
+        bool forcePriority = o->getOption(*path + ".force-priority").toBool();
+        message_           = o->getOption(*path + ".message").toString();
+        status_            = XMPP::Status::txt2type(o->getOption(*path + ".status").toString());
+        if (forcePriority)
+            priority_ = o->getOption(*path + ".priority").toInt();
+    }
 }

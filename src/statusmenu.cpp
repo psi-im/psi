@@ -164,7 +164,7 @@ void StatusMenu::presetActivated()
     QAction     *action = static_cast<QAction *>(sender());
     QString      name   = action->property("preset").toString();
     PsiOptions  *o      = PsiOptions::instance();
-    QString      base   = o->mapLookup("options.status.presets", name);
+    QString      base   = *o->mapLookup("options.status.presets", name);
     XMPP::Status status;
     status.setType(o->getOption(base + ".status").toString());
     status.setStatus(o->getOption(base + ".message").toString());

@@ -407,7 +407,7 @@ bool PsiIconset::loadRoster()
     const auto &services = PsiOptions::instance()->mapKeyList("options.iconsets.service-status");
     for (const QVariant &service : services) {
         QString val = PsiOptions::instance()
-                          ->getOption(PsiOptions::instance()->mapLookup("options.iconsets.service-status", service)
+                          ->getOption(*PsiOptions::instance()->mapLookup("options.iconsets.service-status", service)
                                       + ".iconset")
                           .toString();
         if (val.isEmpty())
@@ -630,20 +630,18 @@ void PsiIconset::loadStatusIconDefinitions()
             find = false;
 
         if (find) {
-            item.iconset = PsiOptions::instance()
-                               ->getOption(PsiOptions::instance()->mapLookup("options.iconsets.service-status", service)
-                                           + ".iconset")
-                               .toString();
-            d->status_icons.list.append(item);
+            auto mapPath = PsiOptions::instance()->mapLookup("options.iconsets.service-status", service);
+            if (mapPath) {
+                item.iconset = PsiOptions::instance()->getOption(*mapPath + ".iconset").toString();
+                d->status_icons.list.append(item);
+            }
         }
     }
     // default transport icon set
-    if (PsiOptions::instance()->mapKeyList("options.iconsets.service-status").contains("transport")) {
+    auto trnasportMapOptionsPath = PsiOptions::instance()->mapLookup("options.iconsets.service-status", "transport");
+    if (trnasportMapOptionsPath) {
         PsiIconset::Private::StatusIconsets::IconsetItem item;
-        item.iconset = PsiOptions::instance()
-                           ->getOption(PsiOptions::instance()->mapLookup("options.iconsets.service-status", "transport")
-                                       + ".iconset")
-                           .toString();
+        item.iconset = PsiOptions::instance()->getOption(*trnasportMapOptionsPath + ".iconset").toString();
         d->status_icons.list.append(item);
     }
     // custom icon sets
@@ -730,7 +728,7 @@ void PsiIconset::reloadRoster()
     const auto &services = PsiOptions::instance()->mapKeyList("options.iconsets.service-status");
     for (const QVariant &service : services) {
         QString val = PsiOptions::instance()
-                          ->getOption(PsiOptions::instance()->mapLookup("options.iconsets.service-status", service)
+                          ->getOption(*PsiOptions::instance()->mapLookup("options.iconsets.service-status", service)
                                       + ".iconset")
                           .toString();
         if (val.isEmpty())
@@ -897,7 +895,7 @@ PsiIcon *PsiIconset::transportStatusPtr(QString name, int s)
     if (serviceicons.contains(name)) {
         const Iconset *is = roster.value(
             PsiOptions::instance()
-                ->getOption(PsiOptions::instance()->mapLookup("options.iconsets.service-status", name) + ".iconset")
+                ->getOption(*PsiOptions::instance()->mapLookup("options.iconsets.service-status", name) + ".iconset")
                 .toString());
         if (is) {
             icon = const_cast<PsiIcon *>(is->icon(status2name(s)));

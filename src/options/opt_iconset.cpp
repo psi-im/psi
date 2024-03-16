@@ -1451,17 +1451,16 @@ bool OptionsTabIconsetRoster::event(QEvent *e)
             while (*it) {
                 QTreeWidgetItem *i = *it;
                 if (!i->data(0, ServiceRole).toString().isEmpty()) {
-                    Iconset *iss
-                        = PsiIconset::instance()->roster[PsiOptions::instance()
-                                                             ->getOption(PsiOptions::instance()->mapLookup(
-                                                                             "options.iconsets.service-status",
-                                                                             i->data(0, ServiceRole).toString())
-                                                                         + ".iconset")
-                                                             .toString()];
-                    if (iss) {
-                        i->setText(1, iss->name());
-                        QFileInfo fi(iss->fileName());
-                        i->setData(0, IconsetRole, fi.fileName());
+                    auto mapPath = PsiOptions::instance()->mapLookup("options.iconsets.service-status",
+                                                                     i->data(0, ServiceRole).toString());
+                    if (mapPath.has_value()) {
+                        Iconset *iss = PsiIconset::instance()->roster.value(
+                            PsiOptions::instance()->getOption(*mapPath + ".iconset").toString());
+                        if (iss) {
+                            i->setText(1, iss->name());
+                            QFileInfo fi(iss->fileName());
+                            i->setData(0, IconsetRole, fi.fileName());
+                        }
                     }
                 }
                 ++it;

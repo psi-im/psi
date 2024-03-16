@@ -1314,10 +1314,10 @@ void PsiAccount::setEnabled(bool e)
             return;
         }
         if (isActive()) {
-            if (QMessageBox::information(nullptr, tr("Disable Account"),
-                                         tr("The account is currently active.\nDo you want to log out ?"),
-                                         QMessageBox::Yes, QMessageBox::No | QMessageBox::Default | QMessageBox::Escape,
-                                         QMessageBox::NoButton)
+            if (QMessageBox::information(
+                    nullptr, tr("Disable Account"), tr("The account is currently active.\nDo you want to log out ?"),
+                    QMessageBox::Yes,
+                    QMessageBox::No | QMessageBox::Default | QMessageBox::Escape | QMessageBox::NoButton)
                 == QMessageBox::Yes) {
                 logout(false, loggedOutStatus());
             } else {

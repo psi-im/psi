@@ -1513,7 +1513,7 @@ void PsiCon::slotApplyOptions()
             QMessageBox::warning(nullptr, tr("Warning"),
                                  tr("You can not disable <i>all</i> toolbars <i>and</i> the menubar. If you do so, you "
                                     "will be unable to enable them back, when you'll change your mind."),
-                                 tr("I understand"));
+                                 QMessageBox::Ok);
             o->setOption("options.ui.contactlist.show-menubar", true);
         }
     }

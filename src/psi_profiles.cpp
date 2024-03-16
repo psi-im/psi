@@ -240,7 +240,7 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
     QVariantList states = o->mapKeyList(base + ".group-state");
     for (const QVariant &k : states) {
         GroupData gd;
-        QString   sbase = o->mapLookup(base + ".group-state", k);
+        QString   sbase = *o->mapLookup(base + ".group-state", k);
         gd.open         = o->getOption(sbase + ".open").toBool();
         gd.rank         = o->getOption(sbase + ".rank").toInt();
         groupState.insert(k.toString(), gd);

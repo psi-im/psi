@@ -311,7 +311,7 @@ void StatusSetDlg::chooseStatusPreset(int x)
     if (x < 1)
         return;
 
-    QString base = PsiOptions::instance()->mapLookup("options.status.presets", d->cb_preset->itemText(x));
+    QString base = *PsiOptions::instance()->mapLookup("options.status.presets", d->cb_preset->itemText(x));
     d->te->setPlainText(PsiOptions::instance()->getOption(base + ".message").toString());
     if (PsiOptions::instance()->getOption(base + ".force-priority").toBool()) {
         d->le_priority->setText(QString::number(PsiOptions::instance()->getOption(base + ".priority").toInt()));

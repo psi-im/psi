@@ -117,7 +117,7 @@ QSizeF TextIconHandler::intrinsicSize(QTextDocument *doc, int posInDocument, con
     QSizeF ret;
     auto   icon = IconsetFactory::iconPtr(iconName);
     if (!icon) {
-        qWarning("invalid icon: %s", qPrintable(iconName));
+        // qWarning("invalid icon: %s", qPrintable(iconName));
         ret = QSizeF();
     } else if (htmlSize > 0) {
         auto pxSize = pointToPixel(htmlSize);

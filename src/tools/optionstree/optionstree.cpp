@@ -133,21 +133,24 @@ bool OptionsTree::isValidName(const QString &name)
     return true;
 }
 
-QString OptionsTree::mapLookup(const QString &basename, const QVariant &key) const
+std::optional<QString> OptionsTree::mapLookup(const QString &basename, const QVariant &key) const
 {
     QStringList children = getChildOptionNames(basename, true, true);
     for (const QString &path : children) {
-        if (getOption(path + ".key") == key) {
+        if (getOption(path + QLatin1String(".key")) == key) {
             return path;
         }
     }
-    qWarning("Accessing missing key '%s' in option map '%s'", qPrintable(key.toString()), qPrintable(basename));
-    return basename + "XXX";
+    return {};
 }
 
 QVariant OptionsTree::mapGet(const QString &basename, const QVariant &key, const QString &node) const
 {
-    return getOption(mapLookup(basename, key) + '.' + node);
+    auto opt = mapLookup(basename, key);
+    if (opt) {
+        return getOption(*opt + QLatin1Char('.') + node);
+    }
+    return {};
 }
 
 QVariant OptionsTree::mapGet(const QString &basename, const QVariant &key, const QString &node,
@@ -155,7 +158,7 @@ QVariant OptionsTree::mapGet(const QString &basename, const QVariant &key, const
 {
     QVariantList keys = mapKeyList(basename);
     if (keys.contains(key)) {
-        return getOption(mapLookup(basename, key) + '.' + node);
+        return getOption(*mapLookup(basename, key) + '.' + node);
     } else {
         return def;
     }
