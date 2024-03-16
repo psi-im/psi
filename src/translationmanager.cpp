@@ -91,8 +91,11 @@ bool TranslationManager::loadQtTranslation(const QString &language)
             return true;
         }
     }
-
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     return loadQtTranslationHelper(language, QLibraryInfo::location(QLibraryInfo::TranslationsPath), qt_translator_);
+#else
+    return loadQtTranslationHelper(language, QLibraryInfo::path(QLibraryInfo::TranslationsPath), qt_translator_);
+#endif
 }
 
 void TranslationManager::loadTranslation(const QString &language)

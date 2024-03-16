@@ -109,7 +109,7 @@ public:
 
     Private(PsiIconset *_psi) { psi = _psi; }
 
-    QString iconsetPath(QString name, Iconset::Format format = Iconset::Format::Psi)
+    QString iconsetPath(QString name, Iconset::Format format = Iconset::Format::Psi, bool silent = false)
     {
         if (format == Iconset::Format::Psi) {
             const auto &dataDirs = ApplicationInfo::dataDirs();
@@ -132,7 +132,9 @@ public:
             }
         }
 
-        qWarning("PsiIconset::Private::iconsetPath(\"%s\"): not found", qPrintable(name));
+        if (!silent) {
+            qWarning("PsiIconset::Private::iconsetPath(\"%s\"): not found", qPrintable(name));
+        }
         return QString();
     }
 
@@ -326,14 +328,18 @@ public:
 
         const auto names = PsiOptions::instance()->getOption("options.iconsets.emoticons").toStringList();
         for (const QString &name : names) {
-            Iconset *is = new Iconset;
-            if (is->load(iconsetPath("emoticons/" + name))) {
-                // PsiIconset::removeAnimation(is);
-                is->addToFactory();
-                emo.append(is);
-                continue;
+            auto     isPath = iconsetPath("emoticons/" + name, Iconset::Format::Psi, true);
+            Iconset *is     = nullptr;
+            if (!isPath.isEmpty()) {
+                is = new Iconset;
+                if (is->load(iconsetPath("emoticons/" + name))) {
+                    is->addToFactory();
+                    emo.append(is);
+                    continue;
+                }
+                delete is;
             }
-            delete is;
+
             is = new Iconset;
             if (is->load(iconsetPath(name, Iconset::Format::KdeEmoticons), Iconset::Format::KdeEmoticons)) {
                 is->addToFactory();
