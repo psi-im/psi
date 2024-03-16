@@ -420,8 +420,6 @@ QPointF WbItem::center()
 **
 ****************************************************************************/
 
-double qstrtod(const char *s00, char const **se, bool *ok);
-
 static qreal toDouble(const QChar *&str)
 {
     const int maxLen = 255; // technically doubles can go til 308+ but whatever
@@ -499,7 +497,7 @@ static qreal toDouble(const QChar *&str)
 #endif
         {
             bool ok = false;
-            val     = qstrtod(temp, nullptr, &ok);
+            val     = QByteArray::fromRawData(temp, pos).toDouble(&ok);
         }
     }
     return val;

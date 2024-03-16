@@ -127,7 +127,11 @@ void VCardFactory::saveVCard(const Jid &j, const VCard &vcard, bool notifyPhoto)
     QFile file(ApplicationInfo::vCardDir() + '/' + JIDUtil::encode(j.bare()).toLower() + ".xml");
     file.open(QIODevice::WriteOnly);
     QTextStream out(&file);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    out.setEncoding(QStringConverter::Utf8);
+#else
     out.setCodec("UTF-8");
+#endif
     QDomDocument doc;
     doc.appendChild(vcard.toXml(&doc));
     out << doc.toString(4);

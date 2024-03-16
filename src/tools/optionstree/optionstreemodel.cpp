@@ -238,11 +238,19 @@ bool OptionsTreeModel::setData(const QModelIndex &index, const QVariant &value, 
     }
     QVariant current = tree_->getOption(option);
     QVariant newval  = value;
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     if (!newval.canConvert(int(current.type()))) {
+#else
+    if (!newval.canConvert(current.metaType())) {
+#endif
         qWarning("Sorry don't know how to do that!");
         return false;
     }
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     newval.convert(int(current.type()));
+#else
+    newval.convert(current.metaType());
+#endif
     tree_->setOption(option, newval);
     return true;
 }

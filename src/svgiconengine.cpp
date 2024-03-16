@@ -44,12 +44,14 @@ void SvgIconEngine::paint(QPainter *painter, const QRect &rect, QIcon::Mode mode
 void SvgIconEngine::virtual_hook(int id, void *data)
 {
     switch (id) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     case QIconEngine::AvailableSizesHook:
         reinterpret_cast<AvailableSizesArgument *>(data)->sizes.clear();
         break;
     case QIconEngine::IconNameHook:
         *reinterpret_cast<QString *>(data) = name;
         break;
+#endif
 #if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
     case QIconEngine::IsNullHook:
         *reinterpret_cast<bool *>(data) = !(renderer && renderer->isValid());

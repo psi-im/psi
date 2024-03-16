@@ -5,6 +5,7 @@
 
 #include <QAction>
 #include <QCoreApplication>
+#include <QWidget>
 
 /**
  * \brief The Construtor of the Shortcutmanager
@@ -127,7 +128,7 @@ void ShortcutManager::connect(const QString &path, QObject *parent, const char *
             act->setShortcuts(shortcuts);
             act->setShortcutContext(appWide ? Qt::ApplicationShortcut : Qt::WindowShortcut);
             if (parent->isWidgetType())
-                static_cast<QWidget *>(parent)->addAction(act);
+                qobject_cast<QWidget *>(parent)->addAction(act);
             parent->connect(act, SIGNAL(triggered()), slot);
         }
     } else {

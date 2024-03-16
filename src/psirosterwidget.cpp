@@ -242,7 +242,11 @@ void PsiRosterWidget::setShowStatusMsg(bool enabled)
 void PsiRosterWidget::filterEditTextChanged(const QString &text)
 {
     if (filterModel_)
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         filterModel_->setFilterRegExp(QRegularExpression::escape(text));
+#else
+        filterModel_->setFilterRegularExpression(QRegularExpression::escape(text));
+#endif
 }
 
 void PsiRosterWidget::quitFilteringMode() { setFilterModeEnabled(false); }
