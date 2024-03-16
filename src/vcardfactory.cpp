@@ -169,7 +169,10 @@ VCard VCardFactory::vcard(const Jid &j)
 
     // then try to load from cache on disk
     QFile file(ApplicationInfo::vCardDir() + '/' + JIDUtil::encode(j.bare()).toLower() + ".xml");
-    file.open(QIODevice::ReadOnly);
+    if (!file.open(QIODevice::ReadOnly)) {
+        // REVIEW we can cache which files were really missed. or maybe set a flag for the contact
+        return {};
+    }
     QDomDocument doc;
 
     if (doc.setContent(&file, false)) {
@@ -180,7 +183,7 @@ VCard VCardFactory::vcard(const Jid &j)
         }
     }
 
-    return VCard();
+    return {};
 }
 
 /**

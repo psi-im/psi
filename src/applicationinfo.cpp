@@ -334,7 +334,11 @@ QString ApplicationInfo::currentProfileDir(ApplicationInfo::HomedirType type)
     return pathToProfile(activeProfile, type);
 }
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 QString ApplicationInfo::desktopFileBaseName() { return QLatin1String(xstr(APP_BIN_NAME) ".desktop"); }
+#else
+QString ApplicationInfo::desktopFileBaseName() { return QLatin1String(xstr(APP_BIN_NAME)); }
+#endif
 
 QString ApplicationInfo::desktopFile()
 {

@@ -114,7 +114,7 @@ void WbManager::openWhiteboard(const Jid &target, const Jid &ownJid, bool groupC
 
                 QFile file(fileName);
                 if (file.open(QIODevice::ReadOnly)) {
-                    doc.setContent(file.readAll(), true);
+                    doc.setContent(&file, true);
                     file.close();
                 }
             }
