@@ -88,7 +88,7 @@ void ChatEditProxy::updateLayout()
     delete textEdit_;
     textEdit_ = newEdit;
     layout_->addWidget(textEdit_);
-    emit textEditCreated(textEdit_);
+    emit textEditCreated();
 }
 
 /**

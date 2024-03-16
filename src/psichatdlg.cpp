@@ -277,7 +277,7 @@ void PsiChatDlg::initUi()
 
     ui_.tb_emoticons->setIcon(IconsetFactory::icon("psi/smile").icon());
 
-    connect(ui_.mle, SIGNAL(textEditCreated(QTextEdit *)), SLOT(chatEditCreated()));
+    connect(ui_.mle, &ChatEditProxy::textEditCreated, this, &PsiChatDlg::chatEditCreated);
     chatEditCreated();
 
 #ifdef Q_OS_MAC

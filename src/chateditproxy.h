@@ -42,7 +42,7 @@ signals:
      * Emitted when internal QTextEdit gets replaced with
      * another one.
      */
-    void textEditCreated(QTextEdit *textEdit);
+    void textEditCreated();
 
 protected:
     /**

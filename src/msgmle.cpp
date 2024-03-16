@@ -259,9 +259,10 @@ void ChatEdit::setCheckSpelling(bool b)
     check_spelling_ = b;
     if (check_spelling_) {
         if (!spellhighlighter_)
-            spellhighlighter_.reset(new SpellHighlighter(document()));
+            spellhighlighter_ = new SpellHighlighter(this);
     } else {
-        spellhighlighter_.reset();
+        delete spellhighlighter_;
+        spellhighlighter_ = nullptr;
     }
     document()->blockSignals(false);
 }

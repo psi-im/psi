@@ -114,30 +114,30 @@ private:
     void setRecButtonIcon();
 
 private:
-    QWidget                          *dialog_         = nullptr;
-    bool                              check_spelling_ = false;
-    std::unique_ptr<SpellHighlighter> spellhighlighter_;
-    QPoint                            last_click_;
-    int                               previous_position_ = 0;
-    QStringList                       typedMsgsHistory;
-    int                               typedMsgsIndex       = 0;
-    QAction                          *act_showMessagePrev  = nullptr;
-    QAction                          *act_showMessageNext  = nullptr;
-    QAction                          *act_showMessageFirst = nullptr;
-    QAction                          *act_showMessageLast  = nullptr;
-    QAction                          *act_changeCase       = nullptr;
-    QAction                          *actPasteAsQuote_     = nullptr;
-    QString                           currentText;
-    HTMLTextController               *controller_  = nullptr;
-    CapitalLettersController         *capitalizer_ = nullptr;
-    bool                              correction   = false;
-    QString                           lastId;
-    QPointer<QLayout>                 layout_;
-    QPointer<QToolButton>             recButton_;
-    QPointer<QLabel>                  overlay_;
-    QPointer<QTimer>                  timer_;
-    std::unique_ptr<AudioRecorder>    recorder_;
-    int                               timeout_;
+    QWidget                       *dialog_           = nullptr;
+    bool                           check_spelling_   = false;
+    SpellHighlighter              *spellhighlighter_ = nullptr;
+    QPoint                         last_click_;
+    int                            previous_position_ = 0;
+    QStringList                    typedMsgsHistory;
+    int                            typedMsgsIndex       = 0;
+    QAction                       *act_showMessagePrev  = nullptr;
+    QAction                       *act_showMessageNext  = nullptr;
+    QAction                       *act_showMessageFirst = nullptr;
+    QAction                       *act_showMessageLast  = nullptr;
+    QAction                       *act_changeCase       = nullptr;
+    QAction                       *actPasteAsQuote_     = nullptr;
+    QString                        currentText;
+    HTMLTextController            *controller_  = nullptr;
+    CapitalLettersController      *capitalizer_ = nullptr;
+    bool                           correction   = false;
+    QString                        lastId;
+    QPointer<QLayout>              layout_;
+    QPointer<QToolButton>          recButton_;
+    QPointer<QLabel>               overlay_;
+    QPointer<QTimer>               timer_;
+    std::unique_ptr<AudioRecorder> recorder_;
+    int                            timeout_;
 };
 
 class LineEdit : public ChatEdit {

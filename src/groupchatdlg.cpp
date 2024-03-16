@@ -1018,7 +1018,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     connect(d->act_scrolldown, SIGNAL(triggered()), SLOT(scrollDown()));
 
     ui_.mini_prompt->hide();
-    connect(ui_.mle, SIGNAL(textEditCreated(QTextEdit *)), SLOT(chatEditCreated()));
+    connect(ui_.mle, &ChatEditProxy::textEditCreated, this, &GCMainDlg::chatEditCreated);
     chatEditCreated();
     ui_.log->init(); // we are ready to do that now. chatEditCreated() inited last pieces required for this init
 
