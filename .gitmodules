@@ -1,9 +1,6 @@
 [submodule "iris"]
 	path = iris
 	url = https://github.com/psi-im/iris.git
-[submodule "src/libpsi"]
-	path = src/libpsi
-	url = https://github.com/psi-im/libpsi.git
 [submodule "3rdparty/qhttp"]
 	path = 3rdparty/qhttp
 	url = https://github.com/psi-im/qhttp.git
