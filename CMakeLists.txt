@@ -53,7 +53,6 @@ set( CHAT_TYPE "BASIC" CACHE STRING "Type of chatlog engine. WEBKIT | WEBENGINE 
 set_property(CACHE CHAT_TYPE PROPERTY STRINGS WEBKIT WEBENGINE BASIC)
 option( PRODUCTION "Build production version" OFF )
 option( VERBOSE_PROGRAM_NAME "Verbose output binary name" OFF )
-option( BUNDLED_IRIS "Build iris library bundled" ON )
 option( BUILD_PSIMEDIA "Build psimedia plugin if its code is found in sources tree. Works only with ENABLE_PLUGINS=ON" OFF )
 option( ENABLE_PLUGINS "Enable plugins" OFF )
 option( USE_HUNSPELL "Build psi with hunspell spellcheck" ON )
@@ -71,8 +70,10 @@ option( PLUGINS_NO_DEBUG "Add -DPLUGINS_NO_DEBUG definition" OFF )
 # Developers options
 option( DEV_MODE "Enable prepare-bin-libs target for MS Windows only. Set PSI_DATADIR and PSI_LIBDIR to CMAKE_RUNTIME_OUTPUT_DIRECTORY to debug plugins for Linux only" OFF )
 # Iris options
+option( BUNDLED_IRIS "Build iris library bundled" ON )
+option( BUNDLED_IRIS_ALL "Build iris library with bundled QCA and bundled USRSCTP" OFF)
 option( IRIS_BUNDLED_QCA "Adds: DTLS, Blake2b and other useful for XMPP crypto-stuff" ${DEFAULT_BUNDLED_QCA} )
-option( BUNDLED_USRSCTP "Compile compatible usrsctp lib when system one is not available or uncompatible (required for p2p file transfer)" ${DEFAULT_BUNDLED_USRSCTP} )
+option( IRIS_BUNDLED_USRSCTP "Compile compatible usrsctp lib when system one is not available or uncompatible (required for p2p file transfer)" ${DEFAULT_BUNDLED_USRSCTP} )
 if (UNIX AND "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     option( ENABLE_ASAN "Enable compilation with address sanitizer" OFF )
 endif()
@@ -192,7 +193,7 @@ if(EXISTS "${CMAKE_TOOLCHAIN_FILE}")
         if(IS_WEBENGINE)
             message(FATAL_ERROR "Webengine is not available in MXE. Please set the CHAT_TYPE variable to Webkit or Basic")
         endif()
-        set(BUNDLED_USRSCTP ON)
+        set(BUNDLED_IRIS_ALL ON)
     endif()
 endif()
 
@@ -280,6 +281,13 @@ endif()
 
 if( DEV_MODE OR ENABLE_PORTABLE )
     message(STATUS "prepare-bin-libs target - ENABLED")
+endif()
+
+if (BUNDLED_IRIS_ALL)
+    message(STATUS "BUNDLED_IRIS_ALL - ENABLED")
+    set(BUNDLED_IRIS ON)
+    set(IRIS_BUNDLED_QCA ON)
+    set(IRIS_BUNDLED_USRSCTP ON)
 endif()
 
 # Copy a list of files from one directory to another. Only full paths.

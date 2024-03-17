@@ -59,7 +59,11 @@ or
 
   to build iris library bundled (default ON)
 
-> -DBUNDLED_QCA=ON
+> -DBUNDLED_IRIS_ALL=ON
+
+  to build iris library bundled with QCA bundled and USRSCTP bundled (default OFF)
+
+> -DIRIS_BUNDLED_QCA=ON
 
   to build qca library from https://github.com/psi-im/qca with Psi
   Adds: DTLS, Blake2b and other useful for XMPP crypto-stuff
@@ -69,7 +73,7 @@ or
   enable SCTP over ICE Jingle transport / data channels
   adds BUNDLED_USRSCTP option if ON (default ON)
 
-> -DBUNDLED_USRSCTP=ON
+> -DIRIS_BUNDLED_USRSCTP=ON
 
   to build usrsctp library from official github repository
   Compile compatible usrsctp lib when system one is not available or
