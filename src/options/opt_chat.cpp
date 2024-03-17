@@ -89,8 +89,8 @@ void OptionsTabChat::applyOptions()
         if (d->ck_chatSoftReturn->isChecked()) {
             vl << QVariant::fromValue(QKeySequence(Qt::Key_Enter)) << QVariant::fromValue(QKeySequence(Qt::Key_Return));
         } else {
-            vl << QVariant::fromValue(QKeySequence(Qt::Key_Enter + Qt::CTRL))
-               << QVariant::fromValue(QKeySequence(Qt::CTRL + Qt::Key_Return));
+            vl << QVariant::fromValue(QKeySequence(Qt::Key_Enter | Qt::CTRL))
+               << QVariant::fromValue(QKeySequence(Qt::CTRL | Qt::Key_Return));
         }
         o->setOption("options.shortcuts.chat.send", vl);
     }

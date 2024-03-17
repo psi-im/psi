@@ -1109,20 +1109,25 @@ void TabBar::mouseMoveEvent(QMouseEvent *event)
 
 void TabBar::dragMoveEvent(QDragMoveEvent *event)
 {
-    int newDragHoverTab    = tabAt(event->pos());
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    auto eventPos = event->pos();
+#else
+    auto eventPos = event->position().toPoint();
+#endif
+    int newDragHoverTab    = tabAt(eventPos);
     int newDragInsertIndex = newDragHoverTab;
 
     // Try to guess that need to insert in the end
     if (newDragHoverTab == -1) {
         QPoint p = d->hackedTabs.last().rect.topRight();
-        if (event->pos().x() > p.x() && event->pos().y() > p.y()) {
+        if (eventPos.x() > p.x() && eventPos.y() > p.y()) {
             newDragHoverTab    = d->hackedTabs.size() - 1;
             newDragInsertIndex = newDragHoverTab;
         }
     }
 
     if (newDragInsertIndex > -1) {
-        int x = event->pos().x() - d->hackedTabs[newDragInsertIndex].rect.left();
+        int x = eventPos.x() - d->hackedTabs[newDragInsertIndex].rect.left();
         if (x * 2 > d->hackedTabs[newDragInsertIndex].rect.width())
             newDragInsertIndex++;
     }

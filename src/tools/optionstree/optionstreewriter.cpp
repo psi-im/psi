@@ -69,31 +69,55 @@ void OptionsTreeWriter::writeTree(const VariantTree *tree)
 void OptionsTreeWriter::writeVariant(const QVariant &variant)
 {
     writeAttribute("type", variant.typeName());
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     if (variant.type() == QVariant::StringList) {
+#else
+    if (variant.typeId() == QMetaType::QStringList) {
+#endif
         const auto &sList = variant.toStringList();
         for (const QString &s : sList) {
             writeStartElement("item");
             writeCharacters(s);
             writeEndElement();
         }
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     } else if (variant.type() == QVariant::List) {
+#else
+    } else if (variant.typeId() == QMetaType::QVariantList) {
+#endif
         const auto &variants = variant.toList();
         for (const QVariant &v : variants) {
             writeStartElement("item");
             writeVariant(v);
             writeEndElement();
         }
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     } else if (variant.type() == QVariant::Size) {
+#else
+    } else if (variant.typeId() == QMetaType::QSize) {
+#endif
         writeTextElement("width", QString::number(variant.toSize().width()));
         writeTextElement("height", QString::number(variant.toSize().height()));
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     } else if (variant.type() == QVariant::Rect) {
+#else
+    } else if (variant.typeId() == QMetaType::QRect) {
+#endif
         writeTextElement("x", QString::number(variant.toRect().x()));
         writeTextElement("y", QString::number(variant.toRect().y()));
         writeTextElement("width", QString::number(variant.toRect().width()));
         writeTextElement("height", QString::number(variant.toRect().height()));
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     } else if (variant.type() == QVariant::ByteArray) {
+#else
+    } else if (variant.typeId() == QMetaType::QByteArray) {
+#endif
         writeCharacters(variant.toByteArray().toBase64());
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     } else if (variant.type() == QVariant::KeySequence) {
+#else
+    } else if (variant.typeId() == QMetaType::QKeySequence) {
+#endif
         QKeySequence k = variant.value<QKeySequence>();
         writeCharacters(k.toString());
     } else {

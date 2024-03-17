@@ -22,7 +22,6 @@
 #include "applicationinfo.h"
 #include "common.h"
 #include "iconset.h"
-#include "iconwidget.h"
 #include "profiles.h"
 #include "psioptions.h"
 
@@ -281,7 +280,7 @@ void ProfileManageDlg::slotProfileDelete()
            "<b>%1</b><br><br>\n"
            "Proceed?")
             .arg(paths.join("\n")),
-        tr("&No"), tr("&Yes"));
+        QMessageBox::Yes | QMessageBox::No);
 
     if (r == 1) {
         if (!profileDelete(paths)) {

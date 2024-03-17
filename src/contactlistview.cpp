@@ -251,7 +251,11 @@ void ContactListView::keyPressEvent(QKeyEvent *event)
             if (item->isGroup()) {
                 toggleExpandedState(currentIndex());
             } else {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
                 QContextMenuEvent e(QContextMenuEvent::Keyboard, visualRect(currentIndex()).center());
+#else
+                QContextMenuEvent e(QContextMenuEvent::Keyboard, visualRect(currentIndex()).center(), QCursor::pos());
+#endif
                 QCoreApplication::sendEvent(this, &e);
             }
         } else {

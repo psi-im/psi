@@ -431,9 +431,13 @@ public:
 
         connect(&icon, SIGNAL(pixmapChanged()), SLOT(update()));
         icon.activated(false);
-
-        auto iconSize = qApp->fontMetrics().height() * ScalableIconFactor;
-        h             = icon.pixmap(QSize(iconSize, iconSize)).height();
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        const auto fontSize = qApp->fontMetrics().height();
+#else
+        const auto fontSize = QFontMetrics(qApp->font()).height();
+#endif
+        const auto iconSize = fontSize * ScalableIconFactor;
+        h                   = icon.pixmap(QSize(iconSize, iconSize)).height();
 
         QStringList str;
         for (const PsiIcon::IconText &t : icon.text())
@@ -475,7 +479,12 @@ public:
     void paint(QPainter *painter) const
     {
 #ifndef WIDGET_PLUGIN
-        auto iconSize = qApp->fontMetrics().height() * ScalableIconFactor;
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        const auto fontSize = qApp->fontMetrics().height();
+#else
+        const auto fontSize = QFontMetrics(qApp->font()).height();
+#endif
+        const auto iconSize = fontSize * ScalableIconFactor;
         painter->drawPixmap(QPoint((2 * margin + w - icon.pixmap(QSize(iconSize, iconSize)).width()) / 2, margin),
                             icon.pixmap(QSize(iconSize, iconSize)));
 #else
@@ -497,8 +506,13 @@ IconsetDisplay::~IconsetDisplay() { }
 void IconsetDisplay::setIconset(const Iconset &iconset)
 {
 #ifndef WIDGET_PLUGIN
-    int                      w        = 0;
-    auto                     iconSize = qApp->fontMetrics().height() * ScalableIconFactor;
+    int w = 0;
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    const auto fontSize = qApp->fontMetrics().height();
+#else
+    const auto fontSize = QFontMetrics(qApp->font()).height();
+#endif
+    const auto               iconSize = fontSize * ScalableIconFactor;
     QListIterator<PsiIcon *> it       = iconset.iterator();
     while (it.hasNext()) {
         w = qMax(w, it.next()->pixmap(QSize(iconSize, iconSize)).width());

@@ -15,7 +15,7 @@ GroupchatTopicDlg::GroupchatTopicDlg(GCMainDlg *parent) :
     m_ui->setupUi(this);
     QKeySequence sendKey = ShortcutManager::instance()->shortcut("chat.send");
     if (sendKey == QKeySequence(Qt::Key_Enter) || sendKey == QKeySequence(Qt::Key_Return)) {
-        sendKey = QKeySequence(Qt::CTRL + Qt::Key_Return);
+        sendKey = QKeySequence(Qt::CTRL | Qt::Key_Return);
     }
     m_ui->buttonBox->button(QDialogButtonBox::Ok)->setShortcut(sendKey);
 
@@ -139,7 +139,11 @@ void GroupchatTopicDlg::populateCountryAndScript()
         for (auto const &loc : locales) {
             if (loc != QLocale::c()) {
                 scripts.insert(QLocale::scriptToString(loc.script()), loc.script());
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
                 countries.insert(QLocale::countryToString(loc.country()), loc.country());
+#else
+                countries.insert(QLocale::territoryToString(loc.territory()), loc.territory());
+#endif
             }
         }
         m_addLangUi->cmbScript->setVisible(scripts.count() > 1);

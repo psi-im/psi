@@ -301,14 +301,22 @@ bool ContactListDragView::supportsDropOnIndex(QDropEvent *e, const QModelIndex &
 
 static void updateDefaultDropAction(QDropEvent *e)
 {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     if (e->keyboardModifiers() == Qt::NoModifier) {
+#else
+    if (e->modifiers() == Qt::NoModifier) {
+#endif
         e->setDropAction(Qt::MoveAction);
     }
 }
 
 static void acceptDropAction(QDropEvent *e)
 {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     if (e->keyboardModifiers() == Qt::NoModifier) {
+#else
+    if (e->modifiers() == Qt::NoModifier) {
+#endif
         if (e->dropAction() != Qt::MoveAction) {
             // qWarning("acceptDropAction(): e->dropAction() != Qt::MoveAction");
             return;
@@ -322,7 +330,11 @@ static void acceptDropAction(QDropEvent *e)
 
 void ContactListDragView::dragMoveEvent(QDragMoveEvent *e)
 {
-    QModelIndex index      = indexAt(e->pos());
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    QModelIndex index = indexAt(e->pos());
+#else
+    QModelIndex index = indexAt(e->position().toPoint());
+#endif
     dropIndicatorRect_     = QRect();
     dropIndicatorPosition_ = OnViewport;
 
@@ -373,7 +385,11 @@ void ContactListDragView::dropEvent(QDropEvent *e)
 {
     updateDefaultDropAction(e);
 
-    QModelIndex index  = indexAt(e->pos());
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    QModelIndex index = indexAt(e->pos());
+#else
+    QModelIndex index = indexAt(e->position().toPoint());
+#endif
     dropIndicatorRect_ = QRect();
 
     if (dropIndicatorPosition_ == OnViewport || !supportsDropOnIndex(e, index)) {
@@ -409,7 +425,11 @@ QAbstractItemView::DropIndicatorPosition ContactListDragView::dropPosition(QDrop
             QModelIndex group = itemToReorderGroup(selection, index);
             if (group.isValid()) {
                 QRect rect = groupVisualRect(group);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
                 if (e->pos().y() >= rect.center().y()) {
+#else
+                if (e->position().toPoint().y() >= rect.center().y()) {
+#endif
                     return BelowItem;
                 } else {
                     return AboveItem;

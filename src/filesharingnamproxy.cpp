@@ -154,7 +154,7 @@ void FileSharingNAMReply::setupHeaders(qint64 fileSize, QString contentType, QDa
 {
     if (lastModified.isValid())
         setRawHeader("Last-Modified", lastModified.toString(Qt::RFC2822Date).toLatin1());
-    if (contentType.count())
+    if (contentType.size())
         setRawHeader("Content-Type", contentType.toLatin1());
 
     bool keepAlive = true;

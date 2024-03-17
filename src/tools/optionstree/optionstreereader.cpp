@@ -59,38 +59,66 @@ void OptionsTreeReader::readTree(VariantTree *tree)
 QVariant OptionsTreeReader::readVariant(const QString &type)
 {
     QVariant result;
-    if (type == "QStringList") {
+    if (type == QLatin1String("QStringList")) {
         result = readStringList();
-    } else if (type == "QVariantList") {
+    } else if (type == QLatin1String("QVariantList")) {
         result = readVariantList();
-    } else if (type == "QSize") {
+    } else if (type == QLatin1String("QSize")) {
         result = readSize();
-    } else if (type == "QRect") {
+    } else if (type == QLatin1String("QRect")) {
         result = readRect();
-    } else if (type == "QByteArray") {
+    } else if (type == QLatin1String("QByteArray")) {
         result = QByteArray();
         result = QByteArray::fromBase64(readElementText().toLatin1());
     } else {
-        QVariant::Type varianttype;
-        bool           known = true;
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        QVariant::Type variantType;
+#else
+        QMetaType::Type variantType;
+#endif
+        bool known = true;
 
-        if (type == "QString") {
-            varianttype = QVariant::String;
-        } else if (type == "bool") {
-            varianttype = QVariant::Bool;
-        } else if (type == "int") {
-            varianttype = QVariant::Int;
-        } else if (type == "QKeySequence") {
-            varianttype = QVariant::KeySequence;
-        } else if (type == "QColor") {
-            varianttype = QVariant::Color;
+        if (type == QLatin1String("QString")) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+            variantType = QVariant::String;
+#else
+            variantType = QMetaType::QString;
+#endif
+        } else if (type == QLatin1String("bool")) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+            variantType = QVariant::Bool;
+#else
+            variantType = QMetaType::Bool;
+#endif
+        } else if (type == QLatin1String("int")) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+            variantType = QVariant::Int;
+#else
+            variantType = QMetaType::Int;
+#endif
+        } else if (type == QLatin1String("QKeySequence")) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+            variantType = QVariant::KeySequence;
+#else
+            variantType = QMetaType::QKeySequence;
+#endif
+        } else if (type == QLatin1String("QColor")) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+            variantType = QVariant::Color;
+#else
+            variantType = QMetaType::QColor;
+#endif
         } else {
             known = false;
         }
 
         if (known) {
             result = readElementText();
-            result.convert(int(varianttype));
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+            result.convert(int(variantType));
+#else
+            result.convert(QMetaType(variantType));
+#endif
         } else {
             [[maybe_unused]] QString result;
             QByteArray               ba;

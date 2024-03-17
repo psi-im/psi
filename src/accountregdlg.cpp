@@ -104,7 +104,7 @@ void AccountRegDlg::done(int r)
 {
     if (ui_.busy->isActive()) {
         int n = QMessageBox::information(this, tr("Warning"), tr("Are you sure you want to cancel the registration?"),
-                                         tr("&Yes"), tr("&No"));
+                                         QMessageBox::Yes | QMessageBox::No);
         if (n != 0)
             return;
     }

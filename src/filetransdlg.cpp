@@ -649,7 +649,7 @@ void FileRequestDlg::done(int r)
 {
     if (busy->isActive()) {
         int n = QMessageBox::information(this, tr("Warning"), tr("Are you sure you want to cancel the transfer?"),
-                                         tr("&Yes"), tr("&No"));
+                                         QMessageBox::Yes | QMessageBox::No);
         if (n != 0)
             return;
 

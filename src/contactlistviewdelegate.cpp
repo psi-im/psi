@@ -438,7 +438,11 @@ QPixmap ContactListViewDelegate::Private::statusPixmap(const QModelIndex &index,
             QVariant alertData = index.data(ContactListModel::AlertPictureRole);
             QIcon    alert;
             if (alertData.isValid()) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
                 if (alertData.type() == QVariant::Icon) {
+#else
+                if (alertData.typeId() == QMetaType::QIcon) {
+#endif
                     alert = qvariant_cast<QIcon>(alertData);
                 }
             }

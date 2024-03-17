@@ -472,10 +472,17 @@ bool EDBSqLite::appendEvent(const QString &accId, const XMPP::Jid &jid, const Ps
         }
         query->bindValue(":extra_data", extraData);
     } else {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         query->bindValue(":subject", QVariant(QVariant::String));
         query->bindValue(":m_text", QVariant(QVariant::String));
         query->bindValue(":lang", QVariant(QVariant::String));
         query->bindValue(":extra_data", QVariant(QVariant::String));
+#else
+        query->bindValue(":subject", QVariant(QMetaType::fromType<QString>()));
+        query->bindValue(":m_text", QVariant(QMetaType::fromType<QString>()));
+        query->bindValue(":lang", QVariant(QMetaType::fromType<QString>()));
+        query->bindValue(":extra_data", QVariant(QMetaType::fromType<QString>()));
+#endif
     }
     bool res = query->exec();
     return res;

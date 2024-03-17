@@ -241,8 +241,8 @@ void WbDlg::endSession()
     if (sender() == act_end_) {
         int n = QMessageBox::information(
             this, tr("Warning"),
-            tr("Are you sure you want to end the session?\nThe contents of the whiteboard will be lost."), tr("&Yes"),
-            tr("&No"));
+            tr("Are you sure you want to end the session?\nThe contents of the whiteboard will be lost."),
+            QMessageBox::Yes | QMessageBox::No);
         if (n != 0)
             return;
     }
@@ -278,8 +278,8 @@ void WbDlg::closeEvent(QCloseEvent *e)
     if (keepOpen_) {
         int n = QMessageBox::information(
             this, tr("Warning"),
-            tr("A new whiteboard message was just received.\nDo you still want to close the window?"), tr("&Yes"),
-            tr("&No"));
+            tr("A new whiteboard message was just received.\nDo you still want to close the window?"),
+            QMessageBox::Yes | QMessageBox::No);
         if (n != 0) {
             e->ignore();
             return;

@@ -153,7 +153,7 @@ void FileSharingHttpProxy::setupHeaders(qint64 fileSize, QString contentType, QD
 {
     if (lastModified.isValid())
         response->addHeader("Last-Modified", lastModified.toString(Qt::RFC2822Date).toLatin1());
-    if (contentType.count())
+    if (contentType.size())
         response->addHeader("Content-Type", contentType.toLatin1());
 
     bool keepAlive = true;
@@ -291,7 +291,7 @@ void FileSharingHttpProxy::transfer()
             } else {
                 response->write(data);
             }
-            qDebug("FSP transferred %d bytes of %lld bytes", data.size(), toTransfer);
+            qDebug("FSP transferred %lld bytes of %lld bytes", data.size(), toTransfer);
         } else {
             qDebug("FSP we have to wait for readyRead or disconnected");
         }

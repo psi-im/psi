@@ -132,7 +132,11 @@ bool PsiDBusNotifier::checkServer()
     QDBusMessage ret = QDBusConnection::sessionBus().call(m);
     if (ret.type() != QDBusMessage::InvalidMessage && !ret.arguments().isEmpty()) {
         QVariant v = ret.arguments().constFirst();
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         if (v.type() == QVariant::StringList)
+#else
+        if (v.typeId() == QMetaType::QStringList)
+#endif
             caps_ = v.toStringList();
     }
 
@@ -208,7 +212,12 @@ void PsiDBusNotifier::popup(PsiAccount *account, PopupManager::PopupType type, c
     }
 
     if (im.isNull() && ico) {
-        im = ico->pixmap(QSize(qApp->fontMetrics().height(), qApp->fontMetrics().height())).toImage();
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        const auto fontSize = qApp->fontMetrics().height();
+#else
+        const auto fontSize = QFontMetrics(qApp->font()).height();
+#endif
+        im = ico->pixmap(QSize(fontSize, fontSize)).toImage();
     }
 
     if (!im.isNull()) {
@@ -278,7 +287,7 @@ void PsiDBusNotifier::popup(PsiAccount *account, PopupManager::PopupType type, c
     QDBusMessage m  = createMessage("Notify");
     QVariantList args;
     args << QString(ApplicationInfo::name());
-    args << QVariant(QVariant::UInt);
+    args << quint32(0);
     args << QVariant("");
     args << QString(title);
     args << QString(text);
@@ -323,7 +332,7 @@ void PsiDBusNotifier::popup(PsiAccount *account, PopupManager::PopupType /*type*
     QDBusMessage m     = createMessage("Notify");
     QVariantList args;
     args << QString(ApplicationInfo::name());
-    args << QVariant(QVariant::UInt);
+    args << quint32(0);
     args << QVariant("");
     args << QString(titleText);
     args << QString(plainText);
@@ -351,7 +360,11 @@ void PsiDBusNotifier::asyncCallFinished(QDBusPendingCallWatcher *watcher)
     }
 
     QVariant repl = m.arguments().constFirst();
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     if (repl.type() != QVariant::UInt || repl.toUInt() == 0) {
+#else
+    if (repl.typeId() != QMetaType::UInt || repl.toUInt() == 0) {
+#endif
         readyToDie();
     } else {
         id_ = repl.toUInt();

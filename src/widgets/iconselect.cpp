@@ -302,9 +302,13 @@ void IconSelect::setIconset(const Iconset &iconset)
     // first we need to find optimal size for elements and don't forget about
     // taking too much screen space
     float w = 0, h = 0;
-    auto  fontSz            = qApp->fontMetrics().height();
-    int   maxPrefTileHeight = fontSz * 2;
-    auto  maxPrefSize       = QSize(maxPrefTileHeight, maxPrefTileHeight);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    const auto fontSz = qApp->fontMetrics().height();
+#else
+    const auto fontSz = QFontMetrics(qApp->font()).height();
+#endif
+    int  maxPrefTileHeight = fontSz * 2;
+    auto maxPrefSize       = QSize(maxPrefTileHeight, maxPrefTileHeight);
 
     double count; // the 'double' type is somewhat important for MSVC.NET here
     if (fontEmojiMode) {

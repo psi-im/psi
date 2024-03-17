@@ -124,7 +124,7 @@ public:
         QByteArray ba;
 
         if (!z.readFile(n, &ba)) {
-            z.readFile(n.mid(baseName.count()), &ba);
+            z.readFile(n.mid(baseName.size()), &ba);
         }
 
         return ba;
@@ -137,7 +137,7 @@ public:
         if (z.fileExists(n)) {
             return true;
         }
-        return z.fileExists(n.mid(baseName.count()));
+        return z.fileExists(n.mid(baseName.size()));
     }
 };
 #endif
