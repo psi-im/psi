@@ -20,11 +20,14 @@
 #include "idle.h"
 
 #ifdef HAVE_XSS
+#include "x11windowsystem.h"
 #include <QApplication>
-#include <QDesktopWidget>
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 #include <QX11Info>
+#else
+#include <QGuiApplication>
+#endif
 #include <X11/Xlib.h>
-#include <X11/Xutil.h>
 #include <X11/extensions/scrnsaver.h>
 
 static XErrorHandler old_handler = 0;
@@ -34,6 +37,16 @@ extern "C" int       xerrhandler(Display *dpy, XErrorEvent *err)
         return 0;
 
     return (*old_handler)(dpy, err);
+}
+
+auto getDisplay()
+{
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    return QX11Info::display();
+#else
+    auto x11app = qApp->nativeInterface<QNativeInterface::QX11Application>();
+    return x11app->display();
+#endif
 }
 #endif // HAVE_XSS
 
@@ -107,7 +120,7 @@ bool IdlePlatform::init()
     }
 #endif // USE_DBUS
 #ifdef HAVE_XSS
-    if (!QX11Info::isPlatformX11())
+    if (!X11WindowSystem::instance()->isValid())
         return false;
 
     if (d->ss_info)
@@ -116,7 +129,7 @@ bool IdlePlatform::init()
     old_handler = XSetErrorHandler(xerrhandler);
 
     int event_base, error_base;
-    if (XScreenSaverQueryExtension(QX11Info::display(), &event_base, &error_base)) {
+    if (XScreenSaverQueryExtension(getDisplay(), &event_base, &error_base)) {
         d->ss_info = XScreenSaverAllocInfo();
         return true;
     }
@@ -146,7 +159,7 @@ int IdlePlatform::secondsIdle()
     if (!d->ss_info)
         return 0;
 
-    if (!XScreenSaverQueryInfo(QX11Info::display(), QX11Info::appRootWindow(), d->ss_info))
+    if (!XScreenSaverQueryInfo(getDisplay(), X11WindowSystem::instance()->getDesktopRootWindow(), d->ss_info))
         return 0;
     return d->ss_info->idle / 1000;
 #endif // HAVE_XSS

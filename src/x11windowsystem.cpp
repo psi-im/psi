@@ -377,3 +377,5 @@ bool X11WindowSystem::windowHasAnyOfStates(Window win, const QSet<Atom> &filtere
     }
     return false;
 }
+
+ulong X11WindowSystem::getDesktopRootWindow() { return getRootWindow(); };

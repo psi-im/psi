@@ -44,6 +44,7 @@ public:
     bool                    desktopOfWindow(Window *window, long *desktop);
     void                    x11wmClass(WId wid, QString resName);
     void                    bringToFront(QWidget *w);
+    ulong                   getDesktopRootWindow();
 };
 
 #endif // X11WINDOWSYSTEM_H
