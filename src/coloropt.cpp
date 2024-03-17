@@ -94,9 +94,9 @@ ColorOpt *ColorOpt::instance()
 {
     if (!instance_)
         instance_.reset(new ColorOpt());
-    return instance_.data();
+    return instance_.get();
 }
 
 void ColorOpt::reset() { instance_.reset(nullptr); }
 
-QScopedPointer<ColorOpt> ColorOpt::instance_;
+std::unique_ptr<ColorOpt> ColorOpt::instance_;

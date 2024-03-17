@@ -215,7 +215,7 @@ void XmlPrompt::doTransmit()
     if (!doc.setContent(str)) {
         int i = QMessageBox::warning(this, tr("Malformed XML"),
                                      tr("You have entered malformed XML input. Are you sure you want to send this ?"),
-                                     tr("Yes"), tr("No"));
+                                     QMessageBox::Yes | QMessageBox::No);
         if (i != 0)
             return;
     }

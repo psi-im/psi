@@ -241,8 +241,11 @@ void WbWidget::mousePressEvent(QMouseEvent *event)
         delete newWbItem_;
         newWbItem_ = nullptr;
     }
-
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     QPointF startPoint = mapToScene(mapFromGlobal(event->globalPos()));
+#else
+    QPointF startPoint = mapToScene(mapFromGlobal(event->globalPosition().toPoint()));
+#endif
     if (mode_ == Mode::DrawPath) {
         // // Create the element with starting position
         // QPointF sp = mapToScene(mapFromGlobal(event->globalPos()));
@@ -292,8 +295,12 @@ void WbWidget::mouseMoveEvent(QMouseEvent *event)
     if (mode_ == Mode::Erase) {
         if (event->buttons() != Qt::MouseButtons(Qt::LeftButton))
             return;
-        // Erase all items that appear in a 2*strokeWidth_ square with center at the event position
-        QPointF            p = mapToScene(mapFromGlobal(event->globalPos()));
+            // Erase all items that appear in a 2*strokeWidth_ square with center at the event position
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        QPointF p = mapToScene(mapFromGlobal(event->globalPos()));
+#else
+        QPointF p = mapToScene(mapFromGlobal(event->globalPosition().toPoint()));
+#endif
         QGraphicsRectItem *eraseRect
             = scene_->addRect(QRectF(p.x() - strokeWidth_, p.y() - strokeWidth_, 2 * strokeWidth_, 2 * strokeWidth_));
         const auto &gItems = eraseRect->collidingItems();
@@ -308,7 +315,11 @@ void WbWidget::mouseMoveEvent(QMouseEvent *event)
         event->ignore();
         return;
     } else if (mode_ >= Mode::DrawPath && newWbItem_) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         newWbItem_->parseCursorMove(mapToScene(mapFromGlobal(event->globalPos())));
+#else
+        newWbItem_->parseCursorMove(mapToScene(mapFromGlobal(event->globalPosition().toPoint())));
+#endif
     }
 }
 

@@ -312,7 +312,11 @@ bool MultiFileTransferDelegate::editorEvent(QEvent *event, QAbstractItemModel *m
             connect(menu->addAction(tr("Open Destination Folder")), &QAction::triggered, this,
                     [model, index]() { model->setData(index, 1, MultiFileTransferModel::OpenDirRole); });
         }
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         menu->popup(me->globalPos());
+#else
+        menu->popup(me->globalPosition().toPoint());
+#endif
         return true;
     }
     return false;

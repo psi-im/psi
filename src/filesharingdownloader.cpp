@@ -400,7 +400,7 @@ public:
     Jingle::FileTransfer::File   file;
     QList<Jid>                   jids;
     QStringList                  uris; // sorted from low priority to high.
-    QScopedPointer<QFile>        tmpFile;
+    std::unique_ptr<QFile>       tmpFile;
     QString                      dstFileName;
     QString                      lastError;
     qint64                       rangeStart  = 0;

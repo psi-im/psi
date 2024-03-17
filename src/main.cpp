@@ -204,9 +204,9 @@ void PsiMain::chooseProfile()
     PsiIconset::instance()->loadSystem();
 
     while (1) {
-        QScopedPointer<ProfileOpenDlg> w(new ProfileOpenDlg(lastProfile,
-                                                            TranslationManager::instance()->availableTranslations(),
-                                                            TranslationManager::instance()->currentLanguage()));
+        std::unique_ptr<ProfileOpenDlg> w(new ProfileOpenDlg(lastProfile,
+                                                             TranslationManager::instance()->availableTranslations(),
+                                                             TranslationManager::instance()->currentLanguage()));
         w->ck_auto->setChecked(autoOpen);
         int r = w->exec();
         // lang change

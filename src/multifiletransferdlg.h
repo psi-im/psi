@@ -21,7 +21,6 @@
 #define MULTIFILETRANSFERDLG_H
 
 #include <QDialog>
-#include <QScopedPointer>
 
 class MultiFileTransferItem;
 class PsiAccount;
@@ -83,7 +82,7 @@ private:
 private:
     Ui::MultiFileTransferDlg *ui;
     class Private;
-    QScopedPointer<Private> d;
+    std::unique_ptr<Private> d;
 };
 
 #endif // MULTIFILETRANSFERDLG_H

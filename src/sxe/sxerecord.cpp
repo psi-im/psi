@@ -229,7 +229,7 @@ void SxeRecord::processInOrderRecordEdit(const SxeRecordEdit *edit)
                     if (n < 0)
                         qDebug("'replacen' = '%s' is negative.", qPrintable(edit->value(SxeRecordEdit::ReplaceN)));
                     if (from + n > data_.length())
-                        qDebug("from (%d) + n (%d) > data_.length() (%d).", from, n, data_.length());
+                        qDebug("from (%d) + n (%d) > data_.length() (%lld).", from, n, data_.length());
                 }
 
             } else {

@@ -224,7 +224,8 @@ void MUCConfigDlg::apply()
 void MUCConfigDlg::destroy()
 {
     int i = QMessageBox::warning(this, tr("Destroy room"),
-                                 tr("Are you absolutely certain you want to destroy this room?"), tr("Yes"), tr("No"));
+                                 tr("Are you absolutely certain you want to destroy this room?"),
+                                 QMessageBox::Yes | QMessageBox::No);
     if (i == 0) {
         manager_->destroy();
     }

@@ -52,6 +52,6 @@ private slots:
     void optionChanged(const QString &opt);
 
 private:
-    static QScopedPointer<ColorOpt> instance_;
-    QHash<QString, ColorData>       colors;
+    static std::unique_ptr<ColorOpt> instance_;
+    QHash<QString, ColorData>        colors;
 };
