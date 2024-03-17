@@ -203,7 +203,7 @@ void RegistrationDlg::done(int r)
             this, tr("Busy"),
             tr("<qt>Registration has already been submitted, so closing this window will not prevent the registration "
                "from happening.  Do you still wish to close?</qt>"),
-            tr("&Yes"), tr("&No"));
+            QMessageBox::Yes | QMessageBox::No);
         if (n != 0)
             return;
     }

@@ -1314,10 +1314,9 @@ void PsiAccount::setEnabled(bool e)
             return;
         }
         if (isActive()) {
-            if (QMessageBox::information(
-                    nullptr, tr("Disable Account"), tr("The account is currently active.\nDo you want to log out ?"),
-                    QMessageBox::Yes,
-                    QMessageBox::No | QMessageBox::Default | QMessageBox::Escape | QMessageBox::NoButton)
+            if (QMessageBox::information(nullptr, tr("Disable Account"),
+                                         tr("The account is currently active.\nDo you want to log out ?"),
+                                         QMessageBox::Yes | QMessageBox::No)
                 == QMessageBox::Yes) {
                 logout(false, loggedOutStatus());
             } else {
@@ -6338,16 +6337,14 @@ bool PsiAccount::ensureKey(const Jid &j)
         }
 
         if (akey.isEmpty()) {
-            int n = QMessageBox::information(
-                nullptr, CAP(tr("No key")),
-                tr("<p>Psi was unable to locate the OpenPGP key to use for <b>%1</b>.<br>"
-                   "<br>"
-                   "This can happen if you do not have the key that the contact is advertising "
-                   "via signed presence, or if the contact is not advertising any key at all.</p>")
-                    .arg(JIDUtil::toString(u->jid(), true)),
-                tr("&Choose key manually"), tr("Do &nothing"));
-            if (n != 0)
-                return false;
+            QMessageBox::information(nullptr, CAP(tr("No key")),
+                                     tr("<p>Psi was unable to locate the OpenPGP key to use for <b>%1</b>.<br>"
+                                        "<br>"
+                                        "This can happen if you do not have the key that the contact is advertising "
+                                        "via signed presence, or if the contact is not advertising any key at all.</p>")
+                                         .arg(JIDUtil::toString(u->jid(), true)),
+                                     QMessageBox::Ok);
+            return false;
         }
 
         // Select a key

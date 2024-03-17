@@ -27,21 +27,37 @@ protected slots:
 
 protected:
     struct supportedType {
-        const char    *name;
+        const char *name;
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         QVariant::Type typ;
+#else
+        QMetaType::Type typ;
+#endif
     };
     static supportedType supportedTypes[];
 };
 
-OptionEditor::supportedType OptionEditor::supportedTypes[]
-    = { { "bool", QVariant::Bool },
-        { "int", QVariant::Int },
-        { "QKeySequence", QVariant::KeySequence },
-        { "QSize", QVariant::Size },
-        { "QString", QVariant::String },
-        { "QColor", QVariant::Color },
-        //    {"QStringList", QVariant::StringList},  doesn't work
-        { nullptr, QVariant::Invalid } };
+OptionEditor::supportedType OptionEditor::supportedTypes[] = {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    { "bool", QVariant::Bool },
+    { "int", QVariant::Int },
+    { "QKeySequence", QVariant::KeySequence },
+    { "QSize", QVariant::Size },
+    { "QString", QVariant::String },
+    { "QColor", QVariant::Color },
+    //    {"QStringList", QVariant::StringList},  doesn't work
+    { nullptr, QVariant::Invalid }
+#else
+    { "bool", QMetaType::Bool },
+    { "int", QMetaType::Int },
+    { "QKeySequence", QMetaType::QKeySequence },
+    { "QSize", QMetaType::QSize },
+    { "QString", QMetaType::QString },
+    { "QColor", QMetaType::QColor },
+    //    {"QStringList", QMetaType::QStringList},  doesn't work
+    { nullptr, QMetaType::Nullptr }
+#endif
+};
 
 OptionEditor::OptionEditor(bool new_, QString name_, QVariant value_)
 {
@@ -65,7 +81,11 @@ OptionEditor::OptionEditor(bool new_, QString name_, QVariant value_)
     if (value_.isValid()) {
         bool ok = false;
         for (int i = 0; supportedTypes[i].name; i++) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
             if (value_.type() == supportedTypes[i].typ) {
+#else
+            if (value_.typeId() == supportedTypes[i].typ) {
+#endif
                 cb_typ->setCurrentIndex(i);
                 le_value->setText(value_.toString());
                 ok = true;
@@ -92,10 +112,14 @@ void OptionEditor::finished()
                               QMessageBox::Close);
         return;
     }
-    QVariant       strval(le_value->text());
-    QVariant::Type type   = supportedTypes[cb_typ->currentIndex()].typ;
-    QVariant       newval = strval;
+    QVariant strval(le_value->text());
+    auto     type   = supportedTypes[cb_typ->currentIndex()].typ;
+    QVariant newval = strval;
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     newval.convert(int(type));
+#else
+    newval.convert(QMetaType(type));
+#endif
     PsiOptions::instance()->setOption(option, newval);
 
     accept();
@@ -228,9 +252,17 @@ void PsiOptionsEditor::tv_edit(const QModelIndex &idx)
     // QModelIndex idx = tv_->currentIndex();
     QString  option = tm_->indexToOptionName(tpm_->mapToSource(idx));
     QVariant value  = PsiOptions::instance()->getOption(option);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     if (value.type() == QVariant::Bool) {
+#else
+    if (value.typeId() == QMetaType::Bool) {
+#endif
         PsiOptions::instance()->setOption(option, QVariant(!value.toBool()));
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     } else if (value.type() == QVariant::Color) {
+#else
+    } else if (value.typeId() == QMetaType::QColor) {
+#endif
         QColorDialog cd(this);
         cd.setCurrentColor(value.value<QColor>());
         if (cd.exec() == QDialog::Accepted) {

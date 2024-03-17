@@ -173,7 +173,11 @@ void PsiContactListView::showToolTip(const QModelIndex &index, const QPoint &glo
 
 bool PsiContactListView::acceptableDragOperation(QDropEvent *e)
 {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     ContactListItem *item = itemProxy(indexAt(e->pos()));
+#else
+    ContactListItem *item = itemProxy(indexAt(e->position().toPoint()));
+#endif
 
     if (!item)
         return false;
@@ -197,7 +201,11 @@ bool PsiContactListView::acceptableDragOperation(QDropEvent *e)
 void PsiContactListView::dragEnterEvent(QDragEnterEvent *e)
 {
     if (acceptableDragOperation(e)) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         setCurrentIndex(indexAt(e->pos()));
+#else
+        setCurrentIndex(indexAt(e->position().toPoint()));
+#endif
         e->acceptProposedAction();
         return;
     }
@@ -208,7 +216,11 @@ void PsiContactListView::dragEnterEvent(QDragEnterEvent *e)
 void PsiContactListView::dragMoveEvent(QDragMoveEvent *e)
 {
     if (acceptableDragOperation(e)) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         setCurrentIndex(indexAt(e->pos()));
+#else
+        setCurrentIndex(indexAt(e->position().toPoint()));
+#endif
         e->acceptProposedAction();
         return;
     }
@@ -218,7 +230,11 @@ void PsiContactListView::dragMoveEvent(QDragMoveEvent *e)
 
 void PsiContactListView::dropEvent(QDropEvent *e)
 {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     ContactListItem *item = itemProxy(indexAt(e->pos()));
+#else
+    ContactListItem *item = itemProxy(indexAt(e->position().toPoint()));
+#endif
 
     if (!item)
         return;
