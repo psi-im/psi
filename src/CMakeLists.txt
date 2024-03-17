@@ -285,8 +285,6 @@ add_subdirectory(avcall)
 add_subdirectory(psimedia)
 add_subdirectory(contactmanager)
 add_subdirectory(tools)
-add_subdirectory(libpsi/dialogs)
-add_subdirectory(libpsi/tools)
 add_subdirectory(widgets)
 add_subdirectory(sxe)
 add_subdirectory(whiteboarding)
@@ -495,7 +493,6 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME}
-    options
     Certificates
     psimedia
     contactmanager
@@ -503,11 +500,10 @@ target_link_libraries(${PROJECT_NAME}
     whiteboarding
     sxe
     tools
-    libpsi_dialogs
-    libpsi_tools
     widgets
     privacy
     tabs
+    options
     AutoUpdater
 )
 

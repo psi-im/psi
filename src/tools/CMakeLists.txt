@@ -137,6 +137,8 @@ elseif(LINUX)
     endif()
 endif()
 
+include(libpsi_tools.cmake)
+
 add_library(tools STATIC ${SOURCES} ${HEADERS})
 target_link_libraries(tools ${QT_LIBRARIES} ${iris_LIB} zip ${EXTRA_LDFLAGS})
 target_include_directories(tools PUBLIC

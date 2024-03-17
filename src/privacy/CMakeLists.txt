@@ -33,5 +33,5 @@ list(APPEND FORMS
 
 qt_wrap_ui(UI_FORMS ${FORMS})
 add_library(privacy STATIC ${SOURCES} ${HEADERS} ${UI_FORMS})
-target_link_libraries(privacy ${QT_LIBRARIES} ${iris_LIB} libpsi_tools widgets tabs)
+target_link_libraries(privacy ${QT_LIBRARIES} ${iris_LIB} tools widgets tabs)
 target_include_directories(privacy PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})

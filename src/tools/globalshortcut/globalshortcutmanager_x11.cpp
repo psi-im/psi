@@ -311,7 +311,7 @@ private:
         Display *appDpy     = QX11Info::display();
         auto     rootWindow = QX11Info::appRootWindow();
 #else
-        auto x11app = qApp->nativeInterface<QNativeInterface::QX11Application>();
+        auto     x11app = qApp->nativeInterface<QNativeInterface::QX11Application>();
         if (!x11app) {
             return; // wayland?
         }
@@ -369,7 +369,7 @@ public:
         Display *appDpy     = QX11Info::display();
         auto     rootWindow = QX11Info::appRootWindow();
 #else
-        auto x11app = qApp->nativeInterface<QNativeInterface::QX11Application>();
+        auto     x11app     = qApp->nativeInterface<QNativeInterface::QX11Application>();
         if (!x11app) {
             return; // wayland?
         }

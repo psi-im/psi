@@ -11,17 +11,17 @@ AC_ARG_ENABLE([demos], AC_HELP_STRING([--enable-demos], [build example programs]
 AM_CONDITIONAL([COND_DEMOS], [test "$enable_demos" = yes])
 if test "$enable_demos" = yes
 then
-	AC_MSG_RESULT([yes])
+    AC_MSG_RESULT([yes])
 else
-	AC_MSG_RESULT([no])
+    AC_MSG_RESULT([no])
 fi
 
 case "${host}" in
-	*-mingw* | mingw*)
-		WIN32="yes"
-		;;
-	*)
-		;;
+    *-mingw* | mingw*)
+        WIN32="yes"
+        ;;
+    *)
+        ;;
 esac
 AM_CONDITIONAL([WIN32], [test "${WIN32}" = "yes"])
 

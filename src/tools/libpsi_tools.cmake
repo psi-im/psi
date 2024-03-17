@@ -1,11 +1,5 @@
 set(CMAKE_CXX_STANDARD 17)
 
-unset(HEADERS)
-unset(FORMS)
-unset(SOURCES)
-unset(UI_FORMS)
-unset(EXTRA_LDFLAGS)
-
 if(APPLE)
     if(USE_GROWL)
         list(APPEND EXTRA_LDFLAGS
@@ -271,10 +265,5 @@ if(LINUX AND USE_XSS)
     include_directories(${X11_Xscreensaver_INCLUDE_PATH})
     list(APPEND EXTRA_LDFLAGS ${X11_Xscreensaver_LIB})
 endif()
-
-qt_wrap_ui(UI_FORMS ${FORMS})
-add_library(libpsi_tools STATIC  ${SOURCES} ${HEADERS} ${UI_FORMS})
-target_link_libraries(libpsi_tools iris ${QT_LIBRARIES} tools ${EXTRA_LDFLAGS})
-target_include_directories(libpsi_tools PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 add_subdirectory(zip)

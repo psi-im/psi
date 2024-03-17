@@ -35,4 +35,4 @@ set(HEADERS
 )
 
 add_library(sxe STATIC ${HEADERS} ${SOURCES})
-target_link_libraries(sxe ${QT_LIBRARIES} ${iris_LIB} libpsi_tools widgets)
+target_link_libraries(sxe ${QT_LIBRARIES} ${iris_LIB} tools widgets)

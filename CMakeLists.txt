@@ -30,7 +30,6 @@ set(SBM_LIST
     ${PROJECT_SOURCE_DIR}/3rdparty/qhttp/qhttp.pro
     ${PROJECT_SOURCE_DIR}/3rdparty/qite/qite.pro
     ${PROJECT_SOURCE_DIR}/iris/CMakeLists.txt
-    ${PROJECT_SOURCE_DIR}/src/libpsi/tools/CMakeLists.txt
 )
 foreach(submodule ${SBM_LIST})
     if(NOT EXISTS "${submodule}")

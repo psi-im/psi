@@ -108,5 +108,5 @@ list(APPEND FORMS
 
 qt_wrap_ui(UI_FORMS ${FORMS})
 add_library(options STATIC ${SOURCES} ${HEADERS} ${UI_FORMS})
-target_link_libraries(options ${QT_LIBRARIES} tools widgets tabs libpsi_dialogs)
+target_link_libraries(options ${QT_LIBRARIES} tools widgets tabs)
 target_include_directories(options PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})

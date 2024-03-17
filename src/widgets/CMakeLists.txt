@@ -10,6 +10,7 @@ set(SOURCES
     eventnotifier.cpp
     fancylabel.cpp
     fancypopup.cpp
+    grepshortcutkeydialog.cpp
     iconaction.cpp
     iconselect.cpp
     iconwidget.cpp
@@ -36,6 +37,7 @@ set(HEADERS
     fancylabel.h
     fancypopup.h
     fancypopuplist.h
+    grepshortcutkeydialog.h
     iconaction.h
     iconbutton.h
     iconlabel.h
@@ -75,6 +77,7 @@ endif()
 
 set(FORMS
     fancypopup.ui
+    grepshortcutkeydialog.ui
 )
 
 if(PSI_PLUS AND (EXISTS "${CMAKE_CURRENT_LIST_DIR}/psiwindowheader.cpp"))
@@ -91,5 +94,5 @@ endif()
 
 qt_wrap_ui(UI_FORMS ${FORMS})
 add_library(widgets STATIC ${SOURCES} ${HEADERS} ${UI_FORMS})
-target_link_libraries(widgets ${QT_LIBRARIES} ${iris_LIB} libpsi_tools)
-target_include_directories(widgets PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+target_link_libraries(widgets ${QT_LIBRARIES} ${iris_LIB} tools)
+target_include_directories(widgets PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_LIST_DIR})

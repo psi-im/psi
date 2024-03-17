@@ -38,7 +38,7 @@ public:
         if (type)
             CFRelease(type);
     }
-    inline          operator T() { return type; }
+    inline operator T() { return type; }
     inline QtCFType operator=(const QtCFType &helper)
     {
         if (helper.type)
