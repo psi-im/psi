@@ -601,7 +601,7 @@ public:
                     iceA_status.remotePassword = audioContent->trans.pass;
                 }
 
-                printf("audio candidates=%lld\n", audioContent->trans.candidates.count());
+                printf("audio candidates=%lld\n", qsizetype(audioContent->trans.candidates.count()));
                 iceA_status.remoteCandidates += audioContent->trans.candidates;
             }
             if (videoContent) {
@@ -610,7 +610,7 @@ public:
                     iceV_status.remotePassword = videoContent->trans.pass;
                 }
 
-                printf("video candidates=%lld\n", videoContent->trans.candidates.count());
+                printf("video candidates=%lld\n", qsizetype(videoContent->trans.candidates.count()));
                 iceV_status.remoteCandidates += videoContent->trans.candidates;
             }
 
