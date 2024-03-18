@@ -38,12 +38,12 @@ foreach(submodule ${SBM_LIST})
 endforeach()
 
 set( DEFAULT_BUNDLED_QCA OFF )
-if (APPLE OR MSVC)
+if (APPLE OR ((MSVC OR USE_MXE) OR BUNDLED_IRIS_ALL))
     set( DEFAULT_BUNDLED_QCA ON )
 endif()
 
 set( DEFAULT_BUNDLED_USRSCTP OFF )
-if (APPLE OR (MSVC OR USE_MXE))
+if (APPLE OR ((MSVC OR USE_MXE) OR BUNDLED_IRIS_ALL))
     set( DEFAULT_BUNDLED_USRSCTP ON )
 endif()
 
@@ -176,10 +176,6 @@ if(USE_CRASH)
     add_definitions(-DUSE_CRASH)
 endif()
 
-if(IRIS_BUNDLED_QCA)
-    add_definitions(-DQCA_STATIC)
-endif()
-
 # Detect MXE cross-compilation
 if(EXISTS "${CMAKE_TOOLCHAIN_FILE}")
     string(TOLOWER ${CMAKE_TOOLCHAIN_FILE} TOOLCHAIN_FILE)
@@ -287,6 +283,10 @@ if (BUNDLED_IRIS_ALL)
     set(BUNDLED_IRIS ON)
     set(IRIS_BUNDLED_QCA ON)
     set(IRIS_BUNDLED_USRSCTP ON)
+endif()
+
+if(IRIS_BUNDLED_QCA)
+    add_definitions(-DQCA_STATIC)
 endif()
 
 # Copy a list of files from one directory to another. Only full paths.

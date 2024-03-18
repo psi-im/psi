@@ -1,5 +1,5 @@
 #=============================================================================
-# Copyright 2016-2017 Psi+ Project, Vitaly Tonkacheyev
+# Copyright 2016-2020 Psi+ Project, Vitaly Tonkacheyev
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,11 +34,11 @@ if (Qca_INCLUDE_DIR AND Qca_LIBRARY)
 endif()
 
 set(EXTRA_PATH_SUFFIXES
-    qt5/Qca-qt5/QtCrypto
-    Qca-qt5/QtCrypto
-    qt5/QtCrypto
-    qt/Qca-qt5/QtCrypto
-    lib/qca-qt5.framework/Versions/2/Headers
+    qt${QT_DEFAULT_MAJOR_VERSION}/Qca-qt${QT_DEFAULT_MAJOR_VERSION}/QtCrypto
+    Qca-qt${QT_DEFAULT_MAJOR_VERSION}/QtCrypto
+    qt${QT_DEFAULT_MAJOR_VERSION}/QtCrypto
+    qt/Qca-qt${QT_DEFAULT_MAJOR_VERSION}/QtCrypto
+    lib/qca-qt${QT_DEFAULT_MAJOR_VERSION}.framework/Versions/2/Headers
 )
 
 find_path(
@@ -52,7 +52,7 @@ find_path(
 
 find_library(
     Qca_LIBRARY
-    NAMES qca-qt5${D}
+    NAMES qca-qt${QT_DEFAULT_MAJOR_VERSION}${D}
     HINTS
     ${QCA_DIR}/lib
     ${QCA_DIR}/bin
