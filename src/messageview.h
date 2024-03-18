@@ -26,16 +26,6 @@
 #include <QDateTime>
 #include <QVariantMap>
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
-#define SET_QFLAG(flags, flag, state)                                                                                  \
-    if (state)                                                                                                         \
-        flags |= flag;                                                                                                 \
-    else                                                                                                               \
-        flags &= ~flag
-#else
-#define SET_QFLAG(flags, flag, state) flags.setFlag(flag, state)
-#endif
-
 class MessageView {
 public:
     enum Type {
@@ -96,19 +86,19 @@ public:
 
     inline const Flags &flags() const { return _flags; }
 
-    inline void setAlert(bool state = true) { SET_QFLAG(_flags, Alert, state); }
+    inline void setAlert(bool state = true) { _flags.setFlag(Alert, state); }
     inline bool isAlert() const { return bool(_flags & Alert); }
-    inline void setLocal(bool state = true) { SET_QFLAG(_flags, Local, state); }
+    inline void setLocal(bool state = true) { _flags.setFlag(Local, state); }
     inline bool isLocal() const { return bool(_flags & Local); }
-    inline void setEmote(bool state = true) { SET_QFLAG(_flags, Emote, state); }
+    inline void setEmote(bool state = true) { _flags.setFlag(Emote, state); }
     inline bool isEmote() const { return bool(_flags & Emote); }
-    inline void setSpooled(bool state = true) { SET_QFLAG(_flags, Spooled, state); }
+    inline void setSpooled(bool state = true) { _flags.setFlag(Spooled, state); }
     inline bool isSpooled() const { return bool(_flags & Spooled); }
-    inline void setAwaitingReceipt(bool b = true) { SET_QFLAG(_flags, AwaitingReceipt, b); }
+    inline void setAwaitingReceipt(bool b = true) { _flags.setFlag(AwaitingReceipt, b); }
     inline bool isAwaitingReceipt() const { return bool(_flags & AwaitingReceipt); }
-    inline void setStatusChangeHidden(bool b = true) { SET_QFLAG(_flags, HideStatusChange, b); }
+    inline void setStatusChangeHidden(bool b = true) { _flags.setFlag(HideStatusChange, b); }
     inline bool isStatusChangeHidden() const { return bool(_flags & HideStatusChange); }
-    inline void setJoinLeaveHidden(bool b = true) { SET_QFLAG(_flags, HideJoinLeave, b); }
+    inline void setJoinLeaveHidden(bool b = true) { _flags.setFlag(HideJoinLeave, b); }
     inline bool isJoinLeaveHidden() const { return bool(_flags & HideJoinLeave); }
 
     inline void setStatus(int s) { _status = s; }

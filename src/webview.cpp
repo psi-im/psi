@@ -140,7 +140,18 @@ void WebView::contextMenuEvent(QContextMenuEvent *event)
             }
             menu->addAction(pageAction(QWebEnginePage::SelectAll));
         }
-        menu->addAction(pageAction(QWebEnginePage::InspectElement));
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        auto inspectAction = pageAction(QWebEnginePage::InspectElement);
+        menu->addAction(inspectAction);
+        connect(inspectAction, &QAction::triggered, this, [this](bool) {
+            auto devView = new QWebEngineView();
+            devView->setAttribute(Qt::WA_DeleteOnClose);
+            devView->setWindowIcon(QIcon(IconsetFactory::iconPtr("psi/logo_128")->icon()));
+            devView->setWindowTitle("Psi WebView DevTools");
+            page()->setDevToolsPage(devView->page());
+            devView->show();
+        });
+#endif
     }
     // menu->addAction(pageAction(QWebEnginePage::Reload));
 #else
