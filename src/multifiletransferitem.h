@@ -21,6 +21,7 @@
 #define MULTIFILETRANSFERITEM_H
 
 #include "multifiletransfermodel.h"
+#include <memory>
 
 class MultiFileTransferItem : public QObject {
     Q_OBJECT

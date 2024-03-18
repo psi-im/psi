@@ -20,6 +20,7 @@
 #pragma once
 
 #include <QIODevice>
+#include <memory>
 
 class PsiAccount;
 
