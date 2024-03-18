@@ -12,6 +12,10 @@ get_filename_component(ABS_INCLUDES_DIR "${CMAKE_CURRENT_LIST_DIR}/../include" A
 
 set(CMAKE_CXX_STANDARD 17)
 
+if("${QT_DEFAULT_MAJOR_VERSION}" STREQUAL "")
+    set(QT_DEFAULT_MAJOR_VERSION 5)
+endif()
+
 if( NOT WIN32 )
     set( LIB_SUFFIX "" CACHE STRING "Define suffix of directory name (32/64)" )
     set( PLUGINS_PATH "lib${LIB_SUFFIX}/${MAIN_PROGRAM_NAME}/plugins" CACHE STRING "Install suffix for plugins" )
