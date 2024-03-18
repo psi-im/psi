@@ -19,8 +19,9 @@
 
 #include <cstdint>
 
-#include "emojidb.cpp"
 #include "emojiregistry.h"
+
+#include "emojidb.cpp" // don't move this line to other headers
 
 const EmojiRegistry &EmojiRegistry::instance()
 {

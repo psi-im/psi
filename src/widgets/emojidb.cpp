@@ -1,8 +1,5 @@
 // This is a generated file. See emoji.py for details
 // clang-format off
-#include "qglobal.h"
-#include "emojiregistry.h"
-#include <vector>
 static std::vector<EmojiRegistry::Group> db = {
     {
         QT_TR_NOOP("Smileys & Emotion"),
@@ -229,6 +226,14 @@ static std::vector<EmojiRegistry::Group> db = {
                     {
                         "🫨",
                         "shaking face"
+                    },
+                    {
+                        "🙂‍↔️",
+                        "head shaking horizontally"
+                    },
+                    {
+                        "🙂‍↕️",
+                        "head shaking vertically"
                     }
                 }
             },
@@ -586,12 +591,8 @@ static std::vector<EmojiRegistry::Group> db = {
                 }
             },
             {
-                "emotion",
+                "heart",
                 {
-                    {
-                        "💋",
-                        "kiss mark"
-                    },
                     {
                         "💌",
                         "love letter"
@@ -649,6 +650,10 @@ static std::vector<EmojiRegistry::Group> db = {
                         "red heart"
                     },
                     {
+                        "🩷",
+                        "pink heart"
+                    },
+                    {
                         "🧡",
                         "orange heart"
                     },
@@ -665,20 +670,12 @@ static std::vector<EmojiRegistry::Group> db = {
                         "blue heart"
                     },
                     {
-                        "💜",
-                        "purple heart"
-                    },
-                    {
                         "🩵",
                         "light blue heart"
                     },
                     {
-                        "🩶",
-                        "grey heart"
-                    },
-                    {
-                        "🩷",
-                        "pink heart"
+                        "💜",
+                        "purple heart"
                     },
                     {
                         "🤎",
@@ -689,8 +686,21 @@ static std::vector<EmojiRegistry::Group> db = {
                         "black heart"
                     },
                     {
+                        "🩶",
+                        "grey heart"
+                    },
+                    {
                         "🤍",
                         "white heart"
+                    }
+                }
+            },
+            {
+                "emotion",
+                {
+                    {
+                        "💋",
+                        "kiss mark"
                     },
                     {
                         "💯",
@@ -719,10 +729,6 @@ static std::vector<EmojiRegistry::Group> db = {
                     {
                         "🕳️",
                         "hole"
-                    },
-                    {
-                        "💣",
-                        "bomb"
                     },
                     {
                         "💬",
@@ -793,6 +799,14 @@ static std::vector<EmojiRegistry::Group> db = {
                     {
                         "🫴",
                         "palm up hand"
+                    },
+                    {
+                        "🫷",
+                        "leftwards pushing hand"
+                    },
+                    {
+                        "🫸",
+                        "rightwards pushing hand"
                     }
                 }
             },
@@ -929,14 +943,6 @@ static std::vector<EmojiRegistry::Group> db = {
                     {
                         "🙏",
                         "folded hands"
-                    },
-                    {
-                        "🫷",
-                        "leftwards pushing hand"
-                    },
-                    {
-                        "🫸",
-                        "rightwards pushing hand"
                     }
                 }
             },
@@ -1782,6 +1788,18 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman walking"
                     },
                     {
+                        "🚶‍➡️",
+                        "person walking facing right"
+                    },
+                    {
+                        "🚶‍♀️‍➡️",
+                        "woman walking facing right"
+                    },
+                    {
+                        "🚶‍♂️‍➡️",
+                        "man walking facing right"
+                    },
+                    {
                         "🧍",
                         "person standing"
                     },
@@ -1806,40 +1824,88 @@ static std::vector<EmojiRegistry::Group> db = {
                         "woman kneeling"
                     },
                     {
+                        "🧎‍➡️",
+                        "person kneeling facing right"
+                    },
+                    {
+                        "🧎‍♀️‍➡️",
+                        "woman kneeling facing right"
+                    },
+                    {
+                        "🧎‍♂️‍➡️",
+                        "man kneeling facing right"
+                    },
+                    {
                         "🧑‍🦯",
                         "person with white cane"
+                    },
+                    {
+                        "🧑‍🦯‍➡️",
+                        "person with white cane facing right"
                     },
                     {
                         "👨‍🦯",
                         "man with white cane"
                     },
                     {
+                        "👨‍🦯‍➡️",
+                        "man with white cane facing right"
+                    },
+                    {
                         "👩‍🦯",
                         "woman with white cane"
+                    },
+                    {
+                        "👩‍🦯‍➡️",
+                        "woman with white cane facing right"
                     },
                     {
                         "🧑‍🦼",
                         "person in motorized wheelchair"
                     },
                     {
+                        "🧑‍🦼‍➡️",
+                        "person in motorized wheelchair facing right"
+                    },
+                    {
                         "👨‍🦼",
                         "man in motorized wheelchair"
+                    },
+                    {
+                        "👨‍🦼‍➡️",
+                        "man in motorized wheelchair facing right"
                     },
                     {
                         "👩‍🦼",
                         "woman in motorized wheelchair"
                     },
                     {
+                        "👩‍🦼‍➡️",
+                        "woman in motorized wheelchair facing right"
+                    },
+                    {
                         "🧑‍🦽",
                         "person in manual wheelchair"
+                    },
+                    {
+                        "🧑‍🦽‍➡️",
+                        "person in manual wheelchair facing right"
                     },
                     {
                         "👨‍🦽",
                         "man in manual wheelchair"
                     },
                     {
+                        "👨‍🦽‍➡️",
+                        "man in manual wheelchair facing right"
+                    },
+                    {
                         "👩‍🦽",
                         "woman in manual wheelchair"
+                    },
+                    {
+                        "👩‍🦽‍➡️",
+                        "woman in manual wheelchair facing right"
                     },
                     {
                         "🏃",
@@ -1852,6 +1918,18 @@ static std::vector<EmojiRegistry::Group> db = {
                     {
                         "🏃‍♀️",
                         "woman running"
+                    },
+                    {
+                        "🏃‍➡️",
+                        "person running facing right"
+                    },
+                    {
+                        "🏃‍♀️‍➡️",
+                        "woman running facing right"
+                    },
+                    {
+                        "🏃‍♂️‍➡️",
+                        "man running facing right"
                     },
                     {
                         "💃",
@@ -2157,10 +2235,6 @@ static std::vector<EmojiRegistry::Group> db = {
                         "couple with heart"
                     },
                     {
-                        "👪",
-                        "family"
-                    },
-                    {
                         "👨‍👩‍👦",
                         "family"
                     },
@@ -2280,6 +2354,26 @@ static std::vector<EmojiRegistry::Group> db = {
                     {
                         "🫂",
                         "people hugging"
+                    },
+                    {
+                        "👪",
+                        "family"
+                    },
+                    {
+                        "🧑‍🧑‍🧒",
+                        "family"
+                    },
+                    {
+                        "🧑‍🧑‍🧒‍🧒",
+                        "family"
+                    },
+                    {
+                        "🧑‍🧒",
+                        "family"
+                    },
+                    {
+                        "🧑‍🧒‍🧒",
+                        "family"
                     },
                     {
                         "👣",
@@ -2641,12 +2735,16 @@ static std::vector<EmojiRegistry::Group> db = {
                         "wing"
                     },
                     {
+                        "🐦‍⬛",
+                        "black bird"
+                    },
+                    {
                         "🪿",
                         "goose"
                     },
                     {
-                        "🐦‍⬛",
-                        "black bird"
+                        "🐦‍🔥",
+                        "phoenix"
                     }
                 }
             },
@@ -2933,6 +3031,10 @@ static std::vector<EmojiRegistry::Group> db = {
                     {
                         "🪺",
                         "nest with eggs"
+                    },
+                    {
+                        "🍄",
+                        "mushroom"
                     }
                 }
             }
@@ -2963,6 +3065,10 @@ static std::vector<EmojiRegistry::Group> db = {
                     {
                         "🍋",
                         "lemon"
+                    },
+                    {
+                        "🍋‍🟩",
+                        "lime"
                     },
                     {
                         "🍌",
@@ -3074,10 +3180,6 @@ static std::vector<EmojiRegistry::Group> db = {
                         "onion"
                     },
                     {
-                        "🍄",
-                        "mushroom"
-                    },
-                    {
                         "🥜",
                         "peanuts"
                     },
@@ -3096,6 +3198,10 @@ static std::vector<EmojiRegistry::Group> db = {
                     {
                         "🫛",
                         "pea pod"
+                    },
+                    {
+                        "🍄‍🟫",
+                        "brown mushroom"
                     }
                 }
             },
@@ -4701,6 +4807,10 @@ static std::vector<EmojiRegistry::Group> db = {
                         "kite"
                     },
                     {
+                        "🔫",
+                        "water pistol"
+                    },
+                    {
                         "🎱",
                         "pool 8 ball"
                     },
@@ -4711,14 +4821,6 @@ static std::vector<EmojiRegistry::Group> db = {
                     {
                         "🪄",
                         "magic wand"
-                    },
-                    {
-                        "🧿",
-                        "nazar amulet"
-                    },
-                    {
-                        "🪬",
-                        "hamsa"
                     },
                     {
                         "🎮",
@@ -4916,10 +5018,6 @@ static std::vector<EmojiRegistry::Group> db = {
                         "folding hand fan"
                     },
                     {
-                        "🪮",
-                        "hair pick"
-                    },
-                    {
                         "👛",
                         "purse"
                     },
@@ -4974,6 +5072,10 @@ static std::vector<EmojiRegistry::Group> db = {
                     {
                         "👢",
                         "woman’s boot"
+                    },
+                    {
+                        "🪮",
+                        "hair pick"
                     },
                     {
                         "👑",
@@ -5677,8 +5779,8 @@ static std::vector<EmojiRegistry::Group> db = {
                         "crossed swords"
                     },
                     {
-                        "🔫",
-                        "water pistol"
+                        "💣",
+                        "bomb"
                     },
                     {
                         "🪃",
@@ -5727,6 +5829,10 @@ static std::vector<EmojiRegistry::Group> db = {
                     {
                         "🔗",
                         "link"
+                    },
+                    {
+                        "⛓️‍💥",
+                        "broken chain"
                     },
                     {
                         "⛓️",
@@ -5939,6 +6045,14 @@ static std::vector<EmojiRegistry::Group> db = {
                     {
                         "⚱️",
                         "funeral urn"
+                    },
+                    {
+                        "🧿",
+                        "nazar amulet"
+                    },
+                    {
+                        "🪬",
+                        "hamsa"
                     },
                     {
                         "🗿",
@@ -6368,16 +6482,16 @@ static std::vector<EmojiRegistry::Group> db = {
                         "antenna bars"
                     },
                     {
+                        "🛜",
+                        "wireless"
+                    },
+                    {
                         "📳",
                         "vibration mode"
                     },
                     {
                         "📴",
                         "mobile phone off"
-                    },
-                    {
-                        "🛜",
-                        "wireless"
                     }
                 }
             },
