@@ -63,6 +63,7 @@ public:
     bool isLoading() { return isLoading_; }
 
     void addContextMenuAction(QAction *act);
+    void connectPageActions();
 
 public slots:
     void copySelected();

@@ -58,9 +58,6 @@ WebView::WebView(QWidget *parent) :
     // TODO cache cotrol
     // TODO network request interception
     // Review ink delegation (in other words all local links on page should work)
-
-    connect(page()->action(QWebEnginePage::Copy), SIGNAL(triggered()), SLOT(textCopiedEvent()));
-    connect(page()->action(QWebEnginePage::Cut), SIGNAL(triggered()), SLOT(textCopiedEvent()));
 #else
     settings()->setAttribute(QWebSettings::JavaEnabled, false);
     settings()->setAttribute(QWebSettings::PluginsEnabled, false);
@@ -68,16 +65,8 @@ WebView::WebView(QWidget *parent) :
     settings()->setMaximumPagesInCache(0);
     settings()->setObjectCacheCapacities(0, 0, 0);
     settings()->clearMemoryCaches();
-
-    page()->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
-
-    connect(page()->action(QWebPage::Copy), SIGNAL(triggered()), SLOT(textCopiedEvent()));
-    connect(page()->action(QWebPage::Cut), SIGNAL(triggered()), SLOT(textCopiedEvent()));
-    connect(page(), SIGNAL(linkClicked(const QUrl &)), this,
-            SLOT(linkClickedEvent(const QUrl &))); // most likely we don't need this at all
 #endif
-    connect(page(), SIGNAL(loadStarted()), this, SLOT(loadStartedEvent()));
-    connect(page(), SIGNAL(loadFinished(bool)), this, SLOT(loadFinishedEvent(bool)));
+    connectPageActions();
 }
 
 void WebView::linkClickedEvent(const QUrl &url)
@@ -141,16 +130,7 @@ void WebView::contextMenuEvent(QContextMenuEvent *event)
             menu->addAction(pageAction(QWebEnginePage::SelectAll));
         }
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        auto inspectAction = pageAction(QWebEnginePage::InspectElement);
-        menu->addAction(inspectAction);
-        connect(inspectAction, &QAction::triggered, this, [this](bool) {
-            auto devView = new QWebEngineView();
-            devView->setAttribute(Qt::WA_DeleteOnClose);
-            devView->setWindowIcon(QIcon(IconsetFactory::iconPtr("psi/logo_128")->icon()));
-            devView->setWindowTitle("Psi WebView DevTools");
-            page()->setDevToolsPage(devView->page());
-            devView->show();
-        });
+        menu->addAction(pageAction(QWebEnginePage::InspectElement));
 #endif
     }
     // menu->addAction(pageAction(QWebEnginePage::Reload));
@@ -252,6 +232,33 @@ void WebView::evaluateJS(const QString &scriptSource)
 }
 
 void WebView::addContextMenuAction(QAction *act) { contextMenuActions_.append(act); }
+
+void WebView::connectPageActions()
+{
+#ifdef WEBENGINE
+    connect(page()->action(QWebEnginePage::Copy), SIGNAL(triggered()), SLOT(textCopiedEvent()));
+    connect(page()->action(QWebEnginePage::Cut), SIGNAL(triggered()), SLOT(textCopiedEvent()));
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    connect(page()->action(QWebEnginePage::InspectElement), &QAction::triggered, this, [this](bool) {
+        auto devView = new QWebEngineView();
+        devView->setAttribute(Qt::WA_DeleteOnClose);
+        devView->setWindowIcon(QIcon(IconsetFactory::iconPtr("psi/logo_128")->icon()));
+        devView->setWindowTitle("Psi WebView DevTools");
+        page()->setDevToolsPage(devView->page());
+        devView->show();
+    });
+#endif
+#else
+    page()->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
+
+    connect(page()->action(QWebPage::Copy), SIGNAL(triggered()), SLOT(textCopiedEvent()));
+    connect(page()->action(QWebPage::Cut), SIGNAL(triggered()), SLOT(textCopiedEvent()));
+    connect(page(), SIGNAL(linkClicked(const QUrl &)), this,
+            SLOT(linkClickedEvent(const QUrl &))); // most likely we don't need this at all
+#endif
+    connect(page(), SIGNAL(loadStarted()), this, SLOT(loadStartedEvent()));
+    connect(page(), SIGNAL(loadFinished(bool)), this, SLOT(loadFinishedEvent(bool)));
+}
 
 #ifndef WEBENGINE
 QString WebView::selectedText() { return TextUtil::rich2plain(TextUtil::img2title(selectedHtml())); }
