@@ -45,7 +45,7 @@ class ChatViewJSLoader : public QObject {
     QHash<QString, QObject *> _sessions;
 
     Q_PROPERTY(QString themeId READ themeId CONSTANT)
-    Q_PROPERTY(QString isMuc READ isMuc CONSTANT)
+    Q_PROPERTY(bool isMuc READ isMuc CONSTANT)
     Q_PROPERTY(QString serverUrl READ serverUrl CONSTANT)
 
 signals:

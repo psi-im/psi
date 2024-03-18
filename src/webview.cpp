@@ -31,7 +31,9 @@
 #include <QStyle>
 #ifdef WEBENGINE
 #include <QWebEngineSettings>
-#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QWebEngineContextMenuRequest>
+#elif QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
 #include <QWebEngineContextMenuData>
 #endif
 #else
@@ -104,25 +106,25 @@ void WebView::contextMenuEvent(QContextMenuEvent *event)
     if (isLoading_)
         return;
 #ifdef WEBENGINE
-#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
-    QWebEngineContextMenuData r = page()->contextMenuData();
-#else
-    struct CMData {
-        QUrl linkUrl() { return QUrl(); } // just a stub. TODO invent something
-    };
-    CMData r;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QWebEngineContextMenuRequest *r       = lastContextMenuRequest();
+    QUrl                          linkUrl = r->linkUrl();
+#elif QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
+    QWebEngineContextMenuData r       = page()->contextMenuData();
+    QUrl                      linkUrl = r.linkUrl();
 #endif
 #else
-    QWebHitTestResult r = page()->mainFrame()->hitTestContent(event->pos());
+    QWebHitTestResult r       = page()->mainFrame()->hitTestContent(event->pos());
+    QUrl              linkUrl = r.linkUrl();
 #endif
     QMenu *menu;
 
-    if (!r.linkUrl().isEmpty()) {
-        if (r.linkUrl().scheme() == "addnick") {
+    if (!linkUrl.isEmpty()) {
+        if (linkUrl.scheme() == "addnick") {
             event->ignore();
             return;
         }
-        menu = URLObject::getInstance()->createPopupMenu(r.linkUrl().toEncoded());
+        menu = URLObject::getInstance()->createPopupMenu(linkUrl.toEncoded());
         // menu->addAction(pageAction(QWebPage::CopyLinkToClipboard));
     } else {
         menu = new QMenu(this);

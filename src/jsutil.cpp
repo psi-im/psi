@@ -26,14 +26,24 @@
 QString JSUtil::variant2js(const QVariant &value)
 {
     QString strVal;
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     switch (value.type()) {
     case QVariant::String:
     case QVariant::Color:
+#else
+    switch (value.typeId()) {
+    case QMetaType::QString:
+    case QMetaType::QColor:
+#endif
         strVal = value.toString();
         escapeString(strVal);
         strVal = QString("\"%1\"").arg(strVal);
         break;
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     case QVariant::StringList: {
+#else
+    case QMetaType::QStringList: {
+#endif
         QStringList sl = value.toStringList();
         for (int i = 0; i < sl.count(); i++) {
             escapeString(sl[i]);
@@ -41,7 +51,11 @@ QString JSUtil::variant2js(const QVariant &value)
         }
         strVal = QString("[%1]").arg(sl.join(","));
     } break;
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     case QVariant::List: {
+#else
+    case QMetaType::QVariantList: {
+#endif
         QStringList sl;
         auto        vl = value.toList();
         sl.reserve(vl.size());
@@ -50,13 +64,25 @@ QString JSUtil::variant2js(const QVariant &value)
         }
         strVal = QString("[%1]").arg(sl.join(","));
     } break;
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     case QVariant::DateTime:
+#else
+    case QMetaType::QDateTime:
+#endif
         strVal = QString("new Date(%1)").arg(value.toDateTime().toString("yyyy,M-1,d,h,m,s"));
         break;
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     case QVariant::Date:
+#else
+    case QMetaType::QDate:
+#endif
         strVal = QString("new Date(%1)").arg(value.toDate().toString("yyyy,M-1,d"));
         break;
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     case QVariant::Map:
+#else
+    case QMetaType::QVariantMap:
+#endif
         strVal = QString::fromUtf8(QJsonDocument::fromVariant(value).toJson(QJsonDocument::Compact));
         break;
     default:

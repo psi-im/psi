@@ -43,7 +43,6 @@
 
 #include <QAction>
 #include <QApplication>
-#include <QDesktopWidget>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonDocument>
@@ -55,7 +54,9 @@
 #include <QPalette>
 #include <QWidget>
 #ifdef WEBENGINE
-#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QWebEngineContextMenuRequest>
+#elif QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
 #include <QWebEngineContextMenuData>
 #endif
 #include <QWebEngineSettings>
@@ -223,6 +224,7 @@ public:
     {
         QFont   f      = static_cast<ChatView *>(parent())->font();
         QString weight = "normal";
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         switch (f.weight()) {
         case QFont::Light:
             weight = "lighter";
@@ -231,12 +233,16 @@ public:
             weight = "bold";
             break;
         case QFont::Bold:
+        case QFont::ExtraBold:
             weight = "bolder";
             break;
         case QFont::Black:
             weight = "900";
             break;
         }
+#else
+        weight = QString::number(f.weight());
+#endif
 
         // Workaround.  WebKit works only with 96dpi
         // Need to convert point size to pixel size
@@ -499,14 +505,14 @@ void ChatView::setAccount(PsiAccount *acc)
 
 void ChatView::contextMenuEvent(QContextMenuEvent *e)
 {
-#if defined(WEBENGINE) && QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
-    Q_UNUSED(e)
-    qDebug("Can't check menu hit point. Calling default handler");
-#else
     QUrl linkUrl;
 #ifdef WEBENGINE
+#if QT_VERSION >= QT_VERSION_CHECK(6, 2, 0)
+    linkUrl = d->webView->lastContextMenuRequest()->linkUrl();
+#else
     QWebEngineContextMenuData cmd = d->webView->page()->contextMenuData();
     linkUrl                       = cmd.linkUrl();
+#endif
 #else
     linkUrl = d->webView->page()->mainFrame()->hitTestContent(e->pos()).linkUrl();
 #endif
@@ -514,7 +520,6 @@ void ChatView::contextMenuEvent(QContextMenuEvent *e)
         emit showNM(linkUrl.path().mid(1));
         e->accept();
     }
-#endif
 }
 
 bool ChatView::focusNextPrevChild(bool next) { return QWidget::focusNextPrevChild(next); }

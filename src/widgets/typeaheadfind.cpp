@@ -29,6 +29,9 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QTextEdit>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QWebEngineFindTextResult>
+#endif
 
 /**
  * \class TypeAheadFindBar
@@ -85,7 +88,13 @@ public:
                 |= options & QTextDocument::FindBackward ? QWebEnginePage::FindBackward : QWebEnginePage::FindFlags();
             wkOptions |= options & QTextDocument::FindCaseSensitively ? QWebEnginePage::FindCaseSensitively
                                                                       : QWebEnginePage::FindFlags();
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
             wv->findText(str, wkOptions, [this](bool found) { updateFoundStyle(found); });
+#else
+            wv->findText(str, wkOptions, [this](const QWebEngineFindTextResult &found) {
+                updateFoundStyle(found.numberOfMatches() > 0);
+            });
+#endif
 #else
             QWebPage::FindFlags wkOptions;
             wkOptions |= options & QTextDocument::FindBackward ? QWebPage::FindBackward : QWebPage::FindFlags();

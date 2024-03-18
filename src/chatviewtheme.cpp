@@ -19,7 +19,6 @@
 
 #include "chatviewtheme.h"
 
-#include "avatars.h"
 #include "chatviewtheme_p.h"
 #include "chatviewthemeprovider.h"
 #include "chatviewthemeprovider_priv.h"
@@ -39,7 +38,6 @@
 #include <QScopedPointer>
 #include <QTimer>
 #include <time.h>
-#include <tuple>
 #ifdef WEBENGINE
 #include <QWebChannel>
 #include <QWebEnginePage>
@@ -613,7 +611,7 @@ QString ChatViewThemeJSUtil::formatDate(const QDateTime &dt, const QString &form
 QString ChatViewThemeJSUtil::strftime(const QDateTime &dt, const QString &format) const
 {
     char   str[256];
-    time_t t = dt.toTime_t();
+    time_t t = dt.toSecsSinceEpoch();
     int    s = int(::strftime(str, 256, format.toLocal8Bit(), localtime(&t)));
     if (s) {
         return QString::fromLocal8Bit(str, s);
