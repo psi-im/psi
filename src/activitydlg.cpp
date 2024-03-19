@@ -36,10 +36,9 @@ ActivityDlg::ActivityDlg(QList<PsiAccount *> list) : QDialog(nullptr), pa_(list)
     setWindowIcon(IconsetFactory::icon("activities/other").icon());
     setModal(false);
 
-    connect(ui_.cb_general_type, SIGNAL(currentIndexChanged(const QString &)),
-            SLOT(loadSpecificActivities(const QString &)));
-    connect(ui_.pb_cancel, SIGNAL(clicked()), SLOT(close()));
-    connect(ui_.pb_ok, SIGNAL(clicked()), SLOT(setActivity()));
+    connect(ui_.cb_general_type, &QComboBox::currentTextChanged, this, &ActivityDlg::loadSpecificActivities);
+    connect(ui_.pb_cancel, &QPushButton::clicked, this, &ActivityDlg::close);
+    connect(ui_.pb_ok, &QPushButton::clicked, this, &ActivityDlg::setActivity);
 
     ui_.cb_general_type->addItem(tr("<unset>"));
     PsiAccount    *pa = pa_.first();
