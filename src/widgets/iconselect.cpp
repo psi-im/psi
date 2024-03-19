@@ -307,14 +307,14 @@ void IconSelect::setIconset(const Iconset &iconset)
 #else
     const auto fontSz = QFontMetrics(qApp->font()).height();
 #endif
-    int  maxPrefTileHeight = fontSz * 2;
+    int  maxPrefTileHeight = fontSz * 3;
     auto maxPrefSize       = QSize(maxPrefTileHeight, maxPrefTileHeight);
 
     double count; // the 'double' type is somewhat important for MSVC.NET here
     if (fontEmojiMode) {
         count = EmojiRegistry::instance().count();
-        w     = fontSz * 1.5;
-        h     = fontSz * 1.5;
+        w     = fontSz * 2.5;
+        h     = fontSz * 2.5;
     } else {
         QListIterator<PsiIcon *> it = is.iterator();
         for (count = 0; it.hasNext(); count++) {
@@ -350,9 +350,9 @@ void IconSelect::setIconset(const Iconset &iconset)
     if (fontEmojiMode) {
         auto font = qApp->font();
         if (font.pointSize() == -1)
-            font.setPixelSize(font.pixelSize() * 1.5);
+            font.setPixelSize(font.pixelSize() * 2.5);
         else
-            font.setPointSize(font.pointSize() * 1.5);
+            font.setPointSize(font.pointSize() * 2.5);
 #if defined(Q_OS_WIN)
         font.setFamily("Segoe UI Emoji");
 #elif defined(Q_OS_MAC)
