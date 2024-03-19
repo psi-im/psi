@@ -112,7 +112,7 @@ AccountRemoveDlg::AccountRemoveDlg(const UserAccount &acc, QWidget *parent) : QD
     d->bg = new QButtonGroup(this);
     d->bg->addButton(rb_remove, 0);
     d->bg->addButton(rb_removeAndUnreg, 1);
-    connect(d->bg, &QButtonGroup::buttonClicked, this, &AccountRemoveDlg::bg_clicked);
+    connect(d->bg, qOverload<QAbstractButton *>(&QButtonGroup::buttonClicked), this, &AccountRemoveDlg::bg_clicked);
     rb_remove->setChecked(true);
     bg_clicked(rb_remove);
 
