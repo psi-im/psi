@@ -64,7 +64,7 @@ public slots:
 
 private slots:
     void remove();
-    void bg_clicked(int);
+    void bg_clicked(QAbstractButton *btn);
 
     void client_handshaken();
     void client_error();
@@ -112,9 +112,9 @@ AccountRemoveDlg::AccountRemoveDlg(const UserAccount &acc, QWidget *parent) : QD
     d->bg = new QButtonGroup(this);
     d->bg->addButton(rb_remove, 0);
     d->bg->addButton(rb_removeAndUnreg, 1);
-    connect(d->bg, SIGNAL(buttonClicked(int)), SLOT(bg_clicked(int)));
+    connect(d->bg, &QButtonGroup::buttonClicked, this, &AccountRemoveDlg::bg_clicked);
     rb_remove->setChecked(true);
-    bg_clicked(0);
+    bg_clicked(rb_remove);
 
     client = new MiniClient(this);
     connect(client, SIGNAL(handshaken()), SLOT(client_handshaken()));
@@ -146,8 +146,9 @@ void AccountRemoveDlg::done(int r)
     QDialog::done(r);
 }
 
-void AccountRemoveDlg::bg_clicked(int x)
+void AccountRemoveDlg::bg_clicked(QAbstractButton *btn)
 {
+    auto x = d->bg->id(btn);
     if (x == 0) {
         lb_pass->setEnabled(false);
         le_pass->setEnabled(false);
