@@ -24,7 +24,6 @@
 #endif
 #include "activeprofiles.h"
 #include "applicationinfo.h"
-#include "chatdlg.h"
 #ifdef USE_CRASH
 #include "crash.h"
 #endif
@@ -308,7 +307,8 @@ void PsiMain::bail()
         pcon->gracefulDeinit([this]() {
             pcon->deleteLater();
             pcon = nullptr;
-            quit();
+            qDebug("graceful deinit finished");
+            emit quit();
         });
     } else {
         emit quit();
@@ -583,7 +583,7 @@ PSI_EXPORT_FUNC int main(int argc, char *argv[])
     // if(!QCA::isSupported(QCA::CAP_SHA1))
     //    QCA::insertProvider(XMPP::createProviderHash());
 
-    QObject::connect(psi, &PsiMain::quit, &app, &PsiApplication::quit);
+    QObject::connect(psi, &PsiMain::quit, &app, &PsiApplication::quit, Qt::QueuedConnection);
     psi->useLocalInstance();
     int returnValue = QCoreApplication::exec();
     delete psi;

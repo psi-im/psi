@@ -796,6 +796,7 @@ void PsiCon::deinit()
 // will gracefully finish all network activity and other async stuff
 void PsiCon::gracefulDeinit(std::function<void()> callback)
 {
+    qDebug("graceful deinit");
     if (d->contactList) {
         connect(d->contactList, &PsiContactList::gracefulDeinitFinished, this, callback);
         d->contactList->gracefulDeinit();
