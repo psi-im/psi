@@ -20,7 +20,7 @@
 #include "msgmle.h"
 
 #include "htmltextcontroller.h"
-#include "psiiconset.h"
+#include "iconset.h"
 #include "psioptions.h"
 #include "qiteaudiorecorder.h"
 #include "shortcutmanager.h"
@@ -39,6 +39,7 @@
 #include <QMenu>
 #include <QMimeData>
 #include <QMimeDatabase>
+#include <QRegularExpression>
 #include <QResizeEvent>
 #include <QStyle>
 #include <QTextCharFormat>
@@ -685,7 +686,10 @@ void ChatEdit::addSoundRecButton()
                 md.setData("application/x-psi-amplitudes", recorder_->amplitudes());
                 emit fileSharingRequested(&md);
             });
-            connect(recorder_.get(), &AudioRecorder::recordingStarted, this, [this]() {
+            connect(recorder_.get(), &AudioRecorder::stateChanged, this, [this]() {
+                if (recorder_->state() != AudioRecorder::RecordingState) {
+                    return;
+                }
                 recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic_rec", fontInfo().pixelSize() * 1.5));
                 overlay_->setVisible(true);
                 timeout_ = TIMEOUT;
