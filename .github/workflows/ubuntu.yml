@@ -69,8 +69,8 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_DEV_PLUGINS=${ENABLE_PLUGINS} \
             -DBUILD_PSIMEDIA=${ENABLE_PLUGINS} \
-            -DBUNDLED_QCA=ON \
-            -DBUNDLED_USRSCTP=ON \
+            -DIRIS_BUNDLED_QCA=ON \
+            -DIRIS_BUNDLED_USRSCTP=ON \
             -DENABLE_PLUGINS=${ENABLE_PLUGINS} \
             -DUSE_HUNSPELL=ON \
             -DUSE_KEYCHAIN=ON \

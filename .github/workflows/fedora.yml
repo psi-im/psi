@@ -75,8 +75,8 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_DEMO:BOOL=OFF \
             -DBUILD_PSIMEDIA:BOOL=${ENABLE_PLUGINS} \
-            -DBUNDLED_QCA:BOOL=OFF \
-            -DBUNDLED_USRSCTP:BOOL=OFF \
+            -DIRIS_BUNDLED_QCA:BOOL=OFF \
+            -DIRIS_BUNDLED_USRSCTP:BOOL=OFF \
             -DCHAT_TYPE:STRING=${{ matrix.chattype }} \
             -DENABLE_DEV_PLUGINS=${ENABLE_PLUGINS} \
             -DENABLE_PLUGINS:BOOL=${ENABLE_PLUGINS} \
