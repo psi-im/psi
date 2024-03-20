@@ -790,6 +790,7 @@ void PsiCon::deinit()
     GlobalShortcutManager::clear();
 
     DesktopUtil::unsetUrlHandler("xmpp");
+    DesktopUtil::unsetUrlHandler("x-psi-atstyle");
 }
 
 // will gracefully finish all network activity and other async stuff

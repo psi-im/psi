@@ -583,7 +583,7 @@ PSI_EXPORT_FUNC int main(int argc, char *argv[])
     // if(!QCA::isSupported(QCA::CAP_SHA1))
     //    QCA::insertProvider(XMPP::createProviderHash());
 
-    QObject::connect(psi, SIGNAL(quit()), &app, SLOT(quit()));
+    QObject::connect(psi, &PsiMain::quit, &app, &PsiApplication::quit);
     psi->useLocalInstance();
     int returnValue = QCoreApplication::exec();
     delete psi;
