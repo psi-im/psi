@@ -37,6 +37,7 @@
 #include <QLabel>
 #include <QLayout>
 #include <QMenu>
+#include <QMessageBox>
 #include <QMimeData>
 #include <QMimeDatabase>
 #include <QRegularExpression>
@@ -675,7 +676,11 @@ void ChatEdit::addSoundRecButton()
 
             recorder_.reset(new AudioRecorder);
             recorder_->setMaxDuration(TIMEOUT);
-            connect(recorder_.get(), &AudioRecorder::recorded, this, [this]() {
+            connect(recorder_.get(), &AudioRecorder::finished, this, [this](bool success) {
+                if (!success) {
+                    QMessageBox::warning(this, tr("Audio recording failed"), recorder_->errorString(), QMessageBox::Ok);
+                    return;
+                }
                 if (recorder_->duration() < 1000)
                     return;
 
@@ -686,25 +691,20 @@ void ChatEdit::addSoundRecButton()
                 md.setData("application/x-psi-amplitudes", recorder_->amplitudes());
                 emit fileSharingRequested(&md);
             });
-            connect(recorder_.get(), &AudioRecorder::stateChanged, this, [this]() {
-                if (recorder_->state() != AudioRecorder::RecordingState) {
-                    return;
+            recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic_rec", fontInfo().pixelSize() * 1.5));
+            overlay_->setVisible(true);
+            timeout_ = TIMEOUT;
+            timer_   = new QTimer(this); // countdown timer to stop recording while the button is pressed
+            connect(timer_, &QTimer::timeout, this, [this]() {
+                if (timeout_ > 0) {
+                    timeout_ -= SECOND;
+                    setOverlayText(timeout_ / SECOND);
+                } else {
+                    timer_->stop();
+                    recorder_->stop();
                 }
-                recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic_rec", fontInfo().pixelSize() * 1.5));
-                overlay_->setVisible(true);
-                timeout_ = TIMEOUT;
-                timer_   = new QTimer(this); // countdown timer to stop recording while the button is pressed
-                connect(timer_, &QTimer::timeout, this, [this]() {
-                    if (timeout_ > 0) {
-                        timeout_ -= SECOND;
-                        setOverlayText(timeout_ / SECOND);
-                    } else {
-                        timer_->stop();
-                        recorder_->stop();
-                    }
-                });
-                timer_->start(SECOND);
             });
+            timer_->start(SECOND);
             recorder_->record();
         });
         connect(recButton_, &QToolButton::released, this, [this]() { // Rec button relesed
