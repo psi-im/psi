@@ -88,7 +88,7 @@ QList<QKeySequence> ShortcutManager::shortcuts(const QString &name)
 QList<QKeySequence> ShortcutManager::readShortcutsFromOptions(const QString &name, const PsiOptions *options)
 {
     QList<QKeySequence> list;
-    QVariant            variant = options->getOption(QString("options.shortcuts.%1").arg(name));
+    QVariant            variant = options->getOption(QStringLiteral("options.shortcuts.%1").arg(name), QVariantList());
     QString             type    = variant.typeName();
     if (type == "QVariantList") {
         const auto &variants = variant.toList();
