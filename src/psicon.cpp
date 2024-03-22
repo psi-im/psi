@@ -268,7 +268,7 @@ public:
         return { nullptr, QString() };
     }
 
-private slots:
+public slots:
     void updateIconSelect()
     {
         Iconset iss;
@@ -504,14 +504,6 @@ bool PsiCon::init()
     QDir profileDir(pathToProfile(activeProfile, ApplicationInfo::DataLocation));
     profileDir.rmdir("info"); // remove unused dir
 
-    d->iconSelect = new IconSelectPopup(nullptr);
-    d->iconSelect->setEmojiSortingEnabled(true);
-    connect(PsiIconset::instance(), SIGNAL(emoticonsChanged()), d, SLOT(updateIconSelect()));
-
-    const QString css = options->getOption("options.ui.chat.css").toString();
-    if (!css.isEmpty())
-        d->iconSelect->setStyleSheet(css);
-
     // first thing, try to load the iconset
     bool result = true;
     if (!PsiIconset::instance()->loadAll()) {
@@ -522,6 +514,15 @@ bool PsiCon::init()
         result = false;
         //}
     }
+
+    d->iconSelect = new IconSelectPopup(nullptr);
+    d->iconSelect->setEmojiSortingEnabled(true);
+    connect(PsiIconset::instance(), SIGNAL(emoticonsChanged()), d, SLOT(updateIconSelect()));
+    d->updateIconSelect();
+
+    const QString css = options->getOption("options.ui.chat.css").toString();
+    if (!css.isEmpty())
+        d->iconSelect->setStyleSheet(css);
 
     d->nam = new NetworkAccessManager(this);
     updateNAMOptions();

@@ -19,7 +19,9 @@
 
 #include "iconselect.h"
 
+#include "actionlineedit.h"
 #include "emojiregistry.h"
+#include "iconaction.h"
 #include "iconset.h"
 
 #include <QAbstractButton>
@@ -208,6 +210,7 @@ private:
     IconSelectPopup *menu;
     Iconset          is;
     QGridLayout     *grid;
+    QString          titleFilter;
     bool             shown;
     bool             emojiSorting;
 
@@ -222,11 +225,13 @@ public:
     const Iconset &iconset() const;
 
     void setEmojiSortingEnabled(bool enabled);
+    void setTitleFilter(const QString &title);
 
 protected:
     QList<PsiIcon *> sortEmojis() const;
     void             noIcons();
     void             createLayout();
+    void             updateGrid();
 
     void paintEvent(QPaintEvent *)
     {
@@ -287,7 +292,11 @@ void IconSelect::noIcons()
 void IconSelect::setIconset(const Iconset &iconset)
 {
     is = iconset;
+    updateGrid();
+}
 
+void IconSelect::updateGrid()
+{
     // delete all children
     if (grid) {
         delete grid;
@@ -310,9 +319,16 @@ void IconSelect::setIconset(const Iconset &iconset)
     int  maxPrefTileHeight = fontSz * 3;
     auto maxPrefSize       = QSize(maxPrefTileHeight, maxPrefTileHeight);
 
-    double count; // the 'double' type is somewhat important for MSVC.NET here
+    double                              count; // the 'double' type is somewhat important for MSVC.NET here
+    QList<const EmojiRegistry::Emoji *> emojis;
     if (fontEmojiMode) {
-        count = EmojiRegistry::instance().count();
+        for (auto const &emoji : EmojiRegistry::instance()) {
+            if (titleFilter.isEmpty() || emoji.name.contains(titleFilter)) {
+                emojis.append(&emoji);
+            }
+        }
+
+        count = emojis.count();
         w     = fontSz * 2.5;
         h     = fontSz * 2.5;
     } else {
@@ -360,12 +376,12 @@ void IconSelect::setIconset(const Iconset &iconset)
 #else
         font.setFamily("Noto Color Emoji");
 #endif
-        for (auto const &emoji : EmojiRegistry::instance()) {
+        for (auto const &emoji : emojis) {
             IconSelectButton *b = new IconSelectButton(this);
             b->setFont(font);
             grid->addWidget(b, row, column);
-            b->setText(emoji.code);
-            b->setToolTip(emoji.name);
+            b->setText(emoji->code);
+            b->setToolTip(emoji->name);
             b->setSizeHint(QSize(tileSize, tileSize));
             connect(b, qOverload<const PsiIcon *>(&IconSelectButton::iconSelected), menu,
                     &IconSelectPopup::iconSelected);
@@ -404,6 +420,12 @@ void IconSelect::setIconset(const Iconset &iconset)
 const Iconset &IconSelect::iconset() const { return is; }
 
 void IconSelect::setEmojiSortingEnabled(bool enabled) { emojiSorting = enabled; }
+
+void IconSelect::setTitleFilter(const QString &title)
+{
+    titleFilter = title;
+    updateGrid();
+}
 
 QList<PsiIcon *> IconSelect::sortEmojis() const
 {
@@ -449,17 +471,20 @@ QList<PsiIcon *> IconSelect::sortEmojis() const
 class IconSelectPopup::Private : public QObject {
     Q_OBJECT
 public:
-    Private(IconSelectPopup *parent) : QObject(parent), parent_(parent), icsel_(nullptr), widgetAction_(nullptr) { }
+    Private(IconSelectPopup *parent) : QObject(parent), parent_(parent), icsel_(nullptr), emotsAction_(nullptr) { }
 
     IconSelectPopup *parent_;
     IconSelect      *icsel_;
-    QWidgetAction   *widgetAction_;
+    QWidgetAction   *emotsAction_;
     QScrollArea     *scrollArea_;
+    ActionLineEdit  *findBar_;
+    IconAction      *findAct_;
+    QWidgetAction   *findAction_;
 
 public slots:
     void updatedGeometry()
     {
-        widgetAction_->setDefaultWidget(scrollArea_);
+        emotsAction_->setDefaultWidget(scrollArea_);
         QRect r       = scrollArea_->screen()->availableGeometry();
         int   maxSize = qMin(r.width(), r.height()) / 3;
         int   vBarWidth
@@ -467,17 +492,29 @@ public slots:
         scrollArea_->setMinimumWidth(icsel_->sizeHint().rwidth() + vBarWidth);
         scrollArea_->setMinimumHeight(qMin(icsel_->sizeHint().rheight(), maxSize));
         scrollArea_->setFrameStyle(QFrame::Plain);
-        parent_->removeAction(widgetAction_);
-        parent_->addAction(widgetAction_);
+        parent_->removeAction(emotsAction_);
+        parent_->addAction(emotsAction_); // add menu item
+        findAct_->setPsiIcon("psi/search");
     }
+
+    void setTitleFilter(const QString &filter) { icsel_->setTitleFilter(filter); }
 };
 
 IconSelectPopup::IconSelectPopup(QWidget *parent) : QMenu(parent)
 {
-    d                = new Private(this);
-    d->icsel_        = new IconSelect(this);
-    d->widgetAction_ = new QWidgetAction(this);
-    d->scrollArea_   = new QScrollArea(this);
+    d         = new Private(this);
+    d->icsel_ = new IconSelect(this);
+
+    d->findAction_ = new QWidgetAction(this);
+    d->findBar_    = new ActionLineEdit(nullptr);
+    d->findAct_    = new IconAction(d->findBar_);
+    d->findBar_->addAction(d->findAct_);
+    d->findAction_->setDefaultWidget(d->findBar_);
+    addAction(d->findAction_);
+    connect(d->findBar_, &QLineEdit::textChanged, d, &Private::setTitleFilter);
+
+    d->emotsAction_ = new QWidgetAction(this);
+    d->scrollArea_  = new QScrollArea(this);
     d->scrollArea_->setWidget(d->icsel_);
     d->scrollArea_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     d->scrollArea_->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
@@ -486,7 +523,11 @@ IconSelectPopup::IconSelectPopup(QWidget *parent) : QMenu(parent)
     d->updatedGeometry();
 }
 
-IconSelectPopup::~IconSelectPopup() { }
+IconSelectPopup::~IconSelectPopup()
+{
+    d->findAction_->setDefaultWidget(nullptr);
+    delete d->findBar_;
+}
 
 void IconSelectPopup::setIconset(const Iconset &i) { d->icsel_->setIconset(i); }
 
