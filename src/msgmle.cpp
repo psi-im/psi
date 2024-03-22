@@ -104,10 +104,12 @@ public slots:
             } else if (charsAdded > 1) { // Insert a piece of text
                 return;
             } else {
-                QRegularExpression      capitalizeAfter("(?:^[^.][.]+\\s+)|(?:\\s*[^.]{2,}[.]+\\s+)|(?:[!?]\\s+)");
+                QRegularExpression      capitalizeAfter("(?:(?:\\s*\\b\\w{2,}\\b[.!?]+\\s+)|(?:^\\s*))(\\w)",
+                                                        QRegularExpression::UseUnicodePropertiesOption
+                                                            | QRegularExpression::MultilineOption);
                 QRegularExpressionMatch match;
-                int                     index = te_->toPlainText().lastIndexOf(capitalizeAfter, 0, &match);
-                if (index != -1 && index == pos - match.capturedLength()) {
+                int                     index = te_->toPlainText().lastIndexOf(capitalizeAfter, -1, &match);
+                if (index != -1 && pos == match.capturedStart(1)) {
                     capitalizeNext_ = true;
                 }
             }
