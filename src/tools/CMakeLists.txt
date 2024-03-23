@@ -24,6 +24,8 @@ list(APPEND SOURCES
     tunecontroller/pollingtunecontroller.cpp
     tunecontroller/tunecontrollermanager.cpp
     tunecontroller/plugins/psifile/psifileplugin.cpp
+
+    emojimodel.cpp
 )
 
 list(APPEND HEADERS
@@ -58,6 +60,8 @@ list(APPEND HEADERS
     tunecontroller/tune.h
     tunecontroller/tunecontrollerinterface.h
     tunecontroller/tunecontrollerplugin.h
+
+    emojimodel.h
 )
 
 if(USE_CRASH)
