@@ -161,6 +161,10 @@ bool X11WindowSystem::currentDesktop(long *desktop)
 
 X11WindowSystem::X11WindowSystem()
 {
+    if (!isPlatformX11()) {
+        return;
+    }
+
     const int   atomsCount        = 10;
     const char *names[atomsCount] = { "_NET_CLIENT_LIST_STACKING",
                                       "_NET_FRAME_EXTENTS",
