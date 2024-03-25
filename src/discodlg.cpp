@@ -1384,14 +1384,14 @@ DiscoDlg::DiscoDlg(PsiAccount *pa, const Jid &jid, const QString &node) : QDialo
     cb_address->setFocus();
     connect(cb_address->lineEdit(), &QLineEdit::editingFinished, d,
             [this]() { d->doDisco(cb_address->currentText(), cb_node->currentText()); });
-    connect(cb_address, &QComboBox::currentIndexChanged, d,
+    connect(cb_address, qOverload<int>(&QComboBox::currentIndexChanged), d,
             [this](int) { d->doDisco(cb_address->currentText(), cb_node->currentText()); });
     cb_address->setEditText(d->jid.full());
 
     cb_node->addItems(pa->psi()->recentNodeList());
     connect(cb_node->lineEdit(), &QLineEdit::editingFinished, d,
             [this]() { d->doDisco(cb_address->currentText(), cb_node->currentText()); });
-    connect(cb_node, &QComboBox::currentIndexChanged, d,
+    connect(cb_node, qOverload<int>(&QComboBox::currentIndexChanged), d,
             [this](int) { d->doDisco(cb_address->currentText(), cb_node->currentText()); });
     cb_node->setCurrentIndex(cb_node->findText(node));
 
