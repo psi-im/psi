@@ -13,7 +13,11 @@ public:
 private:
     class EventFilter;
     EventFilter *d;
-    bool         processWinEvent(MSG *m, long *result);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    bool processWinEvent(MSG *m, long *result);
+#else
+    bool processWinEvent(MSG *m, qintptr *result);
+#endif
 };
 
 #endif // SYSTEMWATCH_WIN_H

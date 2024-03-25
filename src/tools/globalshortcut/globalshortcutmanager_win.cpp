@@ -35,7 +35,11 @@ class GlobalShortcutManager::KeyTrigger::Impl : public QWidget {
             qApp->installNativeEventFilter(this);
         }
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         virtual bool nativeEventFilter(const QByteArray &eventType, void *m, long *result) Q_DECL_OVERRIDE
+#else
+        bool nativeEventFilter(const QByteArray &eventType, void *m, qintptr *result) override
+#endif
         {
             if (eventType == "windows_generic_MSG") {
                 return impl->nativeEvent(eventType, static_cast<MSG *>(m), result);
@@ -70,7 +74,11 @@ public:
     /**
      * Triggers triggered() signal when the hotkey is activated.
      */
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     bool nativeEvent(const QByteArray &eventType, MSG *m, long *result)
+#else
+    bool nativeEvent(const QByteArray &eventType, MSG *m, qintptr *result)
+#endif
     {
         Q_UNUSED(eventType);
         if (m->message == WM_HOTKEY && m->wParam == id_) {

@@ -71,7 +71,9 @@
 #include <QVBoxLayout>
 #include <QtAlgorithms>
 #ifdef Q_OS_WIN
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 #include "widgets/thumbnailtoolbar.h"
+#endif
 #include <windows.h>
 #endif
 #ifdef HAVE_X11
@@ -156,8 +158,10 @@ public:
     PsiRosterWidget *rosterWidget_;
 
 #ifdef Q_OS_WIN
-    DWORD                         deactivationTickCount;
+    DWORD deactivationTickCount;
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     QPointer<PsiThumbnailToolBar> thumbnailToolBar_;
+#endif
 #endif
 
     void        registerActions();
@@ -917,8 +921,17 @@ void MainWin::buildOptionsMenu()
     helpMenu->setIcon(IconsetFactory::icon("psi/help").icon());
 
     QStringList actions;
-    actions << "help_readme" << "separator" << "help_online_wiki" << "help_online_home" << "help_online_forum"
-            << "help_psi_muc" << "help_report_bug" << "diagnostics" << "separator" << "help_about" << "help_about_qt";
+    actions << "help_readme"
+            << "separator"
+            << "help_online_wiki"
+            << "help_online_home"
+            << "help_online_forum"
+            << "help_psi_muc"
+            << "help_report_bug"
+            << "diagnostics"
+            << "separator"
+            << "help_about"
+            << "help_about_qt";
 
     d->updateMenu(actions, helpMenu);
 
@@ -955,7 +968,9 @@ void MainWin::buildMainMenu()
 void MainWin::buildToolsMenu()
 {
     QStringList actions;
-    actions << "menu_file_transfer" << "separator" << "menu_xml_console";
+    actions << "menu_file_transfer"
+            << "separator"
+            << "menu_xml_console";
 
     d->updateMenu(actions, d->toolsMenu);
 }
@@ -972,7 +987,8 @@ void MainWin::buildGeneralMenu(QMenu *menu)
 #ifdef GROUPCHAT
             << "menu_join_groupchat"
 #endif
-            << "menu_options" << "menu_file_transfer";
+            << "menu_options"
+            << "menu_file_transfer";
     if (PsiOptions::instance()->getOption("options.ui.menu.main.change-profile").toBool()) {
         actions << "menu_change_profile";
     }
@@ -1486,6 +1502,7 @@ bool MainWin::nativeEvent(const QByteArray &eventType, MSG *msg, long *result)
     return false;
 }
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 void MainWin::updateWinTaskbar(bool enabled)
 {
     if (!enabled) {
@@ -1507,6 +1524,7 @@ void MainWin::updateWinTaskbar(bool enabled)
         delete d->thumbnailToolBar_;
     }
 }
+#endif
 #endif
 
 void MainWin::updateCaption()

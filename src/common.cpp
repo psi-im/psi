@@ -292,7 +292,13 @@ void soundPlay(const QString &s)
     }
 
 #if defined(Q_OS_WIN) || defined(Q_OS_MAC)
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     QSound::play(str);
+#else
+    QSoundEffect effect;
+    effect.setSource(QUrl::fromLocalFile(str));
+    effect.play();
+#endif
 #else
     QString player = PsiOptions::instance()->getOption("options.ui.notifications.sounds.unix-sound-player").toString();
     if (player == "")

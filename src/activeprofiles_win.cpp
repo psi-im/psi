@@ -99,7 +99,11 @@ public:
     static const DWORD stringListMessage = 1;
 
     bool sendMessage(const QString &to, UINT message, WPARAM wParam, LPARAM lParam) const;
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     bool nativeEvent(const QByteArray &eventType, void *message, long *result) override;
+#else
+    bool nativeEvent(const QByteArray &eventType, void *message, qintptr *result) override;
+#endif
 
     bool sendStringList(const QString &to, const QStringList &list) const;
 
@@ -163,7 +167,11 @@ bool ActiveProfiles::Private::sendStringList(const QString &to, const QStringLis
     return sendMessage(to, WM_COPYDATA, (WPARAM)winId(), (LPARAM)(LPVOID)&cd);
 }
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 bool ActiveProfiles::Private::nativeEvent(const QByteArray &eventType, void *message, long *result)
+#else
+bool ActiveProfiles::Private::nativeEvent(const QByteArray &eventType, void *message, qintptr *result)
+#endif
 {
     [[maybe_unused]] static const auto expectedType = QByteArray("windows_generic_MSG");
     Q_ASSERT(eventType == expectedType);

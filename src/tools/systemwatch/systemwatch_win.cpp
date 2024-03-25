@@ -57,8 +57,11 @@ class WinSystemWatch::EventFilter : public QAbstractNativeEventFilter {
 
 public:
     EventFilter(WinSystemWatch *parent) : syswatch(parent) { qApp->installNativeEventFilter(this); }
-
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     virtual bool nativeEventFilter(const QByteArray &eventType, void *m, long *result) Q_DECL_OVERRIDE
+#else
+    bool nativeEventFilter(const QByteArray &eventType, void *m, qintptr *result) override
+#endif
     {
         if (eventType == "windows_generic_MSG") {
             return syswatch->processWinEvent(static_cast<MSG *>(m), result);
@@ -75,7 +78,11 @@ WinSystemWatch::~WinSystemWatch()
     d = 0;
 }
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 bool WinSystemWatch::processWinEvent(MSG *m, long *result)
+#else
+bool WinSystemWatch::processWinEvent(MSG *m, qintptr *result)
+#endif
 {
     Q_UNUSED(result);
     if (WM_POWERBROADCAST == m->message) {

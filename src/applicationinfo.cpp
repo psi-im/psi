@@ -86,7 +86,8 @@ QStringList ApplicationInfo::getCertificateStoreDirs()
 #if defined(Q_OS_LINUX) && defined(SHARE_SUFF)
         additionalPath,
 #endif
-        ApplicationInfo::resourcesDir() + "/certs", ApplicationInfo::homeDir(ApplicationInfo::DataLocation) + "/certs"
+        ApplicationInfo::resourcesDir() + "/certs",
+        ApplicationInfo::homeDir(ApplicationInfo::DataLocation) + "/certs"
     };
     return dirs;
 }
@@ -103,7 +104,10 @@ QStringList ApplicationInfo::dataDirs()
 #if defined(Q_OS_LINUX) && defined(SHARE_SUFF)
         additionalPath,
 #endif
-        ":", ".", homeDir(DataLocation), resourcesDir()
+        ":",
+        ".",
+        homeDir(DataLocation),
+        resourcesDir()
     };
     return dirs;
 }
@@ -120,7 +124,8 @@ QStringList ApplicationInfo::pluginDirs()
 #if defined(Q_OS_LINUX) && defined(SHARE_SUFF)
         additionalPath,
 #endif
-        ApplicationInfo::resourcesDir() + "/plugins", homeDir(ApplicationInfo::DataLocation) + "/plugins",
+        ApplicationInfo::resourcesDir() + "/plugins",
+        homeDir(ApplicationInfo::DataLocation) + "/plugins",
         libDir() + "/plugins"
     };
     return dirs;
@@ -146,9 +151,9 @@ QString ApplicationInfo::resourcesDir()
     // System routine locates resource files. We "know" that Psi.icns is
     // in the Resources directory.
     QString     resourcePath;
-    CFBundleRef mainBundle = CFBundleGetMainBundle();
+    CFBundleRef mainBundle          = CFBundleGetMainBundle();
 #ifdef PSI_PLUS
-    const char *appIconName = "application-plus.icns";
+    const char *appIconName         = "application-plus.icns";
 #else
     const char *appIconName = "application.icns";
 #endif
@@ -217,7 +222,11 @@ QString ApplicationInfo::homeDir(ApplicationInfo::HomedirType type)
                 }
                 dataDir_ = configDir_;
                 // prefer non-roaming data location for cache which is default for qds:DataLocation
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
                 cacheDir_ = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+#else
+                cacheDir_ = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+#endif
             } else {
                 configDir_ = dataDir_ = cacheDir_ = base + "/" + name();
             }
