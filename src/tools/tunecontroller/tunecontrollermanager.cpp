@@ -127,9 +127,8 @@ void TuneControllerManager::setTuneFilters(const QStringList &filters, const QSt
 bool TuneControllerManager::checkTune(const Tune &tune) const
 {
     if (!tuneTitleFilterPattern_.isEmpty() && !tune.name().isEmpty()) {
-        QRegularExpression tuneTitleFilter(tuneTitleFilterPattern_);
-        if (tuneTitleFilter.isValid()
-            && tuneTitleFilter.match(QLatin1Char('^') + tune.name() + QLatin1Char('^')).hasMatch()) {
+        QRegularExpression tuneTitleFilter(QLatin1Char('^') + tuneTitleFilterPattern_ + QLatin1Char('$'));
+        if (tuneTitleFilter.isValid() && tuneTitleFilter.match(tune.name()).hasMatch()) {
             return false;
         }
     }
