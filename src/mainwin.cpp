@@ -537,7 +537,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
     });
     d->eventNotifier->hide();
 
-#ifdef Q_OS_WIN
+#if defined(Q_OS_WIN) && QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     updateWinTaskbar(_asTool);
 #endif
 
@@ -769,7 +769,7 @@ void MainWin::setWindowOpts(bool _onTop, bool _asTool)
 
     setWindowFlags(flags);
     show();
-#ifdef Q_OS_WIN
+#if defined(Q_OS_WIN) && QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     updateWinTaskbar(_asTool);
 #endif
 }
