@@ -22,7 +22,11 @@ public:
     static QString                        serializeLanguageSet(const QSet<LanguageManager::LangId> &langs);
 };
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 inline uint qHash(const LanguageManager::LangId &t) { return qHash(t.language) ^ qHash(t.country) ^ qHash(t.script); }
+#else
+inline size_t qHash(const LanguageManager::LangId &t) { return qHash(t.language) ^ qHash(t.country) ^ qHash(t.script); }
+#endif
 
 // weird sorting operator
 inline bool operator<(const LanguageManager::LangId &a, const LanguageManager::LangId &b)

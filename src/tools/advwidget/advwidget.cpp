@@ -276,7 +276,7 @@ void GAdvancedWidget::Private::restoreGeometry()
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     if (v.type() == QVariant::ByteArray) {
 #else
-    if (v.typeId() == QVariant::ByteArray) {
+    if (v.typeId() == QMetaType::QByteArray) {
 #endif
         // migrate options back from format used for a short time before
         // 0.12-RC2. This can be removed later.

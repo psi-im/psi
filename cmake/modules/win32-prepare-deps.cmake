@@ -56,8 +56,8 @@ if(WIN32)
         ${QCA_DIR}bin
         ${QCA_DIR}/bin
         ${QT_PLUGINS_DIR}/crypto
-        ${QCA_DIR}lib/qca-qt5/crypto
-        ${QCA_DIR}lib/Qca-qt5/crypto
+        ${QCA_DIR}lib/qca-qt${QT_DEFAULT_MAJOR_VERSION}/crypto
+        ${QCA_DIR}lib/Qca-qt${QT_DEFAULT_MAJOR_VERSION}/crypto
         )
     if(USE_MXE)
         list(APPEND PATHES
@@ -79,8 +79,8 @@ if(WIN32)
         if(MSVC)
             list(APPEND PATHES
                 "${SDK_PATH}bin"
-                "${SDK_PATH}lib/qca-qt5/crypto"
-                "${SDK_PATH}/lib/qca-qt5/crypto"
+                "${SDK_PATH}lib/qca-qt${QT_DEFAULT_MAJOR_VERSION}/crypto"
+                "${SDK_PATH}/lib/qca-qt${QT_DEFAULT_MAJOR_VERSION}/crypto"
                 "${SDK_PATH}plugins/crypto"
                 "${SDK_PATH}/plugins/crypto"
                 )
@@ -100,6 +100,7 @@ if(WIN32)
         else()
             list(APPEND WDARGS --release)
         endif()
+        list(APPEND WDARGS --plugindir "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins")
         add_custom_target(windeploy
             COMMAND ${WINDEPLOYQTBIN}
             ${WDARGS}
@@ -134,33 +135,37 @@ if(WIN32)
         endforeach()
         find_psi_lib("${ICU_LIBS}" "${PATHES}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
         unset(ICU_LIBS)
-        # Qt5 libraries
+        # Qt5 / Qt6 libraries
         set(QT_LIBAS
-            Qt5Concurrent${D}.dll
-            Qt5Core${D}.dll
-            Qt5Gui${D}.dll
-            Qt5Multimedia${D}.dll
-            Qt5MultimediaWidgets${D}.dll
-            Qt5Network${D}.dll
-            Qt5OpenGL${D}.dll
-            Qt5Positioning${D}.dll
-            Qt5PrintSupport${D}.dll
-            Qt5Qml${D}.dll
-            Qt5QmlModels${D}.dll
-            Qt5Quick${D}.dll
-            Qt5Script${D}.dll
-            Qt5Sensors${D}.dll
-            Qt5Sql${D}.dll
-            Qt5Svg${D}.dll
-            Qt5Svg${D}.dll
-            Qt5WebChannel${D}.dll
-            Qt5WebKit${D}.dll
-            Qt5WebKitWidgets${D}.dll
-            Qt5Widgets${D}.dll
-            Qt5WinExtras${D}.dll
-            Qt5Xml${D}.dll
-            Qt5XmlPatterns${D}.dll
+            Qt${QT_DEFAULT_MAJOR_VERSION}Concurrent${D}.dll
+            Qt${QT_DEFAULT_MAJOR_VERSION}Core${D}.dll
+            Qt${QT_DEFAULT_MAJOR_VERSION}Gui${D}.dll
+            Qt${QT_DEFAULT_MAJOR_VERSION}Multimedia${D}.dll
+            Qt${QT_DEFAULT_MAJOR_VERSION}MultimediaWidgets${D}.dll
+            Qt${QT_DEFAULT_MAJOR_VERSION}Network${D}.dll
+            Qt${QT_DEFAULT_MAJOR_VERSION}OpenGL${D}.dll
+            Qt${QT_DEFAULT_MAJOR_VERSION}Positioning${D}.dll
+            Qt${QT_DEFAULT_MAJOR_VERSION}PrintSupport${D}.dll
+            Qt${QT_DEFAULT_MAJOR_VERSION}Qml${D}.dll
+            Qt${QT_DEFAULT_MAJOR_VERSION}QmlModels${D}.dll
+            Qt${QT_DEFAULT_MAJOR_VERSION}Quick${D}.dll
+            Qt${QT_DEFAULT_MAJOR_VERSION}Script${D}.dll
+            Qt${QT_DEFAULT_MAJOR_VERSION}Sensors${D}.dll
+            Qt${QT_DEFAULT_MAJOR_VERSION}Sql${D}.dll
+            Qt${QT_DEFAULT_MAJOR_VERSION}Svg${D}.dll
+            Qt${QT_DEFAULT_MAJOR_VERSION}Svg${D}.dll
+            Qt${QT_DEFAULT_MAJOR_VERSION}WebChannel${D}.dll
+            Qt${QT_DEFAULT_MAJOR_VERSION}Widgets${D}.dll
+            Qt${QT_DEFAULT_MAJOR_VERSION}Xml${D}.dll
+            Qt${QT_DEFAULT_MAJOR_VERSION}XmlPatterns${D}.dll
             )
+        if(${QT_DEFAULT_MAJOR_VERSION} LESS 6)
+            list(APPEND QT_LIBAS
+                Qt5WebKit${D}.dll
+                Qt5WebKitWidgets${D}.dll
+                Qt5WinExtras${D}.dll
+            )
+        endif()
         find_psi_lib("${QT_LIBAS}" "${QT_BIN_DIR}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
         #
         find_psi_lib(qtaudio_windows${D}.dll "${QT_PLUGINS_DIR}/audio/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/audio/")
@@ -221,6 +226,24 @@ if(WIN32)
             )
         find_psi_lib("${MEDIASERVICE_PLUGS}" "${QT_PLUGINS_DIR}/mediaservice/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/mediaservice/")
         #
+        set(MULTIMEDIA_PLUGS
+            ffmpegmediaplugin${D}.dll
+            windowsmediaplugin${D}.dll
+            )
+        find_psi_lib("${MULTIMEDIA_PLUGS}" "${QT_PLUGINS_DIR}/multimedia/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/multimedia/")
+        #
+        set(NETWORKINFORMATION_PLUGS
+            qnetworklistmanager${D}.dll
+            )
+        find_psi_lib("${NETWORKINFORMATION_PLUGS}" "${QT_PLUGINS_DIR}/networkinformation/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/networkinformation/")
+        #
+        set(POSITION_PLUGS
+            qtposition_nmea${D}.dll
+            qtposition_positionpoll${D}.dll
+            qtposition_winrt${D}.dll
+            )
+        find_psi_lib("${POSITION_PLUGS}" "${QT_PLUGINS_DIR}/position/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/position/")
+        #
         set(PLAYLISTFORMATS_PLUGS
             qtmultimedia_m3u${D}.dll
             )
@@ -233,23 +256,26 @@ if(WIN32)
         #
         set(SQLDRIVERS_PLUGS
             qsqlite${D}.dll
+            qsqlmimer${D}.dll
+            qsqlodbc${D}.dll
+            qsqlpsql${D}.dll
             )
         find_psi_lib("${SQLDRIVERS_PLUGS}" "${QT_PLUGINS_DIR}/sqldrivers/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/sqldrivers/")
         #
+        set(TLS_PLUGS
+            qcertonlybackend${D}.dll
+            qopensslbackend${D}.dll
+            qschannelbackend${D}.dll
+            )
+        find_psi_lib("${TLS_PLUGS}" "${QT_PLUGINS_DIR}/tls/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/tls/")
+        #
         if(KEYCHAIN_LIBS)
             set(KEYCHAIN_LIBS
-                qt5keychain.dll
-                libqt5keychain.dll
+                qt${QT_DEFAULT_MAJOR_VERSION}keychain${D}.dll
+                libqt${QT_DEFAULT_MAJOR_VERSION}keychain${D}.dll
                 )
             find_psi_lib("${KEYCHAIN_LIBS}" "${PATHES}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
         endif()
-#         Qt translations
-#         if(EXISTS "${QT_TRANSLATIONS_DIR}")
-#             file(GLOB QT_TRANSLATIONS "${QT_TRANSLATIONS_DIR}/q*.qm")
-#             foreach(FILE ${QT_TRANSLATIONS})
-#                 copy("${FILE}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/translations/" ${LIBS_TARGET})
-#             endforeach()
-#         endif()
     endif()
     # psimedia deps
     if(BUILD_PSIMEDIA)
@@ -490,7 +516,7 @@ if(WIN32)
             )
         if(MSVC)
             set(QCA_LIB
-                qca-qt5${D}.dll
+                qca-qt${QT_DEFAULT_MAJOR_VERSION}${D}.dll
                 )
             list(APPEND QCA_PLUGINS
                 qca-gnupg${D}.dll

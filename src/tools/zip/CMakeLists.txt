@@ -4,6 +4,8 @@ unset(SOURCES)
 unset(UI_FORMS)
 unset(EXTRA_LDFLAGS)
 
+include(policyRules)
+
 find_package(ZLIB REQUIRED)
 
 include_directories(${ZLIB_INCLUDE_DIRS})

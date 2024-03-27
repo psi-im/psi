@@ -392,34 +392,36 @@ if(WIN32)
         set(MANIFEST_ARCH "amd64")
     endif()
     # win resource creation
-    configure_file(${PROJECT_SOURCE_DIR}/win32/psi_win.rc.in ${CMAKE_CURRENT_BINARY_DIR}/psi_win.rc @ONLY)
-    #configure_file(${PROJECT_SOURCE_DIR}/win32/psi.manifest.in ${CMAKE_CURRENT_BINARY_DIR}/psi.manifest @ONLY)
-    # win resource compilation
-    function(compile_rc_file RC_FILE_NAME RC_OUTPUT_NAME)
-        if(NOT MSVC)
-            set(CMD_ARG
-                --include=${CMAKE_CURRENT_SOURCE_DIR}
-                --input=${RC_FILE_NAME}
-                --output=${RC_OUTPUT_NAME}
-        )
-        else()
-            set(CMD_ARG
-                /fo
-                ${RC_OUTPUT_NAME}
-                ${RC_FILE_NAME}
+    if(${QT_DEFAULT_MAJOR_VERSION} LESS 6)
+        configure_file(${PROJECT_SOURCE_DIR}/win32/psi_win.rc.in ${CMAKE_CURRENT_BINARY_DIR}/psi_win.rc @ONLY)
+        #configure_file(${PROJECT_SOURCE_DIR}/win32/psi.manifest.in ${CMAKE_CURRENT_BINARY_DIR}/psi.manifest @ONLY)
+        # win resource compilation
+        function(compile_rc_file RC_FILE_NAME RC_OUTPUT_NAME)
+            if(NOT MSVC)
+                set(CMD_ARG
+                    --include=${CMAKE_CURRENT_SOURCE_DIR}
+                    --input=${RC_FILE_NAME}
+                    --output=${RC_OUTPUT_NAME}
             )
-        endif()
-        add_custom_command(OUTPUT ${RC_OUTPUT_NAME}
-            COMMAND ${CMAKE_RC_COMPILER}
-            ARGS ${CMD_ARG}
-            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/win32
-            VERBATIM
-        )
-    endfunction()
+            else()
+                set(CMD_ARG
+                    /fo
+                    ${RC_OUTPUT_NAME}
+                    ${RC_FILE_NAME}
+                )
+            endif()
+            add_custom_command(OUTPUT ${RC_OUTPUT_NAME}
+                COMMAND ${CMAKE_RC_COMPILER}
+                ARGS ${CMD_ARG}
+                WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/win32
+                VERBATIM
+            )
+        endfunction()
 
-    set(DECS_RC_NAME ${CMAKE_CURRENT_BINARY_DIR}/psi_win.rc)
-    set(RC_FILE ${CMAKE_CURRENT_BINARY_DIR}/psi_win.o)
-    compile_rc_file(${DECS_RC_NAME} ${RC_FILE})
+        set(DECS_RC_NAME ${CMAKE_CURRENT_BINARY_DIR}/psi_win.rc)
+        set(RC_FILE ${CMAKE_CURRENT_BINARY_DIR}/psi_win.o)
+        compile_rc_file(${DECS_RC_NAME} ${RC_FILE})
+    endif()
 endif()
 
 #Main executable creation
@@ -432,6 +434,22 @@ add_executable(${PROJECT_NAME}
     ${QRC_SOURCES}
     ${RC_FILE}
 )
+
+#Generate .rc file for windows with Qt6
+if(WIN32 AND (${QT_DEFAULT_MAJOR_VERSION} GREATER_EQUAL 6))
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        WIN32_EXECUTABLE TRUE
+        QT_TARGET_VERSION "${APP_VERSION}"
+        QT_TARGET_COMPANY_NAME "${COMPANY_NAME}"
+        QT_TARGET_DESCRIPTION "${APP_DESCRIPTION}"
+        QT_TARGET_COPYRIGHT "${APP_COPYRIGHT}"
+        QT_TARGET_PRODUCT_NAME "${APP_NAME}"
+        QT_TARGET_COMMENTS "${APP_COMMENTS}"
+        QT_TARGET_INTERNALNAME "${APP_NAME}"
+        QT_TARGET_RC_ICONS "${PROJECT_SOURCE_DIR}/win32/${APP_ICON}"
+    )
+    _qt_internal_generate_win32_rc_file(${PROJECT_NAME})
+endif()
 
 include(${PROJECT_SOURCE_DIR}/cmake/modules/fix-codestyle.cmake)
 
