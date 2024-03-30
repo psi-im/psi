@@ -54,7 +54,7 @@ class AudioRecorderContext;
 class Plugin {
 public:
     virtual ~Plugin() { }
-    virtual Provider *createProvider(const QVariantMap &param = QVariantMap()) = 0;
+    virtual Provider *createProvider(const QVariantMap &vm = QVariantMap()) = 0;
 };
 
 class QObjectInterface {
@@ -72,10 +72,30 @@ public:
         VideoIn   // video hw to get video packets from
     };
 
-    Type    type;
-    QString name;
-    QString id;
-    bool    isDefault = false;
+    struct _VideoCaps {
+        int width;
+        int height;
+        int framerate_numerator;
+        int framerate_denominator;
+    };
+    struct _AudioCaps {
+        int rate;
+        int channels;
+    };
+
+    struct Caps {
+        QString mime;
+        union {
+            _VideoCaps video;
+            _AudioCaps audio;
+        };
+    };
+
+    Type        type;
+    bool        isDefault = false;
+    QString     name;
+    QString     id;
+    QList<Caps> caps;
 };
 
 class PAudioParams {
@@ -135,7 +155,6 @@ public:
 
 class Provider : public QObjectInterface {
 public:
-    virtual bool init()                = 0;
     virtual bool isInitialized() const = 0;
 
     virtual QString creditName() const = 0;
@@ -269,13 +288,14 @@ public:
     HINT_SIGNALS : HINT_METHOD(started()) HINT_METHOD(preferencesUpdated()) HINT_METHOD(stopped()) HINT_METHOD(paused())
                        HINT_METHOD(error())
 };
+
 }; // namespace PsiMedia
 
-Q_DECLARE_INTERFACE(PsiMedia::Plugin, "org.psi-im.psimedia.Plugin/1.5")
-Q_DECLARE_INTERFACE(PsiMedia::Provider, "org.psi-im.psimedia.Provider/1.5")
-Q_DECLARE_INTERFACE(PsiMedia::FeaturesContext, "org.psi-im.psimedia.FeaturesContext/1.4")
-Q_DECLARE_INTERFACE(PsiMedia::RtpChannelContext, "org.psi-im.psimedia.RtpChannelContext/1.5")
-Q_DECLARE_INTERFACE(PsiMedia::RtpSessionContext, "org.psi-im.psimedia.RtpSessionContext/1.4")
+Q_DECLARE_INTERFACE(PsiMedia::Plugin, "org.psi-im.psimedia.Plugin/1.6")
+Q_DECLARE_INTERFACE(PsiMedia::Provider, "org.psi-im.psimedia.Provider/1.6")
+Q_DECLARE_INTERFACE(PsiMedia::FeaturesContext, "org.psi-im.psimedia.FeaturesContext/1.6")
+Q_DECLARE_INTERFACE(PsiMedia::RtpChannelContext, "org.psi-im.psimedia.RtpChannelContext/1.6")
+Q_DECLARE_INTERFACE(PsiMedia::RtpSessionContext, "org.psi-im.psimedia.RtpSessionContext/1.6")
 Q_DECLARE_INTERFACE(PsiMedia::AudioRecorderContext, "org.psi-im.psimedia.AudioRecorderContext/1.4")
 
 #endif // PSIMEDIAPROVIDER_H
