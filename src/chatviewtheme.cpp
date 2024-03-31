@@ -67,7 +67,11 @@ ChatViewThemePrivate::ChatViewThemePrivate(ChatViewThemeProvider *provider) : Th
     nam = provider->psi()->networkAccessManager();
 }
 
-ChatViewThemePrivate::~ChatViewThemePrivate() { delete wv; }
+ChatViewThemePrivate::~ChatViewThemePrivate()
+{
+    qDebug("ChatViewThemePrivate::~ChatViewThemePrivate");
+    delete wv;
+}
 
 bool ChatViewThemePrivate::exists()
 {

@@ -26,6 +26,7 @@
 
 class PsiThemeProvider;
 class Theme;
+class QTimer;
 
 struct ThemeItemInfo {
     QString     id;
@@ -67,6 +68,7 @@ private:
     struct Loader;
     Loader                       *loader   = nullptr;
     PsiThemeProvider             *provider = nullptr;
+    QTimer                       *gcTimer  = nullptr;
     QFutureWatcher<ThemeItemInfo> themeWatcher;
     QFuture<ThemeItemInfo>        themesFuture;
     QList<ThemeItemInfo>          themesInfo;

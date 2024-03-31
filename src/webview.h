@@ -53,6 +53,7 @@ class WebView : public QWebView {
     Q_OBJECT
 public:
     WebView(QWidget *parent);
+    ~WebView();
 
     /** Evaluates JavaScript code */
     void evaluateJS(const QString &scriptSource = "");

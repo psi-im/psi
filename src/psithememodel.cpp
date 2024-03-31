@@ -19,17 +19,23 @@
 
 #include "psithememodel.h"
 
-#include "psiiconset.h"
-#include "psithememanager.h"
+#include "iconset.h"
+#include "psithemeprovider.h"
 #include "textutil.h"
+#include "theme.h"
 
 #include <QIcon>
 #include <QPixmap>
+#include <QTimer>
 #include <QtConcurrentMap>
 
 class PsiThemeModel;
 
 struct PsiThemeModel::Loader {
+
+    // we need this map just to keep themes alive. otherwise webengine (6.6.3) may crash
+    QMap<QString, Theme> themes; // it's cleaned a little after a theme was loaded
+
     Loader(PsiThemeProvider *provider_) : provider(provider_) { }
 
     typedef ThemeItemInfo result_type;
@@ -52,6 +58,7 @@ struct PsiThemeModel::Loader {
     void asyncLoad(const QString &id, std::function<void(const ThemeItemInfo &)> loadCallback)
     {
         Theme theme = provider->theme(id);
+        themes.insert(id, theme);
         if (!theme.isValid() || !theme.load([this, theme, loadCallback](bool success) {
                 qDebug("%s theme loading status: %s", qPrintable(theme.id()), success ? "success" : "failure");
                 // TODO invent something smarter
@@ -89,8 +96,12 @@ struct PsiThemeModel::Loader {
 //------------------------------------------------------------------------------
 
 PsiThemeModel::PsiThemeModel(PsiThemeProvider *provider, QObject *parent) :
-    QAbstractListModel(parent), provider(provider)
+    QAbstractListModel(parent), provider(provider), gcTimer(new QTimer(this))
 {
+    gcTimer->setSingleShot(true);
+    gcTimer->setInterval(2000);
+    connect(gcTimer, &QTimer::timeout, this, [this]() { loader->themes.clear(); });
+
     connect(&themeWatcher, SIGNAL(resultReadyAt(int)), SLOT(onThreadedResultReadyAt(int)));
     connect(&themeWatcher, SIGNAL(finished()), SLOT(loadComplete()));
 }
@@ -126,6 +137,7 @@ void PsiThemeModel::load()
                     themesInfo.append(ti);
                     endInsertRows();
                 }
+                gcTimer->start();
             });
         }
     }
