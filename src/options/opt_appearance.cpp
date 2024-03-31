@@ -29,11 +29,11 @@ class OptAppearanceMiscUI : public QWidget, public Ui::OptAppearanceMisc {
 public:
     OptAppearanceMiscUI() : QWidget()
     {
+        setupUi(this);
+
         // we could do that in UI. but see https://bugreports.qt.io/browse/QTBUG-123373
         QObject::connect(sl_rosterop, &QSlider::valueChanged, lb_rosterop_val, qOverload<int>(&QLabel::setNum));
         QObject::connect(sl_chatdlgop, &QSlider::valueChanged, lb_chatdlgop_val, qOverload<int>(&QLabel::setNum));
-
-        setupUi(this);
     }
 };
 
