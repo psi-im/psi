@@ -393,7 +393,6 @@ ChatView::ChatView(QWidget *parent) : QFrame(parent), d(new ChatViewPrivate)
     d->jsObject = new ChatViewJSObject(this); /* It's a session bridge between html and c++ part */
     d->webView  = new WebView(this);
     d->webView->setFocusPolicy(Qt::NoFocus);
-    auto page = new ChatViewPage(d->webView);
     d->webView->setPage(new ChatViewPage(d->webView));
     d->webView->connectPageActions();
 
