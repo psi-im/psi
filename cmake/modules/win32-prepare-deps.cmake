@@ -296,24 +296,28 @@ if(WIN32)
                 gstreamer-1.0-0.dll
                 gstriff-1.0-0.dll
                 gstrtp-1.0-0.dll
+                gstrtsp-1.0.0.dll
                 gsttag-1.0-0.dll
                 gstvideo-1.0-0.dll
+                gstwebrtc-1.0.0.dll
+                gstwinrt-1.0.0.dll
                 gthread-2.0-0.dll
                 libgcc_s_sjlj-1.dll
                 libharfbuzz-0.dll
+                harfbuzz.dll
                 libiconv-2.dll
                 intl-8.dll
                 libjpeg-8.dll
                 libogg-0.dll
+                ogg-0.dll
                 libopus-0.dll
+                opus-0.dll
                 orc-0.4-0.dll
                 libpng16-16.dll
-                libtheora-0.dll
-                libtheoradec-1.dll
-                libtheoraenc-1.dll
                 libvorbis-0.dll
                 libvorbisenc-2.dll
                 libwinpthread-1.dll
+                libx264-157.dll
                 libxml2-2.dll
                 z-1.dll
                 )
@@ -333,12 +337,13 @@ if(WIN32)
                 gstplayback.dll
                 gstrtp.dll
                 gstrtpmanager.dll
-                gsttheora.dll
+                gstvideoconvertscale.dll
                 gstvideoconvert.dll
                 gstvideorate.dll
                 gstvideoscale.dll
                 gstvolume.dll
                 gstvorbis.dll
+                gstvpx.dll
                 gstwasapi.dll
                 gstwinks.dll
                 )
@@ -363,16 +368,16 @@ if(WIN32)
                 libgstreamer-1.0-0.dll
                 libgstriff-1.0-0.dll
                 libgstrtp-1.0-0.dll
+                libgstrtsp-1.0.0.dll
                 libgsttag-1.0-0.dll
                 libgstvideo-1.0-0.dll
                 libgthread-2.0-0.dll
+                libgstwebrtc-1.0.0.dll
                 libogg-0.dll
                 libopus-0.dll
-                libtheora-0.dll
-                libtheoradec-1.dll
-                libtheoraenc-1.dll
                 libvorbis-0.dll
                 libvorbisenc-2.dll
+                libx264-155.dll
                 )
             set(GSTREAMER_PLUGINS
                 libgstapp.dll
@@ -391,12 +396,12 @@ if(WIN32)
                 libgstplayback.dll
                 libgstrtp.dll
                 libgstrtpmanager.dll
-                libgsttheora.dll
                 libgstvideoconvert.dll
                 libgstvideorate.dll
                 libgstvideoscale.dll
                 libgstvolume.dll
                 libgstvorbis.dll
+                libgstvpx.dll
                 libgstwasapi.dll
                 libgstwinks.dll
                 )
@@ -507,7 +512,7 @@ if(WIN32)
     find_psi_lib("${LIBRARIES_LIST}" "${PATHES}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
     if(NOT BUNDLED_QCA)
         set(QCA_LIB
-            libqca-qt5${D}.dll
+            libqca-qt${QT_DEFAULT_MAJOR_VERSION}${D}.dll
             )
         # qca and plugins
         set(QCA_PLUGINS

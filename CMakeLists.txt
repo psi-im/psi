@@ -70,7 +70,7 @@ option( PLUGINS_NO_DEBUG "Add -DPLUGINS_NO_DEBUG definition" OFF )
 option( DEV_MODE "Enable prepare-bin-libs target for MS Windows only. Set PSI_DATADIR and PSI_LIBDIR to CMAKE_RUNTIME_OUTPUT_DIRECTORY to debug plugins for Linux only" OFF )
 # Iris options
 option( BUNDLED_IRIS "Build iris library bundled" ON )
-option( BUNDLED_IRIS_ALL "Build iris library with bundled QCA and bundled USRSCTP" OFF)
+option( BUNDLED_IRIS_ALL "Build bundled iris library with bundled QCA and bundled USRSCTP" OFF)
 option( IRIS_BUNDLED_QCA "Adds: DTLS, Blake2b and other useful for XMPP crypto-stuff" ${DEFAULT_BUNDLED_QCA} )
 option( IRIS_BUNDLED_USRSCTP "Compile compatible usrsctp lib when system one is not available or uncompatible (required for p2p file transfer)" ${DEFAULT_BUNDLED_USRSCTP} )
 if (UNIX AND "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")

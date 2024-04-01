@@ -170,13 +170,7 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/3rdparty/qite/libqite
 )
 
-if(BUNDLED_IRIS)
-    # include_directories(
-    #     ${PROJECT_SOURCE_DIR}/iris/src
-    #     ${PROJECT_SOURCE_DIR}/iris/include
-    #     ${PROJECT_SOURCE_DIR}/iris/include/iris
-    # )
-else()
+if(NOT BUNDLED_IRIS)
     include_directories(${Iris_INCLUDE_DIR})
 endif()
 
