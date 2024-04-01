@@ -289,36 +289,33 @@ if(WIN32)
                 gstapp-1.0-0.dll
                 gstaudio-1.0-0.dll
                 gstbadaudio-1.0-0.dll
-                gstbadbase-1.0-0.dll
                 gstbase-1.0-0.dll
                 gstnet-1.0-0.dll
                 gstpbutils-1.0-0.dll
+                gstreamer-1.0
                 gstreamer-1.0-0.dll
                 gstriff-1.0-0.dll
                 gstrtp-1.0-0.dll
-                gstrtsp-1.0.0.dll
+                gstrtsp-1.0-0.dll
                 gsttag-1.0-0.dll
                 gstvideo-1.0-0.dll
-                gstwebrtc-1.0.0.dll
-                gstwinrt-1.0.0.dll
+                gstwebrtc-1.0-0.dll
+                gstwinrt-1.0-0.dll
+                gst_libs.txt
                 gthread-2.0-0.dll
-                libgcc_s_sjlj-1.dll
-                libharfbuzz-0.dll
                 harfbuzz.dll
-                libiconv-2.dll
                 intl-8.dll
                 libjpeg-8.dll
-                libogg-0.dll
-                ogg-0.dll
-                libopus-0.dll
-                opus-0.dll
-                orc-0.4-0.dll
                 libpng16-16.dll
                 libvorbis-0.dll
                 libvorbisenc-2.dll
                 libwinpthread-1.dll
                 libx264-157.dll
                 libxml2-2.dll
+                ogg-0.dll
+                opus-0.dll
+                orc-0.4-0.dll
+                pcre2-8-0.dll
                 z-1.dll
                 )
             set(GSTREAMER_PLUGINS
@@ -339,8 +336,8 @@ if(WIN32)
                 gstrtpmanager.dll
                 gstvideoconvertscale.dll
                 gstvideoconvert.dll
-                gstvideorate.dll
                 gstvideoscale.dll
+                gstvideorate.dll
                 gstvolume.dll
                 gstvorbis.dll
                 gstvpx.dll
