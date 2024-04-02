@@ -414,6 +414,7 @@ if(WIN32)
     foreach( hunsp_counter RANGE 9 )
         list(APPEND HUNSPELL_LIBS
             "libhunspell-1.${hunsp_counter}-0.dll"
+            "hunspell-1.${hunsp_counter}-0.dll"
             )
     endforeach()
     find_psi_lib("${HUNSPELL_LIBS}" "${PATHES}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")

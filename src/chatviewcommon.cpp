@@ -53,7 +53,11 @@ QString ChatViewCommon::getMucNickColor(const QString &nick, bool isSelf)
 
         if (PsiOptions::instance()->getOption("options.ui.muc.use-hash-nick-coloring").toBool()) {
             /* Hash-driven colors */
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
             quint32        hash     = qHash(nickwoun); // almost unique hash
+#else
+            size_t         hash     = qHash(nickwoun); // almost unique hash
+#endif
             QList<QColor> &_palette = generatePalette();
             return _palette.at(int(hash % uint(_palette.size()))).name();
         }

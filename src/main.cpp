@@ -481,7 +481,11 @@ PSI_EXPORT_FUNC int main(int argc, char *argv[])
 #if (defined(Q_OS_MAC) || defined(Q_OS_WIN)) && !defined(ALLOW_QT_PLUGINS_DIR)
     // remove qt's own plugin path on these platforms, to enable safe
     //   distribution
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     QString defaultPluginPath = QLibraryInfo::location(QLibraryInfo::PluginsPath);
+#else
+    QString defaultPluginPath = QLibraryInfo::path(QLibraryInfo::PluginsPath);
+#endif
     if (!getQtPluginPathEnvVar().contains(defaultPluginPath))
         QCoreApplication::removeLibraryPath(defaultPluginPath);
 #endif
