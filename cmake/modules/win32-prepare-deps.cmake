@@ -49,15 +49,22 @@ if(WIN32)
     message(STATUS "Qt${QT_DEFAULT_MAJOR_VERSION} directory found at ${QT_DIR}")
     set(QT_PLUGINS_DIR ${QT_DIR}/plugins)
     set(QT_TRANSLATIONS_DIR ${QT_DIR}/translations)
+    #Output pathes
+    set(QT_PLUGINS_OUTPUT "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins")
+    set(QT_LIBS_OUTPUT "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
+    if(BUILD_PSIMEDIA)
+        set(PSIMEDIA_LIBS_OUTPUT "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
+    endif()
+    set(PSI_LIBS_OUTPUT "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
     set(PSIMEDIA_FOUND OFF)
     #Set paths
     list(APPEND PATHES
         ${QT_BIN_DIR}
-        ${QCA_DIR}bin
-        ${QCA_DIR}/bin
+        ${Qca_DIR}bin
+        ${Qca_DIR}/bin
         ${QT_PLUGINS_DIR}/crypto
-        ${QCA_DIR}lib/qca-qt${QT_DEFAULT_MAJOR_VERSION}/crypto
-        ${QCA_DIR}lib/Qca-qt${QT_DEFAULT_MAJOR_VERSION}/crypto
+        ${Qca_DIR}lib/qca-qt${QT_DEFAULT_MAJOR_VERSION}/crypto
+        ${Qca_DIR}lib/Qca-qt${QT_DEFAULT_MAJOR_VERSION}/crypto
         )
     if(USE_MXE)
         list(APPEND PATHES
@@ -100,7 +107,8 @@ if(WIN32)
         else()
             list(APPEND WDARGS --release)
         endif()
-        list(APPEND WDARGS --plugindir "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins")
+        list(APPEND WDARGS --libdir "${QT_LIBS_OUTPUT}")
+        list(APPEND WDARGS --plugindir "${QT_PLUGINS_OUTPUT}")
         add_custom_target(windeploy
             COMMAND ${WINDEPLOYQTBIN}
             ${WDARGS}
@@ -133,7 +141,7 @@ if(WIN32)
                     )
             endforeach()
         endforeach()
-        find_psi_lib("${ICU_LIBS}" "${PATHES}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
+        find_psi_lib("${ICU_LIBS}" "${PATHES}" "${QT_LIBS_OUTPUT}/")
         unset(ICU_LIBS)
         # Qt5 / Qt6 libraries
         set(QT_LIBAS
@@ -166,42 +174,42 @@ if(WIN32)
                 Qt5WinExtras${D}.dll
             )
         endif()
-        find_psi_lib("${QT_LIBAS}" "${QT_BIN_DIR}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
+        find_psi_lib("${QT_LIBAS}" "${QT_BIN_DIR}" "${QT_LIBS_OUTPUT}/")
         #
-        find_psi_lib(qtaudio_windows${D}.dll "${QT_PLUGINS_DIR}/audio/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/audio/")
+        find_psi_lib(qtaudio_windows${D}.dll "${QT_PLUGINS_DIR}/audio/" "${QT_PLUGINS_OUTPUT}/audio/")
         set(PLATFORMS_PLUGS
             qdirect2d${D}.dll
             qminimal${D}.dll
             qoffscreen${D}.dll
             qwindows${D}.dll
             )
-        find_psi_lib("${PLATFORMS_PLUGS}" "${QT_PLUGINS_DIR}/platforms/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/platforms/")
+        find_psi_lib("${PLATFORMS_PLUGS}" "${QT_PLUGINS_DIR}/platforms/" "${QT_PLUGINS_OUTPUT}/platforms/")
         #
         set(PLATFORMTHEMES_PLUGS
             qxdgdesktopportal${D}.dll
             )
-        find_psi_lib("${PLATFORMTHEMES_PLUGS}" "${QT_PLUGINS_DIR}/platformthemes/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/platformthemes/")
+        find_psi_lib("${PLATFORMTHEMES_PLUGS}" "${QT_PLUGINS_DIR}/platformthemes/" "${QT_PLUGINS_OUTPUT}/platformthemes/")
         #
         set(STYLES_PLUGS
             qwindowsvistastyle${D}.dll
             )
-        find_psi_lib("${STYLES_PLUGS}" "${QT_PLUGINS_DIR}/styles/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/styles/")
+        find_psi_lib("${STYLES_PLUGS}" "${QT_PLUGINS_DIR}/styles/" "${QT_PLUGINS_OUTPUT}/styles/")
         #
         set(BEARER_PLUGS
             qgenericbearer${D}.dll
             qnativewifibearer${D}.dll
             )
-        find_psi_lib("${BEARER_PLUGS}" "${QT_PLUGINS_DIR}/bearer/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/bearer/")
+        find_psi_lib("${BEARER_PLUGS}" "${QT_PLUGINS_DIR}/bearer/" "${QT_PLUGINS_OUTPUT}/bearer/")
         #
         set(GENERIC_PLUGS
             qtuiotouchplugin${D}.dll
             )
-        find_psi_lib("${GENERIC_PLUGS}" "${QT_PLUGINS_DIR}/generic/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/generic/")
+        find_psi_lib("${GENERIC_PLUGS}" "${QT_PLUGINS_DIR}/generic/" "${QT_PLUGINS_OUTPUT}/generic/")
         #
         set(ICONENGINES_PLUGS
             qsvgicon${D}.dll
             )
-        find_psi_lib("${ICONENGINES_PLUGS}" "${QT_PLUGINS_DIR}/iconengines/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/iconengines/")
+        find_psi_lib("${ICONENGINES_PLUGS}" "${QT_PLUGINS_DIR}/iconengines/" "${QT_PLUGINS_OUTPUT}/iconengines/")
         #
         set(IMAGEFORMATS_PLUGS
             qdds${D}.dll
@@ -217,42 +225,42 @@ if(WIN32)
             qwbmp${D}.dll
             qwebp${D}.dll
             )
-        find_psi_lib("${IMAGEFORMATS_PLUGS}" "${QT_PLUGINS_DIR}/imageformats/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/imageformats/")
+        find_psi_lib("${IMAGEFORMATS_PLUGS}" "${QT_PLUGINS_DIR}/imageformats/" "${QT_PLUGINS_OUTPUT}/imageformats/")
         #
         set(MEDIASERVICE_PLUGS
             dsengine${D}.dll
             qtmedia_audioengine${D}.dll
             wmfengine${D}.dll
             )
-        find_psi_lib("${MEDIASERVICE_PLUGS}" "${QT_PLUGINS_DIR}/mediaservice/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/mediaservice/")
+        find_psi_lib("${MEDIASERVICE_PLUGS}" "${QT_PLUGINS_DIR}/mediaservice/" "${QT_PLUGINS_OUTPUT}/mediaservice/")
         #
         set(MULTIMEDIA_PLUGS
             ffmpegmediaplugin${D}.dll
             windowsmediaplugin${D}.dll
             )
-        find_psi_lib("${MULTIMEDIA_PLUGS}" "${QT_PLUGINS_DIR}/multimedia/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/multimedia/")
+        find_psi_lib("${MULTIMEDIA_PLUGS}" "${QT_PLUGINS_DIR}/multimedia/" "${QT_PLUGINS_OUTPUT}/multimedia/")
         #
         set(NETWORKINFORMATION_PLUGS
             qnetworklistmanager${D}.dll
             )
-        find_psi_lib("${NETWORKINFORMATION_PLUGS}" "${QT_PLUGINS_DIR}/networkinformation/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/networkinformation/")
+        find_psi_lib("${NETWORKINFORMATION_PLUGS}" "${QT_PLUGINS_DIR}/networkinformation/" "${QT_PLUGINS_OUTPUT}/networkinformation/")
         #
         set(POSITION_PLUGS
             qtposition_nmea${D}.dll
             qtposition_positionpoll${D}.dll
             qtposition_winrt${D}.dll
             )
-        find_psi_lib("${POSITION_PLUGS}" "${QT_PLUGINS_DIR}/position/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/position/")
+        find_psi_lib("${POSITION_PLUGS}" "${QT_PLUGINS_DIR}/position/" "${QT_PLUGINS_OUTPUT}/position/")
         #
         set(PLAYLISTFORMATS_PLUGS
             qtmultimedia_m3u${D}.dll
             )
-        find_psi_lib("${PLAYLISTFORMATS_PLUGS}" "${QT_PLUGINS_DIR}/playlistformats/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/playlistformats/")
+        find_psi_lib("${PLAYLISTFORMATS_PLUGS}" "${QT_PLUGINS_DIR}/playlistformats/" "${QT_PLUGINS_OUTPUT}/playlistformats/")
         #
         set(PRINTSUPPORT_PLUGS
             windowsprintersupport${D}.dll
             )
-        find_psi_lib("${PRINTSUPPORT_PLUGS}" "${QT_PLUGINS_DIR}/printsupport/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/printsupport/")
+        find_psi_lib("${PRINTSUPPORT_PLUGS}" "${QT_PLUGINS_DIR}/printsupport/" "${QT_PLUGINS_OUTPUT}/printsupport/")
         #
         set(SQLDRIVERS_PLUGS
             qsqlite${D}.dll
@@ -260,21 +268,21 @@ if(WIN32)
             qsqlodbc${D}.dll
             qsqlpsql${D}.dll
             )
-        find_psi_lib("${SQLDRIVERS_PLUGS}" "${QT_PLUGINS_DIR}/sqldrivers/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/sqldrivers/")
+        find_psi_lib("${SQLDRIVERS_PLUGS}" "${QT_PLUGINS_DIR}/sqldrivers/" "${QT_PLUGINS_OUTPUT}/sqldrivers/")
         #
         set(TLS_PLUGS
             qcertonlybackend${D}.dll
             qopensslbackend${D}.dll
             qschannelbackend${D}.dll
             )
-        find_psi_lib("${TLS_PLUGS}" "${QT_PLUGINS_DIR}/tls/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/tls/")
+        find_psi_lib("${TLS_PLUGS}" "${QT_PLUGINS_DIR}/tls/" "${QT_PLUGINS_OUTPUT}/tls/")
         #
         if(KEYCHAIN_LIBS)
             set(KEYCHAIN_LIBS
                 qt${QT_DEFAULT_MAJOR_VERSION}keychain${D}.dll
                 libqt${QT_DEFAULT_MAJOR_VERSION}keychain${D}.dll
                 )
-            find_psi_lib("${KEYCHAIN_LIBS}" "${PATHES}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
+            find_psi_lib("${KEYCHAIN_LIBS}" "${PATHES}" "${QT_LIBS_OUTPUT}/")
         endif()
     endif()
     # psimedia deps
@@ -346,7 +354,7 @@ if(WIN32)
                 )
             set(PSIMEDIA_DEPS_DIR "${GST_SDK}/bin")
             set(GSTREAMER_PLUGINS_DIR "${GST_SDK}/lib/gstreamer-1.0")
-            set(GST_PLUGINS_OUTPUT "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/gstreamer-1.0/")
+            set(GST_PLUGINS_OUTPUT "${PSIMEDIA_LIBS_OUTPUT}/gstreamer-1.0/")
         endif()
         if(USE_MXE)
             set(PSIMEDIA_DEPS
@@ -404,9 +412,9 @@ if(WIN32)
                 )
             set(PSIMEDIA_DEPS_DIR "${CMAKE_PREFIX_PATH}/bin")
             set(GSTREAMER_PLUGINS_DIR "${CMAKE_PREFIX_PATH}/bin/gstreamer-1.0")
-            set(GST_PLUGINS_OUTPUT "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/gstreamer-1.0/")
+            set(GST_PLUGINS_OUTPUT "${PSIMEDIA_LIBS_OUTPUT}/gstreamer-1.0/")
         endif()
-        find_psi_lib("${PSIMEDIA_DEPS}" "${PSIMEDIA_DEPS_DIR}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
+        find_psi_lib("${PSIMEDIA_DEPS}" "${PSIMEDIA_DEPS_DIR}" "${PSIMEDIA_LIBS_OUTPUT}/")
         # streamer plugins
         find_psi_lib("${GSTREAMER_PLUGINS}" "${GSTREAMER_PLUGINS_DIR}/" "${GST_PLUGINS_OUTPUT}")
     endif()
@@ -417,7 +425,7 @@ if(WIN32)
             "hunspell-1.${hunsp_counter}-0.dll"
             )
     endforeach()
-    find_psi_lib("${HUNSPELL_LIBS}" "${PATHES}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
+    find_psi_lib("${HUNSPELL_LIBS}" "${PATHES}" "${PSI_LIBS_OUTPUT}")
     unset(HUNSPELL_LIBS)
     # other libs and executables
     set( LIBRARIES_LIST
@@ -447,6 +455,7 @@ if(WIN32)
         libxslt-1.dll
         libzlib.dll
         libzstd.dll
+        legacy.dll
         ssleay32.dll
         zlib1.dll
         )
@@ -507,7 +516,7 @@ if(WIN32)
             libqjdns.dll
             )
     endif()
-    find_psi_lib("${LIBRARIES_LIST}" "${PATHES}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
+    find_psi_lib("${LIBRARIES_LIST}" "${PATHES}" "${PSI_LIBS_OUTPUT}/")
     if(NOT BUNDLED_QCA)
         set(QCA_LIB
             libqca-qt${QT_DEFAULT_MAJOR_VERSION}${D}.dll
@@ -526,15 +535,15 @@ if(WIN32)
                 qca-ossl${D}.dll
                 )
         endif()
-        find_psi_lib("${QCA_LIB}" "${PATHES}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
-        find_psi_lib("${QCA_PLUGINS}" "${PATHES}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/crypto/")
+        find_psi_lib("${QCA_LIB}" "${PATHES}" "${PSI_LIBS_OUTPUT}/")
+        find_psi_lib("${QCA_PLUGINS}" "${PATHES}" "${QT_PLUGINS_OUTPUT}/crypto/")
     endif()
     if (NOT BUNDLED_USRSCTP)
             set(USRSCTP_LIB libusrsctp${D}.dll)
         if(MSVC)
             set(USRSCTP_LIB usrsctp${D}.dll)
         endif()
-        find_psi_lib("${USRSCTP_LIB}" "${PATHES}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
+        find_psi_lib("${USRSCTP_LIB}" "${PATHES}" "${PSI_LIBS_OUTPUT}/")
     endif()
     copy("${PROJECT_SOURCE_DIR}/win32/qt.conf" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" "${LIBS_TARGET}")
 endif()

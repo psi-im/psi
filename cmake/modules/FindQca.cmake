@@ -54,8 +54,10 @@ find_library(
     Qca_LIBRARY
     NAMES qca-qt${QT_DEFAULT_MAJOR_VERSION}${D}
     HINTS
-    ${QCA_DIR}/lib
-    ${QCA_DIR}/bin
+    ${Qca_ROOT}/lib
+    ${Qca_ROOT}/bin
+    ${Qca_DIR}/lib
+    ${Qca_DIR}/bin
 )
 
 include(FindPackageHandleStandardArgs)

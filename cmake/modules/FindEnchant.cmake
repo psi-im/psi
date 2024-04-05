@@ -73,6 +73,8 @@ find_library(
     ${PC_Enchant_LIBRARY_DIRS}
     ${Enchant_ROOT}/lib
     ${Enchant_ROOT}/bin
+    ${Enchant_DIR}/lib
+    ${Enchant_DIR}/bin
 )
 
 include(FindPackageHandleStandardArgs)

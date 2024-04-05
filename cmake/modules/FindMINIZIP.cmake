@@ -51,7 +51,7 @@ find_path(
     ${PC_MINIZIP_INCLUDE_DIRS}
     PATH_SUFFIXES
     ""
-    if ( NOT ${WIN32} )
+    if ( NOT WIN32 )
     minizip
     endif()
 )
@@ -64,6 +64,8 @@ find_library(
     ${PC_MINIZIP_LIBRARY_DIRS}
     ${MINIZIP_ROOT}/lib
     ${MINIZIP_ROOT}/bin
+    ${MINIZIP_DIR}/lib
+    ${MINIZIP_DIR}/bin
 )
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(

@@ -198,7 +198,7 @@ else()
     set(MAIN_ICON "psiplus_icon.png")
 endif()
 
-include(${PROJECT_SOURCE_DIR}/cmake/modules/get-version.cmake)
+include(get-version)
 
 if(LINUX)
     if(PSI_PLUS)
@@ -223,30 +223,6 @@ endif()
 
 set(CONFIG_OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/config.h")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CONFIG_OUTPUT_FILE} @ONLY)
-
-#Copy default iconsets to build directory and add jisp files to prepare-bin target
-function(prepare_iconsets ACTION)
-    file(GLOB_RECURSE all_iconsets "${PROJECT_SOURCE_DIR}/iconsets/*")
-    message(STATUS "Processing iconsets for ${ACTION}")
-    foreach(_ITEM ${all_iconsets})
-        get_filename_component(FNAME ${_ITEM} NAME)
-        file(RELATIVE_PATH FREL ${PROJECT_SOURCE_DIR} ${_ITEM})
-        get_filename_component(FDIR ${FREL} DIRECTORY)
-        if(NOT ${ACTION} STREQUAL "prepare-bin")
-            if("${_ITEM}" MATCHES ".*/default/.*" AND (NOT "${_ITEM}" MATCHES ".*/system/default/icondef.xml"))
-                configure_file(${_ITEM} "${CMAKE_CURRENT_BINARY_DIR}/${FDIR}/${FNAME}" COPYONLY)
-            endif()
-        else()
-            if(NOT "${_ITEM}" MATCHES ".*/default/.*|.*README")
-                copy(${_ITEM} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${FDIR}/${FNAME}" ${ACTION})
-            endif()
-        endif()
-        unset(_ITEM)
-        unset(FNAME)
-        unset(FREL)
-        unset(FDIR)
-    endforeach()
-endfunction()
 
 prepare_iconsets(prepare-src)
 #Generate iconsets.qrc and icondef.xml
@@ -390,28 +366,6 @@ if(WIN32)
         configure_file(${PROJECT_SOURCE_DIR}/win32/psi_win.rc.in ${CMAKE_CURRENT_BINARY_DIR}/psi_win.rc @ONLY)
         #configure_file(${PROJECT_SOURCE_DIR}/win32/psi.manifest.in ${CMAKE_CURRENT_BINARY_DIR}/psi.manifest @ONLY)
         # win resource compilation
-        function(compile_rc_file RC_FILE_NAME RC_OUTPUT_NAME)
-            if(NOT MSVC)
-                set(CMD_ARG
-                    --include=${CMAKE_CURRENT_SOURCE_DIR}
-                    --input=${RC_FILE_NAME}
-                    --output=${RC_OUTPUT_NAME}
-            )
-            else()
-                set(CMD_ARG
-                    /fo
-                    ${RC_OUTPUT_NAME}
-                    ${RC_FILE_NAME}
-                )
-            endif()
-            add_custom_command(OUTPUT ${RC_OUTPUT_NAME}
-                COMMAND ${CMAKE_RC_COMPILER}
-                ARGS ${CMD_ARG}
-                WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/win32
-                VERBATIM
-            )
-        endfunction()
-
         set(DECS_RC_NAME ${CMAKE_CURRENT_BINARY_DIR}/psi_win.rc)
         set(RC_FILE ${CMAKE_CURRENT_BINARY_DIR}/psi_win.o)
         compile_rc_file(${DECS_RC_NAME} ${RC_FILE})

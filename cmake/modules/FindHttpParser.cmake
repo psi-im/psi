@@ -43,6 +43,8 @@ find_library(
     HINTS
     ${HTTP_PARSER_ROOT}/lib
     ${HTTP_PARSER_ROOT}/bin
+    ${HTTP_PARSER_DIR}/lib
+    ${HTTP_PARSER_DIR}/bin
 )
 
 #Obtain library version

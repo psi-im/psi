@@ -50,11 +50,12 @@ find_path(
     HUNSPELL_INCLUDE_DIR ${LIBINCS}
     HINTS
     ${HUNSPELL_ROOT}/include
+    ${HUNSPELL_DIR}/include
     ${PC_HUNSPELL_INCLUDEDIR}
     ${PC_HUNSPELL_INCLUDE_DIRS}
     PATH_SUFFIXES
     ""
-    if ( NOT ${WIN32} )
+    if ( NOT WIN32 )
     hunspell
     endif()
 )
@@ -75,6 +76,8 @@ find_library(
     ${PC_HUNSPELL_LIBRARY_DIRS}
     ${HUNSPELL_ROOT}/lib
     ${HUNSPELL_ROOT}/bin
+    ${HUNSPELL_DIR}/lib
+    ${HUNSPELL_DIR}/bin
 )
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(

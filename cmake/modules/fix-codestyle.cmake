@@ -16,8 +16,8 @@ if(CLF_BIN)
         ../plugins/*.h
     )
     foreach(src_file ${SRC_LIST})
-        #Exclude libpsi
-        if("${src_file}" MATCHES ".*/libpsi/.*")
+        #Exclude iris
+        if("${src_file}" MATCHES ".*/iris/.*")
             list(REMOVE_ITEM SRC_LIST ${src_file})
         endif()
         #Exclude plugins if no ENABLE_PLUGINS flag enabled
