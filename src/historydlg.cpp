@@ -825,7 +825,7 @@ void HistoryDlg::listAccounts()
     // select active account
     ui_.accountsBox->setCurrentIndex(ui_.accountsBox->findData(getCurrentAccountId()));
     // connect signal after the list is populated to prevent execution in the middle of the loop
-    connect(ui_.accountsBox, SIGNAL(currentIndexChanged(const QString)), SLOT(changeAccount(const QString)));
+    connect(ui_.accountsBox, &QComboBox::currentTextChanged, this, &HistoryDlg::changeAccount);
 }
 
 void HistoryDlg::openSelectedContact()

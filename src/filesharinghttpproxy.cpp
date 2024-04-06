@@ -291,7 +291,7 @@ void FileSharingHttpProxy::transfer()
             } else {
                 response->write(data);
             }
-            qDebug("FSP transferred %lld bytes of %lld bytes", data.size(), toTransfer);
+            qDebug("FSP transferred %lld bytes of %lld bytes", qint64(data.size()), toTransfer);
         } else {
             qDebug("FSP we have to wait for readyRead or disconnected");
         }

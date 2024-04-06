@@ -33,7 +33,7 @@ PrivacyRuleDlg::PrivacyRuleDlg()
     ui_.cb_type->addItem(tr("Subscription"), PrivacyListItem::SubscriptionType);
     ui_.cb_type->addItem(tr("*"), PrivacyListItem::FallthroughType);
 
-    connect(ui_.cb_type, SIGNAL(currentIndexChanged(const QString &)), SLOT(type_selected(const QString &)));
+    connect(ui_.cb_type, &QComboBox::currentTextChanged, this, &PrivacyRuleDlg::type_selected);
     connect(ui_.pb_cancel, SIGNAL(clicked()), SLOT(reject()));
     connect(ui_.pb_ok, SIGNAL(clicked()), SLOT(accept()));
 }
