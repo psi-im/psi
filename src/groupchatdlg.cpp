@@ -1222,12 +1222,16 @@ void GCMainDlg::activated()
     d->trackBar = false;
 }
 
-void GCMainDlg::mucInfoDialog(const QString &title, const QString &message, const Jid &actor, const QString &reason)
+void GCMainDlg::mucInfoDialog(const QString &title, const QString &message, const MUCItem::Actor &actor,
+                              const QString &reason)
 {
     QString m = message;
 
-    if (!actor.isEmpty())
-        m += tr(" by %1").arg(actor.full());
+    if (!actor.nick.isEmpty())
+        m += tr(" by %1").arg(actor.nick);
+
+    if (!actor.jid.isEmpty())
+        m += tr(" by %1").arg(actor.jid.full());
     m += ".";
 
     if (!reason.isEmpty())
@@ -1737,15 +1741,23 @@ void GCMainDlg::mucKickMsgHelper(const QString &nick, const Status &s, const QSt
                                  const QString &someoneBy)
 {
     QString message;
+
+    QString     actor;
+    const auto &actorRef = s.mucItem().actor();
+    if (!actorRef.nick.isEmpty()) {
+        actor = actorRef.nick;
+    } else if (!actorRef.jid.isEmpty()) {
+        actor = actorRef.jid.full();
+    }
     if (nick == d->self) {
         message = youSimple;
         mucInfoDialog(title, message, s.mucItem().actor(), s.mucItem().reason());
-        if (!s.mucItem().actor().isEmpty()) {
-            message = youBy.arg(s.mucItem().actor().full());
+        if (!actor.isEmpty()) {
+            message = youBy.arg(actor);
         }
         goForcedLeave();
-    } else if (!s.mucItem().actor().isEmpty()) {
-        message = someoneBy.arg(nickJid, s.mucItem().actor().full());
+    } else if (!actor.isEmpty()) {
+        message = someoneBy.arg(nickJid, actor);
     } else {
         message = someoneSimple.arg(nickJid);
     }
