@@ -26,7 +26,6 @@
 #include "avatars.h"
 #include "avcall/avcall.h"
 #include "bookmarkmanager.h"
-#include "busywidget.h"
 #include "coloropt.h"
 #include "filesharingmanager.h"
 #include "gcuserview.h"
@@ -63,7 +62,6 @@
 #include "psitooltip.h"
 #include "shortcutmanager.h"
 #include "statusdlg.h"
-#include "stretchwidget.h"
 #include "tabcompletion.h"
 #include "tabdlg.h"
 #include "textutil.h"
@@ -1522,16 +1520,14 @@ void GCMainDlg::doClear() { ui_.log->clear(); }
 void GCMainDlg::doClearButton()
 {
     if (PsiOptions::instance()->getOption("options.ui.chat.warn-before-clear").toBool()) {
-        switch (QMessageBox::warning(
+        auto ret = QMessageBox::warning(
             this, tr("Warning"),
             tr("Are you sure you want to clear the chat window?\n(note: does not affect saved history)"),
-            QMessageBox::Yes | QMessageBox::YesAll | QMessageBox::No)) {
-        case QMessageBox::No:
-            break;
-        case QMessageBox::YesAll:
-            PsiOptions::instance()->setOption("options.ui.chat.warn-before-clear", false);
-            // fall-through
-        case QMessageBox::Yes:
+            QMessageBox::Yes | QMessageBox::YesAll | QMessageBox::No);
+        if (ret == QMessageBox::YesAll || ret == QMessageBox::Yes) {
+            if (ret == QMessageBox::YesAll) {
+                PsiOptions::instance()->setOption("options.ui.chat.warn-before-clear", false);
+            }
             doClear();
         }
     } else {
@@ -2064,7 +2060,7 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
     PsiOptions *options = PsiOptions::instance();
 
     QString topic;
-    if (!m.subjectMap().isEmpty()) {
+    if (!m.subjectMap().isEmpty() && m.isPureSubject()) {
         d->subjectMap.clear();
         auto sm = m.subjectMap();
         for (auto l = sm.constBegin(); l != sm.constEnd(); ++l) {
