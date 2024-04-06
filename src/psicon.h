@@ -137,6 +137,8 @@ public:
     PopupManager *popupManager() const;
     QStringList   xmppFatures() const;
 
+    void qt67visibilityHack(const std::function<void()> &);
+
 signals:
     void quit(int);
     void accountAdded(PsiAccount *);

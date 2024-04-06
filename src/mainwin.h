@@ -68,6 +68,7 @@ public:
     QMap<QString, QAction *> actions;
 
     PsiCon *psiCon() const;
+    void    qt67visibilityHack(const std::function<void()> &callback);
 
 protected:
     // reimplemented

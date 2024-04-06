@@ -4197,7 +4197,7 @@ void PsiAccount::actionDefault(const Jid &j)
     else if (groupchats().contains(j.full())) {
         TabbableWidget *tab = findDialog<TabbableWidget *>(Jid(j.full()));
         if (tab) {
-            tab->ensureTabbedCorrectly();
+            d->psi->qt67visibilityHack([tab]() { tab->ensureTabbedCorrectly(); });
             tab->bringToFront();
         }
     } else {
@@ -5638,7 +5638,7 @@ void PsiAccount::processChats(const Jid &j) { processChatsHelper(j, true); }
 ChatDlg *PsiAccount::openChat(const Jid &j, ActivationType activationType)
 {
     ChatDlg *chat = ensureChatDlg(j);
-    chat->ensureTabbedCorrectly();
+    d->psi->qt67visibilityHack([chat]() { chat->ensureTabbedCorrectly(); });
 
     processChats(j);
     if (activationType == UserAction) {

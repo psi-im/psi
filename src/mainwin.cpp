@@ -571,6 +571,22 @@ MainWin::~MainWin()
     delete d;
 }
 
+void MainWin::qt67visibilityHack(const std::function<void()> &callback)
+{
+    // Q 6.7 has broken something. So every time we add webengine stuff, all the other widgets disappear
+    QList<QWidget *> widgets = { d->rosterWidget_, d->rosterAvatar };
+    // widgets += toolbars_;
+    std::copy(toolbars_.begin(), toolbars_.end(), std::back_inserter(widgets));
+    QList<bool> visibility;
+    for (auto w : widgets) {
+        visibility.append(w->isVisible());
+    }
+    callback();
+    for (auto w : widgets) {
+        w->setVisible(visibility.takeFirst());
+    }
+}
+
 void MainWin::splitterMoved()
 {
     QList<int> list = d->splitter->sizes();
@@ -921,17 +937,8 @@ void MainWin::buildOptionsMenu()
     helpMenu->setIcon(IconsetFactory::icon("psi/help").icon());
 
     QStringList actions;
-    actions << "help_readme"
-            << "separator"
-            << "help_online_wiki"
-            << "help_online_home"
-            << "help_online_forum"
-            << "help_psi_muc"
-            << "help_report_bug"
-            << "diagnostics"
-            << "separator"
-            << "help_about"
-            << "help_about_qt";
+    actions << "help_readme" << "separator" << "help_online_wiki" << "help_online_home" << "help_online_forum"
+            << "help_psi_muc" << "help_report_bug" << "diagnostics" << "separator" << "help_about" << "help_about_qt";
 
     d->updateMenu(actions, helpMenu);
 
@@ -968,9 +975,7 @@ void MainWin::buildMainMenu()
 void MainWin::buildToolsMenu()
 {
     QStringList actions;
-    actions << "menu_file_transfer"
-            << "separator"
-            << "menu_xml_console";
+    actions << "menu_file_transfer" << "separator" << "menu_xml_console";
 
     d->updateMenu(actions, d->toolsMenu);
 }
@@ -987,8 +992,7 @@ void MainWin::buildGeneralMenu(QMenu *menu)
 #ifdef GROUPCHAT
             << "menu_join_groupchat"
 #endif
-            << "menu_options"
-            << "menu_file_transfer";
+            << "menu_options" << "menu_file_transfer";
     if (PsiOptions::instance()->getOption("options.ui.menu.main.change-profile").toBool()) {
         actions << "menu_change_profile";
     }
