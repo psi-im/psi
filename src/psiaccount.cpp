@@ -5818,7 +5818,7 @@ void PsiAccount::client_groupChatJoined(const Jid &j)
 
     if (r != MUCJoinDlg::MucAutoJoin
         || !PsiOptions::instance()->getOption("options.ui.muc.hide-on-autojoin").toBool()) {
-        chat->ensureTabbedCorrectly();
+        d->psi->qt67visibilityHack([chat]() { chat->ensureTabbedCorrectly(); });
         chat->bringToFront();
     }
 

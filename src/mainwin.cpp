@@ -374,17 +374,14 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
     d->vb_roster->setSpacing(layoutMargin);
 
     if (d->allInOne) {
-        QString     toolOpt = "options.ui.contactlist.toolbars";
-        const auto &bases   = PsiOptions::instance()->getChildOptionNames(toolOpt, true, true);
-        for (const QString &base : bases) {
-            // toolbar "Show contacts" is fourth, so check m3
-            if (base == toolOpt + ".m3") {
-                d->viewToolBar = new PsiToolBar(base, rosterBar, d->psi->actionList());
-                d->viewToolBar->initialize();
-                connect(d->viewToolBar, SIGNAL(customize()), d->psi, SLOT(doToolbars()));
-                d->vb_roster->addWidget(d->viewToolBar);
-                break;
-            }
+        QString     toolOpt   = "options.ui.contactlist.toolbars";
+        const auto &bases     = PsiOptions::instance()->getChildOptionNames(toolOpt, true, true);
+        auto        m3ToolOpt = toolOpt + QLatin1String(".m3");
+        if (bases.contains(m3ToolOpt)) {
+            d->viewToolBar = new PsiToolBar(m3ToolOpt, rosterBar, d->psi->actionList());
+            d->viewToolBar->initialize();
+            connect(d->viewToolBar, &PsiToolBar::customize, d->psi, &PsiCon::doToolbars);
+            d->vb_roster->addWidget(d->viewToolBar);
         }
     }
 
@@ -574,17 +571,19 @@ MainWin::~MainWin()
 void MainWin::qt67visibilityHack(const std::function<void()> &callback)
 {
     // Q 6.7 has broken something. So every time we add webengine stuff, all the other widgets disappear
-    QList<QWidget *> widgets = { d->rosterWidget_, d->rosterAvatar };
-    // widgets += toolbars_;
-    std::copy(toolbars_.begin(), toolbars_.end(), std::back_inserter(widgets));
-    QList<bool> visibility;
-    for (auto w : widgets) {
-        visibility.append(w->isVisible());
+    QList<std::tuple<QWidget *, bool>> widgetsVisibility;
+    for (int i = 0; i < d->vb_roster->count(); i++) {
+        auto w = d->vb_roster->itemAt(i)->widget();
+        if (w) {
+            widgetsVisibility.append({ w, w->isVisible() });
+        }
     }
     callback();
-    for (auto w : widgets) {
-        w->setVisible(visibility.takeFirst());
-    }
+    QTimer::singleShot(0, [widgetsVisibility = std::move(widgetsVisibility)]() {
+        for (auto [w, vis] : widgetsVisibility) {
+            w->setVisible(vis);
+        }
+    });
 }
 
 void MainWin::splitterMoved()
