@@ -182,14 +182,16 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
     // Detect
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MAC) && !defined(Q_OS_HAIKU)
     // attempt to get LSB version before trying the distro-specific approach
-    os_str_ = lsbRelease(QStringList() << "--description" << "--short");
+    os_str_ = lsbRelease(QStringList() << "--description"
+                                       << "--short");
 
     if (os_str_.isEmpty()) {
         os_str_ = unixHeuristicDetect();
     }
     os_name_str_ = os_str_;
 
-    os_version_str_ = lsbRelease(QStringList() << "--release" << "--short");
+    os_version_str_ = lsbRelease(QStringList() << "--release"
+                                               << "--short");
 
     if (os_version_str_.isEmpty()) {
         os_version_str_ = QSysInfo::productVersion();
@@ -282,9 +284,6 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
         os_name_str_ = "Windows Server";
         os_str_      = os_name_str_;
         switch (current.majorVersion()) {
-        case 5:
-            os_version_str_ = "2003";
-            break;
         case 6:
             switch (current.minorVersion()) {
             case 0:
@@ -302,11 +301,21 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
             }
             break;
         case 10:
-            os_version_str_ = "2016";
+            if (current.microVersion() >= 20348)
+                os_version_str_ = "2022";
+            else if (current.microVersion() >= 17763)
+                os_version_str_ = "2019";
+            else
+                os_version_str_ = "2016";
             break;
         }
     } else {
-        if (current >= QOperatingSystemVersion::Windows10) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 3, 0)
+        if (current >= QOperatingSystemVersion::Windows11) {
+            os_version_str_ = "11";
+        } else
+#endif
+            if (current >= QOperatingSystemVersion::Windows10) {
             if (current.microVersion() >= 22000) // Hack to detect Win11
                 os_version_str_ = "11";
             else
@@ -317,25 +326,6 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
             os_version_str_ = "8";
         } else if (current >= QOperatingSystemVersion::Windows7) {
             os_version_str_ = "7";
-        } else { // Outdated systems
-            switch (current.majorVersion()) {
-            case 6:
-                os_version_str_ = "Vista";
-                break;
-            case 5:
-                switch (current.minorVersion()) {
-                case 0:
-                    os_version_str_ = "2000";
-                    break;
-                case 1:
-                    os_version_str_ = "XP";
-                    break;
-                case 2:
-                    os_version_str_ = "XP 64-Bit Edition";
-                    break;
-                }
-                break;
-            }
         }
     }
     if (!os_version_str_.isEmpty()) {
