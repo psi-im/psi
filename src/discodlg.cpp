@@ -237,10 +237,11 @@ class DiscoListItem : public DiscoBaseItem {
     Q_OBJECT
 public:
     DiscoListItem(DiscoItem it, DiscoData *d, QTreeWidget *parent);
-    DiscoListItem(DiscoItem it, DiscoData *d, QTreeWidgetItem *parent);
+    DiscoListItem(DiscoItem it, DiscoData *d, QTreeWidgetItem *parent, bool isDeifinitelyLeaf = false);
     ~DiscoListItem();
 
-    void             setExpanded(bool expand);
+    void setExpanded(bool expand);
+
     const DiscoItem &item() const;
 
     void itemSelected();
@@ -261,6 +262,7 @@ private:
     bool                 alreadyItems, alreadyInfo;
     bool                 autoItems; // used in updateItemsFinished
     bool                 autoInfo;
+    bool                 isDefinitelyLeaf = false;
     QString              errorInfo;
     DiscoExtraItem      *moreItem;
     SubsetsClientManager subsets;
@@ -283,17 +285,14 @@ private:
     DiscoDlg *dlg() const;
 };
 
-DiscoListItem::DiscoListItem(DiscoItem it, DiscoData *_d, QTreeWidget *parent) : DiscoBaseItem(parent)
+DiscoListItem::DiscoListItem(DiscoItem it, DiscoData *_d, QTreeWidget *parent) : DiscoBaseItem(parent), isRoot(true)
 {
-    isRoot = true;
-
     init(it, _d);
 }
 
-DiscoListItem::DiscoListItem(DiscoItem it, DiscoData *_d, QTreeWidgetItem *parent) : DiscoBaseItem(parent)
+DiscoListItem::DiscoListItem(DiscoItem it, DiscoData *_d, QTreeWidgetItem *parent, bool isDeifinitelyLeaf) :
+    DiscoBaseItem(parent), isRoot(false), isDefinitelyLeaf(isDeifinitelyLeaf)
 {
-    isRoot = false;
-
     init(it, _d);
 }
 
@@ -311,10 +310,13 @@ void DiscoListItem::init(DiscoItem _item, DiscoData *_d)
         setChildIndicatorPolicy(ShowIndicator);
 
     autoInfo = false;
-    if (autoInfoEnabled() || isRoot) {
+    if (autoInfoEnabled() || isRoot || !isDefinitelyLeaf) {
         updateInfo();
         if (!isRoot)
             autoInfo = true;
+    }
+    if (isDefinitelyLeaf) {
+        hideChildIndicator();
     }
     moreItem = nullptr;
 }
@@ -421,6 +423,9 @@ void DiscoListItem::itemSelected()
 
 void DiscoListItem::updateItems(bool parentAutoItems, bool more)
 {
+    if (isDefinitelyLeaf) {
+        return;
+    }
     if (parentAutoItems) {
         // save traffic
         if (alreadyItems)
@@ -504,6 +509,9 @@ void DiscoListItem::updateItemsFinished(const DiscoList &list)
         child = static_cast<DiscoListItem *>(QTreeWidgetItem::child(i));
     }
 
+    auto canPubsub = std::any_of(di.identities().begin(), di.identities().end(),
+                                 [](auto const &i) { return i.category == QLatin1String("pubsub"); });
+
     // add/update items
     for (const auto &a : list) {
         QString key = computeHash(a.jid().full(), a.node());
@@ -513,7 +521,7 @@ void DiscoListItem::updateItemsFinished(const DiscoList &list)
             item->copyItem(a);
             children.remove(key);
         } else {
-            new DiscoListItem(a, d, this);
+            item = new DiscoListItem(a, d, this, !isRoot && canPubsub && a.node().isEmpty());
         }
     }
 
@@ -559,6 +567,9 @@ void DiscoListItem::autoItemsChildren() const
 
 void DiscoListItem::updateInfo()
 {
+    if (isDefinitelyLeaf) {
+        return;
+    }
     JT_DiscoInfo *jt = new JT_DiscoInfo(d->pa->client()->rootTask());
     jt->setAllowCache(
         false); // Workaround for a bug https://github.com/hanzz/spectrum2/issues/205 (invalid caps from transport)
