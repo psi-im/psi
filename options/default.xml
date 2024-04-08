@@ -173,6 +173,11 @@ RosterAvatarFrame * {
     margin: 1px;
 }
 
+/* remove weird lines between roster window elements */
+QToolBar {
+  border: 0px;
+}
+
 /* frame of avatar - avatar */
 QLabel#lb_avatar {
     margin-left: 0px;
