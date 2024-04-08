@@ -122,7 +122,10 @@ TabDlg::TabDlg(TabManager *tabManager, const QString &geometryOption, TabDlgDele
 
     setAcceptDrops(true);
 
-    X11WM_CLASS("tabs");
+    auto allInOne = PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString().contains('A');
+    if (!allInOne) {
+        X11WM_CLASS("tabs");
+    }
     setLooks();
 
     act_close_ = new QAction(this);

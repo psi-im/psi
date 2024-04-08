@@ -568,24 +568,6 @@ MainWin::~MainWin()
     delete d;
 }
 
-void MainWin::qt67visibilityHack(const std::function<void()> &callback)
-{
-    // Q 6.7 has broken something. So every time we add webengine stuff, all the other widgets disappear
-    QList<std::tuple<QWidget *, bool>> widgetsVisibility;
-    for (int i = 0; i < d->vb_roster->count(); i++) {
-        auto w = d->vb_roster->itemAt(i)->widget();
-        if (w) {
-            widgetsVisibility.append({ w, w->isVisible() });
-        }
-    }
-    callback();
-    QTimer::singleShot(0, [widgetsVisibility = std::move(widgetsVisibility)]() {
-        for (auto [w, vis] : widgetsVisibility) {
-            w->setVisible(vis);
-        }
-    });
-}
-
 void MainWin::splitterMoved()
 {
     QList<int> list = d->splitter->sizes();

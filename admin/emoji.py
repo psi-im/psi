@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # emoji.py - Emojis registry generator
-# Copyright (C) 2020  Sergey Ilinykh
+# Copyright (C) 2020-2024  Sergei Ilinykh
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public

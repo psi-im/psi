@@ -4197,7 +4197,7 @@ void PsiAccount::actionDefault(const Jid &j)
     else if (groupchats().contains(j.full())) {
         TabbableWidget *tab = findDialog<TabbableWidget *>(Jid(j.full()));
         if (tab) {
-            d->psi->qt67visibilityHack([tab]() { tab->ensureTabbedCorrectly(); });
+            tab->ensureTabbedCorrectly();
             tab->bringToFront();
         }
     } else {
@@ -5638,7 +5638,7 @@ void PsiAccount::processChats(const Jid &j) { processChatsHelper(j, true); }
 ChatDlg *PsiAccount::openChat(const Jid &j, ActivationType activationType)
 {
     ChatDlg *chat = ensureChatDlg(j);
-    d->psi->qt67visibilityHack([chat]() { chat->ensureTabbedCorrectly(); });
+    chat->ensureTabbedCorrectly();
 
     processChats(j);
     if (activationType == UserAction) {
@@ -5818,7 +5818,7 @@ void PsiAccount::client_groupChatJoined(const Jid &j)
 
     if (r != MUCJoinDlg::MucAutoJoin
         || !PsiOptions::instance()->getOption("options.ui.muc.hide-on-autojoin").toBool()) {
-        d->psi->qt67visibilityHack([chat]() { chat->ensureTabbedCorrectly(); });
+        chat->ensureTabbedCorrectly();
         chat->bringToFront();
     }
 

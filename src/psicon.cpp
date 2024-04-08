@@ -877,8 +877,6 @@ QStringList PsiCon::xmppFatures() const
     return features;
 }
 
-void PsiCon::qt67visibilityHack(const std::function<void()> &callback) { d->mainwin->qt67visibilityHack(callback); }
-
 TabManager *PsiCon::tabManager() const { return d->tabManager; }
 
 NetworkAccessManager *PsiCon::networkAccessManager() const { return d->nam; }
