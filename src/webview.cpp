@@ -53,6 +53,7 @@ WebView::WebView(QWidget *parent) :
     setAcceptDrops(false);
 
 #ifdef WEBENGINE
+    setAttribute(Qt::WA_NativeWindow);
     settings()->setAttribute(QWebEngineSettings::PluginsEnabled, false);
     settings()->setAttribute(QWebEngineSettings::LocalStorageEnabled, false);
     // TODO cache cotrol

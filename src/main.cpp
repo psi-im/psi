@@ -507,6 +507,20 @@ PSI_EXPORT_FUNC int main(int argc, char *argv[])
 #ifdef Q_OS_WIN
     QCoreApplication::addLibraryPath(appPath);
 #endif
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0) && QT_VERSION <= QT_VERSION_CHECK(6, 8, 0) && defined(WEBENGINE)
+    // let's hope https://bugreports.qt.io/browse/QTBUG-119221 is going to be fixed before 6.8.0
+    // Qt::WA_NativeWindow is already added to webview.cpp
+    qputenv("QT_WIDGETS_RHI", "1");
+#ifdef Q_OS_WIN
+    qputenv("QT_WIDGETS_RHI_BACKEND", "d3d11");
+#elif defined(Q_OS_MAC)
+    qputenv("QT_WIDGETS_RHI_BACKEND", "metal");
+#else
+    qputenv("QT_WIDGETS_RHI_BACKEND", "opengl");
+#endif
+#endif
+
     PsiApplication app(argc, argv);
     QApplication::setApplicationName(ApplicationInfo::name());
     QApplication::setApplicationVersion(ApplicationInfo::version());
