@@ -50,6 +50,7 @@ public:
 
 private slots:
     void popupClosed(uint id, uint reason);
+    void actionInvoked(uint id, const QString &actionKey);
     void asyncCallFinished(QDBusPendingCallWatcher *);
     void readyToDie();
 

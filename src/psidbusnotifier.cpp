@@ -108,6 +108,9 @@ PsiDBusNotifier::PsiDBusNotifier(QObject *parent) :
     QDBusConnection::sessionBus().connect("org.freedesktop.Notifications", "/org/freedesktop/Notifications",
                                           "org.freedesktop.Notifications", "NotificationClosed", this,
                                           SLOT(popupClosed(uint, uint)));
+    QDBusConnection::sessionBus().connect("org.freedesktop.Notifications", "/org/freedesktop/Notifications",
+                                          "org.freedesktop.Notifications", "ActionInvoked", this,
+                                          SLOT(actionInvoked(uint, QString)));
     lifeTimer_->setSingleShot(true);
     connect(lifeTimer_, SIGNAL(timeout()), SLOT(readyToDie()));
 }
@@ -291,15 +294,14 @@ void PsiDBusNotifier::popup(PsiAccount *account, PopupManager::PopupType type, c
     args << QVariant("");
     args << QString(title);
     args << QString(text);
-    args << QStringList();
+    args << (QStringList() << "open" << tr("Open"));
     args << hints;
     args << lifeTime;
     m.setArguments(args);
     QDBusPendingCall         call    = QDBusConnection::sessionBus().asyncCall(m);
     QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(call, this);
 
-    connect(watcher, SIGNAL(finished(QDBusPendingCallWatcher *)), this,
-            SLOT(asyncCallFinished(QDBusPendingCallWatcher *)));
+    connect(watcher, &QDBusPendingCallWatcher::finished, this, &PsiDBusNotifier::asyncCallFinished);
 
     lifeTime = (lifeTime < 0) ? lifeTime : qMax(minLifeTime, lifeTime);
     if (lifeTime >= 0)
@@ -374,16 +376,19 @@ void PsiDBusNotifier::asyncCallFinished(QDBusPendingCallWatcher *watcher)
 void PsiDBusNotifier::popupClosed(uint id, uint reason)
 {
     if (id_ != 0 && id_ == id) {
-        if (reason == 2) {
-            if (account_) {
-                if (event_) {
-                    account_->psi()->processEvent(event_, UserAction);
-                } else if (jid_.isValid()) {
-                    account_->actionDefault(Jid(jid_.bare()));
-                }
-            }
-        }
         readyToDie();
+    }
+}
+
+void PsiDBusNotifier::actionInvoked(uint id, const QString &actionKey)
+{
+    if (id_ != 0 && id_ == id && account_) {
+        Q_UNUSED(actionKey);
+        if (event_) {
+            account_->psi()->processEvent(event_, UserAction);
+        } else if (jid_.isValid()) {
+            account_->actionDefault(Jid(jid_.bare()));
+        }
     }
 }
 
@@ -392,10 +397,6 @@ void PsiDBusNotifier::readyToDie()
     if (lifeTimer_->isActive()) {
         lifeTimer_->stop();
     }
-
-    QDBusConnection::sessionBus().disconnect("org.freedesktop.Notifications", "/org/freedesktop/Notifications",
-                                             "org.freedesktop.Notifications", "NotificationClosed", this,
-                                             SLOT(popupClosed(uint, uint)));
     deleteLater();
 }
 
