@@ -56,6 +56,9 @@ protected slots:
     void commandExecuted();
 
 private:
+    void updateFromCommand(const AHCommand &r);
+
+private:
     Ui::AHCFormDlg _ui;
     PsiCon        *_psi;
     QPushButton   *_pb_prev;

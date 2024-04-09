@@ -42,20 +42,13 @@ AHCFormDlg::AHCFormDlg(PsiCon *psi, const AHCommand &r, const Jid &receiver, XMP
     node_      = r.node();
     sessionId_ = r.sessionId();
 
-    _ui.lb_note->setText(r.note().text);
-    _ui.lb_note->setVisible(r.hasNote());
-
-    _ui.lb_instructions->setText(r.data().instructions());
-    _ui.lb_instructions->setVisible(!r.data().instructions().isEmpty());
-
     // XData form
     _xdata = new XDataWidget(_psi, this, _client, receiver);
-    _xdata->setForm(r.data());
     //_xdata->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     _xdata->layout()->setSizeConstraint(QLayout::SetFixedSize);
     _ui.scrollArea->setWidget(_xdata);
-    if (!r.hasData() && (r.hasNote() || !r.data().instructions().isEmpty()))
-        _ui.scrollArea->setVisible(false);
+
+    updateFromCommand(r);
 
     _ui.busy->setVisible(!final);
 
@@ -129,6 +122,16 @@ AHCFormDlg::AHCFormDlg(PsiCon *psi, const AHCommand &r, const Jid &receiver, XMP
     setParent(nullptr);
 }
 
+void AHCFormDlg::updateFromCommand(const AHCommand &r)
+{
+    _ui.lb_note->setText(r.note().text);
+    _ui.lb_note->setVisible(r.hasNote());
+
+    _xdata->setForm(r.data());
+    if (!r.hasData() && (r.hasNote() || !r.data().instructions().isEmpty()))
+        _ui.scrollArea->setVisible(false);
+}
+
 void AHCFormDlg::doPrev()
 {
     _ui.busy->start();
@@ -178,7 +181,7 @@ void AHCFormDlg::commandExecuted()
     _ui.busy->stop();
     AHCExecuteTask *t = dynamic_cast<AHCExecuteTask *>(sender());
     if (t && t->hasCommandPayload()) {
-        _xdata->setForm(t->resultCommand().data());
+        updateFromCommand(t->resultCommand());
     } else {
         close();
     }
