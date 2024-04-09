@@ -858,7 +858,10 @@ void MainWin::buildToolbars()
 
     PsiOptions *options  = PsiOptions::instance();
     bool        allInOne = options->getOption("options.ui.tabs.grouping").toString().contains('A');
-    const auto &bases    = options->getChildOptionNames("options.ui.contactlist.toolbars", true, true);
+    if (allInOne) {
+        d->viewToolBar->initialize();
+    }
+    const auto &bases = options->getChildOptionNames("options.ui.contactlist.toolbars", true, true);
     for (const QString &base : bases) {
         QString toolbarName = options->getOption(base + ".name").toString();
         if (toolbarName == "Chat" || toolbarName == "Groupchat") {
@@ -867,12 +870,12 @@ void MainWin::buildToolbars()
 
         PsiToolBar *tb;
         if (allInOne) {
-            if (d && d->viewToolBar && (d->viewToolBar->base() == base))
+            if (d->viewToolBar && (d->viewToolBar->base() == base))
                 continue;
             tb = new PsiToolBar(base, this, d->psi->actionList());
             d->vb_roster->addWidget(tb);
         } else {
-            if (d && d->viewToolBar) {
+            if (d->viewToolBar) {
                 delete d->viewToolBar;
                 d->viewToolBar = nullptr;
             }
@@ -899,7 +902,7 @@ void MainWin::buildToolbars()
         tb->setUpdatesEnabled(true);
     }
 
-    if (allInOne && d && d->viewToolBar) {
+    if (allInOne && d->viewToolBar) {
         d->viewToolBar->updateVisibility();
         d->viewToolBar->setUpdatesEnabled(true);
     }

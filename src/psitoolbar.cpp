@@ -82,6 +82,11 @@ QString PsiToolBar::base() const { return base_; }
 
 void PsiToolBar::initialize()
 {
+    blockSignals(true);
+    for (auto act : actions()) {
+        removeAction(act);
+    }
+
     PsiOptions *o = PsiOptions::instance();
     if (o->getOption(base_ + ".key").toString().isEmpty()) {
         o->setOption(base_ + ".key", ToolbarPrefs().id);
@@ -124,6 +129,7 @@ void PsiToolBar::initialize()
     }
 
     updateVisibility();
+    blockSignals(false);
 }
 
 void PsiToolBar::updateVisibility()
