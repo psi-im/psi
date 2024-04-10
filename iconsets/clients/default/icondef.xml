@@ -27,6 +27,11 @@
     </icon>
 
     <icon>
+        <x xmlns='name'>clients/cheogram</x>
+        <object mime='image/png'>cheogram.png</object>
+    </icon>
+
+    <icon>
         <x xmlns='name'>clients/conv6ations</x>
         <object mime='image/png'>conv6ations.png</object>
     </icon>
@@ -79,6 +84,11 @@
     <icon>
         <x xmlns='name'>clients/miranda-ng</x>
         <object mime='image/png'>miranda-ng.png</object>
+    </icon>
+
+    <icon>
+        <x xmlns='name'>clients/monocles</x>
+        <object mime='image/png'>monocles.png</object>
     </icon>
 
     <icon>

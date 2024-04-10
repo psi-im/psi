@@ -9,6 +9,7 @@ bot akarixb,aspro,blacksmith,capsula,dictbot,fatal,fin.jabber.ru,freq,gluxi,hist
 candy candy
 centerim centerim
 chatsecure chatsecure,gibberbot
+cheogram cheogram
 coccinella coccinella
 conv6ations conv6ations
 conversations conversations
@@ -47,6 +48,7 @@ meegim meegim
 miranda miranda
 miranda-ng miranda#ng
 monal monal
+monocles monocles
 movim movim,moxl.movim
 mozilla mozilla,thunderbird,instantbird
 omnipresence omnipresence
