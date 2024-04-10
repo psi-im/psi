@@ -11,7 +11,7 @@ on:
 jobs:
   build:
     name: Build and install project
-    runs-on: ubuntu-20240407
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
