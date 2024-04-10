@@ -291,12 +291,14 @@ void IconSelect::noIcons()
 
 void IconSelect::setIconset(const Iconset &iconset)
 {
-    is = iconset;
+    is    = iconset;
+    shown = false; // we need to recompute geometry
     updateGrid();
 }
 
 void IconSelect::updateGrid()
 {
+    blockSignals(true);
     // delete all children
     if (grid) {
         delete grid;
@@ -325,6 +327,9 @@ void IconSelect::updateGrid()
         for (auto const &emoji : EmojiRegistry::instance()) {
             if (titleFilter.isEmpty() || emoji.name.contains(titleFilter)) {
                 emojis.append(&emoji);
+                if (!titleFilter.isEmpty() && emojis.size() == 40) {
+                    break;
+                }
             }
         }
 
@@ -414,7 +419,11 @@ void IconSelect::updateGrid()
             }
         }
     }
-    emit updatedGeometry();
+    blockSignals(false);
+    if (!shown) {
+        shown = true;
+        emit updatedGeometry();
+    }
 }
 
 const Iconset &IconSelect::iconset() const { return is; }
