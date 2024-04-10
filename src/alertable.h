@@ -26,20 +26,19 @@ class AlertIcon;
 class PsiIcon;
 class QIcon;
 
-class Alertable : public QObject
-{
+class Alertable : public QObject {
     Q_OBJECT
 public:
-    Alertable(QObject* parent = 0);
+    Alertable(QObject *parent = nullptr);
     ~Alertable();
 
-    bool alerting() const;
+    bool  alerting() const;
     QIcon currentAlertFrame() const;
 
-    void setAlert(const PsiIcon* icon);
+    void setAlert(const PsiIcon *icon);
 
 private:
-    AlertIcon* alert_;
+    AlertIcon *alert_;
 };
 
-#endif
+#endif // ALERTABLE_H

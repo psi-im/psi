@@ -21,26 +21,15 @@
 #pragma once
 
 #include "contactlistgroupmenu.h"
-
-#include "contactlistitem.h"
-#include "xmpp_tasks.h"
 #include "contactlistitem.h"
 #include "contactlistmodel.h"
-#include "groupchatdlg.h"
-#include "iconaction.h"
-#include "iconaction.h"
-#include "iconset.h"
-#include "psiaccount.h"
-#include "psicontact.h"
+#include "iris/xmpp_tasks.h"
 #include "psicontactlist.h"
-#include "psioptions.h"
-#include "shortcutmanager.h"
 #include "statusdlg.h"
 
 #include <QObject>
 
-class ContactListGroupMenu::Private : public QObject
-{
+class ContactListGroupMenu::Private : public QObject {
     Q_OBJECT
 
 public:
@@ -57,25 +46,25 @@ public slots:
     void authRequest();
     void authRemove();
     void customStatus();
-    void setStatusFromDialog(const QList<XMPP::Jid> &j, const Status &s);
+    void setStatusFromDialog(const QList<XMPP::Jid> &j, const XMPP::Status &s);
     void removeGroupWithoutContacts();
     void sendMessage();
     void actHide(bool hide);
 
 public:
     ContactListGroupMenu *q;
-    ContactListItem *group;
-    QAction *renameAction_;
-    QAction *removeGroupAndContactsAction_;
-    QAction *sendMessageAction_;
-    QAction *removeGroupWithoutContactsAction_;
-    QMenu *authMenu_;
-    QAction *actionAuth_;
-    QAction *actionAuthRequest_;
-    QAction *actionAuthRemove_;
-    QAction *actionCustomStatus_;
-    QAction *actionMucHide_;
-    QAction *actionMucShow_;
-    QAction *actionMucLeave_;
-    QAction *actionHide_;
+    ContactListItem      *group;
+    QAction              *renameAction_;
+    QAction              *removeGroupAndContactsAction_;
+    QAction              *sendMessageAction_;
+    QAction              *removeGroupWithoutContactsAction_;
+    QMenu                *authMenu_;
+    QAction              *actionAuth_;
+    QAction              *actionAuthRequest_;
+    QAction              *actionAuthRemove_;
+    QAction              *actionCustomStatus_;
+    QAction              *actionMucHide_;
+    QAction              *actionMucShow_;
+    QAction              *actionMucLeave_;
+    QAction              *actionHide_;
 };

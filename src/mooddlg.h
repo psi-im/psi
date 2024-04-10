@@ -20,25 +20,24 @@
 #ifndef MOODDLG_H
 #define MOODDLG_H
 
-#include <QDialog>
-
 #include "ui_mood.h"
+
+#include <QDialog>
 
 class PsiAccount;
 
-class MoodDlg : public QDialog
-{
+class MoodDlg : public QDialog {
     Q_OBJECT
 
 public:
-    MoodDlg(QList<PsiAccount*>);
+    MoodDlg(QList<PsiAccount *>);
 
 protected slots:
     void setMood();
 
 private:
-    Ui::Mood ui_;
-    QList<PsiAccount*> pa_;
+    Ui::Mood            ui_;
+    QList<PsiAccount *> pa_;
 };
 
-#endif
+#endif // MOODDLG_H

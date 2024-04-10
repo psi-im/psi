@@ -1,6 +1,6 @@
 /*
  * userlist.cpp - high-level roster
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,29 +17,30 @@
  *
  */
 
-#include <QApplication>
-#include <QPixmap>
-#include <QList>
-#include <QtCrypto>
-#include <QTextDocument> // for TextUtil::escape()
-#include <QBuffer>
-#include <QUrl>
-
 #include "userlist.h"
+
 #include "avatars.h"
-#include "textutil.h"
 #include "common.h"
-#include "mucmanager.h"
-#include "psioptions.h"
 #include "jidutil.h"
+#include "mucmanager.h"
+#include "pgputil.h"
 #include "psiiconset.h"
-#include "common.h"
+#include "psioptions.h"
+#include "textutil.h"
+
+#include <QApplication>
+#include <QBuffer>
+#include <QFontInfo>
+#include <QList>
+#include <QPixmap>
+// for TextUtil::escape()
+#include <QUrl>
 
 using namespace XMPP;
 
 static QString dot_truncate(const QString &in, int clip)
 {
-    if((int)in.length() <= clip)
+    if (in.length() <= clip)
         return in;
     QString s = in;
     s.truncate(clip);
@@ -50,15 +51,7 @@ static QString dot_truncate(const QString &in, int clip)
 //----------------------------------------------------------------------------
 // UserResource
 //----------------------------------------------------------------------------
-UserResource::UserResource()
-    : v_pgpVerifyStatus(0)
-{
-}
-
-UserResource::UserResource(const Resource &r)
-{
-    setResource(r);
-}
+UserResource::UserResource(const Resource &r) { setResource(r); }
 
 void UserResource::setResource(const Resource &r)
 {
@@ -66,37 +59,24 @@ void UserResource::setResource(const Resource &r)
     setStatus(r.status());
 }
 
-const QString & UserResource::versionString() const
-{
-    return v_ver;
-}
+const QString &UserResource::versionString() const { return v_ver; }
 
-const QString & UserResource::clientName() const
-{
-    return v_clientName;
-}
+const QString &UserResource::clientName() const { return v_clientName; }
 
-const QString & UserResource::clientVersion() const
-{
-    return v_clientVersion;
-}
+const QString &UserResource::clientVersion() const { return v_clientVersion; }
 
-const QString & UserResource::clientOS() const
-{
-    return v_clientOS;
-}
+const QString &UserResource::clientOS() const { return v_clientOS; }
 
-void UserResource::setClient(const QString &name, const QString& version, const QString& os)
+void UserResource::setClient(const QString &name, const QString &version, const QString &os)
 {
-    v_clientName = name;
+    v_clientName    = name;
     v_clientVersion = version;
-    v_clientOS = os;
+    v_clientOS      = os;
     if (!v_clientName.isEmpty()) {
         v_ver = v_clientName + " " + v_clientVersion;
-        if ( !v_clientOS.isEmpty() )
+        if (!v_clientOS.isEmpty())
             v_ver += " / " + v_clientOS;
-    }
-    else {
+    } else {
         v_ver = "";
     }
 }
@@ -104,20 +84,14 @@ void UserResource::setClient(const QString &name, const QString& version, const 
 /**
  * \brief Timezone offset in minutes (if available).
  */
-Maybe<int> UserResource::timezoneOffset() const
-{
-    return v_tzo;
-}
+Maybe<int> UserResource::timezoneOffset() const { return v_tzo; }
 
 /**
  * \brief Timezone offset as string (or empty string if no data).
  *
  * String is formatted as "UTC[+|-]h[:mm]".
  */
-const QString& UserResource::timezoneOffsetString() const
-{
-    return v_tzoString;
-}
+const QString &UserResource::timezoneOffsetString() const { return v_tzoString; }
 
 /**
  * \brief Set timezone offset (in minutes).
@@ -127,66 +101,35 @@ void UserResource::setTimezone(Maybe<int> off)
     v_tzo = off;
 
     if (off.hasValue()) {
-        QTime t = QTime(0, 0).addSecs(abs(off.value())*60);
+        QTime   t = QTime(0, 0).addSecs(abs(off.value()) * 60);
         QString u = QString("UTC") + (off.value() < 0 ? "-" : "+");
         u += QString::number(t.hour());
         if (t.minute())
             u += QString(":%1").arg(t.minute());
         v_tzoString = u;
-    }
-    else
+    } else
         v_tzoString = "";
 }
 
-const QString & UserResource::publicKeyID() const
-{
-    return v_keyID;
-}
+const QString &UserResource::publicKeyID() const { return v_keyID; }
 
-int UserResource::pgpVerifyStatus() const
-{
-    return v_pgpVerifyStatus;
-}
+int UserResource::pgpVerifyStatus() const { return v_pgpVerifyStatus; }
 
-QDateTime UserResource::sigTimestamp() const
-{
-    return sigts;
-}
+QDateTime UserResource::sigTimestamp() const { return sigts; }
 
-void UserResource::setPublicKeyID(const QString &s)
-{
-    v_keyID = s;
-}
+void UserResource::setPublicKeyID(const QString &s) { v_keyID = s; }
 
-void UserResource::setPGPVerifyStatus(int x)
-{
-    v_pgpVerifyStatus = x;
-}
+void UserResource::setPgpVerifyStatus(int x) { v_pgpVerifyStatus = x; }
 
-void UserResource::setSigTimestamp(const QDateTime &ts)
-{
-    sigts = ts;
-}
+void UserResource::setSigTimestamp(const QDateTime &ts) { sigts = ts; }
 
-void UserResource::setTune(const QString& t)
-{
-    v_tune = t;
-}
+void UserResource::setTune(const QString &t) { v_tune = t; }
 
-const QString& UserResource::tune() const
-{
-    return v_tune;
-}
+const QString &UserResource::tune() const { return v_tune; }
 
-void UserResource::setGeoLocation(const GeoLocation& geoLocation)
-{
-    v_geoLocation = geoLocation;
-}
+void UserResource::setGeoLocation(const GeoLocation &geoLocation) { v_geoLocation = geoLocation; }
 
-const GeoLocation& UserResource::geoLocation() const
-{
-    return v_geoLocation;
-}
+const GeoLocation &UserResource::geoLocation() const { return v_geoLocation; }
 
 /*void UserResource::setPhysicalLocation(const PhysicalLocation& physicalLocation)
 {
@@ -198,49 +141,25 @@ const PhysicalLocation& UserResource::physicalLocation() const
     return v_physicalLocation;
 }*/
 
+bool operator<(const UserResource &r1, const UserResource &r2) { return r1.priority() > r2.priority(); }
 
-bool operator<(const UserResource &r1, const UserResource &r2)
-{
-    return r1.priority() > r2.priority();
-}
+bool operator<=(const UserResource &r1, const UserResource &r2) { return r1.priority() >= r2.priority(); }
 
-bool operator<=(const UserResource &r1, const UserResource &r2)
-{
-    return r1.priority() >= r2.priority();
-}
+bool operator==(const UserResource &r1, const UserResource &r2) { return r1.priority() == r2.priority(); }
 
-bool operator==(const UserResource &r1, const UserResource &r2)
-{
-    return r1.priority() == r2.priority();
-}
+bool operator>(const UserResource &r1, const UserResource &r2) { return r1.priority() < r2.priority(); }
 
-bool operator>(const UserResource &r1, const UserResource &r2)
-{
-    return r1.priority() < r2.priority();
-}
-
-bool operator>=(const UserResource &r1, const UserResource &r2)
-{
-    return r1.priority() <= r2.priority();
-}
-
+bool operator>=(const UserResource &r1, const UserResource &r2) { return r1.priority() <= r2.priority(); }
 
 //----------------------------------------------------------------------------
 // UserResourceList
 //----------------------------------------------------------------------------
-UserResourceList::UserResourceList()
-:QList<UserResource>()
-{
-}
+UserResourceList::UserResourceList() : QList<UserResource>() { }
 
-UserResourceList::~UserResourceList()
+UserResourceList::Iterator UserResourceList::find(const QString &_find)
 {
-}
-
-UserResourceList::Iterator UserResourceList::find(const QString & _find)
-{
-    for(UserResourceList::Iterator it = begin(); it != end(); ++it) {
-        if((*it).name() == _find)
+    for (UserResourceList::Iterator it = begin(); it != end(); ++it) {
+        if ((*it).name() == _find)
             return it;
     }
 
@@ -251,18 +170,18 @@ UserResourceList::Iterator UserResourceList::priority()
 {
     UserResourceList::Iterator highest = end();
 
-    for(UserResourceList::Iterator it = begin(); it != end(); ++it) {
-        if(highest == end() || (*it).priority() > (*highest).priority())
+    for (UserResourceList::Iterator it = begin(); it != end(); ++it) {
+        if (highest == end() || (*it).priority() > (*highest).priority())
             highest = it;
     }
 
     return highest;
 }
 
-UserResourceList::ConstIterator UserResourceList::find(const QString & _find) const
+UserResourceList::ConstIterator UserResourceList::find(const QString &_find) const
 {
-    for(UserResourceList::ConstIterator it = begin(); it != end(); ++it) {
-        if((*it).name() == _find)
+    for (UserResourceList::ConstIterator it = begin(); it != end(); ++it) {
+        if ((*it).name() == _find)
             return it;
     }
 
@@ -273,66 +192,49 @@ UserResourceList::ConstIterator UserResourceList::priority() const
 {
     UserResourceList::ConstIterator highest = end();
 
-    for(UserResourceList::ConstIterator it = begin(); it != end(); ++it) {
-        if(highest == end() || (*it).priority() > (*highest).priority())
+    for (UserResourceList::ConstIterator it = begin(); it != end(); ++it) {
+        if (highest == end() || (*it).priority() > (*highest).priority())
             highest = it;
     }
 
     return highest;
 }
 
-void UserResourceList::sort()
-{
-    qSort(*this);
-}
-
+void UserResourceList::sort() { std::sort(begin(), end()); }
 
 //----------------------------------------------------------------------------
 // UserListItem
 //----------------------------------------------------------------------------
 UserListItem::UserListItem(bool self)
 {
-    v_inList = false;
-    v_self = self;
-    v_private = false;
-    v_isTransport = false;
-    v_isConference = false;
+    v_inList        = false;
+    v_self          = self;
+    v_private       = false;
+    v_isTransport   = false;
+    v_isConference  = false;
     v_avatarFactory = nullptr;
-    lastmsgtype = -1;
-    v_pending = 0;
-    v_hPending = 0;
+    lastmsgtype     = -1;
+    v_pending       = 0;
+    v_hPending      = 0;
 }
 
-UserListItem::~UserListItem()
-{
-}
+bool UserListItem::inList() const { return v_inList; }
 
-bool UserListItem::inList() const
-{
-    return v_inList;
-}
+void UserListItem::setMood(const Mood &mood) { v_mood = mood; }
 
-void UserListItem::setMood(const Mood& mood)
-{
-    v_mood = mood;
-}
-
-const Mood& UserListItem::mood() const
-{
-    return v_mood;
-}
+const Mood &UserListItem::mood() const { return v_mood; }
 
 QStringList UserListItem::clients() const
 {
     QStringList res;
 
-    //if(isMuc()) return res; //temporary commented out until necessary patches will be fixed
-    if(!userResourceList().isEmpty()) {
+    // if(isMuc()) return res; //temporary commented out until necessary patches will be fixed
+    if (!userResourceList().isEmpty()) {
         UserResourceList srl = userResourceList();
         srl.sort();
 
-        for(UserResourceList::ConstIterator rit = srl.begin(); rit != srl.end(); ++rit) {
-            QString client(findClient(*rit));
+        for (const auto &rit : srl) {
+            QString client(findClient(rit));
             if (!client.isEmpty()) {
                 res += client;
             }
@@ -353,40 +255,22 @@ QString UserListItem::findClient(const UserResource &ur) const
     }
     if (!name.isEmpty()) {
         res = PsiIconset::instance()->caps2client(name);
-        //qDebug("CLIENT: %s RES: %s", qPrintable(name), qPrintable(res));
+        // qDebug("CLIENT: %s RES: %s", qPrintable(name), qPrintable(res));
     }
     return res;
 }
 
-void UserListItem::setActivity(const Activity& activity)
-{
-    v_activity = activity;
-}
+void UserListItem::setActivity(const Activity &activity) { v_activity = activity; }
 
-const Activity& UserListItem::activity() const
-{
-    return v_activity;
-}
+const Activity &UserListItem::activity() const { return v_activity; }
 
-void UserListItem::setTune(const QString& t)
-{
-    v_tune = t;
-}
+void UserListItem::setTune(const QString &t) { v_tune = t; }
 
-const QString& UserListItem::tune() const
-{
-    return v_tune;
-}
+const QString &UserListItem::tune() const { return v_tune; }
 
-void UserListItem::setGeoLocation(const GeoLocation& geoLocation)
-{
-    v_geoLocation = geoLocation;
-}
+void UserListItem::setGeoLocation(const GeoLocation &geoLocation) { v_geoLocation = geoLocation; }
 
-const GeoLocation& UserListItem::geoLocation() const
-{
-    return v_geoLocation;
-}
+const GeoLocation &UserListItem::geoLocation() const { return v_geoLocation; }
 
 /*void UserListItem::setPhysicalLocation(const PhysicalLocation& physicalLocation)
 {
@@ -398,40 +282,23 @@ const PhysicalLocation& UserListItem::physicalLocation() const
     return v_physicalLocation;
 }*/
 
-void UserListItem::setAvatarFactory(AvatarFactory* av)
-{
-    v_avatarFactory = av;
-}
+void UserListItem::setAvatarFactory(AvatarFactory *av) { v_avatarFactory = av; }
 
 void UserListItem::setJid(const Jid &j)
 {
     LiveRosterItem::setJid(j);
-
-    int n = jid().full().indexOf('@');
-    if(n == -1)
-        v_isTransport = true;
-    else
-        v_isTransport = false;
+    v_isTransport = !jid().full().contains(QLatin1Char('@'));
 }
 
-bool UserListItem::isTransport() const
-{
-    return v_isTransport;
-}
+bool UserListItem::isTransport() const { return v_isTransport; }
 
-bool UserListItem::isConference() const
-{
-    return v_isConference;
-}
+bool UserListItem::isConference() const { return v_isConference; }
 
-void UserListItem::setConference(bool b)
-{
-    v_isConference = b;
-}
+void UserListItem::setConference(bool b) { v_isConference = b; }
 
 void UserListItem::setPending(int p, int h)
 {
-    v_pending = p;
+    v_pending  = p;
     v_hPending = h;
 }
 
@@ -445,94 +312,96 @@ QString UserListItem::pending() const
     return str;
 }
 
-bool UserListItem::isAvailable() const
+QString UserListItem::tooltipPgpData(const UserResource &ur, const QString &imgTag) const
 {
-    return !v_url.isEmpty();
+    QString out;
+    int     v = ur.pgpVerifyStatus();
+    if (v == PGPUtil::SecureMessageSignature::Valid || v == PGPUtil::SecureMessageSignature::InvalidSignature
+        || v == PGPUtil::SecureMessageSignature::InvalidKey || v == PGPUtil::SecureMessageSignature::NoKey) {
+        if (v == PGPUtil::SecureMessageSignature::Valid) {
+            QString d = QLocale().toString(ur.sigTimestamp(), QLocale::ShortFormat);
+            out += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag, "psi/gpg-yes") + QObject::tr("Signed") + ": "
+                + "<font color=\"#2A993B\">" + d + "</font>";
+        } else if (v == PGPUtil::SecureMessageSignature::NoKey) {
+            QString d = QLocale().toString(ur.sigTimestamp(), QLocale::ShortFormat);
+            out += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag, "psi/keyUnknown") + QObject::tr("Signed")
+                + ": " + d;
+        } else if (v == PGPUtil::SecureMessageSignature::InvalidSignature
+                   || v == PGPUtil::SecureMessageSignature::InvalidKey) {
+            out += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag, "psi/keyBad") + "<font color=\"#810000\">"
+                + QObject::tr("Bad signature") + "</font>";
+        }
+
+        if (v_keyID != ur.publicKeyID()) {
+            out += QString(" [%1]").arg(ur.publicKeyID().right(8));
+        }
+        out += "</div>";
+    }
+    return out;
 }
 
-bool UserListItem::isHidden() const
-{
-    return groups().contains(qApp->translate("PsiContact", "Hidden"));
-}
+bool UserListItem::isAvailable() const { return !v_url.isEmpty(); }
+
+bool UserListItem::isHidden() const { return groups().contains(qApp->translate("PsiContact", "Hidden")); }
 
 bool UserListItem::isAway() const
 {
     int status;
-    if(!isAvailable())
+    if (!isAvailable())
         status = STATUS_OFFLINE;
     else
         status = makeSTATUS((*userResourceList().priority()).status());
 
-    if(status == STATUS_AWAY || status == STATUS_XA || status == STATUS_DND)
+    if (status == STATUS_AWAY || status == STATUS_XA || status == STATUS_DND)
         return true;
     else
         return false;
 }
 
-QDateTime UserListItem::lastAvailable() const
-{
-    return v_t;
-}
+QDateTime UserListItem::lastAvailable() const { return v_t; }
 
-int UserListItem::lastMessageType() const
-{
-    return lastmsgtype;
-}
+int UserListItem::lastMessageType() const { return lastmsgtype; }
 
 void UserListItem::setLastMessageType(const int mtype)
 {
-//    printf("setting message type to %i\n", mtype);
+    //    printf("setting message type to %i\n", mtype);
     lastmsgtype = mtype;
 }
 
-const QString & UserListItem::presenceError() const
+const QString &UserListItem::presenceError() const { return v_perr; }
+
+bool UserListItem::isSelf() const { return v_self; }
+
+void UserListItem::setInList(bool b) { v_inList = b; }
+
+void UserListItem::setLastAvailable(const QDateTime &t) { v_t = t; }
+
+void UserListItem::setPresenceError(const QString &e) { v_perr = e; }
+
+UserResourceList &UserListItem::userResourceList() { return v_url; }
+
+UserResourceList::Iterator UserListItem::priority() { return v_url.priority(); }
+
+const UserResourceList &UserListItem::userResourceList() const { return v_url; }
+
+void UserListItem::removeAllResources() { return v_url.clear(); }
+
+void UserListItem::removeResource(const QString &resource)
 {
-    return v_perr;
+    // v_url.removeAll(*rit);//we cant use it since operator== is used for other purpose
+    QMutableListIterator<UserResource> i(v_url);
+    while (i.hasNext()) {
+        if (i.next().name() == resource) {
+            i.remove();
+        }
+    }
 }
 
-bool UserListItem::isSelf() const
-{
-    return v_self;
-}
-
-void UserListItem::setInList(bool b)
-{
-    v_inList = b;
-}
-
-void UserListItem::setLastAvailable(const QDateTime &t)
-{
-    v_t = t;
-}
-
-void UserListItem::setPresenceError(const QString &e)
-{
-    v_perr = e;
-}
-
-UserResourceList & UserListItem::userResourceList()
-{
-    return v_url;
-}
-
-UserResourceList::Iterator UserListItem::priority()
-{
-    return v_url.priority();
-}
-
-const UserResourceList & UserListItem::userResourceList() const
-{
-    return v_url;
-}
-
-UserResourceList::ConstIterator UserListItem::priority() const
-{
-    return v_url.priority();
-}
+UserResourceList::ConstIterator UserListItem::priority() const { return v_url.priority(); }
 
 QString UserListItem::makeTip(bool trim, bool doLinkify) const
 {
-    return "<qt>" + makeBareTip(trim,doLinkify) + "</qt>";
+    return "<qt>" + makeBareTip(trim, doLinkify) + "</qt>";
 }
 
 QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
@@ -541,17 +410,19 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
     // you most probably want to wrap it with TextUtil::escape()
 
     QString str;
-    int s = PsiIconset::instance()->system().iconSize();
-    str +=QString("<style type='text/css'> \
+    int     iconSize = PsiIconset::instance()->system().iconSize();
+    str += QString("<style type='text/css'> \
         .layer1 { white-space:pre; margin-left:%1px;} \
         .layer2 { white-space:normal; margin-left:%1px;} \
-    </style>").arg(s+2);
+    </style>")
+               .arg(iconSize + 2);
 
-    QString imgTag = "icon name"; // or 'img src' if appropriate QMimeSourceFactory is installed. but mblsha noticed that QMimeSourceFactory unloads sometimes
+    QString imgTag = "icon name"; // or 'img src' if appropriate QMimeSourceFactory is installed. but mblsha noticed
+                                  // that QMimeSourceFactory unloads sometimes
     bool useAvatar = false;
-    bool mucItem = false;
+    bool mucItem   = false;
 
-    if(!userResourceList().isEmpty()) {
+    if (!userResourceList().isEmpty()) {
         mucItem = userResourceList()[0].status().hasMUCItem();
     }
 
@@ -564,32 +435,39 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
     }
 
     str += "<table cellspacing=\"3\"><tr>";
-    str += "<td>";
 
     if (useAvatar) {
-        str += QString("<icon name=\"avatars/%1\">").arg(mucItem? jid().full() : jid().bare());
+        str += QString("<td width=\"%1\">").arg(QFontInfo(QApplication::font()).pixelSize() * 5);
+        str += QString(R"(<icon name="avatars/%1" size="-5">)").arg(mucItem ? jid().full() : jid().bare());
         str += "</td><td width=\"10\"></td>";
-        str += "<td>";
     }
+    str += "<td>";
 
     QString nick = JIDUtil::nickOrJid(name(), jid().full());
     if (!mucItem) {
-        if(jid().full() != nick)
-            str += QString("<div style='white-space:pre'>%1 &lt;%2&gt;</div>").arg(TextUtil::escape(nick)).arg(TextUtil::escape(JIDUtil::toString(jid(),true)));
+        if (jid().full() != nick)
+            str += QString("<div style='white-space:pre'>%1 &lt;%2&gt;</div>")
+                       .arg(TextUtil::escape(nick), TextUtil::escape(JIDUtil::toString(jid(), true)));
         else
             str += QString("<div style='white-space:pre'>%1</div>").arg(TextUtil::escape(nick));
     }
 
     // subscription
-    if(!v_self && !v_isConference && subscription().type() != Subscription::Both && !mucItem)
-        str += QString("<div style='white-space:pre'>") + QObject::tr("Subscription") + ": " + subscription().toString() + "</div>";
+    if (!v_self && !v_isConference && subscription().type() != Subscription::Both && !mucItem)
+        str += QString("<div style='white-space:pre'>") + QObject::tr("Subscription") + ": " + subscription().toString()
+            + "</div>";
 
-    if(!v_keyID.isEmpty() && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.pgp").toBool())
-        str += QString("<div style='white-space:pre'><%1=\"%2\"> ").arg(imgTag).arg("psi/pgp") + QObject::tr("OpenPGP") + ": " + v_keyID.right(8) + "</div>";
+    // OpenPGP
+    const bool showPgpData = PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.pgp").toBool();
+    if (!v_keyID.isEmpty() && showPgpData) {
+        str += QString("<div style='white-space:pre'><%1=\"%2\"> ").arg(imgTag, "psi/pgp") + QObject::tr("OpenPGP")
+            + ": " + v_keyID.right(8) + "</div>";
+    }
 
     // User Mood
     if (!mood().isNull()) {
-        str += QString("<div style='white-space:pre'><%1=\"mood/%2\"> ").arg(imgTag).arg(mood().typeValue()) + QObject::tr("Mood") + ": " + mood().typeText();
+        str += QString("<div style='white-space:pre'><%1=\"mood/%2\"> ").arg(imgTag, mood().typeValue())
+            + QObject::tr("Mood") + ": " + mood().typeText();
         if (!mood().text().isEmpty())
             str += QString(" (") + TextUtil::escape(mood().text()) + QString(")");
         str += "</div>";
@@ -597,8 +475,8 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 
     // User Activity
     if (!activity().isNull()) {
-        str += QString("<div style='white-space:pre'><%1=\"%2\"> ").arg(imgTag).arg(activityIconName(activity())) + 
-            QObject::tr("Activity") + ": " + activity().typeText();
+        str += QString("<div style='white-space:pre'><%1=\"%2\"> ").arg(imgTag, activityIconName(activity()))
+            + QObject::tr("Activity") + ": " + activity().typeText();
         if (activity().specificType() != Activity::UnknownSpecific) {
             str += QString(" - ") + activity().specificTypeText();
         }
@@ -609,171 +487,179 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 
     // User Tune
     if (!tune().isEmpty())
-        str += QString("<div style='white-space:pre'><%1=\"%2\"> ").arg(imgTag).arg("pep/tune") + QObject::tr("Listening to") + ": " + TextUtil::escape(tune()) + "</div>";
+        str += QString("<div style='white-space:pre'><%1=\"%2\"> ").arg(imgTag, "pep/tune")
+            + QObject::tr("Listening to") + ": " + TextUtil::escape(tune()) + "</div>";
 
     // User Physical Location
-    //if (!physicalLocation().isNull())
-    //    str += QString("<div style='white-space:pre'>") + QObject::tr("Location") + ": " + TextUtil::escape(physicalLocation().toString()) + "</div>";
+    // if (!physicalLocation().isNull())
+    //    str += QString("<div style='white-space:pre'>") + QObject::tr("Location") + ": " +
+    //    TextUtil::escape(physicalLocation().toString()) + "</div>";
 
     // User Geolocation
-    if (!geoLocation().isNull() && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.geolocation").toBool())
-        str += QString("<div style='white-space:pre'><table cellspacing=\"0\"><tr><td><%1=\"%2\"> </td><td><div>%3</div></td></tr></table></div>") \
-        .arg(imgTag).arg("pep/geolocation").arg(TextUtil::escape(geoLocation().toString().trimmed()));
+    if (!geoLocation().isNull()
+        && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.geolocation").toBool())
+        str += QString("<div style='white-space:pre'><table cellspacing=\"0\"><tr><td><%1=\"%2\"> "
+                       "</td><td><div>%3</div></td></tr></table></div>")
+                   .arg(imgTag, "pep/geolocation", TextUtil::escape(geoLocation().toString().trimmed()));
 
     // resources
-    if(!userResourceList().isEmpty()) {
+    if (!userResourceList().isEmpty()) {
         UserResourceList srl = userResourceList();
         srl.sort();
 
-        for(UserResourceList::ConstIterator rit = srl.begin(); rit != srl.end(); ++rit) {
-            const UserResource &r = *rit;
-
+        for (const auto &r : srl) {
             QString name;
-            if(!r.name().isEmpty())
+            if (!r.name().isEmpty())
                 name = r.name();
             else
                 name = QObject::tr("[blank]");
 
             QString secstr;
-            if(isSecure(r.name()) && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.pgp").toBool())
+            if (isSecure(r.name()) && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.pgp").toBool())
                 secstr += QString(" <%1=\"psi/cryptoYes\">").arg(imgTag);
             QString hr;
             if (!mucItem)
                 hr = "<hr/>";
             str += hr + "<div style='white-space:pre'>";
 
-            PsiIcon *statusIcon = PsiIconset::instance()->statusPtr(jid(), makeSTATUS(r.status()));
+            auto     fontPixelSize = QFontInfo(qApp->font()).pixelSize();
+            PsiIcon *statusIcon    = PsiIconset::instance()->statusPtr(jid(), makeSTATUS(r.status()));
             if (statusIcon) {
                 QByteArray imageArray;
-                QBuffer buff(&imageArray);
-                statusIcon->image().save(&buff, "png");
+                QBuffer    buff(&imageArray);
+
+                auto image = statusIcon->image(QSize(fontPixelSize, fontPixelSize));
+                if (image.height() > fontPixelSize * 1.3)
+                    image = image.scaled(fontPixelSize, fontPixelSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                image.save(&buff, "png");
                 QString imgBase64(QUrl::toPercentEncoding(imageArray.toBase64()));
-                str += QString("<img src=\"data:image/png;base64,%1\" alt=\"img\"/>").arg(imgBase64);
+                str += QString(R"(<img src="data:image/png;base64,%1" alt="img"/>)").arg(imgBase64);
             }
 
             str += QString(" <b>%1</b> ").arg(TextUtil::escape(name)) + QString("(%1)").arg(r.priority());
             if (!r.status().mucItem().jid().isEmpty())
-                str += QString(" &lt;%1&gt;").arg(TextUtil::escape(JIDUtil::toString(r.status().mucItem().jid(),true)));
+                str += QString(" &lt;%1&gt;")
+                           .arg(TextUtil::escape(JIDUtil::toString(r.status().mucItem().jid(), true)));
             str += secstr + "</div>";
 
-            if(!r.publicKeyID().isEmpty() && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.pgp").toBool()) {
-                int v = r.pgpVerifyStatus();
-                if(v == QCA::SecureMessageSignature::Valid || v == QCA::SecureMessageSignature::InvalidSignature || v == QCA::SecureMessageSignature::InvalidKey || v == QCA::SecureMessageSignature::NoKey) {
-                    if(v == QCA::SecureMessageSignature::Valid) {
-                        QString d = r.sigTimestamp().toString(Qt::DefaultLocaleShortDate);
-                        str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/gpg-yes") + QObject::tr("Signed") + ": " + "<font color=\"#2A993B\">" + d + "</font>";
-                    }
-                    else if(v == QCA::SecureMessageSignature::NoKey) {
-                        QString d = r.sigTimestamp().toString(Qt::DefaultLocaleShortDate);
-                        str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/keyUnknown") + QObject::tr("Signed") + ": " + d;
-                    }
-                    else if(v == QCA::SecureMessageSignature::InvalidSignature || v == QCA::SecureMessageSignature::InvalidKey) {
-                        str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/keyBad") + "<font color=\"#810000\">" + QObject::tr("Bad signature") + "</font>";
-                    }
-
-                    if(v_keyID != r.publicKeyID())
-                        str += QString(" [%1]").arg(r.publicKeyID().right(8));
-                    str += "</div>";
-                }
+            // OpenPGP
+            if (!r.publicKeyID().isEmpty() && showPgpData) {
+                const QString &&pgpData = tooltipPgpData(r, imgTag);
+                if (!pgpData.isEmpty())
+                    str += pgpData;
             }
 
             // client
-            if(!r.versionString().isEmpty() && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.client-version").toBool()) {
+            if (!r.versionString().isEmpty()
+                && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.client-version").toBool()) {
                 QString ver = r.versionString();
-                if(trim)
+                if (trim)
                     ver = dot_truncate(ver, 80);
                 ver = TextUtil::escape(ver);
                 QString client(findClient(r));
                 if (!client.isEmpty()) {
-                    client = QString("<%1=\"%2\">").arg(imgTag).arg("clients/" + client);
+                    client = QString("<%1=\"%2\">").arg(imgTag, "clients/" + client);
                 }
-                str += QString("<div class='layer1'>%1 ").arg(client) + QObject::tr("Using") + QString(": %3").arg(ver) + "</div>";
+                str += QString("<div class='layer1'>%1 ").arg(client) + QObject::tr("Using") + QString(": %3").arg(ver)
+                    + "</div>";
             }
-
 
             // Entity Time
             if (r.timezoneOffset().hasValue()) {
-                QDateTime dt = QDateTime::currentDateTime().toUTC().addSecs(r.timezoneOffset().value()*60);
-                str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/time") + QObject::tr("Time") + QString(": %1 (%2)").arg(dt.toString(Qt::DefaultLocaleShortDate)).arg(r.timezoneOffsetString()) + "</div>";
+                QDateTime dt = QDateTime::currentDateTimeUtc().addSecs(r.timezoneOffset().value() * 60);
+                str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag, "psi/time") + QObject::tr("Time")
+                    + QString(": %1 (%2)").arg(QLocale().toString(dt, QLocale::ShortFormat), r.timezoneOffsetString())
+                    + "</div>";
             }
 
             // MUC
-            if(!v_isConference && r.status().hasMUCItem()) {
+            if (!v_isConference && r.status().hasMUCItem()) {
                 MUCItem::Affiliation a = r.status().mucItem().affiliation();
-                QString aff;
-                if(a == MUCItem::Owner)
+                QString              aff;
+                if (a == MUCItem::Owner)
                     aff = "affiliation/owner";
-                else if(a == MUCItem::Admin)
+                else if (a == MUCItem::Admin)
                     aff = "affiliation/admin";
-                else if(a == MUCItem::Member)
+                else if (a == MUCItem::Member)
                     aff = "affiliation/member";
-                else if(a == MUCItem::Outcast)
+                else if (a == MUCItem::Outcast)
                     aff = "affiliation/outcast";
                 else
                     aff = "affiliation/noaffiliation";
 
-                if(r.status().mucItem().role() != MUCItem::NoRole) {
-                    str += QString("<div class='layer2'><table cellspacing=\"0\"><tr><td><%1=\"%2\"> </td><td>").arg(imgTag).arg(aff);
-                    str += QString("<div style='white-space:pre'>") + QObject::tr("Role: %1").arg(MUCManager::roleToString(r.status().mucItem().role())) + QString("</div>");
-                    str += QString("<div style='white-space:pre'>") + QObject::tr("Affiliation: %1").arg(MUCManager::affiliationToString(r.status().mucItem().affiliation())) + QString("</td></tr></table></div>");
+                if (r.status().mucItem().role() != MUCItem::NoRole) {
+                    str += QString(R"(<div class='layer2'><table cellspacing="0"><tr><td><%1="%2"> </td><td>)")
+                               .arg(imgTag, aff);
+                    str += QString("<div style='white-space:pre'>")
+                        + QObject::tr("Role: %1").arg(MUCManager::roleToString(r.status().mucItem().role()))
+                        + QString("</div>");
+                    str += QString("<div style='white-space:pre'>")
+                        + QObject::tr("Affiliation: %1")
+                              .arg(MUCManager::affiliationToString(r.status().mucItem().affiliation()))
+                        + QString("</div></td></tr></table></div>");
                 }
             }
 
             // last status
-            if(r.status().timeStamp().isValid() && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.last-status").toBool()) {
-                QString d = r.status().timeStamp().toString(Qt::DefaultLocaleShortDate);
-                str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/info") + QObject::tr("Last Status") + ": " + d + "</div>";
+            if (r.status().timeStamp().isValid()
+                && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.last-status").toBool()) {
+                QString d = QLocale().toString(r.status().timeStamp(), QLocale::ShortFormat);
+                str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag, "psi/info") + QObject::tr("Last Status")
+                    + ": " + d + "</div>";
             }
 
             // status message
             QString s = r.status().status();
-            if(!s.isEmpty()) {
+            if (!s.isEmpty()) {
                 QString head = QObject::tr("Status Message");
-                if(trim)
+                if (trim)
                     s = TextUtil::plain2rich(clipStatus(s, 200, 12));
                 else
                     s = TextUtil::plain2rich(s);
-                if ( doLinkify )
+                if (doLinkify)
                     s = TextUtil::linkify(s);
-                if( PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool() && !doLinkify )
+                if (PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool() && !doLinkify)
                     s = TextUtil::emoticonify(s);
-                if( !doLinkify && PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool() )
+                if (!doLinkify && PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool())
                     s = TextUtil::legacyFormat(s);
 
-                str += QString("<div class='layer2'><table cellspacing=\"0\"><tr><td><%1=\"%2\"> </td><td><div><u>%3</u>: %4</div></td></tr></table></div>") \
-                .arg(imgTag).arg("psi/action_templates_edit").arg(head).arg(s);
+                str += QString("<div class='layer2'><table cellspacing=\"0\"><tr><td><%1=\"%2\"> "
+                               "</td><td><div><u>%3</u>: %4</div></td></tr></table></div>")
+                           .arg(imgTag, "psi/action_templates_edit", head, s);
             }
         }
-    }
-    else {
+    } else {
         // last available
-        if(!lastAvailable().isNull()) {
-            QString d = lastAvailable().toString(Qt::DefaultLocaleShortDate);
-            str += QString("<div style='white-space:pre'><%1=\"%2\"> ").arg(imgTag).arg("psi/info") + QObject::tr("Last Available") + ": " + d + "</div>";
+        if (!lastAvailable().isNull()) {
+            QString d = QLocale().toString(lastAvailable(), QLocale::ShortFormat);
+            str += QString("<div style='white-space:pre'><%1=\"%2\"> ").arg(imgTag, "psi/info")
+                + QObject::tr("Last Available") + ": " + d + "</div>";
         }
 
         // presence error
-        if(!v_perr.isEmpty()) {
+        if (!v_perr.isEmpty()) {
             QStringList err = v_perr.split('\n');
-            str += QString("<div style='white-space:pre'>") + QObject::tr("Presence Error") + QString(": %1").arg(TextUtil::escape(err[0])) + "</div>";
+            str += QString("<div style='white-space:pre'>") + QObject::tr("Presence Error")
+                + QString(": %1").arg(TextUtil::escape(err[0])) + "</div>";
             err.pop_front();
-            foreach (QString line, err)
+            for (const QString &line : std::as_const(err))
                 str += "<div>" + TextUtil::escape(line) + "</div>";
         }
 
         // status message
         QString s = lastUnavailableStatus().status();
-        if(!s.isEmpty()) {
+        if (!s.isEmpty()) {
             QString head = QObject::tr("Last Status Message");
-            if(trim)
+            if (trim)
                 s = TextUtil::plain2rich(clipStatus(s, 200, 12));
             else {
                 s = TextUtil::plain2rich(clipStatus(s, 200, 12));
-                if ( doLinkify )
+                if (doLinkify)
                     s = TextUtil::linkify(s);
             }
-            str += QString("<div class='layer2'><table cellspacing=\"0\"><tr><td><%1=\"%2\"> </td><td><div><u>%3</u>: %4</div></td></tr></table></div>") \
-            .arg(imgTag).arg("psi/action_templates_edit").arg(head).arg(s);
+            str += QString("<div class='layer2'><table cellspacing=\"0\"><tr><td><%1=\"%2\"> </td><td><div><u>%3</u>: "
+                           "%4</div></td></tr></table></div>")
+                       .arg(imgTag, "psi/action_templates_edit", head, s);
         }
     }
 
@@ -783,76 +669,41 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
     return str;
 }
 
-QString UserListItem::makeDesc() const
-{
-    return makeTip(false);
-}
+QString UserListItem::makeDesc() const { return makeTip(false); }
 
-bool UserListItem::isPrivate() const
-{
-    return v_private;
-}
+bool UserListItem::isPrivate() const { return v_private; }
 
-void UserListItem::setPrivate(bool b)
-{
-    v_private = b;
-}
+void UserListItem::setPrivate(bool b) { v_private = b; }
 
-bool UserListItem::isSecure() const
-{
-    return !secList.isEmpty();
-}
+bool UserListItem::isSecure() const { return !secList.isEmpty(); }
 
-bool UserListItem::isSecure(const QString &rname) const
-{
-    for(QStringList::ConstIterator it = secList.begin(); it != secList.end(); ++it) {
-        if(*it == rname)
-            return true;
-    }
-    return false;
-}
+bool UserListItem::isSecure(const QString &rname) const { return secList.contains(rname); }
 
 void UserListItem::setSecure(const QString &rname, bool b)
 {
-    foreach(const QString s, secList) {
-        if(s == rname) {
-            if(!b)
+    for (const QString &s : std::as_const(secList)) {
+        if (s == rname) {
+            if (!b)
                 secList.removeAll(s);
             return;
         }
     }
-    if(b)
+    if (b)
         secList.append(rname);
 }
 
-const QString & UserListItem::publicKeyID() const
-{
-    return v_keyID;
-}
+const QString &UserListItem::publicKeyID() const { return v_keyID; }
 
-void UserListItem::setPublicKeyID(const QString &k)
-{
-    v_keyID = k;
-}
-
+void UserListItem::setPublicKeyID(const QString &k) { v_keyID = k; }
 
 //----------------------------------------------------------------------------
 // UserList
 //----------------------------------------------------------------------------
-UserList::UserList()
-{
-}
-
-UserList::~UserList()
-{
-}
-
 UserListItem *UserList::find(const XMPP::Jid &j)
 {
-    foreach(UserListItem* i, *this) {
-        if(i->jid().compare(j))
+    for (UserListItem *i : std::as_const(*this)) {
+        if (i->jid().compare(j))
             return i;
     }
     return nullptr;
 }
-

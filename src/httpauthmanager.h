@@ -23,13 +23,13 @@
 #include <QObject>
 
 class HttpAuthListener;
-namespace XMPP {
-    class Task;
-}
 class PsiHttpAuthRequest;
 
-class HttpAuthManager : public QObject
-{
+namespace XMPP {
+class Task;
+}
+
+class HttpAuthManager : public QObject {
     Q_OBJECT
 
 public:
@@ -47,4 +47,4 @@ private:
     HttpAuthListener *listener_;
 };
 
-#endif
+#endif // HTTPAUTHMANAGER_H

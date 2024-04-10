@@ -1,7 +1,7 @@
 /*
  * filetunecontroller.cpp
  * Copyright (C) 2006  Remko Troncon
- * 2011 Vitaly Tonkacheyev, rion
+ * Copyright (C) 2011  Vitaly Tonkacheyev, Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,13 +18,14 @@
  *
  */
 
-#include <QFile>
-#include <QDir>
-#include <QFileInfo>
-#include <QTextStream>
+#include "filetunecontroller.h"
 
 #include "qca.h"
-#include "filetunecontroller.h"
+
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
+#include <QTextStream>
 
 /**
  * \class FileTuneController
@@ -38,44 +39,34 @@
  * time.
  */
 
-
 /**
  * \brief Constructs the controller.
  * \param songFile the filename from which the currently playing song is
  *        read.
  */
-FileTuneController::FileTuneController(const QString& songFile)
-    : PollingTuneController()
-    , _songFile(songFile)
-    , _waitForCreated(true)
-    , _watchFunctional(false)
+FileTuneController::FileTuneController(const QString &songFile) :
+    PollingTuneController(), _songFile(songFile), _waitForCreated(true), _watchFunctional(false)
 {
     // old mechanism of work with tune file
     startPoll();
     // new mechanism of work with tune file
-    // let's consider the directory _songFile resides exists. other cases should be solved by reconfiguration is restarting.
-    // in cases when directory does not exist polling will work as expected. we will not try turn on the watching.
-    // on the other hand if watch is recognized as functional polling will be disabled, so the user
-    // should understand if he suddenly removed the directory with watched file tunes won't work at all.
+    // let's consider the directory _songFile resides exists. other cases should be solved by reconfiguration is
+    // restarting. in cases when directory does not exist polling will work as expected. we will not try turn on the
+    // watching. on the other hand if watch is recognized as functional polling will be disabled, so the user should
+    // understand if he suddenly removed the directory with watched file tunes won't work at all.
     _tuneFileWatcher = new QCA::FileWatch(_songFile, this); // qca watch works on non-existing files ;)
-    connect(_tuneFileWatcher, SIGNAL(changed()), this, SLOT(onFileChanged()));
+    connect(_tuneFileWatcher, &QCA::FileWatch::changed, this, [this]() {
+        _watchFunctional = true;
+        check();
+    });
 }
 
-Tune FileTuneController::currentTune() const
-{
-    return _currentTune;
-}
-
-void FileTuneController::onFileChanged() // this will never happen if _songFile's directory doesn't exist
-{
-    _watchFunctional = true;
-    check();
-}
+Tune FileTuneController::currentTune() const { return _currentTune; }
 
 void FileTuneController::check()
 {
     Tune existedTune = _currentTune;
-    _currentTune = Tune(); // just a reset
+    _currentTune     = Tune(); // just a reset
     if (QFile::exists(_songFile)) {
         if (_waitForCreated && _watchFunctional) {
             if (isPolling()) {
@@ -85,8 +76,12 @@ void FileTuneController::check()
         }
         QFile file(_songFile);
         if (file.open(QIODevice::ReadOnly)) {
-            QTextStream stream( &file );
+            QTextStream stream(&file);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
             stream.setCodec("UTF-8");
+#else
+            stream.setEncoding(QStringConverter::Utf8);
+#endif
             stream.setAutoDetectUnicode(true);
             _currentTune.setName(stream.readLine());
             _currentTune.setArtist(stream.readLine());
@@ -94,8 +89,7 @@ void FileTuneController::check()
             _currentTune.setTrack(stream.readLine());
             _currentTune.setTime(stream.readLine().toUInt());
         }
-    }
-    else if (!_waitForCreated && existedTune.isNull()) {
+    } else if (!_waitForCreated && existedTune.isNull()) {
         _waitForCreated = true;
         return; // we will return to this function when file created. just exit for now.
     }

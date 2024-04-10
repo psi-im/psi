@@ -20,25 +20,24 @@
 #ifndef GLOBALEVENTQUEUE_H
 #define GLOBALEVENTQUEUE_H
 
-#include <QObject>
-
 #include "psievent.h"
 
-class GlobalEventQueue : public QObject
-{
+#include <QObject>
+
+class GlobalEventQueue : public QObject {
     Q_OBJECT
 
 public:
-    static GlobalEventQueue* instance();
+    static GlobalEventQueue *instance();
 
     int count() const;
 
-    const QList<int>& ids() const;
-    PsiEvent::Ptr peek(int id) const;
+    const QList<int> &ids() const;
+    PsiEvent::Ptr     peek(int id) const;
 
 protected:
-    void enqueue(EventItem* item);
-    void dequeue(EventItem* item);
+    void enqueue(EventItem *item);
+    void dequeue(EventItem *item);
 
 signals:
     void queueChanged();
@@ -46,10 +45,10 @@ signals:
 private:
     GlobalEventQueue();
 
-    static GlobalEventQueue* instance_;
-    QList<int> ids_;
-    QList<EventItem*> items_;
+    static GlobalEventQueue *instance_;
+    QList<int>               ids_;
+    QList<EventItem *>       items_;
     friend class EventQueue;
 };
 
-#endif
+#endif // GLOBALEVENTQUEUE_H

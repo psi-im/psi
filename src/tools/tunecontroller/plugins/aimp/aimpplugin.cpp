@@ -1,6 +1,6 @@
 /*
  * aimpplugin.cpp
- * Copyright (C) 2012 Vitaly Tonkacheyev
+ * Copyright (C) 2012  Vitaly Tonkacheyev
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,15 +21,14 @@
 #define QT_STATICPLUGIN
 #endif
 
-#include <QtCore>
-#include <QObject>
-#include <QString>
-
 #include "aimptunecontroller.h"
 #include "tunecontrollerplugin.h"
 
-class AIMPPlugin : public QObject, public TuneControllerPlugin
-{
+#include <QObject>
+#include <QString>
+#include <QtCore>
+
+class AIMPPlugin : public QObject, public TuneControllerPlugin {
 
     Q_OBJECT
 
@@ -37,18 +36,12 @@ class AIMPPlugin : public QObject, public TuneControllerPlugin
     Q_PLUGIN_METADATA(IID "org.psi-im.Psi.TuneControllerPlugin")
 
 public:
-    virtual QString name();
-    virtual TuneController* createController();
+    virtual QString         name();
+    virtual TuneController *createController();
 };
 
-QString AIMPPlugin::name()
-{
-    return "AIMP3";
-}
+QString AIMPPlugin::name() { return "AIMP3"; }
 
-TuneController* AIMPPlugin::createController()
-{
-    return new AimpTuneController();
-}
+TuneController *AIMPPlugin::createController() { return new AimpTuneController(); }
 
 #include "aimpplugin.moc"

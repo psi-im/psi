@@ -17,33 +17,32 @@
  *
  */
 
+#include "showtextdlg.h"
+
+#include <QFile>
+#include <QHBoxLayout>
 #include <QLayout>
 #include <QPushButton>
-#include <QFile>
 #include <QTextEdit>
 #include <QTextStream>
 #include <QVBoxLayout>
-#include <QHBoxLayout>
-
-#include "showtextdlg.h"
 
 // FIXME: combine to common init function
-ShowTextDlg::ShowTextDlg(const QString &fname, bool rich, QWidget *parent)
-    : QDialog(parent)
+ShowTextDlg::ShowTextDlg(const QString &fname, bool rich, QWidget *parent) : QDialog(parent)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     QString text;
 
     QFile f(fname);
-    if(f.open(QIODevice::ReadOnly)) {
+    if (f.open(QIODevice::ReadOnly)) {
         QTextStream t(&f);
-        while(!t.atEnd())
+        while (!t.atEnd())
             text += t.readLine() + '\n';
         f.close();
     }
 
     QVBoxLayout *vb1 = new QVBoxLayout(this);
-    vb1->setMargin(8);
+    vb1->setContentsMargins(8, 8, 8, 8);
     QTextEdit *te = new QTextEdit(this);
     te->setReadOnly(true);
     te->setAcceptRichText(rich);
@@ -65,15 +64,14 @@ ShowTextDlg::ShowTextDlg(const QString &fname, bool rich, QWidget *parent)
     resize(560, 384);
 }
 
-ShowTextDlg::ShowTextDlg(const QString &text, bool nonfile, bool rich, QWidget *parent)
-    : QDialog(parent)
+ShowTextDlg::ShowTextDlg(const QString &text, bool nonfile, bool rich, QWidget *parent) : QDialog(parent)
 {
     Q_UNUSED(nonfile);
 
     setAttribute(Qt::WA_DeleteOnClose);
 
     QVBoxLayout *vb1 = new QVBoxLayout(this);
-    vb1->setMargin(8);
+    vb1->setContentsMargins(8, 8, 8, 8);
     QTextEdit *te = new QTextEdit(this);
     te->setReadOnly(true);
     te->setAcceptRichText(rich);

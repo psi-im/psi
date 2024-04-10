@@ -17,31 +17,32 @@
  *
  */
 
-#ifndef CHATVIEW_H
-#define CHATVIEW_H
+#ifndef CHATVIEW_WEBKIT_H
+#define CHATVIEW_WEBKIT_H
 
-#include <QWidget>
+#include "chatviewcommon.h"
+#include "webview.h"
+
 #include <QDateTime>
 #include <QFrame>
 #include <QPointer>
-#include "webview.h"
-#include "chatviewcommon.h"
+#include <QWidget>
 
 class ChatEdit;
 class ChatView;
+class ChatViewPrivate;
+class ChatViewTheme;
 class MessageView;
 class PsiAccount;
-class ChatViewTheme;
-class ChatViewPrivate;
+
 namespace XMPP {
-    class Jid;
+class Jid;
 }
 
-class ChatView : public QFrame, public ChatViewCommon
-{
+class ChatView : public QFrame, public ChatViewCommon {
     Q_OBJECT
 public:
-    ChatView(QWidget* parent);
+    ChatView(QWidget *parent);
     ~ChatView();
 
     void markReceived(QString id);
@@ -49,40 +50,39 @@ public:
     // reimplemented
     QSize sizeHint() const;
 
-    void setDialog(QWidget* dialog);
+    void setDialog(QWidget *dialog);
     void setSessionData(bool isMuc, bool isMucPrivate, const XMPP::Jid &jid, const QString name);
     void setAccount(PsiAccount *acc);
 
-    void contextMenuEvent(QContextMenuEvent* event);
+    void contextMenuEvent(QContextMenuEvent *event);
     bool handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdit);
 
     void sendJsObject(const QVariantMap &);
     void dispatchMessage(const MessageView &m);
     void sendJsCode(const QString &js);
 
-    void clear();
-    void doTrackBar();
-    bool internalFind(QString str, bool startFromBeginning = false);
-    WebView * textWidget();
-    QWidget * realTextWidget();
-    QObject * jsBridge();
+    void     clear();
+    void     doTrackBar();
+    WebView *textWidget();
+    QWidget *realTextWidget();
+    QObject *jsBridge();
 
 public slots:
     void scrollUp();
     void scrollDown();
-    void updateAvatar(const XMPP::Jid &jid, UserType utype);
+    void updateAvatar(const XMPP::Jid &jid, ChatViewCommon::UserType utype);
 
     void setEncryptionEnabled(bool enabled);
 
 protected:
     // override the tab/esc behavior
     bool focusNextPrevChild(bool next);
-    void changeEvent(QEvent * event);
-    //void keyPressEvent(QKeyEvent *);
+    void changeEvent(QEvent *event);
+    // void keyPressEvent(QKeyEvent *);
 
 protected slots:
     void psiOptionChanged(const QString &);
-    //void autoCopy();
+    // void autoCopy();
 
 public slots:
     void init();
@@ -92,8 +92,9 @@ private slots:
     void sessionInited();
 
 signals:
-    void showNM(const QString&);
+    void showNM(const QString &);
     void nickInsertClick(const QString &nick);
+    void quote(const QString &text);
 
 private:
     friend class ChatViewPrivate;
@@ -101,4 +102,4 @@ private:
     QScopedPointer<ChatViewPrivate> d;
 };
 
-#endif
+#endif // CHATVIEW_WEBKIT_H

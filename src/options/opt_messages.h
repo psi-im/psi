@@ -1,13 +1,12 @@
-#ifndef OPT_TABMESSAGES_H
-#define OPT_TABMESSAGES_H
+#ifndef OPT_MESSAGES_H
+#define OPT_MESSAGES_H
 
 #include "optionstab.h"
 
-class OptionsTabMessages: public MetaOptionsTab
-{
+class OptionsTabMessages : public MetaOptionsTab {
     Q_OBJECT
 public:
     OptionsTabMessages(QObject *parent);
 };
 
-#endif // OPT_TABTABMESSAGES_H
+#endif // OPT_MESSAGES_H

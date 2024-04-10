@@ -22,46 +22,42 @@
 
 #include <QWidget>
 
-class QTextEdit;
-class QLayout;
 class ChatEdit;
+class QLayout;
+class QTextEdit;
 
-class ChatEditProxy : public QWidget
-{
+class ChatEditProxy : public QWidget {
     Q_OBJECT
 public:
-    ChatEditProxy(QWidget* parent);
+    ChatEditProxy(QWidget *parent);
 
     /**
      * Returns encapsulated QTextEdit widget.
      */
-    ChatEdit* chatEdit() const { return textEdit_; }
+    ChatEdit *chatEdit() const { return textEdit_; }
+    void      optionsChanged(const QString &option);
 
 signals:
     /**
      * Emitted when internal QTextEdit gets replaced with
      * another one.
      */
-    void textEditCreated(QTextEdit* textEdit);
+    void textEditCreated();
 
 protected:
     /**
      * Returns true if line edit mode is enabled.
      */
     bool lineEditEnabled() const { return lineEditEnabled_; }
-    void setLineEditEnabled(bool enable);
-
-public slots:
-    void optionsChanged();
 
 private:
-    virtual ChatEdit* createTextEdit();
-    void moveData(QTextEdit* newTextEdit, QTextEdit* oldTextEdit) const;
-    void updateLayout();
+    virtual ChatEdit *createTextEdit();
+    void              moveData(QTextEdit *newTextEdit, QTextEdit *oldTextEdit) const;
+    void              updateLayout();
 
-    bool lineEditEnabled_;
-    ChatEdit* textEdit_;
-    QLayout* layout_;
+    bool      lineEditEnabled_;
+    ChatEdit *textEdit_;
+    QLayout  *layout_;
 };
 
-#endif
+#endif // CHATEDITPROXY_H

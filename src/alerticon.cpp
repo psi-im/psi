@@ -18,24 +18,26 @@
  */
 
 #include "alerticon.h"
+
 #include "psioptions.h"
-#include <QTimer>
+
 #include <QApplication>
+#include <QIcon>
 #include <QPixmap>
+#include <QTimer>
 
 //----------------------------------------------------------------------------
 // MetaAlertIcon
 //----------------------------------------------------------------------------
 
-class MetaAlertIcon : public QObject
-{
+class MetaAlertIcon : public QObject {
     Q_OBJECT
 public:
     MetaAlertIcon();
     ~MetaAlertIcon();
 
     Impix blank16() const;
-    int framenumber() const;
+    int   framenumber() const;
 
 signals:
     void updateFrame(int frame);
@@ -49,16 +51,13 @@ private slots:
 
 private:
     QTimer *animTimer;
-    int frame;
-    Impix _blank16;
+    int     frame;
+    Impix   _blank16;
 };
 
 static MetaAlertIcon *metaAlertIcon = nullptr;
 
-MetaAlertIcon::MetaAlertIcon()
-    : QObject(qApp)
-    , animTimer(new QTimer(this))
-    , frame(0)
+MetaAlertIcon::MetaAlertIcon() : QObject(qApp), animTimer(new QTimer(this)), frame(0)
 {
     connect(animTimer, SIGNAL(timeout()), SLOT(animTimeout()));
     animTimer->start(120 * 5);
@@ -69,14 +68,9 @@ MetaAlertIcon::MetaAlertIcon()
     _blank16.setImage(blankImg);
 }
 
-MetaAlertIcon::~MetaAlertIcon()
-{
-}
+MetaAlertIcon::~MetaAlertIcon() { }
 
-Impix MetaAlertIcon::blank16() const
-{
-    return _blank16;
-}
+Impix MetaAlertIcon::blank16() const { return _blank16; }
 
 void MetaAlertIcon::animTimeout()
 {
@@ -84,22 +78,15 @@ void MetaAlertIcon::animTimeout()
     emit updateFrame(frame);
 }
 
-void MetaAlertIcon::updateAlertStyle()
-{
-    emit update();
-}
+void MetaAlertIcon::updateAlertStyle() { emit update(); }
 
-int MetaAlertIcon::framenumber() const
-{
-    return frame;
-}
+int MetaAlertIcon::framenumber() const { return frame; }
 
 //----------------------------------------------------------------------------
 // AlertIcon::Private
 //----------------------------------------------------------------------------
 
-class AlertIcon::Private : public QObject
-{
+class AlertIcon::Private : public QObject {
     Q_OBJECT
 public:
     Private(AlertIcon *_ai);
@@ -118,27 +105,24 @@ public slots:
     void pixmapChanged();
 
 public:
-    AlertIcon *ai;
-    PsiIcon *real;
-    bool isActivated;
-    Impix impix;
+    AlertIcon     *ai;
+    PsiIcon       *real;
+    bool           isActivated;
+    Impix          impix;
     static QString alertStyle;
 };
 
 QString AlertIcon::Private::alertStyle = QString();
 
-AlertIcon::Private::Private(AlertIcon *_ai)
-    : ai(_ai)
-    , real(nullptr)
-    , isActivated(false)
+AlertIcon::Private::Private(AlertIcon *_ai) : ai(_ai), real(nullptr), isActivated(false)
 {
-    if ( !metaAlertIcon )
+    if (!metaAlertIcon)
         metaAlertIcon = new MetaAlertIcon();
 }
 
 AlertIcon::Private::~Private()
 {
-    if ( isActivated )
+    if (isActivated)
         stop();
 
     delete real;
@@ -156,7 +140,7 @@ void AlertIcon::Private::init()
     connect(metaAlertIcon, SIGNAL(update()), SLOT(update()));
     connect(real, SIGNAL(iconModified()), SLOT(pixmapChanged()));
 
-    if ( alertStyle == "animate" && real->isAnimated() )
+    if (alertStyle == "animate" && real->isAnimated())
         impix = real->frameImpix();
     else
         impix = real->impix();
@@ -170,17 +154,15 @@ void AlertIcon::Private::update()
 
 void AlertIcon::Private::activated(bool playSound)
 {
-    if ( alertStyle == "animate" && real->isAnimated() ) {
-        if ( !isActivated ) {
+    if (alertStyle == "animate" && real->isAnimated()) {
+        if (!isActivated) {
             connect(real, SIGNAL(pixmapChanged()), SLOT(pixmapChanged()));
             real->activated(playSound);
             isActivated = true;
         }
-    }
-    else if ( alertStyle == "blink" || (alertStyle == "animate" && !real->isAnimated()) ) {
+    } else if (alertStyle == "blink" || (alertStyle == "animate" && !real->isAnimated())) {
         connect(metaAlertIcon, SIGNAL(updateFrame(int)), SLOT(updateFrame(int)));
-    }
-    else {
+    } else {
         impix = real->impix();
         emit ai->pixmapChanged();
     }
@@ -190,7 +172,7 @@ void AlertIcon::Private::stop()
 {
     disconnect(metaAlertIcon, SIGNAL(updateFrame(int)), this, SLOT(updateFrame(int)));
 
-    if ( isActivated ) {
+    if (isActivated) {
         disconnect(real, SIGNAL(pixmapChanged()), this, SLOT(pixmapChanged()));
         real->stop();
         isActivated = false;
@@ -199,10 +181,10 @@ void AlertIcon::Private::stop()
 
 void AlertIcon::Private::updateFrame(int frame)
 {
-    if ( !metaAlertIcon ) // just in case
+    if (!metaAlertIcon) // just in case
         metaAlertIcon = new MetaAlertIcon();
 
-    if ( frame )
+    if (frame)
         impix = metaAlertIcon->blank16();
     else
         impix = real->impix();
@@ -221,10 +203,9 @@ void AlertIcon::Private::pixmapChanged()
 // AlertIcon
 //----------------------------------------------------------------------------
 
-AlertIcon::AlertIcon(const PsiIcon *icon)
-    : d(new Private(this))
+AlertIcon::AlertIcon(const PsiIcon *icon) : d(new Private(this))
 {
-    if ( icon )
+    if (icon)
         d->real = new PsiIcon(*icon);
     else
         d->real = new PsiIcon();
@@ -232,73 +213,50 @@ AlertIcon::AlertIcon(const PsiIcon *icon)
     d->init();
 }
 
-AlertIcon::~AlertIcon()
-{
-    delete d;
-}
+AlertIcon::~AlertIcon() { delete d; }
 
-bool AlertIcon::isAnimated() const
-{
-    return d->real->isAnimated();
-}
+bool AlertIcon::isAnimated() const { return d->real->isAnimated(); }
 
-const QPixmap &AlertIcon::pixmap() const
+QPixmap AlertIcon::pixmap(const QSize &desiredSize) const
 {
+    Q_UNUSED(desiredSize);
     return d->impix.pixmap();
 }
 
-const QImage &AlertIcon::image() const
+QImage AlertIcon::image(const QSize &desiredSize) const
 {
+    Q_UNUSED(desiredSize);
     return d->impix.image();
 }
 
-void AlertIcon::activated(bool playSound)
-{
-    d->activated(playSound);
-}
+void AlertIcon::activated(bool playSound) { d->activated(playSound); }
 
-void AlertIcon::stop()
-{
-    d->stop();
-}
+void AlertIcon::stop() { d->stop(); }
 
-const QIcon &AlertIcon::icon() const
-{
-    return d->real->icon();
-}
+QIcon AlertIcon::icon() const { return d->real->icon(); }
 
-const Impix &AlertIcon::impix() const
-{
-    return d->impix;
-}
+const Impix &AlertIcon::impix() const { return d->impix; }
 
 int AlertIcon::frameNumber() const
 {
-    if ( d->alertStyle == "animate" && d->real->isAnimated() ) {
+    if (d->alertStyle == "animate" && d->real->isAnimated()) {
         return d->real->frameNumber();
-    }
-    else if ( d->alertStyle == "blink" || (d->alertStyle == "animate" && !d->real->isAnimated()) ) {
+    } else if (d->alertStyle == "blink" || (d->alertStyle == "animate" && !d->real->isAnimated())) {
         return metaAlertIcon->framenumber();
     }
 
     return 0;
 }
 
-const QString &AlertIcon::name() const
-{
-    return d->real->name();
-}
+const QString &AlertIcon::name() const { return d->real->name(); }
 
-PsiIcon *AlertIcon::copy() const
-{
-    return new AlertIcon(d->real);
-}
+PsiIcon *AlertIcon::copy() const { return new AlertIcon(d->real); }
 
 //----------------------------------------------------------------------------
 
 void alertIconUpdateAlertStyle()
 {
-    if ( !metaAlertIcon )
+    if (!metaAlertIcon)
         metaAlertIcon = new MetaAlertIcon();
 
     AlertIcon::Private::updateAlertStyle();

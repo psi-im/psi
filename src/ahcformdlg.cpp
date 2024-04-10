@@ -19,50 +19,36 @@
 
 #include "ahcformdlg.h"
 
+#include "ahcexecutetask.h"
+#include "ahcommand.h"
+#include "busywidget.h"
+#include "iris/xmpp_client.h"
+#include "psiaccount.h"
+#include "xdata_widget.h"
+
+#include <QLabel>
 #include <QLayout>
 #include <QPushButton>
-#include <QLabel>
 #include <QScrollArea>
 
-#include "ahcommand.h"
-#include "ahcexecutetask.h"
-#include "xdata_widget.h"
-#include "xmpp_client.h"
-#include "psiaccount.h"
-#include "busywidget.h"
-
-AHCFormDlg::AHCFormDlg(PsiCon *psi, const AHCommand& r, const Jid& receiver, XMPP::Client* client, bool final) :
-    QDialog(nullptr),
-    _psi(psi),
-    _pb_prev(nullptr),
-    _pb_next(nullptr),
-    _pb_complete(nullptr),
-    _pb_cancel(nullptr),
-    _xdata(nullptr),
-    _receiver(receiver),
-    _client(client)
+AHCFormDlg::AHCFormDlg(PsiCon *psi, const AHCommand &r, const Jid &receiver, XMPP::Client *client, bool final) :
+    QDialog(nullptr), _psi(psi), _pb_prev(nullptr), _pb_next(nullptr), _pb_complete(nullptr), _pb_cancel(nullptr),
+    _xdata(nullptr), _receiver(receiver), _client(client)
 {
     _ui.setupUi(this);
     setAttribute(Qt::WA_DeleteOnClose);
 
     // Save node
-    node_ = r.node();
+    node_      = r.node();
     sessionId_ = r.sessionId();
-
-    _ui.lb_note->setText(r.note().text);
-    _ui.lb_note->setVisible(r.hasNote());
-
-    _ui.lb_instructions->setText(r.data().instructions());
-    _ui.lb_instructions->setVisible(!r.data().instructions().isEmpty());
 
     // XData form
     _xdata = new XDataWidget(_psi, this, _client, receiver);
-    _xdata->setForm(r.data());
     //_xdata->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     _xdata->layout()->setSizeConstraint(QLayout::SetFixedSize);
     _ui.scrollArea->setWidget(_xdata);
-    if (!r.hasData() && (r.hasNote() || !r.data().instructions().isEmpty()))
-        _ui.scrollArea->setVisible(false);
+
+    updateFromCommand(r);
 
     _ui.busy->setVisible(!final);
 
@@ -70,9 +56,8 @@ AHCFormDlg::AHCFormDlg(PsiCon *psi, const AHCommand& r, const Jid& receiver, XMP
         if (r.actions().empty()) {
             // Single stage dialog
             _pb_complete = _ui.buttonBox->addButton(tr("Finish"), QDialogButtonBox::AcceptRole);
-            connect(_pb_complete,SIGNAL(clicked()),SLOT(doExecute()));
-        }
-        else {
+            connect(_pb_complete, SIGNAL(clicked()), SLOT(doExecute()));
+        } else {
             // Multi-stage dialog
 
             // Previous
@@ -82,10 +67,9 @@ AHCFormDlg::AHCFormDlg(PsiCon *psi, const AHCommand& r, const Jid& receiver, XMP
                     _pb_prev->setDefault(true);
                     _pb_prev->setFocus();
                 }
-                connect(_pb_prev,SIGNAL(clicked()),SLOT(doPrev()));
+                connect(_pb_prev, SIGNAL(clicked()), SLOT(doPrev()));
                 _pb_prev->setEnabled(true);
-            }
-            else {
+            } else {
                 _pb_prev->setEnabled(false);
             }
 
@@ -93,16 +77,14 @@ AHCFormDlg::AHCFormDlg(PsiCon *psi, const AHCommand& r, const Jid& receiver, XMP
             _pb_next = _ui.buttonBox->addButton(tr("Next"), QDialogButtonBox::ActionRole);
             if (r.actions().contains(AHCommand::Next)) {
                 if (r.defaultAction() == AHCommand::Next) {
-                    connect(_pb_next,SIGNAL(clicked()),SLOT(doExecute()));
+                    connect(_pb_next, SIGNAL(clicked()), SLOT(doExecute()));
                     _pb_next->setDefault(true);
                     _pb_next->setFocus();
-                }
-                else {
-                    connect(_pb_next,SIGNAL(clicked()),SLOT(doNext()));
+                } else {
+                    connect(_pb_next, SIGNAL(clicked()), SLOT(doNext()));
                 }
                 _pb_next->setEnabled(true);
-            }
-            else {
+            } else {
                 _pb_next->setEnabled(false);
             }
 
@@ -110,32 +92,28 @@ AHCFormDlg::AHCFormDlg(PsiCon *psi, const AHCommand& r, const Jid& receiver, XMP
             _pb_complete = _ui.buttonBox->addButton(tr("Finish"), QDialogButtonBox::AcceptRole);
             if (r.actions().contains(AHCommand::Complete)) {
                 if (r.defaultAction() == AHCommand::Complete) {
-                    connect(_pb_complete,SIGNAL(clicked()),SLOT(doExecute()));
+                    connect(_pb_complete, SIGNAL(clicked()), SLOT(doExecute()));
                     _pb_complete->setDefault(true);
                     _pb_complete->setFocus();
-                }
-                else {
-                    connect(_pb_complete,SIGNAL(clicked()),SLOT(doComplete()));
+                } else {
+                    connect(_pb_complete, SIGNAL(clicked()), SLOT(doComplete()));
                 }
                 _pb_complete->setEnabled(true);
-            }
-            else {
+            } else {
                 _pb_complete->setEnabled(false);
             }
         }
 
         _pb_cancel = _ui.buttonBox->addButton(QDialogButtonBox::Cancel);
-        connect(_pb_cancel, SIGNAL(clicked()),SLOT(doCancel()));
-    }
-    else {
+        connect(_pb_cancel, SIGNAL(clicked()), SLOT(doCancel()));
+    } else {
         _pb_complete = _ui.buttonBox->addButton(QDialogButtonBox::Ok);
-        connect(_pb_complete,SIGNAL(clicked()),SLOT(close()));
+        connect(_pb_complete, SIGNAL(clicked()), SLOT(close()));
     }
 
     if (!r.data().title().isEmpty()) {
-        setWindowTitle(QString("%1 (%2)").arg(r.data().title()).arg(receiver.full()));
-    }
-    else {
+        setWindowTitle(QString("%1 (%2)").arg(r.data().title(), receiver.full()));
+    } else {
         setWindowTitle(QString("%1").arg(receiver.full()));
     }
 
@@ -144,43 +122,57 @@ AHCFormDlg::AHCFormDlg(PsiCon *psi, const AHCommand& r, const Jid& receiver, XMP
     setParent(nullptr);
 }
 
+void AHCFormDlg::updateFromCommand(const AHCommand &r)
+{
+    _ui.lb_note->setText(r.note().text);
+    _ui.lb_note->setVisible(r.hasNote());
+
+    _xdata->setForm(r.data());
+    if (!r.hasData() && (r.hasNote() || !r.data().instructions().isEmpty()))
+        _ui.scrollArea->setVisible(false);
+}
+
 void AHCFormDlg::doPrev()
 {
     _ui.busy->start();
-    AHCExecuteTask* t = new AHCExecuteTask(_receiver,AHCommand(node_,data(),sessionId_,AHCommand::Prev), _client->rootTask());
-    connect(t,SIGNAL(finished()),SLOT(commandExecuted()));
+    AHCExecuteTask *t
+        = new AHCExecuteTask(_receiver, AHCommand(node_, data(), sessionId_, AHCommand::Prev), _client->rootTask());
+    connect(t, SIGNAL(finished()), SLOT(commandExecuted()));
     t->go(true);
 }
 
 void AHCFormDlg::doNext()
 {
     _ui.busy->start();
-    AHCExecuteTask* t = new AHCExecuteTask(_receiver,AHCommand(node_,data(),sessionId_,AHCommand::Next),_client->rootTask());
-    connect(t,SIGNAL(finished()),SLOT(commandExecuted()));
+    AHCExecuteTask *t
+        = new AHCExecuteTask(_receiver, AHCommand(node_, data(), sessionId_, AHCommand::Next), _client->rootTask());
+    connect(t, SIGNAL(finished()), SLOT(commandExecuted()));
     t->go(true);
 }
 
 void AHCFormDlg::doExecute()
 {
     _ui.busy->start();
-    AHCExecuteTask* t = new AHCExecuteTask(_receiver,AHCommand(node_,data(),sessionId_),_client->rootTask());
-    connect(t,SIGNAL(finished()),SLOT(commandExecuted()));
+    AHCExecuteTask *t = new AHCExecuteTask(_receiver, AHCommand(node_, data(), sessionId_), _client->rootTask());
+    connect(t, SIGNAL(finished()), SLOT(commandExecuted()));
     t->go(true);
 }
 
 void AHCFormDlg::doComplete()
 {
     _ui.busy->start();
-    AHCExecuteTask* t = new AHCExecuteTask(_receiver,AHCommand(node_,data(),sessionId_,AHCommand::Complete), _client->rootTask());
-    connect(t,SIGNAL(finished()),SLOT(commandExecuted()));
+    AHCExecuteTask *t
+        = new AHCExecuteTask(_receiver, AHCommand(node_, data(), sessionId_, AHCommand::Complete), _client->rootTask());
+    connect(t, SIGNAL(finished()), SLOT(commandExecuted()));
     t->go(true);
 }
 
 void AHCFormDlg::doCancel()
 {
     _ui.busy->start();
-    AHCExecuteTask* t = new AHCExecuteTask(_receiver,AHCommand(node_,sessionId_,AHCommand::Cancel), _client->rootTask());
-    connect(t,SIGNAL(finished()),SLOT(commandExecuted()));
+    AHCExecuteTask *t
+        = new AHCExecuteTask(_receiver, AHCommand(node_, sessionId_, AHCommand::Cancel), _client->rootTask());
+    connect(t, SIGNAL(finished()), SLOT(commandExecuted()));
     t->go(true);
 }
 
@@ -189,7 +181,7 @@ void AHCFormDlg::commandExecuted()
     _ui.busy->stop();
     AHCExecuteTask *t = dynamic_cast<AHCExecuteTask *>(sender());
     if (t && t->hasCommandPayload()) {
-        _xdata->setForm(t->resultCommand().data());
+        updateFromCommand(t->resultCommand());
     } else {
         close();
     }
@@ -202,4 +194,3 @@ XData AHCFormDlg::data() const
     x.setType(XData::Data_Submit);
     return x;
 }
-

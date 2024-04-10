@@ -24,19 +24,19 @@
 #include <QObject>
 #include <QStringList>
 
-class ActiveProfiles: public QObject
-{
+class ActiveProfiles : public QObject {
     Q_OBJECT
 public:
-    static ActiveProfiles* instance();
+    static ActiveProfiles *instance();
 
-    bool setThisProfile(const QString &profile);
-    void unsetThisProfile();
+    bool    setThisProfile(const QString &profile);
+    void    unsetThisProfile();
     QString thisProfile() const;
 
     bool isActive(const QString &profile) const;
     bool isAnyActive() const;
 
+    bool recvNextEvent(const QString &profile) const;
     bool setStatus(const QString &profile, const QString &status, const QString &message) const;
     bool openUri(const QString &profile, const QString &uri) const;
     bool raise(const QString &profile, bool withUI) const;
@@ -44,6 +44,7 @@ public:
     ~ActiveProfiles();
 
 signals:
+    void recvNextEventRequested();
     void setStatusRequested(const QString &status, const QString &message);
     void openUriRequested(const QString &uri);
     void raiseRequested();
@@ -61,4 +62,4 @@ private:
     friend class PsiMain;
 };
 
-#endif
+#endif // ACTIVEPSIPROFILES_H

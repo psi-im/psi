@@ -39,6 +39,9 @@
                 <controller-filter comment="List of disabled controllers" type="QString">WinAmp</controller-filter>
             </tune>
         </extended-presence>
+        <media>
+            <audio-message comment="Record and share audio messages" type="bool">true</audio-message>
+        </media>
         <muc comment="Multi-User Chat options">
             <bookmarks comment="Options for bookmarked conference rooms">
                 <auto-join comment="Automatically join bookmarked conference rooms that are configured for auto-joining." type="bool">true</auto-join>
@@ -61,9 +64,9 @@
             <leave-status-message comment="Leave status message" type="QString"></leave-status-message>
         </muc>
         <pgp comment="PGP encryption options">
-            <enable comment="Enable PGP globally" type="bool">true</enable>
             <auto-assign comment="Automatically assign known keys to contacts with signed presences and no assigned keys" type="bool">true</auto-assign>
-            <auto-start comment="Automatically enable PGP encryption" type="bool">false</auto-start>
+            <always-enabled comment="PGP encryption is always enabled" type="bool">false</always-enabled>
+            <enabled-by-default comment="PGP encryption is enabled by default" type="bool">false</enabled-by-default>
         </pgp>
         <ui comment="User interface options">
             <account comment="Account options">
@@ -72,7 +75,7 @@
                 <sm comment="Option related to the Stream Management UI">
                     <show comment="Show the Stream Management UI" type="bool">true</show>
                 </sm>
-                <legacy-ssl-probe comment="Show legacy SSL probe option" type="bool">true</legacy-ssl-probe>
+                <legacy-ssl-probe comment="Show legacy SSL probe option" type="bool">false</legacy-ssl-probe>
                 <manual-host comment="Enable manual host configuration" type="bool">true</manual-host>
                 <priority comment="Allow changing the priority" type="bool">true</priority>
                 <privacy comment="Options related to the privacy UI">
@@ -106,14 +109,13 @@
                 <opacity comment="Opacity percentage of chat dialogs" type="int">100</opacity>
                 <legacy-formatting comment="This enables legacy usenet-style formatting (// ** __)" type="bool">true</legacy-formatting>
                 <avatars comment="Avatar options">
-                    <size comment="Maximum size of the avatar" type="int">24</size>
+                    <size comment="Maximum size of the avatar" type="int">64</size>
                     <show comment="Show avatars in the chat dialog" type="bool">true</show>
                 </avatars>
                 <alert-for-already-open-chats type="bool">true</alert-for-already-open-chats>
                 <auto-popup type="bool">false</auto-popup>
                 <auto-capitalize type="bool">false</auto-capitalize>
                 <auto-scroll-to-bottom type="bool">false</auto-scroll-to-bottom>
-                <delete-contents-after type="QString">hour</delete-contents-after>
                 <raise-chat-windows-on-new-messages type="bool">false</raise-chat-windows-on-new-messages>
                 <switch-tab-on-new-messages type="bool">false</switch-tab-on-new-messages>
                 <use-chat-says-style type="bool">false</use-chat-says-style>
@@ -124,9 +126,14 @@
                 <show-status-changes type="bool">true</show-status-changes>
                 <show-previews type="bool">true</show-previews>
                 <warn-before-clear type="bool">true</warn-before-clear>
-                <css type="QString" />
-                <hide-when-closing type="bool">false</hide-when-closing>
+                <only-paste-template type="bool">false</only-paste-template>
+                <css type="QString">/*Last message correction*/
+QWidget#bottomFrame>QWidget>QTextEdit[correction="true"] {
+      background-color: rgb(160,160,0);
+}</css>
                 <status-with-priority comment="Show priority with status change" type="bool">false</status-with-priority>
+                <log-height type="int">325</log-height>
+                <chatedit-height type="int">10</chatedit-height>
                 <default-jid-mode comment="Default jid mode: barejid | auto" type="QString">auto</default-jid-mode>
                 <default-jid-mode-ignorelist comment="Default autojid mode ignore list: jid1,jid2,..." type="QString"></default-jid-mode-ignorelist>
                 <history comment="Message history options">
@@ -148,8 +155,8 @@
                 <auto-delete-unlisted comment="Automatically remove an unlisted contact from the contact list if it does not have any pending messages anymore" type="bool">false</auto-delete-unlisted>
                 <opacity comment="Opacity percentage of the contact list" type="int">100</opacity>
                 <status-messages comment="Status messages for contacts">
-                    <single-line comment="Show status messages on the same line as the nickname" type="bool">true</single-line>
-                    <show comment="Show status messages" type="bool">false</show>
+                    <single-line comment="Show status messages on the same line as the nickname" type="bool">false</single-line>
+                    <show comment="Show status messages" type="bool">true</show>
                 </status-messages>
                 <tooltip comment="Display options for the contact list tooltips">
                     <css type="QString"></css>
@@ -164,6 +171,11 @@
                 <css type="QString">/* frame of avatar - general settings */
 RosterAvatarFrame * {
     margin: 1px;
+}
+
+/* remove weird lines between roster window elements */
+QToolBar {
+  border: 0px;
 }
 
 /* frame of avatar - avatar */
@@ -225,7 +237,7 @@ QLineEdit#le_status_text {
                     <agent-contacts type="bool">true</agent-contacts>
                     <away-contacts type="bool">true</away-contacts>
                     <hidden-contacts-group type="bool">true</hidden-contacts-group>
-                    <offline-contacts type="bool">true</offline-contacts>
+                    <offline-contacts type="bool">false</offline-contacts>
                     <self-contact type="bool">true</self-contact>
                 </show>
                 <show-group-counts type="bool">true</show-group-counts>
@@ -235,7 +247,7 @@ QLineEdit#le_status_text {
                     <show type="bool">true</show>
                     <avatars-at-left type="bool">true</avatars-at-left>
                     <use-default-avatar type="bool">true</use-default-avatar>
-                    <size type="int">24</size>
+                    <size type="int">26</size>
                     <radius type="int">5</radius>
                 </avatars>
                 <show-mood-icons type="bool">true</show-mood-icons>
@@ -284,7 +296,6 @@ QLineEdit#le_status_text {
                 <contact comment="Options for the contact-specific menu">
                     <active-chats comment="Show the 'active chats' menu" type="bool">true</active-chats>
                     <custom-picture comment="Show the 'picture' menu" type="bool">true</custom-picture>
-                    <custom-pgp-key comment="Show the 'assign pgp key' menu" type="bool">true</custom-pgp-key>
                 </contact>
                 <main comment="Options for the main menu">
                     <change-profile comment="Show the 'change profile' menu" type="bool">true</change-profile>
@@ -305,30 +316,32 @@ QLineEdit#le_status_text {
                     <use-slim-group-headings type="bool">false</use-slim-group-headings>
                     <nick-coloring type = "bool">true</nick-coloring>
                     <show-client-icons type = "bool">true</show-client-icons>
-                    <show-affiliation-icons type = "bool">true</show-affiliation-icons>
+                    <show-affiliation-icons type = "bool">false</show-affiliation-icons>
                     <contact-sort-style type = "QString">alpha</contact-sort-style>
-                    <show-status-icons type = "bool">true</show-status-icons>
+                    <show-status-icons type = "bool">false</show-status-icons>
                     <disable-scrollbar type = "bool">true</disable-scrollbar>
                     <avatars>
-                        <show type="bool">false</show>
-                        <size type="int">24</size>
+                        <show type="bool">true</show>
+                        <size type="int">20</size>
                         <avatars-at-left type="bool">true</avatars-at-left>
                         <radius type="int">3</radius>
                     </avatars>
                 </userlist>
                 <status-with-priority comment="Show priority with status change" type="bool">false</status-with-priority>
                 <show-initial-joins comment="Show joins on your MUC join (with status and priority, depends on options)" type="bool">false</show-initial-joins>
+                <show-technical-kicks comment="Show technical MUC kicks (a result of connection loss for example)" type="bool">false</show-technical-kicks>
                 <log-width type="int">500</log-width>
                 <roster-width type="int">150</roster-width>
                 <roster-at-left type="bool">false</roster-at-left>
                 <theme comment="The theme used for groupchat messages rendering" type="QString">psi/classic</theme>
                 <highlight-words type="QStringList" />
                 <size comment="Remembered window size" type="QSize">
-                    <width>580</width>
-                    <height>420</height>
+                    <width>960</width>
+                    <height>620</height>
                 </size>
                 <use-highlighting type="bool">true</use-highlighting><use-nick-coloring type="bool">true</use-nick-coloring><use-hash-nick-coloring type="bool">true</use-hash-nick-coloring><colored-history type="bool">true</colored-history>
                 <allow-highlight-events type="bool">false</allow-highlight-events>
+                <hide-when-closing type="bool">false</hide-when-closing>
             </muc>
             <spell-check comment="Options related to the spell checker">
                 <enabled comment="Whether the spell checker is enabled" type="bool">true</enabled>
@@ -336,14 +349,9 @@ QLineEdit#le_status_text {
             </spell-check>
             <disable-send-button type="bool">true</disable-send-button>
             <systemtray comment="Options related to the system tray">
-                <use-old comment="Use the old system tray code (deprecated)" type="bool">false</use-old>
                 <enable type="bool">true</enable>
                 <use-double-click type="bool">false</use-double-click>
             </systemtray>
-            <tip comment="Tip of the day options">
-                <show comment="Show the tip of the day upon startup" type="bool">true</show>
-                <number comment="The next tip to show" type="int">0</number>
-            </tip>
             <flash-windows comment="Allow windows to flash upon activity" type="bool">true</flash-windows>
             <automatically-copy-selected-text type="bool">false</automatically-copy-selected-text>
             <emoticons>
@@ -484,11 +492,12 @@ QLineEdit#le_status_text {
                     <system-message type="QString">sound/chat2.wav</system-message>
                     <unix-sound-player type="QString"/>
                 </sounds>
-                <successful-subscription type="bool">false</successful-subscription>
+                <successful-subscription type="bool">true</successful-subscription>
             </notifications>
             <service-discovery>
                 <automatically-get-info type="bool">true</automatically-get-info>
                 <automatically-get-items type="bool">false</automatically-get-items>
+                <items-per-page type="int" comment="Number of items per page for page-by-page feature (XEP-0059). 0 turns this feature off.">0</items-per-page>
                 <recent-jids type="QStringList" />
             </service-discovery>
             <tabs>
@@ -501,13 +510,112 @@ QLineEdit#le_status_text {
                 <mouse-doubleclick-action type="QString">detach</mouse-doubleclick-action>
                 <size type="QString"></size> <!-- will be invalid when converted to QSize so we can detect first load -->
                 <grouping type="QString" comment="A ':' seperated list of groups of kinds of tabs to keep in the same tabset. 'C' for chat and 'M' for mucs. 'A' means using all in one window patch.">CM</grouping>
-                <group-state comment="Saved state data of the tabsets defined by options.ui.tabs.grouping"/>
+                <group-state comment="Saved state data of the tabsets defined by options.ui.tabs.grouping">
+                    <CM>
+                        <size-frame type="QRect">
+                            <x>300</x>
+                            <y>200</y>
+                            <width>963</width>
+                            <height>658</height>
+                        </size-frame>
+                        <size-maximized type="bool">false</size-maximized>
+                        <size-fullscreen type="bool">false</size-fullscreen>
+                        <size type="QRect">
+                            <x>301</x>
+                            <y>231</y>
+                            <width>961</width>
+                            <height>626</height>
+                        </size>
+                        <size-screen type="int">0</size-screen>
+                    </CM>
+                </group-state>
                 <tab-singles type="QString" comment="Tab types that would have been untabbed are given their own tabset. 'C' for chat and 'M' for mucs"/>
                 <use-tab-shortcuts type="bool">true</use-tab-shortcuts>
                 <show-tab-buttons type="bool">true</show-tab-buttons>
+                <multi-rows comment="Use multi rows mode for chat tab bar" type="bool">false</multi-rows>
+                <current-index-at-bottom comment="Move current row to bottom in multi-row mode" type="bool">true</current-index-at-bottom>
+                <disable-wheel-scroll type="bool">false</disable-wheel-scroll>
             </tabs>
         </ui>
         <shortcuts comment="Shortcuts">
+            <alist comment="Action List" >
+                <menu_disco type="QKeySequence" comment="Service Discovery"></menu_disco>
+                <menu_add_contact type="QKeySequence" comment="Add Contact"></menu_add_contact>
+                <menu_new_message type="QKeySequence" comment="New Message"></menu_new_message>
+                <menu_join_groupchat type="QKeySequence" comment="Join Group Chat"></menu_join_groupchat>
+                <menu_account_setup type="QKeySequence" comment="Account Setup"></menu_account_setup>
+                <menu_options type="QKeySequence" comment="Options"></menu_options>
+                <menu_file_transfer type="QKeySequence" comment="File Transfer"></menu_file_transfer>
+                <menu_toolbars type="QKeySequence" comment="Toolbars"></menu_toolbars>
+                <menu_xml_console type="QKeySequence" comment="XML Console"></menu_xml_console>
+                <menu_change_profile type="QKeySequence" comment="Change Profile"></menu_change_profile>
+                <menu_play_sounds type="QKeySequence" comment="Play Sounds"></menu_play_sounds>
+                <menu_quit type="QKeySequence" comment="Quit"></menu_quit>
+                <button_options type="QKeySequence" comment="Options"></button_options>
+                <button_status type="QKeySequence" comment="Status"></button_status>
+                <enable_groups type="QKeySequence" comment="Enable Groups"></enable_groups>
+                <view_groups type="QKeySequence" comment="View Groups"></view_groups>
+                <show_offline type="QKeySequence" comment="Show Offline Contacts"></show_offline>
+                <show_away type="QKeySequence" comment="Show Away Contacts"></show_away>
+                <show_hidden type="QKeySequence" comment="Show Hidden Contacts"></show_hidden>
+                <show_agents type="QKeySequence" comment="Show Agents"></show_agents>
+                <show_self type="QKeySequence" comment="Show Self"></show_self>
+                <show_statusmsg type="QKeySequence" comment="Show Status Message"></show_statusmsg>
+                <publish_tune type="QKeySequence" comment="Publish Tune"></publish_tune>
+                <active_contacts type="QKeySequence" comment="Active contacts"/>
+                <status_all type="QKeySequence" comment="Status All"></status_all>
+                <status_group type="QKeySequence" comment="Status Group"></status_group>
+                <status_chat type="QKeySequence" comment="Status Chat"></status_chat>
+                <status_online type="QKeySequence" comment="Status Online"></status_online>
+                <status_away type="QKeySequence" comment="Status Away"></status_away>
+                <status_xa type="QKeySequence" comment="Status XA"></status_xa>
+                <status_dnd type="QKeySequence" comment="Status DND"></status_dnd>
+                <status_invisible type="QKeySequence" comment="Status Invisible"></status_invisible>
+                <status_offline type="QKeySequence" comment="Status Offline"></status_offline>
+                <choose_status type="QKeySequence" comment="Choose status"></choose_status>
+                <reconnect_all type="QKeySequence" comment="Reconnect all accounts"></reconnect_all>
+                <set_mood type="QKeySequence" comment="Set Mood"/>
+                <set_activity type="QKeySequence" comment="Set Activity"/>
+                <set_geoloc type="QKeySequence" comment="Set Geolocation"/>
+                <help_readme type="QKeySequence" comment="README"></help_readme>
+                <help_online_forum type="QKeySequence" comment="Psi Forum (Online)"></help_online_forum>
+                <help_online_help type="QKeySequence" comment="Open Help"></help_online_help>
+                <help_online_wiki type="QKeySequence" comment="Open Wiki"></help_online_wiki>
+                <help_online_home type="QKeySequence" comment="Open Home Page"></help_online_home>
+                <help_psi_muc type="QKeySequence" comment="Help Psi MUC"></help_psi_muc>
+                <help_report_bug type="QKeySequence" comment="Report Bug"></help_report_bug>
+                <help_about type="QKeySequence" comment="About Psi"></help_about>
+                <help_about_psimedia type="QKeySequence" comment="About PsiMedia" />
+                <help_about_qt type="QKeySequence" comment="About Qt"></help_about_qt>
+                <help_diag_qcaplugin type="QKeySequence" comment="QCA plugin diag"></help_diag_qcaplugin>
+                <help_diag_qcakeystore type="QKeySequence" comment="QCA key store diag"></help_diag_qcakeystore>
+                <chat_active_contacts type="QKeySequence"></chat_active_contacts>
+                <chat_add_contact type="QKeySequence"></chat_add_contact>
+                <chat_clear type="QKeySequence"></chat_clear>
+                <chat_compact type="QKeySequence"></chat_compact>
+                <chat_file type="QKeySequence"></chat_file>
+                <chat_find type="QKeySequence"></chat_find>
+                <chat_history type="QKeySequence"></chat_history>
+                <chat_html_text type="QKeySequence"></chat_html_text>
+                <chat_icon type="QKeySequence"></chat_icon>
+                <chat_info type="QKeySequence"></chat_info>
+                <chat_pin_tab type="QKeySequence"></chat_pin_tab>
+                <chat_ps type="QKeySequence"></chat_ps>
+                <chat_share_files type="QKeySequence"></chat_share_files>
+                <chat_templates type="QKeySequence"></chat_templates>
+                <chat_voice type="QKeySequence"></chat_voice>
+                <gchat_info type="QKeySequence"></gchat_info>
+                <gchat_clear type="QKeySequence"></gchat_clear>
+                <gchat_configure type="QKeySequence"></gchat_configure>
+                <gchat_find type="QKeySequence"></gchat_find>
+                <gchat_html_text type="QKeySequence"></gchat_html_text>
+                <gchat_icon type="QKeySequence"></gchat_icon>
+                <gchat_pin_tab type="QKeySequence"></gchat_pin_tab>
+                <gchat_ps type="QKeySequence"></gchat_ps>
+                <gchat_share_files type="QKeySequence"></gchat_share_files>
+                <gchat_templates type="QKeySequence"></gchat_templates>
+                <gchat_set_topic type="QKeySequence" comment="Set chat topic"/>
+            </alist>
             <chat comment="Shortcuts in the chat dialog">
                 <next-tab type="QVariantList" comment="Switch to the next tab">
                     <item type="QKeySequence">Ctrl+PgDown</item>
@@ -531,6 +639,7 @@ QLineEdit#le_status_text {
                 <show-messageNext type="QKeySequence" comment="Show next message" >Ctrl+Down</show-messageNext>
                 <show-messagePrev type="QKeySequence" comment="Show prev message" >Ctrl+Up</show-messagePrev>
                 <change-case type="QKeySequence" comment="Change case of letters in the chat edit" >Ctrl+Alt+x</change-case>
+                <minimize type="QKeySequence" comment="Minimize active chat window"/>
             </chat>
             <contactlist comment="Shortcuts in the contactlist">
                 <assign-custom-avatar type="QKeySequence" comment="Assign a custom avatar to the selected contact"/>
@@ -561,7 +670,7 @@ QLineEdit#le_status_text {
                 <toggle-visibility type="QKeySequence" comment="Show/hide the application"/>
                 <bring-to-front type="QKeySequence" comment="Bring the application to front"/>
                 <new-blank-message type="QKeySequence" comment="Send new message"/>
-                <boss-key type="QKeySequence" comment="Hide all active windows">Ctrl+Alt+B</boss-key>
+                <boss-key type="QKeySequence" comment="Hide all active windows"></boss-key>
             </global>
             <message comment="Shortcuts in the message dialog">
                 <send type="QVariantList" comment="Send the message">
@@ -607,6 +716,7 @@ QLineEdit#le_status_text {
             <activities type="QString">default</activities>
             <affiliations type="QString">default</affiliations>
             <clients type="QString">default</clients>
+            <clients-capsfile type="QString" comment="Override file for internal client_icons.txt"/>
         </iconsets>
         <messages>
             <default-outgoing-message-type type="QString">chat</default-outgoing-message-type>
@@ -683,10 +793,9 @@ QLineEdit#le_status_text {
                 <audio-input type="QString"/>
                 <video-input type="QString"/>
             </devices>
-            <video-support type="bool">false</video-support>
         </media>
         <history comment="General history options">
-            <store-muc-private comment="Keep a history of correspondence for MUC private" type="bool">false</store-muc-private>
+            <store-muc-private comment="Keep a history of correspondence for MUC private chats" type="bool">true</store-muc-private>
         </history>
         <keychain comment="Keyring manager options">
             <enabled comment="Store passwords in keyring manager only" type="bool">true</enabled>

@@ -1,6 +1,7 @@
 /*
  * pgpkeydlg.h
  * Copyright (C) 2001-2009  Justin Karneges, Michail Pishchagin
+ * Copyright (C) 2020  Boris Pek <tehnick-8@yandex.ru>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -25,39 +26,38 @@
 #ifndef PGPKEYDLG_H
 #define PGPKEYDLG_H
 
-#include <QtCrypto>
-
 #include "ui_pgpkey.h"
 
-class QStandardItemModel;
-class QSortFilterProxyModel;
+#include <QStringList>
 
-class PGPKeyDlg : public QDialog
-{
+class QSortFilterProxyModel;
+class QStandardItemModel;
+
+class PGPKeyDlg : public QDialog {
     Q_OBJECT
 
 public:
-    enum Type { Public, Secret };
+    enum Type { Public, Secret, All };
 
-    PGPKeyDlg(Type, const QString& defaultKeyID, QWidget *parent = 0);
-    const QCA::KeyStoreEntry& keyStoreEntry() const;
+    PGPKeyDlg(Type, const QString &defaultKeyID, QWidget *parent = nullptr);
+    const QString &keyId() const;
 
 private slots:
-    void doubleClicked(const QModelIndex& index);
+    void doubleClicked(const QModelIndex &index);
     void filterTextChanged();
     void do_accept();
-    void show_ksm_dtext();
+    void show_info();
 
 protected:
     // reimplemented
-    bool eventFilter(QObject* watched, QEvent* event);
+    bool eventFilter(QObject *watched, QEvent *event);
 
 private:
-    Ui::PGPKey ui_;
-    QCA::KeyStoreEntry entry_;
-    QPushButton* pb_dtext_;
-    QStandardItemModel* model_;
-    QSortFilterProxyModel* proxy_;
+    Ui::PGPKey             m_ui;
+    QString                m_keyId;
+    QPushButton           *m_pb_dtext;
+    QStandardItemModel    *m_model;
+    QSortFilterProxyModel *m_proxy;
 };
 
-#endif
+#endif // PGPKEYDLG_H

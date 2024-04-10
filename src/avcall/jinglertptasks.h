@@ -19,109 +19,89 @@
 #ifndef JINGLERTPTASKS_H
 #define JINGLERTPTASKS_H
 
-#include <QHostAddress>
-#include <QDomElement>
+#include "iris/ice176.h"
 #include "xmpp_jid.h"
 #include "xmpp_task.h"
-#include "iris/ice176.h"
 
-class JingleRtpPayloadType
-{
+#include <QDomElement>
+#include <QHostAddress>
+
+class JingleRtpPayloadType {
 public:
-    class Parameter
-    {
+    class Parameter {
     public:
         QString name;
         QString value;
     };
 
-    int id;
-    QString name;
-    int clockrate;
-    int channels;
-    int ptime;
-    int maxptime;
+    int              id;
+    QString          name;
+    int              clockrate;
+    int              channels;
+    int              ptime;
+    int              maxptime;
     QList<Parameter> parameters;
 
-    JingleRtpPayloadType() :
-        id(-1),
-        clockrate(-1),
-        channels(-1),
-        ptime(-1),
-        maxptime(-1)
-    {
-    }
+    JingleRtpPayloadType() : id(-1), clockrate(-1), channels(-1), ptime(-1), maxptime(-1) { }
 };
 
-class JingleRtpCrypto
-{
+class JingleRtpCrypto {
 public:
     QString suite;
     QString keyParams;
     QString sessionParams;
-    int tag;
+    int     tag;
 };
 
-class JingleRtpDesc
-{
+class JingleRtpDesc {
 public:
-    QString media;
-    bool haveSsrc;
-    quint32 ssrc;
+    QString                     media;
+    bool                        haveSsrc;
+    quint32                     ssrc;
     QList<JingleRtpPayloadType> payloadTypes;
-    int bitrate; // in Kbps
-    bool encryptionRequired;
-    QList<JingleRtpCrypto> cryptoList;
+    int                         bitrate; // in Kbps
+    bool                        encryptionRequired;
+    QList<JingleRtpCrypto>      cryptoList;
 
-    JingleRtpDesc() :
-        haveSsrc(false),
-        ssrc(0),
-        bitrate(-1),
-        encryptionRequired(false)
-    {
-    }
+    JingleRtpDesc() : haveSsrc(false), ssrc(0), bitrate(-1), encryptionRequired(false) { }
 };
 
-class JingleRtpRemoteCandidate
-{
+class JingleRtpRemoteCandidate {
 public:
-    int component;
+    int          component;
     QHostAddress addr;
-    int port;
+    int          port;
 
-    JingleRtpRemoteCandidate() :
-        component(-1),
-        port(-1)
-    {
-    }
+    JingleRtpRemoteCandidate() : component(-1), port(-1) { }
 };
 
-class JingleRtpTrans
-{
+class JingleRtpTrans {
 public:
-    QString user;
-    QString pass;
-    QList<XMPP::Ice176::Candidate> candidates;
+    enum Transport { IceUdp, Ice };
+
+    QString                         user;
+    QString                         pass;
+    bool                            ice2              = false;
+    bool                            gatheringComplete = false;
+    Transport                       transportType     = IceUdp;
+    QList<XMPP::Ice176::Candidate>  candidates;
     QList<JingleRtpRemoteCandidate> remoteCandidates;
 };
 
-class JingleRtpContent
-{
+class JingleRtpContent {
 public:
     QString creator;
     QString disposition;
     QString name;
     QString senders;
 
-    JingleRtpDesc desc;
+    JingleRtpDesc  desc;
     JingleRtpTrans trans;
 };
 
-class JingleRtpReason
-{
+class JingleRtpReason {
 public:
-    enum Condition
-    {
+    enum Condition {
         AlternativeSession,
         Busy,
         Cancel,
@@ -142,16 +122,12 @@ public:
     };
 
     Condition condition;
-    QString text;
+    QString   text;
 
-    JingleRtpReason() :
-        condition((Condition)-1)
-    {
-    }
+    JingleRtpReason() : condition((Condition)-1) { }
 };
 
-class JingleRtpEnvelope
-{
+class JingleRtpEnvelope {
 public:
     QString action;
     QString initiator;
@@ -163,39 +139,37 @@ public:
     JingleRtpReason reason;
 };
 
-class JT_JingleRtp : public XMPP::Task
-{
+class JT_JingleRtp : public XMPP::Task {
     Q_OBJECT
 
 public:
-    JT_JingleRtp(XMPP::Task *parent);
-    ~JT_JingleRtp();
+    explicit JT_JingleRtp(XMPP::Task *parent);
+    ~JT_JingleRtp() override;
 
     void request(const XMPP::Jid &to, const JingleRtpEnvelope &envelope);
 
-    virtual void onGo();
-    virtual bool take(const QDomElement &x);
+    void onGo() override;
+    bool take(const QDomElement &x) override;
 
 private:
     QDomElement iq_;
-    XMPP::Jid to_;
+    XMPP::Jid   to_;
 };
 
-class JT_PushJingleRtp : public XMPP::Task
-{
+class JT_PushJingleRtp : public XMPP::Task {
     Q_OBJECT
 
 public:
-    JT_PushJingleRtp(XMPP::Task *parent);
-    ~JT_PushJingleRtp();
+    explicit JT_PushJingleRtp(XMPP::Task *parent);
+    ~JT_PushJingleRtp() override;
 
     void respondSuccess(const XMPP::Jid &to, const QString &id);
     void respondError(const XMPP::Jid &to, const QString &id, int code, const QString &str);
 
-    virtual bool take(const QDomElement &e);
+    bool take(const QDomElement &e) override;
 
 signals:
     void incomingRequest(const XMPP::Jid &from, const QString &iq_id, const JingleRtpEnvelope &envelope);
 };
 
-#endif
+#endif // JINGLERTPTASKS_H

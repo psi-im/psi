@@ -20,20 +20,20 @@
 #ifndef CHATSPLITTER_H
 #define CHATSPLITTER_H
 
-#include <QWidget>
 #include <QList>
+#include <QWidget>
 
 class QSplitter;
 
-class ChatSplitter : public QWidget
-{
+class ChatSplitter : public QWidget {
     Q_OBJECT
 public:
-    ChatSplitter(QWidget* parent);
+    ChatSplitter(QWidget *parent);
 
-    void setOrientation(Qt::Orientation orientation);
-    void addWidget(QWidget* widget);
-    void setSizes(const QList<int>& list);
+    void       setOrientation(Qt::Orientation orientation);
+    void       addWidget(QWidget *widget);
+    void       setSizes(const QList<int> &list);
+    QList<int> sizes();
 
 protected:
     /**
@@ -46,16 +46,19 @@ public slots:
     void optionsChanged();
 
 private slots:
-    void childDestroyed(QObject* obj);
+    void childDestroyed(QObject *obj);
+
+signals:
+    void splitterMoved(int, int);
 
 private:
-    void updateChildLayout(QWidget* child);
+    void updateChildLayout(QWidget *child);
     void updateLayout();
 
-    bool splitterEnabled_;
-    QList<QWidget*> children_;
-    QSplitter* splitter_;
-    QLayout* layout_;
+    bool             splitterEnabled_;
+    QList<QWidget *> children_;
+    QSplitter       *splitter_;
+    QLayout         *layout_;
 };
 
-#endif
+#endif // CHATSPLITTER_H

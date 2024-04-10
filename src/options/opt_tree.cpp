@@ -1,18 +1,16 @@
-#include <QDebug>
-#include <QVBoxLayout>
-
 #include "opt_tree.h"
+
 #include "psioptionseditor.h"
 
-OptionsTabTree::OptionsTabTree(QObject *parent)
-        : OptionsTab(parent, "tree", "", tr("Advanced"), tr("Options for advanced users"), "psi/advanced-plus")
+#include <QVBoxLayout>
+
+OptionsTabTree::OptionsTabTree(QObject *parent) :
+    OptionsTab(parent, "tree", "", tr("Advanced"), tr("Options for advanced users"), "psi/advanced-plus")
 {
     w = nullptr;
 }
 
-OptionsTabTree::~OptionsTabTree()
-{
-}
+OptionsTabTree::~OptionsTabTree() { }
 
 QWidget *OptionsTabTree::widget()
 {
@@ -20,14 +18,15 @@ QWidget *OptionsTabTree::widget()
         return nullptr;
     }
     w = new QWidget();
-    //w->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
+    // w->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
 
-    QVBoxLayout* layout = new QVBoxLayout(w);
-    //layout->setSpacing(0);
-    layout->setMargin(0);
+    QVBoxLayout *layout = new QVBoxLayout(w);
+    // layout->setSpacing(0);
+    layout->setContentsMargins(0, 0, 0, 0);
 
     QLabel *lb = new QLabel(tr("Please note: This editor will change the options "
-                               "directly. Pressing Cancel will not revert these changes."), w);
+                               "directly. Pressing Cancel will not revert these changes."),
+                            w);
     lb->setWordWrap(true);
     layout->addWidget(lb);
 

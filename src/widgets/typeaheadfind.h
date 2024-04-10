@@ -21,26 +21,21 @@
 #define TYPEAHEADFIND_H
 
 #include <QToolBar>
-
 #ifdef WEBKIT
 #include <webview.h>
 #endif
 
-class QTextEdit;
 class QString;
+class QTextEdit;
 
-class TypeAheadFindBar : public QToolBar
-{
+class TypeAheadFindBar : public QToolBar {
     Q_OBJECT
 public:
-    enum class Type : char {
-        TextEdit,
-        WebView
-    };
+    enum class Type : char { TextEdit, WebView };
 
-    TypeAheadFindBar(QTextEdit *textedit, const QString &title, QWidget *parent = 0);
+    TypeAheadFindBar(QTextEdit *textedit, const QString &title, QWidget *parent = nullptr);
 #ifdef WEBKIT
-    TypeAheadFindBar(WebView *webView, const QString &title, QWidget *parent = 0);
+    TypeAheadFindBar(WebView *webView, const QString &title, QWidget *parent = nullptr);
 #endif
     ~TypeAheadFindBar();
     void init();
@@ -65,4 +60,4 @@ private:
     Private *d;
 };
 
-#endif
+#endif // TYPEAHEADFIND_H

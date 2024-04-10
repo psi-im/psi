@@ -1,24 +1,20 @@
 #ifndef OPT_PLUGINS_H
 #define OPT_PLUGINS_H
 
-#include "optionstab.h"
 #include "advwidget.h"
+#include "optionstab.h"
 #include "ui_plugininfodialog.h"
+
 #include <QPointer>
 #include <QTreeWidgetItem>
 
-class QWidget;
 class Options;
+class QWidget;
 
-class OptionsTabPlugins : public OptionsTab
-{
+class OptionsTabPlugins : public OptionsTab {
     Q_OBJECT
-    enum ColumnName {
-        C_NAME = 0,
-        C_VERSION = 1,
-        C_ABOUT = 2,
-        C_SETTS = 3
-    };
+    enum ColumnName { C_NAME = 0, C_VERSION = 1, C_ABOUT = 2, C_SETTS = 3 };
+
 public:
     OptionsTabPlugins(QObject *parent);
     ~OptionsTabPlugins();
@@ -26,21 +22,26 @@ public:
     void setData(PsiCon *, QWidget *);
 
     QWidget *widget();
-    void applyOptions();
-    void restoreOptions();
-    bool stretchable() const;
+    void     applyOptions();
+    void     restoreOptions();
+    bool     stretchable() const;
 
 private:
-    QWidget *w = nullptr;
-    QPointer<QDialog> infoDialog;
+    QWidget             *w = nullptr;
+    QPointer<QDialog>    infoDialog;
     Ui::PluginInfoDialog ui_;
-    PsiCon *psi = nullptr;
+    PsiCon              *psi = nullptr;
 
 private slots:
     void listPlugins();
-    void showPluginInfo(int item);
+    void showPluginInfo(QTreeWidgetItem *item);
+    void savePluginInfoDialogSize();
     void itemChanged(QTreeWidgetItem *item, int column);
-    void settingsClicked(int item);
+    void settingsClicked(QTreeWidgetItem *item);
+    void savePluginSettingsDialogSize();
+
+private:
+    inline QString formatVendorText(const QString &text, const bool removeEmail);
 };
 
-#endif
+#endif // OPT_PLUGINS_H

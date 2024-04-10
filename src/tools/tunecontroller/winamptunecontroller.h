@@ -22,18 +22,17 @@
 
 #include "pollingtunecontroller.h"
 
-#include <windows.h>
 #include <QPair>
+#include <windows.h>
 
-class WinAmpTuneController : public PollingTuneController
-{
+class WinAmpTuneController : public PollingTuneController {
     Q_OBJECT
 public:
     WinAmpTuneController();
     virtual Tune currentTune() const;
 
 private:
-    Tune getTune(const HWND &hWnd);
+    Tune                 getTune(const HWND &hWnd);
     QPair<bool, QString> getTrackTitle(const HWND &waWnd) const;
 
 protected slots:
@@ -41,7 +40,7 @@ protected slots:
 
 private:
     Tune prevTune_;
-    int antiscrollCounter_;
+    int  antiscrollCounter_;
 };
 
-#endif
+#endif // WINAMPTUNECONTROLLER_H

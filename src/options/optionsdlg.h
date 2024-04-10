@@ -3,13 +3,17 @@
 
 #include "options/optionsdlgbase.h"
 
-class OptionsDlg : public OptionsDlgBase
-{
+class OAH_PluginOptionsTab;
+
+class OptionsDlg : public OptionsDlgBase {
     Q_OBJECT
 
 public:
-    OptionsDlg(PsiCon *, QWidget *parent = 0);
+    OptionsDlg(PsiCon *, QWidget *parent = nullptr);
+    void addPluginWrapperTab(OAH_PluginOptionsTab *tab);
 
+private slots:
+    void saveDialogSize();
 };
 
 #endif // OPTIONSDLG_H

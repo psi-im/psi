@@ -20,39 +20,36 @@
 #ifndef MAINWIN_H
 #define MAINWIN_H
 
+#include "advwidget.h"
+#include "iris/xmpp_status.h"
+
+#include <QList>
 #include <QMainWindow>
 #include <QMap>
-#include <QList>
 #include <QString>
 #include <QStringList>
 
-#include "advwidget.h"
-#include "xmpp_status.h"
-
-class QMenuBar;
+class ContactView;
+class GlobalStatusMenu;
+class IconAction;
+class PsiAccount;
+class PsiCon;
+class PsiIcon;
+class PsiToolBar;
+class PsiTrayIcon;
 class QAction;
+class QMenu;
+class QMenuBar;
+class QMimeData;
 class QPixmap;
 class QPoint;
-class QMenu;
-class QMimeData;
-
-class PsiCon;
-class PsiToolBar;
-class PsiAccount;
-class IconAction;
-class PsiIcon;
-class ContactView;
-class PsiTrayIcon;
-class GlobalStatusMenu;
 
 namespace XMPP {
-    class Status;
+class Status;
 }
-
 using namespace XMPP;
 
-class MainWin : public AdvancedWidget<QMainWindow>
-{
+class MainWin : public AdvancedWidget<QMainWindow> {
     Q_OBJECT
 public:
     MainWin(bool onTop, bool asTool, PsiCon *);
@@ -63,27 +60,31 @@ public:
     void setUseAvatarFrame(bool state);
     void reinitAutoHide();
 
-    void buildToolbars();
+    void         buildToolbars();
     PsiTrayIcon *psiTrayIcon();
 
     // evil stuff! remove ASAP!!
-    QStringList actionList;
-    QMap<QString, QAction*> actions;
+    QStringList              actionList;
+    QMap<QString, QAction *> actions;
 
     PsiCon *psiCon() const;
 
 protected:
     // reimplemented
-    bool eventFilter(QObject* o, QEvent* e);
+    bool eventFilter(QObject *o, QEvent *e);
     void resizeEvent(QResizeEvent *e);
     void closeEvent(QCloseEvent *);
     void changeEvent(QEvent *event);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     void enterEvent(QEvent *e);
-    void leaveEvent(QEvent *e);
-    void keyPressEvent(QKeyEvent *);
-    QMenuBar* mainMenuBar() const;
+#else
+    void enterEvent(QEnterEvent *e);
+#endif
+    void      leaveEvent(QEvent *e);
+    void      keyPressEvent(QKeyEvent *);
+    QMenuBar *mainMenuBar() const;
 #ifdef Q_OS_WIN
-    bool winEvent(MSG *, long *);
+    bool nativeEvent(const QByteArray &eventType, MSG *, long *);
 #endif
 
 signals:
@@ -94,7 +95,7 @@ signals:
     void closeProgram();
     void doOptions();
     void doToolbars();
-    void doManageAccounts();
+    void doAccounts();
     void doGroupChat();
     void doFileTransDlg();
     void accountInfo();
@@ -109,15 +110,13 @@ private slots:
 
     void setTrayToolTip();
 
-    void activatedStatusAction(int);
-
     void trayClicked(const QPoint &, int);
     void trayDoubleClicked();
     void trayShow();
     void trayHide();
+    void trayHideShow();
 
     void doRecvNextEvent();
-    void statusClicked(int);
     void try2tryCloseProgram();
     void tryCloseProgram();
 
@@ -125,19 +124,17 @@ private slots:
     void accountFeaturesChanged();
     void activatedAccOption(PsiAccount *, int);
 
-    void actReadmeActivated ();
-    void actOnlineWikiActivated ();
-    void actOnlineHomeActivated ();
-    void actOnlineForumActivated ();
+    void actReadmeActivated();
+    void actOnlineWikiActivated();
+    void actOnlineHomeActivated();
+    void actOnlineForumActivated();
     void actJoinPsiMUCActivated();
-    void actBugReportActivated ();
-    void actAboutActivated ();
-    void actAboutQtActivated ();
-    void actAboutPsiMediaActivated ();
-    void actPlaySoundsActivated (bool);
-    void actPublishTuneActivated (bool);
-    void actEnableGroupsActivated (bool);
-    void actTipActivated();
+    void actBugReportActivated();
+    void actAboutActivated();
+    void actAboutQtActivated();
+    void actPlaySoundsActivated(bool);
+    void actPublishTuneActivated(bool);
+    void actEnableGroupsActivated(bool);
     void actDiagQCAPluginActivated();
     void actDiagQCAKeyStoreActivated();
     void actChooseStatusActivated();
@@ -154,7 +151,7 @@ private slots:
     void searchTextEntered(QString const &text);
     void searchTextStarted(QString const &text);
 
-    void registerAction( IconAction * );
+    void registerAction(IconAction *);
     void splitterMoved();
 
     void doTrayToolTip(QObject *, QPoint);
@@ -164,10 +161,10 @@ private slots:
 
     void hideTimerTimeout();
 
-    void optionChanged(const QString&);
+    void optionChanged(const QString &);
 
 public slots:
-    void setWindowIcon(const QPixmap&);
+    void setWindowIcon(const QIcon &);
     void showNoFocus();
 
     void decorateButton(int);
@@ -178,10 +175,8 @@ public slots:
 
     void toggleVisible(bool fromTray = false);
 
-    void avcallConfig();
-
 private:
-    void buildGeneralMenu(QMenu *);
+    void    buildGeneralMenu(QMenu *);
     QString numEventsString(int) const;
 
     bool askQuit();
@@ -194,11 +189,15 @@ private:
 
     void buildStatusMenu(GlobalStatusMenu *statusMenu);
 
+#if defined(Q_OS_WIN) && QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    void updateWinTaskbar(bool enabled);
+#endif
+
 private:
     class Private;
     Private *d;
     friend class Private;
-    QList<PsiToolBar*> toolbars_;
+    QList<PsiToolBar *> toolbars_;
 };
 
-#endif
+#endif // MAINWIN_H

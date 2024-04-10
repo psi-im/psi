@@ -1,15 +1,39 @@
-cmake_minimum_required( VERSION 3.1.0 )
+cmake_minimum_required( VERSION 3.10.0 )
 
-find_program(ASTYLE_BIN astyle DOC "Path to astyle binary")
-if(ASTYLE_BIN)
+#Find clang-format binary
+find_program(CLF_BIN clang-format DOC "Path to clang-format binary")
+if(CLF_BIN)
+    #Obtain list of source files
+    file(GLOB_RECURSE SRC_LIST
+        *.c
+        *.cc
+        *.cpp
+        *.hpp
+        *.h
+        *.mm
+        ../qcm/*.qcm
+        ../plugins/*.cpp
+        ../plugins/*.h
+    )
+    foreach(src_file ${SRC_LIST})
+        #Exclude iris
+        if("${src_file}" MATCHES ".*/iris/.*")
+            list(REMOVE_ITEM SRC_LIST ${src_file})
+        endif()
+        #Exclude plugins if no ENABLE_PLUGINS flag enabled
+        if(NOT ENABLE_PLUGINS)
+            if("${src_file}" MATCHES ".*/plugins/.*")
+                list(REMOVE_ITEM SRC_LIST ${src_file})
+            endif()
+        endif()
+    endforeach()
     add_custom_target(fix-codestyle
-        COMMAND ${ASTYLE_BIN}
-        --options=${PROJECT_SOURCE_DIR}/psi.astylerc
-        --exclude=${PROJECT_SOURCE_DIR}/3rdparty
-        -R -Q
-        *.cpp *.h *.c
+        COMMAND ${CLF_BIN}
+        --verbose
+        -style=file
+        -i ${SRC_LIST}
         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-        COMMENT "Run astyle application to fix project codestyle"
+        COMMENT "Fix codestyle with clang-format"
         VERBATIM
     )
 endif()

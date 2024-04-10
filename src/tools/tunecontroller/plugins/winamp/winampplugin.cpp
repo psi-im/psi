@@ -18,15 +18,9 @@
  */
 
 #include "winampplugin.h"
+
 #include "moc_winampplugin.cpp"
 
+QString WinAmpPlugin::name() { return "WinAmp"; }
 
-QString WinAmpPlugin::name()
-{
-    return "WinAmp";
-}
-
-TuneController* WinAmpPlugin::createController()
-{
-    return new WinAmpTuneController();
-}
+TuneController *WinAmpPlugin::createController() { return new WinAmpTuneController(); }

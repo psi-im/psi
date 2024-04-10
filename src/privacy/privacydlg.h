@@ -20,24 +20,22 @@
 #ifndef PRIVACYDLG_H
 #define PRIVACYDLG_H
 
+#include "privacylistmodel.h"
+#include "ui_privacy.h"
+
 #include <QDialog>
 #include <QPointer>
 
-#include "ui_privacy.h"
-#include "privacylistmodel.h"
-
-class QWidget;
-class QString;
-class QStringList;
 class PrivacyManager;
+class QString;
+class QWidget;
 
-class PrivacyDlg : public QDialog
-{
+class PrivacyDlg : public QDialog {
     Q_OBJECT
 
 public:
-    PrivacyDlg(const QString&, PrivacyManager* manager, QWidget* parent = nullptr);
-    ~PrivacyDlg() { };
+    PrivacyDlg(const QString &, PrivacyManager *manager, QWidget *parent = nullptr);
+    ~PrivacyDlg() {};
 
 protected:
     void rememberSettings();
@@ -47,8 +45,8 @@ protected:
 protected slots:
     void setWidgetsEnabled(bool);
     void setEditRuleEnabled(bool);
-    void updateLists(const QString&, const QString&, const QStringList&);
-    void refreshList(const PrivacyList&);
+    void updateLists(const QString &, const QString &, const QStringList &);
+    void refreshList(const PrivacyList &);
     void active_selected(int);
     void default_selected(int);
     void list_selected(int i);
@@ -72,11 +70,11 @@ protected slots:
     void renameList();
 
 private:
-    Ui::Privacy ui_;
-    int previousActive_, previousDefault_, previousList_;
+    Ui::Privacy              ui_;
+    int                      previousActive_, previousDefault_, previousList_;
     QPointer<PrivacyManager> manager_;
-    PrivacyListModel model_;
-    bool newList_;
+    PrivacyListModel         model_;
+    bool                     newList_;
 };
 
-#endif
+#endif // PRIVACYDLG_H

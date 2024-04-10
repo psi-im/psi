@@ -260,10 +260,6 @@
     <successful-subscription type="bool">false</successful-subscription>
     <bounce-dock type="QString">forever</bounce-dock>
    </notifications>
-   <tip comment="Tip of the day options">
-    <number type="int" comment="The next tip to show">1</number>
-    <show type="bool" comment="Show the tip of the day upon startup">false</show>
-   </tip>
    <muc comment="Multi-User Chat options">
     <use-highlighting type="bool">true</use-highlighting>
     <size type="QSize" comment="Remembered window size">
@@ -540,21 +536,13 @@
           <key type="QString">gadugadu</key>
         </m0>
         <m1>
-          <iconset type="QString">crystal-icq.jisp</iconset>
-          <key type="QString">icq</key>
-        </m1>
-        <m2>
           <iconset type="QString">crystal-sms.jisp</iconset>
           <key type="QString">sms</key>
-        </m2>
-        <m3>
+        </m1>
+        <m2>
           <iconset type="QString">crystal-service.jisp</iconset>
           <key type="QString">transport</key>
-        </m3>
-        <m4>
-          <iconset type="QString">crystal-yahoo.jisp</iconset>
-          <key type="QString">yahoo</key>
-        </m4>
+        </m2>
    </service-status>
    <custom-status/>
    <status type="QString">default</status>

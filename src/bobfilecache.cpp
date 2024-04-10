@@ -1,6 +1,6 @@
 /*
  * bob.cpp - Bits of Binary server and manager
- * Copyright (C) 2010 Rion
+ * Copyright (C) 2010  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public
@@ -18,21 +18,21 @@
  */
 
 #include "bobfilecache.h"
+
 #include "applicationinfo.h"
 #include "filecache.h"
+
 #include <QApplication>
 
 using namespace XMPP;
 
-
-BoBFileCache::BoBFileCache()
-    : BoBCache(nullptr)
+BoBFileCache::BoBFileCache() : BoBCache(nullptr)
 {
     setParent(QApplication::instance());
     _fileCache = new FileCache(ApplicationInfo::bobDir(), this);
 }
 
-BoBFileCache* BoBFileCache::instance()
+BoBFileCache *BoBFileCache::instance()
 {
     if (!_instance) {
         _instance = new BoBFileCache;
@@ -44,15 +44,15 @@ void BoBFileCache::put(const BoBData &data)
 {
     QVariantMap md;
     md.insert(QLatin1String("type"), data.type());
-    _fileCache->append(data.cid(), data.data(), md, data.maxAge());
+    _fileCache->append(data.hash(), data.data(), md, data.maxAge());
 }
 
-BoBData BoBFileCache::get(const QString &cid)
+BoBData BoBFileCache::get(const Hash &h)
 {
-    FileCacheItem *item = _fileCache->get(cid);
-    BoBData bd;
+    FileCacheItem *item = _fileCache->get(h);
+    BoBData        bd;
     if (item) {
-        bd.setCid(item->id());
+        bd.setHash(h);
         bd.setData(item->data());
         bd.setMaxAge(item->maxAge());
         QVariantMap md = item->metadata();
@@ -61,4 +61,4 @@ BoBData BoBFileCache::get(const QString &cid)
     return bd;
 }
 
-BoBFileCache* BoBFileCache::_instance = nullptr;
+BoBFileCache *BoBFileCache::_instance = nullptr;

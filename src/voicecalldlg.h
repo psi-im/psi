@@ -17,30 +17,36 @@
  *
  */
 
-#ifndef VOICECALLDLG
-#define VOICECALLDLG
+#ifndef VOICECALLDLG_H
+#define VOICECALLDLG_H
+
+#include "iris/xmpp_jid.h"
+#include "ui_voicecall.h"
 
 #include <QDialog>
 
-#include "ui_voicecall.h"
-#include "xmpp_jid.h"
+class VoiceCaller;
 
 using namespace XMPP;
 
-class VoiceCaller;
-
-class VoiceCallDlg : public QDialog
-{
+class VoiceCallDlg : public QDialog {
     Q_OBJECT
 
 public:
     enum class CallStatus : char {
         Default,
-        Calling, Accepting, Rejecting, Terminating,
-        Accepted, Rejected, InProgress, Terminated, Incoming
+        Calling,
+        Accepting,
+        Rejecting,
+        Terminating,
+        Accepted,
+        Rejected,
+        InProgress,
+        Terminated,
+        Incoming
     };
 
-    VoiceCallDlg(const Jid&, VoiceCaller*);
+    VoiceCallDlg(const Jid &, VoiceCaller *);
 
 public slots:
     void incoming();
@@ -50,10 +56,10 @@ public slots:
     void accept_call();
     void reject_call();
 
-    void accepted(const Jid&);
-    void rejected(const Jid&);
-    void in_progress(const Jid&);
-    void terminated(const Jid&);
+    void accepted(const Jid &);
+    void rejected(const Jid &);
+    void in_progress(const Jid &);
+    void terminated(const Jid &);
 
 protected slots:
     void reject();
@@ -63,10 +69,10 @@ protected:
     void setStatus(CallStatus);
 
 private:
-    Jid jid_;
-    CallStatus status_;
-    VoiceCaller* voiceCaller_;
+    Jid           jid_;
+    CallStatus    status_;
+    VoiceCaller  *voiceCaller_;
     Ui::VoiceCall ui_;
 };
 
-#endif
+#endif // VOICECALLDLG_H

@@ -1,6 +1,6 @@
 /*
  * psithememanager.h - manages all themes in psi
- * Copyright (C) 2010 Rion (Sergey Ilinyh)
+ * Copyright (C) 2010  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,31 +20,26 @@
 #ifndef PSITHEMEMANAGER_H
 #define PSITHEMEMANAGER_H
 
-#include <QObject>
-
 #include "psithemeprovider.h"
 
-//class ChatViewTheme;
+#include <QObject>
+
+// class ChatViewTheme;
 
 class PsiThemeManager : public QObject {
     Q_OBJECT
 public:
-    static PsiThemeManager* instance();
-
-    void registerProvider(PsiThemeProvider *provider, bool required = false);
-    PsiThemeProvider *provider(const QString &type);
-    QList<PsiThemeProvider *> registeredProviders() const;
-    bool loadAll();
-
-private:
-    PsiThemeManager();
+    PsiThemeManager(QObject *parent);
     ~PsiThemeManager();
 
-    static PsiThemeManager* instance_;
+    void                      registerProvider(PsiThemeProvider *provider, bool required = false);
+    PsiThemeProvider         *unregisterProvider(const QString &type);
+    PsiThemeProvider         *provider(const QString &type);
+    QList<PsiThemeProvider *> registeredProviders() const;
+    bool                      loadAll();
 
     class Private;
     Private *d;
 };
 
-
-#endif
+#endif // PSITHEMEMANAGER_H

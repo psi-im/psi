@@ -9,7 +9,8 @@ set -x
 
 if [ "${TARGET}" = "linux64" ]
 then
-    ./tests/travis-ci/build-in-ubuntu.sh
+    ./linux/build-in-ubuntu.sh
+    cd builddir && sudo make install -j 1
 
     ls -alp /usr/bin/psi*
     ls -alp /usr/share/applications/psi*
@@ -21,26 +22,21 @@ then
     du -shc /usr/share/pixmaps/psi*
     du -shc /usr/share/psi*
 
-    if [ -d "./src/plugins/generic" ]
+    if [ -d "./plugins/generic" ]
     then
         ls -alp /usr/lib/psi*/plugins/*
         du -shc /usr/lib/psi*/plugins/*
     fi
-fi
-
-if [ "${TARGET}" = "macos64" ]
+elif [ "${TARGET}" = "macos64" ]
 then
-    export HOMEBREW="/usr/local"
     ./mac/build-using-homebrew.sh
 
     ls -alp ../Psi*.dmg
     du -shc ../Psi*.dmg
+elif [ "${TARGET}" = "windows64" ]
+then
+    ./win32/build-using-mxe.sh
+else
+    echo "Unknown target!"
+    exit 1
 fi
-
-
-
-
-
-
-
-

@@ -17,68 +17,51 @@
  *
  */
 
+#include "theme_p.h"
+
 #include <QDir>
 #include <QDirIterator>
 
-#include "theme_p.h"
-
 ThemePrivate::ThemePrivate(PsiThemeProvider *provider) :
-    provider(provider),
-    name(QObject::tr("Unnamed")),
-    caseInsensitiveFS(false)
+    provider(provider), name(QObject::tr("Unnamed")), caseInsensitiveFS(false)
 {
-
 }
 
-ThemePrivate::~ThemePrivate()
-{
+ThemePrivate::~ThemePrivate() { }
 
-}
+bool ThemePrivate::load() { return false; }
 
-bool ThemePrivate::load()
-{
-    return false;
-}
-
-bool ThemePrivate::load(std::function<void (bool)> loadCallback)
+bool ThemePrivate::load(std::function<void(bool)> loadCallback)
 {
     Q_UNUSED(loadCallback);
     return false;
 }
 
-bool ThemePrivate::hasPreview() const
-{
-    return false;
-}
+bool ThemePrivate::hasPreview() const { return false; }
 
-QWidget *ThemePrivate::previewWidget()
-{
-    return nullptr;
-}
+QWidget *ThemePrivate::previewWidget() { return nullptr; }
 
 QByteArray ThemePrivate::loadData(const QString &fileName, bool *loaded) const
 {
     return Theme::loadData(fileName, filepath, caseInsensitiveFS, loaded);
 }
 
-
 //=================================================
 // Reource Loader
 //=================================================
 
-class FSResourceLoader : public Theme::ResourceLoader
-{
+class FSResourceLoader : public Theme::ResourceLoader {
     QDir baseDir;
 
     // case insensetive file cache.
-    QHash<QString,QString> ciFSCache; // lower case to real path
-    bool caseInsensetive;
-public:
-    FSResourceLoader(const QDir &d, bool caseInsensetive) :
-        baseDir(d), caseInsensetive(caseInsensetive)
-    { }
+    QHash<QString, QString> ciFSCache; // lower case to real path
+    bool                    caseInsensetive;
 
-    QByteArray loadData(const QString &fileName) {
+public:
+    FSResourceLoader(const QDir &d, bool caseInsensetive) : baseDir(d), caseInsensetive(caseInsensetive) { }
+
+    QByteArray loadData(const QString &fileName)
+    {
         QFile file(baseDir.filePath(fileName));
         if (caseInsensetive && !file.exists()) {
             if (ciFSCache.isEmpty()) {
@@ -89,7 +72,7 @@ public:
                 file.setFileName(baseDir.filePath(realFN));
             }
         }
-        //qDebug("read data from %s", qPrintable(file.fileName()));
+        // qDebug("read data from %s", qPrintable(file.fileName()));
         if (!file.open(QIODevice::ReadOnly)) {
             qDebug("%s Failed to open: %s", __FUNCTION__, qPrintable(file.fileName()));
             return QByteArray();
@@ -100,7 +83,7 @@ public:
 
     void updateCiFsCache()
     {
-        int skip = baseDir.path().length() + 1;
+        int          skip = baseDir.path().length() + 1;
         QDirIterator di(baseDir.path(), QDir::Files, QDirIterator::Subdirectories);
         while (di.hasNext()) {
             QString real = di.next().mid(skip);
@@ -111,7 +94,7 @@ public:
     bool fileExists(const QString &fileName)
     {
         QString base = baseDir.path() + QLatin1Char('/');
-        if (QFileInfo(base + fileName).exists()) {
+        if (QFileInfo::exists(base + fileName)) {
             return true;
         }
         if (caseInsensetive) {
@@ -119,7 +102,7 @@ public:
                 updateCiFsCache();
             }
             QString realFN = ciFSCache.value(fileName.toLower());
-            if (!realFN.isEmpty() && QFileInfo(base + realFN).exists()) {
+            if (!realFN.isEmpty() && QFileInfo::exists(base + realFN)) {
                 return true;
             }
         }
@@ -128,22 +111,20 @@ public:
 };
 
 #ifdef Theme_ZIP
-class ZipResourceLoader : public Theme::ResourceLoader
-{
-    UnZip z;
+class ZipResourceLoader : public Theme::ResourceLoader {
+    UnZip   z;
     QString baseName;
+
 public:
-    ZipResourceLoader(UnZip &&z, const QString &baseName) :
-        z(std::move(z)), baseName(baseName)
-    { }
+    ZipResourceLoader(UnZip &&z, const QString &baseName) : z(std::move(z)), baseName(baseName) { }
 
     QByteArray loadData(const QString &fileName)
     {
-        QString n = baseName + QLatin1Char('/') + fileName;
+        QString    n = baseName + QLatin1Char('/') + fileName;
         QByteArray ba;
 
-        if ( !z.readFile(n, &ba) ) {
-            z.readFile(n.mid(baseName.count()), &ba);
+        if (!z.readFile(n, &ba)) {
+            z.readFile(n.mid(baseName.size()), &ba);
         }
 
         return ba;
@@ -156,7 +137,7 @@ public:
         if (z.fileExists(n)) {
             return true;
         }
-        return z.fileExists(n.mid(baseName.count()));
+        return z.fileExists(n.mid(baseName.size()));
     }
 };
 #endif
@@ -164,7 +145,7 @@ public:
 Theme::ResourceLoader *ThemePrivate::resourceLoader() const
 {
     QFileInfo fi(filepath);
-    if ( fi.isDir() ) {
+    if (fi.isDir()) {
         if (fi.isReadable()) {
             return new FSResourceLoader(QDir(fi.filePath()), caseInsensitiveFS);
         }
@@ -182,5 +163,3 @@ Theme::ResourceLoader *ThemePrivate::resourceLoader() const
 #endif
     return nullptr;
 }
-
-

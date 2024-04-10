@@ -1,7 +1,6 @@
 /*
  * mucreasonseditor.cpp
- * Copyright (C)
- * 2011 Evgeny Khryukin
+ * Copyright (C) 2011  Evgeny Khryukin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,29 +23,28 @@
 #include <QDialog>
 
 namespace Ui {
-    class MUCReasonsEditor;
+class MUCReasonsEditor;
 }
 
-class MUCReasonsEditor: public QDialog
-{
+class MUCReasonsEditor : public QDialog {
     Q_OBJECT
 public:
-    MUCReasonsEditor(QWidget* parent = 0);
+    MUCReasonsEditor(QWidget *parent = nullptr);
     ~MUCReasonsEditor();
     QString reason() const { return reason_; }
 
 private:
     Ui::MUCReasonsEditor *ui_;
-    QString reason_;
+    QString               reason_;
 
 private slots:
     void addButtonClicked();
     void removeButtonClicked();
     void save();
-    void currentChanged(const QString&);
+    void currentChanged(const QString &);
 
 protected slots:
     void accept();
 };
 
-#endif
+#endif // MUCREASONSEDITOR_H

@@ -152,7 +152,6 @@ FILE_PATTERNS          = *.c \
 RECURSIVE              = YES
 EXCLUDE                = _darcs/ \
                          third-party/ \
-                         iris/libidn/ \
                          iris/irisnet/ \
                          iris/irisnet/jdns \
                          iris/example \

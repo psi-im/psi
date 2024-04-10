@@ -128,7 +128,7 @@
      </property>
      <item>
       <widget class="QCheckBox" name="ck_toolbarOn">
-       <property name="whatsThis">
+       <property name="toolTip">
         <string>Specifies, whether toolbar is enabled and visible.</string>
        </property>
        <property name="text">
@@ -138,7 +138,7 @@
      </item>
      <item>
       <widget class="QCheckBox" name="ck_toolbarLocked">
-       <property name="whatsThis">
+       <property name="toolTip">
         <string/>
        </property>
        <property name="text">

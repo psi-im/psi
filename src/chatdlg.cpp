@@ -19,104 +19,95 @@
 
 #include "chatdlg.h"
 
-#include <QLabel>
-#include <QCursor>
-#include <QLineEdit>
-#include <QToolButton>
-#include <QLayout>
-#include <QSplitter>
-#include <QToolBar>
-#include <QTimer>
-#include <QDateTime>
-#include <QPixmap>
-#include <QColor>
-#include <Qt>
-#include <QCloseEvent>
-#include <QList>
-#include <QKeyEvent>
-#include <QHBoxLayout>
-#include <QDropEvent>
-#include <QList>
-#include <QMessageBox>
-#include <QShowEvent>
-#include <QVBoxLayout>
-#include <QContextMenuEvent>
-#include <QResizeEvent>
-#include <QMenu>
-#include <QDragEnterEvent>
-#include <QTextDocument> // for TextUtil::escape()
-#include <QScrollBar>
-#include <QMimeData>
-
-#include "psiaccount.h"
-#include "userlist.h"
-#include "stretchwidget.h"
-#include "psiiconset.h"
-#include "iconwidget.h"
-#include "textutil.h"
-#include "xmpp_message.h"
-#include "xmpp_caps.h"
-#include "xmpp_htmlelement.h"
-#include "xmpp_forwarding.h"
-#include "fancylabel.h"
-#include "msgmle.h"
-#include "iconselect.h"
-#include "pgputil.h"
-#include "psicon.h"
-#include "iconlabel.h"
-#include "iconaction.h"
-#include "avatars.h"
-#include "jidutil.h"
-#include "tabdlg.h"
-#include "psioptions.h"
-#include "psitooltip.h"
-#include "shortcutmanager.h"
-#include "psicontactlist.h"
 #include "accountlabel.h"
-#include "psirichtext.h"
+#include "avatars.h"
 #include "chatview.h"
 #include "eventdb.h"
+#include "fancylabel.h"
+#include "filesharedlg.h"
+#include "filesharingmanager.h"
+#include "iconaction.h"
+#include "iconlabel.h"
+#include "iconselect.h"
+#include "jidutil.h"
+#include "msgmle.h"
+#include "pgputil.h"
+#ifdef PSI_PLUGINS
+#include "pluginmanager.h"
+#endif
+#include "iris/xmpp_caps.h"
+#include "iris/xmpp_forwarding.h"
+#include "iris/xmpp_htmlelement.h"
+#include "iris/xmpp_message.h"
+#include "psiaccount.h"
+#include "psichatdlg.h"
+#include "psicon.h"
+#include "psicontactlist.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "psirichtext.h"
+#include "shortcutmanager.h"
+#include "tabdlg.h"
+#include "textutil.h"
+#include "userlist.h"
 
+#include <QCloseEvent>
+#include <QColor>
+#include <QContextMenuEvent>
+#include <QCursor>
+#include <QDateTime>
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QHBoxLayout>
+#include <QKeyEvent>
+#include <QLabel>
+#include <QLayout>
+#include <QLineEdit>
+#include <QList>
+#include <QMenu>
+#include <QMessageBox>
+#include <QMimeData>
+#include <QPixmap>
+#include <QResizeEvent>
+#include <QScrollBar>
+#include <QShowEvent>
+#include <QSplitter>
+#include <QTextDocument> // for TextUtil::escape()
+#include <QTimer>
+#include <QToolBar>
+#include <QToolButton>
+#include <QVBoxLayout>
+#include <Qt>
 #ifdef Q_OS_WIN
 #include <windows.h>
 #endif
 
-#ifdef PSI_PLUGINS
-#include "pluginmanager.h"
-#endif
-
-#include "psichatdlg.h"
-
 static const QString geometryOption = "options.ui.chat.size";
 
-ChatDlg* ChatDlg::create(const Jid& jid, PsiAccount* account, TabManager* tabManager)
+ChatDlg *ChatDlg::create(const Jid &jid, PsiAccount *account, TabManager *tabManager)
 {
-    ChatDlg* chat = new PsiChatDlg(jid, account, tabManager);
+    ChatDlg *chat = new PsiChatDlg(jid, account, tabManager);
     chat->init();
     return chat;
 }
 
-ChatDlg::ChatDlg(const Jid& jid, PsiAccount* pa, TabManager* tabManager)
-    : TabbableWidget(jid, pa, tabManager)
-    , highlightersInstalled_(false)
-    , delayedMessages(nullptr)
+ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa, TabManager *tabManager) :
+    TabbableWidget(jid, pa, tabManager), highlightersInstalled_(false), delayedMessages(nullptr)
 {
-    pending_ = 0;
-    keepOpen_ = false;
-    warnSend_ = false;
-    selfDestruct_ = nullptr;
-    transid_ = -1;
-    key_ = "";
+    pending_          = 0;
+    keepOpen_         = false;
+    warnSend_         = false;
+    transid_          = -1;
+    key_              = "";
     lastWasEncrypted_ = false;
-    trackBar_ = false;
+    trackBar_         = false;
 
     status_ = -1;
 
     if (!pa->findGCContact(jid) || ((pa->edb()->features() & EDB::PrivateContacts) != 0)) {
         historyState = false;
         preloadHistory();
-    }
-    else
+    } else
         historyState = true;
 
     autoSelectContact_ = false;
@@ -129,13 +120,14 @@ ChatDlg::ChatDlg(const Jid& jid, PsiAccount* pa, TabManager* tabManager)
 
     // Message events
     contactChatState_ = XMPP::StateNone;
-    if ((PsiOptions::instance()->getOption("options.messages.send-composing-events-at-start").toBool()) && (account()->client()->capsManager()->features(jid).hasChatState())) {
+    if ((PsiOptions::instance()->getOption("options.messages.send-composing-events-at-start").toBool())
+        && (account()->client()->capsManager()->features(jid).hasChatState())) {
         contactChatState_ = XMPP::StateActive;
     }
-    lastChatState_ = XMPP::StateNone;
+    lastChatState_       = XMPP::StateNone;
     sendComposingEvents_ = false;
-    isComposing_ = false;
-    composingTimer_ = nullptr;
+    isComposing_         = false;
+    composingTimer_      = nullptr;
     updateRealJid();
 }
 
@@ -148,14 +140,16 @@ void ChatDlg::init()
     chatEdit()->installEventFilter(this);
     chatView()->setDialog(this);
     bool isPrivate = account()->groupchats().contains(jid().bare());
-    chatView()->setSessionData(false, isPrivate, jid(), jid().full()); //FIXME fix nick updating
+    chatView()->setSessionData(false, isPrivate, jid(), jid().full()); // FIXME fix nick updating
 #ifdef WEBKIT
     chatView()->setAccount(account());
+#else
+    chatView()->setMediaOpener(account()->fileSharingDeviceOpener());
 #endif
     chatView()->init();
 
     // seems its useless hack
-    //connect(chatView(), SIGNAL(selectionChanged()), SLOT(logSelectionChanged())); //
+    // connect(chatView(), SIGNAL(selectionChanged()), SLOT(logSelectionChanged())); //
 
     // SyntaxHighlighters modify the QTextEdit in a QTimer::singleShot(0, ...) call
     // so we need to install our hooks after it fired for the first time
@@ -168,10 +162,11 @@ void ChatDlg::init()
     X11WM_CLASS("chat");
     setLooks();
 
-    updatePGP();
+    updatePgp();
 
-    connect(account(), SIGNAL(pgpKeyChanged()), SLOT(updatePGP()));
-    connect(account(), SIGNAL(encryptedMessageSent(int, bool, int, const QString &)), SLOT(encryptedMessageSent(int, bool, int, const QString &)));
+    connect(account(), SIGNAL(pgpKeyChanged()), SLOT(updatePgp()));
+    connect(account(), SIGNAL(encryptedMessageSent(int, bool, int, const QString &)),
+            SLOT(encryptedMessageSent(int, bool, int, const QString &)));
     account()->dialogRegister(this, jid());
 
     chatView()->setFocusPolicy(Qt::NoFocus);
@@ -187,7 +182,7 @@ ChatDlg::~ChatDlg()
 void ChatDlg::initComposing()
 {
     highlightersInstalled_ = true;
-    chatEditCreated();
+    initHighlighters();
 }
 
 void ChatDlg::doTrackBar()
@@ -227,10 +222,10 @@ void ChatDlg::setShortcuts()
     act_scrolldown_->setShortcuts(ShortcutManager::instance()->shortcuts("common.scroll-down"));
     act_hide_->setShortcuts(ShortcutManager::instance()->shortcuts("common.hide"));
 
-    if(!isTabbed()) {
+    if (!isTabbed()) {
         act_close_->setShortcuts(ShortcutManager::instance()->shortcuts("common.close"));
     } else {
-        act_close_->QAction::setShortcuts (QList<QKeySequence>());
+        act_close_->QAction::setShortcuts(QList<QKeySequence>());
     }
 }
 
@@ -238,8 +233,7 @@ void ChatDlg::closeEvent(QCloseEvent *e)
 {
     if (readyToHide()) {
         e->accept();
-    }
-    else {
+    } else {
         e->ignore();
     }
 }
@@ -257,11 +251,9 @@ bool ChatDlg::readyToHide()
     }
 
     if (keepOpen_) {
-        QMessageBox mb(QMessageBox::Information,
-            tr("Warning"),
-            tr("A new chat message was just received.\nDo you still want to close the window?"),
-            QMessageBox::Cancel,
-            this);
+        QMessageBox mb(QMessageBox::Information, tr("Warning"),
+                       tr("A new chat message was just received.\nDo you still want to close the window?"),
+                       QMessageBox::Cancel, this);
         mb.addButton(tr("Close"), QMessageBox::AcceptRole);
         if (mb.exec() == QMessageBox::Cancel) {
             return false;
@@ -269,19 +261,7 @@ bool ChatDlg::readyToHide()
     }
     keepOpen_ = false; // tabdlg calls readyToHide twice on tabdlg close, only display message once.
 
-    // destroy the dialog if delChats is dcClose
-    QString del = PsiOptions::instance()->getOption("options.ui.chat.delete-contents-after").toString();
-    if (del == "instant") {
-        setAttribute(Qt::WA_DeleteOnClose);
-    }
-    else {
-        if (del == "hour") {
-            setSelfDestruct(60);
-        }
-        else if (del == "day") {
-            setSelfDestruct(60 * 24);
-        }
-    }
+    setAttribute(Qt::WA_DeleteOnClose);
 
     // Reset 'contact is composing' & cancel own composing event
     resetComposing();
@@ -292,7 +272,7 @@ bool ChatDlg::readyToHide()
 
     if (pending_ > 0) {
         pending_ = 0;
-        messagesRead(jid());
+        emit messagesRead(jid());
         invalidateTab();
     }
     doFlash(false);
@@ -301,18 +281,16 @@ bool ChatDlg::readyToHide()
     return true;
 }
 
-void ChatDlg::capsChanged(const Jid& j)
+void ChatDlg::capsChanged(const Jid &j)
 {
     if (jid().compare(j, false)) {
         capsChanged();
     }
 }
 
-void ChatDlg::capsChanged()
-{
-}
+void ChatDlg::capsChanged() { }
 
-void ChatDlg::hideEvent(QHideEvent* e)
+void ChatDlg::hideEvent(QHideEvent *e)
 {
     if (isMinimized()) {
         resetComposing();
@@ -323,7 +301,7 @@ void ChatDlg::hideEvent(QHideEvent* e)
 
 void ChatDlg::showEvent(QShowEvent *)
 {
-    setSelfDestruct(0);
+    //
 }
 
 void ChatDlg::logSelectionChanged()
@@ -355,7 +333,7 @@ void ChatDlg::activated()
 
     if (pending_ > 0) {
         pending_ = 0;
-        messagesRead(jid());
+        emit messagesRead(jid());
         invalidateTab();
     }
     doFlash(false);
@@ -367,28 +345,20 @@ void ChatDlg::activated()
     setChatState(XMPP::StateActive);
 }
 
-void ChatDlg::dropEvent(QDropEvent* event)
+void ChatDlg::dropEvent(QDropEvent *event)
 {
-    QStringList files;
-    if (account()->loggedIn() && event->mimeData()->hasUrls()) {
-        foreach(QUrl url, event->mimeData()->urls()) {
-            if (!url.toLocalFile().isEmpty()) {
-                files << url.toLocalFile();
-            }
-        }
-    }
-
-    if (!files.isEmpty()) {
-        account()->sendFiles(jid(), files);
-    }
+    FileShareDlg::shareFiles(
+        account(), jid(), event->mimeData(),
+        [this](const QList<XMPP::Reference> &&rl, const QString &desc) { doFileShare(std::move(rl), desc); }, this);
 }
 
-void ChatDlg::dragEnterEvent(QDragEnterEvent* event)
+void ChatDlg::dragEnterEvent(QDragEnterEvent *event)
 {
     Q_ASSERT(event);
-    //bool accept = false;
+    // bool accept = false;
     if (account()->loggedIn() && event->mimeData()->hasUrls()) {
-        foreach(QUrl url, event->mimeData()->urls()) {
+        const auto &urls = event->mimeData()->urls();
+        for (const QUrl &url : urls) {
             if (!url.toLocalFile().isEmpty()) {
                 event->accept();
                 break;
@@ -408,12 +378,9 @@ void ChatDlg::setJid(const Jid &j)
     }
 }
 
-const QString& ChatDlg::getDisplayName() const
-{
-    return dispNick_;
-}
+const QString &ChatDlg::getDisplayName() const { return dispNick_; }
 
-UserStatus ChatDlg::userStatusFor(const Jid& jid, QList<UserListItem*> ul, bool forceEmptyResource)
+UserStatus ChatDlg::userStatusFor(const Jid &jid, QList<UserListItem *> ul, bool forceEmptyResource)
 {
     if (ul.isEmpty())
         return UserStatus();
@@ -425,25 +392,24 @@ UserStatus ChatDlg::userStatusFor(const Jid& jid, QList<UserListItem*> ul, bool 
         // use priority
         if (u.userListItem->isAvailable()) {
             const UserResource &r = *u.userListItem->userResourceList().priority();
-            u.statusType = r.status().type();
-            u.status = r.status().status();
-            u.priority = r.status().priority();
-            u.publicKeyID = r.publicKeyID();
+            u.statusType          = r.status().type();
+            u.status              = r.status().status();
+            u.priority            = r.status().priority();
+            u.publicKeyID         = r.publicKeyID();
         }
-    }
-    else {
+    } else {
         // use specific
         UserResourceList::ConstIterator rit = u.userListItem->userResourceList().find(jid.resource());
-        if (rit != u.userListItem->userResourceList().end()) {
-            u.statusType = (*rit).status().type();
-            u.status = (*rit).status().status();
-            u.priority = (*rit).status().priority();
+        if (rit != u.userListItem->userResourceList().constEnd()) {
+            u.statusType  = (*rit).status().type();
+            u.status      = (*rit).status().status();
+            u.priority    = (*rit).status().priority();
             u.publicKeyID = (*rit).publicKeyID();
         }
     }
 
     if (u.statusType == XMPP::Status::Offline) {
-        u.status = u.userListItem->lastUnavailableStatus().status();
+        u.status   = u.userListItem->lastUnavailableStatus().status();
         u.priority = 0;
     }
 
@@ -452,7 +418,7 @@ UserStatus ChatDlg::userStatusFor(const Jid& jid, QList<UserListItem*> ul, bool 
 
 void ChatDlg::preloadHistory()
 {
-    int cnt =PsiOptions::instance()->getOption("options.ui.chat.history.preload-history-size").toInt();
+    int cnt = PsiOptions::instance()->getOption("options.ui.chat.history.preload-history-size").toInt();
     if (cnt > 0) {
         holdMessages(true);
         if (cnt > 100) // This is limit, just in case.
@@ -473,11 +439,11 @@ void ChatDlg::getHistory()
     if (!h)
         return;
 
-    historyState = true;
+    historyState       = true;
     const EDBResult &r = h->result();
     for (int i = r.count() - 1; i >= 0; --i) {
         const EDBItemPtr &item = r.at(i);
-        PsiEvent::Ptr e = item->event();
+        PsiEvent::Ptr     e    = item->event();
         if (e->type() == PsiEvent::Message) {
             MessageEvent::Ptr me = e.staticCast<MessageEvent>();
             appendMessage(me->message(), me->originLocal());
@@ -491,17 +457,17 @@ void ChatDlg::ensureTabbedCorrectly()
 {
     TabbableWidget::ensureTabbedCorrectly();
     setShortcuts();
-    QList<UserListItem*> ul = account()->findRelevant(jid());
-    UserStatus userStatus = userStatusFor(jid(), ul, false);
+    QList<UserListItem *> ul         = account()->findRelevant(jid());
+    UserStatus            userStatus = userStatusFor(jid(), ul, false);
     setTabIcon(PsiIconset::instance()->statusPtr(jid(), userStatus.statusType)->icon());
-    if(!isTabbed() && geometryOptionPath().isEmpty()) {
+    if (!isTabbed() && geometryOptionPath().isEmpty()) {
         setGeometryOptionPath(geometryOption);
     }
 }
 
 void ChatDlg::updateContact(const Jid &j, bool fromPresence)
 {
-    if (account()->groupchats().contains(j.full()))
+    if ((j.resource().isEmpty() || j.resource() == QLatin1String("Muc")) && account()->groupchats().contains(j.bare()))
         return;
     // if groupchat, only update if the resource matches
     if (account()->findGCContact(j) && !jid().compare(j)) {
@@ -509,7 +475,7 @@ void ChatDlg::updateContact(const Jid &j, bool fromPresence)
     }
 
     if (jid().compare(j, false)) {
-        QList<UserListItem*> ul = account()->findRelevant(j);
+        QList<UserListItem *> ul = account()->findRelevant(j);
         if (ul.isEmpty()) {
             qWarning("Trying to update not existing contact");
             return;
@@ -527,12 +493,13 @@ void ChatDlg::updateContact(const Jid &j, bool fromPresence)
             contactChatState_ = XMPP::StateNone;
 
         bool statusWithPriority = PsiOptions::instance()->getOption("options.ui.chat.status-with-priority").toBool();
-        bool statusChanged = false;
-        if (jidSwitched || status_ != userStatus.statusType || statusString_ != userStatus.status || (statusWithPriority && priority_ != userStatus.priority)) {
+        bool statusChanged      = false;
+        if (jidSwitched || status_ != userStatus.statusType || statusString_ != userStatus.status
+            || (statusWithPriority && priority_ != userStatus.priority)) {
             statusChanged = true;
-            status_ = userStatus.statusType;
+            status_       = userStatus.statusType;
             statusString_ = userStatus.status;
-            priority_ = userStatus.priority;
+            priority_     = userStatus.priority;
         }
 
         contactUpdated(userStatus.userListItem, userStatus.statusType, userStatus.status);
@@ -543,14 +510,11 @@ void ChatDlg::updateContact(const Jid &j, bool fromPresence)
             invalidateTab();
 
             key_ = userStatus.publicKeyID;
-            updatePGP();
+            updatePgp();
 
-            if (PsiOptions::instance()->getOption("options.ui.chat.show-status-changes").toBool()
-                && fromPresence && statusChanged)
-            {
-                dispatchMessage(MessageView::statusMessage(
-                                                dispNick_, status_,
-                                                statusString_, priority_));
+            if (PsiOptions::instance()->getOption("options.ui.chat.show-status-changes").toBool() && fromPresence
+                && statusChanged) {
+                dispatchMessage(MessageView::statusMessage(dispNick_, status_, statusString_, priority_));
             }
         }
 
@@ -566,26 +530,23 @@ void ChatDlg::updateContact(const Jid &j, bool fromPresence)
     }
 }
 
-void ChatDlg::updateJidWidget(const QList<UserListItem*> &ul, int status, bool fromPresence)
+void ChatDlg::updateJidWidget(const QList<UserListItem *> &ul, int status, bool fromPresence)
 {
     Q_UNUSED(ul);
     Q_UNUSED(status);
     Q_UNUSED(fromPresence);
 }
 
-void ChatDlg::contactUpdated(UserListItem* u, int status, const QString& statusString)
+void ChatDlg::contactUpdated(UserListItem *u, int status, const QString &statusString)
 {
     Q_UNUSED(u);
     Q_UNUSED(status);
     Q_UNUSED(statusString);
 }
 
-void ChatDlg::doVoice()
-{
-    aVoice(jid());
-}
+void ChatDlg::doVoice() { emit aVoice(jid()); }
 
-void ChatDlg::updateAvatar(const Jid& j)
+void ChatDlg::updateAvatar(const Jid &j)
 {
     if (j.compare(jid(), false)) {
         updateAvatar();
@@ -617,7 +578,8 @@ void ChatDlg::setLooks()
     chatView()->setPaper(brush);
     chatView()->setStaticBackground(true);*/
 
-    setWindowOpacity(double(qMax(MINIMUM_OPACITY, PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt())) / 100);
+    setWindowOpacity(double(qMax(MINIMUM_OPACITY, PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt()))
+                     / 100);
 }
 
 void ChatDlg::optionsUpdate()
@@ -626,66 +588,20 @@ void ChatDlg::optionsUpdate()
     setShortcuts();
 
     if (!isTabbed() && isHidden()) {
-        QString del = PsiOptions::instance()->getOption("options.ui.chat.delete-contents-after").toString();
-        if (del == "instant") {
-            deleteLater();
-            return;
-        }
-        else {
-            if (del == "hour") {
-                setSelfDestruct(60);
-            }
-            else if (del == "day") {
-                setSelfDestruct(60 * 24);
-            }
-            else {
-                setSelfDestruct(0);
-            }
-        }
-    }
-}
-
-void ChatDlg::updatePGP()
-{
-}
-
-void ChatDlg::doInfo()
-{
-    aInfo(jid());
-}
-
-void ChatDlg::doHistory()
-{
-    aHistory(jid());
-}
-
-void ChatDlg::doFile()
-{
-    aFile(jid());
-}
-
-void ChatDlg::doClear()
-{
-    chatView()->clear();
-}
-
-void ChatDlg::setSelfDestruct(int minutes)
-{
-    if (minutes <= 0) {
-        if (selfDestruct_) {
-            delete selfDestruct_;
-            selfDestruct_ = nullptr;
-        }
+        deleteLater();
         return;
     }
-
-    if (!selfDestruct_) {
-        selfDestruct_ = new QTimer(this);
-        connect(selfDestruct_, SIGNAL(timeout()), SLOT(deleteLater()));
-    }
-
-    selfDestruct_->start(minutes * 60000);
 }
+
+void ChatDlg::updatePgp() { }
+
+void ChatDlg::doInfo() { emit aInfo(jid()); }
+
+void ChatDlg::doHistory() { emit aHistory(jid()); }
+
+void ChatDlg::doFile() { emit aFile(jid()); }
+
+void ChatDlg::doClear() { chatView()->clear(); }
 
 QString ChatDlg::desiredCaption() const
 {
@@ -701,32 +617,28 @@ QString ChatDlg::desiredCaption() const
 
     if (contactChatState_ == XMPP::StateComposing) {
         cap = tr("%1 (Composing ...)").arg(cap);
-    }
-    else if (contactChatState_ == XMPP::StateInactive || contactChatState_ == XMPP::StateGone) {
+    } else if (contactChatState_ == XMPP::StateInactive || contactChatState_ == XMPP::StateGone) {
         cap = tr("%1 (Inactive)").arg(cap);
     }
 
     return cap;
 }
 
-void ChatDlg::invalidateTab()
-{
-    TabbableWidget::invalidateTab();
-}
+void ChatDlg::invalidateTab() { TabbableWidget::invalidateTab(); }
 
-void ChatDlg::updateRealJid()
-{
-    realJid_ = account()->realJid(jid());
-}
+void ChatDlg::updateRealJid() { realJid_ = account()->realJid(jid()); }
 
-Jid ChatDlg::realJid() const
-{
-    return realJid_;
-}
+Jid ChatDlg::realJid() const { return realJid_; }
 
-bool ChatDlg::isEncryptionEnabled() const
+bool ChatDlg::isPgpEncryptionEnabled() const { return false; }
+
+void ChatDlg::doFileShare(const QList<Reference> &&references, const QString &desc)
 {
-    return false;
+    fileShareReferences_ = std::move(references);
+    fileShareDesc_       = desc;
+    ChatDlg::doSend(); // FIXME PsiChatDlg does some weird things, so direct call
+    fileShareReferences_.clear();
+    fileShareDesc_ = QString();
 }
 
 void ChatDlg::doSend()
@@ -735,14 +647,14 @@ void ChatDlg::doSend()
         return;
     }
 
-    if (chatEdit()->toPlainText().isEmpty()) {
+    if (chatEdit()->toPlainText().isEmpty() && !fileShareReferences_.count()) {
         return;
     }
 
     if (chatEdit()->toPlainText() == "/clear") {
         chatEdit()->clear();
         doClear();
-        QString line1,line2;
+        QString line1, line2;
         MiniCommand_Depreciation_Message("/clear", "clear", line1, line2);
         appendSysMsg(line1);
         appendSysMsg(line2);
@@ -755,10 +667,10 @@ void ChatDlg::doSend()
 
     if (warnSend_) {
         warnSend_ = false;
-        int n = QMessageBox::information(this, tr("Warning"), tr(
-                "<p>Encryption was recently disabled by the remote contact.  "
-                "Are you sure you want to send this message without encryption?</p>"
-                ), tr("&Yes"), tr("&No"));
+        int n     = QMessageBox::information(this, tr("Warning"),
+                                             tr("<p>Encryption was recently disabled by the remote contact.  "
+                                                    "Are you sure you want to send this message without encryption?</p>"),
+                                             QMessageBox::Yes | QMessageBox::No);
         if (n != 0) {
             return;
         }
@@ -766,15 +678,21 @@ void ChatDlg::doSend()
 
     Message m(jid());
     m.setType("chat");
-    m.setBody(chatEdit()->toPlainText());
     m.setTimeStamp(QDateTime::currentDateTime());
-    if (isEncryptionEnabled()) {
+    if (isPgpEncryptionEnabled()) {
         m.setWasEncrypted(true);
+        m.setEncryptionProtocol("Legacy OpenPGP");
     }
 
-    HTMLElement html = chatEdit()->toHTMLElement();
-    if(!html.body().isNull())
-        m.setHTML(html);
+    if (fileShareReferences_.count()) {
+        m.setReferences(fileShareReferences_);
+        m.setBody(fileShareDesc_);
+    } else {
+        m.setBody(chatEdit()->toPlainText());
+        HTMLElement html = chatEdit()->toHTMLElement();
+        if (!html.body().isNull())
+            m.setHTML(html);
+    }
 
     QString id = account()->client()->genUniqueId();
     m.setId(id); // we need id early for message manipulations in chatview
@@ -783,21 +701,21 @@ void ChatDlg::doSend()
     }
     chatEdit()->setLastMessageId(id);
     chatEdit()->resetCorrection();
-    //xep-0184 Message Receipts
+    // xep-0184 Message Receipts
     if (PsiOptions::instance()->getOption("options.ui.notifications.request-receipts").toBool()) {
         QStringList sl;
-        sl<<"urn:xmpp:receipts";
-        //FIXME uncomment next lines when all bugs will be fixed
-        //if (!jid().resource().isEmpty() || (account()->capsManager()->isEnabled() &&
+        sl << "urn:xmpp:receipts";
+        // FIXME uncomment next lines when all bugs will be fixed
+        // if (!jid().resource().isEmpty() || (account()->capsManager()->isEnabled() &&
         //    account()->capsManager()->features(jid()).test(sl))) {
-        if (true) {
-            m.setMessageReceipt(ReceiptRequest);
-            //rememberPosition(id);
-        }
+        // if (true) {
+        m.setMessageReceipt(ReceiptRequest);
+        // rememberPosition(id);
+        //}
     }
 
     m_ = m;
-    emit chatEdit()->appendMessageHistory(m.body());
+    chatEdit()->appendMessageHistory(m.body());
 
     // Request events
     if (PsiOptions::instance()->getOption("options.messages.send-composing-events").toBool()) {
@@ -811,17 +729,16 @@ void ChatDlg::doSend()
     // Update current state
     setChatState(XMPP::StateActive);
 
-    if (isEncryptionEnabled()) {
+    if (isPgpEncryptionEnabled()) {
         chatEdit()->setEnabled(false);
-        transid_ = account()->sendMessageEncrypted(m);
+        transid_ = account()->sendPgpEncryptedMessage(m);
         if (transid_ == -1) {
             chatEdit()->setEnabled(true);
             chatEdit()->setFocus();
             return;
         }
-    }
-    else {
-        aSend(m_);
+    } else {
+        emit aSend(m_);
         doneSend();
     }
 
@@ -843,15 +760,15 @@ void ChatDlg::doneSend()
 
 void ChatDlg::encryptedMessageSent(int x, bool b, int e, const QString &dtext)
 {
+    Q_UNUSED(e);
     if (transid_ == -1 || transid_ != x) {
         return;
     }
     transid_ = -1;
     if (b) {
         doneSend();
-    }
-    else {
-        PGPUtil::showDiagnosticText(static_cast<QCA::SecureMessage::Error>(e), dtext);
+    } else {
+        PGPUtil::showDiagnosticText(dtext, dtext);
     }
     chatEdit()->setEnabled(true);
     chatEdit()->setFocus();
@@ -859,14 +776,13 @@ void ChatDlg::encryptedMessageSent(int x, bool b, int e, const QString &dtext)
 
 void ChatDlg::incomingMessage(const Message &m)
 {
-    Message dm = m.displayMessage();
+    Message dm   = m.displayMessage();
     historyState = false;
     if (dm.body().isEmpty() && dm.subject().isEmpty() && dm.urlList().isEmpty()) {
         // Event message
         if (dm.containsEvent(CancelEvent)) {
             setContactChatState(XMPP::StatePaused);
-        }
-        else if (dm.containsEvent(ComposingEvent)) {
+        } else if (dm.containsEvent(ComposingEvent)) {
             setContactChatState(XMPP::StateComposing);
         }
 
@@ -876,8 +792,7 @@ void ChatDlg::incomingMessage(const Message &m)
         if (dm.messageReceipt() == ReceiptReceived) {
             chatView()->markReceived(dm.messageReceiptId());
         }
-    }
-    else {
+    } else {
         // Normal message
         // Check if user requests event messages
         sendComposingEvents_ = dm.containsEvent(ComposingEvent);
@@ -886,18 +801,14 @@ void ChatDlg::incomingMessage(const Message &m)
         }
         if (dm.containsEvents() || dm.chatState() != XMPP::StateNone) {
             setContactChatState(XMPP::StateActive);
-        }
-        else {
+        } else {
             setContactChatState(XMPP::StateNone);
         }
         appendMessage(m, m.forwarded().type() == Forwarding::ForwardedCarbonsSent);
     }
 }
 
-void ChatDlg::setPGPEnabled(bool enabled)
-{
-    Q_UNUSED(enabled);
-}
+void ChatDlg::setPgpEnabled(bool enabled) { Q_UNUSED(enabled); }
 
 QString ChatDlg::whoNick(bool local) const
 {
@@ -905,8 +816,7 @@ QString ChatDlg::whoNick(bool local) const
 
     if (local) {
         result = account()->nick();
-    }
-    else {
+    } else {
         result = dispNick_;
     }
 
@@ -916,7 +826,7 @@ QString ChatDlg::whoNick(bool local) const
 void ChatDlg::appendMessage(const Message &m, bool local)
 {
     Message dm = m.displayMessage();
-    if(trackBar_)
+    if (trackBar_)
         doTrackBar();
 
     // figure out the encryption state
@@ -927,21 +837,26 @@ void ChatDlg::appendMessage(const Message &m, bool local)
             encChanged = true;
         }
         lastWasEncrypted_ = dm.wasEncrypted();
-        encEnabled = lastWasEncrypted_;
+        encEnabled        = lastWasEncrypted_;
     }
 
     if (encChanged) {
-        dispatchMessage(MessageView::fromHtml(
-                encEnabled? QString("<icon name=\"psi/cryptoYes\"> ") + tr("Encryption Enabled"):
-                            QString("<icon name=\"psi/cryptoNo\"> ") + tr("Encryption Disabled"),
-                MessageView::System
-        ));
+        chatView()->setEncryptionEnabled(encEnabled);
+        QString msg = QString("<icon name=\"psi/cryptoNo\"> ") + tr("Encryption is disabled");
+        if (encEnabled) {
+            if (!m.encryptionProtocol().isEmpty()) {
+                msg = QString("<icon name=\"psi/cryptoYes\"> ")
+                    + tr("%1 encryption is enabled").arg(m.encryptionProtocol());
+            } else {
+                msg = QString("<icon name=\"psi/cryptoYes\"> ") + tr("Encryption is enabled");
+            }
+        }
+        dispatchMessage(MessageView::fromHtml(msg, MessageView::System));
         if (!local) {
-            setPGPEnabled(encEnabled && account()->hasPGP());
             if (!encEnabled) {
                 // enable warning
                 warnSend_ = true;
-                QTimer::singleShot(3000, this, [this](){warnSend_ = false;});
+                QTimer::singleShot(3000, this, [this]() { warnSend_ = false; });
             }
         }
     }
@@ -954,23 +869,23 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 
     MessageView mv(MessageView::Message);
 
-    QString body = dm.body();
+    QString     body     = dm.body();
     HTMLElement htmlElem = dm.html();
-    //if (m.forwarded().type() == Forwarding::ForwardedMessage) {
-    //    TODO
-    //}
+    // if (m.forwarded().type() == Forwarding::ForwardedMessage) {
+    //     TODO
+    // }
 
 #ifdef PSI_PLUGINS
     QDomElement html = htmlElem.body();
 
     PluginManager::instance()->appendingChatMessage(account(), jid().full(), body, html, local);
 
-    if(!html.isNull())
+    if (!html.isNull())
         htmlElem.setBody(html);
 #endif
 
     if (PsiOptions::instance()->getOption("options.html.chat.render").toBool() && !htmlElem.body().isNull()
-            && !htmlElem.body().firstChild().isNull()) {
+        && !htmlElem.body().firstChild().isNull()) {
         mv.setHtml(htmlElem.toString("span"));
     } else {
         mv.setPlainText(body);
@@ -978,17 +893,20 @@ void ChatDlg::appendMessage(const Message &m, bool local)
     mv.setMessageId(dm.id());
     mv.setLocal(local);
     mv.setNick(whoNick(local));
-    mv.setUserId(local?account()->jid().full():jid().full()); // theoretically, this can be inferred from the chat dialog properties
+    mv.setUserId(local ? account()->jid().full()
+                       : jid().full()); // theoretically, this can be inferred from the chat dialog properties
     mv.setDateTime(dm.timeStamp());
     mv.setSpooled(historyState);
     mv.setAwaitingReceipt(local && dm.messageReceipt() == ReceiptRequest);
     mv.setReplaceId(dm.replaceId());
+    account()->psi()->fileSharingManager()->fillMessageView(mv, dm, account());
+
     dispatchMessage(mv);
 
     if (!dm.urlList().isEmpty()) {
-        UrlList urls = dm.urlList();
-        QMap<QString,QString> urlsMap;
-        foreach (const Url &u, urls) {
+        UrlList                urls = dm.urlList();
+        QMap<QString, QString> urlsMap;
+        for (const Url &u : urls) {
             urlsMap.insert(u.url(), u.desc());
         }
         // Some XMPP clients send links to HTTP uploaded files both in body and in jabber:x:oob.
@@ -1007,13 +925,12 @@ void ChatDlg::holdMessages(bool hold)
     if (hold) {
         if (!delayedMessages)
             delayedMessages = new QList<MessageView>();
-    }
-    else if (delayedMessages) {
-        foreach (const MessageView &mv, *delayedMessages) {
-             if (mv.isSpooled())
-                 displayMessage(mv);
+    } else if (delayedMessages) {
+        for (const MessageView &mv : std::as_const(*delayedMessages)) {
+            if (mv.isSpooled())
+                displayMessage(mv);
         }
-        foreach (const MessageView &mv, *delayedMessages) {
+        for (const MessageView &mv : std::as_const(*delayedMessages)) {
             if (!mv.isSpooled())
                 displayMessage(mv);
         }
@@ -1036,7 +953,8 @@ void ChatDlg::displayMessage(const MessageView &mv)
 
     // if we're not active, notify the user by changing the title
     MessageView::Type type = mv.type();
-    if (type != MessageView::System && type != MessageView::Status && !mv.isSpooled() && !isActiveTab() && !mv.isLocal()) {
+    if (type != MessageView::System && type != MessageView::Status && !mv.isSpooled() && !isActiveTab()
+        && !mv.isLocal()) {
         ++pending_;
         invalidateTab();
         if (PsiOptions::instance()->getOption("options.ui.flash-windows").toBool()) {
@@ -1044,56 +962,56 @@ void ChatDlg::displayMessage(const MessageView &mv)
         }
         if (PsiOptions::instance()->getOption("options.ui.chat.raise-chat-windows-on-new-messages").toBool()) {
             if (isTabbed()) {
-                TabDlg* tabSet = getManagingTabDlg();
-                if (PsiOptions::instance()->getOption("options.ui.chat.switch-tab-on-new-messages").toBool() || !tabSet->isActiveWindow())
+                TabDlg *tabSet = getManagingTabDlg();
+                if (PsiOptions::instance()->getOption("options.ui.chat.switch-tab-on-new-messages").toBool()
+                    || !tabSet->isActiveWindow())
                     tabSet->selectTab(this);
                 ::bringToFront(tabSet, false);
-            }
-            else {
+            } else {
                 ::bringToFront(this, false);
             }
         }
     }
-    //else {
+    // else {
     //    messagesRead(jid());
     //}
 
     if (!mv.isLocal()) {
         keepOpen_ = true;
-        QTimer::singleShot(1000, this, [this](){keepOpen_ = false;});
+        QTimer::singleShot(1000, this, [this]() { keepOpen_ = false; });
     }
 }
 
-void ChatDlg::updateIsComposing(bool b)
-{
-    setChatState(b ? XMPP::StateComposing : XMPP::StatePaused);
-}
+void ChatDlg::updateIsComposing(bool b) { setChatState(b ? XMPP::StateComposing : XMPP::StatePaused); }
 
 void ChatDlg::setChatState(ChatState state)
 {
-    if (PsiOptions::instance()->getOption("options.messages.send-composing-events").toBool() && (sendComposingEvents_ || (contactChatState_ != XMPP::StateNone))) {
+    if (PsiOptions::instance()->getOption("options.messages.send-composing-events").toBool()
+        && (sendComposingEvents_ || (contactChatState_ != XMPP::StateNone))) {
         // Don't send to offline resource
-        QList<UserListItem*> ul = account()->findRelevant(jid());
+        QList<UserListItem *> ul = account()->findRelevant(jid());
         if (ul.isEmpty()) {
             sendComposingEvents_ = false;
-            lastChatState_ = XMPP::StateNone;
+            lastChatState_       = XMPP::StateNone;
             return;
         }
 
         UserListItem *u = ul.first();
         if (!u->isAvailable()) {
             sendComposingEvents_ = false;
-            lastChatState_ = XMPP::StateNone;
+            lastChatState_       = XMPP::StateNone;
             return;
         }
 
         // Transform to more privacy-enabled chat states if necessary
-        if (!PsiOptions::instance()->getOption("options.messages.send-inactivity-events").toBool() && (state == XMPP::StateGone || state == XMPP::StateInactive)) {
+        if (!PsiOptions::instance()->getOption("options.messages.send-inactivity-events").toBool()
+            && (state == XMPP::StateGone || state == XMPP::StateInactive)) {
             state = XMPP::StatePaused;
         }
 
-        if (lastChatState_ == XMPP::StateNone && (state != XMPP::StateActive && state != XMPP::StateComposing && state != XMPP::StateGone)) {
-            //this isn't a valid transition, so don't send it, and don't update laststate
+        if (lastChatState_ == XMPP::StateNone
+            && (state != XMPP::StateActive && state != XMPP::StateComposing && state != XMPP::StateGone)) {
+            // this isn't a valid transition, so don't send it, and don't update laststate
             return;
         }
 
@@ -1109,25 +1027,25 @@ void ChatDlg::setChatState(ChatState state)
         }
 
         // Build event message
-        if( !PsiOptions::instance()->getOption("options.messages.dont-send-composing-events").toBool() ) {
+        if (!PsiOptions::instance()->getOption("options.messages.dont-send-composing-events").toBool()) {
             Message m(jid());
             if (sendComposingEvents_) {
                 m.setEventId(eventId_);
                 if (state == XMPP::StateComposing) {
                     m.addEvent(ComposingEvent);
-                }
-                else if (lastChatState_ == XMPP::StateComposing) {
+                } else if (lastChatState_ == XMPP::StateComposing) {
                     m.addEvent(CancelEvent);
                 }
             }
             if (contactChatState_ != XMPP::StateNone) {
-                if ( (state == XMPP::StateInactive && lastChatState_ == XMPP::StateComposing) || (state == XMPP::StateComposing && lastChatState_ == XMPP::StateInactive)) {
+                if ((state == XMPP::StateInactive && lastChatState_ == XMPP::StateComposing)
+                    || (state == XMPP::StateComposing && lastChatState_ == XMPP::StateInactive)) {
                     // First go to the paused state
                     Message tm(jid());
                     m.setType("chat");
                     m.setChatState(XMPP::StatePaused);
                     if (account()->isAvailable()) {
-                            account()->dj_sendMessage(m, false);
+                        account()->dj_sendMessage(m, false);
                     }
                 }
                 m.setChatState(state);
@@ -1161,7 +1079,7 @@ void ChatDlg::setContactChatState(ChatState state)
 bool ChatDlg::eventFilter(QObject *obj, QEvent *event)
 {
     if (event->type() == QEvent::KeyPress) {
-        keyPressEvent(static_cast<QKeyEvent*>(event));
+        keyPressEvent(static_cast<QKeyEvent *>(event));
         if (event->isAccepted())
             return true;
     }
@@ -1214,20 +1132,19 @@ void ChatDlg::resetComposing()
     if (composingTimer_) {
         delete composingTimer_;
         composingTimer_ = nullptr;
-        isComposing_ = false;
+        isComposing_    = false;
     }
 }
 
-PsiAccount* ChatDlg::account() const
-{
-    return TabbableWidget::account();
-}
+PsiAccount *ChatDlg::account() const { return TabbableWidget::account(); }
 
 void ChatDlg::setInputText(const QString &text)
 {
     // chatEdit()->setPlainText(text); because undo/redo history is reset when the function been called.
     chatEdit()->selectAll();
+    chatEdit()->document()->blockSignals(true); // to disable things like auto-capitalizer
     chatEdit()->insertPlainText(text);
+    chatEdit()->document()->blockSignals(false);
 
     chatEdit()->moveCursor(QTextCursor::End);
 }
@@ -1237,29 +1154,32 @@ void ChatDlg::nicksChanged()
     // this function is intended to be reimplemented in subclasses
 }
 
-void ChatDlg::chatEditCreated()
+void ChatDlg::initHighlighters()
 {
-    chatEdit()->setDialog(this);
-
     if (highlightersInstalled_) {
         connect(chatEdit(), SIGNAL(textChanged()), this, SLOT(setComposing()));
     }
 }
 
+void ChatDlg::chatEditCreated()
+{
+    chatEdit()->setDialog(this);
+    initHighlighters();
+}
+
 TabbableWidget::State ChatDlg::state() const
 {
+    if (unreadMessageCount())
+        return TabbableWidget::State::Highlighted;
     switch (contactChatState_) {
-        case XMPP::StateComposing:
-            return TabbableWidget::State::Composing;
-        case XMPP::StateInactive:
-        case XMPP::StateGone:
-            return TabbableWidget::State::Inactive;
-        default:
-            return TabbableWidget::State::None;
+    case XMPP::StateComposing:
+        return TabbableWidget::State::Composing;
+    case XMPP::StateInactive:
+    case XMPP::StateGone:
+        return TabbableWidget::State::Inactive;
+    default:
+        return TabbableWidget::State::None;
     }
 }
 
-int ChatDlg::unreadMessageCount() const
-{
-    return pending_;
-}
+int ChatDlg::unreadMessageCount() const { return pending_; }

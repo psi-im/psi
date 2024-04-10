@@ -1,6 +1,6 @@
 /*
  * statusdlg.cpp - dialogs for setting and reading status messages
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,42 +19,41 @@
 
 #include "statusdlg.h"
 
-#include <QPushButton>
-#include <QMessageBox>
-#include <QLayout>
-#include <QLabel>
-#include <QComboBox>
-#include <QInputDialog>
-#include <QCheckBox>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QKeyEvent>
-
-#include "jidutil.h"
-#include "psicon.h"
-#include "psioptions.h"
-#include "psiiconset.h"
-#include "psiaccount.h"
-#include "userlist.h"
 #include "common.h"
-#include "psitextview.h"
+#include "jidutil.h"
 #include "msgmle.h"
-#include "statuspreset.h"
-#include "statuscombobox.h"
-#include "shortcutmanager.h"
 #include "priorityvalidator.h"
+#include "psiaccount.h"
+#include "psicon.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "psitextview.h"
+#include "shortcutmanager.h"
+#include "statuscombobox.h"
+#include "statuspreset.h"
+#include "userlist.h"
+
+#include <QCheckBox>
+#include <QComboBox>
+#include <QHBoxLayout>
+#include <QInputDialog>
+#include <QKeyEvent>
+#include <QLabel>
+#include <QLayout>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QVBoxLayout>
 
 //----------------------------------------------------------------------------
 // StatusShowDlg
 // FIXME: Will no longer be needed once it is out of the groupchat contactview
 //----------------------------------------------------------------------------
-StatusShowDlg::StatusShowDlg(const UserListItem &u)
-    : QDialog(nullptr)
+StatusShowDlg::StatusShowDlg(const UserListItem &u) : QDialog(nullptr)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     // build the dialog
     QVBoxLayout *vb = new QVBoxLayout(this);
-    vb->setMargin(8);
+    vb->setContentsMargins(8, 8, 8, 8);
     PsiTextView *te = new PsiTextView(this);
     vb->addWidget(te);
     QHBoxLayout *hb = new QHBoxLayout;
@@ -72,44 +71,41 @@ StatusShowDlg::StatusShowDlg(const UserListItem &u)
 
     setWindowTitle(tr("Status for %1").arg(JIDUtil::nickOrJid(u.name(), u.jid().full())));
     setWindowIcon(IconsetFactory::icon("psi/action_direct_presence").icon());
-    resize(400,240);
+    resize(400, 240);
 
     pb->setFocus();
 }
-
 
 //----------------------------------------------------------------------------
 // StatusSetDlg
 //----------------------------------------------------------------------------
 
-class StatusSetDlg::Private
-{
+class StatusSetDlg::Private {
 public:
     Private() = default;
 
-    PsiCon *psi = nullptr;
-    PsiAccount *pa = nullptr;
-    Status s;
-    bool withPriority = false;
-    ChatEdit *te = nullptr;
-    StatusComboBox *cb_type = nullptr;
-    QComboBox *cb_preset = nullptr;
-    QLineEdit *le_priority = nullptr;
-    QCheckBox *save = nullptr;
-    Jid j;
+    PsiCon          *psi = nullptr;
+    PsiAccount      *pa  = nullptr;
+    Status           s;
+    bool             withPriority = false;
+    ChatEdit        *te           = nullptr;
+    StatusComboBox  *cb_type      = nullptr;
+    QComboBox       *cb_preset    = nullptr;
+    QLineEdit       *le_priority  = nullptr;
+    QCheckBox       *save         = nullptr;
+    Jid              j;
     QList<XMPP::Jid> jl;
-    setStatusEnum setStatusMode;
+    setStatusEnum    setStatusMode;
 };
 
-StatusSetDlg::StatusSetDlg(PsiCon *psi, const Status &s, bool withPriority)
-    : QDialog(nullptr)
+StatusSetDlg::StatusSetDlg(PsiCon *psi, const Status &s, bool withPriority) : QDialog(nullptr)
 {
     setAttribute(Qt::WA_DeleteOnClose);
-    d = new Private;
+    d      = new Private;
     d->psi = psi;
-    d->pa = nullptr;
+    d->pa  = nullptr;
     d->psi->dialogRegister(this);
-    d->s = s;
+    d->s            = s;
     d->withPriority = withPriority;
 
     setWindowTitle(CAP(tr("Set Status: All accounts")));
@@ -118,15 +114,14 @@ StatusSetDlg::StatusSetDlg(PsiCon *psi, const Status &s, bool withPriority)
     init();
 }
 
-StatusSetDlg::StatusSetDlg(PsiAccount *pa, const Status &s, bool withPriority)
-    : QDialog(nullptr)
+StatusSetDlg::StatusSetDlg(PsiAccount *pa, const Status &s, bool withPriority) : QDialog(nullptr)
 {
     setAttribute(Qt::WA_DeleteOnClose);
-    d = new Private;
+    d      = new Private;
     d->psi = nullptr;
-    d->pa = pa;
+    d->pa  = pa;
     d->pa->dialogRegister(this);
-    d->s = s;
+    d->s            = s;
     d->withPriority = withPriority;
 
     setWindowTitle(CAP(tr("Set Status: %1").arg(d->pa->name())));
@@ -155,7 +150,7 @@ void StatusSetDlg::init()
 
     // build the dialog
     QVBoxLayout *vb = new QVBoxLayout(this);
-    vb->setMargin(8);
+    vb->setContentsMargins(8, 8, 8, 8);
     QHBoxLayout *hb1 = new QHBoxLayout;
     vb->addLayout(hb1);
 
@@ -164,23 +159,24 @@ void StatusSetDlg::init()
     l = new QLabel(tr("Status:"), this);
     hb1->addWidget(l);
     d->cb_type = new StatusComboBox(this, static_cast<XMPP::Status::Type>(type));
-    hb1->addWidget(d->cb_type,3);
+    hb1->addWidget(d->cb_type, 3);
 
     // Priority
     l = new QLabel(tr("Priority:"), this);
     hb1->addWidget(l);
     d->le_priority = new QLineEdit(this);
     d->le_priority->setMinimumWidth(30);
-    PriorityValidator* prValidator = new PriorityValidator(d->le_priority);
+    PriorityValidator *prValidator = new PriorityValidator(d->le_priority);
     d->le_priority->setValidator(prValidator);
-    hb1->addWidget(d->le_priority,1);
+    hb1->addWidget(d->le_priority, 1);
 
     // Status preset
     l = new QLabel(tr("Preset:"), this);
     hb1->addWidget(l);
     d->cb_preset = new QComboBox(this);
     d->cb_preset->addItem(tr("<None>"));
-    foreach(QVariant name, PsiOptions::instance()->mapKeyList("options.status.presets", true)) {
+    const auto &names = PsiOptions::instance()->mapKeyList("options.status.presets", true);
+    for (const QVariant &name : names) {
         StatusPreset sp;
         sp.fromOptions(PsiOptions::instance(), name.toString());
         sp.filterStatus();
@@ -189,10 +185,9 @@ void StatusSetDlg::init()
 #else
         d->cb_preset->addItem(PsiIconset::instance()->status(sp.status()).icon(), sp.name());
 #endif
-
     }
     connect(d->cb_preset, SIGNAL(currentIndexChanged(int)), SLOT(chooseStatusPreset(int)));
-    hb1->addWidget(d->cb_preset,3);
+    hb1->addWidget(d->cb_preset, 3);
 
     d->te = new ChatEdit(this);
     d->te->setAcceptRichText(false);
@@ -202,7 +197,7 @@ void StatusSetDlg::init()
     vb->addLayout(hb);
     QPushButton *pb1 = new QPushButton(tr("&Set"), this);
     QPushButton *pb2 = new QPushButton(tr("&Cancel"), this);
-    d->save = new QCheckBox(this);
+    d->save          = new QCheckBox(this);
     d->save->setText(tr("Sa&ve as Preset"));
     d->save->setChecked(false);
     hb->addWidget(pb1);
@@ -225,14 +220,14 @@ void StatusSetDlg::init()
     ShortcutManager::connect("common.close", this, SLOT(close()));
     ShortcutManager::connect("status.set", this, SLOT(doButton()));
 
-    resize(400,240);
+    resize(400, 240);
 }
 
 StatusSetDlg::~StatusSetDlg()
 {
-    if(d->psi)
+    if (d->psi)
         d->psi->dialogUnregister(this);
-    else if(d->pa)
+    else if (d->pa)
         d->pa->dialogUnregister(this);
     delete d;
 }
@@ -245,72 +240,67 @@ void StatusSetDlg::doButton()
     // Save preset
     if (d->save->isChecked()) {
         QString text;
-        while(1) {
+        while (1) {
             // Get preset
             bool ok = false;
-            text = QInputDialog::getText(this,
-                CAP(tr("New Status Preset")),
-                    tr("Please enter a name for the new status preset:"),
-                    QLineEdit::Normal, text, &ok);
+            text    = QInputDialog::getText(this, CAP(tr("New Status Preset")),
+                                            tr("Please enter a name for the new status preset:"), QLineEdit::Normal, text,
+                                            &ok);
             if (!ok)
                 return;
 
             // Check preset name
             if (text.isEmpty()) {
-                QMessageBox::information(this, tr("Error"),
-                    tr("Can't create a blank preset!"));
-            }
-            else if(PsiOptions::instance()->mapKeyList("options.status.presets").contains(text)) {
-                QMessageBox::information(this, tr("Error"),
-                    tr("You already have a preset with that name!"));
-            }
-            else
+                QMessageBox::information(this, tr("Error"), tr("Can't create a blank preset!"));
+            } else if (PsiOptions::instance()->mapKeyList("options.status.presets").contains(text)) {
+                QMessageBox::information(this, tr("Error"), tr("You already have a preset with that name!"));
+            } else
                 break;
         }
         // Store preset
         StatusPreset sp(text, d->te->toPlainText(), XMPP::Status(d->cb_type->status()).type());
-         if (!d->le_priority->text().isEmpty()) {
+        if (!d->le_priority->text().isEmpty()) {
             sp.setPriority(d->le_priority->text().toInt());
         }
 
         sp.toOptions(PsiOptions::instance());
         PsiOptions::instance()->mapPut("options.status.presets", text);
 
-        //PsiCon will emit signal to refresh presets in all status menus
+        // PsiCon will emit signal to refresh presets in all status menus
         (d->psi ? d->psi : d->pa->psi())->updateStatusPresets();
     }
 
     // Set status
-    int type = d->cb_type->status();
-    QString str = d->te->toPlainText();
+    int     type = d->cb_type->status();
+    QString str  = d->te->toPlainText();
 
     PsiOptions::instance()->setOption("options.status.last-priority", d->le_priority->text());
     PsiOptions::instance()->setOption("options.status.last-message", str);
     PsiOptions::instance()->setOption("options.status.last-status", XMPP::Status(d->cb_type->status()).typeString());
 
     if (d->le_priority->text().isEmpty())
-        switch(d->setStatusMode) {
-            case setStatusForAccount:
-                emit set(makeStatus(type,str), false, true);
-                break;
-            case setStatusForJid:
-                emit setJid(d->j, makeStatus(type,str));
-                break;
-            case setStatusForJidList:
-                emit setJidList(d->jl, makeStatus(type,str));
-                break;
+        switch (d->setStatusMode) {
+        case setStatusForAccount:
+            emit set(makeStatus(type, str), false, true);
+            break;
+        case setStatusForJid:
+            emit setJid(d->j, makeStatus(type, str));
+            break;
+        case setStatusForJidList:
+            emit setJidList(d->jl, makeStatus(type, str));
+            break;
         }
     else {
-        switch(d->setStatusMode) {
-            case setStatusForAccount:
-                emit set(makeStatus(type,str, d->le_priority->text().toInt()), true, true);
-                break;
-            case setStatusForJid:
-                emit setJid(d->j, makeStatus(type,str, d->le_priority->text().toInt()));
-                break;
-            case setStatusForJidList:
-                emit setJidList(d->jl, makeStatus(type,str, d->le_priority->text().toInt()));
-                break;
+        switch (d->setStatusMode) {
+        case setStatusForAccount:
+            emit set(makeStatus(type, str, d->le_priority->text().toInt()), true, true);
+            break;
+        case setStatusForJid:
+            emit setJid(d->j, makeStatus(type, str, d->le_priority->text().toInt()));
+            break;
+        case setStatusForJidList:
+            emit setJidList(d->jl, makeStatus(type, str, d->le_priority->text().toInt()));
+            break;
         }
     }
     close();
@@ -318,19 +308,19 @@ void StatusSetDlg::doButton()
 
 void StatusSetDlg::chooseStatusPreset(int x)
 {
-    if(x < 1)
+    if (x < 1)
         return;
 
-    QString base = PsiOptions::instance()->mapLookup("options.status.presets", d->cb_preset->itemText(x));
-    d->te->setPlainText(PsiOptions::instance()->getOption(base+".message").toString());
-    if (PsiOptions::instance()->getOption(base+".force-priority").toBool()) {
-        d->le_priority->setText(QString::number(PsiOptions::instance()->getOption(base+".priority").toInt()));
+    QString base = *PsiOptions::instance()->mapLookup("options.status.presets", d->cb_preset->itemText(x));
+    d->te->setPlainText(PsiOptions::instance()->getOption(base + ".message").toString());
+    if (PsiOptions::instance()->getOption(base + ".force-priority").toBool()) {
+        d->le_priority->setText(QString::number(PsiOptions::instance()->getOption(base + ".priority").toInt()));
     } else {
         d->le_priority->clear();
     }
 
     XMPP::Status status;
-    status.setType(PsiOptions::instance()->getOption(base+".status").toString());
+    status.setType(PsiOptions::instance()->getOption(base + ".status").toString());
     d->cb_type->setStatus(status.type());
 }
 

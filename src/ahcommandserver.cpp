@@ -18,20 +18,13 @@
  */
 
 #include "ahcommandserver.h"
+
 #include "ahcservermanager.h"
 
 // --------------------------------------------------------------------------
 // AHCommandServer: The server-side implementation of an Ad-hoc command.
 // --------------------------------------------------------------------------
 
-AHCommandServer::AHCommandServer(AHCServerManager* manager) : manager_(manager)
-{
-    manager_->addServer(this);
-}
+AHCommandServer::AHCommandServer(AHCServerManager *manager) : manager_(manager) { manager_->addServer(this); }
 
-AHCommandServer::~AHCommandServer()
-{
-    manager_->removeServer(this);
-}
-
-
+AHCommandServer::~AHCommandServer() { manager_->removeServer(this); }

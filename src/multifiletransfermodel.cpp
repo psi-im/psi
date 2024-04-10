@@ -1,6 +1,6 @@
 /*
  * multifiletransfermodel.cpp - model for file transfers
- * Copyright (C) 2019 Sergey Ilinykh
+ * Copyright (C) 2019  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,24 +18,27 @@
  */
 
 #include "multifiletransfermodel.h"
+
 #include "multifiletransferitem.h"
 
-#include <QElapsedTimer>
 #include <QDateTime>
+#include <QElapsedTimer>
 #include <QIcon>
 
 // ----------------------------------------------------------------
 // MultiFileTransferModel
 // ----------------------------------------------------------------
-MultiFileTransferModel::MultiFileTransferModel(QObject *parent) :
-    QAbstractListModel(parent)
+MultiFileTransferModel::MultiFileTransferModel(QObject *parent) : QAbstractListModel(parent)
 {
     updateTimer.setSingleShot(true);
-    connect(&updateTimer, &QTimer::timeout, this, [this](){
+    updateTimer.setInterval(1000);
+    connect(&updateTimer, &QTimer::timeout, this, [this]() {
         auto s = updatedTransfers;
         updatedTransfers.clear();
-        for (const auto &v: s) {
-            int row = transfers.indexOf(v); // what about thousands of active transfers? probably we can build a map from trasfers
+        for (const auto &v : s) {
+            v->updateStats();
+            int row = transfers.indexOf(
+                v); // what about thousands of active transfers? probably we can build a map from trasfers
             if (row >= 0) {
                 auto ind = index(row, 0, QModelIndex());
                 emit dataChanged(ind, ind);
@@ -44,10 +47,7 @@ MultiFileTransferModel::MultiFileTransferModel(QObject *parent) :
     });
 }
 
-MultiFileTransferModel::~MultiFileTransferModel()
-{
-
-}
+MultiFileTransferModel::~MultiFileTransferModel() { }
 
 Qt::ItemFlags MultiFileTransferModel::flags(const QModelIndex &index) const
 {
@@ -59,7 +59,7 @@ Qt::ItemFlags MultiFileTransferModel::flags(const QModelIndex &index) const
 
 int MultiFileTransferModel::rowCount(const QModelIndex &parent) const
 {
-    return parent.isValid()? 0 : transfers.size() + 1; // only for root it's valid
+    return parent.isValid() ? 0 : (transfers.size() + (addEnabled ? 1 : 0)); // only for root it's valid
 }
 
 QVariant MultiFileTransferModel::data(const QModelIndex &index, int role) const
@@ -141,40 +141,39 @@ bool MultiFileTransferModel::setData(const QModelIndex &index, const QVariant &v
 QModelIndex MultiFileTransferModel::index(int row, int column, const QModelIndex &parent) const
 {
     // copied from parent but added internal pointer
-    return hasIndex(row, column, parent) ?
-                createIndex(row, column, row == transfers.size()? nullptr : transfers[row]) :
-                QModelIndex();
+    return hasIndex(row, column, parent) ? createIndex(row, column, row == transfers.size() ? nullptr : transfers[row])
+                                         : QModelIndex();
 }
 
 QHash<int, QByteArray> MultiFileTransferModel::roleNames() const
 {
-    return QHash<int, QByteArray>{
-        {Qt::DisplayRole,    "display"},
-        {Qt::DecorationRole, "decoration"},
-        {Qt::ToolTipRole,    "toolTip"},
-        {FullSizeRole,       "fullSize"},
-        {CurrentSizeRole,    "currentSize"},
-        {SpeedRole,          "speed"},
-        {DescriptionRole,    "description"},
-        {DirectionRole,      "direction"},
-        {StateRole,          "stateRole"},
-        {TimeRemainingRole,  "timeRemaining"},
-        {ErrorStringRole,    "errorString"},
+    return QHash<int, QByteArray> {
+        { Qt::DisplayRole, "display" },         { Qt::DecorationRole, "decoration" }, { Qt::ToolTipRole, "toolTip" },
+        { FullSizeRole, "fullSize" },           { CurrentSizeRole, "currentSize" },   { SpeedRole, "speed" },
+        { DescriptionRole, "description" },     { DirectionRole, "direction" },       { StateRole, "stateRole" },
+        { TimeRemainingRole, "timeRemaining" }, { ErrorStringRole, "errorString" },
     };
 }
 
-MultiFileTransferItem* MultiFileTransferModel::addTransfer(Direction direction,
-                                                           const QString &displayName, quint64 fullSize)
+void MultiFileTransferModel::clear()
+{
+    beginResetModel();
+    qDeleteAll(transfers);
+    endResetModel();
+}
+
+MultiFileTransferItem *MultiFileTransferModel::addTransfer(Direction direction, const QString &displayName,
+                                                           quint64 fullSize)
 {
     beginInsertRows(QModelIndex(), transfers.size(), transfers.size());
-    auto t = new MultiFileTransferItem(direction, displayName, fullSize);
-    connect(t, &MultiFileTransferItem::updated, this, [this, t](){
+    auto t = new MultiFileTransferItem(direction, displayName, fullSize, this);
+    connect(t, &MultiFileTransferItem::updated, this, [this, t]() {
         updatedTransfers.insert(t);
         if (!updateTimer.isActive()) {
             updateTimer.start();
         }
     });
-    connect(t, &MultiFileTransferItem::aboutToBeDeleted, this, [this,t](){
+    connect(t, &MultiFileTransferItem::aboutToBeDeleted, this, [this, t]() {
         auto i = transfers.indexOf(t);
         if (i >= 0) {
             beginRemoveRows(QModelIndex(), i, i);
@@ -187,3 +186,30 @@ MultiFileTransferItem* MultiFileTransferModel::addTransfer(Direction direction,
     endInsertRows();
     return t;
 }
+
+void MultiFileTransferModel::forEachTransfer(const std::function<void(MultiFileTransferItem *)> cb) const
+{
+    for (auto &t : transfers) {
+        cb(t);
+    }
+}
+
+void MultiFileTransferModel::setAddEnabled(bool enabled)
+{
+    if (addEnabled == enabled) {
+        return;
+    }
+    if (enabled) {
+        beginInsertRows(QModelIndex(), transfers.size(), transfers.size());
+    } else {
+        beginRemoveRows(QModelIndex(), transfers.size(), transfers.size());
+    }
+    addEnabled = enabled;
+    if (enabled) { // wasn't enabled. now enabled. +1 row
+        endInsertRows();
+    } else {
+        endRemoveRows();
+    }
+}
+
+bool MultiFileTransferModel::isAddEnabled() const { return addEnabled; }

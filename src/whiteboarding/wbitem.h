@@ -20,12 +20,13 @@
 #ifndef WBITEM_H
 #define WBITEM_H
 
-#include <QGraphicsSvgItem>
+#include "../sxe/sxesession.h"
+
 #include <QGraphicsScene>
 #include <QGraphicsSceneMouseEvent>
+#include <QGraphicsSvgItem>
 #include <QMenu>
-#include "iconaction.h"
-#include "../sxe/sxesession.h"
+#include <QTransform>
 
 class WbScene;
 class WbWidget;
@@ -40,13 +41,13 @@ public:
     /*! \brief Constructor
      *  Constructs a new empty menu.
      */
-    WbItemMenu(QWidget* parent);
+    WbItemMenu(QWidget *parent);
     /*! \brief Destructor
      *  Deletes all the actiongroups and their actions.
      */
     ~WbItemMenu();
     /*! \brief Add actiongroup to the menu.*/
-    void addActionGroup(QActionGroup*);
+    void addActionGroup(QActionGroup *);
 
 private slots:
     /*! \brief Destruct self.*/
@@ -54,7 +55,7 @@ private slots:
 
 private:
     /*! \brief The actiongroups that the menu shows.*/
-    QList<QActionGroup*> groups_;
+    QList<QActionGroup *> groups_;
 };
 
 class WbItem : public QGraphicsSvgItem {
@@ -63,7 +64,7 @@ public:
     /*! \brief Constructor
      *  Constructs a new whiteboard item that visualized \a node.
      */
-    WbItem(SxeSession* session, QSvgRenderer* renderer, QDomElement node, WbScene* scene, WbWidget* widget);
+    WbItem(SxeSession *session, QSvgRenderer *renderer, QDomElement node, WbScene *scene, WbWidget *widget);
     /*! \brief Destructor
      *  Makes sure that the item gets deleted from the underlying <svg/> document
      */
@@ -87,37 +88,36 @@ public:
     void resetPos();
 
     /*! \brief Returns a QTransform based on \a string provided in the SVG 'transform' attribute format.*/
-    static QMatrix parseSvgTransform(QString string);
+    static QTransform parseSvgTransform(QString string);
     /*! \brief Returns a QString in the SVG 'transform' attribute format based on \a matrix.*/
-    static QString toSvgTransform(const QMatrix &matrix);
+    static QString toSvgTransform(const QTransform &matrix);
 
 protected:
-     /*! \brief Constructs and popsup the default context menu.*/
-     virtual void contextMenuEvent (QGraphicsSceneContextMenuEvent *);
-     /*! \brief Implements the default item interaction behaviour.
+    /*! \brief Constructs and popsup the default context menu.*/
+    virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent *);
+    /*! \brief Implements the default item interaction behaviour.
      *  The action depends on the mode of widget_;
-      */
-     virtual void mouseMoveEvent(QGraphicsSceneMouseEvent *);
-     /*! \brief Implements the default item interaction behaviour.
-      *  The action depends on the mode of widget_;
-      */
-     virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent *);
+     */
+    virtual void mouseMoveEvent(QGraphicsSceneMouseEvent *);
+    /*! \brief Implements the default item interaction behaviour.
+     *  The action depends on the mode of widget_;
+     */
+    virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent *);
 
 private:
-     /*! \brief Construct a context menu with the default items.*/
-     WbItemMenu* constructContextMenu();
-     /*! \brief Return the center of the item in item coordinates.*/
-     QPointF center();
+    /*! \brief Construct a context menu with the default items.*/
+    WbItemMenu *constructContextMenu();
+    /*! \brief Return the center of the item in item coordinates.*/
+    QPointF center();
 
     // The session that the item belongs to
-    SxeSession* session_;
+    SxeSession *session_;
     // The WbScene that the item belongs to
-    WbScene* scene_;
+    WbScene *scene_;
     // The WbWidget that shows the item
-    WbWidget* widget_;
+    WbWidget *widget_;
     // The node SVG node that's being visualized
     QDomElement node_;
-
 };
 
-#endif
+#endif // WBITEM_H

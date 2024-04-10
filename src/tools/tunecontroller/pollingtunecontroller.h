@@ -20,18 +20,18 @@
 #ifndef POLLINGTUNECONTROLLER_H
 #define POLLINGTUNECONTROLLER_H
 
-#include <QTimer>
-
 #include "tune.h"
 #include "tunecontroller.h"
 
-class PollingTuneController : public TuneController
-{
+#include <QTimer>
+
+class PollingTuneController : public TuneController {
     Q_OBJECT
 
 private:
     static const int DefaultInterval = 10000;
-    QTimer _timer;
+    QTimer           _timer;
+
 public:
     PollingTuneController();
     inline bool isPolling() const { return _timer.isActive(); }
@@ -46,4 +46,4 @@ private:
     Tune _prevTune;
 };
 
-#endif
+#endif // POLLINGTUNECONTROLLER_H

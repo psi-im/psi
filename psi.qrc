@@ -6,5 +6,6 @@
         <file>options/macosx.xml</file>
         <file>options/newprofile.xml</file>
         <file>README.html</file>
+        <file>client_icons.txt</file>
     </qresource>
 </RCC>

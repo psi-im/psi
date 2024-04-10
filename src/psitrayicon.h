@@ -2,28 +2,23 @@
 #define PSITRAYICON_H
 
 #include <QObject>
-#include <QRgb>
 #include <QSystemTrayIcon>
 
 class PsiIcon;
 class QMenu;
-class QPoint;
 class QPixmap;
+class QPoint;
 
-class PsiTrayIcon : public QObject
-{
+class PsiTrayIcon : public QObject {
     Q_OBJECT
 public:
-    PsiTrayIcon(const QString &tip, QMenu *popup, QObject *parent=0);
+    PsiTrayIcon(const QString &tip, QMenu *popup, QObject *parent = nullptr);
     ~PsiTrayIcon();
 
-    void setContextMenu(QMenu*);
+    void setContextMenu(QMenu *);
     void setToolTip(const QString &);
     void setIcon(const PsiIcon *, bool alert = false);
     void setAlert(const PsiIcon *);
-    bool isAnimating() const;
-
-    bool isWMDock();
 
 signals:
     void clicked(const QPoint &, int);
@@ -41,14 +36,12 @@ private slots:
 
 protected:
     QPixmap makeIcon();
-    QRgb pixelBlend(QRgb p1, QRgb p2);
-    bool eventFilter( QObject *, QEvent * );
+    bool    eventFilter(QObject *, QEvent *);
 
 private:
-    PsiIcon* icon_;
-    QSystemTrayIcon* trayicon_;
-    quintptr realIcon_;
+    PsiIcon         *icon_;
+    QSystemTrayIcon *trayicon_;
+    quintptr         realIcon_;
 };
 
-
-#endif
+#endif // PSITRAYICON_H

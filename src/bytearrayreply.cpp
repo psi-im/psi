@@ -1,6 +1,6 @@
 /*
  * bytearrayreply.cpp - Base class for QNetworReply'es returning QByteArray
- * Copyright (C) 2010 senu, Rion
+ * Copyright (C) 2010  senu, Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,13 +21,8 @@
 
 #include <QTimer>
 
-ByteArrayReply::ByteArrayReply(const QNetworkRequest &request,
-                               const QByteArray &ba, const QString& mimeType,
-                               QObject *parent) :
-    QNetworkReply(parent),
-    origLen(ba.size()),
-    data(ba),
-    buffer(&data)
+ByteArrayReply::ByteArrayReply(const QNetworkRequest &request, const QByteArray &ba, const QString &mimeType,
+                               QObject *parent) : QNetworkReply(parent), origLen(ba.size()), data(ba), buffer(&data)
 {
     setRequest(request);
     setOpenMode(QIODevice::ReadOnly);
@@ -50,19 +45,14 @@ ByteArrayReply::ByteArrayReply(const QNetworkRequest &request,
     }
 }
 
-ByteArrayReply::~ByteArrayReply() {
+ByteArrayReply::~ByteArrayReply() { }
 
-}
-
-void ByteArrayReply::abort() {
+void ByteArrayReply::abort()
+{
     // its ok for abort here. webkit calls it in any case on finish
 }
 
-qint64 ByteArrayReply::bytesAvailable() const
-{
-    return data.length() - buffer.pos() + QNetworkReply::bytesAvailable();
-}
-
+qint64 ByteArrayReply::bytesAvailable() const { return data.length() - buffer.pos() + QNetworkReply::bytesAvailable(); }
 
 qint64 ByteArrayReply::readData(char *buf, qint64 maxlen)
 {
@@ -72,13 +62,17 @@ qint64 ByteArrayReply::readData(char *buf, qint64 maxlen)
     return len;
 }
 
-
-bool ByteArrayReply::open(OpenMode mode) {
+bool ByteArrayReply::open(OpenMode mode)
+{
     Q_ASSERT(0); // we don't come here
     return buffer.open(mode);
 }
 
 void ByteArrayReply::signalError()
 {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    emit errorOccurred(error());
+#else
     emit error(error());
+#endif
 }

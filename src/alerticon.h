@@ -22,36 +22,36 @@
 
 #include "iconset.h"
 
-class QPixmap;
 class Impix;
-class QString;
 class QIcon;
 class QImage;
+class QPixmap;
+class QString;
 
-class AlertIcon : public PsiIcon
-{
+class AlertIcon : public PsiIcon {
     Q_OBJECT
 public:
     AlertIcon(const PsiIcon *icon);
     ~AlertIcon();
 
     // reimplemented
-    virtual bool isAnimated() const;
-    virtual const QPixmap &pixmap() const;
-    virtual const QImage &image() const;
-    virtual const QIcon & icon() const;
-    virtual const Impix &impix() const;
-    virtual int frameNumber() const;
-    virtual const QString &name() const;
+    bool           isAnimated() const override;
+    QPixmap        pixmap(const QSize &desiredSize = QSize()) const override;
+    QImage         image(const QSize &desiredSize = QSize()) const override;
+    QIcon          icon() const override;
+    const Impix   &impix() const override;
+    int            frameNumber() const override;
+    const QString &name() const override;
 
-    virtual PsiIcon *copy() const;
+    PsiIcon *copy() const override;
 
 public slots:
-    void activated(bool playSound = true);
-    void stop();
+    void activated(bool playSound = true) override;
+    void stop() override;
 
 public:
     class Private;
+
 private:
     Private *d;
     friend class Private;
@@ -59,4 +59,4 @@ private:
 
 void alertIconUpdateAlertStyle();
 
-#endif
+#endif // ALERTICON_H

@@ -1,7 +1,7 @@
 /*
  * networkaccessmanager.h - Network Manager for WebView able to process
  * custom url schemas
- * Copyright (C) 2010-2017 senu, Sergey Ilinykh
+ * Copyright (C) 2010-2017  senu, Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,37 +18,48 @@
  *
  */
 
-#ifndef _NETWORKACCESSMANAGER_H
-#define _NETWORKACCESSMANAGER_H
+#ifndef NETWORKACCESSMANAGER_H
+#define NETWORKACCESSMANAGER_H
 
-#include <QNetworkAccessManager>
-#include <QSharedPointer>
 #include <QHash>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QSharedPointer>
+#include <functional>
 
 class QByteArray;
 class QNetworkRequest;
 class QNetworkReply;
 
-class NAMDataHandler {
+class NAMNotFoundReply : public QNetworkReply {
+    Q_OBJECT
 public:
-    virtual ~NAMDataHandler() {}
-    virtual bool data(const QNetworkRequest &req, QByteArray &data, QByteArray &mime) const = 0;
+    NAMNotFoundReply(QObject *parent);
+    qint64 readData(char *data, qint64 maxlen) override;
+    void   abort() override;
 };
 
 class NetworkAccessManager : public QNetworkAccessManager {
 
     Q_OBJECT
 public:
+    using Handler       = std::function<bool(const QNetworkRequest &req, QByteArray &data, QByteArray &mime)>;
+    using StreamHandler = std::function<QNetworkReply *(const QNetworkRequest &req)>;
 
-    NetworkAccessManager(QObject *parent = 0);
+    NetworkAccessManager(QObject *parent = nullptr);
 
-    inline void registerPathHandler(const QSharedPointer<NAMDataHandler> &handler)
-    { _pathHandlers.append(handler); }
+    inline void registerPathHandler(const Handler &&handler) { _pathHandlers.append(std::move(handler)); }
 
-    QString registerSessionHandler(const QSharedPointer<NAMDataHandler> &handler);
-    void unregisterSessionHandler(const QString &id);
+    QString registerSessionHandler(const Handler &&handler);
+    void    unregisterSessionHandler(const QString &id);
 
-    void releaseHandlers() { _pathHandlers.clear(); _sessionHandlers.clear(); }
+    void route(const QString &path, const StreamHandler &handler);
+
+    void releaseHandlers()
+    {
+        _pathHandlers.clear();
+        _sessionHandlers.clear();
+    }
 
 private slots:
 
@@ -60,13 +71,13 @@ private slots:
     void callFinished();
 
 protected:
-    QNetworkReply* createRequest(Operation op, const QNetworkRequest & req, QIODevice * outgoingData);
+    QNetworkReply *createRequest(Operation op, const QNetworkRequest &req, QIODevice *outgoingData);
 
 private:
-
-    int _handlerSeed;
-    QList<QSharedPointer<NAMDataHandler> > _pathHandlers;
-    QHash<QString,QSharedPointer<NAMDataHandler> > _sessionHandlers;
+    int                                      _handlerSeed;
+    QList<std::pair<QString, StreamHandler>> _streamHandlers;
+    QList<Handler>                           _pathHandlers;
+    QHash<QString, Handler>                  _sessionHandlers;
 };
 
-#endif
+#endif // NETWORKACCESSMANAGER_H

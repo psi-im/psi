@@ -19,11 +19,12 @@
  */
 
 #include "activeprofiles.h"
-#include <QMessageBox>
+
 #include "profiles.h"
 
+#include <QMessageBox>
 
-ActiveProfiles* ActiveProfiles::instance_ = nullptr;
+ActiveProfiles *ActiveProfiles::instance_ = nullptr;
 
 /**
  * \fn virtual ActiveProfiles::~ActiveProfiles();
@@ -65,7 +66,7 @@ ActiveProfiles* ActiveProfiles::instance_ = nullptr;
 /**
  * \brief Returns the instance of ActiveProfiles.
  */
-ActiveProfiles* ActiveProfiles::instance()
+ActiveProfiles *ActiveProfiles::instance()
 {
     if (!instance_) {
         instance_ = new ActiveProfiles();

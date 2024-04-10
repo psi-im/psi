@@ -168,16 +168,16 @@
                <property name="sizePolicy">
                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
                  <horstretch>0</horstretch>
-		 <verstretch>0</verstretch>
+         <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QToolButton" name="tbFindForward"/>
+              <widget class="QToolButton" name="tbFindBackward"/>
              </item>
              <item>
-              <widget class="QToolButton" name="tbFindBackward"/>
+              <widget class="QToolButton" name="tbFindForward"/>
              </item>
             </layout>
            </item>

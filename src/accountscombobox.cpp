@@ -17,42 +17,32 @@
  *
  */
 
-#include "psicon.h"
 #include "accountscombobox.h"
+
 #include "psiaccount.h"
+#include "psicon.h"
 #include "psicontactlist.h"
 
-AccountsComboBox::AccountsComboBox(QWidget* parent)
-    : QComboBox(parent)
-    , controller_(nullptr)
-    , account_(nullptr)
-    , onlineOnly_(false)
+AccountsComboBox::AccountsComboBox(QWidget *parent) :
+    QComboBox(parent), controller_(nullptr), account_(nullptr), onlineOnly_(false)
 {
     setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
     connect(this, SIGNAL(activated(int)), this, SLOT(changeAccount()));
 }
 
-AccountsComboBox::~AccountsComboBox()
-{
-}
+AccountsComboBox::~AccountsComboBox() { }
 
-PsiAccount* AccountsComboBox::account() const
-{
-    return account_;
-}
+PsiAccount *AccountsComboBox::account() const { return account_; }
 
-void AccountsComboBox::setAccount(PsiAccount* account)
+void AccountsComboBox::setAccount(PsiAccount *account)
 {
     account_ = account;
     updateAccounts();
 }
 
-PsiCon* AccountsComboBox::controller() const
-{
-    return controller_;
-}
+PsiCon *AccountsComboBox::controller() const { return controller_; }
 
-void AccountsComboBox::setController(PsiCon* controller)
+void AccountsComboBox::setController(PsiCon *controller)
 {
     if (controller_) {
         disconnect(controller_, SIGNAL(accountCountChanged()), this, SLOT(updateAccounts()));
@@ -64,19 +54,15 @@ void AccountsComboBox::setController(PsiCon* controller)
     if (controller_) {
         connect(controller_, SIGNAL(accountCountChanged()), this, SLOT(updateAccounts()));
         connect(controller_, SIGNAL(accountActivityChanged()), this, SLOT(updateAccounts()));
-    }
-
-    if (controller_->contactList()->haveEnabledAccounts()) {
-        setAccount(controller_->contactList()->enabledAccounts().first());
+        if (controller_->contactList()->haveEnabledAccounts()) {
+            setAccount(controller_->contactList()->enabledAccounts().first());
+        }
     }
 
     updateAccounts();
 }
 
-bool AccountsComboBox::onlineOnly() const
-{
-    return onlineOnly_;
-}
+bool AccountsComboBox::onlineOnly() const { return onlineOnly_; }
 
 void AccountsComboBox::setOnlineOnly(bool onlineOnly)
 {
@@ -96,21 +82,22 @@ void AccountsComboBox::updateAccounts()
 {
     clear();
 
-    foreach(PsiAccount* account, accounts())
+    const auto accs = accounts();
+    for (PsiAccount *account : accs)
         addItem(account->nameWithJid());
 
     if (accounts().indexOf(account_) == -1) {
-        account_ = accounts().isEmpty() ? 0 : accounts().first();
+        account_ = accounts().isEmpty() ? nullptr : accounts().constFirst();
         emit activated(account_);
     }
     setCurrentIndex(accounts().indexOf(account_));
 }
 
-QList<PsiAccount*> AccountsComboBox::accounts() const
+QList<PsiAccount *> AccountsComboBox::accounts() const
 {
-    QList<PsiAccount*> result;
+    QList<PsiAccount *> result;
     if (controller_) {
-        foreach(PsiAccount* account, controller_->contactList()->enabledAccounts())
+        for (PsiAccount *account : controller_->contactList()->enabledAccounts())
             if (!onlineOnly_ || account->isAvailable())
                 result << account;
     }

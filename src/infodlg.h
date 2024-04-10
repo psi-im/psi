@@ -1,6 +1,6 @@
 /*
  * infodlg.h - handle vcard
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,32 +23,30 @@
 #include "ui_info.h"
 #include "ui_infodlg.h"
 
-namespace XMPP
-{
-    class Jid;
-    class VCard;
-    class Resource;
-}
-
-using namespace XMPP;
-
 class PsiAccount;
 
-class InfoWidget : public QWidget
-{
+namespace XMPP {
+class Jid;
+class VCard;
+class Resource;
+}
+using namespace XMPP;
+
+class InfoWidget : public QWidget {
     Q_OBJECT
 public:
     enum { Self, Contact, MucContact, MucAdm };
-    InfoWidget(int type, const XMPP::Jid &, const XMPP::VCard &, PsiAccount *, QWidget *parent=0, bool cacheVCard = true);
+    InfoWidget(int type, const XMPP::Jid &, const XMPP::VCard &, PsiAccount *, QWidget *parent = nullptr,
+               bool cacheVCard = true);
     ~InfoWidget();
-    bool aboutToClose(); /* call this when you are going to close parent dialog */
+    bool        aboutToClose(); /* call this when you are going to close parent dialog */
     PsiAccount *account() const;
-    const Jid &jid() const;
+    const Jid  &jid() const;
 
 protected:
     // reimplemented
-    //void closeEvent(QCloseEvent *);
-    void showEvent ( QShowEvent * event );
+    // void closeEvent(QCloseEvent *);
+    void showEvent(QShowEvent *event);
     bool updatePhoto();
 
 public slots:
@@ -77,35 +75,35 @@ private slots:
 private:
     class Private;
     Private *d;
-    Ui::Info ui_;
-    //QPushButton* pb_refresh_;
-    //QPushButton* pb_close_;
-    //QPushButton* pb_submit_;
+    Ui::Info m_ui;
+    // QPushButton* pb_refresh_;
+    // QPushButton* pb_close_;
+    // QPushButton* pb_submit_;
 
-    void setData(const XMPP::VCard &);
+    void        setData(const XMPP::VCard &);
     XMPP::VCard makeVCard();
-    void fieldsEnable(bool);
-    void setReadOnly(bool);
-    bool edited();
-    void setEdited(bool);
-    void setPreviewPhoto(const QString& str);
-    void requestResourceInfo(const XMPP::Jid& j);
-    void requestLastActivity();
+    void        fieldsEnable(bool);
+    void        setReadOnly(bool);
+    bool        edited();
+    void        setEdited(bool);
+    void        setPreviewPhoto(const QString &str);
+    void        requestResourceInfo(const XMPP::Jid &j);
+    void        requestLastActivity();
 
 signals:
     void busy();
     void released();
 };
 
-class InfoDlg : public QDialog
-{
+class InfoDlg : public QDialog {
     Q_OBJECT
 public:
-    InfoDlg(int type, const XMPP::Jid &, const XMPP::VCard &, PsiAccount *, QWidget *parent=0, bool cacheVCard = true);
-    inline InfoWidget *infoWidget() const { return iw; }
+    InfoDlg(int type, const XMPP::Jid &, const XMPP::VCard &, PsiAccount *, QWidget *parent = nullptr,
+            bool cacheVCard = true);
+    inline InfoWidget *infoWidget() const { return m_iw; }
 
 protected:
-    void closeEvent(QCloseEvent * e);
+    void closeEvent(QCloseEvent *e);
 
 private slots:
     void doDisco();
@@ -113,8 +111,8 @@ private slots:
     void release();
 
 private:
-    Ui::InfoDlg ui_;
-    InfoWidget *iw;
+    Ui::InfoDlg m_ui;
+    InfoWidget *m_iw;
 };
 
-#endif
+#endif // INFODLG_H

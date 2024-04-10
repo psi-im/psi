@@ -24,12 +24,11 @@
 
 class PsiContact;
 
-class GroupMenu : public QMenu
-{
+class GroupMenu : public QMenu {
     Q_OBJECT
 public:
-    GroupMenu(QWidget* parent);
-    void updateMenu(PsiContact* contact);
+    GroupMenu(QWidget *parent);
+    void updateMenu(PsiContact *contact);
 
 signals:
     void groupActivated(QString groupName);

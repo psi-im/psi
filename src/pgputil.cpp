@@ -1,144 +1,56 @@
+/*
+ * psiaccount.cpp - handles a Psi account
+ * Copyright (C) 2001-2005  Justin Karneges
+ * Copyright (C) 2020  Boris Pek <tehnick-8@yandex.ru>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * You can also redistribute and/or modify this program under the
+ * terms of the Psi License, specified in the accompanied COPYING
+ * file, as published by the Psi Project; either dated January 1st,
+ * 2005, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ */
+
 #include "pgputil.h"
 
-#include <QtCore>
-#include <QStringList>
-#include <QDialog>
-#include <QMessageBox>
-
-#include "passphrasedlg.h"
+#include "gpgprocess.h"
 #include "showtextdlg.h"
 
-PGPUtil* PGPUtil::instance_ = nullptr;
+#include <QDialog>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QStringList>
+#include <QtCore>
 
-PGPUtil::PGPUtil() : qcaEventHandler_(nullptr), passphraseDlg_(nullptr), cache_no_pgp_(false)
+PGPUtil *PGPUtil::m_instance = nullptr;
+
+PGPUtil::PGPUtil() { connect(QCoreApplication::instance(), SIGNAL(aboutToQuit()), SLOT(deleteLater())); }
+
+PGPUtil &PGPUtil::instance()
 {
-    qcaEventHandler_ = new QCA::EventHandler(this);
-    connect(qcaEventHandler_,SIGNAL(eventReady(int,const QCA::Event&)),SLOT(handleEvent(int,const QCA::Event&)));
-    qcaEventHandler_->start();
-    connect(&qcaKeyStoreManager_, SIGNAL(keyStoreAvailable(const QString&)), SLOT(keyStoreAvailable(const QString&)));
-    foreach(const QString& k, qcaKeyStoreManager_.keyStores()) {
-        keyStoreAvailable(k);
+    if (!m_instance) {
+        m_instance = new PGPUtil();
     }
-
-    connect(QCoreApplication::instance(),SIGNAL(aboutToQuit()),SLOT(deleteLater()));
-}
-
-PGPUtil::~PGPUtil()
-{
-    foreach(QCA::KeyStore* ks,keystores_)  {
-        delete ks;
-    }
-    keystores_.clear();
-}
-
-
-PGPUtil& PGPUtil::instance()
-{
-    if (!instance_) {
-        instance_ = new PGPUtil();
-    }
-    return *instance_;
-}
-
-void PGPUtil::handleEvent(int id, const QCA::Event& event)
-{
-    if (event.type() == QCA::Event::Password) {
-        QCA::KeyStoreEntry entry = event.keyStoreEntry();
-        if(!entry.isNull() && passphrases_.contains(entry.id())) {
-            qcaEventHandler_->submitPassword(id, QCA::SecureArray(passphrases_[entry.id()].toUtf8()));
-        }
-        else if (passphraseDlg_) {
-            EventItem i;
-            i.id = id;
-            i.event = event;
-            pendingEvents_.push_back(i);
-        }
-        else {
-            promptPassphrase(id,event);
-        }
-    }
-}
-
-void PGPUtil::promptPassphrase(int id, const QCA::Event& event)
-{
-    QString name;
-    currentEventId_ = id;
-
-    QCA::KeyStoreEntry entry = event.keyStoreEntry();
-    if(!entry.isNull()) {
-        name = entry.name();
-        currentEntryId_ = entry.id();
-    }
-    else {
-        name = event.keyStoreInfo().name();
-        currentEntryId_ = QString();
-    }
-
-    if (!passphraseDlg_) {
-        passphraseDlg_ = new PassphraseDlg();
-        connect(passphraseDlg_,SIGNAL(finished(int)),SLOT(passphraseDone(int)));
-    }
-    passphraseDlg_->promptPassphrase(name);
-    passphraseDlg_->show();
-}
-
-void PGPUtil::passphraseDone(int result)
-{
-    // Process the result
-    if (result == QDialog::Accepted) {
-        QString passphrase = passphraseDlg_->getPassphrase();
-        if (!currentEntryId_.isEmpty()) {
-            passphrases_[currentEntryId_] = passphrase;
-            if(passphraseDlg_->rememberPassPhrase()) {
-                emit newPassPhase(currentEntryId_, passphrase);
-            }
-        }
-        qcaEventHandler_->submitPassword(currentEventId_,passphrase.toUtf8());
-    }
-    else if (result == QDialog::Rejected) {
-        qcaEventHandler_->reject(currentEventId_);
-    }
-    else {
-        qWarning() << "PGPUtil: Unexpected passphrase dialog result";
-    }
-
-    // Process the queue
-    if (!pendingEvents_.isEmpty()) {
-        EventItem eventItem;
-        bool handlePendingEvent = false;
-        while (!pendingEvents_.isEmpty() && !handlePendingEvent) {
-            eventItem = pendingEvents_.takeFirst();
-            QCA::KeyStoreEntry entry = eventItem.event.keyStoreEntry();
-            if(!entry.isNull() && passphrases_.contains(entry.id())) {
-                qcaEventHandler_->submitPassword(eventItem.id, QCA::SecureArray(passphrases_[entry.id()].toUtf8()));
-            }
-            else {
-                handlePendingEvent = true;
-            }
-        }
-        if (handlePendingEvent) {
-            promptPassphrase(eventItem.id,eventItem.event);
-            return;
-        }
-    }
-    passphraseDlg_->deleteLater();
-    passphraseDlg_ = nullptr;
+    return *m_instance;
 }
 
 bool PGPUtil::pgpAvailable()
 {
-    bool have_openpgp = false;
-    if(!cache_no_pgp_) {
-        have_openpgp = QCA::isSupported("openpgp");
-        if(!have_openpgp)
-            cache_no_pgp_ = true;
-    }
-    return (have_openpgp && keystores_.count() > 0);
-}
-
-void PGPUtil::clearPGPAvailableCache()
-{
-    cache_no_pgp_ = false;
+    QString    message;
+    GpgProcess gpg;
+    return gpg.info(message);
 }
 
 QString PGPUtil::stripHeaderFooter(const QString &str)
@@ -148,31 +60,31 @@ QString PGPUtil::stripHeaderFooter(const QString &str)
         qWarning("pgputil.cpp: Empty PGP message");
         return "";
     }
-    if(str.at(0) != '-')
+    if (str.at(0) != '-')
         return str;
-    QStringList lines = str.split('\n');
-    QStringList::ConstIterator it = lines.begin();
+    QStringList                lines = str.split('\n');
+    QStringList::ConstIterator it    = lines.begin();
     // skip the first line
     ++it;
-    if(it == lines.end())
+    if (it == lines.constEnd())
         return str;
 
     // skip the header
-    for(; it != lines.end(); ++it) {
-        if((*it).isEmpty())
+    for (; it != lines.constEnd(); ++it) {
+        if ((*it).isEmpty())
             break;
     }
-    if(it == lines.end())
+    if (it == lines.constEnd())
         return str;
     ++it;
-    if(it == lines.end())
+    if (it == lines.constEnd())
         return str;
 
     bool first = true;
-    for(; it != lines.end(); ++it) {
-        if((*it).at(0) == '-')
+    for (; it != lines.constEnd(); ++it) {
+        if ((*it).at(0) == '-')
             break;
-        if(!first)
+        if (!first)
             s += '\n';
         s += (*it);
         first = false;
@@ -181,11 +93,10 @@ QString PGPUtil::stripHeaderFooter(const QString &str)
     return s;
 }
 
-
 QString PGPUtil::addHeaderFooter(const QString &str, int type)
 {
     QString stype;
-    if(type == 0)
+    if (type == 0)
         stype = "MESSAGE";
     else
         stype = "SIGNATURE";
@@ -199,128 +110,157 @@ QString PGPUtil::addHeaderFooter(const QString &str, int type)
     return s;
 }
 
-
-QCA::KeyStoreEntry PGPUtil::getSecretKeyStoreEntry(const QString& keyID)
+bool PGPUtil::equals(const QString &k1, const QString &k2)
 {
-    foreach(QCA::KeyStore *ks, keystores_) {
-        if (ks->type() == QCA::KeyStore::PGPKeyring && ks->holdsIdentities()) {
-            foreach(QCA::KeyStoreEntry ke, ks->entryList()) {
-                if (ke.type() == QCA::KeyStoreEntry::TypePGPSecretKey
-                    && ke.pgpSecretKey().keyId() == keyID) {
-                    return ke;
-                }
-            }
-        }
-    }
-    return QCA::KeyStoreEntry();
-}
-
-QCA::KeyStoreEntry PGPUtil::getPublicKeyStoreEntry(const QString& keyID)
-{
-    foreach(QCA::KeyStore *ks, keystores_) {
-        if (ks->type() == QCA::KeyStore::PGPKeyring && ks->holdsIdentities()) {
-            foreach(QCA::KeyStoreEntry ke, ks->entryList()) {
-                if ((ke.type() == QCA::KeyStoreEntry::TypePGPSecretKey
-                     || ke.type() == QCA::KeyStoreEntry::TypePGPPublicKey)
-                    && ke.pgpPublicKey().keyId() == keyID) {
-                    return ke;
-                }
-            }
-        }
-    }
-    return QCA::KeyStoreEntry();
-}
-
-QString PGPUtil::messageErrorString(QCA::SecureMessage::Error e)
-{
-    QString msg;
-    switch(e) {
-        case QCA::SecureMessage::ErrorPassphrase:
-            msg = QObject::tr("Invalid passphrase");
-            break;
-        case QCA::SecureMessage::ErrorFormat:
-            msg = QObject::tr("Invalid input format");
-            break;
-        case QCA::SecureMessage::ErrorSignerExpired:
-            msg = QObject::tr("Signing key expired");
-            break;
-        case QCA::SecureMessage::ErrorSignerInvalid:
-            msg = QObject::tr("Invalid key");
-            break;
-        case QCA::SecureMessage::ErrorEncryptExpired:
-            msg = QObject::tr("Encrypting key expired");
-            break;
-        case QCA::SecureMessage::ErrorEncryptUntrusted:
-            msg = QObject::tr("Encrypting key is untrusted");
-            break;
-        case QCA::SecureMessage::ErrorEncryptInvalid:
-            msg = QObject::tr("Encrypting key is invalid");
-            break;
-        case QCA::SecureMessage::ErrorNeedCard:
-            msg = QObject::tr("PGP card is missing");
-            break;
-        default:
-            msg = QObject::tr("Unknown error");
-    }
-    return msg;
-}
-
-bool PGPUtil::equals(QCA::PGPKey k1, QCA::PGPKey k2)
-{
-    if (k1.isNull()) {
-        return k2.isNull();
-    }
-    else if (k2.isNull()) {
+    if (k1.isEmpty()) {
+        return k2.isEmpty();
+    } else if (k2.isEmpty()) {
         return false;
+    } else {
+        return (k1 == k2);
     }
-    else {
-        return k1.keyId() == k2.keyId();
+}
+
+QString PGPUtil::getKeyOwnerName(const QString &key)
+{
+    if (key.isEmpty())
+        return QString();
+
+    const QStringList &&arguments = { "--list-public-keys", "--with-colons", "--fixed-list-mode", "0x" + key };
+
+    GpgProcess gpg;
+    gpg.start(arguments);
+    gpg.waitForFinished();
+
+    if (!gpg.success())
+        return QString();
+
+    const QString &&rawData = QString::fromUtf8(gpg.readAllStandardOutput());
+    if (rawData.isEmpty())
+        return QString();
+
+    QString             name;
+    const QStringList &&stringsList = rawData.split("\n");
+    for (const QString &line : stringsList) {
+        const QString &&type = line.section(':', 0, 0);
+        if (type == "uid") {
+            name = line.section(':', 9, 9); // Name
+            break;
+        }
     }
+    return name;
 }
 
-void PGPUtil::removePassphrase(const QString& id)
+QString PGPUtil::getPublicKeyData(const QString &key)
 {
-    passphrases_.remove(id);
+    if (key.isEmpty())
+        return QString();
+
+    const QStringList &&arguments = { "--armor", "--export", "0x" + key };
+
+    GpgProcess gpg;
+    gpg.start(arguments);
+    gpg.waitForFinished();
+
+    if (!gpg.success())
+        return QString();
+
+#ifdef Q_OS_WIN
+    QString keyData = QString::fromUtf8(gpg.readAllStandardOutput());
+    keyData.replace("\r", "");
+#else
+    const QString &&keyData = QString::fromUtf8(gpg.readAllStandardOutput());
+#endif
+    return keyData;
 }
 
-void PGPUtil::addPassphrase(const QString &id, const QString &pass)
+QString PGPUtil::getFingerprint(const QString &key)
 {
-    passphrases_.insert(id, pass);
+    const QStringList &&arguments = { "--with-colons", "--fingerprint", "0x" + key };
+
+    GpgProcess gpg;
+    gpg.start(arguments);
+    gpg.waitForFinished();
+
+    QString             fingerprint;
+    const QString     &&out   = QString::fromUtf8(gpg.readAllStandardOutput());
+    const QStringList &&lines = out.split("\n");
+    for (const QString &line : lines) {
+        const QString &&type = line.section(':', 0, 0);
+        if (type == "fpr") {
+            fingerprint = line.section(':', 9, 9);
+            break;
+        }
+    }
+
+    if (fingerprint.size() == 40) {
+        for (int k = fingerprint.size() - 4; k >= 3; k -= 4) {
+            fingerprint.insert(k, ' ');
+        }
+        fingerprint.insert(24, ' ');
+        return fingerprint;
+    }
+
+    return QString();
 }
 
-void PGPUtil::keyStoreAvailable(const QString& k)
+QString PGPUtil::chooseKey(PGPKeyDlg::Type type, const QString &key, const QString &title)
 {
-    QCA::KeyStore* ks = new QCA::KeyStore(k, &qcaKeyStoreManager_);
-    connect(ks, SIGNAL(updated()), SIGNAL(pgpKeysUpdated()));
-    keystores_ += ks;
+    PGPKeyDlg d(type, key, nullptr);
+    d.setWindowTitle(title);
+    if (d.exec() == QDialog::Accepted) {
+        return d.keyId();
+    }
+    return QString();
 }
 
-void PGPUtil::showDiagnosticText(const QString& event, const QString& diagnostic)
+PGPUtil::SecureMessageSignature PGPUtil::parseSecureMessageSignature(const QString &stdOutString)
 {
-    while (1) {
-        QMessageBox msgbox(QMessageBox::Critical,
-                           tr("Error"),
-                           event,
-                           QMessageBox::Ok, nullptr);
+    SecureMessageSignature out;
+    const QStringList    &&strings = stdOutString.split("\n");
+    for (const QString &line : strings) {
+        const QString &&type = line.section(' ', 1, 1);
+        if (type == QStringLiteral("GOODSIG")) {
+            out.identityResult = SecureMessageSignature::Valid;
+            out.userName       = line.section(' ', 3);
+        } else if (type == QStringLiteral("VALIDSIG")) {
+            out.sigTimestamp = line.section(' ', 4, 4).toLongLong();
+            out.publicKeyId  = line.section(' ', 11, 11).right(16);
+        }
+        if (type == QStringLiteral("BADSIG")) {
+            out.identityResult = SecureMessageSignature::InvalidSignature;
+            out.publicKeyId    = line.section(' ', 2, 2);
+            if (out.publicKeyId.size() > 16) {
+                out.publicKeyId = out.publicKeyId.right(16);
+            }
+            out.userName = line.section(' ', 3);
+        }
+        if (type == QStringLiteral("ERRSIG")) {
+            out.identityResult = SecureMessageSignature::NoKey;
+        }
+    }
+    if (out.publicKeyId.isEmpty()) {
+        out.identityResult = SecureMessageSignature::NoKey;
+    }
+    return out;
+}
+
+void PGPUtil::showDiagnosticText(const QString &event, const QString &diagnostic)
+{
+    const QString &message = tr("There was an error trying to send the message encrypted.\nReason: %1.").arg(event);
+    while (true) {
+        QMessageBox  msgbox(QMessageBox::Critical, tr("Error"), message, QMessageBox::Ok, nullptr);
         QPushButton *diag = msgbox.addButton(tr("Diagnostics"), QMessageBox::HelpRole);
         msgbox.exec();
         if (msgbox.clickedButton() == diag) {
-            ShowTextDlg* w = new ShowTextDlg(diagnostic, true, false, nullptr);
+            ShowTextDlg *w = new ShowTextDlg(diagnostic, true, false, nullptr);
             w->setWindowTitle(tr("OpenPGP Diagnostic Text"));
             w->resize(560, 240);
             w->exec();
 
             continue;
-        }
-        else {
+        } else {
             break;
         }
     }
-}
-
-void PGPUtil::showDiagnosticText(QCA::SecureMessage::Error error, const QString& diagnostic)
-{
-    showDiagnosticText(tr("There was an error trying to send the message encrypted.\nReason: %1.")
-                       .arg(PGPUtil::instance().messageErrorString(error)),
-                       diagnostic);
 }

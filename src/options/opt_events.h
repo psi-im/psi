@@ -6,19 +6,19 @@
 
 class QWidget;
 
-class OptionsTabEvents : public OptionsTab
-{
+class OptionsTabEvents : public OptionsTab {
     Q_OBJECT
 public:
     OptionsTabEvents(QObject *parent);
 
     QWidget *widget();
-    void applyOptions();
-    void restoreOptions();
+    void     applyOptions();
+    void     restoreOptions();
+    bool     stretchable() const;
 
 private:
-    QWidget *w;
-    QList<QRadioButton*> list_alerts;
+    QWidget              *w;
+    QList<QRadioButton *> list_alerts;
 };
 
-#endif
+#endif // OPT_EVENTS_H

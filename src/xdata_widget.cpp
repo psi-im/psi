@@ -19,42 +19,35 @@
 
 #include "xdata_widget.h"
 
-#include <QLayout>
-#include <QLabel>
+#include "desktoputil.h"
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_tasks.h"
+#include "iris/xmpp_xdata.h"
+#include "networkaccessmanager.h"
+#include "psicon.h"
+
 #include <QCheckBox>
 #include <QComboBox>
-#include <QUrl>
-#include <QListWidget>
-#include <QLineEdit>
-#include <QObject>
-#include <QTextEdit>
 #include <QGridLayout>
-#include <QNetworkRequest>
+#include <QLabel>
+#include <QLayout>
+#include <QLineEdit>
+#include <QListWidget>
 #include <QNetworkReply>
+#include <QNetworkRequest>
+#include <QObject>
 #include <QSpacerItem>
-
-#include "desktoputil.h"
-#include "xmpp_xdata.h"
-#include "xmpp_client.h"
-#include "xmpp_tasks.h"
-#include "psicon.h"
-#include "networkaccessmanager.h"
+#include <QTextEdit>
+#include <QUrl>
 
 using namespace XMPP;
 
-
-
-class XDataMediaWidget : public QLabel
-{
+class XDataMediaWidget : public QLabel {
     Q_OBJECT
 
 public:
-    XDataMediaWidget(XData::Field::MediaUri uri, QSize s,
-                     Jid j, XDataWidget *xdw)
-        : QLabel(xdw)
-        , _xdWidget(xdw)
-        , _size(s)
-        , _type(uri.mimeType)
+    XDataMediaWidget(XData::Field::MediaUri uri, QSize s, Jid j, XDataWidget *xdw) :
+        QLabel(xdw), _xdWidget(xdw), _size(s), _type(uri.mimeType)
     {
         Q_UNUSED(_xdWidget)
         if (uri.uri.startsWith("cid:")) {
@@ -63,21 +56,18 @@ public:
             task->get(j, uri.uri.mid(4));
             task->go(true);
         } else {
-            auto nam = xdw->psi()->networkAccessManager();
+            auto           nam   = xdw->psi()->networkAccessManager();
             QNetworkReply *reply = nam->get(QNetworkRequest(QUrl(uri.uri)));
             connect(reply, SIGNAL(finished()), SLOT(oobReceived()));
         }
     }
 
-    static QList<XDataMediaWidget*> fromMediaElement(
-        XData::Field::MediaElement m,
-        Jid j,
-        XDataWidget *xdw)
+    static QList<XDataMediaWidget *> fromMediaElement(XData::Field::MediaElement m, Jid j, XDataWidget *xdw)
     {
-        QList<XDataMediaWidget*> result;
+        QList<XDataMediaWidget *> result;
         // simple image filter
         // TODO add support for other formats
-        foreach (const XData::Field::MediaUri &uri, m) {
+        for (const XData::Field::MediaUri &uri : m) {
             if (uri.mimeType.startsWith("image")) {
                 XDataMediaWidget *mw = new XDataMediaWidget(uri, m.mediaSize(), j, xdw);
                 result.append(mw);
@@ -112,47 +102,41 @@ private:
 private slots:
     void bobReceived()
     {
-        BoBData &bob = ((JT_BitsOfBinary*)sender())->data();
+        BoBData &bob = static_cast<JT_BitsOfBinary *>(sender())->data();
         onDataReceived(bob.data());
     }
 
     void oobReceived()
     {
-        QNetworkReply* reply = dynamic_cast<QNetworkReply*>(sender());
+        QNetworkReply *reply = dynamic_cast<QNetworkReply *>(sender());
         onDataReceived(reply->readAll());
         reply->deleteLater();
     }
 
 private:
-    XDataWidget* _xdWidget;
-    QSize _size;
-    QString _type;
+    XDataWidget *_xdWidget;
+    QSize        _size;
+    QString      _type;
 };
 
 //----------------------------------------------------------------------------
 // XDataField
 //----------------------------------------------------------------------------
-class XDataField
-{
+class XDataField {
 public:
     XDataField(XData::Field f, XDataWidget *w = nullptr)
     {
-        _field = f;
+        _field    = f;
         _xdWidget = w;
     }
-    virtual ~XDataField()
-    {
-    }
+    virtual ~XDataField() { }
 
-    virtual XData::Field field() const
-    {
-        return _field;
-    }
+    virtual XData::Field field() const { return _field; }
 
-    QString labelText(QString str=": ") const
+    QString labelText(QString str = ": ") const
     {
         QString text = _field.label();
-        if ( text.isEmpty() )
+        if (text.isEmpty())
             text = _field.var();
         return text + str;
     }
@@ -160,20 +144,17 @@ public:
     QString reqText() const
     {
         QString req;
-        if ( _field.required() )
+        if (_field.required())
             req = "*";
-        if ( !_field.desc().isEmpty() ) {
-            if ( !req.isEmpty() )
+        if (!_field.desc().isEmpty()) {
+            if (!req.isEmpty())
                 req += ' ';
             req += "(?)";
         }
         return req;
     }
 
-    virtual bool isValid() const
-    {
-        return field().isValid();
-    }
+    virtual bool isValid() const { return field().isValid(); }
 
 private:
     XData::Field _field;
@@ -184,32 +165,26 @@ protected:
 
 ////////////////////////////////////////
 
-class XDataField_Hidden : public XDataField
-{
+class XDataField_Hidden : public XDataField {
 public:
-    XDataField_Hidden(XData::Field f, XDataWidget *w)
-    : XDataField(f, w)
-    {
-    }
+    XDataField_Hidden(XData::Field f, XDataWidget *w) : XDataField(f, w) { }
 };
 
 ////////////////////////////////////////
 
-class XDataField_Boolean : public XDataField
-{
+class XDataField_Boolean : public XDataField {
 public:
-    XDataField_Boolean(XData::Field f, QGridLayout *grid, XDataWidget *xdw)
-    : XDataField(f, xdw)
+    XDataField_Boolean(XData::Field f, QGridLayout *grid, XDataWidget *xdw) : XDataField(f, xdw)
     {
-        int row = grid->rowCount();
+        int  row     = grid->rowCount();
         bool checked = false;
-        if ( f.value().count() ) {
-            QString s = f.value().first();
-            if ( s == "1" || s == "true" || s == "yes" )
+        if (f.value().count()) {
+            QString s = f.value().constFirst();
+            if (s == "1" || s == "true" || s == "yes")
                 checked = true;
         }
 
-        QHBoxLayout *layout = new QHBoxLayout;
+        QHBoxLayout *layout     = new QHBoxLayout;
         QSpacerItem *spacerItem = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
 
         check = new QCheckBox(xdw);
@@ -225,7 +200,7 @@ public:
         QLabel *req = new QLabel(reqText(), xdw);
         grid->addWidget(req, row, 1);
 
-        if ( !f.desc().isEmpty() ) {
+        if (!f.desc().isEmpty()) {
             label->setToolTip(f.desc());
             check->setToolTip(f.desc());
             req->setToolTip(f.desc());
@@ -235,8 +210,8 @@ public:
     XData::Field field() const
     {
         XData::Field f = XDataField::field();
-        QStringList val;
-        val << QString( check->isChecked() ? "1" : "0" );
+        QStringList  val;
+        val << QString(check->isChecked() ? "1" : "0");
         f.setValue(val);
         return f;
     }
@@ -247,18 +222,16 @@ private:
 
 ////////////////////////////////////////
 
-class XDataField_Fixed : public XDataField
-{
+class XDataField_Fixed : public XDataField {
 public:
-    XDataField_Fixed(XData::Field f, QGridLayout *grid, XDataWidget *xdw)
-    : XDataField(f, xdw)
+    XDataField_Fixed(XData::Field f, QGridLayout *grid, XDataWidget *xdw) : XDataField(f, xdw)
     {
-        int row = grid->rowCount();
-        QString text;
-        QStringList val = f.value();
-        QStringList::Iterator it = val.begin();
-        for ( ; it != val.end(); ++it) {
-            if ( !text.isEmpty() )
+        int                   row = grid->rowCount();
+        QString               text;
+        QStringList           val = f.value();
+        QStringList::Iterator it  = val.begin();
+        for (; it != val.end(); ++it) {
+            if (!text.isEmpty())
                 text += "<br>";
             text += *it;
         }
@@ -267,7 +240,7 @@ public:
         fixed->setWordWrap(true);
         grid->addWidget(fixed, row, 0);
 
-        if ( !f.desc().isEmpty() ) {
+        if (!f.desc().isEmpty()) {
             fixed->setToolTip(f.desc());
         }
     }
@@ -275,31 +248,25 @@ public:
 
 ////////////////////////////////////////
 
-class XDataField_TextSingle : public XDataField
-{
+class XDataField_TextSingle : public XDataField {
 public:
-    XDataField_TextSingle(XData::Field f, QGridLayout *grid, XDataWidget *xdw)
-    : XDataField(f, xdw)
+    XDataField_TextSingle(XData::Field f, QGridLayout *grid, XDataWidget *xdw) : XDataField(f, xdw)
     {
-        int row = grid->rowCount();
-        XData::Field::MediaElement me = f.mediaElement();
+        int                        row = grid->rowCount();
+        XData::Field::MediaElement me  = f.mediaElement();
         if (!me.isEmpty()) {
-            XDataField *fromField = nullptr;
             Jid j = xdw->owner();
-            if (xdw->registrarType() == "urn:xmpp:captcha"
-                && (fromField = xdw->fieldByVar("from"))) {
-                j = Jid(fromField->field().value().value(0));
-            }
-            QList<XDataMediaWidget*> mediaWidgets = XDataMediaWidget::fromMediaElement(me, j, _xdWidget);
-            foreach (XDataMediaWidget* w, mediaWidgets) {
+
+            QList<XDataMediaWidget *> mediaWidgets = XDataMediaWidget::fromMediaElement(me, j, _xdWidget);
+            for (XDataMediaWidget *w : mediaWidgets) {
                 grid->addWidget(w, row, 0, 1, 3, Qt::AlignCenter);
                 row++;
             }
         }
 
         QString text;
-        if ( f.value().count() )
-            text = f.value().first();
+        if (f.value().count())
+            text = f.value().constFirst();
         QVBoxLayout *layout = new QVBoxLayout;
 
         QLabel *label = new QLabel(labelText(), xdw);
@@ -315,7 +282,7 @@ public:
         QLabel *req = new QLabel(reqText(), xdw);
         grid->addWidget(req, row, 1);
 
-        if ( !f.desc().isEmpty() ) {
+        if (!f.desc().isEmpty()) {
             label->setToolTip(f.desc());
             edit->setToolTip(f.desc());
             req->setToolTip(f.desc());
@@ -338,11 +305,9 @@ protected:
 
 ////////////////////////////////////////
 
-class XDataField_TextPrivate : public XDataField_TextSingle
-{
+class XDataField_TextPrivate : public XDataField_TextSingle {
 public:
-    XDataField_TextPrivate(XData::Field f, QGridLayout *grid, XDataWidget *xdw)
-    : XDataField_TextSingle(f, grid, xdw)
+    XDataField_TextPrivate(XData::Field f, QGridLayout *grid, XDataWidget *xdw) : XDataField_TextSingle(f, grid, xdw)
     {
         edit->setEchoMode(QLineEdit::Password);
     }
@@ -350,11 +315,9 @@ public:
 
 ////////////////////////////////////////
 
-class XDataField_JidSingle : public XDataField_TextSingle
-{
+class XDataField_JidSingle : public XDataField_TextSingle {
 public:
-    XDataField_JidSingle(XData::Field f, QGridLayout *grid, XDataWidget *w)
-    : XDataField_TextSingle(f, grid, w)
+    XDataField_JidSingle(XData::Field f, QGridLayout *grid, XDataWidget *w) : XDataField_TextSingle(f, grid, w)
     {
         // TODO: add proper validation
     }
@@ -362,15 +325,13 @@ public:
 
 ////////////////////////////////////////
 
-class XDataField_ListSingle : public XDataField
-{
+class XDataField_ListSingle : public XDataField {
 public:
-    XDataField_ListSingle(XData::Field f, QGridLayout *grid, XDataWidget *xdw)
-    : XDataField(f, xdw)
+    XDataField_ListSingle(XData::Field f, QGridLayout *grid, XDataWidget *xdw) : XDataField(f, xdw)
     {
         QHBoxLayout *layout = new QHBoxLayout;
 
-        int row = grid->rowCount();
+        int     row   = grid->rowCount();
         QLabel *label = new QLabel(labelText(), xdw);
         label->setWordWrap(true);
         layout->addWidget(label);
@@ -382,25 +343,25 @@ public:
         grid->addLayout(layout, row, 0);
 
         QString sel;
-        if ( !f.value().isEmpty() )
-            sel = f.value().first();
+        if (!f.value().isEmpty())
+            sel = f.value().constFirst();
 
-        XData::Field::OptionList opts = f.options();
-        XData::Field::OptionList::Iterator it = opts.begin();
-        for ( ; it != opts.end(); ++it) {
+        XData::Field::OptionList           opts = f.options();
+        XData::Field::OptionList::Iterator it   = opts.begin();
+        for (; it != opts.end(); ++it) {
             QString lbl = (*it).label;
-            if ( lbl.isEmpty() )
+            if (lbl.isEmpty())
                 lbl = (*it).value;
 
             combo->addItem(lbl);
-            if ( (*it).value == sel )
-                combo->setCurrentIndex(combo->count()-1);
+            if ((*it).value == sel)
+                combo->setCurrentIndex(combo->count() - 1);
         }
 
         QLabel *req = new QLabel(reqText(), xdw);
         grid->addWidget(req, row, 1);
 
-        if ( !f.desc().isEmpty() ) {
+        if (!f.desc().isEmpty()) {
             label->setToolTip(f.desc());
             combo->setToolTip(f.desc());
             req->setToolTip(f.desc());
@@ -412,12 +373,12 @@ public:
         QString lbl = combo->currentText();
 
         XData::Field f = XDataField::field();
-        QStringList val;
+        QStringList  val;
 
-        XData::Field::OptionList opts = f.options();
-        XData::Field::OptionList::Iterator it = opts.begin();
-        for ( ; it != opts.end(); ++it) {
-            if ( (*it).label == lbl || (*it).value == lbl ) {
+        XData::Field::OptionList           opts = f.options();
+        XData::Field::OptionList::Iterator it   = opts.begin();
+        for (; it != opts.end(); ++it) {
+            if ((*it).label == lbl || (*it).value == lbl) {
                 val << (*it).value;
                 break;
             }
@@ -433,13 +394,11 @@ private:
 
 ////////////////////////////////////////
 
-class XDataField_ListMulti : public XDataField
-{
+class XDataField_ListMulti : public XDataField {
 public:
-    XDataField_ListMulti(XData::Field f, QGridLayout *grid, XDataWidget *xdw)
-    : XDataField(f, xdw)
+    XDataField_ListMulti(XData::Field f, QGridLayout *grid, XDataWidget *xdw) : XDataField(f, xdw)
     {
-        int row = grid->rowCount();
+        int     row   = grid->rowCount();
         QLabel *label = new QLabel(labelText(), xdw);
         label->setWordWrap(true);
         grid->addWidget(label, row, 0);
@@ -448,26 +407,26 @@ public:
         grid->addWidget(list, row, 1);
         list->setSelectionMode(QAbstractItemView::MultiSelection);
 
-        XData::Field::OptionList opts = f.options();
-        XData::Field::OptionList::Iterator it = opts.begin();
-        for ( ; it != opts.end(); ++it) {
+        XData::Field::OptionList           opts = f.options();
+        XData::Field::OptionList::Iterator it   = opts.begin();
+        for (; it != opts.end(); ++it) {
             QString lbl = (*it).label;
-            if ( lbl.isEmpty() )
+            if (lbl.isEmpty())
                 lbl = (*it).value;
 
-            QListWidgetItem* item = new QListWidgetItem(lbl,list);
+            QListWidgetItem *item = new QListWidgetItem(lbl, list);
 
-            QStringList val = f.value();
+            QStringList           val = f.value();
             QStringList::Iterator sit = val.begin();
-            for ( ; sit != val.end(); ++sit)
-                if ( (*it).label == *sit || (*it).value == *sit )
-                    list->setItemSelected(item, true);
+            for (; sit != val.end(); ++sit)
+                if ((*it).label == *sit || (*it).value == *sit)
+                    item->setSelected(true);
         }
 
         QLabel *req = new QLabel(reqText(), xdw);
         grid->addWidget(req, row, 2);
 
-        if ( !f.desc().isEmpty() ) {
+        if (!f.desc().isEmpty()) {
             label->setToolTip(f.desc());
             list->setToolTip(f.desc());
             req->setToolTip(f.desc());
@@ -477,16 +436,16 @@ public:
     XData::Field field() const
     {
         XData::Field f = XDataField::field();
-        QStringList val;
+        QStringList  val;
 
         for (int i = 0; i < list->count(); i++) {
-            QListWidgetItem* item = list->item(i);
-            if ( list->isItemSelected(item) ) {
-                QString lbl = item->text();
-                XData::Field::OptionList opts = f.options();
-                XData::Field::OptionList::Iterator it = opts.begin();
-                for ( ; it != opts.end(); ++it) {
-                    if ( (*it).label == lbl || (*it).value == lbl ) {
+            QListWidgetItem *item = list->item(i);
+            if (item->isSelected()) {
+                QString                            lbl  = item->text();
+                XData::Field::OptionList           opts = f.options();
+                XData::Field::OptionList::Iterator it   = opts.begin();
+                for (; it != opts.end(); ++it) {
+                    if ((*it).label == lbl || (*it).value == lbl) {
                         val << (*it).value;
                         break;
                     }
@@ -504,13 +463,11 @@ private:
 
 ////////////////////////////////////////
 
-class XDataField_TextMulti : public XDataField
-{
+class XDataField_TextMulti : public XDataField {
 public:
-    XDataField_TextMulti(XData::Field f, QGridLayout *grid, XDataWidget *xdw)
-    : XDataField(f, xdw)
+    XDataField_TextMulti(XData::Field f, QGridLayout *grid, XDataWidget *xdw) : XDataField(f, xdw)
     {
-        int row = grid->rowCount();
+        int          row    = grid->rowCount();
         QHBoxLayout *layout = new QHBoxLayout;
 
         QLabel *label = new QLabel(labelText(), xdw);
@@ -520,11 +477,11 @@ public:
         edit = new QTextEdit(xdw);
         layout->addWidget(edit);
 
-        QString text;
-        QStringList val = f.value();
-        QStringList::Iterator it = val.begin();
-        for ( ; it != val.end(); ++it) {
-            if ( !text.isEmpty() )
+        QString               text;
+        QStringList           val = f.value();
+        QStringList::Iterator it  = val.begin();
+        for (; it != val.end(); ++it) {
+            if (!text.isEmpty())
                 text += '\n';
             text += *it;
         }
@@ -535,7 +492,7 @@ public:
         QLabel *req = new QLabel(reqText(), xdw);
         grid->addWidget(req, row, 1);
 
-        if ( !f.desc().isEmpty() ) {
+        if (!f.desc().isEmpty()) {
             label->setToolTip(f.desc());
             edit->setToolTip(f.desc());
             req->setToolTip(f.desc());
@@ -545,7 +502,7 @@ public:
     XData::Field field() const
     {
         XData::Field f = XDataField::field();
-        f.setValue( edit->toPlainText().split("\n") );
+        f.setValue(edit->toPlainText().split("\n"));
         return f;
     }
 
@@ -555,11 +512,9 @@ private:
 
 ////////////////////////////////////////
 
-class XDataField_JidMulti : public XDataField_TextMulti
-{
+class XDataField_JidMulti : public XDataField_TextMulti {
 public:
-    XDataField_JidMulti(XData::Field f, QGridLayout *grid, XDataWidget *xdw)
-    : XDataField_TextMulti(f, grid, xdw)
+    XDataField_JidMulti(XData::Field f, QGridLayout *grid, XDataWidget *xdw) : XDataField_TextMulti(f, grid, xdw)
     {
         // TODO: improve validation
     }
@@ -569,60 +524,38 @@ public:
 // XDataWidget
 //----------------------------------------------------------------------------
 
-XDataWidget::XDataWidget(PsiCon *psi, QWidget *parent, XMPP::Client* client, XMPP::Jid owner) :
-    QWidget(parent),
-    psi_(psi),
-    client_(client),
-    consistent_(true)
+XDataWidget::XDataWidget(PsiCon *psi, QWidget *parent, XMPP::Client *client, XMPP::Jid owner) :
+    QWidget(parent), psi_(psi), client_(client), consistent_(true)
 {
-    owner_ = owner;
+    owner_  = owner;
     layout_ = new QVBoxLayout(this);
-    layout_->setContentsMargins(0,0,0,0);
-
+    layout_->setContentsMargins(0, 0, 0, 0);
 }
 
-XDataWidget::~XDataWidget()
-{
-    qDeleteAll(fields_);
-}
+XDataWidget::~XDataWidget() { qDeleteAll(fields_); }
 
-PsiCon *XDataWidget::psi() const
-{
-    return psi_;
-}
+PsiCon *XDataWidget::psi() const { return psi_; }
 
-XMPP::Client* XDataWidget::client() const
-{
-    return client_;
-}
+XMPP::Client *XDataWidget::client() const { return client_; }
 
-QString XDataWidget::registrarType() const
-{
-    return registrarType_;
-}
+QString XDataWidget::registrarType() const { return registrarType_; }
 
-XMPP::Jid XDataWidget::owner() const
-{
-    return owner_;
-}
+XMPP::Jid XDataWidget::owner() const { return owner_; }
 
-XMPP::Stanza::Error XDataWidget::consistencyError() const
-{
-    return consistencyError_;
-}
+XMPP::Stanza::Error XDataWidget::consistencyError() const { return consistencyError_; }
 
-void XDataWidget::setInstructions(const QString& instructions)
+void XDataWidget::setInstructions(const QString &instructions)
 {
     if (!instructions.isEmpty()) {
-        QLabel* l = new QLabel(instructions, this);
+        QLabel *l = new QLabel(instructions, this);
         l->setWordWrap(true);
-        l->setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::LinksAccessibleByMouse);
-        connect(l,SIGNAL(linkActivated(const QString&)),SLOT(linkActivated(const QString&)));
+        l->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::LinksAccessibleByMouse);
+        connect(l, SIGNAL(linkActivated(const QString &)), SLOT(linkActivated(const QString &)));
         layout_->addWidget(l);
     }
 }
 
-void XDataWidget::setForm(const XMPP::XData& d, bool withInstructions)
+void XDataWidget::setForm(const XMPP::XData &d, bool withInstructions)
 {
     qDeleteAll(fields_);
     fields_.clear();
@@ -638,22 +571,22 @@ void XDataWidget::setForm(const XMPP::XData& d, bool withInstructions)
     if (registrarType_ == "urn:xmpp:captcha") {
         QStringList supportedMedia = XDataMediaWidget::supportedMedia();
         QStringList mediaVars;
-        mediaVars << "audio_recog" << "ocr" << "picture_q" << "picture_recog"
-                  << "speech_q" << "speech_recog" << "video_q" << "video_recog";
-        short maxAnswers = 0;
+        mediaVars << "audio_recog" << "ocr" << "picture_q" << "picture_recog" << "speech_q" << "speech_recog"
+                  << "video_q" << "video_recog";
+        short maxAnswers       = 0;
         short requestedAnswers = 0;
-        Jid from;
-        foreach (const XData::Field &field, d.fields()) {
+        Jid   from;
+        for (const XData::Field &field : d.fields()) {
             if (!field.var().isEmpty()) {
                 if (field.var() == "answers") {
-                    requestedAnswers = field.value().value(0).toInt();
+                    requestedAnswers = field.value().value(0).toShort();
                 }
                 if (field.var() == "from") {
                     from = field.value().value(0);
                 }
                 if (field.var() == "SHA-256") {
                     if (field.required()) {
-                        consistent_ = false; //sha-256 is not supported atm
+                        consistent_ = false; // sha-256 is not supported atm
                         break;
                     }
                     continue; // unlikely, but who knows
@@ -677,15 +610,13 @@ void XDataWidget::setForm(const XMPP::XData& d, bool withInstructions)
         if (requestedAnswers > maxAnswers) {
             consistent_ = false;
         }
-        if (owner_.domain() != from.domain() || (!owner_.node().isEmpty() &&
-                                                owner_.node() != from.node())) {
+        if (owner_.domain() != from.domain() || (!owner_.node().isEmpty() && owner_.node() != from.node())) {
             consistent_ = false;
         }
         if (!consistent_) {
-            consistencyError_ = Stanza::Error(Stanza::Error::Modify,
-                                              Stanza::Error::NotAcceptable);
+            consistencyError_ = Stanza::Error(Stanza::Error::Modify, Stanza::Error::NotAcceptable);
         }
-        //TODO check if captcha was sent too late (more than 2 minutes)
+        // TODO check if captcha was sent too late (more than 2 minutes)
     } else {
         fields = d.fields();
     }
@@ -695,13 +626,12 @@ void XDataWidget::setForm(const XMPP::XData& d, bool withInstructions)
     setFields(fields);
 }
 
-
 XData::FieldList XDataWidget::fields() const
 {
     XData::FieldList f;
 
-    for (QList<XDataField*>::ConstIterator it = fields_.begin() ; it != fields_.end(); it ++) {
-        f.append( (*it)->field() );
+    for (const auto &field : fields_) {
+        f.append(field->field());
     }
 
     return f;
@@ -711,54 +641,54 @@ void XDataWidget::setFields(const XData::FieldList &f)
 {
     QWidget *fields = new QWidget(this);
     layout_->addWidget(fields);
-    if ( f.count() ) {
+    if (f.count()) {
         // FIXME
         QGridLayout *grid = new QGridLayout(fields);
         grid->setSpacing(3);
 
         XData::FieldList::ConstIterator it = f.begin();
-        for ( ; it != f.end(); ++it) {
+        for (; it != f.end(); ++it) {
             XDataField *f;
-            switch ( (*it).type() ) {
-                case XData::Field::Field_Boolean:
-                    f = new XDataField_Boolean(*it, grid, this);
-                    break;
-                case XData::Field::Field_Fixed:
-                    f = new XDataField_Fixed(*it, grid, this);
-                    break;
-                case XData::Field::Field_Hidden:
-                    f = new XDataField_Hidden(*it, this);
-                    break;
-                case XData::Field::Field_JidSingle:
-                    f = new XDataField_JidSingle(*it, grid, this);
-                    break;
-                case XData::Field::Field_ListMulti:
-                    f = new XDataField_ListMulti(*it, grid, this);
-                    break;
-                case XData::Field::Field_ListSingle:
-                    f = new XDataField_ListSingle(*it, grid, this);
-                    break;
-                case XData::Field::Field_TextMulti:
-                    f = new XDataField_TextMulti(*it, grid, this);
-                    break;
-                case XData::Field::Field_JidMulti:
-                    f = new XDataField_JidMulti(*it, grid, this);
-                    break;
-                case XData::Field::Field_TextPrivate:
-                    f = new XDataField_TextPrivate(*it, grid, this);
-                    break;
+            switch ((*it).type()) {
+            case XData::Field::Field_Boolean:
+                f = new XDataField_Boolean(*it, grid, this);
+                break;
+            case XData::Field::Field_Fixed:
+                f = new XDataField_Fixed(*it, grid, this);
+                break;
+            case XData::Field::Field_Hidden:
+                f = new XDataField_Hidden(*it, this);
+                break;
+            case XData::Field::Field_JidSingle:
+                f = new XDataField_JidSingle(*it, grid, this);
+                break;
+            case XData::Field::Field_ListMulti:
+                f = new XDataField_ListMulti(*it, grid, this);
+                break;
+            case XData::Field::Field_ListSingle:
+                f = new XDataField_ListSingle(*it, grid, this);
+                break;
+            case XData::Field::Field_TextMulti:
+                f = new XDataField_TextMulti(*it, grid, this);
+                break;
+            case XData::Field::Field_JidMulti:
+                f = new XDataField_JidMulti(*it, grid, this);
+                break;
+            case XData::Field::Field_TextPrivate:
+                f = new XDataField_TextPrivate(*it, grid, this);
+                break;
 
-                default:
-                    f = new XDataField_TextSingle(*it, grid, this);
+            default:
+                f = new XDataField_TextSingle(*it, grid, this);
             }
             fields_.append(f);
         }
     }
 }
 
-XDataField* XDataWidget::fieldByVar(const QString &var) const
+XDataField *XDataWidget::fieldByVar(const QString &var) const
 {
-    foreach (XDataField* field, fields_) {
+    for (XDataField *field : fields_) {
         if (field->field().var() == var) {
             return field;
         }
@@ -766,9 +696,6 @@ XDataField* XDataWidget::fieldByVar(const QString &var) const
     return nullptr;
 }
 
-void XDataWidget::linkActivated(const QString& link)
-{
-    DesktopUtil::openUrl(link);
-}
+void XDataWidget::linkActivated(const QString &link) { DesktopUtil::openUrl(link); }
 
 #include "xdata_widget.moc"

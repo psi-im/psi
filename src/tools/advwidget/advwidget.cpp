@@ -17,29 +17,20 @@
  *
  */
 
-#include <QtGlobal> // required to make mingw32 happy
-#ifdef Q_OS_WIN
-#if __GNUC__ >= 3
-#    define WINVER 0x0500
-#endif
-#include <windows.h>
-#include <winuser.h>
-#endif
-
 #include "advwidget.h"
-
-#include <QApplication>
-#include <QWidget>
-#include <QTimer>
-#include <QDesktopWidget>
-#include <QDebug>
 
 #include "psioptions.h"
 
-#ifdef HAVE_X11
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <QX11Info>
+#include <QApplication>
+#include <QDebug>
+#include <QIODevice>
+#include <QScreen>
+#include <QTimer>
+#include <QWidget>
+#include <QtGlobal> // required to make mingw32 happy
+#ifdef Q_OS_WIN
+#include <windows.h>
+#include <winuser.h>
 #endif
 
 // TODO: Make use of KDE taskbar flashing support
@@ -48,22 +39,16 @@
 // AdvancedWidgetShared
 //----------------------------------------------------------------------------
 
-class AdvancedWidgetShared : public QObject
-{
+class AdvancedWidgetShared : public QObject {
     Q_OBJECT
 public:
     AdvancedWidgetShared();
     ~AdvancedWidgetShared();
 };
 
-AdvancedWidgetShared::AdvancedWidgetShared()
-    : QObject(qApp)
-{
-}
+AdvancedWidgetShared::AdvancedWidgetShared() : QObject(qApp) { }
 
-AdvancedWidgetShared::~AdvancedWidgetShared()
-{
-}
+AdvancedWidgetShared::~AdvancedWidgetShared() { }
 
 static AdvancedWidgetShared *advancedWidgetShared = nullptr;
 
@@ -71,8 +56,7 @@ static AdvancedWidgetShared *advancedWidgetShared = nullptr;
 // GAdvancedWidget::Private
 //----------------------------------------------------------------------------
 
-class GAdvancedWidget::Private : public QObject
-{
+class GAdvancedWidget::Private : public QObject {
     Q_OBJECT
 public:
     Private(QWidget *parent);
@@ -81,9 +65,9 @@ public:
     static bool stickToWindows;
     static bool stickEnabled;
 
-    QWidget* parentWidget_;
-    bool flashing_;
-    QString geometryOptionPath_;
+    QWidget *parentWidget_;
+    bool     flashing_;
+    QString  geometryOptionPath_;
 
     bool flashing() const;
     void doFlash(bool on);
@@ -92,12 +76,12 @@ public:
 
 protected:
     // reimplemented
-    bool eventFilter(QObject* obj, QEvent* e);
+    bool eventFilter(QObject *obj, QEvent *e);
 
 private:
-    QTimer* saveGeometryTimer_;
-    QRect newGeometry_;
-    QRect normalGeometry_;
+    QTimer *saveGeometryTimer_;
+    QRect   newGeometry_;
+    QRect   normalGeometry_;
 
 public slots:
     void saveGeometry();
@@ -113,10 +97,7 @@ int  GAdvancedWidget::Private::stickAt        = 5;
 bool GAdvancedWidget::Private::stickToWindows = true;
 bool GAdvancedWidget::Private::stickEnabled   = true;
 
-GAdvancedWidget::Private::Private(QWidget *parent)
-    : QObject(parent)
-    , parentWidget_(parent)
-    , flashing_(false)
+GAdvancedWidget::Private::Private(QWidget *parent) : QObject(parent), parentWidget_(parent), flashing_(false)
 {
     if (!advancedWidgetShared)
         advancedWidgetShared = new AdvancedWidgetShared();
@@ -129,90 +110,76 @@ GAdvancedWidget::Private::Private(QWidget *parent)
 
 void GAdvancedWidget::Private::posChanging(int *x, int *y, int *width, int *height)
 {
-    if ( stickAt <= 0                     ||
-        !stickEnabled                     ||
-        !parentWidget_->isTopLevel()      ||
-         parentWidget_->isMaximized()     ||
-        !parentWidget_->updatesEnabled() )
-    {
+    if (stickAt <= 0 || !stickEnabled || !parentWidget_->isWindow() || parentWidget_->isMaximized()
+        || !parentWidget_->updatesEnabled()) {
         return;
     }
 
     QWidget *p = parentWidget_;
-    if ( p->pos() == QPoint(*x, *y) &&
-         p->frameSize() == QSize(*width, *height) )
+    if (p->pos() == QPoint(*x, *y) && p->frameSize() == QSize(*width, *height))
         return;
 
     bool resizing = p->frameSize() != QSize(*width, *height);
 
-    QDesktopWidget *desktop = qApp->desktop();
+    auto        parentScreen = p->screen();
     QWidgetList list;
 
-    if ( stickToWindows )
+    if (stickToWindows)
         list = QApplication::topLevelWidgets();
 
-    foreach(QWidget *w, list) {
+    for (QWidget *w : std::as_const(list)) {
         QRect rect;
-        bool dockWidget = false;
+        bool  dockWidget = false;
 
-        if ( w->windowType() == Qt::Desktop )
-            rect = ((QDesktopWidget *)w)->availableGeometry((QWidget *)parent());
+        if (w->windowType() == Qt::Desktop)
+            rect = w->frameGeometry();
         else {
-            if ( w == p ||
-                 desktop->screenNumber(p) != desktop->screenNumber(w) )
+            if (w == p || parentScreen != w->screen())
                 continue;
 
-            if ( !w->isVisible() )
+            if (!w->isVisible())
                 continue;
 
             // we want for widget to stick to outer edges of another widget, so
             // we'll change the rect to what it'll snap
-            rect = QRect(w->frameGeometry().bottomRight(), w->frameGeometry().topLeft());
+            rect       = QRect(w->frameGeometry().topLeft(), w->frameGeometry().bottomRight());
             dockWidget = true;
         }
 
-        if ( *x != p->x() )
-        if ( *x <= rect.left() + stickAt &&
-             *x >  rect.left() - stickAt ) {
-            if ( !dockWidget ||
-                 (p->frameGeometry().bottom() >= rect.bottom() &&
-                  p->frameGeometry().top() <= rect.top()) ) {
-                *x = rect.left();
-                if ( resizing )
-                    *width = p->frameSize().width() + p->x() - *x;
+        if (*x != p->x())
+            if (*x <= rect.left() + stickAt && *x > rect.left() - stickAt) {
+                if (!dockWidget
+                    || (p->frameGeometry().bottom() >= rect.bottom() && p->frameGeometry().top() <= rect.top())) {
+                    *x = rect.left();
+                    if (resizing)
+                        *width = p->frameSize().width() + p->x() - *x;
+                }
             }
-        }
 
-        if ( *x + *width >= rect.right() - stickAt &&
-             *x + *width <= rect.right() + stickAt ) {
-            if ( !dockWidget ||
-                 (p->frameGeometry().bottom() >= rect.bottom() &&
-                  p->frameGeometry().top() <= rect.top()) ) {
-                if ( resizing )
+        if (*x + *width >= rect.right() - stickAt && *x + *width <= rect.right() + stickAt) {
+            if (!dockWidget
+                || (p->frameGeometry().bottom() >= rect.bottom() && p->frameGeometry().top() <= rect.top())) {
+                if (resizing)
                     *width = rect.right() - *x + 1;
                 else
                     *x = rect.right() - *width + 1;
             }
         }
 
-        if ( *y != p->y() )
-        if ( *y <= rect.top() + stickAt &&
-             *y >  rect.top() - stickAt ) {
-            if ( !dockWidget ||
-                 (p->frameGeometry().right() >= rect.right() &&
-                  p->frameGeometry().left() <= rect.left()) ) {
-                *y = rect.top();
-                if ( resizing )
-                    *height = p->frameSize().height() + p->y() - *y;
+        if (*y != p->y())
+            if (*y <= rect.top() + stickAt && *y > rect.top() - stickAt) {
+                if (!dockWidget
+                    || (p->frameGeometry().right() >= rect.right() && p->frameGeometry().left() <= rect.left())) {
+                    *y = rect.top();
+                    if (resizing)
+                        *height = p->frameSize().height() + p->y() - *y;
+                }
             }
-        }
 
-        if ( *y + *height >= rect.bottom() - stickAt &&
-             *y + *height <= rect.bottom() + stickAt ) {
-            if ( !dockWidget ||
-                 (p->frameGeometry().right() >= rect.right() &&
-                  p->frameGeometry().left() <= rect.left()) ) {
-                if ( resizing )
+        if (*y + *height >= rect.bottom() - stickAt && *y + *height <= rect.bottom() + stickAt) {
+            if (!dockWidget
+                || (p->frameGeometry().right() >= rect.right() && p->frameGeometry().left() <= rect.left())) {
+                if (resizing)
                     *height = rect.bottom() - *y + 1;
                 else
                     *y = rect.bottom() - *height + 1;
@@ -221,46 +188,42 @@ void GAdvancedWidget::Private::posChanging(int *x, int *y, int *width, int *heig
     }
 }
 
-bool GAdvancedWidget::Private::flashing() const
-{
-    return flashing_;
-}
+bool GAdvancedWidget::Private::flashing() const { return flashing_; }
 
 void GAdvancedWidget::Private::doFlash(bool yes)
 {
     flashing_ = yes;
     if (parentWidget_->window() != parentWidget_)
         return;
-    
+
 #ifdef Q_OS_WIN
-    
+
     FLASHWINFO fwi;
-    
+
     fwi.cbSize = sizeof(fwi);
-    fwi.hwnd = (HWND)parentWidget_->winId();
-    
+    fwi.hwnd   = HWND(parentWidget_->winId());
+
     if (yes) {
-        fwi.dwFlags = FLASHW_ALL | FLASHW_TIMER;
+        fwi.dwFlags   = FLASHW_ALL | FLASHW_TIMER;
         fwi.dwTimeout = 0;
-        fwi.uCount = 5;
-    }
-    else {
+        fwi.uCount    = 5;
+    } else {
         fwi.dwFlags = FLASHW_STOP;
-        fwi.uCount = 0;
+        fwi.uCount  = 0;
     }
-    
+
     FlashWindowEx(&fwi);
-    
+
 #else
-    
+
     QApplication::alert(parentWidget_, yes ? 0 : 1);
-    
+
 #endif
 }
 
 void GAdvancedWidget::Private::moveEvent(QMoveEvent *)
 {
-    if (!parentWidget_->isTopLevel())
+    if (!parentWidget_->isWindow())
         return;
 #ifdef Q_OS_MAC
     QRect r = qApp->desktop()->availableGeometry(parentWidget_);
@@ -287,31 +250,38 @@ void GAdvancedWidget::Private::moveEvent(QMoveEvent *)
 
 void GAdvancedWidget::Private::updateGeometry()
 {
-    QWidget *w = (QWidget *)parent();
+    QWidget *w = static_cast<QWidget *>(parent());
     w->move(newGeometry_.topLeft());
 }
 
 void GAdvancedWidget::Private::saveGeometry()
 {
-    bool isMaximized = parentWidget_->windowState() & Qt::WindowMaximized;
-    //if window is maximized normalGeometry() returns null rect. So in this case we use cached geometry
-    PsiOptions::instance()->setOption(geometryOptionPath_, isMaximized ? normalGeometry_ : parentWidget_->normalGeometry());
+    bool isMaximized = bool(parentWidget_->windowState() & Qt::WindowMaximized);
+    // if window is maximized normalGeometry() returns null rect. So in this case we use cached geometry
+    PsiOptions::instance()->setOption(geometryOptionPath_,
+                                      isMaximized ? normalGeometry_ : parentWidget_->normalGeometry());
     PsiOptions::instance()->setOption(geometryOptionPath_ + "-frame", parentWidget_->frameGeometry());
-    PsiOptions::instance()->setOption(geometryOptionPath_ + "-screen", QApplication::desktop()->screenNumber(parentWidget_));
+    PsiOptions::instance()->setOption(geometryOptionPath_ + "-screen",
+                                      QGuiApplication::screens().indexOf(parentWidget_->screen()));
     PsiOptions::instance()->setOption(geometryOptionPath_ + "-maximized", isMaximized);
-    PsiOptions::instance()->setOption(geometryOptionPath_ + "-fullscreen", bool(parentWidget_->windowState() & Qt::WindowFullScreen));
+    PsiOptions::instance()->setOption(geometryOptionPath_ + "-fullscreen",
+                                      bool(parentWidget_->windowState() & Qt::WindowFullScreen));
 }
 
 void GAdvancedWidget::Private::restoreGeometry()
 {
     PsiOptions *o = PsiOptions::instance();
-    QVariant v(o->getOption(geometryOptionPath_));
+    QVariant    v(o->getOption(geometryOptionPath_));
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     if (v.type() == QVariant::ByteArray) {
+#else
+    if (v.typeId() == QMetaType::QByteArray) {
+#endif
         // migrate options back from format used for a short time before
         // 0.12-RC2. This can be removed later.
         parentWidget_->restoreGeometry(v.toByteArray());
-    } else if (o->getOption(geometryOptionPath_ + "-frame").toRect() != QRect(0,0,0,0)) {
+    } else if (o->getOption(geometryOptionPath_ + "-frame").toRect() != QRect(0, 0, 0, 0)) {
         // this is at least as safe as saving this kind of binary blob into the options file.
         // if future Qt versions drop support for restoring from this format old options files
         // would break anyway. If we want to (e.g. to add other features) we can also reimplement
@@ -319,23 +289,22 @@ void GAdvancedWidget::Private::restoreGeometry()
         // and this way we are sure no Qt version the user happens to have installed writes some
         // newer version of the format that older Qts can't restore from.
 
-        QByteArray array;
+        QByteArray  array;
         QDataStream stream(&array, QIODevice::WriteOnly);
         stream.setVersion(QDataStream::Qt_4_0);
-        const quint32 magicNumber = 0x1D9D0CB;
-        quint16 majorVersion = 1;
-        quint16 minorVersion = 0;
-        QRect restoredFrameGeometry = o->getOption(geometryOptionPath_ + "-frame").toRect();
-        normalGeometry_ = o->getOption(geometryOptionPath_).toRect();
+        // see https://github.com/qt/qtbase/blob/6.7/src/widgets/kernel/qwidget.cpp
+        // TODO 2024. update to version 3 or get rid of text form at all since the format
+        // looks pretty much forward and backward compatible
+        const quint32 magicNumber           = 0x1D9D0CB;
+        quint16       majorVersion          = 1;
+        quint16       minorVersion          = 0;
+        QRect         restoredFrameGeometry = o->getOption(geometryOptionPath_ + "-frame").toRect();
+        normalGeometry_                     = o->getOption(geometryOptionPath_).toRect();
 
-        stream << magicNumber
-            << majorVersion
-            << minorVersion
-            << restoredFrameGeometry
-            << normalGeometry_
-            << qint32(o->getOption(geometryOptionPath_ + "-screen").toInt())
-            << quint8(o->getOption(geometryOptionPath_ + "-maximized").toBool())
-            << quint8(o->getOption(geometryOptionPath_ + "-fullscreen").toBool());
+        stream << magicNumber << majorVersion << minorVersion << restoredFrameGeometry << normalGeometry_
+               << qint32(o->getOption(geometryOptionPath_ + "-screen").toInt())
+               << quint8(o->getOption(geometryOptionPath_ + "-maximized").toBool())
+               << quint8(o->getOption(geometryOptionPath_ + "-fullscreen").toBool());
 
         parentWidget_->restoreGeometry(array);
         return;
@@ -352,10 +321,18 @@ void GAdvancedWidget::Private::restoreGeometry()
 void GAdvancedWidget::Private::restoreGeometry(QRect savedGeometry)
 {
     QRect geom = savedGeometry;
+#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+    QScreen *screen;
+    if (!(screen = QApplication::screenAt(geom.topLeft()))) {
+        qWarning("Failed to find screen for coords %dx%d", geom.topLeft().x(), geom.topLeft().y());
+        return;
+    }
+    QRect r = screen->geometry();
+#else
     QDesktopWidget *pdesktop = QApplication::desktop();
-    int nscreen = pdesktop->screenNumber(geom.topLeft());
-    QRect r = pdesktop->screenGeometry(nscreen);
-
+    int             nscreen  = pdesktop->screenNumber(geom.topLeft());
+    QRect           r        = pdesktop->screenGeometry(nscreen);
+#endif
     // if the coordinates are out of the desktop bounds, reset to the top left
     int pad = 10;
     if (geom.left() < r.left())
@@ -375,12 +352,12 @@ void GAdvancedWidget::Private::restoreGeometry(QRect savedGeometry)
     parentWidget_->resize(geom.size());
 }
 
-bool GAdvancedWidget::Private::eventFilter(QObject* obj, QEvent* e)
+bool GAdvancedWidget::Private::eventFilter(QObject *obj, QEvent *e)
 {
     if (obj == parentWidget_) {
         if (e->type() == QEvent::Move || e->type() == QEvent::Resize) {
             Qt::WindowStates ws = parentWidget_->windowState();
-            if( !(ws & Qt::WindowMaximized) && !(ws & Qt::WindowFullScreen) ) {
+            if (!(ws & Qt::WindowMaximized) && !(ws & Qt::WindowFullScreen)) {
                 normalGeometry_ = parentWidget_->normalGeometry();
             }
             saveGeometryTimer_->start();
@@ -396,21 +373,18 @@ bool GAdvancedWidget::Private::eventFilter(QObject* obj, QEvent* e)
 // GAdvancedWidget
 //----------------------------------------------------------------------------
 
-GAdvancedWidget::GAdvancedWidget(QWidget *parent)
-    : QObject(parent)
-{
-    d = new Private(parent);
-}
+GAdvancedWidget::GAdvancedWidget(QWidget *parent) : QObject(parent) { d = new Private(parent); }
 
 #ifdef Q_OS_WIN
-bool GAdvancedWidget::winEvent(MSG* msg, long* result)
+bool GAdvancedWidget::nativeEvent(const QByteArray &eventType, MSG *msg, long *result)
 {
-    if ( msg->message == WM_WINDOWPOSCHANGING ) {
+    Q_UNUSED(eventType);
+    if (msg->message == WM_WINDOWPOSCHANGING) {
         WINDOWPOS *wpos = (WINDOWPOS *)msg->lParam;
 
         d->posChanging(&wpos->x, &wpos->y, &wpos->cx, &wpos->cy);
 
-        result = 0;
+        *result = 0;
         return true;
     }
 
@@ -418,12 +392,9 @@ bool GAdvancedWidget::winEvent(MSG* msg, long* result)
 }
 #endif
 
-QString GAdvancedWidget::geometryOptionPath() const
-{
-    return d->geometryOptionPath_;
-}
+QString GAdvancedWidget::geometryOptionPath() const { return d->geometryOptionPath_; }
 
-void GAdvancedWidget::setGeometryOptionPath(const QString& optionPath)
+void GAdvancedWidget::setGeometryOptionPath(const QString &optionPath)
 {
     Q_ASSERT(d->geometryOptionPath_.isEmpty());
     Q_ASSERT(!optionPath.isEmpty());
@@ -432,16 +403,10 @@ void GAdvancedWidget::setGeometryOptionPath(const QString& optionPath)
     d->parentWidget_->installEventFilter(d);
 }
 
-bool GAdvancedWidget::flashing() const
-{
-    return d->flashing();
-}
+bool GAdvancedWidget::flashing() const { return d->flashing(); }
 
-void GAdvancedWidget::doFlash(bool on)
-{
-    d->doFlash( on );
-}
-
+void GAdvancedWidget::doFlash(bool on) { d->doFlash(on); }
+/* looks like the next part of the code is no longer relevant
 #ifdef Q_OS_WIN
 // http://groups.google.ru/group/borland.public.cppbuilder.winapi/msg/6eb6f1832d68686d?hl=ru&
 bool ForceForegroundWindow(HWND hwnd)
@@ -507,7 +472,7 @@ bool ForceForegroundWindow(HWND hwnd)
     return Result;
 }
 #endif
-
+*/
 /**
  * http://trolltech.com/developer/task-tracker/index_html?id=202971&method=entry
  * There's a bug in Qt that prevents us to show a window on Windows
@@ -523,69 +488,46 @@ void GAdvancedWidget::showWithoutActivation()
     // in Qt 4.4.0, maybe it'll provide a simpler alternative to this
     // windows-specific code
 
-#ifdef Q_OS_WIN
-    HWND foregroundWindow = GetForegroundWindow();
-#endif
+    /*#ifdef Q_OS_WIN
+        HWND foregroundWindow = GetForegroundWindow();
+    #endif*/
 
     bool showWithoutActivating = d->parentWidget_->testAttribute(Qt::WA_ShowWithoutActivating);
     d->parentWidget_->setAttribute(Qt::WA_ShowWithoutActivating, true);
     d->parentWidget_->show();
     d->parentWidget_->setAttribute(Qt::WA_ShowWithoutActivating, showWithoutActivating);
 
-#ifdef Q_OS_WIN
-    if (foregroundWindow) {
-        // the first step is to make sure we're the topmost window
-        // otherwise step two doesn't seem to have any effect at all
-        ForceForegroundWindow((HWND)d->parentWidget_->winId());
-        ForceForegroundWindow(foregroundWindow);
-    }
-#endif
+    /*#ifdef Q_OS_WIN
+        if (foregroundWindow) {
+            // the first step is to make sure we're the topmost window
+            // otherwise step two doesn't seem to have any effect at all
+            ForceForegroundWindow((HWND)d->parentWidget_->winId());
+            ForceForegroundWindow(foregroundWindow);
+        }
+    #endif*/
 }
 
 void GAdvancedWidget::changeEvent(QEvent *event)
 {
-    if (event->type() == QEvent::ActivationChange ||
-        event->type() == QEvent::WindowStateChange)
-    {
+    if (event->type() == QEvent::ActivationChange || event->type() == QEvent::WindowStateChange) {
         if (d->parentWidget_->isActiveWindow()) {
             doFlash(false);
         }
     }
 }
 
-int GAdvancedWidget::stickAt()
-{
-    return Private::stickAt;
-}
+int GAdvancedWidget::stickAt() { return Private::stickAt; }
 
-void GAdvancedWidget::setStickAt(int val)
-{
-    Private::stickAt = val;
-}
+void GAdvancedWidget::setStickAt(int val) { Private::stickAt = val; }
 
-bool GAdvancedWidget::stickToWindows()
-{
-    return Private::stickToWindows;
-}
+bool GAdvancedWidget::stickToWindows() { return Private::stickToWindows; }
 
-void GAdvancedWidget::setStickToWindows(bool val)
-{
-    Private::stickToWindows = val;
-}
+void GAdvancedWidget::setStickToWindows(bool val) { Private::stickToWindows = val; }
 
-bool GAdvancedWidget::stickEnabled()
-{
-    return Private::stickEnabled;
-}
+bool GAdvancedWidget::stickEnabled() { return Private::stickEnabled; }
 
-void GAdvancedWidget::setStickEnabled(bool val)
-{
-    Private::stickEnabled = val;
-}
+void GAdvancedWidget::setStickEnabled(bool val) { Private::stickEnabled = val; }
 
-void GAdvancedWidget::moveEvent(QMoveEvent *e)
-{
-    d->moveEvent(e);
-}
+void GAdvancedWidget::moveEvent(QMoveEvent *e) { d->moveEvent(e); }
 
 #include "advwidget.moc"

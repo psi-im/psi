@@ -20,23 +20,22 @@
 #ifndef ABOUTDLG_H
 #define ABOUTDLG_H
 
-#include <QDialog>
-
 #include "ui_about.h"
 
-class AboutDlg : public QDialog
-{
+#include <QDialog>
+
+class AboutDlg : public QDialog {
     Q_OBJECT
 
 public:
-    AboutDlg(QWidget* parent = nullptr);
+    AboutDlg(QWidget *parent = nullptr);
 
 protected:
-    QString loadText( const QString & fileName );
-    QString details( QString name, QString email, QString jabber, QString www, QString desc );
+    QString loadText(const QString &fileName);
+    QString details(QString name, QString email, QString xmppAddress, QString www, QString desc);
 
 private:
     Ui::AboutDlg ui_;
 };
 
-#endif
+#endif // ABOUTDLG_H

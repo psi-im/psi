@@ -1,19 +1,18 @@
 #ifndef CAPTCHADLG_H
 #define CAPTCHADLG_H
 
-#include "xmpp_captcha.h"
+#include "iris/xmpp_captcha.h"
 
 #include <QDialog>
+
+class PsiAccount;
+class XDataWidget;
 
 namespace Ui {
 class CaptchaDlg;
 }
 
-class PsiAccount;
-class XDataWidget;
-
-class CaptchaDlg : public QDialog
-{
+class CaptchaDlg : public QDialog {
     Q_OBJECT
 
 public:
@@ -24,9 +23,9 @@ public slots:
     void done(int r);
 
 private:
-    Ui::CaptchaDlg *ui;
+    Ui::CaptchaDlg        *ui;
     XMPP::CaptchaChallenge challenge;
-    XDataWidget *dataWidget;
+    XDataWidget           *dataWidget;
 };
 
 #endif // CAPTCHADLG_H

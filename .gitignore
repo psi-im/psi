@@ -71,3 +71,19 @@ builddir
 .qmake.cache
 .qmake.stash
 psi.app/
+myspell/
+translations/
+src/plugins/CMakeLists.txt
+src/plugins/README.md
+src/plugins/cmake/modules/FindPsiPluginsApi.cmake
+src/plugins/dev/
+src/plugins/generic/
+src/plugins/tests/
+src/plugins/unix/
+
+.idea
+cmake-build-*
+compile_commands.json
+
+# Nix build artifacts
+result*

@@ -3,7 +3,9 @@ unset(FORMS)
 unset(SOURCES)
 unset(UI_FORMS)
 
-include_directories(..)
+get_filename_component(ABS_PARENT_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
+
+include_directories(${ABS_PARENT_DIR})
 
 list(APPEND HEADERS
     optionsdlg.h
@@ -17,13 +19,13 @@ list(APPEND HEADERS
     opt_appearance.h
     opt_advanced.h
     opt_events.h
+    opt_pluginwrapper.h
     opt_popups.h
     opt_roster.h
     opt_roster_main.h
     opt_roster_muc.h
     opt_groupchat.h
     opt_sound.h
-    opt_avcall.h
     opt_messages.h
     opt_messages_common.h
     opt_chat.h
@@ -34,6 +36,7 @@ list(APPEND HEADERS
     opt_input.h
     opt_statusgeneral.h
     opt_theme.h
+    opt_accounts.h
 )
 
 list(APPEND SOURCES
@@ -46,13 +49,13 @@ list(APPEND SOURCES
     opt_advanced.cpp
     opt_appearance.cpp
     opt_application.cpp
-    opt_avcall.cpp
     opt_chat.cpp
     opt_events.cpp
     opt_groupchat.cpp
     opt_iconset.cpp
     opt_messages.cpp
     opt_messages_common.cpp
+    opt_pluginwrapper.cpp
     opt_popups.cpp
     opt_roster.cpp
     opt_roster_main.cpp
@@ -67,6 +70,7 @@ list(APPEND SOURCES
     opt_theme.cpp
     opt_toolbars.cpp
     opt_tree.cpp
+    opt_accounts.cpp
 )
 
 list(APPEND FORMS
@@ -74,7 +78,6 @@ list(APPEND FORMS
     opt_appearance.ui
     opt_appearance_misc.ui
     opt_application.ui
-    opt_avcall.ui
     opt_chat.ui
     opt_events.ui
     opt_general_groupchat.ui
@@ -103,7 +106,7 @@ list(APPEND FORMS
     ui_options.ui
 )
 
-qt5_wrap_ui(UI_FORMS ${FORMS})
+qt_wrap_ui(UI_FORMS ${FORMS})
 add_library(options STATIC ${SOURCES} ${HEADERS} ${UI_FORMS})
-target_link_libraries(options ${QT_LIBRARIES} tools widgets tabs libpsi_dialogs)
+target_link_libraries(options ${QT_LIBRARIES} tools widgets tabs)
 target_include_directories(options PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})

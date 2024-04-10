@@ -17,27 +17,27 @@
  *
  */
 
-#include <QMimeData>
-#include <QFont>
-#include <QVariant>
-
 #include "mucaffiliationsmodel.h"
+
+#include <QFont>
+#include <QIODevice>
+#include <QMimeData>
+#include <QVariant>
 
 using namespace XMPP;
 
-
-MUCAffiliationsModel::MUCAffiliationsModel() : QStandardItemModel(Unknown,2)
+MUCAffiliationsModel::MUCAffiliationsModel() : QStandardItemModel(Unknown, 2)
 {
     QFont font;
     font.setBold(true);
-    QVariant font_variant = qVariantFromValue(font);
+    QVariant font_variant = QVariant::fromValue(font);
     for (int i = 0; i < Unknown; i++) {
         QModelIndex ind = index(i, 0, QModelIndex());
-        setData(ind,QVariant(affiliationlistindexToString((AffiliationListIndex) i)));
-        setData(ind,font_variant,Qt::FontRole);
-        insertColumns(0,1,ind);
-        insertColumns(1,1,ind);
-        enabled_[(AffiliationListIndex) i] = false;
+        setData(ind, QVariant(affiliationlistindexToString(AffiliationListIndex(i))));
+        setData(ind, font_variant, Qt::FontRole);
+        insertColumns(0, 1, ind);
+        insertColumns(1, 1, ind);
+        enabled_[AffiliationListIndex(i)] = false;
     }
     setHorizontalHeaderLabels(QStringList() << tr("JID") << tr("Reason"));
 }
@@ -47,35 +47,30 @@ Qt::ItemFlags MUCAffiliationsModel::flags(const QModelIndex &index) const
     Qt::ItemFlags a;
     if (!index.parent().isValid()) {
         // List headers
-        if (enabled_[(AffiliationListIndex) index.row()]) {
+        if (enabled_[AffiliationListIndex(index.row())]) {
             a |= Qt::ItemIsDropEnabled | Qt::ItemIsSelectable | Qt::ItemIsEnabled;
         }
-    }
-    else {
+    } else {
         a |= Qt::ItemIsDropEnabled | Qt::ItemIsSelectable | Qt::ItemIsDragEnabled | Qt::ItemIsEnabled;
     }
     return a;
 }
 
-Qt::DropActions MUCAffiliationsModel::supportedDropActions() const
-{
-    return Qt::MoveAction;
-}
+Qt::DropActions MUCAffiliationsModel::supportedDropActions() const { return Qt::MoveAction; }
 
-bool MUCAffiliationsModel::dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int, const QModelIndex &parent)
+bool MUCAffiliationsModel::dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int,
+                                        const QModelIndex &parent)
 {
-    if ( (parent.isValid() && parent.column() != 0)
-        || !data || action != Qt::MoveAction
-        || !( data->hasFormat("application/vnd.text.list") || data->hasFormat("text/plain") ) )
-    {
+    if ((parent.isValid() && parent.column() != 0) || !data || action != Qt::MoveAction
+        || !(data->hasFormat("application/vnd.text.list") || data->hasFormat("text/plain"))) {
         return false;
     }
 
     // Decode the data
     QStringList newItems;
-    int nb_rows = 0;
+    int         nb_rows = 0;
     if (data->hasFormat("application/vnd.text.list")) {
-        QByteArray encodedData = data->data("application/vnd.text.list");
+        QByteArray  encodedData = data->data("application/vnd.text.list");
         QDataStream stream(&encodedData, QIODevice::ReadOnly);
         while (!stream.atEnd()) {
             QString text;
@@ -83,8 +78,7 @@ bool MUCAffiliationsModel::dropMimeData(const QMimeData *data, Qt::DropAction ac
             newItems << text;
             nb_rows++;
         }
-    }
-    else if (data->hasFormat("text/plain")) {
+    } else if (data->hasFormat("text/plain")) {
         QString item(data->data("text/plain"));
         if (Jid(item).isValid()) {
             newItems += item;
@@ -97,22 +91,21 @@ bool MUCAffiliationsModel::dropMimeData(const QMimeData *data, Qt::DropAction ac
 
     // Determine the correct index
     QModelIndex real_index;
-    if (parent.isValid())  {
+    if (parent.isValid()) {
         real_index = (parent.parent().isValid() ? parent.parent() : parent);
-    }
-    else {
+    } else {
         if (row > 0)
-            real_index = index(row-1,0,parent);
+            real_index = index(row - 1, 0, parent);
         else if (row == 0)
-            real_index = index(0,0,parent);
+            real_index = index(0, 0, parent);
         else
-            real_index = index(Outcast,0,parent);
+            real_index = index(Outcast, 0, parent);
     }
     int real_row = rowCount(real_index);
 
     // Insert the data
     insertRows(real_row, nb_rows, real_index);
-    foreach (QString text, newItems) {
+    for (const QString &text : std::as_const(newItems)) {
         QModelIndex idx = index(real_row, 0, real_index);
         setData(idx, text);
         real_row++;
@@ -129,12 +122,12 @@ QStringList MUCAffiliationsModel::mimeTypes() const
     return types;
 }
 
-QMimeData* MUCAffiliationsModel::mimeData(const QModelIndexList &indexes) const
+QMimeData *MUCAffiliationsModel::mimeData(const QModelIndexList &indexes) const
 {
-     QMimeData *mimeData = new QMimeData();
-    QByteArray encodedData;
+    QMimeData  *mimeData = new QMimeData();
+    QByteArray  encodedData;
     QDataStream stream(&encodedData, QIODevice::WriteOnly);
-    foreach (QModelIndex index, indexes) {
+    for (const QModelIndex &index : indexes) {
         if (index.isValid() && index.column() == 0) {
             QString text = data(index, Qt::DisplayRole).toString();
             stream << text;
@@ -156,19 +149,19 @@ void MUCAffiliationsModel::resetAffiliationLists()
 void MUCAffiliationsModel::resetAffiliationList(MUCItem::Affiliation a)
 {
     emit layoutAboutToBeChanged();
-    enabled_[(AffiliationListIndex) affiliationToIndex(a)] = false;
-    QModelIndex index = affiliationListIndex(a);
+    enabled_[AffiliationListIndex(affiliationToIndex(a))] = false;
+    QModelIndex index                                     = affiliationListIndex(a);
     if (hasChildren(index)) {
-        removeRows(0,rowCount(index),index);
+        removeRows(0, rowCount(index), index);
     }
     emit layoutChanged();
 }
 
 void MUCAffiliationsModel::setAffiliationListEnabled(MUCItem::Affiliation a, bool b)
 {
-    emit layoutAboutToBeChanged();
-    QModelIndex index = affiliationListIndex(a);
-    enabled_[(AffiliationListIndex) index.row()] = b;
+    emit        layoutAboutToBeChanged();
+    QModelIndex index                           = affiliationListIndex(a);
+    enabled_[AffiliationListIndex(index.row())] = b;
     emit layoutChanged();
 }
 
@@ -209,11 +202,10 @@ MUCAffiliationsModel::AffiliationListIndex MUCAffiliationsModel::affiliationToIn
         return Unknown;
 }
 
-
-void MUCAffiliationsModel::addItems(const QList<MUCItem>& items)
+void MUCAffiliationsModel::addItems(const QList<MUCItem> &items)
 {
     bool dirty = false;
-    foreach(MUCItem item, items) {
+    for (const MUCItem &item : items) {
         QModelIndex list = affiliationListIndex(item.affiliation());
         if (list.isValid() && !item.jid().isEmpty()) {
             if (!dirty) {
@@ -221,17 +213,16 @@ void MUCAffiliationsModel::addItems(const QList<MUCItem>& items)
             }
             int row = rowCount(list);
             if (row == 0) {
-                enabled_[(AffiliationListIndex) list.row()] = true;
+                enabled_[AffiliationListIndex(list.row())] = true;
             }
-            insertRows(row,1,list);
-            setData(index(row,0,list),QVariant(item.jid().full()));
-            setData(index(row,1,list),QVariant(item.reason()));
-            MUCItem i(MUCItem::UnknownRole,item.affiliation());
+            insertRows(row, 1, list);
+            setData(index(row, 0, list), QVariant(item.jid().full()));
+            setData(index(row, 1, list), QVariant(item.reason()));
+            MUCItem i(MUCItem::UnknownRole, item.affiliation());
             i.setJid(item.jid());
             items_ += i;
             dirty = true;
-        }
-        else {
+        } else {
             qDebug("Unexpected item");
         }
     }
@@ -246,30 +237,29 @@ QList<MUCItem> MUCAffiliationsModel::changes() const
 
     // Add all new items
     for (int i = 0; i < rowCount(QModelIndex()); i++) {
-        QModelIndex list = index(i,0,QModelIndex());
-        for(int j = 0; j < rowCount(list); j++) {
-            Jid jid(data(index(j,0,list)).toString());
-            MUCItem item(MUCItem::UnknownRole,indexToAffiliation(i));
+        QModelIndex list = index(i, 0, QModelIndex());
+        for (int j = 0; j < rowCount(list); j++) {
+            Jid     jid(data(index(j, 0, list)).toString());
+            MUCItem item(MUCItem::UnknownRole, indexToAffiliation(i));
             item.setJid(jid);
             if (!items_.contains(item)) {
                 items_delta += item;
-            }
-            else
+            } else
                 items_old.removeAll(item);
         }
     }
 
     // Remove all old items not present in the delta
-    foreach(MUCItem item_old, items_old) {
+    for (const MUCItem &item_old : items_old) {
         bool found = false;
-        foreach(MUCItem item_new, items_delta) {
-            if (item_new.jid().compare(item_old.jid(),false)) {
+        for (const MUCItem &item_new : std::as_const(items_delta)) {
+            if (item_new.jid().compare(item_old.jid(), false)) {
                 found = true;
                 break;
             }
         }
         if (!found) {
-            MUCItem item(MUCItem::UnknownRole,MUCItem::NoAffiliation);
+            MUCItem item(MUCItem::UnknownRole, MUCItem::NoAffiliation);
             item.setJid(item_old.jid());
             items_delta += item;
         }
@@ -291,4 +281,3 @@ MUCItem::Affiliation MUCAffiliationsModel::indexToAffiliation(int li)
     else
         return MUCItem::UnknownAffiliation;
 }
-

@@ -3,8 +3,7 @@
 
 #include "optionstab.h"
 
-class OptionsTabRoster: public MetaOptionsTab
-{
+class OptionsTabRoster : public MetaOptionsTab {
     Q_OBJECT
 public:
     OptionsTabRoster(QObject *parent);

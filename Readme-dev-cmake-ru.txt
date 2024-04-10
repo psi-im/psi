@@ -16,7 +16,7 @@
 
 ./3rdparty/CMakeLists.txt - собирает статическую библиотеку qhttp
 ./3rdparty/qite/libqite/libqite.cmake - содержит список файлов проекта qite
- 
+
 ./cmake/modules - каталог модулей для поиска библиотек:
 ./cmake/modulesCOPYING-CMAKE-SCRIPTS - файл лицензии (для решения проблем
     с сопровождением)
@@ -39,6 +39,7 @@
 ./cmake/modules/win32-prepare-deps.cmake - генерирует список файлов для установки
     командой make prepare-bin-libs, которая установит библиотеки зависимостей
     в выходной каталог сборки. Если доступно использует windeployqt
+    по команде make windeploy
 ./cmake/modules/generate_desktopfile.cmake - генерирует .desktop файл
 ./cmake/modules/fix-codestyle.cmake - исправляет стиль кода исходников по make fix-codestyle
 
@@ -59,7 +60,7 @@
     Требуется доработка.
 ***/
 
-./iris/cmake/modules - модули поиска библиотек для iris (копии модулей 
+./iris/cmake/modules - модули поиска библиотек для iris (копии модулей
     из корня)
 
 ./iris/src/irisnet/CMakeLists.txt - собирает статическую библиотеку irisnet
@@ -75,7 +76,7 @@
     генерирует файл psi_win.rc на основе файла ../win32/psi_win.rc.in и
         компилирует psi_win.o
     подключает файл src.cmake
-    подключает файл ../3rdparty/qite/libqite/libqite.cmake 
+    подключает файл ../3rdparty/qite/libqite/libqite.cmake
     подключает файл irisprotocol/irisprotocol.cmake
     подключает файл protocol/protocol.cmake
     подключает файл plugins/plugins.cmake
@@ -135,37 +136,37 @@
 
 ./src/widgets/CMakeLists.txt - собирает статическую библиотеку widgets
 
-./src/plugins/plugins.cmake - список файлов заголовков оторые подключаются в основные списки сборки
+./plugins/plugins.cmake - список файлов заголовков оторые подключаются в основные списки сборки
 
-./src/plugins/variables.cmake.in - шаблон файла, который содержит основные
+./plugins/variables.cmake.in - шаблон файла, который содержит основные
     переменные для сборки плагинов, общие для всех плагинов
 
-./src/plugins/pluginsconf.pri.cmake.in - шаблон файла pluginsconf.pri, генерируемого при сборке
+./plugins/pluginsconf.pri.cmake.in - шаблон файла pluginsconf.pri, генерируемого при сборке
 
-./src/plugins/CMakeLists.txt - основной скрипт управляющий плагинами
+./plugins/CMakeLists.txt - основной скрипт управляющий плагинами
     содержит основные правила сборки для всех плагинов
     подключает каталоги generic, unix, dev
 
-./src/plugins/generic/CMakeLists.txt:
+./plugins/generic/CMakeLists.txt:
     подключает каталоги плагинов, если задана переменная BUILD_PLUGINS, то
     подключает только заданные каталоги плагинов
 
-./src/plugins/dev/CMakeLists.txt:
+./plugins/dev/CMakeLists.txt:
     подключает каталоги плагинов, если задана переменная BUILD_PLUGINS, то
     подключает только заданные каталоги плагинов
 
-./src/plugins/unix/CMakeLists.txt:
+./plugins/unix/CMakeLists.txt:
     подключает каталоги плагинов, если задана переменная BUILD_PLUGINS, то
     подключает только заданные каталоги плагинов
 
-./src/plugins/тип/плагин/CMakeLists.txt - собирает и устанавливает плагин
+./plugins/тип/плагин/CMakeLists.txt - собирает и устанавливает плагин
     типа "тип" с именем "плагин". Структура у всех этих скриптов практически
     не отличается
 
 ./win32/psi_win.rc.in - файл-шаблон для создания файла psi_win.rc
 
 /***
-Для удобства опакечивания плагинов, чтобы не тянуть все файлы иходников 
+Для удобства опакечивания плагинов, чтобы не тянуть все файлы иходников
 Psi и не заниматься копированием, если включен флаг INSTALL_PLUGINS_SDK
 при сборке и установке клиента Psi средствами CMake-скриптов,
 вместе с основными файлами клиента Psi могут быть установлены файлы

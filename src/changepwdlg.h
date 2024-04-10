@@ -1,6 +1,6 @@
 /*
  * changepwdlg.h - dialog for changing password
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,15 +24,14 @@
 
 class PsiAccount;
 
-class ChangePasswordDlg : public QDialog
-{
+class ChangePasswordDlg : public QDialog {
     Q_OBJECT
 public:
-    ChangePasswordDlg(PsiAccount *, QWidget *parent=0);
+    ChangePasswordDlg(PsiAccount *, QWidget *parent = nullptr);
     ~ChangePasswordDlg();
 
 protected:
-    //void closeEvent(QCloseEvent *e);
+    // void closeEvent(QCloseEvent *e);
 
 public slots:
     void done(int);
@@ -48,7 +47,7 @@ private:
     void setWidgetsEnabled(bool enabled);
 
     Ui::ChangePassword ui_;
-    PsiAccount* pa;
+    PsiAccount        *pa;
 };
 
-#endif
+#endif // CHANGEPWDLG_H

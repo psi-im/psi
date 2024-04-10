@@ -1,7 +1,7 @@
 /*
  * gcuserview.cpp - groupchat roster
- * Copyright (C) 2001, 2002  Justin Karneges
- * 2011 Evgeny Khryukin
+ * Copyright (C) 2001-2002  Justin Karneges
+ * Copyright (C) 2011  Evgeny Khryukin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,49 +20,45 @@
 
 #include "gcuserview.h"
 
-#include <QPainter>
-#include <QMouseEvent>
-#include <QItemDelegate>
-#include <QMimeData>
-#include <QMenu>
-
-#include "psitooltip.h"
-#include "psiaccount.h"
-#include "userlist.h"
-#include "psiiconset.h"
-#include "groupchatdlg.h"
-#include "common.h"
-#include "psioptions.h"
-#include "coloropt.h"
-#include "xmpp_muc.h"
-#include "xmpp_caps.h"
 #include "avatars.h"
+#include "coloropt.h"
+#include "common.h"
+#include "groupchatdlg.h"
+#include "iris/xmpp_caps.h"
+#include "iris/xmpp_muc.h"
+#include "psiaccount.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "psitooltip.h"
+#include "userlist.h"
 
-//static bool caseInsensitiveLessThan(const QString &s1, const QString &s2)
+#include <QItemDelegate>
+#include <QMenu>
+#include <QMimeData>
+#include <QMouseEvent>
+#include <QPainter>
+
+// static bool caseInsensitiveLessThan(const QString &s1, const QString &s2)
 //{
 //    return s1.toLower() < s2.toLower();
 //}
 
+class GCUserView;
 
 //----------------------------------------------------------------------------
 // GCUserViewDelegate
 //----------------------------------------------------------------------------
-class GCUserViewDelegate : public QItemDelegate
-{
+class GCUserViewDelegate : public QItemDelegate {
     Q_OBJECT
 public:
-    GCUserViewDelegate(QObject* p)
-        : QItemDelegate(p)
-    {
-        updateSettings();
-    }
+    GCUserViewDelegate(GCUserView *p) : QItemDelegate(p), view(p) { updateSettings(); }
 
     void updateSettings()
     {
-        PsiOptions *o = PsiOptions::instance();
-        colorForeground_  = ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-foreground");
-        colorBackground_  = ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-background");
-        colorModerator_   = o->getOption("options.ui.look.colors.muc.role-moderator").value<QColor>();
+        PsiOptions *o    = PsiOptions::instance();
+        colorForeground_ = ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-foreground");
+        colorBackground_ = ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-background");
+        colorModerator_  = o->getOption("options.ui.look.colors.muc.role-moderator").value<QColor>();
         colorParticipant_ = o->getOption("options.ui.look.colors.muc.role-participant").value<QColor>();
         colorVisitor_     = o->getOption("options.ui.look.colors.muc.role-visitor").value<QColor>();
         colorNoRole_      = o->getOption("options.ui.look.colors.muc.role-norole").value<QColor>();
@@ -79,10 +75,14 @@ public:
 
         QFont font;
         font.fromString(o->getOption("options.ui.look.font.contactlist").toString());
-        fontHeight_ = QFontMetrics(font).height()+2;
+        fontHeight_ = QFontMetrics(font).height();
+
+        auto ii    = PsiIconset::instance();
+        auto sizes = { ii->clients.iconSize(), ii->system().iconSize(), ii->affiliations.iconSize() };
+        iconsSize_ = *std::max_element(sizes.begin(), sizes.end()) * computeScaleFactor(view);
     }
 
-    void paint(QPainter* mp, const QStyleOptionViewItem& option, const QModelIndex& index) const
+    void paint(QPainter *mp, const QStyleOptionViewItem &option, const QModelIndex &index) const
     {
         if (index.parent().isValid()) {
             paintContact(mp, option, index);
@@ -91,34 +91,37 @@ public:
         }
     }
 
-    void paintGroup(QPainter* p, const QStyleOptionViewItem& o, const QModelIndex& index) const
+    void paintGroup(QPainter *p, const QStyleOptionViewItem &o, const QModelIndex &index) const
     {
-        if(!showGroups_)
+        if (!showGroups_)
             return;
 
         QRect rect = o.rect;
-        QFont f = o.font;
+        QFont f    = o.font;
         p->setFont(f);
-        if (!slimGroups_ || (o.state & QStyle::State_Selected) ) {
+        if (!slimGroups_ || (o.state & QStyle::State_Selected)) {
             p->fillRect(rect, colorBackground_);
         }
 
         p->setPen(QPen(colorForeground_));
-        rect.translate(2, (rect.height() - o.fontMetrics.height())/2);
+        rect.translate(2, (rect.height() - o.fontMetrics.height()) / 2);
 
         QString groupName = index.data().toString();
-        int c = index.model()->rowCount(index);
+        int     c         = index.model()->rowCount(index);
         if (c) {
             groupName += QString("  (%1)").arg(c);
         }
 
         p->drawText(rect, groupName);
-        if (slimGroups_    && !(o.state & QStyle::State_Selected))
-        {
+        if (slimGroups_ && !(o.state & QStyle::State_Selected)) {
             QFontMetrics fm(f);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
+            int x = fm.horizontalAdvance(groupName) + 8;
+#else
             int x = fm.width(groupName) + 8;
+#endif
             int width = rect.width();
-            if(x < width - 8) {
+            if (x < width - 8) {
                 int h = rect.y() + (rect.height() / 2) - 1;
                 p->setPen(QPen(colorBackground_));
                 p->drawLine(x, h, width - 8, h);
@@ -129,136 +132,159 @@ public:
         }
     }
 
-    void paintContact(QPainter* mp, const QStyleOptionViewItem& option, const QModelIndex& index) const
+    void paintContact(QPainter *mp, const QStyleOptionViewItem &option, const QModelIndex &index) const
     {
         mp->save();
-        QStyleOptionViewItem o = option;
-        QPalette palette = o.palette;
-        MUCItem::Role r = index.data(GCUserModel::StatusRole).value<Status>().mucItem().role();
-        QRect rect = o.rect;
+        QStyleOptionViewItem o       = option;
+        QPalette             palette = o.palette;
+        MUCItem::Role        r       = index.data(GCUserModel::StatusRole).value<Status>().mucItem().role();
+        QRect                rect    = o.rect;
+        int                  gap     = qMax(int(fontHeight_ / 6), 1);
 
-        if(nickColoring_) {
-            if(r == MUCItem::Moderator)
+        if (nickColoring_) {
+            if (r == MUCItem::Moderator)
                 palette.setColor(QPalette::Text, colorModerator_);
-            else if(r == MUCItem::Participant)
+            else if (r == MUCItem::Participant)
                 palette.setColor(QPalette::Text, colorParticipant_);
-            else if(r == MUCItem::Visitor)
+            else if (r == MUCItem::Visitor)
                 palette.setColor(QPalette::Text, colorVisitor_);
             else
                 palette.setColor(QPalette::Text, colorNoRole_);
         }
 
-        mp->fillRect(rect, (o.state & QStyle::State_Selected) ? palette.color(QPalette::Highlight) : palette.color(QPalette::Base));
+        mp->fillRect(rect,
+                     (o.state & QStyle::State_Selected) ? palette.color(QPalette::Highlight)
+                                                        : palette.color(QPalette::Base));
 
-        if(showAvatar_) {
+        if (showAvatar_) {
             QPixmap ava = index.data(GCUserModel::AvatarRole).value<QPixmap>();
-            if(ava.isNull()) {
-                ava = IconsetFactory::iconPixmap("psi/default_avatar");
+            if (ava.isNull()) {
+                ava = IconsetFactory::iconPixmap("psi/default_avatar", avatarSize_);
             }
             ava = AvatarFactory::roundedAvatar(ava, avatarRadius_, avatarSize_);
             QRect avaRect(rect);
             avaRect.setWidth(ava.width());
             avaRect.setHeight(ava.height());
-            if(!avatarAtLeft_) {
+            if (!avatarAtLeft_) {
                 avaRect.moveTopRight(rect.topRight());
                 avaRect.translate(-1, 1);
-                rect.setRight(avaRect.left() - 1);
-            }
-            else {
+                rect.setRight(avaRect.left() - gap);
+            } else {
                 avaRect.translate(1, 1);
-                rect.setLeft(avaRect.right() + 1);
+                rect.setLeft(avaRect.right() + gap);
             }
             mp->drawPixmap(avaRect, ava);
         }
 
-        QPixmap status = showStatusIcons_? PsiIconset::instance()->status(index.data(GCUserModel::StatusRole).value<Status>()).pixmap() : QPixmap();
-        int h = rect.height();
-        int sh = status.isNull() ? 0 : status.height();
-        rect.setHeight(qMax(sh, fontHeight_));
-        rect.moveTop(rect.top() + (h - rect.height())/2);
-        if(!status.isNull()) {
-            QRect statusRect(rect);
-            statusRect.setWidth(status.width());
-            statusRect.setHeight(status.height());
-            statusRect.translate(1, 1);
-            mp->drawPixmap(statusRect, status);
-            rect.setLeft(statusRect.right() + 2);
+        // fontHeight_
+        QImage status = showStatusIcons_ ? PsiIconset::instance()
+                                               ->status(index.data(GCUserModel::StatusRole).value<Status>())
+                                               .image(QSize(iconsSize_, iconsSize_))
+                                         : QImage();
+        if (!status.isNull()) {
+            QRect statusRect(status.rect());
+            if (statusRect.height() > iconsSize_) {
+                status     = status.scaled(iconsSize_, iconsSize_, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                statusRect = status.rect();
+            }
+            statusRect.moveTop(rect.top() + (rect.height() - statusRect.height()) / 2);
+            statusRect.moveLeft(rect.left() + 2);
+            mp->drawImage(statusRect, status);
+            rect.setLeft(statusRect.right() + gap);
         }
-        else
-            rect.setLeft(rect.left() + 2);
 
-        mp->setPen(QPen((o.state & QStyle::State_Selected) ? palette.color(QPalette::HighlightedText) : palette.color(QPalette::Text)));
+        mp->setPen(QPen((o.state & QStyle::State_Selected) ? palette.color(QPalette::HighlightedText)
+                                                           : palette.color(QPalette::Text)));
         mp->setFont(o.font);
         mp->setClipRect(rect);
-        QTextOption to;
-        to.setWrapMode(QTextOption::NoWrap);
-        mp->drawText(rect, index.data(Qt::DisplayRole).toString(), to);
+        auto nick     = index.data(Qt::DisplayRole).toString();
+        auto nickRect = QFontMetrics(o.font).boundingRect(rect, Qt::AlignVCenter | Qt::TextSingleLine, nick);
+        mp->drawText(nickRect, Qt::TextSingleLine, nick);
 
         QList<QPixmap> rightPixs;
 
-        if(showAffiliations_) {
-            QPixmap pix = index.data(GCUserModel::AffilationIconRole).value<QPixmap>();;
-            if(!pix.isNull())
-                rightPixs.push_back(pix);
-        }
+        auto addIcon = [&](int role) mutable {
+            QString name;
+            auto    pixv = index.data(role);
+            if (!pixv.isNull() && !(name = pixv.toString()).isEmpty()) {
+                QPixmap pix = IconsetFactory::iconPixmap(name, iconsSize_);
+                if (!pix.isNull())
+                    rightPixs.push_back(pix);
+            }
+        };
 
-        if(showClients_) {
-            QPixmap clientPix = index.data(GCUserModel::ClientIconRole).value<QPixmap>();
-            if(!clientPix.isNull())
-                rightPixs.push_back(clientPix);
-        }
+        if (showAffiliations_)
+            addIcon(GCUserModel::AffilationIconRole);
+
+        if (showClients_)
+            addIcon(GCUserModel::ClientIconRole);
 
         mp->restore();
 
-        if(rightPixs.isEmpty())
+        if (rightPixs.isEmpty())
             return;
 
         int sumWidth = 0;
-        foreach (const QPixmap& pix, rightPixs) {
-                sumWidth += pix.width();
+        for (const QPixmap &pix : rightPixs) {
+            sumWidth += pix.width();
         }
         sumWidth += rightPixs.count();
 
-        QColor bgc = (option.state & QStyle::State_Selected) ? palette.color(QPalette::Highlight) : palette.color(QPalette::Base);
+        QColor bgc  = (option.state & QStyle::State_Selected) ? palette.color(QPalette::Highlight)
+                                                              : palette.color(QPalette::Base);
         QColor tbgc = bgc;
         tbgc.setAlpha(0);
         QLinearGradient grad(rect.right() - sumWidth - 20, 0, rect.right() - sumWidth, 0);
         grad.setColorAt(0, tbgc);
         grad.setColorAt(1, bgc);
         QBrush tbakBr(grad);
-        QRect gradRect(rect);
+        QRect  gradRect(rect);
         gradRect.setLeft(gradRect.right() - sumWidth - 20);
         mp->fillRect(gradRect, tbakBr);
 
         QRect iconRect(rect);
-        for (int i=0; i<rightPixs.size(); i++) {
-            const QPixmap pix = rightPixs[i];
-            iconRect.setRight(iconRect.right() - pix.width() -1);
-            mp->drawPixmap(iconRect.topRight(), pix);
+        for (int i = 0; i < rightPixs.size(); i++) {
+            const QPixmap &pix = rightPixs[i];
+            auto           pmr = pix.rect();
+            pmr.moveCenter(iconRect.center());
+            pmr.moveRight(iconRect.right());
+            mp->drawPixmap(pmr, pix);
+            iconRect.setRight(iconRect.right() - pix.width() - 1);
         }
-
     }
 
     QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
     {
-        if(!index.isValid())
-            return QSize(0,0);
+        if (!index.isValid())
+            return QSize(0, 0);
 
         QSize size = QItemDelegate::sizeHint(option, index);
         if (index.parent().isValid()) {
-            QPixmap statusIcon = PsiIconset::instance()->status(index.data(GCUserModel::StatusRole).value<Status>()).pixmap();
-            int rowH = qMax(fontHeight_, statusIcon.height() + 2);
-            int h = showAvatar_ ? qMax(avatarSize_ + 2, rowH) : rowH;
+            int statusIconHeight = 0;
+            if (showStatusIcons_) {
+                statusIconHeight = int(fontHeight_ * EqTextIconK + .5);
+                statusIconHeight = PsiIconset::instance()
+                                       ->status(index.data(GCUserModel::StatusRole).value<Status>())
+                                       .image(QSize(statusIconHeight, statusIconHeight))
+                                       .height();
+                if (statusIconHeight > fontHeight_ * 1.2)
+                    statusIconHeight = int(fontHeight_ * EqTextIconK + .5);
+            }
+
+            auto height = QFontMetrics(option.font).boundingRect(index.data(Qt::DisplayRole).toString()).height();
+
+            int rowH = qMax(height, statusIconHeight + 2);
+            int h    = showAvatar_ ? qMax(avatarSize_ + 2, rowH) : rowH;
             size.setHeight(h);
-        }
-        else {
+        } else {
             size.setHeight(showGroups_ ? fontHeight_ : 0);
         }
 
         return size;
     }
 
-    bool helpEvent(QHelpEvent *event, QAbstractItemView *view, const QStyleOptionViewItem &option, const QModelIndex &index)
+    bool helpEvent(QHelpEvent *event, QAbstractItemView *view, const QStyleOptionViewItem &option,
+                   const QModelIndex &index)
     {
         Q_UNUSED(option);
         QString toolTip = index.data(Qt::ToolTipRole).toString();
@@ -270,24 +296,20 @@ public:
     }
 
 private:
-    QColor colorForeground_, colorBackground_, colorModerator_, colorParticipant_, colorVisitor_, colorNoRole_;
-    bool showGroups_, slimGroups_, nickColoring_, showClients_, showAffiliations_, showStatusIcons_, showAvatar_, avatarAtLeft_;
-    int avatarSize_, fontHeight_, avatarRadius_;
+    QWidget *view;
+    QColor   colorForeground_, colorBackground_, colorModerator_, colorParticipant_, colorVisitor_, colorNoRole_;
+    bool     showGroups_, slimGroups_, nickColoring_, showClients_, showAffiliations_, showStatusIcons_, showAvatar_,
+        avatarAtLeft_;
+    int avatarSize_, fontHeight_, avatarRadius_, iconsSize_;
 };
-
 
 //----------------------------------------------------------------------------
 // GCUserModel
 //----------------------------------------------------------------------------
 
-
 GCUserModel::GCUserModel(PsiAccount *account, const Jid selfJid, QObject *parent) :
-    QAbstractItemModel(parent),
-    _account(account),
-    _selfJid(selfJid),
-    _selfContact(nullptr)
+    QAbstractItemModel(parent), _account(account), _selfJid(selfJid), _selfContact(nullptr)
 {
-
 }
 
 QModelIndex GCUserModel::index(int row, int column, const QModelIndex &parent) const
@@ -295,7 +317,8 @@ QModelIndex GCUserModel::index(int row, int column, const QModelIndex &parent) c
     if (!column) {
         if (parent.isValid()) { // contact
             if (parent.row() < LastGroupRole && row < contacts[parent.row()].size()) {
-                //qDebug("Create contact index row=%d column=%d, data=%p", row, column, contacts[parent.row()][row].data());
+                // qDebug("Create contact index row=%d column=%d, data=%p", row, column,
+                // contacts[parent.row()][row].data());
                 return createIndex(row, column, contacts[parent.row()][row].data());
             }
         } else {
@@ -309,13 +332,14 @@ QModelIndex GCUserModel::index(int row, int column, const QModelIndex &parent) c
 
 QVariant GCUserModel::data(const QModelIndex &index, int role) const
 {
-    if (!index.isValid() || index.column() > 0) return QVariant();
+    if (!index.isValid() || index.column() > 0)
+        return QVariant();
 
     if (index.parent().isValid()) {
         // contact
 
-        Role groupRole = (Role)index.parent().row();
-        const auto &cs = contacts[groupRole];
+        Role        groupRole = Role(index.parent().row());
+        const auto &cs        = contacts[groupRole];
         if (index.row() >= cs.size()) {
             return QVariant();
         }
@@ -324,44 +348,42 @@ QVariant GCUserModel::data(const QModelIndex &index, int role) const
         switch (role) {
         case Qt::DisplayRole:
             return contact.name;
-            break;
         case Qt::ToolTipRole:
             return makeToolTip(contact);
         case StatusRole:
             return QVariant::fromValue<Status>(contact.status);
         case AvatarRole:
             return contact.avatar;
-        case ClientIconRole:
-        {
+        case ClientIconRole: {
             UserListItem u;
-            Jid jid = _selfJid.withResource(contact.name);
-            Jid caps_jid(/*s.mucItem().jid().isEmpty() ? */ jid /* : s.mucItem().jid()*/); // TODO review caching of such caps
-            CapsManager *cm = _account->client()->capsManager();
-            QString client_name = cm->clientName(caps_jid);
-            QString client_version = (client_name.isEmpty() ? QString() : cm->clientVersion(caps_jid));
+            Jid          jid = _selfJid.withResource(contact.name);
+            Jid          caps_jid(
+                /*s.mucItem().jid().isEmpty() ? */ jid /* : s.mucItem().jid()*/); // TODO review caching of such caps
+            CapsManager *cm             = _account->client()->capsManager();
+            QString      client_name    = cm->clientName(caps_jid);
+            QString      client_version = (client_name.isEmpty() ? QString() : cm->clientVersion(caps_jid));
             UserResource ur;
             ur.setStatus(contact.status);
-            ur.setClient(client_name,client_version,"");
+            ur.setClient(client_name, client_version, "");
             u.userResourceList().append(ur);
             QStringList clients = u.clients();
-            if(!clients.isEmpty())
-                return IconsetFactory::iconPixmap("clients/" + clients.takeFirst());
+            if (!clients.isEmpty())
+                return QLatin1String("clients/") + clients.takeFirst();
             break;
         }
-        case AffilationIconRole:
-        {
+        case AffilationIconRole: {
             MUCItem::Affiliation a = contact.status.mucItem().affiliation();
 
-            if(a == MUCItem::Owner)
-                return IconsetFactory::iconPixmap("affiliation/owner");
-            else if(a == MUCItem::Admin)
-                return IconsetFactory::iconPixmap("affiliation/admin");
-            else if(a == MUCItem::Member)
-                return IconsetFactory::iconPixmap("affiliation/member");
-            else if(a == MUCItem::Outcast)
-                return IconsetFactory::iconPixmap("affiliation/outcast");
+            if (a == MUCItem::Owner)
+                return QLatin1String("affiliation/owner");
+            else if (a == MUCItem::Admin)
+                return QLatin1String("affiliation/admin");
+            else if (a == MUCItem::Member)
+                return QLatin1String("affiliation/member");
+            else if (a == MUCItem::Outcast)
+                return QLatin1String("affiliation/outcast");
             else
-                return IconsetFactory::iconPixmap("affiliation/noaffiliation");
+                return QLatin1String("affiliation/noaffiliation");
         }
         }
     } else {
@@ -380,16 +402,14 @@ QVariant GCUserModel::data(const QModelIndex &index, int role) const
     return QVariant();
 }
 
-GCUserModel::MUCContact *GCUserModel::selfContact() const
-{
-    return _selfContact.data();
-}
+GCUserModel::MUCContact *GCUserModel::selfContact() const { return _selfContact.data(); }
 
 void GCUserModel::updateAvatar(const QString &nick)
 {
     QModelIndex index = findIndex(nick);
     if (index.isValid()) {
-        contacts[index.parent().row()][index.row()]->avatar = _account->avatarFactory()->getMucAvatar(_selfJid.withResource(nick));
+        contacts[index.parent().row()][index.row()]->avatar
+            = _account->avatarFactory()->getMucAvatar(_selfJid.withResource(nick));
         emit dataChanged(index, index);
     }
 }
@@ -397,24 +417,24 @@ void GCUserModel::updateAvatar(const QString &nick)
 QString GCUserModel::makeToolTip(const MUCContact &contact) const
 {
     const QString &nick = contact.name;
-    UserListItem u;
+    UserListItem   u;
 
     Jid contactJid = _selfJid.withResource(nick);
     u.setJid(contactJid);
     u.setName(nick);
 
     // Find out capabilities info
-    Jid caps_jid(contactJid);
-    CapsManager *cm = _account->client()->capsManager();
-    QString client_name = cm->clientName(caps_jid);
-    QString client_version = (client_name.isEmpty() ? QString() : cm->clientVersion(caps_jid));
+    Jid          caps_jid(contactJid);
+    CapsManager *cm             = _account->client()->capsManager();
+    QString      client_name    = cm->clientName(caps_jid);
+    QString      client_version = (client_name.isEmpty() ? QString() : cm->clientVersion(caps_jid));
 
     // make a resource so the contact appears online
     UserResource ur;
     ur.setName(nick);
     ur.setStatus(contact.status);
-    ur.setClient(client_name,client_version,"");
-    //ur.setClient(QString(),QString(),"");
+    ur.setClient(client_name, client_version, "");
+    // ur.setClient(QString(),QString(),"");
     u.userResourceList().append(ur);
     u.setPrivate(true);
     u.setAvatarFactory(_account->avatarFactory());
@@ -422,10 +442,10 @@ QString GCUserModel::makeToolTip(const MUCContact &contact) const
     return u.makeTip();
 }
 
-QMimeData* GCUserModel::mimeData(const QModelIndexList &indexes) const
+QMimeData *GCUserModel::mimeData(const QModelIndexList &indexes) const
 {
-    QMimeData* data = nullptr;
-    if(!indexes.isEmpty()) {
+    QMimeData *data = nullptr;
+    if (!indexes.isEmpty()) {
         data = new QMimeData();
         data->setText(_selfJid.withResource(indexes.first().data().toString()).full());
     }
@@ -433,15 +453,12 @@ QMimeData* GCUserModel::mimeData(const QModelIndexList &indexes) const
     return data;
 }
 
-Qt::DropActions GCUserModel::supportedDragActions() const
-{
-    return Qt::CopyAction;
-}
+Qt::DropActions GCUserModel::supportedDragActions() const { return Qt::CopyAction; }
 
 QModelIndex GCUserModel::parent(const QModelIndex &child) const
 {
     if (child.internalPointer()) { // contact
-        auto c = static_cast<MUCContact*>(child.internalPointer());
+        auto c = static_cast<MUCContact *>(child.internalPointer());
         return index(groupRole(c->status), 0);
     }
     return QModelIndex();
@@ -488,8 +505,7 @@ GCUserModel::Role GCUserModel::groupRole(const Status &s)
     case MUCItem::Moderator:
         newGroupRole = Moderator;
         break;
-    default:
-        ;
+    default:;
     }
     return newGroupRole;
 }
@@ -506,16 +522,17 @@ void GCUserModel::updateEntry(const QString &nick, const Status &s)
     if (!contactIndex.isValid() || newGroupRole != contactIndex.parent().row()) {
         // either new contact or move between groups. we need to find destination position
 
-        bool doStatusSort = PsiOptions::instance()->getOption("options.ui.muc.userlist.contact-sort-style").toString() == QLatin1String("status");
+        bool doStatusSort = PsiOptions::instance()->getOption("options.ui.muc.userlist.contact-sort-style").toString()
+            == QLatin1String("status");
         int insertRowNum = 0;
         if (contacts[newGroupRole].size()) {
             // TODO use sorting filter model instad of code below.
             QString lowerNick = QLocale().toLower(nick);
-            int left = 0, right = contacts[newGroupRole].size();
+            int     left = 0, right = contacts[newGroupRole].size();
             while (right - left > 0) { // std::lower_bound doesn't work here since we need index and not iterator
                 int mid = (right + left) >> 1;
 
-                int rank;
+                int               rank;
                 const MUCContact &contact = *(contacts[newGroupRole][mid]);
                 if (doStatusSort) {
                     rank = rankStatus(s.type()) - rankStatus(contact.status.type());
@@ -537,28 +554,30 @@ void GCUserModel::updateEntry(const QString &nick, const Status &s)
         QModelIndex newParentIndex = index(newGroupRole, 0);
         if (contactIndex.isValid()) { // move between group
             beginMoveRows(contactIndex.parent(), contactIndex.row(), contactIndex.row(), newParentIndex, insertRowNum);
-            auto contact = contacts[contactIndex.parent().row()].takeAt(contactIndex.row());
+            auto contact    = contacts[contactIndex.parent().row()].takeAt(contactIndex.row());
             contact->status = s;
             contacts[newGroupRole].insert(insertRowNum, contact);
             endMoveRows();
             // now report we want to change text of groups
-            emit dataChanged(contactIndex.parent(), contactIndex.parent(), QVector<int>() << Qt::DisplayRole); // TODO check if necessary
-            emit dataChanged(newParentIndex, newParentIndex, QVector<int>() << Qt::DisplayRole); // TODO check if necessary
-        } else { // new contact
-            emit beginInsertRows(newParentIndex, insertRowNum, insertRowNum);
-            auto contact = MUCContact::Ptr(new MUCContact);
-            contact->name = nick;
+            emit dataChanged(contactIndex.parent(), contactIndex.parent(),
+                             QVector<int>() << Qt::DisplayRole); // TODO check if necessary
+            emit dataChanged(newParentIndex, newParentIndex,
+                             QVector<int>() << Qt::DisplayRole); // TODO check if necessary
+        } else {                                                 // new contact
+            beginInsertRows(newParentIndex, insertRowNum, insertRowNum);
+            auto contact    = MUCContact::Ptr(new MUCContact);
+            contact->name   = nick;
             contact->status = s;
             contact->avatar = _account->avatarFactory()->getMucAvatar(_selfJid.withResource(nick));
             contacts[newGroupRole].insert(insertRowNum, contact);
             if (nick == _selfJid.resource()) {
                 _selfContact = contact;
             }
-            emit endInsertRows();
+            endInsertRows();
         }
     } else {
         // just changed status. delegate will decide how to redraw properly
-        auto contact = contacts[contactIndex.parent().row()].at(contactIndex.row());
+        auto contact    = contacts[contactIndex.parent().row()].at(contactIndex.row());
         contact->status = s;
         contact->avatar = _account->avatarFactory()->getMucAvatar(_selfJid.withResource(nick));
         emit dataChanged(contactIndex, contactIndex);
@@ -569,7 +588,7 @@ void GCUserModel::clear()
 {
     for (int i = LastGroupRole - 1; i >= 0; i--) {
         if (contacts[i].size()) {
-            beginRemoveRows(index(i,0), 0, contacts[i].size() - 1);
+            beginRemoveRows(index(i, 0), 0, contacts[i].size() - 1);
             contacts[i].clear();
             endRemoveRows();
         }
@@ -578,15 +597,16 @@ void GCUserModel::clear()
 
 void GCUserModel::updateAll()
 {
-    layoutAboutToBeChanged();
+    emit layoutAboutToBeChanged();
     // TODO sort contacts here? convert all icons to pixmaps for caching purposes?
-    layoutChanged();
+    emit layoutChanged();
 }
 
-bool GCUserModel::hasJid(const Jid& jid)
+bool GCUserModel::hasJid(const Jid &jid)
 {
-    for(int gr = 0; gr < LastGroupRole; gr++) {
-        for (auto const &c : contacts[gr]) {
+    for (int gr = 0; gr < LastGroupRole; gr++) {
+        const auto &cts = contacts[gr];
+        for (auto const &c : cts) {
             auto const &cj = c->status.mucItem().jid();
             if (!cj.isEmpty() && cj.compare(jid, false)) {
                 return true;
@@ -616,13 +636,13 @@ QModelIndex GCUserModel::findIndex(const QString &nick) const
 
 GCUserModel::MUCContact *GCUserModel::findEntry(const QString &nick) const
 {
-    return static_cast<GCUserModel::MUCContact*>(findIndex(nick).internalPointer());
+    return static_cast<GCUserModel::MUCContact *>(findIndex(nick).internalPointer());
 }
 
 QStringList GCUserModel::nickList() const
 {
     QStringList nicks;
-    for(int gr = 0; gr < LastGroupRole; gr++) {
+    for (int gr = 0; gr < LastGroupRole; gr++) {
         for (auto const &c : contacts[gr]) {
             nicks << c->name;
         }
@@ -635,35 +655,30 @@ QStringList GCUserModel::nickList() const
 // GCUserView
 //----------------------------------------------------------------------------
 
-GCUserView::GCUserView(QWidget* parent)
-    : QTreeView(parent)
+GCUserView::GCUserView(QWidget *parent) : QTreeView(parent)
 {
     header()->hide();
     setRootIsDecorated(false);
-    sortByColumn(0);
+    sortByColumn(0, Qt::AscendingOrder);
     setIndentation(0);
     setContextMenuPolicy(Qt::DefaultContextMenu);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setDragDropMode(QAbstractItemView::DragOnly);
 
     setItemDelegate(new GCUserViewDelegate(this));
-    //expandAll(); // doesn't work here
+    // expandAll(); // doesn't work here
 
     connect(this, SIGNAL(doubleClicked(QModelIndex)), SLOT(qlv_doubleClicked(QModelIndex)));
 }
 
-GCUserView::~GCUserView()
-{
-}
+GCUserView::~GCUserView() { }
 
 void GCUserView::mousePressEvent(QMouseEvent *event)
 {
     QModelIndex index = indexAt(event->pos());
     if (index.parent().isValid()) {
-        if (event->button() == Qt::MidButton ||
-            (event->button() == Qt::LeftButton &&
-            qApp->keyboardModifiers() == Qt::ShiftModifier))
-        {
+        if (event->button() == Qt::MiddleButton
+            || (event->button() == Qt::LeftButton && qApp->keyboardModifiers() == Qt::ShiftModifier)) {
             emit insertNick(index.data().toString());
             return;
         }
@@ -673,15 +688,16 @@ void GCUserView::mousePressEvent(QMouseEvent *event)
 
 void GCUserView::qlv_doubleClicked(const QModelIndex &index)
 {
-    if(!index.isValid() || !index.parent().isValid())
+    if (!index.isValid() || !index.parent().isValid())
         return;
 
-    QString nick = index.data().toString();
-    Status status = index.data(GCUserModel::StatusRole).value<Status>();
-    if(PsiOptions::instance()->getOption(QLatin1String("options.messages.default-outgoing-message-type")).toString() == QLatin1String("message"))
-        action(nick, status, 0); // message
+    QString nick   = index.data().toString();
+    Status  status = index.data(GCUserModel::StatusRole).value<Status>();
+    if (PsiOptions::instance()->getOption(QLatin1String("options.messages.default-outgoing-message-type")).toString()
+        == QLatin1String("message"))
+        emit action(nick, status, 0); // message
     else
-        action(nick, status, 1); // chat
+        emit action(nick, status, 1); // chat
 }
 
 void GCUserView::contextMenuEvent(QContextMenuEvent *cm)
@@ -696,7 +712,7 @@ void GCUserView::contextMenuEvent(QContextMenuEvent *cm)
 
 void GCUserView::setLooks()
 {
-    ((GCUserViewDelegate*)itemDelegate())->updateSettings();
+    static_cast<GCUserViewDelegate *>(itemDelegate())->updateSettings();
     viewport()->update();
 }
 

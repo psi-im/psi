@@ -17,66 +17,70 @@
  *
  */
 
-#include <QVariant>
-#include <QMessageBox>
-#include <QInputDialog>
-#include <QMap>
-#include <QScrollArea>
+#include "mucconfigdlg.h"
 
-#include "mucmanager.h"
+#include "infodlg.h"
+#include "iris/xmpp_vcard.h"
 #include "mucaffiliationsmodel.h"
 #include "mucaffiliationsproxymodel.h"
-#include "mucconfigdlg.h"
-#include "xdata_widget.h"
-#include "infodlg.h"
-#include "vcardfactory.h"
-#include "xmpp_vcard.h"
+#include "mucmanager.h"
 #include "psiaccount.h"
+#include "vcardfactory.h"
+#include "xdata_widget.h"
+
+#include <QInputDialog>
+#include <QMap>
+#include <QMessageBox>
+#include <QScrollArea>
+#include <QVariant>
 
 using namespace XMPP;
 
-MUCConfigDlg::MUCConfigDlg(MUCManager* manager, QWidget* parent)
-    : QDialog(parent), manager_(manager)
+MUCConfigDlg::MUCConfigDlg(MUCManager *manager, QWidget *parent) : QDialog(parent), manager_(manager)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     ui_.setupUi(this);
     setModal(false);
 
     QVBoxLayout *data_layout = new QVBoxLayout(ui_.pg_general_data);
-    data_layout->setMargin(0);
+    data_layout->setContentsMargins(0, 0, 0, 0);
 
     data_container_ = new QScrollArea(ui_.pg_general_data);
     data_layout->addWidget(data_container_);
     data_container_->setWidgetResizable(true);
 
-    connect(ui_.tabs,SIGNAL(currentChanged(int)),SLOT(currentTabChanged(int)));
-    connect(ui_.pb_apply,SIGNAL(clicked()),SLOT(apply()));
+    connect(ui_.tabs, SIGNAL(currentChanged(int)), SLOT(currentTabChanged(int)));
+    connect(ui_.pb_apply, SIGNAL(clicked()), SLOT(apply()));
     ui_.pb_close->setDefault(true);
 
     // General tab
     data_ = nullptr;
-    connect(manager_, SIGNAL(getConfiguration_success(const XData&)), SLOT(getConfiguration_success(const XData&)));
-    connect(manager_, SIGNAL(getConfiguration_error(int, const QString&)), SLOT(getConfiguration_error(int, const QString&)));
+    connect(manager_, SIGNAL(getConfiguration_success(const XData &)), SLOT(getConfiguration_success(const XData &)));
+    connect(manager_, SIGNAL(getConfiguration_error(int, const QString &)),
+            SLOT(getConfiguration_error(int, const QString &)));
     connect(manager_, SIGNAL(setConfiguration_success()), SLOT(setConfiguration_success()));
-    connect(manager_, SIGNAL(setConfiguration_error(int, const QString&)), SLOT(setConfiguration_error(int, const QString&)));
-    connect(manager_, SIGNAL(getItemsByAffiliation_success(MUCItem::Affiliation, const QList<MUCItem>&)), SLOT(getItemsByAffiliation_success(MUCItem::Affiliation, const QList<MUCItem>&)));
+    connect(manager_, SIGNAL(setConfiguration_error(int, const QString &)),
+            SLOT(setConfiguration_error(int, const QString &)));
+    connect(manager_, SIGNAL(getItemsByAffiliation_success(MUCItem::Affiliation, const QList<MUCItem> &)),
+            SLOT(getItemsByAffiliation_success(MUCItem::Affiliation, const QList<MUCItem> &)));
     connect(manager_, SIGNAL(setItems_success()), SLOT(setItems_success()));
-    connect(manager_, SIGNAL(setItems_error(int, const QString&)), SLOT(setItems_error(int, const QString&)));
-    connect(manager_, SIGNAL(getItemsByAffiliation_error(MUCItem::Affiliation, int, const QString&)), SLOT(getItemsByAffiliation_error(MUCItem::Affiliation, int, const QString&)));
+    connect(manager_, SIGNAL(setItems_error(int, const QString &)), SLOT(setItems_error(int, const QString &)));
+    connect(manager_, SIGNAL(getItemsByAffiliation_error(MUCItem::Affiliation, int, const QString &)),
+            SLOT(getItemsByAffiliation_error(MUCItem::Affiliation, int, const QString &)));
     connect(manager_, SIGNAL(destroy_success()), SLOT(destroy_success()));
-    connect(manager_, SIGNAL(destroy_error(int, const QString&)), SLOT(destroy_error(int, const QString&)));
+    connect(manager_, SIGNAL(destroy_error(int, const QString &)), SLOT(destroy_error(int, const QString &)));
     connect(ui_.pb_destroy, SIGNAL(clicked()), SLOT(destroy()));
 
     // Affiliations tab
     ui_.pb_add->setEnabled(false);
     ui_.pb_remove->setEnabled(false);
-    connect(ui_.tv_affiliations,SIGNAL(addEnabled(bool)),ui_.pb_add,SLOT(setEnabled(bool)));
-    connect(ui_.tv_affiliations,SIGNAL(removeEnabled(bool)),ui_.pb_remove,SLOT(setEnabled(bool)));
-    connect(ui_.pb_add,SIGNAL(clicked()),SLOT(add()));
-    connect(ui_.pb_remove,SIGNAL(clicked()),ui_.tv_affiliations,SLOT(removeCurrent()));
-    connect(ui_.le_filter, SIGNAL(textChanged(const QString&)), SLOT(applyFilter(const QString&)));
+    connect(ui_.tv_affiliations, SIGNAL(addEnabled(bool)), ui_.pb_add, SLOT(setEnabled(bool)));
+    connect(ui_.tv_affiliations, SIGNAL(removeEnabled(bool)), ui_.pb_remove, SLOT(setEnabled(bool)));
+    connect(ui_.pb_add, SIGNAL(clicked()), SLOT(add()));
+    connect(ui_.pb_remove, SIGNAL(clicked()), ui_.tv_affiliations, SLOT(removeCurrent()));
+    connect(ui_.le_filter, SIGNAL(textChanged(const QString &)), SLOT(applyFilter(const QString &)));
 
-    affiliations_model_ = new MUCAffiliationsModel();
+    affiliations_model_       = new MUCAffiliationsModel();
     affiliations_proxy_model_ = new MUCAffiliationsProxyModel(affiliations_model_);
     affiliations_proxy_model_->setSourceModel(affiliations_model_);
     ui_.tv_affiliations->setModel(affiliations_proxy_model_);
@@ -89,10 +93,7 @@ MUCConfigDlg::MUCConfigDlg(MUCManager* manager, QWidget* parent)
     setAffiliation(MUCItem::NoAffiliation);
 }
 
-MUCConfigDlg::~MUCConfigDlg()
-{
-    delete affiliations_model_;
-}
+MUCConfigDlg::~MUCConfigDlg() { delete affiliations_model_; }
 
 void MUCConfigDlg::setRoleAffiliation(MUCItem::Role role, MUCItem::Affiliation affiliation)
 {
@@ -104,19 +105,15 @@ void MUCConfigDlg::setRoleAffiliation(MUCItem::Role role, MUCItem::Affiliation a
     }
 }
 
-void MUCConfigDlg::setRole(MUCItem::Role role)
-{
-    role_ = role;
-}
+void MUCConfigDlg::setRole(MUCItem::Role role) { role_ = role; }
 
 void MUCConfigDlg::setAffiliation(MUCItem::Affiliation affiliation)
 {
     affiliation_ = affiliation;
-    ui_.tabs->setTabEnabled(ui_.tabs->indexOf(ui_.tab_general),affiliation == MUCItem::Owner);
+    ui_.tabs->setTabEnabled(ui_.tabs->indexOf(ui_.tab_general), affiliation == MUCItem::Owner);
     if (ui_.tabs->currentWidget() == ui_.tab_general) {
         refreshGeneral();
-    }
-    else if (ui_.tabs->currentWidget() == ui_.tab_affiliations) {
+    } else if (ui_.tabs->currentWidget() == ui_.tab_affiliations) {
         refreshAffiliations();
     }
 }
@@ -130,8 +127,7 @@ void MUCConfigDlg::refreshGeneral()
         ui_.sw_general->setCurrentWidget(ui_.pg_general_message);
         ui_.busy->start();
         manager_->getConfiguration();
-    }
-    else {
+    } else {
         ui_.lb_general_message->setText(tr("You are not an owner of this room"));
         ui_.sw_general->setCurrentWidget(ui_.pg_general_message);
         if (ui_.tabs->currentWidget() == ui_.tab_general)
@@ -163,7 +159,7 @@ void MUCConfigDlg::refreshVcard()
         QVBoxLayout *layout = new QVBoxLayout;
 
         const VCard vcard = VCardFactory::instance()->vcard(manager_->room());
-        vcard_ = new InfoWidget(InfoWidget::MucAdm, manager_->room(), vcard, manager_->account());
+        vcard_            = new InfoWidget(InfoWidget::MucAdm, manager_->room(), vcard, manager_->account());
         layout->addWidget(vcard_);
         ui_.tab_vcard->setLayout(layout);
         connect(vcard_, SIGNAL(busy()), ui_.busy, SLOT(start()));
@@ -174,8 +170,9 @@ void MUCConfigDlg::refreshVcard()
 
 void MUCConfigDlg::add()
 {
-    bool ok;
-    QString text = QInputDialog::getText(this, tr("Add affiliation"), tr("Enter the JID of the user:"), QLineEdit::Normal, "", &ok);
+    bool    ok;
+    QString text = QInputDialog::getText(this, tr("Add affiliation"), tr("Enter the JID of the user:"),
+                                         QLineEdit::Normal, "", &ok);
     if (ok && ui_.tv_affiliations->currentIndex().isValid()) {
         if (!text.isEmpty()) {
 
@@ -191,8 +188,8 @@ void MUCConfigDlg::add()
                     // TODO: Check if the user is already in the list
 
                     int row = affiliations_model_->rowCount(index);
-                    affiliations_model_->insertRows(row,1,index);
-                    QModelIndex newIndex = affiliations_model_->index(row,0,index);
+                    affiliations_model_->insertRows(row, 1, index);
+                    QModelIndex newIndex = affiliations_model_->index(row, 0, index);
                     affiliations_model_->setData(newIndex, QVariant(jid.bare()));
                     ui_.tv_affiliations->setCurrentIndex(affiliations_proxy_model_->mapFromSource(newIndex));
                     return;
@@ -207,28 +204,28 @@ void MUCConfigDlg::add()
 void MUCConfigDlg::apply()
 {
     if (ui_.tabs->currentWidget() == ui_.tab_general) {
-           if (affiliation_ == MUCItem::Owner && data_) {
+        if (affiliation_ == MUCItem::Owner && data_) {
             XData data;
             data.setFields(data_->fields());
             ui_.busy->start();
             manager_->setConfiguration(data);
         }
-    }
-    else if (ui_.tabs->currentWidget() == ui_.tab_affiliations) {
+    } else if (ui_.tabs->currentWidget() == ui_.tab_affiliations) {
         QList<MUCItem> changes = affiliations_model_->changes();
         if (!changes.isEmpty()) {
             ui_.busy->start();
             manager_->setItems(changes);
         }
-    }
-    else if (ui_.tabs->currentWidget() == ui_.tab_vcard) {
+    } else if (ui_.tabs->currentWidget() == ui_.tab_vcard) {
         vcard_->publish();
     }
 }
 
 void MUCConfigDlg::destroy()
 {
-    int i = QMessageBox::warning(this, tr("Destroy room"), tr("Are you absolutely certain you want to destroy this room?"),tr("Yes"),tr("No"));
+    int i = QMessageBox::warning(this, tr("Destroy room"),
+                                 tr("Are you absolutely certain you want to destroy this room?"),
+                                 QMessageBox::Yes | QMessageBox::No);
     if (i == 0) {
         manager_->destroy();
     }
@@ -244,15 +241,11 @@ void MUCConfigDlg::currentTabChanged(int)
     } else {
         refreshVcard();
     }
-
 }
 
-void MUCConfigDlg::applyFilter(const QString& s)
-{
-    affiliations_proxy_model_->setFilterFixedString(s);
-}
+void MUCConfigDlg::applyFilter(const QString &s) { affiliations_proxy_model_->setFilterFixedString(s); }
 
-void MUCConfigDlg::getConfiguration_success(const XData& d)
+void MUCConfigDlg::getConfiguration_success(const XData &d)
 {
     if (affiliation_ == MUCItem::Owner) {
         ui_.busy->stop();
@@ -265,7 +258,7 @@ void MUCConfigDlg::getConfiguration_success(const XData& d)
     }
 }
 
-void MUCConfigDlg::getConfiguration_error(int, const QString& e)
+void MUCConfigDlg::getConfiguration_error(int, const QString &e)
 {
     ui_.busy->stop();
     QString text = tr("There was an error retrieving the room configuration");
@@ -282,7 +275,7 @@ void MUCConfigDlg::setConfiguration_success()
     }
 }
 
-void MUCConfigDlg::setConfiguration_error(int, const QString& e)
+void MUCConfigDlg::setConfiguration_error(int, const QString &e)
 {
     if (ui_.tabs->currentWidget() == ui_.tab_general) {
         ui_.busy->stop();
@@ -294,7 +287,7 @@ void MUCConfigDlg::setConfiguration_error(int, const QString& e)
     }
 }
 
-void MUCConfigDlg::getItemsByAffiliation_success(MUCItem::Affiliation a, const QList<MUCItem>& items)
+void MUCConfigDlg::getItemsByAffiliation_success(MUCItem::Affiliation a, const QList<MUCItem> &items)
 {
     if (pending_requests_.contains(a) && ui_.tabs->currentWidget() == ui_.tab_affiliations) {
         ui_.tv_affiliations->setUpdatesEnabled(false);
@@ -310,10 +303,10 @@ void MUCConfigDlg::getItemsByAffiliation_success(MUCItem::Affiliation a, const Q
     }
 }
 
-void MUCConfigDlg::getItemsByAffiliation_error(MUCItem::Affiliation a, int, const QString&)
+void MUCConfigDlg::getItemsByAffiliation_error(MUCItem::Affiliation a, int, const QString &)
 {
     if (pending_requests_.contains(a) && ui_.tabs->currentWidget() == ui_.tab_affiliations) {
-        affiliations_model_->setAffiliationListEnabled(a,false);
+        affiliations_model_->setAffiliationListEnabled(a, false);
         removePendingRequest(a);
     }
 }
@@ -326,7 +319,7 @@ void MUCConfigDlg::setItems_success()
     }
 }
 
-void MUCConfigDlg::setItems_error(int, const QString&)
+void MUCConfigDlg::setItems_error(int, const QString &)
 {
     if (ui_.tabs->currentWidget() == ui_.tab_affiliations) {
         ui_.busy->stop();
@@ -334,7 +327,6 @@ void MUCConfigDlg::setItems_error(int, const QString&)
         refreshAffiliations();
     }
 }
-
 
 void MUCConfigDlg::removePendingRequest(MUCItem::Affiliation a)
 {
@@ -350,7 +342,7 @@ void MUCConfigDlg::destroy_success()
     }
 }
 
-void MUCConfigDlg::destroy_error(int, const QString&)
+void MUCConfigDlg::destroy_error(int, const QString &)
 {
     if (ui_.tabs->currentWidget() == ui_.tab_general) {
         ui_.busy->stop();

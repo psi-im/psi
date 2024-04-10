@@ -1,0 +1,102 @@
+/*
+ * psiplugin.h - Psi plugin interface
+ * Copyright (C) 2006-2008  Kevin Smith, Maciej Niedzielski
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * You can also redistribute and/or modify this program under the
+ * terms of the Psi License, specified in the accompanied COPYING
+ * file, as published by the Psi Project; either dated January 1st,
+ * 2005, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ */
+
+#ifndef PSIPLUGIN_H
+#define PSIPLUGIN_H
+
+#include <QtCore>
+#include <QtPlugin>
+
+class QWidget;
+
+// see PluginHost::selfMetadata for possible properties
+#define PSI_PLUGIN_MD(prop) property("metadata").toMap().value(QLatin1String(prop))
+
+/**
+ * \brief An abstract class for implementing a plugin
+ */
+class PsiPlugin {
+public:
+    // Priorities allows plugins to make processing more ordered. For example
+    // some plugins may require process stanzas as early as possible, others
+    // may want to do some work at the end. So here here are 5 levels of
+    // priority which plugin may choose from. If plugin is not aware about
+    // priority then Normal will be choosed for it.
+    // While writing plugins its desirable to think twice before choosing
+    // Lowest or Highest priority, since your plugin may be not the only which
+    // need it. Think about for example stopspam plugin which is known to be
+    // highest prioroty blocker/processor. Are you writing stopspam? If not
+    // choose High if you want something more then Normal.
+    enum Priority {
+        PriorityLowest  = 0, // always in the end. last loaded Lowest plugin moves other Lowest to Low side
+        PriorityLow     = 1,
+        PriorityNormal  = 2, // default
+        PriorityHigh    = 3,
+        PriorityHighest = 4, // always in the start. last loaded Highest plugin moves others to High side
+    };
+
+    virtual ~PsiPlugin() { }
+
+    /**
+     * \brief Plugin Name
+     * The full name of the plugin.
+     * \return Plugin name
+     */
+    virtual QString name() const = 0;
+
+    /**
+     * \brief Plugin options widget
+     * This method is called by the Psi options system to retrieve
+     * a widget containing the options for this plugin.
+     * This will then be embedded in the options dialog, so this
+     * should be considered when designing the widget. Should return
+     * nullptr when there are no user-configurable options. The calling method
+     * is responsible for deleting the options.
+     *
+     * TODO: make sure this is really deleted, etc
+     */
+    virtual QWidget *options() = 0;
+
+    /**
+     * \brief Enable plugin
+     * \return true if plugin was successfully enabled
+     */
+
+    virtual bool enable() = 0;
+
+    /**
+     * \brief Disable plugin
+     * \return true if plugin was successfully disabled
+     */
+    virtual bool disable() = 0;
+
+    virtual void applyOptions()   = 0;
+    virtual void restoreOptions() = 0;
+
+    virtual QStringList pluginFeatures() { return QStringList(); }
+};
+
+Q_DECLARE_INTERFACE(PsiPlugin, "org.psi-im.PsiPlugin/0.6");
+
+#endif // PSIPLUGIN_H

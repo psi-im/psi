@@ -1,0 +1,101 @@
+name: Fedora CI
+
+on:
+  push:
+    branches:
+    - '*'
+  pull_request:
+    branches:
+    - '*'
+
+jobs:
+  build:
+    name: Build and install project
+    runs-on: ubuntu-latest
+    container: fedora:latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: ['clang', 'gcc']
+        chattype: ['BASIC', 'WEBENGINE']
+        include:
+          - compiler: 'clang'
+            cc: 'clang'
+            cxx: 'clang++'
+          - compiler: 'gcc'
+            cc: 'gcc'
+            cxx: 'g++'
+    steps:
+    - name: Installing core packages
+      run: |
+        sudo dnf -y install git-core
+    - name: Fetching sources
+      uses: actions/checkout@v3
+      with:
+        submodules: true
+    - name: Installing compiler ${{ matrix.compiler }}
+      run: |
+        sudo dnf -y install '/usr/bin/${{ matrix.cc }}' '/usr/bin/${{ matrix.cxx }}'
+    - name: Installing build system
+      run: |
+        sudo dnf -y install cmake ninja-build
+    - name: Installing development packages
+      run: |
+        sudo dnf -y install \
+            glib2-devel \
+            gstreamer1-devel \
+            hunspell-devel \
+            libXScrnSaver-devel \
+            libgcrypt-devel \
+            libidn-devel \
+            libotr-devel \
+            libsignal-protocol-c-devel \
+            libtidy-devel \
+            openssl-devel \
+            qca-qt5-devel \
+            qt5-linguist \
+            qt5-qtbase-devel \
+            qt5-qtmultimedia-devel \
+            qt5-qtsvg-devel \
+            qt5-qttools-devel \
+            qt5-qtwebengine-devel \
+            qt5-qtx11extras-devel \
+            qt5-qtxmlpatterns-devel \
+            qtkeychain-qt5-devel \
+            usrsctp-devel \
+            zlib-devel
+    - name: Building project with CMake
+      run: |
+        [ -d "./plugins/generic" ] && ENABLE_PLUGINS="ON" || ENABLE_PLUGINS="OFF"
+        cmake -S . -B build \
+            -G Ninja \
+            -DCMAKE_C_COMPILER=${{ matrix.cc }} \
+            -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} \
+            -DCMAKE_INSTALL_PREFIX:PATH=/usr \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_DEMO:BOOL=OFF \
+            -DBUILD_PSIMEDIA:BOOL=${ENABLE_PLUGINS} \
+            -DIRIS_BUNDLED_QCA:BOOL=OFF \
+            -DIRIS_BUNDLED_USRSCTP:BOOL=OFF \
+            -DCHAT_TYPE:STRING=${{ matrix.chattype }} \
+            -DENABLE_DEV_PLUGINS=${ENABLE_PLUGINS} \
+            -DENABLE_PLUGINS:BOOL=${ENABLE_PLUGINS} \
+            -DINSTALL_EXTRA_FILES:BOOL=ON \
+            -DINSTALL_PLUGINS_SDK:BOOL=OFF \
+            -DPRODUCTION:BOOL=ON \
+            -DUSE_ASPELL:BOOL=OFF \
+            -DUSE_CRASH:BOOL=OFF \
+            -DUSE_DBUS:BOOL=ON \
+            -DUSE_ENCHANT:BOOL=OFF \
+            -DUSE_HUNSPELL:BOOL=ON \
+            -DUSE_KEYCHAIN:BOOL=ON \
+            -DUSE_X11:BOOL=ON \
+            -DUSE_XSS:BOOL=ON
+        cmake --build build
+      env:
+        CFLAGS: -O2 -fexceptions -pipe -Wall -Wextra -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS -fPIC -fstack-protector-strong -fasynchronous-unwind-tables -fcf-protection
+        CXXFLAGS: -O2 -fexceptions -pipe -Wall -Wextra -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS -fPIC -fstack-protector-strong -fasynchronous-unwind-tables -fcf-protection
+        LDFLAGS: -Wl,-z,relro -Wl,--as-needed -Wl,-z,now
+    - name: Installing project with CMake
+      run: |
+        sudo cmake --install build

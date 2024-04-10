@@ -11,19 +11,18 @@
 /*                                              */
 /************************************************/
 
-#ifndef apiRemoteH
-#define apiRemoteH
+#ifndef APIREMOTE_H
+#define APIREMOTE_H
 
 #include <windows.h>
 
-const char AIMPRemoteAccessClass[] = "AIMP2_RemoteInfo";
+const char AIMPRemoteAccessClass[]     = "AIMP2_RemoteInfo";
 const int  AIMPRemoteAccessMapFileSize = 2048;
 
 #pragma pack(push, 1)
-struct TAIMPRemoteFileInfo
-{
+struct TAIMPRemoteFileInfo {
     DWORD Deprecated1;
-    BOOL Active;
+    BOOL  Active;
     DWORD BitRate;
     DWORD Channels;
     DWORD Duration;
@@ -208,6 +207,6 @@ const int AIMP_RA_NOTIFY_TRACK_START = AIMP_RA_NOTIFY_BASE + 2;
 
 // Called, when property has been changed
 // LParam: Property ID
-const int AIMP_RA_NOTIFY_PROPERTY = AIMP_RA_NOTIFY_BASE + 3; 
+const int AIMP_RA_NOTIFY_PROPERTY = AIMP_RA_NOTIFY_BASE + 3;
 
-#endif // !apiRemoteH
+#endif // APIREMOTE_H

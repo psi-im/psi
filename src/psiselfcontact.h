@@ -22,21 +22,20 @@
 
 #include "psicontact.h"
 
-class PsiSelfContact : public PsiContact
-{
+class PsiSelfContact : public PsiContact {
 public:
-    PsiSelfContact(const UserListItem& u, PsiAccount* parent);
+    PsiSelfContact(const UserListItem &u, PsiAccount *parent);
 
-    void update(const UserListItem& u);
+    void update(const UserListItem &u);
 
     // reimplemented
-    virtual ContactListItemMenu* contextMenu();
-    virtual bool isEditable() const;
-    virtual bool isSelf() const;
+    virtual ContactListItemMenu *contextMenu();
+    virtual bool                 isEditable() const;
+    virtual bool                 isSelf() const;
 
 protected:
     // reimplemented
     virtual bool shouldBeVisible() const;
 };
 
-#endif
+#endif // PSISELFCONTACT_H

@@ -20,36 +20,35 @@
 #ifndef CONTACTLISTITEMMENU_H
 #define CONTACTLISTITEMMENU_H
 
-#include <QMenu>
 #include <QList>
+#include <QMenu>
 
-class ContactListModel;
 class ContactListItem;
+class ContactListModel;
 class QAction;
 class QLabel;
 
-class ContactListItemMenu : public QMenu
-{
+class ContactListItemMenu : public QMenu {
     Q_OBJECT
 public:
-    ContactListItemMenu(ContactListItem* item, ContactListModel* model);
+    ContactListItemMenu(ContactListItem *item, ContactListModel *model);
     virtual ~ContactListItemMenu();
 
-    virtual ContactListItem* item() const;
+    virtual ContactListItem *item() const;
 
-    void setLabelTitle(const QString &title);
-    virtual void removeActions(QStringList actionNames);
-    virtual QList<QAction*> availableActions() const;
+    void                     setLabelTitle(const QString &title);
+    virtual void             removeActions(QStringList actionNames);
+    virtual QList<QAction *> availableActions() const;
 
 protected:
-    QKeySequence shortcut(const QString& name) const;
-    QList<QKeySequence> shortcuts(const QString& name) const;
-    ContactListModel* model() const;
+    QKeySequence        shortcut(const QString &name) const;
+    QList<QKeySequence> shortcuts(const QString &name) const;
+    ContactListModel   *model() const;
 
 private:
-    ContactListItem* item_;
-    ContactListModel* model_;
-    QLabel *_lblTitle;
+    ContactListItem  *item_;
+    ContactListModel *model_;
+    QLabel           *_lblTitle;
 };
 
-#endif
+#endif // CONTACTLISTITEMMENU_H

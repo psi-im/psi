@@ -19,52 +19,44 @@
 #ifndef JINGLERTP_H
 #define JINGLERTP_H
 
-#include "xmpp.h"
 #include "jinglertptasks.h"
+#include "xmpp.h"
 
 class JingleRtpChannel;
-class JingleRtpPrivate;
 class JingleRtpChannelPrivate;
 class JingleRtpManagerPrivate;
+class JingleRtpPrivate;
 
-class JingleRtp : public QObject
-{
+class JingleRtp : public QObject {
     Q_OBJECT
 
 public:
-    enum Error
-    {
-        ErrorGeneric,
-        ErrorTimeout,
-        ErrorICE
-    };
+    enum Error { NoError, ErrorGeneric, ErrorTimeout, ErrorICE };
 
-    enum Type
-    {
-        Audio = 0x01,
-        Video = 0x02
-    };
+    enum Type { Audio = 0x01, Video = 0x02 };
 
-    class RtpPacket
-    {
+    enum PeerFeature { IceTransport = 0x1, IceUdpTransport = 0x2 };
+    Q_DECLARE_FLAGS(PeerFeatures, PeerFeature)
+
+    class RtpPacket {
     public:
-        Type type;
-        int portOffset;
+        Type       type;
+        int        portOffset;
         QByteArray value;
     };
 
-    ~JingleRtp();
+    ~JingleRtp() override;
 
-    XMPP::Jid jid() const;
+    XMPP::Jid                   jid() const;
     QList<JingleRtpPayloadType> remoteAudioPayloadTypes() const;
     QList<JingleRtpPayloadType> remoteVideoPayloadTypes() const;
-    int remoteMaximumBitrate() const;
+    int                         remoteMaximumBitrate() const;
 
     void setLocalAudioPayloadTypes(const QList<JingleRtpPayloadType> &types);
     void setLocalVideoPayloadTypes(const QList<JingleRtpPayloadType> &types);
     void setLocalMaximumBitrate(int kbps);
 
-    void connectToJid(const XMPP::Jid &jid);
+    void connectToJid(const XMPP::Jid &jid, JingleRtp::PeerFeatures features = IceUdpTransport);
     void accept(int types); // intended types, so ICE knows what to do
     void reject();
 
@@ -103,15 +95,15 @@ private:
 
     JingleRtpPrivate *d;
 };
+Q_DECLARE_OPERATORS_FOR_FLAGS(JingleRtp::PeerFeatures)
 
-class JingleRtpChannel : public QObject
-{
+class JingleRtpChannel : public QObject {
     Q_OBJECT
 
 public:
-    bool packetsAvailable() const;
+    bool                 packetsAvailable() const;
     JingleRtp::RtpPacket read();
-    void write(const JingleRtp::RtpPacket &packet);
+    void                 write(const JingleRtp::RtpPacket &packet);
 
 signals:
     void readyRead();
@@ -125,18 +117,17 @@ private:
     friend class JingleRtpChannelPrivate;
     friend class JingleRtpPrivate;
     JingleRtpChannel();
-    ~JingleRtpChannel();
+    ~JingleRtpChannel() override;
 
     JingleRtpChannelPrivate *d;
 };
 
-class JingleRtpManager : public QObject
-{
+class JingleRtpManager : public QObject {
     Q_OBJECT
 
 public:
-    JingleRtpManager(XMPP::Client *client);
-    ~JingleRtpManager();
+    explicit JingleRtpManager(XMPP::Client *client);
+    ~JingleRtpManager() override;
 
     JingleRtp *createOutgoing();
     JingleRtp *takeIncoming();
@@ -145,9 +136,10 @@ public:
     void setExternalAddress(const QString &host); // resolved locally
     void setStunBindService(const QString &host, int port);
     void setStunRelayUdpService(const QString &host, int port, const QString &user, const QString &pass);
-    void setStunRelayTcpService(const QString &host, int port, const XMPP::AdvancedConnector::Proxy &proxy, const QString &user, const QString &pass);
+    void setStunRelayTcpService(const QString &host, int port, const XMPP::AdvancedConnector::Proxy &proxy,
+                                const QString &user, const QString &pass);
     void setBasePort(int port);
-
+    void setAllowIpExposure(bool allow);
 signals:
     void incomingReady();
 
@@ -161,4 +153,4 @@ private:
     JingleRtpManagerPrivate *d;
 };
 
-#endif
+#endif // JINGLERTP_H

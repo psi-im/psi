@@ -1,5 +1,5 @@
 .PHONY: all
-all: 
+all:
 
 .PHONY: api_public
 api_public:

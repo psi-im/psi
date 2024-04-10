@@ -1,24 +1,23 @@
-#ifndef _PSIOPTIONSEDITOR_H_
-#define _PSIOPTIONSEDITOR_H_
+#ifndef PSIOPTIONSEDITOR_H
+#define PSIOPTIONSEDITOR_H
 
+#include "optionstreemodel.h"
 
-#include <QtCore>
-#include <QTreeView>
 #include <QCheckBox>
+#include <QKeyEvent>
 #include <QLabel>
 #include <QPushButton>
 #include <QToolButton>
-
-#include "optionstreemodel.h"
+#include <QTreeView>
+#include <QtCore>
 
 class PsiOptions;
 class QSortFilterProxyModel;
 
-class PsiOptionsEditor : public QWidget
-{
+class PsiOptionsEditor : public QWidget {
     Q_OBJECT
 public:
-    PsiOptionsEditor(QWidget *parent=0);
+    PsiOptionsEditor(QWidget *parent = nullptr);
     void bringToFront();
 
 private slots:
@@ -31,23 +30,26 @@ private slots:
     void resetit();
     void detach();
 
+protected:
+    void keyPressEvent(QKeyEvent *e);
+
 private:
-    PsiOptions *o_;
-    QTreeView* tv_;
-    int tv_colWidth;
-    OptionsTreeModel* tm_;
+    PsiOptions            *o_;
+    QTreeView             *tv_;
+    int                    tv_colWidth;
+    OptionsTreeModel      *tm_;
     QSortFilterProxyModel *tpm_;
-    QCheckBox* cb_;
-    QLabel*    lb_type;
-    QLabel* lb_path;
-    QLabel* lb_comment;
-    QPushButton *pb_delete;
-    QPushButton *pb_reset;
-    QPushButton *pb_edit;
-    QPushButton *pb_new;
-    QToolButton *pb_detach;
+    QCheckBox             *cb_;
+    QLabel                *lb_type;
+    QLabel                *lb_path;
+    QLabel                *lb_comment;
+    QLabel                *lb_filter;
+    QPushButton           *pb_delete;
+    QPushButton           *pb_reset;
+    QPushButton           *pb_edit;
+    QPushButton           *pb_new;
+    QToolButton           *pb_detach;
+    QLineEdit             *le_filter;
 };
 
-
-
-#endif /* _PSIOPTIONSEDITOR_H_ */
+#endif // PSIOPTIONSEDITOR_H

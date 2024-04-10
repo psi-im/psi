@@ -3,18 +3,18 @@
 
 #include "optionstab.h"
 
-class QWidget;
 class QListWidgetItem;
+class QWidget;
 
-class OptionsTabGroupchat : public OptionsTab
-{
+class OptionsTabGroupchat : public OptionsTab {
     Q_OBJECT
 public:
     OptionsTabGroupchat(QObject *parent);
 
+    enum coloringType { NONE = 0, HASH = 1, MANUAL = 2 };
     QWidget *widget();
-    void applyOptions();
-    void restoreOptions();
+    void     applyOptions();
+    void     restoreOptions();
 
     void setData(PsiCon *, QWidget *);
     bool stretchable() const { return true; }
@@ -34,4 +34,4 @@ private:
     QWidget *w = nullptr, *dlg = nullptr;
 };
 
-#endif
+#endif // OPT_GROUPCHAT_H

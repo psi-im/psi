@@ -21,21 +21,19 @@
 
 #include <QDialog>
 
-namespace XMPP
-{
-    class Jid;
+class AvCall;
+class PsiAccount;
+
+namespace XMPP {
+class Jid;
 }
 
-class PsiAccount;
-class AvCall;
-
-class CallDlg : public QDialog
-{
+class CallDlg : public QDialog {
     Q_OBJECT
 
 public:
-    CallDlg(PsiAccount *pa, QWidget *parent = 0);
-    ~CallDlg();
+    explicit CallDlg(PsiAccount *pa, QWidget *parent = nullptr);
+    ~CallDlg() override;
 
     void setOutgoing(const XMPP::Jid &jid);
     void setIncoming(AvCall *sess);
@@ -45,4 +43,4 @@ private:
     Private *d;
 };
 
-#endif
+#endif // CALLDLG_H

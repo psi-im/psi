@@ -22,27 +22,26 @@
 
 #include <QString>
 
-class QDomElement;
 class QDomDocument;
+class QDomElement;
 
-class URLBookmark
-{
+class URLBookmark {
 public:
-    URLBookmark(const QString& name, const QString& url);
-    URLBookmark(const QDomElement&);
+    URLBookmark(const QString &name, const QString &url);
+    URLBookmark(const QDomElement &);
 
-    const QString& name() const;
-    const QString& url() const;
-    bool isNull() const;
+    const QString &name() const;
+    const QString &url() const;
+    bool           isNull() const;
 
-    void fromXml(const QDomElement&);
-    QDomElement toXml(QDomDocument&) const;
+    void        fromXml(const QDomElement &);
+    QDomElement toXml(QDomDocument &) const;
 
-    bool operator==(const URLBookmark& other) const;
+    bool operator==(const URLBookmark &other) const;
 
 private:
     QString name_;
     QString url_;
 };
 
-#endif
+#endif // URLBOOKMARK_H

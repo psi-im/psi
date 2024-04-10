@@ -21,43 +21,47 @@
 #define QT_STATICPLUGIN
 #endif
 
-#include <QtCore>
-#include <QPluginLoader>
+#include "tunecontrollermanager.h"
 
 #include "tunecontroller.h"
-#include "tunecontrollermanager.h"
 #include "tunecontrollerplugin.h"
+
+#include <QLatin1Char>
+#include <QPluginLoader>
+#include <QtCore>
 
 /**
  * \class TuneControllerManager
  * \brief A manager for all tune controller plugins.
  */
 
-
 TuneControllerManager::TuneControllerManager()
 {
-    foreach(QObject* plugin,QPluginLoader::staticInstances()) {
+    const auto &plugins = QPluginLoader::staticInstances();
+    for (QObject *plugin : plugins) {
         loadPlugin(plugin);
     }
 }
 
-TuneControllerManager::~TuneControllerManager()
-{
-}
+TuneControllerManager::~TuneControllerManager() { }
 
 void TuneControllerManager::updateControllers(const QStringList &blacklist)
 {
-    bool isInBlacklist;
-    foreach(const QString &name, plugins_.keys()) {
+    bool        isInBlacklist;
+    const auto &names = plugins_.keys();
+    for (const QString &name : names) {
         TuneControllerPtr c = controllers_.value(name);
-        isInBlacklist = blacklist.contains(name);
+        isInBlacklist       = blacklist.contains(name);
         if (!c && !isInBlacklist) {
             c = TuneControllerPtr(plugins_[name]->createController());
-            connect(c.data(),SIGNAL(stopped()),SIGNAL(stopped()));
-            connect(c.data(),SIGNAL(playing(const Tune&)),SLOT(sendTune(const Tune&)));
+            connect(c.data(), &TuneController::stopped, this, &TuneControllerManager::stopped);
+            connect(c.data(), &TuneController::playing, this, [this](const Tune &tune) {
+                if (checkTune(tune)) {
+                    emit playing(tune);
+                }
+            });
             controllers_.insert(name, c);
-        }
-        else if (c && isInBlacklist) {
+        } else if (c && isInBlacklist) {
             emit stopped();
             controllers_.remove(name);
         }
@@ -66,7 +70,8 @@ void TuneControllerManager::updateControllers(const QStringList &blacklist)
 
 Tune TuneControllerManager::currentTune() const
 {
-    foreach(const TuneControllerPtr &c, controllers_.values()) {
+    const auto &controllers = controllers_.values();
+    for (const TuneControllerPtr &c : controllers) {
         Tune t = c->currentTune();
         if (!t.isNull() && checkTune(t)) {
             return t;
@@ -75,51 +80,37 @@ Tune TuneControllerManager::currentTune() const
     return Tune();
 }
 
-void TuneControllerManager::sendTune(const Tune &tune)
-{
-    if (checkTune(tune)) {
-        emit playing(tune);
-    }
-}
-
-
 /**
  * \brief Returns a list of all the supported controllers.
  */
-QList<QString> TuneControllerManager::controllerNames() const
-{
-    return plugins_.keys();
-}
-
+QList<QString> TuneControllerManager::controllerNames() const { return plugins_.keys(); }
 
 /**
  * \brief Creates a new controller.
  */
-TuneController* TuneControllerManager::createController(const QString& name) const
+TuneController *TuneControllerManager::createController(const QString &name) const
 {
     return plugins_[name]->createController();
 }
 
-
 /**
  * \brief Loads a TuneControllerPlugin from a file.
  */
-bool TuneControllerManager::loadPlugin(const QString& file)
+bool TuneControllerManager::loadPlugin(const QString &file)
 {
-    //return QPluginLoader(file).load();
+    // return QPluginLoader(file).load();
     return loadPlugin(QPluginLoader(file).instance());
 }
 
-
-bool TuneControllerManager::loadPlugin(QObject* plugin)
+bool TuneControllerManager::loadPlugin(QObject *plugin)
 {
     if (!plugin)
         return false;
 
-    TuneControllerPluginPtr tcplugin = TuneControllerPluginPtr(qobject_cast<TuneControllerPlugin*>(plugin));
+    TuneControllerPluginPtr tcplugin = TuneControllerPluginPtr(qobject_cast<TuneControllerPlugin *>(plugin));
     if (tcplugin) {
-        if(!plugins_.contains(tcplugin->name())) {
-            //qDebug() << "Registering plugin " << tcplugin->name();
+        if (!plugins_.contains(tcplugin->name())) {
+            // qDebug() << "Registering plugin " << tcplugin->name();
             plugins_[tcplugin->name()] = tcplugin;
         }
         return true;
@@ -129,22 +120,22 @@ bool TuneControllerManager::loadPlugin(QObject* plugin)
 
 void TuneControllerManager::setTuneFilters(const QStringList &filters, const QString &pattern)
 {
-    tuneUrlFilters_ = filters;
+    tuneUrlFilters_         = filters;
     tuneTitleFilterPattern_ = pattern;
 }
 
 bool TuneControllerManager::checkTune(const Tune &tune) const
 {
     if (!tuneTitleFilterPattern_.isEmpty() && !tune.name().isEmpty()) {
-        QRegExp tuneTitleFilter(tuneTitleFilterPattern_);
-        if (tuneTitleFilter.isValid() && tuneTitleFilter.exactMatch(tune.name())) {
+        QRegularExpression tuneTitleFilter(QLatin1Char('^') + tuneTitleFilterPattern_ + QLatin1Char('$'));
+        if (tuneTitleFilter.isValid() && tuneTitleFilter.match(tune.name()).hasMatch()) {
             return false;
         }
     }
     if (!tune.url().isEmpty()) {
         int index = tune.url().lastIndexOf(".");
         if (index != -1) {
-            QString extension = tune.url().right(tune.url().length() - (index+1)).toLower();
+            QString extension = tune.url().right(tune.url().length() - (index + 1)).toLower();
             if (!extension.isEmpty() && tuneUrlFilters_.contains(extension)) {
                 return false;
             }

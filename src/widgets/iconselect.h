@@ -22,19 +22,19 @@
 
 #include <QMenu>
 
-class PsiIcon;
 class Iconset;
+class PsiIcon;
 
-class IconSelectPopup : public QMenu
-{
+class IconSelectPopup : public QMenu {
     Q_OBJECT
 
 public:
-    IconSelectPopup(QWidget *parent = 0);
+    IconSelectPopup(QWidget *parent = nullptr);
     ~IconSelectPopup();
 
-    void setIconset(const Iconset &);
+    void           setIconset(const Iconset &);
     const Iconset &iconset() const;
+    void           setEmojiSortingEnabled(bool enabled);
 
     // reimplemented
     void mousePressEvent(QMouseEvent *e);
@@ -48,4 +48,4 @@ private:
     Private *d;
 };
 
-#endif
+#endif // ICONSELECT_H

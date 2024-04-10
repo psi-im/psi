@@ -17,16 +17,14 @@
  *
  */
 
-#include "psicontactmenu.h"
-
-#include "psiaccount.h"
-#include "resourcemenu.h"
 #include "groupmenu.h"
+#include "psicontactmenu.h"
+#include "resourcemenu.h"
 
 class InviteToGroupChatMenu;
+class PsiAccount;
 
-class PsiContactMenu::Private : public QObject
-{
+class PsiContactMenu::Private : public QObject {
     Q_OBJECT
 
 public:
@@ -42,7 +40,7 @@ public slots:
     void removeContact();
     void inviteToGroupchat(PsiAccount *account, QString groupchat);
     void setContactGroup(QString group);
-    void block(bool );
+    void block(bool);
     void setAlwaysVisible(bool visible);
     void addAuth();
     void receiveIncomingEvent();
@@ -50,7 +48,7 @@ public slots:
     void openChat();
 #ifdef WHITEBOARDING
     void openWhiteboard();
-    void openWhiteboardTo(PsiContact*, const XMPP::Jid &jid);
+    void openWhiteboardTo(PsiContact *, const XMPP::Jid &jid);
 #endif
     void voiceCall();
     void sendFile();
@@ -62,20 +60,20 @@ public slots:
     void customStatus();
     void pictureAssign();
     void pictureClear();
-    void gpgAssignKey();
-    void gpgUnassignKey();
+    void pgpAssignKey();
+    void pgpUnassignKey();
     void vcard();
     void history();
-    void sendMessageTo(PsiContact*, const XMPP::Jid &jid);
-    void openChatTo(PsiContact*, const XMPP::Jid &jid);
-    void executeCommand(PsiContact*, const XMPP::Jid &jid);
-    void openActiveChat(PsiContact*, const XMPP::Jid &jid);
+    void sendMessageTo(PsiContact *, const XMPP::Jid &jid);
+    void openChatTo(PsiContact *, const XMPP::Jid &jid);
+    void executeCommand(PsiContact *, const XMPP::Jid &jid);
+    void openActiveChat(PsiContact *, const XMPP::Jid &jid);
     void copyJid();
     void updateBlockActionState();
-    
+
 public:
     QPointer<PsiContact> contact_;
-    PsiContactMenu *menu_;
+    PsiContactMenu      *menu_;
 
     QAction *renameAction_;
     QAction *removeAction_;
@@ -84,42 +82,40 @@ public:
     QAction *transportLogonAction_;
     QAction *transportLogoffAction_;
     QAction *receiveIncomingEventAction_;
-    QMenu *msgMenu_;
+    QMenu   *msgMenu_;
     QAction *sendMessageAction_;
-    QMenu *sendMessageToMenu_;
+    QMenu   *sendMessageToMenu_;
     QAction *openChatAction_;
-    QMenu *openChatToMenu_;
+    QMenu   *openChatToMenu_;
 #ifdef WHITEBOARDING
     QAction *openWhiteboardAction_;
-    QMenu *openWhiteboardToMenu_;
+    QMenu   *openWhiteboardToMenu_;
 #endif
-    ResourceMenu *executeCommandMenu_;
-    ResourceMenu *activeChatsMenu_;
-    QAction *voiceCallAction_;
-    QAction *sendFileAction_;
-    QAction *customStatusAction_;
+    ResourceMenu          *executeCommandMenu_;
+    ResourceMenu          *activeChatsMenu_;
+    QAction               *voiceCallAction_;
+    QAction               *sendFileAction_;
+    QAction               *customStatusAction_;
     InviteToGroupChatMenu *inviteToGroupchatMenu_;
-    GroupMenu *groupMenu_;
-    QMenu *authMenu_;
-    QAction *authResendAction_;
-    QAction *authRerequestAction_;
-    QAction *authRemoveAction_;
-    QMenu *pictureMenu_;
-    QAction *pictureAssignAction_;
-    QAction *pictureClearAction_;
-    QAction *gpgAssignKeyAction_;
-    QAction *gpgUnassignKeyAction_;
-    QAction *vcardAction_;
-    QAction *historyAction_;
-    QAction *mucHideAction_;
-    QAction *mucShowAction_;
-    QAction *mucLeaveAction_;
-    QAction *blockAction_;
-    QAction *visibleAction_;
-    QAction *_copyUserJid;
-    QAction *_copyMucJid;
-    QAction *mucAddToBookmarks;
-    QAction *_separator1;
-    QAction *_separator2;
-    QMenu *_advancedMenu;
+    GroupMenu             *groupMenu_;
+    QMenu                 *authMenu_;
+    QAction               *authResendAction_;
+    QAction               *authRerequestAction_;
+    QAction               *authRemoveAction_;
+    QMenu                 *pictureMenu_;
+    QAction               *pictureAssignAction_;
+    QAction               *pictureClearAction_;
+    QAction               *vcardAction_;
+    QAction               *historyAction_;
+    QAction               *mucHideAction_;
+    QAction               *mucShowAction_;
+    QAction               *mucLeaveAction_;
+    QAction               *blockAction_;
+    QAction               *visibleAction_;
+    QAction               *_copyUserJid;
+    QAction               *_copyMucJid;
+    QAction               *mucAddToBookmarks;
+    QAction               *_separator1;
+    QAction               *_separator2;
+    QMenu                 *_advancedMenu;
 };

@@ -1,19 +1,15 @@
 #include "optionstreereader.h"
 
-#include <QSize>
-#include <QRect>
-#include <QBuffer>
-
 #include "optionstree.h"
 #include "varianttree.h"
 
-OptionsTreeReader::OptionsTreeReader(OptionsTree* options)
-    : options_(options)
-{
-    Q_ASSERT(options_);
-}
+#include <QBuffer>
+#include <QRect>
+#include <QSize>
 
-bool OptionsTreeReader::read(QIODevice* device)
+OptionsTreeReader::OptionsTreeReader(OptionsTree *options) : options_(options) { Q_ASSERT(options_); }
+
+bool OptionsTreeReader::read(QIODevice *device)
 {
     setDevice(device);
 
@@ -28,7 +24,7 @@ bool OptionsTreeReader::read(QIODevice* device)
     return !error();
 }
 
-void OptionsTreeReader::readTree(VariantTree* tree)
+void OptionsTreeReader::readTree(VariantTree *tree)
 {
     Q_ASSERT(isStartElement());
     Q_ASSERT(tree);
@@ -48,13 +44,11 @@ void OptionsTreeReader::readTree(VariantTree* tree)
                 if (!tree->trees_.contains(name().toString()))
                     tree->trees_[name().toString()] = new VariantTree(tree);
                 readTree(tree->trees_[name().toString()]);
-            }
-            else {
+            } else {
                 QVariant v = readVariant(attributes().value("type").toString());
                 if (v.isValid()) {
                     tree->values_[name().toString()] = v;
-                }
-                else {
+                } else {
                     tree->unknowns2_[name().toString()] = unknown_;
                 }
             }
@@ -62,51 +56,73 @@ void OptionsTreeReader::readTree(VariantTree* tree)
     }
 }
 
-QVariant OptionsTreeReader::readVariant(const QString& type)
+QVariant OptionsTreeReader::readVariant(const QString &type)
 {
     QVariant result;
-    if (type == "QStringList") {
+    if (type == QLatin1String("QStringList")) {
         result = readStringList();
-    }
-    else if (type == "QVariantList") {
+    } else if (type == QLatin1String("QVariantList")) {
         result = readVariantList();
-    }
-    else if (type == "QSize") {
+    } else if (type == QLatin1String("QSize")) {
         result = readSize();
-    }
-    else if (type == "QRect") {
+    } else if (type == QLatin1String("QRect")) {
         result = readRect();
-    }
-    else if (type == "QByteArray") {
+    } else if (type == QLatin1String("QByteArray")) {
         result = QByteArray();
         result = QByteArray::fromBase64(readElementText().toLatin1());
-    }
-    else {
-        QVariant::Type varianttype;
+    } else {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        QVariant::Type variantType;
+#else
+        QMetaType::Type variantType;
+#endif
         bool known = true;
 
-        if (type=="QString") {
-            varianttype = QVariant::String;
-        } else if (type=="bool") {
-            varianttype = QVariant::Bool;
-        } else if (type=="int") {
-            varianttype = QVariant::Int;
-        } else if (type == "QKeySequence") {
-            varianttype = QVariant::KeySequence;
-        } else if (type == "QColor") {
-            varianttype = QVariant::Color;
+        if (type == QLatin1String("QString")) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+            variantType = QVariant::String;
+#else
+            variantType = QMetaType::QString;
+#endif
+        } else if (type == QLatin1String("bool")) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+            variantType = QVariant::Bool;
+#else
+            variantType = QMetaType::Bool;
+#endif
+        } else if (type == QLatin1String("int")) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+            variantType = QVariant::Int;
+#else
+            variantType = QMetaType::Int;
+#endif
+        } else if (type == QLatin1String("QKeySequence")) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+            variantType = QVariant::KeySequence;
+#else
+            variantType = QMetaType::QKeySequence;
+#endif
+        } else if (type == QLatin1String("QColor")) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+            variantType = QVariant::Color;
+#else
+            variantType = QMetaType::QColor;
+#endif
         } else {
             known = false;
         }
 
         if (known) {
             result = readElementText();
-            result.convert(varianttype);
-        }
-        else {
-            QString result;
-            QByteArray ba;
-            QBuffer buffer(&ba);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+            result.convert(int(variantType));
+#else
+            result.convert(QMetaType(variantType));
+#endif
+        } else {
+            [[maybe_unused]] QString result;
+            QByteArray               ba;
+            QBuffer                  buffer(&ba);
             buffer.open(QIODevice::WriteOnly);
             QXmlStreamWriter writer;
             writer.setDevice(&buffer);
@@ -133,7 +149,7 @@ QStringList OptionsTreeReader::readStringList()
             break;
 
         if (isStartElement()) {
-            if (name() == "item") {
+            if (name() == QLatin1String { "item" }) {
                 list << readElementText();
             }
         }
@@ -151,7 +167,7 @@ QVariantList OptionsTreeReader::readVariantList()
             break;
 
         if (isStartElement()) {
-            if (name() == "item") {
+            if (name() == QLatin1String { "item" }) {
                 list << readVariant(attributes().value("type").toString());
             }
         }
@@ -169,10 +185,9 @@ QSize OptionsTreeReader::readSize()
             break;
 
         if (isStartElement()) {
-            if (name() == "width") {
+            if (name() == QLatin1String { "width" }) {
                 width = readElementText().toInt();
-            }
-            else if (name() == "height") {
+            } else if (name() == QLatin1String { "height" }) {
                 height = readElementText().toInt();
             }
         }
@@ -190,16 +205,13 @@ QRect OptionsTreeReader::readRect()
             break;
 
         if (isStartElement()) {
-            if (name() == "width") {
+            if (name() == QLatin1String { "width" }) {
                 width = readElementText().toInt();
-            }
-            else if (name() == "height") {
+            } else if (name() == QLatin1String { "height" }) {
                 height = readElementText().toInt();
-            }
-            else if (name() == "x") {
+            } else if (name() == QLatin1String { "x" }) {
                 x = readElementText().toInt();
-            }
-            else if (name() == "y") {
+            } else if (name() == QLatin1String { "y" }) {
                 y = readElementText().toInt();
             }
         }
@@ -207,11 +219,12 @@ QRect OptionsTreeReader::readRect()
     return QRect(x, y, width, height);
 }
 
-void OptionsTreeReader::readUnknownElement(QXmlStreamWriter* writer)
+void OptionsTreeReader::readUnknownElement(QXmlStreamWriter *writer)
 {
     Q_ASSERT(isStartElement());
     writer->writeStartElement(name().toString());
-    foreach(QXmlStreamAttribute attr, attributes()) {
+    const auto &attrs = attributes();
+    for (const QXmlStreamAttribute &attr : attrs) {
         writer->writeAttribute(attr.name().toString(), attr.value().toString());
     }
 

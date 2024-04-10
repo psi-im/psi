@@ -19,27 +19,21 @@
 
 #include "resourcemenu.h"
 
+#include "iris/xmpp_status.h"
+#include "psiaccount.h"
+#include "psicontact.h"
 #include "psiiconset.h"
 #include "userlist.h"
-#include "xmpp_status.h"
-#include "psicontact.h"
-#include "psiaccount.h"
 
 /**
  * \class ResourceMenu
  * Helper class that displays available resources using QMenu.
  */
 
-ResourceMenu::ResourceMenu(QWidget *parent)
-    : QMenu(parent)
-    , activeChatsMode_(false)
-{
-}
+ResourceMenu::ResourceMenu(QWidget *parent) : QMenu(parent), activeChatsMode_(false) { }
 
-ResourceMenu::ResourceMenu(const QString& title, PsiContact* contact, QWidget* parent)
-    : QMenu(parent)
-    , contact_(contact)
-    , activeChatsMode_(false)
+ResourceMenu::ResourceMenu(const QString &title, PsiContact *contact, QWidget *parent) :
+    QMenu(parent), contact_(contact), activeChatsMode_(false)
 {
     setTitle(title);
 
@@ -51,10 +45,7 @@ ResourceMenu::ResourceMenu(const QString& title, PsiContact* contact, QWidget* p
 /**
  * Helper function to add resource to the menu.
  */
-void ResourceMenu::addResource(const UserResource &r)
-{
-    addResource(r.status().type(), r.name());
-}
+void ResourceMenu::addResource(const UserResource &r) { addResource(r.status().type(), r.name()); }
 
 /**
  * Helper function to add resource to the menu.
@@ -62,15 +53,15 @@ void ResourceMenu::addResource(const UserResource &r)
 void ResourceMenu::addResource(int status, QString name)
 {
     QString rname = name;
-    if(rname.isEmpty())
+    if (rname.isEmpty())
         rname = tr("[blank]");
 
-    //rname += " (" + status2txt(status) + ")";
+    // rname += " (" + status2txt(status) + ")";
 
-    QAction* action = new QAction(PsiIconset::instance()->status(status).icon(), rname, this);
+    QAction *action = new QAction(PsiIconset::instance()->status(status).icon(), rname, this);
     addAction(action);
     action->setProperty("resource", QVariant(name));
-#if defined (Q_OS_MAC)
+#if defined(Q_OS_MAC)
     action->setIconVisibleInMenu(true);
 #endif
     connect(action, SIGNAL(triggered()), SLOT(actionActivated()));
@@ -78,8 +69,8 @@ void ResourceMenu::addResource(int status, QString name)
 
 void ResourceMenu::actionActivated()
 {
-    QAction* action = static_cast<QAction*>(sender());
-    emit resourceActivated(action->property("resource").toString());
+    QAction *action = static_cast<QAction *>(sender());
+    emit     resourceActivated(action->property("resource").toString());
 
     if (contact_) {
         XMPP::Jid jid(contact_->jid());
@@ -97,13 +88,13 @@ void ResourceMenu::contactUpdated()
     clear();
 
     if (!activeChatsMode_) {
-        foreach(const UserResource& resource, contact_->userResourceList())
+        for (const UserResource &resource : contact_->userResourceList())
             addResource(resource);
-    }
-    else {
-        foreach(QString resourceName, contact_->account()->hiddenChats(contact_->jid())) {
-            XMPP::Status::Type status;
-            const UserResourceList &rl = contact_->userResourceList();
+    } else {
+        const auto &names = contact_->account()->hiddenChats(contact_->jid());
+        for (const QString &resourceName : names) {
+            XMPP::Status::Type              status;
+            const UserResourceList         &rl  = contact_->userResourceList();
             UserResourceList::ConstIterator uit = rl.find(resourceName);
             if (uit != rl.end() || (uit = rl.priority()) != rl.end())
                 status = makeSTATUS((*uit).status());
@@ -114,10 +105,7 @@ void ResourceMenu::contactUpdated()
     }
 }
 
-bool ResourceMenu::activeChatsMode() const
-{
-    return activeChatsMode_;
-}
+bool ResourceMenu::activeChatsMode() const { return activeChatsMode_; }
 
 void ResourceMenu::setActiveChatsMode(bool activeChatsMode)
 {

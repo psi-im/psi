@@ -22,17 +22,16 @@
 
 class AbstractTreeItem;
 
-class AbstractTreeModel : public QAbstractItemModel
-{
+class AbstractTreeModel : public QAbstractItemModel {
     Q_OBJECT
 
 public:
-    explicit AbstractTreeModel(AbstractTreeItem *root, QObject *parent = 0);
+    explicit AbstractTreeModel(AbstractTreeItem *root, QObject *parent = nullptr);
     ~AbstractTreeModel() override;
 
     QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const override;
     QModelIndex parent(const QModelIndex &index) const override;
-    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    int         rowCount(const QModelIndex &parent = QModelIndex()) const override;
 
 protected:
     AbstractTreeItem *root() const;

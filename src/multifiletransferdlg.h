@@ -1,6 +1,6 @@
 /*
  * multifiletransferdlg.h - file transfer dialog
- * Copyright (C) 2019 Sergey Ilinykh
+ * Copyright (C) 2019  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,23 +21,37 @@
 #define MULTIFILETRANSFERDLG_H
 
 #include <QDialog>
-#include <QScopedPointer>
+
+class MultiFileTransferItem;
+class PsiAccount;
+class QDragEnterEvent;
+class QDragLeaveEvent;
+class QDragMoveEvent;
+class QDropEvent;
 
 namespace Ui {
 class MultiFileTransferDlg;
 }
 
 namespace XMPP {
-    class Jid;
-    namespace Jingle {
-        class Session;
+class Jid;
+namespace Jingle {
+    class Session;
+    namespace FileTransfer {
+        class Application;
     }
 }
+}
 
-class PsiAccount;
+class BinaryUriLoader : public QObject {
+    Q_OBJECT
+public:
+    BinaryUriLoader(PsiAccount *acc, const XMPP::Jid &peer, const QUrl &uri);
+signals:
+    void ready(const QByteArray &);
+};
 
-class MultiFileTransferDlg : public QDialog
-{
+class MultiFileTransferDlg : public QDialog {
     Q_OBJECT
 
 public:
@@ -46,15 +60,29 @@ public:
 
     void initOutgoing(const XMPP::Jid &jid, const QStringList &fileList);
     void initIncoming(XMPP::Jingle::Session *session);
+
+    void reject();
+    void accept();
+
+protected:
+    void dragEnterEvent(QDragEnterEvent *event);
+    void dragMoveEvent(QDragMoveEvent *event);
+    void dragLeaveEvent(QDragLeaveEvent *event);
+    void dropEvent(QDropEvent *event);
+
 private:
     void updatePeerVisuals();
     void updateMyVisuals();
     void updateComonVisuals();
+    void addTransferContent(MultiFileTransferItem *item);
+    void appendOutgoing(const QStringList &fileList);
+    void setupSessionSignals();
+    void setupCommonSignals(XMPP::Jingle::FileTransfer::Application *app, MultiFileTransferItem *item);
 
 private:
     Ui::MultiFileTransferDlg *ui;
     class Private;
-    QScopedPointer<Private> d;
+    std::unique_ptr<Private> d;
 };
 
 #endif // MULTIFILETRANSFERDLG_H

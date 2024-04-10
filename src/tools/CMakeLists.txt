@@ -24,6 +24,8 @@ list(APPEND SOURCES
     tunecontroller/pollingtunecontroller.cpp
     tunecontroller/tunecontrollermanager.cpp
     tunecontroller/plugins/psifile/psifileplugin.cpp
+
+    emojimodel.cpp
 )
 
 list(APPEND HEADERS
@@ -58,6 +60,8 @@ list(APPEND HEADERS
     tunecontroller/tune.h
     tunecontroller/tunecontrollerinterface.h
     tunecontroller/tunecontrollerplugin.h
+
+    emojimodel.h
 )
 
 if(USE_CRASH)
@@ -120,20 +124,24 @@ elseif(WIN32)
         tunecontroller/winamptunecontroller.h
         tunecontroller/plugins/winamp/winampplugin.h
     )
-elseif(LINUX)  
-    include_directories(tunecontroller/plugins/mpris)
-    add_definitions(-DTC_MPRIS)
-    list(APPEND SOURCES
-        tunecontroller/plugins/mpris/mprisplugin.cpp
+elseif(LINUX)
+    if(USE_DBUS)
+        include_directories(tunecontroller/plugins/mpris)
+        add_definitions(-DTC_MPRIS)
+        list(APPEND SOURCES
+            tunecontroller/plugins/mpris/mprisplugin.cpp
 
-        tunecontroller/mpristunecontroller.cpp
-        tunecontroller/plugins/mpris/mprisplugin.cpp
-    )
+            tunecontroller/mpristunecontroller.cpp
+            tunecontroller/plugins/mpris/mprisplugin.cpp
+        )
 
-    list(APPEND HEADERS
-        tunecontroller/mpristunecontroller.h
-    )
+        list(APPEND HEADERS
+            tunecontroller/mpristunecontroller.h
+        )
+    endif()
 endif()
+
+include(libpsi_tools.cmake)
 
 add_library(tools STATIC ${SOURCES} ${HEADERS})
 target_link_libraries(tools ${QT_LIBRARIES} ${iris_LIB} zip ${EXTRA_LDFLAGS})

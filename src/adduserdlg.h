@@ -1,6 +1,6 @@
 /*
  * adduserdlg.h - dialog for adding contacts
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,19 +22,19 @@
 
 #include "ui_adduser.h"
 
-class QString;
-class QStringList;
 class PsiAccount;
+class QString;
+
 namespace XMPP {
-    class Jid;
+class Jid;
 }
 
-class AddUserDlg : public QDialog, public Ui::AddUser
-{
+class AddUserDlg : public QDialog, public Ui::AddUser {
     Q_OBJECT
 public:
     AddUserDlg(const QStringList &services, const QStringList &names, const QStringList &groups, PsiAccount *);
-    AddUserDlg(const XMPP::Jid &jid, const QString &nick, const QString &group, const QStringList &groups, PsiAccount *);
+    AddUserDlg(const XMPP::Jid &jid, const QString &nick, const QString &group, const QStringList &groups,
+               PsiAccount *);
     ~AddUserDlg();
 
 signals:
@@ -51,7 +51,6 @@ private slots:
 
     void getVCardActivated();
     void resolveNickActivated();
-    void resolveNickFinished();
 
     void jid_Changed();
 
@@ -61,7 +60,7 @@ private:
     Private *d;
 
     XMPP::Jid jid() const;
-    void errorGateway(const QString &str, const QString &err);
+    void      errorGateway(const QString &str, const QString &err);
 };
 
-#endif
+#endif // ADDUSERDLG_H

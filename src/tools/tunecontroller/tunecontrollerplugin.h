@@ -20,16 +20,15 @@
 #ifndef TUNECONTROLLERPLUGIN_H
 #define TUNECONTROLLERPLUGIN_H
 
-#include <QString>
 #include <QPluginLoader>
+#include <QString>
 
 class TuneController;
 
 /**
  * \brief Base class for TuneController plugins.
  */
-class TuneControllerPlugin
-{
+class TuneControllerPlugin {
 public:
     virtual ~TuneControllerPlugin() { }
 
@@ -41,10 +40,9 @@ public:
     /**
      * \brief Creates a new controller.
      */
-    virtual TuneController* createController() = 0;
+    virtual TuneController *createController() = 0;
 };
 
 Q_DECLARE_INTERFACE(TuneControllerPlugin, "be.el-tramo.TuneController/0.0-20060129");
 
-
-#endif
+#endif // TUNECONTROLLERPLUGIN_H

@@ -1,74 +1,76 @@
 #include "optionsdlg.h"
-#include "psicon.h"
+
 #include "../avcall/avcall.h"
 #include "iconset.h"
-
-// tabs
-#include "opt_toolbars.h"
-#include "opt_application.h"
-#include "opt_roster.h"
-#include "opt_appearance.h"
-#include "opt_messages.h"
-#include "opt_events.h"
-#include "opt_popups.h"
-#include "opt_status.h"
-#include "opt_iconset.h"
-//#include "opt_groupchat.h"
-#include "opt_sound.h"
-#include "opt_avcall.h"
 #include "opt_advanced.h"
-#include "opt_shortcuts.h"
-#include "opt_tree.h"
-
+#include "opt_appearance.h"
+#include "opt_application.h"
+#include "opt_events.h"
+#include "opt_messages.h"
 #ifdef PSI_PLUGINS
 #include "opt_plugins.h"
+#include "optionaccessinghost.h"
 #endif
+#include "opt_accounts.h"
+#include "opt_pluginwrapper.h"
+#include "opt_popups.h"
+#include "opt_roster.h"
+#include "opt_shortcuts.h"
+#include "opt_sound.h"
+#include "opt_status.h"
+#include "opt_toolbars.h"
+#include "opt_tree.h"
+#include "pluginmanager.h"
+#include "psicon.h"
+#include "psioptions.h"
 
-OptionsDlg::OptionsDlg(PsiCon *psi, QWidget *parent) :
-    OptionsDlgBase(psi, parent)
+OptionsDlg::OptionsDlg(PsiCon *psi, QWidget *parent) : OptionsDlgBase(psi, parent)
 {
     setWindowTitle(CAP(windowTitle()));
     setWindowIcon(IconsetFactory::icon("psi/options").icon());
 
-    QList<OptionsTab*> tabs;
+    QList<OptionsTab *> tabs;
 
     // tabs - base
     /*tabs.append( new OptionsTabGeneral(this) );
-    //tabs.append( new OptionsTabBase(this, "general",  "", "psi/logo_16",    tr("General"),        tr("General preferences list")) );
-    tabs.append( new OptionsTabEvents(this) );
-    //tabs.append( new OptionsTabBase(this, "events",   "", "psi/system",    tr("Events"),        tr("Change the events behaviour")) );
-    tabs.append( new OptionsTabPresence(this) );
-    //tabs.append( new OptionsTabBase(this, "presence", "", "status/online",    tr("Presence"),        tr("Presence configuration")) );
-    tabs.append( new OptionsTabLookFeel(this) );
-    tabs.append( new OptionsTabIconset(this) );
-    //tabs.append( new OptionsTabBase(this, "lookfeel", "", "psi/smile",    tr("Look and Feel"),    tr("Change the Psi's Look and Feel")) );
-    tabs.append( new OptionsTabSound(this) );
-    //tabs.append( new OptionsTabBase(this, "sound",    "", "psi/playSounds",    tr("Sound"),        tr("Configure how Psi sounds")) );
+    //tabs.append( new OptionsTabBase(this, "general",  "", "psi/logo_16",    tr("General"),        tr("General
+    preferences list")) ); tabs.append( new OptionsTabEvents(this) );
+    //tabs.append( new OptionsTabBase(this, "events",   "", "psi/system",    tr("Events"),        tr("Change the events
+    behaviour")) ); tabs.append( new OptionsTabPresence(this) );
+    //tabs.append( new OptionsTabBase(this, "presence", "", "status/online",    tr("Presence"),        tr("Presence
+    configuration")) ); tabs.append( new OptionsTabLookFeel(this) ); tabs.append( new OptionsTabIconset(this) );
+    //tabs.append( new OptionsTabBase(this, "lookfeel", "", "psi/smile",    tr("Look and Feel"),    tr("Change the Psi's
+    Look and Feel")) ); tabs.append( new OptionsTabSound(this) );
+    //tabs.append( new OptionsTabBase(this, "sound",    "", "psi/playSounds",    tr("Sound"),        tr("Configure how
+    Psi sounds")) );
     */
 
-    OptionsTabApplication* applicationTab = new OptionsTabApplication(this);
+    OptionsTabApplication *applicationTab = new OptionsTabApplication(this);
     applicationTab->setHaveAutoUpdater(psi->haveAutoUpdater());
-    tabs.append( applicationTab );
-    tabs.append( new OptionsTabRoster(this) );
-    tabs.append( new OptionsTabMessages(this) );
-    tabs.append( new OptionsTabEvents(this) );
-    tabs.append( new OptionsTabPopups(this) );
-    tabs.append( new OptionsTabStatus(this) );
-    tabs.append( new OptionsTabAppearance(this) );
-    //tabs.append( new OptionsTabIconsetSystem(this) );
-    //tabs.append( new OptionsTabIconsetRoster(this) );
-    //tabs.append( new OptionsTabIconsetEmoticons(this) );
-    //tabs.append( new OptionsTabGroupchat(this) );
-    tabs.append( new OptionsTabSound(this) );
-    if(AvCallManager::isSupported())
-        tabs.append( new OptionsTabAvCall(this) );
-    tabs.append( new OptionsTabToolbars(this) );
+    tabs.append(applicationTab);
+    tabs.append(new OptionsTabAccounts(this));
+    tabs.append(new OptionsTabRoster(this));
+    tabs.append(new OptionsTabMessages(this));
+    tabs.append(new OptionsTabEvents(this));
+    tabs.append(new OptionsTabPopups(this));
+    tabs.append(new OptionsTabStatus(this));
+    tabs.append(new OptionsTabAppearance(this));
+    // tabs.append( new OptionsTabIconsetSystem(this) );
+    // tabs.append( new OptionsTabIconsetRoster(this) );
+    // tabs.append( new OptionsTabIconsetEmoticons(this) );
+    // tabs.append( new OptionsTabGroupchat(this) );
+    tabs.append(new OptionsTabSound(this));
+    tabs.append(new OptionsTabToolbars(this));
 #ifdef PSI_PLUGINS
-    tabs.append( new OptionsTabPlugins(this) );
+    tabs.append(new OptionsTabPlugins(this));
+    auto pluginOptPages = PluginManager::instance()->settingsPages();
+    for (auto &p : pluginOptPages) {
+        tabs.append(new OptionsTabPluginWrapper(p, this));
+    }
 #endif
-    tabs.append( new OptionsTabShortcuts(this) );
-    tabs.append( new OptionsTabAdvanced(this) );
-    tabs.append( new OptionsTabTree(this) );
+    tabs.append(new OptionsTabShortcuts(this));
+    tabs.append(new OptionsTabAdvanced(this));
+    tabs.append(new OptionsTabTree(this));
 
     // tabs - general
     /*tabs.append( new OptionsTabGeneralRoster(this) );
@@ -100,9 +102,30 @@ OptionsDlg::OptionsDlg(PsiCon *psi, QWidget *parent) :
     tabs.append( new OptionsTabSoundEvents(this) );*/
 
     setTabs(tabs);
-
     psi->dialogRegister(this);
-    resize(640, 480);
+    openTab("application");
 
-    openTab( "application" );
+    const QSize dialogSize
+        = PsiOptions::instance()->getOption("options.ui.save.psi-options-dialog-size", QSize(800, 600)).toSize();
+    resize(dialogSize);
+
+    connect(this, &OptionsDlg::finished, this, &OptionsDlg::saveDialogSize);
 }
+
+#ifdef PSI_PLUGINS
+void OptionsDlg::addPluginWrapperTab(OAH_PluginOptionsTab *tab)
+{
+    auto wtab = new OptionsTabPluginWrapper(tab, this);
+    insertTab(wtab, tab->nextToId());
+}
+
+void OptionsDlg::saveDialogSize()
+{
+    QDialog *dlg = dynamic_cast<QDialog *>(sender());
+    if (!dlg)
+        return;
+
+    PsiOptions::instance()->setOption("options.ui.save.psi-options-dialog-size", dlg->size());
+    dlg->deleteLater();
+}
+#endif

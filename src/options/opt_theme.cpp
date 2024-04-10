@@ -19,68 +19,59 @@
 
 #include "opt_theme.h"
 
-#include "ui_opt_theme.h"
-#include "psioptions.h"
-#include "psithememodel.h"
-#include "psithememanager.h"
+#include "psicon.h"
 #include "psiiconset.h"
+#include "psithememanager.h"
+#include "psithememodel.h"
+#include "ui_opt_theme.h"
 
-#include <QToolButton>
 #include <QDialog>
 #include <QSortFilterProxyModel>
 #include <QTimer>
+#include <QToolButton>
 
 #define SCREEN_PREFIX "scb_"
 
-class OptAppearanceThemeUI : public QWidget, public Ui::OptAppearanceTheme
-{
+class OptAppearanceThemeUI : public QWidget, public Ui::OptAppearanceTheme {
 public:
     OptAppearanceThemeUI() : QWidget() { setupUi(this); }
 };
 
-
-
-OptionsTabAppearanceThemes::OptionsTabAppearanceThemes(QObject *parent)
-    : MetaOptionsTab(parent, "themes", "", tr("Themes"), tr("Configure themes"))
+OptionsTabAppearanceThemes::OptionsTabAppearanceThemes(QObject *parent) :
+    MetaOptionsTab(parent, "themes", "", tr("Themes"), tr("Configure themes"))
 {
-    foreach (PsiThemeProvider *provider,
-             PsiThemeManager::instance()->registeredProviders()) {
-        addTab( new OptionsTabAppearanceTheme(this, provider) );
-    }
 }
 
-
-
-
+void OptionsTabAppearanceThemes::setData(PsiCon *psi, QWidget *w)
+{
+    const auto &providers = psi->themeManager()->registeredProviders();
+    for (PsiThemeProvider *provider : providers) {
+        addTab(new OptionsTabAppearanceTheme(this, provider));
+    }
+    MetaOptionsTab::setData(psi, w);
+}
 
 //----------------------------------------------------------------------------
 // OptionsTabAppearanceTheme
 //----------------------------------------------------------------------------
 
-OptionsTabAppearanceTheme::OptionsTabAppearanceTheme(QObject *parent,
-                             PsiThemeProvider *provider_)
-    : OptionsTab(parent, provider_->type(), "",
-                 provider_->optionsName(),
-                 provider_->optionsDescription())
-    , w(nullptr)
-    , provider(provider_)
-{
-
-}
-
-OptionsTabAppearanceTheme::~OptionsTabAppearanceTheme()
+OptionsTabAppearanceTheme::OptionsTabAppearanceTheme(QObject *parent, PsiThemeProvider *provider_) :
+    OptionsTab(parent, provider_->type(), "", provider_->optionsName(), provider_->optionsDescription()), w(nullptr),
+    provider(provider_)
 {
 }
+
+OptionsTabAppearanceTheme::~OptionsTabAppearanceTheme() { }
 
 QWidget *OptionsTabAppearanceTheme::widget()
 {
-    if ( w )
+    if (w)
         return nullptr;
 
-    w = new OptAppearanceThemeUI();
+    w                       = new OptAppearanceThemeUI();
     OptAppearanceThemeUI *d = static_cast<OptAppearanceThemeUI *>(w);
 
-    unsortedModel = new PsiThemeModel(this);
+    unsortedModel = new PsiThemeModel(provider, this);
 
     themesModel = new QSortFilterProxyModel(this);
     themesModel->setSourceModel(unsortedModel);
@@ -89,22 +80,14 @@ QWidget *OptionsTabAppearanceTheme::widget()
     d->themeView->setModel(themesModel);
     d->themeView->sortByColumn(0, Qt::AscendingOrder);
 
-    connect(d->themeView->selectionModel(),
-        SIGNAL(currentChanged(QModelIndex, QModelIndex)),
-        SLOT(themeSelected(QModelIndex, QModelIndex)));
+    connect(d->themeView->selectionModel(), SIGNAL(currentChanged(QModelIndex, QModelIndex)),
+            SLOT(themeSelected(QModelIndex, QModelIndex)));
 
-    connect(themesModel,
-        SIGNAL(rowsInserted(QModelIndex,int,int)),
-        SLOT(modelRowsInserted(QModelIndex,int,int)));
+    connect(themesModel, SIGNAL(rowsInserted(QModelIndex, int, int)), SLOT(modelRowsInserted(QModelIndex, int, int)));
 
-    QTimer::singleShot(0, this, SLOT(startLoading()));
+    QTimer::singleShot(0, unsortedModel, &PsiThemeModel::load);
 
     return w;
-}
-
-void OptionsTabAppearanceTheme::startLoading()
-{
-    unsortedModel->setType(provider->type());
 }
 
 void OptionsTabAppearanceTheme::themeSelected(const QModelIndex &current, const QModelIndex &previous)
@@ -120,21 +103,21 @@ void OptionsTabAppearanceTheme::modelRowsInserted(const QModelIndex &parent, int
 {
     if (!parent.isValid() || !w) {
         OptAppearanceThemeUI *d = static_cast<OptAppearanceThemeUI *>(w);
-        //const QSize buttonSize = QSize(21,21);
+        // const QSize buttonSize = QSize(21,21);
         for (int i = first; i <= last; i++) {
             const QModelIndex index = themesModel->index(i, 0);
-            const QString id = themesModel->data(index, PsiThemeModel::IdRole).toString();
             if (themesModel->data(index, PsiThemeModel::IsCurrent).toBool()) {
                 d->themeView->setCurrentIndex(index);
             }
 #if 0
+            const QString id    = themesModel->data(index, PsiThemeModel::IdRole).toString();
             const QString themeName = themesModel->data(index, PsiThemeModel::TitleRole).toString();
             bool isPsi = id.startsWith("psi");
-            const QPixmap client = isPsi ? IconsetFactory::iconPixmap("clients/psi")
-                             : IconsetFactory::iconPixmap("clients/adium");
+            const QPixmap client = isPsi ? IconsetFactory::iconPtr("clients/psi")->icon()
+                             : IconsetFactory::iconPtr("clients/adium")->icon();
             const QString clientName = isPsi ? tr("Psi Theme") : tr("Adium Theme");
             QToolButton *screenshotButton = new QToolButton(d->themeView);
-            screenshotButton->setIcon(QIcon(IconsetFactory::iconPixmap("psi/eye")));
+            screenshotButton->setIcon(QIcon(IconsetFactory::iconPtr("psi/eye")->icon())));
             screenshotButton->resize(buttonSize);
             screenshotButton->setObjectName(SCREEN_PREFIX + id);
             screenshotButton->setToolTip(tr("Show theme screenshot"));
@@ -164,32 +147,31 @@ void OptionsTabAppearanceTheme::modelRowsInserted(const QModelIndex &parent, int
 
 void OptionsTabAppearanceTheme::showThemeScreenshot()
 {
-    if ( !w || !sender()->inherits("QToolButton") )
+    if (!w || !sender()->inherits("QToolButton"))
         return;
-    OptAppearanceThemeUI *d = static_cast<OptAppearanceThemeUI *>(w);
-    QToolButton *btn = static_cast<QToolButton*>(sender());
-    if ( btn ) {
-        if ( screenshotDialog )
-            delete(screenshotDialog);
+    OptAppearanceThemeUI *d   = static_cast<OptAppearanceThemeUI *>(w);
+    QToolButton          *btn = static_cast<QToolButton *>(sender());
+    if (btn) {
+        if (screenshotDialog)
+            delete (screenshotDialog);
 
         const QSize minSize(300, 100);
         screenshotDialog = new QDialog(d);
         screenshotDialog->setMinimumSize(minSize);
 
-        const int row = unsortedModel->themeRow(getThemeId(btn->objectName()));
+        const int         row   = unsortedModel->themeRow(getThemeId(btn->objectName()));
         const QModelIndex index = unsortedModel->index(row, 0);
-        const QString name_ = unsortedModel->data(index, PsiThemeModel::TitleRole).toString();
-        const QPixmap scr = unsortedModel->data(index, PsiThemeModel::HasPreviewRole).value<QPixmap>();
+        const QString     name_ = unsortedModel->data(index, PsiThemeModel::TitleRole).toString();
+        const QPixmap     scr   = unsortedModel->data(index, PsiThemeModel::HasPreviewRole).value<QPixmap>();
 
         screenshotDialog->setWindowTitle(tr("%1 Screenshot").arg(name_));
-        screenshotDialog->setWindowIcon(QIcon(IconsetFactory::iconPixmap("psi/logo_128")));
+        screenshotDialog->setWindowIcon(QIcon(IconsetFactory::iconPtr("psi/logo_128")->icon()));
 
-        QBoxLayout *box = new QBoxLayout(QBoxLayout::LeftToRight, screenshotDialog);
-        QLabel *image = new QLabel(screenshotDialog);
+        QBoxLayout *box   = new QBoxLayout(QBoxLayout::LeftToRight, screenshotDialog);
+        QLabel     *image = new QLabel(screenshotDialog);
         if (!scr.isNull()) {
             image->setPixmap(scr);
-        }
-        else {
+        } else {
             image->setText(tr("No Image"));
         }
         box->addWidget(image);
@@ -202,12 +184,12 @@ void OptionsTabAppearanceTheme::showThemeScreenshot()
 QString OptionsTabAppearanceTheme::getThemeId(const QString &objName) const
 {
     const int index = objName.indexOf("_", 0);
-    return (index >0 ? objName.right(objName.length() - index - 1) : QString());
+    return (index > 0 ? objName.right(objName.length() - index - 1) : QString());
 }
 
 void OptionsTabAppearanceTheme::applyOptions()
 {
-    if ( !w )
+    if (!w)
         return;
 
     OptAppearanceThemeUI *d = static_cast<OptAppearanceThemeUI *>(w);

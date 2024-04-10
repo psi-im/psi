@@ -25,14 +25,13 @@
 class QMenu;
 
 // TODO: This class should be further refactored into more modular system.
-// It should allow registering/unregistering of QRegExps corresponding to
+// It should allow registering/unregistering of QRegularExpressions corresponding to
 // different actions. Also class's base API should be made public.
 //
 // Examples of future use:
-// URLObject::getInstance()::registerAction(QRegExp("^http:\/\/"), act_open_browser);
+// URLObject::getInstance()::registerAction(QRegularExpression("^http:\/\/"), act_open_browser);
 
-class URLObject : public QObject
-{
+class URLObject : public QObject {
     Q_OBJECT
 
 protected:
@@ -40,7 +39,7 @@ protected:
 
 public:
     static URLObject *getInstance();
-    QMenu *createPopupMenu(const QString &lnk);
+    QMenu            *createPopupMenu(const QString &lnk);
 
     void popupAction(QString lnk);
 
@@ -49,8 +48,9 @@ signals:
 
 public:
     class Private;
+
 private:
     Private *d;
 };
 
-#endif
+#endif // URLOBJECT_H

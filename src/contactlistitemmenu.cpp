@@ -19,17 +19,14 @@
 
 #include "contactlistitemmenu.h"
 
-#include "shortcutmanager.h"
 #include "psioptions.h"
+#include "shortcutmanager.h"
 
-#include <QWidgetAction>
 #include <QLabel>
+#include <QWidgetAction>
 
-ContactListItemMenu::ContactListItemMenu(ContactListItem* item, ContactListModel* model)
-    : QMenu(nullptr)
-    , item_(item)
-    , model_(model)
-    , _lblTitle(nullptr)
+ContactListItemMenu::ContactListItemMenu(ContactListItem *item, ContactListModel *model) :
+    QMenu(nullptr), item_(item), model_(model), _lblTitle(nullptr)
 {
     const QString css = PsiOptions::instance()->getOption("options.ui.contactlist.css").toString();
     if (!css.isEmpty()) {
@@ -37,18 +34,18 @@ ContactListItemMenu::ContactListItemMenu(ContactListItem* item, ContactListModel
     }
 
     if (PsiOptions::instance()->getOption("options.ui.contactlist.menu-titles", false).toBool()) {
-        _lblTitle = new QLabel;
-        QPalette palette = _lblTitle->palette();
-        QColor textColor = palette.color(QPalette::BrightText);
-        QColor bcgColor = palette.color(QPalette::Dark);
-        QFont font = _lblTitle->font();
+        _lblTitle          = new QLabel;
+        QPalette palette   = _lblTitle->palette();
+        QColor   textColor = palette.color(QPalette::BrightText);
+        QColor   bcgColor  = palette.color(QPalette::Dark);
+        QFont    font      = _lblTitle->font();
         font.setBold(true);
         palette.setColor(QPalette::WindowText, textColor);
         palette.setColor(QPalette::Window, bcgColor);
         _lblTitle->setPalette(palette);
         _lblTitle->setAutoFillBackground(true);
         _lblTitle->setAlignment(Qt::AlignCenter);
-        _lblTitle->setMargin(6);
+        _lblTitle->setContentsMargins(6, 6, 6, 6);
         _lblTitle->setFont(font);
 
         QWidgetAction *waContextMenuTitle = new QWidgetAction(this);
@@ -57,14 +54,9 @@ ContactListItemMenu::ContactListItemMenu(ContactListItem* item, ContactListModel
     }
 }
 
-ContactListItemMenu::~ContactListItemMenu()
-{
-}
+ContactListItemMenu::~ContactListItemMenu() { }
 
-ContactListItem* ContactListItemMenu::item() const
-{
-    return item_;
-}
+ContactListItem *ContactListItemMenu::item() const { return item_; }
 
 void ContactListItemMenu::setLabelTitle(const QString &title)
 {
@@ -78,8 +70,9 @@ void ContactListItemMenu::setLabelTitle(const QString &title)
  */
 void ContactListItemMenu::removeActions(QStringList actionNames)
 {
-    for (const QString &actionName: actionNames) {
-        for (QAction *action: actions()) {
+    for (const QString &actionName : actionNames) {
+        const auto &acts = actions();
+        for (QAction *action : acts) {
             if (action->objectName() == actionName) {
                 delete action;
                 break;
@@ -88,26 +81,24 @@ void ContactListItemMenu::removeActions(QStringList actionNames)
     }
 }
 
-QList<QAction*> ContactListItemMenu::availableActions() const
+QList<QAction *> ContactListItemMenu::availableActions() const
 {
-    QList<QAction*> result;
-    for (QAction* action: actions())
+    QList<QAction *> result;
+    const auto      &acts = actions();
+    for (QAction *action : acts)
         if (!action->isSeparator())
             result << action;
     return result;
 }
 
-QList<QKeySequence> ContactListItemMenu::shortcuts(const QString& name) const
+QList<QKeySequence> ContactListItemMenu::shortcuts(const QString &name) const
 {
     return ShortcutManager::instance()->shortcuts(name);
 }
 
-QKeySequence ContactListItemMenu::shortcut(const QString& name) const
+QKeySequence ContactListItemMenu::shortcut(const QString &name) const
 {
     return ShortcutManager::instance()->shortcut(name);
 }
 
-ContactListModel* ContactListItemMenu::model() const
-{
-    return model_;
-}
+ContactListModel *ContactListItemMenu::model() const { return model_; }

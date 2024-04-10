@@ -1,6 +1,6 @@
 /*
  * multifiletransferitem.cpp - file transfers item
- * Copyright (C) 2019 Sergey Ilinykh
+ * Copyright (C) 2019  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,136 +19,86 @@
 
 #include "multifiletransferitem.h"
 
-#include <QElapsedTimer>
-#include <QDateTime>
-#include <QIcon>
 #include <QContiguousCache>
+#include <QDateTime>
+#include <QElapsedTimer>
+#include <QIcon>
 
-struct MultiFileTransferItem::Private
-{
-    QString       displayName;       // usually base filename
-    QString       mediaType;
-    QString       description;
-    QString       errorString;       // last error
-    QString       fileName;
-    quint64       fullSize = 0;
-    quint64       currentSize = 0;   // currently transfered
-    quint32       timeRemaining = 0; // secs
+struct MultiFileTransferItem::Private {
+    QString                           displayName; // usually base filename
+    QString                           mediaType;
+    QString                           description;
+    QString                           info;
+    QString                           errorString; // last error
+    QString                           fileName;
+    quint64                           fullSize      = 0;
+    quint64                           currentSize   = 0; // currently transferred
+    quint64                           lastSize      = 0;
+    quint64                           offset        = 0; // initial offset if only part of file is transferred
+    quint32                           timeRemaining = 0; // secs
+    quint32                           speed;             // bytes per second
     MultiFileTransferModel::Direction direction;
-    MultiFileTransferModel::State    state = MultiFileTransferModel::State::Pending;
-    QIcon         thumbnail;
-    QContiguousCache<quint32>         lastSpeeds = QContiguousCache<quint32>(3);      // bytes per second
-    QElapsedTimer lastTimer;         // last speed value update
+    MultiFileTransferModel::State     state = MultiFileTransferModel::State::Pending;
+    QIcon                             thumbnail;
+    QContiguousCache<quint32>         lastSpeeds = QContiguousCache<quint32>(5); // bytes per second
+    QElapsedTimer                     lastTimer;                                 // last speed value update
 };
 
-MultiFileTransferItem::MultiFileTransferItem(MultiFileTransferModel::Direction direction,
-                                             const QString &displayName, quint64 fullSize) :
-    d(new Private)
+MultiFileTransferItem::MultiFileTransferItem(MultiFileTransferModel::Direction direction, const QString &displayName,
+                                             quint64 fullSize, QObject *parent) : QObject(parent), d(new Private)
 {
     d->direction   = direction;
     d->displayName = displayName;
     d->fullSize    = fullSize;
 }
 
-MultiFileTransferItem::~MultiFileTransferItem()
-{
-    emit aboutToBeDeleted();
-}
+MultiFileTransferItem::~MultiFileTransferItem() { emit aboutToBeDeleted(); }
 
-const QString &MultiFileTransferItem::displayName() const
-{
-    return d->displayName;
-}
+const QString &MultiFileTransferItem::displayName() const { return d->displayName; }
 
-quint64 MultiFileTransferItem::fullSize() const
-{
-    return d->fullSize;
-}
+quint64 MultiFileTransferItem::fullSize() const { return d->fullSize; }
 
-quint64 MultiFileTransferItem::currentSize() const
-{
-    return d->currentSize;
-}
+quint64 MultiFileTransferItem::currentSize() const { return d->currentSize; }
 
-QIcon MultiFileTransferItem::icon() const
-{
-    return d->thumbnail;
-}
+quint64 MultiFileTransferItem::offset() const { return d->offset; }
 
-QString MultiFileTransferItem::mediaType() const
-{
-    return d->mediaType;
-}
+QIcon MultiFileTransferItem::icon() const { return d->thumbnail; }
 
-QString MultiFileTransferItem::description() const
-{
-    return d->description;
-}
+QString MultiFileTransferItem::mediaType() const { return d->mediaType; }
 
-quint32 MultiFileTransferItem::speed() const
-{
-    if (d->lastSpeeds.size()) {
-        quint64 sum = 0;
-        for (int i = d->lastSpeeds.firstIndex(); i < d->lastSpeeds.lastIndex(); i++) {
-            sum += d->lastSpeeds.at(i);
-        }
-        return quint32(sum / d->lastSpeeds.size());
-    }
-    return 0;
-}
+QString MultiFileTransferItem::description() const { return d->description; }
 
-MultiFileTransferModel::Direction MultiFileTransferItem::direction() const
-{
-    return d->direction;
-}
+quint32 MultiFileTransferItem::speed() const { return d->speed; }
 
-MultiFileTransferModel::State MultiFileTransferItem::state() const
-{
-    return d->state;
-}
+MultiFileTransferModel::Direction MultiFileTransferItem::direction() const { return d->direction; }
 
-quint32 MultiFileTransferItem::timeRemaining() const
-{
-    return d->timeRemaining;
-}
+MultiFileTransferModel::State MultiFileTransferItem::state() const { return d->state; }
 
-QString MultiFileTransferItem::errorString() const
-{
-    return d->errorString;
-}
+quint32 MultiFileTransferItem::timeRemaining() const { return d->timeRemaining; }
+
+QString MultiFileTransferItem::errorString() const { return d->errorString; }
 
 QString MultiFileTransferItem::toolTipText() const
 {
-    return QString("<b>%1</b><br><br>%2<br><br>").arg(d->displayName, d->description);
+    QString text = QString("<b>%1</b>").arg(d->displayName);
+    if (!d->description.isEmpty()) {
+        text += (QLatin1String("<br><br>") + d->description);
+    }
+    text += (QLatin1String("<br><br>")
+             + tr("Transferred: %1/%2 bytes").arg(QString::number(d->currentSize), QString::number(d->fullSize)));
+    if (!d->info.isEmpty()) {
+        text += (QLatin1String("<br><br>") + d->info);
+    }
+    return text;
 }
 
-QString MultiFileTransferItem::filePath() const
-{
-    return d->fileName;
-}
+QString MultiFileTransferItem::filePath() const { return d->fileName; }
+
+QIcon MultiFileTransferItem::thumbnail() const { return d->thumbnail; }
 
 void MultiFileTransferItem::setCurrentSize(quint64 newCurrentSize)
 {
-    auto diff = newCurrentSize - d->currentSize;
-    auto elapsed = d->lastTimer.elapsed();
-    quint32 speed;
-    if (diff && !elapsed) {
-        speed = quint32(d->fullSize);
-    } else if (diff) {
-        speed = quint32(double(diff) / double(elapsed) / 1000.0);
-    } else {
-        speed = 0;
-    }
-
     d->currentSize = newCurrentSize;
-    d->lastSpeeds.append(speed);
-    auto averageSpeed = this->speed();
-    if (averageSpeed) {
-        d->timeRemaining = (d->fullSize - d->currentSize) / averageSpeed;
-    } else {
-        d->timeRemaining = 0; // just undefined
-    }
-    d->lastTimer.start();
     emit updated();
 }
 
@@ -171,10 +121,12 @@ void MultiFileTransferItem::setDescription(const QString &description)
     emit updated();
 }
 
+void MultiFileTransferItem::setInfo(const QString &html) { d->info = html; }
+
 void MultiFileTransferItem::setFailure(const QString &error)
 {
     d->errorString = error;
-    d->state = MultiFileTransferModel::State::Failed;
+    d->state       = MultiFileTransferModel::State::Failed;
     emit updated();
 }
 
@@ -186,13 +138,38 @@ void MultiFileTransferItem::setSuccess()
 
 void MultiFileTransferItem::setState(MultiFileTransferModel::State state, const QString &stateComment)
 {
+    d->state       = state;
     d->errorString = stateComment;
     if (state == MultiFileTransferModel::Active) {
         d->lastTimer.start();
     }
 }
 
-void MultiFileTransferItem::setFileName(const QString &fileName)
+void MultiFileTransferItem::setFileName(const QString &fileName) { d->fileName = fileName; }
+
+void MultiFileTransferItem::setOffset(quint64 offset)
 {
-    d->fileName = fileName;
+    d->offset      = offset;
+    d->lastSize    = offset;
+    d->currentSize = offset;
+}
+
+void MultiFileTransferItem::updateStats()
+{
+    auto elapsed = d->lastTimer.elapsed();
+    if (!elapsed) {
+        return;
+    }
+    double speedf = double(d->currentSize - d->lastSize) * 1000.0 / double(elapsed); // bytes per second
+    d->lastSpeeds.append(uint(speedf));
+
+    quint64 sum = 0;
+    for (int i = d->lastSpeeds.firstIndex(); i < d->lastSpeeds.lastIndex(); i++) {
+        sum += d->lastSpeeds.at(i);
+    }
+    d->speed = quint32(sum / qulonglong(d->lastSpeeds.size()));
+
+    d->timeRemaining = quint32((d->fullSize - d->currentSize) / speedf);
+    d->lastSize      = d->currentSize;
+    d->lastTimer.start();
 }

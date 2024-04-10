@@ -17,30 +17,29 @@
  *
  */
 
-#include "xmpp_xmlcommon.h"
-#include "xmpp_client.h"
-#include "xmpp_liveroster.h"
 #include "rosteritemexchangetask.h"
 
-RosterItemExchangeTask::RosterItemExchangeTask(Task* parent) : Task(parent), ignoreNonRoster_(false)
-{
-}
+#include "iris/xmpp_client.h"
+#include "iris/xmpp_liveroster.h"
+#include "iris/xmpp_xmlcommon.h"
 
-bool RosterItemExchangeTask::take(const QDomElement& e)
+RosterItemExchangeTask::RosterItemExchangeTask(Task *parent) : Task(parent), ignoreNonRoster_(false) { }
+
+bool RosterItemExchangeTask::take(const QDomElement &e)
 {
-    for(QDomNode n = e.firstChild(); !n.isNull(); n = n.nextSibling()) {
+    for (QDomNode n = e.firstChild(); !n.isNull(); n = n.nextSibling()) {
         QDomElement i = n.toElement();
-        if(i.isNull())
+        if (i.isNull())
             continue;
-        if(i.tagName() == "x" && i.attribute("xmlns") == "http://jabber.org/protocol/rosterx") {
+        if (i.tagName() == "x" && i.namespaceURI() == "http://jabber.org/protocol/rosterx") {
             Jid from(e.attribute("from"));
-            if (client()->roster().find(from,false) == client()->roster().end() && ignoreNonRoster_) {
+            if (client()->roster().find(from, false) == client()->roster().end() && ignoreNonRoster_) {
                 // Send a not-authorized error
-                QDomElement iq = createIQ(doc(), "error", e.attribute("from"), e.attribute("id"));
+                QDomElement iq    = createIQ(doc(), "error", e.attribute("from"), e.attribute("id"));
                 QDomElement error = doc()->createElement("error");
-                error.setAttribute("type","cancel");
-                QDomElement notauthorized = doc()->createElement("not-authorized");
-                notauthorized.setAttribute("xmlns","urn:ietf:params:xml:ns:xmpp-stanzas");
+                error.setAttribute("type", "cancel");
+                QDomElement notauthorized
+                    = doc()->createElementNS("urn:ietf:params:xml:ns:xmpp-stanzas", "not-authorized");
                 error.appendChild(notauthorized);
                 iq.appendChild(error);
                 send(iq);
@@ -50,9 +49,9 @@ bool RosterItemExchangeTask::take(const QDomElement& e)
 
             // Parse all items
             RosterExchangeItems items;
-            for(QDomNode m = i.firstChild(); !m.isNull(); m = m.nextSibling()) {
+            for (QDomNode m = i.firstChild(); !m.isNull(); m = m.nextSibling()) {
                 QDomElement j = m.toElement();
-                if(j.isNull())
+                if (j.isNull())
                     continue;
                 RosterExchangeItem it(j);
                 if (!it.isNull())
@@ -63,7 +62,7 @@ bool RosterItemExchangeTask::take(const QDomElement& e)
             QDomElement iq = createIQ(doc(), "result", e.attribute("from"), e.attribute("id"));
             send(iq);
 
-            emit rosterItemExchange(from,items);
+            emit rosterItemExchange(from, items);
             setSuccess();
             return true;
         }
@@ -71,8 +70,4 @@ bool RosterItemExchangeTask::take(const QDomElement& e)
     return false;
 }
 
-
-void RosterItemExchangeTask::setIgnoreNonRoster(bool b)
-{
-    ignoreNonRoster_ = b;
-}
+void RosterItemExchangeTask::setIgnoreNonRoster(bool b) { ignoreNonRoster_ = b; }

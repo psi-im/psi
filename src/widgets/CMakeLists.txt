@@ -6,8 +6,11 @@ unset(EXTRA_LDFLAGS)
 
 set(SOURCES
     busywidget.cpp
+    emojiregistry.cpp
+    eventnotifier.cpp
     fancylabel.cpp
     fancypopup.cpp
+    grepshortcutkeydialog.cpp
     iconaction.cpp
     iconselect.cpp
     iconwidget.cpp
@@ -29,9 +32,12 @@ set(SOURCES
 set(HEADERS
     actionlineedit.h
     busywidget.h
+    emojiregistry.h
+    eventnotifier.h
     fancylabel.h
     fancypopup.h
     fancypopuplist.h
+    grepshortcutkeydialog.h
     iconaction.h
     iconbutton.h
     iconlabel.h
@@ -56,11 +62,25 @@ set(HEADERS
     stretchwidget.h
 )
 
+if(WIN32 AND (${QT_DEFAULT_MAJOR_VERSION} LESS_EQUAL 5))
+    find_package(Qt${QT_DEFAULT_MAJOR_VERSION} COMPONENTS WinExtras REQUIRED)
+    list(APPEND QT_LIBRARIES
+        Qt${QT_DEFAULT_MAJOR_VERSION}::WinExtras
+    )
+    list(APPEND SOURCES
+        thumbnailtoolbar.cpp
+    )
+    list(APPEND HEADERS
+        thumbnailtoolbar.h
+    )
+endif()
+
 set(FORMS
     fancypopup.ui
+    grepshortcutkeydialog.ui
 )
 
-if(IS_PSIPLUS AND (EXISTS "${CMAKE_CURRENT_LIST_DIR}/psiwindowheader.cpp"))
+if(PSI_PLUS AND (EXISTS "${CMAKE_CURRENT_LIST_DIR}/psiwindowheader.cpp"))
     list(APPEND SOURCES
         psiwindowheader.cpp
     )
@@ -72,7 +92,7 @@ if(IS_PSIPLUS AND (EXISTS "${CMAKE_CURRENT_LIST_DIR}/psiwindowheader.cpp"))
     )
 endif()
 
-qt5_wrap_ui(UI_FORMS ${FORMS})
+qt_wrap_ui(UI_FORMS ${FORMS})
 add_library(widgets STATIC ${SOURCES} ${HEADERS} ${UI_FORMS})
-target_link_libraries(widgets ${QT_LIBRARIES} ${iris_LIB} libpsi_tools)
-target_include_directories(widgets PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+target_link_libraries(widgets ${QT_LIBRARIES} ${iris_LIB} tools)
+target_include_directories(widgets PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_LIST_DIR})

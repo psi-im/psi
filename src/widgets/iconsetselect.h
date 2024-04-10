@@ -25,11 +25,10 @@
 class Iconset;
 class IconsetSelectItem;
 
-class IconsetSelect : public QListWidget
-{
+class IconsetSelect : public QListWidget {
     Q_OBJECT
 public:
-    IconsetSelect(QWidget *parent = 0);
+    IconsetSelect(QWidget *parent = nullptr);
     ~IconsetSelect();
 
     void insert(const Iconset &); // iconsets must be inserted in following order: most prioritent first
@@ -48,4 +47,4 @@ private:
     friend class IconsetSelectItem;
 };
 
-#endif
+#endif // ICONSETSELECT_H

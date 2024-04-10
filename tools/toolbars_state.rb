@@ -35,8 +35,8 @@ class MainWinState
 
   def toSigned(num)
     length = 32
-    mid = 2**(length-1) 
-    max_unsigned = 2**length 
+    mid = 2**(length-1)
+    max_unsigned = 2**length
     (num >= mid) ? num - max_unsigned : num
   end
 

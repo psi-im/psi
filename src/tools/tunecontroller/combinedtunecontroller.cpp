@@ -17,8 +17,9 @@
  *
  */
 
-#include "tune.h"
 #include "combinedtunecontroller.h"
+
+#include "tune.h"
 #include "tunecontrollermanager.h"
 
 /**
@@ -26,13 +27,12 @@
  * \brief Combines all supported controllers into one controller.
  */
 
-
 CombinedTuneController::CombinedTuneController()
 {
-    foreach(QString name, TuneControllerManager::instance()->controllerNames()) {
-        TuneController* c = TuneControllerManager::instance()->createController(name);
-        connect(c,SIGNAL(stopped()),SIGNAL(stopped()));
-        connect(c,SIGNAL(playing(const Tune&)),SIGNAL(playing(const Tune&)));
+    foreach (QString name, TuneControllerManager::instance()->controllerNames()) {
+        TuneController *c = TuneControllerManager::instance()->createController(name);
+        connect(c, SIGNAL(stopped()), SIGNAL(stopped()));
+        connect(c, SIGNAL(playing(const Tune &)), SIGNAL(playing(const Tune &)));
         controllers_ += c;
     }
 }
@@ -46,7 +46,7 @@ CombinedTuneController::~CombinedTuneController()
 
 Tune CombinedTuneController::currentTune()
 {
-    foreach(TuneController* c, controllers_) {
+    foreach (TuneController *c, controllers_) {
         Tune t = c->currentTune();
         if (!t.isNull())
             return t;

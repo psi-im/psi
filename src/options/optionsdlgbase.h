@@ -21,23 +21,27 @@
 #define OPTIONSDLGBASE_H
 
 #include "ui_ui_options.h"
+
 #include <QDialog>
+#include <QKeyEvent>
 
 class OptionsTab;
 class PsiCon;
 
-class OptionsDlgBase : public QDialog, public Ui::OptionsUI
-{
+class OptionsDlgBase : public QDialog, public Ui::OptionsUI {
     Q_OBJECT
 public:
-    OptionsDlgBase(PsiCon *, QWidget *parent = 0);
+    OptionsDlgBase(PsiCon *, QWidget *parent = nullptr);
     ~OptionsDlgBase();
 
     PsiCon *psi() const;
-    void openTab(const QString& id);
+    void    openTab(const QString &id);
+    void    removeTab(const QString &id);
+    void    insertTab(OptionsTab *tab, const QByteArray &afterId = QByteArray());
 
 protected:
-    void setTabs(QList<OptionsTab*> tabs); /* can be called from constructor */
+    void setTabs(QList<OptionsTab *> tabs); /* can be called from constructor */
+    void keyPressEvent(QKeyEvent *e);
 
 signals:
     void applyOptions();
@@ -49,11 +53,12 @@ private slots:
 
 public:
     class Private;
+
 private:
     Private *d;
     friend class Private;
 
-    QPushButton* pb_apply;
+    QPushButton *pb_apply;
 };
 
-#endif
+#endif // OPTIONSDLGBASE_H

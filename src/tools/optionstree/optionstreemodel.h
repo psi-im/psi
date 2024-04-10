@@ -21,28 +21,27 @@
 #define OPTIONSTREEMODEL_H
 
 #include <QAbstractItemModel>
-#include <QVariant>
 #include <QHash>
 #include <QStack>
+#include <QVariant>
 
 class OptionsTree;
 
-class OptionsTreeModel : public QAbstractItemModel
-{
+class OptionsTreeModel : public QAbstractItemModel {
     Q_OBJECT
 
 public:
-    OptionsTreeModel(OptionsTree* tree, QObject* parent = 0);
+    OptionsTreeModel(OptionsTree *tree, QObject *parent = nullptr);
 
     // Reimplemented from QAbstractItemModel
-    int rowCount(const QModelIndex& parent = QModelIndex()) const;
-    int columnCount (const QModelIndex& parent = QModelIndex()) const;
-    QVariant data(const QModelIndex& index, int role) const;
-    bool setData ( const QModelIndex & index, const QVariant & value, int role = Qt::EditRole );
-    QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
-    QModelIndex index(int row, int column, const QModelIndex & parent = QModelIndex() ) const;
-    QModelIndex parent(const QModelIndex& index) const;
-    Qt::ItemFlags flags(const QModelIndex& index) const;
+    int           rowCount(const QModelIndex &parent = QModelIndex()) const;
+    int           columnCount(const QModelIndex &parent = QModelIndex()) const;
+    QVariant      data(const QModelIndex &index, int role) const;
+    bool          setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
+    QVariant      headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
+    QModelIndex   index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
+    QModelIndex   parent(const QModelIndex &index) const;
+    Qt::ItemFlags flags(const QModelIndex &index) const;
 
     // custom accessors
     QString indexToOptionName(QModelIndex idx) const;
@@ -51,28 +50,28 @@ public slots:
     bool setFlat(bool);
 
 protected:
-    enum Section { Name = 0, Type = 1, Value = 2, Comment = 3, SectionBound=4};
-    QString getParentName(const QString &option) const;
-    QModelIndex index(const QString &option, Section sec=Name) const;
-    int nameToIndex(QString name) const;
-    bool internalNode(QString name) const;
-
+    enum Section { Name = 0, Type = 1, Value = 2, Comment = 3, SectionBound = 4 };
+    QString     getParentName(const QString &option) const;
+    QModelIndex index(const QString &option, Section sec = Name) const;
+    int         nameToIndex(QString name) const;
+    bool        internalNode(QString name) const;
+    QStringList getFlatOptions() const;
 
 protected slots:
-    void optionChanged(const QString& option);
-    void optionAboutToBeInserted(const QString& option);
-    void optionInserted(const QString& option);
-    void optionAboutToBeRemoved(const QString& option);
-    void optionRemoved(const QString& option);
-
+    void optionChanged(const QString &option);
+    void optionAboutToBeInserted(const QString &option);
+    void optionInserted(const QString &option);
+    void optionAboutToBeRemoved(const QString &option);
+    void optionRemoved(const QString &option);
 
 private:
-    OptionsTree* tree_;
-    bool flat_;
-    mutable QHash<int, QString> indexMap;
-    mutable QHash<QString, int> nameMap;
-    mutable int nextIdx;
-    QStack<bool> realRemove;
+    OptionsTree                *tree_;
+    bool                        flat_;
+    mutable QHash<int, QString> indexMap; // option index (seq number) to option.name mapping
+    mutable QHash<QString, int> nameMap;  // option.name to option index mapping
+    mutable int                 nextIdx;
+    QStack<bool>                realRemove;
+    mutable QStringList         flatCache;
 };
 
-#endif
+#endif // OPTIONSTREEMODEL_H

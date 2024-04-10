@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Remko Troncon
+ * Copyright (C) 2008  Remko Troncon
  * See COPYING file for the detailed license.
  */
 
@@ -9,26 +9,25 @@
 #include <Cocoa/Cocoa.h>
 #include <QtDebug>
 
-class CocoaInitializer::Private 
-{
-	public:
-		NSAutoreleasePool* autoReleasePool_;
+class CocoaInitializer::Private {
+public:
+    NSAutoreleasePool *autoReleasePool_;
 };
 
 CocoaInitializer::CocoaInitializer()
 {
-	Q_UNUSED(d)
+    Q_UNUSED(d)
 #if 0
-	d = new CocoaInitializer::Private();
-	NSApplicationLoad();
-	d->autoReleasePool_ = [[NSAutoreleasePool alloc] init];
+    d = new CocoaInitializer::Private();
+    NSApplicationLoad();
+    d->autoReleasePool_ = [[NSAutoreleasePool alloc] init];
 #endif
 }
 
 CocoaInitializer::~CocoaInitializer()
 {
 #if 0
-	[d->autoReleasePool_ release];
-	delete d;
+    [d->autoReleasePool_ release];
+    delete d;
 #endif
 }

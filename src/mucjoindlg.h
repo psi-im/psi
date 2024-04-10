@@ -20,41 +20,41 @@
 #ifndef MUCJOINDLG_H
 #define MUCJOINDLG_H
 
-#include <QDialog>
-
+#include "iris/xmpp_jid.h"
 #include "ui_mucjoin.h"
 
+#include <QDialog>
+#include <QTimer>
+
 class PsiCon;
+class PsiAccount;
 class QString;
 
-#include "xmpp_jid.h"
-#include "psiaccount.h"
-
-class MUCJoinDlg : public QDialog
-{
+class MUCJoinDlg : public QDialog {
     Q_OBJECT
 
 public:
+    enum MucJoinReason { MucAutoJoin, MucCustomJoin };
 
     MUCJoinDlg(PsiCon *, PsiAccount *);
     ~MUCJoinDlg();
 
-    void setJid(const XMPP::Jid& jid);
-    void setNick(const QString& nick);
-    void setPassword(const QString& password);
+    void setJid(const XMPP::Jid &jid);
+    void setNick(const QString &nick);
+    void setPassword(const QString &password);
 
     void joined();
     void error(int, const QString &);
 
 public slots:
     void done(int);
-    void doJoin(PsiAccount::MucJoinReason reason = PsiAccount::MucCustomJoin);
+    void doJoin(MucJoinReason reason = MucCustomJoin);
 
     // reimplemented
     void accept();
 
 public:
-    PsiAccount::MucJoinReason getReason() const { return reason_; }
+    MucJoinReason getReason() const { return reason_; }
 
 private slots:
     void updateIdentity(PsiAccount *);
@@ -62,15 +62,17 @@ private slots:
     void pa_disconnected();
     void favoritesCurrentRowChanged(int);
     void favoritesItemDoubleClicked(QListWidgetItem *lwi);
+    void lwFavorites_customContextMenuRequested(const QPoint &pos);
 
 private:
-    Ui::MUCJoin ui_;
-    PsiCon* controller_;
-    PsiAccount* account_;
-    QPushButton* joinButton_;
-    XMPP::Jid jid_;
-    PsiAccount::MucJoinReason reason_;
-    bool nickAlreadyCompleted_;
+    Ui::MUCJoin   ui_;
+    PsiCon       *controller_;
+    PsiAccount   *account_;
+    QPushButton  *joinButton_;
+    XMPP::Jid     jid_;
+    MucJoinReason reason_;
+    QTimer       *timer_;
+    bool          nickAlreadyCompleted_;
 
     void disableWidgets();
     void enableWidgets();
@@ -78,4 +80,4 @@ private:
     void updateFavorites();
 };
 
-#endif
+#endif // MUCJOINDLG_H

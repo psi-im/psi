@@ -19,24 +19,23 @@
 #ifndef CERTIFICATEDISPLAYDIALOG_H
 #define CERTIFICATEDISPLAYDIALOG_H
 
-#include <QtCrypto>
-
 #include "ui_CertificateDisplay.h"
 
-class CertificateDisplayDialog : public QDialog
-{
-        Q_OBJECT
+#include <QtCrypto>
 
-    public:
-        CertificateDisplayDialog(const QCA::Certificate &, int result, QCA::Validity, QWidget *parent=0);
+class CertificateDisplayDialog : public QDialog {
+    Q_OBJECT
 
-    protected:
-        static void setLabelStatus(QLabel& l, bool ok);
-        static QString makePropEntry(QCA::CertificateInfoType var, const QString &name, const QCA::CertificateInfo &list);
-        QString makePropTable(const QString &heading, const QCA::CertificateInfo &props);
+public:
+    CertificateDisplayDialog(const QCA::Certificate &, int result, QCA::Validity, QWidget *parent = nullptr);
 
-    private:
-        Ui::CertificateDisplay ui_;
+protected:
+    static void    setLabelStatus(QLabel &l, bool ok);
+    static QString makePropEntry(QCA::CertificateInfoType var, const QString &name, const QCA::CertificateInfo &list);
+    QString        makePropTable(const QString &heading, const QCA::CertificateInfo &props);
+
+private:
+    Ui::CertificateDisplay ui_;
 };
 
-#endif
+#endif // CERTIFICATEDISPLAYDIALOG_H

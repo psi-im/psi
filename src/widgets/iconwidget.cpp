@@ -18,124 +18,124 @@
  */
 
 #include "iconwidget.h"
+
+#include "iconbutton.h"
 #include "iconsetdisplay.h"
 #include "iconsetselect.h"
 #include "icontoolbutton.h"
-#include "iconbutton.h"
 
 #include <QApplication>
-#include <QPainter>
 #include <QBrush>
+#include <QPainter>
 
 #ifndef WIDGET_PLUGIN
-#    include "iconset.h"
-#    include <QStyle>
-#    include <QBitmap>
-#    include <QMap>
-#       include "pixmaputil.h"
+#include "iconset.h"
+#include "pixmaputil.h"
+#include <QBitmap>
+#include <QMap>
+#include <QStyle>
 #else
-#    include <QImage>
+#include <QImage>
 
-static const char *cancel_xpm[] = {
-"22 22 60 1",
-"     c None",
-".    c #E84300",
-"+    c #E63F00",
-"@    c #D11E00",
-"#    c #D11B00",
-"$    c #F69D50",
-"%    c #F59A4D",
-"&    c #E23800",
-"*    c #EE5F1F",
-"=    c #ED5A1D",
-"-    c #CD1700",
-";    c #FECBA2",
-">    c #FEC69A",
-",    c #F39045",
-"'    c #DE3200",
-")    c #FE7B3C",
-"!    c #FE7234",
-"~    c #EC4C15",
-"{    c #CC1100",
-"]    c #FEC091",
-"^    c #FEBA89",
-"/    c #F2873D",
-"(    c #DA2C00",
-"_    c #FE692C",
-":    c #EB4712",
-"<    c #CA0F00",
-"[    c #FEB480",
-"}    c #FEAE78",
-"|    c #F07D35",
-"1    c #D62600",
-"2    c #FEA870",
-"3    c #FEA166",
-"4    c #EF722D",
-"5    c #D32100",
-"6    c #FE9B5F",
-"7    c #FE9356",
-"8    c #F16C2A",
-"9    c #F16525",
-"0    c #FE8B4D",
-"a    c #FE8445",
-"b    c #EE4B15",
-"c    c #FE6025",
-"d    c #EE4310",
-"e    c #C90E00",
-"f    c #FE561D",
-"g    c #FE4B16",
-"h    c #EA2F08",
-"i    c #C70900",
-"j    c #FE4010",
-"k    c #FE350B",
-"l    c #EA1D03",
-"m    c #C60700",
-"n    c #FE2906",
-"o    c #FE1A02",
-"p    c #E90900",
-"q    c #C50300",
-"r    c #FE0A00",
-"s    c #FE0000",
-"t    c #E90000",
-"u    c #C40000",
-"                      ",
-"                      ",
-"    .+          @#    ",
-"   .$%&        @*=-   ",
-"  .$;>,'      @*)!~{  ",
-"  +%>]^/(    @*)!_:<  ",
-"   &,^[}|1  @*)!_:<   ",
-"    '/}2345@*)!_:<    ",
-"     (|36789)!_:<     ",
-"      1470a)!_:<      ",
-"       58a)!_b<       ",
-"       @9)!_cde       ",
-"      @*)!_cfghi      ",
-"     @*)!_bdgjklm     ",
-"    @*)!_:<ehknopq    ",
-"   @*)!_:<  ilorstu   ",
-"  @*)!_:<    mpssstu  ",
-"  #=!_:<      qtsstu  ",
-"   -~:<        uttu   ",
-"    {<          uu    ",
-"                      ",
-"                      "};
+static const char *cancel_xpm[] = { "22 22 60 1",
+                                    "     c None",
+                                    ".    c #E84300",
+                                    "+    c #E63F00",
+                                    "@    c #D11E00",
+                                    "#    c #D11B00",
+                                    "$    c #F69D50",
+                                    "%    c #F59A4D",
+                                    "&    c #E23800",
+                                    "*    c #EE5F1F",
+                                    "=    c #ED5A1D",
+                                    "-    c #CD1700",
+                                    ";    c #FECBA2",
+                                    ">    c #FEC69A",
+                                    ",    c #F39045",
+                                    "'    c #DE3200",
+                                    ")    c #FE7B3C",
+                                    "!    c #FE7234",
+                                    "~    c #EC4C15",
+                                    "{    c #CC1100",
+                                    "]    c #FEC091",
+                                    "^    c #FEBA89",
+                                    "/    c #F2873D",
+                                    "(    c #DA2C00",
+                                    "_    c #FE692C",
+                                    ":    c #EB4712",
+                                    "<    c #CA0F00",
+                                    "[    c #FEB480",
+                                    "}    c #FEAE78",
+                                    "|    c #F07D35",
+                                    "1    c #D62600",
+                                    "2    c #FEA870",
+                                    "3    c #FEA166",
+                                    "4    c #EF722D",
+                                    "5    c #D32100",
+                                    "6    c #FE9B5F",
+                                    "7    c #FE9356",
+                                    "8    c #F16C2A",
+                                    "9    c #F16525",
+                                    "0    c #FE8B4D",
+                                    "a    c #FE8445",
+                                    "b    c #EE4B15",
+                                    "c    c #FE6025",
+                                    "d    c #EE4310",
+                                    "e    c #C90E00",
+                                    "f    c #FE561D",
+                                    "g    c #FE4B16",
+                                    "h    c #EA2F08",
+                                    "i    c #C70900",
+                                    "j    c #FE4010",
+                                    "k    c #FE350B",
+                                    "l    c #EA1D03",
+                                    "m    c #C60700",
+                                    "n    c #FE2906",
+                                    "o    c #FE1A02",
+                                    "p    c #E90900",
+                                    "q    c #C50300",
+                                    "r    c #FE0A00",
+                                    "s    c #FE0000",
+                                    "t    c #E90000",
+                                    "u    c #C40000",
+                                    "                      ",
+                                    "                      ",
+                                    "    .+          @#    ",
+                                    "   .$%&        @*=-   ",
+                                    "  .$;>,'      @*)!~{  ",
+                                    "  +%>]^/(    @*)!_:<  ",
+                                    "   &,^[}|1  @*)!_:<   ",
+                                    "    '/}2345@*)!_:<    ",
+                                    "     (|36789)!_:<     ",
+                                    "      1470a)!_:<      ",
+                                    "       58a)!_b<       ",
+                                    "       @9)!_cde       ",
+                                    "      @*)!_cfghi      ",
+                                    "     @*)!_bdgjklm     ",
+                                    "    @*)!_:<ehknopq    ",
+                                    "   @*)!_:<  ilorstu   ",
+                                    "  @*)!_:<    mpssstu  ",
+                                    "  #=!_:<      qtsstu  ",
+                                    "   -~:<        uttu   ",
+                                    "    {<          uu    ",
+                                    "                      ",
+                                    "                      " };
 #endif
+
+constexpr int ScalableIconFactor = 3;
 
 //----------------------------------------------------------------------------
 // RealIconWidgetItem
 //----------------------------------------------------------------------------
 
-class RealIconWidgetItem : public IconWidgetItem
-{
+class RealIconWidgetItem : public IconWidgetItem {
     Q_OBJECT
 public:
-    RealIconWidgetItem(QListWidget *parent = nullptr)
-    : IconWidgetItem(parent) {}
+    RealIconWidgetItem(QListWidget *parent = nullptr) : IconWidgetItem(parent) { }
 
-    virtual void paint(QPainter *painter) const = 0;
-    virtual int height() const = 0;
-    virtual int width() const = 0;
+    virtual void   paint(QPainter *painter) const        = 0;
+    virtual int    height() const                        = 0;
+    virtual int    width() const                         = 0;
     virtual QPoint textPosition(QPainter *painter) const = 0;
 
     static const int TextPositionRole = Qt::UserRole + 1;
@@ -154,11 +154,10 @@ public:
             paint(&p);
             p.end();
             return QVariant(pix);
-        }
-        else if (role == TextPositionRole) {
-            QPixmap pix(width(), height());
+        } else if (role == TextPositionRole) {
+            QPixmap  pix(width(), height());
             QPainter p(&pix);
-            QPoint pos = textPosition(&p);
+            QPoint   pos = textPosition(&p);
             p.end();
             return QVariant(pos);
         }
@@ -166,23 +165,18 @@ public:
     }
 
 public slots:
-    void update()
-    {
-        setData(Qt::UserRole, data(Qt::UserRole).toInt() + 1);
-    }
+    void update() { setData(Qt::UserRole, data(Qt::UserRole).toInt() + 1); }
 };
 
 //----------------------------------------------------------------------------
 // IconWidgetDelegate
 //----------------------------------------------------------------------------
 
-class IconWidgetDelegate : public QAbstractItemDelegate
-{
+class IconWidgetDelegate : public QAbstractItemDelegate {
 public:
-    IconWidgetDelegate(QObject *parent)
-    : QAbstractItemDelegate(parent) {}
+    IconWidgetDelegate(QObject *parent) : QAbstractItemDelegate(parent) { }
 
-    QSize sizeHint(const QStyleOptionViewItem &/*option*/, const QModelIndex &index) const
+    QSize sizeHint(const QStyleOptionViewItem & /*option*/, const QModelIndex &index) const
     {
         return index.model()->data(index, Qt::SizeHintRole).toSize();
     }
@@ -191,15 +185,13 @@ public:
     {
         const QAbstractItemModel *model = index.model();
 
-        QPalette::ColorGroup cg = option.state & QStyle::State_Enabled
-            ? QPalette::Normal : QPalette::Disabled;
+        QPalette::ColorGroup cg = option.state & QStyle::State_Enabled ? QPalette::Normal : QPalette::Disabled;
 
         // draw the background color
         if (option.showDecorationSelected && (option.state & QStyle::State_Selected)) {
             painter->fillRect(option.rect, option.palette.brush(cg, QPalette::Highlight));
             painter->setPen(option.palette.color(cg, QPalette::HighlightedText));
-        }
-        else {
+        } else {
             painter->setPen(option.palette.color(cg, QPalette::Text));
             QVariant value = model->data(index, Qt::BackgroundRole);
             if (value.isValid() && qvariant_cast<QColor>(value).isValid())
@@ -210,17 +202,18 @@ public:
 
         QVariant textPosition = model->data(index, RealIconWidgetItem::TextPositionRole);
         if (textPosition.isValid() && !qvariant_cast<QPoint>(textPosition).isNull())
-            painter->drawText(option.rect.topLeft() + qvariant_cast<QPoint>(textPosition), model->data(index, Qt::DisplayRole).value<QString>());
+            painter->drawText(option.rect.topLeft() + qvariant_cast<QPoint>(textPosition),
+                              model->data(index, Qt::DisplayRole).value<QString>());
 
         if (option.state & QStyle::State_HasFocus) {
             QStyleOptionFocusRect o;
             o.QStyleOption::operator=(option);
-            QRect r = option.rect;
+            QRect  r = option.rect;
             QPoint margin(1, 1);
             o.rect = QRect(r.topLeft() + margin, r.bottomRight() - margin);
             o.state |= QStyle::State_KeyboardFocusChange;
-            o.backgroundColor = option.palette.color(cg, (option.state & QStyle::State_Selected)
-                ? QPalette::Highlight : QPalette::Background);
+            o.backgroundColor = option.palette.color(
+                cg, (option.state & QStyle::State_Selected) ? QPalette::Highlight : QPalette::Window);
             QApplication::style()->drawPrimitive(QStyle::PE_FrameFocusRect, &o, painter);
         }
     }
@@ -230,67 +223,69 @@ public:
 // IconsetSelect
 //----------------------------------------------------------------------------
 
-class IconsetSelectItem : public RealIconWidgetItem
-{
+class IconsetSelectItem : public RealIconWidgetItem {
     Q_OBJECT
 private:
     static const int margin;
     static const int displayNumIcons;
 #ifndef WIDGET_PLUGIN
-    Iconset iss;
-    QMap<PsiIcon*, QRect> iconRects;
+    Iconset                iss;
+    QMap<PsiIcon *, QRect> iconRects;
 #endif
-    int w = 16, h = 16;
+    int         w = 16, h = 16;
     mutable int fullW, fullH;
 
 public:
-    IconsetSelectItem(QListWidget *parent, const Iconset &_iconset)
-        : RealIconWidgetItem(parent)
+    IconsetSelectItem(QListWidget *parent, const Iconset &_iconset) : RealIconWidgetItem(parent)
     {
         Q_UNUSED(fullW)
         Q_UNUSED(fullH)
 #ifndef WIDGET_PLUGIN
         iss = _iconset;
-        setText( iss.name() );
+        setText(iss.name());
 
         w = margin;
-        h = 2*margin;
+        h = 2 * margin;
 
         int count;
 
         QListIterator<PsiIcon *> it = iss.iterator();
-        count = 0;
-        while ( it.hasNext() ) {
-            if ( count++ >= displayNumIcons )
+        count                       = 0;
+        auto iconHeight = ((QFontInfo(parent->font()).pixelSize() + 8) / 16) << 5; // ~ 2 times bigger than font
+        while (it.hasNext()) {
+            if (count++ >= displayNumIcons)
                 break; // display only first displayNumIcons icons
 
             PsiIcon *icon = it.next();
-            QPixmap pix = icon->pixmap();
+            QPixmap  pix  = icon->pixmap();
 
-            iconRects[icon] = QRect( w, margin, pix.width(), pix.height() );
+            QSize s = pix.size();
+            if (pix.height() > iconHeight || pix.width() > iconHeight)
+                s.scale(iconHeight, iconHeight, Qt::KeepAspectRatio);
+            iconRects[icon] = QRect(w, margin, s.width(), s.height());
 
-            w += pix.width() + margin;
-            h = qMax( h, pix.height() + 2*margin );
+            w += s.width() + margin;
+            h = qMax(h, s.height() + 2 * margin);
 
             connect(icon, SIGNAL(pixmapChanged()), SLOT(update()));
             icon->activated(false); // start animation
         }
 
-        QMutableMapIterator<PsiIcon*, QRect> it2(iconRects);
+        QMutableMapIterator<PsiIcon *, QRect> it2(iconRects);
         while (it2.hasNext()) {
             it2.next();
             QRect r = it2.value();
             it2.setValue(QRect(r.x(), (h - r.height()) / 2, r.width(), r.height()));
         }
 #else
-        Q_UNUSED( _iconset );
+        Q_UNUSED(_iconset);
 #endif
     }
 
     ~IconsetSelectItem()
     {
 #ifndef WIDGET_PLUGIN
-        QMap<PsiIcon*, QRect>::Iterator it;
+        QMap<PsiIcon *, QRect>::Iterator it;
         for (it = iconRects.begin(); it != iconRects.end(); it++)
             it.key()->stop();
 #endif
@@ -308,26 +303,30 @@ public:
     int height() const
     {
         int hh = listWidget()->fontMetrics().lineSpacing() + h;
-        return qMax( hh, QApplication::globalStrut().height() );
+        return qMax(hh, 16);
     }
 
     int width() const
     {
-        int ww = qMax(listWidget()->fontMetrics().width( text() ) + 6 + 15, w + 10);
-        return qMax( ww, QApplication::globalStrut().width() );
+#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
+        int ww = qMax(listWidget()->fontMetrics().horizontalAdvance(text()) + 6 + 15, w + 10);
+#else
+        int ww = qMax(listWidget()->fontMetrics().width(text()) + 6 + 15, w + 10);
+#endif
+        return qMax(ww, 16);
     }
-
 
     void paint(QPainter *painter) const
     {
 #ifndef WIDGET_PLUGIN
         QFontMetrics fm = painter->fontMetrics();
 
-        QMap<PsiIcon*, QRect>::ConstIterator it;
+        painter->setRenderHints(QPainter::SmoothPixmapTransform | QPainter::Antialiasing);
+        QMap<PsiIcon *, QRect>::ConstIterator it;
         for (it = iconRects.begin(); it != iconRects.end(); it++) {
             PsiIcon *icon = it.key();
-            QRect r = it.value();
-            painter->drawPixmap(QPoint(10 + r.left(), fm.lineSpacing() + 2 + r.top()), icon->pixmap());
+            QRect    r    = it.value();
+            painter->drawPixmap(r.translated(10, fm.lineSpacing() + 2), icon->pixmap());
         }
 #else
         Q_UNUSED(painter);
@@ -336,21 +335,15 @@ public:
     QPoint textPosition(QPainter *painter) const
     {
         QFontMetrics fm = painter->fontMetrics();
-        return QPoint(3, fm.ascent() + (fm.leading()+1)/2 + 1);
+        return QPoint(3, fm.ascent() + (fm.leading() + 1) / 2 + 1);
     }
 };
-const int IconsetSelectItem::margin = 3;
+const int IconsetSelectItem::margin          = 3;
 const int IconsetSelectItem::displayNumIcons = 10;
 
-IconsetSelect::IconsetSelect(QWidget *parent)
-: QListWidget(parent)
-{
-    setItemDelegate(new IconWidgetDelegate(this));
-}
+IconsetSelect::IconsetSelect(QWidget *parent) : QListWidget(parent) { setItemDelegate(new IconWidgetDelegate(this)); }
 
-IconsetSelect::~IconsetSelect()
-{
-}
+IconsetSelect::~IconsetSelect() { }
 
 void IconsetSelect::insert(const Iconset &iconset)
 {
@@ -363,53 +356,55 @@ void IconsetSelect::insert(const Iconset &iconset)
 
 void IconsetSelect::moveItemUp()
 {
-    if ( currentRow() < 1 )
+    if (currentRow() < 1)
         return;
 
     QListWidgetItem *i = currentItem();
-    if ( !i )
+    if (!i)
         return;
     int prevRow = row(i) - 1;
-    i = takeItem(row(i));
+    i           = takeItem(row(i));
     insertItem(prevRow, i);
-    setItemSelected(i, true);
+    i->setSelected(true);
     setCurrentItem(i);
 }
 
 void IconsetSelect::moveItemDown()
 {
-    if ( !currentItem() || currentRow() > (int)count() - 2 )
+    if (!currentItem() || currentRow() > int(count()) - 2)
         return;
 
     QListWidgetItem *i = currentItem();
-    if ( !i )
+    if (!i)
         return;
     int nextRow = row(i) + 1;
-    i = takeItem(row(i));
+    i           = takeItem(row(i));
     insertItem(nextRow, i);
     setCurrentItem(i);
 }
 
 const Iconset *IconsetSelect::iconset() const
 {
-    IconsetSelectItem *i = (IconsetSelectItem *)currentItem();
-    if ( !i ) {
+    IconsetSelectItem *i = static_cast<IconsetSelectItem *>(currentItem());
+    if (!i) {
         QList<QListWidgetItem *> items = selectedItems();
-        i = !items.isEmpty() ? (IconsetSelectItem *)items.first() : nullptr;
+        i                              = !items.isEmpty() ? static_cast<IconsetSelectItem *>(items.first()) : nullptr;
     }
-    if ( i )
+    if (i)
         return i->iconset();
     return nullptr;
 }
 
-QListWidgetItem *IconsetSelect::lastItem() const
-{
-    return item(count() - 1);
-}
+QListWidgetItem *IconsetSelect::lastItem() const { return item(count() - 1); }
 
 QStyleOptionViewItem IconsetSelect::viewOptions() const
 {
-    QStyleOptionViewItem o = QListWidget::viewOptions();
+    QStyleOptionViewItem o;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    initViewItemOption(&o);
+#else
+    o = QListWidget::viewOptions();
+#endif
     o.showDecorationSelected = true;
     return o;
 }
@@ -418,8 +413,7 @@ QStyleOptionViewItem IconsetSelect::viewOptions() const
 // IconsetDisplay
 //----------------------------------------------------------------------------
 
-class IconsetDisplayItem : public RealIconWidgetItem
-{
+class IconsetDisplayItem : public RealIconWidgetItem {
     Q_OBJECT
 private:
     static const int margin;
@@ -429,29 +423,33 @@ private:
     int w = 16, h = 16;
 
 public:
-    IconsetDisplayItem(QListWidget *parent, PsiIcon *i, int iconW)
-        : RealIconWidgetItem(parent)
+    IconsetDisplayItem(QListWidget *parent, PsiIcon *i, int iconW) : RealIconWidgetItem(parent)
     {
 #ifndef WIDGET_PLUGIN
         icon = *i;
-        w = iconW;
+        w    = iconW;
 
         connect(&icon, SIGNAL(pixmapChanged()), SLOT(update()));
         icon.activated(false);
-
-        h = icon.pixmap().height();
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        const auto fontSize = qApp->fontMetrics().height();
+#else
+        const auto fontSize = QFontMetrics(qApp->font()).height();
+#endif
+        const auto iconSize = fontSize * ScalableIconFactor;
+        h                   = icon.pixmap(QSize(iconSize, iconSize)).height();
 
         QStringList str;
-        foreach(PsiIcon::IconText t, icon.text())
+        for (const PsiIcon::IconText &t : icon.text())
             str += t.text;
 
-        if ( !str.isEmpty() )
+        if (!str.isEmpty())
             setText(str.join(", "));
         else
             setText(tr("Name: '%1'").arg(icon.name()));
 #else
-        Q_UNUSED( i );
-        Q_UNUSED( iconW );
+        Q_UNUSED(i);
+        Q_UNUSED(iconW);
 #endif
     }
 
@@ -464,20 +462,31 @@ public:
 
     int height() const
     {
-        int hh = qMax(h + 2*margin, listWidget()->fontMetrics().lineSpacing() + 2);
-        return qMax( hh, QApplication::globalStrut().height() );
+        int hh = qMax(h + 2 * margin, listWidget()->fontMetrics().lineSpacing() + 2);
+        return qMax(hh, 16);
     }
 
     int width() const
     {
-        int ww = listWidget()->fontMetrics().width(text()) + w + 3*margin + 15;
-        return qMax( ww, QApplication::globalStrut().width() );
+#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
+        int ww = listWidget()->fontMetrics().horizontalAdvance(text()) + w + 3 * margin + 15;
+#else
+        int ww = listWidget()->fontMetrics().width(text()) + w + 3 * margin + 15;
+#endif
+        return qMax(ww, 16);
     }
 
     void paint(QPainter *painter) const
     {
 #ifndef WIDGET_PLUGIN
-        painter->drawPixmap(QPoint((2*margin+w - icon.pixmap().width())/2, margin), icon.pixmap());
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        const auto fontSize = qApp->fontMetrics().height();
+#else
+        const auto fontSize = QFontMetrics(qApp->font()).height();
+#endif
+        const auto iconSize = fontSize * ScalableIconFactor;
+        painter->drawPixmap(QPoint((2 * margin + w - icon.pixmap(QSize(iconSize, iconSize)).width()) / 2, margin),
+                            icon.pixmap(QSize(iconSize, iconSize)));
 #else
         Q_UNUSED(painter);
 #endif
@@ -485,33 +494,32 @@ public:
     QPoint textPosition(QPainter *painter) const
     {
         QFontMetrics fm = painter->fontMetrics();
-        return QPoint(w + 2*margin, fm.ascent() + (fm.leading()+1)/2 + 1);
+        return QPoint(w + 2 * margin, fm.ascent() + (fm.leading() + 1) / 2 + 1);
     }
-
 };
 const int IconsetDisplayItem::margin = 3;
 
-IconsetDisplay::IconsetDisplay(QWidget *parent)
-: QListWidget(parent)
-{
-    setItemDelegate(new IconWidgetDelegate(this));
-}
+IconsetDisplay::IconsetDisplay(QWidget *parent) : QListWidget(parent) { setItemDelegate(new IconWidgetDelegate(this)); }
 
-IconsetDisplay::~IconsetDisplay()
-{
-}
+IconsetDisplay::~IconsetDisplay() { }
 
 void IconsetDisplay::setIconset(const Iconset &iconset)
 {
 #ifndef WIDGET_PLUGIN
     int w = 0;
-    QListIterator<PsiIcon *> it = iconset.iterator();
-    while ( it.hasNext() ) {
-        w = qMax(w, it.next()->pixmap().width());
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    const auto fontSize = qApp->fontMetrics().height();
+#else
+    const auto fontSize = QFontMetrics(qApp->font()).height();
+#endif
+    const auto               iconSize = fontSize * ScalableIconFactor;
+    QListIterator<PsiIcon *> it       = iconset.iterator();
+    while (it.hasNext()) {
+        w = qMax(w, it.next()->pixmap(QSize(iconSize, iconSize)).width());
     }
 
     it = iconset.iterator();
-    while ( it.hasNext() ) {
+    while (it.hasNext()) {
         new IconsetDisplayItem(this, it.next(), w);
     }
 #else
@@ -523,14 +531,13 @@ void IconsetDisplay::setIconset(const Iconset &iconset)
 // IconButton
 //----------------------------------------------------------------------------
 
-class IconButton::Private : public QObject
-{
+class IconButton::Private : public QObject {
     Q_OBJECT
 public:
-    PsiIcon *icon;
+    PsiIcon    *icon;
     IconButton *button;
-    bool textVisible;
-    bool activate, forced;
+    bool        textVisible;
+    bool        activate, forced;
 #ifdef WIDGET_PLUGIN
     QString iconName;
 #endif
@@ -538,23 +545,20 @@ public:
 public:
     Private(IconButton *b)
     {
-        icon = nullptr;
-        button = b;
+        icon        = nullptr;
+        button      = b;
         textVisible = true;
-        activate = false;
-        forced = false;
+        activate    = false;
+        forced      = false;
     }
 
-    ~Private()
-    {
-        iconStop();
-    }
+    ~Private() { iconStop(); }
 
     void setIcon(PsiIcon *i)
     {
 #ifndef WIDGET_PLUGIN
         iconStop();
-        if ( i )
+        if (i)
             icon = i->copy();
         iconStart();
 #else
@@ -565,9 +569,9 @@ public:
     void iconStart()
     {
 #ifndef WIDGET_PLUGIN
-        if ( icon ) {
+        if (icon) {
             connect(icon, SIGNAL(pixmapChanged()), SLOT(iconUpdated()));
-            if ( activate )
+            if (activate)
                 icon->activated(true); // FIXME: should icon play sound when it's activated on button?
         }
 
@@ -578,9 +582,9 @@ public:
     void iconStop()
     {
 #ifndef WIDGET_PLUGIN
-        if ( icon ) {
-            disconnect(icon, nullptr, this, nullptr );
-            if ( activate )
+        if (icon) {
+            disconnect(icon, nullptr, this, nullptr);
+            if (activate)
                 icon->stop();
 
             delete icon;
@@ -589,15 +593,9 @@ public:
 #endif
     }
 
-    void update()
-    {
-        iconUpdated();
-    }
+    void update() { iconUpdated(); }
 
-    void updateIcon()
-    {
-        iconUpdated();
-    }
+    void updateIcon() { iconUpdated(); }
 
 public slots:
     void iconUpdated()
@@ -618,33 +616,23 @@ public slots:
     }
 };
 
-IconButton::IconButton(QWidget *parent)
-: QPushButton(parent)
-{
-    d = new Private(this);
-}
+IconButton::IconButton(QWidget *parent) : QPushButton(parent) { d = new Private(this); }
 
-IconButton::~IconButton()
-{
-    delete d;
-}
+IconButton::~IconButton() { delete d; }
 
-void IconButton::setIcon(const QPixmap &p)
-{
-    QPushButton::setIcon(p);
-}
+void IconButton::setIcon(const QPixmap &p) { QPushButton::setIcon(p); }
 
 void IconButton::forceSetPsiIcon(const PsiIcon *i, bool activate)
 {
     d->activate = activate;
-    d->setIcon((PsiIcon *)i);
+    d->setIcon(const_cast<PsiIcon *>(i));
     d->forced = true;
 }
 
 void IconButton::setPsiIcon(const PsiIcon *i, bool activate)
 {
 #ifndef HAVE_X11
-    if ( !text().isEmpty() )
+    if (!text().isEmpty())
         return;
 #endif
 
@@ -655,7 +643,7 @@ void IconButton::setPsiIcon(const PsiIcon *i, bool activate)
 void IconButton::setPsiIcon(const QString &name)
 {
 #ifndef WIDGET_PLUGIN
-    setPsiIcon( IconsetFactory::iconPtr(name) );
+    setPsiIcon(IconsetFactory::iconPtr(name));
 #else
     d->iconName = name;
     d->iconUpdated();
@@ -665,9 +653,9 @@ void IconButton::setPsiIcon(const QString &name)
 QString IconButton::psiIconName() const
 {
 #ifndef WIDGET_PLUGIN
-    if ( d->icon )
+    if (d->icon)
         return d->icon->name();
-    return QString::null;
+    return QString();
 #else
     return d->iconName;
 #endif
@@ -676,18 +664,15 @@ QString IconButton::psiIconName() const
 void IconButton::setText(const QString &text)
 {
 #ifndef HAVE_X11
-    if ( !d->forced )
+    if (!d->forced)
         setPsiIcon(0);
 #endif
 
-    QPushButton::setText( text );
+    QPushButton::setText(text);
     d->updateIcon();
 }
 
-bool IconButton::textVisible() const
-{
-    return d->textVisible;
-}
+bool IconButton::textVisible() const { return d->textVisible; }
 
 void IconButton::setTextVisible(bool v)
 {
@@ -699,13 +684,12 @@ void IconButton::setTextVisible(bool v)
 // IconToolButton
 //----------------------------------------------------------------------------
 
-class IconToolButton::Private : public QObject
-{
+class IconToolButton::Private : public QObject {
     Q_OBJECT
 public:
-    PsiIcon *icon;
+    PsiIcon        *icon;
     IconToolButton *button;
-    bool activate;
+    bool            activate;
 #ifdef WIDGET_PLUGIN
     QString iconName;
 #endif
@@ -713,21 +697,18 @@ public:
 public:
     Private(IconToolButton *b)
     {
-        icon = nullptr;
-        button = b;
+        icon     = nullptr;
+        button   = b;
         activate = false;
     }
 
-    ~Private()
-    {
-        iconStop();
-    }
+    ~Private() { iconStop(); }
 
     void setIcon(const PsiIcon *i)
     {
 #ifndef WIDGET_PLUGIN
         iconStop();
-        if ( i )
+        if (i)
             icon = new PsiIcon(*i);
         iconStart();
 #else
@@ -738,9 +719,9 @@ public:
     void iconStart()
     {
 #ifndef WIDGET_PLUGIN
-        if ( icon ) {
+        if (icon) {
             connect(icon, SIGNAL(pixmapChanged()), SLOT(iconUpdated()));
-            if ( activate )
+            if (activate)
                 icon->activated(true); // FIXME: should icon play sound when it's activated on button?
         }
         iconUpdated();
@@ -750,9 +731,9 @@ public:
     void iconStop()
     {
 #ifndef WIDGET_PLUGIN
-        if ( icon ) {
-            disconnect(icon, nullptr, this, nullptr );
-            if ( activate )
+        if (icon) {
+            disconnect(icon, nullptr, this, nullptr);
+            if (activate)
                 icon->stop();
 
             delete icon;
@@ -761,10 +742,7 @@ public:
 #endif
     }
 
-    void update()
-    {
-        iconUpdated();
-    }
+    void update() { iconUpdated(); }
 
 private slots:
     void iconUpdated()
@@ -785,32 +763,22 @@ private slots:
     }
 };
 
-IconToolButton::IconToolButton(QWidget *parent)
-: QToolButton(parent)
-{
-    d = new Private(this);
-}
+IconToolButton::IconToolButton(QWidget *parent) : QToolButton(parent) { d = new Private(this); }
 
-IconToolButton::~IconToolButton()
-{
-    delete d;
-}
+IconToolButton::~IconToolButton() { delete d; }
 
-void IconToolButton::setIcon(const QIcon &p)
-{
-    QToolButton::setIcon(p);
-}
+void IconToolButton::setIcon(const QIcon &p) { QToolButton::setIcon(p); }
 
 void IconToolButton::setPsiIcon(const PsiIcon *i, bool activate)
 {
     d->activate = activate;
-    d->setIcon ((PsiIcon *)i);
+    d->setIcon(const_cast<PsiIcon *>(i));
 }
 
 void IconToolButton::setPsiIcon(const QString &name)
 {
 #ifndef WIDGET_PLUGIN
-    setPsiIcon( IconsetFactory::iconPtr(name) );
+    setPsiIcon(IconsetFactory::iconPtr(name));
 #else
     d->iconName = name;
 #endif
@@ -819,19 +787,17 @@ void IconToolButton::setPsiIcon(const QString &name)
 QString IconToolButton::psiIconName() const
 {
 #ifndef WIDGET_PLUGIN
-    if ( d->icon )
+    if (d->icon)
         return d->icon->name();
-    return QString::null;
+    return QString();
 #else
     return d->iconName;
 #endif
 }
 
-void IconToolButton::paintEvent(QPaintEvent* event)
+void IconToolButton::paintEvent(QPaintEvent *event)
 {
-    setToolButtonStyle(icon().isNull() ?
-                       Qt::ToolButtonTextOnly :
-                       Qt::ToolButtonIconOnly);
+    setToolButtonStyle(icon().isNull() ? Qt::ToolButtonTextOnly : Qt::ToolButtonIconOnly);
     QToolButton::paintEvent(event);
 }
 

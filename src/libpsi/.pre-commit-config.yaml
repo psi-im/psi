@@ -1,0 +1,29 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+
+exclude: '^3rdparty|tools/zip/minizip|COPYING'
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.5.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-added-large-files
+    -   id: check-merge-conflict
+-   repo: https://github.com/doublify/pre-commit-clang-format
+    # for clang-tidy we can take github.com/pocc/pre-commit-hooks
+    rev: f4c4ac5948aff384af2b439bfabb2bdd65d2b3ac
+    hooks:
+    -   id: clang-format
+-   repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.1.7
+    hooks:
+    -   id: forbid-crlf
+    -   id: remove-crlf
+    -   id: forbid-tabs
+    -   id: remove-tabs
+-   repo: https://github.com/openstack-dev/bashate
+    rev: 2.0.0
+    hooks:
+    -   id: bashate
+        args: ['--ignore', 'E006']

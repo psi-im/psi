@@ -1,6 +1,6 @@
 /*
  * psievent.h - events
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,37 +19,35 @@
 
 #include "psievent.h"
 
-#include <QDomElement>
-#include <QTextStream>
-#include <QList>
-#include <QCoreApplication>
-#include <QSet>
-
-#include "psicon.h"
-#include "psiaccount.h"
-#include "xmpp_xmlcommon.h"
-#include "xmpp_message.h"
-#include "dummystream.h"
-#include "filetransfer.h"
 #include "applicationinfo.h"
-#include "psicontactlist.h"
 #include "atomicxmlfile/atomicxmlfile.h"
-#include "psioptions.h"
 #include "avcall/avcall.h"
-#include "jingle.h"
+#include "dummystream.h"
+#include "iris/filetransfer.h"
+#include "iris/jingle-session.h"
+#include "iris/xmpp_xmlcommon.h"
+#include "psiaccount.h"
+#include "psicon.h"
+#include "psicontactlist.h"
+#include "psioptions.h"
+
+#include <QCoreApplication>
+#include <QDomElement>
+#include <QList>
+#include <QSet>
+#include <QTextStream>
+
+using namespace XMLHelper;
+using namespace XMPP;
 
 // FIXME renames those
 const int eventPriorityHeadline = 0;
 const int eventPriorityChat     = 1;
 const int eventPriorityMessage  = 1;
 const int eventPriorityAuth     = 2;
-//const int eventPriorityFile     = 3;
-const int eventPriorityFile     = 2;
+// const int eventPriorityFile     = 3;
+const int eventPriorityFile           = 2;
 const int eventPriorityRosterExchange = 0; // LEGOPTFIXME: was uninitialised
-
-
-using namespace XMPP;
-using namespace XMLHelper;
 
 //----------------------------------------------------------------------------
 // PsiEvent
@@ -57,110 +55,76 @@ using namespace XMLHelper;
 PsiEvent::PsiEvent(PsiAccount *acc)
 {
     v_originLocal = false;
-    v_late = false;
-    v_account = acc;
+    v_late        = false;
+    v_account     = acc;
 }
 
-PsiEvent::PsiEvent(const PsiEvent &from)
-: QObject()
+PsiEvent::PsiEvent(const PsiEvent &from) : QObject()
 {
     v_originLocal = from.v_originLocal;
-    v_late = from.v_late;
-    v_ts = from.v_ts;
-    v_jid = from.v_jid;
-    v_account = from.v_account;
+    v_late        = from.v_late;
+    v_ts          = from.v_ts;
+    v_jid         = from.v_jid;
+    v_account     = from.v_account;
 }
 
-PsiEvent::~PsiEvent()
-{
-}
+PsiEvent::~PsiEvent() { }
 
-XMPP::Jid PsiEvent::jid() const
-{
-    return v_jid;
-}
+XMPP::Jid PsiEvent::jid() const { return v_jid; }
 
-void PsiEvent::setJid(const XMPP::Jid &j)
-{
-    v_jid = j;
-}
+void PsiEvent::setJid(const XMPP::Jid &j) { v_jid = j; }
 
-PsiAccount *PsiEvent::account() const
-{
-    return v_account;
-}
+PsiAccount *PsiEvent::account() const { return v_account; }
 
-void PsiEvent::setAccount(PsiAccount* account)
-{
-    v_account = account;
-}
+void PsiEvent::setAccount(PsiAccount *account) { v_account = account; }
 
-bool PsiEvent::originLocal() const
-{
-    return v_originLocal;
-}
+bool PsiEvent::originLocal() const { return v_originLocal; }
 
-bool PsiEvent::late() const
-{
-    return v_late;
-}
+bool PsiEvent::late() const { return v_late; }
 
-QDateTime PsiEvent::timeStamp() const
-{
-    return v_ts;
-}
+QDateTime PsiEvent::timeStamp() const { return v_ts; }
 
-void PsiEvent::setOriginLocal(bool b)
-{
-    v_originLocal = b;
-}
+void PsiEvent::setOriginLocal(bool b) { v_originLocal = b; }
 
-void PsiEvent::setLate(bool b)
-{
-    v_late = b;
-}
+void PsiEvent::setLate(bool b) { v_late = b; }
 
-void PsiEvent::setTimeStamp(const QDateTime &t)
-{
-    v_ts = t;
-}
+void PsiEvent::setTimeStamp(const QDateTime &t) { v_ts = t; }
 
 QDomElement PsiEvent::toXml(QDomDocument *doc) const
 {
     QDomElement e = doc->createElement("event");
     e.setAttribute("type", metaObject()->className());
 
-    e.appendChild( textTag(*doc, "originLocal",    v_originLocal) );
-    e.appendChild( textTag(*doc, "late",        v_late) );
-    e.appendChild( textTag(*doc, "ts",        v_ts.toString( Qt::ISODate )) );
-    if ( !v_jid.full().isEmpty() )
-        e.appendChild( textTag(*doc, "jid",        v_jid.full()) );
+    e.appendChild(textTag(*doc, "originLocal", v_originLocal));
+    e.appendChild(textTag(*doc, "late", v_late));
+    e.appendChild(textTag(*doc, "ts", v_ts.toString(Qt::ISODate)));
+    if (!v_jid.full().isEmpty())
+        e.appendChild(textTag(*doc, "jid", v_jid.full()));
 
-    if ( v_account )
-        e.appendChild( textTag(*doc, "account",    v_account->name()) );
+    if (v_account)
+        e.appendChild(textTag(*doc, "account", v_account->name()));
 
     return e;
 }
 
 bool PsiEvent::fromXml(PsiCon *psi, PsiAccount *account, const QDomElement *e)
 {
-    if ( e->tagName() != "event" )
+    if (e->tagName() != "event")
         return false;
-    if ( e->attribute("type") != metaObject()->className() )
+    if (e->attribute("type") != metaObject()->className())
         return false;
 
     readBoolEntry(*e, "originLocal", &v_originLocal);
     readBoolEntry(*e, "late", &v_late);
     v_ts  = QDateTime::fromString(subTagText(*e, "ts"), Qt::ISODate);
-    v_jid = Jid( subTagText(*e, "jid") );
+    v_jid = Jid(subTagText(*e, "jid"));
 
-    if ( account ) {
+    if (account) {
         v_account = account;
-    }
-    else if ( hasSubTag(*e, "account") ) {
+    } else if (hasSubTag(*e, "account")) {
         QString accName = subTagText(*e, "account");
-        foreach(PsiAccount* account, psi->contactList()->accounts()) {
-            if ( account->name() == accName ) {
+        for (PsiAccount *account : psi->contactList()->accounts()) {
+            if (account->name() == accName) {
                 v_account = account;
                 break;
             }
@@ -170,94 +134,55 @@ bool PsiEvent::fromXml(PsiCon *psi, PsiAccount *account, const QDomElement *e)
     return true;
 }
 
-int PsiEvent::priority() const
-{
-    return EventPriorityDontCare;
-}
+int PsiEvent::priority() const { return EventPriorityDontCare; }
 
-QString PsiEvent::description() const
-{
-    return QString();
-}
+QString PsiEvent::description() const { return QString(); }
 
-PsiEvent *PsiEvent::copy() const
-{
-    return nullptr;
-}
+PsiEvent *PsiEvent::copy() const { return nullptr; }
 
 #ifdef PSI_PLUGINS
 //----------------------------------------------------------------------------
 // PluginEvent
 //----------------------------------------------------------------------------
-PluginEvent::PluginEvent(int account, const QString& jid, const QString& descr, PsiAccount *acc)
-    : PsiEvent(acc)
-    , descr_(descr)
-    , _account(account)
+PluginEvent::PluginEvent(int account, const QString &jid, const QString &descr, PsiAccount *acc) :
+    PsiEvent(acc), descr_(descr), _account(account)
 {
     from_ = XMPP::Jid(jid);
 }
 
-PluginEvent::~PluginEvent()
-{
+PluginEvent::~PluginEvent() { }
 
-}
+int PluginEvent::type() const { return Plugin; }
 
-int PluginEvent::type() const
-{
-    return Plugin;
-}
+XMPP::Jid PluginEvent::from() const { return from_; }
 
-XMPP::Jid PluginEvent::from() const
-{
-    return from_;
-}
+void PluginEvent::setFrom(const XMPP::Jid &j) { from_ = j; }
 
-void PluginEvent::setFrom(const XMPP::Jid &j)
-{
-    from_ = j;
-}
+void PluginEvent::activate() { emit activated(from_.full(), _account); }
 
-void PluginEvent::activate()
-{
-    emit activated(from_.full(), _account);
-}
-
-QString PluginEvent::description() const
-{
-    return descr_;
-}
+QString PluginEvent::description() const { return descr_; }
 #endif
 
 //----------------------------------------------------------------------------
 // MessageEvent
 //----------------------------------------------------------------------------
 
-MessageEvent::MessageEvent(PsiAccount *acc)
-: PsiEvent(acc)
-{
-    v_sentToChatWindow = false;
-}
+MessageEvent::MessageEvent(PsiAccount *acc) : PsiEvent(acc) { v_sentToChatWindow = false; }
 
-MessageEvent::MessageEvent(const XMPP::Message &m, PsiAccount *acc)
-: PsiEvent(acc)
+MessageEvent::MessageEvent(const XMPP::Message &m, PsiAccount *acc) : PsiEvent(acc)
 {
     v_sentToChatWindow = false;
     setMessage(m);
 }
 
-MessageEvent::MessageEvent(const MessageEvent &from)
-: PsiEvent(from), v_m(from.v_m), v_sentToChatWindow(from.v_sentToChatWindow)
+MessageEvent::MessageEvent(const MessageEvent &from) :
+    PsiEvent(from), v_m(from.v_m), v_sentToChatWindow(from.v_sentToChatWindow)
 {
 }
 
-MessageEvent::~MessageEvent()
-{
-}
+MessageEvent::~MessageEvent() { }
 
-int MessageEvent::type() const
-{
-    return Message;
-}
+int MessageEvent::type() const { return Message; }
 
 Jid MessageEvent::from() const
 {
@@ -268,36 +193,23 @@ Jid MessageEvent::from() const
     return v_m.displayJid();
 }
 
-void MessageEvent::setFrom(const Jid &j)
-{
-    v_m.setFrom(j);
-}
+void MessageEvent::setFrom(const Jid &j) { v_m.setFrom(j); }
 
-QString MessageEvent::nick() const
-{
-    return v_m.displayMessage().nick();
-}
+QString MessageEvent::nick() const { return v_m.displayMessage().nick(); }
 
-bool MessageEvent::sentToChatWindow() const
-{
-    return v_sentToChatWindow;
-}
+void MessageEvent::setNick(const QString &nick) { v_m.displayMessage().setNick(nick); }
 
-const XMPP::Message & MessageEvent::message() const
-{
-    return v_m;
-}
+bool MessageEvent::sentToChatWindow() const { return v_sentToChatWindow; }
 
-void MessageEvent::setSentToChatWindow(bool b)
-{
-    v_sentToChatWindow = b;
-}
+const XMPP::Message &MessageEvent::message() const { return v_m; }
+
+void MessageEvent::setSentToChatWindow(bool b) { v_sentToChatWindow = b; }
 
 void MessageEvent::setMessage(const XMPP::Message &m)
 {
     v_m = m;
-    setTimeStamp ( v_m.timeStamp() );
-    setLate ( v_m.spooled() );
+    setTimeStamp(v_m.timeStamp());
+    setLate(v_m.spooled());
 }
 
 QDomElement MessageEvent::toXml(QDomDocument *doc) const
@@ -305,21 +217,21 @@ QDomElement MessageEvent::toXml(QDomDocument *doc) const
     QDomElement e = PsiEvent::toXml(doc);
 
     DummyStream stream;
-    Stanza s = v_m.toStanza(&stream);
-    e.appendChild( s.element() );
+    Stanza      s = v_m.toStanza(&stream);
+    e.appendChild(s.element());
 
     return e;
 }
 
 bool MessageEvent::fromXml(PsiCon *psi, PsiAccount *account, const QDomElement *e)
 {
-    if ( !PsiEvent::fromXml(psi, account, e) )
+    if (!PsiEvent::fromXml(psi, account, e))
         return false;
 
     QDomElement msg = (*e).firstChildElement("message");
     if (!msg.isNull()) {
         DummyStream stream;
-        Stanza s = stream.createStanza(addCorrectNS(msg));
+        Stanza      s = stream.createStanza(addCorrectNS(msg));
         v_m.fromStanza(s);
 
         // if message was not spooled, it will be initialized with the
@@ -346,13 +258,14 @@ int MessageEvent::priority() const
 
 QString MessageEvent::description() const
 {
-    QStringList result;
+    QStringList         result;
     const XMPP::Message d_m = v_m.displayMessage();
     if (!d_m.subject().isEmpty())
         result << d_m.subject();
     if (!d_m.body().isEmpty())
         result << d_m.body();
-    foreach (const Url &url, d_m.urlList()) {
+    const auto &urls = d_m.urlList();
+    for (const Url &url : urls) {
         QString text = url.url();
         if (!url.desc().isEmpty())
             text += QString("(%1)").arg(url.desc());
@@ -361,93 +274,63 @@ QString MessageEvent::description() const
     return result.join("\n");
 }
 
-PsiEvent *MessageEvent::copy() const
-{
-    return new MessageEvent( *this );
-}
+PsiEvent *MessageEvent::copy() const { return new MessageEvent(*this); }
 
 //----------------------------------------------------------------------------
 // AuthEvent
 //----------------------------------------------------------------------------
 
-AuthEvent::AuthEvent(const Jid &j, const QString &authType, PsiAccount *acc)
-    : PsiEvent(acc)
+AuthEvent::AuthEvent(const Jid &j, const QString &authType, PsiAccount *acc) : PsiEvent(acc)
 {
-    v_from = j;
-    v_at = authType;
+    v_from             = j;
+    v_at               = authType;
     v_sentToChatWindow = false;
 }
 
-AuthEvent::AuthEvent(const AuthEvent &from)
-    : PsiEvent(from)
-    , v_from(from.v_from)
-    , v_nick(from.v_nick)
-    , v_at(from.v_at)
-    , v_sentToChatWindow(from.v_sentToChatWindow)
+AuthEvent::AuthEvent(const AuthEvent &from) :
+    PsiEvent(from), v_from(from.v_from), v_nick(from.v_nick), v_at(from.v_at),
+    v_sentToChatWindow(from.v_sentToChatWindow)
 {
 }
 
-AuthEvent::~AuthEvent()
-{
-}
+AuthEvent::~AuthEvent() { }
 
-int AuthEvent::type() const
-{
-    return Auth;
-}
+int AuthEvent::type() const { return Auth; }
 
-Jid AuthEvent::from() const
-{
-    return v_from;
-}
+Jid AuthEvent::from() const { return v_from; }
 
-void AuthEvent::setFrom(const Jid &j)
-{
-    v_from = j;
-}
+void AuthEvent::setFrom(const Jid &j) { v_from = j; }
 
-const QString& AuthEvent::nick() const
-{
-    return v_nick;
-}
+const QString &AuthEvent::nick() const { return v_nick; }
 
-void AuthEvent::setNick(const QString &nick)
-{
-    v_nick = nick;
-}
+void AuthEvent::setNick(const QString &nick) { v_nick = nick; }
 
-QString AuthEvent::authType() const
-{
-    return v_at;
-}
+QString AuthEvent::authType() const { return v_at; }
 
 QDomElement AuthEvent::toXml(QDomDocument *doc) const
 {
     QDomElement e = PsiEvent::toXml(doc);
 
-    e.appendChild( textTag(*doc, "from",     v_from.full()) );
-    e.appendChild( textTag(*doc, "authType", v_at) );
-    e.appendChild( textTag(*doc, "nick", v_nick) );
+    e.appendChild(textTag(*doc, "from", v_from.full()));
+    e.appendChild(textTag(*doc, "authType", v_at));
+    e.appendChild(textTag(*doc, "nick", v_nick));
 
     return e;
 }
 
 bool AuthEvent::fromXml(PsiCon *psi, PsiAccount *account, const QDomElement *e)
 {
-    if ( !PsiEvent::fromXml(psi, account, e) )
+    if (!PsiEvent::fromXml(psi, account, e))
         return false;
 
-    v_from = Jid( subTagText(*e, "from") );
+    v_from = Jid(subTagText(*e, "from"));
     v_at   = subTagText(*e, "authType");
     v_nick = subTagText(*e, "nick");
 
     return true;
 }
 
-int AuthEvent::priority() const
-{
-    return eventPriorityAuth;
-}
+int AuthEvent::priority() const { return eventPriorityAuth; }
 
 QString AuthEvent::description() const
 {
@@ -464,171 +347,111 @@ QString AuthEvent::description() const
     return result;
 }
 
-PsiEvent *AuthEvent::copy() const
-{
-    return new AuthEvent( *this );
-}
+PsiEvent *AuthEvent::copy() const { return new AuthEvent(*this); }
 
-void AuthEvent::setSentToChatWindow(bool b)
-{
-    v_sentToChatWindow = b;
-}
+void AuthEvent::setSentToChatWindow(bool b) { v_sentToChatWindow = b; }
 
-bool AuthEvent::sentToChatWindow() const
-{
-    return v_sentToChatWindow;
-}
+bool AuthEvent::sentToChatWindow() const { return v_sentToChatWindow; }
 
 //----------------------------------------------------------------------------
 // FileEvent
 //----------------------------------------------------------------------------
-FileEvent::FileEvent(const Jid &j, FileTransfer *_ft, PsiAccount *acc) :
-    PsiEvent(acc)
+FileEvent::FileEvent(const Jid &j, FileTransfer *_ft, PsiAccount *acc) : PsiEvent(acc)
 {
     v_from = j;
-    ft = _ft;
+    ft     = _ft;
 }
 
-FileEvent::FileEvent(const Jid &j, XMPP::Jingle::Session *jingleFt, PsiAccount *acc) :
-    PsiEvent(acc)
+FileEvent::FileEvent(const Jid &j, XMPP::Jingle::Session *jingleFt, PsiAccount *acc) : PsiEvent(acc)
 {
-    v_from = j;
+    v_from         = j;
     this->jingleFt = jingleFt;
 }
 
-FileEvent::~FileEvent()
-{
-    delete ft;
-}
+FileEvent::~FileEvent() { delete ft; }
 
-FileEvent::FileEvent(const FileEvent &from)
-: PsiEvent(from.account())
+FileEvent::FileEvent(const FileEvent &from) : PsiEvent(from.account())
 {
     v_from = from.v_from;
-    ft = from.ft->copy();
+    ft     = from.ft->copy();
 }
 
-int FileEvent::priority() const
-{
-    return eventPriorityFile;
-}
+int FileEvent::priority() const { return eventPriorityFile; }
 
-Jid FileEvent::from() const
-{
-    return v_from;
-}
+Jid FileEvent::from() const { return v_from; }
 
-void FileEvent::setFrom(const Jid &j)
-{
-    v_from = j;
-}
+void FileEvent::setFrom(const Jid &j) { v_from = j; }
 
 FileTransfer *FileEvent::takeFileTransfer()
 {
     FileTransfer *_ft = ft;
-    ft = nullptr;
+    ft                = nullptr;
     return _ft;
 }
 
 XMPP::Jingle::Session *FileEvent::takeJingleSession()
 {
     Jingle::Session *s = jingleFt.data();
-    jingleFt = nullptr;
+    jingleFt           = nullptr;
     return s;
 }
 
-QString FileEvent::description() const
-{
-    return tr("This user wants to send you a file.");
-}
+QString FileEvent::description() const { return tr("This user wants to send you a file."); }
 
-PsiEvent *FileEvent::copy() const
-{
-    return new FileEvent( *this );
-}
+PsiEvent *FileEvent::copy() const { return new FileEvent(*this); }
 
 //----------------------------------------------------------------------------
 // HttpAuthEvent
 //----------------------------------------------------------------------------
 
-HttpAuthEvent::HttpAuthEvent(const PsiHttpAuthRequest &req, PsiAccount *acc)
-:MessageEvent(acc), v_req(req)
+HttpAuthEvent::HttpAuthEvent(const PsiHttpAuthRequest &req, PsiAccount *acc) : MessageEvent(acc), v_req(req)
 {
     const XMPP::Stanza &s = req.stanza();
 
     XMPP::Message m;
 
-    if ( s.kind() == XMPP::Stanza::Message ) {
+    if (s.kind() == XMPP::Stanza::Message) {
         m.fromStanza(s);
-    }
-    else {
+    } else {
         m.setFrom(s.from());
         m.setTimeStamp(QDateTime::currentDateTime());
-        m.setHttpAuthRequest(HttpAuthRequest(s.element().elementsByTagNameNS("http://jabber.org/protocol/http-auth", "confirm").item(0).toElement()));
+        m.setHttpAuthRequest(HttpAuthRequest(
+            s.element().elementsByTagNameNS("http://jabber.org/protocol/http-auth", "confirm").item(0).toElement()));
     }
 
     setMessage(m);
 }
 
-HttpAuthEvent::~HttpAuthEvent()
-{
-}
+HttpAuthEvent::~HttpAuthEvent() { }
 
-QString HttpAuthEvent::description() const
-{
-    return tr("HTTP Authentication Request");
-}
+QString HttpAuthEvent::description() const { return tr("HTTP Authentication Request"); }
 
 //----------------------------------------------------------------------------
 // RosterExchangeEvent
 //----------------------------------------------------------------------------
-RosterExchangeEvent::RosterExchangeEvent(const Jid &j, const RosterExchangeItems& i, const QString& text, PsiAccount *acc)
-:PsiEvent(acc)
+RosterExchangeEvent::RosterExchangeEvent(const Jid &j, const RosterExchangeItems &i, const QString &text,
+                                         PsiAccount *acc) : PsiEvent(acc)
 {
-    v_from = j;
+    v_from  = j;
     v_items = i;
-    v_text = text;
+    v_text  = text;
 }
 
-int RosterExchangeEvent::priority() const
-{
-    return eventPriorityRosterExchange;
-}
+int RosterExchangeEvent::priority() const { return eventPriorityRosterExchange; }
 
-Jid RosterExchangeEvent::from() const
-{
-    return v_from;
-}
+Jid RosterExchangeEvent::from() const { return v_from; }
 
-void RosterExchangeEvent::setFrom(const Jid &j)
-{
-    v_from = j;
-}
+void RosterExchangeEvent::setFrom(const Jid &j) { v_from = j; }
 
-const RosterExchangeItems& RosterExchangeEvent::rosterExchangeItems() const
-{
-    return v_items;
-}
+const RosterExchangeItems &RosterExchangeEvent::rosterExchangeItems() const { return v_items; }
 
-void RosterExchangeEvent::setRosterExchangeItems(const RosterExchangeItems& i)
-{
-    v_items = i;
-}
+void RosterExchangeEvent::setRosterExchangeItems(const RosterExchangeItems &i) { v_items = i; }
 
-const QString& RosterExchangeEvent::text() const
-{
-    return v_text;
-}
+const QString &RosterExchangeEvent::text() const { return v_text; }
 
-void RosterExchangeEvent::setText(const QString& text)
-{
-    v_text = text;
-}
+void RosterExchangeEvent::setText(const QString &text) { v_text = text; }
 
-QString RosterExchangeEvent::description() const
-{
-    return tr("This user wants to modify your roster.");
-}
+QString RosterExchangeEvent::description() const { return tr("This user wants to modify your roster."); }
 
 //----------------------------------------------------------------------------
 // Status
@@ -669,24 +492,23 @@ void StatusEvent::setStatus(const XMPP::Status& s)
 // EventIdGenerator
 //----------------------------------------------------------------------------
 
-class EventIdGenerator : public QObject
-{
+class EventIdGenerator : public QObject {
     Q_OBJECT
 public:
-    static EventIdGenerator* instance();
+    static EventIdGenerator *instance();
 
     int getId();
 
 private:
-    static EventIdGenerator* instance_;
-    int id_;
+    static EventIdGenerator *instance_;
+    int                      id_;
 
     EventIdGenerator();
 };
 
-EventIdGenerator* EventIdGenerator::instance_ = nullptr;
+EventIdGenerator *EventIdGenerator::instance_ = nullptr;
 
-EventIdGenerator* EventIdGenerator::instance()
+EventIdGenerator *EventIdGenerator::instance()
 {
     if (!instance_) {
         instance_ = new EventIdGenerator();
@@ -696,11 +518,7 @@ EventIdGenerator* EventIdGenerator::instance()
 
 static const QString idGeneratorOptionPath = "options.last-event-id";
 
-EventIdGenerator::EventIdGenerator()
-    : QObject(QCoreApplication::instance())
-{
-    id_ = 0;
-}
+EventIdGenerator::EventIdGenerator() : QObject(QCoreApplication::instance()) { id_ = 0; }
 
 int EventIdGenerator::getId()
 {
@@ -718,39 +536,28 @@ int EventIdGenerator::getId()
 //----------------------------------------------------------------------------
 // AvCallEvent
 //----------------------------------------------------------------------------
-AvCallEvent::AvCallEvent(const XMPP::Jid &j, AvCall *_sess, PsiAccount *acc)
-:PsiEvent(acc)
+AvCallEvent::AvCallEvent(const XMPP::Jid &j, AvCall *_sess, PsiAccount *acc) : PsiEvent(acc)
 {
     v_from = j;
-    sess = _sess;
+    sess   = _sess;
 }
 
-AvCallEvent::AvCallEvent(const AvCallEvent &from)
-:PsiEvent(from.account())
+AvCallEvent::AvCallEvent(const AvCallEvent &from) : PsiEvent(from.account())
 {
     v_from = from.v_from;
-    sess = new AvCall(*from.sess);
+    sess   = new AvCall(*from.sess);
 }
 
-AvCallEvent::~AvCallEvent()
-{
-    delete sess;
-}
+AvCallEvent::~AvCallEvent() { delete sess; }
 
-XMPP::Jid AvCallEvent::from() const
-{
-    return v_from;
-}
+XMPP::Jid AvCallEvent::from() const { return v_from; }
 
-void AvCallEvent::setFrom(const XMPP::Jid &j)
-{
-    v_from = j;
-}
+void AvCallEvent::setFrom(const XMPP::Jid &j) { v_from = j; }
 
 AvCall *AvCallEvent::takeAvCall()
 {
     AvCall *_sess = sess;
-    sess = nullptr;
+    sess          = nullptr;
     return _sess;
 }
 
@@ -759,15 +566,9 @@ int AvCallEvent::priority() const
     return eventPriorityFile; // FIXME
 }
 
-QString AvCallEvent::description() const
-{
-    return tr("The user is calling you.");
-}
+QString AvCallEvent::description() const { return tr("The user is calling you."); }
 
-PsiEvent *AvCallEvent::copy() const
-{
-    return new AvCallEvent(*this);
-}
+PsiEvent *AvCallEvent::copy() const { return new AvCallEvent(*this); }
 
 //----------------------------------------------------------------------------
 // EventItem
@@ -782,46 +583,30 @@ EventItem::EventItem(const PsiEvent::Ptr &_e)
 
 EventItem::EventItem(const EventItem &from)
 {
-    e = from.e;
+    e    = from.e;
     v_id = from.v_id;
 }
 
-EventItem::~EventItem()
-{
-}
+EventItem::~EventItem() { }
 
-int EventItem::id() const
-{
-    return v_id;
-}
+int EventItem::id() const { return v_id; }
 
-PsiEvent::Ptr EventItem::event() const
-{
-    return e;
-}
+PsiEvent::Ptr EventItem::event() const { return e; }
 
 //----------------------------------------------------------------------------
 // EventQueue
 //----------------------------------------------------------------------------
 
-EventQueue::EventQueue(PsiAccount *account)
-    : psi_(nullptr)
-    , account_(nullptr)
-    , enabled_(false)
+EventQueue::EventQueue(PsiAccount *account) : psi_(nullptr), account_(nullptr), enabled_(false)
 {
     account_ = account;
-    psi_ = account_->psi();
+    psi_     = account_->psi();
 }
 
-EventQueue::EventQueue(const EventQueue &from)
-    : QObject()
-    , list_()
-    , psi_(nullptr)
-    , account_(nullptr)
-    , enabled_(false)
+EventQueue::EventQueue(const EventQueue &from) : QObject(), list_(), psi_(nullptr), account_(nullptr), enabled_(false)
 {
     Q_ASSERT(false);
-    Q_UNUSED(from);
+    Q_UNUSED(from)
 }
 
 EventQueue::~EventQueue()
@@ -831,27 +616,21 @@ EventQueue::~EventQueue()
     list_.clear();
 }
 
-bool EventQueue::enabled() const
-{
-    return enabled_;
-}
+bool EventQueue::enabled() const { return enabled_; }
 
-void EventQueue::setEnabled(bool enabled)
-{
-    enabled_ = enabled;
-}
+void EventQueue::setEnabled(bool enabled) { enabled_ = enabled; }
 
-EventQueue &EventQueue::operator= (const EventQueue &from)
+EventQueue &EventQueue::operator=(const EventQueue &from)
 {
-    while(!list_.isEmpty())
+    while (!list_.isEmpty())
         delete list_.takeFirst();
 
-    psi_ = from.psi_;
+    psi_     = from.psi_;
     account_ = from.account_;
 
-    foreach(EventItem *i, from.list_) {
+    for (EventItem *i : from.list_) {
         PsiEvent::Ptr e = i->event();
-        enqueue( e );
+        enqueue(e);
     }
 
     return *this;
@@ -863,20 +642,17 @@ int EventQueue::nextId() const
         return -1;
 
     EventItem *i = list_.first();
-    if(!i)
+    if (!i)
         return -1;
     return i->id();
 }
 
-int EventQueue::count() const
-{
-    return list_.count();
-}
+int EventQueue::count() const { return list_.count(); }
 
 int EventQueue::contactCount() const
 {
     QSet<QString> set;
-    foreach(EventItem *i, list_) {
+    for (EventItem *i : list_) {
         set.insert(i->event()->jid().bare());
     }
     return set.size();
@@ -885,9 +661,9 @@ int EventQueue::contactCount() const
 int EventQueue::count(const Jid &j, bool compareRes) const
 {
     int total = 0;
-    foreach(EventItem *i, list_) {
+    for (EventItem *i : list_) {
         Jid j2(i->event()->jid());
-        if(j.compare(j2, compareRes))
+        if (j.compare(j2, compareRes))
             ++total;
     }
     return total;
@@ -897,12 +673,12 @@ void EventQueue::enqueue(const PsiEvent::Ptr &e)
 {
     EventItem *i = new EventItem(e);
 
-    int prior  = e->priority();
+    int  prior = e->priority();
     bool found = false;
 
     // skip all with higher or equal priority
-    foreach(EventItem *ei, list_) {
-        if (ei && ei->event()->priority() < prior ) {
+    for (EventItem *ei : std::as_const(list_)) {
+        if (ei && ei->event()->priority() < prior) {
             list_.insert(list_.indexOf(ei), i);
             found = true;
             break;
@@ -910,7 +686,7 @@ void EventQueue::enqueue(const PsiEvent::Ptr &e)
     }
 
     // everything else
-    if ( !found )
+    if (!found)
         list_.append(i);
 
     emit queueChanged();
@@ -918,11 +694,11 @@ void EventQueue::enqueue(const PsiEvent::Ptr &e)
 
 void EventQueue::dequeue(const PsiEvent::Ptr &e)
 {
-    if ( !e )
+    if (!e)
         return;
 
-    foreach(EventItem *i, list_) {
-        if ( e == i->event() ) {
+    for (EventItem *i : std::as_const(list_)) {
+        if (e == i->event()) {
             list_.removeAll(i);
             emit queueChanged();
             delete i;
@@ -933,10 +709,10 @@ void EventQueue::dequeue(const PsiEvent::Ptr &e)
 
 PsiEvent::Ptr EventQueue::dequeue(const Jid &j, bool compareRes)
 {
-    foreach(EventItem *i, list_) {
+    for (EventItem *i : std::as_const(list_)) {
         PsiEvent::Ptr e = i->event();
-        Jid j2(e->jid());
-        if(j.compare(j2, compareRes)) {
+        Jid           j2(e->jid());
+        if (j.compare(j2, compareRes)) {
             list_.removeAll(i);
             emit queueChanged();
             delete i;
@@ -949,10 +725,10 @@ PsiEvent::Ptr EventQueue::dequeue(const Jid &j, bool compareRes)
 
 PsiEvent::Ptr EventQueue::peek(const Jid &j, bool compareRes) const
 {
-    foreach(EventItem *i, list_) {
+    for (EventItem *i : list_) {
         PsiEvent::Ptr e = i->event();
-        Jid j2(e->jid());
-        if(j.compare(j2, compareRes)) {
+        Jid           j2(e->jid());
+        if (j.compare(j2, compareRes)) {
             return e;
         }
     }
@@ -966,7 +742,7 @@ PsiEvent::Ptr EventQueue::dequeueNext()
         return PsiEvent::Ptr();
 
     EventItem *i = list_.first();
-    if(!i)
+    if (!i)
         return PsiEvent::Ptr();
     PsiEvent::Ptr e = i->event();
     list_.removeAll(i);
@@ -981,16 +757,16 @@ PsiEvent::Ptr EventQueue::peekNext() const
         return PsiEvent::Ptr();
 
     EventItem *i = list_.first();
-    if(!i)
+    if (!i)
         return PsiEvent::Ptr();
     return i->event();
 }
 
 PsiEvent::Ptr EventQueue::peekFirstChat(const Jid &j, bool compareRes) const
 {
-    foreach(EventItem *i, list_) {
+    for (EventItem *i : list_) {
         PsiEvent::Ptr e = i->event();
-        if(e->type() == PsiEvent::Message) {
+        if (e->type() == PsiEvent::Message) {
             MessageEvent::Ptr me = e.staticCast<MessageEvent>();
             if (j.compare(me->from(), compareRes) && me->message().displayMessage().type() == QLatin1String("chat"))
                 return e;
@@ -1000,22 +776,21 @@ PsiEvent::Ptr EventQueue::peekFirstChat(const Jid &j, bool compareRes) const
     return PsiEvent::Ptr();
 }
 
-bool EventQueue::hasChats(const Jid &j, bool compareRes) const
-{
-    return (peekFirstChat(j, compareRes) ? true: false);
-}
+bool EventQueue::hasChats(const Jid &j, bool compareRes) const { return (peekFirstChat(j, compareRes) ? true : false); }
 
 // this function extracts all chats from the queue, and returns a list of queue positions
 void EventQueue::extractChats(QList<PsiEvent::Ptr> *el, const Jid &j, bool compareRes, bool removeEvents)
 {
     bool changed = false;
 
-    for(QList<EventItem*>::Iterator it = list_.begin(); it != list_.end();) {
-        PsiEvent::Ptr e = (*it)->event();
-        bool extract = false;
-        if(e->type() == PsiEvent::Message) {
+    for (QList<EventItem *>::Iterator it = list_.begin(); it != list_.end();) {
+        PsiEvent::Ptr e       = (*it)->event();
+        bool          extract = false;
+        if (e->type() == PsiEvent::Message) {
             MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-            if(j.compare(me->from(), compareRes) && me->message().displayMessage().type() == QLatin1String("chat")) { // FIXME: refactor-refactor-refactor
+            if (j.compare(me->from(), compareRes)
+                && me->message().displayMessage().type()
+                    == QLatin1String("chat")) { // FIXME: refactor-refactor-refactor
                 extract = true;
             }
         }
@@ -1025,8 +800,8 @@ void EventQueue::extractChats(QList<PsiEvent::Ptr> *el, const Jid &j, bool compa
         }
 
         if (extract && removeEvents) {
-            EventItem* ei = *it;
-            it = list_.erase(it);
+            EventItem *ei = *it;
+            it            = list_.erase(it);
             delete ei;
             changed = true;
             continue;
@@ -1035,13 +810,13 @@ void EventQueue::extractChats(QList<PsiEvent::Ptr> *el, const Jid &j, bool compa
         ++it;
     }
 
-    if ( changed )
+    if (changed)
         emit queueChanged();
 }
 
 void EventQueue::extractByJid(QList<PsiEvent::Ptr> *list, const XMPP::Jid &jid)
 {
-    for (QList<EventItem*>::Iterator it = list_.begin(); it != list_.end(); it++) {
+    for (QList<EventItem *>::Iterator it = list_.begin(); it != list_.end(); it++) {
         PsiEvent::Ptr e = (*it)->event();
         if (jid.compare(e->from(), false)) {
             list->append(e);
@@ -1049,24 +824,20 @@ void EventQueue::extractByJid(QList<PsiEvent::Ptr> *list, const XMPP::Jid &jid)
     }
 }
 
-
 // this function extracts all messages from the queue, and returns a list of them
-void EventQueue::extractMessages(QList<PsiEvent::Ptr> *el)
-{
-    extractByType(PsiEvent::Message, el);
-}
+void EventQueue::extractMessages(QList<PsiEvent::Ptr> *el) { extractByType(PsiEvent::Message, el); }
 
 // this function extracts all auths from the queue, and returns a list of them
 void EventQueue::extractByType(int type, QList<PsiEvent::Ptr> *el)
 {
     bool changed = false;
 
-    for(QList<EventItem*>::Iterator it = list_.begin(); it != list_.end();) {
+    for (QList<EventItem *>::Iterator it = list_.begin(); it != list_.end();) {
         PsiEvent::Ptr e = (*it)->event();
-        if(e->type() == type) {
+        if (e->type() == type) {
             el->append(e);
-            EventItem* ei = *it;
-            it = list_.erase(it);
+            EventItem *ei = *it;
+            it            = list_.erase(it);
             delete ei;
             changed = true;
             continue;
@@ -1074,22 +845,22 @@ void EventQueue::extractByType(int type, QList<PsiEvent::Ptr> *el)
         ++it;
     }
 
-    if ( changed )
+    if (changed)
         emit queueChanged();
 }
 
 void EventQueue::printContent() const
 {
-    foreach(EventItem *i, list_) {
+    for (EventItem *i : list_) {
         PsiEvent::Ptr e = i->event();
-        printf("  %d: (%d) from=[%s] jid=[%s]\n", i->id(), e->type(), qPrintable(e->from().full()), qPrintable(e->jid().full()));
+        printf("  %d: (%d) from=[%s] jid=[%s]\n", i->id(), e->type(), qPrintable(e->from().full()),
+               qPrintable(e->jid().full()));
     }
 }
 
 void EventQueue::clear()
 {
-    while(!list_.isEmpty())
-    {
+    while (!list_.isEmpty()) {
         EventItem *i = list_.takeFirst();
         delete i;
     }
@@ -1102,20 +873,19 @@ void EventQueue::clear(const Jid &j, bool compareRes)
 {
     bool changed = false;
 
-    for(QList<EventItem*>::Iterator it = list_.begin(); it != list_.end();) {
+    for (QList<EventItem *>::Iterator it = list_.begin(); it != list_.end();) {
         PsiEvent::Ptr e = (*it)->event();
-        Jid j2(e->jid());
-        if(j.compare(j2, compareRes)) {
-            EventItem* ei = *it;
-            it = list_.erase(it);
+        Jid           j2(e->jid());
+        if (j.compare(j2, compareRes)) {
+            EventItem *ei = *it;
+            it            = list_.erase(it);
             delete ei;
             changed = true;
-        }
-        else
+        } else
             ++it;
     }
 
-    if ( changed )
+    if (changed)
         emit queueChanged();
 }
 
@@ -1125,9 +895,9 @@ QDomElement EventQueue::toXml(QDomDocument *doc) const
     e.setAttribute("version", "1.0");
     e.appendChild(textTag(doc, "progver", ApplicationInfo::version()));
 
-    foreach(EventItem *i, list_) {
+    for (EventItem *i : list_) {
         QDomElement event = i->event()->toXml(doc);
-        e.appendChild( event );
+        e.appendChild(event);
     }
 
     return e;
@@ -1135,54 +905,53 @@ QDomElement EventQueue::toXml(QDomDocument *doc) const
 
 bool EventQueue::fromXml(const QDomElement *q)
 {
-    if ( !q )
+    if (!q)
         return false;
 
-    if ( q->tagName() != "eventQueue" )
+    if (q->tagName() != "eventQueue")
         return false;
 
-    if ( q->attribute("version") != "1.0" )
+    if (q->attribute("version") != "1.0")
         return false;
 
-    QString progver = subTagText(*q, "progver");
+    [[maybe_unused]] QString progver = subTagText(*q, "progver");
 
-    for(QDomNode n = q->firstChild(); !n.isNull(); n = n.nextSibling()) {
+    for (QDomNode n = q->firstChild(); !n.isNull(); n = n.nextSibling()) {
         QDomElement e = n.toElement();
-        if( e.isNull() )
+        if (e.isNull())
             continue;
 
-        if ( e.tagName() != "event" )
+        if (e.tagName() != "event")
             continue;
 
         PsiEvent::Ptr event;
-        QString eventType = e.attribute("type");
-        if ( eventType == "MessageEvent" ) {
+        QString       eventType = e.attribute("type");
+        if (eventType == "MessageEvent") {
             event = MessageEvent::Ptr(new MessageEvent(nullptr));
-            if ( !event->fromXml(psi_, account_, &e) ) {
-                //delete event;
+            if (!event->fromXml(psi_, account_, &e)) {
+                // delete event;
                 event.clear();
             }
-        }
-        else if ( eventType == "AuthEvent" ) {
+        } else if (eventType == "AuthEvent") {
             event = AuthEvent::Ptr(new AuthEvent("", "", nullptr));
-            if ( !event->fromXml(psi_, account_, &e) ) {
-                //delete event;
+            if (!event->fromXml(psi_, account_, &e)) {
+                // delete event;
                 event.clear();
             }
         }
 
-        if ( event )
-            emit eventFromXml( event );
+        if (event)
+            emit eventFromXml(event);
     }
 
     return true;
 }
 
-QList<EventQueue::PsiEventId> EventQueue::eventsFor(const XMPP::Jid& jid, bool compareRes)
+QList<EventQueue::PsiEventId> EventQueue::eventsFor(const XMPP::Jid &jid, bool compareRes)
 {
     QList<PsiEventId> result;
 
-    foreach(EventItem* i, list_) {
+    for (EventItem *i : std::as_const(list_)) {
         if (i->event()->from().compare(jid, compareRes))
             result << QPair<int, PsiEvent::Ptr>(i->id(), i->event());
     }
@@ -1193,7 +962,7 @@ QList<EventQueue::PsiEventId> EventQueue::eventsFor(const XMPP::Jid& jid, bool c
 bool EventQueue::toFile(const QString &fname)
 {
     QDomDocument doc;
-    QDomElement element = toXml(&doc);
+    QDomElement  element = toXml(&doc);
     doc.appendChild(element);
 
     AtomicXmlFile f(fname);
@@ -1203,7 +972,7 @@ bool EventQueue::toFile(const QString &fname)
 bool EventQueue::fromFile(const QString &fname)
 {
     AtomicXmlFile f(fname);
-    QDomDocument doc;
+    QDomDocument  doc;
     if (!f.loadDocument(&doc))
         return false;
 

@@ -1,0 +1,83 @@
+<ui version="4.0" >
+ <class>GroupChatBrowseWindowUI</class>
+ <widget class="QWidget" name="GroupChatBrowseWindowUI" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>411</width>
+    <height>296</height>
+   </rect>
+  </property>
+  <property name="windowTitle" >
+   <string>Groupchat</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout" >
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout" >
+     <item>
+      <widget class="QLabel" name="lb_server" >
+       <property name="text" >
+        <string>Groupchat server:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="le_server" />
+     </item>
+     <item>
+      <widget class="QPushButton" name="pb_browse" >
+       <property name="text" >
+        <string>&amp;Browse</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QTreeView" name="tv_rooms" />
+   </item>
+   <item>
+    <layout class="QFormLayout" name="formLayout" >
+     <item row="0" column="0" >
+      <widget class="QLabel" name="lb_room" >
+       <property name="text" >
+        <string>Specify groupchat name manually:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1" >
+      <widget class="QLineEdit" name="le_room" />
+     </item>
+     <item row="1" column="0" >
+      <widget class="QLabel" name="lb_nick" >
+       <property name="text" >
+        <string>Show your name in the groupchat as:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1" >
+      <widget class="QLineEdit" name="le_nick" />
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox" >
+     <property name="standardButtons" >
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>le_server</tabstop>
+  <tabstop>pb_browse</tabstop>
+  <tabstop>tv_rooms</tabstop>
+  <tabstop>le_room</tabstop>
+  <tabstop>le_nick</tabstop>
+  <tabstop>buttonBox</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>

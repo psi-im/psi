@@ -6,15 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>477</width>
-    <height>337</height>
+    <width>308</width>
+    <height>106</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>User Info</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../iconsets.qrc">
+   <iconset>
     <normaloff>:/iconsets/system/default/vcard.png</normaloff>:/iconsets/system/default/vcard.png</iconset>
   </property>
   <property name="sizeGripEnabled">
@@ -38,19 +38,6 @@
    </property>
    <item>
     <layout class="QVBoxLayout" name="loContents"/>
-   </item>
-   <item>
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>40</height>
-      </size>
-     </property>
-    </spacer>
    </item>
    <item>
     <layout class="QHBoxLayout">
@@ -82,7 +69,7 @@
        </property>
        <property name="sizeHint" stdset="0">
         <size>
-         <width>190</width>
+         <width>0</width>
          <height>16</height>
         </size>
        </property>
@@ -90,6 +77,12 @@
      </item>
      <item>
       <widget class="IconButton" name="pb_disco" native="true">
+       <property name="minimumSize">
+        <size>
+         <width>20</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="shortcut" stdset="0">
         <string>Alt+D</string>
        </property>
@@ -100,6 +93,12 @@
      </item>
      <item>
       <widget class="IconButton" name="pb_submit" native="true">
+       <property name="minimumSize">
+        <size>
+         <width>20</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text" stdset="0">
         <string>&amp;Publish</string>
        </property>
@@ -107,6 +106,12 @@
      </item>
      <item>
       <widget class="IconButton" name="pb_refresh" native="true">
+       <property name="minimumSize">
+        <size>
+         <width>20</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text" stdset="0">
         <string>&amp;Retrieve</string>
        </property>
@@ -117,6 +122,12 @@
      </item>
      <item>
       <widget class="IconButton" name="pb_close" native="true">
+       <property name="minimumSize">
+        <size>
+         <width>20</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text" stdset="0">
         <string>&amp;Close</string>
        </property>

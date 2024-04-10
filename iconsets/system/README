@@ -72,7 +72,6 @@ psi/edit/delete    - Delete icon
 psi/edit/paste     - Paste icon
 psi/edit           - Edit icon
 psi/edit/trash     - Trash icon
-psi/tip            - Tip of the Day
 psi/browse         - Browse file
 psi/play           - Play sound
 psi/eye            - Used to determine Hidden group visibility

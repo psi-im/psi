@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>504</width>
+    <width>625</width>
     <height>320</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>About Psi</string>
+   <string>About</string>
   </property>
   <layout class="QVBoxLayout">
    <property name="spacing">
@@ -49,7 +49,7 @@
      <item>
       <widget class="IconLabel" name="lb_icon" native="true">
        <property name="psiIconName" stdset="0">
-        <string>psi/logo_48</string>
+        <string notr="true">psi/logo_48</string>
        </property>
       </widget>
      </item>
@@ -121,7 +121,7 @@
           </sizepolicy>
          </property>
          <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Cross-platform XMPP client aimed at experienced users.&lt;br/&gt;&lt;br/&gt;Copyright © 2001-2019 The Psi Team.&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="textFormat">
           <enum>Qt::RichText</enum>
@@ -264,6 +264,31 @@
           <bool>true</bool>
          </property>
         </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab_psiplus">
+      <attribute name="title">
+       <string>About Psi+</string>
+      </attribute>
+      <layout class="QVBoxLayout">
+       <property name="spacing">
+        <number>6</number>
+       </property>
+       <property name="leftMargin">
+        <number>9</number>
+       </property>
+       <property name="topMargin">
+        <number>9</number>
+       </property>
+       <property name="rightMargin">
+        <number>9</number>
+       </property>
+       <property name="bottomMargin">
+        <number>9</number>
+       </property>
+       <item>
+        <widget class="PsiTextView" name="te_psiplus" native="true"/>
        </item>
       </layout>
      </widget>

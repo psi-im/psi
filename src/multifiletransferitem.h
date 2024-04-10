@@ -1,6 +1,6 @@
 /*
  * multifiletransferitem.h - file transfer item
- * Copyright (C) 2019 Sergey Ilinykh
+ * Copyright (C) 2019  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,52 +21,56 @@
 #define MULTIFILETRANSFERITEM_H
 
 #include "multifiletransfermodel.h"
+#include <memory>
 
-#include <QScopedPointer>
-
-class MultiFileTransferItem : public QObject
-{
+class MultiFileTransferItem : public QObject {
     Q_OBJECT
 public:
-
-    MultiFileTransferItem(MultiFileTransferModel::Direction direction, const QString &displayName, quint64 fullSize);
+    MultiFileTransferItem(MultiFileTransferModel::Direction direction, const QString &displayName, quint64 fullSize,
+                          QObject *parent);
     ~MultiFileTransferItem();
 
-    const QString &displayName() const;
-    quint64 fullSize() const;
-    quint64 currentSize() const;
-    QIcon icon() const;
-    QString mediaType() const;
-    QString description() const;
-    quint32 speed() const;
+    const QString                    &displayName() const;
+    quint64                           fullSize() const;
+    quint64                           currentSize() const;
+    quint64                           offset() const; // initial offset
+    QIcon                             icon() const;
+    QString                           mediaType() const;
+    QString                           description() const;
+    quint32                           speed() const;
     MultiFileTransferModel::Direction direction() const;
-    MultiFileTransferModel::State state() const;
-    quint32 timeRemaining() const;
-    QString errorString() const;
-    QString toolTipText() const;
-    QString filePath() const;
-    void setCurrentSize(quint64 newCurrentSize);
-    void setThumbnail(const QIcon &img);
-    void setMediaType(const QString &mediaType);
-    void setDescription(const QString &description);
-    void setFailure(const QString &error);
-    void setSuccess();
+    MultiFileTransferModel::State     state() const;
+    quint32                           timeRemaining() const;
+    QString                           errorString() const;
+    QString                           toolTipText() const;
+    QString                           filePath() const;
+    QIcon                             thumbnail() const;
+    void                              setThumbnail(const QIcon &img);
+    void                              setMediaType(const QString &mediaType);
+    void                              setDescription(const QString &description);
+    void                              setInfo(const QString &html); // to be shown in tooltips
+    void                              setFailure(const QString &error);
+    void                              setSuccess();
     void setState(MultiFileTransferModel::State state, const QString &stateComment = QString());
     void setFileName(const QString &filePath);
-signals:
-    void descriptionChanged(); // user changes description
-    void rejectRequested();    // user selects reject in UI
-    void deleteFileRequested();// user selects delete file from context menu
-    void openDirRequested();   // user wants to open directory with file
-    void openFileRequested();  // user wants to open file
+    void setOffset(quint64 offset); // set initial offset
 
-    void aboutToBeDeleted();   // just this object. mostly to notify the model
-    void updated();            // to notify model mostly
+    void updateStats();
+public slots:
+    void setCurrentSize(quint64 newCurrentSize);
+signals:
+    void descriptionChanged();  // user changes description
+    void rejectRequested();     // user selects reject in UI
+    void deleteFileRequested(); // user selects delete file from context menu
+    void openDirRequested();    // user wants to open directory with file
+    void openFileRequested();   // user wants to open file
+
+    void aboutToBeDeleted(); // just this object. mostly to notify the model
+    void updated();          // to notify model mostly
 private:
     friend class MultiFileTransferModel;
     struct Private;
-    QScopedPointer<Private> d;
+    std::unique_ptr<Private> d;
 };
-
 
 #endif // MULTIFILETRANSFERITEM_H

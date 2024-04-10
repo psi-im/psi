@@ -1,6 +1,6 @@
 /*
  * coloropt.h - Psi color options class
- * Copyright (C) 2011 Rion
+ * Copyright (C) 2011  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,31 +17,26 @@
  *
  */
 
-#include <QObject>
-#include <QHash>
 #include <QColor>
+#include <QHash>
+#include <QObject>
 #include <QPalette>
 
-class ColorData
-{
+class ColorData {
 public:
-    ColorData() : role(QPalette::NoRole), valid(false) {}
-    ColorData(const QColor &color, QPalette::ColorRole role)
-        : color(color)
-        , role(role)
-        , valid(true) { }
+    ColorData() : role(QPalette::NoRole), valid(false) { }
+    ColorData(const QColor &color, QPalette::ColorRole role) : color(color), role(role), valid(true) { }
 
-    QColor color;
+    QColor              color;
     QPalette::ColorRole role;
-    bool valid;
+    bool                valid;
 };
 
-class ColorOpt : public QObject
-{
+class ColorOpt : public QObject {
     Q_OBJECT
 public:
-    static ColorOpt* instance();
-    QColor color(const QString &opt, const QColor &defaultColor = QColor()) const;
+    static ColorOpt    *instance();
+    QColor              color(const QString &opt, const QColor &defaultColor = QColor()) const;
     QPalette::ColorRole colorRole(const QString &opt) const;
 
 signals:
@@ -57,6 +52,6 @@ private slots:
     void optionChanged(const QString &opt);
 
 private:
-    static QScopedPointer<ColorOpt> instance_;
-    QHash<QString, ColorData> colors;
+    static std::unique_ptr<ColorOpt> instance_;
+    QHash<QString, ColorData>        colors;
 };

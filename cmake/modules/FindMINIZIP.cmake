@@ -33,13 +33,13 @@ endif ()
 if ( UNIX AND NOT( APPLE OR CYGWIN ) )
     find_package( PkgConfig QUIET )
     pkg_check_modules( PC_MINIZIP QUIET minizip )
-    set ( MINIZIP_DEFINITIONS 
+    set ( MINIZIP_DEFINITIONS
         ${PC_MINIZIP_CFLAGS}
         ${PC_MINIZIP_CFLAGS_OTHER}
     )
-endif ( UNIX AND NOT( APPLE OR CYGWIN ) )
+endif()
 
-set ( LIBINCS 
+set ( LIBINCS
     unzip.h
 )
 
@@ -51,19 +51,21 @@ find_path(
     ${PC_MINIZIP_INCLUDE_DIRS}
     PATH_SUFFIXES
     ""
-    if ( NOT ${WIN32} )
+    if ( NOT WIN32 )
     minizip
-    endif ( NOT ${WIN32} )
+    endif()
 )
 
 find_library(
     MINIZIP_LIBRARY
     NAMES minizip
-    HINTS 
+    HINTS
     ${PC_MINIZIP_LIBDIR}
     ${PC_MINIZIP_LIBRARY_DIRS}
     ${MINIZIP_ROOT}/lib
     ${MINIZIP_ROOT}/bin
+    ${MINIZIP_DIR}/lib
+    ${MINIZIP_DIR}/bin
 )
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
@@ -75,7 +77,6 @@ find_package_handle_standard_args(
 if ( MINIZIP_FOUND )
     set ( MINIZIP_LIBRARIES ${MINIZIP_LIBRARY} )
     set ( MINIZIP_INCLUDE_DIRS ${MINIZIP_INCLUDE_DIR} )
-endif ( MINIZIP_FOUND )
+endif()
 
 mark_as_advanced( MINIZIP_INCLUDE_DIR MINIZIP_LIBRARY )
-

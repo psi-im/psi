@@ -6,8 +6,6 @@ unset(UI_FORMS)
 list(APPEND HEADERS
     psimedia.h
     psimedia_p.h
-
-    psimediaprovider.h
 )
 
 list(APPEND SOURCES

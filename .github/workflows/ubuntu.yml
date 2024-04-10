@@ -1,0 +1,85 @@
+name: Ubuntu CI
+
+on:
+  push:
+    branches:
+    - '*'
+  pull_request:
+    branches:
+    - '*'
+
+jobs:
+  build:
+    name: Build and install project
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: ['clang', 'gcc']
+        chattype: ['BASIC', 'WEBENGINE']
+        include:
+          - compiler: 'clang'
+            cc: 'clang'
+            cxx: 'clang++'
+          - compiler: 'gcc'
+            cc: 'gcc'
+            cxx: 'g++'
+    steps:
+    - name: Fetching sources
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: Updating apt package metadata
+      run: |
+        sudo apt-get update
+    - name: Installing compiler ${{ matrix.compiler }}
+      run: |
+        sudo apt-get -y install ${{ matrix.compiler }}
+    - name: Installing build system
+      run: |
+        sudo apt-get -y install cmake make
+    - name: Installing development packages
+      run: |
+        sudo apt-get -y install \
+            gstreamer1.0-dev \
+            libhttp-parser-dev \
+            libhunspell-dev \
+            libminizip-dev \
+            libotr5-dev \
+            libqca-qt5-2-dev \
+            libqt5svg5-dev \
+            libqt5x11extras5-dev \
+            libsignal-protocol-c-dev \
+            libsm-dev \
+            libssl-dev \
+            libtidy-dev \
+            libxss-dev \
+            qt5keychain-dev \
+            qtbase5-dev \
+            qtmultimedia5-dev \
+            qtwebengine5-dev \
+            zlib1g-dev
+    - name: Building project with CMake
+      run: |
+        [ -d "./plugins/generic" ] && ENABLE_PLUGINS="ON" || ENABLE_PLUGINS="OFF"
+        cmake -S . -B build \
+            -DCMAKE_C_COMPILER=${{ matrix.cc }} \
+            -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} \
+            -DCMAKE_INSTALL_PREFIX:PATH=/usr \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_DEV_PLUGINS=${ENABLE_PLUGINS} \
+            -DBUILD_PSIMEDIA=${ENABLE_PLUGINS} \
+            -DIRIS_BUNDLED_QCA=ON \
+            -DIRIS_BUNDLED_USRSCTP=ON \
+            -DENABLE_PLUGINS=${ENABLE_PLUGINS} \
+            -DUSE_HUNSPELL=ON \
+            -DUSE_KEYCHAIN=ON \
+            -DUSE_SPARKLE=OFF
+        cmake --build build
+      env:
+        CFLAGS: -O2 -fexceptions -pipe -Wall -Wextra -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS -fPIC -fstack-protector-strong -fasynchronous-unwind-tables -fcf-protection
+        CXXFLAGS: -O2 -fexceptions -pipe -Wall -Wextra -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS -fPIC -fstack-protector-strong -fasynchronous-unwind-tables -fcf-protection
+        LDFLAGS: -Wl,-z,relro -Wl,--as-needed -Wl,-z,now
+    - name: Installing project with CMake
+      run: |
+        sudo cmake --install build

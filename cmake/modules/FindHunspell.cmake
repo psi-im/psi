@@ -31,18 +31,18 @@ endif()
 if (HUNSPELL_INCLUDE_DIR AND HUNSPELL_LIBRARY)
     # in cache already
     set(HUNSPELL_FIND_QUIETLY TRUE)
-endif ()
+endif()
 
 if ( UNIX AND NOT( APPLE OR CYGWIN ) )
     find_package( PkgConfig QUIET )
     pkg_check_modules( PC_HUNSPELL QUIET hunspell )
-    set ( HUNSPELL_DEFINITIONS 
+    set ( HUNSPELL_DEFINITIONS
         ${PC_HUNSPELL_CFLAGS}
         ${PC_HUNSPELL_CFLAGS_OTHER}
     )
-endif ( UNIX AND NOT( APPLE OR CYGWIN ) )
+endif()
 
-set ( LIBINCS 
+set ( LIBINCS
     hunspell.hxx
 )
 
@@ -50,31 +50,34 @@ find_path(
     HUNSPELL_INCLUDE_DIR ${LIBINCS}
     HINTS
     ${HUNSPELL_ROOT}/include
+    ${HUNSPELL_DIR}/include
     ${PC_HUNSPELL_INCLUDEDIR}
     ${PC_HUNSPELL_INCLUDE_DIRS}
     PATH_SUFFIXES
     ""
-    if ( NOT ${WIN32} )
+    if ( NOT WIN32 )
     hunspell
-    endif ( NOT ${WIN32} )
+    endif()
 )
 set(HUNSPELL_NAMES
     hunspell${d}
+    libhunspell${d}
     hunspell-1.3
     hunspell-1.4
     hunspell-1.5
     hunspell-1.6
     hunspell-1.7
-    libhunspell${d}
 )
 find_library(
     HUNSPELL_LIBRARY
     NAMES ${HUNSPELL_NAMES}
-    HINTS 
+    HINTS
     ${PC_HUNSPELL_LIBDIR}
     ${PC_HUNSPELL_LIBRARY_DIRS}
     ${HUNSPELL_ROOT}/lib
     ${HUNSPELL_ROOT}/bin
+    ${HUNSPELL_DIR}/lib
+    ${HUNSPELL_DIR}/bin
 )
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
@@ -86,7 +89,6 @@ find_package_handle_standard_args(
 if ( HUNSPELL_FOUND )
     set ( HUNSPELL_LIBRARIES ${HUNSPELL_LIBRARY} )
     set ( HUNSPELL_INCLUDE_DIRS ${HUNSPELL_INCLUDE_DIR} )
-endif ( HUNSPELL_FOUND )
+endif()
 
 mark_as_advanced( HUNSPELL_INCLUDE_DIR HUNSPELL_LIBRARY )
-

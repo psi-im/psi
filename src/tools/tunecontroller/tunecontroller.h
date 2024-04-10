@@ -20,16 +20,15 @@
 #ifndef TUNECONTROLLER_H
 #define TUNECONTROLLER_H
 
-#include <QString>
-#include <QObject>
-
 #include "tune.h"
+
+#include <QObject>
+#include <QString>
 
 /**
  * \brief Base class for representing a media player.
  */
-class TuneController : public QObject
-{
+class TuneController : public QObject {
     Q_OBJECT
 
 public:
@@ -40,7 +39,7 @@ signals:
      * This signal is emitted when the media player started playing a tune.
      * \param tune the playing tune
      */
-    void playing(const Tune& tune);
+    void playing(const Tune &tune);
 
     /**
      * This signal is emitted when the media player stopped playing tunes.
@@ -48,4 +47,4 @@ signals:
     void stopped();
 };
 
-#endif
+#endif // TUNECONTROLLER_H

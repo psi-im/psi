@@ -1,6 +1,6 @@
 /*
  * activitycatalog.h
- * Copyright (C) 2008 Armando Jagucki
+ * Copyright (C) 2008  Armando Jagucki
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,49 +20,47 @@
 #ifndef ACTIVITYCATALOG_H
 #define ACTIVITYCATALOG_H
 
+#include "activity.h"
+
 #include <QList>
 #include <QObject>
 
-#include "activity.h"
-
 class QString;
 
-class ActivityCatalog : public QObject
-{
+class ActivityCatalog : public QObject {
 public:
     class Entry {
-        public:
-            Entry();
-            Entry(Activity::Type, const QString&, const QString&);
-            Entry(Activity::Type, Activity::SpecificType, const QString&, const QString&);
-            Activity::Type type() const;
-            Activity::SpecificType specificType() const;
-            const QString& value() const;
-            const QString& text() const;
-            bool isNull() const;
+    public:
+        Entry();
+        Entry(Activity::Type, const QString &, const QString &);
+        Entry(Activity::Type, Activity::SpecificType, const QString &, const QString &);
+        Activity::Type         type() const;
+        Activity::SpecificType specificType() const;
+        const QString         &value() const;
+        const QString         &text() const;
+        bool                   isNull() const;
 
-        private:
-            Activity::Type type_;
-            Activity::SpecificType specificType_;
-            QString value_;
-            QString text_;
+    private:
+        Activity::Type         type_;
+        Activity::SpecificType specificType_;
+        QString                value_;
+        QString                text_;
     };
 
-    static ActivityCatalog* instance();
+    static ActivityCatalog *instance();
 
     Entry findEntryByType(Activity::Type) const;
     Entry findEntryByType(Activity::SpecificType) const;
-    Entry findEntryByValue(const QString&) const;
-    Entry findEntryByText(const QString& text) const;
+    Entry findEntryByValue(const QString &) const;
+    Entry findEntryByText(const QString &text) const;
 
-    const QList<Entry>& entries() const;
+    const QList<Entry> &entries() const;
 
 private:
     ActivityCatalog();
 
-    QList<Entry> entries_;
-    static ActivityCatalog* instance_;
-
+    QList<Entry>            entries_;
+    static ActivityCatalog *instance_;
 };
 
-#endif
+#endif // ACTIVITYCATALOG_H

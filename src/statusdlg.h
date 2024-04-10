@@ -1,6 +1,6 @@
 /*
  * statusdlg.h - dialogs for setting and reading status messages
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,32 +20,30 @@
 #ifndef STATUSDLG_H
 #define STATUSDLG_H
 
+#include "iris/xmpp_jid.h"
+
 #include <QDialog>
-
 #include <QList>
-#include "xmpp_jid.h"
 
-class PsiCon;
 class PsiAccount;
-class UserListItem;
+class PsiCon;
 class QKeyEvent;
-namespace XMPP {
-    class Status;
-}
+class UserListItem;
 
+namespace XMPP {
+class Status;
+}
 using namespace XMPP;
 
-enum setStatusEnum {setStatusForAccount = 0, setStatusForJid, setStatusForJidList};
+enum setStatusEnum { setStatusForAccount = 0, setStatusForJid, setStatusForJidList };
 
-class StatusShowDlg : public QDialog
-{
+class StatusShowDlg : public QDialog {
     Q_OBJECT
 public:
     StatusShowDlg(const UserListItem &);
 };
 
-class StatusSetDlg : public QDialog
-{
+class StatusSetDlg : public QDialog {
     Q_OBJECT
 public:
     StatusSetDlg(PsiCon *, const Status &, bool withPriority = true);
@@ -74,4 +72,4 @@ private:
     void init();
 };
 
-#endif
+#endif // STATUSDLG_H

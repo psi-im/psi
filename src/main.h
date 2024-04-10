@@ -20,17 +20,16 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-#include <QString>
-#include <QObject>
 #include <QHash>
+#include <QObject>
+#include <QString>
 
 class PsiCon;
 
-class PsiMain : public QObject
-{
+class PsiMain : public QObject {
     Q_OBJECT
 public:
-    PsiMain(const QHash<QString, QString>& commandline, QObject *parent=0);
+    PsiMain(const QHash<QString, QString> &commandline, QObject *parent = nullptr);
     ~PsiMain();
 
     bool useActiveInstance();
@@ -46,8 +45,8 @@ private slots:
     void bail();
 
 private:
-    QString lastProfile, lastLang;
-    bool autoOpen;
+    QString                 lastProfile, lastLang;
+    bool                    autoOpen;
     QHash<QString, QString> cmdline;
 
     PsiCon *pcon;
@@ -55,4 +54,4 @@ private:
     void saveSettings();
 };
 
-#endif
+#endif // MAIN_H

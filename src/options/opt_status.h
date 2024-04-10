@@ -3,11 +3,10 @@
 
 #include "optionstab.h"
 
-class OptionsTabStatus : public MetaOptionsTab
-{
+class OptionsTabStatus : public MetaOptionsTab {
     Q_OBJECT
 public:
     OptionsTabStatus(QObject *parent);
 };
 
-#endif
+#endif // OPT_STATUS_H

@@ -27,8 +27,7 @@
 
 class QEvent;
 
-class PsiApplication : public QApplication
-{
+class PsiApplication : public QApplication {
     Q_OBJECT
 public:
     PsiApplication(int &argc, char **argv, bool GUIenabled = true);
@@ -45,4 +44,4 @@ private:
     void init(bool GUIenabled);
 };
 
-#endif
+#endif // PSIAPPLICATION_H

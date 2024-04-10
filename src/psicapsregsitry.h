@@ -1,16 +1,15 @@
 #ifndef PSICAPSREGSITRY_H
 #define PSICAPSREGSITRY_H
 
-#include "xmpp_caps.h"
+#include "iris/xmpp_caps.h"
 
-class PsiCapsRegistry : public XMPP::CapsRegistry
-{
+class PsiCapsRegistry : public XMPP::CapsRegistry {
     Q_OBJECT
 
 public:
-    PsiCapsRegistry(QObject *parent = 0);
+    PsiCapsRegistry(QObject *parent = nullptr);
 
-    void saveData(const QByteArray &data);
+    void       saveData(const QByteArray &data);
     QByteArray loadData();
 };
 

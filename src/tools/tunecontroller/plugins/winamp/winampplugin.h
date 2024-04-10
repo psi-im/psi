@@ -24,23 +24,21 @@
 #define QT_STATICPLUGIN
 #endif
 
-#include <QtCore>
+#include "tunecontrollerplugin.h"
+#include "winamptunecontroller.h"
+
 #include <QObject>
 #include <QString>
+#include <QtCore>
 
-#include "winamptunecontroller.h"
-#include "tunecontrollerplugin.h"
-
-class WinAmpPlugin : public QObject, public TuneControllerPlugin
-{
+class WinAmpPlugin : public QObject, public TuneControllerPlugin {
     Q_OBJECT
     Q_INTERFACES(TuneControllerPlugin)
     Q_PLUGIN_METADATA(IID "org.psi-im.Psi.TuneControllerPlugin")
 
 public:
-    virtual QString name();
-    virtual TuneController* createController();
+    virtual QString         name();
+    virtual TuneController *createController();
 };
 
-#endif
-
+#endif // WINAMPPLUGIN_H

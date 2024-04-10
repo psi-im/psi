@@ -18,22 +18,19 @@
  */
 
 #include "messageview.h"
-#include "textutil.h"
-#include "psioptions.h"
+
 #include "common.h"
+#include "psioptions.h"
+#include "textutil.h"
 
 #include <QTextDocument>
 
 static const QString me_cmd = "/me ";
 
-MessageView::MessageView(Type t) :
-    _type(t),
-    _flags(nullptr),
-    _status(0),
-    _statusPriority(0),
-    _dateTime(QDateTime::currentDateTime())
-{
-}
+// ======================================================================
+// MessageView
+// ======================================================================
+MessageView::MessageView(Type t) : _type(t), _status(0), _statusPriority(0), _dateTime(QDateTime::currentDateTime()) { }
 
 MessageView MessageView::fromPlainText(const QString &text, Type type)
 {
@@ -60,7 +57,7 @@ MessageView MessageView::urlsMessage(const QMap<QString, QString> &urls)
 MessageView MessageView::subjectMessage(const QString &subject, const QString &prefix)
 {
     MessageView mv(Subject);
-    mv._text = TextUtil::escape(prefix);
+    mv._text     = TextUtil::escape(prefix);
     mv._userText = subject;
     return mv;
 }
@@ -92,8 +89,7 @@ MessageView MessageView::nickChangeMessage(const QString &nick, const QString &n
     return mv;
 }
 
-MessageView MessageView::statusMessage(const QString &nick, int status,
-                                       const QString &statusText, int priority)
+MessageView MessageView::statusMessage(const QString &nick, int status, const QString &statusText, int priority)
 {
     QString message = QObject::tr("%1 is now %2").arg(nick, status2txt(status));
 
@@ -125,7 +121,7 @@ void MessageView::setHtml(const QString &text)
     if (_type == Message) {
         QString str = TextUtil::rich2plain(text).trimmed();
         setEmote(str.startsWith(me_cmd));
-        if(isEmote()) {
+        if (isEmote()) {
             setPlainText(str);
             return;
         }
@@ -139,7 +135,7 @@ QString MessageView::formattedText() const
 
     if (isEmote() && _type == Message) {
         int cmd = txt.indexOf(me_cmd);
-        txt = txt.remove(cmd, me_cmd.length());
+        txt     = txt.remove(cmd, me_cmd.length());
     }
     if (PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool())
         txt = TextUtil::emoticonify(txt);
@@ -153,7 +149,7 @@ QString MessageView::formattedUserText() const
 {
     if (!_userText.isEmpty()) {
         QString text = TextUtil::plain2rich(_userText);
-        text = TextUtil::linkify(text);
+        text         = TextUtil::linkify(text);
         if (PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool())
             text = TextUtil::emoticonify(text);
         if (PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool())
@@ -163,20 +159,17 @@ QString MessageView::formattedUserText() const
     return "";
 }
 
-bool MessageView::hasStatus() const
-{
-    return _type == Status || _type == MUCJoin;
-}
+bool MessageView::hasStatus() const { return _type == Status || _type == MUCJoin; }
 
 QVariantMap MessageView::toVariantMap(bool isMuc, bool formatted) const
 {
     static QHash<Type, QString> types;
     if (types.isEmpty()) {
         types.insert(Message, "message");
-        types.insert(System,  "system");
-        types.insert(Status,  "status");
+        types.insert(System, "system");
+        types.insert(Status, "status");
         types.insert(Subject, "subject");
-        types.insert(Urls,    "urls");
+        types.insert(Urls, "urls");
         types.insert(MUCJoin, "join");
         types.insert(MUCPart, "part");
         types.insert(FileTransferRequest, "ftreq");
@@ -187,54 +180,62 @@ QVariantMap MessageView::toVariantMap(bool isMuc, bool formatted) const
     m["time"] = _dateTime;
     m["type"] = types.value(_type);
     switch (_type) {
-        case Message:
-            m["message"] = formatted?formattedText():_text;
-            m["emote"] = isEmote();
-            m["local"] = isLocal();
-            m["sender"] = _nick;
-            m["userid"] = _userId;
-            m["spooled"] = isSpooled();
-            m["id"] = _messageId;
-            if (isMuc) { // maybe w/o conditions ?
-                m["alert"] = isAlert();
-            } else {
-                m["awaitingReceipt"] = isAwaitingReceipt();
-            }
-            break;
-        case NickChange:
-            m["sender"] = _nick;
-            m["newnick"] = _userText;
-            m["message"] = _text;
-            break;
-        case MUCJoin:
-        case MUCPart:
-            m["nopartjoin"] = isJoinLeaveHidden();
-            PSI_FALLSTHROUGH; // falls through
-        case Status:
-            m["sender"] = _nick;
-            m["status"] = _status;
-            m["priority"] = _statusPriority;
-            m["message"] = _text;
-            m["usertext"] = formatted?formattedUserText():_userText;
-            m["nostatus"] = isStatusChangeHidden(); // looks strange? but chatview can use status for something anyway
-            break;
-        case System:
-        case Subject:
-            m["message"] = formatted?formattedText():_text;
-            m["usertext"] = formatted?formattedUserText():_userText;
-            break;
-        case Urls:
-        {
-            QVariantMap vmUrls;
-            foreach (const QString &u, _urls.keys()) {
-                vmUrls[u] = _urls.value(u);
-            }
-            m["urls"] = vmUrls;
-            break;
+    case Message:
+        m["message"] = formatted ? formattedText() : _text;
+        m["emote"]   = isEmote();
+        m["local"]   = isLocal();
+        m["sender"]  = _nick;
+        m["userid"]  = _userId;
+        m["spooled"] = isSpooled();
+        m["id"]      = _messageId;
+        if (isMuc) { // maybe w/o conditions ?
+            m["alert"] = isAlert();
+        } else {
+            m["awaitingReceipt"] = isAwaitingReceipt();
         }
-        case FileTransferRequest:
-        case FileTransferFinished:
-            break;
+        if (_references.count()) {
+            QVariantMap rvm;
+            for (auto const &r : _references) {
+                auto md = r->metaData();
+                md.insert("type", r->mimeType());
+                rvm.insert(r->sums()[0].toString(), md);
+            }
+            m["references"] = rvm;
+        }
+        break;
+    case NickChange:
+        m["sender"]  = _nick;
+        m["newnick"] = _userText;
+        m["message"] = _text;
+        break;
+    case MUCJoin:
+    case MUCPart:
+        m["nopartjoin"] = isJoinLeaveHidden();
+        PSI_FALLSTHROUGH; // falls through
+    case Status:
+        m["sender"]   = _nick;
+        m["status"]   = _status;
+        m["priority"] = _statusPriority;
+        m["message"]  = _text;
+        m["usertext"] = formatted ? formattedUserText() : _userText;
+        m["nostatus"] = isStatusChangeHidden(); // looks strange? but chatview can use status for something anyway
+        break;
+    case System:
+    case Subject:
+        m["message"]  = formatted ? formattedText() : _text;
+        m["usertext"] = formatted ? formattedUserText() : _userText;
+        break;
+    case Urls: {
+        QVariantMap vmUrls;
+        for (auto it = _urls.constBegin(); it != _urls.constEnd(); ++it) {
+            vmUrls.insert(it.key(), it.value());
+        }
+        m["urls"] = vmUrls;
+        break;
+    }
+    case FileTransferRequest:
+    case FileTransferFinished:
+        break;
     }
     return m;
 }

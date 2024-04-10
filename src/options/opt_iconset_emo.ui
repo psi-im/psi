@@ -44,16 +44,10 @@
       <property name="spacing" >
        <number>6</number>
       </property>
-      <item row="1" column="1" >
-       <widget class="IconButton" name="pb_emoDown" >
-        <property name="text" >
-         <string/>
-        </property>
-        <property name="psiIconName" stdset="0" >
-         <string>psi/arrowDown</string>
-        </property>
-        <property name="textVisible" >
-         <bool>false</bool>
+      <item row="0" column="0" colspan="4" >
+       <widget class="IconsetSelect" name="iss_emoticons" >
+        <property name="selectionMode" >
+         <enum>QAbstractItemView::MultiSelection</enum>
         </property>
        </widget>
       </item>
@@ -64,6 +58,19 @@
         </property>
         <property name="psiIconName" stdset="0" >
          <string>psi/arrowUp</string>
+        </property>
+        <property name="textVisible" >
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1" >
+       <widget class="IconButton" name="pb_emoDown" >
+        <property name="text" >
+         <string/>
+        </property>
+        <property name="psiIconName" stdset="0" >
+         <string>psi/arrowDown</string>
         </property>
         <property name="textVisible" >
          <bool>false</bool>
@@ -90,13 +97,6 @@
        <widget class="IconButton" name="pb_emoDetails" >
         <property name="text" >
          <string>&amp;Show details</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0" colspan="4" >
-       <widget class="IconsetSelect" name="iss_emoticons" >
-        <property name="selectionMode" >
-         <enum>QAbstractItemView::MultiSelection</enum>
         </property>
        </widget>
       </item>

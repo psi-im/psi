@@ -17,22 +17,23 @@
  *
  */
 
-#ifndef PSITEXTVIEW
-#define PSITEXTVIEW
+#ifndef PSITEXTVIEW_H
+#define PSITEXTVIEW_H
 
 #include <QTextEdit>
 
 class QMimeData;
 class QTextCursor;
+class FileSharingDeviceOpener;
 
-class PsiTextView : public QTextEdit
-{
+class PsiTextView : public QTextEdit {
     Q_OBJECT
 public:
-    PsiTextView(QWidget *parent = 0);
+    PsiTextView(QWidget *parent = nullptr);
+    ~PsiTextView();
 
     // Reimplemented
-    QMenu* createStandardContextMenu(const QPoint &position);
+    QMenu *createStandardContextMenu(const QPoint &position);
 
     bool atBottom();
 
@@ -41,6 +42,7 @@ public:
 
     QString getHtml() const;
     QString getPlainText() const;
+    void    setMediaOpener(FileSharingDeviceOpener *opener);
 
 public slots:
     void scrollToBottom();
@@ -59,19 +61,20 @@ protected:
     void setPlainText(const QString &) { }
 
     // reimplemented
-    void contextMenuEvent(QContextMenuEvent *e);
-    void mouseMoveEvent(QMouseEvent *e);
-    void mousePressEvent(QMouseEvent *e);
-    void mouseReleaseEvent(QMouseEvent *e);
+    void       contextMenuEvent(QContextMenuEvent *e);
+    void       mouseMoveEvent(QMouseEvent *e);
+    void       mousePressEvent(QMouseEvent *e);
+    void       mouseReleaseEvent(QMouseEvent *e);
     QMimeData *createMimeDataFromSelection() const;
-    void resizeEvent(QResizeEvent *);
+    void       resizeEvent(QResizeEvent *);
 
     QString getTextHelper(bool html) const;
 
     class Private;
+
 private:
     Private *d;
-    bool isSelectedBlock();
+    bool     isSelectedBlock();
 };
 
-#endif
+#endif // PSITEXTVIEW_H

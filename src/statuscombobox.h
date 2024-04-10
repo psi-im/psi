@@ -20,17 +20,16 @@
 #ifndef STATUSCOMBOBOX_H
 #define STATUSCOMBOBOX_H
 
+#include "iris/xmpp_status.h"
+
 #include <QComboBox>
 
-#include "xmpp_status.h"
-
-class StatusComboBox : public QComboBox
-{
+class StatusComboBox : public QComboBox {
     Q_OBJECT
 public:
-    StatusComboBox(QWidget* parent, XMPP::Status::Type type = XMPP::Status::Offline);
+    StatusComboBox(QWidget *parent, XMPP::Status::Type type = XMPP::Status::Offline);
 
-    void setStatus(XMPP::Status::Type type);
+    void               setStatus(XMPP::Status::Type type);
     XMPP::Status::Type status() const;
 
 signals:
@@ -43,4 +42,4 @@ private slots:
     void onCurrentIndexChanged(int);
 };
 
-#endif
+#endif // STATUSCOMBOBOX_H

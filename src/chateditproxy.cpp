@@ -19,45 +19,28 @@
 
 #include "chateditproxy.h"
 
-#include <QVBoxLayout>
-
 #include "msgmle.h"
 #include "psioptions.h"
 
-ChatEditProxy::ChatEditProxy(QWidget* parent)
-    : QWidget(parent)
-    , lineEditEnabled_(false)
-    , textEdit_(nullptr)
-    , layout_(nullptr)
+#include <QVBoxLayout>
+
+static const QLatin1String expandingLineEdit("options.ui.chat.use-expanding-line-edit");
+
+ChatEditProxy::ChatEditProxy(QWidget *parent) :
+    QWidget(parent), lineEditEnabled_(false), textEdit_(nullptr), layout_(nullptr)
 {
     layout_ = new QVBoxLayout(this);
-    layout_->setMargin(0);
+    layout_->setContentsMargins(0, 0, 0, 0);
     layout_->setSpacing(0);
 
-    connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionsChanged()));
-    optionsChanged();
-
-    if (!textEdit_)
-        updateLayout();
-}
-
-/**
- * If \a enable is true, then the LineEdit is used as internal
- * QTextEdit. Updates internal layout if necessary.
- */
-void ChatEditProxy::setLineEditEnabled(bool enable)
-{
-    if (lineEditEnabled_ == enable)
-        return;
-
-    lineEditEnabled_ = enable;
-    updateLayout();
+    connect(PsiOptions::instance(), &PsiOptions::optionChanged, this, &ChatEditProxy::optionsChanged);
+    optionsChanged(expandingLineEdit);
 }
 
 /**
  * Creates new QTextEdit basing on ChatEditProxy's properties.
  */
-ChatEdit* ChatEditProxy::createTextEdit()
+ChatEdit *ChatEditProxy::createTextEdit()
 {
     if (lineEditEnabled())
         return new LineEdit(this);
@@ -71,10 +54,10 @@ ChatEdit* ChatEditProxy::createTextEdit()
  * NB: Make sure that all QSyntaxHighlighters are detached prior to calling
  * this function.
  */
-void ChatEditProxy::moveData(QTextEdit* newTextEdit, QTextEdit* oldTextEdit) const
+void ChatEditProxy::moveData(QTextEdit *newTextEdit, QTextEdit *oldTextEdit) const
 {
-    QTextDocument* doc = oldTextEdit->document();
-    QTextCursor cursor = oldTextEdit->textCursor();
+    QTextDocument *doc    = oldTextEdit->document();
+    QTextCursor    cursor = oldTextEdit->textCursor();
 
     doc->setParent(newTextEdit);
     oldTextEdit->setDocument(nullptr);
@@ -89,7 +72,7 @@ void ChatEditProxy::moveData(QTextEdit* newTextEdit, QTextEdit* oldTextEdit) con
  */
 void ChatEditProxy::updateLayout()
 {
-    ChatEdit* newEdit = createTextEdit();
+    ChatEdit *newEdit = createTextEdit();
 
     if (textEdit_) {
         // all syntaxhighlighters should be removed while we move
@@ -105,15 +88,16 @@ void ChatEditProxy::updateLayout()
     delete textEdit_;
     textEdit_ = newEdit;
     layout_->addWidget(textEdit_);
-    emit textEditCreated(textEdit_);
+    emit textEditCreated();
 }
 
 /**
  * Update ChatEdit widget according to current options.
- * FIXME: When PsiOptions::instance()->getOption("options.ui.chat.use-expanding-line-edit").toBool() finally makes it to PsiOptions, make this slot
- *        private.
  */
-void ChatEditProxy::optionsChanged()
+void ChatEditProxy::optionsChanged(const QString &option)
 {
-    setLineEditEnabled(PsiOptions::instance()->getOption("options.ui.chat.use-expanding-line-edit").toBool());
+    if (option == expandingLineEdit) {
+        lineEditEnabled_ = PsiOptions::instance()->getOption(expandingLineEdit).toBool();
+        updateLayout();
+    }
 }

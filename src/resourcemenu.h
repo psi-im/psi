@@ -20,20 +20,19 @@
 #ifndef RESOURCEMENU_H
 #define RESOURCEMENU_H
 
+#include "iris/xmpp_jid.h"
+
 #include <QMenu>
 #include <QPointer>
 
-class UserResource;
 class PsiContact;
+class UserResource;
 
-#include "xmpp_jid.h"
-
-class ResourceMenu : public QMenu
-{
+class ResourceMenu : public QMenu {
     Q_OBJECT
 public:
     ResourceMenu(QWidget *parent);
-    ResourceMenu(const QString& title, PsiContact* contact, QWidget* parent);
+    ResourceMenu(const QString &title, PsiContact *contact, QWidget *parent);
 
     bool activeChatsMode() const;
     void setActiveChatsMode(bool activeChatsMode);
@@ -42,7 +41,7 @@ public:
     void addResource(int status, QString name);
 
 signals:
-    void resourceActivated(PsiContact* contact, const XMPP::Jid& jid);
+    void resourceActivated(PsiContact *contact, const XMPP::Jid &jid);
     void resourceActivated(QString resource);
 
 private slots:
@@ -51,7 +50,7 @@ private slots:
 
 private:
     QPointer<PsiContact> contact_;
-    bool activeChatsMode_;
+    bool                 activeChatsMode_;
 };
 
-#endif
+#endif // RESOURCEMENU_H

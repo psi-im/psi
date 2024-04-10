@@ -20,33 +20,33 @@
 #ifndef AHCOMMANDDLG_H
 #define AHCOMMANDDLG_H
 
+#include "iris/xmpp_jid.h"
+#include "ui_ahcommanddlg.h"
+
 #include <QDialog>
 #include <QList>
 
-#include "xmpp_jid.h"
+class BusyWidget;
+class PsiAccount;
+class PsiCon;
+class QComboBox;
+class QObject;
+class QPushButton;
 
 namespace XMPP {
-    class Client;
+class Client;
 }
 
-class PsiCon;
-class PsiAccount;
-class QObject;
-class QComboBox;
-class QPushButton;
-class BusyWidget;
+typedef struct {
+    QString jid, node, name;
+} AHCommandItem;
 
-typedef struct { QString jid, node, name; } AHCommandItem;
-
-#include "ui_ahcommanddlg.h"
-
-class AHCommandDlg : public QDialog
-{
+class AHCommandDlg : public QDialog {
     Q_OBJECT
 
 public:
-    AHCommandDlg(PsiAccount*, const XMPP::Jid& receiver);
-    static void executeCommand(PsiCon*, XMPP::Client*, const XMPP::Jid& j, const QString &node);
+    AHCommandDlg(PsiAccount *, const XMPP::Jid &receiver);
+    static void executeCommand(PsiCon *, XMPP::Client *, const XMPP::Jid &j, const QString &node);
 
 protected slots:
     void refreshCommands();
@@ -55,12 +55,12 @@ protected slots:
     void commandExecuted();
 
 private:
-    Ui::AHCommandDlg ui_;
-    PsiAccount* pa_;
-    XMPP::Jid receiver_;
+    Ui::AHCommandDlg     ui_;
+    PsiAccount          *pa_;
+    XMPP::Jid            receiver_;
     QList<AHCommandItem> commands_;
-    QPushButton* pb_close;
-    QPushButton* pb_execute;
+    QPushButton         *pb_close;
+    QPushButton         *pb_execute;
 };
 
-#endif
+#endif // AHCOMMANDDLG_H

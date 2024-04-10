@@ -17,33 +17,32 @@
  *
  */
 
-#ifndef SERVERLISTQUERIER
-#define SERVERLISTQUERIER
+#ifndef SERVERLISTQUERIER_H
+#define SERVERLISTQUERIER_H
 
 #include <QObject>
 #include <QUrl>
 
 class QNetworkAccessManager;
 
-class ServerListQuerier : public QObject
-{
+class ServerListQuerier : public QObject {
     Q_OBJECT
 
 public:
-    ServerListQuerier(QObject* parent = nullptr);
+    ServerListQuerier(QObject *parent = nullptr);
     void getList();
 
 signals:
-    void listReceived(const QStringList&);
-    void error(const QString&);
+    void listReceived(const QStringList &);
+    void error(const QString &);
 
 protected slots:
     void get_finished();
 
 private:
-    QNetworkAccessManager* http_;
-    QUrl url_;
-    int redirectCount_;
+    QNetworkAccessManager *http_;
+    QUrl                   url_;
+    int                    redirectCount_;
 };
 
-#endif
+#endif // SERVERLISTQUERIER_H

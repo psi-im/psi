@@ -88,29 +88,9 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QPushButton" name="pb_topic">
-            <property name="text">
-             <string>Topic:</string>
-            </property>
-           </widget>
-          </item>
-          <item>
            <widget class="ActionLineEdit" name="le_topic">
             <property name="readOnly">
              <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="AccountLabel" name="lb_ident">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string>AccountLabel</string>
             </property>
            </widget>
           </item>
@@ -131,24 +111,35 @@
             <property name="popupMode">
              <enum>QToolButton::InstantPopup</enum>
             </property>
+            <property name="autoRaise">
+             <bool>true</bool>
+            </property>
            </widget>
           </item>
           <item>
            <widget class="QToolButton" name="tb_actions">
+            <property name="font">
+             <font>
+              <pointsize>13</pointsize>
+             </font>
+            </property>
             <property name="toolTip">
              <string>Actions</string>
             </property>
-            <property name="text">
-             <string/>
+            <property name="styleSheet">
+             <string notr="true">QToolButton { padding: 0px; } QToolButton::menu-indicator { image:none; } </string>
             </property>
-            <property name="iconSize">
-             <size>
-              <width>16</width>
-              <height>16</height>
-             </size>
+            <property name="text">
+             <string notr="true">≡</string>
             </property>
             <property name="popupMode">
              <enum>QToolButton::InstantPopup</enum>
+            </property>
+            <property name="toolButtonStyle">
+             <enum>Qt::ToolButtonTextOnly</enum>
+            </property>
+            <property name="autoRaise">
+             <bool>true</bool>
             </property>
             <property name="arrowType">
              <enum>Qt::NoArrow</enum>
@@ -282,6 +273,9 @@
              <height>16777215</height>
             </size>
            </property>
+           <property name="contextMenuPolicy">
+            <enum>Qt::CustomContextMenu</enum>
+           </property>
            <property name="toolTip">
             <string>Send</string>
            </property>
@@ -304,6 +298,11 @@
  </widget>
  <customwidgets>
   <customwidget>
+   <class>PixmapRatioLabel</class>
+   <extends>QLabel</extends>
+   <header>pixmapratiolabel.h</header>
+  </customwidget>
+  <customwidget>
    <class>ChatView</class>
    <extends>QFrame</extends>
    <header>chatview.h</header>
@@ -321,11 +320,6 @@
    <header>chateditproxy.h</header>
   </customwidget>
   <customwidget>
-   <class>AccountLabel</class>
-   <extends>QLabel</extends>
-   <header>accountlabel.h</header>
-  </customwidget>
-  <customwidget>
    <class>ActionLineEdit</class>
    <extends>QLineEdit</extends>
    <header>actionlineedit.h</header>
@@ -334,11 +328,6 @@
    <class>GCUserView</class>
    <extends>QTreeView</extends>
    <header>gcuserview.h</header>
-  </customwidget>
-  <customwidget>
-   <class>PixmapRatioLabel</class>
-   <extends>QLabel</extends>
-   <header>pixmapratiolabel.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

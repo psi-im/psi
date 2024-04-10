@@ -1,6 +1,6 @@
 /*
  * psithememodel.h - just a model for theme views
- * Copyright (C) 2010-2017 Sergey Ilinykh
+ * Copyright (C) 2010-2017  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,56 +24,54 @@
 #include <QFutureWatcher>
 #include <QStringList>
 
+class PsiThemeProvider;
 class Theme;
+class QTimer;
 
-struct ThemeItemInfo
-{
-    QString id;
-    QString title;
-    QString version;
-    QString description;
+struct ThemeItemInfo {
+    QString     id;
+    QString     title;
+    QString     version;
+    QString     description;
     QStringList authors;
-    QString creation;
-    QString homeUrl;
+    QString     creation;
+    QString     homeUrl;
 
     bool hasPreview;
-    bool isValid = false;
+    bool isValid   = false;
     bool isCurrent = false;
 };
 
-
-class PsiThemeModel : public QAbstractListModel
-{
+class PsiThemeModel : public QAbstractListModel {
     Q_OBJECT
 
 public:
-    enum ThemeRoles {
-        IdRole = Qt::UserRole + 1,
-        HasPreviewRole,
-        TitleRole,
-        IsCurrent
-    };
+    enum ThemeRoles { IdRole = Qt::UserRole + 1, HasPreviewRole, TitleRole, IsCurrent };
 
-    PsiThemeModel(QObject *parent);
+    PsiThemeModel(PsiThemeProvider *provider, QObject *parent);
     ~PsiThemeModel();
-    void setType(const QString &type);
 
-    int rowCount ( const QModelIndex & parent = QModelIndex() ) const ;
-    QVariant data ( const QModelIndex & index, int role = Qt::DisplayRole ) const;
-    int themeRow(const QString &id);
+    int      rowCount(const QModelIndex &parent = QModelIndex()) const;
+    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
+    int      themeRow(const QString &id);
 
     bool setData(const QModelIndex &index, const QVariant &value, int role);
+
+public slots:
+    void load();
+
 private slots:
     void onThreadedResultReadyAt(int index);
     void loadComplete();
 
 private:
     struct Loader;
-    Loader *loader = nullptr;
+    Loader                       *loader   = nullptr;
+    PsiThemeProvider             *provider = nullptr;
+    QTimer                       *gcTimer  = nullptr;
     QFutureWatcher<ThemeItemInfo> themeWatcher;
-    QFuture<ThemeItemInfo> themesFuture;
-    QList<ThemeItemInfo> themesInfo;
-    QString providerType;
+    QFuture<ThemeItemInfo>        themesFuture;
+    QList<ThemeItemInfo>          themesInfo;
 };
 
-#endif
+#endif // PSITHEMEMODEL_H

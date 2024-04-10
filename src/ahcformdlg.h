@@ -20,30 +20,29 @@
 #ifndef AHCFORMDLG_H
 #define AHCFORMDLG_H
 
-#include <QObject>
-#include <QDialog>
-#include <QString>
-
-#include "xmpp_xdata.h"
-#include "xmpp_jid.h"
-
-class QPushButton;
-class BusyWidget;
-class AHCommand;
-class XDataWidget;
-class PsiCon;
-namespace XMPP {
-    class Client;
-}
-
+#include "iris/xmpp_jid.h"
+#include "iris/xmpp_xdata.h"
 #include "ui_ahcformdlg.h"
 
-class AHCFormDlg : public QDialog
-{
+#include <QDialog>
+#include <QObject>
+#include <QString>
+
+class AHCommand;
+class BusyWidget;
+class PsiCon;
+class QPushButton;
+class XDataWidget;
+
+namespace XMPP {
+class Client;
+}
+
+class AHCFormDlg : public QDialog {
     Q_OBJECT
 
 public:
-    AHCFormDlg(PsiCon *psi, const AHCommand& r, const XMPP::Jid& receiver, XMPP::Client* client, bool final = false);
+    AHCFormDlg(PsiCon *psi, const AHCommand &r, const XMPP::Jid &receiver, XMPP::Client *client, bool final = false);
 
 protected:
     XMPP::XData data() const;
@@ -57,18 +56,21 @@ protected slots:
     void commandExecuted();
 
 private:
-    Ui::AHCFormDlg _ui;
-    PsiCon *_psi;
-    QPushButton* _pb_prev;
-    QPushButton* _pb_next;
-    QPushButton* _pb_complete;
-    QPushButton* _pb_cancel;
-    XDataWidget* _xdata;
+    void updateFromCommand(const AHCommand &r);
 
-    XMPP::Jid _receiver;
-    QString node_;
-    XMPP::Client* _client;
-    QString sessionId_;
+private:
+    Ui::AHCFormDlg _ui;
+    PsiCon        *_psi;
+    QPushButton   *_pb_prev;
+    QPushButton   *_pb_next;
+    QPushButton   *_pb_complete;
+    QPushButton   *_pb_cancel;
+    XDataWidget   *_xdata;
+
+    XMPP::Jid     _receiver;
+    QString       node_;
+    XMPP::Client *_client;
+    QString       sessionId_;
 };
 
-#endif
+#endif // AHCFORMDLG_H

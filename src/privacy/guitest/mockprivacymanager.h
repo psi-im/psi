@@ -19,29 +19,28 @@
 #ifndef MOCKPRIVACYMANAGER_H
 #define MOCKPRIVACYMANAGER_H
 
+#include "privacylistitem.h"
+#include "privacymanager.h"
+
 #include <QObject>
 #include <QStringList>
 
-#include "privacymanager.h"
-#include "privacylistitem.h"
-
-class MockPrivacyManager : public PrivacyManager
-{
+class MockPrivacyManager : public PrivacyManager {
     Q_OBJECT
 
 public:
     MockPrivacyManager();
 
     virtual void requestListNames();
-    virtual void changeDefaultList(const QString& name);
-    virtual void changeActiveList(const QString& name);
-    virtual void changeList(const PrivacyList& list);
+    virtual void changeDefaultList(const QString &name);
+    virtual void changeActiveList(const QString &name);
+    virtual void changeList(const PrivacyList &list);
     virtual void getDefaultList();
-    virtual void requestList(const QString& name);
+    virtual void requestList(const QString &name);
 
 private:
-    PrivacyListItem createItem(PrivacyListItem::Type type, const QString& value, PrivacyListItem::Action action, bool message, bool presence_in, bool presence_out, bool iq);
-
+    PrivacyListItem createItem(PrivacyListItem::Type type, const QString &value, PrivacyListItem::Action action,
+                               bool message, bool presence_in, bool presence_out, bool iq);
 };
 
-#endif
+#endif // MOCKPRIVACYMANAGER_H

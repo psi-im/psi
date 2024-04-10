@@ -3,6 +3,13 @@ unset(SOURCES)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
+if(ISDEBUG)
+    option(COCOA_DEBUG_OUTPUT "Add -DDEBUG_OUTPUT definition" OFF)
+    if(COCOA_DEBUG_OUTPUT)
+        add_definitions(-DDEBUG_OUTPUT)
+    endif()
+endif()
+
 list(APPEND HEADERS
     cocoacommon.h
     CocoaInitializer.h

@@ -23,16 +23,15 @@
 
 #include <QMenu>
 
-class PsiContact;
 class PsiAccount;
 class PsiCon;
+class PsiContact;
 
-class InviteToGroupChatMenu : public QMenu
-{
+class InviteToGroupChatMenu : public QMenu {
     Q_OBJECT
 
 public:
-    InviteToGroupChatMenu(QWidget *parent = 0);
+    InviteToGroupChatMenu(QWidget *parent = nullptr);
     void updateMenu(PsiContact *contact);
 
 signals:
@@ -42,5 +41,5 @@ private slots:
     void actionActivated();
 
 private:
-    PsiCon* controller_;
+    PsiCon *controller_;
 };

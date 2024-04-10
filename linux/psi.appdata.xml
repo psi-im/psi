@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+  <id>org.psi_im.Psi</id>
+  <launchable type="desktop-id">psi.desktop</launchable>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-2.0+</project_license>
+  <name>Psi</name>
+  <name xml:lang="ru">Psi</name>
+  <summary>The cross-platform XMPP client designed for experienced users</summary>
+  <summary xml:lang="ru">Кроссплатформенный XMPP клиент для опытных пользователей</summary>
+  <description>
+    <p>
+      Psi is an XMPP client designed for experienced users. It is highly portable and runs on GNU/Linux, MS Windows, macOS, FreeBSD and Haiku.
+    </p>
+    <p xml:lang="ru">
+      Psi - это стильный XMPP клиент для опытных пользователей. Он легко переносим на различные платформы и успешно работает на GNU/Linux, MS Windows, macOS, FreeBSD и Haiku.
+    </p>
+    <p>Features:</p>
+    <p xml:lang="ru">Особенности:</p>
+    <ul>
+      <li>Native look and feel on all supported systems</li>
+      <li xml:lang="ru">Программа выглядит как влитая на поддерживаемых системах</li>
+      <li>Highly customizable user interface</li>
+      <li xml:lang="ru">Широкие возможности по настройке внешнего вида программы</li>
+      <li>Secure connections and end-to-end encryption</li>
+      <li xml:lang="ru">Поддержка шифрованных подключений и сквозного шифрования</li>
+      <li>User interface is translated to many languages</li>
+      <li xml:lang="ru">Интерфейс программы переведен на множество языков</li>
+    </ul>
+  </description>
+  <url type="homepage">https://psi-im.org/</url>
+  <url type="bugtracker">https://github.com/psi-im/psi/issues</url>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://psi-im.org/content/home/feature_default.png</image>
+    </screenshot>
+  </screenshots>
+  <content_rating type="oars-1.1">
+    <content_attribute id="social-chat">intense</content_attribute>
+    <content_attribute id="social-audio">intense</content_attribute>
+  </content_rating>
+  <releases>
+    <release version="1.5" date="2020-09-06" type="stable"/>
+    <release version="1.4" date="2019-08-20" type="stable"/>
+  </releases>
+</component>

@@ -1,13 +1,12 @@
 #include "mucaffiliationsproxymodel.h"
 
-MUCAffiliationsProxyModel::MUCAffiliationsProxyModel(QObject* parent)
-    : QSortFilterProxyModel(parent)
+MUCAffiliationsProxyModel::MUCAffiliationsProxyModel(QObject *parent) : QSortFilterProxyModel(parent)
 {
     sort(0, Qt::AscendingOrder);
     setDynamicSortFilter(true);
 }
 
-bool MUCAffiliationsProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const
+bool MUCAffiliationsProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const
 {
     QModelIndex idx = sourceModel()->index(sourceRow, 0, sourceParent);
     if (!idx.isValid())
@@ -16,8 +15,9 @@ bool MUCAffiliationsProxyModel::filterAcceptsRow(int sourceRow, const QModelInde
     if (!idx.parent().isValid())
         return true;
 
-    if (filterRegExp().indexIn(idx.data().toString()) >= 0)
-        return true;
-
-    return false;
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    return filterRegExp().indexIn(idx.data().toString()) >= 0;
+#else
+    return filterRegularExpression().match(idx.data().toString()).hasMatch();
+#endif
 }

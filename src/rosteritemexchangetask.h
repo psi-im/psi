@@ -20,28 +20,27 @@
 #ifndef ROSTERITEMEXCHANGETASK_H
 #define ROSTERITEMEXCHANGETASK_H
 
-#include <QDomElement>
+#include "iris/xmpp_rosterx.h"
+#include "iris/xmpp_task.h"
 
-#include "xmpp_task.h"
-#include "xmpp_rosterx.h"
+#include <QDomElement>
 
 using namespace XMPP;
 
-class RosterItemExchangeTask : public Task
-{
+class RosterItemExchangeTask : public Task {
     Q_OBJECT
 
 public:
-    RosterItemExchangeTask(Task*);
+    RosterItemExchangeTask(Task *);
 
-    bool take(const QDomElement&);
+    bool take(const QDomElement &);
     void setIgnoreNonRoster(bool);
 
 signals:
-    void rosterItemExchange(const Jid&, const RosterExchangeItems&);
+    void rosterItemExchange(const Jid &, const RosterExchangeItems &);
 
 private:
     bool ignoreNonRoster_;
 };
 
-#endif
+#endif // ROSTERITEMEXCHANGETASK_H

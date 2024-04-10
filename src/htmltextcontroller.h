@@ -19,39 +19,38 @@
 #ifndef HTMLTEXTCONTROLLER_H
 #define HTMLTEXTCONTROLLER_H
 
-#include  <QTextEdit>
+#include <QTextEdit>
 
-class HTMLTextController : public QObject
-{
+class HTMLTextController : public QObject {
     Q_OBJECT
 public:
     enum TextEditState {
-        StateNone = 0,
-        StateBold = 1,
-        StateItalic = 2,
-        StateUnderline = 4,
-        StateTextStyleChanged = 8,
-        StateTextColorChanged = 16,
+        StateNone                   = 0,
+        StateBold                   = 1,
+        StateItalic                 = 2,
+        StateUnderline              = 4,
+        StateTextStyleChanged       = 8,
+        StateTextColorChanged       = 16,
         StateBackgroundColorChanged = 32,
-        StateStrikeOut = 64
+        StateStrikeOut              = 64
     };
 
     HTMLTextController(QTextEdit *parent);
     void doMenu();
     void setFont(const QFont &);
-    void setCssString(const QString& css) { cssString_ = css; };
+    void setCssString(const QString &css) { cssString_ = css; };
 
 private:
-    void addState(TextEditState state);
-    void removeState(TextEditState state);
+    void                 addState(TextEditState state);
+    void                 removeState(TextEditState state);
     QList<TextEditState> state();
-    QString cssString_;
+    QString              cssString_;
 
 private:
     QTextEdit *te_;
-    QFont font_, currentFont_;
-    QBrush background_ ,currentBackground_;
-    QBrush foreground_, currentForeground_;
+    QFont      font_, currentFont_;
+    QBrush     background_, currentBackground_;
+    QBrush     foreground_, currentForeground_;
 };
 
 #endif // HTMLTEXTCONTROLLER_H

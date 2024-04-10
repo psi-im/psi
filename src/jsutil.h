@@ -17,16 +17,15 @@
  *
  */
 
-#ifndef JSUTIL
-#define JSUTIL
+#ifndef JSUTIL_H
+#define JSUTIL_H
+
+#include <QVariantMap>
 
 class QString;
 class QVariant;
 
-#include <QVariantMap>
-
-class JSUtil
-{
+class JSUtil {
 public:
     static QString variant2js(const QVariant &);
     /** Escapes " and \n  (for JS evaluation) */
@@ -40,5 +39,4 @@ public:
     }
 };
 
-
-#endif
+#endif // JSUTIL_H

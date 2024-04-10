@@ -20,13 +20,12 @@
 #ifndef COMBINEDTUNECONTROLLER_H
 #define COMBINEDTUNECONTROLLER_H
 
-#include <QList>
-
 #include "tune.h"
 #include "tunecontroller.h"
 
-class CombinedTuneController : public TuneController
-{
+#include <QList>
+
+class CombinedTuneController : public TuneController {
 public:
     CombinedTuneController();
     ~CombinedTuneController();
@@ -34,7 +33,7 @@ public:
     virtual Tune currentTune();
 
 private:
-    QList<TuneController*> controllers_;
+    QList<TuneController *> controllers_;
 };
 
-#endif
+#endif // COMBINEDTUNECONTROLLER_H

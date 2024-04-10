@@ -3,14 +3,16 @@ unset(FORMS)
 unset(SOURCES)
 unset(UI_FORMS)
 
-if(WIN32 AND IS_PSIPLUS)
+if(WIN32 AND PSI_PLUS)
     if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/QDChecker.cpp")
         set(USE_QDCHECKER ON)
     endif()
 endif()
 
+get_filename_component(ABS_PARENT_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
+
 include_directories(
-    ../
+    ${ABS_PARENT_DIR}
 )
 
 list(APPEND HEADERS
@@ -54,7 +56,7 @@ if(USE_QDCHECKER)
     )
 endif()
 
-qt5_wrap_ui(UI_FORMS ${FORMS})
+qt_wrap_ui(UI_FORMS ${FORMS})
 add_library(AutoUpdater STATIC ${HEADERS} ${SOURCES} ${UI_FORMS})
 if(USE_QDCHECKER)
     add_dependencies(AutoUpdater build_ui_files tools widgets)
