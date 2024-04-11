@@ -222,14 +222,18 @@ QMenu *PsiTextView::createStandardContextMenu(const QPoint &position)
     QMenu      *menu;
     QString     anc = anchorAt(position);
     if (!anc.isEmpty()) {
-        menu = URLObject::getInstance()->createPopupMenu(anc);
-
-        int     posInBlock = textcursor.position() - textcursor.block().position();
-        QString textblock  = textcursor.block().text();
-        int begin = textcursor.block().position() + textblock.lastIndexOf(QRegularExpression("\\s|^"), posInBlock) + 1;
-        int end   = textcursor.block().position() + textblock.indexOf(QRegularExpression("\\s|$"), posInBlock);
-        textcursor.setPosition(begin);
-        textcursor.setPosition(end, QTextCursor::KeepAnchor);
+        // menu = URLObject::getInstance()->createPopupMenu(anc);
+        const QString href     = textcursor.charFormat().anchorHref();
+        auto          clickPos = textcursor.position();
+        // we rely on cow to quickly find boundaries
+        while (textcursor.charFormat().isAnchor() && textcursor.charFormat().anchorHref() == href) {
+            textcursor.movePosition(QTextCursor::PreviousCharacter);
+        }
+        textcursor.setPosition(clickPos + 1, QTextCursor::KeepAnchor);
+        while (textcursor.charFormat().isAnchor() && textcursor.charFormat().anchorHref() == href) {
+            textcursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+        }
+        textcursor.movePosition(QTextCursor::PreviousCharacter, QTextCursor::KeepAnchor);
         setTextCursor(textcursor);
 
         menu = URLObject::getInstance()->createPopupMenu(anc);
