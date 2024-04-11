@@ -365,11 +365,6 @@ void ChatView::dispatchMessage(const MessageView &mv)
     }
 }
 
-QString ChatView::replaceMarker(const MessageView &mv) const
-{
-    return "<a name=\"msgid_" + TextUtil::escape(mv.messageId() + "_" + mv.userId()) + "\"> </a>";
-}
-
 void ChatView::renderMucMessage(const MessageView &mv, QTextCursor &insertCursor)
 {
     const QString timestr = formatTimeStamp(mv.dateTime());
@@ -406,7 +401,7 @@ void ChatView::renderMucMessage(const MessageView &mv, QTextCursor &insertCursor
     QString nick = QString("<a href=\"addnick://psi/") + QUrl::toPercentEncoding(mv.nick())
         + "\" style=\"color: " + nickcolor + "; text-decoration: none; \">" + TextUtil::escape(mv.nick()) + "</a>";
 
-    QString inner = alerttagso + mv.formattedText() + replaceMarker(mv) + alerttagsc;
+    QString inner = alerttagso + mv.formattedText() + alerttagsc;
 
     if (mv.isEmote()) {
         insertText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1]").arg(timestr)
@@ -464,7 +459,7 @@ void ChatView::renderMessage(const MessageView &mv, QTextCursor &insertCursor)
     }
     QString str;
 
-    QString inner = mv.formattedText() + replaceMarker(mv);
+    QString inner = mv.formattedText();
     if (mv.isEmote()) {
         str = icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1]").arg(timestr)
             + QString(" *%1 ").arg(TextUtil::escape(mv.nick())) + inner + "</span>";

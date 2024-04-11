@@ -83,13 +83,12 @@ protected:
     QString formatTimeStamp(const QDateTime &time);
     QString colorString(bool local, bool spooled) const;
 
-    QString replaceMarker(const MessageView &mv) const;
-    void    renderMucMessage(const MessageView &, QTextCursor &insertCursor);
-    void    renderMessage(const MessageView &, QTextCursor &insertCursor);
-    void    renderSysMessage(const MessageView &);
-    void    renderSubject(const MessageView &);
-    void    renderMucSubject(const MessageView &);
-    void    renderUrls(const MessageView &);
+    void renderMucMessage(const MessageView &, QTextCursor &insertCursor);
+    void renderMessage(const MessageView &, QTextCursor &insertCursor);
+    void renderSysMessage(const MessageView &);
+    void renderSubject(const MessageView &);
+    void renderMucSubject(const MessageView &);
+    void renderUrls(const MessageView &);
 
 protected slots:
     void autoCopy();
