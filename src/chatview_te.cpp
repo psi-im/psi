@@ -125,36 +125,46 @@ QMenu *ChatView::createStandardContextMenu(const QPoint &position)
 
 void ChatView::addLogIconsResources()
 {
-    struct {
+    struct CVIcon {
         const char *name;
         const char *icon;
-    } icons[] = { { "log_icon_receive", "psi/notification_chat_receive" },
-                  { "log_icon_send", "psi/notification_chat_send" },
-                  { "log_icon_receive_encrypted", "psi/notification_chat_receive_encrypted" },
-                  { "log_icon_send_encrypted", "psi/notification_chat_send_encrypted" },
-                  { "log_icon_time", "psi/notification_chat_time" },
-                  { "log_icon_info", "psi/notification_chat_info" },
-                  { "log_icon_delivered", "psi/notification_chat_delivery_ok" },
-                  { "log_icon_delivered_encrypted", "psi/notification_chat_delivery_ok_encrypted" },
-                  { "log_icon_corrected", "psi/action_templates_edit" },
-                  { "log_icon_history", "psi/history" } };
+    };
 
     useMessageIcons_ = PsiOptions::instance()->getOption("options.ui.chat.use-message-icons").toBool();
     int  scaledSize  = int(fontInfo().pixelSize() * EqTextIconK + .5);
     bool scale       = PsiOptions::instance()->getOption("options.ui.chat.scaled-message-icons").toBool();
+    auto fs          = QFontInfo(font()).pixelSize();
 
-    auto fs = QFontInfo(font()).pixelSize();
-    for (auto &i : icons) {
-        auto res = QUrl(QLatin1String("icon:") + i.name);
-        if (useMessageIcons_) {
-            auto icon = IconsetFactory::iconPixmap(i.icon, scaledSize);
-            if (icon.height() > HugeIconTextViewK * fs || scale) {
-                icon = icon.scaledToHeight(scaledSize, Qt::SmoothTransformation);
-            }
-            document()->addResource(QTextDocument::ImageResource, res, icon);
-        } else {
-            document()->addResource(QTextDocument::ImageResource, res, QVariant());
+    auto addResource = [&](const CVIcon &i) {
+        auto res  = QUrl(QStringLiteral("icon:") + QLatin1String(i.name));
+        auto icon = IconsetFactory::iconPixmap(i.icon, scaledSize);
+        if (icon.height() > HugeIconTextViewK * fs || scale) {
+            icon = icon.scaledToHeight(scaledSize, Qt::SmoothTransformation);
         }
+        document()->addResource(QTextDocument::ImageResource, res, icon);
+    };
+
+    CVIcon optional_icons[] = { { "log_icon_receive", "psi/notification_chat_receive" },
+                                { "log_icon_send", "psi/notification_chat_send" },
+                                { "log_icon_receive_encrypted", "psi/notification_chat_receive_encrypted" },
+                                { "log_icon_send_encrypted", "psi/notification_chat_send_encrypted" },
+                                { "log_icon_time", "psi/notification_chat_time" },
+                                { "log_icon_info", "psi/notification_chat_info" },
+                                { "log_icon_delivered", "psi/notification_chat_delivery_ok" },
+                                { "log_icon_delivered_encrypted", "psi/notification_chat_delivery_ok_encrypted" },
+                                { "log_icon_history", "psi/history" } };
+    CVIcon noneopt_icons[] { { "log_icon_corrected", "psi/action_templates_edit" } };
+
+    for (auto &i : optional_icons) {
+        if (useMessageIcons_) {
+            addResource(i);
+        } else {
+            document()->addResource(QTextDocument::ImageResource, QUrl(QLatin1String("icon:") + i.name), QVariant());
+        }
+    }
+
+    for (auto &i : noneopt_icons) {
+        addResource(i);
     }
 }
 
