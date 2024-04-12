@@ -32,8 +32,8 @@ class OptionAccessingHost {
 public:
     virtual ~OptionAccessingHost() { }
 
-    virtual void     setPluginOption(const QString &option, const QVariant &value)                        = 0;
-    virtual QVariant getPluginOption(const QString &option, const QVariant &defValue = QVariant::Invalid) = 0;
+    virtual void     setPluginOption(const QString &option, const QVariant &value)         = 0;
+    virtual QVariant getPluginOption(const QString &option, const QVariant &defValue = {}) = 0;
 
     virtual void     setGlobalOption(const QString &option, const QVariant &value) = 0;
     virtual QVariant getGlobalOption(const QString &option)                        = 0;
