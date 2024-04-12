@@ -35,12 +35,15 @@ jobs:
     - name: Installing compiler ${{ matrix.compiler }}
       run: |
         sudo apt-get -y install ${{ matrix.compiler }}
+    - name: Remove conflicting slotted packages
+      run: |
+        sudo apt-get remove libunwind-*
     - name: Installing build system
       run: |
         sudo apt-get -y install cmake make
     - name: Installing development packages
       run: |
-        sudo apt-get -y install \
+        sudo apt-get -y install --no-install-recommends \
             gstreamer1.0-dev \
             libhttp-parser-dev \
             libhunspell-dev \
