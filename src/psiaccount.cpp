@@ -1836,7 +1836,7 @@ void PsiAccount::cs_needAuthParams(bool user, bool pass, bool realm)
 
     if (pass) {
         d->stream->setPassword(d->acc.pass);
-        if (d->acc.storeSaltedHashedPassword)
+        if (d->acc.storeSaltedHashedPassword) // TODO can we keep this in keychain too?
             d->stream->setSCRAMStoredSaltedHash(d->acc.scramSaltedHashPassword);
     }
     if (realm) {
@@ -1864,37 +1864,51 @@ void PsiAccount::cs_needAuthParams(bool user, bool pass, bool realm)
             pwJob->setKey(d->jid.bare());
             pwJob->setAutoDelete(true);
             QObject::connect(pwJob, &QKeychain::ReadPasswordJob::finished, this, [=](QKeychain::Job *job) {
-                if (job->error() == QKeychain::NoError && d->stream) {
-                    d->stream->setPassword(static_cast<QKeychain::ReadPasswordJob *>(job)->textData());
-                    if (d->acc.opt_pass) {
+                if (job->error() == QKeychain::AccessDeniedByUser) {
+                    if (d->stream) {
+                        d->stream->abortAuth();
+                    }
+                    return;
+                }
+                if (job->error() == QKeychain::NoError) {
+                    // REVIEW can we protect from mem dumps?
+                    d->acc.pass = static_cast<QKeychain::ReadPasswordJob *>(job)->textData();
+                }
+                if (d->acc.pass.isEmpty()) {
+                    if (job->error() != QKeychain::EntryNotFound && job->error() != QKeychain::NoError) {
+                        PsiOptions::instance()->setOption("options.keychain.enabled", false);
+                        psi()->popupManager()->doPopup(
+                            this, jid(), IconsetFactory::iconPtr("psi/cancel"), tr("Keychain failure"), QPixmap(),
+                            nullptr,
+                            tr("Psi switched to the internal password storage because system "
+                               "password manager is unavailable (%s).")
+                                .arg(job->errorString()),
+                            false, PopupManager::AlertNone);
+                        qWarning("KeyChain error=%d: %s", job->error(), qPrintable(job->errorString()));
+                    }
+                    if (!passwordPrompt()) { // this will also save password on success
+                        if (d->stream) {
+                            d->stream->abortAuth();
+                        }
+                        return;
+                    }
+                } else if (job->error() == QKeychain::EntryNotFound) {
+                    // the password was already set to stream (see above)
+                    savePassword();
+                }
+                // we have non-empty password here and should continue with login
+                if (d->stream) {
+                    d->stream->setPassword(d->acc.pass);
+                    if (job->error() == QKeychain::NoError && d->acc.opt_pass) {
                         // keychain read success. erase from xml if any
                         d->acc.opt_pass = false;
                         emit updatedAccount();
                     }
-                } else if (job->error() == QKeychain::EntryNotFound && d->acc.opt_pass) {
-                    // the password was already set to stream
-                    savePassword();
+                    d->stream->continueAfterParams();
                 } else {
-                    if (job->error() > QKeychain::AccessDeniedByUser) { // unrecoverable
-                        PsiOptions::instance()->setOption("options.keychain.enabled", false);
-                    }
-                    bool accepted = false;
-                    if (d->stream) {
-                        qWarning("KeyChain error=%d: %s", job->error(), qPrintable(job->errorString()));
-                        accepted = passwordPrompt();
-                    } else {
-                        // tcp socket reports failure RemoteHostClosedError.
-                        // baically we have to reestablish connection if it's lost here.
-                        qWarning("fixme: stream was unexpectedly cleaned up");
-                        return;
-                    }
-                    if (accepted) {
-                        d->stream->setPassword(d->acc.pass);
-                    } else {
-                        d->stream->abortAuth();
-                    }
+                    login(); // eventually we will come here again and rerequest the password. likely without
+                             // interruption for the master password
                 }
-                d->stream->continueAfterParams();
             });
             pwJob->start();
         } else {
