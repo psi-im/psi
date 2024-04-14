@@ -48,7 +48,7 @@
 #include <QTimer>
 #include <QToolButton>
 
-static const int           TIMEOUT        = 30000; // 30 secs maximum time interval
+static const int           TIMEOUT        = 120000; // 2 min maximum time interval
 static const int           SECOND         = 1000;
 static const int           maxOverlayTime = TIMEOUT / SECOND;
 static const QLatin1String capOption("options.ui.chat.auto-capitalize");
