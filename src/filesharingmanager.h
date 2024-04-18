@@ -79,7 +79,7 @@ public:
 
     FileSharingItem *item(const XMPP::Hash &id);
     // FileSharingItem* fromReference(const XMPP::Reference &ref, PsiAccount *acc);
-    QList<FileSharingItem *> fromMimeData(const QMimeData *data, PsiAccount *acc);
+    QList<FileSharingItem *> createFromMimeData(const QMimeData *data, PsiAccount *acc);
     QList<FileSharingItem *> fromFilesList(const QStringList &fileList, PsiAccount *acc);
 
     // registers source for file and returns share id for future access to the source
@@ -88,10 +88,6 @@ public:
     // returns false if unable to accept automatically
     bool jingleAutoAcceptIncomingDownloadRequest(XMPP::Jingle::Session *session);
 
-#ifdef HAVE_WEBSERVER
-    bool downloadHttpRequest(PsiAccount *acc, const QString &sourceIdHex, qhttp::server::QHttpRequest *req,
-                             qhttp::server::QHttpResponse *res);
-#endif
 signals:
 
 public slots:

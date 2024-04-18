@@ -23,80 +23,82 @@
 
 namespace Http {
 
-std::tuple<ParseResult, qint64, qint64> parseRangeHeader(const QByteArray &rangesBa, qint64 fileSize)
+std::tuple<ParseResult, quint64, quint64> parseRangeHeader(const QByteArray &rangesBa, std::optional<quint64> fileSize)
 {
-    bool   isRanged       = false;
-    qint64 requestedStart = 0;
-    qint64 requestedSize  = 0;
+    bool    isRanged       = false;
+    quint64 requestedStart = 0;
+    quint64 requestedSize  = 0;
 
     if (!rangesBa.startsWith("bytes=")) {
-        return std::tuple<ParseResult, qint64, qint64>(NotImplementedRangeType, 0, 0);
+        return { NotImplementedRangeType, 0, 0 };
     }
 
     if (rangesBa.indexOf(',') != -1) {
-        return std::tuple<ParseResult, qint64, qint64>(NotImplementedMultirange, 0, 0);
+        return { NotImplementedMultirange, 0, 0 };
     }
 
     auto ba = QByteArray::fromRawData(rangesBa.data() + sizeof("bytes"), rangesBa.size() - int(sizeof("bytes")));
 
     auto l = ba.trimmed().split('-');
     if (l.size() != 2) {
-        return std::tuple<ParseResult, qint64, qint64>(Unparsed, 0, 0);
+        return { Unparsed, 0, 0 };
     }
 
-    bool   ok;
-    qint64 start;
-    qint64 end;
+    bool                   ok;
+    quint64                start;
+    std::optional<quint64> end;
 
     if (!l[0].size()) { // bytes from the end are requested. Jingle-ft doesn't support this
-        return std::tuple<ParseResult, qint64, qint64>(NotImplementedTailLoad, 0, 0);
+        return { NotImplementedTailLoad, 0, 0 };
     }
 
-    start = l[0].toLongLong(&ok);
+    start = l[0].toULongLong(&ok);
     if (!ok) {
-        return std::tuple<ParseResult, qint64, qint64>(Unparsed, 0, 0);
+        return { Unparsed, 0, 0 };
     }
-    if (l[1].size()) {              // if we have end
-        end = l[1].toLongLong(&ok); // then parse it
-        if (!ok || start > end) {   // if something not parsed or range is invalid
-            return std::tuple<ParseResult, qint64, qint64>(Unparsed, 0, 0);
-        }
-
-        if (fileSize == -1 || start < fileSize) {
-            isRanged       = true;
-            requestedStart = start;
-            requestedSize  = end - start + 1;
-        }
-    } else { // no end. all the remaining
-        if (fileSize == -1 || start < fileSize) {
-            isRanged       = true;
-            requestedStart = start;
-            requestedSize  = 0;
+    if (l[1].size()) {               // if we have end
+        end = l[1].toULongLong(&ok); // then parse it
+        if (!ok || start > *end) {   // if something not parsed or range is invalid
+            return { Unparsed, 0, 0 };
         }
     }
 
-    if (fileSize >= 0 && !isRanged) { // isRanged is not set. So it doesn't fit
-        return std::tuple<ParseResult, qint64, qint64>(OutOfRange, 0, 0);
+    if (fileSize && start >= *fileSize) {
+        return { OutOfRange, 0, 0 };
     }
-
-    return std::tuple<ParseResult, qint64, qint64>(Parsed, requestedStart, requestedSize);
+    return { Parsed, start, end ? (*end - start + 1) : 0 };
 }
 
-std::tuple<bool, qint64, qint64> parseContentRangeHeader(const QByteArray &value)
+std::optional<std::tuple<quint64, quint64, std::optional<quint64>>> parseContentRangeHeader(const QByteArray &value)
 {
     auto arr = value.split(' ');
-    if (arr.size() != 2 || arr[0] != "bytes" || (arr = arr[1].split('-')).size() != 2)
-        return std::tuple<bool, qint64, qint64>(false, 0, 0);
-    qint64 start, size;
-    bool   ok;
-    start = arr[0].toLongLong(&ok);
-    if (ok) {
-        arr  = arr[1].split('/');
-        size = arr[0].toLongLong(&ok) - start + 1;
+    if (arr.size() != 2 || arr[0] != "bytes" || (arr = arr[1].split('/')).size() != 2)
+        return {};
+
+    qint64                 start, end;
+    std::optional<quint64> totalSize;
+    bool                   ok;
+
+    if (arr[1] != "*") {
+        totalSize = arr[1].toULongLong(&ok);
+        if (!ok) {
+            return {};
+        }
     }
-    if (!ok || size <= 0)
-        return std::tuple<bool, qint64, qint64>(false, 0, 0);
-    return std::tuple<bool, qint64, qint64>(true, start, size);
+
+    arr = arr[0].split('-');
+    if (arr.size() != 2) {
+        start = arr[0].toULongLong(&ok);
+        if (ok) {
+            end = arr[0].toULongLong(&ok);
+            if (ok && start <= end) {
+                if (!totalSize || (start < *totalSize && end < *totalSize)) {
+                    return std::make_tuple(start, end - start + 1, totalSize);
+                }
+            }
+        }
+    }
+    return {};
 }
 
 }

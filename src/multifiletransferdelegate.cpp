@@ -127,9 +127,11 @@ void MultiFileTransferDelegate::paint(QPainter *painter, const QStyleOptionViewI
     painter->restore();
 
     // generate and draw status line
-    quint64 fullSize      = index.data(MultiFileTransferModel::FullSizeRole).toULongLong();
-    quint64 curSize       = index.data(MultiFileTransferModel::CurrentSizeRole).toULongLong();
-    int     timeRemaining = index.data(MultiFileTransferModel::TimeRemainingRole).toInt();
+
+    bool    fullSizeDefined = index.data(MultiFileTransferModel::FullSizeRole).toBool();
+    quint64 fullSize        = fullSizeDefined ? index.data(MultiFileTransferModel::FullSizeRole).toULongLong() : 0;
+    quint64 curSize         = index.data(MultiFileTransferModel::CurrentSizeRole).toULongLong();
+    int     timeRemaining   = index.data(MultiFileTransferModel::TimeRemainingRole).toInt();
 
     // -----------------------------
     // Transfer current status line
@@ -138,9 +140,16 @@ void MultiFileTransferDelegate::paint(QPainter *painter, const QStyleOptionViewI
     s.reserve(128);
     {
         qlonglong div;
-        QString   unit = TextUtil::sizeUnit(qlonglong(fullSize), &div);
+        QString   unit;
 
-        s = TextUtil::roundedNumber(qint64(curSize), div) + '/' + TextUtil::roundedNumber(qint64(fullSize), div) + unit;
+        if (fullSizeDefined) {
+            unit = TextUtil::sizeUnit(qlonglong(fullSize), &div);
+            s    = TextUtil::roundedNumber(qint64(curSize), div) + '/' + TextUtil::roundedNumber(qint64(fullSize), div)
+                + unit;
+        } else {
+            unit = TextUtil::sizeUnit(qlonglong(curSize), &div);
+            s    = TextUtil::roundedNumber(qint64(curSize), div) + "/" + tr("not defined");
+        }
         QString space(" ");
 
         switch (state) {

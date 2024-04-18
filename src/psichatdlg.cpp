@@ -973,16 +973,14 @@ void PsiChatDlg::actPgpToggled(bool b)
 void PsiChatDlg::doClearButton()
 {
     if (PsiOptions::instance()->getOption("options.ui.chat.warn-before-clear").toBool()) {
-        switch (QMessageBox::warning(
+        auto result = QMessageBox::warning(
             this, tr("Warning"),
             tr("Are you sure you want to clear the chat window?\n(note: does not affect saved history)"),
-            QMessageBox::Yes | QMessageBox::YesAll | QMessageBox::No)) {
-        case QMessageBox::No:
-            break;
-        case QMessageBox::YesAll:
+            QMessageBox::Yes | QMessageBox::YesToAll | QMessageBox::No);
+        if (result == QMessageBox::YesToAll) {
             PsiOptions::instance()->setOption("options.ui.chat.warn-before-clear", false);
-            // fall-through
-        case QMessageBox::Yes:
+        }
+        if (result == QMessageBox::YesToAll || result == QMessageBox::Yes) {
             doClear();
         }
     } else {

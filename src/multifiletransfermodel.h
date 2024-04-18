@@ -35,7 +35,8 @@ public:
     enum State { AddTemplate, Pending, Active, Failed, Done };
 
     enum {
-        FullSizeRole = Qt::UserRole,
+        FullSizeDefinedRole = Qt::UserRole,
+        FullSizeRole,
         CurrentSizeRole,
         SpeedRole,
         DescriptionRole,
@@ -62,7 +63,8 @@ public:
     QHash<int, QByteArray> roleNames() const override;
 
     void                   clear();
-    MultiFileTransferItem *addTransfer(Direction direction, const QString &displayName, quint64 fullSize);
+    MultiFileTransferItem *addTransfer(Direction direction, const QString &displayName,
+                                       std::optional<quint64> fullSize);
     void                   forEachTransfer(const std::function<void(MultiFileTransferItem *)> cb) const;
     void                   setAddEnabled(bool enabled = true);
     bool                   isAddEnabled() const;

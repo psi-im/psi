@@ -33,9 +33,6 @@
 #include <X11/keysym.h>
 
 #ifdef KeyPress
-// defined by X11 headers
-const int XKeyPress   = KeyPress;
-const int XKeyRelease = KeyRelease;
 #undef KeyPress
 #endif
 

@@ -59,11 +59,15 @@ public:
         HttpFinished    = 0x1,
         JingleFinished  = 0x2,
         PublishNotified = 0x4,
-        SizeKnown       = 0x8,
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
     using HashSums = QList<XMPP::Hash>;
+
+    struct Range {
+        quint64 start;
+        quint64 size;
+    };
 
     FileSharingItem(FileCacheItem *cache, PsiAccount *acc, FileSharingManager *manager);
     FileSharingItem(const XMPP::MediaSharing &ms, const XMPP::Jid &from, PsiAccount *acc, FileSharingManager *manager);
@@ -73,16 +77,15 @@ public:
                     FileSharingManager *manager);
     ~FileSharingItem();
 
-    QIcon                     thumbnail(const QSize &size) const;
-    QImage                    preview(const QSize &maxSize) const;
-    QString                   displayName() const;
-    QString                   fileName() const;
-    inline const QString     &mimeType() const { return _mimeType; }
-    inline const HashSums    &sums() const { return _sums; }
-    inline QVariantMap        metaData() const { return _metaData; }
-    inline quint64            fileSize() const { return _fileSize; }
-    inline bool               isSizeKnown() const { return bool(_flags & SizeKnown); }
-    inline const QStringList &uris() const { return _uris; }
+    QIcon                               thumbnail(const QSize &size) const;
+    QImage                              preview(const QSize &maxSize) const;
+    QString                             displayName() const;
+    QString                             fileName() const;
+    inline const QString               &mimeType() const { return _mimeType; }
+    inline const HashSums              &sums() const { return _sums; }
+    inline QVariantMap                  metaData() const { return _metaData; }
+    inline std::optional<std::uint64_t> fileSize() const { return _fileSize; }
+    inline const QStringList           &uris() const { return _uris; }
 
     // reborn flag updates ttl for the item
     FileCacheItem           *cache(bool reborn = false) const;
@@ -103,7 +106,7 @@ public:
      *
      * It's responsibility of the caller to delete downloader when it's done, or one can call setSelfDelete(true)
      */
-    FileShareDownloader *download(bool isRanged = false, qint64 start = 0, quint64 size = 0);
+    FileShareDownloader *download(std::optional<Range> range = {});
 
     // accept public internet uri and returns it's type
     static SourceType  sourceType(const QString &uri);
@@ -121,21 +124,21 @@ signals:
     void logChanged();
 
 private:
-    PsiAccount          *_acc        = nullptr;
-    FileSharingManager  *_manager    = nullptr;
-    FileShareDownloader *_downloader = nullptr;
-    FileType             _fileType;
-    Flags                _flags;
-    quint64              _fileSize = 0;
-    QDateTime            _modifyTime; // utc
-    QStringList          _uris;
-    QString              _fileName; // file name with path
-    HashSums             _sums;
-    QString              _mimeType;
-    QString              _description;
-    QVariantMap          _metaData;
-    QStringList          _log;
-    QList<XMPP::Jid>     _jids;
+    PsiAccount         *_acc     = nullptr;
+    FileSharingManager *_manager = nullptr;
+    // FileShareDownloader         *_downloader = nullptr;
+    FileType                     _fileType;
+    Flags                        _flags;
+    std::optional<std::uint64_t> _fileSize;
+    QDateTime                    _modifyTime; // utc
+    QStringList                  _uris;
+    QString                      _fileName; // file name with path
+    HashSums                     _sums;
+    QString                      _mimeType;
+    QString                      _description;
+    QVariantMap                  _metaData;
+    QStringList                  _log;
+    QList<XMPP::Jid>             _jids;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(FileSharingItem::Flags)

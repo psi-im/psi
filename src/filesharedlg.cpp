@@ -19,7 +19,6 @@
 
 #include "filesharedlg.h"
 
-#include "filecache.h"
 #include "filesharingmanager.h"
 #include "fileutil.h"
 #include "iris/httpfileupload.h"
@@ -104,7 +103,9 @@ void FileShareDlg::publish()
         auto publisher = item->property("publisher").value<FileSharingItem *>();
         if (publisher->isPublished()) {
             item->setState(MultiFileTransferModel::Done);
-            item->setCurrentSize(item->fullSize());
+            if (item->fullSize()) {
+                item->setCurrentSize(*item->fullSize());
+            }
             readyPublishers.append(publisher);
             return;
         }
@@ -114,7 +115,9 @@ void FileShareDlg::publish()
         connect(publisher, &FileSharingItem::publishFinished, this, [this, publisher, item]() {
             if (publisher->uris().count()) {
                 item->setState(MultiFileTransferModel::Done);
-                item->setCurrentSize(item->fullSize());
+                if (item->fullSize()) {
+                    item->setCurrentSize(*item->fullSize());
+                }
             } else {
                 item->setState(MultiFileTransferModel::Failed);
                 hasFailures = true;
@@ -152,7 +155,8 @@ void FileShareDlg::finish()
             if (uri.isValid()) {
                 text = uri.toString(QUrl::FullyEncoded);
             } else {
-                text = QLatin1String("SIMS(") + i->mimeType() + ", " + QString::number(i->fileSize()) + "B, "
+                text = QLatin1String("SIMS(") + i->mimeType() + ", "
+                    + (i->fileSize() ? (QString::number(*i->fileSize()) + "B, ") : "stream ")
                     + tr("requires compliant client") + ")";
             }
             QString refText = QString(" %1").arg(text);
@@ -182,7 +186,7 @@ void FileShareDlg::shareFiles(PsiAccount *acc, const XMPP::Jid &myJid, const Cal
 void FileShareDlg::shareFiles(PsiAccount *acc, const Jid &myJid, const QMimeData *data, const Callback &callback,
                               QWidget *parent)
 {
-    auto items = acc->psi()->fileSharingManager()->fromMimeData(data, acc);
+    auto items = acc->psi()->fileSharingManager()->createFromMimeData(data, acc);
     if (items.isEmpty())
         return;
     auto dlg = new FileShareDlg(acc, myJid, items, callback, parent);

@@ -139,7 +139,7 @@ list(APPEND HEADERS
     filesharingdownloader.h
     filesharingitem.h
     filesharingmanager.h
-    filesharingnamproxy.h
+    filesharingproxy.h
     filetransdlg.h
     fileutil.h
     gcuserview.h
@@ -263,10 +263,8 @@ list(APPEND HEADERS
 
 if(UNIX OR IS_WEBENGINE)
     list(APPEND SOURCES
-        filesharinghttpproxy.cpp
         webserver.cpp)
     list(APPEND HEADERS
-        filesharinghttpproxy.h
         webserver.h)
 endif()
 
@@ -386,7 +384,7 @@ list(APPEND SOURCES
     filesharingdownloader.cpp
     filesharingitem.cpp
     filesharingmanager.cpp
-    filesharingnamproxy.cpp
+    filesharingproxy.cpp
     filetransdlg.cpp
     fileutil.cpp
     gcuserview.cpp

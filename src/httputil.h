@@ -34,12 +34,13 @@ enum ParseResult {
 /**
  * @brief parseRangeHeader parses http bytes uni-"Range" header
  * @param value    - heder value
- * @param fileSize - if destination file size is know it will be checked. set -1 when not known
+ * @param fileSize - if destination file size is known it will be checked. set -1 when not known
  * @return (result, start, size)
  *
  * While it's allowed by standard this parser will return error is start is not set in the header
  */
-std::tuple<ParseResult, qint64, qint64> parseRangeHeader(const QByteArray &value, qint64 fileSize = -1);
-std::tuple<bool, qint64, qint64>        parseContentRangeHeader(const QByteArray &value);
+std::tuple<ParseResult, quint64, quint64>                           parseRangeHeader(const QByteArray      &value,
+                                                                                     std::optional<quint64> fileSize = -1);
+std::optional<std::tuple<quint64, quint64, std::optional<quint64>>> parseContentRangeHeader(const QByteArray &value);
 
 }

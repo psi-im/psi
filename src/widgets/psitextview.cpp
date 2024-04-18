@@ -172,16 +172,21 @@ span.emojis {
                           QTimer::singleShot(0, this, &PsiTextView::scrollToBottom);
                       setTextCursor(prevCur);
                   });
-                  auto downloader = item->download(false, 0, 0);
+                  auto downloader = item->download();
                   downloader->setSelfDelete(true);
                   // read just for cache
                   connect(downloader, &FileShareDownloader::readyRead, this,
                           [downloader]() { downloader->read(downloader->bytesAvailable()); });
                   downloader->open();
 
-                  qlonglong div;
-                  QString   unit    = TextUtil::sizeUnit(qlonglong(item->fileSize()), &div);
-                  QString   sizeStr = TextUtil::roundedNumber(qint64(item->fileSize()), div) + unit;
+                  QString sizeStr;
+                  if (item->fileSize()) {
+                      qlonglong div;
+                      QString   unit = TextUtil::sizeUnit(qlonglong(*item->fileSize()), &div);
+                      sizeStr        = TextUtil::roundedNumber(qint64(*item->fileSize()), div) + unit;
+                  } else {
+                      sizeStr = QLatin1String("stream");
+                  }
 
                   QUrl simpleUrl = item->simpleSource();
                   if (simpleUrl.isValid()) {

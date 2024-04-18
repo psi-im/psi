@@ -3633,7 +3633,7 @@ void PsiAccount::actionSendStatus(const Jid &jid)
     StatusSetDlg *w = new StatusSetDlg(psi(), makeLastStatus(status().type()), lastPriorityNotEmpty());
     w->setJid(jid);
     connect(w, qOverload<const Jid &, const Status &>(&StatusSetDlg::setJid), this,
-            [this, w](const Jid &j, const Status &s) {
+            [this](const Jid &j, const Status &s) {
                 JT_Presence *p = new JT_Presence(client()->rootTask());
                 p->pres(j, s);
                 p->go(true);

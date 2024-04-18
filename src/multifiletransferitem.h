@@ -26,12 +26,12 @@
 class MultiFileTransferItem : public QObject {
     Q_OBJECT
 public:
-    MultiFileTransferItem(MultiFileTransferModel::Direction direction, const QString &displayName, quint64 fullSize,
-                          QObject *parent);
+    MultiFileTransferItem(MultiFileTransferModel::Direction direction, const QString &displayName,
+                          std::optional<quint64> fullSize, QObject *parent);
     ~MultiFileTransferItem();
 
     const QString                    &displayName() const;
-    quint64                           fullSize() const;
+    std::optional<quint64>            fullSize() const;
     quint64                           currentSize() const;
     quint64                           offset() const; // initial offset
     QIcon                             icon() const;

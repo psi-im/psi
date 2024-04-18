@@ -70,11 +70,7 @@ FileSharingItem::FileSharingItem(const MediaSharing &ms, const Jid &from, PsiAcc
         _uris     = ms.sources;
     }
 
-    if (ms.file.hasSize()) {
-        _flags |= SizeKnown;
-        _fileSize = ms.file.size();
-    }
-
+    _fileSize = ms.file.size();
     _jids << from;
 
     QByteArray ampl = ms.file.amplitudes();
@@ -86,7 +82,7 @@ FileSharingItem::FileSharingItem(const MediaSharing &ms, const Jid &from, PsiAcc
 }
 
 FileSharingItem::FileSharingItem(const QImage &image, PsiAccount *acc, FileSharingManager *manager) :
-    QObject(manager), _acc(acc), _manager(manager), _fileType(FileType::TempFile), _flags(SizeKnown)
+    QObject(manager), _acc(acc), _manager(manager), _fileType(FileType::TempFile)
 {
     QByteArray ba;
     QBuffer    buffer(&ba);
@@ -107,8 +103,7 @@ FileSharingItem::FileSharingItem(const QImage &image, PsiAccount *acc, FileShari
 }
 
 FileSharingItem::FileSharingItem(const QString &fileName, PsiAccount *acc, FileSharingManager *manager) :
-    QObject(manager), _acc(acc), _manager(manager), _fileType(FileType::LocalLink), _flags(SizeKnown),
-    _fileName(fileName)
+    QObject(manager), _acc(acc), _manager(manager), _fileType(FileType::LocalLink), _fileName(fileName)
 {
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly))
@@ -129,7 +124,7 @@ FileSharingItem::FileSharingItem(const QString &fileName, PsiAccount *acc, FileS
 
 FileSharingItem::FileSharingItem(const QString &mime, const QByteArray &data, const QVariantMap &metaData,
                                  PsiAccount *acc, FileSharingManager *manager) :
-    QObject(manager), _acc(acc), _manager(manager), _fileType(FileType::TempFile), _flags(SizeKnown),
+    QObject(manager), _acc(acc), _manager(manager), _fileType(FileType::TempFile),
     _modifyTime(QDateTime::currentDateTimeUtc()), _metaData(metaData)
 {
     _sums.append(Hash::from(Hash::Sha1, data));
@@ -167,7 +162,7 @@ bool FileSharingItem::initFromCache(FileCacheItem *cache)
     if (!cache)
         return false;
 
-    _flags       = SizeKnown;
+    _flags       = {};
     auto md      = cache->metadata();
     _mimeType    = md.value(QString::fromLatin1("type")).toString();
     QString link = md.value(QString::fromLatin1("link")).toString();
@@ -375,37 +370,40 @@ void FileSharingItem::publish(const XMPP::Jid &myJid)
     }
 }
 
-FileShareDownloader *FileSharingItem::download(bool isRanged, qint64 start, quint64 size)
+FileShareDownloader *FileSharingItem::download(std::optional<Range> range)
 {
-    if (isRanged && (_flags & SizeKnown) && start == 0 && size == _fileSize)
-        isRanged = false;
+    // if (range && range->start == 0 && _fileSize && range->size == *_fileSize)
+    //     range = {};
 
     XMPP::Jingle::FileTransfer::File file;
     file.setDate(_modifyTime);
     file.setMediaType(_mimeType);
     file.setName(_fileName);
-    if (_flags & SizeKnown)
-        file.setSize(_fileSize);
+    if (_fileSize)
+        file.setSize(*_fileSize);
     for (auto const &h : std::as_const(_sums)) {
         file.addHash(h);
     }
 
-    FileShareDownloader *downloader = new FileShareDownloader(_acc, _sums, file, _jids, _uris, this);
-    if (isRanged) {
-        downloader->setRange(start, size);
+    auto downloaderRange = std::optional<FileShareDownloader::Range> {};
+    if (range) {
+        downloaderRange = FileShareDownloader::Range { range->start, range->size };
+    }
+
+    // if (_downloader && _downloader->requestedRange() == downloaderRange) {
+    //     qWarning("double download for the same file: %s", qPrintable(_fileName));
+    //     return _downloader;
+    // }
+
+    auto downloader = new FileShareDownloader(_acc, _sums, file, _jids, _uris, this);
+    if (downloaderRange) {
+        downloader->setRange(downloaderRange);
         return downloader;
     }
-
-    if (_downloader) {
-        qWarning("double download for the same file: %s", qPrintable(_fileName));
-        return downloader; // seems like we are downloading this file twice, but what we can do?
-    }
-
-    _downloader = downloader;
-    connect(downloader, &FileShareDownloader::cacheReady, this, [this]() {
-        QString dlFileName = _downloader->takeFile();
-        _downloader->disconnect(this);
-        _downloader = nullptr;
+    connect(downloader, &FileShareDownloader::cacheReady, this, [this, downloader]() {
+        QString dlFileName = downloader->takeFile();
+        downloader->disconnect(this);
+        // downloader = nullptr;
 
         if (_modifyTime.isValid())
             FileUtil::setModificationTime(dlFileName, _modifyTime);
@@ -435,13 +433,13 @@ FileShareDownloader *FileSharingItem::download(bool isRanged, qint64 start, quin
         emit downloadFinished();
     });
 
-    connect(downloader, &FileShareDownloader::failed, this, [this]() {
-        _downloader->disconnect(this);
-        _downloader = nullptr;
+    connect(downloader, &FileShareDownloader::failed, this, [downloader, this]() {
+        downloader->disconnect(this);
+        // downloader = nullptr;
         emit downloadFinished();
     });
 
-    connect(downloader, &FileShareDownloader::destroyed, this, [this]() { _downloader = nullptr; });
+    // connect(downloader, &FileShareDownloader::destroyed, this, [this]() { _downloader = nullptr; });
 
     return downloader;
 }
