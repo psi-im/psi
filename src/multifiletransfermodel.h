@@ -23,7 +23,9 @@
 #include <QAbstractListModel>
 #include <QSet>
 #include <QTimer>
+
 #include <functional>
+#include <optional>
 
 class MultiFileTransferItem;
 

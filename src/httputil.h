@@ -18,6 +18,8 @@
  */
 
 #include <QByteArray>
+
+#include <optional>
 #include <tuple>
 
 namespace Http {

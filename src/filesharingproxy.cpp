@@ -34,6 +34,8 @@
 #include <QNetworkReply>
 #include <QPointer>
 
+#include <cstring>
+
 #define HTTP_CHUNK (512 * 1024 * 1024)
 
 template <typename Impl> class ControlBase : public QObject {
@@ -55,16 +57,17 @@ public:
     QPointer<FileShareDownloader>         downloader;
     std::optional<FileSharingItem::Range> requestedRange;
     std::optional<quint64>                bytesLeft; // if not set - unknown
-    bool                                  headersSent = false;
-    bool                                  dataHungry  = true;
-    bool                                  finished    = false;
+    qint64                                totalTranferred = 0;
+    bool                                  headersSent     = false;
+    bool                                  dataHungry      = true;
+    bool                                  finished        = false;
 
     ControlBase(PsiAccount *acc, const QString &sourceIdHex, QObject *parent) :
         QObject(parent), acc(acc), item(acc->psi()->fileSharingManager()->item(XMPP::Hash::from(sourceIdHex)))
     {
     }
 
-    ~ControlBase() { qDebug("FSP destroyed"); }
+    ~ControlBase() { qDebug("FSP destroyed. Total transferred bytes: %lld", totalTranferred); }
 
     void process()
     {
@@ -124,7 +127,7 @@ public:
             return { StatusCode::NotImplemented, {} };
         case Http::OutOfRange:
             static_cast<Impl *>(this)->setResponseHeader(
-                "Content-Range", QByteArray("bytes */") + QByteArray::number(*item->fileSize()));
+                "Content-Range", QByteArray("bytes */") + QByteArray::number(quint64(*item->fileSize())));
             return { StatusCode::RangeNotSatisfied, {} };
         }
         return { StatusCode::NotImplemented, {} };
@@ -267,7 +270,6 @@ public:
 
     void transfer()
     {
-        qDebug("transfer");
         if (finished) {
             return;
         }
@@ -278,6 +280,7 @@ public:
             if (bytesAvail) {
                 qint64 toTransfer = bytesAvail > HTTP_CHUNK ? HTTP_CHUNK : bytesAvail;
                 auto   data       = downloader->read(toTransfer);
+                // qDebug("read %lld bytes from available %lld", qint64(data.size()), bytesAvail);
                 if (bytesLeft.has_value()) {
                     if (data.size() < bytesLeft)
                         _write(data);
@@ -291,7 +294,7 @@ public:
                 } else {
                     _write(data);
                 }
-                qDebug("FSP transferred %lld bytes of %lld bytes", qint64(data.size()), toTransfer);
+                // qDebug("FSP transferred %lld bytes of %lld bytes", qint64(data.size()), toTransfer);
             } else {
                 // qDebug("FSP we have to wait for readyRead or disconnected");
             }
@@ -321,6 +324,7 @@ public:
     {
         // qDebug("FSP: write %lld bytes", qint64(data.size()));
         static_cast<Impl *>(this)->write(data);
+        totalTranferred += data.size();
         dataHungry = false;
     }
 
@@ -402,7 +406,7 @@ public:
 protected:
     qint64 readData(char *buf, qint64 maxlen)
     {
-        auto sz = std::min(maxlen, buffer.size());
+        auto sz = std::min(maxlen, qint64(buffer.size()));
         if (sz) {
             std::memcpy(buf, buffer.data(), sz);
             buffer.remove(0, sz);
