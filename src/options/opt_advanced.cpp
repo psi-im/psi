@@ -70,7 +70,7 @@ QWidget *OptionsTabAdvanced::widget()
     d->ck_scrollTo->setToolTip(
         tr("Makes Psi scroll the main window automatically so you can see new incoming events."));
     d->ck_ignoreHeadline->setToolTip(tr("Makes Psi ignore all incoming \"headline\" events,"
-                                        " like system-wide news on MSN, announcements, etc."));
+                                        " like announcements, etc."));
 
     connect(d->ck_messageevents, SIGNAL(toggled(bool)), d->ck_inactiveevents, SLOT(setEnabled(bool)));
     connect(d->ck_messageevents, SIGNAL(toggled(bool)), d->ck_sendComposingEvents, SLOT(setEnabled(bool)));
