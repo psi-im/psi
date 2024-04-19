@@ -539,16 +539,12 @@ QString TextUtil::emoticonify(const QString &in)
 
                         int n = match.capturedStart();
                         if (ePos == -1 || n < ePos || (match.capturedLength() > foundLen && n < ePos + foundLen)) {
-#if 0
-// this logic is commented out being rather harmful with unicode emoji
                             bool leftSpace  = n == 0 || (n > 0 && str[n - 1].isSpace());
                             bool rightSpace = (n + match.capturedLength() == int(str.length()))
                                 || (n + match.capturedLength() < int(str.length())
                                     && str[n + match.capturedLength()].isSpace());
                             // there must be whitespace at least on one side of the emoticon
-                            if (leftSpace || rightSpace) {
-#endif
-                            if (true) {
+                            if (leftSpace || rightSpace || EmojiRegistry::instance().isEmoji(match.captured())) {
                                 ePos    = n;
                                 closest = icon;
 
