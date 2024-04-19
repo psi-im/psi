@@ -31,6 +31,7 @@
 #include "qhttpserverresponse.hpp"
 #include "webserver.h"
 
+#include <QFileInfo>
 #include <QNetworkReply>
 #include <QPointer>
 
