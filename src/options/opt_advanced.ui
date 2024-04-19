@@ -133,7 +133,7 @@
    <item>
     <widget class="QCheckBox" name="ck_ignoreHeadline">
      <property name="text">
-      <string>Ignore &quot;Headline&quot; events (e.g. MSN alerts)</string>
+      <string>Ignore &quot;Headline&quot; events (e.g. announcements)</string>
      </property>
     </widget>
    </item>
