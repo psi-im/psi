@@ -32,9 +32,10 @@ namespace qhttp { namespace server {
 }}
 
 namespace FileSharingProxy {
+#ifdef HAVE_WEBSERVER
 void proxify(PsiAccount *acc, const QString &sourceIdHex, qhttp::server::QHttpRequest *request,
              qhttp::server::QHttpResponse *response);
-
+#endif
 QNetworkReply *proxify(PsiAccount *acc, const QString &sourceIdHex, const QNetworkRequest &req);
 
 };

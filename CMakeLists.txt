@@ -79,7 +79,8 @@ option( DEV_MODE "Enable prepare-bin-libs target for MS Windows only. Set PSI_DA
 # Iris options
 option( BUNDLED_IRIS "Build iris library bundled" ON )
 option( BUNDLED_IRIS_ALL "Build bundled iris library with bundled QCA and bundled USRSCTP" OFF)
-option( IRIS_BUNDLED_QCA "Adds: DTLS, Blake2b and other useful for XMPP crypto-stuff" ${DEFAULT_BUNDLED_QCA} )
+# note Blake2b is needed only with Qt5. Qt6 has its own implementation
+option( IRIS_BUNDLED_QCA "Adds: DTLS, Blake2b (needed with Qt5) and other useful for XMPP crypto-stuff" ${DEFAULT_BUNDLED_QCA} )
 option( IRIS_BUNDLED_USRSCTP "Compile compatible usrsctp lib when system one is not available or uncompatible (required for p2p file transfer)" ${DEFAULT_BUNDLED_USRSCTP} )
 if (UNIX AND "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     option( ENABLE_ASAN "Enable compilation with address sanitizer" OFF )

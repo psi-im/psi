@@ -27,8 +27,10 @@
 #include "httputil.h"
 #include "psiaccount.h"
 #include "psicon.h"
+#ifdef HAVE_WEBSERVER
 #include "qhttpfwd.hpp"
 #include "qhttpserverresponse.hpp"
+#endif
 #include "webserver.h"
 
 #include <QFileInfo>
@@ -485,7 +487,7 @@ public:
     }
     void write(const QByteArray &data) { return reply->appendData(data); }
 };
-
+#ifdef HAVE_WEBSERVER
 class HTTPProxy : public ControlBase<HTTPProxy> {
     Q_OBJECT
 
@@ -541,16 +543,17 @@ public:
     }
     void write(const QByteArray &data) { response->write(data); }
 };
+#endif
 }
 
 namespace FileSharingProxy {
-
+#ifdef HAVE_WEBSERVER
 void proxify(PsiAccount *acc, const QString &sourceIdHex, qhttp::server::QHttpRequest *request,
              qhttp::server::QHttpResponse *response)
 {
     (new HTTPProxy(acc, sourceIdHex, request, response))->process();
 }
-
+#endif
 QNetworkReply *proxify(PsiAccount *acc, const QString &sourceIdHex, const QNetworkRequest &req)
 {
     auto proxy = new NAMProxy(acc, sourceIdHex, req);
