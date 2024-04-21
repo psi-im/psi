@@ -274,7 +274,7 @@ QString soundDetectPlayer()
 
 void soundPlay(const QString &s)
 {
-    if (s.isEmpty())
+    if (s.isEmpty() || s.startsWith('-'))
         return;
 
     QString str = s;

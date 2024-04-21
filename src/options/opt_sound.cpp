@@ -42,33 +42,56 @@ QWidget *OptionsTabSound::widget()
     w             = new OptSoundUI();
     OptSoundUI *d = static_cast<OptSoundUI *>(w);
 
-    sounds_ << d->le_oeMessage << d->le_oeChat1 << d->le_oeChat2 << d->le_oeGroupChat << d->le_oeHeadline
-            << d->le_oeSystem << d->le_oeOnline << d->le_oeOffline << d->le_oeSend << d->le_oeIncomingFT
-            << d->le_oeFTComplete;
-
     bg_se = new QButtonGroup;
+
     bg_se->addButton(d->tb_seMessage);
     modify_buttons_[d->tb_seMessage] = d->le_oeMessage;
+    sounds_ << UiSoundItem { d->ck_oeMessage, d->le_oeMessage, d->tb_seMessage, QStringLiteral("incoming-message") };
+
     bg_se->addButton(d->tb_seChat1);
     modify_buttons_[d->tb_seChat1] = d->le_oeChat1;
+    sounds_ << UiSoundItem { d->ck_oeChat1, d->le_oeChat1, d->tb_seChat1, QStringLiteral("new-chat") };
+
     bg_se->addButton(d->tb_seChat2);
     modify_buttons_[d->tb_seChat2] = d->le_oeChat2;
+    sounds_ << UiSoundItem { d->ck_oeChat2, d->le_oeChat2, d->tb_seChat2, QStringLiteral("chat-message") };
+
     bg_se->addButton(d->tb_seGroupChat);
     modify_buttons_[d->tb_seGroupChat] = d->le_oeGroupChat;
+    sounds_ << UiSoundItem { d->ck_oeGroupChat, d->le_oeGroupChat, d->tb_seGroupChat,
+                             QStringLiteral("groupchat-message") };
+
     bg_se->addButton(d->tb_seHeadline);
     modify_buttons_[d->tb_seHeadline] = d->le_oeHeadline;
+    sounds_ << UiSoundItem { d->ck_oeHeadline, d->le_oeHeadline, d->tb_seHeadline,
+                             QStringLiteral("incoming-headline") };
+
     bg_se->addButton(d->tb_seSystem);
     modify_buttons_[d->tb_seSystem] = d->le_oeSystem;
+    sounds_ << UiSoundItem { d->ck_oeSystem, d->le_oeSystem, d->tb_seSystem, QStringLiteral("system-message") };
+
     bg_se->addButton(d->tb_seOnline);
     modify_buttons_[d->tb_seOnline] = d->le_oeOnline;
+    sounds_ << UiSoundItem { d->ck_oeOnline, d->le_oeOnline, d->tb_seOnline, QStringLiteral("contact-online") };
+
     bg_se->addButton(d->tb_seOffline);
     modify_buttons_[d->tb_seOffline] = d->le_oeOffline;
+    sounds_ << UiSoundItem { d->ck_oeOffline, d->le_oeOffline, d->tb_seOffline, QStringLiteral("contact-offline") };
+
     bg_se->addButton(d->tb_seSend);
     modify_buttons_[d->tb_seSend] = d->le_oeSend;
+    sounds_ << UiSoundItem { d->ck_oeSend, d->le_oeSend, d->tb_seSend, QStringLiteral("outgoing-chat") };
+
     bg_se->addButton(d->tb_seIncomingFT);
     modify_buttons_[d->tb_seIncomingFT] = d->le_oeIncomingFT;
+    sounds_ << UiSoundItem { d->ck_oeIncomingFT, d->le_oeIncomingFT, d->tb_seIncomingFT,
+                             QStringLiteral("incoming-file-transfer") };
+
     bg_se->addButton(d->tb_seFTComplete);
     modify_buttons_[d->tb_seFTComplete] = d->le_oeFTComplete;
+    sounds_ << UiSoundItem { d->ck_oeFTComplete, d->le_oeFTComplete, d->tb_seFTComplete,
+                             QStringLiteral("completed-file-transfer") };
+
     connect(bg_se, SIGNAL(buttonClicked(QAbstractButton *)), SLOT(chooseSoundEvent(QAbstractButton *)));
 
     bg_sePlay = new QButtonGroup;
@@ -138,19 +161,14 @@ void OptionsTabSound::applyOptions()
     PsiOptions::instance()->setOption("options.ui.notifications.sounds.notify-every-muc-message",
                                       d->ck_gcSound->isChecked());
 
-    PsiOptions::instance()->setOption("options.ui.notifications.sounds.incoming-message", d->le_oeMessage->text());
-    PsiOptions::instance()->setOption("options.ui.notifications.sounds.new-chat", d->le_oeChat1->text());
-    PsiOptions::instance()->setOption("options.ui.notifications.sounds.chat-message", d->le_oeChat2->text());
-    PsiOptions::instance()->setOption("options.ui.notifications.sounds.groupchat-message", d->le_oeGroupChat->text());
-    PsiOptions::instance()->setOption("options.ui.notifications.sounds.system-message", d->le_oeSystem->text());
-    PsiOptions::instance()->setOption("options.ui.notifications.sounds.incoming-headline", d->le_oeHeadline->text());
-    PsiOptions::instance()->setOption("options.ui.notifications.sounds.contact-online", d->le_oeOnline->text());
-    PsiOptions::instance()->setOption("options.ui.notifications.sounds.contact-offline", d->le_oeOffline->text());
-    PsiOptions::instance()->setOption("options.ui.notifications.sounds.outgoing-chat", d->le_oeSend->text());
-    PsiOptions::instance()->setOption("options.ui.notifications.sounds.incoming-file-transfer",
-                                      d->le_oeIncomingFT->text());
-    PsiOptions::instance()->setOption("options.ui.notifications.sounds.completed-file-transfer",
-                                      d->le_oeFTComplete->text());
+    for (auto const &ui : std::as_const(sounds_)) {
+        auto opt   = QLatin1String("options.ui.notifications.sounds.") + ui.option;
+        auto value = ui.file->text();
+        if (!value.isEmpty() && !ui.enabled->isChecked()) {
+            value = "-" + value;
+        }
+        PsiOptions::instance()->setOption(opt, value);
+    }
 }
 
 void OptionsTabSound::restoreOptions()
@@ -174,27 +192,17 @@ void OptionsTabSound::restoreOptions()
     d->ck_gcSound->setChecked(
         PsiOptions::instance()->getOption("options.ui.notifications.sounds.notify-every-muc-message").toBool());
 
-    d->le_oeMessage->setText(
-        PsiOptions::instance()->getOption("options.ui.notifications.sounds.incoming-message").toString());
-    d->le_oeChat1->setText(PsiOptions::instance()->getOption("options.ui.notifications.sounds.new-chat").toString());
-    d->le_oeChat2->setText(
-        PsiOptions::instance()->getOption("options.ui.notifications.sounds.chat-message").toString());
-    d->le_oeGroupChat->setText(
-        PsiOptions::instance()->getOption("options.ui.notifications.sounds.groupchat-message").toString());
-    d->le_oeSystem->setText(
-        PsiOptions::instance()->getOption("options.ui.notifications.sounds.system-message").toString());
-    d->le_oeHeadline->setText(
-        PsiOptions::instance()->getOption("options.ui.notifications.sounds.incoming-headline").toString());
-    d->le_oeOnline->setText(
-        PsiOptions::instance()->getOption("options.ui.notifications.sounds.contact-online").toString());
-    d->le_oeOffline->setText(
-        PsiOptions::instance()->getOption("options.ui.notifications.sounds.contact-offline").toString());
-    d->le_oeSend->setText(
-        PsiOptions::instance()->getOption("options.ui.notifications.sounds.outgoing-chat").toString());
-    d->le_oeIncomingFT->setText(
-        PsiOptions::instance()->getOption("options.ui.notifications.sounds.incoming-file-transfer").toString());
-    d->le_oeFTComplete->setText(
-        PsiOptions::instance()->getOption("options.ui.notifications.sounds.completed-file-transfer").toString());
+    for (auto const &ui : std::as_const(sounds_)) {
+        auto opt   = QLatin1String("options.ui.notifications.sounds.") + ui.option;
+        auto value = PsiOptions::instance()->getOption(opt).toString();
+        if (value.startsWith("-")) {
+            ui.enabled->setChecked(false);
+            ui.file->setText(value.mid(1));
+        } else {
+            ui.enabled->setChecked(true);
+            ui.file->setText(value);
+        }
+    }
 }
 
 void OptionsTabSound::setData(PsiCon *, QWidget *p) { parentWidget = p; }
@@ -217,15 +225,26 @@ void OptionsTabSound::soundReset()
     OptSoundUI *d = static_cast<OptSoundUI *>(w);
 
     d->le_oeMessage->setText("sound/chat2.wav");
+    d->ck_oeMessage->setChecked(true);
     d->le_oeChat1->setText("sound/chat1.wav");
+    d->ck_oeChat1->setChecked(true);
     d->le_oeChat2->setText("sound/chat2.wav");
+    d->ck_oeChat2->setChecked(true);
     d->le_oeGroupChat->setText("sound/chat2.wav");
+    d->ck_oeGroupChat->setChecked(true);
     d->le_oeSystem->setText("sound/chat2.wav");
+    d->ck_oeSystem->setChecked(true);
     d->le_oeHeadline->setText("sound/chat2.wav");
+    d->ck_oeHeadline->setChecked(true);
     d->le_oeOnline->setText("sound/online.wav");
+    d->ck_oeOnline->setChecked(true);
     d->le_oeOffline->setText("sound/offline.wav");
+    d->ck_oeOffline->setChecked(true);
     d->le_oeSend->setText("sound/send.wav");
+    d->ck_oeSend->setChecked(true);
     d->le_oeIncomingFT->setText("sound/ft_incoming.wav");
+    d->ck_oeIncomingFT->setChecked(true);
     d->le_oeFTComplete->setText("sound/ft_complete.wav");
+    d->ck_oeFTComplete->setChecked(true);
     emit dataChanged();
 }
