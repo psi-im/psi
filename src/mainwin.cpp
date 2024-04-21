@@ -40,7 +40,6 @@
 #include "psicontactlist.h"
 #include "psievent.h"
 #include "psiiconset.h"
-#include "psimedia/psimedia.h"
 #include "psioptions.h"
 #include "psirosterwidget.h"
 #include "psitoolbar.h"
@@ -595,120 +594,95 @@ void MainWin::registerAction(IconAction *action)
 
     PsiContactList *contactList = psiCon()->contactList();
 
-    struct MenuAction {
-        const char *name;
-        const char *signal;
-        QObject    *receiver;
-        const char *slot;
+    auto cd = [this, action](const QString &actionName, auto signal, auto dst, auto slot) {
+        if (actionName != action->objectName()) {
+            return false;
+        }
+        connect(action, signal, dst, slot, Qt::UniqueConnection);
+        return true;
     };
-    std::vector<MenuAction> actionlist = {
-        { "choose_status", activated, this, SLOT(actChooseStatusActivated()) },
-        { "reconnect_all", activated, this, SLOT(actReconnectActivated()) },
 
-        { "active_contacts", activated, this, SLOT(actActiveContacts()) },
-        { "show_offline", toggled, contactList, SLOT(setShowOffline(bool)) },
-        // { "show_away",      toggled, contactList, SLOT( setShowAway(bool) ) },
-        { "show_hidden", toggled, contactList, SLOT(setShowHidden(bool)) },
-        { "show_agents", toggled, contactList, SLOT(setShowAgents(bool)) },
-        { "show_self", toggled, contactList, SLOT(setShowSelf(bool)) },
-        { "show_statusmsg", toggled, d->rosterWidget_, SLOT(setShowStatusMsg(bool)) },
-        { "enable_groups", toggled, this, SLOT(actEnableGroupsActivated(bool)) },
+    auto mcd = [this, action](const QString &actionName, auto signal, auto dst, auto slot) {
+        if (actionName != action->objectName()) {
+            return;
+        }
+        connect(qobject_cast<MAction *>(action), signal, dst, slot, Qt::UniqueConnection);
+    };
 
-        { "button_options", activated, this, SIGNAL(doOptions()) },
+    // clang-format off
+    cd(QStringLiteral("choose_status"), &IconAction::triggered, this, &MainWin::actChooseStatusActivated);
+    cd(QStringLiteral("reconnect_all"), &IconAction::triggered, this, &MainWin::actReconnectActivated);
 
-        { "menu_disco", SIGNAL(activated(PsiAccount *, int)), this, SLOT(activatedAccOption(PsiAccount *, int)) },
-        { "menu_add_contact", SIGNAL(activated(PsiAccount *, int)), this, SLOT(activatedAccOption(PsiAccount *, int)) },
-        { "menu_xml_console", SIGNAL(activated(PsiAccount *, int)), this, SLOT(activatedAccOption(PsiAccount *, int)) },
+    cd(QStringLiteral("active_contacts"), &IconAction::triggered, this, &MainWin::actActiveContacts);
+    cd(QStringLiteral("show_offline"), &IconAction::toggled, contactList, &PsiContactList::setShowOffline);
+    // cd( "show_away"),      toggled, contactList, &PsiContactList:: setShowAway);
+    cd(QStringLiteral("show_hidden"), &IconAction::toggled, contactList, &PsiContactList::setShowHidden);
+    cd(QStringLiteral("show_agents"), &IconAction::toggled, contactList, &PsiContactList::setShowAgents);
+    cd(QStringLiteral("show_self"), &IconAction::toggled, contactList, &PsiContactList::setShowSelf);
+    cd(QStringLiteral("show_statusmsg"), &IconAction::toggled, d->rosterWidget_, &PsiRosterWidget::setShowStatusMsg);
+    if (cd(QStringLiteral("enable_groups"), &IconAction::toggled, this, &MainWin::actEnableGroupsActivated)) {
+        action->setChecked(PsiOptions::instance()->getOption("options.ui.contactlist.enable-groups").toBool());
+    }
+    cd(QStringLiteral("button_options"), &IconAction::triggered, this, &MainWin::doOptions);
 
-        { "menu_new_message", activated, this, SIGNAL(blankMessage()) },
+    mcd(QStringLiteral("menu_disco"), &MAction::activated, this, &MainWin::activatedAccOption);
+    mcd(QStringLiteral("menu_add_contact"), &MAction::activated, this, &MainWin::activatedAccOption);
+    mcd(QStringLiteral("menu_xml_console"), &MAction::activated, this, &MainWin::activatedAccOption);
+
+    cd(QStringLiteral("menu_new_message"), &IconAction::triggered, this, &MainWin::blankMessage);
 #ifdef GROUPCHAT
-        { "menu_join_groupchat", activated, this, SIGNAL(doGroupChat()) },
+    cd(QStringLiteral("menu_join_groupchat"), &IconAction::triggered, this, &MainWin::doGroupChat);
 #endif
-        { "menu_options", activated, this, SIGNAL(doOptions()) },
-        { "menu_file_transfer", activated, this, SIGNAL(doFileTransDlg()) },
-        { "menu_toolbars", activated, this, SIGNAL(doToolbars()) },
-        { "menu_accounts", activated, this, SIGNAL(doAccounts()) },
-        { "menu_change_profile", activated, this, SIGNAL(changeProfile()) },
-        { "menu_quit", activated, this, SLOT(try2tryCloseProgram()) },
-        { "menu_play_sounds", toggled, this, SLOT(actPlaySoundsActivated(bool)) },
-#ifdef USE_PEP
-        { "publish_tune", toggled, this, SLOT(actPublishTuneActivated(bool)) },
-        { "set_mood", activated, this, SLOT(actSetMoodActivated()) },
-        { "set_activity", activated, this, SLOT(actSetActivityActivated()) },
-        { "set_geoloc", activated, this, SLOT(actSetGeolocActivated()) },
-#endif
-
-        { "help_readme", activated, this, SLOT(actReadmeActivated()) },
-        { "help_online_wiki", activated, this, SLOT(actOnlineWikiActivated()) },
-        { "help_online_home", activated, this, SLOT(actOnlineHomeActivated()) },
-        { "help_online_forum", activated, this, SLOT(actOnlineForumActivated()) },
-        { "help_psi_muc", activated, this, SLOT(actJoinPsiMUCActivated()) },
-        { "help_report_bug", activated, this, SLOT(actBugReportActivated()) },
-        { "help_about", activated, this, SLOT(actAboutActivated()) },
-        { "help_about_qt", activated, this, SLOT(actAboutQtActivated()) },
-        { "help_diag_qcaplugin", activated, this, SLOT(actDiagQCAPluginActivated()) },
-        { "help_diag_qcakeystore", activated, this, SLOT(actDiagQCAKeyStoreActivated()) },
-        { nullptr, nullptr, nullptr, nullptr }
-    };
-
-    int     i;
-    QString aName;
-    for (i = 0; !(aName = QLatin1String(actionlist[i].name)).isEmpty(); i++) {
-        if (aName == action->objectName()) {
-#ifdef USE_PEP
-            // Check before connecting, otherwise we get a loop
-            if (aName == "publish_tune") {
-                action->setChecked(
-                    PsiOptions::instance()->getOption("options.extended-presence.tune.publish").toBool());
-                d->rosterAvatar->setTuneAction(action);
-            }
-#endif
-
-            disconnect(action, actionlist[i].signal, actionlist[i].receiver, actionlist[i].slot); // for safety
-            connect(action, actionlist[i].signal, actionlist[i].receiver, actionlist[i].slot);
-
-            // special cases
-            if (aName == "menu_play_sounds") {
-                action->setChecked(
-                    PsiOptions::instance()->getOption("options.ui.notifications.sounds.enable").toBool());
-            } else if (aName == "enable_groups") {
-                action->setChecked(PsiOptions::instance()->getOption("options.ui.contactlist.enable-groups").toBool());
-            }
-            // else if ( aName == "foobar" )
-            //    ;
-        }
+    cd(QStringLiteral("menu_options"), &IconAction::triggered, this, &MainWin::doOptions);
+    cd(QStringLiteral("menu_file_transfer"), &IconAction::triggered, this, &MainWin::doFileTransDlg);
+    cd(QStringLiteral("menu_toolbars"), &IconAction::triggered, this, &MainWin::doToolbars);
+    cd(QStringLiteral("menu_accounts"), &IconAction::triggered, this, &MainWin::doAccounts);
+    cd(QStringLiteral("menu_change_profile"), &IconAction::triggered, this, &MainWin::changeProfile);
+    cd(QStringLiteral("menu_quit"), &IconAction::triggered, this, &MainWin::try2tryCloseProgram);
+    if (cd(QStringLiteral("menu_play_sounds"), &IconAction::toggled, this, &MainWin::actPlaySoundsActivated)) {
+        action->setChecked(PsiOptions::instance()->getOption("options.ui.notifications.sounds.enable").toBool());
     }
+#ifdef USE_PEP
+    if (cd(QStringLiteral("publish_tune"), &IconAction::toggled, this, &MainWin::actPublishTuneActivated)) {
+        action->setChecked(PsiOptions::instance()->getOption("options.extended-presence.tune.publish").toBool());
+        d->rosterAvatar->setTuneAction(action);
+    }
+    cd(QStringLiteral("set_mood"), &IconAction::triggered, this, &MainWin::actSetMoodActivated);
+    cd(QStringLiteral("set_activity"), &IconAction::triggered, this, &MainWin::actSetActivityActivated);
+    cd(QStringLiteral("set_geoloc"), &IconAction::triggered, this, &MainWin::actSetGeolocActivated);
+#endif
 
-    struct {
-        const char *name;
-        QObject    *sender;
-        const char *signal;
-        const char *slot;
-        bool        checked;
-    } reverseactionlist[]
-        = { // { "show_away",      contactList, SIGNAL(showAwayChanged(bool)), setChecked, contactList->showAway()},
-            { "show_hidden", contactList, SIGNAL(showHiddenChanged(bool)), setChecked, contactList->showHidden() },
-            { "show_offline", contactList, SIGNAL(showOfflineChanged(bool)), setChecked, contactList->showOffline() },
-            { "show_self", contactList, SIGNAL(showSelfChanged(bool)), setChecked, contactList->showSelf() },
-            { "show_agents", contactList, SIGNAL(showAgentsChanged(bool)), setChecked, contactList->showAgents() },
-            { "show_statusmsg", nullptr, nullptr, nullptr, false },
-            { "", nullptr, nullptr, nullptr, false }
+    cd(QStringLiteral("help_readme"), &IconAction::triggered, this, &MainWin::actReadmeActivated);
+    cd(QStringLiteral("help_online_wiki"), &IconAction::triggered, this, &MainWin::actOnlineWikiActivated);
+    cd(QStringLiteral("help_online_home"), &IconAction::triggered, this, &MainWin::actOnlineHomeActivated);
+    cd(QStringLiteral("help_online_forum"), &IconAction::triggered, this, &MainWin::actOnlineForumActivated);
+    cd(QStringLiteral("help_psi_muc"), &IconAction::triggered, this, &MainWin::actJoinPsiMUCActivated);
+    cd(QStringLiteral("help_report_bug"), &IconAction::triggered, this, &MainWin::actBugReportActivated);
+    cd(QStringLiteral("help_about"), &IconAction::triggered, this, &MainWin::actAboutActivated);
+    cd(QStringLiteral("help_about_qt"), &IconAction::triggered, this, &MainWin::actAboutQtActivated);
+    cd(QStringLiteral("help_diag_qcaplugin"), &IconAction::triggered, this, &MainWin::actDiagQCAPluginActivated);
+    cd(QStringLiteral("help_diag_qcakeystore"), &IconAction::triggered, this, &MainWin::actDiagQCAKeyStoreActivated);
+    // clang-format on
+
+    auto connectReverse
+        = [action](const QString &actionName, auto src, auto signal, auto dst, auto slot, bool checked) {
+              if (actionName != action->objectName()) {
+                  return;
+              }
+              if (src) {
+                  connect(src, signal, action, slot, Qt::UniqueConnection);
+              }
+              action->setChecked(checked);
           };
-
-    for (i = 0; !(aName = QString(reverseactionlist[i].name)).isEmpty(); i++) {
-        if (aName == action->objectName()) {
-            if (reverseactionlist[i].sender) {
-                disconnect(reverseactionlist[i].sender, reverseactionlist[i].signal, action,
-                           reverseactionlist[i].slot); // for safety
-                connect(reverseactionlist[i].sender, reverseactionlist[i].signal, action, reverseactionlist[i].slot);
-            }
-
-            if (aName == "show_statusmsg") {
-                action->setChecked(PsiOptions::instance()->getOption(showStatusMessagesOptionPath).toBool());
-            } else
-                action->setChecked(reverseactionlist[i].checked);
-        }
+    // clang-format off
+    connectReverse(QStringLiteral("show_hidden"), contactList, &PsiContactList::showHiddenChanged, action, &IconAction::setChecked, contactList->showHidden());
+    connectReverse(QStringLiteral("show_offline"), contactList, &PsiContactList::showOfflineChanged, action, &IconAction::setChecked, contactList->showOffline());
+    connectReverse(QStringLiteral("show_self"), contactList, &PsiContactList::showSelfChanged, action, &IconAction::setChecked, contactList->showSelf());
+    connectReverse(QStringLiteral("show_agents"), contactList, &PsiContactList::showAgentsChanged, action, &IconAction::setChecked, contactList->showAgents());
+    if (action->objectName() == QStringLiteral("show_statusmsg")) {
+        action->setChecked(PsiOptions::instance()->getOption(showStatusMessagesOptionPath).toBool());
     }
+    // clang-format on
 }
 
 void MainWin::reinitAutoHide()

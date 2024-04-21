@@ -46,6 +46,7 @@ public slots:
     void updateFilterMode();
     void setFilterModeEnabled(bool enabled);
     void clearFilterEdit();
+    void setShowStatusMsg(bool);
 
 private slots:
     void optionChanged(const QString &option);
@@ -53,7 +54,6 @@ private slots:
     void showHiddenChanged(bool);
     void showSelfChanged(bool);
     void showOfflineChanged(bool);
-    void setShowStatusMsg(bool);
 
 protected:
     bool eventFilter(QObject *obj, QEvent *e);
