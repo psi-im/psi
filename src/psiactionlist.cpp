@@ -277,8 +277,7 @@ void PsiActionList::Private::createMainWin()
             = new IconAction(tr("Change Profile"), "psi/profile", tr("&Change Profile"), 0, this);
 
         IconAction *actPlaySounds
-            = new IconAction(tr("Play Sounds"), "psi/playSounds", tr("Play &Sounds"), 0, this, nullptr, true);
-        actPlaySounds->setToolTip(tr("Toggles whether sound should be played or not"));
+            = new IconAction(QString(), "psi/playSounds", tr("Play &Sounds"), 0, this, nullptr, true);
 
         IconAction *actQuit = new IconAction(tr("Quit"), "psi/quit", tr("&Quit"), 0, this);
         actQuit->setMenuRole(QAction::QuitRole);

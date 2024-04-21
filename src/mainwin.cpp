@@ -588,10 +588,6 @@ void MainWin::optionChanged(const QString &option)
 
 void MainWin::registerAction(IconAction *action)
 {
-    const char *activated  = SIGNAL(triggered());
-    const char *toggled    = SIGNAL(toggled(bool));
-    const char *setChecked = SLOT(setChecked(bool));
-
     PsiContactList *contactList = psiCon()->contactList();
 
     auto cd = [this, action](const QString &actionName, auto signal, auto dst, auto slot) {
@@ -640,7 +636,13 @@ void MainWin::registerAction(IconAction *action)
     cd(QStringLiteral("menu_change_profile"), &IconAction::triggered, this, &MainWin::changeProfile);
     cd(QStringLiteral("menu_quit"), &IconAction::triggered, this, &MainWin::try2tryCloseProgram);
     if (cd(QStringLiteral("menu_play_sounds"), &IconAction::toggled, this, &MainWin::actPlaySoundsActivated)) {
-        action->setChecked(PsiOptions::instance()->getOption("options.ui.notifications.sounds.enable").toBool());
+        bool state = PsiOptions::instance()->getOption("options.ui.notifications.sounds.enable").toBool();
+        action->setChecked(state);
+        auto playSoundsToggle = [action](bool state){
+            action->setToolTip(state?tr("Disable Sounds"):tr("Enable Sounds"));
+        };
+        connect(action, &IconAction::toggled, this, playSoundsToggle);
+        playSoundsToggle(state);
     }
 #ifdef USE_PEP
     if (cd(QStringLiteral("publish_tune"), &IconAction::toggled, this, &MainWin::actPublishTuneActivated)) {
