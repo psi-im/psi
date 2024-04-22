@@ -374,7 +374,7 @@ function initPsiTheme() {
   </div>
   <progress class="psi-am-progressbar"/>
   <audio>
-    <source src="/psi/account/${session.account}/sharedfile/${source}" type="${type}">
+    <source src="/psi/account/${session.account}/sharedfile/${source}">
   </audio>
 </div>`);
                         var player = playerFragment.firstChild;
