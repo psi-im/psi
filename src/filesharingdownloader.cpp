@@ -55,7 +55,7 @@ protected:
             _lastError = err;
             qDebug("Jingle failed: %s", qPrintable(err));
         }
-        QTimer::singleShot(0, this, &AbstractFileShareDownloader::failed);
+        emit failed();
     }
 
     Jid selectOnlineJid(const QList<Jid> &jids) const
@@ -187,7 +187,7 @@ public:
                 emit disconnected();
                 return;
             }
-            downloadError(tr("Jingle download failed"));
+            downloadError(tr("Jingle download failed: %s").arg(r.text()));
         });
 
         session->initiate();

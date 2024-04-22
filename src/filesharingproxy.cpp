@@ -82,7 +82,7 @@ public:
 
         QByteArray rangeHeaderValue = self->requestHeader("range");
         if (rangeHeaderValue.size()) {
-            auto [status, range] = parseHttpRangeRequest(rangeHeaderValue);
+            auto status = parseHttpRangeRequest(rangeHeaderValue);
             if (status != StatusCode::Ok) {
                 qWarning("http range parse failed: %d", int(status));
                 _finishWithMetadataError(status);
@@ -115,25 +115,26 @@ public:
     }
 
     // returns <parsed,list of start/size>
-    std::pair<StatusCode, std::optional<FileSharingItem::Range>> parseHttpRangeRequest(const QByteArray &rangeValue)
+    StatusCode parseHttpRangeRequest(const QByteArray &rangeValue)
     {
         auto const [parseResult, start, size] = Http::parseRangeHeader(rangeValue, item->fileSize());
 
         switch (parseResult) {
         case Http::Parsed:
-            return { StatusCode::Ok, FileSharingItem::Range { start, size } };
+            requestedRange = FileSharingItem::Range { start, size };
+            return StatusCode::Ok;
         case Http::Unparsed:
-            return { StatusCode::BadRequest, {} };
+            return StatusCode::BadRequest;
         case Http::NotImplementedRangeType:
         case Http::NotImplementedTailLoad:
         case Http::NotImplementedMultirange:
-            return { StatusCode::NotImplemented, {} };
+            return StatusCode::NotImplemented;
         case Http::OutOfRange:
             static_cast<Impl *>(this)->setResponseHeader(
                 "Content-Range", QByteArray("bytes */") + QByteArray::number(quint64(*item->fileSize())));
-            return { StatusCode::RangeNotSatisfied, {} };
+            return StatusCode::RangeNotSatisfied;
         }
-        return { StatusCode::NotImplemented, {} };
+        return StatusCode::NotImplemented;
     }
 
     void proxyCache()
@@ -497,8 +498,7 @@ class HTTPProxy : public ControlBase<HTTPProxy> {
 public:
     HTTPProxy(PsiAccount *acc, const QString &sourceIdHex, qhttp::server::QHttpRequest *request,
               qhttp::server::QHttpResponse *response) :
-        ControlBase<HTTPProxy>(acc, sourceIdHex, response),
-        request(request), response(response)
+        ControlBase<HTTPProxy>(acc, sourceIdHex, response), request(request), response(response)
     {
         auto baseUrl = acc->psi()->webServer()->serverUrl().toString();
         qDebug("FSP %s %s%s range: %s", qPrintable(request->methodString()), qPrintable(baseUrl),
