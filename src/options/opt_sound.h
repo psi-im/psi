@@ -32,8 +32,10 @@ private:
     struct UiSoundItem {
         QCheckBox       *enabled;
         QLineEdit       *file;
+        QAbstractButton *selectButton;
         QAbstractButton *playButton;
         QString          option;
+        QString          defaultFile;
     };
 
     QList<UiSoundItem> sounds_;
