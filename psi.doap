@@ -4,7 +4,7 @@
          xmlns:xmpp='https://linkmauve.fr/ns/xmpp-doap#'
          xmlns:schema='https://schema.org/'>
   <Project>
-    <name>psi</name>
+    <name>Psi</name>
 
     <created>2001-07-07</created>
 
@@ -13,9 +13,11 @@
     <description xml:lang='en'>Psi is an XMPP client designed for experienced users. It is highly portable and runs on GNU/Linux, MS Windows, macOS, FreeBSD and Haiku.</description>
 
     <homepage rdf:resource='https://psi-im.org/'/>
-    <download-page rdf:resource='https://github.com/psi-im/psi/releases'/>
+    <download-page rdf:resource='https://psi-im.org/download/'/>
     <bug-database rdf:resource='https://github.com/psi-im/psi/issues'/>
-    <developer-forum rdf:resource='https://github.com/psi-im/psi/issues'/>
+    <developer-forum rdf:resource='xmpp:psi-dev@conference.jabber.ru?join'/>
+    <support-forum rdf:resource='xmpp:psi-dev@conference.jabber.ru?join'/>
+    <wiki rdf:resource="https://github.com/psi-im/psi/wiki"/>
 
     <license rdf:resource='https://www.gnu.org/licenses/gpl.html'/>
 
@@ -28,46 +30,715 @@
 
     <os>Linux</os>
     <os>macOS</os>
-    <os>BSD</os>
+    <os>FreeBSD</os>
     <os>Windows</os>
     <os>Haiku</os>
 
     <category rdf:resource='https://linkmauve.fr/ns/xmpp-doap#category-client'/>
+
+    <repository>
+      <GitRepository>
+        <location rdf:resource='https://github.com/psi-im/psi.git'/>
+        <browse rdf:resource='https://github.com/psi-im/psi/'/>
+      </GitRepository>
+    </repository>
 
     <implements rdf:resource='https://datatracker.ietf.org/doc/html/rfc6120'/>
     <implements rdf:resource='https://datatracker.ietf.org/doc/html/rfc6121'/>
     <implements rdf:resource='https://datatracker.ietf.org/doc/html/rfc6122'/>
     <implements rdf:resource='https://datatracker.ietf.org/doc/html/rfc7590'/>
 
+    <!-- XEP-0004: Data Forms -->
     <implements>
       <xmpp:SupportedXep>
-        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0363.html'/>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0004.html'/>
         <xmpp:status>complete</xmpp:status>
-        <xmpp:version>1.1.0</xmpp:version>
-        <xmpp:since>2.0</xmpp:since>
-        <xmpp:note xml:lang='en'></xmpp:note>
       </xmpp:SupportedXep>
     </implements>
 
+    <!-- XEP-0012: Last Activity -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0012.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0016: Privacy Lists -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0016.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0018: Invisible Presence -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0018.html'/>
+        <xmpp:status>complete</xmpp:status>
+        <xmpp:note xml:lang='en'>Will be dropped.</xmpp:note>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0020: Feature Negotiation -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0020.html'/>
+        <xmpp:status>partial</xmpp:status>
+        <xmpp:note xml:lang='en'>Only legacy FT.</xmpp:note>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0022: Message Events -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0022.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0025: Jabber HTTP Polling -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0025.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0027: Current Jabber OpenPGP Usage -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0027.html'/>
+        <xmpp:status>complete</xmpp:status>
+        <xmpp:note xml:lang='en'>Via plugin.</xmpp:note>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0030: Service Discovery -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0030.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0033: Extended Stanza Addressing -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0033.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0038: Icon Styles -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0038.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0045: Multi-User Chat -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0045.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0047: In-Band Bytestreams -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0047.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0048: Bookmarks -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0048.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0049: Private XML Storage -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0049.html'/>
+        <xmpp:status>complete</xmpp:status>
+        <xmpp:note xml:lang='en'>Via plugin.</xmpp:note>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0050: Ad-Hoc Commands -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0050.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0054: vcard-temp -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0054.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0055: Jabber Search -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0055.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0059: Result Set Management -->
     <implements>
       <xmpp:SupportedXep>
         <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0059.html'/>
         <xmpp:status>complete</xmpp:status>
         <xmpp:version>1.0</xmpp:version>
         <xmpp:since>2.0</xmpp:since>
-        <xmpp:note xml:lang='en'></xmpp:note>
       </xmpp:SupportedXep>
     </implements>
 
+    <!-- XEP-0060: Publish-Subscribe -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0060.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0065: SOCKS5 Bytestreams -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0065.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0066: Out of Band Data -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0066.html'/>
+        <xmpp:status>partial</xmpp:status>
+        <xmpp:note xml:lang='en'>jabber:x:oob only.</xmpp:note>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0070: Verifying HTTP Requests via XMPP -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0070.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0071: XHTML-IM -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0071.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0077: In-Band Registration -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0077.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0078: Non-SASL Authentication -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0078.html'/>
+        <xmpp:status>partial</xmpp:status>
+        <xmpp:note xml:lang='en'>Will be dropped.</xmpp:note>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0080: User Location -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0080.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0082: XMPP Date and Time Profiles -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0082.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0084: User Avatar -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0084.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0085: Chat State Notifications -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0085.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0086: Error Condition Mappings -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0086.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0092: Software Version -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0092.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0095: Stream Initiation -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0095.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0096: SI File Transfer -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0096.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0100: Gateway Interaction -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0100.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0107: User Mood -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0107.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0108: User Activity -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0108.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0113: Simple Whiteboarding -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0113.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0115: Entity Capabilities -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0115.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0118: User Tune -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0118.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0128: Service Discovery Extensions -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0128.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0138: Stream Compression -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0138.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0144: Roster Item Exchange -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0144.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0146: Remote Controlling Clients -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0146.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0147: XMPP URI Scheme Query Components -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0147.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0153: vCard-Based Avatars -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0153.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0157: Contact Addresses for XMPP Services -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0157.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0158: CAPTCHA Forms -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0158.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0163: Personal Eventing Protocol -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0163.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0166: Jingle -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0166.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0167: Jingle RTP Sessions -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0167.html'/>
+        <xmpp:status>complete</xmpp:status>
+        <xmpp:note xml:lang='en'>Via psimedia library.</xmpp:note>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0172: User Nickname -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0172.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0176: Jingle ICE-UDP Transport Method -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0176.html'/>
+        <xmpp:status>partial</xmpp:status>
+        <xmpp:note xml:lang='en'>Only for RTP calls in psimedia.</xmpp:note>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0184: Message Delivery Receipts -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0184.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0198: Stream Management -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0198.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0199: XMPP Ping -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0199.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0202: Entity Time -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0202.html'/>
+        <xmpp:status>complete</xmpp:status>
+        <xmpp:note xml:lang='en'>Via plugin.</xmpp:note>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0203: Delayed Delivery -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0203.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0215: External Service Discovery -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0215.html'/>
+        <xmpp:status>partial</xmpp:status>
+        <xmpp:version>0.7</xmpp:version>
+        <xmpp:note xml:lang='en'>Currently only for file transfer over WebRTC data channels.</xmpp:note>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0221: Data Forms Media Element -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0221.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0224: Attention -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0224.html'/>
+        <xmpp:status>complete</xmpp:status>
+        <xmpp:note xml:lang='en'>Via plugin.</xmpp:note>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0231: Bits of Binary -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0231.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0232: Software Information -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0232.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0234: Jingle File Transfer -->
     <implements>
       <xmpp:SupportedXep>
         <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0234.html'/>
         <xmpp:status>complete</xmpp:status>
         <xmpp:version>0.19.1</xmpp:version>
         <xmpp:since>2.0</xmpp:since>
-        <xmpp:note xml:lang='en'></xmpp:note>
       </xmpp:SupportedXep>
     </implements>
+
+    <!-- XEP-0245: The /me Command -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0245.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0249: Direct MUC Invitations -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0249.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0260: Jingle SOCKS5 Bytestreams Transport Method -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0260.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0264: Jingle Content Thumbnails -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0264.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0280: Message Carbons -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0280.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0284: Shared XML Editing -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0284.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0300: Use of Cryptographic Hash Functions in XMPP -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0300.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0308: Last Message Correction -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0308.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0320: Use of DTLS-SRTP in Jingle Sessions -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0320.html'/>
+        <xmpp:status>partial</xmpp:status>
+        <xmpp:version>1.0.0</xmpp:version>
+        <xmpp:note xml:lang='en'>Just DTLS part but not SRTP.</xmpp:note>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0334: Message Processing Hints -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0334.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0343: Signaling WebRTC datachannels in Jingle -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0343.html'/>
+        <xmpp:status>complete</xmpp:status>
+        <xmpp:version>0.3.1</xmpp:version>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0363: HTTP File Upload -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0363.html'/>
+        <xmpp:status>complete</xmpp:status>
+        <xmpp:version>1.1.0</xmpp:version>
+        <xmpp:since>2.0</xmpp:since>
+        <xmpp:note xml:lang='en'>Both :0 and legacy namespace.</xmpp:note>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0364: Current Off-the-Record Messaging Usage -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0364.html'/>
+        <xmpp:status>complete</xmpp:status>
+        <xmpp:note xml:lang='en'>Via plugin.</xmpp:note>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0371: Jingle ICE Transport Method -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0371.html'/>
+        <xmpp:status>partial</xmpp:status>
+        <xmpp:note xml:lang='en'>Only for RTP calls in psimedia.</xmpp:note>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0372: References -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0372.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0380: Explicit Message Encryption -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0380.html'/>
+        <xmpp:status>partial</xmpp:status>
+        <xmpp:note xml:lang='en'>Incomplete: low level part is ready, information dialogs for user are necessary.</xmpp:note>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0384: OMEMO Encryption -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0384.html'/>
+        <xmpp:status>partial</xmpp:status>
+        <xmpp:since>2.0</xmpp:since>
+        <xmpp:note xml:lang='en'>Via plugin. It is not yet possible to send an encrypted file.</xmpp:note>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0385: Stateless Inline Media Sharing (SIMS) -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0385.html'/>
+        <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0414: Cryptographic Hash Function Recommendations for XMPP -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0414.html'/>
+        <xmpp:status>complete</xmpp:status>
+        <xmpp:note xml:lang='en'>All of them.</xmpp:note>
+      </xmpp:SupportedXep>
+    </implements>-->
 
     <release>
       <Version>
