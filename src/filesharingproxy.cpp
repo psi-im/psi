@@ -96,11 +96,7 @@ public:
             return; // handled with success
         }
 
-        std::optional<FileSharingItem::Range> itemRange;
-        if (requestedRange) {
-            itemRange = FileSharingItem::Range { requestedRange->start, requestedRange->size };
-        }
-        downloader = item->download(itemRange);
+        downloader = item->download(requestedRange);
         Q_ASSERT(downloader);
         downloader->setParent(this);
 
@@ -194,19 +190,18 @@ public:
 
     void onMetadataChanged()
     {
-        auto const &downloaderRange = downloader->range();
-        auto const  file            = downloader->jingleFile();
+        auto const &responseRange = downloader->responseRange();
+        auto const  file          = downloader->jingleFile();
 
-        if (downloaderRange)
-            qDebug("FSP metaDataChanged: rangeStart=%lld rangeSize=%lld", downloaderRange->start,
-                   downloaderRange->size);
+        if (responseRange)
+            qDebug("FSP metaDataChanged: rangeStart=%lld rangeSize=%lld", responseRange->start, responseRange->size);
         else if (file.size())
             qDebug("FSP metaDataChanged: size=%lu", *file.size());
         else
             qDebug("FSP metaDataChanged: unknown size or range");
 
         // check range satisfaction
-        if (requestedRange && downloaderRange && !file.size().has_value()
+        if (requestedRange && responseRange && !file.size().has_value()
             && !requestedRange->size) { // size unknown for ranged response.
             qWarning("Unknown size for ranged response");
             _finishWithMetadataError(StatusCode::NotImplemented);
@@ -214,7 +209,7 @@ public:
         }
 
         auto reqsponseRange = requestedRange;
-        if (requestedRange && !downloaderRange) {
+        if (requestedRange && !responseRange) {
             qWarning("FSP: remote doesn't support ranged. transfer everything");
             reqsponseRange = {};
         }
@@ -245,6 +240,9 @@ public:
                       const std::optional<FileSharingItem::Range> &range)
     {
         auto self = static_cast<Impl *>(this);
+        if (contentType == QLatin1String("audio/x-vorbis+ogg")) {
+            contentType = QLatin1String("audio/ogg");
+        }
         if (lastModified.isValid())
             self->setResponseHeader("Last-Modified", lastModified.toString(Qt::RFC2822Date).toLatin1());
         if (contentType.size())

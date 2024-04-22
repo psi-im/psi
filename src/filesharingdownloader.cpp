@@ -45,7 +45,8 @@ class AbstractFileShareDownloader : public QObject {
 protected:
     QString                                   _lastError;
     std::optional<quint64>                    _totalSize; // from response
-    std::optional<FileShareDownloader::Range> _range;
+    std::optional<FileShareDownloader::Range> _requestRange;
+    std::optional<FileShareDownloader::Range> _responseRange;
     PsiAccount                               *acc;
     QString                                   sourceUri;
 
@@ -90,8 +91,9 @@ public:
     virtual void                         close() { }
 
     inline const QString &lastError() const { return _lastError; }
-    void                  setRange(const FileShareDownloader::Range &range) { _range = range; }
-    const std::optional<FileShareDownloader::Range> &range() const { return _range; }
+    void                  setRequestRange(const FileShareDownloader::Range &range) { _requestRange = range; }
+    const std::optional<FileShareDownloader::Range> &requestRange() const { return _requestRange; }
+    const std::optional<FileShareDownloader::Range> &responseRange() const { return _responseRange; }
 
 signals:
     void metaDataChanged();
@@ -152,8 +154,8 @@ public:
             downloadError(QString::fromLatin1("Jingle file transfer is disabled"));
             return;
         }
-        if (_range)
-            file.setRange(XMPP::Jingle::FileTransfer::Range(_range->start, _range->size));
+        if (_requestRange)
+            file.setRange(XMPP::Jingle::FileTransfer::Range(_requestRange->start, _requestRange->size));
         app->setFile(file);
         app->setStreamingMode(true);
         session->addContent(app);
@@ -168,7 +170,7 @@ public:
             qDebug("FSP connectionReady");
             auto r = app->acceptFile().range();
             if (r.isValid()) {
-                _range = FileShareDownloader::Range { quint64(r.offset), quint64(r.length) };
+                _responseRange = FileShareDownloader::Range { r.offset, r.length };
             }
             connection = app->connection();
             connect(connection.data(), &XMPP::Jingle::Connection::readyRead, this,
@@ -248,10 +250,12 @@ public:
     void start()
     {
         QNetworkRequest req = QNetworkRequest(QUrl(sourceUri));
-        if (_range) {
-            QString range = QString("bytes=%1-%2")
-                                .arg(QString::number(_range->start),
-                                     _range->size ? QString::number(_range->start + _range->size - 1) : QString());
+        if (_requestRange) {
+            QString range
+                = QString("bytes=%1-%2")
+                      .arg(QString::number(_requestRange->start),
+                           _requestRange->size ? QString::number(_requestRange->start + _requestRange->size - 1)
+                                               : QString());
             req.setRawHeader("Range", range.toLatin1());
         }
 #if QT_VERSION >= QT_VERSION_CHECK(5, 9, 0)
@@ -271,19 +275,19 @@ public:
                 }
                 auto const &[start, size, totalSize] = *range;
 
-                if (_range) { // we reqeusted some range
-                    if (start != _range->start) {
+                if (_requestRange) { // we reqeusted some range
+                    if (start != _requestRange->start) {
                         namFailed(QLatin1String("Unexpected response range start. Expected ")
-                                  + QString::number(_range->start) + QLatin1String(" but got ")
+                                  + QString::number(_requestRange->start) + QLatin1String(" but got ")
                                   + QString::number(start));
                         return;
                     }
                 }
-                _range     = FileShareDownloader::Range { start, size };
-                _totalSize = totalSize;
+                _responseRange = FileShareDownloader::Range { start, size };
+                _totalSize     = totalSize;
 
             } else {
-                _range = {}; // reset range since not a partial content
+                _responseRange = {}; // reset range since not a partial content
                 if (status != 200 && status != 203) {
                     namFailed(tr("Unexpected HTTP status") + QString(": %1").arg(status));
                     return;
@@ -375,9 +379,9 @@ public:
                              downloadError(tr("Download using \"Bits Of Binary\" failed"));
                              return;
                          }
-                         receivedData = data;
-                         _range       = {}; // make it not-ranged. impossble for bob anyway
-                         _totalSize   = data.size();
+                         receivedData   = data;
+                         _responseRange = {}; // make it not-ranged. impossble for bob anyway
+                         _totalSize     = data.size();
                          emit metaDataChanged();
                          emit readyRead();
                      });
@@ -437,7 +441,8 @@ public:
     std::unique_ptr<QFile>                    tmpFile;
     QString                                   dstFileName;
     QString                                   lastError;
-    std::optional<FileShareDownloader::Range> range;
+    std::optional<FileShareDownloader::Range> requestRange;
+    std::optional<FileShareDownloader::Range> responseRange;
     std::optional<quint64>                    bytesLeft;
     AbstractFileShareDownloader              *downloader  = nullptr;
     bool                                      metaReady   = false;
@@ -512,8 +517,8 @@ public:
             finishWithError("Unhandled downloader");
             return;
         }
-        if (range) {
-            downloader->setRange(*range);
+        if (requestRange) {
+            downloader->setRequestRange(*requestRange);
         }
 
         connect(downloader, &AbstractFileShareDownloader::failed, q, [this]() {
@@ -526,10 +531,11 @@ public:
         });
 
         connect(downloader, &AbstractFileShareDownloader::metaDataChanged, q, [this]() {
-            metaReady = true;
+            metaReady     = true;
+            responseRange = downloader->responseRange();
 
-            if (downloader->range()) {
-                bytesLeft = downloader->range()->size;
+            if (downloader->responseRange()) {
+                bytesLeft = downloader->responseRange()->size;
             } else if (downloader->fileSize()) { // definitely not ranged and full size is known
                 bytesLeft = *downloader->fileSize();
 
@@ -603,9 +609,11 @@ void FileShareDownloader::abort()
     }
 }
 
-void FileShareDownloader::setRange(const std::optional<Range> &range) { d->range = range; }
+void FileShareDownloader::setRequestRange(const std::optional<Range> &range) { d->requestRange = range; }
 
-const std::optional<FileShareDownloader::Range> &FileShareDownloader::range() const { return d->range; }
+const std::optional<FileShareDownloader::Range> &FileShareDownloader::requestRange() const { return d->requestRange; }
+
+const std::optional<FileShareDownloader::Range> &FileShareDownloader::responseRange() const { return d->responseRange; }
 
 QString FileShareDownloader::takeFile() const
 {

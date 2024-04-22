@@ -397,7 +397,7 @@ FileShareDownloader *FileSharingItem::download(std::optional<Range> range)
 
     auto downloader = new FileShareDownloader(_acc, _sums, file, _jids, _uris, this);
     if (downloaderRange) {
-        downloader->setRange(downloaderRange);
+        downloader->setRequestRange(downloaderRange);
         return downloader;
     }
     connect(downloader, &FileShareDownloader::cacheReady, this, [this, downloader]() {

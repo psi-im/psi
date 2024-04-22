@@ -54,8 +54,9 @@ public:
     bool                        isConnected() const;
     bool                        open(QIODevice::OpenMode mode = QIODevice::ReadOnly) override;
     void                        abort();
-    void                        setRange(const std::optional<Range> &range);
-    const std::optional<Range> &range() const;
+    void                        setRequestRange(const std::optional<Range> &range);
+    const std::optional<Range> &requestRange() const;
+    const std::optional<Range> &responseRange() const;
 
     QString                                 takeFile() const;
     const XMPP::Jingle::FileTransfer::File &jingleFile() const;
