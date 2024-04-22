@@ -786,12 +786,14 @@ void EventDlg::init()
     d->w_http_id->hide();
 
     // data form
-    d->xdata              = new XDataWidget(d->psi, this, d->pa->client(), d->jid);
-    d->xdata_form         = new QWidget(this);
+    d->xdata      = new XDataWidget(d->psi, this, d->pa->client(), d->jid);
+    d->xdata_form = new QWidget(this);
+    d->xdata_form->setFocusProxy(d->xdata);
     QVBoxLayout *vb_xdata = new QVBoxLayout(d->xdata_form);
     d->xdata_instruction  = new QLabel(d->xdata_form);
     vb_xdata->addWidget(d->xdata_instruction);
     vb_xdata->addWidget(d->xdata);
+    vb1->addStretch();
     vb1->addWidget(d->xdata_form);
     d->xdata_form->hide();
 
@@ -1730,6 +1732,12 @@ void EventDlg::updateEvent(const PsiEvent::Ptr &e)
 
             // show data form
             d->xdata->setForm(form, false);
+            auto xdfLFW = d->xdata->lastFocusabelWidget();
+            if (xdfLFW) {
+                setTabOrder(d->le_subj, d->xdata_form);
+                setTabOrder(xdfLFW, d->pb_form_submit); // FIXME doesn't work? why?
+            }
+            d->xdata_form->setFocus();
             d->xdata_form->show();
 
             // set instructions
