@@ -272,8 +272,14 @@ bool FileSharingManager::jingleAutoAcceptIncomingDownloadRequest(Jingle::Session
     }
 
     for (auto const &p : toAccept) {
-        auto ft   = p.first;
-        auto item = p.second;
+        auto ft   = p.first;  // jingle-ft app
+        auto item = p.second; // FileCacheItem
+
+        auto acceptFile = ft->file();
+        acceptFile.setHashes(item->sums());
+        ft->setAcceptFile(acceptFile);
+
+        // TODO hashes for ranges
 
         connect(ft, &Jingle::FileTransfer::Application::deviceRequested, this,
                 [ft, item, this](quint64 offset, std::optional<quint64> /*size*/) {
