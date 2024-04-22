@@ -30,8 +30,8 @@
 #ifdef HAVE_WEBSERVER
 #include "qhttpfwd.hpp"
 #include "qhttpserverresponse.hpp"
-#endif
 #include "webserver.h"
+#endif
 
 #include <QFileInfo>
 #include <QNetworkReply>
@@ -497,7 +497,8 @@ class HTTPProxy : public ControlBase<HTTPProxy> {
 public:
     HTTPProxy(PsiAccount *acc, const QString &sourceIdHex, qhttp::server::QHttpRequest *request,
               qhttp::server::QHttpResponse *response) :
-        ControlBase<HTTPProxy>(acc, sourceIdHex, response), request(request), response(response)
+        ControlBase<HTTPProxy>(acc, sourceIdHex, response),
+        request(request), response(response)
     {
         auto baseUrl = acc->psi()->webServer()->serverUrl().toString();
         qDebug("FSP %s %s%s range: %s", qPrintable(request->methodString()), qPrintable(baseUrl),
