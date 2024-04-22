@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>359</width>
-    <height>416</height>
+    <height>445</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -55,7 +55,7 @@
       <item>
        <widget class="QCheckBox" name="ck_dockDCstyle">
         <property name="text">
-         <string>Use &quot;double-click&quot; style (like ICQ)</string>
+         <string>Use &quot;double-click&quot; style</string>
         </property>
        </widget>
       </item>
@@ -144,10 +144,10 @@
      <item>
       <spacer>
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
        <property name="sizeType">
-        <enum>QSizePolicy::Expanding</enum>
+        <enum>QSizePolicy::Policy::Expanding</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>
@@ -211,7 +211,7 @@
      <item>
       <spacer name="horizontalSpacer">
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>
@@ -226,7 +226,7 @@
    <item>
     <spacer>
      <property name="orientation">
-      <enum>Qt::Vertical</enum>
+      <enum>Qt::Orientation::Vertical</enum>
      </property>
      <property name="sizeHint" stdset="0">
       <size>

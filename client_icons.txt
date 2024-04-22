@@ -60,7 +60,6 @@ poezio poezio,poez.io
 profanity profanity,www#profanity
 psi psi,psi-im
 psiplus psi+,psi-plus,psi-dev
-pyicq-t pyicq,icq#transport
 qip qip,2010.qip.ru
 qutim qutim
 qxmpp-api qxmpp

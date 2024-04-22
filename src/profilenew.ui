@@ -52,7 +52,7 @@
      <property name="text" stdset="0">
       <string>Keep your&lt;i&gt; Profile Name&lt;/i&gt; simple. It should be a single word comprised of only letters or numbers.&lt;br&gt;
 &lt;br&gt;
-The&lt;i&gt; Default Action&lt;/i&gt; is what happens when you double click a contact in your list. The choices are&lt;b&gt; Message&lt;/b&gt; (ICQ style) and&lt;b&gt; Chat&lt;/b&gt; (AIM style). You can change this later from the Options menu.&lt;br&gt;
+The&lt;i&gt; Default Action&lt;/i&gt; is what happens when you double click a contact in your list. The choices are&lt;b&gt; Message&lt;/b&gt; and&lt;b&gt; Chat&lt;/b&gt;. You can change this later from the Options menu.&lt;br&gt;
 &lt;br&gt;
 Check the &lt;i&gt;Enable Emoticons&lt;/i&gt; checkbox if you'd like text such as &lt;b&gt;:-)&lt;/b&gt; to be turned into graphics like &lt;icon name=&quot;psi/smile&quot;&gt;.</string>
      </property>
@@ -155,10 +155,10 @@ Check the &lt;i&gt;Enable Emoticons&lt;/i&gt; checkbox if you'd like text such a
      <item>
       <spacer name="Spacer1">
        <property name="orientation">
-        <enum>Qt::Vertical</enum>
+        <enum>Qt::Orientation::Vertical</enum>
        </property>
        <property name="sizeType">
-        <enum>QSizePolicy::Expanding</enum>
+        <enum>QSizePolicy::Policy::Expanding</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>
@@ -171,10 +171,10 @@ Check the &lt;i&gt;Enable Emoticons&lt;/i&gt; checkbox if you'd like text such a
      <item>
       <widget class="Line" name="Line1">
        <property name="frameShape">
-        <enum>QFrame::HLine</enum>
+        <enum>QFrame::Shape::HLine</enum>
        </property>
        <property name="frameShadow">
-        <enum>QFrame::Sunken</enum>
+        <enum>QFrame::Shadow::Sunken</enum>
        </property>
       </widget>
      </item>
@@ -195,10 +195,10 @@ Check the &lt;i&gt;Enable Emoticons&lt;/i&gt; checkbox if you'd like text such a
        <item>
         <spacer name="Spacer2">
          <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+          <enum>Qt::Orientation::Horizontal</enum>
          </property>
          <property name="sizeType">
-          <enum>QSizePolicy::Expanding</enum>
+          <enum>QSizePolicy::Policy::Expanding</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>

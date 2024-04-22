@@ -241,12 +241,6 @@ BlockTransportPopup::BlockTransportPopup(QObject *parent, const Jid &_j) : QObje
     j           = _j;
     userCounter = 0;
 
-    // Hack for ICQ SMS
-    if (j.domain().left(3) == "icq") {
-        new BlockTransportPopup(parent, "sms." + j.domain());                               // sms.icq.host.com
-        new BlockTransportPopup(parent, "sms" + j.domain().right(j.domain().length() - 3)); // sms.host.com
-    }
-
     QTimer::singleShot(15000, this, SLOT(timeout()));
 }
 

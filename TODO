@@ -74,7 +74,7 @@ Extra
     if they say yes, then disable auto-open for profiles
   save presence changes to history?
   win32: docking (all optional)
-    grapple to edge of screen, like ICQ for windows
+    grapple to edge of screen.
   right-click in chat/eventdlg should have options to paste your current URL or IP address
   KDE-enhanced mode
   "previous" button in the eventdlg?
@@ -116,7 +116,6 @@ Extra
     save order on the server
     support empty groups that get removed on signoff
   Have a way of marking some people as 'important' contacts, so they will always trigger sound
-  psuedo-chat support like Mirabilis ICQ / Licq (ie, split window, but still used like normal messages)
   friendlier infodlg.  get rid of those lame tabs
   cvlist sorting options
     sort by group, online/offline split

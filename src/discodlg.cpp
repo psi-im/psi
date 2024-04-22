@@ -66,8 +66,6 @@ PsiIcon category2icon(PsiAccount *acc, const Jid &jid, const QString &category, 
 
         if (type == "facebook")
             trans = "facebook";
-        else if (type == "icq")
-            trans = "icq";
         else if (type == "skype")
             trans = "skype";
         else if (type == "vkontakte")
