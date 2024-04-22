@@ -137,8 +137,10 @@ QWidget *OptionsTabSound::widget()
         // TODO: add ToolTip for earch widget
     }
 
-    connect(bg_se, &QButtonGroup::buttonClicked, this, &OptionsTabSound::chooseSoundEvent);
-    connect(bg_sePlay, &QButtonGroup::buttonClicked, this, &OptionsTabSound::previewSoundEvent);
+    connect(bg_se, qOverload<QAbstractButton *>(&QButtonGroup::buttonClicked), this,
+            &OptionsTabSound::chooseSoundEvent);
+    connect(bg_sePlay, qOverload<QAbstractButton *>(&QButtonGroup::buttonClicked), this,
+            &OptionsTabSound::previewSoundEvent);
     connect(d->pb_soundReset, &QPushButton::clicked, this, &OptionsTabSound::soundReset);
 
     d->le_player->setToolTip(tr("If your system supports multiple sound players, you may"
