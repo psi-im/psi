@@ -181,7 +181,7 @@ if(USE_CRASH)
     add_definitions(-DUSE_CRASH)
 endif()
 
-if(USE_MXE)
+if(WIN32 OR USE_MXE)
     set(BUNDLED_IRIS_ALL ON)
 endif()
 
