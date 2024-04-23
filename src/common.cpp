@@ -45,12 +45,8 @@
 #include <QPaintDevice>
 #include <QProcess>
 #include <QRegularExpression>
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-#include <QSound>
-#else
-#include <QSoundEffect>
-#endif
 #include <QScreen>
+#include <QSoundEffect>
 #include <QUrl>
 #include <QUuid>
 
@@ -260,7 +256,8 @@ bool fileCopy(const QString &src, const QString &dest)
     return true;
 }
 
-static QString existingFullResourcePath(const QString &str) {
+static QString existingFullResourcePath(const QString &str)
+{
     QString fullPath = str;
     if (QDir::isRelativePath(str)) {
         fullPath = ApplicationInfo::resourcesDir() + '/' + str;
@@ -297,8 +294,8 @@ void soundPlay(const QString &s)
     }
 #endif
 
-    static QHash<QString,QSoundEffect*> effects;
-    auto effect = effects.value(s);
+    static QHash<QString, QSoundEffect *> effects;
+    auto                                  effect = effects.value(s);
     if (!effect) {
         auto fullPath = existingFullResourcePath(s);
         if (fullPath.isEmpty()) {
