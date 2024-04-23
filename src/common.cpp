@@ -271,17 +271,21 @@ void soundPlay(const QString &s)
     if (s.isEmpty() || s.startsWith('-'))
         return;
 
-    QString str = s;
-    if (str == "!beep") {
+    if (s == QLatin1String("!beep")) {
         QApplication::beep();
         return;
     }
 
+    QString fullPath;
 #if !(defined(Q_OS_WIN) || defined(Q_OS_MAC))
     QString player = PsiOptions::instance()->getOption("options.ui.notifications.sounds.unix-sound-player").toString();
     if (!player.isEmpty()) {
+        auto fullPath = existingFullResourcePath(s);
+        if (fullPath.isEmpty()) {
+            return;
+        }
         QStringList args = player.split(' ');
-        args += existingFullResourcePath(s);
+        args += fullPath;
         QString prog = args.takeFirst();
         if (QProcess::startDetached(prog, args)) {
             return;
@@ -294,8 +298,7 @@ void soundPlay(const QString &s)
     static QHash<QString, QSoundEffect *> effects;
     auto                                  effect = effects.value(s);
     if (!effect) {
-        auto fullPath = existingFullResourcePath(s);
-        if (fullPath.isEmpty()) {
+        if (fullPath.isEmpty() && (fullPath = existingFullResourcePath(s)).isEmpty()) {
             return;
         }
         effect = effects[s] = new QSoundEffect(qApp);
