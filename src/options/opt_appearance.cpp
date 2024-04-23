@@ -247,10 +247,14 @@ QWidget *OptionsTabAppearanceGeneral::widget()
         if (!cwData[i].descr.isEmpty()) {
             cwData[i].cbox->setToolTip(cwData[i].descr);
         }
+#if QT_VERSION < QT_VERSION_CHECK(6,7,0)
+        connect(cwData[i].cbox, &QCheckBox::stateChanged, this, &OptionsTabAppearanceGeneral::colorCheckBoxClicked);
+#else
         connect(cwData[i].cbox, &QCheckBox::checkStateChanged, this, &OptionsTabAppearanceGeneral::colorCheckBoxClicked);
+#endif
         colorWidgetsMap[cwData[i].cbox] = QPair<QAbstractButton *, QString>(cwData[i].button, cwData[i].option);
     }
-    connect(bg_color, SIGNAL(buttonClicked(QAbstractButton *)), SLOT(chooseColor(QAbstractButton *)));
+    connect(bg_color, &QButtonGroup::buttonClicked, this, &OptionsTabAppearanceGeneral::chooseColor);
 
     if (PsiOptions::instance()->getOption("options.ui.contactlist.status-messages.single-line").toBool()) {
         d->ck_cStatus->hide();

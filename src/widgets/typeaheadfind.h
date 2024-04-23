@@ -53,7 +53,6 @@ private slots:
     void textChanged(const QString &);
     void findNext();
     void findPrevious();
-    void caseToggled(int);
 
 private:
     class Private;
