@@ -75,13 +75,10 @@
    <item>
     <widget class="Line" name="line8">
      <property name="frameShape">
-      <enum>QFrame::Shape::HLine</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Shadow::Sunken</enum>
+      <enum>QFrame::VLine</enum>
      </property>
      <property name="orientation">
-      <enum>Qt::Orientation::Horizontal</enum>
+      <enum>Qt::Vertical</enum>
      </property>
     </widget>
    </item>
@@ -431,11 +428,8 @@
      </property>
      <item>
       <spacer>
-       <property name="orientation">
-        <enum>Qt::Orientation::Horizontal</enum>
-       </property>
        <property name="sizeType">
-        <enum>QSizePolicy::Policy::Expanding</enum>
+        <enum>QSizePolicy::Fixed</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>
@@ -455,15 +449,9 @@
     </layout>
    </item>
    <item>
-    <spacer name="verticalSpacer">
+    <spacer name="spacer">
      <property name="orientation">
-      <enum>Qt::Orientation::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>0</height>
-      </size>
+      <enum>Qt::Vertical</enum>
      </property>
     </spacer>
    </item>

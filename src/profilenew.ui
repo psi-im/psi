@@ -153,28 +153,16 @@ Check the &lt;i&gt;Enable Emoticons&lt;/i&gt; checkbox if you'd like text such a
       </widget>
      </item>
      <item>
-      <spacer name="Spacer1">
+      <spacer name="spacer">
        <property name="orientation">
-        <enum>Qt::Orientation::Vertical</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Policy::Expanding</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>20</width>
-         <height>131</height>
-        </size>
+        <enum>Qt::Horizontal</enum>
        </property>
       </spacer>
      </item>
      <item>
       <widget class="Line" name="Line1">
        <property name="frameShape">
-        <enum>QFrame::Shape::HLine</enum>
-       </property>
-       <property name="frameShadow">
-        <enum>QFrame::Shadow::Sunken</enum>
+        <enum>QFrame::NoFrame</enum>
        </property>
       </widget>
      </item>
@@ -193,18 +181,9 @@ Check the &lt;i&gt;Enable Emoticons&lt;/i&gt; checkbox if you'd like text such a
         <number>0</number>
        </property>
        <item>
-        <spacer name="Spacer2">
+        <spacer name="spacer_2">
          <property name="orientation">
-          <enum>Qt::Orientation::Horizontal</enum>
-         </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::Policy::Expanding</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>95</width>
-           <height>20</height>
-          </size>
+          <enum>Qt::Vertical</enum>
          </property>
         </spacer>
        </item>
