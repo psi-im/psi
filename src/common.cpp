@@ -24,11 +24,8 @@
 #endif
 #include "activity.h"
 #include "applicationinfo.h"
-#include "profiles.h"
-#include "psievent.h"
 #include "psiiconset.h"
 #include "psioptions.h"
-#include "rtparse.h"
 #include "tabdlg.h"
 #ifdef HAVE_X11
 #include "x11windowsystem.h"
