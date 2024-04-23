@@ -71,7 +71,11 @@ public:
 private slots:
     void setData(PsiCon *, QWidget *);
     void chooseColor(QAbstractButton *button);
+#if QT_VERSION < QT_VERSION_CHECK(6,7,0)
     void colorCheckBoxClicked(int);
+#else
+    void colorCheckBoxClicked(Qt::CheckState);
+#endif
     void chooseFont(QAbstractButton *button);
 
 private:

@@ -118,11 +118,6 @@ if(APPLE)
         systemwatch/systemwatch_mac.cpp
         )
 elseif(WIN32)
-    list(APPEND HEADERS
-        # spellchecker
-        spellchecker/hunspellchecker.h
-        )
-
     list(APPEND SOURCES
         #idle
         idle/idle_win.cpp
@@ -132,9 +127,6 @@ elseif(WIN32)
 
         # globalshortcut
         globalshortcut/globalshortcutmanager_win.cpp
-
-        # spellchecker
-        spellchecker/hunspellchecker.cpp
         )
 elseif(HAIKU)
         list(APPEND HEADERS

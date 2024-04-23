@@ -150,7 +150,7 @@ public:
             _finishWithMetadataError(StatusCode::NotFound);
             return; // handled with error
         }
-        qint64 size        = fi.size();
+        auto size        = quint64(fi.size());
         auto   actualRange = requestedRange;
         if (requestedRange) {
             if (requestedRange->start >= size) {

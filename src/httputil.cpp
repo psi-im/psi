@@ -75,7 +75,7 @@ std::optional<std::tuple<quint64, quint64, std::optional<quint64>>> parseContent
     if (arr.size() != 2 || arr[0] != "bytes" || (arr = arr[1].split('/')).size() != 2)
         return {};
 
-    qint64                 start, end;
+    quint64                 start, end;
     std::optional<quint64> totalSize;
     bool                   ok;
 

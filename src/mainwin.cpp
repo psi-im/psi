@@ -590,19 +590,19 @@ void MainWin::registerAction(IconAction *action)
 {
     PsiContactList *contactList = psiCon()->contactList();
 
-    auto cd = [this, action](const QString &actionName, auto signal, auto dst, auto slot) {
+    auto cd = [action](const QString &actionName, auto signal, auto dst, auto slot) {
         if (actionName != action->objectName()) {
             return false;
         }
-        connect(action, signal, dst, slot, Qt::UniqueConnection);
+        QObject::connect(action, signal, dst, slot, Qt::UniqueConnection);
         return true;
     };
 
-    auto mcd = [this, action](const QString &actionName, auto signal, auto dst, auto slot) {
+    auto mcd = [action](const QString &actionName, auto signal, auto dst, auto slot) {
         if (actionName != action->objectName()) {
             return;
         }
-        connect(qobject_cast<MAction *>(action), signal, dst, slot, Qt::UniqueConnection);
+        QObject::connect(qobject_cast<MAction *>(action), signal, dst, slot, Qt::UniqueConnection);
     };
 
     // clang-format off
@@ -672,7 +672,7 @@ void MainWin::registerAction(IconAction *action)
                   return;
               }
               if (src) {
-                  connect(src, signal, action, slot, Qt::UniqueConnection);
+                  QObject::connect(src, signal, action, slot, Qt::UniqueConnection);
               }
               action->setChecked(checked);
           };
