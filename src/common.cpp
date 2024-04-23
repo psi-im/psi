@@ -260,16 +260,16 @@ bool fileCopy(const QString &src, const QString &dest)
     return true;
 }
 
-/** Detect default player helper on unix like systems
- */
-QString soundDetectPlayer()
-{
-    // prefer ALSA on linux
-    if (QFile("/proc/asound").exists()) {
-        return "aplay -q";
+static QString existingFullResourcePath(const QString &str) {
+    QString fullPath = str;
+    if (QDir::isRelativePath(str)) {
+        fullPath = ApplicationInfo::resourcesDir() + '/' + str;
     }
-    // fallback to "play"
-    return "play";
+
+    if (!QFile::exists(fullPath)) {
+        return {};
+    }
+    return fullPath;
 }
 
 void soundPlay(const QString &s)
@@ -283,31 +283,31 @@ void soundPlay(const QString &s)
         return;
     }
 
-    if (QDir::isRelativePath(str)) {
-        str = ApplicationInfo::resourcesDir() + '/' + str;
-    }
-
-    if (!QFile::exists(str)) {
-        return;
-    }
-
-#if defined(Q_OS_WIN) || defined(Q_OS_MAC)
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    QSound::play(str);
-#else
-    QSoundEffect effect;
-    effect.setSource(QUrl::fromLocalFile(str));
-    effect.play();
-#endif
-#else
+#if !(defined(Q_OS_WIN) || defined(Q_OS_MAC))
     QString player = PsiOptions::instance()->getOption("options.ui.notifications.sounds.unix-sound-player").toString();
-    if (player == "")
-        player = soundDetectPlayer();
-    QStringList args = player.split(' ');
-    args += str;
-    QString prog = args.takeFirst();
-    QProcess::startDetached(prog, args);
+    if (!player.isEmpty()) {
+        QStringList args = player.split(' ');
+        args += existingFullResourcePath(s);
+        QString prog = args.takeFirst();
+        if (QProcess::startDetached(prog, args)) {
+            return;
+        } else {
+            qWarning("failed to play with %s. Falling back to sound effect", qUtf8Printable(player));
+        }
+    }
 #endif
+
+    static QHash<QString,QSoundEffect*> effects;
+    auto effect = effects.value(s);
+    if (!effect) {
+        auto fullPath = existingFullResourcePath(s);
+        if (fullPath.isEmpty()) {
+            return;
+        }
+        effect = effects[s] = new QSoundEffect(qApp);
+        effect->setSource(QUrl::fromLocalFile(fullPath));
+    }
+    effect->play();
 }
 
 bool lastPriorityNotEmpty()
