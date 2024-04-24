@@ -151,7 +151,7 @@ public:
             return; // handled with error
         }
         auto size        = quint64(fi.size());
-        auto   actualRange = requestedRange;
+        auto actualRange = requestedRange;
         if (requestedRange) {
             if (requestedRange->start >= size) {
                 self->setResponseHeader("Content-Range", QByteArray("bytes */") + QByteArray::number(size));
@@ -361,12 +361,20 @@ class FileSharingNAMReply : public QNetworkReply {
     Q_OBJECT
 
     QByteArray buffer;
+    bool       metadataSignalled = false;
 
 public:
+    FileSharingNAMReply(const QNetworkRequest &request)
+    {
+        setRequest(request);
+        setOpenMode(QIODevice::ReadOnly);
+    }
+
     qint64 bytesAvailable() const { return buffer.size() + QNetworkReply::bytesAvailable(); }
 
     inline void setRawHeader(const char *headerName, const QByteArray &value)
     {
+        qDebug("FSP set header %s=%s", headerName, value.data());
         QNetworkReply::setRawHeader(headerName, value);
     }
 
@@ -377,8 +385,13 @@ public:
 
     void appendData(const QByteArray &data)
     {
+        qDebug("FSP append %lld bytes for reading", qint64(data.size()));
+        if (!metadataSignalled) {
+            QTimer::singleShot(0, this, SIGNAL(metaDataChanged()));
+            metadataSignalled = true;
+        }
         buffer += data;
-        emit readyRead();
+        QTimer::singleShot(0, this, SIGNAL(readyRead()));
     }
 
     void finishWithError(QNetworkReply::NetworkError networkError, int httpCode, const QByteArray &reason)
@@ -387,7 +400,10 @@ public:
         if (!reason.isEmpty()) {
             setAttribute(QNetworkRequest::HttpReasonPhraseAttribute, reason);
         }
-        emit metaDataChanged();
+        if (!metadataSignalled) {
+            emit metaDataChanged();
+            metadataSignalled = true;
+        }
         setError(networkError, reason);
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
         emit errorOccurred(networkError);
@@ -409,6 +425,7 @@ protected:
     qint64 readData(char *buf, qint64 maxlen)
     {
         auto sz = std::min(maxlen, qint64(buffer.size()));
+        qDebug("FSP read %lld bytes", sz);
         if (sz) {
             std::memcpy(buf, buffer.data(), sz);
             buffer.remove(0, sz);
@@ -433,10 +450,9 @@ class NAMProxy : public ControlBase<NAMProxy> {
 public:
     FileSharingNAMReply *reply;
 
-    NAMProxy(PsiAccount *acc, const QString &sourceIdHex, const QNetworkRequest &req) :
-        ControlBase<NAMProxy>(acc, sourceIdHex, nullptr), request(req), reply(new FileSharingNAMReply())
+    NAMProxy(PsiAccount *acc, const QString &sourceIdHex, const QNetworkRequest &req, FileSharingNAMReply *reply) :
+        ControlBase<NAMProxy>(acc, sourceIdHex, reply), request(req), reply(reply)
     {
-        setParent(reply); // reply will be deleted by an external entity
         qDebug("FSP GET %s range: %s", qUtf8Printable(req.url().toString()), qPrintable(request.rawHeader("range")));
         connect(reply, &QNetworkReply::finished, this, &ControlBase<NAMProxy>::ensureUpstreamStopped);
     }
@@ -555,9 +571,9 @@ void proxify(PsiAccount *acc, const QString &sourceIdHex, qhttp::server::QHttpRe
 #endif
 QNetworkReply *proxify(PsiAccount *acc, const QString &sourceIdHex, const QNetworkRequest &req)
 {
-    auto proxy = new NAMProxy(acc, sourceIdHex, req);
-    proxy->process();
-    return proxy->reply;
+    FileSharingNAMReply *reply = new FileSharingNAMReply(req);
+    (new NAMProxy(acc, sourceIdHex, req, reply))->process();
+    return reply;
 }
 }
 
