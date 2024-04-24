@@ -359,6 +359,7 @@ if(WIN32)
         if(USE_MXE)
             set(PSIMEDIA_DEPS
                 libffi-6.dll
+                libffi-8.dll
                 libfontconfig-1.dll
                 libgio-2.0-0.dll
                 libgmodule-2.0-0.dll
@@ -492,6 +493,7 @@ if(WIN32)
             libmng-2.dll
             libpcre-1.dll
             libpcre16-0.dll
+            libpcre2-8-0.dll
             libpcre2-16-0.dll
             libpng16-16.dll
             libsharpyuv-0.dll
