@@ -40,13 +40,12 @@
 #include <QWidgetAction>
 
 #include <cmath>
+#include <optional>
 
 namespace {
 struct Item {
     PsiIcon                    *icon  = nullptr;
     const EmojiRegistry::Emoji *emoji = nullptr;
-
-    Item(PsiIcon *icon = nullptr, const EmojiRegistry::Emoji *emoji = nullptr) : icon(icon), emoji(emoji) { }
 
     bool operator==(const Item &other) const
     {
@@ -352,7 +351,7 @@ void IconSelect::updateGrid()
     } else {
         for (auto const &emoji : EmojiRegistry::instance()) {
             if (titleFilter.isEmpty() || emoji.name.contains(titleFilter)) {
-                toRender.emplaceBack(nullptr, &emoji);
+                toRender.append(Item { nullptr, &emoji });
                 if (!titleFilter.isEmpty() && toRender.size() == 40) {
                     break;
                 }
