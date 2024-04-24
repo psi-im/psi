@@ -362,6 +362,7 @@ class FileSharingNAMReply : public QNetworkReply {
 
     QByteArray buffer;
     bool       metadataSignalled = false;
+    bool       finished_         = false;
 
 public:
     FileSharingNAMReply(const QNetworkRequest &request)
@@ -374,7 +375,7 @@ public:
 
     inline void setRawHeader(const char *headerName, const QByteArray &value)
     {
-        qDebug("FSP set header %s=%s", headerName, value.data());
+        qDebug("FSP reply set header %s=%s", headerName, value.data());
         QNetworkReply::setRawHeader(headerName, value);
     }
 
@@ -385,8 +386,9 @@ public:
 
     void appendData(const QByteArray &data)
     {
-        qDebug("FSP append %lld bytes for reading", qint64(data.size()));
+        // qDebug("FSP append %lld bytes for reading", qint64(data.size()));
         if (!metadataSignalled) {
+            qDebug("FSP reply signalling metadataChanged");
             QTimer::singleShot(0, this, SIGNAL(metaDataChanged()));
             metadataSignalled = true;
         }
@@ -396,6 +398,10 @@ public:
 
     void finishWithError(QNetworkReply::NetworkError networkError, int httpCode, const QByteArray &reason)
     {
+        if (finished_) {
+            return;
+        }
+        qDebug("FSP reply finishWithError");
         setAttribute(QNetworkRequest::HttpStatusCodeAttribute, httpCode);
         if (!reason.isEmpty()) {
             setAttribute(QNetworkRequest::HttpReasonPhraseAttribute, reason);
@@ -415,17 +421,26 @@ public:
 
     void finish()
     {
+        if (finished_) {
+            return;
+        }
+        finished_ = true;
+        qDebug("FSP reply finished");
         setFinished(true);
-        emit finished();
-        // we should not delete it here, because it may still have data buffered
-        // but we need to stop downloader if it's still running
+        QTimer::singleShot(0, this, [this]() {
+            setFinished(true);
+            emit finished();
+        });
+        // emit finished();
+        //  we should not delete it here, because it may still have data buffered
+        //  but we need to stop downloader if it's still running
     }
 
 protected:
     qint64 readData(char *buf, qint64 maxlen)
     {
         auto sz = std::min(maxlen, qint64(buffer.size()));
-        qDebug("FSP read %lld bytes", sz);
+        // qDebug("FSP read %lld bytes", sz);
         if (sz) {
             std::memcpy(buf, buffer.data(), sz);
             buffer.remove(0, sz);
@@ -437,6 +452,7 @@ protected:
 public slots:
     void abort()
     {
+        qDebug("FSP reply aborted");
         setError(QNetworkReply::OperationCanceledError, "aborted");
         finish();
     }
