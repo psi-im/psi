@@ -22,6 +22,8 @@
 
 #include <QMenu>
 
+#include <memory>
+
 class Iconset;
 class PsiIcon;
 

@@ -1,13 +1,10 @@
 #include "applicationinfo.h"
 
-#include "activeprofiles.h"
 #ifdef HAVE_CONFIG
 #include "config.h"
 #endif
 #include "profiles.h"
-#include "psiapplication.h"
 #include "systeminfo.h"
-#include "translationmanager.h"
 
 #include <QDesktopServices>
 #include <QDir>
