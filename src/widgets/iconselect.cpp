@@ -47,6 +47,15 @@ struct Item {
     const EmojiRegistry::Emoji *emoji = nullptr;
 
     Item(PsiIcon *icon = nullptr, const EmojiRegistry::Emoji *emoji = nullptr) : icon(icon), emoji(emoji) { }
+
+    bool operator==(const Item &other) const
+    {
+        if (emoji)
+            return emoji == other.emoji;
+        if (icon != nullptr && other.icon != nullptr)
+            return icon->name() == other.icon->name();
+        return false;
+    }
 };
 using List = QList<Item>;
 }
@@ -386,7 +395,7 @@ void IconSelect::updateGrid()
     for (auto const &item : toRender) {
         IconSelectButton *b = new IconSelectButton(this);
         b->setFont(font);
-        b->setItem(item);
+        b->setItem(item, maxPrefSize);
         b->setSizeHint(QSize(tileSize, tileSize));
         connect(b, &QAbstractButton::clicked, this, [b, this]() { emit selected(b); });
         grid->addWidget(b, row, column);
@@ -498,49 +507,56 @@ class IconSelectPopup::Private : public QObject {
     Q_OBJECT
 
 public:
-    Private(IconSelectPopup *parent) : QObject(parent), parent_(parent), emotsSel_(nullptr), emotsAction_(nullptr) { }
+    Private(IconSelectPopup *parent) : QObject(parent), parent_(parent) { }
+    ~Private()
+    {
+        for (auto const &item : recent) {
+            if (item.icon) {
+                delete item.icon;
+            }
+        }
+    }
 
     IconSelectPopup *parent_;
 
     Iconset        recentIconset;
-    IconSelect    *recentSel_;
-    QWidgetAction *recentAction_;
-    QScrollArea   *recentScrollArea_;
+    IconSelect    *recentSel_    = nullptr;
+    QWidgetAction *recentAction_ = nullptr;
+    // QScrollArea   *recentScrollArea_ = nullptr;
 
-    IconSelect    *emotsSel_;
-    QWidgetAction *emotsAction_;
-    QScrollArea   *emotsScrollArea_;
+    IconSelect    *emotsSel_        = nullptr;
+    QWidgetAction *emotsAction_     = nullptr;
+    QScrollArea   *emotsScrollArea_ = nullptr;
 
-    ActionLineEdit *findBar_;
-    IconAction     *findAct_;
-    QWidgetAction  *findAction_;
+    ActionLineEdit *findBar_    = nullptr;
+    IconAction     *findAct_    = nullptr;
+    QWidgetAction  *findAction_ = nullptr;
     List            recent;
 
 public slots:
     void updatedGeometry()
     {
-        updateGeometry(emotsAction_, emotsScrollArea_, emotsSel_);
+        emotsAction_->setDefaultWidget(emotsScrollArea_);
+        QRect r         = emotsScrollArea_->screen()->availableGeometry();
+        int   maxSize   = qMin(r.width(), r.height()) / 3;
+        int   vBarWidth = emotsScrollArea_->verticalScrollBar()->isEnabled()
+              ? emotsScrollArea_->verticalScrollBar()->sizeHint().rwidth()
+              : 0;
+        emotsScrollArea_->setMinimumWidth(emotsSel_->sizeHint().rwidth() + vBarWidth);
+        emotsScrollArea_->setMinimumHeight(qMin(emotsSel_->sizeHint().rheight(), maxSize));
+        emotsScrollArea_->setFrameStyle(QFrame::Plain);
+
         recentSel_->setRowSize(*emotsSel_->rowSize());
-        updateGeometry(recentAction_, recentScrollArea_, recentSel_);
+        recentAction_->setDefaultWidget(recentSel_);
+
         parent_->removeAction(emotsAction_);
         parent_->removeAction(recentAction_);
-        parent_->removeAction(findAct_);
+        parent_->removeAction(findAction_);
 
-        parent_->addAction(findAct_);
+        parent_->addAction(findAction_);
         parent_->addAction(recentAction_);
         parent_->addAction(emotsAction_);
-    }
-
-    void updateGeometry(QWidgetAction *action, QScrollArea *scrollArea, IconSelect *sel)
-    {
-        action->setDefaultWidget(scrollArea);
-        QRect r       = scrollArea->screen()->availableGeometry();
-        int   maxSize = qMin(r.width(), r.height()) / 3;
-        int   vBarWidth
-            = scrollArea->verticalScrollBar()->isEnabled() ? scrollArea->verticalScrollBar()->sizeHint().rwidth() : 0;
-        scrollArea->setMinimumWidth(sel->sizeHint().rwidth() + vBarWidth);
-        scrollArea->setMinimumHeight(0); // qMin(sel->sizeHint().rheight(), maxSize)
-        scrollArea->setFrameStyle(QFrame::Plain);
+        findBar_->setFocus();
     }
 
     void selected(IconSelectButton *btn)
@@ -548,8 +564,7 @@ public slots:
         btn->clearFocus();
 
         auto const &item = btn->item();
-        auto        it   = std::find_if(recent.begin(), recent.end(),
-                                        [&item](auto const &r) { return r.icon == item.icon && r.emoji == item.emoji; });
+        auto        it   = std::find_if(recent.begin(), recent.end(), [&item](auto const &r) { return item == r; });
 
         auto rotated = false;
         if (it != recent.end()) {
@@ -559,8 +574,15 @@ public slots:
                 rotated = true;
             }
         } else {
-            recent.push_front(item);
+            auto copyItem = item;
+            if (copyItem.icon) {
+                copyItem.icon = new PsiIcon(*copyItem.icon);
+            }
+            recent.push_front(copyItem);
             if (recent.size() > *emotsSel_->rowSize()) {
+                if (recent.back().icon) {
+                    delete recent.back().icon;
+                }
                 recent.pop_back();
             }
             rotated = true;
@@ -591,13 +613,8 @@ IconSelectPopup::IconSelectPopup(QWidget *parent) : QMenu(parent), d(new Private
     d->findAction_->setDefaultWidget(d->findBar_);
     connect(d->findBar_, &QLineEdit::textChanged, d, &Private::setTitleFilter);
 
-    d->recentSel_        = new IconSelect(this);
-    d->recentAction_     = new QWidgetAction(this);
-    d->recentScrollArea_ = new QScrollArea(this);
-    d->recentScrollArea_->setWidget(d->recentSel_);
-    d->recentScrollArea_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    d->recentScrollArea_->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    d->recentScrollArea_->setWidgetResizable(true);
+    d->recentSel_    = new IconSelect(this);
+    d->recentAction_ = new QWidgetAction(this);
     connect(d->recentSel_, &IconSelect::updatedGeometry, d, &IconSelectPopup::Private::updatedGeometry);
     connect(d->recentSel_, &IconSelect::selected, d, &IconSelectPopup::Private::selected);
 
@@ -614,15 +631,12 @@ IconSelectPopup::IconSelectPopup(QWidget *parent) : QMenu(parent), d(new Private
     d->updatedGeometry();
 }
 
-IconSelectPopup::~IconSelectPopup()
-{
-    // d->findAction_->setDefaultWidget(nullptr);
-    // delete d->findBar_;
-}
+IconSelectPopup::~IconSelectPopup() { }
 
 void IconSelectPopup::setIconset(const Iconset &i)
 {
-    d->recent.clear();
+    std::remove_if(d->recent.begin(), d->recent.end(), [](auto const &item) { return item.icon != nullptr; });
+    d->recentSel_->setIcons(d->recent);
     d->emotsSel_->setIconset(i);
 }
 
