@@ -545,7 +545,9 @@ public slots:
         emotsScrollArea_->setMinimumHeight(qMin(emotsSel_->sizeHint().rheight(), maxSize));
         emotsScrollArea_->setFrameStyle(QFrame::Plain);
 
-        recentSel_->setRowSize(*emotsSel_->rowSize());
+        if (emotsSel_->rowSize()) {
+            recentSel_->setRowSize(*emotsSel_->rowSize());
+        }
         recentAction_->setDefaultWidget(recentSel_);
 
         parent_->removeAction(emotsAction_);
@@ -577,12 +579,14 @@ public slots:
             if (copyItem.icon) {
                 copyItem.icon = new PsiIcon(*copyItem.icon);
             }
-            recent.push_front(copyItem);
-            if (recent.size() > *emotsSel_->rowSize()) {
-                if (recent.back().icon) {
-                    delete recent.back().icon;
+            if (emotsSel_->rowSize()) {
+                recent.push_front(copyItem);
+                if (recent.size() > *emotsSel_->rowSize()) {
+                    if (recent.back().icon) {
+                        delete recent.back().icon;
+                    }
+                    recent.pop_back();
                 }
-                recent.pop_back();
             }
             rotated = true;
         }
