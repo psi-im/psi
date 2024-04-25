@@ -527,8 +527,8 @@
     <implements>
       <xmpp:SupportedXep>
         <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0215.html'/>
-        <xmpp:status>partial</xmpp:status>
-        <xmpp:version>0.7</xmpp:version>
+        <xmpp:status>complete</xmpp:status>
+        <xmpp:version>1.0.0</xmpp:version>
         <xmpp:note xml:lang='en'>Currently only for file transfer over WebRTC data channels.</xmpp:note>
       </xmpp:SupportedXep>
     </implements>
