@@ -691,8 +691,8 @@
     <implements>
       <xmpp:SupportedXep>
         <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0371.html'/>
-        <xmpp:status>partial</xmpp:status>
-        <xmpp:note xml:lang='en'>Only for RTP calls in psimedia.</xmpp:note>
+        <xmpp:status>complete</xmpp:status>
+        <xmpp:note xml:lang='en'>Currently used only for file transfer/sharing.</xmpp:note>
       </xmpp:SupportedXep>
     </implements>
 
