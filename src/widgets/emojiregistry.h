@@ -63,6 +63,12 @@ public:
     int      count() const;
 
     struct iterator {
+        using iterator_category = std::forward_iterator_tag;
+        using difference_type   = std::size_t;
+        using value_type        = EmojiRegistry::Emoji;
+        using pointer           = EmojiRegistry::Emoji *; // or also value_type*
+        using reference         = EmojiRegistry::Emoji &; // or also value_type&
+
         int group_idx    = 0;
         int subgroup_idx = 0;
         int emoji_idx    = 0;

@@ -549,15 +549,18 @@ public slots:
             recentSel_->setRowSize(*emotsSel_->rowSize());
         }
         recentAction_->setDefaultWidget(recentSel_);
-
         parent_->removeAction(emotsAction_);
         parent_->removeAction(recentAction_);
-        parent_->removeAction(findAction_);
 
-        parent_->addAction(findAction_);
         parent_->addAction(recentAction_);
         parent_->addAction(emotsAction_);
         findBar_->setFocus();
+    }
+
+    void updateRecentGeometry()
+    {
+        parent_->removeAction(recentAction_);
+        parent_->insertAction(emotsAction_, recentAction_);
     }
 
     void selected(IconSelectButton *btn)
@@ -614,11 +617,13 @@ IconSelectPopup::IconSelectPopup(QWidget *parent) : QMenu(parent), d(new Private
     d->findAct_->setPsiIcon("psi/search");
     d->findBar_->addAction(d->findAct_);
     d->findAction_->setDefaultWidget(d->findBar_);
+    d->parent_->addAction(d->findAction_);
+
     connect(d->findBar_, &QLineEdit::textChanged, d, &Private::setTitleFilter);
 
     d->recentSel_    = new IconSelect(this);
     d->recentAction_ = new QWidgetAction(this);
-    connect(d->recentSel_, &IconSelect::updatedGeometry, d, &IconSelectPopup::Private::updatedGeometry);
+    connect(d->recentSel_, &IconSelect::updatedGeometry, d, &IconSelectPopup::Private::updateRecentGeometry);
     connect(d->recentSel_, &IconSelect::selected, d, &IconSelectPopup::Private::selected);
 
     d->emotsSel_        = new IconSelect(this);
@@ -647,11 +652,49 @@ const Iconset &IconSelectPopup::iconset() const { return d->emotsSel_->iconset()
 
 void IconSelectPopup::setEmojiSortingEnabled(bool enabled) { d->emotsSel_->setEmojiSortingEnabled(enabled); }
 
+void IconSelectPopup::setRecent(const QStringList &recent)
+{
+    List        list;
+    auto const &er = EmojiRegistry::instance();
+    for (auto const &text : std::as_const(recent)) {
+        auto it = std::find_if(er.begin(), er.end(), [text](const EmojiRegistry::Emoji &e) { return e.code == text; });
+        if (it != er.end()) {
+            list << Item { nullptr, &*it };
+            continue;
+        }
+        auto icon = IconsetFactory::iconPtr(text);
+        if (icon) {
+            list << Item { const_cast<PsiIcon *>(icon), nullptr };
+        }
+    }
+    d->recent = list;
+    d->recentSel_->setIcons(d->recent);
+}
+
+QStringList IconSelectPopup::recent() const
+{
+    QStringList ret;
+    for (auto const &r : d->recent) {
+        if (r.icon) {
+            ret << r.icon->defaultText();
+        } else {
+            ret << r.emoji->code;
+        }
+    }
+    return ret;
+}
+
 /**
     It's used by child widget to close the menu by simulating a
     click slightly outside of menu. This seems to be the best way
     to achieve this.
 */
 void IconSelectPopup::mousePressEvent(QMouseEvent *e) { QMenu::mousePressEvent(e); }
+
+void IconSelectPopup::showEvent(QShowEvent *e)
+{
+    QWidget::showEvent(e);
+    d->findBar_->setFocus();
+}
 
 #include "iconselect.moc"

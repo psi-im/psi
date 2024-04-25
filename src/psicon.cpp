@@ -519,6 +519,8 @@ bool PsiCon::init()
     d->iconSelect->setEmojiSortingEnabled(true);
     connect(PsiIconset::instance(), SIGNAL(emoticonsChanged()), d, SLOT(updateIconSelect()));
     d->updateIconSelect();
+    d->iconSelect->setRecent(
+        PsiOptions::instance()->getOption("options.ui.emoticons.recent", QStringList()).toStringList());
 
     const QString css = options->getOption("options.ui.chat.css").toString();
     if (!css.isEmpty())
@@ -743,6 +745,7 @@ void PsiCon::updateStatusPresets() { emit statusPresetsChanged(); }
 
 void PsiCon::deinit()
 {
+    PsiOptions::instance()->setOption("options.ui.emoticons.recent", d->iconSelect->recent());
     // this deletes all dialogs except for mainwin
     deleteAllDialogs();
 

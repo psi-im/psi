@@ -37,10 +37,12 @@ public:
     void           setIconset(const Iconset &);
     const Iconset &iconset() const;
     void           setEmojiSortingEnabled(bool enabled);
+    void           setRecent(const QStringList &recent);
+    QStringList    recent() const;
 
     // reimplemented
-    void mousePressEvent(QMouseEvent *e);
-
+    void mousePressEvent(QMouseEvent *e) override;
+    void showEvent(QShowEvent *e) override;
 signals:
     void iconSelected(const PsiIcon *);
     void textSelected(QString);
