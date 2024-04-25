@@ -70,6 +70,7 @@ if(WIN32)
         list(APPEND PATHES
             ${CMAKE_PREFIX_PATH}/bin
             ${CMAKE_PREFIX_PATH}/lib
+            ${CMAKE_PREFIX_PATH}/lib/ossl-modules
             )
     endif()
     if(EXISTS "${SDK_PATH}")
