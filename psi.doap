@@ -742,7 +742,7 @@
 
     <release>
       <Version>
-        <revision>0.1.5</revision>
+        <revision>1.5</revision>
         <created>2020-09-06</created>
         <file-release rdf:resource='https://github.com/psi-im/psi/releases/download/1.5/psi-1.5.tar.xz'/>
       </Version>
