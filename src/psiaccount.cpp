@@ -6119,7 +6119,8 @@ void PsiAccount::pgp_decryptFinished()
                 m.setId(transaction->origMessage().id());
             m.setBody(transaction->origMessage().body());
 
-            m.setError(Stanza::Error(Stanza::Error::Modify, Stanza::Error::NotAcceptable, "Unable to decrypt"));
+            m.setError(Stanza::Error(Stanza::Error::ErrorType::Modify, Stanza::Error::ErrorCond::NotAcceptable,
+                                     "Unable to decrypt"));
             d->client->sendMessage(m);
         }
     }

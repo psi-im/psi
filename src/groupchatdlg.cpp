@@ -157,9 +157,9 @@ public:
             } else {
                 XMPP::Stanza::Error err;
                 err.fromXml(tag, client()->stream().baseNS());
-                if (err.condition == XMPP::Stanza::Error::ItemNotFound) {
+                if (err.condition == XMPP::Stanza::Error::ErrorCond::ItemNotFound) {
                     emit result(NoSuch, id());
-                } else if (err.condition == XMPP::Stanza::Error::NotAcceptable) {
+                } else if (err.condition == XMPP::Stanza::Error::ErrorCond::NotAcceptable) {
                     emit result(NotOccupant, id());
                 } else {
                     emit result(OtherErr, id());

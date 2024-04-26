@@ -624,7 +624,8 @@ void XDataWidget::setForm(const XMPP::XData &d, bool withInstructions)
             consistent_ = false;
         }
         if (!consistent_) {
-            consistencyError_ = Stanza::Error(Stanza::Error::Modify, Stanza::Error::NotAcceptable);
+            consistencyError_
+                = Stanza::Error(Stanza::Error::ErrorType::Modify, Stanza::Error::ErrorCond::NotAcceptable);
         }
         // TODO check if captcha was sent too late (more than 2 minutes)
     } else {
