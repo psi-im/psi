@@ -347,7 +347,9 @@ void IconSelect::updateGrid()
         toRender = *icons_;
     } else if (is.count() > 0) {
         toRender.reserve(is.count());
-        std::transform(is.begin(), is.end(), std::back_inserter(toRender), [](auto icon) { return Item { icon }; });
+        auto sorted = sortEmojis();
+        std::transform(sorted.begin(), sorted.end(), std::back_inserter(toRender),
+                       [](auto icon) { return Item { icon }; });
     } else {
         for (auto const &emoji : EmojiRegistry::instance()) {
             if (titleFilter.isEmpty() || emoji.name.contains(titleFilter)) {
@@ -577,19 +579,17 @@ public slots:
                 std::rotate(recent.begin(), recent.begin() + idx, recent.begin() + idx + 1);
                 rotated = true;
             }
-        } else {
+        } else if (emotsSel_->rowSize()) {
             auto copyItem = item;
             if (copyItem.icon) {
                 copyItem.icon = new PsiIcon(*copyItem.icon);
             }
-            if (emotsSel_->rowSize()) {
-                recent.push_front(copyItem);
-                if (recent.size() > *emotsSel_->rowSize() * 3) {
-                    if (recent.back().icon) {
-                        delete recent.back().icon;
-                    }
-                    recent.pop_back();
+            recent.push_front(copyItem);
+            if (recent.size() > *emotsSel_->rowSize() * 3) {
+                if (recent.back().icon) {
+                    delete recent.back().icon;
                 }
+                recent.pop_back();
             }
             rotated = true;
         }
