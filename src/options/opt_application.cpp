@@ -101,7 +101,7 @@ QWidget *OptionsTabApplication::widget()
             d->label->setText(tr("(TCP: %1, UDP: %1-%2)").arg(port).arg(port + 3));
         }
     });
-#if QT_VERSION < QT_VERSION_CHECK(6,7,0)
+#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
     connect(d->ck_docklet, &QCheckBox::stateChanged, this, &OptionsTabApplication::doEnableQuitOnClose);
 #else
     connect(d->ck_docklet, &QCheckBox::checkStateChanged, this, &OptionsTabApplication::doEnableQuitOnClose);
@@ -207,7 +207,7 @@ void OptionsTabApplication::restoreOptions()
 #endif
     d->ck_dockHideMW->setChecked(PsiOptions::instance()->getOption("options.contactlist.hide-on-start").toBool());
     d->ck_dockToolMW->setChecked(PsiOptions::instance()->getOption("options.contactlist.use-toolwindow").toBool());
-#if QT_VERSION < QT_VERSION_CHECK(6,7,0)
+#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
     doEnableQuitOnClose(d->ck_docklet->isChecked() ? 1 : 0);
 #else
     doEnableQuitOnClose(d->ck_docklet->checkState());
@@ -257,7 +257,7 @@ void OptionsTabApplication::restoreOptions()
 #endif
 }
 
-#if QT_VERSION < QT_VERSION_CHECK(6,7,0)
+#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
 void OptionsTabApplication::doEnableQuitOnClose(int state)
 #else
 void OptionsTabApplication::doEnableQuitOnClose(Qt::CheckState state)
@@ -266,13 +266,13 @@ void OptionsTabApplication::doEnableQuitOnClose(Qt::CheckState state)
     if (!w)
         return;
 
-#if QT_VERSION < QT_VERSION_CHECK(6,7,0)
+#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
     const auto enabled = state > 0;
 #else
     const auto enabled = state != Qt::Unchecked;
 #endif
     OptApplicationUI *d = static_cast<OptApplicationUI *>(w);
-    d->ck_quitOnClose->setEnabled(enabled);
+    // d->ck_quitOnClose->setEnabled(enabled);
     d->ck_dockToolMW->setEnabled(enabled);
 #ifdef Q_OS_WIN
     d->ck_dockDCstyle->setEnabled(enabled);

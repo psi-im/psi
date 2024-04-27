@@ -70,9 +70,6 @@
 #include <QVBoxLayout>
 #include <QtAlgorithms>
 #ifdef Q_OS_WIN
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-#include "widgets/thumbnailtoolbar.h"
-#endif
 #include <windows.h>
 #endif
 #ifdef HAVE_X11
@@ -158,9 +155,6 @@ public:
 
 #ifdef Q_OS_WIN
     DWORD deactivationTickCount;
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    QPointer<PsiThumbnailToolBar> thumbnailToolBar_;
-#endif
 #endif
 
     void        registerActions();
@@ -533,10 +527,6 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
     });
     d->eventNotifier->hide();
 
-#if defined(Q_OS_WIN) && QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    updateWinTaskbar(_asTool);
-#endif
-
     connect(qApp, SIGNAL(dockActivated()), SLOT(dockActivated()));
     qApp->installEventFilter(this);
 
@@ -742,9 +732,6 @@ void MainWin::setWindowOpts(bool _onTop, bool _asTool)
 
     setWindowFlags(flags);
     show();
-#if defined(Q_OS_WIN) && QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    updateWinTaskbar(_asTool);
-#endif
 }
 
 void MainWin::setUseDock(bool use)
@@ -897,8 +884,17 @@ void MainWin::buildOptionsMenu()
     helpMenu->setIcon(IconsetFactory::icon("psi/help").icon());
 
     QStringList actions;
-    actions << "help_readme" << "separator" << "help_online_wiki" << "help_online_home" << "help_online_forum"
-            << "help_psi_muc" << "help_report_bug" << "diagnostics" << "separator" << "help_about" << "help_about_qt";
+    actions << "help_readme"
+            << "separator"
+            << "help_online_wiki"
+            << "help_online_home"
+            << "help_online_forum"
+            << "help_psi_muc"
+            << "help_report_bug"
+            << "diagnostics"
+            << "separator"
+            << "help_about"
+            << "help_about_qt";
 
     d->updateMenu(actions, helpMenu);
 
@@ -935,7 +931,9 @@ void MainWin::buildMainMenu()
 void MainWin::buildToolsMenu()
 {
     QStringList actions;
-    actions << "menu_file_transfer" << "separator" << "menu_xml_console";
+    actions << "menu_file_transfer"
+            << "separator"
+            << "menu_xml_console";
 
     d->updateMenu(actions, d->toolsMenu);
 }
@@ -952,7 +950,8 @@ void MainWin::buildGeneralMenu(QMenu *menu)
 #ifdef GROUPCHAT
             << "menu_join_groupchat"
 #endif
-            << "menu_options" << "menu_file_transfer";
+            << "menu_options"
+            << "menu_file_transfer";
     if (PsiOptions::instance()->getOption("options.ui.menu.main.change-profile").toBool()) {
         actions << "menu_change_profile";
     }
@@ -1363,6 +1362,11 @@ void MainWin::closeEvent(QCloseEvent *e)
         trayHide();
         e->ignore();
         return;
+    } else if (!quitOnClose) { // Minimize window to taskbar if there is no trayicon and quit-on-close option is
+                               // disabled
+        setWindowState(windowState() | Qt::WindowMinimized);
+        e->ignore();
+        return;
     }
 
     if (!askQuit()) {
@@ -1465,30 +1469,6 @@ bool MainWin::nativeEvent(const QByteArray &eventType, MSG *msg, long *result)
     }
     return false;
 }
-
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-void MainWin::updateWinTaskbar(bool enabled)
-{
-    if (!enabled) {
-        if (!d->thumbnailToolBar_) {
-            d->thumbnailToolBar_ = new PsiThumbnailToolBar(this, windowHandle());
-            connect(d->thumbnailToolBar_, &PsiThumbnailToolBar::openOptions, this, &MainWin::doOptions);
-            connect(d->thumbnailToolBar_, &PsiThumbnailToolBar::setOnline, this,
-                    [this]() { d->getAction("status_online")->trigger(); });
-            connect(d->thumbnailToolBar_, &PsiThumbnailToolBar::setOffline, this,
-                    [this]() { d->getAction("status_offline")->trigger(); });
-            connect(d->thumbnailToolBar_, &PsiThumbnailToolBar::runActiveEvent, this, &MainWin::doRecvNextEvent);
-            connect(d->psi->contactList(), &PsiContactList::queueChanged, this, [this]() {
-                d->thumbnailToolBar_->updateToolBar(d->nextAmount > 0);
-                if (!isActiveWindow() && d->allInOne)
-                    qApp->alert(this, 0);
-            });
-        }
-    } else {
-        delete d->thumbnailToolBar_;
-    }
-}
-#endif
 #endif
 
 void MainWin::updateCaption()
@@ -1645,12 +1625,21 @@ void MainWin::updateReadNext(PsiIcon *anim, int amount)
         d->eventNotifier->hide();
         d->eventNotifier->setText("");
         d->eventNotifier->setPsiIcon("");
+        if (d->allInOne) // set window header icon accordig to status
+            setWindowIcon(PsiIconset::instance()->statusPtr(d->lastStatus)->icon());
     } else {
         d->eventNotifier->setPsiIcon(anim);
         d->eventNotifier->setText(QString("<b>") + numEventsString(d->nextAmount) + "</b>");
         d->eventNotifier->show();
         // make sure it shows
         // qApp->processEvents();
+        // Hack. If All-in-one mode is enabled there is no reacton on incoming events
+        // so we have to flash taskbar icon by qApp->alert
+        // and change window header icon according to status
+        if (d->allInOne) {
+            setWindowIcon(anim->icon());
+            qApp->alert(this, 0);
+        }
     }
 
     updateTray();

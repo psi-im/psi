@@ -62,19 +62,6 @@ set(HEADERS
     stretchwidget.h
 )
 
-if(WIN32 AND (${QT_DEFAULT_MAJOR_VERSION} LESS_EQUAL 5))
-    find_package(Qt${QT_DEFAULT_MAJOR_VERSION} COMPONENTS WinExtras REQUIRED)
-    list(APPEND QT_LIBRARIES
-        Qt${QT_DEFAULT_MAJOR_VERSION}::WinExtras
-    )
-    list(APPEND SOURCES
-        thumbnailtoolbar.cpp
-    )
-    list(APPEND HEADERS
-        thumbnailtoolbar.h
-    )
-endif()
-
 set(FORMS
     fancypopup.ui
     grepshortcutkeydialog.ui
