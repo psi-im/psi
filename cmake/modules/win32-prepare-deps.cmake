@@ -458,6 +458,7 @@ if(WIN32)
         libzlib.dll
         libzstd.dll
         legacy.dll
+        protobuf-c${D}.dll
         ssleay32.dll
         zlib1.dll
         )
