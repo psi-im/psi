@@ -38,7 +38,7 @@ set(SBM_LIST
 )
 foreach(submodule ${SBM_LIST})
     if(NOT EXISTS "${submodule}")
-        message(FATAL_ERROR "Psi submodules not found.\nPlease run:\n====\ncd ${PROJECT_SOURCE_DIR}\ngit submodule init\ngit submodule update\n====\nbefore run cmake again")
+        message(FATAL_ERROR "Psi ${submodule} submodule not found.\nPlease run:\n====\ncd ${PROJECT_SOURCE_DIR}\ngit submodule init\ngit submodule update\n====\nbefore run cmake again")
     endif()
 endforeach()
 
@@ -101,10 +101,6 @@ elseif(APPLE)
     option( USE_MAC_DOC "Use macOS dock" OFF )
 endif()
 
-if(WIN32 AND ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" OR ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")))
-    option( NO_DEBUG_OPTIMIZATION "Disable optimization for debug builds" OFF )
-endif()
-
 if( USE_HUNSPELL AND (USE_ENCHANT AND USE_ASPELL) )
     message(FATAL_ERROR "Flags USE_HUNSPELL, USE_ASPELL and USE_ENCHANT cannot be enabled at the same time.\nPlease enable only one of them")
 elseif( USE_HUNSPELL AND USE_ASPELL )
@@ -155,6 +151,9 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" OR ("${CMAKE_BUILD_TYPE}" STREQUAL "Re
     endif()
     if(CHATVIEW_CORRECTION_DEBUG)
         add_definitions(-DCORRECTION_DEBUG)
+    endif()
+    if(WIN32)
+        option( NO_DEBUG_OPTIMIZATION "Disable optimization for debug builds" OFF )
     endif()
 endif()
 
@@ -237,7 +236,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/psi" )
 if(APPLE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-overloaded-virtual")
 elseif(WIN32)
-    include("${CMAKE_CURRENT_SOURCE_DIR}/win32/win32_definitions.cmake")
+    include(win32_definitions)
 endif()
 
 if(ENABLE_ASAN)
