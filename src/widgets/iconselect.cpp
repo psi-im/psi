@@ -656,15 +656,24 @@ void IconSelectPopup::setRecent(const QStringList &recent)
 {
     List        list;
     auto const &er = EmojiRegistry::instance();
+
+    QHash<QString, PsiIcon *> isIcons;
+    isIcons.reserve(d->emotsSel_->iconset().count() * 5);
+    for (auto const &icon : d->emotsSel_->iconset()) {
+        for (auto const &text : icon->text()) {
+            isIcons.emplace(text.text, icon);
+        }
+    }
+
     for (auto const &text : std::as_const(recent)) {
+        auto icon = isIcons.value(text);
+        if (icon) {
+            list << Item { const_cast<PsiIcon *>(icon->copy()), nullptr };
+            continue;
+        }
         auto it = std::find_if(er.begin(), er.end(), [text](const EmojiRegistry::Emoji &e) { return e.code == text; });
         if (it != er.end()) {
             list << Item { nullptr, &*it };
-            continue;
-        }
-        auto icon = IconsetFactory::iconPtr(text);
-        if (icon) {
-            list << Item { const_cast<PsiIcon *>(icon), nullptr };
         }
     }
     d->recent = list;
@@ -675,10 +684,14 @@ QStringList IconSelectPopup::recent() const
 {
     QStringList ret;
     for (auto const &r : d->recent) {
+        QString txt;
         if (r.icon) {
-            ret << r.icon->defaultText();
+            txt = r.icon->defaultText();
         } else {
-            ret << r.emoji->code;
+            txt = r.emoji->code;
+        }
+        if (!ret.contains(txt)) {
+            ret << txt;
         }
     }
     return ret;
