@@ -169,9 +169,13 @@ void BookmarkManageDlg::selectionChanged(const QItemSelection &selected, const Q
 
     XMPP::Jid jid = XMPP::Jid(current.data(JidRole).toString());
     ui_.host->setText(jid.domain());
+    ui_.host->setCursorPosition(0);
     ui_.room->setText(jid.node());
+    ui_.room->setCursorPosition(0);
     ui_.nickname->setText(current.data(NickRole).toString());
+    ui_.nickname->setCursorPosition(0);
     ui_.password->setText(current.data(PasswordRole).toString());
+    ui_.password->setCursorPosition(0);
     ui_.autoJoin->setCurrentIndex(current.data(AutoJoinRole).toInt());
     QList<QWidget *> editors;
     editors << ui_.host << ui_.room << ui_.nickname << ui_.password << ui_.autoJoin;
