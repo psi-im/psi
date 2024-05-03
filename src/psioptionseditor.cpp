@@ -136,7 +136,6 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent) : QWidget(parent)
     tpm_->setSourceModel(tm_);
 
     QVBoxLayout *layout = new QVBoxLayout(this);
-    layout->setSpacing(0);
     layout->setContentsMargins(0, 0, 0, 0);
 
     QHBoxLayout *filterLayout = new QHBoxLayout;

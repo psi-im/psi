@@ -661,7 +661,7 @@ void IconSelectPopup::setRecent(const QStringList &recent)
     isIcons.reserve(d->emotsSel_->iconset().count() * 5);
     for (auto const &icon : d->emotsSel_->iconset()) {
         for (auto const &text : icon->text()) {
-            isIcons.emplace(text.text, icon);
+            isIcons.insert(text.text, icon);
         }
     }
 

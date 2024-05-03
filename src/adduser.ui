@@ -299,13 +299,6 @@ p, li { white-space: pre-wrap; }
         </spacer>
        </item>
        <item>
-        <widget class="IconButton" name="pb_close" native="true">
-         <property name="text" stdset="0">
-          <string>&amp;Close</string>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="IconButton" name="pb_add" native="true">
          <property name="text" stdset="0">
           <string>&amp;Add</string>
@@ -318,6 +311,13 @@ p, li { white-space: pre-wrap; }
          </property>
          <property name="psiIconName" stdset="0">
           <string>psi/addContact</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="IconButton" name="pb_close" native="true">
+         <property name="text" stdset="0">
+          <string>&amp;Close</string>
          </property>
         </widget>
        </item>
