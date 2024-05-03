@@ -45,6 +45,7 @@ PsiTabWidget::PsiTabWidget(QWidget *parent) : QWidget(parent)
     tabBar_->setMultiRow(multiRow);
     tabBar_->setUsesScrollButtons(!multiRow);
     tabBar_->setCurrentIndexAlwaysAtBottom(currentIndexAlwaysAtBottom);
+    tabBar_->setExpanding(false);
     layout_ = new QVBoxLayout(this);
     layout_->setContentsMargins(0, 0, 0, 0);
     layout_->setSpacing(0);
@@ -265,7 +266,12 @@ void PsiTabWidget::setTabText(QWidget *widget, const QString &label)
 {
     int index = widgets_.indexOf(widget);
     if (index != -1) {
-        tabBar_->setTabText(index, label);
+        QString shortLabel = label;
+        if (label.length() > 40) {
+            shortLabel = label.left(37) + "...";
+            tabBar_->setTabToolTip(index, label);
+        }
+        tabBar_->setTabText(index, shortLabel);
     }
 }
 
