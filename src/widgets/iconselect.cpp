@@ -23,6 +23,7 @@
 #include "emojiregistry.h"
 #include "iconaction.h"
 #include "iconset.h"
+// #include "qdebug.h"
 
 #include <QAbstractButton>
 #include <QApplication>
@@ -40,6 +41,7 @@
 #include <QWidgetAction>
 
 #include <cmath>
+#include <deque>
 #include <optional>
 
 namespace {
@@ -56,7 +58,20 @@ struct Item {
         return false;
     }
 };
-using List = QList<Item>;
+using List = std::deque<Item>;
+
+QHash<QString, PsiIcon *> hashedIconset(const Iconset &is)
+{
+    QHash<QString, PsiIcon *> isIcons;
+    isIcons.reserve(is.count() * 5);
+    for (auto const &icon : is) {
+        for (auto const &text : icon->text()) {
+            isIcons.insert(text.text, icon);
+        }
+    }
+    return isIcons;
+}
+
 }
 
 //----------------------------------------------------------------------------
@@ -222,6 +237,7 @@ private:
     std::optional<List> icons_; // when set this will rendered instead of Iconset
 
     std::optional<int> rowSize_; // explicit row size in columns
+    QSizeF             preferredIconSize_;
 
     QGridLayout *grid;
     QString      titleFilter;
@@ -233,7 +249,7 @@ signals:
     void selected(IconSelectButton *);
 
 public:
-    IconSelect(IconSelectPopup *parentMenu);
+    IconSelect(IconSelectPopup *parentMenu, const char *objectName);
     ~IconSelect();
 
     void                  setIconset(const Iconset &);
@@ -247,6 +263,9 @@ public:
 
     inline void               setRowSize(int rs) { rowSize_ = rs; }
     inline std::optional<int> rowSize() const { return rowSize_; }
+
+    inline QSizeF preferredIconSize() const { return preferredIconSize_; }
+    inline void   setPreferredIconSize(const QSizeF &size) { preferredIconSize_ = size; }
 
 protected:
     QList<PsiIcon *>         sortEmojis() const;
@@ -269,8 +288,9 @@ protected slots:
     void closeMenu();
 };
 
-IconSelect::IconSelect(IconSelectPopup *parentMenu) : QWidget(parentMenu)
+IconSelect::IconSelect(IconSelectPopup *parentMenu, const char *objectName) : QWidget(parentMenu)
 {
+    setObjectName(QLatin1String(objectName));
     menu = parentMenu;
     connect(menu, SIGNAL(textSelected(QString)), SLOT(closeMenu()));
 
@@ -313,9 +333,10 @@ void IconSelect::noIcons()
 
 void IconSelect::setIconset(const Iconset &iconset)
 {
-    rowSize_ = {};
-    is       = iconset;
-    shown    = false; // we need to recompute geometry
+    rowSize_           = {};
+    preferredIconSize_ = {};
+    is                 = iconset;
+    shown              = false; // we need to recompute geometry
     updateGrid();
 }
 
@@ -342,18 +363,18 @@ void IconSelect::updateGrid()
     // first we need to find optimal size for elements and don't forget about
     // taking too much screen space
     auto [iconSize, maxPrefSize] = computeIconSize();
+    preferredIconSize_           = iconSize;
     List toRender;
     if (icons_.has_value()) {
         toRender = *icons_;
     } else if (is.count() > 0) {
-        toRender.reserve(is.count());
         auto sorted = sortEmojis();
         std::transform(sorted.begin(), sorted.end(), std::back_inserter(toRender),
                        [](auto icon) { return Item { icon }; });
     } else {
         for (auto const &emoji : EmojiRegistry::instance()) {
             if (titleFilter.isEmpty() || emoji.name.contains(titleFilter)) {
-                toRender.append(Item { nullptr, &emoji });
+                toRender.emplace_back(nullptr, &emoji);
                 if (!titleFilter.isEmpty() && toRender.size() == 40) {
                     break;
                 }
@@ -373,6 +394,8 @@ void IconSelect::updateGrid()
         rowSize_       = *rowSize_ > maxColumns ? maxColumns : *rowSize_;
     }
 
+    // qDebug() << objectName() << " tileSize=" << tileSize << " rowSize=" << *rowSize_;
+
     // now, fill grid with elements
     createLayout();
 
@@ -381,10 +404,7 @@ void IconSelect::updateGrid()
 
     // make emoji font
     auto font = qApp->font();
-    if (font.pointSize() == -1)
-        font.setPixelSize(font.pixelSize() * 2.5);
-    else
-        font.setPointSize(font.pointSize() * 2.5);
+    font.setPixelSize(std::round(iconSize.height()));
 #if defined(Q_OS_WIN)
     font.setFamily("Segoe UI Emoji");
 #elif defined(Q_OS_MAC)
@@ -397,7 +417,8 @@ void IconSelect::updateGrid()
         IconSelectButton *b = new IconSelectButton(this);
         b->setFont(font);
         b->setItem(item, maxPrefSize);
-        b->setSizeHint(QSize(tileSize, tileSize));
+        b->setFixedSize(QSize(tileSize, tileSize));
+        // b->setSizeHint(QSize(tileSize, tileSize));
         connect(b, &QAbstractButton::clicked, this, [b, this]() { emit selected(b); });
         grid->addWidget(b, row, column);
 
@@ -451,8 +472,13 @@ std::pair<QSizeF, QSize> IconSelect::computeIconSize() const
             iconSize /= cnt;
         }
     }
+
     if (iconSize.isEmpty()) {
-        iconSize = { fontSz * 2.5, fontSz * 2.5 };
+        if (!preferredIconSize_.isEmpty()) {
+            iconSize = preferredIconSize_;
+        } else {
+            iconSize = { fontSz * 2.0, fontSz * 2.0 };
+        }
     }
     return { iconSize, maxPrefSize };
 }
@@ -621,18 +647,20 @@ IconSelectPopup::IconSelectPopup(QWidget *parent) : QMenu(parent), d(new Private
 
     connect(d->findBar_, &QLineEdit::textChanged, d, &Private::setTitleFilter);
 
-    d->recentSel_    = new IconSelect(this);
+    d->recentSel_    = new IconSelect(this, "recentSelect");
     d->recentAction_ = new QWidgetAction(this);
     connect(d->recentSel_, &IconSelect::updatedGeometry, d, &IconSelectPopup::Private::updateRecentGeometry);
     connect(d->recentSel_, &IconSelect::selected, d, &IconSelectPopup::Private::selected);
 
-    d->emotsSel_        = new IconSelect(this);
+    d->emotsSel_ = new IconSelect(this, "emotsSelect");
+    d->emotsSel_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     d->emotsAction_     = new QWidgetAction(this);
     d->emotsScrollArea_ = new QScrollArea(this);
     d->emotsScrollArea_->setWidget(d->emotsSel_);
     d->emotsScrollArea_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     d->emotsScrollArea_->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     d->emotsScrollArea_->setWidgetResizable(true);
+    d->emotsScrollArea_->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
     connect(d->emotsSel_, &IconSelect::updatedGeometry, d, &IconSelectPopup::Private::updatedGeometry);
     connect(d->emotsSel_, &IconSelect::selected, d, &IconSelectPopup::Private::selected);
 
@@ -643,9 +671,14 @@ IconSelectPopup::~IconSelectPopup() { }
 
 void IconSelectPopup::setIconset(const Iconset &i)
 {
-    std::remove_if(d->recent.begin(), d->recent.end(), [](auto const &item) { return item.icon != nullptr; });
-    d->recentSel_->setIcons(d->recent);
+    auto prev_recent = recent();
+    for (auto const &r : d->recent) {
+        if (r.icon != nullptr)
+            delete r.icon;
+    }
+    d->recent.clear();
     d->emotsSel_->setIconset(i);
+    setRecent(prev_recent);
 }
 
 const Iconset &IconSelectPopup::iconset() const { return d->emotsSel_->iconset(); }
@@ -657,26 +690,21 @@ void IconSelectPopup::setRecent(const QStringList &recent)
     List        list;
     auto const &er = EmojiRegistry::instance();
 
-    QHash<QString, PsiIcon *> isIcons;
-    isIcons.reserve(d->emotsSel_->iconset().count() * 5);
-    for (auto const &icon : d->emotsSel_->iconset()) {
-        for (auto const &text : icon->text()) {
-            isIcons.insert(text.text, icon);
-        }
-    }
+    auto isIcons = hashedIconset(d->emotsSel_->iconset());
 
     for (auto const &text : std::as_const(recent)) {
         auto icon = isIcons.value(text);
         if (icon) {
-            list << Item { const_cast<PsiIcon *>(icon->copy()), nullptr };
+            list.emplace_back(const_cast<PsiIcon *>(icon->copy()), nullptr);
             continue;
         }
         auto it = std::find_if(er.begin(), er.end(), [text](const EmojiRegistry::Emoji &e) { return e.code == text; });
         if (it != er.end()) {
-            list << Item { nullptr, &*it };
+            list.emplace_back(nullptr, &*it);
         }
     }
     d->recent = list;
+    d->recentSel_->setPreferredIconSize(d->emotsSel_->preferredIconSize());
     d->recentSel_->setIcons(d->recent);
 }
 
