@@ -1477,7 +1477,7 @@ void GCMainDlg::openTopic()
         d->topicDlg->setAttribute(Qt::WA_DeleteOnClose);
         d->topicDlg->show();
         QObject::connect(d->topicDlg, &GroupchatTopicDlg::accepted, this,
-                         [=]() { sendNewTopic(d->topicDlg->subjectMap()); });
+                         [this]() { sendNewTopic(d->topicDlg->subjectMap()); });
     }
 }
 

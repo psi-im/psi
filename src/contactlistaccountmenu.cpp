@@ -33,6 +33,7 @@
 #include "psioptions.h"
 
 #include <QPointer>
+#include <ranges>
 
 class ContactListAccountMenu::Private : public QObject {
     Q_OBJECT
@@ -209,7 +210,16 @@ private slots:
         if (account->bookmarkManager()->isAvailable()) {
             bookmarksManageAction_->setEnabled(true);
             bookmarksMenu_->addSeparator();
-            for (const ConferenceBookmark &c : account->bookmarkManager()->conferences()) {
+            using SortableItem                    = std::pair<QString, const ConferenceBookmark *>;
+            auto const               &conferences = account->bookmarkManager()->conferences();
+            std::vector<SortableItem> sorted;
+            sorted.reserve(conferences.size());
+            for (auto const &c : conferences) {
+                sorted.emplace_back(c.name().isEmpty() ? c.jid().bare() : c.name().toLower(), &c);
+            }
+            std::ranges::sort(sorted);
+            for (const auto &cp : sorted) {
+                auto     c          = *std::get<1>(cp);
                 QAction *joinAction = new QAction(c.name(), this);
                 joinAction->setProperty("bookmark", bookmarksJoinActions_.count());
                 connect(joinAction, SIGNAL(triggered()), SLOT(bookmarksJoin()));

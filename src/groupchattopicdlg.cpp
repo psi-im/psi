@@ -22,11 +22,11 @@ GroupchatTopicDlg::GroupchatTopicDlg(GCMainDlg *parent) :
     auto cw = new QToolButton();
     cw->setIcon(IconsetFactory::icon("psi/add").icon());
     m_ui->twLang->setCornerWidget(cw);
-    QObject::connect(m_ui->twLang, &QTabWidget::tabCloseRequested, this, [=](int index) {
+    QObject::connect(m_ui->twLang, &QTabWidget::tabCloseRequested, this, [this](int index) {
         m_ui->twLang->widget(index)->deleteLater();
         m_ui->twLang->removeTab(index);
     });
-    QObject::connect(cw, &QToolButton::clicked, this, [=](bool checked) {
+    QObject::connect(cw, &QToolButton::clicked, this, [this, cw](bool checked) {
         Q_UNUSED(checked);
         if (!addLangDlg) {
             addLangDlg = new QDialog(this);
@@ -54,7 +54,7 @@ GroupchatTopicDlg::GroupchatTopicDlg(GCMainDlg *parent) :
             addLangDlg->adjustSize();
             addLangDlg->move(cw->mapToGlobal(QPoint(cw->width() - addLangDlg->width(), cw->height())));
             addLangDlg->show();
-            QObject::connect(addLangDlg, &QDialog::accepted, this, [=]() {
+            QObject::connect(addLangDlg, &QDialog::accepted, this, [this]() {
                 LanguageManager::LangId id;
                 id.language = quint16(m_addLangUi->cmbLang->currentData().toInt());
                 id.script   = quint8(m_addLangUi->cmbScript->currentData().toInt());
@@ -76,7 +76,7 @@ GroupchatTopicDlg::GroupchatTopicDlg(GCMainDlg *parent) :
 
             QObject::connect(m_addLangUi->cmbLang,
                              static_cast<void (QComboBox::*)(int index)>(&QComboBox::currentIndexChanged), this,
-                             [=](int index) {
+                             [this](int index) {
                                  Q_UNUSED(index)
                                  populateCountryAndScript();
                              });

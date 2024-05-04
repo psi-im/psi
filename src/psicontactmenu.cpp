@@ -186,7 +186,7 @@ PsiContactMenu::Private::Private(PsiContactMenu *menu, PsiContact *_contact) :
     connect(_copyMucJid, SIGNAL(triggered(bool)), SLOT(copyJid()));
 
     mucAddToBookmarks = new IconAction(tr("Add To Bookmarks"), this, "psi/bookmark_add");
-    QObject::connect(mucAddToBookmarks, &QAction::triggered, this, [=](bool) {
+    QObject::connect(mucAddToBookmarks, &QAction::triggered, this, [this](bool) {
         GCMainDlg *gc = contact_->account()->findDialog<GCMainDlg *>(contact_->jid());
         if (gc)
             gc->doBookmark();

@@ -1857,7 +1857,7 @@ void PsiAccount::cs_needAuthParams(bool user, bool pass, bool realm)
                                                         this); // qApp is kind of wrong, but "this" is not QObject
             pwJob->setKey(d->jid.bare());
             pwJob->setAutoDelete(true);
-            QObject::connect(pwJob, &QKeychain::ReadPasswordJob::finished, this, [=](QKeychain::Job *job) {
+            QObject::connect(pwJob, &QKeychain::ReadPasswordJob::finished, this, [this](QKeychain::Job *job) {
                 if (job->error() == QKeychain::AccessDeniedByUser) {
                     if (d->stream) {
                         d->stream->abortAuth();
