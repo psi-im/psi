@@ -104,11 +104,11 @@ public slots:
             } else if (charsAdded > 1) { // Insert a piece of text
                 return;
             } else {
-                static QRegularExpression      capitalizeAfter("(?:(?:\\s*\\b\\w{2,}\\b[.!?]+\\s+)|(?:^\\s*))+(\\w)",
-                                                        QRegularExpression::UseUnicodePropertiesOption
-                                                            | QRegularExpression::MultilineOption);
-                QRegularExpressionMatch match;
-                int                     index = te_->toPlainText().lastIndexOf(capitalizeAfter, -1, &match);
+                static QRegularExpression capitalizeAfter("(?:(?:\\s*\\b\\w{2,}\\b[.!?]+\\s+)|(?:^\\s*))+(\\w)",
+                                                          QRegularExpression::UseUnicodePropertiesOption
+                                                              | QRegularExpression::MultilineOption);
+                QRegularExpressionMatch   match;
+                int                       index = te_->toPlainText().lastIndexOf(capitalizeAfter, -1, &match);
                 if (index != -1 && pos == match.capturedStart(1)) {
                     capitalizeNext_ = true;
                 }
@@ -634,11 +634,12 @@ void ChatEdit::insertAsQuote(const QString &text)
     QString prevLine = toPlainText().left(pos - 1);
     prevLine         = prevLine.mid(prevLine.lastIndexOf("\n") + 1);
 
-    QString quote = QString::fromUtf8(u8"» ") + text;
-    quote.replace("\n", QString::fromUtf8(u8"\n» "));
+    auto    sym   = QChar::fromLatin1(0xBB); // closing double quote
+    QString quote = sym + ' ' + text;
+    quote.replace("\n", QStringLiteral("\n%1 ").arg(sym));
 
     // Check for previous quote and merge if true
-    if (!prevLine.isEmpty() && !prevLine.startsWith(QString::fromUtf8(u8"»"))) {
+    if (!prevLine.isEmpty() && !prevLine.startsWith(sym)) {
         quote.prepend("\n");
     }
     quote.append("\n");
