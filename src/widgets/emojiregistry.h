@@ -84,6 +84,9 @@ public:
         {
             return EmojiRegistry::instance().groups[group_idx].subGroups[subgroup_idx].emojis[emoji_idx];
         }
+
+        const Group &group() const {  return EmojiRegistry::instance().groups[group_idx]; }
+        const SubGroup &subGroup() const {  return EmojiRegistry::instance().groups[group_idx].subGroups[subgroup_idx]; }
     };
 
     inline iterator begin() const { return {}; }

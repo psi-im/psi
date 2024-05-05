@@ -364,6 +364,18 @@ void IconSelect::updateGrid()
     // taking too much screen space
     auto [iconSize, maxPrefSize] = computeIconSize();
     preferredIconSize_           = iconSize;
+
+    // make emoji font
+    auto font = qApp->font();
+#if defined(Q_OS_WIN)
+    font.setFamily("Segoe UI Emoji");
+#elif defined(Q_OS_MAC)
+    font.setFamily("Apple Color Emoji");
+#else
+    font.setFamily("Noto Color Emoji");
+#endif
+    font.setPixelSize(std::round(iconSize.height()));
+
     List toRender;
     if (icons_.has_value()) {
         toRender = *icons_;
@@ -372,13 +384,28 @@ void IconSelect::updateGrid()
         std::transform(sorted.begin(), sorted.end(), std::back_inserter(toRender),
                        [](auto icon) { return Item { icon }; });
     } else {
-        for (auto const &emoji : EmojiRegistry::instance()) {
+        QSizeF totalSize;
+        auto const &er = EmojiRegistry::instance();
+        for (auto it = er.begin(); it != er.end(); ++it) {
+#ifdef Q_OS_WIN
+            if (it.subGroup().name == QStringLiteral("country-flag")) {
+                continue;
+            }
+#endif
+            auto const &emoji = *it;
             if (titleFilter.isEmpty() || emoji.name.contains(titleFilter)) {
-                toRender.emplace_back(nullptr, &emoji);
-                if (!titleFilter.isEmpty() && toRender.size() == 40) {
-                    break;
+                auto rect = QFontMetrics(font).boundingRect(emoji.code);
+                if (!rect.isEmpty() && rect.width() < rect.height() * 1.4 && rect.height() < rect.width() * 1.4) {
+                    totalSize += rect.size().toSizeF();
+                    toRender.emplace_back(nullptr, &emoji);
+                    if (!titleFilter.isEmpty() && toRender.size() == 40) {
+                        break;
+                    }
                 }
             }
+        }
+        if (!toRender.empty()) {
+            iconSize = totalSize / toRender.size();
         }
     }
 
@@ -401,18 +428,6 @@ void IconSelect::updateGrid()
 
     int row    = 0;
     int column = 0;
-
-    // make emoji font
-    auto font = qApp->font();
-    font.setPixelSize(std::round(iconSize.height()));
-#if defined(Q_OS_WIN)
-    font.setFamily("Segoe UI Emoji");
-#elif defined(Q_OS_MAC)
-    font.setFamily("Apple Color Emoji");
-#else
-    font.setFamily("Noto Color Emoji");
-#endif
-
     for (auto const &item : toRender) {
         IconSelectButton *b = new IconSelectButton(this);
         b->setFont(font);

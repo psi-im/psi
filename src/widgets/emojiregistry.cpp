@@ -103,7 +103,7 @@ std::pair<QStringView, int> EmojiRegistry::findEmoji(const QString &in, int idx)
             } else if (category == Category::FullQualify) {
                 if (gotFQ)
                     break;      // double qualification is an error
-                gotSkin = true; // we can't get skin false after fill qualification
+                gotSkin = true; // we can't get skin false after full qualification
                 gotFQ   = true;
             } else if (category == Category::SkinTone) {
                 if (gotSkin)
