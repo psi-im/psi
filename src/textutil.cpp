@@ -87,7 +87,6 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
 QString TextUtil::plain2rich(const QString &plain)
 {
     QString rich;
-    int     col = 0;
 
     for (int i = 0; i < int(plain.length()); ++i) {
 #ifdef Q_OS_WIN
@@ -96,7 +95,6 @@ QString TextUtil::plain2rich(const QString &plain)
 #endif
         if (plain[i] == '\n') {
             rich += "<br>";
-            col = 0;
         } else if (plain[i] == ' ' && !rich.isEmpty() && rich[rich.size() - 1] == ' ')
             rich += "&nbsp;"; // instead of pre-wrap, which prewraps \n as well
         else if (plain[i] == '\t')
@@ -113,7 +111,6 @@ QString TextUtil::plain2rich(const QString &plain)
             rich += "&amp;";
         else
             rich += plain[i];
-        ++col;
     }
 
     return rich;

@@ -169,7 +169,7 @@ public:
         }
         // TODO If-Modified-Since
         setupHeaders(fi.size(), item->mimeType(), fi.lastModified(), actualRange);
-        self->connectReadyWrite(file, [this, self, file, size]() {
+        self->connectReadyWrite(file, [this, file, size]() {
             qint64 toWrite = (requestedRange ? requestedRange->start : 0) + size - file->pos();
             if (!toWrite) {
                 return;
@@ -502,7 +502,7 @@ public:
         reply->finishWithError(replyError, httpCode, httpReason);
     }
     void              finish() { reply->finish(); }
-    inline QByteArray requestHeader(const char *headerName) { return request.rawHeader("range"); }
+    inline QByteArray requestHeader(const char *headerName) { return request.rawHeader(headerName); }
     inline void setResponseHeader(const char *headerName, QByteArray value) { reply->setRawHeader(headerName, value); }
     inline void setResponseStatusCode(StatusCode code)
     {
@@ -511,6 +511,7 @@ public:
     void connectReadyWrite(QObject *ctx, std::function<void()> &&callback)
     {
         connect(reply, &QNetworkReply::bytesWritten, ctx, [this, cb = std::move(callback)](qint64 bytes) {
+            Q_UNUSED(bytes);
             if (reply->bytesToWrite() < HTTP_CHUNK) {
                 cb();
             }

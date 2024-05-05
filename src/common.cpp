@@ -86,7 +86,7 @@ QString clipStatus(const QString &str, int width, int height)
         // only take the first "width" chars
         QString line;
         bool    hasNewline = false;
-        for (int n = 0; at < len; ++n, ++at) {
+        for (; at < len; ++at) {
             if (str.at(at) == '\n') {
                 hasNewline = true;
                 break;

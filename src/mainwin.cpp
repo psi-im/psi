@@ -656,21 +656,20 @@ void MainWin::registerAction(IconAction *action)
     cd(QStringLiteral("help_diag_qcakeystore"), &IconAction::triggered, this, &MainWin::actDiagQCAKeyStoreActivated);
     // clang-format on
 
-    auto connectReverse
-        = [action](const QString &actionName, auto src, auto signal, auto dst, auto slot, bool checked) {
-              if (actionName != action->objectName()) {
-                  return;
-              }
-              if (src) {
-                  QObject::connect(src, signal, action, slot, Qt::UniqueConnection);
-              }
-              action->setChecked(checked);
-          };
+    auto connectReverse = [action](const QString &actionName, auto src, auto signal, auto slot, bool checked) {
+        if (actionName != action->objectName()) {
+            return;
+        }
+        if (src) {
+            QObject::connect(src, signal, action, slot, Qt::UniqueConnection);
+        }
+        action->setChecked(checked);
+    };
     // clang-format off
-    connectReverse(QStringLiteral("show_hidden"), contactList, &PsiContactList::showHiddenChanged, action, &IconAction::setChecked, contactList->showHidden());
-    connectReverse(QStringLiteral("show_offline"), contactList, &PsiContactList::showOfflineChanged, action, &IconAction::setChecked, contactList->showOffline());
-    connectReverse(QStringLiteral("show_self"), contactList, &PsiContactList::showSelfChanged, action, &IconAction::setChecked, contactList->showSelf());
-    connectReverse(QStringLiteral("show_agents"), contactList, &PsiContactList::showAgentsChanged, action, &IconAction::setChecked, contactList->showAgents());
+    connectReverse(QStringLiteral("show_hidden"), contactList, &PsiContactList::showHiddenChanged, &IconAction::setChecked, contactList->showHidden());
+    connectReverse(QStringLiteral("show_offline"), contactList, &PsiContactList::showOfflineChanged, &IconAction::setChecked, contactList->showOffline());
+    connectReverse(QStringLiteral("show_self"), contactList, &PsiContactList::showSelfChanged, &IconAction::setChecked, contactList->showSelf());
+    connectReverse(QStringLiteral("show_agents"), contactList, &PsiContactList::showAgentsChanged, &IconAction::setChecked, contactList->showAgents());
     if (action->objectName() == QStringLiteral("show_statusmsg")) {
         action->setChecked(PsiOptions::instance()->getOption(showStatusMessagesOptionPath).toBool());
     }
@@ -884,17 +883,8 @@ void MainWin::buildOptionsMenu()
     helpMenu->setIcon(IconsetFactory::icon("psi/help").icon());
 
     QStringList actions;
-    actions << "help_readme"
-            << "separator"
-            << "help_online_wiki"
-            << "help_online_home"
-            << "help_online_forum"
-            << "help_psi_muc"
-            << "help_report_bug"
-            << "diagnostics"
-            << "separator"
-            << "help_about"
-            << "help_about_qt";
+    actions << "help_readme" << "separator" << "help_online_wiki" << "help_online_home" << "help_online_forum"
+            << "help_psi_muc" << "help_report_bug" << "diagnostics" << "separator" << "help_about" << "help_about_qt";
 
     d->updateMenu(actions, helpMenu);
 
@@ -931,9 +921,7 @@ void MainWin::buildMainMenu()
 void MainWin::buildToolsMenu()
 {
     QStringList actions;
-    actions << "menu_file_transfer"
-            << "separator"
-            << "menu_xml_console";
+    actions << "menu_file_transfer" << "separator" << "menu_xml_console";
 
     d->updateMenu(actions, d->toolsMenu);
 }
@@ -950,8 +938,7 @@ void MainWin::buildGeneralMenu(QMenu *menu)
 #ifdef GROUPCHAT
             << "menu_join_groupchat"
 #endif
-            << "menu_options"
-            << "menu_file_transfer";
+            << "menu_options" << "menu_file_transfer";
     if (PsiOptions::instance()->getOption("options.ui.menu.main.change-profile").toBool()) {
         actions << "menu_change_profile";
     }

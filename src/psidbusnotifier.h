@@ -73,9 +73,9 @@ class PsiDBusNotifierPlugin : public QObject, public PsiPopupPluginInterface {
     Q_INTERFACES(PsiPopupPluginInterface)
 
 public:
-    virtual QString            name() const { return "DBus"; }
-    virtual PsiPopupInterface *popup(QObject *p) { return new PsiDBusNotifier(p); }
-    virtual bool               isAvailable() { return PsiDBusNotifier::isAvailable(); }
+    QString            name() const override { return "DBus"; }
+    PsiPopupInterface *popup(QObject *p) override { return new PsiDBusNotifier(p); }
+    bool               isAvailable() const override { return PsiDBusNotifier::isAvailable(); }
 };
 
 #endif // PSIDBUSNOTIFIER_H

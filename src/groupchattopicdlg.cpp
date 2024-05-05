@@ -15,7 +15,11 @@ GroupchatTopicDlg::GroupchatTopicDlg(GCMainDlg *parent) :
     m_ui->setupUi(this);
     QKeySequence sendKey = ShortcutManager::instance()->shortcut("chat.send");
     if (sendKey == QKeySequence(Qt::Key_Enter) || sendKey == QKeySequence(Qt::Key_Return)) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         sendKey = QKeySequence(Qt::CTRL | Qt::Key_Return);
+#else
+        sendKey = QKeySequence(QKeyCombination(Qt::CTRL, Qt::Key_Return));
+#endif
     }
     m_ui->buttonBox->button(QDialogButtonBox::Ok)->setShortcut(sendKey);
 
