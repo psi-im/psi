@@ -25,10 +25,6 @@ namespace Http {
 
 std::tuple<ParseResult, quint64, quint64> parseRangeHeader(const QByteArray &rangesBa, std::optional<quint64> fileSize)
 {
-    bool    isRanged       = false;
-    quint64 requestedStart = 0;
-    quint64 requestedSize  = 0;
-
     if (!rangesBa.startsWith("bytes=")) {
         return { NotImplementedRangeType, 0, 0 };
     }
@@ -75,7 +71,7 @@ std::optional<std::tuple<quint64, quint64, std::optional<quint64>>> parseContent
     if (arr.size() != 2 || arr[0] != "bytes" || (arr = arr[1].split('/')).size() != 2)
         return {};
 
-    quint64                 start, end;
+    quint64                start, end;
     std::optional<quint64> totalSize;
     bool                   ok;
 

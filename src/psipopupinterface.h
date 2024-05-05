@@ -27,6 +27,7 @@ class PsiPopupInterface;
 
 class PsiPopupPluginInterface {
 public:
+    virtual ~PsiPopupPluginInterface()      = default;
     virtual QString            name() const = 0;
     virtual bool               isAvailable() const { return true; }
     virtual PsiPopupInterface *popup(QObject *) = 0;

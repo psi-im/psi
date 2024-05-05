@@ -64,9 +64,9 @@ class PsiPopupPlugin : public QObject, public PsiPopupPluginInterface {
     Q_INTERFACES(PsiPopupPluginInterface)
 
 public:
-    virtual ~PsiPopupPlugin() { PsiPopup::deleteAll(); }
-    virtual QString            name() const { return "Classic"; }
-    virtual PsiPopupInterface *popup(QObject *p) { return new PsiPopup(p); }
+    ~PsiPopupPlugin() override { PsiPopup::deleteAll(); }
+    QString            name() const override { return "Classic"; }
+    PsiPopupInterface *popup(QObject *p) override { return new PsiPopup(p); }
 };
 
 #endif // PSIPOPUP_H

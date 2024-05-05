@@ -41,8 +41,9 @@ enum ParseResult {
  *
  * While it's allowed by standard this parser will return error is start is not set in the header
  */
-std::tuple<ParseResult, quint64, quint64>                           parseRangeHeader(const QByteArray      &value,
-                                                                                     std::optional<quint64> fileSize = -1);
+std::tuple<ParseResult, quint64, quint64> parseRangeHeader(const QByteArray      &value,
+                                                           std::optional<quint64> fileSize = -1);
+
 std::optional<std::tuple<quint64, quint64, std::optional<quint64>>> parseContentRangeHeader(const QByteArray &value);
 
 }
