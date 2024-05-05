@@ -278,7 +278,10 @@ void soundPlay(const QString &s)
 
     QString fullPath;
 #if !(defined(Q_OS_WIN) || defined(Q_OS_MAC))
-    QString player = PsiOptions::instance()->getOption("options.ui.notifications.sounds.unix-sound-player").toString();
+    QString player = PsiOptions::instance()
+                         ->getOption("options.ui.notifications.sounds.unix-sound-player")
+                         .toString()
+                         .simplified();
     if (!player.isEmpty()) {
         auto fullPath = existingFullResourcePath(s);
         if (fullPath.isEmpty()) {
