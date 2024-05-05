@@ -22,6 +22,7 @@
 
 #include <QString>
 
+#include <array>
 #include <map>
 #include <vector>
 
@@ -44,7 +45,7 @@ public:
         const std::vector<SubGroup> subGroups;
     };
 
-    const std::vector<Group> groups;
+    const std::array<Group, 9> groups;
 
     static const EmojiRegistry &instance();
 

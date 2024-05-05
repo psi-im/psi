@@ -21,7 +21,7 @@
 
 #include "emojiregistry.h"
 
-#include "emojidb.cpp" // don't move this line to other headers
+#include "emojidb.h" // don't move this line to other headers
 
 const EmojiRegistry &EmojiRegistry::instance()
 {

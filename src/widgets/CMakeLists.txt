@@ -33,6 +33,7 @@ set(HEADERS
     actionlineedit.h
     busywidget.h
     emojiregistry.h
+    emojidb.h
     eventnotifier.h
     fancylabel.h
     fancypopup.h
