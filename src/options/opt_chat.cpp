@@ -90,8 +90,8 @@ void OptionsTabChat::applyOptions()
             vl << QVariant::fromValue(QKeySequence(Qt::Key_Enter)) << QVariant::fromValue(QKeySequence(Qt::Key_Return));
         } else {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-            vl << QVariant::fromValue(QKeySequence(Qt::Key_Enter | Qt::CTRL))
-               << QVariant::fromValue(QKeySequence(Qt::CTRL | Qt::Key_Return));
+            vl << QVariant::fromValue(QKeySequence(quint32(Qt::Key_Enter) | quint32(Qt::CTRL)))
+               << QVariant::fromValue(QKeySequence(quint32(Qt::CTRL) | quint32(Qt::Key_Return)));
 #else
             vl << QVariant::fromValue(QKeySequence(QKeyCombination(Qt::CTRL, Qt::Key_Enter)))
                << QVariant::fromValue(QKeySequence(QKeyCombination(Qt::CTRL, Qt::Key_Return)));

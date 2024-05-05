@@ -384,7 +384,7 @@ void IconSelect::updateGrid()
         std::transform(sorted.begin(), sorted.end(), std::back_inserter(toRender),
                        [](auto icon) { return Item { icon }; });
     } else {
-        QSizeF totalSize;
+        QSizeF      totalSize;
         auto const &er = EmojiRegistry::instance();
         for (auto it = er.begin(); it != er.end(); ++it) {
 #ifdef Q_OS_WIN
@@ -396,7 +396,7 @@ void IconSelect::updateGrid()
             if (titleFilter.isEmpty() || emoji.name.contains(titleFilter)) {
                 auto rect = QFontMetrics(font).boundingRect(emoji.code);
                 if (!rect.isEmpty() && rect.width() < rect.height() * 1.4 && rect.height() < rect.width() * 1.4) {
-                    totalSize += rect.size().toSizeF();
+                    totalSize += rect.size();
                     toRender.emplace_back(nullptr, &emoji);
                     if (!titleFilter.isEmpty() && toRender.size() == 40) {
                         break;
