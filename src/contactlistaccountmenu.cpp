@@ -210,8 +210,9 @@ private slots:
         if (account->bookmarkManager()->isAvailable()) {
             bookmarksManageAction_->setEnabled(true);
             bookmarksMenu_->addSeparator();
-            using SortableItem                    = std::pair<QString, const ConferenceBookmark *>;
-            auto const               &conferences = account->bookmarkManager()->conferences();
+            using SortableItem      = std::pair<QString, const ConferenceBookmark *>;
+            auto const &conferences = account->bookmarkManager()->conferences();
+
             std::vector<SortableItem> sorted;
             sorted.reserve(conferences.size());
             for (auto const &c : conferences) {
@@ -221,8 +222,7 @@ private slots:
             for (const auto &cp : sorted) {
                 auto     c          = *std::get<1>(cp);
                 QAction *joinAction = new QAction(c.name(), this);
-                joinAction->setProperty("bookmark", bookmarksJoinActions_.count());
-                connect(joinAction, SIGNAL(triggered()), SLOT(bookmarksJoin()));
+                connect(joinAction, &QAction::triggered, account, [this, c]() { account->actionJoin(c, true); });
                 bookmarksMenu_->addAction(joinAction);
                 bookmarksJoinActions_ << joinAction;
             }
@@ -315,16 +315,6 @@ private slots:
 
         MUCJoinDlg *w = new MUCJoinDlg(account->psi(), account);
         w->show();
-    }
-
-    void bookmarksJoin()
-    {
-        if (!account)
-            return;
-
-        QAction           *joinAction = static_cast<QAction *>(sender());
-        ConferenceBookmark c = account->bookmarkManager()->conferences()[joinAction->property("bookmark").toInt()];
-        account->actionJoin(c, true);
     }
 
     void addContact()
