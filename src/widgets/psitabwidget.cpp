@@ -275,7 +275,7 @@ void PsiTabWidget::setTabText(QWidget *widget, const QString &label)
             shortLabel = label.first(37) + "...";
 #endif
             int maxLength = 80;
-            // If label text is longer than 80 symbols then make lable multiline
+            // If label is longer than 80 symbols make this label multiline
             if (labelSize > maxLength) {
                 QStringList sentences;
                 for (int i = 0; i < labelSize;) {

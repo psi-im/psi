@@ -286,6 +286,14 @@ if(USE_CCACHE)
     find_program(CCACHE_PATH ccache DOC "Path to ccache")
     if(CCACHE_PATH)
         message(STATUS "Found ccache at ${CCACHE_PATH}")
+        if(MSVC AND (CMAKE_VERSION VERSION_GREATER "3.13.0"))
+            set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug,RelWithDebInfo>:Embedded>")
+            set(CMAKE_VS_GLOBALS
+                "TrackFileAccess=false"
+                "UseMultiToolTask=true"
+                "DebugInformationFormat=OldStyle"
+            )
+        endif()
         set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ${CCACHE_PATH})
         set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ${CCACHE_PATH})
     endif()
