@@ -266,10 +266,32 @@ void PsiTabWidget::setTabText(QWidget *widget, const QString &label)
 {
     int index = widgets_.indexOf(widget);
     if (index != -1) {
-        QString shortLabel = label;
-        if (label.length() > 40) {
+        auto shortLabel = label;
+        auto labelSize  = label.size();
+        if (labelSize > 40) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
             shortLabel = label.left(37) + "...";
-            tabBar_->setTabToolTip(index, label);
+#else
+            shortLabel = label.first(37) + "...";
+#endif
+            int maxLength = 80;
+            // If label text is longer than 80 symbols then make lable multiline
+            if (labelSize > maxLength) {
+                QStringList sentences;
+                for (int i = 0; i < labelSize;) {
+                    if (i + maxLength < labelSize) {
+                        auto lastSpace = QStringView { label }.mid(i, maxLength).lastIndexOf(QString(" ")) + 1;
+                        sentences << label.mid(i, lastSpace);
+                        i += lastSpace;
+                    } else {
+                        sentences << label.mid(i, labelSize - i);
+                        break;
+                    }
+                }
+                tabBar_->setTabToolTip(index, sentences.join("\n"));
+            } else {
+                tabBar_->setTabToolTip(index, label);
+            }
         }
         tabBar_->setTabText(index, shortLabel);
     }
