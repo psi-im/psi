@@ -23,7 +23,6 @@
 #include "iris/xmpp_task.h"
 #include "iris/xmpp_xmlcommon.h"
 #include "psiaccount.h"
-#include "psioptions.h"
 
 // -----------------------------------------------------------------------------
 
@@ -241,12 +240,11 @@ void BookmarkManager::getBookmarks_finished()
             }
         }
 
+        setIsAvailable(true);
         if (urlsWereChanged)
             emit urlsChanged(urls_);
         if (conferencesWereChanged)
             emit conferencesChanged(conferences_);
-
-        setIsAvailable(true);
     } else {
         setIsAvailable(false);
     }
