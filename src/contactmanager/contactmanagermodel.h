@@ -21,7 +21,7 @@
 #define CONTACTMANAGERMODEL_H
 
 #include <QAbstractTableModel>
-#include <QSet>
+#include <QExplicitlySharedDataPointer>
 #include <QStringList>
 
 #include <deque>

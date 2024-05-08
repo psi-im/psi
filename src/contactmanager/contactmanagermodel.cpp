@@ -19,13 +19,15 @@
 
 #include "contactmanagermodel.h"
 
-#include "QDebug"
 #include "iris/xmpp_client.h"
 #include "iris/xmpp_tasks.h"
 #include "psiaccount.h"
 #include "userlist.h"
 
 #include "iris/xmpp_liveroster.h"
+
+#include <QDebug>
+#include <QSet>
 
 class CMModelItem::Private : public QSharedData {
 public:
