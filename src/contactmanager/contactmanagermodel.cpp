@@ -25,102 +25,219 @@
 #include "psiaccount.h"
 #include "userlist.h"
 
-ContactManagerModel::ContactManagerModel(QObject *parent, PsiAccount *pa) : QAbstractTableModel(parent), pa_(pa)
-{
-    columnNames << "" << tr("Nick") << tr("Group") << tr("Node") << tr("Domain") << tr("Subscription");
-    roles << CheckRole << NickRole << GroupRole << NodeRole << DomainRole << SubscriptionRole;
-    connect(pa_, SIGNAL(updateContact(UserListItem)), this, SLOT(view_contactUpdated(UserListItem)));
-    connect(pa_->client(), SIGNAL(rosterItemUpdated(const RosterItem &)), this,
-            SLOT(client_rosterItemUpdated(const RosterItem &)));
-}
+#include "iris/xmpp_liveroster.h"
 
-void ContactManagerModel::reloadUsers()
-{
-    beginResetModel();
-    clear();
-    const UserList *ul = pa_->userList();
-    for (UserListItem *u : *ul) {
-        if (u->inList()) {
-            addContact(u);
+class CMModelItem::Private : public QSharedData {
+public:
+    Private(const RosterItem &item) :
+        jid(item.jid()), name(item.name()), groups(item.groups()), subscription(item.subscription())
+    {
+    }
+
+    Jid          jid;
+    QString      name;
+    QStringList  groups;
+    Subscription subscription;
+};
+
+CMModelItem::CMModelItem(const RosterItem &item) : d(new Private(item)) { }
+
+CMModelItem::CMModelItem(const CMModelItem &other) : d(other.d) { }
+
+CMModelItem::~CMModelItem() = default;
+
+const Jid          &CMModelItem::jid() const { return d->jid; }
+const QString      &CMModelItem::name() const { return d->name; }
+const QStringList  &CMModelItem::groups() const { return d->groups; }
+const Subscription &CMModelItem::subscription() const { return d->subscription; }
+
+class ContactManagerModel::Private {
+    ContactManagerModel *q;
+
+public:
+    PsiAccount   *pa;
+    UserList      userList;
+    QStringList   columnNames;
+    QList<Role>   roles;
+    QSet<QString> checks; // TODO move it too CMModelItem. it's pointless to have it after refactoring
+
+    Private(ContactManagerModel *q, PsiAccount *pa) : q(q), pa(pa)
+    {
+        columnNames << "" << tr("Nick") << tr("Group") << tr("Node") << tr("Domain") << tr("Subscription");
+        roles << CheckRole << NickRole << GroupRole << NodeRole << DomainRole << SubscriptionRole;
+
+        std::ranges::for_each(pa->client()->roster(), [this](const RosterItem &item) { userList.push_front(item); });
+
+        connect(pa->client(), &XMPP::Client::rosterItemAdded, q,
+                [this](const RosterItem &item) { contactAdded(item); });
+        connect(pa->client(), &XMPP::Client::rosterItemRemoved, q,
+                [this](const RosterItem &item) { contactRemoved(item); });
+        connect(pa->client(), &XMPP::Client::rosterItemUpdated, q,
+                [this](const RosterItem &item) { contactUpdated(item); });
+    }
+
+    QString userFieldString(const CMModelItem &u, ContactManagerModel::Role columnRole) const
+    {
+        QString data;
+        switch (columnRole) {
+        case NodeRole: // node
+            data = u.jid().node();
+            break;
+        case DomainRole: // domain
+            data = u.jid().domain();
+            break;
+        case NickRole: // nick
+            data = u.name();
+            break;
+        case GroupRole: // group
+            if (u.groups().isEmpty()) {
+                data = "";
+            } else {
+                data = u.groups().first();
+            }
+            break;
+        case SubscriptionRole: // subscription
+            data = u.subscription().toString();
+            break;
+        default:
+            break;
+        }
+        return data;
+    }
+    void removeUsers(const UserList &users)
+    {
+        for (const auto &item : users) {
+            if (item.jid().node().isEmpty() && !Jid(pa->client()->host()).compare(item.jid())) {
+                JT_UnRegister *ju = new JT_UnRegister(pa->client()->rootTask());
+                ju->unreg(item.jid());
+                ju->go(true);
+            }
+            JT_Roster *r = new JT_Roster(pa->client()->rootTask());
+            r->remove(item.jid());
+            r->go(true);
         }
     }
-    endResetModel();
+
+    void changeDomain(const UserList &users, const QString &domain)
+    {
+        auto items = findUsers(users);
+        for (auto [idx, item] : items) {
+            if (item.jid().node().isEmpty()) {
+                continue;
+            }
+            JT_Roster *r = new JT_Roster(pa->client()->rootTask());
+            r->set(item.jid().withDomain(domain), item.name(), item.groups());
+            r->go(true);
+            r = new JT_Roster(pa->client()->rootTask());
+            r->remove(item.jid());
+            r->go(true);
+        }
+    }
+
+    void changeGroups(const UserList &users, const QStringList &groups)
+    {
+        auto items = findUsers(users);
+        for (auto [idx, item] : items) {
+            JT_Roster *r = new JT_Roster(pa->client()->rootTask());
+            r->set(item.jid(), item.name(), groups);
+            r->go(true);
+        }
+    }
+
+private:
+    QList<std::pair<int, CMModelItem>> findUsers(const UserList &users)
+    {
+        QList<std::pair<int, CMModelItem>> ret;
+        for (auto const &item : users) {
+            auto it = std::ranges::find_if(userList, [&item](const auto &u) { return u.jid() == item.jid(); });
+            if (it != userList.end()) {
+                ret.push_back({ int(std::distance(userList.begin(), it)), *it });
+            }
+        }
+        return ret;
+    }
+
+    inline std::optional<int> findRow(const CMModelItem &item)
+    {
+        auto it = std::ranges::find_if(userList, [&item](auto const &i) { return item.jid() == i.jid(); });
+        if (it != userList.end()) {
+            return std::distance(userList.begin(), it);
+        }
+        return {};
+    }
+
+    void contactAdded(const RosterItem &ri)
+    {
+        q->beginInsertRows({}, userList.size(), userList.size());
+        userList.push_back(ri);
+        q->endInsertRows();
+    }
+
+    void contactRemoved(const RosterItem &ri)
+    {
+        auto row = findRow(ri);
+        if (row) {
+            q->beginRemoveRows(QModelIndex(), *row, *row);
+            userList.erase(userList.begin() + *row);
+            q->endRemoveRows();
+        }
+    }
+
+    void contactUpdated(const RosterItem &ri)
+    {
+        auto row = findRow(ri);
+        if (row) {
+            emit q->dataChanged(q->index(*row, 1), q->index(*row, columnNames.count() - 1));
+        }
+    }
+};
+
+ContactManagerModel::ContactManagerModel(QObject *parent, PsiAccount *pa) :
+    QAbstractTableModel(parent), d(new Private(this, pa))
+{
 }
 
-void ContactManagerModel::clear()
-{
-    _userList.clear();
-    checks.clear();
-}
+ContactManagerModel::~ContactManagerModel() { qDebug("ContactManagerModel destroyed"); }
 
 int ContactManagerModel::rowCount(const QModelIndex &parent) const
 {
     if (parent.isValid())
         return 0;
-    return _userList.count();
+    return d->userList.size();
 }
 
 int ContactManagerModel::columnCount(const QModelIndex &parent) const
 {
     Q_UNUSED(parent);
-    return columnNames.count();
+    return d->columnNames.count();
 }
 
 QVariant ContactManagerModel::data(const QModelIndex &index, int role) const
 {
-    Role          columnRole = roles[index.column()];
-    UserListItem *u          = _userList.at(index.row());
-    if (u) {
+    Role columnRole = d->roles[index.column()];
+    if (index.row() < d->userList.size()) {
+        auto u = d->userList.at(index.row());
         switch (role) {
         case Qt::DisplayRole:
-            return userFieldString(u, columnRole);
+            return d->userFieldString(u, columnRole);
         case Qt::TextAlignmentRole:
             if (columnRole == CheckRole || columnRole == NodeRole)
                 return int(Qt::AlignRight | Qt::AlignVCenter);
             break;
         case Qt::CheckStateRole:
             if (columnRole == CheckRole) {
-                return checks.contains(u->jid().full()) ? 2 : 0;
+                return d->checks.contains(u.jid().full()) ? 2 : 0;
             }
         }
     }
     return QVariant();
 }
 
-QString ContactManagerModel::userFieldString(UserListItem *u, ContactManagerModel::Role columnRole) const
-{
-    QString data;
-    switch (columnRole) {
-    case NodeRole: // node
-        data = u->jid().node();
-        break;
-    case DomainRole: // domain
-        data = u->jid().domain();
-        break;
-    case NickRole: // nick
-        data = u->name();
-        break;
-    case GroupRole: // group
-        if (u->groups().isEmpty()) {
-            data = "";
-        } else {
-            data = u->groups().first();
-        }
-        break;
-    case SubscriptionRole: // subscription
-        data = u->subscription().toString();
-        break;
-    default:
-        break;
-    }
-    return data;
-}
-
 QVariant ContactManagerModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     if (role == Qt::DisplayRole) {
         if (orientation == Qt::Horizontal) {
-            return columnNames[section];
+            return d->columnNames[section];
         } else {
             return section + 1;
         }
@@ -130,17 +247,15 @@ QVariant ContactManagerModel::headerData(int section, Qt::Orientation orientatio
 
 QStringList ContactManagerModel::manageableFields()
 {
-    QStringList ret = columnNames;
+    QStringList ret = d->columnNames;
     ret.removeFirst();
     return ret;
 }
 
-void ContactManagerModel::addContact(UserListItem *u) { _userList.append(u); }
-
 Qt::ItemFlags ContactManagerModel::flags(const QModelIndex &index) const
 {
     Qt::ItemFlags flags      = Qt::ItemIsSelectable | Qt::ItemIsEnabled;
-    Role          columnRole = roles[index.column()];
+    Role          columnRole = d->roles[index.column()];
     if (columnRole == CheckRole) {
         flags |= (Qt::ItemIsUserCheckable);
     }
@@ -151,25 +266,25 @@ bool ContactManagerModel::setData(const QModelIndex &index, const QVariant &valu
 {
     Q_UNUSED(role);
     if (index.isValid()) {
-        Role columnRole = roles[index.column()];
+        Role columnRole = d->roles[index.column()];
         if (columnRole == CheckRole) {
-            QString jid = _userList.at(index.row())->jid().full();
+            QString jid = d->userList.at(index.row()).jid().full();
             if (value.toInt() == 3) { // iversion
-                if (checks.contains(jid)) {
-                    checks.remove(jid);
+                if (d->checks.contains(jid)) {
+                    d->checks.remove(jid);
                 } else {
-                    checks.insert(jid);
+                    d->checks.insert(jid);
                 }
                 emit dataChanged(index, index);
             } else {
-                if (checks.contains(jid)) {
+                if (d->checks.contains(jid)) {
                     if (!value.toBool()) {
-                        checks.remove(jid);
+                        d->checks.remove(jid);
                         emit dataChanged(index, index);
                     }
                 } else {
                     if (value.toBool()) {
-                        checks.insert(jid);
+                        d->checks.insert(jid);
                         emit dataChanged(index, index);
                     }
                 }
@@ -179,61 +294,12 @@ bool ContactManagerModel::setData(const QModelIndex &index, const QVariant &valu
     return false;
 }
 
-ContactManagerModel::Role ContactManagerModel::sortRole;
-Qt::SortOrder             ContactManagerModel::sortOrder = Qt::AscendingOrder;
-
-void ContactManagerModel::sort(int column, Qt::SortOrder order = Qt::AscendingOrder)
+ContactManagerModel::UserList ContactManagerModel::checkedUsers()
 {
-    if (column < 0)
-        return;
-    Role columnRole                = roles[column];
-    ContactManagerModel::sortRole  = columnRole;
-    ContactManagerModel::sortOrder = order;
-    if (columnRole != CheckRole) {
-        emit layoutAboutToBeChanged();
-        std::sort(_userList.begin(), _userList.end(), ContactManagerModel::sortLessThan);
-        emit layoutChanged();
-    }
-}
-
-bool ContactManagerModel::sortLessThan(UserListItem *u1, UserListItem *u2)
-{
-    QString g1, g2;
-    bool    result = false;
-    switch (ContactManagerModel::sortRole) {
-    case NodeRole: // node
-        result = u1->jid().node() < u2->jid().node();
-        break;
-    case DomainRole: // domain
-        result = u1->jid().domain() < u2->jid().domain();
-        break;
-    case NickRole: // nick
-        result = u1->name() < u2->name();
-        break;
-    case GroupRole: // group
-        if (!u1->groups().isEmpty()) {
-            g1 = u1->groups().first();
-        }
-        if (!u2->groups().isEmpty()) {
-            g2 = u2->groups().first();
-        }
-        result = g1 < g2;
-        break;
-    case SubscriptionRole: // subscription
-        result = u1->subscription().toString() < u2->subscription().toString();
-        break;
-    default:
-        break;
-    }
-    return ContactManagerModel::sortOrder == Qt::AscendingOrder ? result : !result;
-}
-
-QList<UserListItem *> ContactManagerModel::checkedUsers()
-{
-    QList<UserListItem *> users;
-    for (UserListItem *u : std::as_const(_userList)) {
-        if (checks.contains(u->jid().full())) {
-            users.append(u);
+    UserList users;
+    for (auto u : d->userList) {
+        if (d->checks.contains(u.jid().full())) {
+            users.push_back(u);
         }
     }
     return users;
@@ -242,38 +308,32 @@ QList<UserListItem *> ContactManagerModel::checkedUsers()
 void ContactManagerModel::invertByMatch(int columnIndex, int matchType, const QString &str)
 {
     emit               layoutAboutToBeChanged();
-    Role               columnRole = roles[columnIndex];
+    Role               columnRole = d->roles[columnIndex];
     QString            data;
     QRegularExpression reg;
     if (matchType == ContactManagerModel::RegexpMatch) {
         reg = QRegularExpression(str);
     }
-    for (UserListItem *u : std::as_const(_userList)) {
-        data = userFieldString(u, columnRole);
+    for (auto u : d->userList) {
+        data = d->userFieldString(u, columnRole);
         if ((matchType == ContactManagerModel::SimpleMatch && str == data)
             || (matchType == ContactManagerModel::RegexpMatch && reg.match(data).hasMatch())) {
-            QString jid = u->jid().full();
-            if (checks.contains(jid)) {
-                checks.remove(jid);
+            QString jid = u.jid().full();
+            if (d->checks.contains(jid)) {
+                d->checks.remove(jid);
             } else {
-                checks.insert(jid);
+                d->checks.insert(jid);
             }
         }
     }
     emit layoutChanged();
 }
 
-void ContactManagerModel::view_contactUpdated(const UserListItem &u) { contactUpdated(u.jid()); }
+void ContactManagerModel::removeUsers(const UserList &users) { d->removeUsers(users); }
 
-void ContactManagerModel::client_rosterItemUpdated(const RosterItem &item) { contactUpdated(item.jid()); }
+void ContactManagerModel::changeDomain(const UserList &users, const QString &domain) { d->changeDomain(users, domain); }
 
-void ContactManagerModel::contactUpdated(const Jid &jid)
+void ContactManagerModel::changeGroups(const UserList &users, const QStringList &groups)
 {
-    int i = 0;
-    for (UserListItem *lu : std::as_const(_userList)) {
-        if (lu->jid() == jid) {
-            emit dataChanged(index(i, 1), index(i, columnNames.count() - 1));
-        }
-        i++;
-    }
+    d->changeGroups(users, groups);
 }

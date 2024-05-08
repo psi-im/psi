@@ -24,14 +24,33 @@
 #include <QSet>
 #include <QStringList>
 
+#include <deque>
+
 class PsiAccount;
 class UserListItem;
 
 namespace XMPP {
 class Jid;
 class RosterItem;
+class Subscription;
 }
 using namespace XMPP;
+
+class CMModelItem {
+    class Private;
+    QExplicitlySharedDataPointer<Private> d;
+
+public:
+    CMModelItem(const RosterItem &item);
+    ~CMModelItem();
+
+    CMModelItem(const CMModelItem &other);
+
+    const Jid          &jid() const;
+    const QString      &name() const;
+    const QStringList  &groups() const;
+    const Subscription &subscription() const;
+};
 
 class ContactManagerModel : public QAbstractTableModel {
     Q_OBJECT
@@ -48,41 +67,29 @@ public:
     const static int SimpleMatch = 1;
     const static int RegexpMatch = 2;
 
+    using UserList = std::deque<CMModelItem>;
+
     ContactManagerModel(QObject *parent, PsiAccount *pa);
+    ~ContactManagerModel();
+
     int           rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int           columnCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant      data(const QModelIndex &index, int role) const override;
     QVariant      headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
     Qt::ItemFlags flags(const QModelIndex &index) const override;
     bool          setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
-    void          sort(int column, Qt::SortOrder order) override;
-    static bool   sortLessThan(UserListItem *u1, UserListItem *u2);
-    static Role   sortRole;
-    static Qt::SortOrder sortOrder;
 
-    QStringList           manageableFields();
-    void                  reloadUsers();
-    void                  clear();
-    void                  addContact(UserListItem *u);
-    QList<UserListItem *> checkedUsers();
-    void                  invertByMatch(int columnIndex, int matchType, const QString &str);
+    QStringList manageableFields();
+    UserList    checkedUsers();
+    void        invertByMatch(int columnIndex, int matchType, const QString &str);
 
-    void startBatch() { emit layoutAboutToBeChanged(); }
-    void stopBatch() { emit layoutChanged(); }
+    void removeUsers(const UserList &users);
+    void changeDomain(const UserList &users, const QString &domain);
+    void changeGroups(const UserList &users, const QStringList &groups);
 
 private:
-    PsiAccount           *pa_;
-    QList<UserListItem *> _userList;
-    QStringList           columnNames;
-    QList<Role>           roles;
-    QSet<QString>         checks;
-
-    QString userFieldString(UserListItem *u, ContactManagerModel::Role columnRole) const;
-    void    contactUpdated(const Jid &);
-
-private slots:
-    void view_contactUpdated(const UserListItem &);
-    void client_rosterItemUpdated(const RosterItem &);
+    class Private;
+    std::unique_ptr<Private> d;
 };
 
 #endif // CONTACTMANAGERMODEL_H

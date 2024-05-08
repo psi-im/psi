@@ -471,7 +471,7 @@ bool PluginHost::enable()
             PsiAccountController *pac = qobject_cast<PsiAccountController *>(plugin_);
             if (pac) {
 #ifndef PLUGINS_NO_DEBUG
-                qDebug("connectint psiaccount controller");
+                qDebug("connecting psiaccount controller");
 #endif
                 pac->setPsiAccountControllingHost(this);
             }
