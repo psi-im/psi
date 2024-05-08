@@ -25,6 +25,7 @@
 #include <QStringList>
 
 #include <deque>
+#include <memory>
 
 class PsiAccount;
 class UserListItem;
