@@ -820,7 +820,7 @@ void MainWin::buildToolbars()
 
     PsiOptions *options  = PsiOptions::instance();
     bool        allInOne = options->getOption("options.ui.tabs.grouping").toString().contains('A');
-    if (allInOne) {
+    if (allInOne && d->viewToolBar) {
         d->viewToolBar->initialize();
     }
     const auto &bases = options->getChildOptionNames("options.ui.contactlist.toolbars", true, true);
