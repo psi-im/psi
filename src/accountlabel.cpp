@@ -23,7 +23,7 @@
 
 AccountLabel::AccountLabel(QWidget *parent) : QLabel(parent), showJid_(true)
 {
-    setFrameStyle(QFrame::Panel | QFrame::Sunken);
+    // setFrameStyle(QFrame::Panel | QFrame::Sunken);
 }
 
 AccountLabel::~AccountLabel() { }
