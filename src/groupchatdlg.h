@@ -169,6 +169,7 @@ private:
     inline XMPP::Jid jidForNick(const QString &nick) const;
 
     void setMucSelfAvatar();
+    void updateIdentityVisibility();
 };
 
 #endif // GROUPCHATDLG_H

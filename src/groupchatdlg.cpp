@@ -899,6 +899,10 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     hb3a->addWidget(d->typeahead);
     ui_.vboxLayout1->addLayout(hb3a);
 
+    ui_.lb_ident->setAccount(account());
+    ui_.lb_ident->setShowJid(false);
+    connect(account()->psi(), &PsiCon::accountCountChanged, this, &GCMainDlg::updateIdentityVisibility);
+
     ActionList *actList = account()->psi()->actionList()->actionLists(PsiActionList::Actions_Groupchat).at(0);
     for (const QString &name : actList->actions()) {
         auto action = actList->copyAction(name, this);
@@ -2355,6 +2359,17 @@ void GCMainDlg::setLooks()
             : Qt::ScrollBarAsNeeded);
     ui_.lv_users->setLooks();
     setMucSelfAvatar();
+    updateIdentityVisibility();
+}
+
+void GCMainDlg::updateIdentityVisibility()
+{
+    if (!PsiOptions::instance()->getOption("options.ui.chat.use-small-chats").toBool()) {
+        bool visible = account()->psi()->contactList()->enabledAccounts().count() > 1;
+        ui_.lb_ident->setVisible(visible);
+    } else {
+        ui_.lb_ident->setVisible(false);
+    }
 }
 
 void GCMainDlg::setToolbuttons()
