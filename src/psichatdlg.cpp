@@ -374,7 +374,6 @@ void PsiChatDlg::setLooks()
 
     int s = PsiIconset::instance()->system().iconSize();
     ui_.lb_status->setFixedSize(s, s);
-    ui_.lb_client->setFixedSize(s, s);
 
     ui_.tb_pgp->hide();
     if (smallChat_) {
@@ -384,9 +383,7 @@ void PsiChatDlg::setLooks()
         ui_.tb_emoticons->hide();
         ui_.toolbar->hide();
         ui_.tb_voice->hide();
-        ui_.lb_client->hide();
     } else {
-        ui_.lb_client->show();
         ui_.lb_status->show();
         ui_.le_jid->show();
         if (PsiOptions::instance()->getOption("options.ui.contactlist.toolbars.m0.visible").toBool()) {
@@ -824,9 +821,8 @@ void PsiChatDlg::contactUpdated(UserListItem *u, int status, const QString &stat
             if (!client.isEmpty()) {
                 const QPixmap &pix
                     = IconsetFactory::iconPixmap("clients/" + client, int(fontInfo().pixelSize() * EqTextIconK + .5));
-                ui_.lb_client->setPixmap(pix);
             }
-            ui_.lb_client->setToolTip(r.versionString());
+            ui_.le_jid->setToolTip(r.versionString());
         }
     }
 }
