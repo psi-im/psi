@@ -1189,6 +1189,11 @@ void GCMainDlg::scrollDown() { ui_.log->scrollDown(); }
 
 void GCMainDlg::closeEvent(QCloseEvent *e)
 {
+    if (PsiOptions::instance()->getOption("options.ui.muc.hide-when-closing").toBool() && !isTabbed()) {
+        hide();
+        e->ignore();
+        return;
+    }
     e->accept();
     if (d->state != Private::Connected)
         account()->groupChatLeave(d->dlg->jid().domain(), d->dlg->jid().node());
