@@ -36,6 +36,7 @@
 #include <QScrollBar>
 #include <QSortFilterProxyModel>
 #include <QTreeView>
+#include <QWindow>
 
 ContactListView::ContactListView(QWidget *parent) : HoverableTreeView(parent), contextMenuActive_(false)
 {
@@ -118,6 +119,10 @@ void ContactListView::updateContextMenu()
         if (item) {
             contextMenu_ = createContextMenuFor(item);
             addContextMenuActions();
+
+            // see https://bugs.kde.org/show_bug.cgi?id=453532
+            contextMenu_->winId();
+            contextMenu_->windowHandle()->setTransientParent(window()->windowHandle());
         }
     }
 }
