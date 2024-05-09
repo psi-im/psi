@@ -1571,9 +1571,10 @@ void GCMainDlg::doBookmark()
     ConferenceBookmark &b = confs[confInd];
 
     QMenu *menu = new QMenu(this);
+
     menu->setAttribute(Qt::WA_DeleteOnClose);
-    menu->winId();
-    menu->windowHandle()->setTransientParent(window()->windowHandle());
+    // menu->winId();
+    // menu->windowHandle()->setTransientParent(window()->windowHandle());
     auto wa  = new QWidgetAction(menu);
     auto dlg = new QWidget(menu);
     wa->setDefaultWidget(dlg);
