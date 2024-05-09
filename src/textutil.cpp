@@ -569,9 +569,8 @@ QString TextUtil::emoticonify(const QString &in)
             if (!closest)
                 break;
 
-            p.putRich(QString("<icon name=\"%1\" text=\"%2\" size=\"%3\" type=\"smiley\">")
-                          .arg(TextUtil::escape(closest->name()), TextUtil::escape(str.mid(foundPos, foundLen)),
-                               QString::number(-1.4)));
+            p.putRich(QString("<icon name=\"%1\" text=\"%2\" min-height=\"1.2em\" max-height=\"2em\" type=\"smiley\">")
+                          .arg(TextUtil::escape(closest->name()), TextUtil::escape(str.mid(foundPos, foundLen))));
             i = foundPos + foundLen;
         }
     }
