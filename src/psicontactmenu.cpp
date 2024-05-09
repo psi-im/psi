@@ -389,7 +389,7 @@ void PsiContactMenu::Private::mucLeave()
 {
     GCMainDlg *gc = contact_->account()->findDialog<GCMainDlg *>(contact_->jid());
     if (gc)
-        gc->close();
+        gc->leave();
 }
 
 void PsiContactMenu::Private::rename()

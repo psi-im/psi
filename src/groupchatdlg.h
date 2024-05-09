@@ -51,6 +51,8 @@ public:
 
     PsiAccount *account() const;
 
+    void leave();
+
     void             error(int, const QString &);
     void             gcSelfPresence(const Status &s);
     void             presence(const QString &, const Status &);

@@ -246,6 +246,7 @@ public:
     bool   alert;
     bool   gcSelfPresenceSupported = false;
     bool   gcSelfAvatarRequested   = false; // when self presence is not supported
+    bool   forceQuit               = false; // ignore hide-when-closing option
 
     QStringList hist;
     int         histAt;
@@ -1197,7 +1198,8 @@ void GCMainDlg::scrollDown() { ui_.log->scrollDown(); }
 
 void GCMainDlg::closeEvent(QCloseEvent *e)
 {
-    if (PsiOptions::instance()->getOption("options.ui.muc.hide-when-closing").toBool() && !isTabbed()) {
+    if (!d->forceQuit && PsiOptions::instance()->getOption("options.ui.muc.hide-when-closing").toBool()
+        && !isTabbed()) {
         hide();
         e->ignore();
         return;
@@ -1741,6 +1743,12 @@ void GCMainDlg::pa_updatedActivity()
 }
 
 PsiAccount *GCMainDlg::account() const { return TabbableWidget::account(); }
+
+void GCMainDlg::leave()
+{
+    d->forceQuit = true;
+    close();
+}
 
 void GCMainDlg::error(int, const QString &str)
 {
