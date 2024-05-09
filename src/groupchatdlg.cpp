@@ -1569,6 +1569,7 @@ void GCMainDlg::doBookmark()
     ConferenceBookmark &b = confs[confInd];
 
     QMenu *menu = new QMenu(this);
+    menu->setAttribute(Qt::WA_DeleteOnClose);
     menu->winId();
     menu->windowHandle()->setTransientParent(window()->windowHandle());
     auto wa  = new QWidgetAction(menu);
@@ -1619,20 +1620,18 @@ void GCMainDlg::doBookmark()
             if (getDisplayName() != txtName->text())
                 account()->actionRename(jid(), txtName->text());
         }
-        menu->hide();
+        menu->close();
     });
     dlg->connect(deleteBtn, &QPushButton::clicked, this, [menu, this]() {
         BookmarkManager *bm = account()->bookmarkManager();
         if (bm->isAvailable()) {
             bm->removeConference(jid());
         }
-        menu->hide();
+        menu->close();
     });
 
     menu->addAction(wa);
-    menu->exec(ui_.le_topic->mapToGlobal(QPoint(ui_.le_topic->width() - dlg->width(), ui_.le_topic->height())));
-
-    delete menu;
+    menu->popup(ui_.le_topic->mapToGlobal(QPoint(ui_.le_topic->width() - dlg->width(), ui_.le_topic->height())));
 }
 
 void GCMainDlg::configureRoom()
