@@ -66,6 +66,7 @@ BookmarkManageDlg::BookmarkManageDlg(PsiAccount *account) : QDialog(), account_(
     connect(ui_.listView->selectionModel(), SIGNAL(selectionChanged(const QItemSelection &, const QItemSelection &)),
             SLOT(selectionChanged(const QItemSelection &, const QItemSelection &)));
 
+    connect(ui_.mucName, SIGNAL(textEdited(const QString &)), SLOT(updateCurrentItem()));
     connect(ui_.host, SIGNAL(textEdited(const QString &)), SLOT(updateCurrentItem()));
     connect(ui_.room, SIGNAL(textEdited(const QString &)), SLOT(updateCurrentItem()));
     connect(ui_.nickname, SIGNAL(textEdited(const QString &)), SLOT(updateCurrentItem()));
@@ -101,6 +102,7 @@ void BookmarkManageDlg::loadBookmarks()
 
     for (const ConferenceBookmark &c : account_->bookmarkManager()->conferences()) {
         QStandardItem *item = new QStandardItem(c.name());
+        item->setData(QVariant(c.name()), MucNameRole);
         item->setData(QVariant(c.jid().full()), JidRole);
         item->setData(QVariant(c.autoJoin()), AutoJoinRole);
         item->setData(QVariant(c.nick()), NickRole);
@@ -111,7 +113,7 @@ void BookmarkManageDlg::loadBookmarks()
 
 ConferenceBookmark BookmarkManageDlg::bookmarkFor(const QModelIndex &index) const
 {
-    return ConferenceBookmark(index.data(Qt::DisplayRole).toString(), index.data(JidRole).toString(),
+    return ConferenceBookmark(index.data(MucNameRole).toString(), index.data(JidRole).toString(),
                               ConferenceBookmark::JoinType(index.data(AutoJoinRole).toInt()),
                               index.data(NickRole).toString(), index.data(PasswordRole).toString());
 }
@@ -168,6 +170,8 @@ void BookmarkManageDlg::selectionChanged(const QItemSelection &selected, const Q
     }
 
     XMPP::Jid jid = XMPP::Jid(current.data(JidRole).toString());
+    ui_.mucName->setText(current.data(MucNameRole).toString());
+    ui_.mucName->setCursorPosition(0);
     ui_.host->setText(jid.domain());
     ui_.host->setCursorPosition(0);
     ui_.room->setText(jid.node());
@@ -178,7 +182,7 @@ void BookmarkManageDlg::selectionChanged(const QItemSelection &selected, const Q
     ui_.password->setCursorPosition(0);
     ui_.autoJoin->setCurrentIndex(current.data(AutoJoinRole).toInt());
     QList<QWidget *> editors;
-    editors << ui_.host << ui_.room << ui_.nickname << ui_.password << ui_.autoJoin;
+    editors << ui_.mucName << ui_.host << ui_.room << ui_.nickname << ui_.password << ui_.autoJoin;
     for (QWidget *w : std::as_const(editors)) {
         w->setEnabled(current.isValid());
     }
@@ -195,6 +199,8 @@ void BookmarkManageDlg::updateCurrentItem()
 
     QStandardItem *item = model_->item(currentIndex().row());
     if (item) {
+        item->setData(ui_.mucName->text().isEmpty() ? jid().full() : ui_.mucName->text(), Qt::DisplayRole);
+        item->setData(ui_.mucName->text(), MucNameRole);
         item->setData(QVariant(jid().full()), JidRole);
         item->setData(QVariant(ui_.autoJoin->currentIndex()), AutoJoinRole);
         item->setData(QVariant(ui_.nickname->text()), NickRole);
@@ -237,6 +243,7 @@ void BookmarkManageDlg::importBookmarks()
                 ConferenceBookmark c(elem);
 
                 QStandardItem *item = new QStandardItem(c.name());
+                item->setData(QVariant(c.name()), MucNameRole);
                 item->setData(QVariant(c.jid().full()), JidRole);
                 item->setData(QVariant(c.autoJoin()), AutoJoinRole);
                 item->setData(QVariant(c.nick()), NickRole);
