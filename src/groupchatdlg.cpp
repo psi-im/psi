@@ -101,6 +101,9 @@
 #include <QToolButton>
 #include <QToolTip>
 #include <QVBoxLayout>
+#include <QWidgetAction>
+#include <QWindow>
+
 #include <functional>
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -970,7 +973,8 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     ui_.le_topic->addAction(d->act_bookmark);
 
     d->act_copy_muc_jid = new QAction(tr("Copy Groupchat JID"), this);
-    connect(d->act_copy_muc_jid, SIGNAL(triggered()), SLOT(copyMucJid()));
+    connect(d->act_copy_muc_jid, &QAction::triggered, this,
+            [this]() { QApplication::clipboard()->setText(jid().bare()); });
     ui_.le_topic->addAction(d->act_copy_muc_jid);
 
     BookmarkManager *bm = account()->bookmarkManager();
@@ -1562,26 +1566,30 @@ void GCMainDlg::doBookmark()
         bm->setBookmarks(confs);
         return;
     }
-    ConferenceBookmark &b          = confs[confInd];
-    QDialog            *dlg        = new QDialog(this);
-    QVBoxLayout        *layout     = new QVBoxLayout;
-    QHBoxLayout        *blayout    = new QHBoxLayout;
-    QFormLayout        *formLayout = new QFormLayout;
-    QLineEdit          *txtName    = new QLineEdit;
-    QLineEdit          *txtNick    = new QLineEdit;
+    ConferenceBookmark &b = confs[confInd];
+
+    QMenu *menu = new QMenu(this);
+    menu->winId();
+    menu->windowHandle()->setTransientParent(window()->windowHandle());
+    auto wa  = new QWidgetAction(menu);
+    auto dlg = new QWidget(menu);
+    wa->setDefaultWidget(dlg);
+
+    QVBoxLayout *layout     = new QVBoxLayout(dlg);
+    QHBoxLayout *blayout    = new QHBoxLayout;
+    QFormLayout *formLayout = new QFormLayout;
+    QLineEdit   *txtName    = new QLineEdit;
+    QLineEdit   *txtNick    = new QLineEdit;
     // QCheckBox *chkAJoin = new QCheckBox;
     QComboBox *cbAutoJoin = new QComboBox;
     cbAutoJoin->addItems(ConferenceBookmark::joinTypeNames());
     QPushButton *saveBtn = new QPushButton(dlg->style()->standardIcon(QStyle::SP_DialogSaveButton), tr("Save"), dlg);
     QPushButton *deleteBtn
         = new QPushButton(dlg->style()->standardIcon(QStyle::SP_DialogDiscardButton), tr("Delete"), dlg);
-    QPushButton *cancelBtn
-        = new QPushButton(dlg->style()->standardIcon(QStyle::SP_DialogCancelButton), tr("Cancel"), dlg);
 
     blayout->insertStretch(0);
     blayout->addWidget(saveBtn);
     blayout->addWidget(deleteBtn);
-    blayout->addWidget(cancelBtn);
     txtName->setText(b.name());
     txtNick->setText(b.nick());
     cbAutoJoin->setCurrentIndex(b.autoJoin());
@@ -1591,37 +1599,40 @@ void GCMainDlg::doBookmark()
     formLayout->addRow(tr("&Auto join:"), cbAutoJoin);
     layout->addLayout(formLayout);
     layout->addLayout(blayout);
-    dlg->setWindowIcon(IconsetFactory::icon("psi/bookmark_remove").icon());
-    dlg->setLayout(layout);
     dlg->setMinimumWidth(300);
-    dlg->connect(saveBtn, SIGNAL(clicked()), dlg, SLOT(accept()));
-    dlg->connect(deleteBtn, SIGNAL(clicked()), dlg, SLOT(reject()));
-    dlg->connect(cancelBtn, SIGNAL(clicked()), dlg, SLOT(reject()));
-    connect(deleteBtn, SIGNAL(clicked()), this, SLOT(doRemoveBookmark()));
-
-    dlg->setWindowTitle(tr("Bookmark conference"));
-    dlg->adjustSize();
-    dlg->move(ui_.le_topic->mapToGlobal(QPoint(ui_.le_topic->width() - dlg->width(), ui_.le_topic->height())));
-    if (dlg->exec() == QDialog::Accepted) {
+    dlg->connect(saveBtn, &QPushButton::clicked, this, [menu, txtName, txtNick, cbAutoJoin, this](bool) {
         ConferenceBookmark conf(txtName->text(), jid(), ConferenceBookmark::JoinType(cbAutoJoin->currentIndex()),
                                 txtNick->text(), d->password);
-        confs[confInd] = conf;
-        bm->setBookmarks(confs);
 
-        if (getDisplayName() != txtName->text())
-            account()->actionRename(jid(), txtName->text());
-    }
-    delete dlg;
-}
+        auto bm = account()->bookmarkManager();
+        if (bm->isAvailable()) {
+            int                       confInd = bm->indexOfConference(jid());
+            QList<ConferenceBookmark> confs   = bm->conferences();
 
-void GCMainDlg::copyMucJid() { QApplication::clipboard()->setText(jid().bare()); }
+            if (confInd == -1) {
+                confs.append(conf);
+            } else {
+                confs[confInd] = conf;
+            }
+            bm->setBookmarks(confs);
 
-void GCMainDlg::doRemoveBookmark()
-{
-    BookmarkManager *bm = account()->bookmarkManager();
-    if (bm->isAvailable()) {
-        bm->removeConference(jid());
-    }
+            if (getDisplayName() != txtName->text())
+                account()->actionRename(jid(), txtName->text());
+        }
+        menu->hide();
+    });
+    dlg->connect(deleteBtn, &QPushButton::clicked, this, [menu, this]() {
+        BookmarkManager *bm = account()->bookmarkManager();
+        if (bm->isAvailable()) {
+            bm->removeConference(jid());
+        }
+        menu->hide();
+    });
+
+    menu->addAction(wa);
+    menu->exec(ui_.le_topic->mapToGlobal(QPoint(ui_.le_topic->width() - dlg->width(), ui_.le_topic->height())));
+
+    delete menu;
 }
 
 void GCMainDlg::configureRoom()

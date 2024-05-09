@@ -119,8 +119,6 @@ private slots:
     void doShowInfo();
     void doClear();
     void doClearButton();
-    void copyMucJid();
-    void doRemoveBookmark();
     void buildMenu();
     void logSelectionChanged();
     void setConnecting();
