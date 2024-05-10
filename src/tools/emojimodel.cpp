@@ -296,7 +296,7 @@ int EmojiModel::rowCount(const QModelIndex &parent) const
         int         sum   = 0;
         auto const &group = EmojiRegistry::instance().groups[id >> 24];
         for (auto const &subGroup : group.subGroups) {
-            sum += subGroup.emojis.size();
+            sum += int(subGroup.emojis.size());
         }
         return sum;
     }

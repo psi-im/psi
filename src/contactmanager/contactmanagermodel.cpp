@@ -170,7 +170,7 @@ private:
 
     void contactAdded(const RosterItem &ri)
     {
-        q->beginInsertRows({}, userList.size(), userList.size());
+        q->beginInsertRows({}, int(userList.size()), int(userList.size()));
         userList.push_back(ri);
         q->endInsertRows();
     }
@@ -205,7 +205,7 @@ int ContactManagerModel::rowCount(const QModelIndex &parent) const
 {
     if (parent.isValid())
         return 0;
-    return d->userList.size();
+    return int(d->userList.size());
 }
 
 int ContactManagerModel::columnCount(const QModelIndex &parent) const

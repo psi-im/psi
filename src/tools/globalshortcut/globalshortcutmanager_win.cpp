@@ -104,16 +104,21 @@ private:
 
     static bool convertKeySequence(const QKeySequence &ks, UINT *mod_, UINT *key_)
     {
-        int code = ks[0];
-
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        auto modifiers = Qt::KeyboardModifiers(ks[0] & Qt::KeyboardModifierMask);
+        int  code      = modifiers & ~Qt::KeyboardModifierMask;
+#else
+        auto modifiers = ks[0].keyboardModifiers();
+        int  code      = ks[0].key();
+#endif
         UINT mod = 0;
-        if (code & Qt::META)
+        if (modifiers & Qt::MetaModifier)
             mod |= MOD_WIN;
-        if (code & Qt::SHIFT)
+        if (modifiers & Qt::ShiftModifier)
             mod |= MOD_SHIFT;
-        if (code & Qt::CTRL)
+        if (modifiers & Qt::ControlModifier)
             mod |= MOD_CONTROL;
-        if (code & Qt::ALT)
+        if (modifiers & Qt::AltModifier)
             mod |= MOD_ALT;
 
         UINT key = 0;
