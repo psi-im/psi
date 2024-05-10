@@ -88,7 +88,8 @@ int htmlSizeToPixels(const HtmlSize &size, const QTextCharFormat &format)
         return pointToPixel(size.size);
     }
     if (size.unit == HtmlSize::Em) {
-        return int(size.size * pointToPixel(format.fontPointSize()) + 0.5);
+        auto fs = format.fontPointSize() ? format.fontPointSize() : format.font().pointSize();
+        return int(size.size * pointToPixel(fs) + 0.5);
     }
     return size.size;
 }
@@ -102,7 +103,8 @@ int htmlSizeToPixels(const HtmlSize &size, const QTextCharFormat &format)
 class TextIconFormat : public QTextCharFormat {
 public:
     TextIconFormat(const QString &iconName, const QString &text, std::optional<HtmlSize> width = {},
-                   std::optional<HtmlSize> height = {}, std::optional<HtmlSize> maxWidth = {},
+                   std::optional<HtmlSize> height = {}, std::optional<HtmlSize> minWidth = {},
+                   std::optional<HtmlSize> minHeight = {}, std::optional<HtmlSize> maxWidth = {},
                    std::optional<HtmlSize> maxHeight = {}, std::optional<VerticalAlignment> valign = {});
 
     enum Property {
@@ -110,13 +112,16 @@ public:
         IconText      = QTextFormat::UserProperty + 2,
         IconWidth     = QTextFormat::UserProperty + 3,
         IconHeight    = QTextFormat::UserProperty + 4,
-        IconMaxWidth  = QTextFormat::UserProperty + 5,
-        IconMaxHeight = QTextFormat::UserProperty + 6
+        IconMinWidth  = QTextFormat::UserProperty + 5,
+        IconMinHeight = QTextFormat::UserProperty + 6,
+        IconMaxWidth  = QTextFormat::UserProperty + 7,
+        IconMaxHeight = QTextFormat::UserProperty + 8
     };
 };
 
 TextIconFormat::TextIconFormat(const QString &iconName, const QString &text, std::optional<HtmlSize> width,
-                               std::optional<HtmlSize> height, std::optional<HtmlSize> maxWidth,
+                               std::optional<HtmlSize> height, std::optional<HtmlSize> minWidth,
+                               std::optional<HtmlSize> minHeight, std::optional<HtmlSize> maxWidth,
                                std::optional<HtmlSize>                           maxHeight,
                                std::optional<QTextCharFormat::VerticalAlignment> valign) : QTextCharFormat()
 {
@@ -129,13 +134,19 @@ TextIconFormat::TextIconFormat(const QString &iconName, const QString &text, std
         QTextFormat::setProperty(IconWidth, QVariant::fromValue<HtmlSize>(*width));
     }
     if (height) {
-        QTextFormat::setProperty(IconWidth, QVariant::fromValue<HtmlSize>(*height));
+        QTextFormat::setProperty(IconHeight, QVariant::fromValue<HtmlSize>(*height));
+    }
+    if (minWidth) {
+        QTextFormat::setProperty(IconMinWidth, QVariant::fromValue<HtmlSize>(*minWidth));
+    }
+    if (minHeight) {
+        QTextFormat::setProperty(IconMinHeight, QVariant::fromValue<HtmlSize>(*minHeight));
     }
     if (maxWidth) {
-        QTextFormat::setProperty(IconWidth, QVariant::fromValue<HtmlSize>(*maxWidth));
+        QTextFormat::setProperty(IconMaxWidth, QVariant::fromValue<HtmlSize>(*maxWidth));
     }
     if (maxHeight) {
-        QTextFormat::setProperty(IconWidth, QVariant::fromValue<HtmlSize>(*maxHeight));
+        QTextFormat::setProperty(IconMaxHeight, QVariant::fromValue<HtmlSize>(*maxHeight));
     }
 
     if (valign) {
@@ -182,13 +193,23 @@ QSizeF TextIconHandler::intrinsicSize(QTextDocument *doc, int posInDocument, con
 
     auto propWidth     = charFormat.property(TextIconFormat::IconWidth);
     auto propHeight    = charFormat.property(TextIconFormat::IconHeight);
+    auto propMinWidth  = charFormat.property(TextIconFormat::IconMinWidth);
+    auto propMinHeight = charFormat.property(TextIconFormat::IconMinHeight);
     auto propMaxWidth  = charFormat.property(TextIconFormat::IconMaxWidth);
     auto propMaxHeight = charFormat.property(TextIconFormat::IconMaxHeight);
 
     std::optional<int> width;
     std::optional<int> height;
+    std::optional<int> minWidth;
+    std::optional<int> minHeight;
     QSize              maxSize { 20000, 20000 }; // should be enough fow a few decades
 
+    if (propMinWidth.isValid()) {
+        minWidth = htmlSizeToPixels(propMinWidth.value<HtmlSize>(), charFormat);
+    }
+    if (propMinHeight.isValid()) {
+        minHeight = htmlSizeToPixels(propMinHeight.value<HtmlSize>(), charFormat);
+    }
     if (propMaxWidth.isValid()) {
         maxSize.setWidth(htmlSizeToPixels(propMaxWidth.value<HtmlSize>(), charFormat));
     }
@@ -196,10 +217,12 @@ QSizeF TextIconHandler::intrinsicSize(QTextDocument *doc, int posInDocument, con
         maxSize.setHeight(htmlSizeToPixels(propMaxHeight.value<HtmlSize>(), charFormat));
     }
     if (propWidth.isValid()) {
-        width = qMin(maxSize.width(), htmlSizeToPixels(propWidth.value<HtmlSize>(), charFormat));
+        int limitMin = minWidth ? *minWidth : 8;
+        width        = qMax(qMin(maxSize.width(), htmlSizeToPixels(propWidth.value<HtmlSize>(), charFormat)), limitMin);
     }
     if (propHeight.isValid()) { // we want to scale ignoring aspect ratio
-        height = qMin(maxSize.height(), htmlSizeToPixels(propHeight.value<HtmlSize>(), charFormat));
+        int limitMin = minHeight ? *minHeight : 8;
+        height = qMax(qMin(maxSize.height(), htmlSizeToPixels(propHeight.value<HtmlSize>(), charFormat)), limitMin);
     }
 
     QSize ret;
@@ -224,6 +247,10 @@ QSizeF TextIconHandler::intrinsicSize(QTextDocument *doc, int posInDocument, con
         ret = icon->size();
         if (ret.width() > maxSize.width() || ret.height() > maxSize.height()) {
             ret.scale(maxSize, Qt::KeepAspectRatio);
+        } else if (minWidth && ret.width() < *minWidth) {
+            ret.scale(QSize { *minWidth, maxSize.width() }, Qt::KeepAspectRatio);
+        } else if (minHeight && ret.height() < *minHeight) {
+            ret.scale(QSize { maxSize.width(), *minHeight }, Qt::KeepAspectRatio);
         }
     }
     return ret;
@@ -399,6 +426,8 @@ static QString convertIconsToObjectReplacementCharacters(const QStringView &text
 
             std::optional<HtmlSize> width;
             std::optional<HtmlSize> height;
+            std::optional<HtmlSize> minWidth;
+            std::optional<HtmlSize> minHeight;
             std::optional<HtmlSize> maxWidth;
             std::optional<HtmlSize> maxHeight;
             QString                 iconName;
@@ -419,6 +448,10 @@ static QString convertIconsToObjectReplacementCharacters(const QStringView &text
                     width = parseSize(match.capturedView(2));
                 } else if (match.capturedView(1) == QLatin1String("height")) {
                     height = parseSize(match.capturedView(2));
+                } else if (match.capturedView(1) == QLatin1String("min-width")) {
+                    minWidth = parseSize(match.capturedView(2));
+                } else if (match.capturedView(1) == QLatin1String("min-height")) {
+                    minHeight = parseSize(match.capturedView(2));
                 } else if (match.capturedView(1) == QLatin1String("max-width")) {
                     maxWidth = parseSize(match.capturedView(2));
                 } else if (match.capturedView(1) == QLatin1String("max-height")) {
@@ -442,7 +475,8 @@ static QString convertIconsToObjectReplacementCharacters(const QStringView &text
 
             if (!iconName.isEmpty()) {
                 queue->enqueue(new TextIconFormat(iconName, iconText, std::move(width), std::move(height),
-                                                  std::move(maxWidth), std::move(maxHeight), std::move(valign)));
+                                                  std::move(minWidth), std::move(minHeight), std::move(maxWidth),
+                                                  std::move(maxHeight), std::move(valign)));
                 result += QChar::ObjectReplacementCharacter;
             }
 
