@@ -466,7 +466,7 @@ join <channel>{,<channel>} [pass{,<pass>}
                 newstate = oldstate;
                 return true;
             } else if (cmd == "leave") {
-                dlg->close();
+                dlg->leave();
             } else if (!cmd.isEmpty()) {
                 return false;
             }
@@ -1013,7 +1013,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     connect(ui_.pb_send, SIGNAL(customContextMenuRequested(const QPoint)), SLOT(sendButtonMenu()));
     d->act_close = new QAction(this);
     addAction(d->act_close);
-    connect(d->act_close, SIGNAL(triggered()), SLOT(close()));
+    connect(d->act_close, &QAction::triggered, this, &GCMainDlg::leave);
     d->act_hide = new QAction(this);
     addAction(d->act_hide);
     connect(d->act_hide, SIGNAL(triggered()), SLOT(hideTab()));
