@@ -275,7 +275,7 @@ void TextIconHandler::drawObject(QPainter *painter, const QRectF &rect, QTextDoc
     if (alignedSize != pixmap.size()) {
         pixmap = pixmap.scaled(alignedSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     }
-    // qDebug() << "render icon " << iconName << " size " << pixmap.size();
+    // qDebug() << "render icon " << iconName << " size " << pixmap.size() << " in " << rect;
     painter->drawPixmap(rect, pixmap, pixmap.rect());
 }
 #endif // WIDGET_PLUGIN
