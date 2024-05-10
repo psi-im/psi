@@ -179,16 +179,28 @@ QSizeF TextIconHandler::intrinsicSize(QTextDocument *doc, int posInDocument, con
 {
     Q_UNUSED(doc);
     Q_UNUSED(posInDocument)
+    QSizeF                ret;
     const QTextCharFormat charFormat = format.toCharFormat();
 
-    auto iconName = charFormat.stringProperty(TextIconFormat::IconName);
-    // if (iconName.startsWith("avatar")) {
-    //     qDebug() << "render avatar";
-    // }
-    auto icon = IconsetFactory::iconPtr(iconName);
-    if (!icon) {
-        // qWarning("invalid icon: %s", qPrintable(iconName));
-        return {};
+    auto           iconName  = charFormat.stringProperty(TextIconFormat::IconName);
+    auto           iconText  = charFormat.stringProperty(TextIconFormat::IconText);
+    const PsiIcon *icon      = nullptr;
+    bool           doScaling = true;
+    if (!iconName.isEmpty()) {
+        icon = IconsetFactory::iconPtr(iconName);
+        if (!icon) {
+            // qWarning("invalid icon: %s", qPrintable(iconName));
+            return {};
+        }
+        ret       = icon->size();
+        doScaling = icon->isScalable();
+    } else {
+        QFontMetrics fm(charFormat.font());
+        ret = fm.boundingRect(iconText).size();
+    }
+    if (ret.isEmpty()) {
+        // something went wrong with this icon
+        return ret;
     }
 
     auto propWidth     = charFormat.property(TextIconFormat::IconWidth);
@@ -202,6 +214,8 @@ QSizeF TextIconHandler::intrinsicSize(QTextDocument *doc, int posInDocument, con
     std::optional<int> height;
     std::optional<int> minWidth;
     std::optional<int> minHeight;
+    std::optional<int> maxWidth;
+    std::optional<int> maxHeight;
     QSize              maxSize { 20000, 20000 }; // should be enough fow a few decades
 
     if (propMinWidth.isValid()) {
@@ -212,9 +226,11 @@ QSizeF TextIconHandler::intrinsicSize(QTextDocument *doc, int posInDocument, con
     }
     if (propMaxWidth.isValid()) {
         maxSize.setWidth(htmlSizeToPixels(propMaxWidth.value<HtmlSize>(), charFormat));
+        maxWidth = maxSize.width();
     }
     if (propMaxHeight.isValid()) {
         maxSize.setHeight(htmlSizeToPixels(propMaxHeight.value<HtmlSize>(), charFormat));
+        maxHeight = maxSize.height();
     }
     if (propWidth.isValid()) {
         int limitMin = minWidth ? *minWidth : 8;
@@ -225,7 +241,6 @@ QSizeF TextIconHandler::intrinsicSize(QTextDocument *doc, int posInDocument, con
         height = qMax(qMin(maxSize.height(), htmlSizeToPixels(propHeight.value<HtmlSize>(), charFormat)), limitMin);
     }
 
-    QSize ret;
     if (width || height) {
         QSize scaledTo;
         if (width) {
@@ -234,23 +249,52 @@ QSizeF TextIconHandler::intrinsicSize(QTextDocument *doc, int posInDocument, con
             } else {
                 scaledTo = { *width, maxSize.height() };
             }
-        } else if (height) { // scaling by height by not by width
+        } else { // scaling by height by not by width
             scaledTo = { maxSize.width(), *height };
         }
-        ret = icon->size(scaledTo);
-        if (!icon->isScalable()) {
-            // we need to scale the icon anyway
-            ret.scale(scaledTo, Qt::KeepAspectRatio);
-        }
-
-    } else {
-        ret = icon->size();
-        if (ret.width() > maxSize.width() || ret.height() > maxSize.height()) {
+        ret.scale(scaledTo, Qt::KeepAspectRatio);
+        doScaling = false;
+    } else if (!doScaling) {
+        // check where scaling is required even for non-scalable
+        doScaling = (ret.width() > maxSize.width() || ret.height() > maxSize.height())
+            || (minWidth && ret.width() < *minWidth) || (minHeight && ret.height() < *minHeight);
+        /*if (ret.width() > maxSize.width() || ret.height() > maxSize.height()) {
             ret.scale(maxSize, Qt::KeepAspectRatio);
         } else if (minWidth && ret.width() < *minWidth) {
-            ret.scale(QSize { *minWidth, maxSize.width() }, Qt::KeepAspectRatio);
+            ret.scale(QSize { *minWidth, maxSize.height() }, Qt::KeepAspectRatio);
         } else if (minHeight && ret.height() < *minHeight) {
             ret.scale(QSize { maxSize.width(), *minHeight }, Qt::KeepAspectRatio);
+        }*/ // else default size looks good enough
+    }
+
+    if (doScaling) {
+        QSizeF desiredSize { 0, 0 };
+        if (minWidth) {
+            if (maxWidth) {
+                desiredSize.setWidth((*minWidth + *maxWidth) / 2.0);
+            } else {
+                desiredSize.setWidth(qMax(qreal(*minWidth), ret.width()));
+            }
+        } else if (maxWidth) {
+            desiredSize.setWidth(qMin(qreal(*maxWidth), ret.width()));
+        }
+        if (minHeight) {
+            if (maxHeight) {
+                desiredSize.setHeight((*minHeight + *maxHeight) / 2.0);
+            } else {
+                desiredSize.setHeight(qMax(qreal(*minHeight), ret.height()));
+            }
+        } else if (maxHeight) {
+            desiredSize.setHeight(qMin(qreal(*maxHeight), ret.height()));
+        }
+        if (desiredSize.width() && !desiredSize.height()) {
+            desiredSize.setHeight(desiredSize.width() / ret.width() * ret.height());
+        }
+        if (!desiredSize.width() && desiredSize.height()) {
+            desiredSize.setWidth(desiredSize.height() / ret.height() * ret.width());
+        }
+        if (!desiredSize.isEmpty()) {
+            ret = desiredSize;
         }
     }
     return ret;
@@ -264,19 +308,28 @@ void TextIconHandler::drawObject(QPainter *painter, const QRectF &rect, QTextDoc
 
     const QTextCharFormat charFormat = format.toCharFormat();
     auto const            iconName   = charFormat.stringProperty(TextIconFormat::IconName);
+    auto const            iconText   = charFormat.stringProperty(TextIconFormat::IconText);
 
     if (rect.isNull()) {
-        qWarning("Null rect for drawing icon %s", qPrintable(iconName));
+        qWarning("Null rect for drawing icon %s: %s", qPrintable(iconName), qPrintable(iconText));
         return;
     }
 
-    auto pixmap      = IconsetFactory::iconPixmap(iconName, rect.size().toSize());
-    auto alignedSize = rect.size().toSize();
-    if (alignedSize != pixmap.size()) {
-        pixmap = pixmap.scaled(alignedSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    // qDebug() << "render icon " << iconText << iconName << " in " << rect;
+    if (iconName.isEmpty()) {
+        auto font = charFormat.font();
+        font.setPixelSize(rect.height());
+        painter->setFont(font);
+        painter->drawText(rect, iconText);
+    } else {
+        auto pixmap      = IconsetFactory::iconPixmap(iconName, rect.size().toSize());
+        auto alignedSize = rect.size().toSize();
+        if (alignedSize != pixmap.size()) {
+            pixmap = pixmap.scaled(alignedSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        }
+        // qDebug() << "render icon " << iconName << " size " << pixmap.size() << " in " << rect;
+        painter->drawPixmap(rect, pixmap, pixmap.rect());
     }
-    // qDebug() << "render icon " << iconName << " size " << pixmap.size() << " in " << rect;
-    painter->drawPixmap(rect, pixmap, pixmap.rect());
 }
 #endif // WIDGET_PLUGIN
 
@@ -401,8 +454,9 @@ static QStringView preserveOriginalObjectReplacementCharacters(const QStringView
 static QString convertIconsToObjectReplacementCharacters(const QStringView &text, TextCharFormatQueue *queue,
                                                          int insertedAfter, const PsiRichText::ParsersMap &parsers)
 {
-    QString     result;
-    QStringView work(text);
+    QString            result;
+    QStringView        work(text);
+    static QStringList emojiFontFamilies = { "Apple Color Emoji", "Noto Color Emoji", "Segoe UI Emoji" };
 
     int start = -1;
     forever
@@ -413,9 +467,6 @@ static QString convertIconsToObjectReplacementCharacters(const QStringView &text
         if (work.mid(start + 1, 5) == QLatin1String { "icon " }) {
             // Format: <icon name="" text="">
             static QRegularExpression rxName("([a-z-]+)=\"([^\"]+)\"");
-            // static QRegularExpression rxText("text=\"([^\"]+)\"");
-            // static QRegularExpression rxSize("size=\"([^\"]+)\"");
-            // static QRegularExpression rxMaxSize("size=\"([^\"]+)\"");
 
             result += preserveOriginalObjectReplacementCharacters(work.left(start), queue);
 
@@ -432,6 +483,7 @@ static QString convertIconsToObjectReplacementCharacters(const QStringView &text
             std::optional<HtmlSize> maxHeight;
             QString                 iconName;
             QString                 iconText;
+            QString                 iconType;
 
             std::optional<QTextCharFormat::VerticalAlignment> valign;
 
@@ -470,13 +522,19 @@ static QString convertIconsToObjectReplacementCharacters(const QStringView &text
                     if (it != vaMap.end()) {
                         valign = *it;
                     }
+                } else if (match.capturedView(1) == QLatin1String("type")) {
+                    iconType = match.captured(2);
                 }
             }
 
-            if (!iconName.isEmpty()) {
-                queue->enqueue(new TextIconFormat(iconName, iconText, std::move(width), std::move(height),
-                                                  std::move(minWidth), std::move(minHeight), std::move(maxWidth),
-                                                  std::move(maxHeight), std::move(valign)));
+            if (!iconName.isEmpty() || !iconText.isEmpty()) {
+                auto format = new TextIconFormat(iconName, iconText, std::move(width), std::move(height),
+                                                 std::move(minWidth), std::move(minHeight), std::move(maxWidth),
+                                                 std::move(maxHeight), std::move(valign));
+                if (iconType == QLatin1String("smiley") && iconName.isEmpty()) {
+                    format->setFontFamilies(emojiFontFamilies);
+                }
+                queue->enqueue(format);
                 result += QChar::ObjectReplacementCharacter;
             }
 
