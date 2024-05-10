@@ -397,17 +397,17 @@ const Iconset *IconsetSelect::iconset() const
 
 QListWidgetItem *IconsetSelect::lastItem() const { return item(count() - 1); }
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 QStyleOptionViewItem IconsetSelect::viewOptions() const
 {
     QStyleOptionViewItem o;
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    initViewItemOption(&o);
-#else
-    o = QListWidget::viewOptions();
-#endif
+    o                        = QListWidget::viewOptions();
     o.showDecorationSelected = true;
     return o;
 }
+#else
+void IconsetSelect::initViewItemOption(QStyleOptionViewItem *option) const { option->showDecorationSelected = true; }
+#endif
 
 //----------------------------------------------------------------------------
 // IconsetDisplay
