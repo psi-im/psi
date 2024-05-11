@@ -22,27 +22,28 @@ a:hover { cursor:pointer; }
 .sent {}
 .received {}
 .infmsg {}
-.grmsg {border-top:1px dotted #ccc;}
+.grmsg { /*border-top:1px dotted #ccc;*/ padding-left:3.2em; }
 .usertext {}
 .alert {font-weight:bold; color:red;}
 
 .avmsg {
-    padding-left:39px;
+    padding-left:3.5em;
 }
 
 .avcont {
-    margin-left:-36px;
+    margin-left:-3.4em;
     display:inline-block;
-    padding-right:2px;
-    width:34px;
+    padding-right:0.3em;
+    width:3em;
     text-align:center;
     vertical-align:top;
-    margin-bottom:2px;
+    margin-bottom:0.3em;
     float:left;
 }
 
 .avcont img {
-    width: 34px;
+    width: 2.7em;
+    border-radius: 0.5em;
 }
 
 .ntcont {
@@ -54,6 +55,16 @@ a:hover { cursor:pointer; }
 .grtime {
     font-weight:bold;
     font-size:80%;
+    display: inline-block;
+    text-align: center;
+    color: gray;
+    width: 3.7em;
+    margin-left: -3.7em;
+}
+
+.trackbar {
+    border:1px solid black;
+    border-color:#bbb #666 #666 #bbb;
 }
   </style>
 </head>
@@ -118,20 +129,20 @@ function startPsiTheme(shared) {
         scroller : new chat.WindowScroller(true),
         groupping: true,
         templates : {
-            message: shared.isMuc?
-                "<div class='msg'>%icon%<span style='color:%nickcolor%'>[%time%] %sender%</span> %alertedmessage%%next%</div>"
-                : "<div class='msg avmsg'%receiptid%><div class='avcont'><img src='%avatarurl%' title='%time%'/></div><div class='ntcont'><span class='%sentrec%'>%sender%</span></div>%message%</div>%next%",
-            messageGroupping: shared.isMuc?null : "<div class='grmsg'%receiptid%><span class='grtime'>%time%</span> %message%</div>%next%",
-            messageNC: "<div class='%sentrec%'%receiptid%>%icon%[%time%] %sender% %message%</div>",
-            spooledMessage: "<div class='infmsg'>%icon%[%time%] %sender% %message%</div>",
+            message: "<div class='msg avmsg'%receiptid%><div class='avcont'><img src='%avatarurl%' title='%time%'/></div><div class='ntcont'>" + (
+                shared.isMuc? "<span style='color:%nickcolor%'>%sender%</span>" : "<span class='%sentrec%'>%sender%</span>") +
+                "</div>%message%</div>%next%",
+            messageGroupping: "<div class='grmsg'%receiptid%><span class='grtime'>%time%</span> %message%</div>%next%",
+            messageNC: "<div class='grmsg %sentrec%'%receiptid%><span class='grtime'>%time%</span>%icon% %sender% %message%</div>",
+            spooledMessage: "<div class='grmsg infmsg'><span class='grtime'>%time%</time>%icon% %sender% %message%</div>",
             sys: "<div class='infmsg'>%icon%%message%</div>",
-            sysMessage: "<div class='infmsg'>%icon%[%time%] *** %message%</div>",
-            sysMessageUT: "<div class='infmsg'>%icon%[%time%] *** %message%: <span class='usertext'>%usertext%</span></div>",
+            sysMessage: "<div class='grmsg infmsg'><span class='grtime'>%time%</time>%icon% *** %message%</div>",
+            sysMessageUT: "<div class='grmsg infmsg'><span class='grtime'>%time%</time>%icon% *** %message%: <span class='usertext'>%usertext%</span></div>",
             lastMsgDate: "<div class='infmsg'>%icon%*** %time{LL}%</div>",
             subject: shared.isMuc?
-                "<div class='infmsg'>%icon%[%time%] %message%<div class='usertext'><b>%usertext%</b></div></div>"
+                "<div class='grmsg infmsg'><span class='grtime'>%time%</span>%icon% %message%<div class='usertext'><b>%usertext%</b></div></div>"
                 : "<div class='infmsg'>%icon%<b>*** %usertext%</b></div>",
-            trackbar: '<hr style="height:1px; border:1px solid black; border-color:#bbf #66f #66f #bbf" />'
+            trackbar: '<hr class="trackbar" />'
         },
         dateFormat : "HH:mm",
         proxy : function() { //optional
@@ -156,7 +167,7 @@ function startPsiTheme(shared) {
                 nick = shared.cdata.mtype == "message" && shared.isMuc?
                     '<a onclick="psiimtheme.addNick(this)"'+
                     ' class="nicklink">'+nick+'</a>' : nick;
-                return shared.cdata["emote"]?"*"+nick:(shared.isMuc?"&lt;"+nick+"&gt;":nick+":");
+                return shared.cdata["emote"]?"*"+nick:(nick+":");
             },
             alertedmessage : function() {
                 var msg = shared.cdata.alert?"<span class='alert'>"+shared.cdata.message+"</span>":shared.cdata.message;
