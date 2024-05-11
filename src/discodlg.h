@@ -43,11 +43,11 @@ public:
 signals:
     void featureActivated(QString feature, Jid jid, QString node);
 
-public:
-    class Private;
-    friend class Private;
+private:
+    void connectAddressNodeSignals();
 
 private:
+    class Private;
     Private *d;
 };
 

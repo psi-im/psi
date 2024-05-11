@@ -65,7 +65,7 @@ class PsiPopupPlugin : public QObject, public PsiPopupPluginInterface {
 
 public:
     ~PsiPopupPlugin() override { PsiPopup::deleteAll(); }
-    QString            name() const override { return "Classic"; }
+    QString            name() const override { return QLatin1String("Classic"); }
     PsiPopupInterface *popup(QObject *p) override { return new PsiPopup(p); }
 };
 

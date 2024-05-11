@@ -871,11 +871,15 @@ public: // data
 
     int itemsPerPage;
 
+    QString addressLastText;
+    QString nodeLastText;
+
 public: // functions
     Private(DiscoDlg *parent, PsiAccount *pa);
     ~Private();
 
 public slots:
+    void doDiscoUserInput();
     void doDisco(QString host = QString(), QString node = QString(), bool doHistory = true);
 
     void actionStop();
@@ -1021,6 +1025,12 @@ DiscoDlg::Private::~Private()
     delete data.tasks;
 }
 
+void DiscoDlg::Private::doDiscoUserInput() {
+    addressLastText = dlg->cb_address->currentText();
+    nodeLastText = dlg->cb_node->currentText().trimmed();
+    doDisco(addressLastText, nodeLastText, true);
+}
+
 void DiscoDlg::Private::doDisco(QString _host, QString _node, bool doHistory)
 {
     PsiAccount *pa = data.pa;
@@ -1030,16 +1040,11 @@ void DiscoDlg::Private::doDisco(QString _host, QString _node, bool doHistory)
     // Strip whitespace
     Jid     j;
     QString host = _host;
-    if (host.isEmpty())
-        host = dlg->cb_address->currentText();
     j = host.trimmed();
     if (!j.isValid())
         return;
 
     QString n = _node.trimmed();
-    if (n.isEmpty())
-        n = dlg->cb_node->currentText().trimmed();
-
     // check, whether we need to update history
     if ((jid.full() != j.full()) || (node != n)) {
         if (doHistory) {
@@ -1076,8 +1081,10 @@ void DiscoDlg::Private::doDisco(QString _host, QString _node, bool doHistory)
 
 void DiscoDlg::Private::updateComboBoxes(Jid j, QString n)
 {
-    dlg->cb_address->blockSignals(true);
-    dlg->cb_node->blockSignals(true);
+    dlg->cb_address->disconnect(this);
+    dlg->cb_node->disconnect(this);
+    dlg->cb_address->lineEdit()->disconnect(this);
+    dlg->cb_node->lineEdit()->disconnect(this);
 
     data.pa->psi()->recentBrowseAdd(j.full());
     dlg->cb_address->clear();
@@ -1087,8 +1094,7 @@ void DiscoDlg::Private::updateComboBoxes(Jid j, QString n)
     dlg->cb_node->clear();
     dlg->cb_node->addItems(data.pa->psi()->recentNodeList());
 
-    dlg->cb_address->blockSignals(false);
-    dlg->cb_node->blockSignals(false);
+    dlg->connectAddressNodeSignals();
 }
 
 void DiscoDlg::Private::actionStop() { data.tasks->clear(); }
@@ -1381,7 +1387,7 @@ DiscoDlg::DiscoDlg(PsiAccount *pa, const Jid &jid, const QString &node) : QDialo
     setWindowIcon(PsiIconset::instance()->transportStatus("transport", STATUS_ONLINE).icon());
     X11WM_CLASS("disco");
 
-    connect(pb_browse, SIGNAL(clicked()), d, SLOT(doDisco()));
+    connect(pb_browse, SIGNAL(clicked()), d, SLOT(doDiscoUserInput()));
     pb_browse->setDefault(false);
     pb_browse->setAutoDefault(false);
 
@@ -1391,21 +1397,14 @@ DiscoDlg::DiscoDlg(PsiAccount *pa, const Jid &jid, const QString &node) : QDialo
 
     cb_address->addItems(pa->psi()->recentBrowseList()); // FIXME
     cb_address->setFocus();
-    connect(cb_address->lineEdit(), &QLineEdit::editingFinished, d,
-            [this]() { d->doDisco(cb_address->currentText(), cb_node->currentText()); });
-    connect(cb_address, qOverload<int>(&QComboBox::currentIndexChanged), d,
-            [this](int) { d->doDisco(cb_address->currentText(), cb_node->currentText()); });
     cb_address->setEditText(d->jid.full());
 
     cb_node->addItems(pa->psi()->recentNodeList());
-    connect(cb_node->lineEdit(), &QLineEdit::editingFinished, d,
-            [this]() { d->doDisco(cb_address->currentText(), cb_node->currentText()); });
-    connect(cb_node, qOverload<int>(&QComboBox::currentIndexChanged), d,
-            [this](int) { d->doDisco(cb_address->currentText(), cb_node->currentText()); });
     cb_node->setCurrentIndex(cb_node->findText(node));
 
+    //connectAddressNodeSignals();
     if (pa->loggedIn())
-        doDisco();
+        d->doDiscoUserInput();
 }
 
 DiscoDlg::~DiscoDlg()
@@ -1418,6 +1417,34 @@ DiscoDlg::~DiscoDlg()
                                       bool(ck_autoItems->isChecked()));
     PsiOptions::instance()->setOption("options.ui.service-discovery.automatically-get-info",
                                       bool(ck_autoInfo->isChecked()));
+}
+
+void DiscoDlg::connectAddressNodeSignals() {
+    connect(cb_address->lineEdit(), &QLineEdit::editingFinished, d,
+            [this]() {
+                if (cb_address->currentText() != d->addressLastText) {
+                    d->doDiscoUserInput();
+                }
+        });
+    connect(cb_address, qOverload<int>(&QComboBox::currentIndexChanged), d,
+            [this](int) {
+                if (cb_address->currentText() != d->addressLastText) {
+                    d->doDiscoUserInput();
+                }
+            });
+
+    connect(cb_node->lineEdit(), &QLineEdit::editingFinished, d,
+            [this]() {
+                if (cb_node->currentText() != d->nodeLastText) {
+                    d->doDiscoUserInput();
+                }
+            });
+    connect(cb_node, qOverload<int>(&QComboBox::currentIndexChanged), d,
+            [this](int) {
+                if (cb_node->currentText() != d->nodeLastText) {
+                    d->doDiscoUserInput();
+                }
+            });
 }
 
 void DiscoDlg::doDisco(QString host, QString node) { d->doDisco(host, node); }
