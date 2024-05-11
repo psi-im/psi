@@ -1,7 +1,6 @@
 #include "textutil.h"
 
 #include "coloropt.h"
-#include "common.h"
 #include "emojiregistry.h"
 #include "psiiconset.h"
 #include "psioptions.h"
