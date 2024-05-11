@@ -290,16 +290,12 @@ static void emojiconifyPlainText(RTParse &p, const QString &in)
     QStringView ref;
 
     auto dump_emoji = [&p, &emojisStartIdx, &in, &idx]() {
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         auto code = QStringView { in }.mid(emojisStartIdx, idx - emojisStartIdx).toString();
-#else
-        auto code = QStringView { in }.mid(emojisStartIdx, idx - emojisStartIdx);
-#endif
 #if defined(WEBKIT) || defined(WEBENGINE)
         p.putRich(QLatin1String(R"html(<span class="emojis">)html") + code + QLatin1String("</span>"));
 #else
         // FIXME custom style here is a hack. This supposed to be handled via style resource in PsiTextView
-        p.putRich(QString(R"(<icon text="%2" min-height="1.25em" max-height="1.7em" valign="bottom" type="smiley">)")
+        p.putRich(QString(R"(<icon text="%1" min-height="1.25em" max-height="1.7em" valign="bottom" type="smiley">)")
                       .arg(code));
 #endif
     };
