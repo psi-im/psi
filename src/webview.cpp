@@ -53,7 +53,9 @@ WebView::WebView(QWidget *parent) :
     setAcceptDrops(false);
 
 #ifdef WEBENGINE
-    // setAttribute(Qt::WA_NativeWindow);  // see https://bugreports.qt.io/browse/QTBUG-119221 (potentially unstable)
+#ifdef Q_OS_WIN
+    setAttribute(Qt::WA_NativeWindow); // see https://bugreports.qt.io/browse/QTBUG-119221 (potentially unstable)
+#endif
     settings()->setAttribute(QWebEngineSettings::PluginsEnabled, false);
     settings()->setAttribute(QWebEngineSettings::LocalStorageEnabled, false);
     // TODO cache cotrol
