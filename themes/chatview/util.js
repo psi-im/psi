@@ -455,7 +455,7 @@ function initPsiTheme() {
 
             nickColor : function(nick) {
                 var u = usersMap[nick];
-                return u && u.nickcolor;
+                return u && u.nickcolor || "#888";
             },
 
             replaceableMessage : function(isMuc, isLocal, nick, msgId, text) {

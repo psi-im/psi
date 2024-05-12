@@ -28,13 +28,13 @@ a:hover { cursor:pointer; }
     float: right;
 }
 
-.msg { padding-left:3.2em; border-top: 1px solid #ddd; }
+.msg { padding-left:3.2em; }
 .grmsg {  }
 .usertext { }
 .alert {font-weight:bold; color:red;}
 
 .avmsg {
-
+    border-top: 1px dotted #ddd;
 }
 
 img.avatar {
@@ -136,13 +136,9 @@ function startPsiTheme(shared) {
         templates : {
             message: "<div class='msg avmsg'%receiptid%><img class='avatar' src='%avatarurl%' title='%sender%'/><div class='ntcont'>" + (
                 shared.isMuc? "<span style='color:%nickcolor%'>%sender%</span>" : "<span class='%sentrec%'>%sender%</span>") +
-                "<span class='msgtime'>%time%</span></div>%message%</div>%next%",
-            messageGroupping: "<div class='msg grmsg'%receiptid%><span class='msgtime'>%time%</span> %message%</div>%next%",
-
+                "<span class='msgtime'>%time%</span></div>%alertedmessage%</div>%next%",
+            messageGroupping: "<div class='msg grmsg'%receiptid%><span class='msgtime'>%time%</span>%alertedmessage%</div>%next%",
             messageNC: "<div class='msg %sentrec%'%receiptid%><span class='msgtime'>%time%</span>%icon% %sender% %message%</div>",
-
-            //spooledMessage: "<div class='msg infmsg'><span class='msgtime'>%time%</span>%icon% %sender% %message%</div>",
-
             sys: "<div class='msg infmsg'>%icon%%message%</div>",
             sysMessage: "<div class='msg infmsg'><span class='msgtime'>%time%</span><div id='info'>%icon% %message%</div></div>",
             sysMessageUT: "<div class='msg infmsg'><span class='msgtime'>%time%</span><div id='info'>%icon% %message%:</div> <div class='usertext'>%usertext%</div></div>",
@@ -155,8 +151,8 @@ function startPsiTheme(shared) {
         dateFormat : "HH:mm",
         proxy : function() { //optional
             if (shared.cdata.mtype == "message") {
-                return shared.cdata.emote && shared.templates.messageNC ||
-                    (shared.cdata.spooled && shared.templates.message || null);
+                return shared.cdata.emote && shared.templates.messageNC || null;
+                    //(shared.cdata.spooled && shared.templates.message || null);
             }
             if (shared.cdata.type == "settings") {
                 applyPsiSettings();
