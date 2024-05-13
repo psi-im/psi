@@ -405,7 +405,7 @@ void TabBar::Private::layoutTabs()
             } else {
                 if (j < endTab - 1) {
                     currentRowWidth += tabWidth;
-                    tab.position = QStyleOptionTab::Beginning;
+                    tab.position = QStyleOptionTab::Middle;
                 } else {
                     tab.position = QStyleOptionTab::End;
 

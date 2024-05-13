@@ -477,6 +477,17 @@ if(APPLE)
     target_link_libraries(${PROJECT_NAME} CocoaUtilities)
 endif()
 
+if(LINUX)
+    if(NOT VERBOSED_NAME)
+        set(VERBOSED_NAME ${PROJECT_NAME})
+    endif()
+    target_compile_definitions(${PROJECT_NAME} PRIVATE
+        HAVE_FREEDESKTOP
+        APP_PREFIX=${CMAKE_INSTALL_PREFIX}
+        APP_BIN_NAME=${VERBOSED_NAME}
+    )
+endif()
+
 #Pre-install section
 set(OTHER_FILES
     ${PROJECT_SOURCE_DIR}/certs

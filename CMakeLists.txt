@@ -200,11 +200,6 @@ if(UNIX AND NOT (APPLE OR HAIKU))
             message(STATUS "Xscreensaver support - ENABLED")
         endif()
     endif()
-    add_definitions(
-        -DHAVE_FREEDESKTOP
-        -DAPP_PREFIX=${CMAKE_INSTALL_PREFIX}
-        -DAPP_BIN_NAME=${PROJECT_NAME}
-    )
     if(USE_DBUS)
         message(STATUS "DBus support - ENABLED")
     endif()
