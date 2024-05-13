@@ -50,7 +50,9 @@
 #include "statusdlg.h"
 #include "tabdlg.h"
 #include "tabmanager.h"
+#if defined(Q_OS_WINDOWS) || defined(USE_DBUS)
 #include "taskbarnotifier.h"
+#endif
 #include "textutil.h"
 
 #include <QApplication>
@@ -118,16 +120,18 @@ public:
 #ifdef Q_OS_MAC
     QMenu *dockMenu;
 #endif
-    QVBoxLayout     *vb_roster;
-    QSplitter       *splitter;
-    TabDlg          *mainTabs;
-    QString          statusTip;
-    PsiToolBar      *viewToolBar;
+    QVBoxLayout *vb_roster;
+    QSplitter   *splitter;
+    TabDlg      *mainTabs;
+    QString      statusTip;
+    PsiToolBar  *viewToolBar;
+#if defined(Q_OS_WINDOWS) || defined(USE_DBUS)
     TaskBarNotifier *taskBarNotifier;
-    int              tabsSize;
-    int              rosterSize;
-    bool             isLeftRoster;
-    bool             allInOne;
+#endif
+    int  tabsSize;
+    int  rosterSize;
+    bool isLeftRoster;
+    bool allInOne;
 
     PopupAction         *optionsButton, *statusButton;
     IconActionGroup     *statusGroup, *viewGroups;
@@ -176,7 +180,10 @@ MainWin::Private::Private(PsiCon *_psi, MainWin *_mainWin) :
 #ifdef Q_OS_MAC
     dockMenu(nullptr),
 #endif
-    vb_roster(nullptr), splitter(nullptr), mainTabs(nullptr), viewToolBar(nullptr), taskBarNotifier(nullptr),
+    vb_roster(nullptr), splitter(nullptr), mainTabs(nullptr), viewToolBar(nullptr),
+#if defined(Q_OS_WINDOWS) || defined(USE_DBUS)
+    taskBarNotifier(nullptr),
+#endif
     tabsSize(0), rosterSize(0), isLeftRoster(false), psi(_psi), mainWin(_mainWin), rosterAvatar(nullptr),
     searchText(nullptr), searchPb(nullptr), searchWidget(nullptr), hideTimer(nullptr), nextAnim(nullptr), nextAmount(0),
     lastStatus(0), rosterWidget_(nullptr)
@@ -541,8 +548,9 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
     optionChanged("options.ui.contactlist.css");
 
     reinitAutoHide();
-
+#if defined(Q_OS_WINDOWS) || defined(USE_DBUS)
     d->taskBarNotifier = new TaskBarNotifier(this, ApplicationInfo::desktopFileBaseName());
+#endif
 }
 
 MainWin::~MainWin()
@@ -1629,13 +1637,17 @@ void MainWin::updateReadNext(PsiIcon *anim, int amount)
         d->eventNotifier->hide();
         d->eventNotifier->setText("");
         d->eventNotifier->setPsiIcon("");
+#if defined(Q_OS_WINDOWS) || defined(USE_DBUS)
         d->taskBarNotifier->removeIconCountCaption();
+#endif
     } else {
         d->eventNotifier->setPsiIcon(anim);
         d->eventNotifier->setText(QString("<b>") + numEventsString(d->nextAmount) + "</b>");
         d->eventNotifier->show();
+#if defined(Q_OS_WINDOWS) || defined(USE_DBUS)
         PsiIcon *icon = const_cast<PsiIcon *>(PsiIconset::instance()->system().icon("logo_128"));
         d->taskBarNotifier->setIconCounCaption(icon, d->nextAmount);
+#endif
     }
 
     updateTray();
