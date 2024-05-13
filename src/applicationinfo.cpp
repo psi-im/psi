@@ -83,7 +83,8 @@ QStringList ApplicationInfo::getCertificateStoreDirs()
 #if defined(Q_OS_LINUX) && defined(SHARE_SUFF)
         additionalPath,
 #endif
-        ApplicationInfo::resourcesDir() + "/certs", ApplicationInfo::homeDir(ApplicationInfo::DataLocation) + "/certs"
+        ApplicationInfo::resourcesDir() + "/certs",
+        ApplicationInfo::homeDir(ApplicationInfo::DataLocation) + "/certs"
     };
     return dirs;
 }
@@ -100,7 +101,10 @@ QStringList ApplicationInfo::dataDirs()
 #if defined(Q_OS_LINUX) && defined(SHARE_SUFF)
         additionalPath,
 #endif
-        ":", ".", homeDir(DataLocation), resourcesDir()
+        ":",
+        ".",
+        homeDir(DataLocation),
+        resourcesDir()
     };
     return dirs;
 }
@@ -117,7 +121,8 @@ QStringList ApplicationInfo::pluginDirs()
 #if defined(Q_OS_LINUX) && defined(SHARE_SUFF)
         additionalPath,
 #endif
-        ApplicationInfo::resourcesDir() + "/plugins", homeDir(ApplicationInfo::DataLocation) + "/plugins",
+        ApplicationInfo::resourcesDir() + "/plugins",
+        homeDir(ApplicationInfo::DataLocation) + "/plugins",
         libDir() + "/plugins"
     };
     return dirs;
@@ -143,9 +148,9 @@ QString ApplicationInfo::resourcesDir()
     // System routine locates resource files. We "know" that Psi.icns is
     // in the Resources directory.
     QString     resourcePath;
-    CFBundleRef mainBundle = CFBundleGetMainBundle();
+    CFBundleRef mainBundle          = CFBundleGetMainBundle();
 #ifdef PSI_PLUS
-    const char *appIconName = "application-plus.icns";
+    const char *appIconName         = "application-plus.icns";
 #else
     const char *appIconName = "application.icns";
 #endif
@@ -344,8 +349,12 @@ QString ApplicationInfo::desktopFileBaseName() { return QLatin1String(xstr(APP_B
 QString ApplicationInfo::desktopFile()
 {
     QString dFile;
-    auto    _desktopFile = QString(xstr(APP_PREFIX) "/share/applications/") + desktopFileBaseName();
-    QFile   f(_desktopFile);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    auto _desktopFile = QString(xstr(APP_PREFIX) "/share/applications/") + desktopFileBaseName();
+#else
+    auto _desktopFile = QString(xstr(APP_PREFIX) "/share/applications/") + desktopFileBaseName() + ".desktop";
+#endif
+    QFile f(_desktopFile);
     if (f.open(QIODevice::ReadOnly)) {
         dFile = QString::fromUtf8(f.readAll());
     }
