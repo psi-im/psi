@@ -87,9 +87,9 @@ bool TaskBarNotifier::Private::sendDBusSignal(bool isVisible, uint number)
 void TaskBarNotifier::Private::setDesktopPath(const QString &appName)
 {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    desktopPath_ = QLatin1String("application://%1.desktop").arg(appName);
-#else
     desktopPath_ = QLatin1String("application://%1").arg(appName);
+#else
+    desktopPath_ = QLatin1String("application://%1.desktop").arg(appName);
 #endif
 }
 
