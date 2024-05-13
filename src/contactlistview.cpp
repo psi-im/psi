@@ -27,6 +27,7 @@
 #include "psioptions.h"
 #include "psitooltip.h"
 
+#include <QApplication>
 #include <QContextMenuEvent>
 #include <QCoreApplication>
 #include <QHeaderView>
