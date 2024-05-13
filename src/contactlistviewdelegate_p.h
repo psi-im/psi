@@ -77,16 +77,32 @@ public:
     int statusIconSize_;
     int avatarRadius_;
 
-    QTimer      *alertTimer_;
-    QTimer      *animTimer;
-    QFont        font_, statusFont_;
-    QFontMetrics fontMetrics_, statusFontMetrics_;
-    bool         statusSingle_;
-    bool         showStatusMessages_, slimGroup_, outlinedGroup_, showClientIcons_, showMoodIcons_, showActivityIcons_,
-        showGeolocIcons_, showTuneIcons_;
-    bool showAvatars_, useDefaultAvatar_, avatarAtLeft_, showStatusIcons_, statusIconsOverAvatars_;
-    bool enableGroups_, allClients_;
-    bool animPhase;
+    QTimer *alertTimer_ = nullptr;
+    QTimer *animTimer   = nullptr;
+    QFont   font_;
+    QFont   statusFont_;
+
+    QFontMetrics fontMetrics_;
+    QFontMetrics statusFontMetrics_;
+
+    bool statusSingle_           = false;
+    bool showStatusMessages_     = false;
+    bool slimGroup_              = false;
+    bool outlinedGroup_          = false;
+    bool showClientIcons_        = false;
+    bool showMoodIcons_          = false;
+    bool showActivityIcons_      = false;
+    bool showGeolocIcons_        = false;
+    bool showTuneIcons_          = false;
+    bool showAvatars_            = false;
+    bool useDefaultAvatar_       = false;
+    bool avatarAtLeft_           = false;
+    bool showStatusIcons_        = false;
+    bool statusIconsOverAvatars_ = false;
+    bool enableGroups_           = false;
+    bool allClients_             = false;
+    bool animPhase               = false;
+
     mutable QSet<QPersistentModelIndex> alertingIndexes;
     mutable QSet<QPersistentModelIndex> animIndexes;
 
@@ -98,8 +114,10 @@ public:
     QColor _animation1Color;
     QColor _animation2Color;
     QColor _statusMessageColor;
-    QColor _headerBackgroundColor;
-    QColor _headerForegroundColor;
+    QColor _accountHeaderBackgroundColor;
+    QColor _accountHeaderForegroundColor;
+    QColor _groupHeaderBackgroundColor;
+    QColor _groupHeaderForegroundColor;
 
     // Geometry
     QRect contactBoundingRect_;
