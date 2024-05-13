@@ -120,9 +120,11 @@ void ContactListView::updateContextMenu()
             contextMenu_ = createContextMenuFor(item);
             addContextMenuActions();
 
-            // see https://bugs.kde.org/show_bug.cgi?id=453532
-            contextMenu_->winId();
-            contextMenu_->windowHandle()->setTransientParent(window()->windowHandle());
+            if (qApp->platformName() == QLatin1String("wayland")) {
+                // see https://bugs.kde.org/show_bug.cgi?id=453532
+                contextMenu_->winId();
+                contextMenu_->windowHandle()->setTransientParent(window()->windowHandle());
+            }
         }
     }
 }
