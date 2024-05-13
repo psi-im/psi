@@ -1638,15 +1638,16 @@ void MainWin::updateReadNext(PsiIcon *anim, int amount)
         d->eventNotifier->setText("");
         d->eventNotifier->setPsiIcon("");
 #if defined(Q_OS_WINDOWS) || defined(USE_DBUS)
-        d->taskBarNotifier->removeIconCountCaption();
+        if (d->taskBarNotifier->isActive())
+            d->taskBarNotifier->removeIconCountCaption();
 #endif
     } else {
         d->eventNotifier->setPsiIcon(anim);
         d->eventNotifier->setText(QString("<b>") + numEventsString(d->nextAmount) + "</b>");
         d->eventNotifier->show();
 #if defined(Q_OS_WINDOWS) || defined(USE_DBUS)
-        PsiIcon *icon = const_cast<PsiIcon *>(PsiIconset::instance()->system().icon("logo_128"));
-        d->taskBarNotifier->setIconCounCaption(icon, d->nextAmount);
+        d->taskBarNotifier->setIconCounCaption(
+            PsiIconset::instance()->system().icon("psi/logo_128")->image({ 128, 128 }), d->nextAmount);
 #endif
     }
 

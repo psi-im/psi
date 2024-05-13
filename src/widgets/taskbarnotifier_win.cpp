@@ -127,7 +127,8 @@ void TaskBarNotifier::Private::doFlashTaskbarIcon()
     FlashWindowEx(&fi);
 }
 
-TaskBarNotifier::TaskBarNotifier(QWidget *parent, const QString &desktopfile) : count_(0), icon_(nullptr)
+TaskBarNotifier::TaskBarNotifier(QWidget *parent, const QString &desktopfile) :
+    count_(0), icon_(nullptr), active_(false)
 {
     Q_UNUSED(desktopfile);
     d         = new Private(this);
@@ -136,17 +137,25 @@ TaskBarNotifier::TaskBarNotifier(QWidget *parent, const QString &desktopfile) : 
     d->setDevicePixelRatio(parent->devicePixelRatio());
 }
 
-void TaskBarNotifier::setIconCounCaption(PsiIcon *icon, uint count)
+TaskBarNotifier::~TaskBarNotifier()
 {
-    icon_ = icon;
+    delete icon_;
+    delete d;
+}
+
+void TaskBarNotifier::setIconCounCaption(const QImage &icon, uint count)
+{
+    icon_ = new QImage(icon);
     d->setUrgent(true);
-    d->setParentIcon(icon->image(), count);
+    d->setParentIcon(icon, count);
+    active_ = true;
 }
 
 void TaskBarNotifier::removeIconCountCaption()
 {
     d->setUrgent(false);
-    d->setParentIcon(icon_->image(), 0);
+    d->setParentIcon(*icon_, 0);
     d->doFlashTaskbarIcon();
+    active_ = false;
 }
 #endif

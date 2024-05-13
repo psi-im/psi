@@ -20,23 +20,25 @@
 #ifndef TASKBARNOTIFIER_H
 #define TASKBARNOTIFIER_H
 
-#include "iconset.h"
 #include <QWidget>
 
 class QString;
+class QImage;
 
 class TaskBarNotifier {
 public:
     explicit TaskBarNotifier(QWidget *parent = nullptr, const QString &desktopfile = nullptr);
     ~TaskBarNotifier();
-    void setIconCounCaption(PsiIcon *icon, uint count);
+    void setIconCounCaption(const QImage &icon, uint count);
     void removeIconCountCaption();
+    bool isActive() { return active_; };
 
 private:
     class Private;
     Private *d;
     uint     count_;
-    PsiIcon *icon_;
+    QImage  *icon_;
+    bool     active_;
 };
 
 #endif // TASKBARNOTIFIER_H

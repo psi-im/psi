@@ -93,7 +93,8 @@ void TaskBarNotifier::Private::setDesktopPath(const QString &appName)
 #endif
 }
 
-TaskBarNotifier::TaskBarNotifier(QWidget *parent, const QString &desktopfile) : count_(0)
+TaskBarNotifier::TaskBarNotifier(QWidget *parent, const QString &desktopfile) :
+    count_(0), icon_(nullptr), active_(false)
 {
     Q_UNUSED(parent)
     d = new Private(this);
@@ -102,16 +103,18 @@ TaskBarNotifier::TaskBarNotifier(QWidget *parent, const QString &desktopfile) : 
 
 TaskBarNotifier::~TaskBarNotifier() { delete d; }
 
-void TaskBarNotifier::setIconCounCaption(PsiIcon *icon, uint count)
+void TaskBarNotifier::setIconCounCaption(const QImage &icon, uint count)
 {
     Q_UNUSED(icon);
     d->setUrgent(true);
     d->sendDBusSignal(true, count);
+    active_ = true;
 }
 
 void TaskBarNotifier::removeIconCountCaption()
 {
     d->setUrgent(false);
     d->sendDBusSignal(false, 0);
+    active_ = false;
 }
 #endif
