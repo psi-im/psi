@@ -304,6 +304,18 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
         ur.setStatus(pa->gcContactStatus(j));
         d->userListItem->userResourceList().append(ur);
         d->userListItem->setAvatarFactory(pa->avatarFactory());
+        connect(d->pa->client(), &XMPP::Client::groupChatPresence, this, [this](const Jid &j, const Status &s) {
+            if (d->jid.compare(j, true)) {
+                UserResource ur;
+                ur.setName(j.resource());
+                ur.setStatus(s);
+                UserResourceList url;
+                url.append(ur);
+                d->userListItem->userResourceList() = url;
+                updateStatus();
+                requestResourceInfo(j);
+            }
+        });
     } else {
         d->userListItem = nullptr;
     }
