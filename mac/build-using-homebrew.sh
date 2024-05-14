@@ -60,7 +60,7 @@ BUILD_OPTIONS="-DCMAKE_BUILD_TYPE=Release \
                -DBUILD_PSIMEDIA=${ENABLE_PSIMEDIA} \
                -DENABLE_PLUGINS=${ENABLE_PLUGINS} \
                -DUSE_HUNSPELL=ON \
-               -DUSE_KEYCHAIN=ON \
+               -DUSE_KEYCHAIN=OFF \
                -DUSE_SPARKLE=OFF \
                -DBUNDLED_QCA=ON \
                -DBUNDLED_USRSCTP=ON \
