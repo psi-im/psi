@@ -1648,12 +1648,12 @@ void MainWin::updateReadNext(PsiIcon *anim, int amount)
         d->eventNotifier->show();
 #ifdef USE_TASKBARNOTIFIER
         d->taskBarNotifier->setIconCounCaption(
+            d->nextAmount
 #ifdef Q_OS_WINDOWS
-            PsiIconset::instance()->system().icon("psi/logo_128")->image({ 128, 128 }),
-#else
-            QImage(),
+            ,
+            PsiIconset::instance()->system().icon("psi/logo_128")->image({ 128, 128 })
 #endif
-            d->nextAmount);
+        );
 #endif
     }
 

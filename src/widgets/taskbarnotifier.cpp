@@ -223,7 +223,7 @@ TaskBarNotifier::~TaskBarNotifier()
     delete d;
 }
 
-void TaskBarNotifier::setIconCounCaption(const QImage &icon, uint count)
+void TaskBarNotifier::setIconCounCaption(uint count, const QImage &icon)
 {
     d->setUrgent(true);
 #ifdef USE_DBUS

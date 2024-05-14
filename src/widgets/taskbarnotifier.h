@@ -29,7 +29,7 @@ class TaskBarNotifier {
 public:
     explicit TaskBarNotifier(QWidget *parent = nullptr, const QString &desktopfile = nullptr);
     ~TaskBarNotifier();
-    void setIconCounCaption(const QImage &icon, uint count);
+    void setIconCounCaption(uint count, const QImage &icon = QImage());
     void removeIconCountCaption();
     bool isActive() { return active_; };
 
