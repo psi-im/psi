@@ -32,6 +32,7 @@
 #ifdef WEBENGINE
 #include <QWebEngineSettings>
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include "iconset.h"
 #include <QWebEngineContextMenuRequest>
 #elif QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
 #include <QWebEngineContextMenuData>

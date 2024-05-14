@@ -25,6 +25,7 @@
 #include "coloropt.h"
 #include "common.h"
 #include "jsutil.h"
+#include "networkaccessmanager.h"
 #include "psicon.h"
 #include "psioptions.h"
 #include "theme_p.h"

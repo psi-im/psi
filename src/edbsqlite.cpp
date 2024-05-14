@@ -414,11 +414,11 @@ bool EDBSqLite::appendEvent(const QString &accId, const XMPP::Jid &jid, const Ps
         MessageEvent::Ptr me = e.staticCast<MessageEvent>();
         const Message    &m  = me->message();
         dTime                = m.timeStamp();
-        if (m.type() == "chat")
+        if (m.type() == Message::Type::Chat)
             nType = 1;
-        else if (m.type() == "error")
+        else if (m.type() == Message::Type::Error)
             nType = 4;
-        else if (m.type() == "headline")
+        else if (m.type() == Message::Type::Headline)
             nType = 5;
 
     } else if (e->type() == PsiEvent::Auth) {
@@ -498,13 +498,13 @@ PsiEvent::Ptr EDBSqLite::getEvent(const QSqlRecord &record)
         Message m;
         m.setTimeStamp(record.value("date").toDateTime());
         if (type == 1)
-            m.setType("chat");
+            m.setType(Message::Type::Chat);
         else if (type == 4)
-            m.setType("error");
+            m.setType(Message::Type::Error);
         else if (type == 5)
-            m.setType("headline");
+            m.setType(Message::Type::Headline);
         else
-            m.setType("");
+            m.setType(Message::Type::Normal);
         m.setFrom(Jid(record.value("jid").toString()));
         QVariant text = record.value("m_text");
         if (!text.isNull()) {

@@ -187,7 +187,7 @@ int MessageEvent::type() const { return Message; }
 Jid MessageEvent::from() const
 {
 #ifdef GROUPCHAT
-    if (v_m.type() == "groupchat")
+    if (v_m.type() == Message::Type::Groupchat)
         return v_m.from().bare();
 #endif
     return v_m.carbonDirection() == XMPP::Message::Sent ? v_m.to() : v_m.from();
@@ -248,9 +248,9 @@ bool MessageEvent::fromXml(PsiCon *psi, PsiAccount *account, const QDomElement *
 
 int MessageEvent::priority() const
 {
-    if (v_m.type() == "headline")
+    if (v_m.type() == Message::Type::Headline)
         return eventPriorityHeadline;
-    else if (v_m.type() == "chat")
+    else if (v_m.type() == Message::Type::Chat)
         return eventPriorityChat;
 
     return eventPriorityMessage;
@@ -767,7 +767,7 @@ PsiEvent::Ptr EventQueue::peekFirstChat(const Jid &j, bool compareRes) const
         PsiEvent::Ptr e = i->event();
         if (e->type() == PsiEvent::Message) {
             MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-            if (j.compare(me->from(), compareRes) && me->message().type() == "chat")
+            if (j.compare(me->from(), compareRes) && me->message().type() == Message::Type::Chat)
                 return e;
         }
     }
@@ -788,7 +788,7 @@ void EventQueue::extractChats(QList<PsiEvent::Ptr> *el, const Jid &j, bool compa
         if (e->type() == PsiEvent::Message) {
             MessageEvent::Ptr me = e.staticCast<MessageEvent>();
             if (j.compare(me->from(), compareRes)
-                && me->message().type() == "chat") { // FIXME: refactor-refactor-refactor
+                && me->message().type() == Message::Type::Chat) { // FIXME: refactor-refactor-refactor
                 extract = true;
             }
         }

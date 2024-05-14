@@ -576,7 +576,7 @@ void PEPManager::get(const Jid &jid, const QString &node, const QString &id)
 
 void PEPManager::messageReceived(const Message &m)
 {
-    if (m.type() != "error") {
+    if (m.type() != Message::Type::Error) {
         const auto &psrItems = m.pubsubRetractions();
         for (const PubSubRetraction &i : psrItems) {
             emit itemRetracted(m.from(), m.pubsubNode(), i);

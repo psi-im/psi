@@ -855,9 +855,12 @@ QStringList PsiCon::xmppFatures() const
 #ifdef GROUPCHAT
                                          << "http://jabber.org/protocol/muc"
 #endif
-                                         << "http://jabber.org/protocol/mood" << "http://jabber.org/protocol/activity"
-                                         << "http://jabber.org/protocol/tune" << "http://jabber.org/protocol/geoloc"
-                                         << "urn:xmpp:avatar:data" << "urn:xmpp:avatar:metadata";
+                                         << "http://jabber.org/protocol/mood"
+                                         << "http://jabber.org/protocol/activity"
+                                         << "http://jabber.org/protocol/tune"
+                                         << "http://jabber.org/protocol/geoloc"
+                                         << "urn:xmpp:avatar:data"
+                                         << "urn:xmpp:avatar:metadata";
 
     static QList<OptFeatureMap> fmap = QList<OptFeatureMap>()
         << OptFeatureMap("options.service-discovery.last-activity", QStringList() << "jabber:iq:last")
@@ -1780,13 +1783,13 @@ void PsiCon::processEvent(const PsiEvent::Ptr &e, ActivationType activationType)
         MessageEvent::Ptr me = e.staticCast<MessageEvent>();
         const Message    &m  = me->message();
 #ifdef GROUPCHAT
-        if (m.type() == "groupchat") {
+        if (m.type() == Message::Type::Groupchat) {
             isMuc = true;
         } else {
 #endif
             bool emptyForm = m.getForm().fields().empty();
             // FIXME: Refactor this, PsiAccount and PsiEvent out
-            if (m.type() == "chat" && emptyForm) {
+            if (m.type() == Message::Type::Chat && emptyForm) {
                 isChat           = true;
                 sentToChatWindow = me->sentToChatWindow();
             }

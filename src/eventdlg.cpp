@@ -1315,9 +1315,9 @@ void EventDlg::doSend()
 
     Message m;
     if (d->cb_type->currentIndex() == 0)
-        m.setType("");
+        m.setType(Message::Type::Normal);
     else
-        m.setType("chat");
+        m.setType(Message::Type::Chat);
 
     m.setBody(d->mle->getPlainText());
     m.setSubject(d->le_subj->text());

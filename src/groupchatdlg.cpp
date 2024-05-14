@@ -521,7 +521,7 @@ public:
     void doFileShare(const QList<Reference> &refs, const QString &desc)
     {
         Message m(dlg->jid());
-        m.setType("groupchat");
+        m.setType(Message::Type::Groupchat);
         m.setReferences(refs);
         m.setBody(desc);
         emit dlg->aSend(m);
@@ -1439,7 +1439,7 @@ void GCMainDlg::mle_returnPressed()
         return;
 
     Message m(jid());
-    m.setType("groupchat");
+    m.setType(Message::Type::Groupchat);
     m.setBody(str);
     QString id = account()->client()->genUniqueId();
     m.setId(id); // we need id early for message manipulations in chatview
@@ -1499,7 +1499,7 @@ void GCMainDlg::openTopic()
 void GCMainDlg::sendNewTopic(const QMap<LanguageManager::LangId, QString> &topics)
 {
     Message m(jid());
-    m.setType("groupchat");
+    m.setType(Message::Type::Groupchat);
     for (auto it = topics.constBegin(); it != topics.constEnd(); ++it) {
         m.setSubject(it.value(), LanguageManager::toString(it.key()));
     }

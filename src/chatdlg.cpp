@@ -677,7 +677,7 @@ void ChatDlg::doSend()
     }
 
     Message m(jid());
-    m.setType("chat");
+    m.setType(Message::Type::Chat);
     m.setTimeStamp(QDateTime::currentDateTime());
     if (isPgpEncryptionEnabled()) {
         m.setWasEncrypted(true);
@@ -1040,7 +1040,7 @@ void ChatDlg::setChatState(ChatState state)
                     || (state == XMPP::StateComposing && lastChatState_ == XMPP::StateInactive)) {
                     // First go to the paused state
                     Message tm(jid());
-                    m.setType("chat");
+                    m.setType(Message::Type::Chat);
                     m.setChatState(XMPP::StatePaused);
                     if (account()->isAvailable()) {
                         account()->dj_sendMessage(m, false);
@@ -1051,7 +1051,7 @@ void ChatDlg::setChatState(ChatState state)
 
             // Send event message
             if (m.containsEvents() || m.chatState() != XMPP::StateNone) {
-                m.setType("chat");
+                m.setType(Message::Type::Chat);
                 if (account()->isAvailable()) {
                     account()->dj_sendMessage(m, false);
                 }
