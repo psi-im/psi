@@ -3,7 +3,7 @@
 # Authors: Boris Pek
 # License: Public Domain
 # Created: 2018-10-07
-# Updated: 2022-04-04
+# Updated: 2024-05-15
 # Version: N/A
 #
 # Description: script for building of app bundles for macOS
@@ -64,6 +64,7 @@ BUILD_OPTIONS="-DCMAKE_BUILD_TYPE=Release \
                -DUSE_SPARKLE=OFF \
                -DBUNDLED_QCA=ON \
                -DBUNDLED_USRSCTP=ON \
+               -DBUNDLED_OMEMO_C_ALL=ON \
                -DVERBOSE_PROGRAM_NAME=ON"
 
 mkdir -p "${MAIN_DIR}/builddir"
