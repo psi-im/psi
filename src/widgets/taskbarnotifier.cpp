@@ -1,5 +1,5 @@
 /*
- * taskbarnotifier_dbus.cpp - DBUS taskbar notifications class
+ * taskbarnotifier.cpp - Taskbar notifications class
  * Copyright (C) 2024  Vitaly Tonkacheyev
  *
  * This library is free software; you can redistribute it and/or
