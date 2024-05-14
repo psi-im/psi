@@ -2819,10 +2819,10 @@ void PsiAccount::wbRequest(const Jid &j, int id)
 void PsiAccount::processIncomingMessage(const Message &_m)
 {
     // skip empty messages, but not if the message contains a data form
-    if (_m.body().isEmpty() && _m.urlList().isEmpty() && _m.invite().isEmpty() && !_m.containsEvents()
-        && _m.chatState() == StateNone && _m.subject().isNull() && _m.rosterExchangeItems().isEmpty()
-        && _m.mucInvites().isEmpty() && _m.getForm().fields().empty() && _m.messageReceipt() == ReceiptNone
-        && _m.getMUCStatuses().isEmpty())
+    if (_m.type() != Message::Type::Error && _m.body().isEmpty() && _m.urlList().isEmpty() && _m.invite().isEmpty()
+        && !_m.containsEvents() && _m.chatState() == StateNone && _m.subject().isNull()
+        && _m.rosterExchangeItems().isEmpty() && _m.mucInvites().isEmpty() && _m.getForm().fields().empty()
+        && _m.messageReceipt() == ReceiptNone && _m.getMUCStatuses().isEmpty())
         return;
 
     // skip headlines?
@@ -2865,12 +2865,14 @@ void PsiAccount::processIncomingMessage(const Message &_m)
     }
 #endif
 
-    UserListItem *u = findFirstRelevant(_m.from());
-    if (u) {
-        if (_m.type() == Message::Type::Chat)
-            u->setLastMessageType(1);
-        else
-            u->setLastMessageType(0);
+    if (_m.type() != Message::Type::Error) {
+        UserListItem *u = findFirstRelevant(_m.from());
+        if (u) {
+            if (_m.type() == Message::Type::Chat)
+                u->setLastMessageType(1);
+            else
+                u->setLastMessageType(0);
+        }
     }
 
     Message m = _m;
