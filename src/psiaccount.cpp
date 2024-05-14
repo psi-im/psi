@@ -1531,9 +1531,12 @@ void PsiAccount::updateFeatures()
 #endif
 
 #ifdef USE_PEP
-    features << "http://jabber.org/protocol/mood" << "http://jabber.org/protocol/activity";
-    features << "http://jabber.org/protocol/tune" << "http://jabber.org/protocol/geoloc";
-    features << "urn:xmpp:avatar:data" << "urn:xmpp:avatar:metadata";
+    features << "http://jabber.org/protocol/mood"
+             << "http://jabber.org/protocol/activity";
+    features << "http://jabber.org/protocol/tune"
+             << "http://jabber.org/protocol/geoloc";
+    features << "urn:xmpp:avatar:data"
+             << "urn:xmpp:avatar:metadata";
 #endif
     if (AvCallManager::isSupported()) {
         features << "urn:xmpp:jingle:transports:ice-udp:1";
@@ -2823,7 +2826,8 @@ void PsiAccount::processIncomingMessage(const Message &_m)
         return;
 
     // skip headlines?
-    if (_m.type() == "headline" && PsiOptions::instance()->getOption("options.messages.ignore-headlines").toBool())
+    if (_m.type() == QLatin1String("headline")
+        && PsiOptions::instance()->getOption("options.messages.ignore-headlines").toBool())
         return;
 
     if (_m.getForm().registrarType() == "urn:xmpp:captcha") {
@@ -5112,7 +5116,7 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
         }
 
         // pass chat messages directly to a chat window if possible (and deal with sound)
-        else if (m.type() == "chat") {
+        else if (m.type() == QLatin1String("chat")) {
             Jid chatJid = m.carbonDirection() == Message::Sent ? m.to() : m.from();
 
             if (m.carbonDirection() == Message::Sent) {
@@ -5152,13 +5156,13 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
                 popupType = PopupManager::AlertChat;
             }
         } // /chat
-        else if (m.type() == "headline") {
+        else if (m.type() == QLatin1String("headline")) {
             soundType = eHeadline;
             doPopup   = true;
             popupType = PopupManager::AlertHeadline;
         } // /headline
 #ifdef GROUPCHAT
-        else if (m.type() == "groupchat") {
+        else if (m.type() == QLatin1String("groupchat")) {
             putToQueue          = false;
             bool allowMucEvents = o->getOption("options.ui.muc.allow-highlight-events").toBool();
             if (activationType != FromXml) {
