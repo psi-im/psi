@@ -1,5 +1,5 @@
 /*
- * taskbarnotifier_win.cpp - Windows taskbar notifications class
+ * taskbarnotifier_dbus.cpp - DBUS taskbar notifications class
  * Copyright (C) 2024  Vitaly Tonkacheyev
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,15 @@
 
 #include "taskbarnotifier.h"
 
-#ifdef Q_OS_WINDOWS
+#ifdef USE_DBUS
+#include <QDBusConnection>
+#include <QDBusConnectionInterface>
+#include <QDBusMessage>
+#include <QLatin1String>
+#include <QString>
+#include <QStringList>
+#include <QVariantMap>
+#elif defined(Q_OS_WINDOWS)
 #include <QImage>
 #include <QPaintDevice>
 #include <QPainter>
@@ -30,30 +38,95 @@
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 #include <QtWinExtras/qwinfunctions.h>
 #endif
+#endif
+
+#ifdef USE_DBUS
+// UnityLauncher dbus
+static const QLatin1String ULAUNCHER_SERV("com.canonical.Unity");
+static const QLatin1String ULAUNCHER_PATH("/");
+static const QLatin1String ULAUNCHER_IFACE("com.canonical.Unity.LauncherEntry");
+// UnityLauncher functions
+static const QLatin1String ULAUNCHER_CMD("Update");
+#endif
 
 class TaskBarNotifier::Private {
 public:
-    Private(TaskBarNotifier *base);
+    Private(TaskBarNotifier *);
 
+    void setUrgent(bool urgent) { urgent_ = urgent; };
+#ifdef USE_DBUS
+    bool checkDBusSeviceAvailable();
+    void sendDBusSignal(bool isVisible, uint number = 0);
+    void setDesktopPath(const QString &appName);
+#elif defined(Q_OS_WINDOWS)
     void   setParentHWND(HWND hwnd) { hwnd_ = hwnd; };
-    void   setUrgent(bool urgent) { urgent_ = urgent; };
     void   setParentIcon(const QImage &image, uint count);
-    QImage makeIconCaption(const QImage &image, const QString &number);
-    HICON  getHICONfromQImage(const QImage &image);
+    QImage makeIconCaption(const QImage &image, const QString &number) const;
+    HICON  getHICONfromQImage(const QImage &image) const;
     void   doFlashTaskbarIcon();
     void   setDevicePixelRatio(int ratio) { devicePixelRatio_ = ratio; };
-
-    TaskBarNotifier *tbn;
+#endif
 
 private:
     bool urgent_;
+#ifdef USE_DBUS
+    bool    isServiceAvailable_;
+    QString desktopPath_;
+#elif defined(Q_OS_WINDOWS)
     HWND hwnd_;
     int  devicePixelRatio_;
+#endif
 };
 
-TaskBarNotifier::Private::Private(TaskBarNotifier *base) : tbn(base), urgent_(false) { }
+TaskBarNotifier::Private::Private(TaskBarNotifier *) :
+    urgent_(false)
+#ifdef USE_DBUS
+    ,
+    isServiceAvailable_(false), desktopPath_(QLatin1String())
+{
+    isServiceAvailable_ = checkDBusSeviceAvailable();
+}
+#elif defined(Q_OS_WINDOWS)
+{
+}
+#endif
 
-QImage TaskBarNotifier::Private::makeIconCaption(const QImage &image, const QString &number)
+#ifdef USE_DBUS
+bool TaskBarNotifier::Private::checkDBusSeviceAvailable()
+{
+    const auto services = QDBusConnection::sessionBus().interface()->registeredServiceNames().value();
+    for (const auto &service : services) {
+        if (service.contains(ULAUNCHER_SERV, Qt::CaseInsensitive))
+            return true;
+    }
+    return false;
+}
+
+void TaskBarNotifier::Private::sendDBusSignal(bool isVisible, uint number)
+{
+    if (isServiceAvailable_) {
+        QDBusMessage signal = QDBusMessage::createSignal(ULAUNCHER_PATH, ULAUNCHER_IFACE, ULAUNCHER_CMD);
+        signal << desktopPath_;
+        QVariantMap args;
+        args["count-visible"] = isVisible;
+        args["count"]         = number;
+        args["urgent"]        = urgent_;
+        signal << args;
+        QDBusConnection::sessionBus().send(signal);
+    }
+}
+
+void TaskBarNotifier::Private::setDesktopPath(const QString &appName)
+{
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    desktopPath_ = QLatin1String("application://%1").arg(appName);
+#else
+    desktopPath_ = QLatin1String("application://%1.desktop").arg(appName);
+#endif
+}
+
+#elif defined(Q_OS_WINDOWS)
+QImage TaskBarNotifier::Private::makeIconCaption(const QImage &image, const QString &number) const
 {
     if (!image.isNull()) {
         auto   imSize    = image.size() * devicePixelRatio_;
@@ -103,7 +176,7 @@ void TaskBarNotifier::Private::setParentIcon(const QImage &image, uint count)
     doFlashTaskbarIcon();
 }
 
-HICON TaskBarNotifier::Private::getHICONfromQImage(const QImage &image)
+HICON TaskBarNotifier::Private::getHICONfromQImage(const QImage &image) const
 {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     auto p = QPixmap::fromImage(image);
@@ -126,36 +199,53 @@ void TaskBarNotifier::Private::doFlashTaskbarIcon()
     fi.dwTimeout = speed;
     FlashWindowEx(&fi);
 }
+#endif
 
 TaskBarNotifier::TaskBarNotifier(QWidget *parent, const QString &desktopfile) :
     count_(0), icon_(nullptr), active_(false)
 {
+    d = new Private(this);
+#ifdef USE_DBUS
+    Q_UNUSED(parent)
+    d->setDesktopPath(desktopfile);
+#elif defined(Q_OS_WINDOWS)
     Q_UNUSED(desktopfile);
-    d         = new Private(this);
     HWND hwnd = reinterpret_cast<HWND>(parent->winId());
     d->setParentHWND(hwnd);
     d->setDevicePixelRatio(parent->devicePixelRatio());
+#endif
 }
 
 TaskBarNotifier::~TaskBarNotifier()
 {
-    delete icon_;
+    if (icon_)
+        delete icon_;
     delete d;
 }
 
 void TaskBarNotifier::setIconCounCaption(const QImage &icon, uint count)
 {
+    d->setUrgent(true);
+#ifdef USE_DBUS
+    Q_UNUSED(icon);
+    d->sendDBusSignal(true, count);
+#elif defined(Q_OS_WINDOWS)
     icon_ = new QImage(icon);
     d->setUrgent(true);
     d->setParentIcon(icon, count);
+    active_ = true;
+#endif
     active_ = true;
 }
 
 void TaskBarNotifier::removeIconCountCaption()
 {
     d->setUrgent(false);
+#ifdef USE_DBUS
+    d->sendDBusSignal(false, 0);
+#elif defined(Q_OS_WINDOWS)
     d->setParentIcon(*icon_, 0);
     d->doFlashTaskbarIcon();
+#endif
     active_ = false;
 }
-#endif

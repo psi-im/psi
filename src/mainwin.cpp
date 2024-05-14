@@ -50,7 +50,7 @@
 #include "statusdlg.h"
 #include "tabdlg.h"
 #include "tabmanager.h"
-#if defined(Q_OS_WINDOWS) || defined(USE_DBUS)
+#ifdef USE_TASKBARNOTIFIER
 #include "taskbarnotifier.h"
 #endif
 #include "textutil.h"
@@ -125,9 +125,10 @@ public:
     TabDlg      *mainTabs;
     QString      statusTip;
     PsiToolBar  *viewToolBar;
-#if defined(Q_OS_WINDOWS) || defined(USE_DBUS)
+#ifdef USE_TASKBARNOTIFIER
     TaskBarNotifier *taskBarNotifier;
 #endif
+
     int  tabsSize;
     int  rosterSize;
     bool isLeftRoster;
@@ -181,7 +182,7 @@ MainWin::Private::Private(PsiCon *_psi, MainWin *_mainWin) :
     dockMenu(nullptr),
 #endif
     vb_roster(nullptr), splitter(nullptr), mainTabs(nullptr), viewToolBar(nullptr),
-#if defined(Q_OS_WINDOWS) || defined(USE_DBUS)
+#ifdef USE_TASKBARNOTIFIER
     taskBarNotifier(nullptr),
 #endif
     tabsSize(0), rosterSize(0), isLeftRoster(false), psi(_psi), mainWin(_mainWin), rosterAvatar(nullptr),
@@ -548,7 +549,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
     optionChanged("options.ui.contactlist.css");
 
     reinitAutoHide();
-#if defined(Q_OS_WINDOWS) || defined(USE_DBUS)
+#ifdef USE_TASKBARNOTIFIER
     d->taskBarNotifier = new TaskBarNotifier(this, ApplicationInfo::desktopFileBaseName());
 #endif
 }
@@ -1637,7 +1638,7 @@ void MainWin::updateReadNext(PsiIcon *anim, int amount)
         d->eventNotifier->hide();
         d->eventNotifier->setText("");
         d->eventNotifier->setPsiIcon("");
-#if defined(Q_OS_WINDOWS) || defined(USE_DBUS)
+#ifdef USE_TASKBARNOTIFIER
         if (d->taskBarNotifier->isActive())
             d->taskBarNotifier->removeIconCountCaption();
 #endif
@@ -1645,9 +1646,14 @@ void MainWin::updateReadNext(PsiIcon *anim, int amount)
         d->eventNotifier->setPsiIcon(anim);
         d->eventNotifier->setText(QString("<b>") + numEventsString(d->nextAmount) + "</b>");
         d->eventNotifier->show();
-#if defined(Q_OS_WINDOWS) || defined(USE_DBUS)
+#ifdef USE_TASKBARNOTIFIER
         d->taskBarNotifier->setIconCounCaption(
-            PsiIconset::instance()->system().icon("psi/logo_128")->image({ 128, 128 }), d->nextAmount);
+#ifdef Q_OS_WINDOWS
+            PsiIconset::instance()->system().icon("psi/logo_128")->image({ 128, 128 }),
+#else
+            QImage(),
+#endif
+            d->nextAmount);
 #endif
     }
 
