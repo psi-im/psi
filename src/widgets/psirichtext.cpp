@@ -348,7 +348,7 @@ QSizeF TextIconHandler::intrinsicSize(QTextDocument *doc, int posInDocument, con
             ret = desiredSize;
         }
     }
-    qDebug() << ret;
+    // qDebug() << ret;
     return ret;
 }
 
