@@ -550,7 +550,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
 
     reinitAutoHide();
 #ifdef USE_TASKBARNOTIFIER
-    d->taskBarNotifier = new TaskBarNotifier(this, ApplicationInfo::desktopFileBaseName());
+    d->taskBarNotifier = new TaskBarNotifier(this);
 #endif
 }
 
@@ -1647,7 +1647,7 @@ void MainWin::updateReadNext(PsiIcon *anim, int amount)
         d->eventNotifier->setText(QString("<b>") + numEventsString(d->nextAmount) + "</b>");
         d->eventNotifier->show();
 #ifdef USE_TASKBARNOTIFIER
-        d->taskBarNotifier->setIconCounCaption(
+        d->taskBarNotifier->setIconCountCaption(
             d->nextAmount
 #ifdef Q_OS_WINDOWS
             ,

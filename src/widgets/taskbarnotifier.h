@@ -20,25 +20,21 @@
 #ifndef TASKBARNOTIFIER_H
 #define TASKBARNOTIFIER_H
 
-#include <QWidget>
+#include <QImage>
+#include <memory>
 
-class QString;
-class QImage;
+class QWidget;
 
 class TaskBarNotifier {
 public:
-    explicit TaskBarNotifier(QWidget *parent = nullptr, const QString &desktopfile = nullptr);
-    ~TaskBarNotifier();
-    void setIconCounCaption(uint count, const QImage &icon = QImage());
+    explicit TaskBarNotifier(QWidget *parent = nullptr);
+    void setIconCountCaption(uint count, const QImage &icon = QImage());
     void removeIconCountCaption();
-    bool isActive() { return active_; };
+    bool isActive();
 
 private:
     class Private;
-    Private *d;
-    uint     count_;
-    QImage  *icon_;
-    bool     active_;
+    std::unique_ptr<Private> d;
 };
 
 #endif // TASKBARNOTIFIER_H
