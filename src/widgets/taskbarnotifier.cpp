@@ -53,7 +53,7 @@ static const QLatin1String ULAUNCHER_CMD("Update");
 
 class TaskBarNotifier::Private {
 public:
-    Private();
+    Private() = default;
 
     bool active() const;
     void setIconCount(uint count = 0);
@@ -86,8 +86,6 @@ private:
     QImage image_;
 #endif
 };
-
-TaskBarNotifier::Private::Private() { }
 
 bool TaskBarNotifier::Private::active() const { return active_; }
 
