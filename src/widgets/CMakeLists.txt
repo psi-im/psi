@@ -63,6 +63,15 @@ set(HEADERS
     stretchwidget.h
 )
 
+if(USE_DBUS OR WIN32)
+    list(APPEND SOURCES taskbarnotifier.cpp)
+    list(APPEND HEADERS taskbarnotifier.h)
+    if(WIN32 AND (${QT_DEFAULT_MAJOR_VERSION} VERSION_LESS "6"))
+        find_package(Qt${QT_DEFAULT_MAJOR_VERSION} 5.10 REQUIRED COMPONENTS WinExtras)
+        list(APPEND QT_LIBRARIES Qt${QT_DEFAULT_MAJOR_VERSION}::WinExtras)
+    endif()
+endif()
+
 set(FORMS
     fancypopup.ui
     grepshortcutkeydialog.ui

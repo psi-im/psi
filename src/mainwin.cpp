@@ -50,6 +50,9 @@
 #include "statusdlg.h"
 #include "tabdlg.h"
 #include "tabmanager.h"
+#ifdef USE_TASKBARNOTIFIER
+#include "taskbarnotifier.h"
+#endif
 #include "textutil.h"
 
 #include <QApplication>
@@ -122,10 +125,14 @@ public:
     TabDlg      *mainTabs;
     QString      statusTip;
     PsiToolBar  *viewToolBar;
-    int          tabsSize;
-    int          rosterSize;
-    bool         isLeftRoster;
-    bool         allInOne;
+#ifdef USE_TASKBARNOTIFIER
+    TaskBarNotifier *taskBarNotifier;
+#endif
+
+    int  tabsSize;
+    int  rosterSize;
+    bool isLeftRoster;
+    bool allInOne;
 
     PopupAction         *optionsButton, *statusButton;
     IconActionGroup     *statusGroup, *viewGroups;
@@ -174,9 +181,13 @@ MainWin::Private::Private(PsiCon *_psi, MainWin *_mainWin) :
 #ifdef Q_OS_MAC
     dockMenu(nullptr),
 #endif
-    vb_roster(nullptr), splitter(nullptr), mainTabs(nullptr), viewToolBar(nullptr), tabsSize(0), rosterSize(0),
-    isLeftRoster(false), psi(_psi), mainWin(_mainWin), rosterAvatar(nullptr), searchText(nullptr), searchPb(nullptr),
-    searchWidget(nullptr), hideTimer(nullptr), nextAnim(nullptr), nextAmount(0), lastStatus(0), rosterWidget_(nullptr)
+    vb_roster(nullptr), splitter(nullptr), mainTabs(nullptr), viewToolBar(nullptr),
+#ifdef USE_TASKBARNOTIFIER
+    taskBarNotifier(nullptr),
+#endif
+    tabsSize(0), rosterSize(0), isLeftRoster(false), psi(_psi), mainWin(_mainWin), rosterAvatar(nullptr),
+    searchText(nullptr), searchPb(nullptr), searchWidget(nullptr), hideTimer(nullptr), nextAnim(nullptr), nextAmount(0),
+    lastStatus(0), rosterWidget_(nullptr)
 {
 
     statusGroup   = static_cast<IconActionGroup *>(getAction("status_group"));
@@ -298,7 +309,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
     setAttribute(Qt::WA_AlwaysShowToolTips);
     d = new Private(psi, this);
 
-    setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).icon());
+    setWindowIcon(PsiIconset::instance()->system().icon("psi/logo_128")->icon());
 
     d->onTop  = _onTop;
     d->asTool = _asTool;
@@ -538,6 +549,9 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
     optionChanged("options.ui.contactlist.css");
 
     reinitAutoHide();
+#ifdef USE_TASKBARNOTIFIER
+    d->taskBarNotifier = new TaskBarNotifier(this);
+#endif
 }
 
 MainWin::~MainWin()
@@ -546,6 +560,12 @@ MainWin::~MainWin()
         delete d->tray;
         d->tray = nullptr;
     }
+#ifdef USE_TASKBARNOTIFIER
+    if (d->taskBarNotifier) {
+        delete d->taskBarNotifier;
+        d->taskBarNotifier = nullptr;
+    }
+#endif
 
     saveToolbarsState();
 
@@ -883,8 +903,17 @@ void MainWin::buildOptionsMenu()
     helpMenu->setIcon(IconsetFactory::icon("psi/help").icon());
 
     QStringList actions;
-    actions << "help_readme" << "separator" << "help_online_wiki" << "help_online_home" << "help_online_forum"
-            << "help_psi_muc" << "help_report_bug" << "diagnostics" << "separator" << "help_about" << "help_about_qt";
+    actions << "help_readme"
+            << "separator"
+            << "help_online_wiki"
+            << "help_online_home"
+            << "help_online_forum"
+            << "help_psi_muc"
+            << "help_report_bug"
+            << "diagnostics"
+            << "separator"
+            << "help_about"
+            << "help_about_qt";
 
     d->updateMenu(actions, helpMenu);
 
@@ -921,7 +950,9 @@ void MainWin::buildMainMenu()
 void MainWin::buildToolsMenu()
 {
     QStringList actions;
-    actions << "menu_file_transfer" << "separator" << "menu_xml_console";
+    actions << "menu_file_transfer"
+            << "separator"
+            << "menu_xml_console";
 
     d->updateMenu(actions, d->toolsMenu);
 }
@@ -938,7 +969,8 @@ void MainWin::buildGeneralMenu(QMenu *menu)
 #ifdef GROUPCHAT
             << "menu_join_groupchat"
 #endif
-            << "menu_options" << "menu_file_transfer";
+            << "menu_options"
+            << "menu_file_transfer";
     if (PsiOptions::instance()->getOption("options.ui.menu.main.change-profile").toBool()) {
         actions << "menu_change_profile";
     }
@@ -1308,7 +1340,7 @@ void MainWin::decorateButton(int status)
 #endif
         d->statusMenu->statusChanged(makeStatus(STATUS_OFFLINE, ""));
 
-        setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).icon());
+        // setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).icon());
     } else {
         d->statusButton->setText(status2txt(status));
         d->statusButton->setIcon(PsiIconset::instance()->statusPtr(status));
@@ -1318,7 +1350,7 @@ void MainWin::decorateButton(int status)
         d->statusMenuMB->statusChanged(makeStatus(status, d->psi->currentStatusMessage()));
 #endif
         d->statusMenu->statusChanged(makeStatus(status, d->psi->currentStatusMessage()));
-        setWindowIcon(PsiIconset::instance()->status(status).icon());
+        // setWindowIcon(PsiIconset::instance()->status(status).icon());
     }
 
     updateTray();
@@ -1612,21 +1644,22 @@ void MainWin::updateReadNext(PsiIcon *anim, int amount)
         d->eventNotifier->hide();
         d->eventNotifier->setText("");
         d->eventNotifier->setPsiIcon("");
-        if (d->allInOne) // set window header icon accordig to status
-            setWindowIcon(PsiIconset::instance()->statusPtr(d->lastStatus)->icon());
+#ifdef USE_TASKBARNOTIFIER
+        if (d->taskBarNotifier->isActive())
+            d->taskBarNotifier->removeIconCountCaption();
+#endif
     } else {
         d->eventNotifier->setPsiIcon(anim);
         d->eventNotifier->setText(QString("<b>") + numEventsString(d->nextAmount) + "</b>");
         d->eventNotifier->show();
-        // make sure it shows
-        // qApp->processEvents();
-        // Hack. If All-in-one mode is enabled there is no reacton on incoming events
-        // so we have to flash taskbar icon by qApp->alert
-        // and change window header icon according to status
-        if (d->allInOne) {
-            setWindowIcon(anim->icon());
-            qApp->alert(this, 0);
-        }
+#ifdef USE_TASKBARNOTIFIER
+        d->taskBarNotifier->setIconCountCaption(d->nextAmount
+#ifdef Q_OS_WINDOWS
+                                                ,
+                                                windowIcon().pixmap(QSize(128, 128)).toImage()
+#endif
+        );
+#endif
     }
 
     updateTray();

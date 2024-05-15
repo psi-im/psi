@@ -496,6 +496,11 @@ if(LINUX)
     )
 endif()
 
+#TaskbarNotifier definition
+if(WIN32 OR USE_DBUS)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_TASKBARNOTIFIER)
+endif()
+
 #Pre-install section
 set(OTHER_FILES
     ${PROJECT_SOURCE_DIR}/certs
