@@ -28,7 +28,8 @@ class QWidget;
 class TaskBarNotifier {
 public:
     explicit TaskBarNotifier(QWidget *parent = nullptr);
-    void setIconCountCaption(uint count, const QImage &icon = QImage());
+    ~TaskBarNotifier();
+    void setIconCountCaption(uint count, const QImage &icon = {});
     void removeIconCountCaption();
     bool isActive();
 

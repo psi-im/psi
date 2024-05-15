@@ -560,6 +560,12 @@ MainWin::~MainWin()
         delete d->tray;
         d->tray = nullptr;
     }
+#ifdef USE_TASKBARNOTIFIER
+    if (d->taskBarNotifier) {
+        delete d->taskBarNotifier;
+        d->taskBarNotifier = nullptr;
+    }
+#endif
 
     saveToolbarsState();
 

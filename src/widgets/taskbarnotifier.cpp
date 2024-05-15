@@ -59,6 +59,7 @@ public:
     void setIconCount(uint count = 0);
     void restoreDefaultIcon();
 #ifdef USE_DBUS
+    ~Private() = default;
     void setDesktopPath(const QString &appName);
 #elif defined(Q_OS_WINDOWS)
     ~Private();
@@ -217,27 +218,24 @@ QImage TaskBarNotifier::Private::makeIconCaption(const QImage &image, const QStr
 HICON TaskBarNotifier::Private::getHICONfromQImage(const QImage &image) const
 {
     if (image.isNull())
-        return nullptr;
+        return {};
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     auto p = QPixmap::fromImage(image);
     return QtWin::toHICON(p);
 #else
     return image.toHICON();
 #endif
-    return nullptr;
+    return {};
 }
 
 void TaskBarNotifier::Private::doFlashTaskbarIcon()
 {
-    const int count = 0;
-    const int speed = 0;
-
     FLASHWINFO fi;
     fi.cbSize    = sizeof(FLASHWINFO);
     fi.hwnd      = hwnd_;
     fi.dwFlags   = (urgent_) ? FLASHW_ALL | FLASHW_TIMER : FLASHW_STOP;
-    fi.uCount    = count;
-    fi.dwTimeout = speed;
+    fi.uCount    = 0;
+    fi.dwTimeout = 0;
     FlashWindowEx(&fi);
 }
 
@@ -255,6 +253,8 @@ TaskBarNotifier::TaskBarNotifier(QWidget *parent)
     d->setDevicePixelRatio(parent->devicePixelRatio());
 #endif
 }
+
+TaskBarNotifier::~TaskBarNotifier() = default;
 
 void TaskBarNotifier::setIconCountCaption(uint count, const QImage &icon)
 {
