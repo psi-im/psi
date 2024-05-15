@@ -126,7 +126,7 @@ TextIconFormat::TextIconFormat(const QString &iconName, const QString &text, std
                                std::optional<HtmlSize> minHeight, std::optional<HtmlSize> maxWidth,
                                std::optional<HtmlSize>                           maxHeight,
                                std::optional<QTextCharFormat::VerticalAlignment> valign,
-                               std::optional<HtmlSize> fontSize) : QTextCharFormat()
+                               std::optional<HtmlSize>                           fontSize) : QTextCharFormat()
 {
     Q_UNUSED(text);
 
@@ -178,8 +178,8 @@ public:
                               const QTextFormat &format);
 
 private:
-
-    QFont adjustFontSize(const QTextCharFormat charFormat) {
+    QFont adjustFontSize(const QTextCharFormat charFormat)
+    {
         auto propHeight    = charFormat.property(TextIconFormat::IconHeight);
         auto propMinHeight = charFormat.property(TextIconFormat::IconMinHeight);
         auto propMaxHeight = charFormat.property(TextIconFormat::IconMaxHeight);
@@ -198,12 +198,12 @@ private:
         if (propHeight.isValid()) { // we want to scale ignoring aspect ratio
             int limitMin = minHeight ? *minHeight : 8;
             int limitMax = maxHeight ? *maxHeight : 1080;
-            height = htmlSizeToPixels(propHeight.value<HtmlSize>(), charFormat);
-            height = qMax(qMin(limitMax, *height), limitMin);
+            height       = htmlSizeToPixels(propHeight.value<HtmlSize>(), charFormat);
+            height       = qMax(qMin(limitMax, *height), limitMin);
         }
 
         auto font = charFormat.font();
-        int ps = font.pixelSize();
+        int  ps   = font.pixelSize();
         if (ps == -1) {
             ps = pointToPixel(font.pointSizeF());
         }
@@ -254,7 +254,7 @@ QSizeF TextIconHandler::intrinsicSize(QTextDocument *doc, int posInDocument, con
         doScaling = icon->isScalable();
     } else if (!iconText.isEmpty()) {
         auto font = adjustFontSize(charFormat);
-        return QFontMetricsF(font).tightBoundingRect(iconText).size()*1.16; // 1.16 - magic for Windows
+        return QFontMetricsF(font).tightBoundingRect(iconText).size() * 1.16; // 1.16 - magic for Windows
     }
     if (ret.isEmpty()) {
         // something went wrong with this icon
@@ -316,13 +316,6 @@ QSizeF TextIconHandler::intrinsicSize(QTextDocument *doc, int posInDocument, con
         // check where scaling is required even for non-scalable
         doScaling = (ret.width() > maxSize.width() || ret.height() > maxSize.height())
             || (minWidth && ret.width() < *minWidth) || (minHeight && ret.height() < *minHeight);
-        /*if (ret.width() > maxSize.width() || ret.height() > maxSize.height()) {
-            ret.scale(maxSize, Qt::KeepAspectRatio);
-        } else if (minWidth && ret.width() < *minWidth) {
-            ret.scale(QSize { *minWidth, maxSize.height() }, Qt::KeepAspectRatio);
-        } else if (minHeight && ret.height() < *minHeight) {
-            ret.scale(QSize { maxSize.width(), *minHeight }, Qt::KeepAspectRatio);
-        }*/ // else default size looks good enough
     }
 
     if (doScaling) {
@@ -379,7 +372,7 @@ void TextIconHandler::drawObject(QPainter *painter, const QRectF &rect, QTextDoc
         auto font = adjustFontSize(charFormat);
         font.setPixelSize(font.pixelSize());
         painter->setFont(font);
-        painter->drawText(rect, Qt::AlignHCenter | Qt::AlignTop, iconText);
+        painter->drawText(rect, Qt::AlignCenter, iconText);
     } else {
         auto pixmap      = IconsetFactory::iconPixmap(iconName, rect.size().toSize());
         auto alignedSize = rect.size().toSize();
