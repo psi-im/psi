@@ -80,6 +80,10 @@ or
   uncompatible (required for p2p file transfer. Available only if
   JINGLE_SCTP flag set to ON)
 
+> -DBUNDLED_KEYCHAIN=ON
+
+  to build QtKeychain library bundled (useful for macOS) (default OFF)
+
 > -DUSE_ASPELL=OFF
 
   to use Aspell spellchecker (default OFF)
