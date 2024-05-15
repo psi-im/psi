@@ -64,6 +64,7 @@ BUILD_OPTIONS="-DCMAKE_BUILD_TYPE=Release \
                -DUSE_SPARKLE=OFF \
                -DBUNDLED_QCA=ON \
                -DBUNDLED_USRSCTP=ON \
+               -DBUNDLED_KEYCHAIN=ON \
                -DBUNDLED_OMEMO_C_ALL=ON \
                -DVERBOSE_PROGRAM_NAME=ON"
 
