@@ -61,6 +61,7 @@ public:
 #ifdef USE_DBUS
     void setDesktopPath(const QString &appName);
 #elif defined(Q_OS_WINDOWS)
+    ~Private();
     void setParentHWND(HWND hwnd);
     void setDevicePixelRatio(int ratio);
     void setDefaultIcon(const QImage &icon);
@@ -71,7 +72,7 @@ private:
     bool checkDBusSeviceAvailable();
     void sendDBusSignal(bool isVisible, uint number = 0);
 #elif defined(Q_OS_WINDOWS)
-    void   setTaskBarIcon(HICON icon);
+    void   setTaskBarIcon(const HICON &icon);
     QImage makeIconCaption(const QImage &image, const QString &number) const;
     HICON  getHICONfromQImage(const QImage &image) const;
     void   doFlashTaskbarIcon();
@@ -84,6 +85,7 @@ private:
     HWND   hwnd_;
     int    devicePixelRatio_;
     QImage image_;
+    HICON  icon_;
 #endif
 };
 
@@ -157,15 +159,24 @@ void TaskBarNotifier::Private::sendDBusSignal(bool isVisible, uint number)
 }
 
 #elif defined(Q_OS_WINDOWS)
+TaskBarNotifier::Private::~Private()
+{
+    if (icon_)
+        DestroyIcon(icon_);
+}
+
 void TaskBarNotifier::Private::setParentHWND(HWND hwnd) { hwnd_ = hwnd; }
 
 void TaskBarNotifier::Private::setDevicePixelRatio(int ratio) { devicePixelRatio_ = ratio; }
 
-void TaskBarNotifier::Private::setTaskBarIcon(HICON icon)
+void TaskBarNotifier::Private::setTaskBarIcon(const HICON &icon)
 {
-    SendMessage(hwnd_, WM_SETICON, ICON_SMALL, (LPARAM)icon);
-    SendMessage(hwnd_, WM_SETICON, ICON_BIG, (LPARAM)icon);
-    DestroyIcon(icon);
+    if (icon_)
+        DestroyIcon(icon_);
+
+    icon_ = icon;
+    SendMessage(hwnd_, WM_SETICON, ICON_SMALL, (LPARAM)icon_);
+    SendMessage(hwnd_, WM_SETICON, ICON_BIG, (LPARAM)icon_);
 }
 
 QImage TaskBarNotifier::Private::makeIconCaption(const QImage &image, const QString &number) const
@@ -205,6 +216,8 @@ QImage TaskBarNotifier::Private::makeIconCaption(const QImage &image, const QStr
 
 HICON TaskBarNotifier::Private::getHICONfromQImage(const QImage &image) const
 {
+    if (image.isNull())
+        return nullptr;
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     auto p = QPixmap::fromImage(image);
     return QtWin::toHICON(p);

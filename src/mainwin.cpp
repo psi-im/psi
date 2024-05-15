@@ -309,7 +309,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
     setAttribute(Qt::WA_AlwaysShowToolTips);
     d = new Private(psi, this);
 
-    setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).icon());
+    setWindowIcon(PsiIconset::instance()->system().icon("psi/logo_128")->icon());
 
     d->onTop  = _onTop;
     d->asTool = _asTool;
@@ -1334,7 +1334,7 @@ void MainWin::decorateButton(int status)
 #endif
         d->statusMenu->statusChanged(makeStatus(STATUS_OFFLINE, ""));
 
-        setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).icon());
+        // setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).icon());
     } else {
         d->statusButton->setText(status2txt(status));
         d->statusButton->setIcon(PsiIconset::instance()->statusPtr(status));
@@ -1344,7 +1344,7 @@ void MainWin::decorateButton(int status)
         d->statusMenuMB->statusChanged(makeStatus(status, d->psi->currentStatusMessage()));
 #endif
         d->statusMenu->statusChanged(makeStatus(status, d->psi->currentStatusMessage()));
-        setWindowIcon(PsiIconset::instance()->status(status).icon());
+        // setWindowIcon(PsiIconset::instance()->status(status).icon());
     }
 
     updateTray();
@@ -1647,11 +1647,10 @@ void MainWin::updateReadNext(PsiIcon *anim, int amount)
         d->eventNotifier->setText(QString("<b>") + numEventsString(d->nextAmount) + "</b>");
         d->eventNotifier->show();
 #ifdef USE_TASKBARNOTIFIER
-        d->taskBarNotifier->setIconCountCaption(
-            d->nextAmount
+        d->taskBarNotifier->setIconCountCaption(d->nextAmount
 #ifdef Q_OS_WINDOWS
-            ,
-            PsiIconset::instance()->system().icon("psi/logo_128")->image({ 128, 128 })
+                                                ,
+                                                windowIcon().pixmap(QSize(128, 128)).toImage()
 #endif
         );
 #endif
