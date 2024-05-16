@@ -25,7 +25,7 @@ include(psi-cmake-functions)
 include(policyRules)
 
 # Define LINUX on Linux like as WIN32 on Windows and APPLE on macOS
-if(UNIX AND NOT (APPLE OR HAIKU))
+if(UNIX AND (NOT (APPLE OR HAIKU) AND NOT CYGWIN))
     set(LINUX ON)
 endif()
 

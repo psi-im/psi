@@ -19,6 +19,8 @@
 
 #include "taskbarnotifier.h"
 
+#include <QWidget>
+
 #ifdef USE_DBUS
 #include "applicationinfo.h"
 
@@ -29,18 +31,19 @@
 #include <QString>
 #include <QStringList>
 #include <QVariantMap>
-#elif defined(Q_OS_WINDOWS)
+#endif
+#ifdef Q_OS_WIN
 #include <QImage>
 #include <QPaintDevice>
 #include <QPainter>
 #include <QPen>
-#include <QStaticText>
+#include <shobjidl.h>
 #include <windows.h>
+
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 #include <QtWinExtras/qwinfunctions.h>
 #endif
 #endif
-#include <QWidget>
 
 #ifdef USE_DBUS
 // UnityLauncher dbus
@@ -61,32 +64,30 @@ public:
 #ifdef USE_DBUS
     ~Private() = default;
     void setDesktopPath(const QString &appName);
-#elif defined(Q_OS_WINDOWS)
+#elif defined(Q_OS_WIN)
     ~Private();
     void setParentHWND(HWND hwnd);
     void setDevicePixelRatio(int ratio);
-    void setDefaultIcon(const QImage &icon);
 #endif
 
 private:
 #ifdef USE_DBUS
     bool checkDBusSeviceAvailable();
     void sendDBusSignal(bool isVisible, uint number = 0);
-#elif defined(Q_OS_WINDOWS)
-    void   setTaskBarIcon(const HICON &icon);
-    QImage makeIconCaption(const QImage &image, const QString &number) const;
-    HICON  getHICONfromQImage(const QImage &image) const;
-    void   doFlashTaskbarIcon();
+#elif defined(Q_OS_WIN)
+    void  setTaskBarIcon(const HICON &icon = {});
+    HICON makeIconCaption(const QString &number) const;
+    HICON getHICONfromQImage(const QImage &image) const;
+    void  doFlashTaskbarIcon();
 #endif
 
 private:
     bool urgent_ = false;
     bool active_ = false;
-#ifdef Q_OS_WINDOWS
-    HWND   hwnd_;
-    int    devicePixelRatio_;
-    QImage image_;
-    HICON  icon_;
+#ifdef Q_OS_WIN
+    HWND  hwnd_;
+    int   devicePixelRatio_;
+    HICON icon_;
 #endif
 };
 
@@ -97,16 +98,8 @@ void TaskBarNotifier::Private::setIconCount(uint count)
     urgent_ = true;
 #ifdef USE_DBUS
     sendDBusSignal(true, count);
-#elif defined(Q_OS_WINDOWS)
-    if (image_.isNull())
-        return;
-
-    QImage img;
-    if (count > 0 && urgent_) {
-        img = makeIconCaption(image_, QString::number(count));
-    }
-    HICON icon = (img.isNull()) ? getHICONfromQImage(image_) : getHICONfromQImage(img);
-    setTaskBarIcon(icon);
+#elif defined(Q_OS_WIN)
+    setTaskBarIcon(makeIconCaption(QString::number(count)));
     doFlashTaskbarIcon();
 #endif
     active_ = true;
@@ -117,12 +110,8 @@ void TaskBarNotifier::Private::restoreDefaultIcon()
     urgent_ = false;
 #ifdef USE_DBUS
     sendDBusSignal(false, 0);
-#elif defined(Q_OS_WINDOWS)
-    if (image_.isNull())
-        return;
-
-    HICON icon = getHICONfromQImage(image_);
-    setTaskBarIcon(icon);
+#elif defined(Q_OS_WIN)
+    setTaskBarIcon();
     doFlashTaskbarIcon();
 #endif
     active_ = false;
@@ -159,7 +148,7 @@ void TaskBarNotifier::Private::sendDBusSignal(bool isVisible, uint number)
     }
 }
 
-#elif defined(Q_OS_WINDOWS)
+#elif defined(Q_OS_WIN)
 TaskBarNotifier::Private::~Private()
 {
     if (icon_)
@@ -175,44 +164,46 @@ void TaskBarNotifier::Private::setTaskBarIcon(const HICON &icon)
     if (icon_)
         DestroyIcon(icon_);
 
-    icon_ = icon;
-    SendMessage(hwnd_, WM_SETICON, ICON_SMALL, (LPARAM)icon_);
-    SendMessage(hwnd_, WM_SETICON, ICON_BIG, (LPARAM)icon_);
+    if (icon)
+        icon_ = icon;
+
+    ITaskbarList3 *tbList;
+    if (SUCCEEDED(CoCreateInstance(CLSID_TaskbarList, nullptr, CLSCTX_INPROC_SERVER, IID_ITaskbarList3,
+                                   reinterpret_cast<void **>(&tbList)))) {
+        tbList->SetOverlayIcon(hwnd_, icon_, (icon_) ? L"Incoming events" : 0);
+        tbList->Release();
+    }
 }
 
-QImage TaskBarNotifier::Private::makeIconCaption(const QImage &image, const QString &number) const
+HICON TaskBarNotifier::Private::makeIconCaption(const QString &number) const
 {
-    if (!image.isNull()) {
-        auto   imSize    = image.size() * devicePixelRatio_;
-        QImage img       = image;
-        auto   letters   = number.length();
-        auto   text      = QStaticText((letters < 3) ? number : "99+");
-        auto   textDelta = (letters <= 2) ? 3 : 4;
+    auto   imSize = QSize(GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON)) * devicePixelRatio_;
+    QImage img(imSize, QImage::Format_ARGB32_Premultiplied);
+    img.fill(Qt::transparent);
+    QString text      = (number.length() < 3) ? number : "∞";
+    auto    letters   = text.length();
+    auto    textDelta = (letters <= 2) ? 2 : 3;
 
-        QPainter p(&img);
-        p.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
-        auto font   = QFont("Times", imSize.height() / textDelta, QFont::Bold);
-        auto fm     = QFontMetrics(font);
-        auto fh     = fm.height();
-        auto fw     = fm.horizontalAdvance(text.text());
-        auto radius = fh / 2;
+    QPainter p(&img);
+    p.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
+    auto font   = QFont("Times", imSize.height() / textDelta, QFont::Bold);
+    auto fm     = QFontMetrics(font);
+    auto fh     = fm.height();
+    auto radius = fh / 2;
 
-        Qt::BrushStyle style = Qt::SolidPattern;
-        QBrush         brush(Qt::red, style);
-        p.setBrush(brush);
-        p.setPen(QPen(Qt::NoPen));
-        QRect rect(imSize.width() - fw - radius, 0, fw + radius, fh);
-        p.drawRoundedRect(rect, radius, radius);
+    Qt::BrushStyle style = Qt::SolidPattern;
+    QBrush         brush(Qt::black, style);
+    p.setBrush(brush);
+    p.setPen(QPen(Qt::yellow));
+    QRect rect(0, 0, imSize.width() - 2, imSize.height() - 2);
+    p.drawRoundedRect(rect, radius, radius);
 
-        p.setFont(font);
-        p.setPen(QPen(Qt::white));
-        auto offset = rect.width() / ((letters + 1) * 2);
-        p.drawStaticText(rect.x() + offset, rect.y(), text);
+    p.setFont(font);
+    p.setPen(QPen(Qt::white));
+    p.drawText(rect, Qt::AlignCenter, text);
 
-        p.end();
-        return img;
-    }
-    return QImage();
+    p.end();
+    return std::move(getHICONfromQImage(img));
 }
 
 HICON TaskBarNotifier::Private::getHICONfromQImage(const QImage &image) const
@@ -220,10 +211,9 @@ HICON TaskBarNotifier::Private::getHICONfromQImage(const QImage &image) const
     if (image.isNull())
         return {};
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    auto p = QPixmap::fromImage(image);
-    return QtWin::toHICON(p);
+    return std::move(QtWin::toHICON(QPixmap::fromImage(image)));
 #else
-    return image.toHICON();
+    return std::move(image.toHICON());
 #endif
     return {};
 }
@@ -238,8 +228,6 @@ void TaskBarNotifier::Private::doFlashTaskbarIcon()
     fi.dwTimeout = 0;
     FlashWindowEx(&fi);
 }
-
-void TaskBarNotifier::Private::setDefaultIcon(const QImage &icon) { image_ = icon; }
 #endif
 
 TaskBarNotifier::TaskBarNotifier(QWidget *parent)
@@ -247,24 +235,15 @@ TaskBarNotifier::TaskBarNotifier(QWidget *parent)
     d = std::make_unique<Private>(Private());
 #ifdef USE_DBUS
     Q_UNUSED(parent)
-#elif defined(Q_OS_WINDOWS)
-    HWND hwnd = reinterpret_cast<HWND>(parent->winId());
-    d->setParentHWND(hwnd);
+#elif defined(Q_OS_WIN)
+    d->setParentHWND(reinterpret_cast<HWND>(parent->winId()));
     d->setDevicePixelRatio(parent->devicePixelRatio());
 #endif
 }
 
 TaskBarNotifier::~TaskBarNotifier() = default;
 
-void TaskBarNotifier::setIconCountCaption(uint count, const QImage &icon)
-{
-#ifdef Q_OS_WINDOWS
-    d->setDefaultIcon(icon);
-#else
-    Q_UNUSED(icon);
-#endif
-    d->setIconCount(count);
-}
+void TaskBarNotifier::setIconCountCaption(int count) { d->setIconCount(count); }
 
 void TaskBarNotifier::removeIconCountCaption() { d->restoreDefaultIcon(); }
 

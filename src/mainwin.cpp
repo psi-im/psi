@@ -1653,12 +1653,7 @@ void MainWin::updateReadNext(PsiIcon *anim, int amount)
         d->eventNotifier->setText(QString("<b>") + numEventsString(d->nextAmount) + "</b>");
         d->eventNotifier->show();
 #ifdef USE_TASKBARNOTIFIER
-        d->taskBarNotifier->setIconCountCaption(d->nextAmount
-#ifdef Q_OS_WINDOWS
-                                                ,
-                                                windowIcon().pixmap(QSize(128, 128)).toImage()
-#endif
-        );
+        d->taskBarNotifier->setIconCountCaption(d->nextAmount);
 #endif
     }
 
