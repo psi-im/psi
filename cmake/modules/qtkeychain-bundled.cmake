@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.10.0)
 
 set(QtkeychainRepo "https://github.com/frankosterfeld/qtkeychain.git")
 
+include(GNUInstallDirs)
 set(libname qt${QT_DEFAULT_MAJOR_VERSION}keychain)
 message(STATUS "Qt${QT_DEFAULT_MAJOR_VERSION}Keychain: using bundled")
 set(Qtkeychain_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/${libname})
