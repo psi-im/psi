@@ -485,6 +485,7 @@ if(APPLE)
     target_link_libraries(${PROJECT_NAME} CocoaUtilities)
 endif()
 
+#Privare Psi project defenitions
 if(LINUX)
     if(NOT VERBOSED_NAME)
         set(VERBOSED_NAME ${PROJECT_NAME})
@@ -494,11 +495,34 @@ if(LINUX)
         APP_PREFIX=${CMAKE_INSTALL_PREFIX}
         APP_BIN_NAME=${VERBOSED_NAME}
     )
+    #Set compile definions for options static library
+    target_compile_definitions(options PRIVATE
+        HAVE_FREEDESKTOP
+        APP_BIN_NAME=${VERBOSED_NAME}
+    )
 endif()
 
 #TaskbarNotifier definition
 if(WIN32 OR USE_DBUS)
     target_compile_definitions(${PROJECT_NAME} PRIVATE USE_TASKBARNOTIFIER)
+endif()
+if(USE_CRASH)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_CRASH)
+endif()
+if(LINUX AND USE_X11)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_X11)
+    if(LIMIT_X11_USAGE)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE LIMIT_X11_USAGE)
+    endif()
+endif()
+if(IS_WEBKIT OR IS_WEBENGINE)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE WEBKIT)
+    if(IS_WEBENGINE)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE WEBENGINE)
+    endif()
+endif()
+if(ISDEBUG AND CHATVIEW_CORRECTION_DEBUG)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE CORRECTION_DEBUG)
 endif()
 
 #Pre-install section

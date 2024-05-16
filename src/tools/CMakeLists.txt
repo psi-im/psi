@@ -154,3 +154,12 @@ target_include_directories(tools PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/iconset
     ${CMAKE_CURRENT_SOURCE_DIR}/tunecontroller
 )
+if(LINUX AND USE_X11)
+    target_compile_definitions(tools PRIVATE HAVE_X11)
+    if(LIMIT_X11_USAGE)
+        target_compile_definitions(tools PRIVATE LIMIT_X11_USAGE)
+    endif()
+    if(USE_XSS)
+        target_compile_definitions(tools PRIVATE HAVE_XSS)
+    endif()
+endif()
