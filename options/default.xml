@@ -102,7 +102,7 @@
                 <size type="QString"></size> <!-- will be invalid when converted to QSize so we can detect first load -->
             </message>
             <chat comment="Chat dialog options">
-                <theme comment="The theme used for chat messages rendering" type="QString">psi/classic</theme>
+                <theme comment="The theme used for chat messages rendering" type="QString">psi/new_classic</theme>
                 <central-toolbar comment="Have a central toolbar" type="bool">true</central-toolbar>
                 <size comment="Remembered window size" type="QSize">
                 </size><!-- will be invalid when converted to QSize so we can detect first load -->
@@ -333,7 +333,7 @@ QLineEdit#le_status_text {
                 <log-width type="int">500</log-width>
                 <roster-width type="int">150</roster-width>
                 <roster-at-left type="bool">false</roster-at-left>
-                <theme comment="The theme used for groupchat messages rendering" type="QString">psi/classic</theme>
+                <theme comment="The theme used for groupchat messages rendering" type="QString">psi/new_classic</theme>
                 <highlight-words type="QStringList" />
                 <size comment="Remembered window size" type="QSize">
                     <width>960</width>
