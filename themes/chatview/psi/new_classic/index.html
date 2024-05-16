@@ -50,6 +50,8 @@ a:hover { cursor:pointer; }
 
 .avmsg {
     border-top: 1px dotted #8884;
+    margin-top: 0.3em;
+    padding-top: 0.3em;
 }
 
 img.avatar {
@@ -80,6 +82,20 @@ img.avatar {
 
 .ntcont .msgtime {
     float: right;
+}
+
+.left_time {
+    display:inline-block;
+    text-align:center;
+    width:3.2em;
+    margin: auto 0 auto -3.2em;
+    color: gray;
+}
+
+.left_time > div {
+    font-size:80%;
+    font-weight:bold;
+    margin:auto
 }
 
 .trackbar {
@@ -152,16 +168,18 @@ function startPsiTheme(shared) {
             message: "<div class='msg avmsg'%receiptid%><img class='avatar' src='%avatarurl%' title='%sender%'/><div class='ntcont'>" + (
                 shared.isMuc? "<span style='color:%nickcolor%'>%sender%</span>" : "<span class='%sentrec%'>%sender%</span>") +
                 "<span class='msgtime'>%time%</span></div>%alertedmessage%</div>%next%",
-            messageGroupping: "<div class='msg grmsg'%receiptid%><span class='msgtime'>%time%</span>%alertedmessage%</div>%next%",
-            messageNC: "<div class='msg %sentrec%'%receiptid%><span class='msgtime'>%time%</span>%icon% %sender% %message%</div>",
+            messageGroupping: "<div class='msg grmsg'%receiptid%>%template{left_time}%%alertedmessage%</div>%next%",
+            messageNC: "<div class='msg %sentrec%'%receiptid%>%template{left_time}%%icon% %sender% %message%</div>",
             sys: "<div class='msg infmsg'>%icon%%message%</div>",
-            sysMessage: "<div class='msg infmsg'><span class='msgtime'>%time%</span><div id='info'>%icon% %message%</div></div>",
-            sysMessageUT: "<div class='msg infmsg'><span class='msgtime'>%time%</span><div id='info'>%icon% %message%:</div> <div class='usertext'>%usertext%</div></div>",
+            sysMessage: "<div class='msg infmsg'>%template{left_time}%<div id='info'>%icon% %message%</div></div>",
+            sysMessageUT: "<div class='msg infmsg'>%template{left_time}%<div id='info'>%icon% %message%:</div> <div class='usertext'>%usertext%</div></div>",
             lastMsgDate: "<div class='msg infmsg'><div id='info'>%icon% %time{LL}%</div></div>",
             subject: shared.isMuc?
-                "<div class='msg infmsg'><span class='msgtime'>%time%</span><div id='info'>%icon% %message%</div><div class='usertext'><b>%usertext%</b></div></div>"
+                "<div class='msg infmsg'>%template{left_time}%<div id='info'>%icon% %message%</div><div class='usertext'><b>%usertext%</b></div></div>"
                 : "<div class='infmsg'>%icon%<b> %usertext%</b></div>",
-            trackbar: '<hr class="trackbar" />'
+            trackbar: '<hr class="trackbar" />',
+
+            left_time: '<div class="left_time"><div>%time%</div></div>'
         },
         dateFormat : "HH:mm",
         proxy : function() { //optional

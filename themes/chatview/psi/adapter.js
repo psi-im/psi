@@ -88,6 +88,10 @@ function psiThemeAdapter(chat) {
                 this.formatter = new chat.DateTimeFormatter(format || shared.dateFormat);
             },
 
+            TemplateTemplateVar : function(template_name) {
+                this.template_name = template_name;
+            },
+
             Template : function(raw) {
                 var splitted = raw.split(/(%[\w]+(?:\{[^\{]+\})?%)/), i;
                 this.parts = [];
@@ -95,9 +99,11 @@ function psiThemeAdapter(chat) {
                 for (i = 0; i < splitted.length; i++) {
                     var m = splitted[i].match(/%([\w]+)(?:\{([^\{]+)\})?%/);
                     if (m) {
-                        this.parts.push(m[1] == "time"
-                            ? new shared.TemplateTimeVar(m[1], m[2])
-                            : new shared.TemplateVar(m[1], m[2]));
+                        switch (m[1]) {
+                        case "time": this.parts.push(new shared.TemplateTimeVar(m[1], m[2])); break;
+                        case "template": this.parts.push(new shared.TemplateTemplateVar(m[2])); break;
+                        default: this.parts.push(new shared.TemplateVar(m[1], m[2])); break;
+                        }
                     } else {
                         this.parts.push(splitted[i]);
                     }
@@ -236,6 +242,11 @@ function psiThemeAdapter(chat) {
             return shared.cdata[this.name]?
                         this.formatter.format(shared.cdata[this.name]):
                         this.formatter.format(new Date());
+        }
+
+        shared.TemplateTemplateVar.prototype.toString = function() {
+            var tt = shared.templates[this.template_name];
+            return "" + tt;
         }
 
         shared.Template.prototype.toString = function() {
