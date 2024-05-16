@@ -32,7 +32,7 @@ const EmojiRegistry &EmojiRegistry::instance()
 bool EmojiRegistry::isEmoji(const QString &code) const
 {
     auto cat = startCategory(code);
-    return cat == Category::Emoji || cat == Category::SkinTone;
+    return cat == Category::Emoji || cat == Category::SkinTone || cat == Category::HairStyle;
     // TODO check the whole code is emoji. not just start
 }
 
@@ -120,7 +120,7 @@ std::pair<QStringView, int> EmojiRegistry::findEmoji(const QString &in, int idx)
             } else
                 break; // TODO review other categories when implemented
         } else if (!gotEmoji
-                   && (category == Category::Emoji || category == Category::SkinTone
+                   && (category == Category::Emoji || category == Category::SkinTone || category == Category::HairStyle
                        || category == Category::SimpleKeycap)) {
             if (emojiStart == -1)
                 emojiStart = idx;

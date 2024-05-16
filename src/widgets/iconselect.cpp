@@ -529,7 +529,7 @@ QList<PsiIcon *> IconSelect::sortEmojis() const
     for (auto const &group : EmojiRegistry::instance().groups) {
         for (auto const &subgroup : group.subGroups) {
             for (auto const &emoji : subgroup.emojis) {
-                auto icon = cp2icon.value(emoji.code);
+                auto icon = cp2icon.take(emoji.code);
                 if (icon) {
                     ret.append(icon);
                 }
@@ -537,7 +537,10 @@ QList<PsiIcon *> IconSelect::sortEmojis() const
         }
     }
 
+    auto unused = cp2icon.values();
+    auto unique = QSet<PsiIcon *>(unused.begin(), unused.end());
     ret += notEmoji;
+    std::copy(unique.begin(), unique.end(), std::back_inserter(ret));
     return ret;
 }
 
