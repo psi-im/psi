@@ -28,7 +28,7 @@
 
 class EmojiRegistry {
 public:
-    enum class Category { None, Emoji, SkinTone, ZWJ, FullQualify, SimpleKeycap };
+    enum class Category { None, Emoji, SkinTone, HairStyle, ZWJ, FullQualify, SimpleKeycap };
 
     struct Emoji {
         const QString code;
@@ -85,8 +85,8 @@ public:
             return EmojiRegistry::instance().groups[group_idx].subGroups[subgroup_idx].emojis[emoji_idx];
         }
 
-        const Group &group() const {  return EmojiRegistry::instance().groups[group_idx]; }
-        const SubGroup &subGroup() const {  return EmojiRegistry::instance().groups[group_idx].subGroups[subgroup_idx]; }
+        const Group    &group() const { return EmojiRegistry::instance().groups[group_idx]; }
+        const SubGroup &subGroup() const { return EmojiRegistry::instance().groups[group_idx].subGroups[subgroup_idx]; }
     };
 
     inline iterator begin() const { return {}; }

@@ -70,6 +70,8 @@ EmojiRegistry::Category EmojiRegistry::startCategory(QStringView in) const
     if (found) {
         if (ucs >= 0x1f3fb && ucs <= 0x1f3ff)
             return Category::SkinTone;
+        if (ucs >= 0x1f9b0 && ucs <= 0x1f9b2)
+            return Category::HairStyle;
         return Category::Emoji; // there more cases to review. like emoji tags/flags etc
     }
     return Category::None;
@@ -92,6 +94,7 @@ std::pair<QStringView, int> EmojiRegistry::findEmoji(const QString &in, int idx)
 
     bool gotEmoji = false;
     bool gotSkin  = false;
+    bool gotHair  = false;
     bool gotFQ    = false;
     for (; idx < in.size(); idx++) {
         auto category = startCategory(QStringView { in }.mid(idx, in.size() - idx));
@@ -104,11 +107,16 @@ std::pair<QStringView, int> EmojiRegistry::findEmoji(const QString &in, int idx)
                 if (gotFQ)
                     break;      // double qualification is an error
                 gotSkin = true; // we can't get skin false after full qualification
+                gotHair = true;
                 gotFQ   = true;
             } else if (category == Category::SkinTone) {
                 if (gotSkin)
                     break; // can't have 2 skin tones in the same time
                 gotSkin = true;
+            } else if (category == Category::HairStyle) {
+                if (gotHair)
+                    break; // can't have 2 hair styles in the same time
+                gotHair = true;
             } else
                 break; // TODO review other categories when implemented
         } else if (!gotEmoji
