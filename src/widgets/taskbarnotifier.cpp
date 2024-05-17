@@ -19,6 +19,14 @@
 
 #include "taskbarnotifier.h"
 
+// #include <QApplication> //Maybe it will be needed for macOS to set application icon
+#include <QImage>
+#include <QPaintDevice>
+#include <QPainter>
+#include <QPen>
+#include <QStaticText>
+#include <QString>
+#include <QStringList>
 #include <QWidget>
 
 #ifdef USE_DBUS
@@ -28,15 +36,10 @@
 #include <QDBusConnectionInterface>
 #include <QDBusMessage>
 #include <QLatin1String>
-#include <QString>
-#include <QStringList>
 #include <QVariantMap>
 #endif
+
 #ifdef Q_OS_WIN
-#include <QImage>
-#include <QPaintDevice>
-#include <QPainter>
-#include <QPen>
 #include <shobjidl.h>
 #include <windows.h>
 
@@ -57,20 +60,17 @@ static const QLatin1String ULAUNCHER_CMD("Update");
 class TaskBarNotifier::Private {
 public:
     Private() = default;
+    ~Private();
 
     bool active() const;
     void setIconCount(uint count = 0);
     void restoreDefaultIcon();
+    void setParent(QWidget *parent);
 #ifdef USE_DBUS
-    ~Private() = default;
     void setDesktopPath(const QString &appName);
-#elif defined(Q_OS_WIN)
-    ~Private();
-    void setParentHWND(HWND hwnd);
-    void setDevicePixelRatio(int ratio);
 #endif
-
 private:
+    QIcon setImageCountCaption(uint count = 0);
 #ifdef USE_DBUS
     bool checkDBusSeviceAvailable();
     void sendDBusSignal(bool isVisible, uint number = 0);
@@ -82,25 +82,42 @@ private:
 #endif
 
 private:
-    bool urgent_ = false;
-    bool active_ = false;
+    bool     urgent_ = false;
+    bool     active_ = false;
+    QWidget *parent_;
+    QImage  *image_;
+    int      devicePixelRatio_;
 #ifdef Q_OS_WIN
     HWND  hwnd_;
-    int   devicePixelRatio_;
     HICON icon_;
 #endif
 };
+
+TaskBarNotifier::Private::~Private()
+{
+#ifdef Q_OS_WIN
+    if (icon_)
+        DestroyIcon(icon_);
+#endif
+    if (image_)
+        delete image_;
+}
 
 bool TaskBarNotifier::Private::active() const { return active_; }
 
 void TaskBarNotifier::Private::setIconCount(uint count)
 {
     urgent_ = true;
-#ifdef USE_DBUS
-    sendDBusSignal(true, count);
-#elif defined(Q_OS_WIN)
+#ifdef Q_OS_WIN
     setTaskBarIcon(makeIconCaption(QString::number(count)));
     doFlashTaskbarIcon();
+#else
+#ifdef USE_DBUS
+    if (checkDBusSeviceAvailable())
+        sendDBusSignal(true, count);
+    else
+#endif
+        parent_->setWindowIcon(setImageCountCaption(count)); // qApp->setWindowIcon(setImageCountCaption(count));
 #endif
     active_ = true;
 }
@@ -108,13 +125,62 @@ void TaskBarNotifier::Private::setIconCount(uint count)
 void TaskBarNotifier::Private::restoreDefaultIcon()
 {
     urgent_ = false;
-#ifdef USE_DBUS
-    sendDBusSignal(false, 0);
-#elif defined(Q_OS_WIN)
+#ifdef Q_OS_WIN
     setTaskBarIcon();
     doFlashTaskbarIcon();
+#else
+#ifdef USE_DBUS
+    if (checkDBusSeviceAvailable())
+        sendDBusSignal(false, 0);
+    else
+#endif
+        parent_->setWindowIcon(
+            QIcon(QPixmap::fromImage(*image_))); // qApp->setWindowIcon(QIcon(QPixmap::fromImage(*image_)));
 #endif
     active_ = false;
+}
+
+void TaskBarNotifier::Private::setParent(QWidget *parent)
+{
+    parent_           = parent;
+    image_            = new QImage(parent->windowIcon().pixmap({ 128, 128 }).toImage());
+    devicePixelRatio_ = parent->devicePixelRatio();
+#ifdef Q_OS_WIN
+    hwnd_ = reinterpret_cast<HWND>(parent->winId()));
+#endif
+}
+
+QIcon TaskBarNotifier::Private::setImageCountCaption(uint count)
+{
+    auto   imSize    = image_->size() * devicePixelRatio_;
+    QImage img       = *image_;
+    auto   number    = QString::number(count);
+    auto   letters   = number.length();
+    auto   text      = (letters < 3) ? QStaticText(number) : QStaticText("∞");
+    auto   textDelta = (letters <= 2) ? 3 : 4;
+
+    QPainter p(&img);
+    p.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
+    auto font   = QFont(parent_->font().defaultFamily(), imSize.height() / textDelta, QFont::Bold);
+    auto fm     = QFontMetrics(font);
+    auto fh     = fm.height();
+    auto fw     = fm.horizontalAdvance(text.text());
+    auto radius = fh / 2;
+
+    Qt::BrushStyle style = Qt::SolidPattern;
+    QBrush         brush(Qt::black, style);
+    p.setBrush(brush);
+    p.setPen(QPen(Qt::NoPen));
+    QRect rect(imSize.width() - fw - radius, radius / 4, fw + radius, fh);
+    p.drawRoundedRect(rect, radius, radius);
+
+    p.setFont(font);
+    p.setPen(QPen(Qt::white));
+    auto offset = rect.width() / ((letters + 1) * 2);
+    p.drawStaticText(rect.x() + offset, rect.y(), text);
+
+    p.end();
+    return QIcon(QPixmap::fromImage(img));
 }
 
 #ifdef USE_DBUS
@@ -130,35 +196,23 @@ bool TaskBarNotifier::Private::checkDBusSeviceAvailable()
 
 void TaskBarNotifier::Private::sendDBusSignal(bool isVisible, uint number)
 {
-    if (checkDBusSeviceAvailable()) {
-        auto appName = ApplicationInfo::desktopFileBaseName();
+    auto appName = ApplicationInfo::desktopFileBaseName();
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-        auto desktopPath_ = QLatin1String("application://%1").arg(appName);
+    auto desktopPath_ = QLatin1String("application://%1").arg(appName);
 #else
-        auto desktopPath_ = QLatin1String("application://%1.desktop").arg(appName);
+    auto desktopPath_ = QLatin1String("application://%1.desktop").arg(appName);
 #endif
-        QDBusMessage signal = QDBusMessage::createSignal(ULAUNCHER_PATH, ULAUNCHER_IFACE, ULAUNCHER_CMD);
-        signal << desktopPath_;
-        QVariantMap args;
-        args["count-visible"] = isVisible;
-        args["count"]         = number;
-        args["urgent"]        = urgent_;
-        signal << args;
-        QDBusConnection::sessionBus().send(signal);
-    }
+    QDBusMessage signal = QDBusMessage::createSignal(ULAUNCHER_PATH, ULAUNCHER_IFACE, ULAUNCHER_CMD);
+    signal << desktopPath_;
+    QVariantMap args;
+    args["count-visible"] = isVisible;
+    args["count"]         = number;
+    args["urgent"]        = urgent_;
+    signal << args;
+    QDBusConnection::sessionBus().send(signal);
 }
 
 #elif defined(Q_OS_WIN)
-TaskBarNotifier::Private::~Private()
-{
-    if (icon_)
-        DestroyIcon(icon_);
-}
-
-void TaskBarNotifier::Private::setParentHWND(HWND hwnd) { hwnd_ = hwnd; }
-
-void TaskBarNotifier::Private::setDevicePixelRatio(int ratio) { devicePixelRatio_ = ratio; }
-
 void TaskBarNotifier::Private::setTaskBarIcon(const HICON &icon)
 {
     if (icon_)
@@ -186,7 +240,7 @@ HICON TaskBarNotifier::Private::makeIconCaption(const QString &number) const
 
     QPainter p(&img);
     p.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
-    auto font   = QFont("Times", imSize.height() / textDelta, QFont::Bold);
+    auto font   = QFont(parent_->font().defaultFamily(), imSize.height() / textDelta, QFont::Bold);
     auto fm     = QFontMetrics(font);
     auto fh     = fm.height();
     auto radius = fh / 2;
@@ -194,7 +248,7 @@ HICON TaskBarNotifier::Private::makeIconCaption(const QString &number) const
     Qt::BrushStyle style = Qt::SolidPattern;
     QBrush         brush(Qt::black, style);
     p.setBrush(brush);
-    p.setPen(QPen(Qt::yellow));
+    p.setPen(QPen(Qt::NoPen));
     QRect rect(0, 0, imSize.width() - 2, imSize.height() - 2);
     p.drawRoundedRect(rect, radius, radius);
 
@@ -233,12 +287,7 @@ void TaskBarNotifier::Private::doFlashTaskbarIcon()
 TaskBarNotifier::TaskBarNotifier(QWidget *parent)
 {
     d = std::make_unique<Private>(Private());
-#ifdef USE_DBUS
-    Q_UNUSED(parent)
-#elif defined(Q_OS_WIN)
-    d->setParentHWND(reinterpret_cast<HWND>(parent->winId()));
-    d->setDevicePixelRatio(parent->devicePixelRatio());
-#endif
+    d->setParent(parent);
 }
 
 TaskBarNotifier::~TaskBarNotifier() = default;

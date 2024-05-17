@@ -1645,7 +1645,7 @@ void MainWin::updateReadNext(PsiIcon *anim, int amount)
         d->eventNotifier->setText("");
         d->eventNotifier->setPsiIcon("");
 #ifdef USE_TASKBARNOTIFIER
-        if (d->taskBarNotifier->isActive())
+        if (!d->asTool && d->taskBarNotifier->isActive())
             d->taskBarNotifier->removeIconCountCaption();
 #endif
     } else {
@@ -1653,7 +1653,8 @@ void MainWin::updateReadNext(PsiIcon *anim, int amount)
         d->eventNotifier->setText(QString("<b>") + numEventsString(d->nextAmount) + "</b>");
         d->eventNotifier->show();
 #ifdef USE_TASKBARNOTIFIER
-        d->taskBarNotifier->setIconCountCaption(d->nextAmount);
+        if (!d->asTool)
+            d->taskBarNotifier->setIconCountCaption(d->nextAmount);
 #endif
     }
 

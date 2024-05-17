@@ -503,7 +503,7 @@ if(LINUX)
 endif()
 
 #TaskbarNotifier definition
-if(WIN32 OR USE_DBUS)
+if(USE_TASKBARNOTIFIER)
     target_compile_definitions(${PROJECT_NAME} PRIVATE USE_TASKBARNOTIFIER)
 endif()
 if(USE_CRASH)

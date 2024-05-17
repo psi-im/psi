@@ -186,6 +186,13 @@ or
 
   Disable usage of X11 features which may crash program (default OFF)
 
+> -DUSE_TASKBARNOTIFIER=ON
+
+  Shows the incoming events count on the program icon.
+  For Linux systems, it uses the DBus service com.canonical.Unity if available.
+  Windows it uses an icon overlay mechanism.
+  Or simply changes the program icon for other cases. (default ON)
+
 ## Work with plugins:
 
 ### Next flags are working only if ENABLE_PLUGINS or ONLY_PLUGINS are enabled
