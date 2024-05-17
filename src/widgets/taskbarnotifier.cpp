@@ -46,6 +46,8 @@
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 #include <QtWinExtras/qwinfunctions.h>
 #endif
+#else
+#include <QIcon>
 #endif
 
 #ifdef USE_DBUS
