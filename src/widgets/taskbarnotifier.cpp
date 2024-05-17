@@ -72,27 +72,30 @@ public:
     void setDesktopPath(const QString &appName);
 #endif
 private:
-    QIcon setImageCountCaption(uint count = 0);
-#ifdef USE_DBUS
-    bool checkDBusSeviceAvailable();
-    void sendDBusSignal(bool isVisible, uint number = 0);
-#elif defined(Q_OS_WIN)
+#ifdef Q_OS_WIN
     void  setTaskBarIcon(const HICON &icon = {});
     HICON makeIconCaption(const QString &number) const;
     HICON getHICONfromQImage(const QImage &image) const;
     void  doFlashTaskbarIcon();
+#else
+    QIcon setImageCountCaption(uint count = 0);
+#ifdef USE_DBUS
+    bool checkDBusSeviceAvailable();
+    void sendDBusSignal(bool isVisible, uint number = 0);
+#endif
 #endif
 
 private:
     bool     urgent_ = false;
     bool     active_ = false;
     QWidget *parent_;
-    QImage  *image_;
-    int      devicePixelRatio_;
 #ifdef Q_OS_WIN
     HWND  hwnd_;
     HICON icon_;
+#else
+    QImage *image_;
 #endif
+    int devicePixelRatio_;
 };
 
 TaskBarNotifier::Private::~Private()
@@ -100,9 +103,10 @@ TaskBarNotifier::Private::~Private()
 #ifdef Q_OS_WIN
     if (icon_)
         DestroyIcon(icon_);
-#endif
+#else
     if (image_)
         delete image_;
+#endif
 }
 
 bool TaskBarNotifier::Private::active() const { return active_; }
@@ -145,13 +149,15 @@ void TaskBarNotifier::Private::restoreDefaultIcon()
 void TaskBarNotifier::Private::setParent(QWidget *parent)
 {
     parent_           = parent;
-    image_            = new QImage(parent->windowIcon().pixmap({ 128, 128 }).toImage());
     devicePixelRatio_ = parent->devicePixelRatio();
 #ifdef Q_OS_WIN
-    hwnd_ = reinterpret_cast<HWND>(parent->winId()));
+    hwnd_ = reinterpret_cast<HWND>(parent->winId());
+#else
+    image_ = new QImage(parent->windowIcon().pixmap({ 128, 128 }).toImage());
 #endif
 }
 
+#ifndef Q_OS_WIN
 QIcon TaskBarNotifier::Private::setImageCountCaption(uint count)
 {
     auto   imSize    = image_->size() * devicePixelRatio_;
@@ -184,6 +190,7 @@ QIcon TaskBarNotifier::Private::setImageCountCaption(uint count)
     p.end();
     return QIcon(QPixmap::fromImage(img));
 }
+#endif
 
 #ifdef USE_DBUS
 bool TaskBarNotifier::Private::checkDBusSeviceAvailable()
