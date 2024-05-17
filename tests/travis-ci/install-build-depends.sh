@@ -21,7 +21,7 @@ then
                              libqca-qt5-2-dev \
                              libqt5svg5-dev \
                              libqt5x11extras5-dev \
-                             libsignal-protocol-c-dev \
+                             libomemo-c-dev \
                              libsm-dev \
                              libssl-dev \
                              libtidy-dev \
@@ -50,7 +50,7 @@ then
                      tidy-html5 \
                      libgpg-error \
                      libotr \
-                     libsignal-protocol-c \
+                     libomemo-c \
                     "
     brew install ${PACKAGES}
 elif [ "${TARGET}" = "windows64" ]
@@ -67,7 +67,7 @@ then
                              ${PREFIX}-hunspell \
                              ${PREFIX}-minizip \
                              ${PREFIX}-libotr \
-                             ${PREFIX}-libsignal-protocol-c \
+                             ${PREFIX}-libomemo-c \
                              ${PREFIX}-tidy-html5 \
                              ${PREFIX}-qtbase \
                              ${PREFIX}-qttools \

@@ -26,7 +26,7 @@
 # brew install hunspell minizip qt@5 qtkeychain
 #
 # Build dependencies for Psi plugins:
-# brew install tidy-html5 libotr libsignal-protocol-c
+# brew install tidy-html5 libotr libomemo-c
 #
 # Additional tools:
 # brew install gnupg pinentry-mac wget htop
