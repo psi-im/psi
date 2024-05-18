@@ -446,7 +446,7 @@ if(WIN32)
         libhunspell.dll
         libotr-5.dll
         libotr.dll
-        libomemo-conversations.dll
+        libomemo-c.dll
         libssl-1_1-x64.dll
         libssl-3-x64.dll
         libssl-1_1.dll

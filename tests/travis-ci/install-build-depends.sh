@@ -67,7 +67,6 @@ then
                              ${PREFIX}-hunspell \
                              ${PREFIX}-minizip \
                              ${PREFIX}-libotr \
-                             ${PREFIX}-libomemo \
                              ${PREFIX}-tidy-html5 \
                              ${PREFIX}-qtbase \
                              ${PREFIX}-qttools \

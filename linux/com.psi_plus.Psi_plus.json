@@ -100,7 +100,7 @@
              "sources": [
                 {
                     "type": "git",
-                    "url": "https://github.com/gkdr/libomemo.git"
+                    "url": "https://github.com/dino/libomemo-c.git"
                 }
              ]
         },
