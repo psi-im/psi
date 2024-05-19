@@ -1081,13 +1081,13 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vc, PsiAccount *pa, QWidge
     else
         adjustSize();
 
-    connect(m_ui.pb_refresh, SIGNAL(clicked()), m_iw, SLOT(doRefresh()));
-    connect(m_ui.pb_refresh, SIGNAL(clicked()), m_iw, SLOT(updateStatus()));
-    connect(m_ui.pb_submit, SIGNAL(clicked()), m_iw, SLOT(publish()));
-    connect(m_ui.pb_close, SIGNAL(clicked()), this, SLOT(close()));
-    connect(m_ui.pb_disco, SIGNAL(clicked()), this, SLOT(doDisco()));
-    connect(m_iw, SIGNAL(busy()), SLOT(doBusy()));
-    connect(m_iw, SIGNAL(released()), SLOT(release()));
+    connect(m_ui.pb_refresh, &IconButton::clicked, m_iw, &InfoWidget::doRefresh);
+    connect(m_ui.pb_refresh, &IconButton::clicked, m_iw, &InfoWidget::updateStatus);
+    connect(m_ui.pb_submit, &IconButton::clicked, m_iw, &InfoWidget::publish);
+    connect(m_ui.pb_close, &IconButton::clicked, this, &InfoDlg::close);
+    connect(m_ui.pb_disco, &IconButton::clicked, this, &InfoDlg::doDisco);
+    connect(m_iw, &InfoWidget::busy, this, &InfoDlg::doBusy);
+    connect(m_iw, &InfoWidget::released, this, &InfoDlg::release);
 }
 
 void InfoDlg::closeEvent(QCloseEvent *e)

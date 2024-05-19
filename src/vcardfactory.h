@@ -24,6 +24,7 @@
 #include <QMap>
 #include <QObject>
 #include <QStringList>
+
 #include <functional>
 
 class PsiAccount;
@@ -51,9 +52,9 @@ public:
 
 signals:
     void vcardChanged(const Jid &);
-    void vcardPhotoAvailable(
-        const Jid &,
-        bool isMuc); // dedicated for AvatarFactory. it will almost always work except requests from AvatarFactory
+
+    // dedicated for AvatarFactory. it will almost always work except requests from AvatarFactory
+    void vcardPhotoAvailable(const Jid &, bool isMuc);
 
 protected:
     void checkLimit(const QString &jid, const VCard &vcard);

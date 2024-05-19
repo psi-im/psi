@@ -106,7 +106,7 @@ void VCardFactory::mucTaskFinished()
         }
 
         emit vcardChanged(j);
-        if (notifyPhoto && !task->vcard().photo().isEmpty()) {
+        if (notifyPhoto) {
             emit vcardPhotoAvailable(j, true);
         }
     }
@@ -139,7 +139,7 @@ void VCardFactory::saveVCard(const Jid &j, const VCard &vcard, bool notifyPhoto)
     Jid  jid = j;
     emit vcardChanged(jid);
 
-    if (notifyPhoto && !vcard.photo().isEmpty()) {
+    if (notifyPhoto) {
         emit vcardPhotoAvailable(jid, false);
     }
 }
@@ -197,9 +197,11 @@ void VCardFactory::setVCard(const Jid &j, const VCard &v, bool notifyPhoto) { sa
 void VCardFactory::setVCard(const PsiAccount *account, const VCard &v, QObject *obj, const char *slot)
 {
     JT_VCard *jtVCard_ = new JT_VCard(account->client()->rootTask());
-    if (obj)
+
+    if (obj != nullptr && slot != nullptr) {
         connect(jtVCard_, SIGNAL(finished()), obj, slot);
-    connect(jtVCard_, SIGNAL(finished()), SLOT(updateVCardFinished()));
+    }
+    connect(jtVCard_, &JT_VCard::finished, this, &VCardFactory::updateVCardFinished);
     jtVCard_->set(account->jid(), v);
     jtVCard_->go(true);
 }
@@ -207,14 +209,15 @@ void VCardFactory::setVCard(const PsiAccount *account, const VCard &v, QObject *
 /**
  * \brief Updates vCard on specified \a account.
  */
-void VCardFactory::setTargetVCard(const PsiAccount *account, const VCard &v, const Jid &mucJid, QObject *obj,
+void VCardFactory::setTargetVCard(const PsiAccount *account, const VCard &v, const Jid &targetJid, QObject *obj,
                                   const char *slot)
 {
     JT_VCard *jtVCard_ = new JT_VCard(account->client()->rootTask());
-    if (obj)
+    if (obj != nullptr && slot != nullptr) {
         connect(jtVCard_, SIGNAL(finished()), obj, slot);
-    connect(jtVCard_, SIGNAL(finished()), SLOT(updateVCardFinished()));
-    jtVCard_->set(mucJid, v, true);
+    }
+    connect(jtVCard_, &JT_VCard::finished, this, &VCardFactory::updateVCardFinished);
+    jtVCard_->set(targetJid, v, true);
     jtVCard_->go(true);
 }
 
@@ -223,9 +226,6 @@ void VCardFactory::updateVCardFinished()
     JT_VCard *jtVCard = static_cast<JT_VCard *>(sender());
     if (jtVCard && jtVCard->success()) {
         setVCard(jtVCard->jid(), jtVCard->vcard());
-    }
-    if (jtVCard) {
-        jtVCard->deleteLater();
     }
 }
 

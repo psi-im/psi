@@ -914,12 +914,13 @@ void AvatarFactory::vcardUpdated(const Jid &j, bool isMuc)
         return; // wtf??
     }
     ba = vcard.photo();
-    if (!ba.isEmpty()) {
-        if (AvatarCache::instance()->setIcon(AvatarCache::VCardType, fullJid, ba) == AvatarCache::UserUpdateRequired) {
-            d->iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(fullJid));
-            emit avatarChanged(j);
-        }
+    if (ba.isEmpty()) {
+        AvatarCache::instance()->removeIcon(AvatarCache::VCardType, fullJid);
+    } else {
+        AvatarCache::instance()->setIcon(AvatarCache::VCardType, fullJid, ba);
     }
+    d->iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(fullJid));
+    emit avatarChanged(j);
 }
 
 void AvatarFactory::itemPublished(const Jid &jid, const QString &n, const PubSubItem &item)
