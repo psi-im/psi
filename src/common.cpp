@@ -481,6 +481,12 @@ void bringToFront(QWidget *widget, bool)
     X11WindowSystem::instance()->bringToFront(w);
 #endif
 
+    // dirty hack to bring window to front in wayland desktop session
+    if (qApp->platformName() == "wayland" && qApp->applicationState() & Qt::ApplicationInactive) {
+        w->setWindowFlags(w->windowFlags() | Qt::WindowStaysOnTopHint);
+        w->setWindowFlags(w->windowFlags() & ~Qt::WindowStaysOnTopHint);
+    }
+
     if (w->isMaximized()) {
         w->showMaximized();
     } else {
@@ -489,13 +495,7 @@ void bringToFront(QWidget *widget, bool)
 
     // if(grabFocus)
     //    w->setActiveWindow();
-    // dirty hack to bring window to front in wayland desktop session
-    if (qApp->platformName() == "wayland" && qApp->applicationState() & Qt::ApplicationInactive) {
-        auto flags = w->windowFlags();
-        w->setWindowFlags(flags | Qt::WindowStaysOnTopHint);
-        w->setWindowFlags(flags & ~Qt::WindowStaysOnTopHint);
-        w->show();
-    }
+
     w->raise();
     w->activateWindow();
 
