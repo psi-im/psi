@@ -1066,7 +1066,7 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vc, PsiAccount *pa, QWidge
                    | Qt::CustomizeWindowHint);
     setModal(false);
     m_ui.setupUi(this);
-    m_iw = new InfoWidget(type, j, vc, pa, parent, cacheVCard);
+    m_iw = new InfoWidget(type, j, vc, pa, this, cacheVCard);
     m_ui.loContents->addWidget(m_iw);
 
     if (type == InfoWidget::Self) {
