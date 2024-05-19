@@ -984,10 +984,22 @@ void AvatarFactory::itemPublished(const Jid &jid, const QString &n, const PubSub
         }
     }
 
-    if (result == AvatarCache::UserUpdateRequired) {
-        d->iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(jidFull));
-        emit avatarChanged(jid);
-    }
+    // we force the signal even if it's not really changed according to our cache,
+    // coz in case of 2 mutually added each other in roster account in Psi we query
+    // and update cache twice on pubsub update:
+    // 1. 1st account on change its avatar
+    // 2. 2nd account as a subsriber of the first one via pubsub.
+    // as result cache on the first call will be updated and the second call will
+    // say there is nothing to change (after the first call), but we still need to make
+    // sure the second account rerenders the avatar of the first one after update.
+
+    // since we create AvatarFactory per account, we also have a copy of iconset for
+    // each account. This is memory consuming in case of duplicated contacts and likely
+    // has to be refactored, but we have to update iconset for every account,
+    // regardless if result == AvatarCache::UserUpdateRequired.
+
+    d->iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(jidFull));
+    emit avatarChanged(jid);
 }
 
 void AvatarFactory::publish_success(const QString &n, const PubSubItem &item)
