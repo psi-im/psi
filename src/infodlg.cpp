@@ -371,7 +371,7 @@ bool InfoWidget::aboutToClose()
                 : tr("You have not published your account information changes.\nAre you sure you want to discard "
                      "them?"),
             QMessageBox::Discard | QMessageBox::No);
-        if (n != 0) {
+        if (n != QMessageBox::Discard) {
             return false;
         }
     }
