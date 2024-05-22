@@ -507,7 +507,7 @@ void AccountModifyDlg::save()
     acc.opt_sm                 = ck_enableSM->isChecked();
     acc.ibbOnly                = ck_ibbOnly->isChecked();
     acc.dtProxy                = le_dtProxy->text();
-    acc.stunHost               = cb_stunHost->currentIndex() ? cb_stunHost->currentText().trimmed() : "";
+    acc.stunHost               = cb_stunHost->currentText().trimmed();
     acc.stunHosts.clear();
     // first item is no host
     for (int i = 1; i < cb_stunHost->count(); i++) {
