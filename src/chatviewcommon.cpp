@@ -37,7 +37,9 @@ void ChatViewCommon::setLooks(QWidget *w)
 bool ChatViewCommon::updateLastMsgTime(QDateTime t)
 {
     bool doInsert = t.date() != _lastMsgTime.date();
-    _lastMsgTime  = t;
+    if (!_lastMsgTime.isValid() || t > _lastMsgTime) {
+        _lastMsgTime = t;
+    }
     return doInsert;
 }
 
