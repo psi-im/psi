@@ -223,6 +223,7 @@ public:
     QString                                mucName, discoMucName, discoMucDescription, vcardMucName;
     QString                                password;
     QMap<LanguageManager::LangId, QString> subjectMap;
+    QString                                lastTopic;
     bool                                   nonAnonymous; // got status code 100 ?
     ActionList                            *actions;
     IconAction                            *act_bookmark, *act_pastesend;
@@ -2119,6 +2120,10 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
     }
 
     if (!topic.isNull()) {
+        if (d->lastTopic == topic) {
+            return; // ignore same topic
+        }
+        d->lastTopic           = topic;
         QString subjectTooltip = TextUtil::plain2rich(topic);
         subjectTooltip         = TextUtil::linkify(subjectTooltip);
         if (options->getOption("options.ui.emoticons.use-emoticons").toBool()) {
