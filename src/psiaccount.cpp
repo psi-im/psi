@@ -3134,6 +3134,7 @@ void PsiAccount::setStatus(const Status &_s, bool withPriority, bool isManualSta
         else {
             if (!isConnected()) {
                 cleanupStream();
+                v_isActive = false;
                 login();
             }
             if (rosterDone) {
