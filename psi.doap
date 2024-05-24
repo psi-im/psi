@@ -687,6 +687,15 @@
       </xmpp:SupportedXep>
     </implements>
 
+    <!-- XEP-0368: SRV records for XMPP over TLS -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0364.html'/>
+        <xmpp:status>complete</xmpp:status>
+        <xmpp:version>1.1.0</xmpp:version>
+      </xmpp:SupportedXep>
+    </implements>
+
     <!-- XEP-0371: Jingle ICE Transport Method -->
     <implements>
       <xmpp:SupportedXep>
