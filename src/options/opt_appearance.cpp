@@ -218,42 +218,47 @@ QWidget *OptionsTabAppearanceGeneral::widget()
         QString      option;
         QString      descr;
     };
-    ColorWidgetData cwData[]
-        = { { d->ck_cOnline, d->pb_cOnline, "contactlist.status.online", s.arg(tr("online")) },
-            { d->ck_cOffline, d->pb_cOffline, "contactlist.status.offline", s.arg(tr("offline")) },
-            { d->ck_cAway, d->pb_cAway, "contactlist.status.away", s.arg(tr("away")) },
-            { d->ck_cDND, d->pb_cDND, "contactlist.status.do-not-disturb", s.arg(tr("do not disturb")) },
-            { d->ck_cStatus, d->pb_cStatus, "contactlist.status-messages", s.arg(tr("Status message")) },
-            { d->ck_cProfileFore, d->pb_cProfileFore, "contactlist.profile.header-foreground", "" },
-            { d->ck_cProfileBack, d->pb_cProfileBack, "contactlist.profile.header-background", "" },
-            { d->ck_cGroupFore, d->pb_cGroupFore, "contactlist.grouping.header-foreground", "" },
-            { d->ck_cGroupBack, d->pb_cGroupBack, "contactlist.grouping.header-background", "" },
-            { d->ck_cListBack, d->pb_cListBack, "contactlist.background", "" },
-            { d->ck_cAnimFront, d->pb_cAnimFront, "contactlist.status-change-animation1", "" },
-            { d->ck_cAnimBack, d->pb_cAnimBack, "contactlist.status-change-animation2", "" },
-            { d->ck_cMessageSent, d->pb_cMessageSent, "messages.sent", "" },
-            { d->ck_cMessageReceived, d->pb_cMessageReceived, "messages.received", "" },
-            { d->ck_cSysMsg, d->pb_cSysMsg, "messages.informational", "" },
-            { d->ck_cUserText, d->pb_cUserText, "messages.usertext", "" },
-            { d->ck_highlight, d->pb_highlight, "messages.highlighting", "" },
-            { d->ck_cLink, d->pb_cLink, "messages.link", "" },
-            { d->ck_cLinkVisited, d->pb_cLinkVisited, "messages.link-visited", "" },
-            { d->ck_cToolTipText, d->pb_cToolTipText, "tooltip.text", "" },
-            { d->ck_cToolTipBack, d->pb_cToolTipBack, "tooltip.background", "" } };
+    std::array cwData(std::to_array<ColorWidgetData>(
+        { { d->ck_cProfileFore, d->pb_cProfileFore, "contactlist.profile.header-foreground", "" },
+          { d->ck_cProfileBack, d->pb_cProfileBack, "contactlist.profile.header-background", "" },
+          { d->ck_cGroupFore, d->pb_cGroupFore, "contactlist.grouping.header-foreground", "" },
+          { d->ck_cGroupBack, d->pb_cGroupBack, "contactlist.grouping.header-background", "" },
+          { d->ck_cAnimFront, d->pb_cAnimFront, "contactlist.status-change-animation1", "" },
+          { d->ck_cAnimBack, d->pb_cAnimBack, "contactlist.status-change-animation2", "" },
+          { d->ck_cMessageSent, d->pb_cMessageSent, "messages.sent", "" },
+          { d->ck_cMessageReceived, d->pb_cMessageReceived, "messages.received", "" },
+          { d->ck_cSysMsg, d->pb_cSysMsg, "messages.informational", "" },
+          { d->ck_cUserText, d->pb_cUserText, "messages.usertext", "" },
+          { d->ck_cOnline, d->pb_cOnline, "contactlist.status.online", s.arg(tr("online")) },
+          { d->ck_cAway, d->pb_cAway, "contactlist.status.away", s.arg(tr("away")) },
+          { d->ck_cDND, d->pb_cDND, "contactlist.status.do-not-disturb", s.arg(tr("do not disturb")) },
+          { d->ck_cOffline, d->pb_cOffline, "contactlist.status.offline", s.arg(tr("offline")) },
+          { d->ck_cListBack, d->pb_cListBack, "contactlist.background", "" },
+
+          { d->ck_cMucModerator, d->pb_cMucModerator, "muc.role-moderator", "" },
+          { d->ck_cMucParticipant, d->pb_cMucParticipant, "muc.role-participant", "" },
+          { d->ck_cMucVisitor, d->pb_cMucVisitor, "muc.role-visitor", "" },
+          { d->ck_cMucNoRole, d->pb_cMucNoRole, "muc.role-norole", "" },
+
+          { d->ck_cStatus, d->pb_cStatus, "contactlist.status-messages", s.arg(tr("Status message")) },
+          { d->ck_highlight, d->pb_highlight, "messages.highlighting", "" },
+          { d->ck_cLink, d->pb_cLink, "messages.link", "" },
+          { d->ck_cLinkVisited, d->pb_cLinkVisited, "messages.link-visited", "" },
+          { d->ck_cToolTipText, d->pb_cToolTipText, "tooltip.text", "" },
+          { d->ck_cToolTipBack, d->pb_cToolTipBack, "tooltip.background", "" } }));
 
     bg_color = new QButtonGroup(this);
-    for (unsigned int i = 0; i < sizeof(cwData) / sizeof(ColorWidgetData); i++) {
-        bg_color->addButton(cwData[i].button);
-        if (!cwData[i].descr.isEmpty()) {
-            cwData[i].cbox->setToolTip(cwData[i].descr);
+    for (auto const &d : cwData) {
+        bg_color->addButton(d.button);
+        if (!d.descr.isEmpty()) {
+            d.cbox->setToolTip(d.descr);
         }
 #if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
-        connect(cwData[i].cbox, &QCheckBox::stateChanged, this, &OptionsTabAppearanceGeneral::colorCheckBoxClicked);
+        connect(d.cbox, &QCheckBox::stateChanged, this, &OptionsTabAppearanceGeneral::colorCheckBoxClicked);
 #else
-        connect(cwData[i].cbox, &QCheckBox::checkStateChanged, this,
-                &OptionsTabAppearanceGeneral::colorCheckBoxClicked);
+        connect(d.cbox, &QCheckBox::checkStateChanged, this, &OptionsTabAppearanceGeneral::colorCheckBoxClicked);
 #endif
-        colorWidgetsMap[cwData[i].cbox] = QPair<QAbstractButton *, QString>(cwData[i].button, cwData[i].option);
+        colorWidgetsMap[d.cbox] = QPair<QAbstractButton *, QString>(d.button, d.option);
     }
     connect(bg_color, qOverload<QAbstractButton *>(&QButtonGroup::buttonClicked), this,
             &OptionsTabAppearanceGeneral::chooseColor);
