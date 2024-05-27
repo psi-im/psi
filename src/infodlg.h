@@ -87,6 +87,8 @@ private:
     void        setPreviewPhoto(const QString &str);
     void        requestResourceInfo(const XMPP::Jid &j);
     void        requestLastActivity();
+    void        release();
+    void        updateNick();
 
 signals:
     void busy();

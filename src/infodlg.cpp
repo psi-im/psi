@@ -611,6 +611,23 @@ void InfoWidget::setReadOnly(bool x)
     m_ui.te_desc->setReadOnly(x);
 }
 
+void InfoWidget::release()
+{
+    d->busy = false;
+    emit released();
+    fieldsEnable(true);
+}
+
+void InfoWidget::updateNick()
+{
+    if (d->jid.compare(d->pa->jid(), false)) {
+        if (!d->vcard.nickName().isEmpty())
+            d->pa->setNick(d->vcard.nickName());
+        else
+            d->pa->setNick(d->pa->jid().node());
+    }
+}
+
 void InfoWidget::doRefresh()
 {
     if (!d->pa->checkConnected(this))
@@ -620,7 +637,6 @@ void InfoWidget::doRefresh()
 
     fieldsEnable(false);
 
-    d->actionType = 0;
     emit busy();
 
     VCardFactory::Flags flags;
@@ -629,47 +645,27 @@ void InfoWidget::doRefresh()
     }
     auto request = VCardFactory::instance()->getVCard(d->pa, d->jid, flags);
     connect(request, &VCardRequest::finished, this, [this, request]() {
-        d->busy = false;
-        emit released();
-        fieldsEnable(true);
-
+        release();
         if (request->success()) {
             auto vcard = request->vcard();
             if (vcard) {
                 d->vcard = vcard;
                 setData(d->vcard);
             }
-
-            if (d->jid.compare(d->pa->jid(), false)) {
-                if (vcard && !vcard.nickName().isEmpty())
-                    d->pa->setNick(d->vcard.nickName());
-                else
-                    d->pa->setNick(d->pa->jid().node());
-            }
-
-            if (d->actionType == 1)
-                QMessageBox::information(this, tr("Success"),
-                                         d->type == MucAdm ? tr("Your conference information has been published.")
-                                                           : tr("Your account information has been published."));
+            updateNick();
         } else {
-            if (d->actionType == 0) {
-                if (d->type == Self)
-                    QMessageBox::critical(
-                        this, tr("Error"),
-                        tr("Unable to retrieve your account information.  Perhaps you haven't entered any yet."));
-                else if (d->type == MucAdm)
-                    QMessageBox::critical(this, tr("Error"),
-                                          tr("Unable to retrieve information about this conference.\nReason: %1")
-                                              .arg(request->errorString()));
-                else
-                    QMessageBox::critical(this, tr("Error"),
-                                          tr("Unable to retrieve information about this contact.\nReason: %1")
-                                              .arg(request->errorString()));
-            } else {
+            if (d->type == Self)
                 QMessageBox::critical(
                     this, tr("Error"),
-                    tr("Unable to publish your account information.\nReason: %1").arg(request->errorString()));
-            }
+                    tr("Unable to retrieve your account information.  Perhaps you haven't entered any yet."));
+            else if (d->type == MucAdm)
+                QMessageBox::critical(this, tr("Error"),
+                                      tr("Unable to retrieve information about this conference.\nReason: %1")
+                                          .arg(request->errorString()));
+            else
+                QMessageBox::critical(
+                    this, tr("Error"),
+                    tr("Unable to retrieve information about this contact.\nReason: %1").arg(request->errorString()));
         }
     });
 }
@@ -686,17 +682,29 @@ void InfoWidget::publish()
         return;
     }
 
-    VCard submit_vcard = makeVCard();
+    d->vcard = makeVCard();
 
     fieldsEnable(false);
 
-    d->actionType = 1;
     emit busy();
 
     VCardFactory::Flags flags;
     if (d->type == MucAdm)
         flags |= VCardFactory::MucRoom;
-    VCardFactory::instance()->setVCard(d->pa, submit_vcard, jid(), flags);
+    auto task = VCardFactory::instance()->setVCard(d->pa, d->vcard, {}, flags);
+    connect(task, &JT_VCard::finished, this, [this, task]() {
+        release();
+        if (task->success()) {
+            updateNick();
+            QMessageBox::information(this, tr("Success"),
+                                     d->type == MucAdm ? tr("Your conference information has been published.")
+                                                       : tr("Your account information has been published."));
+        } else {
+            QMessageBox::critical(
+                this, tr("Error"),
+                tr("Unable to publish your account information.\nReason: %1").arg(task->statusString()));
+        }
+    });
 }
 
 PsiAccount *InfoWidget::account() const { return d->pa; }
