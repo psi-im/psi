@@ -35,6 +35,8 @@
 #include <QObject>
 #include <QTextStream>
 
+// #define VCF_DEBUG 1
+
 using VCardRequestQueue = QList<VCardRequest *>;
 
 class VCardFactory::QueuedLoader : public QObject {
@@ -84,9 +86,12 @@ VCardFactory::VCardFactory() : QObject(qApp), dictSize_(5), queuedLoader_(new Qu
             } else {
                 saveVCard(request->jid(), request->vcard(), request->flags());
             }
-        } else {
+        }
+#ifdef VCF_DEBUG
+        else {
             qDebug() << "vcard query failed for " << request->jid().full() << ": " << request->errorString();
         }
+#endif
     });
 }
 

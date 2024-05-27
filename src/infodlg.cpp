@@ -320,6 +320,18 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
     connect(d->pa->client(), SIGNAL(resourceUnavailable(const Jid &, const Resource &)),
             SLOT(contactUnavailable(const Jid &, const Resource &)));
     connect(d->pa, SIGNAL(updateContact(const Jid &)), SLOT(contactUpdated(const Jid &)));
+    connect(VCardFactory::instance(), &VCardFactory::vcardChanged, this,
+            [this](const Jid &j, VCardFactory::Flags flags) {
+                if (d->jid.compare(j, flags & VCardFactory::MucUser)) {
+                    auto vcard = (flags & VCardFactory::MucUser) ? VCardFactory::instance()->mucVcard(j)
+                                                                 : VCardFactory::instance()->vcard(j);
+                    if (vcard) {
+                        d->vcard = vcard;
+                        setData(d->vcard);
+                    }
+                    updateNick();
+                }
+            });
     m_ui.te_status->setReadOnly(true);
     m_ui.te_status->setAcceptRichText(true);
     PsiRichText::install(m_ui.te_status->document());
