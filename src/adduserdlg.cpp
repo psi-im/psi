@@ -295,7 +295,7 @@ void AddUserDlg::getVCardActivated()
 {
     const VCard vcard = VCardFactory::instance()->vcard(jid());
 
-    InfoDlg *w = new InfoDlg(InfoWidget::Contact, jid(), vcard, d->pa, nullptr, false);
+    InfoDlg *w = new InfoDlg(InfoWidget::Contact, jid(), vcard, d->pa, nullptr);
     w->show();
 
     // automatically retrieve info if it doesn't exist
@@ -305,40 +305,38 @@ void AddUserDlg::getVCardActivated()
 
 void AddUserDlg::resolveNickActivated()
 {
-    JT_VCard *jt = VCardFactory::instance()->getVCard(
-        jid(), d->pa->client()->rootTask(), this,
-        [this]() {
-            JT_VCard *jt = static_cast<JT_VCard *>(sender());
-
-            if (jt->success()) {
-                QString           nickname;
-                const XMPP::VCard vcard = jt->vcard();
-                if (!vcard.nickName().isEmpty()) {
-                    nickname = vcard.nickName();
-                } else if (!vcard.fullName().isEmpty()) {
-                    nickname = vcard.fullName();
-                } else {
-                    nickname = vcard.givenName();
-                    if (nickname.isEmpty()) {
-                        nickname = vcard.middleName();
-                    } else if (!vcard.middleName().isEmpty()) {
-                        nickname += " " + vcard.middleName();
-                    }
-                    if (nickname.isEmpty()) {
-                        nickname = vcard.familyName();
-                    } else if (!vcard.familyName().isEmpty()) {
-                        nickname += " " + vcard.familyName();
-                    }
-                }
-
+    auto *jt = VCardFactory::instance()->getVCard(d->pa, jid());
+    connect(jt, &VCardRequest::finished, this, [this, jt]() {
+        if (!jt->success()) {
+            return;
+        }
+        auto vcard = jt->vcard();
+        if (vcard) {
+            QString nickname;
+            if (!vcard.nickName().isEmpty()) {
+                nickname = vcard.nickName();
+            } else if (!vcard.fullName().isEmpty()) {
+                nickname = vcard.fullName();
+            } else {
+                nickname = vcard.givenName();
                 if (nickname.isEmpty()) {
-                    nickname = jt->jid().bare();
+                    nickname = vcard.middleName();
+                } else if (!vcard.middleName().isEmpty()) {
+                    nickname += " " + vcard.middleName();
                 }
-                le_nick->setText(nickname);
+                if (nickname.isEmpty()) {
+                    nickname = vcard.familyName();
+                } else if (!vcard.familyName().isEmpty()) {
+                    nickname += " " + vcard.familyName();
+                }
             }
-        },
-        false);
-    d->tasks->append(jt);
+
+            if (nickname.isEmpty()) {
+                nickname = jt->jid().bare();
+            }
+            le_nick->setText(nickname);
+        }
+    });
 }
 
 /**

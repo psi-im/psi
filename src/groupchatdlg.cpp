@@ -104,7 +104,6 @@
 #include <QWidgetAction>
 #include <QWindow>
 
-#include <functional>
 #ifdef Q_OS_WIN
 #include <windows.h>
 #endif
@@ -1069,11 +1068,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
 
     updateMucName();
     updateGCVCard();
-    JT_DiscoInfo *disco = new JT_DiscoInfo(
-        account()->client()->rootTask()); // FIXME in fact xep says we should do this before entering.
-    connect(disco, SIGNAL(finished()), SLOT(discoInfoFinished())); // but we need this just for name for now.
-    disco->get(jid());                                             // From other side we could provide the name outside.
-    disco->go(true);
+    updateConfiguration();
 
     setLooks();
     setToolbuttons();
@@ -1327,6 +1322,15 @@ void GCMainDlg::updateMucName()
     }
 }
 
+void GCMainDlg::updateConfiguration()
+{
+    JT_DiscoInfo *disco = new JT_DiscoInfo(
+        account()->client()->rootTask()); // FIXME in fact xep says we should do this before entering.
+    connect(disco, SIGNAL(finished()), SLOT(discoInfoFinished())); // but we need this just for name for now.
+    disco->get(jid());                                             // From other side we could provide the name outside.
+    disco->go(true);
+}
+
 void GCMainDlg::discoInfoFinished()
 {
     JT_DiscoInfo                *t = static_cast<JT_DiscoInfo *>(sender());
@@ -1338,6 +1342,12 @@ void GCMainDlg::discoInfoFinished()
     d->discoMucDescription = x.getField("muc#roominfo_description").value().value(0);
     if (d->mucNameSource >= Private::TitleDisco) {
         updateMucName();
+    }
+    if (t->item().features().hasVCard()) {
+        auto avatarHash = x.getField("muc#roominfo_avatarhash").value().value(0);
+        account()->avatarFactory()->ensureVCardUpdated(jid(), QByteArray::fromHex(avatarHash.toLatin1()),
+                                                       AvatarFactory::MucRoom);
+    } else if (d->gcSelfPresenceSupported) {
     }
 }
 
@@ -1801,7 +1811,7 @@ void GCMainDlg::mucKickMsgHelper(const QString &nick, const Status &s, const QSt
 void GCMainDlg::gcSelfPresence(const Status &s)
 {
     d->gcSelfPresenceSupported = true;
-    account()->avatarFactory()->statusUpdate(jid().withResource(QString()), s);
+    account()->avatarFactory()->statusUpdate(jid(), s, AvatarFactory::MucRoom);
 }
 
 void GCMainDlg::presence(const QString &nick, const Status &s)
@@ -1824,13 +1834,6 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 
     bool isSelf = (nick == d->self);
     if (isSelf) {
-        if (!d->gcSelfPresenceSupported && !d->gcSelfAvatarRequested) {
-            d->gcSelfAvatarRequested = true;
-            VCardFactory::instance()->getVCard(
-                jid(), account()->client()->rootTask(), this, [this]() { GCMainDlg::updateGCVCard(); }, true, false,
-                true);
-        }
-
         if (s.isAvailable())
             setStatusTabIcon(s.type());
         UserListItem *u = account()->find(d->dlg->jid().bare());
@@ -2052,7 +2055,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
     }
 
     if (!nick.isEmpty())
-        account()->avatarFactory()->newMucItem(jidForNick(nick), s);
+        account()->avatarFactory()->statusUpdate(jidForNick(nick), s, AvatarFactory::MucUser);
 }
 
 XMPP::Jid GCMainDlg::jidForNick(const QString &nick) const { return Jid(jid()).withResource(nick); }
@@ -2090,12 +2093,7 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
         d->nonAnonymous = false;
     }
     if (m.getMUCStatuses().contains(104)) {
-        // new MUC vcard available
-        if (!d->gcSelfPresenceSupported) {
-            // we had to handle avatar hash from presence already
-            VCardFactory::instance()->getVCard(
-                jid(), account()->client()->rootTask(), this, [this]() { GCMainDlg::updateGCVCard(); }, true);
-        }
+        updateConfiguration();
     }
 
     PsiOptions *options = PsiOptions::instance();

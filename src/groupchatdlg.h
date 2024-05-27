@@ -170,6 +170,7 @@ private:
 
     void setMucSelfAvatar();
     void updateIdentityVisibility();
+    void updateConfiguration();
 };
 
 #endif // GROUPCHATDLG_H

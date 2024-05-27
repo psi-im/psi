@@ -41,6 +41,8 @@ class VCardMucAvatar;
 class VCardStaticAvatar;
 
 namespace XMPP {
+
+class DiscoItem;
 class Jid;
 class Resource;
 class PubSubItem;
@@ -53,8 +55,6 @@ using namespace XMPP;
 class AvatarFactory : public QObject {
     Q_OBJECT
 
-    static const int VcardReqInterval = 500; // query vcard avatars once per half second
-
 public:
     struct UserHashes {
         QByteArray avatar; // current active avatar
@@ -65,6 +65,9 @@ public:
         QByteArray data;
         QString    metaType;
     };
+
+    enum Flag { MucRoom = 0x1, MucUser = 0x2, Cache = 0x4 };
+    Q_DECLARE_FLAGS(Flags, Flag);
 
     AvatarFactory(PsiAccount *pa);
     ~AvatarFactory();
@@ -80,28 +83,25 @@ public:
     void removeManualAvatar(const Jid &j);
     bool hasManualAvatar(const Jid &j);
 
-    void    newMucItem(const Jid &fullJid, const Status &s);
     QPixmap getMucAvatar(const Jid &jid);
 
     static QString getCacheDir();
     static int     maxAvatarSize();
     static QPixmap roundedAvatar(const QPixmap &pix, int rad, int avatarSize);
 
-    void statusUpdate(const Jid &jid, const XMPP::Status &status);
+    void statusUpdate(const Jid &jid, const XMPP::Status &status, Flags flags = {});
+    void ensureVCardUpdated(const Jid &jid, const QByteArray &hash, Flags flags = {});
 signals:
     void avatarChanged(const XMPP::Jid &);
 
 protected slots:
-    void itemPublished(const XMPP::Jid &, const QString &, const PubSubItem &);
     void publish_success(const QString &, const XMPP::PubSubItem &);
-    void resourceAvailable(const XMPP::Jid &, const XMPP::Resource &);
-
-private slots:
-    void vcardUpdated(const XMPP::Jid &, bool isMuc);
 
 private:
     class Private;
     Private *d;
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(AvatarFactory::Flags)
 
 #endif // AVATARS_H

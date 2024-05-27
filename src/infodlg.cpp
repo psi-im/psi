@@ -25,7 +25,6 @@
 #include "discodlg.h"
 #include "fileutil.h"
 #include "iconset.h"
-#include "iconwidget.h"
 #include "iris/xmpp_client.h"
 #include "iris/xmpp_serverinfomanager.h"
 #include "iris/xmpp_tasks.h"
@@ -145,11 +144,9 @@ public:
     int                       actionType = 0;
     Jid                       jid;
     VCard                     vcard;
-    PsiAccount               *pa         = nullptr;
-    bool                      busy       = false;
-    bool                      te_edited  = false;
-    bool                      cacheVCard = false;
-    JT_VCard                 *jt         = nullptr;
+    PsiAccount               *pa        = nullptr;
+    bool                      busy      = false;
+    bool                      te_edited = false;
     QByteArray                photo;
     QDate                     bday;
     QString                   dateTextFormat;
@@ -200,8 +197,7 @@ public:
     }
 };
 
-InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWidget *parent, bool cacheVCard) :
-    QWidget(parent)
+InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWidget *parent) : QWidget(parent)
 {
     m_ui.setupUi(this);
     d            = new Private;
@@ -211,9 +207,7 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
     d->pa        = pa;
     d->busy      = false;
     d->te_edited = false;
-    d->jt        = nullptr;
     d->pa->dialogRegister(this, j);
-    d->cacheVCard     = cacheVCard;
     d->dateTextFormat = "d MMM yyyy";
 
     setWindowTitle(d->jid.full());
@@ -375,67 +369,7 @@ bool InfoWidget::aboutToClose()
             return false;
         }
     }
-
-    // cancel active transaction (refresh only)
-    if (d->busy && d->actionType == 0) {
-        delete d->jt;
-        d->jt = nullptr;
-    }
-
     return true;
-}
-
-void InfoWidget::jt_finished()
-{
-    d->jt             = nullptr;
-    JT_VCard *jtVCard = static_cast<JT_VCard *>(sender());
-
-    d->busy = false;
-    emit released();
-    fieldsEnable(true);
-
-    if (jtVCard->success()) {
-        if (d->actionType == 0) {
-            d->vcard = jtVCard->vcard();
-            setData(d->vcard);
-        } else if (d->actionType == 1) {
-            d->vcard = jtVCard->vcard();
-            if (d->cacheVCard)
-                VCardFactory::instance()->setVCard(d->jid, d->vcard);
-            setData(d->vcard);
-        }
-
-        if (d->jid.compare(d->pa->jid(), false)) {
-            if (!d->vcard.nickName().isEmpty())
-                d->pa->setNick(d->vcard.nickName());
-            else
-                d->pa->setNick(d->pa->jid().node());
-        }
-
-        if (d->actionType == 1)
-            QMessageBox::information(this, tr("Success"),
-                                     d->type == MucAdm ? tr("Your conference information has been published.")
-                                                       : tr("Your account information has been published."));
-    } else {
-        if (d->actionType == 0) {
-            if (d->type == Self)
-                QMessageBox::critical(
-                    this, tr("Error"),
-                    tr("Unable to retrieve your account information.  Perhaps you haven't entered any yet."));
-            else if (d->type == MucAdm)
-                QMessageBox::critical(this, tr("Error"),
-                                      tr("Unable to retrieve information about this conference.\nReason: %1")
-                                          .arg(jtVCard->statusString()));
-            else
-                QMessageBox::critical(
-                    this, tr("Error"),
-                    tr("Unable to retrieve information about this contact.\nReason: %1").arg(jtVCard->statusString()));
-        } else {
-            QMessageBox::critical(
-                this, tr("Error"),
-                tr("Unable to publish your account information.\nReason: %1").arg(jtVCard->statusString()));
-        }
-    }
 }
 
 void InfoWidget::setData(const VCard &i)
@@ -689,8 +623,55 @@ void InfoWidget::doRefresh()
     d->actionType = 0;
     emit busy();
 
-    d->jt = VCardFactory::instance()->getVCard(
-        d->jid, d->pa->client()->rootTask(), this, [this]() { jt_finished(); }, d->cacheVCard, d->type == MucContact);
+    VCardFactory::Flags flags;
+    if (d->type == MucContact) {
+        flags |= VCardFactory::MucUser;
+    }
+    auto request = VCardFactory::instance()->getVCard(d->pa, d->jid, flags);
+    connect(request, &VCardRequest::finished, this, [this, request]() {
+        d->busy = false;
+        emit released();
+        fieldsEnable(true);
+
+        if (request->success()) {
+            auto vcard = request->vcard();
+            if (vcard) {
+                d->vcard = vcard;
+                setData(d->vcard);
+            }
+
+            if (d->jid.compare(d->pa->jid(), false)) {
+                if (vcard && !vcard.nickName().isEmpty())
+                    d->pa->setNick(d->vcard.nickName());
+                else
+                    d->pa->setNick(d->pa->jid().node());
+            }
+
+            if (d->actionType == 1)
+                QMessageBox::information(this, tr("Success"),
+                                         d->type == MucAdm ? tr("Your conference information has been published.")
+                                                           : tr("Your account information has been published."));
+        } else {
+            if (d->actionType == 0) {
+                if (d->type == Self)
+                    QMessageBox::critical(
+                        this, tr("Error"),
+                        tr("Unable to retrieve your account information.  Perhaps you haven't entered any yet."));
+                else if (d->type == MucAdm)
+                    QMessageBox::critical(this, tr("Error"),
+                                          tr("Unable to retrieve information about this conference.\nReason: %1")
+                                              .arg(request->errorString()));
+                else
+                    QMessageBox::critical(this, tr("Error"),
+                                          tr("Unable to retrieve information about this contact.\nReason: %1")
+                                              .arg(request->errorString()));
+            } else {
+                QMessageBox::critical(
+                    this, tr("Error"),
+                    tr("Unable to publish your account information.\nReason: %1").arg(request->errorString()));
+            }
+        }
+    });
 }
 
 void InfoWidget::publish()
@@ -712,11 +693,10 @@ void InfoWidget::publish()
     d->actionType = 1;
     emit busy();
 
-    if (d->type == MucAdm) {
-        VCardFactory::instance()->setTargetVCard(d->pa, submit_vcard, d->jid, this, SLOT(jt_finished()));
-    } else {
-        VCardFactory::instance()->setVCard(d->pa, submit_vcard, this, SLOT(jt_finished()));
-    }
+    VCardFactory::Flags flags;
+    if (d->type == MucAdm)
+        flags |= VCardFactory::MucRoom;
+    VCardFactory::instance()->setVCard(d->pa, submit_vcard, jid(), flags);
 }
 
 PsiAccount *InfoWidget::account() const { return d->pa; }
@@ -1059,14 +1039,14 @@ void InfoWidget::goHomepage()
 // --------------------------------------------
 // InfoDlg
 // --------------------------------------------
-InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vc, PsiAccount *pa, QWidget *parent, bool cacheVCard)
+InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vc, PsiAccount *pa, QWidget *parent)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint
                    | Qt::CustomizeWindowHint);
     setModal(false);
     m_ui.setupUi(this);
-    m_iw = new InfoWidget(type, j, vc, pa, this, cacheVCard);
+    m_iw = new InfoWidget(type, j, vc, pa, this);
     m_ui.loContents->addWidget(m_iw);
 
     if (type == InfoWidget::Self) {

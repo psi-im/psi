@@ -36,8 +36,7 @@ class InfoWidget : public QWidget {
     Q_OBJECT
 public:
     enum { Self, Contact, MucContact, MucAdm };
-    InfoWidget(int type, const XMPP::Jid &, const XMPP::VCard &, PsiAccount *, QWidget *parent = nullptr,
-               bool cacheVCard = true);
+    InfoWidget(int type, const XMPP::Jid &, const XMPP::VCard &, PsiAccount *, QWidget *parent = nullptr);
     ~InfoWidget();
     bool        aboutToClose(); /* call this when you are going to close parent dialog */
     PsiAccount *account() const;
@@ -62,7 +61,6 @@ private slots:
     void clientVersionFinished();
     void entityTimeFinished();
     void requestLastActivityFinished();
-    void jt_finished();
     void doShowCal();
     void doUpdateFromCalendar(const QDate &);
     void doClearBirthDate();
@@ -98,8 +96,7 @@ signals:
 class InfoDlg : public QDialog {
     Q_OBJECT
 public:
-    InfoDlg(int type, const XMPP::Jid &, const XMPP::VCard &, PsiAccount *, QWidget *parent = nullptr,
-            bool cacheVCard = true);
+    InfoDlg(int type, const XMPP::Jid &, const XMPP::VCard &, PsiAccount *, QWidget *parent = nullptr);
     inline InfoWidget *infoWidget() const { return m_iw; }
 
 protected:

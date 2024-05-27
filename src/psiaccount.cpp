@@ -2337,27 +2337,24 @@ void PsiAccount::client_rosterRequestFinished(bool success, int, const QString &
 
 void PsiAccount::resolveContactName(const Jid &j)
 {
-    VCardFactory::instance()->getVCard(j, client()->rootTask(), this, [this]() { jt_resolveContactName(); });
+    auto req = VCardFactory::instance()->getVCard(this, j, {});
+    connect(req, &VCardRequest::finished, this, [this, req]() {
+        if (req->success() && req->vcard()) {
+            QString nick = req->vcard().nickName();
+            QString full = req->vcard().fullName();
+            if (!nick.isEmpty()) {
+                actionRename(req->jid(), nick);
+            } else if (!full.isEmpty()) {
+                actionRename(req->jid(), full);
+            }
+        }
+    });
 }
 
 void PsiAccount::setClientVersionInfoMap(const QVariantMap &info)
 {
     d->clientVersionInfo = info;
     updateClientVersionInfo();
-}
-
-void PsiAccount::jt_resolveContactName()
-{
-    JT_VCard *j = static_cast<JT_VCard *>(sender());
-    if (j->success()) {
-        QString nick = j->vcard().nickName();
-        QString full = j->vcard().fullName();
-        if (!nick.isEmpty()) {
-            actionRename(j->jid(), nick);
-        } else if (!full.isEmpty()) {
-            actionRename(j->jid(), full);
-        }
-    }
 }
 
 void PsiAccount::serverFeaturesChanged()
@@ -2379,15 +2376,15 @@ void PsiAccount::serverFeaturesChanged()
         const VCard vcard = VCardFactory::instance()->vcard(d->jid);
         if (PsiOptions::instance()->getOption("options.vcard.query-own-vcard-on-login").toBool() || vcard.isEmpty()
             || (vcard.nickName().isEmpty() && vcard.fullName().isEmpty())) {
-            VCardFactory::instance()->getVCard(d->jid, d->client->rootTask(), this, [this]() {
+            auto req = VCardFactory::instance()->getVCard(this, d->jid);
+            connect(req, &VCardRequest::finished, this, [this, req]() {
                 if (!isConnected() || !isActive())
                     return;
 
-                QString   nick  = d->jid.node();
-                JT_VCard *j     = static_cast<JT_VCard *>(sender());
-                VCard     vcard = j->vcard();
-                bool      changeOwn;
-                if (j->success()) {
+                QString nick  = d->jid.node();
+                VCard   vcard = req->vcard();
+                bool    changeOwn;
+                if (vcard) {
                     if (!vcard.nickName().isEmpty()) {
                         d->nickFromVCard = true;
                         nick             = vcard.nickName();
@@ -2396,13 +2393,14 @@ void PsiAccount::serverFeaturesChanged()
                         nick             = vcard.fullName();
                     }
                     if (!vcard.photo().isEmpty()) {
-                        d->vcardPhotoUpdate(j->vcard().photo());
+                        d->vcardPhotoUpdate(vcard.photo());
                     }
                     setNick(nick);
 
                     changeOwn = vcard.isEmpty();
                 } else {
-                    changeOwn = (j->statusCode() == Task::ErrDisc + 1 || j->statusCode() == 404);
+                    // if vcard is null because of not found, likely unpublished (still good)
+                    changeOwn = req->success();
                 }
 
                 if (changeOwn && PsiOptions::instance()->getOption("options.vcard.query-own-vcard-on-login").toBool()) {
@@ -4485,7 +4483,7 @@ void PsiAccount::actionInfo(const Jid &_j, bool showStatusInfo)
         w = new InfoDlg(j.compare(d->jid) ? InfoWidget::Self
                             : isMucMember ? InfoWidget::MucContact
                                           : InfoWidget::Contact,
-                        j, vcard, this, nullptr, true);
+                        j, vcard, this, nullptr);
 
         w->infoWidget()->setStatusVisibility(showStatusInfo);
         w->show();
