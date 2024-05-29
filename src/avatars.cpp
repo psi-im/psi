@@ -184,6 +184,8 @@ public:
                     return; // doesn't look like sha1 hash. just ignore it
             }
 
+            VCardFactory::instance()->getVCard(pa, jid, VCardFactory::InterestPhoto);
+
             if (item.payload().tagName() == QLatin1String(PEP_AVATAR_METADATA_TN)
                 && item.payload().firstChildElement().isNull()) {
                 // user wants to stop publishing avatar
@@ -532,32 +534,33 @@ private:
         iconset_->addToFactory(); // the factory will own the iconset
         updateJids();
 
-        connect(VCardFactory::instance(), &VCardFactory::vcardChanged, this, [this](const Jid &j, bool isMuc) {
-            QByteArray  ba;
-            QString     fullJid;
-            XMPP::VCard vcard;
-            if (isMuc) {
-                vcard   = VCardFactory::instance()->mucVcard(j);
-                fullJid = j.full();
-            } else {
-                vcard   = VCardFactory::instance()->vcard(j);
-                fullJid = j.bare();
-            }
-            if (!vcard) {
-                return; // wtf??
-            }
-            ba = vcard.photo();
-            OpResult result;
-            if (ba.isEmpty()) {
-                result = AvatarCache::instance()->removeIcon(AvatarCache::VCardType, fullJid);
-            } else {
-                result = AvatarCache::instance()->setIcon(AvatarCache::VCardType, fullJid, ba);
-            }
-            if (result == UserUpdateRequired) {
-                iconset_->removeIcon(QString(QLatin1String("avatars/%1")).arg(fullJid));
-                emit avatarChanged(j);
-            }
-        });
+        connect(VCardFactory::instance(), &VCardFactory::vcardChanged, this,
+                [this](const Jid &j, VCardFactory::Flags flags) {
+                    QByteArray  ba;
+                    QString     fullJid;
+                    XMPP::VCard vcard;
+                    if (flags & VCardFactory::MucUser) {
+                        vcard   = VCardFactory::instance()->mucVcard(j);
+                        fullJid = j.full();
+                    } else {
+                        vcard   = VCardFactory::instance()->vcard(j);
+                        fullJid = j.bare();
+                    }
+                    if (!vcard) {
+                        return; // wtf??
+                    }
+                    ba = vcard.photo();
+                    OpResult result;
+                    if (ba.isEmpty()) {
+                        result = AvatarCache::instance()->removeIcon(AvatarCache::VCardType, fullJid);
+                    } else {
+                        result = AvatarCache::instance()->setIcon(AvatarCache::VCardType, fullJid, ba);
+                    }
+                    if (result == UserUpdateRequired) {
+                        iconset_->removeIcon(QString(QLatin1String("avatars/%1")).arg(fullJid));
+                        emit avatarChanged(j);
+                    }
+                });
     }
 
     bool areIconsEmpty(const JidIcons &icons) const { return !icons.avatar && !icons.vcard && !icons.customAvatar; }

@@ -722,7 +722,7 @@ public slots:
             acc.proxyID = "";
     }
 
-    void vcardChanged(const Jid &j)
+    void vcardChanged(const Jid &j, VCardFactory::Flags)
     {
         // our own vcard?
         if (j.compare(jid, false)) {
@@ -2329,7 +2329,7 @@ void PsiAccount::client_rosterRequestFinished(bool success, int, const QString &
     //    PsiOptions::instance()->load(d->client);
 
     // we need to have up-to-date photoHash for initial presence
-    d->vcardChanged(jid());
+    d->vcardChanged(jid(), {});
     setStatusDirect(d->loginStatus, d->loginWithPriority);
 
     emit rosterRequestFinished();
