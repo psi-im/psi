@@ -31,6 +31,7 @@
 #include "iris/xmpp_vcard.h"
 #include "lastactivitytask.h"
 #include "msgmle.h"
+#include "pepmanager.h"
 #include "psiaccount.h"
 #include "psioptions.h"
 #include "psirichtext.h"
@@ -332,6 +333,14 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
                     updateNick();
                 }
             });
+    if (!gcc) {
+        connect(d->pa->pepManager(), &PEPManager::itemPublished, this,
+                [this](const Jid &jid, const QString &n, const PubSubItem &item) {
+                    if (this->jid().compare(jid, false)) {
+                        doRefresh();
+                    }
+                });
+    }
     m_ui.te_status->setReadOnly(true);
     m_ui.te_status->setAcceptRichText(true);
     PsiRichText::install(m_ui.te_status->document());
