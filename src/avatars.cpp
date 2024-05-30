@@ -164,6 +164,7 @@ public:
                 if (hash.size() < 20)
                     return; // doesn't look like sha1 hash. just ignore it
                 // try append user first. since data may be unexpected and we want to save some cpu cycles.
+                // qDebug() << "append user " << jidFull << AvatarCache::AvatarType;
                 result = appendUser(hash, AvatarCache::AvatarType, jidFull);
                 if (result == AvatarCache::NoData) {
                     QByteArray ba = QByteArray::fromBase64(item.payload().text().toLatin1());
@@ -180,8 +181,10 @@ public:
             QByteArray hash;
             if (!isCurrent) {
                 hash = QByteArray::fromHex(id);
-                if (hash.size() < 20)
+                if (hash.size() < 20) {
+                    // qDebug() << "not sha1";
                     return; // doesn't look like sha1 hash. just ignore it
+                }
             }
 
             VCardFactory::instance()->getVCard(pa, jid, VCardFactory::InterestPhoto);
@@ -190,6 +193,7 @@ public:
                 && item.payload().firstChildElement().isNull()) {
                 // user wants to stop publishing avatar
                 // previously we used "stop" element. now specs are changed
+                // qDebug() << "remove AvatarType from cache" << jidFull;
                 result = AvatarCache::instance()->removeIcon(AvatarCache::AvatarType, jidFull);
             } else {
                 auto mimes = QImageReader::supportedMimeTypes();
@@ -216,6 +220,7 @@ public:
             }
         }
 
+        // qDebug() << "remove from iconset" << jidFull;
         iconset_->removeIcon(QString(QLatin1String("avatars/%1")).arg(jidFull));
         emit avatarChanged(jidFull);
     }
@@ -267,6 +272,7 @@ public:
         QString iconName = QString("avatars/%1").arg(bareJid);
         auto    iconp    = iconset_->icon(iconName);
         if (iconp) {
+            // qDebug() << "return icons" << iconName << "from iconset for jid" << bareJid;
             return iconp->pixmap();
         }
 
@@ -286,6 +292,7 @@ public:
         }
 
         if (img.isNull()) {
+            // qDebug() << "return from vcardfactory for jid " << _jid.full();
             auto vcard = VCardFactory::instance()->vcard(_jid);
             if (vcard.isNull() || vcard.photo().isNull()) {
                 return QPixmap();
@@ -310,6 +317,7 @@ public:
         // Update iconset
         PsiIcon icon;
         icon.setImpix(pm);
+        // qDebug() << "setting icon to iconset " << iconName << "=" << pm;
         iconset_->setIcon(iconName, icon);
 
         return pm;
@@ -354,6 +362,7 @@ public:
         // Update iconset
         PsiIcon icon;
         icon.setImpix(pm);
+        // qDebug() << "setting icon " << QString("avatars/%1").arg(fullJid) << "=" << pm;
         iconset_->setIcon(QString("avatars/%1").arg(fullJid), icon); // FIXME do we ever release it?
 
         return pm;
@@ -552,11 +561,15 @@ private:
                     ba = vcard.photo();
                     OpResult result;
                     if (ba.isEmpty()) {
+                        // qDebug() << "removeIcon VCardType from cache for " << fullJid;
                         result = AvatarCache::instance()->removeIcon(AvatarCache::VCardType, fullJid);
                     } else {
+                        // qDebug() << "setIcon VCardType to cache for " << fullJid;
                         result = AvatarCache::instance()->setIcon(AvatarCache::VCardType, fullJid, ba);
                     }
                     if (result == UserUpdateRequired) {
+                        // qDebug() << "removing icon from iconset:" <<
+                        // QString(QLatin1String("avatars/%1")).arg(fullJid);
                         iconset_->removeIcon(QString(QLatin1String("avatars/%1")).arg(fullJid));
                         emit avatarChanged(j);
                     }
