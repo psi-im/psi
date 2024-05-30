@@ -551,6 +551,10 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
     reinitAutoHide();
 #ifdef USE_TASKBARNOTIFIER
     d->taskBarNotifier = new TaskBarNotifier(this);
+#ifdef Q_OS_WIN
+    d->taskBarNotifier->enableFlashWindow(d->allInOne
+                                          && PsiOptions::instance()->getOption("options.ui.flash-windows").toBool());
+#endif
 #endif
 }
 
@@ -589,11 +593,16 @@ void MainWin::optionChanged(const QString &option)
     if (option == toolbarsStateOptionPath) {
         loadToolbarsState();
     } else if (option == "options.ui.contactlist.css") {
-        const QString css = PsiOptions::instance()->getOption("options.ui.contactlist.css").toString();
+        const QString css = PsiOptions::instance()->getOption(option).toString();
         if (!css.isEmpty()) {
             setStyleSheet(css);
         }
     }
+#if defined(USE_TASKBARNOTIFIER) && defined(Q_OS_WIN)
+    else if (d->allInOne && option == "options.ui.flash-windows") {
+        d->taskBarNotifier->enableFlashWindow(PsiOptions::instance()->getOption(option).toBool());
+    }
+#endif
 }
 
 void MainWin::registerAction(IconAction *action)

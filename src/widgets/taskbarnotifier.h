@@ -21,6 +21,7 @@
 #define TASKBARNOTIFIER_H
 
 #include <memory>
+#include <qglobal.h>
 
 class QWidget;
 
@@ -31,6 +32,9 @@ public:
     void setIconCountCaption(int count);
     void removeIconCountCaption();
     bool isActive();
+#ifdef Q_OS_WIN
+    void enableFlashWindow(bool enabled);
+#endif
 
 private:
     class Private;

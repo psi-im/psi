@@ -71,6 +71,9 @@ public:
 #ifdef USE_DBUS
     void setDesktopPath(const QString &appName);
 #endif
+#ifdef Q_OS_WIN
+    void setFlashWindow(bool enabled);
+#endif
 private:
 #ifdef Q_OS_WIN
     void  setTaskBarIcon(const HICON &icon = {});
@@ -92,6 +95,7 @@ private:
 #ifdef Q_OS_WIN
     HWND  hwnd_;
     HICON icon_;
+    bool  flashWindow_ = false;
 #else
     QImage *image_;
 #endif
@@ -222,6 +226,8 @@ void TaskBarNotifier::Private::sendDBusSignal(bool isVisible, uint number)
 }
 
 #elif defined(Q_OS_WIN)
+void TaskBarNotifier::Private::setFlashWindow(bool enabled) { flashWindow_ = enabled; }
+
 void TaskBarNotifier::Private::setTaskBarIcon(const HICON &icon)
 {
     if (icon_)
@@ -284,9 +290,12 @@ HICON TaskBarNotifier::Private::getHICONfromQImage(const QImage &image) const
 void TaskBarNotifier::Private::doFlashTaskbarIcon()
 {
     FLASHWINFO fi;
-    fi.cbSize    = sizeof(FLASHWINFO);
-    fi.hwnd      = hwnd_;
-    fi.dwFlags   = (urgent_) ? FLASHW_ALL | FLASHW_TIMER : FLASHW_STOP;
+    fi.cbSize = sizeof(FLASHWINFO);
+    fi.hwnd   = hwnd_;
+    if (urgent_)
+        fi.dwFlags = ((flashWindow_) ? FLASHW_ALL : FLASHW_TRAY) | FLASHW_TIMER;
+    else
+        fi.dwFlags = FLASHW_STOP;
     fi.uCount    = 0;
     fi.dwTimeout = 0;
     FlashWindowEx(&fi);
@@ -306,3 +315,11 @@ void TaskBarNotifier::setIconCountCaption(int count) { d->setIconCount(count); }
 void TaskBarNotifier::removeIconCountCaption() { d->restoreDefaultIcon(); }
 
 bool TaskBarNotifier::isActive() { return d->active(); }
+
+#ifdef Q_OS_WIN
+void TaskBarNotifier::enableFlashWindow(bool enabled)
+{
+    if (d)
+        d->setFlashWindow(enabled);
+}
+#endif
