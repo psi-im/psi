@@ -104,7 +104,7 @@ public slots:
             } else if (charsAdded > 1) { // Insert a piece of text
                 return;
             } else {
-                static QRegularExpression capitalizeAfter("(?:(?:\\s*\\b\\w{2,}\\b[.!?]+\\s+)|(?:^\\s*))+(\\w)",
+                static QRegularExpression capitalizeAfter("(?:(?:\\s*\\b\\w{2,}\\b\\s*[.!?]+\\s+)|(?:^\\s*))+(\\w)",
                                                           QRegularExpression::UseUnicodePropertiesOption
                                                               | QRegularExpression::MultilineOption);
                 QRegularExpressionMatch   match;
