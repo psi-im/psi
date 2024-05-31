@@ -135,11 +135,18 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent) : QWidget(parent)
     tpm_ = new QSortFilterProxyModel(this);
     tpm_->setSourceModel(tm_);
 
-    QVBoxLayout *layout = new QVBoxLayout(this);
-    layout->setContentsMargins(0, 0, 0, 0);
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
+    mainLayout->setContentsMargins(10, 10, 10, 10); // Adjust margins for the main layout
+
+    QFrame *frame = new QFrame(this);
+    frame->setFrameShape(QFrame::StyledPanel); // Set frame shape to give an outline
+    frame->setFrameShadow(QFrame::Raised);
+
+    QVBoxLayout *layout = new QVBoxLayout(frame);
+    layout->setContentsMargins(10, 10, 10, 10); // Adjust margins for the inner layout
 
     QHBoxLayout *filterLayout = new QHBoxLayout;
-    le_filter                 = new QLineEdit(this);
+    le_filter = new QLineEdit(this);
     le_filter->setProperty("isOption", false);
     le_filter->setToolTip(tr("Options filter"));
     lb_filter = new QLabel(tr("Filter"), this);
@@ -243,6 +250,8 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent) : QWidget(parent)
 
     if (!parent)
         show();
+
+    mainLayout->addWidget(frame); // Add the frame to the main layout
     updateWidth();
 }
 
@@ -260,7 +269,7 @@ void PsiOptionsEditor::tv_edit(const QModelIndex &idx)
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     } else if (value.type() == QVariant::Color) {
 #else
-    } else if (value.typeId() == QMetaType::QColor) {
+        } else if (value.typeId() == QMetaType::QColor) {
 #endif
         QColorDialog cd(this);
         cd.setCurrentColor(value.value<QColor>());
