@@ -136,10 +136,10 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent) : QWidget(parent)
     tpm_->setSourceModel(tm_);
 
     QVBoxLayout *layout = new QVBoxLayout(this);
-    layout->setContentsMargins(0, 0, 0, 0);
 
     QHBoxLayout *filterLayout = new QHBoxLayout;
-    le_filter                 = new QLineEdit(this);
+    filterLayout->setSpacing(5);
+    le_filter = new QLineEdit(this);
     le_filter->setProperty("isOption", false);
     le_filter->setToolTip(tr("Options filter"));
     lb_filter = new QLabel(tr("Filter"), this);
@@ -352,7 +352,11 @@ void PsiOptionsEditor::resetit()
     }
 }
 
-void PsiOptionsEditor::detach() { new PsiOptionsEditor(); }
+void PsiOptionsEditor::detach()
+{
+    auto dlg = new PsiOptionsEditor();
+    dlg->resize(pointToPixel(800), pointToPixel(600));
+}
 
 void PsiOptionsEditor::bringToFront() { ::bringToFront(this, true); }
 
