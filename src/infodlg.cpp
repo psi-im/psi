@@ -309,6 +309,10 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
                 d->userListItem->userResourceList() = url;
                 updateStatus();
                 requestResourceInfo(j);
+                if (s.photoHash()) {
+                    VCardFactory::instance()->ensureVCardUpdated(
+                        d->pa, j, VCardFactory::InterestPhoto | VCardFactory::MucUser, *s.photoHash());
+                }
             }
         });
     } else {
@@ -910,6 +914,9 @@ void InfoWidget::updateStatus()
             }
         }
         PsiRichText::setText(m_ui.te_status->document(), info);
+        auto cursor = m_ui.te_status->textCursor();
+        cursor.setPosition(0);
+        m_ui.te_status->setTextCursor(cursor);
     } else {
         m_ui.te_status->clear();
     }

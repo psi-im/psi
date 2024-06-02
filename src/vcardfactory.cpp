@@ -241,6 +241,11 @@ void VCardFactory::ensureVCardUpdated(PsiAccount *acc, const Jid &jid, Flags fla
     }
     if (!vc || (flags & InterestPhoto && QCryptographicHash::hash(vc.photo(), QCryptographicHash::Sha1) != photoHash)) {
         // FIXME computing hash everytime is not quite cool. We need to store it in metadata like in FileCache
+        // if (vc) {
+        //     qDebug() << QCryptographicHash::hash(vc.photo(), QCryptographicHash::Sha1).toHex() << photoHash.toHex();
+        // } else {
+        //     qDebug() << "no vcard";
+        // }
         queuedLoader_->enqueue(acc, jid, flags, QueuedLoader::NormalPriority);
     }
 }
@@ -320,6 +325,7 @@ VCardFactory::QueuedLoader::QueuedLoader(VCardFactory *vcf) : QObject(vcf), q(vc
         auto task    = request->execute();
         if (task) {
             connect(task, &JT_VCard::finished, this, [this, request]() {
+                // qDebug() << "received VCardRequest" << request->jid().full();
                 emit vcardReceived(request);
                 jid2req.remove(request->jid());
                 request->deleteLater();
@@ -344,9 +350,12 @@ VCardRequest *VCardFactory::QueuedLoader::enqueue(PsiAccount *acc, const Jid &ji
     }
     auto req = jid2req[sanitized_jid];
     if (!req) {
-        req = new VCardRequest(acc, sanitized_jid, flags);
+        // qDebug() << "new VCardRequest" << sanitized_jid.full() << flags;
+        req                    = new VCardRequest(acc, sanitized_jid, flags);
+        jid2req[sanitized_jid] = req;
         queue_.append(req);
     } else {
+        // qDebug() << "merge VCardRequest" << sanitized_jid.full() << flags;
         req->merge(acc, sanitized_jid, flags);
     }
 

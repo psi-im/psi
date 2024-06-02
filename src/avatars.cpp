@@ -176,32 +176,26 @@ public:
                 qWarning("avatars.cpp: Unexpected item payload");
             }
         } else if (n == PEP_AVATAR_METADATA_NS) {
-            auto       id        = item.id().toLatin1();
-            bool       isCurrent = id == "current";
-            QByteArray hash;
-            if (!isCurrent) {
-                hash = QByteArray::fromHex(id);
-                if (hash.size() < 20) {
-                    // qDebug() << "not sha1";
-                    return; // doesn't look like sha1 hash. just ignore it
-                }
+            auto id = item.id().toLatin1();
+            if (id == "current") {
+                return; // probably was in previous versions of xep
             }
-
-            VCardFactory::instance()->getVCard(pa, jid, VCardFactory::InterestPhoto);
+            QByteArray hash = QByteArray::fromHex(id);
+            if (hash.size() < 20) {
+                // qDebug() << "not sha1";
+                return; // doesn't look like sha1 hash. just ignore it
+            }
 
             if (item.payload().tagName() == QLatin1String(PEP_AVATAR_METADATA_TN)
                 && item.payload().firstChildElement().isNull()) {
-                // user wants to stop publishing avatar
-                // previously we used "stop" element. now specs are changed
-                // qDebug() << "remove AvatarType from cache" << jidFull;
                 result = AvatarCache::instance()->removeIcon(AvatarCache::AvatarType, jidFull);
             } else {
-                auto mimes = QImageReader::supportedMimeTypes();
+                VCardFactory::instance()->ensureVCardUpdated(pa, jid, VCardFactory::InterestPhoto, hash);
 
                 for (QDomElement e = item.payload().firstChildElement(QLatin1String("info")); !e.isNull();
                      e             = e.nextSiblingElement(QLatin1String("info"))) {
-                    if (!mimes.contains(e.attribute(QLatin1String("type")).toLower().toLatin1())) {
-                        continue; // unsupported mime
+                    if (e.attribute(QLatin1String("type")).toLower() != QLatin1String("image/png")) {
+                        continue; // TODO add support for QImageReader::supportedMimeTypes() (requires usage of qnam)
                     }
                     if (!e.attribute(QLatin1String("url")).isEmpty()) {
                         continue; // web avatars are not currently supported. TODO but their support is highly expected
@@ -220,9 +214,11 @@ public:
             }
         }
 
-        // qDebug() << "remove from iconset" << jidFull;
-        iconset_->removeIcon(QString(QLatin1String("avatars/%1")).arg(jidFull));
-        emit avatarChanged(jidFull);
+        if (result == UserUpdateRequired) {
+            // qDebug() << "remove from iconset" << jidFull;
+            iconset_->removeIcon(QString(QLatin1String("avatars/%1")).arg(jidFull));
+            emit avatarChanged(jidFull);
+        }
     }
 
     bool ensureVCardUpdated(const Jid &jid, const QByteArray &hash, AvatarFactory::Flags flags)
@@ -915,21 +911,25 @@ AvatarFactory::UserHashes AvatarFactory::userHashes(const Jid &jid) const
 void AvatarFactory::setSelfAvatar(const QString &fileName)
 {
     if (!fileName.isEmpty()) {
-        QFile avatar_file(fileName);
-        if (!avatar_file.open(QIODevice::ReadOnly))
-            return;
-
-        QByteArray avatar_data  = scaleAvatar(avatar_file.readAll());
-        QImage     avatar_image = QImage::fromData(avatar_data);
-        if (!avatar_image.isNull()) {
+        QImage image(fileName);
+        if (!image.isNull()) {
             // Publish data
+
+            QByteArray data;
+            QBuffer    buffer(&data);
+            buffer.open(QIODevice::WriteOnly);
+            auto maxSz = maxAvatarSize();
+            image.scaled(image.size().boundedTo(QSize(maxSz, maxSz)), Qt::KeepAspectRatio, Qt::SmoothTransformation)
+                .save(&buffer, "PNG", 0);
+            auto    hash = QCryptographicHash::hash(data, QCryptographicHash::Sha1);
+            QString id   = QString::fromLatin1(hash.toHex());
+
             QDomDocument *doc = account()->client()->doc();
-            QString hash = QString::fromLatin1(QCryptographicHash::hash(avatar_data, QCryptographicHash::Sha1).toHex());
-            QDomElement el = doc->createElementNS(PEP_AVATAR_DATA_NS, PEP_AVATAR_DATA_TN);
-            el.appendChild(doc->createTextNode(QString::fromLatin1(avatar_data.toBase64())));
-            d->selfAvatarData_ = avatar_data;
-            d->selfAvatarHash_ = hash;
-            account()->pepManager()->publish(PEP_AVATAR_DATA_NS, PubSubItem(hash, el));
+            QDomElement   el  = doc->createElementNS(PEP_AVATAR_DATA_NS, PEP_AVATAR_DATA_TN);
+            el.appendChild(doc->createTextNode(QString::fromLatin1(data.toBase64())));
+            d->selfAvatarData_ = data;
+            d->selfAvatarHash_ = id;
+            account()->pepManager()->publish(PEP_AVATAR_DATA_NS, PubSubItem(id, el));
         }
     } else {
         account()->pepManager()->disable(PEP_AVATAR_METADATA_TN, PEP_AVATAR_METADATA_NS, "current");
