@@ -321,11 +321,17 @@ VCardFactory::QueuedLoader::QueuedLoader(VCardFactory *vcf) : QObject(vcf), q(vc
     timer_.setSingleShot(false);
     timer_.setInterval(VcardReqInterval);
     QObject::connect(&timer_, &QTimer::timeout, this, [this]() {
+        if (queue_.isEmpty()) {
+            timer_.stop();
+            return;
+        }
         auto request = queue_.takeFirst();
         auto task    = request->execute();
         if (task) {
             connect(task, &JT_VCard::finished, this, [this, request]() {
-                // qDebug() << "received VCardRequest" << request->jid().full();
+#ifdef VCF_DEBUG
+                qDebug() << "received VCardRequest" << request->jid().full();
+#endif
                 emit vcardReceived(request);
                 jid2req.remove(request->jid());
                 request->deleteLater();
@@ -350,12 +356,16 @@ VCardRequest *VCardFactory::QueuedLoader::enqueue(PsiAccount *acc, const Jid &ji
     }
     auto req = jid2req[sanitized_jid];
     if (!req) {
-        // qDebug() << "new VCardRequest" << sanitized_jid.full() << flags;
+#ifdef VCF_DEBUG
+        qDebug() << "new VCardRequest" << sanitized_jid.full() << flags;
+#endif
         req                    = new VCardRequest(acc, sanitized_jid, flags);
         jid2req[sanitized_jid] = req;
         queue_.append(req);
     } else {
-        // qDebug() << "merge VCardRequest" << sanitized_jid.full() << flags;
+#ifdef VCF_DEBUG
+        qDebug() << "merge VCardRequest" << sanitized_jid.full() << flags;
+#endif
         req->merge(acc, sanitized_jid, flags);
     }
 

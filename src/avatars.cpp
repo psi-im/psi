@@ -176,20 +176,20 @@ public:
                 qWarning("avatars.cpp: Unexpected item payload");
             }
         } else if (n == PEP_AVATAR_METADATA_NS) {
-            auto id = item.id().toLatin1();
-            if (id == "current") {
-                return; // probably was in previous versions of xep
-            }
-            QByteArray hash = QByteArray::fromHex(id);
-            if (hash.size() < 20) {
-                // qDebug() << "not sha1";
-                return; // doesn't look like sha1 hash. just ignore it
-            }
-
             if (item.payload().tagName() == QLatin1String(PEP_AVATAR_METADATA_TN)
                 && item.payload().firstChildElement().isNull()) {
                 result = AvatarCache::instance()->removeIcon(AvatarCache::AvatarType, jidFull);
             } else {
+                auto id = item.id().toLatin1();
+                if (id == "current") {
+                    return; // probably was in previous versions of xep
+                }
+                QByteArray hash = QByteArray::fromHex(id);
+                if (hash.size() < 20) {
+                    // qDebug() << "not sha1";
+                    return; // doesn't look like sha1 hash. just ignore it
+                }
+
                 VCardFactory::instance()->ensureVCardUpdated(pa, jid, VCardFactory::InterestPhoto, hash);
 
                 for (QDomElement e = item.payload().firstChildElement(QLatin1String("info")); !e.isNull();
@@ -693,6 +693,7 @@ private:
             jids.append(typedJid(iconType, jid));
             md.insert(QLatin1String("jids"), jids);
             item->setMetadata(md);
+            lazySync();
         }
 
         if (prevIcon) {
@@ -723,6 +724,7 @@ private:
         } else {
             md.insert(QLatin1String("jids"), jids);
             item->setMetadata(md);
+            lazySync();
         }
     }
 
@@ -804,6 +806,7 @@ private:
             if (jidsChanged) {
                 md.insert(QLatin1String("jids"), jids);
                 it.value()->setMetadata(md);
+                lazySync();
             }
         }
     }
@@ -932,7 +935,7 @@ void AvatarFactory::setSelfAvatar(const QString &fileName)
             account()->pepManager()->publish(PEP_AVATAR_DATA_NS, PubSubItem(id, el));
         }
     } else {
-        account()->pepManager()->disable(PEP_AVATAR_METADATA_TN, PEP_AVATAR_METADATA_NS, "current");
+        account()->pepManager()->disable(PEP_AVATAR_METADATA_TN, PEP_AVATAR_METADATA_NS, {});
     }
 }
 
@@ -959,8 +962,9 @@ void AvatarFactory::statusUpdate(const Jid &jid, const XMPP::Status &status, Fla
 void AvatarFactory::ensureVCardUpdated(const Jid &jid, const QByteArray &hash, Flags flags)
 {
     if (!AvatarCache::instance()->ensureVCardUpdated(jid, hash, flags)) {
-        VCardFactory::instance()->ensureVCardUpdated(d->pa_, jid, flags2AvatarFlags(flags), hash);
+        // must request vcard
     }
+    VCardFactory::instance()->ensureVCardUpdated(d->pa_, jid, flags2AvatarFlags(flags), hash);
 }
 
 QString AvatarFactory::getCacheDir()

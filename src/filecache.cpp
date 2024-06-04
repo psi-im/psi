@@ -307,8 +307,14 @@ bool ctimeLessThan(FileCacheItem *a, FileCacheItem *b) { return a->created() < b
 
 void FileCache::sync() { sync(false); }
 
+void FileCache::lazySync() { _syncTimer->start(); }
+
 void FileCache::sync(bool finishSession)
 {
+    if (_syncTimer->isActive()) {
+        _syncTimer->stop();
+    }
+
     QList<FileCacheItem *> loadedItems;
     QList<FileCacheItem *> onDiskItems;
     qint64                 sumMemorySize = 0;
@@ -333,8 +339,9 @@ void FileCache::sync(bool finishSession)
                 sumFileSize += item->size();
                 onDiskItems.append(item);
             }
-        } else if (!item->isRegistered()) { // just put to registry item without data and stop reviewing it
-            toRegistry(item);               // save item to registry if not yet
+        }
+        if (!item->isRegistered()) { // just put to registry item without data and stop reviewing it
+            toRegistry(item);        // save item to registry if not yet
         }
     }
 
@@ -351,9 +358,9 @@ void FileCache::sync(bool finishSession)
             }
             item->unload(); // will flush data to disk if necesary
             sumMemorySize -= item->size();
-            if (!item->isRegistered()) {
-                toRegistry(item); // save item to registry if not yet
-            }
+            // if (!item->isRegistered()) {
+            //     toRegistry(item); // save item to registry if not yet
+            // }
         }
     }
 

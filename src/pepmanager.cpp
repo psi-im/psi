@@ -240,7 +240,9 @@ public:
         pubsub.appendChild(publish);
 
         QDomElement item = doc()->createElement("item");
-        item.setAttribute("id", it.id());
+        if (!it.id().isEmpty()) {
+            item.setAttribute("id", it.id());
+        }
         publish.appendChild(item);
 
         if (access != PEPManager::DefaultAccess) {
