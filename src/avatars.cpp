@@ -179,9 +179,9 @@ public:
             } else {
                 qWarning("avatars.cpp: Unexpected item payload");
             }
-        } else if (n == PEP_AVATAR_METADATA_NS) {
-            if (item.payload().tagName() == QLatin1String(PEP_AVATAR_METADATA_TN)
-                && item.payload().firstChildElement().isNull()) {
+        } else if (n == PEP_AVATAR_METADATA_NS && item.payload().tagName() == QLatin1String(PEP_AVATAR_METADATA_TN)) {
+            auto info = item.payload().firstChildElement(QLatin1String("info"));
+            if (info.isNull()) {
                 result = AvatarCache::instance()->removeIcon(AvatarCache::AvatarType, jidFull);
             } else {
                 auto id = item.id().toLatin1();
@@ -198,15 +198,14 @@ public:
 
                 VCardFactory::instance()->ensureVCardUpdated(pa, jid, VCardFactory::InterestPhoto, hash);
 
-                for (QDomElement e = item.payload().firstChildElement(QLatin1String("info")); !e.isNull();
-                     e             = e.nextSiblingElement(QLatin1String("info"))) {
-                    if (e.attribute(QLatin1String("type")).toLower() != QLatin1String("image/png")) {
+                for (; !info.isNull(); info = info.nextSiblingElement(QLatin1String("info"))) {
+                    if (info.attribute(QLatin1String("type")).toLower() != QLatin1String("image/png")) {
                         continue; // TODO add support for QImageReader::supportedMimeTypes() (requires usage of qnam)
                     }
-                    if (!e.attribute(QLatin1String("url")).isEmpty()) {
+                    if (!info.attribute(QLatin1String("url")).isEmpty()) {
                         continue; // web avatars are not currently supported. TODO but their support is highly expected
                     }
-                    if (e.attribute(QLatin1String("id")) != item.id()) {
+                    if (info.attribute(QLatin1String("id")) != item.id()) {
                         continue; // that's something totally unexpected
                     }
                     // found in-band png (by xep84 hash is for png) avatar. So we can make request
@@ -222,7 +221,7 @@ public:
 
         if (result == UserUpdateRequired) {
 #ifdef AVATAR_EDBUG
-            qDebug() << "remove from iconset" << jidFull;
+            qDebug() << "remove from iconset and emit avatarChanged on itemPublished" << jidFull;
 #endif
             iconset_->removeIcon(QString(QLatin1String("avatars/%1")).arg(jidFull));
             emit avatarChanged(jidFull);
@@ -236,12 +235,18 @@ public:
         if (hash.isEmpty()) { // photo removal
             if (AvatarCache::instance()->removeIcon(AvatarCache::VCardType, fullJid)
                 == AvatarCache::UserUpdateRequired) {
+#ifdef AVATAR_EDBUG
+                qDebug() << "remove from iconset and emit avatarChanged. ensureVCardUpdated/removeIcon" << fullJid;
+#endif
                 iconset_->removeIcon(QString(QLatin1String("avatars/%1")).arg(fullJid));
                 emit avatarChanged(fullJid);
             }
         } else {
             auto result = appendUser(hash, AvatarCache::VCardType, fullJid);
             if (result == AvatarCache::UserUpdateRequired) {
+#ifdef AVATAR_EDBUG
+                qDebug() << "remove from iconset and emit avatarChanged. ensureVCardUpdated/appendUser" << fullJid;
+#endif
                 iconset_->removeIcon(QString(QLatin1String("avatars/%1")).arg(fullJid));
                 emit avatarChanged(fullJid);
             } else if (result == AvatarCache::NoData) {
@@ -258,6 +263,9 @@ public:
               && AvatarCache::instance()->setIcon(AvatarCache::CustomType, j.bare(), f.readAll()))) {
             qWarning("Failed to set manual avatar");
         }
+#ifdef AVATAR_EDBUG
+        qDebug() << "remove from iconset and emit avatarChanged. importManualAvatar" << j.bare();
+#endif
         iconset_->removeIcon(QString(QLatin1String("avatars/%1")).arg(j.bare()));
         emit avatarChanged(j);
     }
@@ -265,6 +273,9 @@ public:
     void removeManualAvatar(const Jid &j)
     {
         if (AvatarCache::instance()->removeIcon(AvatarCache::CustomType, j.bare()) == AvatarCache::UserUpdateRequired) {
+#ifdef AVATAR_EDBUG
+            qDebug() << "remove from iconset and emit avatarChanged. removeManualAvatar" << j.bare();
+#endif
             iconset_->removeIcon(QString(QLatin1String("avatars/%1")).arg(j.bare()));
             emit avatarChanged(j);
         }
