@@ -86,7 +86,7 @@ QByteArray scaleAvatar(const QByteArray &b)
 
 VCardFactory::Flags flags2AvatarFlags(AvatarFactory::Flags flags)
 {
-    VCardFactory::Flags ret = VCardFactory::InterestPhoto;
+    VCardFactory::Flags ret;
     if (flags & AvatarFactory::MucRoom) {
         ret |= VCardFactory::MucRoom;
     }
@@ -196,7 +196,7 @@ public:
                     return; // doesn't look like sha1 hash. just ignore it
                 }
 
-                VCardFactory::instance()->ensureVCardUpdated(pa, jid, VCardFactory::InterestPhoto, hash);
+                VCardFactory::instance()->ensureVCardPhotoUpdated(pa, jid, {}, hash);
 
                 for (; !info.isNull(); info = info.nextSiblingElement(QLatin1String("info"))) {
                     if (info.attribute(QLatin1String("type")).toLower() != QLatin1String("image/png")) {
@@ -995,8 +995,10 @@ void AvatarFactory::ensureVCardUpdated(const Jid &jid, const QByteArray &hash, F
 {
     if (!AvatarCache::instance()->ensureVCardUpdated(jid, hash, flags)) {
         // must request vcard
-    }
-    VCardFactory::instance()->ensureVCardUpdated(d->pa_, jid, flags2AvatarFlags(flags), hash);
+    } // else we need to remember jid has new hash but vcard is not necessary at the moment
+
+    // force request till we figure out how to follow comments above
+    VCardFactory::instance()->ensureVCardPhotoUpdated(d->pa_, jid, flags2AvatarFlags(flags), hash);
 }
 
 QString AvatarFactory::getCacheDir()

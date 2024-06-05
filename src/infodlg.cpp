@@ -310,8 +310,7 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
                 updateStatus();
                 requestResourceInfo(j);
                 if (s.photoHash()) {
-                    VCardFactory::instance()->ensureVCardUpdated(
-                        d->pa, j, VCardFactory::InterestPhoto | VCardFactory::MucUser, *s.photoHash());
+                    VCardFactory::instance()->ensureVCardPhotoUpdated(d->pa, j, VCardFactory::MucUser, *s.photoHash());
                 }
             }
         });

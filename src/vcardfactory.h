@@ -25,7 +25,6 @@
 #include <QObject>
 #include <QStringList>
 
-#include <functional>
 #include <memory>
 
 class PsiAccount;
@@ -45,12 +44,9 @@ class VCardFactory : public QObject {
 
 public:
     enum Flag {
-        MucRoom       = 0x1,
-        MucUser       = 0x2,
-        Cache         = 0x4,
-        InterestInfo  = 0x8,  // text data
-        InterestPhoto = 0x10, // graphics. photoHash MUST be provided
-        InterestAll   = InterestInfo | InterestPhoto
+        MucRoom = 0x1,
+        MucUser = 0x2,
+        Cache   = 0x4,
     };
     Q_DECLARE_FLAGS(Flags, Flag);
 
@@ -60,13 +56,12 @@ public:
     // void                 setVCard(const Jid &, const VCard &);
 
     JT_VCard     *setVCard(const PsiAccount *account, const VCard &v, const Jid &targetJid, VCardFactory::Flags flags);
-    VCardRequest *getVCard(PsiAccount *account, const Jid &, VCardFactory::Flags flags = InterestInfo);
+    VCardRequest *getVCard(PsiAccount *account, const Jid &, VCardFactory::Flags flags = {});
 
     // 1. check if it's needed to do a request,
-    // 2. enqueue request if necessary (no vcard, or if InterestPhoto then also if hash doesn't match)
+    // 2. enqueue request if necessary (no vcard, or if hash doesn't match)
     // 3. vcardChanged() will be sent as usually when vcard is updated
-    void ensureVCardUpdated(PsiAccount *acc, const Jid &jid, Flags flags = InterestInfo,
-                            const QByteArray &photoHash = {});
+    void ensureVCardPhotoUpdated(PsiAccount *acc, const Jid &jid, Flags flags, const QByteArray &newPhotoHash);
 
 signals:
     void vcardChanged(const Jid &, VCardFactory::Flags);

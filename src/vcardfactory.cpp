@@ -67,25 +67,7 @@ VCardFactory::VCardFactory() : QObject(qApp), dictSize_(5), queuedLoader_(new Qu
 {
     connect(queuedLoader_, &QueuedLoader::vcardReceived, this, [this](const VCardRequest *request) {
         if (request->success()) {
-            if (request->flags() & MucUser) {
-                Jid   j          = request->jid();
-                auto &nick2vcard = mucVcardDict_[j.bare()];
-                auto  nickIt     = nick2vcard.find(j.resource());
-                if (nickIt == nick2vcard.end()) {
-                    nick2vcard.insert(j.resource(), request->vcard());
-                    auto &resQueue = lastMucVcards_[j.bare()];
-                    resQueue.enqueue(j.resource());
-                    while (resQueue.size() > 3) { // keep max 3 vcards per muc
-                        nick2vcard.remove(resQueue.dequeue());
-                    }
-                } else {
-                    *nickIt = request->vcard();
-                }
-
-                emit vcardChanged(j, request->flags());
-            } else {
-                saveVCard(request->jid(), request->vcard(), request->flags());
-            }
+            saveVCard(request->jid(), request->vcard(), request->flags());
         }
 #ifdef VCF_DEBUG
         else {
@@ -131,8 +113,26 @@ void VCardFactory::checkLimit(const QString &jid, const VCard &vcard)
 void VCardFactory::saveVCard(const Jid &j, const VCard &vcard, Flags flags)
 {
 #ifdef VCF_DEBUG
-    qDebug() << "VCardFactory::saveVCard" << j.bare();
+    qDebug() << "VCardFactory::saveVCard" << j.full();
 #endif
+    if (flags & MucUser) {
+
+        auto &nick2vcard = mucVcardDict_[j.bare()];
+        auto  nickIt     = nick2vcard.find(j.resource());
+        if (nickIt == nick2vcard.end()) {
+            nick2vcard.insert(j.resource(), vcard);
+            auto &resQueue = lastMucVcards_[j.bare()];
+            resQueue.enqueue(j.resource());
+            while (resQueue.size() > 3) { // keep max 3 vcards per muc
+                nick2vcard.remove(resQueue.dequeue());
+            }
+        } else {
+            *nickIt = vcard;
+        }
+
+        emit vcardChanged(j, flags);
+        return;
+    }
 
     checkLimit(j.bare(), vcard);
 
@@ -235,7 +235,7 @@ VCardRequest *VCardFactory::getVCard(PsiAccount *account, const Jid &jid, Flags 
     return queuedLoader_->enqueue(account, jid, flags, QueuedLoader::HighPriority);
 }
 
-void VCardFactory::ensureVCardUpdated(PsiAccount *acc, const Jid &jid, Flags flags, const QByteArray &photoHash)
+void VCardFactory::ensureVCardPhotoUpdated(PsiAccount *acc, const Jid &jid, Flags flags, const QByteArray &newPhotoHash)
 {
     VCard vc;
     if (flags & MucUser) {
@@ -243,17 +243,20 @@ void VCardFactory::ensureVCardUpdated(PsiAccount *acc, const Jid &jid, Flags fla
     } else {
         vc = vcard(jid);
     }
-    if (!vc
-        || (flags & InterestPhoto
-            && (vc.photo().isEmpty() != photoHash.isEmpty()
-                || (!vc.photo().isEmpty()
-                    && QCryptographicHash::hash(vc.photo(), QCryptographicHash::Sha1) != photoHash)))) {
-        // FIXME computing hash everytime is not quite cool. We need to store it in metadata like in FileCache
-        // if (vc) {
-        //     qDebug() << QCryptographicHash::hash(vc.photo(), QCryptographicHash::Sha1).toHex() << photoHash.toHex();
-        // } else {
-        //     qDebug() << "no vcard";
-        // }
+    if (newPhotoHash.isEmpty()) {
+        if (!vc || vc.photo().isEmpty()) { // we didn't have it and still don't
+            return;
+        }
+        vc.setPhoto({}); // reset photo;
+        saveVCard(jid, vc, flags);
+
+        return;
+    }
+    auto oldHash = vc ? QCryptographicHash::hash(vc.photo(), QCryptographicHash::Sha1) : QByteArray();
+    if (oldHash != newPhotoHash) {
+#ifdef VCF_DEBUG
+        qDebug() << "hash mismatch. old=" << oldHash.toHex() << "new=" << photoHash.toHex();
+#endif
         queuedLoader_->enqueue(acc, jid, flags, QueuedLoader::NormalPriority);
     }
 }
