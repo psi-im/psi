@@ -208,7 +208,7 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
     d->pa        = pa;
     d->busy      = false;
     d->te_edited = false;
-    d->pa->dialogRegister(this, j);
+    d->pa->dialogRegister(window(), j);
     d->dateTextFormat = "d MMM yyyy";
 
     setWindowTitle(d->jid.full());
@@ -357,7 +357,7 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
 
 InfoWidget::~InfoWidget()
 {
-    d->pa->dialogUnregister(this);
+    d->pa->dialogUnregister(window());
     delete d->userListItem;
     d->userListItem = nullptr;
     delete d;

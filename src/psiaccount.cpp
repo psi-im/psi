@@ -805,11 +805,12 @@ public:
 
     void dialogRegister(QWidget *w, const Jid &jid)
     {
-        connect(w, &QWidget::destroyed, this, &Private::forceDialogUnregister);
-        item_dialog2 *i = new item_dialog2;
-        i->widget       = w;
-        i->jid          = jid;
-        dialogList.append(i);
+        if (connect(w, &QWidget::destroyed, this, &Private::forceDialogUnregister, Qt::UniqueConnection)) {
+            item_dialog2 *i = new item_dialog2;
+            i->widget       = w;
+            i->jid          = jid;
+            dialogList.append(i);
+        }
     }
 
     void dialogUnregister(QWidget *w)
