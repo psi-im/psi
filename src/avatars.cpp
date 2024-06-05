@@ -58,6 +58,8 @@
 #define MAX_AVATAR_SIZE 96
 // #define MAX_AVATAR_DISPLAY_SIZE 64
 
+// #define AVATAR_EDBUG 1
+
 //------------------------------------------------------------------------------
 
 namespace {
@@ -163,8 +165,10 @@ public:
                 auto hash = QByteArray::fromHex(item.id().toLatin1());
                 if (hash.size() < 20)
                     return; // doesn't look like sha1 hash. just ignore it
-                // try append user first. since data may be unexpected and we want to save some cpu cycles.
-                // qDebug() << "append user " << jidFull << AvatarCache::AvatarType;
+                            // try append user first. since data may be unexpected and we want to save some cpu cycles.
+#ifdef AVATAR_EDBUG
+                qDebug() << "append user " << jidFull << AvatarCache::AvatarType;
+#endif
                 result = appendUser(hash, AvatarCache::AvatarType, jidFull);
                 if (result == AvatarCache::NoData) {
                     QByteArray ba = QByteArray::fromBase64(item.payload().text().toLatin1());
@@ -186,7 +190,9 @@ public:
                 }
                 QByteArray hash = QByteArray::fromHex(id);
                 if (hash.size() < 20) {
-                    // qDebug() << "not sha1";
+#ifdef AVATAR_EDBUG
+                    qDebug() << "not sha1";
+#endif
                     return; // doesn't look like sha1 hash. just ignore it
                 }
 
@@ -215,7 +221,9 @@ public:
         }
 
         if (result == UserUpdateRequired) {
-            // qDebug() << "remove from iconset" << jidFull;
+#ifdef AVATAR_EDBUG
+            qDebug() << "remove from iconset" << jidFull;
+#endif
             iconset_->removeIcon(QString(QLatin1String("avatars/%1")).arg(jidFull));
             emit avatarChanged(jidFull);
         }
@@ -268,7 +276,9 @@ public:
         QString iconName = QString("avatars/%1").arg(bareJid);
         auto    iconp    = iconset_->icon(iconName);
         if (iconp) {
-            // qDebug() << "return icons" << iconName << "from iconset for jid" << bareJid;
+#ifdef AVATAR_EDBUG
+            qDebug() << "return icons" << iconName << "from iconset for jid" << bareJid;
+#endif
             return iconp->pixmap();
         }
 
@@ -288,7 +298,9 @@ public:
         }
 
         if (img.isNull()) {
-            // qDebug() << "return from vcardfactory for jid " << _jid.full();
+#ifdef AVATAR_EDBUG
+            qDebug() << "return from vcardfactory for jid " << _jid.full();
+#endif
             auto vcard = VCardFactory::instance()->vcard(_jid);
             if (vcard.isNull() || vcard.photo().isNull()) {
                 return QPixmap();
@@ -313,7 +325,9 @@ public:
         // Update iconset
         PsiIcon icon;
         icon.setImpix(pm);
-        // qDebug() << "setting icon to iconset " << iconName << "=" << pm;
+#ifdef AVATAR_EDBUG
+        qDebug() << "setting icon to iconset " << iconName << "=" << pm;
+#endif
         iconset_->setIcon(iconName, icon);
 
         return pm;
@@ -358,7 +372,9 @@ public:
         // Update iconset
         PsiIcon icon;
         icon.setImpix(pm);
-        // qDebug() << "setting icon " << QString("avatars/%1").arg(fullJid) << "=" << pm;
+#ifdef AVATAR_EDBUG
+        qDebug() << "setting icon " << QString("avatars/%1").arg(fullJid) << "=" << pm;
+#endif
         iconset_->setIcon(QString("avatars/%1").arg(fullJid), icon); // FIXME do we ever release it?
 
         return pm;
@@ -557,15 +573,20 @@ private:
                     ba = vcard.photo();
                     OpResult result;
                     if (ba.isEmpty()) {
-                        // qDebug() << "removeIcon VCardType from cache for " << fullJid;
+#ifdef AVATAR_EDBUG
+                        qDebug() << "removeIcon VCardType from cache for " << fullJid;
+#endif
                         result = AvatarCache::instance()->removeIcon(AvatarCache::VCardType, fullJid);
                     } else {
-                        // qDebug() << "setIcon VCardType to cache for " << fullJid;
+#ifdef AVATAR_EDBUG
+                        qDebug() << "setIcon VCardType to cache for " << fullJid;
+#endif
                         result = AvatarCache::instance()->setIcon(AvatarCache::VCardType, fullJid, ba);
                     }
                     if (result == UserUpdateRequired) {
-                        // qDebug() << "removing icon from iconset:" <<
-                        // QString(QLatin1String("avatars/%1")).arg(fullJid);
+#ifdef AVATAR_EDBUG
+                        qDebug() << "removing icon from iconset:" << QString(QLatin1String("avatars/%1")).arg(fullJid);
+#endif
                         iconset_->removeIcon(QString(QLatin1String("avatars/%1")).arg(fullJid));
                         emit avatarChanged(j);
                     }

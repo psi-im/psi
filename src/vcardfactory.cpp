@@ -130,6 +130,10 @@ void VCardFactory::checkLimit(const QString &jid, const VCard &vcard)
 
 void VCardFactory::saveVCard(const Jid &j, const VCard &vcard, Flags flags)
 {
+#ifdef VCF_DEBUG
+    qDebug() << "VCardFactory::saveVCard" << j.bare();
+#endif
+
     checkLimit(j.bare(), vcard);
 
     // save vCard to disk
@@ -239,7 +243,11 @@ void VCardFactory::ensureVCardUpdated(PsiAccount *acc, const Jid &jid, Flags fla
     } else {
         vc = vcard(jid);
     }
-    if (!vc || (flags & InterestPhoto && QCryptographicHash::hash(vc.photo(), QCryptographicHash::Sha1) != photoHash)) {
+    if (!vc
+        || (flags & InterestPhoto
+            && (vc.photo().isEmpty() != photoHash.isEmpty()
+                || (!vc.photo().isEmpty()
+                    && QCryptographicHash::hash(vc.photo(), QCryptographicHash::Sha1) != photoHash)))) {
         // FIXME computing hash everytime is not quite cool. We need to store it in metadata like in FileCache
         // if (vc) {
         //     qDebug() << QCryptographicHash::hash(vc.photo(), QCryptographicHash::Sha1).toHex() << photoHash.toHex();

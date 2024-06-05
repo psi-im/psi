@@ -158,6 +158,8 @@
 #include <qt5keychain/keychain.h>
 #endif
 
+#include <optional>
+
 /*#ifdef Q_OS_WIN
 #    include <windows.h>
 typedef int socklen_t;
@@ -416,8 +418,8 @@ public:
     RCLeaveMucServer   *rcLeaveMucServer   = nullptr;
 
     // Avatars
-    AvatarFactory *avatarFactory = nullptr;
-    QByteArray     photoHash;
+    AvatarFactory            *avatarFactory = nullptr;
+    std::optional<QByteArray> photoHash;
 
     // Voice Call
     VoiceCaller   *voiceCaller   = nullptr;
@@ -3260,8 +3262,9 @@ void PsiAccount::setStatusActual(const Status &_s)
     }
 
     // Add vcard photo hash if available
-    if (!d->photoHash.isEmpty()) {
-        s.setPhotoHash(d->photoHash);
+    if (d->photoHash.has_value()) {
+        s.setPhotoHash(*d->photoHash);
+        d->photoHash = {};
     }
 
     // Set the status
