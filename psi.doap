@@ -284,7 +284,9 @@
     <implements>
       <xmpp:SupportedXep>
         <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0084.html'/>
-        <xmpp:status>complete</xmpp:status>
+        <xmpp:status>partial</xmpp:status>
+        <xmpp:version>1.1.4</xmpp:version>
+        <xmpp:note xml:lang='en'>Loading avatars from URLs is not supported at the moment.</xmpp:note>
       </xmpp:SupportedXep>
     </implements>
 
@@ -737,6 +739,15 @@
       <xmpp:SupportedXep>
         <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0385.html'/>
         <xmpp:status>complete</xmpp:status>
+      </xmpp:SupportedXep>
+    </implements>
+
+    <!-- XEP-0398: User Avatar to vCard-Based Avatars Conversion -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0398.html'/>
+        <xmpp:status>complete</xmpp:status>
+        <xmpp:version>1.0.0</xmpp:version>
       </xmpp:SupportedXep>
     </implements>
 
