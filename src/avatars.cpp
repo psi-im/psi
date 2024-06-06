@@ -137,7 +137,12 @@ class AvatarCache : public FileCache {
 public:
     enum IconType { NoneType, AvatarType, VCardType, AvatarFromVCardType, CustomType };
 
-    enum OpResult { NoData, NotChanged, Changed, UserUpdateRequired };
+    enum OpResult {
+        NoData,            /* data for gived hash/jid is not in the cache, but it's required */
+        NotChanged,        /* data with same hash is already in the cache. or there is nothing to remove */
+        Changed,           /* icon changed in the cache but user update is not needed. another is active  */
+        UserUpdateRequired /* active icon has changed in the cache and we need to inform the user */
+    };
 
     // design of the structure is matter of priority, not possible ways of avatars receiving.
     struct JidIcons {
@@ -155,6 +160,9 @@ public:
         }
         return _instance;
     }
+
+    void rememberHash(const Jid &j, const QByteArray &hash) { jid2hash[j] = hash; }
+    void removeHash(const Jid &j) { jid2hash.remove(j); }
 
     void itemPublished(PsiAccount *pa, const Jid &jid, const QString &n, const PubSubItem &item)
     {
@@ -183,7 +191,13 @@ public:
         } else if (n == PEP_AVATAR_METADATA_NS && item.payload().tagName() == QLatin1String(PEP_AVATAR_METADATA_TN)) {
             auto info = item.payload().firstChildElement(QLatin1String("info"));
             if (info.isNull()) {
-                result = AvatarCache::instance()->removeIcon(AvatarCache::AvatarType, jidFull);
+                result  = AvatarCache::instance()->removeIcon(AvatarCache::AvatarType, jidFull);
+                auto it = jid2hash.find(jid);
+                if (it != jid2hash.end()) {
+                    auto vcard_hash = it.value();
+                    jid2hash.erase(it);
+                    VCardFactory::instance()->ensureVCardPhotoUpdated(pa, jid, {}, vcard_hash);
+                }
             } else {
                 auto id = item.id().toLatin1();
                 if (id == "current") {
@@ -229,32 +243,26 @@ public:
         }
     }
 
-    bool ensureVCardUpdated(const Jid &jid, const QByteArray &hash, AvatarFactory::Flags flags)
+    OpResult ensureVCardUpdated(const Jid &jid, const QByteArray &hash, AvatarFactory::Flags flags)
     {
-        QString fullJid = (flags & AvatarFactory::MucUser) ? jid.full() : jid.bare();
+        QString  fullJid = (flags & AvatarFactory::MucUser) ? jid.full() : jid.bare();
+        OpResult result;
 
         if (hash.isEmpty()) { // photo removal
-            if (AvatarCache::instance()->removeIcon(AvatarCache::VCardType, fullJid)
-                == AvatarCache::UserUpdateRequired) {
-#ifdef AVATAR_EDBUG
-                qDebug() << "remove from iconset and emit avatarChanged. ensureVCardUpdated/removeIcon" << fullJid;
-#endif
-                iconset_->removeIcon(QString(QLatin1String("avatars/%1")).arg(fullJid));
-                emit avatarChanged(fullJid);
-            }
+            result = AvatarCache::instance()->removeIcon(AvatarCache::VCardType, fullJid);
         } else {
-            auto result = appendUser(hash, AvatarCache::VCardType, fullJid);
-            if (result == AvatarCache::UserUpdateRequired) {
-#ifdef AVATAR_EDBUG
-                qDebug() << "remove from iconset and emit avatarChanged. ensureVCardUpdated/appendUser" << fullJid;
-#endif
-                iconset_->removeIcon(QString(QLatin1String("avatars/%1")).arg(fullJid));
-                emit avatarChanged(fullJid);
-            } else if (result == AvatarCache::NoData) {
-                return false;
-            }
+            result = appendUser(hash, AvatarCache::VCardType, fullJid);
         }
-        return true;
+        if (result == AvatarCache::UserUpdateRequired) {
+#ifdef AVATAR_EDBUG
+            qDebug() << "remove from iconset and emit avatarChanged. ensureVCardUpdated hash=" << hash.toHex()
+                     << fullJid;
+#endif
+            iconset_->removeIcon(QString(QLatin1String("avatars/%1")).arg(fullJid));
+            emit avatarChanged(fullJid);
+        }
+
+        return result;
     }
 
     void importManualAvatar(const Jid &j, const QString &fileName)
@@ -499,7 +507,7 @@ public:
         }
 
         if (!canDel(*it, iconType)) {
-            return NoData; // or NotChanged.. no suitable icon to delete
+            return NotChanged; //  no suitable icon to delete
         }
 
         FileCacheItem *oldActiveIcon = activeAvatarIcon(*it);
@@ -536,12 +544,13 @@ signals:
 
 protected:
     // all the active items are protected (undeletabe) during session. so it's fine to not update user of changes.
-    // from other side we call removeItem of parent class and even if called this function, by design it's only if no
-    // users.
+    // from other side we call removeItem of parent class and even if called this function, by design it's only if
+    // no users.
     void removeItem(FileCacheItem *item, bool needSync)
     {
         QStringList jids = item->metadata().value(QLatin1String("jids")).toStringList();
-        // weh have user of this icon. And this users can use other icons as well. so we have to properly update them
+        // weh have user of this icon. And this users can use other icons as well. so we have to properly update
+        // them
         for (const QString &j : jids) {
             IconType itype = extractIconType(j);
             QString  jid   = extractIconJid(j);
@@ -845,6 +854,7 @@ private:
     }
 
     QHash<QString, JidIcons> jidToIcons;
+    QHash<Jid, QByteArray>   jid2hash;
     Iconset                 *iconset_;
 
     static AvatarCache *_instance;
@@ -986,20 +996,29 @@ bool AvatarFactory::hasManualAvatar(const Jid &j)
 
 void AvatarFactory::statusUpdate(const Jid &jid, const XMPP::Status &status, Flags flags)
 {
-    if (status.photoHash()) { // even if it's empty. user adretises something.
-        auto hash = *status.photoHash();
-        ensureVCardUpdated(jid, hash, flags);
+    if (status.type() == Status::Offline) {
+        AvatarCache::instance()->removeHash((flags & MucUser) ? jid : jid.withResource({}));
+    } else {
+        if (status.photoHash()) { // even if it's empty. user adretises something.
+            auto hash = *status.photoHash();
+            ensureVCardUpdated(jid, hash, flags);
+        }
     }
 }
 
 void AvatarFactory::ensureVCardUpdated(const Jid &jid, const QByteArray &hash, Flags flags)
 {
-    if (!AvatarCache::instance()->ensureVCardUpdated(jid, hash, flags)) {
-        // must request vcard
-    } // else we need to remember jid has new hash but vcard is not necessary at the moment
+    auto xj = jid;
+    if (!(flags & MucUser)) {
+        xj = jid.withResource({});
+    }
+    auto result = AvatarCache::instance()->ensureVCardUpdated(xj, hash, flags);
 
-    // force request till we figure out how to follow comments above
-    VCardFactory::instance()->ensureVCardPhotoUpdated(d->pa_, jid, flags2AvatarFlags(flags), hash);
+    if (result == AvatarCache::NoData) {
+        VCardFactory::instance()->ensureVCardPhotoUpdated(d->pa_, xj, flags2AvatarFlags(flags), hash);
+    } else {
+        AvatarCache::instance()->rememberHash(xj, hash);
+    }
 }
 
 QString AvatarFactory::getCacheDir()

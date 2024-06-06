@@ -310,6 +310,8 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
                 updateStatus();
                 requestResourceInfo(j);
                 if (s.photoHash()) {
+                    // for vcard we need rather immediate update, regardless if pubsub avatar is set.
+                    // so don't use AvatarFactory and use VCardFactory directly. who knows what's else changed
                     VCardFactory::instance()->ensureVCardPhotoUpdated(d->pa, j, VCardFactory::MucUser, *s.photoHash());
                 }
             }
