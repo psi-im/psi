@@ -40,6 +40,7 @@
 #include "pixmaputil.h"
 #include "psiaccount.h"
 #include "vcardfactory.h"
+#include "xmpp/xmpp-im/xmpp_serverinfomanager.h"
 
 #include <QBuffer>
 #include <QDateTime>
@@ -1064,7 +1065,15 @@ void AvatarFactory::publish_success(const QString &n, const PubSubItem &item)
         info_el.setAttribute("type", image2type(d->selfAvatarData_));
         meta_el.appendChild(info_el);
         account()->pepManager()->publish(PEP_AVATAR_METADATA_NS, PubSubItem(d->selfAvatarHash_, meta_el));
+        if (account()->client()->serverInfoManager()->account_features().hasAvatarConversion()) {
+            VCardFactory::instance()->setPhoto(account()->jid(), d->selfAvatarData_, {});
+        }
         d->selfAvatarData_.clear(); // we don't need it anymore
+    } else if (n == PEP_AVATAR_METADATA_NS) {
+        bool removed = item.payload().firstChildElement("metadata").firstChildElement("info").isNull();
+        if (account()->client()->serverInfoManager()->account_features().hasAvatarConversion() && removed) {
+            VCardFactory::instance()->deletePhoto(account()->jid(), {});
+        }
     }
 }
 

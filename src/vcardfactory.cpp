@@ -235,6 +235,40 @@ VCardRequest *VCardFactory::getVCard(PsiAccount *account, const Jid &jid, Flags 
     return queuedLoader_->enqueue(account, jid, flags, QueuedLoader::HighPriority);
 }
 
+void VCardFactory::setPhoto(const Jid &j, const QByteArray &photo, Flags flags)
+{
+    VCard vc;
+    Jid   sj;
+    if (flags & MucUser) {
+        sj = j;
+        vc = mucVcard(j);
+    } else {
+        sj = j.withResource({});
+        vc = vcard(sj);
+    }
+    if (vc && vc.photo() != photo) {
+        vc.setPhoto({});
+        saveVCard(sj, vc, flags);
+    }
+}
+
+void VCardFactory::deletePhoto(const Jid &j, Flags flags)
+{
+    VCard vc;
+    Jid   sj;
+    if (flags & MucUser) {
+        sj = j;
+        vc = mucVcard(j);
+    } else {
+        sj = j.withResource({});
+        vc = vcard(sj);
+    }
+    if (vc && !vc.photo().isEmpty()) {
+        vc.setPhoto({});
+        saveVCard(sj, vc, flags);
+    }
+}
+
 void VCardFactory::ensureVCardPhotoUpdated(PsiAccount *acc, const Jid &jid, Flags flags, const QByteArray &newPhotoHash)
 {
     VCard vc;

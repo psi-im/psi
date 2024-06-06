@@ -58,6 +58,9 @@ public:
     JT_VCard     *setVCard(const PsiAccount *account, const VCard &v, const Jid &targetJid, VCardFactory::Flags flags);
     VCardRequest *getVCard(PsiAccount *account, const Jid &, VCardFactory::Flags flags = {});
 
+    void setPhoto(const Jid &j, const QByteArray &photo, Flags flags);
+    void deletePhoto(const Jid &j, Flags flags);
+
     // 1. check if it's needed to do a request,
     // 2. enqueue request if necessary (no vcard, or if hash doesn't match)
     // 3. vcardChanged() will be sent as usually when vcard is updated
