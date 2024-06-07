@@ -48,6 +48,7 @@ public:
 
     QString                  anchorOnMousePress;
     bool                     hadSelectionOnMousePress = false;
+    bool                     keepAtBottom             = true;
     FileSharingDeviceOpener *mediaOpener              = nullptr;
     ITEAudioController      *voiceMsgCtrl             = nullptr;
 
@@ -255,6 +256,8 @@ QMenu *PsiTextView::createStandardContextMenu(const QPoint &position)
     return menu;
 }
 
+void PsiTextView::setKeepAtBottom(bool v) { d->keepAtBottom = v; }
+
 bool PsiTextView::isSelectedBlock()
 {
     if (textCursor().hasSelection()) {
@@ -437,6 +440,10 @@ QMimeData *PsiTextView::createMimeDataFromSelection() const
  */
 void PsiTextView::resizeEvent(QResizeEvent *e)
 {
+    if (!d->keepAtBottom) {
+        QTextEdit::resizeEvent(e);
+        return;
+    }
     bool   atEnd   = verticalScrollBar()->value() == verticalScrollBar()->maximum();
     bool   atStart = verticalScrollBar()->value() == verticalScrollBar()->minimum();
     double value   = 0;

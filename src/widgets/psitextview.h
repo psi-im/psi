@@ -35,6 +35,7 @@ public:
     // Reimplemented
     QMenu *createStandardContextMenu(const QPoint &position);
 
+    void setKeepAtBottom(bool v = true); // keep scrolls at bottom on resize
     bool atBottom();
 
     virtual void appendText(const QString &text);

@@ -340,6 +340,7 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
             });
     m_ui.te_status->setReadOnly(true);
     m_ui.te_status->setAcceptRichText(true);
+    m_ui.te_status->setKeepAtBottom(false);
     PsiRichText::install(m_ui.te_status->document());
     updateStatus();
     const auto &items = d->findRelevant(j);
@@ -915,12 +916,13 @@ void InfoWidget::updateStatus()
             }
         }
         PsiRichText::setText(m_ui.te_status->document(), info);
-        auto cursor = m_ui.te_status->textCursor();
-        cursor.setPosition(0);
-        m_ui.te_status->setTextCursor(cursor);
     } else {
         m_ui.te_status->clear();
     }
+
+    auto cursor = m_ui.te_status->textCursor();
+    cursor.setPosition(0);
+    m_ui.te_status->setTextCursor(cursor);
 }
 
 /**
