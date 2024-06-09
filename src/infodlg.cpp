@@ -399,21 +399,8 @@ void InfoWidget::setData(const VCard4::VCard &i)
     d->le_middlename->setText(names.data.additional.value(0));
     d->le_familyname->setText(names.data.surname.value(0));
     m_ui.le_nickname->setText(i.nickname().preferred().data.value(0));
-    std::visit(
-        [this](auto const &v) {
-            using Tv = std::decay_t<decltype(v)>;
-            if constexpr (std::is_same_v<Tv, QString>) {
-                m_ui.le_bday->setText(v);
-            } else {
-                m_ui.le_bday->setText(v.toString(Qt::ISODate));
-            }
-            if constexpr (std::is_same_v<Tv, QDate>) {
-                d->bday = v;
-            } else if constexpr (std::is_same_v<Tv, QDateTime>) {
-                d->bday = v.date();
-            }
-        },
-        i.bday().data);
+    d->bday = i.bday();
+    m_ui.le_bday->setText(i.bday());
 
     const QString fullName = i.fullName().value(0).data;
     if (d->type != Self && d->type != MucAdm && fullName.isEmpty()) {
@@ -471,9 +458,9 @@ void InfoWidget::setData(const VCard4::VCard &i)
 
     if (!i.photo().isEmpty()) {
         // printf("There is a picture...\n");
-        for (auto const &[params, photo] : i.photo()) {
-            if (!photo.data.isEmpty()) {
-                d->photo = photo.data;
+        for (auto const &photoItem : i.photo()) {
+            if (!photoItem.data.data.isEmpty()) {
+                d->photo = photoItem.data.data;
                 break;
             }
         }
