@@ -395,10 +395,10 @@ bool InfoWidget::aboutToClose()
 void InfoWidget::setData(const VCard4::VCard &i)
 {
     auto names = i.names();
-    d->le_givenname->setText(names.second.given.value(0));
-    d->le_middlename->setText(names.second.additional.value(0));
-    d->le_familyname->setText(names.second.surname.value(0));
-    m_ui.le_nickname->setText(i.nickname().value(0).second.value(0));
+    d->le_givenname->setText(names.data.given.value(0));
+    d->le_middlename->setText(names.data.additional.value(0));
+    d->le_familyname->setText(names.data.surname.value(0));
+    m_ui.le_nickname->setText(i.nickname().preferred().data.value(0));
     std::visit(
         [this](auto const &v) {
             using Tv = std::decay_t<decltype(v)>;
@@ -413,13 +413,14 @@ void InfoWidget::setData(const VCard4::VCard &i)
                 d->bday = v.date();
             }
         },
-        i.bday().second);
+        i.bday().data);
 
-    const QString fullName = i.fullName().value(0).second;
+    const QString fullName = i.fullName().value(0).data;
     if (d->type != Self && d->type != MucAdm && fullName.isEmpty()) {
         m_ui.le_fullname->setText(
             QString("%1 %2 %3")
-                .arg(names.second.given.value(0), names.second.additional.value(0), names.second.surname.value(0)));
+                .arg(names.data.given.value(0), names.data.additional.value(0), names.data.surname.value(0))
+                .simplified());
     } else {
         m_ui.le_fullname->setText(fullName);
     }
@@ -430,24 +431,19 @@ void InfoWidget::setData(const VCard4::VCard &i)
                                  + TextUtil::escape(d->vcard.familyName()));
 
     // E-Mail handling
-    auto email = i.emails().value(0);
-    for (auto const &[params, e] : i.emails()) {
-        if (params.pref) {
-            email = { params, e };
-        }
-    }
-    m_ui.le_email->setText(email.second);
+    auto email = i.emails().preferred();
+    m_ui.le_email->setText(email);
     AddressTypeDlg::AddrTypes addTypes;
-    addTypes |= (email.first.pref ? AddressTypeDlg::Pref : AddressTypeDlg::None);
-    addTypes |= (email.first.type.contains(QLatin1String("home")) ? AddressTypeDlg::Home : AddressTypeDlg::None);
-    addTypes |= (email.first.type.contains(QLatin1String("work")) ? AddressTypeDlg::Work : AddressTypeDlg::None);
+    addTypes |= (email.parameters.pref ? AddressTypeDlg::Pref : AddressTypeDlg::None);
+    addTypes |= (email.parameters.type.contains(QLatin1String("home")) ? AddressTypeDlg::Home : AddressTypeDlg::None);
+    addTypes |= (email.parameters.type.contains(QLatin1String("work")) ? AddressTypeDlg::Work : AddressTypeDlg::None);
     d->emailsDlg->setTypes(addTypes);
 
-    m_ui.le_homepage->setText(i.urls().value(0).second.toString());
+    m_ui.le_homepage->setText(i.urls().preferred().data.toString());
     d->homepageAction->setVisible(!m_ui.le_homepage->text().isEmpty());
 
     QString phone;
-    if (!i.tels().isEmpty())
+    if (!i.phones().isEmpty())
         phone = std::visit(
             []<typename T>(T const &v) {
                 if constexpr (std::is_same_v<T, QString>) {
@@ -456,10 +452,10 @@ void InfoWidget::setData(const VCard4::VCard &i)
                     return v.toString();
                 }
             },
-            i.tels()[0].second);
+            i.phones()[0].data);
     m_ui.le_phone->setText(phone);
 
-    auto addr = i.addresses().value(0).second;
+    auto addr = i.addresses().preferred().data;
     m_ui.le_street->setText(addr.street.value(0));
     m_ui.le_ext->setText(addr.ext.value(0));
     m_ui.le_city->setText(addr.locality.value(0));
@@ -467,11 +463,11 @@ void InfoWidget::setData(const VCard4::VCard &i)
     m_ui.le_pcode->setText(addr.code.value(0));
     m_ui.le_country->setText(addr.country.value(0));
 
-    m_ui.le_orgName->setText(i.org().value(0).second.value(0));
+    m_ui.le_orgName->setText(i.org().preferred().data.value(0));
 
-    m_ui.le_title->setText(i.title().value(0).second);
-    m_ui.le_role->setText(i.role().value(0).second);
-    m_ui.te_desc->setPlainText(i.note().value(0).second);
+    m_ui.le_title->setText(i.title().preferred().data);
+    m_ui.le_role->setText(i.role().preferred().data);
+    m_ui.te_desc->setPlainText(i.note().preferred().data);
 
     if (!i.photo().isEmpty()) {
         // printf("There is a picture...\n");
@@ -505,7 +501,7 @@ void InfoWidget::setData(const VCard &i)
     }
     const QString fullName = i.fullName();
     if (d->type != Self && d->type != MucAdm && fullName.isEmpty()) {
-        m_ui.le_fullname->setText(QString("%1 %2 %3").arg(i.givenName(), i.middleName(), i.familyName()));
+        m_ui.le_fullname->setText(QString("%1 %2 %3").arg(i.givenName(), i.middleName(), i.familyName()).simplified());
     } else {
         m_ui.le_fullname->setText(fullName);
     }
