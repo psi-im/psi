@@ -39,6 +39,7 @@
 #include "userlist.h"
 #include "vcardfactory.h"
 #include "vcardphotodlg.h"
+#include "xmpp/xmpp-im/xmpp_vcard4.h"
 
 #include <QAction>
 #include <QCalendarWidget>
@@ -389,6 +390,105 @@ bool InfoWidget::aboutToClose()
         }
     }
     return true;
+}
+
+void InfoWidget::setData(const VCard4::VCard &i)
+{
+    auto names = i.names();
+    d->le_givenname->setText(names.second.given.value(0));
+    d->le_middlename->setText(names.second.additional.value(0));
+    d->le_familyname->setText(names.second.surname.value(0));
+    m_ui.le_nickname->setText(i.nickname().value(0).second.value(0));
+    std::visit(
+        [this](auto const &v) {
+            using Tv = std::decay_t<decltype(v)>;
+            if constexpr (std::is_same_v<Tv, QString>) {
+                m_ui.le_bday->setText(v);
+            } else {
+                m_ui.le_bday->setText(v.toString(Qt::ISODate));
+            }
+            if constexpr (std::is_same_v<Tv, QDate>) {
+                d->bday = v;
+            } else if constexpr (std::is_same_v<Tv, QDateTime>) {
+                d->bday = v.date();
+            }
+        },
+        i.bday().second);
+
+    const QString fullName = i.fullName().value(0).second;
+    if (d->type != Self && d->type != MucAdm && fullName.isEmpty()) {
+        m_ui.le_fullname->setText(
+            QString("%1 %2 %3")
+                .arg(names.second.given.value(0), names.second.additional.value(0), names.second.surname.value(0)));
+    } else {
+        m_ui.le_fullname->setText(fullName);
+    }
+
+    m_ui.le_fullname->setToolTip(QString("<b>") + tr("First Name:") + "</b> " + TextUtil::escape(d->vcard.givenName())
+                                 + "<br>" + "<b>" + tr("Middle Name:") + "</b> "
+                                 + TextUtil::escape(d->vcard.middleName()) + "<br>" + "<b>" + tr("Last Name:") + "</b> "
+                                 + TextUtil::escape(d->vcard.familyName()));
+
+    // E-Mail handling
+    auto email = i.emails().value(0);
+    for (auto const &[params, e] : i.emails()) {
+        if (params.pref) {
+            email = { params, e };
+        }
+    }
+    m_ui.le_email->setText(email.second);
+    AddressTypeDlg::AddrTypes addTypes;
+    addTypes |= (email.first.pref ? AddressTypeDlg::Pref : AddressTypeDlg::None);
+    addTypes |= (email.first.type.contains(QLatin1String("home")) ? AddressTypeDlg::Home : AddressTypeDlg::None);
+    addTypes |= (email.first.type.contains(QLatin1String("work")) ? AddressTypeDlg::Work : AddressTypeDlg::None);
+    d->emailsDlg->setTypes(addTypes);
+
+    m_ui.le_homepage->setText(i.urls().value(0).second.toString());
+    d->homepageAction->setVisible(!m_ui.le_homepage->text().isEmpty());
+
+    QString phone;
+    if (!i.tels().isEmpty())
+        phone = std::visit(
+            []<typename T>(T const &v) {
+                if constexpr (std::is_same_v<T, QString>) {
+                    return v;
+                } else {
+                    return v.toString();
+                }
+            },
+            i.tels()[0].second);
+    m_ui.le_phone->setText(phone);
+
+    auto addr = i.addresses().value(0).second;
+    m_ui.le_street->setText(addr.street.value(0));
+    m_ui.le_ext->setText(addr.ext.value(0));
+    m_ui.le_city->setText(addr.locality.value(0));
+    m_ui.le_state->setText(addr.region.value(0));
+    m_ui.le_pcode->setText(addr.code.value(0));
+    m_ui.le_country->setText(addr.country.value(0));
+
+    m_ui.le_orgName->setText(i.org().value(0).second.value(0));
+
+    m_ui.le_title->setText(i.title().value(0).second);
+    m_ui.le_role->setText(i.role().value(0).second);
+    m_ui.te_desc->setPlainText(i.note().value(0).second);
+
+    if (!i.photo().isEmpty()) {
+        // printf("There is a picture...\n");
+        for (auto const &[params, photo] : i.photo()) {
+            if (!photo.data.isEmpty()) {
+                d->photo = photo.data;
+                break;
+            }
+        }
+        if (!updatePhoto()) {
+            clearPhoto();
+        }
+    } else {
+        clearPhoto();
+    }
+
+    setEdited(false);
 }
 
 void InfoWidget::setData(const VCard &i)

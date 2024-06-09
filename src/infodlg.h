@@ -29,6 +29,9 @@ namespace XMPP {
 class Jid;
 class VCard;
 class Resource;
+namespace VCard4 {
+    class VCard;
+}
 }
 using namespace XMPP;
 
@@ -78,6 +81,7 @@ private:
     // QPushButton* pb_close_;
     // QPushButton* pb_submit_;
 
+    void        setData(const XMPP::VCard4::VCard &);
     void        setData(const XMPP::VCard &);
     XMPP::VCard makeVCard();
     void        fieldsEnable(bool);
