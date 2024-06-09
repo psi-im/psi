@@ -805,18 +805,30 @@ public:
 
     void dialogRegister(QWidget *w, const Jid &jid)
     {
+        item_dialog2 *i;
         if (connect(w, &QWidget::destroyed, this, &Private::forceDialogUnregister, Qt::UniqueConnection)) {
-            item_dialog2 *i = new item_dialog2;
-            i->widget       = w;
-            i->jid          = jid;
+            i         = new item_dialog2;
+            i->widget = w;
             dialogList.append(i);
+            // qDebug("registerd: %s for jid=%s", qPrintable(w->objectName()), qPrintable(jid.full()));
+        } else {
+            auto it = std::ranges::find_if(dialogList, [w](auto const &v) { return v->widget == w; });
+            if (it == dialogList.end()) {
+                qWarning("dialog registration inconsistency: %s jid=%s", qPrintable(w->objectName()),
+                         qPrintable(jid.full()));
+                return;
+            }
+            i = *it;
+            // qDebug("jid updated: %s for jid=%s", qPrintable(w->objectName()), qPrintable(jid.full()));
         }
+        i->jid = jid;
     }
 
     void dialogUnregister(QWidget *w)
     {
         for (item_dialog2 *i : std::as_const(dialogList)) {
             if (i->widget == w) {
+                disconnect(w, &QWidget::destroyed, this, &Private::forceDialogUnregister);
                 dialogList.removeAll(i);
                 delete i;
                 return;
