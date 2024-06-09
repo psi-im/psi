@@ -669,6 +669,15 @@
       </xmpp:SupportedXep>
     </implements>
 
+    <!-- XEP-0359: Unique and Stable Stanza IDs -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0359.html'/>
+        <xmpp:status>complete</xmpp:status>
+        <xmpp:version>0.7.0</xmpp:version>
+      </xmpp:SupportedXep>
+    </implements>
+
     <!-- XEP-0363: HTTP File Upload -->
     <implements>
       <xmpp:SupportedXep>
@@ -758,7 +767,16 @@
         <xmpp:status>complete</xmpp:status>
         <xmpp:note xml:lang='en'>All of them.</xmpp:note>
       </xmpp:SupportedXep>
-    </implements>-->
+    </implements>
+
+    <!-- XEP-0486: MUC Avatars -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0486.html'/>
+        <xmpp:status>complete</xmpp:status>
+        <xmpp:version>0.1.0</xmpp:version>
+      </xmpp:SupportedXep>
+    </implements>
 
     <release>
       <Version>
