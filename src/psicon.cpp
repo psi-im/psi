@@ -859,6 +859,7 @@ QStringList PsiCon::xmppFatures() const
                                          << "http://jabber.org/protocol/activity"
                                          << "http://jabber.org/protocol/tune"
                                          << "http://jabber.org/protocol/geoloc"
+                                         << "urn:ietf:params:xml:ns:vcard-4.0"
                                          << "urn:xmpp:avatar:data"
                                          << "urn:xmpp:avatar:metadata";
 

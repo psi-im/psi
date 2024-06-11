@@ -20,7 +20,7 @@
 #include "mucconfigdlg.h"
 
 #include "infodlg.h"
-#include "iris/xmpp_vcard.h"
+#include "iris/xmpp_vcard4.h"
 #include "mucaffiliationsmodel.h"
 #include "mucaffiliationsproxymodel.h"
 #include "mucmanager.h"
@@ -158,8 +158,8 @@ void MUCConfigDlg::refreshVcard()
     if (!ui_.tab_vcard->layout()) {
         QVBoxLayout *layout = new QVBoxLayout;
 
-        const VCard vcard = VCardFactory::instance()->vcard(manager_->room());
-        vcard_            = new InfoWidget(InfoWidget::MucAdm, manager_->room(), vcard, manager_->account());
+        const auto vcard = VCardFactory::instance()->vcard(manager_->room());
+        vcard_           = new InfoWidget(InfoWidget::MucAdm, manager_->room(), vcard, manager_->account());
         layout->addWidget(vcard_);
         ui_.tab_vcard->setLayout(layout);
         connect(vcard_, SIGNAL(busy()), ui_.busy, SLOT(start()));

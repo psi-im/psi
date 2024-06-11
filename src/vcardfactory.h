@@ -34,6 +34,9 @@ class JT_VCard;
 class Jid;
 class Task;
 class VCard;
+namespace VCard4 {
+    class VCard;
+}
 }
 using namespace XMPP;
 
@@ -51,11 +54,10 @@ public:
     Q_DECLARE_FLAGS(Flags, Flag);
 
     static VCardFactory *instance();
-    VCard                vcard(const Jid &);
-    const VCard          mucVcard(const Jid &j) const;
-    // void                 setVCard(const Jid &, const VCard &);
+    VCard4::VCard        vcard(const Jid &, Flags flags = {});
+    const VCard4::VCard  mucVcard(const Jid &j) const;
 
-    JT_VCard     *setVCard(const PsiAccount *account, const VCard &v, const Jid &targetJid, VCardFactory::Flags flags);
+    Task *setVCard(PsiAccount *account, const VCard4::VCard &v, const Jid &targetJid, VCardFactory::Flags flags);
     VCardRequest *getVCard(PsiAccount *account, const Jid &, VCardFactory::Flags flags = {});
 
     void setPhoto(const Jid &j, const QByteArray &photo, Flags flags);
@@ -70,19 +72,21 @@ signals:
     void vcardChanged(const Jid &, VCardFactory::Flags);
 
 protected:
-    void checkLimit(const QString &jid, const VCard &vcard);
+    void checkLimit(const QString &jid, const VCard4::VCard &vcard);
 
 private:
     VCardFactory();
     ~VCardFactory();
     friend class VCardRequest;
-    void saveVCard(const Jid &, const VCard &, VCardFactory::Flags flags);
+    void saveVCard(const Jid &, const VCard4::VCard &, VCardFactory::Flags flags);
 
-    static VCardFactory                 *instance_;
-    const int                            dictSize_;
-    QStringList                          vcardList_;
-    QMap<QString, VCard>                 vcardDict_;
-    QMap<QString, QHash<QString, VCard>> mucVcardDict_; // QHash in case of big mucs mucBareJid => {resoure => vcard}
+    static VCardFactory         *instance_;
+    const int                    dictSize_;
+    QStringList                  vcardList_;
+    QMap<QString, VCard4::VCard> vcardDict_;
+
+    // QHash in case of big mucs mucBareJid => {resoure => vcard}
+    QMap<QString, QHash<QString, VCard4::VCard>> mucVcardDict_;
 
     // to limit the hash above. this one keeps ordered resource. mucBareJid => resource_list
     QMap<QString, QQueue<QString>> lastMucVcards_;
@@ -102,13 +106,13 @@ public:
     Jid                &jid() const;
     VCardFactory::Flags flags() const;
 
-    JT_VCard *execute();
-    void      merge(PsiAccount *account, const Jid &, VCardFactory::Flags flags);
+    Task *execute();
+    void  merge(PsiAccount *account, const Jid &, VCardFactory::Flags flags);
 
     // result stuff
-    bool    success() const; // item-not-found is considered success but vcard will be null
-    VCard   vcard() const;
-    QString errorString() const;
+    bool          success() const; // item-not-found is considered success but vcard will be null
+    VCard4::VCard vcard() const;
+    QString       errorString() const;
 
 signals:
     void finished();

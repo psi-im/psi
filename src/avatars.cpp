@@ -34,7 +34,7 @@
 #include "iris/xmpp_pubsubitem.h"
 #include "iris/xmpp_resource.h"
 #include "iris/xmpp_tasks.h"
-#include "iris/xmpp_vcard.h"
+#include "iris/xmpp_vcard4.h"
 #include "iris/xmpp_xmlcommon.h"
 #include "pepmanager.h"
 #include "pixmaputil.h"
@@ -322,7 +322,7 @@ public:
             qDebug() << "return from vcardfactory for jid " << _jid.full();
 #endif
             auto vcard = VCardFactory::instance()->vcard(_jid);
-            if (vcard.isNull() || vcard.photo().isNull()) {
+            if (vcard.isNull() || QByteArray(vcard.photo()).isNull()) {
                 return QPixmap();
             }
             QByteArray data = vcard.photo();
@@ -367,7 +367,7 @@ public:
         QByteArray data;
         if (!icons.avatar) {
             auto vcard = VCardFactory::instance()->mucVcard(_jid);
-            if (vcard.isNull() || vcard.photo().isNull()) {
+            if (vcard.isNull() || QByteArray(vcard.photo()).isNull()) {
                 return QPixmap();
             }
             data = vcard.photo();
@@ -578,14 +578,12 @@ private:
 
         connect(VCardFactory::instance(), &VCardFactory::vcardChanged, this,
                 [this](const Jid &j, VCardFactory::Flags flags) {
-                    QByteArray  ba;
-                    QString     fullJid;
-                    XMPP::VCard vcard;
+                    QByteArray ba;
+                    QString    fullJid;
+                    auto       vcard = VCardFactory::instance()->vcard(j, flags);
                     if (flags & VCardFactory::MucUser) {
-                        vcard   = VCardFactory::instance()->mucVcard(j);
                         fullJid = j.full();
                     } else {
-                        vcard   = VCardFactory::instance()->vcard(j);
                         fullJid = j.bare();
                     }
                     if (!vcard) {
@@ -931,14 +929,9 @@ AvatarFactory::UserHashes AvatarFactory::userHashes(const Jid &jid) const
     auto icons = AvatarCache::instance()->icons(jid.full());
     if (!icons.vcard) { // hm try to get from vcard factory then
         // we don't call this method often. so it's fine to query vcard factory every time.
-        bool  isMuc = !jid.resource().isEmpty();
-        VCard vcard;
-        if (isMuc) {
-            vcard = VCardFactory::instance()->mucVcard(jid);
-        } else {
-            vcard = VCardFactory::instance()->vcard(jid);
-        }
-        if (!vcard.isNull() && !vcard.photo().isNull()) {
+        auto flags = jid.resource().isEmpty() ? VCardFactory::Flags {} : VCardFactory::MucUser;
+        auto vcard = VCardFactory::instance()->vcard(jid, flags);
+        if (!vcard.isNull() && !QByteArray(vcard.photo()).isNull()) {
             if (AvatarCache::instance()->setIcon(AvatarCache::VCardType, jid.full(), vcard.photo())
                 != AvatarCache::NoData) {
                 icons = AvatarCache::instance()->icons(jid.full());

@@ -145,7 +145,7 @@ public:
     int                       type       = 0;
     int                       actionType = 0;
     Jid                       jid;
-    VCard                     vcard;
+    VCard4::VCard             vcard;
     PsiAccount               *pa        = nullptr;
     bool                      busy      = false;
     bool                      te_edited = false;
@@ -199,13 +199,14 @@ public:
     }
 };
 
-InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWidget *parent) : QWidget(parent)
+InfoWidget::InfoWidget(int type, const Jid &j, const VCard4::VCard &vcard, PsiAccount *pa, QWidget *parent) :
+    QWidget(parent)
 {
     m_ui.setupUi(this);
     d            = new Private;
     d->type      = type;
     d->jid       = j;
-    d->vcard     = vcard ? vcard : VCard::makeEmpty();
+    d->vcard     = vcard;
     d->pa        = pa;
     d->busy      = false;
     d->te_edited = false;
@@ -330,8 +331,7 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
     connect(VCardFactory::instance(), &VCardFactory::vcardChanged, this,
             [this](const Jid &j, VCardFactory::Flags flags) {
                 if (d->jid.compare(j, flags & VCardFactory::MucUser)) {
-                    auto vcard = (flags & VCardFactory::MucUser) ? VCardFactory::instance()->mucVcard(j)
-                                                                 : VCardFactory::instance()->vcard(j);
+                    auto vcard = VCardFactory::instance()->vcard(j, flags);
                     if (vcard) {
                         d->vcard = vcard;
                         setData(d->vcard);
@@ -398,7 +398,7 @@ void InfoWidget::setData(const VCard4::VCard &i)
     d->le_givenname->setText(names.data.given.value(0));
     d->le_middlename->setText(names.data.additional.value(0));
     d->le_familyname->setText(names.data.surname.value(0));
-    m_ui.le_nickname->setText(i.nickname().preferred().data.value(0));
+    m_ui.le_nickname->setText(i.nickName().preferred().data.value(0));
     d->bday = i.bday();
     m_ui.le_bday->setText(i.bday());
 
@@ -412,10 +412,10 @@ void InfoWidget::setData(const VCard4::VCard &i)
         m_ui.le_fullname->setText(fullName);
     }
 
-    m_ui.le_fullname->setToolTip(QString("<b>") + tr("First Name:") + "</b> " + TextUtil::escape(d->vcard.givenName())
-                                 + "<br>" + "<b>" + tr("Middle Name:") + "</b> "
-                                 + TextUtil::escape(d->vcard.middleName()) + "<br>" + "<b>" + tr("Last Name:") + "</b> "
-                                 + TextUtil::escape(d->vcard.familyName()));
+    m_ui.le_fullname->setToolTip(QString("<b>") + tr("First Name:") + "</b> "
+                                 + TextUtil::escape(names.data.given.value(0)) + "<br>" + "<b>" + tr("Middle Name:")
+                                 + "</b> " + TextUtil::escape(names.data.additional.value(0)) + "<br>" + "<b>"
+                                 + tr("Last Name:") + "</b> " + TextUtil::escape(names.data.surname.value(0)));
 
     // E-Mail handling
     auto email = i.emails().preferred();
@@ -444,7 +444,7 @@ void InfoWidget::setData(const VCard4::VCard &i)
 
     auto addr = i.addresses().preferred().data;
     m_ui.le_street->setText(addr.street.value(0));
-    m_ui.le_ext->setText(addr.ext.value(0));
+    m_ui.le_ext->setText(addr.extaddr.value(0));
     m_ui.le_city->setText(addr.locality.value(0));
     m_ui.le_state->setText(addr.region.value(0));
     m_ui.le_pcode->setText(addr.code.value(0));
@@ -456,102 +456,8 @@ void InfoWidget::setData(const VCard4::VCard &i)
     m_ui.le_role->setText(i.role().preferred().data);
     m_ui.te_desc->setPlainText(i.note().preferred().data);
 
-    if (!i.photo().isEmpty()) {
-        // printf("There is a picture...\n");
-        for (auto const &photoItem : i.photo()) {
-            if (!photoItem.data.data.isEmpty()) {
-                d->photo = photoItem.data.data;
-                break;
-            }
-        }
-        if (!updatePhoto()) {
-            clearPhoto();
-        }
-    } else {
-        clearPhoto();
-    }
-
-    setEdited(false);
-}
-
-void InfoWidget::setData(const VCard &i)
-{
-    d->le_givenname->setText(i.givenName());
-    d->le_middlename->setText(i.middleName());
-    d->le_familyname->setText(i.familyName());
-    m_ui.le_nickname->setText(i.nickName());
-    d->bday = QDate::fromString(i.bdayStr(), Qt::ISODate);
-    if (d->bday.isValid()) {
-        m_ui.le_bday->setText(d->bday.toString(d->dateTextFormat));
-    } else {
-        m_ui.le_bday->setText(i.bdayStr());
-    }
-    const QString fullName = i.fullName();
-    if (d->type != Self && d->type != MucAdm && fullName.isEmpty()) {
-        m_ui.le_fullname->setText(QString("%1 %2 %3").arg(i.givenName(), i.middleName(), i.familyName()).simplified());
-    } else {
-        m_ui.le_fullname->setText(fullName);
-    }
-
-    m_ui.le_fullname->setToolTip(QString("<b>") + tr("First Name:") + "</b> " + TextUtil::escape(d->vcard.givenName())
-                                 + "<br>" + "<b>" + tr("Middle Name:") + "</b> "
-                                 + TextUtil::escape(d->vcard.middleName()) + "<br>" + "<b>" + tr("Last Name:") + "</b> "
-                                 + TextUtil::escape(d->vcard.familyName()));
-
-    // E-Mail handling
-    VCard::Email email;
-    VCard::Email internetEmail;
-    for (auto const &e : i.emailList()) {
-        if (e.pref) {
-            email = e;
-        }
-        if (e.internet) {
-            internetEmail = e;
-        }
-    }
-    if (email.userid.isEmpty() && !i.emailList().isEmpty())
-        email = internetEmail.userid.isEmpty() ? i.emailList()[0] : internetEmail;
-    m_ui.le_email->setText(email.userid);
-    AddressTypeDlg::AddrTypes addTypes;
-    addTypes |= (email.pref ? AddressTypeDlg::Pref : AddressTypeDlg::None);
-    addTypes |= (email.home ? AddressTypeDlg::Home : AddressTypeDlg::None);
-    addTypes |= (email.work ? AddressTypeDlg::Work : AddressTypeDlg::None);
-    addTypes |= (email.internet ? AddressTypeDlg::Internet : AddressTypeDlg::None);
-    addTypes |= (email.x400 ? AddressTypeDlg::X400 : AddressTypeDlg::None);
-    d->emailsDlg->setTypes(addTypes);
-
-    m_ui.le_homepage->setText(i.url());
-    d->homepageAction->setVisible(!i.url().isEmpty());
-
-    QString phone;
-    if (!i.phoneList().isEmpty())
-        phone = i.phoneList()[0].number;
-    m_ui.le_phone->setText(phone);
-
-    VCard::Address addr;
-    if (!i.addressList().isEmpty())
-        addr = i.addressList()[0];
-    m_ui.le_street->setText(addr.street);
-    m_ui.le_ext->setText(addr.extaddr);
-    m_ui.le_city->setText(addr.locality);
-    m_ui.le_state->setText(addr.region);
-    m_ui.le_pcode->setText(addr.pcode);
-    m_ui.le_country->setText(addr.country);
-
-    m_ui.le_orgName->setText(i.org().name);
-
-    QString unit;
-    if (!i.org().unit.isEmpty())
-        unit = i.org().unit[0];
-    m_ui.le_orgUnit->setText(unit);
-
-    m_ui.le_title->setText(i.title());
-    m_ui.le_role->setText(i.role());
-    m_ui.te_desc->setPlainText(i.desc().isEmpty() ? i.note() : i.desc());
-
-    if (!i.photo().isEmpty()) {
-        // printf("There is a picture...\n");
-        d->photo = i.photo();
+    d->photo = i.photo();
+    if (!d->photo.isEmpty()) {
         if (!updatePhoto()) {
             clearPhoto();
         }
@@ -723,8 +629,8 @@ void InfoWidget::release()
 void InfoWidget::updateNick()
 {
     if (d->jid.compare(d->pa->jid(), false)) {
-        if (!d->vcard.nickName().isEmpty())
-            d->pa->setNick(d->vcard.nickName());
+        if (!d->vcard.nickName().preferred().data.isEmpty())
+            d->pa->setNick(d->vcard.nickName().preferred());
         else
             d->pa->setNick(d->pa->jid().node());
     }
@@ -841,86 +747,112 @@ void InfoWidget::doClearBirthDate()
     d->bdayPopup->hide();
 }
 
-VCard InfoWidget::makeVCard()
+VCard4::VCard InfoWidget::makeVCard()
 {
-    VCard v = VCard::makeEmpty();
+    VCard4::VCard v;
 
-    v.setFullName(m_ui.le_fullname->text());
-    v.setGivenName(d->le_givenname->text());
-    v.setMiddleName(d->le_middlename->text());
-    v.setFamilyName(d->le_familyname->text());
-    v.setNickName(m_ui.le_nickname->text());
-    v.setBdayStr(d->bday.isValid() ? d->bday.toString(Qt::ISODate) : m_ui.le_bday->text());
+    using namespace VCard4;
 
+    // Full Name
+    v.setFullName({ { PString { Parameters(), m_ui.le_fullname->text() } } });
+
+    // Given Name
+    PNames names;
+    names.data.given.append(d->le_givenname->text());
+    names.data.additional.append(d->le_middlename->text());
+    names.data.surname.append(d->le_familyname->text());
+    v.setNames(names);
+
+    // Nickname
+    v.setNickName({ { { PStringList { Parameters(), { m_ui.le_nickname->text() } } } } });
+
+    // Birthday
+    if (d->bday.isValid()) {
+        v.setBday({ Parameters(), d->bday });
+    } else {
+        v.setBday({ Parameters(), m_ui.le_bday->text() });
+    }
+
+    // Email
     if (!m_ui.le_email->text().isEmpty()) {
-        VCard::Email email;
-        auto         types = d->emailsDlg->types();
+        PStrings   emails;
+        Parameters emailParams;
+        auto       types = d->emailsDlg->types();
         if (types & AddressTypeDlg::Pref) {
-            email.pref = true;
+            emailParams.pref = 1;
             types ^= AddressTypeDlg::Pref;
         }
         if (!types) {
-            email.internet = true;
+            emailParams.type << "internet";
         } else {
-            email.internet = bool(types & AddressTypeDlg::Internet);
-            email.home     = bool(types & AddressTypeDlg::Home);
-            email.work     = bool(types & AddressTypeDlg::Work);
-            email.x400     = bool(types & AddressTypeDlg::X400);
+            if (types & AddressTypeDlg::Internet)
+                emailParams.type << "internet";
+            if (types & AddressTypeDlg::Home)
+                emailParams.type << "home";
+            if (types & AddressTypeDlg::Work)
+                emailParams.type << "work";
+            if (types & AddressTypeDlg::X400)
+                emailParams.type << "x400";
         }
-        email.userid = m_ui.le_email->text();
-
-        VCard::EmailList list;
-        list << email;
-        v.setEmailList(list);
+        emails.append({ emailParams, m_ui.le_email->text() });
+        v.setEmails(emails);
     }
 
-    v.setUrl(m_ui.le_homepage->text());
+    // URL
+    v.setUrls({ { PUri { Parameters(), QUrl(m_ui.le_homepage->text()) } } });
 
+    // Phone
     if (!m_ui.le_phone->text().isEmpty()) {
-        VCard::Phone p;
-        p.home   = true;
-        p.voice  = true;
-        p.number = m_ui.le_phone->text();
-
-        VCard::PhoneList list;
-        list << p;
-        v.setPhoneList(list);
+        PUrisOrTexts phones;
+        Parameters   phoneParams;
+        phoneParams.type << "home"
+                         << "voice";
+        phones.append({ phoneParams, m_ui.le_phone->text() });
+        v.setPhones(phones);
     }
 
+    // Photo
     if (!d->photo.isEmpty()) {
-        // printf("Adding a pixmap to the vCard...\n");
-        v.setPhoto(d->photo);
+        PAdvUris photos;
+        photos.append({ Parameters(), UriValue(d->photo) });
+        v.setPhoto(photos);
     }
 
+    // Address
     if (!m_ui.le_street->text().isEmpty() || !m_ui.le_ext->text().isEmpty() || !m_ui.le_city->text().isEmpty()
         || !m_ui.le_state->text().isEmpty() || !m_ui.le_pcode->text().isEmpty() || !m_ui.le_country->text().isEmpty()) {
-        VCard::Address addr;
-        addr.home     = true;
-        addr.street   = m_ui.le_street->text();
-        addr.extaddr  = m_ui.le_ext->text();
-        addr.locality = m_ui.le_city->text();
-        addr.region   = m_ui.le_state->text();
-        addr.pcode    = m_ui.le_pcode->text();
-        addr.country  = m_ui.le_country->text();
-
-        VCard::AddressList list;
-        list << addr;
-        v.setAddressList(list);
+        PAddresses addresses;
+        Parameters addressParams;
+        addressParams.type << "home";
+        VCard4::Address address;
+        address.pobox.append(m_ui.le_street->text());
+        address.extaddr.append(m_ui.le_ext->text());
+        address.street.append(m_ui.le_city->text());
+        address.locality.append(m_ui.le_state->text());
+        address.region.append(m_ui.le_pcode->text());
+        address.country.append(m_ui.le_country->text());
+        addresses.append({ addressParams, address });
+        v.setAddresses(addresses);
     }
 
-    VCard::Org org;
-
-    org.name = m_ui.le_orgName->text();
-
-    if (!m_ui.le_orgUnit->text().isEmpty()) {
-        org.unit << m_ui.le_orgUnit->text();
+    // Organization
+    PStringLists orgName;
+    if (!m_ui.le_orgName->text().isEmpty()) {
+        orgName.append({ Parameters(), { m_ui.le_orgName->text() } });
+        if (!m_ui.le_orgUnit->text().isEmpty()) {
+            orgName.append({ Parameters(), { m_ui.le_orgUnit->text() } });
+        }
+        v.setOrg(orgName);
     }
 
-    v.setOrg(org);
+    // Title
+    v.setTitle({ { PString { Parameters(), m_ui.le_title->text() } } });
 
-    v.setTitle(m_ui.le_title->text());
-    v.setRole(m_ui.le_role->text());
-    v.setDesc(m_ui.te_desc->toPlainText());
+    // Role
+    v.setRole({ { PString { Parameters(), m_ui.le_role->text() } } });
+
+    // Description (note)
+    v.setNote({ { PString { Parameters(), m_ui.te_desc->toPlainText() } } });
 
     return v;
 }
@@ -1153,7 +1085,7 @@ void InfoWidget::goHomepage()
 // --------------------------------------------
 // InfoDlg
 // --------------------------------------------
-InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vc, PsiAccount *pa, QWidget *parent)
+InfoDlg::InfoDlg(int type, const Jid &j, const VCard4::VCard &vc, PsiAccount *pa, QWidget *parent)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint

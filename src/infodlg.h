@@ -39,7 +39,7 @@ class InfoWidget : public QWidget {
     Q_OBJECT
 public:
     enum { Self, Contact, MucContact, MucAdm };
-    InfoWidget(int type, const XMPP::Jid &, const XMPP::VCard &, PsiAccount *, QWidget *parent = nullptr);
+    InfoWidget(int type, const XMPP::Jid &, const XMPP::VCard4::VCard &, PsiAccount *, QWidget *parent = nullptr);
     ~InfoWidget();
     bool        aboutToClose(); /* call this when you are going to close parent dialog */
     PsiAccount *account() const;
@@ -77,22 +77,19 @@ private:
     class Private;
     Private *d;
     Ui::Info m_ui;
-    // QPushButton* pb_refresh_;
-    // QPushButton* pb_close_;
-    // QPushButton* pb_submit_;
 
-    void        setData(const XMPP::VCard4::VCard &);
-    void        setData(const XMPP::VCard &);
-    XMPP::VCard makeVCard();
-    void        fieldsEnable(bool);
-    void        setReadOnly(bool);
-    bool        edited();
-    void        setEdited(bool);
-    void        setPreviewPhoto(const QString &str);
-    void        requestResourceInfo(const XMPP::Jid &j);
-    void        requestLastActivity();
-    void        release();
-    void        updateNick();
+    XMPP::VCard4::VCard makeVCard();
+
+    void setData(const XMPP::VCard4::VCard &);
+    void fieldsEnable(bool);
+    void setReadOnly(bool);
+    bool edited();
+    void setEdited(bool);
+    void setPreviewPhoto(const QString &str);
+    void requestResourceInfo(const XMPP::Jid &j);
+    void requestLastActivity();
+    void release();
+    void updateNick();
 
 signals:
     void busy();
@@ -102,7 +99,7 @@ signals:
 class InfoDlg : public QDialog {
     Q_OBJECT
 public:
-    InfoDlg(int type, const XMPP::Jid &, const XMPP::VCard &, PsiAccount *, QWidget *parent = nullptr);
+    InfoDlg(int type, const XMPP::Jid &, const XMPP::VCard4::VCard &, PsiAccount *, QWidget *parent = nullptr);
     inline InfoWidget *infoWidget() const { return m_iw; }
 
 protected:

@@ -56,6 +56,7 @@
 #include "fileutil.h"
 #include "geolocationdlg.h"
 #include "iris/bsocket.h"
+#include "xmpp/xmpp-im/xmpp_vcard4.h"
 #ifdef GOOGLE_FT
 #include "googleftmanager.h"
 #endif
@@ -728,7 +729,7 @@ public slots:
     {
         // our own vcard?
         if (j.compare(jid, false)) {
-            const VCard vcard = VCardFactory::instance()->vcard(j);
+            const auto vcard = VCardFactory::instance()->vcard(j);
             if (vcard) {
                 vcardPhotoUpdate(vcard.photo());
             }
@@ -2355,8 +2356,8 @@ void PsiAccount::resolveContactName(const Jid &j)
     auto req = VCardFactory::instance()->getVCard(this, j, {});
     connect(req, &VCardRequest::finished, this, [this, req]() {
         if (req->success() && req->vcard()) {
-            QString nick = req->vcard().nickName();
-            QString full = req->vcard().fullName();
+            QString nick = req->vcard().nickName().preferred().data.value(0);
+            QString full = req->vcard().fullName().preferred();
             if (!nick.isEmpty()) {
                 actionRename(req->jid(), nick);
             } else if (!full.isEmpty()) {
@@ -2388,7 +2389,7 @@ void PsiAccount::serverFeaturesChanged()
 
     if (d->client->serverInfoManager()->server_features().hasVCard() && !d->vcardChecked) {
         // Get the vcard
-        const VCard vcard = VCardFactory::instance()->vcard(d->jid);
+        const auto vcard = VCardFactory::instance()->vcard(d->jid);
         if (PsiOptions::instance()->getOption("options.vcard.query-own-vcard-on-login").toBool() || vcard.isEmpty()
             || (vcard.nickName().isEmpty() && vcard.fullName().isEmpty())) {
             auto req = VCardFactory::instance()->getVCard(this, d->jid);
@@ -2397,7 +2398,7 @@ void PsiAccount::serverFeaturesChanged()
                     return;
 
                 QString nick  = d->jid.node();
-                VCard   vcard = req->vcard();
+                auto    vcard = req->vcard();
                 bool    changeOwn;
                 if (vcard) {
                     if (!vcard.nickName().isEmpty()) {
@@ -4489,7 +4490,7 @@ void PsiAccount::actionInfo(const Jid &_j, bool showStatusInfo)
         w->infoWidget()->setStatusVisibility(showStatusInfo);
         bringToFront(w);
     } else {
-        VCard vcard;
+        VCard4::VCard vcard;
         if (isMucMember) {
             vcard = VCardFactory::instance()->mucVcard(j);
         } else {

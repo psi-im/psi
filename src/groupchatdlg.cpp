@@ -50,6 +50,7 @@
 #include "iris/xmpp_caps.h"
 #include "iris/xmpp_message.h"
 #include "iris/xmpp_tasks.h"
+#include "iris/xmpp_vcard4.h"
 #include "popupmanager.h"
 #include "psiaccount.h"
 #include "psiactionlist.h"
@@ -1373,12 +1374,12 @@ void GCMainDlg::setMucSelfAvatar()
 
 void GCMainDlg::updateGCVCard()
 {
-    const VCard vcard = VCardFactory::instance()->vcard(jid());
-    QPixmap     avatar;
+    const auto vcard = VCardFactory::instance()->vcard(jid());
+    QPixmap    avatar;
     if (vcard) {
-        d->vcardMucName = vcard.nickName();
+        d->vcardMucName = vcard.nickName().preferred().data.value(0);
         if (d->vcardMucName.isEmpty()) {
-            d->vcardMucName = vcard.fullName();
+            d->vcardMucName = vcard.fullName().preferred();
         }
         if (d->mucNameSource >= Private::TitleVCard) {
             updateMucName();
@@ -1532,7 +1533,7 @@ void GCMainDlg::doShowInfo()
 
     {
         QVBoxLayout *layout = new QVBoxLayout;
-        const VCard  vcard  = VCardFactory::instance()->vcard(jid());
+        const auto   vcard  = VCardFactory::instance()->vcard(jid());
         auto         info   = new InfoWidget(InfoWidget::Contact, jid(), vcard, account());
         layout->addWidget(info);
         ui.tab_vcard->setLayout(layout);
