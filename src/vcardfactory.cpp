@@ -235,7 +235,7 @@ VCard4::VCard VCardFactory::vcard(const Jid &j, Flags flags)
  */
 Task *VCardFactory::setVCard(PsiAccount *account, const VCard4::VCard &v, const Jid &targetJid, Flags flags)
 {
-    if ((flags & MucRoom) || !account->client()->serverInfoManager()->server_features().hasVCard4()) {
+    if ((flags & MucRoom) || !account->client()->serverInfoManager()->hasPersistentStorage()) {
         JT_VCard *jtVCard_ = new JT_VCard(account->client()->rootTask());
         connect(jtVCard_, &JT_VCard::finished, this, [this, v, jtVCard_, flags]() {
             if (jtVCard_->success()) {
@@ -248,7 +248,7 @@ Task *VCardFactory::setVCard(PsiAccount *account, const VCard4::VCard &v, const 
     }
     QDomDocument *doc = account->client()->doc();
     auto          el  = v.toXmlElement(*doc);
-    return account->pepManager()->publish(QLatin1String(PEP_VCARD4_NS), PubSubItem({}, el));
+    return account->pepManager()->publish(QLatin1String(PEP_VCARD4_NODE), PubSubItem({}, el));
 }
 
 /**
@@ -352,14 +352,24 @@ Task *VCardRequest::execute()
         return nullptr;
 
     bool doTemp = (d->flags & VCardFactory::MucRoom) || (d->flags & VCardFactory::MucUser);
-    if (!doTemp && (*paIt)->client()->capsManager()->disco(d->jid).features().hasVCard4()) {
+    auto client = (*paIt)->client();
+    auto cm     = client->capsManager();
+
+    if (!doTemp) {
+        if (d->jid.compare((*paIt)->jid(), false)) {
+            doTemp = !client->serverInfoManager()->hasPersistentStorage();
+        } else {
+            doTemp = !cm->features(d->jid).hasVCard4();
+        }
+    }
+    if (!doTemp) {
         auto task = (*paIt)->pepManager()->get(d->jid, PEP_VCARD4_NODE, {});
-        task->connect(task, &JT_VCard::finished, this, [this, task]() {
+        task->connect(task, &PEPGetTask::finished, this, [this, task]() {
             if (task->success()) {
                 d->vcard = VCard4::VCard(task->items().value(0).payload());
             } else if (!task->error().isCancel()
                        || task->error().condition != XMPP::Stanza::Error::ErrorCond::ItemNotFound) {
-                // consider not founf vcard as not an error. maybe user removed their vcard intentionally
+                // consider not found vcard as not an error. maybe user removed their vcard intentionally
                 d->error.reset(new Stanza::Error(task->error()));
                 d->statusString = task->statusString();
             }
@@ -374,7 +384,7 @@ Task *VCardRequest::execute()
                 d->vcard.fromVCardTemp(task->vcard());
             } else if (!task->error().isCancel()
                        || task->error().condition != XMPP::Stanza::Error::ErrorCond::ItemNotFound) {
-                // consider not founf vcard as not an error. maybe user removed their vcard intentionally
+                // consider not found vcard as not an error. maybe user removed their vcard intentionally
                 d->error.reset(new Stanza::Error(task->error()));
                 d->statusString = task->statusString();
             }
@@ -413,17 +423,16 @@ VCardFactory::QueuedLoader::QueuedLoader(VCardFactory *vcf) : QObject(vcf), q(vc
             return;
         }
         auto request = queue_.takeFirst();
-        auto task    = request->execute();
-        if (task) {
-            connect(task, &JT_VCard::finished, this, [this, request]() {
+        connect(request, &VCardRequest::finished, this, [this, request]() {
 #ifdef VCF_DEBUG
-                qDebug() << "received VCardRequest" << request->jid().full();
+            qDebug() << "received VCardRequest" << request->jid().full();
 #endif
-                emit vcardReceived(request);
-                jid2req.remove(request->jid());
-                request->deleteLater();
-            });
-        } else {
+            emit vcardReceived(request);
+            jid2req.remove(request->jid());
+            request->deleteLater();
+        });
+        auto task = request->execute();
+        if (!task) {
             jid2req.remove(request->jid());
             request->deleteLater();
         }

@@ -652,7 +652,8 @@ void InfoWidget::doRefresh()
         flags |= VCardFactory::MucUser;
     }
     auto request = VCardFactory::instance()->getVCard(d->pa, d->jid, flags);
-    connect(request, &VCardRequest::finished, this, [this, request]() {
+    QObject::connect(request, &VCardRequest::finished, this, [this, request]() {
+        qDebug() << "VCardRequest::finished" << request->jid().full();
         release();
         if (request->success()) {
             auto vcard = request->vcard();

@@ -617,9 +617,11 @@ PEPGetTask::PEPGetTask(Task *parent, const QString &jid, const QString &node, co
     items.setAttribute("node", node);
     pubsub.appendChild(items);
 
-    QDomElement item = doc()->createElement("item");
-    item.setAttribute("id", itemID);
-    items.appendChild(item);
+    if (!itemID.isEmpty()) {
+        QDomElement item = doc()->createElement("item");
+        item.setAttribute("id", itemID);
+        items.appendChild(item);
+    }
 }
 
 void PEPGetTask::onGo() { send(iq_); }
