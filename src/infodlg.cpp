@@ -400,7 +400,7 @@ void InfoWidget::setData(const VCard4::VCard &i)
     d->le_familyname->setText(names.data.surname.value(0));
     m_ui.le_nickname->setText(i.nickName().preferred().data.value(0));
     d->bday = i.bday();
-    m_ui.le_bday->setText(i.bday());
+    m_ui.le_bday->setText(d->bday.toString(d->dateTextFormat));
 
     const QString fullName = i.fullName().value(0).data;
     if (d->type != Self && d->type != MucAdm && fullName.isEmpty()) {
@@ -754,27 +754,49 @@ VCard4::VCard InfoWidget::makeVCard()
     using namespace VCard4;
 
     // Full Name
-    v.setFullName({ { PString { Parameters(), m_ui.le_fullname->text() } } });
+    QString fullName = m_ui.le_fullname->text();
+    if (!fullName.isEmpty()) {
+        v.setFullName({ { PString { Parameters(), fullName } } });
+    }
 
     // Given Name
-    PNames names;
-    names.data.given.append(d->le_givenname->text());
-    names.data.additional.append(d->le_middlename->text());
-    names.data.surname.append(d->le_familyname->text());
-    v.setNames(names);
+    PNames  names;
+    QString givenName  = d->le_givenname->text();
+    QString middleName = d->le_middlename->text();
+    QString familyName = d->le_familyname->text();
+
+    if (!givenName.isEmpty()) {
+        names.data.given.append(givenName);
+    }
+    if (!middleName.isEmpty()) {
+        names.data.additional.append(middleName);
+    }
+    if (!familyName.isEmpty()) {
+        names.data.surname.append(familyName);
+    }
+    if (!names.data.isEmpty()) {
+        v.setNames(names);
+    }
 
     // Nickname
-    v.setNickName({ { { PStringList { Parameters(), { m_ui.le_nickname->text() } } } } });
+    QString nickName = m_ui.le_nickname->text();
+    if (!nickName.isEmpty()) {
+        v.setNickName({ { { PStringList { Parameters(), { nickName } } } } });
+    }
 
     // Birthday
     if (d->bday.isValid()) {
         v.setBday({ Parameters(), d->bday });
     } else {
-        v.setBday({ Parameters(), m_ui.le_bday->text() });
+        QString bdayStr = m_ui.le_bday->text();
+        if (!bdayStr.isEmpty()) {
+            v.setBday({ Parameters(), bdayStr });
+        }
     }
 
     // Email
-    if (!m_ui.le_email->text().isEmpty()) {
+    QString emailText = m_ui.le_email->text();
+    if (!emailText.isEmpty()) {
         PStrings   emails;
         Parameters emailParams;
         auto       types = d->emailsDlg->types();
@@ -794,20 +816,27 @@ VCard4::VCard InfoWidget::makeVCard()
             if (types & AddressTypeDlg::X400)
                 emailParams.type << "x400";
         }
-        emails.append({ emailParams, m_ui.le_email->text() });
+        emails.append({ emailParams, emailText });
         v.setEmails(emails);
     }
 
     // URL
-    v.setUrls({ { PUri { Parameters(), QUrl(m_ui.le_homepage->text()) } } });
+    QString homepage = m_ui.le_homepage->text();
+    if (!homepage.isEmpty()) {
+        QUrl url(homepage);
+        if (url.isValid()) {
+            v.setUrls({ { PUri { Parameters(), url } } });
+        }
+    }
 
     // Phone
-    if (!m_ui.le_phone->text().isEmpty()) {
+    QString phoneText = m_ui.le_phone->text();
+    if (!phoneText.isEmpty()) {
         PUrisOrTexts phones;
         Parameters   phoneParams;
         phoneParams.type << "home"
                          << "voice";
-        phones.append({ phoneParams, m_ui.le_phone->text() });
+        phones.append({ phoneParams, phoneText });
         v.setPhones(phones);
     }
 
@@ -819,40 +848,63 @@ VCard4::VCard InfoWidget::makeVCard()
     }
 
     // Address
-    if (!m_ui.le_street->text().isEmpty() || !m_ui.le_ext->text().isEmpty() || !m_ui.le_city->text().isEmpty()
-        || !m_ui.le_state->text().isEmpty() || !m_ui.le_pcode->text().isEmpty() || !m_ui.le_country->text().isEmpty()) {
+    QString street  = m_ui.le_street->text();
+    QString ext     = m_ui.le_ext->text();
+    QString city    = m_ui.le_city->text();
+    QString state   = m_ui.le_state->text();
+    QString pcode   = m_ui.le_pcode->text();
+    QString country = m_ui.le_country->text();
+    if (!street.isEmpty() || !ext.isEmpty() || !city.isEmpty() || !state.isEmpty() || !pcode.isEmpty()
+        || !country.isEmpty()) {
         PAddresses addresses;
         Parameters addressParams;
         addressParams.type << "home";
         VCard4::Address address;
-        address.pobox.append(m_ui.le_street->text());
-        address.extaddr.append(m_ui.le_ext->text());
-        address.street.append(m_ui.le_city->text());
-        address.locality.append(m_ui.le_state->text());
-        address.region.append(m_ui.le_pcode->text());
-        address.country.append(m_ui.le_country->text());
+        if (!street.isEmpty())
+            address.street.append(street);
+        if (!ext.isEmpty())
+            address.extaddr.append(ext);
+        if (!city.isEmpty())
+            address.locality.append(city);
+        if (!state.isEmpty())
+            address.region.append(state);
+        if (!pcode.isEmpty())
+            address.code.append(pcode);
+        if (!country.isEmpty())
+            address.country.append(country);
         addresses.append({ addressParams, address });
         v.setAddresses(addresses);
     }
 
     // Organization
-    PStringLists orgName;
-    if (!m_ui.le_orgName->text().isEmpty()) {
-        orgName.append({ Parameters(), { m_ui.le_orgName->text() } });
-        if (!m_ui.le_orgUnit->text().isEmpty()) {
-            orgName.append({ Parameters(), { m_ui.le_orgUnit->text() } });
+    QString orgName = m_ui.le_orgName->text();
+    QString orgUnit = m_ui.le_orgUnit->text();
+    if (!orgName.isEmpty()) {
+        PStringLists org;
+        org.append({ Parameters(), { orgName } });
+        if (!orgUnit.isEmpty()) {
+            org.append({ Parameters(), { orgUnit } });
         }
-        v.setOrg(orgName);
+        v.setOrg(org);
     }
 
     // Title
-    v.setTitle({ { PString { Parameters(), m_ui.le_title->text() } } });
+    QString title = m_ui.le_title->text();
+    if (!title.isEmpty()) {
+        v.setTitle({ { PString { Parameters(), title } } });
+    }
 
     // Role
-    v.setRole({ { PString { Parameters(), m_ui.le_role->text() } } });
+    QString role = m_ui.le_role->text();
+    if (!role.isEmpty()) {
+        v.setRole({ { PString { Parameters(), role } } });
+    }
 
     // Description (note)
-    v.setNote({ { PString { Parameters(), m_ui.te_desc->toPlainText() } } });
+    QString desc = m_ui.te_desc->toPlainText();
+    if (!desc.isEmpty()) {
+        v.setNote({ { PString { Parameters(), desc } } });
+    }
 
     return v;
 }
