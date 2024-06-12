@@ -260,9 +260,10 @@ Task *VCardFactory::setVCard(PsiAccount *account, const VCard4::VCard &v, const 
         VCard4::VCard v2 = v;
         v2.detach();
         VCard4::PAdvUris photos;
-        for (auto const &uri :
-             v2.photo() | std::views::filter([](auto const &item) { return item.data.data.isEmpty(); })) {
-            photos.append(uri);
+        for (auto const &item : v2.photo()) {
+            if (item.data.data.isEmpty()) {
+                photos.append(item);
+            }
         }
         v2.setPhoto(photos);
         el = v2.toXmlElement(*doc);
