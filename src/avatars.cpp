@@ -881,7 +881,7 @@ AvatarFactory::AvatarFactory(PsiAccount *pa) : d(new Private)
 
     connect(d->pa_->client(), &XMPP::Client::resourceAvailable, this, [this](const Jid &jid, const Resource &r) {
         if (jid.compare(d->pa_->jid(), false)) {
-            return; // to avoid
+            return; // to avoid endless recursion with vcard update
         }
         statusUpdate(jid.withResource(QString()), r.status());
     });
@@ -954,28 +954,34 @@ AvatarFactory::UserHashes AvatarFactory::userHashes(const Jid &jid) const
 void AvatarFactory::setSelfAvatar(const QString &fileName)
 {
     if (!fileName.isEmpty()) {
-        QImage image(fileName);
-        if (!image.isNull()) {
-            // Publish data
-
-            QByteArray data;
-            QBuffer    buffer(&data);
-            buffer.open(QIODevice::WriteOnly);
-            auto maxSz = maxAvatarSize();
-            image.scaled(image.size().boundedTo(QSize(maxSz, maxSz)), Qt::KeepAspectRatio, Qt::SmoothTransformation)
-                .save(&buffer, "PNG", 0);
-            auto    hash = QCryptographicHash::hash(data, QCryptographicHash::Sha1);
-            QString id   = QString::fromLatin1(hash.toHex());
-
-            QDomDocument *doc = account()->client()->doc();
-            QDomElement   el  = doc->createElementNS(PEP_AVATAR_DATA_NS, PEP_AVATAR_DATA_TN);
-            el.appendChild(doc->createTextNode(QString::fromLatin1(data.toBase64())));
-            d->selfAvatarData_ = data;
-            d->selfAvatarHash_ = id;
-            account()->pepManager()->publish(PEP_AVATAR_DATA_NS, PubSubItem(id, el));
-        }
+        setSelfAvatar(QImage(fileName));
     } else {
         account()->pepManager()->disable(PEP_AVATAR_METADATA_TN, PEP_AVATAR_METADATA_NS, {});
+    }
+}
+
+void AvatarFactory::setSelfAvatar(const QImage &image)
+{
+    if (image.isNull()) {
+        account()->pepManager()->disable(PEP_AVATAR_METADATA_TN, PEP_AVATAR_METADATA_NS, {});
+    } else {
+        // Publish data
+
+        QByteArray data;
+        QBuffer    buffer(&data);
+        buffer.open(QIODevice::WriteOnly);
+        auto maxSz = maxAvatarSize();
+        image.scaled(image.size().boundedTo(QSize(maxSz, maxSz)), Qt::KeepAspectRatio, Qt::SmoothTransformation)
+            .save(&buffer, "PNG", 0);
+        auto    hash = QCryptographicHash::hash(data, QCryptographicHash::Sha1);
+        QString id   = QString::fromLatin1(hash.toHex());
+
+        QDomDocument *doc = account()->client()->doc();
+        QDomElement   el  = doc->createElementNS(PEP_AVATAR_DATA_NS, PEP_AVATAR_DATA_TN);
+        el.appendChild(doc->createTextNode(QString::fromLatin1(data.toBase64())));
+        d->selfAvatarData_ = data;
+        d->selfAvatarHash_ = id;
+        account()->pepManager()->publish(PEP_AVATAR_DATA_NS, PubSubItem(id, el));
     }
 }
 
@@ -1081,13 +1087,13 @@ void AvatarFactory::publish_success(const QString &n, const PubSubItem &item)
         info_el.setAttribute("type", image2type(d->selfAvatarData_));
         meta_el.appendChild(info_el);
         account()->pepManager()->publish(PEP_AVATAR_METADATA_NS, PubSubItem(d->selfAvatarHash_, meta_el));
-        if (account()->client()->serverInfoManager()->account_features().hasAvatarConversion()) {
+        if (account()->client()->serverInfoManager()->accountFeatures().hasAvatarConversion()) {
             VCardFactory::instance()->setPhoto(account()->jid(), d->selfAvatarData_, {});
         }
         d->selfAvatarData_.clear(); // we don't need it anymore
     } else if (n == PEP_AVATAR_METADATA_NS) {
         bool removed = item.payload().firstChildElement("metadata").firstChildElement("info").isNull();
-        if (account()->client()->serverInfoManager()->account_features().hasAvatarConversion() && removed) {
+        if (account()->client()->serverInfoManager()->accountFeatures().hasAvatarConversion() && removed) {
             VCardFactory::instance()->deletePhoto(account()->jid(), {});
         }
     }

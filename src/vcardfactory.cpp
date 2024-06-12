@@ -20,6 +20,7 @@
 #include "vcardfactory.h"
 
 #include "applicationinfo.h"
+#include "avatars.h"
 #include "iris/xmpp_client.h"
 #include "iris/xmpp_tasks.h"
 #include "iris/xmpp_vcard.h"
@@ -40,6 +41,7 @@
 #include <QMap>
 #include <QObject>
 #include <QTextStream>
+#include <ranges>
 
 // #define VCF_DEBUG 1
 
@@ -247,7 +249,24 @@ Task *VCardFactory::setVCard(PsiAccount *account, const VCard4::VCard &v, const 
         return jtVCard_;
     }
     QDomDocument *doc = account->client()->doc();
-    auto          el  = v.toXmlElement(*doc);
+    QDomElement   el;
+    QByteArray    avatarData = v.photo();
+    if (avatarData.isEmpty() || !account->serverInfoManager()->accountFeatures().hasAvatarConversion()) {
+        el = v.toXmlElement(*doc);
+    } else {
+        // let's better publish avatar via avatar service
+        QImage image = QImage::fromData(avatarData);
+        account->avatarFactory()->setSelfAvatar(image);
+        VCard4::VCard v2 = v;
+        v2.detach();
+        VCard4::PAdvUris photos;
+        for (auto const &uri :
+             v2.photo() | std::views::filter([](auto const &item) { return item.data.data.isEmpty(); })) {
+            photos.append(uri);
+        }
+        v2.setPhoto(photos);
+        el = v2.toXmlElement(*doc);
+    }
     return account->pepManager()->publish(QLatin1String(PEP_VCARD4_NODE), PubSubItem(QLatin1String("current"), el));
 }
 

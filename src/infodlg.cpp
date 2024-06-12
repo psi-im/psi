@@ -19,6 +19,7 @@
 
 #include "infodlg.h"
 
+#include "avatars.h"
 #include "busywidget.h"
 #include "common.h"
 #include "desktoputil.h"
@@ -39,6 +40,7 @@
 #include "userlist.h"
 #include "vcardfactory.h"
 #include "vcardphotodlg.h"
+#include "xmpp/xmpp-im/xmpp_caps.h"
 #include "xmpp/xmpp-im/xmpp_vcard4.h"
 
 #include <QAction>
@@ -150,6 +152,7 @@ public:
     bool                      busy      = false;
     bool                      te_edited = false;
     QByteArray                photo;
+    QString                   photoMime;
     QDate                     bday;
     QString                   dateTextFormat;
     QList<QString>            infoRequested;
@@ -455,7 +458,26 @@ void InfoWidget::setData(const VCard4::VCard &i)
             clearPhoto();
         }
     } else {
-        clearPhoto();
+        bool usePubsubAvatar
+            = (d->type == Contact && d->pa->client()->capsManager()->features(d->jid).hasAvatarConversion())
+            || (d->type == Self && d->pa->client()->serverInfoManager()->accountFeatures().hasAvatarConversion());
+        if (usePubsubAvatar) {
+            // it has to be always updated in avatars cache
+            auto pix = d->pa->avatarFactory()->getAvatar(d->jid);
+            if (pix.isNull()) {
+                clearPhoto();
+            } else {
+                // yes we could use pixmap directly. let's keep it for future code optimization
+                QByteArray ba;
+                QBuffer    b(&ba);
+                b.open(QIODevice::WriteOnly);
+                pix.toImage().save(&b, "PNG");
+                d->photo = ba;
+                updatePhoto();
+            }
+        } else {
+            clearPhoto();
+        }
     }
 
     setEdited(false);
@@ -475,8 +497,11 @@ bool InfoWidget::updatePhoto()
 {
     const QImage img = QImage::fromData(d->photo);
     if (img.isNull()) {
+        d->photo = {};
         return false;
     }
+    QMimeDatabase db;
+    d->photoMime   = db.mimeTypeForData(d->photo).name();
     int max_width  = m_ui.tb_photo->width() - 10;  // FIXME: Ugly magic number
     int max_height = m_ui.tb_photo->height() - 10; // FIXME: Ugly magic number
 
@@ -835,9 +860,7 @@ VCard4::VCard InfoWidget::makeVCard()
 
     // Photo
     if (!d->photo.isEmpty()) {
-        PAdvUris photos;
-        photos.append({ Parameters(), UriValue(d->photo) });
-        v.setPhoto(photos);
+        v.setPhoto(UriValue(d->photo, d->photoMime));
     }
 
     // Address

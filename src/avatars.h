@@ -78,6 +78,7 @@ public:
     UserHashes        userHashes(const Jid &jid) const;
     PsiAccount       *account() const;
     void              setSelfAvatar(const QString &fileName);
+    void              setSelfAvatar(const QImage &image);
 
     void importManualAvatar(const Jid &j, const QString &fileName);
     void removeManualAvatar(const Jid &j);

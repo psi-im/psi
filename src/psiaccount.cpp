@@ -2387,7 +2387,7 @@ void PsiAccount::serverFeaturesChanged()
         j->go(true);
     }
 
-    if (d->client->serverInfoManager()->server_features().hasVCard() && !d->vcardChecked) {
+    if (d->client->serverInfoManager()->serverFeatures().hasVCard() && !d->vcardChecked) {
         // Get the vcard
         const auto vcard = VCardFactory::instance()->vcard(d->jid);
         if (PsiOptions::instance()->getOption("options.vcard.query-own-vcard-on-login").toBool() || vcard.isEmpty()
