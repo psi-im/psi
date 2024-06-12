@@ -208,7 +208,7 @@ VCard4::VCard VCardFactory::vcard(const Jid &j, Flags flags)
     }
     QDomDocument doc;
 
-    VCard4::VCard v4 = VCard4::VCard::fromFile(file);
+    VCard4::VCard v4 = VCard4::VCard::fromDevice(&file);
     if (!v4) {
         file.seek(0);
         if (doc.setContent(&file, false)) {
@@ -366,7 +366,9 @@ Task *VCardRequest::execute()
         auto task = (*paIt)->pepManager()->get(d->jid, PEP_VCARD4_NODE, {});
         task->connect(task, &PEPGetTask::finished, this, [this, task]() {
             if (task->success()) {
-                d->vcard = VCard4::VCard(task->items().value(0).payload());
+                if (!task->items().empty()) {
+                    d->vcard = VCard4::VCard(task->items().last().payload());
+                }
             } else if (!task->error().isCancel()
                        || task->error().condition != XMPP::Stanza::Error::ErrorCond::ItemNotFound) {
                 // consider not found vcard as not an error. maybe user removed their vcard intentionally
