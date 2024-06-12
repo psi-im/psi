@@ -879,8 +879,12 @@ AvatarFactory::AvatarFactory(PsiAccount *pa) : d(new Private)
     // Connect signals
     connect(AvatarCache::instance(), &AvatarCache::avatarChanged, this, &AvatarFactory::avatarChanged);
 
-    connect(d->pa_->client(), &XMPP::Client::resourceAvailable, this,
-            [this](const Jid &jid, const Resource &r) { statusUpdate(jid.withResource(QString()), r.status()); });
+    connect(d->pa_->client(), &XMPP::Client::resourceAvailable, this, [this](const Jid &jid, const Resource &r) {
+        if (jid.compare(d->pa_->jid(), false)) {
+            return; // to avoid
+        }
+        statusUpdate(jid.withResource(QString()), r.status());
+    });
 
     // PEP
     connect(d->pa_->pepManager(), &PEPManager::itemPublished, this,

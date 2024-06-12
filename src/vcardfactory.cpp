@@ -271,7 +271,7 @@ void VCardFactory::setPhoto(const Jid &j, const QByteArray &photo, Flags flags)
         vc = vcard(sj);
     }
     if (vc && vc.photo() != photo) {
-        vc.setPhoto({});
+        vc.setPhoto(VCard4::UriValue {});
         saveVCard(sj, vc, flags);
     }
 }
@@ -288,7 +288,7 @@ void VCardFactory::deletePhoto(const Jid &j, Flags flags)
         vc = vcard(sj);
     }
     if (vc && !vc.photo().isEmpty()) {
-        vc.setPhoto({});
+        vc.setPhoto(VCard4::UriValue {});
         saveVCard(sj, vc, flags);
     }
 }
@@ -305,7 +305,7 @@ void VCardFactory::ensureVCardPhotoUpdated(PsiAccount *acc, const Jid &jid, Flag
         if (!vc || vc.photo().isEmpty()) { // we didn't have it and still don't
             return;
         }
-        vc.setPhoto({}); // reset photo;
+        vc.setPhoto(VCard4::UriValue {}); // reset photo;
         saveVCard(jid, vc, flags);
 
         return;

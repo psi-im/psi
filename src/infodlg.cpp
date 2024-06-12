@@ -403,11 +403,15 @@ void InfoWidget::setData(const VCard4::VCard &i)
     m_ui.le_bday->setText(d->bday.toString(d->dateTextFormat));
 
     const QString fullName = i.fullName().value(0).data;
-    if (d->type != Self && d->type != MucAdm && fullName.isEmpty()) {
-        m_ui.le_fullname->setText(
-            QString("%1 %2 %3")
-                .arg(names.data.given.value(0), names.data.additional.value(0), names.data.surname.value(0))
-                .simplified());
+    if (d->type != MucAdm && fullName.isEmpty()) {
+        auto fn = QString("%1 %2 %3")
+                      .arg(names.data.given.value(0), names.data.additional.value(0), names.data.surname.value(0))
+                      .simplified();
+        if (d->type == Self) {
+            m_ui.le_fullname->setPlaceholderText(fn);
+        } else {
+            m_ui.le_fullname->setText(fn);
+        }
     } else {
         m_ui.le_fullname->setText(fullName);
     }
@@ -426,21 +430,10 @@ void InfoWidget::setData(const VCard4::VCard &i)
     addTypes |= (email.parameters.type.contains(QLatin1String("work")) ? AddressTypeDlg::Work : AddressTypeDlg::None);
     d->emailsDlg->setTypes(addTypes);
 
-    m_ui.le_homepage->setText(i.urls().preferred().data.toString());
+    QUrl homepage = i.urls();
+    m_ui.le_homepage->setText(homepage.toString());
     d->homepageAction->setVisible(!m_ui.le_homepage->text().isEmpty());
-
-    QString phone;
-    if (!i.phones().isEmpty())
-        phone = std::visit(
-            []<typename T>(T const &v) {
-                if constexpr (std::is_same_v<T, QString>) {
-                    return v;
-                } else {
-                    return v.toString();
-                }
-            },
-            i.phones()[0].data);
-    m_ui.le_phone->setText(phone);
+    m_ui.le_phone->setText(i.phones());
 
     auto addr = i.addresses().preferred().data;
     m_ui.le_street->setText(addr.street.value(0));
@@ -450,11 +443,11 @@ void InfoWidget::setData(const VCard4::VCard &i)
     m_ui.le_pcode->setText(addr.code.value(0));
     m_ui.le_country->setText(addr.country.value(0));
 
-    m_ui.le_orgName->setText(i.org().preferred().data.value(0));
+    m_ui.le_orgName->setText(i.org());
 
-    m_ui.le_title->setText(i.title().preferred().data);
-    m_ui.le_role->setText(i.role().preferred().data);
-    m_ui.te_desc->setPlainText(i.note().preferred().data);
+    m_ui.le_title->setText(i.title());
+    m_ui.le_role->setText(i.role());
+    m_ui.te_desc->setPlainText(i.note());
 
     d->photo = i.photo();
     if (!d->photo.isEmpty()) {
@@ -781,7 +774,7 @@ VCard4::VCard InfoWidget::makeVCard()
     // Nickname
     QString nickName = m_ui.le_nickname->text();
     if (!nickName.isEmpty()) {
-        v.setNickName({ { { PStringList { Parameters(), { nickName } } } } });
+        v.setNickName({ nickName });
     }
 
     // Birthday
@@ -825,7 +818,7 @@ VCard4::VCard InfoWidget::makeVCard()
     if (!homepage.isEmpty()) {
         QUrl url(homepage);
         if (url.isValid()) {
-            v.setUrls({ { PUri { Parameters(), url } } });
+            v.setUrls(url);
         }
     }
 
