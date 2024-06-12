@@ -248,7 +248,7 @@ Task *VCardFactory::setVCard(PsiAccount *account, const VCard4::VCard &v, const 
     }
     QDomDocument *doc = account->client()->doc();
     auto          el  = v.toXmlElement(*doc);
-    return account->pepManager()->publish(QLatin1String(PEP_VCARD4_NODE), PubSubItem({}, el));
+    return account->pepManager()->publish(QLatin1String(PEP_VCARD4_NODE), PubSubItem(QLatin1String("current"), el));
 }
 
 /**
@@ -363,7 +363,7 @@ Task *VCardRequest::execute()
         }
     }
     if (!doTemp) {
-        auto task = (*paIt)->pepManager()->get(d->jid, PEP_VCARD4_NODE, {});
+        auto task = (*paIt)->pepManager()->get(d->jid, PEP_VCARD4_NODE, QLatin1String("current"));
         task->connect(task, &PEPGetTask::finished, this, [this, task]() {
             if (task->success()) {
                 if (!task->items().empty()) {
