@@ -1344,11 +1344,12 @@ void GCMainDlg::discoInfoFinished()
     if (d->mucNameSource >= Private::TitleDisco) {
         updateMucName();
     }
-    if (t->item().features().hasVCard()) {
-        auto avatarHash = x.getField("muc#roominfo_avatarhash").value().value(0);
-        account()->avatarFactory()->ensureVCardUpdated(jid(), QByteArray::fromHex(avatarHash.toLatin1()),
-                                                       AvatarFactory::MucRoom);
-    } else if (d->gcSelfPresenceSupported) {
+    if (!d->gcSelfPresenceSupported) {
+        if (t->item().features().hasVCard()) {
+            auto avatarHash = x.getField("muc#roominfo_avatarhash").value().value(0);
+            account()->avatarFactory()->ensureVCardUpdated(jid(), QByteArray::fromHex(avatarHash.toLatin1()),
+                                                           AvatarFactory::MucRoom);
+        }
     }
 }
 

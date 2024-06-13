@@ -71,7 +71,7 @@ public:
     // void subscribe(const QString&, const QString&);
     // void unsubscribe(const QString&, const QString&);
 
-    XMPP::Task *publish(const QString &node, const PubSubItem &, Access = DefaultAccess);
+    XMPP::Task *publish(const QString &node, const PubSubItem &, Access = DefaultAccess, bool persisteItems = false);
     void        retract(const QString &node, const QString &id);
     void        disable(const QString &tagName, const QString &node, const QString &id);
     PEPGetTask *get(const Jid &jid, const QString &node, const QString &id);

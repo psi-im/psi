@@ -164,8 +164,8 @@ private:
 
 class PEPPublishTask : public Task {
 public:
-    PEPPublishTask(Task *parent, const QString &node, const PubSubItem &it, PEPManager::Access access) :
-        Task(parent), node_(node), item_(it)
+    PEPPublishTask(Task *parent, const QString &node, const PubSubItem &it, PEPManager::Access access,
+                   bool persisteItems = false) : Task(parent), node_(node), item_(it)
     {
         iq_ = createIQ(doc(), "set", "", id());
 
@@ -182,7 +182,7 @@ public:
         }
         publish.appendChild(item);
 
-        if (access != PEPManager::DefaultAccess) {
+        if (access != PEPManager::DefaultAccess || persisteItems) {
             QDomElement conf   = doc()->createElement("configure");
             QDomElement conf_x = doc()->createElementNS("jabber:x:data", "x");
 
@@ -196,16 +196,26 @@ public:
             conf_x.appendChild(conf_x_field_type);
 
             // Access model
-            QDomElement access_model = doc()->createElement("field");
-            access_model.setAttribute("var", "pubsub#access_model");
-            QDomElement access_model_value = doc()->createElement("value");
-            access_model.appendChild(access_model_value);
-            if (access == PEPManager::PublicAccess) {
-                access_model_value.appendChild(doc()->createTextNode("open"));
-            } else if (access == PEPManager::PresenceAccess) {
-                access_model_value.appendChild(doc()->createTextNode("presence"));
+            if (access != PEPManager::DefaultAccess) {
+                QDomElement access_model = doc()->createElement("field");
+                access_model.setAttribute("var", "pubsub#access_model");
+                QDomElement access_model_value = doc()->createElement("value");
+                access_model.appendChild(access_model_value);
+                if (access == PEPManager::PublicAccess) {
+                    access_model_value.appendChild(doc()->createTextNode("open"));
+                } else if (access == PEPManager::PresenceAccess) {
+                    access_model_value.appendChild(doc()->createTextNode("presence"));
+                }
+                conf_x.appendChild(access_model);
             }
-            conf_x.appendChild(access_model);
+            if (persisteItems) {
+                QDomElement pi = doc()->createElement("field");
+                pi.setAttribute("var", "pubsub#persist_items");
+                QDomElement pi_value = doc()->createElement("value");
+                pi.appendChild(pi_value);
+                pi_value.appendChild(doc()->createTextNode("true"));
+                conf_x.appendChild(pi);
+            }
 
             conf.appendChild(conf_x);
             pubsub.appendChild(conf);
@@ -464,14 +474,14 @@ void PEPManager::unsubscribeFinished()
     saveSubscriptions();
 }*/
 
-Task *PEPManager::publish(const QString &node, const PubSubItem &it, Access access)
+Task *PEPManager::publish(const QString &node, const PubSubItem &it, Access access, bool persisteItems)
 {
     // if (!canPublish(node))
     //    return;
     if (!serverInfo_->hasPEP())
         return nullptr;
 
-    PEPPublishTask *tp = new PEPPublishTask(client_->rootTask(), node, it, access);
+    PEPPublishTask *tp = new PEPPublishTask(client_->rootTask(), node, it, access, persisteItems);
     connect(tp, SIGNAL(finished()), SLOT(publishFinished()));
     tp->go(true);
     return tp;

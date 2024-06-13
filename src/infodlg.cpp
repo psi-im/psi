@@ -714,10 +714,14 @@ void InfoWidget::publish()
 
     emit busy();
 
+    VCard4::VCard       v = d->vcard;
     VCardFactory::Flags flags;
-    if (d->type == MucAdm)
+    Jid                 target;
+    if (d->type == MucAdm) {
         flags |= VCardFactory::MucRoom;
-    auto task = VCardFactory::instance()->setVCard(d->pa, d->vcard, {}, flags);
+        target = d->jid;
+    }
+    auto task = VCardFactory::instance()->setVCard(d->pa, v, target, flags);
     connect(task, &JT_VCard::finished, this, [this, task]() {
         release();
         if (task->success()) {
@@ -731,6 +735,11 @@ void InfoWidget::publish()
                 tr("Unable to publish your account information.\nReason: %1").arg(task->statusString()));
         }
     });
+
+    if (d->type == Self) {
+        // publish or retract avatar depending on d->photo contents
+        d->pa->avatarFactory()->setSelfAvatar(QImage::fromData(d->photo));
+    }
 }
 
 PsiAccount *InfoWidget::account() const { return d->pa; }
@@ -859,7 +868,7 @@ VCard4::VCard InfoWidget::makeVCard()
     }
 
     // Photo
-    if (!d->photo.isEmpty()) {
+    if (d->type != Self && !d->photo.isEmpty()) {
         v.setPhoto(UriValue(d->photo, d->photoMime));
     }
 

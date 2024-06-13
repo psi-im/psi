@@ -20,7 +20,6 @@
 #include "vcardfactory.h"
 
 #include "applicationinfo.h"
-#include "avatars.h"
 #include "iris/xmpp_client.h"
 #include "iris/xmpp_tasks.h"
 #include "iris/xmpp_vcard.h"
@@ -41,11 +40,11 @@
 #include <QMap>
 #include <QObject>
 #include <QTextStream>
-#include <ranges>
 
 // #define VCF_DEBUG 1
 
 #define PEP_VCARD4_NODE "urn:xmpp:vcard4"
+#define CONTACTS_NODE "urn:xmpp:contacts"
 #define PEP_VCARD4_NS "urn:ietf:params:xml:ns:vcard-4.0"
 
 using VCardRequestQueue = QList<VCardRequest *>;
@@ -249,26 +248,11 @@ Task *VCardFactory::setVCard(PsiAccount *account, const VCard4::VCard &v, const 
         return jtVCard_;
     }
     QDomDocument *doc = account->client()->doc();
-    QDomElement   el;
-    QByteArray    avatarData = v.photo();
-    if (avatarData.isEmpty() || !account->serverInfoManager()->accountFeatures().hasAvatarConversion()) {
-        el = v.toXmlElement(*doc);
-    } else {
-        // let's better publish avatar via avatar service
-        QImage image = QImage::fromData(avatarData);
-        account->avatarFactory()->setSelfAvatar(image);
-        VCard4::VCard v2 = v;
-        v2.detach();
-        VCard4::PAdvUris photos;
-        for (auto const &item : v2.photo()) {
-            if (item.data.data.isEmpty()) {
-                photos.append(item);
-            }
-        }
-        v2.setPhoto(photos);
-        el = v2.toXmlElement(*doc);
-    }
-    return account->pepManager()->publish(QLatin1String(PEP_VCARD4_NODE), PubSubItem(QLatin1String("current"), el));
+    QDomElement   el  = v.toXmlElement(*doc);
+
+    account->pepManager()->publish(QLatin1String(PEP_VCARD4_NODE), PubSubItem(QLatin1String("current"), el));
+    return account->pepManager()->publish(QLatin1String(CONTACTS_NODE), PubSubItem(account->jid().bare(), el),
+                                          PEPManager::PresenceAccess, true);
 }
 
 /**
@@ -335,6 +319,9 @@ void VCardFactory::ensureVCardPhotoUpdated(PsiAccount *acc, const Jid &jid, Flag
 #ifdef VCF_DEBUG
         qDebug() << "hash mismatch. old=" << oldHash.toHex() << "new=" << photoHash.toHex();
 #endif
+        if (!newPhotoHash.isEmpty()) {
+            flags |= VCardFactory::ForceVCardTemp;
+        }
         queuedLoader_->enqueue(acc, jid, flags, QueuedLoader::NormalPriority);
     }
 }
@@ -371,17 +358,20 @@ Task *VCardRequest::execute()
     if (paIt == d->accounts.end())
         return nullptr;
 
-    bool doTemp = (d->flags & VCardFactory::MucRoom) || (d->flags & VCardFactory::MucUser);
+    bool doTemp = (d->flags & VCardFactory::ForceVCardTemp) || (d->flags & VCardFactory::MucRoom)
+        || (d->flags & VCardFactory::MucUser);
     auto client = (*paIt)->client();
-    auto cm     = client->capsManager();
 
-    if (!doTemp) {
-        if (d->jid.compare((*paIt)->jid(), false)) {
-            doTemp = !client->serverInfoManager()->hasPersistentStorage();
-        } else {
-            doTemp = !cm->features(d->jid).hasVCard4();
-        }
-    }
+    // auto cm     = client->capsManager();
+    // if (!doTemp) {
+    //     if (d->jid.compare((*paIt)->jid(), false)) {
+    //         // we can assume persistent storage is always there
+    //         doTemp = !client->serverInfoManager()->hasPersistentStorage();
+    //     } else {
+    //         // neither clients nor servers follow the XEP. so this check rather breaks stuff.
+    //         doTemp = !cm->features(d->jid).hasVCard4();
+    //     }
+    // }
     if (!doTemp) {
         auto task = (*paIt)->pepManager()->get(d->jid, PEP_VCARD4_NODE, QLatin1String("current"));
         task->connect(task, &PEPGetTask::finished, this, [this, task]() {
@@ -400,7 +390,7 @@ Task *VCardRequest::execute()
         });
         return task;
     } else {
-        JT_VCard *task = new JT_VCard((*paIt)->client()->rootTask());
+        JT_VCard *task = new JT_VCard(client->rootTask());
         task->connect(task, &JT_VCard::finished, this, [this, task]() {
             if (task->success()) {
                 d->vcard.fromVCardTemp(task->vcard());
