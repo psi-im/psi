@@ -454,7 +454,14 @@ void InfoWidget::setData(const VCard4::VCard &i)
 
     auto pix = d->pa->avatarFactory()->getAvatar(d->jid);
     if (pix.isNull()) {
-        clearPhoto();
+        d->photo = i.photo();
+        if (d->photo.isEmpty()) {
+            clearPhoto();
+        } else {
+            // FIXME ideally we should come here after avatar factory is updated
+            // the this code would be unnecessary
+            updatePhoto();
+        }
     } else {
         // yes we could use pixmap directly. let's keep it for future code optimization
         QByteArray ba;
