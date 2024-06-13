@@ -1086,13 +1086,13 @@ void AvatarFactory::publish_success(const QString &n, const PubSubItem &item)
         meta_el.appendChild(info_el);
         account()->pepManager()->publish(PEP_AVATAR_METADATA_NS, PubSubItem(d->selfAvatarHash_, meta_el));
         if (account()->client()->serverInfoManager()->accountFeatures().hasAvatarConversion()) {
-            VCardFactory::instance()->setPhoto(account()->jid(), d->selfAvatarData_, {});
+            VCardFactory::instance()->setPhoto(account()->jid(), d->selfAvatarData_, VCardFactory::Silent);
         }
         d->selfAvatarData_.clear(); // we don't need it anymore
     } else if (n == PEP_AVATAR_METADATA_NS) {
         bool removed = item.payload().firstChildElement("metadata").firstChildElement("info").isNull();
         if (account()->client()->serverInfoManager()->accountFeatures().hasAvatarConversion() && removed) {
-            VCardFactory::instance()->deletePhoto(account()->jid(), {});
+            VCardFactory::instance()->deletePhoto(account()->jid(), VCardFactory::Silent);
         }
     }
 }

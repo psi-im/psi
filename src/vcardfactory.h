@@ -46,7 +46,7 @@ class VCardFactory : public QObject {
     Q_OBJECT
 
 public:
-    enum Flag { MucRoom = 0x1, MucUser = 0x2, Cache = 0x4, ForceVCardTemp = 0x8 };
+    enum Flag { MucRoom = 0x1, MucUser = 0x2, Cache = 0x4, ForceVCardTemp = 0x8, Silent = 0x10 };
     Q_DECLARE_FLAGS(Flags, Flag);
 
     static VCardFactory *instance();

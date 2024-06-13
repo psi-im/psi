@@ -2390,6 +2390,7 @@ void PsiAccount::serverFeaturesChanged()
     if (d->client->serverInfoManager()->serverFeatures().hasVCard() && !d->vcardChecked) {
         // Get the vcard
         const auto vcard = VCardFactory::instance()->vcard(d->jid);
+#if 0 // feels not needed with pubsub vcards. commented out on 2024-06-13. TODO remove options?
         if (PsiOptions::instance()->getOption("options.vcard.query-own-vcard-on-login").toBool() || vcard.isEmpty()
             || (vcard.nickName().isEmpty() && vcard.fullName().isEmpty())) {
             auto req = VCardFactory::instance()->getVCard(this, d->jid);
@@ -2423,7 +2424,9 @@ void PsiAccount::serverFeaturesChanged()
                     changeVCard();
                 }
             });
-        } else {
+        } else
+#endif
+        {
             d->nickFromVCard = true;
             // if we get here, one of these fields is non-empty
             if (!vcard.nickName().isEmpty()) {
@@ -3865,6 +3868,28 @@ void PsiAccount::itemPublished(const Jid &j, const QString &n, const PubSubItem 
         for (UserListItem *u : items) {
             u->setGeoLocation(geoloc);
             cpUpdate(*u);
+        }
+    } else if (n == QLatin1String("urn:ietf:params:xml:ns:vcard-4.0")) {
+        // we are interested only in our own at the moment
+        if (j.compare(d->jid, false)) {
+            VCard4::VCard vcard(item.payload());
+            QString       nick = d->jid.node();
+            bool          changeOwn;
+            if (vcard) {
+                if (!vcard.nickName().isEmpty()) {
+                    d->nickFromVCard = true;
+                    nick             = vcard.nickName();
+                } else if (!vcard.fullName().isEmpty()) {
+                    d->nickFromVCard = true;
+                    nick             = vcard.fullName();
+                }
+                if (!vcard.photo().isEmpty()) {
+                    d->vcardPhotoUpdate(vcard.photo());
+                }
+                setNick(nick);
+
+                changeOwn = vcard.isEmpty();
+            }
         }
     }
 }

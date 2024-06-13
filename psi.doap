@@ -626,6 +626,15 @@
       </xmpp:SupportedXep>
     </implements>
 
+    <!-- XEP-0292: vCard4 Over XMPP -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0292.html'/>
+        <xmpp:status>complete</xmpp:status>
+        <xmpp:version>0.12.0</xmpp:version>
+      </xmpp:SupportedXep>
+    </implements>
+
     <!-- XEP-0300: Use of Cryptographic Hash Functions in XMPP -->
     <implements>
       <xmpp:SupportedXep>

@@ -140,7 +140,9 @@ void VCardFactory::saveVCard(const Jid &j, const VCard4::VCard &vcard, Flags fla
             *nickIt = vcard;
         }
 
-        emit vcardChanged(j, flags);
+        if (!(flags & Silent)) {
+            emit vcardChanged(j, flags);
+        }
         return;
     }
 
@@ -170,8 +172,10 @@ void VCardFactory::saveVCard(const Jid &j, const VCard4::VCard &vcard, Flags fla
         file.remove();
     }
 
-    Jid  jid = j;
-    emit vcardChanged(jid, flags);
+    Jid jid = j;
+    if (!(flags & Silent)) {
+        emit vcardChanged(jid, flags);
+    }
 }
 
 /**

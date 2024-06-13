@@ -871,7 +871,8 @@ QStringList PsiCon::xmppFatures() const
                                        << "http://jabber.org/protocol/activity+notify"
                                        << "http://jabber.org/protocol/tune+notify"
                                        << "http://jabber.org/protocol/geoloc+notify"
-                                       << "urn:xmpp:avatar:metadata+notify")
+                                       << "urn:xmpp:avatar:metadata+notify"
+                                       << "urn:xmpp:contacts+notify")
         << OptFeatureMap("options.messages.send-composing-events",
                          QStringList() << "http://jabber.org/protocol/chatstates")
         << OptFeatureMap("options.ui.notifications.send-receipts", QStringList() << "urn:xmpp:receipts");
