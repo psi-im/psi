@@ -62,6 +62,14 @@ class PEPManager : public QObject {
 public:
     enum Access { DefaultAccess, PresenceAccess, PublicAccess };
 
+    /* Implement all
+     *    <option><value>authorize</value></option>
+          <option><value>open</value></option>
+          <option><value>presence</value></option>
+          <option><value>roster</value></option>
+          <option><value>whitelist</value></option>
+    */
+
     PEPManager(XMPP::Client *client, ServerInfoManager *serverInfo);
 
     // void registerNode(const QString&);

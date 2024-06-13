@@ -183,39 +183,28 @@ public:
         publish.appendChild(item);
 
         if (access != PEPManager::DefaultAccess || persisteItems) {
-            QDomElement conf   = doc()->createElement("configure");
-            QDomElement conf_x = doc()->createElementNS("jabber:x:data", "x");
-
-            // Form type
-            QDomElement conf_x_field_type = doc()->createElement("field");
-            conf_x_field_type.setAttribute("var", "FORM_TYPE");
-            conf_x_field_type.setAttribute("type", "hidden");
-            QDomElement conf_x_field_type_value = doc()->createElement("value");
-            conf_x_field_type_value.appendChild(doc()->createTextNode("http://jabber.org/protocol/pubsub#node_config"));
-            conf_x_field_type.appendChild(conf_x_field_type_value);
-            conf_x.appendChild(conf_x_field_type);
-
-            // Access model
+            QDomElement conf = doc()->createElement("publish-options");
+            XData       form(XData::Data_Submit);
+            form.setRegistrarType(QLatin1String("http://jabber.org/protocol/pubsub#publish-options"));
+            XMPP::XData::FieldList fields;
             if (access != PEPManager::DefaultAccess) {
-                QDomElement access_model = doc()->createElement("field");
-                access_model.setAttribute("var", "pubsub#access_model");
-                QDomElement access_model_value = doc()->createElement("value");
-                access_model.appendChild(access_model_value);
+                XMPP::XData::Field f;
+                f.setVar(QLatin1String("pubsub#access_model"));
                 if (access == PEPManager::PublicAccess) {
-                    access_model_value.appendChild(doc()->createTextNode("open"));
+                    f.setValue({ QLatin1String("open") });
                 } else if (access == PEPManager::PresenceAccess) {
-                    access_model_value.appendChild(doc()->createTextNode("presence"));
+                    f.setValue({ QLatin1String("presence") });
                 }
-                conf_x.appendChild(access_model);
+                fields << f;
             }
             if (persisteItems) {
-                QDomElement pi = doc()->createElement("field");
-                pi.setAttribute("var", "pubsub#persist_items");
-                QDomElement pi_value = doc()->createElement("value");
-                pi.appendChild(pi_value);
-                pi_value.appendChild(doc()->createTextNode("true"));
-                conf_x.appendChild(pi);
+                XMPP::XData::Field f;
+                f.setVar(QLatin1String("pubsub#persist_items"));
+                f.setValue({ QLatin1String("true") });
+                fields << f;
             }
+            form.setFields(fields);
+            auto conf_x = form.toXml(doc(), true);
 
             conf.appendChild(conf_x);
             pubsub.appendChild(conf);

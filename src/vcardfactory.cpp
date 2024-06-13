@@ -360,11 +360,12 @@ Task *VCardRequest::execute()
 
     bool doTemp = (d->flags & VCardFactory::ForceVCardTemp) || (d->flags & VCardFactory::MucRoom)
         || (d->flags & VCardFactory::MucUser);
-    auto client = (*paIt)->client();
+    auto pa     = (*paIt);
+    auto client = pa->client();
 
     // auto cm     = client->capsManager();
     // if (!doTemp) {
-    //     if (d->jid.compare((*paIt)->jid(), false)) {
+    //     if (d->jid.compare(pa->jid(), false)) {
     //         // we can assume persistent storage is always there
     //         doTemp = !client->serverInfoManager()->hasPersistentStorage();
     //     } else {
@@ -373,7 +374,10 @@ Task *VCardRequest::execute()
     //     }
     // }
     if (!doTemp) {
-        auto task = (*paIt)->pepManager()->get(d->jid, PEP_VCARD4_NODE, QLatin1String("current"));
+        auto isSelf = pa->jid().compare(d->jid, false);
+        auto node   = isSelf ? CONTACTS_NODE : PEP_VCARD4_NODE;
+        auto id     = isSelf ? pa->jid().bare() : QString::fromLatin1("current");
+        auto task   = pa->pepManager()->get(d->jid, QLatin1String(node), id);
         task->connect(task, &PEPGetTask::finished, this, [this, task]() {
             if (task->success()) {
                 if (!task->items().empty()) {

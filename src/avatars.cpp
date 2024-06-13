@@ -211,8 +211,6 @@ public:
                     return; // doesn't look like sha1 hash. just ignore it
                 }
 
-                VCardFactory::instance()->ensureVCardPhotoUpdated(pa, jid, {}, hash);
-
                 for (; !info.isNull(); info = info.nextSiblingElement(QLatin1String("info"))) {
                     if (info.attribute(QLatin1String("type")).toLower() != QLatin1String("image/png")) {
                         continue; // TODO add support for QImageReader::supportedMimeTypes() (requires usage of qnam)
