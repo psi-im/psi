@@ -452,32 +452,17 @@ void InfoWidget::setData(const VCard4::VCard &i)
     m_ui.le_role->setText(i.role());
     m_ui.te_desc->setPlainText(i.note());
 
-    d->photo = i.photo();
-    if (!d->photo.isEmpty()) {
-        if (!updatePhoto()) {
-            clearPhoto();
-        }
+    auto pix = d->pa->avatarFactory()->getAvatar(d->jid);
+    if (pix.isNull()) {
+        clearPhoto();
     } else {
-        bool usePubsubAvatar
-            = (d->type == Contact && d->pa->client()->capsManager()->features(d->jid).hasAvatarConversion())
-            || (d->type == Self && d->pa->client()->serverInfoManager()->accountFeatures().hasAvatarConversion());
-        if (usePubsubAvatar) {
-            // it has to be always updated in avatars cache
-            auto pix = d->pa->avatarFactory()->getAvatar(d->jid);
-            if (pix.isNull()) {
-                clearPhoto();
-            } else {
-                // yes we could use pixmap directly. let's keep it for future code optimization
-                QByteArray ba;
-                QBuffer    b(&ba);
-                b.open(QIODevice::WriteOnly);
-                pix.toImage().save(&b, "PNG");
-                d->photo = ba;
-                updatePhoto();
-            }
-        } else {
-            clearPhoto();
-        }
+        // yes we could use pixmap directly. let's keep it for future code optimization
+        QByteArray ba;
+        QBuffer    b(&ba);
+        b.open(QIODevice::WriteOnly);
+        pix.toImage().save(&b, "PNG");
+        d->photo = ba;
+        updatePhoto();
     }
 
     setEdited(false);
