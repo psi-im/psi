@@ -191,6 +191,9 @@ public:
         } else if (n == PEP_AVATAR_METADATA_NS && item.payload().tagName() == QLatin1String(PEP_AVATAR_METADATA_TN)) {
             auto info = item.payload().firstChildElement(QLatin1String("info"));
             if (info.isNull()) {
+#ifdef AVATAR_EDBUG
+                qDebug() << "removeIcon AvatarType " << jidFull << AvatarCache::AvatarType;
+#endif
                 result  = AvatarCache::instance()->removeIcon(AvatarCache::AvatarType, jidFull);
                 auto it = jid2hash.find(jid);
                 if (it != jid2hash.end()) {
@@ -201,7 +204,7 @@ public:
             } else {
                 auto id = item.id().toLatin1();
                 if (id == "current") {
-                    return; // probably was in previous versions of xep
+                    return; // should we handle singletons? probably previous versions of the xep
                 }
                 QByteArray hash = QByteArray::fromHex(id);
                 if (hash.size() < 20) {
@@ -211,9 +214,10 @@ public:
                     return; // doesn't look like sha1 hash. just ignore it
                 }
 
+                auto supportedMime = QImageReader::supportedMimeTypes();
                 for (; !info.isNull(); info = info.nextSiblingElement(QLatin1String("info"))) {
-                    if (info.attribute(QLatin1String("type")).toLower() != QLatin1String("image/png")) {
-                        continue; // TODO add support for QImageReader::supportedMimeTypes() (requires usage of qnam)
+                    if (!supportedMime.contains(info.attribute(QLatin1String("type")).toLower())) {
+                        continue;
                     }
                     if (!info.attribute(QLatin1String("url")).isEmpty()) {
                         continue; // web avatars are not currently supported. TODO but their support is highly expected
@@ -221,6 +225,9 @@ public:
                     if (info.attribute(QLatin1String("id")) != item.id()) {
                         continue; // that's something totally unexpected
                     }
+#ifdef AVATAR_EDBUG
+                    qDebug() << "appendUser AvatarType " << jidFull;
+#endif
                     // found in-band png (by xep84 hash is for png) avatar. So we can make request
                     result = appendUser(hash, AvatarCache::AvatarType, jidFull);
                     if (result == AvatarCache::NoData) {
