@@ -661,6 +661,9 @@ void InfoWidget::doRefresh()
     if (d->type == MucContact) {
         flags |= VCardFactory::MucUser;
     }
+    if (d->type == MucAdm) {
+        flags |= VCardFactory::MucRoom;
+    }
     auto request = VCardFactory::instance()->getVCard(d->pa, d->jid, flags);
     QObject::connect(request, &VCardRequest::finished, this, [this, request]() {
         release();

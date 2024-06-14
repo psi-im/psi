@@ -48,13 +48,35 @@ struct ClientIconCheck {
  *   psi-plus psi+,psi#fork#plus
  *   psi-ny psi#ny
  *
- * First column is icon name in the iconpack and remaining is a set of caps/clientName search spec.
- * This mean for clients with caps node starting with: psi+ and also for nodes starting with psi and having
- *   word "fork" or "plus" somewhere inside, "psi-plus" icons will be used. For psi-ny (New Year edition) icon
- *   caps whould start with "psi" and have "ny" somewhere in the middle.
+ * The first column is an icon name in the iconpack and the remaining is a set of caps/clientName search spec.
+ * This mean for clients with caps node or client name (i.e. taken from disco#info or other sources) starting
+ * with: `psi+` and also for nodes/names starting with `psi` and having words "fork" or "plus" somewhere inside,
+ * "psi-plus" icons will be used. For psi-ny (New Year edition) icon caps/client-name whould start with "psi"
+ * and have "ny" somewhere in the middle.
  *
- * The structire below will look like
+ * === How to add new icons ===
+ * In general you are gonna need to discover the client name and update one of iconpacks.
  *
+ * To discover the client do next:
+ * 1. Find any alive contact using interested you client
+ * 2. Open xml console, and insert the current JID together with current online resource into the filter line
+ * 3. Press Dump Ringbuf to see some stanzas.
+ * 4. Find <presence....> stanza and remember "ver" attribute from <c> element
+ * 5. Open caps.xml file (~/.cache/psi/caps.xml, "C:/Users/<USER>/AppData/Local/psi/cache") and search for
+ *    value of `ver`.
+ * 6. You should see a line like <identity name="TheClientName 1.0 O_o" category="client" ...>
+ * 7. You can take the most important unique part of "TheClientName 1.0 O_o" from the beginning (e.g. TheClient)
+ * 8. Come up with an icon name in lower case (e.g. "theclient")
+ * 9. Add a line to client_icons.txt with the format described above, all in lower case.
+ *    "theclient theclient"
+ * 10. If it conflicts with anything else try to add something unique from its name/node to the client lookup spec.
+ *     "theclient theclient#O_o"
+ * 11. Next you need to update an iconpack. We have at least two iconpacks for icons. One comes in this repo and
+ *     it's quite minimal just co cover popular clients. And there is also a larger iconpack in resources repo.
+ *     Choose one wisely and and the new "theclient" icon there.
+ *
+ *
+ * The QMap below will look like:
  * {
  *   "psi"  => [
  *                {"psi-plus",["fork", "plus"]}
@@ -67,15 +89,15 @@ struct ClientIconCheck {
  *       psi-plus/psi-ny - icon name
  *       fork/plus/ny    - parts of caps/client name
  *
- * Now for example we need to lookup icon for caps node "psiplus.com". The most still mathing item here is "psi",
+ * Now for example we need to lookup icon for caps node "psiplus.com". The most still matching item here is "psi",
  * (psi+ won't match because psiplus.com doesn't start with psi+). And we don't have anything like "psip" or "psipl"..
  * So we review just "psi" (all its items consequently)
  * Both items in "psi" have clarification list. For the first item we take its clarification list ["fork", "plus"]
  * and review if any item is in "psiplus.com". The "plus" will be found, so the icon "psi-plus" will be returned.
  *
- * Note: It's quite regular for caps node to start with "https" but current client_icons.txt almost doesn't have
- * such records. It just means it heavily rely on detected client names instead of caps.
- * Client name from its side maybe taken from caps node when there is not other way to detect.
+ * Note: It's quite regular for caps node to start with "https" but current client_icons.txt almost never have
+ * such records. It just means it relies heavily on discovered client names instead of caps nodes.
+ * Client name from its side may be taken from caps node when there is no other way to detect.
  * Example:
  * caps node = https://www.psi-im.org/helloworld/caps
  * resulting client name = psi-im.org/helloworld

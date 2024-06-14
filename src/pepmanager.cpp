@@ -551,8 +551,8 @@ void PEPManager::getFinished()
             emit itemPublished(task->jid(), task->node(), task->items().first());
         }
     } else {
-        qWarning() << QString("[%3] PEP Get failed: '%1' (%2)")
-                          .arg(task->statusString(), QString::number(task->statusCode()), client_->jid().full());
+        qWarning() << QString("PEP Get (jid=%1 node=%2) failed: '%3' (%4)")
+                          .arg(task->jid(), task->node(), task->statusString(), QString::number(task->statusCode()));
     }
 }
 
