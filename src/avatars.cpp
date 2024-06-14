@@ -216,7 +216,7 @@ public:
 
                 auto supportedMime = QImageReader::supportedMimeTypes();
                 for (; !info.isNull(); info = info.nextSiblingElement(QLatin1String("info"))) {
-                    if (!supportedMime.contains(info.attribute(QLatin1String("type")).toLower())) {
+                    if (!supportedMime.contains(info.attribute(QLatin1String("type")).toLower().toLatin1())) {
                         continue;
                     }
                     if (!info.attribute(QLatin1String("url")).isEmpty()) {
