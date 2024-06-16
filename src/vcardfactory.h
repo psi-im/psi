@@ -102,8 +102,8 @@ public:
     Jid                &jid() const;
     VCardFactory::Flags flags() const;
 
-    Task *execute();
-    void  merge(PsiAccount *account, const Jid &, VCardFactory::Flags flags);
+    bool execute();
+    void merge(PsiAccount *account, const Jid &, VCardFactory::Flags flags);
 
     // result stuff
     bool          success() const; // item-not-found is considered success but vcard will be null
@@ -114,6 +114,9 @@ signals:
     void finished();
 
 private:
+    void executeVCardTemp(PsiAccount *pa);
+    void executePubSub(PsiAccount *pa);
+
     class Private;
     friend class QueuedLoader;
     std::unique_ptr<Private> d;

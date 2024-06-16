@@ -356,16 +356,15 @@ Jid &VCardRequest::jid() const { return d->jid; }
 
 VCardFactory::Flags VCardRequest::flags() const { return d->flags; }
 
-Task *VCardRequest::execute()
+bool VCardRequest::execute()
 {
     auto paIt = std::ranges::find_if(d->accounts, [](auto pa) { return pa && pa->isConnected(); });
     if (paIt == d->accounts.end())
-        return nullptr;
+        return false;
 
     bool doTemp = (d->flags & VCardFactory::ForceVCardTemp) || (d->flags & VCardFactory::MucRoom)
         || (d->flags & VCardFactory::MucUser);
-    auto pa     = (*paIt);
-    auto client = pa->client();
+    auto pa = (*paIt);
 
     // auto cm     = client->capsManager();
     // if (!doTemp) {
@@ -377,44 +376,60 @@ Task *VCardRequest::execute()
     //         doTemp = !cm->features(d->jid).hasVCard4();
     //     }
     // }
-    if (!doTemp) {
-        auto isSelf = pa->jid().compare(d->jid, false);
-        auto node   = isSelf ? CONTACTS_NODE : PEP_VCARD4_NODE;
-        auto id     = isSelf ? pa->jid().bare() : QString::fromLatin1("current");
-        auto task   = pa->pepManager()->get(d->jid, QLatin1String(node), id);
-        task->connect(task, &PEPGetTask::finished, this, [this, task]() {
-            if (task->success()) {
-                if (!task->items().empty()) {
-                    d->vcard = VCard4::VCard(task->items().last().payload());
-                }
-            } else if (!task->error().isCancel()
-                       || task->error().condition != XMPP::Stanza::Error::ErrorCond::ItemNotFound) {
-                // consider not found vcard as not an error. maybe user removed their vcard intentionally
-                d->error.reset(new Stanza::Error(task->error()));
-                d->statusString = task->statusString();
-            }
-            emit finished();
-            deleteLater();
-        });
-        return task;
+
+    if (doTemp) {
+        executeVCardTemp(pa);
     } else {
-        JT_VCard *task = new JT_VCard(client->rootTask());
-        task->connect(task, &JT_VCard::finished, this, [this, task]() {
-            if (task->success()) {
-                d->vcard.fromVCardTemp(task->vcard());
-            } else if (!task->error().isCancel()
-                       || task->error().condition != XMPP::Stanza::Error::ErrorCond::ItemNotFound) {
-                // consider not found vcard as not an error. maybe user removed their vcard intentionally
-                d->error.reset(new Stanza::Error(task->error()));
-                d->statusString = task->statusString();
-            }
-            emit finished();
-            deleteLater();
-        });
-        task->get(d->jid);
-        task->go(true);
-        return task;
+        executePubSub(pa);
     }
+    return true;
+}
+
+void VCardRequest::executeVCardTemp(PsiAccount *pa)
+{
+    JT_VCard *task = new JT_VCard(pa->client()->rootTask());
+    task->connect(task, &JT_VCard::finished, this, [this, task]() {
+        if (task->success()) {
+            d->vcard.fromVCardTemp(task->vcard());
+        } else if (!task->error().isCancel()
+                   || task->error().condition != XMPP::Stanza::Error::ErrorCond::ItemNotFound) {
+
+            d->error.reset(new Stanza::Error(task->error()));
+            d->statusString = task->statusString();
+        }
+        emit finished();
+        deleteLater();
+    });
+    task->get(d->jid);
+    task->go(true);
+}
+
+void VCardRequest::executePubSub(PsiAccount *pa)
+{
+    auto isSelf = pa->jid().compare(d->jid, false);
+    auto node   = isSelf ? CONTACTS_NODE : PEP_VCARD4_NODE;
+    auto id     = isSelf ? pa->jid().bare() : QString::fromLatin1("current");
+    auto task   = pa->pepManager()->get(d->jid, QLatin1String(node), id);
+    task->connect(task, &PEPGetTask::finished, this, [this, task, ppa = QPointer<PsiAccount>(pa)]() {
+        if (task->success()) {
+            if (!task->items().empty()) {
+                d->vcard = VCard4::VCard(task->items().last().payload());
+            }
+        } else if (!task->error().isCancel()
+                   || task->error().condition != XMPP::Stanza::Error::ErrorCond::ItemNotFound) {
+            // consider not found vcard as not an error. maybe user removed their vcard intentionally
+            d->error.reset(new Stanza::Error(task->error()));
+            d->statusString = task->statusString();
+        } else {
+            // we can still try vcard-temp as a fallback
+            if (ppa) {
+                executeVCardTemp(ppa);
+                return;
+            }
+        }
+        emit finished();
+        deleteLater();
+    });
 }
 
 void VCardRequest::merge(PsiAccount *account, const Jid &, VCardFactory::Flags flags)
@@ -451,8 +466,8 @@ VCardFactory::QueuedLoader::QueuedLoader(VCardFactory *vcf) : QObject(vcf), q(vc
             jid2req.remove(request->jid());
             request->deleteLater();
         });
-        auto task = request->execute();
-        if (!task) {
+        auto started = request->execute();
+        if (!started) {
             jid2req.remove(request->jid());
             request->deleteLater();
         }
