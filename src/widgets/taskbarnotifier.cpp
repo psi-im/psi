@@ -45,11 +45,12 @@
 #include "applicationinfo.h"
 #include "psiiconset.h"
 
+#include <wtypes.h>
+
 #include <propkey.h>
 #include <propvarutil.h>
 #include <shobjidl.h>
 #include <windows.h>
-#include <wtypes.h>
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 #include <QtWinExtras/qwinfunctions.h>
