@@ -132,6 +132,10 @@ bool PsiMain::useActiveInstance()
             ActiveProfiles::instance()->raise(cmdline.value("profile"), true);
         }
 
+        if (cmdline.contains("quit")) {
+            ActiveProfiles::instance()->quit(cmdline.value("profile"));
+        }
+
         return true;
     } else
         return cmdline.contains("remote");
@@ -282,11 +286,11 @@ void PsiMain::sessionStart()
     connect(pcon, SIGNAL(quit(int)), SLOT(sessionQuit(int)));
 
     if (cmdline.contains("uri")) {
-        emit ActiveProfiles::instance() -> openUriRequested(cmdline.value("uri"));
+        emit ActiveProfiles::instance()->openUriRequested(cmdline.value("uri"));
         cmdline.remove("uri");
     }
     if (cmdline.contains("status") || cmdline.contains("status-message")) {
-        emit ActiveProfiles::instance() -> setStatusRequested(cmdline.value("status"), cmdline.value("status-message"));
+        emit ActiveProfiles::instance()->setStatusRequested(cmdline.value("status"), cmdline.value("status-message"));
         cmdline.remove("status");
         cmdline.remove("status-message");
     }

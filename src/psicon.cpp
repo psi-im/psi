@@ -719,6 +719,7 @@ bool PsiCon::init()
             SLOT(setStatusFromCommandline(const QString &, const QString &)));
     connect(ActiveProfiles::instance(), SIGNAL(openUriRequested(const QString &)), SLOT(openUri(const QString &)));
     connect(ActiveProfiles::instance(), SIGNAL(raiseRequested()), SLOT(raiseMainwin()));
+    connect(ActiveProfiles::instance(), SIGNAL(quitRequested()), SLOT(closeProgram()));
 
     DesktopUtil::setUrlHandler("xmpp", this, "openUri");
     DesktopUtil::setUrlHandler("x-psi-atstyle", this, "openAtStyleUri");

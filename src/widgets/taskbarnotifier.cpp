@@ -40,6 +40,13 @@
 #endif
 
 #ifdef Q_OS_WIN
+#include <QApplication>
+
+#include "applicationinfo.h"
+#include "psiiconset.h"
+
+#include <propkey.h>
+#include <propvarutil.h>
 #include <shobjidl.h>
 #include <windows.h>
 
@@ -73,13 +80,16 @@ public:
 #endif
 #ifdef Q_OS_WIN
     void setFlashWindow(bool enabled);
+    void addJumpListItem();
 #endif
 private:
 #ifdef Q_OS_WIN
-    void  setTaskBarIcon(const HICON &icon = {});
-    HICON makeIconCaption(const QString &number) const;
-    HICON getHICONfromQImage(const QImage &image) const;
-    void  doFlashTaskbarIcon();
+    void        setTaskBarIcon(const HICON &icon = {});
+    HICON       makeIconCaption(const QString &number) const;
+    HICON       getHICONfromQImage(const QImage &image) const;
+    void        doFlashTaskbarIcon();
+    IShellLink *createShellLink(const QString &path, const QString &name, const QString &tooltip, const QString &args,
+                                const QString &icon);
 #else
     QIcon setImageCountCaption(uint count = 0);
 #ifdef USE_DBUS
@@ -300,12 +310,86 @@ void TaskBarNotifier::Private::doFlashTaskbarIcon()
     fi.dwTimeout = 0;
     FlashWindowEx(&fi);
 }
+
+void TaskBarNotifier::Private::addJumpListItem()
+{
+    // Create an object collection
+    IObjectCollection *pCollection = nullptr;
+    if (SUCCEEDED(CoCreateInstance(CLSID_EnumerableObjectCollection, nullptr, CLSCTX_INPROC_SERVER,
+                                   IID_PPV_ARGS(&pCollection)))) {
+        // Create shell link object
+        auto path       = qApp->applicationFilePath();
+        auto nameString = QString("Quit %1 application").arg(qApp->applicationName());
+        auto cachedIconFile
+            = ApplicationInfo::homeDir(ApplicationInfo::CacheLocation) + QStringLiteral("/quit_icon.ico");
+        auto pixmap = PsiIconset::instance()
+                          ->system()
+                          .icon("psi/quit")
+                          ->pixmap(QSize(GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON)) * devicePixelRatio_);
+        pixmap.save(cachedIconFile, "ICO");
+        IShellLink *quitShellLink
+            = createShellLink(path, nameString, nameString, QStringLiteral("--quit"), cachedIconFile);
+        if (quitShellLink != nullptr) {
+            pCollection->AddObject(quitShellLink);
+            quitShellLink->Release();
+            // Create custom Jump list
+            ICustomDestinationList *destinationList = nullptr;
+            if (SUCCEEDED(CoCreateInstance(CLSID_DestinationList, NULL, CLSCTX_INPROC_SERVER,
+                                           IID_ICustomDestinationList,
+                                           reinterpret_cast<void **>(&(destinationList))))) {
+                IObjectArray *objectArray = nullptr;
+                UINT          cMaxSlots;
+                // Init Jump list and add items to it
+                if (SUCCEEDED(destinationList->BeginList(&cMaxSlots, IID_IObjectArray,
+                                                         reinterpret_cast<void **>(&(objectArray))))) {
+                    destinationList->AddUserTasks(pCollection);
+                    destinationList->CommitList();
+                    objectArray->Release();
+                }
+                destinationList->Release();
+            }
+        }
+        pCollection->Release();
+    }
+}
+
+IShellLink *TaskBarNotifier::Private::createShellLink(const QString &path, const QString &name, const QString &tooltip,
+                                                      const QString &args, const QString &icon)
+{
+    IShellLink *pShellLink = nullptr;
+    if (SUCCEEDED(CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pShellLink)))) {
+        auto wPath = reinterpret_cast<const wchar_t *>(path.utf16());
+        auto wName = reinterpret_cast<const wchar_t *>(name.utf16());
+        auto wDesc = reinterpret_cast<const wchar_t *>(tooltip.utf16());
+        auto wArgs = reinterpret_cast<const wchar_t *>(args.utf16());
+        auto wIcon = reinterpret_cast<const wchar_t *>(icon.utf16());
+        pShellLink->SetPath(wPath);
+        pShellLink->SetArguments(wArgs);
+        pShellLink->SetDescription(wDesc);
+        pShellLink->SetIconLocation(wIcon, 0);
+        // Change shell link object name
+        IPropertyStore *propertyStore = nullptr;
+        if (SUCCEEDED(pShellLink->QueryInterface(IID_IPropertyStore, (LPVOID *)&propertyStore))) {
+            PROPVARIANT pv;
+            if (SUCCEEDED(InitPropVariantFromString(wName, &pv))) {
+                if (SUCCEEDED(propertyStore->SetValue(PKEY_Title, pv)))
+                    propertyStore->Commit();
+                PropVariantClear(&pv);
+            }
+            propertyStore->Release();
+        }
+    }
+    return pShellLink;
+}
 #endif
 
 TaskBarNotifier::TaskBarNotifier(QWidget *parent)
 {
     d = std::make_unique<Private>(Private());
     d->setParent(parent);
+#ifdef Q_OS_WIN
+    d->addJumpListItem();
+#endif
 }
 
 TaskBarNotifier::~TaskBarNotifier() = default;

@@ -3,3 +3,8 @@
 Exec=psi --choose-profile
 Name=Start with another profile
 Icon=psi
+
+[Desktop Action QuitApplication]
+Exec=psi --quit
+Name=Quit the application
+Icon=application-exit

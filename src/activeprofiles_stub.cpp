@@ -72,3 +72,9 @@ bool ActiveProfiles::raise(const QString &profile, bool withUI) const
     Q_UNUSED(withUI);
     return true;
 }
+
+bool ActiveProfiles::quit(const QString &profile) const
+{
+    Q_UNUSED(profile);
+    return true;
+}

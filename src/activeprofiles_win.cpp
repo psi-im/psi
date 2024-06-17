@@ -198,14 +198,19 @@ bool ActiveProfiles::Private::nativeEvent(const QByteArray &eventType, void *mes
             }
 
             if (list.count() > 1) {
-                if (list[0] == "openUri") {
+                if (list[0] == QStringLiteral("openUri")) {
                     emit ap->openUriRequested(list.value(1));
                     *result = TRUE;
-                } else if (list[0] == "setStatus") {
+                } else if (list[0] == QStringLiteral("setStatus")) {
                     emit ap->setStatusRequested(list.value(1), list.value(2));
                     *result = TRUE;
-                } else if (list[0] == "recvNextEvent") {
+                }
+            } else if (list.count() == 1) {
+                if (list[0] == QStringLiteral("recvNextEvent")) {
                     emit ap->recvNextEventRequested();
+                    *result = TRUE;
+                } else if (list[0] == QStringLiteral("quit")) {
+                    emit ap->quitRequested();
                     *result = TRUE;
                 }
             }
@@ -324,21 +329,24 @@ bool ActiveProfiles::raise(const QString &profile, bool withUI) const
 
 bool ActiveProfiles::openUri(const QString &profile, const QString &uri) const
 {
-    QStringList list;
-    list << "openUri" << uri;
+    QStringList list { QStringLiteral("openUri"), uri };
     return d->sendStringList(profile.isEmpty() ? d->pickProfile() : profile, list);
 }
 
 bool ActiveProfiles::recvNextEvent(const QString &profile) const
 {
-    QStringList list;
-    list << "recvNextEvent";
+    QStringList list { QStringLiteral("recvNextEvent") };
     return d->sendStringList(profile.isEmpty() ? d->pickProfile() : profile, list);
 }
 
 bool ActiveProfiles::setStatus(const QString &profile, const QString &status, const QString &message) const
 {
-    QStringList list;
-    list << "setStatus" << status << message;
+    QStringList list { QStringLiteral("setStatus"), status, message };
+    return d->sendStringList(profile.isEmpty() ? d->pickProfile() : profile, list);
+}
+
+bool ActiveProfiles::quit(const QString &profile) const
+{
+    QStringList list { QStringLiteral("quit") };
     return d->sendStringList(profile.isEmpty() ? d->pickProfile() : profile, list);
 }

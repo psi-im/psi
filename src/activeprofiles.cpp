@@ -114,3 +114,14 @@ ActiveProfiles *ActiveProfiles::instance()
  * \fn void ActiveProfiles::raiseRequested()
  * \brief Signal emitted when other Psi instance requested to raise main window.
  */
+
+/**
+ * \fn bool ActiveProfiles::quit(const QString &profile) const
+ * \brief Closes the active Psi application instance running \a profile.
+ * If \a profile is empty, other running instance is selected.
+ */
+
+/**
+ * \fn void ActiveProfiles::quitRequested()
+ * \brief Signal emitted when other Psi instance requested to quit application.
+ */

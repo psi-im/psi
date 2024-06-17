@@ -50,6 +50,8 @@ public:
             tr("Use software widgets rendering. In some cases default hardware rendering may lead to graphical "
                "glitches and crashes. This option may help."));
 
+        defineSwitch("quit", tr("Quit the application"));
+
         defineSwitch("help", tr("Show this help message and exit."));
         defineAlias("h", "help");
         defineAlias("?", "help");

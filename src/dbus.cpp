@@ -28,6 +28,7 @@ public Q_SLOTS:
     void sleep();
     void wake();
     void recvNextEvent();
+    void quit();
     /*Q_SIGNALS:
         void psi_pong();
     */
@@ -39,15 +40,15 @@ PsiConAdapter::PsiConAdapter(PsiCon *psicon_) : QDBusAbstractAdaptor(psicon_) { 
 
 PsiConAdapter::~PsiConAdapter() { }
 
-void PsiConAdapter::openURI(QString uri) { emit ActiveProfiles::instance() -> openUriRequested(uri); }
+void PsiConAdapter::openURI(QString uri) { emit ActiveProfiles::instance()->openUriRequested(uri); }
 
 void PsiConAdapter::setStatus(QString status, QString message)
 {
-    emit ActiveProfiles::instance() -> setStatusRequested(status, message);
+    emit ActiveProfiles::instance()->setStatusRequested(status, message);
 }
 
 // FIXME libguniqueapp uses activate
-void PsiConAdapter::raise() { emit ActiveProfiles::instance() -> raiseRequested(); }
+void PsiConAdapter::raise() { emit ActiveProfiles::instance()->raiseRequested(); }
 
 void PsiConAdapter::sleep() { psicon->doSleep(); }
 
@@ -60,5 +61,7 @@ void addPsiConAdapter(PsiCon *psicon)
     new PsiConAdapter(psicon);
     QDBusConnection::sessionBus().registerObject("/Main", psicon);
 }
+
+void PsiConAdapter::quit() { emit ActiveProfiles::instance()->quitRequested(); }
 
 #include "dbus.moc"

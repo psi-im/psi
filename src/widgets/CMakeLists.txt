@@ -63,7 +63,7 @@ set(HEADERS
     stretchwidget.h
 )
 
-if(USE_DBUS OR WIN32)
+if(USE_TASKBARNOTIFIER)
     list(APPEND SOURCES taskbarnotifier.cpp)
     list(APPEND HEADERS taskbarnotifier.h)
     if(WIN32 AND (${QT_DEFAULT_MAJOR_VERSION} VERSION_LESS "6"))
@@ -91,6 +91,9 @@ endif()
 
 qt_wrap_ui(UI_FORMS ${FORMS})
 add_library(widgets STATIC ${SOURCES} ${HEADERS} ${UI_FORMS})
+if(WIN32)
+target_link_libraries(widgets shlwapi)
+endif()
 target_link_libraries(widgets ${QT_LIBRARIES} ${iris_LIB} tools)
 target_include_directories(widgets PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_LIST_DIR})
 if(IS_WEBKIT OR IS_WEBENGINE)
