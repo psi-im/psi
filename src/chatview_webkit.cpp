@@ -341,6 +341,17 @@ signals:
 //----------------------------------------------------------------------------
 
 #ifdef WEBENGINE
+class ExtBrowserPage : public QWebEnginePage {
+protected:
+    using QWebEnginePage::QWebEnginePage;
+    bool acceptNavigationRequest(const QUrl &url, NavigationType type, bool isMainFrame)
+    {
+        DesktopUtil::openUrl(url);
+        deleteLater();
+        return false;
+    }
+};
+
 class ChatViewPage : public QWebEnginePage {
 protected:
     using QWebEnginePage::QWebEnginePage;
@@ -354,8 +365,22 @@ protected:
         }
         return true;
     }
+
+    QWebEnginePage *createWindow(WebWindowType type) { return new ExtBrowserPage(); }
 };
 #else
+
+class ExtBrowserPage : public QWebPage {
+protected:
+    using QWebPage::QWebPage;
+    bool acceptNavigationRequest(const QUrl &url, NavigationType type, bool isMainFrame)
+    {
+        DesktopUtil::openUrl(url);
+        deleteLater();
+        return false;
+    }
+};
+
 class ChatViewPage : public QWebPage {
     Q_OBJECT
 
@@ -386,6 +411,8 @@ protected:
         }
         return true;
     }
+
+    QWebPage *createWindow(WebWindowType type) { return new ExtBrowserPage(); }
 };
 
 #endif
@@ -591,7 +618,7 @@ bool ChatView::handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdi
 // input point of all messages
 void ChatView::dispatchMessage(const MessageView &mv)
 {
-    QString replaceId = mv.replaceId();
+    QString replaceId = mv.targetId();
     if (replaceId.isEmpty() && (mv.type() == MessageView::Message || mv.type() == MessageView::Subject)
         && updateLastMsgTime(mv.dateTime())) {
         QVariantMap m;
