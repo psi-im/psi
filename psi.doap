@@ -779,6 +779,16 @@
       </xmpp:SupportedXep>
     </implements>
 
+    <!-- XEP-0453: DOAP usage in XMPP -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0453.html'/>
+        <xmpp:status>complete</xmpp:status>
+        <xmpp:version>0.1.2</xmpp:version>
+        <xmpp:since>2.0</xmpp:since>
+      </xmpp:SupportedXep>
+    </implements>
+
     <!-- XEP-0486: MUC Avatars -->
     <implements>
       <xmpp:SupportedXep>
