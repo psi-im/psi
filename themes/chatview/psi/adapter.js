@@ -117,7 +117,7 @@ function psiThemeAdapter(chat) {
                 if (nextEl) {
                     chat.util.siblingHtml(nextEl, html);
                 } else {
-                    chat.util.appendHtml(shared.chatElement, html);
+                    chat.util.appendHtml(shared.chatElement, html, shared.isMuc? shared.cdata.sender : "");
                 }
                 shared.scroller.invalidate();
             },

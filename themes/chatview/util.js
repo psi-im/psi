@@ -226,11 +226,14 @@ function initPsiTheme() {
                 }
             },
 
-            replaceBob : function(el) {
+            replaceBob : function(el, sender) {
                 var els = el.querySelectorAll("img"); // frozen list
                 for (var i=0; i < els.length; i++) {
                     if (els[i].src.indexOf('cid:') == 0) {
-                        els[i].src = "/psibob/" + els[i].src.slice(4);
+                        els[i].src = "psibob/" + els[i].src.slice(4);
+                        if (sender) {
+                            els[i].src += "?sender=" + encodeURIComponent(sender);
+                        }
                     }
                 }
             },
@@ -394,21 +397,21 @@ function initPsiTheme() {
                 }
             },
 
-            prepareContents : function(html) {
+            prepareContents : function(html, sender) {
                 htmlSource.innerHTML = html;
-                chat.util.replaceBob(htmlSource);
+                chat.util.replaceBob(htmlSource, sender);
                 chat.util.handleLinks(htmlSource);
                 chat.util.replaceIcons(htmlSource);
                 chat.util.handleShares(htmlSource);
             },
 
-            appendHtml : function(dest, html) {
-                chat.util.prepareContents(html);
+            appendHtml : function(dest, html, sender) {
+                chat.util.prepareContents(html, sender);
                 while (htmlSource.firstChild) dest.appendChild(htmlSource.firstChild);
             },
 
-            siblingHtml : function(dest, html) {
-                chat.util.prepareContents(html);
+            siblingHtml : function(dest, html, sourceUser) {
+                chat.util.prepareContents(html, sourceUser);
                 while (htmlSource.firstChild) dest.parentNode.insertBefore(htmlSource.firstChild, dest);
             },
 

@@ -171,8 +171,13 @@ public:
                      std::function<void(bool success, const QByteArray &, const QByteArray &)> callback)
     {
         if (url.path().startsWith("/psibob/")) {
-            QString cid = url.path().mid(sizeof("/psibob/") - 1);
-            _view->d->account_->loadBob(_view->d->jid_, cid, this, callback);
+            QString cid    = url.path().mid(sizeof("/psibob/") - 1);
+            auto    sender = QUrlQuery(url).queryItemValue("sender", QUrl::FullyDecoded);
+            auto    j      = _view->d->jid_;
+            if (!sender.isEmpty()) {
+                j = j.withResource(sender);
+            }
+            _view->d->account_->loadBob(j, cid, this, callback);
             return true;
         }
         // qDebug("Unhandled url: %s", qPrintable(url.toString()));
