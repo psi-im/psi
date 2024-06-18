@@ -492,7 +492,11 @@ VCardRequest *VCardFactory::QueuedLoader::enqueue(PsiAccount *acc, const Jid &ji
 #endif
         req                    = new VCardRequest(acc, sanitized_jid, flags);
         jid2req[sanitized_jid] = req;
-        queue_.append(req);
+        if (prio == HighPriority) {
+            queue_.prepend(req);
+        } else {
+            queue_.append(req);
+        }
     } else {
 #ifdef VCF_DEBUG
         qDebug() << "merge VCardRequest" << sanitized_jid.full() << flags;

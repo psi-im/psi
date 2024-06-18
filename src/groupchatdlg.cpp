@@ -2153,6 +2153,12 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
         return;
     }
 
+    if (!m.reactions().targetId.isEmpty()) {
+        auto mv = MessageView::reactionsMessage(from, m.reactions().targetId, m.reactions().reactions);
+        ui_.log->dispatchMessage(mv);
+        return;
+    }
+
     if (m.body().isEmpty())
         return;
 
@@ -2234,7 +2240,7 @@ void GCMainDlg::appendSysMsg(const QString &str, bool alert)
 
 void GCMainDlg::dispatchMessage(const MessageView &mv)
 {
-    if (d->trackBar && !mv.isLocal() && !mv.isSpooled())
+    if (d->trackBar && !mv.isLocal() && !mv.isSpooled() && mv.reactionsId().isEmpty())
         d->doTrackBar();
 
     ui_.log->dispatchMessage(mv);

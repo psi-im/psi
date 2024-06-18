@@ -791,6 +791,10 @@ void ChatDlg::incomingMessage(const Message &m)
         if (m.messageReceipt() == ReceiptReceived) {
             chatView()->markReceived(m.messageReceiptId());
         }
+        if (!m.reactions().targetId.isEmpty()) {
+            auto mv = MessageView::reactionsMessage({}, m.reactions().targetId, m.reactions().reactions);
+            chatView()->dispatchMessage(mv);
+        }
     } else {
         // Normal message
         // Check if user requests event messages

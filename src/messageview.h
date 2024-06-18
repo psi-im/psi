@@ -38,7 +38,8 @@ public:
         MUCPart,
         NickChange,
         FileTransferRequest,
-        FileTransferFinished
+        FileTransferFinished,
+        Reactions,
     };
 
     enum Flag {
@@ -71,6 +72,8 @@ public:
     static MessageView mucPartMessage(const QString &nick, const QString &message = QString(),
                                       const QString &statusText = QString());
     static MessageView nickChangeMessage(const QString &nick, const QString &newNick);
+    static MessageView reactionsMessage(const QString &nick, const QString &targetMessageId,
+                                        const QStringList &reactions);
 
     inline Type           type() const { return _type; }
     inline const QString &text() const { return _text; }
@@ -117,10 +120,16 @@ public:
     inline QMap<QString, QString>          urls() const { return _urls; }
     inline void                            setReplaceId(const QString &id) { _replaceId = id; }
     inline const QString                  &replaceId() const { return _replaceId; }
+    inline void                            setQuoteId(const QString &id) { _quoteId = id; }
+    inline const QString                  &quoteId() const { return _quoteId; }
+    inline void                            setReactionsId(const QString &id) { _reactionsId = id; }
+    inline const QString                  &reactionsId() const { return _reactionsId; }
     inline void                            setCarbonDirection(XMPP::Message::CarbonDir c) { _carbon = c; }
     inline XMPP::Message::CarbonDir        carbonDirection() const { return _carbon; }
     inline void                            addReference(FileSharingItem *fsi) { _references.append(fsi); }
     inline const QList<FileSharingItem *> &references() const { return _references; }
+    inline void                            setReactions(const QStringList &r) { _reactions = r; }
+    inline const QStringList              &reactions() const { return _reactions; }
 
     QVariantMap toVariantMap(bool isMuc, bool formatted = false) const;
 
@@ -137,8 +146,11 @@ private:
     QDateTime                _dateTime;
     QMap<QString, QString>   _urls;
     QString                  _replaceId;
+    QString                  _quoteId;
+    QString                  _reactionsId;
     XMPP::Message::CarbonDir _carbon;
     QList<FileSharingItem *> _references;
+    QStringList              _reactions;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(MessageView::Flags)

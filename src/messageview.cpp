@@ -92,6 +92,16 @@ MessageView MessageView::nickChangeMessage(const QString &nick, const QString &n
     return mv;
 }
 
+MessageView MessageView::reactionsMessage(const QString &nick, const QString &targetMessageId,
+                                          const QStringList &reactions)
+{
+    MessageView mv(Reactions);
+    mv.setNick(nick);
+    mv.setReactionsId(targetMessageId);
+    mv.setReactions(reactions);
+    return mv;
+}
+
 MessageView MessageView::statusMessage(const QString &nick, int status, const QString &statusText, int priority)
 {
     QString message = QObject::tr("%1 is now %2").arg(nick, status2txt(status));
@@ -178,6 +188,7 @@ QVariantMap MessageView::toVariantMap(bool isMuc, bool formatted) const
         types.insert(FileTransferRequest, "ftreq");
         types.insert(FileTransferFinished, "ftfin");
         types.insert(NickChange, "newnick");
+        types.insert(Reactions, "reactions");
     }
     QVariantMap m;
     m["time"] = _dateTime;
@@ -236,6 +247,11 @@ QVariantMap MessageView::toVariantMap(bool isMuc, bool formatted) const
         m["urls"] = vmUrls;
         break;
     }
+    case Reactions:
+        m["sender"]    = _nick;
+        m["reactions"] = _reactions;
+        m["targetid"]  = _reactionsId;
+        break;
     case FileTransferRequest:
     case FileTransferFinished:
         break;

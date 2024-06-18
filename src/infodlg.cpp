@@ -1157,7 +1157,7 @@ void InfoWidget::goHomepage()
 // --------------------------------------------
 // InfoDlg
 // --------------------------------------------
-InfoDlg::InfoDlg(int type, const Jid &j, const VCard4::VCard &vc, PsiAccount *pa, QWidget *parent)
+InfoDlg::InfoDlg(int type, const Jid &j, const VCard4::VCard &vc, PsiAccount *pa, QWidget *parent) : QDialog(parent)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint

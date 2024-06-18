@@ -618,6 +618,11 @@ bool ChatView::handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdi
 // input point of all messages
 void ChatView::dispatchMessage(const MessageView &mv)
 {
+    QVariantMap vm = mv.toVariantMap(d->isMuc_, true);
+    if (!mv.reactionsId().isEmpty()) {
+        sendJsObject(vm);
+        return;
+    }
     QString replaceId = mv.replaceId();
     if (replaceId.isEmpty() && (mv.type() == MessageView::Message || mv.type() == MessageView::Subject)
         && updateLastMsgTime(mv.dateTime())) {
@@ -627,7 +632,7 @@ void ChatView::dispatchMessage(const MessageView &mv)
         m["mtype"] = "lastDate";
         sendJsObject(m);
     }
-    QVariantMap vm = mv.toVariantMap(d->isMuc_, true);
+
     if (mv.type() == MessageView::MUCJoin) {
         Jid j           = d->jid_.withResource(mv.nick());
         vm["avatar"]    = ChatViewJSObject::avatarUrl(d->account_->avatarFactory()->userHashes(j).avatar);
