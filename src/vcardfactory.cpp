@@ -245,9 +245,7 @@ Task *VCardFactory::setVCard(PsiAccount *account, const VCard4::VCard &v, const 
     QDomDocument *doc = account->client()->doc();
     QDomElement   el  = v.toXmlElement(*doc);
 
-    account->pepManager()->publish(QLatin1String(PEP_VCARD4_NODE), PubSubItem(QLatin1String("current"), el));
-    return account->pepManager()->publish(QLatin1String(CONTACTS_NODE), PubSubItem(account->jid().bare(), el),
-                                          PEPManager::PresenceAccess, true);
+    return account->pepManager()->publish(QLatin1String(PEP_VCARD4_NODE), PubSubItem(QLatin1String("current"), el));
 }
 
 /**
@@ -397,10 +395,7 @@ void VCardRequest::executeVCardTemp(PsiAccount *pa)
 
 void VCardRequest::executePubSub(PsiAccount *pa)
 {
-    auto isSelf = pa->jid().compare(d->jid, false);
-    auto node   = isSelf ? CONTACTS_NODE : PEP_VCARD4_NODE;
-    auto id     = isSelf ? pa->jid().bare() : QString::fromLatin1("current");
-    auto task   = pa->pepManager()->get(d->jid, QLatin1String(node), id);
+    auto task = pa->pepManager()->get(d->jid, QLatin1String(PEP_VCARD4_NODE), QLatin1String("current"));
     task->connect(task, &PEPGetTask::finished, this, [this, task, ppa = QPointer<PsiAccount>(pa)]() {
         if (task->success()) {
             if (!task->items().empty()) {
