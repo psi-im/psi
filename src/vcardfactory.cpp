@@ -28,7 +28,7 @@
 #include "profiles.h"
 #include "psiaccount.h"
 
-#include "xmpp/xmpp-im/xmpp_caps.h"
+// #include "xmpp/xmpp-im/xmpp_caps.h"
 #include "xmpp/xmpp-im/xmpp_pubsubitem.h"
 #include "xmpp/xmpp-im/xmpp_serverinfomanager.h"
 #include "xmpp/xmpp-im/xmpp_vcard4.h"
@@ -414,6 +414,11 @@ void VCardRequest::executePubSub(PsiAccount *pa)
         if (task->success()) {
             if (!task->items().empty()) {
                 d->vcard = VCard4::VCard(task->items().last().payload());
+            } else {
+                if (ppa) {
+                    executeVCardTemp(ppa);
+                    return;
+                }
             }
         } else if (!task->error().isCancel()
                    || task->error().condition != XMPP::Stanza::Error::ErrorCond::ItemNotFound) {
