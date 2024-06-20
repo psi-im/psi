@@ -156,20 +156,11 @@ void VCardFactory::saveVCard(const Jid &j, const VCard4::VCard &vcard, Flags fla
     if (!v.exists())
         p.mkdir("vcard");
 
-    QFile file(ApplicationInfo::vCardDir() + '/' + JIDUtil::encode(j.bare()).toLower() + ".xml");
+    auto filename = ApplicationInfo::vCardDir() + '/' + JIDUtil::encode(j.bare()).toLower() + ".xml";
     if (vcard) {
-        file.open(QIODevice::WriteOnly);
-        QTextStream out(&file);
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        out.setEncoding(QStringConverter::Utf8);
-#else
-        out.setCodec("UTF-8");
-#endif
-        QDomDocument doc;
-        doc.appendChild(vcard.toXmlElement(doc));
-        out << doc.toString(4);
-    } else if (file.exists()) {
-        file.remove();
+        vcard.save(filename);
+    } else {
+        QFile::remove(filename);
     }
 
     Jid jid = j;
@@ -211,11 +202,11 @@ VCard4::VCard VCardFactory::vcard(const Jid &j, Flags flags)
         // REVIEW we can cache which files were really missed. or maybe set a flag for the contact
         return {};
     }
-    QDomDocument doc;
 
     VCard4::VCard v4 = VCard4::VCard::fromDevice(&file);
     if (!v4) {
         file.seek(0);
+        QDomDocument doc;
         if (doc.setContent(&file, false)) {
             VCard vcard = VCard::fromXml(doc.documentElement());
             if (!vcard.isNull()) {
