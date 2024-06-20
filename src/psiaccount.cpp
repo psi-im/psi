@@ -1694,7 +1694,7 @@ void PsiAccount::login()
         connect(d->tlsHandler, &QCATLSHandler::tlsHandshaken, this, &PsiAccount::tls_handshaken);
     }
     d->conn->setProxy(p);
-
+    d->conn->setOptTlsSrv(d->acc.ssl == UserAccount::SSL_Auto || d->acc.ssl == UserAccount::SSL_Yes);
     if (useHost) {
         d->conn->setOptHostPort(host, quint16(port));
         d->conn->setOptSSL(d->acc.ssl == UserAccount::SSL_Legacy);
