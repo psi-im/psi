@@ -452,7 +452,8 @@ void InfoWidget::setData(const VCard4::VCard &i)
     m_ui.le_role->setText(i.role());
     m_ui.te_desc->setPlainText(i.note());
 
-    auto pix = d->pa->avatarFactory()->getAvatar(d->jid);
+    auto pix = d->type == MucContact ? d->pa->avatarFactory()->getMucAvatar(d->jid)
+                                     : d->pa->avatarFactory()->getAvatar(d->jid);
     if (pix.isNull()) {
         d->photo = i.photo();
         if (d->photo.isEmpty()) {
@@ -661,7 +662,7 @@ void InfoWidget::doRefresh()
     if (d->type == MucContact) {
         flags |= VCardFactory::MucUser;
     }
-    if (d->type == MucAdm) {
+    if (d->type == MucAdm || d->type == MucView) {
         flags |= VCardFactory::MucRoom;
     }
     auto request = VCardFactory::instance()->getVCard(d->pa, d->jid, flags);
@@ -679,7 +680,7 @@ void InfoWidget::doRefresh()
                 QMessageBox::critical(
                     this, tr("Error"),
                     tr("Unable to retrieve your account information.  Perhaps you haven't entered any yet."));
-            else if (d->type == MucAdm)
+            else if (d->type == MucAdm || d->type == MucView)
                 QMessageBox::critical(this, tr("Error"),
                                       tr("Unable to retrieve information about this conference.\nReason: %1")
                                           .arg(request->errorString()));

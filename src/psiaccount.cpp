@@ -4501,12 +4501,16 @@ void PsiAccount::actionAgentSetStatus(const Jid &j, const Status &s)
 void PsiAccount::actionInfo(const Jid &_j, bool showStatusInfo)
 {
     bool isMucMember = false;
+    bool isSelf      = _j.compare(d->jid, false);
+    bool isMuc       = false;
     Jid  j;
-    if (findGCContact(_j)) {
+    if (!isSelf && findGCContact(_j)) {
         isMucMember = true;
         j           = _j;
     } else {
-        j = _j.bare();
+        auto js = _j.bare();
+        j       = js;
+        isMuc   = d->groupchats.contains(js);
     }
 
     InfoDlg *w = findDialog<InfoDlg *>(j);
@@ -4521,9 +4525,9 @@ void PsiAccount::actionInfo(const Jid &_j, bool showStatusInfo)
         } else {
             vcard = VCardFactory::instance()->vcard(j);
         }
-
-        w = new InfoDlg(j.compare(d->jid) ? InfoWidget::Self
+        w = new InfoDlg(isSelf            ? InfoWidget::Self
                             : isMucMember ? InfoWidget::MucContact
+                            : isMuc       ? InfoWidget::MucView
                                           : InfoWidget::Contact,
                         j, vcard, this, nullptr);
 

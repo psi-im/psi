@@ -1535,7 +1535,7 @@ void GCMainDlg::doShowInfo()
     {
         QVBoxLayout *layout = new QVBoxLayout;
         const auto   vcard  = VCardFactory::instance()->vcard(jid());
-        auto         info   = new InfoWidget(InfoWidget::Contact, jid(), vcard, account());
+        auto         info   = new InfoWidget(InfoWidget::MucView, jid(), vcard, account());
         layout->addWidget(info);
         ui.tab_vcard->setLayout(layout);
         // connect(vcard_, SIGNAL(busy()), ui_.busy, SLOT(start()));
