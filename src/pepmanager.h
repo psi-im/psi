@@ -22,6 +22,8 @@
 
 #include "iris/xmpp_task.h"
 
+#include <optional>
+
 class PubSubSubscription;
 class QString;
 
@@ -60,15 +62,7 @@ class PEPManager : public QObject {
     Q_OBJECT
 
 public:
-    enum Access { DefaultAccess, PresenceAccess, PublicAccess };
-
-    /* Implement all
-     *    <option><value>authorize</value></option>
-          <option><value>open</value></option>
-          <option><value>presence</value></option>
-          <option><value>roster</value></option>
-          <option><value>whitelist</value></option>
-    */
+    enum class Access { Open, Presence, Roster, Authorize, Whitelist };
 
     PEPManager(XMPP::Client *client, ServerInfoManager *serverInfo);
 
@@ -79,7 +73,8 @@ public:
     // void subscribe(const QString&, const QString&);
     // void unsubscribe(const QString&, const QString&);
 
-    XMPP::Task *publish(const QString &node, const PubSubItem &, Access = DefaultAccess, bool persisteItems = false);
+    XMPP::Task *publish(const QString &node, const PubSubItem &, std::optional<Access> = {},
+                        bool           persisteItems = false);
     void        retract(const QString &node, const QString &id);
     void        disable(const QString &tagName, const QString &node, const QString &id);
     PEPGetTask *get(const Jid &jid, const QString &node, const QString &id);

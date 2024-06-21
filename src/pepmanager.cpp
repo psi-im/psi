@@ -164,7 +164,7 @@ private:
 
 class PEPPublishTask : public Task {
 public:
-    PEPPublishTask(Task *parent, const QString &node, const PubSubItem &it, PEPManager::Access access,
+    PEPPublishTask(Task *parent, const QString &node, const PubSubItem &it, std::optional<PEPManager::Access> access,
                    bool persisteItems = false) : Task(parent), node_(node), item_(it)
     {
         iq_ = createIQ(doc(), "set", "", id());
@@ -182,18 +182,24 @@ public:
         }
         publish.appendChild(item);
 
-        if (access != PEPManager::DefaultAccess || persisteItems) {
+        if (access || persisteItems) {
             QDomElement conf = doc()->createElement("publish-options");
             XData       form(XData::Data_Submit);
             form.setRegistrarType(QLatin1String("http://jabber.org/protocol/pubsub#publish-options"));
             XMPP::XData::FieldList fields;
-            if (access != PEPManager::DefaultAccess) {
+            if (access) {
                 XMPP::XData::Field f;
                 f.setVar(QLatin1String("pubsub#access_model"));
-                if (access == PEPManager::PublicAccess) {
+                if (*access == PEPManager::Access::Open) {
                     f.setValue({ QLatin1String("open") });
-                } else if (access == PEPManager::PresenceAccess) {
+                } else if (access == PEPManager::Access::Presence) {
                     f.setValue({ QLatin1String("presence") });
+                } else if (access == PEPManager::Access::Roster) {
+                    f.setValue({ QLatin1String("roster") });
+                } else if (access == PEPManager::Access::Authorize) {
+                    f.setValue({ QLatin1String("authorize") });
+                } else if (access == PEPManager::Access::Whitelist) {
+                    f.setValue({ QLatin1String("whitelist") });
                 }
                 fields << f;
             }
@@ -463,7 +469,7 @@ void PEPManager::unsubscribeFinished()
     saveSubscriptions();
 }*/
 
-Task *PEPManager::publish(const QString &node, const PubSubItem &it, Access access, bool persisteItems)
+Task *PEPManager::publish(const QString &node, const PubSubItem &it, std::optional<Access> access, bool persisteItems)
 {
     // if (!canPublish(node))
     //    return;

@@ -986,7 +986,7 @@ void AvatarFactory::setSelfAvatar(const QImage &image)
         el.appendChild(doc->createTextNode(QString::fromLatin1(data.toBase64())));
         d->selfAvatarData_ = data;
         d->selfAvatarHash_ = id;
-        account()->pepManager()->publish(PEP_AVATAR_DATA_NS, PubSubItem(id, el));
+        account()->pepManager()->publish(PEP_AVATAR_DATA_NS, PubSubItem(id, el), PEPManager::Access::Open);
     }
 }
 
@@ -1091,7 +1091,8 @@ void AvatarFactory::publish_success(const QString &n, const PubSubItem &item)
         info_el.setAttribute("width", avatar_image.width());
         info_el.setAttribute("type", image2type(d->selfAvatarData_));
         meta_el.appendChild(info_el);
-        account()->pepManager()->publish(PEP_AVATAR_METADATA_NS, PubSubItem(d->selfAvatarHash_, meta_el));
+        account()->pepManager()->publish(PEP_AVATAR_METADATA_NS, PubSubItem(d->selfAvatarHash_, meta_el),
+                                         PEPManager::Access::Open);
         if (account()->client()->serverInfoManager()->accountFeatures().hasAvatarConversion()) {
             VCardFactory::instance()->setPhoto(account()->jid(), d->selfAvatarData_, VCardFactory::Silent);
         }
