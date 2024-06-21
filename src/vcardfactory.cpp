@@ -231,7 +231,8 @@ VCard4::VCard VCardFactory::vcard(const Jid &j, Flags flags)
  */
 Task *VCardFactory::setVCard(PsiAccount *account, const VCard4::VCard &v, const Jid &targetJid, Flags flags)
 {
-    if ((flags & MucRoom)) { // || !account->client()->serverInfoManager()->hasPersistentStorage()) {
+    if ((flags & MucRoom) || (flags & ForceVCardTemp)) {
+        // || !account->client()->serverInfoManager()->hasPersistentStorage()) {
         JT_VCard *jtVCard_ = new JT_VCard(account->client()->rootTask());
         connect(jtVCard_, &JT_VCard::finished, this, [this, v, jtVCard_, flags]() {
             if (jtVCard_->success()) {

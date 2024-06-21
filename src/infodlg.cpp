@@ -731,6 +731,15 @@ void InfoWidget::publish()
         }
     });
 
+    bool hasAvaConv = account()->client()->serverInfoManager()->accountFeatures().hasAvatarConversion();
+    if (!hasAvaConv) {
+        v.detach();
+        if (d->photo.size()) {
+            v.setPhoto(VCard4::UriValue { d->photo, d->photoMime });
+        }
+        VCardFactory::instance()->setVCard(d->pa, v, target, flags | VCardFactory::ForceVCardTemp);
+    }
+
     if (d->type == Self) {
         // publish or retract avatar depending on d->photo contents
         d->pa->avatarFactory()->setSelfAvatar(QImage::fromData(d->photo));
