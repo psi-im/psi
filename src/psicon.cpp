@@ -105,7 +105,6 @@
 #ifdef WEBKIT
 #include "avatars.h"
 #include "chatviewthemeprovider.h"
-#include "webview.h"
 #endif
 #ifdef HAVE_SPARKLE
 #include "AutoUpdater/SparkleAutoUpdater.h"
@@ -1036,11 +1035,11 @@ AccountsComboBox *PsiCon::accountsComboBox(QWidget *parent, bool online_only)
 }
 
 PsiAccount *PsiCon::createAccount(const QString &name, const Jid &j, const QString &pass, bool opt_host,
-                                  const QString &host, int port, bool legacy_ssl_probe, UserAccount::SSLFlag ssl,
-                                  QString proxy, const QString &tlsOverrideDomain, const QByteArray &tlsOverrideCert)
+                                  const QString &host, int port, UserAccount::SSLFlag ssl, QString proxy,
+                                  const QString &tlsOverrideDomain, const QByteArray &tlsOverrideCert)
 {
-    return d->contactList->createAccount(name, j, pass, opt_host, host, port, legacy_ssl_probe, ssl, proxy,
-                                         tlsOverrideDomain, tlsOverrideCert);
+    return d->contactList->createAccount(name, j, pass, opt_host, host, port, ssl, proxy, tlsOverrideDomain,
+                                         tlsOverrideCert);
 }
 
 PsiAccount *PsiCon::createAccount(const UserAccount &_acc)
@@ -1920,8 +1919,8 @@ void PsiCon::promptUserToCreateAccount()
         AccountRegDlg w(this);
         int           n = w.exec();
         if (n == QDialog::Accepted) {
-            contactList()->createAccount(w.jid().node(), w.jid(), w.pass(), w.useHost(), w.host(), w.port(), false,
-                                         w.ssl(), w.proxy(), w.tlsOverrideDomain(), w.tlsOverrideCert());
+            contactList()->createAccount(w.jid().node(), w.jid(), w.pass(), w.useHost(), w.host(), w.port(), w.ssl(),
+                                         w.proxy(), w.tlsOverrideDomain(), w.tlsOverrideCert());
         }
     }
 }

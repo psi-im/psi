@@ -96,10 +96,10 @@ void AccountModifyDlg::init()
     le_name->setText(acc.name);
     le_jid->setText(JIDUtil::accountToString(acc.jid, false));
 
-    cb_ssl->addItem(tr("Always"), UserAccount::SSL_Yes);
-    cb_ssl->addItem(tr("When available"), UserAccount::SSL_Auto);
-    cb_ssl->addItem(tr("Never"), UserAccount::SSL_No);
-    cb_ssl->addItem(tr("Legacy SSL"), UserAccount::SSL_Legacy);
+    cb_ssl->addItem(tr("Always"), UserAccount::TLS_Yes);
+    cb_ssl->addItem(tr("When available"), UserAccount::TLS_Auto);
+    cb_ssl->addItem(tr("Never"), UserAccount::TLS_No);
+    cb_ssl->addItem(tr("Direct TLS"), UserAccount::Direct_TLS);
     cb_ssl->setCurrentIndex(cb_ssl->findData(acc.ssl));
     connect(cb_ssl, SIGNAL(activated(int)), SLOT(sslActivated(int)));
 
@@ -378,20 +378,20 @@ void AccountModifyDlg::setPassword(const QString &pw)
 
 void AccountModifyDlg::sslActivated(int i)
 {
-    if ((cb_ssl->itemData(i) == UserAccount::SSL_Yes || cb_ssl->itemData(i) == UserAccount::SSL_Legacy)
+    if ((cb_ssl->itemData(i) == UserAccount::TLS_Yes || cb_ssl->itemData(i) == UserAccount::Direct_TLS)
         && !checkSSL()) {
-        cb_ssl->setCurrentIndex(cb_ssl->findData(UserAccount::SSL_Auto));
-    } else if (cb_ssl->itemData(i) == UserAccount::SSL_Legacy && !ck_host->isChecked()) {
+        cb_ssl->setCurrentIndex(cb_ssl->findData(UserAccount::TLS_Auto));
+    } else if (cb_ssl->itemData(i) == UserAccount::Direct_TLS && !ck_host->isChecked()) {
         QMessageBox::critical(this, tr("Error"),
-                              tr("Legacy SSL is only available in combination with manual host/port."));
-        cb_ssl->setCurrentIndex(cb_ssl->findData(UserAccount::SSL_Auto));
+                              tr("Direct TLS is only available in combination with manual host/port."));
+        cb_ssl->setCurrentIndex(cb_ssl->findData(UserAccount::TLS_Auto));
     }
 }
 
 bool AccountModifyDlg::checkSSL()
 {
     if (!QCA::isSupported("tls")) {
-        QMessageBox::critical(this, tr("SSL error"), tr("Cannot enable SSL/TLS.  Plugin not found."));
+        QMessageBox::critical(this, tr("TLS error"), tr("Cannot enable TLS.  Plugin not found."));
         return false;
     }
     return true;
@@ -403,8 +403,8 @@ void AccountModifyDlg::hostToggled(bool on)
     lb_host->setEnabled(on);
     le_port->setEnabled(on);
     lb_port->setEnabled(on);
-    if (!on && cb_ssl->currentIndex() == cb_ssl->findData(UserAccount::SSL_Legacy)) {
-        cb_ssl->setCurrentIndex(cb_ssl->findData(UserAccount::SSL_Auto));
+    if (!on && cb_ssl->currentIndex() == cb_ssl->findData(UserAccount::Direct_TLS)) {
+        cb_ssl->setCurrentIndex(cb_ssl->findData(UserAccount::TLS_Auto));
     }
 }
 

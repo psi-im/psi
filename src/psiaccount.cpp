@@ -1609,7 +1609,7 @@ void PsiAccount::login()
 
     const bool tlsSupported             = QCA::isSupported("tls");
     const bool keyStoreManagerAvailable = !QCA::KeyStoreManager().isBusy();
-    if (d->acc.ssl == UserAccount::SSL_Yes || d->acc.ssl == UserAccount::SSL_Legacy) {
+    if (d->acc.ssl == UserAccount::TLS_Yes || d->acc.ssl == UserAccount::Direct_TLS) {
         if (!tlsSupported) {
             QString title;
             if (d->psi->contactList()->enabledAccounts().count() > 1) {
@@ -1642,24 +1642,6 @@ void PsiAccount::login()
 #endif
     updateClientVersionInfo();
 
-    if (d->acc.legacy_ssl_probe) {
-        // disable the feature and display a notice
-        d->acc.legacy_ssl_probe = false;
-        emit updatedAccount();
-
-        QString title;
-        if (d->psi->contactList()->enabledAccounts().count() > 1) {
-            title = QString("%1: ").arg(name());
-        }
-        title += tr("Feature Removed");
-        QString message = tr("This account was configured to use the \"Probe legacy SSL port\" feature, but this "
-                             "feature is no longer supported. Unless your XMPP server is very outdated, this change "
-                             "should not affect you. If you have trouble connecting, please review your account "
-                             "settings for correctness or contact your XMPP server administrator.");
-
-        psi()->alertManager()->raiseMessageBox(AlertManager::ConnectionError, QMessageBox::Information, title, message);
-    }
-
     d->jid = d->nextJid;
 
     v_isActive      = true;
@@ -1686,7 +1668,7 @@ void PsiAccount::login()
 
     // stream
     d->conn = new AdvancedConnector;
-    if (d->acc.ssl != UserAccount::SSL_No && tlsSupported && keyStoreManagerAvailable) {
+    if (d->acc.ssl != UserAccount::TLS_No && tlsSupported && keyStoreManagerAvailable) {
         d->tls = new QCA::TLS;
         d->tls->setTrustedCertificates(CertificateHelpers::allCertificates(ApplicationInfo::getCertificateStoreDirs()));
         d->tlsHandler = new QCATLSHandler(d->tls);
@@ -1694,10 +1676,10 @@ void PsiAccount::login()
         connect(d->tlsHandler, &QCATLSHandler::tlsHandshaken, this, &PsiAccount::tls_handshaken);
     }
     d->conn->setProxy(p);
-    d->conn->setOptTlsSrv(d->acc.ssl == UserAccount::SSL_Auto || d->acc.ssl == UserAccount::SSL_Yes);
+    d->conn->setOptTlsSrv(d->acc.ssl == UserAccount::TLS_Auto || d->acc.ssl == UserAccount::TLS_Yes);
     if (useHost) {
         d->conn->setOptHostPort(host, quint16(port));
-        d->conn->setOptSSL(d->acc.ssl == UserAccount::SSL_Legacy);
+        d->conn->setOptSSL(d->acc.ssl == UserAccount::Direct_TLS);
     }
 
     d->stream = new ClientStream(d->conn, d->tlsHandler);
@@ -2018,7 +2000,7 @@ void PsiAccount::cs_warning(int w)
     if (w == ClientStream::WarnSMReconnection)
         return;
 
-    bool showNoTlsWarning = w == ClientStream::WarnNoTLS && d->acc.ssl == UserAccount::SSL_Yes;
+    bool showNoTlsWarning = w == ClientStream::WarnNoTLS && d->acc.ssl == UserAccount::TLS_Yes;
     bool doCleanupStream  = !d->stream || showNoTlsWarning;
 
     if (doCleanupStream) {

@@ -191,9 +191,8 @@ void AccountRemoveDlg::remove()
 
     QString pass = le_pass->text();
     Jid     j(Jid(d->acc.jid).withResource(d->acc.resource));
-    client->connectToServer(j, d->acc.legacy_ssl_probe, d->acc.ssl == UserAccount::SSL_Legacy,
-                            d->acc.ssl == UserAccount::SSL_Yes, d->acc.opt_host ? d->acc.host : QString(), d->acc.port,
-                            d->acc.proxyID, &pass);
+    client->connectToServer(j, d->acc.ssl == UserAccount::Direct_TLS, d->acc.ssl == UserAccount::TLS_Yes,
+                            d->acc.opt_host ? d->acc.host : QString(), d->acc.port, d->acc.proxyID, &pass);
 }
 
 void AccountRemoveDlg::client_handshaken()

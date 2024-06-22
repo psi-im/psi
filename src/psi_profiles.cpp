@@ -65,9 +65,8 @@ void UserAccount::reset()
     customAuth                = false;
     storeSaltedHashedPassword = false;
     req_mutual_auth           = false;
-    legacy_ssl_probe          = false;
     security_level            = QCA::SL_None;
-    ssl                       = SSL_Auto;
+    ssl                       = TLS_Auto;
     jid                       = "";
     pass                      = "";
     scramSaltedHashPassword   = "";
@@ -137,7 +136,6 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
     opt_useProxyForUpload  = o->getOption(base + ".use-proxy-for-upload", true).toBool();
     opt_compress           = o->getOption(base + ".compress").toBool();
     req_mutual_auth        = o->getOption(base + ".require-mutual-auth").toBool();
-    legacy_ssl_probe       = o->getOption(base + ".legacy-ssl-probe").toBool();
     opt_automatic_resource = o->getOption(base + ".automatic-resource").toBool();
     priority_dep_on_status = o->getOption(base + ".priority-depends-on-status", false).toBool();
     ignore_global_actions  = o->getOption(base + ".ignore-global-actions").toBool();
@@ -179,15 +177,15 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 
     tmp = o->getOption(base + ".ssl").toString();
     if (tmp == "no") {
-        ssl = SSL_No;
+        ssl = TLS_No;
     } else if (tmp == "yes") {
-        ssl = SSL_Yes;
+        ssl = TLS_Yes;
     } else if (tmp == "auto") {
-        ssl = SSL_Auto;
+        ssl = TLS_Auto;
     } else if (tmp == "legacy") {
-        ssl = SSL_Legacy;
+        ssl = Direct_TLS;
     } else {
-        ssl = SSL_Yes;
+        ssl = TLS_Yes;
     }
 
     host = o->getOption(base + ".host").toString();
@@ -296,7 +294,6 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
     o->setOption(base + ".use-proxy-for-upload", opt_useProxyForUpload);
     o->setOption(base + ".compress", opt_compress);
     o->setOption(base + ".require-mutual-auth", req_mutual_auth);
-    o->setOption(base + ".legacy-ssl-probe", legacy_ssl_probe);
     o->setOption(base + ".automatic-resource", opt_automatic_resource);
     o->setOption(base + ".priority-depends-on-status", priority_dep_on_status);
     o->setOption(base + ".ignore-global-actions", ignore_global_actions);
@@ -331,16 +328,16 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
     o->setOption(base + ".use-host", opt_host);
     o->setOption(base + ".security-level", security_level);
     switch (ssl) {
-    case SSL_No:
+    case TLS_No:
         o->setOption(base + ".ssl", "no");
         break;
-    case SSL_Yes:
+    case TLS_Yes:
         o->setOption(base + ".ssl", "yes");
         break;
-    case SSL_Auto:
+    case TLS_Auto:
         o->setOption(base + ".ssl", "auto");
         break;
-    case SSL_Legacy:
+    case Direct_TLS:
         o->setOption(base + ".ssl", "legacy");
         break;
     default:
