@@ -86,6 +86,12 @@ QString ChatViewCommon::getMucNickColor(const QString &nick, bool isSelf)
     return QLatin1String("#000000"); // FIXME it's bad for fallback color
 }
 
+void ChatViewCommon::addUser(const QString &nickname) { }
+
+void ChatViewCommon::removeUser(const QString &nickname) { }
+
+void ChatViewCommon::renameUser(const QString &oldNickname, const QString &newNickname) { }
+
 QList<QColor> &ChatViewCommon::generatePalette()
 {
     static QColor        bg;
@@ -120,4 +126,35 @@ bool ChatViewCommon::compatibleColors(const QColor &c1, const QColor &c2)
     double dC = sqrt(0.2126 * dR * dR + 0.7152 * dG * dG + 0.0722 * dB * dB);
 
     return !((dC < 80. && dV > 100) || (dC < 110. && dV <= 100 && dV > 10) || (dC < 125. && dV <= 10));
+}
+
+const QMap<QString, QStringList> &
+ChatViewCommon::updateReactions(const QString &senderNickname, const QString &messageId, const QSet<QString> &reactions)
+{
+    auto          msgIt = _reactions.find(messageId);
+    QSet<QString> toAdd = reactions;
+    QSet<QString> toRemove;
+
+    QHash<QString, QSet<QString>>::Iterator userIt;
+    if (msgIt != _reactions.end()) {
+        auto &sotredReactions = msgIt.value();
+        userIt                = sotredReactions.perUser.find(senderNickname);
+        if (userIt != sotredReactions.perUser.end()) {
+            toAdd    = reactions - userIt.value();
+            toRemove = userIt.value() - reactions;
+        } else {
+            userIt = sotredReactions.perUser.insert(senderNickname, {});
+        }
+    } else {
+        msgIt  = _reactions.insert(messageId, {});
+        userIt = msgIt.value().perUser.insert(senderNickname, {});
+    }
+    *userIt = reactions;
+    for (auto const &v : toAdd) {
+        msgIt.value().total[v].append(senderNickname);
+    }
+    for (auto const &v : toRemove) {
+        msgIt.value().total[v].removeOne(senderNickname);
+    }
+    return msgIt.value().total;
 }

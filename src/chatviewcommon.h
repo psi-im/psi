@@ -39,13 +39,27 @@ public:
     QList<QColor>           getPalette();
 
 protected:
+    struct Reactions {
+        QMap<QString, QStringList>    total;   // unicode reaction => nicknames
+        QHash<QString, QSet<QString>> perUser; // nickname => unicode reactions
+    };
+
+    void addUser(const QString &nickname);
+    void removeUser(const QString &nickname);
+    void renameUser(const QString &oldNickname, const QString &newNickname);
+
+    const QMap<QString, QStringList> &updateReactions(const QString &senderNickname, const QString &messageId,
+                                               const QSet<QString> &reactions);
+
+protected:
     QDateTime _lastMsgTime;
 
 private:
-    QList<QColor>     &generatePalette();
-    bool               compatibleColors(const QColor &, const QColor &);
-    int                _nickNumber;
-    QMap<QString, int> _nicks;
+    QList<QColor>            &generatePalette();
+    bool                      compatibleColors(const QColor &, const QColor &);
+    int                       _nickNumber;
+    QMap<QString, int>        _nicks;
+    QHash<QString, Reactions> _reactions; // messageId -> reactions
 };
 
 #endif // CHATVIEWBASE_H

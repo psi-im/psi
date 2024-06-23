@@ -73,7 +73,7 @@ public:
                                       const QString &statusText = QString());
     static MessageView nickChangeMessage(const QString &nick, const QString &newNick);
     static MessageView reactionsMessage(const QString &nick, const QString &targetMessageId,
-                                        const QStringList &reactions);
+                                        const QSet<QString> &reactions);
 
     inline Type           type() const { return _type; }
     inline const QString &text() const { return _text; }
@@ -128,10 +128,8 @@ public:
     inline XMPP::Message::CarbonDir        carbonDirection() const { return _carbon; }
     inline void                            addReference(FileSharingItem *fsi) { _references.append(fsi); }
     inline const QList<FileSharingItem *> &references() const { return _references; }
-    inline void                            setReactions(const QStringList &r) { _reactions = r; }
-    inline const QStringList              &reactions() const { return _reactions; }
-
-    QVariantMap toVariantMap(bool isMuc, bool formatted = false) const;
+    inline void                            setReactions(const QSet<QString> &r) { _reactions = r; }
+    inline const QSet<QString>            &reactions() const { return _reactions; }
 
 private:
     Type                     _type;
@@ -150,7 +148,7 @@ private:
     QString                  _reactionsId;
     XMPP::Message::CarbonDir _carbon;
     QList<FileSharingItem *> _references;
-    QStringList              _reactions;
+    QSet<QString>            _reactions;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(MessageView::Flags)

@@ -93,7 +93,7 @@ MessageView MessageView::nickChangeMessage(const QString &nick, const QString &n
 }
 
 MessageView MessageView::reactionsMessage(const QString &nick, const QString &targetMessageId,
-                                          const QStringList &reactions)
+                                          const QSet<QString> &reactions)
 {
     MessageView mv(Reactions);
     mv.setNick(nick);
@@ -173,88 +173,3 @@ QString MessageView::formattedUserText() const
 }
 
 bool MessageView::hasStatus() const { return _type == Status || _type == MUCJoin; }
-
-QVariantMap MessageView::toVariantMap(bool isMuc, bool formatted) const
-{
-    static QHash<Type, QString> types;
-    if (types.isEmpty()) {
-        types.insert(Message, "message");
-        types.insert(System, "system");
-        types.insert(Status, "status");
-        types.insert(Subject, "subject");
-        types.insert(Urls, "urls");
-        types.insert(MUCJoin, "join");
-        types.insert(MUCPart, "part");
-        types.insert(FileTransferRequest, "ftreq");
-        types.insert(FileTransferFinished, "ftfin");
-        types.insert(NickChange, "newnick");
-        types.insert(Reactions, "reactions");
-    }
-    QVariantMap m;
-    m["time"] = _dateTime;
-    m["type"] = types.value(_type);
-    switch (_type) {
-    case Message:
-        m["message"] = formatted ? formattedText() : _text;
-        m["emote"]   = isEmote();
-        m["local"]   = isLocal();
-        m["sender"]  = _nick;
-        m["userid"]  = _userId;
-        m["spooled"] = isSpooled();
-        m["id"]      = _messageId;
-        if (isMuc) { // maybe w/o conditions ?
-            m["alert"] = isAlert();
-        } else {
-            m["awaitingReceipt"] = isAwaitingReceipt();
-        }
-        if (_references.count()) {
-            QVariantMap rvm;
-            for (auto const &r : _references) {
-                auto md = r->metaData();
-                md.insert("type", r->mimeType());
-                rvm.insert(r->sums()[0].toString(), md);
-            }
-            m["references"] = rvm;
-        }
-        break;
-    case NickChange:
-        m["sender"]  = _nick;
-        m["newnick"] = _userText;
-        m["message"] = _text;
-        break;
-    case MUCJoin:
-    case MUCPart:
-        m["nopartjoin"] = isJoinLeaveHidden();
-        PSI_FALLSTHROUGH; // falls through
-    case Status:
-        m["sender"]   = _nick;
-        m["status"]   = _status;
-        m["priority"] = _statusPriority;
-        m["message"]  = _text;
-        m["usertext"] = formatted ? formattedUserText() : _userText;
-        m["nostatus"] = isStatusChangeHidden(); // looks strange? but chatview can use status for something anyway
-        break;
-    case System:
-    case Subject:
-        m["message"]  = formatted ? formattedText() : _text;
-        m["usertext"] = formatted ? formattedUserText() : _userText;
-        break;
-    case Urls: {
-        QVariantMap vmUrls;
-        for (auto it = _urls.constBegin(); it != _urls.constEnd(); ++it) {
-            vmUrls.insert(it.key(), it.value());
-        }
-        m["urls"] = vmUrls;
-        break;
-    }
-    case Reactions:
-        m["sender"]    = _nick;
-        m["reactions"] = _reactions;
-        m["targetid"]  = _reactionsId;
-        break;
-    case FileTransferRequest:
-    case FileTransferFinished:
-        break;
-    }
-    return m;
-}
