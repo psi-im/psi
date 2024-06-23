@@ -31,6 +31,7 @@
     <os>Linux</os>
     <os>macOS</os>
     <os>FreeBSD</os>
+    <os>NetBSD</os>
     <os>Windows</os>
     <os>Haiku</os>
 
