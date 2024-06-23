@@ -23,6 +23,7 @@
 
 #include <QApplication>
 #include <QRegularExpression>
+#include <QSet>
 #include <QWidget>
 #include <math.h>
 
