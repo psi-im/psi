@@ -9,7 +9,7 @@ This program is licensed under the GNU General Public License. See the [COPYING]
 
 ## Description
 
-Psi is an XMPP client designed for experienced users. It is highly portable and runs on GNU/Linux, MS Windows, macOS, FreeBSD and Haiku.
+Psi is an XMPP client designed for experienced users. It is highly portable and runs on GNU/Linux, MS Windows, macOS, FreeBSD, NetBSD and Haiku.
 
 User interface of program is very flexible in customization. For example, there are "multi windows" and "all in one" modes, support of different iconsets and themes. Psi supports file sharing and audio/video calls. Security is also a major consideration, and Psi provides it for both client-to-server (TLS) and client-to-client (OpenPGP, OTR, OMEMO) via appropriate plugins.
 
@@ -30,7 +30,7 @@ See [CHANGELOG](https://github.com/psi-im/psi/blob/master/CHANGELOG) file.
 
 For build from sources see [INSTALL](https://github.com/psi-im/psi/blob/master/INSTALL.md) file.
 
-GNU/Linux and FreeBSD users may install [packages](https://github.com/psi-im/psi#packages-and-installers) from official and unofficial repositories, ports, etc.
+GNU/Linux and *BSD users may install [packages](https://github.com/psi-im/psi#packages-and-installers) from official and unofficial repositories, ports, etc.
 
 macOS users may install and update official builds using [Homebrew](https://brew.sh/) cask:
 
