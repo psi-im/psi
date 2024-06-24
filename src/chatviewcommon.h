@@ -44,12 +44,18 @@ protected:
         QHash<QString, QSet<QString>> perUser; // nickname => unicode reactions
     };
 
+    struct ReactionsItem {
+        QString     base;
+        QString     code;
+        QStringList nicks;
+    };
+
     void addUser(const QString &nickname);
     void removeUser(const QString &nickname);
     void renameUser(const QString &oldNickname, const QString &newNickname);
 
-    const QMap<QString, QStringList> &updateReactions(const QString &senderNickname, const QString &messageId,
-                                               const QSet<QString> &reactions);
+    QList<ReactionsItem> updateReactions(const QString &senderNickname, const QString &messageId,
+                                         const QSet<QString> &reactions);
 
 protected:
     QDateTime _lastMsgTime;

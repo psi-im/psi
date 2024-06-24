@@ -129,7 +129,7 @@ bool ChatViewCommon::compatibleColors(const QColor &c1, const QColor &c2)
     return !((dC < 80. && dV > 100) || (dC < 110. && dV <= 100 && dV > 10) || (dC < 125. && dV <= 10));
 }
 
-const QMap<QString, QStringList> &
+QList<ChatViewCommon::ReactionsItem>
 ChatViewCommon::updateReactions(const QString &senderNickname, const QString &messageId, const QSet<QString> &reactions)
 {
     auto          msgIt = _reactions.find(messageId);
@@ -157,5 +157,14 @@ ChatViewCommon::updateReactions(const QString &senderNickname, const QString &me
     for (auto const &v : toRemove) {
         msgIt.value().total[v].removeOne(senderNickname);
     }
-    return msgIt.value().total;
+    auto &total = msgIt.value().total;
+
+    QList<ReactionsItem> ret;
+    for (auto it = total.begin(); it != total.end(); ++it) {
+        static const auto skinRemove = QRegularExpression("([\\x{1F3FB}-\\x{1F3FF}]|[\\x{1F9B0}-\\x{1F9B2}])");
+        QString           orig       = it.key();
+        auto              sanitized  = orig.remove(skinRemove);
+        ret << ReactionsItem { sanitized != orig ? sanitized : QString {}, orig, it.value() };
+    }
+    return ret;
 }

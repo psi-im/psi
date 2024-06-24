@@ -697,15 +697,18 @@ void ChatView::dispatchMessage(const MessageView &mv)
         m["sender"]    = mv.nick();
         m["messageid"] = mv.reactionsId();
         {
-            auto r   = updateReactions(mv.nick(), mv.reactionsId(), mv.reactions());
-            auto vmr = QVariantMap();
-
-            QMapIterator<QString, QStringList> it(r);
-            while (it.hasNext()) {
-                it.next();
-                vmr[it.key()] = it.value();
+            auto rl = updateReactions(mv.nick(), mv.reactionsId(), mv.reactions());
+            auto vl = QVariantList();
+            for (auto &r : std::as_const(rl)) {
+                auto vmr = QVariantMap();
+                if (!r.base.isEmpty()) {
+                    vmr[QLatin1String("base")] = r.base;
+                }
+                vmr[QLatin1String("text")]  = r.code;
+                vmr[QLatin1String("nicks")] = r.nicks;
+                vl << vmr;
             }
-            m["reactions"] = vmr;
+            m[QLatin1String("reactions")] = vl;
         }
         break;
     case MessageView::FileTransferRequest:
