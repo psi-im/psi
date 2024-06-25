@@ -30,7 +30,7 @@ available_reactions = [
 
 var prevMessage = {
     "type": undefined,
-    "nick": undefined,
+    "sender": undefined,
 };
 
 var applyPsiSettings = function() {
@@ -42,7 +42,7 @@ shared.initTheme({
     templates : {},
     dateFormat : "HH:mm:ss",
     proxy : function() { //optional
-        shared.chat.console(shared.cdata);
+        //shared.chat.console(shared.cdata);
         render(shared.cdata);
         return false;
     }
@@ -173,7 +173,7 @@ function show_context_menu(x, y, items) {
 
 function render_message(event) {
     let classes = ["msg"];
-    if (prevMessage["type"] == "message" && prevMessage["nick"] == event["nick"]) {
+    if (prevMessage["type"] == "message" && prevMessage["sender"] == event["sender"]) {
         classes.push("grnext")
     }
     let nickControl = "";
@@ -183,10 +183,9 @@ function render_message(event) {
         nickControl = `<div class="reply">Reply</div>`;
     }
     classes = classes.join(" ");
-    //const avatar = new Option(avatars[event["nick"]]).innerHTML;
-    const nickHtml = new Option(event["nick"]).innerHTML;
-    const nickAttr = encodeURIComponent(event["nick"]);
-    let msgtext = new Option(event["text"]).innerHTML.replace("\n", "<br/>");
+    //const avatar = new Option(avatars[event["sender"]]).innerHTML;
+    const nickHtml = new Option(event["sender"]).innerHTML;
+    const nickAttr = encodeURIComponent(event["sender"]);
     let quoteMsg = null;
     let quoteTxt = "";
     if (event.reply) {
@@ -206,7 +205,7 @@ ${nickControl}
 </div>
 <span class="time">${time}</span>
 ${quoteTxt}
-<span class="msgtext">${msgtext}</span>
+<span class="msgtext">${event["message"]}</span>
 </div>`);
     document.body.appendChild(el);
     let shared_timer = {}
@@ -269,7 +268,7 @@ function render_reactions(event) {
 }
 
 function render_system(event) {
-    let text = new Option(event["text"]).innerHTML;
+    let text = new Option(event["message"]).innerHTML;
     if (event["usertext"]) {
         let usertext = event["usertext"].replaceAll("\n", "<br/>");
         document.body.appendChild(fromHTML(`<div class="sysmsg">${text}<div class="usertext">${usertext}</div></div>`));
@@ -279,18 +278,21 @@ function render_system(event) {
 }
 
 function render(event) {
-    switch (event["type"]) {
-        case "message": render_message(event); break;
-        case "reactions": render_reactions(event); break;
-        case "system": render_system(event); break;
+    if (event["type"] == "message") {
+        switch (event["mtype"]) {
+            case "message": render_message(event); break;
+            case "system": render_system(event); break;
+        }
+        if (event.mtype === "message" || event.mtype === "system") {
+            prevMessage = {
+                "type": event["type"],
+                "sender": event["sender"],
+            };
+        }
+         document.documentElement.scrollTo({ "top": document.documentElement.scrollHeight, "behavior": "smooth" })
+    } else if (event["type"] == "reactions") {
+        render_reactions(event);
     }
-    if (event.type === "message" || event.type === "system") {
-        prevMessage = {
-            "type": event["type"],
-            "nick": event["nick"],
-        };
-    }
-    document.documentElement.scrollTo({ "top": document.documentElement.scrollHeight, "behavior": "smooth" })
 }
 
 setup_reactions_selector();
