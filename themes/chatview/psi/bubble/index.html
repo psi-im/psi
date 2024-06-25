@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Psi Bubble</title>
+%scripts%
+%styles%
+<script type="text/javascript">
+function startPsiTheme(shared) {
+
+var util = shared.chat.util;
+var themeStyle     = document.getElementById("themeStyle").sheet;
+var cssBody        = util.findStyleSheet(themeStyle, "body").style;
+
+available_reactions = [
+    "😂",
+    "🤣",
+    "🔥",
+    "👍",
+    "😭",
+    "🙏",
+    "❤️",
+    "😘",
+    "🥰",
+    "😍",
+    "😊",
+]
+
+var prevMessage = {
+    "type": undefined,
+    "nick": undefined,
+};
+
+var applyPsiSettings = function() {
+    util.getFont(function(cssFont){util.updateObject(cssBody, cssFont)});
+}
+
+shared.initTheme({
+    chatElement : document.body,
+    templates : {},
+    dateFormat : "HH:mm:ss",
+    proxy : function() { //optional
+        shared.chat.console(shared.cdata);
+        render(shared.cdata);
+        return false;
+    }
+});
+
+function fromHTML(html, trim = true) {
+    // Process the HTML string.
+    html = trim ? html.trim() : html;
+    if (!html) return null;
+
+    // Then set up a new template element.
+    const template = document.createElement('template');
+    template.innerHTML = html;
+    const result = template.content.children;
+
+    // Then return either an HTMLElement or HTMLCollection,
+    // based on whether the input HTML had one or more roots.
+    if (result.length === 1) return result[0];
+    return result;
+}
+
+function setup_reactions_selector() {
+    const rs = document.body.appendChild(document.createElement("div"));
+    rs.classList.add("reactions_selector");
+    rs.id = "reactions_selector";
+    available_reactions.forEach(emoji => {
+        const em = rs.appendChild(document.createElement("em"));
+        em.textContent = emoji;
+    });
+
+    rs.addEventListener("click", function (event) {
+        if (event.target.localName == "em") {
+            event.target.parentNode.style.display = "none";
+        }
+        event.stopPropagation();
+    });
+    rs.addEventListener("mouseleave", function (event) {
+        rs.style.display = "none";
+        event.stopPropagation();
+    });
+}
+
+function show_reactions_selector(nearEl, scrollEl) {
+    const rs = document.getElementById("reactions_selector");
+    const nbr = nearEl.getBoundingClientRect();
+    rs.style.top = (nbr.top + scrollEl.scrollTop) + "px";
+    rs.style.display = "flex";
+    const selectorRect = rs.getBoundingClientRect();
+    const scrollRect = scrollEl.getBoundingClientRect();
+    if (nbr.left + selectorRect.width > scrollRect.right) {
+        rs.style.left = (nbr.right - selectorRect.width) + "px";
+    } else {
+        rs.style.left = nbr.left + "px";
+    }
+}
+
+function setup_context_menu() {
+    document.addEventListener("contextmenu", function (event) {
+        const nick = event.target.getAttribute("data-nick");
+        let msgNode;
+        if (!nick) {
+            msgNode = event.target;
+            while (msgNode) {
+                if (msgNode.classList && msgNode.classList.contains("msg")) {
+                    break;
+                }
+                msgNode = msgNode.parentNode;
+            }
+        }
+        if (nick || msgNode) {
+            event.stopPropagation();
+            event.preventDefault();
+
+            let items;
+            if (nick) {
+                items = [
+                    { "id": "info", "text": "Info" },
+                    { "id": "private_chat", "text": "Open Chat" },
+                    { "id": "kick", "text": "Kick" }
+                ]
+            } else {
+                items = [
+                    { "id": "delete", "text": "Delete" },
+                    { "id": "reply", "text": "Reply" },
+                    { "id": "forward", "text": "Forward" },
+                    { "id": "copy", "text": "Copy" }
+                ]
+            }
+
+            show_context_menu(event.x, event.y + document.documentElement.scrollTop, items).then((id) => {
+                console.log(id + " selected");
+            }).catch(() => { });
+            return false;
+        }
+    });
+}
+
+function show_context_menu(x, y, items) {
+    if (window.activeMenu) {
+        window.activeMenu.destroyMenu();
+    }
+    const menu = document.body.appendChild(document.createElement("div"));
+    menu.classList.add("context_menu");
+    return new Promise((resolve, reject) => {
+        for (let i = 0; i < items.length; i++) {
+            const item = menu.appendChild(document.createElement("div"));
+            item.textContent = items[i].text;
+            item.menuItemId = items[i].id;
+            item.addEventListener("click", (event) => {
+                resolve(event.target.menuItemId);
+                event.stopPropagation();
+                menu.destroyMenu();
+            }, { "once": true });
+        }
+        menu.destroyMenu = () => {
+            document.body.removeEventListener("click", menu.destroyMenu);
+            menu.parentNode.removeChild(menu);
+            window.activeMenu = undefined;
+            reject();
+        };
+        document.body.addEventListener("click", menu.destroyMenu, { "once": true });
+
+        menu.style.top = y + "px";
+        menu.style.left = x + "px";
+        window.activeMenu = menu;
+    });
+}
+
+function render_message(event) {
+    let classes = ["msg"];
+    if (prevMessage["type"] == "message" && prevMessage["nick"] == event["nick"]) {
+        classes.push("grnext")
+    }
+    let nickControl = "";
+    if (event.local) {
+        classes.push("mymsg");
+    } else {
+        nickControl = `<div class="reply">Reply</div>`;
+    }
+    classes = classes.join(" ");
+    //const avatar = new Option(avatars[event["nick"]]).innerHTML;
+    const nickHtml = new Option(event["nick"]).innerHTML;
+    const nickAttr = encodeURIComponent(event["nick"]);
+    let msgtext = new Option(event["text"]).innerHTML.replace("\n", "<br/>");
+    let quoteMsg = null;
+    let quoteTxt = "";
+    if (event.reply) {
+        quoteMsg = document.getElementById(event.reply);
+        if (quoteMsg) {
+            const quoteNick = decodeURIComponent(quoteMsg.getAttribute("data-nick"));
+            const quoteText = quoteMsg.getElementsByClassName("msgtext")[0].innerHTML;
+            quoteTxt = `<blockquote><div>${quoteNick}</div>${quoteText}</blockquote>`;
+        }
+    }
+    const time = (new Date()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    let el = fromHTML(`<div class="${classes}" id="${event.id}" data-nick="${nickAttr}">
+<img class='avatar' src='%avatarurl%'/>
+<div class="msgheader">
+<span class="nick">${nickHtml}</span>
+${nickControl}
+</div>
+<span class="time">${time}</span>
+${quoteTxt}
+<span class="msgtext">${msgtext}</span>
+</div>`);
+    document.body.appendChild(el);
+    let shared_timer = {}
+    el.addEventListener("mouseleave", function () {
+        if (shared_timer.timer) { // if we were going to show it
+            clearTimeout(shared_timer.timer);
+            shared_timer.timer = null;
+        } else {
+            const rs = el.getElementsByClassName("like_button")[0];
+            rs.parentNode.removeChild(rs);
+        }
+    });
+    el.addEventListener("mouseenter", function () {
+        shared_timer.timer = setTimeout(function () {
+            let selector = el.appendChild(document.createElement("div"));
+            selector.classList.add("like_button");
+            selector.textContent = "❤️";
+            setTimeout(() => { selector.classList.add('noopacity'); }, 0);
+            shared_timer.timer = null;
+            selector.addEventListener("click", () => show_reactions_selector(selector, document.documentElement));
+        }, 500);
+    });
+    if (event.reply) {
+        const bq = el.getElementsByTagName("blockquote")[0];
+        if (bq) {
+            bq.addEventListener("click", () => { quoteMsg.scrollIntoView({ "behavior": "smooth", "block": "center" }) });
+        }
+    }
+}
+
+function render_reactions(event) {
+    const msg = document.getElementById(event.target);
+    if (!msg) {
+        return;
+    }
+    let reactions = msg.getElementsByClassName("reactions").item(0);
+    if (reactions) {
+        reactions.innerHTML = "";
+    } else {
+        reactions = document.createElement("reactions");
+        reactions.className = "reactions";
+        msg.appendChild(reactions);
+    }
+
+    let groupped = {}
+    for (let r = 0; r < event["reactions"].length; r++) {
+        const base = event["reactions"][r].base || event["reactions"][r].text;
+        groupped[base] = groupped[base] || {"text": "", "nicks": []};
+        groupped[base].nicks = groupped[base].nicks.concat(event["reactions"][r].nicks);
+        groupped[base].text += event["reactions"][r].text;
+    }
+
+    for (const [base, value] of Object.entries(groupped)) {
+        const nicks = value.nicks.sort().filter((x, i, a) => !i || x != a[i-1]);
+        const reaction = document.createElement("span");
+        reaction.innerHTML = `${nicks.length} <em>${value.text}</em>`;
+        reaction.title = nicks.join("\n");
+        reactions.appendChild(reaction);
+    }
+}
+
+function render_system(event) {
+    let text = new Option(event["text"]).innerHTML;
+    if (event["usertext"]) {
+        let usertext = event["usertext"].replaceAll("\n", "<br/>");
+        document.body.appendChild(fromHTML(`<div class="sysmsg">${text}<div class="usertext">${usertext}</div></div>`));
+    } else {
+        document.body.appendChild(fromHTML(`<div class="sysmsg">${text}</div>`));
+    }
+}
+
+function render(event) {
+    switch (event["type"]) {
+        case "message": render_message(event); break;
+        case "reactions": render_reactions(event); break;
+        case "system": render_system(event); break;
+    }
+    if (event.type === "message" || event.type === "system") {
+        prevMessage = {
+            "type": event["type"],
+            "nick": event["nick"],
+        };
+    }
+    document.documentElement.scrollTo({ "top": document.documentElement.scrollHeight, "behavior": "smooth" })
+}
+
+setup_reactions_selector();
+setup_context_menu();
+
+applyPsiSettings();
+
+shared.session.signalInited();
+}
+</script>
+    <style id="themeStyle">
+        html {
+            font-size: 12pt;
+        }
+
+        body {
+            width: 100%;
+            height: 100%;
+            padding: .5rem 0;
+            margin: 0;
+            box-sizing: border-box;
+            /*background: url(background.jpg);
+            background-attachment: fixed;
+            background-size: cover;*/
+            background: rgb(145,111,186);
+            background: linear-gradient(90deg, rgba(145,111,186,1) 0%, rgba(153,153,255,1) 37%, rgba(119,229,251,1) 100%);
+            color: black;
+            font-family: sans, times;
+            position: relative;
+            text-size-adjust: none;
+            -moz-text-size-adjust: none;
+            overflow-x: hidden;
+        }
+
+        .sysmsg {
+            background-color: rgb(122, 246, 246);
+            color: #444;
+            padding: .4rem 1rem;
+            width: 70%;
+            margin: 0 auto .5rem;
+            border-radius: 1rem;
+            text-align: center;
+            box-shadow: 0px 0px 0.5rem black;
+        }
+
+        .sysmsg .usertext {
+            text-align: left;
+            color: black;
+            word-break: break-word;
+        }
+
+        .msg {
+            margin: 0.5rem;
+            margin-left: 3rem;
+            padding: .5rem;
+            position: relative;
+            background-color: white;
+            border-radius: 0 .6rem .6rem .6rem;
+            box-shadow: 0px 0px 0.5rem black;
+            clip-path: inset(-0.5rem -5rem -0.5rem -5rem);
+            word-wrap: break-word !important;
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .msg::before {
+            width: 2rem;
+            height: 2rem;
+            border: .5rem solid white;
+            border-radius: 1.4rem;
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            margin-top: -0.6rem;
+            margin-left: -2.44rem;
+            display: inline-block;
+            z-index: -1;
+            clip: rect(0.6rem, 3rem, 1.5rem, 2rem);
+        }
+
+        .mymsg {
+            margin-left: 0.5rem;
+            margin-right: 3rem;
+            background-color: #ffd;
+            border-radius: .6rem 0 .6rem .6rem;
+            padding-top: .5rem;
+        }
+
+        .mymsg::before {
+            left: inherit;
+            right: 0;
+            margin-left: inherit;
+            margin-right: -2.44rem;
+            border-color: #ffc;
+            clip: rect(0.6rem, 2rem, 1.5rem, 0);
+        }
+
+        .msgheader {
+            display: block;
+            flex-basis: 100%;
+            position: relative;
+            height: 1.5em;
+        }
+
+        .nick {
+            padding-bottom: .3em;
+            display: inline-block;
+            cursor: pointer;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+
+        .reply {
+            display: inline-block;
+            content: "Reply";
+            font-weight: normal;
+            cursor: pointer;
+            position:absolute;
+            right: 0;
+            opacity: 0.1;
+            transition: opacity 0.3s linear;
+        }
+
+        .reply:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+
+        .mymsg .msgheader {
+            display: none;
+        }
+
+        .time {
+            order: 4;
+            right: .5rem;
+            font-size: .8rem;
+            color: #777;
+            align-items: flex-end;
+            margin-left: auto;
+            margin-top: auto;
+        }
+
+        .mymsg .time {
+            margin-top: inherit;
+            display: flex;
+            align-items: flex-end;
+            order: 2;
+        }
+
+        .avatar {
+            margin-left: -3rem;
+            font-size: 2.3rem;
+            top: 0;
+            left: 0;
+            position: absolute;
+        }
+
+        .mymsg .avatar {
+            margin-right: -3rem;
+            left: inherit;
+            right: 0;
+        }
+
+        .msgtext {
+            color: #111;
+            word-break: break-word;
+        }
+
+        .reactions:not(:empty) {
+            flex-basis: calc(100% - 4rem);
+        }
+
+        .reactions>span {
+            display: inline-block;
+            font-size: .8rem;
+            font-weight: bold;
+            border: 1px solid #aaa;
+            color: gray;
+            padding: .2rem .6rem;
+            border-radius: 1.3rem;
+            margin-top: .3rem;
+            margin-right: .5rem;
+            background-color: #00000008;
+            user-select: none;
+        }
+
+        .reactions>span>em {
+            font-style: normal;
+            cursor: pointer;
+        }
+
+        .like_button {
+            position: absolute;
+            bottom: .3rem;
+            left: -2.5rem;
+            width: 3rem;
+            height: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            padding-top: 1rem;
+            /*background-color: green;*/
+            opacity: 0;
+            transition: opacity 0.5s linear, bottom .5s, font-size .5s;
+            ;
+        }
+
+        .noopacity {
+            opacity: 1;
+        }
+
+        .like_button:hover {
+            font-size: 1.4rem;
+            bottom: .4rem;
+        }
+
+        .mymsg .like_button {
+            left: inherit;
+            right: -2.5rem;
+        }
+
+        .grnext {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: -0.15rem;
+            padding-top: 0.3rem;
+            border-top-right-radius: 0;
+            border-top-left-radius: 0;
+            /* We clip it like
+        _       _
+       | |_____| |
+       |         |
+       |_________|
+       where central part is for the text and everything else for the shadow.
+       this 0.08rem below together with margin-top: -0.15rem; is a workaround for
+       shadow clipping Google Chrome bug.
+    */
+            clip-path: polygon(0 0,
+                    0 -.5rem,
+                    -5rem -.5rem,
+                    -5rem calc(100% + .5rem),
+                    calc(100% + 5rem) calc(100% + .5rem),
+                    calc(100% + 5rem) -.5rem,
+                    100% -.5rem,
+                    100% 0.08rem,
+                    0 0.08rem);
+        }
+
+        .grnext .msgheader {
+            display: none;
+        }
+
+        .grnext .avatar {
+            display: none;
+        }
+
+        .grnext:before {
+            display: none;
+        }
+
+        .msg:has(+ .grnext) {
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+            margin-bottom: 0;
+            padding-bottom: .2rem;
+        }
+
+        blockquote {
+            background: #f0f0f080;
+            border: 0;
+            border-left: 3px solid #ccc;
+            margin: .5rem;
+            margin-top: 0;
+            padding: 0.5rem;
+            padding-top: 0;
+            border-radius: .2rem;
+            color: #444;
+            cursor: pointer;
+            flex-basis: 100%;
+        }
+
+        blockquote>div {
+            background: #ccc;
+            padding: .1rem .5rem;
+            font-weight: bold;
+            margin: 0 -.5rem .3rem;
+        }
+
+        .reactions_selector {
+            display: none;
+            position: absolute;
+            padding: .5rem;
+            margin-top: 1rem;
+            border-radius: 0.2rem;
+            background-color: #fafafa;
+            box-shadow: 0px 0px 0.5rem black;
+            flex-wrap: wrap;
+            z-index: 2;
+        }
+
+        .reactions_selector em {
+            font-style: normal;
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+
+        .context_menu {
+            position: absolute;
+            box-sizing: border-box;
+            flex-flow: column;
+            box-shadow: 0px 0px 0.5rem black;
+            border-radius: .3rem;
+            background-color: white;
+            z-index: 3;
+            overflow: hidden;
+        }
+
+        .context_menu>div {
+            box-sizing: border-box;
+            padding: .3rem .5rem;
+        }
+
+        .context_menu>div+div {
+            border-top: 1px dotted #aaa;
+        }
+
+        .context_menu>div:hover {
+            background-color: #ffa;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+</body>
+
+</html>
