@@ -39,12 +39,81 @@ var applyPsiSettings = function() {
 
 shared.initTheme({
     chatElement : document.body,
-    templates : {},
+    templates : {
+        message: `<div class="%msgClasses%" id="%id%" data-nick="%escapeURI{sender}%">
+<img class='avatar' src='%avatarurl%'/>
+<div class="msgheader">
+<span class="nick">%sender%</span>
+%nickControl%
+</div>
+<span class="time" title="%time{LL}%">%time%</span>
+%quoteTxt%
+<span class="msgtext">%message%</span>
+</div>`,
+        sys: `<div class="sysmsg" title="%time{LL}%">%message%</div>`,
+        sysMessageUT: `<div class="sysmsg" title="%time{LL}%">%message%<div class="usertext">%usertext%</div></div>`
+    },
     dateFormat : "HH:mm:ss",
     proxy : function() { //optional
-        //shared.chat.console(shared.cdata);
-        render(shared.cdata);
-        return false;
+        if (shared.cdata.type == "reactions") {
+            render_reactions(shared.cdata);
+            return false;
+        }
+    },
+    varHandlers : {
+        msgClasses: function() {
+            let classes = ["msg"];
+            if (prevMessage["type"] == "message" && prevMessage["sender"] == shard.cdata.sender) {
+                classes.push("grnext")
+            }
+            if (shared.cdata.local) {
+                classes.push("mymsg");
+            }
+            return classes.join(" ");
+        },
+        nickControl: function() {
+            return shared.cdata.local? "": `<div class="reply">Reply</div>`;
+        },
+        quoteTxt: function() {
+            if (!shared.cdata.reply) {
+                return "";
+            }
+            const quoteMsg = document.getElementById(shared.cdata.reply);
+            if (quoteMsg) {
+                const quoteNick = util.escapeHtml(decodeURIComponent(quoteMsg.getAttribute("data-nick")));
+                const quoteText = quoteMsg.getElementsByClassName("msgtext")[0].innerHTML;
+                return `<blockquote><div>${quoteNick}</div>${quoteText}</blockquote>`;
+            }
+            return "";
+        }
+    },
+    postProcess: function(el) {
+        let shared_timer = {}
+        el.addEventListener("mouseleave", function () {
+            if (shared_timer.timer) { // if we were going to show it
+                clearTimeout(shared_timer.timer);
+                shared_timer.timer = null;
+            } else {
+                const rs = el.getElementsByClassName("like_button")[0];
+                rs.parentNode.removeChild(rs);
+            }
+        });
+        el.addEventListener("mouseenter", function () {
+            shared_timer.timer = setTimeout(function () {
+                let selector = el.appendChild(document.createElement("div"));
+                selector.classList.add("like_button");
+                selector.textContent = "❤️";
+                setTimeout(() => { selector.classList.add('noopacity'); }, 0);
+                shared_timer.timer = null;
+                selector.addEventListener("click", () => show_reactions_selector(selector, document.documentElement));
+            }, 500);
+        });
+        if (shared.cdata.reply) {
+            const bq = el.getElementsByTagName("blockquote")[0];
+            if (bq) {
+                bq.addEventListener("click", () => { quoteMsg.scrollIntoView({ "behavior": "smooth", "block": "center" }) });
+            }
+        }
     }
 });
 
@@ -171,70 +240,6 @@ function show_context_menu(x, y, items) {
     });
 }
 
-function render_message(event) {
-    let classes = ["msg"];
-    if (prevMessage["type"] == "message" && prevMessage["sender"] == event["sender"]) {
-        classes.push("grnext")
-    }
-    let nickControl = "";
-    if (event.local) {
-        classes.push("mymsg");
-    } else {
-        nickControl = `<div class="reply">Reply</div>`;
-    }
-    classes = classes.join(" ");
-    //const avatar = new Option(avatars[event["sender"]]).innerHTML;
-    const nickHtml = new Option(event["sender"]).innerHTML;
-    const nickAttr = encodeURIComponent(event["sender"]);
-    let quoteMsg = null;
-    let quoteTxt = "";
-    if (event.reply) {
-        quoteMsg = document.getElementById(event.reply);
-        if (quoteMsg) {
-            const quoteNick = decodeURIComponent(quoteMsg.getAttribute("data-nick"));
-            const quoteText = quoteMsg.getElementsByClassName("msgtext")[0].innerHTML;
-            quoteTxt = `<blockquote><div>${quoteNick}</div>${quoteText}</blockquote>`;
-        }
-    }
-    const time = (new Date()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    let el = fromHTML(`<div class="${classes}" id="${event.id}" data-nick="${nickAttr}">
-<img class='avatar' src='%avatarurl%'/>
-<div class="msgheader">
-<span class="nick">${nickHtml}</span>
-${nickControl}
-</div>
-<span class="time">${time}</span>
-${quoteTxt}
-<span class="msgtext">${event["message"]}</span>
-</div>`);
-    document.body.appendChild(el);
-    let shared_timer = {}
-    el.addEventListener("mouseleave", function () {
-        if (shared_timer.timer) { // if we were going to show it
-            clearTimeout(shared_timer.timer);
-            shared_timer.timer = null;
-        } else {
-            const rs = el.getElementsByClassName("like_button")[0];
-            rs.parentNode.removeChild(rs);
-        }
-    });
-    el.addEventListener("mouseenter", function () {
-        shared_timer.timer = setTimeout(function () {
-            let selector = el.appendChild(document.createElement("div"));
-            selector.classList.add("like_button");
-            selector.textContent = "❤️";
-            setTimeout(() => { selector.classList.add('noopacity'); }, 0);
-            shared_timer.timer = null;
-            selector.addEventListener("click", () => show_reactions_selector(selector, document.documentElement));
-        }, 500);
-    });
-    if (event.reply) {
-        const bq = el.getElementsByTagName("blockquote")[0];
-        if (bq) {
-            bq.addEventListener("click", () => { quoteMsg.scrollIntoView({ "behavior": "smooth", "block": "center" }) });
-        }
-    }
-}
 
 function render_reactions(event) {
     const msg = document.getElementById(event.target);
@@ -264,34 +269,6 @@ function render_reactions(event) {
         reaction.innerHTML = `${nicks.length} <em>${value.text}</em>`;
         reaction.title = nicks.join("\n");
         reactions.appendChild(reaction);
-    }
-}
-
-function render_system(event) {
-    let text = new Option(event["message"]).innerHTML;
-    if (event["usertext"]) {
-        let usertext = event["usertext"].replaceAll("\n", "<br/>");
-        document.body.appendChild(fromHTML(`<div class="sysmsg">${text}<div class="usertext">${usertext}</div></div>`));
-    } else {
-        document.body.appendChild(fromHTML(`<div class="sysmsg">${text}</div>`));
-    }
-}
-
-function render(event) {
-    if (event["type"] == "message") {
-        switch (event["mtype"]) {
-            case "message": render_message(event); break;
-            case "system": render_system(event); break;
-        }
-        if (event.mtype === "message" || event.mtype === "system") {
-            prevMessage = {
-                "type": event["type"],
-                "sender": event["sender"],
-            };
-        }
-         document.documentElement.scrollTo({ "top": document.documentElement.scrollHeight, "behavior": "smooth" })
-    } else if (event["type"] == "reactions") {
-        render_reactions(event);
     }
 }
 
@@ -450,6 +427,7 @@ shared.session.signalInited();
             top: 0;
             left: 0;
             position: absolute;
+            max-width: 2.3rem;
         }
 
         .mymsg .avatar {

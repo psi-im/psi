@@ -407,12 +407,16 @@ function initPsiTheme() {
 
             appendHtml : function(dest, html, sender) {
                 chat.util.prepareContents(html, sender);
+                var firstAdded = htmlSource.firstChild;
                 while (htmlSource.firstChild) dest.appendChild(htmlSource.firstChild);
+                return firstAdded;
             },
 
             siblingHtml : function(dest, html, sourceUser) {
                 chat.util.prepareContents(html, sourceUser);
+                var firstAdded = htmlSource.firstChild;
                 while (htmlSource.firstChild) dest.parentNode.insertBefore(htmlSource.firstChild, dest);
+                return firstAdded;
             },
 
             ensureDeleted : function(id) {
@@ -465,8 +469,8 @@ function initPsiTheme() {
                 // if we have an id then this is a replacable message.
                 // next weird logic is as follows:
                 //   - wrapping to some element may break elements flow
-                //   - using well know elements may break styles
-                //   - setting just starting mark is useless (we will never find correct end)
+                //   - using well known elements may break styles
+                //   - setting just starting mark is useless (we will never find the correct end)
                 var uniqId;
                 if (isMuc) {
                     var u = usersMap[nick];
