@@ -803,11 +803,13 @@ function initPsiTheme() {
 
                 var totalScrollY = 0;
                 var el = event.target;
-                while (el && el.scrollTop !== undefined) {
-                    totalScrollY += el.scrollTop;
+                while (el) {
+                    if (el.scrollTop !== undefined) {
+                        totalScrollY += el.scrollTop;
+                    }
                     el = el.parentNode;
                 }
-                menu.show(event.x, event.y + 0/*totalScrollY*/, all_items).catch(()=>{});
+                menu.show(event.x, event.y + totalScrollY, all_items).catch(()=>{});
             });
         },
 

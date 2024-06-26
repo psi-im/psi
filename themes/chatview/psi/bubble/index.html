@@ -245,7 +245,7 @@ shared.session.signalInited();
         .msg::before {
             width: 2rem;
             height: 2rem;
-            border: .5rem solid white;
+            border: .5rem solid #f0f0f0;
             border-radius: 1.4rem;
             content: "";
             position: absolute;
@@ -275,8 +275,12 @@ shared.session.signalInited();
             right: 0;
             margin-left: inherit;
             margin-right: -2.44rem;
-            border-color: #ffc;
+            border-color: #ffd;
             clip: rect(0.6rem, 2rem, 1.5rem, 0);
+        }
+
+        .mymsg:hover::before {
+            border-color: #ffe;
         }
 
         .msgheader {
