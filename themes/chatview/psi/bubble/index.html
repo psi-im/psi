@@ -13,34 +13,14 @@ function startPsiTheme(shared) {
 var util = shared.chat.util;
 var themeStyle     = document.getElementById("themeStyle").sheet;
 var cssBody        = util.findStyleSheet(themeStyle, "body").style;
-
-available_reactions = [
-    "😂",
-    "🤣",
-    "🔥",
-    "👍",
-    "😭",
-    "🙏",
-    "❤️",
-    "😘",
-    "🥰",
-    "😍",
-    "😊",
-]
-
-var prevMessage = {
-    "type": undefined,
-    "sender": undefined,
-};
+const reactionsSelector = new shared.chat.ReactionsSelector();
+const chatMenu = new shared.chat.ContextMenu();
 
 var applyPsiSettings = function() {
     util.getFont(function(cssFont){util.updateObject(cssBody, cssFont)});
 }
 
-shared.initTheme({
-    chatElement : document.body,
-    templates : {
-        message: `<div class="%msgClasses%" id="%id%" data-nick="%escapeURI{sender}%">
+const messageTemplate = `<div class="%msgClasses%" id="%id%" data-nick="%escapeURI{sender}%">
 <img class='avatar' src='%avatarurl%'/>
 <div class="msgheader">
 <span class="nick">%sender%</span>
@@ -49,11 +29,21 @@ shared.initTheme({
 <span class="time" title="%time{LL}%">%time%</span>
 %quoteTxt%
 <span class="msgtext">%message%</span>
-</div>`,
+</div>%next%`;
+
+shared.initTheme({
+    chatElement : document.body,
+    templates : {
+        message: messageTemplate,
+        messageGroupping: messageTemplate,
         sys: `<div class="sysmsg" title="%time{LL}%">%message%</div>`,
-        sysMessageUT: `<div class="sysmsg" title="%time{LL}%">%message%<div class="usertext">%usertext%</div></div>`
+        sysMessageUT: `<div class="sysmsg" title="%time{LL}%">%message%<div class="usertext">%usertext%</div></div>`,
+        lastMsgDate: `<div class="sysmsg">%time{LL}%</div>`,
+        subject: shared.isMuc?
+                "<div class='sysmsg' title='%time{LL}%'>%message%<div class='usertext'><b>%usertext%</b></div></div>"
+                : "<div class='sysmsg'><b>%usertext%</b></div>",
     },
-    dateFormat : "HH:mm:ss",
+    dateFormat : "HH:mm",
     proxy : function() { //optional
         if (shared.cdata.type == "reactions") {
             render_reactions(shared.cdata);
@@ -63,7 +53,7 @@ shared.initTheme({
     varHandlers : {
         msgClasses: function() {
             let classes = ["msg"];
-            if (prevMessage["type"] == "message" && prevMessage["sender"] == shard.cdata.sender) {
+            if (shared.cdata.nextOfGroup) {
                 classes.push("grnext")
             }
             if (shared.cdata.local) {
@@ -105,7 +95,7 @@ shared.initTheme({
                 selector.textContent = "❤️";
                 setTimeout(() => { selector.classList.add('noopacity'); }, 0);
                 shared_timer.timer = null;
-                selector.addEventListener("click", () => show_reactions_selector(selector, document.documentElement));
+                selector.addEventListener("click", () => reactionsSelector.show(selector, document.documentElement));
             }, 500);
         });
         if (shared.cdata.reply) {
@@ -117,62 +107,13 @@ shared.initTheme({
     }
 });
 
-function fromHTML(html, trim = true) {
-    // Process the HTML string.
-    html = trim ? html.trim() : html;
-    if (!html) return null;
 
-    // Then set up a new template element.
-    const template = document.createElement('template');
-    template.innerHTML = html;
-    const result = template.content.children;
-
-    // Then return either an HTMLElement or HTMLCollection,
-    // based on whether the input HTML had one or more roots.
-    if (result.length === 1) return result[0];
-    return result;
-}
-
-function setup_reactions_selector() {
-    const rs = document.body.appendChild(document.createElement("div"));
-    rs.classList.add("reactions_selector");
-    rs.id = "reactions_selector";
-    available_reactions.forEach(emoji => {
-        const em = rs.appendChild(document.createElement("em"));
-        em.textContent = emoji;
-    });
-
-    rs.addEventListener("click", function (event) {
-        if (event.target.localName == "em") {
-            event.target.parentNode.style.display = "none";
-        }
-        event.stopPropagation();
-    });
-    rs.addEventListener("mouseleave", function (event) {
-        rs.style.display = "none";
-        event.stopPropagation();
-    });
-}
-
-function show_reactions_selector(nearEl, scrollEl) {
-    const rs = document.getElementById("reactions_selector");
-    const nbr = nearEl.getBoundingClientRect();
-    rs.style.top = (nbr.top + scrollEl.scrollTop) + "px";
-    rs.style.display = "flex";
-    const selectorRect = rs.getBoundingClientRect();
-    const scrollRect = scrollEl.getBoundingClientRect();
-    if (nbr.left + selectorRect.width > scrollRect.right) {
-        rs.style.left = (nbr.right - selectorRect.width) + "px";
-    } else {
-        rs.style.left = nbr.left + "px";
-    }
-}
 
 function setup_context_menu() {
-    document.addEventListener("contextmenu", function (event) {
-        const nick = event.target.getAttribute("data-nick");
+    chatMenu.addItemProvider((event) => {
+        const isNick = event.target.className == "nick";
         let msgNode;
-        if (!nick) {
+        if (!isNick) {
             msgNode = event.target;
             while (msgNode) {
                 if (msgNode.classList && msgNode.classList.contains("msg")) {
@@ -181,62 +122,25 @@ function setup_context_menu() {
                 msgNode = msgNode.parentNode;
             }
         }
-        if (nick || msgNode) {
-            event.stopPropagation();
-            event.preventDefault();
-
+        if (isNick || msgNode) {
             let items;
-            if (nick) {
+            if (isNick) {
                 items = [
-                    { "id": "info", "text": "Info" },
-                    { "id": "private_chat", "text": "Open Chat" },
-                    { "id": "kick", "text": "Kick" }
+                    { text: "Info", action: ()=>{} },
+                    { text: "Open Chat", action: ()=>{} },
+                    { text: "Kick", action: ()=>{} }
                 ]
             } else {
                 items = [
-                    { "id": "delete", "text": "Delete" },
-                    { "id": "reply", "text": "Reply" },
-                    { "id": "forward", "text": "Forward" },
-                    { "id": "copy", "text": "Copy" }
+                    { text: "Delete", action: ()=>{} },
+                    { text: "Reply", action: ()=>{} },
+                    { text: "Forward", action: ()=>{} },
+                    { text: "Copy", action: ()=>{} }
                 ]
             }
-
-            show_context_menu(event.x, event.y + document.documentElement.scrollTop, items).then((id) => {
-                console.log(id + " selected");
-            }).catch(() => { });
-            return false;
+            return items;
         }
-    });
-}
-
-function show_context_menu(x, y, items) {
-    if (window.activeMenu) {
-        window.activeMenu.destroyMenu();
-    }
-    const menu = document.body.appendChild(document.createElement("div"));
-    menu.classList.add("context_menu");
-    return new Promise((resolve, reject) => {
-        for (let i = 0; i < items.length; i++) {
-            const item = menu.appendChild(document.createElement("div"));
-            item.textContent = items[i].text;
-            item.menuItemId = items[i].id;
-            item.addEventListener("click", (event) => {
-                resolve(event.target.menuItemId);
-                event.stopPropagation();
-                menu.destroyMenu();
-            }, { "once": true });
-        }
-        menu.destroyMenu = () => {
-            document.body.removeEventListener("click", menu.destroyMenu);
-            menu.parentNode.removeChild(menu);
-            window.activeMenu = undefined;
-            reject();
-        };
-        document.body.addEventListener("click", menu.destroyMenu, { "once": true });
-
-        menu.style.top = y + "px";
-        menu.style.left = x + "px";
-        window.activeMenu = menu;
+        return [];
     });
 }
 
@@ -272,7 +176,6 @@ function render_reactions(event) {
     }
 }
 
-setup_reactions_selector();
 setup_context_menu();
 
 applyPsiSettings();
@@ -326,13 +229,17 @@ shared.session.signalInited();
             margin-left: 3rem;
             padding: .5rem;
             position: relative;
-            background-color: white;
+            background-color: #f0f0f0;
             border-radius: 0 .6rem .6rem .6rem;
             box-shadow: 0px 0px 0.5rem black;
             clip-path: inset(-0.5rem -5rem -0.5rem -5rem);
             word-wrap: break-word !important;
             display: flex;
             flex-wrap: wrap;
+        }
+
+        .msg:hover {
+            background-color: #ffffff;
         }
 
         .msg::before {
@@ -357,6 +264,10 @@ shared.session.signalInited();
             background-color: #ffd;
             border-radius: .6rem 0 .6rem .6rem;
             padding-top: .5rem;
+        }
+
+        .mymsg:hover {
+            background-color: #ffe;
         }
 
         .mymsg::before {
@@ -422,16 +333,18 @@ shared.session.signalInited();
         }
 
         .avatar {
-            margin-left: -3rem;
+            margin-left: -2.8rem;
             font-size: 2.3rem;
             top: 0;
             left: 0;
             position: absolute;
             max-width: 2.3rem;
+            z-index: -1;
+            border-radius: .5rem;
         }
 
         .mymsg .avatar {
-            margin-right: -3rem;
+            margin-right: -2.8rem;
             left: inherit;
             right: 0;
         }
