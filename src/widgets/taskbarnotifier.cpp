@@ -321,7 +321,7 @@ void TaskBarNotifier::Private::addJumpListItem()
                                    IID_PPV_ARGS(&pCollection)))) {
         // Create shell link object
         auto path       = qApp->applicationFilePath();
-        auto nameString = QString("Quit %1 application").arg(qApp->applicationName());
+        auto nameString = parent_->tr("Quit %1 application").arg(qApp->applicationName());
         auto cachedIconFile
             = ApplicationInfo::homeDir(ApplicationInfo::CacheLocation) + QStringLiteral("/quit_icon.ico");
         auto pixmap = PsiIconset::instance()
