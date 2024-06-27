@@ -685,7 +685,7 @@ function initPsiTheme() {
             o.cancel = stopAnimation; // stops any current in-progress autoscroll
         },
 
-        ReactionsSelector : function() {
+        ReactionsSelector : function(session) {
             var available_reactions = [
                 "😂",
                 "🤣",
@@ -709,8 +709,10 @@ function initPsiTheme() {
             });
             document.body.appendChild(rs);
 
+            var selector = this;
             rs.addEventListener("click", function (event) {
-                if (event.target.localName == "em") {
+                if (event.target.nodeName == "EM") {
+                    session.react(selector.currentMessage, event.target.textContent);
                     event.target.parentNode.style.display = "none";
                 }
                 event.stopPropagation();
@@ -720,7 +722,8 @@ function initPsiTheme() {
                 event.stopPropagation();
             });
 
-            this.show = function(nearEl, scrollEl) {
+            this.show = function(messageId, nearEl, scrollEl) {
+                this.currentMessage = messageId;
                 const nbr = nearEl.getBoundingClientRect();
                 rs.style.top = (nbr.top + scrollEl.scrollTop) + "px";
                 rs.style.display = "flex";

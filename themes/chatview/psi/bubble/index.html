@@ -13,7 +13,7 @@ function startPsiTheme(shared) {
 var util = shared.chat.util;
 var themeStyle     = document.getElementById("themeStyle").sheet;
 var cssBody        = util.findStyleSheet(themeStyle, "body").style;
-const reactionsSelector = new shared.chat.ReactionsSelector();
+const reactionsSelector = new shared.chat.ReactionsSelector(shared.session);
 const chatMenu = new shared.chat.ContextMenu();
 
 var applyPsiSettings = function() {
@@ -95,7 +95,7 @@ shared.initTheme({
                 selector.textContent = "❤️";
                 setTimeout(() => { selector.classList.add('noopacity'); }, 0);
                 shared_timer.timer = null;
-                selector.addEventListener("click", () => reactionsSelector.show(selector, document.documentElement));
+                selector.addEventListener("click", () => reactionsSelector.show(el.id, selector, document.documentElement));
             }, 500);
         });
         if (shared.cdata.reply) {
@@ -126,16 +126,16 @@ function setup_context_menu() {
             let items;
             if (isNick) {
                 items = [
-                    { text: "Info", action: ()=>{} },
-                    { text: "Open Chat", action: ()=>{} },
-                    { text: "Kick", action: ()=>{} }
+                    { text: "Info", action: ()=>{      shared.session.showInfo(nick); } },
+                    { text: "Open Chat", action: ()=>{ shared.session.openChat(nick); } },
+                    { text: "Kick", action: ()=>{      shared.session.kick(nick); } }
                 ]
             } else {
                 items = [
-                    { text: "Delete", action: ()=>{} },
-                    { text: "Reply", action: ()=>{} },
-                    { text: "Forward", action: ()=>{} },
-                    { text: "Copy", action: ()=>{} }
+                    { text: "Delete", action: ()=>{  shared.session.deleteMessage(msgNode.id); } },
+                    { text: "Reply", action: ()=>{   shared.session.replyMessage(msgNode.id);  } },
+                    { text: "Forward", action: ()=>{ shared.session.forwardMessage(msgNode.id); } },
+                    { text: "Copy", action: ()=>{    shared.session.copyMessage(msgNode.id);   } }
                 ]
             }
             return items;
@@ -146,7 +146,7 @@ function setup_context_menu() {
 
 
 function render_reactions(event) {
-    const msg = document.getElementById(event.target);
+    const msg = document.getElementById(event.messageid);
     if (!msg) {
         return;
     }
@@ -164,14 +164,21 @@ function render_reactions(event) {
         const base = event["reactions"][r].base || event["reactions"][r].text;
         groupped[base] = groupped[base] || {"text": "", "nicks": []};
         groupped[base].nicks = groupped[base].nicks.concat(event["reactions"][r].nicks);
-        groupped[base].text += event["reactions"][r].text;
+        groupped[base].text += `<em>${event["reactions"][r].text}</em>`;
     }
 
     for (const [base, value] of Object.entries(groupped)) {
         const nicks = value.nicks.sort().filter((x, i, a) => !i || x != a[i-1]);
         const reaction = document.createElement("span");
-        reaction.innerHTML = `${nicks.length} <em>${value.text}</em>`;
+        reaction.innerHTML = `${nicks.length} ${value.text}`;
         reaction.title = nicks.join("\n");
+        reaction.addEventListener("click", (event)=>{
+            if (event.target.nodeName == "EM") {
+                shared.session.react(msg.id, event.target.textContent);
+                event.stopPropagation();
+                event.preventDefault();
+            }
+        });
         reactions.appendChild(reaction);
     }
 }

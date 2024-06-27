@@ -298,6 +298,24 @@ public:
         connect(reply, SIGNAL(finished()), SLOT(onUrlHeadersReady()));
     }
 
+    Q_INVOKABLE void react(const QString &messageId, const QString &reaction)
+    {
+        //_view->updateReactions()
+        qDebug() << "react" << messageId << reaction;
+    }
+
+    Q_INVOKABLE void deleteMessage(const QString &messageId) { qDebug() << "deleteMessage" << messageId; }
+
+    Q_INVOKABLE void replyMessage(const QString &messageId) { qDebug() << "replyMessage" << messageId; }
+
+    Q_INVOKABLE void copyMessage(const QString &messageId) { qDebug() << "copyMessage" << messageId; }
+
+    Q_INVOKABLE void showInfo(const QString &nick) { qDebug() << "showInfo" << nick; }
+
+    Q_INVOKABLE void openChat(const QString &nick) { qDebug() << "openChat" << nick; }
+
+    Q_INVOKABLE void kick(const QString &nick) { qDebug() << "kick" << nick; }
+
 private slots:
     void onUrlHeadersReady()
     {
