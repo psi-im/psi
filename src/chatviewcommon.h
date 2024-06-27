@@ -39,6 +39,7 @@ public:
     QList<QColor>           getPalette();
 
 protected:
+    // a cache of reactions per message
     struct Reactions {
         QMap<QString, QStringList>    total;   // unicode reaction => nicknames
         QHash<QString, QSet<QString>> perUser; // nickname => unicode reactions
@@ -54,8 +55,12 @@ protected:
     void removeUser(const QString &nickname);
     void renameUser(const QString &oldNickname, const QString &newNickname);
 
+    // takes incoming reactions and returns reactions to be send to UI
     QList<ReactionsItem> updateReactions(const QString &senderNickname, const QString &messageId,
                                          const QSet<QString> &reactions);
+
+    // to be called from UI stuff. return list of reactions to send over network
+    QSet<QString> onReactionSwitched(const QString &senderNickname, const QString &messageId, const QString &reaction);
 
 protected:
     QDateTime _lastMsgTime;

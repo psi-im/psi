@@ -141,6 +141,7 @@ void ChatDlg::init()
     chatView()->setDialog(this);
     bool isPrivate = account()->groupchats().contains(jid().bare());
     chatView()->setSessionData(false, isPrivate, jid(), jid().full()); // FIXME fix nick updating
+    chatView()->setLocalNickname(account()->nick());
 #ifdef WEBKIT
     chatView()->setAccount(account());
 #else

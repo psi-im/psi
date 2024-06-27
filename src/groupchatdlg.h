@@ -145,6 +145,7 @@ private slots:
     void avatarUpdated(const Jid &jid);
     void doContactContextMenu(const QString &nick);
 
+    void outgoingReactions(const QString &messageId, const QSet<QString> &reactions);
 public:
     class Private;
     friend class Private;

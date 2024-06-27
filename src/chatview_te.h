@@ -57,6 +57,7 @@ public:
     void init();
     void setDialog(QWidget *dialog);
     void setSessionData(bool isMuc, bool isMucPrivate, const XMPP::Jid &jid, const QString name);
+    void setLocalNickname(const QString &nickname);
 
     void insertText(const QString &text, QTextCursor &insertCursor);
     void appendText(const QString &text);
@@ -100,6 +101,7 @@ signals:
     void showNM(const QString &);
     void quote(const QString &text);
     void nickInsertClick(const QString &nick);
+    void outgoingReactions(const QString &messageId, const QSet<QString> &reactions);
 
 private:
     bool              isMuc_;
@@ -109,6 +111,7 @@ private:
     int               oldTrackBarPosition;
     XMPP::Jid         jid_;
     QString           name_;
+    QString           localNickname_;
     QPointer<QWidget> dialog_;
     QAction          *actQuote_;
 };

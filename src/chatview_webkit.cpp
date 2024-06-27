@@ -71,7 +71,9 @@ class ChatViewThemeSessionBridge;
 
 class ChatViewPrivate {
 public:
-    ChatViewPrivate() = default;
+    ChatViewPrivate(ChatView *q) : q(q) { }
+
+    ChatView *q;
 
     Theme theme;
 
@@ -90,6 +92,7 @@ public:
     AvatarFactory::UserHashes remoteIcons;
     AvatarFactory::UserHashes localIcons;
     ChatViewThemeProvider    *themeProvider = nullptr;
+    QString                   localNickName;
 
     static QString closeIconTags(const QString &richText)
     {
@@ -300,8 +303,11 @@ public:
 
     Q_INVOKABLE void react(const QString &messageId, const QString &reaction)
     {
-        //_view->updateReactions()
-        qDebug() << "react" << messageId << reaction;
+        if (messageId.isEmpty()) {
+            qWarning("empty message id on sending reaction. broken theme?");
+            return;
+        }
+        _view->outgoingReaction(messageId, reaction);
     }
 
     Q_INVOKABLE void deleteMessage(const QString &messageId) { qDebug() << "deleteMessage" << messageId; }
@@ -438,7 +444,7 @@ protected:
 //----------------------------------------------------------------------------
 // ChatView
 //----------------------------------------------------------------------------
-ChatView::ChatView(QWidget *parent) : QFrame(parent), d(new ChatViewPrivate)
+ChatView::ChatView(QWidget *parent) : QFrame(parent), d(new ChatViewPrivate(this))
 {
     d->jsObject = new ChatViewJSObject(this); /* It's a session bridge between html and c++ part */
     d->webView  = new WebView(this);
@@ -553,6 +559,8 @@ void ChatView::setAccount(PsiAccount *acc)
         acc->psi()->themeManager()->provider(d->isMuc_ ? "groupchatview" : "chatview"));
     connect(d->themeProvider, SIGNAL(themeChanged()), SLOT(init()));
 }
+
+void ChatView::setLocalNickname(const QString &nickname) { d->localNickName = nickname; }
 
 void ChatView::contextMenuEvent(QContextMenuEvent *e)
 {
@@ -715,7 +723,8 @@ void ChatView::dispatchMessage(const MessageView &mv)
         m["sender"]    = mv.nick();
         m["messageid"] = mv.reactionsId();
         {
-            auto rl = updateReactions(mv.nick(), mv.reactionsId(), mv.reactions());
+            auto n  = d->isMuc_ ? mv.nick() : QString::fromLatin1(mv.isLocal() ? "l" : "r");
+            auto rl = updateReactions(n, mv.reactionsId(), mv.reactions());
             auto vl = QVariantList();
             for (auto &r : std::as_const(rl)) {
                 auto vmr = QVariantMap();
@@ -822,5 +831,12 @@ WebView *ChatView::textWidget() { return d->webView; }
 QWidget *ChatView::realTextWidget() { return d->webView; }
 
 QObject *ChatView::jsBridge() { return d->jsObject; }
+
+void ChatView::outgoingReaction(const QString &messageId, const QString &reaction)
+{
+    auto n         = d->isMuc_ ? d->localNickName : QString::fromLatin1("l");
+    auto reactions = onReactionSwitched(n, messageId, reaction);
+    emit outgoingReactions(messageId, reactions);
+}
 
 #include "chatview_webkit.moc"
