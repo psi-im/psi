@@ -887,7 +887,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     ui_.log->setMediaOpener(account()->fileSharingDeviceOpener());
 #endif
 
-    connect(ui_.log, SIGNAL(showNM(QString)), this, SLOT(doContactContextMenu(QString)));
+    connect(ui_.log, SIGNAL(showNickMenu(QString)), this, SLOT(doContactContextMenu(QString)));
     connect(URLObject::getInstance(), SIGNAL(openURL(QString)), SLOT(openURL(QString)));
     connect(ui_.log, SIGNAL(nickInsertClick(QString)), SLOT(onNickInsertClick(QString)));
     connect(ui_.log, &ChatView::outgoingReactions, this, &GCMainDlg::outgoingReactions);

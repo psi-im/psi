@@ -576,7 +576,7 @@ void ChatView::contextMenuEvent(QContextMenuEvent *e)
     linkUrl = d->webView->page()->mainFrame()->hitTestContent(e->pos()).linkUrl();
 #endif
     if (linkUrl.scheme() == "addnick") {
-        emit showNM(linkUrl.path().mid(1));
+        emit showNickMenu(linkUrl.path().mid(1));
         e->accept();
     }
 }

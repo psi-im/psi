@@ -96,7 +96,7 @@ private slots:
     void sessionInited();
 
 signals:
-    void showNM(const QString &);
+    void showNickMenu(const QString &);
     void nickInsertClick(const QString &nick);
     void quote(const QString &text);
     void outgoingReactions(const QString &messageId, const QSet<QString> &reactions);

@@ -98,7 +98,7 @@ private slots:
     void slotScroll();
 
 signals:
-    void showNM(const QString &);
+    void showNickMenu(const QString &);
     void quote(const QString &text);
     void nickInsertClick(const QString &nick);
     void outgoingReactions(const QString &messageId, const QSet<QString> &reactions);

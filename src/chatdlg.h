@@ -146,6 +146,7 @@ private slots:
     void         initComposing();
     void         setComposing();
     void         getHistory();
+    void         sendOutgoingReactions(const QString &messageId, const QSet<QString> &reactions);
 
 protected slots:
     void checkComposing();
