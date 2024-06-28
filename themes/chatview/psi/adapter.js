@@ -92,6 +92,10 @@ function psiThemeAdapter(chat) {
                 this.template_name = template_name;
             },
 
+            TemplateEscapeUriVar : function(name) {
+                this.name = name; // cdata member name
+            },
+
             Template : function(raw) {
                 var splitted = raw.split(/(%[\w]+(?:\{[^\{]+\})?%)/), i;
                 this.parts = [];
@@ -102,6 +106,7 @@ function psiThemeAdapter(chat) {
                         switch (m[1]) {
                         case "time": this.parts.push(new shared.TemplateTimeVar(m[1], m[2])); break;
                         case "template": this.parts.push(new shared.TemplateTemplateVar(m[2])); break;
+                        case "escapeURI": this.parts.push(new shared.TemplateEscapeUriVar(m[2])); break;
                         default: this.parts.push(new shared.TemplateVar(m[1], m[2])); break;
                         }
                     } else {
@@ -114,12 +119,14 @@ function psiThemeAdapter(chat) {
                 if (typeof(scroll) == 'boolean') {
                     shared.scroller.atBottom = scroll;
                 }
+                var el;
                 if (nextEl) {
-                    chat.util.siblingHtml(nextEl, html);
+                    el = chat.util.siblingHtml(nextEl, html);
                 } else {
-                    chat.util.appendHtml(shared.chatElement, html, shared.isMuc? shared.cdata.sender : "");
+                    el = chat.util.appendHtml(shared.chatElement, html, shared.isMuc? shared.cdata.sender : "");
                 }
                 shared.scroller.invalidate();
+                return el;
             },
 
             stopGroupping : function() {
@@ -141,6 +148,7 @@ function psiThemeAdapter(chat) {
                 shared.groupping = config.groupping || shared.groupping;
                 proxy = config.proxy;
                 shared.varHandlers = config.varHandlers || {};
+                shared.msgElPostProcess = config.postProcess;
                 for (var tname in config.templates) {
                     if (config.templates[tname]) {
                         t[tname] = new shared.Template(config.templates[tname]);
@@ -203,8 +211,9 @@ function psiThemeAdapter(chat) {
 
         shared.TemplateVar.prototype = {
             toString : function() {
-                if (shared.varHandlers[this.name]) {
-                    return shared.varHandlers[this.name]();
+                const varHandler = shared.varHandlers[this.name];
+                if (varHandler) {
+                    return varHandler();
                 }
                 var d = shared.cdata[this.name];
                 if (this.name == "sender") { //may not be html
@@ -249,10 +258,13 @@ function psiThemeAdapter(chat) {
             return "" + tt;
         }
 
+        shared.TemplateEscapeUriVar.prototype.toString = function() {
+            return encodeURIComponent(shared.cdata[this.name]);
+        }
+
         shared.Template.prototype.toString = function() {
             return this.parts.join("");
         }
-
 
         chat.adapter.receiveObject = function(data) {
             shared.cdata = data;
@@ -317,8 +329,11 @@ function psiThemeAdapter(chat) {
                             break;
                     }
                     if (template) {
-                        shared.appendHtml(template.toString(), data.local?true:null, data.nextOfGroup?
+                        var el = shared.appendHtml(template.toString(), data.local?true:null, data.nextOfGroup?
                             shared.prevGrouppingData.nextEl:null); //force scroll on local messages
+                        if (shared.msgElPostProcess) {
+                            shared.msgElPostProcess(el);
+                        }
                         shared.stopGroupping();// safe clean up previous data
                         if (shared.cdata.nextEl) { //convert to DOM
                             shared.cdata.nextEl = document.getElementById(shared.cdata.nextEl);

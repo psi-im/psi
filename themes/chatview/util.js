@@ -407,12 +407,16 @@ function initPsiTheme() {
 
             appendHtml : function(dest, html, sender) {
                 chat.util.prepareContents(html, sender);
+                var firstAdded = htmlSource.firstChild;
                 while (htmlSource.firstChild) dest.appendChild(htmlSource.firstChild);
+                return firstAdded;
             },
 
             siblingHtml : function(dest, html, sourceUser) {
                 chat.util.prepareContents(html, sourceUser);
+                var firstAdded = htmlSource.firstChild;
                 while (htmlSource.firstChild) dest.parentNode.insertBefore(htmlSource.firstChild, dest);
+                return firstAdded;
             },
 
             ensureDeleted : function(id) {
@@ -465,8 +469,8 @@ function initPsiTheme() {
                 // if we have an id then this is a replacable message.
                 // next weird logic is as follows:
                 //   - wrapping to some element may break elements flow
-                //   - using well know elements may break styles
-                //   - setting just starting mark is useless (we will never find correct end)
+                //   - using well known elements may break styles
+                //   - setting just starting mark is useless (we will never find the correct end)
                 var uniqId;
                 if (isMuc) {
                     var u = usersMap[nick];
@@ -679,6 +683,137 @@ function initPsiTheme() {
             }
 
             o.cancel = stopAnimation; // stops any current in-progress autoscroll
+        },
+
+        ReactionsSelector : function(session) {
+            var available_reactions = [
+                "😂",
+                "🤣",
+                "🔥",
+                "👍",
+                "😭",
+                "🙏",
+                "❤️",
+                "😘",
+                "🥰",
+                "😍",
+                "😊",
+            ]
+
+            const rs = document.createElement("div");
+            rs.style.display = "none";
+            rs.classList.add("reactions_selector");
+            available_reactions.forEach(emoji => {
+                const em = rs.appendChild(document.createElement("em"));
+                em.textContent = emoji;
+            });
+            document.body.appendChild(rs);
+
+            var selector = this;
+            rs.addEventListener("click", function (event) {
+                if (event.target.nodeName == "EM") {
+                    session.react(selector.currentMessage, event.target.textContent);
+                    event.target.parentNode.style.display = "none";
+                }
+                event.stopPropagation();
+            });
+            rs.addEventListener("mouseleave", function (event) {
+                rs.style.display = "none";
+                event.stopPropagation();
+            });
+
+            this.show = function(messageId, nearEl, scrollEl) {
+                this.currentMessage = messageId;
+                const nbr = nearEl.getBoundingClientRect();
+                rs.style.top = (nbr.top + scrollEl.scrollTop) + "px";
+                rs.style.display = "flex";
+                const selectorRect = rs.getBoundingClientRect();
+                const scrollRect = scrollEl.getBoundingClientRect();
+                if (nbr.left + selectorRect.width > scrollRect.right) {
+                    rs.style.left = (nbr.right - selectorRect.width) + "px";
+                } else {
+                    rs.style.left = nbr.left + "px";
+                }
+            }
+            this.hide = function() {
+                rs.style.display = "none";
+            }
+        },
+
+        ContextMenu : function()  {
+            this.items = [];
+            this.providers = [];
+
+            this.addItem = function(text, action)  {
+                this.items.push({text: text, action: action});
+            };
+            this.addItemProvider = function(itemProvider)  {
+                this.providers.push(itemProvider);
+            };
+            this.show = function(x, y, items)  {
+                if (window.activeMenu) {
+                    window.activeMenu.destroyMenu();
+                }
+                const menu = document.body.appendChild(document.createElement("div"));
+                menu.classList.add("context_menu");
+                return new Promise((resolve, reject) => {
+                    for (let i = 0; i < items.length; i++) {
+                        const item = menu.appendChild(document.createElement("div"));
+                        item.textContent = items[i].text;
+                        const action = items[i].action;
+                        item.addEventListener("click", (event) => {
+                            event.stopPropagation();
+                            menu.destroyMenu();
+                            try {
+                                if (action instanceof Function) {
+                                    action();
+                                }
+                            } finally {
+                                resolve(action);
+                            }
+                        }, { "once": true });
+                    }
+                    menu.destroyMenu = () => {
+                        document.body.removeEventListener("click", menu.destroyMenu);
+                        menu.parentNode.removeChild(menu);
+                        window.activeMenu = undefined;
+                        reject();
+                    };
+                    document.body.addEventListener("click", menu.destroyMenu, { "once": true });
+            
+                    menu.style.top = y + "px";
+                    menu.style.left = x + "px";
+                    window.activeMenu = menu;
+                });
+            };
+
+            var menu = this;
+            document.addEventListener("contextmenu", function (event) {
+                var all_items = menu.items.slice();
+                try {
+                    for (let i = 0; i < menu.providers.length; i++) {
+                        all_items = all_items.concat(menu.providers[i](event));
+                    }
+                } catch(e) {
+                    chat.console(e+"");
+                }
+                if (!all_items.length) {
+                    return true;
+                }
+
+                event.stopPropagation();
+                event.preventDefault();
+
+                var totalScrollY = 0;
+                var el = event.target;
+                while (el) {
+                    if (el.scrollTop !== undefined) {
+                        totalScrollY += el.scrollTop;
+                    }
+                    el = el.parentNode;
+                }
+                menu.show(event.x, event.y + totalScrollY, all_items).catch(()=>{});
+            });
         },
 
         DateTimeFormatter : function(formatStr) {

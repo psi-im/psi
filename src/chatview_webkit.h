@@ -53,6 +53,7 @@ public:
     void setDialog(QWidget *dialog);
     void setSessionData(bool isMuc, bool isMucPrivate, const XMPP::Jid &jid, const QString name);
     void setAccount(PsiAccount *acc);
+    void setLocalNickname(const QString &nickname);
 
     void contextMenuEvent(QContextMenuEvent *event);
     bool handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdit);
@@ -80,6 +81,9 @@ protected:
     void changeEvent(QEvent *event);
     // void keyPressEvent(QKeyEvent *);
 
+private:
+    void outgoingReaction(const QString &messageId, const QString &reaction);
+
 protected slots:
     void psiOptionChanged(const QString &);
     // void autoCopy();
@@ -92,9 +96,10 @@ private slots:
     void sessionInited();
 
 signals:
-    void showNM(const QString &);
+    void showNickMenu(const QString &);
     void nickInsertClick(const QString &nick);
     void quote(const QString &text);
+    void outgoingReactions(const QString &messageId, const QSet<QString> &reactions);
 
 private:
     friend class ChatViewPrivate;

@@ -361,6 +361,7 @@ public slots:
             if (!nick.isEmpty()) {
                 prev_self = self;
                 self      = nick;
+                dlg->ui_.log->setLocalNickname(self);
                 dlg->account()->groupChatChangeNick(dlg->jid().domain(), dlg->jid().node(), self,
                                                     dlg->account()->status());
             }
@@ -404,6 +405,7 @@ join <channel>{,<channel>} [pass{,<pass>}
                     // FIXME nick can't be empty....
                     prev_self = self;
                     self      = nick;
+                    dlg->ui_.log->setLocalNickname(self);
                     dlg->account()->groupChatChangeNick(dlg->jid().domain(), dlg->jid().node(), self,
                                                         dlg->account()->status());
                     newstate = nullptr;
@@ -675,6 +677,19 @@ void GCMainDlg::onNickInsertClick(const QString &nick)
     ui_.mle->chatEdit()->setFocus();
 }
 
+void GCMainDlg::outgoingReactions(const QString &messageId, const QSet<QString> &reactions)
+{
+    Message m(jid());
+    m.setType(Message::Type::Groupchat);
+    m.setReactions({ messageId, reactions });
+    QString id = account()->client()->genUniqueId();
+    m.setId(id); // we need id early for message manipulations in chatview
+    m.setTimeStamp(QDateTime::currentDateTime());
+    // d->mle()->appendMessageHistory(m.body());
+
+    emit aSend(m);
+}
+
 void GCMainDlg::doContactContextMenu(const QString &nick)
 {
     auto itm = d->usersModel->findEntry(nick);
@@ -865,15 +880,17 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     d->tabmode = PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool();
 
     ui_.log->setSessionData(true, false, jid(), jid().full()); // FIXME change conference name
+    ui_.log->setLocalNickname(d->self);
 #ifdef WEBKIT
     ui_.log->setAccount(account());
 #else
     ui_.log->setMediaOpener(account()->fileSharingDeviceOpener());
 #endif
 
-    connect(ui_.log, SIGNAL(showNM(QString)), this, SLOT(doContactContextMenu(QString)));
+    connect(ui_.log, SIGNAL(showNickMenu(QString)), this, SLOT(doContactContextMenu(QString)));
     connect(URLObject::getInstance(), SIGNAL(openURL(QString)), SLOT(openURL(QString)));
     connect(ui_.log, SIGNAL(nickInsertClick(QString)), SLOT(onNickInsertClick(QString)));
+    connect(ui_.log, &ChatView::outgoingReactions, this, &GCMainDlg::outgoingReactions);
 
     PsiToolTip::install(ui_.le_topic);
 
@@ -1438,6 +1455,7 @@ void GCMainDlg::mle_returnPressed()
         if (!nick.isEmpty() && newJid.isValid()) {
             d->prev_self = d->self;
             d->self      = newJid.resource();
+            ui_.log->setLocalNickname(d->self);
             account()->groupChatChangeNick(jid().domain(), jid().node(), d->self, account()->status());
         }
         ui_.mle->chatEdit()->setText("");
@@ -1697,6 +1715,7 @@ void GCMainDlg::setJid(const Jid &j)
 {
     TabbableWidget::setJid(j);
     d->self = d->prev_self = j.resource();
+    ui_.log->setLocalNickname(d->self);
 }
 
 void GCMainDlg::goConn()
@@ -1823,6 +1842,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
         if (s.errorCode() == 409) {
             message = tr("Please choose a different nickname");
             d->self = d->prev_self;
+            ui_.log->setLocalNickname(d->self);
         } else {
             message = tr("An error occurred (errorcode: %1)").arg(s.errorCode());
         }

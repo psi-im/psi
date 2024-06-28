@@ -3,6 +3,8 @@
         <file>chatview/adium/Template.html</file>
         <file>chatview/adium/adapter.js</file>
         <file>chatview/psi/psi.css</file>
+        <file>chatview/psi/bubble/index.html</file>
+        <file>chatview/psi/bubble/load.js</file>
         <file>chatview/psi/LunnaCat_Classic/index.html</file>
         <file>chatview/psi/LunnaCat_Classic/images/HR.png</file>
         <file>chatview/psi/LunnaCat_Classic/images/ChatLog.png</file>

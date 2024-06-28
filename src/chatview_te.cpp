@@ -95,6 +95,10 @@ void ChatView::setSessionData(bool isMuc, bool isMucPrivate, const XMPP::Jid &ji
     name_         = name;
 }
 
+void ChatView::setLocalNickname(const QString &nickname) {
+    localNickname_ = nickname;
+}
+
 void ChatView::clear()
 {
     PsiTextView::clear();
@@ -106,7 +110,7 @@ void ChatView::contextMenuEvent(QContextMenuEvent *e)
     const QUrl anc = QUrl::fromEncoded(anchorAt(e->pos()).toLatin1());
 
     if (anc.scheme() == "addnick") {
-        emit showNM(anc.path().mid(1));
+        emit showNickMenu(anc.path().mid(1));
         e->accept();
     } else {
         QMenu *menu = createStandardContextMenu(e->pos());

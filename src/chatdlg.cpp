@@ -141,12 +141,14 @@ void ChatDlg::init()
     chatView()->setDialog(this);
     bool isPrivate = account()->groupchats().contains(jid().bare());
     chatView()->setSessionData(false, isPrivate, jid(), jid().full()); // FIXME fix nick updating
+    chatView()->setLocalNickname(account()->nick());
 #ifdef WEBKIT
     chatView()->setAccount(account());
 #else
     chatView()->setMediaOpener(account()->fileSharingDeviceOpener());
 #endif
     chatView()->init();
+    connect(chatView(), &ChatView::outgoingReactions, this, &ChatDlg::sendOutgoingReactions);
 
     // seems its useless hack
     // connect(chatView(), SIGNAL(selectionChanged()), SLOT(logSelectionChanged())); //
@@ -756,6 +758,14 @@ void ChatDlg::doneSend()
     connect(chatEdit(), SIGNAL(textChanged()), this, SLOT(setComposing()));
     // Reset composing timer
     resetComposing();
+}
+
+void ChatDlg::sendOutgoingReactions(const QString &messageId, const QSet<QString> &reactions)
+{
+    Message m(jid());
+    m.setType(Message::Type::Chat);
+    m.setReactions({ messageId, reactions });
+    emit aSend(m);
 }
 
 void ChatDlg::encryptedMessageSent(int x, bool b, int e, const QString &dtext)

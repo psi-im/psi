@@ -168,3 +168,23 @@ ChatViewCommon::updateReactions(const QString &senderNickname, const QString &me
     }
     return ret;
 }
+
+QSet<QString> ChatViewCommon::onReactionSwitched(const QString &senderNickname, const QString &messageId,
+                                                 const QString &reaction)
+{
+    auto msgIt = _reactions.find(messageId);
+    if (msgIt == _reactions.end()) {
+        return { { reaction } };
+    }
+    auto userIt = msgIt->perUser.find(senderNickname);
+    if (userIt == msgIt->perUser.end()) {
+        return { { reaction } };
+    }
+    auto ret = *userIt;
+    if (ret.contains(reaction)) {
+        ret.remove(reaction);
+    } else {
+        ret.insert(reaction);
+    }
+    return ret;
+}
