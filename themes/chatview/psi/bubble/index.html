@@ -134,6 +134,9 @@ function render_reactions(event) {
     if (reactions) {
         reactions.innerHTML = "";
     } else {
+        lineBreak = document.createElement("hr");
+        lineBreak.classList.add("flex-breaker");
+        msg.appendChild(lineBreak);
         reactions = document.createElement("reactions");
         reactions.className = "reactions";
         msg.appendChild(reactions);
@@ -357,6 +360,12 @@ body {
 .msgtext {
     color: #111;
     word-break: break-word;
+}
+
+hr.flex-breaker {
+    width: 100%;
+    margin: 0;
+    border: 0;
 }
 
 .reactions:not(:empty) {
