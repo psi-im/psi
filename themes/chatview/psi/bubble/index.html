@@ -45,7 +45,7 @@ shared.initTheme({
     },
     dateFormat : "HH:mm",
     proxy : function() { //optional
-        if (shared.cdata.type == "reactions") {
+        if (shared.cdata.mtype == "reactions") {
             render_reactions(shared.cdata);
             return false;
         }
