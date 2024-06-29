@@ -190,343 +190,357 @@ applyPsiSettings();
 shared.session.signalInited();
 }
 </script>
-    <style id="themeStyle">
-        html {
-            font-size: 12pt;
-        }
+<style id="themeStyle">
+html {
+    font-size: 12pt;
+}
 
-        body {
-            width: 100%;
-            height: 100%;
-            padding: .5rem 0;
-            margin: 0;
-            box-sizing: border-box;
-            /*background: url(background.jpg);
-            background-attachment: fixed;
-            background-size: cover;*/
-            background: rgb(145,111,186);
-            background: linear-gradient(90deg, rgba(145,111,186,1) 0%, rgba(153,153,255,1) 37%, rgba(119,229,251,1) 100%);
-            color: black;
-            font-family: sans, times;
-            position: relative;
-            text-size-adjust: none;
-            -moz-text-size-adjust: none;
-            overflow-x: hidden;
-        }
+::-webkit-scrollbar {
+    width: 0.5em;
+}
+::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background-color: #8886;
+    border-radius: 0.3em;
+}
+::-webkit-scrollbar-thumb:hover {
+    background-color: #888A;
+}
 
-        .sysmsg {
-            background-color: rgb(122, 246, 246);
-            color: #444;
-            padding: .4rem 1rem;
-            width: 70%;
-            margin: 0 auto .5rem;
-            border-radius: 1rem;
-            text-align: center;
-            box-shadow: 0px 0px 0.5rem black;
-        }
+body {
+    width: 100%;
+    height: 100%;
+    padding: .5rem 0;
+    margin: 0;
+    box-sizing: border-box;
+    /*background: url(background.jpg);
+    background-attachment: fixed;
+    background-size: cover;*/
+    background: rgb(194 181 209);
+    background: linear-gradient(90deg, rgb(194 181 209) 0%, rgb(198 198 255) 37%, rgb(174 241 255) 100%);
+    color: black;
+    font-family: sans, times;
+    position: relative;
+    text-size-adjust: none;
+    -moz-text-size-adjust: none;
+    overflow-x: hidden;
+}
 
-        .sysmsg .usertext {
-            text-align: left;
-            color: black;
-            word-break: break-word;
-        }
+.sysmsg {
+    background-color: rgb(209 241 241);
+    color: #444;
+    padding: .4rem 1rem;
+    width: 70%;
+    margin: 0 auto .5rem;
+    border-radius: 1rem;
+    text-align: center;
+    box-shadow: 0px 0px 0.5rem black;
+}
 
-        .msg {
-            margin: 0.5rem;
-            margin-left: 3rem;
-            padding: .5rem;
-            position: relative;
-            background-color: #f8f8f8;
-            border-radius: 0 .6rem .6rem .6rem;
-            box-shadow: 0px 0px 0.5rem black;
-            clip-path: inset(-0.5rem -5rem -0.5rem -5rem);
-            word-wrap: break-word !important;
-            display: flex;
-            flex-wrap: wrap;
-        }
+.sysmsg .usertext {
+    text-align: left;
+    color: black;
+    word-break: break-word;
+}
 
-        .msg:hover {
-            background-color: #ffffff;
-        }
+.msg {
+    margin: 0.5rem;
+    margin-left: 3rem;
+    padding: .5rem;
+    position: relative;
+    background-color: #f8f8f8;
+    border-radius: 0 .6rem .6rem .6rem;
+    box-shadow: 0px 0px 0.5rem black;
+    clip-path: inset(-0.5rem -5rem -0.5rem -5rem);
+    word-wrap: break-word !important;
+    display: flex;
+    flex-wrap: wrap;
+}
 
-        .msg::before {
-            width: 2rem;
-            height: 2rem;
-            border: .5rem solid #f8f8f8;
-            border-radius: 1.4rem;
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            margin-top: -0.6rem;
-            margin-left: -2.44rem;
-            display: inline-block;
-            z-index: -1;
-            clip: rect(0.6rem, 3rem, 1.5rem, 2rem);
-        }
+.msg:hover {
+    background-color: #ffffff;
+}
 
-        .mymsg {
-            margin-left: 0.5rem;
-            margin-right: 3rem;
-            background-color: #ffd;
-            border-radius: .6rem 0 .6rem .6rem;
-            padding-top: .5rem;
-        }
+.msg::before {
+    width: 2rem;
+    height: 2rem;
+    border: .5rem solid #f8f8f8;
+    border-radius: 1.4rem;
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin-top: -0.6rem;
+    margin-left: -2.44rem;
+    display: inline-block;
+    z-index: -1;
+    clip: rect(0.6rem, 3rem, 1.5rem, 2rem);
+}
 
-        .mymsg:hover {
-            background-color: #ffe;
-        }
+.mymsg {
+    margin-left: 0.5rem;
+    margin-right: 3rem;
+    background-color: #ffd;
+    border-radius: .6rem 0 .6rem .6rem;
+    padding-top: .5rem;
+}
 
-        .mymsg::before {
-            left: inherit;
-            right: 0;
-            margin-left: inherit;
-            margin-right: -2.44rem;
-            border-color: #ffd;
-            clip: rect(0.6rem, 2rem, 1.5rem, 0);
-        }
+.mymsg:hover {
+    background-color: #ffe;
+}
 
-        .mymsg:hover::before {
-            border-color: #ffe;
-        }
+.mymsg::before {
+    left: inherit;
+    right: 0;
+    margin-left: inherit;
+    margin-right: -2.44rem;
+    border-color: #ffd;
+    clip: rect(0.6rem, 2rem, 1.5rem, 0);
+}
 
-        .msgheader {
-            display: block;
-            flex-basis: 100%;
-            position: relative;
-            height: 1.5em;
-        }
+.mymsg:hover::before {
+    border-color: #ffe;
+}
 
-        .nick {
-            padding-bottom: .3em;
-            display: inline-block;
-            cursor: pointer;
-            font-weight: bold;
-            position: absolute;
-            left: 0;
-        }
+.msgheader {
+    display: block;
+    flex-basis: 100%;
+    position: relative;
+    height: 1.5em;
+}
 
-        .reply {
-            display: inline-block;
-            content: "Reply";
-            font-weight: normal;
-            cursor: pointer;
-            position:absolute;
-            right: 0;
-            opacity: 0.1;
-            transition: opacity 0.3s linear;
-        }
+.nick {
+    padding-bottom: .3em;
+    display: inline-block;
+    cursor: pointer;
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+}
 
-        .reply:hover {
-            opacity: 1;
-            text-decoration: underline;
-        }
+.reply {
+    display: inline-block;
+    content: "Reply";
+    font-weight: normal;
+    cursor: pointer;
+    position:absolute;
+    right: 0;
+    opacity: 0.1;
+    transition: opacity 0.3s linear;
+}
 
-        .mymsg .msgheader {
-            display: none;
-        }
+.reply:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
 
-        .time {
-            order: 4;
-            right: .5rem;
-            font-size: .8rem;
-            color: #777;
-            align-items: flex-end;
-            margin-left: auto;
-            margin-top: auto;
-        }
+.mymsg .msgheader {
+    display: none;
+}
 
-        .mymsg .time {
-            margin-top: inherit;
-            display: flex;
-            align-items: flex-end;
-            order: 2;
-        }
+.time {
+    order: 4;
+    right: .5rem;
+    font-size: .8rem;
+    color: #777;
+    align-items: flex-end;
+    margin-left: auto;
+    margin-top: auto;
+}
 
-        .avatar {
-            margin-left: -2.8rem;
-            font-size: 2.3rem;
-            top: 0;
-            left: 0;
-            position: absolute;
-            max-width: 2.3rem;
-            z-index: -1;
-            border-radius: .5rem;
-        }
+.mymsg .time {
+    margin-top: inherit;
+    display: flex;
+    align-items: flex-end;
+    order: 2;
+}
 
-        .mymsg .avatar {
-            margin-right: -2.8rem;
-            left: inherit;
-            right: 0;
-        }
+.avatar {
+    margin-left: -2.8rem;
+    font-size: 2.3rem;
+    top: 0;
+    left: 0;
+    position: absolute;
+    max-width: 2.3rem;
+    z-index: -1;
+    border-radius: .5rem;
+}
 
-        .msgtext {
-            color: #111;
-            word-break: break-word;
-        }
+.mymsg .avatar {
+    margin-right: -2.8rem;
+    left: inherit;
+    right: 0;
+}
 
-        .reactions:not(:empty) {
-            flex-basis: calc(100% - 4rem);
-        }
+.msgtext {
+    color: #111;
+    word-break: break-word;
+}
 
-        .reactions>span {
-            display: inline-block;
-            font-size: .8rem;
-            font-weight: bold;
-            border: 1px solid #aaa;
-            color: gray;
-            padding: .2rem .6rem;
-            border-radius: 1.3rem;
-            margin-top: .3rem;
-            margin-right: .5rem;
-            background-color: #00000008;
-            user-select: none;
-        }
+.reactions:not(:empty) {
+    flex-basis: calc(100% - 4rem);
+}
 
-        .reactions>span>em {
-            font-style: normal;
-            cursor: pointer;
-        }
+.reactions>span {
+    display: inline-block;
+    font-size: .8rem;
+    font-weight: bold;
+    border: 1px solid #aaa;
+    color: gray;
+    padding: .2rem .6rem;
+    border-radius: 1.3rem;
+    margin-top: .3rem;
+    margin-right: .5rem;
+    background-color: #00000008;
+    user-select: none;
+}
 
-        .like_button {
-            position: absolute;
-            bottom: .3rem;
-            left: -2.5rem;
-            width: 3rem;
-            height: 1.5rem;
-            text-align: center;
-            cursor: pointer;
-            padding-top: 1rem;
-            /*background-color: green;*/
-            opacity: 0;
-            transition: opacity 0.5s linear, bottom .5s, font-size .5s;
-            ;
-        }
+.reactions>span>em {
+    font-style: normal;
+    cursor: pointer;
+}
 
-        .noopacity {
-            opacity: 1;
-        }
+.like_button {
+    position: absolute;
+    bottom: .3rem;
+    left: -2.5rem;
+    width: 3rem;
+    height: 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    padding-top: 1rem;
+    /*background-color: green;*/
+    opacity: 0;
+    transition: opacity 0.5s linear, bottom .5s, font-size .5s;
+    ;
+}
 
-        .like_button:hover {
-            font-size: 1.4rem;
-            bottom: .4rem;
-        }
+.noopacity {
+    opacity: 1;
+}
 
-        .mymsg .like_button {
-            left: inherit;
-            right: -2.5rem;
-        }
+.like_button:hover {
+    font-size: 1.4rem;
+    bottom: .4rem;
+}
 
-        .grnext {
-            display: flex;
-            flex-wrap: wrap;
-            margin-top: -0.15rem;
-            padding-top: 0.3rem;
-            border-top-right-radius: 0;
-            border-top-left-radius: 0;
-            /* We clip it like
-        _       _
-       | |_____| |
-       |         |
-       |_________|
-       where central part is for the text and everything else for the shadow.
-       this 0.08rem below together with margin-top: -0.15rem; is a workaround for
-       shadow clipping Google Chrome bug.
-    */
-            clip-path: polygon(0 0,
-                    0 -.5rem,
-                    -5rem -.5rem,
-                    -5rem calc(100% + .5rem),
-                    calc(100% + 5rem) calc(100% + .5rem),
-                    calc(100% + 5rem) -.5rem,
-                    100% -.5rem,
-                    100% 0.08rem,
-                    0 0.08rem);
-        }
+.mymsg .like_button {
+    left: inherit;
+    right: -2.5rem;
+}
 
-        .grnext .msgheader {
-            display: none;
-        }
+.grnext {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: -0.15rem;
+    padding-top: 0.3rem;
+    border-top-right-radius: 0;
+    border-top-left-radius: 0;
+    /* We clip it like
+_       _
+| |_____| |
+|         |
+|_________|
+where central part is for the text and everything else for the shadow.
+this 0.08rem below together with margin-top: -0.15rem; is a workaround for
+shadow clipping Google Chrome bug.
+*/
+    clip-path: polygon(0 0,
+            0 -.5rem,
+            -5rem -.5rem,
+            -5rem calc(100% + .5rem),
+            calc(100% + 5rem) calc(100% + .5rem),
+            calc(100% + 5rem) -.5rem,
+            100% -.5rem,
+            100% 0.08rem,
+            0 0.08rem);
+}
 
-        .grnext .avatar {
-            display: none;
-        }
+.grnext .msgheader {
+    display: none;
+}
 
-        .grnext:before {
-            display: none;
-        }
+.grnext .avatar {
+    display: none;
+}
 
-        .msg:has(+ .grnext) {
-            border-bottom-left-radius: 0;
-            border-bottom-right-radius: 0;
-            margin-bottom: 0;
-            padding-bottom: .2rem;
-        }
+.grnext:before {
+    display: none;
+}
 
-        blockquote {
-            background: #f0f0f080;
-            border: 0;
-            border-left: 3px solid #ccc;
-            margin: .5rem;
-            margin-top: 0;
-            padding: 0.5rem;
-            padding-top: 0;
-            border-radius: .2rem;
-            color: #444;
-            cursor: pointer;
-            flex-basis: 100%;
-        }
+.msg:has(+ .grnext) {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    margin-bottom: 0;
+    padding-bottom: .2rem;
+}
 
-        blockquote>div {
-            background: #ccc;
-            padding: .1rem .5rem;
-            font-weight: bold;
-            margin: 0 -.5rem .3rem;
-        }
+blockquote {
+    background: #f0f0f080;
+    border: 0;
+    border-left: 3px solid #ccc;
+    margin: .5rem;
+    margin-top: 0;
+    padding: 0.5rem;
+    padding-top: 0;
+    border-radius: .2rem;
+    color: #444;
+    cursor: pointer;
+    flex-basis: 100%;
+}
 
-        .reactions_selector {
-            display: none;
-            position: absolute;
-            padding: .5rem;
-            margin-top: 1rem;
-            border-radius: 0.2rem;
-            background-color: #fafafa;
-            box-shadow: 0px 0px 0.5rem black;
-            flex-wrap: wrap;
-            z-index: 2;
-        }
+blockquote>div {
+    background: #ccc;
+    padding: .1rem .5rem;
+    font-weight: bold;
+    margin: 0 -.5rem .3rem;
+}
 
-        .reactions_selector em {
-            font-style: normal;
-            cursor: pointer;
-            font-size: 1.5rem;
-        }
+.reactions_selector {
+    display: none;
+    position: absolute;
+    padding: .5rem;
+    margin-top: 1rem;
+    border-radius: 0.2rem;
+    background-color: #fafafa;
+    box-shadow: 0px 0px 0.5rem black;
+    flex-wrap: wrap;
+    z-index: 2;
+}
 
-        .context_menu {
-            position: absolute;
-            box-sizing: border-box;
-            flex-flow: column;
-            box-shadow: 0px 0px 0.5rem black;
-            border-radius: .3rem;
-            background-color: white;
-            z-index: 3;
-            overflow: hidden;
-        }
+.reactions_selector em {
+    font-style: normal;
+    cursor: pointer;
+    font-size: 1.5rem;
+}
 
-        .context_menu>div {
-            box-sizing: border-box;
-            padding: .3rem .5rem;
-        }
+.context_menu {
+    position: absolute;
+    box-sizing: border-box;
+    flex-flow: column;
+    box-shadow: 0px 0px 0.5rem black;
+    border-radius: .3rem;
+    background-color: white;
+    z-index: 3;
+    overflow: hidden;
+}
 
-        .context_menu>div+div {
-            border-top: 1px dotted #aaa;
-        }
+.context_menu>div {
+    box-sizing: border-box;
+    padding: .3rem .5rem;
+}
 
-        .context_menu>div:hover {
-            background-color: #ffa;
-            cursor: pointer;
-        }
-    </style>
+.context_menu>div+div {
+    border-top: 1px dotted #aaa;
+}
+
+.context_menu>div:hover {
+    background-color: #ffa;
+    cursor: pointer;
+}
+</style>
 </head>
 
 <body>
