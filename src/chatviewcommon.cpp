@@ -166,6 +166,11 @@ ChatViewCommon::updateReactions(const QString &senderNickname, const QString &me
         auto              sanitized  = orig.remove(skinRemove);
         ret << ReactionsItem { sanitized != orig ? sanitized : QString {}, orig, it.value() };
     }
+    if (total.isEmpty()) {
+        _reactions.erase(msgIt);
+    } else if (userIt->isEmpty()) {
+        msgIt.value().perUser.erase(userIt);
+    }
     return ret;
 }
 

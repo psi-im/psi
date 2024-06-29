@@ -14,6 +14,7 @@ var util = shared.chat.util;
 var themeStyle     = document.getElementById("themeStyle").sheet;
 var cssBody        = util.findStyleSheet(themeStyle, "body").style;
 const reactionsSelector = new shared.chat.ReactionsSelector(shared.session);
+const likeButton   = new shared.chat.LikeButton(reactionsSelector, document.documentElement);
 const chatMenu = new shared.chat.ContextMenu();
 
 var applyPsiSettings = function() {
@@ -78,26 +79,7 @@ shared.initTheme({
         }
     },
     postProcess: function(el) {
-        let shared_timer = {}
-        el.addEventListener("mouseleave", function () {
-            if (shared_timer.timer) { // if we were going to show it
-                clearTimeout(shared_timer.timer);
-                shared_timer.timer = null;
-            } else {
-                const rs = el.getElementsByClassName("like_button")[0];
-                rs.parentNode.removeChild(rs);
-            }
-        });
-        el.addEventListener("mouseenter", function () {
-            shared_timer.timer = setTimeout(function () {
-                let selector = el.appendChild(document.createElement("div"));
-                selector.classList.add("like_button");
-                selector.textContent = "❤️";
-                setTimeout(() => { selector.classList.add('noopacity'); }, 0);
-                shared_timer.timer = null;
-                selector.addEventListener("click", () => reactionsSelector.show(el.id, selector, document.documentElement));
-            }, 500);
-        });
+        likeButton.setupForMessageElement(el);
         if (shared.cdata.reply) {
             const bq = el.getElementsByTagName("blockquote")[0];
             if (bq) {
@@ -106,8 +88,6 @@ shared.initTheme({
         }
     }
 });
-
-
 
 function setup_context_menu() {
     chatMenu.addItemProvider((event) => {
@@ -413,8 +393,7 @@ body {
     padding-top: 1rem;
     /*background-color: green;*/
     opacity: 0;
-    transition: opacity 0.5s linear, bottom .5s, font-size .5s;
-    ;
+    transition: opacity 0.3s linear, bottom .3s, font-size .3s;
 }
 
 .noopacity {
