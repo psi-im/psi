@@ -312,7 +312,12 @@ public:
 
     Q_INVOKABLE void deleteMessage(const QString &messageId) { qDebug() << "deleteMessage" << messageId; }
 
-    Q_INVOKABLE void replyMessage(const QString &messageId) { qDebug() << "replyMessage" << messageId; }
+    Q_INVOKABLE void replyMessage(const QString &messageId, const QString &quotedHtml)
+    {
+        auto plainText = TextUtil::rich2plain(quotedHtml);
+        emit _view->quote(plainText);
+        qDebug() << "replyMessage" << messageId;
+    }
 
     Q_INVOKABLE void copyMessage(const QString &messageId) { qDebug() << "copyMessage" << messageId; }
 
