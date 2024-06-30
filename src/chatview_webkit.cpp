@@ -139,6 +139,36 @@ public:
         ret.append(QStringView { msg }.mid(post));
         return ret;
     }
+
+    void sendJsObject(const QVariantMap &map)
+    {
+        jsBuffer_.append(map);
+        checkJsBuffer();
+    }
+
+    void checkJsBuffer();
+
+    void sendReactionsToUI(const QString &nick, const QString &messageId, const QSet<QString> &reactions)
+    {
+        QVariantMap m;
+        // m["type"]      = "message";
+        m["type"]      = QLatin1String("reactions");
+        m["sender"]    = nick;
+        m["messageid"] = messageId;
+        auto rl        = q->updateReactions(nick, messageId, reactions);
+        auto vl        = QVariantList();
+        for (auto &r : std::as_const(rl)) {
+            auto vmr = QVariantMap();
+            if (!r.base.isEmpty()) {
+                vmr[QLatin1String("base")] = r.base;
+            }
+            vmr[QLatin1String("text")]  = r.code;
+            vmr[QLatin1String("nicks")] = r.nicks;
+            vl << vmr;
+        }
+        m[QLatin1String("reactions")] = vl;
+        sendJsObject(m);
+    }
 };
 
 //----------------------------------------------------------------------------
@@ -483,12 +513,12 @@ ChatView::ChatView(QWidget *parent) : QFrame(parent), d(new ChatViewPrivate(this
     QVariantMap m;
     m["type"]  = "receivehooks";
     m["hooks"] = PluginManager::instance()->messageViewJSFilters();
-    sendJsObject(m);
+    d->sendJsObject(m);
     connect(PluginManager::instance(), &PluginManager::jsFiltersUpdated, this, [this]() {
         QVariantMap m;
         m["type"]  = "receivehooks";
         m["hooks"] = PluginManager::instance()->messageViewJSFilters();
-        sendJsObject(m);
+        d->sendJsObject(m);
     });
 #endif
 }
@@ -538,7 +568,7 @@ void ChatView::markReceived(QString id)
     m["type"]      = "receipt";
     m["id"]        = id;
     m["encrypted"] = d->isEncryptionEnabled_;
-    sendJsObject(m);
+    d->sendJsObject(m);
 }
 
 QSize ChatView::sizeHint() const { return minimumSizeHint(); }
@@ -594,7 +624,7 @@ void ChatView::changeEvent(QEvent *event)
         || event->type() == QEvent::FontChange) {
         QVariantMap m;
         m["type"] = "settings";
-        sendJsObject(m);
+        d->sendJsObject(m);
     }
     QFrame::changeEvent(event);
 }
@@ -610,26 +640,11 @@ void ChatView::psiOptionChanged(const QString &option)
     }
 }
 
-void ChatView::sendJsObject(const QVariantMap &map)
-{
-    d->jsBuffer_.append(map);
-    checkJsBuffer();
-}
-
-void ChatView::checkJsBuffer()
-{
-    if (d->sessionReady_) {
-        while (!d->jsBuffer_.isEmpty()) {
-            emit d->jsObject->newMessage(d->jsBuffer_.takeFirst());
-        }
-    }
-}
-
 void ChatView::sessionInited()
 {
     qDebug("Session is initialized");
     d->sessionReady_ = true;
-    checkJsBuffer();
+    d->checkJsBuffer();
 }
 
 bool ChatView::handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdit)
@@ -664,8 +679,6 @@ void ChatView::dispatchMessage(const MessageView &mv)
         types.insert(MessageView::Reactions, "reactions");
     }
     QVariantMap m;
-    m["time"] = mv.dateTime();
-    m["type"] = types.value(mv.type());
     switch (mv.type()) {
     case MessageView::Message:
         m["message"] = d->prepareShares(ChatViewPrivate::closeIconTags(mv.formattedText()));
@@ -724,30 +737,18 @@ void ChatView::dispatchMessage(const MessageView &mv)
         m["urls"] = vmUrls;
         break;
     }
-    case MessageView::Reactions:
-        m["sender"]    = mv.nick();
-        m["messageid"] = mv.reactionsId();
-        {
-            auto n  = d->isMuc_ ? mv.nick() : QString::fromLatin1(mv.isLocal() ? "l" : "r");
-            auto rl = updateReactions(n, mv.reactionsId(), mv.reactions());
-            auto vl = QVariantList();
-            for (auto &r : std::as_const(rl)) {
-                auto vmr = QVariantMap();
-                if (!r.base.isEmpty()) {
-                    vmr[QLatin1String("base")] = r.base;
-                }
-                vmr[QLatin1String("text")]  = r.code;
-                vmr[QLatin1String("nicks")] = r.nicks;
-                vl << vmr;
-            }
-            m[QLatin1String("reactions")] = vl;
-        }
-        break;
+    case MessageView::Reactions: {
+        auto n = d->isMuc_ ? mv.nick() : QString::fromLatin1(mv.isLocal() ? "l" : "r");
+        d->sendReactionsToUI(n, mv.reactionsId(), mv.reactions());
+        return;
+    }
     case MessageView::FileTransferRequest:
     case MessageView::FileTransferFinished:
         break;
     }
 
+    m["time"]         = mv.dateTime();
+    m["type"]         = types.value(mv.type());
     QString replaceId = mv.replaceId();
     if (replaceId.isEmpty() && (mv.type() == MessageView::Message || mv.type() == MessageView::Subject)
         && updateLastMsgTime(mv.dateTime())) {
@@ -755,7 +756,7 @@ void ChatView::dispatchMessage(const MessageView &mv)
         m["date"]  = mv.dateTime();
         m["type"]  = "message";
         m["mtype"] = "lastDate";
-        sendJsObject(m);
+        d->sendJsObject(m);
     }
 
     m["encrypted"] = d->isEncryptionEnabled_;
@@ -766,7 +767,7 @@ void ChatView::dispatchMessage(const MessageView &mv)
         m["mtype"] = m["type"];
         m["type"]  = "message";
     }
-    sendJsObject(m);
+    d->sendJsObject(m);
 }
 
 void ChatView::sendJsCode(const QString &js)
@@ -774,7 +775,7 @@ void ChatView::sendJsCode(const QString &js)
     QVariantMap m;
     m["type"] = "js";
     m["js"]   = js;
-    sendJsObject(m);
+    d->sendJsObject(m);
 }
 
 void ChatView::scrollUp() { emit d->jsObject->scrollRequested(-50); }
@@ -813,7 +814,7 @@ void ChatView::updateAvatar(const Jid &jid, UserType utype)
         m["type"]   = "avatar";
         m["sender"] = jid.resource();
         m["avatar"] = ChatViewJSObject::avatarUrl(d->account_->avatarFactory()->userHashes(jid).avatar);
-        sendJsObject(m);
+        d->sendJsObject(m);
     }
 }
 
@@ -821,14 +822,14 @@ void ChatView::clear()
 {
     QVariantMap m;
     m["type"] = "clear";
-    sendJsObject(m);
+    d->sendJsObject(m);
 }
 
 void ChatView::doTrackBar()
 {
     QVariantMap m;
     m["type"] = "trackbar";
-    sendJsObject(m);
+    d->sendJsObject(m);
 }
 
 WebView *ChatView::textWidget() { return d->webView; }
@@ -842,6 +843,19 @@ void ChatView::outgoingReaction(const QString &messageId, const QString &reactio
     auto n         = d->isMuc_ ? d->localNickName : QString::fromLatin1("l");
     auto reactions = onReactionSwitched(n, messageId, reaction);
     emit outgoingReactions(messageId, reactions);
+    if (!d->isMuc_) {
+        // with private message we are not going to get it back. so back immediately
+        d->sendReactionsToUI(n, messageId, reactions);
+    }
+}
+
+void ChatViewPrivate::checkJsBuffer()
+{
+    if (sessionReady_) {
+        while (!jsBuffer_.isEmpty()) {
+            emit jsObject->newMessage(jsBuffer_.takeFirst());
+        }
+    }
 }
 
 #include "chatview_webkit.moc"

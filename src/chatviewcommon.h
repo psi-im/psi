@@ -30,6 +30,8 @@ class QWidget;
 class ChatViewCommon {
 public:
     enum UserType { LocalParty, RemoteParty, Participant };
+    enum class Feature { Reactions = 0x1 };
+    Q_DECLARE_FLAGS(Features, Feature)
 
     ChatViewCommon() : _nickNumber(0) { }
     void                    setLooks(QWidget *);
@@ -62,12 +64,16 @@ protected:
     // to be called from UI stuff. return list of reactions to send over network
     QSet<QString> onReactionSwitched(const QString &senderNickname, const QString &messageId, const QString &reaction);
 
+    Features features();
+
 protected:
     QDateTime _lastMsgTime;
+    Features  _featuers;
 
 private:
-    QList<QColor>            &generatePalette();
-    bool                      compatibleColors(const QColor &, const QColor &);
+    QList<QColor> &generatePalette();
+    bool           compatibleColors(const QColor &, const QColor &);
+
     int                       _nickNumber;
     QMap<QString, int>        _nicks;
     QHash<QString, Reactions> _reactions; // messageId -> reactions

@@ -58,7 +58,6 @@ public:
     void contextMenuEvent(QContextMenuEvent *event);
     bool handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdit);
 
-    void sendJsObject(const QVariantMap &);
     void dispatchMessage(const MessageView &m);
     void sendJsCode(const QString &js);
 
@@ -92,7 +91,6 @@ public slots:
     void init();
 
 private slots:
-    void checkJsBuffer();
     void sessionInited();
 
 signals:
