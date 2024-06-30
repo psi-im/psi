@@ -151,7 +151,6 @@ public:
     void sendReactionsToUI(const QString &nick, const QString &messageId, const QSet<QString> &reactions)
     {
         QVariantMap m;
-        // m["type"]      = "message";
         m["type"]      = QLatin1String("reactions");
         m["sender"]    = nick;
         m["messageid"] = messageId;

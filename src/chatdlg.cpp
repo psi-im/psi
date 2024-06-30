@@ -169,7 +169,7 @@ void ChatDlg::init()
     connect(account(), SIGNAL(pgpKeyChanged()), SLOT(updatePgp()));
     connect(account(), SIGNAL(encryptedMessageSent(int, bool, int, const QString &)),
             SLOT(encryptedMessageSent(int, bool, int, const QString &)));
-    account()->dialogRegister(this, jid());
+    account()->dialogRegister(this, isPrivate ? jid() : jid().withResource({}));
 
     chatView()->setFocusPolicy(Qt::NoFocus);
     chatEdit()->setFocus();
@@ -375,7 +375,8 @@ void ChatDlg::setJid(const Jid &j)
         account()->dialogUnregister(this);
         TabbableWidget::setJid(j);
         updateRealJid();
-        account()->dialogRegister(this, jid());
+        bool isPrivate = account()->groupchats().contains(jid().bare());
+        account()->dialogRegister(this, isPrivate ? jid() : jid().withResource({}));
         updateContact(jid(), false);
     }
 }

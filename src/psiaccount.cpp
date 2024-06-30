@@ -3450,6 +3450,7 @@ ChatDlg *PsiAccount::findChatDialogEx(const Jid &jid, bool ignoreResource) const
     ChatDlg    *cm1     = nullptr;
     ChatDlg    *cm2     = nullptr;
     const auto &dialogs = findChatDialogs(jid, false);
+    ignoreResource      = ignoreResource || !d->groupchats.contains(jid.bare());
     for (ChatDlg *cl : dialogs) {
         if (cl->autoSelectContact() || ignoreResource)
             return cl;
