@@ -155,7 +155,11 @@ ChatViewCommon::updateReactions(const QString &senderNickname, const QString &me
         msgIt.value().total[v].append(senderNickname);
     }
     for (auto const &v : toRemove) {
-        msgIt.value().total[v].removeOne(senderNickname);
+        auto it = msgIt.value().total.find(v);
+        it->removeOne(senderNickname);
+        if (it->isEmpty()) {
+            msgIt.value().total.erase(it);
+        }
     }
     auto &total = msgIt.value().total;
 

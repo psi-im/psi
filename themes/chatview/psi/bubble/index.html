@@ -111,7 +111,7 @@ function onReplyClicked(el) {
 
 function setupContextMenu() {
     chatMenu.addItemProvider((event) => {
-        const isNick = event.target.className == "nick";
+        const isNick = event.target.classList.contains("nick");
         let msgNode;
         if (!isNick) {
             msgNode = event.target;
@@ -126,10 +126,14 @@ function setupContextMenu() {
             let items;
             if (isNick) {
                 items = [
-                    { text: "Info", action: ()=>{      shared.session.showInfo(nick); } },
-                    { text: "Open Chat", action: ()=>{ shared.session.openChat(nick); } },
-                    { text: "Kick", action: ()=>{      shared.session.kick(nick); } }
-                ]
+                    { text: "Info", action: ()=>{      shared.session.showInfo(nick); } }
+                ];
+                if (shared.isMuc) {
+                    items = items.concat([
+                        { text: "Open Chat", action: ()=>{ shared.session.openChat(nick); } },
+                        { text: "Kick", action: ()=>{      shared.session.kick(nick); } }
+                    ])
+                }
             } else {
                 items = [
                     { text: "Delete", action: ()=>{  shared.session.deleteMessage(msgNode.id); } },
@@ -152,6 +156,11 @@ function renderReactions(event) {
     }
     let reactions = msg.getElementsByClassName("reactions").item(0);
     if (reactions) {
+        if (!event["reactions"].length) {
+            reactions.parentElement.removeChild(reactions.previousSibling);
+            reactions.parentElement.removeChild(reactions);
+            return;
+        }
         reactions.innerHTML = "";
     } else {
         lineBreak = document.createElement("hr");
