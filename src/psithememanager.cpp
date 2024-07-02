@@ -107,12 +107,10 @@ PsiThemeProvider::LoadRestult PsiThemeManager::loadAll()
         if (!ctx) {
             ctx = new QObject(this);
         }
-        connect(
-            provider, &PsiThemeProvider::themeChanged, ctx,
-            [ctx, provider, cleanup]() { cleanup(ctx, provider, false); }, Qt::SingleShotConnection);
-        connect(
-            provider, &PsiThemeProvider::currentLoadFailed, ctx,
-            [ctx, provider, required, cleanup]() { cleanup(ctx, provider, required); }, Qt::SingleShotConnection);
+        connect(provider, &PsiThemeProvider::themeChanged, ctx,
+                [ctx, provider, cleanup]() { cleanup(ctx, provider, false); });
+        connect(provider, &PsiThemeProvider::currentLoadFailed, ctx,
+                [ctx, provider, required, cleanup]() { cleanup(ctx, provider, required); });
     }
     d->loadResult = pending->isEmpty() ? PsiThemeProvider::LoadSuccess : PsiThemeProvider::LoadInProgress;
     return d->loadResult;
