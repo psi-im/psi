@@ -73,7 +73,7 @@ WebView::WebView(QWidget *parent) :
     connectPageActions();
 }
 
-WebView::~WebView() { qDebug("WebView::~WebView"); }
+WebView::~WebView() { /*qDebug("WebView::~WebView");*/ }
 
 void WebView::linkClickedEvent(const QUrl &url)
 {

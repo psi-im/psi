@@ -28,6 +28,9 @@ class PsiThemeManager::Private {
 public:
     QMap<QString, PsiThemeProvider *> providers;
     QSet<QString>                     required;
+    QString                           failedId;
+    QString                           errorString;
+    PsiThemeProvider::LoadRestult     loadResult = PsiThemeProvider::LoadNotStarted;
 };
 
 //---------------------------------------------------------
@@ -61,13 +64,58 @@ PsiThemeProvider *PsiThemeManager::provider(const QString &type) { return d->pro
 
 QList<PsiThemeProvider *> PsiThemeManager::registeredProviders() const { return d->providers.values(); }
 
-bool PsiThemeManager::loadAll()
+PsiThemeProvider::LoadRestult PsiThemeManager::loadAll()
 {
-    const auto &types = d->providers.keys();
-    for (const QString &type : types) {
-        if (!d->providers[type]->loadCurrent() && d->required.contains(type)) {
-            return false;
+    d->loadResult    = PsiThemeProvider::LoadInProgress;
+    QObject *ctx     = nullptr;
+    auto     pending = std::shared_ptr<QList<PsiThemeProvider *>> { new QList<PsiThemeProvider *>() };
+    auto     cleanup = [this, pending](QObject *ctx, PsiThemeProvider *provider, bool failure) {
+        if (failure) {
+            d->failedId = QLatin1String(provider->type());
+            for (auto p : *pending) {
+                p->cancelCurrentLoading();
+                p->disconnect(ctx);
+            }
+            ctx->deleteLater();
+            d->loadResult = PsiThemeProvider::LoadFailure;
+            emit currentLoadFailed();
+            return;
         }
+        pending->removeOne(provider);
+        provider->disconnect(ctx);
+        if (pending->isEmpty()) {
+            ctx->deleteLater();
+            d->loadResult = PsiThemeProvider::LoadSuccess;
+            emit currentLoadSuccess();
+        }
+    };
+    for (auto it = d->providers.begin(); it != d->providers.end(); ++it) {
+        auto provider = it.value();
+        auto required = d->required.contains(it.key());
+        auto status   = provider->loadCurrent();
+        if (status == PsiThemeProvider::LoadFailure && required) {
+            d->failedId   = QLatin1String(provider->type());
+            d->loadResult = PsiThemeProvider::LoadFailure;
+            return PsiThemeProvider::LoadFailure;
+        }
+        if (status == PsiThemeProvider::LoadSuccess) {
+            continue;
+        }
+        // in progress
+        pending->append(provider);
+
+        if (!ctx) {
+            ctx = new QObject(this);
+        }
+        connect(
+            provider, &PsiThemeProvider::themeChanged, ctx,
+            [ctx, provider, cleanup]() { cleanup(ctx, provider, false); }, Qt::SingleShotConnection);
+        connect(
+            provider, &PsiThemeProvider::currentLoadFailed, ctx,
+            [ctx, provider, required, cleanup]() { cleanup(ctx, provider, required); }, Qt::SingleShotConnection);
     }
-    return true;
+    d->loadResult = pending->isEmpty() ? PsiThemeProvider::LoadSuccess : PsiThemeProvider::LoadInProgress;
+    return d->loadResult;
 }
+
+QString PsiThemeManager::failedId() const { return d->failedId; }

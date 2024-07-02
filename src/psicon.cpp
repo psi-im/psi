@@ -558,10 +558,21 @@ bool PsiCon::init()
     d->themeManager->registerProvider(new GroupChatViewThemeProvider(this), true);
 #endif
 
-    if (!d->themeManager->loadAll()) {
+    const auto reportThemeError = [this]() {
         QMessageBox::critical(nullptr, tr("Error"),
-                              tr("Unable to load theme!  Please make sure Psi is properly installed."));
+                              tr("Unable to load \"%1\" theme! Please make sure Psi is properly installed.")
+                                  .arg(d->themeManager->failedId()));
+    };
+    auto themeLoadResult = d->themeManager->loadAll();
+    if (themeLoadResult == PsiThemeProvider::LoadFailure) {
+        reportThemeError();
         result = false;
+    }
+    if (themeLoadResult == PsiThemeProvider::LoadInProgress) {
+        connect(d->themeManager, &PsiThemeManager::currentLoadFailed, this, [this, reportThemeError]() {
+            reportThemeError();
+            closeProgram();
+        });
     }
 
     if (!d->actionList)

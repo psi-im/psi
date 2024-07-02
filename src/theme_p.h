@@ -33,7 +33,7 @@ public:
 
     // metadata
     QString                 id, name, version, description, creation, homeUrl;
-    QStringList             authors;
+    QStringList             authors, features;
     QHash<QString, QString> info;
 
     // runtime info

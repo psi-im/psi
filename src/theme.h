@@ -62,8 +62,9 @@ public:
     Theme &operator=(const Theme &other);
     virtual ~Theme();
 
-    bool  isValid() const;
-    State state() const;
+    bool   isValid() const;
+    inline operator bool() const { return isValid(); }
+    State  state() const;
 
     // previously virtual
     bool exists();
@@ -91,6 +92,7 @@ public:
     const QStringList &authors() const;
     const QString     &creation() const;
     const QString     &homeUrl() const;
+    const QStringList &features() const;
 
     PsiThemeProvider             *themeProvider() const;
     const QString                &filePath() const;

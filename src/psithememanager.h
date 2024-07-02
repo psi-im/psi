@@ -32,12 +32,18 @@ public:
     PsiThemeManager(QObject *parent);
     ~PsiThemeManager();
 
-    void                      registerProvider(PsiThemeProvider *provider, bool required = false);
-    PsiThemeProvider         *unregisterProvider(const QString &type);
-    PsiThemeProvider         *provider(const QString &type);
-    QList<PsiThemeProvider *> registeredProviders() const;
-    bool                      loadAll();
+    void                          registerProvider(PsiThemeProvider *provider, bool required = false);
+    PsiThemeProvider             *unregisterProvider(const QString &type);
+    PsiThemeProvider             *provider(const QString &type);
+    QList<PsiThemeProvider *>     registeredProviders() const;
+    PsiThemeProvider::LoadRestult loadAll();
+    QString                       failedId() const;
 
+signals:
+    void currentLoadSuccess();
+    void currentLoadFailed();
+
+private:
     class Private;
     Private *d;
 };

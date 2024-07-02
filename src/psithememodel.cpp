@@ -82,6 +82,7 @@ struct PsiThemeModel::Loader {
         ti.authors     = theme.authors();
         ti.creation    = theme.creation();
         ti.homeUrl     = theme.homeUrl();
+        ti.features    = theme.features();
 
         ti.hasPreview = theme.hasPreview();
         ti.isValid    = true;

@@ -70,7 +70,7 @@ ChatViewThemePrivate::ChatViewThemePrivate(ChatViewThemeProvider *provider) : Th
 
 ChatViewThemePrivate::~ChatViewThemePrivate()
 {
-    qDebug("ChatViewThemePrivate::~ChatViewThemePrivate");
+    // qDebug("ChatViewThemePrivate::~ChatViewThemePrivate");
     delete wv;
 }
 
@@ -446,6 +446,11 @@ void ChatViewJSLoader::setMetaData(const QVariantMap &map)
     v = map["url"].toString();
     if (!v.isEmpty()) {
         theme->homeUrl = v;
+    }
+
+    vl = map["features"].toStringList();
+    if (vl.count()) {
+        theme->features = vl;
     }
 }
 

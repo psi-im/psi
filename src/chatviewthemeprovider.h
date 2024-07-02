@@ -37,9 +37,10 @@ public:
     const QStringList themeIds() const;
     Theme             theme(const QString &id);
 
-    bool  loadCurrent();
-    void  unloadCurrent();
-    Theme current() const; // currently loaded theme
+    LoadRestult loadCurrent();
+    void        unloadCurrent();
+    void        cancelCurrentLoading();
+    Theme       current() const; // currently loaded theme
 
     void        setCurrentTheme(const QString &);
     virtual int screenshotWidth() const { return 512; } // hack
@@ -54,11 +55,9 @@ public:
 protected:
     virtual const char *optionString() const { return "options.ui.chat.theme"; }
 
-signals:
-    void themeChanged();
-
 private:
     Theme curTheme;
+    Theme curLoadingTheme; // load-in-progress theme to replace cutTheme in success
 };
 
 class GroupChatViewThemeProvider : public ChatViewThemeProvider {

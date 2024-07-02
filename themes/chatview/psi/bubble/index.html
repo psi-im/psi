@@ -136,10 +136,10 @@ function setupContextMenu() {
                 }
             } else {
                 items = [
-                    { text: "Delete", action: ()=>{  shared.session.deleteMessage(msgNode.id); } },
-                    { text: "Reply", action: ()=>{   onReplyClicked(msgNode); } },
+                    { text: "Delete",  action: ()=>{ shared.session.deleteMessage(msgNode.id); } },
+                    { text: "Reply",   action: ()=>{ onReplyClicked(msgNode); } },
                     { text: "Forward", action: ()=>{ shared.session.forwardMessage(msgNode.id); } },
-                    { text: "Copy", action: ()=>{    shared.session.copyMessage(msgNode.id);   } }
+                    { text: "Copy",    action: ()=>{ shared.session.copyMessage(msgNode.id);   } }
                 ]
             }
             return items;

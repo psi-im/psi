@@ -36,6 +36,7 @@ struct ThemeItemInfo {
     QStringList authors;
     QString     creation;
     QString     homeUrl;
+    QStringList features;
 
     bool hasPreview;
     bool isValid   = false;

@@ -56,6 +56,7 @@
 #include "fileutil.h"
 #include "geolocationdlg.h"
 #include "iris/bsocket.h"
+#include "psithememanager.h"
 #include "xmpp/xmpp-im/xmpp_vcard4.h"
 #ifdef GOOGLE_FT
 #include "googleftmanager.h"
@@ -1075,6 +1076,12 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
     // another hack. We rather should have PsiMedia single instance as a member of PsiCon
     connect(MediaDeviceWatcher::instance(), &MediaDeviceWatcher::availibityChanged, this, &PsiAccount::updateFeatures);
 
+#ifdef WEBKIT
+    connect(d->psi->themeManager()->provider("chatview"), &PsiThemeProvider::themeChanged, this,
+            &PsiAccount::updateFeatures);
+    connect(d->psi->themeManager()->provider("groupchatview"), &PsiThemeProvider::themeChanged, this,
+            &PsiAccount::updateFeatures);
+#endif
 #ifdef FILETRANSFER
     d->client->setFileTransferEnabled(true);
 #else
@@ -1547,22 +1554,30 @@ void PsiAccount::updateFeatures()
 #endif
 
 #ifdef USE_PEP
-    features << "http://jabber.org/protocol/mood"
-             << "http://jabber.org/protocol/activity";
-    features << "http://jabber.org/protocol/tune"
-             << "http://jabber.org/protocol/geoloc";
-    features << "urn:xmpp:avatar:data"
-             << "urn:xmpp:avatar:metadata";
+    features << QLatin1String("http://jabber.org/protocol/mood") << QLatin1String("http://jabber.org/protocol/activity")
+             << QLatin1String("http://jabber.org/protocol/tune") << QLatin1String("http://jabber.org/protocol/geoloc")
+             << QLatin1String("urn:xmpp:avatar:data") << QLatin1String("urn:xmpp:avatar:metadata");
 #endif
     if (AvCallManager::isSupported()) {
-        features << "urn:xmpp:jingle:transports:ice-udp:1";
-        features << "urn:xmpp:jingle:transports:ice:0";
-        features << "urn:xmpp:jingle:apps:rtp:1";
-        features << "urn:xmpp:jingle:apps:rtp:audio";
-        features << "urn:xmpp:jingle:apps:rtp:video";
+        features << QLatin1String("urn:xmpp:jingle:transports:ice-udp:1");
+        features << QLatin1String("urn:xmpp:jingle:transports:ice:0");
+        features << QLatin1String("urn:xmpp:jingle:apps:rtp:1");
+        features << QLatin1String("urn:xmpp:jingle:apps:rtp:audio");
+        features << QLatin1String("urn:xmpp:jingle:apps:rtp:video");
     }
 
-    features << "jabber:x:conference"; // allow direct invites
+    features << QLatin1String("jabber:x:conference"); // allow direct invites
+
+#ifdef WEBKIT
+    auto gcTheme   = psi()->themeManager()->provider("groupchatview")->current();
+    auto chatTheme = psi()->themeManager()->provider("chatview")->current();
+    if (gcTheme && chatTheme) {
+        auto themeFeatures = gcTheme.features() + chatTheme.features();
+        if (themeFeatures.contains(QStringLiteral("reactions"))) {
+            features << QLatin1String("urn:xmpp:reactions:0");
+        }
+    }
+#endif
 
     // TODO reset hash
     d->client->setFeatures(Features(features));

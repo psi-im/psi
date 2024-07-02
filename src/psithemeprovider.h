@@ -23,7 +23,6 @@
 #include "theme.h"
 
 #include <QFuture>
-#include <functional>
 
 class PsiCon;
 
@@ -33,6 +32,8 @@ class PsiThemeProvider : public QObject {
     PsiCon *_psi;
 
 public:
+    enum LoadRestult { LoadNotStarted, LoadSuccess, LoadFailure, LoadInProgress };
+
     PsiThemeProvider(PsiCon *parent);
 
     inline PsiCon *psi() const { return _psi; }
@@ -40,8 +41,9 @@ public:
     virtual const char       *type() const                     = 0;
     virtual Theme             theme(const QString &id)         = 0; // make new theme
     virtual const QStringList themeIds() const                 = 0;
-    virtual bool              loadCurrent()                    = 0;
+    virtual LoadRestult       loadCurrent()                    = 0;
     virtual void              unloadCurrent()                  = 0;
+    virtual void              cancelCurrentLoading()           = 0;
     virtual Theme             current() const                  = 0;
     virtual void              setCurrentTheme(const QString &) = 0;
 
@@ -52,6 +54,10 @@ public:
     virtual QString optionsDescription() const = 0;
 
     static QString themePath(const QString &name);
+
+signals:
+    void themeChanged();
+    void currentLoadFailed(); // loading of the current therme has failed
 };
 
 #endif // PSITHEMEPROVIDER_H
