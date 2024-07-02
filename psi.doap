@@ -781,6 +781,16 @@
       </xmpp:SupportedXep>
     </implements>
 
+    <!-- XEP-0444: Message Reactions -->
+    <implements>
+      <xmpp:SupportedXep>
+        <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0444.html'/>
+        <xmpp:status>partial</xmpp:status>
+        <xmpp:note xml:lang='en'>No allowed reaction handling / everything is allowed</xmpp:note>
+        <xmpp:version>0.2.1</xmpp:version>
+      </xmpp:SupportedXep>
+    </implements>
+
     <!-- XEP-0453: DOAP usage in XMPP -->
     <implements>
       <xmpp:SupportedXep>
