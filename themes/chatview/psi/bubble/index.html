@@ -14,7 +14,7 @@ var util = shared.chat.util;
 var themeStyle     = document.getElementById("themeStyle").sheet;
 var cssBody        = util.findStyleSheet(themeStyle, "body").style;
 const reactionsSelector = new shared.chat.ReactionsSelector(shared.session);
-const likeButton   = new shared.chat.LikeButton(reactionsSelector, document.documentElement);
+const likeButton   = new shared.chat.LikeButton(reactionsSelector, document.body);
 const chatMenu = new shared.chat.ContextMenu();
 
 var applyPsiSettings = function() {
@@ -289,7 +289,7 @@ body {
     margin-top: -0.6rem;
     margin-left: -2.44rem;
     display: inline-block;
-    z-index: -1;
+    /*z-index: -1;*/
     clip: rect(0.6rem, 3rem, 1.5rem, 2rem);
 }
 
@@ -442,6 +442,7 @@ hr.flex-breaker {
     cursor: pointer;
     padding-top: 1rem;
     /*background-color: green;*/
+    font-size: 1rem;
     opacity: 0;
     transition: opacity 0.3s linear, bottom .3s, font-size .3s;
 }
