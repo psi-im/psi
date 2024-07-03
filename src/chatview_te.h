@@ -103,6 +103,7 @@ signals:
     void nickInsertClick(const QString &nick);
     void outgoingReactions(const QString &messageId, const QSet<QString> &reactions);
     void outgoingMessageRetraction(const QString &messageId);
+    void editMessageRequested(const QString &messageId, const QString &text);
 
 private:
     bool              isMuc_;

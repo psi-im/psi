@@ -700,7 +700,7 @@ void ChatDlg::doSend()
     QString id = account()->client()->genUniqueId();
     m.setId(id); // we need id early for message manipulations in chatview
     if (chatEdit()->isCorrection()) {
-        m.setReplaceId(chatEdit()->lastMessageId());
+        m.setReplaceId(chatEdit()->correctionId());
     }
     chatEdit()->setLastMessageId(id);
     chatEdit()->resetCorrection();

@@ -1109,6 +1109,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     setConnecting();
 
     connect(ui_.log, &ChatView::quote, ui_.mle->chatEdit(), &ChatEdit::insertAsQuote);
+    connect(ui_.log, &ChatView::editMessageRequested, ui_.mle->chatEdit(), &ChatEdit::startCorrection);
     connect(pa->avatarFactory(), &AvatarFactory::avatarChanged, this, &GCMainDlg::avatarUpdated);
 
 #ifdef PSI_PLUGINS
@@ -1489,7 +1490,7 @@ void GCMainDlg::mle_returnPressed()
     QString id = account()->client()->genUniqueId();
     m.setId(id); // we need id early for message manipulations in chatview
     if (ui_.mle->chatEdit()->isCorrection()) {
-        m.setReplaceId(ui_.mle->chatEdit()->lastMessageId());
+        m.setReplaceId(ui_.mle->chatEdit()->correctionId());
     }
     ui_.mle->chatEdit()->setLastMessageId(id);
     ui_.mle->chatEdit()->resetCorrection();

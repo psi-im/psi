@@ -365,6 +365,11 @@ public:
 
     Q_INVOKABLE void kick(const QString &nick) { qDebug() << "kick" << nick; }
 
+    Q_INVOKABLE void editMessage(const QString &messageId, const QString &messageHtml)
+    {
+        emit _view->editMessageRequested(messageId, TextUtil::rich2plain(messageHtml));
+    }
+
 private slots:
     void onUrlHeadersReady()
     {

@@ -142,12 +142,14 @@ function setupContextMenu() {
             msgNode = event.target;
             while (msgNode) {
                 const mcl = msgNode.classList;
-                hasGrNext = mcl.contains("grnext");
-                if (mcl.contains("avatar")) {
-                    return []; // ignore avatar completely
-                }
-                if (msgNode.classList && (hasGrNext || mcl.contains("msg"))) {
-                    break;
+                if (mcl) {
+                    hasGrNext = mcl.contains("grnext");
+                    if (mcl.contains("avatar")) {
+                        return []; // ignore avatar completely
+                    }
+                    if (hasGrNext || mcl.contains("msg")) {
+                        break;
+                    }
                 }
                 msgNode = msgNode.parentNode;
             }
@@ -177,7 +179,7 @@ function setupContextMenu() {
                     { text: "Reply",   action: ()=>{ onReplyClicked(msgNode); } },
                     { text: "Copy",    action: ()=>{ shared.session.copyMessage(msgNode.id);   } },
                     { text: "Forward", action: ()=>{ shared.session.forwardMessage(msgNode.id); } },
-                    { text: "Edit",    action: ()=>{ shared.session.editMessage(msgNode.id);   } },
+                    { text: "Edit",    action: ()=>{ shared.session.editMessage(msgNode.id, msgNode.getElementsByClassName("msgtext").item(0).innerHTML);   } },
                     { text: "Delete",  action: ()=>{ shared.session.deleteMessage(msgNode.id); } }
                 ]
             }

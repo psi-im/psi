@@ -99,6 +99,7 @@ signals:
     void quote(const QString &text);
     void outgoingReactions(const QString &messageId, const QSet<QString> &reactions);
     void outgoingMessageRetraction(const QString &messageId);
+    void editMessageRequested(const QString &messageId, const QString &text);
 
 private:
     friend class ChatViewPrivate;

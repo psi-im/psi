@@ -280,7 +280,7 @@ bool ChatEdit::event(QEvent *event)
     if (event->type() == QEvent::ShortcutOverride) {
         return false;
     }
-    if (event->type() == QEvent::PaletteChange && recButton_ && !correction) {
+    if (event->type() == QEvent::PaletteChange && recButton_ && _correctionId.isEmpty()) {
         setRecButtonIcon();
     }
     return QTextEdit::event(event);
@@ -433,7 +433,7 @@ void ChatEdit::optionsChanged(const QString &option)
 
 void ChatEdit::showHistoryMessageNext()
 {
-    correction = false;
+    _correctionId.clear();
     if (!typedMsgsHistory.isEmpty()) {
         if (typedMsgsIndex + 1 < typedMsgsHistory.size()) {
             ++typedMsgsIndex;
@@ -463,14 +463,14 @@ void ChatEdit::pasteAsQuote()
 
 void ChatEdit::showHistoryMessagePrev()
 {
-    if (!typedMsgsHistory.isEmpty() && (typedMsgsIndex > 0 || correction)) {
+    if (!typedMsgsHistory.isEmpty() && (typedMsgsIndex > 0 || !_correctionId.isEmpty())) {
         // Save current typed text
         if (typedMsgsIndex == typedMsgsHistory.size()) {
-            currentText = toPlainText();
-            correction  = true;
+            currentText  = toPlainText();
+            _correctionId = lastId;
         }
-        if (typedMsgsIndex == typedMsgsHistory.size() - 1 && correction) {
-            correction = false;
+        if (typedMsgsIndex == typedMsgsHistory.size() - 1 && !_correctionId.isEmpty()) {
+            _correctionId.clear();
             ++typedMsgsIndex;
         }
         --typedMsgsIndex;
@@ -480,7 +480,7 @@ void ChatEdit::showHistoryMessagePrev()
 
 void ChatEdit::showHistoryMessageFirst()
 {
-    correction = false;
+    _correctionId.clear();
     if (!typedMsgsHistory.isEmpty()) {
         if (currentText.isEmpty()) {
             typedMsgsIndex = typedMsgsHistory.size() - 1;
@@ -496,7 +496,7 @@ void ChatEdit::showHistoryMessageFirst()
 
 void ChatEdit::showHistoryMessageLast()
 {
-    correction = false;
+    _correctionId.clear();
     if (!typedMsgsHistory.isEmpty()) {
         typedMsgsIndex = 0;
         showMessageHistory();
@@ -553,7 +553,6 @@ bool ChatEdit::canInsertFromMimeData(const QMimeData *source) const
 
 void ChatEdit::updateBackground()
 {
-    setProperty("correction", correction);
     style()->unpolish(this);
     style()->polish(this);
     update();
@@ -645,6 +644,12 @@ void ChatEdit::insertAsQuote(const QString &text)
     quote.append("\n");
     insertPlainText(quote);
     setFocus(Qt::OtherFocusReason);
+}
+
+void ChatEdit::startCorrection(const QString messageId, const QString &text)
+{
+    _correctionId = messageId;
+    setEditText(text);
 }
 
 void ChatEdit::addSoundRecButton()

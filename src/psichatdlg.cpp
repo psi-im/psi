@@ -317,6 +317,7 @@ void PsiChatDlg::initUi()
     addAction(act_mini_cmd_);
 
     connect(ui_.log, &ChatView::quote, ui_.mle->chatEdit(), &ChatEdit::insertAsQuote);
+    connect(ui_.log, &ChatView::editMessageRequested, ui_.mle->chatEdit(), &ChatEdit::startCorrection);
 
     act_pastesend_ = new IconAction(tr("Paste and Send"), "psi/action_paste_and_send", tr("Paste and Send"), 0, this);
     connect(act_pastesend_, SIGNAL(triggered()), SLOT(doPasteAndSend()));

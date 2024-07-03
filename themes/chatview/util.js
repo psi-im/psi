@@ -642,9 +642,13 @@ function initPsiTheme() {
             return false;
         },
 
-        createHtmlNode : function(html, context) {
+        createHtmlNode : function(html, context, stripIndents=true) {
             var range = document.createRange();
             range.selectNode(context || document.body);
+            if (stripIndents) {
+                var re = new RegExp("^ +", "gm");
+                html = html.replace(re, "");
+            }
             return range.createContextualFragment(html);
         },
 

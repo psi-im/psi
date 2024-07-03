@@ -60,12 +60,13 @@ public:
     static bool       checkSpellingGloballyEnabled();
     void              setCheckSpelling(bool);
     XMPP::HTMLElement toHTMLElement();
-    bool              isCorrection() { return correction; }
+    bool              isCorrection() { return !_correctionId.isEmpty(); }
     void              setLastMessageId(const QString &id) { lastId = id; }
+    const QString    &correctionId() const { return _correctionId; }
     const QString    &lastMessageId() { return lastId; }
     void              resetCorrection()
     {
-        correction = false;
+        _correctionId.clear();
         updateBackground();
     }
     CapitalLettersController *capitalizer();
@@ -80,6 +81,7 @@ public slots:
     void doHTMLTextMenu();
     void setCssString(const QString &css);
     void insertAsQuote(const QString &text);
+    void startCorrection(const QString messageId, const QString &text);
 
 protected slots:
     void applySuggestion();
@@ -114,24 +116,25 @@ private:
     void setRecButtonIcon();
 
 private:
-    QWidget                       *dialog_           = nullptr;
-    bool                           check_spelling_   = false;
-    SpellHighlighter              *spellhighlighter_ = nullptr;
-    QPoint                         last_click_;
-    int                            previous_position_ = 0;
-    QStringList                    typedMsgsHistory;
-    int                            typedMsgsIndex       = 0;
-    QAction                       *act_showMessagePrev  = nullptr;
-    QAction                       *act_showMessageNext  = nullptr;
-    QAction                       *act_showMessageFirst = nullptr;
-    QAction                       *act_showMessageLast  = nullptr;
-    QAction                       *act_changeCase       = nullptr;
-    QAction                       *actPasteAsQuote_     = nullptr;
-    QString                        currentText;
-    HTMLTextController            *controller_  = nullptr;
-    CapitalLettersController      *capitalizer_ = nullptr;
-    bool                           correction   = false;
+    QWidget                  *dialog_           = nullptr;
+    bool                      check_spelling_   = false;
+    SpellHighlighter         *spellhighlighter_ = nullptr;
+    QPoint                    last_click_;
+    int                       previous_position_ = 0;
+    QStringList               typedMsgsHistory;
+    int                       typedMsgsIndex       = 0;
+    QAction                  *act_showMessagePrev  = nullptr;
+    QAction                  *act_showMessageNext  = nullptr;
+    QAction                  *act_showMessageFirst = nullptr;
+    QAction                  *act_showMessageLast  = nullptr;
+    QAction                  *act_changeCase       = nullptr;
+    QAction                  *actPasteAsQuote_     = nullptr;
+    QString                   currentText;
+    HTMLTextController       *controller_  = nullptr;
+    CapitalLettersController *capitalizer_ = nullptr;
+    // bool                           correction   = false;
     QString                        lastId;
+    QString                        _correctionId;
     QPointer<QLayout>              layout_;
     QPointer<QToolButton>          recButton_;
     QPointer<QLabel>               overlay_;
