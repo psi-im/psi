@@ -40,6 +40,7 @@ public:
         FileTransferRequest,
         FileTransferFinished,
         Reactions,
+        MessageRetraction
     };
 
     enum Flag {
@@ -74,6 +75,7 @@ public:
     static MessageView nickChangeMessage(const QString &nick, const QString &newNick);
     static MessageView reactionsMessage(const QString &nick, const QString &targetMessageId,
                                         const QSet<QString> &reactions);
+    static MessageView retractionMessage(const QString &targetMessageId);
 
     inline Type           type() const { return _type; }
     inline const QString &text() const { return _text; }
@@ -122,12 +124,14 @@ public:
     inline const QString                  &replaceId() const { return _replaceId; }
     inline void                            setQuoteId(const QString &id) { _quoteId = id; }
     inline const QString                  &quoteId() const { return _quoteId; }
-    inline void                            setReactionsId(const QString &id) { _reactionsId = id; }
-    inline const QString                  &reactionsId() const { return _reactionsId; }
+    inline void                            setRetractionId(const QString &id) { _retractionId = id; }
+    inline const QString                  &retractionId() const { return _retractionId; }
     inline void                            setCarbonDirection(XMPP::Message::CarbonDir c) { _carbon = c; }
     inline XMPP::Message::CarbonDir        carbonDirection() const { return _carbon; }
     inline void                            addReference(FileSharingItem *fsi) { _references.append(fsi); }
     inline const QList<FileSharingItem *> &references() const { return _references; }
+    inline void                            setReactionsId(const QString &id) { _reactionsId = id; }
+    inline const QString                  &reactionsId() const { return _reactionsId; }
     inline void                            setReactions(const QSet<QString> &r) { _reactions = r; }
     inline const QSet<QString>            &reactions() const { return _reactions; }
 
@@ -145,6 +149,7 @@ private:
     QMap<QString, QString>   _urls;
     QString                  _replaceId;
     QString                  _quoteId;
+    QString                  _retractionId;
     QString                  _reactionsId;
     XMPP::Message::CarbonDir _carbon;
     QList<FileSharingItem *> _references;

@@ -21,22 +21,41 @@ var applyPsiSettings = function() {
     util.getFont(function(cssFont){util.updateObject(cssBody, cssFont)});
 }
 
-const messageTemplate = `<div class="%msgClasses%" id="%id%" data-nick="%escapeURI{sender}%">
-<img class='avatar' src='%avatarurl%'/>
+const messageTemplate = `
+<div class="msg mymsg" data-nick="%escapeURI{sender}%">
+<div class='avatar'><img src='%avatarurl%'/></div>
+%template{messageGroupping}%
+%next%
+</div>
+`;
+
+const receivedMessageTemplate = `
+<div class="msg" data-nick="%escapeURI{sender}%">
+<div class='avatar'><img src='%avatarurl%'/></div>
 <div class="msgheader">
 <span class="nick">%sender%</span>
-%nickControl%
+<div class="reply">Reply</div>
 </div>
+%template{messageGroupping}%
+%next%
+</div>
+`;
+
+const messageGroupping = `
+<div id="%id%" class="grnext">
 <span class="time" title="%time{LL}%">%time%</span>
 %quoteTxt%
 <span class="%msgtextClasses%">%message%</span>
-</div>%next%`;
+</div>
+%next%
+`
 
 shared.initTheme({
     chatElement : document.body,
     templates : {
         message: messageTemplate,
-        messageGroupping: messageTemplate,
+        receivedMessage: receivedMessageTemplate,
+        messageGroupping: messageGroupping,
         sys: `<div class="sysmsg" title="%time{LL}%">%message%</div>`,
         sysMessageUT: `<div class="sysmsg" title="%time{LL}%">%message%<div class="usertext">%usertext%</div></div>`,
         lastMsgDate: `<div class="sysmsg">%time{LL}%</div>`,
@@ -49,28 +68,17 @@ shared.initTheme({
         if (shared.cdata.type == "reactions") {
             renderReactions(shared.cdata);
             return false;
+        } else if (shared.cdata.type == "msgretract") {
+            retractMessage(shared.cdata.targetid);
         }
     },
     varHandlers : {
-        msgClasses: function() {
-            let classes = ["msg"];
-            if (shared.cdata.nextOfGroup) {
-                classes.push("grnext")
-            }
-            if (shared.cdata.local) {
-                classes.push("mymsg");
-            }
-            return classes.join(" ");
-        },
         msgtextClasses: function() {
             let classes = ["msgtext"];
             if (shared.cdata.alert) {
                 classes.push("alert");
             }
             return classes.join(" ");
-        },
-        nickControl: function() {
-            return shared.cdata.local? "": `<div class="reply">Reply</div>`;
         },
         quoteTxt: function() {
             if (!shared.cdata.reply) {
@@ -86,6 +94,22 @@ shared.initTheme({
         }
     },
     postProcess: function(el) {
+        if (shared.cdata.mtype != "message") {
+            return;
+        }
+        if (!el.classList.contains("grnext")) {
+            var replyBtn = el.getElementsByClassName("reply").item(0);
+            if (replyBtn) {
+                replyBtn.addEventListener("click", ()=>{onReplyClicked(el);});
+            }
+            var nickEl = el.getElementsByClassName("nick").item(0);
+            if (nickEl) {
+                nickEl.addEventListener("click", ()=>{shared.session.nickInsertClick(nickEl.textContent);});
+            }
+            el = el.getElementsByClassName("grnext").item(0);
+        } else {
+            fixReplyVisibility(el.parentNode);
+        }
         likeButton.setupForMessageElement(el);
         if (shared.cdata.reply) {
             const bq = el.getElementsByTagName("blockquote")[0];
@@ -93,16 +117,16 @@ shared.initTheme({
                 bq.addEventListener("click", () => { quoteMsg.scrollIntoView({ "behavior": "smooth", "block": "center" }) });
             }
         }
-        var replyBtn = el.getElementsByClassName("reply").item(0);
-        if (replyBtn) {
-            replyBtn.addEventListener("click", ()=>{onReplyClicked(el);});
-        }
-        var nickEl = el.getElementsByClassName("nick").item(0);
-        if (nickEl) {
-            nickEl.addEventListener("click", ()=>{shared.session.nickInsertClick(nickEl.textContent);});
-        }
     }
 });
+
+function fixReplyVisibility(msgBlock) {
+    const reply = msgBlock.getElementsByClassName("reply").item(0);
+    if (reply) {
+        const visible = msgBlock.getElementsByClassName("grnext").length == 1;
+        reply.style.display = visible? "inline-block" : "none";
+    }
+}
 
 function onReplyClicked(el) {
     var textEl = el.getElementsByClassName("msgtext").item(0);
@@ -113,10 +137,16 @@ function setupContextMenu() {
     chatMenu.addItemProvider((event) => {
         const isNick = event.target.classList.contains("nick");
         let msgNode;
+        let hasGrNext = false;
         if (!isNick) {
             msgNode = event.target;
             while (msgNode) {
-                if (msgNode.classList && msgNode.classList.contains("msg")) {
+                const mcl = msgNode.classList;
+                hasGrNext = mcl.contains("grnext");
+                if (mcl.contains("avatar")) {
+                    return []; // ignore avatar completely
+                }
+                if (msgNode.classList && (hasGrNext || mcl.contains("msg"))) {
                     break;
                 }
                 msgNode = msgNode.parentNode;
@@ -135,11 +165,20 @@ function setupContextMenu() {
                     ])
                 }
             } else {
+                if (!hasGrNext) {
+                    const nodes = msgNode.getElementsByClassName("grnext");
+                    if (nodes.length > 1) {
+                        // clicked on message header but there are many messages
+                        return [];
+                    }
+                    msgNode = nodes.item(0);
+                }
                 items = [
-                    { text: "Delete",  action: ()=>{ shared.session.deleteMessage(msgNode.id); } },
                     { text: "Reply",   action: ()=>{ onReplyClicked(msgNode); } },
+                    { text: "Copy",    action: ()=>{ shared.session.copyMessage(msgNode.id);   } },
                     { text: "Forward", action: ()=>{ shared.session.forwardMessage(msgNode.id); } },
-                    { text: "Copy",    action: ()=>{ shared.session.copyMessage(msgNode.id);   } }
+                    { text: "Edit",    action: ()=>{ shared.session.editMessage(msgNode.id);   } },
+                    { text: "Delete",  action: ()=>{ shared.session.deleteMessage(msgNode.id); } }
                 ]
             }
             return items;
@@ -148,6 +187,16 @@ function setupContextMenu() {
     });
 }
 
+function retractMessage(targetId) {
+    const msg = document.getElementById(targetId);
+    if (msg && msg.classList.contains("grnext")) {
+        const parent = msg.parentNode;
+        parent.removeChild(msg);
+        if (parent.getElementsByClassName("grnext").length == 0) {
+            parent.parentNode.removeChild(parent);
+        }
+    }
+}
 
 function renderReactions(event) {
     const msg = document.getElementById(event.messageid);
@@ -273,10 +322,6 @@ body {
     flex-wrap: wrap;
 }
 
-.msg:hover {
-    background-color: #ffffff;
-}
-
 .msg::before {
     width: 2rem;
     height: 2rem;
@@ -293,20 +338,12 @@ body {
     clip: rect(0.6rem, 3rem, 1.5rem, 2rem);
 }
 
-.msg:hover::before {
-    border-color: #ffffff;
-}
-
 .mymsg {
     margin-left: 0.5rem;
     margin-right: 3rem;
     background-color: #ffd;
     border-radius: .6rem 0 .6rem .6rem;
     padding-top: .5rem;
-}
-
-.mymsg:hover {
-    background-color: #ffe;
 }
 
 .mymsg::before {
@@ -316,10 +353,6 @@ body {
     margin-right: -2.44rem;
     border-color: #ffd;
     clip: rect(0.6rem, 2rem, 1.5rem, 0);
-}
-
-.mymsg:hover::before {
-    border-color: #ffe;
 }
 
 .msgheader {
@@ -355,10 +388,6 @@ body {
     text-decoration: underline;
 }
 
-.mymsg .msgheader {
-    display: none;
-}
-
 .time {
     order: 4;
     right: .5rem;
@@ -375,15 +404,23 @@ body {
     top: 0;
     left: 0;
     position: absolute;
-    max-width: 2.3rem;
     z-index: -1;
-    border-radius: .5rem;
+    height: 1.1em;
+    width: 2.3rem;
 }
 
 .mymsg .avatar {
     margin-right: -2.8rem;
     left: inherit;
     right: 0;
+}
+
+.avatar > img {
+    max-height: 100%;
+    max-width: 100%;
+    display: block;
+    margin: 0 auto;
+    border-radius: 0.5rem;
 }
 
 .msgtext {
@@ -427,8 +464,8 @@ hr.flex-breaker {
 
 .like_button {
     position: absolute;
-    bottom: .3rem;
-    left: -2.5rem;
+    bottom: 0rem;
+    left: -3rem;
     width: 3rem;
     height: 1.5rem;
     text-align: center;
@@ -451,53 +488,18 @@ hr.flex-breaker {
 
 .mymsg .like_button {
     left: inherit;
-    right: -2.5rem;
+    right: -3rem;
 }
 
 .grnext {
     display: flex;
+    width: 100%;
     flex-wrap: wrap;
-    margin-top: -0.15rem;
-    padding-top: 0.3rem;
-    border-top-right-radius: 0;
-    border-top-left-radius: 0;
-    /* We clip it like
-_       _
-| |_____| |
-|         |
-|_________|
-where central part is for the text and everything else for the shadow.
-this 0.08rem below together with margin-top: -0.15rem; is a workaround for
-shadow clipping Google Chrome bug.
-*/
-    clip-path: polygon(0 0,
-            0 -.5rem,
-            -5rem -.5rem,
-            -5rem calc(100% + .5rem),
-            calc(100% + 5rem) calc(100% + .5rem),
-            calc(100% + 5rem) -.5rem,
-            100% -.5rem,
-            100% 0.08rem,
-            0 0.08rem);
+    position: relative;
 }
 
-.grnext .msgheader {
-    display: none;
-}
-
-.grnext .avatar {
-    display: none;
-}
-
-.grnext:before {
-    display: none;
-}
-
-.msg:has(+ .grnext) {
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-    margin-bottom: 0;
-    padding-bottom: .2rem;
+.grnext:hover {
+    background: linear-gradient(90deg, #FFFFFF00 0%, #FFFFFFFF 10%, #FFFFFFFF 90%, #FFFFFF00 100%)
 }
 
 blockquote {
@@ -524,7 +526,7 @@ blockquote>div {
 .reactions_selector {
     display: none;
     position: absolute;
-    padding: .5rem;
+    padding: .3rem;
     margin-top: 1rem;
     border-radius: 0.2rem;
     background-color: #fafafa;
@@ -536,7 +538,7 @@ blockquote>div {
 .reactions_selector em {
     font-style: normal;
     cursor: pointer;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
 }
 
 .context_menu {

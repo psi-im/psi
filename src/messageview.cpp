@@ -102,6 +102,13 @@ MessageView MessageView::reactionsMessage(const QString &nick, const QString &ta
     return mv;
 }
 
+MessageView MessageView::retractionMessage(const QString &targetMessageId)
+{
+    MessageView mv(MessageRetraction);
+    mv.setRetractionId(targetMessageId);
+    return mv;
+}
+
 MessageView MessageView::statusMessage(const QString &nick, int status, const QString &statusText, int priority)
 {
     QString message = QObject::tr("%1 is now %2").arg(nick, status2txt(status));

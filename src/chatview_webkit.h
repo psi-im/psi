@@ -98,6 +98,7 @@ signals:
     void nickInsertClick(const QString &nick);
     void quote(const QString &text);
     void outgoingReactions(const QString &messageId, const QSet<QString> &reactions);
+    void outgoingMessageRetraction(const QString &messageId);
 
 private:
     friend class ChatViewPrivate;

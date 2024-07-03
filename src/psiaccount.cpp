@@ -1576,6 +1576,9 @@ void PsiAccount::updateFeatures()
         if (themeFeatures.contains(QStringLiteral("reactions"))) {
             features << QLatin1String("urn:xmpp:reactions:0");
         }
+        if (themeFeatures.contains(QStringLiteral("message-retract"))) {
+            features << QLatin1String("urn:xmpp:message-retract:1");
+        }
     }
 #endif
 
@@ -2836,7 +2839,8 @@ void PsiAccount::processIncomingMessage(const Message &_m)
     if (_m.type() != Message::Type::Error && _m.body().isEmpty() && _m.urlList().isEmpty() && _m.invite().isEmpty()
         && !_m.containsEvents() && _m.chatState() == StateNone && _m.subject().isNull()
         && _m.rosterExchangeItems().isEmpty() && _m.mucInvites().isEmpty() && _m.getForm().fields().empty()
-        && _m.messageReceipt() == ReceiptNone && _m.getMUCStatuses().isEmpty() && _m.reactions().targetId.isEmpty())
+        && _m.messageReceipt() == ReceiptNone && _m.getMUCStatuses().isEmpty() && _m.reactions().targetId.isEmpty()
+        && _m.retraction().isEmpty())
         return;
 
     // skip headlines?

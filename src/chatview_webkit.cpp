@@ -339,13 +339,22 @@ public:
         _view->outgoingReaction(messageId, reaction);
     }
 
-    Q_INVOKABLE void deleteMessage(const QString &messageId) { qDebug() << "deleteMessage" << messageId; }
+    Q_INVOKABLE void deleteMessage(const QString &messageId)
+    {
+        emit _view->outgoingMessageRetraction(messageId);
+        if (!_view->d->isMuc_) {
+            // send back immediately coz it's not it's not iq and not MUC where server sends it back
+            QVariantMap vm;
+            vm["type"]     = QLatin1String("msgretract");
+            vm["targetid"] = messageId;
+            emit newMessage(vm);
+        }
+    }
 
     Q_INVOKABLE void replyMessage(const QString &messageId, const QString &quotedHtml)
     {
         auto plainText = TextUtil::rich2plain(quotedHtml);
         emit _view->quote(plainText);
-        qDebug() << "replyMessage" << messageId;
     }
 
     Q_INVOKABLE void copyMessage(const QString &messageId) { qDebug() << "copyMessage" << messageId; }
@@ -676,6 +685,7 @@ void ChatView::dispatchMessage(const MessageView &mv)
         types.insert(MessageView::FileTransferFinished, "ftfin");
         types.insert(MessageView::NickChange, "newnick");
         types.insert(MessageView::Reactions, "reactions");
+        types.insert(MessageView::MessageRetraction, "msgretract");
     }
     QVariantMap m;
     switch (mv.type()) {
@@ -741,6 +751,9 @@ void ChatView::dispatchMessage(const MessageView &mv)
         d->sendReactionsToUI(n, mv.reactionsId(), mv.reactions());
         return;
     }
+    case MessageView::MessageRetraction:
+        m["targetid"] = mv.retractionId();
+        break;
     case MessageView::FileTransferRequest:
     case MessageView::FileTransferFinished:
         break;
@@ -762,7 +775,7 @@ void ChatView::dispatchMessage(const MessageView &mv)
     if (!replaceId.isEmpty()) {
         m["type"]      = "replace";
         m["replaceId"] = replaceId;
-    } else {
+    } else if (mv.type() != MessageView::MessageRetraction) {
         m["mtype"] = m["type"];
         m["type"]  = "message";
     }

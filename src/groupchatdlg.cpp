@@ -690,6 +690,19 @@ void GCMainDlg::outgoingReactions(const QString &messageId, const QSet<QString> 
     emit aSend(m);
 }
 
+void GCMainDlg::sendMessageRetraction(const QString &messageId)
+{
+    Message m(jid());
+    m.setType(Message::Type::Groupchat);
+    m.setRetraction(messageId);
+    // QString id = account()->client()->genUniqueId();
+    // m.setId(id); // we need id early for message manipulations in chatview
+    // m.setTimeStamp(QDateTime::currentDateTime());
+    //  d->mle()->appendMessageHistory(m.body());
+
+    emit aSend(m);
+}
+
 void GCMainDlg::doContactContextMenu(const QString &nick)
 {
     auto itm = d->usersModel->findEntry(nick);
@@ -891,6 +904,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     connect(URLObject::getInstance(), SIGNAL(openURL(QString)), SLOT(openURL(QString)));
     connect(ui_.log, SIGNAL(nickInsertClick(QString)), SLOT(onNickInsertClick(QString)));
     connect(ui_.log, &ChatView::outgoingReactions, this, &GCMainDlg::outgoingReactions);
+    connect(ui_.log, &ChatView::outgoingMessageRetraction, this, &GCMainDlg::sendMessageRetraction);
 
     PsiToolTip::install(ui_.le_topic);
 
@@ -2175,6 +2189,12 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
 
     if (!m.reactions().targetId.isEmpty()) {
         auto mv = MessageView::reactionsMessage(from, m.reactions().targetId, m.reactions().reactions);
+        ui_.log->dispatchMessage(mv);
+        return;
+    }
+
+    if (!m.retraction().isEmpty()) {
+        auto mv = MessageView::retractionMessage(m.retraction());
         ui_.log->dispatchMessage(mv);
         return;
     }

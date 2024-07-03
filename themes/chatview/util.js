@@ -413,6 +413,7 @@ function initPsiTheme() {
         this.show = function(messageId, nearEl, scrollEl) {
             this.currentMessage = messageId;
             const nbr = nearEl.getBoundingClientRect();
+            rs.style.left = "0px";
             rs.style.top = (nbr.top + scrollEl.scrollTop + document.documentElement.scrollTop) + "px";
             rs.style.display = "flex";
             const selectorRect = rs.getBoundingClientRect();

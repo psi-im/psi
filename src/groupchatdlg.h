@@ -146,6 +146,7 @@ private slots:
     void doContactContextMenu(const QString &nick);
 
     void outgoingReactions(const QString &messageId, const QSet<QString> &reactions);
+    void sendMessageRetraction(const QString &messageId);
 public:
     class Private;
     friend class Private;

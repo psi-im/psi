@@ -102,6 +102,7 @@ signals:
     void quote(const QString &text);
     void nickInsertClick(const QString &nick);
     void outgoingReactions(const QString &messageId, const QSet<QString> &reactions);
+    void outgoingMessageRetraction(const QString &messageId);
 
 private:
     bool              isMuc_;

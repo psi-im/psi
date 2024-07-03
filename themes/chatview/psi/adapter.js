@@ -151,18 +151,17 @@ function psiThemeAdapter(chat) {
                 shared.msgElPostProcess = config.postProcess;
                 for (var tname in config.templates) {
                     if (config.templates[tname]) {
-                        t[tname] = new shared.Template(config.templates[tname]);
+                        t[tname] = new shared.Template(config.templates[tname].trim());
                     }
                 }
                 t.message = t.message || "%message%";
                 t.sys = t.sys || "%message%";
                 t.sysMessage = t.sysMessage || t.sys;
                 t.sysMessageUT = t.sysMessageUT || t.sysMessage;
-                t.statusMessageUT = t.statusMessageUT || (t.statusMessage || t.sysMessageUT);
                 t.statusMessage = t.statusMessage || t.sysMessage;
+                t.statusMessageUT = t.statusMessageUT || (t.statusMessage || t.sysMessageUT);
                 t.sentMessage = t.sentMessage || t.message;
                 t.receivedMessage = t.receivedMessage || t.message;
-                t.spooledMessage = t.spooledMessage || t.message;
                 t.receivedMessageGroupping = t.receivedMessageGroupping || t.messageGroupping;
                 t.sentMessageGroupping = t.sentMessageGroupping || t.messageGroupping;
                 t.lastMsgDate = t.lastMsgDate || t.sys;
@@ -297,11 +296,7 @@ function psiThemeAdapter(chat) {
                             }
                             if (!template) {
                                 data.nextOfGroup = false; //can't group w/o template
-                                if (data.spooled) {
-                                    template = shared.templates.spooledMessage;
-                                } else {
-                                    template = data.local?shared.templates.sentMessage:shared.templates.receivedMessage;
-                                }
+                                template = data.local?shared.templates.sentMessage:shared.templates.receivedMessage;
                             }
                             break;
                         case "join":
