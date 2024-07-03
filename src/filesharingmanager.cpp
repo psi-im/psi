@@ -219,7 +219,8 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
             // only audio and image supported for now
             if (!ms.isValid() || !ms.file.hasComputedHashes() || !ms.file.size().has_value()
                 || !(ms.file.mediaType().startsWith(QLatin1String("audio"))
-                     || ms.file.mediaType().startsWith(QLatin1String("image")))) {
+                     || ms.file.mediaType().startsWith(QLatin1String("image"))
+                     || ms.file.mediaType().startsWith(QLatin1String("video")))) {
                 continue;
             }
             auto item = new FileSharingItem(ms, m.from(), acc, this);

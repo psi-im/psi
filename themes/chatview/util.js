@@ -648,6 +648,15 @@ function initPsiTheme() {
             return range.createContextualFragment(html);
         },
 
+        videoPreview: function(source) {
+            const html = `<div class="video psi-preview">
+                <video width="560" height="315" controls="1">
+                    <source src="${source}"/>
+                </video>
+            </div>`;
+            return chat.util.createHtmlNode(html); 
+        },
+
         replaceYoutube : function(linkEl) {
             var baseLink = "https://www.youtube.com/embed/";
             var link;
@@ -686,8 +695,8 @@ function initPsiTheme() {
 
         replaceVideo : function(linkEl)
         {
-            var audio = chat.util.createHtmlNode('<div class="video psi-preview"><video width="560" height="315" controls="1"><source src="'+ linkEl.href +'"></video></div>');
-            linkEl.parentNode.insertBefore(audio, linkEl.nextSibling);
+            const video = chat.util.videoPreview(linkEl.href);
+            linkEl.parentNode.insertBefore(video, linkEl.nextSibling);
         },
 
         replaceLinkAsync : function(linkEl)
@@ -783,6 +792,12 @@ ${info}
                         share.parentNode.insertBefore(img, share.nextSibling);
                     else
                         share.parentNode.appendChild(img);
+                } else if (type.startsWith("video"))  {
+                    player = chat.util.videoPreview(`/psi/account/${session.account}/sharedfile/${source}`);
+                    if (share.nextSibling)
+                        share.parentNode.insertBefore(player, share.nextSibling);
+                    else
+                        share.parentNode.appendChild(player);
                 }
             }
         },
