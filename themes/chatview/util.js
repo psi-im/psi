@@ -432,13 +432,35 @@ function initPsiTheme() {
         this.items = [];
         this.providers = [];
 
-        this.addItem = function(text, action)  {
+        var menu = this;
+        document.addEventListener("contextmenu", function (event) {
+            var all_items = menu.items.slice();
+            try {
+                for (let i = 0; i < menu.providers.length; i++) {
+                    all_items = all_items.concat(menu.providers[i](event));
+                }
+            } catch(e) {
+                chat.console(e+"");
+            }
+            if (!all_items.length) {
+                return true;
+            }
+
+            event.stopPropagation();
+            event.preventDefault();
+
+            menu.show(event.pageX, event.pageY, all_items).catch(()=>{});
+        });
+    }
+
+    ContextMenu.prototype = {
+        addItem : function(text, action)  {
             this.items.push({text: text, action: action});
-        };
-        this.addItemProvider = function(itemProvider)  {
+        },
+        addItemProvider : function(itemProvider)  {
             this.providers.push(itemProvider);
-        };
-        this.show = function(x, y, items)  {
+        },
+        show : function(x, y, items)  {
             if (window.activeMenu) {
                 window.activeMenu.destroyMenu();
             }
@@ -462,46 +484,30 @@ function initPsiTheme() {
                     }, { "once": true });
                 }
                 menu.destroyMenu = () => {
-                    document.body.removeEventListener("click", menu.destroyMenu);
+                    document.removeEventListener("click", menu.destroyMenu);
                     menu.parentNode.removeChild(menu);
                     window.activeMenu = undefined;
                     reject();
                 };
-                document.body.addEventListener("click", menu.destroyMenu, { "once": true });
+                document.addEventListener("click", menu.destroyMenu, { "once": true });
         
-                menu.style.top = y + "px";
+                if (x + menu.clientWidth > document.body.clientWidth) {
+                    x = document.body.clientWidth - menu.clientWidth - 5;
+                    if (x < 0) x = 0;
+                }
                 menu.style.left = x + "px";
+                
+                const docEl = document.documentElement;
+                const bottom = docEl.clientHeight + docEl.scrollTop + document.body.scrollTop;
+                if (y + menu.clientHeight > bottom) {
+                    y = bottom - menu.clientHeight;
+                    if (y < docEl.scrollTop) y = docEl.scrollTop;
+                }
+                menu.style.top = y + "px";
+                
                 window.activeMenu = menu;
             });
-        };
-
-        var menu = this;
-        document.addEventListener("contextmenu", function (event) {
-            var all_items = menu.items.slice();
-            try {
-                for (let i = 0; i < menu.providers.length; i++) {
-                    all_items = all_items.concat(menu.providers[i](event));
-                }
-            } catch(e) {
-                chat.console(e+"");
-            }
-            if (!all_items.length) {
-                return true;
-            }
-
-            event.stopPropagation();
-            event.preventDefault();
-
-            var totalScrollY = 0;
-            var el = event.target;
-            while (el) {
-                if (el.scrollTop !== undefined) {
-                    totalScrollY += el.scrollTop;
-                }
-                el = el.parentNode;
-            }
-            menu.show(event.x, event.y + totalScrollY, all_items).catch(()=>{});
-        });
+        }
     }
 
     var util = {
