@@ -22,7 +22,7 @@ var applyPsiSettings = function() {
 }
 
 const messageTemplate = `
-<div class="msg mymsg" data-nick="%escapeURI{sender}%">
+<div class="msg mymsg" data-nick="%escapeURI{sender}%" data-local="1">
 <div class='avatar'><img src='%avatarurl%'/></div>
 %template{messageGroupping}%
 %next%
@@ -136,26 +136,26 @@ function onReplyClicked(el) {
 function setupContextMenu() {
     chatMenu.addItemProvider((event) => {
         const isNick = event.target.classList.contains("nick");
-        let msgNode;
-        let hasGrNext = false;
-        if (!isNick) {
-            msgNode = event.target;
-            while (msgNode) {
-                const mcl = msgNode.classList;
-                if (mcl) {
-                    hasGrNext = mcl.contains("grnext");
-                    if (mcl.contains("avatar")) {
-                        return []; // ignore avatar completely
-                    }
-                    if (hasGrNext || mcl.contains("msg")) {
-                        break;
-                    }
+        let msgNode = undefined;
+        let msgGroup = isNick? event.target.parentElement.parentElement : event.target;
+        while (msgGroup) {
+            const mcl = msgGroup.classList;
+            if (mcl) {
+                if (mcl.contains("msg")) {
+                    break;
                 }
-                msgNode = msgNode.parentNode;
+                if (!msgNode && mcl.contains("grnext")) {
+                    msgNode = msgGroup;
+                }
+                if (mcl.contains("avatar")) {
+                    return []; // ignore avatar completely
+                }
             }
+            msgGroup = msgGroup.parentNode;
         }
-        if (isNick || msgNode) {
+        if (msgGroup) {
             let items;
+            const nick = decodeURIComponent(msgGroup.getAttribute("data-nick"));
             if (isNick) {
                 items = [
                     { text: "Info", action: ()=>{      shared.session.showInfo(nick); } }
@@ -167,21 +167,27 @@ function setupContextMenu() {
                     ])
                 }
             } else {
-                if (!hasGrNext) {
-                    const nodes = msgNode.getElementsByClassName("grnext");
+                if (!msgNode) {
+                    const nodes = msgGroup.getElementsByClassName("grnext");
                     if (nodes.length > 1) {
                         // clicked on message header but there are many messages
                         return [];
                     }
                     msgNode = nodes.item(0);
                 }
+                const local = msgGroup.getAttribute("data-local") === "1";
+                msgHtml = () => msgNode.getElementsByClassName("msgtext").item(0).innerHTML;
                 items = [
                     { text: "Reply",   action: ()=>{ onReplyClicked(msgNode); } },
-                    { text: "Copy",    action: ()=>{ shared.session.copyMessage(msgNode.id);   } },
-                    { text: "Forward", action: ()=>{ shared.session.forwardMessage(msgNode.id); } },
-                    { text: "Edit",    action: ()=>{ shared.session.editMessage(msgNode.id, msgNode.getElementsByClassName("msgtext").item(0).innerHTML);   } },
-                    { text: "Delete",  action: ()=>{ shared.session.deleteMessage(msgNode.id); } }
-                ]
+                    { text: "Copy",    action: ()=>{ shared.session.copyMessage(msgNode.id, msgHtml());   } },
+                    { text: "Forward", action: ()=>{ shared.session.forwardMessage(msgNode.id, nick, msgHtml()); } }
+                ];
+                if (local) {
+                    items = items.concat([
+                        { text: "Edit",    action: ()=>{ shared.session.editMessage(msgNode.id, msgHtml());   } },
+                        { text: "Delete",  action: ()=>{ shared.session.deleteMessage(msgNode.id); } }
+                    ]);
+                }
             }
             return items;
         }

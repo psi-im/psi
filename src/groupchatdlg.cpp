@@ -1110,6 +1110,14 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
 
     connect(ui_.log, &ChatView::quote, ui_.mle->chatEdit(), &ChatEdit::insertAsQuote);
     connect(ui_.log, &ChatView::editMessageRequested, ui_.mle->chatEdit(), &ChatEdit::startCorrection);
+    connect(ui_.log, &ChatView::forwardMessageRequested, account(),
+            [this](const QString &messageId, const QString &nick, const QString &text) {
+                account()->psi()->invokeForwardMessage(jid().withResource(nick), text);
+            });
+    connect(ui_.log, &ChatView::openInfoRequested, account(),
+            [this](const QString &nick) { account()->invokeGCInfo(jid().withResource(nick)); });
+    connect(ui_.log, &ChatView::openChatRequested, account(),
+            [this](const QString &nick) { account()->invokeGCChat(jid().withResource(nick)); });
     connect(pa->avatarFactory(), &AvatarFactory::avatarChanged, this, &GCMainDlg::avatarUpdated);
 
 #ifdef PSI_PLUGINS

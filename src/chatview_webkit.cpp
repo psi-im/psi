@@ -357,17 +357,26 @@ public:
         emit _view->quote(plainText);
     }
 
-    Q_INVOKABLE void copyMessage(const QString &messageId) { qDebug() << "copyMessage" << messageId; }
+    Q_INVOKABLE void copyMessage(const QString &messageId, const QString &html)
+    {
+        auto plainText = TextUtil::rich2plain(html);
+        QApplication::clipboard()->setText(plainText);
+    }
 
-    Q_INVOKABLE void showInfo(const QString &nick) { qDebug() << "showInfo" << nick; }
+    Q_INVOKABLE void showInfo(const QString &nick) { emit _view->openInfoRequested(nick); }
 
-    Q_INVOKABLE void openChat(const QString &nick) { qDebug() << "openChat" << nick; }
+    Q_INVOKABLE void openChat(const QString &nick) { emit _view->openChatRequested(nick); }
 
     Q_INVOKABLE void kick(const QString &nick) { qDebug() << "kick" << nick; }
 
     Q_INVOKABLE void editMessage(const QString &messageId, const QString &messageHtml)
     {
         emit _view->editMessageRequested(messageId, TextUtil::rich2plain(messageHtml));
+    }
+
+    Q_INVOKABLE void forwardMessage(const QString &messageId, const QString &nick, const QString &messageHtml)
+    {
+        emit _view->forwardMessageRequested(messageId, nick, TextUtil::rich2plain(messageHtml));
     }
 
 private slots:

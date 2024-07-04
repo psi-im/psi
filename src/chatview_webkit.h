@@ -100,6 +100,9 @@ signals:
     void outgoingReactions(const QString &messageId, const QSet<QString> &reactions);
     void outgoingMessageRetraction(const QString &messageId);
     void editMessageRequested(const QString &messageId, const QString &text);
+    void forwardMessageRequested(const QString &messageId, const QString &nick, const QString &text);
+    void openInfoRequested(const QString &nickname);
+    void openChatRequested(const QString &nickname);
 
 private:
     friend class ChatViewPrivate;

@@ -67,6 +67,7 @@
 #include "psicontactlist.h"
 #include "psievent.h"
 #include "psiiconset.h"
+#include "psirosterwidget.h"
 #ifdef PSIMNG
 #include "psimng.h"
 #endif
@@ -1984,5 +1985,26 @@ void PsiCon::secondsIdle(int sec)
 int PsiCon::idle() const { return d->idleSettings_.secondsIdle; }
 
 ContactUpdatesManager *PsiCon::contactUpdatesManager() const { return contactUpdatesManager_; }
+
+void PsiCon::invokeForwardMessage(const Jid &from, const QString &text)
+{
+    auto dlg = new QDialog(d->mainwin);
+    dlg->resize(200, 600);
+    dlg->setAttribute(Qt::WA_DeleteOnClose);
+    dlg->setWindowIcon(IconsetFactory::icon("psi/action_contacts_manager").icon());
+    dlg->setWindowTitle(tr("Forward..."));
+    auto layout = new QVBoxLayout(dlg);
+
+    auto roster = new PsiRosterWidget(d->mainwin);
+    roster->setContactList(d->contactList);
+    roster->setFilterModeEnabled(true);
+
+    auto btn = new QPushButton(tr("Forward"));
+    connect(btn, &QPushButton::clicked, dlg, [this, roster](bool) { qDebug("TODO: implement forwarding"); });
+
+    layout->addWidget(roster);
+    layout->addWidget(btn);
+    dlg->show();
+}
 
 #include "psicon.moc"

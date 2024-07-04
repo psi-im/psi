@@ -137,6 +137,8 @@ public:
     PopupManager *popupManager() const;
     QStringList   xmppFatures() const;
 
+    void invokeForwardMessage(const Jid &from, const QString &text);
+
 signals:
     void quit(int);
     void accountAdded(PsiAccount *);
@@ -182,7 +184,6 @@ public slots:
     void openAtStyleUri(const QUrl &uri);
     void raiseMainwin();
 
-private slots:
     void saveAccounts();
     void optionChanged(const QString &option);
     void forceSavePreferences(QSessionManager &);

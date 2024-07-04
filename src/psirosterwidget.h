@@ -35,7 +35,7 @@ class QStackedWidget;
 class PsiRosterWidget : public QWidget {
     Q_OBJECT
 public:
-    PsiRosterWidget(QWidget *parent);
+    PsiRosterWidget(QWidget *parent = nullptr);
     ~PsiRosterWidget();
 
     void setContactList(PsiContactList *contactList);

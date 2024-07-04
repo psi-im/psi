@@ -787,7 +787,7 @@
         <xmpp:xep rdf:resource='https://xmpp.org/extensions/xep-0424.html'/>
         <xmpp:status>partial</xmpp:status>
         <xmpp:note xml:lang='en'>Without security checks for now.</xmpp:note>
-        <xmpp:version>0.2.1</xmpp:version>
+        <xmpp:version>0.4.1</xmpp:version>
       </xmpp:SupportedXep>
     </implements>
 

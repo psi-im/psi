@@ -176,8 +176,8 @@ void PsiRosterWidget::setContactList(PsiContactList *contactList)
 
     contactListModel_ = new ContactListDragModel(contactList_, this);
     contactListModel_->invalidateLayout();
-    contactListModel_->setGroupsEnabled(PsiOptions::instance()->getOption(enableGroupsOptionPath).toBool());
     contactListModel_->setAccountsEnabled(true);
+    contactListModel_->setGroupsEnabled(PsiOptions::instance()->getOption(enableGroupsOptionPath).toBool());
 #ifdef MODELTEST
     new ModelTest(contactListModel_, this);
 #endif
