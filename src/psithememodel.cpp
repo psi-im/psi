@@ -83,6 +83,7 @@ struct PsiThemeModel::Loader {
         ti.creation    = theme.creation();
         ti.homeUrl     = theme.homeUrl();
         ti.features    = theme.features();
+        ti.stylesList  = theme.stylesList();
 
         ti.hasPreview = theme.hasPreview();
         ti.isValid    = true;
@@ -196,6 +197,10 @@ QVariant PsiThemeModel::data(const QModelIndex &index, int role) const
     }
     case IsCurrent:
         return themesInfo[index.row()].isCurrent;
+    case StylesListRole: {
+        const ThemeItemInfo &ti = themesInfo[index.row()];
+        return ti.stylesList;
+    }
     }
     return QVariant();
 }

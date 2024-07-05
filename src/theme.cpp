@@ -189,6 +189,8 @@ const QString &Theme::homeUrl() const { return d->homeUrl; }
 
 const QStringList &Theme::features() const { return d->features; }
 
+const QStringList &Theme::stylesList() const { return d->stylesList; }
+
 PsiThemeProvider *Theme::themeProvider() const { return d->provider; }
 
 /**

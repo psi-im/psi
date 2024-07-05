@@ -452,6 +452,11 @@ void ChatViewJSLoader::setMetaData(const QVariantMap &map)
     if (vl.count()) {
         theme->features = vl;
     }
+
+    vl = map["stylesList"].toStringList();
+    if (vl.count()) {
+        theme->stylesList = vl;
+    }
 }
 
 void ChatViewJSLoader::finishThemeLoading()

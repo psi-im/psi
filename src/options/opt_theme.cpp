@@ -92,7 +92,7 @@ QWidget *OptionsTabAppearanceTheme::widget()
 
 void OptionsTabAppearanceTheme::themeSelected(const QModelIndex &current, const QModelIndex &previous)
 {
-    Q_UNUSED(current);
+    updateStyles(current);
     if (!previous.isValid()) {
         return; // Psi won't start if it's impossible to load any theme. So we always have previous.
     }
@@ -108,6 +108,7 @@ void OptionsTabAppearanceTheme::modelRowsInserted(const QModelIndex &parent, int
             const QModelIndex index = themesModel->index(i, 0);
             if (themesModel->data(index, PsiThemeModel::IsCurrent).toBool()) {
                 d->themeView->setCurrentIndex(index);
+                updateStyles(index);
             }
 #if 0
             const QString id    = themesModel->data(index, PsiThemeModel::IdRole).toString();
@@ -185,6 +186,19 @@ QString OptionsTabAppearanceTheme::getThemeId(const QString &objName) const
 {
     const int index = objName.indexOf("_", 0);
     return (index > 0 ? objName.right(objName.length() - index - 1) : QString());
+}
+
+void OptionsTabAppearanceTheme::updateStyles(const QModelIndex &index)
+{
+    auto                  styles = themesModel->data(index, PsiThemeModel::StylesListRole).toStringList();
+    OptAppearanceThemeUI *d      = static_cast<OptAppearanceThemeUI *>(w);
+    d->cmb_style->blockSignals(true);
+    d->cmb_style->clear();
+    for (auto const &s : styles) {
+        d->cmb_style->addItem(s);
+    }
+    d->cmb_style->setCurrentIndex(0);
+    d->cmb_style->blockSignals(0);
 }
 
 void OptionsTabAppearanceTheme::applyOptions()

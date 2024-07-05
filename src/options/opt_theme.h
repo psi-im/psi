@@ -59,6 +59,7 @@ private slots:
 
 private:
     QString getThemeId(const QString &objName) const;
+    void    updateStyles(const QModelIndex &index);
 
 private:
     QWidget               *w             = nullptr;

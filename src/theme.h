@@ -93,6 +93,7 @@ public:
     const QString     &creation() const;
     const QString     &homeUrl() const;
     const QStringList &features() const;
+    const QStringList &stylesList() const;
 
     PsiThemeProvider             *themeProvider() const;
     const QString                &filePath() const;
