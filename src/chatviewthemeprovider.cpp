@@ -60,7 +60,8 @@ const QStringList ChatViewThemeProvider::themeIds() const
             QString typeName = tDirInfo.fileName();
             foreach (QFileInfo themeInfo,
                      QDir(tDirInfo.absoluteFilePath()).entryInfoList(QDir::AllDirs | QDir::NoDotAndDotDot)
-                         + QDir(tDirInfo.absoluteFilePath()).entryInfoList(QStringList("*.theme"), QDir::Files)) {
+                         + QDir(tDirInfo.absoluteFilePath())
+                               .entryInfoList(QStringList { { "*.theme", "*.zip" } }, QDir::Files)) {
                 ret << (QString("%1/%2").arg(typeName, themeInfo.fileName()));
                 // qDebug("found theme: %s", qPrintable(QString("%1/%2").arg(typeName).arg(themeInfo.fileName())));
             }

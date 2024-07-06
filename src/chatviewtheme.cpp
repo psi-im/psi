@@ -555,7 +555,10 @@ QVariantMap ChatViewJSLoader::checkFilesExist(const QStringList &files, const QS
 QStringList ChatViewJSLoader::listFiles()
 {
     QScopedPointer<Theme::ResourceLoader> loader(Theme(theme).resourceLoader());
-    return loader->listAll();
+    if (loader) {
+        return loader->listAll();
+    }
+    return {};
 }
 
 QString ChatViewJSLoader::getFileContents(const QString &name) const { return QString(Theme(theme).loadData(name)); }

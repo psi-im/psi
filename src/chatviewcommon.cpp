@@ -84,7 +84,7 @@ QString ChatViewCommon::getMucNickColor(const QString &nick, bool isSelf)
         return nickColors[it.value() % (nickColors.size() - 1)];
     } while (false);
 
-    return QLatin1String("#000000"); // FIXME it's bad for fallback color
+    return qApp->palette().color(QPalette::Inactive, QPalette::WindowText).name();
 }
 
 void ChatViewCommon::addUser(const QString &nickname) { }

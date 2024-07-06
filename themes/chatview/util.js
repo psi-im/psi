@@ -837,7 +837,7 @@ ${info}
             }
         },
 
-        listAllFiles  : function(callback)  {
+        listAllFiles : function(callback)  {
             if (chat.async) {
                 loader.listFiles(callback);
             } else {

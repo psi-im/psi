@@ -80,7 +80,8 @@ QWidget *Theme::previewWidget() { return d->previewWidget(); }
 bool Theme::isCompressed(const QFileInfo &fi)
 {
     QString sfx = fi.suffix();
-    return fi.isDir() && (sfx == QLatin1String("jisp") || sfx == QLatin1String("zip") || sfx == QLatin1String("theme"));
+    return fi.isFile()
+        && (sfx == QLatin1String("jisp") || sfx == QLatin1String("zip") || sfx == QLatin1String("theme"));
 }
 
 bool Theme::isCompressed() const { return isCompressed(QFileInfo(d->filepath)); }
@@ -144,9 +145,8 @@ QByteArray Theme::loadData(const QString &fileName, const QString &themePath, bo
             z.setCaseSensitivity(UnZip::CS_Insensitive);
         }
 
-        QString n = fi.completeBaseName() + '/' + fileName;
-        if (!z.readFile(n, &ba)) {
-            n = "/" + fileName;
+        if (!z.readFile(fileName, &ba)) {
+            auto n = "/" + fileName;
             if (loaded) {
                 *loaded = z.readFile(n, &ba);
             } else {

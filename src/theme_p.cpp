@@ -172,7 +172,7 @@ Theme::ResourceLoader *ThemePrivate::resourceLoader() const
     }
 #ifdef Theme_ZIP
     else if (Theme::isCompressed(fi)) {
-        UnZip z;
+        UnZip z(fi.filePath());
         if (z.open()) {
             if (caseInsensitiveFS) {
                 z.setCaseSensitivity(UnZip::CS_Insensitive);

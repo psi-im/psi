@@ -25,28 +25,36 @@ var adapter = {
     loadTheme : function(style) {
         //var chat = chat;
         var loader = window.srvLoader;
+        var baseDir = "";
         loader.toCache("variant", style);
         //chat.console("DEBUG: loading " );
         loader.setCaseInsensitiveFS(true);
         loader.setPrepareSessionHtml(true);
-        loader.setHttpResourcePath("/Contents/Resources");
-        //chat.console("DEBUG: loading " + loader.themeId);
-        var resources = ["FileTransferRequest.html",
-        "Footer.html", "Header.html", "Status.html", "Topic.html", "Content.html",
-        "Incoming/Content.html", "Incoming/NextContent.html",
-        "Incoming/Context.html", "Incoming/NextContext.html",
-        "Outgoing/Content.html", "Outgoing/NextContent.html",
-        "Outgoing/Context.html", "Outgoing/NextContext.html"];
-
-        var toCache = {};
-        for (var i=0; i<resources.length; i++) {
-            toCache[resources[i]] = "Contents/Resources/" + resources[i];
-        }
-        loader.saveFilesToCache(toCache);
 
         function gotFilesList(filesList) {
-            chat.console(filesList.join(","));
-            chat.util.loadXML("Contents/Info.plist", plistLoaded);
+            filesList = filesList.filter((path) => !(path.startsWith("__MACOSX") || path.startsWith(".") || path.endsWith("DS_Store")));
+            const value = filesList.find((path)=>path.split("/")[0].toLowerCase().endsWith("adiummessagestyle"));
+            if (value)  {
+                baseDir = value.split("/")[0] + "/";
+            }
+            loader.setHttpResourcePath("/" + baseDir + "Contents/Resources");
+
+            //chat.console("DEBUG: loading " + loader.themeId);
+            var resources = ["FileTransferRequest.html",
+                "Footer.html", "Header.html", "Status.html", "Topic.html", "Content.html",
+                "Incoming/Content.html", "Incoming/NextContent.html",
+                "Incoming/Context.html", "Incoming/NextContext.html",
+                "Outgoing/Content.html", "Outgoing/NextContent.html",
+                "Outgoing/Context.html", "Outgoing/NextContext.html"];
+    
+            var toCache = {};
+            for (var i=0; i<resources.length; i++) {
+                toCache[resources[i]] = baseDir + "Contents/Resources/" + resources[i];
+            }
+            loader.saveFilesToCache(toCache);
+
+            chat.console("Found base dir: " + value);
+            chat.util.loadXML(baseDir + "Contents/Info.plist", plistLoaded);
         }
 
         function plistLoaded(ipDoc)
@@ -98,11 +106,16 @@ var adapter = {
                 loader.setTransparent();
             }
 
-            var resources = ["Incoming/buddy_icon.png", "Outgoing/buddy_icon.png", "incoming_icon.png", "outgoing_icon.png"];
+            var resources = [
+                "Incoming/buddy_icon.png",
+                "Outgoing/buddy_icon.png", 
+                "incoming_icon.png", 
+                "outgoing_icon.png"
+            ];
             if (chat.async) {
-                loader.checkFilesExist(resources, "Contents/Resources", resourcesListReady);
+                loader.checkFilesExist(resources, baseDir + "Contents/Resources", resourcesListReady);
             } else {
-                resourcesListReady(loader.checkFilesExist(resources, "Contents/Resources"));
+                resourcesListReady(loader.checkFilesExist(resources, baseDir + "Contents/Resources"));
             }
         }
 
@@ -115,9 +128,9 @@ var adapter = {
             avatars.outgoingImage = rlist["outgoing_icon.png"]? "outgoing_icon.png" : chat.server.psiDefaultAvatarUrl;
             loader.toCache("avatars", avatars)
             if (chat.async) {
-                loader.getFileContents("Contents/Resources/Template.html", baseHtmlLoaded);
+                loader.getFileContents(baseDir + "Contents/Resources/Template.html", baseHtmlLoaded);
             } else {
-                baseHtmlLoaded(loader.getFileContents("Contents/Resources/Template.html"));
+                baseHtmlLoaded(loader.getFileContents(baseDir + "Contents/Resources/Template.html"));
             }
         }
 
