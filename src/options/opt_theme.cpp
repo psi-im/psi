@@ -198,7 +198,6 @@ void OptionsTabAppearanceTheme::updateStyles(const QModelIndex &index)
     for (auto const &s : styles) {
         d->cmb_style->addItem(s);
     }
-    // d->cmb_style->setCurrentIndex(0);
     d->cmb_style->setCurrentText(themesModel->data(index, PsiThemeModel::CurrentStyleRole).toString());
     d->cmb_style->blockSignals(false);
 }
