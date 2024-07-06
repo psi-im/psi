@@ -22,6 +22,14 @@
 #include <QDir>
 #include <QDirIterator>
 
+#ifndef NO_Theme_ZIP
+#define Theme_ZIP
+#endif
+
+#ifdef Theme_ZIP
+#include "zip/zip.h"
+#endif
+
 ThemePrivate::ThemePrivate(PsiThemeProvider *provider) :
     provider(provider), name(QObject::tr("Unnamed")), caseInsensitiveFS(false)
 {
@@ -29,9 +37,9 @@ ThemePrivate::ThemePrivate(PsiThemeProvider *provider) :
 
 ThemePrivate::~ThemePrivate() { }
 
-bool ThemePrivate::load() { return false; }
+bool ThemePrivate::load(const QString &style) { return false; }
 
-bool ThemePrivate::load(std::function<void(bool)> loadCallback)
+bool ThemePrivate::load(const QString &style, std::function<void(bool)> loadCallback)
 {
     Q_UNUSED(loadCallback);
     return false;
@@ -108,6 +116,16 @@ public:
         }
         return false;
     }
+
+    QStringList listAll()
+    {
+        QString      base = baseDir.path() + QLatin1Char('/');
+        QDirIterator it(baseDir.path(), QDir::Files, QDirIterator::Subdirectories);
+        QStringList  ret;
+        while (it.hasNext())
+            ret << it.next();
+        return ret;
+    }
 };
 
 #ifdef Theme_ZIP
@@ -139,6 +157,8 @@ public:
         }
         return z.fileExists(n.mid(baseName.size()));
     }
+
+    QStringList listAll() { return z.list(); }
 };
 #endif
 

@@ -63,15 +63,15 @@ Theme::State Theme::state() const
 
 bool Theme::exists() { return d && d->exists(); }
 
-bool Theme::load()
+bool Theme::load(const QString &style)
 {
     if (!d) {
         return false;
     }
-    return d->load();
+    return d->load(style);
 }
 
-bool Theme::load(std::function<void(bool)> loadCallback) { return d->load(loadCallback); }
+bool Theme::load(const QString &style, std::function<void(bool)> loadCallback) { return d->load(style, loadCallback); }
 
 bool Theme::hasPreview() const { return d->hasPreview(); }
 
@@ -190,6 +190,8 @@ const QString &Theme::homeUrl() const { return d->homeUrl; }
 const QStringList &Theme::features() const { return d->features; }
 
 const QStringList &Theme::stylesList() const { return d->stylesList; }
+
+const QString &Theme::style() const { return d->style; }
 
 PsiThemeProvider *Theme::themeProvider() const { return d->provider; }
 

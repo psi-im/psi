@@ -92,9 +92,11 @@ Theme ChatViewThemeProvider::theme(const QString &id)
  */
 PsiThemeProvider::LoadRestult ChatViewThemeProvider::loadCurrent()
 {
-    QString loadedId  = curTheme.id();
-    QString themeName = PsiOptions::instance()->getOption(optionString()).toString();
-    if (!loadedId.isEmpty() && loadedId == themeName) {
+    QString loadedId    = curTheme.id();
+    QString loadedStyle = loadedId.isEmpty() ? loadedId : curTheme.style();
+    QString themeName   = PsiOptions::instance()->getOption(optionString()).toString();
+    QString style       = PsiOptions::instance()->getOption(optionString() + QLatin1String("-style")).toString();
+    if (!loadedId.isEmpty() && loadedId == themeName && loadedStyle == style) {
         return LoadSuccess; // already loaded. nothing todo
     }
     auto newClassic = QStringLiteral("psi/new_classic");
@@ -104,6 +106,7 @@ PsiThemeProvider::LoadRestult ChatViewThemeProvider::loadCurrent()
             qDebug("Invalid theme id: %s", qPrintable(themeName));
             qDebug("fallback to new_classic chatview theme");
             PsiOptions::instance()->setOption(optionString(), newClassic);
+            style.clear();
             curLoadingTheme = theme(newClassic);
         } else {
             qDebug("New Classic theme failed to load. No fallback..");
@@ -111,12 +114,12 @@ PsiThemeProvider::LoadRestult ChatViewThemeProvider::loadCurrent()
         }
     }
 
-    bool startedLoading = curLoadingTheme.load([this, loadedId, newClassic](bool success) {
+    bool startedLoading = curLoadingTheme.load(style, [this, loadedId, loadedStyle, newClassic](bool success) {
         auto t          = curLoadingTheme;
         curLoadingTheme = {};
         if (success) {
             curTheme = t;
-            if (t.id() != loadedId) {
+            if (t.id() != loadedId || t.style() != loadedStyle) {
                 emit themeChanged();
             }
             return;
@@ -144,10 +147,11 @@ void ChatViewThemeProvider::cancelCurrentLoading() { curLoadingTheme = {}; /* sh
 
 Theme ChatViewThemeProvider::current() const { return curTheme; }
 
-void ChatViewThemeProvider::setCurrentTheme(const QString &id)
+void ChatViewThemeProvider::setCurrentTheme(const QString &id, const QString &style)
 {
     PsiOptions::instance()->setOption(optionString(), id);
-    if (!curTheme.isValid() || curTheme.id() != id) {
+    PsiOptions::instance()->setOption(optionString() + QLatin1String("-style"), style);
+    if (!curTheme.isValid() || curTheme.id() != id || curTheme.style() != style) {
         loadCurrent();
     }
 }

@@ -1,5 +1,5 @@
 <RCC>
-    <qresource prefix="/themes/">
+    <qresource prefix="/themes">
         <file>chatview/adium/Template.html</file>
         <file>chatview/adium/adapter.js</file>
         <file>chatview/psi/psi.css</file>
@@ -23,5 +23,6 @@
         <file>chatview/psi/adapter.js</file>
         <file>chatview/moment-with-locales.js</file>
         <file>chatview/util.js</file>
+        <file>chatview/psi/bubble/Dark.css</file>
     </qresource>
 </RCC>

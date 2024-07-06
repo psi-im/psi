@@ -1,0 +1,71 @@
+body {
+	background-color: #180808;
+	color: white;
+}
+
+.sysmsg {
+    background-color: #233;
+	color: #bbb;
+}
+
+.sysmsg .usertext {
+	color: white;
+}
+
+.msg {
+	background-color: #282828;
+}
+
+.msg::before {
+	border-color: #282828;
+}
+
+.mymsg {
+	background-color: #346;
+}
+
+.mymsg::before {
+	border-color: #346;
+}
+
+.msgtext {
+	color: #eee;
+}
+
+.grnext:hover {
+    background: linear-gradient(90deg, #FFFFFF00 0%, #FFFFFF0F 10%, #FFFFFF0F 90%, #FFFFFF00 100%)
+}
+
+.time {
+	color: #aaa
+}
+
+.reactions>span {
+	border-color: #777
+}
+
+blockquote {
+	background: #f0f0f080;
+	border-color: #444;
+	color: #ccc;
+}
+
+blockquote>div {
+	background-color: #444;
+}
+
+.reactions_selector {
+	background-color: #111;
+}
+
+.context_menu {
+	background-color: black;
+}
+
+.context_menu>div+div {
+	border-color: #555;
+}
+
+.context_menu>div:hover {
+    background-color: #441;
+}

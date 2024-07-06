@@ -45,7 +45,7 @@ struct PsiThemeModel::Loader {
         ThemeItemInfo ti;
         ti.id       = id;
         Theme theme = provider->theme(id);
-        if (theme.load()) {
+        if (theme.load({})) { // load with default style
             fillThemeInfo(ti, theme);
         } else {
             ti.title = ":-(";
@@ -55,11 +55,11 @@ struct PsiThemeModel::Loader {
         return ti;
     }
 
-    void asyncLoad(const QString &id, std::function<void(const ThemeItemInfo &)> loadCallback)
+    void asyncLoad(const QString &id, const QString &style, std::function<void(const ThemeItemInfo &)> loadCallback)
     {
         Theme theme = provider->theme(id);
         themes.insert(id, theme);
-        if (!theme.isValid() || !theme.load([this, theme, loadCallback](bool success) {
+        if (!theme.isValid() || !theme.load(style, [this, theme, loadCallback](bool success) {
                 qDebug("%s theme loading status: %s", qPrintable(theme.id()), success ? "success" : "failure");
                 // TODO invent something smarter
 
@@ -75,15 +75,16 @@ struct PsiThemeModel::Loader {
 
     void fillThemeInfo(ThemeItemInfo &ti, const Theme &theme) const
     {
-        ti.id          = theme.id();
-        ti.title       = theme.title();
-        ti.version     = theme.version();
-        ti.description = theme.description();
-        ti.authors     = theme.authors();
-        ti.creation    = theme.creation();
-        ti.homeUrl     = theme.homeUrl();
-        ti.features    = theme.features();
-        ti.stylesList  = theme.stylesList();
+        ti.id           = theme.id();
+        ti.title        = theme.title();
+        ti.version      = theme.version();
+        ti.description  = theme.description();
+        ti.authors      = theme.authors();
+        ti.creation     = theme.creation();
+        ti.homeUrl      = theme.homeUrl();
+        ti.features     = theme.features();
+        ti.stylesList   = theme.stylesList();
+        ti.currentStyle = theme.style();
 
         ti.hasPreview = theme.hasPreview();
         ti.isValid    = true;
@@ -133,7 +134,12 @@ void PsiThemeModel::load()
         QStringList ids = provider->themeIds();
         qDebug() << ids;
         for (const QString &id : ids) {
-            loader->asyncLoad(id, [this](const ThemeItemInfo &ti) {
+            QString style;
+            if (id == provider->current().id()) {
+                style = provider->current().style();
+            }
+
+            loader->asyncLoad(id, style, [this](const ThemeItemInfo &ti) {
                 if (ti.isValid) {
                     beginInsertRows(QModelIndex(), themesInfo.size(), themesInfo.size());
                     themesInfo.append(ti);
@@ -197,10 +203,10 @@ QVariant PsiThemeModel::data(const QModelIndex &index, int role) const
     }
     case IsCurrent:
         return themesInfo[index.row()].isCurrent;
-    case StylesListRole: {
-        const ThemeItemInfo &ti = themesInfo[index.row()];
-        return ti.stylesList;
-    }
+    case StylesListRole:
+        return themesInfo[index.row()].stylesList;
+    case CurrentStyleRole:
+        return themesInfo[index.row()].currentStyle;
     }
     return QVariant();
 }
@@ -212,12 +218,9 @@ bool PsiThemeModel::setData(const QModelIndex &index, const QVariant &value, int
     }
 
     if (role == IsCurrent) {
-        if (value.toBool()) {
-            provider->setCurrentTheme(themesInfo[index.row()].id);
-            return true;
-        } else {
-            // TODO set fallback / default
-        }
+        auto style = value.toString();
+        provider->setCurrentTheme(themesInfo[index.row()].id, style);
+        return true;
     }
 
     return false;

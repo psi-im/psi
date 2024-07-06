@@ -21,13 +21,30 @@ function psiThemeAdapter(chat) {
     chat.console("Psi adapter is ready");
 
     return {
-    loadTheme : function() {
+    loadTheme : function(style) {
+        const finishSetup = (html, js, scripts) => {
+            var hasStyles = html.indexOf("%styles%") !== -1;
+            var hasStylesVariant = html.indexOf("%stylesVariant%") !==  -1;
+            var styles = '<link rel="stylesheet" href="/psi/themes/chatview/psi/psi.css" type="text/css">';
+            var stylesVariant = `<link rel="stylesheet" href="${style}.css" type="text/css">`;
+            if (style && !hasStylesVariant) {
+                styles +=  stylesVariant;
+            }
+            html = html.replace("%scripts%", scripts + (hasStyles?"":"%styles%"));
+            html = html.replace("%styles%", styles);
+            if (hasStylesVariant) {
+                html = html.replace("%stylesVariant%", style? stylesVariant : "");
+            }
+            srvLoader.setHtml(html);
+            eval(js);
+            srvLoader.finishThemeLoading();
+        };
+
         if (chat.async) {
             srvLoader.getFileContents("index.html", function(html){
                 // FIXME we have a lot of copies of this html everywhere. should be rewritten somehow
                 // probably it's a good idea if adapter will send to Psi a list of required scripts
-                var hasStyles = html.indexOf("%styles%") !== -1;
-                html = html.replace("%scripts%", "<script src=\"/psi/themes/chatview/moment-with-locales.js\"></script>\n \
+                var scripts = "<script src=\"/psi/themes/chatview/moment-with-locales.js\"></script>\n \
 <script src=\"/psi/themes/chatview/util.js\"></script>\n \
 <script src=\"/psi/themes/chatview/psi/adapter.js\"></script>\n \
 <script src=\"/psi/static/qwebchannel.js\"></script>\n \
@@ -37,24 +54,16 @@ function psiThemeAdapter(chat) {
         window.srvUtil = channel.objects.srvUtil;\n \
         var shared = initPsiTheme().adapter.initSession();\n \
     });\n \
-</script>" + (hasStyles?"":"%styles%"));
-                html = html.replace("%styles%", '<link rel="stylesheet" href="/psi/themes/chatview/psi/psi.css" type="text/css">');
-                srvLoader.setHtml(html);
+</script>";
                 srvLoader.getFileContents("load.js", function(js){
-                    eval(js);
-                    srvLoader.finishThemeLoading();
+                    finishSetup(html, js, scripts)
                 })
             });
         } else {
             var html = srvLoader.getFileContents("index.html");
-            html = html.replace("%scripts%", "<script type=\"text/javascript\"> \
-                                var shared = initPsiTheme().adapter.initSession(); \
-                        </script>" + (html.indexOf("%styles%") === -1?"%styles%":"") );
-            html = html.replace("%styles%", '<link rel="stylesheet" href="/psi/themes/chatview/psi/psi.css" type="text/css">');
-
-            srvLoader.setHtml(html);
-            eval(srvLoader.getFileContents("load.js"));
-            srvLoader.finishThemeLoading();
+            var js = srvLoader.getFileContents("load.js");
+            var scripts = `<script type="text/javascript">var shared = initPsiTheme().adapter.initSession();</script>`;
+            finishSetup(html, js, scripts);
         }
     },
     initSession : function() {

@@ -95,6 +95,7 @@ public slots:
     QString     getFileContents(const QString &name) const;
     QString     getFileContentsFromAdapterDir(const QString &name) const;
     void        setTransparent();
+    QStringList listFiles();
 };
 
 // JS Bridge object emedded by theme. Has any logic unrelted to contact itself
@@ -160,7 +161,7 @@ public:
     ~ChatViewThemePrivate();
 
     bool     exists();
-    bool     load(std::function<void(bool)> loadCallback);
+    bool     load(const QString &style, std::function<void(bool)> loadCallback);
     bool     hasPreview() const;
     QWidget *previewWidget();
 

@@ -837,6 +837,14 @@ ${info}
             }
         },
 
+        listAllFiles  : function(callback)  {
+            if (chat.async) {
+                loader.listFiles(callback);
+            } else {
+                callback(loader.listFiles(path));
+            }
+        },
+
         loadXML : function(path, callback) {
             function cb(text){
                 if (!text) {

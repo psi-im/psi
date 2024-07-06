@@ -32,8 +32,10 @@ public:
     Theme::State      state = Theme::State::NotLoaded;
 
     // metadata
-    QString                 id, name, version, description, creation, homeUrl;
-    QStringList             authors, features, stylesList;
+    QString     id, name, version, description, creation, homeUrl;
+    QStringList authors, features, stylesList;
+    QString     style;
+
     QHash<QString, QString> info;
 
     // runtime info
@@ -45,8 +47,8 @@ public:
     virtual ~ThemePrivate();
 
     virtual bool exists() = 0;
-    virtual bool load();                                       // synchronous load
-    virtual bool load(std::function<void(bool)> loadCallback); // asynchronous load
+    virtual bool load(const QString &style);                                       // synchronous load
+    virtual bool load(const QString &style, std::function<void(bool)> loadCallback); // asynchronous load
 
     virtual bool     hasPreview() const;
     virtual QWidget *previewWidget(); // this hack must be replaced with something widget based

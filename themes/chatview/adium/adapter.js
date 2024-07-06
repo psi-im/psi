@@ -22,9 +22,10 @@ function psiThemeAdapter(chat)
 {
 
 var adapter = {
-    loadTheme : function() {
+    loadTheme : function(style) {
         //var chat = chat;
         var loader = window.srvLoader;
+        loader.toCache("variant", style);
         //chat.console("DEBUG: loading " );
         loader.setCaseInsensitiveFS(true);
         loader.setPrepareSessionHtml(true);
@@ -42,6 +43,11 @@ var adapter = {
             toCache[resources[i]] = "Contents/Resources/" + resources[i];
         }
         loader.saveFilesToCache(toCache);
+
+        function gotFilesList(filesList) {
+            chat.console(filesList.join(","));
+            chat.util.loadXML("Contents/Info.plist", plistLoaded);
+        }
 
         function plistLoaded(ipDoc)
         {
@@ -155,7 +161,7 @@ var adapter = {
 
         var ip = {variants: {}};
         //chat.console("DEBUG: 2");
-        chat.util.loadXML("Contents/Info.plist", plistLoaded);
+        chat.util.listAllFiles(gotFilesList);
     }
 }
 
@@ -284,7 +290,7 @@ chat.util.updateObject(adapter, function(chat){
                 //chat.console("cached Template.html: " + html);
                 var ip = cache["Info.plist"];
 
-                var variant = ip.DefaultVariant;
+                var variant = cache["variant"] || ip.DefaultVariant;
                 if (variant && ip.variants[variant]) {
                     chat.util.updateObject(ip, ip.variants[variant]);
                 }

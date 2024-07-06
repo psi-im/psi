@@ -38,6 +38,7 @@ struct ThemeItemInfo {
     QString     homeUrl;
     QStringList features;
     QStringList stylesList;
+    QString     currentStyle;
 
     bool hasPreview;
     bool isValid   = false;
@@ -48,7 +49,14 @@ class PsiThemeModel : public QAbstractListModel {
     Q_OBJECT
 
 public:
-    enum ThemeRoles { IdRole = Qt::UserRole + 1, HasPreviewRole, TitleRole, IsCurrent, StylesListRole };
+    enum ThemeRoles {
+        IdRole = Qt::UserRole + 1,
+        HasPreviewRole,
+        TitleRole,
+        IsCurrent,
+        CurrentStyleRole,
+        StylesListRole
+    };
 
     PsiThemeModel(PsiThemeProvider *provider, QObject *parent);
     ~PsiThemeModel();

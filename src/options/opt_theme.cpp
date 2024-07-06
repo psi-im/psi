@@ -84,6 +84,7 @@ QWidget *OptionsTabAppearanceTheme::widget()
             SLOT(themeSelected(QModelIndex, QModelIndex)));
 
     connect(themesModel, SIGNAL(rowsInserted(QModelIndex, int, int)), SLOT(modelRowsInserted(QModelIndex, int, int)));
+    connect(d->cmb_style, qOverload<int>(&QComboBox::currentIndexChanged), this, [this](int) { emit dataChanged(); });
 
     QTimer::singleShot(0, unsortedModel, &PsiThemeModel::load);
 
@@ -197,8 +198,9 @@ void OptionsTabAppearanceTheme::updateStyles(const QModelIndex &index)
     for (auto const &s : styles) {
         d->cmb_style->addItem(s);
     }
-    d->cmb_style->setCurrentIndex(0);
-    d->cmb_style->blockSignals(0);
+    // d->cmb_style->setCurrentIndex(0);
+    d->cmb_style->setCurrentText(themesModel->data(index, PsiThemeModel::CurrentStyleRole).toString());
+    d->cmb_style->blockSignals(false);
 }
 
 void OptionsTabAppearanceTheme::applyOptions()
@@ -207,7 +209,7 @@ void OptionsTabAppearanceTheme::applyOptions()
         return;
 
     OptAppearanceThemeUI *d = static_cast<OptAppearanceThemeUI *>(w);
-    themesModel->setData(d->themeView->currentIndex(), true, PsiThemeModel::IsCurrent);
+    themesModel->setData(d->themeView->currentIndex(), d->cmb_style->currentText(), PsiThemeModel::IsCurrent);
 }
 
 void OptionsTabAppearanceTheme::restoreOptions()

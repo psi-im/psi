@@ -90,8 +90,9 @@ bool ChatViewThemePrivate::exists()
  * @param adapterPath path to directry with adapter
  * @return true on success
  */
-bool ChatViewThemePrivate::load(std::function<void(bool)> loadCallback)
+bool ChatViewThemePrivate::load(const QString &style, std::function<void(bool)> loadCallback)
 {
+    this->style = style;
     if (!exists()) {
         return false;
     }
@@ -134,11 +135,11 @@ bool ChatViewThemePrivate::load(std::function<void(bool)> loadCallback)
                                 "new QWebChannel(qt.webChannelTransport, function (channel) {\n"
                                 "window.srvLoader = channel.objects.srvLoader;\n"
                                 "window.srvUtil = channel.objects.srvUtil;\n"
-                                "initPsiTheme().adapter.loadTheme();\n"
+                                "initPsiTheme().adapter.loadTheme(\"%2\");\n"
                                 "});\n"
                                 "});\n"
                                 "</script></head></html>")
-                            .arg(themeType),
+                            .arg(themeType, style),
                         jsLoader->serverUrl());
     return true;
 #else
@@ -155,11 +156,13 @@ bool ChatViewThemePrivate::load(std::function<void(bool)> loadCallback)
         evaluateFromFile(sp, wv->page()->mainFrame());
     }
 
-    QString resStr = wv->page()
-                         ->mainFrame()
-                         ->evaluateJavaScript("try { initPsiTheme().adapter.loadTheme(); \"ok\"; } "
-                                              "catch(e) { \"Error:\" + e + \"\\n\" + window.psiim.util.props(e); }")
-                         .toString();
+    QString resStr
+        = wv->page()
+              ->mainFrame()
+              ->evaluateJavaScript(QString("try { initPsiTheme().adapter.loadTheme(\"%1\"); \"ok\"; } "
+                                           "catch(e) { \"Error:\" + e + \"\\n\" + window.psiim.util.props(e); }")
+                                       .arg(style))
+              .toString();
 
     if (resStr == "ok") {
         return true;
@@ -456,6 +459,15 @@ void ChatViewJSLoader::setMetaData(const QVariantMap &map)
     vl = map["stylesList"].toStringList();
     if (vl.count()) {
         theme->stylesList = vl;
+        if (theme->style.isEmpty()) {
+            auto const currentId    = theme->provider->current().id();
+            auto       currentStyle = currentId.isEmpty() ? QString {} : theme->provider->current().style();
+            if (vl.contains(currentStyle)) {
+                theme->style = currentStyle;
+            } else {
+                theme->style = vl[0];
+            }
+        }
     }
 }
 
@@ -538,6 +550,12 @@ QVariantMap ChatViewJSLoader::checkFilesExist(const QStringList &files, const QS
     }
 
     return ret;
+}
+
+QStringList ChatViewJSLoader::listFiles()
+{
+    QScopedPointer<Theme::ResourceLoader> loader(Theme(theme).resourceLoader());
+    return loader->listAll();
 }
 
 QString ChatViewJSLoader::getFileContents(const QString &name) const { return QString(Theme(theme).loadData(name)); }
