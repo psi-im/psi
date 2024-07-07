@@ -214,11 +214,10 @@
 
         //Auto-scroll to bottom.  Use nearBottom to determine if a scrollToBottom is desired.
         function nearBottom() {
-            return ( (document.documentElement.scrollTop + document.body.scrollTop) >= ( document.body.offsetHeight - ( window.innerHeight * 1.2 ) ) );
+            return ( document.body.scrollTop >= ( document.body.offsetHeight - ( window.innerHeight * 1.2 ) ) );
         }
         function scrollToBottom() {
             document.body.scrollTop = document.body.offsetHeight;
-            document.documentElement.scrollTop = document.body.offsetHeight;
         }
 
         //Dynamically exchange the active stylesheet
@@ -321,7 +320,7 @@
         .actionMessageBody:before { content:"*"; }
         .actionMessageBody:after { content:"*"; }
         * { word-wrap:break-word; text-rendering: optimizelegibility; }
-        img.scaledToFitImage { height: auto; max-width: 100%%; }
+        img.scaledToFitImage { height: auto; max-width: 100%; }
     </style>
 
     <!-- This style is shared by all variants. !-->

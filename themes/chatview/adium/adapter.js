@@ -567,6 +567,18 @@ chat.util.updateObject(adapter, function(chat){
 
                 session.newMessage.connect(chat.receiveObject);
                 session.scrollRequested.connect((value) => { window.scrollBy(0, value); });
+                if (QWebChannel) {
+                    // define compatibility hack for webengine
+                    Object.defineProperty(document.body, "scrollTop", {
+                        set: function(x) { document.documentElement.scrollTop = x; },
+                        get: function() { return document.documentElement.scrollTop; }
+                    });
+                    Object.defineProperty(document.body, "scrollHeight", {
+                        set: function(x) { document.documentElement.scrollHeight = x; },
+                        get: function() { return document.documentElement.scrollHeight; }
+                    });
+                }
+
                 chat.util.rereadOptions();
                 session.signalInited();
             }
