@@ -146,12 +146,12 @@ QByteArray Theme::loadData(const QString &fileName, const QString &themePath, bo
         }
 
         if (!z.readFile(fileName, &ba)) {
-            auto n = "/" + fileName;
-            if (loaded) {
-                *loaded = z.readFile(n, &ba);
-            } else {
-                z.readFile(n, &ba);
+            if (!z.readFile("/" + fileName, &ba)) {
+                return {};
             }
+        }
+        if (loaded) {
+            *loaded = true;
         }
     }
 #endif

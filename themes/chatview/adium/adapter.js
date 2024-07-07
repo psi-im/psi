@@ -37,7 +37,7 @@ var adapter = {
             if (value)  {
                 baseDir = value.split("/")[0] + "/";
             }
-            loader.setHttpResourcePath("/" + baseDir + "Contents/Resources");
+            loader.setHttpResourcePath(baseDir + "Contents/Resources");
 
             //chat.console("DEBUG: loading " + loader.themeId);
             var resources = ["FileTransferRequest.html",

@@ -214,10 +214,11 @@
 
         //Auto-scroll to bottom.  Use nearBottom to determine if a scrollToBottom is desired.
         function nearBottom() {
-            return ( document.body.scrollTop >= ( document.body.offsetHeight - ( window.innerHeight * 1.2 ) ) );
+            return ( (document.documentElement.scrollTop + document.body.scrollTop) >= ( document.body.offsetHeight - ( window.innerHeight * 1.2 ) ) );
         }
         function scrollToBottom() {
             document.body.scrollTop = document.body.offsetHeight;
+            document.documentElement.scrollTop = document.body.offsetHeight;
         }
 
         //Dynamically exchange the active stylesheet
