@@ -395,7 +395,6 @@ function initPsiTheme() {
             const em = rs.appendChild(document.createElement("em"));
             em.textContent = emoji;
         });
-        document.body.appendChild(rs);
 
         var selector = this;
         rs.addEventListener("click", function (event) {
@@ -411,6 +410,7 @@ function initPsiTheme() {
         });
 
         this.show = function(messageId, nearEl, scrollEl) {
+            document.body.appendChild(rs);
             this.currentMessage = messageId;
             const nbr = nearEl.getBoundingClientRect();
             rs.style.left = "0px";
