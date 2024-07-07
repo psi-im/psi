@@ -140,7 +140,9 @@ function psiThemeAdapter(chat) {
 
             stopGroupping : function() {
                 if (shared.prevGrouppingData) {
-                    shared.prevGrouppingData.nextEl.parentNode.removeChild(shared.prevGrouppingData.nextEl)
+                    if (shared.prevGrouppingData.nextEl) {
+                        shared.prevGrouppingData.nextEl.parentNode.removeChild(shared.prevGrouppingData.nextEl);
+                    }
                     shared.prevGrouppingData = null;
                 }
             },

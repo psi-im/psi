@@ -70,6 +70,7 @@ shared.initTheme({
             return false;
         } else if (shared.cdata.type == "msgretract") {
             retractMessage(shared.cdata.targetid);
+            shared.stopGroupping(); // an ugly hack to not group with not existing. TODO: better solution
         }
     },
     varHandlers : {
