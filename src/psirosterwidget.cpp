@@ -314,7 +314,7 @@ void PsiRosterWidget::setPickContactMode(bool value)
     if (value) {
         setFilterModeEnabled(true);
     }
-    contactListPageView_->setActivateAction(value ? ContactListView::SignalSelected : ContactListView::Activate);
+    filterPageView_->setActivateAction(value ? ContactListView::SignalSelected : ContactListView::Activate);
 }
 
 void PsiRosterWidget::clearFilterEdit()
