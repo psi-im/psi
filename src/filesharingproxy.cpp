@@ -39,7 +39,7 @@
 
 #include <cstring>
 
-#define HTTP_CHUNK (512 * 1024 * 1024)
+#define HTTP_CHUNK (512 * 1024)
 
 template <typename Impl> class ControlBase : public QObject {
 
