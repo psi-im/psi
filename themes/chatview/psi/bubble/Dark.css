@@ -55,11 +55,11 @@ blockquote>div {
 }
 
 .reactions_selector {
-	background-color: #111;
+	background-color: #033;
 }
 
 .context_menu {
-	background-color: black;
+	background-color: #033;
 }
 
 .context_menu>div+div {

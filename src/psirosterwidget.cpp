@@ -178,6 +178,7 @@ void PsiRosterWidget::setContactList(PsiContactList *contactList)
     contactListModel_->invalidateLayout();
     contactListModel_->setAccountsEnabled(true);
     contactListModel_->setGroupsEnabled(PsiOptions::instance()->getOption(enableGroupsOptionPath).toBool());
+    // connect
 #ifdef MODELTEST
     new ModelTest(contactListModel_, this);
 #endif
@@ -249,9 +250,19 @@ void PsiRosterWidget::filterEditTextChanged(const QString &text)
 #endif
 }
 
-void PsiRosterWidget::quitFilteringMode() { setFilterModeEnabled(false); }
+void PsiRosterWidget::quitFilteringMode()
+{
+    if (!pickContactMode_) {
+        setFilterModeEnabled(false);
+    }
+}
 
-void PsiRosterWidget::updateFilterMode() { setFilterModeEnabled(!filterEdit_->text().isEmpty()); }
+void PsiRosterWidget::updateFilterMode()
+{
+    if (!pickContactMode_) {
+        setFilterModeEnabled(!filterEdit_->text().isEmpty());
+    }
+}
 
 void PsiRosterWidget::setFilterModeEnabled(bool enabled)
 {
@@ -297,9 +308,18 @@ void PsiRosterWidget::setFilterModeEnabled(bool enabled)
     delete selection;
 }
 
+void PsiRosterWidget::setPickContactMode(bool value)
+{
+    pickContactMode_ = value;
+    if (value) {
+        setFilterModeEnabled(true);
+    }
+    contactListPageView_->setActivateAction(value ? ContactListView::SignalSelected : ContactListView::Activate);
+}
+
 void PsiRosterWidget::clearFilterEdit()
 {
-    if (filterEdit_->text().isEmpty())
+    if (filterEdit_->text().isEmpty() && !pickContactMode_)
         setFilterModeEnabled(false);
     else
         filterEdit_->setText("");
@@ -332,7 +352,7 @@ bool PsiRosterWidget::eventFilter(QObject *obj, QEvent *e)
                 filterEdit_->setText(text);
                 return true;
             }
-        } else if (ke->key() == Qt::Key_F3) {
+        } else if (ke->key() == Qt::Key_F3 && !pickContactMode_) {
             setFilterModeEnabled(!(filterEdit_->isVisible() && filterEdit_->text().isEmpty()));
             filterEdit_->setText("");
             return true;
@@ -340,11 +360,15 @@ bool PsiRosterWidget::eventFilter(QObject *obj, QEvent *e)
 
         if (obj == filterEdit_ || obj == filterPageView_ || obj == filterPage_) {
             if (ke->key() == Qt::Key_Escape) {
-                setFilterModeEnabled(false);
+                if (pickContactMode_) {
+                    deleteLater();
+                } else {
+                    setFilterModeEnabled(false);
+                }
                 return true;
             }
 
-            if (ke->key() == Qt::Key_Backspace && filterEdit_->text().isEmpty()) {
+            if (ke->key() == Qt::Key_Backspace && filterEdit_->text().isEmpty() && !pickContactMode_) {
                 setFilterModeEnabled(false);
                 return true;
             }

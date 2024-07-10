@@ -27,6 +27,7 @@ class ContactListDragModel;
 class PsiContactList;
 class PsiContactListView;
 class PsiFilteredContactListView;
+class PsiContact;
 class QLineEdit;
 class QMimeData;
 class QSortFilterProxyModel;
@@ -39,6 +40,10 @@ public:
     ~PsiRosterWidget();
 
     void setContactList(PsiContactList *contactList);
+
+    void setPickContactMode(bool);
+signals:
+    void contactPick(PsiContact *);
 
 public slots:
     void filterEditTextChanged(const QString &);
@@ -69,6 +74,7 @@ private:
 
     ContactListDragModel  *contactListModel_;
     QSortFilterProxyModel *filterModel_;
+    bool                   pickContactMode_ = false;
 };
 
 #endif // PSIROSTERWIDGET_H

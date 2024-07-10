@@ -1997,7 +1997,9 @@ void PsiCon::invokeForwardMessage(const Jid &from, const QString &text)
 
     auto roster = new PsiRosterWidget(d->mainwin);
     roster->setContactList(d->contactList);
-    roster->setFilterModeEnabled(true);
+    roster->setPickContactMode(true);
+    connect(roster, &PsiRosterWidget::contactPick, this,
+            [](PsiContact *c) { qDebug("TODO forwarding to: %s", qPrintable(c->jid().full())); });
 
     auto btn = new QPushButton(tr("Forward"));
     connect(btn, &QPushButton::clicked, dlg, [this, roster](bool) { qDebug("TODO: implement forwarding"); });

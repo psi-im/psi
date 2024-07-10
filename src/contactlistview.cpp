@@ -326,7 +326,12 @@ void ContactListView::activate(const QModelIndex &index) { itemActivated(index);
 
 void ContactListView::itemActivated(const QModelIndex &index)
 {
-    model()->setData(index, QVariant(true), ContactListModel::ActivateRole);
+    if (activateAction == Activate) {
+        model()->setData(index, QVariant(true), ContactListModel::ActivateRole);
+    } else {
+        emit contactSelected(
+            model()->data(index, ContactListModel::ContactListItemRole).value<ContactListItem *>()->contact());
+    }
 }
 
 static QAbstractItemModel *realModel(QAbstractItemModel *model)
