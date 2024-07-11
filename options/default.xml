@@ -644,7 +644,7 @@ QLineEdit#le_status_text {
                 <assign-custom-avatar type="QKeySequence" comment="Assign a custom avatar to the selected contact"/>
                 <clear-custom-avatar type="QKeySequence" comment="Remove custom avatar from the selected contact"/>
                 <delete type="QKeySequence" comment="Delete the selected contact">Shift+Del</delete>
-                <chat type="QKeySequence" comment="Open a chat to the selected contact">Ctrl+C</chat>
+                <chat type="QKeySequence" comment="Open a chat to the selected contact"></chat>
                 <message type="QKeySequence" comment="Send a message to the selected contact">Ctrl+M</message>
                 <event type="QKeySequence" comment="Receive incoming event">Ctrl+R</event>
                 <rename type="QKeySequence" comment="Rename the selected contact">F2</rename>

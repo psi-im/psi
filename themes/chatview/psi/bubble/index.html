@@ -11,19 +11,33 @@
 function startPsiTheme(shared) {
 
 var util = shared.chat.util;
-var themeStyle     = document.getElementById("themeStyle").sheet;
-var cssBody        = util.findStyleSheet(themeStyle, "body").style;
+var themeStyle = document.getElementById("themeStyle").sheet;
+var cssBody = util.findStyleSheet(themeStyle, "body").style;
+var cssLink = util.findStyleSheet(themeStyle, "a").style;
+var colorMap = {
+    "options.ui.look.colors.messages.link": cssLink,
+};
 const reactionsSelector = new shared.chat.ReactionsSelector(shared.session);
-const likeButton   = new shared.chat.LikeButton(reactionsSelector, document.body);
+const likeButton = new shared.chat.LikeButton(reactionsSelector, document.body);
 const chatMenu = new shared.chat.ContextMenu();
 
 var applyPsiSettings = function() {
-    util.getFont(function(cssFont){util.updateObject(cssBody, cssFont)});
-}
+    util.getFont(function(cssFont) { util.updateObject(cssBody, cssFont); });
+    function updateColor(opt, style) {
+        util.colorOption(opt, function(val) { style.color = val; });
+    }
+    for (var k in colorMap) {
+        colorMap.hasOwnProperty(k) && updateColor(k, colorMap[k]);
+    }
+};
 
 const messageTemplate = `
 <div class="msg mymsg" data-nick="%escapeURI{sender}%" data-local="1">
 <div class='avatar'><img src='%avatarurl%'/></div>
+<div class="msgheader">
+<span class="nick">%sender%</span>
+<div class="reply">Reply</div>
+</div>
 %template{messageGroupping}%
 </div>
 `;
@@ -54,7 +68,7 @@ shared.initTheme({
         message: messageTemplate,
         receivedMessage: receivedMessageTemplate,
         messageGroupping: messageGroupping,
-        sys: `<div class="sysmsg" title="%time{LL}%">%message%</div>`,
+        sys: `<div class="sysmsg" title="%time{LL}%">%time%&nbsp;%message%</div>`,
         sysMessageUT: `<div class="sysmsg" title="%time{LL}%">%message%<div class="usertext">%usertext%</div></div>`,
         lastMsgDate: `<div class="sysmsg">%time{LL}%</div>`,
         subject: shared.isMuc?
@@ -129,7 +143,9 @@ function fixReplyVisibility(msgBlock) {
 
 function onReplyClicked(el) {
     var textEl = el.getElementsByClassName("msgtext").item(0);
-    shared.session.replyMessage(el.id, textEl.innerHTML); 
+    var nickEl = el.closest(".msg").getAttribute("data-nick");
+    var messageText = `<blockquote><div>${nickEl}</div><div>${textEl.innerHTML}</div></blockquote>`;
+    shared.session.replyMessage(el.id, messageText);
 }
 
 function setupContextMenu() {
@@ -282,6 +298,10 @@ html {
     background-color: #888A;
 }
 
+a {
+ color: default;
+}
+
 body {
     width: 100%;
     height: 100%;
@@ -369,6 +389,7 @@ body {
 }
 
 .nick {
+    color: blue;
     padding-bottom: .3em;
     display: inline-block;
     cursor: pointer;
