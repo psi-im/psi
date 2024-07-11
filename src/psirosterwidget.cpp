@@ -151,6 +151,7 @@ PsiRosterWidget::PsiRosterWidget(QWidget *parent) :
     connect(filterPageView_, SIGNAL(quitFilteringMode()), SLOT(quitFilteringMode()));
     filterPageView_->installEventFilter(this);
     filterPageLayout->addWidget(filterPageView_);
+    connect(filterPageView_, &ContactListView::contactSelected, this, &PsiRosterWidget::contactPick);
 }
 
 PsiRosterWidget::~PsiRosterWidget() { }
@@ -316,6 +317,8 @@ void PsiRosterWidget::setPickContactMode(bool value)
     }
     filterPageView_->setActivateAction(value ? ContactListView::SignalSelected : ContactListView::Activate);
 }
+
+QList<PsiContact *> PsiRosterWidget::selectedContacts() const { return {}; }
 
 void PsiRosterWidget::clearFilterEdit()
 {

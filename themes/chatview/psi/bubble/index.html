@@ -134,6 +134,9 @@ function onReplyClicked(el) {
 
 function setupContextMenu() {
     chatMenu.addItemProvider((event) => {
+        if (event.target.href || getSelection().toString()) {
+            return []; // C++ will handle this
+        }
         const isNick = event.target.classList.contains("nick");
         let msgNode = undefined;
         let msgGroup = isNick? event.target.parentElement.parentElement : event.target;

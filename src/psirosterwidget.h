@@ -41,7 +41,8 @@ public:
 
     void setContactList(PsiContactList *contactList);
 
-    void setPickContactMode(bool);
+    void                setPickContactMode(bool);
+    QList<PsiContact *> selectedContacts() const;
 signals:
     void contactPick(PsiContact *);
 
