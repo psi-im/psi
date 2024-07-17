@@ -633,7 +633,7 @@ void ChatEdit::insertAsQuote(const QString &text)
     QString prevLine = toPlainText().left(pos - 1);
     prevLine         = prevLine.mid(prevLine.lastIndexOf("\n") + 1);
 
-    auto    sym   = QChar::fromLatin1(0xBB); // closing double quote
+    auto    sym   = QChar::fromLatin1(0x3E); // closing double quote
     QString quote = sym + ' ' + text;
     quote.replace("\n", QStringLiteral("\n%1 ").arg(sym));
 
