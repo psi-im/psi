@@ -20,39 +20,22 @@
 #include "showtextdlg.h"
 #include "fileutil.h"
 
-#include <QHBoxLayout>
-#include <QLayout>
-#include <QPushButton>
-#include <QTextEdit>
 #include <QTextStream>
-#include <QVBoxLayout>
 
 // FIXME: combine to common init function
 ShowTextDlg::ShowTextDlg(const QString &fname, bool rich, QWidget *parent) : QDialog(parent)
 {
     setAttribute(Qt::WA_DeleteOnClose);
-    QString text = FileUtil::readFileText(fname);
+    ui_.setupUi(this);
 
-    QVBoxLayout *vb1 = new QVBoxLayout(this);
-    vb1->setContentsMargins(8, 8, 8, 8);
-    QTextEdit *te = new QTextEdit(this);
-    te->setReadOnly(true);
-    te->setAcceptRichText(rich);
-    te->setText(text);
+    QString text = FileUtil::readFileText(fname);
+    ui_.textEdit->setAcceptRichText(rich);
+    ui_.textEdit->setText(text);
     if (rich) {
-        te->setTextInteractionFlags(Qt::TextBrowserInteraction);
+        ui_.textEdit->setTextInteractionFlags(Qt::TextBrowserInteraction);
     }
 
-    vb1->addWidget(te);
-
-    QHBoxLayout *hb1 = new QHBoxLayout;
-    vb1->addLayout(hb1);
-    hb1->addStretch(1);
-    QPushButton *pb = new QPushButton(tr("&OK"), this);
-    connect(pb, SIGNAL(clicked()), SLOT(accept()));
-    hb1->addWidget(pb);
-    hb1->addStretch(1);
-
+    connect(ui_.okButton, SIGNAL(clicked()), SLOT(accept()));
     resize(560, 384);
 }
 
@@ -61,26 +44,14 @@ ShowTextDlg::ShowTextDlg(const QString &text, bool nonfile, bool rich, QWidget *
     Q_UNUSED(nonfile);
 
     setAttribute(Qt::WA_DeleteOnClose);
+    ui_.setupUi(this);
 
-    QVBoxLayout *vb1 = new QVBoxLayout(this);
-    vb1->setContentsMargins(8, 8, 8, 8);
-    QTextEdit *te = new QTextEdit(this);
-    te->setReadOnly(true);
-    te->setAcceptRichText(rich);
-    te->setText(text);
+    ui_.textEdit->setAcceptRichText(rich);
+    ui_.textEdit->setText(text);
     if (rich) {
-        te->setTextInteractionFlags(Qt::TextBrowserInteraction);
+        ui_.textEdit->setTextInteractionFlags(Qt::TextBrowserInteraction);
     }
 
-    vb1->addWidget(te);
-
-    QHBoxLayout *hb1 = new QHBoxLayout;
-    vb1->addLayout(hb1);
-    hb1->addStretch(1);
-    QPushButton *pb = new QPushButton(tr("&OK"), this);
-    connect(pb, SIGNAL(clicked()), SLOT(accept()));
-    hb1->addWidget(pb);
-    hb1->addStretch(1);
-
+    connect(ui_.okButton, SIGNAL(clicked()), SLOT(accept()));
     resize(560, 384);
 }
