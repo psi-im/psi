@@ -35,7 +35,6 @@ ShowTextDlg::ShowTextDlg(const QString &fname, bool rich, QWidget *parent) : QDi
         ui_.textEdit->setTextInteractionFlags(Qt::TextBrowserInteraction);
     }
 
-    connect(ui_.okButton, SIGNAL(clicked()), SLOT(accept()));
     resize(560, 384);
 }
 
@@ -52,6 +51,5 @@ ShowTextDlg::ShowTextDlg(const QString &text, bool nonfile, bool rich, QWidget *
         ui_.textEdit->setTextInteractionFlags(Qt::TextBrowserInteraction);
     }
 
-    connect(ui_.okButton, SIGNAL(clicked()), SLOT(accept()));
     resize(560, 384);
 }
