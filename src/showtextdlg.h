@@ -31,6 +31,7 @@ public:
     ShowTextDlg(const QString &text, bool nonfile, bool rich, QWidget *parent);
 private:
     Ui::ShowTextDlg ui_;
+    void            renderDialog(const QString &text, bool rich);
 };
 
 #endif // CS_SHOWTEXTDLG_H

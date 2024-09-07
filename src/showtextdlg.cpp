@@ -25,23 +25,19 @@
 // FIXME: combine to common init function
 ShowTextDlg::ShowTextDlg(const QString &fname, bool rich, QWidget *parent) : QDialog(parent)
 {
-    setAttribute(Qt::WA_DeleteOnClose);
-    ui_.setupUi(this);
-
     QString text = FileUtil::readFileText(fname);
-    ui_.textEdit->setAcceptRichText(rich);
-    ui_.textEdit->setText(text);
-    if (rich) {
-        ui_.textEdit->setTextInteractionFlags(Qt::TextBrowserInteraction);
-    }
-
-    resize(560, 384);
+    renderDialog(text, rich);
 }
 
 ShowTextDlg::ShowTextDlg(const QString &text, bool nonfile, bool rich, QWidget *parent) : QDialog(parent)
 {
     Q_UNUSED(nonfile);
 
+    renderDialog(text, rich);
+}
+
+void ShowTextDlg::renderDialog(const QString &text, bool rich)
+{
     setAttribute(Qt::WA_DeleteOnClose);
     ui_.setupUi(this);
 
