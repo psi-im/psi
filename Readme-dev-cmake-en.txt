@@ -7,7 +7,6 @@ This file contains the CMake files description
     determines chatlog type Basic/Webkit/Webengine;
     contains general compile definitions;
     enables ccache, mxe;
-    contains useful copy function;
     adds iris, 3rdparty, src, plugins subdirectories;
     in case of only plugins build - enables plugins;
     if plugins/generic/psimedia directory exists and BUILD_PSIMEDIA flag is
@@ -22,19 +21,16 @@ This file contains the CMake files description
 ./cmake/modules - directory contains modules for searching libraries, for determining a
     program version, for work with sources and generation of additional targets and files.
 ./cmake/modules/COPYING-CMAKE-SCRIPTS - license file (to solve problems with mainaining)
-./cmake/modules/FindLibGpgError.cmake - finds libgpg-error library
-./cmake/modules/FindQJDns.cmake - finds qjdns library
+./cmake/modules/FindLibGpgError.cmake - finds libgpg-error library [moved to the OTR plugin sources]
 ./cmake/modules/FindEnchant.cmake - finds enchant library
-./cmake/modules/FindLibOtr.cmake - finds otr library
-./cmake/modules/FindQJSON.cmake - finds qjson library (disabled as outdated)
+./cmake/modules/FindLibOtr.cmake - finds otr library [moved to the OTR plugin sources]
 ./cmake/modules/FindHunspell.cmake - finds hunspell library
-./cmake/modules/FindLibTidy.cmake - finds tidy or html-tidy library
+./cmake/modules/FindLibTidy.cmake - finds tidy or html-tidy library [moved to the OTR plugin sources]
 ./cmake/modules/FindSparkle.cmake - finds sparkle (not yet tested)
 ./cmake/modules/FindMINIZIP.cmake - finds minizip library
 ./cmake/modules/FindXCB.cmake - finds xcb library
-./cmake/modules/FindLibGcrypt.cmake - finds libgctypt or libgcrypt2 library
-./cmake/modules/FindQca.cmake - finds qca-qt5 library
-./cmake/modules/FindZLIB.cmake - finds zlib library
+./cmake/modules/FindLibGcrypt.cmake - finds libgctypt or libgcrypt2 library [moved to the OTR plugin sources]
+./cmake/modules/FindQca.cmake - finds qca-qt library
 ./cmake/modules/FindPsiPluginsApi.cmake - module to search files useful at build plugins
 ./cmake/modules/get-version.cmake - determines clien version using git utility or by parsing
     a ../version file
@@ -44,6 +40,14 @@ This file contains the CMake files description
     with make windeploy command
 ./cmake/modules/generate_desktopfile.cmake - generates .desktop file
 ./cmake/modules/fix-codestyle.cmake - module for codestyle fix using clang-format
+./cmake/modules/win32_definitions.cmake - provides the next features:
+    determines PSI_SDK and GSTREAMER_SDK pathes
+    determines the MinGW or MSVC compilation flags
+    contains the main definitions for OS Windows
+./cmake/modules/psi-cmake-functions.cmake - contains useful functions that can be run anywhere in the project
+./cmake/modules/qtkeychain-bundled - module to compile qtkeychain library together with psi as static library
+./cmake/modules/policyRules.cmake - contains default policy rules definitions
+
 
 ./iris/CMakeLists.txt - builds iris library:
     contains options for the iris library (duplicated in a main script)
@@ -158,11 +162,6 @@ This file contains the CMake files description
     whit "*TYPE*" type and "*PLUGIN*" name. The structure of these files are mostly
     the same
 
-./win32/win32_definitions.cmake - provides the next features:
-    determines PSI_SDK and GSTREAMER_SDK pathes
-    determines the MinGW or MSVC compilation flags
-    contains the main definitions for OS Windows
-
 ./win32/psi_win.rc.in - template-file to generate psi_win.rc file
 
 /***
@@ -188,7 +187,7 @@ In this case the variables.cmake generates at Psi build and contains:
 ***/
 
 /***
-If there is a plguin debug necessity in OS Linux you can do next:
+If there is a plugin debug necessity in OS Linux you can do next:
 - download psi-plus-snapshots repository
 - open CMakeLists.txt from root directory using qtcreator
 - choose profile and build type
