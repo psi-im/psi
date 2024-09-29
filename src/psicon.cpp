@@ -41,6 +41,7 @@
 #include "edbsqlite.h"
 #include "eventdlg.h"
 #include "globalshortcut/globalshortcutmanager.h"
+#include "xmpp/xmpp-im/xmpp_forwarding.h"
 #ifdef GROUPCHAT
 #include "groupchatdlg.h"
 #endif
@@ -1986,9 +1987,38 @@ int PsiCon::idle() const { return d->idleSettings_.secondsIdle; }
 
 ContactUpdatesManager *PsiCon::contactUpdatesManager() const { return contactUpdatesManager_; }
 
-void PsiCon::invokeForwardMessage(const Jid &from, const QString &text)
+void PsiCon::invokeForwardMessage(const QString &fromMessageId, const Jid &from, const QString &text)
 {
+    Message m, dm;
+    dm.setFrom(from);
+    dm.setBody(text);
+    dm.setId(fromMessageId);
+
+    Forwarding fwd;
+    fwd.setMessage(dm);
+    fwd.setType(Forwarding::ForwardedMessage);
+
+    m.setType(Message::Type::Chat);
+    m.setForwarded(fwd);
+
+    auto sender = [m = std::move(m)](const QList<PsiContact *> &destinationsContacts) {
+        QHash<PsiAccount *, QList<PsiContact *>> perAcc;
+        for (auto contact : destinationsContacts) {
+            if (contact->account()->isAvailable()) {
+                perAcc[contact->account()].append(contact);
+            }
+        }
+        for (auto it = perAcc.begin(); it != perAcc.end(); ++it) {
+            for (auto c : it.value()) {
+                Message m_ = m;
+                m_.setTo(c->jid());
+                it.key()->dj_sendMessage(m_);
+            }
+        }
+    };
+
     auto dlg = new QDialog(d->mainwin);
+    dlg->setAttribute(Qt::WA_DeleteOnClose, true);
     dlg->resize(200, 600);
     dlg->setAttribute(Qt::WA_DeleteOnClose);
     dlg->setWindowIcon(IconsetFactory::icon("psi/action_contacts_manager").icon());
@@ -1998,11 +2028,21 @@ void PsiCon::invokeForwardMessage(const Jid &from, const QString &text)
     auto roster = new PsiRosterWidget(d->mainwin);
     roster->setContactList(d->contactList);
     roster->setPickContactMode(true);
-    connect(roster, &PsiRosterWidget::contactPick, this,
-            [](PsiContact *c) { qDebug("TODO forwarding to: %s", qPrintable(c->jid().full())); });
+    connect(roster, &PsiRosterWidget::contactPick, this, [this, roster, sender, dlg](PsiContact *c) {
+        sender(QList<PsiContact *> { c });
+        roster->deleteLater();
+        dlg->close();
+    });
 
     auto btn = new QPushButton(tr("Forward"));
-    connect(btn, &QPushButton::clicked, dlg, [this, roster](bool) { qDebug("TODO: implement forwarding"); });
+    connect(btn, &QPushButton::clicked, dlg, [this, roster, sender, dlg](bool) {
+        auto contacts = roster->selectedContacts();
+        if (!contacts.empty()) {
+            sender(roster->selectedContacts());
+            roster->deleteLater();
+            dlg->close();
+        }
+    });
 
     layout->addWidget(roster);
     layout->addWidget(btn);

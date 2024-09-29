@@ -47,6 +47,7 @@ class ProxyManager;
 class PsiAccount;
 class PsiActionList;
 class PsiCon;
+class PsiContact;
 class PsiContactList;
 class PsiThemeManager;
 class PsiToolBar;
@@ -137,8 +138,7 @@ public:
     PopupManager *popupManager() const;
     QStringList   xmppFatures() const;
 
-    void invokeForwardMessage(const Jid &from, const QString &text);
-
+    void invokeForwardMessage(const QString &fromMessageId, const Jid &from, const QString &text);
 signals:
     void quit(int);
     void accountAdded(PsiAccount *);
