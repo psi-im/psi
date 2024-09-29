@@ -67,6 +67,7 @@
 #include "psicontactlist.h"
 #include "psievent.h"
 #include "psiiconset.h"
+#include "psirosterwidget.h"
 #ifdef PSIMNG
 #include "psimng.h"
 #endif
@@ -99,13 +100,12 @@
 #endif
 #ifdef PSI_PLUGINS
 #include "filesharingmanager.h"
-#include "filesharingnamproxy.h"
+#include "filesharingproxy.h"
 #include "pluginmanager.h"
 #endif
 #ifdef WEBKIT
 #include "avatars.h"
 #include "chatviewthemeprovider.h"
-#include "webview.h"
 #endif
 #ifdef HAVE_SPARKLE
 #include "AutoUpdater/SparkleAutoUpdater.h"
@@ -519,6 +519,8 @@ bool PsiCon::init()
     d->iconSelect->setEmojiSortingEnabled(true);
     connect(PsiIconset::instance(), SIGNAL(emoticonsChanged()), d, SLOT(updateIconSelect()));
     d->updateIconSelect();
+    d->iconSelect->setRecent(
+        PsiOptions::instance()->getOption("options.ui.emoticons.recent", QStringList()).toStringList());
 
     const QString css = options->getOption("options.ui.chat.css").toString();
     if (!css.isEmpty())
@@ -538,7 +540,8 @@ bool PsiCon::init()
                             std::tie(acc, id) = d->uriToShareSource(req->url().path());
                             if (!acc)
                                 return false;
-                            return d->fileSharingManager->downloadHttpRequest(acc, id, req, res);
+                            FileSharingProxy::proxify(acc, id, req, res);
+                            return true;
                         });
 #endif
     d->nam->route("/psi/account/", [this](const QNetworkRequest &req) -> QNetworkReply * {
@@ -547,7 +550,7 @@ bool PsiCon::init()
         std::tie(acc, id) = d->uriToShareSource(req.url().path());
         if (id.isNull() || !acc)
             return nullptr;
-        return new FileSharingNAMReply(acc, id, req);
+        return FileSharingProxy::proxify(acc, id, req);
     });
 
     d->themeManager = new PsiThemeManager(this);
@@ -556,10 +559,21 @@ bool PsiCon::init()
     d->themeManager->registerProvider(new GroupChatViewThemeProvider(this), true);
 #endif
 
-    if (!d->themeManager->loadAll()) {
+    const auto reportThemeError = [this]() {
         QMessageBox::critical(nullptr, tr("Error"),
-                              tr("Unable to load theme!  Please make sure Psi is properly installed."));
+                              tr("Unable to load \"%1\" theme! Please make sure Psi is properly installed.")
+                                  .arg(d->themeManager->failedId()));
+    };
+    auto themeLoadResult = d->themeManager->loadAll();
+    if (themeLoadResult == PsiThemeProvider::LoadFailure) {
+        reportThemeError();
         result = false;
+    }
+    if (themeLoadResult == PsiThemeProvider::LoadInProgress) {
+        connect(d->themeManager, &PsiThemeManager::currentLoadFailed, this, [this, reportThemeError]() {
+            reportThemeError();
+            closeProgram();
+        });
     }
 
     if (!d->actionList)
@@ -716,6 +730,7 @@ bool PsiCon::init()
             SLOT(setStatusFromCommandline(const QString &, const QString &)));
     connect(ActiveProfiles::instance(), SIGNAL(openUriRequested(const QString &)), SLOT(openUri(const QString &)));
     connect(ActiveProfiles::instance(), SIGNAL(raiseRequested()), SLOT(raiseMainwin()));
+    connect(ActiveProfiles::instance(), SIGNAL(quitRequested()), SLOT(closeProgram()));
 
     DesktopUtil::setUrlHandler("xmpp", this, "openUri");
     DesktopUtil::setUrlHandler("x-psi-atstyle", this, "openAtStyleUri");
@@ -742,6 +757,7 @@ void PsiCon::updateStatusPresets() { emit statusPresetsChanged(); }
 
 void PsiCon::deinit()
 {
+    PsiOptions::instance()->setOption("options.ui.emoticons.recent", d->iconSelect->recent());
     // this deletes all dialogs except for mainwin
     deleteAllDialogs();
 
@@ -851,9 +867,13 @@ QStringList PsiCon::xmppFatures() const
 #ifdef GROUPCHAT
                                          << "http://jabber.org/protocol/muc"
 #endif
-                                         << "http://jabber.org/protocol/mood" << "http://jabber.org/protocol/activity"
-                                         << "http://jabber.org/protocol/tune" << "http://jabber.org/protocol/geoloc"
-                                         << "urn:xmpp:avatar:data" << "urn:xmpp:avatar:metadata";
+                                         << "http://jabber.org/protocol/mood"
+                                         << "http://jabber.org/protocol/activity"
+                                         << "http://jabber.org/protocol/tune"
+                                         << "http://jabber.org/protocol/geoloc"
+                                         << "urn:ietf:params:xml:ns:vcard-4.0"
+                                         << "urn:xmpp:avatar:data"
+                                         << "urn:xmpp:avatar:metadata";
 
     static QList<OptFeatureMap> fmap = QList<OptFeatureMap>()
         << OptFeatureMap("options.service-discovery.last-activity", QStringList() << "jabber:iq:last")
@@ -863,7 +883,8 @@ QStringList PsiCon::xmppFatures() const
                                        << "http://jabber.org/protocol/activity+notify"
                                        << "http://jabber.org/protocol/tune+notify"
                                        << "http://jabber.org/protocol/geoloc+notify"
-                                       << "urn:xmpp:avatar:metadata+notify")
+                                       << "urn:xmpp:avatar:metadata+notify"
+                                       << "urn:xmpp:contacts+notify")
         << OptFeatureMap("options.messages.send-composing-events",
                          QStringList() << "http://jabber.org/protocol/chatstates")
         << OptFeatureMap("options.ui.notifications.send-receipts", QStringList() << "urn:xmpp:receipts");
@@ -1026,11 +1047,11 @@ AccountsComboBox *PsiCon::accountsComboBox(QWidget *parent, bool online_only)
 }
 
 PsiAccount *PsiCon::createAccount(const QString &name, const Jid &j, const QString &pass, bool opt_host,
-                                  const QString &host, int port, bool legacy_ssl_probe, UserAccount::SSLFlag ssl,
-                                  QString proxy, const QString &tlsOverrideDomain, const QByteArray &tlsOverrideCert)
+                                  const QString &host, int port, UserAccount::SSLFlag ssl, QString proxy,
+                                  const QString &tlsOverrideDomain, const QByteArray &tlsOverrideCert)
 {
-    return d->contactList->createAccount(name, j, pass, opt_host, host, port, legacy_ssl_probe, ssl, proxy,
-                                         tlsOverrideDomain, tlsOverrideCert);
+    return d->contactList->createAccount(name, j, pass, opt_host, host, port, ssl, proxy, tlsOverrideDomain,
+                                         tlsOverrideCert);
 }
 
 PsiAccount *PsiCon::createAccount(const UserAccount &_acc)
@@ -1776,13 +1797,13 @@ void PsiCon::processEvent(const PsiEvent::Ptr &e, ActivationType activationType)
         MessageEvent::Ptr me = e.staticCast<MessageEvent>();
         const Message     dm = me->message().displayMessage();
 #ifdef GROUPCHAT
-        if (dm.type() == "groupchat") {
+        if (dm.type() == Message::Type::Groupchat) {
             isMuc = true;
         } else {
 #endif
             bool emptyForm = dm.getForm().fields().empty();
             // FIXME: Refactor this, PsiAccount and PsiEvent out
-            if (dm.type() == "chat" && emptyForm) {
+            if (dm.type() == Message::Type::Chat && emptyForm) {
                 isChat           = true;
                 sentToChatWindow = me->sentToChatWindow();
             }
@@ -1910,8 +1931,8 @@ void PsiCon::promptUserToCreateAccount()
         AccountRegDlg w(this);
         int           n = w.exec();
         if (n == QDialog::Accepted) {
-            contactList()->createAccount(w.jid().node(), w.jid(), w.pass(), w.useHost(), w.host(), w.port(), false,
-                                         w.ssl(), w.proxy(), w.tlsOverrideDomain(), w.tlsOverrideCert());
+            contactList()->createAccount(w.jid().node(), w.jid(), w.pass(), w.useHost(), w.host(), w.port(), w.ssl(),
+                                         w.proxy(), w.tlsOverrideDomain(), w.tlsOverrideCert());
         }
     }
 }
@@ -1964,5 +1985,28 @@ void PsiCon::secondsIdle(int sec)
 int PsiCon::idle() const { return d->idleSettings_.secondsIdle; }
 
 ContactUpdatesManager *PsiCon::contactUpdatesManager() const { return contactUpdatesManager_; }
+
+void PsiCon::invokeForwardMessage(const Jid &from, const QString &text)
+{
+    auto dlg = new QDialog(d->mainwin);
+    dlg->resize(200, 600);
+    dlg->setAttribute(Qt::WA_DeleteOnClose);
+    dlg->setWindowIcon(IconsetFactory::icon("psi/action_contacts_manager").icon());
+    dlg->setWindowTitle(tr("Forward..."));
+    auto layout = new QVBoxLayout(dlg);
+
+    auto roster = new PsiRosterWidget(d->mainwin);
+    roster->setContactList(d->contactList);
+    roster->setPickContactMode(true);
+    connect(roster, &PsiRosterWidget::contactPick, this,
+            [](PsiContact *c) { qDebug("TODO forwarding to: %s", qPrintable(c->jid().full())); });
+
+    auto btn = new QPushButton(tr("Forward"));
+    connect(btn, &QPushButton::clicked, dlg, [this, roster](bool) { qDebug("TODO: implement forwarding"); });
+
+    layout->addWidget(roster);
+    layout->addWidget(btn);
+    dlg->show();
+}
 
 #include "psicon.moc"

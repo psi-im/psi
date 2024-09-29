@@ -3,7 +3,7 @@
 # Authors: Boris Pek
 # License: Public Domain
 # Created: 2018-10-07
-# Updated: 2022-04-04
+# Updated: 2024-05-17
 # Version: N/A
 #
 # Description: script for building of app bundles for macOS
@@ -26,7 +26,7 @@
 # brew install hunspell minizip qt@5 qtkeychain
 #
 # Build dependencies for Psi plugins:
-# brew install tidy-html5 libotr libsignal-protocol-c
+# brew install tidy-html5 libotr libomemo-c
 #
 # Additional tools:
 # brew install gnupg pinentry-mac wget htop
@@ -59,11 +59,13 @@ BUILD_OPTIONS="-DCMAKE_BUILD_TYPE=Release \
                -DBUILD_DEV_PLUGINS=${ENABLE_DEV_PLUGINS} \
                -DBUILD_PSIMEDIA=${ENABLE_PSIMEDIA} \
                -DENABLE_PLUGINS=${ENABLE_PLUGINS} \
+               -DUSE_SPARKLE=OFF \
                -DUSE_HUNSPELL=ON \
                -DUSE_KEYCHAIN=ON \
-               -DUSE_SPARKLE=OFF \
-               -DBUNDLED_QCA=ON \
-               -DBUNDLED_USRSCTP=ON \
+               -DBUNDLED_KEYCHAIN=ON \
+               -DBUNDLED_OMEMO_C_ALL=ON \
+               -DIRIS_BUNDLED_QCA=ON \
+               -DIRIS_BUNDLED_USRSCTP=ON \
                -DVERBOSE_PROGRAM_NAME=ON"
 
 mkdir -p "${MAIN_DIR}/builddir"

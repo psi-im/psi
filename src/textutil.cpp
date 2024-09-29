@@ -1,7 +1,6 @@
 #include "textutil.h"
 
 #include "coloropt.h"
-#include "common.h"
 #include "emojiregistry.h"
 #include "psiiconset.h"
 #include "psioptions.h"
@@ -87,7 +86,6 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
 QString TextUtil::plain2rich(const QString &plain)
 {
     QString rich;
-    int     col = 0;
 
     for (int i = 0; i < int(plain.length()); ++i) {
 #ifdef Q_OS_WIN
@@ -96,7 +94,6 @@ QString TextUtil::plain2rich(const QString &plain)
 #endif
         if (plain[i] == '\n') {
             rich += "<br>";
-            col = 0;
         } else if (plain[i] == ' ' && !rich.isEmpty() && rich[rich.size() - 1] == ' ')
             rich += "&nbsp;"; // instead of pre-wrap, which prewraps \n as well
         else if (plain[i] == '\t')
@@ -113,7 +110,6 @@ QString TextUtil::plain2rich(const QString &plain)
             rich += "&amp;";
         else
             rich += plain[i];
-        ++col;
     }
 
     return rich;
@@ -293,15 +289,14 @@ static void emojiconifyPlainText(RTParse &p, const QString &in)
     QStringView ref;
 
     auto dump_emoji = [&p, &emojisStartIdx, &in, &idx]() {
+        auto code = QStringView { in }.mid(emojisStartIdx, idx - emojisStartIdx).toString();
 #if defined(WEBKIT) || defined(WEBENGINE)
-        p.putRich(QLatin1String(R"html(<span class="emojis">)html")
+        p.putRich(QLatin1String(R"html(<span class="emojis">)html") + code + QLatin1String("</span>"));
 #else
         // FIXME custom style here is a hack. This supposed to be handled via style resource in PsiTextView
-        p.putRich(
-            QLatin1String(
-                R"html(<span style="font-family: 'Apple Color Emoji', 'Noto Color Emoji', 'Segoe UI Emoji'; font-size:1.5em">)html")
+        p.putRich(QString(R"(<icon text="%1" min-height="1.25em" max-height="1.7em" font-size="1.3em" valign="bottom" type="smiley">)")
+                      .arg(code));
 #endif
-                  + QStringView { in }.mid(emojisStartIdx, idx - emojisStartIdx).toString() + QLatin1String("</span>"));
     };
     int position;
     while (std::tie(ref, position) = reg.findEmoji(in, idx), !ref.isEmpty()) {
@@ -539,16 +534,12 @@ QString TextUtil::emoticonify(const QString &in)
 
                         int n = match.capturedStart();
                         if (ePos == -1 || n < ePos || (match.capturedLength() > foundLen && n < ePos + foundLen)) {
-#if 0
-// this logic is commented out being rather harmful with unicode emoji
                             bool leftSpace  = n == 0 || (n > 0 && str[n - 1].isSpace());
                             bool rightSpace = (n + match.capturedLength() == int(str.length()))
                                 || (n + match.capturedLength() < int(str.length())
                                     && str[n + match.capturedLength()].isSpace());
                             // there must be whitespace at least on one side of the emoticon
-                            if (leftSpace || rightSpace) {
-#endif
-                            if (true) {
+                            if (leftSpace || rightSpace || EmojiRegistry::instance().isEmoji(match.captured())) {
                                 ePos    = n;
                                 closest = icon;
 
@@ -576,9 +567,10 @@ QString TextUtil::emoticonify(const QString &in)
             if (!closest)
                 break;
 
-            p.putRich(QString("<icon name=\"%1\" text=\"%2\" size=\"%3\" type=\"smiley\">")
-                          .arg(TextUtil::escape(closest->name()), TextUtil::escape(str.mid(foundPos, foundLen)),
-                               QString::number(-1.4)));
+            p.putRich(
+                QString(
+                    R"(<icon name="%1" text="%2" min-height="1.25em" max-height="1.7em" valign="bottom" type="smiley">)")
+                    .arg(TextUtil::escape(closest->name()), TextUtil::escape(str.mid(foundPos, foundLen))));
             i = foundPos + foundLen;
         }
     }

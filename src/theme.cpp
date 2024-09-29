@@ -63,15 +63,15 @@ Theme::State Theme::state() const
 
 bool Theme::exists() { return d && d->exists(); }
 
-bool Theme::load()
+bool Theme::load(const QString &style)
 {
     if (!d) {
         return false;
     }
-    return d->load();
+    return d->load(style);
 }
 
-bool Theme::load(std::function<void(bool)> loadCallback) { return d->load(loadCallback); }
+bool Theme::load(const QString &style, std::function<void(bool)> loadCallback) { return d->load(style, loadCallback); }
 
 bool Theme::hasPreview() const { return d->hasPreview(); }
 
@@ -80,7 +80,8 @@ QWidget *Theme::previewWidget() { return d->previewWidget(); }
 bool Theme::isCompressed(const QFileInfo &fi)
 {
     QString sfx = fi.suffix();
-    return fi.isDir() && (sfx == QLatin1String("jisp") || sfx == QLatin1String("zip") || sfx == QLatin1String("theme"));
+    return fi.isFile()
+        && (sfx == QLatin1String("jisp") || sfx == QLatin1String("zip") || sfx == QLatin1String("theme"));
 }
 
 bool Theme::isCompressed() const { return isCompressed(QFileInfo(d->filepath)); }
@@ -144,14 +145,13 @@ QByteArray Theme::loadData(const QString &fileName, const QString &themePath, bo
             z.setCaseSensitivity(UnZip::CS_Insensitive);
         }
 
-        QString n = fi.completeBaseName() + '/' + fileName;
-        if (!z.readFile(n, &ba)) {
-            n = "/" + fileName;
-            if (loaded) {
-                *loaded = z.readFile(n, &ba);
-            } else {
-                z.readFile(n, &ba);
+        if (!z.readFile(fileName, &ba)) {
+            if (!z.readFile("/" + fileName, &ba)) {
+                return {};
             }
+        }
+        if (loaded) {
+            *loaded = true;
         }
     }
 #endif
@@ -186,6 +186,12 @@ const QStringList &Theme::authors() const { return d->authors; }
 const QString &Theme::creation() const { return d->creation; }
 
 const QString &Theme::homeUrl() const { return d->homeUrl; }
+
+const QStringList &Theme::features() const { return d->features; }
+
+const QStringList &Theme::stylesList() const { return d->stylesList; }
+
+const QString &Theme::style() const { return d->style; }
 
 PsiThemeProvider *Theme::themeProvider() const { return d->provider; }
 

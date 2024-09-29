@@ -43,8 +43,12 @@ ContactManagerDlg::ContactManagerDlg(PsiAccount *pa) : QDialog(nullptr, Qt::Wind
     setWindowIcon(IconsetFactory::icon("psi/action_contacts_manager").icon());
 
     um = new ContactManagerModel(this, pa_);
-    um->reloadUsers();
-    ui_.usersView->setModel(um);
+    connect(um, &ContactManagerModel::modelReset, this, [this]() { ui_.usersView->viewport()->update(); });
+
+    auto proxy = new QSortFilterProxyModel(this);
+    proxy->setSourceModel(um);
+
+    ui_.usersView->setModel(proxy);
     ui_.usersView->init();
 
     ui_.cbAction->addItem(IconsetFactory::icon("psi/sendMessage").icon(), tr("Message"), 1);
@@ -65,8 +69,6 @@ ContactManagerDlg::ContactManagerDlg(PsiAccount *pa) : QDialog(nullptr, Qt::Wind
     connect(ui_.btnExecute, SIGNAL(clicked()), this, SLOT(executeCurrent()));
     connect(ui_.btnSelect, SIGNAL(clicked()), this, SLOT(doSelect()));
 
-    connect(pa_->client(), SIGNAL(rosterRequestFinished(bool, int, QString)), this,
-            SLOT(client_rosterUpdated(bool, int, QString)));
     connect(ui_.usersView, &ContactManagerView::doubleClicked, this, [this](const QModelIndex &index) {
         ContactManagerView *v = ui_.usersView;
         bool itemCS           = v->model()->data(v->model()->index(index.row(), 0), Qt::CheckStateRole) == Qt::Checked;
@@ -100,17 +102,17 @@ void ContactManagerDlg::doSelect()
 
 void ContactManagerDlg::executeCurrent()
 {
-    int                   action = ui_.cbAction->itemData(ui_.cbAction->currentIndex()).toInt();
-    QList<UserListItem *> users  = um->checkedUsers();
-    if (!users.count() && action != 9) {
+    int  action = ui_.cbAction->itemData(ui_.cbAction->currentIndex()).toInt();
+    auto users  = um->checkedUsers();
+    if (!users.size() && action != 9) {
         return;
     }
     switch (action) {
     case 1: // message
     {
         QList<XMPP::Jid> list;
-        for (UserListItem *u : users) {
-            list.append(u->jid().full());
+        for (auto const &item : users) {
+            list.append(item.jid().full());
         }
         pa_->actionSendMessage(list);
     } break;
@@ -122,41 +124,36 @@ void ContactManagerDlg::executeCurrent()
             != QMessageBox::Yes) {
             return;
         }
-        um->startBatch();
-        for (UserListItem *u : users) {
-            if (u->isTransport() && !Jid(pa_->client()->host()).compare(u->jid())) {
-                JT_UnRegister *ju = new JT_UnRegister(pa_->client()->rootTask());
-                ju->unreg(u->jid());
-                ju->go(true);
-            }
-            JT_Roster *r = new JT_Roster(pa_->client()->rootTask());
-            r->remove(u->jid());
-            r->go(true);
-        }
-        um->clear();
-        pa_->client()->rosterRequest();
+        um->removeUsers(users);
     } break;
     case 3: // Auth request
-        for (UserListItem *u : users) {
-            pa_->dj_authReq(u->jid());
+        for (auto const &item : users) {
+            pa_->dj_authReq(item.jid());
         }
         break;
     case 4: // Auth grant
-        for (UserListItem *u : users) {
-            pa_->dj_auth(u->jid());
+        for (auto const &item : users) {
+            pa_->dj_auth(item.jid());
         }
         break;
     case 5: // change domain
-        changeDomain(users);
-        break;
+    {
+        QString domain = ui_.edtActionParam->text();
+        if (domain.size()) {
+            um->changeDomain(users, domain);
+        } else {
+            QMessageBox::warning(this, tr("Invalid"), tr("Please fill parameter field with new domain name"));
+        }
+    } break;
     case 6: // resolve nicks
-        for (UserListItem *u : std::as_const(users)) {
-            pa_->resolveContactName(u->jid());
+        for (auto const &item : users) {
+            pa_->resolveContactName(item.jid());
         }
         break;
-    case 7:
-        changeGroup(users);
-        break;
+    case 7: {
+        QStringList groups(ui_.cmbActionParam->currentText());
+        um->changeGroups(users, groups);
+    } break;
     case 8: // export
         exportRoster(users);
         break;
@@ -185,49 +182,7 @@ void ContactManagerDlg::showParamField(int index)
     }
 }
 
-void ContactManagerDlg::changeDomain(QList<UserListItem *> &users)
-{
-    QString domain = ui_.edtActionParam->text();
-    if (domain.size()) {
-        um->startBatch();
-        um->clear();
-        for (UserListItem *u : users) {
-            JT_Roster *r = new JT_Roster(pa_->client()->rootTask());
-            if (!u->jid().node().isEmpty()) {
-                r->set(u->jid().withDomain(domain), u->name(), u->groups());
-                r->remove(u->jid());
-            }
-            r->go(true);
-        }
-        pa_->client()->rosterRequest();
-    } else {
-        QMessageBox::warning(this, tr("Invalid"), tr("Please fill parameter field with new domain name"));
-    }
-}
-
-void ContactManagerDlg::changeGroup(QList<UserListItem *> &users)
-{
-    QStringList groups(ui_.cmbActionParam->currentText());
-
-    for (UserListItem *u : users) {
-        JT_Roster *r = new JT_Roster(pa_->client()->rootTask());
-        r->set(u->jid(), u->name(), groups);
-        r->go(true);
-    }
-}
-
-void ContactManagerDlg::client_rosterUpdated(bool success, int statusCode, QString statusString)
-{
-    if (success) {
-        um->reloadUsers();
-    }
-    ui_.usersView->viewport()->update();
-    Q_UNUSED(statusCode);
-    Q_UNUSED(statusString);
-    um->stopBatch();
-}
-
-void ContactManagerDlg::exportRoster(QList<UserListItem *> &users)
+void ContactManagerDlg::exportRoster(const ContactManagerModel::UserList &users)
 {
     QString fileName = QFileDialog::getSaveFileName(this, tr("Roster file"), QDir::homePath());
     if (!fileName.isEmpty()) {
@@ -235,13 +190,13 @@ void ContactManagerDlg::exportRoster(QList<UserListItem *> &users)
         QString      nick;
         QDomElement  root = doc.createElement("roster");
         doc.appendChild(root);
-        for (UserListItem *u : users) {
+        for (auto u : std::as_const(users)) {
             QDomElement contact = root.appendChild(doc.createElement("contact")).toElement();
-            contact.setAttribute("jid", u->jid().bare());
-            for (const QString &group : u->groups()) {
+            contact.setAttribute("jid", u.jid().bare());
+            for (const QString &group : u.groups()) {
                 contact.appendChild(doc.createElement("group")).appendChild(doc.createTextNode(group));
             }
-            nick = u->name();
+            nick = u.name();
             if (!nick.isEmpty()) {
                 contact.appendChild(doc.createElement("nick")).appendChild(doc.createTextNode(nick));
             }
@@ -305,14 +260,11 @@ void ContactManagerDlg::importRoster()
                                QMessageBox::Cancel | QMessageBox::Yes);
         confirmDlg.setDetailedText(labelContent.join("\n"));
         if (confirmDlg.exec() == QMessageBox::Yes) {
-            um->startBatch();
-            um->clear();
             for (const QString &jid : jids) {
                 JT_Roster *r = new JT_Roster(pa_->client()->rootTask());
                 r->set(Jid(jid), nicks[jid], groups[jid]);
                 r->go(true);
             }
-            pa_->client()->rosterRequest(); // через ж.., но пускай пока так.
         }
         file.close();
     }

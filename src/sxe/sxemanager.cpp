@@ -91,14 +91,14 @@ void SxeManager::recordDetectedSession(const Message &message)
     // check if a record of the session exists
     for (const DetectedSession &d : std::as_const(DetectedSessions_)) {
         if (d.session == message.sxe().attribute("session")
-            && d.jid.compare(message.from(), message.type() != "groupchat"))
+            && d.jid.compare(message.from(), message.type() != Message::Type::Groupchat))
             return;
     }
 
     // store a record of a detected session
     DetectedSession detected;
     detected.session = message.sxe().attribute("session");
-    if (message.type() == "groupchat")
+    if (message.type() == Message::Type::Groupchat)
         detected.jid = message.from().bare();
     else
         detected.jid = message.from();
@@ -368,7 +368,7 @@ QPointer<SxeSession> SxeManager::processNegotiationMessage(const Message &messag
 {
 
     if (PsiOptions::instance()->getOption("options.messages.ignore-non-roster-contacts").toBool()
-        && message.type() != "groupchat") {
+        && message.type() != Message::Type::Groupchat) {
         // Ignore the message if contact not in roster
         if (!pa_->find(message.from())) {
             qDebug("SXE invitation received from contact that is not in roster.");
@@ -534,7 +534,7 @@ SxeManager::SxeNegotiation *SxeManager::createNegotiation(const Message &message
         negotiation->role  = SxeNegotiation::Joiner;
         negotiation->state = SxeNegotiation::NotStarted;
 
-        if (message.type() == "groupchat") {
+        if (message.type() == Message::Type::Groupchat) {
 
             // If we're being invited from a groupchat,
             // ownJid is determined based on the bare part of ownJids_
@@ -677,7 +677,7 @@ void SxeManager::sendSxe(QDomElement sxe, const Jid &receiver, bool groupChat)
     // QDomElement el = sxe.ownerDocument() == *clientDoc ? sxe : clientDoc->importNode(sxe, true).toElement();
     m.setSxe(clientDoc->importNode(sxe, true).toElement());
     if (groupChat && receiver.resource().isEmpty())
-        m.setType("groupchat");
+        m.setType(Message::Type::Groupchat);
 
     if (client_->isActive()) {
         // send queued messages first

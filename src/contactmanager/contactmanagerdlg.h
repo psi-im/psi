@@ -42,9 +42,7 @@ protected:
     void changeEvent(QEvent *e) override;
 
 private:
-    void changeDomain(QList<UserListItem *> &users);
-    void changeGroup(QList<UserListItem *> &users);
-    void exportRoster(QList<UserListItem *> &users);
+    void exportRoster(const ContactManagerModel::UserList &users);
     void importRoster();
 
     Ui::ContactManagerDlg ui_;
@@ -55,7 +53,6 @@ private slots:
     void doSelect();
     void executeCurrent();
     void showParamField(int index);
-    void client_rosterUpdated(bool, int, QString);
 };
 
 #endif // CONTACTMANAGERDLG_H

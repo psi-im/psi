@@ -20,7 +20,9 @@
 #pragma once
 
 #include <QIODevice>
+
 #include <memory>
+#include <optional>
 
 class PsiAccount;
 
@@ -39,6 +41,11 @@ namespace Jingle {
 class FileShareDownloader : public QIODevice {
     Q_OBJECT
 public:
+    struct Range {
+        quint64 start;
+        quint64 size; // 0 - all the remaining
+    };
+
     FileShareDownloader(PsiAccount *acc, const QList<XMPP::Hash> &sums, const XMPP::Jingle::FileTransfer::File &file,
                         const QList<XMPP::Jid> &jids, const QStringList &uris, QObject *manager);
     ~FileShareDownloader();
@@ -47,9 +54,9 @@ public:
     bool                        isConnected() const;
     bool                        open(QIODevice::OpenMode mode = QIODevice::ReadOnly) override;
     void                        abort();
-    void                        setRange(qint64 start, qint64 size);
-    bool                        isRanged() const;
-    std::tuple<qint64, quint64> range() const;
+    void                        setRequestRange(const std::optional<Range> &range);
+    const std::optional<Range> &requestRange() const;
+    const std::optional<Range> &responseRange() const;
 
     QString                                 takeFile() const;
     const XMPP::Jingle::FileTransfer::File &jingleFile() const;

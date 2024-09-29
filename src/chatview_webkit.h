@@ -53,11 +53,11 @@ public:
     void setDialog(QWidget *dialog);
     void setSessionData(bool isMuc, bool isMucPrivate, const XMPP::Jid &jid, const QString name);
     void setAccount(PsiAccount *acc);
+    void setLocalNickname(const QString &nickname);
 
     void contextMenuEvent(QContextMenuEvent *event);
     bool handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdit);
 
-    void sendJsObject(const QVariantMap &);
     void dispatchMessage(const MessageView &m);
     void sendJsCode(const QString &js);
 
@@ -80,6 +80,9 @@ protected:
     void changeEvent(QEvent *event);
     // void keyPressEvent(QKeyEvent *);
 
+private:
+    void outgoingReaction(const QString &messageId, const QString &reaction);
+
 protected slots:
     void psiOptionChanged(const QString &);
     // void autoCopy();
@@ -88,13 +91,18 @@ public slots:
     void init();
 
 private slots:
-    void checkJsBuffer();
     void sessionInited();
 
 signals:
-    void showNM(const QString &);
+    void showNickMenu(const QString &);
     void nickInsertClick(const QString &nick);
     void quote(const QString &text);
+    void outgoingReactions(const QString &messageId, const QSet<QString> &reactions);
+    void outgoingMessageRetraction(const QString &messageId);
+    void editMessageRequested(const QString &messageId, const QString &text);
+    void forwardMessageRequested(const QString &messageId, const QString &nick, const QString &text);
+    void openInfoRequested(const QString &nickname);
+    void openChatRequested(const QString &nickname);
 
 private:
     friend class ChatViewPrivate;

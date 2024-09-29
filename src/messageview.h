@@ -38,7 +38,9 @@ public:
         MUCPart,
         NickChange,
         FileTransferRequest,
-        FileTransferFinished
+        FileTransferFinished,
+        Reactions,
+        MessageRetraction
     };
 
     enum Flag {
@@ -71,6 +73,9 @@ public:
     static MessageView mucPartMessage(const QString &nick, const QString &message = QString(),
                                       const QString &statusText = QString());
     static MessageView nickChangeMessage(const QString &nick, const QString &newNick);
+    static MessageView reactionsMessage(const QString &nick, const QString &targetMessageId,
+                                        const QSet<QString> &reactions);
+    static MessageView retractionMessage(const QString &targetMessageId);
 
     inline Type           type() const { return _type; }
     inline const QString &text() const { return _text; }
@@ -117,10 +122,16 @@ public:
     inline QMap<QString, QString>          urls() const { return _urls; }
     inline void                            setReplaceId(const QString &id) { _replaceId = id; }
     inline const QString                  &replaceId() const { return _replaceId; }
+    inline void                            setQuoteId(const QString &id) { _quoteId = id; }
+    inline const QString                  &quoteId() const { return _quoteId; }
+    inline void                            setRetractionId(const QString &id) { _retractionId = id; }
+    inline const QString                  &retractionId() const { return _retractionId; }
     inline void                            addReference(FileSharingItem *fsi) { _references.append(fsi); }
     inline const QList<FileSharingItem *> &references() const { return _references; }
-
-    QVariantMap toVariantMap(bool isMuc, bool formatted = false) const;
+    inline void                            setReactionsId(const QString &id) { _reactionsId = id; }
+    inline const QString                  &reactionsId() const { return _reactionsId; }
+    inline void                            setReactions(const QSet<QString> &r) { _reactions = r; }
+    inline const QSet<QString>            &reactions() const { return _reactions; }
 
 private:
     Type                     _type;
@@ -135,7 +146,11 @@ private:
     QDateTime                _dateTime;
     QMap<QString, QString>   _urls;
     QString                  _replaceId;
+    QString                  _quoteId;
+    QString                  _retractionId;
+    QString                  _reactionsId;
     QList<FileSharingItem *> _references;
+    QSet<QString>            _reactions;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(MessageView::Flags)

@@ -441,7 +441,6 @@ private slots:
     void cs_warning(int);
     void cs_error(int);
     void client_rosterRequestFinished(bool, int, const QString &);
-    void jt_resolveContactName();
     void client_rosterItemAdded(const RosterItem &);
     void client_rosterItemUpdated(const RosterItem &);
     void client_rosterItemRemoved(const RosterItem &);

@@ -50,8 +50,9 @@ public:
 
     public:
         virtual ~ResourceLoader();
-        virtual QByteArray loadData(const QString &fileName)   = 0;
-        virtual bool       fileExists(const QString &fileName) = 0;
+        virtual QByteArray  loadData(const QString &fileName)   = 0;
+        virtual bool        fileExists(const QString &fileName) = 0;
+        virtual QStringList listAll()                           = 0;
     };
 
     enum class State : char { Invalid, NotLoaded, Loading, Loaded };
@@ -62,13 +63,14 @@ public:
     Theme &operator=(const Theme &other);
     virtual ~Theme();
 
-    bool  isValid() const;
-    State state() const;
+    bool   isValid() const;
+    inline operator bool() const { return isValid(); }
+    State  state() const;
 
     // previously virtual
     bool exists();
-    bool load();                                       // synchronous load
-    bool load(std::function<void(bool)> loadCallback); // asynchronous load
+    bool load(const QString &style);                                         // synchronous load
+    bool load(const QString &style, std::function<void(bool)> loadCallback); // asynchronous load
 
     bool     hasPreview() const;
     QWidget *previewWidget(); // this hack must be replaced with something widget based
@@ -91,6 +93,9 @@ public:
     const QStringList &authors() const;
     const QString     &creation() const;
     const QString     &homeUrl() const;
+    const QStringList &features() const;
+    const QStringList &stylesList() const;
+    const QString     &style() const;
 
     PsiThemeProvider             *themeProvider() const;
     const QString                &filePath() const;

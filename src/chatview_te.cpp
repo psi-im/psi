@@ -95,6 +95,10 @@ void ChatView::setSessionData(bool isMuc, bool isMucPrivate, const XMPP::Jid &ji
     name_         = name;
 }
 
+void ChatView::setLocalNickname(const QString &nickname) {
+    localNickname_ = nickname;
+}
+
 void ChatView::clear()
 {
     PsiTextView::clear();
@@ -106,7 +110,7 @@ void ChatView::contextMenuEvent(QContextMenuEvent *e)
     const QUrl anc = QUrl::fromEncoded(anchorAt(e->pos()).toLatin1());
 
     if (anc.scheme() == "addnick") {
-        emit showNM(anc.path().mid(1));
+        emit showNickMenu(anc.path().mid(1));
         e->accept();
     } else {
         QMenu *menu = createStandardContextMenu(e->pos());
@@ -125,36 +129,46 @@ QMenu *ChatView::createStandardContextMenu(const QPoint &position)
 
 void ChatView::addLogIconsResources()
 {
-    struct {
+    struct CVIcon {
         const char *name;
         const char *icon;
-    } icons[] = { { "log_icon_receive", "psi/notification_chat_receive" },
-                  { "log_icon_send", "psi/notification_chat_send" },
-                  { "log_icon_receive_encrypted", "psi/notification_chat_receive_encrypted" },
-                  { "log_icon_send_encrypted", "psi/notification_chat_send_encrypted" },
-                  { "log_icon_time", "psi/notification_chat_time" },
-                  { "log_icon_info", "psi/notification_chat_info" },
-                  { "log_icon_delivered", "psi/notification_chat_delivery_ok" },
-                  { "log_icon_delivered_encrypted", "psi/notification_chat_delivery_ok_encrypted" },
-                  { "log_icon_corrected", "psi/action_templates_edit" },
-                  { "log_icon_history", "psi/history" } };
+    };
 
     useMessageIcons_ = PsiOptions::instance()->getOption("options.ui.chat.use-message-icons").toBool();
     int  scaledSize  = int(fontInfo().pixelSize() * EqTextIconK + .5);
     bool scale       = PsiOptions::instance()->getOption("options.ui.chat.scaled-message-icons").toBool();
+    auto fs          = QFontInfo(font()).pixelSize();
 
-    auto fs = QFontInfo(font()).pixelSize();
-    for (auto &i : icons) {
-        auto res = QUrl(QLatin1String("icon:") + i.name);
-        if (useMessageIcons_) {
-            auto icon = IconsetFactory::iconPixmap(i.icon, scaledSize);
-            if (icon.height() > HugeIconTextViewK * fs || scale) {
-                icon = icon.scaledToHeight(scaledSize, Qt::SmoothTransformation);
-            }
-            document()->addResource(QTextDocument::ImageResource, res, icon);
-        } else {
-            document()->addResource(QTextDocument::ImageResource, res, QVariant());
+    auto addResource = [&](const CVIcon &i) {
+        auto res  = QUrl(QStringLiteral("icon:") + QLatin1String(i.name));
+        auto icon = IconsetFactory::iconPixmap(i.icon, scaledSize);
+        if (icon.height() > HugeIconTextViewK * fs || scale) {
+            icon = icon.scaledToHeight(scaledSize, Qt::SmoothTransformation);
         }
+        document()->addResource(QTextDocument::ImageResource, res, icon);
+    };
+
+    CVIcon optional_icons[] = { { "log_icon_receive", "psi/notification_chat_receive" },
+                                { "log_icon_send", "psi/notification_chat_send" },
+                                { "log_icon_receive_encrypted", "psi/notification_chat_receive_encrypted" },
+                                { "log_icon_send_encrypted", "psi/notification_chat_send_encrypted" },
+                                { "log_icon_time", "psi/notification_chat_time" },
+                                { "log_icon_info", "psi/notification_chat_info" },
+                                { "log_icon_delivered", "psi/notification_chat_delivery_ok" },
+                                { "log_icon_delivered_encrypted", "psi/notification_chat_delivery_ok_encrypted" },
+                                { "log_icon_history", "psi/history" } };
+    CVIcon noneopt_icons[] { { "log_icon_corrected", "psi/action_templates_edit" } };
+
+    for (auto &i : optional_icons) {
+        if (useMessageIcons_) {
+            addResource(i);
+        } else {
+            document()->addResource(QTextDocument::ImageResource, QUrl(QLatin1String("icon:") + i.name), QVariant());
+        }
+    }
+
+    for (auto &i : noneopt_icons) {
+        addResource(i);
     }
 }
 
@@ -365,11 +379,6 @@ void ChatView::dispatchMessage(const MessageView &mv)
     }
 }
 
-QString ChatView::replaceMarker(const MessageView &mv) const
-{
-    return "<a name=\"msgid_" + TextUtil::escape(mv.messageId() + "_" + mv.userId()) + "\"> </a>";
-}
-
 void ChatView::renderMucMessage(const MessageView &mv, QTextCursor &insertCursor)
 {
     const QString timestr = formatTimeStamp(mv.dateTime());
@@ -406,7 +415,7 @@ void ChatView::renderMucMessage(const MessageView &mv, QTextCursor &insertCursor
     QString nick = QString("<a href=\"addnick://psi/") + QUrl::toPercentEncoding(mv.nick())
         + "\" style=\"color: " + nickcolor + "; text-decoration: none; \">" + TextUtil::escape(mv.nick()) + "</a>";
 
-    QString inner = alerttagso + mv.formattedText() + replaceMarker(mv) + alerttagsc;
+    QString inner = alerttagso + mv.formattedText() + alerttagsc;
 
     if (mv.isEmote()) {
         insertText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1]").arg(timestr)
@@ -464,7 +473,7 @@ void ChatView::renderMessage(const MessageView &mv, QTextCursor &insertCursor)
     }
     QString str;
 
-    QString inner = mv.formattedText() + replaceMarker(mv);
+    QString inner = mv.formattedText();
     if (mv.isEmote()) {
         str = icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1]").arg(timestr)
             + QString(" *%1 ").arg(TextUtil::escape(mv.nick())) + inner + "</span>";

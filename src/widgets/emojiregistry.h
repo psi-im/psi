@@ -22,12 +22,13 @@
 
 #include <QString>
 
+#include <array>
 #include <map>
 #include <vector>
 
 class EmojiRegistry {
 public:
-    enum class Category { None, Emoji, SkinTone, ZWJ, FullQualify, SimpleKeycap };
+    enum class Category { None, Emoji, SkinTone, HairStyle, ZWJ, FullQualify, SimpleKeycap };
 
     struct Emoji {
         const QString code;
@@ -44,7 +45,7 @@ public:
         const std::vector<SubGroup> subGroups;
     };
 
-    const std::vector<Group> groups;
+    const std::array<Group, 9> groups;
 
     static const EmojiRegistry &instance();
 
@@ -63,6 +64,12 @@ public:
     int      count() const;
 
     struct iterator {
+        using iterator_category = std::forward_iterator_tag;
+        using difference_type   = std::size_t;
+        using value_type        = EmojiRegistry::Emoji;
+        using pointer           = EmojiRegistry::Emoji *; // or also value_type*
+        using reference         = EmojiRegistry::Emoji &; // or also value_type&
+
         int group_idx    = 0;
         int subgroup_idx = 0;
         int emoji_idx    = 0;
@@ -77,6 +84,9 @@ public:
         {
             return EmojiRegistry::instance().groups[group_idx].subGroups[subgroup_idx].emojis[emoji_idx];
         }
+
+        const Group    &group() const { return EmojiRegistry::instance().groups[group_idx]; }
+        const SubGroup &subGroup() const { return EmojiRegistry::instance().groups[group_idx].subGroups[subgroup_idx]; }
     };
 
     inline iterator begin() const { return {}; }

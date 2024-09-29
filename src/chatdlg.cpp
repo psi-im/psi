@@ -141,12 +141,15 @@ void ChatDlg::init()
     chatView()->setDialog(this);
     bool isPrivate = account()->groupchats().contains(jid().bare());
     chatView()->setSessionData(false, isPrivate, jid(), jid().full()); // FIXME fix nick updating
+    chatView()->setLocalNickname(account()->nick());
 #ifdef WEBKIT
     chatView()->setAccount(account());
 #else
     chatView()->setMediaOpener(account()->fileSharingDeviceOpener());
 #endif
     chatView()->init();
+    connect(chatView(), &ChatView::outgoingReactions, this, &ChatDlg::sendOutgoingReactions);
+    connect(chatView(), &ChatView::outgoingMessageRetraction, this, &ChatDlg::sendMessageRetraction);
 
     // seems its useless hack
     // connect(chatView(), SIGNAL(selectionChanged()), SLOT(logSelectionChanged())); //
@@ -167,7 +170,7 @@ void ChatDlg::init()
     connect(account(), SIGNAL(pgpKeyChanged()), SLOT(updatePgp()));
     connect(account(), SIGNAL(encryptedMessageSent(int, bool, int, const QString &)),
             SLOT(encryptedMessageSent(int, bool, int, const QString &)));
-    account()->dialogRegister(this, jid());
+    account()->dialogRegister(this, isPrivate ? jid() : jid().withResource({}));
 
     chatView()->setFocusPolicy(Qt::NoFocus);
     chatEdit()->setFocus();
@@ -373,7 +376,8 @@ void ChatDlg::setJid(const Jid &j)
         account()->dialogUnregister(this);
         TabbableWidget::setJid(j);
         updateRealJid();
-        account()->dialogRegister(this, jid());
+        bool isPrivate = account()->groupchats().contains(jid().bare());
+        account()->dialogRegister(this, isPrivate ? jid() : jid().withResource({}));
         updateContact(jid(), false);
     }
 }
@@ -677,7 +681,7 @@ void ChatDlg::doSend()
     }
 
     Message m(jid());
-    m.setType("chat");
+    m.setType(Message::Type::Chat);
     m.setTimeStamp(QDateTime::currentDateTime());
     if (isPgpEncryptionEnabled()) {
         m.setWasEncrypted(true);
@@ -697,7 +701,7 @@ void ChatDlg::doSend()
     QString id = account()->client()->genUniqueId();
     m.setId(id); // we need id early for message manipulations in chatview
     if (chatEdit()->isCorrection()) {
-        m.setReplaceId(chatEdit()->lastMessageId());
+        m.setReplaceId(chatEdit()->correctionId());
     }
     chatEdit()->setLastMessageId(id);
     chatEdit()->resetCorrection();
@@ -758,6 +762,22 @@ void ChatDlg::doneSend()
     resetComposing();
 }
 
+void ChatDlg::sendOutgoingReactions(const QString &messageId, const QSet<QString> &reactions)
+{
+    Message m(jid());
+    m.setType(Message::Type::Chat);
+    m.setReactions({ messageId, reactions });
+    emit aSend(m);
+}
+
+void ChatDlg::sendMessageRetraction(const QString &messageId)
+{
+    Message m(jid());
+    m.setType(Message::Type::Chat);
+    m.setRetraction(messageId);
+    emit aSend(m);
+}
+
 void ChatDlg::encryptedMessageSent(int x, bool b, int e, const QString &dtext)
 {
     Q_UNUSED(e);
@@ -791,6 +811,14 @@ void ChatDlg::incomingMessage(const Message &m)
         }
         if (dm.messageReceipt() == ReceiptReceived) {
             chatView()->markReceived(dm.messageReceiptId());
+        }
+        if (!m.reactions().targetId.isEmpty()) {
+            auto mv = MessageView::reactionsMessage({}, m.reactions().targetId, m.reactions().reactions);
+            chatView()->dispatchMessage(mv);
+        }
+        if (!m.retraction().isEmpty()) {
+            auto mv = MessageView::retractionMessage(m.retraction());
+            chatView()->dispatchMessage(mv);
         }
     } else {
         // Normal message
@@ -1042,7 +1070,7 @@ void ChatDlg::setChatState(ChatState state)
                     || (state == XMPP::StateComposing && lastChatState_ == XMPP::StateInactive)) {
                     // First go to the paused state
                     Message tm(jid());
-                    m.setType("chat");
+                    m.setType(Message::Type::Chat);
                     m.setChatState(XMPP::StatePaused);
                     if (account()->isAvailable()) {
                         account()->dj_sendMessage(m, false);
@@ -1053,7 +1081,7 @@ void ChatDlg::setChatState(ChatState state)
 
             // Send event message
             if (m.containsEvents() || m.chatState() != XMPP::StateNone) {
-                m.setType("chat");
+                m.setType(Message::Type::Chat);
                 if (account()->isAvailable()) {
                     account()->dj_sendMessage(m, false);
                 }

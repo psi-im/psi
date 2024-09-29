@@ -40,7 +40,6 @@
 #include "psicontactlist.h"
 #include "psievent.h"
 #include "psiiconset.h"
-#include "psimedia/psimedia.h"
 #include "psioptions.h"
 #include "psirosterwidget.h"
 #include "psitoolbar.h"
@@ -51,6 +50,9 @@
 #include "statusdlg.h"
 #include "tabdlg.h"
 #include "tabmanager.h"
+#ifdef USE_TASKBARNOTIFIER
+#include "taskbarnotifier.h"
+#endif
 #include "textutil.h"
 
 #include <QApplication>
@@ -71,9 +73,6 @@
 #include <QVBoxLayout>
 #include <QtAlgorithms>
 #ifdef Q_OS_WIN
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-#include "widgets/thumbnailtoolbar.h"
-#endif
 #include <windows.h>
 #endif
 #ifdef HAVE_X11
@@ -126,10 +125,14 @@ public:
     TabDlg      *mainTabs;
     QString      statusTip;
     PsiToolBar  *viewToolBar;
-    int          tabsSize;
-    int          rosterSize;
-    bool         isLeftRoster;
-    bool         allInOne;
+#ifdef USE_TASKBARNOTIFIER
+    TaskBarNotifier *taskBarNotifier;
+#endif
+
+    int  tabsSize;
+    int  rosterSize;
+    bool isLeftRoster;
+    bool allInOne;
 
     PopupAction         *optionsButton, *statusButton;
     IconActionGroup     *statusGroup, *viewGroups;
@@ -159,9 +162,6 @@ public:
 
 #ifdef Q_OS_WIN
     DWORD deactivationTickCount;
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    QPointer<PsiThumbnailToolBar> thumbnailToolBar_;
-#endif
 #endif
 
     void        registerActions();
@@ -181,9 +181,13 @@ MainWin::Private::Private(PsiCon *_psi, MainWin *_mainWin) :
 #ifdef Q_OS_MAC
     dockMenu(nullptr),
 #endif
-    vb_roster(nullptr), splitter(nullptr), mainTabs(nullptr), viewToolBar(nullptr), tabsSize(0), rosterSize(0),
-    isLeftRoster(false), psi(_psi), mainWin(_mainWin), rosterAvatar(nullptr), searchText(nullptr), searchPb(nullptr),
-    searchWidget(nullptr), hideTimer(nullptr), nextAnim(nullptr), nextAmount(0), lastStatus(0), rosterWidget_(nullptr)
+    vb_roster(nullptr), splitter(nullptr), mainTabs(nullptr), viewToolBar(nullptr),
+#ifdef USE_TASKBARNOTIFIER
+    taskBarNotifier(nullptr),
+#endif
+    tabsSize(0), rosterSize(0), isLeftRoster(false), psi(_psi), mainWin(_mainWin), rosterAvatar(nullptr),
+    searchText(nullptr), searchPb(nullptr), searchWidget(nullptr), hideTimer(nullptr), nextAnim(nullptr), nextAmount(0),
+    lastStatus(0), rosterWidget_(nullptr)
 {
 
     statusGroup   = static_cast<IconActionGroup *>(getAction("status_group"));
@@ -305,7 +309,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
     setAttribute(Qt::WA_AlwaysShowToolTips);
     d = new Private(psi, this);
 
-    setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).icon());
+    setWindowIcon(PsiIconset::instance()->system().icon("psi/logo_128")->icon());
 
     d->onTop  = _onTop;
     d->asTool = _asTool;
@@ -534,10 +538,6 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
     });
     d->eventNotifier->hide();
 
-#if defined(Q_OS_WIN) && QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    updateWinTaskbar(_asTool);
-#endif
-
     connect(qApp, SIGNAL(dockActivated()), SLOT(dockActivated()));
     qApp->installEventFilter(this);
 
@@ -549,6 +549,13 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
     optionChanged("options.ui.contactlist.css");
 
     reinitAutoHide();
+#ifdef USE_TASKBARNOTIFIER
+    d->taskBarNotifier = new TaskBarNotifier(this);
+#ifdef Q_OS_WIN
+    d->taskBarNotifier->enableFlashWindow(d->allInOne
+                                          && PsiOptions::instance()->getOption("options.ui.flash-windows").toBool());
+#endif
+#endif
 }
 
 MainWin::~MainWin()
@@ -557,6 +564,12 @@ MainWin::~MainWin()
         delete d->tray;
         d->tray = nullptr;
     }
+#ifdef USE_TASKBARNOTIFIER
+    if (d->taskBarNotifier) {
+        delete d->taskBarNotifier;
+        d->taskBarNotifier = nullptr;
+    }
+#endif
 
     saveToolbarsState();
 
@@ -580,135 +593,116 @@ void MainWin::optionChanged(const QString &option)
     if (option == toolbarsStateOptionPath) {
         loadToolbarsState();
     } else if (option == "options.ui.contactlist.css") {
-        const QString css = PsiOptions::instance()->getOption("options.ui.contactlist.css").toString();
+        const QString css = PsiOptions::instance()->getOption(option).toString();
         if (!css.isEmpty()) {
             setStyleSheet(css);
         }
     }
+#if defined(USE_TASKBARNOTIFIER) && defined(Q_OS_WIN)
+    else if (d->allInOne && option == "options.ui.flash-windows") {
+        d->taskBarNotifier->enableFlashWindow(PsiOptions::instance()->getOption(option).toBool());
+    }
+#endif
 }
 
 void MainWin::registerAction(IconAction *action)
 {
-    const char *activated  = SIGNAL(triggered());
-    const char *toggled    = SIGNAL(toggled(bool));
-    const char *setChecked = SLOT(setChecked(bool));
-
     PsiContactList *contactList = psiCon()->contactList();
 
-    struct MenuAction {
-        const char *name;
-        const char *signal;
-        QObject    *receiver;
-        const char *slot;
+    auto cd = [action](const QString &actionName, auto signal, auto dst, auto slot) {
+        if (actionName != action->objectName()) {
+            return false;
+        }
+        QObject::connect(action, signal, dst, slot, Qt::UniqueConnection);
+        return true;
     };
-    std::vector<MenuAction> actionlist = {
-        { "choose_status", activated, this, SLOT(actChooseStatusActivated()) },
-        { "reconnect_all", activated, this, SLOT(actReconnectActivated()) },
 
-        { "active_contacts", activated, this, SLOT(actActiveContacts()) },
-        { "show_offline", toggled, contactList, SLOT(setShowOffline(bool)) },
-        // { "show_away",      toggled, contactList, SLOT( setShowAway(bool) ) },
-        { "show_hidden", toggled, contactList, SLOT(setShowHidden(bool)) },
-        { "show_agents", toggled, contactList, SLOT(setShowAgents(bool)) },
-        { "show_self", toggled, contactList, SLOT(setShowSelf(bool)) },
-        { "show_statusmsg", toggled, d->rosterWidget_, SLOT(setShowStatusMsg(bool)) },
-        { "enable_groups", toggled, this, SLOT(actEnableGroupsActivated(bool)) },
+    auto mcd = [action](const QString &actionName, auto signal, auto dst, auto slot) {
+        if (actionName != action->objectName()) {
+            return;
+        }
+        QObject::connect(qobject_cast<MAction *>(action), signal, dst, slot, Qt::UniqueConnection);
+    };
 
-        { "button_options", activated, this, SIGNAL(doOptions()) },
+    // clang-format off
+    cd(QStringLiteral("choose_status"), &IconAction::triggered, this, &MainWin::actChooseStatusActivated);
+    cd(QStringLiteral("reconnect_all"), &IconAction::triggered, this, &MainWin::actReconnectActivated);
 
-        { "menu_disco", SIGNAL(activated(PsiAccount *, int)), this, SLOT(activatedAccOption(PsiAccount *, int)) },
-        { "menu_add_contact", SIGNAL(activated(PsiAccount *, int)), this, SLOT(activatedAccOption(PsiAccount *, int)) },
-        { "menu_xml_console", SIGNAL(activated(PsiAccount *, int)), this, SLOT(activatedAccOption(PsiAccount *, int)) },
+    cd(QStringLiteral("active_contacts"), &IconAction::triggered, this, &MainWin::actActiveContacts);
+    cd(QStringLiteral("show_offline"), &IconAction::toggled, contactList, &PsiContactList::setShowOffline);
+    // cd( "show_away"),      toggled, contactList, &PsiContactList:: setShowAway);
+    cd(QStringLiteral("show_hidden"), &IconAction::toggled, contactList, &PsiContactList::setShowHidden);
+    cd(QStringLiteral("show_agents"), &IconAction::toggled, contactList, &PsiContactList::setShowAgents);
+    cd(QStringLiteral("show_self"), &IconAction::toggled, contactList, &PsiContactList::setShowSelf);
+    cd(QStringLiteral("show_statusmsg"), &IconAction::toggled, d->rosterWidget_, &PsiRosterWidget::setShowStatusMsg);
+    if (cd(QStringLiteral("enable_groups"), &IconAction::toggled, this, &MainWin::actEnableGroupsActivated)) {
+        action->setChecked(PsiOptions::instance()->getOption("options.ui.contactlist.enable-groups").toBool());
+    }
+    cd(QStringLiteral("button_options"), &IconAction::triggered, this, &MainWin::doOptions);
 
-        { "menu_new_message", activated, this, SIGNAL(blankMessage()) },
+    mcd(QStringLiteral("menu_disco"), &MAction::activated, this, &MainWin::activatedAccOption);
+    mcd(QStringLiteral("menu_add_contact"), &MAction::activated, this, &MainWin::activatedAccOption);
+    mcd(QStringLiteral("menu_xml_console"), &MAction::activated, this, &MainWin::activatedAccOption);
+
+    cd(QStringLiteral("menu_new_message"), &IconAction::triggered, this, &MainWin::blankMessage);
 #ifdef GROUPCHAT
-        { "menu_join_groupchat", activated, this, SIGNAL(doGroupChat()) },
+    cd(QStringLiteral("menu_join_groupchat"), &IconAction::triggered, this, &MainWin::doGroupChat);
 #endif
-        { "menu_options", activated, this, SIGNAL(doOptions()) },
-        { "menu_file_transfer", activated, this, SIGNAL(doFileTransDlg()) },
-        { "menu_toolbars", activated, this, SIGNAL(doToolbars()) },
-        { "menu_accounts", activated, this, SIGNAL(doAccounts()) },
-        { "menu_change_profile", activated, this, SIGNAL(changeProfile()) },
-        { "menu_quit", activated, this, SLOT(try2tryCloseProgram()) },
-        { "menu_play_sounds", toggled, this, SLOT(actPlaySoundsActivated(bool)) },
+    cd(QStringLiteral("menu_options"), &IconAction::triggered, this, &MainWin::doOptions);
+    cd(QStringLiteral("menu_file_transfer"), &IconAction::triggered, this, &MainWin::doFileTransDlg);
+    cd(QStringLiteral("menu_toolbars"), &IconAction::triggered, this, &MainWin::doToolbars);
+    cd(QStringLiteral("menu_accounts"), &IconAction::triggered, this, &MainWin::doAccounts);
+    cd(QStringLiteral("menu_change_profile"), &IconAction::triggered, this, &MainWin::changeProfile);
+    cd(QStringLiteral("menu_quit"), &IconAction::triggered, this, &MainWin::try2tryCloseProgram);
+    if (cd(QStringLiteral("menu_play_sounds"), &IconAction::toggled, this, &MainWin::actPlaySoundsActivated)) {
+        bool state = PsiOptions::instance()->getOption("options.ui.notifications.sounds.enable").toBool();
+        action->setChecked(state);
+        auto playSoundsToggle = [action](bool state){
+            action->setToolTip(state?tr("Disable Sounds"):tr("Enable Sounds"));
+        };
+        connect(action, &IconAction::toggled, this, playSoundsToggle);
+        playSoundsToggle(state);
+    }
 #ifdef USE_PEP
-        { "publish_tune", toggled, this, SLOT(actPublishTuneActivated(bool)) },
-        { "set_mood", activated, this, SLOT(actSetMoodActivated()) },
-        { "set_activity", activated, this, SLOT(actSetActivityActivated()) },
-        { "set_geoloc", activated, this, SLOT(actSetGeolocActivated()) },
+    if (cd(QStringLiteral("publish_tune"), &IconAction::toggled, this, &MainWin::actPublishTuneActivated)) {
+        action->setChecked(PsiOptions::instance()->getOption("options.extended-presence.tune.publish").toBool());
+        d->rosterAvatar->setTuneAction(action);
+    }
+    cd(QStringLiteral("set_mood"), &IconAction::triggered, this, &MainWin::actSetMoodActivated);
+    cd(QStringLiteral("set_activity"), &IconAction::triggered, this, &MainWin::actSetActivityActivated);
+    cd(QStringLiteral("set_geoloc"), &IconAction::triggered, this, &MainWin::actSetGeolocActivated);
 #endif
 
-        { "help_readme", activated, this, SLOT(actReadmeActivated()) },
-        { "help_online_wiki", activated, this, SLOT(actOnlineWikiActivated()) },
-        { "help_online_home", activated, this, SLOT(actOnlineHomeActivated()) },
-        { "help_online_forum", activated, this, SLOT(actOnlineForumActivated()) },
-        { "help_psi_muc", activated, this, SLOT(actJoinPsiMUCActivated()) },
-        { "help_report_bug", activated, this, SLOT(actBugReportActivated()) },
-        { "help_about", activated, this, SLOT(actAboutActivated()) },
-        { "help_about_qt", activated, this, SLOT(actAboutQtActivated()) },
-        { "help_diag_qcaplugin", activated, this, SLOT(actDiagQCAPluginActivated()) },
-        { "help_diag_qcakeystore", activated, this, SLOT(actDiagQCAKeyStoreActivated()) },
-        { nullptr, nullptr, nullptr, nullptr }
+    cd(QStringLiteral("help_readme"), &IconAction::triggered, this, &MainWin::actReadmeActivated);
+    cd(QStringLiteral("help_online_wiki"), &IconAction::triggered, this, &MainWin::actOnlineWikiActivated);
+    cd(QStringLiteral("help_online_home"), &IconAction::triggered, this, &MainWin::actOnlineHomeActivated);
+    cd(QStringLiteral("help_online_forum"), &IconAction::triggered, this, &MainWin::actOnlineForumActivated);
+    cd(QStringLiteral("help_psi_muc"), &IconAction::triggered, this, &MainWin::actJoinPsiMUCActivated);
+    cd(QStringLiteral("help_report_bug"), &IconAction::triggered, this, &MainWin::actBugReportActivated);
+    cd(QStringLiteral("help_about"), &IconAction::triggered, this, &MainWin::actAboutActivated);
+    cd(QStringLiteral("help_about_qt"), &IconAction::triggered, this, &MainWin::actAboutQtActivated);
+    cd(QStringLiteral("help_diag_qcaplugin"), &IconAction::triggered, this, &MainWin::actDiagQCAPluginActivated);
+    cd(QStringLiteral("help_diag_qcakeystore"), &IconAction::triggered, this, &MainWin::actDiagQCAKeyStoreActivated);
+    // clang-format on
+
+    auto connectReverse = [action](const QString &actionName, auto src, auto signal, auto slot, bool checked) {
+        if (actionName != action->objectName()) {
+            return;
+        }
+        if (src) {
+            QObject::connect(src, signal, action, slot, Qt::UniqueConnection);
+        }
+        action->setChecked(checked);
     };
-
-    int     i;
-    QString aName;
-    for (i = 0; !(aName = QLatin1String(actionlist[i].name)).isEmpty(); i++) {
-        if (aName == action->objectName()) {
-#ifdef USE_PEP
-            // Check before connecting, otherwise we get a loop
-            if (aName == "publish_tune") {
-                action->setChecked(
-                    PsiOptions::instance()->getOption("options.extended-presence.tune.publish").toBool());
-                d->rosterAvatar->setTuneAction(action);
-            }
-#endif
-
-            disconnect(action, actionlist[i].signal, actionlist[i].receiver, actionlist[i].slot); // for safety
-            connect(action, actionlist[i].signal, actionlist[i].receiver, actionlist[i].slot);
-
-            // special cases
-            if (aName == "menu_play_sounds") {
-                action->setChecked(
-                    PsiOptions::instance()->getOption("options.ui.notifications.sounds.enable").toBool());
-            } else if (aName == "enable_groups") {
-                action->setChecked(PsiOptions::instance()->getOption("options.ui.contactlist.enable-groups").toBool());
-            }
-            // else if ( aName == "foobar" )
-            //    ;
-        }
+    // clang-format off
+    connectReverse(QStringLiteral("show_hidden"), contactList, &PsiContactList::showHiddenChanged, &IconAction::setChecked, contactList->showHidden());
+    connectReverse(QStringLiteral("show_offline"), contactList, &PsiContactList::showOfflineChanged, &IconAction::setChecked, contactList->showOffline());
+    connectReverse(QStringLiteral("show_self"), contactList, &PsiContactList::showSelfChanged, &IconAction::setChecked, contactList->showSelf());
+    connectReverse(QStringLiteral("show_agents"), contactList, &PsiContactList::showAgentsChanged, &IconAction::setChecked, contactList->showAgents());
+    if (action->objectName() == QStringLiteral("show_statusmsg")) {
+        action->setChecked(PsiOptions::instance()->getOption(showStatusMessagesOptionPath).toBool());
     }
-
-    struct {
-        const char *name;
-        QObject    *sender;
-        const char *signal;
-        const char *slot;
-        bool        checked;
-    } reverseactionlist[]
-        = { // { "show_away",      contactList, SIGNAL(showAwayChanged(bool)), setChecked, contactList->showAway()},
-            { "show_hidden", contactList, SIGNAL(showHiddenChanged(bool)), setChecked, contactList->showHidden() },
-            { "show_offline", contactList, SIGNAL(showOfflineChanged(bool)), setChecked, contactList->showOffline() },
-            { "show_self", contactList, SIGNAL(showSelfChanged(bool)), setChecked, contactList->showSelf() },
-            { "show_agents", contactList, SIGNAL(showAgentsChanged(bool)), setChecked, contactList->showAgents() },
-            { "show_statusmsg", nullptr, nullptr, nullptr, false },
-            { "", nullptr, nullptr, nullptr, false }
-          };
-
-    for (i = 0; !(aName = QString(reverseactionlist[i].name)).isEmpty(); i++) {
-        if (aName == action->objectName()) {
-            if (reverseactionlist[i].sender) {
-                disconnect(reverseactionlist[i].sender, reverseactionlist[i].signal, action,
-                           reverseactionlist[i].slot); // for safety
-                connect(reverseactionlist[i].sender, reverseactionlist[i].signal, action, reverseactionlist[i].slot);
-            }
-
-            if (aName == "show_statusmsg") {
-                action->setChecked(PsiOptions::instance()->getOption(showStatusMessagesOptionPath).toBool());
-            } else
-                action->setChecked(reverseactionlist[i].checked);
-        }
-    }
+    // clang-format on
 }
 
 void MainWin::reinitAutoHide()
@@ -766,9 +760,6 @@ void MainWin::setWindowOpts(bool _onTop, bool _asTool)
 
     setWindowFlags(flags);
     show();
-#if defined(Q_OS_WIN) && QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    updateWinTaskbar(_asTool);
-#endif
 }
 
 void MainWin::setUseDock(bool use)
@@ -858,7 +849,7 @@ void MainWin::buildToolbars()
 
     PsiOptions *options  = PsiOptions::instance();
     bool        allInOne = options->getOption("options.ui.tabs.grouping").toString().contains('A');
-    if (allInOne) {
+    if (allInOne && d->viewToolBar) {
         d->viewToolBar->initialize();
     }
     const auto &bases = options->getChildOptionNames("options.ui.contactlist.toolbars", true, true);
@@ -921,8 +912,17 @@ void MainWin::buildOptionsMenu()
     helpMenu->setIcon(IconsetFactory::icon("psi/help").icon());
 
     QStringList actions;
-    actions << "help_readme" << "separator" << "help_online_wiki" << "help_online_home" << "help_online_forum"
-            << "help_psi_muc" << "help_report_bug" << "diagnostics" << "separator" << "help_about" << "help_about_qt";
+    actions << "help_readme"
+            << "separator"
+            << "help_online_wiki"
+            << "help_online_home"
+            << "help_online_forum"
+            << "help_psi_muc"
+            << "help_report_bug"
+            << "diagnostics"
+            << "separator"
+            << "help_about"
+            << "help_about_qt";
 
     d->updateMenu(actions, helpMenu);
 
@@ -959,7 +959,9 @@ void MainWin::buildMainMenu()
 void MainWin::buildToolsMenu()
 {
     QStringList actions;
-    actions << "menu_file_transfer" << "separator" << "menu_xml_console";
+    actions << "menu_file_transfer"
+            << "separator"
+            << "menu_xml_console";
 
     d->updateMenu(actions, d->toolsMenu);
 }
@@ -976,7 +978,8 @@ void MainWin::buildGeneralMenu(QMenu *menu)
 #ifdef GROUPCHAT
             << "menu_join_groupchat"
 #endif
-            << "menu_options" << "menu_file_transfer";
+            << "menu_options"
+            << "menu_file_transfer";
     if (PsiOptions::instance()->getOption("options.ui.menu.main.change-profile").toBool()) {
         actions << "menu_change_profile";
     }
@@ -1346,7 +1349,7 @@ void MainWin::decorateButton(int status)
 #endif
         d->statusMenu->statusChanged(makeStatus(STATUS_OFFLINE, ""));
 
-        setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).icon());
+        // setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).icon());
     } else {
         d->statusButton->setText(status2txt(status));
         d->statusButton->setIcon(PsiIconset::instance()->statusPtr(status));
@@ -1356,7 +1359,7 @@ void MainWin::decorateButton(int status)
         d->statusMenuMB->statusChanged(makeStatus(status, d->psi->currentStatusMessage()));
 #endif
         d->statusMenu->statusChanged(makeStatus(status, d->psi->currentStatusMessage()));
-        setWindowIcon(PsiIconset::instance()->status(status).icon());
+        // setWindowIcon(PsiIconset::instance()->status(status).icon());
     }
 
     updateTray();
@@ -1385,6 +1388,11 @@ void MainWin::closeEvent(QCloseEvent *e)
 
     if (d->tray && !quitOnClose) {
         trayHide();
+        e->ignore();
+        return;
+    } else if (!quitOnClose) { // Minimize window to taskbar if there is no trayicon and quit-on-close option is
+                               // disabled
+        setWindowState(windowState() | Qt::WindowMinimized);
         e->ignore();
         return;
     }
@@ -1489,30 +1497,6 @@ bool MainWin::nativeEvent(const QByteArray &eventType, MSG *msg, long *result)
     }
     return false;
 }
-
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-void MainWin::updateWinTaskbar(bool enabled)
-{
-    if (!enabled) {
-        if (!d->thumbnailToolBar_) {
-            d->thumbnailToolBar_ = new PsiThumbnailToolBar(this, windowHandle());
-            connect(d->thumbnailToolBar_, &PsiThumbnailToolBar::openOptions, this, &MainWin::doOptions);
-            connect(d->thumbnailToolBar_, &PsiThumbnailToolBar::setOnline, this,
-                    [this]() { d->getAction("status_online")->trigger(); });
-            connect(d->thumbnailToolBar_, &PsiThumbnailToolBar::setOffline, this,
-                    [this]() { d->getAction("status_offline")->trigger(); });
-            connect(d->thumbnailToolBar_, &PsiThumbnailToolBar::runActiveEvent, this, &MainWin::doRecvNextEvent);
-            connect(d->psi->contactList(), &PsiContactList::queueChanged, this, [this]() {
-                d->thumbnailToolBar_->updateToolBar(d->nextAmount > 0);
-                if (!isActiveWindow() && d->allInOne)
-                    qApp->alert(this, 0);
-            });
-        }
-    } else {
-        delete d->thumbnailToolBar_;
-    }
-}
-#endif
 #endif
 
 void MainWin::updateCaption()
@@ -1669,12 +1653,18 @@ void MainWin::updateReadNext(PsiIcon *anim, int amount)
         d->eventNotifier->hide();
         d->eventNotifier->setText("");
         d->eventNotifier->setPsiIcon("");
+#ifdef USE_TASKBARNOTIFIER
+        if (!d->asTool && d->taskBarNotifier->isActive())
+            d->taskBarNotifier->removeIconCountCaption();
+#endif
     } else {
         d->eventNotifier->setPsiIcon(anim);
         d->eventNotifier->setText(QString("<b>") + numEventsString(d->nextAmount) + "</b>");
         d->eventNotifier->show();
-        // make sure it shows
-        // qApp->processEvents();
+#ifdef USE_TASKBARNOTIFIER
+        if (!d->asTool)
+            d->taskBarNotifier->setIconCountCaption(d->nextAmount);
+#endif
     }
 
     updateTray();

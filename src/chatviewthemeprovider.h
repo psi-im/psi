@@ -33,32 +33,31 @@ class ChatViewThemeProvider : public PsiThemeProvider {
 public:
     ChatViewThemeProvider(PsiCon *);
 
-    const char       *type() const { return "chatview"; }
-    const QStringList themeIds() const;
-    Theme             theme(const QString &id);
+    const char       *type() const override { return "chatview"; }
+    const QStringList themeIds() const override;
+    Theme             theme(const QString &id) override;
 
-    bool  loadCurrent();
-    void  unloadCurrent();
-    Theme current() const; // currently loaded theme
+    LoadRestult loadCurrent() override;
+    void        unloadCurrent() override;
+    void        cancelCurrentLoading() override;
+    Theme       current() const override; // currently loaded theme
 
-    void        setCurrentTheme(const QString &);
-    virtual int screenshotWidth() const { return 512; } // hack
+    void        setCurrentTheme(const QString &, const QString &style = {}) override;
+    virtual int screenshotWidth() const override { return 512; } // hack
 
 #ifdef WEBENGINE
     QWebEngineUrlRequestInterceptor *requestInterceptor();
 #endif
 
-    QString optionsName() const { return tr("Chat Message Style"); }
-    QString optionsDescription() const { return tr("Configure your chat theme here"); }
+    QString optionsName() const override { return tr("Chat Message Style"); }
+    QString optionsDescription() const override { return tr("Configure your chat theme here"); }
 
 protected:
     virtual const char *optionString() const { return "options.ui.chat.theme"; }
 
-signals:
-    void themeChanged();
-
 private:
     Theme curTheme;
+    Theme curLoadingTheme; // load-in-progress theme to replace cutTheme in success
 };
 
 class GroupChatViewThemeProvider : public ChatViewThemeProvider {

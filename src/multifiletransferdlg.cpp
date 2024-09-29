@@ -254,7 +254,7 @@ void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
             auto app  = static_cast<Jingle::FileTransfer::Application *>(c);
             auto file = app->file();
             auto item = d->model->addTransfer(MultiFileTransferModel::Incoming, file.name(),
-                                              quint64(file.size())); // FIXME size is optional. ranges?
+                                              file.size()); // FIXME ranges?
             setupCommonSignals(app, item);
 
             auto thumb = file.thumbnail();
@@ -297,7 +297,7 @@ void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
                     if (item)
                         item->setFileName(fn);
                     connect(app, &Jingle::FileTransfer::Application::deviceRequested, this,
-                            [fn, app](quint64 offset, quint64 size) {
+                            [fn, app](quint64 offset, std::optional<quint64> size) {
                                 auto f = new QFile(fn, app);
                                 f->open(QIODevice::WriteOnly);
                                 f->seek(qint64(offset));
@@ -319,7 +319,7 @@ void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
                 if (item)
                     item->setFileName(fn);
                 connect(app, &Jingle::FileTransfer::Application::deviceRequested, this,
-                        [fn, app](quint64 offset, quint64 size) {
+                        [fn, app](quint64 offset, std::optional<quint64> size) {
                             auto f = new QFile(fn, app);
                             f->open(QIODevice::WriteOnly);
                             f->seek(qint64(offset));
@@ -360,13 +360,14 @@ void MultiFileTransferDlg::addTransferContent(MultiFileTransferItem *item)
         return;
     }
 
-    connect(app, &Jingle::FileTransfer::Application::deviceRequested, item, [app, item](quint64 offset, quint64 size) {
-        auto f = new QFile(item->filePath(), app);
-        f->open(QIODevice::ReadOnly);
-        f->seek(qint64(offset));
-        app->setDevice(f);
-        Q_UNUSED(size);
-    });
+    connect(app, &Jingle::FileTransfer::Application::deviceRequested, item,
+            [app, item](quint64 offset, std::optional<quint64> size) {
+                auto f = new QFile(item->filePath(), app);
+                f->open(QIODevice::ReadOnly);
+                f->seek(qint64(offset));
+                app->setDevice(f);
+                Q_UNUSED(size);
+            });
     setupCommonSignals(app, item);
 
     // take thumbnail

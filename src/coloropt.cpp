@@ -32,31 +32,35 @@ ColorOpt::ColorOpt() : QObject(nullptr)
         const char         *opt;
         QPalette::ColorRole role;
     } SourceType;
-    SourceType source[] = { { "contactlist.status.online", QPalette::Text },
-                            { "contactlist.status.offline", QPalette::Text },
-                            { "contactlist.status.away", QPalette::Text },
-                            { "contactlist.status.do-not-disturb", QPalette::Text },
-                            { "contactlist.profile.header-foreground", QPalette::Text },
-                            { "contactlist.profile.header-background", QPalette::Dark },
-                            { "contactlist.grouping.header-foreground", QPalette::Text },
-                            { "contactlist.grouping.header-background", QPalette::Base },
-                            { "contactlist.background", QPalette::Base },
-                            { "contactlist.status-change-animation1", QPalette::Text },
-                            { "contactlist.status-change-animation2", QPalette::Base },
-                            { "contactlist.status-messages", QPalette::Text },
-                            { "tooltip.background", QPalette::ToolTipBase },
-                            { "tooltip.text", QPalette::ToolTipText },
-                            { "messages.received", QPalette::Text },
-                            { "messages.sent", QPalette::Text },
-                            { "messages.informational", QPalette::Text },
-                            { "messages.usertext", QPalette::Text },
-                            { "messages.highlighting", QPalette::Text },
-                            { "messages.link", QPalette::Link },
-                            { "messages.link-visited", QPalette::Link },
-                            { "passive-popup.border", QPalette::Window } };
-    for (unsigned int i = 0; i < sizeof(source) / sizeof(SourceType); i++) {
-        QString opt = QString("options.ui.look.colors.%1").arg(source[i].opt);
-        colors.insert(opt, ColorData(PsiOptions::instance()->getOption(opt).value<QColor>(), source[i].role));
+    auto source = std::to_array<SourceType>({ { "contactlist.status.online", QPalette::Text },
+                                              { "contactlist.status.offline", QPalette::Text },
+                                              { "contactlist.status.away", QPalette::Text },
+                                              { "contactlist.status.do-not-disturb", QPalette::Text },
+                                              { "contactlist.profile.header-foreground", QPalette::Text },
+                                              { "contactlist.profile.header-background", QPalette::Dark },
+                                              { "contactlist.grouping.header-foreground", QPalette::Text },
+                                              { "contactlist.grouping.header-background", QPalette::Base },
+                                              { "contactlist.background", QPalette::Base },
+                                              { "contactlist.status-change-animation1", QPalette::Text },
+                                              { "contactlist.status-change-animation2", QPalette::Base },
+                                              { "contactlist.status-messages", QPalette::Text },
+                                              { "muc.role-moderator", QPalette::Text },
+                                              { "muc.role-participant", QPalette::Text },
+                                              { "muc.role-visitor", QPalette::Text },
+                                              { "muc.role-norole", QPalette::Text },
+                                              { "tooltip.background", QPalette::ToolTipBase },
+                                              { "tooltip.text", QPalette::ToolTipText },
+                                              { "messages.received", QPalette::Text },
+                                              { "messages.sent", QPalette::Text },
+                                              { "messages.informational", QPalette::Text },
+                                              { "messages.usertext", QPalette::Text },
+                                              { "messages.highlighting", QPalette::Text },
+                                              { "messages.link", QPalette::Link },
+                                              { "messages.link-visited", QPalette::Link },
+                                              { "passive-popup.border", QPalette::Window } });
+    for (const auto &item : source) {
+        QString opt = QString("options.ui.look.colors.%1").arg(item.opt);
+        colors.insert(opt, ColorData(PsiOptions::instance()->getOption(opt).value<QColor>(), item.role));
     }
 }
 

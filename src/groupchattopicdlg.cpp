@@ -15,18 +15,22 @@ GroupchatTopicDlg::GroupchatTopicDlg(GCMainDlg *parent) :
     m_ui->setupUi(this);
     QKeySequence sendKey = ShortcutManager::instance()->shortcut("chat.send");
     if (sendKey == QKeySequence(Qt::Key_Enter) || sendKey == QKeySequence(Qt::Key_Return)) {
-        sendKey = QKeySequence(Qt::CTRL | Qt::Key_Return);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        sendKey = QKeySequence(quint32(Qt::CTRL) | quint32(Qt::Key_Return));
+#else
+        sendKey = QKeySequence(QKeyCombination(Qt::CTRL, Qt::Key_Return));
+#endif
     }
     m_ui->buttonBox->button(QDialogButtonBox::Ok)->setShortcut(sendKey);
 
     auto cw = new QToolButton();
     cw->setIcon(IconsetFactory::icon("psi/add").icon());
     m_ui->twLang->setCornerWidget(cw);
-    QObject::connect(m_ui->twLang, &QTabWidget::tabCloseRequested, this, [=](int index) {
+    QObject::connect(m_ui->twLang, &QTabWidget::tabCloseRequested, this, [this](int index) {
         m_ui->twLang->widget(index)->deleteLater();
         m_ui->twLang->removeTab(index);
     });
-    QObject::connect(cw, &QToolButton::clicked, this, [=](bool checked) {
+    QObject::connect(cw, &QToolButton::clicked, this, [this, cw](bool checked) {
         Q_UNUSED(checked);
         if (!addLangDlg) {
             addLangDlg = new QDialog(this);
@@ -54,7 +58,7 @@ GroupchatTopicDlg::GroupchatTopicDlg(GCMainDlg *parent) :
             addLangDlg->adjustSize();
             addLangDlg->move(cw->mapToGlobal(QPoint(cw->width() - addLangDlg->width(), cw->height())));
             addLangDlg->show();
-            QObject::connect(addLangDlg, &QDialog::accepted, this, [=]() {
+            QObject::connect(addLangDlg, &QDialog::accepted, this, [this]() {
                 LanguageManager::LangId id;
                 id.language = quint16(m_addLangUi->cmbLang->currentData().toInt());
                 id.script   = quint8(m_addLangUi->cmbScript->currentData().toInt());
@@ -76,7 +80,7 @@ GroupchatTopicDlg::GroupchatTopicDlg(GCMainDlg *parent) :
 
             QObject::connect(m_addLangUi->cmbLang,
                              static_cast<void (QComboBox::*)(int index)>(&QComboBox::currentIndexChanged), this,
-                             [=](int index) {
+                             [this](int index) {
                                  Q_UNUSED(index)
                                  populateCountryAndScript();
                              });

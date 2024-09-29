@@ -44,7 +44,7 @@ AccountRegDlg::AccountRegDlg(PsiCon *psi, QWidget *parent) : QDialog(parent), ps
     // step
 
     // Initialize settings
-    ssl_  = UserAccount::SSL_Auto;
+    ssl_  = UserAccount::TLS_Auto;
     port_ = 5222;
 
     // Server select button
@@ -62,9 +62,9 @@ AccountRegDlg::AccountRegDlg(PsiCon *psi, QWidget *parent) : QDialog(parent), ps
     connect(ui_.ck_host, SIGNAL(toggled(bool)), SLOT(hostToggled(bool)));
 
     // SSL
-    ui_.cb_ssl->addItem(tr("Always"), UserAccount::SSL_Yes);
-    ui_.cb_ssl->addItem(tr("When available"), UserAccount::SSL_Auto);
-    ui_.cb_ssl->addItem(tr("Legacy SSL"), UserAccount::SSL_Legacy);
+    ui_.cb_ssl->addItem(tr("Always"), UserAccount::TLS_Yes);
+    ui_.cb_ssl->addItem(tr("When available"), UserAccount::TLS_Auto);
+    ui_.cb_ssl->addItem(tr("Direct TLS"), UserAccount::Direct_TLS);
     ui_.cb_ssl->setCurrentIndex(ui_.cb_ssl->findData(ssl_));
     connect(ui_.cb_ssl, SIGNAL(activated(int)), SLOT(sslActivated(int)));
 
@@ -114,13 +114,13 @@ void AccountRegDlg::done(int r)
 
 void AccountRegDlg::sslActivated(int i)
 {
-    if ((ui_.cb_ssl->itemData(i) == UserAccount::SSL_Yes || ui_.cb_ssl->itemData(i) == UserAccount::SSL_Legacy)
+    if ((ui_.cb_ssl->itemData(i) == UserAccount::TLS_Yes || ui_.cb_ssl->itemData(i) == UserAccount::Direct_TLS)
         && !checkSSL()) {
-        ui_.cb_ssl->setCurrentIndex(ui_.cb_ssl->findData(UserAccount::SSL_Auto));
-    } else if (ui_.cb_ssl->itemData(i) == UserAccount::SSL_Legacy && !ui_.ck_host->isChecked()) {
+        ui_.cb_ssl->setCurrentIndex(ui_.cb_ssl->findData(UserAccount::TLS_Auto));
+    } else if (ui_.cb_ssl->itemData(i) == UserAccount::Direct_TLS && !ui_.ck_host->isChecked()) {
         QMessageBox::critical(this, tr("Error"),
-                              tr("Legacy SSL is only available in combination with manual host/port."));
-        ui_.cb_ssl->setCurrentIndex(ui_.cb_ssl->findData(UserAccount::SSL_Auto));
+                              tr("Direct TLS is only available in combination with manual host/port."));
+        ui_.cb_ssl->setCurrentIndex(ui_.cb_ssl->findData(UserAccount::TLS_Auto));
     }
 }
 
@@ -139,8 +139,8 @@ void AccountRegDlg::hostToggled(bool on)
     ui_.le_port->setEnabled(on);
     ui_.lb_host->setEnabled(on);
     ui_.lb_port->setEnabled(on);
-    if (!on && ui_.cb_ssl->currentIndex() == ui_.cb_ssl->findData(UserAccount::SSL_Legacy)) {
-        ui_.cb_ssl->setCurrentIndex(ui_.cb_ssl->findData(UserAccount::SSL_Auto));
+    if (!on && ui_.cb_ssl->currentIndex() == ui_.cb_ssl->findData(UserAccount::Direct_TLS)) {
+        ui_.cb_ssl->setCurrentIndex(ui_.cb_ssl->findData(UserAccount::TLS_Auto));
     }
 }
 
@@ -196,7 +196,7 @@ void AccountRegDlg::next()
         // Connect to the server
         ui_.busy->start();
         block();
-        client_->connectToServer(server_, false, ssl_ == UserAccount::SSL_Legacy, ssl_ == UserAccount::SSL_Yes,
+        client_->connectToServer(server_, ssl_ == UserAccount::Direct_TLS, ssl_ == UserAccount::TLS_Yes,
                                  opt_host_ ? host_ : QString(), port_, proxy_);
     } else if (ui_.sw_register->currentWidget() == ui_.page_fields) {
         // Initialize the form

@@ -60,11 +60,10 @@ public:
         opt_reconn, opt_ignoreSSLWarnings, opt_useProxyForUpload, opt_compress, opt_sm;
 
     bool                               req_mutual_auth;
-    bool                               legacy_ssl_probe;
     bool                               opt_automatic_resource, priority_dep_on_status, ignore_global_actions;
     XMPP::ClientStream::AllowPlainType allow_plain;
     int                                security_level;
-    enum SSLFlag { SSL_No = 0, SSL_Yes = 1, SSL_Auto = 2, SSL_Legacy = 3 } ssl;
+    enum SSLFlag { TLS_No = 0, TLS_Yes = 1, TLS_Auto = 2, Direct_TLS = 3 } ssl;
 
     QString proxyID;
 

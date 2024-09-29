@@ -70,6 +70,7 @@ if(WIN32)
         list(APPEND PATHES
             ${CMAKE_PREFIX_PATH}/bin
             ${CMAKE_PREFIX_PATH}/lib
+            ${CMAKE_PREFIX_PATH}/lib/ossl-modules
             )
     endif()
     if(EXISTS "${SDK_PATH}")
@@ -359,6 +360,7 @@ if(WIN32)
         if(USE_MXE)
             set(PSIMEDIA_DEPS
                 libffi-6.dll
+                libffi-8.dll
                 libfontconfig-1.dll
                 libgio-2.0-0.dll
                 libgmodule-2.0-0.dll
@@ -444,7 +446,7 @@ if(WIN32)
         libhunspell.dll
         libotr-5.dll
         libotr.dll
-        libsignal-protocol-c.dll
+        libomemo-c.dll
         libssl-1_1-x64.dll
         libssl-3-x64.dll
         libssl-1_1.dll
@@ -456,6 +458,7 @@ if(WIN32)
         libzlib.dll
         libzstd.dll
         legacy.dll
+        protobuf-c${D}.dll
         ssleay32.dll
         zlib1.dll
         )
@@ -492,6 +495,7 @@ if(WIN32)
             libmng-2.dll
             libpcre-1.dll
             libpcre16-0.dll
+            libpcre2-8-0.dll
             libpcre2-16-0.dll
             libpng16-16.dll
             libsharpyuv-0.dll

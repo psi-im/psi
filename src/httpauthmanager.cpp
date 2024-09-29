@@ -75,7 +75,7 @@ void HttpAuthListener::reply(bool confirm, const PsiHttpAuthRequest &req)
     if (s.kind() == XMPP::Stanza::Message) {
         XMPP::Message m(s.from());
         if (!confirm) {
-            m.setType("error");
+            m.setType(XMPP::Message::Type::Error);
             m.setError(XMPP::HttpAuthRequest::denyError);
         }
         m.setHttpAuthRequest(req);

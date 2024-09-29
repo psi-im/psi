@@ -212,6 +212,7 @@ void PsiTipLabel::enterEvent(QEvent *e)
 void PsiTipLabel::enterEvent(QEnterEvent *e)
 #endif
 {
+    Q_UNUSED(e);
     hideTip();
 }
 

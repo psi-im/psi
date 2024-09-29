@@ -119,11 +119,11 @@ void ContactListModel::Private::realAddContact(PsiContact *contact)
         monitoredContacts.insert(contact, q->toModelIndex(item));
     }
 
-    connect(contact, SIGNAL(destroyed(PsiContact *)), SLOT(removeContact(PsiContact *)));
-    connect(contact, SIGNAL(groupsChanged()), SLOT(contactGroupsChanged()));
-    connect(contact, SIGNAL(updated()), SLOT(contactUpdated()));
-    connect(contact, SIGNAL(alert()), SLOT(contactUpdated()));
-    connect(contact, SIGNAL(anim()), SLOT(contactUpdated()));
+    connect(contact, &PsiContact::destroyed, this, &Private::removeContact);
+    connect(contact, &PsiContact::groupsChanged, this, &Private::contactGroupsChanged);
+    connect(contact, &PsiContact::updated, this, &Private::contactUpdated);
+    connect(contact, &PsiContact::alert, this, &Private::contactUpdated);
+    connect(contact, &PsiContact::anim, this, &Private::contactUpdated);
 }
 
 void ContactListModel::Private::addContacts(const QList<PsiContact *> &contacts)

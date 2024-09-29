@@ -68,8 +68,8 @@ void MiniClient::reset()
     conn = nullptr;
 }
 
-void MiniClient::connectToServer(const Jid &jid, bool legacy_ssl_probe, bool legacy_ssl, bool forcessl,
-                                 const QString &_host, int _port, QString proxy, QString *_pass)
+void MiniClient::connectToServer(const Jid &jid, bool direct_tls, bool forcessl, const QString &_host, int _port,
+                                 QString proxy, QString *_pass)
 {
     j = jid;
 
@@ -123,9 +123,7 @@ void MiniClient::connectToServer(const Jid &jid, bool legacy_ssl_probe, bool leg
     conn->setProxy(p);
     if (useHost) {
         conn->setOptHostPort(host, quint16(port));
-        conn->setOptSSL(legacy_ssl);
-    } else {
-        conn->setOptProbe(legacy_ssl_probe);
+        conn->setOptSSL(direct_tls);
     }
 
     stream = new ClientStream(conn, tlsHandler);

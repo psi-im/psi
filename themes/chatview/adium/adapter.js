@@ -22,26 +22,40 @@ function psiThemeAdapter(chat)
 {
 
 var adapter = {
-    loadTheme : function() {
+    loadTheme : function(style) {
         //var chat = chat;
         var loader = window.srvLoader;
+        var baseDir = "";
+        loader.toCache("variant", style);
         //chat.console("DEBUG: loading " );
         loader.setCaseInsensitiveFS(true);
         loader.setPrepareSessionHtml(true);
-        loader.setHttpResourcePath("/Contents/Resources");
-        //chat.console("DEBUG: loading " + loader.themeId);
-        var resources = ["FileTransferRequest.html",
-        "Footer.html", "Header.html", "Status.html", "Topic.html", "Content.html",
-        "Incoming/Content.html", "Incoming/NextContent.html",
-        "Incoming/Context.html", "Incoming/NextContext.html",
-        "Outgoing/Content.html", "Outgoing/NextContent.html",
-        "Outgoing/Context.html", "Outgoing/NextContext.html"];
 
-        var toCache = {};
-        for (var i=0; i<resources.length; i++) {
-            toCache[resources[i]] = "Contents/Resources/" + resources[i];
+        function gotFilesList(filesList) {
+            filesList = filesList.filter((path) => !(path.startsWith("__MACOSX") || path.startsWith(".") || path.endsWith("DS_Store")));
+            const value = filesList.find((path)=>path.split("/")[0].toLowerCase().endsWith("adiummessagestyle"));
+            if (value)  {
+                baseDir = value.split("/")[0] + "/";
+            }
+            loader.setHttpResourcePath(baseDir + "Contents/Resources");
+
+            //chat.console("DEBUG: loading " + loader.themeId);
+            var resources = ["FileTransferRequest.html",
+                "Footer.html", "Header.html", "Status.html", "Topic.html", "Content.html",
+                "Incoming/Content.html", "Incoming/NextContent.html",
+                "Incoming/Context.html", "Incoming/NextContext.html",
+                "Outgoing/Content.html", "Outgoing/NextContent.html",
+                "Outgoing/Context.html", "Outgoing/NextContext.html"];
+    
+            var toCache = {};
+            for (var i=0; i<resources.length; i++) {
+                toCache[resources[i]] = baseDir + "Contents/Resources/" + resources[i];
+            }
+            loader.saveFilesToCache(toCache);
+
+            chat.console("Found base dir: " + value);
+            chat.util.loadXML(baseDir + "Contents/Info.plist", plistLoaded);
         }
-        loader.saveFilesToCache(toCache);
 
         function plistLoaded(ipDoc)
         {
@@ -92,11 +106,16 @@ var adapter = {
                 loader.setTransparent();
             }
 
-            var resources = ["Incoming/buddy_icon.png", "Outgoing/buddy_icon.png", "incoming_icon.png", "outgoing_icon.png"];
+            var resources = [
+                "Incoming/buddy_icon.png",
+                "Outgoing/buddy_icon.png", 
+                "incoming_icon.png", 
+                "outgoing_icon.png"
+            ];
             if (chat.async) {
-                loader.checkFilesExist(resources, "Contents/Resources", resourcesListReady);
+                loader.checkFilesExist(resources, baseDir + "Contents/Resources", resourcesListReady);
             } else {
-                resourcesListReady(loader.checkFilesExist(resources, "Contents/Resources"));
+                resourcesListReady(loader.checkFilesExist(resources, baseDir + "Contents/Resources"));
             }
         }
 
@@ -109,9 +128,9 @@ var adapter = {
             avatars.outgoingImage = rlist["outgoing_icon.png"]? "outgoing_icon.png" : chat.server.psiDefaultAvatarUrl;
             loader.toCache("avatars", avatars)
             if (chat.async) {
-                loader.getFileContents("Contents/Resources/Template.html", baseHtmlLoaded);
+                loader.getFileContents(baseDir + "Contents/Resources/Template.html", baseHtmlLoaded);
             } else {
-                baseHtmlLoaded(loader.getFileContents("Contents/Resources/Template.html"));
+                baseHtmlLoaded(loader.getFileContents(baseDir + "Contents/Resources/Template.html"));
             }
         }
 
@@ -155,7 +174,7 @@ var adapter = {
 
         var ip = {variants: {}};
         //chat.console("DEBUG: 2");
-        chat.util.loadXML("Contents/Info.plist", plistLoaded);
+        chat.util.listAllFiles(gotFilesList);
     }
 }
 
@@ -284,7 +303,7 @@ chat.util.updateObject(adapter, function(chat){
                 //chat.console("cached Template.html: " + html);
                 var ip = cache["Info.plist"];
 
-                var variant = ip.DefaultVariant;
+                var variant = cache["variant"] || ip.DefaultVariant;
                 if (variant && ip.variants[variant]) {
                     chat.util.updateObject(ip, ip.variants[variant]);
                 }
@@ -548,6 +567,18 @@ chat.util.updateObject(adapter, function(chat){
 
                 session.newMessage.connect(chat.receiveObject);
                 session.scrollRequested.connect((value) => { window.scrollBy(0, value); });
+                if (QWebChannel) {
+                    // define compatibility hack for webengine
+                    Object.defineProperty(document.body, "scrollTop", {
+                        set: function(x) { document.documentElement.scrollTop = x; },
+                        get: function() { return document.documentElement.scrollTop; }
+                    });
+                    Object.defineProperty(document.body, "scrollHeight", {
+                        set: function(x) { document.documentElement.scrollHeight = x; },
+                        get: function() { return document.documentElement.scrollHeight; }
+                    });
+                }
+
                 chat.util.rereadOptions();
                 session.signalInited();
             }

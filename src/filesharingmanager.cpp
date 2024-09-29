@@ -34,7 +34,6 @@
 #include "iris/xmpp_reference.h"
 #include "iris/xmpp_vcard.h"
 #ifdef HAVE_WEBSERVER
-#include "filesharinghttpproxy.h"
 #include "webserver.h"
 #endif
 #include "messageview.h"
@@ -117,10 +116,9 @@ FileCacheItem *FileSharingManager::moveToCache(const QList<XMPP::Hash> &sums, co
 
 FileSharingItem *FileSharingManager::item(const Hash &id) { return d->items.value(id); }
 
-QList<FileSharingItem *> FileSharingManager::fromMimeData(const QMimeData *data, PsiAccount *acc)
+QList<FileSharingItem *> FileSharingManager::createFromMimeData(const QMimeData *data, PsiAccount *acc)
 {
-    QList<FileSharingItem *> ret;
-    QStringList              files;
+    QStringList files;
 
     QString voiceMsgMime;
     QString voiceAmplitudesMime(QLatin1String("application/x-psi-amplitudes"));
@@ -152,9 +150,10 @@ QList<FileSharingItem *> FileSharingManager::fromMimeData(const QMimeData *data,
         }
     }
     if (files.isEmpty() && img.isNull() && !hasVoice) {
-        return ret;
+        return {};
     }
 
+    QList<FileSharingItem *> ret;
     if (files.isEmpty()) { // so we have an image
         FileSharingItem *item = nullptr;
         if (hasVoice) {
@@ -218,9 +217,10 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
             MediaSharing ms = r.mediaSharing();
             // qDebug() << "BEGIN:" << r.begin() << "END:" << r.end();
             // only audio and image supported for now
-            if (!ms.isValid() || !ms.file.hasComputedHashes() || !ms.file.hasSize()
+            if (!ms.isValid() || !ms.file.hasComputedHashes() || !ms.file.size().has_value()
                 || !(ms.file.mediaType().startsWith(QLatin1String("audio"))
-                     || ms.file.mediaType().startsWith(QLatin1String("image")))) {
+                     || ms.file.mediaType().startsWith(QLatin1String("image"))
+                     || ms.file.mediaType().startsWith(QLatin1String("video")))) {
                 continue;
             }
             auto item = new FileSharingItem(ms, m.from(), acc, this);
@@ -273,11 +273,17 @@ bool FileSharingManager::jingleAutoAcceptIncomingDownloadRequest(Jingle::Session
     }
 
     for (auto const &p : toAccept) {
-        auto ft   = p.first;
-        auto item = p.second;
+        auto ft   = p.first;  // jingle-ft app
+        auto item = p.second; // FileCacheItem
+
+        auto acceptFile = ft->file();
+        acceptFile.setHashes(item->sums());
+        ft->setAcceptFile(acceptFile);
+
+        // TODO hashes for ranges
 
         connect(ft, &Jingle::FileTransfer::Application::deviceRequested, this,
-                [ft, item, this](quint64 offset, quint64 /*size*/) {
+                [ft, item, this](quint64 offset, std::optional<quint64> /*size*/) {
                     auto    vm       = item->metadata();
                     QString fileName = vm.value(QString::fromLatin1("link")).toString();
                     if (fileName.isEmpty()) {
@@ -296,16 +302,6 @@ bool FileSharingManager::jingleAutoAcceptIncomingDownloadRequest(Jingle::Session
 
     return true;
 }
-
-#ifdef HAVE_WEBSERVER
-// returns true if request handled. false if we need to find another hander
-bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sourceIdHex,
-                                             qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse *res)
-{
-    new FileSharingHttpProxy(acc, sourceIdHex, req, res);
-    return true;
-}
-#endif
 
 XMPP::Hash FileSharingDeviceOpener::urlToSourceId(const QUrl &url)
 {

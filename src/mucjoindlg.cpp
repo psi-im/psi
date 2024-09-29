@@ -190,6 +190,9 @@ void MUCJoinDlg::updateFavorites()
 {
     QListWidgetItem *recentLwi = nullptr, *lwi;
 
+    if (!ui_.le_room->text().isEmpty()) {
+        ui_.lwFavorites->blockSignals(true);
+    }
     ui_.lwFavorites->clear();
 
     QHash<QString, QListWidgetItem *>     bmMap; // jid to item
@@ -247,6 +250,7 @@ void MUCJoinDlg::updateFavorites()
     if (recentLwi && ui_.le_room->text().isEmpty()) {
         ui_.lwFavorites->setCurrentItem(recentLwi);
     }
+    ui_.lwFavorites->blockSignals(false);
 }
 
 void MUCJoinDlg::pa_disconnected()

@@ -80,6 +80,10 @@ or
   uncompatible (required for p2p file transfer. Available only if
   JINGLE_SCTP flag set to ON)
 
+> -DBUNDLED_KEYCHAIN=ON
+
+  to build QtKeychain library bundled (useful for macOS) (default OFF)
+
 > -DUSE_ASPELL=OFF
 
   to use Aspell spellchecker (default OFF)
@@ -181,6 +185,13 @@ or
 > -DLIMIT_X11_USAGE=ON
 
   Disable usage of X11 features which may crash program (default OFF)
+
+> -DUSE_TASKBARNOTIFIER=ON
+
+  Shows the incoming events count on the program icon.
+  For Linux systems, it uses the DBus service com.canonical.Unity if available.
+  Windows it uses an icon overlay mechanism.
+  Or simply changes the program icon for other cases. (default ON)
 
 ## Work with plugins:
 

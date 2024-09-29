@@ -87,8 +87,10 @@ QVariant MultiFileTransferModel::data(const QModelIndex &index, int role) const
     }
     // try our roles
     switch (role) {
+    case FullSizeDefinedRole:
+        return item->fullSize().has_value();
     case FullSizeRole:
-        return item->fullSize();
+        return *item->fullSize();
     case CurrentSizeRole:
         return item->currentSize();
     case SpeedRole:
@@ -163,7 +165,7 @@ void MultiFileTransferModel::clear()
 }
 
 MultiFileTransferItem *MultiFileTransferModel::addTransfer(Direction direction, const QString &displayName,
-                                                           quint64 fullSize)
+                                                           std::optional<quint64> fullSize)
 {
     beginInsertRows(QModelIndex(), transfers.size(), transfers.size());
     auto t = new MultiFileTransferItem(direction, displayName, fullSize, this);

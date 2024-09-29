@@ -119,7 +119,13 @@ PsiContact::PsiContact(const UserListItem &u, PsiAccount *account, bool isSelf) 
     if (d->account_) {
         connect(d->account_->avatarFactory(), &AvatarFactory::avatarChanged, this, &PsiContact::avatarChanged);
     }
-    connect(VCardFactory::instance(), &VCardFactory::vcardChanged, this, &PsiContact::vcardChanged);
+    connect(VCardFactory::instance(), &VCardFactory::vcardChanged, this,
+            [this](const Jid &j, VCardFactory::Flags flags) {
+                if (!j.compare(jid(), flags & VCardFactory::MucUser))
+                    return;
+
+                emit updated();
+            });
     update(u);
 
     // updateParent();
@@ -683,16 +689,6 @@ void PsiContact::avatarChanged(const Jid &j)
 {
     if (!j.compare(jid(), false))
         return;
-    emit updated();
-}
-
-void PsiContact::rereadVCard() { vcardChanged(jid()); }
-
-void PsiContact::vcardChanged(const Jid &j)
-{
-    if (!j.compare(jid(), false))
-        return;
-
     emit updated();
 }
 

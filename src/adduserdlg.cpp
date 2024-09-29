@@ -24,7 +24,7 @@
 #include "infodlg.h"
 #include "iris/xmpp_client.h"
 #include "iris/xmpp_tasks.h"
-#include "iris/xmpp_vcard.h"
+#include "iris/xmpp_vcard4.h"
 #include "psiaccount.h"
 #include "psiiconset.h"
 #include "tasklist.h"
@@ -293,9 +293,9 @@ void AddUserDlg::errorGateway(const QString &str, const QString &err)
 
 void AddUserDlg::getVCardActivated()
 {
-    const VCard vcard = VCardFactory::instance()->vcard(jid());
+    const auto vcard = VCardFactory::instance()->vcard(jid());
 
-    InfoDlg *w = new InfoDlg(InfoWidget::Contact, jid(), vcard, d->pa, nullptr, false);
+    InfoDlg *w = new InfoDlg(InfoWidget::Contact, jid(), vcard, d->pa, nullptr);
     w->show();
 
     // automatically retrieve info if it doesn't exist
@@ -305,40 +305,41 @@ void AddUserDlg::getVCardActivated()
 
 void AddUserDlg::resolveNickActivated()
 {
-    JT_VCard *jt = VCardFactory::instance()->getVCard(
-        jid(), d->pa->client()->rootTask(), this,
-        [this]() {
-            JT_VCard *jt = static_cast<JT_VCard *>(sender());
-
-            if (jt->success()) {
-                QString           nickname;
-                const XMPP::VCard vcard = jt->vcard();
-                if (!vcard.nickName().isEmpty()) {
-                    nickname = vcard.nickName();
-                } else if (!vcard.fullName().isEmpty()) {
-                    nickname = vcard.fullName();
-                } else {
-                    nickname = vcard.givenName();
-                    if (nickname.isEmpty()) {
-                        nickname = vcard.middleName();
-                    } else if (!vcard.middleName().isEmpty()) {
-                        nickname += " " + vcard.middleName();
-                    }
-                    if (nickname.isEmpty()) {
-                        nickname = vcard.familyName();
-                    } else if (!vcard.familyName().isEmpty()) {
-                        nickname += " " + vcard.familyName();
-                    }
-                }
+    auto *jt = VCardFactory::instance()->getVCard(d->pa, jid());
+    connect(jt, &VCardRequest::finished, this, [this, jt]() {
+        if (!jt->success()) {
+            return;
+        }
+        auto vcard = jt->vcard();
+        if (vcard) {
+            QString nickname = vcard.nickName().preferred().data.value(0);
+            if (nickname.isEmpty()) {
+                nickname = vcard.fullName().preferred();
+            }
+            if (nickname.isEmpty()) {
+                auto names   = vcard.names();
+                nickname     = names.data.given.value(0);
+                auto middle  = names.data.additional.value(0);
+                auto surname = names.data.surname.value(0);
 
                 if (nickname.isEmpty()) {
-                    nickname = jt->jid().bare();
+                    nickname = middle;
+                } else if (!middle.isEmpty()) {
+                    nickname += " " + middle;
                 }
-                le_nick->setText(nickname);
+                if (nickname.isEmpty()) {
+                    nickname = surname;
+                } else if (!surname.isEmpty()) {
+                    nickname += " " + surname;
+                }
             }
-        },
-        false);
-    d->tasks->append(jt);
+
+            if (nickname.isEmpty()) {
+                nickname = jt->jid().bare();
+            }
+            le_nick->setText(nickname);
+        }
+    });
 }
 
 /**

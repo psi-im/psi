@@ -146,7 +146,7 @@ void ContactListGroupMenu::Private::mucLeave()
         Jid        j(gc);
         GCMainDlg *gcDlg = pa->findDialog<GCMainDlg *>(j.bare());
         if (gcDlg)
-            gcDlg->close();
+            gcDlg->leave();
     }
 }
 

@@ -24,8 +24,8 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules" )
 include(psi-cmake-functions)
 include(policyRules)
 
-# Define LINUX on Linux like as WIN32 on Windows and APPLE on macOS
-if(UNIX AND NOT (APPLE OR HAIKU))
+# Define LINUX on Linux like and BSD as WIN32 on Windows and APPLE on macOS
+if(UNIX AND (NOT (APPLE OR HAIKU) AND NOT CYGWIN))
     set(LINUX ON)
 endif()
 
@@ -38,7 +38,7 @@ set(SBM_LIST
 )
 foreach(submodule ${SBM_LIST})
     if(NOT EXISTS "${submodule}")
-        message(FATAL_ERROR "Psi submodules not found.\nPlease run:\n====\ncd ${PROJECT_SOURCE_DIR}\ngit submodule init\ngit submodule update\n====\nbefore run cmake again")
+        message(FATAL_ERROR "Psi ${submodule} submodule not found.\nPlease run:\n====\ncd ${PROJECT_SOURCE_DIR}\ngit submodule update --init --recursive\n====\nbefore run cmake again")
     endif()
 endforeach()
 
@@ -67,7 +67,6 @@ option( USE_ENCHANT "Build psi with enchant spellcheck" OFF )
 option( USE_ASPELL "Build psi with aspell spellcheck" OFF )
 option( USE_CCACHE "Use ccache utility if found" ON )
 option( USE_CRASH "Enable builtin sigsegv handling" OFF )
-option( USE_DBUS "Enable DBUS support" ON )
 option( USE_KEYCHAIN "Enable QtKeychain support" ON )
 option( ONLY_BINARY "Build and install only binary file" OFF )
 option( ONLY_PLUGINS "Build psi plugins only" OFF )
@@ -79,8 +78,12 @@ option( DEV_MODE "Enable prepare-bin-libs target for MS Windows only. Set PSI_DA
 # Iris options
 option( BUNDLED_IRIS "Build iris library bundled" ON )
 option( BUNDLED_IRIS_ALL "Build bundled iris library with bundled QCA and bundled USRSCTP" OFF)
-option( IRIS_BUNDLED_QCA "Adds: DTLS, Blake2b and other useful for XMPP crypto-stuff" ${DEFAULT_BUNDLED_QCA} )
+# note Blake2b is needed only with Qt5. Qt6 has its own implementation
+option( IRIS_BUNDLED_QCA "Adds: DTLS, Blake2b (needed with Qt5) and other useful for XMPP crypto-stuff" ${DEFAULT_BUNDLED_QCA} )
 option( IRIS_BUNDLED_USRSCTP "Compile compatible usrsctp lib when system one is not available or uncompatible (required for p2p file transfer)" ${DEFAULT_BUNDLED_USRSCTP} )
+option( BUNDLED_KEYCHAIN "Build QtKeychain library bundled" OFF )
+option( USE_TASKBARNOTIFIER "Use taskbar notifications for incoming events" ON )
+
 if (UNIX AND "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     option( ENABLE_ASAN "Enable compilation with address sanitizer" OFF )
 endif()
@@ -91,6 +94,7 @@ option( USE_MXE "Use MXE (cross-compilation build environment for MS Windows)" $
 
 # Other systems
 if(LINUX)
+    option( USE_DBUS "Enable DBUS support" ON )
     option( USE_X11 "Enable X11 features support" ON )
     option( USE_XSS "Enable Xscreensaver support" ON )
     option( LIMIT_X11_USAGE "Disable usage of X11 features which may crash program" OFF )
@@ -98,10 +102,6 @@ elseif(APPLE)
     option( USE_SPARKLE "Use Sparkle for APPLE builds" OFF )
     option( USE_GROWL "Use growl for macOS builds" OFF )
     option( USE_MAC_DOC "Use macOS dock" OFF )
-endif()
-
-if(WIN32 AND ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" OR ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")))
-    option( NO_DEBUG_OPTIMIZATION "Disable optimization for debug builds" OFF )
 endif()
 
 if( USE_HUNSPELL AND (USE_ENCHANT AND USE_ASPELL) )
@@ -125,17 +125,10 @@ set(IS_WEBENGINE OFF CACHE INTERNAL "Use webengine. Internal variable")
 string(TOLOWER "${CHAT_TYPE}" LCHAT_TYPE)
 
 if("${LCHAT_TYPE}" STREQUAL "webkit")
-    add_definitions(
-        -DWEBKIT
-    )
     set(IS_WEBKIT ON)
     message(STATUS "Chatlog type - QtWebKit")
 elseif("${LCHAT_TYPE}" STREQUAL "webengine")
     set(IS_WEBENGINE ON)
-    add_definitions(
-        -DWEBKIT
-        -DWEBENGINE=1
-    )
     message(STATUS "Chatlog type - QtWebEngine")
 else()
     set(IS_WEBKIT OFF)
@@ -146,14 +139,14 @@ endif()
 message(STATUS "System name - ${CMAKE_SYSTEM_NAME}")
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" OR ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo"))
-    set(ISDEBUG ON)
+    set(ISDEBUG ON CACHE INTERNAL "Debug on RelWithDebInfo build type enabled")
     option(PLUGIN_INSTALL_PATH_DEBUG "Add -DPLUGIN_INSTALL_PATH_DEBUG definition" OFF)
     option(CHATVIEW_CORRECTION_DEBUG "Add -DCORRECTION_DEBUG definition" OFF)
     if(PLUGIN_INSTALL_PATH_DEBUG)
         add_definitions(-DPLUGIN_INSTALL_PATH_DEBUG)
     endif()
-    if(CHATVIEW_CORRECTION_DEBUG)
-        add_definitions(-DCORRECTION_DEBUG)
+    if(WIN32)
+        option( NO_DEBUG_OPTIMIZATION "Disable optimization for debug builds" OFF )
     endif()
 endif()
 
@@ -176,35 +169,23 @@ elseif(NOT ENABLE_PLUGINS AND BUILD_PSIMEDIA)
     message(FATAL_ERROR "BUILD_PSIMEDIA flag not works without ENABLE_PLUGINS flag.\nPlease enable ENABLE_PLUGINS flag or disable BUILD_PSIMEDIA flag")
 endif()
 
-if(USE_CRASH)
-    add_definitions(-DUSE_CRASH)
-endif()
-
-if(USE_MXE)
+if(WIN32 OR USE_MXE)
     set(BUNDLED_IRIS_ALL ON)
 endif()
 
 # For GNU/Linux and *BSD systems:
-if(UNIX AND NOT (APPLE OR HAIKU))
+if(UNIX AND (NOT (APPLE OR HAIKU) AND NOT CYGWIN))
     if(USE_X11)
-        add_definitions( -DHAVE_X11 )
         message(STATUS "X11 features support - ENABLED")
         if(LIMIT_X11_USAGE)
-            add_definitions( -DLIMIT_X11_USAGE )
             message(STATUS "Unsafe X11 features support - DISABLED")
             set(USE_XSS OFF)
             message(STATUS "Xscreensaver support - DISABLED")
         endif()
         if(USE_XSS)
-            add_definitions( -DHAVE_XSS )
             message(STATUS "Xscreensaver support - ENABLED")
         endif()
     endif()
-    add_definitions(
-        -DHAVE_FREEDESKTOP
-        -DAPP_PREFIX=${CMAKE_INSTALL_PREFIX}
-        -DAPP_BIN_NAME=${PROJECT_NAME}
-    )
     if(USE_DBUS)
         message(STATUS "DBus support - ENABLED")
     endif()
@@ -226,8 +207,8 @@ if(PROJECT_OS_NETBSD)
 endif()
 
 # Qt dependencies make building very slow
-# Track only .h files
-include_regular_expression("^.*\\.h$")
+# Track only .h and .hpp files
+include_regular_expression("^.*\\.h$|^.*\\.hpp$")
 
 # Put executable in build root dir
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/psi" )
@@ -236,7 +217,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/psi" )
 if(APPLE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-overloaded-virtual")
 elseif(WIN32)
-    include("${CMAKE_CURRENT_SOURCE_DIR}/win32/win32_definitions.cmake")
+    include(win32_definitions)
 endif()
 
 if(ENABLE_ASAN)
@@ -286,6 +267,14 @@ if(USE_CCACHE)
     find_program(CCACHE_PATH ccache DOC "Path to ccache")
     if(CCACHE_PATH)
         message(STATUS "Found ccache at ${CCACHE_PATH}")
+        if(MSVC AND (CMAKE_VERSION VERSION_GREATER "3.13.0"))
+            set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug,RelWithDebInfo>:Embedded>")
+            set(CMAKE_VS_GLOBALS
+                "TrackFileAccess=false"
+                "UseMultiToolTask=true"
+                "DebugInformationFormat=OldStyle"
+            )
+        endif()
         set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ${CCACHE_PATH})
         set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ${CCACHE_PATH})
     endif()

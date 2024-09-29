@@ -9,6 +9,7 @@ class QAbstractButton;
 class QButtonGroup;
 class QLineEdit;
 class QWidget;
+class QCheckBox;
 
 class OptionsTabSound : public OptionsTab {
     Q_OBJECT
@@ -28,8 +29,19 @@ private slots:
     void setData(PsiCon *, QWidget *);
 
 private:
-    QWidget                             *w = nullptr, *parentWidget = nullptr;
-    QList<QLineEdit *>                   sounds_;
+    struct UiSoundItem {
+        QCheckBox       *enabled;
+        QLineEdit       *file;
+        QAbstractButton *selectButton;
+        QAbstractButton *playButton;
+        QString          option;
+        QString          defaultFile;
+    };
+
+    QList<UiSoundItem> sounds_;
+
+    QWidget *w = nullptr, *parentWidget = nullptr;
+    // QList<QLineEdit *>                   sounds_;
     QMap<QAbstractButton *, QLineEdit *> modify_buttons_;
     QMap<QAbstractButton *, QLineEdit *> play_buttons_;
     QButtonGroup                        *bg_se = nullptr, *bg_sePlay = nullptr;

@@ -317,6 +317,7 @@ void PsiChatDlg::initUi()
     addAction(act_mini_cmd_);
 
     connect(ui_.log, &ChatView::quote, ui_.mle->chatEdit(), &ChatEdit::insertAsQuote);
+    connect(ui_.log, &ChatView::editMessageRequested, ui_.mle->chatEdit(), &ChatEdit::startCorrection);
 
     act_pastesend_ = new IconAction(tr("Paste and Send"), "psi/action_paste_and_send", tr("Paste and Send"), 0, this);
     connect(act_pastesend_, SIGNAL(triggered()), SLOT(doPasteAndSend()));
@@ -374,7 +375,6 @@ void PsiChatDlg::setLooks()
 
     int s = PsiIconset::instance()->system().iconSize();
     ui_.lb_status->setFixedSize(s, s);
-    ui_.lb_client->setFixedSize(s, s);
 
     ui_.tb_pgp->hide();
     if (smallChat_) {
@@ -384,9 +384,7 @@ void PsiChatDlg::setLooks()
         ui_.tb_emoticons->hide();
         ui_.toolbar->hide();
         ui_.tb_voice->hide();
-        ui_.lb_client->hide();
     } else {
-        ui_.lb_client->show();
         ui_.lb_status->show();
         ui_.le_jid->show();
         if (PsiOptions::instance()->getOption("options.ui.contactlist.toolbars.m0.visible").toBool()) {
@@ -824,9 +822,8 @@ void PsiChatDlg::contactUpdated(UserListItem *u, int status, const QString &stat
             if (!client.isEmpty()) {
                 const QPixmap &pix
                     = IconsetFactory::iconPixmap("clients/" + client, int(fontInfo().pixelSize() * EqTextIconK + .5));
-                ui_.lb_client->setPixmap(pix);
             }
-            ui_.lb_client->setToolTip(r.versionString());
+            ui_.le_jid->setToolTip(r.versionString());
         }
     }
 }
@@ -973,16 +970,14 @@ void PsiChatDlg::actPgpToggled(bool b)
 void PsiChatDlg::doClearButton()
 {
     if (PsiOptions::instance()->getOption("options.ui.chat.warn-before-clear").toBool()) {
-        switch (QMessageBox::warning(
+        auto result = QMessageBox::warning(
             this, tr("Warning"),
             tr("Are you sure you want to clear the chat window?\n(note: does not affect saved history)"),
-            QMessageBox::Yes | QMessageBox::YesAll | QMessageBox::No)) {
-        case QMessageBox::No:
-            break;
-        case QMessageBox::YesAll:
+            QMessageBox::Yes | QMessageBox::YesToAll | QMessageBox::No);
+        if (result == QMessageBox::YesToAll) {
             PsiOptions::instance()->setOption("options.ui.chat.warn-before-clear", false);
-            // fall-through
-        case QMessageBox::Yes:
+        }
+        if (result == QMessageBox::YesToAll || result == QMessageBox::Yes) {
             doClear();
         }
     } else {

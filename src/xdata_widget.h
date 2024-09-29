@@ -54,6 +54,8 @@ public:
     XMPP::XData::FieldList fields() const;
     XDataField            *fieldByVar(const QString &) const;
 
+    inline QWidget *lastFocusabelWidget() const { return lastFocusableWidget_; }
+
 protected slots:
     void linkActivated(const QString &);
 
@@ -71,6 +73,7 @@ private:
     XMPP::Jid                   owner_;
     bool                        consistent_;
     XMPP::Stanza::Error         consistencyError_;
+    QWidget                    *lastFocusableWidget_ = nullptr;
 };
 
 #endif // XDATAWIDGET_H

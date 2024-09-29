@@ -84,6 +84,7 @@ QWidget *OptionsTabAppearanceTheme::widget()
             SLOT(themeSelected(QModelIndex, QModelIndex)));
 
     connect(themesModel, SIGNAL(rowsInserted(QModelIndex, int, int)), SLOT(modelRowsInserted(QModelIndex, int, int)));
+    connect(d->cmb_style, qOverload<int>(&QComboBox::currentIndexChanged), this, [this](int) { emit dataChanged(); });
 
     QTimer::singleShot(0, unsortedModel, &PsiThemeModel::load);
 
@@ -92,7 +93,7 @@ QWidget *OptionsTabAppearanceTheme::widget()
 
 void OptionsTabAppearanceTheme::themeSelected(const QModelIndex &current, const QModelIndex &previous)
 {
-    Q_UNUSED(current);
+    updateStyles(current);
     if (!previous.isValid()) {
         return; // Psi won't start if it's impossible to load any theme. So we always have previous.
     }
@@ -108,6 +109,7 @@ void OptionsTabAppearanceTheme::modelRowsInserted(const QModelIndex &parent, int
             const QModelIndex index = themesModel->index(i, 0);
             if (themesModel->data(index, PsiThemeModel::IsCurrent).toBool()) {
                 d->themeView->setCurrentIndex(index);
+                updateStyles(index);
             }
 #if 0
             const QString id    = themesModel->data(index, PsiThemeModel::IdRole).toString();
@@ -187,13 +189,26 @@ QString OptionsTabAppearanceTheme::getThemeId(const QString &objName) const
     return (index > 0 ? objName.right(objName.length() - index - 1) : QString());
 }
 
+void OptionsTabAppearanceTheme::updateStyles(const QModelIndex &index)
+{
+    auto                  styles = themesModel->data(index, PsiThemeModel::StylesListRole).toStringList();
+    OptAppearanceThemeUI *d      = static_cast<OptAppearanceThemeUI *>(w);
+    d->cmb_style->blockSignals(true);
+    d->cmb_style->clear();
+    for (auto const &s : styles) {
+        d->cmb_style->addItem(s);
+    }
+    d->cmb_style->setCurrentText(themesModel->data(index, PsiThemeModel::CurrentStyleRole).toString());
+    d->cmb_style->blockSignals(false);
+}
+
 void OptionsTabAppearanceTheme::applyOptions()
 {
     if (!w)
         return;
 
     OptAppearanceThemeUI *d = static_cast<OptAppearanceThemeUI *>(w);
-    themesModel->setData(d->themeView->currentIndex(), true, PsiThemeModel::IsCurrent);
+    themesModel->setData(d->themeView->currentIndex(), d->cmb_style->currentText(), PsiThemeModel::IsCurrent);
 }
 
 void OptionsTabAppearanceTheme::restoreOptions()

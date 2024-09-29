@@ -57,6 +57,7 @@ public:
     void init();
     void setDialog(QWidget *dialog);
     void setSessionData(bool isMuc, bool isMucPrivate, const XMPP::Jid &jid, const QString name);
+    void setLocalNickname(const QString &nickname);
 
     void insertText(const QString &text, QTextCursor &insertCursor);
     void appendText(const QString &text);
@@ -83,13 +84,12 @@ protected:
     QString formatTimeStamp(const QDateTime &time);
     QString colorString(bool local, bool spooled) const;
 
-    QString replaceMarker(const MessageView &mv) const;
-    void    renderMucMessage(const MessageView &, QTextCursor &insertCursor);
-    void    renderMessage(const MessageView &, QTextCursor &insertCursor);
-    void    renderSysMessage(const MessageView &);
-    void    renderSubject(const MessageView &);
-    void    renderMucSubject(const MessageView &);
-    void    renderUrls(const MessageView &);
+    void renderMucMessage(const MessageView &, QTextCursor &insertCursor);
+    void renderMessage(const MessageView &, QTextCursor &insertCursor);
+    void renderSysMessage(const MessageView &);
+    void renderSubject(const MessageView &);
+    void renderMucSubject(const MessageView &);
+    void renderUrls(const MessageView &);
 
 protected slots:
     void autoCopy();
@@ -98,9 +98,15 @@ private slots:
     void slotScroll();
 
 signals:
-    void showNM(const QString &);
+    void showNickMenu(const QString &);
     void quote(const QString &text);
     void nickInsertClick(const QString &nick);
+    void outgoingReactions(const QString &messageId, const QSet<QString> &reactions);
+    void outgoingMessageRetraction(const QString &messageId);
+    void editMessageRequested(const QString &messageId, const QString &text);
+    void forwardMessageRequested(const QString &messageId, const QString &nick, const QString &text);
+    void openInfoRequested(const QString &nickname);
+    void openChatRequested(const QString &nickname);
 
 private:
     bool              isMuc_;
@@ -110,6 +116,7 @@ private:
     int               oldTrackBarPosition;
     XMPP::Jid         jid_;
     QString           name_;
+    QString           localNickname_;
     QPointer<QWidget> dialog_;
     QAction          *actQuote_;
 };

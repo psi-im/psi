@@ -35,7 +35,7 @@ GeoLocationDlg::GeoLocationDlg(QList<PsiAccount *> list) : QDialog(nullptr), pa_
     if (pa_.isEmpty())
         close();
     ui_.setupUi(this);
-    setWindowIcon(IconsetFactory::icon("system/geolocation").icon());
+    setWindowIcon(IconsetFactory::icon("pep/geolocation").icon());
     setModal(false);
 
     connect(ui_.pb_cancel, SIGNAL(clicked()), SLOT(close()));

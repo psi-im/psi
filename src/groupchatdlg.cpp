@@ -50,6 +50,7 @@
 #include "iris/xmpp_caps.h"
 #include "iris/xmpp_message.h"
 #include "iris/xmpp_tasks.h"
+#include "iris/xmpp_vcard4.h"
 #include "popupmanager.h"
 #include "psiaccount.h"
 #include "psiactionlist.h"
@@ -101,7 +102,9 @@
 #include <QToolButton>
 #include <QToolTip>
 #include <QVBoxLayout>
-#include <functional>
+#include <QWidgetAction>
+#include <QWindow>
+
 #ifdef Q_OS_WIN
 #include <windows.h>
 #endif
@@ -157,9 +160,9 @@ public:
             } else {
                 XMPP::Stanza::Error err;
                 err.fromXml(tag, client()->stream().baseNS());
-                if (err.condition == XMPP::Stanza::Error::ItemNotFound) {
+                if (err.condition == XMPP::Stanza::Error::ErrorCond::ItemNotFound) {
                     emit result(NoSuch, id());
-                } else if (err.condition == XMPP::Stanza::Error::NotAcceptable) {
+                } else if (err.condition == XMPP::Stanza::Error::ErrorCond::NotAcceptable) {
                     emit result(NotOccupant, id());
                 } else {
                     emit result(OtherErr, id());
@@ -220,6 +223,7 @@ public:
     QString                                mucName, discoMucName, discoMucDescription, vcardMucName;
     QString                                password;
     QMap<LanguageManager::LangId, QString> subjectMap;
+    QString                                lastTopic;
     bool                                   nonAnonymous; // got status code 100 ?
     ActionList                            *actions;
     IconAction                            *act_bookmark, *act_pastesend;
@@ -243,6 +247,7 @@ public:
     bool   alert;
     bool   gcSelfPresenceSupported = false;
     bool   gcSelfAvatarRequested   = false; // when self presence is not supported
+    bool   forceQuit               = false; // ignore hide-when-closing option
 
     QStringList hist;
     int         histAt;
@@ -356,6 +361,7 @@ public slots:
             if (!nick.isEmpty()) {
                 prev_self = self;
                 self      = nick;
+                dlg->ui_.log->setLocalNickname(self);
                 dlg->account()->groupChatChangeNick(dlg->jid().domain(), dlg->jid().node(), self,
                                                     dlg->account()->status());
             }
@@ -399,6 +405,7 @@ join <channel>{,<channel>} [pass{,<pass>}
                     // FIXME nick can't be empty....
                     prev_self = self;
                     self      = nick;
+                    dlg->ui_.log->setLocalNickname(self);
                     dlg->account()->groupChatChangeNick(dlg->jid().domain(), dlg->jid().node(), self,
                                                         dlg->account()->status());
                     newstate = nullptr;
@@ -462,7 +469,7 @@ join <channel>{,<channel>} [pass{,<pass>}
                 newstate = oldstate;
                 return true;
             } else if (cmd == "leave") {
-                dlg->close();
+                dlg->leave();
             } else if (!cmd.isEmpty()) {
                 return false;
             }
@@ -517,7 +524,7 @@ public:
     void doFileShare(const QList<Reference> &refs, const QString &desc)
     {
         Message m(dlg->jid());
-        m.setType("groupchat");
+        m.setType(Message::Type::Groupchat);
         m.setReferences(refs);
         m.setBody(desc);
         emit dlg->aSend(m);
@@ -668,6 +675,32 @@ void GCMainDlg::onNickInsertClick(const QString &nick)
         ui_.mle->chatEdit()->insertPlainText(QString(" %1 ").arg(nick));
     }
     ui_.mle->chatEdit()->setFocus();
+}
+
+void GCMainDlg::outgoingReactions(const QString &messageId, const QSet<QString> &reactions)
+{
+    Message m(jid());
+    m.setType(Message::Type::Groupchat);
+    m.setReactions({ messageId, reactions });
+    QString id = account()->client()->genUniqueId();
+    m.setId(id); // we need id early for message manipulations in chatview
+    m.setTimeStamp(QDateTime::currentDateTime());
+    // d->mle()->appendMessageHistory(m.body());
+
+    emit aSend(m);
+}
+
+void GCMainDlg::sendMessageRetraction(const QString &messageId)
+{
+    Message m(jid());
+    m.setType(Message::Type::Groupchat);
+    m.setRetraction(messageId);
+    // QString id = account()->client()->genUniqueId();
+    // m.setId(id); // we need id early for message manipulations in chatview
+    // m.setTimeStamp(QDateTime::currentDateTime());
+    //  d->mle()->appendMessageHistory(m.body());
+
+    emit aSend(m);
 }
 
 void GCMainDlg::doContactContextMenu(const QString &nick)
@@ -860,15 +893,18 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     d->tabmode = PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool();
 
     ui_.log->setSessionData(true, false, jid(), jid().full()); // FIXME change conference name
+    ui_.log->setLocalNickname(d->self);
 #ifdef WEBKIT
     ui_.log->setAccount(account());
 #else
     ui_.log->setMediaOpener(account()->fileSharingDeviceOpener());
 #endif
 
-    connect(ui_.log, SIGNAL(showNM(QString)), this, SLOT(doContactContextMenu(QString)));
+    connect(ui_.log, SIGNAL(showNickMenu(QString)), this, SLOT(doContactContextMenu(QString)));
     connect(URLObject::getInstance(), SIGNAL(openURL(QString)), SLOT(openURL(QString)));
     connect(ui_.log, SIGNAL(nickInsertClick(QString)), SLOT(onNickInsertClick(QString)));
+    connect(ui_.log, &ChatView::outgoingReactions, this, &GCMainDlg::outgoingReactions);
+    connect(ui_.log, &ChatView::outgoingMessageRetraction, this, &GCMainDlg::sendMessageRetraction);
 
     PsiToolTip::install(ui_.le_topic);
 
@@ -898,6 +934,10 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     d->typeahead      = new TypeAheadFindBar(ui_.log->textWidget(), tr("Find toolbar"), nullptr);
     hb3a->addWidget(d->typeahead);
     ui_.vboxLayout1->addLayout(hb3a);
+
+    ui_.lb_ident->setAccount(account());
+    ui_.lb_ident->setShowJid(false);
+    connect(account()->psi(), &PsiCon::accountCountChanged, this, &GCMainDlg::updateIdentityVisibility);
 
     ActionList *actList = account()->psi()->actionList()->actionLists(PsiActionList::Actions_Groupchat).at(0);
     for (const QString &name : actList->actions()) {
@@ -966,7 +1006,8 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     ui_.le_topic->addAction(d->act_bookmark);
 
     d->act_copy_muc_jid = new QAction(tr("Copy Groupchat JID"), this);
-    connect(d->act_copy_muc_jid, SIGNAL(triggered()), SLOT(copyMucJid()));
+    connect(d->act_copy_muc_jid, &QAction::triggered, this,
+            [this]() { QApplication::clipboard()->setText(jid().bare()); });
     ui_.le_topic->addAction(d->act_copy_muc_jid);
 
     BookmarkManager *bm = account()->bookmarkManager();
@@ -1004,7 +1045,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     connect(ui_.pb_send, SIGNAL(customContextMenuRequested(const QPoint)), SLOT(sendButtonMenu()));
     d->act_close = new QAction(this);
     addAction(d->act_close);
-    connect(d->act_close, SIGNAL(triggered()), SLOT(close()));
+    connect(d->act_close, &QAction::triggered, this, &GCMainDlg::leave);
     d->act_hide = new QAction(this);
     addAction(d->act_hide);
     connect(d->act_hide, SIGNAL(triggered()), SLOT(hideTab()));
@@ -1059,11 +1100,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
 
     updateMucName();
     updateGCVCard();
-    JT_DiscoInfo *disco = new JT_DiscoInfo(
-        account()->client()->rootTask()); // FIXME in fact xep says we should do this before entering.
-    connect(disco, SIGNAL(finished()), SLOT(discoInfoFinished())); // but we need this just for name for now.
-    disco->get(jid());                                             // From other side we could provide the name outside.
-    disco->go(true);
+    updateConfiguration();
 
     setLooks();
     setToolbuttons();
@@ -1072,6 +1109,15 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     setConnecting();
 
     connect(ui_.log, &ChatView::quote, ui_.mle->chatEdit(), &ChatEdit::insertAsQuote);
+    connect(ui_.log, &ChatView::editMessageRequested, ui_.mle->chatEdit(), &ChatEdit::startCorrection);
+    connect(ui_.log, &ChatView::forwardMessageRequested, account(),
+            [this](const QString &messageId, const QString &nick, const QString &text) {
+                account()->psi()->invokeForwardMessage(jid().withResource(nick), text);
+            });
+    connect(ui_.log, &ChatView::openInfoRequested, account(),
+            [this](const QString &nick) { account()->invokeGCInfo(jid().withResource(nick)); });
+    connect(ui_.log, &ChatView::openChatRequested, account(),
+            [this](const QString &nick) { account()->invokeGCChat(jid().withResource(nick)); });
     connect(pa->avatarFactory(), &AvatarFactory::avatarChanged, this, &GCMainDlg::avatarUpdated);
 
 #ifdef PSI_PLUGINS
@@ -1189,6 +1235,12 @@ void GCMainDlg::scrollDown() { ui_.log->scrollDown(); }
 
 void GCMainDlg::closeEvent(QCloseEvent *e)
 {
+    if (!d->forceQuit && PsiOptions::instance()->getOption("options.ui.muc.hide-when-closing").toBool()
+        && !isTabbed()) {
+        hide();
+        e->ignore();
+        return;
+    }
     e->accept();
     if (d->state != Private::Connected)
         account()->groupChatLeave(d->dlg->jid().domain(), d->dlg->jid().node());
@@ -1311,6 +1363,15 @@ void GCMainDlg::updateMucName()
     }
 }
 
+void GCMainDlg::updateConfiguration()
+{
+    JT_DiscoInfo *disco = new JT_DiscoInfo(
+        account()->client()->rootTask()); // FIXME in fact xep says we should do this before entering.
+    connect(disco, SIGNAL(finished()), SLOT(discoInfoFinished())); // but we need this just for name for now.
+    disco->get(jid());                                             // From other side we could provide the name outside.
+    disco->go(true);
+}
+
 void GCMainDlg::discoInfoFinished()
 {
     JT_DiscoInfo                *t = static_cast<JT_DiscoInfo *>(sender());
@@ -1322,6 +1383,13 @@ void GCMainDlg::discoInfoFinished()
     d->discoMucDescription = x.getField("muc#roominfo_description").value().value(0);
     if (d->mucNameSource >= Private::TitleDisco) {
         updateMucName();
+    }
+    if (!d->gcSelfPresenceSupported) {
+        if (t->item().features().hasVCard()) {
+            auto avatarHash = x.getField("muc#roominfo_avatarhash").value().value(0);
+            account()->avatarFactory()->ensureVCardUpdated(jid(), QByteArray::fromHex(avatarHash.toLatin1()),
+                                                           AvatarFactory::MucRoom);
+        }
     }
 }
 
@@ -1347,12 +1415,12 @@ void GCMainDlg::setMucSelfAvatar()
 
 void GCMainDlg::updateGCVCard()
 {
-    const VCard vcard = VCardFactory::instance()->vcard(jid());
-    QPixmap     avatar;
+    const auto vcard = VCardFactory::instance()->vcard(jid());
+    QPixmap    avatar;
     if (vcard) {
-        d->vcardMucName = vcard.nickName();
+        d->vcardMucName = vcard.nickName().preferred().data.value(0);
         if (d->vcardMucName.isEmpty()) {
-            d->vcardMucName = vcard.fullName();
+            d->vcardMucName = vcard.fullName().preferred();
         }
         if (d->mucNameSource >= Private::TitleVCard) {
             updateMucName();
@@ -1410,6 +1478,7 @@ void GCMainDlg::mle_returnPressed()
         if (!nick.isEmpty() && newJid.isValid()) {
             d->prev_self = d->self;
             d->self      = newJid.resource();
+            ui_.log->setLocalNickname(d->self);
             account()->groupChatChangeNick(jid().domain(), jid().node(), d->self, account()->status());
         }
         ui_.mle->chatEdit()->setText("");
@@ -1424,12 +1493,12 @@ void GCMainDlg::mle_returnPressed()
         return;
 
     Message m(jid());
-    m.setType("groupchat");
+    m.setType(Message::Type::Groupchat);
     m.setBody(str);
     QString id = account()->client()->genUniqueId();
     m.setId(id); // we need id early for message manipulations in chatview
     if (ui_.mle->chatEdit()->isCorrection()) {
-        m.setReplaceId(ui_.mle->chatEdit()->lastMessageId());
+        m.setReplaceId(ui_.mle->chatEdit()->correctionId());
     }
     ui_.mle->chatEdit()->setLastMessageId(id);
     ui_.mle->chatEdit()->resetCorrection();
@@ -1477,14 +1546,14 @@ void GCMainDlg::openTopic()
         d->topicDlg->setAttribute(Qt::WA_DeleteOnClose);
         d->topicDlg->show();
         QObject::connect(d->topicDlg, &GroupchatTopicDlg::accepted, this,
-                         [=]() { sendNewTopic(d->topicDlg->subjectMap()); });
+                         [this]() { sendNewTopic(d->topicDlg->subjectMap()); });
     }
 }
 
 void GCMainDlg::sendNewTopic(const QMap<LanguageManager::LangId, QString> &topics)
 {
     Message m(jid());
-    m.setType("groupchat");
+    m.setType(Message::Type::Groupchat);
     for (auto it = topics.constBegin(); it != topics.constEnd(); ++it) {
         m.setSubject(it.value(), LanguageManager::toString(it.key()));
     }
@@ -1506,8 +1575,8 @@ void GCMainDlg::doShowInfo()
 
     {
         QVBoxLayout *layout = new QVBoxLayout;
-        const VCard  vcard  = VCardFactory::instance()->vcard(jid());
-        auto         info   = new InfoWidget(InfoWidget::Contact, jid(), vcard, account());
+        const auto   vcard  = VCardFactory::instance()->vcard(jid());
+        auto         info   = new InfoWidget(InfoWidget::MucView, jid(), vcard, account());
         layout->addWidget(info);
         ui.tab_vcard->setLayout(layout);
         // connect(vcard_, SIGNAL(busy()), ui_.busy, SLOT(start()));
@@ -1553,26 +1622,32 @@ void GCMainDlg::doBookmark()
         bm->setBookmarks(confs);
         return;
     }
-    ConferenceBookmark &b          = confs[confInd];
-    QDialog            *dlg        = new QDialog(this);
-    QVBoxLayout        *layout     = new QVBoxLayout;
-    QHBoxLayout        *blayout    = new QHBoxLayout;
-    QFormLayout        *formLayout = new QFormLayout;
-    QLineEdit          *txtName    = new QLineEdit;
-    QLineEdit          *txtNick    = new QLineEdit;
+    ConferenceBookmark &b = confs[confInd];
+
+    QMenu *menu = new QMenu(this);
+
+    menu->setAttribute(Qt::WA_DeleteOnClose);
+    // menu->winId();
+    // menu->windowHandle()->setTransientParent(window()->windowHandle());
+    auto wa  = new QWidgetAction(menu);
+    auto dlg = new QWidget(menu);
+    wa->setDefaultWidget(dlg);
+
+    QVBoxLayout *layout     = new QVBoxLayout(dlg);
+    QHBoxLayout *blayout    = new QHBoxLayout;
+    QFormLayout *formLayout = new QFormLayout;
+    QLineEdit   *txtName    = new QLineEdit;
+    QLineEdit   *txtNick    = new QLineEdit;
     // QCheckBox *chkAJoin = new QCheckBox;
     QComboBox *cbAutoJoin = new QComboBox;
     cbAutoJoin->addItems(ConferenceBookmark::joinTypeNames());
     QPushButton *saveBtn = new QPushButton(dlg->style()->standardIcon(QStyle::SP_DialogSaveButton), tr("Save"), dlg);
     QPushButton *deleteBtn
         = new QPushButton(dlg->style()->standardIcon(QStyle::SP_DialogDiscardButton), tr("Delete"), dlg);
-    QPushButton *cancelBtn
-        = new QPushButton(dlg->style()->standardIcon(QStyle::SP_DialogCancelButton), tr("Cancel"), dlg);
 
     blayout->insertStretch(0);
     blayout->addWidget(saveBtn);
     blayout->addWidget(deleteBtn);
-    blayout->addWidget(cancelBtn);
     txtName->setText(b.name());
     txtNick->setText(b.nick());
     cbAutoJoin->setCurrentIndex(b.autoJoin());
@@ -1582,37 +1657,38 @@ void GCMainDlg::doBookmark()
     formLayout->addRow(tr("&Auto join:"), cbAutoJoin);
     layout->addLayout(formLayout);
     layout->addLayout(blayout);
-    dlg->setWindowIcon(IconsetFactory::icon("psi/bookmark_remove").icon());
-    dlg->setLayout(layout);
     dlg->setMinimumWidth(300);
-    dlg->connect(saveBtn, SIGNAL(clicked()), dlg, SLOT(accept()));
-    dlg->connect(deleteBtn, SIGNAL(clicked()), dlg, SLOT(reject()));
-    dlg->connect(cancelBtn, SIGNAL(clicked()), dlg, SLOT(reject()));
-    connect(deleteBtn, SIGNAL(clicked()), this, SLOT(doRemoveBookmark()));
-
-    dlg->setWindowTitle(tr("Bookmark conference"));
-    dlg->adjustSize();
-    dlg->move(ui_.le_topic->mapToGlobal(QPoint(ui_.le_topic->width() - dlg->width(), ui_.le_topic->height())));
-    if (dlg->exec() == QDialog::Accepted) {
+    dlg->connect(saveBtn, &QPushButton::clicked, this, [menu, txtName, txtNick, cbAutoJoin, this](bool) {
         ConferenceBookmark conf(txtName->text(), jid(), ConferenceBookmark::JoinType(cbAutoJoin->currentIndex()),
                                 txtNick->text(), d->password);
-        confs[confInd] = conf;
-        bm->setBookmarks(confs);
 
-        if (getDisplayName() != txtName->text())
-            account()->actionRename(jid(), txtName->text());
-    }
-    delete dlg;
-}
+        auto bm = account()->bookmarkManager();
+        if (bm->isAvailable()) {
+            int                       confInd = bm->indexOfConference(jid());
+            QList<ConferenceBookmark> confs   = bm->conferences();
 
-void GCMainDlg::copyMucJid() { QApplication::clipboard()->setText(jid().bare()); }
+            if (confInd == -1) {
+                confs.append(conf);
+            } else {
+                confs[confInd] = conf;
+            }
+            bm->setBookmarks(confs);
 
-void GCMainDlg::doRemoveBookmark()
-{
-    BookmarkManager *bm = account()->bookmarkManager();
-    if (bm->isAvailable()) {
-        bm->removeConference(jid());
-    }
+            if (getDisplayName() != txtName->text())
+                account()->actionRename(jid(), txtName->text());
+        }
+        menu->close();
+    });
+    dlg->connect(deleteBtn, &QPushButton::clicked, this, [menu, this]() {
+        BookmarkManager *bm = account()->bookmarkManager();
+        if (bm->isAvailable()) {
+            bm->removeConference(jid());
+        }
+        menu->close();
+    });
+
+    menu->addAction(wa);
+    menu->popup(ui_.le_topic->mapToGlobal(QPoint(ui_.le_topic->width() - dlg->width(), ui_.le_topic->height())));
 }
 
 void GCMainDlg::configureRoom()
@@ -1662,6 +1738,7 @@ void GCMainDlg::setJid(const Jid &j)
 {
     TabbableWidget::setJid(j);
     d->self = d->prev_self = j.resource();
+    ui_.log->setLocalNickname(d->self);
 }
 
 void GCMainDlg::goConn()
@@ -1723,6 +1800,12 @@ void GCMainDlg::pa_updatedActivity()
 
 PsiAccount *GCMainDlg::account() const { return TabbableWidget::account(); }
 
+void GCMainDlg::leave()
+{
+    d->forceQuit = true;
+    close();
+}
+
 void GCMainDlg::error(int, const QString &str)
 {
     d->actions->action("gchat_set_topic")->setEnabled(false);
@@ -1772,7 +1855,7 @@ void GCMainDlg::mucKickMsgHelper(const QString &nick, const Status &s, const QSt
 void GCMainDlg::gcSelfPresence(const Status &s)
 {
     d->gcSelfPresenceSupported = true;
-    account()->avatarFactory()->statusUpdate(jid().withResource(QString()), s);
+    account()->avatarFactory()->statusUpdate(jid(), s, AvatarFactory::MucRoom);
 }
 
 void GCMainDlg::presence(const QString &nick, const Status &s)
@@ -1782,6 +1865,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
         if (s.errorCode() == 409) {
             message = tr("Please choose a different nickname");
             d->self = d->prev_self;
+            ui_.log->setLocalNickname(d->self);
         } else {
             message = tr("An error occurred (errorcode: %1)").arg(s.errorCode());
         }
@@ -1795,13 +1879,6 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 
     bool isSelf = (nick == d->self);
     if (isSelf) {
-        if (!d->gcSelfPresenceSupported && !d->gcSelfAvatarRequested) {
-            d->gcSelfAvatarRequested = true;
-            VCardFactory::instance()->getVCard(
-                jid(), account()->client()->rootTask(), this, [this]() { GCMainDlg::updateGCVCard(); }, true, false,
-                true);
-        }
-
         if (s.isAvailable())
             setStatusTabIcon(s.type());
         UserListItem *u = account()->find(d->dlg->jid().bare());
@@ -2023,7 +2100,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
     }
 
     if (!nick.isEmpty())
-        account()->avatarFactory()->newMucItem(jidForNick(nick), s);
+        account()->avatarFactory()->statusUpdate(jidForNick(nick), s, AvatarFactory::MucUser);
 }
 
 XMPP::Jid GCMainDlg::jidForNick(const QString &nick) const { return Jid(jid()).withResource(nick); }
@@ -2062,12 +2139,7 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
         d->nonAnonymous = false;
     }
     if (dm.getMUCStatuses().contains(104)) {
-        // new MUC vcard available
-        if (!d->gcSelfPresenceSupported) {
-            // we had to handle avatar hash from presence already
-            VCardFactory::instance()->getVCard(
-                jid(), account()->client()->rootTask(), this, [this]() { GCMainDlg::updateGCVCard(); }, true);
-        }
+        updateConfiguration();
     }
 
     PsiOptions *options = PsiOptions::instance();
@@ -2092,6 +2164,10 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
     }
 
     if (!topic.isNull()) {
+        if (d->lastTopic == topic) {
+            return; // ignore same topic
+        }
+        d->lastTopic           = topic;
         QString subjectTooltip = TextUtil::plain2rich(topic);
         subjectTooltip         = TextUtil::linkify(subjectTooltip);
         if (options->getOption("options.ui.emoticons.use-emoticons").toBool()) {
@@ -2118,6 +2194,18 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
         ui_.le_topic->setToolTip(QString("<qt><p>%1</p></qt>").arg(subjectTooltip));
 
         dispatchMessage(tv);
+        return;
+    }
+
+    if (!dm.reactions().targetId.isEmpty()) {
+        auto mv = MessageView::reactionsMessage(from, dm.reactions().targetId, dm.reactions().reactions);
+        ui_.log->dispatchMessage(mv);
+        return;
+    }
+
+    if (!dm.retraction().isEmpty()) {
+        auto mv = MessageView::retractionMessage(dm.retraction());
+        ui_.log->dispatchMessage(mv);
         return;
     }
 
@@ -2202,7 +2290,7 @@ void GCMainDlg::appendSysMsg(const QString &str, bool alert)
 
 void GCMainDlg::dispatchMessage(const MessageView &mv)
 {
-    if (d->trackBar && !mv.isLocal() && !mv.isSpooled())
+    if (d->trackBar && !mv.isLocal() && !mv.isSpooled() && mv.reactionsId().isEmpty())
         d->doTrackBar();
 
     ui_.log->dispatchMessage(mv);
@@ -2352,6 +2440,17 @@ void GCMainDlg::setLooks()
             : Qt::ScrollBarAsNeeded);
     ui_.lv_users->setLooks();
     setMucSelfAvatar();
+    updateIdentityVisibility();
+}
+
+void GCMainDlg::updateIdentityVisibility()
+{
+    if (!PsiOptions::instance()->getOption("options.ui.chat.use-small-chats").toBool()) {
+        bool visible = account()->psi()->contactList()->enabledAccounts().count() > 1;
+        ui_.lb_ident->setVisible(visible);
+    } else {
+        ui_.lb_ident->setVisible(false);
+    }
 }
 
 void GCMainDlg::setToolbuttons()

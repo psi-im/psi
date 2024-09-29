@@ -24,11 +24,8 @@
 #endif
 #include "activity.h"
 #include "applicationinfo.h"
-#include "profiles.h"
-#include "psievent.h"
 #include "psiiconset.h"
 #include "psioptions.h"
-#include "rtparse.h"
 #include "tabdlg.h"
 #ifdef HAVE_X11
 #include "x11windowsystem.h"
@@ -45,12 +42,8 @@
 #include <QPaintDevice>
 #include <QProcess>
 #include <QRegularExpression>
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-#include <QSound>
-#else
-#include <QSoundEffect>
-#endif
 #include <QScreen>
+#include <QSoundEffect>
 #include <QUrl>
 #include <QUuid>
 
@@ -93,7 +86,7 @@ QString clipStatus(const QString &str, int width, int height)
         // only take the first "width" chars
         QString line;
         bool    hasNewline = false;
-        for (int n = 0; at < len; ++n, ++at) {
+        for (; at < len; ++at) {
             if (str.at(at) == '\n') {
                 hasNewline = true;
                 break;
@@ -260,54 +253,61 @@ bool fileCopy(const QString &src, const QString &dest)
     return true;
 }
 
-/** Detect default player helper on unix like systems
- */
-QString soundDetectPlayer()
+static QString existingFullResourcePath(const QString &str)
 {
-    // prefer ALSA on linux
-    if (QFile("/proc/asound").exists()) {
-        return "aplay -q";
+    QString fullPath = str;
+    if (QDir::isRelativePath(str)) {
+        fullPath = ApplicationInfo::resourcesDir() + '/' + str;
     }
-    // fallback to "play"
-    return "play";
+
+    if (!QFile::exists(fullPath)) {
+        return {};
+    }
+    return fullPath;
 }
 
 void soundPlay(const QString &s)
 {
-    if (s.isEmpty())
+    if (s.isEmpty() || s.startsWith('-'))
         return;
 
-    QString str = s;
-    if (str == "!beep") {
+    if (s == QLatin1String("!beep")) {
         QApplication::beep();
         return;
     }
 
-    if (QDir::isRelativePath(str)) {
-        str = ApplicationInfo::resourcesDir() + '/' + str;
+    QString fullPath;
+#if !(defined(Q_OS_WIN) || defined(Q_OS_MAC))
+    QString player = PsiOptions::instance()
+                         ->getOption("options.ui.notifications.sounds.unix-sound-player")
+                         .toString()
+                         .simplified();
+    if (!player.isEmpty()) {
+        auto fullPath = existingFullResourcePath(s);
+        if (fullPath.isEmpty()) {
+            return;
+        }
+        QStringList args = player.split(' ');
+        args += fullPath;
+        QString prog = args.takeFirst();
+        if (QProcess::startDetached(prog, args)) {
+            return;
+        } else {
+            qWarning("failed to play with %s. Falling back to sound effect", qUtf8Printable(player));
+        }
     }
+#endif
 
-    if (!QFile::exists(str)) {
-        return;
+    static QHash<QString, QSoundEffect *> effects;
+    auto                                  effect = effects.value(s);
+    if (!effect) {
+        if (fullPath.isEmpty() && (fullPath = existingFullResourcePath(s)).isEmpty()) {
+            return;
+        }
+        effect = effects[s] = new QSoundEffect(qApp);
+        effect->setSource(QUrl::fromLocalFile(fullPath));
     }
-
-#if defined(Q_OS_WIN) || defined(Q_OS_MAC)
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    QSound::play(str);
-#else
-    QSoundEffect effect;
-    effect.setSource(QUrl::fromLocalFile(str));
-    effect.play();
-#endif
-#else
-    QString player = PsiOptions::instance()->getOption("options.ui.notifications.sounds.unix-sound-player").toString();
-    if (player == "")
-        player = soundDetectPlayer();
-    QStringList args = player.split(' ');
-    args += str;
-    QString prog = args.takeFirst();
-    QProcess::startDetached(prog, args);
-#endif
+    effect->play();
 }
 
 bool lastPriorityNotEmpty()
@@ -469,7 +469,7 @@ void clearMenu(QMenu *m)
 bool isKde()
 {
     return qgetenv("XDG_SESSION_DESKTOP") == "KDE" || qgetenv("DESKTOP_SESSION").endsWith("plasma")
-        || qgetenv("DESKTOP_SESSION").endsWith("plasma5");
+        || qgetenv("DESKTOP_SESSION").endsWith("plasma5") || qgetenv("DESKTOP_SESSION").endsWith("plasmawayland");
 }
 
 void bringToFront(QWidget *widget, bool)
@@ -481,6 +481,12 @@ void bringToFront(QWidget *widget, bool)
     X11WindowSystem::instance()->bringToFront(w);
 #endif
 
+    // dirty hack to bring window to front in wayland desktop session
+    if (qApp->platformName() == "wayland" && qApp->applicationState() & Qt::ApplicationInactive) {
+        w->setWindowFlags(w->windowFlags() | Qt::WindowStaysOnTopHint);
+        w->setWindowFlags(w->windowFlags() & ~Qt::WindowStaysOnTopHint);
+    }
+
     if (w->isMaximized()) {
         w->showMaximized();
     } else {
@@ -489,6 +495,7 @@ void bringToFront(QWidget *widget, bool)
 
     // if(grabFocus)
     //    w->setActiveWindow();
+
     w->raise();
     w->activateWindow();
 

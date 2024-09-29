@@ -454,7 +454,7 @@
     <clear-custom-avatar type="QKeySequence" comment="Remove custom avatar from the selected contact"></clear-custom-avatar>
     <message type="QKeySequence" comment="Send a message to the selected contact">Ctrl+M</message>
     <event type="QKeySequence" comment="Receive incoming event">Ctrl+R</event>
-    <chat type="QKeySequence" comment="Open a chat to the selected contact">Ctrl+C</chat>
+    <chat type="QKeySequence" comment="Open a chat to the selected contact"></chat>
     <assign-custom-avatar type="QKeySequence" comment="Assign a custom avatar to the selected contact"></assign-custom-avatar>
     <delete type="QKeySequence" comment="Delete the selected contact">Del</delete>
     <login-transport type="QKeySequence" comment="Log on to the selected transport">Ctrl+L</login-transport>

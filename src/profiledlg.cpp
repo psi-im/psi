@@ -268,7 +268,7 @@ void ProfileManageDlg::slotProfileDelete()
                       tr("<qt>Are you sure you want to delete the \"<b>%1</b>\" profile?  "
                          "This will delete all of the profile's message history as well as associated settings!</qt>")
                           .arg(name));
-    auto rejectButton = msgBox.addButton(tr("No, I changed my mind"), QMessageBox::RejectRole);
+    msgBox.addButton(tr("No, I changed my mind"), QMessageBox::RejectRole);
     auto acceptButton = msgBox.addButton(tr("Delete it!"), QMessageBox::AcceptRole);
     msgBox.exec();
 

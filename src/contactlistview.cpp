@@ -27,6 +27,7 @@
 #include "psioptions.h"
 #include "psitooltip.h"
 
+#include <QApplication>
 #include <QContextMenuEvent>
 #include <QCoreApplication>
 #include <QHeaderView>
@@ -36,6 +37,7 @@
 #include <QScrollBar>
 #include <QSortFilterProxyModel>
 #include <QTreeView>
+#include <QWindow>
 
 ContactListView::ContactListView(QWidget *parent) : HoverableTreeView(parent), contextMenuActive_(false)
 {
@@ -118,6 +120,12 @@ void ContactListView::updateContextMenu()
         if (item) {
             contextMenu_ = createContextMenuFor(item);
             addContextMenuActions();
+
+            if (qApp->platformName() == QLatin1String("wayland")) {
+                // see https://bugs.kde.org/show_bug.cgi?id=453532
+                contextMenu_->winId();
+                contextMenu_->windowHandle()->setTransientParent(window()->windowHandle());
+            }
         }
     }
 }
@@ -318,7 +326,12 @@ void ContactListView::activate(const QModelIndex &index) { itemActivated(index);
 
 void ContactListView::itemActivated(const QModelIndex &index)
 {
-    model()->setData(index, QVariant(true), ContactListModel::ActivateRole);
+    if (activateAction == Activate) {
+        model()->setData(index, QVariant(true), ContactListModel::ActivateRole);
+    } else {
+        emit contactSelected(
+            model()->data(index, ContactListModel::ContactListItemRole).value<ContactListItem *>()->contact());
+    }
 }
 
 static QAbstractItemModel *realModel(QAbstractItemModel *model)

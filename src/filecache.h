@@ -187,6 +187,7 @@ protected:
 
 public slots:
     void sync();
+    void lazySync();
 
 private:
     void toRegistry(FileCacheItem *);

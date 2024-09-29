@@ -71,7 +71,9 @@ class ChatViewThemeSessionBridge;
 
 class ChatViewPrivate {
 public:
-    ChatViewPrivate() = default;
+    ChatViewPrivate(ChatView *q) : q(q) { }
+
+    ChatView *q;
 
     Theme theme;
 
@@ -90,6 +92,7 @@ public:
     AvatarFactory::UserHashes remoteIcons;
     AvatarFactory::UserHashes localIcons;
     ChatViewThemeProvider    *themeProvider = nullptr;
+    QString                   localNickName;
 
     static QString closeIconTags(const QString &richText)
     {
@@ -136,6 +139,35 @@ public:
         ret.append(QStringView { msg }.mid(post));
         return ret;
     }
+
+    void sendJsObject(const QVariantMap &map)
+    {
+        jsBuffer_.append(map);
+        checkJsBuffer();
+    }
+
+    void checkJsBuffer();
+
+    void sendReactionsToUI(const QString &nick, const QString &messageId, const QSet<QString> &reactions)
+    {
+        QVariantMap m;
+        m["type"]      = QLatin1String("reactions");
+        m["sender"]    = nick;
+        m["messageid"] = messageId;
+        auto rl        = q->updateReactions(nick, messageId, reactions);
+        auto vl        = QVariantList();
+        for (auto &r : std::as_const(rl)) {
+            auto vmr = QVariantMap();
+            if (!r.base.isEmpty()) {
+                vmr[QLatin1String("base")] = r.base;
+            }
+            vmr[QLatin1String("text")]  = r.code;
+            vmr[QLatin1String("nicks")] = r.nicks;
+            vl << vmr;
+        }
+        m[QLatin1String("reactions")] = vl;
+        sendJsObject(m);
+    }
 };
 
 //----------------------------------------------------------------------------
@@ -171,8 +203,13 @@ public:
                      std::function<void(bool success, const QByteArray &, const QByteArray &)> callback)
     {
         if (url.path().startsWith("/psibob/")) {
-            QString cid = url.path().mid(sizeof("/psibob/") - 1);
-            _view->d->account_->loadBob(_view->d->jid_, cid, this, callback);
+            QString cid    = url.path().mid(sizeof("/psibob/") - 1);
+            auto    sender = QUrlQuery(url).queryItemValue("sender", QUrl::FullyDecoded);
+            auto    j      = _view->d->jid_;
+            if (!sender.isEmpty()) {
+                j = j.withResource(sender);
+            }
+            _view->d->account_->loadBob(j, cid, this, callback);
             return true;
         }
         // qDebug("Unhandled url: %s", qPrintable(url.toString()));
@@ -293,6 +330,55 @@ public:
         connect(reply, SIGNAL(finished()), SLOT(onUrlHeadersReady()));
     }
 
+    Q_INVOKABLE void react(const QString &messageId, const QString &reaction)
+    {
+        if (messageId.isEmpty()) {
+            qWarning("empty message id on sending reaction. broken theme?");
+            return;
+        }
+        _view->outgoingReaction(messageId, reaction);
+    }
+
+    Q_INVOKABLE void deleteMessage(const QString &messageId)
+    {
+        emit _view->outgoingMessageRetraction(messageId);
+        if (!_view->d->isMuc_) {
+            // send back immediately coz it's not it's not iq and not MUC where server sends it back
+            QVariantMap vm;
+            vm["type"]     = QLatin1String("msgretract");
+            vm["targetid"] = messageId;
+            emit newMessage(vm);
+        }
+    }
+
+    Q_INVOKABLE void replyMessage(const QString &messageId, const QString &quotedHtml)
+    {
+        auto plainText = TextUtil::rich2plain(quotedHtml);
+        emit _view->quote(plainText);
+    }
+
+    Q_INVOKABLE void copyMessage(const QString &messageId, const QString &html)
+    {
+        auto plainText = TextUtil::rich2plain(html);
+        QApplication::clipboard()->setText(plainText);
+    }
+
+    Q_INVOKABLE void showInfo(const QString &nick) { emit _view->openInfoRequested(nick); }
+
+    Q_INVOKABLE void openChat(const QString &nick) { emit _view->openChatRequested(nick); }
+
+    Q_INVOKABLE void kick(const QString &nick) { qDebug() << "kick" << nick; }
+
+    Q_INVOKABLE void editMessage(const QString &messageId, const QString &messageHtml)
+    {
+        emit _view->editMessageRequested(messageId, TextUtil::rich2plain(messageHtml));
+    }
+
+    Q_INVOKABLE void forwardMessage(const QString &messageId, const QString &nick, const QString &messageHtml)
+    {
+        emit _view->forwardMessageRequested(messageId, nick, TextUtil::rich2plain(messageHtml));
+    }
+
 private slots:
     void onUrlHeadersReady()
     {
@@ -336,6 +422,17 @@ signals:
 //----------------------------------------------------------------------------
 
 #ifdef WEBENGINE
+class ExtBrowserPage : public QWebEnginePage {
+protected:
+    using QWebEnginePage::QWebEnginePage;
+    bool acceptNavigationRequest(const QUrl &url, NavigationType type, bool isMainFrame)
+    {
+        DesktopUtil::openUrl(url);
+        deleteLater();
+        return false;
+    }
+};
+
 class ChatViewPage : public QWebEnginePage {
 protected:
     using QWebEnginePage::QWebEnginePage;
@@ -349,8 +446,22 @@ protected:
         }
         return true;
     }
+
+    QWebEnginePage *createWindow(WebWindowType type) { return new ExtBrowserPage(); }
 };
 #else
+
+class ExtBrowserPage : public QWebPage {
+protected:
+    using QWebPage::QWebPage;
+    bool acceptNavigationRequest(const QUrl &url, NavigationType type, bool isMainFrame)
+    {
+        DesktopUtil::openUrl(url);
+        deleteLater();
+        return false;
+    }
+};
+
 class ChatViewPage : public QWebPage {
     Q_OBJECT
 
@@ -381,6 +492,8 @@ protected:
         }
         return true;
     }
+
+    QWebPage *createWindow(WebWindowType type) { return new ExtBrowserPage(); }
 };
 
 #endif
@@ -388,7 +501,7 @@ protected:
 //----------------------------------------------------------------------------
 // ChatView
 //----------------------------------------------------------------------------
-ChatView::ChatView(QWidget *parent) : QFrame(parent), d(new ChatViewPrivate)
+ChatView::ChatView(QWidget *parent) : QFrame(parent), d(new ChatViewPrivate(this))
 {
     d->jsObject = new ChatViewJSObject(this); /* It's a session bridge between html and c++ part */
     d->webView  = new WebView(this);
@@ -422,12 +535,12 @@ ChatView::ChatView(QWidget *parent) : QFrame(parent), d(new ChatViewPrivate)
     QVariantMap m;
     m["type"]  = "receivehooks";
     m["hooks"] = PluginManager::instance()->messageViewJSFilters();
-    sendJsObject(m);
+    d->sendJsObject(m);
     connect(PluginManager::instance(), &PluginManager::jsFiltersUpdated, this, [this]() {
         QVariantMap m;
         m["type"]  = "receivehooks";
         m["hooks"] = PluginManager::instance()->messageViewJSFilters();
-        sendJsObject(m);
+        d->sendJsObject(m);
     });
 #endif
 }
@@ -477,7 +590,7 @@ void ChatView::markReceived(QString id)
     m["type"]      = "receipt";
     m["id"]        = id;
     m["encrypted"] = d->isEncryptionEnabled_;
-    sendJsObject(m);
+    d->sendJsObject(m);
 }
 
 QSize ChatView::sizeHint() const { return minimumSizeHint(); }
@@ -504,6 +617,8 @@ void ChatView::setAccount(PsiAccount *acc)
     connect(d->themeProvider, SIGNAL(themeChanged()), SLOT(init()));
 }
 
+void ChatView::setLocalNickname(const QString &nickname) { d->localNickName = nickname; }
+
 void ChatView::contextMenuEvent(QContextMenuEvent *e)
 {
     QUrl linkUrl;
@@ -518,7 +633,7 @@ void ChatView::contextMenuEvent(QContextMenuEvent *e)
     linkUrl = d->webView->page()->mainFrame()->hitTestContent(e->pos()).linkUrl();
 #endif
     if (linkUrl.scheme() == "addnick") {
-        emit showNM(linkUrl.path().mid(1));
+        emit showNickMenu(linkUrl.path().mid(1));
         e->accept();
     }
 }
@@ -531,7 +646,7 @@ void ChatView::changeEvent(QEvent *event)
         || event->type() == QEvent::FontChange) {
         QVariantMap m;
         m["type"] = "settings";
-        sendJsObject(m);
+        d->sendJsObject(m);
     }
     QFrame::changeEvent(event);
 }
@@ -547,26 +662,11 @@ void ChatView::psiOptionChanged(const QString &option)
     }
 }
 
-void ChatView::sendJsObject(const QVariantMap &map)
-{
-    d->jsBuffer_.append(map);
-    checkJsBuffer();
-}
-
-void ChatView::checkJsBuffer()
-{
-    if (d->sessionReady_) {
-        while (!d->jsBuffer_.isEmpty()) {
-            emit d->jsObject->newMessage(d->jsBuffer_.takeFirst());
-        }
-    }
-}
-
 void ChatView::sessionInited()
 {
     qDebug("Session is initialized");
     d->sessionReady_ = true;
-    checkJsBuffer();
+    d->checkJsBuffer();
 }
 
 bool ChatView::handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdit)
@@ -586,6 +686,95 @@ bool ChatView::handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdi
 // input point of all messages
 void ChatView::dispatchMessage(const MessageView &mv)
 {
+    static QHash<MessageView::Type, QString> types;
+    if (types.isEmpty()) {
+        types.insert(MessageView::Message, "message");
+        types.insert(MessageView::System, "system");
+        types.insert(MessageView::Status, "status");
+        types.insert(MessageView::Subject, "subject");
+        types.insert(MessageView::Urls, "urls");
+        types.insert(MessageView::MUCJoin, "join");
+        types.insert(MessageView::MUCPart, "part");
+        types.insert(MessageView::FileTransferRequest, "ftreq");
+        types.insert(MessageView::FileTransferFinished, "ftfin");
+        types.insert(MessageView::NickChange, "newnick");
+        types.insert(MessageView::Reactions, "reactions");
+        types.insert(MessageView::MessageRetraction, "msgretract");
+    }
+    QVariantMap m;
+    switch (mv.type()) {
+    case MessageView::Message:
+        m["message"] = d->prepareShares(ChatViewPrivate::closeIconTags(mv.formattedText()));
+        m["emote"]   = mv.isEmote();
+        m["local"]   = mv.isLocal();
+        m["sender"]  = mv.nick();
+        m["userid"]  = mv.userId();
+        m["spooled"] = mv.isSpooled();
+        m["id"]      = mv.messageId();
+        if (d->isMuc_) { // maybe w/o conditions ?
+            m["alert"] = mv.isAlert();
+        } else {
+            m["awaitingReceipt"] = mv.isAwaitingReceipt();
+        }
+        if (mv.references().count()) {
+            QVariantMap rvm;
+            for (auto const &r : mv.references()) {
+                auto md = r->metaData();
+                md.insert("type", r->mimeType());
+                rvm.insert(r->sums()[0].toString(), md);
+            }
+            m["references"] = rvm;
+        }
+        break;
+    case MessageView::NickChange:
+        m["sender"]  = mv.nick();
+        m["newnick"] = mv.userText();
+        m["message"] = ChatViewPrivate::closeIconTags(mv.text());
+        break;
+    case MessageView::MUCJoin: {
+        Jid j          = d->jid_.withResource(mv.nick());
+        m["avatar"]    = ChatViewJSObject::avatarUrl(d->account_->avatarFactory()->userHashes(j).avatar);
+        m["nickcolor"] = getMucNickColor(mv.nick(), mv.isLocal());
+    }
+    case MessageView::MUCPart:
+        m["nopartjoin"] = mv.isJoinLeaveHidden();
+        PSI_FALLSTHROUGH; // falls through
+    case MessageView::Status:
+        m["sender"]   = mv.nick();
+        m["status"]   = mv.status();
+        m["priority"] = mv.statusPriority();
+        m["message"]  = ChatViewPrivate::closeIconTags(mv.text());
+        m["usertext"] = ChatViewPrivate::closeIconTags(mv.formattedUserText());
+        m["nostatus"] = mv.isStatusChangeHidden(); // looks strange? but chatview can use status for something anyway
+        break;
+    case MessageView::System:
+    case MessageView::Subject:
+        m["message"]  = ChatViewPrivate::closeIconTags(mv.formattedText());
+        m["usertext"] = ChatViewPrivate::closeIconTags(mv.formattedUserText());
+        break;
+    case MessageView::Urls: {
+        QVariantMap vmUrls;
+        for (auto it = mv.urls().constBegin(); it != mv.urls().constEnd(); ++it) {
+            vmUrls.insert(it.key(), it.value());
+        }
+        m["urls"] = vmUrls;
+        break;
+    }
+    case MessageView::Reactions: {
+        auto n = d->isMuc_ ? mv.nick() : QString::fromLatin1(mv.isLocal() ? "l" : "r");
+        d->sendReactionsToUI(n, mv.reactionsId(), mv.reactions());
+        return;
+    }
+    case MessageView::MessageRetraction:
+        m["targetid"] = mv.retractionId();
+        break;
+    case MessageView::FileTransferRequest:
+    case MessageView::FileTransferFinished:
+        break;
+    }
+
+    m["time"]         = mv.dateTime();
+    m["type"]         = types.value(mv.type());
     QString replaceId = mv.replaceId();
     if (replaceId.isEmpty() && (mv.type() == MessageView::Message || mv.type() == MessageView::Subject)
         && updateLastMsgTime(mv.dateTime())) {
@@ -593,33 +782,18 @@ void ChatView::dispatchMessage(const MessageView &mv)
         m["date"]  = mv.dateTime();
         m["type"]  = "message";
         m["mtype"] = "lastDate";
-        sendJsObject(m);
-    }
-    QVariantMap vm = mv.toVariantMap(d->isMuc_, true);
-    if (mv.type() == MessageView::MUCJoin) {
-        Jid j           = d->jid_.withResource(mv.nick());
-        vm["avatar"]    = ChatViewJSObject::avatarUrl(d->account_->avatarFactory()->userHashes(j).avatar);
-        vm["nickcolor"] = getMucNickColor(mv.nick(), mv.isLocal());
-    }
-    auto it = vm.find(QLatin1String("usertext"));
-    if (it != vm.end()) {
-        *it = ChatViewPrivate::closeIconTags(it.value().toString());
-    }
-    it = vm.find(QLatin1String("message"));
-    if (it != vm.end()) {
-        *it = d->prepareShares(it.value().toString());
-        *it = ChatViewPrivate::closeIconTags(it.value().toString());
+        d->sendJsObject(m);
     }
 
-    vm["encrypted"] = d->isEncryptionEnabled_;
+    m["encrypted"] = d->isEncryptionEnabled_;
     if (!replaceId.isEmpty()) {
-        vm["type"]      = "replace";
-        vm["replaceId"] = replaceId;
-    } else {
-        vm["mtype"] = vm["type"];
-        vm["type"]  = "message";
+        m["type"]      = "replace";
+        m["replaceId"] = replaceId;
+    } else if (mv.type() != MessageView::MessageRetraction) {
+        m["mtype"] = m["type"];
+        m["type"]  = "message";
     }
-    sendJsObject(vm);
+    d->sendJsObject(m);
 }
 
 void ChatView::sendJsCode(const QString &js)
@@ -627,7 +801,7 @@ void ChatView::sendJsCode(const QString &js)
     QVariantMap m;
     m["type"] = "js";
     m["js"]   = js;
-    sendJsObject(m);
+    d->sendJsObject(m);
 }
 
 void ChatView::scrollUp() { emit d->jsObject->scrollRequested(-50); }
@@ -666,7 +840,7 @@ void ChatView::updateAvatar(const Jid &jid, UserType utype)
         m["type"]   = "avatar";
         m["sender"] = jid.resource();
         m["avatar"] = ChatViewJSObject::avatarUrl(d->account_->avatarFactory()->userHashes(jid).avatar);
-        sendJsObject(m);
+        d->sendJsObject(m);
     }
 }
 
@@ -674,14 +848,14 @@ void ChatView::clear()
 {
     QVariantMap m;
     m["type"] = "clear";
-    sendJsObject(m);
+    d->sendJsObject(m);
 }
 
 void ChatView::doTrackBar()
 {
     QVariantMap m;
     m["type"] = "trackbar";
-    sendJsObject(m);
+    d->sendJsObject(m);
 }
 
 WebView *ChatView::textWidget() { return d->webView; }
@@ -689,5 +863,25 @@ WebView *ChatView::textWidget() { return d->webView; }
 QWidget *ChatView::realTextWidget() { return d->webView; }
 
 QObject *ChatView::jsBridge() { return d->jsObject; }
+
+void ChatView::outgoingReaction(const QString &messageId, const QString &reaction)
+{
+    auto n         = d->isMuc_ ? d->localNickName : QString::fromLatin1("l");
+    auto reactions = onReactionSwitched(n, messageId, reaction);
+    emit outgoingReactions(messageId, reactions);
+    if (!d->isMuc_) {
+        // with private message we are not going to get it back. so back immediately
+        d->sendReactionsToUI(n, messageId, reactions);
+    }
+}
+
+void ChatViewPrivate::checkJsBuffer()
+{
+    if (sessionReady_) {
+        while (!jsBuffer_.isEmpty()) {
+            emit jsObject->newMessage(jsBuffer_.takeFirst());
+        }
+    }
+}
 
 #include "chatview_webkit.moc"

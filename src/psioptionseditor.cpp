@@ -136,11 +136,10 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent) : QWidget(parent)
     tpm_->setSourceModel(tm_);
 
     QVBoxLayout *layout = new QVBoxLayout(this);
-    layout->setSpacing(0);
-    layout->setContentsMargins(0, 0, 0, 0);
 
     QHBoxLayout *filterLayout = new QHBoxLayout;
-    le_filter                 = new QLineEdit(this);
+    filterLayout->setSpacing(5);
+    le_filter = new QLineEdit(this);
     le_filter->setProperty("isOption", false);
     le_filter->setToolTip(tr("Options filter"));
     lb_filter = new QLabel(tr("Filter"), this);
@@ -206,6 +205,14 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent) : QWidget(parent)
 
     buttonLine->addStretch(1);
 
+    pb_new = new QPushButton(tr("Add..."), this);
+    buttonLine->addWidget(pb_new);
+    connect(pb_new, SIGNAL(clicked()), SLOT(add()));
+
+    pb_edit = new QPushButton(tr("Edit..."), this);
+    buttonLine->addWidget(pb_edit);
+    connect(pb_edit, SIGNAL(clicked()), SLOT(edit()));
+
     pb_delete = new QPushButton(tr("Delete..."), this);
     buttonLine->addWidget(pb_delete);
     connect(pb_delete, SIGNAL(clicked()), SLOT(deleteit()));
@@ -213,14 +220,6 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent) : QWidget(parent)
     pb_reset = new QPushButton(tr("Reset..."), this);
     buttonLine->addWidget(pb_reset);
     connect(pb_reset, SIGNAL(clicked()), SLOT(resetit()));
-
-    pb_edit = new QPushButton(tr("Edit..."), this);
-    buttonLine->addWidget(pb_edit);
-    connect(pb_edit, SIGNAL(clicked()), SLOT(edit()));
-
-    pb_new = new QPushButton(tr("Add..."), this);
-    buttonLine->addWidget(pb_new);
-    connect(pb_new, SIGNAL(clicked()), SLOT(add()));
 
     if (parent) {
         pb_detach = new QToolButton(this);
@@ -353,7 +352,11 @@ void PsiOptionsEditor::resetit()
     }
 }
 
-void PsiOptionsEditor::detach() { new PsiOptionsEditor(); }
+void PsiOptionsEditor::detach()
+{
+    auto dlg = new PsiOptionsEditor();
+    dlg->resize(pointToPixel(800), pointToPixel(600));
+}
 
 void PsiOptionsEditor::bringToFront() { ::bringToFront(this, true); }
 

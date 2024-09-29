@@ -36,69 +36,6 @@ using namespace XMPP;
 
 // -----------------------------------------------------------------------------
 
-class PEPGetTask : public Task {
-public:
-    PEPGetTask(Task *parent, const QString &jid, const QString &node, const QString &itemID) :
-        Task(parent), jid_(jid), node_(node)
-    {
-        iq_ = createIQ(doc(), "get", jid_, id());
-
-        QDomElement pubsub = doc()->createElementNS("http://jabber.org/protocol/pubsub", "pubsub");
-        iq_.appendChild(pubsub);
-
-        QDomElement items = doc()->createElement("items");
-        items.setAttribute("node", node);
-        pubsub.appendChild(items);
-
-        QDomElement item = doc()->createElement("item");
-        item.setAttribute("id", itemID);
-        items.appendChild(item);
-    }
-
-    void onGo() { send(iq_); }
-
-    bool take(const QDomElement &x)
-    {
-        if (!iqVerify(x, jid_, id()))
-            return false;
-
-        if (x.attribute("type") == "result") {
-            // FIXME Check namespace...
-            QDomElement e = x.firstChildElement("pubsub");
-            if (!e.isNull()) {
-                QDomElement i = e.firstChildElement("items");
-                if (!i.isNull()) {
-                    QString iname = "item";
-                    for (QDomElement e1 = i.firstChildElement(iname); !e1.isNull(); e1 = e1.nextSiblingElement(iname)) {
-                        for (QDomElement e2 = e1.firstChildElement(); !e2.isNull(); e2 = e2.nextSiblingElement()) {
-                            items_ += PubSubItem(e1.attribute("id"), e2);
-                        }
-                    }
-                }
-            }
-            setSuccess();
-            return true;
-        } else {
-            setError(x);
-            return true;
-        }
-    }
-
-    const QList<PubSubItem> &items() const { return items_; }
-
-    const QString &jid() const { return jid_; }
-
-    const QString &node() const { return node_; }
-
-private:
-    QDomElement       iq_;
-    QString           jid_;
-    QString           node_;
-    QList<PubSubItem> items_;
-};
-
-// -----------------------------------------------------------------------------
-
 /*
 class PEPUnsubscribeTask : public Task
 {
@@ -227,8 +164,8 @@ private:
 
 class PEPPublishTask : public Task {
 public:
-    PEPPublishTask(Task *parent, const QString &node, const PubSubItem &it, PEPManager::Access access) :
-        Task(parent), node_(node), item_(it)
+    PEPPublishTask(Task *parent, const QString &node, const PubSubItem &it, std::optional<PEPManager::Access> access,
+                   bool persisteItems = false) : Task(parent), node_(node), item_(it)
     {
         iq_ = createIQ(doc(), "set", "", id());
 
@@ -240,33 +177,40 @@ public:
         pubsub.appendChild(publish);
 
         QDomElement item = doc()->createElement("item");
-        item.setAttribute("id", it.id());
+        if (!it.id().isEmpty()) {
+            item.setAttribute("id", it.id());
+        }
         publish.appendChild(item);
 
-        if (access != PEPManager::DefaultAccess) {
-            QDomElement conf   = doc()->createElement("configure");
-            QDomElement conf_x = doc()->createElementNS("jabber:x:data", "x");
-
-            // Form type
-            QDomElement conf_x_field_type = doc()->createElement("field");
-            conf_x_field_type.setAttribute("var", "FORM_TYPE");
-            conf_x_field_type.setAttribute("type", "hidden");
-            QDomElement conf_x_field_type_value = doc()->createElement("value");
-            conf_x_field_type_value.appendChild(doc()->createTextNode("http://jabber.org/protocol/pubsub#node_config"));
-            conf_x_field_type.appendChild(conf_x_field_type_value);
-            conf_x.appendChild(conf_x_field_type);
-
-            // Access model
-            QDomElement access_model = doc()->createElement("field");
-            access_model.setAttribute("var", "pubsub#access_model");
-            QDomElement access_model_value = doc()->createElement("value");
-            access_model.appendChild(access_model_value);
-            if (access == PEPManager::PublicAccess) {
-                access_model_value.appendChild(doc()->createTextNode("open"));
-            } else if (access == PEPManager::PresenceAccess) {
-                access_model_value.appendChild(doc()->createTextNode("presence"));
+        if (access || persisteItems) {
+            QDomElement conf = doc()->createElement("publish-options");
+            XData       form(XData::Data_Submit);
+            form.setRegistrarType(QLatin1String("http://jabber.org/protocol/pubsub#publish-options"));
+            XMPP::XData::FieldList fields;
+            if (access) {
+                XMPP::XData::Field f;
+                f.setVar(QLatin1String("pubsub#access_model"));
+                if (*access == PEPManager::Access::Open) {
+                    f.setValue({ QLatin1String("open") });
+                } else if (access == PEPManager::Access::Presence) {
+                    f.setValue({ QLatin1String("presence") });
+                } else if (access == PEPManager::Access::Roster) {
+                    f.setValue({ QLatin1String("roster") });
+                } else if (access == PEPManager::Access::Authorize) {
+                    f.setValue({ QLatin1String("authorize") });
+                } else if (access == PEPManager::Access::Whitelist) {
+                    f.setValue({ QLatin1String("whitelist") });
+                }
+                fields << f;
             }
-            conf_x.appendChild(access_model);
+            if (persisteItems) {
+                XMPP::XData::Field f;
+                f.setVar(QLatin1String("pubsub#persist_items"));
+                f.setValue({ QLatin1String("true") });
+                fields << f;
+            }
+            form.setFields(fields);
+            auto conf_x = form.toXml(doc(), true);
 
             conf.appendChild(conf_x);
             pubsub.appendChild(conf);
@@ -525,16 +469,17 @@ void PEPManager::unsubscribeFinished()
     saveSubscriptions();
 }*/
 
-void PEPManager::publish(const QString &node, const PubSubItem &it, Access access)
+Task *PEPManager::publish(const QString &node, const PubSubItem &it, std::optional<Access> access, bool persisteItems)
 {
     // if (!canPublish(node))
     //    return;
     if (!serverInfo_->hasPEP())
-        return;
+        return nullptr;
 
-    PEPPublishTask *tp = new PEPPublishTask(client_->rootTask(), node, it, access);
+    PEPPublishTask *tp = new PEPPublishTask(client_->rootTask(), node, it, access, persisteItems);
     connect(tp, SIGNAL(finished()), SLOT(publishFinished()));
     tp->go(true);
+    return tp;
 }
 
 void PEPManager::retract(const QString &node, const QString &id)
@@ -567,16 +512,17 @@ void PEPManager::publishFinished()
     }
 }
 
-void PEPManager::get(const Jid &jid, const QString &node, const QString &id)
+PEPGetTask *PEPManager::get(const Jid &jid, const QString &node, const QString &id)
 {
     PEPGetTask *g = new PEPGetTask(client_->rootTask(), jid.bare(), node, id);
     connect(g, SIGNAL(finished()), SLOT(getFinished()));
     g->go(true);
+    return g;
 }
 
 void PEPManager::messageReceived(const Message &m)
 {
-    if (m.type() != "error") {
+    if (m.type() != Message::Type::Error) {
         const auto &psrItems = m.pubsubRetractions();
         for (const PubSubRetraction &i : psrItems) {
             emit itemRetracted(m.from(), m.pubsubNode(), i);
@@ -611,8 +557,8 @@ void PEPManager::getFinished()
             emit itemPublished(task->jid(), task->node(), task->items().first());
         }
     } else {
-        qWarning() << QString("[%3] PEP Get failed: '%1' (%2)")
-                          .arg(task->statusString(), QString::number(task->statusCode()), client_->jid().full());
+        qWarning() << QString("PEP Get (jid=%1 node=%2) failed: '%3' (%4)")
+                          .arg(task->jid(), task->node(), task->statusString(), QString::number(task->statusCode()));
     }
 }
 
@@ -663,3 +609,57 @@ void PEPManager::getSubscriptionsTaskFinished()
         emit getSubscriptions_error(task->jid(),task->statusCode(), task->statusString());
     }
 }*/
+
+PEPGetTask::PEPGetTask(Task *parent, const QString &jid, const QString &node, const QString &itemID) :
+    Task(parent), jid_(jid), node_(node)
+{
+    iq_ = createIQ(doc(), "get", jid_, id());
+
+    QDomElement pubsub = doc()->createElementNS("http://jabber.org/protocol/pubsub", "pubsub");
+    iq_.appendChild(pubsub);
+
+    QDomElement items = doc()->createElement("items");
+    items.setAttribute("node", node);
+    pubsub.appendChild(items);
+
+    if (!itemID.isEmpty()) {
+        QDomElement item = doc()->createElement("item");
+        item.setAttribute("id", itemID);
+        items.appendChild(item);
+    }
+}
+
+void PEPGetTask::onGo() { send(iq_); }
+
+bool PEPGetTask::take(const QDomElement &x)
+{
+    if (!iqVerify(x, jid_, id()))
+        return false;
+
+    if (x.attribute("type") == "result") {
+        // FIXME Check namespace...
+        QDomElement e = x.firstChildElement("pubsub");
+        if (!e.isNull()) {
+            QDomElement i = e.firstChildElement("items");
+            if (!i.isNull()) {
+                QString iname = "item";
+                for (QDomElement e1 = i.firstChildElement(iname); !e1.isNull(); e1 = e1.nextSiblingElement(iname)) {
+                    for (QDomElement e2 = e1.firstChildElement(); !e2.isNull(); e2 = e2.nextSiblingElement()) {
+                        items_ += PubSubItem(e1.attribute("id"), e2);
+                    }
+                }
+            }
+        }
+        setSuccess();
+        return true;
+    } else {
+        setError(x);
+        return true;
+    }
+}
+
+const QList<PubSubItem> &PEPGetTask::items() const { return items_; }
+
+const QString &PEPGetTask::jid() const { return jid_; }
+
+const QString &PEPGetTask::node() const { return node_; }

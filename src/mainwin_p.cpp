@@ -470,12 +470,7 @@ IconAction *SpacerAction::copy() const { return new SpacerAction(nullptr); }
 // SeparatorAction
 //----------------------------------------------------------------------------
 
-SeparatorAction::SeparatorAction(QObject *parent, const char *name) :
-    IconAction(tr("<Separator>"), tr("<Separator>"), 0, parent, name)
-{
-    setSeparator(true);
-    setToolTip(tr("Separator"));
-}
+SeparatorAction::SeparatorAction(QObject *parent, const char *name) : IconAction(parent, name) { setSeparator(true); }
 
 SeparatorAction::~SeparatorAction() { }
 

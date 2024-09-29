@@ -36,8 +36,11 @@ public:
     const Iconset *iconset() const;
 
     QListWidgetItem *lastItem() const;
-
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     QStyleOptionViewItem viewOptions() const;
+#else
+    void initViewItemOption(QStyleOptionViewItem *option) const;
+#endif
 
 public slots:
     void moveItemUp();

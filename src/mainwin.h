@@ -189,10 +189,6 @@ private:
 
     void buildStatusMenu(GlobalStatusMenu *statusMenu);
 
-#if defined(Q_OS_WIN) && QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    void updateWinTaskbar(bool enabled);
-#endif
-
 private:
     class Private;
     Private *d;

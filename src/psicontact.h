@@ -98,8 +98,6 @@ public:
     QIcon            picture() const;
     QIcon            alertPicture() const;
 
-    void rereadVCard();
-
     bool        groupOperationPermitted(const QString &oldGroupName, const QString &newGroupName) const;
     QStringList groups() const;
     void        setGroups(QStringList);
@@ -144,7 +142,6 @@ public slots:
 
 private slots:
     void avatarChanged(const Jid &);
-    void vcardChanged(const Jid &);
 
     void blockContactConfirmation(const QString &id, bool confirmed);
     void blockContactConfirmationHelper(bool block);

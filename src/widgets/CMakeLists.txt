@@ -33,6 +33,7 @@ set(HEADERS
     actionlineedit.h
     busywidget.h
     emojiregistry.h
+    emojidb.h
     eventnotifier.h
     fancylabel.h
     fancypopup.h
@@ -62,17 +63,13 @@ set(HEADERS
     stretchwidget.h
 )
 
-if(WIN32 AND (${QT_DEFAULT_MAJOR_VERSION} LESS_EQUAL 5))
-    find_package(Qt${QT_DEFAULT_MAJOR_VERSION} COMPONENTS WinExtras REQUIRED)
-    list(APPEND QT_LIBRARIES
-        Qt${QT_DEFAULT_MAJOR_VERSION}::WinExtras
-    )
-    list(APPEND SOURCES
-        thumbnailtoolbar.cpp
-    )
-    list(APPEND HEADERS
-        thumbnailtoolbar.h
-    )
+if(USE_TASKBARNOTIFIER)
+    list(APPEND SOURCES taskbarnotifier.cpp)
+    list(APPEND HEADERS taskbarnotifier.h)
+    if(WIN32 AND (${QT_DEFAULT_MAJOR_VERSION} VERSION_LESS "6"))
+        find_package(Qt${QT_DEFAULT_MAJOR_VERSION} 5.10 REQUIRED COMPONENTS WinExtras)
+        list(APPEND QT_LIBRARIES Qt${QT_DEFAULT_MAJOR_VERSION}::WinExtras)
+    endif()
 endif()
 
 set(FORMS
@@ -94,5 +91,17 @@ endif()
 
 qt_wrap_ui(UI_FORMS ${FORMS})
 add_library(widgets STATIC ${SOURCES} ${HEADERS} ${UI_FORMS})
+if(WIN32)
+target_link_libraries(widgets shlwapi)
+endif()
 target_link_libraries(widgets ${QT_LIBRARIES} ${iris_LIB} tools)
 target_include_directories(widgets PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_LIST_DIR})
+if(IS_WEBKIT OR IS_WEBENGINE)
+    target_compile_definitions(widgets PRIVATE WEBKIT)
+    if(IS_WEBENGINE)
+        target_compile_definitions(widgets PRIVATE WEBENGINE)
+    endif()
+endif()
+if(LINUX AND USE_X11)
+    target_compile_definitions(widgets PRIVATE HAVE_X11)
+endif()

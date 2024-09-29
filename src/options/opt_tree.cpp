@@ -31,6 +31,7 @@ QWidget *OptionsTabTree::widget()
     layout->addWidget(lb);
 
     PsiOptionsEditor *poe = new PsiOptionsEditor(w);
+    poe->layout()->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(poe);
     poe->show();
 

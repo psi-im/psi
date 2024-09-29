@@ -48,7 +48,7 @@
 #include <QTimer>
 #include <QToolButton>
 
-static const int           TIMEOUT        = 30000; // 30 secs maximum time interval
+static const int           TIMEOUT        = 120000; // 2 min maximum time interval
 static const int           SECOND         = 1000;
 static const int           maxOverlayTime = TIMEOUT / SECOND;
 static const QLatin1String capOption("options.ui.chat.auto-capitalize");
@@ -104,11 +104,11 @@ public slots:
             } else if (charsAdded > 1) { // Insert a piece of text
                 return;
             } else {
-                QRegularExpression      capitalizeAfter("(?:(?:\\s*\\b\\w{2,}\\b[.!?]+\\s+)|(?:^\\s*))+(\\w)",
-                                                        QRegularExpression::UseUnicodePropertiesOption
-                                                            | QRegularExpression::MultilineOption);
-                QRegularExpressionMatch match;
-                int                     index = te_->toPlainText().lastIndexOf(capitalizeAfter, -1, &match);
+                static QRegularExpression capitalizeAfter("(?:(?:\\s*\\b\\w{2,}\\b\\s*[.!?]+\\s+)|(?:^\\s*))+(\\w)",
+                                                          QRegularExpression::UseUnicodePropertiesOption
+                                                              | QRegularExpression::MultilineOption);
+                QRegularExpressionMatch   match;
+                int                       index = te_->toPlainText().lastIndexOf(capitalizeAfter, -1, &match);
                 if (index != -1 && pos == match.capturedStart(1)) {
                     capitalizeNext_ = true;
                 }
@@ -280,7 +280,7 @@ bool ChatEdit::event(QEvent *event)
     if (event->type() == QEvent::ShortcutOverride) {
         return false;
     }
-    if (event->type() == QEvent::PaletteChange && recButton_ && !correction) {
+    if (event->type() == QEvent::PaletteChange && recButton_ && _correctionId.isEmpty()) {
         setRecButtonIcon();
     }
     return QTextEdit::event(event);
@@ -433,7 +433,7 @@ void ChatEdit::optionsChanged(const QString &option)
 
 void ChatEdit::showHistoryMessageNext()
 {
-    correction = false;
+    _correctionId.clear();
     if (!typedMsgsHistory.isEmpty()) {
         if (typedMsgsIndex + 1 < typedMsgsHistory.size()) {
             ++typedMsgsIndex;
@@ -463,14 +463,14 @@ void ChatEdit::pasteAsQuote()
 
 void ChatEdit::showHistoryMessagePrev()
 {
-    if (!typedMsgsHistory.isEmpty() && (typedMsgsIndex > 0 || correction)) {
+    if (!typedMsgsHistory.isEmpty() && (typedMsgsIndex > 0 || !_correctionId.isEmpty())) {
         // Save current typed text
         if (typedMsgsIndex == typedMsgsHistory.size()) {
-            currentText = toPlainText();
-            correction  = true;
+            currentText  = toPlainText();
+            _correctionId = lastId;
         }
-        if (typedMsgsIndex == typedMsgsHistory.size() - 1 && correction) {
-            correction = false;
+        if (typedMsgsIndex == typedMsgsHistory.size() - 1 && !_correctionId.isEmpty()) {
+            _correctionId.clear();
             ++typedMsgsIndex;
         }
         --typedMsgsIndex;
@@ -480,7 +480,7 @@ void ChatEdit::showHistoryMessagePrev()
 
 void ChatEdit::showHistoryMessageFirst()
 {
-    correction = false;
+    _correctionId.clear();
     if (!typedMsgsHistory.isEmpty()) {
         if (currentText.isEmpty()) {
             typedMsgsIndex = typedMsgsHistory.size() - 1;
@@ -496,7 +496,7 @@ void ChatEdit::showHistoryMessageFirst()
 
 void ChatEdit::showHistoryMessageLast()
 {
-    correction = false;
+    _correctionId.clear();
     if (!typedMsgsHistory.isEmpty()) {
         typedMsgsIndex = 0;
         showMessageHistory();
@@ -553,7 +553,6 @@ bool ChatEdit::canInsertFromMimeData(const QMimeData *source) const
 
 void ChatEdit::updateBackground()
 {
-    setProperty("correction", correction);
     style()->unpolish(this);
     style()->polish(this);
     update();
@@ -634,16 +633,23 @@ void ChatEdit::insertAsQuote(const QString &text)
     QString prevLine = toPlainText().left(pos - 1);
     prevLine         = prevLine.mid(prevLine.lastIndexOf("\n") + 1);
 
-    QString quote = QString::fromUtf8(u8"» ") + text;
-    quote.replace("\n", QString::fromUtf8(u8"\n» "));
+    auto    sym   = QChar::fromLatin1(0x3E); // closing double quote
+    QString quote = sym + ' ' + text;
+    quote.replace("\n", QStringLiteral("\n%1 ").arg(sym));
 
     // Check for previous quote and merge if true
-    if (!prevLine.isEmpty() && !prevLine.startsWith(QString::fromUtf8(u8"»"))) {
+    if (!prevLine.isEmpty() && !prevLine.startsWith(sym)) {
         quote.prepend("\n");
     }
     quote.append("\n");
     insertPlainText(quote);
     setFocus(Qt::OtherFocusReason);
+}
+
+void ChatEdit::startCorrection(const QString messageId, const QString &text)
+{
+    _correctionId = messageId;
+    setEditText(text);
 }
 
 void ChatEdit::addSoundRecButton()

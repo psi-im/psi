@@ -157,9 +157,8 @@ PsiAccount *PsiContactList::defaultAccount() const
  * Creates new PsiAccount based on some initial settings. This is used by AccountAddDlg.
  */
 PsiAccount *PsiContactList::createAccount(const QString &name, const Jid &j, const QString &pass, bool opt_host,
-                                          const QString &host, int port, bool legacy_ssl_probe,
-                                          UserAccount::SSLFlag ssl, QString proxyID, const QString &tlsOverrideDomain,
-                                          const QByteArray &tlsOverrideCert)
+                                          const QString &host, int port, UserAccount::SSLFlag ssl, QString proxyID,
+                                          const QString &tlsOverrideDomain, const QByteArray &tlsOverrideCert)
 {
     UserAccount acc;
     acc.name = name;
@@ -170,12 +169,11 @@ PsiAccount *PsiContactList::createAccount(const QString &name, const Jid &j, con
         acc.pass     = pass;
     }
 
-    acc.opt_host         = opt_host;
-    acc.host             = host;
-    acc.port             = quint16(port);
-    acc.ssl              = ssl;
-    acc.proxyID          = proxyID;
-    acc.legacy_ssl_probe = legacy_ssl_probe;
+    acc.opt_host = opt_host;
+    acc.host     = host;
+    acc.port     = quint16(port);
+    acc.ssl      = ssl;
+    acc.proxyID  = proxyID;
 
     acc.tog_offline = showOffline();
     acc.tog_agents  = showAgents();

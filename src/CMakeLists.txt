@@ -1,4 +1,4 @@
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 list(APPEND CMAKE_MODULE_PATH
     "${CMAKE_CURRENT_SOURCE_DIR}"
@@ -7,20 +7,20 @@ set(CMAKE_AUTOMOC ON)
 
 if(LINUX)
     set(LIB_SUFFIX "" CACHE STRING "Define suffix of directory name (32/64)")
-    if(NOT DEV_MODE)
-        set(PSI_LIBDIR "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/${PROJECT_NAME}" CACHE STRING "Path to Psi/Psi+ libraries directory")
-        set(PSI_DATADIR "${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}" CACHE STRING "Path to Psi/Psi+ data directory")
-    else()
+    if(DEV_MODE)
         set(PSI_LIBDIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
         set(PSI_DATADIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+    else()
+        set(PSI_LIBDIR "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/${PROJECT_NAME}" CACHE STRING "Path to Psi/Psi+ libraries directory")
+        set(PSI_DATADIR "${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}" CACHE STRING "Path to Psi/Psi+ data directory")
     endif()
 endif()
 
 if(APPLE AND NOT PSI_LIBDIR)
-    if(NOT DEV_MODE)
-        set(PSI_LIBDIR "/Applications/${CLIENT_NAME}.app/Contents/Resources/plugins")
-    else()
+    if(DEV_MODE)
         set(PSI_LIBDIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/plugins")
+    else()
+        set(PSI_LIBDIR "/Applications/${CLIENT_NAME}.app/Contents/Resources/plugins")
     endif()
 endif()
 
@@ -81,7 +81,11 @@ else()
     find_package(Qt${QT_DEFAULT_MAJOR_VERSION} 6.6 REQUIRED COMPONENTS ${REQUIRED_QT_COMPONENTS})
 endif()
 if(USE_KEYCHAIN)
-    find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Keychain)
+    if(NOT BUNDLED_KEYCHAIN)
+        find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Keychain)
+    else()
+        include(qtkeychain-bundled)
+    endif()
     set(KEYCHAIN_LIBS ${QTKEYCHAIN_LIBRARIES})
     include_directories(${QTKEYCHAIN_INCLUDE_DIRS})
     add_definitions(-DHAVE_KEYCHAIN)
@@ -399,7 +403,7 @@ if(WIN32 AND (${QT_DEFAULT_MAJOR_VERSION} GREATER_EQUAL 6))
     _qt_internal_generate_win32_rc_file(${PROJECT_NAME})
 endif()
 
-include(${PROJECT_SOURCE_DIR}/cmake/modules/fix-codestyle.cmake)
+include(fix-codestyle)
 
 #Add webkit/webengine suffix to output binary name
 if(VERBOSE_PROGRAM_NAME)
@@ -432,6 +436,10 @@ if(UNIX OR IS_WEBENGINE)
     add_dependencies(${PROJECT_NAME} qhttp)
 endif()
 add_dependencies(${PROJECT_NAME} build_ui_files)
+
+if(BUNDLED_KEYCHAIN)
+    add_dependencies(${PROJECT_NAME} QtkeychainProject)
+endif()
 
 #Add win32 additional dependencies
 if(WIN32 AND MSVC)
@@ -475,6 +483,46 @@ target_link_libraries(${PROJECT_NAME}
 
 if(APPLE)
     target_link_libraries(${PROJECT_NAME} CocoaUtilities)
+endif()
+
+#Privare Psi project defenitions
+if(LINUX)
+    if(NOT VERBOSED_NAME)
+        set(VERBOSED_NAME ${PROJECT_NAME})
+    endif()
+    target_compile_definitions(${PROJECT_NAME} PRIVATE
+        HAVE_FREEDESKTOP
+        APP_PREFIX=${CMAKE_INSTALL_PREFIX}
+        APP_BIN_NAME=${VERBOSED_NAME}
+    )
+    #Set compile definions for options static library
+    target_compile_definitions(options PRIVATE
+        HAVE_FREEDESKTOP
+        APP_BIN_NAME=${VERBOSED_NAME}
+    )
+endif()
+
+#TaskbarNotifier definition
+if(USE_TASKBARNOTIFIER)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_TASKBARNOTIFIER)
+endif()
+if(USE_CRASH)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_CRASH)
+endif()
+if(LINUX AND USE_X11)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_X11)
+    if(LIMIT_X11_USAGE)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE LIMIT_X11_USAGE)
+    endif()
+endif()
+if(IS_WEBKIT OR IS_WEBENGINE)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE WEBKIT)
+    if(IS_WEBENGINE)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE WEBENGINE)
+    endif()
+endif()
+if(ISDEBUG AND CHATVIEW_CORRECTION_DEBUG)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE CORRECTION_DEBUG)
 endif()
 
 #Pre-install section
@@ -533,7 +581,7 @@ if(LINUX)
             set(VERBOSED_NAME ${PROJECT_NAME})
         endif()
         #Generate .desktop file
-        include(${PROJECT_SOURCE_DIR}/cmake/modules/generate_desktopfile.cmake)
+        include(generate_desktopfile)
         install(FILES ${OUT_DESK_FILE} DESTINATION ${APPS_INSTALL_DIR})
         if(PSI_PLUS)
             set(PSI_LOGO_PREFIX ${PROJECT_SOURCE_DIR}/iconsets/system/default/psiplus)
@@ -605,7 +653,7 @@ elseif(WIN32)
         copy("${PROJECT_SOURCE_DIR}/myspell/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/myspell/" prepare-bin)
     endif()
     if(ENABLE_PORTABLE OR DEV_MODE)
-        include(${PROJECT_SOURCE_DIR}/cmake/modules/win32-prepare-deps.cmake)
+        include(win32-prepare-deps)
     endif()
 elseif(APPLE)
     include("${PROJECT_SOURCE_DIR}/mac/macos_definitions.cmake")

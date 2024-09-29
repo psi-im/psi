@@ -92,7 +92,8 @@ TipDlg::TipDlg(PsiCon *psi) : QDialog(0), psi_(psi)
               "features on an unstable server, you can do that -- without running a second client to connect to your "
               "stable server.  Just click Add in the Account Setup screen."),
            "Hal Rottenberg");
-    addTip(tr("Do you chat on third-party IM networks such as AIM and ICQ?  Try enabling the \"transport-specific "
+    addTip(tr("Do you chat on third-party IM networks such as Telegram and WhatsApp?  Try enabling the "
+              "\"transport-specific "
               "icons\" option.  This will allow you to quickly see at a glance which network your buddy is using.  "
               "Then you can convince him to switch to XMPP. <icon name=\"psi/smile\">"),
            "Hal Rottenberg");

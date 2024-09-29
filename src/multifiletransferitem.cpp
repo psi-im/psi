@@ -24,6 +24,8 @@
 #include <QElapsedTimer>
 #include <QIcon>
 
+using std::optional;
+
 struct MultiFileTransferItem::Private {
     QString                           displayName; // usually base filename
     QString                           mediaType;
@@ -31,7 +33,7 @@ struct MultiFileTransferItem::Private {
     QString                           info;
     QString                           errorString; // last error
     QString                           fileName;
-    quint64                           fullSize      = 0;
+    std::optional<quint64>            fullSize      = 0;
     quint64                           currentSize   = 0; // currently transferred
     quint64                           lastSize      = 0;
     quint64                           offset        = 0; // initial offset if only part of file is transferred
@@ -45,7 +47,8 @@ struct MultiFileTransferItem::Private {
 };
 
 MultiFileTransferItem::MultiFileTransferItem(MultiFileTransferModel::Direction direction, const QString &displayName,
-                                             quint64 fullSize, QObject *parent) : QObject(parent), d(new Private)
+                                             std::optional<quint64> fullSize, QObject *parent) :
+    QObject(parent), d(new Private)
 {
     d->direction   = direction;
     d->displayName = displayName;
@@ -56,7 +59,7 @@ MultiFileTransferItem::~MultiFileTransferItem() { emit aboutToBeDeleted(); }
 
 const QString &MultiFileTransferItem::displayName() const { return d->displayName; }
 
-quint64 MultiFileTransferItem::fullSize() const { return d->fullSize; }
+optional<quint64> MultiFileTransferItem::fullSize() const { return d->fullSize; }
 
 quint64 MultiFileTransferItem::currentSize() const { return d->currentSize; }
 
@@ -85,7 +88,9 @@ QString MultiFileTransferItem::toolTipText() const
         text += (QLatin1String("<br><br>") + d->description);
     }
     text += (QLatin1String("<br><br>")
-             + tr("Transferred: %1/%2 bytes").arg(QString::number(d->currentSize), QString::number(d->fullSize)));
+             + tr("Transferred: %1/%2 bytes")
+                   .arg(QString::number(d->currentSize),
+                        d->fullSize ? QString::number(*d->fullSize) : tr("not defined")));
     if (!d->info.isEmpty()) {
         text += (QLatin1String("<br><br>") + d->info);
     }
@@ -169,7 +174,7 @@ void MultiFileTransferItem::updateStats()
     }
     d->speed = quint32(sum / qulonglong(d->lastSpeeds.size()));
 
-    d->timeRemaining = quint32((d->fullSize - d->currentSize) / speedf);
+    d->timeRemaining = d->fullSize ? quint32((*d->fullSize - d->currentSize) / speedf) : 0;
     d->lastSize      = d->currentSize;
     d->lastTimer.start();
 }

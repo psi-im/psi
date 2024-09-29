@@ -23,6 +23,7 @@
 
 #include <QApplication>
 #include <QRegularExpression>
+#include <QSet>
 #include <QWidget>
 #include <math.h>
 
@@ -37,7 +38,9 @@ void ChatViewCommon::setLooks(QWidget *w)
 bool ChatViewCommon::updateLastMsgTime(QDateTime t)
 {
     bool doInsert = t.date() != _lastMsgTime.date();
-    _lastMsgTime  = t;
+    if (!_lastMsgTime.isValid() || t > _lastMsgTime) {
+        _lastMsgTime = t;
+    }
     return doInsert;
 }
 
@@ -81,8 +84,14 @@ QString ChatViewCommon::getMucNickColor(const QString &nick, bool isSelf)
         return nickColors[it.value() % (nickColors.size() - 1)];
     } while (false);
 
-    return QLatin1String("#000000"); // FIXME it's bad for fallback color
+    return qApp->palette().color(QPalette::Inactive, QPalette::WindowText).name();
 }
+
+void ChatViewCommon::addUser(const QString &nickname) { }
+
+void ChatViewCommon::removeUser(const QString &nickname) { }
+
+void ChatViewCommon::renameUser(const QString &oldNickname, const QString &newNickname) { }
 
 QList<QColor> &ChatViewCommon::generatePalette()
 {
@@ -118,4 +127,73 @@ bool ChatViewCommon::compatibleColors(const QColor &c1, const QColor &c2)
     double dC = sqrt(0.2126 * dR * dR + 0.7152 * dG * dG + 0.0722 * dB * dB);
 
     return !((dC < 80. && dV > 100) || (dC < 110. && dV <= 100 && dV > 10) || (dC < 125. && dV <= 10));
+}
+
+QList<ChatViewCommon::ReactionsItem>
+ChatViewCommon::updateReactions(const QString &senderNickname, const QString &messageId, const QSet<QString> &reactions)
+{
+    auto          msgIt = _reactions.find(messageId);
+    QSet<QString> toAdd = reactions;
+    QSet<QString> toRemove;
+
+    QHash<QString, QSet<QString>>::Iterator userIt;
+    if (msgIt != _reactions.end()) {
+        auto &sotredReactions = msgIt.value();
+        userIt                = sotredReactions.perUser.find(senderNickname);
+        if (userIt != sotredReactions.perUser.end()) {
+            toAdd    = reactions - userIt.value();
+            toRemove = userIt.value() - reactions;
+        } else {
+            userIt = sotredReactions.perUser.insert(senderNickname, {});
+        }
+    } else {
+        msgIt  = _reactions.insert(messageId, {});
+        userIt = msgIt.value().perUser.insert(senderNickname, {});
+    }
+    *userIt = reactions;
+    for (auto const &v : toAdd) {
+        msgIt.value().total[v].append(senderNickname);
+    }
+    for (auto const &v : toRemove) {
+        auto it = msgIt.value().total.find(v);
+        it->removeOne(senderNickname);
+        if (it->isEmpty()) {
+            msgIt.value().total.erase(it);
+        }
+    }
+    auto &total = msgIt.value().total;
+
+    QList<ReactionsItem> ret;
+    for (auto it = total.begin(); it != total.end(); ++it) {
+        static const auto skinRemove = QRegularExpression("([\\x{1F3FB}-\\x{1F3FF}]|[\\x{1F9B0}-\\x{1F9B2}])");
+        QString           orig       = it.key();
+        auto              sanitized  = orig.remove(skinRemove);
+        ret << ReactionsItem { sanitized != orig ? sanitized : QString {}, orig, it.value() };
+    }
+    if (total.isEmpty()) {
+        _reactions.erase(msgIt);
+    } else if (userIt->isEmpty()) {
+        msgIt.value().perUser.erase(userIt);
+    }
+    return ret;
+}
+
+QSet<QString> ChatViewCommon::onReactionSwitched(const QString &senderNickname, const QString &messageId,
+                                                 const QString &reaction)
+{
+    auto msgIt = _reactions.find(messageId);
+    if (msgIt == _reactions.end()) {
+        return { { reaction } };
+    }
+    auto userIt = msgIt->perUser.find(senderNickname);
+    if (userIt == msgIt->perUser.end()) {
+        return { { reaction } };
+    }
+    auto ret = *userIt;
+    if (ret.contains(reaction)) {
+        ret.remove(reaction);
+    } else {
+        ret.insert(reaction);
+    }
+    return ret;
 }

@@ -24,8 +24,14 @@
 #include "iris/xmpp_tasks.h"
 #include "iris/xmpp_vcard.h"
 #include "jidutil.h"
+#include "pepmanager.h"
 #include "profiles.h"
 #include "psiaccount.h"
+
+// #include "xmpp/xmpp-im/xmpp_caps.h"
+#include "xmpp/xmpp-im/xmpp_pubsubitem.h"
+#include "xmpp/xmpp-im/xmpp_serverinfomanager.h"
+#include "xmpp/xmpp-im/xmpp_vcard4.h"
 
 #include <QApplication>
 #include <QDir>
@@ -35,12 +41,51 @@
 #include <QObject>
 #include <QTextStream>
 
-#include <functional>
+// #define VCF_DEBUG 1
+
+#define PEP_VCARD4_NODE "urn:xmpp:vcard4"
+#define CONTACTS_NODE "urn:xmpp:contacts"
+#define PEP_VCARD4_NS "urn:ietf:params:xml:ns:vcard-4.0"
+
+using VCardRequestQueue = QList<VCardRequest *>;
+
+class VCardFactory::QueuedLoader : public QObject {
+    Q_OBJECT
+
+    static const int VcardReqInterval = 500; // query vcards
+
+    VCardFactory              *q;
+    VCardRequestQueue          queue_;
+    QHash<Jid, VCardRequest *> jid2req;
+    QTimer                     timer_;
+
+signals:
+    void vcardReceived(const VCardRequest *);
+
+public:
+    enum Priority { HighPriority, NormalPriority };
+
+    QueuedLoader(VCardFactory *vcf);
+    ~QueuedLoader();
+    VCardRequest *enqueue(PsiAccount *acc, const Jid &jid, Flags flags, Priority prio);
+};
 
 /**
  * \brief Factory for retrieving and changing VCards.
  */
-VCardFactory::VCardFactory() : QObject(qApp), dictSize_(5) { }
+VCardFactory::VCardFactory() : QObject(qApp), dictSize_(5), queuedLoader_(new QueuedLoader(this))
+{
+    connect(queuedLoader_, &QueuedLoader::vcardReceived, this, [this](const VCardRequest *request) {
+        if (request->success()) {
+            saveVCard(request->jid(), request->vcard(), request->flags());
+        }
+#ifdef VCF_DEBUG
+        else {
+            qDebug() << "vcard query failed for " << request->jid().full() << ": " << request->errorString();
+        }
+#endif
+    });
+}
 
 /**
  * \brief Destroys all cached VCards.
@@ -61,7 +106,7 @@ VCardFactory *VCardFactory::instance()
 /**
  * Adds a vcard to the cache (and removes other items if necessary)
  */
-void VCardFactory::checkLimit(const QString &jid, const VCard &vcard)
+void VCardFactory::checkLimit(const QString &jid, const VCard4::VCard &vcard)
 {
     if (vcardList_.contains(jid)) {
         vcardList_.removeAll(jid);
@@ -75,45 +120,32 @@ void VCardFactory::checkLimit(const QString &jid, const VCard &vcard)
     vcardList_.push_front(jid);
 }
 
-void VCardFactory::taskFinished()
+void VCardFactory::saveVCard(const Jid &j, const VCard4::VCard &vcard, Flags flags)
 {
-    JT_VCard *task        = static_cast<JT_VCard *>(sender());
-    bool      notifyPhoto = task->property("phntf").toBool();
-    if (task->success()) {
-        Jid j = task->jid();
+#ifdef VCF_DEBUG
+    qDebug() << "VCardFactory::saveVCard" << j.full();
+#endif
+    if (flags & MucUser) {
 
-        saveVCard(j, task->vcard(), notifyPhoto);
-    }
-}
-
-void VCardFactory::mucTaskFinished()
-{
-    JT_VCard *task        = static_cast<JT_VCard *>(sender());
-    bool      notifyPhoto = task->property("phntf").toBool();
-    if (task->success()) {
-        Jid   j          = task->jid();
         auto &nick2vcard = mucVcardDict_[j.bare()];
         auto  nickIt     = nick2vcard.find(j.resource());
         if (nickIt == nick2vcard.end()) {
-            nick2vcard.insert(j.resource(), task->vcard());
+            nick2vcard.insert(j.resource(), vcard);
             auto &resQueue = lastMucVcards_[j.bare()];
             resQueue.enqueue(j.resource());
             while (resQueue.size() > 3) { // keep max 3 vcards per muc
                 nick2vcard.remove(resQueue.dequeue());
             }
         } else {
-            *nickIt = task->vcard();
+            *nickIt = vcard;
         }
 
-        emit vcardChanged(j);
-        if (notifyPhoto && !task->vcard().photo().isEmpty()) {
-            emit vcardPhotoAvailable(j, true);
+        if (!(flags & Silent)) {
+            emit vcardChanged(j, flags);
         }
+        return;
     }
-}
 
-void VCardFactory::saveVCard(const Jid &j, const VCard &vcard, bool notifyPhoto)
-{
     checkLimit(j.bare(), vcard);
 
     // save vCard to disk
@@ -124,44 +156,41 @@ void VCardFactory::saveVCard(const Jid &j, const VCard &vcard, bool notifyPhoto)
     if (!v.exists())
         p.mkdir("vcard");
 
-    QFile file(ApplicationInfo::vCardDir() + '/' + JIDUtil::encode(j.bare()).toLower() + ".xml");
-    file.open(QIODevice::WriteOnly);
-    QTextStream out(&file);
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    out.setEncoding(QStringConverter::Utf8);
-#else
-    out.setCodec("UTF-8");
-#endif
-    QDomDocument doc;
-    doc.appendChild(vcard.toXml(&doc));
-    out << doc.toString(4);
+    auto filename = ApplicationInfo::vCardDir() + '/' + JIDUtil::encode(j.bare()).toLower() + ".xml";
+    if (vcard) {
+        vcard.save(filename);
+    } else {
+        QFile::remove(filename);
+    }
 
-    Jid  jid = j;
-    emit vcardChanged(jid);
-
-    if (notifyPhoto && !vcard.photo().isEmpty()) {
-        emit vcardPhotoAvailable(jid, false);
+    Jid jid = j;
+    if (!(flags & Silent)) {
+        emit vcardChanged(jid, flags);
     }
 }
 
 /**
  * \brief Call this, when you need a runtime cached vCard.
  */
-const VCard VCardFactory::mucVcard(const Jid &j) const
+const VCard4::VCard VCardFactory::mucVcard(const Jid &j) const
 {
-    QHash<QString, VCard>                d  = mucVcardDict_.value(j.bare());
-    QHash<QString, VCard>::ConstIterator it = d.constFind(j.resource());
+    QHash<QString, VCard4::VCard>                d  = mucVcardDict_.value(j.bare());
+    QHash<QString, VCard4::VCard>::ConstIterator it = d.constFind(j.resource());
     if (it != d.constEnd()) {
         return *it;
     }
-    return VCard();
+    return {};
 }
 
 /**
  * \brief Call this, when you need a cached vCard.
  */
-VCard VCardFactory::vcard(const Jid &j)
+VCard4::VCard VCardFactory::vcard(const Jid &j, Flags flags)
 {
+    if (flags & MucUser) {
+        return mucVcard(j);
+    }
+
     // first, try to get vCard from runtime cache
     if (vcardDict_.contains(j.bare())) {
         return vcardDict_[j.bare()];
@@ -173,14 +202,20 @@ VCard VCardFactory::vcard(const Jid &j)
         // REVIEW we can cache which files were really missed. or maybe set a flag for the contact
         return {};
     }
-    QDomDocument doc;
 
-    if (doc.setContent(&file, false)) {
-        VCard vcard = VCard::fromXml(doc.documentElement());
-        if (!vcard.isNull()) {
-            checkLimit(j.bare(), vcard);
-            return vcard;
+    VCard4::VCard v4 = VCard4::VCard::fromDevice(&file);
+    if (!v4) {
+        file.seek(0);
+        QDomDocument doc;
+        if (doc.setContent(&file, false)) {
+            VCard vcard = VCard::fromXml(doc.documentElement());
+            if (!vcard.isNull()) {
+                v4.fromVCardTemp(vcard);
+            }
         }
+    }
+    if (v4) {
+        checkLimit(j.bare(), v4);
     }
 
     return {};
@@ -189,66 +224,282 @@ VCard VCardFactory::vcard(const Jid &j)
 /**
  * \brief Call this when you need to update vCard in cache.
  */
-void VCardFactory::setVCard(const Jid &j, const VCard &v, bool notifyPhoto) { saveVCard(j, v, notifyPhoto); }
+// void VCardFactory::setVCard(const Jid &j, const VCard &v) { saveVCard(j, v); }
 
 /**
  * \brief Updates vCard on specified \a account.
  */
-void VCardFactory::setVCard(const PsiAccount *account, const VCard &v, QObject *obj, const char *slot)
+Task *VCardFactory::setVCard(PsiAccount *account, const VCard4::VCard &v, const Jid &targetJid, Flags flags)
 {
-    JT_VCard *jtVCard_ = new JT_VCard(account->client()->rootTask());
-    if (obj)
-        connect(jtVCard_, SIGNAL(finished()), obj, slot);
-    connect(jtVCard_, SIGNAL(finished()), SLOT(updateVCardFinished()));
-    jtVCard_->set(account->jid(), v);
-    jtVCard_->go(true);
-}
-
-/**
- * \brief Updates vCard on specified \a account.
- */
-void VCardFactory::setTargetVCard(const PsiAccount *account, const VCard &v, const Jid &mucJid, QObject *obj,
-                                  const char *slot)
-{
-    JT_VCard *jtVCard_ = new JT_VCard(account->client()->rootTask());
-    if (obj)
-        connect(jtVCard_, SIGNAL(finished()), obj, slot);
-    connect(jtVCard_, SIGNAL(finished()), SLOT(updateVCardFinished()));
-    jtVCard_->set(mucJid, v, true);
-    jtVCard_->go(true);
-}
-
-void VCardFactory::updateVCardFinished()
-{
-    JT_VCard *jtVCard = static_cast<JT_VCard *>(sender());
-    if (jtVCard && jtVCard->success()) {
-        setVCard(jtVCard->jid(), jtVCard->vcard());
+    if ((flags & MucRoom) || (flags & ForceVCardTemp)) {
+        // || !account->client()->serverInfoManager()->hasPersistentStorage()) {
+        JT_VCard *jtVCard_ = new JT_VCard(account->client()->rootTask());
+        connect(jtVCard_, &JT_VCard::finished, this, [this, v, jtVCard_, flags]() {
+            if (jtVCard_->success()) {
+                saveVCard(jtVCard_->jid(), v, flags);
+            }
+        });
+        jtVCard_->set(targetJid.isNull() ? account->jid() : targetJid, v.toVCardTemp(), !targetJid.isNull());
+        jtVCard_->go(true);
+        return jtVCard_;
     }
-    if (jtVCard) {
-        jtVCard->deleteLater();
-    }
+    QDomDocument *doc = account->client()->doc();
+    QDomElement   el  = v.toXmlElement(*doc);
+
+    return account->pepManager()->publish(QLatin1String(PEP_VCARD4_NODE), PubSubItem(QLatin1String("current"), el));
 }
 
 /**
  * \brief Call this when you need to retrieve fresh vCard from server (and store it in cache afterwards)
  */
-JT_VCard *VCardFactory::getVCard(const Jid &jid, Task *rootTask, const QObject *obj, std::function<void()> &&cb,
-                                 bool cacheVCard, bool isMuc, bool notifyPhoto)
+VCardRequest *VCardFactory::getVCard(PsiAccount *account, const Jid &jid, Flags flags)
 {
-    JT_VCard *task = new JT_VCard(rootTask);
-    if (notifyPhoto) {
-        task->setProperty("phntf", true);
+    return queuedLoader_->enqueue(account, jid, flags, QueuedLoader::HighPriority);
+}
+
+void VCardFactory::setPhoto(const Jid &j, const QByteArray &photo, Flags flags)
+{
+    VCard4::VCard vc;
+    Jid           sj;
+    if (flags & MucUser) {
+        sj = j;
+        vc = mucVcard(j);
+    } else {
+        sj = j.withResource({});
+        vc = vcard(sj);
     }
-    if (cacheVCard) {
-        if (isMuc)
-            task->connect(task, SIGNAL(finished()), this, SLOT(mucTaskFinished()));
-        else
-            task->connect(task, SIGNAL(finished()), this, SLOT(taskFinished()));
+    if (vc && vc.photo() != photo) {
+        vc.setPhoto(VCard4::UriValue {});
+        saveVCard(sj, vc, flags);
     }
-    task->connect(task, &JT_VCard::finished, obj, cb);
-    task->get(Jid(jid.full()));
-    task->go(true);
-    return task;
+}
+
+void VCardFactory::deletePhoto(const Jid &j, Flags flags)
+{
+    VCard4::VCard vc;
+    Jid           sj;
+    if (flags & MucUser) {
+        sj = j;
+        vc = mucVcard(j);
+    } else {
+        sj = j.withResource({});
+        vc = vcard(sj);
+    }
+    if (vc && !vc.photo().isEmpty()) {
+        vc.setPhoto(VCard4::UriValue {});
+        saveVCard(sj, vc, flags);
+    }
+}
+
+void VCardFactory::ensureVCardPhotoUpdated(PsiAccount *acc, const Jid &jid, Flags flags, const QByteArray &newPhotoHash)
+{
+    VCard4::VCard vc;
+    if (flags & MucUser) {
+        vc = mucVcard(jid);
+    } else {
+        vc = vcard(jid);
+    }
+    if (newPhotoHash.isEmpty()) {
+        if (!vc || vc.photo().isEmpty()) { // we didn't have it and still don't
+            return;
+        }
+        vc.setPhoto(VCard4::UriValue {}); // reset photo;
+        saveVCard(jid, vc, flags);
+
+        return;
+    }
+    auto oldHash = vc ? QCryptographicHash::hash(QByteArray(vc.photo()), QCryptographicHash::Sha1) : QByteArray();
+    if (oldHash != newPhotoHash) {
+#ifdef VCF_DEBUG
+        qDebug() << "hash mismatch. old=" << oldHash.toHex() << "new=" << photoHash.toHex();
+#endif
+        if (!newPhotoHash.isEmpty()) {
+            flags |= VCardFactory::ForceVCardTemp;
+        }
+        queuedLoader_->enqueue(acc, jid, flags, QueuedLoader::NormalPriority);
+    }
 }
 
 VCardFactory *VCardFactory::instance_ = nullptr;
+
+class VCardRequest::Private {
+public:
+    QList<QPointer<PsiAccount>> accounts;
+    Jid                         jid;
+    VCardFactory::Flags         flags;
+
+    using ErrorPtr = std::unique_ptr<XMPP::Stanza::Error>;
+    VCard4::VCard vcard;
+    ErrorPtr      error;
+    QString       statusString;
+
+    Private(PsiAccount *pa, const Jid &jid, VCardFactory::Flags flags) :
+        accounts({ { pa } }), jid(jid), flags(flags) { }
+};
+
+VCardRequest::VCardRequest(PsiAccount *account, const Jid &jid, VCardFactory::Flags flags) :
+    d(new Private(account, jid, flags))
+{
+}
+
+Jid &VCardRequest::jid() const { return d->jid; }
+
+VCardFactory::Flags VCardRequest::flags() const { return d->flags; }
+
+bool VCardRequest::execute()
+{
+    auto paIt = std::ranges::find_if(d->accounts, [](auto pa) { return pa && pa->isConnected(); });
+    if (paIt == d->accounts.end())
+        return false;
+
+    bool doTemp = (d->flags & VCardFactory::ForceVCardTemp) || (d->flags & VCardFactory::MucRoom)
+        || (d->flags & VCardFactory::MucUser);
+    auto pa = (*paIt);
+
+    // auto cm     = client->capsManager();
+    // if (!doTemp) {
+    //     if (d->jid.compare(pa->jid(), false)) {
+    //         // we can assume persistent storage is always there
+    //         doTemp = !client->serverInfoManager()->hasPersistentStorage();
+    //     } else {
+    //         // neither clients nor servers follow the XEP. so this check rather breaks stuff.
+    //         doTemp = !cm->features(d->jid).hasVCard4();
+    //     }
+    // }
+
+    if (doTemp) {
+        executeVCardTemp(pa);
+    } else {
+        executePubSub(pa);
+    }
+    return true;
+}
+
+void VCardRequest::executeVCardTemp(PsiAccount *pa)
+{
+    JT_VCard *task = new JT_VCard(pa->client()->rootTask());
+    task->connect(task, &JT_VCard::finished, this, [this, task]() {
+        if (task->success()) {
+            d->vcard.fromVCardTemp(task->vcard());
+        } else if (!task->error().isCancel()
+                   || task->error().condition != XMPP::Stanza::Error::ErrorCond::ItemNotFound) {
+
+            d->error.reset(new Stanza::Error(task->error()));
+            d->statusString = task->statusString();
+        }
+        emit finished();
+        deleteLater();
+    });
+    task->get(d->jid);
+    task->go(true);
+}
+
+void VCardRequest::executePubSub(PsiAccount *pa)
+{
+    auto task = pa->pepManager()->get(d->jid, QLatin1String(PEP_VCARD4_NODE), QLatin1String("current"));
+    task->connect(task, &PEPGetTask::finished, this, [this, task, ppa = QPointer<PsiAccount>(pa)]() {
+        if (task->success()) {
+            if (!task->items().empty()) {
+                d->vcard = VCard4::VCard(task->items().last().payload());
+            } else {
+                if (ppa) {
+                    executeVCardTemp(ppa);
+                    return;
+                }
+            }
+        } else if (!task->error().isCancel()
+                   || task->error().condition != XMPP::Stanza::Error::ErrorCond::ItemNotFound) {
+            // consider not found vcard as not an error. maybe user removed their vcard intentionally
+            d->error.reset(new Stanza::Error(task->error()));
+            d->statusString = task->statusString();
+        } else {
+            // we can still try vcard-temp as a fallback
+            if (ppa) {
+                executeVCardTemp(ppa);
+                return;
+            }
+        }
+        emit finished();
+        deleteLater();
+    });
+}
+
+void VCardRequest::merge(PsiAccount *account, const Jid &, VCardFactory::Flags flags)
+{
+    d->flags |= flags;
+    if (!std::any_of(d->accounts.begin(), d->accounts.end(), [account](auto const &p) { return p == account; })) {
+        d->accounts << QPointer(account);
+    }
+}
+
+bool VCardRequest::success() const { return d->error == nullptr; }
+
+VCard4::VCard VCardRequest::vcard() const { return d->vcard; }
+
+QString VCardRequest::errorString() const { return d->statusString.isEmpty() ? d->error->toString() : d->statusString; }
+
+VCardRequest::~VCardRequest() = default;
+
+VCardFactory::QueuedLoader::QueuedLoader(VCardFactory *vcf) : QObject(vcf), q(vcf)
+{
+    timer_.setSingleShot(false);
+    timer_.setInterval(VcardReqInterval);
+    QObject::connect(&timer_, &QTimer::timeout, this, [this]() {
+        if (queue_.isEmpty()) {
+            timer_.stop();
+            return;
+        }
+        auto request = queue_.takeFirst();
+        connect(request, &VCardRequest::finished, this, [this, request]() {
+#ifdef VCF_DEBUG
+            qDebug() << "received VCardRequest" << request->jid().full();
+#endif
+            emit vcardReceived(request);
+            jid2req.remove(request->jid());
+            request->deleteLater();
+        });
+        auto started = request->execute();
+        if (!started) {
+            jid2req.remove(request->jid());
+            request->deleteLater();
+        }
+        if (queue_.isEmpty()) {
+            timer_.stop();
+        }
+    });
+}
+
+VCardFactory::QueuedLoader::~QueuedLoader() { qDeleteAll(jid2req); }
+
+VCardRequest *VCardFactory::QueuedLoader::enqueue(PsiAccount *acc, const Jid &jid, Flags flags, Priority prio)
+{
+    auto sanitized_jid = jid;
+    if (!(flags & MucUser)) {
+        sanitized_jid = jid.withResource({});
+    }
+    auto req = jid2req[sanitized_jid];
+    if (!req) {
+#ifdef VCF_DEBUG
+        qDebug() << "new VCardRequest" << sanitized_jid.full() << flags;
+#endif
+        req                    = new VCardRequest(acc, sanitized_jid, flags);
+        jid2req[sanitized_jid] = req;
+        if (prio == HighPriority) {
+            queue_.prepend(req);
+        } else {
+            queue_.append(req);
+        }
+    } else {
+#ifdef VCF_DEBUG
+        qDebug() << "merge VCardRequest" << sanitized_jid.full() << flags;
+#endif
+        req->merge(acc, sanitized_jid, flags);
+    }
+
+    if (!timer_.isActive()) {
+        timer_.start();
+    }
+    return req;
+}
+
+#include "vcardfactory.moc"

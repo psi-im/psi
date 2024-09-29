@@ -213,3 +213,9 @@ bool ActiveProfiles::raise(const QString &profile, bool withUI) const
     }
     return rmsg.type() == QDBusMessage::ReplyMessage;
 }
+
+bool ActiveProfiles::quit(const QString &profile) const
+{
+    QDBusInterface(d->dbusName(profile), "/Main", PSIDBUSMAINIF).call(QDBus::NoBlock, "quit");
+    return true;
+}

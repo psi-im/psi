@@ -251,7 +251,7 @@ QModelIndex EmojiModel::index(int row, int column, const QModelIndex &parent) co
         auto        groupId         = groupInternalId >> 24;
         auto const &group           = EmojiRegistry::instance().groups[groupId];
 
-        auto relColumn = column;
+        std::size_t relColumn = column;
         for (auto const &subGroup : group.subGroups) {
             if (relColumn < subGroup.emojis.size()) {
                 auto subGroupId      = &subGroup - &group.subGroups[0];
@@ -262,8 +262,9 @@ QModelIndex EmojiModel::index(int row, int column, const QModelIndex &parent) co
         }
     } else {
         auto const &groups = EmojiRegistry::instance().groups;
-        if (row < groups.size()) {
-            return createIndex(row, column, (quintptr(row) << 24) | 0x00ffffff + 1); // 0x00ffffff - refers group itself
+        quintptr    rowx   = row;
+        if (rowx < groups.size()) {
+            return createIndex(row, column, (rowx << 24) | 0x00ffffff + 1); // 0x00ffffff - refers group itself
         }
     }
     return QModelIndex();
@@ -295,7 +296,7 @@ int EmojiModel::rowCount(const QModelIndex &parent) const
         int         sum   = 0;
         auto const &group = EmojiRegistry::instance().groups[id >> 24];
         for (auto const &subGroup : group.subGroups) {
-            sum += subGroup.emojis.size();
+            sum += int(subGroup.emojis.size());
         }
         return sum;
     }

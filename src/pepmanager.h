@@ -20,7 +20,9 @@
 #ifndef PEPMANAGER_H
 #define PEPMANAGER_H
 
-#include <QObject>
+#include "iris/xmpp_task.h"
+
+#include <optional>
 
 class PubSubSubscription;
 class QString;
@@ -35,11 +37,32 @@ class ServerInfoManager;
 }
 using namespace XMPP;
 
+class PEPGetTask : public Task {
+public:
+    PEPGetTask(Task *parent, const QString &jid, const QString &node, const QString &itemID);
+
+    void onGo();
+
+    bool take(const QDomElement &x);
+
+    const QList<PubSubItem> &items() const;
+
+    const QString &jid() const;
+
+    const QString &node() const;
+
+private:
+    QDomElement       iq_;
+    QString           jid_;
+    QString           node_;
+    QList<PubSubItem> items_;
+};
+
 class PEPManager : public QObject {
     Q_OBJECT
 
 public:
-    enum Access { DefaultAccess, PresenceAccess, PublicAccess };
+    enum class Access { Open, Presence, Roster, Authorize, Whitelist };
 
     PEPManager(XMPP::Client *client, ServerInfoManager *serverInfo);
 
@@ -50,10 +73,11 @@ public:
     // void subscribe(const QString&, const QString&);
     // void unsubscribe(const QString&, const QString&);
 
-    void publish(const QString &node, const PubSubItem &, Access = DefaultAccess);
-    void retract(const QString &node, const QString &id);
-    void disable(const QString &tagName, const QString &node, const QString &id);
-    void get(const Jid &jid, const QString &node, const QString &id);
+    XMPP::Task *publish(const QString &node, const PubSubItem &, std::optional<Access> = {},
+                        bool           persisteItems = false);
+    void        retract(const QString &node, const QString &id);
+    void        disable(const QString &tagName, const QString &node, const QString &id);
+    PEPGetTask *get(const Jid &jid, const QString &node, const QString &id);
 
     // void getSubscriptions(const Jid& jid);
 

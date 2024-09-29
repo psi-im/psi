@@ -139,7 +139,7 @@ public:
         QPalette             palette = o.palette;
         MUCItem::Role        r       = index.data(GCUserModel::StatusRole).value<Status>().mucItem().role();
         QRect                rect    = o.rect;
-        int                  gap     = qMax(int(fontHeight_ / 6), 1);
+        int                  gap     = qMax(int(fontHeight_ / 3), 1);
 
         if (nickColoring_) {
             if (r == MUCItem::Moderator)

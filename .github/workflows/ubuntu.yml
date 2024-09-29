@@ -19,8 +19,8 @@ jobs:
         chattype: ['BASIC', 'WEBENGINE']
         include:
           - compiler: 'clang'
-            cc: 'clang'
-            cxx: 'clang++'
+            cc: 'clang-17'
+            cxx: 'clang++-17'
           - compiler: 'gcc'
             cc: 'gcc'
             cxx: 'g++'
@@ -32,15 +32,28 @@ jobs:
     - name: Updating apt package metadata
       run: |
         sudo apt-get update
-    - name: Installing compiler ${{ matrix.compiler }}
+
+    - name: Installing compiler GCC
+      if: ${{ matrix.compiler == 'gcc' }}
       run: |
         sudo apt-get -y install ${{ matrix.compiler }}
+
+    - name: Installing compiler CLang
+      if: ${{ matrix.compiler == 'clang' }}
+      run: |
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x ./llvm.sh
+        sudo ./llvm.sh 17
+
+    - name: Remove conflicting slotted packages
+      run: |
+        sudo apt-get remove libunwind-*
     - name: Installing build system
       run: |
         sudo apt-get -y install cmake make
     - name: Installing development packages
       run: |
-        sudo apt-get -y install \
+        sudo apt-get -y install --no-install-recommends \
             gstreamer1.0-dev \
             libhttp-parser-dev \
             libhunspell-dev \

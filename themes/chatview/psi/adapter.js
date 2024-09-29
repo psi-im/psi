@@ -21,13 +21,30 @@ function psiThemeAdapter(chat) {
     chat.console("Psi adapter is ready");
 
     return {
-    loadTheme : function() {
+    loadTheme : function(style) {
+        const finishSetup = (html, js, scripts) => {
+            var hasStyles = html.indexOf("%styles%") !== -1;
+            var hasStylesVariant = html.indexOf("%stylesVariant%") !==  -1;
+            var styles = '<link rel="stylesheet" href="/psi/themes/chatview/psi/psi.css" type="text/css">';
+            var stylesVariant = `<link rel="stylesheet" href="${style}.css" type="text/css">`;
+            if (style && !hasStylesVariant) {
+                styles +=  stylesVariant;
+            }
+            html = html.replace("%scripts%", scripts + (hasStyles?"":"%styles%"));
+            html = html.replace("%styles%", styles);
+            if (hasStylesVariant) {
+                html = html.replace("%stylesVariant%", style? stylesVariant : "");
+            }
+            srvLoader.setHtml(html);
+            eval(js);
+            srvLoader.finishThemeLoading();
+        };
+
         if (chat.async) {
             srvLoader.getFileContents("index.html", function(html){
                 // FIXME we have a lot of copies of this html everywhere. should be rewritten somehow
                 // probably it's a good idea if adapter will send to Psi a list of required scripts
-                var hasStyles = html.indexOf("%styles%") !== -1;
-                html = html.replace("%scripts%", "<script src=\"/psi/themes/chatview/moment-with-locales.js\"></script>\n \
+                var scripts = "<script src=\"/psi/themes/chatview/moment-with-locales.js\"></script>\n \
 <script src=\"/psi/themes/chatview/util.js\"></script>\n \
 <script src=\"/psi/themes/chatview/psi/adapter.js\"></script>\n \
 <script src=\"/psi/static/qwebchannel.js\"></script>\n \
@@ -37,24 +54,16 @@ function psiThemeAdapter(chat) {
         window.srvUtil = channel.objects.srvUtil;\n \
         var shared = initPsiTheme().adapter.initSession();\n \
     });\n \
-</script>" + (hasStyles?"":"%styles%"));
-                html = html.replace("%styles%", '<link rel="stylesheet" href="/psi/themes/chatview/psi/psi.css" type="text/css">');
-                srvLoader.setHtml(html);
+</script>";
                 srvLoader.getFileContents("load.js", function(js){
-                    eval(js);
-                    srvLoader.finishThemeLoading();
+                    finishSetup(html, js, scripts)
                 })
             });
         } else {
             var html = srvLoader.getFileContents("index.html");
-            html = html.replace("%scripts%", "<script type=\"text/javascript\"> \
-                                var shared = initPsiTheme().adapter.initSession(); \
-                        </script>" + (html.indexOf("%styles%") === -1?"%styles%":"") );
-            html = html.replace("%styles%", '<link rel="stylesheet" href="/psi/themes/chatview/psi/psi.css" type="text/css">');
-
-            srvLoader.setHtml(html);
-            eval(srvLoader.getFileContents("load.js"));
-            srvLoader.finishThemeLoading();
+            var js = srvLoader.getFileContents("load.js");
+            var scripts = `<script type="text/javascript">var shared = initPsiTheme().adapter.initSession();</script>`;
+            finishSetup(html, js, scripts);
         }
     },
     initSession : function() {
@@ -88,6 +97,14 @@ function psiThemeAdapter(chat) {
                 this.formatter = new chat.DateTimeFormatter(format || shared.dateFormat);
             },
 
+            TemplateTemplateVar : function(template_name) {
+                this.template_name = template_name;
+            },
+
+            TemplateEscapeUriVar : function(name) {
+                this.name = name; // cdata member name
+            },
+
             Template : function(raw) {
                 var splitted = raw.split(/(%[\w]+(?:\{[^\{]+\})?%)/), i;
                 this.parts = [];
@@ -95,9 +112,12 @@ function psiThemeAdapter(chat) {
                 for (i = 0; i < splitted.length; i++) {
                     var m = splitted[i].match(/%([\w]+)(?:\{([^\{]+)\})?%/);
                     if (m) {
-                        this.parts.push(m[1] == "time"
-                            ? new shared.TemplateTimeVar(m[1], m[2])
-                            : new shared.TemplateVar(m[1], m[2]));
+                        switch (m[1]) {
+                        case "time": this.parts.push(new shared.TemplateTimeVar(m[1], m[2])); break;
+                        case "template": this.parts.push(new shared.TemplateTemplateVar(m[2])); break;
+                        case "escapeURI": this.parts.push(new shared.TemplateEscapeUriVar(m[2])); break;
+                        default: this.parts.push(new shared.TemplateVar(m[1], m[2])); break;
+                        }
                     } else {
                         this.parts.push(splitted[i]);
                     }
@@ -108,17 +128,21 @@ function psiThemeAdapter(chat) {
                 if (typeof(scroll) == 'boolean') {
                     shared.scroller.atBottom = scroll;
                 }
+                var el;
                 if (nextEl) {
-                    chat.util.siblingHtml(nextEl, html);
+                    el = chat.util.siblingHtml(nextEl, html);
                 } else {
-                    chat.util.appendHtml(shared.chatElement, html);
+                    el = chat.util.appendHtml(shared.chatElement, html, shared.isMuc? shared.cdata.sender : "");
                 }
                 shared.scroller.invalidate();
+                return el;
             },
 
             stopGroupping : function() {
                 if (shared.prevGrouppingData) {
-                    shared.prevGrouppingData.nextEl.parentNode.removeChild(shared.prevGrouppingData.nextEl)
+                    if (shared.prevGrouppingData.nextEl) {
+                        shared.prevGrouppingData.nextEl.parentNode.removeChild(shared.prevGrouppingData.nextEl);
+                    }
                     shared.prevGrouppingData = null;
                 }
             },
@@ -135,20 +159,20 @@ function psiThemeAdapter(chat) {
                 shared.groupping = config.groupping || shared.groupping;
                 proxy = config.proxy;
                 shared.varHandlers = config.varHandlers || {};
+                shared.msgElPostProcess = config.postProcess;
                 for (var tname in config.templates) {
                     if (config.templates[tname]) {
-                        t[tname] = new shared.Template(config.templates[tname]);
+                        t[tname] = new shared.Template(config.templates[tname].trim());
                     }
                 }
                 t.message = t.message || "%message%";
                 t.sys = t.sys || "%message%";
                 t.sysMessage = t.sysMessage || t.sys;
                 t.sysMessageUT = t.sysMessageUT || t.sysMessage;
-                t.statusMessageUT = t.statusMessageUT || (t.statusMessage || t.sysMessageUT);
                 t.statusMessage = t.statusMessage || t.sysMessage;
+                t.statusMessageUT = t.statusMessageUT || (t.statusMessage || t.sysMessageUT);
                 t.sentMessage = t.sentMessage || t.message;
                 t.receivedMessage = t.receivedMessage || t.message;
-                t.spooledMessage = t.spooledMessage || t.message;
                 t.receivedMessageGroupping = t.receivedMessageGroupping || t.messageGroupping;
                 t.sentMessageGroupping = t.sentMessageGroupping || t.messageGroupping;
                 t.lastMsgDate = t.lastMsgDate || t.sys;
@@ -197,8 +221,9 @@ function psiThemeAdapter(chat) {
 
         shared.TemplateVar.prototype = {
             toString : function() {
-                if (shared.varHandlers[this.name]) {
-                    return shared.varHandlers[this.name]();
+                const varHandler = shared.varHandlers[this.name];
+                if (varHandler) {
+                    return varHandler();
                 }
                 var d = shared.cdata[this.name];
                 if (this.name == "sender") { //may not be html
@@ -238,10 +263,18 @@ function psiThemeAdapter(chat) {
                         this.formatter.format(new Date());
         }
 
+        shared.TemplateTemplateVar.prototype.toString = function() {
+            var tt = shared.templates[this.template_name];
+            return "" + tt;
+        }
+
+        shared.TemplateEscapeUriVar.prototype.toString = function() {
+            return encodeURIComponent(shared.cdata[this.name]);
+        }
+
         shared.Template.prototype.toString = function() {
             return this.parts.join("");
         }
-
 
         chat.adapter.receiveObject = function(data) {
             shared.cdata = data;
@@ -274,11 +307,7 @@ function psiThemeAdapter(chat) {
                             }
                             if (!template) {
                                 data.nextOfGroup = false; //can't group w/o template
-                                if (data.spooled) {
-                                    template = shared.templates.spooledMessage;
-                                } else {
-                                    template = data.local?shared.templates.sentMessage:shared.templates.receivedMessage;
-                                }
+                                template = data.local?shared.templates.sentMessage:shared.templates.receivedMessage;
                             }
                             break;
                         case "join":
@@ -306,8 +335,11 @@ function psiThemeAdapter(chat) {
                             break;
                     }
                     if (template) {
-                        shared.appendHtml(template.toString(), data.local?true:null, data.nextOfGroup?
+                        var el = shared.appendHtml(template.toString(), data.local?true:null, data.nextOfGroup?
                             shared.prevGrouppingData.nextEl:null); //force scroll on local messages
+                        if (shared.msgElPostProcess) {
+                            shared.msgElPostProcess(el);
+                        }
                         shared.stopGroupping();// safe clean up previous data
                         if (shared.cdata.nextEl) { //convert to DOM
                             shared.cdata.nextEl = document.getElementById(shared.cdata.nextEl);

@@ -32,6 +32,7 @@
 #ifdef WEBENGINE
 #include <QWebEngineSettings>
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include "iconset.h"
 #include <QWebEngineContextMenuRequest>
 #elif QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
 #include <QWebEngineContextMenuData>
@@ -53,7 +54,9 @@ WebView::WebView(QWidget *parent) :
     setAcceptDrops(false);
 
 #ifdef WEBENGINE
-    setAttribute(Qt::WA_NativeWindow);
+#ifdef Q_OS_WIN
+    setAttribute(Qt::WA_NativeWindow); // see https://bugreports.qt.io/browse/QTBUG-119221 (potentially unstable)
+#endif
     settings()->setAttribute(QWebEngineSettings::PluginsEnabled, false);
     settings()->setAttribute(QWebEngineSettings::LocalStorageEnabled, false);
     // TODO cache cotrol
@@ -70,7 +73,7 @@ WebView::WebView(QWidget *parent) :
     connectPageActions();
 }
 
-WebView::~WebView() { qDebug("WebView::~WebView"); }
+WebView::~WebView() { /*qDebug("WebView::~WebView");*/ }
 
 void WebView::linkClickedEvent(const QUrl &url)
 {

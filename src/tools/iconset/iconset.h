@@ -181,6 +181,8 @@ private:
 
 class Iconset {
 public:
+    using value_type = PsiIcon *;
+
     enum class Format { Psi, KdeEmoticons };
 
     Iconset();

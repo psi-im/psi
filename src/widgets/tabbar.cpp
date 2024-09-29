@@ -34,7 +34,7 @@
 #include <QStylePainter>
 #include <memory>
 
-#define PINNED_CHARS 12
+#define PINNED_CHARS 16
 
 class CloseButton : public QAbstractButton {
     Q_OBJECT
@@ -323,8 +323,8 @@ void TabBar::Private::layoutTabs()
     LayoutSf layout;
     if (rows == 1 || hackedTabs.size() == 1) {
         // Only one row in bar
-        rows       = 1;
-        normalRows = 1;
+        rows = 1;
+        // normalRows = 1;
         layout << RowSf();
         layout[0].number = 0;
         layout[0].sf     = qMin(1.5, sf);

@@ -133,6 +133,8 @@ public:
 
     virtual XData::Field field() const { return _field; }
 
+    virtual QWidget *focusProxy() const { return nullptr; }
+
     QString labelText(QString str = ": ") const
     {
         QString text = _field.label();
@@ -299,6 +301,8 @@ public:
         return f;
     }
 
+    QWidget *focusProxy() const { return edit; }
+
 protected:
     QLineEdit *edit;
 };
@@ -388,6 +392,8 @@ public:
         return f;
     }
 
+    QWidget *focusProxy() const { return combo; }
+
 private:
     QComboBox *combo;
 };
@@ -457,6 +463,8 @@ public:
         return f;
     }
 
+    QWidget *focusProxy() const { return list; }
+
 private:
     QListWidget *list;
 };
@@ -505,6 +513,8 @@ public:
         f.setValue(edit->toPlainText().split("\n"));
         return f;
     }
+
+    QWidget *focusProxy() const { return edit; }
 
 private:
     QTextEdit *edit;
@@ -614,7 +624,8 @@ void XDataWidget::setForm(const XMPP::XData &d, bool withInstructions)
             consistent_ = false;
         }
         if (!consistent_) {
-            consistencyError_ = Stanza::Error(Stanza::Error::Modify, Stanza::Error::NotAcceptable);
+            consistencyError_
+                = Stanza::Error(Stanza::Error::ErrorType::Modify, Stanza::Error::ErrorCond::NotAcceptable);
         }
         // TODO check if captcha was sent too late (more than 2 minutes)
     } else {
@@ -645,6 +656,7 @@ void XDataWidget::setFields(const XData::FieldList &f)
         // FIXME
         QGridLayout *grid = new QGridLayout(fields);
         grid->setSpacing(3);
+        bool focusSet = false;
 
         XData::FieldList::ConstIterator it = f.begin();
         for (; it != f.end(); ++it) {
@@ -682,6 +694,14 @@ void XDataWidget::setFields(const XData::FieldList &f)
                 f = new XDataField_TextSingle(*it, grid, this);
             }
             fields_.append(f);
+            auto proxy = f->focusProxy();
+            if (proxy) {
+                if (!focusSet) {
+                    setFocusProxy(proxy);
+                    focusSet = true;
+                }
+                lastFocusableWidget_ = proxy;
+            }
         }
     }
 }

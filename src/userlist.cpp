@@ -410,12 +410,10 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
     // you most probably want to wrap it with TextUtil::escape()
 
     QString str;
-    int     iconSize = PsiIconset::instance()->system().iconSize();
     str += QString("<style type='text/css'> \
-        .layer1 { white-space:pre; margin-left:%1px;} \
-        .layer2 { white-space:normal; margin-left:%1px;} \
-    </style>")
-               .arg(iconSize + 2);
+        .layer1 { white-space:pre; } \
+        .layer2 { white-space:normal;} \
+    </style>");
 
     QString imgTag = "icon name"; // or 'img src' if appropriate QMimeSourceFactory is installed. but mblsha noticed
                                   // that QMimeSourceFactory unloads sometimes
@@ -437,9 +435,9 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
     str += "<table cellspacing=\"3\"><tr>";
 
     if (useAvatar) {
-        str += QString("<td width=\"%1\">").arg(QFontInfo(QApplication::font()).pixelSize() * 5);
-        str += QString(R"(<icon name="avatars/%1" size="-5">)").arg(mucItem ? jid().full() : jid().bare());
-        str += "</td><td width=\"10\"></td>";
+        str += QString("<td width=\"64\">");
+        str += QString(R"(<icon name="avatars/%1" max-width="64">)").arg(mucItem ? jid().full() : jid().bare());
+        str += "</td><td width=\"5\"></td>";
     }
     str += "<td>";
 

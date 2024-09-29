@@ -75,9 +75,13 @@ static const QString animation1ColorPath(QStringLiteral("options.ui.look.colors.
 static const QString animation2ColorPath(QStringLiteral("options.ui.look.colors.contactlist.status-change-animation2"));
 static const QString statusMessageColorPath(QStringLiteral("options.ui.look.colors.contactlist.status-messages"));
 static const QString
-    headerBackgroungColorPath(QStringLiteral("options.ui.look.colors.contactlist.grouping.header-background"));
+    accountHeaderBackgroundColorPath(QStringLiteral("options.ui.look.colors.contactlist.profile.header-background"));
 static const QString
-    headerForegroungColorPath(QStringLiteral("options.ui.look.colors.contactlist.grouping.header-foreground"));
+    accountHeaderForegroundColorPath(QStringLiteral("options.ui.look.colors.contactlist.profile.header-foreground"));
+static const QString
+    groupHeaderBackgroundColorPath(QStringLiteral("options.ui.look.colors.contactlist.grouping.header-background"));
+static const QString
+    groupHeaderForegroundColorPath(QStringLiteral("options.ui.look.colors.contactlist.grouping.header-foreground"));
 
 static QRect relativeRect(const QStyleOption &option, const QSize &size, const QRect &prevRect, int padding = 0)
 {
@@ -113,13 +117,7 @@ static QRect relativeRect(const QStyleOption &option, const QSize &size, const Q
 ContactListViewDelegate::Private::Private(ContactListViewDelegate *parent, ContactListView *contactList) :
     QObject(), q(parent), contactList(contactList), horizontalMargin_(5), verticalMargin_(3), statusIconSize_(0),
     avatarRadius_(0), alertTimer_(new QTimer(this)), animTimer(new QTimer(this)), fontMetrics_(QFont()),
-    statusFontMetrics_(QFont()), statusSingle_(false), showStatusMessages_(false), slimGroup_(false),
-    outlinedGroup_(false), showClientIcons_(false), showMoodIcons_(false), showActivityIcons_(false),
-    showGeolocIcons_(false), showTuneIcons_(false), showAvatars_(false), useDefaultAvatar_(false), avatarAtLeft_(false),
-    showStatusIcons_(false), statusIconsOverAvatars_(false), enableGroups_(false), allClients_(false), animPhase(false),
-    _awayColor(QColor()), _dndColor(QColor()), _offlineColor(QColor()), _onlineColor(QColor()),
-    _animation1Color(QColor()), _animation2Color(QColor()), _statusMessageColor(QColor()),
-    _headerBackgroundColor(QColor()), _headerForegroundColor(QColor())
+    statusFontMetrics_(QFont())
 {
     alertTimer_->setInterval(ALERT_INTERVAL);
     alertTimer_->setSingleShot(false);
@@ -311,13 +309,23 @@ void ContactListViewDelegate::Private::colorOptionChanged(const QString &option)
         if (showStatusMessages_ && statusSingle_)
             updateViewPort = true;
     }
-    if (bulkUpdate || (!updated && option == headerBackgroungColorPath)) {
-        _headerBackgroundColor = ColorOpt::instance()->color(headerBackgroungColorPath);
-        updated                = true;
-        updateViewPort         = true;
+    if (bulkUpdate || (!updated && option == accountHeaderBackgroundColorPath)) {
+        _accountHeaderBackgroundColor = ColorOpt::instance()->color(accountHeaderBackgroundColorPath);
+        updated                       = true;
+        updateViewPort                = true;
     }
-    if (bulkUpdate || (!updated && option == headerForegroungColorPath)) {
-        _headerForegroundColor = ColorOpt::instance()->color(headerForegroungColorPath);
+    if (bulkUpdate || (!updated && option == accountHeaderForegroundColorPath)) {
+        _accountHeaderForegroundColor = ColorOpt::instance()->color(accountHeaderForegroundColorPath);
+        updated                       = true;
+        updateViewPort                = true;
+    }
+    if (bulkUpdate || (!updated && option == groupHeaderBackgroundColorPath)) {
+        _groupHeaderBackgroundColor = ColorOpt::instance()->color(groupHeaderBackgroundColorPath);
+        updated                     = true;
+        updateViewPort              = true;
+    }
+    if (bulkUpdate || (!updated && option == groupHeaderForegroundColorPath)) {
+        _groupHeaderForegroundColor = ColorOpt::instance()->color(groupHeaderForegroundColorPath);
         // updated = true;
         updateViewPort = true;
     }
@@ -943,15 +951,15 @@ void ContactListViewDelegate::Private::drawGroup(QPainter *painter, const QModel
     o.fontMetrics          = fontMetrics_;
     QPalette palette       = o.palette;
     if (!slimGroup_)
-        palette.setColor(QPalette::Base, _headerBackgroundColor);
-    palette.setColor(QPalette::Text, _headerForegroundColor);
+        palette.setColor(QPalette::Base, _groupHeaderBackgroundColor);
+    palette.setColor(QPalette::Text, _groupHeaderForegroundColor);
     o.palette = palette;
 
     drawBackground(painter, o, index);
 
     QRect r = opt.rect;
     if (!slimGroup_ && outlinedGroup_) {
-        painter->setPen(QPen(_headerForegroundColor));
+        painter->setPen(QPen(_groupHeaderForegroundColor));
         QRect gr(r);
         int   s = painter->pen().width();
         gr.adjust(0, 0, -s, -s);
@@ -979,7 +987,7 @@ void ContactListViewDelegate::Private::drawGroup(QPainter *painter, const QModel
 #else
         int x = r.left() + fontMetrics_.width(text) + 8;
 #endif
-        painter->setPen(QPen(_headerBackgroundColor, 2));
+        painter->setPen(QPen(_groupHeaderBackgroundColor, 2));
         painter->drawLine(x, h, r.right(), h);
     }
 }
@@ -990,14 +998,14 @@ void ContactListViewDelegate::Private::drawAccount(QPainter *painter, const QMod
     o.font                 = font_;
     o.fontMetrics          = fontMetrics_;
     QPalette palette       = o.palette;
-    palette.setColor(QPalette::Base, _headerBackgroundColor);
-    palette.setColor(QPalette::Text, _headerForegroundColor);
+    palette.setColor(QPalette::Base, _accountHeaderBackgroundColor);
+    palette.setColor(QPalette::Text, _accountHeaderForegroundColor);
     o.palette = palette;
 
     drawBackground(painter, o, index);
 
     if (outlinedGroup_) {
-        painter->setPen(QPen(_headerForegroundColor));
+        painter->setPen(QPen(_accountHeaderForegroundColor));
         QRect r(opt.rect);
         int   s = painter->pen().width();
         r.adjust(0, 0, -s, -s);

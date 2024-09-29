@@ -45,10 +45,11 @@ public slots:
 private:
     enum Role {
         // DisplayRole / EditRole
-        JidRole      = Qt::UserRole + 0,
-        AutoJoinRole = Qt::UserRole + 1,
-        NickRole     = Qt::UserRole + 2,
-        PasswordRole = Qt::UserRole + 3
+        MucNameRole  = Qt::UserRole + 0,
+        JidRole      = Qt::UserRole + 2,
+        AutoJoinRole = Qt::UserRole + 3,
+        NickRole     = Qt::UserRole + 4,
+        PasswordRole = Qt::UserRole + 5
     };
 
     void loadBookmarks();

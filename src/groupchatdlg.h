@@ -51,6 +51,8 @@ public:
 
     PsiAccount *account() const;
 
+    void leave();
+
     void             error(int, const QString &);
     void             gcSelfPresence(const Status &s);
     void             presence(const QString &, const Status &);
@@ -119,8 +121,6 @@ private slots:
     void doShowInfo();
     void doClear();
     void doClearButton();
-    void copyMucJid();
-    void doRemoveBookmark();
     void buildMenu();
     void logSelectionChanged();
     void setConnecting();
@@ -145,6 +145,8 @@ private slots:
     void avatarUpdated(const Jid &jid);
     void doContactContextMenu(const QString &nick);
 
+    void outgoingReactions(const QString &messageId, const QSet<QString> &reactions);
+    void sendMessageRetraction(const QString &messageId);
 public:
     class Private;
     friend class Private;
@@ -169,6 +171,8 @@ private:
     inline XMPP::Jid jidForNick(const QString &nick) const;
 
     void setMucSelfAvatar();
+    void updateIdentityVisibility();
+    void updateConfiguration();
 };
 
 #endif // GROUPCHATDLG_H

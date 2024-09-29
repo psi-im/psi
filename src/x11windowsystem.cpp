@@ -94,7 +94,7 @@ auto getRootWindow()
 
 bool X11WindowSystem::isValid() const { return ::isPlatformX11(); }
 
-void X11WindowSystem::x11wmClass(WId wid, QString resName)
+void X11WindowSystem::x11wmClass(QWidget *widget, QString resName)
 {
 #if defined(LIMIT_X11_USAGE)
     return;
@@ -103,16 +103,18 @@ void X11WindowSystem::x11wmClass(WId wid, QString resName)
     if (!isValid()) // Avoid crashes if launched in Wayland
         return;
 
+    auto winId = widget->winId();
+
     Display *dsp = getDisplay(); // get the display
     // WId win = winId();                           // get the window
     XClassHint classhint; // class hints
     // Get old class hint. It is important to save old class name
-    XGetClassHint(dsp, wid, &classhint);
+    XGetClassHint(dsp, winId, &classhint);
     XFree(classhint.res_name);
 
     const QByteArray latinResName = resName.toLatin1();
     classhint.res_name            = const_cast<char *>(latinResName.data()); // res_name
-    XSetClassHint(dsp, wid, &classhint);                                     // set the class hints
+    XSetClassHint(dsp, winId, &classhint);                                   // set the class hints
 
     XFree(classhint.res_class);
 }

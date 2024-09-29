@@ -9,7 +9,7 @@ This program is licensed under the GNU General Public License. See the [COPYING]
 
 ## Description
 
-Psi is an XMPP client designed for experienced users. It is highly portable and runs on GNU/Linux, MS Windows, macOS, FreeBSD and Haiku.
+Psi is an XMPP client designed for experienced users. It is highly portable and runs on GNU/Linux, MS Windows, macOS, FreeBSD, NetBSD and Haiku.
 
 User interface of program is very flexible in customization. For example, there are "multi windows" and "all in one" modes, support of different iconsets and themes. Psi supports file sharing and audio/video calls. Security is also a major consideration, and Psi provides it for both client-to-server (TLS) and client-to-client (OpenPGP, OTR, OMEMO) via appropriate plugins.
 
@@ -30,7 +30,7 @@ See [CHANGELOG](https://github.com/psi-im/psi/blob/master/CHANGELOG) file.
 
 For build from sources see [INSTALL](https://github.com/psi-im/psi/blob/master/INSTALL.md) file.
 
-GNU/Linux and FreeBSD users may install [packages](https://github.com/psi-im/psi#packages-and-installers) from official and unofficial repositories, ports, etc.
+GNU/Linux and *BSD users may install [packages](https://github.com/psi-im/psi#packages-and-installers) from official and unofficial repositories, ports, etc.
 
 macOS users may install and update official builds using [Homebrew](https://brew.sh/) cask:
 
@@ -86,7 +86,7 @@ There are a lot of people who were involved into Psi and Psi+ development. Some 
 
 ### Bug reports
 
-If you found a bug please report about it in our [Bug Tracker](https://github.com/psi-im/psi/issues). If you have doubts contact with us in [XMPP Conference](https://chatlogs.jabber.ru/psi-dev@conference.jabber.ru) &lt;psi-dev@conference.jabber.ru&gt; (preferable) or in a [Mailing List](https://groups.google.com/forum/#!forum/psi-users).
+If you found a bug please report about it in our [Bug Tracker](https://github.com/psi-im/psi/issues). If you have doubts contact with us in XMPP Conference [psi-dev@conference.jabber.ru](xmpp:psi-dev@conference.jabber.ru?join) (preferable) or in a [Mailing List](https://groups.google.com/forum/#!forum/psi-users).
 
 ### Beta testing
 
@@ -94,7 +94,7 @@ As we (intentionally) do not have nor beta versions of Psi, nor daily build buil
 
 ### Comments and wishes
 
-We like constructive comments and wishes to functions of program. You may contact with us in [XMPP Conference](https://chatlogs.jabber.ru/psi-dev@conference.jabber.ru) &lt;psi-dev@conference.jabber.ru&gt; for discussing of your ideas. Some of them will be drawn up as feature requests in our [Bug Tracker](https://github.com/psi-im/psi/issues).
+We like constructive comments and wishes to functions of program. You may contact with us in XMPP Conference [psi-dev@conference.jabber.ru](xmpp:psi-dev@conference.jabber.ru?join) for discussing of your ideas. Some of them will be drawn up as feature requests in our [Bug Tracker](https://github.com/psi-im/psi/issues).
 
 ### Translations
 

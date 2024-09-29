@@ -130,7 +130,7 @@ public:
 
     // OptionAccessingHost
     void     setPluginOption(const QString &option, const QVariant &value) override;
-    QVariant getPluginOption(const QString &option, const QVariant &defValue = QVariant::Invalid) override;
+    QVariant getPluginOption(const QString &option, const QVariant &defValue = {}) override;
     void     setGlobalOption(const QString &option, const QVariant &value) override;
     QVariant getGlobalOption(const QString &option) override;
     void     optionChanged(const QString &option);

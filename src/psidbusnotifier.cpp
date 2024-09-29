@@ -375,6 +375,7 @@ void PsiDBusNotifier::asyncCallFinished(QDBusPendingCallWatcher *watcher)
 
 void PsiDBusNotifier::popupClosed(uint id, uint reason)
 {
+    Q_UNUSED(reason)
     if (id_ != 0 && id_ == id) {
         readyToDie();
     }

@@ -48,6 +48,7 @@ public:
 
     QString                  anchorOnMousePress;
     bool                     hadSelectionOnMousePress = false;
+    bool                     keepAtBottom             = true;
     FileSharingDeviceOpener *mediaOpener              = nullptr;
     ITEAudioController      *voiceMsgCtrl             = nullptr;
 
@@ -172,16 +173,21 @@ span.emojis {
                           QTimer::singleShot(0, this, &PsiTextView::scrollToBottom);
                       setTextCursor(prevCur);
                   });
-                  auto downloader = item->download(false, 0, 0);
+                  auto downloader = item->download();
                   downloader->setSelfDelete(true);
                   // read just for cache
                   connect(downloader, &FileShareDownloader::readyRead, this,
                           [downloader]() { downloader->read(downloader->bytesAvailable()); });
                   downloader->open();
 
-                  qlonglong div;
-                  QString   unit    = TextUtil::sizeUnit(qlonglong(item->fileSize()), &div);
-                  QString   sizeStr = TextUtil::roundedNumber(qint64(item->fileSize()), div) + unit;
+                  QString sizeStr;
+                  if (item->fileSize()) {
+                      qlonglong div;
+                      QString   unit = TextUtil::sizeUnit(qlonglong(*item->fileSize()), &div);
+                      sizeStr        = TextUtil::roundedNumber(qint64(*item->fileSize()), div) + unit;
+                  } else {
+                      sizeStr = QLatin1String("stream");
+                  }
 
                   QUrl simpleUrl = item->simpleSource();
                   if (simpleUrl.isValid()) {
@@ -222,14 +228,18 @@ QMenu *PsiTextView::createStandardContextMenu(const QPoint &position)
     QMenu      *menu;
     QString     anc = anchorAt(position);
     if (!anc.isEmpty()) {
-        menu = URLObject::getInstance()->createPopupMenu(anc);
-
-        int     posInBlock = textcursor.position() - textcursor.block().position();
-        QString textblock  = textcursor.block().text();
-        int begin = textcursor.block().position() + textblock.lastIndexOf(QRegularExpression("\\s|^"), posInBlock) + 1;
-        int end   = textcursor.block().position() + textblock.indexOf(QRegularExpression("\\s|$"), posInBlock);
-        textcursor.setPosition(begin);
-        textcursor.setPosition(end, QTextCursor::KeepAnchor);
+        // menu = URLObject::getInstance()->createPopupMenu(anc);
+        const QString href     = textcursor.charFormat().anchorHref();
+        auto          clickPos = textcursor.position();
+        // we rely on cow to quickly find boundaries
+        while (textcursor.charFormat().isAnchor() && textcursor.charFormat().anchorHref() == href) {
+            textcursor.movePosition(QTextCursor::PreviousCharacter);
+        }
+        textcursor.setPosition(clickPos + 1, QTextCursor::KeepAnchor);
+        while (textcursor.charFormat().isAnchor() && textcursor.charFormat().anchorHref() == href) {
+            textcursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+        }
+        textcursor.movePosition(QTextCursor::PreviousCharacter, QTextCursor::KeepAnchor);
         setTextCursor(textcursor);
 
         menu = URLObject::getInstance()->createPopupMenu(anc);
@@ -245,6 +255,8 @@ QMenu *PsiTextView::createStandardContextMenu(const QPoint &position)
     }
     return menu;
 }
+
+void PsiTextView::setKeepAtBottom(bool v) { d->keepAtBottom = v; }
 
 bool PsiTextView::isSelectedBlock()
 {
@@ -428,6 +440,10 @@ QMimeData *PsiTextView::createMimeDataFromSelection() const
  */
 void PsiTextView::resizeEvent(QResizeEvent *e)
 {
+    if (!d->keepAtBottom) {
+        QTextEdit::resizeEvent(e);
+        return;
+    }
     bool   atEnd   = verticalScrollBar()->value() == verticalScrollBar()->maximum();
     bool   atStart = verticalScrollBar()->value() == verticalScrollBar()->minimum();
     double value   = 0;

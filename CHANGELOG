@@ -14,6 +14,7 @@ New in 2.0 (UNRELEASED)
 - Fixed build for macOS using cmake + different macOS specific improvements
 - Different MS Windows specific improvements
 - Added official support of Haiku operating system
+- Added DOAP file
 - PsiMedia (Psi Multimedia) library was rewritten and now is loaded as usual
   Psi plugin instead of loading library directly
 - Changed plugins API (plugins from old releases of Psi will not work):

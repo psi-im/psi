@@ -29,11 +29,14 @@ class ContactListItemMenu;
 class ContactListModel;
 class QLineEdit;
 class QWidget;
+class PsiContact;
 
 class ContactListView : public HoverableTreeView {
     Q_OBJECT
 
 public:
+    enum ActivateAction { Activate, SignalSelected };
+
     ContactListView(QWidget *parent = nullptr);
 
     ContactListModel *realModel() const;
@@ -47,6 +50,7 @@ public:
     void activate(const QModelIndex &index);
     void toggleExpandedState(const QModelIndex &index);
     void ensureVisible(const QModelIndex &index);
+    void setActivateAction(ActivateAction action) { activateAction = action; }
 
     // reimplemented
     void setModel(QAbstractItemModel *model) override;
@@ -58,6 +62,7 @@ signals:
     void realExpanded(const QModelIndex &);
     void realCollapsed(const QModelIndex &);
     void modelItemsUpdated();
+    void contactSelected(PsiContact *);
 
 protected:
     // reimplemented
@@ -98,6 +103,7 @@ protected:
 private:
     QPointer<ContactListItemMenu> contextMenu_;
     bool                          contextMenuActive_;
+    ActivateAction                activateAction = Activate;
 };
 
 #endif // CONTACTLISTVIEW_H

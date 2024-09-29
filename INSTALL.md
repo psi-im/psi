@@ -28,7 +28,7 @@ See "Packages and installers" section in [README.md](README.md) or [README.html]
 * libhttp-parser (optional, for plugins only)
 * libotr (optional, for plugins only)
 * libtidy (optional, for plugins only)
-* libsignal-protocol-c (optional, for plugins only)
+* libomemo-c (optional, for plugins only)
 
 ### Common
 
@@ -74,7 +74,7 @@ Plugin build dependencies:
 sudo apt install -qq \
         libhttp-parser-dev \
         libotr5-dev \
-        libsignal-protocol-c-dev \
+        libomemo-c-dev \
         libtidy-dev
 ```
 
@@ -108,7 +108,7 @@ Plugin build dependencies:
 
 ```shell
 sudo zypper in libotr-devel \
-        libsignal-protocol-c-devel \
+        libomemo-c-devel \
         libtidy-devel
 ```
 

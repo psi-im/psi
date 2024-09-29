@@ -45,6 +45,7 @@ PsiTabWidget::PsiTabWidget(QWidget *parent) : QWidget(parent)
     tabBar_->setMultiRow(multiRow);
     tabBar_->setUsesScrollButtons(!multiRow);
     tabBar_->setCurrentIndexAlwaysAtBottom(currentIndexAlwaysAtBottom);
+    tabBar_->setExpanding(false);
     layout_ = new QVBoxLayout(this);
     layout_->setContentsMargins(0, 0, 0, 0);
     layout_->setSpacing(0);
@@ -265,7 +266,34 @@ void PsiTabWidget::setTabText(QWidget *widget, const QString &label)
 {
     int index = widgets_.indexOf(widget);
     if (index != -1) {
-        tabBar_->setTabText(index, label);
+        auto shortLabel = label;
+        auto labelSize  = label.size();
+        if (labelSize > 40) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+            shortLabel = label.left(37) + "...";
+#else
+            shortLabel = label.first(37) + "...";
+#endif
+            int maxLength = 80;
+            // If label is longer than 80 symbols make this label multiline
+            if (labelSize > maxLength) {
+                QStringList sentences;
+                for (int i = 0; i < labelSize;) {
+                    if (i + maxLength < labelSize) {
+                        auto lastSpace = QStringView { label }.mid(i, maxLength).lastIndexOf(QString(" ")) + 1;
+                        sentences << label.mid(i, lastSpace);
+                        i += lastSpace;
+                    } else {
+                        sentences << label.mid(i, labelSize - i);
+                        break;
+                    }
+                }
+                tabBar_->setTabToolTip(index, sentences.join("\n"));
+            } else {
+                tabBar_->setTabToolTip(index, label);
+            }
+        }
+        tabBar_->setTabText(index, shortLabel);
     }
 }
 

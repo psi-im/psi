@@ -34,10 +34,10 @@ BUILD_OPTIONS="-DCMAKE_INSTALL_PREFIX=/usr \
                -DENABLE_PLUGINS=${ENABLE_PLUGINS} \
                -DUSE_HUNSPELL=ON \
                -DUSE_KEYCHAIN=ON \
-               -DUSE_SPARKLE=OFF \
-               -DBUNDLED_QCA=OFF \
-               -DBUNDLED_USRSCTP=ON \
-               -DBUILD_DEV_PLUGINS=OFF \
+               -DBUNDLED_KEYCHAIN=OFF \
+               -DBUNDLED_OMEMO_C_ALL=ON \
+               -DIRIS_BUNDLED_QCA=OFF \
+               -DIRIS_BUNDLED_USRSCTP=ON \
                -DVERBOSE_PROGRAM_NAME=ON \
                "
 

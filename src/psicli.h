@@ -45,6 +45,13 @@ public:
         defineParam("status-message", tr("MSG", "translate in UPPER_CASE with no spaces"),
                     tr("Set status message. Must be used together with --status.", "do not translate --status"));
 
+        defineSwitch(
+            "swrender",
+            tr("Use software widgets rendering. In some cases default hardware rendering may lead to graphical "
+               "glitches and crashes. This option may help."));
+
+        defineSwitch("quit", tr("Quit the application"));
+
         defineSwitch("help", tr("Show this help message and exit."));
         defineAlias("h", "help");
         defineAlias("?", "help");

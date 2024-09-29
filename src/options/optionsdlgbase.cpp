@@ -281,7 +281,11 @@ void OptionsDlgBase::Private::createChangedMap()
     //   Do NOT call addWidgetChangedSignal() for them.
     //   Instead, connect the widget's signal to your tab own dataChaged() signal
     changedMap.insert("QButton", SIGNAL(stateChanged(int)));
+#if QT_VERSION < QT_VERSION_CHECK(6,7,0)
     changedMap.insert("QCheckBox", SIGNAL(stateChanged(int)));
+#else
+    changedMap.insert("QCheckBox", SIGNAL(checkStateChanged(Qt::CheckState)));
+#endif
     // qt4 port: there are no stateChangedSignals anymore
     // changedMap.insert("QPushButton", SIGNAL(stateChanged(int)));
     // changedMap.insert("QRadioButton", SIGNAL(stateChanged(int)));

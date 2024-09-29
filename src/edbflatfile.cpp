@@ -597,13 +597,13 @@ PsiEvent::Ptr EDBFlatFile::File::lineToEvent(const QString &line)
         Message m;
         m.setTimeStamp(QDateTime::fromString(strData.at(Time), Qt::ISODate));
         if (type == 1)
-            m.setType("chat");
+            m.setType(Message::Type::Chat);
         else if (type == 4)
-            m.setType("error");
+            m.setType(Message::Type::Error);
         else if (type == 5)
-            m.setType("headline");
+            m.setType(Message::Type::Headline);
         else
-            m.setType("");
+            m.setType(Message::Type::Normal);
 
         bool originLocal = strData.at(Origin) == "to";
         m.setFrom(j);
@@ -665,11 +665,11 @@ QString EDBFlatFile::File::eventToLine(const PsiEvent::Ptr &e)
 
         sTime = m.timeStamp().toString(Qt::ISODate);
         int n = 0;
-        if (m.type() == "chat")
+        if (m.type() == Message::Type::Chat)
             n = 1;
-        else if (m.type() == "error")
+        else if (m.type() == Message::Type::Error)
             n = 4;
-        else if (m.type() == "headline")
+        else if (m.type() == Message::Type::Headline)
             n = 5;
         sType.setNum(n);
         sOrigin = e->originLocal() ? "to" : "from";

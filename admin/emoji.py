@@ -23,9 +23,16 @@ import pprint
 data = []
 ranges = []
 
-template_main="""// This is a generated file. See emoji.py for details
+template_main = """// This is a generated file. See emoji.py for details
 // clang-format off
-static std::vector<EmojiRegistry::Group> db = {{{groups}
+
+#include "emojiregistry.h"
+
+#include <array>
+{groups_declarations};
+
+static std::array db {{
+{groups_list}
 }};
 
 static std::map<quint32, quint32> ranges = {{
@@ -35,25 +42,28 @@ static std::map<quint32, quint32> ranges = {{
 // clang-format on
 """
 
-template_group="""
-    {{
-        QT_TR_NOOP("{name}"),
-        {{{subgroups}
-        }}
-    }}"""
+template_groups_list_item = """    std::move({var_name})"""
+
+template_group = """
+EmojiRegistry::Group {var_name} {{
+    QT_TR_NOOP("{name}"),
+    {{{subgroups}
+    }}
+}}"""
 
 template_subgroup = """
-            {{
-                "{name}",
-                {{{emojis}
-                }}
-            }}"""
+        {{
+            "{name}",
+            {{{emojis}
+            }}
+        }}"""
 
 template_emoji = """
-                    {{
-                        "{code}",
-                        "{desc}"
-                    }}"""
+                {{
+                    "{code}",
+                    "{desc}"
+                }}"""
+
 
 def reset():
     global group, subgroup
@@ -61,14 +71,20 @@ def reset():
     subgroup = dict(name="", emojis=[])
 
 
+def sanitize_name(name):
+    return re.sub(r"[^a-zA-Z0-9_]", "_", name)
+
+
 def parse(f):
     for line in f:
         if line.startswith("# group:"):
             reset()
             group["name"] = line.split(":")[1].strip()
+            group["var_name"] = "emoji_" + sanitize_name(group["name"])
             data.append(group)
         elif line.startswith("# subgroup:"):
             subgroup = dict(name=line.split(":")[1].strip(), emojis=[])
+            subgroup["var_name"] = sanitize_name(subgroup["name"])
             group["subgroups"].append(subgroup)
         elif not line.strip() or line.startswith("#"):
             continue
@@ -91,7 +107,7 @@ def cleanup_empty():
 
 
 def generate_ranges():
-    emojis=[]
+    emojis = []
     for g in data:
         for sg in g["subgroups"]:
             emojis += sg["emojis"]
@@ -108,16 +124,18 @@ def generate_ranges():
 
 
 def generate_cpp_db():
-    print(template_main.format(groups=",".join([
-        template_group.format(name=group["name"], subgroups=",".join([
-            template_subgroup.format(name=sub["name"], emojis=",".join([
-                template_emoji.format(code=emoji[0], desc=emoji[1])
-                for emoji in sub["emojis"]
+    print(template_main.format(
+        groups_list=",\n".join([template_groups_list_item.format(var_name=group["var_name"]) for group in data]),
+        groups_declarations=";\n".join([
+            template_group.format(name=group["name"], var_name=group["var_name"],subgroups=",".join([
+                template_subgroup.format(name=sub["name"], emojis=",".join([
+                    template_emoji.format(code=emoji[0], desc=emoji[1])
+                    for emoji in sub["emojis"]
+                ]))
+                for sub in group["subgroups"]
             ]))
-            for sub in group["subgroups"]
-        ]))
-        for group in data
-    ]), ranges=",\n    ".join([f"{{{r[0]}, {r[1]}}}" for r in ranges])))
+            for group in data
+        ]), ranges=",\n    ".join([f"{{{r[0]}, {r[1]}}}" for r in ranges])))
 
 
 # https://unicode.org/Public/emoji/15.0/emoji-test.txt
