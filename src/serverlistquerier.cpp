@@ -19,9 +19,15 @@
 
 #include "serverlistquerier.h"
 
+#ifdef XML_SERVER_LIST
 #include <QDomDocument>
 #include <QDomElement>
 #include <QDomNodeList>
+#else
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#endif
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
@@ -39,7 +45,7 @@
 ServerListQuerier::ServerListQuerier(QObject *parent) : QObject(parent), redirectCount_(0)
 {
     http_ = new QNetworkAccessManager(this);
-    url_  = QUrl("https://xmpp.net/directory.php");
+    url_  = QUrl("https://data.xmpp.net/providers/v2/providers-A.json");
 }
 
 void ServerListQuerier::getList()
@@ -75,35 +81,59 @@ void ServerListQuerier::get_finished()
                     servers.push_back(jid);
                 }
             }
+            emit listReceived(servers);
 #else
-            QStringList             servers;
-            QString                 contents = QString::fromUtf8(reply->readAll());
-            int                     index    = 0;
-            QRegularExpression      re("data-original-title=\"([^\"]+)\"");
-            QRegularExpressionMatch match;
-            while ((index = contents.indexOf(re, index + 1, &match)) != -1) {
-                servers.append(match.captured(1));
+
+            if (auto r = parseJson(reply->readAll()); r) {
+                emit listReceived(*r);
             }
 #endif
-            emit listReceived(servers);
-        } else if (reply->attribute(QNetworkRequest::RedirectionTargetAttribute).isValid()) {
-            if (redirectCount_ >= SERVERLIST_MAX_REDIRECT) {
-                emit error(tr("Maximum redirect count reached"));
-                return;
-            }
-
-            url_ = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).value<QUrl>().resolved(url_);
-            if (url_.isValid()) {
-                QNetworkReply *newReply = http_->get(QNetworkRequest(url_));
-                connect(newReply, SIGNAL(finished()), SLOT(get_finished()));
-                ++redirectCount_;
-            } else {
-                emit error(tr("Invalid redirect URL %1").arg(url_.toString()));
-                return;
-            }
         } else {
             emit error(tr("Unexpected HTTP status code: %1").arg(status));
         }
     }
     reply->deleteLater();
+}
+
+std::optional<QStringList> ServerListQuerier::parseJson(const QByteArray &data)
+{
+    QStringList jidList;
+    bool        parsingErrorOccurred = false;
+
+    QJsonDocument jsonDoc = QJsonDocument::fromJson(data);
+    if (!jsonDoc.isArray()) {
+        emit error(tr("Failed to parse json."));
+        return {};
+    }
+
+    QJsonArray jsonArray = jsonDoc.array();
+
+    for (const QJsonValue &providerValue : jsonArray) {
+        if (!providerValue.isObject()) {
+            parsingErrorOccurred = true;
+            continue; // Skip if the item is not a valid object
+        }
+
+        QJsonObject providerObj = providerValue.toObject();
+        auto        jidIt       = providerObj.find("jid");
+
+        if (jidIt == providerObj.end() || !jidIt->isString()) {
+            parsingErrorOccurred = true;
+            continue; // Skip if "jid" is not found or is not a string
+        }
+
+        QString jid = jidIt->toString();
+        if (!jid.isEmpty()) {
+            jidList.append(jid);
+        } else {
+            parsingErrorOccurred = true; // Handle empty jid case
+        }
+    }
+
+    // Emit an error if the list is empty and there was a parsing error
+    if (jidList.isEmpty() && parsingErrorOccurred) {
+        emit error(tr("Failed to parse any valid server JIDs from %1.").arg(url_.toDisplayString()));
+    }
+
+    return jidList;
 }

@@ -40,6 +40,9 @@ protected slots:
     void get_finished();
 
 private:
+    std::optional<QStringList> parseJson(const QByteArray &providers);
+
+private:
     QNetworkAccessManager *http_;
     QUrl                   url_;
     int                    redirectCount_;

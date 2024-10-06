@@ -103,10 +103,12 @@ AccountRegDlg::~AccountRegDlg() { delete client_; }
 void AccountRegDlg::done(int r)
 {
     if (ui_.busy->isActive()) {
-        int n = QMessageBox::information(this, tr("Warning"), tr("Are you sure you want to cancel the registration?"),
-                                         QMessageBox::Yes | QMessageBox::No);
-        if (n != 0)
+        auto btn
+            = QMessageBox::information(this, tr("Warning"), tr("Are you sure you want to cancel the registration?"),
+                                       QMessageBox::Yes | QMessageBox::No);
+        if (btn != QMessageBox::Yes) {
             return;
+        }
     }
     client_->close();
     QDialog::done(r);
@@ -157,9 +159,11 @@ void AccountRegDlg::serverListReceived(const QStringList &list)
 {
     ui_.busy->stop();
     unblock();
+    ui_.le_server->blockSignals(true);
     ui_.le_server->clear();
     ui_.le_server->addItems(list);
     ui_.le_server->showPopup();
+    ui_.le_server->blockSignals(false);
 }
 
 void AccountRegDlg::serverListError(const QString &e)
