@@ -23,6 +23,8 @@
 #include <QObject>
 #include <QUrl>
 
+#include <optional>
+
 class QNetworkAccessManager;
 
 class ServerListQuerier : public QObject {

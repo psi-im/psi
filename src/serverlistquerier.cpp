@@ -117,17 +117,12 @@ std::optional<QStringList> ServerListQuerier::parseJson(const QByteArray &data)
         QJsonObject providerObj = providerValue.toObject();
         auto        jidIt       = providerObj.find("jid");
 
-        if (jidIt == providerObj.end() || !jidIt->isString()) {
+        QString jid;
+        if (jidIt == providerObj.end() || !jidIt->isString() || (jid = jidIt->toString()).isEmpty()) {
             parsingErrorOccurred = true;
             continue; // Skip if "jid" is not found or is not a string
         }
-
-        QString jid = jidIt->toString();
-        if (!jid.isEmpty()) {
-            jidList.append(jid);
-        } else {
-            parsingErrorOccurred = true; // Handle empty jid case
-        }
+        jidList.append(jid);
     }
 
     // Emit an error if the list is empty and there was a parsing error
