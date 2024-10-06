@@ -53,7 +53,8 @@ EventNotifier::EventNotifier(QWidget *parent, const char *name) :
     eventLayout->addWidget(eventLabel);
     eventLabel->setText("");
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    setFrameStyle(QFrame::Panel | QFrame::Sunken);
+    setFrameShadow(QFrame::Sunken);
+    setFrameShape(QFrame::Panel);
     connect(eventLabel, &ClickableLabel::clicked, this, &EventNotifier::clicked);
 }
 

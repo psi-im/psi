@@ -589,7 +589,7 @@ public slots:
               : 0;
         emotsScrollArea_->setMinimumWidth(emotsSel_->sizeHint().rwidth() + vBarWidth);
         emotsScrollArea_->setMinimumHeight(qMin(emotsSel_->sizeHint().rheight(), maxSize));
-        emotsScrollArea_->setFrameStyle(QFrame::Plain);
+        emotsScrollArea_->setFrameShadow(QFrame::Plain);
 
         if (emotsSel_->rowSize()) {
             recentSel_->setRowSize(*emotsSel_->rowSize());

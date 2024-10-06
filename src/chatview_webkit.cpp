@@ -520,7 +520,8 @@ ChatView::ChatView(QWidget *parent) : QFrame(parent), d(new ChatViewPrivate(this
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(d->webView);
     setLayout(layout);
-    setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
+    setFrameShadow(QFrame::Sunken);
+    setFrameShape(QFrame::StyledPanel);
     setLooks(d->webView);
 
 #ifndef HAVE_X11 // linux has this feature built-in

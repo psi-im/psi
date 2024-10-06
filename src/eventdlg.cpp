@@ -667,7 +667,8 @@ void EventDlg::init()
         l = new QLabel(tr("Time:"), this);
         hb2->addWidget(l);
         d->lb_time = new QLabel(this);
-        d->lb_time->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+        d->lb_time->setFrameShadow(QFrame::Sunken);
+        d->lb_time->setFrameShape(QFrame::Panel);
         hb2->addWidget(d->lb_time);
     }
 
@@ -689,7 +690,8 @@ void EventDlg::init()
     d->lb_count = new QLabel(this);
     d->lb_count->setToolTip(tr("Message length"));
     d->lb_count->setFixedWidth(40);
-    d->lb_count->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+    d->lb_count->setFrameShadow(QFrame::Sunken);
+    d->lb_count->setFrameShape(QFrame::Panel);
     d->lb_count->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
     d->lb_count->setNum(0);
 

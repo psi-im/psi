@@ -150,7 +150,8 @@ RegistrationDlg::RegistrationDlg(const Jid &jid, PsiAccount *pa) : QDialog(nullp
     vb1->setContentsMargins(4, 4, 4, 4);
     d->lb_top = new QLabel(this);
     d->lb_top->setWordWrap(true);
-    d->lb_top->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+    d->lb_top->setFrameShadow(QFrame::Sunken);
+    d->lb_top->setFrameShape(QFrame::Panel);
     d->lb_top->hide();
     vb1->addWidget(d->lb_top);
 
@@ -162,7 +163,8 @@ RegistrationDlg::RegistrationDlg(const Jid &jid, PsiAccount *pa) : QDialog(nullp
 
     QFrame *line = new QFrame(this);
     line->setFixedHeight(2);
-    line->setFrameStyle(QFrame::HLine | QFrame::Sunken);
+    line->setFrameShadow(QFrame::Sunken);
+    line->setFrameShape(QFrame::HLine);
     vb1->addWidget(line);
 
     QHBoxLayout *hb1 = new QHBoxLayout;

@@ -76,7 +76,7 @@ void PsiTipLabel::setText(const QString &text)
 void PsiTipLabel::initUi()
 {
     margin = 1 + style()->pixelMetric(QStyle::PM_ToolTipLabelFrameWidth, nullptr, this);
-    setFrameStyle(QFrame::NoFrame);
+    setFrameShape(QFrame::NoFrame);
 
     doc             = new QTextDocument(this);
     QTextOption opt = doc->defaultTextOption();
