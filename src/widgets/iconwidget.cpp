@@ -291,22 +291,22 @@ public:
 #endif
     }
 
-    const Iconset *iconset() const
+    Iconset iconset() const override
     {
 #ifndef WIDGET_PLUGIN
-        return &iss;
+        return iss;
 #else
         return 0;
 #endif
     }
 
-    int height() const
+    int height() const override
     {
         int hh = listWidget()->fontMetrics().lineSpacing() + h;
         return qMax(hh, 16);
     }
 
-    int width() const
+    int width() const override
     {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
         int ww = qMax(listWidget()->fontMetrics().horizontalAdvance(text()) + 6 + 15, w + 10);
@@ -316,7 +316,7 @@ public:
         return qMax(ww, 16);
     }
 
-    void paint(QPainter *painter) const
+    void paint(QPainter *painter) const override
     {
 #ifndef WIDGET_PLUGIN
         QFontMetrics fm = painter->fontMetrics();
@@ -332,7 +332,7 @@ public:
         Q_UNUSED(painter);
 #endif
     }
-    QPoint textPosition(QPainter *painter) const
+    QPoint textPosition(QPainter *painter) const override
     {
         QFontMetrics fm = painter->fontMetrics();
         return QPoint(3, fm.ascent() + (fm.leading() + 1) / 2 + 1);
@@ -383,7 +383,7 @@ void IconsetSelect::moveItemDown()
     setCurrentItem(i);
 }
 
-const Iconset *IconsetSelect::iconset() const
+Iconset IconsetSelect::iconset() const
 {
     IconsetSelectItem *i = static_cast<IconsetSelectItem *>(currentItem());
     if (!i) {
@@ -392,7 +392,7 @@ const Iconset *IconsetSelect::iconset() const
     }
     if (i)
         return i->iconset();
-    return nullptr;
+    return {};
 }
 
 QListWidgetItem *IconsetSelect::lastItem() const { return item(count() - 1); }

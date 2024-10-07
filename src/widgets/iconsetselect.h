@@ -33,7 +33,7 @@ public:
 
     void insert(const Iconset &); // iconsets must be inserted in following order: most prioritent first
 
-    const Iconset *iconset() const;
+    Iconset iconset() const;
 
     QListWidgetItem *lastItem() const;
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)

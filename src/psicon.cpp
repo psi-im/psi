@@ -273,8 +273,8 @@ public slots:
     void updateIconSelect()
     {
         Iconset iss;
-        for (Iconset *iconset : std::as_const(PsiIconset::instance()->emoticons)) {
-            iss += *iconset;
+        for (const Iconset &iconset : std::as_const(PsiIconset::instance()->emoticons)) {
+            iss += iconset;
         }
 
         iconSelect->setIconset(iss);

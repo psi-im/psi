@@ -20,17 +20,17 @@
 #ifndef ICONWIDGET_H
 #define ICONWIDGET_H
 
+#include "iconset.h"
+
 #include <QListWidget>
 #include <QVariant>
-
-class Iconset;
 
 class IconWidgetItem : public QObject, public QListWidgetItem {
     Q_OBJECT
 public:
     IconWidgetItem(QListWidget *parent = nullptr) : QListWidgetItem(parent) { }
 
-    virtual const Iconset *iconset() const { return nullptr; }
+    virtual Iconset iconset() const { return {}; };
 };
 
 #endif // ICONWIDGET_H

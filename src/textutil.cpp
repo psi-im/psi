@@ -294,8 +294,10 @@ static void emojiconifyPlainText(RTParse &p, const QString &in)
         p.putRich(QLatin1String(R"html(<span class="emojis">)html") + code + QLatin1String("</span>"));
 #else
         // FIXME custom style here is a hack. This supposed to be handled via style resource in PsiTextView
-        p.putRich(QString(R"(<icon text="%1" min-height="1.25em" max-height="1.7em" font-size="1.3em" valign="bottom" type="smiley">)")
-                      .arg(code));
+        p.putRich(
+            QString(
+                R"(<icon text="%1" min-height="1.25em" max-height="1.7em" font-size="1.3em" valign="bottom" type="smiley">)")
+                .arg(code));
 #endif
     };
     int position;
@@ -509,8 +511,8 @@ QString TextUtil::emoticonify(const QString &in)
 
             int foundPos = -1, foundLen = -1;
 
-            for (const Iconset *iconset : std::as_const(PsiIconset::instance()->emoticons)) {
-                QListIterator<PsiIcon *> it = iconset->iterator();
+            for (const Iconset &iconset : std::as_const(PsiIconset::instance()->emoticons)) {
+                QListIterator<PsiIcon *> it = iconset.iterator();
                 while (it.hasNext()) {
                     PsiIcon *icon = it.next();
                     if (icon->regExp().pattern().isEmpty())

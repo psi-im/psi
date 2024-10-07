@@ -77,7 +77,7 @@
  */
 PluginHost::PluginHost(PluginManager *manager, const QString &pluginFile) :
     manager_(manager), plugin_(nullptr), file_(pluginFile), priority_(PsiPlugin::PriorityNormal), loader_(nullptr),
-    iconset_(nullptr), valid_(false), connected_(false), enabled_(false), hasInfo_(false), infoString_(QString())
+    valid_(false), connected_(false), enabled_(false), hasInfo_(false), infoString_(QString())
 {
     updateMetadata();
 }
@@ -330,8 +330,7 @@ bool PluginHost::unload()
             return false;
         } else if (loader_->unload()) {
             // delete plugin_; // loader will delete it automatically
-            delete iconset_;
-            iconset_   = nullptr;
+            iconset_.clear();
             connected_ = false;
             delete loader_;
             plugin_ = nullptr;
@@ -978,11 +977,8 @@ void PluginHost::addIcon(const QString &name, const QByteArray &ba)
     PsiIcon icon;
     icon.setImpix(pm);
     icon.setName(name);
-    if (!iconset_) {
-        iconset_ = new Iconset();
-    }
-    iconset_->setIcon(name, icon);
-    iconset_->addToFactory();
+    iconset_.setIcon(name, icon);
+    iconset_.addToFactory();
 }
 
 QTextEdit *PluginHost::getEditBox()

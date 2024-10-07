@@ -41,15 +41,15 @@ public:
     void reloadRoster();
     bool loadAll();
 
-    QHash<QString, Iconset *> roster;
-    QList<Iconset *>          emoticons;
-    Iconset                   moods;
-    Iconset                   activities;
-    Iconset                   clients;
-    Iconset                   affiliations;
-    const Iconset            &system() const;
-    void                      stripFirstAnimFrame(Iconset *);
-    static void               removeAnimation(Iconset *);
+    QHash<QString, Iconset> roster;
+    QList<Iconset>          emoticons;
+    Iconset                 moods;
+    Iconset                 activities;
+    Iconset                 clients;
+    Iconset                 affiliations;
+    const Iconset          &system() const;
+    void                    stripFirstAnimFrame(Iconset &);
+    static void             removeAnimation(Iconset &);
 
     PsiIcon *event2icon(const PsiEvent::Ptr &e);
 
@@ -69,8 +69,8 @@ public:
     PsiIcon status(const XMPP::Jid &, const XMPP::Status &);
 
     // functions to get status icon by transport name
-    PsiIcon *transportStatusPtr(QString name, int);
-    PsiIcon *transportStatusPtr(QString name, const XMPP::Status &);
+    const PsiIcon *transportStatusPtr(QString name, int);
+    const PsiIcon *transportStatusPtr(QString name, const XMPP::Status &);
 
     PsiIcon transportStatus(QString name, int);
     PsiIcon transportStatus(QString name, const XMPP::Status &);

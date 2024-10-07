@@ -290,9 +290,9 @@ private:
     int               priority_ = 0;
     QByteArray        rawIcon_;
     QIcon             icon_;
-    QPluginLoader    *loader_             = nullptr;
-    QPointer<QObject> enableHandler       = nullptr;
-    Iconset          *iconset_            = nullptr;
+    QPluginLoader    *loader_       = nullptr;
+    QPointer<QObject> enableHandler = nullptr;
+    Iconset           iconset_;
     bool              hasToolBarButton_   = false;
     bool              hasGCToolBarButton_ = false;
 

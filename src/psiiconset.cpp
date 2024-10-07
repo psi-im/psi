@@ -168,37 +168,24 @@ public:
         }
     }
 
-    void loadIconset(Iconset *to, Iconset *from)
+    void loadIconset(Iconset &to, const Iconset &from)
     {
-        if (!to) {
-            qWarning("PsiIconset::loadIconset(): 'to' iconset is NULL!");
-            if (from)
-                qWarning("from->name() = '%s'", qPrintable(from->name()));
-            return;
-        }
-        if (!from) {
-            qWarning("PsiIconset::loadIconset(): 'from' iconset is NULL!");
-            if (to)
-                qWarning("to->name() = '%s'", qPrintable(to->name()));
-            return;
-        }
-
-        QListIterator<PsiIcon *> it = from->iterator();
+        QListIterator<PsiIcon *> it = from.iterator();
         while (it.hasNext()) {
             PsiIcon *icon = it.next();
 
             if (icon && !icon->name().isEmpty()) {
-                PsiIcon *toIcon = const_cast<PsiIcon *>(to->icon(icon->name()));
+                PsiIcon *toIcon = const_cast<PsiIcon *>(to.icon(icon->name()));
                 if (toIcon) {
                     bool b  = toIcon->blockSignals(true);
                     *toIcon = *icon;
                     toIcon->blockSignals(b);
                 } else
-                    to->setIcon(icon->name(), *icon);
+                    to.setIcon(icon->name(), *icon);
             }
         }
 
-        to->setInformation(*from);
+        to.setInformation(from);
     }
 
     PsiIcon *jid2icon(const Jid &jid, const QString &iconName)
@@ -211,9 +198,9 @@ public:
             for (const StatusIconsets::IconsetItem &item : std::as_const(status_icons.list)) {
                 if (item.regexp.pattern().isEmpty() ? jid.node().isEmpty()
                                                     : (item.regexp.match(jid.domain()).hasMatch())) {
-                    const Iconset *is = psi->roster.value(item.iconset);
-                    if (is) {
-                        PsiIcon *i = const_cast<PsiIcon *>(is->icon(iconName));
+                    auto isIt = psi->roster.find(item.iconset);
+                    if (isIt != psi->roster.end()) {
+                        PsiIcon *i = const_cast<PsiIcon *>(isIt->icon(iconName));
                         if (i) {
                             icon = i;
                             break;
@@ -226,9 +213,9 @@ public:
         // third level -- custom icons
         for (const StatusIconsets::IconsetItem &item : std::as_const(status_icons.customList)) {
             if (item.regexp.match(jid.bare()).hasMatch()) {
-                const Iconset *is = psi->roster.value(item.iconset);
-                if (is) {
-                    PsiIcon *i = const_cast<PsiIcon *>(is->icon(iconName));
+                auto isIt = psi->roster.find(item.iconset);
+                if (isIt != psi->roster.end()) {
+                    PsiIcon *i = const_cast<PsiIcon *>(isIt->icon(iconName));
                     if (i) {
                         icon = i;
                         break;
@@ -249,7 +236,7 @@ public:
             Iconset is;
             is.load(iconsetPath("system/" + PsiOptions::instance()->getOption("options.iconsets.system").toString()));
 
-            loadIconset(&def, &is);
+            loadIconset(def, is);
         }
 
         stripFirstAnimFrame(def);
@@ -257,19 +244,19 @@ public:
         return def;
     }
 
-    Iconset *defaultRosterIconset(bool *ok)
+    Iconset defaultRosterIconset(bool *ok)
     {
-        Iconset *def = new Iconset;
-        *ok          = def->load(":/iconsets/roster/default");
+        Iconset def;
+        *ok = def.load(":/iconsets/roster/default");
 
         if (PsiOptions::instance()->getOption("options.iconsets.status").toString() != "default") {
             Iconset is;
             is.load(iconsetPath("roster/" + PsiOptions::instance()->getOption("options.iconsets.status").toString()));
 
-            loadIconset(def, &is);
+            loadIconset(def, is);
         }
 
-        stripFirstAnimFrame(*def);
+        stripFirstAnimFrame(def);
 
         return def;
     }
@@ -283,7 +270,7 @@ public:
             Iconset is;
             is.load(iconsetPath("moods/" + PsiOptions::instance()->getOption("options.iconsets.moods").toString()));
 
-            loadIconset(&def, &is);
+            loadIconset(def, is);
         }
 
         stripFirstAnimFrame(def);
@@ -301,7 +288,7 @@ public:
             is.load(iconsetPath("activities/"
                                 + PsiOptions::instance()->getOption("options.iconsets.activities").toString()));
 
-            loadIconset(&def, &is);
+            loadIconset(def, is);
         }
 
         stripFirstAnimFrame(def);
@@ -318,7 +305,7 @@ public:
             Iconset is;
             is.load(iconsetPath("clients/" + PsiOptions::instance()->getOption("options.iconsets.clients").toString()));
 
-            loadIconset(&def, &is);
+            loadIconset(def, is);
         }
 
         stripFirstAnimFrame(def);
@@ -336,7 +323,7 @@ public:
             is.load(iconsetPath("affiliations/"
                                 + PsiOptions::instance()->getOption("options.iconsets.affiliations").toString()));
 
-            loadIconset(&def, &is);
+            loadIconset(def, is);
         }
 
         stripFirstAnimFrame(def);
@@ -344,30 +331,28 @@ public:
         return def;
     }
 
-    QList<Iconset *> emoticons()
+    QList<Iconset> emoticons()
     {
-        QList<Iconset *> emo;
+        QList<Iconset> emo;
 
         const auto names = PsiOptions::instance()->getOption("options.iconsets.emoticons").toStringList();
         for (const QString &name : names) {
-            auto     isPath = iconsetPath("emoticons/" + name, Iconset::Format::Psi, true);
-            Iconset *is     = nullptr;
+            auto isPath = iconsetPath("emoticons/" + name, Iconset::Format::Psi, true);
+
             if (!isPath.isEmpty()) {
-                is = new Iconset;
-                if (is->load(iconsetPath("emoticons/" + name))) {
-                    is->addToFactory();
+                Iconset is;
+                if (is.load(iconsetPath("emoticons/" + name))) {
+                    is.addToFactory();
                     emo.append(is);
                     continue;
                 }
-                delete is;
             }
 
-            is = new Iconset;
-            if (is->load(iconsetPath(name, Iconset::Format::KdeEmoticons), Iconset::Format::KdeEmoticons)) {
-                is->addToFactory();
+            Iconset is;
+            if (is.load(iconsetPath(name, Iconset::Format::KdeEmoticons), Iconset::Format::KdeEmoticons)) {
+                is.addToFactory();
                 emo.append(is);
-            } else
-                delete is;
+            }
         }
 
         return emo;
@@ -403,7 +388,7 @@ bool PsiIconset::loadSystem()
             emit systemIconsSizeChanged(sys.iconSize());
         }
 
-        d->loadIconset(&d->system, &sys);
+        d->loadIconset(d->system, sys);
 
         // d->system = d->systemIconset();
         d->system.addToFactory();
@@ -417,13 +402,12 @@ bool PsiIconset::loadSystem()
 bool PsiIconset::loadRoster()
 {
     // load roster
-    qDeleteAll(roster);
     roster.clear();
 
     // default roster iconset
-    bool     ok;
-    Iconset *def = d->defaultRosterIconset(&ok);
-    def->addToFactory();
+    bool    ok;
+    Iconset def = d->defaultRosterIconset(&ok);
+    def.addToFactory();
     roster.insert(PsiOptions::instance()->getOption("options.iconsets.status").toString(), def);
 
     d->cur_status = PsiOptions::instance()->getOption("options.iconsets.status").toString();
@@ -458,13 +442,11 @@ bool PsiIconset::loadRoster()
             continue;
         }
 
-        Iconset *is = new Iconset;
-        if (is->load(d->iconsetPath("roster/" + it2))) {
-            is->addToFactory();
-            d->stripFirstAnimFrame(*is);
+        Iconset is;
+        if (is.load(d->iconsetPath("roster/" + it2))) {
+            is.addToFactory();
+            d->stripFirstAnimFrame(is);
             roster.insert(it2, is);
-        } else {
-            delete is;
         }
     }
 
@@ -475,7 +457,6 @@ void PsiIconset::loadEmoticons()
 {
     QStringList cur_emoticons = PsiOptions::instance()->getOption("options.iconsets.emoticons").toStringList();
     if (d->cur_emoticons != cur_emoticons) {
-        qDeleteAll(emoticons);
         emoticons.clear();
         emoticons = d->emoticons();
 
@@ -491,7 +472,7 @@ bool PsiIconset::loadMoods()
     QString cur_moods = PsiOptions::instance()->getOption("options.iconsets.moods").toString();
     if (d->cur_moods != cur_moods) {
         Iconset moods = d->moodsIconset(&ok);
-        d->loadIconset(&d->moods, &moods);
+        d->loadIconset(d->moods, moods);
         d->moods.addToFactory();
 
         d->cur_moods = cur_moods;
@@ -506,7 +487,7 @@ bool PsiIconset::loadActivity()
     QString cur_activity = PsiOptions::instance()->getOption("options.iconsets.activities").toString();
     if (d->cur_activity != cur_activity) {
         Iconset activities = d->activityIconset(&ok);
-        d->loadIconset(&d->activities, &activities);
+        d->loadIconset(d->activities, activities);
         d->activities.addToFactory();
 
         d->cur_activity = cur_activity;
@@ -521,7 +502,7 @@ bool PsiIconset::loadClients()
     QString cur_clients = PsiOptions::instance()->getOption("options.iconsets.clients").toString();
     if (d->cur_clients != cur_clients) {
         Iconset clients = d->clientsIconset(&ok);
-        d->loadIconset(&d->clients, &clients);
+        d->loadIconset(d->clients, clients);
         d->clients.addToFactory();
 
         QSet<QString> iconNames;
@@ -610,7 +591,7 @@ bool PsiIconset::loadAffiliations()
     QString cur_affiliations = PsiOptions::instance()->getOption("options.iconsets.affiliations").toString();
     if (d->cur_affiliations != cur_affiliations) {
         Iconset affiliations = d->affiliationsIconset(&ok);
-        d->loadIconset(&d->affiliations, &affiliations);
+        d->loadIconset(d->affiliations, affiliations);
         d->affiliations.addToFactory();
 
         d->cur_affiliations = cur_affiliations;
@@ -735,18 +716,17 @@ void PsiIconset::reloadRoster()
     QString cur_status = PsiOptions::instance()->getOption("options.iconsets.status").toString();
     // default roster iconset
     if (d->cur_status != cur_status) {
-        Iconset *newDef = d->defaultRosterIconset(&ok);
-        Iconset *oldDef = roster[d->cur_status];
+        Iconset newDef = d->defaultRosterIconset(&ok);
+        Iconset oldDef = roster[d->cur_status];
 
-        if (oldDef->iconSize() != newDef->iconSize())
-            emit rosterIconsSizeChanged(newDef->iconSize());
+        if (oldDef.iconSize() != newDef.iconSize())
+            emit rosterIconsSizeChanged(newDef.iconSize());
 
         d->loadIconset(oldDef, newDef);
 
         roster.remove(d->cur_status);
 
         roster.insert(cur_status, oldDef);
-        delete newDef;
         d->cur_status = cur_status;
     }
 
@@ -790,26 +770,25 @@ void PsiIconset::reloadRoster()
             if (*it2 == PsiOptions::instance()->getOption("options.iconsets.status").toString())
                 continue;
 
-            Iconset *is = new Iconset;
-            if (is->load(d->iconsetPath("roster/" + *it2))) {
-                d->stripFirstAnimFrame(*is);
-                Iconset *oldis = roster[*it2];
+            Iconset is;
+            if (is.load(d->iconsetPath("roster/" + *it2))) {
+                d->stripFirstAnimFrame(is);
+                auto oldisIt = roster.find(*it2);
 
-                if (oldis)
-                    d->loadIconset(oldis, is);
+                if (oldisIt != roster.end())
+                    d->loadIconset(oldisIt.value(), is);
                 else {
-                    is->addToFactory();
+                    is.addToFactory();
                     roster.insert(*it2, is);
                 }
-            } else
-                delete is;
+            }
         }
 
         bool clear = false;
         while (!clear) {
             clear = true;
 
-            QMutableHashIterator<QString, Iconset *> it3(roster);
+            QMutableHashIterator<QString, Iconset> it3(roster);
             while (it3.hasNext()) {
                 it3.next();
                 QString name = it3.key();
@@ -818,7 +797,6 @@ void PsiIconset::reloadRoster()
 
                 if (!rosterIconsets.contains(name)) {
                     // remove redundant iconset
-                    delete roster[name];
                     it3.remove();
                     clear = false;
                     break;
@@ -915,18 +893,18 @@ PsiIcon *PsiIconset::statusPtr(const XMPP::Status &s) { return statusPtr(makeSTA
 
 PsiIcon PsiIconset::status(const XMPP::Status &s) { return status(makeSTATUS(s)); }
 
-PsiIcon *PsiIconset::transportStatusPtr(QString name, int s)
+const PsiIcon *PsiIconset::transportStatusPtr(QString name, int s)
 {
-    PsiIcon *icon = nullptr;
+    const PsiIcon *icon = nullptr;
 
     QVariantList serviceicons = PsiOptions::instance()->mapKeyList("options.iconsets.service-status");
     if (serviceicons.contains(name)) {
-        const Iconset *is = roster.value(
+        auto it = roster.find(
             PsiOptions::instance()
                 ->getOption(*PsiOptions::instance()->mapLookup("options.iconsets.service-status", name) + ".iconset")
                 .toString());
-        if (is) {
-            icon = const_cast<PsiIcon *>(is->icon(status2name(s)));
+        if (it != roster.end()) {
+            icon = it->icon(status2name(s));
         }
     }
 
@@ -936,25 +914,25 @@ PsiIcon *PsiIconset::transportStatusPtr(QString name, int s)
     return icon;
 }
 
-PsiIcon *PsiIconset::transportStatusPtr(QString name, const XMPP::Status &s)
+const PsiIcon *PsiIconset::transportStatusPtr(QString name, const XMPP::Status &s)
 {
     return transportStatusPtr(name, makeSTATUS(s));
 }
 
 PsiIcon PsiIconset::transportStatus(QString name, int s)
 {
-    PsiIcon *icon = transportStatusPtr(name, s);
+    auto icon = transportStatusPtr(name, s);
     if (icon)
         return *icon;
-    return PsiIcon();
+    return {};
 }
 
 PsiIcon PsiIconset::transportStatus(QString name, const XMPP::Status &s)
 {
-    PsiIcon *icon = transportStatusPtr(name, s);
+    auto icon = transportStatusPtr(name, s);
     if (icon)
         return *icon;
-    return PsiIcon();
+    return {};
 }
 
 PsiIcon *PsiIconset::statusPtr(const XMPP::Jid &jid, int s) { return d->jid2icon(jid, status2name(s)); }
@@ -1013,19 +991,13 @@ PsiIcon PsiIconset::status(UserListItem *u)
 
 const Iconset &PsiIconset::system() const { return d->system; }
 
-void PsiIconset::stripFirstAnimFrame(Iconset *is)
-{
-    if (is)
-        d->stripFirstAnimFrame(*is);
-}
+void PsiIconset::stripFirstAnimFrame(Iconset &is) { d->stripFirstAnimFrame(is); }
 
-void PsiIconset::removeAnimation(Iconset *is)
+void PsiIconset::removeAnimation(Iconset &is)
 {
-    if (is) {
-        QListIterator<PsiIcon *> it = is->iterator();
-        while (it.hasNext()) {
-            it.next()->removeAnim(false);
-        }
+    QListIterator<PsiIcon *> it = is.iterator();
+    while (it.hasNext()) {
+        it.next()->removeAnim(false);
     }
 }
 

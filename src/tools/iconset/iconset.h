@@ -189,11 +189,13 @@ public:
     Iconset(const Iconset &);
     ~Iconset();
 
-    Iconset &operator=(const Iconset &);
-    Iconset &operator+=(const Iconset &);
+    Iconset    &operator=(const Iconset &);
+    Iconset    &operator+=(const Iconset &);
+    inline bool operator==(const Iconset &other) const { return d == other.d; }
 
     void clear();
     int  count() const;
+    bool isEmpty() const;
 
     bool load(const QString &dir, Format format = Format::Psi);
 
@@ -228,12 +230,12 @@ public:
     static bool isSourceAllowed(const QFileInfo &fi);
     static void setSoundPrefs(QString unpackPath, QObject *receiver, const char *slot);
 
-    Iconset copy() const;
-    void    detach();
+    // Iconset copy() const;
+    void detach();
 
 private:
     class Private;
-    QSharedDataPointer<Private> d;
+    QExplicitlySharedDataPointer<Private> d;
 };
 
 class IconsetFactory {

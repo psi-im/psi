@@ -825,16 +825,11 @@ void PsiIcon::stripFirstAnimFrame()
 //! \if _hide_doc_
 class IconsetFactoryPrivate : public QObject {
 private:
-    IconsetFactoryPrivate() : QObject(QCoreApplication::instance()), iconsets_(nullptr), emptyPixmap_(nullptr) { }
+    IconsetFactoryPrivate() : QObject(QCoreApplication::instance()), emptyPixmap_(nullptr) { }
 
     ~IconsetFactoryPrivate()
     {
-        if (iconsets_) {
-            while (!iconsets_->empty())
-                delete iconsets_->takeFirst();
-            delete iconsets_;
-            iconsets_ = nullptr;
-        }
+        iconsets_.clear();
 
         if (emptyPixmap_) {
             delete emptyPixmap_;
@@ -843,7 +838,7 @@ private:
     }
 
     static IconsetFactoryPrivate *instance_;
-    QList<Iconset *>             *iconsets_;
+    QList<Iconset>                iconsets_;
     mutable QPixmap              *emptyPixmap_;
 
 public:
@@ -859,8 +854,8 @@ public:
     {
         QStringList list;
 
-        for (const Iconset *iconset : std::as_const(*iconsets_)) {
-            QListIterator<PsiIcon *> it = iconset->iterator();
+        for (const Iconset &iconset : iconsets_) {
+            QListIterator<PsiIcon *> it = iconset.iterator();
             while (it.hasNext()) {
                 list << it.next()->name();
             }
@@ -869,8 +864,8 @@ public:
         return list;
     }
 
-    void registerIconset(const Iconset *);
-    void unregisterIconset(const Iconset *);
+    void registerIconset(const Iconset &);
+    void unregisterIconset(const Iconset &);
 
 public:
     static IconsetFactoryPrivate *instance()
@@ -893,36 +888,20 @@ public:
 
 IconsetFactoryPrivate *IconsetFactoryPrivate::instance_ = nullptr;
 
-void IconsetFactoryPrivate::registerIconset(const Iconset *i)
+void IconsetFactoryPrivate::registerIconset(const Iconset &i)
 {
-    if (!iconsets_) {
-        iconsets_ = new QList<Iconset *>;
-    }
-
-    if (!iconsets_->contains(const_cast<Iconset *>(i))) {
-        iconsets_->append(const_cast<Iconset *>(i));
+    if (!iconsets_.contains(i)) {
+        iconsets_.append(i);
     }
 }
 
-void IconsetFactoryPrivate::unregisterIconset(const Iconset *i)
-{
-    if (iconsets_ && iconsets_->contains(const_cast<Iconset *>(i))) {
-        iconsets_->removeAll(const_cast<Iconset *>(i));
-    }
-}
+void IconsetFactoryPrivate::unregisterIconset(const Iconset &i) { iconsets_.removeAll(i); }
 
 const PsiIcon *IconsetFactoryPrivate::icon(const QString &name) const
 {
-    if (!iconsets_) {
-        return nullptr;
-    }
-
     const PsiIcon *out = nullptr;
-    for (const Iconset *const iconset : std::as_const(*iconsets_)) {
-        if (iconset) {
-            out = iconset->icon(name);
-        }
-
+    for (const Iconset &iconset : iconsets_) {
+        out = iconset.icon(name);
         if (out) {
             break;
         }
@@ -1531,7 +1510,7 @@ Iconset::Iconset(const Iconset &from)
 /**
  * Destroys Iconset, and frees all allocated Icons.
  */
-Iconset::~Iconset() { IconsetFactoryPrivate::instance()->unregisterIconset(this); }
+Iconset::~Iconset() = default;
 
 /**
  * Copies all Icons as well as additional information from Iconset \a from.
@@ -1543,13 +1522,13 @@ Iconset &Iconset::operator=(const Iconset &from)
     return *this;
 }
 
-Iconset Iconset::copy() const
-{
-    Iconset is;
-    is.d = new Private(*this->d.data());
+// Iconset Iconset::copy() const
+// {
+//     Iconset is;
+//     is.d = new Private(*this->d.data());
 
-    return is;
-}
+//     return is;
+// }
 
 void Iconset::detach() { d.detach(); }
 
@@ -1583,6 +1562,8 @@ void Iconset::clear()
  * Returns the number of Icons in Iconset.
  */
 int Iconset::count() const { return d->list.count(); }
+
+bool Iconset::isEmpty() const { return d->list.isEmpty(); }
 
 /**
  * Loads Icons and additional information from directory \a dir. Directory can usual directory,
@@ -1763,12 +1744,12 @@ void Iconset::setInfo(const QHash<QString, QString> &i) { d->info = i; }
 /**
  * Adds Iconset to IconsetFactory.
  */
-void Iconset::addToFactory() const { IconsetFactoryPrivate::instance()->registerIconset(this); }
+void Iconset::addToFactory() const { IconsetFactoryPrivate::instance()->registerIconset(*this); }
 
 /**
  * Removes Iconset from IconsetFactory.
  */
-void Iconset::removeFromFactory() const { IconsetFactoryPrivate::instance()->unregisterIconset(this); }
+void Iconset::removeFromFactory() const { IconsetFactoryPrivate::instance()->unregisterIconset(*this); }
 
 bool Iconset::isSourceAllowed(const QFileInfo &fi)
 {

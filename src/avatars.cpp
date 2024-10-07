@@ -243,7 +243,7 @@ public:
 #ifdef AVATAR_EDBUG
             qDebug() << "remove from iconset and emit avatarChanged on itemPublished" << jidFull;
 #endif
-            iconset_->removeIcon(QString(QLatin1String("avatars/%1")).arg(jidFull));
+            iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(jidFull));
             emit avatarChanged(jidFull);
         }
     }
@@ -263,7 +263,7 @@ public:
             qDebug() << "remove from iconset and emit avatarChanged. ensureVCardUpdated hash=" << hash.toHex()
                      << fullJid;
 #endif
-            iconset_->removeIcon(QString(QLatin1String("avatars/%1")).arg(fullJid));
+            iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(fullJid));
             emit avatarChanged(fullJid);
         }
 
@@ -280,7 +280,7 @@ public:
 #ifdef AVATAR_EDBUG
         qDebug() << "remove from iconset and emit avatarChanged. importManualAvatar" << j.bare();
 #endif
-        iconset_->removeIcon(QString(QLatin1String("avatars/%1")).arg(j.bare()));
+        iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(j.bare()));
         emit avatarChanged(j);
     }
 
@@ -290,7 +290,7 @@ public:
 #ifdef AVATAR_EDBUG
             qDebug() << "remove from iconset and emit avatarChanged. removeManualAvatar" << j.bare();
 #endif
-            iconset_->removeIcon(QString(QLatin1String("avatars/%1")).arg(j.bare()));
+            iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(j.bare()));
             emit avatarChanged(j);
         }
     }
@@ -299,7 +299,7 @@ public:
     {
         QString bareJid  = _jid.bare();
         QString iconName = QString("avatars/%1").arg(bareJid);
-        auto    iconp    = iconset_->icon(iconName);
+        auto    iconp    = iconset_.icon(iconName);
         if (iconp) {
 #ifdef AVATAR_EDBUG
             qDebug() << "return icons" << iconName << "from iconset for jid" << bareJid;
@@ -353,7 +353,7 @@ public:
 #ifdef AVATAR_EDBUG
         qDebug() << "setting icon to iconset " << iconName << "=" << pm;
 #endif
-        iconset_->setIcon(iconName, icon);
+        iconset_.setIcon(iconName, icon);
 
         return pm;
     }
@@ -363,7 +363,7 @@ public:
         QString fullJid = _jid.full();
 
         QString iconName = QString("avatars/%1").arg(fullJid);
-        auto    iconp    = iconset_->icon(iconName);
+        auto    iconp    = iconset_.icon(iconName);
         if (iconp) {
             return iconp->pixmap();
         }
@@ -400,7 +400,7 @@ public:
 #ifdef AVATAR_EDBUG
         qDebug() << "setting icon " << QString("avatars/%1").arg(fullJid) << "=" << pm;
 #endif
-        iconset_->setIcon(QString("avatars/%1").arg(fullJid), icon); // FIXME do we ever release it?
+        iconset_.setIcon(QString("avatars/%1").arg(fullJid), icon); // FIXME do we ever release it?
 
         return pm;
     }
@@ -577,8 +577,7 @@ private:
     AvatarCache() : FileCache(AvatarFactory::getCacheDir())
     {
         // Register iconset
-        iconset_ = new Iconset();
-        iconset_->addToFactory(); // the factory will own the iconset
+        iconset_.addToFactory(); // the factory will own the iconset
         updateJids();
 
         connect(VCardFactory::instance(), &VCardFactory::vcardChanged, this,
@@ -611,7 +610,7 @@ private:
 #ifdef AVATAR_EDBUG
                         qDebug() << "removing icon from iconset:" << QString(QLatin1String("avatars/%1")).arg(fullJid);
 #endif
-                        iconset_->removeIcon(QString(QLatin1String("avatars/%1")).arg(fullJid));
+                        iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(fullJid));
                         emit avatarChanged(j);
                     }
                 });
@@ -858,7 +857,7 @@ private:
 
     QHash<QString, JidIcons> jidToIcons;
     QHash<Jid, QByteArray>   jid2hash;
-    Iconset                 *iconset_;
+    Iconset                  iconset_;
 
     static AvatarCache *_instance;
 };

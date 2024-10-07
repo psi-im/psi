@@ -133,7 +133,7 @@ ContactListViewDelegate::Private::Private(ContactListViewDelegate *parent, Conta
 
     statusIconSize_ = PsiIconset::instance()
                           ->roster.value(PsiOptions::instance()->getOption(statusIconsetOptionPath).toString())
-                          ->iconSize();
+                          .iconSize();
 
     optionChanged("*");
     colorOptionChanged("*");
