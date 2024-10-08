@@ -238,7 +238,9 @@ function renderReactions(event) {
         groupped[base].text += `<em>${event["reactions"][r].text}</em>`;
     }
 
-    for (const [base, value] of Object.entries(groupped)) {
+    //for (const [base, value] of Object.entries(groupped)) {
+    for (const base in groupped) {
+        const value = groupped[base];
         const nicks = value.nicks.sort().filter((x, i, a) => !i || x != a[i-1]);
         const reaction = document.createElement("span");
         reaction.innerHTML = `${nicks.length} ${value.text}`;
