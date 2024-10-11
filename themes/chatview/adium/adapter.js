@@ -459,7 +459,8 @@ chat.util.updateObject(adapter, function(chat){
                                         (prevGrouppingData.mtype == cdata.mtype) &&
                                         (prevGrouppingData.userid == cdata.userid) &&
                                         (prevGrouppingData.emote == cdata.emote) &&
-                                        (prevGrouppingData.local == cdata.local));
+                                        (prevGrouppingData.local == cdata.local) &&
+                                        (cdata.time - prevGrouppingData.time) < 30000);
                                     data.messageClasses += data.nextOfGroup? " consecutive" : "";
 
                                     if (data.nextOfGroup) {

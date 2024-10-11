@@ -189,7 +189,8 @@ function psiThemeAdapter(chat) {
                                     (shared.prevGrouppingData.mtype == shared.cdata.mtype) &&
                                     (shared.prevGrouppingData.userid == shared.cdata.userid) &&
                                     (shared.prevGrouppingData.emote == shared.cdata.emote) &&
-                                    (shared.prevGrouppingData.local == shared.cdata.local));
+                                    (shared.prevGrouppingData.local == shared.cdata.local) &&
+                                    (shared.cdata.time - shared.prevGrouppingData.time) < 30000);
                 return shared.cdata.nextOfGroup;
             },
 
