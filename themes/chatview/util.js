@@ -981,6 +981,16 @@ ${info}
                 }
             }
 
+            // we need "time" as Date for groupping.
+            if (data.time) {
+                data.time = new Date(data.time);
+            }
+
+            // "date" is not really required that early but why not
+            if (data.date) {
+                data.date = new Date(data.date);
+            }
+
             if (data.type == "message") {
                 if (data.mtype == "join") {
                     usersMap[data.sender] = {avatar:data.avatar, nickcolor:data.nickcolor, msgs:{}};

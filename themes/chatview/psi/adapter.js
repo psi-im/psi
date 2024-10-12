@@ -235,7 +235,7 @@ function psiThemeAdapter(chat) {
                 if (this.name == "sender") { //may not be html
                     d = chat.util.escapeHtml(d);
                 } else if (d instanceof Date) {
-                    // "date" and "time" variables use TemplateTimeVar. this is something unknown
+                    chat.console("WARNING: " + this.name + " isn't handled by TemplateTimeVar");
                     d = chat.util.dateFormat(d, shared.dateTimeFormat);
                 } else if (this.name == "avatarurl") {
                     var url;
