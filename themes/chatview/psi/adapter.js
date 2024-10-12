@@ -113,6 +113,7 @@ function psiThemeAdapter(chat) {
                     var m = splitted[i].match(/%([\w]+)(?:\{([^\{]+)\})?%/);
                     if (m) {
                         switch (m[1]) {
+                        case "date":
                         case "time": this.parts.push(new shared.TemplateTimeVar(m[1], m[2])); break;
                         case "template": this.parts.push(new shared.TemplateTemplateVar(m[2])); break;
                         case "escapeURI": this.parts.push(new shared.TemplateEscapeUriVar(m[2])); break;

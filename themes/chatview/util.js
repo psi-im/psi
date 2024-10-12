@@ -981,10 +981,6 @@ ${info}
                 }
             }
 
-            if (data.time) {
-                data.time = new Date(data.time);
-            }
-
             if (data.type == "message") {
                 if (data.mtype == "join") {
                     usersMap[data.sender] = {avatar:data.avatar, nickcolor:data.nickcolor, msgs:{}};
