@@ -203,8 +203,11 @@ public:
     void           setIcon(const QString &, const PsiIcon &);
     void           removeIcon(const QString &);
 
-    const QString     &id() const;
-    const QString     &name() const;
+    const QString &id() const;
+
+    const QString &name() const;
+    void           setName(const QString &name);
+
     const QString     &version() const;
     const QString     &description() const;
     const QStringList &authors() const;
@@ -231,7 +234,7 @@ public:
     static void setSoundPrefs(QString unpackPath, QObject *receiver, const char *slot);
 
     // Iconset copy() const;
-    void detach();
+    // void detach();
 
 private:
     class Private;

@@ -577,6 +577,7 @@ private:
     AvatarCache() : FileCache(AvatarFactory::getCacheDir())
     {
         // Register iconset
+        iconset_.setName(QLatin1String("Avatars"));
         iconset_.addToFactory(); // the factory will own the iconset
         updateJids();
 

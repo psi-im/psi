@@ -1530,14 +1530,14 @@ Iconset &Iconset::operator=(const Iconset &from)
 //     return is;
 // }
 
-void Iconset::detach() { d.detach(); }
+// void Iconset::detach() { d.detach(); }
 
 /**
  * Appends icons from Iconset \a from to this Iconset.
  */
 Iconset &Iconset::operator+=(const Iconset &i)
 {
-    detach();
+    // detach();
 
     QListIterator<PsiIcon *> it(i.d->list);
     while (it.hasNext()) {
@@ -1553,7 +1553,7 @@ Iconset &Iconset::operator+=(const Iconset &i)
  */
 void Iconset::clear()
 {
-    detach();
+    // detach();
 
     d->clear();
 }
@@ -1576,7 +1576,7 @@ bool Iconset::load(const QString &dir, Format format)
     }
     Q_ASSERT(!dir.isEmpty());
 
-    detach();
+    // detach();
 
     // make it run okay on windows 9.x (where the pixmap memory is limited)
     // QPixmap::Optimization optimization = QPixmap::defaultOptimization();
@@ -1642,7 +1642,7 @@ const PsiIcon *Iconset::icon(const QString &name) const
  */
 void Iconset::setIcon(const QString &name, const PsiIcon &icon)
 {
-    detach();
+    // detach();
 
     PsiIcon *newIcon = new PsiIcon(icon);
 
@@ -1655,7 +1655,7 @@ void Iconset::setIcon(const QString &name, const PsiIcon &icon)
  */
 void Iconset::removeIcon(const QString &name)
 {
-    detach();
+    // detach();
 
     d->remove(name);
 }
@@ -1669,6 +1669,11 @@ const QString &Iconset::id() const { return d->id; }
  * Returns the Iconset name.
  */
 const QString &Iconset::name() const { return d->name; }
+
+/**
+ * Sets Iconset name (used for dynamic iconsets).
+ */
+void Iconset::setName(const QString &name) { d->name = name; }
 
 /**
  * Returns the icons size from Iconset.
@@ -1725,7 +1730,7 @@ void Iconset::setFileName(const QString &f) { d->filename = f; }
  */
 void Iconset::setInformation(const Iconset &from)
 {
-    detach();
+    // detach();
     d->setInformation(*(from.d));
 }
 
