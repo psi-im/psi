@@ -79,7 +79,9 @@ function psiThemeAdapter(chat) {
             session : session,
             isMuc : session.isMuc,
             accountId : window.srvSession.account,
-            dateFormat : "HH:MM:SS",
+            timeFormat : "HH:mm:ss",
+            dateFormat : "LL",
+            dateTimeFormat: "LL HH:mm:ss",
             scroller : null,
             varHandlers : {},
             prevGrouppingData : null,
@@ -94,7 +96,7 @@ function psiThemeAdapter(chat) {
 
             TemplateTimeVar : function(name, format) {
                 this.name = name;
-                this.formatter = new chat.DateTimeFormatter(format || shared.dateFormat);
+                this.formatter = new chat.DateTimeFormatter(format || (name == "date"? shared.dateFormat : shared.timeFormat));
             },
 
             TemplateTemplateVar : function(template_name) {
@@ -155,7 +157,9 @@ function psiThemeAdapter(chat) {
                 }
                 var t = shared.templates;
                 shared.chatElement = config.chatElement;
+                shared.timeFormat = config.timeFormat || shared.timeFormat;
                 shared.dateFormat = config.dateFormat || shared.dateFormat;
+                shared.dateTimeFormat = config.dateTimeFormat || shared.dateTimeFormat;
                 shared.scroller = config.scroller || new chat.WindowScroller(false);
                 shared.groupping = config.groupping || shared.groupping;
                 proxy = config.proxy;
@@ -231,11 +235,8 @@ function psiThemeAdapter(chat) {
                 if (this.name == "sender") { //may not be html
                     d = chat.util.escapeHtml(d);
                 } else if (d instanceof Date) {
-                    if (this.name == "time") {
-                        d = chat.util.dateFormat(d, shared.dateFormat);
-                    } else { // last message date ?
-                        d = chat.util.dateFormat(d, "LL");
-                    }
+                    // "date" and "time" variables use TemplateTimeVar. this is something unknown
+                    d = chat.util.dateFormat(d, shared.dateTimeFormat);
                 } else if (this.name == "avatarurl") {
                     var url;
                     if (shared.cdata.local) {

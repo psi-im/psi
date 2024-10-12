@@ -56,12 +56,12 @@ shared.initTheme({
         messageGroupping: messageGroupping,
         sys: `<div class="sysmsg" title="%time{LL}%">%message%</div>`,
         sysMessageUT: `<div class="sysmsg" title="%time{LL}%">%message%<div class="usertext">%usertext%</div></div>`,
-        lastMsgDate: `<div class="sysmsg">%date{LL}%</div>`,
+        lastMsgDate: `<div class="sysmsg">%date%</div>`,
         subject: shared.isMuc?
                 "<div class='sysmsg' title='%time{LL}%'>%message%<div class='usertext'><b>%usertext%</b></div></div>"
                 : "<div class='sysmsg'><b>%usertext%</b></div>",
     },
-    dateFormat : "HH:mm",
+    timeFormat : "HH:mm",
     proxy : function() { //optional
         if (shared.cdata.type == "reactions") {
             renderReactions(shared.cdata);

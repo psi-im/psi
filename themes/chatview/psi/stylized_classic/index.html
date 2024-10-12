@@ -211,7 +211,7 @@ function startPsiTheme(shared) {
                 : "<div class='infmsg'>%icon%<b>*** %usertext%</b></div>",
             trackbar: '<hr style="height:1px; border:1px solid black; border-color:#2d2d2d #5b5b5b #5b5b5b #2d2d2d" />'
         },
-        dateFormat : "HH:mm",
+        timeFormat : "HH:mm",
         proxy : function() { //optional
             if (shared.cdata.mtype == "message") {
                 return shared.cdata.emote && shared.templates.messageNC ||

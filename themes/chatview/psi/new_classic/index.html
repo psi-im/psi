@@ -181,7 +181,7 @@ function startPsiTheme(shared) {
 
             left_time: '<div class="left_time"><div>%time%</div></div>'
         },
-        dateFormat : "HH:mm",
+        timeFormat : "HH:mm",
         proxy : function() { //optional
             if (shared.cdata.mtype == "message") {
                 return shared.cdata.emote && shared.templates.messageNC || null;
