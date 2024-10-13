@@ -303,7 +303,7 @@ void VCardFactory::ensureVCardPhotoUpdated(PsiAccount *acc, const Jid &jid, Flag
         if (!vc || vc.photo().isEmpty()) { // we didn't have it and still don't
             return;
         }
-        vc.setPhoto(VCard4::UriValue {}); // reset photo;
+        vc.setPhoto(VCard4::PAdvUris {}); // reset photo;
         saveVCard(jid, vc, flags);
 
         return;

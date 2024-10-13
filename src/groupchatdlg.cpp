@@ -1380,15 +1380,23 @@ void GCMainDlg::discoInfoFinished()
         d->discoMucName = i.first().name;
     }
     auto x = t->item().findExtension(XData::Data_Result, QLatin1String("http://jabber.org/protocol/muc#roominfo"));
-    d->discoMucDescription = x.getField("muc#roominfo_description").value().value(0);
+    d->discoMucDescription = x.getField(QLatin1String("muc#roominfo_description")).value().value(0);
     if (d->mucNameSource >= Private::TitleDisco) {
         updateMucName();
     }
     if (!d->gcSelfPresenceSupported) {
         if (t->item().features().hasVCard()) {
-            auto avatarHash = x.getField("muc#roominfo_avatarhash").value().value(0);
-            account()->avatarFactory()->ensureVCardUpdated(jid(), QByteArray::fromHex(avatarHash.toLatin1()),
-                                                           AvatarFactory::MucRoom);
+            // xep-0486 says either we have "muc#roominfo_avatarhash" with valid hash
+            // or don't have "muc#roominfo_avatarhash" at all and no avatar correspondingly.
+            // unfortunatelly we also have old server without this stuff in disco.
+            // So we are going to update avatar factory only we have "muc#roominfo_avatarhash".
+            // A drawback of this is inability to reset avatar by room configuration update notification.
+            auto field = x.findField(QLatin1String("muc#roominfo_avatarhash"));
+            if (field) {
+                auto avatarHash = field->value().value(0);
+                account()->avatarFactory()->ensureVCardUpdated(jid(), QByteArray::fromHex(avatarHash.toLatin1()),
+                                                               AvatarFactory::MucRoom);
+            }
         }
     }
 }

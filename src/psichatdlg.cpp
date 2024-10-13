@@ -517,7 +517,7 @@ void PsiChatDlg::initToolButtons()
     ui_.vboxLayout1->addLayout(hb3a);
     // -- typeahead
 
-    ActionList *list = account()->psi()->actionList()->actionLists(PsiActionList::Actions_Chat).at(0);
+    ActionList *list = account()->psi()->actionList()->actionLists(PsiActionList::Actions_Chat).value(0);
     for (const QString &name : list->actions()) {
         auto action = list->copyAction(name, this);
         actions_->addAction(name, action);
@@ -569,7 +569,7 @@ void PsiChatDlg::initToolButtons()
         }
     }
 
-    list = account()->psi()->actionList()->actionLists(PsiActionList::Actions_Common).at(0);
+    list = account()->psi()->actionList()->actionLists(PsiActionList::Actions_Common).value(0);
     for (const QString &name : list->actions()) {
         IconAction *action = list->copyAction(name, this);
         actions_->addAction(name, action);

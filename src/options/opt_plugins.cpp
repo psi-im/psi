@@ -128,7 +128,7 @@ void OptionsTabPlugins::listPlugins()
         item->setToolTip(C_NAME, toolTip);
         item->setCheckState(C_NAME, state);
         if (!enabled && !icon.isNull()) {
-            icon = QIcon(icon.pixmap(icon.availableSizes().at(0), QIcon::Disabled));
+            icon = QIcon(icon.pixmap(icon.availableSizes().value(0), QIcon::Disabled));
         }
         item->setIcon(C_NAME, icon);
 
@@ -178,7 +178,7 @@ void OptionsTabPlugins::itemChanged(QTreeWidgetItem *item, int column)
     d->tw_Plugins->itemWidget(item, C_ABOUT)->setEnabled(enabled);
     QIcon icon = pm->icon(name);
     if (!enabled && !icon.isNull()) {
-        icon = QIcon(icon.pixmap(icon.availableSizes().at(0), QIcon::Disabled));
+        icon = QIcon(icon.pixmap(icon.availableSizes().value(0), QIcon::Disabled));
     }
     item->setIcon(C_NAME, icon);
     d->tw_Plugins->blockSignals(false); // Release signals blocking
