@@ -75,7 +75,12 @@ public:
     Private() { }
 
 #ifdef USE_DBUS
-    QString dbusService = QString();
+    struct {
+        QString name    = QString();
+        QString path    = QString();
+        QString method  = QString();
+        bool    isGnome = false;
+    } idleService;
 #endif // USE_DBUS
 #ifdef HAVE_XSS
     XScreenSaverInfo *ss_info = nullptr;
@@ -110,12 +115,25 @@ bool IdlePlatform::init()
 #ifdef USE_DBUS
     // if DBUS idle is available using it else try to use XSS functions
     const auto        services     = QDBusConnection::sessionBus().interface()->registeredServiceNames().value();
-    const QStringList idleServices = { COMMON_SS_SERV, KDE_SS_SERV, GNOME_SS_SERV };
+    const QStringList idleServices = { GNOME_SS_SERV, COMMON_SS_SERV, KDE_SS_SERV };
     // find first available dbus-service
     for (const auto &service : idleServices) {
         if (services.contains(service)) {
-            d->dbusService = service;
-            return true;
+            bool isGnome   = (service == GNOME_SS_SERV);
+            auto path      = isGnome ? GNOME_SS_PATH : COMMON_SS_PATH;
+            auto interface = QDBusInterface(service, path, "org.freedesktop.DBus.Introspectable");
+            if (interface.isValid()) {
+                QDBusReply<QString> reply = interface.call("Introspect");
+                if (reply.isValid()) {
+                    if (reply.value().contains(isGnome ? GNOME_SS_F : COMMON_SS_F)) {
+                        d->idleService.name    = service;
+                        d->idleService.path    = path;
+                        d->idleService.method  = isGnome ? GNOME_SS_F : COMMON_SS_F;
+                        d->idleService.isGnome = isGnome;
+                        return true;
+                    }
+                }
+            }
         }
     }
 #endif // USE_DBUS
@@ -140,18 +158,17 @@ bool IdlePlatform::init()
 int IdlePlatform::secondsIdle()
 {
 #ifdef USE_DBUS
-    if (!d->dbusService.isEmpty()) {
+    if (!d->idleService.name.isEmpty()) {
         // KDE and freedesktop uses the same path interface and method but gnome uses other
-        bool                isNotGnome = d->dbusService == COMMON_SS_SERV || d->dbusService == KDE_SS_SERV;
-        const QLatin1String iface      = isNotGnome ? COMMON_SS_SERV : GNOME_SS_SERV;
-        const QLatin1String path       = isNotGnome ? COMMON_SS_PATH : GNOME_SS_PATH;
-        const QLatin1String method     = isNotGnome ? COMMON_SS_F : GNOME_SS_F;
-        auto                interface  = QDBusInterface(d->dbusService, path, iface);
+        auto interface = QDBusInterface(d->idleService.name, d->idleService.path, d->idleService.name);
         if (interface.isValid()) {
-            QDBusReply<uint> reply = interface.call(method);
-            // probably reply value for freedesktop and kde need to be converted to seconds
-            if (reply.isValid())
-                return isNotGnome ? reply.value() / 1000 : reply.value();
+            QDBusMessage reply = interface.call(d->idleService.method);
+            if (reply.type() == QDBusMessage::ReplyMessage && reply.arguments().count() > 0) {
+                auto result = reply.arguments().at(0);
+                if (result.canConvert<int>())
+                    // reply should be in milliseconds and must be converted to seconds
+                    return result.toInt() / 1000;
+            }
         }
     }
 #endif // USE_DBUS
