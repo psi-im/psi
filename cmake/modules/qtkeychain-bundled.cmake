@@ -34,6 +34,8 @@ include(FindPkgConfig)
 include(ExternalProject)
 #set CMake options and transfer the environment to an external project
 set(Qtkeychain_BUILD_OPTIONS
+    -DCMAKE_CXX_STANDARD=14
+    -DCMAKE_CXX_STANDARD_REQUIRED=ON
     -DBUILD_SHARED_LIBS=OFF
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
