@@ -25,7 +25,7 @@
 
 #include <assert.h>
 #ifdef HAVE_CONFIG_H_
-#include <config.h>
+#include <psi_config.h>
 #endif
 #include <errno.h>
 /*

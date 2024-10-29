@@ -225,8 +225,8 @@ elseif(APPLE)
     message(STATUS "${CLIENT_NAME} libraries directory: ${PSI_LIBDIR}")
 endif()
 
-set(CONFIG_OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/config.h")
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CONFIG_OUTPUT_FILE} @ONLY)
+set(CONFIG_OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/psi_config.h")
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/psi_config.h.in ${CONFIG_OUTPUT_FILE} @ONLY)
 
 prepare_iconsets(prepare-src)
 #Generate iconsets.qrc and icondef.xml
@@ -238,7 +238,7 @@ configure_file(${PROJECT_SOURCE_DIR}/iconsets.qrc.in ${ICONSETSQRC_OUTPUT_FILE} 
 #Include SOURCES HEADERS FORMS
 include(src.cmake)
 
-#Append config.h to HEADERS list
+#Append psi_config.h to HEADERS list
 if(EXISTS "${CONFIG_OUTPUT_FILE}")
     message(STATUS "${CONFIG_OUTPUT_FILE} file generated")
     list(APPEND HEADERS ${CONFIG_OUTPUT_FILE})

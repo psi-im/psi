@@ -20,7 +20,7 @@
 #include "debug.h"
 
 #include <QDir>
-#include <config.h>
+#include <psi_config.h>
 
 SlowTimer::SlowTimer(const QString &path, int line, int maxTime, const QString &message) :
     _path(QDir::fromNativeSeparators(path)), _line(line), _message(message), _maxTime(maxTime)

@@ -28,8 +28,8 @@
 #ifdef Q_OS_WIN
 #include "applicationinfo.h"
 #endif
-#include "config.h"
 #include "languagemanager.h"
+#include "psi_config.h"
 
 #include <QCoreApplication>
 // #include <QDebug>

@@ -20,7 +20,7 @@
 #include "translationmanager.h"
 
 #include "applicationinfo.h"
-#include "config.h"
+#include "psi_config.h"
 #include "varlist.h"
 
 #include <QCoreApplication>
