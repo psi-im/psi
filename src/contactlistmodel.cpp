@@ -320,9 +320,11 @@ void ContactListModel::Private::addContact(PsiContact *contact)
 
 void ContactListModel::Private::removeContact(PsiContact *contact)
 {
-    Q_ASSERT(monitoredContacts.contains(contact));
-    if (!monitoredContacts.contains(contact))
+    // Q_ASSERT(monitoredContacts.contains(contact));
+    if (!monitoredContacts.contains(contact)) {
+        qWarning("contact %s is not monitored", qUtf8Printable(contact->jid().full()));
         return;
+    }
 
     while (monitoredContacts.contains(contact)) {
         QModelIndex index = monitoredContacts.take(contact);
