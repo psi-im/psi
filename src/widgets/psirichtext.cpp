@@ -540,7 +540,11 @@ static QString convertIconsToObjectReplacementCharacters(const QStringView &text
 
             std::optional<QTextCharFormat::VerticalAlignment> valign;
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 5, 0)
             QRegularExpressionMatchIterator i = rxName.globalMatch(fragment);
+#else
+            QRegularExpressionMatchIterator i = rxName.globalMatchView(fragment);
+#endif
             while (i.hasNext()) {
                 auto match = i.next();
                 if (match.capturedView(1) == QLatin1String("name")) {

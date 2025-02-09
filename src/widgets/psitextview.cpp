@@ -59,7 +59,11 @@ public:
     {
         static QRegularExpression attrStart("([a-zA-Z0-9]+)=([\"'])((.(?!\\2))*.)\\2");
         // static QRegularExpression attrStart("([a-zA-Z0-9]+)=([\"'])([^\"']*)\\2");
-        auto                   it = attrStart.globalMatch(html);
+#if QT_VERSION < QT_VERSION_CHECK(6, 5, 0)
+        auto it = attrStart.globalMatch(html);
+#else
+        auto it = attrStart.globalMatchView(html);
+#endif
         QMap<QString, QString> attrs;
         while (it.hasNext()) {
             auto    match = it.next();

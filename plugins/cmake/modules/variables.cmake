@@ -12,6 +12,9 @@ get_filename_component(ABS_INCLUDES_DIR "${CMAKE_CURRENT_LIST_DIR}/../include" A
 
 set(CMAKE_CXX_STANDARD 17)
 
+if(USE_QT6)
+    set(QT_DEFAULT_MAJOR_VERSION 6)
+endif()
 if("${QT_DEFAULT_MAJOR_VERSION}" STREQUAL "")
     set(QT_DEFAULT_MAJOR_VERSION 5)
 endif()
