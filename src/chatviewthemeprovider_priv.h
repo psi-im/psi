@@ -22,6 +22,7 @@
 
 #ifdef WEBENGINE
 #include "webserver.h"
+#include <QMap>
 #include <QWebEngineUrlRequestInterceptor>
 #else
 #include <QObject> // at least

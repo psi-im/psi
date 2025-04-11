@@ -23,6 +23,7 @@
 #include "theme.h"
 
 #include <QCoreApplication>
+#include <QSet>
 
 class PsiThemeManager::Private {
 public:
