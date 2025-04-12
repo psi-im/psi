@@ -50,7 +50,11 @@ static QString encodeAlNumD(QString in)
         } else if ('/' == c) {
             out += "_";
         } else {
+#if QT_VERSION < QT_VERSION_CHECK(6, 9, 0)
             out += QString("-%1").arg(c, 2, 16, QChar('0'));
+#else
+            out += QString("-%1").arg(QString::number(c, 16), QChar('0'));
+#endif
         }
         first = false;
     }
