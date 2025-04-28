@@ -5208,7 +5208,7 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
             if (c && (d->tabManager->isChatTabbed(c) || !c->isHidden())) {
                 c->incomingMessage(m);
                 soundType = eChat2;
-                if (selfMessage
+                if (!selfMessage
                     && ((o->getOption("options.ui.chat.alert-for-already-open-chats").toBool() && !c->isActiveTab())
                         || (c->isTabbed() && c->getManagingTabDlg()->isHidden()))) {
 
