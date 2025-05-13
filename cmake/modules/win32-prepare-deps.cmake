@@ -101,7 +101,7 @@ if(WIN32)
     endif()
     #Find windeployqt prorgam and add windeploy target
     find_program(WINDEPLOYQTBIN windeployqt ${QT_BIN_DIR})
-    if((NOT USE_MXE) AND ("${WINDEPLOYQTBIN}" STREQUAL "WINDEPLOYQTBIN-NOTFOUND"))
+    if((NOT USE_MXE) AND (NOT "${WINDEPLOYQTBIN}" STREQUAL "WINDEPLOYQTBIN-NOTFOUND"))
         message(STATUS "WinDeployQt utility - FOUND")
         if(CMAKE_BUILD_TYPE STREQUAL "Debug")
             list(APPEND WDARGS --debug)
