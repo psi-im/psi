@@ -176,7 +176,7 @@ if(WIN32)
             )
         endif()
         find_psi_lib("${QT_LIBAS}" "${QT_BIN_DIR}" "${QT_LIBS_OUTPUT}/")
-        #
+        #AUDIO PLUGINS
         find_psi_lib(qtaudio_windows${D}.dll "${QT_PLUGINS_DIR}/audio/" "${QT_PLUGINS_OUTPUT}/audio/")
         set(PLATFORMS_PLUGS
             qdirect2d${D}.dll
@@ -185,33 +185,33 @@ if(WIN32)
             qwindows${D}.dll
             )
         find_psi_lib("${PLATFORMS_PLUGS}" "${QT_PLUGINS_DIR}/platforms/" "${QT_PLUGINS_OUTPUT}/platforms/")
-        #
+        #PLATFORMS PLUGINS
         set(PLATFORMTHEMES_PLUGS
             qxdgdesktopportal${D}.dll
             )
         find_psi_lib("${PLATFORMTHEMES_PLUGS}" "${QT_PLUGINS_DIR}/platformthemes/" "${QT_PLUGINS_OUTPUT}/platformthemes/")
-        #
+        #PLATFORMTHEMES PLUGINS
         set(STYLES_PLUGS
             qwindowsvistastyle${D}.dll
             )
         find_psi_lib("${STYLES_PLUGS}" "${QT_PLUGINS_DIR}/styles/" "${QT_PLUGINS_OUTPUT}/styles/")
-        #
+        #STYLES PLUGINS
         set(BEARER_PLUGS
             qgenericbearer${D}.dll
             qnativewifibearer${D}.dll
             )
         find_psi_lib("${BEARER_PLUGS}" "${QT_PLUGINS_DIR}/bearer/" "${QT_PLUGINS_OUTPUT}/bearer/")
-        #
+        #BEARER PLUGINS
         set(GENERIC_PLUGS
             qtuiotouchplugin${D}.dll
             )
         find_psi_lib("${GENERIC_PLUGS}" "${QT_PLUGINS_DIR}/generic/" "${QT_PLUGINS_OUTPUT}/generic/")
-        #
+        #GENERIC PLUGINS
         set(ICONENGINES_PLUGS
             qsvgicon${D}.dll
             )
         find_psi_lib("${ICONENGINES_PLUGS}" "${QT_PLUGINS_DIR}/iconengines/" "${QT_PLUGINS_OUTPUT}/iconengines/")
-        #
+        #ICONENGINES PLUGINS
         set(IMAGEFORMATS_PLUGS
             qdds${D}.dll
             qgif${D}.dll
@@ -227,57 +227,59 @@ if(WIN32)
             qwebp${D}.dll
             )
         find_psi_lib("${IMAGEFORMATS_PLUGS}" "${QT_PLUGINS_DIR}/imageformats/" "${QT_PLUGINS_OUTPUT}/imageformats/")
-        #
+        #IMAGEFORMATS PLUGINS
         set(MEDIASERVICE_PLUGS
             dsengine${D}.dll
             qtmedia_audioengine${D}.dll
             wmfengine${D}.dll
             )
         find_psi_lib("${MEDIASERVICE_PLUGS}" "${QT_PLUGINS_DIR}/mediaservice/" "${QT_PLUGINS_OUTPUT}/mediaservice/")
-        #
+        #MEDIASERVICE PLUGINS
         set(MULTIMEDIA_PLUGS
             ffmpegmediaplugin${D}.dll
             windowsmediaplugin${D}.dll
             )
         find_psi_lib("${MULTIMEDIA_PLUGS}" "${QT_PLUGINS_DIR}/multimedia/" "${QT_PLUGINS_OUTPUT}/multimedia/")
-        #
+        #MULTIMEDIA PLUGINS
         set(NETWORKINFORMATION_PLUGS
             qnetworklistmanager${D}.dll
             )
         find_psi_lib("${NETWORKINFORMATION_PLUGS}" "${QT_PLUGINS_DIR}/networkinformation/" "${QT_PLUGINS_OUTPUT}/networkinformation/")
-        #
+        #NETWORKINFORMATION PLUGINS
         set(POSITION_PLUGS
             qtposition_nmea${D}.dll
             qtposition_positionpoll${D}.dll
             qtposition_winrt${D}.dll
             )
         find_psi_lib("${POSITION_PLUGS}" "${QT_PLUGINS_DIR}/position/" "${QT_PLUGINS_OUTPUT}/position/")
-        #
+        #POSITION PLUGINS
         set(PLAYLISTFORMATS_PLUGS
             qtmultimedia_m3u${D}.dll
             )
         find_psi_lib("${PLAYLISTFORMATS_PLUGS}" "${QT_PLUGINS_DIR}/playlistformats/" "${QT_PLUGINS_OUTPUT}/playlistformats/")
-        #
+        #PLAYLISTFORMATS PLUGINS
         set(PRINTSUPPORT_PLUGS
             windowsprintersupport${D}.dll
             )
         find_psi_lib("${PRINTSUPPORT_PLUGS}" "${QT_PLUGINS_DIR}/printsupport/" "${QT_PLUGINS_OUTPUT}/printsupport/")
-        #
+        #PRINTSUPPORT PLUGINS
         set(SQLDRIVERS_PLUGS
             qsqlite${D}.dll
             qsqlmimer${D}.dll
+            qsqlmysql${D}.dll
             qsqlodbc${D}.dll
             qsqlpsql${D}.dll
+            qsqltds${D}.dll
             )
         find_psi_lib("${SQLDRIVERS_PLUGS}" "${QT_PLUGINS_DIR}/sqldrivers/" "${QT_PLUGINS_OUTPUT}/sqldrivers/")
-        #
+        #SQLDRIVERS PLUGINS
         set(TLS_PLUGS
             qcertonlybackend${D}.dll
             qopensslbackend${D}.dll
             qschannelbackend${D}.dll
             )
         find_psi_lib("${TLS_PLUGS}" "${QT_PLUGINS_DIR}/tls/" "${QT_PLUGINS_OUTPUT}/tls/")
-        #
+        #TLS PLUGINS
         if(KEYCHAIN_LIBS)
             set(KEYCHAIN_LIBS
                 qt${QT_DEFAULT_MAJOR_VERSION}keychain${D}.dll
