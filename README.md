@@ -141,6 +141,8 @@ If you want to donate some money for development of Psi and Psi+ project, it is 
 * [Unofficial PPA for Debian and Ubuntu](http://notesalexp.org/index-old.html) (see [notes](https://psi-plus.com/wiki/en:debian#nightly_builds) about using it)
 * [Unofficial PPA for openSUSE](https://software.opensuse.org/package/psi-plus) (daily builds)
 * [Unofficial PPA for Fedora](https://copr.fedorainfracloud.org/coprs/valdikss/psi-plus-snapshots/) (outdated)
+* [Psi package for Arch Linux](https://archlinux.org/packages/extra/x86_64/psi/)
+* [Unofficial Psi+ AUR package](https://aur.archlinux.org/packages/psi-plus) 
 * [Packages for different Linux distros](https://repology.org/metapackage/psi-plus/versions)
 
 ## Extra links
