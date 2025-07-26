@@ -560,50 +560,26 @@ void InfoWidget::setEdited(bool x)
 
 bool InfoWidget::edited()
 {
-    bool x = false;
-
-    if (m_ui.le_fullname->isModified())
-        x = true;
-    if (d->le_givenname->isModified())
-        x = true;
-    if (d->le_middlename->isModified())
-        x = true;
-    if (d->le_familyname->isModified())
-        x = true;
-    if (m_ui.le_nickname->isModified())
-        x = true;
-    if (m_ui.le_bday->isModified())
-        x = true;
-    if (m_ui.le_email->isModified())
-        x = true;
-    if (m_ui.le_homepage->isModified())
-        x = true;
-    if (m_ui.le_phone->isModified())
-        x = true;
-    if (m_ui.le_street->isModified())
-        x = true;
-    if (m_ui.le_ext->isModified())
-        x = true;
-    if (m_ui.le_city->isModified())
-        x = true;
-    if (m_ui.le_state->isModified())
-        x = true;
-    if (m_ui.le_pcode->isModified())
-        x = true;
-    if (m_ui.le_country->isModified())
-        x = true;
-    if (m_ui.le_orgName->isModified())
-        x = true;
-    if (m_ui.le_orgUnit->isModified())
-        x = true;
-    if (m_ui.le_title->isModified())
-        x = true;
-    if (m_ui.le_role->isModified())
-        x = true;
-    if (d->te_edited)
-        x = true;
-
-    return x;
+    return 
+        m_ui.le_fullname->isModified() ||
+        d->le_givenname->isModified() ||
+        d->le_middlename->isModified() ||
+        d->le_familyname->isModified() ||
+        m_ui.le_nickname->isModified() ||
+        m_ui.le_bday->isModified() ||
+        m_ui.le_email->isModified() ||
+        m_ui.le_homepage->isModified() ||
+        m_ui.le_phone->isModified() ||
+        m_ui.le_street->isModified() ||
+        m_ui.le_ext->isModified() ||
+        m_ui.le_city->isModified() ||
+        m_ui.le_state->isModified() ||
+        m_ui.le_pcode->isModified() ||
+        m_ui.le_orgName->isModified() ||
+        m_ui.le_orgUnit->isModified() ||
+        m_ui.le_title->isModified() ||
+        m_ui.le_role->isModified() ||
+        d->te_edited;
 }
 
 void InfoWidget::setReadOnly(bool x)
