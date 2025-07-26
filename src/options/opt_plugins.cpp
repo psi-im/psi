@@ -121,9 +121,12 @@ void OptionsTabPlugins::listPlugins()
         Qt::CheckState   state               = enabled ? Qt::Checked : Qt::Unchecked;
         QTreeWidgetItem *item                = new QTreeWidgetItem(d->tw_Plugins, QTreeWidgetItem::Type);
         auto             truncatedPluginName = QString(pluginName).replace(" Plugin", "");
+        auto truncatedDescription = QString(description);
+        truncatedDescription.truncate(80);
         item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
         item->setData(C_NAME, Qt::UserRole, shortName);
         item->setText(C_NAME, truncatedPluginName);
+        item->setText(C_DESCRIPTION, truncatedDescription);
         item->setText(C_VERSION, pm->version(shortName));
         item->setTextAlignment(C_VERSION, Qt::AlignHCenter);
         item->setToolTip(C_NAME, toolTip);
@@ -150,6 +153,7 @@ void OptionsTabPlugins::listPlugins()
     if (d->tw_Plugins->topLevelItemCount() > 0) {
         d->tw_Plugins->sortItems(C_NAME, Qt::AscendingOrder);
         d->tw_Plugins->header()->setSectionResizeMode(C_NAME, QHeaderView::Stretch);
+        d->tw_Plugins->resizeColumnToContents(C_DESCRIPTION);
         d->tw_Plugins->resizeColumnToContents(C_VERSION);
         d->tw_Plugins->resizeColumnToContents(C_ABOUT);
         d->tw_Plugins->resizeColumnToContents(C_SETTS);
