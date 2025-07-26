@@ -801,5 +801,12 @@ QLineEdit#le_status_text {
         </keychain>
     </options>
     <accounts comment="Account definitions and options"/>
-    <plugins comment="Plugin options"/>
+    <plugins comment="Plugin options">
+        <auto-load>
+            <attention type="bool">true</attention>
+            <otr type="bool">true</otr>
+            <omemo type="bool">true</omemo>
+            <openpgp type="bool">true</openpgp>
+        </auto-load>
+    </plugins>
 </psi>
