@@ -579,7 +579,7 @@ bool InfoWidget::edited()
         m_ui.le_orgUnit->isModified() ||
         m_ui.le_title->isModified() ||
         m_ui.le_role->isModified() ||
-        d->te_edited
+        d->te_edited;
 }
 
 void InfoWidget::setReadOnly(bool x)
