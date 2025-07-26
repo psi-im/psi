@@ -741,10 +741,10 @@ QLineEdit#le_status_text {
         <status>
             <ask-for-message-on-offline type="bool">false</ask-for-message-on-offline>
             <ask-for-message-on-online type="bool">false</ask-for-message-on-online>
-            <ask-for-message-on-chat type="bool">true</ask-for-message-on-chat>
-            <ask-for-message-on-away type="bool">true</ask-for-message-on-away>
+            <ask-for-message-on-chat type="bool">false</ask-for-message-on-chat>
+            <ask-for-message-on-away type="bool">false</ask-for-message-on-away>
             <ask-for-message-on-xa type="bool">true</ask-for-message-on-xa>
-            <ask-for-message-on-dnd type="bool">true</ask-for-message-on-dnd>
+            <ask-for-message-on-dnd type="bool">false</ask-for-message-on-dnd>
             <auto-away>
                 <away-after type="int">10</away-after>
                 <force-priority type="bool">false</force-priority>
