@@ -127,9 +127,6 @@ void OptionsTabPlugins::listPlugins()
         item->setTextAlignment(C_VERSION, Qt::AlignHCenter);
         item->setToolTip(C_NAME, toolTip);
         item->setCheckState(C_NAME, state);
-        if (!enabled && !icon.isNull()) {
-            icon = QIcon(icon.pixmap(icon.availableSizes().value(0), QIcon::Disabled));
-        }
         item->setIcon(C_NAME, icon);
 
         QToolButton *aboutbutton = new QToolButton(d->tw_Plugins);
