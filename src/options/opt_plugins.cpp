@@ -111,10 +111,11 @@ void OptionsTabPlugins::listPlugins()
         bool          enabled    = pm->isEnabled(shortName);
         const QString path       = pm->pathToPlugin(shortName);
         auto          pluginName = pm->pluginName(shortName);
+        auto          description = pm->description(shortName);
 
         auto    vendors = formatVendorText(pm->vendor(shortName), true);
         QString toolTip = QString("<b>%1 %2</b><br/>%3<br/><br/><b>%4:</b><br/>%5<br/><br/><b>%6:</b><br/>%7")
-                              .arg(pluginName, pm->version(shortName), TextUtil::plain2rich(pm->description(shortName)),
+                              .arg(pluginName, pm->version(shortName), TextUtil::plain2rich(description),
                                    tr("Authors"), vendors, tr("Plugin Path"), path);
 
         Qt::CheckState   state               = enabled ? Qt::Checked : Qt::Unchecked;
