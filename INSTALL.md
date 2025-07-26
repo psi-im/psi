@@ -44,7 +44,7 @@ make install DESTDIR="../installdir"
 # or copy them manually from "../installdir".
 ```
 
-Available configuration options for cmake are described in [Readme-cmake.txt](Readme-cmake.txt).
+Available configuration options for cmake are described in [Readme-cmake.md](./Readme-cmake.md).
 
 ### Linux
 
