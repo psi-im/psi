@@ -207,7 +207,7 @@ bool ActiveProfiles::raise(const QString &profile, bool withUI) const
     QLabel      *lab = nullptr;
     QDBusMessage msg = QDBusMessage::createMethodCall(d->dbusName(profile), "/Main", PSIDBUSMAINIF, "raise");
     if (withUI) {
-        lab = new QLabel(tr("This psi profile is already running...<br>please wait..."));
+        lab = new QLabel(tr("This Psi profile is already running...<br>Please wait..."));
         QTimer::singleShot(250, lab, SLOT(show()));
     }
     QDBusMessage rmsg = QDBusConnection::sessionBus().call(msg, QDBus::BlockWithGui, 10000);
