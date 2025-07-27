@@ -22,13 +22,13 @@
      <item>
       <widget class="QTreeWidget" name="tw_Plugins">
        <property name="layoutDirection">
-        <enum>Qt::LeftToRight</enum>
+        <enum>Qt::LayoutDirection::LeftToRight</enum>
        </property>
        <property name="horizontalScrollBarPolicy">
-        <enum>Qt::ScrollBarAlwaysOff</enum>
+        <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
        </property>
        <property name="editTriggers">
-        <set>QAbstractItemView::NoEditTriggers</set>
+        <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
        </property>
        <property name="showDropIndicator" stdset="0">
         <bool>false</bool>
@@ -48,11 +48,11 @@
        <attribute name="headerVisible">
         <bool>false</bool>
        </attribute>
-       <attribute name="headerDefaultSectionSize">
-        <number>100</number>
-       </attribute>
        <attribute name="headerMinimumSectionSize">
         <number>21</number>
+       </attribute>
+       <attribute name="headerDefaultSectionSize">
+        <number>100</number>
        </attribute>
        <attribute name="headerStretchLastSection">
         <bool>false</bool>
@@ -65,7 +65,7 @@
          <string>Available plugins</string>
         </property>
         <property name="textAlignment">
-         <set>AlignHCenter|AlignVCenter|AlignCenter</set>
+         <set>AlignCenter</set>
         </property>
        </column>
        <column>
@@ -73,7 +73,7 @@
          <string>Description</string>
         </property>
         <property name="textAlignment">
-         <set>AlignHCenter|AlignVCenter|AlignCenter</set>
+         <set>AlignLeading|AlignVCenter</set>
         </property>
        </column>
        <column>
@@ -81,7 +81,7 @@
          <string>Version</string>
         </property>
         <property name="textAlignment">
-         <set>AlignHCenter|AlignVCenter|AlignCenter</set>
+         <set>AlignCenter</set>
         </property>
        </column>
        <column>

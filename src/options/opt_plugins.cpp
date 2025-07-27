@@ -107,21 +107,21 @@ void OptionsTabPlugins::listPlugins()
     QStringList plugins    = pm->availablePlugins();
     const QSize buttonSize = QSize(21, 21);
     for (const QString &shortName : plugins) {
-        QIcon         icon       = pm->icon(shortName);
-        bool          enabled    = pm->isEnabled(shortName);
-        const QString path       = pm->pathToPlugin(shortName);
-        auto          pluginName = pm->pluginName(shortName);
+        QIcon         icon        = pm->icon(shortName);
+        bool          enabled     = pm->isEnabled(shortName);
+        const QString path        = pm->pathToPlugin(shortName);
+        auto          pluginName  = pm->pluginName(shortName);
         auto          description = pm->description(shortName);
 
         auto    vendors = formatVendorText(pm->vendor(shortName), true);
         QString toolTip = QString("<b>%1 %2</b><br/>%3<br/><br/><b>%4:</b><br/>%5<br/><br/><b>%6:</b><br/>%7")
-                              .arg(pluginName, pm->version(shortName), TextUtil::plain2rich(description),
-                                   tr("Authors"), vendors, tr("Plugin Path"), path);
+                              .arg(pluginName, pm->version(shortName), TextUtil::plain2rich(description), tr("Authors"),
+                                   vendors, tr("Plugin Path"), path);
 
-        Qt::CheckState   state               = enabled ? Qt::Checked : Qt::Unchecked;
-        QTreeWidgetItem *item                = new QTreeWidgetItem(d->tw_Plugins, QTreeWidgetItem::Type);
-        auto             truncatedPluginName = QString(pluginName).replace(" Plugin", "");
-        auto truncatedDescription = QString(description);
+        Qt::CheckState   state                = enabled ? Qt::Checked : Qt::Unchecked;
+        QTreeWidgetItem *item                 = new QTreeWidgetItem(d->tw_Plugins, QTreeWidgetItem::Type);
+        auto             truncatedPluginName  = QString(pluginName).replace(" Plugin", "");
+        auto             truncatedDescription = QString(description);
         truncatedDescription.truncate(80);
         item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
         item->setData(C_NAME, Qt::UserRole, shortName);
@@ -152,7 +152,9 @@ void OptionsTabPlugins::listPlugins()
     }
     if (d->tw_Plugins->topLevelItemCount() > 0) {
         d->tw_Plugins->sortItems(C_NAME, Qt::AscendingOrder);
-        d->tw_Plugins->header()->setSectionResizeMode(C_NAME, QHeaderView::Stretch);
+        d->tw_Plugins->header()->setSectionResizeMode(C_NAME, QHeaderView::Fixed);
+        d->tw_Plugins->resizeColumnToContents(C_NAME);
+        d->tw_Plugins->header()->setSectionResizeMode(C_DESCRIPTION, QHeaderView::Stretch);
         d->tw_Plugins->resizeColumnToContents(C_DESCRIPTION);
         d->tw_Plugins->resizeColumnToContents(C_VERSION);
         d->tw_Plugins->resizeColumnToContents(C_ABOUT);
@@ -176,7 +178,7 @@ void OptionsTabPlugins::itemChanged(QTreeWidgetItem *item, int column)
 
     d->tw_Plugins->blockSignals(true); // Block signalls to change item elements
     d->tw_Plugins->itemWidget(item, C_SETTS)->setEnabled(enabled);
-    d->tw_Plugins->itemWidget(item, C_ABOUT)->setEnabled(enabled);
+    // d->tw_Plugins->itemWidget(item, C_ABOUT)->setEnabled(enabled);
     QIcon icon = pm->icon(name);
     if (!enabled && !icon.isNull()) {
         icon = QIcon(icon.pixmap(icon.availableSizes().value(0), QIcon::Disabled));
