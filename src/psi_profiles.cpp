@@ -56,7 +56,7 @@ void UserAccount::reset()
     id                        = QUuid::createUuid().toString();
     name                      = "Default";
     opt_enabled               = true;
-    opt_auto                  = false;
+    opt_auto                  = true;
     tog_offline               = true;
     tog_away                  = true;
     tog_hidden                = false;
@@ -87,7 +87,7 @@ void UserAccount::reset()
     opt_compress              = true;
     opt_log                   = true;
     opt_reconn                = true;
-    opt_connectAfterSleep     = false;
+    opt_connectAfterSleep     = true;
     opt_autoSameStatus        = true;
     lastStatusWithPriority    = false;
     opt_ignoreSSLWarnings     = false;
