@@ -43,6 +43,7 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QVBoxLayout>
+#include <QTimer>
 
 //----------------------------------------------------------------------------
 // StatusShowDlg
@@ -220,6 +221,13 @@ void StatusSetDlg::init()
     ShortcutManager::connect("common.close", this, SLOT(close()));
     ShortcutManager::connect("status.set", this, SLOT(doButton()));
 
+    // Give to a user 5s to type status and if not then just apply the empty
+    QTimer::singleShot(5000, this, [this]() {
+        // if user didn't started typing the status
+        if (d->te->toPlainText().isEmpty()) {
+            this->doButton();
+        }
+    });
     resize(400, 240);
 }
 
