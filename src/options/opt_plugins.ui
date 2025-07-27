@@ -70,6 +70,14 @@
        </column>
        <column>
         <property name="text">
+         <string>Description</string>
+        </property>
+        <property name="textAlignment">
+         <set>AlignHCenter|AlignVCenter|AlignCenter</set>
+        </property>
+       </column>
+       <column>
+        <property name="text">
          <string>Version</string>
         </property>
         <property name="textAlignment">

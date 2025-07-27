@@ -13,7 +13,7 @@ class QWidget;
 
 class OptionsTabPlugins : public OptionsTab {
     Q_OBJECT
-    enum ColumnName { C_NAME = 0, C_VERSION = 1, C_ABOUT = 2, C_SETTS = 3 };
+    enum ColumnName { C_NAME = 0, C_DESCRIPTION = 1, C_VERSION = 2, C_ABOUT = 3, C_SETTS = 4 };
 
 public:
     OptionsTabPlugins(QObject *parent);

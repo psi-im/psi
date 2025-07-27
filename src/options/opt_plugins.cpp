@@ -111,25 +111,26 @@ void OptionsTabPlugins::listPlugins()
         bool          enabled    = pm->isEnabled(shortName);
         const QString path       = pm->pathToPlugin(shortName);
         auto          pluginName = pm->pluginName(shortName);
+        auto          description = pm->description(shortName);
 
         auto    vendors = formatVendorText(pm->vendor(shortName), true);
         QString toolTip = QString("<b>%1 %2</b><br/>%3<br/><br/><b>%4:</b><br/>%5<br/><br/><b>%6:</b><br/>%7")
-                              .arg(pluginName, pm->version(shortName), TextUtil::plain2rich(pm->description(shortName)),
+                              .arg(pluginName, pm->version(shortName), TextUtil::plain2rich(description),
                                    tr("Authors"), vendors, tr("Plugin Path"), path);
 
         Qt::CheckState   state               = enabled ? Qt::Checked : Qt::Unchecked;
         QTreeWidgetItem *item                = new QTreeWidgetItem(d->tw_Plugins, QTreeWidgetItem::Type);
         auto             truncatedPluginName = QString(pluginName).replace(" Plugin", "");
+        auto truncatedDescription = QString(description);
+        truncatedDescription.truncate(80);
         item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
         item->setData(C_NAME, Qt::UserRole, shortName);
         item->setText(C_NAME, truncatedPluginName);
+        item->setText(C_DESCRIPTION, truncatedDescription);
         item->setText(C_VERSION, pm->version(shortName));
         item->setTextAlignment(C_VERSION, Qt::AlignHCenter);
         item->setToolTip(C_NAME, toolTip);
         item->setCheckState(C_NAME, state);
-        if (!enabled && !icon.isNull()) {
-            icon = QIcon(icon.pixmap(icon.availableSizes().value(0), QIcon::Disabled));
-        }
         item->setIcon(C_NAME, icon);
 
         QToolButton *aboutbutton = new QToolButton(d->tw_Plugins);
@@ -137,7 +138,6 @@ void OptionsTabPlugins::listPlugins()
         aboutbutton->resize(buttonSize);
         aboutbutton->setObjectName("ab_" + shortName);
         aboutbutton->setToolTip(tr("Show information about plugin"));
-        aboutbutton->setEnabled(enabled);
         d->tw_Plugins->setItemWidget(item, C_ABOUT, aboutbutton);
         connect(aboutbutton, &QToolButton::clicked, this, [item, this](bool) { showPluginInfo(item); });
 
@@ -153,6 +153,7 @@ void OptionsTabPlugins::listPlugins()
     if (d->tw_Plugins->topLevelItemCount() > 0) {
         d->tw_Plugins->sortItems(C_NAME, Qt::AscendingOrder);
         d->tw_Plugins->header()->setSectionResizeMode(C_NAME, QHeaderView::Stretch);
+        d->tw_Plugins->resizeColumnToContents(C_DESCRIPTION);
         d->tw_Plugins->resizeColumnToContents(C_VERSION);
         d->tw_Plugins->resizeColumnToContents(C_ABOUT);
         d->tw_Plugins->resizeColumnToContents(C_SETTS);
