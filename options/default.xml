@@ -236,7 +236,7 @@ QLineEdit#le_status_text {
                     <agent-contacts type="bool">true</agent-contacts>
                     <away-contacts type="bool">true</away-contacts>
                     <hidden-contacts-group type="bool">true</hidden-contacts-group>
-                    <offline-contacts type="bool">false</offline-contacts>
+                    <offline-contacts type="bool">true</offline-contacts>
                     <self-contact type="bool">true</self-contact>
                 </show>
                 <show-group-counts type="bool">true</show-group-counts>
