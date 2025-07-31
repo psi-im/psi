@@ -106,7 +106,7 @@ void OptionsTabPlugins::listPlugins()
 
     QStringList plugins    = pm->availablePlugins();
     const QSize buttonSize = QSize(21, 21);
-    for (const QString &shortName : plugins) {
+    for (const QString &shortName : std::as_const(plugins)) {
         QIcon         icon        = pm->icon(shortName);
         bool          enabled     = pm->isEnabled(shortName);
         const QString path        = pm->pathToPlugin(shortName);
@@ -118,15 +118,13 @@ void OptionsTabPlugins::listPlugins()
                               .arg(pluginName, pm->version(shortName), TextUtil::plain2rich(description), tr("Authors"),
                                    vendors, tr("Plugin Path"), path);
 
-        Qt::CheckState   state                = enabled ? Qt::Checked : Qt::Unchecked;
-        QTreeWidgetItem *item                 = new QTreeWidgetItem(d->tw_Plugins, QTreeWidgetItem::Type);
-        auto             truncatedPluginName  = QString(pluginName).replace(" Plugin", "");
-        auto             truncatedDescription = QString(description);
-        truncatedDescription.truncate(80);
+        Qt::CheckState   state               = enabled ? Qt::Checked : Qt::Unchecked;
+        QTreeWidgetItem *item                = new QTreeWidgetItem(d->tw_Plugins, QTreeWidgetItem::Type);
+        auto             truncatedPluginName = QString(pluginName).replace(" Plugin", "");
         item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
         item->setData(C_NAME, Qt::UserRole, shortName);
         item->setText(C_NAME, truncatedPluginName);
-        item->setText(C_DESCRIPTION, truncatedDescription);
+        item->setText(C_DESCRIPTION, description);
         item->setText(C_VERSION, pm->version(shortName));
         item->setTextAlignment(C_VERSION, Qt::AlignHCenter);
         item->setToolTip(C_NAME, toolTip);
