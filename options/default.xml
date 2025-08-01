@@ -221,7 +221,7 @@ QLineEdit#le_status_text {
                 <always-on-top type="bool">false</always-on-top>
                 <automatically-resize-roster type="bool">false</automatically-resize-roster>
                 <grow-roster-upwards type="bool">true</grow-roster-upwards>
-                <disable-scrollbar type="bool">true</disable-scrollbar>
+                <disable-scrollbar type="bool">false</disable-scrollbar>
                 <contact-sort-style type="QString">status</contact-sort-style>
                 <disable-service-discovery type="bool">false</disable-service-discovery>
                 <enable-groups type="bool">true</enable-groups>
@@ -241,7 +241,7 @@ QLineEdit#le_status_text {
                 </show>
                 <show-group-counts type="bool">true</show-group-counts>
                 <show-menubar type="bool">false</show-menubar>
-                <disable-scrollbar type="bool">true</disable-scrollbar>
+                <disable-scrollbar type="bool">false</disable-scrollbar>
                 <avatars>
                     <show type="bool">true</show>
                     <avatars-at-left type="bool">true</avatars-at-left>
@@ -318,7 +318,7 @@ QLineEdit#le_status_text {
                     <show-affiliation-icons type = "bool">false</show-affiliation-icons>
                     <contact-sort-style type = "QString">alpha</contact-sort-style>
                     <show-status-icons type = "bool">false</show-status-icons>
-                    <disable-scrollbar type = "bool">true</disable-scrollbar>
+                    <disable-scrollbar type = "bool">false</disable-scrollbar>
                     <avatars>
                         <show type="bool">true</show>
                         <size type="int">20</size>
