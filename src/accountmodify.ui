@@ -711,13 +711,13 @@
           <widget class="QLineEdit" name="le_port">
            <property name="minimumSize">
             <size>
-             <width>56</width>
+             <width>80</width>
              <height>0</height>
             </size>
            </property>
            <property name="maximumSize">
             <size>
-             <width>56</width>
+             <width>120</width>
              <height>32767</height>
             </size>
            </property>
