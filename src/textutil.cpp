@@ -196,13 +196,10 @@ QString TextUtil::resolveEntities(const QStringView &in)
     for (int i = 0; i < int(in.length()); ++i) {
         if (in[i] == '&') {
             // find a semicolon
-            ++i;
-            int n = in.indexOf(';', i);
+            int n = in.indexOf(';', i+1);
             if (n == -1)
                 break;
-            auto type = in.mid(i, (n - i));
-
-            i = n; // should be n+1, but we'll let the loop increment do it
+            auto type = in.mid(i+1, (n - (i+1)));
 
             if (type == QLatin1String { "amp" })
                 out += '&';
@@ -216,6 +213,7 @@ QString TextUtil::resolveEntities(const QStringView &in)
                 out += '\'';
             else if (type == QLatin1String { "nbsp" })
                 out += char(0xa0);
+            i = n; // should be n+1, but we'll let the loop increment do it
         } else {
             out += in[i];
         }
