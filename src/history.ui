@@ -9,7 +9,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>672</width>
+    <width>800</width>
     <height>680</height>
    </rect>
   </property>
@@ -151,7 +151,7 @@
      <item>
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_5">
+        <layout class="QHBoxLayout" name="horizontalLayout_5">
          <item>
           <widget class="QLabel" name="label">
            <property name="text">
@@ -168,7 +168,7 @@
                <property name="sizePolicy">
                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
                  <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
+                 <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
               </widget>

@@ -1,21 +1,22 @@
-<ui version="4.0" >
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
  <author></author>
  <comment></comment>
  <exportmacro></exportmacro>
  <class>Disco</class>
- <widget class="QWidget" name="Disco" >
-  <property name="geometry" >
+ <widget class="QWidget" name="Disco">
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>523</width>
-    <height>404</height>
+    <width>800</width>
+    <height>600</height>
    </rect>
   </property>
-  <property name="windowTitle" >
+  <property name="windowTitle">
    <string>Service Discovery</string>
   </property>
-  <layout class="QVBoxLayout" >
+  <layout class="QVBoxLayout">
    <property name="margin" >
     <number>0</number>
    </property>
@@ -23,14 +24,14 @@
     <number>0</number>
    </property>
    <item>
-    <widget class="QLabel" name="toolBarPlaceholder" >
-     <property name="text" >
-      <string comment="Don't translate this string" >ToolBar will be placed here</string>
+    <widget class="QLabel" name="toolBarPlaceholder">
+     <property name="text">
+      <string comment="Don't translate this string">ToolBar will be placed here</string>
      </property>
     </widget>
    </item>
    <item>
-    <layout class="QVBoxLayout" >
+    <layout class="QVBoxLayout">
      <property name="margin" >
       <number>11</number>
      </property>
@@ -38,7 +39,7 @@
       <number>6</number>
      </property>
      <item>
-      <layout class="QHBoxLayout" >
+      <layout class="QHBoxLayout">
        <property name="margin" >
         <number>0</number>
        </property>
@@ -46,18 +47,18 @@
         <number>6</number>
        </property>
        <item>
-        <widget class="QLabel" name="textLabel1" >
-         <property name="text" >
+        <widget class="QLabel" name="textLabel1">
+         <property name="text">
           <string>&amp;Address:</string>
          </property>
-         <property name="buddy" >
+         <property name="buddy">
           <cstring>cb_address</cstring>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="cb_address" >
-         <property name="sizePolicy" >
+        <widget class="QComboBox" name="cb_address">
+         <property name="sizePolicy">
           <sizepolicy>
            <hsizetype>7</hsizetype>
            <vsizetype>0</vsizetype>
@@ -65,24 +66,24 @@
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
-         <property name="editable" >
+         <property name="editable">
           <bool>true</bool>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QLabel" name="lb_node" >
-         <property name="text" >
+        <widget class="QLabel" name="lb_node">
+         <property name="text">
           <string>&amp;Node:</string>
          </property>
-         <property name="buddy" >
+         <property name="buddy">
           <cstring>cb_node</cstring>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="cb_node" >
-         <property name="sizePolicy" >
+        <widget class="QComboBox" name="cb_node">
+         <property name="sizePolicy">
           <sizepolicy>
            <hsizetype>7</hsizetype>
            <vsizetype>0</vsizetype>
@@ -90,26 +91,26 @@
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
-         <property name="minimumSize" >
+         <property name="minimumSize">
           <size>
            <width>0</width>
            <height>0</height>
           </size>
          </property>
-         <property name="maximumSize" >
+         <property name="maximumSize">
           <size>
            <width>16777215</width>
            <height>16777215</height>
           </size>
          </property>
-         <property name="editable" >
+         <property name="editable">
           <bool>true</bool>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pb_browse" >
-         <property name="text" >
+        <widget class="QPushButton" name="pb_browse">
+         <property name="text">
           <string>&amp;Browse</string>
          </property>
         </widget>
@@ -120,55 +121,55 @@
       <widget class="QTreeWidget" name="lv_disco" />
      </item>
      <item>
-    <layout class="QHBoxLayout" name="horizontalLayout">
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>Filter by JID:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="le_filter"/>
+       </item>
+      </layout>
+     </item>
      <item>
-      <widget class="QLabel" name="label">
+      <widget class="QCheckBox" name="ck_autoItems">
        <property name="text">
-        <string>Filter by JID:</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLineEdit" name="le_filter"/>
-     </item>
-    </layout>
-   </item>
-     <item>
-      <widget class="QCheckBox" name="ck_autoItems" >
-       <property name="text" >
         <string>Auto-browse into objects</string>
        </property>
-       <property name="checked" >
+       <property name="checked">
         <bool>true</bool>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QCheckBox" name="ck_autoInfo" >
-       <property name="text" >
+      <widget class="QCheckBox" name="ck_autoInfo">
+       <property name="text">
         <string>Automatically get item information</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="Line" name="line3" >
-       <property name="frameShape" >
+      <widget class="Line" name="line3">
+       <property name="frameShape">
         <enum>QFrame::HLine</enum>
        </property>
-       <property name="frameShadow" >
+       <property name="frameShadow">
         <enum>QFrame::Sunken</enum>
        </property>
-       <property name="orientation" >
+       <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
       </widget>
      </item>
      <item>
-      <layout class="QHBoxLayout" >
+      <layout class="QHBoxLayout">
        <property name="margin" >
         <number>0</number>
        </property>
-       <property name="spacing" >
+       <property name="spacing">
         <number>6</number>
        </property>
        <item>
@@ -176,10 +177,10 @@
        </item>
        <item>
         <spacer>
-         <property name="orientation" >
+         <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
-         <property name="sizeType" >
+         <property name="sizeType">
           <enum>QSizePolicy::Expanding</enum>
          </property>
          <property name="sizeHint" >
@@ -203,7 +204,7 @@
    </item>
   </layout>
  </widget>
- <layoutdefault spacing="6" margin="11" />
+ <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
    <class>BusyWidget</class>
