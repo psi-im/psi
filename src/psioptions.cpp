@@ -185,7 +185,7 @@ bool PsiOptions::newProfile()
         ToolbarPrefs showContacts;
         showContacts.on   = true;
         showContacts.name = tr("Show contacts");
-        showContacts.keys << "menu_options" << "menu_add_contact" << "view_groups" << "menu_disco" << "menu_play_sounds"
+        showContacts.keys << "menu_options" << "menu_add_contact" << "view_groups" << "menu_join_groupchat" << "menu_disco" << "menu_play_sounds"
                           << "menu_xml_console";
 
         QList<ToolbarPrefs> toolbars = { chatToolbar, groupchatToolbar, buttons, showContacts };
