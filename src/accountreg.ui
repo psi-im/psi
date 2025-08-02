@@ -1,18 +1,19 @@
-<ui version="4.0" >
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
  <class>AccountReg</class>
- <widget class="QDialog" name="AccountReg" >
-  <property name="geometry" >
+ <widget class="QDialog" name="AccountReg">
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>384</width>
-    <height>339</height>
+    <width>640</width>
+    <height>480</height>
    </rect>
   </property>
-  <property name="windowTitle" >
+  <property name="windowTitle">
    <string>Register Account</string>
   </property>
-  <layout class="QVBoxLayout" >
+  <layout class="QVBoxLayout">
    <property name="margin" >
     <number>9</number>
    </property>
@@ -20,12 +21,12 @@
     <number>6</number>
    </property>
    <item>
-    <widget class="QStackedWidget" name="sw_register" >
-     <property name="currentIndex" >
+    <widget class="QStackedWidget" name="sw_register">
+     <property name="currentIndex">
       <number>0</number>
      </property>
-     <widget class="QWidget" name="page_server" >
-      <layout class="QVBoxLayout" >
+     <widget class="QWidget" name="page_server">
+      <layout class="QVBoxLayout">
        <property name="margin" >
         <number>9</number>
        </property>
@@ -33,30 +34,30 @@
         <number>6</number>
        </property>
        <item>
-        <widget class="QGroupBox" name="gb_server" >
-         <property name="title" >
+        <widget class="QGroupBox" name="gb_server">
+         <property name="title">
           <string>Server</string>
          </property>
-         <layout class="QGridLayout" >
+         <layout class="QGridLayout">
           <property name="margin" >
            <number>9</number>
           </property>
-          <property name="spacing" >
+          <property name="spacing">
            <number>6</number>
           </property>
           <item row="0" column="0" colspan="2">
-           <widget class="QLabel" name="lb_jid" >
-            <property name="text" >
+           <widget class="QLabel" name="lb_jid">
+            <property name="text">
              <string>Please enter the name of the server you wish to register with:</string>
             </property>
-            <property name="wordWrap" >
+            <property name="wordWrap">
              <bool>true</bool>
             </property>
            </widget>
           </item>
           <item row="1" column="0" colspan="2">
            <widget class="UpdatingComboBox" name="le_server" >
-            <property name="minimumSize" >
+            <property name="minimumSize">
              <size>
               <width>200</width>
               <height>0</height>
@@ -68,11 +69,11 @@
            </widget>
           </item>
           <item row="2" column="0" colspan="2">
-           <widget class="QLabel" name="lb_example" >
-            <property name="enabled" >
+           <widget class="QLabel" name="lb_example">
+            <property name="enabled">
              <bool>false</bool>
             </property>
-            <property name="text" >
+            <property name="text">
              <string>Example: capulet.com</string>
             </property>
            </widget>
@@ -81,11 +82,11 @@
         </widget>
        </item>
        <item>
-        <widget class="QGroupBox" name="gb_connection" >
-         <property name="title" >
+        <widget class="QGroupBox" name="gb_connection">
+         <property name="title">
           <string>Connection settings</string>
          </property>
-         <layout class="QVBoxLayout" >
+         <layout class="QVBoxLayout">
           <property name="margin" >
            <number>9</number>
           </property>
@@ -93,46 +94,46 @@
            <number>6</number>
           </property>
           <item>
-           <widget class="QCheckBox" name="ck_host" >
-            <property name="text" >
+           <widget class="QCheckBox" name="ck_host">
+            <property name="text">
              <string>Manually Specify Server Host/Port:</string>
             </property>
            </widget>
           </item>
           <item>
-           <layout class="QHBoxLayout" >
+           <layout class="QHBoxLayout">
             <property name="margin" >
              <number>0</number>
             </property>
-            <property name="spacing" >
+            <property name="spacing">
              <number>6</number>
             </property>
             <item>
-             <widget class="QLabel" name="lb_host" >
-              <property name="text" >
+             <widget class="QLabel" name="lb_host">
+              <property name="text">
                <string>Host:</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLineEdit" name="le_host" />
+             <widget class="QLineEdit" name="le_host"/>
             </item>
             <item>
-             <widget class="QLabel" name="lb_port" >
-              <property name="text" >
+             <widget class="QLabel" name="lb_port">
+              <property name="text">
                <string>Port:</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLineEdit" name="le_port" >
-              <property name="minimumSize" >
+             <widget class="QLineEdit" name="le_port">
+              <property name="minimumSize">
                <size>
                 <width>56</width>
                 <height>0</height>
                </size>
               </property>
-              <property name="maximumSize" >
+              <property name="maximumSize">
                <size>
                 <width>56</width>
                 <height>32767</height>
@@ -143,7 +144,7 @@
            </layout>
           </item>
           <item>
-           <layout class="QHBoxLayout" >
+           <layout class="QHBoxLayout">
             <property name="margin" >
              <number>0</number>
             </property>
@@ -151,21 +152,21 @@
              <number>6</number>
             </property>
             <item>
-             <widget class="QLabel" name="lb_ssl" >
-              <property name="text" >
+             <widget class="QLabel" name="lb_ssl">
+              <property name="text">
                <string>Encrypt connection:</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QComboBox" name="cb_ssl" />
+             <widget class="QComboBox" name="cb_ssl"/>
             </item>
             <item>
              <spacer>
-              <property name="orientation" >
+              <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
-              <property name="sizeType" >
+              <property name="sizeType">
                <enum>QSizePolicy::Expanding</enum>
               </property>
               <property name="sizeHint" >
@@ -179,23 +180,23 @@
            </layout>
           </item>
           <item>
-           <layout class="QHBoxLayout" >
+           <layout class="QHBoxLayout">
             <property name="margin" >
              <number>0</number>
             </property>
-            <property name="spacing" >
+            <property name="spacing">
              <number>6</number>
             </property>
             <item>
-             <widget class="QLabel" name="lb_proxy" >
-              <property name="text" >
+             <widget class="QLabel" name="lb_proxy">
+              <property name="text">
                <string>Proxy:</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="lb_proxychooser" >
-              <property name="text" >
+             <widget class="QLabel" name="lb_proxychooser">
+              <property name="text">
                <string>proxychooser</string>
               </property>
              </widget>
@@ -207,10 +208,10 @@
        </item>
        <item>
         <spacer>
-         <property name="orientation" >
+         <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
-         <property name="sizeType" >
+         <property name="sizeType">
           <enum>QSizePolicy::Expanding</enum>
          </property>
          <property name="sizeHint" >
@@ -223,24 +224,24 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="page_fields" />
+     <widget class="QWidget" name="page_fields"/>
     </widget>
    </item>
    <item>
-    <widget class="Line" name="line2" >
-     <property name="frameShape" >
+    <widget class="Line" name="line2">
+     <property name="frameShape">
       <enum>QFrame::HLine</enum>
      </property>
-     <property name="frameShadow" >
+     <property name="frameShadow">
       <enum>QFrame::Sunken</enum>
      </property>
-     <property name="orientation" >
+     <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
     </widget>
    </item>
    <item>
-    <layout class="QHBoxLayout" >
+    <layout class="QHBoxLayout">
      <property name="margin" >
       <number>0</number>
      </property>
@@ -252,7 +253,7 @@
      </item>
      <item>
       <spacer>
-       <property name="orientation" >
+       <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
        <property name="sizeHint" >
@@ -264,18 +265,18 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="pb_cancel" >
-       <property name="text" >
+      <widget class="QPushButton" name="pb_cancel">
+       <property name="text">
         <string>&amp;Cancel</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pb_next" >
-       <property name="text" >
+      <widget class="QPushButton" name="pb_next">
+       <property name="text">
         <string>&amp;Next</string>
        </property>
-       <property name="default" >
+       <property name="default">
         <bool>true</bool>
        </property>
       </widget>
@@ -284,7 +285,7 @@
    </item>
   </layout>
  </widget>
- <layoutdefault spacing="6" margin="11" />
+ <layoutdefault spacing="6" margin="11"/>
  <tabstops>
   <tabstop>le_server</tabstop>
   <tabstop>ck_host</tabstop>

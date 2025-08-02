@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>566</width>
-    <height>375</height>
+    <width>800</width>
+    <height>600</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -286,16 +286,16 @@ p, li { white-space: pre-wrap; }
         <spacer name="Spacer2">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
-         </property>
+       </property>
          <property name="sizeType">
           <enum>QSizePolicy::Expanding</enum>
-         </property>
+       </property>
          <property name="sizeHint" stdset="0">
           <size>
            <width>140</width>
            <height>20</height>
           </size>
-         </property>
+       </property>
         </spacer>
        </item>
        <item>

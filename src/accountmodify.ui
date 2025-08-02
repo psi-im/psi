@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>765</width>
-    <height>655</height>
+    <width>1024</width>
+    <height>800</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -112,7 +112,14 @@
              </widget>
             </item>
             <item row="0" column="1">
-             <widget class="QLineEdit" name="le_jid"/>
+             <widget class="QLineEdit" name="le_jid">
+              <property name="inputMethodHints">
+               <set>Qt::ImhEmailCharactersOnly|Qt::ImhNoAutoUppercase|Qt::ImhPreferLatin|Qt::ImhPreferLowercase</set>
+              </property>
+              <property name="placeholderText">
+               <string extracomment="Like email">yourname@server.test</string>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>
@@ -142,6 +149,9 @@
             </item>
             <item>
              <widget class="QLineEdit" name="le_pass">
+              <property name="inputMethodHints">
+               <set>Qt::ImhNoAutoUppercase|Qt::ImhNoPredictiveText|Qt::ImhPreferLatin|Qt::ImhSensitiveData</set>
+              </property>
               <property name="echoMode">
                <enum>QLineEdit::Password</enum>
               </property>
@@ -701,13 +711,13 @@
           <widget class="QLineEdit" name="le_port">
            <property name="minimumSize">
             <size>
-             <width>56</width>
+             <width>80</width>
              <height>0</height>
             </size>
            </property>
            <property name="maximumSize">
             <size>
-             <width>56</width>
+             <width>120</width>
              <height>32767</height>
             </size>
            </property>

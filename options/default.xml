@@ -266,8 +266,8 @@ QLineEdit#le_status_text {
                 <saved-window-geometry type="QRect" >
                     <x>64</x>
                     <y>64</y>
-                    <width>220</width>
-                    <height>360</height>
+                    <width>500</width>
+                    <height>800</height>
                 </saved-window-geometry>
                 <saved-window-geometry-frame type="QRect" >
                     <x>0</x>
