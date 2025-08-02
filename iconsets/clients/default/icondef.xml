@@ -32,6 +32,11 @@
     </icon>
 
     <icon>
+        <x xmlns='name'>clients/bridge</x>
+        <object mime='image/png'>bridge.png</object>
+    </icon>
+
+    <icon>
         <x xmlns='name'>clients/chatsecure</x>
         <object mime='image/png'>chatsecure.png</object>
     </icon>
