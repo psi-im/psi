@@ -194,29 +194,29 @@ QString TextUtil::resolveEntities(const QStringView &in)
     out.reserve(in.length());
 
     for (int i = 0; i < int(in.length()); ++i) {
-        if (in[i] == '&') {
-            // find a semicolon
-            int n = in.indexOf(';', i+1);
-            if (n == -1)
-                break;
-            auto type = in.mid(i+1, (n - (i+1)));
-
-            if (type == QLatin1String { "amp" })
-                out += '&';
-            else if (type == QLatin1String { "lt" })
-                out += '<';
-            else if (type == QLatin1String { "gt" })
-                out += '>';
-            else if (type == QLatin1String { "quot" })
-                out += '\"';
-            else if (type == QLatin1String { "apos" })
-                out += '\'';
-            else if (type == QLatin1String { "nbsp" })
-                out += char(0xa0);
-            i = n; // should be n+1, but we'll let the loop increment do it
-        } else {
+        if (in[i] != '&') {
             out += in[i];
+            continue;
         }
+        // find a semicolon
+        int n = in.indexOf(';', i+1);
+        if (n == -1)
+            break;
+        auto type = in.mid(i+1, (n - (i+1)));
+
+        if (type == QLatin1String { "amp" })
+            out += '&';
+        else if (type == QLatin1String { "lt" })
+            out += '<';
+        else if (type == QLatin1String { "gt" })
+            out += '>';
+        else if (type == QLatin1String { "quot" })
+            out += '\"';
+        else if (type == QLatin1String { "apos" })
+            out += '\'';
+        else if (type == QLatin1String { "nbsp" })
+            out += char(0xa0);
+        i = n; // should be n+1, but we'll let the loop increment do it
     }
 
     return out;
