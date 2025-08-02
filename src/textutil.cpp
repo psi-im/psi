@@ -191,6 +191,7 @@ QString TextUtil::rich2plain(const QString &in, bool collapseSpaces)
 QString TextUtil::resolveEntities(const QStringView &in)
 {
     QString out;
+    out.reserve(in.length());
 
     for (int i = 0; i < int(in.length()); ++i) {
         if (in[i] == '&') {
