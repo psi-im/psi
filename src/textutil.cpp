@@ -456,7 +456,7 @@ QString TextUtil::linkify(const QString &in)
 #else
             auto linkColor = ColorOpt::instance()->color("options.ui.look.colors.messages.link");
             // we have visited link as well but it's no applicable to QTextEdit or we have to track visited manually
-            linked = QString("<a href=\"%1\" style=\"color:%2\">").arg(href, linkColor.name());
+            linked = QString(R"(<a href="%1" style="color:%2">)").arg(href, linkColor.name());
 #endif
             linked += (escape(link) + "</a>" + escape(pre.mid(cutoff)));
             out.replace(x1, len, linked);
@@ -596,17 +596,16 @@ QString TextUtil::img2title(const QString &in)
 
 QString TextUtil::legacyFormat(const QString &in)
 {
-
     // enable *bold* stuff
     // //old code
-    // out=out.replace(QRegularExpression("(^[^<>\\s]*|\\s[^<>\\s]*)\\*(\\S+)\\*([^<>\\s]*\\s|[^<>\\s]*$)"),"\\1<b>*\\2*</b>\\3");
-    // out=out.replace(QRegularExpression("(^[^<>\\s\\/]*|\\s[^<>\\s\\/]*)\\/([^\\/\\s]+)\\/([^<>\\s\\/]*\\s|[^<>\\s\\/]*$)"),"\\1<i>/\\2/</i>\\3");
-    // out=out.replace(QRegularExpression("(^[^<>\\s]*|\\s[^<>\\s]*)_(\\S+)_([^<>\\s]*\\s|[^<>\\s]*$)"),"\\1<u>_\\2_</u>\\3");
+   //  out=out.replace(QRegularExpression(R"((^[^<>\s]*|\s[^<>\s]*)\*(\S+)\*([^<>\s]*\s|[^<>\s]*$))"), "\\1<b>*\\2*</b>\\3");
+   //  out=out.replace(QRegularExpression(R"((^[^<>\s\/]*|\s[^<>\s\/]*)\/([^\/\s]+)\/([^<>\s\/]*\s|[^<>\s\/]*$))"), "\\1<i>/\\2/</i>\\3");
+   //  out=out.replace(QRegularExpression(R"((^[^<>\s]*|\s[^<>\s]*)_(\S+)_([^<>\s]*\s|[^<>\s]*$))"), "\\1<u>_\\2_</u>\\3");
 
     QString out = in;
-    out = out.replace(QRegularExpression("(^|\\s|>)_(\\S+)_(?=<|\\s|$)"), "\\1<u>_\\2_</u>"); // underline inside _text_
-    out = out.replace(QRegularExpression("(^|\\s|>)\\*(\\S+)\\*(?=<|\\s|$)"), "\\1<b>*\\2*</b>"); // bold *text*
-    out = out.replace(QRegularExpression("(^|\\s|>)\\/(\\S+)\\/(?=<|\\s|$)"), "\\1<i>/\\2/</i>"); // italic /text/
+    out = out.replace(QRegularExpression(R"((^|\s|>)_(\S+)_(?=<|\s|$))"), "\\1<u>_\\2_</u>"); // underline inside _text_
+    out = out.replace(QRegularExpression(R"((^|\s|>)\*(\S+)\*(?=<|\s|$))"), "\\1<b>*\\2*</b>"); // bold *text*
+    out = out.replace(QRegularExpression(R"((^|\s|>)\/(\S+)\/(?=<|\s|$))"), "\\1<i>/\\2/</i>"); // italic /text/
 
     return out;
 }
