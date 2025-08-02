@@ -41,6 +41,7 @@ kadu kadu
 kaidan kaidan
 kopete kopete
 leechcraft-azoth leechcraft
+libervia libervia
 libpurple libpurple,purple,finch
 loudmouth irssi-xmpp
 mandarin tomclaw.com#mandarin_im
@@ -61,6 +62,7 @@ poezio poezio,poez.io
 profanity profanity,www#profanity
 psi psi,psi-im,psi+,psi-plus,psi-dev
 qip qip,2010.qip.ru
+quicksy quicksy
 qutim qutim
 qxmpp-api qxmpp
 riddim riddim
