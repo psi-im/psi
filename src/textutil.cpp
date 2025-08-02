@@ -193,13 +193,13 @@ QString TextUtil::resolveEntities(const QStringView &in)
     QString out;
     out.reserve(in.length());
 
-    for (int i = 0; i < int(in.length()); ++i) {
+    for (qsizetype i = 0; i < int(in.length()); i++) {
         if (in[i] != '&') {
             out += in[i];
             continue;
         }
         // find a semicolon
-        int n = in.indexOf(';', i+1);
+        qsizetype n = in.indexOf(';', i+1);
         if (n == -1) {
             out += in[i];
             continue;
