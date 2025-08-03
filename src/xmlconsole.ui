@@ -1,18 +1,19 @@
-<ui version="4.0" >
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
  <class>XMLConsole</class>
- <widget class="QWidget" name="XMLConsole" >
-  <property name="geometry" >
+ <widget class="QWidget" name="XMLConsole">
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>539</width>
-    <height>447</height>
+    <width>800</width>
+    <height>600</height>
    </rect>
   </property>
-  <property name="windowTitle" >
+  <property name="windowTitle">
    <string>XML Console</string>
   </property>
-  <layout class="QVBoxLayout" >
+  <layout class="QVBoxLayout">
    <property name="margin" >
     <number>9</number>
    </property>
@@ -20,14 +21,14 @@
     <number>6</number>
    </property>
    <item>
-    <widget class="QTextEdit" name="te" />
+    <widget class="QTextEdit" name="te"/>
    </item>
    <item>
-    <widget class="QGroupBox" name="gb_filter" >
-     <property name="title" >
+    <widget class="QGroupBox" name="gb_filter">
+     <property name="title">
       <string>Filter</string>
      </property>
-     <layout class="QHBoxLayout" >
+     <layout class="QHBoxLayout">
       <property name="margin" >
        <number>9</number>
       </property>
@@ -35,48 +36,48 @@
        <number>6</number>
       </property>
       <item>
-       <widget class="QCheckBox" name="ck_message" >
-        <property name="text" >
+       <widget class="QCheckBox" name="ck_message">
+        <property name="text">
          <string>Message</string>
         </property>
-        <property name="checked" >
+        <property name="checked">
          <bool>true</bool>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="ck_presence" >
-        <property name="text" >
+       <widget class="QCheckBox" name="ck_presence">
+        <property name="text">
          <string>Presence</string>
         </property>
-        <property name="checked" >
+        <property name="checked">
          <bool>true</bool>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="ck_iq" >
-        <property name="text" >
+       <widget class="QCheckBox" name="ck_iq">
+        <property name="text">
          <string>IQ</string>
         </property>
-        <property name="checked" >
+        <property name="checked">
          <bool>true</bool>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="ck_sm" >
-        <property name="text" >
+       <widget class="QCheckBox" name="ck_sm">
+        <property name="text">
          <string>SM</string>
         </property>
-        <property name="checked" >
+        <property name="checked">
          <bool>true</bool>
         </property>
        </widget>
       </item>
-       <item>
+      <item>
        <spacer>
-        <property name="orientation" >
+        <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
         <property name="sizeHint" >
@@ -88,20 +89,20 @@
        </spacer>
       </item>
       <item>
-       <widget class="QLabel" name="label" >
-        <property name="text" >
+       <widget class="QLabel" name="label">
+        <property name="text">
          <string>JID:</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="le_jid" />
+       <widget class="QLineEdit" name="le_jid"/>
       </item>
      </layout>
     </widget>
    </item>
    <item>
-    <layout class="QHBoxLayout" >
+    <layout class="QHBoxLayout">
      <property name="margin" >
       <number>0</number>
      </property>
@@ -109,15 +110,15 @@
       <number>6</number>
      </property>
      <item>
-      <widget class="QCheckBox" name="ck_enable" >
-       <property name="text" >
+      <widget class="QCheckBox" name="ck_enable">
+       <property name="text">
         <string>Enable</string>
        </property>
       </widget>
      </item>
      <item>
       <spacer>
-       <property name="orientation" >
+       <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
        <property name="sizeHint" >
@@ -129,29 +130,29 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="pb_dumpRingbuf" >
-       <property name="text" >
+      <widget class="QPushButton" name="pb_dumpRingbuf">
+       <property name="text">
         <string>Dump Ringbuf</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pb_clear" >
-       <property name="text" >
+      <widget class="QPushButton" name="pb_clear">
+       <property name="text">
         <string>Clear</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pb_input" >
-       <property name="text" >
+      <widget class="QPushButton" name="pb_input">
+       <property name="text">
         <string>XML Input...</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pb_close" >
-       <property name="text" >
+      <widget class="QPushButton" name="pb_close">
+       <property name="text">
         <string>Close</string>
        </property>
       </widget>

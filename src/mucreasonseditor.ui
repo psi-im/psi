@@ -1,18 +1,19 @@
-<ui version="4.0" >
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
  <class>MUCReasonsEditor</class>
- <widget class="QDialog" name="MUCReasonsEditor" >
-  <property name="geometry" >
+ <widget class="QDialog" name="MUCReasonsEditor">
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>640</width>
+    <height>480</height>
    </rect>
   </property>
-  <property name="windowTitle" >
+  <property name="windowTitle">
    <string>Reason editor</string>
   </property>
-  <layout class="QVBoxLayout" >
+  <layout class="QVBoxLayout">
    <property name="margin" >
     <number>9</number>
    </property>
@@ -20,11 +21,11 @@
     <number>6</number>
    </property>
    <item>
-    <widget class="QGroupBox" name="groupBox" >
-     <property name="title" >
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
       <string>Reasons</string>
      </property>
-     <layout class="QVBoxLayout" >
+     <layout class="QVBoxLayout">
       <property name="margin" >
        <number>9</number>
       </property>
@@ -32,17 +33,17 @@
        <number>6</number>
       </property>
       <item>
-       <widget class="QLineEdit" name="txtReason" >
-        <property name="text" >
+       <widget class="QLineEdit" name="txtReason">
+        <property name="text">
          <string/>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QListWidget" name="lstReasons" />
+       <widget class="QListWidget" name="lstReasons"/>
       </item>
       <item>
-       <layout class="QHBoxLayout" >
+       <layout class="QHBoxLayout">
         <property name="margin" >
          <number>0</number>
         </property>
@@ -50,15 +51,15 @@
          <number>6</number>
         </property>
         <item>
-         <widget class="QPushButton" name="btnAdd" >
-          <property name="text" >
+         <widget class="QPushButton" name="btnAdd">
+          <property name="text">
            <string>Add</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="btnRemove" >
-          <property name="text" >
+         <widget class="QPushButton" name="btnRemove">
+          <property name="text">
            <string>Remove</string>
           </property>
          </widget>
@@ -69,7 +70,7 @@
     </widget>
    </item>
    <item>
-    <layout class="QHBoxLayout" >
+    <layout class="QHBoxLayout">
      <property name="margin" >
       <number>0</number>
      </property>
@@ -85,7 +86,7 @@
      </item>
      <item>
       <spacer>
-       <property name="orientation" >
+       <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
        <property name="sizeHint" >
@@ -97,21 +98,21 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="btnOk" >
-       <property name="text" >
+      <widget class="QPushButton" name="btnOk">
+       <property name="text">
         <string>Ok</string>
        </property>
-       <property name="autoDefault" >
+       <property name="autoDefault">
         <bool>false</bool>
        </property>
-       <property name="default" >
+       <property name="default">
         <bool>true</bool>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="btnCancel" >
-       <property name="text" >
+      <widget class="QPushButton" name="btnCancel">
+       <property name="text">
         <string>Cancel</string>
        </property>
       </widget>
@@ -128,11 +129,11 @@
    <receiver>MUCReasonsEditor</receiver>
    <slot>accept()</slot>
    <hints>
-    <hint type="sourcelabel" >
+    <hint type="sourcelabel">
      <x>265</x>
      <y>271</y>
     </hint>
-    <hint type="destinationlabel" >
+    <hint type="destinationlabel">
      <x>-2</x>
      <y>287</y>
     </hint>
@@ -144,11 +145,11 @@
    <receiver>MUCReasonsEditor</receiver>
    <slot>reject()</slot>
    <hints>
-    <hint type="sourcelabel" >
+    <hint type="sourcelabel">
      <x>341</x>
      <y>283</y>
     </hint>
-    <hint type="destinationlabel" >
+    <hint type="destinationlabel">
      <x>81</x>
      <y>272</y>
     </hint>
@@ -160,11 +161,11 @@
    <receiver>MUCReasonsEditor</receiver>
    <slot>save()</slot>
    <hints>
-    <hint type="sourcelabel" >
+    <hint type="sourcelabel">
      <x>35</x>
      <y>282</y>
     </hint>
-    <hint type="destinationlabel" >
+    <hint type="destinationlabel">
      <x>199</x>
      <y>149</y>
     </hint>
