@@ -122,11 +122,6 @@
     </icon>
 
     <icon>
-        <x xmlns='name'>clients/psiplus</x>
-        <object mime='image/png'>psiplus.png</object>
-    </icon>
-
-    <icon>
         <x xmlns='name'>clients/qip</x>
         <object mime='image/png'>qip.png</object>
     </icon>
