@@ -12,9 +12,6 @@ This file contains the CMake files description
     if plugins/generic/psimedia directory exists and BUILD_PSIMEDIA flag is
     enabled - builds psimedia library.
 
-./icondef.xml.in - template-file to generate icondef.xml file
-./iconsets.qrc.in - template-file to generate iconsets.qrc file
-
 ./3rdparty/CMakeLists.txt - builds qhttp static library
 ./3rdparty/qite/libqite/libqite.cmake - contains qite project file list
 
