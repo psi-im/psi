@@ -380,7 +380,7 @@
         <object mime='image/png'>close.png</object> <!-- TODO: change icon -->
     </icon>
 
-  <icon>
+    <icon>
         <x xmlns='name'>psi/closetab</x>
         <object mime='image/png'>closetab.png</object>
     </icon>
@@ -734,5 +734,4 @@
         <x xmlns='name'>psi/mic_rec</x>
         <object mime='image/png'>mic_rec.png</object>
     </icon>
-
 </icondef>
