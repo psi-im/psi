@@ -998,22 +998,14 @@ void MainWin::actReadmeActivated()
 void MainWin::actOnlineWikiActivated()
 {
     DesktopUtil::openUrl(
-#ifndef PSI_PLUS
         "https://github.com/psi-im/psi/wiki"
-#else
-        "https://psi-plus.com/wiki/en:main"
-#endif
     );
 }
 
 void MainWin::actOnlineHomeActivated()
 {
     DesktopUtil::openUrl(
-#ifndef PSI_PLUS
         "https://psi-im.org"
-#else
-        "https://psi-plus.com"
-#endif
     );
 }
 
@@ -1032,11 +1024,7 @@ void MainWin::actJoinPsiMUCActivated()
 void MainWin::actBugReportActivated()
 {
     DesktopUtil::openUrl(
-#ifndef PSI_PLUS
         "https://github.com/psi-im/psi/issues"
-#else
-        "https://github.com/psi-plus/main/issues"
-#endif
     );
 }
 
