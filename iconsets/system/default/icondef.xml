@@ -759,11 +759,6 @@
     </icon>
 
     <icon>
-        <x xmlns='name'>psi/psiplus_logo</x>
-        <object mime='image/png'>psiplus/psiplus_logo.png</object>
-    </icon>
-
-    <icon>
         <x xmlns='name'>psi/doubleNextArrow</x>
         <object mime='image/png'>psiplus/doublenextarrow.png</object>
     </icon>

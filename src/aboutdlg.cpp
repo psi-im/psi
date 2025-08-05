@@ -29,11 +29,7 @@ AboutDlg::AboutDlg(QWidget *parent) : QDialog(parent)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     ui_.setupUi(this);
-#ifdef PSI_PLUS
-    setWindowIcon(IconsetFactory::icon("psi/psiplus_logo").icon());
-#else
     setWindowIcon(IconsetFactory::icon("psi/logo_32").icon());
-#endif
 
     setModal(false);
 
@@ -90,7 +86,7 @@ AboutDlg::AboutDlg(QWidget *parent) : QDialog(parent)
                        tr("Patcher and former Russian translator"));
     psiplus += details(QString::fromUtf8("Z_God"), "", "", "", tr("Psimedia Patcher and Wiki English localization"));
     ui_.te_psiplus->setText(psiplus);
-    PsiIcon _icon = IconsetFactory::icon("psi/psiplus_logo");
+    PsiIcon _icon = IconsetFactory::icon("psi/logo_32");
     ui_.lb_icon->setPsiIcon(&_icon, true);
 #else
     for (int i = 0; i < ui_.tw_tabs->count(); ++i) {
