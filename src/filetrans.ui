@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Form1</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../iconsets.qrc">
+    <normaloff>:/iconsets/system/default/filemanager.png</normaloff>:/iconsets/system/default/filemanager.png</iconset>
+  </property>
   <layout class="QVBoxLayout">
    <item>
     <widget class="QLabel" name="lb_accountlabel">
@@ -185,6 +189,8 @@
    <header>busywidget.h</header>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="../iconsets.qrc"/>
+ </resources>
  <connections/>
 </ui>

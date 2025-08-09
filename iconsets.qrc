@@ -54,11 +54,11 @@
         <file>iconsets/system/default/gstreamer-logo-50.png</file>
         <file>iconsets/system/default/help.png</file>
         <file>iconsets/system/default/history.png</file>
-        <file>iconsets/system/default/@PSILOGO_PREFIX@logo_16.png</file>
-        <file>iconsets/system/default/@PSILOGO_PREFIX@logo_32.png</file>
-        <file>iconsets/system/default/@PSILOGO_PREFIX@logo_48.png</file>
-        <file>iconsets/system/default/@PSILOGO_PREFIX@logo_64.png</file>
-        <file>iconsets/system/default/@PSILOGO_PREFIX@logo_128.png</file>
+        <file>iconsets/system/default/logo_16.png</file>
+        <file>iconsets/system/default/logo_32.png</file>
+        <file>iconsets/system/default/logo_48.png</file>
+        <file>iconsets/system/default/logo_64.png</file>
+        <file>iconsets/system/default/logo_128.png</file>
         <file>iconsets/system/default/icondef.xml</file>
         <file>iconsets/system/default/info.png</file>
         <file>iconsets/system/default/jabber.png</file>
@@ -76,7 +76,7 @@
         <file>iconsets/system/default/pgp.png</file>
         <file>iconsets/system/default/play.png</file>
         <file>iconsets/system/default/play_sounds.png</file>
-        <file>iconsets/system/default/@PSILOGO_PREFIX@psilogo.png</file>
+        <file>iconsets/system/default/psilogo.png</file>
         <file>iconsets/system/default/psimain.png</file>
         <file>iconsets/system/default/quit.png</file>
         <file>iconsets/system/default/register.png</file>
@@ -137,10 +137,8 @@
         <file>iconsets/system/default/cm_uncheck.png</file>
         <file>iconsets/system/default/cm_export.png</file>
         <file>iconsets/system/default/cm_import.png</file>
-        <file>iconsets/system/default/psiplus/psiplus_icon.png</file>
         <file>iconsets/system/default/psiplus/action_vcard_restore.png</file>
         <file>iconsets/system/default/psiplus/action_vcard_save_as.png</file>
-        <file>iconsets/system/default/psiplus/psiplus_logo.png</file>
         <file>iconsets/system/default/psiplus/doublenextarrow.png</file>
         <file>iconsets/system/default/psiplus/doublebackarrow.png</file>
         <file>iconsets/system/default/crop.png</file>
@@ -398,7 +396,6 @@
         <file>iconsets/clients/default/pix-art.png</file>
         <file>iconsets/clients/default/poezio.png</file>
         <file>iconsets/clients/default/profanity.png</file>
-        <file>iconsets/clients/default/psiplus.png</file>
         <file>iconsets/clients/default/psi.png</file>
         <file>iconsets/clients/default/qip.png</file>
         <file>iconsets/clients/default/qutim.png</file>

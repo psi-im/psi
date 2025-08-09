@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Add Contact</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../iconsets.qrc">
+    <normaloff>:/iconsets/system/default/add.png</normaloff>:/iconsets/system/default/add.png</iconset>
+  </property>
   <layout class="QHBoxLayout" name="_4">
    <property name="sizeConstraint">
     <enum>QLayout::SetMinimumSize</enum>
@@ -355,6 +359,8 @@ p, li { white-space: pre-wrap; }
   <tabstop>ck_authreq</tabstop>
   <tabstop>ck_close</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="../iconsets.qrc"/>
+ </resources>
  <connections/>
 </ui>

@@ -617,9 +617,6 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa) :
         ui_.buttonRefresh->setMaximumWidth(minWidth);
     }
 
-#ifndef Q_OS_MAC
-    setWindowIcon(IconsetFactory::icon("psi/history").icon());
-#endif
     ui_.tbFindBackward->setIcon(IconsetFactory::icon("psi/arrowUp").icon());
     ui_.tbFindForward->setIcon(IconsetFactory::icon("psi/arrowDown").icon());
 

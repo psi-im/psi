@@ -6,12 +6,16 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>366</width>
-    <height>161</height>
+    <width>600</width>
+    <height>300</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="../../iconsets.qrc">
+    <normaloff>:/iconsets/system/default/avcall.png</normaloff>:/iconsets/system/default/avcall.png</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -132,6 +136,8 @@
   <tabstop>pb_reject</tabstop>
   <tabstop>pb_accept</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="../../iconsets.qrc"/>
+ </resources>
  <connections/>
 </ui>

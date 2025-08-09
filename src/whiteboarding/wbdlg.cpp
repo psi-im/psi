@@ -208,9 +208,7 @@ WbDlg::WbDlg(SxeSession *session, PsiAccount *pa)
     le_jid_->setToolTip(session->target().full());
 
     // update the widget icon
-#ifndef Q_OS_MAC
     setWindowIcon(IconsetFactory::icon("psi/whiteboard").icon());
-#endif
 
     setWindowOpacity(double(qMax(MINIMUM_OPACITY, PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt()))
                      / 100);

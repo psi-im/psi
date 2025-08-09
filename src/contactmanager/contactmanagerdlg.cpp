@@ -40,7 +40,6 @@ ContactManagerDlg::ContactManagerDlg(PsiAccount *pa) : QDialog(nullptr, Qt::Wind
     ui_.setupUi(this);
     pa_->dialogRegister(this);
     setWindowTitle(tr("Contacts Manager") + " - " + pa->jid().bare());
-    setWindowIcon(IconsetFactory::icon("psi/action_contacts_manager").icon());
 
     um = new ContactManagerModel(this, pa_);
     connect(um, &ContactManagerModel::modelReset, this, [this]() { ui_.usersView->viewport()->update(); });

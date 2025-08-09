@@ -16,6 +16,10 @@
   <property name="windowTitle">
    <string>Set Mood</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../iconsets.qrc">
+    <normaloff>:/iconsets/system/default/mood.png</normaloff>:/iconsets/system/default/mood.png</iconset>
+  </property>
   <layout class="QVBoxLayout">
    <property name="margin" >
     <number>9</number>
@@ -106,5 +110,8 @@
   </layout>
  </widget>
  <pixmapfunction></pixmapfunction>
- <resources/>
+ <resources>
+  <include location="../iconsets.qrc"/>
+ </resources>
+ <connections/>
 </ui>

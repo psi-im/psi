@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Manage Bookmarks</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../iconsets.qrc">
+    <normaloff>:/iconsets/system/default/bookmarks.png</normaloff>:/iconsets/system/default/bookmarks.png</iconset>
+  </property>
   <layout class="QGridLayout">
    <item row="0" column="0">
     <layout class="QVBoxLayout">
@@ -184,7 +188,9 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../iconsets.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>buttonBox</sender>

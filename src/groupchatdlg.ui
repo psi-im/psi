@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string/>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../iconsets.qrc">
+    <normaloff>:/iconsets/system/default/info.png</normaloff>:/iconsets/system/default/info.png</iconset>
+  </property>
   <layout class="QVBoxLayout">
    <property name="spacing">
     <number>6</number>
@@ -341,6 +345,8 @@
    <header>gcuserview.h</header>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="../iconsets.qrc"/>
+ </resources>
  <connections/>
 </ui>

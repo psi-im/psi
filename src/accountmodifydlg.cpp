@@ -68,9 +68,6 @@ void AccountModifyDlg::init()
         pa->dialogRegister(this);
 
     setWindowTitle(CAP(windowTitle()));
-#ifndef Q_OS_MAC
-    setWindowIcon(IconsetFactory::icon("psi/account").icon());
-#endif
     setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint
                    | Qt::CustomizeWindowHint);
 

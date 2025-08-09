@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>XML Console</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../iconsets.qrc">
+    <normaloff>:/iconsets/system/default/xml.png</normaloff>:/iconsets/system/default/xml.png</iconset>
+  </property>
   <layout class="QVBoxLayout">
    <property name="margin" >
     <number>9</number>
@@ -161,6 +165,8 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../iconsets.qrc"/>
+ </resources>
  <connections/>
 </ui>

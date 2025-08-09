@@ -42,7 +42,6 @@
 XmlConsole::XmlConsole(PsiAccount *_pa) : QWidget()
 {
     ui_.setupUi(this);
-    setWindowIcon(IconsetFactory::icon("psi/xml").icon());
     pa = _pa;
     pa->dialogRegister(this);
     connect(pa, SIGNAL(updatedAccount()), SLOT(updateCaption()));

@@ -10,6 +10,13 @@
     <height>400</height>
    </rect>
   </property>
+  <property name="windowTitle">
+   <string/>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>:/iconsets/system/default/vcard.png</normaloff>:/iconsets/system/default/vcard.png</iconset>
+  </property>
   <property name="sizeGripEnabled" stdset="0">
    <bool>true</bool>
   </property>
@@ -547,6 +554,8 @@
   <tabstop>le_country</tabstop>
   <tabstop>te_desc</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="../iconsets.qrc"/>
+ </resources>
  <connections/>
 </ui>

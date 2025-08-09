@@ -6,9 +6,13 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>733</width>
-    <height>562</height>
+    <width>800</width>
+    <height>600</height>
    </rect>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="../../iconsets.qrc">
+    <normaloff>:/iconsets/system/default/eye_blue.png</normaloff>:/iconsets/system/default/eye_blue.png</iconset>
   </property>
   <layout class="QVBoxLayout">
    <item>
@@ -237,6 +241,8 @@
   <tabstop>pb_edit</tabstop>
   <tabstop>pb_apply</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="../../iconsets.qrc"/>
+ </resources>
  <connections/>
 </ui>

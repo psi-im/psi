@@ -28,6 +28,10 @@
   <property name="windowTitle">
    <string>HistoryDlg</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../iconsets.qrc">
+    <normaloff>:/iconsets/system/default/history.png</normaloff>:/iconsets/system/default/history.png</iconset>
+  </property>
   <property name="sizeGripEnabled">
    <bool>true</bool>
   </property>
@@ -342,6 +346,8 @@
   <tabstop>accountsBox</tabstop>
   <tabstop>msgLog</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="../iconsets.qrc"/>
+ </resources>
  <connections/>
 </ui>
