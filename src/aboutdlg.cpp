@@ -38,7 +38,7 @@ AboutDlg::AboutDlg(QWidget *parent) : QDialog(parent)
     setModal(false);
 
     ui_.lb_about->setText("<html><head/><body><p>" + tr("Cross-platform XMPP client designed for experienced users.")
-                          + "<br/><br/>Copyright © 2001-2020 The Psi Team<br/></p></body></html>");
+                          + "<br/><br/>Copyright © 2001-2025 The Psi Team<br/></p></body></html>");
     ui_.lb_name->setText(QString("<h3><b>%1 v%2</b></h3>").arg(ApplicationInfo::name(), ApplicationInfo::version()));
 
     ui_.te_license->setText(loadText(":/COPYING"));
@@ -148,11 +148,7 @@ QString AboutDlg::details(QString name, QString email, QString xmppAddress, QStr
     if (!email.isEmpty())
         ret += nbsp + "E-mail: " + "<a href=\"mailto:" + email + "\">" + email + "</a><br>\n";
     if (!xmppAddress.isEmpty())
-#ifndef PSI_PLUS
         ret += nbsp + "XMPP: " + "<a href=\"xmpp:" + xmppAddress + "\">" + xmppAddress + "</a><br>\n";
-#else
-        ret += nbsp + "XMPP: " + "<a href=\"xmpp:" + xmppAddress + "?join\">" + xmppAddress + "</a><br>\n";
-#endif
     if (!www.isEmpty())
         ret += nbsp + "WWW: " + "<a href=\"" + www + "\">" + www + "</a><br>\n";
     if (!desc.isEmpty())
