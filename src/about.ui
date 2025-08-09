@@ -267,31 +267,6 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tab_psiplus">
-      <attribute name="title">
-       <string>About Psi+</string>
-      </attribute>
-      <layout class="QVBoxLayout">
-       <property name="spacing">
-        <number>6</number>
-       </property>
-       <property name="leftMargin">
-        <number>9</number>
-       </property>
-       <property name="topMargin">
-        <number>9</number>
-       </property>
-       <property name="rightMargin">
-        <number>9</number>
-       </property>
-       <property name="bottomMargin">
-        <number>9</number>
-       </property>
-       <item>
-        <widget class="PsiTextView" name="te_psiplus" native="true"/>
-       </item>
-      </layout>
-     </widget>
     </widget>
    </item>
    <item>
