@@ -200,7 +200,6 @@ void OptionsTabPlugins::showPluginInfo(QTreeWidgetItem *item)
     infoDialog = new QDialog(d);
     ui_.setupUi(infoDialog);
     infoDialog->setWindowTitle(tr("About plugin"));
-    infoDialog->setWindowIcon(QIcon(IconsetFactory::iconPtr("psi/logo_128")->icon()));
     const QString &shortName = item->data(C_NAME, Qt::UserRole).toString();
     ui_.tb_info->setText(PluginManager::instance()->pluginInfo(shortName));
     auto vendor   = formatVendorText(PluginManager::instance()->vendor(shortName), false);
