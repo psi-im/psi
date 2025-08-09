@@ -1630,9 +1630,7 @@ FileTransDlg::FileTransDlg(PsiCon *psi) : AdvancedWidget<QDialog>(nullptr, psi_d
     connect(&d->t, SIGNAL(timeout()), SLOT(updateItems()));
 
     setWindowTitle(tr("Transfer Manager"));
-#ifndef Q_OS_MAC
     setWindowIcon(IconsetFactory::icon("psi/filemanager").icon());
-#endif
 
     QVBoxLayout *vb = new QVBoxLayout(this);
     vb->setSpacing(6); // FIXME: Is forced spacing really necessary?
