@@ -19,6 +19,10 @@
   <property name="windowTitle">
    <string>Contacts Manager</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../../iconsets.qrc">
+    <normaloff>:/iconsets/system/default/action_contacts_manager.png</normaloff>:/iconsets/system/default/action_contacts_manager.png</iconset>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="ContactManagerView" name="usersView">
@@ -149,7 +153,9 @@
    <header>contactmanager/contactmanagerview.h</header>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="../../iconsets.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>buttonBox</sender>
