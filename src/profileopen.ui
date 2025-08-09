@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ui version="4.0" stdsetdef="1" >
-  <author></author>
-  <comment></comment>
-  <exportmacro></exportmacro>
+<ui version="4.0" stdsetdef="1">
+ <author></author>
+ <comment></comment>
+ <exportmacro></exportmacro>
  <class>ProfileOpen</class>
  <widget class="QDialog" name="ProfileOpen">
   <property name="geometry">
@@ -17,18 +17,18 @@
    <string>Open Profile</string>
   </property>
   <layout class="QVBoxLayout">
-      <property name="margin" >
+   <property name="margin">
     <number>0</number>
    </property>
-      <property name="spacing" >
+   <property name="spacing">
     <number>0</number>
    </property>
    <item>
     <layout class="QHBoxLayout">
-          <property name="margin" >
+     <property name="margin">
       <number>0</number>
      </property>
-          <property name="spacing" >
+     <property name="spacing">
       <number>0</number>
      </property>
      <item>
@@ -56,7 +56,7 @@
    </item>
    <item>
     <layout class="QVBoxLayout">
-          <property name="margin" >
+     <property name="margin">
       <number>11</number>
      </property>
      <item>
@@ -65,19 +65,19 @@
         <string>Open Profile</string>
        </property>
        <layout class="QVBoxLayout">
-                <property name="margin" >
-                  <number>11</number>
-                </property>
+        <property name="margin">
+         <number>11</number>
+        </property>
         <property name="spacing">
          <number>6</number>
         </property>
         <item>
          <layout class="QHBoxLayout">
-                    <property name="margin" >
+          <property name="margin">
            <number>0</number>
           </property>
-                    <property name="spacing" >
-                      <number>6</number>
+          <property name="spacing">
+           <number>6</number>
           </property>
           <item>
            <widget class="QLabel" name="TextLabel4">
@@ -89,9 +89,9 @@
           <item>
            <widget class="QComboBox" name="cb_profile">
             <property name="sizePolicy">
-                          <sizepolicy>
-                            <hsizetype>7</hsizetype>
-                            <vsizetype>0</vsizetype>
+             <sizepolicy>
+              <hsizetype>7</hsizetype>
+              <vsizetype>0</vsizetype>
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -112,11 +112,11 @@
      </item>
      <item>
       <layout class="QHBoxLayout">
-              <property name="margin" >
+       <property name="margin">
         <number>0</number>
        </property>
-              <property name="spacing" >
-                <number>6</number>
+       <property name="spacing">
+        <number>6</number>
        </property>
        <item>
         <widget class="QLabel" name="lb_lang">
@@ -128,9 +128,9 @@
        <item>
         <widget class="QComboBox" name="cb_lang">
          <property name="sizePolicy">
-                    <sizepolicy>
-                      <hsizetype>7</hsizetype>
-                      <vsizetype>0</vsizetype>
+          <sizepolicy>
+           <hsizetype>7</hsizetype>
+           <vsizetype>0</vsizetype>
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -151,12 +151,12 @@
      </item>
      <item>
       <layout class="QHBoxLayout">
-              <property name="margin" >
+       <property name="margin">
         <number>0</number>
        </property>
        <item>
-                <widget class="IconButton" name="pb_close" >
-                  <property name="text" >
+        <widget class="IconButton" name="pb_close">
+         <property name="text">
           <string>&amp;Quit</string>
          </property>
          <property name="psiIconName" stdset="0">
@@ -166,23 +166,23 @@
        </item>
        <item>
         <spacer name="Spacer1">
-                  <property name="sizeHint" >
+         <property name="sizeHint">
           <size>
            <width>59</width>
            <height>20</height>
           </size>
          </property>
-                  <property name="sizeType" >
-                    <enum>Expanding</enum>
-                  </property>
-                  <property name="orientation" >
-                    <enum>Horizontal</enum>
-                  </property>
+         <property name="sizeType">
+          <enum>Expanding</enum>
+         </property>
+         <property name="orientation">
+          <enum>Horizontal</enum>
+         </property>
         </spacer>
        </item>
        <item>
-                <widget class="IconButton" name="pb_profiles" >
-                  <property name="text" >
+        <widget class="IconButton" name="pb_profiles">
+         <property name="text">
           <string>&amp;Profiles...</string>
          </property>
          <property name="psiIconName" stdset="0">
@@ -191,8 +191,8 @@
         </widget>
        </item>
        <item>
-                <widget class="IconButton" name="pb_open" >
-                  <property name="text" >
+        <widget class="IconButton" name="pb_open">
+         <property name="text">
           <string>&amp;Open</string>
          </property>
          <property name="psiIconName" stdset="0">
