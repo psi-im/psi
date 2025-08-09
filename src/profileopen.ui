@@ -16,6 +16,10 @@
   <property name="windowTitle">
    <string>Open Profile</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../iconsets.qrc">
+    <normaloff>:/iconsets/system/default/changeacc.png</normaloff>:/iconsets/system/default/changeacc.png</iconset>
+  </property>
   <layout class="QVBoxLayout">
    <property name="margin">
     <number>0</number>
@@ -207,4 +211,8 @@
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <resources>
+  <include location="../iconsets.qrc"/>
+ </resources>
+ <connections/>
 </ui>
