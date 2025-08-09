@@ -33,7 +33,6 @@ ActivityDlg::ActivityDlg(QList<PsiAccount *> list) : QDialog(nullptr), pa_(list)
     if (pa_.isEmpty())
         close();
     ui_.setupUi(this);
-    setWindowIcon(IconsetFactory::icon("activities/other").icon());
     setModal(false);
 
     connect(ui_.cb_general_type, &QComboBox::currentTextChanged, this, &ActivityDlg::loadSpecificActivities);
