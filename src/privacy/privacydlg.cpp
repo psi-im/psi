@@ -34,7 +34,6 @@ PrivacyDlg::PrivacyDlg(const QString &account_name, PrivacyManager *manager, QWi
     ui_.setupUi(this);
     setAttribute(Qt::WA_DeleteOnClose);
     setWindowTitle(tr("%1: Privacy Lists").arg(account_name));
-    setWindowIcon(IconsetFactory::icon("psi/eye").icon());
     setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint
                    | Qt::CustomizeWindowHint);
 

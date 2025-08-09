@@ -10,6 +10,10 @@
     <height>600</height>
    </rect>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../../iconsets.qrc">
+    <normaloff>:/iconsets/system/default/eye_blue.png</normaloff>:/iconsets/system/default/eye_blue.png</iconset>
+  </property>
   <layout class="QVBoxLayout">
    <item>
     <widget class="QGroupBox" name="gb_settings">
@@ -237,6 +241,8 @@
   <tabstop>pb_edit</tabstop>
   <tabstop>pb_apply</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="../../iconsets.qrc"/>
+ </resources>
  <connections/>
 </ui>
