@@ -134,7 +134,17 @@
           <string>https://psi-im.org</string>
          </property>
          <property name="title" stdset="0">
-          <string>https://psi-im.org</string>
+          <string>psi-im.org</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="URLLabel" name="uRLLabel2" native="true">
+         <property name="url" stdset="0">
+          <string>xmpp:psi-dev@conference.jabber.ru?join</string>
+         </property>
+         <property name="title" stdset="0">
+          <string>psi-dev@conference.jabber.ru</string>
          </property>
         </widget>
        </item>
