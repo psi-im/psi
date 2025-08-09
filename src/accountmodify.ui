@@ -148,6 +148,21 @@
               </property>
              </widget>
             </item>
+            <item row="2" column="0" colspan="3">
+             <widget class="QCheckBox" name="ck_scram_salted_password">
+              <property name="toolTip">
+               <string>&lt;b&gt;Attention!&lt;/b&gt;
+                &lt;br/&gt;
+                When you enable this option you will not be able to find your password in config files. Only hash text will be there. So if you forget your password, it will be lost if you have not make a backup somewhere else.</string>
+              </property>
+              <property name="text">
+               <string>Store hash instead of plaintext password if server supports this feature.</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
            </layout>
           </item>
          </layout>
@@ -1158,18 +1173,6 @@
          </item>
         </layout>
        </item>
-       <item>
-        <widget class="QCheckBox" name="ck_scram_salted_password">
-         <property name="toolTip">
-          <string>&lt;b&gt;Attention!&lt;/b&gt;
-&lt;br/&gt;
-When you enable this option you will not be able to find your password in config files. Only hash text will be there. So if you forget your password, it will be lost if you have not make a backup somewhere else.</string>
-         </property>
-         <property name="text">
-          <string>Store hash instead of plaintext password if server supports this feature.</string>
-         </property>
-        </widget>
-       </item>
       </layout>
      </widget>
     </widget>
@@ -1190,6 +1193,7 @@ When you enable this option you will not be able to find your password in config
   <tabstop>le_jid</tabstop>
   <tabstop>le_pass</tabstop>
   <tabstop>pb_changepw</tabstop>
+  <tabstop>ck_scram_salted_password</tabstop>
   <tabstop>ck_auto</tabstop>
   <tabstop>ck_connectAfterSleep</tabstop>
   <tabstop>ck_autoSameStatus</tabstop>
@@ -1224,7 +1228,6 @@ When you enable this option you will not be able to find your password in config
   <tabstop>ck_custom_auth</tabstop>
   <tabstop>le_authid</tabstop>
   <tabstop>le_realm</tabstop>
-  <tabstop>ck_scram_salted_password</tabstop>
  </tabstops>
  <resources/>
  <connections>
