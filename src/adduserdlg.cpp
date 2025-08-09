@@ -105,7 +105,6 @@ void AddUserDlg::init(const QStringList &groups, PsiAccount *pa)
     connect(d->tasks, SIGNAL(finished()), busy, SLOT(stop()));
 
     setWindowTitle(CAP(windowTitle()));
-    setWindowIcon(IconsetFactory::icon("psi/addContact").icon());
     setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint
                    | Qt::CustomizeWindowHint);
 
