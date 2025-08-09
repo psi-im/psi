@@ -217,9 +217,6 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard4::VCard &vcard, PsiAc
     d->dateTextFormat = "d MMM yyyy";
 
     setWindowTitle(d->jid.full());
-#ifndef Q_OS_MAC
-    setWindowIcon(IconsetFactory::icon("psi/vCard").icon());
-#endif
     // names editing dialog
     d->namesDlg = new QFrame(this);
     d->namesDlg->setFrameShape(QFrame::StyledPanel);
