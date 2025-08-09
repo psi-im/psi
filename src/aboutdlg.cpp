@@ -74,8 +74,6 @@ AboutDlg::AboutDlg(QWidget *parent) : QDialog(parent)
 
     // fill in Thanks To tab...
     QString thanks;
-    thanks += details(QString::fromUtf8("Boris Pek"), "tehnick-8@yandex.ru", "", "",
-                      tr("Language coordinator, macOS port, miscellaneous assistance"));
     thanks += details(QString::fromUtf8("Frederik Schwarzer"), "schwarzerf@gmail.com", "", "",
                       tr("Former language coordinator, miscellaneous assistance"));
     thanks += details(QString::fromUtf8("Akito Nozaki"), "anpluto@usa.net", "", "",
