@@ -48,9 +48,6 @@ MUCJoinDlg::MUCJoinDlg(PsiCon *psi, PsiAccount *pa) : QDialog(nullptr), nickAlre
                    | Qt::CustomizeWindowHint);
     setModal(false);
     ui_.setupUi(this);
-#ifndef Q_OS_MAC
-    setWindowIcon(IconsetFactory::icon("psi/groupChat").icon());
-#endif
     controller_ = psi;
     account_    = nullptr;
     controller_->dialogRegister(this);

@@ -19,6 +19,10 @@
   <property name="windowTitle">
    <string>Join Groupchat</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../iconsets.qrc">
+    <normaloff>:/iconsets/system/default/groupchat.png</normaloff>:/iconsets/system/default/groupchat.png</iconset>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QFormLayout" name="formLayout_2">
@@ -172,7 +176,9 @@
   <tabstop>lwFavorites</tabstop>
   <tabstop>cb_ident</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="../iconsets.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>buttonBox</sender>
