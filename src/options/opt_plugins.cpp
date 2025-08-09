@@ -44,10 +44,9 @@ public:
     {
         setWindowTitle(QString("%1: %2").arg(PluginManager::instance()->pluginName(shortPluginName), windowTitle()));
         QIcon icon = PluginManager::instance()->icon(shortPluginName);
-        if (icon.isNull()) {
-            icon = IconsetFactory::iconPtr("psi/options")->icon();
+        if (!icon.isNull()) {
+            setWindowIcon(icon);
         }
-        setWindowIcon(icon);
         setTabs({ new OptionsTabPlugin(shortPluginName, this) });
 
         psi->dialogRegister(this);
