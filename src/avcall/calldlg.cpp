@@ -52,7 +52,6 @@ public:
     {
         ui.setupUi(q);
         q->setWindowTitle(tr("Voice Call"));
-        q->setWindowIcon(IconsetFactory::icon("psi/avcall").icon());
 
         if (AvCallManager::isSupported()) {
             auto config = MediaDeviceWatcher::instance()->configuration();
