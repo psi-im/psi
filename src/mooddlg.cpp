@@ -33,7 +33,6 @@ MoodDlg::MoodDlg(QList<PsiAccount *> list) : QDialog(nullptr), pa_(list)
     if (pa_.isEmpty())
         close();
     ui_.setupUi(this);
-    setWindowIcon(IconsetFactory::icon("mood/").icon());
     setModal(false);
 
     connect(ui_.pb_cancel, SIGNAL(clicked()), SLOT(close()));
