@@ -159,8 +159,5 @@
   <tabstop>pb_refresh</tabstop>
   <tabstop>pb_close</tabstop>
  </tabstops>
- <resources>
-  <include location="../iconsets.qrc"/>
- </resources>
  <connections/>
 </ui>
