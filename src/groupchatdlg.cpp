@@ -975,6 +975,8 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
             connect(action, SIGNAL(triggered()), SLOT(pinTab()));
         } else if (name == QLatin1String("gchat_templates")) {
             action->setMenu(getTemplateMenu());
+        } else if (name == QLatin1String("gchat_paste_send")) {
+            connect(action, SIGNAL(triggered()), SLOT(doPasteAndSend()));
         } else if (name == QLatin1String("gchat_set_topic")) {
             connect(action, &QAction::triggered, this, &GCMainDlg::openTopic);
         }
@@ -1019,8 +1021,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     connect(bm, SIGNAL(conferencesChanged(QList<ConferenceBookmark>)), SLOT(updateMucName()));
     connect(bm, SIGNAL(bookmarksSaved()), SLOT(updateBookmarkIcon()));
 
-    d->act_pastesend = new IconAction(tr("Paste and Send"), "psi/action_paste_and_send", tr("Paste and Send"), 0, this);
-    connect(d->act_pastesend, SIGNAL(triggered()), SLOT(doPasteAndSend()));
+    d->act_pastesend = d->actions->action("gchat_paste_send");
 
     d->act_minimize = new QAction(this);
     connect(d->act_minimize, SIGNAL(triggered()), SLOT(doMinimize()));
