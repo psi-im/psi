@@ -2621,9 +2621,6 @@ void GCMainDlg::buildMenu()
     // #endif
     d->pm_settings->addSeparator();
 
-    d->pm_settings->addAction(d->actions->action("gchat_icon"));
-    d->pm_settings->addAction(d->actions->action("gchat_templates"));
-    d->pm_settings->addAction(d->act_pastesend);
     d->pm_settings->addAction(d->act_nick);
     d->pm_settings->addAction(d->act_bookmark);
     d->pm_settings->addAction(d->actions->action("gchat_set_topic"));
@@ -2638,7 +2635,6 @@ void GCMainDlg::buildMenu()
         PluginManager::instance()->addGCToolBarButton(this, d->pm_settings, account(), jid().full());
     }
 #endif
-    d->pm_settings->addAction(d->actions->action("gchat_share_files"));
 }
 
 void GCMainDlg::chatEditCreated()
