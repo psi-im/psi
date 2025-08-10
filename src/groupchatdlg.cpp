@@ -1012,10 +1012,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     ui_.le_topic->addAction(d->act_copy_muc_jid);
 
     BookmarkManager *bm = account()->bookmarkManager();
-    d->act_bookmark->setVisible(bm->isAvailable());
-    if (bm->isAvailable()) {
-        updateBookmarkIcon();
-    }
+    updateBookmarkIcon();
     connect(bm, SIGNAL(availabilityChanged()), SLOT(updateBookmarkIcon()));
     connect(bm, SIGNAL(conferencesChanged(QList<ConferenceBookmark>)), SLOT(updateBookmarkIcon()));
     connect(bm, SIGNAL(conferencesChanged(QList<ConferenceBookmark>)), SLOT(updateMucName()));
