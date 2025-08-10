@@ -94,16 +94,6 @@
             <property name="spacing">
              <number>6</number>
             </property>
-            <item row="1" column="1">
-             <widget class="QLabel" name="lb_example">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-              <property name="text">
-               <string>Example: juliet@capulet.com</string>
-              </property>
-             </widget>
-            </item>
             <item row="0" column="0">
              <widget class="QLabel" name="lb_jid">
               <property name="text">
@@ -113,6 +103,9 @@
             </item>
             <item row="0" column="1">
              <widget class="QLineEdit" name="le_jid">
+              <property name="toolTip">
+               <string>Example: juliet@capulet.com</string>
+              </property>
               <property name="inputMethodHints">
                <set>Qt::ImhEmailCharactersOnly|Qt::ImhNoAutoUppercase|Qt::ImhPreferLatin|Qt::ImhPreferLowercase</set>
               </property>
@@ -121,33 +114,24 @@
               </property>
              </widget>
             </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QHBoxLayout">
-            <property name="spacing">
-             <number>6</number>
-            </property>
-            <property name="leftMargin">
-             <number>0</number>
-            </property>
-            <property name="topMargin">
-             <number>0</number>
-            </property>
-            <property name="rightMargin">
-             <number>0</number>
-            </property>
-            <property name="bottomMargin">
-             <number>0</number>
-            </property>
-            <item>
+            <item row="0" column="2">
+             <widget class="QLabel" name="lb_example">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="text">
+               <string>Example: juliet@capulet.com</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
              <widget class="QLabel" name="textLabel1">
               <property name="text">
                <string>Password:</string>
               </property>
              </widget>
             </item>
-            <item>
+            <item row="1" column="1">
              <widget class="QLineEdit" name="le_pass">
               <property name="inputMethodHints">
                <set>Qt::ImhNoAutoUppercase|Qt::ImhNoPredictiveText|Qt::ImhPreferLatin|Qt::ImhSensitiveData</set>
@@ -157,10 +141,25 @@
               </property>
              </widget>
             </item>
-            <item>
+            <item row="1" column="2">
              <widget class="QPushButton" name="pb_changepw">
               <property name="text">
                <string>Change...</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0" colspan="3">
+             <widget class="QCheckBox" name="ck_scram_salted_password">
+              <property name="toolTip">
+               <string>&lt;b&gt;Attention!&lt;/b&gt;
+                &lt;br/&gt;
+                When you enable this option you will not be able to find your password in config files. Only hash text will be there. So if you forget your password, it will be lost if you have not make a backup somewhere else.</string>
+              </property>
+              <property name="text">
+               <string>Store hash instead of plaintext password if server supports this feature.</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
               </property>
              </widget>
             </item>
@@ -897,22 +896,6 @@
          </item>
         </layout>
        </item>
-       <item>
-        <spacer>
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::Expanding</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>0</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
       </layout>
      </widget>
      <widget class="QWidget" name="tab_misc">
@@ -1190,34 +1173,6 @@
          </item>
         </layout>
        </item>
-       <item>
-        <widget class="QCheckBox" name="ck_scram_salted_password">
-         <property name="toolTip">
-          <string>&lt;b&gt;Attention!&lt;/b&gt;
-&lt;br/&gt;
-When you enable this option you will not be able to find your password in config files. Only hash text will be there. So if you forget your password, it will be lost if you have not make a backup somewhere else.</string>
-         </property>
-         <property name="text">
-          <string>Store hash instead of plaintext password if server supports this feature.</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer>
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::Expanding</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>460</width>
-           <height>0</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
       </layout>
      </widget>
     </widget>
@@ -1238,6 +1193,7 @@ When you enable this option you will not be able to find your password in config
   <tabstop>le_jid</tabstop>
   <tabstop>le_pass</tabstop>
   <tabstop>pb_changepw</tabstop>
+  <tabstop>ck_scram_salted_password</tabstop>
   <tabstop>ck_auto</tabstop>
   <tabstop>ck_connectAfterSleep</tabstop>
   <tabstop>ck_autoSameStatus</tabstop>
@@ -1272,7 +1228,6 @@ When you enable this option you will not be able to find your password in config
   <tabstop>ck_custom_auth</tabstop>
   <tabstop>le_authid</tabstop>
   <tabstop>le_realm</tabstop>
-  <tabstop>ck_scram_salted_password</tabstop>
  </tabstops>
  <resources/>
  <connections>

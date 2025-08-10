@@ -63,7 +63,7 @@ void UserAccount::reset()
     tog_agents                = true;
     tog_self                  = false;
     customAuth                = false;
-    storeSaltedHashedPassword = false;
+    storeSaltedHashedPassword = true;
     req_mutual_auth           = false;
     security_level            = QCA::SL_None;
     ssl                       = TLS_Auto;
