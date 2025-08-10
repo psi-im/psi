@@ -975,6 +975,10 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
             connect(action, SIGNAL(triggered()), SLOT(pinTab()));
         } else if (name == QLatin1String("gchat_templates")) {
             action->setMenu(getTemplateMenu());
+        } else if (name == QLatin1String("gchat_paste_send")) {
+            connect(action, SIGNAL(triggered()), SLOT(doPasteAndSend()));
+        } else if (name == QLatin1String("gchat_set_topic")) {
+            connect(action, &QAction::triggered, this, &GCMainDlg::openTopic);
         }
     }
 
@@ -998,11 +1002,11 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     connect(d->act_mini_cmd, SIGNAL(triggered()), d, SLOT(doMiniCmd()));
     addAction(d->act_mini_cmd);
 
-    d->act_bookmark  = new IconAction(this);
     auto actSetTopic = d->actions->action("gchat_set_topic");
-    connect(actSetTopic, &IconAction::triggered, this, &GCMainDlg::openTopic);
-    connect(d->act_bookmark, SIGNAL(triggered()), SLOT(doBookmark()));
     ui_.le_topic->addAction(actSetTopic);
+
+    d->act_bookmark  = new IconAction(this);
+    connect(d->act_bookmark, SIGNAL(triggered()), SLOT(doBookmark()));
     ui_.le_topic->addAction(d->act_bookmark);
 
     d->act_copy_muc_jid = new QAction(tr("Copy Groupchat JID"), this);
@@ -1011,17 +1015,13 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     ui_.le_topic->addAction(d->act_copy_muc_jid);
 
     BookmarkManager *bm = account()->bookmarkManager();
-    d->act_bookmark->setVisible(bm->isAvailable());
-    if (bm->isAvailable()) {
-        updateBookmarkIcon();
-    }
+    updateBookmarkIcon();
     connect(bm, SIGNAL(availabilityChanged()), SLOT(updateBookmarkIcon()));
     connect(bm, SIGNAL(conferencesChanged(QList<ConferenceBookmark>)), SLOT(updateBookmarkIcon()));
     connect(bm, SIGNAL(conferencesChanged(QList<ConferenceBookmark>)), SLOT(updateMucName()));
     connect(bm, SIGNAL(bookmarksSaved()), SLOT(updateBookmarkIcon()));
 
-    d->act_pastesend = new IconAction(tr("Paste and Send"), "psi/action_paste_and_send", tr("Paste and Send"), 0, this);
-    connect(d->act_pastesend, SIGNAL(triggered()), SLOT(doPasteAndSend()));
+    d->act_pastesend = d->actions->action("gchat_paste_send");
 
     d->act_minimize = new QAction(this);
     connect(d->act_minimize, SIGNAL(triggered()), SLOT(doMinimize()));
@@ -1033,7 +1033,6 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     // #ifdef WHITEBOARDING
     //     ui_.toolbar->addAction(d->act_whiteboard);
     // #endif
-    ui_.toolbar->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum);
 
     // Common actions
     d->act_send = new QAction(this);
@@ -2622,9 +2621,6 @@ void GCMainDlg::buildMenu()
     // #endif
     d->pm_settings->addSeparator();
 
-    d->pm_settings->addAction(d->actions->action("gchat_icon"));
-    d->pm_settings->addAction(d->actions->action("gchat_templates"));
-    d->pm_settings->addAction(d->act_pastesend);
     d->pm_settings->addAction(d->act_nick);
     d->pm_settings->addAction(d->act_bookmark);
     d->pm_settings->addAction(d->actions->action("gchat_set_topic"));
@@ -2639,7 +2635,6 @@ void GCMainDlg::buildMenu()
         PluginManager::instance()->addGCToolBarButton(this, d->pm_settings, account(), jid().full());
     }
 #endif
-    d->pm_settings->addAction(d->actions->action("gchat_share_files"));
 }
 
 void GCMainDlg::chatEditCreated()

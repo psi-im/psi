@@ -319,8 +319,7 @@ void PsiChatDlg::initUi()
     connect(ui_.log, &ChatView::quote, ui_.mle->chatEdit(), &ChatEdit::insertAsQuote);
     connect(ui_.log, &ChatView::editMessageRequested, ui_.mle->chatEdit(), &ChatEdit::startCorrection);
 
-    act_pastesend_ = new IconAction(tr("Paste and Send"), "psi/action_paste_and_send", tr("Paste and Send"), 0, this);
-    connect(act_pastesend_, SIGNAL(triggered()), SLOT(doPasteAndSend()));
+    act_pastesend_ = actions_->action("chat_paste_send");
 
     ui_.log->realTextWidget()->installEventFilter(this);
     ui_.mini_prompt->hide();
@@ -566,6 +565,8 @@ void PsiChatDlg::initToolButtons()
             connect(action, SIGNAL(triggered()), SLOT(pinTab()));
         } else if (name == "chat_templates") {
             action->setMenu(getTemplateMenu());
+        } else if (name == "chat_paste_send") {
+            connect(action, SIGNAL(triggered()), SLOT(doPasteAndSend()));
         }
     }
 
@@ -1001,11 +1002,6 @@ void PsiChatDlg::buildMenu()
     pm_settings_->addAction(actions_->action("chat_clear"));
     pm_settings_->addSeparator();
 
-    pm_settings_->addAction(actions_->action("chat_icon"));
-    pm_settings_->addAction(actions_->action("chat_templates"));
-    pm_settings_->addAction(act_pastesend_);
-    pm_settings_->addAction(actions_->action("chat_share_files"));
-    pm_settings_->addAction(actions_->action("chat_file"));
     if (AvCallManager::isSupported()) {
         pm_settings_->addAction(actions_->action("chat_voice"));
     }
