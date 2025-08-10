@@ -998,11 +998,12 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     connect(d->act_mini_cmd, SIGNAL(triggered()), d, SLOT(doMiniCmd()));
     addAction(d->act_mini_cmd);
 
-    d->act_bookmark  = new IconAction(this);
     auto actSetTopic = d->actions->action("gchat_set_topic");
     connect(actSetTopic, &IconAction::triggered, this, &GCMainDlg::openTopic);
-    connect(d->act_bookmark, SIGNAL(triggered()), SLOT(doBookmark()));
     ui_.le_topic->addAction(actSetTopic);
+
+    d->act_bookmark  = new IconAction(this);
+    connect(d->act_bookmark, SIGNAL(triggered()), SLOT(doBookmark()));
     ui_.le_topic->addAction(d->act_bookmark);
 
     d->act_copy_muc_jid = new QAction(tr("Copy Groupchat JID"), this);
