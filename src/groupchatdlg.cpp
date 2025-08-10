@@ -1033,7 +1033,6 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     // #ifdef WHITEBOARDING
     //     ui_.toolbar->addAction(d->act_whiteboard);
     // #endif
-    ui_.toolbar->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum);
 
     // Common actions
     d->act_send = new QAction(this);
