@@ -975,6 +975,8 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
             connect(action, SIGNAL(triggered()), SLOT(pinTab()));
         } else if (name == QLatin1String("gchat_templates")) {
             action->setMenu(getTemplateMenu());
+        } else if (name == QLatin1String("gchat_set_topic")) {
+            connect(action, &QAction::triggered, this, &GCMainDlg::openTopic);
         }
     }
 
@@ -999,7 +1001,6 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     addAction(d->act_mini_cmd);
 
     auto actSetTopic = d->actions->action("gchat_set_topic");
-    connect(actSetTopic, &IconAction::triggered, this, &GCMainDlg::openTopic);
     ui_.le_topic->addAction(actSetTopic);
 
     d->act_bookmark  = new IconAction(this);
