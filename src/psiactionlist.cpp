@@ -538,9 +538,7 @@ void PsiActionList::Private::createGroupchat()
         IconAction *actPinTab     = new IconAction(tr("Pin/UnPin Tab"), "psi/pin", tr("Pin/UnPin Tab"), 0, this);
         IconAction *actTemplates  = new IconAction(tr("Templates"), "psi/action_templates", tr("Templates"), 0, this);
 
-        QString     setTopicText = tr("Set Topic");
-        IconAction *actSetTopic  = new IconAction(setTopicText, QLatin1String("psi/topic"), setTopicText, 0, this);
-        actSetTopic->setToolTip(setTopicText);
+        IconAction *actSetTopic  = new IconAction(tr("Set Topic"), QLatin1String("psi/topic"), tr("Set Topic"), 0, this);
 
         ActionNames actions[] = { { "gchat_info", actInfo },
                                   { "gchat_clear", actClear },
