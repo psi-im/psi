@@ -8,9 +8,21 @@
 
 #include <QTextDocument> // for escape()
 
-// With Qt4 this func was more complex. Now we don't need it
 QString TextUtil::escape(const QString &plain) { return plain.toHtmlEscaped(); }
 
+/**
+ * Converts a given QString containing escaped XML/HTML entities into their unescaped equivalents.
+ *
+ * This function replaces specific XML/HTML escape sequences within the input string
+ * with their corresponding special characters. The replacements include:
+ * - "&lt;" with "<"
+ * - "&gt;" with ">"
+ * - "&quot;" with "\""
+ * - "&amp;" with "&"
+ *
+ * @param escaped The QString containing escaped XML/HTML entities to be unescaped.
+ * @return A QString where the escape sequences are replaced with their corresponding characters.
+ */
 QString TextUtil::unescape(const QString &escaped)
 {
     QString plain = escaped;
@@ -23,11 +35,14 @@ QString TextUtil::unescape(const QString &escaped)
 
 QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
 {
-    int ql = 0, col = 0, atstart = 1, ls = 0;
+    int ql = 0; // amount of leading '>' in the current line
+    int col = 0; // current column
+    int atstart = 1; // at beginning of line
+    int ls = 0; // index of last whitespace to break line
 
     QString            quoted = "> " + toquote; // quote first line
     QString            rxs    = quoteEmpty ? "\n" : "\n(?!\\s*\n)";
-    QRegularExpression rx(rxs); // quote following lines
+    QRegularExpression rx(rxs); // quote the following lines
     quoted.replace(rx, "\n> ");
     rx.setPattern("> +>"); // compress > > > > quotes to >>>>
     quoted.replace(rx, ">>");
@@ -78,7 +93,7 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
             }
         }
     }
-    quoted += "\n\n"; // add two empty lines to quoted text - the cursor
+    quoted += "\n\n"; // add two empty lines to the quoted text - the cursor
                       // will be positioned at the end of those.
     return quoted;
 }
