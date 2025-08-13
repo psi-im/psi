@@ -35,10 +35,10 @@ QString TextUtil::unescape(const QString &escaped)
 
 QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
 {
-    int ql = 0; // amount of leading '>' in the current line
-    int col = 0; // current column
-    int atstart = 1; // at beginning of line
-    int ls = 0; // index of last whitespace to break line
+    int quoteLevel = 0; // amount of leading '>' in the current line
+    int column = 0; // current column
+    int atLineStart = 1; // at beginning of line
+    int lastSpaceIndex = 0; // index of last whitespace to break line
 
     QString            quoted = "> " + toquote; // quote first line
     QString            rxs    = quoteEmpty ? "\n" : "\n(?!\\s*\n)";
@@ -55,46 +55,48 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
     }
 
     for (int i = 0; i < int(quoted.length()); i++) {
-        col++;
-        if (atstart && quoted[i] == '>')
-            ql++;
-        else
-            atstart = 0;
+        column++;
+        if (atLineStart && quoted[i] == '>') {
+            quoteLevel++;
+        } else {
+            atLineStart = 0;
+        }
 
         switch (quoted[i].toLatin1()) {
         case '\n':
-            ql = col = 0;
-            atstart  = 1;
+            quoteLevel = column = 0;
+            atLineStart         = 1;
             break;
         case ' ':
         case '\t':
-            ls = i;
+            lastSpaceIndex = i;
             break;
         }
         if (quoted[i] == '\n') {
-            ql      = 0;
-            atstart = 1;
+            quoteLevel = 0;
+            atLineStart = 1;
         }
 
-        if (col > width) {
-            if ((ls + width) < i) {
-                ls = i;
+        if (column > width) {
+            if ((lastSpaceIndex + width) < i) {
+                lastSpaceIndex = i;
                 i  = quoted.length();
-                while ((ls < i) && !quoted[ls].isSpace())
-                    ls++;
-                i = ls;
+                while ((lastSpaceIndex < i) && !quoted[lastSpaceIndex].isSpace()) {
+                    lastSpaceIndex++;
+                }
+                i = lastSpaceIndex;
             }
-            if ((i < int(quoted.length())) && (quoted[ls] != '\n')) {
-                quoted.insert(ls, '\n');
-                ++ls;
-                quoted.insert(ls, QString().fill('>', ql));
-                i += ql + 1;
-                col = 0;
+            if ((i < int(quoted.length())) && (quoted[lastSpaceIndex] != '\n')) {
+                quoted.insert(lastSpaceIndex, '\n');
+                ++lastSpaceIndex;
+                quoted.insert(lastSpaceIndex, QString().fill('>', quoteLevel));
+                i += quoteLevel + 1;
+                column = 0;
             }
         }
     }
-    quoted += "\n\n"; // add two empty lines to the quoted text - the cursor
-                      // will be positioned at the end of those.
+    // add two empty lines to the quoted text - the cursor will be positioned at the end of those.
+    quoted += "\n\n";
     return quoted;
 }
 
