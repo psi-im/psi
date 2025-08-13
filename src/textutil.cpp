@@ -37,7 +37,7 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
 {
     int quoteLevel = 0; // amount of leading '>' in the current line
     int column = 0; // current column
-    int atLineStart = 1; // at beginning of line
+    bool atLineStart = true; // at beginning of line
     int lastSpaceIndex = 0; // index of last whitespace to break line
 
     QString            quoted = "> " + toquote; // quote first line
@@ -59,13 +59,13 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
         if (atLineStart && quoted[i] == '>') {
             quoteLevel++;
         } else {
-            atLineStart = 0;
+            atLineStart = false;
         }
 
         switch (quoted[i].toLatin1()) {
         case '\n':
             quoteLevel = column = 0;
-            atLineStart         = 1;
+            atLineStart         = true;
             break;
         case ' ':
         case '\t':
@@ -74,7 +74,7 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
         }
         if (quoted[i] == '\n') {
             quoteLevel = 0;
-            atLineStart = 1;
+            atLineStart = true;
         }
 
         if (column > width) {
