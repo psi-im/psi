@@ -40,10 +40,14 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
     bool atLineStart = true; // at beginning of line
     int lastSpaceIndex = 0; // index of last whitespace to break line
 
+    const QRegularExpression rxTrimTrailingSpaces(QStringLiteral(" +\n"));
+    const QRegularExpression rxUnquote1(QStringLiteral("^>+\n"));
+    const QRegularExpression rxUnquote2(QStringLiteral("\n>+\n"));
+
     // quote first line
     QString            quoted = "> " + toquote;
-    QString            rxs    = quoteEmpty ? "\n" : "\n(?!\\s*\n)";
-    QRegularExpression rx(rxs);
+    QString            followLinePattern = quoteEmpty ? QStringLiteral("\n") : QStringLiteral("\n(?!\\s*\n)");
+    QRegularExpression rx(followLinePattern);
     // quote the following lines
     quoted.replace(rx, "\n> ");
     // compress > > > > quotes to >>>>
@@ -51,12 +55,12 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
     quoted.replace(rx, ">>");
     quoted.replace(rx, ">>");
     // remove trailing spaces before a newline
-    quoted.replace(QRegularExpression(" +\n"), "\n");
+    quoted.replace(rxTrimTrailingSpaces, "\n");
 
     if (!quoteEmpty) {
         // unquote empty lines
-        quoted.replace(QRegularExpression("^>+\n"), "\n\n");
-        quoted.replace(QRegularExpression("\n>+\n"), "\n\n");
+        quoted.replace(rxUnquote1, "\n\n");
+        quoted.replace(rxUnquote2, "\n\n");
     }
 
     for (int i = 0; i < int(quoted.length()); i++) {
