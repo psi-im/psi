@@ -40,17 +40,22 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
     bool atLineStart = true; // at beginning of line
     int lastSpaceIndex = 0; // index of last whitespace to break line
 
-    QString            quoted = "> " + toquote; // quote first line
+    // quote first line
+    QString            quoted = "> " + toquote;
     QString            rxs    = quoteEmpty ? "\n" : "\n(?!\\s*\n)";
-    QRegularExpression rx(rxs); // quote the following lines
+    QRegularExpression rx(rxs);
+    // quote the following lines
     quoted.replace(rx, "\n> ");
-    rx.setPattern("> +>"); // compress > > > > quotes to >>>>
+    // compress > > > > quotes to >>>>
+    rx.setPattern("> +>");
     quoted.replace(rx, ">>");
     quoted.replace(rx, ">>");
-    quoted.replace(QRegularExpression(" +\n"), "\n"); // remove trailing spaces
+    // remove trailing spaces before a newline
+    quoted.replace(QRegularExpression(" +\n"), "\n");
 
     if (!quoteEmpty) {
-        quoted.replace(QRegularExpression("^>+\n"), "\n\n"); // unquote empty lines
+        // unquote empty lines
+        quoted.replace(QRegularExpression("^>+\n"), "\n\n");
         quoted.replace(QRegularExpression("\n>+\n"), "\n\n");
     }
 
@@ -64,6 +69,7 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
 
         switch (quoted[i].toLatin1()) {
         case '\n':
+            // Reset state at a newline
             quoteLevel = column = 0;
             atLineStart         = true;
             break;
@@ -78,6 +84,7 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
         }
 
         if (column > width) {
+            // If we have no breakable space in range, advance to the next whitespace
             if ((lastSpaceIndex + width) < i) {
                 lastSpaceIndex = i;
                 i  = quoted.length();
@@ -87,10 +94,14 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
                 i = lastSpaceIndex;
             }
             if ((i < int(quoted.length())) && (quoted[lastSpaceIndex] != '\n')) {
+                // Insert newline at lastSpaceIndex
                 quoted.insert(lastSpaceIndex, '\n');
                 ++lastSpaceIndex;
+                // Re-insert the current quote prefix to the next line
                 quoted.insert(lastSpaceIndex, QString().fill('>', quoteLevel));
+                // count of inserted '>' chars
                 i += quoteLevel + 1;
+                // Reset wrapping state for the new line
                 column = 0;
             }
         }
