@@ -49,18 +49,18 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
     QString            followLinePattern = quoteEmpty ? QStringLiteral("\n") : QStringLiteral("\n(?!\\s*\n)");
     QRegularExpression rx(followLinePattern);
     // quote the following lines
-    quoted.replace(rx, "\n> ");
+    quoted.replace(rx, QStringLiteral("\n> "));
     // compress > > > > quotes to >>>>
     rx.setPattern("> +>");
-    quoted.replace(rx, ">>");
-    quoted.replace(rx, ">>");
+    quoted.replace(rx, QStringLiteral(">>"));
+    quoted.replace(rx, QStringLiteral(">>"));
     // remove trailing spaces before a newline
-    quoted.replace(rxTrimTrailingSpaces, "\n");
+    quoted.replace(rxTrimTrailingSpaces, QStringLiteral("\n"));
 
     if (!quoteEmpty) {
         // unquote empty lines
-        quoted.replace(rxUnquote1, "\n\n");
-        quoted.replace(rxUnquote2, "\n\n");
+        quoted.replace(rxUnquote1, QStringLiteral("\n\n"));
+        quoted.replace(rxUnquote2, QStringLiteral("\n\n"));
     }
 
     for (int i = 0; i < int(quoted.length()); i++) {
@@ -111,7 +111,7 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
         }
     }
     // add two empty lines to the quoted text - the cursor will be positioned at the end of those.
-    quoted += "\n\n";
+    quoted += QStringLiteral("\n\n");
     return quoted;
 }
 
