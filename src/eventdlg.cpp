@@ -1259,14 +1259,12 @@ void EventDlg::optionsUpdate()
         d->pb_next->forceSetPsiIcon(d->nextAnim());
 
         // update the widget icon
-#ifndef Q_OS_MAC
     if (d->composing) {
         setWindowIcon(IconsetFactory::icon("psi/sendMessage").icon());
     } else {
         if (d->anim)
             setWindowIcon(d->anim->icon());
     }
-#endif
 }
 
 void EventDlg::showEvent(QShowEvent *e)

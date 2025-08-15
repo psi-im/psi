@@ -2,37 +2,55 @@
 
 ## Подготовка каталога сборки:
 
-> $ mkdir build && cd build
-> $ cmake FLAGS ..
+```sh
+mkdir build && cd build
+cmake FLAGS ..
+```
 
   вместо флага FLAGS нужно ставить флаги из секции "Полезные CMAKE флаги"
   можно вообще не ставить никаких флагов
 
 ## Сборка:
 
-> $ cmake --build . --target all --
+```sh
+cmake --build . --target all --
+```
 
 или
 
-> $ make
+```sh
+make
+```
 
-## Установка:
+## Установка Psi/Psi+:
 
-> $ cmake --build . --target install --
+```sh
+cmake --build . --target install --
+```
 
 или
 
-> $ make install
+```sh
+make install
+```
 
 ## Если в установке нет необходимости, для запуска Psi/Psi+:
 
-> $ make prepare-bin
-> $ cd psi && ./psi && cd .. #для Psi
-> $ cd psi && ./psi-plus && cd .. #для Psi+
+```sh
+cmake --build . --target prepare-bin
+```
+
+или
+
+```sh
+make prepare-bin
+cd psi && ./psi && cd .. #для Psi
+cd psi && ./psi-plus && cd .. #для Psi+
+```
 
 ## Полезные CMAKE флаги:
 
-> -PSI_PLUS=OFF
+> -DPSI_PLUS=ON
 
   Компилировать Psi+ вместо Psi (по-умолчанию OFF)
 
@@ -44,7 +62,7 @@
 > -DPSI_DATADIR=${path}
 
   Путь к каталогу данных программы Psi/Psi+. Путь по
-  которому Psi/Psi+ будет искать данные (иконпаки, темы и.т.д.)
+  которому Psi/Psi+ будет искать данные (иконпаки, темы и т.д.)
 
 > -DCMAKE_INSTALL_PREFIX=prefix
 
@@ -96,15 +114,15 @@
 
 > -DCHAT_TYPE=BASIC
 
-  выбрать тип движка чатлогов. Возможные значения: WEBKIT, WEBENGINE, BASIC
-  значение по-умолчанию - BASIC.
+  выбрать тип движка чатлогов. Возможные значения: `WEBKIT`, `WEBENGINE`, `BASIC`
+  значение по-умолчанию: `BASIC`.
 
 > -DPSI_VERSION=${version}
 
   задать версию Psi/Psi+ вручную
-  ( Пример для Psi+: 1.0.40 (2017-06-05, Psi:a7d2d7b8, Psi+:055e945, webkit) ).
+  Пример для Psi+: `1.0.40 (2017-06-05, Psi:a7d2d7b8, Psi+:055e945, webkit`.
   Данный флаг ставить не обязательно, т.к. скрипт автоматически
-  определяет версию по содержимому файла "version"
+  определяет версию по содержимому файла `version`
 
 > -DCMAKE_BUILD_TYPE=Release
 
@@ -206,30 +224,54 @@
 
 > -DBUILD_PLUGINS=${plugins}
 
-  задать список плагинов для сборки. Чтобы собрать все плагины можно задать -DBUILD_PLUGINS="ALL" или вообще не ставить этот флаг
+  задать список плагинов для сборки. Чтобы собрать все плагины можно задать `-DBUILD_PLUGINS="ALL"` или вообще не ставить этот флаг
 
-  - возможные значения для ${plugins} (можно определить по содержимому каталога plugins/generic):
+  - возможные значения для `${plugins}` (можно определить по содержимому каталога plugins/generic):
 
-    historykeeperplugin    stopspamplugin juickplugin translateplugin gomokugameplugin attentionplugin
-    cleanerplugin autoreplyplugin contentdownloaderplugin qipxstatusesplugin skinsplugin
-    clientswitcherplugin watcherplugin videostatusplugin screenshotplugin jabberdiskplugin
-    storagenotesplugin    extendedoptionsplugin imageplugin extendedmenuplugin birthdayreminderplugin
-    pepchangenotifyplugin omemoplugin openpgpplugin otrplugin chessplugin conferenceloggerplugin
-    enummessagesplugin httpuploadplugin imagepreviewplugin
+   - historykeeperplugin
+   - stopspamplugin
+   - juickplugin
+   - translateplugin
+   - gomokugameplugin
+   - attentionplugin
+   - cleanerplugin
+   - autoreplyplugin
+   - contentdownloaderplugin
+   - qipxstatusesplugin
+   - skinsplugin
+   - clientswitcherplugin
+   - watcherplugin
+   - videostatusplugin
+   - screenshotplugin
+   - jabberdiskplugin
+   - storagenotesplugin
+   - extendedoptionsplugin
+   - imageplugin
+   - extendedmenuplugin
+   - birthdayreminderplugin
+   - pepchangenotifyplugin
+   - omemoplugin
+   - openpgpplugin
+   - otrplugin
+   - chessplugin
+   - conferenceloggerplugin
+   - enummessagesplugin
+   - httpuploadplugin
+   - imagepreviewplugin
 
   Пример:
 
   > -DBUILD_PLUGINS="chessplugin;otrplugin"
 
-    Переменная BUILD_PLUGINS может также быть использована как черный список.
-    В этом случае будут собраны все плагины, кроме указаных.
-    Для этого достаточно указать переменную как
+  Переменная BUILD_PLUGINS может также быть использована как черный список.
+  В этом случае будут собраны все плагины, кроме указаных.
+  Для этого достаточно указать переменную как
 
-    > -DBUILD_PLUGINS="-chessplugin;-otrplugin"
+  > -DBUILD_PLUGINS="-chessplugin;-otrplugin"
 
-    и плагины chessplugin и otrplugin собраны не будут
+  и плагины `chessplugin` и `otrplugin` собраны не будут
 
-    ВНИМАНИЕ! Смешивание белого и черного списков не допускается.
+  ВНИМАНИЕ! Смешивание белого и черного списков не допускается.
 
 
 > -DPLUGINS_ROOT_DIR=${path}
@@ -239,15 +281,15 @@
 
 > -DPLUGINS_PATH=${path}
 
-  установка плагинов в каталог с суфииксом ${path}. Для установки по-умолчанию:
+  установка плагинов в каталог с суфииксом `${path}`. Для установки по-умолчанию:
 
   -DPLUGINS_PATH=lib/psi-plus/plugins или не задавать этот флаг
 
-  Например для установки плагинов в ~/.local/share/psi+/plugins:
+  Например для установки плагинов в `~/.local/share/psi+/plugins`:
 
   > -DCMAKE_INSTALL_PREFIX=$HOME/.local -DPLUGINS_PATH=share/psi+/plugins
 
-  Напирмер для установки плагинов в /usr/share/psi-plus/plugins:
+  Напирмер для установки плагинов в `/usr/share/psi-plus/plugins`:
 
   > -DCMAKE_INSTALL_PREFIX=/usr -DPLUGINS_PATH=share/psi-plus/plugins
 

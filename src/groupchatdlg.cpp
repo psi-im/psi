@@ -2437,9 +2437,7 @@ void GCMainDlg::setLooks()
                      / 100);
 
     // update the widget icon
-#ifndef Q_OS_MAC
     setWindowIcon(IconsetFactory::icon("psi/start-chat").icon());
-#endif
 
     ui_.lv_users->setVerticalScrollBarPolicy(
         PsiOptions::instance()->getOption("options.ui.muc.userlist.disable-scrollbar").toBool()

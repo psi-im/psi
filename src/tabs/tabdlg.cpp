@@ -308,9 +308,7 @@ void TabDlg::optionsUpdate() { setShortcuts(); }
 void TabDlg::setLooks()
 {
     // set the widget icon
-#ifndef Q_OS_MAC
     setWindowIcon(IconsetFactory::icon("psi/start-chat").icon());
-#endif
     tabWidget_->setTabPosition(QTabWidget::North);
     if (PsiOptions::instance()->getOption("options.ui.tabs.put-tabs-at-bottom").toBool())
         tabWidget_->setTabPosition(QTabWidget::South);
