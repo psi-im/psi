@@ -409,27 +409,15 @@ void PsiActionList::Private::createMainWin()
         actOnlineHome->setToolTip(tr("Home Page (Online)"));
 
         IconAction *actOnlineForum = new IconAction(
-#ifdef PSI_PLUS
-            tr("Psi+ Forum (Online)"), tr("Psi+ &Forum (Online)")
-#else
-            tr("Psi Forum (Online)"), tr("Psi &Forum (Online)")
-#endif
+        tr("Psi Forum (Online)"), tr("Psi &Forum (Online)")
                                            ,
             0, this);
         actOnlineForum->setToolTip(
-#ifdef PSI_PLUS
-            tr("Psi+ Forum (Online)")
-#else
-            tr("Psi Forum (Online)")
-#endif
+        tr("Psi Forum (Online)")
         );
 
         IconAction *actPsiMUC = new IconAction(
-#ifdef PSI_PLUS
-            tr("Join Psi+ Discussion Room (Online)"), tr("&Join Psi+ Discussion Room (Online)")
-#else
-            tr("Join Psi Discussion Room (Online)"), tr("&Join Psi Discussion Room (Online)")
-#endif
+        tr("Join Psi Discussion Room (Online)"), tr("&Join Psi Discussion Room (Online)")
                                                           ,
             0, this);
         actOnlineHome->setToolTip(tr("Join Psi Discussion Room (Online)"));
