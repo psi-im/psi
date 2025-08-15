@@ -197,6 +197,11 @@
     </icon>
 
     <icon>
+        <x xmlns='name'>clients/thunderbird</x>
+        <object mime='image/png'>thunderbird.png</object>
+    </icon>
+
+    <icon>
         <x xmlns='name'>clients/tigase</x>
         <object mime='image/png'>tigase.png</object>
     </icon>

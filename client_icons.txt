@@ -81,6 +81,7 @@ strophe-api strophe
 swift swift
 talkonaut talkonaut
 telepathy telepathy,empathy
+thunderbird thunderbird
 tigase tigase,stork,beagle,siskin,multi user chat
 tkabber tkabber
 trillian trillian
