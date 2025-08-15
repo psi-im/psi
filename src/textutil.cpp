@@ -8,9 +8,21 @@
 
 #include <QTextDocument> // for escape()
 
-// With Qt4 this func was more complex. Now we don't need it
 QString TextUtil::escape(const QString &plain) { return plain.toHtmlEscaped(); }
 
+/**
+ * Converts a given QString containing escaped XML/HTML entities into their unescaped equivalents.
+ *
+ * This function replaces specific XML/HTML escape sequences within the input string
+ * with their corresponding special characters. The replacements include:
+ * - "&lt;" with "<"
+ * - "&gt;" with ">"
+ * - "&quot;" with "\""
+ * - "&amp;" with "&"
+ *
+ * @param escaped The QString containing escaped XML/HTML entities to be unescaped.
+ * @return A QString where the escape sequences are replaced with their corresponding characters.
+ */
 QString TextUtil::unescape(const QString &escaped)
 {
     QString plain = escaped;
@@ -23,63 +35,83 @@ QString TextUtil::unescape(const QString &escaped)
 
 QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
 {
-    int ql = 0, col = 0, atstart = 1, ls = 0;
+    int quoteLevel = 0; // amount of leading '>' in the current line
+    int column = 0; // current column
+    bool atLineStart = true; // at beginning of line
+    int lastSpaceIndex = 0; // index of last whitespace to break line
 
-    QString            quoted = "> " + toquote; // quote first line
-    QString            rxs    = quoteEmpty ? "\n" : "\n(?!\\s*\n)";
-    QRegularExpression rx(rxs); // quote following lines
-    quoted.replace(rx, "\n> ");
-    rx.setPattern("> +>"); // compress > > > > quotes to >>>>
-    quoted.replace(rx, ">>");
-    quoted.replace(rx, ">>");
-    quoted.replace(QRegularExpression(" +\n"), "\n"); // remove trailing spaces
+    const QRegularExpression rxTrimTrailingSpaces(QStringLiteral(" +\n"));
+    const QRegularExpression rxUnquote1(QStringLiteral("^>+\n"));
+    const QRegularExpression rxUnquote2(QStringLiteral("\n>+\n"));
+
+    // quote first line
+    QString            quoted = "> " + toquote;
+    QString            followLinePattern = quoteEmpty ? QStringLiteral("\n") : QStringLiteral("\n(?!\\s*\n)");
+    QRegularExpression rx(followLinePattern);
+    // quote the following lines
+    quoted.replace(rx, QStringLiteral("\n> "));
+    // compress > > > > quotes to >>>>
+    rx.setPattern("> +>");
+    quoted.replace(rx, QStringLiteral(">>"));
+    quoted.replace(rx, QStringLiteral(">>"));
+    // remove trailing spaces before a newline
+    quoted.replace(rxTrimTrailingSpaces, QStringLiteral("\n"));
 
     if (!quoteEmpty) {
-        quoted.replace(QRegularExpression("^>+\n"), "\n\n"); // unquote empty lines
-        quoted.replace(QRegularExpression("\n>+\n"), "\n\n");
+        // unquote empty lines
+        quoted.replace(rxUnquote1, QStringLiteral("\n\n"));
+        quoted.replace(rxUnquote2, QStringLiteral("\n\n"));
     }
 
     for (int i = 0; i < int(quoted.length()); i++) {
-        col++;
-        if (atstart && quoted[i] == '>')
-            ql++;
-        else
-            atstart = 0;
+        column++;
+        if (atLineStart && quoted[i] == '>') {
+            quoteLevel++;
+        } else {
+            atLineStart = false;
+        }
 
         switch (quoted[i].toLatin1()) {
         case '\n':
-            ql = col = 0;
-            atstart  = 1;
+            // Reset state at a newline
+            quoteLevel = column = 0;
+            atLineStart         = true;
             break;
         case ' ':
         case '\t':
-            ls = i;
+            lastSpaceIndex = i;
             break;
         }
         if (quoted[i] == '\n') {
-            ql      = 0;
-            atstart = 1;
+            quoteLevel = 0;
+            atLineStart = true;
         }
 
-        if (col > width) {
-            if ((ls + width) < i) {
-                ls = i;
+        if (column > width) {
+            // If we have no breakable space in range, advance to the next whitespace
+            if ((lastSpaceIndex + width) < i) {
+                lastSpaceIndex = i;
                 i  = quoted.length();
-                while ((ls < i) && !quoted[ls].isSpace())
-                    ls++;
-                i = ls;
+                while ((lastSpaceIndex < i) && !quoted[lastSpaceIndex].isSpace()) {
+                    lastSpaceIndex++;
+                }
+                i = lastSpaceIndex;
             }
-            if ((i < int(quoted.length())) && (quoted[ls] != '\n')) {
-                quoted.insert(ls, '\n');
-                ++ls;
-                quoted.insert(ls, QString().fill('>', ql));
-                i += ql + 1;
-                col = 0;
+            if ((i < int(quoted.length())) && (quoted[lastSpaceIndex] != '\n')) {
+                // Insert newline at lastSpaceIndex
+                quoted.insert(lastSpaceIndex, '\n');
+                ++lastSpaceIndex;
+                // Re-insert the current quote prefix to the next line
+                quoted.insert(lastSpaceIndex, QString().fill('>', quoteLevel));
+                // count of inserted '>' chars
+                i += quoteLevel + 1;
+                // Reset wrapping state for the new line
+                column = 0;
             }
         }
     }
-    quoted += "\n\n"; // add two empty lines to quoted text - the cursor
-                      // will be positioned at the end of those.
+    // add two empty lines to the quoted text - the cursor will be positioned at the end of those.
+    quoted += QStringLiteral("\n\n");
     return quoted;
 }
 
