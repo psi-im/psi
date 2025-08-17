@@ -245,6 +245,7 @@ if(EXISTS "${CONFIG_OUTPUT_FILE}")
 endif()
 
 # Only headers or very small sources
+include(BasicXMLSyntaxHighlighter/BasicXMLSyntaxHighlighter.cmake)
 include(irisprotocol/irisprotocol.cmake)
 include(protocol/protocol.cmake)
 include(${PROJECT_SOURCE_DIR}/plugins/plugins.cmake)

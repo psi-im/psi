@@ -19,6 +19,7 @@
 
 #include "xmlconsole.h"
 
+#include "BasicXMLSyntaxHighlighter/BasicXMLSyntaxHighlighter.h"
 #include "iconset.h"
 #include "iris/xmpp_client.h"
 #include "psiaccount.h"
@@ -56,6 +57,8 @@ XmlConsole::XmlConsole(PsiAccount *_pa) : QWidget()
     ui_.te->setUndoRedoEnabled(false);
     ui_.te->setReadOnly(true);
     ui_.te->setAcceptRichText(false);
+    BasicXMLSyntaxHighlighter *highlighter = new BasicXMLSyntaxHighlighter(ui_.te);
+    Q_UNUSED(highlighter);
 
     connect(ui_.pb_clear, SIGNAL(clicked()), SLOT(clear()));
     connect(ui_.pb_input, SIGNAL(clicked()), SLOT(insertXml()));
@@ -140,7 +143,6 @@ static const QTextFrameFormat frameFormatOutcoming = [] {
     return f;
 }();
 
-
 void XmlConsole::addRecord(bool incoming, const QString &str)
 {
     if (filtered(str))
@@ -152,7 +154,7 @@ void XmlConsole::addRecord(bool incoming, const QString &str)
     auto  prevCur     = textEdit->textCursor();
 
     textEdit->moveCursor(QTextCursor::End);
-    textEdit->textCursor().insertFrame(incoming ?  frameFormatIncoming : frameFormatOutcoming);
+    textEdit->textCursor().insertFrame(incoming ? frameFormatIncoming : frameFormatOutcoming);
     textEdit->insertPlainText(str);
 
     if (!wasAtBottom) {
@@ -194,6 +196,8 @@ XmlPrompt::XmlPrompt(QWidget *parent) : QDialog(parent)
     te = new QTextEdit(this);
     te->setAcceptRichText(false);
     vb1->addWidget(te);
+    BasicXMLSyntaxHighlighter *highlighter = new BasicXMLSyntaxHighlighter(te);
+    Q_UNUSED(highlighter);
 
     QHBoxLayout *hb1 = new QHBoxLayout;
     vb1->addLayout(hb1);

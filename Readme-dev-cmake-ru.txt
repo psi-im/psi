@@ -105,6 +105,8 @@
 
 ./src/avcall/CMakeLists.txt - собирает статическую библиотеку avcall
 
+./src/BasicXMLSyntaxHighlighter/BasicXMLSyntaxHighlighter.cmake - класс для подсветки XML в консоли XMPP.
+
 ./src/Certificates/CMakeLists.txt - собирает статическую библиотеку Certificates
 
 ./src/contactmanager/CMakeLists.txt - собирает статическую библиотеку contactmanager
