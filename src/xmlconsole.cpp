@@ -128,6 +128,19 @@ void XmlConsole::dumpRingbuf()
     ui_.ck_enable->setChecked(enablesave);
 }
 
+static const QTextFrameFormat frameFormatIncoming = [] {
+    QTextFrameFormat f;
+    f.setBackground(QColorConstants::Svg::lemonchiffon);
+    return f;
+}();
+
+static const QTextFrameFormat frameFormatOutcoming = [] {
+    QTextFrameFormat f;
+    f.setBackground(QColorConstants::Svg::lightpink);
+    return f;
+}();
+
+
 void XmlConsole::addRecord(bool incoming, const QString &str)
 {
     if (!filtered(str)) {
@@ -136,8 +149,8 @@ void XmlConsole::addRecord(bool incoming, const QString &str)
         QTextCursor prevCur  = ui_.te->textCursor();
 
         ui_.te->moveCursor(QTextCursor::End);
-        ui_.te->setTextColor(incoming ? Qt::yellow : Qt::red);
-        ui_.te->insertPlainText(str + '\n');
+        ui_.te->textCursor().insertFrame(incoming ?  frameFormatIncoming : frameFormatOutcoming);
+        ui_.te->insertPlainText(str);
 
         if (!atBottom) {
             ui_.te->setTextCursor(prevCur);
