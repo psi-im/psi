@@ -59,8 +59,7 @@ pidgin pidgin,gaim
 pix-art pix-art
 poezio poezio,poez.io
 profanity profanity,www#profanity
-psi psi,psi-im
-psiplus psi+,psi-plus,psi-dev
+psi psi,psi-im,psi+,psi-plus,psi-dev
 qip qip,2010.qip.ru
 qutim qutim
 qxmpp-api qxmpp

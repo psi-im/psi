@@ -3,7 +3,7 @@
     <meta>
         <name>Crystal - System (default)</name>
         <version>1.0</version>
-        <description>Crystal Iconset</description>
+        <description>Crystal System Iconset</description>
         <creation>2005-11-23</creation>
         <home>https://psi-im.org/</home>
         <author email='jmkim@uci.edu'>Jason Kim (Logo and misc. icons)</author>
@@ -316,6 +316,11 @@
     </icon>
 
     <icon>
+        <x xmlns='name'>psi/topic</x>
+        <object mime='image/svg+xml'>topic.svg</object>
+    </icon>
+
+    <icon>
         <x xmlns='name'>psi/www</x>
         <object mime='image/png'>url.png</object>
     </icon>
@@ -380,7 +385,7 @@
         <object mime='image/png'>close.png</object> <!-- TODO: change icon -->
     </icon>
 
-  <icon>
+    <icon>
         <x xmlns='name'>psi/closetab</x>
         <object mime='image/png'>closetab.png</object>
     </icon>
@@ -716,7 +721,7 @@
 
     <icon>
         <x xmlns='name'>psi/xmpp</x>
-        <object mime='image/xml+svg'>xmpp.svg</object>
+        <object mime='image/svg+xml'>xmpp.svg</object>
     </icon>
     <icon>
         <x xmlns='name'>psi/mic</x>
@@ -735,4 +740,69 @@
         <object mime='image/png'>mic_rec.png</object>
     </icon>
 
+    <!-- conferenceloggerplugin icon -->
+    <icon>
+        <x xmlns='name'>loggerplugin/openlog</x>
+        <object mime='image/png'>history.png</object>
+    </icon>
+    <!-- End conferenceloggerplugin icon -->
+
+    <!-- Psi Plus icons -->
+    <icon>
+        <x xmlns='name'>psi/action_vcard_restore</x>
+        <object mime='image/png'>psiplus/action_vcard_restore.png</object>
+    </icon>
+
+    <icon>
+        <x xmlns='name'>psi/action_vcard_save_as</x>
+        <object mime='image/png'>psiplus/action_vcard_save_as.png</object>
+    </icon>
+
+    <icon>
+        <x xmlns='name'>psi/psiplus_logo</x>
+        <object mime='image/png'>psiplus/psiplus_logo.png</object>
+    </icon>
+
+    <icon>
+        <x xmlns='name'>psi/doubleNextArrow</x>
+        <object mime='image/png'>psiplus/doublenextarrow.png</object>
+    </icon>
+
+    <icon>
+        <x xmlns='name'>psi/doubleBackArrow</x>
+        <object mime='image/png'>psiplus/doublebackarrow.png</object>
+    </icon>
+    <!-- End psi Plus icons -->
+
+    <!-- Icons for screenshot-plugin -->
+    <icon>
+        <x xmlns='name'>psi/crop</x>
+        <object mime='image/png'>crop.png</object>
+    </icon>
+
+    <icon>
+        <x xmlns='name'>psi/draw</x>
+        <object mime='image/png'>draw.png</object>
+    </icon>
+
+    <icon>
+        <x xmlns='name'>psi/frame</x>
+        <object mime='image/png'>frame.png</object>
+    </icon>
+
+    <icon>
+        <x xmlns='name'>psi/palette</x>
+        <object mime='image/png'>palette.png</object>
+    </icon>
+
+    <icon>
+        <x xmlns='name'>psi/undo</x>
+        <object mime='image/png'>undo.png</object>
+    </icon>
+
+    <icon>
+        <x xmlns='name'>psi/print</x>
+        <object mime='image/png'>print.png</object>
+    </icon>
+    <!-- End icons for screenshot-plugin -->
 </icondef>

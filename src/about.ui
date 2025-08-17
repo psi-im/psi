@@ -134,7 +134,17 @@
           <string>https://psi-im.org</string>
          </property>
          <property name="title" stdset="0">
-          <string>https://psi-im.org</string>
+          <string>psi-im.org</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="URLLabel" name="uRLLabel2" native="true">
+         <property name="url" stdset="0">
+          <string>xmpp:psi-dev@conference.jabber.ru?join</string>
+         </property>
+         <property name="title" stdset="0">
+          <string>psi-dev@conference.jabber.ru</string>
          </property>
         </widget>
        </item>
@@ -264,31 +274,6 @@
           <bool>true</bool>
          </property>
         </widget>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="tab_psiplus">
-      <attribute name="title">
-       <string>About Psi+</string>
-      </attribute>
-      <layout class="QVBoxLayout">
-       <property name="spacing">
-        <number>6</number>
-       </property>
-       <property name="leftMargin">
-        <number>9</number>
-       </property>
-       <property name="topMargin">
-        <number>9</number>
-       </property>
-       <property name="rightMargin">
-        <number>9</number>
-       </property>
-       <property name="bottomMargin">
-        <number>9</number>
-       </property>
-       <item>
-        <widget class="PsiTextView" name="te_psiplus" native="true"/>
        </item>
       </layout>
      </widget>
