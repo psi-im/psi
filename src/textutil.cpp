@@ -40,18 +40,18 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
     bool atLineStart = true; // at beginning of line
     int lastSpaceIndex = 0; // index of last whitespace to break line
 
-    const QRegularExpression rxTrimTrailingSpaces(QStringLiteral(" +\n"));
-    const QRegularExpression rxUnquote1(QStringLiteral("^>+\n"));
-    const QRegularExpression rxUnquote2(QStringLiteral("\n>+\n"));
+    const static QRegularExpression rxTrimTrailingSpaces(QStringLiteral(" +\n"));
+    const static QRegularExpression rxUnquote1(QStringLiteral("^>+\n"));
+    const static QRegularExpression rxUnquote2(QStringLiteral("\n>+\n"));
 
     // quote first line
-    QString            quoted = "> " + toquote;
+    QString            quoted = QStringLiteral("> ") + toquote;
     QString            followLinePattern = quoteEmpty ? QStringLiteral("\n") : QStringLiteral("\n(?!\\s*\n)");
     QRegularExpression rx(followLinePattern);
     // quote the following lines
     quoted.replace(rx, QStringLiteral("\n> "));
     // compress > > > > quotes to >>>>
-    rx.setPattern("> +>");
+    rx.setPattern(QStringLiteral("> +>"));
     quoted.replace(rx, QStringLiteral(">>"));
     quoted.replace(rx, QStringLiteral(">>"));
     // remove trailing spaces before a newline
@@ -99,12 +99,12 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
             }
             if ((i < int(quoted.length())) && (quoted[lastSpaceIndex] != '\n')) {
                 // Insert newline at lastSpaceIndex
-                quoted.insert(lastSpaceIndex, '\n');
+                quoted.insert(lastSpaceIndex, QLatin1Char('\n'));
                 ++lastSpaceIndex;
                 // Re-insert the current quote prefix to the next line
-                quoted.insert(lastSpaceIndex, QString().fill('>', quoteLevel));
+                quoted.insert(lastSpaceIndex, QString().fill(QLatin1Char('>'), quoteLevel));
                 // count of inserted '>' chars
-                i += quoteLevel + 1;
+                i += (quoteLevel + 1);
                 // Reset wrapping state for the new line
                 column = 0;
             }
