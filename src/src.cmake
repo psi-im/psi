@@ -55,6 +55,7 @@ list(APPEND FORMS
     mucreasonseditor.ui
     multifiletransferdlg.ui
     optioneditor.ui
+    password.ui
     pgpkey.ui
     profilemanage.ui
     profilenew.ui

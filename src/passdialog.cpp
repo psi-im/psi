@@ -20,47 +20,15 @@
 
 #include "passdialog.h"
 
-#include <QCheckBox>
-#include <QHBoxLayout>
-#include <QLabel>
-#include <QLayout>
-#include <QLineEdit>
-#include <QPushButton>
-#include <QVBoxLayout>
-
 PassDialog::PassDialog(const QString &jid, QWidget *parent) : QDialog(parent)
 {
+    m_ui.setupUi(this);
     setWindowTitle(tr("Wrong Account Password"));
-
-    QVBoxLayout *mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(6, 6, 6, 6);
-    mainLayout->setSpacing(6);
-    QHBoxLayout *botLayout = new QHBoxLayout();
-
-    le_password = new QLineEdit();
-    le_password->setEchoMode(QLineEdit::Password);
-
-    cb_savePassword = new QCheckBox(tr("Save Password"));
-    botLayout->addWidget(cb_savePassword);
-    botLayout->addStretch(1);
-
-    QPushButton *pb_ok = new QPushButton(tr("OK"));
-    pb_ok->setDefault(true);
-    botLayout->addWidget(pb_ok);
-
-    QPushButton *pb_cancel = new QPushButton(tr("Cancel"));
-    botLayout->addWidget(pb_cancel);
-
-    mainLayout->addWidget(new QLabel(tr("Please enter your password for %1:").arg(jid)));
-    mainLayout->addWidget(le_password);
-    mainLayout->addLayout(botLayout);
-
-    connect(pb_cancel, SIGNAL(clicked()), this, SLOT(reject()));
-    connect(pb_ok, SIGNAL(clicked()), this, SLOT(accept()));
+    m_ui.labelAcc->setText(tr("Please enter your password for %1:").arg(jid));
 }
 
-bool PassDialog::savePassword() const { return cb_savePassword->isChecked(); }
+bool PassDialog::savePassword() const { return m_ui.cb_savePassword->isChecked(); }
 
-void PassDialog::setSavePassword(bool save) { cb_savePassword->setChecked(save); }
+void PassDialog::setSavePassword(bool save) { m_ui.cb_savePassword->setChecked(save); }
 
-QString PassDialog::password() const { return le_password->text(); }
+QString PassDialog::password() const { return m_ui.le_password->text(); }

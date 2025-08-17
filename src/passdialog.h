@@ -21,6 +21,8 @@
 #ifndef PASSDIALOG_H
 #define PASSDIALOG_H
 
+#include "ui_password.h"
+
 #include <QDialog>
 
 class QCheckBox;
@@ -36,8 +38,7 @@ public:
     void    setSavePassword(bool save);
 
 private:
-    QCheckBox *cb_savePassword;
-    QLineEdit *le_password;
+    Ui::PasswordDialog m_ui;
 };
 
 #endif // PASSDIALOG_H
