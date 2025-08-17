@@ -43,17 +43,18 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
     const static QRegularExpression rxTrimTrailingSpaces(QStringLiteral(" +\n"));
     const static QRegularExpression rxUnquote1(QStringLiteral("^>+\n"));
     const static QRegularExpression rxUnquote2(QStringLiteral("\n>+\n"));
+    const static QRegularExpression rxFollowLineEmpty(QStringLiteral("\n"));
+    const static QRegularExpression rxFollowLinePattern(QStringLiteral("\n(?!\\s*\n)"));
+    const static QRegularExpression rxCompress(QStringLiteral("> +>"));
 
     // quote first line
     QString            quoted = QStringLiteral("> ") + toquote;
-    QString            followLinePattern = quoteEmpty ? QStringLiteral("\n") : QStringLiteral("\n(?!\\s*\n)");
-    QRegularExpression rx(followLinePattern);
+    QRegularExpression rx = quoteEmpty ? rxFollowLineEmpty : rxFollowLinePattern;
     // quote the following lines
     quoted.replace(rx, QStringLiteral("\n> "));
     // compress > > > > quotes to >>>>
-    rx.setPattern(QStringLiteral("> +>"));
-    quoted.replace(rx, QStringLiteral(">>"));
-    quoted.replace(rx, QStringLiteral(">>"));
+    quoted.replace(rxCompress, QStringLiteral(">>"));
+    quoted.replace(rxCompress, QStringLiteral(">>"));
     // remove trailing spaces before a newline
     quoted.replace(rxTrimTrailingSpaces, QStringLiteral("\n"));
 
