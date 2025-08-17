@@ -145,19 +145,21 @@ void XmlConsole::addRecord(bool incoming, const QString &str)
 {
     if (filtered(str))
         return;
-    int         prevSPos = ui_.te->verticalScrollBar()->value();
-    bool        atBottom = (prevSPos == ui_.te->verticalScrollBar()->maximum());
-    QTextCursor prevCur  = ui_.te->textCursor();
+    auto *textEdit    = ui_.te;
+    auto *scrollBar   = textEdit->verticalScrollBar();
+    int   prevSPos    = scrollBar->value();
+    bool  wasAtBottom = (prevSPos == scrollBar->maximum());
+    auto  prevCur     = textEdit->textCursor();
 
-    ui_.te->moveCursor(QTextCursor::End);
-    ui_.te->textCursor().insertFrame(incoming ?  frameFormatIncoming : frameFormatOutcoming);
-    ui_.te->insertPlainText(str);
+    textEdit->moveCursor(QTextCursor::End);
+    textEdit->textCursor().insertFrame(incoming ?  frameFormatIncoming : frameFormatOutcoming);
+    textEdit->insertPlainText(str);
 
-    if (!atBottom) {
-        ui_.te->setTextCursor(prevCur);
-        ui_.te->verticalScrollBar()->setValue(prevSPos);
+    if (!wasAtBottom) {
+        textEdit->setTextCursor(prevCur);
+        scrollBar->setValue(prevSPos);
     } else {
-        ui_.te->verticalScrollBar()->setValue(ui_.te->verticalScrollBar()->maximum());
+        scrollBar->setValue(scrollBar->maximum());
     }
 }
 
