@@ -33,6 +33,21 @@ QString TextUtil::unescape(const QString &escaped)
     return plain;
 }
 
+/**
+ * Quote text for a response with "> " prefix.
+ * Nested quotes and word wrapping are supported.
+ * assert(TextUtil::quote("Hello world", 80, true) == "> Hello world\n\n")
+ * // Line wrapping
+ * assert(TextUtil::quote("This is a very long line that should be wrapped", 20, true) == "> This is a very\n> long line that should be\n> wrapped\n\n")
+ * // Empty lines
+ * assert(TextUtil::quote("Line1\n\nLine2", 80, false) == "> Line1\n\n> Line2\n\n")
+ * // Empty lines: quoteEmpty
+ * assert(TextUtil::quote("Line1\n\nLine2", 80, true) == "> Line1\n>\n> Line2\n\n")
+ * @param toquote text to quote
+ * @param width width where to wrap text
+ * @param quoteEmpty add > to empty lines
+ * @return
+ */
 QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
 {
     int quoteLevel = 0; // amount of leading '>' in the current line
@@ -40,12 +55,12 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
     bool atLineStart = true; // at beginning of line
     int lastSpaceIndex = 0; // index of last whitespace to break line
 
-    const static QRegularExpression rxTrimTrailingSpaces(QStringLiteral(" +\n"));
-    const static QRegularExpression rxUnquote1(QStringLiteral("^>+\n"));
-    const static QRegularExpression rxUnquote2(QStringLiteral("\n>+\n"));
-    const static QRegularExpression rxFollowLineEmpty(QStringLiteral("\n"));
-    const static QRegularExpression rxFollowLinePattern(QStringLiteral("\n(?!\\s*\n)"));
-    const static QRegularExpression rxCompress(QStringLiteral("> +>"));
+    static const QRegularExpression rxTrimTrailingSpaces(QStringLiteral(" +\n"));
+    static const QRegularExpression rxUnquote1(QStringLiteral("^>+\n"));
+    static const QRegularExpression rxUnquote2(QStringLiteral("\n>+\n"));
+    static const QRegularExpression rxFollowLineEmpty(QStringLiteral("\n"));
+    static const QRegularExpression rxFollowLinePattern(QStringLiteral("\n(?!\\s*\n)"));
+    static const QRegularExpression rxCompress(QStringLiteral("> +>"));
 
     // quote first line
     QString            quoted = QStringLiteral("> ") + toquote;
@@ -75,8 +90,9 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
         switch (quoted[i].toLatin1()) {
         case '\n':
             // Reset state at a newline
-            quoteLevel = column = 0;
-            atLineStart         = true;
+            quoteLevel  = 0;
+            column      = 0;
+            atLineStart = true;
             break;
         case ' ':
         case '\t':
@@ -91,6 +107,7 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
         if (column > width) {
             // If we have no breakable space in range, advance to the next whitespace
             if ((lastSpaceIndex + width) < i) {
+                // advance to the next whitespace from the position
                 lastSpaceIndex = i;
                 i  = quoted.length();
                 while ((lastSpaceIndex < i) && !quoted[lastSpaceIndex].isSpace()) {
