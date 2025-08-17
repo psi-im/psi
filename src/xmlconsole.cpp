@@ -82,9 +82,9 @@ void XmlConsole::clear()
 void XmlConsole::updateCaption()
 {
     if (pa->psi()->contactList()->enabledAccounts().count() > 1)
-        setWindowTitle(pa->name() + ": " + tr("XML Console"));
+        setWindowTitle(pa->name() + ": " + tr("XMPP Console"));
     else
-        setWindowTitle(tr("XML Console"));
+        setWindowTitle(tr("XMPP Console"));
 }
 
 void XmlConsole::enable() { ui_.ck_enable->setChecked(true); }

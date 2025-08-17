@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>XML Console</string>
+   <string>XMPP Console</string>
   </property>
   <layout class="QVBoxLayout">
    <property name="margin" >
