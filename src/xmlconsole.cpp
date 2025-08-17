@@ -57,10 +57,6 @@ XmlConsole::XmlConsole(PsiAccount *_pa) : QWidget()
     ui_.te->setReadOnly(true);
     ui_.te->setAcceptRichText(false);
 
-    QTextFrameFormat f = ui_.te->document()->rootFrame()->frameFormat();
-    f.setBackground(QBrush(Qt::black));
-    ui_.te->document()->rootFrame()->setFrameFormat(f);
-
     connect(ui_.pb_clear, SIGNAL(clicked()), SLOT(clear()));
     connect(ui_.pb_input, SIGNAL(clicked()), SLOT(insertXml()));
     connect(ui_.pb_close, SIGNAL(clicked()), SLOT(close()));
@@ -74,9 +70,6 @@ XmlConsole::~XmlConsole() { pa->dialogUnregister(this); }
 void XmlConsole::clear()
 {
     ui_.te->clear();
-    QTextFrameFormat f = ui_.te->document()->rootFrame()->frameFormat();
-    f.setBackground(QBrush(Qt::black));
-    ui_.te->document()->rootFrame()->setFrameFormat(f);
 }
 
 void XmlConsole::updateCaption()
