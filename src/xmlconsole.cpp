@@ -143,21 +143,21 @@ static const QTextFrameFormat frameFormatOutcoming = [] {
 
 void XmlConsole::addRecord(bool incoming, const QString &str)
 {
-    if (!filtered(str)) {
-        int         prevSPos = ui_.te->verticalScrollBar()->value();
-        bool        atBottom = (prevSPos == ui_.te->verticalScrollBar()->maximum());
-        QTextCursor prevCur  = ui_.te->textCursor();
+    if (filtered(str))
+        return;
+    int         prevSPos = ui_.te->verticalScrollBar()->value();
+    bool        atBottom = (prevSPos == ui_.te->verticalScrollBar()->maximum());
+    QTextCursor prevCur  = ui_.te->textCursor();
 
-        ui_.te->moveCursor(QTextCursor::End);
-        ui_.te->textCursor().insertFrame(incoming ?  frameFormatIncoming : frameFormatOutcoming);
-        ui_.te->insertPlainText(str);
+    ui_.te->moveCursor(QTextCursor::End);
+    ui_.te->textCursor().insertFrame(incoming ?  frameFormatIncoming : frameFormatOutcoming);
+    ui_.te->insertPlainText(str);
 
-        if (!atBottom) {
-            ui_.te->setTextCursor(prevCur);
-            ui_.te->verticalScrollBar()->setValue(prevSPos);
-        } else {
-            ui_.te->verticalScrollBar()->setValue(ui_.te->verticalScrollBar()->maximum());
-        }
+    if (!atBottom) {
+        ui_.te->setTextCursor(prevCur);
+        ui_.te->verticalScrollBar()->setValue(prevSPos);
+    } else {
+        ui_.te->verticalScrollBar()->setValue(ui_.te->verticalScrollBar()->maximum());
     }
 }
 
