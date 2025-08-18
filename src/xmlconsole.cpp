@@ -57,10 +57,6 @@ XmlConsole::XmlConsole(PsiAccount *_pa) : QWidget()
     ui_.te->setReadOnly(true);
     ui_.te->setAcceptRichText(false);
 
-    QTextFrameFormat f = ui_.te->document()->rootFrame()->frameFormat();
-    f.setBackground(QBrush(Qt::black));
-    ui_.te->document()->rootFrame()->setFrameFormat(f);
-
     connect(ui_.pb_clear, SIGNAL(clicked()), SLOT(clear()));
     connect(ui_.pb_input, SIGNAL(clicked()), SLOT(insertXml()));
     connect(ui_.pb_close, SIGNAL(clicked()), SLOT(close()));
@@ -74,17 +70,14 @@ XmlConsole::~XmlConsole() { pa->dialogUnregister(this); }
 void XmlConsole::clear()
 {
     ui_.te->clear();
-    QTextFrameFormat f = ui_.te->document()->rootFrame()->frameFormat();
-    f.setBackground(QBrush(Qt::black));
-    ui_.te->document()->rootFrame()->setFrameFormat(f);
 }
 
 void XmlConsole::updateCaption()
 {
     if (pa->psi()->contactList()->enabledAccounts().count() > 1)
-        setWindowTitle(pa->name() + ": " + tr("XML Console"));
+        setWindowTitle(pa->name() + ": " + tr("XMPP Console"));
     else
-        setWindowTitle(tr("XML Console"));
+        setWindowTitle(tr("XMPP Console"));
 }
 
 void XmlConsole::enable() { ui_.ck_enable->setChecked(true); }
@@ -135,23 +128,38 @@ void XmlConsole::dumpRingbuf()
     ui_.ck_enable->setChecked(enablesave);
 }
 
+static const QTextFrameFormat frameFormatIncoming = [] {
+    QTextFrameFormat f;
+    f.setBackground(QColorConstants::Svg::lemonchiffon);
+    return f;
+}();
+
+static const QTextFrameFormat frameFormatOutcoming = [] {
+    QTextFrameFormat f;
+    f.setBackground(QColorConstants::Svg::lightpink);
+    return f;
+}();
+
+
 void XmlConsole::addRecord(bool incoming, const QString &str)
 {
-    if (!filtered(str)) {
-        int         prevSPos = ui_.te->verticalScrollBar()->value();
-        bool        atBottom = (prevSPos == ui_.te->verticalScrollBar()->maximum());
-        QTextCursor prevCur  = ui_.te->textCursor();
+    if (filtered(str))
+        return;
+    auto *textEdit    = ui_.te;
+    auto *scrollBar   = textEdit->verticalScrollBar();
+    int   prevSPos    = scrollBar->value();
+    bool  wasAtBottom = (prevSPos == scrollBar->maximum());
+    auto  prevCur     = textEdit->textCursor();
 
-        ui_.te->moveCursor(QTextCursor::End);
-        ui_.te->setTextColor(incoming ? Qt::yellow : Qt::red);
-        ui_.te->insertPlainText(str + '\n');
+    textEdit->moveCursor(QTextCursor::End);
+    textEdit->textCursor().insertFrame(incoming ?  frameFormatIncoming : frameFormatOutcoming);
+    textEdit->insertPlainText(str);
 
-        if (!atBottom) {
-            ui_.te->setTextCursor(prevCur);
-            ui_.te->verticalScrollBar()->setValue(prevSPos);
-        } else {
-            ui_.te->verticalScrollBar()->setValue(ui_.te->verticalScrollBar()->maximum());
-        }
+    if (!wasAtBottom) {
+        textEdit->setTextCursor(prevCur);
+        scrollBar->setValue(prevSPos);
+    } else {
+        scrollBar->setValue(scrollBar->maximum());
     }
 }
 

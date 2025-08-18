@@ -59,7 +59,7 @@ struct ClientIconCheck {
  *
  * To discover the client do next:
  * 1. Find any alive contact using interested you client
- * 2. Open xml console, and insert the current JID together with current online resource into the filter line
+ * 2. Open XMPP Console and insert the current JID together with its current online resource into the filter line
  * 3. Press Dump Ringbuf to see some stanzas.
  * 4. Find <presence....> stanza and remember "ver" attribute from <c> element
  * 5. Open caps.xml file (~/.cache/psi/caps.xml, "C:/Users/<USER>/AppData/Local/psi/cache") and search for

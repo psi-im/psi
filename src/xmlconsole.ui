@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>XML Console</string>
+   <string>XMPP Console</string>
   </property>
   <layout class="QVBoxLayout">
    <property name="margin" >
@@ -37,6 +37,9 @@
       </property>
       <item>
        <widget class="QCheckBox" name="ck_message">
+        <property name="toolTip">
+         <string>&lt;message&gt; stanza used to send information to other XMPP entities without requiring a response.</string>
+        </property>
         <property name="text">
          <string>Message</string>
         </property>
@@ -47,6 +50,9 @@
       </item>
       <item>
        <widget class="QCheckBox" name="ck_presence">
+        <property name="toolTip">
+         <string>&lt;presence&gt; stanza used for status of other clients and components. It's a multi-cast so extensions use it to broadcast own things to contacts, such as capabilities, music choice, or location.</string>
+        </property>
         <property name="text">
          <string>Presence</string>
         </property>
@@ -57,6 +63,9 @@
       </item>
       <item>
        <widget class="QCheckBox" name="ck_iq">
+        <property name="toolTip">
+         <string>&lt;iq&gt; (info/query) stanza used for requesting and modifying information.</string>
+        </property>
         <property name="text">
          <string>IQ</string>
         </property>
@@ -67,11 +76,14 @@
       </item>
       <item>
        <widget class="QCheckBox" name="ck_sm">
+        <property name="toolTip">
+         <string>&lt;a&gt; (ack) and &lt;r&gt; (request ack) stanzas used to acknowledge successful receipt of a stanza.</string>
+        </property>
         <property name="text">
          <string>SM</string>
         </property>
         <property name="checked">
-         <bool>true</bool>
+         <bool>false</bool>
         </property>
        </widget>
       </item>

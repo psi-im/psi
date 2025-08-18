@@ -122,7 +122,7 @@ public:
         privacyListsAction_ = new IconAction(tr("Privacy Lists"), this, "psi/eye");
         connect(privacyListsAction_, SIGNAL(triggered()), SLOT(privacyLists()));
 
-        xmlConsoleAction_ = new IconAction(tr("&XML Console"), this, "psi/xml");
+        xmlConsoleAction_ = new IconAction(tr("&XMPP Console"), this, "psi/xml");
         connect(xmlConsoleAction_, SIGNAL(triggered()), SLOT(xmlConsole()));
 
         modifyAccountAction_ = new IconAction(tr("&Modify Account..."), this, "psi/account");

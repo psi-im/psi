@@ -244,7 +244,7 @@ void PsiActionList::Private::createMainWin()
         if (!PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool())
             add_act = new MAction(IconsetFactory::icon("psi/addContact"), tr("&Add a Contact"), 0, psi, this);
 
-        IconAction *lw_act = new MAction(IconsetFactory::icon("psi/xml"), tr("&XML Console"), 2, psi, this);
+        IconAction *lw_act = new MAction(IconsetFactory::icon("psi/xml"), tr("&XMPP Console"), 2, psi, this);
 
         IconAction *actDisco = nullptr;
         if (!PsiOptions::instance()->getOption("options.ui.contactlist.disable-service-discovery").toBool())
