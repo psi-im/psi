@@ -1046,7 +1046,6 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     d->pm_settings = new QMenu(this);
     connect(d->pm_settings, SIGNAL(aboutToShow()), SLOT(buildMenu()));
     ui_.tb_actions->setMenu(d->pm_settings);
-    ui_.tb_actions->setIcon(IconsetFactory::icon("psi/select").icon());
 
     connect(ui_.hsplitter, SIGNAL(splitterMoved(int, int)), this, SLOT(horizSplitterMoved()));
     connect(ui_.vsplitter, SIGNAL(splitterMoved(int, int)), this, SLOT(verticalSplitterMoved(int, int)));

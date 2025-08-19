@@ -295,8 +295,6 @@ void PsiChatDlg::initUi()
     pm_settings_ = new QMenu(this);
     connect(pm_settings_, SIGNAL(aboutToShow()), SLOT(buildMenu()));
     ui_.tb_actions->setMenu(pm_settings_);
-    ui_.tb_actions->setIcon(IconsetFactory::icon("psi/select").icon());
-    ui_.tb_actions->setStyleSheet(" QToolButton::menu-indicator { image:none } ");
 
     connect(account()->client()->capsManager(), &CapsManager::capsChanged, this, &PsiChatDlg::capsChanged);
 
