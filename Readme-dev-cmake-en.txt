@@ -101,6 +101,8 @@ This file contains the CMake files description
 
 ./src/avcall/CMakeLists.txt - builds avcall static library
 
+./src/BasicXMLSyntaxHighlighter/BasicXMLSyntaxHighlighter.cmake - class used for XML highlighting in the XMPP Console.
+
 ./src/Certificates/CMakeLists.txt - builds Certificates static library
 
 ./src/contactmanager/CMakeLists.txt - builds contactmanager static library
