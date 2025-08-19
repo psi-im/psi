@@ -2401,12 +2401,10 @@ void GCMainDlg::setLooks()
 
     if (PsiOptions::instance()->getOption("options.ui.contactlist.toolbars.m1.visible").toBool()) {
         ui_.toolbar->show();
-        // ui_.tb_actions->hide();
         ui_.tb_emoticons->hide();
     } else {
         ui_.toolbar->hide();
         ui_.tb_emoticons->setVisible(PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool());
-        ui_.tb_actions->show();
     }
 
     if (PsiOptions::instance()->getOption("options.ui.disable-send-button").toBool()) {
