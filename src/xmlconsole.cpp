@@ -213,7 +213,7 @@ XmlPrompt::XmlPrompt(QWidget *parent) : QDialog(parent)
     connect(pb, SIGNAL(clicked()), SLOT(close()));
     hb1->addWidget(pb);
 
-    resize(320, 240);
+    resize(800, 600);
 }
 
 XmlPrompt::~XmlPrompt() { }
