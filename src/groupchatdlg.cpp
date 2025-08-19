@@ -17,12 +17,10 @@
  *
  */
 
-// TODO: Move all the 'logic' of groupchats into MUCManager. See MUCManager
-// for more details.
+// TODO: Move all the 'logic' of groupchats into MUCManager
 
 #include "groupchatdlg.h"
 
-#include "accountlabel.h"
 #include "avatars.h"
 #include "avcall/avcall.h"
 #include "bookmarkmanager.h"
@@ -72,38 +70,23 @@
 #include "userlist.h"
 #include "vcardfactory.h"
 
-#include <QAction>
 #include <QCheckBox>
 #include <QClipboard>
-#include <QCloseEvent>
-#include <QContextMenuEvent>
 #include <QCursor>
-#include <QDialogButtonBox>
 #include <QEvent>
 #include <QFormLayout>
-#include <QFrame>
-#include <QHBoxLayout>
 #include <QInputDialog>
 #include <QKeyEvent>
-#include <QLabel>
-#include <QLayout>
 #include <QList>
 #include <QMessageBox>
 #include <QMimeData>
 #include <QPointer>
 #include <QPushButton>
-#include <QResizeEvent>
-#include <QScrollBar>
-#include <QSplitter>
 #include <QTextCursor>
-#include <QTextDocument> // for TextUtil::escape()
 #include <QTimer>
-#include <QToolBar>
 #include <QToolButton>
-#include <QToolTip>
 #include <QVBoxLayout>
 #include <QWidgetAction>
-#include <QWindow>
 
 #ifdef Q_OS_WIN
 #include <windows.h>
