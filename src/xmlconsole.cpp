@@ -221,15 +221,11 @@ XmlPrompt::~XmlPrompt() { }
 void XmlPrompt::doTransmit()
 {
     QString str = te->toPlainText();
-
     // Validate input
     QDomDocument doc;
     if (!doc.setContent(str)) {
-        int i = QMessageBox::warning(this, tr("Malformed XML"),
-                                     tr("You have entered malformed XML input. Are you sure you want to send this ?"),
-                                     QMessageBox::Yes | QMessageBox::No);
-        if (i != 0)
-            return;
+        QMessageBox::warning(this, tr("Malformed XML"), tr("You have entered malformed XML input."));
+        return;
     }
 
     emit textReady(str);
