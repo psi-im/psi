@@ -50,7 +50,7 @@ MS Windows users may download official installers and portable builds from [Sour
 
 ## Development
 
-In 2009 a Psi fork named [Psi+](https://psi-plus.com/) was started. Project purposes were: implementation of new features, writing of patches and plugins for transferring them to upstream. As of 2017 all active Psi+ developers have become official Psi developers and now Psi+ is just a development branch of Psi with rolling release development model.
+In 2009 a Psi fork named [Psi+](https://github.com/psi-plus) was started. Project purposes were: implementation of new features, writing of patches and plugins for transferring them to upstream. As of 2017 all active Psi+ developers have become official Psi developers and now Psi+ is just a development branch of Psi with rolling release development model.
 
 Users who wants to receive new features and bug fixes very quickly may use Psi+ on daily basis. Users who do not care about new trends and prefer constancy may choose Psi as it uses classical development model and its releases are quite rare.
 
@@ -90,7 +90,7 @@ If you found a bug please report about it in our [Bug Tracker](https://github.co
 
 ### Beta testing
 
-As we (intentionally) do not have nor beta versions of Psi, nor daily build builds for it, you are invited to use [Psi+ program](https://psi-plus.com/) for suggesting and testing of new features, and for reporting about new bugs (if they happen).
+As we (intentionally) do not have nor beta versions of Psi, nor daily build builds for it, you are invited to use [Psi+ program](https://github.com/psi-plus) for suggesting and testing of new features, and for reporting about new bugs (if they happen).
 
 ### Comments and wishes
 
@@ -125,7 +125,7 @@ If you want to donate some money for development of Psi and Psi+ project, it is 
 * [Officially supported plugins](https://github.com/psi-im/plugins) (sources)
 * [Multimedia plugin for audio and video calls](https://github.com/psi-im/psimedia) (sources)
 * [Extra resources](https://github.com/psi-im/resources) (iconsets, sounds, skins, themes, etc.)
-* [Psi+ project](https://psi-plus.com/) (official website)
+* [Psi+ project](https://psi-im.org/) (official website)
 * [Psi+ snapshots](https://github.com/psi-plus/psi-plus-snapshots) (sources)
 * [Psi+ translations](https://github.com/psi-plus/psi-plus-l10n) (sources)
 
@@ -138,11 +138,11 @@ If you want to donate some money for development of Psi and Psi+ project, it is 
 * [Psi+ builds for macOS](https://sourceforge.net/projects/psiplus/files/macOS/tehnick/)
 * [Psi+ package in Haiku](https://depot.haiku-os.org/psi_plus)
 * [Official PPA for Ubuntu and distros based on it](https://launchpad.net/~psi-plus/+archive/ubuntu/ppa) (daily builds)
-* [Unofficial PPA for Debian and Ubuntu](http://notesalexp.org/index-old.html) (see [notes](https://psi-plus.com/wiki/en:debian#nightly_builds) about using it)
+* [Unofficial PPA for Debian and Ubuntu](http://notesalexp.org/index-old.html)
 * [Unofficial PPA for openSUSE](https://software.opensuse.org/package/psi-plus) (daily builds)
 * [Unofficial PPA for Fedora](https://copr.fedorainfracloud.org/coprs/valdikss/psi-plus-snapshots/) (outdated)
 * [Psi package for Arch Linux](https://archlinux.org/packages/extra/x86_64/psi/)
-* [Unofficial Psi+ AUR package](https://aur.archlinux.org/packages/psi-plus) 
+* [Unofficial Psi+ AUR package](https://aur.archlinux.org/packages/psi-plus)
 * [Packages for different Linux distros](https://repology.org/metapackage/psi-plus/versions)
 
 ## Extra links

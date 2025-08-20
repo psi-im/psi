@@ -225,7 +225,7 @@ void MainWin::Private::registerActions()
         IconAction *action = getAction(aName);
         mainWin->connect(action, &IconAction::triggered, mainWin, [this, id](bool) {
             QList<IconAction *> l = statusGroup->findChildren<IconAction *>();
-            for (IconAction *action : l) {
+            for (IconAction *action : std::as_const(l)) {
                 auto it = statusActions.constFind(action);
                 action->setChecked(it != statusActions.constEnd() && *it == id);
             }
@@ -927,7 +927,7 @@ void MainWin::buildOptionsMenu()
     d->updateMenu(actions, helpMenu);
 
     auto pluginActions = PluginManager::instance()->globalAboutMenuActions();
-    for (auto a : pluginActions) {
+    for (auto a : std::as_const(pluginActions)) {
         helpMenu->addAction(a);
     }
 
@@ -998,16 +998,15 @@ void MainWin::actReadmeActivated()
 void MainWin::actOnlineWikiActivated()
 {
     DesktopUtil::openUrl(
+#ifdef PSI_PLUS
+        "https://psi-im.org/wiki"
+#else
         "https://github.com/psi-im/psi/wiki"
+#endif
     );
 }
 
-void MainWin::actOnlineHomeActivated()
-{
-    DesktopUtil::openUrl(
-        "https://psi-im.org"
-    );
-}
+void MainWin::actOnlineHomeActivated() { DesktopUtil::openUrl("https://psi-im.org"); }
 
 void MainWin::actOnlineForumActivated() { DesktopUtil::openUrl("https://groups.google.com/forum/#!forum/psi-users"); }
 
@@ -1021,12 +1020,7 @@ void MainWin::actJoinPsiMUCActivated()
     account->actionJoin("psi-dev@conference.jabber.ru");
 }
 
-void MainWin::actBugReportActivated()
-{
-    DesktopUtil::openUrl(
-        "https://github.com/psi-im/psi/issues"
-    );
-}
+void MainWin::actBugReportActivated() { DesktopUtil::openUrl("https://github.com/psi-im/psi/issues"); }
 
 void MainWin::actAboutActivated()
 {
@@ -1314,7 +1308,7 @@ void MainWin::decorateButton(int status)
 {
     // update the 'change status' buttons
     QList<IconAction *> l = d->statusGroup->findChildren<IconAction *>();
-    for (IconAction *action : l) {
+    for (IconAction *action : std::as_const(l)) {
         action->setChecked(d->statusActions[action] == status);
     }
 

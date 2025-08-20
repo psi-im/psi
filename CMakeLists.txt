@@ -174,6 +174,11 @@ elseif(NOT ENABLE_PLUGINS AND BUILD_PSIMEDIA)
     message(FATAL_ERROR "BUILD_PSIMEDIA flag not works without ENABLE_PLUGINS flag.\nPlease enable ENABLE_PLUGINS flag or disable BUILD_PSIMEDIA flag")
 endif()
 
+if(ENABLE_PLUGINS AND (NOT EXISTS "${PROJECT_SOURCE_DIR}/plugins/CMakeLists.txt"))
+    message(FATAL_ERROR "ENABLE_PLUGINS option is enabled but no plugins sources found at ${PROJECT_SOURCE_DIR}/plugins.\nPlease download and copy plguins sources from official repository or disable this option")
+endif()
+
+
 if(WIN32 OR USE_MXE)
     set(BUNDLED_IRIS_ALL ON)
 endif()
