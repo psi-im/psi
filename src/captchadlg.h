@@ -2,6 +2,7 @@
 #define CAPTCHADLG_H
 
 #include "iris/xmpp_captcha.h"
+#include "iris/xmpp_jid.h"
 
 #include <QDialog>
 
@@ -16,7 +17,7 @@ class CaptchaDlg : public QDialog {
     Q_OBJECT
 
 public:
-    explicit CaptchaDlg(QWidget *parent, const XMPP::CaptchaChallenge &challenge, PsiAccount *pa);
+    explicit CaptchaDlg(QWidget *parent, XMPP::Jid from, QString msg, const XMPP::CaptchaChallenge &challenge, PsiAccount *pa);
     ~CaptchaDlg();
 
 public slots:
