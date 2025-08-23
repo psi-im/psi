@@ -1,3 +1,9 @@
+To add the icon edit the following files:
+client_icons.txt
+iconsets.qrc.in
+iconsets/clients/default/icondef.xml
+
+
 Next command was used to generate png from svg
 
 ```
