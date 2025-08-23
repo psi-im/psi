@@ -9,18 +9,18 @@
 
 using namespace XMPP;
 
-CaptchaDlg::CaptchaDlg(QWidget *parent, const CaptchaChallenge &challenge, PsiAccount *pa) :
+CaptchaDlg::CaptchaDlg(QWidget *parent, XMPP::Jid from, QString msg, const CaptchaChallenge &challenge, PsiAccount *pa) :
     QDialog(parent), ui(new Ui::CaptchaDlg), challenge(challenge)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     ui->setupUi(this);
 
-    QVBoxLayout *l = new QVBoxLayout(this);
+    ui->lb_ident->setAccount(pa);
+    ui->lb_from->setText(from.full());
+    ui->te_message->setText(msg);
     dataWidget     = new XDataWidget(pa->psi(), this, pa->client(), challenge.arbiter());
     dataWidget->setForm(challenge.form());
-    l->addWidget(dataWidget);
-    l->addStretch();
-    l->addWidget(ui->buttonBox);
+    ui->layoutForm->addWidget(dataWidget);
 }
 
 CaptchaDlg::~CaptchaDlg() { delete ui; }
