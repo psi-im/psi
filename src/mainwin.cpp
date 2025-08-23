@@ -1179,8 +1179,8 @@ void MainWin::buildTrayMenu()
                 return;
             }
 
-            // Workaround for some unknow bug. likely this one https://bugreports.qt.io/browse/QTBUG-63187
-            // replaces possible svg icon with QPixmap
+            // Workaround for some unknown bug, likely this one https://bugreports.qt.io/browse/QTBUG-63187
+            // Replaces the possible SVG icon with QPixmap
             auto actionCopy
                 = new QAction(QIcon(action->icon().pixmap(iconSize, iconSize)), action->text(), d->trayMenu);
             actionCopy->setCheckable(action->isCheckable());
@@ -1197,8 +1197,15 @@ void MainWin::buildTrayMenu()
             d->trayMenu->addAction(actionCopy);
         };
 
-        const QStringList _actions = { "status_online", "status_chat",    "status_away", "status_xa",
-                                       "status_dnd",    "status_offline", "separator",   "menu_options" };
+        const QStringList _actions = {
+            "status_online", "status_chat", "status_away", "status_xa", "status_dnd", "status_offline", "separator",
+            "menu_play_sounds", "menu_options",
+            "menu_add_contact",
+#ifdef GROUPCHAT
+            "menu_join_groupchat",
+#endif
+            "menu_new_message",
+            "menu_quit" };
         for (const QString &actionName : _actions) {
             addWrappedAction(actionName);
         }
