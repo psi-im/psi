@@ -15,12 +15,10 @@ CaptchaDlg::CaptchaDlg(QWidget *parent, const CaptchaChallenge &challenge, PsiAc
     setAttribute(Qt::WA_DeleteOnClose);
     ui->setupUi(this);
 
-    QVBoxLayout *l = new QVBoxLayout(this);
+    ui->lb_ident->setAccount(pa);
     dataWidget     = new XDataWidget(pa->psi(), this, pa->client(), challenge.arbiter());
     dataWidget->setForm(challenge.form());
-    l->addWidget(dataWidget);
-    l->addStretch();
-    l->addWidget(ui->buttonBox);
+    ui->layoutForm->addWidget(dataWidget);
 }
 
 CaptchaDlg::~CaptchaDlg() { delete ui; }
