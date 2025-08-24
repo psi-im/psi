@@ -58,6 +58,7 @@ public slots:
     void publish();
 
 private slots:
+    void setupCountriesLookup();
     void contactAvailable(const Jid &, const Resource &);
     void contactUnavailable(const Jid &, const Resource &);
     void contactUpdated(const Jid &);

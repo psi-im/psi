@@ -45,6 +45,7 @@
 
 #include <QAction>
 #include <QCalendarWidget>
+#include <QCompleter>
 #include <QDialogButtonBox>
 #include <QFileDialog>
 #include <QFlags>
@@ -56,6 +57,7 @@
 #include <QPixmap>
 #include <QPointer>
 #include <QRadioButton>
+#include <QStandardItemModel>
 #include <QTabWidget>
 #include <QVBoxLayout>
 
@@ -473,7 +475,35 @@ void InfoWidget::setData(const VCard4::VCard &i)
         updatePhoto();
     }
 
+    setupCountriesLookup();
     setEdited(false);
+}
+
+void InfoWidget::setupCountriesLookup()
+{
+    QStringList countries = FileUtil::readFileLines( QLatin1String(":/countries.tsv"));
+    QStandardItemModel *countriesModel = new QStandardItemModel(countries.size(), 2);
+    for (const auto &countryRow : countries) {
+       if (countryRow.isEmpty()) {
+           continue;
+       }
+       QString country = countryRow.section(QLatin1Char('\t'), 0, 0);
+       QString code = countryRow.section(QLatin1Char('\t'), 1, 1);
+       QList<QStandardItem *> row = QList<QStandardItem *>();
+       row << new QStandardItem(country);
+       row << new QStandardItem(code);
+       countriesModel->appendRow(row);
+   }
+
+    QTreeView *treeView = new QTreeView(this);
+    treeView->setRootIsDecorated(false);
+    treeView->header()->hide();
+    treeView->header()->setStretchLastSection(false);
+    QCompleter *completer = new QCompleter(this);
+    completer->setModel(countriesModel);
+    completer->setPopup(treeView);
+    completer->setCaseSensitivity(Qt::CaseInsensitive);
+    this->m_ui.le_country->setCompleter(completer);
 }
 
 void InfoWidget::showEvent(QShowEvent *event)

@@ -31,7 +31,6 @@ public:
     AboutDlg(QWidget *parent = nullptr);
 
 protected:
-    QString loadText(const QString &fileName);
     QString details(QString name, QString email, QString xmppAddress, QString www, QString desc);
 
 private:
