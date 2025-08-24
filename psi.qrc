@@ -7,5 +7,6 @@
         <file>options/newprofile.xml</file>
         <file>README.html</file>
         <file>client_icons.txt</file>
+        <file>countries.tsv</file>
     </qresource>
 </RCC>
