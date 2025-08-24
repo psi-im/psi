@@ -54,6 +54,23 @@
        <property name="spacing">
         <number>6</number>
        </property>
+       <item row="0" column="0">
+        <widget class="QLabel" name="TextLabel1_2_2">
+         <property name="text">
+          <string>Full Name:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1" colspan="2">
+        <widget class="ActionLineEdit" name="le_fullname"/>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="TextLabel1_2">
+         <property name="text">
+          <string>Nickname:</string>
+         </property>
+        </widget>
+       </item>
        <item row="1" column="1">
         <widget class="QLineEdit" name="le_nickname">
          <property name="minimumSize">
@@ -61,39 +78,6 @@
            <width>120</width>
            <height>0</height>
           </size>
-         </property>
-        </widget>
-       </item>
-       <item row="7" column="1">
-        <spacer>
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::Expanding</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>0</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item row="5" column="0">
-        <widget class="QLabel" name="TextLabel1_2_2_2_2">
-         <property name="text">
-          <string>E-Mail:</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1" colspan="2">
-        <widget class="ActionLineEdit" name="le_fullname"/>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="TextLabel1_3_2_3_2">
-         <property name="text">
-          <string>Birthday:</string>
          </property>
         </widget>
        </item>
@@ -204,10 +188,17 @@
          </item>
         </layout>
        </item>
-       <item row="0" column="0">
-        <widget class="QLabel" name="TextLabel1_2_2">
+       <item row="2" column="0">
+        <widget class="QLabel" name="TextLabel1_3_2_3_2">
          <property name="text">
-          <string>Full Name:</string>
+          <string>Birthday:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="ActionLineEdit" name="le_bday">
+         <property name="readOnly">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
@@ -218,6 +209,9 @@
          </property>
         </widget>
        </item>
+       <item row="3" column="1">
+        <widget class="QLineEdit" name="le_phone"/>
+       </item>
        <item row="4" column="0">
         <widget class="QLabel" name="TextLabel1_2_3_2">
          <property name="text">
@@ -225,28 +219,34 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="TextLabel1_2">
-         <property name="text">
-          <string>Nickname:</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="1">
-        <widget class="QLineEdit" name="le_phone"/>
-       </item>
-       <item row="2" column="1">
-        <widget class="ActionLineEdit" name="le_bday">
-         <property name="readOnly">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
        <item row="4" column="1">
         <widget class="ActionLineEdit" name="le_homepage"/>
        </item>
+       <item row="5" column="0">
+        <widget class="QLabel" name="TextLabel1_2_2_2_2">
+         <property name="text">
+          <string>E-Mail:</string>
+         </property>
+        </widget>
+       </item>
        <item row="5" column="1">
         <widget class="ActionLineEdit" name="le_email"/>
+       </item>
+       <item row="7" column="1">
+        <spacer>
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Expanding</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>0</height>
+          </size>
+         </property>
+        </spacer>
        </item>
       </layout>
      </widget>
@@ -287,20 +287,10 @@
          <property name="spacing">
           <number>6</number>
          </property>
-         <item row="2" column="1">
-          <widget class="QLineEdit" name="le_title"/>
-         </item>
          <item row="0" column="0">
           <widget class="QLabel" name="TextLabel1_2_2_2_3">
            <property name="text">
             <string>Company:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="TextLabel1_3_2_2_2_3_2">
-           <property name="text">
-            <string>Position:</string>
            </property>
           </widget>
          </item>
@@ -317,8 +307,15 @@
          <item row="1" column="1">
           <widget class="QLineEdit" name="le_orgUnit"/>
          </item>
-         <item row="3" column="1">
-          <widget class="QLineEdit" name="le_role"/>
+         <item row="2" column="0">
+          <widget class="QLabel" name="TextLabel1_3_2_2_2_3_2">
+           <property name="text">
+            <string>Position:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLineEdit" name="le_title"/>
          </item>
          <item row="3" column="0">
           <widget class="QLabel" name="TextLabel1_3_2_2_2_4">
@@ -326,6 +323,9 @@
             <string>Role:</string>
            </property>
           </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLineEdit" name="le_role"/>
          </item>
         </layout>
        </item>
@@ -384,35 +384,18 @@
          <property name="spacing">
           <number>6</number>
          </property>
-         <item row="5" column="0">
-          <widget class="QLabel" name="TextLabel1_3_2_2_2">
+         <item row="0" column="0">
+          <widget class="QLabel" name="TextLabel1_3_2_3">
            <property name="text">
-            <string>Country:</string>
+            <string>Street:</string>
            </property>
           </widget>
          </item>
-         <item row="4" column="0">
-          <widget class="QLabel" name="TextLabel1_3_2_2_2_3">
-           <property name="text">
-            <string>Postal Code:</string>
-           </property>
-          </widget>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="le_street"/>
          </item>
          <item row="1" column="1">
           <widget class="QLineEdit" name="le_ext"/>
-         </item>
-         <item row="5" column="1">
-          <widget class="QLineEdit" name="le_country"/>
-         </item>
-         <item row="4" column="1">
-          <widget class="QLineEdit" name="le_pcode"/>
-         </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="TextLabel1_2_3">
-           <property name="text">
-            <string>State:</string>
-           </property>
-          </widget>
          </item>
          <item row="2" column="0">
           <widget class="QLabel" name="TextLabel1_2_2_2">
@@ -421,21 +404,38 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="1">
-          <widget class="QLineEdit" name="le_street"/>
+         <item row="2" column="1">
+          <widget class="QLineEdit" name="le_city"/>
          </item>
-         <item row="0" column="0">
-          <widget class="QLabel" name="TextLabel1_3_2_3">
+         <item row="3" column="0">
+          <widget class="QLabel" name="TextLabel1_2_3">
            <property name="text">
-            <string>Street:</string>
+            <string>State:</string>
            </property>
           </widget>
          </item>
          <item row="3" column="1">
           <widget class="QLineEdit" name="le_state"/>
          </item>
-         <item row="2" column="1">
-          <widget class="QLineEdit" name="le_city"/>
+         <item row="4" column="0">
+          <widget class="QLabel" name="TextLabel1_3_2_2_2_3">
+           <property name="text">
+            <string>Postal Code:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QLineEdit" name="le_pcode"/>
+         </item>
+         <item row="5" column="0">
+          <widget class="QLabel" name="TextLabel1_3_2_2_2">
+           <property name="text">
+            <string>Country:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="1">
+          <widget class="QLineEdit" name="le_country"/>
          </item>
         </layout>
        </item>
