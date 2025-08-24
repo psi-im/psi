@@ -45,6 +45,7 @@
 
 #include <QAction>
 #include <QCalendarWidget>
+#include <QCompleter>
 #include <QDialogButtonBox>
 #include <QFileDialog>
 #include <QFlags>
@@ -52,10 +53,13 @@
 #include <QLabel>
 #include <QLayout>
 #include <QLineEdit>
+#include <QLocale>
 #include <QMessageBox>
 #include <QPixmap>
 #include <QPointer>
 #include <QRadioButton>
+#include <QStandardItemModel>
+#include <QStringList>
 #include <QTabWidget>
 #include <QVBoxLayout>
 
@@ -473,7 +477,61 @@ void InfoWidget::setData(const VCard4::VCard &i)
         updatePhoto();
     }
 
+    setupCountriesLookup();
     setEdited(false);
+}
+
+QStringList allCountryNames()
+{
+    QStringList names;
+    names.reserve(int(QLocale::LastCountry));
+    for (int i = int(QLocale::AnyCountry) + 1; i <= int(QLocale::LastCountry); ++i) {
+        const auto country = static_cast<QLocale::Country>(i);
+        QString code;
+        QString name;
+#if QT_VERSION > QT_VERSION_CHECK(6, 2, 0)
+        code = QLocale::territoryToCode(country);
+        name = QLocale::territoryToString(country);
+#else
+        name = QLocale::countryToString(country);
+#endif
+        if (!name.isEmpty()) {
+            names.append(name + QLatin1Char('\t') + code);
+        }
+    }
+    names.sort(Qt::CaseInsensitive);
+    return names;
+}
+
+void InfoWidget::setupCountriesLookup()
+{
+    QStringList countries = allCountryNames();
+    QStandardItemModel *countriesModel = new QStandardItemModel(countries.size(), 2);
+    for (const auto &countryRow : countries) {
+       if (countryRow.isEmpty()) {
+           continue;
+       }
+       QString country = countryRow.section(QLatin1Char('\t'), 0, 0);
+       QString code = countryRow.section(QLatin1Char('\t'), 1, 1);
+       QList<QStandardItem *> row = QList<QStandardItem *>();
+       row << new QStandardItem(country);
+       row << new QStandardItem(code);
+       countriesModel->appendRow(row);
+   }
+
+    QTreeView *treeView = new QTreeView(this);
+    QCompleter *completer = new QCompleter(this);
+    completer->setModel(countriesModel);
+    completer->setPopup(treeView);
+    completer->setCaseSensitivity(Qt::CaseInsensitive);
+
+    treeView->setRootIsDecorated(false);
+    treeView->header()->hide();
+    treeView->header()->setStretchLastSection(false);
+    treeView->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+    treeView->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+
+    this->m_ui.le_country->setCompleter(completer);
 }
 
 void InfoWidget::showEvent(QShowEvent *event)
