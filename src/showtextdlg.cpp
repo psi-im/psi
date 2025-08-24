@@ -18,8 +18,8 @@
  */
 
 #include "showtextdlg.h"
+#include "fileutil.h"
 
-#include <QFile>
 #include <QHBoxLayout>
 #include <QLayout>
 #include <QPushButton>
@@ -31,15 +31,7 @@
 ShowTextDlg::ShowTextDlg(const QString &fname, bool rich, QWidget *parent) : QDialog(parent)
 {
     setAttribute(Qt::WA_DeleteOnClose);
-    QString text;
-
-    QFile f(fname);
-    if (f.open(QIODevice::ReadOnly)) {
-        QTextStream t(&f);
-        while (!t.atEnd())
-            text += t.readLine() + '\n';
-        f.close();
-    }
+    QString text = FileUtil::readFileText(fname);
 
     QVBoxLayout *vb1 = new QVBoxLayout(this);
     vb1->setContentsMargins(8, 8, 8, 8);
