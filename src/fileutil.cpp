@@ -270,3 +270,23 @@ QString FileUtil::readFileText(const QString &filename)
     f.close();
     return text;
 }
+
+QStringList FileUtil::readFileLines(const QString &filename) {
+    QStringList lines;
+    QFile f(filename);
+    if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return lines;
+    }
+    QString     text;
+    QTextStream in(&f);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    in.setEncoding(QStringConverter::Utf8);
+#else
+    in.setCodec("UTF-8");
+#endif
+    while (!in.atEnd()) {
+        lines << in.readLine();
+    }
+    f.close();
+    return lines;
+}

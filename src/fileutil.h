@@ -56,6 +56,7 @@ public:
      */
     static void setModificationTime(const QString &filename, const QDateTime &mtime);
     static QString readFileText(const QString &filename);
+    static QStringList readFileLines(const QString &filename);
 };
 
 #endif // FILEUTIL_H

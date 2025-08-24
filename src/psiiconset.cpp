@@ -22,6 +22,7 @@
 #include "anim.h"
 #include "applicationinfo.h"
 #include "common.h"
+#include "fileutil.h"
 #include "psievent.h"
 #include "psioptions.h"
 #include "userlist.h"
@@ -514,19 +515,14 @@ bool PsiIconset::loadClients()
         ClientIconMap cm; // start part, spec[spec2[spec3]]
 
         auto readClientsDesc = [&](const QString &filePath) {
-            QFile capsConv(filePath);
+            QStringList lines = FileUtil::readFileLines(filePath);
+            if (lines.isEmpty())
+                return false;
             /* file format: <icon res name> <left_part_of_cap1#inside1#inside2>,<left_part_of_cap2>
                 next line the same.
             */
-            if (!capsConv.open(QIODevice::ReadOnly))
-                return false;
-
-            QTextStream stream(&capsConv);
-
-            QString line;
-            while (!(line = stream.readLine()).isNull()) {
-                line             = line.trimmed();
-                QString iconName = line.section(QLatin1Char(' '), 0, 0);
+            for (const auto &line : lines) {
+                QString iconName = line.trimmed().section(QLatin1Char(' '), 0, 0);
                 if (iconName.isEmpty() || !iconNames.contains(iconName)) {
                     continue;
                 }
@@ -562,7 +558,7 @@ bool PsiIconset::loadClients()
                           [](const auto &a, const auto &b) { return a.inside.size() > b.inside.size(); });
             }
 
-            /* insert end boundry element to make search implementation simple */
+            // insert end boundary element to make search implementation simple
             cm.insert(QLatin1String("~"), QList<ClientIconCheck>());
             return true;
         };
