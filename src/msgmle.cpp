@@ -553,6 +553,7 @@ bool ChatEdit::canInsertFromMimeData(const QMimeData *source) const
 
 void ChatEdit::updateBackground()
 {
+    setProperty("correction", !_correctionId.isEmpty());
     style()->unpolish(this);
     style()->polish(this);
     update();
