@@ -19,18 +19,14 @@
 
 #include "chatdlg.h"
 
-#include "accountlabel.h"
 #include "avatars.h"
 #include "chatview.h"
 #include "eventdb.h"
-#include "fancylabel.h"
 #include "filesharedlg.h"
 #include "filesharingmanager.h"
 #include "iconaction.h"
-#include "iconlabel.h"
 #include "iconselect.h"
 #include "jidutil.h"
-#include "msgmle.h"
 #include "pgputil.h"
 #ifdef PSI_PLUGINS
 #include "pluginmanager.h"
@@ -41,7 +37,6 @@
 #include "iris/xmpp_message.h"
 #include "psiaccount.h"
 #include "psichatdlg.h"
-#include "psicon.h"
 #include "psicontactlist.h"
 #include "psiiconset.h"
 #include "psioptions.h"
@@ -51,32 +46,9 @@
 #include "textutil.h"
 #include "userlist.h"
 
-#include <QCloseEvent>
-#include <QColor>
-#include <QContextMenuEvent>
-#include <QCursor>
 #include <QDateTime>
-#include <QDragEnterEvent>
-#include <QDropEvent>
-#include <QHBoxLayout>
-#include <QKeyEvent>
-#include <QLabel>
-#include <QLayout>
-#include <QLineEdit>
-#include <QList>
-#include <QMenu>
 #include <QMessageBox>
-#include <QMimeData>
-#include <QPixmap>
-#include <QResizeEvent>
-#include <QScrollBar>
-#include <QShowEvent>
-#include <QSplitter>
-#include <QTextDocument> // for TextUtil::escape()
 #include <QTimer>
-#include <QToolBar>
-#include <QToolButton>
-#include <QVBoxLayout>
 #include <Qt>
 #ifdef Q_OS_WIN
 #include <windows.h>
