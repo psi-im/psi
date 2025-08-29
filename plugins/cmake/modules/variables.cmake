@@ -8,7 +8,11 @@ if(PSI_PLUS)
     set(MAIN_PROGRAM_NAME "psi-plus")
 endif()
 
-get_filename_component(ABS_INCLUDES_DIR "${CMAKE_CURRENT_LIST_DIR}/../include" ABSOLUTE)
+if(CMAKE_VERSION GREATER_EQUAL 3.20)
+    cmake_path(SET ABS_INCLUDES_DIR NORMALIZE "${CMAKE_CURRENT_LIST_DIR}/../include")
+else()
+    get_filename_component(ABS_INCLUDES_DIR "${CMAKE_CURRENT_LIST_DIR}/../include" ABSOLUTE)
+endif()
 
 set(CMAKE_CXX_STANDARD 17)
 
