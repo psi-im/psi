@@ -77,18 +77,6 @@ set(FORMS
     grepshortcutkeydialog.ui
 )
 
-if(PSI_PLUS AND (EXISTS "${CMAKE_CURRENT_LIST_DIR}/psiwindowheader.cpp"))
-    list(APPEND SOURCES
-        psiwindowheader.cpp
-    )
-    list(APPEND HEADERS
-        psiwindowheader.h
-    )
-    list(APPEND FORMS
-        psiwindowheader.ui
-    )
-endif()
-
 qt_wrap_ui(UI_FORMS ${FORMS})
 add_library(widgets STATIC ${SOURCES} ${HEADERS} ${UI_FORMS})
 if(WIN32)
