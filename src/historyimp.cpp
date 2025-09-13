@@ -211,7 +211,7 @@ void HistoryImport::showDialog()
 {
     dlg = new QDialog();
     dlg->setModal(true);
-    dlg->setWindowTitle(tr("Psi+ Import history"));
+    dlg->setWindowTitle(CAP(tr("Import history")));
     QVBoxLayout *mainLayout = new QVBoxLayout(dlg);
     stackedWidget           = new QStackedWidget(dlg);
 

@@ -33,6 +33,7 @@
 #ifdef Q_OS_WIN
 #include <sys/utime.h>
 #else
+#include <QTextStream>
 #include <utime.h>
 #endif
 
@@ -160,7 +161,7 @@ QString FileUtil::getSaveDirName(QWidget *parent, const QString &caption)
 
 QString FileUtil::getImageFileName(QWidget *parent, QString caption)
 {
-    // double extenstions because of QTBUG-51712
+    // double extensions because of QTBUG-51712
     return FileUtil::getOpenFileName(parent, caption.isEmpty() ? tr("Choose a file") : caption,
                                      tr("Images (*.png *.xpm *.jpg *.jpeg *.webp *.PNG *.XPM *.JPG *.JPEG *.WEBP)"));
 }
@@ -248,4 +249,44 @@ void FileUtil::setModificationTime(const QString &filename, const QDateTime &mti
     t.modtime = secs;
     utime(filename.toLocal8Bit().data(), &t);
 #endif
+}
+
+QString FileUtil::readFileText(const QString &filename)
+{
+    QFile f(filename);
+    if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return "";
+    }
+    QString     text;
+    QTextStream in(&f);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    in.setEncoding(QStringConverter::Utf8);
+#else
+    in.setCodec("UTF-8");
+#endif
+    while (!in.atEnd()) {
+        text += in.readLine() + '\n';
+    }
+    f.close();
+    return text;
+}
+
+QStringList FileUtil::readFileLines(const QString &filename) {
+    QStringList lines;
+    QFile f(filename);
+    if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return lines;
+    }
+    QString     text;
+    QTextStream in(&f);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    in.setEncoding(QStringConverter::Utf8);
+#else
+    in.setCodec("UTF-8");
+#endif
+    while (!in.atEnd()) {
+        lines << in.readLine();
+    }
+    f.close();
+    return lines;
 }
