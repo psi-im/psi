@@ -998,11 +998,7 @@ void MainWin::actReadmeActivated()
 void MainWin::actOnlineWikiActivated()
 {
     DesktopUtil::openUrl(
-#ifdef PSI_PLUS
         "https://psi-im.org/wiki"
-#else
-        "https://github.com/psi-im/psi/wiki"
-#endif
     );
 }
 
