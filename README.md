@@ -1,7 +1,12 @@
 # Psi &ndash; Qt-based XMPP client
 
-Website: https://psi-im.org/ <br>
-Sources: https://github.com/psi-im
+[Website](https://psi-im.org/) 
+[Downloads](https://psi-im.org/downloads/) 
+[Sources](https://github.com/psi-im) 
+[Issue tracker](https://github.com/psi-im/psi/issues) 
+[Support chat](xmpp:psi-dev@conference.jabber.ru?join) 
+[Wiki](https://psi-im.org/wiki) 
+[Dev Wiki](https://github.com/psi-im/psi/wiki) 
 
 ## License
 
