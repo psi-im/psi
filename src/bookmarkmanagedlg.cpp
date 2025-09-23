@@ -234,7 +234,13 @@ void BookmarkManageDlg::importBookmarks()
     if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         QDomDocument doc;
         QString      error;
+#if QT_VERSION < QT_VERSION_CHECK(6, 8, 0)
         if (doc.setContent(&file, &error)) {
+#else
+        auto result = doc.setContent(&file);
+        error       = result.errorMessage;
+        if (result) {
+#endif
             QDomElement root = doc.firstChildElement("bookmarks");
             if (root.isNull())
                 return;

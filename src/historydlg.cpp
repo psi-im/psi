@@ -38,6 +38,9 @@
 #include <QProgressDialog>
 #include <QScrollBar>
 #include <QTextBlock>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
+#include <QTimeZone>
+#endif
 
 #define SEARCH_PADDING_SIZE 20
 #define DISPLAY_PAGE_SIZE 200
@@ -1138,8 +1141,10 @@ void HistoryDlg::getNext()
 
 void HistoryDlg::getDate()
 {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0) && QT_VERSION < QT_VERSION_CHECK(6, 9, 0)
     QDateTime ts = ui_.calendar->selectedDate().startOfDay(Qt::UTC);
+#elif QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
+    QDateTime ts = ui_.calendar->selectedDate().startOfDay(QTimeZone::UTC);
 #else
     QDateTime ts(ui_.calendar->selectedDate(), { 0, 0 }, Qt::UTC);
 #endif

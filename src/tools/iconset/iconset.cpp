@@ -1603,7 +1603,11 @@ bool Iconset::load(const QString &dir, Format format)
     ba = d->loadData(fileName, dir);
     if (!ba.isEmpty()) {
         QDomDocument doc;
+#if QT_VERSION < QT_VERSION_CHECK(6, 8, 0)
         if (doc.setContent(ba, false)) {
+#else
+        if (doc.setContent(ba)) {
+#endif
             if ((format == Format::Psi && d->load(doc, dir))
                 || (format == Format::KdeEmoticons && d->loadKdeEmoticons(doc, dir))) {
                 d->filename = dir;

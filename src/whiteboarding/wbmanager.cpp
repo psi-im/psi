@@ -114,7 +114,11 @@ void WbManager::openWhiteboard(const Jid &target, const Jid &ownJid, bool groupC
 
                 QFile file(fileName);
                 if (file.open(QIODevice::ReadOnly)) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 8, 0)
                     doc.setContent(&file, true);
+#else
+                    doc.setContent(&file, QDomDocument::ParseOption::UseNamespaceProcessing);
+#endif
                     file.close();
                 }
             }
@@ -124,7 +128,11 @@ void WbManager::openWhiteboard(const Jid &target, const Jid &ownJid, bool groupC
 
             // initialize with an empty whiteboarding document
             doc = QDomDocument();
+#if QT_VERSION < QT_VERSION_CHECK(6, 8, 0)
             doc.setContent(QString(EMPTYWB), true);
+#else
+            doc.setContent(QString(EMPTYWB), QDomDocument::ParseOption::UseNamespaceProcessing);
+#endif
         }
 
         // negotiate the session
