@@ -43,7 +43,7 @@ void BossKey::shortCutActivated()
 void BossKey::doHide()
 {
     QWidgetList l = qApp->topLevelWidgets();
-    for (QWidget *w : l) {
+    for (QWidget *w : std::as_const(l)) {
         w = w->window();
         if (!w->isHidden()) {
             hiddenWidgets_.push_back(QPointer<QWidget>(w));

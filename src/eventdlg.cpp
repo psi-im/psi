@@ -1029,7 +1029,7 @@ QString EventDlg::expandAddresses(const QString &in, bool enc) const
     QString     str;
     QStringList list  = stringToList(in, enc);
     bool        first = true;
-    for (const auto &item : list) {
+    for (const auto &item : std::as_const(list)) {
         if (!first)
             str += ", ";
         first = false;
@@ -1258,7 +1258,7 @@ void EventDlg::optionsUpdate()
     if (d->nextAmount > 0)
         d->pb_next->forceSetPsiIcon(d->nextAnim());
 
-        // update the widget icon
+    // update the widget icon
     if (d->composing) {
         setWindowIcon(IconsetFactory::icon("psi/sendMessage").icon());
     } else {
@@ -1329,12 +1329,12 @@ void EventDlg::doSend()
     if (list.count() > 1 && !d->pa->serverInfoManager()->multicastService().isEmpty()
         && PsiOptions::instance()->getOption("options.enable-multicast").toBool()) {
         m.setTo(d->pa->serverInfoManager()->multicastService());
-        for (const QString &recipient : list) {
+        for (const QString &recipient : std::as_const(list)) {
             m.addAddress(Address(XMPP::Address::To, Jid(recipient)));
         }
         d->pa->dj_sendMessage(m, true);
     } else {
-        for (const auto &item : list) {
+        for (const auto &item : std::as_const(list)) {
             m.setTo(Jid(item));
             d->pa->dj_sendMessage(m, true);
         }

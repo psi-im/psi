@@ -620,7 +620,7 @@ void ContactListDragView::restoreSelection(QMimeData *_mimeData)
         if (!indexes.isEmpty()) {
             setCurrentIndex(indexes.first());
             QItemSelection selection;
-            for (QModelIndex index : indexes)
+            for (QModelIndex index : std::as_const(indexes))
                 selection << QItemSelectionRange(index);
             selectionModel()->select(selection, QItemSelectionModel::Select);
         }
@@ -649,7 +649,7 @@ void ContactListDragView::removeSelection()
     QModelIndexList indexes  = qobject_cast<ContactListDragModel *>(realModel())->indexesFor(mimeData);
     delete mimeData;
 
-    for (const QModelIndex &index : indexes) {
+    for (const QModelIndex &index : std::as_const(indexes)) {
         ContactListItem *item = realModel()->toItem(index);
 
         if (item->isContact())

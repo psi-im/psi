@@ -666,14 +666,14 @@ bool PsiCon::init()
     {
         QList<UserAccount> accs;
         QStringList        bases = d->accountTree.getChildOptionNames("accounts", true, true);
-        for (const QString &base : bases) {
+        for (const QString &base : std::as_const(bases)) {
             UserAccount ua;
             ua.fromOptions(&d->accountTree, base);
             accs += ua;
         }
         QStringList order = d->accountTree.getOption("order", QStringList()).toStringList();
         int         start = 0;
-        for (const QString &id : order) {
+        for (const QString &id : std::as_const(order)) {
             for (int i = start; i < accs.size(); ++i) {
                 if (accs[i].id == id) {
                     accs.move(i, start);
@@ -1636,7 +1636,7 @@ void PsiCon::recentGCAdd(const QString &str)
 {
     QStringList recentList = recentGCList();
     // remove it if we have it
-    for (const QString &s : recentList) {
+    for (const QString &s : std::as_const(recentList)) {
         if (s == str) {
             recentList.removeAll(s);
             break;
@@ -1659,7 +1659,7 @@ void PsiCon::recentGCRemove(const QString &str)
 {
     QStringList recentList = recentGCList();
     // remove it if we have it
-    for (const QString &s : recentList) {
+    for (const QString &s : std::as_const(recentList)) {
         if (s == str) {
             recentList.removeAll(s);
             break;
@@ -1677,7 +1677,7 @@ void PsiCon::recentBrowseAdd(const QString &str)
 {
     QStringList recentList = recentBrowseList();
     // remove it if we have it
-    for (const QString &s : recentList) {
+    for (const QString &s : std::as_const(recentList)) {
         if (s == str) {
             recentList.removeAll(s);
             break;

@@ -123,7 +123,7 @@ public:
     void changeDomain(const UserList &users, const QString &domain)
     {
         auto items = findUsers(users);
-        for (auto [idx, item] : items) {
+        for (const auto &[idx, item] : std::as_const(items)) {
             if (item.jid().node().isEmpty()) {
                 continue;
             }
@@ -139,7 +139,7 @@ public:
     void changeGroups(const UserList &users, const QStringList &groups)
     {
         auto items = findUsers(users);
-        for (auto [idx, item] : items) {
+        for (const auto &[idx, item] : std::as_const(items)) {
             JT_Roster *r = new JT_Roster(pa->client()->rootTask());
             r->set(item.jid(), item.name(), groups);
             r->go(true);
@@ -299,7 +299,7 @@ bool ContactManagerModel::setData(const QModelIndex &index, const QVariant &valu
 ContactManagerModel::UserList ContactManagerModel::checkedUsers()
 {
     UserList users;
-    for (auto u : d->userList) {
+    for (const auto &u : d->userList) {
         if (d->checks.contains(u.jid().full())) {
             users.push_back(u);
         }
@@ -316,7 +316,7 @@ void ContactManagerModel::invertByMatch(int columnIndex, int matchType, const QS
     if (matchType == ContactManagerModel::RegexpMatch) {
         reg = QRegularExpression(str);
     }
-    for (auto u : d->userList) {
+    for (const auto &u : d->userList) {
         data = d->userFieldString(u, columnRole);
         if ((matchType == ContactManagerModel::SimpleMatch && str == data)
             || (matchType == ContactManagerModel::RegexpMatch && reg.match(data).hasMatch())) {

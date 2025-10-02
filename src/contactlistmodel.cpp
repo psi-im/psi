@@ -471,7 +471,7 @@ void ContactListModel::destroyingContactList()
     d->collapsed.clear();
     QList<ContactListItem *> list = static_cast<ContactListItem *>(root())->allChildren();
 
-    for (const auto *item : list) {
+    for (const auto *item : std::as_const(list)) {
         if (!item->expanded())
             d->collapsed << item->internalName();
 

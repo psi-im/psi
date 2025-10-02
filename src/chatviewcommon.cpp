@@ -151,10 +151,10 @@ ChatViewCommon::updateReactions(const QString &senderNickname, const QString &me
         userIt = msgIt.value().perUser.insert(senderNickname, {});
     }
     *userIt = reactions;
-    for (auto const &v : toAdd) {
+    for (auto const &v : std::as_const(toAdd)) {
         msgIt.value().total[v].append(senderNickname);
     }
-    for (auto const &v : toRemove) {
+    for (auto const &v : std::as_const(toRemove)) {
         auto it = msgIt.value().total.find(v);
         it->removeOne(senderNickname);
         if (it->isEmpty()) {

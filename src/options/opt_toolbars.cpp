@@ -433,7 +433,7 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
 
         QList<ActionList *> lists = psi->actionList()->actionLists(p->currentType());
 
-        for (ActionList *actionList : lists) {
+        for (ActionList *actionList : std::as_const(lists)) {
             QTreeWidgetItem *root = new QTreeWidgetItem(tw, lastRoot);
             lastRoot              = root;
             root->setText(0, actionList->name());

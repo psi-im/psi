@@ -262,7 +262,7 @@ void FancyPopup::show()
 
     // QLabels with rich contents don't propagate mouse clicks
     QList<QLabel *> labels = findChildren<QLabel *>();
-    for (QLabel *label : labels)
+    for (QLabel *label : std::as_const(labels))
         label->installEventFilter(d);
 
     // position popup

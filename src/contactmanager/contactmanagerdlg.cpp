@@ -190,7 +190,7 @@ void ContactManagerDlg::exportRoster(const ContactManagerModel::UserList &users)
         QString      nick;
         QDomElement  root = doc.createElement("roster");
         doc.appendChild(root);
-        for (auto u : std::as_const(users)) {
+        for (const auto &u : std::as_const(users)) {
             QDomElement contact = root.appendChild(doc.createElement("contact")).toElement();
             contact.setAttribute("jid", u.jid().bare());
             for (const QString &group : u.groups()) {

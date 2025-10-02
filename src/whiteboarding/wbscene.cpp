@@ -48,7 +48,7 @@ QPointF WbScene::selectionCenter() const
     }
 
     QRectF box = items.at(0)->sceneBoundingRect();
-    for (QGraphicsItem *item : items) {
+    for (QGraphicsItem *item : std::as_const(items)) {
         box = box.united(item->sceneBoundingRect());
     }
 
@@ -80,7 +80,7 @@ void WbScene::group()
         std::sort(selected.begin(), selected.end(), zValueLessThan);
 
         // Reparent each selected item
-        for (QGraphicsItem *item : selected) {
+        for (QGraphicsItem *item : std::as_const(selected)) {
             WbItem *wbitem = dynamic_cast<WbItem *>(item);
             if (wbitem)
                 session_->insertNodeAfter(wbitem->node(), group);

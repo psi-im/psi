@@ -106,7 +106,7 @@ void StatusMenu::addPresets(IconActionGroup *parent)
     if ((showEditPresets || presets.count() > 0) && !parent)
         this->addSeparator();
     if (presets.count() > 0) {
-        for (const QVariant &name : presets) {
+        for (const QVariant &name : std::as_const(presets)) {
             StatusPreset preset;
             preset.fromOptions(o, name.toString());
             preset.filterStatus();

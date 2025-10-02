@@ -195,7 +195,7 @@ void OptionsTabAppearanceTheme::updateStyles(const QModelIndex &index)
     OptAppearanceThemeUI *d      = static_cast<OptAppearanceThemeUI *>(w);
     d->cmb_style->blockSignals(true);
     d->cmb_style->clear();
-    for (auto const &s : styles) {
+    for (auto const &s : std::as_const(styles)) {
         d->cmb_style->addItem(s);
     }
     d->cmb_style->setCurrentText(themesModel->data(index, PsiThemeModel::CurrentStyleRole).toString());

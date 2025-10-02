@@ -284,7 +284,7 @@ bool BlockTransportPopupList::find(const Jid &j, bool online)
         return false;
 
     QList<BlockTransportPopup *> list = findChildren<BlockTransportPopup *>();
-    for (BlockTransportPopup *btp : list) {
+    for (BlockTransportPopup *btp : std::as_const(list)) {
         if (j.domain() == btp->jid().domain()) {
             if (online)
                 btp->userCounter++;

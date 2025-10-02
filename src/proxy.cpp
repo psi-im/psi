@@ -388,7 +388,7 @@ void ProxyChooser::buildComboBox()
     d->cb_proxy->clear();
     d->cb_proxy->addItem(tr("None"), "");
     ProxyItemList list = d->m->itemList();
-    for (const ProxyItem &pi : list) {
+    for (const ProxyItem &pi : std::as_const(list)) {
         d->cb_proxy->addItem(pi.name, pi.id);
     }
 }
@@ -506,7 +506,7 @@ ProxyItemList ProxyManager::itemList() const
     QList<ProxyItem> proxies;
     QString          opt  = "proxies";
     QStringList      keys = d->o->getChildOptionNames(opt, true, true);
-    for (const QString &key : keys) {
+    for (const QString &key : std::as_const(keys)) {
         proxies += getItem(key.mid(opt.length() + 1));
     }
     return proxies;

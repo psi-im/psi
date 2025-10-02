@@ -89,7 +89,7 @@ PsiIcon *PsiChatDlg::throbber_icon = nullptr;
 class PsiChatDlg::ChatDlgMCmdProvider : public QObject, public MCmdProviderIface {
     Q_OBJECT
 public:
-    ChatDlgMCmdProvider(PsiChatDlg *dlg) : QObject(dlg), dlg_(dlg) {};
+    ChatDlgMCmdProvider(PsiChatDlg *dlg) : QObject(dlg), dlg_(dlg) { };
 
     virtual bool mCmdTryStateTransit(MCmdStateIface *oldstate, QStringList command, MCmdStateIface *&newstate,
                                      QStringList &preset)
@@ -167,8 +167,8 @@ public:
         return res;
     };
 
-    virtual void mCmdSiteDestroyed() {};
-    virtual ~ChatDlgMCmdProvider() {};
+    virtual void mCmdSiteDestroyed() { };
+    virtual ~ChatDlgMCmdProvider() { };
 
 public slots:
     void version_finished()
@@ -464,7 +464,7 @@ void PsiChatDlg::updateToolbuttons()
     ui_.toolbar->clear();
     PsiOptions *options      = PsiOptions::instance();
     QStringList actionsNames = options->getOption("options.ui.contactlist.toolbars.m0.actions").toStringList();
-    for (const QString &actionName : actionsNames) {
+    for (const QString &actionName : std::as_const(actionsNames)) {
         if (actionName == "chat_voice" && !AvCallManager::isSupported()) {
             continue;
         }

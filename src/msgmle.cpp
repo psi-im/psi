@@ -341,7 +341,7 @@ void ChatEdit::contextMenuEvent(QContextMenuEvent *e)
             if (!suggestions.isEmpty() || SpellChecker::instance()->writable()) {
                 QMenu spell_menu;
                 if (!suggestions.isEmpty()) {
-                    for (const QString &suggestion : suggestions) {
+                    for (const QString &suggestion : std::as_const(suggestions)) {
                         QAction *act_suggestion = spell_menu.addAction(suggestion);
                         connect(act_suggestion, &QAction::triggered, this, &ChatEdit::applySuggestion);
                     }
@@ -466,7 +466,7 @@ void ChatEdit::showHistoryMessagePrev()
     if (!typedMsgsHistory.isEmpty() && (typedMsgsIndex > 0 || !_correctionId.isEmpty())) {
         // Save current typed text
         if (typedMsgsIndex == typedMsgsHistory.size()) {
-            currentText  = toPlainText();
+            currentText   = toPlainText();
             _correctionId = lastId;
         }
         if (typedMsgsIndex == typedMsgsHistory.size() - 1 && !_correctionId.isEmpty()) {

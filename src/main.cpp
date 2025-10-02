@@ -286,11 +286,11 @@ void PsiMain::sessionStart()
     connect(pcon, SIGNAL(quit(int)), SLOT(sessionQuit(int)));
 
     if (cmdline.contains("uri")) {
-        emit ActiveProfiles::instance()->openUriRequested(cmdline.value("uri"));
+        emit ActiveProfiles::instance() -> openUriRequested(cmdline.value("uri"));
         cmdline.remove("uri");
     }
     if (cmdline.contains("status") || cmdline.contains("status-message")) {
-        emit ActiveProfiles::instance()->setStatusRequested(cmdline.value("status"), cmdline.value("status-message"));
+        emit ActiveProfiles::instance() -> setStatusRequested(cmdline.value("status"), cmdline.value("status-message"));
         cmdline.remove("status");
         cmdline.remove("status-message");
     }
@@ -437,7 +437,7 @@ QStringList getQtPluginPathEnvVar()
 #else
         QStringList paths = QString::fromLatin1(val).split(pathSep, QString::SkipEmptyParts);
 #endif
-        for (const QString &path : paths) {
+        for (const QString &path : std::as_const(paths)) {
             QString canonicalPath = QDir(path).canonicalPath();
             if (!canonicalPath.isEmpty() && !out.contains(canonicalPath))
                 out += canonicalPath;
