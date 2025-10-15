@@ -52,7 +52,7 @@ public:
 
 #ifdef Q_OS_LINUX
         defineSwitch("vulkanrender",
-                     tr("Use vulkan widgets rendering. QtWebengine rendering on X11 and with NVIDIA cards may use"
+                     tr("Use vulkan widgets rendering. QtWebengine rendering on X11 and with NVIDIA cards may use "
                         "Vulkan and this option may help if there is no content in chat tab/window"));
 #endif
 
