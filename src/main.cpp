@@ -521,6 +521,12 @@ PSI_EXPORT_FUNC int main(int argc, char *argv[])
     qputenv("QT_WIDGETS_RHI", "1");
     qputenv("QT_WIDGETS_RHI_BACKEND", "d3d11"); // macos: metal, linux: opengl
 #else
+#ifdef Q_OS_LINUX
+    if (cmdline.contains("vulkanrender")) {
+        qputenv("QT_WIDGETS_RHI", "1");
+        qputenv("QT_WIDGETS_RHI_BACKEND", "Vulkan");
+    }
+#endif
     if (cmdline.contains("swrender")) {
         QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
     }

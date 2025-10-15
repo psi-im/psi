@@ -50,6 +50,12 @@ public:
             tr("Use software widgets rendering. In some cases default hardware rendering may lead to graphical "
                "glitches and crashes. This option may help."));
 
+#ifdef Q_OS_LINUX
+        defineSwitch("vulkanrender",
+                     tr("Use vulkan widgets rendering. QtWebengine rendering on X11 and with NVIDIA cards may use"
+                        "Vulkan and this option may help if there is no content in chat tab/window"));
+#endif
+
         defineSwitch("quit", tr("Quit the application"));
 
         defineSwitch("help", tr("Show this help message and exit."));
