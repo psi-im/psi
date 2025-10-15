@@ -173,7 +173,7 @@ void ContactListGroupMenu::Private::authResend()
 
     QList<PsiContact *> contacts = group->contacts();
     if (!contacts.isEmpty()) {
-        for (PsiContact *contact : contacts) {
+        for (PsiContact *contact : std::as_const(contacts)) {
             contact->account()->actionAuth(contact->jid());
         }
     }
@@ -186,7 +186,7 @@ void ContactListGroupMenu::Private::authRequest()
 
     QList<PsiContact *> contacts = group->contacts();
     if (!contacts.isEmpty()) {
-        for (PsiContact *contact : contacts) {
+        for (PsiContact *contact : std::as_const(contacts)) {
             contact->account()->actionAuthRequest(contact->jid());
         }
     }
@@ -199,7 +199,7 @@ void ContactListGroupMenu::Private::authRemove()
 
     QList<PsiContact *> contacts = group->contacts();
     if (!contacts.isEmpty()) {
-        for (PsiContact *contact : contacts) {
+        for (PsiContact *contact : std::as_const(contacts)) {
             contact->account()->actionAuthRemove(contact->jid());
         }
     }
@@ -252,7 +252,7 @@ void ContactListGroupMenu::Private::removeGroupWithoutContacts()
                                        QMessageBox::StandardButton::Yes | QMessageBox::StandardButton::No);
 
     if (res == QMessageBox::StandardButton::Yes) {
-        for (PsiContact *contact : contacts) {
+        for (PsiContact *contact : std::as_const(contacts)) {
             QStringList groups = contact->groups();
             groups.removeAll(group->name());
             contact->setGroups(groups);
@@ -268,7 +268,7 @@ void ContactListGroupMenu::Private::sendMessage()
     QList<PsiContact *> contacts = group->contacts();
     if (!contacts.isEmpty()) {
         QList<XMPP::Jid> list;
-        for (PsiContact *contact : contacts) {
+        for (PsiContact *contact : std::as_const(contacts)) {
             list << contact->jid();
         }
         contacts.first()->account()->actionSendMessage(list);

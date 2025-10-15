@@ -136,7 +136,7 @@ bool OptionsTree::isValidName(const QString &name)
 std::optional<QString> OptionsTree::mapLookup(const QString &basename, const QVariant &key) const
 {
     QStringList children = getChildOptionNames(basename, true, true);
-    for (const QString &path : children) {
+    for (const QString &path : std::as_const(children)) {
         if (getOption(path + QLatin1String(".key")) == key) {
             return path;
         }
@@ -167,7 +167,7 @@ QVariant OptionsTree::mapGet(const QString &basename, const QVariant &key, const
 QString OptionsTree::mapPut(const QString &basename, const QVariant &key)
 {
     QStringList children = getChildOptionNames(basename, true, true);
-    for (const QString &path : children) {
+    for (const QString &path : std::as_const(children)) {
         if (getOption(path + ".key") == key) {
             return path;
         }
@@ -214,7 +214,7 @@ QVariantList OptionsTree::mapKeyList(const QString &basename, bool sortedByNumbe
     if (sortedByNumbers) {
         std::sort(children.begin(), children.end(), mapKeyListLessThanByNumber);
     }
-    for (const QString &path : children) {
+    for (const QString &path : std::as_const(children)) {
         ret << getOption(path + ".key");
     }
     return ret;

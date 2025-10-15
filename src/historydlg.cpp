@@ -38,6 +38,12 @@
 #include <QProgressDialog>
 #include <QScrollBar>
 #include <QTextBlock>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
+#include <QTimeZone>
+typedef QTimeZone TimeZomeEnum;
+#else
+typedef Qt::TimeSpec TimeZomeEnum;
+#endif
 
 #define SEARCH_PADDING_SIZE 20
 #define DISPLAY_PAGE_SIZE 200
@@ -1019,9 +1025,9 @@ void HistoryDlg::exportHistory()
 #else
                 QStringList lines = me->message().body().split('\n', QString::KeepEmptyParts);
 #endif
-                for (const QString &str : lines) {
+                for (const QString &str : std::as_const(lines)) {
                     QStringList sub = wrapString(str, 72);
-                    for (const QString &str2 : sub) {
+                    for (const QString &str2 : std::as_const(sub)) {
                         txt += str2 + "\n" + QString("    ");
                     }
                 }
@@ -1139,9 +1145,9 @@ void HistoryDlg::getNext()
 void HistoryDlg::getDate()
 {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
-    QDateTime ts = ui_.calendar->selectedDate().startOfDay(Qt::UTC);
+    QDateTime ts = ui_.calendar->selectedDate().startOfDay(TimeZomeEnum::UTC);
 #else
-    QDateTime ts(ui_.calendar->selectedDate(), { 0, 0 }, Qt::UTC);
+    QDateTime ts(ui_.calendar->selectedDate(), { 0, 0 }, TimeZomeEnum::UTC);
 #endif
     startRequest();
     displayProxy->displayFromDate(getCurrentAccountId(), d->jid, ts);

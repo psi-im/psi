@@ -223,7 +223,7 @@ void BookmarkManager::getBookmarks_finished()
         QStringList   localMucs     = account_->localMucBookmarks();
         QStringList   mucIgnore     = account_->ignoreMucBookmarks();
         QSet<QString> strippedMucs;
-        for (const QString &m : localMucs) {
+        for (const QString &m : std::as_const(localMucs)) {
             Jid j(m);
             if (j.isValid()) {
                 strippedMucs.insert(j.bare());

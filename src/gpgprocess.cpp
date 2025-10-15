@@ -116,7 +116,7 @@ QString GpgProcess::findBin() const
         return bin;
 #endif
 
-        // Look up at PATH environment
+    // Look up at PATH environment
 #ifdef Q_OS_WIN
     QString pathSep = ";";
 #else
@@ -137,7 +137,7 @@ QString GpgProcess::findBin() const
 #endif
     paths.removeDuplicates();
 
-    for (const QString &path : paths) {
+    for (const QString &path : std::as_const(paths)) {
         for (const QString &bin : bins) {
             if (checkBin(path + "/" + bin)) {
                 return path + "/" + bin;

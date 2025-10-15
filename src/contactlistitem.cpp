@@ -96,7 +96,7 @@ bool ContactListItem::isEditable() const
         return false;
     } else {
         AbstractTreeItemList children = AbstractTreeItem::children();
-        for (const auto &child : children) {
+        for (const auto &child : std::as_const(children)) {
             ContactListItem *item = static_cast<ContactListItem *>(child);
             if (item->isEditable()) {
                 return true;
@@ -275,7 +275,7 @@ QList<PsiContact *> ContactListItem::contacts()
 {
     AbstractTreeItemList children = AbstractTreeItem::children();
     QList<PsiContact *>  res;
-    for (const auto &child : children) {
+    for (const auto &child : std::as_const(children)) {
         ContactListItem *item = static_cast<ContactListItem *>(child);
         if (item->isContact()) {
             res << item->_contact;
@@ -291,7 +291,7 @@ ContactListItem *ContactListItem::findAccount(PsiAccount *account)
 {
     AbstractTreeItemList children = AbstractTreeItem::children();
     ContactListItem     *res      = nullptr;
-    for (const auto &child : children) {
+    for (const auto &child : std::as_const(children)) {
         ContactListItem *item = static_cast<ContactListItem *>(child);
         if (item->isAccount() && item->account() == account) {
             res = item;
@@ -315,7 +315,7 @@ ContactListItem *ContactListItem::findGroup(const QString &groupName)
     AbstractTreeItemList children = AbstractTreeItem::children();
     ContactListItem     *res      = nullptr;
 
-    for (const auto &child : children) {
+    for (const auto &child : std::as_const(children)) {
         ContactListItem *item = static_cast<ContactListItem *>(child);
 
         if (_type == Type::AccountType) {
@@ -337,7 +337,7 @@ ContactListItem *ContactListItem::findGroup(ContactListItem::SpecialGroupType sp
 {
     AbstractTreeItemList children = AbstractTreeItem::children();
     ContactListItem     *res      = nullptr;
-    for (const auto &child : children) {
+    for (const auto &child : std::as_const(children)) {
         ContactListItem *item = static_cast<ContactListItem *>(child);
         if (item->isGroup() && item->specialGroupType() == specialGroupType) {
             res = item;
@@ -352,7 +352,7 @@ ContactListItem *ContactListItem::findContact(PsiContact *contact)
 {
     AbstractTreeItemList children = AbstractTreeItem::children();
     ContactListItem     *res      = nullptr;
-    for (const auto &child : children) {
+    for (const auto &child : std::as_const(children)) {
         ContactListItem *item = static_cast<ContactListItem *>(child);
         if (item->contact() == contact) {
             res = item;
@@ -572,7 +572,7 @@ void ContactListItem::updateContactsCount() const
     _shouldBeVisible = false;
 
     AbstractTreeItemList children = AbstractTreeItem::children();
-    for (const auto &child : children) {
+    for (const auto &child : std::as_const(children)) {
         ContactListItem *item = static_cast<ContactListItem *>(child);
         if (item->_type == Type::ContactType) {
             _totalContacts++;
@@ -599,7 +599,7 @@ QList<ContactListItem *> ContactListItem::allChildren() const
 {
     AbstractTreeItemList     children = AbstractTreeItem::children();
     QList<ContactListItem *> res;
-    for (const auto &child : children) {
+    for (const auto &child : std::as_const(children)) {
         ContactListItem *item = static_cast<ContactListItem *>(child);
         res << item;
         res += item->allChildren();

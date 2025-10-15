@@ -108,7 +108,7 @@ std::optional<QStringList> ServerListQuerier::parseJson(const QByteArray &data)
 
     QJsonArray jsonArray = jsonDoc.array();
 
-    for (const QJsonValue &providerValue : jsonArray) {
+    for (const QJsonValue &providerValue : std::as_const(jsonArray)) {
         if (!providerValue.isObject()) {
             parsingErrorOccurred = true;
             continue; // Skip if the item is not a valid object

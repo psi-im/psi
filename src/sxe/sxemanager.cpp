@@ -199,7 +199,7 @@ bool SxeManager::processNegotiationAsParticipant(const QDomNode &negotiationElem
         response.appendChild(documentBegin);
 
         // append all the SxeEdit's returned by startQueueing()
-        for (const SxeEdit *e : snapshot) {
+        for (const SxeEdit *e : std::as_const(snapshot)) {
             response.appendChild(e->xml(doc));
         }
 
@@ -472,7 +472,7 @@ QPointer<SxeSession> SxeManager::processNegotiationMessage(const Message &messag
 SxeManager::SxeNegotiation *SxeManager::findNegotiation(const Jid &jid, const QString &session)
 {
     QList<SxeNegotiation *> negotiations = negotiations_.values(session);
-    for (SxeNegotiation *negotiation : negotiations) {
+    for (SxeNegotiation *negotiation : std::as_const(negotiations)) {
         if (negotiation->state != SxeNegotiation::Aborted
             && negotiation->peer.compare(jid, negotiation->state != SxeNegotiation::ConnectionRequested))
             return negotiation;
@@ -773,7 +773,7 @@ void SxeManager::groupChatLeft(const Jid &jid)
             ownJids_.removeAt(i);
     }
     QList<QPointer<SxeSession>> matching = findSession(jid);
-    for (QPointer<SxeSession> w : matching)
+    for (QPointer<SxeSession> w : std::as_const(matching))
         w->endSession();
 }
 

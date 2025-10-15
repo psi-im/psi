@@ -389,7 +389,7 @@ void IconActionGroup::Private::updatePopup()
     popup->clear();
 
     QList<QAction *> list = group->findChildren<QAction *>();
-    for (QAction *action : list) {
+    for (QAction *action : std::as_const(list)) {
         if (!group->psiIcon() && action->inherits("IconAction"))
             group->setIcon(static_cast<IconAction *>(action)->icon());
 
@@ -446,7 +446,7 @@ bool IconActionGroup::addTo(QWidget *w)
         QMenu *popup = static_cast<QMenu *>(w);
 
         QList<QAction *> list = findChildren<QAction *>();
-        for (QAction *action : list)
+        for (QAction *action : std::as_const(list))
             popup->addAction(action);
 
         return true;

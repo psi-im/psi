@@ -130,7 +130,7 @@ void ProfileOpenDlg::reload(const QString &choose)
         pb_profiles->setFocus();
     } else {
         int x = 0;
-        for (const auto &it : list) {
+        for (const auto &it : std::as_const(list)) {
             cb_profile->addItem(it);
             if ((choose.isEmpty() && x == 0) || (choose == it)) {
                 cb_profile->setCurrentIndex(x);
@@ -184,7 +184,7 @@ ProfileManageDlg::ProfileManageDlg(const QString &choose, QWidget *parent) : QDi
     // load the listing
     QStringList list = getProfilesList();
     int         x    = 0;
-    for (const auto &it : list) {
+    for (const auto &it : std::as_const(list)) {
         lbx_profiles->addItem(it);
         if (it == choose)
             lbx_profiles->setCurrentRow(x);

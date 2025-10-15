@@ -556,7 +556,7 @@ protected:
         QStringList jids = item->metadata().value(QLatin1String("jids")).toStringList();
         // weh have user of this icon. And this users can use other icons as well. so we have to properly update
         // them
-        for (const QString &j : jids) {
+        for (const QString &j : std::as_const(jids)) {
             IconType itype = extractIconType(j);
             QString  jid   = extractIconJid(j);
             auto     it    = jidToIcons.find(jid);

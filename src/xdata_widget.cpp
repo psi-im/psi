@@ -260,7 +260,7 @@ public:
             Jid j = xdw->owner();
 
             QList<XDataMediaWidget *> mediaWidgets = XDataMediaWidget::fromMediaElement(me, j, _xdWidget);
-            for (XDataMediaWidget *w : mediaWidgets) {
+            for (XDataMediaWidget *w : std::as_const(mediaWidgets)) {
                 grid->addWidget(w, row, 0, 1, 3, Qt::AlignCenter);
                 row++;
             }

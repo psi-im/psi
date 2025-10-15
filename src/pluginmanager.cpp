@@ -1079,7 +1079,7 @@ QStringList PluginManager::messageViewJSFilters() const
     ret.reserve(_messageViewJSFilters.size());
     for (int i = PsiPlugin::PriorityHighest; i >= PsiPlugin::PriorityLowest; i--) {
         auto values = _messageViewJSFilters.values(PsiPlugin::Priority(i));
-        for (const auto &p : values) {
+        for (const auto &p : std::as_const(values)) {
             ret.append(p.second);
         }
     }

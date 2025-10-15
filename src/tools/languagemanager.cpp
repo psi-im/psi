@@ -235,7 +235,7 @@ QSet<LanguageManager::LangId> LanguageManager::deserializeLanguageSet(const QStr
     QStringList langs = str.split(QRegularExpression("\\s+"), QString::SkipEmptyParts);
 #endif
     QSet<LangId> ret;
-    for (auto const &l : langs) {
+    for (auto const &l : std::as_const(langs)) {
         auto id = fromString(l);
         if (id.language) {
             ret.insert(id);

@@ -430,7 +430,7 @@ bool PsiIconset::loadRoster()
 
     QStringList customicons = PsiOptions::instance()->getChildOptionNames("options.iconsets.custom-status", true, true);
     d->cur_custom_status.clear();
-    for (const QString &base : customicons) {
+    for (const QString &base : std::as_const(customicons)) {
         QString regexp  = PsiOptions::instance()->getOption(base + ".regexp").toString();
         QString iconset = PsiOptions::instance()->getOption(base + ".iconset").toString();
         rosterIconsets << iconset;
@@ -570,7 +570,7 @@ bool PsiIconset::loadClients()
         auto customPath = PsiOptions::instance()->getOption("options.iconsets.clients-capsfile").toString();
         if (customPath.isEmpty() || !readClientsDesc(customPath)) {
             QStringList dirs = ApplicationInfo::dataDirs();
-            for (const auto &dataDir : dirs)
+            for (const auto &dataDir : std::as_const(dirs))
                 if (readClientsDesc(dataDir + QLatin1String("/client_icons.txt")))
                     break;
         }
@@ -745,7 +745,7 @@ void PsiIconset::reloadRoster()
     }
 
     QStringList customicons = PsiOptions::instance()->getChildOptionNames("options.iconsets.custom-status", true, true);
-    for (const QString &base : customicons) {
+    for (const QString &base : std::as_const(customicons)) {
         QString regexp  = PsiOptions::instance()->getOption(base + ".regexp").toString();
         QString iconset = PsiOptions::instance()->getOption(base + ".iconset").toString();
         cur_custom_status.insert(regexp, iconset);

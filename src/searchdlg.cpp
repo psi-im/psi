@@ -467,7 +467,7 @@ void SearchDlg::doAdd()
     if (nicksAndJids.isEmpty())
         return;
 
-    for (const Private::NickAndJid &nickJid : nicksAndJids)
+    for (const Private::NickAndJid &nickJid : std::as_const(nicksAndJids))
         emit add(nickJid.jid, nickJid.nick, QStringList(), true);
 
     if (nicksAndJids.count() > 1) {
@@ -487,7 +487,7 @@ void SearchDlg::doInfo()
     if (nicksAndJids.isEmpty())
         return;
 
-    for (const Private::NickAndJid &nickJid : nicksAndJids)
+    for (const Private::NickAndJid &nickJid : std::as_const(nicksAndJids))
         emit aInfo(nickJid.jid);
 }
 

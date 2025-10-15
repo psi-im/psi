@@ -932,7 +932,7 @@ void ChatDlg::appendMessage(const Message &m, bool local)
     if (!dm.urlList().isEmpty()) {
         UrlList                urls = dm.urlList();
         QMap<QString, QString> urlsMap;
-        for (const Url &u : urls) {
+        for (const Url &u : std::as_const(urls)) {
             urlsMap.insert(u.url(), u.desc());
         }
         // Some XMPP clients send links to HTTP uploaded files both in body and in jabber:x:oob.

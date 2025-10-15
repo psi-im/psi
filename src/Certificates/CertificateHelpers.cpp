@@ -39,7 +39,7 @@ CertificateCollection CertificateHelpers::allCertificates(const QStringList &sto
         // Read in PEM certificates
         store.setNameFilters(QStringList("*.crt") + QStringList("*.pem"));
         QStringList cert_files = store.entryList();
-        for (const auto &c : cert_files) {
+        for (const auto &c : std::as_const(cert_files)) {
             // qDebug() << "certutil.cpp: Reading " << store.filePath(*c);
             ConvertResult result;
             Certificate   cert = Certificate::fromPEMFile(store.filePath(c), &result);

@@ -207,7 +207,11 @@ VCard4::VCard VCardFactory::vcard(const Jid &j, Flags flags)
     if (!v4) {
         file.seek(0);
         QDomDocument doc;
+#if QT_VERSION < QT_VERSION_CHECK(6, 8, 0)
         if (doc.setContent(&file, false)) {
+#else
+        if (doc.setContent(&file)) {
+#endif
             VCard vcard = VCard::fromXml(doc.documentElement());
             if (!vcard.isNull()) {
                 v4.fromVCardTemp(vcard);

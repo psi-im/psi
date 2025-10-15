@@ -597,7 +597,7 @@ public:
     class TabCompletionMUC : public TabCompletion {
     public:
         GCMainDlg::Private *p_;
-        TabCompletionMUC(GCMainDlg::Private *p) : p_(p), nickSeparator(":") {};
+        TabCompletionMUC(GCMainDlg::Private *p) : p_(p), nickSeparator(":") { };
 
         virtual void setup(QString str, int pos, int &start, int &end)
         {
@@ -618,7 +618,7 @@ public:
 
             QString postAdd = atStart_ ? nickSeparator + " " : "";
 
-            for (const QString &nick : nicks) {
+            for (const QString &nick : std::as_const(nicks)) {
                 if (nick.left(toComplete_.length()).toLower() == toComplete_.toLower()) {
                     suggestedNicks << nick + postAdd;
                 }
@@ -1005,7 +1005,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     auto actSetTopic = d->actions->action("gchat_set_topic");
     ui_.le_topic->addAction(actSetTopic);
 
-    d->act_bookmark  = new IconAction(this);
+    d->act_bookmark = new IconAction(this);
     connect(d->act_bookmark, SIGNAL(triggered()), SLOT(doBookmark()));
     ui_.le_topic->addAction(d->act_bookmark);
 
@@ -2228,7 +2228,7 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
 
     if (options->getOption("options.ui.muc.use-highlighting").toBool()) {
         QStringList highlightWords = options->getOption("options.ui.muc.highlight-words").toStringList();
-        for (const QString &word : highlightWords) {
+        for (const QString &word : std::as_const(highlightWords)) {
             if (dm.body().contains((word), Qt::CaseInsensitive)) {
                 d->alert = true;
             }
@@ -2463,7 +2463,7 @@ void GCMainDlg::setToolbuttons()
     ui_.toolbar->clear();
     PsiOptions *options      = PsiOptions::instance();
     QStringList actionsNames = options->getOption("options.ui.contactlist.toolbars.m1.actions").toStringList();
-    for (const QString &actionName : actionsNames) {
+    for (const QString &actionName : std::as_const(actionsNames)) {
 #ifdef PSI_PLUGINS
         if (actionName.endsWith("-plugin")) {
             QString name = actionName.mid(0, actionName.length() - 7);

@@ -76,7 +76,7 @@ public:
         QStringList bold_labels({ "lb_name2", "lb_version2", "lb_date2", "lb_home2", "lb_desc2", "lb_authors" });
 
         QList<QLabel *> labels = findChildren<QLabel *>();
-        for (QLabel *l : labels) {
+        for (QLabel *l : std::as_const(labels)) {
             if (bold_labels.contains(l->objectName())) {
                 QFont font = l->font();
                 font.setBold(true);
@@ -342,7 +342,7 @@ void IconsetLoadThread::loadPsiIconsets()
     QStringList dirs = ApplicationInfo::dataDirs();
     threadMutex.unlock();
 
-    for (const QString &dataDir : dirs) {
+    for (const QString &dataDir : std::as_const(dirs)) {
         QDir       dir(dataDir + "/iconsets" + addPath);
         const auto icsFiList = dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries);
         for (const QFileInfo &iconsetFI : icsFiList) {
@@ -1463,7 +1463,7 @@ bool OptionsTabIconsetRoster::event(QEvent *e)
             QTreeWidgetItem *last = nullptr;
             QStringList      customicons
                 = PsiOptions::instance()->getChildOptionNames("options.iconsets.custom-status", true, true);
-            for (const QString &base : customicons) {
+            for (const QString &base : std::as_const(customicons)) {
                 QString          regexp = PsiOptions::instance()->getOption(base + ".regexp").toString();
                 QString          icoset = PsiOptions::instance()->getOption(base + ".iconset").toString();
                 QTreeWidgetItem *item   = new QTreeWidgetItem(d->tw_customRoster, last);

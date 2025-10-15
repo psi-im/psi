@@ -350,7 +350,7 @@ QList<EDB::ContactItem> EDBFlatFile::File::contacts(const QString &accId, int ty
     if (type == EDB::Contact) {
         QDir          dir(ApplicationInfo::historyDir() + "/");
         QFileInfoList flist = dir.entryInfoList(QStringList(strToFileName("*")), QDir::Files);
-        for (const QFileInfo &fi : flist) {
+        for (const QFileInfo &fi : std::as_const(flist)) {
             XMPP::Jid jid(JIDUtil::decode(fi.completeBaseName()));
             if (jid.isValid())
                 res.append(ContactItem(accId, jid));

@@ -84,7 +84,7 @@ void OptionsTabStatusPep::restoreOptions()
 #else
     blackList_ = tmpBL.split(QRegularExpression("[,]\\s*"), QString::SkipEmptyParts);
 #endif
-    for (const QString &name : controllers) {
+    for (const QString &name : std::as_const(controllers)) {
         QCheckBox *cb      = new QCheckBox(name);
         QString    caption = name + " controller";
         cb->setText(caption);

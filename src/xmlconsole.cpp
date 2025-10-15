@@ -70,10 +70,7 @@ XmlConsole::XmlConsole(PsiAccount *_pa) : QWidget()
 
 XmlConsole::~XmlConsole() { pa->dialogUnregister(this); }
 
-void XmlConsole::clear()
-{
-    ui_.te->clear();
-}
+void XmlConsole::clear() { ui_.te->clear(); }
 
 void XmlConsole::updateCaption()
 {
@@ -120,7 +117,7 @@ void XmlConsole::dumpRingbuf()
     bool                           enablesave = ui_.ck_enable->isChecked();
     ui_.ck_enable->setChecked(true);
     QString stamp;
-    for (const PsiAccount::xmlRingElem &el : buf) {
+    for (const PsiAccount::xmlRingElem &el : std::as_const(buf)) {
         stamp = "<!-- TS:" + el.time.toString(Qt::ISODate) + "-->";
         if (el.type == PsiAccount::RingXmlOut) {
             client_xmlOutgoing(stamp + el.xml);

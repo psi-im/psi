@@ -77,7 +77,7 @@ void OptionsTabPopups::applyOptions()
                  QVariant(d->ck_everyMucMessage->isChecked()));
 
     auto spinBoxes = d->sa_durations->widget()->findChildren<QSpinBox *>(QString(), Qt::FindDirectChildrenOnly);
-    for (auto sb : spinBoxes) {
+    for (auto sb : std::as_const(spinBoxes)) {
         const QString oName = sb->property("name").toString();
         const QString oPath = sb->property("path").toString();
         const int     value = sb->value();

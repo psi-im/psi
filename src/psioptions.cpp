@@ -156,7 +156,7 @@ bool PsiOptions::newProfile()
 #ifdef PSI_PLUGINS
         PluginManager *pm      = PluginManager::instance();
         QStringList    plugins = pm->availablePlugins();
-        for (const QString &plugin : plugins) {
+        for (const QString &plugin : std::as_const(plugins)) {
             pluginsKeys << plugin + "-plugin";
         }
 #endif
@@ -185,7 +185,8 @@ bool PsiOptions::newProfile()
         ToolbarPrefs showContacts;
         showContacts.on   = true;
         showContacts.name = tr("Show contacts");
-        showContacts.keys << "menu_options" << "menu_add_contact" << "view_groups" << "menu_join_groupchat" << "menu_disco" << "menu_play_sounds"
+        showContacts.keys << "menu_options" << "menu_add_contact" << "view_groups" << "menu_join_groupchat"
+                          << "menu_disco" << "menu_play_sounds"
                           << "menu_xml_console";
 
         QList<ToolbarPrefs> toolbars = { chatToolbar, groupchatToolbar, buttons, showContacts };
@@ -328,7 +329,7 @@ void PsiOptions::resetOption(const QString &name)
         }
         setOption(name, dev);
     } else { // internal node
-        for (const QString &node : nodes) {
+        for (const QString &node : std::as_const(nodes)) {
             const QVariant &dev = defaults_->getOption(node);
             if (!dev.isValid()) {
                 continue;

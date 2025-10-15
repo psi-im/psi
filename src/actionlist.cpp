@@ -181,7 +181,7 @@ ActionList MetaActionList::suitableActions(int id) const
     QList<ActionList *> lists = actionLists(uint(id));
     ActionList          actions("", 0, false);
 
-    for (ActionList *list : lists) {
+    for (ActionList *list : std::as_const(lists)) {
         QStringList           actionList = list->actions();
         QStringList::Iterator it2        = actionList.begin();
         for (; it2 != actionList.end(); ++it2)

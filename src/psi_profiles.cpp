@@ -222,7 +222,7 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
     }
 
     QStringList rosterCache = o->getChildOptionNames(base + ".roster-cache", true, true);
-    for (const QString &rbase : rosterCache) {
+    for (const QString &rbase : std::as_const(rosterCache)) {
         RosterItem ri;
         ri.setJid(Jid(o->getOption(rbase + ".jid").toString()));
         ri.setName(o->getOption(rbase + ".name").toString());
@@ -236,7 +236,7 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 
     groupState.clear();
     QVariantList states = o->mapKeyList(base + ".group-state");
-    for (const QVariant &k : states) {
+    for (const QVariant &k : std::as_const(states)) {
         GroupData gd;
         QString   sbase = *o->mapLookup(base + ".group-state", k);
         gd.open         = o->getOption(sbase + ".open").toBool();
@@ -472,7 +472,7 @@ void OptionsMigration::lateMigration()
 #ifdef PSI_PLUGINS
         PluginManager *pm      = PluginManager::instance();
         QStringList    plugins = pm->availablePlugins();
-        for (const QString &plugin : plugins) {
+        for (const QString &plugin : std::as_const(plugins)) {
             pluginsKeys << plugin + "-plugin";
         }
 #endif
@@ -508,7 +508,7 @@ void OptionsMigration::lateMigration()
 
         QStringList toolbarBases
             = PsiOptions::instance()->getChildOptionNames("options.ui.contactlist.toolbars", true, true);
-        for (const QString &base : toolbarBases) {
+        for (const QString &base : std::as_const(toolbarBases)) {
             ToolbarPrefs tb;
             tb.id   = PsiOptions::instance()->getOption(base + ".key").toString();
             tb.name = PsiOptions::instance()->getOption(base + ".name").toString();

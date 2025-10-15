@@ -222,7 +222,7 @@ void OptionsTabApplication::restoreOptions()
     VarList     vList = TranslationManager::instance()->availableTranslations();
     QStringList lang  = vList.varsToStringList();
     d->cb_lang->addItem(tr("Default"));
-    for (const QString &item : lang) {
+    for (const QString &item : std::as_const(lang)) {
         d->cb_lang->addItem(vList.get(item));
     }
     QString   curLang = TranslationManager::instance()->currentLanguage();

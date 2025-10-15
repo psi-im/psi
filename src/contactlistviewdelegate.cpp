@@ -489,7 +489,7 @@ QList<QPixmap> ContactListViewDelegate::Private::clientPixmap(const QModelIndex 
     if (vList.isEmpty())
         return pixList;
 
-    for (const QString &client : vList) {
+    for (const QString &client : std::as_const(vList)) {
         auto pix = rosterIndicator("clients/" + client);
         if (!pix.isNull())
             pixList.push_back(pix);
