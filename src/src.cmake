@@ -63,6 +63,7 @@ list(APPEND FORMS
     rosteravatarframe.ui
     search.ui
     sendbuttontemplateseditor.ui
+    showtextdlg.ui
     voicecall.ui
     xmlconsole.ui
     )

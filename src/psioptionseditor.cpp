@@ -93,7 +93,7 @@ OptionEditor::OptionEditor(bool new_, QString name_, QVariant value_)
             }
         }
         if (!ok) {
-            QMessageBox::critical(this, tr("Psi: Option Editor"), tr("Can't edit this type of setting, sorry."),
+            QMessageBox::critical(this, CAP(tr("Option Editor")), tr("Can't edit this type of setting, sorry."),
                                   QMessageBox::Close);
             deleteLater();
         }
@@ -106,7 +106,7 @@ void OptionEditor::finished()
 {
     QString option = le_option->text();
     if (option.isEmpty() || option.endsWith(".") || option.contains("..") || !PsiOptions::isValidName(option)) {
-        QMessageBox::critical(this, tr("Psi: Option Editor"),
+        QMessageBox::critical(this, CAP(tr("Option Editor")),
                               tr("Please enter option name.\n\n"
                                  "Option names may not be empty, end in '.' or contain '..'."),
                               QMessageBox::Close);
@@ -331,7 +331,7 @@ void PsiOptionsEditor::deleteit()
         confirm = tr("Really delete all options starting with %1.?");
     }
     if (QMessageBox::Yes
-        == QMessageBox::warning(this, tr("Psi+: Option Editor"), confirm.arg(option),
+        == QMessageBox::warning(this, CAP(tr("Option Editor")), confirm.arg(option),
                                 QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel)) {
         PsiOptions::instance()->removeOption(option, sub);
     }
@@ -346,7 +346,7 @@ void PsiOptionsEditor::resetit()
         confirm = tr("Really reset all options starting with %1. to default value?");
     }
     if (QMessageBox::Yes
-        == QMessageBox::warning(this, tr("Psi+: Option Editor"), confirm.arg(option),
+        == QMessageBox::warning(this, CAP(tr("Option Editor")), confirm.arg(option),
                                 QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel)) {
         PsiOptions::instance()->resetOption(option);
     }

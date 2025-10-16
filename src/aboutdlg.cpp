@@ -19,6 +19,7 @@
 
 #include "aboutdlg.h"
 #include "applicationinfo.h"
+#include "fileutil.h"
 #include "iconset.h"
 
 #include <QFile>
@@ -41,7 +42,7 @@ AboutDlg::AboutDlg(QWidget *parent) : QDialog(parent)
                           + "<br/><br/>Copyright © 2001-2025 The Psi Team<br/></p></body></html>");
     ui_.lb_name->setText(QString("<h3><b>%1 v%2</b></h3>").arg(ApplicationInfo::name(), ApplicationInfo::version()));
 
-    ui_.te_license->setText(loadText(":/COPYING"));
+    ui_.te_license->setText(FileUtil::readFileText(":/COPYING"));
 
     QString lang_name = qApp->translate("@default", "language_name");
     if (lang_name == "language_name") // remove the translation tab, if no translation is used
@@ -123,21 +124,6 @@ AboutDlg::AboutDlg(QWidget *parent) : QDialog(parent)
                              "<a href=\"https://github.com/psi-plus/psi-plus-l10n\">\n"
                              "https://github.com/psi-plus/psi-plus-l10n</a> for further details!");
     ui_.te_translation->appendText(translation);
-}
-
-QString AboutDlg::loadText(const QString &fileName)
-{
-    QString text;
-
-    QFile f(fileName);
-    if (f.open(QIODevice::ReadOnly)) {
-        QTextStream t(&f);
-        while (!t.atEnd())
-            text += t.readLine() + '\n';
-        f.close();
-    }
-
-    return text;
 }
 
 QString AboutDlg::details(QString name, QString email, QString xmppAddress, QString www, QString desc)

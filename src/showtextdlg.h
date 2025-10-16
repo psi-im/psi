@@ -21,6 +21,7 @@
 #define CS_SHOWTEXTDLG_H
 
 #include <QDialog>
+#include "ui_showtextdlg.h"
 
 // TODO looks like its better to not use this class at all
 class ShowTextDlg : public QDialog {
@@ -28,6 +29,9 @@ class ShowTextDlg : public QDialog {
 public:
     ShowTextDlg(const QString &fname, bool rich = false, QWidget *parent = nullptr);
     ShowTextDlg(const QString &text, bool nonfile, bool rich, QWidget *parent);
+private:
+    Ui::ShowTextDlg ui_;
+    void            renderDialog(const QString &text, bool rich);
 };
 
 #endif // CS_SHOWTEXTDLG_H
