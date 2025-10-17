@@ -28,12 +28,12 @@
 #include <QMessageBox>
 #include <QProcess>
 #include <QStandardPaths>
+#include <QTextStream>
 
 #include <sys/types.h>
 #ifdef Q_OS_WIN
 #include <sys/utime.h>
 #else
-#include <QTextStream>
 #include <utime.h>
 #endif
 
@@ -271,9 +271,10 @@ QString FileUtil::readFileText(const QString &filename)
     return text;
 }
 
-QStringList FileUtil::readFileLines(const QString &filename) {
+QStringList FileUtil::readFileLines(const QString &filename)
+{
     QStringList lines;
-    QFile f(filename);
+    QFile       f(filename);
     if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
         return lines;
     }
