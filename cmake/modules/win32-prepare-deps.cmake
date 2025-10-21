@@ -312,10 +312,10 @@ if(WIN32)
                 gstvideo-1.0-0.dll
                 gstwebrtc-1.0-0.dll
                 gstwinrt-1.0-0.dll
-                gst_libs.txt
                 gthread-2.0-0.dll
                 harfbuzz.dll
                 intl-8.dll
+                jpeg8.dll
                 libjpeg-8.dll
                 libpng16-16.dll
                 libvorbis-0.dll
@@ -327,6 +327,11 @@ if(WIN32)
                 opus-0.dll
                 orc-0.4-0.dll
                 pcre2-8-0.dll
+                png16.dll
+                vorbis-0.dll
+                vorbisenc-2.dll
+                x264-164.dll
+                xml2-2.dll
                 z-1.dll
                 )
             set(GSTREAMER_PLUGINS
