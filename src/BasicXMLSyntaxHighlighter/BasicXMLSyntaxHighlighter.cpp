@@ -62,6 +62,7 @@ void BasicXMLSyntaxHighlighter::highlightBlock(const QString &text)
     highlightByRegex(m_xmlAttributeFormat, m_xmlAttributeRegex, text);
     highlightByRegex(m_xmlCommentFormat, m_xmlCommentRegex, text);
     highlightByRegex(m_xmlValueFormat, m_xmlValueRegex, text);
+    highlightByRegex(m_xmlRegularTextFormat, m_xmlRegularTextRegex, text);
 }
 
 void BasicXMLSyntaxHighlighter::highlightByRegex(const QTextCharFormat &format, const QRegularExpression &regex,
@@ -81,6 +82,7 @@ void BasicXMLSyntaxHighlighter::setRegexes()
     m_xmlAttributeRegex.setPattern("\\w+(?=\\=)");
     m_xmlValueRegex.setPattern("\"[^\\n\"]+\"(?=[?\\s/>])");
     m_xmlCommentRegex.setPattern("<!--[^\\n]*-->");
+    m_xmlRegularTextRegex.setPattern("[^>]*(?=<)");
 
     m_xmlKeywordRegexes = QList<QRegularExpression>()
         << QRegularExpression("<\\?") << QRegularExpression("/>") << QRegularExpression(">") << QRegularExpression("<")
@@ -102,4 +104,6 @@ void BasicXMLSyntaxHighlighter::setFormats()
     m_xmlValueFormat.setForeground(Qt::darkRed);
 
     m_xmlCommentFormat.setForeground(Qt::gray);
+
+    m_xmlRegularTextFormat.setForeground(Qt::darkBlue);
 }

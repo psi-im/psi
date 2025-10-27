@@ -50,12 +50,14 @@ private:
     QTextCharFormat m_xmlAttributeFormat;
     QTextCharFormat m_xmlValueFormat;
     QTextCharFormat m_xmlCommentFormat;
+    QTextCharFormat m_xmlRegularTextFormat;
 
     QList<QRegularExpression> m_xmlKeywordRegexes;
     QRegularExpression        m_xmlElementRegex;
     QRegularExpression        m_xmlAttributeRegex;
     QRegularExpression        m_xmlValueRegex;
     QRegularExpression        m_xmlCommentRegex;
+    QRegularExpression        m_xmlRegularTextRegex;
 };
 
 #endif // BASIC_XML_SYNTAX_HIGHLIGHTER_H

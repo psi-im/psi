@@ -128,18 +128,6 @@ void XmlConsole::dumpRingbuf()
     ui_.ck_enable->setChecked(enablesave);
 }
 
-static const QTextFrameFormat frameFormatIncoming = [] {
-    QTextFrameFormat f;
-    f.setBackground(QColorConstants::Svg::lemonchiffon);
-    return f;
-}();
-
-static const QTextFrameFormat frameFormatOutcoming = [] {
-    QTextFrameFormat f;
-    f.setBackground(QColorConstants::Svg::lightpink);
-    return f;
-}();
-
 void XmlConsole::addRecord(bool incoming, const QString &str)
 {
     if (filtered(str))
@@ -150,8 +138,10 @@ void XmlConsole::addRecord(bool incoming, const QString &str)
     bool  wasAtBottom = (prevSPos == scrollBar->maximum());
     auto  prevCur     = textEdit->textCursor();
 
+    QTextFrameFormat f;
+    f.setBackground(incoming ? QColorConstants::Svg::lemonchiffon : QColorConstants::Svg::lightpink);
     textEdit->moveCursor(QTextCursor::End);
-    textEdit->textCursor().insertFrame(incoming ? frameFormatIncoming : frameFormatOutcoming);
+    textEdit->textCursor().insertFrame(f);
     textEdit->insertPlainText(str);
 
     if (!wasAtBottom) {
