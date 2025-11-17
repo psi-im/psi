@@ -17,12 +17,10 @@
  *
  */
 
-// TODO: Move all the 'logic' of groupchats into MUCManager. See MUCManager
-// for more details.
+// TODO: Move all the 'logic' of groupchats into MUCManager
 
 #include "groupchatdlg.h"
 
-#include "accountlabel.h"
 #include "avatars.h"
 #include "avcall/avcall.h"
 #include "bookmarkmanager.h"
@@ -72,38 +70,23 @@
 #include "userlist.h"
 #include "vcardfactory.h"
 
-#include <QAction>
 #include <QCheckBox>
 #include <QClipboard>
-#include <QCloseEvent>
-#include <QContextMenuEvent>
 #include <QCursor>
-#include <QDialogButtonBox>
 #include <QEvent>
 #include <QFormLayout>
-#include <QFrame>
-#include <QHBoxLayout>
 #include <QInputDialog>
 #include <QKeyEvent>
-#include <QLabel>
-#include <QLayout>
 #include <QList>
 #include <QMessageBox>
 #include <QMimeData>
 #include <QPointer>
 #include <QPushButton>
-#include <QResizeEvent>
-#include <QScrollBar>
-#include <QSplitter>
 #include <QTextCursor>
-#include <QTextDocument> // for TextUtil::escape()
 #include <QTimer>
-#include <QToolBar>
 #include <QToolButton>
-#include <QToolTip>
 #include <QVBoxLayout>
 #include <QWidgetAction>
-#include <QWindow>
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -1063,7 +1046,6 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     d->pm_settings = new QMenu(this);
     connect(d->pm_settings, SIGNAL(aboutToShow()), SLOT(buildMenu()));
     ui_.tb_actions->setMenu(d->pm_settings);
-    ui_.tb_actions->setIcon(IconsetFactory::icon("psi/select").icon());
 
     connect(ui_.hsplitter, SIGNAL(splitterMoved(int, int)), this, SLOT(horizSplitterMoved()));
     connect(ui_.vsplitter, SIGNAL(splitterMoved(int, int)), this, SLOT(verticalSplitterMoved(int, int)));
@@ -2419,12 +2401,10 @@ void GCMainDlg::setLooks()
 
     if (PsiOptions::instance()->getOption("options.ui.contactlist.toolbars.m1.visible").toBool()) {
         ui_.toolbar->show();
-        // ui_.tb_actions->hide();
         ui_.tb_emoticons->hide();
     } else {
         ui_.toolbar->hide();
         ui_.tb_emoticons->setVisible(PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool());
-        ui_.tb_actions->show();
     }
 
     if (PsiOptions::instance()->getOption("options.ui.disable-send-button").toBool()) {

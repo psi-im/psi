@@ -295,8 +295,6 @@ void PsiChatDlg::initUi()
     pm_settings_ = new QMenu(this);
     connect(pm_settings_, SIGNAL(aboutToShow()), SLOT(buildMenu()));
     ui_.tb_actions->setMenu(pm_settings_);
-    ui_.tb_actions->setIcon(IconsetFactory::icon("psi/select").icon());
-    ui_.tb_actions->setStyleSheet(" QToolButton::menu-indicator { image:none } ");
 
     connect(account()->client()->capsManager(), &CapsManager::capsChanged, this, &PsiChatDlg::capsChanged);
 
@@ -379,7 +377,6 @@ void PsiChatDlg::setLooks()
     if (smallChat_) {
         ui_.lb_status->hide();
         ui_.le_jid->hide();
-        ui_.tb_actions->hide();
         ui_.tb_emoticons->hide();
         ui_.toolbar->hide();
         ui_.tb_voice->hide();
@@ -388,14 +385,12 @@ void PsiChatDlg::setLooks()
         ui_.le_jid->show();
         if (PsiOptions::instance()->getOption("options.ui.contactlist.toolbars.m0.visible").toBool()) {
             ui_.toolbar->show();
-            ui_.tb_actions->hide();
             ui_.tb_emoticons->hide();
             ui_.tb_voice->hide();
         } else {
             ui_.toolbar->hide();
             ui_.tb_emoticons->setVisible(
                 PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool());
-            ui_.tb_actions->show();
             ui_.tb_voice->setVisible(AvCallManager::isSupported());
         }
     }
