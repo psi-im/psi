@@ -46,7 +46,16 @@
         <string>Search Fields</string>
        </property>
        <layout class="QVBoxLayout" name="vb_search_form">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>1</number>
+        </property>
+        <property name="topMargin">
+         <number>10</number>
+        </property>
+        <property name="rightMargin">
+         <number>1</number>
+        </property>
+        <property name="bottomMargin">
          <number>1</number>
         </property>
         <item>
