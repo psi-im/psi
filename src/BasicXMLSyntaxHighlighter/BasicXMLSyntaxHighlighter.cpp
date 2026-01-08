@@ -82,7 +82,7 @@ void BasicXMLSyntaxHighlighter::setRegexes()
     m_xmlAttributeRegex.setPattern("\\w+(?=\\=)");
     m_xmlValueRegex.setPattern("\"[^\\n\"]+\"(?=[?\\s/>])");
     m_xmlCommentRegex.setPattern("<!--[^\\n]*-->");
-    m_xmlRegularTextRegex.setPattern("[^>\\s]+(?=<)");
+    m_xmlRegularTextRegex.setPattern("(?<=>)(?!\\s*<)[^<]+(?=<)");
 
     m_xmlKeywordRegexes = QList<QRegularExpression>()
         << QRegularExpression("<\\?") << QRegularExpression("/>") << QRegularExpression(">") << QRegularExpression("<")
