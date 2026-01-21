@@ -1353,7 +1353,10 @@ public:
                                + '.' + ext.suffix();
 
                            QFile file(path);
-                           file.open(QIODevice::WriteOnly);
+                           if (!file.open(QIODevice::WriteOnly)) {
+                               qWarning("failed to open %s: %s", qPrintable(path), qPrintable(file.errorString()));
+                               return false;
+                           }
                            QDataStream out(&file);
 
                            QByteArray data = this->loadData(fileName, dir); // "this" for compatibility with old gcc
