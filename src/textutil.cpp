@@ -241,33 +241,37 @@ QString TextUtil::rich2plain(const QString &in, bool collapseSpaces)
 QString TextUtil::resolveEntities(const QStringView &in)
 {
     QString out;
+    out.reserve(in.length());
 
-    for (int i = 0; i < int(in.length()); ++i) {
-        if (in[i] == '&') {
-            // find a semicolon
-            ++i;
-            int n = in.indexOf(';', i);
-            if (n == -1)
-                break;
-            auto type = in.mid(i, (n - i));
-
-            i = n; // should be n+1, but we'll let the loop increment do it
-
-            if (type == QLatin1String { "amp" })
-                out += '&';
-            else if (type == QLatin1String { "lt" })
-                out += '<';
-            else if (type == QLatin1String { "gt" })
-                out += '>';
-            else if (type == QLatin1String { "quot" })
-                out += '\"';
-            else if (type == QLatin1String { "apos" })
-                out += '\'';
-            else if (type == QLatin1String { "nbsp" })
-                out += char(0xa0);
-        } else {
+    for (qsizetype i = 0; i < int(in.length()); i++) {
+        if (in[i] != '&') {
             out += in[i];
+            continue;
         }
+        // find a semicolon
+        qsizetype n = in.indexOf(';', i+1);
+        if (n == -1) {
+            out += in[i];
+            continue;
+        }
+        auto type = in.mid(i+1, (n - (i+1)));
+        if (type == QLatin1String { "amp" })
+            out += '&';
+        else if (type == QLatin1String { "lt" })
+            out += '<';
+        else if (type == QLatin1String { "gt" })
+            out += '>';
+        else if (type == QLatin1String { "quot" })
+            out += '\"';
+        else if (type == QLatin1String { "apos" })
+            out += '\'';
+        else if (type == QLatin1String { "nbsp" })
+            out += char(0xa0);
+        else {
+            out += in[i];
+            continue;
+        }
+        i = n; // should be n+1, but we'll let the loop increment do it
     }
 
     return out;
@@ -502,7 +506,7 @@ QString TextUtil::linkify(const QString &in)
 #else
             auto linkColor = ColorOpt::instance()->color("options.ui.look.colors.messages.link");
             // we have visited link as well but it's no applicable to QTextEdit or we have to track visited manually
-            linked = QString("<a href=\"%1\" style=\"color:%2\">").arg(href, linkColor.name());
+            linked = QString(R"(<a href="%1" style="color:%2">)").arg(href, linkColor.name());
 #endif
             linked += (escape(link) + "</a>" + escape(pre.mid(cutoff)));
             out.replace(x1, len, linked);
@@ -642,17 +646,16 @@ QString TextUtil::img2title(const QString &in)
 
 QString TextUtil::legacyFormat(const QString &in)
 {
-
     // enable *bold* stuff
     // //old code
-    // out=out.replace(QRegularExpression("(^[^<>\\s]*|\\s[^<>\\s]*)\\*(\\S+)\\*([^<>\\s]*\\s|[^<>\\s]*$)"),"\\1<b>*\\2*</b>\\3");
-    // out=out.replace(QRegularExpression("(^[^<>\\s\\/]*|\\s[^<>\\s\\/]*)\\/([^\\/\\s]+)\\/([^<>\\s\\/]*\\s|[^<>\\s\\/]*$)"),"\\1<i>/\\2/</i>\\3");
-    // out=out.replace(QRegularExpression("(^[^<>\\s]*|\\s[^<>\\s]*)_(\\S+)_([^<>\\s]*\\s|[^<>\\s]*$)"),"\\1<u>_\\2_</u>\\3");
+   //  out=out.replace(QRegularExpression(R"((^[^<>\s]*|\s[^<>\s]*)\*(\S+)\*([^<>\s]*\s|[^<>\s]*$))"), "\\1<b>*\\2*</b>\\3");
+   //  out=out.replace(QRegularExpression(R"((^[^<>\s\/]*|\s[^<>\s\/]*)\/([^\/\s]+)\/([^<>\s\/]*\s|[^<>\s\/]*$))"), "\\1<i>/\\2/</i>\\3");
+   //  out=out.replace(QRegularExpression(R"((^[^<>\s]*|\s[^<>\s]*)_(\S+)_([^<>\s]*\s|[^<>\s]*$))"), "\\1<u>_\\2_</u>\\3");
 
     QString out = in;
-    out = out.replace(QRegularExpression("(^|\\s|>)_(\\S+)_(?=<|\\s|$)"), "\\1<u>_\\2_</u>"); // underline inside _text_
-    out = out.replace(QRegularExpression("(^|\\s|>)\\*(\\S+)\\*(?=<|\\s|$)"), "\\1<b>*\\2*</b>"); // bold *text*
-    out = out.replace(QRegularExpression("(^|\\s|>)\\/(\\S+)\\/(?=<|\\s|$)"), "\\1<i>/\\2/</i>"); // italic /text/
+    out = out.replace(QRegularExpression(R"((^|\s|>)_(\S+)_(?=<|\s|$))"), "\\1<u>_\\2_</u>"); // underline inside _text_
+    out = out.replace(QRegularExpression(R"((^|\s|>)\*(\S+)\*(?=<|\s|$))"), "\\1<b>*\\2*</b>"); // bold *text*
+    out = out.replace(QRegularExpression(R"((^|\s|>)\/(\S+)\/(?=<|\s|$))"), "\\1<i>/\\2/</i>"); // italic /text/
 
     return out;
 }
