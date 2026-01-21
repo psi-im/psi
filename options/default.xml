@@ -255,7 +255,7 @@ QLineEdit#le_status_text {
                 <show-status-icons type="bool">true</show-status-icons>
                 <status-icon-over-avatar type="bool">true</status-icon-over-avatar>
                 <show-tune-icons type="bool">true</show-tune-icons>
-                <show-client-icons type="bool">true</show-client-icons>
+                <show-client-icons type="bool">false</show-client-icons>
                 <show-all-client-icons type="bool">false</show-all-client-icons>
                 <toolbars/>
                 <use-left-click type="bool">false</use-left-click>
@@ -314,7 +314,7 @@ QLineEdit#le_status_text {
                     <show-groups type="bool">true</show-groups>
                     <use-slim-group-headings type="bool">false</use-slim-group-headings>
                     <nick-coloring type = "bool">true</nick-coloring>
-                    <show-client-icons type = "bool">true</show-client-icons>
+                    <show-client-icons type = "bool">false</show-client-icons>
                     <show-affiliation-icons type = "bool">false</show-affiliation-icons>
                     <contact-sort-style type = "QString">alpha</contact-sort-style>
                     <show-status-icons type = "bool">false</show-status-icons>
