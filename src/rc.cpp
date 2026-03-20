@@ -42,17 +42,11 @@ AHCommand RCSetStatusServer::execute(const AHCommand &c, const Jid &)
     if (!c.hasData()) {
         // Initial set status form
         XData form;
+        form.setRegistrarType("http://jabber.org/protocol/rc");
         form.setTitle(QObject::tr("Set Status"));
         form.setInstructions(QObject::tr("Choose the status and status message"));
         form.setType(XData::Data_Form);
         XData::FieldList fields;
-
-        XData::Field type_field;
-        type_field.setType(XData::Field::Field_Hidden);
-        type_field.setVar("FORM_TYPE");
-        type_field.setValue(QStringList("http://jabber.org/protocol/rc"));
-        type_field.setRequired(false);
-        fields += type_field;
 
         XData::Field status_field;
         status_field.setType(XData::Field::Field_ListSingle);
@@ -154,17 +148,11 @@ AHCommand RCSetOptionsServer::execute(const AHCommand &c, const Jid &)
     if (!c.hasData()) {
         // Initial set options form
         XData form;
+        form.setRegistrarType("http://jabber.org/protocol/rc");
         form.setTitle(QObject::tr("Set Options"));
         form.setInstructions(QObject::tr("Set the desired options"));
         form.setType(XData::Data_Form);
         XData::FieldList fields;
-
-        XData::Field type_field;
-        type_field.setType(XData::Field::Field_Hidden);
-        type_field.setVar("FORM_TYPE");
-        type_field.setValue(QStringList("http://jabber.org/protocol/rc"));
-        type_field.setRequired(false);
-        fields += type_field;
 
         XData::Field sounds_field;
         sounds_field.setType(XData::Field::Field_Boolean);
