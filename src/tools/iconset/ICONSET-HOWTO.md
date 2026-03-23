@@ -23,9 +23,9 @@ Step-by-step guide how to create an iconset.
            <description>Iconset Description</description>
            <creation>2003-01-25</creation> <!-- Creation date yyyy-mm-dd -->
            <home>https://www.myiconsethomepage.com</home>
-           <author    jid='mblsha@jabber.ru'
+           <author jid='mblsha@jabber.ru'
                email='mblsha@spammeanddie.com'
-               www='hhtp://maz.sf.net'>Michail Pishchagin</author>
+               www='https://maz.sf.net'>Michail Pishchagin</author>
            <author>I.M. Anonymous</author>
        </meta>
    </icondef>

@@ -108,6 +108,7 @@ The work of translators is quite routine and boring. People who do it usually lo
 ### Graphics
 
 There are many ways to contribute to the Psi project, if you think you can do a better job with any of the Psi graphics, then go right ahead!
+You can create own emoticons and icon packs, see [HOWTO ICONSET](src/tools/iconset/ICONSET-HOWTO.md).
 
 ### Programming
 

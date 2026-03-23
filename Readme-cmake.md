@@ -1,13 +1,14 @@
-# Howto build Psi/Psi+ using cmake utility
+# Howto build Psi using cmake utility
 
 ## Prepare sources:
 
 ```sh
-mkdir build && cd build
+mkdir buildir && cd buildir
 cmake FLAGS ..
 ```
 
-  instead of FLAGS can be the flags from the "Usefull CMAKE FLAGS" section
+  Here instead of the `FLAGS` can be the flags from the "Useful CMAKE FLAGS" section.
+  You may omit the flags.
 
 ## Build sources:
 
@@ -21,7 +22,7 @@ or
 make
 ```
 
-## Install Psi/Psi+:
+## Install Psi:
 
 ```sh
 cmake --build . --target install --
@@ -33,7 +34,7 @@ or
 make install
 ```
 
-## To run Psi/Psi+ without installation:
+## To run Psi without installation:
 
 ```sh
 cmake --build . --target prepare-bin
@@ -47,163 +48,192 @@ cd psi && ./psi && cd .. #For Psi
 cd psi && ./psi-plus && cd .. #For Psi+
 ```
 
-## Usefull CMAKE FLAGS:
+## Useful CMAKE FLAGS:
 
 > -DPSI_PLUS=ON
 
-  Build Psi+ client instead of Psi (default OFF)
+  Build Psi+ client instead of Psi.
+  (default `OFF`)
 
 > -DPSI_LIBDIR=${path}
 
-  Path to Psi/Psi+ libraries directory. Path to the directory
-  where Psi/Psi+ will search plugins.
+  Path to Psi libraries directory. Path to the directory
+  where Psi will search plugins.
 
 > -DPSI_DATADIR=${path}
 
-  Path to Psi/Psi+ data directory. Path to the directory
-  where Psi/Psi+ will search datafiles (iconpacks, themes, etc)
+  Path to Psi data directory. Path to the directory
+  where Psi will search datafiles (iconpacks, themes, etc).
 
 > -DCMAKE_INSTALL_PREFIX=prefix
 
-  to set installation prefix
+  To set installation prefix (installation folder).
 
 > -DBUNDLED_IRIS=ON
 
-  to build the Iris library bundled (default ON)
+  To build the `Iris` library bundled.
+  (default `ON`)
 
 > -DBUNDLED_IRIS_ALL=ON
 
-  to build iris library bundled with QCA bundled and USRSCTP bundled (default OFF)
+  To build `iris` library bundled with `QCA` bundled and `USRSCTP` bundled.
+  (default `OFF`)
 
 > -DIRIS_BUNDLED_QCA=ON
 
-  to build qca library from https://github.com/psi-im/qca with Psi
-  Adds: DTLS, Blake2b and other useful for XMPP crypto-stuff
+  To build `QCA` library from https://github.com/psi-im/qca with Psi.
+  Adds: `DTLS`, `Blake2b` and other useful for XMPP crypto-stuff.
+  (default `OFF`)
 
 > -DJINGLE_SCTP=ON
 
-  enable SCTP over ICE Jingle transport / data channels
-  adds the BUNDLED_USRSCTP option if ON (default ON)
+  Enable `SCTP` over `ICE Jingle` transport / data channels.
+  Adds the `BUNDLED_USRSCTP` option if `ON`.
+  (default `ON`)
 
 > -DIRIS_BUNDLED_USRSCTP=ON
 
-  to build usrsctp library from the official GitHub repository,
-  Compile compatible usrsctp lib when system one is not available or
-  incompatible (required for p2p file transfer. Available only if
-  JINGLE_SCTP flag is set to ON)
+  To build `usrsctp` library (required for p2p file transfer) from the official GitHub repository.
+  Compile compatible `usrsctp` lib when system one is not available or incompatible with Psi.
+  Available only if `JINGLE_SCTP` flag is set to `ON`).
+  (default `OFF`)
 
 > -DBUNDLED_KEYCHAIN=ON
 
-  to build QtKeychain library bundled (useful for macOS) (default OFF)
+  To build `QtKeychain` library bundled  from the official GitHub repository.
+  Useful for build on macOS.
+  (default `OFF`)
 
 > -DUSE_ASPELL=OFF
 
-  to use Aspell spellchecker (default OFF)
+  To use `Aspell` spellchecker.
+  (default `OFF`)
 
 > -DUSE_ENCHANT=ON
 
-  to use Enchant spellchecker (default OFF)
+  To use `Enchant` spellchecker.
+  (default `OFF`)
 
 > -DUSE_HUNSPELL=ON
 
-  to use Hunspell spellchecker (default ON)
-
-> -DUSE_HUNSPELL=ON
-
-  to use Aspell spellchecker (default OFF)
+  To use `Hunspell` spellchecker.
+  (default `ON`)
 
 > -DCHAT_TYPE=BASIC
 
-   to set a type of chatlog engine. Possible values: `WEBKIT`, `WEBENGINE`, `BASIC`
-   default value: `BASIC`
+   To set a type of chatlog engine. Possible values: `WEBKIT`, `WEBENGINE`, `BASIC`.
+   Default value: `BASIC`.
 
 > -DPSI_VERSION=${version}
 
-  to set the Psi/Psi+ version manually
+  To set the Psi version manually.
   Example for Psi+: `1.0.40 (2017-06-05, Psi:a7d2d7b8, Psi+:055e945, webkit)`.
   Script sets this flag automatically from `version` file if it exists in sources directory
 
-> -DCMAKE_BUILD_TYPE=Release (default: Release)
+> -DCMAKE_BUILD_TYPE=Release
 
-  to set a build type. Possible values: `DEBUG`, `RELEASE`, `RELWITHDEBINFO`, `MINSIZEREL`
+  To set a build type. Possible values: `DEBUG`, `RELEASE`, `RELWITHDEBINFO`, `MINSIZEREL`.
+  (default: `Release`)
 
-> -USE_CCACHE=ON (default: ON)
+> -USE_CCACHE=ON
 
-  to enable ccache utility support
+  To enable `ccache` utility support.
+  (default: `ON`)
 
-> -DUSE_MXE=ON (default: OFF)
+> -DUSE_MXE=ON
 
-  Enables MXE (M cross environment) support.
-  Disables USE_CCACHE. Script can automatically detect MXE.
+  Enables `MXE` ("M cross environment") support.
+  Disables `USE_CCACHE` and adds new dependencies, if the flag `PRODUCTION` is on.
+  Script can automatically detect `MXE`.
+  (default: `OFF`)
 
 > -DVERBOSE_PROGRAM_NAME=ON
 
-  Verbose output program name. (default OFF)
-  Experimental flag. Exmaple of output name: psi-plus-webkit
+  Verbose output program name.
+  Experimental flag. After compilation will be created a binary file not with
+  the name `psi` or `psi-plus`, but, for example, `psi-webkit` or `psi-plus-webengine`.
+  (default `OFF`)
 
 > -DPRODUCTION=ON
 
-  to build a release version of Psi/Psi+
+  To build a release version of Psi/Psi+.
+  (Default for the Psi is `ON`, for the Psi+ is `OFF`)
 
 > -DUSE_KEYCHAIN=ON
 
-  to enable Qt5Keychain library support
+  To enable `Qt5Keychain` library support.
 
 > -DBUILD_PSIMEDIA=ON
 
-  build psimedia plugin if sources are found in the project folder
+  To build `psimedia` plugin if sources are found in the project folder.
 
 > -DONLY_BINARY=OFF
 
-  When ON then only the binary file will be installed
+  When `ON` then only the binary file will be installed.
 
 > -DINSTALL_EXTRA_FILES=ON
 
-  If OFF - sounds, certificates, iconsets, themes and cilent_icons.txt
-  file will not be installed
+  If `OFF` - sounds, certificates, iconsets, themes and `client_icons.txt`
+  file will not be installed.
 
 > -DINSTALL_PLUGINS_SDK=ON
 
-  If this flag is ON then with psi will be installed PluginsAPI that needed
-  to build plugins separately of main program sources
-  (default OFF)
+  If this flag is `ON` then with Psi will be installed PluginsAPI
+  that needed to build plugins separately of main program sources.
+  This might be useful for package maintainers.
+  (default `OFF`)
 
 > -DENABLE_PLUGINS=ON
 
-  to build psi plugins (default OFF)
+  To build plugins.
+  If there are no plugins in the `plugins` directory, the script will fail with an error.
+  (default `OFF`)
 
 > -DONLY_PLUGINS=ON
 
-  to build only psi plugins (default OFF). On enabling this flag
-  ENABLE_PLUGINS flag turns on automatically
+  To build only plugins without build of the Psi.
+  On enabling this flag `ENABLE_PLUGINS` flag turns on automatically.
+  (default `OFF`)
 
 > -DDEV_MODE=ON
 
-  In OS Windows enables prepare-bin-libs target. Allows copying the necessary libraries to run Psi/Psi+.
-  In Linux sets PSI_DATA directory to the current binary directory (Usefully to debug plugins)
+  Useful to debug plugins.
+  On Windows, enables the `prepare-bin-libs` build target.
+  This flag is useful for running Psi immediately after building during development.
+  When this flag is enabled, the script searches for dependency libraries 
+  and copies them to the build directory with the command: `make prepare-bin-libs`.
+  
+  On Linux, it enables developer mode and, together with the `ENABLE_PLUGINS` flag.
+  When using `psi-plus-snapshots` allows debugging plugins without installing the Psi.
+  Sets the `PSI_DATA` directory to the current executable directory.
 
 > -DUSE_XSS=ON
 
-  In Linux OS adds XScreensaver support (default ON).
+  In Linux adds `XScreensaver` support.
+  (default `ON`).
 
 > -DUSE_DBUS=ON
 
-  In Linux OS enables DBus support for client management, notifications, tunes (default ON).
+  In Linux enables `DBus` support for client management, notifications, tunes.
+  (default `ON`).
 
 > -DUSE_X11=ON
 
-  Enable X11 features support (default ON)
+  Enable `X11` features support.
+  (default `ON`)
 
 > -DLIMIT_X11_USAGE=ON
 
-  Disable usage of X11 features which may crash program (default OFF)
+  Disable usage of `X11` features which may crash program.
+  (default `OFF`)
 
 > -DUSE_TASKBARNOTIFIER=ON
 
   Shows the incoming events count on the program icon.
-  For Linux systems, it uses the DBus service com.canonical.Unity if available.
-  Windows it uses an icon overlay mechanism.
-  Or simply changes the program icon for other cases. (default ON)
+  For Linux systems, it uses the `DBus` service `com.canonical.Unity` if available.
+  On Windows is used an icon overlay mechanism.
+  Or simply changes the program icon for other cases.
+  (default `ON`)
 
 ## Work with plugins:
 
@@ -211,64 +241,64 @@ cd psi && ./psi-plus && cd .. #For Psi+
 
 > -DBUILD_PLUGINS=${plugins}
 
-  set a list of plugins to build. To build all plugins: `-DBUILD_PLUGINS="ALL"` or do not set this flag
+  To set a list of plugins to build. To build all plugins: `-DBUILD_PLUGINS="ALL"` or do not set this flag.
 
-  possible values for the `${plugins}`:
-   - historykeeperplugin
-   - stopspamplugin
-   - juickplugin
-   - translateplugin
-   - gomokugameplugin
-   - attentionplugin
-   - cleanerplugin
-   - autoreplyplugin
-   - contentdownloaderplugin
-   - qipxstatusesplugin
-   - skinsplugin
-   - clientswitcherplugin
-   - watcherplugin
-   - videostatusplugin
-   - screenshotplugin
-   - jabberdiskplugin
-   - storagenotesplugin
-   - extendedoptionsplugin
-   - imageplugin
-   - extendedmenuplugin
-   - birthdayreminderplugin
-   - pepchangenotifyplugin
-   - omemoplugin
-   - openpgpplugin
-   - otrplugin
-   - chessplugin
-   - conferenceloggerplugin
-   - enummessagesplugin
-   - httpuploadplugin
-   - imagepreviewplugin
+  Possible values for the `${plugins}` (you may determine by a contents of the [plugins/generic](https://github.com/psi-im/plugins/tree/master/generic) directory):
+   - `attentionplugin`
+   - `autoreplyplugin`
+   - `battleshipgameplugin`
+   - `birthdayreminderplugin`
+   - `chessplugin`
+   - `cleanerplugin`
+   - `clientswitcherplugin`
+   - `conferenceloggerplugin`
+   - `contentdownloaderplugin`
+   - `enummessagesplugin`
+   - `extendedmenuplugin`
+   - `extendedoptionsplugin`
+   - `gomokugameplugin`
+   - `historykeeperplugin`
+   - `imageplugin`
+   - `imagepreviewplugin`
+   - `jabberdiskplugin`
+   - `juickplugin`
+   - `messagefilterplugin`
+   - `omemoplugin`
+   - `openpgpplugin`
+   - `otrplugin`
+   - `pepchangenotifyplugin`
+   - `qipxstatusesplugin`
+   - `skinsplugin`
+   - `stopspamplugin`
+   - `storagenotesplugin`
+   - `translateplugin`
+   - `videostatusplugin`
+   - `watcherplugin`
 
   Example:
 
   > -DBUILD_PLUGINS="chessplugin;otrplugin"
 
-  The BUILD_PLUGINS variable can also be used as a blacklist.
+  The `BUILD_PLUGINS` variable can also be used as a blacklist.
   In this case, all plugins will be compiled, except those indicated.
-  To do this, just specify the variable as
+  To do this, just specify the variable asЖ
 
   > -DBUILD_PLUGINS="-chessplugin;-otrplugin"
 
-  and plugins `chessplugin` and `otrplugin` will not be assembled
+  and plugins `chessplugin` and `otrplugin` will not be assembled.
 
-  ATTENTION! Mixing white and blacklists is not allowed.
+  **ATTENTION!** Mixing white and blacklists is not allowed.
 
 > -DPLUGINS_ROOT_DIR=${path}
 
-  Path to the include directory to build plugins outside of Psi/Psi+
-  sources (path to the plugins.cmake file)
+  Path to the include directory to build plugins outside of Psi
+  sources (path to the `plugins.cmake` file)
 
 > -DPLUGINS_PATH=${path}
 
-  to install plugins into `${path}`. To install into default suffix:
+  To install plugins into `${path}`. To install into default suffix:
 
-  -DPLUGINS_PATH=lib/psi-plus/plugins or do not set this flag
+  `-DPLUGINS_PATH=lib/psi-plus/plugins` or do not set this flag.
 
   For example, to install plugins into `~/.local/share/psi+/plugins`:
 
@@ -280,63 +310,81 @@ cd psi && ./psi-plus && cd .. #For Psi+
 
 ## Win32 or MXE Section:
 
-> -DQCA_DIR=DIRECTORY
-
-  to set Qca library root directory
-
-> -DZLIB_ROOT=DIRECTORY
-
-  to set Zlib library root directory
-
-> -DHUNSPELL_ROOT=DIRECTORY
-
-  to set Hunspell library root directory
+No program installation is required for assembly under Windows OS!!!
 
 > -DENABLE_PORTABLE=ON
 
-  to build a portable version (not need to rename binary).
-  Enables prepare-bin-libs target.
+  To build a portable version (this is done for convenience, so you don't have to rename the binary manually).
+  The output will be "binary-name-portable.exe", and if `VERBOSE_PROGRAM_NAME=ON`,
+  then "extended-binary-name-portable.exe".
+  Enabling this flag automatically makes the `prepare-bin-libs` build target available.
+  (The default is `OFF`).
+
+> -DQCA_DIR=DIRECTORY
+
+  To set `Qca` library root directory.
+
+> -DZLIB_ROOT=DIRECTORY
+
+  To set `Zlib` library root directory.
+
+> -DHUNSPELL_ROOT=DIRECTORY
+
+  To set `Hunspell` library root directory.
 
 > -DNO_DEBUG_OPTIMIZATION=OFF
 
-  Disable optimization for debug builds. Windows only (default OFF)
+  Disable optimization for debug builds. Windows only.
+  (default `OFF`)
 
-### To build OTRPLUGIN in OS WINDOWS you need to set additional variables
+### To build OTR plugin in OS WINDOWS you need to set additional variables
 
 > -DLIBGCRYPT_ROOT=%LIBGCRYPT_ROOT%
 
-  path to `LIBGCRYPT` library root directory
+  Set path to `LIBGCRYPT` library root directory.
 
 > -DLIBGPGERROR_ROOT=%LIBGPGERROR_ROOT%
 
-  path to `LIBGPG-ERROR` library root directory
+  Set path to `LIBGPG-ERROR` library root directory.
 
 > -DLIBOTR_ROOT=%LIBOTR_ROOT%
 
-  path to LIBOTR library root directory
+  Set path to the `LIBOTR` library root directory.
 
 > -DLIBTIDY_ROOT=%LIBTIDY_ROOT%
 
-  path to LIBTIDY library root directory
+  Set path to the `LIBTIDY` library root directory.
 
   For example:
 
-  > -DLIBGCRYPT_ROOT=C:\libgcrypt -DLIBGPGERROR_ROOT=C:\libgpg-error -DLIBOTR_ROOT=C:\libotr -DLIBTIDY_ROOT=C:\libtidy
+  `-DLIBGCRYPT_ROOT=C:\libgcrypt -DLIBGPGERROR_ROOT=C:\libgpg-error -DLIBOTR_ROOT=C:\libotr -DLIBTIDY_ROOT=C:\libtidy`
 
-### If you are using Psi+ SDK you need to set SDK_PATH:
+> -DNO_DEBUG_OPTIMIZATION=OFF
+
+  Disable compiler optimizations when building the debug version.
+  (default is `OFF`)
+
+
+### If you are using Psi SDK you need to set SDK_PATH:
 
 > -DSDK_PATH=path
+
+  If you set this flag, you don't need to set the flags for the root directories 
+  of the libraries dependencies.
 
 ### macOS specific flags
 
 > -DUSE_SPARKLE=ON
 
-  Use Sparkle for macOS builds (default ON)
+  Use Sparkle for macOS builds.
+  (default `ON`)
 
 > -DUSE_GROWL=OFF
 
-  Use growl for macOS builds (default OFF)
+  Use growl for macOS builds.
+  (default `OFF`)
 
 > -DUSE_MAC_DOC=OFF
 
-  Use macOS dock (default OFF)
+  Use macOS dock.
+  (default `OFF`)
