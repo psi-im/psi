@@ -145,28 +145,30 @@ static QString unixHeuristicDetect()
     for (int i = 0; osInfo[i].id != LinuxNone; i++) {
         QFileInfo fi(osInfo[i].file);
         if (fi.exists()) {
-            char buffer[128];
-
             QFile f(osInfo[i].file);
-            f.open(QIODevice::ReadOnly);
-            f.readLine(buffer, 128);
-            QString desc = QString::fromUtf8(buffer);
+            if (!f.open(QIODevice::ReadOnly)) {
+                qWarning("failed to open %s", qPrintable(f.errorString()));
+            } else {
+                char buffer[128];
+                f.readLine(buffer, 128);
+                QString desc = QString::fromUtf8(buffer);
 
-            desc = desc.trimmed();
+                desc = desc.trimmed();
 
-            switch (osInfo[i].flags) {
-            case OsUseFile:
-                ret = desc;
-                break;
-            case OsUseName:
-                ret = osInfo[i].name;
-                break;
-            case OsAppendFile:
-                ret = osInfo[i].name + " (" + desc + ")";
+                switch (osInfo[i].flags) {
+                case OsUseFile:
+                    ret = desc;
+                    break;
+                case OsUseName:
+                    ret = osInfo[i].name;
+                    break;
+                case OsAppendFile:
+                    ret = osInfo[i].name + " (" + desc + ")";
+                    break;
+                }
+
                 break;
             }
-
-            break;
         }
     }
     return ret;
