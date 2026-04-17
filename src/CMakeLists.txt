@@ -296,18 +296,34 @@ if(LANGS_EXISTS)
         )
 
     #update translations with: make lupdate
-    add_custom_target(lupdate)
-    foreach(_LANG ${PSI_TRANSLATIONS})
-        get_filename_component(_SHORT_LANG ${_LANG} NAME_WE)
-        string(REPLACE "@" "_" _SHORT_LANG ${_SHORT_LANG})
-        add_custom_command(TARGET lupdate
-            PRE_BUILD
-            COMMAND ${QT_LUPDATE_EXECUTABLE}
-            ARGS -no-obsolete -recursive ${CMAKE_CURRENT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/iris -ts ${_LANG}
-            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-            VERBATIM
+    if(${QT_DEFAULT_MAJOR_VERSION} LESS 6)
+        foreach(_LANG ${PSI_TRANSLATIONS})
+            add_custom_target(lupdate)
+            get_filename_component(_SHORT_LANG ${_LANG} NAME_WE)
+            string(REPLACE "@" "_" _SHORT_LANG ${_SHORT_LANG})
+            add_custom_command(TARGET lupdate
+                PRE_BUILD
+                COMMAND ${QT_LUPDATE_EXECUTABLE}
+                ARGS -no-obsolete -recursive ${CMAKE_CURRENT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/iris ${PROJECT_SOURCE_DIR}/plugins -ts ${_LANG}
+                WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+                VERBATIM
+            )
+        endforeach()
+    else()
+        qt_add_lupdate(
+            TS_FILES ${PSI_TRANSLATIONS}
+            SOURCES
+            ${SOURCES}
+            ${HEADERS}
+            ${UI_FORMS}
+            INCLUDE_DIRECTORIES
+            ${CMAKE_CURRENT_SOURCE_DIR}
+            ${PROJECT_SOURCE_DIR}/iris
+            ${PROJECT_SOURCE_DIR}/plugins
+            LUPDATE_TARGET lupdate
+            OPTIONS  -no-obsolete -recursive
         )
-    endforeach()
+    endif()
 
     # Psi translations
     Qt_add_translation(QM ${PSI_TRANSLATIONS})

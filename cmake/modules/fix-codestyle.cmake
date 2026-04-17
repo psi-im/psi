@@ -2,7 +2,7 @@ cmake_minimum_required( VERSION 3.10.0 )
 
 #Find clang-format binary
 find_program(CLF_BIN clang-format DOC "Path to clang-format binary")
-if(CLF_BIN)
+if(NOT "${CLF_BIN}" STREQUAL "CLF_BIN-NOTFOUND")
     #Obtain list of source files
     file(GLOB_RECURSE SRC_LIST
         *.c
