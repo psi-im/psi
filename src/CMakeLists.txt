@@ -297,8 +297,8 @@ if(LANGS_EXISTS)
 
     #update translations with: make lupdate
     if(${QT_DEFAULT_MAJOR_VERSION} LESS 6)
+        add_custom_target(lupdate)
         foreach(_LANG ${PSI_TRANSLATIONS})
-            add_custom_target(lupdate)
             get_filename_component(_SHORT_LANG ${_LANG} NAME_WE)
             string(REPLACE "@" "_" _SHORT_LANG ${_SHORT_LANG})
             add_custom_command(TARGET lupdate
