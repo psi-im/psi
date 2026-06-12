@@ -149,7 +149,6 @@ private:
 #endif
 #if !defined(LIMIT_X11_USAGE)
         XModifierKeymap *map = XGetModifierMapping(appDpy);
-#endif
         if (map) {
             // XKeycodeToKeysym helper code adapeted from xmodmap
             int min_keycode, max_keycode, keysyms_per_keycode_return, keysyms_per_keycode = 1;
@@ -208,6 +207,7 @@ private:
         }
 
         haveMods = true;
+#endif
     }
 
 public:
