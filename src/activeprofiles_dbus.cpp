@@ -53,7 +53,7 @@ static QString encodeAlNumD(QString in)
 #if QT_VERSION < QT_VERSION_CHECK(6, 9, 0)
             out += QString("-%1").arg(c, 2, 16, QChar('0'));
 #else
-            out += QString("-%1").arg(QString::number(c, 16), QChar('0'));
+            out += QString::asprintf("-%02x", static_cast<unsigned int>(static_cast<unsigned char>(c)));
 #endif
         }
         first = false;
