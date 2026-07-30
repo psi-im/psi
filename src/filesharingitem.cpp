@@ -94,11 +94,14 @@ FileSharingItem::FileSharingItem(const QImage &image, PsiAccount *acc, FileShari
         _mimeType = QString::fromLatin1("image/png");
         _fileSize = quint64(ba.size());
         QTemporaryFile file(QDir::tempPath() + QString::fromLatin1("/psishare-XXXXXX.png"));
-        file.open();
-        file.write(ba);
-        file.setAutoRemove(false);
-        _fileName = file.fileName();
-        file.close();
+        if (file.open()) {
+            file.write(ba);
+            file.setAutoRemove(false);
+            _fileName = file.fileName();
+            file.close();
+        } else {
+            qWarning("failed to open %s", qPrintable(file.errorString()));
+        }
     }
 }
 
@@ -137,11 +140,14 @@ FileSharingItem::FileSharingItem(const QString &mime, const QByteArray &data, co
         QString        fileExt = db.mimeTypeForData(data).suffixes().value(0);
         QTemporaryFile file(QDir::tempPath() + QString::fromLatin1("/psi-XXXXXX")
                             + (fileExt.isEmpty() ? fileExt : QString('.') + fileExt));
-        file.open();
-        file.write(data);
-        file.setAutoRemove(false);
-        _fileName = file.fileName();
-        file.close();
+        if (file.open()) {
+            file.write(data);
+            file.setAutoRemove(false);
+            _fileName = file.fileName();
+            file.close();
+        } else {
+            qWarning("failed to open %s", qPrintable(file.errorString()));
+        }
     }
 }
 
@@ -162,7 +168,7 @@ bool FileSharingItem::initFromCache(FileCacheItem *cache)
     if (!cache)
         return false;
 
-    _flags       = {};
+    _flags       = { };
     auto md      = cache->metadata();
     _mimeType    = md.value(QString::fromLatin1("type")).toString();
     QString link = md.value(QString::fromLatin1("link")).toString();
@@ -385,7 +391,7 @@ FileShareDownloader *FileSharingItem::download(std::optional<Range> range)
         file.addHash(h);
     }
 
-    auto downloaderRange = std::optional<FileShareDownloader::Range> {};
+    auto downloaderRange = std::optional<FileShareDownloader::Range> { };
     if (range) {
         downloaderRange = FileShareDownloader::Range { range->start, range->size };
     }

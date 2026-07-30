@@ -131,8 +131,13 @@ void GAdvancedWidget::Private::posChanging(int *x, int *y, int *width, int *heig
         QRect rect;
         bool  dockWidget = false;
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         if (w->windowType() == Qt::Desktop)
             rect = w->frameGeometry();
+#else
+        if (w->windowType() == Qt::ForeignWindow || w->windowType() == Qt::CoverWindow)
+            rect = w->screen()->availableGeometry();
+#endif
         else {
             if (w == p || parentScreen != w->screen())
                 continue;
