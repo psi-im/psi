@@ -341,7 +341,7 @@ static QByteArray encodeUri(const QByteArray &in)
             out += in[n];
         } else {
             char hex[5];
-            qsnprintf(hex, 5, "\\x%02x", c);
+            std::snprintf(hex, sizeof(hex), "\\x%02x", static_cast<unsigned char>(c));
             out += QByteArray::fromRawData(hex, 4);
         }
     }

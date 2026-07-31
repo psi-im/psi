@@ -299,10 +299,13 @@ void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
                     connect(app, &Jingle::FileTransfer::Application::deviceRequested, this,
                             [fn, app](quint64 offset, std::optional<quint64> size) {
                                 auto f = new QFile(fn, app);
-                                f->open(QIODevice::WriteOnly);
-                                f->seek(qint64(offset));
-                                Q_UNUSED(size)
-                                app->setDevice(f);
+                                if (f->open(QIODevice::WriteOnly)) {
+                                    f->seek(qint64(offset));
+                                    Q_UNUSED(size)
+                                    app->setDevice(f);
+                                } else {
+                                    qWarning("failed to open %s", qPrintable(f->errorString()));
+                                }
                             });
                 }
             }
@@ -321,10 +324,13 @@ void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
                 connect(app, &Jingle::FileTransfer::Application::deviceRequested, this,
                         [fn, app](quint64 offset, std::optional<quint64> size) {
                             auto f = new QFile(fn, app);
-                            f->open(QIODevice::WriteOnly);
-                            f->seek(qint64(offset));
-                            Q_UNUSED(size);
-                            app->setDevice(f);
+                            if (f->open(QIODevice::WriteOnly)) {
+                                f->seek(qint64(offset));
+                                Q_UNUSED(size);
+                                app->setDevice(f);
+                            } else {
+                                qWarning("failed to open %s", qPrintable(f->errorString()));
+                            }
                         });
             }
         }
@@ -363,10 +369,13 @@ void MultiFileTransferDlg::addTransferContent(MultiFileTransferItem *item)
     connect(app, &Jingle::FileTransfer::Application::deviceRequested, item,
             [app, item](quint64 offset, std::optional<quint64> size) {
                 auto f = new QFile(item->filePath(), app);
-                f->open(QIODevice::ReadOnly);
-                f->seek(qint64(offset));
-                app->setDevice(f);
-                Q_UNUSED(size);
+                if (f->open(QIODevice::ReadOnly)) {
+                    f->seek(qint64(offset));
+                    app->setDevice(f);
+                    Q_UNUSED(size);
+                } else {
+                    qWarning("failed to open %s", qPrintable(f->errorString()));
+                }
             });
     setupCommonSignals(app, item);
 
