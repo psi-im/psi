@@ -96,6 +96,7 @@ if(APPLE)
     list(APPEND EXTRA_LDFLAGS "-framework CoreFoundation")
     include_directories(
         tunecontroller/plugins/itunes
+        tunecontroller/plugins/mac_spotify
     )
     add_definitions(-DTC_ITUNES)
     list(APPEND SOURCES

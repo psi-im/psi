@@ -93,11 +93,21 @@ void MacDNCController::NotificationCallback(CFNotificationCenterRef, void *obser
         }
 
         CFNumberRef cf_time = (CFNumberRef)CFDictionaryGetValue(info, CFSTR("Total Time"));
+        if (!cf_time) cf_time = (CFNumberRef)CFDictionaryGetValue(info, CFSTR("Duration")); // Spotify uses 'Duration' instead of 'Total Time'
         int         time    = 0;
         if (cf_time && !CFNumberGetValue(cf_time, kCFNumberIntType, &time)) {
             qWarning("macdnctunecontroller.cpp: Number value conversion failed.");
         }
         tune.setTime((unsigned int)(time / 1000));
+
+        CFStringRef cf_trackId = (CFStringRef)CFDictionaryGetValue(info, CFSTR("Track ID"));
+        if (cf_trackId && CFStringHasPrefix(cf_trackId, CFSTR("spotify:"))) {
+            QString url = CFStringToQString(cf_trackId)
+                .replace(QChar(':'), QChar('/'))
+                .replace("spotify/", "https://open.spotify.com/");
+            tune.setURL(url);
+        }
+
         controller->currentTune_ = tune;
         emit controller->playing(tune);
     } else {

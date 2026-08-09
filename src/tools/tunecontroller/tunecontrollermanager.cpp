@@ -148,6 +148,7 @@ bool TuneControllerManager::checkTune(const Tune &tune) const
 
 #ifdef TC_ITUNES
 Q_IMPORT_PLUGIN(ITunesPlugin)
+Q_IMPORT_PLUGIN(MacSpotifyPlugin)
 #endif
 
 #ifdef TC_WINAMP
