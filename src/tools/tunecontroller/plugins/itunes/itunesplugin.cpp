@@ -21,7 +21,7 @@
 #define QT_STATICPLUGIN
 #endif
 
-#include "itunestunecontroller.h"
+#include "macdnctunecontroller.h"
 #include "tunecontrollerplugin.h"
 
 #include <QObject>
@@ -40,6 +40,6 @@ public:
 
 QString ITunesPlugin::name() { return "iTunes"; }
 
-TuneController *ITunesPlugin::createController() { return new ITunesController(); }
+TuneController *ITunesPlugin::createController() { return new MacDNCController(CFSTR("com.apple.iTunes.playerInfo")); }
 
 #include "itunesplugin.moc"

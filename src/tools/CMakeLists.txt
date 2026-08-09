@@ -94,15 +94,18 @@ include_directories(
 
 if(APPLE)
     list(APPEND EXTRA_LDFLAGS "-framework CoreFoundation")
-    include_directories(tunecontroller/plugins/itunes)
+    include_directories(
+        tunecontroller/plugins/itunes
+    )
     add_definitions(-DTC_ITUNES)
     list(APPEND SOURCES
-        tunecontroller/itunestunecontroller.cpp
+        tunecontroller/macdnctunecontroller.cpp
         tunecontroller/plugins/itunes/itunesplugin.cpp
+        tunecontroller/plugins/mac_spotify/mac_spotifyplugin.cpp
     )
 
     list(APPEND HEADERS
-        tunecontroller/itunestunecontroller.h
+        tunecontroller/macdnctunecontroller.h
     )
 elseif(WIN32)
     list(APPEND EXTRA_LDFLAGS user32)
