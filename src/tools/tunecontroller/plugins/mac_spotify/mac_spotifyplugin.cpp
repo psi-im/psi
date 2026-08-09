@@ -1,6 +1,7 @@
 /*
- * itunesplugin.cpp
+ * mac_spotifyplugin.cpp
  * Copyright (C) 2006  Remko Troncon
+ * Copyright (C) 2026  Taylor Fox
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -28,7 +29,7 @@
 #include <QString>
 #include <QtCore>
 
-class ITunesPlugin : public QObject, public TuneControllerPlugin {
+class MacSpotifyPlugin : public QObject, public TuneControllerPlugin {
     Q_OBJECT
     Q_INTERFACES(TuneControllerPlugin)
     Q_PLUGIN_METADATA(IID "org.psi-im.Psi.TuneControllerPlugin")
@@ -38,8 +39,8 @@ public:
     virtual TuneController *createController();
 };
 
-QString ITunesPlugin::name() { return "iTunes"; }
+QString MacSpotifyPlugin::name() { return "Spotify (Mac)"; }
 
-TuneController *ITunesPlugin::createController() { return new MacDNCController(CFSTR("com.apple.iTunes.playerInfo")); }
+TuneController *MacSpotifyPlugin::createController() { return new MacDNCController(CFSTR("com.spotify.client.PlaybackStateChanged")); }
 
-#include "itunesplugin.moc"
+#include "mac_spotifyplugin.moc"

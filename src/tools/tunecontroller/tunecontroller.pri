@@ -21,6 +21,9 @@ tc_itunes {
         DEFINES += TC_ITUNES
         ITUNES_PLUGIN_PATH = $$PWD/plugins/itunes
         INCLUDEPATH += $$ITUNES_PLUGIN_PATH
+        MAC_SPOTIFY_PLUGIN_PATH = $$PWD/plugins/mac_spotify
+        INCLUDEPATH += $$MAC_SPOTIFY_PLUGIN_PATH
+
 
         HEADERS += \
             $$PWD/itunestunecontroller.h
@@ -28,6 +31,7 @@ tc_itunes {
         SOURCES += \
             $$PWD/itunestunecontroller.cpp \
             $$ITUNES_PLUGIN_PATH/itunesplugin.cpp
+            $$MAC_SPOTIFY_PLUGIN_PATH/mac_spotifyplugin.cpp
 
         QMAKE_LFLAGS += -framework CoreFoundation
     }
