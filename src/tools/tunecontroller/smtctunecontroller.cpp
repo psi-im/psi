@@ -70,14 +70,13 @@ IAsyncAction SmtcTuneController::updateTune(Session session)
     if (!session)
         co_return;
 
-    bool isPlaying    = false;
-    bool notVideo     = false;
+    bool canPublish   = false;
     auto playbackInfo = session.GetPlaybackInfo();
     if (playbackInfo) {
-        isPlaying = (playbackInfo.PlaybackStatus() == PlaybackStatus::Playing);
-        notVideo  = (playbackInfo.PlaybackType().Value() != Windows::Media::MediaPlaybackType::Video);
+        if (playbackInfo.PlaybackStatus() == PlaybackStatus::Playing)
+            canPublish = (playbackInfo.PlaybackType().Value() != Windows::Media::MediaPlaybackType::Video);
     }
-    if (isPlaying && notVideo) {
+    if (canPublish) {
         auto props = co_await session.TryGetMediaPropertiesAsync();
         if (props) {
             Tune tune;
