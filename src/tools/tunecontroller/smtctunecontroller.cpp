@@ -19,6 +19,7 @@
 
 #include "smtctunecontroller.h"
 
+#include <combaseapi.h>
 #include <winrt/base.h>
 #include <winrt/windows.foundation.h>
 #include <winrt/windows.media.control.h>
@@ -32,29 +33,9 @@ using namespace winrt;
 using namespace Windows::Media::Control;
 using namespace winrt::Windows::Foundation;
 
-namespace {
-thread_local bool g_tryInit = false;
-}
-
-void initWinRt()
-{
-    // Hack to init winrt without app crash
-    if (g_tryInit)
-        return;
-    g_tryInit = true;
-    try {
-        winrt::init_apartment();
-    } catch (const winrt::hresult_error &ex) {
-        // RPC_E_CHANGED_MODE (0x80010106) — normal for plugin,
-        // means, that COM already initialized in STA mode.
-        if (ex.code() == hresult(0x80010106)) {
-            // COM is ready, ignoring
-        }
-    }
-}
-
 SmtcTuneController::SmtcTuneController() : PollingTuneController(), _tuneSent(false)
 {
+    initWinRt();
     startAsync(); // start async smtc listening
     startPoll();  // start polling
 }
@@ -66,19 +47,20 @@ Tune SmtcTuneController::currentTune() const { return _currentTune; }
 winrt::Windows::Foundation::IAsyncAction SmtcTuneController::startAsync()
 {
     // connect to winrt and subscribe to current session
-    initWinRt();
     auto manager = co_await GlobalSystemMediaTransportControlsSessionManager::RequestAsync();
     if (manager) {
-        manager.CurrentSessionChanged([this, manager](GlobalSystemMediaTransportControlsSessionManager const &sender,
-                                                      IInspectable const & /*args*/) {
-            auto currentSession = sender.GetCurrentSession();
-            if (currentSession)
-                subscribeToSession(currentSession);
-        });
-        // obtain media data if player is playing
+        manager.CurrentSessionChanged(
+            [this, manager](GlobalSystemMediaTransportControlsSessionManager const &sender, IInspectable const &) {
+                auto currentSession = sender.GetCurrentSession();
+                if (currentSession)
+                    subscribeToSession(currentSession);
+            });
+        // try to subscribe to already running player
         auto session = manager.GetCurrentSession();
-        if (session)
-            getMediaProperties(session);
+        if (session) {
+            subscribeToSession(session);
+            co_await getMediaProperties(session);
+        }
     }
     co_return;
 }
@@ -86,7 +68,8 @@ winrt::Windows::Foundation::IAsyncAction SmtcTuneController::startAsync()
 winrt::Windows::Foundation::IAsyncAction
 SmtcTuneController::getMediaProperties(GlobalSystemMediaTransportControlsSession session)
 {
-    initWinRt();
+    if (!session)
+        co_return;
     auto props = co_await session.TryGetMediaPropertiesAsync();
     if (props) {
         Tune tune;
@@ -104,7 +87,18 @@ SmtcTuneController::getMediaProperties(GlobalSystemMediaTransportControlsSession
             tune.setTrack(QString::number(track));
         sendTune(tune);
     }
+
     co_return;
+}
+
+void SmtcTuneController::initWinRt()
+{
+    APTTYPE          aptType;
+    APTTYPEQUALIFIER aptTypeQualifier;
+
+    if (FAILED(CoGetApartmentType(&aptType, &aptTypeQualifier))) {
+        winrt::init_apartment();
+    }
 }
 
 void SmtcTuneController::sendTune(const Tune &tune)
@@ -129,19 +123,19 @@ void SmtcTuneController::subscribeToSession(const GlobalSystemMediaTransportCont
         // metadata changed callback
         session.MediaPropertiesChanged([this](GlobalSystemMediaTransportControlsSession const &sender, auto const &) {
             auto playbackInfo = sender.GetPlaybackInfo();
-            auto mediaType    = playbackInfo.PlaybackType().Value();
-            if (mediaType != Windows::Media::MediaPlaybackType::Video)
-                getMediaProperties(sender);
+            if (playbackInfo) {
+                auto mediaType = playbackInfo.PlaybackType().Value();
+                if (mediaType != Windows::Media::MediaPlaybackType::Video)
+                    getMediaProperties(sender);
+            }
         });
         // playback status changed callback
         session.PlaybackInfoChanged([this](GlobalSystemMediaTransportControlsSession const &sender, auto const &) {
             auto playbackInfo = sender.GetPlaybackInfo();
-            auto mediaType    = playbackInfo.PlaybackType().Value();
-            if (mediaType != Windows::Media::MediaPlaybackType::Video) {
+            if (playbackInfo) {
                 auto status = playbackInfo.PlaybackStatus();
-                if (status == GlobalSystemMediaTransportControlsSessionPlaybackStatus::Playing)
-                    getMediaProperties(sender);
-                else
+                if (status == GlobalSystemMediaTransportControlsSessionPlaybackStatus::Stopped
+                    || status == GlobalSystemMediaTransportControlsSessionPlaybackStatus::Closed)
                     emit clearTune();
             }
         });

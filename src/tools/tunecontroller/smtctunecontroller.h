@@ -38,6 +38,7 @@ private:
     winrt::Windows::Foundation::IAsyncAction startAsync();
     winrt::Windows::Foundation::IAsyncAction
          getMediaProperties(winrt::Windows::Media::Control::GlobalSystemMediaTransportControlsSession session);
+    void initWinRt();
     void sendTune(const Tune &tune);
     void clearTune();
     void subscribeToSession(const winrt::Windows::Media::Control::GlobalSystemMediaTransportControlsSession &session);
