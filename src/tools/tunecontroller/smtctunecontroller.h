@@ -22,6 +22,7 @@
 
 #include "pollingtunecontroller.h"
 #include "tune.h"
+#include <winrt/windows.foundation.h>
 #include <winrt/windows.media.control.h>
 
 class SmtcTuneController : public PollingTuneController {
@@ -35,17 +36,22 @@ protected slots:
     void check();
 
 private:
-    winrt::Windows::Foundation::IAsyncAction startAsync();
-    winrt::Windows::Foundation::IAsyncAction
-         getMediaProperties(winrt::Windows::Media::Control::GlobalSystemMediaTransportControlsSession session);
-    void initWinRt();
-    void sendTune(const Tune &tune);
-    void clearTune();
-    void subscribeToSession(const winrt::Windows::Media::Control::GlobalSystemMediaTransportControlsSession &session);
+    using SessionManager = winrt::Windows::Media::Control::GlobalSystemMediaTransportControlsSessionManager;
+    using Session        = winrt::Windows::Media::Control::GlobalSystemMediaTransportControlsSession;
+    using PlaybackStatus = winrt::Windows::Media::Control::GlobalSystemMediaTransportControlsSessionPlaybackStatus;
+    using AsyncAction    = winrt::Windows::Foundation::IAsyncAction;
+    AsyncAction startAsync();
+    AsyncAction updateTune(Session session);
+    void        initWinRt();
+    void        sendTune(const Tune &tune);
+    void        clearTune();
+    void        updateCurrentSession(const Session &session);
 
 private:
-    Tune _currentTune;
-    bool _tuneSent;
+    Tune           _currentTune;
+    bool           _tuneSent;
+    SessionManager _manager { nullptr };
+    Session        _currentSession { nullptr };
 };
 
 #endif // SMTCTUNECONTROLLER_H
