@@ -87,7 +87,6 @@ if(USE_KEYCHAIN)
     else()
         include(qtkeychain-bundled)
     endif()
-
     set(KEYCHAIN_LIBS ${QTKEYCHAIN_LIBRARIES})
     include_directories(${QTKEYCHAIN_INCLUDE_DIRS})
     add_definitions(-DHAVE_KEYCHAIN)
