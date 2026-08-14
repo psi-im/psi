@@ -475,6 +475,7 @@ if(WIN32)
             libotr${D}.dll
             tidy${D}.dll
             zlib1${D}.dll
+            z${D}.dll
             )
     endif()
 

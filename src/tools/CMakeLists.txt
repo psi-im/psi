@@ -128,6 +128,20 @@ elseif(WIN32)
         tunecontroller/winamptunecontroller.h
         tunecontroller/plugins/winamp/winampplugin.h
     )
+    if(MSVC)
+        list(APPEND EXTRA_LDFLAGS windowsapp)
+        add_definitions(-DTC_SMTC)
+        include_directories(
+            tunecontroller/plugins/smtc
+        )
+        list(APPEND SOURCES
+            tunecontroller/plugins/smtc/smtcplugin.cpp
+            tunecontroller/smtctunecontroller.cpp
+        )
+        list(APPEND HEADERS
+            tunecontroller/smtctunecontroller.h
+        )
+    endif()
 elseif(LINUX)
     if(USE_DBUS)
         include_directories(tunecontroller/plugins/mpris)
