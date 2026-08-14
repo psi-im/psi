@@ -159,6 +159,10 @@ Q_IMPORT_PLUGIN(WinAmpPlugin)
 Q_IMPORT_PLUGIN(AIMPPlugin)
 #endif
 
+#ifdef TC_SMTC
+Q_IMPORT_PLUGIN(SMTCPlugin)
+#endif
+
 #ifdef TC_PSIFILE
 Q_IMPORT_PLUGIN(PsiFilePlugin)
 #endif
