@@ -93,6 +93,7 @@
         <file>iconsets/system/default/smile.png</file>
         <file>iconsets/system/default/ssl_no.png</file>
         <file>iconsets/system/default/ssl_yes.png</file>
+        <file>iconsets/system/default/omemo.svg</file>
         <file>iconsets/system/default/start-chat.png</file>
         <file>iconsets/system/default/status.png</file>
         <file>iconsets/system/default/stop.png</file>
