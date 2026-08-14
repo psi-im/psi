@@ -20,6 +20,7 @@
 #ifdef IRIS_ENABLE_OMEMO
 
 #include <QDateTime>
+#include <QDebug>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -268,7 +269,11 @@ XMPP::OmemoStorage::OmemoData PsiOmemoStorage::allData() const
                 auto         &state = data.devices[owner][id].protocols[XMPP::OmemoProtocol::Legacy];
                 state.keyId         = q.value(2).toByteArray();
                 if (!activeLegacyDevices.contains(legacyDeviceKey(owner, id)))
+#if QT_VERSION < QT_VERSION_CHECK(6, 9, 0)
                     state.removalFromDeviceListDate = QDateTime::fromMSecsSinceEpoch(0, Qt::UTC);
+#else
+                    state.removalFromDeviceListDate = QDateTime::fromMSecsSinceEpoch(0, QTimeZone::UTC);
+#endif
             }
         }
     }
