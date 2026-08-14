@@ -995,12 +995,7 @@ void MainWin::actReadmeActivated()
     w->show();
 }
 
-void MainWin::actOnlineWikiActivated()
-{
-    DesktopUtil::openUrl(
-        "https://psi-im.org/wiki"
-    );
-}
+void MainWin::actOnlineWikiActivated() { DesktopUtil::openUrl("https://psi-im.org/wiki"); }
 
 void MainWin::actOnlineHomeActivated() { DesktopUtil::openUrl("https://psi-im.org"); }
 
@@ -1193,15 +1188,13 @@ void MainWin::buildTrayMenu()
             d->trayMenu->addAction(actionCopy);
         };
 
-        const QStringList _actions = {
-            "status_online", "status_chat", "status_away", "status_xa", "status_dnd", "status_offline", "separator",
-            "menu_play_sounds", "menu_options",
-            "menu_add_contact",
+        const QStringList _actions
+            = { "status_online",       "status_chat", "status_away",      "status_xa",    "status_dnd",
+                "status_offline",      "separator",   "menu_play_sounds", "menu_options", "menu_add_contact",
 #ifdef GROUPCHAT
-            "menu_join_groupchat",
+                "menu_join_groupchat",
 #endif
-            "menu_new_message",
-            "menu_quit" };
+                "menu_new_message",    "menu_quit" };
         for (const QString &actionName : _actions) {
             addWrappedAction(actionName);
         }

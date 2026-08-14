@@ -17,7 +17,8 @@ class CaptchaDlg : public QDialog {
     Q_OBJECT
 
 public:
-    explicit CaptchaDlg(QWidget *parent, XMPP::Jid from, QString msg, const XMPP::CaptchaChallenge &challenge, PsiAccount *pa);
+    explicit CaptchaDlg(QWidget *parent, XMPP::Jid from, QString msg, const XMPP::CaptchaChallenge &challenge,
+                        PsiAccount *pa);
     ~CaptchaDlg();
 
 public slots:

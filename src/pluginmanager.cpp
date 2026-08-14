@@ -8,6 +8,7 @@
 #include "applicationinfo.h"
 #include "avatars.h"
 #include "chatdlg.h"
+#include "encryptionmethodprovider.h"
 #include "eventfilter.h"
 #include "groupchatdlg.h"
 #include "iqfilter.h"
@@ -24,6 +25,7 @@
 #include "psiaccount.h"
 #include "psicon.h"
 #include "psicontact.h"
+#include "psiencryptioncontroller.h"
 #include "psiiconset.h"
 #include "psimediaprovider.h"
 #include "psioptions.h"
@@ -178,6 +180,9 @@ void PluginManager::dirsChanged()
 void PluginManager::accountDestroyed()
 {
     PsiAccount *pa = static_cast<PsiAccount *>(sender());
+    const int   id = accountIds_.id(pa);
+    if (id >= 0 && id < clients_.size())
+        clients_[id] = nullptr;
     accountIds_.removeAccount(pa);
 }
 
@@ -554,7 +559,7 @@ void PluginManager::sendXml(int account, const QString &xml)
     // - make psi aware of things that are being send
     //   (for example, pipeline messages through history system)
 
-    if (account < clients_.size()) {
+    if (account >= 0 && account < clients_.size() && clients_[account]) {
         clients_[account]->send(xml);
     }
 }
@@ -568,7 +573,7 @@ void PluginManager::sendXml(int account, const QString &xml)
 QString PluginManager::uniqueId(int account) const
 {
     QString id;
-    if (account < clients_.size()) {
+    if (account >= 0 && account < clients_.size() && clients_[account]) {
         id = clients_[account]->genUniqueId();
     }
     return id;
@@ -890,11 +895,104 @@ QStringList PluginManager::pluginFeatures() const
  */
 void PluginManager::addAccount(PsiAccount *account, XMPP::Client *client)
 {
-    clients_.append(client);
     const int id = accountIds_.appendAccount(account);
+    if (clients_.size() <= id)
+        clients_.resize(id + 1);
+    clients_[id] = client;
+
     new StreamWatcher(client->rootTask(), this, id); // this StreamWatcher instance isn't stored anywhere
     // and probably leaks (if go(true) isn't called somewhere else)
     connect(account, SIGNAL(accountDestroyed()), this, SLOT(accountDestroyed()));
+
+    if (auto *controller = account->encryptionController()) {
+        for (const auto &registration : std::as_const(encryptionMethods_)) {
+            if (!registration.method || registration.lifetime.isNull())
+                continue;
+            if (!controller->registerPluginMethod(id, registration.method, registration.lifetime)) {
+                qWarning() << "Could not register plugin encryption method" << registration.methodId << "for account"
+                           << id;
+            }
+        }
+    }
+}
+
+bool PluginManager::registerEncryptionMethod(PluginHost *plugin, EncryptionMethodProvider *method,
+                                             QObject *pluginLifetime)
+{
+    if (!plugin || !method || !pluginLifetime || method->id().isEmpty())
+        return false;
+    if (encryptionMethods_.contains(method))
+        return true;
+
+    const QString methodId = method->id();
+    for (const auto &registration : std::as_const(encryptionMethods_)) {
+        if (registration.methodId == methodId) {
+            qWarning() << "Encryption method id is already registered:" << methodId;
+            return false;
+        }
+    }
+
+    QList<PsiEncryptionController *> registeredControllers;
+    for (int id = 0; id < clients_.size(); ++id) {
+        if (!clients_[id] || !accountIds_.isValidRange(id))
+            continue;
+        auto *account    = accountIds_.account(id);
+        auto *controller = account ? account->encryptionController() : nullptr;
+        if (!controller)
+            continue;
+        if (!controller->registerPluginMethod(id, method, pluginLifetime)) {
+            for (auto *registered : std::as_const(registeredControllers))
+                registered->unregisterPluginMethod(method);
+            qWarning() << "Plugin" << plugin->shortName() << "could not register encryption method" << methodId;
+            return false;
+        }
+        registeredControllers.append(controller);
+    }
+
+    encryptionMethods_.insert(method, { plugin, method, methodId, pluginLifetime });
+    return true;
+}
+
+void PluginManager::unregisterEncryptionMethod(PluginHost *plugin, EncryptionMethodProvider *method)
+{
+    const auto it = encryptionMethods_.constFind(method);
+    if (it == encryptionMethods_.cend() || it->plugin != plugin)
+        return;
+
+    for (int id = 0; id < clients_.size(); ++id) {
+        if (!clients_[id] || !accountIds_.isValidRange(id))
+            continue;
+        auto *account = accountIds_.account(id);
+        if (account && account->encryptionController())
+            account->encryptionController()->unregisterPluginMethod(method);
+    }
+    encryptionMethods_.remove(method);
+}
+
+void PluginManager::unregisterEncryptionMethods(PluginHost *plugin)
+{
+    QList<EncryptionMethodProvider *> methods;
+    for (auto it = encryptionMethods_.cbegin(); it != encryptionMethods_.cend(); ++it) {
+        if (it->plugin == plugin)
+            methods.append(it.key());
+    }
+    for (auto *method : std::as_const(methods))
+        unregisterEncryptionMethod(plugin, method);
+}
+
+void PluginManager::encryptionMethodStateChanged(PluginHost *plugin, EncryptionMethodProvider *method)
+{
+    const auto it = encryptionMethods_.constFind(method);
+    if (it == encryptionMethods_.cend() || it->plugin != plugin)
+        return;
+
+    for (int id = 0; id < clients_.size(); ++id) {
+        if (!clients_[id] || !accountIds_.isValidRange(id))
+            continue;
+        auto *account = accountIds_.account(id);
+        if (account && account->encryptionController())
+            account->encryptionController()->pluginMethodStateChanged(method);
+    }
 }
 
 /**
@@ -1236,31 +1334,13 @@ bool PluginManager::hasCaps(int account, const QString &jid, const QStringList &
     return false;
 }
 
-bool PluginManager::decryptMessageElement(PsiAccount *account, QDomElement &message) const
-{
-    for (auto const host : pluginByFile_) {
-        if (host->decryptMessageElement(accountIds_.id(account), message)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-bool PluginManager::encryptMessageElement(PsiAccount *account, QDomElement &message) const
-{
-    for (auto const host : pluginByFile_) {
-        if (host->encryptMessageElement(accountIds_.id(account), message)) {
-            return true;
-        }
-    }
-    return false;
-}
-
 int AccountIds::appendAccount(PsiAccount *acc)
 {
     int id = -1;
     if (acc) {
-        id            = id_keys.size();
+        id = 0;
+        while (id_keys.contains(id))
+            ++id;
         id_keys[id]   = acc;
         acc_keys[acc] = id;
     }

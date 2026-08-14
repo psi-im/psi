@@ -58,18 +58,24 @@ AboutDlg::AboutDlg(QWidget *parent) : QDialog(parent)
     authors += details(QString::fromUtf8("Michail Pishchagin"), "", "", "", tr("Past Lead Widget Developer"));
     authors += details(QString::fromUtf8("Maciej Niedzielski"), "", "", "", tr("Developer"));
     authors += details(QString::fromUtf8("Martin Hostettler"), "", "", "", tr("Developer"));
-    authors += details(QString::fromUtf8("Evgeny Khryukin"), "wadealer@gmail.com", "", "", tr("Lead Patcher and Plugins Writer; former macOS Packager"));
+    authors += details(QString::fromUtf8("Evgeny Khryukin"), "wadealer@gmail.com", "", "",
+                       tr("Lead Patcher and Plugins Writer; former macOS Packager"));
     authors += details(QString::fromUtf8("Aleksey Andreev"), "liuch@mail.ru", "", "", tr("Patcher and Plugins Writer"));
     authors += details(QString::fromUtf8("Vitaly Tonkacheyev"), "thetvg@gmail.com", "", "", tr("Developer"));
-    authors += details(QString::fromUtf8("Boris Pek"), "tehnick-8@yandex.ru", "", "", tr("Language coordinator; Patcher; Debian and Ubuntu Packager; MS Windows and macOS Packager"));
-    authors += details(QString::fromUtf8("zet"), "vladimir.shelukhin@gmail.com", "", "", tr("Patcher and former MS Windows Packager"));
+    authors += details(QString::fromUtf8("Boris Pek"), "tehnick-8@yandex.ru", "", "",
+                       tr("Language coordinator; Patcher; Debian and Ubuntu Packager; MS Windows and macOS Packager"));
+    authors += details(QString::fromUtf8("zet"), "vladimir.shelukhin@gmail.com", "", "",
+                       tr("Patcher and former MS Windows Packager"));
     authors += details(QString::fromUtf8("majik"), "maksim.maj@gmail.com", "", "", tr("Patcher and former Designer"));
-    authors += details(QString::fromUtf8("KukuRuzo"), "", "", "", tr("Patcher and Plugins Writer; MS Windows Packager"));
-    authors += details(QString::fromUtf8("taurus"), "", "", "", tr("Patcher and Plugins Writer; former Fedora Packager"));
+    authors
+        += details(QString::fromUtf8("KukuRuzo"), "", "", "", tr("Patcher and Plugins Writer; MS Windows Packager"));
+    authors
+        += details(QString::fromUtf8("taurus"), "", "", "", tr("Patcher and Plugins Writer; former Fedora Packager"));
     authors += details(QString::fromUtf8("ivan1986"), "", "", "", tr("Patcher and former Ubuntu Packager"));
     authors += details(QString::fromUtf8("nexor (aka zerkalica)"), "", "", "", tr("former Ubuntu Packager"));
     authors += details(QString::fromUtf8("Flint (aka Флинт)"), "", "", "", tr("former Mandriva Linux Packager"));
-    authors += details(QString::fromUtf8("ivan101"), "ivan101@users.sourceforge.net", "", "", tr("Patcher and former Russian translator"));
+    authors += details(QString::fromUtf8("ivan101"), "ivan101@users.sourceforge.net", "", "",
+                       tr("Patcher and former Russian translator"));
     authors += details(QString::fromUtf8("Z_God"), "", "", "", tr("Psimedia Patcher and Wiki English localization"));
     ui_.te_authors->setText(authors);
 

@@ -49,6 +49,7 @@ psi/search         - Search service
 psi/sendMessage    - New plain message/Send message
 psi/cryptoYes      - Encryption enabled
 psi/cryptoNo       - Encryption disabled
+psi/omemo          - OMEMO encryption method
 psi/time           - Time
 psi/www            - URL icon
 psi/email          - Email icon

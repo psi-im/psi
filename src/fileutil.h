@@ -54,8 +54,8 @@ public:
      * @param filename - relative or absolute file name
      * @param mtime - new file modification time
      */
-    static void setModificationTime(const QString &filename, const QDateTime &mtime);
-    static QString readFileText(const QString &filename);
+    static void        setModificationTime(const QString &filename, const QDateTime &mtime);
+    static QString     readFileText(const QString &filename);
     static QStringList readFileLines(const QString &filename);
 };
 

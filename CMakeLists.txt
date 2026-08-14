@@ -82,6 +82,8 @@ option( BUNDLED_IRIS_ALL "Build bundled iris library with bundled QCA and bundle
 # note Blake2b is needed only with Qt5. Qt6 has its own implementation
 option( IRIS_BUNDLED_QCA "Adds: DTLS, Blake2b (needed with Qt5) and other useful for XMPP crypto-stuff" ${DEFAULT_BUNDLED_QCA} )
 option( IRIS_BUNDLED_USRSCTP "Compile compatible usrsctp lib when system one is not available or uncompatible (required for p2p file transfer)" ${DEFAULT_BUNDLED_USRSCTP} )
+option( ENABLE_OMEMO "Enable built-in OMEMO support through Iris" ON )
+set(IRIS_ENABLE_OMEMO ${ENABLE_OMEMO} CACHE BOOL "Enable Iris OMEMO support" FORCE)
 option( BUNDLED_KEYCHAIN "Build QtKeychain library bundled" OFF )
 option( USE_TASKBARNOTIFIER "Use taskbar notifications for incoming events" ON )
 

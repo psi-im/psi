@@ -200,9 +200,9 @@ cd psi && ./psi-plus && cd .. #For Psi+
   Useful to debug plugins.
   On Windows, enables the `prepare-bin-libs` build target.
   This flag is useful for running Psi immediately after building during development.
-  When this flag is enabled, the script searches for dependency libraries 
+  When this flag is enabled, the script searches for dependency libraries
   and copies them to the build directory with the command: `make prepare-bin-libs`.
-  
+
   On Linux, it enables developer mode and, together with the `ENABLE_PLUGINS` flag.
   When using `psi-plus-snapshots` allows debugging plugins without installing the Psi.
   Sets the `PSI_DATA` directory to the current executable directory.
@@ -369,7 +369,7 @@ No program installation is required for assembly under Windows OS!!!
 
 > -DSDK_PATH=path
 
-  If you set this flag, you don't need to set the flags for the root directories 
+  If you set this flag, you don't need to set the flags for the root directories
   of the libraries dependencies.
 
 ### macOS specific flags

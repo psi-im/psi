@@ -9,6 +9,9 @@ HEADERS += \
     $$psi_plugins_include_dir/iqnamespacefilter.h \
     $$psi_plugins_include_dir/iqfilteringhost.h \
     $$psi_plugins_include_dir/eventfilter.h \
+    $$psi_plugins_include_dir/encryptionmethodaccessinghost.h \
+    $$psi_plugins_include_dir/encryptionmethodaccessor.h \
+    $$psi_plugins_include_dir/encryptionmethodprovider.h \
     $$psi_plugins_include_dir/optionaccessor.h \
     $$psi_plugins_include_dir/optionaccessinghost.h \
     $$psi_plugins_include_dir/popupaccessor.h \

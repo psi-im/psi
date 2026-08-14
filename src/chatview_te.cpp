@@ -95,9 +95,7 @@ void ChatView::setSessionData(bool isMuc, bool isMucPrivate, const XMPP::Jid &ji
     name_         = name;
 }
 
-void ChatView::setLocalNickname(const QString &nickname) {
-    localNickname_ = nickname;
-}
+void ChatView::setLocalNickname(const QString &nickname) { localNickname_ = nickname; }
 
 void ChatView::clear()
 {

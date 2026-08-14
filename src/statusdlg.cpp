@@ -42,8 +42,8 @@
 #include <QLayout>
 #include <QMessageBox>
 #include <QPushButton>
-#include <QVBoxLayout>
 #include <QTimer>
+#include <QVBoxLayout>
 
 //----------------------------------------------------------------------------
 // StatusShowDlg

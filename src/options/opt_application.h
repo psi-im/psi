@@ -25,7 +25,7 @@ private:
     bool     autostartOptChanged_ = false;
 
 private slots:
-#if QT_VERSION < QT_VERSION_CHECK(6,7,0)
+#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
     void doEnableQuitOnClose(int);
 #else
     void doEnableQuitOnClose(Qt::CheckState);

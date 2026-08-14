@@ -47,8 +47,8 @@ public:
     ~MiniClient();
 
     void          reset();
-    void          connectToServer(const XMPP::Jid &j, bool direct_tls, bool force_ssl,
-                                  const QString &host, int port, QString proxy, QString *pass = nullptr);
+    void          connectToServer(const XMPP::Jid &j, bool direct_tls, bool force_ssl, const QString &host, int port,
+                                  QString proxy, QString *pass = nullptr);
     void          close();
     XMPP::Client *client();
     void          setErrorOnDisconnect(bool);

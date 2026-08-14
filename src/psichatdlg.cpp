@@ -38,6 +38,7 @@
 #include "iconselect.h"
 #include "iconwidget.h"
 #include "iris/xmpp_caps.h"
+#include "iris/xmpp_encryption.h"
 #include "iris/xmpp_tasks.h"
 #include "jidutil.h"
 #include "lastactivitytask.h"
@@ -45,6 +46,10 @@
 #include "msgmle.h"
 #include "pgputil.h"
 #include "psiaccount.h"
+#include "psiencryptioncontroller.h"
+#ifdef IRIS_ENABLE_OMEMO
+#include "iris/xmpp_omemo.h"
+#endif
 #include "psiactionlist.h"
 #include "psicon.h"
 #include "psicontact.h"
@@ -207,6 +212,8 @@ PsiChatDlg::PsiChatDlg(const Jid &jid, PsiAccount *pa, TabManager *tabManager) :
     ChatDlg(jid, pa, tabManager), actions_(new ActionList("", 0, false)), mCmdManager_(&mCmdSite_),
     tabCompletion(&mCmdManager_)
 {
+    encryptionMenu_ = new QMenu(this);
+    connect(encryptionMenu_, &QMenu::aboutToShow, this, &PsiChatDlg::buildEncryptionMenu);
     connect(account()->psi(), SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
     connect(account(), SIGNAL(addedContact(PsiContact *)), SLOT(updateContactAdding(PsiContact *)));
     connect(account(), SIGNAL(removedContact(PsiContact *)), SLOT(updateContactAdding(PsiContact *)));
@@ -218,10 +225,17 @@ PsiChatDlg::PsiChatDlg(const Jid &jid, PsiAccount *pa, TabManager *tabManager) :
         connect(menu, SIGNAL(doEditTemplates()), this, SLOT(editTemplates()));
         connect(menu, SIGNAL(doTemplateText(const QString &)), this, SLOT(sendTemp(const QString &)));
     }
+
+    if (auto *controller = account()->encryptionController()) {
+        selectedEncryptionMethod_ = controller->selectedMethod(jid);
+        rebuildEncryptionSession();
+    }
 }
 
 PsiChatDlg::~PsiChatDlg()
 {
+    if (encryptionSession_)
+        encryptionSession_->close();
     SendButtonTemplatesMenu *menu = getTemplateMenu();
     if (menu) {
         disconnect(menu, SIGNAL(doPasteAndSend()), this, SLOT(doPasteAndSend()));
@@ -229,6 +243,58 @@ PsiChatDlg::~PsiChatDlg()
         disconnect(menu, SIGNAL(doTemplateText(const QString &)), this, SLOT(sendTemp(const QString &)));
     }
     delete actions_;
+}
+
+void PsiChatDlg::setJid(const Jid &newJid)
+{
+    const Jid oldJid = jid();
+    ChatDlg::setJid(newJid);
+    if (oldJid == jid())
+        return;
+
+    if (oldJid.bare() != jid().bare()) {
+        if (auto *controller = account()->encryptionController())
+            selectedEncryptionMethod_ = controller->selectedMethod(jid());
+    }
+    rebuildEncryptionSession();
+    updateEncryption();
+}
+
+XMPP::EncryptedSession *PsiChatDlg::encryptionSession() const { return encryptionSession_.data(); }
+
+QString PsiChatDlg::encryptionMethodId() const { return selectedEncryptionMethod_; }
+
+void PsiChatDlg::setEncryptionMethod(const QString &methodId, bool persist)
+{
+    selectedEncryptionMethod_ = methodId;
+    rebuildEncryptionSession();
+
+    if (persist) {
+        if (auto *controller = account()->encryptionController())
+            controller->setSelectedMethod(jid(), methodId);
+    }
+    updateEncryption();
+}
+
+void PsiChatDlg::rebuildEncryptionSession()
+{
+    if (encryptionSession_) {
+        encryptionSession_->close();
+        encryptionSession_.clear();
+    }
+
+    if (selectedEncryptionMethod_.isEmpty() || selectedEncryptionMethod_ == QLatin1String("openpgp"))
+        return;
+
+    auto *controller = account()->encryptionController();
+    auto *client     = account()->client();
+    if (!controller || !client)
+        return;
+
+    XMPP::EncryptionContext context;
+    context.recipients.append(controller->capabilityJid(jid()));
+    encryptionSession_ = client->encryptionManager()->startSession(
+        selectedEncryptionMethod_, XMPP::EncryptionMethod::XmppStanza, context);
 }
 
 void PsiChatDlg::initUi()
@@ -463,9 +529,6 @@ void PsiChatDlg::updateToolbuttons()
         if (actionName == "chat_voice" && !AvCallManager::isSupported()) {
             continue;
         }
-        if (actionName == "chat_pgp" && !options->getOption("plugins.auto-load.openpgp", false).toBool()) {
-            continue;
-        }
 
 #ifdef PSI_PLUGINS
         if (actionName.endsWith("-plugin")) {
@@ -485,9 +548,12 @@ void PsiChatDlg::updateToolbuttons()
         auto action = actions_->action(actionName);
         if (action) {
             action->addTo(ui_.toolbar);
-            if (actionName == QLatin1String("chat_icon") || actionName == QLatin1String("chat_templates")) {
-                static_cast<QToolButton *>(ui_.toolbar->widgetForAction(action))
-                    ->setPopupMode(QToolButton::InstantPopup);
+            if (actionName == QLatin1String("chat_icon") || actionName == QLatin1String("chat_templates")
+                || actionName == QLatin1String("chat_pgp")) {
+                auto *button = static_cast<QToolButton *>(ui_.toolbar->widgetForAction(action));
+                if (actionName == QLatin1String("chat_pgp"))
+                    button->setMenu(encryptionMenu_);
+                button->setPopupMode(QToolButton::InstantPopup);
             }
         }
     }
@@ -537,8 +603,10 @@ void PsiChatDlg::initToolButtons()
         } else if (name == QString::fromLatin1("chat_file")) {
             connect(action, SIGNAL(triggered()), SLOT(doFile()));
         } else if (name == QString::fromLatin1("chat_pgp")) {
+            action->setMenu(encryptionMenu_);
             ui_.tb_pgp->setDefaultAction(actions_->action("chat_pgp"));
-            connect(action, SIGNAL(triggered(bool)), SLOT(actPgpToggled(bool)));
+            ui_.tb_pgp->setMenu(encryptionMenu_);
+            ui_.tb_pgp->setPopupMode(QToolButton::InstantPopup);
         } else if (name == QString::fromLatin1("chat_info")) {
             connect(action, SIGNAL(triggered()), SLOT(doInfo()));
         } else if (name == QString::fromLatin1("chat_history")) {
@@ -873,94 +941,145 @@ void PsiChatDlg::optionsUpdate()
     typeahead_->optionsUpdate();
 }
 
-void PsiChatDlg::updatePgp()
+void PsiChatDlg::updateEncryption()
 {
-    if (account()->hasPgp()) {
-        actions_->action("chat_pgp")->setEnabled(true);
-        actions_->action("chat_pgp")->setToolTip(tr("OpenPGP encryption"));
-    } else {
-        setPgpEnabled(false);
-        actions_->action("chat_pgp")->setEnabled(false);
-        actions_->action("chat_pgp")->setToolTip(tr("OpenPGP key is not set in your account settings!"));
+    auto *controller = account()->encryptionController();
+    auto *action     = actions_->action("chat_pgp"); // legacy action id, now generic encryption selector
+    if (!controller) {
+        action->setEnabled(false);
+        action->setChecked(false);
+        ui_.tb_pgp->setVisible(false);
+        return;
     }
 
-    checkPgpAutostart();
+    if (!selectedEncryptionMethod_.isEmpty() && selectedEncryptionMethod_ != QLatin1String("openpgp")) {
+        const auto peer = controller->capabilityJid(jid());
+        const bool contextChanged
+            = encryptionSession_
+            && (encryptionSession_->context().recipients.size() != 1
+                || encryptionSession_->context().recipients.constFirst() != peer);
+        if (!encryptionSession_ || encryptionSession_->isClosing() || contextChanged)
+            rebuildEncryptionSession();
+    }
+
+    const QString methodId   = selectedEncryptionMethod_;
+    const auto    methods    = controller->methods(XMPP::EncryptionMethod::XmppStanza);
+    const bool    hasMethods = !methods.isEmpty() || !methodId.isEmpty();
+
+    const QIcon encryptionIcon
+        = IconsetFactory::icon(methodId.isEmpty() ? "psi/cryptoNo" : "psi/cryptoYes").icon();
+    action->setIcon(encryptionIcon);
+    action->setEnabled(hasMethods);
+    action->setChecked(!methodId.isEmpty());
+    ui_.tb_pgp->setIcon(encryptionIcon);
+    if (auto *toolbarButton = qobject_cast<QToolButton *>(ui_.toolbar->widgetForAction(action)))
+        toolbarButton->setIcon(encryptionIcon);
+
+    const auto info = controller->methodInfo(methodId);
+    if (methodId.isEmpty()) {
+        action->setToolTip(tr("Encryption is disabled"));
+    } else {
+        const QString name         = info.name.isEmpty() ? methodId : info.name;
+        const auto    availability = controller->availability(methodId, jid());
+        action->setToolTip(availability == PsiEncryptionController::Availability::Unavailable
+                               ? tr("Encryption: %1 (unavailable for this contact)").arg(name)
+                               : tr("Encryption: %1").arg(name));
+    }
 
     ui_.tb_pgp->setVisible(
-        account()->hasPgp() && !smallChat_
+        hasMethods && !smallChat_
         && !PsiOptions::instance()->getOption("options.ui.contactlist.toolbars.m0.visible").toBool());
 }
 
-void PsiChatDlg::checkPgpAutostart()
+void PsiChatDlg::buildEncryptionMenu()
 {
-    const bool enabled = PsiOptions::instance()->getOption("plugins.auto-load.openpgp", false).toBool();
-    if (account()->hasPgp() && enabled) {
-        const bool alwaysEnabled = PsiOptions::instance()->getOption("options.pgp.always-enabled").toBool();
-        if (alwaysEnabled) {
-            setPgpEnabled(true);
-        } else {
-            // Get stored data from account settings:
-            setPgpEnabled(account()->isPgpEnabled(jid()));
-        }
-    } else {
-        setPgpEnabled(false);
-    }
-}
-
-void PsiChatDlg::actPgpToggled(bool b)
-{
-#ifdef HAVE_PGPUTIL
-    actions_->action("chat_pgp")->setChecked(!b);
-
-    if (!account()->hasPgp() || !PGPUtil::instance().pgpAvailable())
+    auto *controller = account()->encryptionController();
+    if (!controller)
         return;
 
-    QMenu    menu;
-    QAction *actAssignKey   = nullptr;
-    QAction *actUnassignKey = nullptr;
+    encryptionMenu_->clear();
 
-    auto actEnablePgp  = menu.addAction(tr("Enable OpenPGP encryption"));
-    auto actDisablePgp = menu.addAction(tr("Disable OpenPGP encryption"));
+    const QString current = selectedEncryptionMethod_;
+    actions_->action("chat_pgp")->setChecked(!current.isEmpty());
 
-    actEnablePgp->setVisible(b);
-    actDisablePgp->setVisible(!b);
+    auto *plain = encryptionMenu_->addAction(tr("No encryption"));
+    plain->setCheckable(true);
+    plain->setChecked(current.isEmpty());
+    connect(plain, &QAction::triggered, this, [this]() { setEncryptionMethod({}, true); });
 
-    UserListItem *item = account()->findFirstRelevant(jid());
-    if (item) {
-        menu.addSeparator();
-        actAssignKey   = menu.addAction(tr("Assign Open&PGP Key"));
-        actUnassignKey = menu.addAction(tr("Unassign Open&PGP Key"));
-        actAssignKey->setVisible(item->publicKeyID().isEmpty());
-        actUnassignKey->setVisible(!item->publicKeyID().isEmpty());
-    }
-    auto actShowOwnFingerprint = menu.addAction(tr("Show own &fingerprint"));
-    menu.addSeparator();
-    auto actSendOwnPublicKey = menu.addAction(tr("Send own public key"));
-    auto actSendPublicKey    = menu.addAction(tr("Send public key..."));
+    const auto methods = controller->methods(XMPP::EncryptionMethod::XmppStanza);
+    for (const auto &info : methods) {
+        auto *methodAction = encryptionMenu_->addAction(info.icon, info.name);
 
-    QAction *act = menu.exec(QCursor::pos());
-    if (act == actEnablePgp) {
-        actions_->action("chat_pgp")->setChecked(true);
-        account()->setPgpEnabled(jid(), true);
-    } else if (act == actDisablePgp) {
-        actions_->action("chat_pgp")->setChecked(false);
-        account()->setPgpEnabled(jid(), false);
-    } else if (act == actAssignKey) {
-        if (item) {
-            account()->actionAssignPgpKey(jid());
+        methodAction->setCheckable(true);
+        methodAction->setData(info.id);
+        methodAction->setChecked(current == info.id);
+        if (controller->availability(info.id, jid()) == PsiEncryptionController::Availability::Unavailable) {
+            methodAction->setEnabled(false);
+            methodAction->setToolTip(tr("This encryption method is not available for the selected resource."));
         }
-    } else if (act == actUnassignKey) {
-        if (item) {
-            account()->actionUnassignPgpKey(jid());
-        }
-    } else if (act == actShowOwnFingerprint) {
-        showOwnFingerprint();
-    } else if (act == actSendOwnPublicKey) {
-        sendOwnPublicKey();
-    } else if (act == actSendPublicKey) {
-        sendPublicKey();
+        connect(methodAction, &QAction::triggered, this,
+                [this, methodId = info.id]() { setEncryptionMethod(methodId, true); });
     }
-#endif // HAVE_PGPUTIL
+
+#ifdef HAVE_PGPUTIL
+    if (controller->hasMethod(QStringLiteral("openpgp")) && account()->hasPgp() && PGPUtil::instance().pgpAvailable()) {
+        encryptionMenu_->addSeparator();
+        auto *pgpMenu = encryptionMenu_->addMenu(tr("OpenPGP management"));
+        auto *pgpItem = account()->findFirstRelevant(jid());
+        if (pgpItem) {
+            auto *assignPgpKeyAction   = pgpMenu->addAction(tr("Assign Open&PGP Key"));
+            auto *unassignPgpKeyAction = pgpMenu->addAction(tr("Unassign Open&PGP Key"));
+            assignPgpKeyAction->setVisible(pgpItem->publicKeyID().isEmpty());
+            unassignPgpKeyAction->setVisible(!pgpItem->publicKeyID().isEmpty());
+            connect(assignPgpKeyAction, &QAction::triggered, this, [this]() { account()->actionAssignPgpKey(jid()); });
+            connect(unassignPgpKeyAction, &QAction::triggered, this,
+                    [this]() { account()->actionUnassignPgpKey(jid()); });
+            pgpMenu->addSeparator();
+        }
+
+        auto *showOwnFingerprintAction = pgpMenu->addAction(tr("Show own &fingerprint"));
+        pgpMenu->addSeparator();
+        auto *sendOwnPublicKeyAction = pgpMenu->addAction(tr("Send own public key"));
+        auto *sendPublicKeyAction    = pgpMenu->addAction(tr("Send public key..."));
+        connect(showOwnFingerprintAction, &QAction::triggered, this, &PsiChatDlg::showOwnFingerprint);
+        connect(sendOwnPublicKeyAction, &QAction::triggered, this, &PsiChatDlg::sendOwnPublicKey);
+        connect(sendPublicKeyAction, &QAction::triggered, this, &PsiChatDlg::sendPublicKey);
+    }
+#endif
+
+#ifdef IRIS_ENABLE_OMEMO
+    if (controller->omemoEncryption()) {
+        encryptionMenu_->addSeparator();
+        auto *showOmemoInfo = encryptionMenu_->addAction(tr("OMEMO devices and fingerprints…"));
+        connect(showOmemoInfo, &QAction::triggered, this, [this, controller]() {
+            auto *omemo = controller->omemoEncryption();
+            if (!omemo)
+                return;
+
+            QStringList lines;
+            lines << tr("Own device: %1").arg(omemo->ownDeviceId());
+            lines << tr("Own fingerprint: %1").arg(QString::fromLatin1(omemo->ownIdentityKey().toHex(' ')));
+            lines << QString();
+            const auto devices = omemo->devices(jid().bare());
+            if (devices.isEmpty()) {
+                lines << tr("No remote OMEMO devices are known yet.");
+            } else {
+                lines << tr("Remote devices:");
+                for (const auto &device : devices) {
+                    const QString trust = device.trust == XMPP::EncryptionTrustLevel::Distrusted
+                        ? tr("distrusted")
+                        : (device.trust == XMPP::EncryptionTrustLevel::Undecided ? tr("undecided") : tr("trusted"));
+                    lines << QStringLiteral("%1  %2  [%3]")
+                                 .arg(device.id)
+                                 .arg(QString::fromLatin1(device.identityKey.toHex(' ')))
+                                 .arg(trust);
+                }
+            }
+            QMessageBox::information(this, tr("OMEMO devices"), lines.join(QLatin1Char('\n')));
+        });
+    }
+#endif
 }
 
 void PsiChatDlg::doClearButton()
@@ -980,8 +1099,6 @@ void PsiChatDlg::doClearButton()
         doClear();
     }
 }
-
-void PsiChatDlg::setPgpEnabled(bool enabled) { actions_->action("chat_pgp")->setChecked(enabled); }
 
 void PsiChatDlg::toggleSmallChat()
 {
@@ -1020,7 +1137,10 @@ void PsiChatDlg::buildMenu()
 
 void PsiChatDlg::updateCounter() { ui_.lb_count->setNum(int(chatEdit()->toPlainText().length())); }
 
-bool PsiChatDlg::isPgpEncryptionEnabled() const { return actions_->action("chat_pgp")->isChecked(); }
+bool PsiChatDlg::isPgpEncryptionEnabled() const
+{
+    return selectedEncryptionMethod_ == QLatin1String("openpgp");
+}
 
 void PsiChatDlg::appendSysMsg(const QString &str)
 {

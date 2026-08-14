@@ -60,7 +60,7 @@ public:
      */
     virtual const QHash<QString, QVariant> &getInfo() = 0;
 
-    virtual ~MCmdStateIface() {};
+    virtual ~MCmdStateIface() { };
 };
 
 /** Interface for user interface site of an mini command.
@@ -83,7 +83,7 @@ public:
      */
     virtual void mCmdClose() = 0;
 
-    virtual ~MCmdUiSiteIface() {};
+    virtual ~MCmdUiSiteIface() { };
 };
 
 /** Interface for the mini command manager.
@@ -121,7 +121,7 @@ public:
      */
     virtual void registerProvider(MCmdProviderIface *prov) = 0;
 
-    virtual ~MCmdManagerIface() {};
+    virtual ~MCmdManagerIface() { };
 };
 
 /** Interface for command providers for a mini command manager.
@@ -160,7 +160,7 @@ public:
      */
     virtual void mCmdSiteDestroyed() = 0; // once per registerProvider
 
-    virtual ~MCmdProviderIface() {};
+    virtual ~MCmdProviderIface() { };
 };
 
 #endif // MINICMD_H

@@ -487,8 +487,8 @@ QStringList allCountryNames()
     names.reserve(int(QLocale::LastCountry));
     for (int i = int(QLocale::AnyCountry) + 1; i <= int(QLocale::LastCountry); ++i) {
         const auto country = static_cast<QLocale::Country>(i);
-        QString code;
-        QString name;
+        QString    code;
+        QString    name;
 #if QT_VERSION > QT_VERSION_CHECK(6, 2, 0)
         code = QLocale::territoryToCode(country);
         name = QLocale::territoryToString(country);
@@ -505,21 +505,21 @@ QStringList allCountryNames()
 
 void InfoWidget::setupCountriesLookup()
 {
-    QStringList countries = allCountryNames();
+    QStringList         countries      = allCountryNames();
     QStandardItemModel *countriesModel = new QStandardItemModel(countries.size(), 2);
     for (const auto &countryRow : countries) {
-       if (countryRow.isEmpty()) {
-           continue;
-       }
-       QString country = countryRow.section(QLatin1Char('\t'), 0, 0);
-       QString code = countryRow.section(QLatin1Char('\t'), 1, 1);
-       QList<QStandardItem *> row = QList<QStandardItem *>();
-       row << new QStandardItem(country);
-       row << new QStandardItem(code);
-       countriesModel->appendRow(row);
-   }
+        if (countryRow.isEmpty()) {
+            continue;
+        }
+        QString                country = countryRow.section(QLatin1Char('\t'), 0, 0);
+        QString                code    = countryRow.section(QLatin1Char('\t'), 1, 1);
+        QList<QStandardItem *> row     = QList<QStandardItem *>();
+        row << new QStandardItem(country);
+        row << new QStandardItem(code);
+        countriesModel->appendRow(row);
+    }
 
-    QTreeView *treeView = new QTreeView(this);
+    QTreeView  *treeView  = new QTreeView(this);
     QCompleter *completer = new QCompleter(this);
     completer->setModel(countriesModel);
     completer->setPopup(treeView);
@@ -618,26 +618,12 @@ void InfoWidget::setEdited(bool x)
 
 bool InfoWidget::edited()
 {
-    return 
-        m_ui.le_fullname->isModified() ||
-        d->le_givenname->isModified() ||
-        d->le_middlename->isModified() ||
-        d->le_familyname->isModified() ||
-        m_ui.le_nickname->isModified() ||
-        m_ui.le_bday->isModified() ||
-        m_ui.le_email->isModified() ||
-        m_ui.le_homepage->isModified() ||
-        m_ui.le_phone->isModified() ||
-        m_ui.le_street->isModified() ||
-        m_ui.le_ext->isModified() ||
-        m_ui.le_city->isModified() ||
-        m_ui.le_state->isModified() ||
-        m_ui.le_pcode->isModified() ||
-        m_ui.le_orgName->isModified() ||
-        m_ui.le_orgUnit->isModified() ||
-        m_ui.le_title->isModified() ||
-        m_ui.le_role->isModified() ||
-        d->te_edited;
+    return m_ui.le_fullname->isModified() || d->le_givenname->isModified() || d->le_middlename->isModified()
+        || d->le_familyname->isModified() || m_ui.le_nickname->isModified() || m_ui.le_bday->isModified()
+        || m_ui.le_email->isModified() || m_ui.le_homepage->isModified() || m_ui.le_phone->isModified()
+        || m_ui.le_street->isModified() || m_ui.le_ext->isModified() || m_ui.le_city->isModified()
+        || m_ui.le_state->isModified() || m_ui.le_pcode->isModified() || m_ui.le_orgName->isModified()
+        || m_ui.le_orgUnit->isModified() || m_ui.le_title->isModified() || m_ui.le_role->isModified() || d->te_edited;
 }
 
 void InfoWidget::setReadOnly(bool x)

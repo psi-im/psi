@@ -42,6 +42,7 @@ class QDropEvent;
 class UserListItem;
 
 namespace XMPP {
+class EncryptedSession;
 class Jid;
 class Message;
 }
@@ -87,6 +88,8 @@ public:
     void              dispatchMessage(const MessageView &mv);
     virtual void      appendSysMsg(const QString &txt) = 0;
     void              appendMessage(const Message &, bool local = false);
+    virtual XMPP::EncryptedSession *encryptionSession() const;
+    virtual QString                 encryptionMethodId() const;
 
 signals:
     void aInfo(const XMPP::Jid &);
@@ -134,8 +137,7 @@ protected slots:
     void         doFile();
 
 private slots:
-    virtual void updatePgp();
-    virtual void setPgpEnabled(bool enabled);
+    virtual void updateEncryption();
     void         encryptedMessageSent(int, bool, int, const QString &);
     void         setChatState(XMPP::ChatState s);
     void         updateIsComposing(bool);
@@ -161,6 +163,7 @@ protected:
     void         doneSend();
     void         holdMessages(bool hold);
     void         displayMessage(const MessageView &mv);
+    void         sendMessage(Message &message, bool log = true);
     virtual void setLooks();
     virtual void chatEditCreated();
     void         initHighlighters();

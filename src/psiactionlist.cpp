@@ -408,18 +408,11 @@ void PsiActionList::Private::createMainWin()
         IconAction *actOnlineHome = new IconAction(tr("Home Page (Online)"), tr("&Home Page (Online)"), 0, this);
         actOnlineHome->setToolTip(tr("Home Page (Online)"));
 
-        IconAction *actOnlineForum = new IconAction(
-        tr("Psi Forum (Online)"), tr("Psi &Forum (Online)")
-                                           ,
-            0, this);
-        actOnlineForum->setToolTip(
-        tr("Psi Forum (Online)")
-        );
+        IconAction *actOnlineForum = new IconAction(tr("Psi Forum (Online)"), tr("Psi &Forum (Online)"), 0, this);
+        actOnlineForum->setToolTip(tr("Psi Forum (Online)"));
 
-        IconAction *actPsiMUC = new IconAction(
-        tr("Join Psi Discussion Room (Online)"), tr("&Join Psi Discussion Room (Online)")
-                                                          ,
-            0, this);
+        IconAction *actPsiMUC = new IconAction(tr("Join Psi Discussion Room (Online)"),
+                                               tr("&Join Psi Discussion Room (Online)"), 0, this);
         actOnlineHome->setToolTip(tr("Join Psi Discussion Room (Online)"));
 
         IconAction *actBugReport = new IconAction(tr("Report a Bug (Online)"), tr("Report a &Bug (Online)"), 0, this);
@@ -476,8 +469,9 @@ void PsiActionList::Private::createChat()
         IconAction *actIcon  = new IconAction(tr("Select Icon"), "psi/smile", tr("Select Icon"), 0, this);
         IconAction *actVoice = new IconAction(tr("Voice Call"), "psi/avcall", tr("Voice Call"), 0, this);
         IconAction *actFile  = new IconAction(tr("Send File"), "psi/upload", tr("Send File"), 0, this);
-        IconAction *actPgp
-            = new IconAction(QString("OpenPGP"), "psi/cryptoYes", QString("OpenPGP"), 0, this, nullptr, true);
+        // Keep the historical action id "chat_pgp" for existing toolbar
+        // configurations, but the action is now the generic encryption selector.
+        IconAction *actPgp = new IconAction(tr("Encryption"), "psi/cryptoNo", tr("Encryption"), 0, this, nullptr, true);
         IconAction *actInfo    = new IconAction(tr("User Info"), "psi/vCard", tr("User Info"), 0, this);
         IconAction *actHistory = new IconAction(tr("Message History"), "psi/history", tr("Message History"), 0, this);
         IconAction *actCompact
@@ -487,7 +481,8 @@ void PsiActionList::Private::createChat()
         IconAction *actShareFiles = new IconAction(tr("Share Files"), "psi/share_file", tr("Share Files"), 0, this);
         IconAction *actPinTab     = new IconAction(tr("Pin/UnPin Tab"), "psi/pin", tr("Pin/UnPin Tab"), 0, this);
         IconAction *actTemplates  = new IconAction(tr("Templates"), "psi/action_templates", tr("Templates"), 0, this);
-        IconAction *actPasteSend = new IconAction(tr("Paste and Send"), "psi/action_paste_and_send", tr("Paste and Send"), 0, this);
+        IconAction *actPasteSend
+            = new IconAction(tr("Paste and Send"), "psi/action_paste_and_send", tr("Paste and Send"), 0, this);
 
         ActionNames actions[] = { { "chat_clear", actClear },
                                   { "chat_find", actFind },
@@ -527,9 +522,10 @@ void PsiActionList::Private::createGroupchat()
         IconAction *actShareFiles = new IconAction(tr("Share Files"), "psi/share_file", tr("Share Files"), 0, this);
         IconAction *actPinTab     = new IconAction(tr("Pin/UnPin Tab"), "psi/pin", tr("Pin/UnPin Tab"), 0, this);
         IconAction *actTemplates  = new IconAction(tr("Templates"), "psi/action_templates", tr("Templates"), 0, this);
-        IconAction *actPasteSend = new IconAction(tr("Paste and Send"), "psi/action_paste_and_send", tr("Paste and Send"), 0, this);
+        IconAction *actPasteSend
+            = new IconAction(tr("Paste and Send"), "psi/action_paste_and_send", tr("Paste and Send"), 0, this);
 
-        IconAction *actSetTopic  = new IconAction(tr("Set Topic"), QLatin1String("psi/topic"), tr("Set Topic"), 0, this);
+        IconAction *actSetTopic = new IconAction(tr("Set Topic"), QLatin1String("psi/topic"), tr("Set Topic"), 0, this);
 
         ActionNames actions[] = { { "gchat_info", actInfo },
                                   { "gchat_clear", actClear },

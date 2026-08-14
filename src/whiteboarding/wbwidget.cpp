@@ -295,7 +295,7 @@ void WbWidget::mouseMoveEvent(QMouseEvent *event)
     if (mode_ == Mode::Erase) {
         if (event->buttons() != Qt::MouseButtons(Qt::LeftButton))
             return;
-            // Erase all items that appear in a 2*strokeWidth_ square with center at the event position
+        // Erase all items that appear in a 2*strokeWidth_ square with center at the event position
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         QPointF p = mapToScene(mapFromGlobal(event->globalPos()));
 #else

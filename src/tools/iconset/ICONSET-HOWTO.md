@@ -35,12 +35,12 @@ Step-by-step guide how to create an iconset.
    <?xml version='1.0' encoding='UTF-8'?>
    <icondef>
        <meta> <!-- ... --> </meta>
-   
+
        <icon>
            <text>:-)</text>
            <text>:)</text>
            <text xml:lang='en'>:smiley:</text>
-   
+
            <object mime='image/png'>smiley.png</object>
            <object mime='audio/x-wav'>smiley.wav</object>
        </icon>
@@ -50,7 +50,7 @@ Step-by-step guide how to create an iconset.
   This iconset contains only one icon, that is associated with the following strings:
   `:-)`, `:)`, `:smiley:`. When it is shown on screen, it will be displayed as
   `smiley.png` image, and will play the `smiley.wav` sound.
-  
+
   Possible mime-types are:
   1. For images:
        * image/png -- preferred image format
@@ -65,14 +65,14 @@ Step-by-step guide how to create an iconset.
       * audio/x-ogg
       * audio/x-mp3
       * audio/x-midi -- not really supported
-  
+
   Multiple graphic mime types, and sound mime types can be specified simultaneously:
   ```xml
       <icon>
           <object mime='image/png'>smiley.png</object>
           <object mime='video/x-mng'>smiley.mng</object>
           <object mime='image/gif'>smiley.gif</object>
-  
+
           <object mime='audio/x-wav'>smiley.wav</object>
           <object mime='audio/x-ogg'>smiley.ogg</object>
       </icon>
@@ -84,16 +84,16 @@ Step-by-step guide how to create an iconset.
        <icon>
            <object mime='image/png'>smiley.png</object>
            <object mime='audio/x-wav'>smiley.wav</object>
-   
+
            <x xmlns='name'>emoticon/smiley</x>
        </icon>
    ```
-   
+
    And it can be forced for icon to be animated, or not:
    ```xml
        <icon>
            <object mime='image/png'>connect.png</object>
-   
+
            <x xmlns='name'>psi/connect</x>
            <x xmlns='type'>animation</x>
        </icon>
@@ -104,12 +104,12 @@ Step-by-step guide how to create an iconset.
    ```xml
        <icon>
            <object mime='image/png'>connect.png</object>
-   
+
            <x xmlns='name'>psi/connect</x>
            <x xmlns='type'>image</x>
        </icon>
    ```
-   
+
    And this way, it will be loaded as single graphic.
 
 9. Packing it all together: Pack your `my-first-iconset` directory in a

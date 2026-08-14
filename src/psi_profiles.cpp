@@ -108,6 +108,7 @@ void UserAccount::reset()
 
     stunHost = stunHosts[0];
 
+    encryptionMethods.clear();
     pgpKnownKeys.clear();
     pgpEnabledChats.clear();
     pgpDisabledChats.clear();
@@ -245,6 +246,15 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
     }
 
     proxyID = o->getOption(base + ".proxy-id").toString();
+
+    encryptionMethods.clear();
+    const QVariantList encryptionKeys = o->mapKeyList(base + ".encryption-methods");
+    for (const QVariant &key : encryptionKeys) {
+        auto methodBase = o->mapLookup(base + ".encryption-methods", key);
+        if (!methodBase)
+            continue;
+        encryptionMethods.insert(key.toString(), o->getOption(*methodBase + ".method").toString());
+    }
 
     pgpKnownKeys.fromOptions(o, base + ".pgp-key-bindings");
     pgpEnabledChats  = o->getOption(base + ".pgp-enabled-chats").toStringList();
@@ -412,6 +422,12 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
     }
 
     o->setOption(base + ".proxy-id", proxyID);
+
+    o->removeOption(base + ".encryption-methods", true);
+    for (auto it = encryptionMethods.cbegin(); it != encryptionMethods.cend(); ++it) {
+        const QString methodBase = o->mapPut(base + ".encryption-methods", it.key());
+        o->setOption(methodBase + ".method", it.value());
+    }
 
     pgpKnownKeys.toOptions(o, base + ".pgp-key-bindings");
     o->setOption(base + ".pgp-enabled-chats", pgpEnabledChats);
