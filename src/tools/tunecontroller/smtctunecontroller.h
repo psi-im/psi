@@ -30,6 +30,7 @@ class SmtcTuneController : public PollingTuneController {
 
 public:
     SmtcTuneController();
+    ~SmtcTuneController();
     Tune currentTune() const;
 
 protected slots:
@@ -49,7 +50,10 @@ private:
 
 private:
     Tune           _currentTune;
-    bool           _tuneSent;
+    bool           _tuneSent { false };
+    bool           _updateInFlight { false };
+    AsyncAction    _startAction { nullptr };
+    AsyncAction    _updateAction { nullptr };
     SessionManager _manager { nullptr };
     Session        _currentSession { nullptr };
 };

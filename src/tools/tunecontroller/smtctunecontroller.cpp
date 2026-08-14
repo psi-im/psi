@@ -19,6 +19,8 @@
 
 #include "smtctunecontroller.h"
 
+#include <QDebug>
+#include <QPointer>
 #include <combaseapi.h>
 #include <winrt/base.h>
 
@@ -33,21 +35,38 @@ using namespace winrt::Windows::Foundation;
 SmtcTuneController::SmtcTuneController() : PollingTuneController(), _tuneSent(false)
 {
     initWinRt();
-    startAsync(); // start async smtc listening
-    startPoll();  // start polling
+    _startAction = startAsync(); // start async smtc listening
+    startPoll();                 // start polling
+}
+
+SmtcTuneController::~SmtcTuneController()
+{
+    stopPoll();
+    if (_startAction)
+        _startAction.Cancel();
+    if (_updateAction)
+        _updateAction.Cancel();
 }
 
 void SmtcTuneController::check()
 {
-    if (_manager) {
-        auto session = _manager.GetCurrentSession();
-        updateCurrentSession(session);
-        if (_currentSession)
-            updateTune(_currentSession);
-        else
-            clearTune();
-    } else
+    if (!_manager) {
         clearTune();
+        PollingTuneController::check();
+        return;
+    }
+
+    auto session = _manager.GetCurrentSession();
+    updateCurrentSession(session);
+
+    if (_currentSession && !_updateInFlight) {
+        _updateInFlight = true;
+        _updateAction   = nullptr;
+        _updateAction   = updateTune(_currentSession);
+    } else if (!_currentSession) {
+        clearTune();
+    }
+
     PollingTuneController::check();
 }
 
@@ -56,11 +75,14 @@ Tune SmtcTuneController::currentTune() const { return _currentTune; }
 IAsyncAction SmtcTuneController::startAsync()
 {
     // connect to winrt and get current session
-    _manager = co_await SessionManager::RequestAsync();
-    if (_manager) {
-        _currentSession = _manager.GetCurrentSession();
-        if (_currentSession)
-            co_await updateTune(_currentSession);
+    QPointer<SmtcTuneController> guard(this);
+    try {
+        auto manager = co_await SessionManager::RequestAsync();
+        if (guard)
+            guard->_manager = manager;
+        ;
+    } catch (winrt::hresult_error const &e) {
+        qWarning() << "SMTC initialization failed:" << QString::fromWCharArray(e.message().c_str());
     }
     co_return;
 }
@@ -93,6 +115,7 @@ IAsyncAction SmtcTuneController::updateTune(Session session)
             if (track >= 0)
                 tune.setTrack(QString::number(track));
             sendTune(tune);
+            _updateInFlight = false;
         }
     } else
         clearTune();
