@@ -12,6 +12,7 @@
 #include "optionaccessinghost.h"
 #endif
 #include "opt_accounts.h"
+#include "opt_security.h"
 #include "opt_pluginwrapper.h"
 #include "opt_popups.h"
 #include "opt_roster.h"
@@ -49,6 +50,7 @@ OptionsDlg::OptionsDlg(PsiCon *psi, QWidget *parent) : OptionsDlgBase(psi, paren
     applicationTab->setHaveAutoUpdater(psi->haveAutoUpdater());
     tabs.append(applicationTab);
     tabs.append(new OptionsTabAccounts(this));
+    tabs.append(new OptionsTabSecurity(this));
     tabs.append(new OptionsTabRoster(this));
     tabs.append(new OptionsTabMessages(this));
     tabs.append(new OptionsTabEvents(this));

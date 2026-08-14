@@ -403,6 +403,8 @@ PsiEncryptionController::PsiEncryptionController(PsiAccount *account, XMPP::Clie
                 [this](const XMPP::Jid &, uint32_t) { emit methodStateChanged(XMPP::OmemoEncryption::methodId()); });
         connect(omemo_, &XMPP::OmemoEncryption::deviceRemoved, this,
                 [this](const XMPP::Jid &, uint32_t) { emit methodStateChanged(XMPP::OmemoEncryption::methodId()); });
+        connect(omemo_, &XMPP::OmemoEncryption::readyChanged, this,
+                [this](bool) { emit methodStateChanged(XMPP::OmemoEncryption::methodId()); });
         connect(omemo_, &XMPP::OmemoEncryption::warning, this,
                 [this](const QString &message) { emit encryptionError({}, message); });
     } else {
@@ -863,10 +865,13 @@ void PsiEncryptionController::setUpOmemo(const QString &deviceLabel)
         if (!job->success())
             emit encryptionError({}, tr("OMEMO setup failed: %1").arg(job->errorString()));
     };
-    if (job->isFinished())
+    if (job->isFinished()) {
         report();
-    else
+        job->deleteLater();
+    } else {
         connect(job, &XMPP::EncryptionJob::finished, this, report);
+        connect(job, &XMPP::EncryptionJob::finished, job, &QObject::deleteLater);
+    }
 }
 #endif
 
