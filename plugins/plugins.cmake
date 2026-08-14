@@ -15,7 +15,9 @@ list(APPEND PLUGINS_INCLUDES
     ${CMAKE_CURRENT_LIST_DIR}/include/contactinfoaccessor.h
     ${CMAKE_CURRENT_LIST_DIR}/include/contactstateaccessinghost.h
     ${CMAKE_CURRENT_LIST_DIR}/include/contactstateaccessor.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/encryptionsupport.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/encryptionmethodaccessinghost.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/encryptionmethodaccessor.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/encryptionmethodprovider.h
     ${CMAKE_CURRENT_LIST_DIR}/include/eventcreatinghost.h
     ${CMAKE_CURRENT_LIST_DIR}/include/eventcreator.h
     ${CMAKE_CURRENT_LIST_DIR}/include/eventfilter.h

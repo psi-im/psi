@@ -332,18 +332,15 @@ void MUCJoinDlg::doJoin(MucJoinReason r)
 
     if (!account_->groupChatJoin(host, room, nick, pass, !ui_.ck_history->isChecked())) {
 
-        //wrap at dashes
-        // "<html>%1<br/><br/><nobr>&ndash;&nbsp;<b>%2</b>: %3</nobr><br/><nobr>&ndash;&nbsp;<b>%4</b>: %5</nobr></html>"
-        // "%1<br/><br/>-&nbsp;<b>%2</b>:&nbsp;%3<br/>-&nbsp;<b>%4</b>:&nbsp;%5"
-        QString dialogMessage=QString("%1\n\n- %2: %3\n- %4: %5").arg(
-            tr("You are in or joining this room already!"),
-            tr("Account"),
-            account_->jid().bare(),
-            tr("Room"),
-            j.bare()
-        );
+        // wrap at dashes
+        //  "<html>%1<br/><br/><nobr>&ndash;&nbsp;<b>%2</b>: %3</nobr><br/><nobr>&ndash;&nbsp;<b>%4</b>:
+        //  %5</nobr></html>"
+        //  "%1<br/><br/>-&nbsp;<b>%2</b>:&nbsp;%3<br/>-&nbsp;<b>%4</b>:&nbsp;%5"
+        QString dialogMessage = QString("%1\n\n- %2: %3\n- %4: %5")
+                                    .arg(tr("You are in or joining this room already!"), tr("Account"),
+                                         account_->jid().bare(), tr("Room"), j.bare());
 
-        QMessageBox::information( this, tr("Error"), dialogMessage );
+        QMessageBox::information(this, tr("Error"), dialogMessage);
         return;
     }
 

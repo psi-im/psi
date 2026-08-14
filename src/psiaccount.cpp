@@ -86,6 +86,7 @@
 #include "psicon.h"
 #include "psicontact.h"
 #include "psicontactlist.h"
+#include "psiencryptioncontroller.h"
 #include "psievent.h"
 #include "psiiconset.h"
 #include "psioptions.h"
@@ -96,6 +97,7 @@
 #include "iris/xmpp_caps.h"
 #include "iris/xmpp_captcha.h"
 #include "iris/xmpp_carbons.h"
+#include "iris/xmpp_encryption.h"
 #include "iris/xmpp_forwarding.h"
 #include "iris/xmpp_serverinfomanager.h"
 #include "iris/xmpp_tasks.h"
@@ -383,11 +385,12 @@ public:
         });
     }
 
-    PsiContactList          *contactList = nullptr;
-    PsiContact              *selfContact = nullptr;
-    PsiCon                  *psi         = nullptr;
-    PsiAccount              *account     = nullptr;
-    Client                  *client      = nullptr;
+    PsiContactList          *contactList          = nullptr;
+    PsiContact              *selfContact          = nullptr;
+    PsiCon                  *psi                  = nullptr;
+    PsiAccount              *account              = nullptr;
+    Client                  *client               = nullptr;
+    PsiEncryptionController *encryptionController = nullptr;
     QVariantMap              clientVersionInfo;
     FileSharingDeviceOpener *fileSharingDeviceOpener = nullptr;
     UserAccount              acc;
@@ -1064,12 +1067,25 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
     // create XMPP::Client
     d->client = new Client;
 
-    // Plugins
+    d->encryptionController
+        = new PsiEncryptionController(this, d->client, acc.encryptionMethods,
+                                      pathToProfile(activeProfile, ApplicationInfo::DataLocation), acc.id, this);
+    connect(d->encryptionController, &PsiEncryptionController::methodsChanged, this, [this]() {
+        updateFeatures();
+        if (isConnected())
+            setStatusActual(status());
+    });
+    connect(d->encryptionController, &PsiEncryptionController::selectedMethodChanged, this,
+            [this](const XMPP::Jid &, const QString &) {
+                d->acc.encryptionMethods = d->encryptionController->selectedMethods();
+                emit updatedAccount();
+            });
+
+    // Plugins may register additional encryption methods through the Psi plugin API.
 #ifdef PSI_PLUGINS
     PluginManager::instance()->addAccount(this, d->client);
 #endif
     d->client->bobManager()->setCache(BoBFileCache::instance()); // xep-0231
-    d->client->setEncryptionHandler(this);
 
     DiscoItem::Identity identity;
     identity.category = "client";
@@ -1277,6 +1293,10 @@ PsiAccount::~PsiAccount()
     delete d->ahcManager;
     delete d->privacyManager;
     delete d->pepManager;
+    // PsiEncryptionController unregisters Iris methods and owns the OMEMO
+    // backend, so it must die while XMPP::Client is still alive.
+    delete d->encryptionController;
+    d->encryptionController = nullptr;
     delete d->client->serverInfoManager();
 #ifdef WHITEBOARDING
     delete d->wbManager;
@@ -1373,6 +1393,9 @@ const QString &PsiAccount::id() const { return d->acc.id; }
 // FIXME: we should move all PsiAccount::userAccount() users to PsiAccount::accountOptions()
 const UserAccount &PsiAccount::userAccount() const
 {
+    if (d->encryptionController)
+        d->acc.encryptionMethods = d->encryptionController->selectedMethods();
+
     // save the roster and pgp key bindings
     d->acc.roster.clear();
     d->acc.pgpKnownKeys.clear();
@@ -1387,11 +1410,19 @@ const UserAccount &PsiAccount::userAccount() const
     return d->acc;
 }
 
-UserAccount PsiAccount::accountOptions() const { return d->acc; }
+UserAccount PsiAccount::accountOptions() const
+{
+    UserAccount result = d->acc;
+    if (d->encryptionController)
+        result.encryptionMethods = d->encryptionController->selectedMethods();
+    return result;
+}
 
 UserList *PsiAccount::userList() const { return &d->userList; }
 
 Client *PsiAccount::client() const { return d->client; }
+
+PsiEncryptionController *PsiAccount::encryptionController() const { return d->encryptionController; }
 
 EventQueue *PsiAccount::eventQueue() const { return d->eventQueue; }
 
@@ -1452,6 +1483,8 @@ void PsiAccount::setUserAccount(const UserAccount &_acc)
     }
 
     d->acc = acc;
+    if (d->encryptionController)
+        d->encryptionController->setSelectedMethods(acc.encryptionMethods);
     d->setEnabled(enabled());
 
     // rename queue file?
@@ -1992,6 +2025,10 @@ void PsiAccount::sessionStart_finished()
 
 void PsiAccount::sessionStarted()
 {
+#ifdef IRIS_ENABLE_OMEMO
+    if (d->encryptionController)
+        d->encryptionController->setUpOmemo(ApplicationInfo::name());
+#endif
     if (d->voiceCaller)
         d->voiceCaller->initialize();
 
@@ -2790,6 +2827,17 @@ void PsiAccount::client_messageReceived(const Message &m)
         QDateTime ts = _m.forwarded().timeStamp();
         if (ts.isValid())
             dm.setTimeStamp(ts);
+    }
+
+    // Iris keeps encryption metadata scoped to delivery of the decrypted
+    // stanza. Ask Psi's application-level controller to verify a newly seen
+    // OMEMO identity without delaying or hiding the already authenticated
+    // plaintext message. The prompt itself is queued by the controller.
+    if (d->encryptionController) {
+        if (const auto *metadata = d->client->currentEncryptionMetadata(); metadata && !metadata->methodId.isEmpty()) {
+            d->encryptionController->requestTrustDecision(metadata->methodId, metadata->sender, false,
+                                                          findChatDialog(metadata->sender));
+        }
     }
 
     // if the sender is already in the queue, then queue this message also
@@ -4041,7 +4089,9 @@ ChatDlg *PsiAccount::ensureChatDlg(const Jid &j)
     if (!c) {
         // create the chatbox
         c = ChatDlg::create(j, this, d->tabManager);
-        connect(c, &ChatDlg::aSend, this, [this](XMPP::Message &msg) { dj_sendMessage(msg); });
+        connect(c, &ChatDlg::aSend, this, [this, c](XMPP::Message &msg) {
+            dj_sendMessage(msg, true, c->encryptionSession(), c->encryptionMethodId());
+        });
         connect(c, &ChatDlg::messagesRead, this, &PsiAccount::chatMessagesRead);
         connect(c, &ChatDlg::aInfo, this, [this](const XMPP::Jid &jid) { actionInfo(jid); });
         connect(c, &ChatDlg::aHistory, this, &PsiAccount::actionHistory);
@@ -4779,6 +4829,20 @@ void PsiAccount::openUri(const QUrl &uriToOpen)
 
 void PsiAccount::dj_sendMessage(Message &m, bool log)
 {
+    const QString methodId = m.xencrypted().isEmpty() && m.type() != Message::Type::Groupchat && d->encryptionController
+        ? d->encryptionController->selectedMethod(m.to())
+        : QString();
+    sendMessageInternal(m, log, nullptr, methodId, true);
+}
+
+void PsiAccount::dj_sendMessage(Message &m, bool log, XMPP::EncryptedSession *session, const QString &methodId)
+{
+    sendMessageInternal(m, log, session, methodId, false);
+}
+
+void PsiAccount::sendMessageInternal(Message &m, bool log, XMPP::EncryptedSession *session, const QString &methodId,
+                                     bool allowTransientSession)
+{
     UserListItem *u = findFirstRelevant(m.to());
 
     if (PsiOptions::instance()->getOption("options.messages.force-incoming-message-type").toString()
@@ -4820,43 +4884,116 @@ void PsiAccount::dj_sendMessage(Message &m, bool log)
         }
     }
 
+    if (!methodId.isEmpty() && methodId != QLatin1String("openpgp")) {
+        sendEncryptedMessage(m, log, methodId, session, allowTransientSession);
+        return;
+    }
+
     d->client->sendMessage(m);
+    finishSentMessage(m, log);
+}
 
+void PsiAccount::finishSentMessage(const Message &sent, bool log)
+{
     // only toggle if not an invite or body is not empty
-    if (m.invite().isEmpty() && !m.body().isEmpty())
-        toggleSecurity(m.to(), m.wasEncrypted());
+    if (sent.invite().isEmpty() && !sent.body().isEmpty())
+        toggleSecurity(sent.to(), sent.wasEncrypted());
 
-    // don't log groupchat or encrypted messages
-    if (log) {
-        if (m.type() != Message::Type::Groupchat && m.xencrypted().isEmpty()) {
-            int               type = findGCContact(m.to()) ? EDB::GroupChatContact : EDB::Contact;
-            MessageEvent::Ptr me(new MessageEvent(m, this));
-            me->setOriginLocal(true);
-            me->setTimeStamp(QDateTime::currentDateTime());
-            const AddressList al = m.addresses();
-            if (al.isEmpty())
-                logEvent(m.to(), me, type);
-            else {
-                for (const Address &a : al) {
-                    logEvent(a.jid(), me, type);
-                }
-            }
+    // don't log groupchat or OpenPGP-wrapped messages
+    if (log && sent.type() != Message::Type::Groupchat && sent.xencrypted().isEmpty()) {
+        int               type = findGCContact(sent.to()) ? EDB::GroupChatContact : EDB::Contact;
+        MessageEvent::Ptr me(new MessageEvent(sent, this));
+        me->setOriginLocal(true);
+        me->setTimeStamp(QDateTime::currentDateTime());
+        const AddressList al = sent.addresses();
+        if (al.isEmpty())
+            logEvent(sent.to(), me, type);
+        else {
+            for (const Address &a : al)
+                logEvent(a.jid(), me, type);
         }
     }
 
     // don't sound when sending groupchat messages or message events
-    if (m.type() != Message::Type::Groupchat && !m.body().isEmpty() && log)
+    if (sent.type() != Message::Type::Groupchat && !sent.body().isEmpty() && log)
         playSound(eSend);
 
     // auto close an open messagebox (if non-chat)
-    if (m.type() != Message::Type::Chat && !m.body().isEmpty()) {
-        UserListItem *u = findFirstRelevant(m.to());
-        if (u) {
-            EventDlg *e = findDialog<EventDlg *>(u->jid());
+    if (sent.type() != Message::Type::Chat && !sent.body().isEmpty()) {
+        UserListItem *item = findFirstRelevant(sent.to());
+        if (item) {
+            EventDlg *e = findDialog<EventDlg *>(item->jid());
             if (e)
                 e->closeAfterReply();
         }
     }
+}
+
+void PsiAccount::sendEncryptedMessage(const Message &message, bool log, const QString &methodId,
+                                      XMPP::EncryptedSession *session, bool allowTransientSession)
+{
+    if (!d->encryptionController)
+        return;
+
+    auto *method = d->client->encryptionManager()->method(methodId);
+    if (!method || !method->capabilities().testFlag(XMPP::EncryptionMethod::XmppStanza)) {
+        d->encryptionController->reportError(message.to(),
+                                             tr("The selected encryption method '%1' is not available.").arg(methodId));
+        return;
+    }
+
+    const bool                         boundToChatSession = session != nullptr;
+    QPointer<XMPP::EncryptedSession>   sessionGuard(session);
+    Message                            sent = message;
+    XMPP::EncryptionJob               *job  = nullptr;
+    if (session) {
+        if (session->methodId() != methodId || session->isClosing()) {
+            d->encryptionController->reportError(message.to(), tr("The selected encryption session is unavailable."));
+            return;
+        }
+        job = d->client->sendMessageEncrypted(sent, session);
+    } else if (allowTransientSession) {
+        // Non-chat senders use a transient session with the current per-contact
+        // preference. Chat windows pass their own long-lived session instead.
+        XMPP::EncryptionContext context;
+        context.recipients.append(d->encryptionController->capabilityJid(message.to()));
+        job = d->client->sendMessageEncrypted(sent, methodId, context);
+    } else {
+        d->encryptionController->reportError(message.to(), tr("The chat could not create an encryption session."));
+        return;
+    }
+    const Jid  recipient       = sent.to();
+    const auto finishEncrypted = [this, job, recipient, sent, log, methodId, sessionGuard,
+                                  boundToChatSession]() {
+        if (job->success()) {
+            finishSentMessage(sent, log);
+            return;
+        }
+
+        if (job->error() == XMPP::EncryptionJob::Error::UntrustedIdentity && d->encryptionController) {
+            ChatDlg   *parent    = findChatDialog(recipient);
+            const bool requested = d->encryptionController->requestTrustDecision(
+                methodId, recipient, true, parent,
+                [this, sent, log, methodId, sessionGuard, boundToChatSession](bool retry) {
+                    if (!retry || !d->encryptionController)
+                        return;
+                    if (boundToChatSession && !sessionGuard) {
+                        d->encryptionController->reportError(
+                            sent.to(), tr("The chat encryption session was closed before the message could be retried."));
+                        return;
+                    }
+                    sendEncryptedMessage(sent, log, methodId, sessionGuard.data(), !boundToChatSession);
+                });
+            if (requested)
+                return;
+        }
+
+        d->encryptionController->reportError(recipient, tr("Encryption failed: %1").arg(job->errorString()));
+    };
+    if (job->isFinished())
+        finishEncrypted();
+    else
+        connect(job, &XMPP::EncryptionJob::finished, this, finishEncrypted);
 }
 
 void PsiAccount::dj_newMessage(const Jid &jid, const QString &body, const QString &subject, const QString &thread)
@@ -6530,24 +6667,6 @@ void PsiAccount::ed_deny(const Jid &j)
             dj_deny(e->jid());
         }
     }
-}
-
-bool PsiAccount::decryptMessageElement(QDomElement &element)
-{
-#ifdef PSI_PLUGINS
-    return PluginManager::instance()->decryptMessageElement(this, element);
-#else
-    return false;
-#endif
-}
-
-bool PsiAccount::encryptMessageElement(QDomElement &element)
-{
-#ifdef PSI_PLUGINS
-    return PluginManager::instance()->encryptMessageElement(this, element);
-#else
-    return false;
-#endif
 }
 
 #include "psiaccount.moc"

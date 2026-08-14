@@ -77,6 +77,11 @@ public:
     };
     QMap<QString, GroupData> groupState;
 
+    // Selected end-to-end encryption method per bare JID. An empty value is
+    // an explicit plaintext choice; absence means that legacy/default policy
+    // may still apply during migration.
+    QMap<QString, QString> encryptionMethods;
+
     QString pgpSecretKey;
 
     VarList     pgpKnownKeys;

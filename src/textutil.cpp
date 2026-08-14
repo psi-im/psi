@@ -38,7 +38,8 @@ QString TextUtil::unescape(const QString &escaped)
  * Nested quotes and word wrapping are supported.
  * assert(TextUtil::quote("Hello world", 80, true) == "> Hello world\n\n")
  * // Line wrapping
- * assert(TextUtil::quote("This is a very long line that should be wrapped", 20, true) == "> This is a very\n> long line that should be\n> wrapped\n\n")
+ * assert(TextUtil::quote("This is a very long line that should be wrapped", 20, true) == "> This is a very\n> long line
+ * that should be\n> wrapped\n\n")
  * // Empty lines
  * assert(TextUtil::quote("Line1\n\nLine2", 80, false) == "> Line1\n\n> Line2\n\n")
  * // Empty lines: quoteEmpty
@@ -50,10 +51,10 @@ QString TextUtil::unescape(const QString &escaped)
  */
 QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
 {
-    int quoteLevel = 0; // amount of leading '>' in the current line
-    int column = 0; // current column
-    bool atLineStart = true; // at beginning of line
-    int lastSpaceIndex = 0; // index of last whitespace to break line
+    int  quoteLevel     = 0;    // amount of leading '>' in the current line
+    int  column         = 0;    // current column
+    bool atLineStart    = true; // at beginning of line
+    int  lastSpaceIndex = 0;    // index of last whitespace to break line
 
     static const QRegularExpression rxTrimTrailingSpaces(QStringLiteral(" +\n"));
     static const QRegularExpression rxUnquote1(QStringLiteral("^>+\n"));
@@ -64,7 +65,7 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
 
     // quote first line
     QString            quoted = QStringLiteral("> ") + toquote;
-    QRegularExpression rx = quoteEmpty ? rxFollowLineEmpty : rxFollowLinePattern;
+    QRegularExpression rx     = quoteEmpty ? rxFollowLineEmpty : rxFollowLinePattern;
     // quote the following lines
     quoted.replace(rx, QStringLiteral("\n> "));
     // compress > > > > quotes to >>>>
@@ -100,7 +101,7 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
             break;
         }
         if (quoted[i] == '\n') {
-            quoteLevel = 0;
+            quoteLevel  = 0;
             atLineStart = true;
         }
 
@@ -109,7 +110,7 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
             if ((lastSpaceIndex + width) < i) {
                 // advance to the next whitespace from the position
                 lastSpaceIndex = i;
-                i  = quoted.length();
+                i              = quoted.length();
                 while ((lastSpaceIndex < i) && !quoted[lastSpaceIndex].isSpace()) {
                     lastSpaceIndex++;
                 }

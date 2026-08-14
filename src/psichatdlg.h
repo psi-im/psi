@@ -37,6 +37,8 @@
 #include "ui_chatdlg.h"
 #include "widgets/actionlineedit.h"
 
+#include <QPointer>
+
 class IconAction;
 class PsiContact;
 
@@ -47,6 +49,10 @@ public:
     ~PsiChatDlg();
 
     virtual void setVSplitterPosition(int log, int chat);
+    void         setJid(const Jid &jid) override;
+
+    XMPP::EncryptedSession *encryptionSession() const override;
+    QString                 encryptionMethodId() const override;
 
 protected:
     // reimplemented
@@ -56,6 +62,8 @@ protected:
 
 private:
     void setContactToolTip(QString text);
+    void setEncryptionMethod(const QString &methodId, bool persist);
+    void rebuildEncryptionSession();
     void showOwnFingerprint();
     void sendOwnPublicKey();
     void sendPublicKey();
@@ -80,7 +88,7 @@ private slots:
     void    doSwitchJidMode();
     void    copyUserJid();
     void    actActiveContacts();
-    void    actPgpToggled(bool);
+    void    buildEncryptionMenu();
     void    sendButtonMenu();
     void    editTemplates();
     void    doPasteAndSend();
@@ -97,14 +105,12 @@ private:
     // reimplemented
     void      initUi();
     void      capsChanged();
-    bool      isPgpEncryptionEnabled() const;
+    bool      isPgpEncryptionEnabled() const override;
     void      updateJidWidget(const QList<UserListItem *> &ul, int status, bool fromPresence);
     void      contactUpdated(UserListItem *u, int status, const QString &statusString);
     void      updateAvatar();
     void      optionsUpdate();
-    void      updatePgp();
-    void      checkPgpAutostart();
-    void      setPgpEnabled(bool enabled);
+    void      updateEncryption() override;
     void      activated();
     void      setLooks();
     void      setShortcuts();
@@ -118,6 +124,10 @@ private:
     Ui::ChatDlg ui_;
 
     QMenu *pm_settings_;
+    QMenu *encryptionMenu_ = nullptr;
+
+    QString                            selectedEncryptionMethod_;
+    QPointer<XMPP::EncryptedSession>   encryptionSession_;
 
     ActionList       *actions_;
     QAction          *act_mini_cmd_;

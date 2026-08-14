@@ -38,6 +38,7 @@
 #include "psiaccount.h"
 #include "psichatdlg.h"
 #include "psicontactlist.h"
+#include "psiencryptioncontroller.h"
 #include "psiiconset.h"
 #include "psioptions.h"
 #include "psirichtext.h"
@@ -137,9 +138,27 @@ void ChatDlg::init()
     X11WM_CLASS("chat");
     setLooks();
 
-    updatePgp();
+    updateEncryption();
 
-    connect(account(), SIGNAL(pgpKeyChanged()), SLOT(updatePgp()));
+    auto *encryptionController = account()->encryptionController();
+    connect(encryptionController, &PsiEncryptionController::methodsChanged, this, &ChatDlg::updateEncryption);
+    connect(encryptionController, &PsiEncryptionController::methodStateChanged, this,
+            [this](const QString &) { updateEncryption(); });
+    connect(encryptionController, &PsiEncryptionController::peerAvailabilityChanged, this,
+            [this](const XMPP::Jid &changed) {
+                if (changed.bare() == jid().bare())
+                    updateEncryption();
+            });
+    connect(encryptionController, &PsiEncryptionController::selectedMethodChanged, this,
+            [this](const XMPP::Jid &changed, const QString &) {
+                if (changed.bare() == jid().bare())
+                    updateEncryption();
+            });
+    connect(encryptionController, &PsiEncryptionController::encryptionError, this,
+            [this](const XMPP::Jid &recipient, const QString &message) {
+                if (recipient.isEmpty() || recipient.bare() == jid().bare())
+                    appendSysMsg(QStringLiteral("[Encryption] ") + message);
+            });
     connect(account(), SIGNAL(encryptedMessageSent(int, bool, int, const QString &)),
             SLOT(encryptedMessageSent(int, bool, int, const QString &)));
     account()->dialogRegister(this, isPrivate ? jid() : jid().withResource({}));
@@ -152,6 +171,15 @@ ChatDlg::~ChatDlg()
 {
     delete delayedMessages;
     account()->dialogUnregister(this);
+}
+
+XMPP::EncryptedSession *ChatDlg::encryptionSession() const { return nullptr; }
+
+QString ChatDlg::encryptionMethodId() const { return {}; }
+
+void ChatDlg::sendMessage(Message &message, bool log)
+{
+    account()->dj_sendMessage(message, log, encryptionSession(), encryptionMethodId());
 }
 
 void ChatDlg::initComposing()
@@ -486,7 +514,7 @@ void ChatDlg::updateContact(const Jid &j, bool fromPresence)
             invalidateTab();
 
             key_ = userStatus.publicKeyID;
-            updatePgp();
+            updateEncryption();
 
             if (PsiOptions::instance()->getOption("options.ui.chat.show-status-changes").toBool() && fromPresence
                 && statusChanged) {
@@ -567,7 +595,7 @@ void ChatDlg::optionsUpdate()
     }
 }
 
-void ChatDlg::updatePgp() { }
+void ChatDlg::updateEncryption() { }
 
 void ChatDlg::doInfo() { emit aInfo(jid()); }
 
@@ -806,8 +834,6 @@ void ChatDlg::incomingMessage(const Message &m)
     }
 }
 
-void ChatDlg::setPgpEnabled(bool enabled) { Q_UNUSED(enabled); }
-
 QString ChatDlg::whoNick(bool local) const
 {
     QString result;
@@ -1043,7 +1069,7 @@ void ChatDlg::setChatState(ChatState state)
                     m.setType(Message::Type::Chat);
                     m.setChatState(XMPP::StatePaused);
                     if (account()->isAvailable()) {
-                        account()->dj_sendMessage(m, false);
+                        sendMessage(m, false);
                     }
                 }
                 m.setChatState(state);
@@ -1053,7 +1079,7 @@ void ChatDlg::setChatState(ChatState state)
             if (m.containsEvents() || m.chatState() != XMPP::StateNone) {
                 m.setType(Message::Type::Chat);
                 if (account()->isAvailable()) {
-                    account()->dj_sendMessage(m, false);
+                    sendMessage(m, false);
                 }
             }
         }

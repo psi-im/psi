@@ -12,7 +12,8 @@
 #include "applicationinfoaccessinghost.h"
 #include "contactinfoaccessinghost.h"
 #include "contactstateaccessinghost.h"
-#include "encryptionsupport.h"
+#include "encryptionmethodaccessinghost.h"
+#include "encryptionmethodprovider.h"
 #include "eventcreatinghost.h"
 #include "iconfactoryaccessinghost.h"
 #include "iconset.h"
@@ -60,7 +61,7 @@ class PluginHost : public QObject,
                    public EventCreatingHost,
                    public ContactInfoAccessingHost,
                    public SoundAccessingHost,
-                   public EncryptionSupport,
+                   public EncryptionMethodAccessingHost,
                    public PluginAccessingHost,
                    public WebkitAccessingHost,
                    public PsiMediaHost {
@@ -68,7 +69,8 @@ class PluginHost : public QObject,
     Q_INTERFACES(StanzaSendingHost IqFilteringHost OptionAccessingHost ShortcutAccessingHost IconFactoryAccessingHost
                      ActiveTabAccessingHost ApplicationInfoAccessingHost AccountInfoAccessingHost PopupAccessingHost
                          ContactStateAccessingHost PsiAccountControllingHost EventCreatingHost ContactInfoAccessingHost
-                             SoundAccessingHost EncryptionSupport PluginAccessingHost WebkitAccessingHost PsiMediaHost)
+                             SoundAccessingHost EncryptionMethodAccessingHost PluginAccessingHost WebkitAccessingHost
+                                 PsiMediaHost)
 
 public:
     PluginHost(PluginManager *manager, const QString &pluginFile);
@@ -251,9 +253,10 @@ public:
 
     void playSound(const QString &fileName) override;
 
-    // EncryptionSupport
-    bool decryptMessageElement(int account, QDomElement &message) override;
-    bool encryptMessageElement(int account, QDomElement &message) override;
+    // EncryptionMethodAccessingHost
+    bool registerEncryptionMethod(EncryptionMethodProvider *method) override;
+    void unregisterEncryptionMethod(EncryptionMethodProvider *method) override;
+    void encryptionMethodStateChanged(EncryptionMethodProvider *method) override;
 
     // PluginAccessingHost
 

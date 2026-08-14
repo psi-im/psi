@@ -238,6 +238,23 @@ configure_file(${PROJECT_SOURCE_DIR}/iconsets.qrc.in ${ICONSETSQRC_OUTPUT_FILE} 
 #Include SOURCES HEADERS FORMS
 include(src.cmake)
 
+# Application-level bridge between Psi UI/plugin API and Iris encryption.
+list(APPEND SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/psiencryptioncontroller.cpp
+)
+list(APPEND HEADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/psiencryptioncontroller.h
+)
+
+if(ENABLE_OMEMO)
+    list(APPEND SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/psiomemostorage.cpp
+    )
+    list(APPEND HEADERS
+        ${CMAKE_CURRENT_SOURCE_DIR}/psiomemostorage.h
+    )
+endif()
+
 #Append psi_config.h to HEADERS list
 if(EXISTS "${CONFIG_OUTPUT_FILE}")
     message(STATUS "${CONFIG_OUTPUT_FILE} file generated")

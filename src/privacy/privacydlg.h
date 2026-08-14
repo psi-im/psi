@@ -35,7 +35,7 @@ class PrivacyDlg : public QDialog {
 
 public:
     PrivacyDlg(const QString &, PrivacyManager *manager, QWidget *parent = nullptr);
-    ~PrivacyDlg() {};
+    ~PrivacyDlg() { };
 
 protected:
     void rememberSettings();

@@ -17,6 +17,7 @@
 
 // #define PLUGINS_NO_DEBUG
 
+class EncryptionMethodProvider;
 class MessageView;
 class PluginHost;
 class PsiAccount;
@@ -109,9 +110,6 @@ public:
     QIcon       icon(const QString &plugin) const;
     QStringList pluginFeatures() const;
 
-    bool decryptMessageElement(PsiAccount *account, QDomElement &message) const;
-    bool encryptMessageElement(PsiAccount *account, QDomElement &message) const;
-
     QStringList messageViewJSFilters() const;
 
     QList<QAction *> globalAboutMenuActions() const;
@@ -133,6 +131,10 @@ private:
     bool                verifyStanza(const QString &stanza);
     QList<PluginHost *> updatePluginsList();
     void                loadPluginIfEnabled(PluginHost *plugin);
+    bool registerEncryptionMethod(PluginHost *plugin, EncryptionMethodProvider *method, QObject *pluginLifetime);
+    void unregisterEncryptionMethod(PluginHost *plugin, EncryptionMethodProvider *method);
+    void unregisterEncryptionMethods(PluginHost *plugin);
+    void encryptionMethodStateChanged(PluginHost *plugin, EncryptionMethodProvider *method);
 
     static PluginManager *instance_;
 
@@ -148,6 +150,14 @@ private:
     QMap<QString, PluginHost *> pluginByFile_;
     // sorted by priority
     QList<PluginHost *> pluginsByPriority_;
+
+    struct EncryptionMethodRegistration {
+        PluginHost               *plugin = nullptr;
+        EncryptionMethodProvider *method = nullptr;
+        QString                   methodId;
+        QPointer<QObject>         lifetime;
+    };
+    QHash<EncryptionMethodProvider *, EncryptionMethodRegistration> encryptionMethods_;
 
     QList<QCA::DirWatch *> dirWatchers_;
 

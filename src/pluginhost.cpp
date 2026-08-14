@@ -15,6 +15,7 @@
 #include "chatview.h"
 #include "contactinfoaccessor.h"
 #include "contactstateaccessor.h"
+#include "encryptionmethodaccessor.h"
 #include "eventcreator.h"
 #include "eventfilter.h"
 #include "gctoolbariconaccessor.h"
@@ -495,6 +496,13 @@ bool PluginHost::enable()
 #endif
                 soa->setSoundAccessingHost(this);
             }
+            EncryptionMethodAccessor *ema = qobject_cast<EncryptionMethodAccessor *>(plugin_);
+            if (ema) {
+#ifndef PLUGINS_NO_DEBUG
+                qDebug("connecting encryption method accessor");
+#endif
+                ema->setEncryptionMethodAccessingHost(this);
+            }
             PluginAccessor *pla = qobject_cast<PluginAccessor *>(plugin_);
             if (pla) {
 #ifndef PLUGINS_NO_DEBUG
@@ -516,10 +524,12 @@ bool PluginHost::enable()
 
         enableHandler = new QObject(this);
         enabled_      = qobject_cast<PsiPlugin *>(plugin_)->enable();
-        if (enabled_)
+        if (enabled_) {
             emit enabled();
-        else
+        } else {
+            manager_->unregisterEncryptionMethods(this);
             delete enableHandler;
+        }
     }
 
     return enabled_;
@@ -538,6 +548,7 @@ bool PluginHost::disable()
     if (enabled_) {
         enabled_ = !qobject_cast<PsiPlugin *>(plugin_)->disable();
         if (!enabled_) {
+            manager_->unregisterEncryptionMethods(this);
             delete enableHandler;
             emit disabled();
         }
@@ -1336,20 +1347,19 @@ void PluginHost::createNewMessageEvent(int account, QDomElement const &element)
 
 void PluginHost::playSound(const QString &fileName) { soundPlay(fileName); }
 
-/**
- * EncryptionSupport
- */
-
-bool PluginHost::decryptMessageElement(int account, QDomElement &message)
+bool PluginHost::registerEncryptionMethod(EncryptionMethodProvider *method)
 {
-    EncryptionSupport *es = qobject_cast<EncryptionSupport *>(plugin_);
-    return es && es->decryptMessageElement(account, message);
+    return manager_->registerEncryptionMethod(this, method, enableHandler);
 }
 
-bool PluginHost::encryptMessageElement(int account, QDomElement &message)
+void PluginHost::unregisterEncryptionMethod(EncryptionMethodProvider *method)
 {
-    EncryptionSupport *es = qobject_cast<EncryptionSupport *>(plugin_);
-    return es && es->encryptMessageElement(account, message);
+    manager_->unregisterEncryptionMethod(this, method);
+}
+
+void PluginHost::encryptionMethodStateChanged(EncryptionMethodProvider *method)
+{
+    manager_->encryptionMethodStateChanged(this, method);
 }
 
 /**

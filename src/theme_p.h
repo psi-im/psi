@@ -47,7 +47,7 @@ public:
     virtual ~ThemePrivate();
 
     virtual bool exists() = 0;
-    virtual bool load(const QString &style);                                       // synchronous load
+    virtual bool load(const QString &style);                                         // synchronous load
     virtual bool load(const QString &style, std::function<void(bool)> loadCallback); // asynchronous load
 
     virtual bool     hasPreview() const;

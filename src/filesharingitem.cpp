@@ -168,7 +168,7 @@ bool FileSharingItem::initFromCache(FileCacheItem *cache)
     if (!cache)
         return false;
 
-    _flags       = { };
+    _flags       = {};
     auto md      = cache->metadata();
     _mimeType    = md.value(QString::fromLatin1("type")).toString();
     QString link = md.value(QString::fromLatin1("link")).toString();
@@ -391,7 +391,7 @@ FileShareDownloader *FileSharingItem::download(std::optional<Range> range)
         file.addHash(h);
     }
 
-    auto downloaderRange = std::optional<FileShareDownloader::Range> { };
+    auto downloaderRange = std::optional<FileShareDownloader::Range> {};
     if (range) {
         downloaderRange = FileShareDownloader::Range { range->start, range->size };
     }

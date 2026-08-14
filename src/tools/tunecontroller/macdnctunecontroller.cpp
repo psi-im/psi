@@ -51,8 +51,7 @@ static QString CFStringToQString(CFStringRef s)
 MacDNCController::MacDNCController(CFStringRef notificationName) : notificationName_(notificationName)
 {
     CFNotificationCenterRef center = CFNotificationCenterGetDistributedCenter();
-    CFNotificationCenterAddObserver(center, this, MacDNCController::NotificationCallback,
-                                    notificationName_, NULL,
+    CFNotificationCenterAddObserver(center, this, MacDNCController::NotificationCallback, notificationName_, NULL,
                                     CFNotificationSuspensionBehaviorDeliverImmediately);
 }
 
@@ -65,7 +64,7 @@ MacDNCController::~MacDNCController()
 Tune MacDNCController::currentTune() const { return currentTune_; }
 
 void MacDNCController::NotificationCallback(CFNotificationCenterRef, void *observer, CFStringRef, const void *,
-                                      CFDictionaryRef info)
+                                            CFDictionaryRef info)
 {
     Tune              tune;
     MacDNCController *controller = (MacDNCController *)observer;
@@ -93,8 +92,10 @@ void MacDNCController::NotificationCallback(CFNotificationCenterRef, void *obser
         }
 
         CFNumberRef cf_time = (CFNumberRef)CFDictionaryGetValue(info, CFSTR("Total Time"));
-        if (!cf_time) cf_time = (CFNumberRef)CFDictionaryGetValue(info, CFSTR("Duration")); // Spotify uses 'Duration' instead of 'Total Time'
-        int         time    = 0;
+        if (!cf_time)
+            cf_time = (CFNumberRef)CFDictionaryGetValue(
+                info, CFSTR("Duration")); // Spotify uses 'Duration' instead of 'Total Time'
+        int time = 0;
         if (cf_time && !CFNumberGetValue(cf_time, kCFNumberIntType, &time)) {
             qWarning("macdnctunecontroller.cpp: Number value conversion failed.");
         }
@@ -103,8 +104,8 @@ void MacDNCController::NotificationCallback(CFNotificationCenterRef, void *obser
         CFStringRef cf_trackId = (CFStringRef)CFDictionaryGetValue(info, CFSTR("Track ID"));
         if (cf_trackId && CFStringHasPrefix(cf_trackId, CFSTR("spotify:"))) {
             QString url = CFStringToQString(cf_trackId)
-                .replace(QChar(':'), QChar('/'))
-                .replace("spotify/", "https://open.spotify.com/");
+                              .replace(QChar(':'), QChar('/'))
+                              .replace("spotify/", "https://open.spotify.com/");
             tune.setURL(url);
         }
 

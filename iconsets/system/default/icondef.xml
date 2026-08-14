@@ -311,6 +311,11 @@
     </icon>
 
     <icon>
+        <x xmlns='name'>psi/omemo</x>
+        <object mime='image/svg+xml'>omemo.svg</object>
+    </icon>
+
+    <icon>
         <x xmlns='name'>psi/time</x>
         <object mime='image/png'>time.png</object>
     </icon>

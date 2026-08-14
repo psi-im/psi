@@ -41,6 +41,9 @@ public:
 
 QString MacSpotifyPlugin::name() { return "Spotify (Mac)"; }
 
-TuneController *MacSpotifyPlugin::createController() { return new MacDNCController(CFSTR("com.spotify.client.PlaybackStateChanged")); }
+TuneController *MacSpotifyPlugin::createController()
+{
+    return new MacDNCController(CFSTR("com.spotify.client.PlaybackStateChanged"));
+}
 
 #include "mac_spotifyplugin.moc"

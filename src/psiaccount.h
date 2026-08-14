@@ -28,7 +28,6 @@
 #include "activity.h"
 #include "filesharingdownloader.h"
 #include "geolocation.h"
-#include "iris/xmpp_encryptionhandler.h"
 #include "iris/xmpp_reference.h"
 #include "iris/xmpp_rosterx.h"
 #include "iris/xmpp_status.h"
@@ -61,6 +60,7 @@ class PsiCon;
 class PsiContact;
 class PsiContactList;
 class PsiHttpAuthRequest;
+class PsiEncryptionController;
 class PsiIcon;
 class QHostAddress;
 class QIcon;
@@ -84,6 +84,7 @@ class WbManager;
 namespace XMPP {
 class AdvancedConnector;
 class Client;
+class EncryptedSession;
 class Jid;
 class Message;
 class PubSubItem;
@@ -101,7 +102,7 @@ using namespace XMPP;
 // sick sick remove this someday please!
 struct GCContact;
 
-class PsiAccount : public QObject, EncryptionHandler {
+class PsiAccount : public QObject {
     Q_OBJECT
 protected:
     PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManager *tabManager);
@@ -129,15 +130,16 @@ public:
     const Jid         &jid() const;
     QString            nameWithJid() const;
 
-    void                    updateFeatures();
-    XMPP::Client           *client() const;
-    virtual ContactProfile *contactProfile() const;
-    EventQueue             *eventQueue() const;
-    EDB                    *edb() const;
-    PsiCon                 *psi() const;
-    AvatarFactory          *avatarFactory() const;
-    PrivacyManager         *privacyManager() const;
-    VoiceCaller            *voiceCaller() const;
+    void                     updateFeatures();
+    XMPP::Client            *client() const;
+    PsiEncryptionController *encryptionController() const;
+    virtual ContactProfile  *contactProfile() const;
+    EventQueue              *eventQueue() const;
+    EDB                     *edb() const;
+    PsiCon                  *psi() const;
+    AvatarFactory           *avatarFactory() const;
+    PrivacyManager          *privacyManager() const;
+    VoiceCaller             *voiceCaller() const;
 #ifdef WHITEBOARDING
     WbManager *wbManager() const;
 #endif
@@ -356,6 +358,7 @@ public slots:
 
     // dj_ originally referred to 'direct jabber', if you care
     void dj_sendMessage(Message &, bool log = true);
+    void dj_sendMessage(Message &, bool log, XMPP::EncryptedSession *session, const QString &methodId);
     void dj_newMessage(const Jid &jid, const QString &body, const QString &subject, const QString &thread);
     void dj_replyMessage(const Jid &jid, const QString &body);
     void dj_replyMessage(const XMPP::Jid &jid, const QString &body, const QString &subject, const QString &thread);
@@ -541,6 +544,11 @@ private:
     void          processPgpEncryptedMessage(const Message &);
     void          processPgpEncryptedMessageNext();
     void          processPgpEncryptedMessageDone();
+    void          sendMessageInternal(Message &message, bool log, XMPP::EncryptedSession *session,
+                                      const QString &methodId, bool allowTransientSession);
+    void          finishSentMessage(const Message &message, bool log);
+    void          sendEncryptedMessage(const Message &message, bool log, const QString &methodId,
+                                       XMPP::EncryptedSession *session, bool allowTransientSession);
     void          verifyStatus(const Jid &j, const Status &s);
     bool          passwordPrompt();
     void          sentInitialPresence();
@@ -559,8 +567,6 @@ private:
     void     findDialogs(const QMetaObject &mo, const Jid &jid, bool compareResource, QList<void *> *list) const;
     void     findDialogs(const QMetaObject &mo, QList<void *> *list) const;
 
-    bool decryptMessageElement(QDomElement &element) override;
-    bool encryptMessageElement(QDomElement &element) override;
     void userListItemUnavailable(UserListItem *u, const Jid &j, const Resource &r, bool *doSound = nullptr,
                                  bool *doPopup = nullptr);
     void updateClientVersionInfo();
