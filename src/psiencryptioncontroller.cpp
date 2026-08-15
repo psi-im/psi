@@ -418,6 +418,11 @@ PsiEncryptionController::PsiEncryptionController(PsiAccount *account, XMPP::Clie
 
 PsiEncryptionController::~PsiEncryptionController()
 {
+    // OmemoEncryption unregisters itself from EncryptionManager in its
+    // destructor. Do not turn that teardown notification into methodsChanged():
+    // observers may already be going away during account/application shutdown.
+    disconnect(client_->encryptionManager(), nullptr, this, nullptr);
+
     const auto providers = pluginMethods_.keys();
     for (auto *provider : providers)
         unregisterPluginMethod(provider);

@@ -767,8 +767,6 @@ void PsiCon::deinit()
     delete d->themeManager->unregisterProvider(QString::fromLatin1("groupchatview"));
     delete d->themeManager->unregisterProvider(QString::fromLatin1("chatview"));
 #endif
-    delete d->themeManager;
-    d->themeManager = nullptr;
 #ifdef HAVE_WEBSERVER
     delete d->webServer;
     d->webServer = nullptr;
@@ -781,7 +779,13 @@ void PsiCon::deinit()
     if (d->contactList) {
         acc = d->contactList->getUserAccountList();
         delete d->contactList; // also deletes all accounts
+        d->contactList = nullptr;
     }
+
+    // Accounts and their encryption providers may still need theme icons while
+    // they are being destroyed, so the theme manager must outlive them.
+    delete d->themeManager;
+    d->themeManager = nullptr;
     d->nam->releaseHandlers();
 
     delete d->tcpPortReserver;
@@ -800,8 +804,7 @@ void PsiCon::deinit()
     delete d->tuneManager;
 
     // save profile
-    if (d->contactList)
-        d->saveProfile(acc);
+    d->saveProfile(acc);
 #ifdef PSI_PLUGINS
     PluginManager::instance()->unloadAllPlugins();
 #endif
