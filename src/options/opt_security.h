@@ -19,6 +19,7 @@
 
 class QComboBox;
 class QLabel;
+class QLineEdit;
 class QPushButton;
 class QRadioButton;
 class QTreeWidget;
@@ -54,12 +55,14 @@ private:
     QTreeWidget  *methods_           = nullptr;
     QLabel       *ownDeviceId_       = nullptr;
     QLabel       *ownFingerprint_    = nullptr;
+    QLineEdit    *ownDeviceLabel_    = nullptr;
     QTreeWidget  *knownKeys_         = nullptr;
     QTreeWidget  *ownDevices_        = nullptr;
     QPushButton  *setUpOmemo_        = nullptr;
     QPushButton  *trustKey_          = nullptr;
     QPushButton  *distrustKey_       = nullptr;
     QPushButton  *retireOwnDevice_   = nullptr;
+    QPushButton  *sanitizePep_       = nullptr;
     QRadioButton *alwaysEnabled_     = nullptr;
     QRadioButton *enabledByDefault_  = nullptr;
     QRadioButton *disabledByDefault_ = nullptr;

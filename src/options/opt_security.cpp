@@ -28,6 +28,7 @@
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QLabel>
+#include <QLineEdit>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QRadioButton>
@@ -44,7 +45,7 @@ constexpr auto OwnDeviceIdRole             = Qt::UserRole;
 
 QString formatFingerprint(const QByteArray &fingerprint)
 {
-    const auto hex = fingerprint.toHex().toUpper();
+    const auto hex = fingerprint.toHex();
     QString    out;
     out.reserve(hex.size() + hex.size() / 8);
     for (qsizetype i = 0; i < hex.size(); i += 8) {
@@ -144,7 +145,9 @@ QWidget *OptionsTabSecurity::widget()
     ownFingerprint_        = new QLabel(identityGroup);
     ownFingerprint_->setTextInteractionFlags(Qt::TextSelectableByMouse);
     ownFingerprint_->setWordWrap(true);
+    ownDeviceLabel_ = new QLineEdit(identityGroup);
     identityLayout->addRow(tr("Device ID:"), ownDeviceId_);
+    identityLayout->addRow(tr("Device name:"), ownDeviceLabel_);
     identityLayout->addRow(tr("Fingerprint:"), ownFingerprint_);
     setUpOmemo_ = new QPushButton(identityGroup);
     identityLayout->addRow(setUpOmemo_);
@@ -168,7 +171,9 @@ QWidget *OptionsTabSecurity::widget()
     ownDevicesLayout->addWidget(ownDevices_, 1);
     auto *ownDeviceActions = new QHBoxLayout;
     retireOwnDevice_       = new QPushButton(tr("Retire device"), ownDevicesPage);
+    sanitizePep_           = new QPushButton(tr("Sanitize OMEMO PEP"), ownDevicesPage);
     ownDeviceActions->addWidget(retireOwnDevice_);
+    ownDeviceActions->addWidget(sanitizePep_);
     ownDeviceActions->addStretch();
     ownDevicesLayout->addLayout(ownDeviceActions);
     tabs->addTab(ownDevicesPage, tr("Own keys"));
@@ -227,7 +232,40 @@ QWidget *OptionsTabSecurity::widget()
         if (!controller || !controller->omemoEncryption())
             return;
         accountStatus_->setText(tr("Publishing OMEMO keys…"));
-        controller->setUpOmemo(account->name());
+        controller->setUpOmemo(ownDeviceLabel_->text());
+#endif
+    });
+    connect(sanitizePep_, &QPushButton::clicked, w_, [this]() {
+#ifdef IRIS_ENABLE_OMEMO
+        auto *account    = currentAccount();
+        auto *controller = account ? account->encryptionController() : nullptr;
+        auto *omemo      = controller ? controller->omemoEncryption() : nullptr;
+        if (!omemo)
+            return;
+
+        const auto answer = QMessageBox::warning(
+            w_, tr("Sanitize OMEMO PEP"),
+            tr("Psi will verify this account's OMEMO 2 device list and bundles. A broken bundle for this device "
+               "will be republished. A broken bundle belonging to another device will be retracted and that "
+               "device will stop receiving new encrypted messages."),
+            QMessageBox::Cancel | QMessageBox::Ok, QMessageBox::Cancel);
+        if (answer != QMessageBox::Ok)
+            return;
+
+        accountStatus_->setText(tr("Checking OMEMO PEP data…"));
+        auto *job = omemo->sanitizeOwnPep();
+        const auto finished = [this, job]() {
+            if (!job->success())
+                QMessageBox::warning(w_, tr("OMEMO"), job->errorString());
+            else
+                accountStatus_->setText(tr("OMEMO PEP data has been sanitized."));
+            refreshOmemo();
+            job->deleteLater();
+        };
+        if (job->isFinished())
+            finished();
+        else
+            connect(job, &XMPP::EncryptionJob::finished, w_, finished);
 #endif
     });
     connect(retireOwnDevice_, &QPushButton::clicked, w_, [this]() {
@@ -385,11 +423,13 @@ void OptionsTabSecurity::refreshOmemo()
 {
     ownDeviceId_->clear();
     ownFingerprint_->clear();
+    ownDeviceLabel_->clear();
     knownKeys_->clear();
     ownDevices_->clear();
     trustKey_->setEnabled(false);
     distrustKey_->setEnabled(false);
     retireOwnDevice_->setEnabled(false);
+    sanitizePep_->setEnabled(false);
 
 #ifdef IRIS_ENABLE_OMEMO
     auto *account    = currentAccount();
@@ -399,13 +439,17 @@ void OptionsTabSecurity::refreshOmemo()
         ownDeviceId_->setText(tr("OMEMO is unavailable in this build."));
         setUpOmemo_->setEnabled(false);
         setUpOmemo_->setText(tr("Set up OMEMO"));
+        ownDeviceLabel_->setEnabled(false);
         return;
     }
 
     ownDeviceId_->setText(omemo->isReady() ? QString::number(omemo->ownDeviceId()) : tr("Not set up"));
     ownFingerprint_->setText(formatFingerprint(omemo->ownIdentityKey()));
+    ownDeviceLabel_->setEnabled(true);
+    ownDeviceLabel_->setText(omemo->isReady() ? omemo->ownDeviceLabel() : QStringLiteral("Psi"));
     setUpOmemo_->setEnabled(true);
-    setUpOmemo_->setText(omemo->isReady() ? tr("Republish OMEMO keys") : tr("Set up OMEMO"));
+    setUpOmemo_->setText(omemo->isReady() ? tr("Save name and republish") : tr("Set up OMEMO"));
+    sanitizePep_->setEnabled(omemo->isReady());
 
     for (const auto &device : omemo->devices()) {
         if (device.identityKey.isEmpty())
@@ -432,6 +476,7 @@ void OptionsTabSecurity::refreshOmemo()
     ownDeviceId_->setText(tr("OMEMO support is not compiled in."));
     setUpOmemo_->setEnabled(false);
     setUpOmemo_->setText(tr("Set up OMEMO"));
+    ownDeviceLabel_->setEnabled(false);
 #endif
 }
 
