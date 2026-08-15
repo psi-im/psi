@@ -91,10 +91,13 @@ public:
     /**
      * Ask the user to resolve identities that currently block an encrypted
      * operation.  The callback receives true only when the operation can be
-     * retried without another pending trust decision.
+     * retried without another pending trust decision. A non-zero deviceId
+     * requests explicit approval to repair that device's broken session even
+     * when its identity was already trusted.
      */
     bool requestTrustDecision(const QString &methodId, const XMPP::Jid &peer, bool includeOwnDevices,
-                              QWidget *parent = nullptr, std::function<void(bool)> completion = {});
+                              QWidget *parent = nullptr, std::function<void(bool)> completion = {},
+                              quint32 deviceId = 0);
 
 #ifdef IRIS_ENABLE_OMEMO
     XMPP::OmemoEncryption *omemoEncryption() const;
@@ -114,6 +117,10 @@ private:
 
     EncryptionMethodProvider *pluginProvider(const QString &methodId) const;
     void                      syncLegacySelection(const QString &bareJid, const QString &methodId);
+    void                      recoverDecryption(const QString &methodId, const XMPP::Jid &displayPeer,
+                                                const XMPP::EncryptionMetadata &metadata);
+    void                      performDecryptionRecovery(const QString &methodId, const XMPP::Jid &displayPeer,
+                                                       const XMPP::EncryptionMetadata &metadata);
 
     PsiAccount                                             *account_ = nullptr;
     XMPP::Client                                           *client_  = nullptr;
@@ -122,6 +129,8 @@ private:
     QHash<QString, EncryptionMethodProvider *>              pluginMethodsById_;
     QHash<QString, QList<std::function<void(bool)>>>        trustPromptWaiters_;
     QSet<QString>                                           trustPromptsActive_;
+    QHash<QString, qint64>                                  decryptionRecoveryAttempts_;
+    QSet<QString>                                           decryptionRecoveriesActive_;
 
 #ifdef IRIS_ENABLE_OMEMO
     std::unique_ptr<PsiOmemoStorage> omemoStorage_;
