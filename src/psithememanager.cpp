@@ -95,6 +95,11 @@ PsiThemeProvider::LoadRestult PsiThemeManager::loadAll()
         auto required = d->required.contains(it.key());
         auto status   = provider->loadCurrent();
         if (status == PsiThemeProvider::LoadFailure && required) {
+            for (auto *pendingProvider : *pending) {
+                pendingProvider->cancelCurrentLoading();
+                pendingProvider->disconnect(ctx);
+            }
+            delete ctx;
             d->failedId   = QLatin1String(provider->type());
             d->loadResult = PsiThemeProvider::LoadFailure;
             return PsiThemeProvider::LoadFailure;

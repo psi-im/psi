@@ -312,7 +312,7 @@ void OptionsTabSecurity::refreshAccounts()
     const QString currentId = accounts_->currentData().toString();
     accounts_->blockSignals(true);
     accounts_->clear();
-    for (auto *account : psi_->contactList()->accounts())
+    for (auto *account : psi_->contactList()->enabledAccounts())
         accounts_->addItem(account->nameWithJid(), account->id());
     const int previousIndex = accounts_->findData(currentId);
     accounts_->setCurrentIndex(previousIndex >= 0 ? previousIndex : (accounts_->count() ? 0 : -1));
@@ -333,9 +333,15 @@ void OptionsTabSecurity::updateControllerConnections()
     if (!controller || !w_)
         return;
 
-    methodsConnection_ = connect(controller, &PsiEncryptionController::methodsChanged, w_, [this]() { refresh(); });
+    methodsConnection_ = connect(controller, &PsiEncryptionController::methodsChanged, w_, [this]() {
+        if (!changingTrust_)
+            refresh();
+    });
     stateConnection_
-        = connect(controller, &PsiEncryptionController::methodStateChanged, w_, [this](const QString &) { refresh(); });
+        = connect(controller, &PsiEncryptionController::methodStateChanged, w_, [this](const QString &) {
+              if (!changingTrust_)
+                  refresh();
+          });
     errorConnection_ = connect(controller, &PsiEncryptionController::encryptionError, w_,
                                [this](const XMPP::Jid &, const QString &message) { accountStatus_->setText(message); });
 }
@@ -439,12 +445,17 @@ void OptionsTabSecurity::setTrustForSelection(bool trusted)
         return;
 
     const auto level = trusted ? XMPP::EncryptionTrustLevel::ManuallyTrusted : XMPP::EncryptionTrustLevel::Distrusted;
-    for (const auto *item : knownKeys_->selectedItems()) {
-        const XMPP::Jid owner(item->data(0, DeviceOwnerRole).toString());
-        const auto      identityKey = item->data(0, DeviceIdentityKeyRole).toByteArray();
+    QList<QPair<XMPP::Jid, QByteArray>> keys;
+    for (const auto *item : knownKeys_->selectedItems())
+        keys.append({ XMPP::Jid(item->data(0, DeviceOwnerRole).toString()),
+                      item->data(0, DeviceIdentityKeyRole).toByteArray() });
+
+    changingTrust_ = true;
+    for (const auto &[owner, identityKey] : keys) {
         if (!omemo->setTrustLevel(owner, identityKey, level))
             QMessageBox::warning(w_, tr("OMEMO"), tr("Could not save the trust decision."));
     }
+    changingTrust_ = false;
     refreshOmemo();
 #else
     Q_UNUSED(trusted);

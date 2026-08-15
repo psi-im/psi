@@ -67,6 +67,7 @@ private:
     QMetaObject::Connection methodsConnection_;
     QMetaObject::Connection stateConnection_;
     QMetaObject::Connection errorConnection_;
+    bool                    changingTrust_ = false;
 };
 
 #endif // OPT_SECURITY_H
