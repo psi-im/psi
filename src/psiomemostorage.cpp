@@ -119,9 +119,10 @@ public:
                            "KEY(jid, device_id))"),
             QStringLiteral(
                 "CREATE TABLE IF NOT EXISTS omemo_protocol_state (jid TEXT NOT NULL, device_id INTEGER NOT "
-                "NULL, protocol INTEGER NOT NULL, key_id BLOB, session BLOB, last_received_ratchet_key BLOB, "
-                "unresponded_sent INTEGER NOT NULL DEFAULT 0, unresponded_received INTEGER NOT NULL DEFAULT "
-                "0, removed_at TEXT, PRIMARY KEY(jid, device_id, protocol))"),
+                "NULL, protocol INTEGER NOT NULL, label TEXT, label_signature BLOB, label_verified INTEGER, "
+                "key_id BLOB, session BLOB, last_received_ratchet_key BLOB, unresponded_sent INTEGER NOT NULL "
+                "DEFAULT 0, unresponded_received INTEGER NOT NULL DEFAULT 0, removed_at TEXT, PRIMARY KEY(jid, "
+                "device_id, protocol))"),
             QStringLiteral("CREATE TABLE IF NOT EXISTS encryption_trust (method TEXT NOT NULL, jid TEXT NOT NULL, key "
                            "BLOB NOT NULL, trust INTEGER NOT NULL, PRIMARY KEY(method, jid, key))")
         };
@@ -143,6 +144,28 @@ public:
         }
         if (!hasLabel && !exec(QStringLiteral("ALTER TABLE devices ADD COLUMN label TEXT")))
             return false;
+
+        const auto ensureColumn = [this, &db](const QString &table, const QString &column, const QString &definition) {
+            QSqlQuery columns(db);
+            if (!columns.exec(QStringLiteral("PRAGMA table_info(%1)").arg(table)))
+                return false;
+            while (columns.next()) {
+                if (columns.value(1).toString() == column)
+                    return true;
+            }
+            return exec(QStringLiteral("ALTER TABLE %1 ADD COLUMN %2 %3").arg(table, column, definition));
+        };
+        // Protocol-specific device metadata used to live in omemo_device_meta
+        // under (jid, device_id). Keep that table as a migration fallback, but
+        // store all new metadata with the protocol state so equal numeric ids
+        // in legacy OMEMO and OMEMO 2 remain independent.
+        if (!ensureColumn(QStringLiteral("omemo_protocol_state"), QStringLiteral("label"), QStringLiteral("TEXT"))
+            || !ensureColumn(QStringLiteral("omemo_protocol_state"), QStringLiteral("label_signature"),
+                             QStringLiteral("BLOB"))
+            || !ensureColumn(QStringLiteral("omemo_protocol_state"), QStringLiteral("label_verified"),
+                             QStringLiteral("INTEGER"))) {
+            return false;
+        }
         return true;
     }
 };
@@ -248,11 +271,11 @@ XMPP::OmemoStorage::OmemoData PsiOmemoStorage::allData() const
         QSqlQuery q(d->database());
         if (q.exec(QStringLiteral("SELECT jid, device_id, label FROM devices"))) {
             while (q.next()) {
-                const QString owner  = bareJid(q.value(0).toString());
-                const auto    id     = q.value(1).toUInt();
-                auto         &device = data.devices[owner][id];
-                device.label         = q.value(2).toString();
-                device.protocols[XMPP::OmemoProtocol::Legacy]; // active: invalid removal date
+                const QString owner = bareJid(q.value(0).toString());
+                const auto    id    = q.value(1).toUInt();
+                auto         &state = data.devices[owner][id].protocols[XMPP::OmemoProtocol::Legacy];
+                state.label         = q.value(2).toString();
+                // Active legacy record: invalid removal date.
                 activeLegacyDevices.insert(legacyDeviceKey(owner, id));
             }
         }
@@ -286,39 +309,72 @@ XMPP::OmemoStorage::OmemoData PsiOmemoStorage::allData() const
                 auto         &state = data.devices[owner][id].protocols[XMPP::OmemoProtocol::Legacy];
                 state.session       = q.value(2).toByteArray();
                 if (!activeLegacyDevices.contains(legacyDeviceKey(owner, id)))
+#if QT_VERSION < QT_VERSION_CHECK(6, 9, 0)
                     state.removalFromDeviceListDate = QDateTime::fromMSecsSinceEpoch(0, Qt::UTC);
+#else
+                    state.removalFromDeviceListDate = QDateTime::fromMSecsSinceEpoch(0, QTimeZone::UTC);
+#endif
             }
         }
     }
 
-    // New metadata supersedes legacy labels when available.
+    // Migration fallback for databases written before device metadata became
+    // protocol-specific. Do not create a device from this table alone: a
+    // stale metadata row must not resurrect a profile which is absent from
+    // omemo_protocol_state.
+    struct OldModernMeta {
+        QString    label;
+        QByteArray signature;
+        bool       verified = false;
+    };
+    QHash<QString, OldModernMeta> oldModernMeta;
+    const auto                    metaKey
+        = [](const QString &owner, uint32_t id) { return owner + QLatin1Char('\n') + QString::number(id); };
     {
         QSqlQuery q(d->database());
         if (q.exec(QStringLiteral(
                 "SELECT jid, device_id, label, label_signature, label_verified FROM omemo_device_meta"))) {
             while (q.next()) {
-                auto &device          = data.devices[bareJid(q.value(0).toString())][q.value(1).toUInt()];
-                device.label          = q.value(2).toString();
-                device.labelSignature = q.value(3).toByteArray();
-                device.labelVerified  = q.value(4).toBool();
+                const QString owner = bareJid(q.value(0).toString());
+                oldModernMeta.insert(metaKey(owner, q.value(1).toUInt()),
+                                     { q.value(2).toString(), q.value(3).toByteArray(), q.value(4).toBool() });
             }
         }
     }
     {
         QSqlQuery q(d->database());
-        if (q.exec(QStringLiteral("SELECT jid, device_id, protocol, key_id, session, last_received_ratchet_key, "
-                                  "unresponded_sent, unresponded_received, removed_at FROM omemo_protocol_state"))) {
+        if (q.exec(QStringLiteral(
+                "SELECT jid, device_id, protocol, label, label_signature, label_verified, key_id, session, "
+                "last_received_ratchet_key, unresponded_sent, unresponded_received, removed_at "
+                "FROM omemo_protocol_state"))) {
             while (q.next()) {
                 const auto protocol = static_cast<XMPP::OmemoProtocol>(q.value(2).toUInt());
                 if (protocol != XMPP::OmemoProtocol::Legacy && protocol != XMPP::OmemoProtocol::Omemo2)
                     continue;
-                auto &state   = data.devices[bareJid(q.value(0).toString())][q.value(1).toUInt()].protocols[protocol];
-                state.keyId   = q.value(3).toByteArray();
-                state.session = q.value(4).toByteArray();
-                state.lastReceivedRatchetKey          = q.value(5).toByteArray();
-                state.unrespondedSentStanzasCount     = q.value(6).toInt();
-                state.unrespondedReceivedStanzasCount = q.value(7).toInt();
-                state.removalFromDeviceListDate       = dateTimeFromDb(q.value(8));
+                auto &state = data.devices[bareJid(q.value(0).toString())][q.value(1).toUInt()].protocols[protocol];
+                // Rows created before this schema change expose NULL in these
+                // columns. Preserve the OMEMO 2 migration fallback in that
+                // case, but only for a real protocol-state row.
+                const auto oldMeta
+                    = oldModernMeta.constFind(metaKey(bareJid(q.value(0).toString()), q.value(1).toUInt()));
+                if (!q.value(3).isNull())
+                    state.label = q.value(3).toString();
+                else if (protocol == XMPP::OmemoProtocol::Omemo2 && oldMeta != oldModernMeta.cend())
+                    state.label = oldMeta->label;
+                if (!q.value(4).isNull())
+                    state.labelSignature = q.value(4).toByteArray();
+                else if (protocol == XMPP::OmemoProtocol::Omemo2 && oldMeta != oldModernMeta.cend())
+                    state.labelSignature = oldMeta->signature;
+                if (!q.value(5).isNull())
+                    state.labelVerified = q.value(5).toBool();
+                else if (protocol == XMPP::OmemoProtocol::Omemo2 && oldMeta != oldModernMeta.cend())
+                    state.labelVerified = oldMeta->verified;
+                state.keyId                           = q.value(6).toByteArray();
+                state.session                         = q.value(7).toByteArray();
+                state.lastReceivedRatchetKey          = q.value(8).toByteArray();
+                state.unrespondedSentStanzasCount     = q.value(9).toInt();
+                state.unrespondedReceivedStanzasCount = q.value(10).toInt();
+                state.removalFromDeviceListDate       = dateTimeFromDb(q.value(11));
             }
         }
     }
@@ -413,19 +469,6 @@ bool PsiOmemoStorage::addDevice(const QString &jid, uint32_t deviceId, const Dev
     if (!db.transaction())
         return false;
 
-    QSqlQuery meta(db);
-    meta.prepare(QStringLiteral("INSERT OR REPLACE INTO omemo_device_meta "
-                                "(jid, device_id, label, label_signature, label_verified) VALUES (?, ?, ?, ?, ?)"));
-    meta.addBindValue(owner);
-    meta.addBindValue(deviceId);
-    meta.addBindValue(device.label);
-    meta.addBindValue(device.labelSignature);
-    meta.addBindValue(device.labelVerified ? 1 : 0);
-    if (!meta.exec()) {
-        db.rollback();
-        return false;
-    }
-
     QSqlQuery clear(db);
     clear.prepare(QStringLiteral("DELETE FROM omemo_protocol_state WHERE jid = ? AND device_id = ?"));
     clear.addBindValue(owner);
@@ -438,18 +481,22 @@ bool PsiOmemoStorage::addDevice(const QString &jid, uint32_t deviceId, const Dev
     QSqlQuery stateQuery(db);
     stateQuery.prepare(
         QStringLiteral("INSERT INTO omemo_protocol_state "
-                       "(jid, device_id, protocol, key_id, session, last_received_ratchet_key, "
-                       "unresponded_sent, unresponded_received, removed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"));
+                       "(jid, device_id, protocol, label, label_signature, label_verified, key_id, session, "
+                       "last_received_ratchet_key, unresponded_sent, unresponded_received, removed_at) "
+                       "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"));
     for (auto it = device.protocols.cbegin(); it != device.protocols.cend(); ++it) {
         stateQuery.bindValue(0, owner);
         stateQuery.bindValue(1, deviceId);
         stateQuery.bindValue(2, static_cast<int>(it.key()));
-        stateQuery.bindValue(3, it->keyId);
-        stateQuery.bindValue(4, it->session);
-        stateQuery.bindValue(5, it->lastReceivedRatchetKey);
-        stateQuery.bindValue(6, it->unrespondedSentStanzasCount);
-        stateQuery.bindValue(7, it->unrespondedReceivedStanzasCount);
-        stateQuery.bindValue(8, dateTimeToDb(it->removalFromDeviceListDate));
+        stateQuery.bindValue(3, it->label);
+        stateQuery.bindValue(4, it->labelSignature);
+        stateQuery.bindValue(5, it->labelVerified ? 1 : 0);
+        stateQuery.bindValue(6, it->keyId);
+        stateQuery.bindValue(7, it->session);
+        stateQuery.bindValue(8, it->lastReceivedRatchetKey);
+        stateQuery.bindValue(9, it->unrespondedSentStanzasCount);
+        stateQuery.bindValue(10, it->unrespondedReceivedStanzasCount);
+        stateQuery.bindValue(11, dateTimeToDb(it->removalFromDeviceListDate));
         if (!stateQuery.exec()) {
             db.rollback();
             return false;
@@ -497,14 +544,14 @@ bool PsiOmemoStorage::addDevice(const QString &jid, uint32_t deviceId, const Dev
                 QStringLiteral("INSERT OR IGNORE INTO devices (jid, device_id, trust, label) VALUES (?, ?, 0, ?)"));
             insertDevice.addBindValue(owner);
             insertDevice.addBindValue(deviceId);
-            insertDevice.addBindValue(device.label);
+            insertDevice.addBindValue(legacy->label);
             if (!insertDevice.exec()) {
                 db.rollback();
                 return false;
             }
             QSqlQuery label(db);
             label.prepare(QStringLiteral("UPDATE devices SET label = ? WHERE jid = ? AND device_id = ?"));
-            label.addBindValue(device.label);
+            label.addBindValue(legacy->label);
             label.addBindValue(owner);
             label.addBindValue(deviceId);
             if (!label.exec()) {

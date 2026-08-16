@@ -93,11 +93,13 @@ public:
      * operation.  The callback receives true only when the operation can be
      * retried without another pending trust decision. A non-zero deviceId
      * requests explicit approval to repair that device's broken session even
-     * when its identity was already trusted.
+     * when its identity was already trusted. profile is an optional
+     * method-specific wire-profile discriminator used to avoid conflating
+     * equal numeric device ids from different protocol generations.
      */
     bool requestTrustDecision(const QString &methodId, const XMPP::Jid &peer, bool includeOwnDevices,
                               QWidget *parent = nullptr, std::function<void(bool)> completion = {},
-                              quint32 deviceId = 0);
+                              quint32 deviceId = 0, const QString &profile = {});
 
 #ifdef IRIS_ENABLE_OMEMO
     XMPP::OmemoEncryption *omemoEncryption() const;

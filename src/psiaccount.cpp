@@ -4983,7 +4983,8 @@ void PsiAccount::sendEncryptedMessage(const Message &message, bool log, const QS
                         return;
                     }
                     sendEncryptedMessage(sent, log, methodId, sessionGuard.data(), !boundToChatSession);
-                });
+                },
+                0, job->metadata().details.value(QStringLiteral("omemoProtocol")).toString());
             if (requested)
                 return;
         }
