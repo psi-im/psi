@@ -36,6 +36,8 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
+#include <algorithm>
+#include <optional>
 #include <utility>
 
 namespace {
@@ -389,7 +391,7 @@ PsiEncryptionController::PsiEncryptionController(PsiAccount *account, XMPP::Clie
 
         // Preserve historical trust decisions from the old OMEMO plugin.
         for (const auto &device : omemo_->devices()) {
-            if (device.identityKey.isEmpty())
+            if (device.identityKey.isEmpty() || !device.protocols.testFlag(XMPP::OmemoProtocol::Legacy))
                 continue;
             const auto legacyTrust = omemoStorage_->legacyTrust(device.owner.bare(), device.id);
             if (!legacyTrust || device.trust != XMPP::EncryptionTrustLevel::Undecided)
@@ -685,7 +687,7 @@ void PsiEncryptionController::recoverDecryption(const QString &methodId, const X
                 if (approved)
                     performDecryptionRecovery(methodId, displayPeer, prepared);
             },
-            prepared.senderDeviceId);
+            prepared.senderDeviceId, prepared.details.value(QStringLiteral("omemoProtocol")).toString());
         if (!requested) {
             emit encryptionError(displayPeer,
                                  tr("Session recovery was not offered because the sending device is unavailable or "
@@ -831,7 +833,8 @@ QWidget *PsiEncryptionController::createTrustManagementWidget(const QString &met
 
 bool PsiEncryptionController::requestTrustDecision(const QString &methodId, const XMPP::Jid &peer,
                                                    bool includeOwnDevices, QWidget *parent,
-                                                   std::function<void(bool)> completion, quint32 deviceId)
+                                                   std::function<void(bool)> completion, quint32 deviceId,
+                                                   const QString &profile)
 {
 #ifdef IRIS_ENABLE_OMEMO
     if (!omemo_ || methodId != XMPP::OmemoEncryption::methodId())
@@ -842,21 +845,46 @@ bool PsiEncryptionController::requestTrustDecision(const QString &methodId, cons
         return false;
     const QString peerAddress = deviceId != 0 && !peer.resource().isEmpty() ? peer.full() : peerBare;
 
-    const QString ownBare        = client_->jid().bare();
-    const auto    collectDevices = [this, peerBare, ownBare, includeOwnDevices, deviceId]() {
+    const QString ownBare = client_->jid().bare();
+    std::optional<XMPP::OmemoProtocol> profileFilter;
+    if (profile == QLatin1String("legacy"))
+        profileFilter = XMPP::OmemoProtocol::Legacy;
+    else if (profile == QLatin1String("omemo2"))
+        profileFilter = XMPP::OmemoProtocol::Omemo2;
+
+    const auto collectDevices = [this, peerBare, ownBare, includeOwnDevices, deviceId, profileFilter]() {
         QList<XMPP::OmemoDeviceInfo> candidates;
-        const auto append = [&candidates, deviceId](const QList<XMPP::OmemoDeviceInfo> &devices) {
+        const auto append = [&candidates, deviceId, profileFilter](const QList<XMPP::OmemoDeviceInfo> &devices) {
             for (const auto &device : devices) {
                 if (deviceId != 0 && device.id != deviceId)
                     continue;
+                if (profileFilter && device.protocol != *profileFilter)
+                    continue;
                 if (device.identityKey.isEmpty() || !device.active)
                     continue;
-                if (deviceId != 0) {
-                    if (device.trust != XMPP::EncryptionTrustLevel::Distrusted)
-                        candidates.append(device);
-                } else if (needsManualTrustDecision(device.trust)) {
+                const bool include = deviceId != 0
+                    ? device.trust != XMPP::EncryptionTrustLevel::Distrusted
+                    : needsManualTrustDecision(device.trust);
+                if (!include)
+                    continue;
+
+                // Iris exposes one record per wire profile. Collapse only
+                // records which have the same numeric id *and* canonical
+                // identity key; equal ids alone are not a cross-profile
+                // identity relation.
+                auto existing = std::find_if(candidates.begin(), candidates.end(), [&device](const auto &candidate) {
+                    return candidate.owner.bare() == device.owner.bare() && candidate.id == device.id
+                        && candidate.identityKey == device.identityKey;
+                });
+                if (existing == candidates.end()) {
                     candidates.append(device);
+                    continue;
                 }
+                existing->protocols |= device.protocols;
+                existing->active     = existing->active || device.active;
+                existing->hasSession = existing->hasSession || device.hasSession;
+                if (existing->label.isEmpty() && !device.label.isEmpty())
+                    existing->label = device.label;
             }
         };
         append(omemo_->devices(XMPP::Jid(peerBare)));
@@ -871,7 +899,7 @@ bool PsiEncryptionController::requestTrustDecision(const QString &methodId, cons
     // Coalesce simultaneous failed sends for the same trust scope into one
     // prompt. All callers are resumed after the single user decision.
     const QString promptKey = peerBare + QLatin1Char('|') + (includeOwnDevices ? QLatin1Char('1') : QLatin1Char('0'))
-        + QLatin1Char('|') + QString::number(deviceId);
+        + QLatin1Char('|') + QString::number(deviceId) + QLatin1Char('|') + profile;
     if (completion)
         trustPromptWaiters_[promptKey].append(std::move(completion));
     if (trustPromptsActive_.contains(promptKey))
@@ -1028,6 +1056,7 @@ bool PsiEncryptionController::requestTrustDecision(const QString &methodId, cons
     Q_UNUSED(parent);
     Q_UNUSED(completion);
     Q_UNUSED(deviceId);
+    Q_UNUSED(profile);
     return false;
 #endif
 }

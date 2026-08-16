@@ -42,6 +42,7 @@ constexpr auto OmemoEnabledByDefaultOption = "plugins.options.omemo.enabled-by-d
 constexpr auto DeviceOwnerRole             = Qt::UserRole;
 constexpr auto DeviceIdentityKeyRole       = Qt::UserRole + 1;
 constexpr auto OwnDeviceIdRole             = Qt::UserRole;
+constexpr auto OwnDeviceProtocolRole       = Qt::UserRole + 1;
 
 QString formatFingerprint(const QByteArray &fingerprint)
 {
@@ -68,6 +69,13 @@ QString trustText(XMPP::EncryptionTrustLevel level)
         return QObject::tr("Trusted");
     }
 }
+
+#ifdef IRIS_ENABLE_OMEMO
+QString omemoProtocolText(XMPP::OmemoProtocol protocol)
+{
+    return protocol == XMPP::OmemoProtocol::Legacy ? QObject::tr("Legacy") : QObject::tr("OMEMO 2");
+}
+#endif
 } // namespace
 
 OptionsTabSecurity::OptionsTabSecurity(QObject *parent) :
@@ -116,15 +124,16 @@ QWidget *OptionsTabSecurity::widget()
     knownKeysHint->setWordWrap(true);
     knownKeysLayout->addWidget(knownKeysHint);
     knownKeys_ = new QTreeWidget(knownKeysPage);
-    knownKeys_->setColumnCount(4);
-    knownKeys_->setHeaderLabels({ tr("User"), tr("Device ID"), tr("Trust"), tr("Fingerprint") });
+    knownKeys_->setColumnCount(5);
+    knownKeys_->setHeaderLabels({ tr("User"), tr("Device ID"), tr("Profile"), tr("Trust"), tr("Fingerprint") });
     knownKeys_->setRootIsDecorated(false);
     knownKeys_->setSelectionBehavior(QAbstractItemView::SelectRows);
     knownKeys_->setSelectionMode(QAbstractItemView::ExtendedSelection);
     knownKeys_->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     knownKeys_->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     knownKeys_->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
-    knownKeys_->header()->setSectionResizeMode(3, QHeaderView::Stretch);
+    knownKeys_->header()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
+    knownKeys_->header()->setSectionResizeMode(4, QHeaderView::Stretch);
     knownKeysLayout->addWidget(knownKeys_, 1);
     auto *knownKeyActions = new QHBoxLayout;
     trustKey_             = new QPushButton(tr("Trust"), knownKeysPage);
@@ -160,14 +169,15 @@ QWidget *OptionsTabSecurity::widget()
     otherDevicesHint->setWordWrap(true);
     ownDevicesLayout->addWidget(otherDevicesHint);
     ownDevices_ = new QTreeWidget(ownDevicesPage);
-    ownDevices_->setColumnCount(3);
-    ownDevices_->setHeaderLabels({ tr("Device"), tr("Device ID"), tr("Fingerprint") });
+    ownDevices_->setColumnCount(4);
+    ownDevices_->setHeaderLabels({ tr("Device"), tr("Device ID"), tr("Profile"), tr("Fingerprint") });
     ownDevices_->setRootIsDecorated(false);
     ownDevices_->setSelectionBehavior(QAbstractItemView::SelectRows);
     ownDevices_->setSelectionMode(QAbstractItemView::SingleSelection);
     ownDevices_->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     ownDevices_->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
-    ownDevices_->header()->setSectionResizeMode(2, QHeaderView::Stretch);
+    ownDevices_->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    ownDevices_->header()->setSectionResizeMode(3, QHeaderView::Stretch);
     ownDevicesLayout->addWidget(ownDevices_, 1);
     auto *ownDeviceActions = new QHBoxLayout;
     retireOwnDevice_       = new QPushButton(tr("Retire device"), ownDevicesPage);
@@ -220,7 +230,7 @@ QWidget *OptionsTabSecurity::widget()
     connect(copyKey, &QPushButton::clicked, w_, [this]() {
         QStringList fingerprints;
         for (const auto *item : knownKeys_->selectedItems())
-            fingerprints.append(item->text(3));
+            fingerprints.append(item->text(4));
         QApplication::clipboard()->setText(fingerprints.join(QLatin1Char('\n')));
     });
     connect(setUpOmemo_, &QPushButton::clicked, w_, [this]() {
@@ -288,7 +298,9 @@ QWidget *OptionsTabSecurity::widget()
             return;
 
         const auto deviceId = selected.constFirst()->data(0, OwnDeviceIdRole).toUInt();
-        auto      *job      = omemo->retireOwnDevice(deviceId);
+        const auto protocol = static_cast<XMPP::OmemoProtocol>(
+            selected.constFirst()->data(0, OwnDeviceProtocolRole).toUInt());
+        auto *job = omemo->retireOwnDevice(deviceId, protocol);
         const auto finished = [this, job]() {
             if (!job->success())
                 QMessageBox::warning(w_, tr("OMEMO"), job->errorString());
@@ -457,8 +469,9 @@ void OptionsTabSecurity::refreshOmemo()
         auto *item = new QTreeWidgetItem(knownKeys_);
         item->setText(0, device.owner.bare());
         item->setText(1, QString::number(device.id));
-        item->setText(2, trustText(device.trust));
-        item->setText(3, formatFingerprint(device.identityKey));
+        item->setText(2, omemoProtocolText(device.protocol));
+        item->setText(3, trustText(device.trust));
+        item->setText(4, formatFingerprint(device.identityKey));
         item->setData(0, DeviceOwnerRole, device.owner.bare());
         item->setData(0, DeviceIdentityKeyRole, device.identityKey);
     }
@@ -469,8 +482,10 @@ void OptionsTabSecurity::refreshOmemo()
         auto *item = new QTreeWidgetItem(ownDevices_);
         item->setText(0, device.label.isEmpty() ? tr("Unnamed device") : device.label);
         item->setText(1, QString::number(device.id));
-        item->setText(2, formatFingerprint(device.identityKey));
+        item->setText(2, omemoProtocolText(device.protocol));
+        item->setText(3, formatFingerprint(device.identityKey));
         item->setData(0, OwnDeviceIdRole, device.id);
+        item->setData(0, OwnDeviceProtocolRole, static_cast<quint32>(device.protocol));
     }
 #else
     ownDeviceId_->setText(tr("OMEMO support is not compiled in."));
