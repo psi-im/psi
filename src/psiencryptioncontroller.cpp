@@ -606,10 +606,16 @@ PsiEncryptionController::Availability PsiEncryptionController::availability(cons
         return Availability::Unavailable;
 
     const auto peer = capabilityJid(jid);
-    if (auto *provider = pluginProvider(methodId))
-        return provider->isAvailable(pluginMethods_.value(provider)->accountId, peer.full())
-            ? Availability::Available
-            : Availability::Unavailable;
+    if (auto *provider = pluginProvider(methodId)) {
+        switch (provider->availability(pluginMethods_.value(provider)->accountId, peer.full())) {
+        case EncryptionMethodProvider::Availability::Available:
+            return Availability::Available;
+        case EncryptionMethodProvider::Availability::Unavailable:
+            return Availability::Unavailable;
+        case EncryptionMethodProvider::Availability::Unknown:
+            return Availability::Unknown;
+        }
+    }
 
 #ifdef IRIS_ENABLE_OMEMO
     if (methodId == XMPP::OmemoEncryption::methodId() && omemo_) {

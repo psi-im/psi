@@ -101,19 +101,14 @@ QWidget *OptionsTabSecurity::widget()
     accountStatus_->setWordWrap(true);
     layout->addWidget(accountStatus_);
 
-    auto *methodsGroup  = new QGroupBox(tr("Available encryption methods"), w_);
-    auto *methodsLayout = new QVBoxLayout(methodsGroup);
-    methods_            = new QTreeWidget(methodsGroup);
-    methods_->setColumnCount(2);
-    methods_->setHeaderLabels({ tr("Method"), tr("Status") });
-    methods_->setRootIsDecorated(false);
-    methods_->setSelectionMode(QAbstractItemView::NoSelection);
-    methods_->header()->setSectionResizeMode(0, QHeaderView::Stretch);
-    methods_->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
-    methodsLayout->addWidget(methods_);
-    layout->addWidget(methodsGroup);
+    methodTabs_ = new QTabWidget(w_);
+    layout->addWidget(methodTabs_, 1);
 
-    auto *tabs = new QTabWidget(w_);
+    omemoPage_             = new QWidget(methodTabs_);
+    auto *omemoPageLayout  = new QVBoxLayout(omemoPage_);
+    omemoPageLayout->setContentsMargins(0, 0, 0, 0);
+    auto *tabs = new QTabWidget(omemoPage_);
+    omemoPageLayout->addWidget(tabs);
 
     auto *knownKeysPage   = new QWidget(tabs);
     auto *knownKeysLayout = new QVBoxLayout(knownKeysPage);
@@ -211,8 +206,6 @@ QWidget *OptionsTabSecurity::widget()
     configurationLayout->addWidget(policyHint);
     configurationLayout->addStretch();
     tabs->addTab(configurationPage, tr("Configuration"));
-
-    layout->addWidget(tabs, 1);
 
     connect(accounts_, qOverload<int>(&QComboBox::currentIndexChanged), w_, [this](int) {
         updateControllerConnections();
@@ -390,7 +383,7 @@ void OptionsTabSecurity::updateControllerConnections()
     stateConnection_
         = connect(controller, &PsiEncryptionController::methodStateChanged, w_, [this](const QString &) {
               if (!changingTrust_)
-                  refresh();
+                  refreshOmemo();
           });
     errorConnection_ = connect(controller, &PsiEncryptionController::encryptionError, w_,
                                [this](const XMPP::Jid &, const QString &message) { accountStatus_->setText(message); });
@@ -406,29 +399,68 @@ void OptionsTabSecurity::refresh()
 
 void OptionsTabSecurity::refreshMethods()
 {
-    methods_->clear();
+    if (!methodTabs_)
+        return;
+
+    const QString previousMethod = methodTabs_->currentWidget()
+        ? methodTabs_->currentWidget()->property("encryptionMethodId").toString()
+        : QString();
+
+    while (methodTabs_->count()) {
+        auto *page = methodTabs_->widget(0);
+        methodTabs_->removeTab(0);
+        if (page != omemoPage_)
+            delete page;
+    }
+
     auto *account    = currentAccount();
     auto *controller = account ? account->encryptionController() : nullptr;
     if (!controller) {
-        accountStatus_->setText(tr("Select an account to manage its encryption keys."));
+        accountStatus_->setText(tr("Select an account to manage its encryption settings."));
         return;
     }
 
+    int restoreIndex = -1;
     for (const auto &method : controller->methods()) {
-        auto *item = new QTreeWidgetItem(methods_);
-        item->setText(0, method.name);
-        item->setIcon(0, method.icon);
+        QWidget *page = nullptr;
 #ifdef IRIS_ENABLE_OMEMO
-        if (method.id == XMPP::OmemoEncryption::methodId() && controller->omemoEncryption())
-            item->setText(1, controller->omemoEncryption()->isReady() ? tr("Ready") : tr("Not set up"));
-        else
+        if (method.id == XMPP::OmemoEncryption::methodId()) {
+            page = omemoPage_;
+        } else
 #endif
-            item->setText(1, tr("Available"));
+        if (method.pluginProvided && method.uiCapabilities.testFlag(EncryptionMethodProvider::Settings)) {
+            page = controller->createSettingsWidget(method.id, methodTabs_);
+        }
+
+        if (!page) {
+            page         = new QWidget(methodTabs_);
+            auto *layout = new QVBoxLayout(page);
+            auto *label  = new QLabel(tr("This encryption method does not provide settings for this page."), page);
+            label->setWordWrap(true);
+            layout->addWidget(label);
+            layout->addStretch();
+        }
+
+        page->setProperty("encryptionMethodId", method.id);
+        const int index = methodTabs_->addTab(page, method.icon, method.name);
+        if (method.id == previousMethod)
+            restoreIndex = index;
+
+#ifdef IRIS_ENABLE_OMEMO
+        if (method.id == XMPP::OmemoEncryption::methodId() && controller->omemoEncryption()) {
+            methodTabs_->setTabToolTip(index, controller->omemoEncryption()->isReady() ? tr("Ready") : tr("Not set up"));
+        } else
+#endif
+            methodTabs_->setTabToolTip(index, tr("Available"));
     }
-    if (methods_->topLevelItemCount() == 0)
+
+    if (restoreIndex >= 0)
+        methodTabs_->setCurrentIndex(restoreIndex);
+
+    if (methodTabs_->count() == 0)
         accountStatus_->setText(tr("No encryption methods are available for this account."));
     else
-        accountStatus_->setText(tr("Manage keys and trust decisions for the selected account."));
+        accountStatus_->setText(tr("Manage the selected account's encryption methods, keys and trust decisions."));
 }
 
 void OptionsTabSecurity::refreshOmemo()

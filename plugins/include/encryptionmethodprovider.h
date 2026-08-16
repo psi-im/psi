@@ -48,6 +48,12 @@ public:
     };
     Q_DECLARE_FLAGS(UiCapabilities, UiCapability)
 
+    enum class Availability {
+        Unknown,
+        Available,
+        Unavailable,
+    };
+
     enum class Error {
         None,
         Unsupported,
@@ -140,6 +146,15 @@ public:
         Q_UNUSED(account);
         Q_UNUSED(fullJid);
         return true;
+    }
+
+    /**
+     * Tri-state availability for methods whose peer support may be unknown.
+     * The default preserves the original boolean API for existing providers.
+     */
+    virtual Availability availability(int account, const QString &fullJid) const
+    {
+        return isAvailable(account, fullJid) ? Availability::Available : Availability::Unavailable;
     }
 
     /**
