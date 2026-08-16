@@ -23,6 +23,7 @@ class QLineEdit;
 class QPushButton;
 class QRadioButton;
 class QTreeWidget;
+class QTabWidget;
 class QWidget;
 class PsiAccount;
 class PsiCon;
@@ -52,7 +53,8 @@ private:
 
     QComboBox    *accounts_          = nullptr;
     QLabel       *accountStatus_     = nullptr;
-    QTreeWidget  *methods_           = nullptr;
+    QTabWidget   *methodTabs_        = nullptr;
+    QWidget      *omemoPage_         = nullptr;
     QLabel       *ownDeviceId_       = nullptr;
     QLabel       *ownFingerprint_    = nullptr;
     QLineEdit    *ownDeviceLabel_    = nullptr;
