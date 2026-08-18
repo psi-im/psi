@@ -72,8 +72,10 @@ find_package_handle_standard_args(
 )
 
 if (Qca_FOUND)
-    set ( Qca_LIBRARIES ${Qca_LIBRARY} )
-    set ( Qca_INCLUDE_DIRS ${Qca_INCLUDE_DIR} )
+    add_library(Qca::Qca UNKNOWN IMPORTED)
+    set_target_properties(Qca::Qca PROPERTIES
+        IMPORTED_LOCATION "${Qca_LIBRARY}"
+        INTERFACE_INCLUDE_DIRECTORIES "${Qca_INCLUDE_DIR}")
 endif()
 
 mark_as_advanced( Qca_INCLUDE_DIR Qca_LIBRARY )
