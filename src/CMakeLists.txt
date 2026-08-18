@@ -130,17 +130,19 @@ if(APPLE)
     list(APPEND EXTRA_LDFLAGS "-framework Carbon" "-framework AppKit" "-framework IOKit" "-framework CoreAudio" "-framework AudioToolbox")
 endif()
 
-if (NOT IRIS_BUNDLED_QCA)
-    find_package( Qca REQUIRED )
-    include_directories(${Qca_INCLUDE_DIR})
-else()
+if (IRIS_BUNDLED_QCA)
     find_package(OpenSSL REQUIRED)
-    include_directories(${Qca_INCLUDE_DIR_EXPORT})
-    set(Qca_LIBRARY ${Qca_LIBRARY_EXPORT} OpenSSL::SSL OpenSSL::Crypto)
-    #Additional win32 link dependencies
+    list(APPEND EXTRA_LDFLAGS OpenSSL::SSL OpenSSL::Crypto)
     if(WIN32 OR USE_MXE)
-        list(APPEND Qca_LIBRARY crypt32 ws2_32)
+        list(APPEND EXTRA_LDFLAGS crypt32 ws2_32)
     endif()
+else()
+    find_package(Qca REQUIRED)
+endif()
+list(APPEND EXTRA_LIBS Qca::Qca)
+
+if(IRIS_BUNDLED_USRSCTP)
+    list(APPEND EXTRA_LIBS SctpLab::UsrSCTP)
 endif()
 
 if(LINUX AND (USE_X11 OR LIMIT_X11_USAGE))
@@ -492,7 +494,6 @@ target_link_libraries(${PROJECT_NAME}
     ${X11_LIBRARIES}
     ${EXTRA_LIBS}
     iris
-    ${Qca_LIBRARY}
 )
 
 target_link_libraries(${PROJECT_NAME}
