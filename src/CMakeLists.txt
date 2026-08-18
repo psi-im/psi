@@ -141,7 +141,10 @@ else()
 endif()
 list(APPEND EXTRA_LIBS Qca::Qca)
 
-if(IRIS_BUNDLED_USRSCTP)
+if(IRIS_ENABLE_JINGLE_SCTP)
+    if(NOT IRIS_BUNDLED_USRSCTP)
+        find_package(UsrSCTP REQUIRED)
+    endif()
     list(APPEND EXTRA_LIBS SctpLab::UsrSCTP)
 endif()
 
