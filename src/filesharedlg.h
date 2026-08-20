@@ -20,8 +20,8 @@
 #ifndef FILESHAREDLG_H
 #define FILESHAREDLG_H
 
+#include "iris/jid/jid.h"
 #include "iris/xmpp_reference.h"
-#include "xmpp/jid/jid.h"
 
 #include <QDialog>
 

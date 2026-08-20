@@ -21,9 +21,9 @@
 #define HISTORYIMP_H
 
 #include "eventdb.h"
+#include "iris/jid/jid.h"
 #include "jidutil.h"
 #include "psicon.h"
-#include "xmpp/jid/jid.h"
 
 #include <QDialog>
 #include <QLabel>

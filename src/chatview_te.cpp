@@ -22,13 +22,13 @@
 #include "coloropt.h"
 #include "common.h"
 #include "iconset.h"
+#include "iris/jid/jid.h"
 #include "messageview.h"
 #include "msgmle.h"
 #include "psioptions.h"
 #include "psirichtext.h"
 #include "qiteaudio.h"
 #include "textutil.h"
-#include "xmpp/jid/jid.h"
 
 #include <QKeyEvent>
 #include <QMenu>

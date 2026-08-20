@@ -41,7 +41,7 @@
 #include "edbsqlite.h"
 #include "eventdlg.h"
 #include "globalshortcut/globalshortcutmanager.h"
-#include "xmpp/xmpp-im/xmpp_forwarding.h"
+#include "iris/xmpp-im/xmpp_forwarding.h"
 #ifdef GROUPCHAT
 #include "groupchatdlg.h"
 #endif

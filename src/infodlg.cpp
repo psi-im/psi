@@ -26,6 +26,8 @@
 #include "discodlg.h"
 #include "fileutil.h"
 #include "iconset.h"
+#include "iris/xmpp-im/xmpp_caps.h"
+#include "iris/xmpp-im/xmpp_vcard4.h"
 #include "iris/xmpp_client.h"
 #include "iris/xmpp_serverinfomanager.h"
 #include "iris/xmpp_tasks.h"
@@ -40,8 +42,6 @@
 #include "userlist.h"
 #include "vcardfactory.h"
 #include "vcardphotodlg.h"
-#include "xmpp/xmpp-im/xmpp_caps.h"
-#include "xmpp/xmpp-im/xmpp_vcard4.h"
 
 #include <QAction>
 #include <QCalendarWidget>
