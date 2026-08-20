@@ -28,10 +28,10 @@
 #include "profiles.h"
 #include "psiaccount.h"
 
-// #include "xmpp/xmpp-im/xmpp_caps.h"
-#include "xmpp/xmpp-im/xmpp_pubsubitem.h"
-#include "xmpp/xmpp-im/xmpp_serverinfomanager.h"
-#include "xmpp/xmpp-im/xmpp_vcard4.h"
+// #include "iris/xmpp-im/xmpp_caps.h"
+#include "iris/xmpp-im/xmpp_pubsubitem.h"
+#include "iris/xmpp-im/xmpp_serverinfomanager.h"
+#include "iris/xmpp-im/xmpp_vcard4.h"
 
 #include <QApplication>
 #include <QDir>

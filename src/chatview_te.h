@@ -21,8 +21,8 @@
 #define CHATVIEW_TE_H
 
 #include "chatviewcommon.h"
+#include "iris/jid/jid.h"
 #include "psitextview.h"
-#include "xmpp/jid/jid.h"
 
 #include <QContextMenuEvent>
 #include <QDateTime>

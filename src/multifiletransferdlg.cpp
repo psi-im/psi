@@ -22,6 +22,7 @@
 #include "avatars.h"
 #include "fileutil.h"
 #include "iconset.h"
+#include "iris/jid/jid.h"
 #include "iris/jingle-ft.h"
 #include "iris/jingle-session.h"
 #include "iris/jingle.h"
@@ -35,7 +36,6 @@
 #include "psicontact.h"
 #include "ui_multifiletransferdlg.h"
 #include "userlist.h"
-#include "xmpp/jid/jid.h"
 
 #include <QBuffer>
 #include <QDragEnterEvent>

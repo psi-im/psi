@@ -55,8 +55,8 @@
 #include "fileutil.h"
 #include "geolocationdlg.h"
 #include "iris/bsocket.h"
+#include "iris/xmpp-im/xmpp_vcard4.h"
 #include "psithememanager.h"
-#include "xmpp/xmpp-im/xmpp_vcard4.h"
 #ifdef GOOGLE_FT
 #include "googleftmanager.h"
 #endif
@@ -4942,10 +4942,10 @@ void PsiAccount::sendEncryptedMessage(const Message &message, bool log, const QS
         return;
     }
 
-    const bool                         boundToChatSession = session != nullptr;
-    QPointer<XMPP::EncryptedSession>   sessionGuard(session);
-    Message                            sent = message;
-    XMPP::EncryptionJob               *job  = nullptr;
+    const bool                       boundToChatSession = session != nullptr;
+    QPointer<XMPP::EncryptedSession> sessionGuard(session);
+    Message                          sent = message;
+    XMPP::EncryptionJob             *job  = nullptr;
     if (session) {
         if (session->methodId() != methodId || session->isClosing()) {
             d->encryptionController->reportError(message.to(), tr("The selected encryption session is unavailable."));
@@ -4963,8 +4963,7 @@ void PsiAccount::sendEncryptedMessage(const Message &message, bool log, const QS
         return;
     }
     const Jid  recipient       = sent.to();
-    const auto finishEncrypted = [this, job, recipient, sent, log, methodId, sessionGuard,
-                                  boundToChatSession]() {
+    const auto finishEncrypted = [this, job, recipient, sent, log, methodId, sessionGuard, boundToChatSession]() {
         if (job->success()) {
             finishSentMessage(sent, log);
             return;
@@ -4979,7 +4978,8 @@ void PsiAccount::sendEncryptedMessage(const Message &message, bool log, const QS
                         return;
                     if (boundToChatSession && !sessionGuard) {
                         d->encryptionController->reportError(
-                            sent.to(), tr("The chat encryption session was closed before the message could be retried."));
+                            sent.to(),
+                            tr("The chat encryption session was closed before the message could be retried."));
                         return;
                     }
                     sendEncryptedMessage(sent, log, methodId, sessionGuard.data(), !boundToChatSession);

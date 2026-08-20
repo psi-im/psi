@@ -29,6 +29,7 @@
 #include "applicationinfo.h"
 #include "filecache.h"
 #include "iconset.h"
+#include "iris/xmpp-im/xmpp_serverinfomanager.h"
 #include "iris/xmpp_client.h"
 #include "iris/xmpp_hash.h"
 #include "iris/xmpp_pubsubitem.h"
@@ -40,7 +41,6 @@
 #include "pixmaputil.h"
 #include "psiaccount.h"
 #include "vcardfactory.h"
-#include "xmpp/xmpp-im/xmpp_serverinfomanager.h"
 
 #include <QBuffer>
 #include <QDateTime>
