@@ -28,6 +28,12 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
+# Legacy QCA 2 finder. QCA 3 provides its own CMake config package and target.
+if(TARGET Qca::Qca)
+    set(Qca_FOUND TRUE)
+    return()
+endif()
+
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND WIN32)
     set(D "d")
 endif()
