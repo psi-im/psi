@@ -130,12 +130,20 @@ if(APPLE)
     list(APPEND EXTRA_LDFLAGS "-framework Carbon" "-framework AppKit" "-framework IOKit" "-framework CoreAudio" "-framework AudioToolbox")
 endif()
 
-if (IRIS_BUNDLED_QCA)
-    find_package(OpenSSL REQUIRED)
+# Iris selects the QCA implementation before Psi's src directory is
+# configured. Reuse that target so Psi and Iris always link the same QCA.
+if(TARGET Qca3::Qca)
+    set(PSI_QCA_TARGET Qca3::Qca)
+elseif(TARGET Qca::Qca)
+    set(PSI_QCA_TARGET Qca::Qca)
+elseif(IRIS_BUNDLED_QCA)
+    message(FATAL_ERROR "Bundled Iris QCA did not expose a QCA CMake target")
 else()
+    # Compatibility fallback for older Iris/system QCA2 setups.
     find_package(Qca REQUIRED)
+    set(PSI_QCA_TARGET Qca::Qca)
 endif()
-list(APPEND EXTRA_LIBS Qca::Qca)
+list(APPEND EXTRA_LIBS ${PSI_QCA_TARGET})
 
 if(IRIS_ENABLE_JINGLE_SCTP)
     if(NOT IRIS_BUNDLED_USRSCTP)
@@ -492,7 +500,7 @@ target_link_libraries(${PROJECT_NAME}
     ${EXTRA_LDFLAGS}
     ${X11_LIBRARIES}
     ${EXTRA_LIBS}
-    iris
+    Iris::Iris
 )
 
 target_link_libraries(${PROJECT_NAME}
