@@ -27,6 +27,7 @@
 #include "contactlistviewdelegate_p.h"
 #include "debug.h"
 #include "mood.h"
+#include "psiapplication.h"
 #include "psiiconset.h"
 #include "psioptions.h"
 
@@ -129,6 +130,11 @@ ContactListViewDelegate::Private::Private(ContactListViewDelegate *parent, Conta
     connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString &)), SLOT(optionChanged(const QString &)));
     connect(ColorOpt::instance(), SIGNAL(changed(const QString &)), SLOT(colorOptionChanged(const QString &)));
     connect(PsiIconset::instance(), SIGNAL(rosterIconsSizeChanged(int)), SLOT(rosterIconsSizeChanged(int)));
+    if (auto *app = qobject_cast<PsiApplication *>(qApp)) {
+        connect(
+            app, &PsiApplication::applicationPaletteChanged, this,
+            [this]() { colorOptionChanged(groupHeaderBackgroundColorPath); }, Qt::QueuedConnection);
+    }
 
     statusIconSize_ = PsiIconset::instance()
                           ->roster.value(PsiOptions::instance()->getOption(statusIconsetOptionPath).toString())
@@ -311,14 +317,15 @@ void ContactListViewDelegate::Private::colorOptionChanged(const QString &option)
         updated                       = true;
         updateViewPort                = true;
     }
-    if (bulkUpdate || (!updated && option == groupHeaderBackgroundColorPath)) {
-        _groupHeaderBackgroundColor = ColorOpt::instance()->color(groupHeaderBackgroundColorPath);
-        updated                     = true;
-        updateViewPort              = true;
-    }
-    if (bulkUpdate || (!updated && option == groupHeaderForegroundColorPath)) {
-        _groupHeaderForegroundColor = ColorOpt::instance()->color(groupHeaderForegroundColorPath);
-        // updated = true;
+    if (bulkUpdate
+        || (!updated && (option == groupHeaderBackgroundColorPath || option == groupHeaderForegroundColorPath))) {
+        _groupHeaderBackgroundColor
+            = ColorOpt::adaptBackground(ColorOpt::instance()->color(groupHeaderBackgroundColorPath),
+                                        contactList->palette());
+        _groupHeaderForegroundColor
+            = ColorOpt::ensureContrast(ColorOpt::instance()->color(groupHeaderForegroundColorPath),
+                                       _groupHeaderBackgroundColor, contactList->palette().color(QPalette::Text));
+        updated        = true;
         updateViewPort = true;
     }
     if (!bulkUpdate && updateViewPort)

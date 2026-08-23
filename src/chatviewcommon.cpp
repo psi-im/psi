@@ -19,13 +19,13 @@
 
 #include "chatviewcommon.h"
 
+#include "coloropt.h"
 #include "psioptions.h"
 
 #include <QApplication>
 #include <QRegularExpression>
 #include <QSet>
 #include <QWidget>
-#include <math.h>
 
 void ChatViewCommon::setLooks(QWidget *w)
 {
@@ -106,28 +106,16 @@ QList<QColor> &ChatViewCommon::generatePalette()
         QColor color;
         for (int k = 0; k < 10; ++k) {
             color = QColor::fromHsv(36 * k, 255, 255);
-            if (compatibleColors(color, bg)) {
+            if (ColorOpt::compatibleColors(color, bg)) {
                 result << color;
             }
             color = QColor::fromHsv(36 * k, 255, 170);
-            if (compatibleColors(color, bg)) {
+            if (ColorOpt::compatibleColors(color, bg)) {
                 result << color;
             }
         }
     }
     return result;
-}
-
-bool ChatViewCommon::compatibleColors(const QColor &c1, const QColor &c2)
-{
-    int dR = c1.red() - c2.red();
-    int dG = c1.green() - c2.green();
-    int dB = c1.blue() - c2.blue();
-
-    double dV = abs(c1.value() - c2.value());
-    double dC = sqrt(0.2126 * dR * dR + 0.7152 * dG * dG + 0.0722 * dB * dB);
-
-    return !((dC < 80. && dV > 100) || (dC < 110. && dV <= 100 && dV > 10) || (dC < 125. && dV <= 10));
 }
 
 QList<ChatViewCommon::ReactionsItem>

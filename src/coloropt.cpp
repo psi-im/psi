@@ -19,23 +19,27 @@
 
 #include "coloropt.h"
 
+#include "psiapplication.h"
 #include "psioptions.h"
 
 #include <QApplication>
+
+#include <cmath>
 
 ColorOpt::ColorOpt() : QObject(nullptr)
 {
     connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString &)), SLOT(optionChanged(const QString &)));
     connect(PsiOptions::instance(), SIGNAL(destroyed()), SLOT(reset()));
-    connect(qApp, &QApplication::paletteChanged, this, [this](const QPalette &) {
-        // Invalid option colors mean "use the current application palette".
-        // Re-emit them when the desktop theme changes so cached users (for
-        // example the contact-list delegate) repaint immediately.
-        for (auto it = colors.cbegin(); it != colors.cend(); ++it) {
-            if (!it.value().color.isValid())
-                emit changed(it.key());
-        }
-    });
+    if (auto *app = qobject_cast<PsiApplication *>(qApp)) {
+        connect(app, &PsiApplication::applicationPaletteChanged, this, [this]() {
+            // Invalid option colors mean "use the current application palette".
+            // Re-emit them when the desktop theme changes so cached users repaint.
+            for (auto it = colors.cbegin(); it != colors.cend(); ++it) {
+                if (!it.value().color.isValid())
+                    emit changed(it.key());
+            }
+        });
+    }
 
     typedef struct {
         const char         *opt;
@@ -88,6 +92,51 @@ QColor ColorOpt::color(const QString &opt, const QColor &defaultColor) const
 }
 
 QPalette::ColorRole ColorOpt::colorRole(const QString &opt) const { return colors.value(opt).role; }
+
+bool ColorOpt::compatibleColors(const QColor &foreground, const QColor &background)
+{
+    const int    dR = foreground.red() - background.red();
+    const int    dG = foreground.green() - background.green();
+    const int    dB = foreground.blue() - background.blue();
+    const double dV = std::abs(foreground.value() - background.value());
+    const double dC = std::sqrt(0.2126 * dR * dR + 0.7152 * dG * dG + 0.0722 * dB * dB);
+
+    return !((dC < 80. && dV > 100) || (dC < 110. && dV <= 100 && dV > 10) || (dC < 125. && dV <= 10));
+}
+
+QColor ColorOpt::ensureContrast(const QColor &foreground, const QColor &background, const QColor &fallback)
+{
+    if (!foreground.isValid() || !background.isValid() || compatibleColors(foreground, background))
+        return foreground;
+    if (!fallback.isValid())
+        return foreground;
+
+    constexpr int steps = 10;
+    for (int step = 1; step <= steps; ++step) {
+        const auto blend = [step](int from, int to) { return (from * (steps - step) + to * step) / steps; };
+        const QColor candidate(blend(foreground.red(), fallback.red()), blend(foreground.green(), fallback.green()),
+                               blend(foreground.blue(), fallback.blue()), foreground.alpha());
+        if (compatibleColors(candidate, background))
+            return candidate;
+    }
+    return fallback;
+}
+
+QColor ColorOpt::adaptBackground(const QColor &background, const QPalette &palette)
+{
+    if (!background.isValid())
+        return background;
+
+    const QColor base = palette.color(QPalette::Base);
+    // A light, explicitly configured header color is usually a leftover from
+    // the default light theme. Keep deliberate colors, but do not let such a
+    // header turn into a bright stripe when the application palette is dark.
+    constexpr int maximumLightnessDifference = 64;
+    if (base.lightness() < 128 && background.lightness() - base.lightness() > maximumLightnessDifference)
+        return palette.color(QPalette::AlternateBase);
+
+    return background;
+}
 
 void ColorOpt::optionChanged(const QString &opt)
 {

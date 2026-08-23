@@ -59,10 +59,19 @@ public:
         PsiOptions *o    = PsiOptions::instance();
         colorForeground_ = ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-foreground");
         colorBackground_ = ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-background");
+        colorBackground_ = ColorOpt::adaptBackground(colorBackground_, view->palette());
+        colorForeground_ = ColorOpt::ensureContrast(colorForeground_, colorBackground_,
+                                                    view->palette().color(QPalette::Text));
         colorModerator_  = ColorOpt::instance()->color("options.ui.look.colors.muc.role-moderator");
         colorParticipant_ = ColorOpt::instance()->color("options.ui.look.colors.muc.role-participant");
         colorVisitor_     = ColorOpt::instance()->color("options.ui.look.colors.muc.role-visitor");
         colorNoRole_      = ColorOpt::instance()->color("options.ui.look.colors.muc.role-norole");
+        const QColor background = view->palette().color(QPalette::Base);
+        const QColor fallback   = view->palette().color(QPalette::Text);
+        colorModerator_         = ColorOpt::ensureContrast(colorModerator_, background, fallback);
+        colorParticipant_       = ColorOpt::ensureContrast(colorParticipant_, background, fallback);
+        colorVisitor_           = ColorOpt::ensureContrast(colorVisitor_, background, fallback);
+        colorNoRole_            = ColorOpt::ensureContrast(colorNoRole_, background, fallback);
         showGroups_       = o->getOption("options.ui.muc.userlist.show-groups").toBool();
         slimGroups_       = o->getOption("options.ui.muc.userlist.use-slim-group-headings").toBool();
         nickColoring_     = o->getOption("options.ui.muc.userlist.nick-coloring").toBool();

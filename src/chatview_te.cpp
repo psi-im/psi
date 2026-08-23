@@ -36,6 +36,7 @@
 #include <QScrollBar>
 #include <QTextBlock>
 #include <QTextDocumentFragment>
+#include <QTextFragment>
 #include <QTextOption>
 #include <QTimer>
 #include <QUrl>
@@ -69,6 +70,34 @@ QTextCursor cursorAfter(const QTextCursor &range)
     QTextCursor cursor(range.document());
     cursor.setPosition(range.selectionEnd());
     return cursor;
+}
+
+void recolorLinks(QTextDocument *document, const QPalette &palette)
+{
+    const QColor linkColor = ColorOpt::ensureContrast(
+        ColorOpt::instance()->color("options.ui.look.colors.messages.link"), palette.color(QPalette::Base),
+        palette.color(QPalette::Text));
+    QList<QPair<int, int>> ranges;
+    for (QTextBlock block = document->begin(); block.isValid(); block = block.next()) {
+        for (auto it = block.begin(); !it.atEnd(); ++it) {
+            const QTextFragment fragment = it.fragment();
+            if (!fragment.isValid())
+                continue;
+            const QTextCharFormat format = fragment.charFormat();
+            const QString         href   = format.anchorHref();
+            if (format.isAnchor() && !href.isEmpty() && !href.startsWith(QLatin1String("addnick://psi/")))
+                ranges.append({ fragment.position(), fragment.length() });
+        }
+    }
+
+    QTextCharFormat format;
+    format.setForeground(linkColor);
+    for (const auto &[position, length] : std::as_const(ranges)) {
+        QTextCursor cursor(document);
+        cursor.setPosition(position);
+        cursor.setPosition(position + length, QTextCursor::KeepAnchor);
+        cursor.mergeCharFormat(format);
+    }
 }
 }
 
@@ -378,6 +407,7 @@ void ChatView::recolorAutomaticText()
             return QColor();
         }
     });
+    recolorLinks(document(), palette());
     cursor = textCursor();
     PsiRichText::restoreSelection(this, cursor, selection);
     setTextCursor(cursor);
