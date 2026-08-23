@@ -19,11 +19,13 @@
 
 #include "contactlistview.h"
 
+#include "coloropt.h"
 #include "contactlistitem.h"
 #include "contactlistitemmenu.h"
 #include "contactlistmodel.h"
 #include "contactlistproxymodel.h"
 #include "debug.h"
+#include "psiapplication.h"
 #include "psioptions.h"
 #include "psitooltip.h"
 
@@ -38,6 +40,8 @@
 #include <QSortFilterProxyModel>
 #include <QTreeView>
 #include <QWindow>
+
+static const QString contactListBackgroundOptionPath(QStringLiteral("options.ui.look.colors.contactlist.background"));
 
 ContactListView::ContactListView(QWidget *parent) : HoverableTreeView(parent), contextMenuActive_(false)
 {
@@ -62,7 +66,29 @@ ContactListView::ContactListView(QWidget *parent) : HoverableTreeView(parent), c
 #endif
 
     connect(this, &ContactListView::doubleClicked, this, &ContactListView::itemActivated);
+    connect(ColorOpt::instance(), &ColorOpt::changed, this, [this](const QString &option) {
+        if (option == contactListBackgroundOptionPath)
+            updatePalette();
+    });
+    if (auto *app = qobject_cast<PsiApplication *>(qApp))
+        connect(app, &PsiApplication::applicationPaletteChanged, this, &ContactListView::updatePalette);
+    updatePalette();
     // showStatus_ = PsiOptions::instance()->getOption("options.ui.contactlist.status-messages.show").toBool();
+}
+
+void ContactListView::updatePalette()
+{
+    QPalette palette;
+    palette.setColor(QPalette::Base, ColorOpt::instance()->color(contactListBackgroundOptionPath));
+    setPalette(palette);
+
+    // Drop palettes cached by QAbstractScrollArea children. Their class-specific
+    // roles must be resolved again after a desktop theme change, while Base is
+    // inherited from the contact-list palette above.
+    viewport()->setPalette({});
+    horizontalScrollBar()->setPalette({});
+    verticalScrollBar()->setPalette({});
+    viewport()->update();
 }
 
 static void setExpandedState(QTreeView *view, QAbstractItemModel *model, const QModelIndex &parent)

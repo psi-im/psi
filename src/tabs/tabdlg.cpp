@@ -22,6 +22,7 @@
 #include "chatdlg.h"
 #include "iconset.h"
 #include "iconwidget.h"
+#include "psiapplication.h"
 #include "psicon.h"
 #include "psioptions.h"
 #include "psitabwidget.h"
@@ -121,6 +122,14 @@ TabDlg::TabDlg(TabManager *tabManager, const QString &geometryOption, TabDlgDele
     vert1->addWidget(tabWidget_);
 
     setAcceptDrops(true);
+    if (auto *app = qobject_cast<PsiApplication *>(qApp)) {
+        connect(app, &PsiApplication::applicationPaletteChanged, this, [this]() {
+            if (!styleSheet().isEmpty())
+                setStyleSheet(styleSheet());
+            for (TabbableWidget *tab : std::as_const(tabs_))
+                updateTab(tab);
+        });
+    }
 
     auto allInOne = PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString().contains('A');
     if (!allInOne) {
@@ -577,7 +586,7 @@ void TabDlg::updateTab(TabbableWidget *chat)
             tabWidget_->setTabTextColor(
                 chat, PsiOptions::instance()->getOption("options.ui.look.colors.chat.inactive-color").value<QColor>());
         } else {
-            tabWidget_->setTabTextColor(chat, palette().color(QPalette::Text));
+            tabWidget_->setTabTextColor(chat, qApp->palette().color(QPalette::Text));
         }
 
         if (chat->unreadMessageCount()) {

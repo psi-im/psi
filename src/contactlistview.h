@@ -101,6 +101,8 @@ protected:
     virtual void updateContextMenu();
 
 private:
+    void updatePalette();
+
     QPointer<ContactListItemMenu> contextMenu_;
     bool                          contextMenuActive_;
     ActivateAction                activateAction = Activate;

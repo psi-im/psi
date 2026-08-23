@@ -36,6 +36,7 @@
 #include "mooddlg.h"
 #include "mucjoindlg.h"
 #include "psiaccount.h"
+#include "psiapplication.h"
 #include "psicon.h"
 #include "psicontactlist.h"
 #include "psievent.h"
@@ -308,6 +309,12 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
     setObjectName("MainWin");
     setAttribute(Qt::WA_AlwaysShowToolTips);
     d = new Private(psi, this);
+    if (auto *app = qobject_cast<PsiApplication *>(qApp)) {
+        connect(app, &PsiApplication::applicationPaletteChanged, this, [this]() {
+            if (!styleSheet().isEmpty())
+                setStyleSheet(styleSheet());
+        });
+    }
 
     setWindowIcon(PsiIconset::instance()->system().icon("psi/logo_128")->icon());
 
@@ -1388,6 +1395,8 @@ void MainWin::closeEvent(QCloseEvent *e)
 
 void MainWin::changeEvent(QEvent *event)
 {
+    AdvancedWidget<QMainWindow>::changeEvent(event);
+
 #ifdef Q_OS_WIN
     if (event->type() == QEvent::ActivationChange
         && PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool()

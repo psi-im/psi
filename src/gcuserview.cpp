@@ -27,6 +27,7 @@
 #include "iris/xmpp_caps.h"
 #include "iris/xmpp_muc.h"
 #include "psiaccount.h"
+#include "psiapplication.h"
 #include "psiiconset.h"
 #include "psioptions.h"
 #include "psitooltip.h"
@@ -58,10 +59,10 @@ public:
         PsiOptions *o    = PsiOptions::instance();
         colorForeground_ = ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-foreground");
         colorBackground_ = ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-background");
-        colorModerator_  = o->getOption("options.ui.look.colors.muc.role-moderator").value<QColor>();
-        colorParticipant_ = o->getOption("options.ui.look.colors.muc.role-participant").value<QColor>();
-        colorVisitor_     = o->getOption("options.ui.look.colors.muc.role-visitor").value<QColor>();
-        colorNoRole_      = o->getOption("options.ui.look.colors.muc.role-norole").value<QColor>();
+        colorModerator_  = ColorOpt::instance()->color("options.ui.look.colors.muc.role-moderator");
+        colorParticipant_ = ColorOpt::instance()->color("options.ui.look.colors.muc.role-participant");
+        colorVisitor_     = ColorOpt::instance()->color("options.ui.look.colors.muc.role-visitor");
+        colorNoRole_      = ColorOpt::instance()->color("options.ui.look.colors.muc.role-norole");
         showGroups_       = o->getOption("options.ui.muc.userlist.show-groups").toBool();
         slimGroups_       = o->getOption("options.ui.muc.userlist.use-slim-group-headings").toBool();
         nickColoring_     = o->getOption("options.ui.muc.userlist.nick-coloring").toBool();
@@ -669,6 +670,8 @@ GCUserView::GCUserView(QWidget *parent) : QTreeView(parent)
     // expandAll(); // doesn't work here
 
     connect(this, SIGNAL(doubleClicked(QModelIndex)), SLOT(qlv_doubleClicked(QModelIndex)));
+    if (auto *app = qobject_cast<PsiApplication *>(qApp))
+        connect(app, &PsiApplication::applicationPaletteChanged, this, &GCUserView::setLooks);
 }
 
 GCUserView::~GCUserView() { }

@@ -48,7 +48,6 @@ static const QString contactListFontOptionPath(QStringLiteral("options.ui.look.f
 static const QString slimGroupsOptionPath(QStringLiteral("options.ui.look.contactlist.use-slim-group-headings"));
 static const QString
     outlinedGroupsOptionPath(QStringLiteral("options.ui.look.contactlist.use-outlined-group-headings"));
-static const QString contactListBackgroundOptionPath(QStringLiteral("options.ui.look.colors.contactlist.background"));
 static const QString showStatusMessagesOptionPath(QStringLiteral("options.ui.contactlist.status-messages.show"));
 static const QString statusSingleOptionPath(QStringLiteral("options.ui.contactlist.status-messages.single-line"));
 static const QString showClientIconsPath(QStringLiteral("options.ui.contactlist.show-client-icons"));
@@ -158,13 +157,6 @@ void ContactListViewDelegate::Private::optionChanged(const QString &option)
         statusFontMetrics_ = QFontMetrics(statusFont_);
         updated            = true;
         updateGeometry     = true;
-    }
-    if (bulkUpdate || (!updated && option == contactListBackgroundOptionPath)) {
-        QPalette p = contactList->palette();
-        p.setColor(QPalette::Base, ColorOpt::instance()->color(contactListBackgroundOptionPath));
-        contactList->setPalette(p);
-        updated        = true;
-        updateViewport = true;
     }
     if (bulkUpdate || (!updated && option == showStatusMessagesOptionPath)) {
         showStatusMessages_ = PsiOptions::instance()->getOption(showStatusMessagesOptionPath).toBool();

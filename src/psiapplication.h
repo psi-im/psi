@@ -39,9 +39,15 @@ public:
 
 signals:
     void dockActivated();
+    void applicationPaletteChanged();
+
+protected:
+    bool event(QEvent *event) override;
 
 private:
     void init(bool GUIenabled);
+
+    bool paletteChangeScheduled_ = false;
 };
 
 #endif // PSIAPPLICATION_H

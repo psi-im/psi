@@ -29,10 +29,11 @@
 
 void ChatViewCommon::setLooks(QWidget *w)
 {
-    QPalette pal = w->palette(); // copy widget's palette to non const QPalette
-    pal.setColor(QPalette::Inactive, QPalette::HighlightedText, pal.color(QPalette::Active, QPalette::HighlightedText));
-    pal.setColor(QPalette::Inactive, QPalette::Highlight, pal.color(QPalette::Active, QPalette::Highlight));
-    w->setPalette(pal); // set the widget's palette
+    QPalette pal;
+    pal.setColor(QPalette::Inactive, QPalette::HighlightedText,
+                 qApp->palette().color(QPalette::Active, QPalette::HighlightedText));
+    pal.setColor(QPalette::Inactive, QPalette::Highlight, qApp->palette().color(QPalette::Active, QPalette::Highlight));
+    w->setPalette(pal);
 }
 
 bool ChatViewCommon::updateLastMsgTime(QDateTime t)

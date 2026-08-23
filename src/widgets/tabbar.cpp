@@ -783,6 +783,15 @@ void TabBar::setCurrentIndexAlwaysAtBottom(bool b)
 
 bool TabBar::currentIndexAlwaysAtBottom() const { return d->indexAlwaysAtBottom; }
 
+void TabBar::changeEvent(QEvent *event)
+{
+    QTabBar::changeEvent(event);
+    if (event->type() == QEvent::PaletteChange || event->type() == QEvent::StyleChange
+        || event->type() == QEvent::FontChange) {
+        layoutTabs();
+    }
+}
+
 QSize TabBar::minimumSizeHint() const { return { 0, sizeHint().height() }; }
 
 QSize TabBar::sizeHint() const

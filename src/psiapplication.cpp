@@ -30,7 +30,9 @@
 #ifdef Q_OS_MAC
 #include <Carbon/Carbon.h>
 #endif
+#include <QEvent>
 #include <QSessionManager>
+#include <QTimer>
 
 //----------------------------------------------------------------------------
 // PsiApplication
@@ -45,6 +47,19 @@ PsiApplication::PsiApplication(int &argc, char **argv, bool GUIenabled) : QAppli
 }
 
 PsiApplication::~PsiApplication() { }
+
+bool PsiApplication::event(QEvent *event)
+{
+    const bool handled = QApplication::event(event);
+    if (event->type() == QEvent::ApplicationPaletteChange && !paletteChangeScheduled_) {
+        paletteChangeScheduled_ = true;
+        QTimer::singleShot(0, this, [this]() {
+            paletteChangeScheduled_ = false;
+            emit applicationPaletteChanged();
+        });
+    }
+    return handled;
+}
 
 void PsiApplication::init(bool GUIenabled)
 {

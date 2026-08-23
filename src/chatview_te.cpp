@@ -25,6 +25,7 @@
 #include "iris/jid/jid.h"
 #include "messageview.h"
 #include "msgmle.h"
+#include "psiapplication.h"
 #include "psioptions.h"
 #include "psirichtext.h"
 #include "qiteaudio.h"
@@ -98,6 +99,12 @@ ChatView::ChatView(QWidget *parent) :
     addLogIconsResources();
     connect(ColorOpt::instance(), &ColorOpt::changed, this,
             [this](const QString &) { scheduleAutomaticTextRecolor(); });
+    if (auto *app = qobject_cast<PsiApplication *>(qApp)) {
+        connect(app, &PsiApplication::applicationPaletteChanged, this, [this]() {
+            ChatViewCommon::setLooks(this);
+            scheduleAutomaticTextRecolor();
+        });
+    }
 }
 
 ChatView::~ChatView() { }
@@ -337,9 +344,8 @@ void ChatView::appendText(const QString &text)
 void ChatView::changeEvent(QEvent *event)
 {
     PsiTextView::changeEvent(event);
-    if (event->type() == QEvent::ApplicationPaletteChange || event->type() == QEvent::PaletteChange) {
+    if (event->type() == QEvent::ApplicationPaletteChange || event->type() == QEvent::PaletteChange)
         scheduleAutomaticTextRecolor();
-    }
 }
 
 void ChatView::scheduleAutomaticTextRecolor()
