@@ -27,6 +27,15 @@ ColorOpt::ColorOpt() : QObject(nullptr)
 {
     connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString &)), SLOT(optionChanged(const QString &)));
     connect(PsiOptions::instance(), SIGNAL(destroyed()), SLOT(reset()));
+    connect(qApp, &QApplication::paletteChanged, this, [this](const QPalette &) {
+        // Invalid option colors mean "use the current application palette".
+        // Re-emit them when the desktop theme changes so cached users (for
+        // example the contact-list delegate) repaint immediately.
+        for (auto it = colors.cbegin(); it != colors.cend(); ++it) {
+            if (!it.value().color.isValid())
+                emit changed(it.key());
+        }
+    });
 
     typedef struct {
         const char         *opt;

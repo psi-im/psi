@@ -425,6 +425,9 @@ add_executable(${PROJECT_NAME}
     ${RC_FILE}
 )
 
+# qite's QTextFormat properties must not overlap Psi's rich-text properties.
+target_compile_definitions(${PROJECT_NAME} PRIVATE QITE_FIRST_USER_PROPERTY=0x1000)
+
 #Generate .rc file for windows with Qt6
 if(WIN32 AND (${QT_DEFAULT_MAJOR_VERSION} GREATER_EQUAL 6))
     set_target_properties(${PROJECT_NAME} PROPERTIES
@@ -697,7 +700,7 @@ elseif(APPLE)
 
     set(PROJECT_OUTPUT_DATA_DIR "${CLIENT_NAME}.app/Contents/Resources")
 
-    list(APPEND SOURCES ${MACOSX_ICON})
+    target_sources(${PROJECT_NAME} PRIVATE ${MACOSX_ICON})
     set_source_files_properties(${MACOSX_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
     set_property(TARGET ${PROJECT_NAME} PROPERTY OUTPUT_NAME "${CLIENT_NAME}")
     install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION "bin" BUNDLE DESTINATION ".")
