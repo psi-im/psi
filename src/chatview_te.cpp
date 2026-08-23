@@ -49,6 +49,28 @@ static const char              *informationalColorOpt = "options.ui.look.colors.
 static const QRegularExpression underlineFixRE("(<a href=\"addnick://psi/[^\"]*\"><span style=\")");
 static const QRegularExpression removeTagsRE("<[^>]*>");
 
+namespace {
+enum AutoColorKind { OptionColor = 1, PaletteColor, MucNickColor };
+
+void markOptionColor(QTextCursor cursor, const char *option)
+{
+    PsiRichText::markAutoForeground(cursor, ColorOpt::instance()->color(option), OptionColor,
+                                    QString::fromLatin1(option));
+}
+
+void markPaletteColor(QTextCursor cursor, QPalette::ColorRole role, const QPalette &palette)
+{
+    PsiRichText::markAutoForeground(cursor, palette.color(role), PaletteColor, int(role));
+}
+
+QTextCursor cursorAfter(const QTextCursor &range)
+{
+    QTextCursor cursor(range.document());
+    cursor.setPosition(range.selectionEnd());
+    return cursor;
+}
+}
+
 //----------------------------------------------------------------------------
 // ChatView
 //----------------------------------------------------------------------------
@@ -74,6 +96,8 @@ ChatView::ChatView(QWidget *parent) :
     connect(this, &ChatView::selectionChanged, this, [this]() { actQuote_->setEnabled(textCursor().hasSelection()); });
 
     addLogIconsResources();
+    connect(ColorOpt::instance(), &ColorOpt::changed, this,
+            [this](const QString &) { scheduleAutomaticTextRecolor(); });
 }
 
 ChatView::~ChatView() { }
@@ -264,22 +288,44 @@ QString ChatView::colorString(bool local, bool spooled) const
 
 void ChatView::insertText(const QString &text, QTextCursor &insertCursor)
 {
+    insertTextWithRange(text, insertCursor);
+}
+
+QTextCursor ChatView::insertTextWithRange(const QString &text, QTextCursor &insertCursor)
+{
     bool doScrollToBottom = atBottom();
 
     // prevent scrolling back to selected text when
     // restoring selection
     int scrollbarValue = verticalScrollBar()->value();
 
+    QTextCursor inserted;
     if (insertCursor.isNull()) {
-        PsiTextView::appendText(text);
+        inserted = PsiTextView::appendTextWithRange(text);
     } else {
-        PsiTextView::insertText(text, insertCursor);
+        inserted = PsiTextView::insertTextWithRange(text, insertCursor);
     }
 
     if (doScrollToBottom)
         scrollToBottom();
     else
         verticalScrollBar()->setValue(scrollbarValue);
+    return inserted;
+}
+
+QTextCursor ChatView::insertTextFragmentWithRange(const QString &text, QTextCursor &insertCursor)
+{
+    Q_ASSERT(!insertCursor.isNull());
+    const bool doScrollToBottom = atBottom();
+    const int  scrollbarValue   = verticalScrollBar()->value();
+
+    QTextCursor inserted = PsiTextView::insertTextFragmentWithRange(text, insertCursor);
+
+    if (doScrollToBottom)
+        scrollToBottom();
+    else
+        verticalScrollBar()->setValue(scrollbarValue);
+    return inserted;
 }
 
 void ChatView::appendText(const QString &text)
@@ -288,15 +334,62 @@ void ChatView::appendText(const QString &text)
     insertText(text, c);
 }
 
+void ChatView::changeEvent(QEvent *event)
+{
+    PsiTextView::changeEvent(event);
+    if (event->type() == QEvent::ApplicationPaletteChange || event->type() == QEvent::PaletteChange) {
+        scheduleAutomaticTextRecolor();
+    }
+}
+
+void ChatView::scheduleAutomaticTextRecolor()
+{
+    if (automaticTextRecolorScheduled_)
+        return;
+    automaticTextRecolorScheduled_ = true;
+    QTimer::singleShot(0, this, [this]() {
+        automaticTextRecolorScheduled_ = false;
+        recolorAutomaticText();
+    });
+}
+
+void ChatView::recolorAutomaticText()
+{
+    const int   scrollbarValue = verticalScrollBar()->value();
+    QTextCursor cursor    = textCursor();
+    const auto  selection = PsiRichText::saveSelection(this, cursor);
+    PsiRichText::recolorAutoForegrounds(document(), [this](int kind, const QVariant &data) {
+        switch (kind) {
+        case OptionColor:
+            return ColorOpt::instance()->color(data.toString());
+        case PaletteColor:
+            return palette().color(static_cast<QPalette::ColorRole>(data.toInt()));
+        case MucNickColor: {
+            const auto nick = data.toMap();
+            return QColor(getMucNickColor(nick.value("nick").toString(), nick.value("self").toBool()));
+        }
+        default:
+            return QColor();
+        }
+    });
+    cursor = textCursor();
+    PsiRichText::restoreSelection(this, cursor, selection);
+    setTextCursor(cursor);
+    verticalScrollBar()->setValue(scrollbarValue);
+    viewport()->update();
+}
+
 void ChatView::dispatchMessage(const MessageView &mv)
 {
     const QString &replaceId = mv.replaceId();
     if ((mv.type() == MessageView::Message || mv.type() == MessageView::Subject)
         && ChatViewCommon::updateLastMsgTime(mv.dateTime()) && replaceId.isEmpty()) {
         QString color = ColorOpt::instance()->color(informationalColorOpt).name();
-        appendText(
+        QTextCursor cursor;
+        auto inserted = insertTextWithRange(
             QString(useMessageIcons_ ? "<img src=\"icon:log_icon_time\" />" : "")
-            + QString("<font color=\"%1\">*** %2</font>").arg(color, mv.dateTime().date().toString(Qt::ISODate)));
+            + QString("<font color=\"%1\">*** %2</font>").arg(color, mv.dateTime().date().toString(Qt::ISODate)), cursor);
+        markOptionColor(inserted, informationalColorOpt);
     }
 
     switch (mv.type()) {
@@ -415,22 +508,46 @@ void ChatView::renderMucMessage(const MessageView &mv, QTextCursor &insertCursor
 
     QString inner = alerttagso + mv.formattedText() + alerttagsc;
 
+    QTextCursor inserted;
     if (mv.isEmote()) {
-        insertText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1]").arg(timestr)
+        inserted = insertTextWithRange(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1]").arg(timestr)
                        + QString(" *%1 ").arg(nick) + inner + "</font>",
                    insertCursor);
-    } else {
-        if (PsiOptions::instance()->getOption("options.ui.chat.use-chat-says-style").toBool()) {
-            insertText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] ").arg(timestr)
-                           + QString("%1 says:").arg(nick) + "</font><br>"
-                           + QString("<font color=\"%1\">").arg(textcolor) + inner + "</font>",
-                       insertCursor);
-        } else {
-            insertText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] &lt;").arg(timestr) + nick
-                           + QString("&gt;</font> ") + QString("<font color=\"%1\">").arg(textcolor) + inner
-                           + "</font>",
-                       insertCursor);
+        if (mv.isSpooled() && !PsiOptions::instance()->getOption("options.ui.muc.colored-history").toBool())
+            markOptionColor(inserted, informationalColorOpt);
+        else {
+            QVariantMap data { { "nick", mv.nick() }, { "self", mv.isLocal() } };
+            PsiRichText::markAutoForeground(inserted, QColor(nickcolor), MucNickColor, data);
         }
+    } else {
+        QString header;
+        const bool saysStyle = PsiOptions::instance()->getOption("options.ui.chat.use-chat-says-style").toBool();
+        if (saysStyle) {
+            header = icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] ").arg(timestr)
+                + QString("%1 says:").arg(nick) + "</font>";
+        } else {
+            header = icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] &lt;").arg(timestr)
+                + nick + "&gt;</font>";
+        }
+        inserted = insertTextWithRange(header, insertCursor);
+        if (mv.isSpooled() && !PsiOptions::instance()->getOption("options.ui.muc.colored-history").toBool())
+            markOptionColor(inserted, informationalColorOpt);
+        else {
+            QVariantMap data { { "nick", mv.nick() }, { "self", mv.isLocal() } };
+            PsiRichText::markAutoForeground(inserted, QColor(nickcolor), MucNickColor, data);
+        }
+
+        QTextCursor bodyCursor = cursorAfter(inserted);
+        if (saysStyle)
+            bodyCursor.insertBlock();
+        else
+            bodyCursor.insertText(" ");
+        auto body = insertTextFragmentWithRange(
+            QString("<font color=\"%1\">").arg(textcolor) + inner + "</font>", bodyCursor);
+        if (mv.isAlert())
+            markOptionColor(body, "options.ui.look.colors.messages.highlighting");
+        else
+            markPaletteColor(body, QPalette::Text, palette());
     }
 
     if (mv.isLocal() && PsiOptions::instance()->getOption("options.ui.chat.auto-scroll-to-bottom").toBool()) {
@@ -469,27 +586,42 @@ void ChatView::renderMessage(const MessageView &mv, QTextCursor &insertCursor)
         }
         icon = QString("<img src=\"%1\" />").arg(sRes);
     }
-    QString str;
-
     QString inner = mv.formattedText();
     if (mv.isEmote()) {
-        str = icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1]").arg(timestr)
+        QString str = icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1]").arg(timestr)
             + QString(" *%1 ").arg(TextUtil::escape(mv.nick())) + inner + "</span>";
+        auto inserted = insertTextWithRange(str, insertCursor);
+        markOptionColor(inserted, mv.isLocal() ? "options.ui.look.colors.messages.sent"
+                                               : "options.ui.look.colors.messages.received");
     } else {
-        if (PsiOptions::instance()->getOption("options.ui.chat.use-chat-says-style").toBool()) {
-            str = icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1] ").arg(timestr)
-                + tr("%1 says:").arg(TextUtil::escape(mv.nick())) + "</span><br>";
+        QString prefix;
+        const bool saysStyle = PsiOptions::instance()->getOption("options.ui.chat.use-chat-says-style").toBool();
+        if (saysStyle) {
+            prefix = icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1] ").arg(timestr)
+                + tr("%1 says:").arg(TextUtil::escape(mv.nick())) + "</span>";
         } else {
-            str = icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1] &lt;").arg(timestr)
-                + TextUtil::escape(mv.nick()) + QString("&gt;</span> ");
+            prefix = icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1] &lt;").arg(timestr)
+                + TextUtil::escape(mv.nick()) + QString("&gt;</span>");
         }
-        if (mv.isSpooled())
-            str.append(QString("<span style=\"color: %1\">%2</span>")
-                           .arg(ColorOpt::instance()->color("options.ui.look.colors.messages.usertext").name(), inner));
+        auto prefixRange = insertTextWithRange(prefix, insertCursor);
+        markOptionColor(prefixRange, mv.isLocal() ? "options.ui.look.colors.messages.sent"
+                                                  : "options.ui.look.colors.messages.received");
+
+        QTextCursor bodyCursor = cursorAfter(prefixRange);
+        if (saysStyle)
+            bodyCursor.insertBlock();
         else
-            str.append(inner);
+            bodyCursor.insertText(" ");
+        if (mv.isSpooled()) {
+            auto bodyRange = insertTextFragmentWithRange(
+                QString("<span style=\"color: %1\">%2</span>")
+                    .arg(ColorOpt::instance()->color("options.ui.look.colors.messages.usertext").name(), inner),
+                bodyCursor);
+            markOptionColor(bodyRange, "options.ui.look.colors.messages.usertext");
+        } else {
+            insertTextFragmentWithRange(inner, bodyCursor);
+        }
     }
-    insertText(str, insertCursor);
 
     if (mv.isLocal() && PsiOptions::instance()->getOption("options.ui.chat.auto-scroll-to-bottom").toBool()) {
         deferredScroll();
@@ -525,10 +657,25 @@ void ChatView::renderSysMessage(const MessageView &mv)
 
     QString color         = ColorOpt::instance()->color(informationalColorOpt).name();
     QString userTextColor = ColorOpt::instance()->color("options.ui.look.colors.messages.usertext").name();
-    appendText(QString(useMessageIcons_ ? "<img src=\"icon:log_icon_info\" />" : "")
+    QTextCursor cursor;
+    auto inserted = insertTextWithRange(QString(useMessageIcons_ ? "<img src=\"icon:log_icon_info\" />" : "")
                + QString("<font color=\"%1\">[%2] *** ").arg(color, timestr) + mv.formattedText()
-               + (ut.isEmpty() ? "" : QString(": <span style=\"color:%1;\">%2</span>").arg(userTextColor, ut))
-               + (isPriority ? QString(" [%1]").arg(mv.statusPriority()) : "") + "</font>");
+               + (ut.isEmpty() ? "" : ":") + "</font>", cursor);
+    markOptionColor(inserted, informationalColorOpt);
+    QTextCursor continuation = cursorAfter(inserted);
+    if (!ut.isEmpty()) {
+        continuation.insertText(" ");
+        auto userText = insertTextFragmentWithRange(
+            QString("<span style=\"color:%1;\">%2</span>").arg(userTextColor, ut), continuation);
+        markOptionColor(userText, "options.ui.look.colors.messages.usertext");
+        continuation = cursorAfter(userText);
+    }
+    if (isPriority) {
+        continuation.insertText(" ");
+        auto priority = insertTextFragmentWithRange(
+            QString("<font color=\"%1\">[%2]</font>").arg(color).arg(mv.statusPriority()), continuation);
+        markOptionColor(priority, informationalColorOpt);
+    }
 }
 
 void ChatView::renderSubject(const MessageView &mv)
@@ -543,11 +690,20 @@ void ChatView::renderMucSubject(const MessageView &mv)
     QString ut            = mv.formattedUserText();
     QString color         = ColorOpt::instance()->color(informationalColorOpt).name();
     QString userTextColor = ColorOpt::instance()->color("options.ui.look.colors.messages.usertext").name();
-    appendText(
+    QTextCursor cursor;
+    auto inserted = insertTextWithRange(
         QString(useMessageIcons_ ? "<img src=\"icon:log_icon_info\" />" : "")
         + QString("<font color=\"%1\">[%2] *** ").arg(color, timestr) + mv.formattedText()
-        + (ut.isEmpty() ? "" : ":<br>") + "</font>"
-        + (ut.isEmpty() ? "" : QString(" <span style=\"color:%1;font-weight:bold\">%2</span>").arg(userTextColor, ut)));
+        + (ut.isEmpty() ? "" : ":") + "</font>", cursor);
+    markOptionColor(inserted, informationalColorOpt);
+    if (!ut.isEmpty()) {
+        QTextCursor continuation = cursorAfter(inserted);
+        continuation.insertBlock();
+        continuation.insertText(" ");
+        auto userText = insertTextFragmentWithRange(
+            QString("<span style=\"color:%1;font-weight:bold\">%2</span>").arg(userTextColor, ut), continuation);
+        markOptionColor(userText, "options.ui.look.colors.messages.usertext");
+    }
 }
 
 void ChatView::renderUrls(const MessageView &mv)

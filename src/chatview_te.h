@@ -60,6 +60,8 @@ public:
     void setLocalNickname(const QString &nickname);
 
     void insertText(const QString &text, QTextCursor &insertCursor);
+    QTextCursor insertTextWithRange(const QString &text, QTextCursor &insertCursor);
+    QTextCursor insertTextFragmentWithRange(const QString &text, QTextCursor &insertCursor);
     void appendText(const QString &text);
     void dispatchMessage(const MessageView &);
     bool handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdit);
@@ -78,6 +80,7 @@ public slots:
 
 protected:
     // override the tab/esc behavior
+    void changeEvent(QEvent *event) override;
     bool focusNextPrevChild(bool next);
     void keyPressEvent(QKeyEvent *);
 
@@ -90,6 +93,8 @@ protected:
     void renderSubject(const MessageView &);
     void renderMucSubject(const MessageView &);
     void renderUrls(const MessageView &);
+    void scheduleAutomaticTextRecolor();
+    void recolorAutomaticText();
 
 protected slots:
     void autoCopy();
@@ -119,6 +124,7 @@ private:
     QString           localNickname_;
     QPointer<QWidget> dialog_;
     QAction          *actQuote_;
+    bool              automaticTextRecolorScheduled_ = false;
 };
 
 #endif // CHATVIEW_TE_H

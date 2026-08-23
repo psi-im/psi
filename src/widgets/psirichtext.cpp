@@ -33,6 +33,7 @@
 #include <QTextCursor>
 #include <QTextDocumentFragment>
 #include <QTextEdit>
+#include <QTextFragment>
 #include <QTextFrame>
 #include <QUrl>
 #include <QVariant>
@@ -82,6 +83,7 @@ std::optional<HtmlSize> parseSize(QStringView view)
     return {};
 }
 
+#ifndef WIDGET_PLUGIN
 int htmlSizeToPixels(const HtmlSize &size, const QTextCharFormat &format)
 {
     if (size.unit == HtmlSize::Pt) {
@@ -93,6 +95,7 @@ int htmlSizeToPixels(const HtmlSize &size, const QTextCharFormat &format)
     }
     return size.size;
 }
+#endif
 
 }
 
@@ -666,8 +669,8 @@ static void applyFormatToIcons(QTextDocument *doc, TextCharFormatQueue *queue, Q
 /**
  * Groups some related function calls together.
  */
-static void appendTextHelper(QTextDocument *doc, QString text, QTextCursor &cursor,
-                             const PsiRichText::ParsersMap &parsers)
+static int appendTextHelper(QTextDocument *doc, QString text, QTextCursor &cursor,
+                            const PsiRichText::ParsersMap &parsers)
 {
     TextCharFormatQueue queue;
 
@@ -731,9 +734,11 @@ static void appendTextHelper(QTextDocument *doc, QString text, QTextCursor &curs
 
     cursor.insertFragment(QTextDocumentFragment::fromHtml(
         convertIconsToObjectReplacementCharacters(text, &queue, cursor.position(), parsers)));
+    const int insertedEnd = cursor.position();
     cursor.setPosition(initialpos);
 
     applyFormatToIcons(doc, &queue, cursor);
+    return insertedEnd;
 }
 
 /**
@@ -758,7 +763,7 @@ void PsiRichText::setText(QTextDocument *doc, const QString &text, const Parsers
  *             insert any <icon>s, attributes' values MUST be Qt::escaped.
  */
 void PsiRichText::appendText(QTextDocument *doc, QTextCursor &cursor, const QString &text, bool append,
-                             const ParsersMap &parsers)
+                             const ParsersMap &parsers, QTextCursor *inserted)
 {
     cursor.beginEditBlock();
     if (append) {
@@ -776,8 +781,28 @@ void PsiRichText::appendText(QTextDocument *doc, QTextCursor &cursor, const QStr
         cursor.setBlockFormat(blockFormat);
     }
 
-    appendTextHelper(doc, text, cursor, parsers);
+    const int insertedStart = cursor.position();
+    const int insertedEnd   = appendTextHelper(doc, text, cursor, parsers);
+    if (inserted) {
+        *inserted = QTextCursor(doc);
+        inserted->setPosition(insertedStart);
+        inserted->setPosition(insertedEnd, QTextCursor::KeepAnchor);
+    }
 
+    cursor.endEditBlock();
+}
+
+void PsiRichText::insertTextFragment(QTextDocument *doc, QTextCursor &cursor, const QString &text,
+                                     const ParsersMap &parsers, QTextCursor *inserted)
+{
+    cursor.beginEditBlock();
+    const int insertedStart = cursor.position();
+    const int insertedEnd   = appendTextHelper(doc, text, cursor, parsers);
+    if (inserted) {
+        *inserted = QTextCursor(doc);
+        inserted->setPosition(insertedStart);
+        inserted->setPosition(insertedEnd, QTextCursor::KeepAnchor);
+    }
     cursor.endEditBlock();
 }
 #if 0
@@ -849,6 +874,83 @@ void PsiRichText::addEmoticon(QTextEdit *textEdit, const QString &emoticon)
 }
 
 void PsiRichText::setAllowedImageDirs(const QStringList &dirs) { allowedImageDirs = dirs; }
+
+void PsiRichText::markAutoForeground(QTextCursor cursor, const QColor &currentColor, int kind, const QVariant &data)
+{
+    if (!cursor.hasSelection() || !currentColor.isValid())
+        return;
+
+    const int start = cursor.selectionStart();
+    const int end   = cursor.selectionEnd();
+    struct Range {
+        int position;
+        int length;
+    };
+    QList<Range> ranges;
+
+    for (QTextBlock block = cursor.document()->findBlock(start); block.isValid() && block.position() < end;
+         block = block.next()) {
+        for (auto it = block.begin(); !it.atEnd(); ++it) {
+            const QTextFragment fragment = it.fragment();
+            const int           first    = fragment.position();
+            const int           last     = first + fragment.length();
+            const auto          format   = fragment.charFormat();
+            if (last <= start || first >= end || format.objectType() != QTextFormat::NoObject
+                || format.foreground().color() != currentColor) {
+                continue;
+            }
+            ranges << Range { qMax(first, start), qMin(last, end) - qMax(first, start) };
+        }
+    }
+
+    QTextCharFormat tag;
+    tag.setProperty(AutoColorKind, kind);
+    tag.setProperty(AutoColorData, data);
+    QTextCursor editCursor(cursor.document());
+    editCursor.beginEditBlock();
+    for (const auto &range : std::as_const(ranges)) {
+        QTextCursor rangeCursor(cursor.document());
+        rangeCursor.setPosition(range.position);
+        rangeCursor.setPosition(range.position + range.length, QTextCursor::KeepAnchor);
+        rangeCursor.mergeCharFormat(tag);
+    }
+    editCursor.endEditBlock();
+}
+
+void PsiRichText::recolorAutoForegrounds(
+    QTextDocument *doc, const std::function<QColor(int kind, const QVariant &data)> &resolveColor)
+{
+    struct Update {
+        int      position;
+        int      length;
+        QColor   color;
+    };
+    QList<Update> updates;
+
+    for (QTextBlock block = doc->begin(); block.isValid(); block = block.next()) {
+        for (auto it = block.begin(); !it.atEnd(); ++it) {
+            const QTextFragment fragment = it.fragment();
+            const auto          format   = fragment.charFormat();
+            if (format.objectType() != QTextFormat::NoObject || !format.hasProperty(AutoColorKind))
+                continue;
+            QColor color = resolveColor(format.intProperty(AutoColorKind), format.property(AutoColorData));
+            if (color.isValid() && color != format.foreground().color())
+                updates << Update { fragment.position(), fragment.length(), color };
+        }
+    }
+
+    QTextCursor editCursor(doc);
+    editCursor.beginEditBlock();
+    for (const auto &update : std::as_const(updates)) {
+        QTextCursor cursor(doc);
+        cursor.setPosition(update.position);
+        cursor.setPosition(update.position + update.length, QTextCursor::KeepAnchor);
+        QTextCharFormat format;
+        format.setForeground(update.color);
+        cursor.mergeCharFormat(format);
+    }
+    editCursor.endEditBlock();
+}
 
 QTextCharFormat PsiRichText::markerFormat(const QString &uniqueId) { return TextMarkerFormat(uniqueId); }
 

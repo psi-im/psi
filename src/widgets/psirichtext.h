@@ -19,6 +19,7 @@
 
 #include <QTextCursor>
 #include <QTextDocument>
+#include <QVariant>
 
 #include <functional>
 
@@ -27,6 +28,11 @@ class ITEMediaOpener;
 
 class PsiRichText {
 public:
+    enum FormatProperty {
+        AutoColorKind = QTextFormat::UserProperty + 0x100,
+        AutoColorData
+    };
+
     using ParserRet  = std::pair<QTextCharFormat, QString>;
     using Parser     = std::function<ParserRet(const QStringView &htmlElement, int insertAfter)>;
     using ParsersMap = QMap<QString, Parser>;
@@ -37,9 +43,16 @@ public:
     static void setText(QTextDocument *doc, const QString &text, const ParsersMap &parsers = ParsersMap());
     static void insertIcon(QTextCursor &cursor, const QString &iconName, const QString &iconText);
     static void appendText(QTextDocument *doc, QTextCursor &cursor, const QString &text, bool append = true,
-                           const ParsersMap &parsers = ParsersMap());
+                           const ParsersMap &parsers = ParsersMap(), QTextCursor *inserted = nullptr);
+    static void insertTextFragment(QTextDocument *doc, QTextCursor &cursor, const QString &text,
+                                   const ParsersMap &parsers = ParsersMap(), QTextCursor *inserted = nullptr);
     static void addEmoticon(QTextEdit *textEdit, const QString &emoticon);
     static void setAllowedImageDirs(const QStringList &);
+
+    static void markAutoForeground(QTextCursor cursor, const QColor &currentColor, int kind,
+                                   const QVariant &data = {});
+    static void recolorAutoForegrounds(
+        QTextDocument *doc, const std::function<QColor(int kind, const QVariant &data)> &resolveColor);
 
     static QString convertToPlainText(const QTextDocument *doc);
 

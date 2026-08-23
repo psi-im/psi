@@ -40,6 +40,9 @@ public:
 
     virtual void appendText(const QString &text);
     virtual void insertText(const QString &text, QTextCursor &cursor);
+    QTextCursor  appendTextWithRange(const QString &text);
+    QTextCursor  insertTextWithRange(const QString &text, QTextCursor &cursor);
+    QTextCursor  insertTextFragmentWithRange(const QString &text, QTextCursor &cursor);
 
     QString getHtml() const;
     QString getPlainText() const;

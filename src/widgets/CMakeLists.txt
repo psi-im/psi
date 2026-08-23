@@ -93,3 +93,7 @@ endif()
 if(LINUX AND USE_X11)
     target_compile_definitions(widgets PRIVATE HAVE_X11)
 endif()
+
+if(BUILD_TESTING)
+    add_subdirectory(unittest/richtext)
+endif()
