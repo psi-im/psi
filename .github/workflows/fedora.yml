@@ -48,6 +48,7 @@ jobs:
             libXScrnSaver-devel \
             libgcrypt-devel \
             libidn-devel \
+            libomemo-c-devel \
             libotr-devel \
             libsignal-protocol-c-devel \
             libtidy-devel \

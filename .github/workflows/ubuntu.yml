@@ -58,6 +58,7 @@ jobs:
             libhttp-parser-dev \
             libhunspell-dev \
             libminizip-dev \
+            libomemo-c-dev \
             libotr5-dev \
             libqca-qt5-2-dev \
             libqt5svg5-dev \
