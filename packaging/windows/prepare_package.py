@@ -151,12 +151,19 @@ def main() -> int:
     # MSYS2 Qt5 windeployqt does not support the upstream --translationdir
     # option, so deploy only Qt runtime libraries/plugins here and leave the
     # already installed Psi translations untouched.
+    #
+    # MSYS2 builds Qt5 with desktop OpenGL and keeps ANGLE as an optional
+    # package, so asking windeployqt to deploy ANGLE otherwise fails on the
+    # absent libGLESv2.dll.  Compiler runtime deployment is disabled as well:
+    # the recursive PE dependency closure below is authoritative for MinGW DLLs.
     subprocess.run(
         [
             str(windeployqt),
             "--release",
             "--verbose",
             "2",
+            "--no-angle",
+            "--no-compiler-runtime",
             "--dir",
             str(root),
             "--libdir",
