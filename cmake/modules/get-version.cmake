@@ -33,10 +33,10 @@ function(read_version_file VF_RESULT)
     endif()
 endfunction()
 
-function(run_git GIT_ARG1 GIT_ARG2 GIT_ARG3 RESULT)
+function(run_git RESULT)
     if(GIT_EXECUTABLE)
         execute_process(
-            COMMAND ${GIT_EXECUTABLE} ${GIT_ARG1} ${GIT_ARG2} ${GIT_ARG3}
+            COMMAND ${GIT_EXECUTABLE} ${ARGN}
             WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
             OUTPUT_VARIABLE RES
             OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -45,20 +45,24 @@ function(run_git GIT_ARG1 GIT_ARG2 GIT_ARG3 RESULT)
         if(RES)
             set(${RESULT} ${RES} PARENT_SCOPE)
         elseif(ERROR_1)
-            message(WARNING "Can't execute ${GIT_EXECUTABLE} ${GIT_ARG1} ${GIT_ARG2} ${GIT_ARG3}: ${ERROR_1}")
+            string(JOIN " " GIT_ARGS ${ARGN})
+            message(WARNING "Can't execute ${GIT_EXECUTABLE} ${GIT_ARGS}: ${ERROR_1}")
         endif()
     endif()
 endfunction()
 
 function(obtain_git_version GIT_VERSION GIT_FULL_VERSION)
     if(EXISTS "${PROJECT_SOURCE_DIR}/\.git" AND (NOT IS_SNAPSHOT))
-        run_git("describe" "--tags" "--abbrev=0" MAIN_VER)
+        # Only application-version tags participate in Psi versioning.  The
+        # repository may also contain infrastructure/release tags (for example
+        # Windows SDK releases), which must not become the application version.
+        run_git(MAIN_VER describe --tags --abbrev=0 --match "[0-9]*")
         if(MAIN_VER)
             set(APP_VERSION "${MAIN_VER}" PARENT_SCOPE)
             set(${GIT_VERSION} ${MAIN_VER} PARENT_SCOPE)
-            run_git("rev-list" "--count" "${MAIN_VER}\.\.HEAD" COMMITS)
+            run_git(COMMITS rev-list --count "${MAIN_VER}\.\.HEAD")
             if(COMMITS)
-                run_git("rev-parse" "--short" "HEAD" VER_HASH)
+                run_git(VER_HASH rev-parse --short HEAD)
                 if(COMMITS AND VER_HASH)
                     set(PSI_REVISION ${VER_HASH} PARENT_SCOPE)
                     set(APP_VERSION "${MAIN_VER}.${COMMITS}" PARENT_SCOPE)
