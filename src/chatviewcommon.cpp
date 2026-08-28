@@ -88,11 +88,11 @@ QString ChatViewCommon::getMucNickColor(const QString &nick, bool isSelf)
     return qApp->palette().color(QPalette::Inactive, QPalette::WindowText).name();
 }
 
-void ChatViewCommon::addUser(const QString &nickname) { }
+void ChatViewCommon::addUser(const QString &) { }
 
-void ChatViewCommon::removeUser(const QString &nickname) { }
+void ChatViewCommon::removeUser(const QString &) { }
 
-void ChatViewCommon::renameUser(const QString &oldNickname, const QString &newNickname) { }
+void ChatViewCommon::renameUser(const QString &, const QString &) { }
 
 QList<QColor> &ChatViewCommon::generatePalette()
 {
