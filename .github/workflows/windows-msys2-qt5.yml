@@ -62,12 +62,18 @@ jobs:
             mingw-w64-x86_64-usrsctp
             mingw-w64-x86_64-libomemo-c
 
-      - name: Verify MINGW64 Windows 7 target baseline
+      - name: Verify explicit Windows 7 target baseline
         shell: msys2 {0}
         run: |
           set -euo pipefail
+          echo 'MINGW64 header defaults:'
           printf '#include <windows.h>\n' | gcc -dM -E -x c - \
-            | grep -Eq '^#define _WIN32_WINNT 0x0601([[:space:]]|$)'
+            | grep -E '^#define (_WIN32_WINNT|WINVER) ' || true
+
+          macros=$(printf '#include <windows.h>\n' | \
+            gcc -D_WIN32_WINNT=0x0601 -DWINVER=0x0601 -dM -E -x c -)
+          grep -Eq '^#define _WIN32_WINNT 0x0601([[:space:]]|$)' <<< "$macros"
+          grep -Eq '^#define WINVER 0x0601([[:space:]]|$)' <<< "$macros"
 
       - name: Build and install QCA3 SDK
         shell: msys2 {0}
@@ -216,12 +222,14 @@ jobs:
           unzip -q "sdk-artifact/$SDK_ARCHIVE" -d sdk
           test -f sdk/lib/cmake/Qca3-qt5/Qca3-qt5Config.cmake
 
-      - name: Verify Windows 7 compiler baseline
+      - name: Verify explicit Windows 7 target baseline
         shell: msys2 {0}
         run: |
           set -euo pipefail
-          printf '#include <windows.h>\n' | gcc -dM -E -x c - \
-            | grep -Eq '^#define _WIN32_WINNT 0x0601([[:space:]]|$)'
+          macros=$(printf '#include <windows.h>\n' | \
+            gcc -D_WIN32_WINNT=0x0601 -DWINVER=0x0601 -dM -E -x c -)
+          grep -Eq '^#define _WIN32_WINNT 0x0601([[:space:]]|$)' <<< "$macros"
+          grep -Eq '^#define WINVER 0x0601([[:space:]]|$)' <<< "$macros"
 
       - name: Temporarily allow native MinGW to use system Iris dependencies
         shell: msys2 {0}
