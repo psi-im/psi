@@ -1,0 +1,283 @@
+name: Windows SDK MSYS2 Qt5
+
+on:
+  workflow_dispatch:
+    inputs:
+      sdk_tag:
+        description: SDK release tag
+        required: false
+        default: windows-sdk-msys2-qt5-v1
+        type: string
+      force_rebuild:
+        description: Rebuild and replace the SDK asset even if it already exists
+        required: false
+        default: false
+        type: boolean
+  workflow_call:
+    inputs:
+      sdk_tag:
+        description: SDK release tag
+        required: false
+        default: windows-sdk-msys2-qt5-v1
+        type: string
+      force_rebuild:
+        description: Rebuild and replace the SDK asset even if it already exists
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: windows-sdk-msys2-qt5-${{ inputs.sdk_tag }}
+  cancel-in-progress: false
+
+env:
+  QCA_TAG: v3.0.1
+  QTKEYCHAIN_TAG: 0.17.0
+  SDK_ARCHIVE: psi-windows-sdk-msys2-qt5.zip
+
+jobs:
+  check:
+    name: Check SDK release
+    runs-on: ubuntu-24.04
+    outputs:
+      need_build: ${{ steps.check.outputs.need_build }}
+
+    steps:
+      - name: Check release asset
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SDK_TAG: ${{ inputs.sdk_tag }}
+          FORCE_REBUILD: ${{ inputs.force_rebuild }}
+        run: |
+          set -euo pipefail
+          if [[ "$FORCE_REBUILD" == "true" ]]; then
+            echo "need_build=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          assets="$(gh release view "$SDK_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --json assets \
+            --jq '.assets[].name' 2>/dev/null || true)"
+
+          if grep -Fxq "$SDK_ARCHIVE" <<< "$assets"; then
+            echo "SDK $SDK_TAG/$SDK_ARCHIVE already exists"
+            echo "need_build=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "SDK $SDK_TAG/$SDK_ARCHIVE is missing"
+            echo "need_build=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    name: Build Qt5 dependency SDK
+    needs: check
+    if: needs.check.outputs.need_build == 'true'
+    runs-on: windows-2022
+    timeout-minutes: 45
+
+    steps:
+      - name: Set up MSYS2 MINGW64
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            git
+            zip
+            unzip
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-pkgconf
+            mingw-w64-x86_64-qt5-base
+            mingw-w64-x86_64-qt5-multimedia
+            mingw-w64-x86_64-qt5-svg
+            mingw-w64-x86_64-qt5-tools
+            mingw-w64-x86_64-qtwebkit
+            mingw-w64-x86_64-qt5-winextras
+            mingw-w64-x86_64-hunspell
+            mingw-w64-x86_64-openssl
+            mingw-w64-x86_64-usrsctp
+            mingw-w64-x86_64-libomemo-c
+            mingw-w64-x86_64-libotr
+
+      - name: Verify explicit Windows 7 target baseline
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          macros=$(printf '#include <windows.h>\n' | \
+            gcc -D_WIN32_WINNT=0x0601 -DWINVER=0x0601 -dM -E -x c -)
+          grep -Eq '^#define _WIN32_WINNT 0x0601([[:space:]]|$)' <<< "$macros"
+          grep -Eq '^#define WINVER 0x0601([[:space:]]|$)' <<< "$macros"
+
+      - name: Build and install QCA3 SDK
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch "$QCA_TAG" https://github.com/psi-im/qca.git qca
+
+          cmake -S qca -B qca-build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$PWD/sdk" \
+            -DCMAKE_C_FLAGS='-D_WIN32_WINNT=0x0601 -DWINVER=0x0601' \
+            -DCMAKE_CXX_FLAGS='-D_WIN32_WINNT=0x0601 -DWINVER=0x0601' \
+            -DBUILD_WITH_QT6=OFF \
+            -DBUILD_SHARED_LIBS=ON \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_TOOLS=OFF \
+            -DBUILD_PLUGINS=ossl \
+            -DLOAD_SHARED_PLUGINS=ON \
+            -DQCA_SUFFIX=qt5 \
+            -DUSE_RELATIVE_PATHS=ON
+
+          cmake --build qca-build --parallel 2
+          cmake --install qca-build
+
+          test -f sdk/lib/cmake/Qca3-qt5/Qca3-qt5Config.cmake
+          test -n "$(find sdk/include -type f -name qca.h -print -quit)"
+          test -n "$(find sdk/bin -type f -iname '*qca3-qt5*.dll' -print -quit)"
+          test -n "$(find sdk -type f -iname '*qca-ossl*.dll' -print -quit)"
+
+      - name: Build and install Qt5Keychain SDK
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch "$QTKEYCHAIN_TAG" https://github.com/frankosterfeld/qtkeychain.git qtkeychain
+
+          cmake -S qtkeychain -B qtkeychain-build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$PWD/sdk" \
+            -DCMAKE_PREFIX_PATH=/mingw64 \
+            -DCMAKE_CXX_FLAGS='-D_WIN32_WINNT=0x0601 -DWINVER=0x0601' \
+            -DBUILD_WITH_QT5=ON \
+            -DBUILD_SHARED_LIBS=ON \
+            -DBUILD_TESTING=OFF \
+            -DBUILD_TEST_APPLICATION=OFF \
+            -DBUILD_QTQUICK_DEMO=OFF \
+            -DBUILD_TRANSLATIONS=OFF
+
+          cmake --build qtkeychain-build --parallel 2
+          cmake --install qtkeychain-build
+
+          test -f sdk/lib/cmake/Qt5Keychain/Qt5KeychainConfig.cmake
+          test -f sdk/include/qt5keychain/keychain.h
+          test -n "$(find sdk/bin -type f -iname '*qt5keychain*.dll' -print -quit)"
+          test -n "$(find sdk/lib -type f -iname '*qt5keychain*.dll.a' -print -quit)"
+
+      - name: Verify relocated SDK consumers
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          mv sdk relocated-sdk
+          mkdir consumer
+          cat > consumer/CMakeLists.txt <<'CMAKE'
+          cmake_minimum_required(VERSION 3.16)
+          project(psi_sdk_consumer LANGUAGES CXX)
+          find_package(Qca3-qt5 CONFIG REQUIRED)
+          find_package(Qt5Keychain CONFIG REQUIRED)
+          add_executable(psi-sdk-consumer main.cpp)
+          target_link_libraries(psi-sdk-consumer PRIVATE Qca3::Qca ${QTKEYCHAIN_LIBRARIES})
+          CMAKE
+          cat > consumer/main.cpp <<'CPP'
+          #include <QtCrypto>
+          #include <qt5keychain/keychain.h>
+
+          int main()
+          {
+              QCA::Initializer init;
+              QKeychain::ReadPasswordJob job(QStringLiteral("psi-sdk-test"));
+              return job.service().isEmpty() ? 1 : 0;
+          }
+          CPP
+
+          cmake -S consumer -B consumer-build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            "-DCMAKE_PREFIX_PATH=$PWD/relocated-sdk;/mingw64" \
+            "-DQca3-qt5_DIR=$PWD/relocated-sdk/lib/cmake/Qca3-qt5" \
+            "-DQt5Keychain_DIR=$PWD/relocated-sdk/lib/cmake/Qt5Keychain"
+          cmake --build consumer-build --parallel 2
+          PATH="$PWD/relocated-sdk/bin:/mingw64/bin:$PATH" ./consumer-build/psi-sdk-consumer.exe
+          mv relocated-sdk sdk
+
+      - name: Write SDK manifest and archive
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          {
+            echo 'Psi Windows SDK'
+            echo '================='
+            echo 'Build environment: MSYS2 MINGW64 / Qt5'
+            echo 'Target baseline: Windows 7 (_WIN32_WINNT=0x0601, WINVER=0x0601)'
+            echo "QCA source: psi-im/qca $QCA_TAG"
+            echo "QtKeychain source: frankosterfeld/qtkeychain $QTKEYCHAIN_TAG (Qt5)"
+            echo 'SDK contents: QCA3 Qt5 and Qt5Keychain development/runtime files not provided by current MSYS2 MINGW64 packages'
+            echo
+            echo 'Required MSYS2 packages used by Psi/Iris and future plugin builds:'
+            pacman -Q \
+              mingw-w64-x86_64-gcc \
+              mingw-w64-x86_64-cmake \
+              mingw-w64-x86_64-ninja \
+              mingw-w64-x86_64-pkgconf \
+              mingw-w64-x86_64-qt5-base \
+              mingw-w64-x86_64-qt5-multimedia \
+              mingw-w64-x86_64-qt5-svg \
+              mingw-w64-x86_64-qt5-tools \
+              mingw-w64-x86_64-qtwebkit \
+              mingw-w64-x86_64-qt5-winextras \
+              mingw-w64-x86_64-hunspell \
+              mingw-w64-x86_64-openssl \
+              mingw-w64-x86_64-usrsctp \
+              mingw-w64-x86_64-libomemo-c \
+              mingw-w64-x86_64-libotr
+          } > sdk/SDK-MANIFEST.txt
+
+          (cd sdk && zip -9 -r "../$SDK_ARCHIVE" .)
+          unzip -t "$SDK_ARCHIVE"
+
+      - name: Upload SDK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: psi-windows-sdk-msys2-qt5
+          path: ${{ env.SDK_ARCHIVE }}
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    name: Publish SDK release
+    needs:
+      - check
+      - build
+    if: needs.check.outputs.need_build == 'true' && needs.build.result == 'success'
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Download SDK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: psi-windows-sdk-msys2-qt5
+          path: release
+
+      - name: Create or update SDK release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SDK_TAG: ${{ inputs.sdk_tag }}
+        run: |
+          set -euo pipefail
+          archive="release/$SDK_ARCHIVE"
+          test -f "$archive"
+
+          if gh release view "$SDK_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$SDK_TAG" "$archive" \
+              --repo "$GITHUB_REPOSITORY" \
+              --clobber
+          else
+            gh release create "$SDK_TAG" "$archive" \
+              --repo "$GITHUB_REPOSITORY" \
+              --target master \
+              --title "Psi Windows SDK (MSYS2 MINGW64 / Qt5)" \
+              --notes "Development/runtime SDK for dependencies not supplied as suitable Qt5 packages by MSYS2. Combine this archive with the MSYS2 packages listed in SDK-MANIFEST.txt."
+          fi

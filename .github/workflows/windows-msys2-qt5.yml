@@ -1,0 +1,245 @@
+name: Windows MSYS2 Qt5 CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - '*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-msys2-qt5-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SDK_TAG: windows-sdk-msys2-qt5-v1
+  SDK_ARCHIVE: psi-windows-sdk-msys2-qt5.zip
+
+jobs:
+  check-sdk:
+    name: Check dependency SDK
+    runs-on: ubuntu-24.04
+    outputs:
+      exists: ${{ steps.check.outputs.exists }}
+
+    steps:
+      - name: Check release asset
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          assets="$(gh release view "$SDK_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --json assets \
+            --jq '.assets[].name' 2>/dev/null || true)"
+
+          if grep -Fxq "$SDK_ARCHIVE" <<< "$assets"; then
+            echo "SDK found: $SDK_TAG/$SDK_ARCHIVE"
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "SDK missing: $SDK_TAG/$SDK_ARCHIVE"
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  build-sdk:
+    name: Build missing dependency SDK
+    needs: check-sdk
+    if: needs.check-sdk.outputs.exists != 'true'
+    permissions:
+      contents: write
+    uses: ./.github/workflows/windows-sdk-msys2-qt5.yml
+    with:
+      sdk_tag: windows-sdk-msys2-qt5-v1
+      force_rebuild: false
+
+  psi:
+    name: Build Psi + bundled Iris / Qt5 WebKit / OMEMO
+    needs:
+      - check-sdk
+      - build-sdk
+    if: >-
+      always() &&
+      needs.check-sdk.result == 'success' &&
+      (needs.check-sdk.outputs.exists == 'true' || needs.build-sdk.result == 'success')
+    runs-on: windows-2022
+    timeout-minutes: 60
+    permissions:
+      contents: read
+
+    steps:
+      - name: Fetch Psi history
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          filter: blob:none
+          submodules: false
+
+      - name: Fetch bundled sources shallowly
+        shell: bash
+        run: |
+          set -euo pipefail
+          git submodule sync --recursive
+          git submodule update --init --recursive --depth=1
+
+      - name: Apply pending Iris native MinGW fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          winsock_paths = [
+              Path("iris/src/irisnet/noncore/cutestuff/socks.cpp"),
+              Path("iris/src/xmpp/xmpp-im/s5b.cpp"),
+          ]
+          old_winsock = """#ifdef _MSC_VER
+          #include <winsock2.h>
+          #endif
+          #include <windows.h>"""
+          new_winsock = """#include <winsock2.h>
+          #include <windows.h>"""
+
+          for path in winsock_paths:
+              text = path.read_text(encoding="utf-8")
+              if old_winsock not in text:
+                  raise SystemExit(f"expected Winsock include block not found in {path}")
+              path.write_text(text.replace(old_winsock, new_winsock, 1), encoding="utf-8")
+
+          sctp_cmake = Path("iris/cmake/modules/IrisSCTP.cmake")
+          text = sctp_cmake.read_text(encoding="utf-8")
+          old_sctp = "if(USE_MXE AND STDINT_FOUND)"
+          new_sctp = "if((USE_MXE OR (WIN32 AND MINGW)) AND STDINT_FOUND)"
+          if old_sctp not in text:
+              raise SystemExit(f"expected SCTP stdint condition not found in {sctp_cmake}")
+          sctp_cmake.write_text(text.replace(old_sctp, new_sctp, 1), encoding="utf-8")
+          PY
+
+      - name: Set up MSYS2 MINGW64
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            git
+            unzip
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-pkgconf
+            mingw-w64-x86_64-qt5-base
+            mingw-w64-x86_64-qt5-multimedia
+            mingw-w64-x86_64-qt5-svg
+            mingw-w64-x86_64-qt5-tools
+            mingw-w64-x86_64-qtwebkit
+            mingw-w64-x86_64-qt5-winextras
+            mingw-w64-x86_64-hunspell
+            mingw-w64-x86_64-openssl
+            mingw-w64-x86_64-usrsctp
+            mingw-w64-x86_64-libomemo-c
+            mingw-w64-x86_64-libotr
+
+      - name: Download dependency SDK release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p sdk-artifact
+          gh release download "$SDK_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern "$SDK_ARCHIVE" \
+            --dir sdk-artifact
+          test -f "sdk-artifact/$SDK_ARCHIVE"
+
+      - name: Extract SDK
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          mkdir sdk
+          unzip -q "sdk-artifact/$SDK_ARCHIVE" -d sdk
+          test -f sdk/lib/cmake/Qca3-qt5/Qca3-qt5Config.cmake
+          test -f sdk/lib/cmake/Qt5Keychain/Qt5KeychainConfig.cmake
+
+      - name: Verify explicit Windows 7 target baseline
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          macros=$(printf '#include <windows.h>\n' | \
+            gcc -D_WIN32_WINNT=0x0601 -DWINVER=0x0601 -dM -E -x c -)
+          grep -Eq '^#define _WIN32_WINNT 0x0601([[:space:]]|$)' <<< "$macros"
+          grep -Eq '^#define WINVER 0x0601([[:space:]]|$)' <<< "$macros"
+
+      - name: Temporarily allow native MinGW to use system Iris dependencies
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          sed -i '/^if(WIN32 OR USE_MXE)$/,/^endif()$/d' CMakeLists.txt
+          ! grep -q '^if(WIN32 OR USE_MXE)$' CMakeLists.txt
+
+      - name: Configure Psi
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          cmake -S . -B build-msys2 -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            "-DCMAKE_PREFIX_PATH=$PWD/sdk;/mingw64" \
+            "-DQca3-qt5_DIR=$PWD/sdk/lib/cmake/Qca3-qt5" \
+            "-DQt5Keychain_DIR=$PWD/sdk/lib/cmake/Qt5Keychain" \
+            -DCMAKE_C_FLAGS='-D_WIN32_WINNT=0x0601 -DWINVER=0x0601' \
+            -DCMAKE_CXX_FLAGS='-D_WIN32_WINNT=0x0601 -DWINVER=0x0601' \
+            -DQT_DEFAULT_MAJOR_VERSION=5 \
+            -DUSE_QT6=OFF \
+            -DUSE_MXE=OFF \
+            -DCHAT_TYPE=WEBKIT \
+            -DBUNDLED_IRIS=ON \
+            -DBUNDLED_IRIS_ALL=OFF \
+            -DIRIS_BUNDLED_QCA=OFF \
+            -DIRIS_SYSTEM_QCA=3 \
+            -DIRIS_BUNDLED_USRSCTP=OFF \
+            -DIRIS_BUNDLED_OMEMO_C=OFF \
+            -DENABLE_OMEMO=ON \
+            -DUSRSCTP_INCLUDE_DIR=/mingw64/include \
+            -DUSRSCTP_LIB_DIR=/mingw64/lib \
+            -DHUNSPELL_INCLUDE_DIR=/mingw64/include/hunspell \
+            -DHUNSPELL_LIBRARY=/mingw64/lib/libhunspell.dll.a \
+            -DUSE_HUNSPELL=ON \
+            -DUSE_KEYCHAIN=ON \
+            -DBUILD_TESTING=OFF \
+            -DENABLE_PLUGINS=OFF \
+            -DBUILD_PSIMEDIA=OFF \
+            -DONLY_BINARY=ON \
+            -DINSTALL_EXTRA_FILES=OFF \
+            2>&1 | tee configure.log
+
+          grep -F 'Chatlog type - QtWebKit' configure.log
+          grep -F 'QCA: selected system QCA 3' configure.log
+          grep -F 'Found UsrSCTP' configure.log
+          grep -Eq 'Found (PkgConfig::)?OmemoC|libomemo-c' configure.log
+          grep -Eq '^-- Git Version [0-9]' configure.log
+          ! grep -F 'Git Version windows-sdk-' configure.log
+          grep -Eq '^BUNDLED_IRIS:BOOL=ON$' build-msys2/CMakeCache.txt
+          grep -Eq '^IRIS_BUNDLED_QCA:BOOL=OFF$' build-msys2/CMakeCache.txt
+          grep -Eq '^IRIS_BUNDLED_USRSCTP:BOOL=OFF$' build-msys2/CMakeCache.txt
+          grep -Eq '^IRIS_BUNDLED_OMEMO_C:BOOL=OFF$' build-msys2/CMakeCache.txt
+          grep -Eq '^Qt5Keychain_DIR:[^=]+=.*/sdk/lib/cmake/Qt5Keychain$' build-msys2/CMakeCache.txt
+
+      - name: Build Psi
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          cmake --build build-msys2 --parallel 2
+          test -f build-msys2/psi/psi.exe
+
+      - name: Upload Psi executable for inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: psi-qt5-webkit-mingw64
+          path: build-msys2/psi/psi.exe
+          if-no-files-found: error
+          retention-days: 14
