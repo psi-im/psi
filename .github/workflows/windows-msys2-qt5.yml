@@ -87,29 +87,37 @@ jobs:
           git submodule sync --recursive
           git submodule update --init --recursive --depth=1
 
-      - name: Apply pending Iris MinGW Winsock fix
+      - name: Apply pending Iris native MinGW fixes
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
 
-          paths = [
+          winsock_paths = [
               Path("iris/src/irisnet/noncore/cutestuff/socks.cpp"),
               Path("iris/src/xmpp/xmpp-im/s5b.cpp"),
           ]
-          old = """#ifdef _MSC_VER
+          old_winsock = """#ifdef _MSC_VER
           #include <winsock2.h>
           #endif
           #include <windows.h>"""
-          new = """#include <winsock2.h>
+          new_winsock = """#include <winsock2.h>
           #include <windows.h>"""
 
-          for path in paths:
+          for path in winsock_paths:
               text = path.read_text(encoding="utf-8")
-              if old not in text:
+              if old_winsock not in text:
                   raise SystemExit(f"expected Winsock include block not found in {path}")
-              path.write_text(text.replace(old, new, 1), encoding="utf-8")
+              path.write_text(text.replace(old_winsock, new_winsock, 1), encoding="utf-8")
+
+          sctp_cmake = Path("iris/cmake/modules/IrisSCTP.cmake")
+          text = sctp_cmake.read_text(encoding="utf-8")
+          old_sctp = "if(USE_MXE AND STDINT_FOUND)"
+          new_sctp = "if((USE_MXE OR (WIN32 AND MINGW)) AND STDINT_FOUND)"
+          if old_sctp not in text:
+              raise SystemExit(f"expected SCTP stdint condition not found in {sctp_cmake}")
+          sctp_cmake.write_text(text.replace(old_sctp, new_sctp, 1), encoding="utf-8")
           PY
 
       - name: Set up MSYS2 MINGW64
@@ -213,6 +221,8 @@ jobs:
           grep -F 'QCA: selected system QCA 3' configure.log
           grep -F 'Found UsrSCTP' configure.log
           grep -Eq 'Found (PkgConfig::)?OmemoC|libomemo-c' configure.log
+          grep -Eq '^-- Git Version [0-9]' configure.log
+          ! grep -F 'Git Version windows-sdk-' configure.log
           grep -Eq '^BUNDLED_IRIS:BOOL=ON$' build-msys2/CMakeCache.txt
           grep -Eq '^IRIS_BUNDLED_QCA:BOOL=OFF$' build-msys2/CMakeCache.txt
           grep -Eq '^IRIS_BUNDLED_USRSCTP:BOOL=OFF$' build-msys2/CMakeCache.txt
