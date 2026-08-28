@@ -37,13 +37,9 @@ ThemePrivate::ThemePrivate(PsiThemeProvider *provider) :
 
 ThemePrivate::~ThemePrivate() { }
 
-bool ThemePrivate::load(const QString &style) { return false; }
+bool ThemePrivate::load(const QString &) { return false; }
 
-bool ThemePrivate::load(const QString &style, std::function<void(bool)> loadCallback)
-{
-    Q_UNUSED(loadCallback);
-    return false;
-}
+bool ThemePrivate::load(const QString &, std::function<void(bool)>) { return false; }
 
 bool ThemePrivate::hasPreview() const { return false; }
 
