@@ -1,0 +1,128 @@
+name: Windows MXE Qt5 CI
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  MXE_COMMIT: c4859dddb60f611ec8a09076995fcdc3aac30560
+  MXE_TARGET: x86_64-w64-mingw32.shared
+  MXE_ROOT: ${{ github.workspace }}/.mxe
+
+jobs:
+  build:
+    name: Build Qt5 / MinGW-w64 (Windows 7)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+
+    steps:
+      - name: Fetch sources
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Install MXE build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            autoconf \
+            automake \
+            autopoint \
+            bison \
+            bzip2 \
+            flex \
+            g++ \
+            g++-multilib \
+            gettext \
+            git \
+            gperf \
+            intltool \
+            libc6-dev-i386 \
+            libltdl-dev \
+            libssl-dev \
+            libtool-bin \
+            libxml-parser-perl \
+            lzip \
+            make \
+            openssl \
+            patch \
+            perl \
+            pkg-config \
+            python3 \
+            python3-mako \
+            ruby \
+            unzip \
+            wget \
+            xz-utils
+
+      - name: Fetch pinned MXE
+        run: |
+          git init "$MXE_ROOT"
+          git -C "$MXE_ROOT" remote add origin https://github.com/mxe/mxe.git
+          git -C "$MXE_ROOT" fetch --depth=1 origin "$MXE_COMMIT"
+          git -C "$MXE_ROOT" checkout --detach FETCH_HEAD
+
+      - name: Restore MXE toolchain cache
+        id: mxe-cache
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ env.MXE_ROOT }}/usr
+          key: mxe-ubuntu-24.04-${{ env.MXE_COMMIT }}-${{ env.MXE_TARGET }}-qt5-psi-v1
+
+      - name: Build MXE Qt5 dependencies
+        run: |
+          make -C "$MXE_ROOT" \
+            -j2 \
+            MXE_TARGETS="$MXE_TARGET" \
+            qtbase qtmultimedia qtsvg qtkeychain hunspell
+
+      - name: Save MXE toolchain cache
+        if: ${{ steps.mxe-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v5
+        with:
+          path: ${{ env.MXE_ROOT }}/usr
+          key: ${{ steps.mxe-cache.outputs.cache-primary-key }}
+
+      - name: Verify Windows 7 target
+        run: |
+          "$MXE_ROOT/usr/bin/$MXE_TARGET-gcc" -dM -E -x c -include windows.h /dev/null \
+            | grep -Eq '^#define _WIN32_WINNT 0x0601([[:space:]]|$)'
+
+      - name: Configure Psi
+        run: |
+          export PATH="$MXE_ROOT/usr/bin:$PATH"
+          "$MXE_TARGET-cmake" -S . -B build-mxe \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DQT_DEFAULT_MAJOR_VERSION=5 \
+            -DUSE_QT6=OFF \
+            -DUSE_MXE=ON \
+            -DCHAT_TYPE=BASIC \
+            -DBUILD_TESTING=OFF \
+            -DENABLE_PLUGINS=OFF \
+            -DBUILD_PSIMEDIA=OFF \
+            -DIRIS_BUNDLED_QCA=ON \
+            -DIRIS_BUNDLED_USRSCTP=ON \
+            -DIRIS_BUNDLED_OMEMO_C=ON \
+            -DUSE_HUNSPELL=ON \
+            -DUSE_KEYCHAIN=ON \
+            -DONLY_BINARY=ON \
+            -DINSTALL_EXTRA_FILES=OFF
+
+      - name: Verify Qt5 configuration
+        run: |
+          grep -Eq '^QT_DEFAULT_MAJOR_VERSION:.*=5$' build-mxe/CMakeCache.txt
+          grep -Eq '^Qt5Core_DIR:PATH=' build-mxe/CMakeCache.txt
+          ! grep -Eq '^Qt6Core_DIR:PATH=' build-mxe/CMakeCache.txt
+
+      - name: Build Psi
+        run: |
+          export PATH="$MXE_ROOT/usr/bin:$PATH"
+          cmake --build build-mxe --parallel 2
