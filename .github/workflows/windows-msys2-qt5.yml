@@ -1,0 +1,330 @@
+name: Windows MSYS2 Qt5 CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - '*'
+  workflow_dispatch:
+    inputs:
+      publish_sdk:
+        description: Publish the verified MinGW64 Qt5 SDK as a GitHub release
+        required: false
+        default: false
+        type: boolean
+      sdk_tag:
+        description: SDK release tag
+        required: false
+        default: windows-sdk-v1
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-msys2-qt5-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  QCA_TAG: v3.0.1
+  SDK_ARCHIVE: psi-windows-sdk-mingw64-qt5.zip
+
+jobs:
+  sdk:
+    name: Build QCA3 Qt5 MinGW64 SDK
+    runs-on: windows-2022
+    timeout-minutes: 45
+
+    steps:
+      - name: Set up MSYS2 MINGW64
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            git
+            zip
+            unzip
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-pkgconf
+            mingw-w64-x86_64-qt5-base
+            mingw-w64-x86_64-qt5-multimedia
+            mingw-w64-x86_64-qt5-svg
+            mingw-w64-x86_64-qt5-tools
+            mingw-w64-x86_64-qtwebkit
+            mingw-w64-x86_64-qtkeychain
+            mingw-w64-x86_64-hunspell
+            mingw-w64-x86_64-openssl
+            mingw-w64-x86_64-usrsctp
+            mingw-w64-x86_64-libomemo-c
+
+      - name: Verify MINGW64 Windows 7 target baseline
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          printf '#include <windows.h>\n' | gcc -dM -E -x c - \
+            | grep -Eq '^#define _WIN32_WINNT 0x0601([[:space:]]|$)'
+
+      - name: Build and install QCA3 SDK
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch "$QCA_TAG" https://github.com/psi-im/qca.git qca
+
+          cmake -S qca -B qca-build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$PWD/sdk" \
+            -DCMAKE_C_FLAGS='-D_WIN32_WINNT=0x0601 -DWINVER=0x0601' \
+            -DCMAKE_CXX_FLAGS='-D_WIN32_WINNT=0x0601 -DWINVER=0x0601' \
+            -DBUILD_WITH_QT6=OFF \
+            -DBUILD_SHARED_LIBS=ON \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_TOOLS=OFF \
+            -DBUILD_PLUGINS=ossl \
+            -DLOAD_SHARED_PLUGINS=ON \
+            -DQCA_SUFFIX=qt5 \
+            -DUSE_RELATIVE_PATHS=ON
+
+          cmake --build qca-build --parallel 2
+          cmake --install qca-build
+
+          test -f sdk/lib/cmake/Qca3-qt5/Qca3-qt5Config.cmake
+          test -n "$(find sdk/include -type f -name qca.h -print -quit)"
+          test -n "$(find sdk/bin -type f -iname '*qca3-qt5*.dll' -print -quit)"
+          test -n "$(find sdk -type f -iname '*qca-ossl*.dll' -print -quit)"
+
+      - name: Verify relocated QCA3 SDK consumer
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          mv sdk relocated-sdk
+          mkdir consumer
+          cat > consumer/CMakeLists.txt <<'CMAKE'
+          cmake_minimum_required(VERSION 3.16)
+          project(qca3_sdk_consumer LANGUAGES CXX)
+          find_package(Qca3-qt5 CONFIG REQUIRED)
+          add_executable(qca3-sdk-consumer main.cpp)
+          target_link_libraries(qca3-sdk-consumer PRIVATE Qca3::Qca)
+          CMAKE
+          cat > consumer/main.cpp <<'CPP'
+          #include <QtCrypto>
+          int main()
+          {
+              QCA::Initializer init;
+              return 0;
+          }
+          CPP
+
+          cmake -S consumer -B consumer-build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            "-DQca3-qt5_DIR=$PWD/relocated-sdk/lib/cmake/Qca3-qt5"
+          cmake --build consumer-build --parallel 2
+          PATH="$PWD/relocated-sdk/bin:/mingw64/bin:$PATH" ./consumer-build/qca3-sdk-consumer.exe
+          mv relocated-sdk sdk
+
+      - name: Write SDK manifest and archive
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          {
+            echo 'Psi Windows SDK'
+            echo '================='
+            echo 'Host/build environment: MSYS2 MINGW64'
+            echo 'Target baseline: Windows 7 (_WIN32_WINNT=0x0601, WINVER=0x0601)'
+            echo "QCA source: psi-im/qca $QCA_TAG"
+            echo 'SDK contents: QCA3 Qt5 development/runtime files not provided by MSYS2'
+            echo
+            echo 'Required MSYS2 packages used by Psi/Iris:'
+            pacman -Q \
+              mingw-w64-x86_64-gcc \
+              mingw-w64-x86_64-cmake \
+              mingw-w64-x86_64-ninja \
+              mingw-w64-x86_64-pkgconf \
+              mingw-w64-x86_64-qt5-base \
+              mingw-w64-x86_64-qt5-multimedia \
+              mingw-w64-x86_64-qt5-svg \
+              mingw-w64-x86_64-qt5-tools \
+              mingw-w64-x86_64-qtwebkit \
+              mingw-w64-x86_64-qtkeychain \
+              mingw-w64-x86_64-hunspell \
+              mingw-w64-x86_64-openssl \
+              mingw-w64-x86_64-usrsctp \
+              mingw-w64-x86_64-libomemo-c
+          } > sdk/SDK-MANIFEST.txt
+
+          (cd sdk && zip -9 -r "../$SDK_ARCHIVE" .)
+          unzip -t "$SDK_ARCHIVE"
+
+      - name: Upload SDK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: psi-windows-sdk-mingw64-qt5
+          path: ${{ env.SDK_ARCHIVE }}
+          if-no-files-found: error
+          retention-days: 14
+
+  psi:
+    name: Build Psi + bundled Iris / Qt5 WebKit / OMEMO
+    needs: sdk
+    runs-on: windows-2022
+    timeout-minutes: 60
+
+    steps:
+      - name: Fetch Psi and bundled Iris
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Set up MSYS2 MINGW64
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            git
+            unzip
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-pkgconf
+            mingw-w64-x86_64-qt5-base
+            mingw-w64-x86_64-qt5-multimedia
+            mingw-w64-x86_64-qt5-svg
+            mingw-w64-x86_64-qt5-tools
+            mingw-w64-x86_64-qtwebkit
+            mingw-w64-x86_64-qtkeychain
+            mingw-w64-x86_64-hunspell
+            mingw-w64-x86_64-openssl
+            mingw-w64-x86_64-usrsctp
+            mingw-w64-x86_64-libomemo-c
+
+      - name: Download QCA3 SDK
+        uses: actions/download-artifact@v4
+        with:
+          name: psi-windows-sdk-mingw64-qt5
+          path: sdk-artifact
+
+      - name: Extract SDK
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          mkdir sdk
+          unzip -q "sdk-artifact/$SDK_ARCHIVE" -d sdk
+          test -f sdk/lib/cmake/Qca3-qt5/Qca3-qt5Config.cmake
+
+      - name: Verify Windows 7 compiler baseline
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          printf '#include <windows.h>\n' | gcc -dM -E -x c - \
+            | grep -Eq '^#define _WIN32_WINNT 0x0601([[:space:]]|$)'
+
+      - name: Temporarily allow native MinGW to use system Iris dependencies
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          # The current tree forcibly enables BUNDLED_IRIS_ALL for every WIN32
+          # build. Remove that legacy override in this experiment so bundled
+          # Iris can consume QCA3 from the SDK and OMEMO/usrsctp from MSYS2.
+          sed -i '/^if(WIN32 OR USE_MXE)$/,/^endif()$/d' CMakeLists.txt
+          ! grep -q '^if(WIN32 OR USE_MXE)$' CMakeLists.txt
+
+      - name: Configure Psi
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          cmake -S . -B build-msys2 -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            "-DCMAKE_PREFIX_PATH=$PWD/sdk;/mingw64" \
+            "-DQca3-qt5_DIR=$PWD/sdk/lib/cmake/Qca3-qt5" \
+            -DCMAKE_C_FLAGS='-D_WIN32_WINNT=0x0601 -DWINVER=0x0601' \
+            -DCMAKE_CXX_FLAGS='-D_WIN32_WINNT=0x0601 -DWINVER=0x0601' \
+            -DQT_DEFAULT_MAJOR_VERSION=5 \
+            -DUSE_QT6=OFF \
+            -DUSE_MXE=OFF \
+            -DCHAT_TYPE=WEBKIT \
+            -DBUNDLED_IRIS=ON \
+            -DBUNDLED_IRIS_ALL=OFF \
+            -DIRIS_BUNDLED_QCA=OFF \
+            -DIRIS_SYSTEM_QCA=3 \
+            -DIRIS_BUNDLED_USRSCTP=OFF \
+            -DIRIS_BUNDLED_OMEMO_C=OFF \
+            -DENABLE_OMEMO=ON \
+            -DUSRSCTP_INCLUDE_DIR=/mingw64/include \
+            -DUSRSCTP_LIB_DIR=/mingw64/lib \
+            -DHUNSPELL_INCLUDE_DIR=/mingw64/include/hunspell \
+            -DHUNSPELL_LIBRARY=/mingw64/lib/libhunspell.dll.a \
+            -DUSE_HUNSPELL=ON \
+            -DUSE_KEYCHAIN=ON \
+            -DBUILD_TESTING=OFF \
+            -DENABLE_PLUGINS=OFF \
+            -DBUILD_PSIMEDIA=OFF \
+            -DONLY_BINARY=ON \
+            -DINSTALL_EXTRA_FILES=OFF \
+            2>&1 | tee configure.log
+
+          grep -F 'Chatlog type - QtWebKit' configure.log
+          grep -F 'QCA: selected system QCA 3' configure.log
+          grep -F 'Found UsrSCTP' configure.log
+          grep -Eq 'Found (PkgConfig::)?OmemoC|libomemo-c' configure.log
+          grep -Eq '^BUNDLED_IRIS:BOOL=ON$' build-msys2/CMakeCache.txt
+          grep -Eq '^IRIS_BUNDLED_QCA:BOOL=OFF$' build-msys2/CMakeCache.txt
+          grep -Eq '^IRIS_BUNDLED_USRSCTP:BOOL=OFF$' build-msys2/CMakeCache.txt
+          grep -Eq '^IRIS_BUNDLED_OMEMO_C:BOOL=OFF$' build-msys2/CMakeCache.txt
+
+      - name: Build Psi
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          cmake --build build-msys2 --parallel 2
+          test -f build-msys2/psi/psi.exe
+
+      - name: Upload Psi executable for inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: psi-qt5-webkit-mingw64
+          path: build-msys2/psi/psi.exe
+          if-no-files-found: error
+          retention-days: 14
+
+  publish-sdk:
+    name: Publish verified Windows SDK
+    if: github.event_name == 'workflow_dispatch' && inputs.publish_sdk
+    needs:
+      - sdk
+      - psi
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download verified SDK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: psi-windows-sdk-mingw64-qt5
+          path: release
+
+      - name: Create or update SDK release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SDK_TAG: ${{ inputs.sdk_tag }}
+        run: |
+          set -euo pipefail
+          archive="release/$SDK_ARCHIVE"
+          test -f "$archive"
+
+          if gh release view "$SDK_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$SDK_TAG" "$archive" \
+              --repo "$GITHUB_REPOSITORY" \
+              --clobber
+          else
+            gh release create "$SDK_TAG" "$archive" \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title "Psi Windows SDK (MSYS2 MINGW64 / Qt5)" \
+              --notes "QCA3 Qt5 SDK for the Psi Windows build. Combine this archive with the MSYS2 MINGW64 packages listed in SDK-MANIFEST.txt. The CI verifies that this environment builds Psi with bundled Iris, QtWebKit and OMEMO using the Windows 7 target baseline."
+          fi
