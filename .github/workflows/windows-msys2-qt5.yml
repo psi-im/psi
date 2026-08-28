@@ -216,10 +216,19 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - name: Fetch Psi and bundled Iris
+      - name: Fetch Psi history
         uses: actions/checkout@v5
         with:
-          submodules: recursive
+          fetch-depth: 0
+          filter: blob:none
+          submodules: false
+
+      - name: Fetch bundled sources shallowly
+        shell: bash
+        run: |
+          set -euo pipefail
+          git submodule sync --recursive
+          git submodule update --init --recursive --depth=1
 
       - name: Set up MSYS2 MINGW64
         uses: msys2/setup-msys2@v2
@@ -322,7 +331,7 @@ jobs:
           grep -Eq '^IRIS_BUNDLED_QCA:BOOL=OFF$' build-msys2/CMakeCache.txt
           grep -Eq '^IRIS_BUNDLED_USRSCTP:BOOL=OFF$' build-msys2/CMakeCache.txt
           grep -Eq '^IRIS_BUNDLED_OMEMO_C:BOOL=OFF$' build-msys2/CMakeCache.txt
-          grep -Eq '^Qt5Keychain_DIR:PATH=.*/sdk/lib/cmake/Qt5Keychain$' build-msys2/CMakeCache.txt
+          grep -Eq '^Qt5Keychain_DIR:[^=]+=.*/sdk/lib/cmake/Qt5Keychain$' build-msys2/CMakeCache.txt
 
       - name: Build Psi
         shell: msys2 {0}
