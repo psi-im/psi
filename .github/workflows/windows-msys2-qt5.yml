@@ -57,6 +57,7 @@ jobs:
             mingw-w64-x86_64-qt5-svg
             mingw-w64-x86_64-qt5-tools
             mingw-w64-x86_64-qtwebkit
+            mingw-w64-x86_64-qt5-winextras
             mingw-w64-x86_64-hunspell
             mingw-w64-x86_64-openssl
             mingw-w64-x86_64-usrsctp
@@ -189,6 +190,7 @@ jobs:
               mingw-w64-x86_64-qt5-svg \
               mingw-w64-x86_64-qt5-tools \
               mingw-w64-x86_64-qtwebkit \
+              mingw-w64-x86_64-qt5-winextras \
               mingw-w64-x86_64-hunspell \
               mingw-w64-x86_64-openssl \
               mingw-w64-x86_64-usrsctp \
@@ -236,6 +238,7 @@ jobs:
             mingw-w64-x86_64-qt5-svg
             mingw-w64-x86_64-qt5-tools
             mingw-w64-x86_64-qtwebkit
+            mingw-w64-x86_64-qt5-winextras
             mingw-w64-x86_64-hunspell
             mingw-w64-x86_64-openssl
             mingw-w64-x86_64-usrsctp
