@@ -29,11 +29,12 @@ concurrency:
 
 env:
   QCA_TAG: v3.0.1
+  QTKEYCHAIN_TAG: 0.17.0
   SDK_ARCHIVE: psi-windows-sdk-mingw64-qt5.zip
 
 jobs:
   sdk:
-    name: Build QCA3 Qt5 MinGW64 SDK
+    name: Build Qt5 dependency SDK
     runs-on: windows-2022
     timeout-minutes: 45
 
@@ -56,11 +57,11 @@ jobs:
             mingw-w64-x86_64-qt5-svg
             mingw-w64-x86_64-qt5-tools
             mingw-w64-x86_64-qtwebkit
-            mingw-w64-x86_64-qtkeychain
             mingw-w64-x86_64-hunspell
             mingw-w64-x86_64-openssl
             mingw-w64-x86_64-usrsctp
             mingw-w64-x86_64-libomemo-c
+            mingw-w64-x86_64-libotr
 
       - name: Verify explicit Windows 7 target baseline
         shell: msys2 {0}
@@ -103,7 +104,33 @@ jobs:
           test -n "$(find sdk/bin -type f -iname '*qca3-qt5*.dll' -print -quit)"
           test -n "$(find sdk -type f -iname '*qca-ossl*.dll' -print -quit)"
 
-      - name: Verify relocated QCA3 SDK consumer
+      - name: Build and install Qt5Keychain SDK
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch "$QTKEYCHAIN_TAG" https://github.com/frankosterfeld/qtkeychain.git qtkeychain
+
+          cmake -S qtkeychain -B qtkeychain-build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$PWD/sdk" \
+            -DCMAKE_PREFIX_PATH=/mingw64 \
+            -DCMAKE_CXX_FLAGS='-D_WIN32_WINNT=0x0601 -DWINVER=0x0601' \
+            -DBUILD_WITH_QT5=ON \
+            -DBUILD_SHARED_LIBS=ON \
+            -DBUILD_TESTING=OFF \
+            -DBUILD_TEST_APPLICATION=OFF \
+            -DBUILD_QTQUICK_DEMO=OFF \
+            -DBUILD_TRANSLATIONS=OFF
+
+          cmake --build qtkeychain-build --parallel 2
+          cmake --install qtkeychain-build
+
+          test -f sdk/lib/cmake/Qt5Keychain/Qt5KeychainConfig.cmake
+          test -f sdk/include/qt5keychain/keychain.h
+          test -n "$(find sdk/bin -type f -iname '*qt5keychain*.dll' -print -quit)"
+          test -n "$(find sdk/lib -type f -iname '*qt5keychain*.dll.a' -print -quit)"
+
+      - name: Verify relocated SDK consumers
         shell: msys2 {0}
         run: |
           set -euo pipefail
@@ -111,25 +138,31 @@ jobs:
           mkdir consumer
           cat > consumer/CMakeLists.txt <<'CMAKE'
           cmake_minimum_required(VERSION 3.16)
-          project(qca3_sdk_consumer LANGUAGES CXX)
+          project(psi_sdk_consumer LANGUAGES CXX)
           find_package(Qca3-qt5 CONFIG REQUIRED)
-          add_executable(qca3-sdk-consumer main.cpp)
-          target_link_libraries(qca3-sdk-consumer PRIVATE Qca3::Qca)
+          find_package(Qt5Keychain CONFIG REQUIRED)
+          add_executable(psi-sdk-consumer main.cpp)
+          target_link_libraries(psi-sdk-consumer PRIVATE Qca3::Qca ${QTKEYCHAIN_LIBRARIES})
           CMAKE
           cat > consumer/main.cpp <<'CPP'
           #include <QtCrypto>
+          #include <qt5keychain/keychain.h>
+
           int main()
           {
               QCA::Initializer init;
-              return 0;
+              QKeychain::ReadPasswordJob job(QStringLiteral("psi-sdk-test"));
+              return job.service().isEmpty() ? 1 : 0;
           }
           CPP
 
           cmake -S consumer -B consumer-build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
-            "-DQca3-qt5_DIR=$PWD/relocated-sdk/lib/cmake/Qca3-qt5"
+            "-DCMAKE_PREFIX_PATH=$PWD/relocated-sdk;/mingw64" \
+            "-DQca3-qt5_DIR=$PWD/relocated-sdk/lib/cmake/Qca3-qt5" \
+            "-DQt5Keychain_DIR=$PWD/relocated-sdk/lib/cmake/Qt5Keychain"
           cmake --build consumer-build --parallel 2
-          PATH="$PWD/relocated-sdk/bin:/mingw64/bin:$PATH" ./consumer-build/qca3-sdk-consumer.exe
+          PATH="$PWD/relocated-sdk/bin:/mingw64/bin:$PATH" ./consumer-build/psi-sdk-consumer.exe
           mv relocated-sdk sdk
 
       - name: Write SDK manifest and archive
@@ -142,9 +175,10 @@ jobs:
             echo 'Host/build environment: MSYS2 MINGW64'
             echo 'Target baseline: Windows 7 (_WIN32_WINNT=0x0601, WINVER=0x0601)'
             echo "QCA source: psi-im/qca $QCA_TAG"
-            echo 'SDK contents: QCA3 Qt5 development/runtime files not provided by MSYS2'
+            echo "QtKeychain source: frankosterfeld/qtkeychain $QTKEYCHAIN_TAG (Qt5)"
+            echo 'SDK contents: QCA3 Qt5 and Qt5Keychain development/runtime files not provided by current MSYS2 MINGW64 packages'
             echo
-            echo 'Required MSYS2 packages used by Psi/Iris:'
+            echo 'Required MSYS2 packages used by Psi/Iris and future plugin builds:'
             pacman -Q \
               mingw-w64-x86_64-gcc \
               mingw-w64-x86_64-cmake \
@@ -155,11 +189,11 @@ jobs:
               mingw-w64-x86_64-qt5-svg \
               mingw-w64-x86_64-qt5-tools \
               mingw-w64-x86_64-qtwebkit \
-              mingw-w64-x86_64-qtkeychain \
               mingw-w64-x86_64-hunspell \
               mingw-w64-x86_64-openssl \
               mingw-w64-x86_64-usrsctp \
-              mingw-w64-x86_64-libomemo-c
+              mingw-w64-x86_64-libomemo-c \
+              mingw-w64-x86_64-libotr
           } > sdk/SDK-MANIFEST.txt
 
           (cd sdk && zip -9 -r "../$SDK_ARCHIVE" .)
@@ -202,13 +236,13 @@ jobs:
             mingw-w64-x86_64-qt5-svg
             mingw-w64-x86_64-qt5-tools
             mingw-w64-x86_64-qtwebkit
-            mingw-w64-x86_64-qtkeychain
             mingw-w64-x86_64-hunspell
             mingw-w64-x86_64-openssl
             mingw-w64-x86_64-usrsctp
             mingw-w64-x86_64-libomemo-c
+            mingw-w64-x86_64-libotr
 
-      - name: Download QCA3 SDK
+      - name: Download dependency SDK
         uses: actions/download-artifact@v4
         with:
           name: psi-windows-sdk-mingw64-qt5
@@ -221,6 +255,7 @@ jobs:
           mkdir sdk
           unzip -q "sdk-artifact/$SDK_ARCHIVE" -d sdk
           test -f sdk/lib/cmake/Qca3-qt5/Qca3-qt5Config.cmake
+          test -f sdk/lib/cmake/Qt5Keychain/Qt5KeychainConfig.cmake
 
       - name: Verify explicit Windows 7 target baseline
         shell: msys2 {0}
@@ -249,6 +284,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             "-DCMAKE_PREFIX_PATH=$PWD/sdk;/mingw64" \
             "-DQca3-qt5_DIR=$PWD/sdk/lib/cmake/Qca3-qt5" \
+            "-DQt5Keychain_DIR=$PWD/sdk/lib/cmake/Qt5Keychain" \
             -DCMAKE_C_FLAGS='-D_WIN32_WINNT=0x0601 -DWINVER=0x0601' \
             -DCMAKE_CXX_FLAGS='-D_WIN32_WINNT=0x0601 -DWINVER=0x0601' \
             -DQT_DEFAULT_MAJOR_VERSION=5 \
@@ -283,6 +319,7 @@ jobs:
           grep -Eq '^IRIS_BUNDLED_QCA:BOOL=OFF$' build-msys2/CMakeCache.txt
           grep -Eq '^IRIS_BUNDLED_USRSCTP:BOOL=OFF$' build-msys2/CMakeCache.txt
           grep -Eq '^IRIS_BUNDLED_OMEMO_C:BOOL=OFF$' build-msys2/CMakeCache.txt
+          grep -Eq '^Qt5Keychain_DIR:PATH=.*/sdk/lib/cmake/Qt5Keychain$' build-msys2/CMakeCache.txt
 
       - name: Build Psi
         shell: msys2 {0}
@@ -334,5 +371,5 @@ jobs:
               --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
               --title "Psi Windows SDK (MSYS2 MINGW64 / Qt5)" \
-              --notes "QCA3 Qt5 SDK for the Psi Windows build. Combine this archive with the MSYS2 MINGW64 packages listed in SDK-MANIFEST.txt. The CI verifies that this environment builds Psi with bundled Iris, QtWebKit and OMEMO using the Windows 7 target baseline."
+              --notes "Qt5 dependency SDK for the Psi Windows build. Combine this archive with the MSYS2 MINGW64 packages listed in SDK-MANIFEST.txt. The CI verifies that this environment builds Psi with bundled Iris, QtWebKit and OMEMO using the Windows 7 target baseline."
           fi
