@@ -100,6 +100,20 @@ def copy_runtime_data(source_root: Path, root: Path) -> None:
         shutil.copytree(myspell, target)
 
 
+def prune_unused_qt_plugins(root: Path) -> None:
+    # windeployqt deploys every Qt SQL driver when QtSql is linked, but Psi uses
+    # only SQLite.  Keeping the other plugins would pull Firebird, MariaDB and
+    # PostgreSQL client runtimes into an otherwise self-contained Psi package.
+    sqldrivers = root / "qtplugins" / "sqldrivers"
+    qsqlite = sqldrivers / "qsqlite.dll"
+    if not qsqlite.is_file():
+        raise SystemExit(f"Required Qt SQLite plugin is missing: {qsqlite}")
+
+    for plugin in sqldrivers.glob("*.dll"):
+        if plugin.name.lower() != "qsqlite.dll":
+            plugin.unlink()
+
+
 def collect_pe_files(root: Path) -> list[Path]:
     return sorted(
         (
@@ -175,6 +189,7 @@ def main() -> int:
         check=True,
     )
 
+    prune_unused_qt_plugins(root)
     shutil.copy2(qt_conf, root / "qt.conf")
     copy_runtime_data(source_root, root)
     copy_sdk_runtime(sdk, root)
