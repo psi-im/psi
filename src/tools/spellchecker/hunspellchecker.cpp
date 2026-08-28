@@ -176,7 +176,7 @@ QList<QString> HunspellChecker::suggestions(const QString &word)
             }
         }
     }
-    return std::move(qtResult);
+    return qtResult;
 }
 
 bool HunspellChecker::isCorrect(const QString &word)

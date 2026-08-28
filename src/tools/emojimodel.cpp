@@ -264,7 +264,8 @@ QModelIndex EmojiModel::index(int row, int column, const QModelIndex &parent) co
         auto const &groups = EmojiRegistry::instance().groups;
         quintptr    rowx   = row;
         if (rowx < groups.size()) {
-            return createIndex(row, column, (rowx << 24) | 0x00ffffff + 1); // 0x00ffffff - refers group itself
+            return createIndex(row, column,
+                               ((rowx << 24) | 0x00ffffff) + 1); // 0x00ffffff - refers group itself
         }
     }
     return QModelIndex();

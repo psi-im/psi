@@ -188,8 +188,10 @@ if(ENABLE_PLUGINS AND (NOT EXISTS "${PROJECT_SOURCE_DIR}/plugins/CMakeLists.txt"
     message(FATAL_ERROR "ENABLE_PLUGINS option is enabled but no plugins sources found at ${PROJECT_SOURCE_DIR}/plugins.\nPlease download and copy plguins sources from official repository or disable this option")
 endif()
 
-
-if(WIN32 OR USE_MXE)
+# MSVC and MXE keep their historical self-contained Iris dependency behavior.
+# Native MinGW can use system QCA/usrsctp/libomemo-c and should respect the
+# explicit BUNDLED_IRIS_ALL setting instead of forcing it back on.
+if(MSVC OR USE_MXE)
     set(BUNDLED_IRIS_ALL ON)
 endif()
 
