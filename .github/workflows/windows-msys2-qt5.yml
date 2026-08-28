@@ -233,7 +233,7 @@ jobs:
         shell: msys2 {0}
         run: |
           set -euo pipefail
-          cmake --build build-msys2 --parallel 2
+          cmake --build build-msys2 --parallel 4
           test -f build-msys2/psi/psi.exe
 
       - name: Upload Psi executable for inspection
