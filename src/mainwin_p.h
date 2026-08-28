@@ -35,6 +35,8 @@ class QMenu;
 class SeparatorAction : public IconAction {
     Q_OBJECT
 public:
+    using IconAction::operator=;
+
     SeparatorAction(QObject *parent, const char *name = nullptr);
     ~SeparatorAction();
 
@@ -46,6 +48,8 @@ public:
 class SpacerAction : public IconAction {
     Q_OBJECT
 public:
+    using IconAction::operator=;
+
     SpacerAction(QObject *parent, const char *name = nullptr);
     ~SpacerAction();
 
@@ -67,6 +71,8 @@ public slots:
     void setEnabled(bool);
 
 public:
+    using IconAction::operator=;
+
     PopupAction(const QString &label, QMenu *_menu, QObject *parent, const char *name);
     void setSizePolicy(const QSizePolicy &p);
     void setAlert(const PsiIcon *);
@@ -82,6 +88,8 @@ class MAction : public IconActionGroup {
     Q_OBJECT
 
 public:
+    using IconActionGroup::operator=;
+
     MAction(PsiIcon, const QString &, int id, PsiCon *, QObject *parent);
     MAction(const QString &, int id, PsiCon *, QObject *parent);
 

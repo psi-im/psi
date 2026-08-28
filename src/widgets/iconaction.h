@@ -94,6 +94,8 @@ private:
 class IconActionGroup : public IconAction {
     Q_OBJECT
 public:
+    using IconAction::operator=;
+
     IconActionGroup(QObject *parent, const char *name = nullptr, bool exclusive = false);
     ~IconActionGroup();
 

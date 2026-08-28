@@ -217,7 +217,7 @@ int ContactManagerModel::columnCount(const QModelIndex &parent) const
 QVariant ContactManagerModel::data(const QModelIndex &index, int role) const
 {
     Role columnRole = d->roles[index.column()];
-    if (index.row() < d->userList.size()) {
+    if (index.row() >= 0 && index.row() < int(d->userList.size())) {
         auto u = d->userList.at(index.row());
         switch (role) {
         case Qt::DisplayRole:

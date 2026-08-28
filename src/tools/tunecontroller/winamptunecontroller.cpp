@@ -22,13 +22,19 @@
 #ifdef Q_CC_MSVC
 #pragma warning(push)
 #pragma warning(disable : 4100)
+#elif defined(Q_CC_GNU)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
 
-// this file generates eight C4100 warnings, when compiled with MSVC2003
+// The third-party WinAmp IPC header contains callback helpers with intentionally
+// unused parameters. Keep those warnings local to the vendored header.
 #include "plugins/winamp/third-party/wa_ipc.h"
 
 #ifdef Q_CC_MSVC
 #pragma warning(pop)
+#elif defined(Q_CC_GNU)
+#pragma GCC diagnostic pop
 #endif
 
 #include <QString>
