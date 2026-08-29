@@ -1,0 +1,167 @@
+name: Windows MSVC Qt6 profile
+
+on:
+  workflow_call:
+    inputs:
+      sdk_tag:
+        description: Dependency SDK release tag
+        required: false
+        default: windows-sdk-msvc-qt6-v1
+        type: string
+      sdk_archive:
+        description: Dependency SDK release asset
+        required: false
+        default: psi-windows-sdk-msvc-qt6.zip
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  QT_SERIES: "6.11.*"
+  AQT_WINDOWS_QT611_SOURCE: "git+https://github.com/miurahr/aqtinstall.git@refs/pull/1000/head"
+
+jobs:
+  build:
+    name: modern MSVC Qt6 x64
+    runs-on: windows-2022
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Fetch Psi history
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          filter: blob:none
+          submodules: false
+
+      - name: Fetch bundled sources shallowly
+        shell: bash
+        run: |
+          set -euo pipefail
+          git submodule sync --recursive
+          git submodule update --init --recursive --depth=1
+
+      - name: Restore compiler cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .ccache
+          key: windows-msvc-qt6-ccache-${{ github.sha }}
+          restore-keys: |
+            windows-msvc-qt6-ccache-
+
+      - name: Install Qt 6.11 + WebEngine
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_SERIES }}
+          arch: win64_msvc2022_64
+          modules: qtmultimedia qtwebchannel qtpositioning qtwebengine qtimageformats
+          aqtsource: ${{ env.AQT_WINDOWS_QT611_SOURCE }}
+          cache: true
+
+      - name: Set up MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Verify Windows 10 compile baseline
+        run: |
+          @'
+          #include <windows.h>
+          #if _WIN32_WINNT != 0x0A00
+          #error _WIN32_WINNT baseline mismatch
+          #endif
+          #if WINVER != 0x0A00
+          #error WINVER baseline mismatch
+          #endif
+          int main() { return 0; }
+          '@ | Set-Content winver-check.cpp -Encoding ascii
+
+          cl.exe /nologo /c /D_WIN32_WINNT=0x0A00 /DWINVER=0x0A00 winver-check.cpp
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Install packaging tools
+        run: |
+          choco install ccache ninja nsis --no-progress -y
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          "${env:ProgramFiles(x86)}\NSIS" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Download dependency SDK
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SDK_TAG: ${{ inputs.sdk_tag }}
+          SDK_ARCHIVE: ${{ inputs.sdk_archive }}
+        run: |
+          New-Item -ItemType Directory -Force sdk-artifact | Out-Null
+          gh release download $env:SDK_TAG `
+            --repo $env:GITHUB_REPOSITORY `
+            --pattern $env:SDK_ARCHIVE `
+            --dir sdk-artifact
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (-not (Test-Path "sdk-artifact\$env:SDK_ARCHIVE")) {
+            throw "SDK asset is missing: $env:SDK_TAG/$env:SDK_ARCHIVE"
+          }
+
+      - name: Extract SDK
+        env:
+          SDK_ARCHIVE: ${{ inputs.sdk_archive }}
+        run: |
+          New-Item -ItemType Directory -Force sdk | Out-Null
+          Expand-Archive "sdk-artifact\$env:SDK_ARCHIVE" sdk -Force
+          if (-not (Test-Path sdk\SDK-MANIFEST.txt)) {
+            throw 'SDK manifest missing'
+          }
+          if (-not (Test-Path sdk\lib\cmake\Qt6Keychain\Qt6KeychainConfig.cmake)) {
+            throw 'Qt6Keychain package missing from SDK'
+          }
+
+      - name: Build and package modern profile
+        run: |
+          New-Item -ItemType Directory -Force artifacts | Out-Null
+          try {
+            & packaging\windows\build_profile_msvc.ps1 `
+              -SdkDir "$pwd\sdk" `
+              -OutputDir "$pwd\artifacts" 2>&1 |
+              Tee-Object -FilePath artifacts\build-modern.log
+          } catch {
+            $_ | Out-String | Tee-Object -FilePath artifacts\status-modern.txt
+            throw
+          }
+
+      - name: Show compiler cache statistics
+        run: |
+          ccache --show-stats
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Upload release packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: psi-windows-modern-x64
+          path: |
+            artifacts/*.zip
+            artifacts/*-setup.exe
+            artifacts/dependencies-*.txt
+            artifacts/version-*.txt
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload packaging diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: psi-windows-modern-diagnostics
+          path: |
+            artifacts/*.log
+            artifacts/*.txt
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Save compiler cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .ccache
+          key: windows-msvc-qt6-ccache-${{ github.sha }}
