@@ -1,0 +1,3 @@
+This branch anchors GitHub release tags for Windows dependency SDKs.
+
+SDK release tags must stay off the application history so git describe on master and historical development branches continues to resolve only Psi release tags.
