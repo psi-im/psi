@@ -45,6 +45,14 @@ jobs:
           git submodule sync --recursive
           git submodule update --init --recursive --depth=1
 
+      - name: Restore compiler cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .ccache
+          key: windows-msvc-qt6-ccache-${{ github.sha }}
+          restore-keys: |
+            windows-msvc-qt6-ccache-
+
       - name: Install Qt 6.11 + WebEngine
         uses: jurplel/install-qt-action@v4
         with:
@@ -77,7 +85,7 @@ jobs:
 
       - name: Install packaging tools
         run: |
-          choco install ninja nsis --no-progress -y
+          choco install ccache ninja nsis --no-progress -y
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           "${env:ProgramFiles(x86)}\NSIS" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
@@ -123,6 +131,11 @@ jobs:
             throw
           }
 
+      - name: Show compiler cache statistics
+        run: |
+          ccache --show-stats
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Upload release packages
         uses: actions/upload-artifact@v4
         with:
@@ -145,3 +158,10 @@ jobs:
             artifacts/*.txt
           if-no-files-found: warn
           retention-days: 14
+
+      - name: Save compiler cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .ccache
+          key: windows-msvc-qt6-ccache-${{ github.sha }}

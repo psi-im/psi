@@ -29,6 +29,13 @@ $sdkDir = (Resolve-Path $SdkDir).Path
 New-Item -ItemType Directory -Force $OutputDir | Out-Null
 $outputDir = (Resolve-Path $OutputDir).Path
 
+$ccache = (Get-Command ccache.exe -ErrorAction Stop).Source
+$ccacheDir = Join-Path $sourceDir '.ccache'
+New-Item -ItemType Directory -Force $ccacheDir | Out-Null
+$env:CCACHE_DIR = $ccacheDir
+Invoke-Checked $ccache --max-size=1G
+Invoke-Checked $ccache --zero-stats
+
 $buildDir = Join-Path $sourceDir 'build-msvc-modern'
 $stageDir = Join-Path $sourceDir 'package-msvc-modern'
 $l10nDir = Join-Path $sourceDir '.packaging-psi-l10n-msvc-modern'
@@ -64,6 +71,9 @@ $configureArgs = @(
     '-DQT_DEFAULT_MAJOR_VERSION=6',
     '-DUSE_QT6=ON',
     '-DUSE_MXE=OFF',
+    '-DUSE_CCACHE=OFF',
+    '-DCMAKE_C_COMPILER_LAUNCHER=ccache',
+    '-DCMAKE_CXX_COMPILER_LAUNCHER=ccache',
     '-DCHAT_TYPE=WEBENGINE',
     '-DBUNDLED_IRIS=ON',
     '-DBUNDLED_IRIS_ALL=ON',
@@ -125,7 +135,7 @@ Invoke-Checked python packaging/windows/prepare_package_msvc.py `
     --qt-conf (Join-Path $sourceDir 'win32\qt.conf') `
     --report $report
 
-$baseTag = (git describe --tags --abbrev=0 --exclude 'windows-sdk-*').Trim()
+$baseTag = (git describe --tags --abbrev=0).Trim()
 if (-not $baseTag) {
     throw 'Could not determine the base Psi version tag'
 }
