@@ -293,7 +293,7 @@ jobs:
           else
             gh release create "$SDK_TAG" "$archive" \
               --repo "$GITHUB_REPOSITORY" \
-              --target master \
+              --target infra/windows-sdk-releases \
               --title "Psi Windows SDK (MSVC 2022 / Qt6)" \
               --notes "Development/runtime SDK for the modern Windows build. Qt itself is installed from the official Qt binary repository; this SDK contains OpenSSL, zlib, Hunspell, minizip and static Qt6Keychain."
           fi
