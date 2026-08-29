@@ -1,0 +1,199 @@
+name: Windows MSYS2 Qt5 profile
+
+on:
+  workflow_call:
+    inputs:
+      profile:
+        description: modern or legacy-win7
+        required: true
+        type: string
+      allow_failure:
+        description: Keep the workflow green if this compatibility profile fails
+        required: false
+        default: false
+        type: boolean
+      sdk_tag:
+        description: Dependency SDK release tag
+        required: false
+        default: windows-sdk-msys2-qt5-v1
+        type: string
+      sdk_archive:
+        description: Dependency SDK release asset
+        required: false
+        default: psi-windows-sdk-msys2-qt5.zip
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ inputs.profile }} x64
+    runs-on: windows-2022
+    timeout-minutes: 75
+
+    steps:
+      - name: Validate profile
+        shell: bash
+        env:
+          PROFILE: ${{ inputs.profile }}
+        run: |
+          set -euo pipefail
+          case "$PROFILE" in
+            modern|legacy-win7) ;;
+            *) echo "Unsupported Windows profile: $PROFILE" >&2; exit 2 ;;
+          esac
+
+      - name: Fetch Psi history
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          filter: blob:none
+          submodules: false
+
+      - name: Fetch bundled sources shallowly
+        shell: bash
+        run: |
+          set -euo pipefail
+          git submodule sync --recursive
+          git submodule update --init --recursive --depth=1
+
+      - name: Restore compiler cache
+        id: ccache-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: .ccache
+          key: windows-msys2-qt5-${{ inputs.profile }}-ccache-${{ github.sha }}
+          restore-keys: |
+            windows-msys2-qt5-${{ inputs.profile }}-ccache-
+
+      - name: Set up MSYS2 MINGW64
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            curl
+            git
+            unzip
+            zip
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-ccache
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-nsis
+            mingw-w64-x86_64-pkgconf
+            mingw-w64-x86_64-python
+            mingw-w64-x86_64-qt5-base
+            mingw-w64-x86_64-qt5-multimedia
+            mingw-w64-x86_64-qt5-svg
+            mingw-w64-x86_64-qt5-tools
+            mingw-w64-x86_64-qtwebkit
+            mingw-w64-x86_64-qt5-winextras
+            mingw-w64-x86_64-hunspell
+            mingw-w64-x86_64-minizip
+            mingw-w64-x86_64-openssl
+            mingw-w64-x86_64-usrsctp
+            mingw-w64-x86_64-libomemo-c
+            mingw-w64-x86_64-libotr
+
+      - name: Download dependency SDK release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SDK_TAG: ${{ inputs.sdk_tag }}
+          SDK_ARCHIVE: ${{ inputs.sdk_archive }}
+        run: |
+          set -euo pipefail
+          mkdir -p sdk-artifact
+          gh release download "$SDK_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern "$SDK_ARCHIVE" \
+            --dir sdk-artifact
+          test -f "sdk-artifact/$SDK_ARCHIVE"
+
+      - name: Extract SDK
+        shell: msys2 {0}
+        env:
+          SDK_ARCHIVE: ${{ inputs.sdk_archive }}
+        run: |
+          set -euo pipefail
+          mkdir sdk
+          unzip -q "sdk-artifact/$SDK_ARCHIVE" -d sdk
+          test -f sdk/lib/cmake/Qca3-qt5/Qca3-qt5Config.cmake
+          test -f sdk/lib/cmake/Qt5Keychain/Qt5KeychainConfig.cmake
+
+      - name: Verify compiler profile baseline
+        shell: msys2 {0}
+        env:
+          PROFILE: ${{ inputs.profile }}
+        run: |
+          set -euo pipefail
+          if [[ "$PROFILE" == legacy-win7 ]]; then
+            winver=0x0601
+          else
+            winver=0x0A00
+          fi
+          macros=$(printf '#include <windows.h>\n' | \
+            gcc "-D_WIN32_WINNT=$winver" "-DWINVER=$winver" -dM -E -x c -)
+          grep -Eq "^#define _WIN32_WINNT $winver([[:space:]]|$)" <<< "$macros"
+          grep -Eq "^#define WINVER $winver([[:space:]]|$)" <<< "$macros"
+
+      - name: Build and package profile
+        id: package
+        shell: msys2 {0}
+        env:
+          PROFILE: ${{ inputs.profile }}
+          ALLOW_FAILURE: ${{ inputs.allow_failure }}
+        run: |
+          set -uo pipefail
+          mkdir -p artifacts
+          set +e
+          bash packaging/windows/build_profile.sh "$PROFILE" "$PWD/sdk" "$PWD/artifacts" \
+            2>&1 | tee "artifacts/build-$PROFILE.log"
+          status=${PIPESTATUS[0]}
+          set -e
+
+          if [[ $status -eq 0 ]]; then
+            echo 'success=true' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo 'success=false' >> "$GITHUB_OUTPUT"
+          echo "Profile $PROFILE failed with exit code $status" | tee "artifacts/status-$PROFILE.txt"
+          if [[ "$ALLOW_FAILURE" == true ]]; then
+            echo "Legacy compatibility failure is non-blocking by policy."
+            exit 0
+          fi
+          exit "$status"
+
+      - name: Upload release packages
+        if: steps.package.outputs.success == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: psi-windows-${{ inputs.profile }}-x64
+          path: |
+            artifacts/*.zip
+            artifacts/*-setup.exe
+            artifacts/dependencies-*.txt
+            artifacts/version-*.txt
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload packaging diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: psi-windows-${{ inputs.profile }}-diagnostics
+          path: |
+            artifacts/*.log
+            artifacts/*.txt
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Save compiler cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .ccache
+          key: windows-msys2-qt5-${{ inputs.profile }}-ccache-${{ github.sha }}

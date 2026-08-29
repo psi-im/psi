@@ -54,9 +54,7 @@ find_path(
     ${PC_MINIZIP_INCLUDE_DIRS}
     PATH_SUFFIXES
     ""
-    if ( NOT WIN32 )
     minizip
-    endif()
 )
 
 find_library(
