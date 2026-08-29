@@ -183,33 +183,6 @@ Invoke-Checked python packaging/windows/generate_nsis_manifest.py `
     --root $stageDir `
     --output $manifest
 
-$needsVcRedist = $false
-$lines = Get-Content $report
-$start = [Array]::IndexOf($lines, 'MSVC runtime imports:')
-if ($start -lt 0) {
-    throw 'Dependency report has no MSVC runtime section'
-}
-for ($i = $start + 1; $i -lt $lines.Count -and $lines[$i].Trim(); ++$i) {
-    if ($lines[$i].Trim() -ne 'none') {
-        $needsVcRedist = $true
-        break
-    }
-}
-
-$nsisRedistArg = $null
-if ($needsVcRedist) {
-    $redist = Join-Path $outputDir 'vc_redist-modern.x64.exe'
-    Invoke-WebRequest `
-        -Uri 'https://aka.ms/vc14/vc_redist.x64.exe' `
-        -OutFile $redist `
-        -MaximumRetryCount 3 `
-        -RetryIntervalSec 3
-    if (-not (Test-Path $redist) -or (Get-Item $redist).Length -eq 0) {
-        throw 'Microsoft Visual C++ Redistributable download failed'
-    }
-    $nsisRedistArg = "-DVC_REDIST=$redist"
-}
-
 Remove-Item $zipFile, $setupFile -Force -ErrorAction SilentlyContinue
 Push-Location $stageDir
 try {
@@ -220,11 +193,7 @@ try {
 Invoke-Checked cmake '-E' tar tf $zipFile
 
 $makensis = (Get-Command makensis.exe -ErrorAction Stop).Source
-$nsisArgs = @()
-if ($nsisRedistArg) {
-    $nsisArgs += $nsisRedistArg
-}
-$nsisArgs += @(
+$nsisArgs = @(
     "-DAPP_VERSION=$appVersion",
     "-DAPP_VERSION_NUMERIC=$numericVersion",
     "-DSOURCE_DIR=$stageDir",
