@@ -441,6 +441,7 @@ if(WIN32)
         gpg.exe
         libcrypto-1_1-x64.dll
         libcrypto-3-x64.dll
+        libcrypto-4.dll
         libcrypto-4-x64.dll
         libcrypto-1_1.dll
         libcrypto-3.dll
@@ -457,6 +458,7 @@ if(WIN32)
         libomemo-c.dll
         libssl-1_1-x64.dll
         libssl-3-x64.dll
+        libssl-4.dll
         libssl-4-x64.dll
         libssl-1_1.dll
         libssl-3.dll
