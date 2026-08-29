@@ -441,6 +441,7 @@ if(WIN32)
         gpg.exe
         libcrypto-1_1-x64.dll
         libcrypto-3-x64.dll
+        libcrypto-4-x64.dll
         libcrypto-1_1.dll
         libcrypto-3.dll
         libeay32.dll
@@ -456,6 +457,7 @@ if(WIN32)
         libomemo-c.dll
         libssl-1_1-x64.dll
         libssl-3-x64.dll
+        libssl-4-x64.dll
         libssl-1_1.dll
         libssl-3.dll
         libstdc++-6.dll
@@ -496,6 +498,7 @@ if(WIN32)
             libjasper-1.dll
             libjasper.dll
             libjpeg-9.dll
+            libjpeg-10.dll
             liblcms2-2.dll
             liblzma-5.dll
             liblzo2-2.dll
