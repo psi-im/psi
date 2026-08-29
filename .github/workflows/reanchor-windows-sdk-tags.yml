@@ -1,0 +1,25 @@
+name: Re-anchor Windows SDK release tags
+
+on:
+  push:
+    branches:
+      - infra/windows-sdk-releases
+
+permissions:
+  contents: write
+
+jobs:
+  reanchor:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Move SDK tags off application history
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for tag in windows-sdk-msys2-qt5-v1 windows-sdk-msvc-qt6-v1; do
+            gh api --method PATCH \
+              "repos/$GITHUB_REPOSITORY/git/refs/tags/$tag" \
+              -f sha="$GITHUB_SHA" \
+              -F force=true
+          done
