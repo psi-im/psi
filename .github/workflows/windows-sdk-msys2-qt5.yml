@@ -277,7 +277,7 @@ jobs:
           else
             gh release create "$SDK_TAG" "$archive" \
               --repo "$GITHUB_REPOSITORY" \
-              --target master \
+              --target infra/windows-sdk-releases \
               --title "Psi Windows SDK (MSYS2 MINGW64 / Qt5)" \
               --notes "Development/runtime SDK for dependencies not supplied as suitable Qt5 packages by MSYS2. Combine this archive with the MSYS2 packages listed in SDK-MANIFEST.txt."
           fi
