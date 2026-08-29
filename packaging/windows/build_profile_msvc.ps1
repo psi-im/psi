@@ -213,11 +213,11 @@ if ($needsVcRedist) {
 Remove-Item $zipFile, $setupFile -Force -ErrorAction SilentlyContinue
 Push-Location $stageDir
 try {
-    Invoke-Checked cmake -E tar cf $zipFile --format=zip .
+    Invoke-Checked cmake '-E' tar cf $zipFile --format=zip .
 } finally {
     Pop-Location
 }
-Invoke-Checked cmake -E tar tf $zipFile
+Invoke-Checked cmake '-E' tar tf $zipFile
 
 $makensis = (Get-Command makensis.exe -ErrorAction Stop).Source
 $nsisArgs = @()
