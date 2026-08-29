@@ -166,13 +166,16 @@ def main() -> int:
     translations.mkdir(parents=True, exist_ok=True)
 
     # Official Qt/MSVC deployment is authoritative for Qt, WebEngine,
-    # QtWebEngineProcess, resources/locales and the app-local compiler runtime.
+    # QtWebEngineProcess and resources/locales. Compiler runtime deployment is
+    # disabled here because the dependency closure below handles app-local DLLs
+    # explicitly and the NSIS path can install the official VC redistributable.
     subprocess.run(
         [
             str(windeployqt),
             "--release",
             "--verbose",
             "2",
+            "--no-compiler-runtime",
             "--dir",
             str(root),
             "--libdir",
