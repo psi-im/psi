@@ -1,25 +1,28 @@
-name: Windows legacy MSYS2 Qt5 CI
+name: Windows modern MSVC Qt6 CI
 
 on:
   push:
     branches:
       - master
+  pull_request:
+    branches:
+      - '*'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: windows-legacy-msys2-qt5-${{ github.ref }}
+  group: windows-modern-msvc-qt6-${{ github.ref }}
   cancel-in-progress: true
 
 env:
-  SDK_TAG: windows-sdk-msys2-qt5-v1
-  SDK_ARCHIVE: psi-windows-sdk-msys2-qt5.zip
+  SDK_TAG: windows-sdk-msvc-qt6-v1
+  SDK_ARCHIVE: psi-windows-sdk-msvc-qt6.zip
 
 jobs:
   check-sdk:
-    name: Check legacy dependency SDK
+    name: Check modern dependency SDK
     runs-on: ubuntu-24.04
     outputs:
       exists: ${{ steps.check.outputs.exists }}
@@ -45,18 +48,18 @@ jobs:
           fi
 
   build-sdk:
-    name: Build missing legacy dependency SDK
+    name: Build missing modern dependency SDK
     needs: check-sdk
     if: needs.check-sdk.outputs.exists != 'true'
     permissions:
       contents: write
-    uses: ./.github/workflows/windows-sdk-msys2-qt5.yml
+    uses: ./.github/workflows/windows-sdk-msvc-qt6.yml
     with:
-      sdk_tag: windows-sdk-msys2-qt5-v1
+      sdk_tag: windows-sdk-msvc-qt6-v1
       force_rebuild: false
 
-  legacy-win7:
-    name: Build legacy Windows 7 x64 package
+  modern:
+    name: Build modern Windows 10/11 x64 package
     needs:
       - check-sdk
       - build-sdk
@@ -66,9 +69,7 @@ jobs:
       (needs.check-sdk.outputs.exists == 'true' || needs.build-sdk.result == 'success')
     permissions:
       contents: read
-    uses: ./.github/workflows/windows-msys2-qt5-profile.yml
+    uses: ./.github/workflows/windows-msvc-qt6-profile.yml
     with:
-      profile: legacy-win7
-      allow_failure: true
-      sdk_tag: windows-sdk-msys2-qt5-v1
-      sdk_archive: psi-windows-sdk-msys2-qt5.zip
+      sdk_tag: windows-sdk-msvc-qt6-v1
+      sdk_archive: psi-windows-sdk-msvc-qt6.zip

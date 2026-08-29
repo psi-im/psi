@@ -53,9 +53,10 @@ endfunction()
 
 function(obtain_git_version GIT_VERSION GIT_FULL_VERSION)
     if(EXISTS "${PROJECT_SOURCE_DIR}/\.git" AND (NOT IS_SNAPSHOT))
-        # Infrastructure tags (for example Windows SDK releases) must not
-        # become the Psi application version.
-        run_git(MAIN_VER describe --tags --abbrev=0 --exclude "windows-sdk-*")
+        # Only application/release tags are valid version anchors. Infrastructure
+        # tags (Windows SDKs, nightly plumbing, etc.) must never become Psi's
+        # version or the base of its revision count.
+        run_git(MAIN_VER describe --tags --abbrev=0 --match "[0-9]*")
         if(MAIN_VER)
             set(APP_VERSION "${MAIN_VER}" PARENT_SCOPE)
             set(${GIT_VERSION} ${MAIN_VER} PARENT_SCOPE)

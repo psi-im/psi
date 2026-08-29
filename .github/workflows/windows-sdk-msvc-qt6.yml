@@ -1,0 +1,299 @@
+name: Windows SDK MSVC Qt6
+
+on:
+  workflow_dispatch:
+    inputs:
+      sdk_tag:
+        description: SDK release tag
+        required: false
+        default: windows-sdk-msvc-qt6-v1
+        type: string
+      force_rebuild:
+        description: Rebuild and replace the SDK asset even if it already exists
+        required: false
+        default: false
+        type: boolean
+  workflow_call:
+    inputs:
+      sdk_tag:
+        description: SDK release tag
+        required: false
+        default: windows-sdk-msvc-qt6-v1
+        type: string
+      force_rebuild:
+        description: Rebuild and replace the SDK asset even if it already exists
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: windows-sdk-msvc-qt6-${{ inputs.sdk_tag }}
+  cancel-in-progress: false
+
+env:
+  QT_SERIES: "6.11.*"
+  QTKEYCHAIN_TAG: "0.17.0"
+  SDK_ARCHIVE: psi-windows-sdk-msvc-qt6.zip
+  AQT_WINDOWS_QT611_SOURCE: "git+https://github.com/miurahr/aqtinstall.git@refs/pull/1000/head"
+
+jobs:
+  check:
+    name: Check SDK release
+    runs-on: ubuntu-24.04
+    outputs:
+      need_build: ${{ steps.check.outputs.need_build }}
+
+    steps:
+      - name: Check release asset
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SDK_TAG: ${{ inputs.sdk_tag }}
+          FORCE_REBUILD: ${{ inputs.force_rebuild }}
+        run: |
+          set -euo pipefail
+          if [[ "$FORCE_REBUILD" == "true" ]]; then
+            echo "need_build=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          assets="$(gh release view "$SDK_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --json assets \
+            --jq '.assets[].name' 2>/dev/null || true)"
+
+          if grep -Fxq "$SDK_ARCHIVE" <<< "$assets"; then
+            echo "SDK $SDK_TAG/$SDK_ARCHIVE already exists"
+            echo "need_build=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "SDK $SDK_TAG/$SDK_ARCHIVE is missing"
+            echo "need_build=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    name: Build MSVC Qt6 dependency SDK
+    needs: check
+    if: needs.check.outputs.need_build == 'true'
+    runs-on: windows-2022
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Install Qt 6.11
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_SERIES }}
+          arch: win64_msvc2022_64
+          aqtsource: ${{ env.AQT_WINDOWS_QT611_SOURCE }}
+          cache: true
+
+      - name: Set up MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Resolve vcpkg cache key
+        id: vcpkg-key
+        run: |
+          $revision = (git -C $env:VCPKG_INSTALLATION_ROOT rev-parse HEAD).Trim()
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsPath = (& $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath).Trim()
+          $toolset = (Get-Content (Join-Path $vsPath 'VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt') -Raw).Trim()
+          "vcpkg=$revision" >> $env:GITHUB_OUTPUT
+          "msvc=$toolset" >> $env:GITHUB_OUTPUT
+
+      - name: Restore vcpkg binary cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/vcpkg-binary-cache
+          key: psi-msvc-qt6-sdk-vcpkg-${{ steps.vcpkg-key.outputs.vcpkg }}-${{ steps.vcpkg-key.outputs.msvc }}-x64-windows-v1
+
+      - name: Install native dependency packages
+        run: |
+          $cache = Join-Path $env:RUNNER_TEMP 'vcpkg-binary-cache'
+          New-Item -ItemType Directory -Force -Path $cache | Out-Null
+          $env:VCPKG_BINARY_SOURCES = "clear;files,$cache,readwrite"
+
+          vcpkg install `
+            openssl:x64-windows `
+            zlib:x64-windows `
+            hunspell:x64-windows `
+            minizip:x64-windows
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Stage vcpkg development and runtime files
+        run: |
+          $installed = Join-Path $env:VCPKG_INSTALLATION_ROOT 'installed\x64-windows'
+          New-Item -ItemType Directory -Force sdk, sdk\include, sdk\lib, sdk\bin, sdk\share\licenses | Out-Null
+
+          Copy-Item (Join-Path $installed 'include\*') sdk\include -Recurse -Force
+          Copy-Item (Join-Path $installed 'lib\*.lib') sdk\lib -Force
+          Copy-Item (Join-Path $installed 'bin\*.dll') sdk\bin -Force
+
+          # Psi's historical FindHunspell.cmake also accepts a flat include
+          # layout on Windows. Keep that compatibility facade in the SDK.
+          Copy-Item (Join-Path $installed 'include\hunspell\*.h*') sdk\include -Force
+
+          foreach ($package in @('openssl', 'zlib', 'hunspell', 'minizip', 'libiconv')) {
+            $copyright = Join-Path $installed "share\$package\copyright"
+            if (Test-Path $copyright) {
+              $target = Join-Path 'sdk\share\licenses' $package
+              New-Item -ItemType Directory -Force $target | Out-Null
+              Copy-Item $copyright (Join-Path $target 'COPYRIGHT')
+            }
+          }
+
+          if (-not (Get-ChildItem sdk\lib -File | Where-Object Name -Match 'hunspell.*\.lib$')) {
+            throw 'Hunspell import library missing from SDK'
+          }
+          if (-not (Get-ChildItem sdk\lib -File | Where-Object Name -Match 'minizip.*\.lib$')) {
+            throw 'minizip import library missing from SDK'
+          }
+          if (-not (Get-ChildItem sdk\lib -File | Where-Object Name -Match 'libcrypto.*\.lib$')) {
+            throw 'OpenSSL crypto import library missing from SDK'
+          }
+
+      - name: Build static Qt6Keychain
+        run: |
+          git clone --depth 1 --branch $env:QTKEYCHAIN_TAG https://github.com/frankosterfeld/qtkeychain.git qtkeychain
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          cmake -S qtkeychain -B qtkeychain-build -G Ninja `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_INSTALL_PREFIX="$pwd/sdk" `
+            -DCMAKE_INSTALL_LIBDIR=lib `
+            -DCMAKE_INSTALL_INCLUDEDIR=include `
+            "-DCMAKE_PREFIX_PATH=$env:QT_ROOT_DIR" `
+            -DBUILD_SHARED_LIBS=OFF `
+            -DBUILD_WITH_QT6=ON `
+            -DBUILD_TESTING=OFF `
+            -DBUILD_TEST_APPLICATION=OFF `
+            -DBUILD_QTQUICK_DEMO=OFF `
+            -DBUILD_TRANSLATIONS=OFF `
+            -DLIBSECRET_SUPPORT=OFF
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          cmake --build qtkeychain-build --parallel 4
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake --install qtkeychain-build
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          if (-not (Test-Path sdk\lib\cmake\Qt6Keychain\Qt6KeychainConfig.cmake)) {
+            throw 'Qt6Keychain CMake package missing'
+          }
+          if (-not (Test-Path sdk\lib\qt6keychain.lib)) {
+            throw 'Static Qt6Keychain library missing'
+          }
+
+      - name: Verify relocated SDK consumer
+        run: |
+          Move-Item sdk relocated-sdk
+          New-Item -ItemType Directory consumer | Out-Null
+          @'
+          cmake_minimum_required(VERSION 3.25)
+          project(psi_msvc_sdk_consumer LANGUAGES CXX)
+          find_package(Qt6 REQUIRED COMPONENTS Core)
+          find_package(Qt6Keychain CONFIG REQUIRED)
+          find_package(OpenSSL REQUIRED)
+          find_package(ZLIB REQUIRED)
+          add_executable(psi-sdk-consumer main.cpp)
+          target_link_libraries(psi-sdk-consumer PRIVATE
+              Qt6::Core
+              Qt6Keychain::Qt6Keychain
+              OpenSSL::Crypto
+              ZLIB::ZLIB)
+          '@ | Set-Content consumer\CMakeLists.txt -Encoding utf8
+          @'
+          #include <openssl/crypto.h>
+          #include <qt6keychain/keychain.h>
+          #include <zlib.h>
+
+          int main()
+          {
+              QKeychain::ReadPasswordJob job(QStringLiteral("psi-sdk-test"));
+              return (OpenSSL_version_num() != 0 && zlibVersion()[0] != '\0'
+                      && !job.service().isEmpty()) ? 0 : 1;
+          }
+          '@ | Set-Content consumer\main.cpp -Encoding utf8
+
+          cmake -S consumer -B consumer-build -G Ninja `
+            -DCMAKE_BUILD_TYPE=Release `
+            "-DCMAKE_PREFIX_PATH=$pwd/relocated-sdk;$env:QT_ROOT_DIR" `
+            "-DQt6Keychain_DIR=$pwd/relocated-sdk/lib/cmake/Qt6Keychain" `
+            "-DOPENSSL_ROOT_DIR=$pwd/relocated-sdk"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake --build consumer-build --parallel 2
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          $env:PATH = "$pwd\relocated-sdk\bin;$env:QT_ROOT_DIR\bin;$env:PATH"
+          & "$pwd\consumer-build\psi-sdk-consumer.exe"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Move-Item relocated-sdk sdk
+
+      - name: Write SDK manifest and archive
+        run: |
+          $vcpkgRevision = (git -C $env:VCPKG_INSTALLATION_ROOT rev-parse HEAD).Trim()
+          $qtVersion = (& "$env:QT_ROOT_DIR\bin\qmake.exe" -query QT_VERSION).Trim()
+          @"
+          Psi Windows SDK
+          =================
+          Build environment: MSVC 2022 / Qt $qtVersion
+          Target: Windows x64
+          QtKeychain source: frankosterfeld/qtkeychain $env:QTKEYCHAIN_TAG (static)
+          vcpkg revision: $vcpkgRevision
+          vcpkg packages: openssl, zlib, hunspell, minizip and transitive runtime dependencies
+          SDK purpose: non-Qt development/runtime dependencies for the modern Psi MSVC/Qt6 build
+          "@ | Set-Content sdk\SDK-MANIFEST.txt -Encoding utf8
+
+          if (Test-Path $env:SDK_ARCHIVE) { Remove-Item $env:SDK_ARCHIVE -Force }
+          Compress-Archive -Path sdk\* -DestinationPath $env:SDK_ARCHIVE -CompressionLevel Optimal
+          if (-not (Test-Path $env:SDK_ARCHIVE)) { throw 'SDK archive was not created' }
+
+      - name: Upload SDK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: psi-windows-sdk-msvc-qt6
+          path: ${{ env.SDK_ARCHIVE }}
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    name: Publish SDK release
+    needs:
+      - check
+      - build
+    if: needs.check.outputs.need_build == 'true' && needs.build.result == 'success'
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Download SDK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: psi-windows-sdk-msvc-qt6
+          path: release
+
+      - name: Create or update SDK release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SDK_TAG: ${{ inputs.sdk_tag }}
+        run: |
+          set -euo pipefail
+          archive="release/$SDK_ARCHIVE"
+          test -f "$archive"
+
+          if gh release view "$SDK_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$SDK_TAG" "$archive" \
+              --repo "$GITHUB_REPOSITORY" \
+              --clobber
+          else
+            gh release create "$SDK_TAG" "$archive" \
+              --repo "$GITHUB_REPOSITORY" \
+              --target master \
+              --title "Psi Windows SDK (MSVC 2022 / Qt6)" \
+              --notes "Development/runtime SDK for the modern Windows build. Qt itself is installed from the official Qt binary repository; this SDK contains OpenSSL, zlib, Hunspell, minizip and static Qt6Keychain."
+          fi
