@@ -197,12 +197,12 @@ def main() -> int:
     system32 = Path(os.environ.get("WINDIR", r"C:\Windows")) / "System32"
     search_dirs = [root, sdk / "bin", qt_root / "bin"]
 
-    redist_root: Path | None = None
+    redist_x64: Path | None = None
     redist_env = os.environ.get("VCToolsRedistDir")
     if redist_env:
-        candidate = Path(redist_env)
+        candidate = Path(redist_env) / "x64"
         if candidate.is_dir():
-            redist_root = candidate
+            redist_x64 = candidate
 
     copied: dict[str, str] = {}
     system: set[str] = set()
@@ -231,10 +231,14 @@ def main() -> int:
                     if candidate:
                         break
 
-                if not candidate and redist_root:
-                    candidate = find_recursive_case_insensitive(redist_root, dll_name)
+                if not candidate and redist_x64:
+                    candidate = find_recursive_case_insensitive(redist_x64, dll_name)
 
                 if candidate:
+                    if not is_pe64(dumpbin, candidate):
+                        raise SystemExit(
+                            f"Non-x64 runtime candidate for {dll_name}: {candidate}"
+                        )
                     shutil.copy2(candidate, root / candidate.name)
                     copied[lowered] = str(candidate)
                     changed = True
