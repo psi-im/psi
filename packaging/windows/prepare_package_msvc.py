@@ -99,7 +99,7 @@ def copy_sdk_runtime(sdk: Path, root: Path) -> None:
         shutil.copy2(dll, root / dll.name)
 
 
-def prune_unused_qt_plugins(root: Path) -> None:
+def prune_unused_qt_plugins(root: Path, dumpbin: Path) -> None:
     # Qt deployment brings all installed SQL drivers when QtSql is linked.
     # Psi only uses SQLite; keeping other drivers needlessly expands the
     # dependency closure with database client runtimes.
@@ -114,6 +114,18 @@ def prune_unused_qt_plugins(root: Path) -> None:
     for plugin in sqldrivers.glob("*.dll"):
         if plugin.name.lower() != "qsqlite.dll":
             plugin.unlink()
+
+    # QtPositioning deploys optional backends as a group. The NMEA serial
+    # backend pulls Qt6SerialPort even though Psi does not use serial NMEA
+    # positioning. Keep the usable positioning backends, but drop any optional
+    # backend that would add QtSerialPort solely for that plugin.
+    position_plugins = root / "qtplugins" / "position"
+    if position_plugins.is_dir():
+        for plugin in position_plugins.glob("*.dll"):
+            dependencies = {name.lower() for name in imports(dumpbin, plugin)}
+            if "qt6serialport.dll" in dependencies:
+                print(f"Pruning unused Qt serial positioning plugin: {plugin}")
+                plugin.unlink()
 
 
 def collect_pe_files(root: Path) -> list[Path]:
@@ -189,7 +201,7 @@ def main() -> int:
         check=True,
     )
 
-    prune_unused_qt_plugins(root)
+    prune_unused_qt_plugins(root, dumpbin)
     shutil.copy2(qt_conf, root / "qt.conf")
     copy_runtime_data(source_root, root)
     copy_sdk_runtime(sdk, root)
