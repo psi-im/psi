@@ -89,6 +89,8 @@ if(WIN32)
             ${CMAKE_PREFIX_PATH}/bin
             ${CMAKE_PREFIX_PATH}/lib
             ${CMAKE_PREFIX_PATH}/lib/ossl-modules
+            ${CMAKE_PREFIX_PATH}/lib/qca3-qt${QT_DEFAULT_MAJOR_VERSION}/crypto
+            ${CMAKE_PREFIX_PATH}/lib/Qca3-qt${QT_DEFAULT_MAJOR_VERSION}/crypto
             )
     endif()
     if(EXISTS "${SDK_PATH}")
