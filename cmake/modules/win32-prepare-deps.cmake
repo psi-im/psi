@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.10.0)
 if(WIN32)
     set(LIBS_TARGET prepare-bin-libs)
+    set(DEPS_INSTALL_PREFIX ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+    if(PRODUCTION)
+        set(LIBS_TARGET install-deps)
+        set(DEPS_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
+    endif()
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         set(D "d")
     endif()
@@ -8,31 +13,42 @@ if(WIN32)
     string(REGEX REPLACE "([^ ]+)[/\\].*" "\\1" QT_BIN_DIR_TMP "${QT_MOC_EXECUTABLE}")
     string(REGEX REPLACE "\\\\" "/" QT_BIN_DIR "${QT_BIN_DIR_TMP}")
     unset(QT_BIN_DIR_TMP)
+    # find_psi_lib function
     function(find_psi_lib LIBLIST PATHES OUTPUT_PATH)
         set(_LIBS ${LIBLIST})
         set(_PATHES ${PATHES})
         set(_OUTPUT_PATH ${OUTPUT_PATH})
-        set(FIXED_PATHES "")
+        set(FULL_LIBNAMES "")
+        # Generate list with libnames templates
         foreach(_path ${_PATHES})
-            string(REGEX REPLACE "//bin" "/bin" tmp_path "${_path}")
-            list(APPEND FIXED_PATHES ${tmp_path})
+            foreach(_libname ${_LIBS})
+                set(_tmpname "${_path}/${_libname}")
+                string(REGEX REPLACE "/+" "/" _tmpname_fixed "${_tmpname}")
+                list(APPEND FULL_LIBNAMES ${_tmpname_fixed})
+            endforeach()
         endforeach()
-        if(NOT USE_MXE)
-            set(ADDITTIONAL_FLAG "NO_DEFAULT_PATH")
-        else()
-            set(ADDITTIONAL_FLAG "")
-        endif()
-        foreach(_liba ${_LIBS})
+        list(SORT FULL_LIBNAMES)
+        list(REMOVE_DUPLICATES FULL_LIBNAMES)
+        # Get real libraries names for each template
+        foreach(_liba ${FULL_LIBNAMES})
             set(_library _library-NOTFOUND)
-            find_file( _library ${_liba} PATHS ${FIXED_PATHES} ${ADDITTIONAL_FLAG})
-            if( NOT "${_library}" STREQUAL "_library-NOTFOUND" )
-                message("library found ${_library}")
-                copy("${_library}" "${_OUTPUT_PATH}" "${LIBS_TARGET}")
-            endif()
+            # Get list of libraries
+            file(GLOB _library
+                LIST_DIRECTORIES false
+                ${_liba}
+            )
+            # Add each existing library to copy target
+            foreach(_fname ${_library})
+                if(EXISTS "${_fname}")
+                    message("library found: ${_fname}")
+                    copy("${_fname}" "${_OUTPUT_PATH}" "${LIBS_TARGET}")
+                endif()
+            endforeach()
         endforeach()
         unset(_LIBS)
         unset(_PATHES)
         unset(_OUTPUT_PATH)
+        unset(FULL_LIBNAMES)
     endfunction()
     set(SDK_PREFIX "")
     find_package(Qt${QT_DEFAULT_MAJOR_VERSION} COMPONENTS Core)
@@ -50,12 +66,12 @@ if(WIN32)
     set(QT_PLUGINS_DIR ${QT_DIR}/plugins)
     set(QT_TRANSLATIONS_DIR ${QT_DIR}/translations)
     #Output pathes
-    set(QT_PLUGINS_OUTPUT "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins")
-    set(QT_LIBS_OUTPUT "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
+    set(QT_PLUGINS_OUTPUT "${DEPS_INSTALL_PREFIX}/qtplugins")
+    set(QT_LIBS_OUTPUT "${DEPS_INSTALL_PREFIX}/")
     if(BUILD_PSIMEDIA)
-        set(PSIMEDIA_LIBS_OUTPUT "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
+        set(PSIMEDIA_LIBS_OUTPUT "${DEPS_INSTALL_PREFIX}/")
     endif()
-    set(PSI_LIBS_OUTPUT "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
+    set(PSI_LIBS_OUTPUT "${DEPS_INSTALL_PREFIX}/")
     set(PSIMEDIA_FOUND OFF)
     #Set paths
     list(APPEND PATHES
@@ -65,6 +81,8 @@ if(WIN32)
         ${QT_PLUGINS_DIR}/crypto
         ${Qca_DIR}lib/qca-qt${QT_DEFAULT_MAJOR_VERSION}/crypto
         ${Qca_DIR}lib/Qca-qt${QT_DEFAULT_MAJOR_VERSION}/crypto
+        ${Qca_DIR}lib/qca3-qt${QT_DEFAULT_MAJOR_VERSION}/crypto
+        ${Qca_DIR}lib/Qca3-qt${QT_DEFAULT_MAJOR_VERSION}/crypto
         )
     if(USE_MXE)
         list(APPEND PATHES
@@ -89,6 +107,8 @@ if(WIN32)
                 "${SDK_PATH}bin"
                 "${SDK_PATH}lib/qca-qt${QT_DEFAULT_MAJOR_VERSION}/crypto"
                 "${SDK_PATH}/lib/qca-qt${QT_DEFAULT_MAJOR_VERSION}/crypto"
+                "${SDK_PATH}lib/qca3-qt${QT_DEFAULT_MAJOR_VERSION}/crypto"
+                "${SDK_PATH}/lib/qca3-qt${QT_DEFAULT_MAJOR_VERSION}/crypto"
                 "${SDK_PATH}plugins/crypto"
                 "${SDK_PATH}/plugins/crypto"
                 )
@@ -115,33 +135,18 @@ if(WIN32)
             ${WDARGS}
             $<TARGET_FILE:${PROJECT_NAME}>
             WORKING_DIRECTORY
-            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+            ${DEPS_INSTALL_PREFIX}
             COMMENT
             "Preparing Qt runtime dependencies"
             )
+        # Make windeploy targer run prepare-bin-libs target
+        add_dependencies(windeploy ${LIBS_TARGET})
     else()
-        #if windeployqt not found search libs manually
-        # required libraries
-        set( ICU_LIBS_PREFIXES
-            icudt5
-            icudt6
-            icudt7
-            icuin5
-            icuin6
-            icuin7
-            icuuc5
-            icuuc6
-            icuuc7
-            )
-        set( ICU_LIBS "" )
-        #hack to find icu libs with name template icu\W{2}[1..9]-0.dll
-        foreach( icu_prefix ${ICU_LIBS_PREFIXES} )
-            foreach( icu_counter RANGE 9 )
-                list(APPEND ICU_LIBS
-                    "${icu_prefix}${icu_counter}.dll"
-                    )
-            endforeach()
-        endforeach()
+        set( ICU_LIBS
+            icudt*.dll
+            icuin*.dll
+            icuuc*.dll
+        )
         find_psi_lib("${ICU_LIBS}" "${PATHES}" "${QT_LIBS_OUTPUT}/")
         unset(ICU_LIBS)
         # Qt5 / Qt6 libraries
@@ -163,54 +168,56 @@ if(WIN32)
             Qt${QT_DEFAULT_MAJOR_VERSION}Sql${D}.dll
             Qt${QT_DEFAULT_MAJOR_VERSION}Svg${D}.dll
             Qt${QT_DEFAULT_MAJOR_VERSION}Svg${D}.dll
-            Qt${QT_DEFAULT_MAJOR_VERSION}WebChannel${D}.dll
             Qt${QT_DEFAULT_MAJOR_VERSION}Widgets${D}.dll
             Qt${QT_DEFAULT_MAJOR_VERSION}Xml${D}.dll
             Qt${QT_DEFAULT_MAJOR_VERSION}XmlPatterns${D}.dll
             )
         if(${QT_DEFAULT_MAJOR_VERSION} LESS 6)
+            list(APPEND QT_LIBAS Qt5WinExtras${D}.dll)
+        endif()
+        if(IS_WEBENGINE OR IS_WEBKIT)
             list(APPEND QT_LIBAS
-                Qt5WebKit${D}.dll
-                Qt5WebKitWidgets${D}.dll
-                Qt5WinExtras${D}.dll
+                Qt${QT_DEFAULT_MAJOR_VERSION}WebKit${D}.dll
+                Qt${QT_DEFAULT_MAJOR_VERSION}WebKitWidgets${D}.dll
+                Qt${QT_DEFAULT_MAJOR_VERSION}WebChannel${D}.dll
             )
         endif()
         find_psi_lib("${QT_LIBAS}" "${QT_BIN_DIR}" "${QT_LIBS_OUTPUT}/")
         #AUDIO PLUGINS
-        find_psi_lib(qtaudio_windows${D}.dll "${QT_PLUGINS_DIR}/audio/" "${QT_PLUGINS_OUTPUT}/audio/")
+        find_psi_lib(qtaudio_windows${D}.dll "${QT_PLUGINS_DIR}/audio" "${QT_PLUGINS_OUTPUT}/audio/")
         set(PLATFORMS_PLUGS
             qdirect2d${D}.dll
             qminimal${D}.dll
             qoffscreen${D}.dll
             qwindows${D}.dll
             )
-        find_psi_lib("${PLATFORMS_PLUGS}" "${QT_PLUGINS_DIR}/platforms/" "${QT_PLUGINS_OUTPUT}/platforms/")
+        find_psi_lib("${PLATFORMS_PLUGS}" "${QT_PLUGINS_DIR}/platforms" "${QT_PLUGINS_OUTPUT}/platforms/")
         #PLATFORMS PLUGINS
         set(PLATFORMTHEMES_PLUGS
             qxdgdesktopportal${D}.dll
             )
-        find_psi_lib("${PLATFORMTHEMES_PLUGS}" "${QT_PLUGINS_DIR}/platformthemes/" "${QT_PLUGINS_OUTPUT}/platformthemes/")
+        find_psi_lib("${PLATFORMTHEMES_PLUGS}" "${QT_PLUGINS_DIR}/platformthemes" "${QT_PLUGINS_OUTPUT}/platformthemes/")
         #PLATFORMTHEMES PLUGINS
         set(STYLES_PLUGS
             qwindowsvistastyle${D}.dll
             )
-        find_psi_lib("${STYLES_PLUGS}" "${QT_PLUGINS_DIR}/styles/" "${QT_PLUGINS_OUTPUT}/styles/")
+        find_psi_lib("${STYLES_PLUGS}" "${QT_PLUGINS_DIR}/styles" "${QT_PLUGINS_OUTPUT}/styles/")
         #STYLES PLUGINS
         set(BEARER_PLUGS
             qgenericbearer${D}.dll
             qnativewifibearer${D}.dll
             )
-        find_psi_lib("${BEARER_PLUGS}" "${QT_PLUGINS_DIR}/bearer/" "${QT_PLUGINS_OUTPUT}/bearer/")
+        find_psi_lib("${BEARER_PLUGS}" "${QT_PLUGINS_DIR}/bearer" "${QT_PLUGINS_OUTPUT}/bearer/")
         #BEARER PLUGINS
         set(GENERIC_PLUGS
             qtuiotouchplugin${D}.dll
             )
-        find_psi_lib("${GENERIC_PLUGS}" "${QT_PLUGINS_DIR}/generic/" "${QT_PLUGINS_OUTPUT}/generic/")
+        find_psi_lib("${GENERIC_PLUGS}" "${QT_PLUGINS_DIR}/generic" "${QT_PLUGINS_OUTPUT}/generic/")
         #GENERIC PLUGINS
         set(ICONENGINES_PLUGS
             qsvgicon${D}.dll
             )
-        find_psi_lib("${ICONENGINES_PLUGS}" "${QT_PLUGINS_DIR}/iconengines/" "${QT_PLUGINS_OUTPUT}/iconengines/")
+        find_psi_lib("${ICONENGINES_PLUGS}" "${QT_PLUGINS_DIR}/iconengines" "${QT_PLUGINS_OUTPUT}/iconengines/")
         #ICONENGINES PLUGINS
         set(IMAGEFORMATS_PLUGS
             qdds${D}.dll
@@ -226,42 +233,42 @@ if(WIN32)
             qwbmp${D}.dll
             qwebp${D}.dll
             )
-        find_psi_lib("${IMAGEFORMATS_PLUGS}" "${QT_PLUGINS_DIR}/imageformats/" "${QT_PLUGINS_OUTPUT}/imageformats/")
+        find_psi_lib("${IMAGEFORMATS_PLUGS}" "${QT_PLUGINS_DIR}/imageformats" "${QT_PLUGINS_OUTPUT}/imageformats/")
         #IMAGEFORMATS PLUGINS
         set(MEDIASERVICE_PLUGS
             dsengine${D}.dll
             qtmedia_audioengine${D}.dll
             wmfengine${D}.dll
             )
-        find_psi_lib("${MEDIASERVICE_PLUGS}" "${QT_PLUGINS_DIR}/mediaservice/" "${QT_PLUGINS_OUTPUT}/mediaservice/")
+        find_psi_lib("${MEDIASERVICE_PLUGS}" "${QT_PLUGINS_DIR}/mediaservice" "${QT_PLUGINS_OUTPUT}/mediaservice/")
         #MEDIASERVICE PLUGINS
         set(MULTIMEDIA_PLUGS
             ffmpegmediaplugin${D}.dll
             windowsmediaplugin${D}.dll
             )
-        find_psi_lib("${MULTIMEDIA_PLUGS}" "${QT_PLUGINS_DIR}/multimedia/" "${QT_PLUGINS_OUTPUT}/multimedia/")
+        find_psi_lib("${MULTIMEDIA_PLUGS}" "${QT_PLUGINS_DIR}/multimedia" "${QT_PLUGINS_OUTPUT}/multimedia/")
         #MULTIMEDIA PLUGINS
         set(NETWORKINFORMATION_PLUGS
             qnetworklistmanager${D}.dll
             )
-        find_psi_lib("${NETWORKINFORMATION_PLUGS}" "${QT_PLUGINS_DIR}/networkinformation/" "${QT_PLUGINS_OUTPUT}/networkinformation/")
+        find_psi_lib("${NETWORKINFORMATION_PLUGS}" "${QT_PLUGINS_DIR}/networkinformation" "${QT_PLUGINS_OUTPUT}/networkinformation/")
         #NETWORKINFORMATION PLUGINS
         set(POSITION_PLUGS
             qtposition_nmea${D}.dll
             qtposition_positionpoll${D}.dll
             qtposition_winrt${D}.dll
             )
-        find_psi_lib("${POSITION_PLUGS}" "${QT_PLUGINS_DIR}/position/" "${QT_PLUGINS_OUTPUT}/position/")
+        find_psi_lib("${POSITION_PLUGS}" "${QT_PLUGINS_DIR}/position" "${QT_PLUGINS_OUTPUT}/position/")
         #POSITION PLUGINS
         set(PLAYLISTFORMATS_PLUGS
             qtmultimedia_m3u${D}.dll
             )
-        find_psi_lib("${PLAYLISTFORMATS_PLUGS}" "${QT_PLUGINS_DIR}/playlistformats/" "${QT_PLUGINS_OUTPUT}/playlistformats/")
+        find_psi_lib("${PLAYLISTFORMATS_PLUGS}" "${QT_PLUGINS_DIR}/playlistformats" "${QT_PLUGINS_OUTPUT}/playlistformats/")
         #PLAYLISTFORMATS PLUGINS
         set(PRINTSUPPORT_PLUGS
             windowsprintersupport${D}.dll
             )
-        find_psi_lib("${PRINTSUPPORT_PLUGS}" "${QT_PLUGINS_DIR}/printsupport/" "${QT_PLUGINS_OUTPUT}/printsupport/")
+        find_psi_lib("${PRINTSUPPORT_PLUGS}" "${QT_PLUGINS_DIR}/printsupport" "${QT_PLUGINS_OUTPUT}/printsupport/")
         #PRINTSUPPORT PLUGINS
         set(SQLDRIVERS_PLUGS
             qsqlite${D}.dll
@@ -271,298 +278,190 @@ if(WIN32)
             qsqlpsql${D}.dll
             qsqltds${D}.dll
             )
-        find_psi_lib("${SQLDRIVERS_PLUGS}" "${QT_PLUGINS_DIR}/sqldrivers/" "${QT_PLUGINS_OUTPUT}/sqldrivers/")
+        find_psi_lib("${SQLDRIVERS_PLUGS}" "${QT_PLUGINS_DIR}/sqldrivers" "${QT_PLUGINS_OUTPUT}/sqldrivers/")
         #SQLDRIVERS PLUGINS
         set(TLS_PLUGS
             qcertonlybackend${D}.dll
             qopensslbackend${D}.dll
             qschannelbackend${D}.dll
             )
-        find_psi_lib("${TLS_PLUGS}" "${QT_PLUGINS_DIR}/tls/" "${QT_PLUGINS_OUTPUT}/tls/")
+        find_psi_lib("${TLS_PLUGS}" "${QT_PLUGINS_DIR}/tls" "${QT_PLUGINS_OUTPUT}/tls/")
         #TLS PLUGINS
-        if(KEYCHAIN_LIBS)
+        if(KEYCHAIN_LIBS AND NOT BUNDLED_KEYCHAIN)
             set(KEYCHAIN_LIBS
-                qt${QT_DEFAULT_MAJOR_VERSION}keychain${D}.dll
-                libqt${QT_DEFAULT_MAJOR_VERSION}keychain${D}.dll
+                *qt${QT_DEFAULT_MAJOR_VERSION}keychain${D}.dll
                 )
             find_psi_lib("${KEYCHAIN_LIBS}" "${PATHES}" "${QT_LIBS_OUTPUT}/")
         endif()
     endif()
     # psimedia deps
     if(BUILD_PSIMEDIA)
+        set(PSIMEDIA_DEPS
+            ${CMAKE_SHARED_LIBRARY_PREFIX}ffi-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}fontconfig*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gio-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}glib-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gmodule-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gobject-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstapp-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstaudio-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstbadaudio-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstbadbase-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstbase-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstnet-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstpbutils-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstreamer-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstriff-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstrtp-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstrtsp-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gsttag-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gthread-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstvideo-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstwebrtc-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstwinrt-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gthread-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}harfbuzz.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}intl-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}jpeg8.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}jpeg-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}png16-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}vorbis-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}vorbisenc-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}winpthread-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}x264-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}xml2-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}ogg-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}opus-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}orc-[0-9]*-[0-9].dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}pcre2-[0-9]*-[0-9].dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}png16.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}xml2-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}z-*.dll
+        )
+        set(GSTREAMER_PLUGINS
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstapp.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstaudioconvert.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstaudiomixer.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstaudioresample.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstcoreelements.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstdirectsound.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstdirectsoundsrc.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstjpeg.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstlevel.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstogg.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstopus.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstopusparse.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstplayback.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstrtp.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstrtpmanager.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstvideoconvertscale.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstvideoconvert.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstvideoscale.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstvideorate.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstvolume.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstvorbis.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstvpx.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstwasapi*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstwinks.dll
+        )
         if(MSVC)
-            set(PSIMEDIA_DEPS
-                ffi-7.dll
-                gio-2.0-0.dll
-                glib-2.0-0.dll
-                gmodule-2.0-0.dll
-                gobject-2.0-0.dll
-                gstapp-1.0-0.dll
-                gstaudio-1.0-0.dll
-                gstbadaudio-1.0-0.dll
-                gstbase-1.0-0.dll
-                gstnet-1.0-0.dll
-                gstpbutils-1.0-0.dll
-                gstreamer-1.0
-                gstreamer-1.0-0.dll
-                gstriff-1.0-0.dll
-                gstrtp-1.0-0.dll
-                gstrtsp-1.0-0.dll
-                gsttag-1.0-0.dll
-                gstvideo-1.0-0.dll
-                gstwebrtc-1.0-0.dll
-                gstwinrt-1.0-0.dll
-                gthread-2.0-0.dll
-                harfbuzz.dll
-                intl-8.dll
-                jpeg8.dll
-                libjpeg-8.dll
-                libpng16-16.dll
-                libvorbis-0.dll
-                libvorbisenc-2.dll
-                libwinpthread-1.dll
-                libx264-157.dll
-                libxml2-2.dll
-                ogg-0.dll
-                opus-0.dll
-                orc-0.4-0.dll
-                pcre2-8-0.dll
-                png16.dll
-                vorbis-0.dll
-                vorbisenc-2.dll
-                x264-164.dll
-                xml2-2.dll
-                z-1.dll
-                )
-            set(GSTREAMER_PLUGINS
-                gstapp.dll
-                gstaudioconvert.dll
-                gstaudiomixer.dll
-                gstaudioresample.dll
-                gstcoreelements.dll
-                gstdirectsound.dll
-                gstdirectsoundsrc.dll
-                gstjpeg.dll
-                gstlevel.dll
-                gstogg.dll
-                gstopus.dll
-                gstopusparse.dll
-                gstplayback.dll
-                gstrtp.dll
-                gstrtpmanager.dll
-                gstvideoconvertscale.dll
-                gstvideoconvert.dll
-                gstvideoscale.dll
-                gstvideorate.dll
-                gstvolume.dll
-                gstvorbis.dll
-                gstvpx.dll
-                gstwasapi.dll
-                gstwinks.dll
-                )
             set(PSIMEDIA_DEPS_DIR "${GST_SDK}/bin")
             set(GSTREAMER_PLUGINS_DIR "${GST_SDK}/lib/gstreamer-1.0")
-            set(GST_PLUGINS_OUTPUT "${PSIMEDIA_LIBS_OUTPUT}/gstreamer-1.0/")
         endif()
         if(USE_MXE)
-            set(PSIMEDIA_DEPS
-                libffi-6.dll
-                libffi-8.dll
-                libfontconfig-1.dll
-                libgio-2.0-0.dll
-                libgmodule-2.0-0.dll
-                libgobject-2.0-0.dll
-                libgstapp-1.0-0.dll
-                libgstaudio-1.0-0.dll
-                libgstbadaudio-1.0-0.dll
-                libgstbadbase-1.0-0.dll
-                libgstbase-1.0-0.dll
-                libgstnet-1.0-0.dll
-                libgstpbutils-1.0-0.dll
-                libgstreamer-1.0-0.dll
-                libgstriff-1.0-0.dll
-                libgstrtp-1.0-0.dll
-                libgstrtsp-1.0.0.dll
-                libgsttag-1.0-0.dll
-                libgstvideo-1.0-0.dll
-                libgthread-2.0-0.dll
-                libgstwebrtc-1.0.0.dll
-                libogg-0.dll
-                libopus-0.dll
-                libvorbis-0.dll
-                libvorbisenc-2.dll
-                libx264-155.dll
-                )
-            set(GSTREAMER_PLUGINS
-                libgstapp.dll
-                libgstaudioconvert.dll
-                libgstaudiomixer.dll
-                libgstaudioresample.dll
-                libgstcoreelements.dll
-                libgstdirectsound.dll
-                libgstdirectsoundsink.dll
-                libgstdirectsoundsrc.dll
-                libgstjpeg.dll
-                libgstlevel.dll
-                libgstogg.dll
-                libgstopus.dll
-                libgstopusparse.dll
-                libgstplayback.dll
-                libgstrtp.dll
-                libgstrtpmanager.dll
-                libgstvideoconvert.dll
-                libgstvideorate.dll
-                libgstvideoscale.dll
-                libgstvolume.dll
-                libgstvorbis.dll
-                libgstvpx.dll
-                libgstwasapi.dll
-                libgstwinks.dll
-                )
             set(PSIMEDIA_DEPS_DIR "${CMAKE_PREFIX_PATH}/bin")
             set(GSTREAMER_PLUGINS_DIR "${CMAKE_PREFIX_PATH}/bin/gstreamer-1.0")
-            set(GST_PLUGINS_OUTPUT "${PSIMEDIA_LIBS_OUTPUT}/gstreamer-1.0/")
         endif()
+        set(GST_PLUGINS_OUTPUT "${PSIMEDIA_LIBS_OUTPUT}/gstreamer-1.0/")
         find_psi_lib("${PSIMEDIA_DEPS}" "${PSIMEDIA_DEPS_DIR}" "${PSIMEDIA_LIBS_OUTPUT}/")
         # streamer plugins
         find_psi_lib("${GSTREAMER_PLUGINS}" "${GSTREAMER_PLUGINS_DIR}/" "${GST_PLUGINS_OUTPUT}")
     endif()
-    #hack to find hunspell libs with name template libhunspell-1.[1..9]-0.dll
-    foreach( hunsp_counter RANGE 9 )
-        list(APPEND HUNSPELL_LIBS
-            "libhunspell-1.${hunsp_counter}-0.dll"
-            "hunspell-1.${hunsp_counter}-0.dll"
-            )
-    endforeach()
+    list(APPEND HUNSPELL_LIBS
+        ${CMAKE_SHARED_LIBRARY_PREFIX}hunspell*.dll
+    )
     find_psi_lib("${HUNSPELL_LIBS}" "${PATHES}" "${PSI_LIBS_OUTPUT}")
     unset(HUNSPELL_LIBS)
     # other libs and executables
-    set( LIBRARIES_LIST
+    set(LIBRARIES_LIST
         gpg.exe
-        libcrypto-1_1-x64.dll
-        libcrypto-3-x64.dll
-        libcrypto-4.dll
-        libcrypto-4-x64.dll
-        libcrypto-1_1.dll
-        libcrypto-3.dll
-        libeay32.dll
-        libgcc_s_dw2-1.dll
-        libgcc_s_seh-1.dll
-        libgcc_s_sjlj-1.dll
-        libgcrypt-11.dll
-        libgcrypt-20.dll
-        libgpg-error-0.dll
-        libhunspell.dll
-        libotr-5.dll
-        libotr.dll
-        libomemo-c.dll
-        libssl-1_1-x64.dll
-        libssl-3-x64.dll
-        libssl-4.dll
-        libssl-4-x64.dll
-        libssl-1_1.dll
-        libssl-3.dll
-        libstdc++-6.dll
-        libtidy.dll
-        libwinpthread-1.dll
-        libxslt-1.dll
-        libzlib.dll
-        libzstd.dll
+        ${CMAKE_SHARED_LIBRARY_PREFIX}crypto-*.dll
+        ${CMAKE_SHARED_LIBRARY_PREFIX}eay32.dll
+        ${CMAKE_SHARED_LIBRARY_PREFIX}gcc_s_*.dll
+        ${CMAKE_SHARED_LIBRARY_PREFIX}omemo-c.dll
+        ${CMAKE_SHARED_LIBRARY_PREFIX}ssl-*.dll
+        ${CMAKE_SHARED_LIBRARY_PREFIX}stdc++-*.dll
+        ${CMAKE_SHARED_LIBRARY_PREFIX}winpthread-*.dll
+        ${CMAKE_SHARED_LIBRARY_PREFIX}xslt-*.dll
+        ${CMAKE_SHARED_LIBRARY_PREFIX}zlib*.dll
+        ${CMAKE_SHARED_LIBRARY_PREFIX}zstd.dll
         legacy.dll
-        protobuf-c${D}.dll
-        ssleay32.dll
-        zlib1.dll
+        ${CMAKE_SHARED_LIBRARY_PREFIX}protobuf-c${D}.dll
+        ${CMAKE_SHARED_LIBRARY_PREFIX}ssleay32.dll
+        ${CMAKE_SHARED_LIBRARY_PREFIX}z${D}.dll
         )
-
-    if(MSVC)
-        list(APPEND LIBRARIES_LIST
-            libotr${D}.dll
-            tidy${D}.dll
-            zlib1${D}.dll
-            z${D}.dll
-            )
-    endif()
-
     if(USE_MXE)
         list(APPEND LIBRARIES_LIST
-            libbrotlicommon.dll
-            libbrotlidec.dll
-            libbz2.dll
-            libdl.dll
-            libffi-7.dll
-            libfreetype-6.dll
-            libglib-2.0-0.dll
-            libgpg-error6-0.dll
-            libharfbuzz-0.dll
-            libharfbuzz-icu-0.dll
-            libiconv-2.dll
-            libintl-8.dll
-            libjasper-1.dll
-            libjasper.dll
-            libjpeg-9.dll
-            libjpeg-10.dll
-            liblcms2-2.dll
-            liblzma-5.dll
-            liblzo2-2.dll
-            libminizip.dll
-            libmng-2.dll
-            libpcre-1.dll
-            libpcre16-0.dll
-            libpcre2-8-0.dll
-            libpcre2-16-0.dll
-            libpng16-16.dll
-            libsharpyuv-0.dll
-            libsqlite3-0.dll
-            libssp-0.dll
-            libtiff-5.dll
-            libtiff-6.dll
-            libwebp-5.dll
-            libwebp-7.dll
-            libwebpdecoder-1.dll
-            libwebpdecoder-3.dll
-            libwebpdemux-1.dll
-            libwebpdemux-2.dll
-            libwebpmux-3.dll
-            libxml2-2.dll
-            libxml2-16.dll
-            libxslt-1.dll
-            libzstd.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}brotlicommon.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}brotlidec.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}bz2.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}dl.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}ffi-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}freetype-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}glib-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}harfbuzz-[0-9].dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}harfbuzz-icu-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}iconv-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}intl-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}jasper*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}jpeg-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}lcms2-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}lzma-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}lzo2-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}minizip.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}mng-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}pcre2-[0-9]*-[0-9].dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}pcre16-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}png16-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}sharpyuv-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}sqlite3-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}ssp-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}tiff-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}webp-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}webpdecoder-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}webpdemux-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}webpmux-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}xml2-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}xslt-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}zstd.dll
             )
     endif()
     if(SEPARATE_QJDNS)
         list(APPEND LIBRARIES_LIST
-            libjdns.dll
-            libqjdns.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}jdns.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}qjdns.dll
             )
     endif()
     find_psi_lib("${LIBRARIES_LIST}" "${PATHES}" "${PSI_LIBS_OUTPUT}/")
-    if(NOT BUNDLED_QCA)
+    if(NOT IRIS_BUNDLED_QCA)
         set(QCA_LIB
-            libqca-qt${QT_DEFAULT_MAJOR_VERSION}${D}.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}qca-qt${QT_DEFAULT_MAJOR_VERSION}${D}.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}qca3-qt${QT_DEFAULT_MAJOR_VERSION}${D}.dll
             )
         # qca and plugins
         set(QCA_PLUGINS
-            libqca-gnupg${D}.dll
-            libqca-ossl${D}.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}qca-gnupg${D}.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}qca-ossl${D}.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}qca3-gnupg${D}.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}qca3-ossl${D}.dll
             )
-        if(MSVC)
-            set(QCA_LIB
-                qca-qt${QT_DEFAULT_MAJOR_VERSION}${D}.dll
-                )
-            list(APPEND QCA_PLUGINS
-                qca-gnupg${D}.dll
-                qca-ossl${D}.dll
-                )
-        endif()
         find_psi_lib("${QCA_LIB}" "${PATHES}" "${PSI_LIBS_OUTPUT}/")
         find_psi_lib("${QCA_PLUGINS}" "${PATHES}" "${QT_PLUGINS_OUTPUT}/crypto/")
     endif()
-    if (NOT BUNDLED_USRSCTP)
-            set(USRSCTP_LIB libusrsctp${D}.dll)
-        if(MSVC)
-            set(USRSCTP_LIB usrsctp${D}.dll)
-        endif()
+    if (NOT IRIS_BUNDLED_USRSCTP)
+        set(USRSCTP_LIB *usrsctp${D}.dll)
         find_psi_lib("${USRSCTP_LIB}" "${PATHES}" "${PSI_LIBS_OUTPUT}/")
     endif()
-    copy("${PROJECT_SOURCE_DIR}/win32/qt.conf" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" "${LIBS_TARGET}")
+    unset(LIBRARIES_LIST)
+    copy("${PROJECT_SOURCE_DIR}/win32/qt.conf" "${DEPS_INSTALL_PREFIX}/" "${LIBS_TARGET}")
 endif()
