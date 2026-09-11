@@ -119,13 +119,23 @@ jobs:
           }
 
       - name: Build and package modern profile
+        env:
+          RUN_TESTS: ${{ startsWith(github.ref, 'refs/heads/ai/') }}
         run: |
           New-Item -ItemType Directory -Force artifacts | Out-Null
           try {
-            & packaging\windows\build_profile_msvc.ps1 `
-              -SdkDir "$pwd\sdk" `
-              -OutputDir "$pwd\artifacts" 2>&1 |
-              Tee-Object -FilePath artifacts\build-modern.log
+            if ($env:RUN_TESTS -eq 'true') {
+              & packaging\windows\build_profile_msvc.ps1 `
+                -SdkDir "$pwd\sdk" `
+                -OutputDir "$pwd\artifacts" `
+                -RunTests 2>&1 |
+                Tee-Object -FilePath artifacts\build-modern.log
+            } else {
+              & packaging\windows\build_profile_msvc.ps1 `
+                -SdkDir "$pwd\sdk" `
+                -OutputDir "$pwd\artifacts" 2>&1 |
+                Tee-Object -FilePath artifacts\build-modern.log
+            }
           } catch {
             $_ | Out-String | Tee-Object -FilePath artifacts\status-modern.txt
             throw
