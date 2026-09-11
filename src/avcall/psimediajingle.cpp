@@ -685,14 +685,29 @@ void Endpoint::drainOutgoing()
     auto channel = session_->channel(media_);
     if (!channel)
         return;
+
+    struct OutgoingPacket {
+        QByteArray                data;
+        RTP::SrtpContext::Packet kind;
+    };
+    QList<OutgoingPacket> batch;
     while (channel->packetsAvailable() > 0) {
         const auto packet = channel->read();
         if (packet.isNull())
             continue;
         if (packet.portOffset() == 0)
-            writer_(packet.rawValue(), RTP::SrtpContext::Packet::Rtp);
+            batch.append({ packet.rawValue(), RTP::SrtpContext::Packet::Rtp });
         else if (packet.portOffset() == 1)
-            writer_(packet.rawValue(), RTP::SrtpContext::Packet::Rtcp);
+            batch.append({ packet.rawValue(), RTP::SrtpContext::Packet::Rtcp });
+    }
+
+    // PacketWriter is external code and may synchronously tear down the Jingle
+    // application, this endpoint and its backend session. Keep everything used
+    // after the first callback in local values only.
+    const auto writer = writer_;
+    for (auto &packet : batch) {
+        if (!writer(std::move(packet.data), packet.kind))
+            break;
     }
 }
 
