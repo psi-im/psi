@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - 'ai/**'
   workflow_dispatch:
 
 permissions:

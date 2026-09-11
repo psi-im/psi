@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - 'ai/**'
   pull_request:
     branches:
       - '*'
@@ -22,6 +23,7 @@ env:
 
 jobs:
   check-sdk:
+    if: github.event_name != 'pull_request' || !startsWith(github.head_ref, 'ai/')
     name: Check modern dependency SDK
     runs-on: ubuntu-24.04
     outputs:
@@ -50,7 +52,9 @@ jobs:
   build-sdk:
     name: Build missing modern dependency SDK
     needs: check-sdk
-    if: needs.check-sdk.outputs.exists != 'true'
+    if: >-
+      (github.event_name != 'pull_request' || !startsWith(github.head_ref, 'ai/')) &&
+      needs.check-sdk.outputs.exists != 'true'
     permissions:
       contents: write
     uses: ./.github/workflows/windows-sdk-msvc-qt6.yml
@@ -64,6 +68,7 @@ jobs:
       - check-sdk
       - build-sdk
     if: >-
+      (github.event_name != 'pull_request' || !startsWith(github.head_ref, 'ai/')) &&
       always() &&
       needs.check-sdk.result == 'success' &&
       (needs.check-sdk.outputs.exists == 'true' || needs.build-sdk.result == 'success')
