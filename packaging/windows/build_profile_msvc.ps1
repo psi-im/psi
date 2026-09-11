@@ -3,7 +3,9 @@ param(
     [string]$SdkDir,
 
     [Parameter(Mandatory = $true)]
-    [string]$OutputDir
+    [string]$OutputDir,
+
+    [switch]$RunTests
 )
 
 $ErrorActionPreference = 'Stop'
@@ -56,6 +58,7 @@ if (-not (Test-Path (Join-Path $qtKeychainDir 'Qt6KeychainConfig.cmake'))) {
 }
 
 $configureLog = Join-Path $outputDir 'configure-modern.log'
+$buildTesting = if ($RunTests) { 'ON' } else { 'OFF' }
 $configureArgs = @(
     '-S', '.',
     '-B', $buildDir,
@@ -86,7 +89,7 @@ $configureArgs = @(
     '-DOPENSSL_USE_STATIC_LIBS=OFF',
     "-DHUNSPELL_ROOT=$sdkDir",
     "-DMINIZIP_ROOT=$sdkDir",
-    '-DBUILD_TESTING=OFF',
+    "-DBUILD_TESTING=$buildTesting",
     '-DENABLE_PLUGINS=OFF',
     '-DBUILD_PSIMEDIA=OFF',
     '-DONLY_BINARY=OFF',
@@ -111,6 +114,9 @@ foreach ($required in @(
 }
 
 Invoke-Checked cmake --build $buildDir --parallel 4
+if ($RunTests) {
+    Invoke-Checked ctest --test-dir $buildDir --output-on-failure -j 1
+}
 Invoke-Checked cmake --install $buildDir
 
 $psiExe = Join-Path $stageDir 'psi.exe'
