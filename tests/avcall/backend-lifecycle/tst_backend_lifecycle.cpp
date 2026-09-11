@@ -48,6 +48,9 @@ public:
         emit packetsWritten(1);
     }
 
+    void queueOutgoing(const PsiMedia::PRtpPacket &packet) { packets_.enqueue(packet); }
+    void notifyReadyRead() { emit readyRead(); }
+
 signals:
     void readyRead();
     void packetsWritten(int count);
@@ -168,6 +171,8 @@ public:
     PsiMedia::RtpChannelContext *audioRtpChannel() override { return &audio_; }
     PsiMedia::RtpChannelContext *videoRtpChannel() override { return &video_; }
     void dumpPipeline(std::function<void(const QStringList &)> callback) override { callback({}); }
+
+    FakeRtpChannel *audioChannel() { return &audio_; }
 
     void completeStart()
     {
@@ -394,6 +399,92 @@ private slots:
 
         QCOMPARE(provider_.stats().updateCalls, 1);
         QCOMPARE(provider_.stats().stopCalls, 0);
+        QCOMPARE(provider_.stats().invalidCalls, 0);
+    }
+
+    void activeErrorAfterCleanupIsTerminal()
+    {
+        Harness harness;
+        std::optional<RTP::Description> local;
+        bool                             prepared = false;
+        auto prepare = harness.session->prepareLocalOffer(
+            harness.endpoint.get(),
+            [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description, RTP::MediaError error) {
+                QVERIFY(!error);
+                local    = std::move(description);
+                prepared = true;
+            });
+        QTRY_COMPARE(provider_.stats().startCalls, 1);
+        provider_.context()->completeStart();
+        QTRY_VERIFY(prepared);
+        QVERIFY(local);
+        prepare.reset();
+
+        bool applied = false;
+        auto apply = harness.session->applyNegotiation(
+            harness.endpoint.get(), *local, audioDescription(),
+            [&](RTP::MediaOperation::Id, RTP::MediaError error) {
+                QVERIFY(!error);
+                applied = true;
+            });
+        QTRY_COMPARE(provider_.stats().updateCalls, 1);
+        provider_.context()->completePreferences();
+        QTRY_VERIFY(applied);
+        apply.reset();
+
+        int runtimeErrors = 0;
+        connect(harness.session.get(), &RTP::MediaSession::runtimeError, this,
+                [&](const RTP::MediaError &) { ++runtimeErrors; });
+        provider_.context()->failAfterCleanup(PsiMedia::RtpSessionContext::ErrorCodec);
+        QTRY_COMPARE(runtimeErrors, 1);
+
+        harness.endpoint->stop();
+        harness.endpoint.reset();
+        harness.session.reset();
+        QCOMPARE(provider_.stats().pauseAudioCalls, 0);
+        QCOMPARE(provider_.stats().stopCalls, 0);
+        QCOMPARE(provider_.stats().invalidCalls, 0);
+    }
+
+    void packetWriterMayDeleteBackendSynchronously()
+    {
+        Harness harness;
+        bool prepared = false;
+        auto operation = harness.session->prepareLocalOffer(
+            harness.endpoint.get(),
+            [&](RTP::MediaOperation::Id, std::optional<RTP::Description>, RTP::MediaError error) {
+                QVERIFY(!error);
+                prepared = true;
+            });
+        QTRY_COMPARE(provider_.stats().startCalls, 1);
+        provider_.context()->completeStart();
+        QTRY_VERIFY(prepared);
+        operation.reset();
+
+        auto context = QPointer<FakeRtpSessionContext>(provider_.context());
+        QVERIFY(context);
+        PsiMedia::PRtpPacket first;
+        first.rawValue   = QByteArray(12, 'a');
+        first.portOffset = 0;
+        PsiMedia::PRtpPacket second;
+        second.rawValue   = QByteArray(12, 'b');
+        second.portOffset = 1;
+        context->audioChannel()->queueOutgoing(first);
+        context->audioChannel()->queueOutgoing(second);
+
+        int writes = 0;
+        QVERIFY(harness.endpoint->attachPacketIo(
+            [&](QByteArray, RTP::SrtpContext::Packet) {
+                ++writes;
+                harness.session.reset();
+                return false;
+            }));
+
+        QCOMPARE(writes, 1);
+        QVERIFY(!harness.session);
+        QVERIFY(!context);
+        harness.endpoint.reset();
+        QCOMPARE(provider_.stats().stopCalls, 1);
         QCOMPARE(provider_.stats().invalidCalls, 0);
     }
 
