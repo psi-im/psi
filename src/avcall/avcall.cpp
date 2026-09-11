@@ -390,11 +390,7 @@ void AvCallManager::setStunRelayTcpService(const QString &host, int port, const 
     d->iceManager->setStunRelayTcpService(host, port, proxy, user, pass);
 }
 
-void AvCallManager::setAllowIpExposure(bool allow)
-{
-    // Moved to the native Iris ICE manager in the next integration slice.
-    Q_UNUSED(allow)
-}
+void AvCallManager::setAllowIpExposure(bool allow) { d->iceManager->setAllowIpExposure(allow); }
 
 void AvCallManager::setBasePort(int port)
 {
