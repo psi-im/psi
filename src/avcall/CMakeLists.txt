@@ -16,6 +16,7 @@ set(HEADERS
     avcall.h
     calldlg.h
     mediadevicewatcher.h
+    psimediajingle.h
 )
 
 set(SOURCES
@@ -25,6 +26,7 @@ set(SOURCES
 
     jinglertptasks.cpp
     mediadevicewatcher.cpp
+    psimediajingle.cpp
 )
 
 set(FORMS
