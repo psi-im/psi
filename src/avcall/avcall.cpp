@@ -125,6 +125,7 @@ public:
             fail(tr("Unable to create the requested RTP media."));
             return;
         }
+        wireApplications();
 
         if (!configureBackend()) {
             fail(errorString.isEmpty() ? tr("Unable to initialize the media backend.") : errorString);
@@ -188,7 +189,61 @@ public:
         Q_ASSERT(session);
         connect(session, &Jingle::Session::activated, this, &AvCallPrivate::sessionActivated);
         connect(session, &Jingle::Session::terminated, this, &AvCallPrivate::sessionTerminated);
-        connect(session, &QObject::destroyed, this, [this] { session = nullptr; });
+        connect(session, &Jingle::Session::newContentReceived, this, &AvCallPrivate::wireApplications);
+        connect(session, &QObject::destroyed, this, [this] {
+            session         = nullptr;
+            signalingActive = false;
+            active          = false;
+        });
+        wireApplications();
+    }
+
+    void wireApplications()
+    {
+        if (!session)
+            return;
+        for (auto app : session->contentList()) {
+            auto rtp = dynamic_cast<RTP::Application *>(app);
+            if (!rtp)
+                continue;
+            connect(rtp, &Jingle::Application::stateChanged, this, &AvCallPrivate::applicationStateChanged,
+                    Qt::UniqueConnection);
+        }
+    }
+
+    void maybeActivateMedia()
+    {
+        if (!session || !signalingActive || active)
+            return;
+
+        const bool needAudio = mode == AvCall::Audio || mode == AvCall::Both;
+        const bool needVideo = mode == AvCall::Video || mode == AvCall::Both;
+        bool       haveAudio = !needAudio;
+        bool       haveVideo = !needVideo;
+        bool       audioReady = !needAudio;
+        bool       videoReady = !needVideo;
+
+        for (auto app : session->contentList()) {
+            auto rtp = dynamic_cast<RTP::Application *>(app);
+            if (!rtp)
+                continue;
+            if (rtp->media() == QLatin1String("audio") && needAudio && rtp->state() < Jingle::State::Finishing) {
+                haveAudio  = true;
+                audioReady = rtp->state() == Jingle::State::Active;
+            } else if (rtp->media() == QLatin1String("video") && needVideo
+                       && rtp->state() < Jingle::State::Finishing) {
+                haveVideo  = true;
+                videoReady = rtp->state() == Jingle::State::Active;
+            }
+        }
+
+        if (!haveAudio || !haveVideo || !audioReady || !videoReady)
+            return;
+
+        active = true;
+        startPsiMediaJingleTransmit(session, g_config->liveInput, needAudio, g_config->audioInDeviceId, needVideo,
+                                    g_config->videoInDeviceId);
+        emit q->activated();
     }
 
     void fail(const QString &message)
@@ -209,15 +264,11 @@ public:
 private slots:
     void sessionActivated()
     {
-        if (!session)
-            return;
-        active           = true;
-        const bool audio = mode == AvCall::Audio || mode == AvCall::Both;
-        const bool video = mode == AvCall::Video || mode == AvCall::Both;
-        startPsiMediaJingleTransmit(session, g_config->liveInput, audio, g_config->audioInDeviceId, video,
-                                    g_config->videoInDeviceId);
-        emit q->activated();
+        signalingActive = true;
+        maybeActivateMedia();
     }
+
+    void applicationStateChanged(Jingle::State) { maybeActivateMedia(); }
 
     void sessionTerminated()
     {
@@ -228,7 +279,8 @@ private slots:
             errorString = active ? tr("Call was terminated.") : tr("Call was rejected or negotiation failed.");
             emit q->error();
         }
-        active = false;
+        signalingActive = false;
+        active          = false;
     }
 
 public:
@@ -241,6 +293,7 @@ public:
     QString                        errorString;
     PsiMedia::VideoWidget         *videoWidget = nullptr;
     bool                           incoming = false;
+    bool                           signalingActive = false;
     bool                           active = false;
     bool                           localTermination = false;
 };
