@@ -12,12 +12,28 @@
 
 #include <memory>
 
-namespace XMPP::Jingle::RTP {
-class MediaProvider;
+class QString;
+
+namespace PsiMedia {
+class VideoWidget;
 }
 
-// Media adapter for the experimental Iris-native Jingle RTP path. Creating the
-// provider has no signaling, device or capture side effects.
+namespace XMPP::Jingle {
+class Session;
+namespace RTP {
+class MediaProvider;
+}
+}
+
 std::shared_ptr<XMPP::Jingle::RTP::MediaProvider> makePsiMediaJingleProvider();
+
+// Psi policy/control surface for the psimedia backend owned by an Iris-native
+// Jingle RTP session. Negotiation never enables capture by itself.
+bool configurePsiMediaJingleSession(XMPP::Jingle::Session *session, const QString &audioOutputDevice,
+                                    const QString &fileInput, bool loopFile, int maximumSendingBitrate);
+bool setPsiMediaJingleVideoOutput(XMPP::Jingle::Session *session, PsiMedia::VideoWidget *widget);
+bool startPsiMediaJingleTransmit(XMPP::Jingle::Session *session, bool liveInput, bool audio,
+                                 const QString &audioInputDevice, bool video, const QString &videoInputDevice);
+void stopPsiMediaJingleTransmit(XMPP::Jingle::Session *session);
 
 #endif // PSIMEDIAJINGLE_H

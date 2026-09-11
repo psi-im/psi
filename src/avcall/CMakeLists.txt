@@ -11,8 +11,6 @@ include_directories(
 add_definitions(-DDEBUG_POSTFIX="")
 
 set(HEADERS
-    jinglertptasks.h
-    jinglertp.h
     avcall.h
     calldlg.h
     mediadevicewatcher.h
@@ -20,11 +18,8 @@ set(HEADERS
 )
 
 set(SOURCES
-    jinglertp.cpp
     avcall.cpp
     calldlg.cpp
-
-    jinglertptasks.cpp
     mediadevicewatcher.cpp
     psimediajingle.cpp
 )

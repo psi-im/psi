@@ -12,6 +12,7 @@
 #include "../psimedia/psimedia.h"
 
 #include <iris/jingle-rtp.h>
+#include <iris/jingle-session.h>
 
 #include <QMetaObject>
 #include <QPointer>
@@ -94,11 +95,11 @@ bool hasUnsupportedAnswerFeatures(const RTP::Description &answer)
     return false;
 }
 
-class Session;
+class BackendSession;
 
 class Endpoint final : public RTP::MediaEndpoint {
 public:
-    Endpoint(Session *session, QString media);
+    Endpoint(BackendSession *session, QString media);
     ~Endpoint() override { stop(); }
 
     bool supportsPacketIo() const override { return true; }
@@ -114,24 +115,26 @@ public:
     bool configure(const RTP::Description &, const RTP::Description &) override { return false; }
     void stop() override;
 
-    const QString &media() const { return media_; }
-    Session       *session() const { return session_; }
-    void           setPrepared(RTP::Description description) { prepared_ = std::move(description); }
+    const QString  &media() const { return media_; }
+    BackendSession *session() const { return session_; }
+    void            setPrepared(RTP::Description description) { prepared_ = std::move(description); }
 
 private:
     void drainOutgoing();
 
-    Session                        *session_ = nullptr;
-    QString                         media_;
+    BackendSession                  *session_ = nullptr;
+    QString                          media_;
     std::optional<RTP::Description> prepared_;
-    PacketWriter                    writer_;
-    QMetaObject::Connection         readyReadConnection_;
+    PacketWriter                     writer_;
+    QMetaObject::Connection          readyReadConnection_;
 };
 
-class Session final : public RTP::MediaSession {
+class BackendSession final : public RTP::MediaSession {
 public:
-    Session()
+    BackendSession()
     {
+        // Negotiation is intentionally device-independent. Capture gets enabled
+        // only by AvCall after the Jingle session has been accepted.
         rtp_.setAudioInputDevice(QString());
         rtp_.setVideoInputDevice(QString());
         connect(&rtp_, &PsiMedia::RtpSession::started, this, [this] {
@@ -146,19 +149,20 @@ public:
             finishRunning({});
         });
         connect(&rtp_, &PsiMedia::RtpSession::error, this, [this] {
-            const auto error = backendError(QStringLiteral("psimedia RTP session error (%1)").arg(int(rtp_.errorCode())));
+            const auto error
+                = backendError(QStringLiteral("psimedia RTP session error (%1)").arg(int(rtp_.errorCode())));
             if (!running_) {
                 emit runtimeError(error);
                 return;
             }
 
-            // RtpSession::error() is call-fatal in the existing Psi call path.
-            // Complete the current Iris operation first so an initial incoming
-            // prepare can become ContentReject rather than a generic remove.
-            // Then fail the rest of the call on the next event-loop turn.
+            // psimedia has no operation IDs and its error is call-fatal. Complete
+            // the current operation first, then fail the rest of the call on the
+            // next event-loop turn so initial incoming failure can become a
+            // content/session rejection rather than a stale generic callback.
             deferred_.reset();
             finishRunning(error);
-            QPointer<Session> guard(this);
+            QPointer<BackendSession> guard(this);
             QTimer::singleShot(0, this, [guard, error] {
                 if (guard)
                     emit guard->runtimeError(error);
@@ -166,7 +170,7 @@ public:
         });
     }
 
-    ~Session() override
+    ~BackendSession() override
     {
         rtp_.disconnect(this);
         rtp_.stop();
@@ -198,6 +202,65 @@ public:
             rtp_.pauseVideo();
     }
 
+    void configurePolicy(const QString &audioOutputDevice, const QString &fileInput, bool loopFile,
+                         int maximumSendingBitrate)
+    {
+        if (!audioOutputDevice.isEmpty())
+            rtp_.setAudioOutputDevice(audioOutputDevice);
+        if (!fileInput.isEmpty()) {
+            rtp_.setFileInput(fileInput);
+            rtp_.setFileLoopEnabled(loopFile);
+        }
+        if (maximumSendingBitrate >= 0)
+            rtp_.setMaximumSendingBitrate(maximumSendingBitrate);
+    }
+
+    void setVideoOutput(PsiMedia::VideoWidget *widget)
+    {
+#ifdef QT_GUI_LIB
+        rtp_.setVideoOutputWidget(widget);
+#else
+        Q_UNUSED(widget)
+#endif
+    }
+
+    bool startTransmit(bool liveInput, bool audio, const QString &audioInputDevice, bool video,
+                       const QString &videoInputDevice)
+    {
+        if (!started_)
+            return false;
+
+        bool transmitting = false;
+        if (liveInput) {
+            rtp_.setAudioInputDevice(audio ? audioInputDevice : QString());
+            rtp_.setVideoInputDevice(video ? videoInputDevice : QString());
+        }
+
+        if (audio && (liveInput ? !audioInputDevice.isEmpty() : rtp_.canTransmitAudio())) {
+            rtp_.transmitAudio();
+            transmitting = true;
+        } else {
+            rtp_.pauseAudio();
+        }
+        if (video && (liveInput ? !videoInputDevice.isEmpty() : rtp_.canTransmitVideo())) {
+            rtp_.transmitVideo();
+            transmitting = true;
+        } else {
+            rtp_.pauseVideo();
+        }
+        return transmitting;
+    }
+
+    void stopTransmit()
+    {
+        if (!started_)
+            return;
+        rtp_.pauseAudio();
+        rtp_.pauseVideo();
+        rtp_.setAudioInputDevice(QString());
+        rtp_.setVideoInputDevice(QString());
+    }
+
 protected:
     void beginPrepareLocalOffer(RTP::MediaOperation::Id id, RTP::MediaEndpoint *base,
                                 PrepareCompletion completion) override
@@ -210,8 +273,8 @@ protected:
         submit(std::move(operation));
     }
 
-    void beginPrepareAnswer(RTP::MediaOperation::Id id, RTP::MediaEndpoint *base,
-                            const RTP::Description &remote, PrepareCompletion completion) override
+    void beginPrepareAnswer(RTP::MediaOperation::Id id, RTP::MediaEndpoint *base, const RTP::Description &remote,
+                            PrepareCompletion completion) override
     {
         Pending operation;
         operation.id                = id;
@@ -222,9 +285,8 @@ protected:
         submit(std::move(operation));
     }
 
-    void beginApplyNegotiation(RTP::MediaOperation::Id id, RTP::MediaEndpoint *base,
-                               const RTP::Description &local, const RTP::Description &remote,
-                               ApplyCompletion completion) override
+    void beginApplyNegotiation(RTP::MediaOperation::Id id, RTP::MediaEndpoint *base, const RTP::Description &local,
+                               const RTP::Description &remote, ApplyCompletion completion) override
     {
         Pending operation;
         operation.id              = id;
@@ -274,9 +336,9 @@ private:
             return;
         }
         if (running_) {
-            // A cancelled psimedia start/update cannot be interrupted. The Iris
-            // operation is already cancelled, but its backend signal still has to
-            // be drained before another operation can be mapped to signal-without-id.
+            // A cancelled psimedia start/update cannot be interrupted. Iris has
+            // already cancelled its operation, but this signal-without-id must be
+            // drained before the next operation can be mapped safely.
             deferred_ = std::move(operation);
             return;
         }
@@ -429,7 +491,7 @@ private:
     std::optional<Pending>       deferred_;
 };
 
-Endpoint::Endpoint(Session *session, QString media) : session_(session), media_(std::move(media)) { }
+Endpoint::Endpoint(BackendSession *session, QString media) : session_(session), media_(std::move(media)) { }
 
 bool Endpoint::attachPacketIo(PacketWriter writer)
 {
@@ -485,11 +547,51 @@ void Endpoint::drainOutgoing()
 
 class Provider final : public RTP::MediaProvider {
 public:
-    std::unique_ptr<RTP::MediaSession> createSession() override { return std::make_unique<Session>(); }
+    std::unique_ptr<RTP::MediaSession> createSession() override { return std::make_unique<BackendSession>(); }
 };
+
+BackendSession *backendSession(XMPP::Jingle::Session *session)
+{
+    if (!session)
+        return nullptr;
+    auto pad = qSharedPointerDynamicCast<RTP::Pad>(session->applicationPad(RTP::Description::ns()));
+    return pad ? dynamic_cast<BackendSession *>(pad->mediaSession()) : nullptr;
+}
 }
 
 std::shared_ptr<XMPP::Jingle::RTP::MediaProvider> makePsiMediaJingleProvider()
 {
     return std::make_shared<Provider>();
+}
+
+bool configurePsiMediaJingleSession(XMPP::Jingle::Session *session, const QString &audioOutputDevice,
+                                    const QString &fileInput, bool loopFile, int maximumSendingBitrate)
+{
+    auto backend = backendSession(session);
+    if (!backend)
+        return false;
+    backend->configurePolicy(audioOutputDevice, fileInput, loopFile, maximumSendingBitrate);
+    return true;
+}
+
+bool setPsiMediaJingleVideoOutput(XMPP::Jingle::Session *session, PsiMedia::VideoWidget *widget)
+{
+    auto backend = backendSession(session);
+    if (!backend)
+        return false;
+    backend->setVideoOutput(widget);
+    return true;
+}
+
+bool startPsiMediaJingleTransmit(XMPP::Jingle::Session *session, bool liveInput, bool audio,
+                                 const QString &audioInputDevice, bool video, const QString &videoInputDevice)
+{
+    auto backend = backendSession(session);
+    return backend && backend->startTransmit(liveInput, audio, audioInputDevice, video, videoInputDevice);
+}
+
+void stopPsiMediaJingleTransmit(XMPP::Jingle::Session *session)
+{
+    if (auto backend = backendSession(session))
+        backend->stopTransmit();
 }
