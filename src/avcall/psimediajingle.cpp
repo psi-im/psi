@@ -14,6 +14,8 @@
 #include <iris/jingle-rtp.h>
 
 #include <QMetaObject>
+#include <QPointer>
+#include <QTimer>
 
 #include <optional>
 #include <utility>
@@ -119,11 +121,11 @@ public:
 private:
     void drainOutgoing();
 
-    Session                       *session_ = nullptr;
-    QString                        media_;
+    Session                        *session_ = nullptr;
+    QString                         media_;
     std::optional<RTP::Description> prepared_;
-    PacketWriter                   writer_;
-    QMetaObject::Connection        readyReadConnection_;
+    PacketWriter                    writer_;
+    QMetaObject::Connection         readyReadConnection_;
 };
 
 class Session final : public RTP::MediaSession {
@@ -144,11 +146,23 @@ public:
             finishRunning({});
         });
         connect(&rtp_, &PsiMedia::RtpSession::error, this, [this] {
-            auto error = backendError(QStringLiteral("psimedia RTP session error (%1)").arg(int(rtp_.errorCode())));
-            if (running_)
-                finishRunning(std::move(error));
-            else
+            const auto error = backendError(QStringLiteral("psimedia RTP session error (%1)").arg(int(rtp_.errorCode())));
+            if (!running_) {
                 emit runtimeError(error);
+                return;
+            }
+
+            // RtpSession::error() is call-fatal in the existing Psi call path.
+            // Complete the current Iris operation first so an initial incoming
+            // prepare can become ContentReject rather than a generic remove.
+            // Then fail the rest of the call on the next event-loop turn.
+            deferred_.reset();
+            finishRunning(error);
+            QPointer<Session> guard(this);
+            QTimer::singleShot(0, this, [guard, error] {
+                if (guard)
+                    emit guard->runtimeError(error);
+            });
         });
     }
 
@@ -237,14 +251,14 @@ private:
     enum class Await { None, Started, Preferences };
 
     struct Pending {
-        RTP::MediaOperation::Id        id = 0;
-        Kind                           kind = Kind::PrepareOffer;
-        Endpoint                      *endpoint = nullptr;
+        RTP::MediaOperation::Id         id = 0;
+        Kind                            kind = Kind::PrepareOffer;
+        Endpoint                       *endpoint = nullptr;
         std::optional<RTP::Description> local;
         std::optional<RTP::Description> remote;
-        PrepareCompletion              prepareCompletion;
-        ApplyCompletion                applyCompletion;
-        bool                           cancelled = false;
+        PrepareCompletion               prepareCompletion;
+        ApplyCompletion                 applyCompletion;
+        bool                            cancelled = false;
     };
 
     Endpoint *checkedEndpoint(RTP::MediaEndpoint *base)
@@ -404,15 +418,15 @@ private:
         start(std::move(operation));
     }
 
-    PsiMedia::RtpSession             rtp_;
-    bool                             started_ = false;
-    bool                             audioEnabled_ = false;
-    bool                             videoEnabled_ = false;
-    QList<PsiMedia::PayloadInfo>     audioRemote_;
-    QList<PsiMedia::PayloadInfo>     videoRemote_;
-    Await                            await_ = Await::None;
-    std::optional<Pending>           running_;
-    std::optional<Pending>           deferred_;
+    PsiMedia::RtpSession         rtp_;
+    bool                         started_ = false;
+    bool                         audioEnabled_ = false;
+    bool                         videoEnabled_ = false;
+    QList<PsiMedia::PayloadInfo> audioRemote_;
+    QList<PsiMedia::PayloadInfo> videoRemote_;
+    Await                        await_ = Await::None;
+    std::optional<Pending>       running_;
+    std::optional<Pending>       deferred_;
 };
 
 Endpoint::Endpoint(Session *session, QString media) : session_(session), media_(std::move(media)) { }
