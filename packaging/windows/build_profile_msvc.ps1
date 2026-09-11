@@ -122,8 +122,17 @@ if ($RunTests) {
     Invoke-Checked cmake @configureArgs
     Invoke-Checked cmake --build $buildDir --target avcall_backend_lifecycle_test --parallel 4
     $testPath = "$(Join-Path $env:QT_ROOT_DIR 'bin');$(Join-Path $sdkDir 'bin');$env:PATH"
-    Invoke-Checked cmake -E env "PATH=$testPath" ctest --test-dir $buildDir --output-on-failure `
-        -R '^avcall_backend_lifecycle_test$' -j 1
+    $testArgs = @(
+        '-E', 'env', "PATH=$testPath", 'ctest',
+        '--test-dir', $buildDir,
+        '--output-on-failure',
+        '-R', '^avcall_backend_lifecycle_test$',
+        '-j', '1'
+    )
+    & cmake @testArgs
+    if ($LASTEXITCODE -ne 0) {
+        throw "Lifecycle test failed with exit code $LASTEXITCODE"
+    }
 }
 Invoke-Checked cmake --install $buildDir
 
