@@ -16,6 +16,7 @@
 
 #include <QMetaObject>
 #include <QPointer>
+#include <QSet>
 #include <QTimer>
 
 #include <optional>
@@ -100,7 +101,7 @@ class BackendSession;
 class Endpoint final : public RTP::MediaEndpoint {
 public:
     Endpoint(BackendSession *session, QString media);
-    ~Endpoint() override { stop(); }
+    ~Endpoint() override;
 
     bool supportsPacketIo() const override { return true; }
     bool attachPacketIo(PacketWriter writer) override;
@@ -120,6 +121,10 @@ public:
     void            setPrepared(RTP::Description description) { prepared_ = std::move(description); }
 
 private:
+    friend class BackendSession;
+    void detachPacketIo();
+    void backendUnavailable();
+    void invalidateSession();
     void drainOutgoing();
 
     BackendSession                  *session_ = nullptr;
@@ -127,6 +132,7 @@ private:
     std::optional<RTP::Description> prepared_;
     PacketWriter                     writer_;
     QMetaObject::Connection          readyReadConnection_;
+    bool                             stopped_ = false;
 };
 
 class BackendSession final : public RTP::MediaSession {
@@ -138,42 +144,65 @@ public:
         rtp_.setAudioInputDevice(QString());
         rtp_.setVideoInputDevice(QString());
         connect(&rtp_, &PsiMedia::RtpSession::started, this, [this] {
-            if (!running_ || await_ != Await::Started)
+            if (state_ != State::Starting || !running_ || await_ != Await::Started)
                 return;
-            started_ = true;
+            state_ = State::Running;
             finishRunning({});
         });
         connect(&rtp_, &PsiMedia::RtpSession::preferencesUpdated, this, [this] {
-            if (!running_ || await_ != Await::Preferences)
+            if (state_ != State::Running || !running_ || await_ != Await::Preferences)
                 return;
             finishRunning({});
         });
-        connect(&rtp_, &PsiMedia::RtpSession::error, this, [this] {
-            const auto error
-                = backendError(QStringLiteral("psimedia RTP session error (%1)").arg(int(rtp_.errorCode())));
-            if (!running_) {
-                emit runtimeError(error);
+        connect(&rtp_, &PsiMedia::RtpSession::stopped, this, [this] {
+            if (state_ == State::Stopped || state_ == State::Failed)
+                return;
+            const bool expected = state_ == State::Stopping;
+            state_              = State::Stopped;
+            deferred_.reset();
+            revokeEndpoints();
+            if (expected) {
+                running_.reset();
+                await_ = Await::None;
                 return;
             }
-
-            // psimedia has no operation IDs and its error is call-fatal. Complete
-            // the current operation first, then fail the rest of the call on the
-            // next event-loop turn so initial incoming failure can become a
-            // content/session rejection rather than a stale generic callback.
+            failCurrentAndCall(backendError(QStringLiteral("psimedia RTP session stopped unexpectedly")));
+        });
+        connect(&rtp_, &PsiMedia::RtpSession::error, this, [this] {
+            // GstRtpSessionContext has already destroyed its live control before
+            // this signal. Capture the provider error while its context still
+            // carries lastStatus, then make the adapter terminal before any
+            // completion/runtime callback can synchronously tear the call down.
+            const auto code = rtp_.errorCode();
+            const auto error
+                = backendError(QStringLiteral("psimedia RTP session error (%1)").arg(int(code)));
+            if (state_ == State::Failed || state_ == State::Stopped)
+                return;
+            state_ = State::Failed;
             deferred_.reset();
-            finishRunning(error);
-            QPointer<BackendSession> guard(this);
-            QTimer::singleShot(0, this, [guard, error] {
-                if (guard)
-                    emit guard->runtimeError(error);
-            });
+            revokeEndpoints();
+            failCurrentAndCall(error);
         });
     }
 
     ~BackendSession() override
     {
+        cancelAll();
+        invalidateEndpoints();
+        deferred_.reset();
+        running_.reset();
+        await_ = Await::None;
+
+        // The real psimedia provider requires a live control for stop(). It has
+        // no idempotent stop contract and destroys that control before error()/
+        // stopped(). Disconnect first, and request stop only while our state
+        // proves that the control created by start() is still live. The provider
+        // context destructor performs its own synchronous cleanup afterwards.
         rtp_.disconnect(this);
-        rtp_.stop();
+        if (state_ == State::Starting || state_ == State::Running) {
+            state_ = State::Stopping;
+            rtp_.stop();
+        }
     }
 
     std::unique_ptr<RTP::MediaEndpoint> createEndpoint(const QString &, const QString &media) override
@@ -185,6 +214,8 @@ public:
 
     PsiMedia::RtpChannel *channel(const QString &media)
     {
+        if (state_ != State::Running)
+            return nullptr;
         if (media == QLatin1String("audio"))
             return rtp_.audioRtpChannel();
         if (media == QLatin1String("video"))
@@ -194,7 +225,7 @@ public:
 
     void pause(const QString &media)
     {
-        if (!started_)
+        if (state_ != State::Running)
             return;
         if (media == QLatin1String("audio"))
             rtp_.pauseAudio();
@@ -205,6 +236,8 @@ public:
     void configurePolicy(const QString &audioOutputDevice, const QString &fileInput, bool loopFile,
                          int maximumSendingBitrate)
     {
+        if (isTerminalOrStopping())
+            return;
         if (!audioOutputDevice.isEmpty())
             rtp_.setAudioOutputDevice(audioOutputDevice);
         if (!fileInput.isEmpty()) {
@@ -217,6 +250,8 @@ public:
 
     void setVideoOutput(PsiMedia::VideoWidget *widget)
     {
+        if (isTerminalOrStopping())
+            return;
 #ifdef QT_GUI_LIB
         rtp_.setVideoOutputWidget(widget);
 #else
@@ -227,7 +262,7 @@ public:
     bool startTransmit(bool liveInput, bool audio, const QString &audioInputDevice, bool video,
                        const QString &videoInputDevice)
     {
-        if (!started_)
+        if (state_ != State::Running)
             return false;
 
         bool transmitting = false;
@@ -253,12 +288,23 @@ public:
 
     void stopTransmit()
     {
-        if (!started_)
+        if (state_ != State::Running)
             return;
         rtp_.pauseAudio();
         rtp_.pauseVideo();
         rtp_.setAudioInputDevice(QString());
         rtp_.setVideoInputDevice(QString());
+    }
+
+    void registerEndpoint(Endpoint *endpoint) { endpoints_.insert(endpoint); }
+
+    void unregisterEndpoint(Endpoint *endpoint)
+    {
+        endpoints_.remove(endpoint);
+        if (deferred_ && deferred_->endpoint == endpoint)
+            deferred_.reset();
+        if (running_ && running_->endpoint == endpoint)
+            running_->cancelled = true;
     }
 
 protected:
@@ -311,6 +357,7 @@ protected:
 private:
     enum class Kind { PrepareOffer, PrepareAnswer, Apply };
     enum class Await { None, Started, Preferences };
+    enum class State { Unstarted, Starting, Running, Stopping, Stopped, Failed };
 
     struct Pending {
         RTP::MediaOperation::Id         id = 0;
@@ -323,16 +370,25 @@ private:
         bool                            cancelled = false;
     };
 
+    bool isTerminalOrStopping() const
+    {
+        return state_ == State::Stopping || state_ == State::Stopped || state_ == State::Failed;
+    }
+
     Endpoint *checkedEndpoint(RTP::MediaEndpoint *base)
     {
         auto endpoint = dynamic_cast<Endpoint *>(base);
-        return endpoint && endpoint->session() == this ? endpoint : nullptr;
+        return endpoint && endpoint->session() == this && endpoints_.contains(endpoint) ? endpoint : nullptr;
     }
 
     void submit(Pending operation)
     {
-        if (!operation.endpoint) {
+        if (!operation.endpoint || !endpoints_.contains(operation.endpoint)) {
             complete(std::move(operation), backendError(QStringLiteral("Invalid psimedia RTP endpoint")));
+            return;
+        }
+        if (isTerminalOrStopping()) {
+            complete(std::move(operation), backendError(QStringLiteral("psimedia RTP backend is no longer available")));
             return;
         }
         if (running_) {
@@ -347,6 +403,15 @@ private:
 
     void start(Pending operation)
     {
+        if (!operation.endpoint || !endpoints_.contains(operation.endpoint)) {
+            complete(std::move(operation), backendError(QStringLiteral("Invalid psimedia RTP endpoint")));
+            return;
+        }
+        if (isTerminalOrStopping()) {
+            complete(std::move(operation), backendError(QStringLiteral("psimedia RTP backend is no longer available")));
+            return;
+        }
+
         bool changed = false;
         if (operation.kind == Kind::PrepareOffer || operation.kind == Kind::PrepareAnswer)
             changed |= enableLocal(operation.endpoint->media());
@@ -364,10 +429,15 @@ private:
             changed |= setRemote(operation.endpoint->media(), *remote);
         }
 
-        if (!started_) {
+        if (state_ == State::Unstarted) {
             running_ = std::move(operation);
             await_   = Await::Started;
+            state_   = State::Starting;
             rtp_.start();
+            return;
+        }
+        if (state_ != State::Running) {
+            complete(std::move(operation), backendError(QStringLiteral("psimedia RTP backend is not runnable")));
             return;
         }
         if (changed) {
@@ -423,6 +493,8 @@ private:
 
     std::optional<RTP::Description> preparedDescription(Endpoint *endpoint)
     {
+        if (!endpoint || !endpoints_.contains(endpoint) || state_ != State::Running)
+            return {};
         const auto payloads = endpoint->media() == QLatin1String("audio") ? rtp_.localAudioPayloadInfo()
                                                                           : rtp_.localVideoPayloadInfo();
         RTP::Description result;
@@ -442,6 +514,8 @@ private:
 
     void finishRunning(RTP::MediaError error)
     {
+        if (!running_)
+            return;
         auto operation = std::move(*running_);
         running_.reset();
         await_ = Await::None;
@@ -454,6 +528,7 @@ private:
 
     void complete(Pending operation, RTP::MediaError error)
     {
+        QPointer<BackendSession> guard(this);
         if (operation.kind == Kind::Apply) {
             auto completion = std::move(operation.applyCompletion);
             if (completion)
@@ -468,20 +543,64 @@ private:
             if (completion)
                 completion(std::move(description), std::move(error));
         }
-        startDeferred();
+        if (guard)
+            guard->startDeferred();
     }
 
     void startDeferred()
     {
         if (running_ || !deferred_)
             return;
+        if (isTerminalOrStopping()) {
+            deferred_.reset();
+            return;
+        }
         auto operation = std::move(*deferred_);
         deferred_.reset();
         start(std::move(operation));
     }
 
+    void failCurrentAndCall(const RTP::MediaError &error)
+    {
+        const bool hadRunning = running_.has_value();
+        QPointer<BackendSession> guard(this);
+        if (hadRunning)
+            finishRunning(error);
+        if (!guard)
+            return;
+
+        if (!hadRunning) {
+            emit runtimeError(error);
+            return;
+        }
+
+        QTimer::singleShot(0, this, [guard, error] {
+            if (guard)
+                emit guard->runtimeError(error);
+        });
+    }
+
+    void revokeEndpoints()
+    {
+        const auto endpoints = endpoints_;
+        for (auto endpoint : endpoints) {
+            if (endpoint)
+                endpoint->backendUnavailable();
+        }
+    }
+
+    void invalidateEndpoints()
+    {
+        const auto endpoints = endpoints_;
+        endpoints_.clear();
+        for (auto endpoint : endpoints) {
+            if (endpoint)
+                endpoint->invalidateSession();
+        }
+    }
+
     PsiMedia::RtpSession         rtp_;
-    bool                         started_ = false;
+    State                        state_ = State::Unstarted;
     bool                         audioEnabled_ = false;
     bool                         videoEnabled_ = false;
     QList<PsiMedia::PayloadInfo> audioRemote_;
@@ -489,14 +608,45 @@ private:
     Await                        await_ = Await::None;
     std::optional<Pending>       running_;
     std::optional<Pending>       deferred_;
+    QSet<Endpoint *>             endpoints_;
 };
 
-Endpoint::Endpoint(BackendSession *session, QString media) : session_(session), media_(std::move(media)) { }
+Endpoint::Endpoint(BackendSession *session, QString media) : session_(session), media_(std::move(media))
+{
+    if (session_)
+        session_->registerEndpoint(this);
+}
+
+Endpoint::~Endpoint()
+{
+    stop();
+    if (session_)
+        session_->unregisterEndpoint(this);
+}
+
+void Endpoint::detachPacketIo()
+{
+    QObject::disconnect(readyReadConnection_);
+    readyReadConnection_ = {};
+    writer_               = {};
+}
+
+void Endpoint::backendUnavailable()
+{
+    detachPacketIo();
+    stopped_ = true;
+}
+
+void Endpoint::invalidateSession()
+{
+    backendUnavailable();
+    session_ = nullptr;
+}
 
 bool Endpoint::attachPacketIo(PacketWriter writer)
 {
-    stop();
-    if (!session_ || !writer)
+    detachPacketIo();
+    if (!session_ || stopped_ || !writer)
         return false;
     auto channel = session_->channel(media_);
     if (!channel)
@@ -510,7 +660,7 @@ bool Endpoint::attachPacketIo(PacketWriter writer)
 
 void Endpoint::receivePacket(const QByteArray &data, RTP::SrtpContext::Packet kind)
 {
-    if (!session_)
+    if (!session_ || stopped_)
         return;
     auto channel = session_->channel(media_);
     if (!channel)
@@ -520,16 +670,17 @@ void Endpoint::receivePacket(const QByteArray &data, RTP::SrtpContext::Packet ki
 
 void Endpoint::stop()
 {
-    QObject::disconnect(readyReadConnection_);
-    readyReadConnection_ = {};
-    writer_               = {};
+    detachPacketIo();
+    if (stopped_)
+        return;
+    stopped_ = true;
     if (session_)
         session_->pause(media_);
 }
 
 void Endpoint::drainOutgoing()
 {
-    if (!session_ || !writer_)
+    if (!session_ || stopped_ || !writer_)
         return;
     auto channel = session_->channel(media_);
     if (!channel)
