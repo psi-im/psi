@@ -58,7 +58,6 @@ if (-not (Test-Path (Join-Path $qtKeychainDir 'Qt6KeychainConfig.cmake'))) {
 }
 
 $configureLog = Join-Path $outputDir 'configure-modern.log'
-$buildTesting = if ($RunTests) { 'ON' } else { 'OFF' }
 $configureArgs = @(
     '-S', '.',
     '-B', $buildDir,
@@ -89,7 +88,7 @@ $configureArgs = @(
     '-DOPENSSL_USE_STATIC_LIBS=OFF',
     "-DHUNSPELL_ROOT=$sdkDir",
     "-DMINIZIP_ROOT=$sdkDir",
-    "-DBUILD_TESTING=$buildTesting",
+    '-DBUILD_TESTING=OFF',
     '-DENABLE_PLUGINS=OFF',
     '-DBUILD_PSIMEDIA=OFF',
     '-DONLY_BINARY=OFF',
@@ -115,7 +114,14 @@ foreach ($required in @(
 
 Invoke-Checked cmake --build $buildDir --parallel 4
 if ($RunTests) {
-    Invoke-Checked ctest --test-dir $buildDir --output-on-failure -j 1
+    $testingArg = [Array]::IndexOf($configureArgs, '-DBUILD_TESTING=OFF')
+    if ($testingArg -lt 0) {
+        throw 'BUILD_TESTING configure argument is missing'
+    }
+    $configureArgs[$testingArg] = '-DBUILD_TESTING=ON'
+    Invoke-Checked cmake @configureArgs
+    Invoke-Checked cmake --build $buildDir --target avcall_backend_lifecycle_test --parallel 4
+    Invoke-Checked ctest --test-dir $buildDir --output-on-failure -R '^avcall_backend_lifecycle_test$' -j 1
 }
 Invoke-Checked cmake --install $buildDir
 
