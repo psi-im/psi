@@ -186,9 +186,9 @@ public:
         emit preferencesUpdated();
     }
 
-    void failAfterCleanup(Error error)
+    void failAfterCleanup(Error code)
     {
-        error_        = error;
+        error_        = code;
         controlAlive_ = false;
         ++stats_->cleanups;
         emit error();
