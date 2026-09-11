@@ -548,6 +548,7 @@ void Endpoint::drainOutgoing()
 class Provider final : public RTP::MediaProvider {
 public:
     std::unique_ptr<RTP::MediaSession> createSession() override { return std::make_unique<BackendSession>(); }
+    QStringList mediaTypes() const override { return { QStringLiteral("audio"), QStringLiteral("video") }; }
 };
 
 BackendSession *backendSession(XMPP::Jingle::Session *session)
