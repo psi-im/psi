@@ -101,7 +101,11 @@ public:
         }
         if (!audio && !video)
             return false;
-        mode = audio && video ? AvCall::Both : (audio ? AvCall::Audio : AvCall::Video);
+        requestedAudio      = audio;
+        requestedVideo      = video;
+        captureAudioConsent = false;
+        captureVideoConsent = false;
+        mode                = audio && video ? AvCall::Both : (audio ? AvCall::Audio : AvCall::Video);
         return true;
     }
 
@@ -120,6 +124,10 @@ public:
 
         const bool needAudio = mode == AvCall::Audio || mode == AvCall::Both;
         const bool needVideo = mode == AvCall::Video || mode == AvCall::Both;
+        requestedAudio      = needAudio;
+        requestedVideo      = needVideo;
+        captureAudioConsent = needAudio;
+        captureVideoConsent = needVideo;
         if ((needAudio && !manager->rtpManager->createOutgoing(session, QStringLiteral("audio")))
             || (needVideo && !manager->rtpManager->createOutgoing(session, QStringLiteral("video")))) {
             fail(tr("Unable to create the requested RTP media."));
@@ -145,8 +153,19 @@ public:
             return;
         }
 
-        const bool acceptAudio = mode == AvCall::Audio || mode == AvCall::Both;
-        const bool acceptVideo = mode == AvCall::Video || mode == AvCall::Both;
+        const bool wantsAudio = mode == AvCall::Audio || mode == AvCall::Both;
+        const bool wantsVideo = mode == AvCall::Video || mode == AvCall::Both;
+        const bool acceptAudio = requestedAudio && wantsAudio;
+        const bool acceptVideo = requestedVideo && wantsVideo;
+        captureAudioConsent = acceptAudio;
+        captureVideoConsent = acceptVideo;
+        if (!acceptAudio && !acceptVideo) {
+            errorString      = tr("No offered RTP media type was accepted.");
+            localTermination = true;
+            session->terminate(Jingle::Reason::Decline);
+            emit q->error();
+            return;
+        }
         for (auto app : session->contentList()) {
             auto rtp = dynamic_cast<RTP::Application *>(app);
             if (!rtp)
@@ -194,6 +213,8 @@ public:
             session         = nullptr;
             signalingActive = false;
             active          = false;
+            acceptedAudio   = false;
+            acceptedVideo   = false;
         });
         wireApplications();
     }
@@ -216,33 +237,46 @@ public:
         if (!session || !signalingActive || active)
             return;
 
-        const bool needAudio = mode == AvCall::Audio || mode == AvCall::Both;
-        const bool needVideo = mode == AvCall::Video || mode == AvCall::Both;
-        bool       haveAudio = !needAudio;
-        bool       haveVideo = !needVideo;
-        bool       audioReady = !needAudio;
-        bool       videoReady = !needVideo;
+        acceptedAudio       = false;
+        acceptedVideo       = false;
+        bool audioReady     = true;
+        bool videoReady     = true;
+        bool audioMaySend   = false;
+        bool videoMaySend   = false;
 
         for (auto app : session->contentList()) {
             auto rtp = dynamic_cast<RTP::Application *>(app);
-            if (!rtp)
+            if (!rtp || rtp->state() >= Jingle::State::Finishing)
                 continue;
-            if (rtp->media() == QLatin1String("audio") && needAudio && rtp->state() < Jingle::State::Finishing) {
-                haveAudio  = true;
-                audioReady = rtp->state() == Jingle::State::Active;
-            } else if (rtp->media() == QLatin1String("video") && needVideo
-                       && rtp->state() < Jingle::State::Finishing) {
-                haveVideo  = true;
-                videoReady = rtp->state() == Jingle::State::Active;
+
+            const bool localMaySend
+                = rtp->senders() == Jingle::Origin::Both || rtp->senders() == session->role();
+            if (rtp->media() == QLatin1String("audio")) {
+                acceptedAudio = true;
+                audioReady    = audioReady && rtp->state() == Jingle::State::Active;
+                audioMaySend  = audioMaySend || localMaySend;
+            } else if (rtp->media() == QLatin1String("video")) {
+                acceptedVideo = true;
+                videoReady    = videoReady && rtp->state() == Jingle::State::Active;
+                videoMaySend  = videoMaySend || localMaySend;
             }
         }
 
-        if (!haveAudio || !haveVideo || !audioReady || !videoReady)
+        if (!acceptedAudio && !acceptedVideo) {
+            fail(tr("The peer did not accept any usable RTP media."));
+            return;
+        }
+        if ((acceptedAudio && !audioReady) || (acceptedVideo && !videoReady))
             return;
 
+        const bool transmitAudio = acceptedAudio && captureAudioConsent && audioMaySend;
+        const bool transmitVideo = acceptedVideo && captureVideoConsent && videoMaySend;
+
         active = true;
-        startPsiMediaJingleTransmit(session, g_config->liveInput, needAudio, g_config->audioInDeviceId, needVideo,
-                                    g_config->videoInDeviceId);
+        // A false return is valid for receive-only calls: activation is driven
+        // by negotiated media readiness, while this call controls local capture.
+        startPsiMediaJingleTransmit(session, g_config->liveInput, transmitAudio, g_config->audioInDeviceId,
+                                    transmitVideo, g_config->videoInDeviceId);
         emit q->activated();
     }
 
@@ -296,6 +330,12 @@ public:
     bool                           signalingActive = false;
     bool                           active = false;
     bool                           localTermination = false;
+    bool                           requestedAudio = false;
+    bool                           requestedVideo = false;
+    bool                           acceptedAudio = false;
+    bool                           acceptedVideo = false;
+    bool                           captureAudioConsent = false;
+    bool                           captureVideoConsent = false;
 };
 
 AvCall::AvCall() : d(new AvCallPrivate(this)) { }
