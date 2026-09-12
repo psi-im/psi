@@ -98,9 +98,14 @@ jobs:
 
           cat > _psimedia-smoke/smoke.cpp <<'EOF'
           #include "gstprovider.h"
+          #include "psimediaprovider.h"
 
           #include <QCoreApplication>
           #include <QDebug>
+
+          static_assert(sizeof(PsiMedia::PRtpPacket::Type) == sizeof(int));
+          static_assert(static_cast<int>(PsiMedia::PRtpPacket::Type::Rtp) == 0);
+          static_assert(static_cast<int>(PsiMedia::PRtpPacket::Type::Rtcp) == 1);
 
           int main(int argc, char **argv)
           {
