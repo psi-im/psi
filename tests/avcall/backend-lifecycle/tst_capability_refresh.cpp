@@ -1,5 +1,8 @@
 #include "psimediajinglecapabilitytransaction.h"
 
+#include "psimedia.h"
+#include "psimediaprovider.h"
+
 #include <iris/jingle-rtp.h>
 #include <iris/jingle.h>
 #include <iris/xmpp_client.h>
@@ -18,6 +21,80 @@ const QString GenericRtp = RTP::Description::ns();
 const QString AudioRtp   = QStringLiteral("urn:xmpp:jingle:apps:rtp:audio");
 const QString VideoRtp   = QStringLiteral("urn:xmpp:jingle:apps:rtp:video");
 const QString Baseline   = QStringLiteral("urn:psi:test:baseline");
+
+class CapabilityRtpSessionContext final : public QObject, public PsiMedia::RtpSessionContext {
+    Q_OBJECT
+    Q_INTERFACES(PsiMedia::RtpSessionContext)
+public:
+    QObject *qobject() override { return this; }
+
+    void setAudioOutputDevice(const QString &) override { }
+    void setAudioInputDevice(const QString &) override { }
+    void setVideoInputDevice(const QString &) override { }
+    void setFileInput(const QString &) override { }
+    void setFileDataInput(const QByteArray &) override { }
+    void setFileLoopEnabled(bool) override { }
+#ifdef QT_GUI_LIB
+    void setVideoOutputWidget(PsiMedia::VideoWidgetContext *) override { }
+    void setVideoPreviewWidget(PsiMedia::VideoWidgetContext *) override { }
+#endif
+    void setRecorder(QIODevice *) override { }
+    void stopRecording() override { }
+    void setLocalAudioPreferences(const QList<PsiMedia::PAudioParams> &) override { }
+    void setLocalVideoPreferences(const QList<PsiMedia::PVideoParams> &) override { }
+    void setMaximumSendingBitrate(int) override { }
+    void setRemoteAudioPreferences(const QList<PsiMedia::PPayloadInfo> &) override { }
+    void setRemoteVideoPreferences(const QList<PsiMedia::PPayloadInfo> &) override { }
+    void start() override { }
+    void updatePreferences() override { }
+    void transmitAudio() override { }
+    void transmitVideo() override { }
+    void pauseAudio() override { }
+    void pauseVideo() override { }
+    void stop() override { }
+    QList<PsiMedia::PPayloadInfo> localAudioPayloadInfo() const override { return {}; }
+    QList<PsiMedia::PPayloadInfo> localVideoPayloadInfo() const override { return {}; }
+    QList<PsiMedia::PPayloadInfo> remoteAudioPayloadInfo() const override { return {}; }
+    QList<PsiMedia::PPayloadInfo> remoteVideoPayloadInfo() const override { return {}; }
+    QList<PsiMedia::PAudioParams> audioParams() const override { return {}; }
+    QList<PsiMedia::PVideoParams> videoParams() const override { return {}; }
+    bool canTransmitAudio() const override { return false; }
+    bool canTransmitVideo() const override { return false; }
+    int  outputVolume() const override { return 100; }
+    void setOutputVolume(int) override { }
+    int  inputVolume() const override { return 100; }
+    void setInputVolume(int) override { }
+    Error errorCode() const override { return ErrorGeneric; }
+    PsiMedia::RtpChannelContext *audioRtpChannel() override { return nullptr; }
+    PsiMedia::RtpChannelContext *videoRtpChannel() override { return nullptr; }
+    void dumpPipeline(std::function<void(const QStringList &)> callback) override { callback({}); }
+
+signals:
+    void started();
+    void preferencesUpdated();
+    void audioOutputIntensityChanged(int intensity);
+    void audioInputIntensityChanged(int intensity);
+    void stoppedRecording();
+    void stopped();
+    void finished();
+    void error();
+};
+
+class CapabilityProvider final : public QObject, public PsiMedia::Provider {
+    Q_OBJECT
+    Q_INTERFACES(PsiMedia::Provider)
+public:
+    QObject *qobject() override { return this; }
+    bool     isInitialized() const override { return true; }
+    QString  creditName() const override { return QStringLiteral("capability-test"); }
+    QString  creditText() const override { return {}; }
+    PsiMedia::FeaturesContext *createFeatures() override { return nullptr; }
+    PsiMedia::RtpSessionContext *createRtpSession() override { return new CapabilityRtpSessionContext; }
+    PsiMedia::AudioRecorderContext *createAudioRecorder() override { return nullptr; }
+
+signals:
+    void initialized();
+};
 
 PsiMediaJingleCapabilities fullCapabilities()
 {
@@ -99,6 +176,8 @@ class CapabilityRefreshTest : public QObject {
     Q_OBJECT
 
 private slots:
+    void initTestCase() { PsiMedia::setProvider(&provider_); }
+
     void advertisedTransitionsStayInSync()
     {
         QCA::Initializer qca;
@@ -229,6 +308,9 @@ private slots:
         verifyDisco(client, true, true);
         QVERIFY(advertisedHash(client) != probingHash);
     }
+
+private:
+    CapabilityProvider provider_;
 };
 
 QTEST_GUILESS_MAIN(CapabilityRefreshTest)
