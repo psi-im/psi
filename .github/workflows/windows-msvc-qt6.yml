@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  SDK_TAG: windows-sdk-msvc-qt6-v1
+  SDK_TAG: windows-sdk-msvc-qt6-v2
   SDK_ARCHIVE: psi-windows-sdk-msvc-qt6.zip
 
 jobs:
@@ -59,7 +59,7 @@ jobs:
       contents: write
     uses: ./.github/workflows/windows-sdk-msvc-qt6.yml
     with:
-      sdk_tag: windows-sdk-msvc-qt6-v1
+      sdk_tag: windows-sdk-msvc-qt6-v2
       force_rebuild: false
 
   modern:
@@ -76,5 +76,5 @@ jobs:
       contents: read
     uses: ./.github/workflows/windows-msvc-qt6-profile.yml
     with:
-      sdk_tag: windows-sdk-msvc-qt6-v1
+      sdk_tag: windows-sdk-msvc-qt6-v2
       sdk_archive: psi-windows-sdk-msvc-qt6.zip
