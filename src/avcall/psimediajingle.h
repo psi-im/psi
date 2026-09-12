@@ -38,7 +38,7 @@ struct PsiMediaJingleCapabilities {
     bool videoInput       = false;
 
     bool operator==(const PsiMediaJingleCapabilities &) const = default;
-    bool available() const { return audio || video; }
+    bool available() const { return backendAvailable && probeComplete && secureRtp && (audio || video); }
     bool supportsMedia(const QString &media) const;
     QStringList mediaTypes() const;
     QString unavailableReason() const;

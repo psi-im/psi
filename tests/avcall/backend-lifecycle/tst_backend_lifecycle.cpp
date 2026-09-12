@@ -312,8 +312,25 @@ private slots:
         auto audioProvider = makePsiMediaJingleProvider(audioOnly);
         QCOMPARE(audioProvider->mediaTypes(), QStringList { QStringLiteral("audio") });
 
-        auto disabled = audioOnly;
+        auto receiveOnlyVideo = fullCapabilities();
+        receiveOnlyVideo.audio      = false;
+        receiveOnlyVideo.videoInput = false;
+        auto videoProvider = makePsiMediaJingleProvider(receiveOnlyVideo);
+        QCOMPARE(videoProvider->mediaTypes(), QStringList { QStringLiteral("video") });
+
+        auto unavailable = fullCapabilities();
+        unavailable.backendAvailable = false;
+        QVERIFY(makePsiMediaJingleProvider(unavailable)->mediaTypes().isEmpty());
+        unavailable                   = fullCapabilities();
+        unavailable.probeComplete     = false;
+        QVERIFY(makePsiMediaJingleProvider(unavailable)->mediaTypes().isEmpty());
+        unavailable               = fullCapabilities();
+        unavailable.secureRtp     = false;
+        QVERIFY(makePsiMediaJingleProvider(unavailable)->mediaTypes().isEmpty());
+
+        auto disabled = fullCapabilities();
         disabled.audio = false;
+        disabled.video = false;
         auto disabledProvider = makePsiMediaJingleProvider(disabled);
         QVERIFY(disabledProvider->mediaTypes().isEmpty());
         QVERIFY(!disabledProvider->createSession());

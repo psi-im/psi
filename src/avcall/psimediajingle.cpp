@@ -24,11 +24,14 @@
 
 bool PsiMediaJingleCapabilities::supportsMedia(const QString &media) const
 {
-    return (media == QLatin1String("audio") && audio) || (media == QLatin1String("video") && video);
+    return available()
+        && ((media == QLatin1String("audio") && audio) || (media == QLatin1String("video") && video));
 }
 
 QStringList PsiMediaJingleCapabilities::mediaTypes() const
 {
+    if (!backendAvailable || !probeComplete || !secureRtp)
+        return {};
     QStringList result;
     if (audio)
         result.append(QStringLiteral("audio"));
