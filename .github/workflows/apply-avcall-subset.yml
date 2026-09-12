@@ -1,0 +1,27 @@
+name: Apply AvCall subset media patch
+
+on:
+  push:
+    branches:
+      - ai/jingle-native-calls
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-24.04
+    if: contains(github.event.head_commit.message, 'Stage AvCall subset media patch')
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: ai/jingle-native-calls
+      - run: python3 .github/avcall-subset-patch.py
+      - run: |
+          git rm .github/workflows/apply-avcall-subset.yml .github/avcall-subset-patch.py
+          git config user.name 'Sergei Ilinykh'
+          git config user.email 'rion4ik@gmail.com'
+          git add src/avcall/avcall.cpp
+          git commit -m 'Activate calls from accepted RTP contents'
+          git push origin HEAD:ai/jingle-native-calls
