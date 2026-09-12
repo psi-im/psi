@@ -82,6 +82,7 @@ jobs:
 
           find_package(Qt5 REQUIRED COMPONENTS Core)
 
+          enable_testing()
           set(PLUGINS_ROOT_DIR "${PSI_SOURCE_DIR}/plugins" CACHE STRING "" FORCE)
           add_subdirectory("${PSIMEDIA_SOURCE_DIR}" psimedia)
 
@@ -92,7 +93,6 @@ jobs:
           )
           target_link_libraries(psimedia_provider_smoke PRIVATE gstprovidersrc Qt5::Core)
 
-          enable_testing()
           add_test(NAME psimedia_provider_smoke COMMAND psimedia_provider_smoke)
           set_tests_properties(psimedia_provider_smoke PROPERTIES TIMEOUT 30)
           EOF
