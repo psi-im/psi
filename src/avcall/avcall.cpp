@@ -14,6 +14,7 @@
 #include "../psimedia/psimedia.h"
 #include "mediadevicewatcher.h"
 #include "psimediajingle.h"
+#include "psimediajinglecapabilitytransaction.h"
 #include "psiaccount.h"
 
 #include <iris/jingle-ice.h>
@@ -460,23 +461,8 @@ void AvCallManagerPrivate::applyNetworkConfiguration()
 
 void AvCallManagerPrivate::refreshCapabilities()
 {
-    const auto next = currentNativeCallCapabilities();
-    if (mediaProvider && next == capabilities)
-        return;
-
-    const auto oldAdvertisedMedia = capabilities.mediaTypes();
-    const auto newAdvertisedMedia = next.mediaTypes();
-
-    // Commit the new backend snapshot first. Only after Iris has the matching
-    // provider may Psi update disco/caps and potentially publish new presence.
-    capabilities  = next;
-    mediaProvider = makePsiMediaJingleProvider(capabilities);
-    rtpManager->setMediaProvider(mediaProvider);
-
-    // Device/backend-only changes which preserve the advertised audio/video set
-    // must not cause needless caps hash churn or presence broadcasts.
-    if (oldAdvertisedMedia != newAdvertisedMedia)
-        pa->updateFeatures();
+    commitPsiMediaJingleCapabilities(rtpManager, capabilities, mediaProvider, currentNativeCallCapabilities(),
+                                     [this] { pa->updateFeatures(); });
 }
 
 void AvCallManagerPrivate::incomingSession(Jingle::Session *incoming)
