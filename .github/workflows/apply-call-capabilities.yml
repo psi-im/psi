@@ -11,7 +11,7 @@ permissions:
 jobs:
   patch:
     runs-on: ubuntu-24.04
-    if: contains(github.event.head_commit.message, 'Stage native call capability patch')
+    if: contains(github.event.head_commit.message, 'Stage native call capability patch source retry')
     steps:
       - uses: actions/checkout@v5
         with:
@@ -19,12 +19,14 @@ jobs:
           ref: ai/jingle-native-calls
       - run: python3 .github/call-capabilities-patch.py
       - run: |
-          git rm .github/workflows/apply-call-capabilities.yml .github/call-capabilities-patch.py
-          git config user.name 'Sergei Ilinykh'
-          git config user.email 'rion4ik@gmail.com'
-          git add CMakeLists.txt src/avcall src/psiaccount.cpp tests/avcall/backend-lifecycle \
-            .github/workflows/ubuntu.yml .github/workflows/fedora.yml \
+          # Workflow files are updated separately through the GitHub connector;
+          # keep this Actions-authored commit limited to ordinary repository files.
+          git restore .github/workflows/ubuntu.yml .github/workflows/fedora.yml \
             .github/workflows/windows-msvc-qt6.yml .github/workflows/windows-msvc-qt6-profile.yml \
             .github/workflows/windows-sdk-msvc-qt6.yml .github/workflows/windows-msys2-qt5-profile.yml
+          git config user.name 'Sergei Ilinykh'
+          git config user.email 'rion4ik@gmail.com'
+          git add CMakeLists.txt src/avcall src/psiaccount.cpp tests/avcall/backend-lifecycle
+          git update-index --add --cacheinfo 160000,df2e53fc3ab7495fbde27a4fbbd90f6a56acb31b,iris
           git commit -m 'Gate native calls on runtime media capabilities'
           git push origin HEAD:ai/jingle-native-calls
