@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: psi-im/psimedia
-          ref: jingle/provider-capabilities
+          ref: jingle/rtcp-session
           path: _psimedia
           fetch-depth: 1
 
@@ -73,6 +73,7 @@ jobs:
           set(BUILD_PSIPLUGIN ON CACHE BOOL "" FORCE)
           set(USE_PSI ON CACHE BOOL "" FORCE)
           set(MAIN_PROGRAM_NAME psi CACHE STRING "" FORCE)
+          set(PSIMEDIA_BUILD_TESTS ON CACHE BOOL "" FORCE)
 
           if(NOT DEFINED PSI_SOURCE_DIR OR NOT DEFINED PSIMEDIA_SOURCE_DIR)
               message(FATAL_ERROR "PSI_SOURCE_DIR and PSIMEDIA_SOURCE_DIR are required")
@@ -135,19 +136,19 @@ jobs:
             -DPSI_SOURCE_DIR="$GITHUB_WORKSPACE" \
             -DPSIMEDIA_SOURCE_DIR="$GITHUB_WORKSPACE/_psimedia"
 
-      - name: Build real provider and plugin
+      - name: Build real provider, plugin and RTP session regression
         run: |
           cmake --build _psimedia-smoke-build \
-            --target gstprovidersrc mediaplugin psimedia_provider_smoke \
+            --target gstprovidersrc mediaplugin psimedia_provider_smoke psimedia_rtpsessionbridge_test \
             --parallel 4
 
-      - name: Run provider smoke
+      - name: Run provider and RTP session smoke
         env:
           QT_QPA_PLATFORM: offscreen
           G_DEBUG: fatal-criticals
         run: |
           ctest --test-dir _psimedia-smoke-build \
-            -R '^psimedia_provider_smoke$' \
+            -R '^psimedia_(provider_smoke|rtpsessionbridge)$' \
             --output-on-failure \
             -V \
             -j1
