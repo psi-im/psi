@@ -2,8 +2,8 @@ name: Ubuntu CI
 
 on:
   push:
-    branches:
-    - '*'
+    branches-ignore:
+    - 'ai/**'
   pull_request:
     branches:
     - '*'
