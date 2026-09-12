@@ -1,0 +1,95 @@
+name: Apply psimedia packet kind migration
+
+on:
+  push:
+    branches:
+      - ai/jingle-native-calls
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ai/jingle-native-calls
+          fetch-depth: 0
+
+      - name: Migrate psimedia packet API to semantic kind
+        shell: python
+        run: |
+          from pathlib import Path
+
+          def replace(path, old, new, count=1):
+              p = Path(path)
+              text = p.read_text()
+              found = text.count(old)
+              if found != count:
+                  raise SystemExit(f"{path}: expected {count} matches, got {found}")
+              p.write_text(text.replace(old, new))
+
+          replace(
+              'plugins/include/psimediaprovider.h',
+              '''class PRtpPacket {\npublic:\n    QByteArray rawValue;\n    int        portOffset;\n\n    inline PRtpPacket() : portOffset(0) { }\n};\n''',
+              '''class PRtpPacket {\npublic:\n    // Keep the historical int-sized 0/1 representation ABI-compatible with\n    // Provider 1.6 while removing transport topology from the source API.\n    enum class Type : int { Rtp = 0, Rtcp = 1 };\n\n    QByteArray rawValue;\n    Type       type = Type::Rtp;\n};\n''')
+
+          replace(
+              'src/psimedia/psimedia.h',
+              '''class RtpPacket {\npublic:\n    RtpPacket();\n    RtpPacket(const QByteArray &rawValue, int portOffset);\n''',
+              '''class RtpPacket {\npublic:\n    enum class Type { Rtp, Rtcp };\n\n    RtpPacket();\n    RtpPacket(const QByteArray &rawValue, Type type);\n''')
+          replace(
+              'src/psimedia/psimedia.h',
+              '''    QByteArray rawValue() const;\n    int        portOffset() const;\n''',
+              '''    QByteArray rawValue() const;\n    Type       type() const;\n''')
+
+          replace(
+              'src/psimedia/psimedia.cpp',
+              '''    QByteArray rawValue;\n    int        portOffset;\n\n    Private(const QByteArray &_rawValue, int _portOffset) : rawValue(_rawValue), portOffset(_portOffset) { }\n''',
+              '''    QByteArray rawValue;\n    Type       type;\n\n    Private(const QByteArray &_rawValue, Type _type) : rawValue(_rawValue), type(_type) { }\n''')
+          replace(
+              'src/psimedia/psimedia.cpp',
+              '''RtpPacket::RtpPacket(const QByteArray &rawValue, int portOffset) : d(new Private(rawValue, portOffset)) { }\n''',
+              '''RtpPacket::RtpPacket(const QByteArray &rawValue, Type type) : d(new Private(rawValue, type)) { }\n''')
+          replace(
+              'src/psimedia/psimedia.cpp',
+              '''int RtpPacket::portOffset() const { return d->portOffset; }\n''',
+              '''RtpPacket::Type RtpPacket::type() const { return d->type; }\n''')
+          replace(
+              'src/psimedia/psimedia.cpp',
+              '''        return RtpPacket(pp.rawValue, pp.portOffset);\n''',
+              '''        return RtpPacket(pp.rawValue, pp.type == PRtpPacket::Type::Rtp ? RtpPacket::Type::Rtp : RtpPacket::Type::Rtcp);\n''')
+          replace(
+              'src/psimedia/psimedia.cpp',
+              '''        pp.rawValue   = rtp.rawValue();\n        pp.portOffset = rtp.portOffset();\n''',
+              '''        pp.rawValue = rtp.rawValue();\n        pp.type     = rtp.type() == RtpPacket::Type::Rtp ? PRtpPacket::Type::Rtp : PRtpPacket::Type::Rtcp;\n''')
+
+          replace(
+              'src/avcall/psimediajingle.cpp',
+              '''    channel->write(PsiMedia::RtpPacket(data, kind == RTP::SrtpContext::Packet::Rtp ? 0 : 1));\n''',
+              '''    channel->write(PsiMedia::RtpPacket(data, kind == RTP::SrtpContext::Packet::Rtp\n                                                     ? PsiMedia::RtpPacket::Type::Rtp\n                                                     : PsiMedia::RtpPacket::Type::Rtcp));\n''')
+          replace(
+              'src/avcall/psimediajingle.cpp',
+              '''        if (packet.portOffset() == 0)\n            batch.append({ packet.rawValue(), RTP::SrtpContext::Packet::Rtp });\n        else if (packet.portOffset() == 1)\n            batch.append({ packet.rawValue(), RTP::SrtpContext::Packet::Rtcp });\n''',
+              '''        if (packet.type() == PsiMedia::RtpPacket::Type::Rtp)\n            batch.append({ packet.rawValue(), RTP::SrtpContext::Packet::Rtp });\n        else\n            batch.append({ packet.rawValue(), RTP::SrtpContext::Packet::Rtcp });\n''')
+
+          # The removed legacy jinglertp stack is intentionally absent from this
+          # branch. Any remaining portOffset in live source is a transport leak.
+          import subprocess
+          result = subprocess.run(['git', 'grep', '-n', 'portOffset', '--', 'src', 'plugins/include', 'tests'],
+                                  text=True, capture_output=True)
+          if result.returncode == 0:
+              raise SystemExit('remaining portOffset references:\n' + result.stdout)
+          if result.returncode != 1:
+              raise SystemExit(result.stderr)
+
+      - name: Commit migration
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add plugins/include/psimediaprovider.h src/psimedia/psimedia.h src/psimedia/psimedia.cpp src/avcall/psimediajingle.cpp
+          git diff --cached --check
+          git commit -m "Model psimedia packets by RTP kind"
+          git push origin HEAD:ai/jingle-native-calls
