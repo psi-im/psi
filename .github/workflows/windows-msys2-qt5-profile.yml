@@ -93,6 +93,7 @@ jobs:
             mingw-w64-x86_64-hunspell
             mingw-w64-x86_64-minizip
             mingw-w64-x86_64-openssl
+            mingw-w64-x86_64-libsrtp
             mingw-w64-x86_64-usrsctp
             mingw-w64-x86_64-libomemo-c
             mingw-w64-x86_64-libotr
