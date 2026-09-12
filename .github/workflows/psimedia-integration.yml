@@ -41,7 +41,19 @@ jobs:
             qtbase5-dev \
             libgstreamer1.0-dev \
             libgstreamer-plugins-base1.0-dev \
-            libgstreamer-plugins-bad1.0-dev
+            libgstreamer-plugins-bad1.0-dev \
+            gstreamer1.0-plugins-base \
+            gstreamer1.0-plugins-good \
+            gstreamer1.0-plugins-bad \
+            gstreamer1.0-tools
+
+      - name: Record integration versions
+        run: |
+          echo "Psi: $(git rev-parse HEAD)"
+          echo "psimedia: $(git -C _psimedia rev-parse HEAD)"
+          qmake -v
+          gst-launch-1.0 --version
+          pkg-config --modversion gstreamer-1.0 gstreamer-rtp-1.0
 
       - name: Configure integration smoke
         shell: bash
@@ -88,21 +100,31 @@ jobs:
           #include "gstprovider.h"
 
           #include <QCoreApplication>
+          #include <QDebug>
 
           int main(int argc, char **argv)
           {
               QCoreApplication app(argc, argv);
 
               PsiMedia::GstProvider provider;
-              if (!provider.isInitialized())
+              if (!provider.isInitialized()) {
+                  qCritical() << "GstProvider failed to initialize";
                   return 1;
+              }
 
               auto *session = provider.createRtpSession();
-              if (!session || !session->qobject()) {
-                  delete session;
+              if (!session) {
+                  qCritical() << "GstProvider returned a null RTP session";
                   return 2;
               }
+              if (!session->qobject()) {
+                  qCritical() << "GstProvider RTP session has no QObject facade";
+                  delete session;
+                  return 3;
+              }
+
               delete session;
+              qInfo() << "Real psimedia provider smoke passed";
               return 0;
           }
           EOF
@@ -125,4 +147,5 @@ jobs:
           ctest --test-dir _psimedia-smoke-build \
             -R '^psimedia_provider_smoke$' \
             --output-on-failure \
+            -V \
             -j1
