@@ -420,11 +420,16 @@ AvCallManagerPrivate::AvCallManagerPrivate(PsiAccount *account, AvCallManager *q
     jingleManager = pa->client()->jingleManager();
     rtpManager    = jingleManager->rtpManager();
     iceManager    = pa->client()->jingleICEManager();
+    rtpManager->setTransportNamespaces({ ICE::NS, ICE::NS_ICE_UDP });
+
     auto watcher = MediaDeviceWatcher::instance();
+    // PsiAccount used to listen to the watcher independently. That made caps
+    // advertisement race the provider refresh because the two slots depended on
+    // QObject connection order. AvCallManager owns the transaction now.
+    QObject::disconnect(watcher, &MediaDeviceWatcher::capabilitiesChanged, pa, &PsiAccount::updateFeatures);
     connect(watcher, &MediaDeviceWatcher::capabilitiesChanged, this, &AvCallManagerPrivate::refreshCapabilities);
     refreshCapabilities();
 
-    rtpManager->setTransportNamespaces({ ICE::NS, ICE::NS_ICE_UDP });
     connect(jingleManager, &Jingle::Manager::incomingSession, this, &AvCallManagerPrivate::incomingSession);
 }
 
@@ -458,9 +463,20 @@ void AvCallManagerPrivate::refreshCapabilities()
     const auto next = currentNativeCallCapabilities();
     if (mediaProvider && next == capabilities)
         return;
+
+    const auto oldAdvertisedMedia = capabilities.mediaTypes();
+    const auto newAdvertisedMedia = next.mediaTypes();
+
+    // Commit the new backend snapshot first. Only after Iris has the matching
+    // provider may Psi update disco/caps and potentially publish new presence.
     capabilities  = next;
     mediaProvider = makePsiMediaJingleProvider(capabilities);
     rtpManager->setMediaProvider(mediaProvider);
+
+    // Device/backend-only changes which preserve the advertised audio/video set
+    // must not cause needless caps hash churn or presence broadcasts.
+    if (oldAdvertisedMedia != newAdvertisedMedia)
+        pa->updateFeatures();
 }
 
 void AvCallManagerPrivate::incomingSession(Jingle::Session *incoming)
