@@ -5,6 +5,8 @@
 
 #include <iris/jingle-rtp.h>
 
+#include <QCoreApplication>
+#include <QEventLoop>
 #include <QPointer>
 #include <QQueue>
 #include <QTest>
@@ -286,6 +288,15 @@ PsiMediaJingleCapabilities fullCapabilities()
     return result;
 }
 
+RTP::MediaOperationPolicy shortOperationPolicy()
+{
+    RTP::MediaOperationPolicy policy;
+    policy.prepareDeadlineMs    = 5;
+    policy.applyDeadlineMs      = 5;
+    policy.maxPendingOperations = 4;
+    return policy;
+}
+
 struct Harness {
     std::shared_ptr<RTP::MediaProvider> provider = makePsiMediaJingleProvider(fullCapabilities());
     std::unique_ptr<RTP::MediaSession>  session  = provider->createSession();
@@ -365,6 +376,154 @@ private slots:
         video.reset();
         session.reset();
         QCOMPARE(provider_.stats().startCalls, 0);
+        QCOMPARE(provider_.stats().invalidCalls, 0);
+    }
+
+    void silentBackendTimeoutIsFailClosed()
+    {
+        Harness harness;
+        QVERIFY(harness.session->setOperationPolicy(shortOperationPolicy()));
+        QStringList     events;
+        int             callbacks = 0;
+        int             runtimeErrors = 0;
+        RTP::MediaError operationError;
+        RTP::MediaError runtimeError;
+        connect(harness.session.get(), &RTP::MediaSession::runtimeError, this,
+                [&](const RTP::MediaError &error) {
+                    events.append(QStringLiteral("runtime"));
+                    runtimeError = error;
+                    ++runtimeErrors;
+                });
+
+        auto operation = harness.session->prepareLocalOffer(
+            harness.endpoint.get(),
+            [&](RTP::MediaOperation::Id, std::optional<RTP::Description> result, RTP::MediaError error) {
+                QVERIFY(!result);
+                events.append(QStringLiteral("operation"));
+                operationError = error;
+                ++callbacks;
+            });
+        QVERIFY(operation);
+        QTRY_COMPARE(provider_.stats().startCalls, 1);
+        auto context = QPointer<FakeRtpSessionContext>(provider_.context());
+        QVERIFY(context);
+
+        QTRY_COMPARE(callbacks, 1);
+        QCOMPARE(operationError.code, RTP::MediaError::Code::Timeout);
+        QTRY_COMPARE(runtimeErrors, 1);
+        QCOMPARE(runtimeError.code, RTP::MediaError::Code::Timeout);
+        QCOMPARE(events, (QStringList { QStringLiteral("operation"), QStringLiteral("runtime") }));
+
+        // The provider may still deliver the signal which missed the deadline.
+        // It must not revive this backend or become a completion for newer work.
+        context->completeStart();
+        QCoreApplication::processEvents(QEventLoop::AllEvents);
+        QCOMPARE(callbacks, 1);
+        QCOMPARE(runtimeErrors, 1);
+        QCOMPARE(provider_.stats().updateCalls, 0);
+
+        harness.endpoint->stop();
+        operation.reset();
+        harness.endpoint.reset();
+        harness.session.reset();
+        QCOMPARE(provider_.stats().pauseAudioCalls, 0);
+        QCOMPARE(provider_.stats().stopCalls, 0);
+        QCOMPARE(provider_.stats().invalidCalls, 0);
+    }
+
+    void cancelledAudioDrainsBeforeQueuedVideo()
+    {
+        auto provider = makePsiMediaJingleProvider(fullCapabilities());
+        auto session  = provider->createSession();
+        auto audio    = session->createEndpoint(QStringLiteral("audio"), QStringLiteral("audio"));
+        auto video    = session->createEndpoint(QStringLiteral("video"), QStringLiteral("video"));
+        QVERIFY(audio);
+        QVERIFY(video);
+
+        int audioCallbacks = 0;
+        auto audioOperation = session->prepareLocalOffer(
+            audio.get(), [&](RTP::MediaOperation::Id, std::optional<RTP::Description>, RTP::MediaError) {
+                ++audioCallbacks;
+            });
+        QTRY_COMPARE(provider_.stats().startCalls, 1);
+        audioOperation->cancel();
+
+        bool videoPrepared = false;
+        auto videoOperation = session->prepareLocalOffer(
+            video.get(), [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description,
+                             RTP::MediaError error) {
+                QVERIFY(!error);
+                QVERIFY(description);
+                QCOMPARE(description->media, QStringLiteral("video"));
+                videoPrepared = true;
+            });
+        QVERIFY(videoOperation);
+        QCoreApplication::processEvents(QEventLoop::AllEvents);
+        QVERIFY(!videoPrepared);
+        QCOMPARE(provider_.stats().updateCalls, 0);
+
+        provider_.context()->completeStart();
+        QTRY_COMPARE(provider_.stats().updateCalls, 1);
+        provider_.context()->completePreferences();
+        QTRY_VERIFY(videoPrepared);
+        QCOMPARE(audioCallbacks, 0);
+
+        audio.reset();
+        video.reset();
+        videoOperation.reset();
+        session.reset();
+        QCOMPARE(provider_.stats().invalidCalls, 0);
+    }
+
+    void runtimeErrorWhileDrainingFailsDeferred()
+    {
+        auto provider = makePsiMediaJingleProvider(fullCapabilities());
+        auto session  = provider->createSession();
+        auto audio    = session->createEndpoint(QStringLiteral("audio"), QStringLiteral("audio"));
+        auto video    = session->createEndpoint(QStringLiteral("video"), QStringLiteral("video"));
+        QVERIFY(audio);
+        QVERIFY(video);
+
+        int audioCallbacks = 0;
+        auto audioOperation = session->prepareLocalOffer(
+            audio.get(), [&](RTP::MediaOperation::Id, std::optional<RTP::Description>, RTP::MediaError) {
+                ++audioCallbacks;
+            });
+        QTRY_COMPARE(provider_.stats().startCalls, 1);
+        audioOperation->cancel();
+
+        QStringList     events;
+        int             videoCallbacks = 0;
+        int             runtimeErrors = 0;
+        RTP::MediaError videoError;
+        auto videoOperation = session->prepareLocalOffer(
+            video.get(), [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description,
+                             RTP::MediaError error) {
+                QVERIFY(!description);
+                events.append(QStringLiteral("video"));
+                videoError = error;
+                ++videoCallbacks;
+            });
+        connect(session.get(), &RTP::MediaSession::runtimeError, this,
+                [&](const RTP::MediaError &) {
+                    events.append(QStringLiteral("runtime"));
+                    ++runtimeErrors;
+                });
+        QCoreApplication::processEvents(QEventLoop::AllEvents);
+        QVERIFY(!videoCallbacks);
+
+        provider_.context()->failAfterCleanup(PsiMedia::RtpSessionContext::ErrorSystem);
+        QTRY_COMPARE(videoCallbacks, 1);
+        QCOMPARE(videoError.code, RTP::MediaError::Code::Backend);
+        QTRY_COMPARE(runtimeErrors, 1);
+        QCOMPARE(events, (QStringList { QStringLiteral("video"), QStringLiteral("runtime") }));
+        QCOMPARE(audioCallbacks, 0);
+
+        audio.reset();
+        video.reset();
+        videoOperation.reset();
+        session.reset();
+        QCOMPARE(provider_.stats().stopCalls, 0);
         QCOMPARE(provider_.stats().invalidCalls, 0);
     }
 

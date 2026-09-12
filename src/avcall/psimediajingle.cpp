@@ -190,14 +190,16 @@ public:
                 return;
             const bool expected = state_ == State::Stopping;
             state_              = State::Stopped;
-            deferred_.reset();
             revokeEndpoints();
             if (expected) {
+                deferred_.reset();
                 running_.reset();
                 await_ = Await::None;
                 return;
             }
-            failCurrentAndCall(backendError(QStringLiteral("psimedia RTP session stopped unexpectedly")));
+            const auto error = backendError(QStringLiteral("psimedia RTP session stopped unexpectedly"));
+            failDeferred(error);
+            failCurrentAndCall(error);
         });
         connect(&rtp_, &PsiMedia::RtpSession::error, this, [this] {
             // GstRtpSessionContext has already destroyed its live control before
@@ -210,8 +212,8 @@ public:
             if (state_ == State::Failed || state_ == State::Stopped)
                 return;
             state_ = State::Failed;
-            deferred_.reset();
             revokeEndpoints();
+            failDeferred(error);
             failCurrentAndCall(error);
         });
     }
@@ -392,6 +394,29 @@ protected:
             running_->cancelled = true;
     }
 
+    void timeoutMediaOperation(RTP::MediaOperation::Id id) override
+    {
+        if (isTerminalOrStopping())
+            return;
+        const bool ownsRunning  = running_ && running_->id == id;
+        const bool ownsDeferred = deferred_ && deferred_->id == id;
+        if (!ownsRunning && !ownsDeferred)
+            return;
+
+        // psimedia completion signals carry no operation ID. Once one of them
+        // misses its deadline, reusing this backend could map a late started/
+        // preferencesUpdated signal to newer work. Fail closed without calling
+        // stop()/pause(): the real provider may already have destroyed control.
+        const RTP::MediaError error { RTP::MediaError::Code::Timeout,
+                                      QStringLiteral("psimedia RTP operation timed out") };
+        state_ = State::Failed;
+        await_ = Await::None;
+        running_.reset();
+        deferred_.reset();
+        revokeEndpoints();
+        queueRuntimeError(error);
+    }
+
 private:
     enum class Kind { PrepareOffer, PrepareAnswer, Apply };
     enum class Await { None, Started, Preferences };
@@ -433,6 +458,11 @@ private:
             // A cancelled psimedia start/update cannot be interrupted. Iris has
             // already cancelled its operation, but this signal-without-id must be
             // drained before the next operation can be mapped safely.
+            if (deferred_) {
+                complete(std::move(operation),
+                         backendError(QStringLiteral("psimedia RTP deferred operation queue is full")));
+                return;
+            }
             deferred_ = std::move(operation);
             return;
         }
@@ -585,6 +615,15 @@ private:
             guard->startDeferred();
     }
 
+    void failDeferred(const RTP::MediaError &error)
+    {
+        if (!deferred_)
+            return;
+        auto operation = std::move(*deferred_);
+        deferred_.reset();
+        complete(std::move(operation), error);
+    }
+
     void startDeferred()
     {
         if (running_ || !deferred_)
@@ -598,6 +637,22 @@ private:
         start(std::move(operation));
     }
 
+    void queueRuntimeError(const RTP::MediaError &error)
+    {
+        // Keep runtimeError behind any operation-scoped completion already queued
+        // by MediaSession. The extra hop keeps sibling teardown out of the first
+        // queued completion turn.
+        QPointer<BackendSession> guard(this);
+        QTimer::singleShot(0, this, [guard, error] {
+            if (!guard)
+                return;
+            QTimer::singleShot(0, guard, [guard, error] {
+                if (guard)
+                    emit guard->runtimeError(error);
+            });
+        });
+    }
+
     void failCurrentAndCall(const RTP::MediaError &error)
     {
         const bool hadRunning = running_.has_value();
@@ -606,16 +661,11 @@ private:
             finishRunning(error);
         if (!guard)
             return;
-
         if (!hadRunning) {
             emit runtimeError(error);
             return;
         }
-
-        QTimer::singleShot(0, this, [guard, error] {
-            if (guard)
-                emit guard->runtimeError(error);
-        });
+        guard->queueRuntimeError(error);
     }
 
     void revokeEndpoints()
