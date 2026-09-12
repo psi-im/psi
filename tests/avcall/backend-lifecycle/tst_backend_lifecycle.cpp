@@ -336,6 +336,38 @@ private slots:
         QVERIFY(!disabledProvider->createSession());
     }
 
+    void endpointReservationTracksLifetime()
+    {
+        auto provider = makePsiMediaJingleProvider(fullCapabilities());
+        auto session  = provider->createSession();
+        QVERIFY(session);
+
+        auto audio = session->createEndpoint(QStringLiteral("audio-1"), QStringLiteral("audio"));
+        QVERIFY(audio);
+        QVERIFY(!session->createEndpoint(QStringLiteral("audio-2"), QStringLiteral("audio")));
+
+        auto video = session->createEndpoint(QStringLiteral("video-1"), QStringLiteral("video"));
+        QVERIFY(video);
+        QVERIFY(!session->createEndpoint(QStringLiteral("video-2"), QStringLiteral("video")));
+
+        audio->stop();
+        QVERIFY(!session->createEndpoint(QStringLiteral("audio-after-stop"), QStringLiteral("audio")));
+
+        audio.reset();
+        audio = session->createEndpoint(QStringLiteral("audio-recreated"), QStringLiteral("audio"));
+        QVERIFY(audio);
+
+        video.reset();
+        video = session->createEndpoint(QStringLiteral("video-recreated"), QStringLiteral("video"));
+        QVERIFY(video);
+
+        audio.reset();
+        video.reset();
+        session.reset();
+        QCOMPARE(provider_.stats().startCalls, 0);
+        QCOMPARE(provider_.stats().invalidCalls, 0);
+    }
+
     void destroyBeforeStart()
     {
         {

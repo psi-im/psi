@@ -240,6 +240,13 @@ public:
     {
         if (!mediaTypes_.contains(media))
             return {};
+        // psimedia exposes one RTP channel per media type. Reserve that channel
+        // for the full Endpoint lifetime: stop()/packet-I/O detach must not let a
+        // second Jingle content silently share and mutate the same backend state.
+        for (auto endpoint : endpoints_) {
+            if (endpoint && endpoint->media() == media)
+                return {};
+        }
         return std::make_unique<Endpoint>(this, media);
     }
 
