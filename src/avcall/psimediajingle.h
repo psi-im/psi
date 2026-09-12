@@ -10,6 +10,8 @@
 #ifndef PSIMEDIAJINGLE_H
 #define PSIMEDIAJINGLE_H
 
+#include <QStringList>
+
 #include <memory>
 
 class QString;
@@ -25,7 +27,25 @@ class MediaProvider;
 }
 }
 
-std::shared_ptr<XMPP::Jingle::RTP::MediaProvider> makePsiMediaJingleProvider();
+struct PsiMediaJingleCapabilities {
+    bool backendAvailable = false;
+    bool probeComplete    = false;
+    bool secureRtp        = false;
+    bool audio            = false;
+    bool video            = false;
+    bool audioInput       = false;
+    bool audioOutput      = false;
+    bool videoInput       = false;
+
+    bool operator==(const PsiMediaJingleCapabilities &) const = default;
+    bool available() const { return audio || video; }
+    bool supportsMedia(const QString &media) const;
+    QStringList mediaTypes() const;
+    QString unavailableReason() const;
+};
+
+std::shared_ptr<XMPP::Jingle::RTP::MediaProvider>
+makePsiMediaJingleProvider(const PsiMediaJingleCapabilities &capabilities);
 
 // Psi policy/control surface for the psimedia backend owned by an Iris-native
 // Jingle RTP session. Negotiation never enables capture by itself.

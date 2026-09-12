@@ -1095,7 +1095,8 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
     updateFeatures();
 
     // another hack. We rather should have PsiMedia single instance as a member of PsiCon
-    connect(MediaDeviceWatcher::instance(), &MediaDeviceWatcher::availibityChanged, this, &PsiAccount::updateFeatures);
+    connect(MediaDeviceWatcher::instance(), &MediaDeviceWatcher::capabilitiesChanged, this,
+            &PsiAccount::updateFeatures);
 
 #ifdef WEBKIT
     connect(d->psi->themeManager()->provider("chatview"), &PsiThemeProvider::themeChanged, this,
@@ -1599,8 +1600,10 @@ void PsiAccount::updateFeatures()
         features << QLatin1String("urn:xmpp:jingle:transports:ice-udp:1");
         features << QLatin1String("urn:xmpp:jingle:transports:ice:0");
         features << QLatin1String("urn:xmpp:jingle:apps:rtp:1");
-        features << QLatin1String("urn:xmpp:jingle:apps:rtp:audio");
-        features << QLatin1String("urn:xmpp:jingle:apps:rtp:video");
+        if (AvCallManager::isAudioSupported())
+            features << QLatin1String("urn:xmpp:jingle:apps:rtp:audio");
+        if (AvCallManager::isVideoSupported())
+            features << QLatin1String("urn:xmpp:jingle:apps:rtp:video");
     }
 
     features << QLatin1String("jabber:x:conference"); // allow direct invites

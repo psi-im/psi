@@ -65,6 +65,11 @@ public:
                 PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString());
         }
 
+        if (!AvCallManager::isVideoSupported()) {
+            ui.ck_useVideo->setChecked(false);
+            ui.ck_useVideo->setEnabled(false);
+        }
+
         ui.lb_bandwidth->setEnabled(false);
         ui.cb_bandwidth->setEnabled(false);
         connect(ui.ck_useVideo, SIGNAL(toggled(bool)), ui.lb_bandwidth, SLOT(setEnabled(bool)));
@@ -122,7 +127,8 @@ public:
         ui.le_to->setText(sess->jid().full());
         ui.le_to->setReadOnly(true);
 
-        if (sess->mode() == AvCall::Video || sess->mode() == AvCall::Both) {
+        if (AvCallManager::isVideoSupported()
+            && (sess->mode() == AvCall::Video || sess->mode() == AvCall::Both)) {
             ui.ck_useVideo->setChecked(true);
 
             // video-only session, don't allow deselecting video

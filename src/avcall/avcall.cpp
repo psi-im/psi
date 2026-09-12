@@ -34,6 +34,26 @@ namespace ICE    = XMPP::Jingle::ICE;
 
 static MediaConfiguration *g_config = new MediaConfiguration;
 
+static PsiMediaJingleCapabilities currentNativeCallCapabilities()
+{
+    PsiMediaJingleCapabilities result;
+    auto                       watcher = MediaDeviceWatcher::instance();
+    result.backendAvailable            = PsiMedia::isSupported();
+    result.probeComplete               = watcher->featuresReady();
+#ifdef PSI_ENABLE_AVCALL
+    result.secureRtp = !RTP::supportedSecureRtpProfiles().isEmpty();
+#else
+    result.secureRtp = false;
+#endif
+    const bool mediaReady = result.backendAvailable && result.probeComplete && result.secureRtp;
+    result.audio           = mediaReady && !watcher->supportedAudioModes().isEmpty();
+    result.video           = mediaReady && !watcher->supportedVideoModes().isEmpty();
+    result.audioInput      = !watcher->audioInputDevices().isEmpty();
+    result.audioOutput     = !watcher->audioOutputDevices().isEmpty();
+    result.videoInput      = !watcher->videoInputDevices().isEmpty();
+    return result;
+}
+
 class AvCallManagerPrivate : public QObject {
     Q_OBJECT
 
@@ -43,6 +63,7 @@ public:
 
     void unlink(AvCall *call);
     void applyNetworkConfiguration();
+    void refreshCapabilities();
 
     AvCallManager                       *q             = nullptr;
     PsiAccount                          *pa            = nullptr;
@@ -50,6 +71,7 @@ public:
     RTP::Manager                        *rtpManager    = nullptr;
     ICE::Manager                        *iceManager    = nullptr;
     std::shared_ptr<RTP::MediaProvider>  mediaProvider;
+    PsiMediaJingleCapabilities           capabilities;
     QList<AvCall *>                      sessions;
     QList<AvCall *>                      pending;
 
@@ -124,6 +146,14 @@ public:
 
         const bool needAudio = mode == AvCall::Audio || mode == AvCall::Both;
         const bool needVideo = mode == AvCall::Video || mode == AvCall::Both;
+        if (!manager->capabilities.available()) {
+            fail(manager->capabilities.unavailableReason());
+            return;
+        }
+        if ((needAudio && !manager->capabilities.audio) || (needVideo && !manager->capabilities.video)) {
+            fail(tr("The requested media type is not supported by the current media backend."));
+            return;
+        }
         requestedAudio      = needAudio;
         requestedVideo      = needVideo;
         captureAudioConsent = needAudio;
@@ -269,8 +299,12 @@ public:
         if ((acceptedAudio && !audioReady) || (acceptedVideo && !videoReady))
             return;
 
-        const bool transmitAudio = acceptedAudio && captureAudioConsent && audioMaySend;
-        const bool transmitVideo = acceptedVideo && captureVideoConsent && videoMaySend;
+        const bool audioCaptureAvailable
+            = !g_config->liveInput || (manager && manager->capabilities.audioInput);
+        const bool videoCaptureAvailable
+            = !g_config->liveInput || (manager && manager->capabilities.videoInput);
+        const bool transmitAudio = acceptedAudio && captureAudioConsent && audioMaySend && audioCaptureAvailable;
+        const bool transmitVideo = acceptedVideo && captureVideoConsent && videoMaySend && videoCaptureAvailable;
 
         active = true;
         // A false return is valid for receive-only calls: activation is driven
@@ -386,9 +420,10 @@ AvCallManagerPrivate::AvCallManagerPrivate(PsiAccount *account, AvCallManager *q
     jingleManager = pa->client()->jingleManager();
     rtpManager    = jingleManager->rtpManager();
     iceManager    = pa->client()->jingleICEManager();
-    mediaProvider = makePsiMediaJingleProvider();
+    auto watcher = MediaDeviceWatcher::instance();
+    connect(watcher, &MediaDeviceWatcher::capabilitiesChanged, this, &AvCallManagerPrivate::refreshCapabilities);
+    refreshCapabilities();
 
-    rtpManager->setMediaProvider(mediaProvider);
     rtpManager->setTransportNamespaces({ ICE::NS, ICE::NS_ICE_UDP });
     connect(jingleManager, &Jingle::Manager::incomingSession, this, &AvCallManagerPrivate::incomingSession);
 }
@@ -418,6 +453,16 @@ void AvCallManagerPrivate::applyNetworkConfiguration()
     iceManager->setExternalAddress(g_config->extHost);
 }
 
+void AvCallManagerPrivate::refreshCapabilities()
+{
+    const auto next = currentNativeCallCapabilities();
+    if (mediaProvider && next == capabilities)
+        return;
+    capabilities  = next;
+    mediaProvider = makePsiMediaJingleProvider(capabilities);
+    rtpManager->setMediaProvider(mediaProvider);
+}
+
 void AvCallManagerPrivate::incomingSession(Jingle::Session *incoming)
 {
     if (!incoming || incoming->role() != Jingle::Origin::Responder)
@@ -426,7 +471,7 @@ void AvCallManagerPrivate::incomingSession(Jingle::Session *incoming)
     if (types.size() != 1 || types.first() != RTP::Description::ns())
         return;
 
-    if (!PsiMedia::isSupported()) {
+    if (!capabilities.available()) {
         incoming->terminate(Jingle::Reason::UnsupportedApplications);
         return;
     }
@@ -459,14 +504,13 @@ AvCall *AvCallManager::takeIncoming() { return d->pending.isEmpty() ? nullptr : 
 
 void AvCallManager::config() { }
 
-bool AvCallManager::isSupported()
-{
-    if (!QCA::isSupported("hmac(sha1)")) {
-        qWarning("hmac support missing for calls, install qca-ossl");
-        return false;
-    }
-    return PsiMedia::isSupported();
-}
+bool AvCallManager::isSupported() { return currentNativeCallCapabilities().available(); }
+
+bool AvCallManager::isAudioSupported() { return currentNativeCallCapabilities().audio; }
+
+bool AvCallManager::isVideoSupported() { return currentNativeCallCapabilities().video; }
+
+QString AvCallManager::unsupportedReason() { return currentNativeCallCapabilities().unavailableReason(); }
 
 void AvCallManager::setSelfAddress(const QHostAddress &addr) { d->iceManager->setSelfAddress(addr); }
 

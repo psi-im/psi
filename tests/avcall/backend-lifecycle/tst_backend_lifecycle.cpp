@@ -272,8 +272,22 @@ RTP::Description audioDescription()
     return description;
 }
 
+PsiMediaJingleCapabilities fullCapabilities()
+{
+    PsiMediaJingleCapabilities result;
+    result.backendAvailable = true;
+    result.probeComplete    = true;
+    result.secureRtp        = true;
+    result.audio            = true;
+    result.video            = true;
+    result.audioInput       = true;
+    result.audioOutput      = true;
+    result.videoInput       = true;
+    return result;
+}
+
 struct Harness {
-    std::shared_ptr<RTP::MediaProvider> provider = makePsiMediaJingleProvider();
+    std::shared_ptr<RTP::MediaProvider> provider = makePsiMediaJingleProvider(fullCapabilities());
     std::unique_ptr<RTP::MediaSession>  session  = provider->createSession();
     std::unique_ptr<RTP::MediaEndpoint> endpoint
         = session->createEndpoint(QStringLiteral("audio"), QStringLiteral("audio"));
@@ -289,6 +303,20 @@ private slots:
     {
         QVERIFY(provider_.context() == nullptr);
         provider_.resetStats();
+    }
+
+    void capabilitySnapshotLimitsMediaTypes()
+    {
+        auto audioOnly = fullCapabilities();
+        audioOnly.video = false;
+        auto audioProvider = makePsiMediaJingleProvider(audioOnly);
+        QCOMPARE(audioProvider->mediaTypes(), QStringList { QStringLiteral("audio") });
+
+        auto disabled = audioOnly;
+        disabled.audio = false;
+        auto disabledProvider = makePsiMediaJingleProvider(disabled);
+        QVERIFY(disabledProvider->mediaTypes().isEmpty());
+        QVERIFY(!disabledProvider->createSession());
     }
 
     void destroyBeforeStart()

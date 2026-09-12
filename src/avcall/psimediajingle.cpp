@@ -22,6 +22,34 @@
 #include <optional>
 #include <utility>
 
+bool PsiMediaJingleCapabilities::supportsMedia(const QString &media) const
+{
+    return (media == QLatin1String("audio") && audio) || (media == QLatin1String("video") && video);
+}
+
+QStringList PsiMediaJingleCapabilities::mediaTypes() const
+{
+    QStringList result;
+    if (audio)
+        result.append(QStringLiteral("audio"));
+    if (video)
+        result.append(QStringLiteral("video"));
+    return result;
+}
+
+QString PsiMediaJingleCapabilities::unavailableReason() const
+{
+    if (!backendAvailable)
+        return QStringLiteral("The psimedia provider is unavailable.");
+    if (!probeComplete)
+        return QStringLiteral("Media codec capabilities are not available yet.");
+    if (!secureRtp)
+        return QStringLiteral("DTLS-SRTP is unavailable in the current Iris/QCA/libSRTP configuration.");
+    if (!audio && !video)
+        return QStringLiteral("The media backend reported no usable RTP audio or video codecs.");
+    return {};
+}
+
 namespace {
 namespace RTP = XMPP::Jingle::RTP;
 
@@ -137,7 +165,7 @@ private:
 
 class BackendSession final : public RTP::MediaSession {
 public:
-    BackendSession()
+    explicit BackendSession(QStringList mediaTypes) : mediaTypes_(std::move(mediaTypes))
     {
         // Negotiation is intentionally device-independent. Capture gets enabled
         // only by AvCall after the Jingle session has been accepted.
@@ -207,7 +235,7 @@ public:
 
     std::unique_ptr<RTP::MediaEndpoint> createEndpoint(const QString &, const QString &media) override
     {
-        if (media != QLatin1String("audio") && media != QLatin1String("video"))
+        if (!mediaTypes_.contains(media))
             return {};
         return std::make_unique<Endpoint>(this, media);
     }
@@ -599,6 +627,7 @@ private:
         }
     }
 
+    QStringList                   mediaTypes_;
     PsiMedia::RtpSession         rtp_;
     State                        state_ = State::Unstarted;
     bool                         audioEnabled_ = false;
@@ -713,8 +742,17 @@ void Endpoint::drainOutgoing()
 
 class Provider final : public RTP::MediaProvider {
 public:
-    std::unique_ptr<RTP::MediaSession> createSession() override { return std::make_unique<BackendSession>(); }
-    QStringList mediaTypes() const override { return { QStringLiteral("audio"), QStringLiteral("video") }; }
+    explicit Provider(PsiMediaJingleCapabilities capabilities) : capabilities_(std::move(capabilities)) { }
+
+    std::unique_ptr<RTP::MediaSession> createSession() override
+    {
+        const auto types = capabilities_.mediaTypes();
+        return types.isEmpty() ? nullptr : std::make_unique<BackendSession>(types);
+    }
+    QStringList mediaTypes() const override { return capabilities_.mediaTypes(); }
+
+private:
+    const PsiMediaJingleCapabilities capabilities_;
 };
 
 BackendSession *backendSession(XMPP::Jingle::Session *session)
@@ -726,9 +764,10 @@ BackendSession *backendSession(XMPP::Jingle::Session *session)
 }
 }
 
-std::shared_ptr<XMPP::Jingle::RTP::MediaProvider> makePsiMediaJingleProvider()
+std::shared_ptr<XMPP::Jingle::RTP::MediaProvider>
+makePsiMediaJingleProvider(const PsiMediaJingleCapabilities &capabilities)
 {
-    return std::make_shared<Provider>();
+    return std::make_shared<Provider>(capabilities);
 }
 
 bool configurePsiMediaJingleSession(XMPP::Jingle::Session *session, const QString &audioOutputDevice,
