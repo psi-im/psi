@@ -52,6 +52,7 @@ jobs:
             libidn-devel \
             libomemo-c-devel \
             libotr-devel \
+            libsrtp-devel \
             libtidy-devel \
             openssl-devel \
             protobuf-c-devel \
