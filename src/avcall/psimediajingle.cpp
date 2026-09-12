@@ -754,7 +754,9 @@ void Endpoint::receivePacket(const QByteArray &data, RTP::SrtpContext::Packet ki
     auto channel = session_->channel(media_);
     if (!channel)
         return;
-    channel->write(PsiMedia::RtpPacket(data, kind == RTP::SrtpContext::Packet::Rtp ? 0 : 1));
+    channel->write(PsiMedia::RtpPacket(data, kind == RTP::SrtpContext::Packet::Rtp
+                                                     ? PsiMedia::RtpPacket::Type::Rtp
+                                                     : PsiMedia::RtpPacket::Type::Rtcp));
 }
 
 void Endpoint::stop()
@@ -784,9 +786,9 @@ void Endpoint::drainOutgoing()
         const auto packet = channel->read();
         if (packet.isNull())
             continue;
-        if (packet.portOffset() == 0)
+        if (packet.type() == PsiMedia::RtpPacket::Type::Rtp)
             batch.append({ packet.rawValue(), RTP::SrtpContext::Packet::Rtp });
-        else if (packet.portOffset() == 1)
+        else
             batch.append({ packet.rawValue(), RTP::SrtpContext::Packet::Rtcp });
     }
 

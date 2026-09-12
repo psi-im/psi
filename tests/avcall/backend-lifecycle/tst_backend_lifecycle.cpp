@@ -700,11 +700,11 @@ private slots:
         auto context = QPointer<FakeRtpSessionContext>(provider_.context());
         QVERIFY(context);
         PsiMedia::PRtpPacket first;
-        first.rawValue   = QByteArray(12, 'a');
-        first.portOffset = 0;
+        first.rawValue = QByteArray(12, 'a');
+        first.type     = PsiMedia::PRtpPacket::Type::Rtp;
         PsiMedia::PRtpPacket second;
-        second.rawValue   = QByteArray(12, 'b');
-        second.portOffset = 1;
+        second.rawValue = QByteArray(12, 'b');
+        second.type     = PsiMedia::PRtpPacket::Type::Rtcp;
         context->audioChannel()->queueOutgoing(first);
         context->audioChannel()->queueOutgoing(second);
 
