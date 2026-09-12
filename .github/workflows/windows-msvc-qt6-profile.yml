@@ -6,7 +6,7 @@ on:
       sdk_tag:
         description: Dependency SDK release tag
         required: false
-        default: windows-sdk-msvc-qt6-v1
+        default: windows-sdk-msvc-qt6-v2
         type: string
       sdk_archive:
         description: Dependency SDK release asset
