@@ -68,6 +68,7 @@ jobs:
             libqt5x11extras5-dev \
             libsm-dev \
             libssl-dev \
+            libsrtp2-dev \
             libtidy-dev \
             libxss-dev \
             qt5keychain-dev \
