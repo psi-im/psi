@@ -145,6 +145,7 @@ jobs:
           cmake --build _psimedia-smoke-build \
             --target gstprovidersrc mediaplugin psimedia_provider_smoke \
                      psimedia_rtpsessionbridge_test psimedia_rtpsessionbridge_packets_test \
+                     psimedia_rtpsessionbridge_periodic_test \
             --parallel 4
 
       - name: Run provider and RTP session smoke
@@ -153,7 +154,7 @@ jobs:
           G_DEBUG: fatal-criticals
         run: |
           ctest --test-dir _psimedia-smoke-build \
-            -R '^psimedia_(provider_smoke|rtpsessionbridge|rtpsessionbridge_packets)$' \
+            -R '^psimedia_(provider_smoke|rtpsessionbridge|rtpsessionbridge_packets|rtpsessionbridge_periodic)$' \
             --output-on-failure \
             -V \
             -j1
