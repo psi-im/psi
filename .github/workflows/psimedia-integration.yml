@@ -65,6 +65,10 @@ jobs:
               message(FATAL_ERROR "PSI_SOURCE_DIR and PSIMEDIA_SOURCE_DIR are required")
           endif()
 
+          # psimedia resolves Qt inside its subdirectory, but our sibling smoke
+          # target also links Qt5::Core. Resolve it in the wrapper scope as well.
+          find_package(Qt5 REQUIRED COMPONENTS Core)
+
           set(PLUGINS_ROOT_DIR "${PSI_SOURCE_DIR}/plugins" CACHE STRING "" FORCE)
           add_subdirectory("${PSIMEDIA_SOURCE_DIR}" psimedia)
 
