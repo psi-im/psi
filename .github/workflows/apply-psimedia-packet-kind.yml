@@ -75,6 +75,11 @@ jobs:
               '''        if (packet.portOffset() == 0)\n            batch.append({ packet.rawValue(), RTP::SrtpContext::Packet::Rtp });\n        else if (packet.portOffset() == 1)\n            batch.append({ packet.rawValue(), RTP::SrtpContext::Packet::Rtcp });\n''',
               '''        if (packet.type() == PsiMedia::RtpPacket::Type::Rtp)\n            batch.append({ packet.rawValue(), RTP::SrtpContext::Packet::Rtp });\n        else\n            batch.append({ packet.rawValue(), RTP::SrtpContext::Packet::Rtcp });\n''')
 
+          replace(
+              'tests/avcall/backend-lifecycle/tst_backend_lifecycle.cpp',
+              '''        first.rawValue   = QByteArray(12, 'a');\n        first.portOffset = 0;\n        PsiMedia::PRtpPacket second;\n        second.rawValue   = QByteArray(12, 'b');\n        second.portOffset = 1;\n''',
+              '''        first.rawValue = QByteArray(12, 'a');\n        first.type     = PsiMedia::PRtpPacket::Type::Rtp;\n        PsiMedia::PRtpPacket second;\n        second.rawValue = QByteArray(12, 'b');\n        second.type     = PsiMedia::PRtpPacket::Type::Rtcp;\n''')
+
           # The removed legacy jinglertp stack is intentionally absent from this
           # branch. Any remaining portOffset in live source is a transport leak.
           import subprocess
@@ -89,7 +94,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add plugins/include/psimediaprovider.h src/psimedia/psimedia.h src/psimedia/psimedia.cpp src/avcall/psimediajingle.cpp
+          git add plugins/include/psimediaprovider.h src/psimedia/psimedia.h src/psimedia/psimedia.cpp src/avcall/psimediajingle.cpp tests/avcall/backend-lifecycle/tst_backend_lifecycle.cpp
           git diff --cached --check
           git commit -m "Model psimedia packets by RTP kind"
           git push origin HEAD:ai/jingle-native-calls
