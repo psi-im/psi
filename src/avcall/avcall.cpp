@@ -27,6 +27,7 @@
 #include <QtCrypto>
 
 #include <memory>
+#include <optional>
 #include <utility>
 
 namespace Jingle = XMPP::Jingle;
@@ -34,6 +35,43 @@ namespace RTP    = XMPP::Jingle::RTP;
 namespace ICE    = XMPP::Jingle::ICE;
 
 static MediaConfiguration *g_config = new MediaConfiguration;
+
+static QString resolvedAudioInputDevice()
+{
+    if (!g_config->liveInput)
+        return {};
+
+    const auto devices = MediaDeviceWatcher::instance()->audioInputDevices();
+    for (const auto &device : devices) {
+        if (!g_config->audioInDeviceId.isEmpty() && device.id() == g_config->audioInDeviceId)
+            return device.id();
+    }
+    for (const auto &device : devices) {
+        if (device.isDefault())
+            return device.id();
+    }
+    return devices.isEmpty() ? QString() : devices.first().id();
+}
+
+static Jingle::Origin peerRole(Jingle::Origin localRole)
+{
+    return localRole == Jingle::Origin::Initiator ? Jingle::Origin::Responder : Jingle::Origin::Initiator;
+}
+
+static bool allowsSender(Jingle::Origin senders, Jingle::Origin role)
+{
+    return senders == Jingle::Origin::Both || senders == role;
+}
+
+static Jingle::Origin withoutLocalSender(Jingle::Origin senders, Jingle::Origin localRole)
+{
+    const auto remoteRole = peerRole(localRole);
+    if (senders == Jingle::Origin::Both)
+        return remoteRole;
+    if (senders == localRole)
+        return Jingle::Origin::None;
+    return senders;
+}
 
 static PsiMediaJingleCapabilities currentNativeCallCapabilities()
 {
@@ -159,7 +197,15 @@ public:
         requestedVideo      = needVideo;
         captureAudioConsent = needAudio;
         captureVideoConsent = needVideo;
-        if ((needAudio && !manager->rtpManager->createOutgoing(session, QStringLiteral("audio")))
+
+        Jingle::Origin audioSenders = Jingle::Origin::Both;
+        if (needAudio) {
+            audioDesiredWithCapture = Jingle::Origin::Both;
+            if (!audioCaptureAvailable())
+                audioSenders = withoutLocalSender(*audioDesiredWithCapture, session->role());
+        }
+
+        if ((needAudio && !manager->rtpManager->createOutgoing(session, QStringLiteral("audio"), audioSenders))
             || (needVideo && !manager->rtpManager->createOutgoing(session, QStringLiteral("video")))) {
             fail(tr("Unable to create the requested RTP media."));
             return;
@@ -203,9 +249,13 @@ public:
                 continue;
             const bool accepted = (rtp->media() == QLatin1String("audio") && acceptAudio)
                 || (rtp->media() == QLatin1String("video") && acceptVideo);
-            if (!accepted)
+            if (!accepted) {
                 rtp->remove(Jingle::Reason::Decline, QStringLiteral("Media type declined locally"));
+            } else if (rtp->media() == QLatin1String("audio")) {
+                audioDesiredWithCapture = rtp->senders();
+            }
         }
+        syncAudioDirection();
         session->accept();
     }
 
@@ -234,6 +284,48 @@ public:
         return true;
     }
 
+    RTP::Application *audioApplication() const
+    {
+        if (!session)
+            return nullptr;
+        for (auto app : session->contentList()) {
+            auto rtp = dynamic_cast<RTP::Application *>(app);
+            if (rtp && rtp->media() == QLatin1String("audio") && rtp->state() < Jingle::State::Finishing)
+                return rtp;
+        }
+        return nullptr;
+    }
+
+    bool audioCaptureAvailable() const
+    {
+        return !g_config->liveInput || !resolvedAudioInputDevice().isEmpty();
+    }
+
+    void syncAudioDirection()
+    {
+        if (!session || !captureAudioConsent)
+            return;
+        auto rtp = audioApplication();
+        if (!rtp)
+            return;
+
+        if (!audioDesiredWithCapture)
+            audioDesiredWithCapture = rtp->senders();
+        const auto desired = audioCaptureAvailable()
+            ? *audioDesiredWithCapture
+            : withoutLocalSender(*audioDesiredWithCapture, session->role());
+
+        if (rtp->senders() == desired) {
+            if (audioPolicyTarget && *audioPolicyTarget == desired)
+                audioPolicyTarget.reset();
+            return;
+        }
+
+        audioPolicyTarget = desired;
+        if (!rtp->requestSenders(desired))
+            audioPolicyTarget.reset();
+    }
+
     void setupSession()
     {
         Q_ASSERT(session);
@@ -260,7 +352,46 @@ public:
                 continue;
             connect(rtp, &Jingle::Application::stateChanged, this, &AvCallPrivate::applicationStateChanged,
                     Qt::UniqueConnection);
+            connect(rtp, &Jingle::Application::sendersChanged, this, &AvCallPrivate::applicationSendersChanged,
+                    Qt::UniqueConnection);
         }
+    }
+
+    void syncActiveTransmit()
+    {
+        if (!session || !active)
+            return;
+
+        bool hasAudio      = false;
+        bool hasVideo      = false;
+        bool audioMaySend  = false;
+        bool videoMaySend  = false;
+        for (auto app : session->contentList()) {
+            auto rtp = dynamic_cast<RTP::Application *>(app);
+            if (!rtp || rtp->state() >= Jingle::State::Finishing)
+                continue;
+
+            const bool localMaySend = allowsSender(rtp->senders(), session->role());
+            if (rtp->media() == QLatin1String("audio")) {
+                hasAudio     = true;
+                audioMaySend = audioMaySend || localMaySend;
+            } else if (rtp->media() == QLatin1String("video")) {
+                hasVideo     = true;
+                videoMaySend = videoMaySend || localMaySend;
+            }
+        }
+
+        acceptedAudio = hasAudio;
+        acceptedVideo = hasVideo;
+        const auto audioInput = resolvedAudioInputDevice();
+        const bool audioCaptureAvailable = !g_config->liveInput || !audioInput.isEmpty();
+        const bool videoCaptureAvailable
+            = !g_config->liveInput || (manager && manager->capabilities.videoInput);
+        const bool transmitAudio = hasAudio && captureAudioConsent && audioMaySend && audioCaptureAvailable;
+        const bool transmitVideo = hasVideo && captureVideoConsent && videoMaySend && videoCaptureAvailable;
+
+        startPsiMediaJingleTransmit(session, g_config->liveInput, transmitAudio, audioInput, transmitVideo,
+                                    g_config->videoInDeviceId);
     }
 
     void maybeActivateMedia()
@@ -272,24 +403,18 @@ public:
         acceptedVideo       = false;
         bool audioReady     = true;
         bool videoReady     = true;
-        bool audioMaySend   = false;
-        bool videoMaySend   = false;
 
         for (auto app : session->contentList()) {
             auto rtp = dynamic_cast<RTP::Application *>(app);
             if (!rtp || rtp->state() >= Jingle::State::Finishing)
                 continue;
 
-            const bool localMaySend
-                = rtp->senders() == Jingle::Origin::Both || rtp->senders() == session->role();
             if (rtp->media() == QLatin1String("audio")) {
                 acceptedAudio = true;
                 audioReady    = audioReady && rtp->state() == Jingle::State::Active;
-                audioMaySend  = audioMaySend || localMaySend;
             } else if (rtp->media() == QLatin1String("video")) {
                 acceptedVideo = true;
                 videoReady    = videoReady && rtp->state() == Jingle::State::Active;
-                videoMaySend  = videoMaySend || localMaySend;
             }
         }
 
@@ -300,19 +425,20 @@ public:
         if ((acceptedAudio && !audioReady) || (acceptedVideo && !videoReady))
             return;
 
-        const bool audioCaptureAvailable
-            = !g_config->liveInput || (manager && manager->capabilities.audioInput);
-        const bool videoCaptureAvailable
-            = !g_config->liveInput || (manager && manager->capabilities.videoInput);
-        const bool transmitAudio = acceptedAudio && captureAudioConsent && audioMaySend && audioCaptureAvailable;
-        const bool transmitVideo = acceptedVideo && captureVideoConsent && videoMaySend && videoCaptureAvailable;
-
         active = true;
-        // A false return is valid for receive-only calls: activation is driven
-        // by negotiated media readiness, while this call controls local capture.
-        startPsiMediaJingleTransmit(session, g_config->liveInput, transmitAudio, g_config->audioInDeviceId,
-                                    transmitVideo, g_config->videoInDeviceId);
+        // A receive-only call is active even though this leaves capture paused.
+        // sendersChanged/device hotplug reuse the same backend session below.
+        syncActiveTransmit();
         emit q->activated();
+    }
+
+    void mediaCapabilitiesChanged()
+    {
+        syncAudioDirection();
+        if (active)
+            syncActiveTransmit();
+        else
+            maybeActivateMedia();
     }
 
     void fail(const QString &message)
@@ -334,10 +460,34 @@ private slots:
     void sessionActivated()
     {
         signalingActive = true;
+        syncAudioDirection();
         maybeActivateMedia();
     }
 
-    void applicationStateChanged(Jingle::State) { maybeActivateMedia(); }
+    void applicationStateChanged(Jingle::State)
+    {
+        if (active)
+            syncActiveTransmit();
+        else
+            maybeActivateMedia();
+    }
+
+    void applicationSendersChanged(Jingle::Origin senders)
+    {
+        auto rtp = dynamic_cast<RTP::Application *>(sender());
+        if (rtp && rtp->media() == QLatin1String("audio")) {
+            if (audioPolicyTarget && *audioPolicyTarget == senders)
+                audioPolicyTarget.reset();
+            else
+                audioDesiredWithCapture = senders;
+            syncAudioDirection();
+        }
+
+        if (active)
+            syncActiveTransmit();
+        else
+            maybeActivateMedia();
+    }
 
     void sessionTerminated()
     {
@@ -371,6 +521,8 @@ public:
     bool                           acceptedVideo = false;
     bool                           captureAudioConsent = false;
     bool                           captureVideoConsent = false;
+    std::optional<Jingle::Origin>  audioDesiredWithCapture;
+    std::optional<Jingle::Origin>  audioPolicyTarget;
 };
 
 AvCall::AvCall() : d(new AvCallPrivate(this)) { }
@@ -463,6 +615,15 @@ void AvCallManagerPrivate::refreshCapabilities()
 {
     commitPsiMediaJingleCapabilities(rtpManager, capabilities, mediaProvider, currentNativeCallCapabilities(),
                                      [this] { pa->updateFeatures(); });
+
+    // Input-device changes do not necessarily alter advertised audio/video
+    // support, but they do alter the legal Jingle direction and capture state of
+    // an existing call.
+    const auto calls = sessions;
+    for (auto call : calls) {
+        if (call && call->d && call->d->manager == this)
+            call->d->mediaCapabilitiesChanged();
+    }
 }
 
 void AvCallManagerPrivate::incomingSession(Jingle::Session *incoming)
