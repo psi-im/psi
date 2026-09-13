@@ -1,0 +1,161 @@
+name: PsiMedia integration
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: psimedia-integration-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux-qt5:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout Psi native-call branch
+        uses: actions/checkout@v4
+        with:
+          ref: ai/jingle-native-calls
+          submodules: false
+
+      - name: Checkout psimedia RTP session branch
+        uses: actions/checkout@v4
+        with:
+          repository: psi-im/psimedia
+          ref: jingle/rtcp-session
+          path: _psimedia
+          fetch-depth: 1
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            g++ \
+            ninja-build \
+            pkg-config \
+            qtbase5-dev \
+            libgstreamer1.0-dev \
+            libgstreamer-plugins-base1.0-dev \
+            libgstreamer-plugins-bad1.0-dev \
+            gstreamer1.0-plugins-base \
+            gstreamer1.0-plugins-good \
+            gstreamer1.0-plugins-bad \
+            gstreamer1.0-tools
+
+      - name: Record integration versions
+        run: |
+          echo "Psi: $(git rev-parse HEAD)"
+          echo "psimedia: $(git -C _psimedia rev-parse HEAD)"
+          qmake -v
+          gst-launch-1.0 --version
+          pkg-config --modversion gstreamer-1.0 gstreamer-rtp-1.0
+
+      - name: Configure integration smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p _psimedia-smoke
+          cat > _psimedia-smoke/CMakeLists.txt <<'EOF'
+          cmake_minimum_required(VERSION 3.19)
+          project(psimedia_integration_smoke LANGUAGES CXX)
+
+          set(CMAKE_CXX_STANDARD 20)
+          set(CMAKE_CXX_STANDARD_REQUIRED ON)
+          set(CMAKE_AUTOMOC ON)
+          set(QT_DEFAULT_MAJOR_VERSION 5)
+          set(BUILD_DEMO OFF CACHE BOOL "" FORCE)
+          set(BUILD_PSIPLUGIN ON CACHE BOOL "" FORCE)
+          set(PSIMEDIA_BUILD_TESTS ON CACHE BOOL "" FORCE)
+          set(USE_PSI ON CACHE BOOL "" FORCE)
+          set(MAIN_PROGRAM_NAME psi CACHE STRING "" FORCE)
+
+          if(NOT DEFINED PSI_SOURCE_DIR OR NOT DEFINED PSIMEDIA_SOURCE_DIR)
+              message(FATAL_ERROR "PSI_SOURCE_DIR and PSIMEDIA_SOURCE_DIR are required")
+          endif()
+
+          find_package(Qt5 REQUIRED COMPONENTS Core)
+
+          enable_testing()
+          set(PLUGINS_ROOT_DIR "${PSI_SOURCE_DIR}/plugins" CACHE STRING "" FORCE)
+          add_subdirectory("${PSIMEDIA_SOURCE_DIR}" psimedia)
+
+          add_executable(psimedia_provider_smoke smoke.cpp)
+          target_include_directories(psimedia_provider_smoke PRIVATE
+              "${PSI_SOURCE_DIR}/plugins/include"
+              "${PSIMEDIA_SOURCE_DIR}/gstprovider"
+          )
+          target_link_libraries(psimedia_provider_smoke PRIVATE gstprovidersrc Qt5::Core)
+
+          add_test(NAME psimedia_provider_smoke COMMAND psimedia_provider_smoke)
+          set_tests_properties(psimedia_provider_smoke PROPERTIES TIMEOUT 30)
+          EOF
+
+          cat > _psimedia-smoke/smoke.cpp <<'EOF'
+          #include "gstprovider.h"
+          #include "psimediaprovider.h"
+
+          #include <QCoreApplication>
+          #include <QDebug>
+
+          static_assert(sizeof(PsiMedia::PRtpPacket::Type) == sizeof(int));
+          static_assert(static_cast<int>(PsiMedia::PRtpPacket::Type::Rtp) == 0);
+          static_assert(static_cast<int>(PsiMedia::PRtpPacket::Type::Rtcp) == 1);
+
+          int main(int argc, char **argv)
+          {
+              QCoreApplication app(argc, argv);
+
+              PsiMedia::GstProvider provider;
+              if (!provider.isInitialized()) {
+                  qCritical() << "GstProvider failed to initialize";
+                  return 1;
+              }
+
+              auto *session = provider.createRtpSession();
+              if (!session) {
+                  qCritical() << "GstProvider returned a null RTP session";
+                  return 2;
+              }
+              if (!session->qobject()) {
+                  qCritical() << "GstProvider RTP session has no QObject facade";
+                  delete session;
+                  return 3;
+              }
+
+              delete session;
+              qInfo() << "Real psimedia provider smoke passed";
+              return 0;
+          }
+          EOF
+
+          cmake -S _psimedia-smoke -B _psimedia-smoke-build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DPSI_SOURCE_DIR="$GITHUB_WORKSPACE" \
+            -DPSIMEDIA_SOURCE_DIR="$GITHUB_WORKSPACE/_psimedia"
+
+      - name: Build real provider, plugin and RTP session regressions
+        run: |
+          cmake --build _psimedia-smoke-build \
+            --target gstprovidersrc mediaplugin psimedia_provider_smoke \
+                     psimedia_opusrtppay_test psimedia_rtpsessioncontext_sender_test \
+                     psimedia_rtpsessionbridge_test psimedia_rtpsessionbridge_packets_test \
+                     psimedia_rtpsessionbridge_periodic_test psimedia_rtpsessionbridge_backpressure_test \
+            --parallel 4
+
+      - name: Run provider and RTP session smoke
+        env:
+          QT_QPA_PLATFORM: offscreen
+          G_DEBUG: fatal-criticals
+        run: |
+          ctest --test-dir _psimedia-smoke-build \
+            -R '^psimedia_(provider_smoke|opusrtppay|rtpsessioncontext_sender|rtpsessionbridge|rtpsessionbridge_packets|rtpsessionbridge_periodic|rtpsessionbridge_backpressure)$' \
+            --output-on-failure \
+            -V \
+            -j1
