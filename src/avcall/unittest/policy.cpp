@@ -76,6 +76,24 @@ int main()
         }
     }
 
+    // A queued/in-flight policy target matters independently of the currently
+    // acknowledged senders. This is what lets a rapid device flip supersede an
+    // obsolete content-modify before its ACK arrives.
+    for (const auto current : directions) {
+        for (const auto desired : directions) {
+            check(Policy::shouldRequestSenders(current, std::nullopt, desired) == (current != desired),
+                  "sender request decision ignored current negotiated direction");
+            for (const auto pending : directions) {
+                check(Policy::shouldRequestSenders(current, pending, desired) == (pending != desired),
+                      "sender request decision ignored queued target");
+            }
+        }
+    }
+    check(Policy::shouldRequestSenders(Origin::Both, Origin::Responder, Origin::Both),
+          "mic return did not supersede pending receive-only target");
+    check(!Policy::shouldRequestSenders(Origin::Responder, Origin::Both, Origin::Both),
+          "matching bidirectional target was queued twice");
+
     // Outgoing audio starts receive-only when no microphone exists, for either
     // Jingle role. This is the concrete no-mic invariant used by AvCall.
     check(Policy::sendersForCaptureAvailability(Origin::Both, Origin::Initiator, false) == Origin::Responder,
