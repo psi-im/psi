@@ -456,10 +456,7 @@ private slots:
     {
         auto rtp = dynamic_cast<RTP::Application *>(sender());
         if (rtp && rtp->media() == QLatin1String("audio")) {
-            if (audioPolicyTarget && *audioPolicyTarget == senders)
-                audioPolicyTarget.reset();
-            else
-                audioDesiredWithCapture = senders;
+            AvCallPolicy::reconcileSendersChanged(senders, audioDesiredWithCapture, audioPolicyTarget);
             syncAudioDirection();
         }
 
