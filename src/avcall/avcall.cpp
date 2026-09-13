@@ -332,6 +332,8 @@ public:
                     Qt::UniqueConnection);
             connect(rtp, &Jingle::Application::sendersChanged, this, &AvCallPrivate::applicationSendersChanged,
                     Qt::UniqueConnection);
+            connect(rtp, &Jingle::Application::sendersChangedByPeer, this,
+                    &AvCallPrivate::applicationSendersChangedByPeer, Qt::UniqueConnection);
         }
     }
 
@@ -455,15 +457,23 @@ private slots:
     void applicationSendersChanged(Jingle::Origin senders)
     {
         auto rtp = dynamic_cast<RTP::Application *>(sender());
-        if (rtp && rtp->media() == QLatin1String("audio")) {
-            AvCallPolicy::reconcileSendersChanged(senders, audioDesiredWithCapture, audioPolicyTarget);
-            syncAudioDirection();
-        }
+        if (rtp && rtp->media() == QLatin1String("audio"))
+            AvCallPolicy::reconcilePolicyTarget(senders, audioPolicyTarget);
 
         if (active)
             syncActiveTransmit();
         else
             maybeActivateMedia();
+    }
+
+    void applicationSendersChangedByPeer(Jingle::Origin senders)
+    {
+        auto rtp = dynamic_cast<RTP::Application *>(sender());
+        if (!rtp || rtp->media() != QLatin1String("audio"))
+            return;
+
+        audioDesiredWithCapture = senders;
+        syncAudioDirection();
     }
 
     void sessionTerminated()
