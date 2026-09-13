@@ -4,6 +4,8 @@
 
 #include <iris/jingle.h>
 
+#include <optional>
+
 namespace AvCallPolicy {
 
 using Origin = XMPP::Jingle::Origin;
@@ -36,6 +38,11 @@ inline Origin withoutLocalSender(Origin senders, Origin localRole)
 inline Origin sendersForCaptureAvailability(Origin desiredWithCapture, Origin localRole, bool captureAvailable)
 {
     return captureAvailable ? desiredWithCapture : withoutLocalSender(desiredWithCapture, localRole);
+}
+
+inline bool shouldRequestSenders(Origin current, const std::optional<Origin> &pendingTarget, Origin desired)
+{
+    return pendingTarget ? *pendingTarget != desired : current != desired;
 }
 
 inline bool shouldTransmit(bool hasMedia, bool captureConsent, bool senderAllowed, bool captureAvailable)
