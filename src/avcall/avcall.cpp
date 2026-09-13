@@ -296,11 +296,8 @@ public:
         const auto desired = AvCallPolicy::sendersForCaptureAvailability(*audioDesiredWithCapture, session->role(),
                                                                           audioCaptureAvailable());
 
-        if (rtp->senders() == desired) {
-            if (audioPolicyTarget && *audioPolicyTarget == desired)
-                audioPolicyTarget.reset();
+        if (!AvCallPolicy::shouldRequestSenders(rtp->senders(), audioPolicyTarget, desired))
             return;
-        }
 
         audioPolicyTarget = desired;
         if (!rtp->requestSenders(desired))
@@ -670,7 +667,7 @@ void AvCallManager::setStunRelayUdpService(const QString &host, int port, const 
 void AvCallManager::setStunRelayTcpService(const QString &host, int port, const XMPP::AdvancedConnector::Proxy &proxy,
                                            const QString &user, const QString &pass)
 {
-    d->iceManager->setStunRelayTcpService(host, port, proxy, user, pass);
+    d->iceManager->setStunRelayTcpService(host, port, user, pass);
 }
 
 void AvCallManager::setAllowIpExposure(bool allow) { d->iceManager->setAllowIpExposure(allow); }
