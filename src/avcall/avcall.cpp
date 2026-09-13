@@ -12,6 +12,7 @@
 #include "avcall.h"
 
 #include "../psimedia/psimedia.h"
+#include "avcallpolicy.h"
 #include "mediadevicewatcher.h"
 #include "psimediajingle.h"
 #include "psimediajinglecapabilitytransaction.h"
@@ -51,26 +52,6 @@ static QString resolvedAudioInputDevice()
             return device.id();
     }
     return devices.isEmpty() ? QString() : devices.first().id();
-}
-
-static Jingle::Origin peerRole(Jingle::Origin localRole)
-{
-    return localRole == Jingle::Origin::Initiator ? Jingle::Origin::Responder : Jingle::Origin::Initiator;
-}
-
-static bool allowsSender(Jingle::Origin senders, Jingle::Origin role)
-{
-    return senders == Jingle::Origin::Both || senders == role;
-}
-
-static Jingle::Origin withoutLocalSender(Jingle::Origin senders, Jingle::Origin localRole)
-{
-    const auto remoteRole = peerRole(localRole);
-    if (senders == Jingle::Origin::Both)
-        return remoteRole;
-    if (senders == localRole)
-        return Jingle::Origin::None;
-    return senders;
 }
 
 static PsiMediaJingleCapabilities currentNativeCallCapabilities()
@@ -201,8 +182,8 @@ public:
         Jingle::Origin audioSenders = Jingle::Origin::Both;
         if (needAudio) {
             audioDesiredWithCapture = Jingle::Origin::Both;
-            if (!audioCaptureAvailable())
-                audioSenders = withoutLocalSender(*audioDesiredWithCapture, session->role());
+            audioSenders = AvCallPolicy::sendersForCaptureAvailability(*audioDesiredWithCapture, session->role(),
+                                                                        audioCaptureAvailable());
         }
 
         if ((needAudio && !manager->rtpManager->createOutgoing(session, QStringLiteral("audio"), audioSenders))
@@ -311,9 +292,8 @@ public:
 
         if (!audioDesiredWithCapture)
             audioDesiredWithCapture = rtp->senders();
-        const auto desired = audioCaptureAvailable()
-            ? *audioDesiredWithCapture
-            : withoutLocalSender(*audioDesiredWithCapture, session->role());
+        const auto desired = AvCallPolicy::sendersForCaptureAvailability(*audioDesiredWithCapture, session->role(),
+                                                                          audioCaptureAvailable());
 
         if (rtp->senders() == desired) {
             if (audioPolicyTarget && *audioPolicyTarget == desired)
@@ -371,7 +351,7 @@ public:
             if (!rtp || rtp->state() >= Jingle::State::Finishing)
                 continue;
 
-            const bool localMaySend = allowsSender(rtp->senders(), session->role());
+            const bool localMaySend = AvCallPolicy::allowsSender(rtp->senders(), session->role());
             if (rtp->media() == QLatin1String("audio")) {
                 hasAudio     = true;
                 audioMaySend = audioMaySend || localMaySend;
@@ -387,8 +367,10 @@ public:
         const bool audioCaptureAvailable = !g_config->liveInput || !audioInput.isEmpty();
         const bool videoCaptureAvailable
             = !g_config->liveInput || (manager && manager->capabilities.videoInput);
-        const bool transmitAudio = hasAudio && captureAudioConsent && audioMaySend && audioCaptureAvailable;
-        const bool transmitVideo = hasVideo && captureVideoConsent && videoMaySend && videoCaptureAvailable;
+        const bool transmitAudio
+            = AvCallPolicy::shouldTransmit(hasAudio, captureAudioConsent, audioMaySend, audioCaptureAvailable);
+        const bool transmitVideo
+            = AvCallPolicy::shouldTransmit(hasVideo, captureVideoConsent, videoMaySend, videoCaptureAvailable);
 
         startPsiMediaJingleTransmit(session, g_config->liveInput, transmitAudio, audioInput, transmitVideo,
                                     g_config->videoInDeviceId);
