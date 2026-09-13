@@ -12,6 +12,7 @@ add_definitions(-DDEBUG_POSTFIX="")
 
 set(HEADERS
     avcall.h
+    avcallpolicy.h
     calldlg.h
     mediadevicewatcher.h
     psimediajingle.h
@@ -33,3 +34,7 @@ add_library(avcall STATIC ${SOURCES} ${HEADERS} ${UI_FORMS})
 add_dependencies(avcall build_ui_files)
 target_link_libraries(avcall ${QT_LIBRARIES} ${iris_LIB} tools widgets)
 target_include_directories(avcall PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+
+if(BUILD_TESTING)
+    add_subdirectory(unittest)
+endif()
