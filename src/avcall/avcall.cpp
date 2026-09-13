@@ -65,12 +65,13 @@ static PsiMediaJingleCapabilities currentNativeCallCapabilities()
 #else
     result.secureRtp = false;
 #endif
-    const bool mediaReady = result.backendAvailable && result.probeComplete && result.secureRtp;
-    result.audio           = mediaReady && !watcher->supportedAudioModes().isEmpty();
-    result.video           = mediaReady && !watcher->supportedVideoModes().isEmpty();
-    result.audioInput      = !watcher->audioInputDevices().isEmpty();
-    result.audioOutput     = !watcher->audioOutputDevices().isEmpty();
-    result.videoInput      = !watcher->videoInputDevices().isEmpty();
+    result.audio = AvCallPolicy::mediaTypeSupported(result.backendAvailable, result.probeComplete, result.secureRtp,
+                                                     !watcher->supportedAudioModes().isEmpty());
+    result.video = AvCallPolicy::mediaTypeSupported(result.backendAvailable, result.probeComplete, result.secureRtp,
+                                                     !watcher->supportedVideoModes().isEmpty());
+    result.audioInput  = !watcher->audioInputDevices().isEmpty();
+    result.audioOutput = !watcher->audioOutputDevices().isEmpty();
+    result.videoInput  = !watcher->videoInputDevices().isEmpty();
     return result;
 }
 
