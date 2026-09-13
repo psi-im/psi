@@ -667,7 +667,7 @@ void AvCallManager::setStunRelayUdpService(const QString &host, int port, const 
 void AvCallManager::setStunRelayTcpService(const QString &host, int port, const XMPP::AdvancedConnector::Proxy &proxy,
                                            const QString &user, const QString &pass)
 {
-    d->iceManager->setStunRelayTcpService(host, port, user, pass);
+    d->iceManager->setStunRelayTcpService(host, port, proxy, user, pass);
 }
 
 void AvCallManager::setAllowIpExposure(bool allow) { d->iceManager->setAllowIpExposure(allow); }
