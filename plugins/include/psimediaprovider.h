@@ -147,10 +147,12 @@ public:
 
 class PRtpPacket {
 public:
-    QByteArray rawValue;
-    int        portOffset;
+    // Keep the historical int-sized 0/1 representation ABI-compatible with
+    // Provider 1.6 while removing transport topology from the source API.
+    enum class Type : int { Rtp = 0, Rtcp = 1 };
 
-    inline PRtpPacket() : portOffset(0) { }
+    QByteArray rawValue;
+    Type       type = Type::Rtp;
 };
 
 class Provider : public QObjectInterface {

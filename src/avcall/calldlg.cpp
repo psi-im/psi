@@ -43,12 +43,14 @@ public:
     bool                   incoming;
     bool                   active;
     bool                   activated;
+    bool                   sessionFinished;
     AvCall                *sess;
     PsiMedia::VideoWidget *vw_remote;
     QTimer                *timer;
     QTime                  call_duration;
 
-    explicit Private(CallDlg *_q) : QObject(_q), q(_q), active(false), activated(false), sess(nullptr), timer(nullptr)
+    explicit Private(CallDlg *_q) :
+        QObject(_q), q(_q), active(false), activated(false), sessionFinished(false), sess(nullptr), timer(nullptr)
     {
         ui.setupUi(q);
         q->setWindowTitle(tr("Voice Call"));
@@ -63,6 +65,11 @@ public:
                 PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt());
             AvCallManager::setExternalAddress(
                 PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString());
+        }
+
+        if (!AvCallManager::isVideoSupported()) {
+            ui.ck_useVideo->setChecked(false);
+            ui.ck_useVideo->setEnabled(false);
         }
 
         ui.lb_bandwidth->setEnabled(false);
@@ -90,7 +97,7 @@ public:
     ~Private() override
     {
         if (sess) {
-            if (active)
+            if ((active || incoming) && !sessionFinished)
                 sess->reject();
 
             sess->setIncomingVideo(nullptr);
@@ -122,7 +129,8 @@ public:
         ui.le_to->setText(sess->jid().full());
         ui.le_to->setReadOnly(true);
 
-        if (sess->mode() == AvCall::Video || sess->mode() == AvCall::Both) {
+        if (AvCallManager::isVideoSupported()
+            && (sess->mode() == AvCall::Video || sess->mode() == AvCall::Both)) {
             ui.ck_useVideo->setChecked(true);
 
             // video-only session, don't allow deselecting video
@@ -185,8 +193,10 @@ private slots:
 
     void cancel_clicked()
     {
-        if (sess && incoming && !active)
+        if (sess && incoming && !active) {
             sess->reject();
+            sessionFinished = true;
+        }
         q->close();
     }
 
@@ -219,6 +229,7 @@ private slots:
 
     void sess_error()
     {
+        sessionFinished = true;
         if (!activated)
             ui.busy->stop();
 

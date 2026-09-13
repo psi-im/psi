@@ -1,659 +1,537 @@
 /*
+ * avcall.cpp - Psi call UI facade for Iris-native Jingle RTP
  * Copyright (C) 2009  Barracuda Networks, Inc.
+ * Copyright (C) 2026  Psi Project
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- *
  */
 
 #include "avcall.h"
 
 #include "../psimedia/psimedia.h"
-#include "applicationinfo.h"
-#include "jingle-ice.h"
-#include "jinglertp.h"
+#include "avcallpolicy.h"
 #include "mediadevicewatcher.h"
+#include "psimediajingle.h"
+#include "psimediajinglecapabilitytransaction.h"
 #include "psiaccount.h"
-#include "psioptions.h"
-#include "xmpp_client.h"
-#include "xmpp_jid.h"
-#ifdef PSI_PLUGINS
-#include "pluginmanager.h"
-#endif
 
-#include <QCoreApplication>
-#include <QDir>
-#include <QLibrary>
+#include <iris/jingle-ice.h>
+#include <iris/jingle-rtp.h>
+#include <iris/jingle-session.h>
+#include <iris/xmpp_client.h>
+
+#include <QHostAddress>
+#include <QPointer>
 #include <QtCrypto>
-#include <cstdio>
-#include <cstdlib>
 
-// threaded mode is unstable. Enable it at your own risk.
-// most likely moveToThread below has to be handled carefully to call changeThread of Ice176
-// #define USE_THREAD
+#include <memory>
+#include <optional>
+#include <utility>
+
+namespace Jingle = XMPP::Jingle;
+namespace RTP    = XMPP::Jingle::RTP;
+namespace ICE    = XMPP::Jingle::ICE;
 
 static MediaConfiguration *g_config = new MediaConfiguration;
 
-static JingleRtpPayloadType payloadInfoToPayloadType(const PsiMedia::PayloadInfo &pi)
+static QString resolvedAudioInputDevice()
 {
-    JingleRtpPayloadType out;
-    out.id        = pi.id();
-    out.name      = pi.name();
-    out.clockrate = pi.clockrate();
-    out.channels  = pi.channels();
-    out.ptime     = pi.ptime();
-    out.maxptime  = pi.maxptime();
-    for (const PsiMedia::PayloadInfo::Parameter &pip : pi.parameters()) {
-        JingleRtpPayloadType::Parameter ptp;
-        ptp.name  = pip.name;
-        ptp.value = pip.value;
-        out.parameters += ptp;
+    if (!g_config->liveInput)
+        return {};
+
+    const auto devices = MediaDeviceWatcher::instance()->audioInputDevices();
+    for (const auto &device : devices) {
+        if (!g_config->audioInDeviceId.isEmpty() && device.id() == g_config->audioInDeviceId)
+            return device.id();
     }
-    return out;
+    for (const auto &device : devices) {
+        if (device.isDefault())
+            return device.id();
+    }
+    return devices.isEmpty() ? QString() : devices.first().id();
 }
 
-static PsiMedia::PayloadInfo payloadTypeToPayloadInfo(const JingleRtpPayloadType &pt)
+static PsiMediaJingleCapabilities currentNativeCallCapabilities()
 {
-    PsiMedia::PayloadInfo out;
-    out.setId(pt.id);
-    out.setName(pt.name);
-    out.setClockrate(pt.clockrate);
-    out.setChannels(pt.channels);
-    out.setPtime(pt.ptime);
-    out.setMaxptime(pt.maxptime);
-    QList<PsiMedia::PayloadInfo::Parameter> list;
-    for (const JingleRtpPayloadType::Parameter &ptp : pt.parameters) {
-        PsiMedia::PayloadInfo::Parameter pip;
-        pip.name  = ptp.name;
-        pip.value = ptp.value;
-        list += pip;
-    }
-    out.setParameters(list);
-    return out;
+    PsiMediaJingleCapabilities result;
+    auto                       watcher = MediaDeviceWatcher::instance();
+    result.backendAvailable            = PsiMedia::isSupported();
+    result.probeComplete               = watcher->featuresReady();
+#ifdef PSI_ENABLE_AVCALL
+    result.secureRtp = !RTP::supportedSecureRtpProfiles().isEmpty();
+#else
+    result.secureRtp = false;
+#endif
+    result.audio = AvCallPolicy::mediaTypeSupported(result.backendAvailable, result.probeComplete, result.secureRtp,
+                                                     !watcher->supportedAudioModes().isEmpty());
+    result.video = AvCallPolicy::mediaTypeSupported(result.backendAvailable, result.probeComplete, result.secureRtp,
+                                                     !watcher->supportedVideoModes().isEmpty());
+    result.audioInput  = !watcher->audioInputDevices().isEmpty();
+    result.audioOutput = !watcher->audioOutputDevices().isEmpty();
+    result.videoInput  = !watcher->videoInputDevices().isEmpty();
+    return result;
 }
 
-class AvTransmit : public QObject {
-    Q_OBJECT
-
-public:
-    PsiMedia::RtpChannel *audio, *video;
-    JingleRtpChannel     *transport;
-
-    AvTransmit(PsiMedia::RtpChannel *_audio, PsiMedia::RtpChannel *_video, JingleRtpChannel *_transport,
-               QObject *parent = nullptr) : QObject(parent), audio(_audio), video(_video), transport(_transport)
-    {
-        if (audio) {
-            audio->setParent(this);
-            connect(audio, SIGNAL(readyRead()), SLOT(audio_readyRead()));
-        }
-
-        if (video) {
-            video->setParent(this);
-            connect(video, SIGNAL(readyRead()), SLOT(video_readyRead()));
-        }
-
-        transport->setParent(this);
-        connect(transport, SIGNAL(readyRead()), SLOT(transport_readyRead()));
-        connect(transport, SIGNAL(packetsWritten(int)), SLOT(transport_packetsWritten(int)));
-    }
-
-    ~AvTransmit() override
-    {
-        if (audio)
-            audio->setParent(nullptr);
-        if (video)
-            video->setParent(nullptr);
-        transport->setParent(nullptr);
-    }
-
-private slots:
-    void audio_readyRead()
-    {
-        while (audio->packetsAvailable() > 0) {
-            PsiMedia::RtpPacket packet = audio->read();
-
-            JingleRtp::RtpPacket jpacket;
-            jpacket.type       = JingleRtp::Audio;
-            jpacket.portOffset = packet.portOffset();
-            jpacket.value      = packet.rawValue();
-
-            transport->write(jpacket);
-        }
-    }
-
-    void video_readyRead()
-    {
-        while (video->packetsAvailable() > 0) {
-            PsiMedia::RtpPacket packet = video->read();
-
-            JingleRtp::RtpPacket jpacket;
-            jpacket.type       = JingleRtp::Video;
-            jpacket.portOffset = packet.portOffset();
-            jpacket.value      = packet.rawValue();
-
-            transport->write(jpacket);
-        }
-    }
-
-    void transport_readyRead()
-    {
-        while (transport->packetsAvailable()) {
-            JingleRtp::RtpPacket jpacket = transport->read();
-
-            if (jpacket.type == JingleRtp::Audio && audio) // FIXME why audio could null but we still receive packets?
-                                                           // (the check was added to fix a crash)
-                audio->write(PsiMedia::RtpPacket(jpacket.value, jpacket.portOffset));
-            else if (jpacket.type == JingleRtp::Video && video) //  FIXME see above
-                video->write(PsiMedia::RtpPacket(jpacket.value, jpacket.portOffset));
-        }
-    }
-
-    void transport_packetsWritten(int count)
-    {
-        Q_UNUSED(count);
-
-        // nothing
-    }
-};
-
-class AvTransmitHandler : public QObject {
-    Q_OBJECT
-
-public:
-    AvTransmit *avTransmit;
-    QThread    *previousThread;
-
-    explicit AvTransmitHandler(QObject *parent = nullptr) :
-        QObject(parent), avTransmit(nullptr), previousThread(nullptr)
-    {
-    }
-
-    ~AvTransmitHandler() override
-    {
-        if (avTransmit)
-            releaseAvTransmit();
-    }
-
-    // NOTE: the handler never touches these variables except here
-    //   and on destruction, so it's safe to call this function from
-    //   another thread if you know what you're doing.
-    void setAvTransmit(AvTransmit *_avTransmit)
-    {
-        avTransmit     = _avTransmit;
-        previousThread = avTransmit->thread();
-        avTransmit->moveToThread(thread());
-    }
-
-    void releaseAvTransmit()
-    {
-        Q_ASSERT(avTransmit);
-        avTransmit->moveToThread(previousThread);
-        avTransmit = nullptr;
-    }
-};
-
-class AvTransmitThread : public QCA::SyncThread {
-    Q_OBJECT
-
-public:
-    AvTransmitHandler *handler;
-
-    explicit AvTransmitThread(QObject *parent = nullptr) : QCA::SyncThread(parent), handler(nullptr) { }
-
-    ~AvTransmitThread() override { stop(); }
-
-protected:
-    void atStart() override { handler = new AvTransmitHandler; }
-
-    void atEnd() override { delete handler; }
-};
-
-//----------------------------------------------------------------------------
-// AvCall
-//----------------------------------------------------------------------------
 class AvCallManagerPrivate : public QObject {
     Q_OBJECT
 
 public:
-    AvCallManager              *q                    = nullptr;
-    PsiAccount                 *pa                   = nullptr;
-    JingleRtpManager           *rtpManager           = nullptr;
-    XMPP::Jingle::ICE::Manager *irisJingleICEManager = nullptr;
-    QList<AvCall *>             sessions;
-    QList<AvCall *>             pending;
-
-    AvCallManagerPrivate(PsiAccount *_pa, AvCallManager *_q);
+    AvCallManagerPrivate(PsiAccount *account, AvCallManager *q);
     ~AvCallManagerPrivate() override;
 
     void unlink(AvCall *call);
+    void applyNetworkConfiguration();
+    void refreshCapabilities();
+
+    AvCallManager                       *q             = nullptr;
+    PsiAccount                          *pa            = nullptr;
+    Jingle::Manager                     *jingleManager = nullptr;
+    RTP::Manager                        *rtpManager    = nullptr;
+    ICE::Manager                        *iceManager    = nullptr;
+    std::shared_ptr<RTP::MediaProvider>  mediaProvider;
+    PsiMediaJingleCapabilities           capabilities;
+    QList<AvCall *>                      sessions;
+    QList<AvCall *>                      pending;
 
 private slots:
-    void rtp_incomingReady();
+    void incomingSession(Jingle::Session *session);
 };
 
 class AvCallPrivate : public QObject {
     Q_OBJECT
 
 public:
-    AvCall               *q;
-    AvCallManagerPrivate *manager;
-    bool                  incoming;
-    JingleRtp            *sess;
-    PsiMedia::RtpSession  rtp;
-    XMPP::Jid             peer;
-    AvCall::Mode          mode;
-    AvCall::PeerFeatures  peerFeatures;
-    int                   bitrate;
-    QString               errorString;
-    bool                  transmitAudio;
-    bool                  transmitVideo;
-    bool                  transmitting;
-    AvTransmit           *avTransmit;
-    AvTransmitThread     *avTransmitThread;
-
-    explicit AvCallPrivate(AvCall *_q) :
-        QObject(_q), q(_q), manager(nullptr), sess(nullptr), transmitAudio(false), transmitVideo(false),
-        transmitting(false), avTransmit(nullptr), avTransmitThread(nullptr)
-    {
-        connect(&rtp, SIGNAL(started()), SLOT(rtp_started()));
-        connect(&rtp, SIGNAL(preferencesUpdated()), SLOT(rtp_preferencesUpdated()));
-        connect(&rtp, SIGNAL(stopped()), SLOT(rtp_stopped()));
-        connect(&rtp, SIGNAL(error()), SLOT(rtp_error()));
-    }
-
+    explicit AvCallPrivate(AvCall *q) : QObject(q), q(q) { }
     ~AvCallPrivate() override
     {
-        rtp.disconnect(this);
-        cleanup();
+        if (session)
+            stopPsiMediaJingleTransmit(session);
         unlink();
     }
 
     void unlink()
     {
         if (manager) {
-            // note that the object remains active, just
-            //   dissociated from the manager
             manager->unlink(q);
             manager = nullptr;
         }
     }
 
-    void startOutgoing()
+    bool attachIncoming(Jingle::Session *incomingSession)
     {
-        if (!manager)
-            return;
+        if (!incomingSession || incomingSession->role() != Jingle::Origin::Responder)
+            return false;
+        session  = incomingSession;
+        peer     = session->peer();
+        incoming = true;
+        setupSession();
 
-        manager->rtpManager->setBasePort(g_config->basePort);
-        manager->rtpManager->setExternalAddress(g_config->extHost);
-        manager->irisJingleICEManager->setBasePort(g_config->basePort);
-        manager->irisJingleICEManager->setExternalAddress(g_config->extHost);
-
-        start_rtp();
+        bool audio = false;
+        bool video = false;
+        for (auto app : session->contentList()) {
+            auto rtp = dynamic_cast<RTP::Application *>(app);
+            if (!rtp)
+                return false;
+            if (rtp->media() == QLatin1String("audio"))
+                audio = true;
+            else if (rtp->media() == QLatin1String("video"))
+                video = true;
+            else
+                return false;
+        }
+        if (!audio && !video)
+            return false;
+        requestedAudio      = audio;
+        requestedVideo      = video;
+        captureAudioConsent = false;
+        captureVideoConsent = false;
+        mode                = audio && video ? AvCall::Both : (audio ? AvCall::Audio : AvCall::Video);
+        return true;
     }
 
-    bool initIncoming()
+    void startOutgoing()
     {
-        setup_sess();
+        if (!manager || session)
+            return;
 
-        // JingleRtp guarantees there will be at least one of audio or video
-        bool offeredAudio = false;
-        bool offeredVideo = false;
-        if (!sess->remoteAudioPayloadTypes().isEmpty())
-            offeredAudio = true;
-        if (!sess->remoteVideoPayloadTypes().isEmpty())
-            offeredVideo = true;
+        manager->applyNetworkConfiguration();
+        session = manager->jingleManager->newSession(peer);
+        if (!session) {
+            fail(tr("Unable to create a Jingle call session."));
+            return;
+        }
+        setupSession();
 
-        if (offeredAudio && offeredVideo)
-            mode = AvCall::Both;
-        else if (offeredAudio)
-            mode = AvCall::Audio;
-        else if (offeredVideo)
-            mode = AvCall::Video;
-        else {
-            // this could happen if only video is offered but
-            //   we don't allow it
-            return false;
+        const bool needAudio = mode == AvCall::Audio || mode == AvCall::Both;
+        const bool needVideo = mode == AvCall::Video || mode == AvCall::Both;
+        if (!manager->capabilities.available()) {
+            fail(manager->capabilities.unavailableReason());
+            return;
+        }
+        if ((needAudio && !manager->capabilities.audio) || (needVideo && !manager->capabilities.video)) {
+            fail(tr("The requested media type is not supported by the current media backend."));
+            return;
+        }
+        requestedAudio      = needAudio;
+        requestedVideo      = needVideo;
+        captureAudioConsent = needAudio;
+        captureVideoConsent = needVideo;
+
+        Jingle::Origin audioSenders = Jingle::Origin::Both;
+        if (needAudio) {
+            audioDesiredWithCapture = Jingle::Origin::Both;
+            audioSenders = AvCallPolicy::sendersForCaptureAvailability(*audioDesiredWithCapture, session->role(),
+                                                                        audioCaptureAvailable());
         }
 
-        return true;
+        if ((needAudio && !manager->rtpManager->createOutgoing(session, QStringLiteral("audio"), audioSenders))
+            || (needVideo && !manager->rtpManager->createOutgoing(session, QStringLiteral("video")))) {
+            fail(tr("Unable to create the requested RTP media."));
+            return;
+        }
+        wireApplications();
+
+        if (!configureBackend()) {
+            fail(errorString.isEmpty() ? tr("Unable to initialize the media backend.") : errorString);
+            return;
+        }
+        session->initiate();
     }
 
     void accept()
     {
-        if (!manager)
+        if (!manager || !session || !incoming || session->state() != Jingle::State::Created)
             return;
 
-        manager->rtpManager->setBasePort(g_config->basePort);
-        manager->rtpManager->setExternalAddress(g_config->extHost);
-        manager->irisJingleICEManager->setBasePort(g_config->basePort);
-        manager->irisJingleICEManager->setExternalAddress(g_config->extHost);
+        manager->applyNetworkConfiguration();
+        if (!configureBackend()) {
+            fail(errorString.isEmpty() ? tr("Unable to initialize the media backend.") : errorString);
+            return;
+        }
 
-        // kick off the acceptance negotiation while simultaneously
-        //   initializing the rtp engine.  note that session-accept
-        //   won't actually get sent to the peer until we call
-        //   localMediaUpdated()
-        int types;
-        if (mode == AvCall::Both)
-            types = JingleRtp::Audio | JingleRtp::Video;
-        else if (mode == AvCall::Audio)
-            types = JingleRtp::Audio;
-        else // Video
-            types = JingleRtp::Video;
-
-        sess->accept(types);
-        start_rtp();
+        const bool wantsAudio = mode == AvCall::Audio || mode == AvCall::Both;
+        const bool wantsVideo = mode == AvCall::Video || mode == AvCall::Both;
+        const bool acceptAudio = requestedAudio && wantsAudio;
+        const bool acceptVideo = requestedVideo && wantsVideo;
+        captureAudioConsent = acceptAudio;
+        captureVideoConsent = acceptVideo;
+        if (!acceptAudio && !acceptVideo) {
+            errorString      = tr("No offered RTP media type was accepted.");
+            localTermination = true;
+            session->terminate(Jingle::Reason::Decline);
+            emit q->error();
+            return;
+        }
+        for (auto app : session->contentList()) {
+            auto rtp = dynamic_cast<RTP::Application *>(app);
+            if (!rtp)
+                continue;
+            const bool accepted = (rtp->media() == QLatin1String("audio") && acceptAudio)
+                || (rtp->media() == QLatin1String("video") && acceptVideo);
+            if (!accepted) {
+                rtp->remove(Jingle::Reason::Decline, QStringLiteral("Media type declined locally"));
+            } else if (rtp->media() == QLatin1String("audio")) {
+                audioDesiredWithCapture = rtp->senders();
+            }
+        }
+        syncAudioDirection();
+        session->accept();
     }
 
     void reject()
     {
-        if (sess)
-            sess->reject();
-        cleanup();
+        if (!session)
+            return;
+        localTermination = true;
+        stopPsiMediaJingleTransmit(session);
+        session->terminate(Jingle::Reason::Decline);
     }
 
-private:
-    static QString rtpSessionErrorToString(PsiMedia::RtpSession::Error e)
+    bool configureBackend()
     {
-        QString str;
-        switch (e) {
-        case PsiMedia::RtpSession::ErrorSystem:
-            str = tr("System error");
-            break;
-        case PsiMedia::RtpSession::ErrorCodec:
-            str = tr("Codec error");
-            break;
-        default: // generic
-            str = tr("Generic error");
-            break;
+        if (!session)
+            return false;
+        const QString file = g_config->liveInput ? QString() : g_config->file;
+        if (!g_config->liveInput && file.isEmpty()) {
+            errorString = tr("A media file was selected as call input but no file is configured.");
+            return false;
         }
-        return str;
+        if (!configurePsiMediaJingleSession(session, g_config->audioOutDeviceId, file, g_config->loopFile, bitrate))
+            return false;
+        if (videoWidget)
+            setPsiMediaJingleVideoOutput(session, videoWidget);
+        return true;
     }
 
-    void cleanup()
+    RTP::Application *audioApplication() const
     {
-        // if we had a thread, this will move the object back
-        delete avTransmitThread;
-        avTransmitThread = nullptr;
-
-        delete avTransmit;
-        avTransmit = nullptr;
-
-        rtp.reset();
-
-        delete sess;
-        sess = nullptr;
-    }
-
-    void start_rtp()
-    {
-        MediaConfiguration &config = *g_config;
-
-        transmitAudio = false;
-        transmitVideo = false;
-
-        if (config.liveInput) {
-            if (config.audioInDeviceId.isEmpty() && config.videoInDeviceId.isEmpty()) {
-                errorString
-                    = tr("Cannot call without selecting a device.  Do you have a microphone?  Check the Psi options.");
-                cleanup();
-                emit q->error();
-                return;
-            }
-
-            if ((mode == AvCall::Audio || mode == AvCall::Both) && !config.audioInDeviceId.isEmpty()) {
-                rtp.setAudioInputDevice(config.audioInDeviceId);
-                transmitAudio = true;
-            } else
-                rtp.setAudioInputDevice(QString());
-
-            if ((mode == AvCall::Video || mode == AvCall::Both) && !config.videoInDeviceId.isEmpty()) {
-                rtp.setVideoInputDevice(config.videoInDeviceId);
-                transmitVideo = true;
-            } else
-                rtp.setVideoInputDevice(QString());
-        } else // non-live (file) input
-        {
-            if (config.file.isEmpty()) {
-                errorString = "An attempt to send a video file over the call but file name is not set";
-                cleanup();
-                emit q->error();
-                return;
-            }
-            rtp.setFileInput(config.file);
-            rtp.setFileLoopEnabled(config.loopFile);
-
-            // we just assume the file has both audio and video.
-            //   if it doesn't, no big deal, it'll still work.
-            //   update: after starting, we can correct these
-            //   variables.
-            transmitAudio = true;
-            transmitVideo = true;
+        if (!session)
+            return nullptr;
+        for (auto app : session->contentList()) {
+            auto rtp = dynamic_cast<RTP::Application *>(app);
+            if (rtp && rtp->media() == QLatin1String("audio") && rtp->state() < Jingle::State::Finishing)
+                return rtp;
         }
-
-        if (!config.audioOutDeviceId.isEmpty())
-            rtp.setAudioOutputDevice(config.audioOutDeviceId);
-
-        // media types are flagged by params, even if empty
-        QList<PsiMedia::AudioParams> audioParamsList;
-        if (transmitAudio)
-            audioParamsList += PsiMedia::AudioParams();
-        rtp.setLocalAudioPreferences(audioParamsList);
-
-        QList<PsiMedia::VideoParams> videoParamsList;
-        if (transmitVideo)
-            videoParamsList += PsiMedia::VideoParams();
-        rtp.setLocalVideoPreferences(videoParamsList);
-
-        // for incoming sessions, we have the remote media info at
-        //   the start, so use it
-        if (incoming)
-            setup_remote_media();
-
-        if (bitrate != -1)
-            rtp.setMaximumSendingBitrate(bitrate);
-
-        transmitting = false;
-        rtp.start();
+        return nullptr;
     }
 
-    void setup_sess()
+    bool audioCaptureAvailable() const
     {
-        connect(sess, SIGNAL(rejected()), SLOT(sess_rejected()));
-        connect(sess, SIGNAL(error()), SLOT(sess_error()));
-        connect(sess, SIGNAL(activated()), SLOT(sess_activated()));
-        connect(sess, SIGNAL(remoteMediaUpdated()), SLOT(sess_remoteMediaUpdated()));
+        return !g_config->liveInput || !resolvedAudioInputDevice().isEmpty();
     }
 
-    void setup_remote_media()
+    void syncAudioDirection()
     {
-        if (transmitAudio) {
-            QList<JingleRtpPayloadType>  payloadTypes = sess->remoteAudioPayloadTypes();
-            QList<PsiMedia::PayloadInfo> list;
-            for (const JingleRtpPayloadType &pt : std::as_const(payloadTypes))
-                list += payloadTypeToPayloadInfo(pt);
-            rtp.setRemoteAudioPreferences(list);
-        }
-
-        if (transmitVideo) {
-            QList<JingleRtpPayloadType>  payloadTypes = sess->remoteVideoPayloadTypes();
-            QList<PsiMedia::PayloadInfo> list;
-            for (const JingleRtpPayloadType &pt : std::as_const(payloadTypes))
-                list += payloadTypeToPayloadInfo(pt);
-            rtp.setRemoteVideoPreferences(list);
-        }
-
-        // FIXME: if the remote side doesn't support a media type,
-        //   then we need to downgrade locally
-    }
-
-private slots:
-    void rtp_started()
-    {
-        if (!manager)
+        if (!session || !captureAudioConsent)
+            return;
+        auto rtp = audioApplication();
+        if (!rtp)
             return;
 
-        printf("rtp_started\n");
+        if (!audioDesiredWithCapture)
+            audioDesiredWithCapture = rtp->senders();
+        const auto desired = AvCallPolicy::sendersForCaptureAvailability(*audioDesiredWithCapture, session->role(),
+                                                                          audioCaptureAvailable());
 
-        if (!incoming) {
-            sess = manager->rtpManager->createOutgoing();
-            setup_sess();
+        if (!AvCallPolicy::shouldRequestSenders(rtp->senders(), audioPolicyTarget, desired))
+            return;
+
+        audioPolicyTarget = desired;
+        if (!rtp->requestSenders(desired))
+            audioPolicyTarget.reset();
+    }
+
+    void setupSession()
+    {
+        Q_ASSERT(session);
+        connect(session, &Jingle::Session::activated, this, &AvCallPrivate::sessionActivated);
+        connect(session, &Jingle::Session::terminated, this, &AvCallPrivate::sessionTerminated);
+        connect(session, &Jingle::Session::newContentReceived, this, &AvCallPrivate::wireApplications);
+        connect(session, &QObject::destroyed, this, [this] {
+            session         = nullptr;
+            signalingActive = false;
+            active          = false;
+            acceptedAudio   = false;
+            acceptedVideo   = false;
+        });
+        wireApplications();
+    }
+
+    void wireApplications()
+    {
+        if (!session)
+            return;
+        for (auto app : session->contentList()) {
+            auto rtp = dynamic_cast<RTP::Application *>(app);
+            if (!rtp)
+                continue;
+            connect(rtp, &Jingle::Application::stateChanged, this, &AvCallPrivate::applicationStateChanged,
+                    Qt::UniqueConnection);
+            connect(rtp, &Jingle::Application::sendersChanged, this, &AvCallPrivate::applicationSendersChanged,
+                    Qt::UniqueConnection);
+            connect(rtp, &Jingle::Application::sendersChangedByPeer, this,
+                    &AvCallPrivate::applicationSendersChangedByPeer, Qt::UniqueConnection);
         }
+    }
 
-        if (transmitAudio && !rtp.localAudioPayloadInfo().isEmpty()) {
-            QList<JingleRtpPayloadType> pis;
-            const auto                 &lAPInfo = rtp.localAudioPayloadInfo();
-            for (const PsiMedia::PayloadInfo &pi : lAPInfo) {
-                JingleRtpPayloadType pt = payloadInfoToPayloadType(pi);
-                pis << pt;
+    void syncActiveTransmit()
+    {
+        if (!session || !active)
+            return;
+
+        bool hasAudio      = false;
+        bool hasVideo      = false;
+        bool audioMaySend  = false;
+        bool videoMaySend  = false;
+        for (auto app : session->contentList()) {
+            auto rtp = dynamic_cast<RTP::Application *>(app);
+            if (!rtp || rtp->state() >= Jingle::State::Finishing)
+                continue;
+
+            const bool localMaySend = AvCallPolicy::allowsSender(rtp->senders(), session->role());
+            if (rtp->media() == QLatin1String("audio")) {
+                hasAudio     = true;
+                audioMaySend = audioMaySend || localMaySend;
+            } else if (rtp->media() == QLatin1String("video")) {
+                hasVideo     = true;
+                videoMaySend = videoMaySend || localMaySend;
             }
-            sess->setLocalAudioPayloadTypes(pis);
-        } else
-            transmitAudio = false;
+        }
 
-        if (transmitVideo && !rtp.localVideoPayloadInfo().isEmpty()) {
-            QList<JingleRtpPayloadType> pis;
-            const auto                 &lVPInfo = rtp.localVideoPayloadInfo();
-            for (const PsiMedia::PayloadInfo &pi : lVPInfo) {
-                JingleRtpPayloadType pt = payloadInfoToPayloadType(pi);
-                pis << pt;
+        acceptedAudio = hasAudio;
+        acceptedVideo = hasVideo;
+        const auto audioInput = resolvedAudioInputDevice();
+        const bool audioCaptureAvailable = !g_config->liveInput || !audioInput.isEmpty();
+        const bool videoCaptureAvailable
+            = !g_config->liveInput || (manager && manager->capabilities.videoInput);
+        const bool transmitAudio
+            = AvCallPolicy::shouldTransmit(hasAudio, captureAudioConsent, audioMaySend, audioCaptureAvailable);
+        const bool transmitVideo
+            = AvCallPolicy::shouldTransmit(hasVideo, captureVideoConsent, videoMaySend, videoCaptureAvailable);
+
+        startPsiMediaJingleTransmit(session, g_config->liveInput, transmitAudio, audioInput, transmitVideo,
+                                    g_config->videoInDeviceId);
+    }
+
+    void maybeActivateMedia()
+    {
+        if (!session || !signalingActive || active)
+            return;
+
+        acceptedAudio       = false;
+        acceptedVideo       = false;
+        bool audioReady     = true;
+        bool videoReady     = true;
+
+        for (auto app : session->contentList()) {
+            auto rtp = dynamic_cast<RTP::Application *>(app);
+            if (!rtp || rtp->state() >= Jingle::State::Finishing)
+                continue;
+
+            if (rtp->media() == QLatin1String("audio")) {
+                acceptedAudio = true;
+                audioReady    = audioReady && rtp->state() == Jingle::State::Active;
+            } else if (rtp->media() == QLatin1String("video")) {
+                acceptedVideo = true;
+                videoReady    = videoReady && rtp->state() == Jingle::State::Active;
             }
-            sess->setLocalVideoPayloadTypes(pis);
-        } else
-            transmitVideo = false;
-
-        if (transmitAudio && transmitVideo)
-            mode = AvCall::Both;
-        else if (transmitAudio && !transmitVideo)
-            mode = AvCall::Audio;
-        else if (transmitVideo && !transmitAudio)
-            mode = AvCall::Video;
-        else {
-            // can't happen?
-            Q_ASSERT(0);
         }
 
-        if (!incoming) {
-            JingleRtp::PeerFeatures features;
-            if (peerFeatures & AvCall::IceTransport)
-                features |= JingleRtp::IceTransport;
-            if (peerFeatures & AvCall::IceUdpTransport)
-                features |= JingleRtp::IceUdpTransport;
-            sess->connectToJid(peer, features);
-        } else
-            sess->localMediaUpdate();
-    }
-
-    void rtp_preferencesUpdated()
-    {
-        // nothing?
-    }
-
-    void rtp_stopped()
-    {
-        // nothing for now, until we do async shutdown
-    }
-
-    void rtp_error()
-    {
-        errorString = tr("An error occurred while trying to send:\n%1.").arg(rtpSessionErrorToString(rtp.errorCode()));
-        reject();
-        emit q->error();
-    }
-
-    void sess_rejected()
-    {
-        errorString = tr("Call was rejected or terminated.");
-        cleanup();
-        emit q->error();
-    }
-
-    void sess_error()
-    {
-        JingleRtp::Error e = sess->errorCode();
-        if (e == JingleRtp::ErrorTimeout) {
-            errorString = tr("Call negotiation timed out.");
-            cleanup();
-        } else if (e == JingleRtp::ErrorICE) {
-            errorString = tr("Unable to establish peer-to-peer connection.");
-            reject();
-        } else {
-            errorString = tr("Call negotiation failed.");
-            cleanup();
+        if (!acceptedAudio && !acceptedVideo) {
+            fail(tr("The peer did not accept any usable RTP media."));
+            return;
         }
+        if ((acceptedAudio && !audioReady) || (acceptedVideo && !videoReady))
+            return;
 
-        emit q->error();
-    }
-
-    void sess_activated()
-    {
-        PsiMedia::RtpChannel *audio = nullptr;
-        PsiMedia::RtpChannel *video = nullptr;
-
-        if (transmitAudio)
-            audio = rtp.audioRtpChannel();
-        if (transmitVideo)
-            video = rtp.videoRtpChannel();
-
-        avTransmit = new AvTransmit(audio, video, sess->rtpChannel());
-#ifdef USE_THREAD
-        avTransmitThread = new AvTransmitThread(this);
-        avTransmitThread->start();
-        avTransmitThread->handler->setAvTransmit(avTransmit);
-#endif
-
-        if (transmitAudio)
-            rtp.transmitAudio();
-        if (transmitVideo)
-            rtp.transmitVideo();
-
-        transmitting = true;
+        active = true;
+        // A receive-only call is active even though this leaves capture paused.
+        // sendersChanged/device hotplug reuse the same backend session below.
+        syncActiveTransmit();
         emit q->activated();
     }
 
-    void sess_remoteMediaUpdated()
+    void mediaCapabilitiesChanged()
     {
-        setup_remote_media();
-        rtp.updatePreferences();
+        syncAudioDirection();
+        if (active)
+            syncActiveTransmit();
+        else
+            maybeActivateMedia();
     }
+
+    void fail(const QString &message)
+    {
+        errorString       = message;
+        localTermination  = true;
+        if (session) {
+            if (session->state() == Jingle::State::Created && session->role() == Jingle::Origin::Initiator) {
+                delete session;
+                session = nullptr;
+            } else {
+                session->terminate(Jingle::Reason::FailedApplication, message);
+            }
+        }
+        emit q->error();
+    }
+
+private slots:
+    void sessionActivated()
+    {
+        signalingActive = true;
+        syncAudioDirection();
+        maybeActivateMedia();
+    }
+
+    void applicationStateChanged(Jingle::State)
+    {
+        if (active)
+            syncActiveTransmit();
+        else
+            maybeActivateMedia();
+    }
+
+    void applicationSendersChanged(Jingle::Origin senders)
+    {
+        auto rtp = dynamic_cast<RTP::Application *>(sender());
+        if (rtp && rtp->media() == QLatin1String("audio"))
+            AvCallPolicy::reconcilePolicyTarget(senders, audioPolicyTarget);
+
+        if (active)
+            syncActiveTransmit();
+        else
+            maybeActivateMedia();
+    }
+
+    void applicationSendersChangedByPeer(Jingle::Origin senders)
+    {
+        auto rtp = dynamic_cast<RTP::Application *>(sender());
+        if (!rtp || rtp->media() != QLatin1String("audio"))
+            return;
+
+        audioDesiredWithCapture = senders;
+        syncAudioDirection();
+    }
+
+    void sessionTerminated()
+    {
+        if (!session)
+            return;
+        stopPsiMediaJingleTransmit(session);
+        if (!localTermination) {
+            errorString = active ? tr("Call was terminated.") : tr("Call was rejected or negotiation failed.");
+            emit q->error();
+        }
+        signalingActive = false;
+        active          = false;
+    }
+
+public:
+    AvCall                        *q       = nullptr;
+    AvCallManagerPrivate          *manager = nullptr;
+    QPointer<Jingle::Session>      session;
+    XMPP::Jid                      peer;
+    AvCall::Mode                   mode = AvCall::Audio;
+    int                            bitrate = -1;
+    QString                        errorString;
+    PsiMedia::VideoWidget         *videoWidget = nullptr;
+    bool                           incoming = false;
+    bool                           signalingActive = false;
+    bool                           active = false;
+    bool                           localTermination = false;
+    bool                           requestedAudio = false;
+    bool                           requestedVideo = false;
+    bool                           acceptedAudio = false;
+    bool                           acceptedVideo = false;
+    bool                           captureAudioConsent = false;
+    bool                           captureVideoConsent = false;
+    std::optional<Jingle::Origin>  audioDesiredWithCapture;
+    std::optional<Jingle::Origin>  audioPolicyTarget;
 };
 
-AvCall::AvCall() { d = new AvCallPrivate(this); }
+AvCall::AvCall() : d(new AvCallPrivate(this)) { }
 
 AvCall::AvCall(const AvCall &from) : QObject(nullptr)
 {
-    Q_UNUSED(from);
-    fprintf(stderr, "AvCall copy not supported\n");
-    abort();
+    Q_UNUSED(from)
+    qFatal("AvCall copy is not supported");
 }
 
 AvCall::~AvCall() { delete d; }
 
-XMPP::Jid AvCall::jid() const
-{
-    if (d->sess)
-        return d->sess->jid();
-    else
-        return XMPP::Jid();
-}
+XMPP::Jid AvCall::jid() const { return d->session ? d->session->peer() : d->peer; }
 
 AvCall::Mode AvCall::mode() const { return d->mode; }
 
 void AvCall::connectToJid(const XMPP::Jid &jid, Mode mode, int kbps, PeerFeatures features)
 {
-    d->peer         = jid;
-    d->mode         = mode;
-    d->bitrate      = kbps;
-    d->peerFeatures = features;
+    Q_UNUSED(features)
+    d->peer    = jid;
+    d->mode    = mode;
+    d->bitrate = kbps;
     d->startOutgoing();
 }
 
@@ -666,105 +544,140 @@ void AvCall::accept(Mode mode, int kbps)
 
 void AvCall::reject() { d->reject(); }
 
-void AvCall::setIncomingVideo(PsiMedia::VideoWidget *widget) { d->rtp.setVideoOutputWidget(widget); }
+void AvCall::setIncomingVideo(PsiMedia::VideoWidget *widget)
+{
+    d->videoWidget = widget;
+    if (d->session)
+        setPsiMediaJingleVideoOutput(d->session, widget);
+}
 
 QString AvCall::errorString() const { return d->errorString; }
 
 void AvCall::unlink() { d->unlink(); }
 
-//----------------------------------------------------------------------------
-// AvCallManager
-//----------------------------------------------------------------------------
-AvCallManagerPrivate::AvCallManagerPrivate(PsiAccount *_pa, AvCallManager *_q) : QObject(_q), q(_q), pa(_pa)
+AvCallManagerPrivate::AvCallManagerPrivate(PsiAccount *account, AvCallManager *q) : QObject(q), q(q), pa(account)
 {
-    rtpManager           = new JingleRtpManager(pa->client());
-    irisJingleICEManager = pa->client()->jingleICEManager();
-    connect(rtpManager, SIGNAL(incomingReady()), SLOT(rtp_incomingReady()));
+    jingleManager = pa->client()->jingleManager();
+    rtpManager    = jingleManager->rtpManager();
+    iceManager    = pa->client()->jingleICEManager();
+    rtpManager->setTransportNamespaces({ ICE::NS, ICE::NS_ICE_UDP });
+
+    auto watcher = MediaDeviceWatcher::instance();
+    // PsiAccount used to listen to the watcher independently. That made caps
+    // advertisement race the provider refresh because the two slots depended on
+    // QObject connection order. AvCallManager owns the transaction now.
+    QObject::disconnect(watcher, &MediaDeviceWatcher::capabilitiesChanged, pa, &PsiAccount::updateFeatures);
+    connect(watcher, &MediaDeviceWatcher::capabilitiesChanged, this, &AvCallManagerPrivate::refreshCapabilities);
+    refreshCapabilities();
+
+    connect(jingleManager, &Jingle::Manager::incomingSession, this, &AvCallManagerPrivate::incomingSession);
 }
 
-AvCallManagerPrivate::~AvCallManagerPrivate() { delete rtpManager; }
-
-void AvCallManagerPrivate::unlink(AvCall *call) { sessions.removeAll(call); }
-
-void AvCallManagerPrivate::rtp_incomingReady()
+AvCallManagerPrivate::~AvCallManagerPrivate()
 {
-    if (!PsiMedia::isSupported()) {
-        auto sess = rtpManager->takeIncoming();
-        sess->reject();
-        delete sess;
+    if (rtpManager) {
+        rtpManager->closeAll();
+        rtpManager->setTransportNamespaces({});
+        rtpManager->setMediaProvider({});
+    }
+    for (auto call : std::as_const(sessions)) {
+        if (call && call->d)
+            call->d->manager = nullptr;
+    }
+}
+
+void AvCallManagerPrivate::unlink(AvCall *call)
+{
+    sessions.removeAll(call);
+    pending.removeAll(call);
+}
+
+void AvCallManagerPrivate::applyNetworkConfiguration()
+{
+    iceManager->setBasePort(g_config->basePort);
+    iceManager->setExternalAddress(g_config->extHost);
+}
+
+void AvCallManagerPrivate::refreshCapabilities()
+{
+    commitPsiMediaJingleCapabilities(rtpManager, capabilities, mediaProvider, currentNativeCallCapabilities(),
+                                     [this] { pa->updateFeatures(); });
+
+    // Input-device changes do not necessarily alter advertised audio/video
+    // support, but they do alter the legal Jingle direction and capture state of
+    // an existing call.
+    const auto calls = sessions;
+    for (auto call : calls) {
+        if (call && call->d && call->d->manager == this)
+            call->d->mediaCapabilitiesChanged();
+    }
+}
+
+void AvCallManagerPrivate::incomingSession(Jingle::Session *incoming)
+{
+    if (!incoming || incoming->role() != Jingle::Origin::Responder)
+        return;
+    const auto types = incoming->allApplicationTypes();
+    if (types.size() != 1 || types.first() != RTP::Description::ns())
+        return;
+
+    if (!capabilities.available()) {
+        incoming->terminate(Jingle::Reason::UnsupportedApplications);
         return;
     }
-    AvCall *call      = new AvCall;
-    call->d->manager  = this;
-    call->d->incoming = true;
-    call->d->sess     = rtpManager->takeIncoming();
-    sessions += call;
-    if (!call->d->initIncoming()) {
-        call->d->sess->reject();
-        delete call->d->sess;
-        call->d->sess = nullptr;
+
+    auto call        = new AvCall;
+    call->d->manager = this;
+    if (!call->d->attachIncoming(incoming)) {
+        incoming->terminate(Jingle::Reason::UnsupportedApplications);
         delete call;
         return;
     }
-
-    pending += call;
+    sessions.append(call);
+    pending.append(call);
     emit q->incomingReady();
 }
 
-AvCallManager::AvCallManager(PsiAccount *pa) : QObject(nullptr) { d = new AvCallManagerPrivate(pa, this); }
+AvCallManager::AvCallManager(PsiAccount *pa) : QObject(nullptr), d(new AvCallManagerPrivate(pa, this)) { }
 
 AvCallManager::~AvCallManager() { delete d; }
 
 AvCall *AvCallManager::createOutgoing()
 {
-    AvCall *call      = new AvCall;
-    call->d->manager  = d;
-    call->d->incoming = false;
+    auto call        = new AvCall;
+    call->d->manager = d;
+    d->sessions.append(call);
     return call;
 }
 
-AvCall *AvCallManager::takeIncoming() { return d->pending.takeFirst(); }
+AvCall *AvCallManager::takeIncoming() { return d->pending.isEmpty() ? nullptr : d->pending.takeFirst(); }
 
-void AvCallManager::config()
-{
-    // TODO: remove this function?
-}
+void AvCallManager::config() { }
 
-bool AvCallManager::isSupported()
-{
-    if (!QCA::isSupported("hmac(sha1)")) {
-        printf("hmac support missing for voice calls, install qca-ossl\n");
-        return false;
-    }
-    return PsiMedia::isSupported();
-}
+bool AvCallManager::isSupported() { return currentNativeCallCapabilities().available(); }
 
-void AvCallManager::setSelfAddress(const QHostAddress &addr)
-{
-    d->rtpManager->setSelfAddress(addr);
-    d->irisJingleICEManager->setSelfAddress(addr);
-}
+bool AvCallManager::isAudioSupported() { return currentNativeCallCapabilities().audio; }
 
-void AvCallManager::setStunBindService(const QString &host, int port)
-{
-    d->rtpManager->setStunBindService(host, port);
-    d->irisJingleICEManager->setStunBindService(host, port);
-}
+bool AvCallManager::isVideoSupported() { return currentNativeCallCapabilities().video; }
+
+QString AvCallManager::unsupportedReason() { return currentNativeCallCapabilities().unavailableReason(); }
+
+void AvCallManager::setSelfAddress(const QHostAddress &addr) { d->iceManager->setSelfAddress(addr); }
+
+void AvCallManager::setStunBindService(const QString &host, int port) { d->iceManager->setStunBindService(host, port); }
 
 void AvCallManager::setStunRelayUdpService(const QString &host, int port, const QString &user, const QString &pass)
 {
-    d->rtpManager->setStunRelayUdpService(host, port, user, pass);
-    d->irisJingleICEManager->setStunRelayUdpService(host, port, user, pass);
+    d->iceManager->setStunRelayUdpService(host, port, user, pass);
 }
 
 void AvCallManager::setStunRelayTcpService(const QString &host, int port, const XMPP::AdvancedConnector::Proxy &proxy,
                                            const QString &user, const QString &pass)
 {
-    d->rtpManager->setStunRelayTcpService(host, port, proxy, user, pass);
-    d->irisJingleICEManager->setStunRelayTcpService(host, port, proxy, user, pass);
+    d->iceManager->setStunRelayTcpService(host, port, proxy, user, pass);
 }
 
-void AvCallManager::setAllowIpExposure(bool allow) { d->rtpManager->setAllowIpExposure(allow); }
+void AvCallManager::setAllowIpExposure(bool allow) { d->iceManager->setAllowIpExposure(allow); }
 
 void AvCallManager::setBasePort(int port)
 {

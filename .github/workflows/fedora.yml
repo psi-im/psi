@@ -2,14 +2,16 @@ name: Fedora CI
 
 on:
   push:
-    branches:
-    - '*'
+    branches-ignore:
+    - 'ai/**'
   pull_request:
     branches:
     - '*'
+  workflow_dispatch:
 
 jobs:
   build:
+    if: ${{ github.event_name != 'pull_request' || !startsWith(github.head_ref, 'ai/') }}
     name: Build and install project
     runs-on: ubuntu-latest
     container: fedora:latest
@@ -50,6 +52,7 @@ jobs:
             libidn-devel \
             libomemo-c-devel \
             libotr-devel \
+            libsrtp-devel \
             libtidy-devel \
             openssl-devel \
             protobuf-c-devel \
