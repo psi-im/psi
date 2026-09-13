@@ -94,6 +94,34 @@ int main()
     check(!Policy::shouldRequestSenders(Origin::Responder, Origin::Both, Origin::Both),
           "matching bidirectional target was queued twice");
 
+    // sendersChanged can report the ACK of an older request after policy has
+    // already queued a newer target. Such an observation must not redefine the
+    // capture-enabled baseline or cancel the newer target.
+    {
+        std::optional<Origin> desired = Origin::Both;
+        std::optional<Origin> target  = Origin::Both;
+        Policy::reconcileSendersChanged(Origin::Responder, desired, target);
+        check(desired == Origin::Both, "stale receive-only ACK replaced the capture-enabled direction");
+        check(target == Origin::Both, "stale receive-only ACK cancelled the newer bidirectional target");
+
+        Policy::reconcileSendersChanged(Origin::Both, desired, target);
+        check(desired == Origin::Both, "matching policy ACK changed the capture-enabled direction");
+        check(!target, "matching policy ACK did not clear the pending target");
+    }
+    {
+        std::optional<Origin> desired = Origin::Both;
+        std::optional<Origin> target  = Origin::Responder;
+        Policy::reconcileSendersChanged(Origin::Initiator, desired, target);
+        check(desired == Origin::Both, "conflicting senders update replaced policy baseline while target pending");
+        check(target == Origin::Responder, "conflicting senders update cancelled the local policy target");
+    }
+    {
+        std::optional<Origin> desired = Origin::Both;
+        std::optional<Origin> target;
+        Policy::reconcileSendersChanged(Origin::Initiator, desired, target);
+        check(desired == Origin::Initiator, "external senders update was not adopted without a local target");
+    }
+
     // Outgoing audio starts receive-only when no microphone exists, for either
     // Jingle role. This is the concrete no-mic invariant used by AvCall.
     check(Policy::sendersForCaptureAvailability(Origin::Both, Origin::Initiator, false) == Origin::Responder,
