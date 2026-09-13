@@ -31,6 +31,22 @@ int main()
     const Origin roles[]      = { Origin::Initiator, Origin::Responder };
     const Origin directions[] = { Origin::None, Origin::Both, Origin::Initiator, Origin::Responder };
 
+    // Codec/media capability is independent of capture-device presence. The
+    // production gate intentionally has no microphone/camera input parameter.
+    for (int backendAvailable = 0; backendAvailable <= 1; ++backendAvailable) {
+        for (int probeComplete = 0; probeComplete <= 1; ++probeComplete) {
+            for (int secureRtp = 0; secureRtp <= 1; ++secureRtp) {
+                for (int hasModes = 0; hasModes <= 1; ++hasModes) {
+                    const bool expected = backendAvailable && probeComplete && secureRtp && hasModes;
+                    check(Policy::mediaTypeSupported(backendAvailable, probeComplete, secureRtp, hasModes) == expected,
+                          "media capability gate truth table mismatch");
+                }
+            }
+        }
+    }
+    check(Policy::mediaTypeSupported(true, true, true, true),
+          "usable audio modes were not advertised without a capture dependency");
+
     check(Policy::peerRole(Origin::Initiator) == Origin::Responder, "initiator peer role is not responder");
     check(Policy::peerRole(Origin::Responder) == Origin::Initiator, "responder peer role is not initiator");
 
