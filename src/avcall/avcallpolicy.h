@@ -45,6 +45,17 @@ inline bool shouldRequestSenders(Origin current, const std::optional<Origin> &pe
     return pendingTarget ? *pendingTarget != desired : current != desired;
 }
 
+inline void reconcileSendersChanged(Origin senders, std::optional<Origin> &desiredWithCapture,
+                                    std::optional<Origin> &pendingTarget)
+{
+    if (pendingTarget) {
+        if (*pendingTarget == senders)
+            pendingTarget.reset();
+        return;
+    }
+    desiredWithCapture = senders;
+}
+
 inline bool shouldTransmit(bool hasMedia, bool captureConsent, bool senderAllowed, bool captureAvailable)
 {
     return hasMedia && captureConsent && senderAllowed && captureAvailable;
