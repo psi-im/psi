@@ -120,13 +120,13 @@ if ($RunTests) {
     }
     $configureArgs[$testingArg] = '-DBUILD_TESTING=ON'
     Invoke-Checked cmake @configureArgs
-    Invoke-Checked cmake --build $buildDir --target avcall_backend_lifecycle_test avcall_capability_refresh_test --parallel 4
+    Invoke-Checked cmake --build $buildDir --target avcallpolicy_test avcall_backend_lifecycle_test avcall_capability_refresh_test --parallel 4
     $testPath = "$(Join-Path $env:QT_ROOT_DIR 'bin');$(Join-Path $sdkDir 'bin');$env:PATH"
     $testArgs = @(
         '-E', 'env', "PATH=$testPath", 'ctest',
         '--test-dir', $buildDir,
         '--output-on-failure',
-        '-R', '^avcall_(backend_lifecycle|capability_refresh)_test$',
+        '-R', '^avcall(policy|_(backend_lifecycle|capability_refresh))_test$',
         '-j', '1'
     )
     & cmake @testArgs
