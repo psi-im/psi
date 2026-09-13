@@ -95,7 +95,7 @@ public:
     ~Private() override
     {
         if (sess) {
-            if (active)
+            if (active || incoming)
                 sess->reject();
 
             sess->setIncomingVideo(nullptr);
