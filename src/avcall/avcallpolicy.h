@@ -33,9 +33,9 @@ inline Origin sendersForCaptureAvailability(Origin desiredWithCapture, Origin lo
     return captureAvailable ? desiredWithCapture : withoutLocalSender(desiredWithCapture, localRole);
 }
 
-inline bool shouldTransmit(bool hasMedia, bool captureConsent, Origin senders, Origin localRole, bool captureAvailable)
+inline bool shouldTransmit(bool hasMedia, bool captureConsent, bool senderAllowed, bool captureAvailable)
 {
-    return hasMedia && captureConsent && captureAvailable && allowsSender(senders, localRole);
+    return hasMedia && captureConsent && senderAllowed && captureAvailable;
 }
 
 } // namespace AvCallPolicy
