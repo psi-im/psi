@@ -8,6 +8,11 @@ namespace AvCallPolicy {
 
 using Origin = XMPP::Jingle::Origin;
 
+inline bool mediaTypeSupported(bool backendAvailable, bool probeComplete, bool secureRtp, bool hasModes)
+{
+    return backendAvailable && probeComplete && secureRtp && hasModes;
+}
+
 inline Origin peerRole(Origin localRole)
 {
     return localRole == Origin::Initiator ? Origin::Responder : Origin::Initiator;
