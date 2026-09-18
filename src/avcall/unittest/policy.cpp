@@ -76,46 +76,6 @@ int main()
         }
     }
 
-    // A queued/in-flight policy target matters independently of the currently
-    // acknowledged senders. This is what lets a rapid device flip supersede an
-    // obsolete content-modify before its ACK arrives.
-    for (const auto current : directions) {
-        for (const auto desired : directions) {
-            check(Policy::shouldRequestSenders(current, std::nullopt, desired) == (current != desired),
-                  "sender request decision ignored current negotiated direction");
-            for (const auto pending : directions) {
-                check(Policy::shouldRequestSenders(current, pending, desired) == (pending != desired),
-                      "sender request decision ignored queued target");
-            }
-        }
-    }
-    check(Policy::shouldRequestSenders(Origin::Both, Origin::Responder, Origin::Both),
-          "mic return did not supersede pending receive-only target");
-    check(!Policy::shouldRequestSenders(Origin::Responder, Origin::Both, Origin::Both),
-          "matching bidirectional target was queued twice");
-
-    // Generic sendersChanged can be the ACK of an older local request. It may
-    // acknowledge the current policy target, but it must never redefine the
-    // capture-enabled baseline; only sendersChangedByPeer is allowed to do that.
-    {
-        std::optional<Origin> target = Origin::Both;
-        Policy::reconcilePolicyTarget(Origin::Responder, target);
-        check(target == Origin::Both, "stale receive-only ACK cancelled the newer bidirectional target");
-
-        Policy::reconcilePolicyTarget(Origin::Both, target);
-        check(!target, "matching policy ACK did not clear the pending target");
-    }
-    {
-        std::optional<Origin> target = Origin::Responder;
-        Policy::reconcilePolicyTarget(Origin::Initiator, target);
-        check(target == Origin::Responder, "conflicting senders update cancelled the local policy target");
-    }
-    {
-        std::optional<Origin> target;
-        Policy::reconcilePolicyTarget(Origin::Initiator, target);
-        check(!target, "senders update created a policy target without a local request");
-    }
-
     // Outgoing audio starts receive-only when no microphone exists, for either
     // Jingle role. This is the concrete no-mic invariant used by AvCall.
     check(Policy::sendersForCaptureAvailability(Origin::Both, Origin::Initiator, false) == Origin::Responder,

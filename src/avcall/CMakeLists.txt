@@ -13,6 +13,7 @@ add_definitions(-DDEBUG_POSTFIX="")
 set(HEADERS
     avcall.h
     avcallpolicy.h
+    avcallaudiodirection.h
     calldlg.h
     mediadevicewatcher.h
     psimediajingle.h
@@ -20,6 +21,7 @@ set(HEADERS
 
 set(SOURCES
     avcall.cpp
+    avcallaudiodirection.cpp
     calldlg.cpp
     mediadevicewatcher.cpp
     psimediajingle.cpp

@@ -99,7 +99,7 @@ jobs:
         LDFLAGS: -Wl,-z,relro -Wl,--as-needed -Wl,-z,now
     - name: Running native call direction regression
       run: |
-        ctest --test-dir build --output-on-failure -R '^avcallpolicy_test$'
+        ctest --test-dir build --output-on-failure --no-tests=error -R '^avcall(policy|audiodirection)_test$'
     - name: Installing project with CMake
       run: |
         sudo cmake --install build

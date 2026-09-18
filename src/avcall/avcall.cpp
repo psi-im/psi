@@ -10,6 +10,7 @@
  */
 
 #include "avcall.h"
+#include "avcallaudiodirection.h"
 
 #include "../psimedia/psimedia.h"
 #include "avcallpolicy.h"
@@ -28,7 +29,6 @@
 #include <QtCrypto>
 
 #include <memory>
-#include <optional>
 #include <utility>
 
 namespace Jingle = XMPP::Jingle;
@@ -104,7 +104,10 @@ class AvCallPrivate : public QObject {
     Q_OBJECT
 
 public:
-    explicit AvCallPrivate(AvCall *q) : QObject(q), q(q) { }
+    explicit AvCallPrivate(AvCall *q) : QObject(q), q(q)
+    {
+        connect(&audioDirection, &AvCallAudioDirection::changed, this, [this] { syncActiveTransmit(); });
+    }
     ~AvCallPrivate() override
     {
         if (session)
@@ -182,8 +185,7 @@ public:
 
         Jingle::Origin audioSenders = Jingle::Origin::Both;
         if (needAudio) {
-            audioDesiredWithCapture = Jingle::Origin::Both;
-            audioSenders = AvCallPolicy::sendersForCaptureAvailability(*audioDesiredWithCapture, session->role(),
+            audioSenders = AvCallPolicy::sendersForCaptureAvailability(Jingle::Origin::Both, session->role(),
                                                                         audioCaptureAvailable());
         }
 
@@ -193,6 +195,9 @@ public:
             return;
         }
         wireApplications();
+
+        if (needAudio)
+            audioDirection.bind(audioApplication(), true, audioCaptureAvailable());
 
         if (!configureBackend()) {
             fail(errorString.isEmpty() ? tr("Unable to initialize the media backend.") : errorString);
@@ -234,7 +239,8 @@ public:
             if (!accepted) {
                 rtp->remove(Jingle::Reason::Decline, QStringLiteral("Media type declined locally"));
             } else if (rtp->media() == QLatin1String("audio")) {
-                audioDesiredWithCapture = rtp->senders();
+                audioDirection.bind(rtp, AvCallPolicy::allowsSender(rtp->senders(), session->role()),
+                                    audioCaptureAvailable());
             }
         }
         syncAudioDirection();
@@ -285,23 +291,7 @@ public:
 
     void syncAudioDirection()
     {
-        if (!session || !captureAudioConsent)
-            return;
-        auto rtp = audioApplication();
-        if (!rtp)
-            return;
-
-        if (!audioDesiredWithCapture)
-            audioDesiredWithCapture = rtp->senders();
-        const auto desired = AvCallPolicy::sendersForCaptureAvailability(*audioDesiredWithCapture, session->role(),
-                                                                          audioCaptureAvailable());
-
-        if (!AvCallPolicy::shouldRequestSenders(rtp->senders(), audioPolicyTarget, desired))
-            return;
-
-        audioPolicyTarget = desired;
-        if (!rtp->requestSenders(desired))
-            audioPolicyTarget.reset();
+        audioDirection.setCaptureAvailable(audioCaptureAvailable());
     }
 
     void setupSession()
@@ -332,8 +322,6 @@ public:
                     Qt::UniqueConnection);
             connect(rtp, &Jingle::Application::sendersChanged, this, &AvCallPrivate::applicationSendersChanged,
                     Qt::UniqueConnection);
-            connect(rtp, &Jingle::Application::sendersChangedByPeer, this,
-                    &AvCallPrivate::applicationSendersChangedByPeer, Qt::UniqueConnection);
         }
     }
 
@@ -354,7 +342,7 @@ public:
             const bool localMaySend = AvCallPolicy::allowsSender(rtp->senders(), session->role());
             if (rtp->media() == QLatin1String("audio")) {
                 hasAudio     = true;
-                audioMaySend = audioMaySend || localMaySend;
+                audioMaySend = audioMaySend || audioDirection.allowsCapture(rtp);
             } else if (rtp->media() == QLatin1String("video")) {
                 hasVideo     = true;
                 videoMaySend = videoMaySend || localMaySend;
@@ -416,7 +404,10 @@ public:
 
     void mediaCapabilitiesChanged()
     {
+        QPointer<AvCallPrivate> guard(this);
         syncAudioDirection();
+        if (!guard)
+            return;
         if (active)
             syncActiveTransmit();
         else
@@ -442,8 +433,10 @@ private slots:
     void sessionActivated()
     {
         signalingActive = true;
+        QPointer<AvCallPrivate> guard(this);
         syncAudioDirection();
-        maybeActivateMedia();
+        if (guard)
+            maybeActivateMedia();
     }
 
     void applicationStateChanged(Jingle::State)
@@ -454,26 +447,12 @@ private slots:
             maybeActivateMedia();
     }
 
-    void applicationSendersChanged(Jingle::Origin senders)
+    void applicationSendersChanged(Jingle::Origin)
     {
-        auto rtp = dynamic_cast<RTP::Application *>(sender());
-        if (rtp && rtp->media() == QLatin1String("audio"))
-            AvCallPolicy::reconcilePolicyTarget(senders, audioPolicyTarget);
-
         if (active)
             syncActiveTransmit();
         else
             maybeActivateMedia();
-    }
-
-    void applicationSendersChangedByPeer(Jingle::Origin senders)
-    {
-        auto rtp = dynamic_cast<RTP::Application *>(sender());
-        if (!rtp || rtp->media() != QLatin1String("audio"))
-            return;
-
-        audioDesiredWithCapture = senders;
-        syncAudioDirection();
     }
 
     void sessionTerminated()
@@ -508,8 +487,7 @@ public:
     bool                           acceptedVideo = false;
     bool                           captureAudioConsent = false;
     bool                           captureVideoConsent = false;
-    std::optional<Jingle::Origin>  audioDesiredWithCapture;
-    std::optional<Jingle::Origin>  audioPolicyTarget;
+    AvCallAudioDirection           audioDirection;
 };
 
 AvCall::AvCall() : d(new AvCallPrivate(this)) { }
