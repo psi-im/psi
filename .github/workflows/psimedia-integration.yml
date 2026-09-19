@@ -151,6 +151,23 @@ jobs:
           )
           add_test(NAME psi_native_media_adapter_smoke COMMAND psi_native_media_adapter_smoke)
           set_tests_properties(psi_native_media_adapter_smoke PROPERTIES TIMEOUT 30)
+
+          add_executable(psi_native_media_peer_smoke native_media_peer_smoke.cpp)
+          target_include_directories(psi_native_media_peer_smoke PRIVATE
+              "${PSI_SOURCE_DIR}/src/psimedia"
+              "${PSI_SOURCE_DIR}/src/avcall"
+              "${PSI_SOURCE_DIR}/plugins/include"
+              "${PSIMEDIA_SOURCE_DIR}/gstprovider"
+          )
+          target_link_libraries(psi_native_media_peer_smoke PRIVATE
+              psi_native_media_adapter
+              gstprovidersrc
+              Iris::Iris
+              Qt5::Core
+              Qt5::Network
+          )
+          add_test(NAME psi_native_media_peer_smoke COMMAND psi_native_media_peer_smoke)
+          set_tests_properties(psi_native_media_peer_smoke PROPERTIES TIMEOUT 35)
           EOF
 
           cat > _psimedia-smoke/smoke.cpp <<'EOF'
@@ -394,6 +411,367 @@ jobs:
           }
           EOF
 
+          cat > _psimedia-smoke/native_media_peer_smoke.cpp <<'EOF'
+          #include "gstprovider.h"
+          #include "psimedia.h"
+          #include "psimediajingle.h"
+
+          #include <iris/ice176.h>
+          #include <iris/jingle-ice.h>
+          #include <iris/jingle-rtp.h>
+          #include <iris/jingle-session.h>
+          #include <iris/xmpp_client.h>
+          #include <iris/xmpp_task.h>
+
+          #include <QCoreApplication>
+          #include <QDebug>
+          #include <QEventLoop>
+          #include <QHostAddress>
+          #include <QTimer>
+
+          #include <memory>
+          #include <optional>
+          #include <utility>
+
+          using namespace XMPP;
+          namespace J = XMPP::Jingle;
+          namespace RTP = XMPP::Jingle::RTP;
+
+          static void check(bool ok, const char *message)
+          {
+              if (!ok)
+                  qFatal("%s", message);
+          }
+
+          class Ack final : public Task {
+          public:
+              explicit Ack(Task *parent) : Task(parent) { setSuccess(); }
+          };
+
+          struct ReceivedPacket {
+              QByteArray bytes;
+              RTP::SrtpContext::Packet kind = RTP::SrtpContext::Packet::Rtp;
+          };
+
+          struct FakeMediaState {
+              RTP::MediaEndpoint::PacketWriter writer;
+              QList<ReceivedPacket> received;
+              int configured = 0;
+              int attached   = 0;
+          };
+
+          class FakeEndpoint final : public RTP::MediaEndpoint {
+          public:
+              explicit FakeEndpoint(std::shared_ptr<FakeMediaState> state) : state_(std::move(state)) { }
+
+              RTP::Description localOffer() const override
+              {
+                  RTP::Description description;
+                  description.media   = QStringLiteral("audio");
+                  description.rtcpMux = true;
+                  RTP::PayloadType opus;
+                  opus.id        = 111;
+                  opus.name      = QStringLiteral("opus");
+                  opus.clockrate = 48000;
+                  opus.channels  = 2;
+                  description.payloads.append(opus);
+                  return description;
+              }
+
+              std::optional<RTP::Description> makeAnswer(const RTP::Description &remote) const override
+              {
+                  return remote;
+              }
+
+              bool acceptsAnswer(const RTP::Description &, const RTP::Description &) const override { return true; }
+
+              bool configure(const RTP::Description &, const RTP::Description &) override
+              {
+                  ++state_->configured;
+                  return true;
+              }
+
+              bool supportsPacketIo() const override { return true; }
+
+              bool attachPacketIo(PacketWriter writer) override
+              {
+                  ++state_->attached;
+                  state_->writer = std::move(writer);
+                  return true;
+              }
+
+              void receivePacket(const QByteArray &bytes, RTP::SrtpContext::Packet kind) override
+              {
+                  state_->received.append({ bytes, kind });
+              }
+
+              void stop() override { state_->writer = {}; }
+
+          private:
+              std::shared_ptr<FakeMediaState> state_;
+          };
+
+          class FakeMediaSession final : public RTP::MediaSession {
+          public:
+              explicit FakeMediaSession(std::shared_ptr<FakeMediaState> state) : state_(std::move(state)) { }
+
+              std::unique_ptr<RTP::MediaEndpoint> createEndpoint(const QString &, const QString &media) override
+              {
+                  if (media != QLatin1String("audio"))
+                      return {};
+                  return std::make_unique<FakeEndpoint>(state_);
+              }
+
+          private:
+              std::shared_ptr<FakeMediaState> state_;
+          };
+
+          class FakeProvider final : public RTP::MediaProvider {
+          public:
+              explicit FakeProvider(std::shared_ptr<FakeMediaState> state) : state_(std::move(state)) { }
+
+              std::unique_ptr<RTP::MediaSession> createSession() override
+              {
+                  return std::make_unique<FakeMediaSession>(state_);
+              }
+
+              QStringList mediaTypes() const override { return { QStringLiteral("audio") }; }
+
+          private:
+              std::shared_ptr<FakeMediaState> state_;
+          };
+
+          QByteArray makeOpusRtp(quint16 sequence, quint32 timestamp, quint32 ssrc, quint8 payloadType)
+          {
+              QByteArray packet(15, char(0));
+              auto *p = reinterpret_cast<uchar *>(packet.data());
+              p[0]  = 0x80;
+              p[1]  = payloadType & 0x7f;
+              p[2]  = uchar(sequence >> 8);
+              p[3]  = uchar(sequence);
+              p[4]  = uchar(timestamp >> 24);
+              p[5]  = uchar(timestamp >> 16);
+              p[6]  = uchar(timestamp >> 8);
+              p[7]  = uchar(timestamp);
+              p[8]  = uchar(ssrc >> 24);
+              p[9]  = uchar(ssrc >> 16);
+              p[10] = uchar(ssrc >> 8);
+              p[11] = uchar(ssrc);
+              p[12] = 0xf8;
+              p[13] = 0xff;
+              p[14] = 0xfe;
+              return packet;
+          }
+
+          bool containsReceiverReport(const QByteArray &compound)
+          {
+              const auto *bytes = reinterpret_cast<const uchar *>(compound.constData());
+              int offset = 0;
+              while (offset + 4 <= compound.size()) {
+                  const auto *packet = bytes + offset;
+                  if ((packet[0] >> 6) != 2)
+                      return false;
+                  const int packetBytes = (int(packet[2]) * 256 + int(packet[3]) + 1) * 4;
+                  if (packetBytes < 4 || offset + packetBytes > compound.size())
+                      return false;
+                  if (packet[1] == 201)
+                      return true;
+                  offset += packetBytes;
+              }
+              return false;
+          }
+
+          int main(int argc, char **argv)
+          {
+              QCoreApplication app(argc, argv);
+              QCA::Initializer qca;
+
+              PsiMedia::GstProvider gstProvider;
+              check(gstProvider.isInitialized(), "GstProvider failed to initialize");
+              PsiMedia::setProvider(&gstProvider);
+
+              PsiMediaJingleCapabilities capabilities;
+              capabilities.backendAvailable = true;
+              capabilities.probeComplete    = true;
+              capabilities.secureRtp        = true;
+              capabilities.audio            = true;
+              auto realProvider = makePsiMediaJingleProvider(capabilities);
+              check(realProvider && realProvider->mediaTypes().contains(QStringLiteral("audio")),
+                    "real Psi media provider did not expose audio");
+
+              auto fakeState    = std::make_shared<FakeMediaState>();
+              auto fakeProvider = std::make_shared<FakeProvider>(fakeState);
+
+              const QString transportNs = J::ICE::NS;
+              TcpPortReserver reserver;
+              Client firstClient, secondClient;
+              firstClient.setTcpPortReserver(&reserver);
+              secondClient.setTcpPortReserver(&reserver);
+              J::Session firstSession(firstClient.jingleManager(), Jid("second@example.test/device"),
+                                      J::Origin::Initiator);
+              J::Session secondSession(secondClient.jingleManager(), Jid("first@example.test/device"),
+                                       J::Origin::Responder);
+              firstClient.jingleICEManager()->setSelfAddress(QHostAddress::LocalHost);
+              secondClient.jingleICEManager()->setSelfAddress(QHostAddress::LocalHost);
+
+              auto makeTransport = [&](Client &client, J::Session &session, J::Origin creator) {
+                  auto rawPad = client.jingleManager()->transportPad(&session, transportNs);
+                  check(rawPad, "ICE transport pad unavailable");
+                  J::TransportManagerPad::Ptr pad(rawPad);
+                  auto base = pad->manager()->newTransport(pad, creator);
+                  auto ice  = qSharedPointerDynamicCast<J::ICE::Transport>(base);
+                  check(bool(ice), "ICE transport creation failed");
+                  return ice;
+              };
+              auto first  = makeTransport(firstClient, firstSession, J::Origin::Initiator);
+              auto second = makeTransport(secondClient, secondSession, J::Origin::Initiator);
+
+              auto makeApp = [&](Client &client, J::Session &session, std::shared_ptr<RTP::MediaProvider> provider) {
+                  auto pad = QSharedPointer<RTP::Pad>::create(client.jingleManager()->rtpManager(), &session,
+                                                              std::move(provider), QStringList { transportNs });
+                  return std::make_unique<RTP::Application>(pad, QStringLiteral("audio"), J::Origin::Initiator,
+                                                             J::Origin::Both);
+              };
+              auto firstApp  = makeApp(firstClient, firstSession, fakeProvider);
+              auto secondApp = makeApp(secondClient, secondSession, realProvider);
+              check(firstApp->initializeOutgoing(QStringLiteral("audio")), "fake-side RTP offer initialization failed");
+              check(firstApp->setTransport(first) && secondApp->setTransport(second),
+                    "RTP application rejected ICE transport");
+
+              QEventLoop loop;
+              QTimer tick, deadline;
+              deadline.setSingleShot(true);
+              QObject::connect(&deadline, &QTimer::timeout, &loop, &QEventLoop::quit);
+
+              bool failed = false;
+              auto fail = [&]() {
+                  failed = true;
+                  loop.quit();
+              };
+              QObject::connect(first.data(), &J::Transport::failed, &loop, fail);
+              QObject::connect(second.data(), &J::Transport::failed, &loop, fail);
+
+              bool offerDelivered = false;
+              bool secondPrepared = false;
+              bool offered = false;
+              bool answered = false;
+              bool started = false;
+              bool sent = false;
+              bool replied = false;
+
+              auto exchange = [&](J::ICE::Transport *from, J::ICE::Transport *to) {
+                  if (!from->hasUpdates())
+                      return false;
+                  auto [xml, ack] = from->takeOutgoingUpdate(false);
+                  check(!xml.isNull() && xml.namespaceURI() == transportNs, "wrong ICE wire namespace");
+                  check(to->update(xml), "ICE signaling update rejected");
+                  if (ack) {
+                      Ack result(from->pad()->session()->manager()->client()->rootTask());
+                      ack(&result);
+                  }
+                  return true;
+              };
+
+              QObject::connect(&tick, &QTimer::timeout, &loop, [&]() {
+                  if (firstApp->state() >= J::State::Finishing || secondApp->state() >= J::State::Finishing) {
+                      fail();
+                      return;
+                  }
+
+                  if (!offerDelivered && firstApp->localDescription()) {
+                      check(secondApp->setRemoteOffer(firstApp->makeLocalOffer()) == J::Application::Ok,
+                            "real-side RTP offer rejected");
+                      offerDelivered = true;
+                  }
+
+                  offered = exchange(first.data(), second.data()) || offered;
+                  if (offered && second->state() == J::State::Pending && !secondPrepared) {
+                      secondPrepared = true;
+                      firstApp->setState(J::State::Pending);
+                      secondApp->setState(J::State::Pending);
+                      secondApp->prepare();
+                  }
+
+                  answered = exchange(second.data(), first.data()) || answered;
+                  if (answered && !started) {
+                      started = true;
+                      QTimer::singleShot(0, &loop, [&]() {
+                          check(firstApp->setRemoteAnswer(secondApp->makeLocalAnswer()) == J::Application::Ok,
+                                "real-side RTP answer rejected");
+                          secondApp->setState(J::State::Accepted);
+                          firstApp->start();
+                          secondApp->start();
+                      });
+                  }
+
+                  auto firstSrtp = first->rtpSession();
+                  auto secondSrtp = second->rtpSession();
+                  if (!sent && started && firstSrtp && secondSrtp && firstSrtp->isReady() && secondSrtp->isReady()
+                      && firstApp->state() == J::State::Active && secondApp->state() == J::State::Active) {
+                      check(fakeState->configured == 1 && fakeState->attached == 1 && bool(fakeState->writer),
+                            "fake peer media was not attached exactly once");
+
+                      const auto local = firstApp->localDescription();
+                      check(local && !local->payloads.isEmpty(), "active fake peer lost negotiated RTP payload");
+                      const quint8 pt = quint8(local->payloads.constFirst().id);
+                      constexpr quint32 RemoteSsrc = 0x11223344;
+                      for (quint16 sequence = 1; sequence <= 4; ++sequence) {
+                          const auto rtp = makeOpusRtp(sequence, 48000u + quint32(sequence - 1) * 960u, RemoteSsrc, pt);
+                          check(fakeState->writer(rtp, RTP::SrtpContext::Packet::Rtp),
+                                "fake peer RTP writer failed after SRTP activation");
+                      }
+                      sent = true;
+                  }
+
+                  if (sent) {
+                      for (const auto &packet : fakeState->received) {
+                          if (packet.kind == RTP::SrtpContext::Packet::Rtcp && containsReceiverReport(packet.bytes)) {
+                              replied = true;
+                              loop.quit();
+                              return;
+                          }
+                      }
+                  }
+              });
+
+              firstApp->prepare();
+              tick.start(5);
+              deadline.start(20000);
+              loop.exec();
+              tick.stop();
+
+              if (!replied)
+                  qWarning() << "native peer smoke state" << failed << offered << answered << started << sent
+                             << int(firstApp->state()) << int(secondApp->state())
+                             << fakeState->received.size();
+              check(!failed && replied, "real Psi media peer did not return RTCP over ICE/DTLS/SRTP");
+
+              auto retainedWriter = fakeState->writer;
+              firstApp->incomingContentModify(J::Origin::None);
+              const auto local = firstApp->localDescription();
+              check(local && !local->payloads.isEmpty(), "active peer lost description before direction check");
+              const auto blocked = makeOpusRtp(20, 96000, 0x55667788, quint8(local->payloads.constFirst().id));
+              check(!retainedWriter(blocked, RTP::SrtpContext::Packet::Rtp),
+                    "senders=none allowed RTP through retained real-peer writer");
+
+              const auto epoch = first->rtpSession()->epoch();
+              first->stop();
+              check(!first->rtpSession()->isReady(), "stopping peer transport retained SRTP keys");
+              check(!first->sendRtpPacket(blocked, RTP::SrtpContext::Packet::Rtp, epoch),
+                    "stopped peer transport accepted RTP");
+              check(!retainedWriter(blocked, RTP::SrtpContext::Packet::Rtp),
+                    "retained media writer survived transport stop");
+
+              firstApp.reset();
+              secondApp.reset();
+              second->stop();
+              PsiMedia::setProvider(nullptr);
+
+              qInfo() << "Psi real-backend peer ICE/DTLS/SRTP receive+RTCP smoke passed";
+              return 0;
+          }
+          EOF
+
           cmake -S _psimedia-smoke -B _psimedia-smoke-build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DPSI_SOURCE_DIR="$GITHUB_WORKSPACE" \
@@ -403,6 +781,7 @@ jobs:
         run: |
           cmake --build _psimedia-smoke-build \
             --target gstprovidersrc mediaplugin psimedia_provider_smoke psi_native_media_adapter_smoke \
+                     psi_native_media_peer_smoke \
                      psimedia_opusrtppay_test psimedia_rtpsessioncontext_sender_test \
                      psimedia_rtpsessionbridge_test psimedia_rtpsessionbridge_packets_test \
                      psimedia_rtpsessionbridge_periodic_test psimedia_rtpsessionbridge_backpressure_test \
