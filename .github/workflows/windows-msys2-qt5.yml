@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - 'ai/**'
   workflow_dispatch:
 
 permissions:
@@ -19,6 +20,8 @@ env:
 
 jobs:
   check-sdk:
+    if: >-
+      github.event_name != 'push' || !startsWith(github.ref_name, 'ai/') || !contains(github.event.head_commit.message, '[skip ci]')
     name: Check legacy dependency SDK
     runs-on: ubuntu-24.04
     outputs:
@@ -47,7 +50,9 @@ jobs:
   build-sdk:
     name: Build missing legacy dependency SDK
     needs: check-sdk
-    if: needs.check-sdk.outputs.exists != 'true'
+    if: >-
+      (github.event_name != 'push' || !startsWith(github.ref_name, 'ai/') || !contains(github.event.head_commit.message, '[skip ci]')) &&
+      needs.check-sdk.outputs.exists != 'true'
     permissions:
       contents: write
     uses: ./.github/workflows/windows-sdk-msys2-qt5.yml
@@ -61,6 +66,7 @@ jobs:
       - check-sdk
       - build-sdk
     if: >-
+      (github.event_name != 'push' || !startsWith(github.ref_name, 'ai/') || !contains(github.event.head_commit.message, '[skip ci]')) &&
       always() &&
       needs.check-sdk.result == 'success' &&
       (needs.check-sdk.outputs.exists == 'true' || needs.build-sdk.result == 'success')
