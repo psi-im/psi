@@ -65,7 +65,7 @@ jobs:
       - name: Restore compiler cache
         uses: actions/cache@v4
         with:
-          path: ${{ github.workspace }}/.ccache
+          path: ~/.cache/ccache
           key: ${{ runner.os }}-psimedia-integration-ccache-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-psimedia-integration-ccache-
