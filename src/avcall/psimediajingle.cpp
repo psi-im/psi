@@ -19,6 +19,7 @@
 #include <QSet>
 #include <QTimer>
 
+#include <algorithm>
 #include <optional>
 #include <utility>
 
@@ -125,6 +126,31 @@ bool hasUnsupportedAnswerFeatures(const RTP::Description &answer)
             return true;
     }
     return false;
+}
+
+
+bool payloadMatchesBackend(const RTP::PayloadType &accepted, const RTP::PayloadType &actual)
+{
+    return accepted.id == actual.id && accepted.name.compare(actual.name, Qt::CaseInsensitive) == 0
+        && accepted.clockrate == actual.clockrate && accepted.channels == actual.channels
+        && accepted.ptime == actual.ptime && accepted.maxptime == actual.maxptime
+        && accepted.parameters == actual.parameters;
+}
+
+bool descriptionMatchesBackend(const RTP::Description &accepted, const RTP::Description &actual)
+{
+    if (accepted.media != actual.media || accepted.rtcpMux != actual.rtcpMux || hasUnsupportedAnswerFeatures(accepted)
+        || accepted.payloads.size() != actual.payloads.size())
+        return false;
+
+    for (const auto &payload : accepted.payloads) {
+        const auto it = std::find_if(actual.payloads.cbegin(), actual.payloads.cend(), [&](const auto &candidate) {
+            return candidate.id == payload.id;
+        });
+        if (it == actual.payloads.cend() || !payloadMatchesBackend(payload, *it))
+            return false;
+    }
+    return true;
 }
 
 class BackendSession;
@@ -559,7 +585,7 @@ private:
         return false;
     }
 
-    std::optional<RTP::Description> preparedDescription(Endpoint *endpoint)
+    std::optional<RTP::Description> backendDescription(Endpoint *endpoint) const
     {
         if (!endpoint || !endpoints_.contains(endpoint) || state_ != State::Running)
             return {};
@@ -574,10 +600,23 @@ private:
                 return {};
             result.payloads.append(*converted);
         }
-        if (result.payloads.isEmpty())
-            return {};
-        endpoint->setPrepared(result);
+        return result.payloads.isEmpty() ? std::nullopt : std::optional<RTP::Description>(std::move(result));
+    }
+
+    std::optional<RTP::Description> preparedDescription(Endpoint *endpoint)
+    {
+        auto result = backendDescription(endpoint);
+        if (result)
+            endpoint->setPrepared(*result);
         return result;
+    }
+
+    bool appliedLocalMatchesBackend(Endpoint *endpoint, const std::optional<RTP::Description> &local) const
+    {
+        if (!local)
+            return false;
+        const auto actual = backendDescription(endpoint);
+        return actual && descriptionMatchesBackend(*local, *actual);
     }
 
     void finishRunning(RTP::MediaError error)
@@ -598,6 +637,10 @@ private:
     {
         QPointer<BackendSession> guard(this);
         if (operation.kind == Kind::Apply) {
+            if (!error && !appliedLocalMatchesBackend(operation.endpoint, operation.local)) {
+                error = unsupportedError(
+                    QStringLiteral("Negotiated local RTP payloads do not match the psimedia backend"));
+            }
             auto completion = std::move(operation.applyCompletion);
             if (completion)
                 completion(std::move(error));
