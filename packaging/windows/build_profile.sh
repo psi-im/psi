@@ -128,7 +128,7 @@ if [[ "$build_testing" == ON ]]; then
         objdump -p "$test_exe" | sed -n 's/^[[:space:]]*DLL Name: /  /p'
     done
 
-    PATH="$test_path" ctest --test-dir "$build_dir" --output-on-failure --no-tests=error -R '^avcall'
+    PATH="$test_path" ctest --test-dir "$build_dir" --output-on-failure --no-tests=error -V -R '^avcall'
 fi
 ccache --show-stats
 
