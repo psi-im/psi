@@ -3,8 +3,10 @@ name: PsiMedia integration
 on:
   push:
     branches:
-      - '**'
+      - ci/psimedia-integration
   pull_request:
+    branches:
+      - ai/jingle-native-calls
   workflow_dispatch:
 
 permissions:
