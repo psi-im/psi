@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - 'ai/**'
   pull_request:
     branches:
       - '*'
@@ -22,7 +23,9 @@ env:
 
 jobs:
   check-sdk:
-    if: github.event_name != 'pull_request' || !startsWith(github.head_ref, 'ai/')
+    if: >-
+      (github.event_name != 'pull_request' || !startsWith(github.head_ref, 'ai/')) &&
+      (github.event_name != 'push' || !startsWith(github.ref_name, 'ai/') || !contains(github.event.head_commit.message, '[skip ci]'))
     name: Check modern dependency SDK
     runs-on: ubuntu-24.04
     outputs:
@@ -53,6 +56,7 @@ jobs:
     needs: check-sdk
     if: >-
       (github.event_name != 'pull_request' || !startsWith(github.head_ref, 'ai/')) &&
+      (github.event_name != 'push' || !startsWith(github.ref_name, 'ai/') || !contains(github.event.head_commit.message, '[skip ci]')) &&
       needs.check-sdk.outputs.exists != 'true'
     permissions:
       contents: write
@@ -68,6 +72,7 @@ jobs:
       - build-sdk
     if: >-
       (github.event_name != 'pull_request' || !startsWith(github.head_ref, 'ai/')) &&
+      (github.event_name != 'push' || !startsWith(github.ref_name, 'ai/') || !contains(github.event.head_commit.message, '[skip ci]')) &&
       always() &&
       needs.check-sdk.result == 'success' &&
       (needs.check-sdk.outputs.exists == 'true' || needs.build-sdk.result == 'success')
