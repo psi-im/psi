@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  linux-qt5:
+  linux-qt6:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout Psi native-call branch
@@ -56,13 +56,28 @@ jobs:
             gstreamer1.0-plugins-bad \
             gstreamer1.0-tools
 
+      - name: Install QCA3 release package
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          QCA_TAG: v3.0.1
+        run: |
+          set -euo pipefail
+          rm -rf qca-release qca3.zip
+          mkdir qca-release
+          gh release download "$QCA_TAG" --repo psi-im/qca \
+            -p 'qca3-deb-ubuntu-24.04.zip' -O qca3.zip
+          (cd qca-release && cmake -E tar xvf ../qca3.zip)
+          test -n "$(find qca-release -type f -name '*.deb' -print -quit)"
+          sudo apt-get install -y ./qca-release/*.deb
+
       - name: Record integration versions
         run: |
           echo "Psi: $(git rev-parse HEAD)"
           echo "Iris: $(git -C iris rev-parse HEAD)"
           echo "psimedia: $(git -C _psimedia rev-parse HEAD)"
-          echo "QCA: bundled psi-im/qca v3.0.7 (qca-ossl)"
-          qmake -v
+          echo "QCA: psi-im/qca v3.0.1 release package (qca-ossl)"
+          qmake6 -v
           openssl version
           gst-launch-1.0 --version
           pkg-config --modversion gstreamer-1.0 gstreamer-rtp-1.0 libsrtp2
@@ -79,7 +94,7 @@ jobs:
           set(CMAKE_CXX_STANDARD 20)
           set(CMAKE_CXX_STANDARD_REQUIRED ON)
           set(CMAKE_AUTOMOC ON)
-          set(QT_DEFAULT_MAJOR_VERSION 5)
+          set(QT_DEFAULT_MAJOR_VERSION 6)
           set(BUILD_DEMO OFF CACHE BOOL "" FORCE)
           set(BUILD_PSIPLUGIN ON CACHE BOOL "" FORCE)
           set(PSIMEDIA_BUILD_TESTS ON CACHE BOOL "" FORCE)
@@ -90,7 +105,7 @@ jobs:
               message(FATAL_ERROR "PSI_SOURCE_DIR and PSIMEDIA_SOURCE_DIR are required")
           endif()
 
-          find_package(Qt5 REQUIRED COMPONENTS Core Gui Widgets Network Xml)
+          find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Network Xml)
 
           enable_testing()
           set(PLUGINS_ROOT_DIR "${PSI_SOURCE_DIR}/plugins" CACHE STRING "" FORCE)
@@ -100,8 +115,9 @@ jobs:
           set(IRIS_ENABLE_JINGLE_SCTP OFF CACHE BOOL "" FORCE)
           set(IRIS_ENABLE_OMEMO OFF CACHE BOOL "" FORCE)
           set(IRIS_BUNDLED_USRSCTP OFF CACHE BOOL "" FORCE)
-          set(IRIS_BUNDLED_QCA ON CACHE BOOL "" FORCE)
-          set(IRIS_BUNDLED_QCA_GIT_TAG v3.0.7 CACHE STRING "" FORCE)
+          set(IRIS_BUNDLED_QCA OFF CACHE BOOL "" FORCE)
+          set(IRIS_SYSTEM_QCA 3 CACHE STRING "" FORCE)
+          set(USE_QT6 ON CACHE BOOL "" FORCE)
           add_subdirectory("${PSI_SOURCE_DIR}/iris" iris)
 
           add_subdirectory("${PSIMEDIA_SOURCE_DIR}" psimedia)
@@ -121,9 +137,9 @@ jobs:
           )
           target_link_libraries(psi_native_media_adapter PUBLIC
               Iris::Iris
-              Qt5::Core
-              Qt5::Gui
-              Qt5::Widgets
+              Qt6::Core
+              Qt6::Gui
+              Qt6::Widgets
           )
 
           add_executable(psimedia_provider_smoke smoke.cpp)
@@ -131,7 +147,7 @@ jobs:
               "${PSI_SOURCE_DIR}/plugins/include"
               "${PSIMEDIA_SOURCE_DIR}/gstprovider"
           )
-          target_link_libraries(psimedia_provider_smoke PRIVATE gstprovidersrc Qt5::Core)
+          target_link_libraries(psimedia_provider_smoke PRIVATE gstprovidersrc Qt6::Core)
 
           add_test(NAME psimedia_provider_smoke COMMAND psimedia_provider_smoke)
           set_tests_properties(psimedia_provider_smoke PROPERTIES TIMEOUT 30)
@@ -147,7 +163,7 @@ jobs:
               psi_native_media_adapter
               gstprovidersrc
               Iris::Iris
-              Qt5::Core
+              Qt6::Core
           )
           add_test(NAME psi_native_media_adapter_smoke COMMAND psi_native_media_adapter_smoke)
           set_tests_properties(psi_native_media_adapter_smoke PROPERTIES TIMEOUT 30)
@@ -163,8 +179,8 @@ jobs:
               psi_native_media_adapter
               gstprovidersrc
               Iris::Iris
-              Qt5::Core
-              Qt5::Network
+              Qt6::Core
+              Qt6::Network
           )
           add_test(NAME psi_native_media_peer_smoke COMMAND psi_native_media_peer_smoke)
           set_tests_properties(psi_native_media_peer_smoke PROPERTIES TIMEOUT 35)
