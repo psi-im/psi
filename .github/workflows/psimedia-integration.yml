@@ -451,6 +451,7 @@ jobs:
 
           #include <QCoreApplication>
           #include <QDebug>
+          #include <QElapsedTimer>
           #include <QEventLoop>
           #include <QHostAddress>
           #include <QTimer>
@@ -467,6 +468,19 @@ jobs:
           {
               if (!ok)
                   qFatal("%s", message);
+          }
+
+          template<typename Predicate> bool waitUntil(Predicate predicate, int timeoutMs)
+          {
+              QElapsedTimer timer;
+              timer.start();
+              while (timer.elapsed() < timeoutMs) {
+                  QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+                  if (predicate())
+                      return true;
+              }
+              QCoreApplication::processEvents(QEventLoop::AllEvents);
+              return predicate();
           }
 
           class Ack final : public Task {
@@ -771,6 +785,60 @@ jobs:
                              << int(firstApp->state()) << int(secondApp->state())
                              << fakeState->received.size();
               check(!failed && replied, "real Psi media peer did not return RTCP over ICE/DTLS/SRTP");
+
+              // P1c consent gate: only after negotiation and authenticated
+              // packet readiness do we attach a real capture source and start
+              // the production psimedia sender. The opposite peer remains a
+              // fake media endpoint so the process still owns only one real
+              // psimedia backend.
+              const auto realLocal = secondApp->localDescription();
+              check(realLocal && !realLocal->payloads.isEmpty(),
+                    "real peer lost negotiated payload before consent");
+              const quint8 realPayloadType = quint8(realLocal->payloads.constFirst().id);
+
+              fakeState->received.clear();
+              check(startPsiMediaJingleTransmit(&secondSession, true, true,
+                                                QStringLiteral("audiotestsrc is-live=true wave=sine"),
+                                                false, QString()),
+                    "consent did not start real psimedia audio capture/transmit");
+
+              auto realRtpCount = [&]() {
+                  int count = 0;
+                  for (const auto &packet : fakeState->received) {
+                      if (packet.kind == RTP::SrtpContext::Packet::Rtp)
+                          ++count;
+                  }
+                  return count;
+              };
+              check(waitUntil([&] { return realRtpCount() >= 4; }, 10000),
+                    "real psimedia sender produced no RTP after consent");
+
+              bool payloadMatched = false;
+              for (const auto &packet : fakeState->received) {
+                  if (packet.kind != RTP::SrtpContext::Packet::Rtp || packet.bytes.size() < 2)
+                      continue;
+                  const auto *bytes = reinterpret_cast<const uchar *>(packet.bytes.constData());
+                  if ((bytes[0] >> 6) == 2 && (bytes[1] & 0x7f) == realPayloadType) {
+                      payloadMatched = true;
+                      break;
+                  }
+              }
+              check(payloadMatched, "real sender RTP payload type diverged from negotiated description");
+
+              stopPsiMediaJingleTransmit(&secondSession);
+              int lastRtpCount = realRtpCount();
+              QElapsedTimer quiet, totalQuiet;
+              quiet.start();
+              totalQuiet.start();
+              while (totalQuiet.elapsed() < 5000 && quiet.elapsed() < 500) {
+                  QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+                  const int current = realRtpCount();
+                  if (current != lastRtpCount) {
+                      lastRtpCount = current;
+                      quiet.restart();
+                  }
+              }
+              check(quiet.elapsed() >= 500, "real psimedia sender did not quiesce after consent was revoked");
 
               auto retainedWriter = fakeState->writer;
               firstApp->incomingContentModify(J::Origin::None);
