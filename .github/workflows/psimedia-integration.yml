@@ -115,7 +115,7 @@ jobs:
               message(FATAL_ERROR "PSI_SOURCE_DIR and PSIMEDIA_SOURCE_DIR are required")
           endif()
 
-          find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Network Xml)
+          find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Network Xml Test)
 
           enable_testing()
           set(PLUGINS_ROOT_DIR "${PSI_SOURCE_DIR}/plugins" CACHE STRING "" FORCE)
@@ -188,6 +188,23 @@ jobs:
           )
           add_test(NAME psi_native_media_adapter_smoke COMMAND psi_native_media_adapter_smoke)
           set_tests_properties(psi_native_media_adapter_smoke PROPERTIES TIMEOUT 30)
+
+          add_executable(psi_backend_lifecycle_test
+              "${PSI_SOURCE_DIR}/tests/avcall/backend-lifecycle/tst_backend_lifecycle.cpp"
+          )
+          target_include_directories(psi_backend_lifecycle_test PRIVATE
+              "${PSI_SOURCE_DIR}/src/psimedia"
+              "${PSI_SOURCE_DIR}/src/avcall"
+              "${PSI_SOURCE_DIR}/plugins/include"
+          )
+          target_link_libraries(psi_backend_lifecycle_test PRIVATE
+              psi_native_media_adapter
+              Iris::Iris
+              Qt6::Core
+              Qt6::Test
+          )
+          add_test(NAME psi_backend_lifecycle_test COMMAND psi_backend_lifecycle_test)
+          set_tests_properties(psi_backend_lifecycle_test PROPERTIES TIMEOUT 30)
 
           add_executable(psi_native_media_peer_smoke native_media_peer_smoke.cpp)
           target_include_directories(psi_native_media_peer_smoke PRIVATE
@@ -1121,7 +1138,7 @@ jobs:
         run: |
           cmake --build _psimedia-smoke-build \
             --target gstprovidersrc mediaplugin psimedia_provider_smoke psimedia_plugin_load_smoke \
-                     psi_native_media_adapter_smoke psi_native_media_peer_smoke \
+                     psi_native_media_adapter_smoke psi_backend_lifecycle_test psi_native_media_peer_smoke \
                      psimedia_opusrtppay_test psimedia_rtpsessioncontext_sender_test \
                      psimedia_rtpsessionbridge_test psimedia_rtpsessionbridge_packets_test \
                      psimedia_rtpsessionbridge_periodic_test psimedia_rtpsessionbridge_backpressure_test \
@@ -1133,7 +1150,7 @@ jobs:
           G_DEBUG: fatal-criticals
         run: |
           ctest --test-dir _psimedia-smoke-build \
-            -R '^(psimedia_(provider_smoke|plugin_load_smoke|opusrtppay|rtpsessioncontext_sender|rtpsessionbridge|rtpsessionbridge_packets|rtpsessionbridge_periodic|rtpsessionbridge_backpressure)|psi_native_media_(adapter|peer)_smoke)$' \
+            -R '^(psimedia_(provider_smoke|plugin_load_smoke|opusrtppay|rtpsessioncontext_sender|rtpsessionbridge|rtpsessionbridge_packets|rtpsessionbridge_periodic|rtpsessionbridge_backpressure)|psi_(backend_lifecycle_test|native_media_(adapter|peer)_smoke))$' \
             --no-tests=error \
             --output-on-failure \
             -V \
