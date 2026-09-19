@@ -1027,6 +1027,37 @@ jobs:
               check(!failed && replied,
                     "real Psi media peer did not complete independent audio/video ICE/DTLS/SRTP");
 
+              // P1c no-device gate: asking to transmit with no capture device
+              // must stay receive-only. Authenticated receive/RTCP remains live;
+              // lack of local capture is not a reason to tear down media.
+              const auto fakeAudioLocal = firstAudioApp->localDescription();
+              check(fakeAudioLocal && !fakeAudioLocal->payloads.isEmpty(),
+                    "active fake audio peer lost negotiated RTP payload before no-device check");
+              check(!startPsiMediaJingleTransmit(&secondSession, true, true, QString(), true, QString()),
+                    "no-device transmit unexpectedly reported active capture");
+
+              fakeState->audio.received.clear();
+              constexpr quint32 NoDeviceRemoteSsrc = 0x22334455;
+              for (quint16 sequence = 10; sequence <= 13; ++sequence) {
+                  const auto rtp = makeOpusRtp(sequence, 96000u + quint32(sequence - 10) * 960u,
+                                               NoDeviceRemoteSsrc,
+                                               quint8(fakeAudioLocal->payloads.constFirst().id));
+                  check(fakeState->audio.writer(rtp, RTP::SrtpContext::Packet::Rtp),
+                        "receive-only peer rejected RTP while no capture device was available");
+              }
+              check(waitUntil([&] {
+                        for (const auto &packet : fakeState->audio.received) {
+                            if (packet.kind == RTP::SrtpContext::Packet::Rtcp
+                                && containsReceiverReport(packet.bytes))
+                                return true;
+                        }
+                        return false;
+                    }, 12000),
+                    "RTCP reporting stopped when local capture device was unavailable");
+              check(firstVideoTransport->rtpSession()->isReady()
+                        && secondVideoTransport->rtpSession()->isReady(),
+                    "no-device audio state disturbed independent video transport");
+
               // P1c consent gate: authenticated media exists for both contents,
               // but only explicit audio consent attaches a synthetic live source.
               const auto realAudioLocal = secondAudioApp->localDescription();
