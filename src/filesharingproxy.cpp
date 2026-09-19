@@ -196,7 +196,7 @@ public:
         if (responseRange)
             qDebug("FSP metaDataChanged: rangeStart=%lld rangeSize=%lld", responseRange->start, responseRange->size);
         else if (file.size())
-            qDebug("FSP metaDataChanged: size=%lu", *file.size());
+            qDebug() << "FSP metaDataChanged: size=" << *file.size();
         else
             qDebug("FSP metaDataChanged: unknown size or range");
 
