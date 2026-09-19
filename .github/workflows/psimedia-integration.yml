@@ -952,15 +952,7 @@ jobs:
           G_DEBUG: fatal-criticals
         run: |
           ctest --test-dir _psimedia-smoke-build \
-            -R '^(psimedia_(provider_smoke|plugin_load_smoke|opusrtppay|rtpsessioncontext_sender|rtpsessionbridge|rtpsessionbridge_packets|rtpsessionbridge_periodic|rtpsessionbridge_backpressure)|psi_native_media_(adapter|peer)_smoke)            --no-tests=error \
-            --output-on-failure \
-            -V \
-            -j1
-
-      - name: Show compiler cache stats
-        if: always()
-        run: ccache --show-stats
- \
+            -R '^(psimedia_(provider_smoke|plugin_load_smoke|opusrtppay|rtpsessioncontext_sender|rtpsessionbridge|rtpsessionbridge_packets|rtpsessionbridge_periodic|rtpsessionbridge_backpressure)|psi_native_media_(adapter|peer)_smoke)$' \
             --no-tests=error \
             --output-on-failure \
             -V \
