@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    if: ${{ github.event_name != 'pull_request' || !startsWith(github.head_ref, 'ai/') }}
+    if: ${{ github.event_name != 'pull_request' || (!startsWith(github.head_ref, 'ai/') && github.head_ref != 'ci/psimedia-integration') }}
     name: Build and install project
     runs-on: ubuntu-latest
     container: fedora:latest

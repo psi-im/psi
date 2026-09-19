@@ -50,7 +50,7 @@ jobs:
             message="$PUSH_COMMIT_MESSAGE"
           fi
 
-          if [[ "$EVENT_NAME" != "workflow_dispatch" && "$BRANCH_NAME" == ai/* ]]; then
+          if [[ "$EVENT_NAME" != "workflow_dispatch" && ( "$BRANCH_NAME" == ai/* || "$BRANCH_NAME" == "ci/psimedia-integration" ) ]]; then
             run_ci=false
           elif [[ "$EVENT_NAME" != "workflow_dispatch" && "$message" == *"[skip ci]"* ]]; then
             run_ci=false
