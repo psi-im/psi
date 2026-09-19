@@ -204,6 +204,7 @@ jobs:
           #include <QEventLoop>
           #include <QThread>
 
+          #include <algorithm>
           #include <optional>
           #include <utility>
           #include <vector>
