@@ -12,6 +12,9 @@ on:
 permissions:
   contents: read
 
+env:
+  QCA_TAG: v3.0.7
+
 concurrency:
   group: psimedia-integration-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -62,7 +65,6 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          QCA_TAG: v3.0.7
         run: |
           set -euo pipefail
           rm -rf qca-release qca3.zip
