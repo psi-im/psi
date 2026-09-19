@@ -693,7 +693,7 @@ jobs:
                   }
 
                   answered = exchange(second.data(), first.data()) || answered;
-                  if (answered && !started) {
+                  if (answered && secondApp->localDescription() && !started) {
                       started = true;
                       QTimer::singleShot(0, &loop, [&]() {
                           check(firstApp->setRemoteAnswer(secondApp->makeLocalAnswer()) == J::Application::Ok,
