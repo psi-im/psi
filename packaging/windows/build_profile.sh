@@ -117,7 +117,18 @@ grep -F 'Found ccache at ' "$configure_log"
 
 cmake --build "$build_dir" --parallel 4
 if [[ "$build_testing" == ON ]]; then
-    ctest --test-dir "$build_dir" --output-on-failure -R '^avcall'
+    test_path="$sdk_dir/bin:/mingw64/bin:$PATH"
+    echo "CTest runtime PATH: $sdk_dir/bin;/mingw64/bin"
+
+    for test_exe in \
+        "$build_dir"/src/avcall/unittest/*.exe \
+        "$build_dir"/tests/avcall/backend-lifecycle/*.exe; do
+        [[ -f "$test_exe" ]] || continue
+        echo "Runtime imports for $test_exe:"
+        objdump -p "$test_exe" | sed -n 's/^[[:space:]]*DLL Name: /  /p'
+    done
+
+    PATH="$test_path" ctest --test-dir "$build_dir" --output-on-failure --no-tests=error -R '^avcall'
 fi
 ccache --show-stats
 
