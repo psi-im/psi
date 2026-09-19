@@ -206,6 +206,24 @@ jobs:
           add_test(NAME psi_backend_lifecycle_test COMMAND psi_backend_lifecycle_test)
           set_tests_properties(psi_backend_lifecycle_test PROPERTIES TIMEOUT 30)
 
+          add_executable(psi_native_media_runtime_error_smoke runtime_error_smoke.cpp)
+          target_include_directories(psi_native_media_runtime_error_smoke PRIVATE
+              "${PSI_SOURCE_DIR}/src"
+              "${PSI_SOURCE_DIR}/src/psimedia"
+              "${PSI_SOURCE_DIR}/src/avcall"
+              "${PSI_SOURCE_DIR}/plugins/include"
+              "${PSIMEDIA_SOURCE_DIR}/gstprovider"
+          )
+          target_link_libraries(psi_native_media_runtime_error_smoke PRIVATE
+              psi_native_media_adapter
+              gstprovidersrc
+              Iris::Iris
+              Qt6::Core
+              Qt6::Network
+          )
+          add_test(NAME psi_native_media_runtime_error_smoke COMMAND psi_native_media_runtime_error_smoke)
+          set_tests_properties(psi_native_media_runtime_error_smoke PROPERTIES TIMEOUT 30)
+
           add_executable(psi_native_media_peer_smoke native_media_peer_smoke.cpp)
           target_include_directories(psi_native_media_peer_smoke PRIVATE
               "${PSI_SOURCE_DIR}/src/psimedia"
@@ -559,6 +577,148 @@ jobs:
               session.reset();
 
               qInfo() << "Psi native media adapter real-backend audio/video negotiation + RTP/RTCP smoke passed";
+              return 0;
+          }
+          EOF
+
+          cat > _psimedia-smoke/runtime_error_smoke.cpp <<'EOF'
+          #include "gstprovider.h"
+          #include "psimedia.h"
+          #include "psimediajingle.h"
+
+          #include <iris/jingle-rtp.h>
+          #include <iris/jingle-session.h>
+          #include <iris/xmpp_client.h>
+
+          #include <QCoreApplication>
+          #include <QDebug>
+          #include <QElapsedTimer>
+          #include <QEventLoop>
+
+          #include <optional>
+
+          using namespace XMPP;
+          namespace J = XMPP::Jingle;
+          namespace RTP = XMPP::Jingle::RTP;
+
+          static void check(bool ok, const char *message)
+          {
+              if (!ok)
+                  qFatal("%s", message);
+          }
+
+          template<typename Predicate> bool waitUntil(Predicate predicate, int timeoutMs)
+          {
+              QElapsedTimer timer;
+              timer.start();
+              while (timer.elapsed() < timeoutMs) {
+                  QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+                  if (predicate())
+                      return true;
+              }
+              QCoreApplication::processEvents(QEventLoop::AllEvents);
+              return predicate();
+          }
+
+          int main(int argc, char **argv)
+          {
+              QCoreApplication app(argc, argv);
+
+              PsiMedia::GstProvider gstProvider;
+              check(gstProvider.isInitialized(), "GstProvider failed to initialize");
+              PsiMedia::setProvider(&gstProvider);
+
+              PsiMediaJingleCapabilities capabilities;
+              capabilities.backendAvailable = true;
+              capabilities.probeComplete    = true;
+              capabilities.secureRtp        = true;
+              capabilities.audio            = true;
+              auto provider = makePsiMediaJingleProvider(capabilities);
+              check(provider && provider->mediaTypes() == QStringList { QStringLiteral("audio") },
+                    "real Psi media provider did not expose audio");
+
+              Client client;
+              J::Session jingleSession(client.jingleManager(), Jid("peer@example.test/device"),
+                                       J::Origin::Initiator);
+              auto *rtpManager = client.jingleManager()->rtpManager();
+              rtpManager->setMediaProvider(provider);
+
+              auto basePad = jingleSession.applicationPadFactory(RTP::Description::ns());
+              auto pad = qSharedPointerDynamicCast<RTP::Pad>(basePad);
+              check(bool(pad) && pad->mediaSession(), "registered real RTP media session unavailable");
+              auto *media = pad->mediaSession();
+              auto endpoint = media->createEndpoint(QStringLiteral("runtime-audio"), QStringLiteral("audio"));
+              check(bool(endpoint), "real RTP runtime-error endpoint unavailable");
+
+              int runtimeErrors = 0;
+              RTP::MediaError runtimeError;
+              QObject::connect(media, &RTP::MediaSession::runtimeError,
+                               [&](const RTP::MediaError &error) {
+                                   ++runtimeErrors;
+                                   runtimeError = error;
+                               });
+
+              bool prepared = false;
+              RTP::MediaError prepareError;
+              std::optional<RTP::Description> local;
+              auto prepare = media->prepareLocalOffer(
+                  endpoint.get(),
+                  [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description,
+                      RTP::MediaError error) {
+                      local = std::move(description);
+                      prepareError = std::move(error);
+                      prepared = true;
+                  });
+              check(bool(prepare), "real backend runtime-error prepare did not start");
+              check(waitUntil([&] { return prepared || runtimeErrors; }, 10000),
+                    "real backend runtime-error prepare timed out");
+              check(runtimeErrors == 0 && !prepareError && local && !local->payloads.isEmpty(),
+                    "real backend runtime-error prepare failed");
+
+              bool applied = false;
+              RTP::MediaError applyError;
+              auto apply = media->applyNegotiation(
+                  endpoint.get(), *local, *local,
+                  [&](RTP::MediaOperation::Id, RTP::MediaError error) {
+                      applyError = std::move(error);
+                      applied = true;
+                  });
+              check(bool(apply), "real backend runtime-error apply did not start");
+              check(waitUntil([&] { return applied || runtimeErrors; }, 10000),
+                    "real backend runtime-error apply timed out");
+              check(runtimeErrors == 0 && !applyError,
+                    "real backend runtime-error apply failed before stimulus");
+
+              check(endpoint->attachPacketIo([](QByteArray, RTP::SrtpContext::Packet) { return true; }),
+                    "real backend runtime-error endpoint refused packet I/O");
+
+              // Cross the actual psimedia device-update boundary with a source
+              // string that GStreamer cannot instantiate. The helper returns
+              // true initially because capture was requested; the asynchronous
+              // provider failure must then become exactly one terminal
+              // MediaSession::runtimeError and revoke endpoint packet I/O.
+              check(startPsiMediaJingleTransmit(
+                        &jingleSession, true, true,
+                        QStringLiteral("psi_nonexistent_capture_src_20260919"), false, QString()),
+                    "runtime-error stimulus did not request real backend capture");
+              check(waitUntil([&] { return runtimeErrors > 0; }, 10000),
+                    "real psimedia capture failure did not reach MediaSession::runtimeError");
+              check(runtimeErrors == 1 && runtimeError.code == RTP::MediaError::Code::Backend,
+                    "real psimedia capture failure produced wrong or duplicate runtime error");
+
+              check(!endpoint->attachPacketIo([](QByteArray, RTP::SrtpContext::Packet) { return true; }),
+                    "failed real backend allowed packet I/O to be reattached");
+              check(!startPsiMediaJingleTransmit(
+                        &jingleSession, true, true,
+                        QStringLiteral("audiotestsrc is-live=true wave=sine"), false, QString()),
+                    "failed real backend resumed capture after terminal error");
+
+              endpoint->stop();
+              endpoint.reset();
+              apply.reset();
+              prepare.reset();
+
+              qInfo() << "Psi real-backend runtime-error propagation and endpoint revocation smoke passed";
               return 0;
           }
           EOF
@@ -1169,7 +1329,8 @@ jobs:
         run: |
           cmake --build _psimedia-smoke-build \
             --target gstprovidersrc mediaplugin psimedia_provider_smoke psimedia_plugin_load_smoke \
-                     psi_native_media_adapter_smoke psi_backend_lifecycle_test psi_native_media_peer_smoke \
+                     psi_native_media_adapter_smoke psi_backend_lifecycle_test \
+                     psi_native_media_runtime_error_smoke psi_native_media_peer_smoke \
                      psimedia_opusrtppay_test psimedia_rtpsessioncontext_sender_test \
                      psimedia_rtpsessionbridge_test psimedia_rtpsessionbridge_packets_test \
                      psimedia_rtpsessionbridge_periodic_test psimedia_rtpsessionbridge_backpressure_test \
@@ -1181,7 +1342,7 @@ jobs:
           G_DEBUG: fatal-criticals
         run: |
           ctest --test-dir _psimedia-smoke-build \
-            -R '^(psimedia_(provider_smoke|plugin_load_smoke|opusrtppay|rtpsessioncontext_sender|rtpsessionbridge|rtpsessionbridge_packets|rtpsessionbridge_periodic|rtpsessionbridge_backpressure)|psi_(backend_lifecycle_test|native_media_(adapter|peer)_smoke))$' \
+            -R '^(psimedia_(provider_smoke|plugin_load_smoke|opusrtppay|rtpsessioncontext_sender|rtpsessionbridge|rtpsessionbridge_packets|rtpsessionbridge_periodic|rtpsessionbridge_backpressure)|psi_(backend_lifecycle_test|native_media_(adapter|runtime_error|peer)_smoke))$' \
             --no-tests=error \
             --output-on-failure \
             -V \
