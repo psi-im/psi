@@ -6,6 +6,23 @@ sdk_dir=$(cd "${2:?SDK_DIR is required}" && pwd)
 output_dir=$(mkdir -p "${3:?OUTPUT_DIR is required}" && cd "$3" && pwd)
 source_dir=$(pwd)
 
+chat_type=${CHAT_TYPE:-WEBKIT}
+build_testing=${BUILD_TESTING:-OFF}
+package_enabled=${PACKAGE_ENABLED:-ON}
+
+case "$chat_type" in
+    BASIC|WEBKIT|WEBENGINE) ;;
+    *) echo "Unsupported CHAT_TYPE: $chat_type" >&2; exit 2 ;;
+esac
+case "$build_testing" in
+    ON|OFF) ;;
+    *) echo "BUILD_TESTING must be ON or OFF" >&2; exit 2 ;;
+esac
+case "$package_enabled" in
+    ON|OFF) ;;
+    *) echo "PACKAGE_ENABLED must be ON or OFF" >&2; exit 2 ;;
+esac
+
 export CCACHE_DIR="$source_dir/.ccache"
 export CCACHE_BASEDIR="$source_dir"
 mkdir -p "$CCACHE_DIR"
@@ -35,13 +52,16 @@ l10n_dir="$source_dir/.packaging-psi-l10n-$profile"
 report="$output_dir/dependencies-$profile.txt"
 rm -rf "$build_dir" "$stage_dir" "$l10n_dir"
 
-# Psi translations intentionally live in the separate psi-l10n repository.
-# Use a shallow sparse checkout so release packages contain current translations
-# without restoring the old installer-side download machinery.
-git clone --depth 1 --filter=blob:none --sparse \
-    https://github.com/psi-im/psi-l10n.git "$l10n_dir"
-git -C "$l10n_dir" sparse-checkout set translations
-l10n_revision=$(git -C "$l10n_dir" rev-parse HEAD)
+# Psi translations are packaging input, not a CI compile dependency.
+if [[ "$package_enabled" == ON ]]; then
+    git clone --depth 1 --filter=blob:none --sparse \
+        https://github.com/psi-im/psi-l10n.git "$l10n_dir"
+    git -C "$l10n_dir" sparse-checkout set translations
+    l10n_revision=$(git -C "$l10n_dir" rev-parse HEAD)
+else
+    mkdir -p "$l10n_dir/translations"
+    l10n_revision=not-packaged
+fi
 
 cmake -S . -B "$build_dir" -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
@@ -56,7 +76,7 @@ cmake -S . -B "$build_dir" -G Ninja \
     -DUSE_QT6=OFF \
     -DUSE_MXE=OFF \
     -DUSE_CCACHE=ON \
-    -DCHAT_TYPE=WEBKIT \
+    -DCHAT_TYPE="$chat_type" \
     -DBUNDLED_IRIS=ON \
     -DBUNDLED_IRIS_ALL=OFF \
     -DIRIS_BUNDLED_QCA=OFF \
@@ -70,7 +90,7 @@ cmake -S . -B "$build_dir" -G Ninja \
     -DHUNSPELL_LIBRARY=/mingw64/lib/libhunspell.dll.a \
     -DUSE_HUNSPELL=ON \
     -DUSE_KEYCHAIN=ON \
-    -DBUILD_TESTING=OFF \
+    -DBUILD_TESTING="$build_testing" \
     -DENABLE_PLUGINS=OFF \
     -DBUILD_PSIMEDIA=OFF \
     -DONLY_BINARY=OFF \
@@ -78,7 +98,11 @@ cmake -S . -B "$build_dir" -G Ninja \
     2>&1 | tee "$output_dir/configure-$profile.log"
 
 configure_log="$output_dir/configure-$profile.log"
-grep -F 'Chatlog type - QtWebKit' "$configure_log"
+case "$chat_type" in
+    BASIC)     grep -F 'Chatlog type - Basic' "$configure_log" ;;
+    WEBKIT)    grep -F 'Chatlog type - QtWebKit' "$configure_log" ;;
+    WEBENGINE) grep -F 'Chatlog type - QtWebEngine' "$configure_log" ;;
+esac
 grep -F 'QCA: selected system QCA 3' "$configure_log"
 grep -F 'Found UsrSCTP' "$configure_log"
 grep -Eq 'Found (PkgConfig::)?OmemoC|libomemo-c' "$configure_log"
@@ -92,7 +116,16 @@ grep -Eq '^MINIZIP_LIBRARY:FILEPATH=.*libminizip' "$build_dir/CMakeCache.txt"
 grep -F 'Found ccache at ' "$configure_log"
 
 cmake --build "$build_dir" --parallel 4
+if [[ "$build_testing" == ON ]]; then
+    ctest --test-dir "$build_dir" --output-on-failure -R '^avcall'
+fi
 ccache --show-stats
+
+if [[ "$package_enabled" != ON ]]; then
+    echo "CI-only profile completed; packaging disabled."
+    exit 0
+fi
+
 cmake --install "$build_dir"
 test -f "$stage_dir/psi.exe"
 

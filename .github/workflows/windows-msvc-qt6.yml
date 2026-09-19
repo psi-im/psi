@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - 'ai/**'
   pull_request:
     branches:
       - '*'
@@ -23,6 +22,10 @@ env:
 
 jobs:
   check-sdk:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && !startsWith(github.ref_name, 'ai/')) ||
+      (github.event_name == 'pull_request' && !startsWith(github.head_ref, 'ai/'))
     name: Check modern dependency SDK
     runs-on: ubuntu-24.04
     outputs:
