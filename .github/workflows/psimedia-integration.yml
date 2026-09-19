@@ -46,6 +46,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             cmake \
+            ccache \
             g++ \
             ninja-build \
             pkg-config \
@@ -60,6 +61,14 @@ jobs:
             gstreamer1.0-plugins-good \
             gstreamer1.0-plugins-bad \
             gstreamer1.0-tools
+
+      - name: Restore compiler cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ${{ runner.os }}-psimedia-integration-ccache-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-psimedia-integration-ccache-
 
       - name: Install QCA3 release package
         shell: bash
@@ -135,6 +144,7 @@ jobs:
           )
           target_compile_definitions(psi_native_media_adapter PRIVATE QT_GUI_LIB)
           target_include_directories(psi_native_media_adapter PUBLIC
+              "${PSI_SOURCE_DIR}/src"
               "${PSI_SOURCE_DIR}/src/psimedia"
               "${PSI_SOURCE_DIR}/src/avcall"
               "${PSI_SOURCE_DIR}/plugins/include"
@@ -792,8 +802,10 @@ jobs:
           }
           EOF
 
+          ccache --zero-stats
           cmake -S _psimedia-smoke -B _psimedia-smoke-build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DPSI_SOURCE_DIR="$GITHUB_WORKSPACE" \
             -DPSIMEDIA_SOURCE_DIR="$GITHUB_WORKSPACE/_psimedia"
 
@@ -813,9 +825,12 @@ jobs:
           G_DEBUG: fatal-criticals
         run: |
           ctest --test-dir _psimedia-smoke-build \
-            -R '^(psimedia_(provider_smoke|opusrtppay|rtpsessioncontext_sender|rtpsessionbridge|rtpsessionbridge_packets|rtpsessionbridge_periodic|rtpsessionbridge_backpressure)|psi_native_media_adapter_smoke)            --output-on-failure \
-            -V \
-            -j1 \
+            -R '^(psimedia_(provider_smoke|opusrtppay|rtpsessioncontext_sender|rtpsessionbridge|rtpsessionbridge_packets|rtpsessionbridge_periodic|rtpsessionbridge_backpressure)|psi_native_media_(adapter|peer)_smoke)$' \
+            --no-tests=error \
             --output-on-failure \
             -V \
             -j1
+
+      - name: Show compiler cache stats
+        if: always()
+        run: ccache --show-stats
