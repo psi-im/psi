@@ -667,8 +667,12 @@ jobs:
               auto second = makeTransport(secondClient, secondSession, J::Origin::Initiator);
 
               auto makeApp = [&](Client &client, J::Session &session, std::shared_ptr<RTP::MediaProvider> provider) {
-                  auto pad = QSharedPointer<RTP::Pad>::create(client.jingleManager()->rtpManager(), &session,
-                                                              std::move(provider), QStringList { transportNs });
+                  auto *manager = client.jingleManager()->rtpManager();
+                  manager->setMediaProvider(std::move(provider));
+                  manager->setTransportNamespaces(QStringList { transportNs });
+                  auto basePad = session.applicationPadFactory(RTP::Description::ns());
+                  auto pad = qSharedPointerDynamicCast<RTP::Pad>(basePad);
+                  check(bool(pad), "registered RTP application pad unavailable");
                   return std::make_unique<RTP::Application>(pad, QStringLiteral("audio"), J::Origin::Initiator,
                                                              J::Origin::Both);
               };
