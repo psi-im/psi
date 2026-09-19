@@ -69,6 +69,7 @@ option( PRODUCTION "Build production version" OFF )
 option( VERBOSE_PROGRAM_NAME "Verbose output binary name" OFF )
 option( BUILD_PSIMEDIA "Build psimedia plugin if its code is found in sources tree. Works only with ENABLE_PLUGINS=ON" OFF )
 option( ENABLE_PLUGINS "Enable plugins" OFF )
+option( ENABLE_AVCALL "Enable native secure audio/video calls" ON )
 option( USE_HUNSPELL "Build psi with hunspell spellcheck" ON )
 option( USE_ENCHANT "Build psi with enchant spellcheck" OFF )
 option( USE_ASPELL "Build psi with aspell spellcheck" OFF )
@@ -280,6 +281,15 @@ if (BUNDLED_IRIS_ALL)
     if(NOT IRIS_BUNDLED_OMEMO_C)
         set(IRIS_BUNDLED_OMEMO_C ON)
     endif()
+endif()
+
+if(BUNDLED_IRIS AND ENABLE_AVCALL)
+    # Native RTP calls are DTLS-SRTP only. Keep SRTP optional for Iris itself,
+    # but require it for Psi builds that expose the call feature.
+    set(IRIS_ENABLE_SRTP ON CACHE BOOL "Enable libSRTP packet protection for native Jingle RTP" FORCE)
+endif()
+if(ENABLE_AVCALL)
+    add_compile_definitions(PSI_ENABLE_AVCALL)
 endif()
 
 if(IRIS_BUNDLED_QCA)

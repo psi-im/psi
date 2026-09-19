@@ -17,3 +17,10 @@ add_definitions( -DQT_GUI_LIB )
 add_library(psimedia STATIC ${SOURCES} ${HEADERS} ${UI_FORMS})
 target_link_libraries(psimedia ${QT_LIBRARIES})
 target_include_directories(psimedia PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+
+if(BUILD_TESTING)
+    add_subdirectory(
+        ${PROJECT_SOURCE_DIR}/tests/avcall/backend-lifecycle
+        ${CMAKE_CURRENT_BINARY_DIR}/backend-lifecycle-test
+    )
+endif()

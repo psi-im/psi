@@ -1,0 +1,33 @@
+name: AI Windows GCC BASIC CI
+
+on:
+  push:
+    branches:
+      - 'ai/**'
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-windows-gcc-basic-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  windows-gcc-basic:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      startsWith(github.ref_name, 'ai/') ||
+      startsWith(github.head_ref, 'ai/')
+    uses: ./.github/workflows/windows-msys2-qt5-profile.yml
+    with:
+      profile: modern
+      chat_type: BASIC
+      run_tests: true
+      package: false
+      allow_failure: false
+      sdk_tag: windows-sdk-msys2-qt5-v1
+      sdk_archive: psi-windows-sdk-msys2-qt5.zip

@@ -3,7 +3,9 @@ param(
     [string]$SdkDir,
 
     [Parameter(Mandatory = $true)]
-    [string]$OutputDir
+    [string]$OutputDir,
+
+    [switch]$RunTests
 )
 
 $ErrorActionPreference = 'Stop'
@@ -111,6 +113,27 @@ foreach ($required in @(
 }
 
 Invoke-Checked cmake --build $buildDir --parallel 4
+if ($RunTests) {
+    $testingArg = [Array]::IndexOf($configureArgs, '-DBUILD_TESTING=OFF')
+    if ($testingArg -lt 0) {
+        throw 'BUILD_TESTING configure argument is missing'
+    }
+    $configureArgs[$testingArg] = '-DBUILD_TESTING=ON'
+    Invoke-Checked cmake @configureArgs
+    Invoke-Checked cmake --build $buildDir --target avcallpolicy_test avcall_backend_lifecycle_test avcall_capability_refresh_test --parallel 4
+    $testPath = "$(Join-Path $env:QT_ROOT_DIR 'bin');$(Join-Path $sdkDir 'bin');$env:PATH"
+    $testArgs = @(
+        '-E', 'env', "PATH=$testPath", 'ctest',
+        '--test-dir', $buildDir,
+        '--output-on-failure',
+        '-R', '^avcall(policy|_(backend_lifecycle|capability_refresh))_test$',
+        '-j', '1'
+    )
+    & cmake @testArgs
+    if ($LASTEXITCODE -ne 0) {
+        throw "AvCall regression tests failed with exit code $LASTEXITCODE"
+    }
+}
 Invoke-Checked cmake --install $buildDir
 
 $psiExe = Join-Path $stageDir 'psi.exe'

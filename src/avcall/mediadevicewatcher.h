@@ -51,14 +51,17 @@ public:
     inline QList<PsiMedia::Device>      videoInputDevices() { return _features.videoInputDevices(); }
     inline QList<PsiMedia::AudioParams> supportedAudioModes() { return _features.supportedAudioModes(); }
     inline QList<PsiMedia::VideoParams> supportedVideoModes() { return _features.supportedVideoModes(); }
+    inline bool                         featuresReady() const { return _featuresReady; }
 
 signals:
     void updated();
     void availibityChanged();
+    void capabilitiesChanged();
 
 private:
     MediaConfiguration         _configuration;
     PsiMedia::Features         _features;
+    bool                       _featuresReady = false;
     static MediaDeviceWatcher *_instance;
 };
 
