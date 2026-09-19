@@ -24,6 +24,10 @@ jobs:
           ref: ai/jingle-native-calls
           submodules: false
 
+      - name: Initialize pinned Iris
+        shell: bash
+        run: git submodule update --init --depth 1 iris
+
       - name: Checkout psimedia RTP session branch
         uses: actions/checkout@v4
         with:
@@ -41,6 +45,9 @@ jobs:
             ninja-build \
             pkg-config \
             qtbase5-dev \
+            libssl-dev \
+            libsrtp2-dev \
+            zlib1g-dev \
             libgstreamer1.0-dev \
             libgstreamer-plugins-base1.0-dev \
             libgstreamer-plugins-bad1.0-dev \
@@ -52,10 +59,13 @@ jobs:
       - name: Record integration versions
         run: |
           echo "Psi: $(git rev-parse HEAD)"
+          echo "Iris: $(git -C iris rev-parse HEAD)"
           echo "psimedia: $(git -C _psimedia rev-parse HEAD)"
+          echo "QCA: bundled psi-im/qca v3.0.7 (qca-ossl)"
           qmake -v
+          openssl version
           gst-launch-1.0 --version
-          pkg-config --modversion gstreamer-1.0 gstreamer-rtp-1.0
+          pkg-config --modversion gstreamer-1.0 gstreamer-rtp-1.0 libsrtp2
 
       - name: Configure integration smoke
         shell: bash
@@ -80,11 +90,41 @@ jobs:
               message(FATAL_ERROR "PSI_SOURCE_DIR and PSIMEDIA_SOURCE_DIR are required")
           endif()
 
-          find_package(Qt5 REQUIRED COMPONENTS Core)
+          find_package(Qt5 REQUIRED COMPONENTS Core Gui Widgets Network Xml)
 
           enable_testing()
           set(PLUGINS_ROOT_DIR "${PSI_SOURCE_DIR}/plugins" CACHE STRING "" FORCE)
+
+          set(IRIS_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
+          set(IRIS_ENABLE_SRTP ON CACHE BOOL "" FORCE)
+          set(IRIS_ENABLE_JINGLE_SCTP OFF CACHE BOOL "" FORCE)
+          set(IRIS_ENABLE_OMEMO OFF CACHE BOOL "" FORCE)
+          set(IRIS_BUNDLED_USRSCTP OFF CACHE BOOL "" FORCE)
+          set(IRIS_BUNDLED_QCA ON CACHE BOOL "" FORCE)
+          set(IRIS_BUNDLED_QCA_GIT_TAG v3.0.7 CACHE STRING "" FORCE)
+          add_subdirectory("${PSI_SOURCE_DIR}/iris" iris)
+
           add_subdirectory("${PSIMEDIA_SOURCE_DIR}" psimedia)
+
+          add_library(psi_native_media_adapter STATIC
+              "${PSI_SOURCE_DIR}/src/psimedia/psimedia.cpp"
+              "${PSI_SOURCE_DIR}/src/psimedia/psimedia.h"
+              "${PSI_SOURCE_DIR}/src/psimedia/psimedia_p.h"
+              "${PSI_SOURCE_DIR}/src/avcall/psimediajingle.cpp"
+              "${PSI_SOURCE_DIR}/src/avcall/psimediajingle.h"
+          )
+          target_compile_definitions(psi_native_media_adapter PRIVATE QT_GUI_LIB)
+          target_include_directories(psi_native_media_adapter PUBLIC
+              "${PSI_SOURCE_DIR}/src/psimedia"
+              "${PSI_SOURCE_DIR}/src/avcall"
+              "${PSI_SOURCE_DIR}/plugins/include"
+          )
+          target_link_libraries(psi_native_media_adapter PUBLIC
+              Iris::Iris
+              Qt5::Core
+              Qt5::Gui
+              Qt5::Widgets
+          )
 
           add_executable(psimedia_provider_smoke smoke.cpp)
           target_include_directories(psimedia_provider_smoke PRIVATE
@@ -95,6 +135,22 @@ jobs:
 
           add_test(NAME psimedia_provider_smoke COMMAND psimedia_provider_smoke)
           set_tests_properties(psimedia_provider_smoke PROPERTIES TIMEOUT 30)
+
+          add_executable(psi_native_media_adapter_smoke native_adapter_smoke.cpp)
+          target_include_directories(psi_native_media_adapter_smoke PRIVATE
+              "${PSI_SOURCE_DIR}/src/psimedia"
+              "${PSI_SOURCE_DIR}/src/avcall"
+              "${PSI_SOURCE_DIR}/plugins/include"
+              "${PSIMEDIA_SOURCE_DIR}/gstprovider"
+          )
+          target_link_libraries(psi_native_media_adapter_smoke PRIVATE
+              psi_native_media_adapter
+              gstprovidersrc
+              Iris::Iris
+              Qt5::Core
+          )
+          add_test(NAME psi_native_media_adapter_smoke COMMAND psi_native_media_adapter_smoke)
+          set_tests_properties(psi_native_media_adapter_smoke PROPERTIES TIMEOUT 30)
           EOF
 
           cat > _psimedia-smoke/smoke.cpp <<'EOF'
@@ -135,6 +191,208 @@ jobs:
           }
           EOF
 
+          cat > _psimedia-smoke/native_adapter_smoke.cpp <<'EOF'
+          #include "gstprovider.h"
+          #include "psimedia.h"
+          #include "psimediajingle.h"
+
+          #include <iris/jingle-rtp.h>
+
+          #include <QCoreApplication>
+          #include <QDebug>
+          #include <QElapsedTimer>
+          #include <QEventLoop>
+          #include <QThread>
+
+          #include <optional>
+          #include <utility>
+          #include <vector>
+
+          namespace RTP = XMPP::Jingle::RTP;
+
+          template<typename Predicate> bool waitUntil(Predicate predicate, int timeoutMs)
+          {
+              QElapsedTimer timer;
+              timer.start();
+              while (timer.elapsed() < timeoutMs) {
+                  QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+                  if (predicate())
+                      return true;
+                  QThread::msleep(5);
+              }
+              QCoreApplication::processEvents(QEventLoop::AllEvents);
+              return predicate();
+          }
+
+          QByteArray makeOpusRtp(quint16 sequence, quint32 timestamp, quint32 ssrc, quint8 payloadType)
+          {
+              QByteArray packet(15, char(0));
+              auto *p = reinterpret_cast<uchar *>(packet.data());
+              p[0]  = 0x80;
+              p[1]  = payloadType & 0x7f;
+              p[2]  = uchar(sequence >> 8);
+              p[3]  = uchar(sequence);
+              p[4]  = uchar(timestamp >> 24);
+              p[5]  = uchar(timestamp >> 16);
+              p[6]  = uchar(timestamp >> 8);
+              p[7]  = uchar(timestamp);
+              p[8]  = uchar(ssrc >> 24);
+              p[9]  = uchar(ssrc >> 16);
+              p[10] = uchar(ssrc >> 8);
+              p[11] = uchar(ssrc);
+              // Valid Opus comfort/silence frame used only to exercise the
+              // receive pipeline without any physical playback device.
+              p[12] = 0xf8;
+              p[13] = 0xff;
+              p[14] = 0xfe;
+              return packet;
+          }
+
+          bool containsReceiverReport(const QByteArray &compound)
+          {
+              const auto *bytes = reinterpret_cast<const uchar *>(compound.constData());
+              int offset = 0;
+              while (offset + 4 <= compound.size()) {
+                  const auto *packet = bytes + offset;
+                  if ((packet[0] >> 6) != 2)
+                      return false;
+                  const int packetBytes = (int(packet[2]) * 256 + int(packet[3]) + 1) * 4;
+                  if (packetBytes < 4 || offset + packetBytes > compound.size())
+                      return false;
+                  if (packet[1] == 201)
+                      return true;
+                  offset += packetBytes;
+              }
+              return false;
+          }
+
+          int main(int argc, char **argv)
+          {
+              QCoreApplication app(argc, argv);
+
+              PsiMedia::GstProvider gstProvider;
+              if (!gstProvider.isInitialized()) {
+                  qCritical() << "GstProvider failed to initialize";
+                  return 1;
+              }
+              PsiMedia::setProvider(&gstProvider);
+
+              PsiMediaJingleCapabilities capabilities;
+              capabilities.backendAvailable = true;
+              capabilities.probeComplete    = true;
+              capabilities.secureRtp        = true;
+              capabilities.audio            = true;
+
+              auto provider = makePsiMediaJingleProvider(capabilities);
+              if (!provider || provider->mediaTypes() != QStringList { QStringLiteral("audio") }) {
+                  qCritical() << "Psi native media provider did not expose audio";
+                  return 2;
+              }
+
+              auto session = provider->createSession();
+              auto endpoint = session ? session->createEndpoint(QStringLiteral("audio"), QStringLiteral("audio"))
+                                      : nullptr;
+              if (!session || !endpoint) {
+                  qCritical() << "Psi native media adapter did not create audio session/endpoint";
+                  return 3;
+              }
+
+              bool runtimeFailed = false;
+              RTP::MediaError runtimeError;
+              QObject::connect(session.get(), &RTP::MediaSession::runtimeError,
+                               [&](const RTP::MediaError &error) {
+                                   runtimeFailed = true;
+                                   runtimeError  = error;
+                               });
+
+              bool prepared = false;
+              RTP::MediaError prepareError;
+              std::optional<RTP::Description> local;
+              auto prepare = session->prepareLocalOffer(
+                  endpoint.get(),
+                  [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description, RTP::MediaError error) {
+                      local        = std::move(description);
+                      prepareError = std::move(error);
+                      prepared     = true;
+                  });
+              if (!prepare || !waitUntil([&] { return prepared || runtimeFailed; }, 10000) || runtimeFailed
+                  || prepareError || !local || local->media != QLatin1String("audio") || !local->rtcpMux
+                  || local->payloads.isEmpty()) {
+                  qCritical() << "Device-free real-backend RTP prepare failed"
+                              << int(prepareError.code) << prepareError.text
+                              << int(runtimeError.code) << runtimeError.text;
+                  return 4;
+              }
+              prepare.reset();
+
+              const auto opus = std::find_if(local->payloads.cbegin(), local->payloads.cend(), [](const auto &payload) {
+                  return payload.name.compare(QLatin1String("opus"), Qt::CaseInsensitive) == 0
+                      && payload.clockrate && *payload.clockrate == 48000;
+              });
+              if (opus == local->payloads.cend()) {
+                  qCritical() << "Real backend did not negotiate Opus";
+                  return 5;
+              }
+
+              bool applied = false;
+              RTP::MediaError applyError;
+              auto apply = session->applyNegotiation(
+                  endpoint.get(), *local, *local,
+                  [&](RTP::MediaOperation::Id, RTP::MediaError error) {
+                      applyError = std::move(error);
+                      applied    = true;
+                  });
+              if (!apply || !waitUntil([&] { return applied || runtimeFailed; }, 10000) || runtimeFailed
+                  || applyError) {
+                  qCritical() << "Real-backend RTP apply failed"
+                              << int(applyError.code) << applyError.text
+                              << int(runtimeError.code) << runtimeError.text;
+                  return 6;
+              }
+              apply.reset();
+
+              std::vector<QByteArray> rtcpPackets;
+              if (!endpoint->attachPacketIo([&](QByteArray packet, RTP::SrtpContext::Packet kind) {
+                      if (kind == RTP::SrtpContext::Packet::Rtcp)
+                          rtcpPackets.push_back(std::move(packet));
+                      return true;
+                  })) {
+                  qCritical() << "Production Psi media endpoint refused packet I/O";
+                  return 7;
+              }
+
+              constexpr quint32 RemoteSsrc = 0x44556677;
+              for (quint16 sequence = 1; sequence <= 4; ++sequence) {
+                  endpoint->receivePacket(
+                      makeOpusRtp(sequence, 48000u + quint32(sequence - 1) * 960u, RemoteSsrc, opus->id),
+                      RTP::SrtpContext::Packet::Rtp);
+              }
+
+              if (!waitUntil([&] {
+                      if (runtimeFailed)
+                          return true;
+                      for (const auto &packet : rtcpPackets) {
+                          if (containsReceiverReport(packet))
+                              return true;
+                      }
+                      return false;
+                  }, 12000)
+                  || runtimeFailed) {
+                  qCritical() << "Production Psi adapter did not return an RTCP receiver report"
+                              << int(runtimeError.code) << runtimeError.text;
+                  return 8;
+              }
+
+              endpoint->stop();
+              endpoint.reset();
+              session.reset();
+              PsiMedia::setProvider(nullptr);
+
+              qInfo() << "Psi native media adapter real-backend RTP/RTCP smoke passed";
+              return 0;
+          }
+          EOF
+
           cmake -S _psimedia-smoke -B _psimedia-smoke-build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DPSI_SOURCE_DIR="$GITHUB_WORKSPACE" \
@@ -143,7 +401,7 @@ jobs:
       - name: Build real provider, plugin and RTP session regressions
         run: |
           cmake --build _psimedia-smoke-build \
-            --target gstprovidersrc mediaplugin psimedia_provider_smoke \
+            --target gstprovidersrc mediaplugin psimedia_provider_smoke psi_native_media_adapter_smoke \
                      psimedia_opusrtppay_test psimedia_rtpsessioncontext_sender_test \
                      psimedia_rtpsessionbridge_test psimedia_rtpsessionbridge_packets_test \
                      psimedia_rtpsessionbridge_periodic_test psimedia_rtpsessionbridge_backpressure_test \
@@ -155,7 +413,9 @@ jobs:
           G_DEBUG: fatal-criticals
         run: |
           ctest --test-dir _psimedia-smoke-build \
-            -R '^psimedia_(provider_smoke|opusrtppay|rtpsessioncontext_sender|rtpsessionbridge|rtpsessionbridge_packets|rtpsessionbridge_periodic|rtpsessionbridge_backpressure)$' \
+            -R '^(psimedia_(provider_smoke|opusrtppay|rtpsessioncontext_sender|rtpsessionbridge|rtpsessionbridge_packets|rtpsessionbridge_periodic|rtpsessionbridge_backpressure)|psi_native_media_adapter_smoke)            --output-on-failure \
+            -V \
+            -j1 \
             --output-on-failure \
             -V \
             -j1
