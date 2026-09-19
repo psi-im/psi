@@ -1,9 +1,6 @@
 name: PsiMedia integration
 
 on:
-  push:
-    branches:
-      - ci/psimedia-integration
   pull_request:
     branches:
       - ai/jingle-native-calls
@@ -434,8 +431,7 @@ jobs:
               endpoint->stop();
               endpoint.reset();
               session.reset();
-              PsiMedia::setProvider(nullptr);
-
+          
               qInfo() << "Psi native media adapter real-backend RTP/RTCP smoke passed";
               return 0;
           }
@@ -795,8 +791,7 @@ jobs:
               firstApp.reset();
               secondApp.reset();
               second->stop();
-              PsiMedia::setProvider(nullptr);
-
+          
               qInfo() << "Psi real-backend peer ICE/DTLS/SRTP receive+RTCP smoke passed";
               return 0;
           }
