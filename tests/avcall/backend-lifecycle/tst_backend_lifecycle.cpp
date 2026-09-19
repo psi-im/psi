@@ -638,6 +638,86 @@ private slots:
         QCOMPARE(provider_.stats().invalidCalls, 0);
     }
 
+    void applyRejectsLocalPayloadTypeNotCommittedByBackend()
+    {
+        Harness harness;
+        std::optional<RTP::Description> local;
+        bool prepared = false;
+        auto prepare = harness.session->prepareLocalOffer(
+            harness.endpoint.get(),
+            [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description, RTP::MediaError error) {
+                QVERIFY(!error);
+                local = std::move(description);
+                prepared = true;
+            });
+        QTRY_COMPARE(provider_.stats().startCalls, 1);
+        provider_.context()->completeStart();
+        QTRY_VERIFY(prepared);
+        QVERIFY(local);
+        prepare.reset();
+
+        auto accepted = *local;
+        accepted.payloads[0].id = 112;
+
+        bool applied = false;
+        RTP::MediaError applyError;
+        auto apply = harness.session->applyNegotiation(
+            harness.endpoint.get(), accepted, audioDescription(),
+            [&](RTP::MediaOperation::Id, RTP::MediaError error) {
+                applied = true;
+                applyError = std::move(error);
+            });
+        QTRY_COMPARE(provider_.stats().updateCalls, 1);
+        provider_.context()->completePreferences();
+        QTRY_VERIFY(applied);
+        QCOMPARE(applyError.code, RTP::MediaError::Code::Unsupported);
+
+        apply.reset();
+        harness.endpoint.reset();
+        harness.session.reset();
+        QCOMPARE(provider_.stats().invalidCalls, 0);
+    }
+
+    void applyRejectsLocalFmtpNotConfirmedByBackend()
+    {
+        Harness harness;
+        std::optional<RTP::Description> local;
+        bool prepared = false;
+        auto prepare = harness.session->prepareLocalOffer(
+            harness.endpoint.get(),
+            [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description, RTP::MediaError error) {
+                QVERIFY(!error);
+                local = std::move(description);
+                prepared = true;
+            });
+        QTRY_COMPARE(provider_.stats().startCalls, 1);
+        provider_.context()->completeStart();
+        QTRY_VERIFY(prepared);
+        QVERIFY(local);
+        prepare.reset();
+
+        auto accepted = *local;
+        accepted.payloads[0].parameters.insert(QStringLiteral("stereo"), QStringLiteral("1"));
+
+        bool applied = false;
+        RTP::MediaError applyError;
+        auto apply = harness.session->applyNegotiation(
+            harness.endpoint.get(), accepted, audioDescription(),
+            [&](RTP::MediaOperation::Id, RTP::MediaError error) {
+                applied = true;
+                applyError = std::move(error);
+            });
+        QTRY_COMPARE(provider_.stats().updateCalls, 1);
+        provider_.context()->completePreferences();
+        QTRY_VERIFY(applied);
+        QCOMPARE(applyError.code, RTP::MediaError::Code::Unsupported);
+
+        apply.reset();
+        harness.endpoint.reset();
+        harness.session.reset();
+        QCOMPARE(provider_.stats().invalidCalls, 0);
+    }
+
     void activeErrorAfterCleanupIsTerminal()
     {
         Harness harness;
