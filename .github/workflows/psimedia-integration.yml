@@ -1,0 +1,1353 @@
+name: PsiMedia integration
+
+on:
+  pull_request:
+    branches:
+      - ai/jingle-native-calls
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  QCA_TAG: v3.0.7
+
+concurrency:
+  group: psimedia-integration-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux-qt6:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout Psi native-call branch
+        uses: actions/checkout@v4
+        with:
+          ref: ai/jingle-native-calls
+          submodules: false
+
+      - name: Initialize pinned Iris
+        shell: bash
+        run: git submodule update --init --depth 1 iris
+
+      - name: Checkout psimedia RTP session branch
+        uses: actions/checkout@v4
+        with:
+          repository: psi-im/psimedia
+          ref: jingle/rtcp-session
+          path: _psimedia
+          fetch-depth: 1
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            ccache \
+            g++ \
+            ninja-build \
+            pkg-config \
+            qtbase5-dev \
+            libssl-dev \
+            libsrtp2-dev \
+            zlib1g-dev \
+            libgstreamer1.0-dev \
+            libgstreamer-plugins-base1.0-dev \
+            libgstreamer-plugins-bad1.0-dev \
+            gstreamer1.0-plugins-base \
+            gstreamer1.0-plugins-good \
+            gstreamer1.0-plugins-bad \
+            gstreamer1.0-tools
+
+      - name: Restore compiler cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ${{ runner.os }}-psimedia-integration-ccache-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-psimedia-integration-ccache-
+
+      - name: Install QCA3 release package
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          rm -rf qca-release qca3.zip
+          mkdir qca-release
+          gh release download "$QCA_TAG" --repo psi-im/qca \
+            -p 'qca3-deb-ubuntu-24.04.zip' -O qca3.zip
+          (cd qca-release && cmake -E tar xvf ../qca3.zip)
+          test -n "$(find qca-release -type f -name '*.deb' -print -quit)"
+          sudo apt-get install -y ./qca-release/*.deb
+
+      - name: Record integration versions
+        run: |
+          echo "Psi: $(git rev-parse HEAD)"
+          echo "Iris: $(git -C iris rev-parse HEAD)"
+          echo "psimedia: $(git -C _psimedia rev-parse HEAD)"
+          echo "QCA: psi-im/qca v3.0.7 release package (qca-ossl)"
+          qmake6 -v
+          openssl version
+          gst-launch-1.0 --version
+          pkg-config --modversion gstreamer-1.0 gstreamer-rtp-1.0 libsrtp2
+
+      - name: Configure integration smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p _psimedia-smoke
+          cat > _psimedia-smoke/CMakeLists.txt <<'EOF'
+          cmake_minimum_required(VERSION 3.19)
+          project(psimedia_integration_smoke LANGUAGES CXX)
+
+          set(CMAKE_CXX_STANDARD 20)
+          set(CMAKE_CXX_STANDARD_REQUIRED ON)
+          set(CMAKE_AUTOMOC ON)
+          set(QT_DEFAULT_MAJOR_VERSION 6)
+          set(BUILD_DEMO OFF CACHE BOOL "" FORCE)
+          set(BUILD_PSIPLUGIN ON CACHE BOOL "" FORCE)
+          set(PSIMEDIA_BUILD_TESTS ON CACHE BOOL "" FORCE)
+          set(USE_PSI ON CACHE BOOL "" FORCE)
+          set(MAIN_PROGRAM_NAME psi CACHE STRING "" FORCE)
+
+          if(NOT DEFINED PSI_SOURCE_DIR OR NOT DEFINED PSIMEDIA_SOURCE_DIR)
+              message(FATAL_ERROR "PSI_SOURCE_DIR and PSIMEDIA_SOURCE_DIR are required")
+          endif()
+
+          find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Network Xml Test)
+
+          enable_testing()
+          set(PLUGINS_ROOT_DIR "${PSI_SOURCE_DIR}/plugins" CACHE STRING "" FORCE)
+
+          set(IRIS_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
+          set(IRIS_ENABLE_SRTP ON CACHE BOOL "" FORCE)
+          set(IRIS_ENABLE_JINGLE_SCTP OFF CACHE BOOL "" FORCE)
+          set(IRIS_ENABLE_OMEMO OFF CACHE BOOL "" FORCE)
+          set(IRIS_BUNDLED_USRSCTP OFF CACHE BOOL "" FORCE)
+          set(IRIS_BUNDLED_QCA OFF CACHE BOOL "" FORCE)
+          set(IRIS_SYSTEM_QCA 3 CACHE STRING "" FORCE)
+          set(USE_QT6 ON CACHE BOOL "" FORCE)
+          add_subdirectory("${PSI_SOURCE_DIR}/iris" iris)
+
+          add_subdirectory("${PSIMEDIA_SOURCE_DIR}" psimedia)
+
+          add_library(psi_native_media_adapter STATIC
+              "${PSI_SOURCE_DIR}/src/psimedia/psimedia.cpp"
+              "${PSI_SOURCE_DIR}/src/psimedia/psimedia.h"
+              "${PSI_SOURCE_DIR}/src/psimedia/psimedia_p.h"
+              "${PSI_SOURCE_DIR}/src/avcall/psimediajingle.cpp"
+              "${PSI_SOURCE_DIR}/src/avcall/psimediajingle.h"
+          )
+          target_compile_definitions(psi_native_media_adapter PRIVATE QT_GUI_LIB)
+          target_include_directories(psi_native_media_adapter PUBLIC
+              "${PSI_SOURCE_DIR}/src"
+              "${PSI_SOURCE_DIR}/src/psimedia"
+              "${PSI_SOURCE_DIR}/src/avcall"
+              "${PSI_SOURCE_DIR}/plugins/include"
+          )
+          target_link_libraries(psi_native_media_adapter PUBLIC
+              Iris::Iris
+              Qt6::Core
+              Qt6::Gui
+              Qt6::Widgets
+          )
+
+          add_executable(psimedia_provider_smoke smoke.cpp)
+          target_include_directories(psimedia_provider_smoke PRIVATE
+              "${PSI_SOURCE_DIR}/plugins/include"
+              "${PSIMEDIA_SOURCE_DIR}/gstprovider"
+          )
+          target_link_libraries(psimedia_provider_smoke PRIVATE gstprovidersrc Qt6::Core)
+
+          add_test(NAME psimedia_provider_smoke COMMAND psimedia_provider_smoke)
+          set_tests_properties(psimedia_provider_smoke PROPERTIES TIMEOUT 30)
+
+          add_executable(psimedia_plugin_load_smoke plugin_load_smoke.cpp)
+          target_include_directories(psimedia_plugin_load_smoke PRIVATE
+              "${PSIMEDIA_SOURCE_DIR}/psimedia"
+          )
+          target_link_libraries(psimedia_plugin_load_smoke PRIVATE Qt6::Core)
+          add_dependencies(psimedia_plugin_load_smoke mediaplugin)
+          add_test(NAME psimedia_plugin_load_smoke
+              COMMAND psimedia_plugin_load_smoke "$<TARGET_FILE:mediaplugin>")
+          set_tests_properties(psimedia_plugin_load_smoke PROPERTIES TIMEOUT 30)
+
+          add_executable(psi_native_media_adapter_smoke native_adapter_smoke.cpp)
+          target_include_directories(psi_native_media_adapter_smoke PRIVATE
+              "${PSI_SOURCE_DIR}/src/psimedia"
+              "${PSI_SOURCE_DIR}/src/avcall"
+              "${PSI_SOURCE_DIR}/plugins/include"
+              "${PSIMEDIA_SOURCE_DIR}/gstprovider"
+          )
+          target_link_libraries(psi_native_media_adapter_smoke PRIVATE
+              psi_native_media_adapter
+              gstprovidersrc
+              Iris::Iris
+              Qt6::Core
+          )
+          add_test(NAME psi_native_media_adapter_smoke COMMAND psi_native_media_adapter_smoke)
+          set_tests_properties(psi_native_media_adapter_smoke PROPERTIES TIMEOUT 30)
+
+          add_executable(psi_backend_lifecycle_test
+              "${PSI_SOURCE_DIR}/tests/avcall/backend-lifecycle/tst_backend_lifecycle.cpp"
+          )
+          target_include_directories(psi_backend_lifecycle_test PRIVATE
+              "${PSI_SOURCE_DIR}/src/psimedia"
+              "${PSI_SOURCE_DIR}/src/avcall"
+              "${PSI_SOURCE_DIR}/plugins/include"
+          )
+          target_link_libraries(psi_backend_lifecycle_test PRIVATE
+              psi_native_media_adapter
+              Iris::Iris
+              Qt6::Core
+              Qt6::Test
+          )
+          add_test(NAME psi_backend_lifecycle_test COMMAND psi_backend_lifecycle_test)
+          set_tests_properties(psi_backend_lifecycle_test PROPERTIES TIMEOUT 30)
+
+          add_executable(psi_native_media_runtime_error_smoke runtime_error_smoke.cpp)
+          target_include_directories(psi_native_media_runtime_error_smoke PRIVATE
+              "${PSI_SOURCE_DIR}/src"
+              "${PSI_SOURCE_DIR}/src/psimedia"
+              "${PSI_SOURCE_DIR}/src/avcall"
+              "${PSI_SOURCE_DIR}/plugins/include"
+              "${PSIMEDIA_SOURCE_DIR}/gstprovider"
+          )
+          target_link_libraries(psi_native_media_runtime_error_smoke PRIVATE
+              psi_native_media_adapter
+              gstprovidersrc
+              Iris::Iris
+              Qt6::Core
+              Qt6::Network
+          )
+          add_test(NAME psi_native_media_runtime_error_smoke COMMAND psi_native_media_runtime_error_smoke)
+          set_tests_properties(psi_native_media_runtime_error_smoke PROPERTIES TIMEOUT 30)
+
+          add_executable(psi_native_media_peer_smoke native_media_peer_smoke.cpp)
+          target_include_directories(psi_native_media_peer_smoke PRIVATE
+              "${PSI_SOURCE_DIR}/src/psimedia"
+              "${PSI_SOURCE_DIR}/src/avcall"
+              "${PSI_SOURCE_DIR}/plugins/include"
+              "${PSIMEDIA_SOURCE_DIR}/gstprovider"
+          )
+          target_link_libraries(psi_native_media_peer_smoke PRIVATE
+              psi_native_media_adapter
+              gstprovidersrc
+              Iris::Iris
+              Qt6::Core
+              Qt6::Network
+          )
+          add_test(NAME psi_native_media_peer_smoke COMMAND psi_native_media_peer_smoke)
+          set_tests_properties(psi_native_media_peer_smoke PROPERTIES TIMEOUT 35)
+          EOF
+
+          cat > _psimedia-smoke/smoke.cpp <<'EOF'
+          #include "gstprovider.h"
+          #include "psimediaprovider.h"
+
+          #include <QCoreApplication>
+          #include <QDebug>
+
+          static_assert(sizeof(PsiMedia::PRtpPacket::Type) == sizeof(int));
+          static_assert(static_cast<int>(PsiMedia::PRtpPacket::Type::Rtp) == 0);
+          static_assert(static_cast<int>(PsiMedia::PRtpPacket::Type::Rtcp) == 1);
+
+          int main(int argc, char **argv)
+          {
+              QCoreApplication app(argc, argv);
+
+              PsiMedia::GstProvider provider;
+              if (!provider.isInitialized()) {
+                  qCritical() << "GstProvider failed to initialize";
+                  return 1;
+              }
+
+              auto *session = provider.createRtpSession();
+              if (!session) {
+                  qCritical() << "GstProvider returned a null RTP session";
+                  return 2;
+              }
+              if (!session->qobject()) {
+                  qCritical() << "GstProvider RTP session has no QObject facade";
+                  delete session;
+                  return 3;
+              }
+
+              delete session;
+              qInfo() << "Real psimedia provider smoke passed";
+              return 0;
+          }
+          EOF
+
+          cat > _psimedia-smoke/plugin_load_smoke.cpp <<'EOF'
+          #include "psimediaprovider.h"
+
+          #include <QCoreApplication>
+          #include <QDebug>
+          #include <QFileInfo>
+          #include <QJsonObject>
+          #include <QPluginLoader>
+
+          int main(int argc, char **argv)
+          {
+              QCoreApplication app(argc, argv);
+              if (argc != 2) {
+                  qCritical() << "Expected production psimedia plugin path";
+                  return 1;
+              }
+
+              const QString pluginPath = QFileInfo(QString::fromLocal8Bit(argv[1])).absoluteFilePath();
+              QPluginLoader loader(pluginPath);
+              const auto metadata = loader.metaData();
+              const QString iid = metadata.value(QStringLiteral("IID")).toString();
+              if (iid != QLatin1String("org.psi-im.PsiMediaPlugin")) {
+                  qCritical() << "Unexpected psimedia plugin IID" << iid << pluginPath;
+                  return 2;
+              }
+
+              QObject *instance = loader.instance();
+              if (!instance) {
+                  qCritical() << "Could not load production psimedia plugin" << pluginPath << loader.errorString();
+                  return 3;
+              }
+
+              auto *plugin = qobject_cast<PsiMedia::Plugin *>(instance);
+              if (!plugin) {
+                  qCritical() << "Loaded psimedia binary does not expose PsiMedia::Plugin"
+                              << instance->metaObject()->className() << pluginPath;
+                  return 4;
+              }
+              if (QString::fromLatin1(instance->metaObject()->className()) != QLatin1String("PsiMediaPlugin")) {
+                  qCritical() << "Unexpected production psimedia plugin class"
+                              << instance->metaObject()->className() << pluginPath;
+                  return 5;
+              }
+
+              qInfo() << "Production psimedia plugin loaded through PsiMedia::Plugin"
+                      << pluginPath << iid << instance->metaObject()->className();
+              return 0;
+          }
+          EOF
+
+          cat > _psimedia-smoke/native_adapter_smoke.cpp <<'EOF'
+          #include "gstprovider.h"
+          #include "psimedia.h"
+          #include "psimediajingle.h"
+
+          #include <iris/jingle-rtp.h>
+
+          #include <QCoreApplication>
+          #include <QDebug>
+          #include <QElapsedTimer>
+          #include <QEventLoop>
+          #include <QThread>
+
+          #include <algorithm>
+          #include <optional>
+          #include <utility>
+          #include <vector>
+
+          namespace RTP = XMPP::Jingle::RTP;
+
+          template<typename Predicate> bool waitUntil(Predicate predicate, int timeoutMs)
+          {
+              QElapsedTimer timer;
+              timer.start();
+              while (timer.elapsed() < timeoutMs) {
+                  QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+                  if (predicate())
+                      return true;
+                  QThread::msleep(5);
+              }
+              QCoreApplication::processEvents(QEventLoop::AllEvents);
+              return predicate();
+          }
+
+          QByteArray makeOpusRtp(quint16 sequence, quint32 timestamp, quint32 ssrc, quint8 payloadType)
+          {
+              QByteArray packet(15, char(0));
+              auto *p = reinterpret_cast<uchar *>(packet.data());
+              p[0]  = 0x80;
+              p[1]  = payloadType & 0x7f;
+              p[2]  = uchar(sequence >> 8);
+              p[3]  = uchar(sequence);
+              p[4]  = uchar(timestamp >> 24);
+              p[5]  = uchar(timestamp >> 16);
+              p[6]  = uchar(timestamp >> 8);
+              p[7]  = uchar(timestamp);
+              p[8]  = uchar(ssrc >> 24);
+              p[9]  = uchar(ssrc >> 16);
+              p[10] = uchar(ssrc >> 8);
+              p[11] = uchar(ssrc);
+              // Valid Opus comfort/silence frame used only to exercise the
+              // receive pipeline without any physical playback device.
+              p[12] = 0xf8;
+              p[13] = 0xff;
+              p[14] = 0xfe;
+              return packet;
+          }
+
+          bool containsReceiverReport(const QByteArray &compound)
+          {
+              const auto *bytes = reinterpret_cast<const uchar *>(compound.constData());
+              int offset = 0;
+              while (offset + 4 <= compound.size()) {
+                  const auto *packet = bytes + offset;
+                  if ((packet[0] >> 6) != 2)
+                      return false;
+                  const int packetBytes = (int(packet[2]) * 256 + int(packet[3]) + 1) * 4;
+                  if (packetBytes < 4 || offset + packetBytes > compound.size())
+                      return false;
+                  if (packet[1] == 201)
+                      return true;
+                  offset += packetBytes;
+              }
+              return false;
+          }
+
+          int main(int argc, char **argv)
+          {
+              QCoreApplication app(argc, argv);
+
+              PsiMedia::GstProvider gstProvider;
+              if (!gstProvider.isInitialized()) {
+                  qCritical() << "GstProvider failed to initialize";
+                  return 1;
+              }
+              PsiMedia::setProvider(&gstProvider);
+
+              PsiMediaJingleCapabilities capabilities;
+              capabilities.backendAvailable = true;
+              capabilities.probeComplete    = true;
+              capabilities.secureRtp        = true;
+              capabilities.audio            = true;
+              capabilities.video            = true;
+
+              auto provider = makePsiMediaJingleProvider(capabilities);
+              if (!provider
+                  || provider->mediaTypes()
+                      != QStringList { QStringLiteral("audio"), QStringLiteral("video") }) {
+                  qCritical() << "Psi native media provider did not expose audio+video";
+                  return 2;
+              }
+
+              auto session = provider->createSession();
+              auto audioEndpoint = session
+                  ? session->createEndpoint(QStringLiteral("audio"), QStringLiteral("audio"))
+                  : nullptr;
+              auto videoEndpoint = session
+                  ? session->createEndpoint(QStringLiteral("video"), QStringLiteral("video"))
+                  : nullptr;
+              if (!session || !audioEndpoint || !videoEndpoint) {
+                  qCritical() << "Psi native media adapter did not create audio+video endpoints";
+                  return 3;
+              }
+
+              bool runtimeFailed = false;
+              RTP::MediaError runtimeError;
+              QObject::connect(session.get(), &RTP::MediaSession::runtimeError,
+                               [&](const RTP::MediaError &error) {
+                                   runtimeFailed = true;
+                                   runtimeError  = error;
+                               });
+
+              bool audioPrepared = false;
+              bool videoPrepared = false;
+              RTP::MediaError audioPrepareError;
+              RTP::MediaError videoPrepareError;
+              std::optional<RTP::Description> audioLocal;
+              std::optional<RTP::Description> videoLocal;
+              auto audioPrepare = session->prepareLocalOffer(
+                  audioEndpoint.get(),
+                  [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description, RTP::MediaError error) {
+                      audioLocal        = std::move(description);
+                      audioPrepareError = std::move(error);
+                      audioPrepared     = true;
+                  });
+              auto videoPrepare = session->prepareLocalOffer(
+                  videoEndpoint.get(),
+                  [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description, RTP::MediaError error) {
+                      videoLocal        = std::move(description);
+                      videoPrepareError = std::move(error);
+                      videoPrepared     = true;
+                  });
+              if (!audioPrepare || !videoPrepare
+                  || !waitUntil([&] { return (audioPrepared && videoPrepared) || runtimeFailed; }, 10000)
+                  || runtimeFailed || audioPrepareError || videoPrepareError || !audioLocal || !videoLocal
+                  || audioLocal->media != QLatin1String("audio") || videoLocal->media != QLatin1String("video")
+                  || !audioLocal->rtcpMux || !videoLocal->rtcpMux
+                  || audioLocal->payloads.isEmpty() || videoLocal->payloads.isEmpty()) {
+                  qCritical() << "Device-free real-backend audio+video RTP prepare failed"
+                              << int(audioPrepareError.code) << audioPrepareError.text
+                              << int(videoPrepareError.code) << videoPrepareError.text
+                              << int(runtimeError.code) << runtimeError.text;
+                  return 4;
+              }
+              audioPrepare.reset();
+              videoPrepare.reset();
+
+              const auto opus = std::find_if(
+                  audioLocal->payloads.cbegin(), audioLocal->payloads.cend(), [](const auto &payload) {
+                      return payload.name.compare(QLatin1String("opus"), Qt::CaseInsensitive) == 0
+                          && payload.clockrate && *payload.clockrate == 48000;
+                  });
+              if (opus == audioLocal->payloads.cend()) {
+                  qCritical() << "Real backend did not negotiate Opus";
+                  return 5;
+              }
+              const auto vp8 = std::find_if(
+                  videoLocal->payloads.cbegin(), videoLocal->payloads.cend(), [](const auto &payload) {
+                      return payload.name.compare(QLatin1String("VP8"), Qt::CaseInsensitive) == 0
+                          && payload.clockrate && *payload.clockrate == 90000;
+                  });
+              if (vp8 == videoLocal->payloads.cend()) {
+                  qCritical() << "Real backend did not negotiate VP8";
+                  return 6;
+              }
+
+              bool audioApplied = false;
+              bool videoApplied = false;
+              RTP::MediaError audioApplyError;
+              RTP::MediaError videoApplyError;
+              auto audioApply = session->applyNegotiation(
+                  audioEndpoint.get(), *audioLocal, *audioLocal,
+                  [&](RTP::MediaOperation::Id, RTP::MediaError error) {
+                      audioApplyError = std::move(error);
+                      audioApplied    = true;
+                  });
+              auto videoApply = session->applyNegotiation(
+                  videoEndpoint.get(), *videoLocal, *videoLocal,
+                  [&](RTP::MediaOperation::Id, RTP::MediaError error) {
+                      videoApplyError = std::move(error);
+                      videoApplied    = true;
+                  });
+              if (!audioApply || !videoApply
+                  || !waitUntil([&] { return (audioApplied && videoApplied) || runtimeFailed; }, 10000)
+                  || runtimeFailed || audioApplyError || videoApplyError) {
+                  qCritical() << "Real-backend audio+video RTP apply failed"
+                              << int(audioApplyError.code) << audioApplyError.text
+                              << int(videoApplyError.code) << videoApplyError.text
+                              << int(runtimeError.code) << runtimeError.text;
+                  return 7;
+              }
+              audioApply.reset();
+              videoApply.reset();
+
+              std::vector<QByteArray> rtcpPackets;
+              if (!audioEndpoint->attachPacketIo([&](QByteArray packet, RTP::SrtpContext::Packet kind) {
+                      if (kind == RTP::SrtpContext::Packet::Rtcp)
+                          rtcpPackets.push_back(std::move(packet));
+                      return true;
+                  })) {
+                  qCritical() << "Production Psi audio endpoint refused packet I/O";
+                  return 8;
+              }
+              if (!videoEndpoint->attachPacketIo([](QByteArray, RTP::SrtpContext::Packet) { return true; })) {
+                  qCritical() << "Production Psi video endpoint refused packet I/O";
+                  return 9;
+              }
+
+              constexpr quint32 RemoteSsrc = 0x44556677;
+              for (quint16 sequence = 1; sequence <= 4; ++sequence) {
+                  audioEndpoint->receivePacket(
+                      makeOpusRtp(sequence, 48000u + quint32(sequence - 1) * 960u, RemoteSsrc, opus->id),
+                      RTP::SrtpContext::Packet::Rtp);
+              }
+
+              if (!waitUntil([&] {
+                      if (runtimeFailed)
+                          return true;
+                      for (const auto &packet : rtcpPackets) {
+                          if (containsReceiverReport(packet))
+                              return true;
+                      }
+                      return false;
+                  }, 12000)
+                  || runtimeFailed) {
+                  qCritical() << "Production Psi adapter did not return an RTCP receiver report"
+                              << int(runtimeError.code) << runtimeError.text;
+                  return 10;
+              }
+
+              audioEndpoint->stop();
+              videoEndpoint->stop();
+              audioEndpoint.reset();
+              videoEndpoint.reset();
+              session.reset();
+
+              qInfo() << "Psi native media adapter real-backend audio/video negotiation + RTP/RTCP smoke passed";
+              return 0;
+          }
+          EOF
+
+          cat > _psimedia-smoke/runtime_error_smoke.cpp <<'EOF'
+          #include "gstprovider.h"
+          #include "psimedia.h"
+          #include "psimediajingle.h"
+
+          #include <iris/jingle-rtp.h>
+          #include <iris/jingle-session.h>
+          #include <iris/xmpp_client.h>
+
+          #include <QCoreApplication>
+          #include <QDebug>
+          #include <QElapsedTimer>
+          #include <QEventLoop>
+
+          #include <optional>
+
+          using namespace XMPP;
+          namespace J = XMPP::Jingle;
+          namespace RTP = XMPP::Jingle::RTP;
+
+          static void check(bool ok, const char *message)
+          {
+              if (!ok)
+                  qFatal("%s", message);
+          }
+
+          template<typename Predicate> bool waitUntil(Predicate predicate, int timeoutMs)
+          {
+              QElapsedTimer timer;
+              timer.start();
+              while (timer.elapsed() < timeoutMs) {
+                  QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+                  if (predicate())
+                      return true;
+              }
+              QCoreApplication::processEvents(QEventLoop::AllEvents);
+              return predicate();
+          }
+
+          int main(int argc, char **argv)
+          {
+              QCoreApplication app(argc, argv);
+
+              PsiMedia::GstProvider gstProvider;
+              check(gstProvider.isInitialized(), "GstProvider failed to initialize");
+              PsiMedia::setProvider(&gstProvider);
+
+              PsiMediaJingleCapabilities capabilities;
+              capabilities.backendAvailable = true;
+              capabilities.probeComplete    = true;
+              capabilities.secureRtp        = true;
+              capabilities.audio            = true;
+              auto provider = makePsiMediaJingleProvider(capabilities);
+              check(provider && provider->mediaTypes() == QStringList { QStringLiteral("audio") },
+                    "real Psi media provider did not expose audio");
+
+              Client client;
+              J::Session jingleSession(client.jingleManager(), Jid("peer@example.test/device"),
+                                       J::Origin::Initiator);
+              auto *rtpManager = client.jingleManager()->rtpManager();
+              rtpManager->setMediaProvider(provider);
+
+              auto basePad = jingleSession.applicationPadFactory(RTP::Description::ns());
+              auto pad = qSharedPointerDynamicCast<RTP::Pad>(basePad);
+              check(bool(pad) && pad->mediaSession(), "registered real RTP media session unavailable");
+              auto *media = pad->mediaSession();
+              auto endpoint = media->createEndpoint(QStringLiteral("runtime-audio"), QStringLiteral("audio"));
+              check(bool(endpoint), "real RTP runtime-error endpoint unavailable");
+
+              int runtimeErrors = 0;
+              RTP::MediaError runtimeError;
+              QObject::connect(media, &RTP::MediaSession::runtimeError,
+                               [&](const RTP::MediaError &error) {
+                                   ++runtimeErrors;
+                                   runtimeError = error;
+                               });
+
+              bool prepared = false;
+              RTP::MediaError prepareError;
+              std::optional<RTP::Description> local;
+              auto prepare = media->prepareLocalOffer(
+                  endpoint.get(),
+                  [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description,
+                      RTP::MediaError error) {
+                      local = std::move(description);
+                      prepareError = std::move(error);
+                      prepared = true;
+                  });
+              check(bool(prepare), "real backend runtime-error prepare did not start");
+              check(waitUntil([&] { return prepared || runtimeErrors; }, 10000),
+                    "real backend runtime-error prepare timed out");
+              check(runtimeErrors == 0 && !prepareError && local && !local->payloads.isEmpty(),
+                    "real backend runtime-error prepare failed");
+
+              bool applied = false;
+              RTP::MediaError applyError;
+              auto apply = media->applyNegotiation(
+                  endpoint.get(), *local, *local,
+                  [&](RTP::MediaOperation::Id, RTP::MediaError error) {
+                      applyError = std::move(error);
+                      applied = true;
+                  });
+              check(bool(apply), "real backend runtime-error apply did not start");
+              check(waitUntil([&] { return applied || runtimeErrors; }, 10000),
+                    "real backend runtime-error apply timed out");
+              check(runtimeErrors == 0 && !applyError,
+                    "real backend runtime-error apply failed before stimulus");
+
+              check(endpoint->attachPacketIo([](QByteArray, RTP::SrtpContext::Packet) { return true; }),
+                    "real backend runtime-error endpoint refused packet I/O");
+
+              // Cross the actual psimedia device-update boundary with a source
+              // string that GStreamer cannot instantiate. The helper returns
+              // true initially because capture was requested; the asynchronous
+              // provider failure must then become exactly one terminal
+              // MediaSession::runtimeError and revoke endpoint packet I/O.
+              check(startPsiMediaJingleTransmit(
+                        &jingleSession, true, true,
+                        QStringLiteral("psi_nonexistent_capture_src_20260919"), false, QString()),
+                    "runtime-error stimulus did not request real backend capture");
+              check(waitUntil([&] { return runtimeErrors > 0; }, 10000),
+                    "real psimedia capture failure did not reach MediaSession::runtimeError");
+              check(runtimeErrors == 1 && runtimeError.code == RTP::MediaError::Code::Backend,
+                    "real psimedia capture failure produced wrong or duplicate runtime error");
+
+              check(!endpoint->attachPacketIo([](QByteArray, RTP::SrtpContext::Packet) { return true; }),
+                    "failed real backend allowed packet I/O to be reattached");
+              check(!startPsiMediaJingleTransmit(
+                        &jingleSession, true, true,
+                        QStringLiteral("audiotestsrc is-live=true wave=sine"), false, QString()),
+                    "failed real backend resumed capture after terminal error");
+
+              endpoint->stop();
+              endpoint.reset();
+              apply.reset();
+              prepare.reset();
+
+              qInfo() << "Psi real-backend runtime-error propagation and endpoint revocation smoke passed";
+              return 0;
+          }
+          EOF
+
+          cat > _psimedia-smoke/native_media_peer_smoke.cpp <<'EOF'
+          #include "gstprovider.h"
+          #include "psimedia.h"
+          #include "psimediajingle.h"
+
+          #include <iris/ice176.h>
+          #include <iris/jingle-ice.h>
+          #include <iris/jingle-rtp.h>
+          #include <iris/jingle-session.h>
+          #include <iris/xmpp_client.h>
+          #include <iris/xmpp_task.h>
+
+          #include <QCoreApplication>
+          #include <QDebug>
+          #include <QElapsedTimer>
+          #include <QEventLoop>
+          #include <QHostAddress>
+          #include <QTimer>
+
+          #include <memory>
+          #include <optional>
+          #include <utility>
+
+          using namespace XMPP;
+          namespace J = XMPP::Jingle;
+          namespace RTP = XMPP::Jingle::RTP;
+
+          static void check(bool ok, const char *message)
+          {
+              if (!ok)
+                  qFatal("%s", message);
+          }
+
+          template<typename Predicate> bool waitUntil(Predicate predicate, int timeoutMs)
+          {
+              QElapsedTimer timer;
+              timer.start();
+              while (timer.elapsed() < timeoutMs) {
+                  QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+                  if (predicate())
+                      return true;
+              }
+              QCoreApplication::processEvents(QEventLoop::AllEvents);
+              return predicate();
+          }
+
+          class Ack final : public Task {
+          public:
+              explicit Ack(Task *parent) : Task(parent) { setSuccess(); }
+          };
+
+          struct ReceivedPacket {
+              QByteArray bytes;
+              RTP::SrtpContext::Packet kind = RTP::SrtpContext::Packet::Rtp;
+          };
+
+          struct FakeEndpointState {
+              RTP::MediaEndpoint::PacketWriter writer;
+              QList<ReceivedPacket> received;
+              int configured = 0;
+              int attached   = 0;
+          };
+
+          struct FakeMediaState {
+              FakeEndpointState audio;
+              FakeEndpointState video;
+
+              FakeEndpointState &forMedia(const QString &media)
+              {
+                  return media == QLatin1String("audio") ? audio : video;
+              }
+          };
+
+          class FakeEndpoint final : public RTP::MediaEndpoint {
+          public:
+              FakeEndpoint(std::shared_ptr<FakeMediaState> state, QString media)
+                  : state_(std::move(state)), media_(std::move(media))
+              {
+              }
+
+              RTP::Description localOffer() const override
+              {
+                  RTP::Description description;
+                  description.media   = media_;
+                  description.rtcpMux = true;
+                  RTP::PayloadType payload;
+                  if (media_ == QLatin1String("audio")) {
+                      payload.id        = 111;
+                      payload.name      = QStringLiteral("opus");
+                      payload.clockrate = 48000;
+                      payload.channels  = 2;
+                  } else {
+                      payload.id        = 96;
+                      payload.name      = QStringLiteral("VP8");
+                      payload.clockrate = 90000;
+                  }
+                  description.payloads.append(payload);
+                  return description;
+              }
+
+              std::optional<RTP::Description> makeAnswer(const RTP::Description &remote) const override
+              {
+                  return remote;
+              }
+
+              bool acceptsAnswer(const RTP::Description &, const RTP::Description &) const override { return true; }
+
+              bool configure(const RTP::Description &, const RTP::Description &) override
+              {
+                  ++state_->forMedia(media_).configured;
+                  return true;
+              }
+
+              bool supportsPacketIo() const override { return true; }
+
+              bool attachPacketIo(PacketWriter writer) override
+              {
+                  auto &slot = state_->forMedia(media_);
+                  ++slot.attached;
+                  slot.writer = std::move(writer);
+                  return true;
+              }
+
+              void receivePacket(const QByteArray &bytes, RTP::SrtpContext::Packet kind) override
+              {
+                  state_->forMedia(media_).received.append({ bytes, kind });
+              }
+
+              void stop() override { state_->forMedia(media_).writer = {}; }
+
+          private:
+              std::shared_ptr<FakeMediaState> state_;
+              QString media_;
+          };
+
+          class FakeMediaSession final : public RTP::MediaSession {
+          public:
+              explicit FakeMediaSession(std::shared_ptr<FakeMediaState> state) : state_(std::move(state)) { }
+
+              std::unique_ptr<RTP::MediaEndpoint> createEndpoint(const QString &, const QString &media) override
+              {
+                  if (media != QLatin1String("audio") && media != QLatin1String("video"))
+                      return {};
+                  return std::make_unique<FakeEndpoint>(state_, media);
+              }
+
+          private:
+              std::shared_ptr<FakeMediaState> state_;
+          };
+
+          class FakeProvider final : public RTP::MediaProvider {
+          public:
+              explicit FakeProvider(std::shared_ptr<FakeMediaState> state) : state_(std::move(state)) { }
+
+              std::unique_ptr<RTP::MediaSession> createSession() override
+              {
+                  return std::make_unique<FakeMediaSession>(state_);
+              }
+
+              QStringList mediaTypes() const override
+              {
+                  return { QStringLiteral("audio"), QStringLiteral("video") };
+              }
+
+          private:
+              std::shared_ptr<FakeMediaState> state_;
+          };
+
+          QByteArray makeOpusRtp(quint16 sequence, quint32 timestamp, quint32 ssrc, quint8 payloadType)
+          {
+              QByteArray packet(15, char(0));
+              auto *p = reinterpret_cast<uchar *>(packet.data());
+              p[0]  = 0x80;
+              p[1]  = payloadType & 0x7f;
+              p[2]  = uchar(sequence >> 8);
+              p[3]  = uchar(sequence);
+              p[4]  = uchar(timestamp >> 24);
+              p[5]  = uchar(timestamp >> 16);
+              p[6]  = uchar(timestamp >> 8);
+              p[7]  = uchar(timestamp);
+              p[8]  = uchar(ssrc >> 24);
+              p[9]  = uchar(ssrc >> 16);
+              p[10] = uchar(ssrc >> 8);
+              p[11] = uchar(ssrc);
+              p[12] = 0xf8;
+              p[13] = 0xff;
+              p[14] = 0xfe;
+              return packet;
+          }
+
+          QByteArray makeReceiverReport(quint32 ssrc)
+          {
+              QByteArray packet(8, char(0));
+              auto *p = reinterpret_cast<uchar *>(packet.data());
+              p[0] = 0x80;
+              p[1] = 201;
+              p[2] = 0;
+              p[3] = 1;
+              p[4] = uchar(ssrc >> 24);
+              p[5] = uchar(ssrc >> 16);
+              p[6] = uchar(ssrc >> 8);
+              p[7] = uchar(ssrc);
+              return packet;
+          }
+
+          bool containsReceiverReport(const QByteArray &compound)
+          {
+              const auto *bytes = reinterpret_cast<const uchar *>(compound.constData());
+              int offset = 0;
+              while (offset + 4 <= compound.size()) {
+                  const auto *packet = bytes + offset;
+                  if ((packet[0] >> 6) != 2)
+                      return false;
+                  const int packetBytes = (int(packet[2]) * 256 + int(packet[3]) + 1) * 4;
+                  if (packetBytes < 4 || offset + packetBytes > compound.size())
+                      return false;
+                  if (packet[1] == 201)
+                      return true;
+                  offset += packetBytes;
+              }
+              return false;
+          }
+
+          int main(int argc, char **argv)
+          {
+              QCoreApplication app(argc, argv);
+              QCA::Initializer qca;
+
+              PsiMedia::GstProvider gstProvider;
+              check(gstProvider.isInitialized(), "GstProvider failed to initialize");
+              PsiMedia::setProvider(&gstProvider);
+
+              PsiMediaJingleCapabilities capabilities;
+              capabilities.backendAvailable = true;
+              capabilities.probeComplete    = true;
+              capabilities.secureRtp        = true;
+              capabilities.audio            = true;
+              capabilities.video            = true;
+              auto realProvider = makePsiMediaJingleProvider(capabilities);
+              check(realProvider
+                        && realProvider->mediaTypes()
+                            == QStringList { QStringLiteral("audio"), QStringLiteral("video") },
+                    "real Psi media provider did not expose audio+video");
+
+              auto fakeState    = std::make_shared<FakeMediaState>();
+              auto fakeProvider = std::make_shared<FakeProvider>(fakeState);
+
+              const QString transportNs = J::ICE::NS;
+              TcpPortReserver reserver;
+              Client firstClient, secondClient;
+              firstClient.setTcpPortReserver(&reserver);
+              secondClient.setTcpPortReserver(&reserver);
+              J::Session firstSession(firstClient.jingleManager(), Jid("second@example.test/device"),
+                                      J::Origin::Initiator);
+              J::Session secondSession(secondClient.jingleManager(), Jid("first@example.test/device"),
+                                       J::Origin::Responder);
+              firstClient.jingleICEManager()->setSelfAddress(QHostAddress::LocalHost);
+              secondClient.jingleICEManager()->setSelfAddress(QHostAddress::LocalHost);
+
+              auto makeTransport = [&](Client &client, J::Session &session, J::Origin creator) {
+                  auto rawPad = client.jingleManager()->transportPad(&session, transportNs);
+                  check(rawPad, "ICE transport pad unavailable");
+                  J::TransportManagerPad::Ptr pad(rawPad);
+                  auto base = pad->manager()->newTransport(pad, creator);
+                  auto ice  = qSharedPointerDynamicCast<J::ICE::Transport>(base);
+                  check(bool(ice), "ICE transport creation failed");
+                  return ice;
+              };
+
+              auto firstAudioTransport  = makeTransport(firstClient, firstSession, J::Origin::Initiator);
+              auto firstVideoTransport  = makeTransport(firstClient, firstSession, J::Origin::Initiator);
+              auto secondAudioTransport = makeTransport(secondClient, secondSession, J::Origin::Initiator);
+              auto secondVideoTransport = makeTransport(secondClient, secondSession, J::Origin::Initiator);
+              check(firstAudioTransport != firstVideoTransport && secondAudioTransport != secondVideoTransport,
+                    "audio/video unexpectedly share one ICE transport object");
+
+              auto makePad = [&](Client &client, J::Session &session,
+                                 const std::shared_ptr<RTP::MediaProvider> &provider) {
+                  auto *manager = client.jingleManager()->rtpManager();
+                  manager->setMediaProvider(provider);
+                  manager->setTransportNamespaces(QStringList { transportNs });
+                  auto basePad = session.applicationPadFactory(RTP::Description::ns());
+                  auto pad = qSharedPointerDynamicCast<RTP::Pad>(basePad);
+                  check(bool(pad), "registered RTP application pad unavailable");
+                  return pad;
+              };
+              auto firstPad  = makePad(firstClient, firstSession, fakeProvider);
+              auto secondPad = makePad(secondClient, secondSession, realProvider);
+
+              auto firstAudioApp = std::make_unique<RTP::Application>(
+                  firstPad, QStringLiteral("audio"), J::Origin::Initiator, J::Origin::Both);
+              auto firstVideoApp = std::make_unique<RTP::Application>(
+                  firstPad, QStringLiteral("video"), J::Origin::Initiator, J::Origin::Both);
+              auto secondAudioApp = std::make_unique<RTP::Application>(
+                  secondPad, QStringLiteral("audio"), J::Origin::Initiator, J::Origin::Both);
+              auto secondVideoApp = std::make_unique<RTP::Application>(
+                  secondPad, QStringLiteral("video"), J::Origin::Initiator, J::Origin::Both);
+
+              check(firstAudioApp->initializeOutgoing(QStringLiteral("audio")),
+                    "fake-side audio RTP offer initialization failed");
+              check(firstVideoApp->initializeOutgoing(QStringLiteral("video")),
+                    "fake-side video RTP offer initialization failed");
+              check(firstAudioApp->setTransport(firstAudioTransport)
+                        && firstVideoApp->setTransport(firstVideoTransport)
+                        && secondAudioApp->setTransport(secondAudioTransport)
+                        && secondVideoApp->setTransport(secondVideoTransport),
+                    "RTP application rejected independent ICE transport");
+
+              QEventLoop loop;
+              QTimer tick, deadline;
+              deadline.setSingleShot(true);
+              QObject::connect(&deadline, &QTimer::timeout, &loop, &QEventLoop::quit);
+
+              bool failed = false;
+              auto fail = [&]() {
+                  failed = true;
+                  loop.quit();
+              };
+              for (const auto &transport : { firstAudioTransport, firstVideoTransport,
+                                             secondAudioTransport, secondVideoTransport }) {
+                  QObject::connect(transport.data(), &J::Transport::failed, &loop, fail);
+              }
+
+              bool audioOfferDelivered = false;
+              bool videoOfferDelivered = false;
+              bool secondPrepared      = false;
+              bool audioOffered        = false;
+              bool videoOffered        = false;
+              bool audioAnswered       = false;
+              bool videoAnswered       = false;
+              bool started             = false;
+              bool sent                = false;
+              bool replied             = false;
+
+              auto exchange = [&](J::ICE::Transport *from, J::ICE::Transport *to) {
+                  if (!from->hasUpdates())
+                      return false;
+                  auto [xml, ack] = from->takeOutgoingUpdate(false);
+                  check(!xml.isNull() && xml.namespaceURI() == transportNs, "wrong ICE wire namespace");
+                  check(to->update(xml), "ICE signaling update rejected");
+                  if (ack) {
+                      Ack result(from->pad()->session()->manager()->client()->rootTask());
+                      ack(&result);
+                  }
+                  return true;
+              };
+
+              QObject::connect(&tick, &QTimer::timeout, &loop, [&]() {
+                  if (firstAudioApp->state() >= J::State::Finishing
+                      || firstVideoApp->state() >= J::State::Finishing
+                      || secondAudioApp->state() >= J::State::Finishing
+                      || secondVideoApp->state() >= J::State::Finishing) {
+                      fail();
+                      return;
+                  }
+
+                  if (!audioOfferDelivered && firstAudioApp->localDescription()) {
+                      check(secondAudioApp->setRemoteOffer(firstAudioApp->makeLocalOffer()) == J::Application::Ok,
+                            "real-side audio RTP offer rejected");
+                      audioOfferDelivered = true;
+                  }
+                  if (!videoOfferDelivered && firstVideoApp->localDescription()) {
+                      check(secondVideoApp->setRemoteOffer(firstVideoApp->makeLocalOffer()) == J::Application::Ok,
+                            "real-side video RTP offer rejected");
+                      videoOfferDelivered = true;
+                  }
+
+                  audioOffered = exchange(firstAudioTransport.data(), secondAudioTransport.data()) || audioOffered;
+                  videoOffered = exchange(firstVideoTransport.data(), secondVideoTransport.data()) || videoOffered;
+                  if (audioOffered && videoOffered
+                      && secondAudioTransport->state() == J::State::Pending
+                      && secondVideoTransport->state() == J::State::Pending
+                      && audioOfferDelivered && videoOfferDelivered && !secondPrepared) {
+                      secondPrepared = true;
+                      firstAudioApp->setState(J::State::Pending);
+                      firstVideoApp->setState(J::State::Pending);
+                      secondAudioApp->setState(J::State::Pending);
+                      secondVideoApp->setState(J::State::Pending);
+                      secondAudioApp->prepare();
+                      secondVideoApp->prepare();
+                  }
+
+                  audioAnswered = exchange(secondAudioTransport.data(), firstAudioTransport.data()) || audioAnswered;
+                  videoAnswered = exchange(secondVideoTransport.data(), firstVideoTransport.data()) || videoAnswered;
+                  if (audioAnswered && videoAnswered
+                      && secondAudioApp->localDescription() && secondVideoApp->localDescription() && !started) {
+                      started = true;
+                      QTimer::singleShot(0, &loop, [&]() {
+                          check(firstAudioApp->setRemoteAnswer(secondAudioApp->makeLocalAnswer())
+                                    == J::Application::Ok,
+                                "real-side audio RTP answer rejected");
+                          check(firstVideoApp->setRemoteAnswer(secondVideoApp->makeLocalAnswer())
+                                    == J::Application::Ok,
+                                "real-side video RTP answer rejected");
+                          secondAudioApp->setState(J::State::Accepted);
+                          secondVideoApp->setState(J::State::Accepted);
+                          firstAudioApp->start();
+                          firstVideoApp->start();
+                          secondAudioApp->start();
+                          secondVideoApp->start();
+                      });
+                  }
+
+                  auto firstAudioSrtp  = firstAudioTransport->rtpSession();
+                  auto firstVideoSrtp  = firstVideoTransport->rtpSession();
+                  auto secondAudioSrtp = secondAudioTransport->rtpSession();
+                  auto secondVideoSrtp = secondVideoTransport->rtpSession();
+                  if (!sent && started
+                      && firstAudioSrtp && firstVideoSrtp && secondAudioSrtp && secondVideoSrtp
+                      && firstAudioSrtp->isReady() && firstVideoSrtp->isReady()
+                      && secondAudioSrtp->isReady() && secondVideoSrtp->isReady()
+                      && firstAudioApp->state() == J::State::Active
+                      && firstVideoApp->state() == J::State::Active
+                      && secondAudioApp->state() == J::State::Active
+                      && secondVideoApp->state() == J::State::Active) {
+                      check(firstAudioSrtp != firstVideoSrtp && secondAudioSrtp != secondVideoSrtp,
+                            "audio/video unexpectedly share one SRTP session");
+                      check(fakeState->audio.configured == 1 && fakeState->audio.attached == 1
+                                && bool(fakeState->audio.writer),
+                            "fake audio media was not attached exactly once");
+                      check(fakeState->video.configured == 1 && fakeState->video.attached == 1
+                                && bool(fakeState->video.writer),
+                            "fake video media was not attached exactly once");
+
+                      const auto local = firstAudioApp->localDescription();
+                      check(local && !local->payloads.isEmpty(), "active fake audio peer lost negotiated RTP payload");
+                      const quint8 pt = quint8(local->payloads.constFirst().id);
+                      constexpr quint32 RemoteSsrc = 0x11223344;
+                      for (quint16 sequence = 1; sequence <= 4; ++sequence) {
+                          const auto rtp = makeOpusRtp(sequence, 48000u + quint32(sequence - 1) * 960u,
+                                                       RemoteSsrc, pt);
+                          check(fakeState->audio.writer(rtp, RTP::SrtpContext::Packet::Rtp),
+                                "fake peer audio RTP writer failed after SRTP activation");
+                      }
+                      sent = true;
+                  }
+
+                  if (sent) {
+                      for (const auto &packet : fakeState->audio.received) {
+                          if (packet.kind == RTP::SrtpContext::Packet::Rtcp && containsReceiverReport(packet.bytes)) {
+                              replied = true;
+                              loop.quit();
+                              return;
+                          }
+                      }
+                  }
+              });
+
+              firstAudioApp->prepare();
+              firstVideoApp->prepare();
+              tick.start(5);
+              deadline.start(25000);
+              loop.exec();
+              tick.stop();
+
+              if (!replied)
+                  qWarning() << "native A/V peer smoke state" << failed << audioOffered << videoOffered
+                             << audioAnswered << videoAnswered << started << sent
+                             << int(firstAudioApp->state()) << int(firstVideoApp->state())
+                             << int(secondAudioApp->state()) << int(secondVideoApp->state())
+                             << fakeState->audio.received.size() << fakeState->video.received.size();
+              check(!failed && replied,
+                    "real Psi media peer did not complete independent audio/video ICE/DTLS/SRTP");
+
+              // P1c no-device gate: asking to transmit with no capture device
+              // must stay receive-only. Authenticated receive/RTCP remains live;
+              // lack of local capture is not a reason to tear down media.
+              const auto fakeAudioLocal = firstAudioApp->localDescription();
+              check(fakeAudioLocal && !fakeAudioLocal->payloads.isEmpty(),
+                    "active fake audio peer lost negotiated RTP payload before no-device check");
+              check(!startPsiMediaJingleTransmit(&secondSession, true, true, QString(), true, QString()),
+                    "no-device transmit unexpectedly reported active capture");
+
+              fakeState->audio.received.clear();
+              constexpr quint32 NoDeviceRemoteSsrc = 0x22334455;
+              for (quint16 sequence = 10; sequence <= 13; ++sequence) {
+                  const auto rtp = makeOpusRtp(sequence, 96000u + quint32(sequence - 10) * 960u,
+                                               NoDeviceRemoteSsrc,
+                                               quint8(fakeAudioLocal->payloads.constFirst().id));
+                  check(fakeState->audio.writer(rtp, RTP::SrtpContext::Packet::Rtp),
+                        "receive-only peer rejected RTP while no capture device was available");
+              }
+              check(waitUntil([&] {
+                        for (const auto &packet : fakeState->audio.received) {
+                            if (packet.kind == RTP::SrtpContext::Packet::Rtcp
+                                && containsReceiverReport(packet.bytes))
+                                return true;
+                        }
+                        return false;
+                    }, 12000),
+                    "RTCP reporting stopped when local capture device was unavailable");
+              check(firstVideoTransport->rtpSession()->isReady()
+                        && secondVideoTransport->rtpSession()->isReady(),
+                    "no-device audio state disturbed independent video transport");
+
+              // P1c consent gate: authenticated media exists for both contents,
+              // but only explicit audio consent attaches a synthetic live source.
+              const auto realAudioLocal = secondAudioApp->localDescription();
+              check(realAudioLocal && !realAudioLocal->payloads.isEmpty(),
+                    "real peer lost negotiated audio payload before consent");
+              const quint8 realAudioPayloadType = quint8(realAudioLocal->payloads.constFirst().id);
+
+              fakeState->audio.received.clear();
+              check(startPsiMediaJingleTransmit(&secondSession, true, true,
+                                                QStringLiteral("audiotestsrc is-live=true wave=sine"),
+                                                false, QString()),
+                    "consent did not start real psimedia audio capture/transmit");
+
+              auto realAudioRtpCount = [&]() {
+                  int count = 0;
+                  for (const auto &packet : fakeState->audio.received) {
+                      if (packet.kind == RTP::SrtpContext::Packet::Rtp)
+                          ++count;
+                  }
+                  return count;
+              };
+              check(waitUntil([&] { return realAudioRtpCount() >= 4; }, 10000),
+                    "real psimedia sender produced no audio RTP after consent");
+
+              bool payloadMatched = false;
+              for (const auto &packet : fakeState->audio.received) {
+                  if (packet.kind != RTP::SrtpContext::Packet::Rtp || packet.bytes.size() < 2)
+                      continue;
+                  const auto *bytes = reinterpret_cast<const uchar *>(packet.bytes.constData());
+                  if ((bytes[0] >> 6) == 2 && (bytes[1] & 0x7f) == realAudioPayloadType) {
+                      payloadMatched = true;
+                      break;
+                  }
+              }
+              check(payloadMatched, "real sender audio RTP payload type diverged from negotiated description");
+
+              stopPsiMediaJingleTransmit(&secondSession);
+              int lastRtpCount = realAudioRtpCount();
+              QElapsedTimer quiet, totalQuiet;
+              quiet.start();
+              totalQuiet.start();
+              while (totalQuiet.elapsed() < 5000 && quiet.elapsed() < 500) {
+                  QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+                  const int current = realAudioRtpCount();
+                  if (current != lastRtpCount) {
+                      lastRtpCount = current;
+                      quiet.restart();
+                  }
+              }
+              check(quiet.elapsed() >= 500, "real psimedia audio sender did not quiesce after consent was revoked");
+
+              auto retainedAudioWriter = fakeState->audio.writer;
+              auto retainedVideoWriter = fakeState->video.writer;
+              firstAudioApp->incomingContentModify(J::Origin::None);
+              const auto audioLocal = firstAudioApp->localDescription();
+              check(audioLocal && !audioLocal->payloads.isEmpty(),
+                    "active audio peer lost description before direction check");
+              const auto blockedAudio
+                  = makeOpusRtp(20, 96000, 0x55667788, quint8(audioLocal->payloads.constFirst().id));
+              check(!retainedAudioWriter(blockedAudio, RTP::SrtpContext::Packet::Rtp),
+                    "audio senders=none allowed RTP through retained writer");
+
+              const auto videoRtcp = makeReceiverReport(0x66778899);
+              check(retainedVideoWriter(videoRtcp, RTP::SrtpContext::Packet::Rtcp),
+                    "audio direction change incorrectly blocked independent video writer");
+
+              const auto audioEpoch = firstAudioTransport->rtpSession()->epoch();
+              firstAudioTransport->stop();
+              check(!firstAudioTransport->rtpSession()->isReady(),
+                    "stopping audio transport retained audio SRTP keys");
+              check(firstVideoTransport->rtpSession()->isReady()
+                        && secondVideoTransport->rtpSession()->isReady()
+                        && firstVideoApp->state() == J::State::Active
+                        && secondVideoApp->state() == J::State::Active,
+                    "stopping audio transport disturbed independent video transport");
+              check(!firstAudioTransport->sendRtpPacket(blockedAudio, RTP::SrtpContext::Packet::Rtp, audioEpoch),
+                    "stopped audio transport accepted RTP");
+              check(!retainedAudioWriter(blockedAudio, RTP::SrtpContext::Packet::Rtp),
+                    "retained audio writer survived audio transport stop");
+              check(retainedVideoWriter(videoRtcp, RTP::SrtpContext::Packet::Rtcp),
+                    "video writer stopped when only audio transport stopped");
+
+              firstVideoTransport->stop();
+              check(!firstVideoTransport->rtpSession()->isReady(),
+                    "stopping video transport retained video SRTP keys");
+              check(!retainedVideoWriter(videoRtcp, RTP::SrtpContext::Packet::Rtcp),
+                    "retained video writer survived video transport stop");
+
+              firstAudioApp.reset();
+              firstVideoApp.reset();
+              secondAudioApp.reset();
+              secondVideoApp.reset();
+              secondAudioTransport->stop();
+              secondVideoTransport->stop();
+
+              qInfo() << "Psi real-backend independent audio/video ICE/DTLS/SRTP + consent smoke passed";
+              return 0;
+          }
+          EOF
+
+          ccache --zero-stats
+          cmake -S _psimedia-smoke -B _psimedia-smoke-build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DPSI_SOURCE_DIR="$GITHUB_WORKSPACE" \
+            -DPSIMEDIA_SOURCE_DIR="$GITHUB_WORKSPACE/_psimedia"
+
+      - name: Build real provider, plugin and RTP session regressions
+        run: |
+          cmake --build _psimedia-smoke-build \
+            --target gstprovidersrc mediaplugin psimedia_provider_smoke psimedia_plugin_load_smoke \
+                     psi_native_media_adapter_smoke psi_backend_lifecycle_test \
+                     psi_native_media_runtime_error_smoke psi_native_media_peer_smoke \
+                     psimedia_opusrtppay_test psimedia_rtpsessioncontext_sender_test \
+                     psimedia_rtpsessionbridge_test psimedia_rtpsessionbridge_packets_test \
+                     psimedia_rtpsessionbridge_periodic_test psimedia_rtpsessionbridge_backpressure_test \
+            --parallel 4
+
+      - name: Run provider and RTP session smoke
+        env:
+          QT_QPA_PLATFORM: offscreen
+          G_DEBUG: fatal-criticals
+        run: |
+          ctest --test-dir _psimedia-smoke-build \
+            -R '^(psimedia_(provider_smoke|plugin_load_smoke|opusrtppay|rtpsessioncontext_sender|rtpsessionbridge|rtpsessionbridge_packets|rtpsessionbridge_periodic|rtpsessionbridge_backpressure)|psi_(backend_lifecycle_test|native_media_(adapter|runtime_error|peer)_smoke))$' \
+            --no-tests=error \
+            --output-on-failure \
+            -V \
+            -j1
+
+      - name: Show compiler cache stats
+        if: always()
+        run: ccache --show-stats
