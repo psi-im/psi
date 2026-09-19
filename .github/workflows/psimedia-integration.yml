@@ -387,18 +387,25 @@ jobs:
               capabilities.probeComplete    = true;
               capabilities.secureRtp        = true;
               capabilities.audio            = true;
+              capabilities.video            = true;
 
               auto provider = makePsiMediaJingleProvider(capabilities);
-              if (!provider || provider->mediaTypes() != QStringList { QStringLiteral("audio") }) {
-                  qCritical() << "Psi native media provider did not expose audio";
+              if (!provider
+                  || provider->mediaTypes()
+                      != QStringList { QStringLiteral("audio"), QStringLiteral("video") }) {
+                  qCritical() << "Psi native media provider did not expose audio+video";
                   return 2;
               }
 
               auto session = provider->createSession();
-              auto endpoint = session ? session->createEndpoint(QStringLiteral("audio"), QStringLiteral("audio"))
-                                      : nullptr;
-              if (!session || !endpoint) {
-                  qCritical() << "Psi native media adapter did not create audio session/endpoint";
+              auto audioEndpoint = session
+                  ? session->createEndpoint(QStringLiteral("audio"), QStringLiteral("audio"))
+                  : nullptr;
+              auto videoEndpoint = session
+                  ? session->createEndpoint(QStringLiteral("video"), QStringLiteral("video"))
+                  : nullptr;
+              if (!session || !audioEndpoint || !videoEndpoint) {
+                  qCritical() << "Psi native media adapter did not create audio+video endpoints";
                   return 3;
               }
 
@@ -410,65 +417,105 @@ jobs:
                                    runtimeError  = error;
                                });
 
-              bool prepared = false;
-              RTP::MediaError prepareError;
-              std::optional<RTP::Description> local;
-              auto prepare = session->prepareLocalOffer(
-                  endpoint.get(),
+              bool audioPrepared = false;
+              bool videoPrepared = false;
+              RTP::MediaError audioPrepareError;
+              RTP::MediaError videoPrepareError;
+              std::optional<RTP::Description> audioLocal;
+              std::optional<RTP::Description> videoLocal;
+              auto audioPrepare = session->prepareLocalOffer(
+                  audioEndpoint.get(),
                   [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description, RTP::MediaError error) {
-                      local        = std::move(description);
-                      prepareError = std::move(error);
-                      prepared     = true;
+                      audioLocal        = std::move(description);
+                      audioPrepareError = std::move(error);
+                      audioPrepared     = true;
                   });
-              if (!prepare || !waitUntil([&] { return prepared || runtimeFailed; }, 10000) || runtimeFailed
-                  || prepareError || !local || local->media != QLatin1String("audio") || !local->rtcpMux
-                  || local->payloads.isEmpty()) {
-                  qCritical() << "Device-free real-backend RTP prepare failed"
-                              << int(prepareError.code) << prepareError.text
+              auto videoPrepare = session->prepareLocalOffer(
+                  videoEndpoint.get(),
+                  [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description, RTP::MediaError error) {
+                      videoLocal        = std::move(description);
+                      videoPrepareError = std::move(error);
+                      videoPrepared     = true;
+                  });
+              if (!audioPrepare || !videoPrepare
+                  || !waitUntil([&] { return (audioPrepared && videoPrepared) || runtimeFailed; }, 10000)
+                  || runtimeFailed || audioPrepareError || videoPrepareError || !audioLocal || !videoLocal
+                  || audioLocal->media != QLatin1String("audio") || videoLocal->media != QLatin1String("video")
+                  || !audioLocal->rtcpMux || !videoLocal->rtcpMux
+                  || audioLocal->payloads.isEmpty() || videoLocal->payloads.isEmpty()) {
+                  qCritical() << "Device-free real-backend audio+video RTP prepare failed"
+                              << int(audioPrepareError.code) << audioPrepareError.text
+                              << int(videoPrepareError.code) << videoPrepareError.text
                               << int(runtimeError.code) << runtimeError.text;
                   return 4;
               }
-              prepare.reset();
+              audioPrepare.reset();
+              videoPrepare.reset();
 
-              const auto opus = std::find_if(local->payloads.cbegin(), local->payloads.cend(), [](const auto &payload) {
-                  return payload.name.compare(QLatin1String("opus"), Qt::CaseInsensitive) == 0
-                      && payload.clockrate && *payload.clockrate == 48000;
-              });
-              if (opus == local->payloads.cend()) {
+              const auto opus = std::find_if(
+                  audioLocal->payloads.cbegin(), audioLocal->payloads.cend(), [](const auto &payload) {
+                      return payload.name.compare(QLatin1String("opus"), Qt::CaseInsensitive) == 0
+                          && payload.clockrate && *payload.clockrate == 48000;
+                  });
+              if (opus == audioLocal->payloads.cend()) {
                   qCritical() << "Real backend did not negotiate Opus";
                   return 5;
               }
-
-              bool applied = false;
-              RTP::MediaError applyError;
-              auto apply = session->applyNegotiation(
-                  endpoint.get(), *local, *local,
-                  [&](RTP::MediaOperation::Id, RTP::MediaError error) {
-                      applyError = std::move(error);
-                      applied    = true;
+              const auto vp8 = std::find_if(
+                  videoLocal->payloads.cbegin(), videoLocal->payloads.cend(), [](const auto &payload) {
+                      return payload.name.compare(QLatin1String("VP8"), Qt::CaseInsensitive) == 0
+                          && payload.clockrate && *payload.clockrate == 90000;
                   });
-              if (!apply || !waitUntil([&] { return applied || runtimeFailed; }, 10000) || runtimeFailed
-                  || applyError) {
-                  qCritical() << "Real-backend RTP apply failed"
-                              << int(applyError.code) << applyError.text
-                              << int(runtimeError.code) << runtimeError.text;
+              if (vp8 == videoLocal->payloads.cend()) {
+                  qCritical() << "Real backend did not negotiate VP8";
                   return 6;
               }
-              apply.reset();
+
+              bool audioApplied = false;
+              bool videoApplied = false;
+              RTP::MediaError audioApplyError;
+              RTP::MediaError videoApplyError;
+              auto audioApply = session->applyNegotiation(
+                  audioEndpoint.get(), *audioLocal, *audioLocal,
+                  [&](RTP::MediaOperation::Id, RTP::MediaError error) {
+                      audioApplyError = std::move(error);
+                      audioApplied    = true;
+                  });
+              auto videoApply = session->applyNegotiation(
+                  videoEndpoint.get(), *videoLocal, *videoLocal,
+                  [&](RTP::MediaOperation::Id, RTP::MediaError error) {
+                      videoApplyError = std::move(error);
+                      videoApplied    = true;
+                  });
+              if (!audioApply || !videoApply
+                  || !waitUntil([&] { return (audioApplied && videoApplied) || runtimeFailed; }, 10000)
+                  || runtimeFailed || audioApplyError || videoApplyError) {
+                  qCritical() << "Real-backend audio+video RTP apply failed"
+                              << int(audioApplyError.code) << audioApplyError.text
+                              << int(videoApplyError.code) << videoApplyError.text
+                              << int(runtimeError.code) << runtimeError.text;
+                  return 7;
+              }
+              audioApply.reset();
+              videoApply.reset();
 
               std::vector<QByteArray> rtcpPackets;
-              if (!endpoint->attachPacketIo([&](QByteArray packet, RTP::SrtpContext::Packet kind) {
+              if (!audioEndpoint->attachPacketIo([&](QByteArray packet, RTP::SrtpContext::Packet kind) {
                       if (kind == RTP::SrtpContext::Packet::Rtcp)
                           rtcpPackets.push_back(std::move(packet));
                       return true;
                   })) {
-                  qCritical() << "Production Psi media endpoint refused packet I/O";
-                  return 7;
+                  qCritical() << "Production Psi audio endpoint refused packet I/O";
+                  return 8;
+              }
+              if (!videoEndpoint->attachPacketIo([](QByteArray, RTP::SrtpContext::Packet) { return true; })) {
+                  qCritical() << "Production Psi video endpoint refused packet I/O";
+                  return 9;
               }
 
               constexpr quint32 RemoteSsrc = 0x44556677;
               for (quint16 sequence = 1; sequence <= 4; ++sequence) {
-                  endpoint->receivePacket(
+                  audioEndpoint->receivePacket(
                       makeOpusRtp(sequence, 48000u + quint32(sequence - 1) * 960u, RemoteSsrc, opus->id),
                       RTP::SrtpContext::Packet::Rtp);
               }
@@ -485,14 +532,16 @@ jobs:
                   || runtimeFailed) {
                   qCritical() << "Production Psi adapter did not return an RTCP receiver report"
                               << int(runtimeError.code) << runtimeError.text;
-                  return 8;
+                  return 10;
               }
 
-              endpoint->stop();
-              endpoint.reset();
+              audioEndpoint->stop();
+              videoEndpoint->stop();
+              audioEndpoint.reset();
+              videoEndpoint.reset();
               session.reset();
-          
-              qInfo() << "Psi native media adapter real-backend RTP/RTCP smoke passed";
+
+              qInfo() << "Psi native media adapter real-backend audio/video negotiation + RTP/RTCP smoke passed";
               return 0;
           }
           EOF
