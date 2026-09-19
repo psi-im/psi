@@ -50,7 +50,9 @@ jobs:
             message="$PUSH_COMMIT_MESSAGE"
           fi
 
-          if [[ "$EVENT_NAME" != "workflow_dispatch" && "$BRANCH_NAME" == ai/* && "$message" == *"[skip ci]"* ]]; then
+          if [[ "$EVENT_NAME" != "workflow_dispatch" && "$BRANCH_NAME" == ai/* ]]; then
+            run_ci=false
+          elif [[ "$EVENT_NAME" != "workflow_dispatch" && "$message" == *"[skip ci]"* ]]; then
             run_ci=false
           fi
 
