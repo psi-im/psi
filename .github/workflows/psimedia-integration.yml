@@ -60,7 +60,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          QCA_TAG: v3.0.1
+          QCA_TAG: v3.0.7
         run: |
           set -euo pipefail
           rm -rf qca-release qca3.zip
@@ -76,7 +76,7 @@ jobs:
           echo "Psi: $(git rev-parse HEAD)"
           echo "Iris: $(git -C iris rev-parse HEAD)"
           echo "psimedia: $(git -C _psimedia rev-parse HEAD)"
-          echo "QCA: psi-im/qca v3.0.1 release package (qca-ossl)"
+          echo "QCA: psi-im/qca v3.0.7 release package (qca-ossl)"
           qmake6 -v
           openssl version
           gst-launch-1.0 --version
