@@ -258,7 +258,12 @@ public:
         // proves that the control created by start() is still live. The provider
         // context destructor performs its own synchronous cleanup afterwards.
         rtp_.disconnect(this);
-        if (state_ == State::Starting || state_ == State::Running) {
+        if (state_ == State::Starting && backendCommandScheduled_) {
+            // The batched initial start has not crossed the provider boundary
+            // yet, so there is no live psimedia control to stop.
+            backendCommandScheduled_ = false;
+            state_ = State::Stopped;
+        } else if (state_ == State::Starting || state_ == State::Running) {
             state_ = State::Stopping;
             rtp_.stop();
         }
@@ -506,41 +511,114 @@ private:
             return;
         }
 
-        bool changed = false;
-        if (operation.kind == Kind::PrepareOffer || operation.kind == Kind::PrepareAnswer)
-            changed |= enableLocal(operation.endpoint->media());
-
-        if (operation.kind == Kind::PrepareAnswer || operation.kind == Kind::Apply) {
-            if (!operation.remote) {
-                complete(std::move(operation), unsupportedError(QStringLiteral("Missing remote RTP description")));
-                return;
-            }
-            auto remote = toPsiPayloads(*operation.remote);
-            if (!remote) {
-                complete(std::move(operation), unsupportedError(QStringLiteral("Unsupported remote RTP payloads")));
-                return;
-            }
-            changed |= setRemote(operation.endpoint->media(), *remote);
-        }
-
+        // Iris starts the initial RTP applications one after another in the
+        // same event-loop turn. psimedia cannot add a second media type after
+        // its send/receive pipelines have started, so batch that turn and
+        // commit all initial audio/video preferences at one provider boundary.
+        // No capture device is attached here.
         if (state_ == State::Unstarted) {
             running_ = std::move(operation);
             await_   = Await::Started;
             state_   = State::Starting;
-            rtp_.start();
+            scheduleBackendCommand();
             return;
         }
         if (state_ != State::Running) {
             complete(std::move(operation), backendError(QStringLiteral("psimedia RTP backend is not runnable")));
             return;
         }
+
+        running_ = std::move(operation);
+        await_   = Await::None;
+        scheduleBackendCommand();
+    }
+
+    std::optional<RTP::MediaError> configureOperation(Pending &operation, bool &changed)
+    {
+        if (operation.kind == Kind::PrepareOffer || operation.kind == Kind::PrepareAnswer)
+            changed |= enableLocal(operation.endpoint->media());
+
+        if (operation.kind == Kind::PrepareAnswer || operation.kind == Kind::Apply) {
+            if (!operation.remote)
+                return unsupportedError(QStringLiteral("Missing remote RTP description"));
+
+            auto remote = toPsiPayloads(*operation.remote);
+            if (!remote)
+                return unsupportedError(QStringLiteral("Unsupported remote RTP payloads"));
+
+            changed |= setRemote(operation.endpoint->media(), *remote);
+        }
+        return {};
+    }
+
+    void scheduleBackendCommand()
+    {
+        if (backendCommandScheduled_)
+            return;
+        backendCommandScheduled_ = true;
+        QPointer<BackendSession> guard(this);
+        QTimer::singleShot(0, this, [guard] {
+            if (guard)
+                guard->dispatchBackendCommand();
+        });
+    }
+
+    void dispatchBackendCommand()
+    {
+        backendCommandScheduled_ = false;
+        if (!running_ || isTerminalOrStopping())
+            return;
+
+        bool changed = false;
+        if (auto error = configureOperation(*running_, changed)) {
+            auto operation = std::move(*running_);
+            running_.reset();
+            await_ = Await::None;
+            if (state_ == State::Starting)
+                state_ = State::Unstarted;
+            complete(std::move(operation), std::move(*error));
+            return;
+        }
+
+        // The queue is intentionally one-deep. When the sibling initial media
+        // operation arrived before this command crossed into psimedia, fold its
+        // preferences into the same provider start/update. Its own completion
+        // still remains serialized behind the running operation.
+        if (deferred_) {
+            bool deferredChanged = false;
+            if (auto error = configureOperation(*deferred_, deferredChanged)) {
+                auto operation = std::move(*deferred_);
+                deferred_.reset();
+                QPointer<BackendSession> guard(this);
+                complete(std::move(operation), std::move(*error));
+                if (!guard || !running_)
+                    return;
+            } else {
+                changed |= deferredChanged;
+            }
+        }
+
+        if (!running_ || isTerminalOrStopping())
+            return;
+
+        if (state_ == State::Starting) {
+            await_ = Await::Started;
+            rtp_.start();
+            return;
+        }
+        if (state_ != State::Running) {
+            auto operation = std::move(*running_);
+            running_.reset();
+            await_ = Await::None;
+            complete(std::move(operation), backendError(QStringLiteral("psimedia RTP backend is not runnable")));
+            return;
+        }
         if (changed) {
-            running_ = std::move(operation);
-            await_   = Await::Preferences;
+            await_ = Await::Preferences;
             rtp_.updatePreferences();
             return;
         }
-        complete(std::move(operation), {});
+        finishRunning({});
     }
 
     bool enableLocal(const QString &media)
@@ -740,6 +818,7 @@ private:
     Await                        await_ = Await::None;
     std::optional<Pending>       running_;
     std::optional<Pending>       deferred_;
+    bool                         backendCommandScheduled_ = false;
     QSet<Endpoint *>             endpoints_;
 };
 

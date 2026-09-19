@@ -23,10 +23,14 @@ struct BackendStats {
     int stopCalls          = 0;
     int pauseAudioCalls    = 0;
     int pauseVideoCalls    = 0;
-    int transmitAudioCalls = 0;
-    int transmitVideoCalls = 0;
-    int invalidCalls       = 0;
-    int cleanups           = 0;
+    int transmitAudioCalls       = 0;
+    int transmitVideoCalls       = 0;
+    int localAudioPreferenceCalls = 0;
+    int localVideoPreferenceCalls = 0;
+    int remoteAudioPreferenceCalls = 0;
+    int remoteVideoPreferenceCalls = 0;
+    int invalidCalls             = 0;
+    int cleanups                 = 0;
 };
 
 class FakeRtpChannel final : public QObject, public PsiMedia::RtpChannelContext {
@@ -82,11 +86,23 @@ public:
 #endif
     void setRecorder(QIODevice *) override { }
     void stopRecording() override { }
-    void setLocalAudioPreferences(const QList<PsiMedia::PAudioParams> &) override { }
-    void setLocalVideoPreferences(const QList<PsiMedia::PVideoParams> &) override { }
+    void setLocalAudioPreferences(const QList<PsiMedia::PAudioParams> &) override
+    {
+        ++stats_->localAudioPreferenceCalls;
+    }
+    void setLocalVideoPreferences(const QList<PsiMedia::PVideoParams> &) override
+    {
+        ++stats_->localVideoPreferenceCalls;
+    }
     void setMaximumSendingBitrate(int) override { }
-    void setRemoteAudioPreferences(const QList<PsiMedia::PPayloadInfo> &) override { }
-    void setRemoteVideoPreferences(const QList<PsiMedia::PPayloadInfo> &) override { }
+    void setRemoteAudioPreferences(const QList<PsiMedia::PPayloadInfo> &) override
+    {
+        ++stats_->remoteAudioPreferenceCalls;
+    }
+    void setRemoteVideoPreferences(const QList<PsiMedia::PPayloadInfo> &) override
+    {
+        ++stats_->remoteVideoPreferenceCalls;
+    }
 
     void start() override
     {
@@ -274,6 +290,19 @@ RTP::Description audioDescription()
     return description;
 }
 
+RTP::Description videoDescription()
+{
+    RTP::Description description;
+    description.media   = QStringLiteral("video");
+    description.rtcpMux = true;
+    RTP::PayloadType payload;
+    payload.id        = 96;
+    payload.name      = QStringLiteral("VP8");
+    payload.clockrate = 90000;
+    description.payloads.append(payload);
+    return description;
+}
+
 PsiMediaJingleCapabilities fullCapabilities()
 {
     PsiMediaJingleCapabilities result;
@@ -376,6 +405,89 @@ private slots:
         video.reset();
         session.reset();
         QCOMPARE(provider_.stats().startCalls, 0);
+        QCOMPARE(provider_.stats().invalidCalls, 0);
+    }
+
+    void initialAudioVideoConfigurationIsBatched()
+    {
+        auto mediaProvider = makePsiMediaJingleProvider(fullCapabilities());
+        auto session       = mediaProvider->createSession();
+        auto audio         = session->createEndpoint(QStringLiteral("audio"), QStringLiteral("audio"));
+        auto video         = session->createEndpoint(QStringLiteral("video"), QStringLiteral("video"));
+        QVERIFY(audio);
+        QVERIFY(video);
+
+        std::optional<RTP::Description> audioLocal;
+        std::optional<RTP::Description> videoLocal;
+        bool audioPrepared = false;
+        bool videoPrepared = false;
+        auto audioPrepare = session->prepareLocalOffer(
+            audio.get(), [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description,
+                             RTP::MediaError error) {
+                QVERIFY(!error);
+                audioLocal    = std::move(description);
+                audioPrepared = true;
+            });
+        auto videoPrepare = session->prepareLocalOffer(
+            video.get(), [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description,
+                             RTP::MediaError error) {
+                QVERIFY(!error);
+                videoLocal    = std::move(description);
+                videoPrepared = true;
+            });
+        QVERIFY(audioPrepare);
+        QVERIFY(videoPrepare);
+
+        // Both operations were submitted in the same turn. The provider
+        // boundary must not be crossed until both local media preferences are
+        // staged, otherwise psimedia cannot add the sibling media type later.
+        QCOMPARE(provider_.stats().startCalls, 0);
+        QTRY_COMPARE(provider_.stats().startCalls, 1);
+        QCOMPARE(provider_.stats().localAudioPreferenceCalls, 1);
+        QCOMPARE(provider_.stats().localVideoPreferenceCalls, 1);
+
+        provider_.context()->completeStart();
+        QTRY_VERIFY(audioPrepared && videoPrepared);
+        QVERIFY(audioLocal);
+        QVERIFY(videoLocal);
+        QCOMPARE(audioLocal->media, QStringLiteral("audio"));
+        QCOMPARE(videoLocal->media, QStringLiteral("video"));
+        QCOMPARE(provider_.stats().updateCalls, 0);
+
+        bool audioApplied = false;
+        bool videoApplied = false;
+        auto audioApply = session->applyNegotiation(
+            audio.get(), *audioLocal, audioDescription(),
+            [&](RTP::MediaOperation::Id, RTP::MediaError error) {
+                QVERIFY(!error);
+                audioApplied = true;
+            });
+        auto videoApply = session->applyNegotiation(
+            video.get(), *videoLocal, videoDescription(),
+            [&](RTP::MediaOperation::Id, RTP::MediaError error) {
+                QVERIFY(!error);
+                videoApplied = true;
+            });
+        QVERIFY(audioApply);
+        QVERIFY(videoApply);
+
+        QCOMPARE(provider_.stats().updateCalls, 0);
+        QTRY_COMPARE(provider_.stats().updateCalls, 1);
+        QCOMPARE(provider_.stats().remoteAudioPreferenceCalls, 1);
+        QCOMPARE(provider_.stats().remoteVideoPreferenceCalls, 1);
+
+        provider_.context()->completePreferences();
+        QTRY_VERIFY(audioApplied && videoApplied);
+        QCoreApplication::processEvents(QEventLoop::AllEvents);
+        QCOMPARE(provider_.stats().updateCalls, 1);
+
+        audioApply.reset();
+        videoApply.reset();
+        audioPrepare.reset();
+        videoPrepare.reset();
+        audio.reset();
+        video.reset();
+        session.reset();
         QCOMPARE(provider_.stats().invalidCalls, 0);
     }
 
