@@ -876,6 +876,19 @@ public slots:
         AvCall          *sess = avCallManager->takeIncoming();
         AvCallEvent::Ptr ae(new AvCallEvent(sess->jid().full(), sess, account));
         ae->setTimeStamp(QDateTime::currentDateTime());
+
+        // A JMI retract or a carbon from another answering resource can arrive
+        // before the event is opened. Remove the stale event after the signal
+        // stack unwinds; dequeuing synchronously would destroy the AvCall while
+        // it is emitting cancelled().
+        const auto weakEvent = ae.toWeakRef();
+        connect(sess, &AvCall::cancelled, account, [account = account, weakEvent] {
+            QTimer::singleShot(0, account, [account, weakEvent] {
+                if (const auto event = weakEvent.toStrongRef())
+                    account->eventQueue()->dequeue(event);
+            });
+        });
+
         account->handleEvent(ae, IncomingStanza);
     }
 
