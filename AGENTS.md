@@ -11,3 +11,4 @@ These rules apply to automated/AI-assisted changes in this repository.
 - Before merging, ensure the final squash commit message does not accidentally contain CI control tokens such as `[skip ci]` or `[ci skip]`.
 - For XMPP protocol work, check the current XEP/RFC text before encoding protocol assumptions. Keep parsing/signaling policy separated from UI/application policy.
 - Prefer extending the existing architecture over creating a parallel signaling/media stack.
+- Preserve build compatibility with the supported Qt baseline: Qt 5 and Qt 6.4. Guard APIs introduced in newer Qt releases with `QT_VERSION` checks and keep the older code path buildable.
