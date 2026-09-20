@@ -3080,6 +3080,12 @@ void PsiAccount::processIncomingMessage(const Message &_m)
                 }
             }
         }
+
+        // JMI messages are protocol signalling, not chat events. Process
+        // ordinary message receipts above, but do not put the signalling
+        // stanza itself into the user's message/event queue.
+        if (dm2.jingleMessageInitiation().isValid())
+            return;
     }
 
     MessageEvent::Ptr me(new MessageEvent(m, this));

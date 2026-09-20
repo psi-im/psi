@@ -27,6 +27,7 @@
 #include <iris/xmpp_client.h>
 #include <iris/xmpp_message.h>
 
+#include <QDebug>
 #include <QHash>
 #include <QHostAddress>
 #include <QPointer>
@@ -809,8 +810,28 @@ void AvCallManagerPrivate::incomingRtpProposal(const XMPP::Message &message, con
     const bool ownMessage = message.from().compare(pa->client()->jid(), false);
     auto       call       = jmiCalls.value(id, nullptr);
 
-    if (ownMessage || message.spooled() || !jingleManager->messageInitiationEnabled())
+    qInfo().noquote() << "AvCall JMI: typed RTP proposal id=" << id
+                       << "from=" << message.from().full()
+                       << "audio=" << media.testFlag(RTP::Media::Audio)
+                       << "video=" << media.testFlag(RTP::Media::Video);
+
+    if (ownMessage) {
+        qInfo().noquote() << "AvCall JMI: ignore own proposal id=" << id;
         return;
+    }
+    if (message.spooled()) {
+        qWarning().noquote() << "AvCall JMI: ignore spooled proposal id=" << id;
+        return;
+    }
+    if (!jingleManager->messageInitiationEnabled()) {
+        qWarning().noquote() << "AvCall JMI: JMI disabled for proposal id=" << id
+                             << "backend=" << capabilities.backendAvailable
+                             << "probe=" << capabilities.probeComplete
+                             << "srtp=" << capabilities.secureRtp
+                             << "audio=" << capabilities.audio
+                             << "video=" << capabilities.video;
+        return;
+    }
 
     if (call) {
         if (call->d && !call->d->jmiClosed && message.from().compare(call->d->peer, false)) {
@@ -830,6 +851,11 @@ void AvCallManagerPrivate::incomingRtpProposal(const XMPP::Message &message, con
     const bool usableAudio = proposed->d->requestedAudio && capabilities.audio;
     const bool usableVideo = proposed->d->requestedVideo && capabilities.video;
     if (!usableAudio && !usableVideo) {
+        qWarning().noquote() << "AvCall JMI: no usable proposed media id=" << id
+                             << "requestedAudio=" << proposed->d->requestedAudio
+                             << "requestedVideo=" << proposed->d->requestedVideo
+                             << "localAudio=" << capabilities.audio
+                             << "localVideo=" << capabilities.video;
         Jingle::MessageInitiation reject(Jingle::MessageInitiation::Action::Reject, id);
         reject.setReason(QStringLiteral("busy"), QStringLiteral("Busy"));
         jingleManager->sendMessageInitiation(message.from(), reject);
@@ -843,12 +869,18 @@ void AvCallManagerPrivate::incomingRtpProposal(const XMPP::Message &message, con
 
     Jingle::MessageInitiation ringing(Jingle::MessageInitiation::Action::Ringing, id);
     jingleManager->sendMessageInitiation(message.from(), ringing);
+    qInfo().noquote() << "AvCall JMI: accepted incoming proposal id=" << id;
     emit q->incomingReady();
 }
 
 void AvCallManagerPrivate::incomingMessageInitiation(const XMPP::Message &message,
                                                      const Jingle::MessageInitiation &initiation)
 {
+    qInfo().noquote() << "AvCall JMI: generic action=" << static_cast<int>(initiation.action())
+                       << "id=" << initiation.id()
+                       << "from=" << message.from().full()
+                       << "descriptions=" << initiation.descriptions().size();
+
     const bool ownMessage = message.from().compare(pa->client()->jid(), false);
     auto       call       = jmiCalls.value(initiation.id(), nullptr);
 
