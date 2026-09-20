@@ -261,8 +261,7 @@ public:
         captureAudioConsent = needAudio;
         captureVideoConsent = needVideo;
 
-        if (peerFeatures.testFlag(AvCall::JingleMessageInitiation)
-            && manager->jingleManager->messageInitiationEnabled()) {
+        if (manager->jingleManager->messageInitiationEnabled()) {
             RTP::MediaSet media;
             if (needAudio)
                 media |= RTP::Media::Audio;
@@ -629,7 +628,6 @@ public:
     QPointer<Jingle::Session>      session;
     XMPP::Jid                      peer;
     AvCall::Mode                   mode = AvCall::Audio;
-    AvCall::PeerFeatures           peerFeatures;
     int                            bitrate = -1;
     QString                        errorString;
     PsiMedia::VideoWidget         *videoWidget = nullptr;
@@ -666,10 +664,10 @@ AvCall::Mode AvCall::mode() const { return d->mode; }
 
 void AvCall::connectToJid(const XMPP::Jid &jid, Mode mode, int kbps, PeerFeatures features)
 {
-    d->peer         = jid;
-    d->mode         = mode;
-    d->peerFeatures = features;
-    d->bitrate      = kbps;
+    Q_UNUSED(features)
+    d->peer    = jid;
+    d->mode    = mode;
+    d->bitrate = kbps;
     d->startOutgoing();
 }
 
