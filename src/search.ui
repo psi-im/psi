@@ -24,7 +24,7 @@
     <number>5</number>
    </property>
    <item>
-    <layout class="QHBoxLayout">
+    <layout class="QHBoxLayout" name="hb_main">
      <property name="margin">
       <number>0</number>
      </property>
@@ -45,102 +45,104 @@
        <property name="title">
         <string>Search Fields</string>
        </property>
-       <layout class="QVBoxLayout">
-        <property name="margin">
+       <layout class="QVBoxLayout" name="vb_search_form">
+        <property name="leftMargin">
+         <number>1</number>
+        </property>
+        <property name="topMargin">
+         <number>10</number>
+        </property>
+        <property name="rightMargin">
+         <number>1</number>
+        </property>
+        <property name="bottomMargin">
          <number>1</number>
         </property>
         <item>
-         <layout class="QVBoxLayout">
+         <widget class="QLabel" name="lb_instructions">
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Sunken</enum>
+          </property>
+          <property name="text">
+           <string>Instructions go here.</string>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QScrollArea" name="scrollArea">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="horizontalScrollBarPolicy">
+           <enum>Qt::ScrollBarAlwaysOff</enum>
+          </property>
+          <property name="widgetResizable">
+           <bool>true</bool>
+          </property>
+          <widget class="QWidget" name="scrollAreaWidgetContents_2">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>268</width>
+             <height>357</height>
+            </rect>
+           </property>
+          </widget>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="hb_search_button">
           <property name="margin">
            <number>0</number>
           </property>
           <item>
-           <widget class="QLabel" name="lb_instructions">
-            <property name="frameShape">
-             <enum>QFrame::StyledPanel</enum>
+           <widget class="IconButton" name="pb_search" native="true">
+            <property name="text" stdset="0">
+             <string>&amp;Search</string>
             </property>
-            <property name="frameShadow">
-             <enum>QFrame::Sunken</enum>
+            <property name="psiIconName" stdset="0">
+             <string>psi/search</string>
             </property>
-            <property name="text">
-             <string>Instructions go here.</string>
-            </property>
-            <property name="wordWrap">
+            <property name="default" stdset="0">
              <bool>true</bool>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QScrollArea" name="scrollArea">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
+           <spacer name="Spacer1">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
             </property>
-            <property name="horizontalScrollBarPolicy">
-             <enum>Qt::ScrollBarAlwaysOff</enum>
+            <property name="sizeType">
+             <enum>QSizePolicy::Expanding</enum>
             </property>
-            <property name="widgetResizable">
-             <bool>true</bool>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>30</width>
+              <height>16</height>
+             </size>
             </property>
-            <widget class="QWidget" name="scrollAreaWidgetContents_2">
-             <property name="geometry">
-              <rect>
-               <x>0</x>
-               <y>0</y>
-               <width>400</width>
-               <height>400</height>
-              </rect>
-             </property>
-            </widget>
-           </widget>
+           </spacer>
           </item>
           <item>
-           <layout class="QHBoxLayout">
-            <property name="margin">
-             <number>0</number>
+           <widget class="IconButton" name="pb_stop" native="true">
+            <property name="text" stdset="0">
+             <string>&amp;Stop</string>
             </property>
-            <item>
-             <widget class="IconButton" name="pb_search" native="true">
-              <property name="text" stdset="0">
-               <string>&amp;Search</string>
-              </property>
-              <property name="psiIconName" stdset="0">
-               <string>psi/search</string>
-              </property>
-              <property name="default" stdset="0">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <spacer name="Spacer1">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeType">
-               <enum>QSizePolicy::Expanding</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>30</width>
-                <height>16</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item>
-             <widget class="IconButton" name="pb_stop" native="true">
-              <property name="text" stdset="0">
-               <string>&amp;Stop</string>
-              </property>
-              <property name="psiIconName" stdset="0">
-               <string>psi/stop</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
+            <property name="psiIconName" stdset="0">
+             <string>psi/stop</string>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>
@@ -148,7 +150,7 @@
       </widget>
      </item>
      <item>
-      <layout class="QVBoxLayout">
+      <layout class="QVBoxLayout" name="l_search_results">
        <property name="margin">
         <number>0</number>
        </property>
@@ -206,7 +208,7 @@
         </widget>
        </item>
        <item>
-        <layout class="QHBoxLayout">
+        <layout class="QHBoxLayout" name="hb_add_contact">
          <property name="margin">
           <number>0</number>
          </property>
@@ -263,7 +265,7 @@
     </widget>
    </item>
    <item>
-    <layout class="QHBoxLayout">
+    <layout class="QHBoxLayout" name="hb_bottom">
      <property name="margin">
       <number>0</number>
      </property>
