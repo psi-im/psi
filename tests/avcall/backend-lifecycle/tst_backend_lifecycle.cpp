@@ -31,6 +31,7 @@ struct BackendStats {
 
 class FakeRtpChannel final : public QObject, public PsiMedia::RtpChannelContext {
     Q_OBJECT
+    Q_INTERFACES(PsiMedia::RtpChannelContext)
 public:
     QObject *qobject() override { return this; }
 
@@ -65,6 +66,7 @@ private:
 
 class FakeRtpSessionContext final : public QObject, public PsiMedia::RtpSessionContext {
     Q_OBJECT
+    Q_INTERFACES(PsiMedia::RtpSessionContext)
 public:
     explicit FakeRtpSessionContext(BackendStats *stats) : stats_(stats) { }
 
@@ -231,6 +233,7 @@ private:
 
 class FakeProvider final : public QObject, public PsiMedia::Provider {
     Q_OBJECT
+    Q_INTERFACES(PsiMedia::Provider)
 public:
     QObject *qobject() override { return this; }
     bool     isInitialized() const override { return true; }
