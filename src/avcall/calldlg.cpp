@@ -124,6 +124,7 @@ public:
         sess     = _sess;
         connect(sess, SIGNAL(activated()), SLOT(sess_activated()));
         connect(sess, SIGNAL(error()), SLOT(sess_error()));
+        connect(sess, SIGNAL(cancelled()), SLOT(sess_cancelled()));
 
         ui.lb_to->setText(tr("From:"));
         ui.le_to->setText(sess->jid().full());
@@ -237,6 +238,14 @@ private slots:
             timer->stop();
 
         QMessageBox::information(q, tr("Call is ended"), sess->errorString());
+        q->close();
+    }
+
+    void sess_cancelled()
+    {
+        sessionFinished = true;
+        if (timer->isActive())
+            timer->stop();
         q->close();
     }
 

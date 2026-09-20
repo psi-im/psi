@@ -67,6 +67,7 @@ public:
 signals:
     void activated();
     void error();
+    void cancelled();
 
 private:
     friend class AvCallPrivate;
