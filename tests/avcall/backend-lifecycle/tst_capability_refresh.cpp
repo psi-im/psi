@@ -3,6 +3,7 @@
 #include "psimedia.h"
 #include "psimediaprovider.h"
 
+#include <iris/jingle-ice.h>
 #include <iris/jingle-rtp.h>
 #include <iris/jingle.h>
 #include <iris/xmpp_client.h>
@@ -186,6 +187,7 @@ private slots:
 
         auto rtpManager = client.jingleManager()->rtpManager();
         QVERIFY(rtpManager);
+        rtpManager->setTransportNamespaces({ Jingle::ICE::NS, Jingle::ICE::NS_ICE_UDP });
 
         PsiMediaJingleCapabilities          current;
         std::shared_ptr<RTP::MediaProvider> provider;
@@ -252,6 +254,7 @@ private slots:
 
         auto rtpManager = client.jingleManager()->rtpManager();
         QVERIFY(rtpManager);
+        rtpManager->setTransportNamespaces({ Jingle::ICE::NS, Jingle::ICE::NS_ICE_UDP });
 
         PsiMediaJingleCapabilities          current;
         std::shared_ptr<RTP::MediaProvider> provider;
@@ -286,6 +289,7 @@ private slots:
 
         auto rtpManager = client.jingleManager()->rtpManager();
         QVERIFY(rtpManager);
+        rtpManager->setTransportNamespaces({ Jingle::ICE::NS, Jingle::ICE::NS_ICE_UDP });
 
         PsiMediaJingleCapabilities          current;
         std::shared_ptr<RTP::MediaProvider> provider;
