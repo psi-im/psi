@@ -20,8 +20,8 @@
 #include "psiaccount.h"
 
 #include <iris/jingle-ice.h>
-#include <iris/jingle-message.h>
 #include <iris/jingle-rtp-description.h>
+#include <iris/xmpp-im/xmpp_jinglemessage.h>
 #include <iris/jingle-rtp.h>
 #include <iris/jingle-session.h>
 #include <iris/xmpp_client.h>
@@ -93,7 +93,6 @@ public:
     AvCallManager                       *q             = nullptr;
     PsiAccount                          *pa            = nullptr;
     Jingle::Manager                     *jingleManager = nullptr;
-    Jingle::MessageInitiationManager    *jmiManager    = nullptr;
     RTP::Manager                        *rtpManager    = nullptr;
     ICE::Manager                        *iceManager    = nullptr;
     std::shared_ptr<RTP::MediaProvider>  mediaProvider;
@@ -104,6 +103,7 @@ public:
 
 private slots:
     void incomingSession(Jingle::Session *session);
+    void incomingRtpProposal(const XMPP::Message &message, const QString &id, RTP::MediaSet media);
     void incomingMessageInitiation(const XMPP::Message &message,
                                    const Jingle::MessageInitiation &initiation);
 };
@@ -131,37 +131,19 @@ public:
         }
     }
 
-    bool attachProposal(const XMPP::Jid &from, const Jingle::MessageInitiation &initiation)
+    bool attachProposal(const XMPP::Jid &from, const QString &id, RTP::MediaSet media)
     {
-        if (!manager || initiation.action() != Jingle::MessageInitiation::Action::Propose)
+        if (!manager || id.isEmpty() || media == RTP::MediaSet())
             return false;
 
-        bool audio = false;
-        bool video = false;
-        for (const auto &element : initiation.descriptions()) {
-            // XEP-0353 is application-agnostic. AvCall is the RTP-specific
-            // consumer, so interpret the opaque JMI description only here.
-            const auto description = RTP::Description::fromXml(element, true);
-            if (!description)
-                return false;
-            if (description->media == QLatin1String("audio")) {
-                if (audio)
-                    return false;
-                audio = true;
-            } else if (description->media == QLatin1String("video")) {
-                if (video)
-                    return false;
-                video = true;
-            } else {
-                return false;
-            }
-        }
+        const bool audio = media.testFlag(RTP::Media::Audio);
+        const bool video = media.testFlag(RTP::Media::Video);
         if (!audio && !video)
             return false;
 
         peer           = from;
         incoming       = true;
-        jmiId          = initiation.id();
+        jmiId          = id;
         requestedAudio = audio;
         requestedVideo = video;
         mode            = audio && video ? AvCall::Both : (audio ? AvCall::Audio : AvCall::Video);
@@ -194,12 +176,12 @@ public:
     bool sendJmi(Jingle::MessageInitiation::Action action, const QString &condition = {},
                  const QString &text = {})
     {
-        if (!manager || !manager->jmiManager || jmiId.isEmpty() || !peer.isValid())
+        if (!manager || !manager->jingleManager || jmiId.isEmpty() || !peer.isValid())
             return false;
         Jingle::MessageInitiation initiation(action, jmiId);
         if (!condition.isEmpty() || !text.isEmpty())
             initiation.setReason(condition, text);
-        return manager->jmiManager->send(peer, initiation);
+        return manager->jingleManager->sendMessageInitiation(peer, initiation);
     }
 
     void sendJmiFinish(const QString &condition, const QString &text)
@@ -287,8 +269,8 @@ public:
                                                                         audioCaptureAvailable());
         }
 
-        if ((needAudio && !manager->rtpManager->createOutgoing(session, QStringLiteral("audio"), audioSenders))
-            || (needVideo && !manager->rtpManager->createOutgoing(session, QStringLiteral("video")))) {
+        if ((needAudio && !manager->rtpManager->createOutgoing(session, RTP::Media::Audio, audioSenders))
+            || (needVideo && !manager->rtpManager->createOutgoing(session, RTP::Media::Video))) {
             fail(tr("Unable to create the requested RTP media."));
             return;
         }
@@ -675,7 +657,6 @@ void AvCall::unlink() { d->unlink(); }
 AvCallManagerPrivate::AvCallManagerPrivate(PsiAccount *account, AvCallManager *q) : QObject(q), q(q), pa(account)
 {
     jingleManager = pa->client()->jingleManager();
-    jmiManager    = jingleManager->messageInitiationManager();
     rtpManager    = jingleManager->rtpManager();
     iceManager    = pa->client()->jingleICEManager();
     rtpManager->setTransportNamespaces({ ICE::NS, ICE::NS_ICE_UDP });
@@ -689,14 +670,15 @@ AvCallManagerPrivate::AvCallManagerPrivate(PsiAccount *account, AvCallManager *q
     refreshCapabilities();
 
     connect(jingleManager, &Jingle::Manager::incomingSession, this, &AvCallManagerPrivate::incomingSession);
-    connect(jmiManager, &Jingle::MessageInitiationManager::incoming, this,
+    connect(jingleManager, &Jingle::Manager::incomingMessageInitiation, this,
             &AvCallManagerPrivate::incomingMessageInitiation);
+    connect(rtpManager, &RTP::Manager::incomingProposal, this, &AvCallManagerPrivate::incomingRtpProposal);
 }
 
 AvCallManagerPrivate::~AvCallManagerPrivate()
 {
-    if (jmiManager)
-        jmiManager->setEnabled(false);
+    if (jingleManager)
+        jingleManager->setMessageInitiationEnabled(false);
     if (rtpManager) {
         rtpManager->closeAll();
         rtpManager->setTransportNamespaces({});
@@ -729,8 +711,8 @@ void AvCallManagerPrivate::applyNetworkConfiguration()
 void AvCallManagerPrivate::refreshCapabilities()
 {
     const auto next = currentNativeCallCapabilities();
-    if (jmiManager)
-        jmiManager->setEnabled(next.available());
+    if (jingleManager)
+        jingleManager->setMessageInitiationEnabled(next.available());
     commitPsiMediaJingleCapabilities(rtpManager, capabilities, mediaProvider, next,
                                      [this] { pa->updateFeatures(); });
 
@@ -785,6 +767,48 @@ void AvCallManagerPrivate::incomingSession(Jingle::Session *incoming)
     emit q->incomingReady();
 }
 
+void AvCallManagerPrivate::incomingRtpProposal(const XMPP::Message &message, const QString &id, RTP::MediaSet media)
+{
+    const bool ownMessage = message.from().compare(pa->client()->jid(), false);
+    auto       call       = jmiCalls.value(id, nullptr);
+
+    if (ownMessage || message.spooled() || !jingleManager->messageInitiationEnabled())
+        return;
+
+    if (call) {
+        if (call->d && !call->d->jmiClosed && message.from().compare(call->d->peer, false)) {
+            Jingle::MessageInitiation ringing(Jingle::MessageInitiation::Action::Ringing, id);
+            jingleManager->sendMessageInitiation(message.from(), ringing);
+        }
+        return;
+    }
+
+    auto proposed        = new AvCall;
+    proposed->d->manager = this;
+    if (!proposed->d->attachProposal(message.from(), id, media)) {
+        delete proposed;
+        return;
+    }
+
+    const bool usableAudio = proposed->d->requestedAudio && capabilities.audio;
+    const bool usableVideo = proposed->d->requestedVideo && capabilities.video;
+    if (!usableAudio && !usableVideo) {
+        Jingle::MessageInitiation reject(Jingle::MessageInitiation::Action::Reject, id);
+        reject.setReason(QStringLiteral("busy"), QStringLiteral("Busy"));
+        jingleManager->sendMessageInitiation(message.from(), reject);
+        delete proposed;
+        return;
+    }
+
+    sessions.append(proposed);
+    pending.append(proposed);
+    jmiCalls.insert(id, proposed);
+
+    Jingle::MessageInitiation ringing(Jingle::MessageInitiation::Action::Ringing, id);
+    jingleManager->sendMessageInitiation(message.from(), ringing);
+    emit q->incomingReady();
+}
+
 void AvCallManagerPrivate::incomingMessageInitiation(const XMPP::Message &message,
                                                      const Jingle::MessageInitiation &initiation)
 {
@@ -792,43 +816,10 @@ void AvCallManagerPrivate::incomingMessageInitiation(const XMPP::Message &messag
     auto       call       = jmiCalls.value(initiation.id(), nullptr);
 
     switch (initiation.action()) {
-    case Jingle::MessageInitiation::Action::Propose: {
-        if (ownMessage || message.spooled() || !jmiManager->enabled())
-            return;
-        if (call) {
-            if (call->d && !call->d->jmiClosed && message.from().compare(call->d->peer, false)) {
-                Jingle::MessageInitiation ringing(Jingle::MessageInitiation::Action::Ringing, initiation.id());
-                jmiManager->send(message.from(), ringing);
-            }
-            return;
-        }
-
-        auto proposed = new AvCall;
-        proposed->d->manager = this;
-        if (!proposed->d->attachProposal(message.from(), initiation)) {
-            delete proposed;
-            return;
-        }
-
-        const bool usableAudio = proposed->d->requestedAudio && capabilities.audio;
-        const bool usableVideo = proposed->d->requestedVideo && capabilities.video;
-        if (!usableAudio && !usableVideo) {
-            Jingle::MessageInitiation reject(Jingle::MessageInitiation::Action::Reject, initiation.id());
-            reject.setReason(QStringLiteral("busy"), QStringLiteral("Busy"));
-            jmiManager->send(message.from(), reject);
-            delete proposed;
-            return;
-        }
-
-        sessions.append(proposed);
-        pending.append(proposed);
-        jmiCalls.insert(initiation.id(), proposed);
-
-        Jingle::MessageInitiation ringing(Jingle::MessageInitiation::Action::Ringing, initiation.id());
-        jmiManager->send(message.from(), ringing);
-        emit q->incomingReady();
+    case Jingle::MessageInitiation::Action::Propose:
+        // Pure RTP proposals are surfaced through RTP::Manager::incomingProposal.
+        // Mixed/application-composite proposals deliberately remain generic.
         return;
-    }
 
     case Jingle::MessageInitiation::Action::Proceed:
         // A carbon from another local resource means that device accepted the
