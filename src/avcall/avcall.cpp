@@ -205,8 +205,9 @@ public:
     {
         if (jmiClosed)
             return;
-        jmiClosed  = true;
-        errorString = message;
+        jmiClosed   = true;
+        errorString  = message;
+        peer         = {};
         emit q->cancelled();
     }
 
