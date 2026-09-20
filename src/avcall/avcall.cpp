@@ -118,6 +118,11 @@ public:
     }
     ~AvCallPrivate() override
     {
+        if (!incoming && !session && !jmiId.isEmpty() && !jmiProceedSent && !jmiClosed) {
+            sendJmi(Jingle::MessageInitiation::Action::Retract, QStringLiteral("cancel"),
+                    QStringLiteral("Cancelled"));
+            jmiClosed = true;
+        }
         if (session)
             stopPsiMediaJingleTransmit(session);
         unlink();
@@ -237,16 +242,8 @@ public:
 
     void startOutgoing()
     {
-        if (!manager || session)
+        if (!manager || session || !jmiId.isEmpty())
             return;
-
-        manager->applyNetworkConfiguration();
-        session = manager->jingleManager->newSession(peer);
-        if (!session) {
-            fail(tr("Unable to create a Jingle call session."));
-            return;
-        }
-        setupSession();
 
         const bool needAudio = mode == AvCall::Audio || mode == AvCall::Both;
         const bool needVideo = mode == AvCall::Video || mode == AvCall::Both;
@@ -258,10 +255,51 @@ public:
             fail(tr("The requested media type is not supported by the current media backend."));
             return;
         }
+
         requestedAudio      = needAudio;
         requestedVideo      = needVideo;
         captureAudioConsent = needAudio;
         captureVideoConsent = needVideo;
+
+        if (peerFeatures.testFlag(AvCall::JingleMessageInitiation)
+            && manager->jingleManager->messageInitiationEnabled()) {
+            RTP::MediaSet media;
+            if (needAudio)
+                media |= RTP::Media::Audio;
+            if (needVideo)
+                media |= RTP::Media::Video;
+
+            jmiId = manager->rtpManager->propose(peer, media);
+            if (!jmiId.isEmpty()) {
+                // XEP-0353 proposes to the peer's bare JID. The resource that
+                // answers with <proceed/> becomes the actual Jingle peer.
+                peer = XMPP::Jid(peer.bare());
+                manager->jmiCalls.insert(jmiId, q);
+                return;
+            }
+        }
+
+        startOutgoingSession();
+    }
+
+    void startOutgoingSession()
+    {
+        if (!manager || session)
+            return;
+
+        manager->applyNetworkConfiguration();
+        session = jmiId.isEmpty() ? manager->jingleManager->newSession(peer)
+                                  : manager->jingleManager->newSession(peer, jmiId);
+        if (!session) {
+            if (!jmiId.isEmpty() && jmiProceedSent)
+                sendJmiFinish(QStringLiteral("expired"), QString());
+            fail(tr("Unable to create a Jingle call session."));
+            return;
+        }
+        setupSession();
+
+        const bool needAudio = requestedAudio;
+        const bool needVideo = requestedVideo;
 
         Jingle::Origin audioSenders = Jingle::Origin::Both;
         if (needAudio) {
@@ -591,6 +629,7 @@ public:
     QPointer<Jingle::Session>      session;
     XMPP::Jid                      peer;
     AvCall::Mode                   mode = AvCall::Audio;
+    AvCall::PeerFeatures           peerFeatures;
     int                            bitrate = -1;
     QString                        errorString;
     PsiMedia::VideoWidget         *videoWidget = nullptr;
@@ -627,10 +666,10 @@ AvCall::Mode AvCall::mode() const { return d->mode; }
 
 void AvCall::connectToJid(const XMPP::Jid &jid, Mode mode, int kbps, PeerFeatures features)
 {
-    Q_UNUSED(features)
-    d->peer    = jid;
-    d->mode    = mode;
-    d->bitrate = kbps;
+    d->peer         = jid;
+    d->mode         = mode;
+    d->peerFeatures = features;
+    d->bitrate      = kbps;
     d->startOutgoing();
 }
 
@@ -822,15 +861,35 @@ void AvCallManagerPrivate::incomingMessageInitiation(const XMPP::Message &messag
         return;
 
     case Jingle::MessageInitiation::Action::Proceed:
+        if (!call || !call->d || call->d->jmiClosed || call->d->session)
+            return;
         // A carbon from another local resource means that device accepted the
-        // call. Stop this resource from ringing; never auto-proceed ourselves.
-        if (ownMessage && call && call->d && !call->d->jmiProceedSent && !call->d->session)
-            call->d->cancelJmiUi(tr("Call answered on another device."));
+        // incoming call. Stop this resource from ringing; never auto-proceed.
+        if (ownMessage) {
+            if (call->d->incoming && !call->d->jmiProceedSent)
+                call->d->cancelJmiUi(tr("Call answered on another device."));
+            return;
+        }
+        // For an outgoing proposal, the resource that sends <proceed/> is the
+        // resource selected for the actual Jingle session.
+        if (!call->d->incoming && !call->d->jmiProceedSent
+            && message.from().compare(call->d->peer, false)) {
+            call->d->peer           = message.from();
+            call->d->jmiProceedSent = true;
+            call->d->startOutgoingSession();
+        }
         return;
 
     case Jingle::MessageInitiation::Action::Reject:
-        if (ownMessage && call && call->d && !call->d->jmiClosed && !call->d->session)
-            call->d->cancelJmiUi(tr("Call declined on another device."));
+        if (!call || !call->d || call->d->jmiClosed || call->d->session)
+            return;
+        if (ownMessage) {
+            if (call->d->incoming)
+                call->d->cancelJmiUi(tr("Call declined on another device."));
+            return;
+        }
+        if (!call->d->incoming && message.from().compare(call->d->peer, false))
+            call->d->cancelJmiUi(tr("Call was declined."));
         return;
 
     case Jingle::MessageInitiation::Action::Retract:

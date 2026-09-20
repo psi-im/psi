@@ -42,7 +42,7 @@ class AvCall : public QObject {
 public:
     enum Mode { Audio, Video, Both };
 
-    enum PeerFeature { IceTransport = 0x1, IceUdpTransport = 0x2 };
+    enum PeerFeature { IceTransport = 0x1, IceUdpTransport = 0x2, JingleMessageInitiation = 0x4 };
     Q_DECLARE_FLAGS(PeerFeatures, PeerFeature)
 
     AvCall(const AvCall &from);

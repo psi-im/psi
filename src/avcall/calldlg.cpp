@@ -29,6 +29,8 @@
 #include "xmpp_caps.h"
 #include "xmpp_client.h"
 
+#include <iris/xmpp-im/xmpp_jinglemessage.h>
+
 #include <QMessageBox>
 #include <QTime>
 #include <QTimer>
@@ -175,6 +177,8 @@ private slots:
                 features |= AvCall::IceTransport;
             if (caps.hasJingleIceUdp())
                 features |= AvCall::IceUdpTransport;
+            if (caps.test(XMPP::Jingle::MessageInitiation::ns()))
+                features |= AvCall::JingleMessageInitiation;
             sess->connectToJid(ui.le_to->text(), mode, kbps, features);
         } else {
             ui.le_to->setEnabled(false);
