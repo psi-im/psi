@@ -20,6 +20,7 @@
 #include "pepmanager.h"
 
 #include "iris/xmpp_client.h"
+#include "iris/xmpp_pubsubevent.h"
 #include "iris/xmpp_pubsubitem.h"
 #include "iris/xmpp_pubsubretraction.h"
 #include "iris/xmpp_serverinfomanager.h"
@@ -522,14 +523,21 @@ PEPGetTask *PEPManager::get(const Jid &jid, const QString &node, const QString &
 
 void PEPManager::messageReceived(const Message &m)
 {
-    if (m.type() != Message::Type::Error) {
-        const auto &psrItems = m.pubsubRetractions();
-        for (const PubSubRetraction &i : psrItems) {
-            emit itemRetracted(m.from(), m.pubsubNode(), i);
-        }
-        const auto &psItems = m.pubsubItems();
-        for (const PubSubItem &i : psItems) {
-            emit itemPublished(m.from(), m.pubsubNode(), i);
+    if (m.type() == Message::Type::Error)
+        return;
+
+    for (const auto &event : m.pubSubEvents()) {
+        if (event.type() != PubSubEvent::Type::Items)
+            continue;
+
+        for (const auto &retraction : event.retractions())
+            emit itemRetracted(m.from(), event.node(), retraction);
+
+        // Preserve the legacy PEP behavior: notification-only items are not
+        // surfaced as itemPublished() until callers explicitly support them.
+        for (const auto &item : event.items()) {
+            if (!item.payload().isNull())
+                emit itemPublished(m.from(), event.node(), item);
         }
     }
 }
