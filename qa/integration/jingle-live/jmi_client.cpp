@@ -4,6 +4,7 @@
 #include <iris/xmpp_client.h>
 #include <iris/xmpp_clientstream.h>
 #include <iris/xmpp_message.h>
+#include <iris/xmpp_status.h>
 #include <iris/xmpp_tasks.h>
 
 #include <QtCrypto>
@@ -233,15 +234,20 @@ int main(int argc, char **argv)
     endpoint.start(
         [&]() {
             if (role == QLatin1String("receiver")) {
-                QFile ready(readyPath);
-                if (!ready.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-                    finish(10, QStringLiteral("cannot create receiver ready file"));
-                    return;
-                }
-                ready.write(endpoint.client()->jid().full().toUtf8());
-                ready.write("\n");
-                ready.close();
-                qInfo("Receiver armed for JMI proposal");
+                // The real JMI proposal is addressed to a bare JID. Publish
+                // available presence first so Prosody has a routable resource.
+                endpoint.client()->setPresence(Status());
+                QTimer::singleShot(200, &app, [&]() {
+                    QFile ready(readyPath);
+                    if (!ready.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+                        finish(10, QStringLiteral("cannot create receiver ready file"));
+                        return;
+                    }
+                    ready.write(endpoint.client()->jid().full().toUtf8());
+                    ready.write("\n");
+                    ready.close();
+                    qInfo("Receiver armed for bare-JID JMI proposal");
+                });
                 return;
             }
 
