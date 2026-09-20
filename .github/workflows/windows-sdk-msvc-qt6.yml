@@ -6,7 +6,7 @@ on:
       sdk_tag:
         description: SDK release tag
         required: false
-        default: windows-sdk-msvc-qt6-v1
+        default: windows-sdk-msvc-qt6-v2
         type: string
       force_rebuild:
         description: Rebuild and replace the SDK asset even if it already exists
@@ -18,7 +18,7 @@ on:
       sdk_tag:
         description: SDK release tag
         required: false
-        default: windows-sdk-msvc-qt6-v1
+        default: windows-sdk-msvc-qt6-v2
         type: string
       force_rebuild:
         description: Rebuild and replace the SDK asset even if it already exists
@@ -123,7 +123,8 @@ jobs:
             openssl:x64-windows `
             zlib:x64-windows `
             hunspell:x64-windows `
-            minizip:x64-windows
+            minizip:x64-windows `
+            libsrtp[openssl]:x64-windows
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Stage vcpkg development and runtime files
@@ -139,7 +140,7 @@ jobs:
           # layout on Windows. Keep that compatibility facade in the SDK.
           Copy-Item (Join-Path $installed 'include\hunspell\*.h*') sdk\include -Force
 
-          foreach ($package in @('openssl', 'zlib', 'hunspell', 'minizip', 'libiconv')) {
+          foreach ($package in @('openssl', 'zlib', 'hunspell', 'minizip', 'libiconv', 'libsrtp')) {
             $copyright = Join-Path $installed "share\$package\copyright"
             if (Test-Path $copyright) {
               $target = Join-Path 'sdk\share\licenses' $package
@@ -156,6 +157,12 @@ jobs:
           }
           if (-not (Get-ChildItem sdk\lib -File | Where-Object Name -Match 'libcrypto.*\.lib$')) {
             throw 'OpenSSL crypto import library missing from SDK'
+          }
+          if (-not (Test-Path sdk\include\srtp2\srtp.h)) {
+            throw 'libSRTP headers missing from SDK'
+          }
+          if (-not (Get-ChildItem sdk\lib -File | Where-Object Name -Match 'srtp2.*\.lib$')) {
+            throw 'libSRTP import library missing from SDK'
           }
 
       - name: Build static Qt6Keychain
@@ -246,7 +253,7 @@ jobs:
           Target: Windows x64
           QtKeychain source: frankosterfeld/qtkeychain $env:QTKEYCHAIN_TAG (static)
           vcpkg revision: $vcpkgRevision
-          vcpkg packages: openssl, zlib, hunspell, minizip and transitive runtime dependencies
+          vcpkg packages: openssl, zlib, hunspell, minizip, libsrtp[openssl] and transitive runtime dependencies
           SDK purpose: non-Qt development/runtime dependencies for the modern Psi MSVC/Qt6 build
           "@ | Set-Content sdk\SDK-MANIFEST.txt -Encoding utf8
 
@@ -295,5 +302,5 @@ jobs:
               --repo "$GITHUB_REPOSITORY" \
               --target infra/windows-sdk-releases \
               --title "Psi Windows SDK (MSVC 2022 / Qt6)" \
-              --notes "Development/runtime SDK for the modern Windows build. Qt itself is installed from the official Qt binary repository; this SDK contains OpenSSL, zlib, Hunspell, minizip and static Qt6Keychain."
+              --notes "Development/runtime SDK for the modern Windows build. Qt itself is installed from the official Qt binary repository; this SDK contains OpenSSL, libSRTP, zlib, Hunspell, minizip and static Qt6Keychain."
           fi

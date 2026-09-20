@@ -17,18 +17,52 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  SDK_TAG: windows-sdk-msvc-qt6-v1
+  SDK_TAG: windows-sdk-msvc-qt6-v2
   SDK_ARCHIVE: psi-windows-sdk-msvc-qt6.zip
 
 jobs:
   check-sdk:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && !startsWith(github.ref_name, 'ai/')) ||
+      (github.event_name == 'pull_request' && !startsWith(github.head_ref, 'ai/'))
     name: Check modern dependency SDK
     runs-on: ubuntu-24.04
     outputs:
       exists: ${{ steps.check.outputs.exists }}
+      run_ci: ${{ steps.policy.outputs.run_ci }}
 
     steps:
+      - name: Resolve ai branch CI policy
+        id: policy
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          PUSH_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          run_ci=true
+          message=""
+
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            message="$(gh api "repos/$GITHUB_REPOSITORY/commits/$HEAD_SHA" --jq '.commit.message')"
+          elif [[ "$EVENT_NAME" == "push" ]]; then
+            message="$PUSH_COMMIT_MESSAGE"
+          fi
+
+          if [[ "$EVENT_NAME" != "workflow_dispatch" && "$BRANCH_NAME" == "ci/psimedia-integration" ]]; then
+            run_ci=false
+          elif [[ "$EVENT_NAME" != "workflow_dispatch" && "$BRANCH_NAME" == ai/* && "$message" == *"[skip ci]"* ]]; then
+            run_ci=false
+          fi
+
+          echo "run_ci=$run_ci" >> "$GITHUB_OUTPUT"
+
       - name: Check release asset
+        if: steps.policy.outputs.run_ci == 'true'
         id: check
         env:
           GH_TOKEN: ${{ github.token }}
@@ -50,12 +84,14 @@ jobs:
   build-sdk:
     name: Build missing modern dependency SDK
     needs: check-sdk
-    if: needs.check-sdk.outputs.exists != 'true'
+    if: >-
+      needs.check-sdk.outputs.run_ci == 'true' &&
+      needs.check-sdk.outputs.exists != 'true'
     permissions:
       contents: write
     uses: ./.github/workflows/windows-sdk-msvc-qt6.yml
     with:
-      sdk_tag: windows-sdk-msvc-qt6-v1
+      sdk_tag: windows-sdk-msvc-qt6-v2
       force_rebuild: false
 
   modern:
@@ -66,10 +102,11 @@ jobs:
     if: >-
       always() &&
       needs.check-sdk.result == 'success' &&
+      needs.check-sdk.outputs.run_ci == 'true' &&
       (needs.check-sdk.outputs.exists == 'true' || needs.build-sdk.result == 'success')
     permissions:
       contents: read
     uses: ./.github/workflows/windows-msvc-qt6-profile.yml
     with:
-      sdk_tag: windows-sdk-msvc-qt6-v1
+      sdk_tag: windows-sdk-msvc-qt6-v2
       sdk_archive: psi-windows-sdk-msvc-qt6.zip

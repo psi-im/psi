@@ -23,7 +23,15 @@
 
 MediaDeviceWatcher::MediaDeviceWatcher(QObject *parent) : QObject(parent)
 {
-    connect(&_features, &PsiMedia::Features::availibityChanged, this, &MediaDeviceWatcher::availibityChanged);
+    connect(&_features, &PsiMedia::Features::availibityChanged, this, [this] {
+        _featuresReady = false;
+        emit availibityChanged();
+        emit capabilitiesChanged();
+    });
+    connect(&_features, &PsiMedia::Features::updated, this, [this] {
+        _featuresReady = true;
+        emit capabilitiesChanged();
+    });
 }
 
 MediaDeviceWatcher *MediaDeviceWatcher::_instance = nullptr;

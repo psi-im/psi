@@ -12,6 +12,21 @@ on:
         required: false
         default: false
         type: boolean
+      chat_type:
+        description: BASIC, WEBKIT or WEBENGINE
+        required: false
+        default: WEBKIT
+        type: string
+      run_tests:
+        description: Build and run the avcall regression tests
+        required: false
+        default: false
+        type: boolean
+      package:
+        description: Produce install/package artifacts
+        required: false
+        default: true
+        type: boolean
       sdk_tag:
         description: Dependency SDK release tag
         required: false
@@ -88,14 +103,19 @@ jobs:
             mingw-w64-x86_64-qt5-multimedia
             mingw-w64-x86_64-qt5-svg
             mingw-w64-x86_64-qt5-tools
-            mingw-w64-x86_64-qtwebkit
             mingw-w64-x86_64-qt5-winextras
             mingw-w64-x86_64-hunspell
             mingw-w64-x86_64-minizip
             mingw-w64-x86_64-openssl
+            mingw-w64-x86_64-libsrtp
             mingw-w64-x86_64-usrsctp
             mingw-w64-x86_64-libomemo-c
             mingw-w64-x86_64-libotr
+
+      - name: Install QtWebKit for WEBKIT profile
+        if: inputs.chat_type == 'WEBKIT'
+        shell: msys2 {0}
+        run: pacman --noconfirm -S --needed mingw-w64-x86_64-qtwebkit
 
       - name: Download dependency SDK release
         shell: bash
@@ -145,6 +165,9 @@ jobs:
         env:
           PROFILE: ${{ inputs.profile }}
           ALLOW_FAILURE: ${{ inputs.allow_failure }}
+          CHAT_TYPE: ${{ inputs.chat_type }}
+          BUILD_TESTING: ${{ inputs.run_tests && 'ON' || 'OFF' }}
+          PACKAGE_ENABLED: ${{ inputs.package && 'ON' || 'OFF' }}
         run: |
           set -uo pipefail
           mkdir -p artifacts
@@ -168,7 +191,7 @@ jobs:
           exit "$status"
 
       - name: Upload release packages
-        if: steps.package.outputs.success == 'true'
+        if: inputs.package && steps.package.outputs.success == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: psi-windows-${{ inputs.profile }}-x64

@@ -182,8 +182,10 @@ private:
 
 class RtpPacket {
 public:
+    enum class Type { Rtp, Rtcp };
+
     RtpPacket();
-    RtpPacket(const QByteArray &rawValue, int portOffset);
+    RtpPacket(const QByteArray &rawValue, Type type);
     RtpPacket(const RtpPacket &other);
     ~RtpPacket();
     RtpPacket &operator=(const RtpPacket &other);
@@ -191,7 +193,7 @@ public:
     bool isNull() const;
 
     QByteArray rawValue() const;
-    int        portOffset() const;
+    Type       type() const;
 
 private:
     class Private;

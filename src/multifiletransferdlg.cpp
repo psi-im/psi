@@ -121,12 +121,7 @@ static void setMFTItemStateFromJingleState(MultiFileTransferItem *item, Jingle::
 {
     QString                       comment;
     MultiFileTransferModel::State state = MultiFileTransferModel::State::Pending;
-    if (app->state() > Jingle::State::Active) {
-        // TODO consider lastError and return Failed instead
-        state = MultiFileTransferModel::State::Done;
-    } else if (app->state() > Jingle::State::Pending) {
-        state = MultiFileTransferModel::State::Active;
-    }
+
     switch (app->state()) {
     case Jingle::State::Created:
         comment = QObject::tr("Not started");
@@ -141,19 +136,33 @@ static void setMFTItemStateFromJingleState(MultiFileTransferItem *item, Jingle::
         comment = QObject::tr("Waiting accept");
         break;
     case Jingle::State::Accepted:
+        state   = MultiFileTransferModel::State::Active;
         comment = QObject::tr("Accepted");
         break;
     case Jingle::State::Connecting:
+        state   = MultiFileTransferModel::State::Active;
         comment = QObject::tr("Connecting");
         break;
     case Jingle::State::Active:
+        state   = MultiFileTransferModel::State::Active;
         comment = QObject::tr("Transferring");
         break;
     case Jingle::State::Finishing:
-        break; // put error in comment here if any
-    case Jingle::State::Finished:
+        state   = MultiFileTransferModel::State::Active;
+        comment = QObject::tr("Finishing");
         break;
-    };
+    case Jingle::State::Finished: {
+        const auto reason = app->lastReason();
+        if (reason.isValid() && reason.condition() == Jingle::Reason::Condition::Success) {
+            state   = MultiFileTransferModel::State::Done;
+            comment = QObject::tr("Done");
+        } else {
+            state   = MultiFileTransferModel::State::Failed;
+            comment = reason.isValid() && !reason.text().isEmpty() ? reason.text() : QObject::tr("Failed");
+        }
+        break;
+    }
+    }
     item->setState(state, comment);
 }
 
@@ -222,7 +231,11 @@ void MultiFileTransferDlg::setupCommonSignals(Jingle::FileTransfer::Application 
         }
         setMFTItemStateFromJingleState(item, app);
         if (state == Jingle::State::Finished && app->senders() == Jingle::negateOrigin(d->session->role())) {
-            // transfer has just finished and we were the receiving side.
+            const auto reason = app->lastReason();
+            if (!reason.isValid() || reason.condition() != Jingle::Reason::Condition::Success)
+                return;
+
+            // transfer has just finished successfully and we were the receiving side.
             // if it was the last finished transfer xep recommends us to send session.terminate
             connect(item, &MultiFileTransferItem::openDirRequested, this,
                     [item]() { FileUtil::openFolder(item->filePath()); });
