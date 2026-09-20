@@ -629,7 +629,7 @@ public slots:
                 copyItem.icon = new PsiIcon(*copyItem.icon);
             }
             recent.push_front(copyItem);
-            if (recent.size() > *emotsSel_->rowSize() * 3) {
+            if (recent.size() > static_cast<decltype(recent.size())>(*emotsSel_->rowSize()) * 3) {
                 if (recent.back().icon) {
                     delete recent.back().icon;
                 }

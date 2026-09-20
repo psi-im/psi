@@ -3955,7 +3955,6 @@ void PsiAccount::itemPublished(const Jid &j, const QString &n, const PubSubItem 
         if (j.compare(d->jid, false)) {
             VCard4::VCard vcard(item.payload());
             QString       nick = d->jid.node();
-            bool          changeOwn;
             if (vcard) {
                 if (!vcard.nickName().isEmpty()) {
                     d->nickFromVCard = true;
@@ -3969,7 +3968,6 @@ void PsiAccount::itemPublished(const Jid &j, const QString &n, const PubSubItem 
                 }
                 setNick(nick);
 
-                changeOwn = vcard.isEmpty();
             }
         }
     }
