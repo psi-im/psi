@@ -21,6 +21,7 @@
 
 #include <iris/jingle-ice.h>
 #include <iris/jingle-message.h>
+#include <iris/jingle-rtp-description.h>
 #include <iris/jingle-rtp.h>
 #include <iris/jingle-session.h>
 #include <iris/xmpp_client.h>
@@ -137,15 +138,23 @@ public:
 
         bool audio = false;
         bool video = false;
-        for (const auto &description : initiation.descriptions()) {
-            if (description.ns != RTP::Description::ns())
+        for (const auto &element : initiation.descriptions()) {
+            // XEP-0353 is application-agnostic. AvCall is the RTP-specific
+            // consumer, so interpret the opaque JMI description only here.
+            const auto description = RTP::Description::fromXml(element, true);
+            if (!description)
                 return false;
-            if (description.media == QLatin1String("audio"))
+            if (description->media == QLatin1String("audio")) {
+                if (audio)
+                    return false;
                 audio = true;
-            else if (description.media == QLatin1String("video"))
+            } else if (description->media == QLatin1String("video")) {
+                if (video)
+                    return false;
                 video = true;
-            else
+            } else {
                 return false;
+            }
         }
         if (!audio && !video)
             return false;
