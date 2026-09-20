@@ -697,6 +697,12 @@ AvCallManagerPrivate::AvCallManagerPrivate(PsiAccount *account, AvCallManager *q
     jingleManager = pa->client()->jingleManager();
     rtpManager    = jingleManager->rtpManager();
     iceManager    = pa->client()->jingleICEManager();
+
+    // JMI support is a signalling-policy opt-in, not a snapshot of the
+    // currently available media devices/codecs. Keep it enabled while the
+    // native call manager exists; RTP::Manager and the handlers below validate
+    // concrete media/transport capability separately.
+    jingleManager->setMessageInitiationEnabled(true);
     rtpManager->setTransportNamespaces({ ICE::NS, ICE::NS_ICE_UDP });
 
     auto watcher = MediaDeviceWatcher::instance();
@@ -749,8 +755,15 @@ void AvCallManagerPrivate::applyNetworkConfiguration()
 void AvCallManagerPrivate::refreshCapabilities()
 {
     const auto next = currentNativeCallCapabilities();
-    if (jingleManager)
-        jingleManager->setMessageInitiationEnabled(next.available());
+    qInfo().noquote() << "AvCall capabilities:"
+                       << "backend=" << next.backendAvailable
+                       << "probe=" << next.probeComplete
+                       << "srtp=" << next.secureRtp
+                       << "audio=" << next.audio
+                       << "video=" << next.video
+                       << "audioIn=" << next.audioInput
+                       << "audioOut=" << next.audioOutput
+                       << "videoIn=" << next.videoInput;
     commitPsiMediaJingleCapabilities(rtpManager, capabilities, mediaProvider, next,
                                      [this] { pa->updateFeatures(); });
 
@@ -824,12 +837,7 @@ void AvCallManagerPrivate::incomingRtpProposal(const XMPP::Message &message, con
         return;
     }
     if (!jingleManager->messageInitiationEnabled()) {
-        qWarning().noquote() << "AvCall JMI: JMI disabled for proposal id=" << id
-                             << "backend=" << capabilities.backendAvailable
-                             << "probe=" << capabilities.probeComplete
-                             << "srtp=" << capabilities.secureRtp
-                             << "audio=" << capabilities.audio
-                             << "video=" << capabilities.video;
+        qWarning().noquote() << "AvCall JMI: signalling unexpectedly disabled id=" << id;
         return;
     }
 
