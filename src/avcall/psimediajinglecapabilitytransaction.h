@@ -30,10 +30,11 @@
  * advertised audio/video set changes, and always after RTP::Manager owns the
  * matching provider.
  */
-inline bool commitPsiMediaJingleCapabilities(
-    XMPP::Jingle::RTP::Manager *rtpManager, PsiMediaJingleCapabilities &current,
-    std::shared_ptr<XMPP::Jingle::RTP::MediaProvider> &provider, const PsiMediaJingleCapabilities &next,
-    const std::function<void()> &advertisedMediaChanged = {})
+inline bool commitPsiMediaJingleCapabilities(XMPP::Jingle::RTP::Manager                        *rtpManager,
+                                             PsiMediaJingleCapabilities                        &current,
+                                             std::shared_ptr<XMPP::Jingle::RTP::MediaProvider> &provider,
+                                             const PsiMediaJingleCapabilities                  &next,
+                                             const std::function<void()> &advertisedMediaChanged = {})
 {
     if (!rtpManager)
         return false;

@@ -1,0 +1,151 @@
+name: AI JMI Prosody CI
+
+on:
+  push:
+    branches:
+      - ai/xep-0353-jmi
+    paths:
+      - 'iris'
+      - 'qa/integration/jingle-live/**'
+      - '.github/workflows/ai-jmi-prosody.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  QCA_TAG: v3.0.7
+
+concurrency:
+  group: ai-jmi-prosody-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  xmpp-prosody-jmi:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout Psi JMI branch
+        uses: actions/checkout@v4
+        with:
+          ref: ai/xep-0353-jmi
+          submodules: false
+
+      - name: Initialize pinned Iris
+        shell: bash
+        run: git submodule update --init --depth 1 iris
+
+      - name: Install JMI live-test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake g++ ninja-build pkg-config qt6-base-dev \
+            libssl-dev zlib1g-dev prosody
+          sudo systemctl stop prosody.service 2>/dev/null || true
+          sudo service prosody stop 2>/dev/null || true
+
+      - name: Install QCA3 release package
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          rm -rf qca-release qca3.zip
+          mkdir qca-release
+          gh release download "$QCA_TAG" --repo psi-im/qca \
+            -p 'qca3-deb-ubuntu-24.04.zip' -O qca3.zip
+          (cd qca-release && cmake -E tar xvf ../qca3.zip)
+          test -n "$(find qca-release -type f -name '*.deb' -print -quit)"
+          sudo apt-get install -y ./qca-release/*.deb
+
+      - name: Build JMI live client
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S qa/integration/jingle-live -B _jmi-live-build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DPSI_SOURCE_DIR="$GITHUB_WORKSPACE"
+          cmake --build _jmi-live-build --target psi_jmi_live_client --parallel 4
+
+      - name: Start local Prosody
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PROSODY_DATA_DIR="$RUNNER_TEMP/prosody-data"
+          export PROSODY_PID_FILE="$RUNNER_TEMP/prosody.pid"
+          mkdir -p "$PROSODY_DATA_DIR"
+          cfg="$GITHUB_WORKSPACE/qa/integration/jingle-live/prosody.cfg.lua"
+          mkdir -p "$(dirname "$cfg")/certs"
+          prosodyctl --config "$cfg" check config
+          prosodyctl --config "$cfg" register user01 localhost ci-pass-01
+          prosodyctl --config "$cfg" register user02 localhost ci-pass-02
+          prosody -F --config "$cfg" >"$RUNNER_TEMP/prosody-jmi.log" 2>&1 &
+          echo $! >"$RUNNER_TEMP/prosody-jmi.pid"
+          for i in $(seq 1 100); do
+            if (echo > /dev/tcp/127.0.0.1/5222) 2>/dev/null; then
+              exit 0
+            fi
+            if ! kill -0 "$(cat "$RUNNER_TEMP/prosody-jmi.pid")" 2>/dev/null; then
+              cat "$RUNNER_TEMP/prosody-jmi.log"
+              exit 1
+            fi
+            sleep 0.1
+          done
+          cat "$RUNNER_TEMP/prosody-jmi.log"
+          exit 1
+
+      - name: Route Conversations-style JMI proposal through Prosody
+        shell: bash
+        run: |
+          set -euo pipefail
+          bin="$GITHUB_WORKSPACE/_jmi-live-build/psi_jmi_live_client"
+          ready="$RUNNER_TEMP/jmi.ready"
+          sender_log="$RUNNER_TEMP/jmi-sender.log"
+          receiver_log="$RUNNER_TEMP/jmi-receiver.log"
+          rm -f "$ready" "$sender_log" "$receiver_log"
+
+          "$bin" receiver user02@localhost/jmi-receiver ci-pass-02 \
+            user01@localhost "$ready" >"$receiver_log" 2>&1 &
+          receiver_pid=$!
+
+          for i in $(seq 1 200); do
+            if [[ -s "$ready" ]]; then break; fi
+            if ! kill -0 "$receiver_pid" 2>/dev/null; then
+              cat "$receiver_log"
+              exit 1
+            fi
+            sleep 0.1
+          done
+          test -s "$ready"
+
+          set +e
+          "$bin" sender user01@localhost/Conversations.UOrf ci-pass-01 \
+            user02@localhost '' >"$sender_log" 2>&1
+          sender_rc=$?
+          wait "$receiver_pid"
+          receiver_rc=$?
+          set -e
+
+          echo "LIVE_JMI_PROCESS_RC sender=$sender_rc receiver=$receiver_rc"
+          echo "--- sender log ---"
+          cat "$sender_log"
+          echo "--- receiver log ---"
+          cat "$receiver_log"
+
+          test "$sender_rc" -eq 0
+          test "$receiver_rc" -eq 0
+          grep -F "LIVE_JMI_GENERIC id= jmi-live-audio" "$receiver_log"
+          grep -F "LIVE_JMI_TYPED id= jmi-live-audio" "$receiver_log"
+          grep -F "audio= true video= false" "$receiver_log"
+          grep -F "LIVE_JMI_MESSAGE id= jmi-live-audio receipt= true store= true" "$receiver_log"
+          grep -F "LIVE_JMI_RESULT=success typed audio proposal delivered through Prosody" "$receiver_log"
+
+      - name: Show Prosody log
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f "$RUNNER_TEMP/prosody-jmi.pid" ]]; then
+            kill "$(cat "$RUNNER_TEMP/prosody-jmi.pid")" 2>/dev/null || true
+          fi
+          if [[ -f "$RUNNER_TEMP/prosody-jmi.log" ]]; then
+            tail -n 250 "$RUNNER_TEMP/prosody-jmi.log"
+          fi

@@ -876,6 +876,19 @@ public slots:
         AvCall          *sess = avCallManager->takeIncoming();
         AvCallEvent::Ptr ae(new AvCallEvent(sess->jid().full(), sess, account));
         ae->setTimeStamp(QDateTime::currentDateTime());
+
+        // A JMI retract or a carbon from another answering resource can arrive
+        // before the event is opened. Remove the stale event after the signal
+        // stack unwinds; dequeuing synchronously would destroy the AvCall while
+        // it is emitting cancelled().
+        const auto weakEvent = ae.toWeakRef();
+        connect(sess, &AvCall::cancelled, account, [account = account, weakEvent] {
+            QTimer::singleShot(0, account, [account, weakEvent] {
+                if (const auto event = weakEvent.toStrongRef())
+                    account->eventQueue()->dequeue(event);
+            });
+        });
+
         account->handleEvent(ae, IncomingStanza);
     }
 
@@ -3067,6 +3080,12 @@ void PsiAccount::processIncomingMessage(const Message &_m)
                 }
             }
         }
+
+        // JMI messages are protocol signalling, not chat events. Process
+        // ordinary message receipts above, but do not put the signalling
+        // stanza itself into the user's message/event queue.
+        if (dm2.jingleMessageInitiation().isValid())
+            return;
     }
 
     MessageEvent::Ptr me(new MessageEvent(m, this));
@@ -3967,7 +3986,6 @@ void PsiAccount::itemPublished(const Jid &j, const QString &n, const PubSubItem 
                     d->vcardPhotoUpdate(vcard.photo());
                 }
                 setNick(nick);
-
             }
         }
     }
@@ -4173,9 +4191,8 @@ void PsiAccount::actionVoice(const Jid &j)
         if (u && u->isAvailable()) {
             const UserResource *bestCallResource = nullptr;
             for (const auto &resource : u->userResourceList()) {
-                const auto features = d->client->capsManager()->features(j.withResource(resource.name()));
-                const bool callCapable
-                    = features.test(QStringLiteral("urn:xmpp:jingle:1"))
+                const auto features    = d->client->capsManager()->features(j.withResource(resource.name()));
+                const bool callCapable = features.test(QStringLiteral("urn:xmpp:jingle:1"))
                     && features.test(QStringLiteral("urn:xmpp:jingle:transports:ice-udp:1"))
                     && features.test(QStringLiteral("urn:xmpp:jingle:apps:rtp:1"))
                     && features.test(QStringLiteral("urn:xmpp:jingle:apps:dtls:0"))

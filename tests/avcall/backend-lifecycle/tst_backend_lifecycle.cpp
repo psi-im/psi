@@ -31,6 +31,7 @@ struct BackendStats {
 
 class FakeRtpChannel final : public QObject, public PsiMedia::RtpChannelContext {
     Q_OBJECT
+    Q_INTERFACES(PsiMedia::RtpChannelContext)
 public:
     QObject *qobject() override { return this; }
 
@@ -65,6 +66,7 @@ private:
 
 class FakeRtpSessionContext final : public QObject, public PsiMedia::RtpSessionContext {
     Q_OBJECT
+    Q_INTERFACES(PsiMedia::RtpSessionContext)
 public:
     explicit FakeRtpSessionContext(BackendStats *stats) : stats_(stats) { }
 
@@ -163,15 +165,15 @@ public:
     QList<PsiMedia::PPayloadInfo> remoteVideoPayloadInfo() const override { return {}; }
     QList<PsiMedia::PAudioParams> audioParams() const override { return {}; }
     QList<PsiMedia::PVideoParams> videoParams() const override { return {}; }
-    bool canTransmitAudio() const override { return controlAlive_; }
-    bool canTransmitVideo() const override { return controlAlive_; }
-    int  outputVolume() const override { return 100; }
-    void setOutputVolume(int) override { }
-    int  inputVolume() const override { return 100; }
-    void setInputVolume(int) override { }
-    Error errorCode() const override { return error_; }
-    PsiMedia::RtpChannelContext *audioRtpChannel() override { return &audio_; }
-    PsiMedia::RtpChannelContext *videoRtpChannel() override { return &video_; }
+    bool                          canTransmitAudio() const override { return controlAlive_; }
+    bool                          canTransmitVideo() const override { return controlAlive_; }
+    int                           outputVolume() const override { return 100; }
+    void                          setOutputVolume(int) override { }
+    int                           inputVolume() const override { return 100; }
+    void                          setInputVolume(int) override { }
+    Error                         errorCode() const override { return error_; }
+    PsiMedia::RtpChannelContext  *audioRtpChannel() override { return &audio_; }
+    PsiMedia::RtpChannelContext  *videoRtpChannel() override { return &video_; }
     void dumpPipeline(std::function<void(const QStringList &)> callback) override { callback({}); }
 
     FakeRtpChannel *audioChannel() { return &audio_; }
@@ -222,15 +224,16 @@ private:
         return false;
     }
 
-    BackendStats  *stats_ = nullptr;
+    BackendStats  *stats_        = nullptr;
     bool           controlAlive_ = false;
-    Error          error_ = ErrorGeneric;
+    Error          error_        = ErrorGeneric;
     FakeRtpChannel audio_;
     FakeRtpChannel video_;
 };
 
 class FakeProvider final : public QObject, public PsiMedia::Provider {
     Q_OBJECT
+    Q_INTERFACES(PsiMedia::Provider)
 public:
     QObject *qobject() override { return this; }
     bool     isInitialized() const override { return true; }
@@ -248,8 +251,8 @@ public:
 
     PsiMedia::AudioRecorderContext *createAudioRecorder() override { return nullptr; }
 
-    void resetStats() { stats_ = {}; }
-    BackendStats &stats() { return stats_; }
+    void                   resetStats() { stats_ = {}; }
+    BackendStats          &stats() { return stats_; }
     FakeRtpSessionContext *context() const { return context_; }
 
 signals:
@@ -318,30 +321,30 @@ private slots:
 
     void capabilitySnapshotLimitsMediaTypes()
     {
-        auto audioOnly = fullCapabilities();
-        audioOnly.video = false;
+        auto audioOnly     = fullCapabilities();
+        audioOnly.video    = false;
         auto audioProvider = makePsiMediaJingleProvider(audioOnly);
         QCOMPARE(audioProvider->mediaTypes(), QStringList { QStringLiteral("audio") });
 
-        auto receiveOnlyVideo = fullCapabilities();
+        auto receiveOnlyVideo       = fullCapabilities();
         receiveOnlyVideo.audio      = false;
         receiveOnlyVideo.videoInput = false;
-        auto videoProvider = makePsiMediaJingleProvider(receiveOnlyVideo);
+        auto videoProvider          = makePsiMediaJingleProvider(receiveOnlyVideo);
         QCOMPARE(videoProvider->mediaTypes(), QStringList { QStringLiteral("video") });
 
-        auto unavailable = fullCapabilities();
+        auto unavailable             = fullCapabilities();
         unavailable.backendAvailable = false;
         QVERIFY(makePsiMediaJingleProvider(unavailable)->mediaTypes().isEmpty());
-        unavailable                   = fullCapabilities();
-        unavailable.probeComplete     = false;
-        QVERIFY(makePsiMediaJingleProvider(unavailable)->mediaTypes().isEmpty());
         unavailable               = fullCapabilities();
-        unavailable.secureRtp     = false;
+        unavailable.probeComplete = false;
+        QVERIFY(makePsiMediaJingleProvider(unavailable)->mediaTypes().isEmpty());
+        unavailable           = fullCapabilities();
+        unavailable.secureRtp = false;
         QVERIFY(makePsiMediaJingleProvider(unavailable)->mediaTypes().isEmpty());
 
-        auto disabled = fullCapabilities();
-        disabled.audio = false;
-        disabled.video = false;
+        auto disabled         = fullCapabilities();
+        disabled.audio        = false;
+        disabled.video        = false;
         auto disabledProvider = makePsiMediaJingleProvider(disabled);
         QVERIFY(disabledProvider->mediaTypes().isEmpty());
         QVERIFY(!disabledProvider->createSession());
@@ -384,16 +387,15 @@ private slots:
         Harness harness;
         QVERIFY(harness.session->setOperationPolicy(shortOperationPolicy()));
         QStringList     events;
-        int             callbacks = 0;
+        int             callbacks     = 0;
         int             runtimeErrors = 0;
         RTP::MediaError operationError;
         RTP::MediaError runtimeError;
-        connect(harness.session.get(), &RTP::MediaSession::runtimeError, this,
-                [&](const RTP::MediaError &error) {
-                    events.append(QStringLiteral("runtime"));
-                    runtimeError = error;
-                    ++runtimeErrors;
-                });
+        connect(harness.session.get(), &RTP::MediaSession::runtimeError, this, [&](const RTP::MediaError &error) {
+            events.append(QStringLiteral("runtime"));
+            runtimeError = error;
+            ++runtimeErrors;
+        });
 
         auto operation = harness.session->prepareLocalOffer(
             harness.endpoint.get(),
@@ -440,18 +442,17 @@ private slots:
         QVERIFY(audio);
         QVERIFY(video);
 
-        int audioCallbacks = 0;
+        int  audioCallbacks = 0;
         auto audioOperation = session->prepareLocalOffer(
-            audio.get(), [&](RTP::MediaOperation::Id, std::optional<RTP::Description>, RTP::MediaError) {
-                ++audioCallbacks;
-            });
+            audio.get(),
+            [&](RTP::MediaOperation::Id, std::optional<RTP::Description>, RTP::MediaError) { ++audioCallbacks; });
         QTRY_COMPARE(provider_.stats().startCalls, 1);
         audioOperation->cancel();
 
-        bool videoPrepared = false;
+        bool videoPrepared  = false;
         auto videoOperation = session->prepareLocalOffer(
-            video.get(), [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description,
-                             RTP::MediaError error) {
+            video.get(),
+            [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description, RTP::MediaError error) {
                 QVERIFY(!error);
                 QVERIFY(description);
                 QCOMPARE(description->media, QStringLiteral("video"));
@@ -484,31 +485,29 @@ private slots:
         QVERIFY(audio);
         QVERIFY(video);
 
-        int audioCallbacks = 0;
+        int  audioCallbacks = 0;
         auto audioOperation = session->prepareLocalOffer(
-            audio.get(), [&](RTP::MediaOperation::Id, std::optional<RTP::Description>, RTP::MediaError) {
-                ++audioCallbacks;
-            });
+            audio.get(),
+            [&](RTP::MediaOperation::Id, std::optional<RTP::Description>, RTP::MediaError) { ++audioCallbacks; });
         QTRY_COMPARE(provider_.stats().startCalls, 1);
         audioOperation->cancel();
 
         QStringList     events;
         int             videoCallbacks = 0;
-        int             runtimeErrors = 0;
+        int             runtimeErrors  = 0;
         RTP::MediaError videoError;
-        auto videoOperation = session->prepareLocalOffer(
-            video.get(), [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description,
-                             RTP::MediaError error) {
+        auto            videoOperation = session->prepareLocalOffer(
+            video.get(),
+            [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description, RTP::MediaError error) {
                 QVERIFY(!description);
                 events.append(QStringLiteral("video"));
                 videoError = error;
                 ++videoCallbacks;
             });
-        connect(session.get(), &RTP::MediaSession::runtimeError, this,
-                [&](const RTP::MediaError &) {
-                    events.append(QStringLiteral("runtime"));
-                    ++runtimeErrors;
-                });
+        connect(session.get(), &RTP::MediaSession::runtimeError, this, [&](const RTP::MediaError &) {
+            events.append(QStringLiteral("runtime"));
+            ++runtimeErrors;
+        });
         QCoreApplication::processEvents(QEventLoop::AllEvents);
         QVERIFY(!videoCallbacks);
 
@@ -542,11 +541,10 @@ private slots:
     void cancelDuringStarting()
     {
         Harness harness;
-        bool callbackCalled = false;
-        auto operation = harness.session->prepareLocalOffer(
-            harness.endpoint.get(), [&](RTP::MediaOperation::Id, std::optional<RTP::Description>, RTP::MediaError) {
-                callbackCalled = true;
-            });
+        bool    callbackCalled = false;
+        auto    operation      = harness.session->prepareLocalOffer(
+            harness.endpoint.get(),
+            [&](RTP::MediaOperation::Id, std::optional<RTP::Description>, RTP::MediaError) { callbackCalled = true; });
         QTRY_COMPARE(provider_.stats().startCalls, 1);
 
         operation->cancel();
@@ -561,7 +559,7 @@ private slots:
 
     void startErrorCleansUpBeforeSignal()
     {
-        Harness harness;
+        Harness         harness;
         bool            callbackCalled = false;
         RTP::MediaError operationError;
         int             runtimeErrors = 0;
@@ -596,10 +594,10 @@ private slots:
 
     void applyErrorDoesNotResumeBackend()
     {
-        Harness harness;
+        Harness                         harness;
         std::optional<RTP::Description> local;
-        bool                             prepared = false;
-        auto prepare = harness.session->prepareLocalOffer(
+        bool                            prepared = false;
+        auto                            prepare  = harness.session->prepareLocalOffer(
             harness.endpoint.get(),
             [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description, RTP::MediaError error) {
                 QVERIFY(!error);
@@ -617,12 +615,11 @@ private slots:
         int             runtimeErrors = 0;
         connect(harness.session.get(), &RTP::MediaSession::runtimeError, this,
                 [&](const RTP::MediaError &) { ++runtimeErrors; });
-        auto apply = harness.session->applyNegotiation(
-            harness.endpoint.get(), *local, audioDescription(),
-            [&](RTP::MediaOperation::Id, RTP::MediaError error) {
-                applied    = true;
-                applyError = std::move(error);
-            });
+        auto apply = harness.session->applyNegotiation(harness.endpoint.get(), *local, audioDescription(),
+                                                       [&](RTP::MediaOperation::Id, RTP::MediaError error) {
+                                                           applied    = true;
+                                                           applyError = std::move(error);
+                                                       });
         QTRY_COMPARE(provider_.stats().updateCalls, 1);
         provider_.context()->failAfterCleanup(PsiMedia::RtpSessionContext::ErrorSystem);
 
@@ -640,14 +637,14 @@ private slots:
 
     void applyRejectsLocalPayloadTypeNotCommittedByBackend()
     {
-        Harness harness;
+        Harness                         harness;
         std::optional<RTP::Description> local;
-        bool prepared = false;
-        auto prepare = harness.session->prepareLocalOffer(
+        bool                            prepared = false;
+        auto                            prepare  = harness.session->prepareLocalOffer(
             harness.endpoint.get(),
             [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description, RTP::MediaError error) {
                 QVERIFY(!error);
-                local = std::move(description);
+                local    = std::move(description);
                 prepared = true;
             });
         QTRY_COMPARE(provider_.stats().startCalls, 1);
@@ -656,17 +653,16 @@ private slots:
         QVERIFY(local);
         prepare.reset();
 
-        auto accepted = *local;
+        auto accepted           = *local;
         accepted.payloads[0].id = 112;
 
-        bool applied = false;
+        bool            applied = false;
         RTP::MediaError applyError;
-        auto apply = harness.session->applyNegotiation(
-            harness.endpoint.get(), accepted, audioDescription(),
-            [&](RTP::MediaOperation::Id, RTP::MediaError error) {
-                applied = true;
-                applyError = std::move(error);
-            });
+        auto            apply = harness.session->applyNegotiation(harness.endpoint.get(), accepted, audioDescription(),
+                                                                  [&](RTP::MediaOperation::Id, RTP::MediaError error) {
+                                                           applied    = true;
+                                                           applyError = std::move(error);
+                                                       });
         QTRY_COMPARE(provider_.stats().updateCalls, 1);
         provider_.context()->completePreferences();
         QTRY_VERIFY(applied);
@@ -680,14 +676,14 @@ private slots:
 
     void applyRejectsLocalFmtpNotConfirmedByBackend()
     {
-        Harness harness;
+        Harness                         harness;
         std::optional<RTP::Description> local;
-        bool prepared = false;
-        auto prepare = harness.session->prepareLocalOffer(
+        bool                            prepared = false;
+        auto                            prepare  = harness.session->prepareLocalOffer(
             harness.endpoint.get(),
             [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description, RTP::MediaError error) {
                 QVERIFY(!error);
-                local = std::move(description);
+                local    = std::move(description);
                 prepared = true;
             });
         QTRY_COMPARE(provider_.stats().startCalls, 1);
@@ -699,14 +695,13 @@ private slots:
         auto accepted = *local;
         accepted.payloads[0].parameters.insert(QStringLiteral("stereo"), QStringLiteral("1"));
 
-        bool applied = false;
+        bool            applied = false;
         RTP::MediaError applyError;
-        auto apply = harness.session->applyNegotiation(
-            harness.endpoint.get(), accepted, audioDescription(),
-            [&](RTP::MediaOperation::Id, RTP::MediaError error) {
-                applied = true;
-                applyError = std::move(error);
-            });
+        auto            apply = harness.session->applyNegotiation(harness.endpoint.get(), accepted, audioDescription(),
+                                                                  [&](RTP::MediaOperation::Id, RTP::MediaError error) {
+                                                           applied    = true;
+                                                           applyError = std::move(error);
+                                                       });
         QTRY_COMPARE(provider_.stats().updateCalls, 1);
         provider_.context()->completePreferences();
         QTRY_VERIFY(applied);
@@ -720,10 +715,10 @@ private slots:
 
     void activeErrorAfterCleanupIsTerminal()
     {
-        Harness harness;
+        Harness                         harness;
         std::optional<RTP::Description> local;
-        bool                             prepared = false;
-        auto prepare = harness.session->prepareLocalOffer(
+        bool                            prepared = false;
+        auto                            prepare  = harness.session->prepareLocalOffer(
             harness.endpoint.get(),
             [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description, RTP::MediaError error) {
                 QVERIFY(!error);
@@ -737,12 +732,11 @@ private slots:
         prepare.reset();
 
         bool applied = false;
-        auto apply = harness.session->applyNegotiation(
-            harness.endpoint.get(), *local, audioDescription(),
-            [&](RTP::MediaOperation::Id, RTP::MediaError error) {
-                QVERIFY(!error);
-                applied = true;
-            });
+        auto apply   = harness.session->applyNegotiation(harness.endpoint.get(), *local, audioDescription(),
+                                                         [&](RTP::MediaOperation::Id, RTP::MediaError error) {
+                                                           QVERIFY(!error);
+                                                           applied = true;
+                                                       });
         QTRY_COMPARE(provider_.stats().updateCalls, 1);
         provider_.context()->completePreferences();
         QTRY_VERIFY(applied);
@@ -765,8 +759,8 @@ private slots:
     void packetWriterMayDeleteBackendSynchronously()
     {
         Harness harness;
-        bool prepared = false;
-        auto operation = harness.session->prepareLocalOffer(
+        bool    prepared  = false;
+        auto    operation = harness.session->prepareLocalOffer(
             harness.endpoint.get(),
             [&](RTP::MediaOperation::Id, std::optional<RTP::Description>, RTP::MediaError error) {
                 QVERIFY(!error);
@@ -789,12 +783,11 @@ private slots:
         context->audioChannel()->queueOutgoing(second);
 
         int writes = 0;
-        QVERIFY(harness.endpoint->attachPacketIo(
-            [&](QByteArray, RTP::SrtpContext::Packet) {
-                ++writes;
-                harness.session.reset();
-                return false;
-            }));
+        QVERIFY(harness.endpoint->attachPacketIo([&](QByteArray, RTP::SrtpContext::Packet) {
+            ++writes;
+            harness.session.reset();
+            return false;
+        }));
 
         QCOMPARE(writes, 1);
         QVERIFY(!harness.session);
@@ -807,8 +800,8 @@ private slots:
     void repeatedEndpointStopIsIdempotent()
     {
         Harness harness;
-        bool prepared = false;
-        auto operation = harness.session->prepareLocalOffer(
+        bool    prepared  = false;
+        auto    operation = harness.session->prepareLocalOffer(
             harness.endpoint.get(),
             [&](RTP::MediaOperation::Id, std::optional<RTP::Description>, RTP::MediaError error) {
                 QVERIFY(!error);
@@ -833,8 +826,8 @@ private slots:
     void providerStoppedAfterCleanupIsTerminal()
     {
         Harness harness;
-        bool prepared = false;
-        auto operation = harness.session->prepareLocalOffer(
+        bool    prepared  = false;
+        auto    operation = harness.session->prepareLocalOffer(
             harness.endpoint.get(),
             [&](RTP::MediaOperation::Id, std::optional<RTP::Description>, RTP::MediaError error) {
                 QVERIFY(!error);
@@ -862,8 +855,8 @@ private slots:
     void runtimeErrorMayDeleteBackendSynchronously()
     {
         Harness harness;
-        bool prepared = false;
-        auto operation = harness.session->prepareLocalOffer(
+        bool    prepared  = false;
+        auto    operation = harness.session->prepareLocalOffer(
             harness.endpoint.get(),
             [&](RTP::MediaOperation::Id, std::optional<RTP::Description>, RTP::MediaError error) {
                 QVERIFY(!error);

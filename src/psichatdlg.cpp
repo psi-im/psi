@@ -293,8 +293,8 @@ void PsiChatDlg::rebuildEncryptionSession()
 
     XMPP::EncryptionContext context;
     context.recipients.append(controller->capabilityJid(jid()));
-    encryptionSession_ = client->encryptionManager()->startSession(
-        selectedEncryptionMethod_, XMPP::EncryptionMethod::XmppStanza, context);
+    encryptionSession_ = client->encryptionManager()->startSession(selectedEncryptionMethod_,
+                                                                   XMPP::EncryptionMethod::XmppStanza, context);
 }
 
 void PsiChatDlg::initUi()
@@ -953,9 +953,8 @@ void PsiChatDlg::updateEncryption()
     }
 
     if (!selectedEncryptionMethod_.isEmpty() && selectedEncryptionMethod_ != QLatin1String("openpgp")) {
-        const auto peer = controller->capabilityJid(jid());
-        const bool contextChanged
-            = encryptionSession_
+        const auto peer           = controller->capabilityJid(jid());
+        const bool contextChanged = encryptionSession_
             && (encryptionSession_->context().recipients.size() != 1
                 || encryptionSession_->context().recipients.constFirst() != peer);
         if (!encryptionSession_ || encryptionSession_->isClosing() || contextChanged)
@@ -966,8 +965,7 @@ void PsiChatDlg::updateEncryption()
     const auto    methods    = controller->methods(XMPP::EncryptionMethod::XmppStanza);
     const bool    hasMethods = !methods.isEmpty() || !methodId.isEmpty();
 
-    const QIcon encryptionIcon
-        = IconsetFactory::icon(methodId.isEmpty() ? "psi/cryptoNo" : "psi/cryptoYes").icon();
+    const QIcon encryptionIcon = IconsetFactory::icon(methodId.isEmpty() ? "psi/cryptoNo" : "psi/cryptoYes").icon();
     action->setIcon(encryptionIcon);
     action->setEnabled(hasMethods);
     action->setChecked(!methodId.isEmpty());
@@ -1137,10 +1135,7 @@ void PsiChatDlg::buildMenu()
 
 void PsiChatDlg::updateCounter() { ui_.lb_count->setNum(int(chatEdit()->toPlainText().length())); }
 
-bool PsiChatDlg::isPgpEncryptionEnabled() const
-{
-    return selectedEncryptionMethod_ == QLatin1String("openpgp");
-}
+bool PsiChatDlg::isPgpEncryptionEnabled() const { return selectedEncryptionMethod_ == QLatin1String("openpgp"); }
 
 void PsiChatDlg::appendSysMsg(const QString &str)
 {

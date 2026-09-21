@@ -100,8 +100,7 @@ int main()
 
     check(!Policy::shouldTransmit(true, true, true, false),
           "device loss did not synchronously close the transmit gate");
-    check(!Policy::shouldTransmit(true, true, false, true),
-          "device gain bypassed negotiated senders");
+    check(!Policy::shouldTransmit(true, true, false, true), "device gain bypassed negotiated senders");
     check(Policy::shouldTransmit(true, true, true, true), "fully authorized media did not open the transmit gate");
 
     return 0;

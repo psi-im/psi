@@ -25,8 +25,7 @@
 
 bool PsiMediaJingleCapabilities::supportsMedia(const QString &media) const
 {
-    return available()
-        && ((media == QLatin1String("audio") && audio) || (media == QLatin1String("video") && video));
+    return available() && ((media == QLatin1String("audio") && audio) || (media == QLatin1String("video") && video));
 }
 
 QStringList PsiMediaJingleCapabilities::mediaTypes() const
@@ -57,15 +56,9 @@ QString PsiMediaJingleCapabilities::unavailableReason() const
 namespace {
 namespace RTP = XMPP::Jingle::RTP;
 
-RTP::MediaError backendError(const QString &text)
-{
-    return { RTP::MediaError::Code::Backend, text };
-}
+RTP::MediaError backendError(const QString &text) { return { RTP::MediaError::Code::Backend, text }; }
 
-RTP::MediaError unsupportedError(const QString &text)
-{
-    return { RTP::MediaError::Code::Unsupported, text };
-}
+RTP::MediaError unsupportedError(const QString &text) { return { RTP::MediaError::Code::Unsupported, text }; }
 
 std::optional<RTP::PayloadType> toRtpPayload(const PsiMedia::PayloadInfo &input)
 {
@@ -128,7 +121,6 @@ bool hasUnsupportedAnswerFeatures(const RTP::Description &answer)
     return false;
 }
 
-
 bool payloadMatchesBackend(const RTP::PayloadType &accepted, const RTP::PayloadType &actual)
 {
     return accepted.id == actual.id && accepted.name.compare(actual.name, Qt::CaseInsensitive) == 0
@@ -144,9 +136,8 @@ bool descriptionMatchesBackend(const RTP::Description &accepted, const RTP::Desc
         return false;
 
     for (const auto &payload : accepted.payloads) {
-        const auto it = std::find_if(actual.payloads.cbegin(), actual.payloads.cend(), [&](const auto &candidate) {
-            return candidate.id == payload.id;
-        });
+        const auto it = std::find_if(actual.payloads.cbegin(), actual.payloads.cend(),
+                                     [&](const auto &candidate) { return candidate.id == payload.id; });
         if (it == actual.payloads.cend() || !payloadMatchesBackend(payload, *it))
             return false;
     }
@@ -164,7 +155,7 @@ public:
     bool attachPacketIo(PacketWriter writer) override;
     void receivePacket(const QByteArray &data, RTP::SrtpContext::Packet kind) override;
 
-    RTP::Description localOffer() const override { return prepared_.value_or(RTP::Description {}); }
+    RTP::Description                localOffer() const override { return prepared_.value_or(RTP::Description {}); }
     std::optional<RTP::Description> makeAnswer(const RTP::Description &) const override { return {}; }
     bool acceptsAnswer(const RTP::Description &, const RTP::Description &answer) const override
     {
@@ -184,12 +175,12 @@ private:
     void invalidateSession();
     void drainOutgoing();
 
-    BackendSession                  *session_ = nullptr;
-    QString                          media_;
+    BackendSession                 *session_ = nullptr;
+    QString                         media_;
     std::optional<RTP::Description> prepared_;
-    PacketWriter                     writer_;
-    QMetaObject::Connection          readyReadConnection_;
-    bool                             stopped_ = false;
+    PacketWriter                    writer_;
+    QMetaObject::Connection         readyReadConnection_;
+    bool                            stopped_ = false;
 };
 
 class BackendSession final : public RTP::MediaSession {
@@ -232,9 +223,8 @@ public:
             // this signal. Capture the provider error while its context still
             // carries lastStatus, then make the adapter terminal before any
             // completion/runtime callback can synchronously tear the call down.
-            const auto code = rtp_.errorCode();
-            const auto error
-                = backendError(QStringLiteral("psimedia RTP session error (%1)").arg(int(code)));
+            const auto code  = rtp_.errorCode();
+            const auto error = backendError(QStringLiteral("psimedia RTP session error (%1)").arg(int(code)));
             if (state_ == State::Failed || state_ == State::Stopped)
                 return;
             state_ = State::Failed;
@@ -449,8 +439,8 @@ private:
     enum class State { Unstarted, Starting, Running, Stopping, Stopped, Failed };
 
     struct Pending {
-        RTP::MediaOperation::Id         id = 0;
-        Kind                            kind = Kind::PrepareOffer;
+        RTP::MediaOperation::Id         id       = 0;
+        Kind                            kind     = Kind::PrepareOffer;
         Endpoint                       *endpoint = nullptr;
         std::optional<RTP::Description> local;
         std::optional<RTP::Description> remote;
@@ -589,8 +579,8 @@ private:
     {
         if (!endpoint || !endpoints_.contains(endpoint) || state_ != State::Running)
             return {};
-        const auto payloads = endpoint->media() == QLatin1String("audio") ? rtp_.localAudioPayloadInfo()
-                                                                          : rtp_.localVideoPayloadInfo();
+        const auto payloads
+            = endpoint->media() == QLatin1String("audio") ? rtp_.localAudioPayloadInfo() : rtp_.localVideoPayloadInfo();
         RTP::Description result;
         result.media   = endpoint->media();
         result.rtcpMux = true;
@@ -698,7 +688,7 @@ private:
 
     void failCurrentAndCall(const RTP::MediaError &error)
     {
-        const bool hadRunning = running_.has_value();
+        const bool               hadRunning = running_.has_value();
         QPointer<BackendSession> guard(this);
         if (hadRunning)
             finishRunning(error);
@@ -730,9 +720,9 @@ private:
         }
     }
 
-    QStringList                   mediaTypes_;
+    QStringList                  mediaTypes_;
     PsiMedia::RtpSession         rtp_;
-    State                        state_ = State::Unstarted;
+    State                        state_        = State::Unstarted;
     bool                         audioEnabled_ = false;
     bool                         videoEnabled_ = false;
     QList<PsiMedia::PayloadInfo> audioRemote_;
@@ -760,7 +750,7 @@ void Endpoint::detachPacketIo()
 {
     QObject::disconnect(readyReadConnection_);
     readyReadConnection_ = {};
-    writer_               = {};
+    writer_              = {};
 }
 
 void Endpoint::backendUnavailable()
@@ -797,9 +787,9 @@ void Endpoint::receivePacket(const QByteArray &data, RTP::SrtpContext::Packet ki
     auto channel = session_->channel(media_);
     if (!channel)
         return;
-    channel->write(PsiMedia::RtpPacket(data, kind == RTP::SrtpContext::Packet::Rtp
-                                                     ? PsiMedia::RtpPacket::Type::Rtp
-                                                     : PsiMedia::RtpPacket::Type::Rtcp));
+    channel->write(PsiMedia::RtpPacket(data,
+                                       kind == RTP::SrtpContext::Packet::Rtp ? PsiMedia::RtpPacket::Type::Rtp
+                                                                             : PsiMedia::RtpPacket::Type::Rtcp));
 }
 
 void Endpoint::stop()
@@ -821,7 +811,7 @@ void Endpoint::drainOutgoing()
         return;
 
     struct OutgoingPacket {
-        QByteArray                data;
+        QByteArray               data;
         RTP::SrtpContext::Packet kind;
     };
     QList<OutgoingPacket> batch;

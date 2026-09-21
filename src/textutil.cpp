@@ -502,10 +502,10 @@ QString TextUtil::linkify(const QString &in)
 #ifdef WEBKIT
             linked = QString("<a href=\"%1\">").arg(href);
 #else
-            const QPalette palette   = qApp->palette();
-            const auto     linkColor = ColorOpt::ensureContrast(
-                ColorOpt::instance()->color("options.ui.look.colors.messages.link"),
-                palette.color(QPalette::Base), palette.color(QPalette::Text));
+            const QPalette palette = qApp->palette();
+            const auto     linkColor
+                = ColorOpt::ensureContrast(ColorOpt::instance()->color("options.ui.look.colors.messages.link"),
+                                           palette.color(QPalette::Base), palette.color(QPalette::Text));
             // we have visited link as well but it's no applicable to QTextEdit or we have to track visited manually
             linked = QString("<a href=\"%1\" style=\"color:%2\">").arg(href, linkColor.name());
 #endif

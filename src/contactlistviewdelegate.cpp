@@ -319,9 +319,8 @@ void ContactListViewDelegate::Private::colorOptionChanged(const QString &option)
     }
     if (bulkUpdate
         || (!updated && (option == groupHeaderBackgroundColorPath || option == groupHeaderForegroundColorPath))) {
-        _groupHeaderBackgroundColor
-            = ColorOpt::adaptBackground(ColorOpt::instance()->color(groupHeaderBackgroundColorPath),
-                                        contactList->palette());
+        _groupHeaderBackgroundColor = ColorOpt::adaptBackground(
+            ColorOpt::instance()->color(groupHeaderBackgroundColorPath), contactList->palette());
         _groupHeaderForegroundColor
             = ColorOpt::ensureContrast(ColorOpt::instance()->color(groupHeaderForegroundColorPath),
                                        _groupHeaderBackgroundColor, contactList->palette().color(QPalette::Text));

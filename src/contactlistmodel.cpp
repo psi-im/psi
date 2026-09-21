@@ -189,6 +189,10 @@ void ContactListModel::Private::addOperation(PsiContact *contact, ContactListMod
         Q_ASSERT(false);
     }
 
+    if (operation == AddContact and !contact->account()) {
+        qFatal("no account");
+    }
+
     if (!operationQueue.contains(contact)) {
         operationQueue[contact] = operation;
     } else {

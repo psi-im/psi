@@ -59,12 +59,12 @@ public:
     void setSessionData(bool isMuc, bool isMucPrivate, const XMPP::Jid &jid, const QString name);
     void setLocalNickname(const QString &nickname);
 
-    void insertText(const QString &text, QTextCursor &insertCursor);
+    void        insertText(const QString &text, QTextCursor &insertCursor);
     QTextCursor insertTextWithRange(const QString &text, QTextCursor &insertCursor);
     QTextCursor insertTextFragmentWithRange(const QString &text, QTextCursor &insertCursor);
-    void appendText(const QString &text);
-    void dispatchMessage(const MessageView &);
-    bool handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdit);
+    void        appendText(const QString &text);
+    void        dispatchMessage(const MessageView &);
+    bool        handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdit);
 
     void      deferredScroll();
     void      doTrackBar();
