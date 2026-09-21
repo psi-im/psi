@@ -367,8 +367,8 @@ Repository: `psi-im/iris`.
    select a profile the backend cannot use. Validate the selected profile again at activation.
    Replace both the Iris manager capability gate and the ICE DTLS setup call sites; preserve
    DTLS-only SCTP/data-channel operation when secure RTP is unavailable.
-8. Once the new path is exercised by Psi:
-   - remove `SrtpContext` packet crypto from Iris;
+8. As part of this Phase 2 refactor (not as a later compatibility cleanup):
+   - remove `SrtpContext`/`SrtpSession` packet crypto from Iris;
    - remove direct libSRTP includes/linking;
    - remove `IRIS_ENABLE_SRTP`, `FindSRTP`, pkg-config/CMake SRTP consumer dependencies;
    - update `docs/jingle-rtp-design.md` to describe the new ownership.
@@ -380,24 +380,24 @@ Repository: `psi-im/iris`.
 
 ### Phase 2 implementation shape
 
-The chosen Iris boundary is additive at first:
+The chosen Iris boundary is a direct replacement; no compatibility layer for the short-lived
+pre-migration Iris RTP API is required.
 
-- `MediaEndpoint` remains responsible for per-content codec negotiation only.
-- `MediaProvider` gains a secure-RTP profile capability query so the manager can intersect the
-  actual backend with `Dtls::supportedSRTPProfiles()` before DTLS starts.
-- `MediaSession`, not `MediaEndpoint`, gains the protected group packet API. It accepts
+- `MediaEndpoint` is per-content codec negotiation only. Remove its packet-I/O methods.
+- `MediaProvider` exposes secure-RTP profiles so the manager can intersect the actual backend
+  with `Dtls::supportedSRTPProfiles()` before DTLS starts.
+- `MediaSession`, not `MediaEndpoint`, owns the protected group packet API. It accepts
   transactional endpoint-route metadata, configures/invalidates multiple opaque associations,
   receives protected packets tagged with association+epoch, and exposes one protected egress
   callback for the whole media session.
 - An opaque association token maps one-to-one to an Iris `IceConnection`/DTLS association.
   Bundled endpoints share the token; unbundled audio/video use distinct tokens. The token has
-  session-local identity only and must not expose Jingle/BUNDLE classes to the backend.
+  session-local identity only and does not expose Jingle/BUNDLE classes to the backend.
 - Iris keeps key material in secure storage through the DTLS/export boundary and the Psi adapter
   performs only the synchronous conversion required by the psimedia ABI. No key is logged or
   retained in ordinary signaling objects.
-- The existing per-endpoint `supportsPacketIo()/attachPacketIo()/receivePacket()` path remains
-  temporarily as migration compatibility while Iris/Psi tests are converted, then is removed
-  together with `SrtpSession` packet crypto.
+- Remove `SrtpContext`, `SrtpSession`, per-endpoint packet routing and direct libSRTP from Iris
+  as part of Phase 2 rather than retaining a transitional production path.
 
 Incoming flow becomes `ICE -> RFC7983/RFC5761 classification -> protected MediaSession ingress
 -> psimedia/libSRTP authentication -> group router/rtpsession`. Iris must not route on unauthenticated
