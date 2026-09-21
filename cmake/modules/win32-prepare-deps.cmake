@@ -395,11 +395,12 @@ if(WIN32)
         ${CMAKE_SHARED_LIBRARY_PREFIX}stdc++-*.dll
         ${CMAKE_SHARED_LIBRARY_PREFIX}winpthread-*.dll
         ${CMAKE_SHARED_LIBRARY_PREFIX}xslt-*.dll
-        ${CMAKE_SHARED_LIBRARY_PREFIX}zlib*.dll
+        *zlib*.dll
         ${CMAKE_SHARED_LIBRARY_PREFIX}zstd.dll
         legacy.dll
         ${CMAKE_SHARED_LIBRARY_PREFIX}protobuf-c${D}.dll
         ${CMAKE_SHARED_LIBRARY_PREFIX}ssleay32.dll
+        ${CMAKE_SHARED_LIBRARY_PREFIX}srtp2*.dll
         ${CMAKE_SHARED_LIBRARY_PREFIX}z${D}.dll
         )
     if(USE_MXE)
