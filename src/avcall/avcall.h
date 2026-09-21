@@ -89,10 +89,10 @@ public:
     AvCall *createOutgoing();
     AvCall *takeIncoming();
 
-    static void config();
-    static bool isSupported();
-    static bool isAudioSupported();
-    static bool isVideoSupported();
+    static void    config();
+    static bool    isSupported();
+    static bool    isAudioSupported();
+    static bool    isVideoSupported();
     static QString unsupportedReason();
 
     void setSelfAddress(const QHostAddress &addr);

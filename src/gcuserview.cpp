@@ -60,28 +60,28 @@ public:
         colorForeground_ = ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-foreground");
         colorBackground_ = ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-background");
         colorBackground_ = ColorOpt::adaptBackground(colorBackground_, view->palette());
-        colorForeground_ = ColorOpt::ensureContrast(colorForeground_, colorBackground_,
-                                                    view->palette().color(QPalette::Text));
-        colorModerator_  = ColorOpt::instance()->color("options.ui.look.colors.muc.role-moderator");
-        colorParticipant_ = ColorOpt::instance()->color("options.ui.look.colors.muc.role-participant");
-        colorVisitor_     = ColorOpt::instance()->color("options.ui.look.colors.muc.role-visitor");
-        colorNoRole_      = ColorOpt::instance()->color("options.ui.look.colors.muc.role-norole");
+        colorForeground_
+            = ColorOpt::ensureContrast(colorForeground_, colorBackground_, view->palette().color(QPalette::Text));
+        colorModerator_         = ColorOpt::instance()->color("options.ui.look.colors.muc.role-moderator");
+        colorParticipant_       = ColorOpt::instance()->color("options.ui.look.colors.muc.role-participant");
+        colorVisitor_           = ColorOpt::instance()->color("options.ui.look.colors.muc.role-visitor");
+        colorNoRole_            = ColorOpt::instance()->color("options.ui.look.colors.muc.role-norole");
         const QColor background = view->palette().color(QPalette::Base);
         const QColor fallback   = view->palette().color(QPalette::Text);
         colorModerator_         = ColorOpt::ensureContrast(colorModerator_, background, fallback);
         colorParticipant_       = ColorOpt::ensureContrast(colorParticipant_, background, fallback);
         colorVisitor_           = ColorOpt::ensureContrast(colorVisitor_, background, fallback);
         colorNoRole_            = ColorOpt::ensureContrast(colorNoRole_, background, fallback);
-        showGroups_       = o->getOption("options.ui.muc.userlist.show-groups").toBool();
-        slimGroups_       = o->getOption("options.ui.muc.userlist.use-slim-group-headings").toBool();
-        nickColoring_     = o->getOption("options.ui.muc.userlist.nick-coloring").toBool();
-        showClients_      = o->getOption("options.ui.muc.userlist.show-client-icons").toBool();
-        showAffiliations_ = o->getOption("options.ui.muc.userlist.show-affiliation-icons").toBool();
-        showStatusIcons_  = o->getOption("options.ui.muc.userlist.show-status-icons").toBool();
-        showAvatar_       = o->getOption("options.ui.muc.userlist.avatars.show").toBool();
-        avatarSize_       = pointToPixel(o->getOption("options.ui.muc.userlist.avatars.size").toInt());
-        avatarAtLeft_     = o->getOption("options.ui.muc.userlist.avatars.avatars-at-left").toBool();
-        avatarRadius_     = pointToPixel(o->getOption("options.ui.muc.userlist.avatars.radius").toInt());
+        showGroups_             = o->getOption("options.ui.muc.userlist.show-groups").toBool();
+        slimGroups_             = o->getOption("options.ui.muc.userlist.use-slim-group-headings").toBool();
+        nickColoring_           = o->getOption("options.ui.muc.userlist.nick-coloring").toBool();
+        showClients_            = o->getOption("options.ui.muc.userlist.show-client-icons").toBool();
+        showAffiliations_       = o->getOption("options.ui.muc.userlist.show-affiliation-icons").toBool();
+        showStatusIcons_        = o->getOption("options.ui.muc.userlist.show-status-icons").toBool();
+        showAvatar_             = o->getOption("options.ui.muc.userlist.avatars.show").toBool();
+        avatarSize_             = pointToPixel(o->getOption("options.ui.muc.userlist.avatars.size").toInt());
+        avatarAtLeft_           = o->getOption("options.ui.muc.userlist.avatars.avatars-at-left").toBool();
+        avatarRadius_           = pointToPixel(o->getOption("options.ui.muc.userlist.avatars.radius").toInt());
 
         QFont font;
         font.fromString(o->getOption("options.ui.look.font.contactlist").toString());

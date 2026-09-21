@@ -39,35 +39,35 @@ public:
     void setVideoOutputWidget(PsiMedia::VideoWidgetContext *) override { }
     void setVideoPreviewWidget(PsiMedia::VideoWidgetContext *) override { }
 #endif
-    void setRecorder(QIODevice *) override { }
-    void stopRecording() override { }
-    void setLocalAudioPreferences(const QList<PsiMedia::PAudioParams> &) override { }
-    void setLocalVideoPreferences(const QList<PsiMedia::PVideoParams> &) override { }
-    void setMaximumSendingBitrate(int) override { }
-    void setRemoteAudioPreferences(const QList<PsiMedia::PPayloadInfo> &) override { }
-    void setRemoteVideoPreferences(const QList<PsiMedia::PPayloadInfo> &) override { }
-    void start() override { }
-    void updatePreferences() override { }
-    void transmitAudio() override { }
-    void transmitVideo() override { }
-    void pauseAudio() override { }
-    void pauseVideo() override { }
-    void stop() override { }
+    void                          setRecorder(QIODevice *) override { }
+    void                          stopRecording() override { }
+    void                          setLocalAudioPreferences(const QList<PsiMedia::PAudioParams> &) override { }
+    void                          setLocalVideoPreferences(const QList<PsiMedia::PVideoParams> &) override { }
+    void                          setMaximumSendingBitrate(int) override { }
+    void                          setRemoteAudioPreferences(const QList<PsiMedia::PPayloadInfo> &) override { }
+    void                          setRemoteVideoPreferences(const QList<PsiMedia::PPayloadInfo> &) override { }
+    void                          start() override { }
+    void                          updatePreferences() override { }
+    void                          transmitAudio() override { }
+    void                          transmitVideo() override { }
+    void                          pauseAudio() override { }
+    void                          pauseVideo() override { }
+    void                          stop() override { }
     QList<PsiMedia::PPayloadInfo> localAudioPayloadInfo() const override { return {}; }
     QList<PsiMedia::PPayloadInfo> localVideoPayloadInfo() const override { return {}; }
     QList<PsiMedia::PPayloadInfo> remoteAudioPayloadInfo() const override { return {}; }
     QList<PsiMedia::PPayloadInfo> remoteVideoPayloadInfo() const override { return {}; }
     QList<PsiMedia::PAudioParams> audioParams() const override { return {}; }
     QList<PsiMedia::PVideoParams> videoParams() const override { return {}; }
-    bool canTransmitAudio() const override { return false; }
-    bool canTransmitVideo() const override { return false; }
-    int  outputVolume() const override { return 100; }
-    void setOutputVolume(int) override { }
-    int  inputVolume() const override { return 100; }
-    void setInputVolume(int) override { }
-    Error errorCode() const override { return ErrorGeneric; }
-    PsiMedia::RtpChannelContext *audioRtpChannel() override { return nullptr; }
-    PsiMedia::RtpChannelContext *videoRtpChannel() override { return nullptr; }
+    bool                          canTransmitAudio() const override { return false; }
+    bool                          canTransmitVideo() const override { return false; }
+    int                           outputVolume() const override { return 100; }
+    void                          setOutputVolume(int) override { }
+    int                           inputVolume() const override { return 100; }
+    void                          setInputVolume(int) override { }
+    Error                         errorCode() const override { return ErrorGeneric; }
+    PsiMedia::RtpChannelContext  *audioRtpChannel() override { return nullptr; }
+    PsiMedia::RtpChannelContext  *videoRtpChannel() override { return nullptr; }
     void dumpPipeline(std::function<void(const QStringList &)> callback) override { callback({}); }
 
 signals:
@@ -85,12 +85,12 @@ class CapabilityProvider final : public QObject, public PsiMedia::Provider {
     Q_OBJECT
     Q_INTERFACES(PsiMedia::Provider)
 public:
-    QObject *qobject() override { return this; }
-    bool     isInitialized() const override { return true; }
-    QString  creditName() const override { return QStringLiteral("capability-test"); }
-    QString  creditText() const override { return {}; }
-    PsiMedia::FeaturesContext *createFeatures() override { return nullptr; }
-    PsiMedia::RtpSessionContext *createRtpSession() override { return new CapabilityRtpSessionContext; }
+    QObject                        *qobject() override { return this; }
+    bool                            isInitialized() const override { return true; }
+    QString                         creditName() const override { return QStringLiteral("capability-test"); }
+    QString                         creditText() const override { return {}; }
+    PsiMedia::FeaturesContext      *createFeatures() override { return nullptr; }
+    PsiMedia::RtpSessionContext    *createRtpSession() override { return new CapabilityRtpSessionContext; }
     PsiMedia::AudioRecorderContext *createAudioRecorder() override { return nullptr; }
 
 signals:
@@ -137,8 +137,8 @@ void commitCapabilities(XMPP::Client &client, RTP::Manager *rtpManager, PsiMedia
                         const PsiMediaJingleCapabilities &next, std::shared_ptr<RTP::MediaProvider> &provider,
                         int &featureRefreshes)
 {
-    const auto oldMedia = current.mediaTypes();
-    const auto newMedia = next.mediaTypes();
+    const auto oldMedia    = current.mediaTypes();
+    const auto newMedia    = next.mediaTypes();
     bool       callbackRan = false;
 
     const bool committed = commitPsiMediaJingleCapabilities(rtpManager, current, provider, next, [&] {
@@ -202,10 +202,10 @@ private slots:
 
         // An identical authoritative snapshot is a strict no-op: no provider
         // replacement and no disco/caps refresh.
-        const auto sameProvider = provider;
+        const auto sameProvider     = provider;
         bool       duplicateRefresh = false;
-        QVERIFY(!commitPsiMediaJingleCapabilities(rtpManager, current, provider, full,
-                                                   [&] { duplicateRefresh = true; }));
+        QVERIFY(
+            !commitPsiMediaJingleCapabilities(rtpManager, current, provider, full, [&] { duplicateRefresh = true; }));
         QVERIFY(!duplicateRefresh);
         QVERIFY(provider == sameProvider);
         QCOMPARE(featureRefreshes, 1);
@@ -216,7 +216,7 @@ private slots:
         auto oldSession = provider->createSession();
         QVERIFY(oldSession);
 
-        auto audioOnly = full;
+        auto audioOnly  = full;
         audioOnly.video = false;
         commitCapabilities(client, rtpManager, current, audioOnly, provider, featureRefreshes);
         QCOMPARE(featureRefreshes, 2);
@@ -231,7 +231,7 @@ private slots:
         QVERIFY(!newSession->createEndpoint(QStringLiteral("video"), QStringLiteral("video")));
         QVERIFY(oldSession->createEndpoint(QStringLiteral("video"), QStringLiteral("video")));
 
-        auto unavailable = full;
+        auto unavailable             = full;
         unavailable.backendAvailable = false;
         commitCapabilities(client, rtpManager, current, unavailable, provider, featureRefreshes);
         QCOMPARE(featureRefreshes, 3);
@@ -265,7 +265,7 @@ private slots:
         const auto before = advertisedHash(client);
         QVERIFY(!before.isEmpty());
 
-        auto deviceOnly = full;
+        auto deviceOnly       = full;
         deviceOnly.audioInput = false;
         QCOMPARE(deviceOnly.mediaTypes(), full.mediaTypes());
 
@@ -296,7 +296,7 @@ private slots:
         int                                 featureRefreshes = 0;
         client.setFeatures(clientFeatures(current));
 
-        auto probing = fullCapabilities();
+        auto probing          = fullCapabilities();
         probing.probeComplete = false;
         commitCapabilities(client, rtpManager, current, probing, provider, featureRefreshes);
         QCOMPARE(featureRefreshes, 0);

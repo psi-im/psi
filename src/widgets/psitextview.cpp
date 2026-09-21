@@ -298,16 +298,13 @@ void PsiTextView::scrollToTop() { verticalScrollBar()->setValue(verticalScrollBa
  * This function is provided for convenience. Please see
  * PsiRichText::appendText() documentation for usage details.
  */
-void PsiTextView::appendText(const QString &text)
-{
-    appendTextWithRange(text);
-}
+void PsiTextView::appendText(const QString &text) { appendTextWithRange(text); }
 
 QTextCursor PsiTextView::appendTextWithRange(const QString &text)
 {
     QTextCursor            cursor    = textCursor();
     PsiRichText::Selection selection = PsiRichText::saveSelection(this, cursor);
-    QTextCursor             inserted;
+    QTextCursor            inserted;
 
     PsiRichText::appendText(document(), cursor, text, true, d->objectParsers, &inserted);
 
@@ -320,17 +317,14 @@ QTextCursor PsiTextView::appendTextWithRange(const QString &text)
  * This function is provided for convenience. Please see
  * PsiRichText::appendText() documentation for usage details.
  */
-void PsiTextView::insertText(const QString &text, QTextCursor &cursor)
-{
-    insertTextWithRange(text, cursor);
-}
+void PsiTextView::insertText(const QString &text, QTextCursor &cursor) { insertTextWithRange(text, cursor); }
 
 QTextCursor PsiTextView::insertTextWithRange(const QString &text, QTextCursor &cursor)
 {
     Q_ASSERT(!cursor.isNull());
     QTextCursor            selCursor = textCursor();
     PsiRichText::Selection selection = PsiRichText::saveSelection(this, selCursor);
-    QTextCursor             inserted;
+    QTextCursor            inserted;
 
     // qDebug() << "DEBUG TO INSERT:" << text;
     PsiRichText::appendText(document(), cursor, text, false, d->objectParsers, &inserted);
@@ -345,7 +339,7 @@ QTextCursor PsiTextView::insertTextFragmentWithRange(const QString &text, QTextC
     Q_ASSERT(!cursor.isNull());
     QTextCursor            selCursor = textCursor();
     PsiRichText::Selection selection = PsiRichText::saveSelection(this, selCursor);
-    QTextCursor             inserted;
+    QTextCursor            inserted;
 
     PsiRichText::insertTextFragment(document(), cursor, text, d->objectParsers, &inserted);
 

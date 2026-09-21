@@ -122,7 +122,7 @@ private:
     void                      recoverDecryption(const QString &methodId, const XMPP::Jid &displayPeer,
                                                 const XMPP::EncryptionMetadata &metadata);
     void                      performDecryptionRecovery(const QString &methodId, const XMPP::Jid &displayPeer,
-                                                       const XMPP::EncryptionMetadata &metadata);
+                                                        const XMPP::EncryptionMetadata &metadata);
 
     PsiAccount                                             *account_ = nullptr;
     XMPP::Client                                           *client_  = nullptr;

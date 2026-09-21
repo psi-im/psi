@@ -113,7 +113,7 @@ QColor ColorOpt::ensureContrast(const QColor &foreground, const QColor &backgrou
 
     constexpr int steps = 10;
     for (int step = 1; step <= steps; ++step) {
-        const auto blend = [step](int from, int to) { return (from * (steps - step) + to * step) / steps; };
+        const auto   blend = [step](int from, int to) { return (from * (steps - step) + to * step) / steps; };
         const QColor candidate(blend(foreground.red(), fallback.red()), blend(foreground.green(), fallback.green()),
                                blend(foreground.blue(), fallback.blue()), foreground.alpha());
         if (compatibleColors(candidate, background))

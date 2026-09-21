@@ -18,13 +18,13 @@
 #include <utility>
 
 using namespace XMPP;
-namespace J = XMPP::Jingle;
+namespace J   = XMPP::Jingle;
 namespace RTP = XMPP::Jingle::RTP;
 
 class XmppEndpoint final : public QObject {
 public:
-    XmppEndpoint(Jid jid, QString password, QObject *parent = nullptr)
-        : QObject(parent), jid_(std::move(jid)), password_(std::move(password))
+    XmppEndpoint(Jid jid, QString password, QObject *parent = nullptr) :
+        QObject(parent), jid_(std::move(jid)), password_(std::move(password))
     {
     }
 
@@ -41,7 +41,7 @@ public:
 
     void start(std::function<void()> ready, std::function<void(const QString &)> failed)
     {
-        ready_ = std::move(ready);
+        ready_  = std::move(ready);
         failed_ = std::move(failed);
 
         connector_ = new AdvancedConnector;
@@ -68,7 +68,7 @@ public:
             stream_->continueAfterWarning();
         });
         connect(stream_, &ClientStream::authenticated, this, [this]() {
-            const Jid bound = stream_->jid();
+            const Jid     bound    = stream_->jid();
             const QString resource = bound.resource().isEmpty() ? jid_.resource() : bound.resource();
             client_.start(jid_.domain(), jid_.node(), password_, resource);
             if (client_.isSessionRequired()) {
@@ -85,9 +85,8 @@ public:
                 becomeReady();
             }
         });
-        connect(stream_, &Stream::error, this, [this](int error) {
-            fail(QStringLiteral("XMPP stream error %1").arg(error));
-        });
+        connect(stream_, &Stream::error, this,
+                [this](int error) { fail(QStringLiteral("XMPP stream error %1").arg(error)); });
         connect(stream_, &Stream::connectionClosed, this, [this]() {
             if (!readyState_)
                 fail(QStringLiteral("XMPP stream closed before authentication"));
@@ -120,13 +119,13 @@ private:
             failed_(message);
     }
 
-    Client client_;
-    Jid jid_;
-    QString password_;
-    AdvancedConnector *connector_ = nullptr;
-    ClientStream *stream_ = nullptr;
-    bool readyState_ = false;
-    std::function<void()> ready_;
+    Client                               client_;
+    Jid                                  jid_;
+    QString                              password_;
+    AdvancedConnector                   *connector_  = nullptr;
+    ClientStream                        *stream_     = nullptr;
+    bool                                 readyState_ = false;
+    std::function<void()>                ready_;
     std::function<void(const QString &)> failed_;
 };
 
@@ -136,25 +135,24 @@ int main(int argc, char **argv)
     QCA::Initializer qca;
 
     if (argc != 6) {
-        qCritical() << "Usage:" << argv[0]
-                    << "<sender|receiver> <jid/resource> <password> <peer-jid> <ready-file>";
+        qCritical() << "Usage:" << argv[0] << "<sender|receiver> <jid/resource> <password> <peer-jid> <ready-file>";
         return 2;
     }
 
     const QString role = QString::fromLocal8Bit(argv[1]);
-    const Jid localJid(QString::fromLocal8Bit(argv[2]));
+    const Jid     localJid(QString::fromLocal8Bit(argv[2]));
     const QString password = QString::fromLocal8Bit(argv[3]);
-    const Jid peerJid(QString::fromLocal8Bit(argv[4]));
+    const Jid     peerJid(QString::fromLocal8Bit(argv[4]));
     const QString readyPath = QString::fromLocal8Bit(argv[5]);
 
-    if ((role != QLatin1String("sender") && role != QLatin1String("receiver"))
-        || !localJid.isValid() || localJid.resource().isEmpty() || !peerJid.isValid()) {
+    if ((role != QLatin1String("sender") && role != QLatin1String("receiver")) || !localJid.isValid()
+        || localJid.resource().isEmpty() || !peerJid.isValid()) {
         qCritical() << "Invalid live-JMI arguments";
         return 3;
     }
 
     bool finishing = false;
-    auto finish = [&](int code, const QString &message) {
+    auto finish    = [&](int code, const QString &message) {
         if (finishing)
             return;
         finishing = true;
@@ -173,54 +171,52 @@ int main(int argc, char **argv)
     XmppEndpoint endpoint(localJid, password, &app);
 
     bool genericSeen = false;
-    bool typedSeen = false;
+    bool typedSeen   = false;
     bool messageSeen = false;
 
     if (role == QLatin1String("receiver")) {
         auto *manager = endpoint.client()->jingleManager();
-        auto *rtp = manager->rtpManager();
+        auto *rtp     = manager->rtpManager();
         manager->setMessageInitiationEnabled(true);
 
         QObject::connect(manager, &J::Manager::incomingMessageInitiation, &app,
                          [&](const Message &message, const J::MessageInitiation &initiation) {
-            qInfo().noquote() << "LIVE_JMI_GENERIC id=" << initiation.id()
-                              << "from=" << message.from().full()
-                              << "descriptions=" << initiation.descriptions().size();
-            if (initiation.action() != J::MessageInitiation::Action::Propose
-                || initiation.id() != QLatin1String("jmi-live-audio")
-                || initiation.descriptions().size() != 1) {
-                finish(20, QStringLiteral("generic JMI proposal mismatch"));
-                return;
-            }
-            genericSeen = true;
-        });
+                             qInfo().noquote()
+                                 << "LIVE_JMI_GENERIC id=" << initiation.id() << "from=" << message.from().full()
+                                 << "descriptions=" << initiation.descriptions().size();
+                             if (initiation.action() != J::MessageInitiation::Action::Propose
+                                 || initiation.id() != QLatin1String("jmi-live-audio")
+                                 || initiation.descriptions().size() != 1) {
+                                 finish(20, QStringLiteral("generic JMI proposal mismatch"));
+                                 return;
+                             }
+                             genericSeen = true;
+                         });
 
         QObject::connect(rtp, &RTP::Manager::incomingProposal, &app,
                          [&](const Message &message, const QString &id, RTP::MediaSet media) {
-            qInfo().noquote() << "LIVE_JMI_TYPED id=" << id
-                              << "from=" << message.from().full()
-                              << "audio=" << media.testFlag(RTP::Media::Audio)
-                              << "video=" << media.testFlag(RTP::Media::Video);
-            if (id != QLatin1String("jmi-live-audio")
-                || !media.testFlag(RTP::Media::Audio)
-                || media.testFlag(RTP::Media::Video)) {
-                finish(21, QStringLiteral("typed RTP proposal mismatch"));
-                return;
-            }
-            typedSeen = true;
-            if (genericSeen && messageSeen)
-                finish(0, QStringLiteral("typed audio proposal delivered through Prosody"));
-        });
+                             qInfo().noquote() << "LIVE_JMI_TYPED id=" << id << "from=" << message.from().full()
+                                               << "audio=" << media.testFlag(RTP::Media::Audio)
+                                               << "video=" << media.testFlag(RTP::Media::Video);
+                             if (id != QLatin1String("jmi-live-audio") || !media.testFlag(RTP::Media::Audio)
+                                 || media.testFlag(RTP::Media::Video)) {
+                                 finish(21, QStringLiteral("typed RTP proposal mismatch"));
+                                 return;
+                             }
+                             typedSeen = true;
+                             if (genericSeen && messageSeen)
+                                 finish(0, QStringLiteral("typed audio proposal delivered through Prosody"));
+                         });
 
         QObject::connect(endpoint.client(), &Client::messageReceived, &app, [&](const Message &message) {
-            const auto effective = message.displayMessage();
+            const auto effective  = message.displayMessage();
             const auto initiation = effective.jingleMessageInitiation();
             if (!initiation.isValid())
                 return;
             const bool receipt = effective.messageReceipt() == ReceiptRequest;
-            const bool store = effective.processingHints().testFlag(Message::Store);
-            qInfo().noquote() << "LIVE_JMI_MESSAGE id=" << initiation.id()
-                              << "receipt=" << receipt << "store=" << store;
+            const bool store   = effective.processingHints().testFlag(Message::Store);
+            qInfo().noquote() << "LIVE_JMI_MESSAGE id=" << initiation.id() << "receipt=" << receipt
+                              << "store=" << store;
             if (!receipt || !store) {
                 finish(22, QStringLiteral("receipt/store metadata was not preserved"));
                 return;
@@ -251,21 +247,18 @@ int main(int argc, char **argv)
                 return;
             }
 
-            const QString raw = QStringLiteral(
-                "<message id='jm-propose-live' to='%1' type='chat' xml:lang='en'>"
-                "<propose xmlns='urn:xmpp:jingle-message:0' id='jmi-live-audio'>"
-                "<description xmlns='urn:xmpp:jingle:apps:rtp:1' media='audio'/>"
-                "</propose>"
-                "<request xmlns='urn:xmpp:receipts'/>"
-                "<store xmlns='urn:xmpp:hints'/>"
-                "</message>")
-                .arg(peerJid.bare());
+            const QString raw = QStringLiteral("<message id='jm-propose-live' to='%1' type='chat' xml:lang='en'>"
+                                               "<propose xmlns='urn:xmpp:jingle-message:0' id='jmi-live-audio'>"
+                                               "<description xmlns='urn:xmpp:jingle:apps:rtp:1' media='audio'/>"
+                                               "</propose>"
+                                               "<request xmlns='urn:xmpp:receipts'/>"
+                                               "<store xmlns='urn:xmpp:hints'/>"
+                                               "</message>")
+                                    .arg(peerJid.bare());
 
             qInfo().noquote() << "LIVE_JMI_SEND=" << raw;
             endpoint.client()->send(raw);
-            QTimer::singleShot(500, &app, [&]() {
-                finish(0, QStringLiteral("proposal sent"));
-            });
+            QTimer::singleShot(500, &app, [&]() { finish(0, QStringLiteral("proposal sent")); });
         },
         [&](const QString &message) { finish(9, message); });
 

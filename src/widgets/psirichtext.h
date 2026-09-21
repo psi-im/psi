@@ -28,10 +28,7 @@ class ITEMediaOpener;
 
 class PsiRichText {
 public:
-    enum FormatProperty {
-        AutoColorKind = QTextFormat::UserProperty + 0x100,
-        AutoColorData
-    };
+    enum FormatProperty { AutoColorKind = QTextFormat::UserProperty + 0x100, AutoColorData };
 
     using ParserRet  = std::pair<QTextCharFormat, QString>;
     using Parser     = std::function<ParserRet(const QStringView &htmlElement, int insertAfter)>;
@@ -49,10 +46,9 @@ public:
     static void addEmoticon(QTextEdit *textEdit, const QString &emoticon);
     static void setAllowedImageDirs(const QStringList &);
 
-    static void markAutoForeground(QTextCursor cursor, const QColor &currentColor, int kind,
-                                   const QVariant &data = {});
-    static void recolorAutoForegrounds(
-        QTextDocument *doc, const std::function<QColor(int kind, const QVariant &data)> &resolveColor);
+    static void markAutoForeground(QTextCursor cursor, const QColor &currentColor, int kind, const QVariant &data = {});
+    static void recolorAutoForegrounds(QTextDocument                                               *doc,
+                                       const std::function<QColor(int kind, const QVariant &data)> &resolveColor);
 
     static QString convertToPlainText(const QTextDocument *doc);
 

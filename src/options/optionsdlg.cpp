@@ -12,10 +12,10 @@
 #include "optionaccessinghost.h"
 #endif
 #include "opt_accounts.h"
-#include "opt_security.h"
 #include "opt_pluginwrapper.h"
 #include "opt_popups.h"
 #include "opt_roster.h"
+#include "opt_security.h"
 #include "opt_shortcuts.h"
 #include "opt_sound.h"
 #include "opt_status.h"

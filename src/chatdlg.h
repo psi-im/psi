@@ -79,15 +79,15 @@ public:
     void                  ensureTabbedCorrectly() override;
 
 public:
-    PsiAccount       *account() const;
-    void              setInputText(const QString &text);
-    Jid               realJid() const;
-    bool              autoSelectContact() const { return autoSelectContact_; }
-    static UserStatus userStatusFor(const Jid &jid, QList<UserListItem *> ul, bool forceEmptyResource);
-    void              preloadHistory();
-    void              dispatchMessage(const MessageView &mv);
-    virtual void      appendSysMsg(const QString &txt) = 0;
-    void              appendMessage(const Message &, bool local = false);
+    PsiAccount                     *account() const;
+    void                            setInputText(const QString &text);
+    Jid                             realJid() const;
+    bool                            autoSelectContact() const { return autoSelectContact_; }
+    static UserStatus               userStatusFor(const Jid &jid, QList<UserListItem *> ul, bool forceEmptyResource);
+    void                            preloadHistory();
+    void                            dispatchMessage(const MessageView &mv);
+    virtual void                    appendSysMsg(const QString &txt) = 0;
+    void                            appendMessage(const Message &, bool local = false);
     virtual XMPP::EncryptedSession *encryptionSession() const;
     virtual QString                 encryptionMethodId() const;
 

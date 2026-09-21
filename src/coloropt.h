@@ -39,8 +39,7 @@ public:
     QColor              color(const QString &opt, const QColor &defaultColor = QColor()) const;
     QPalette::ColorRole colorRole(const QString &opt) const;
     static bool         compatibleColors(const QColor &foreground, const QColor &background);
-    static QColor       ensureContrast(const QColor &foreground, const QColor &background,
-                                       const QColor &fallback);
+    static QColor       ensureContrast(const QColor &foreground, const QColor &background, const QColor &fallback);
     static QColor       adaptBackground(const QColor &background, const QPalette &palette);
 
 signals:

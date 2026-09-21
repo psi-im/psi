@@ -104,8 +104,8 @@ QWidget *OptionsTabSecurity::widget()
     methodTabs_ = new QTabWidget(w_);
     layout->addWidget(methodTabs_, 1);
 
-    omemoPage_             = new QWidget(methodTabs_);
-    auto *omemoPageLayout  = new QVBoxLayout(omemoPage_);
+    omemoPage_            = new QWidget(methodTabs_);
+    auto *omemoPageLayout = new QVBoxLayout(omemoPage_);
     omemoPageLayout->setContentsMargins(0, 0, 0, 0);
     auto *tabs = new QTabWidget(omemoPage_);
     omemoPageLayout->addWidget(tabs);
@@ -256,7 +256,7 @@ QWidget *OptionsTabSecurity::widget()
             return;
 
         accountStatus_->setText(tr("Checking OMEMO PEP data…"));
-        auto *job = omemo->sanitizeOwnPep();
+        auto      *job      = omemo->sanitizeOwnPep();
         const auto finished = [this, job]() {
             if (!job->success())
                 QMessageBox::warning(w_, tr("OMEMO"), job->errorString());
@@ -291,9 +291,9 @@ QWidget *OptionsTabSecurity::widget()
             return;
 
         const auto deviceId = selected.constFirst()->data(0, OwnDeviceIdRole).toUInt();
-        const auto protocol = static_cast<XMPP::OmemoProtocol>(
-            selected.constFirst()->data(0, OwnDeviceProtocolRole).toUInt());
-        auto *job = omemo->retireOwnDevice(deviceId, protocol);
+        const auto protocol
+            = static_cast<XMPP::OmemoProtocol>(selected.constFirst()->data(0, OwnDeviceProtocolRole).toUInt());
+        auto      *job      = omemo->retireOwnDevice(deviceId, protocol);
         const auto finished = [this, job]() {
             if (!job->success())
                 QMessageBox::warning(w_, tr("OMEMO"), job->errorString());
@@ -380,13 +380,12 @@ void OptionsTabSecurity::updateControllerConnections()
         if (!changingTrust_)
             refresh();
     });
-    stateConnection_
-        = connect(controller, &PsiEncryptionController::methodStateChanged, w_, [this](const QString &) {
-              if (!changingTrust_)
-                  refreshOmemo();
-          });
-    errorConnection_ = connect(controller, &PsiEncryptionController::encryptionError, w_,
-                               [this](const XMPP::Jid &, const QString &message) { accountStatus_->setText(message); });
+    stateConnection_   = connect(controller, &PsiEncryptionController::methodStateChanged, w_, [this](const QString &) {
+        if (!changingTrust_)
+            refreshOmemo();
+    });
+    errorConnection_   = connect(controller, &PsiEncryptionController::encryptionError, w_,
+                                 [this](const XMPP::Jid &, const QString &message) { accountStatus_->setText(message); });
 }
 
 void OptionsTabSecurity::refresh()
@@ -428,7 +427,7 @@ void OptionsTabSecurity::refreshMethods()
             page = omemoPage_;
         } else
 #endif
-        if (method.pluginProvided && method.uiCapabilities.testFlag(EncryptionMethodProvider::Settings)) {
+            if (method.pluginProvided && method.uiCapabilities.testFlag(EncryptionMethodProvider::Settings)) {
             page = controller->createSettingsWidget(method.id, methodTabs_);
         }
 
@@ -448,7 +447,8 @@ void OptionsTabSecurity::refreshMethods()
 
 #ifdef IRIS_ENABLE_OMEMO
         if (method.id == XMPP::OmemoEncryption::methodId() && controller->omemoEncryption()) {
-            methodTabs_->setTabToolTip(index, controller->omemoEncryption()->isReady() ? tr("Ready") : tr("Not set up"));
+            methodTabs_->setTabToolTip(index,
+                                       controller->omemoEncryption()->isReady() ? tr("Ready") : tr("Not set up"));
         } else
 #endif
             methodTabs_->setTabToolTip(index, tr("Available"));

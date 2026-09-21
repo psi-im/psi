@@ -92,14 +92,12 @@ private slots:
 
     void testParserFormatsAfterImage()
     {
-        QTextDocument doc;
-        QTextCursor   cursor(&doc);
-        PsiRichText::ParsersMap parsers {
-            { "marker",
-              [](const QStringView &, int) {
-                  return PsiRichText::ParserRet { PsiRichText::markerFormat("test"), QString() };
-              } }
-        };
+        QTextDocument           doc;
+        QTextCursor             cursor(&doc);
+        PsiRichText::ParsersMap parsers { { "marker", [](const QStringView &, int) {
+                                               return PsiRichText::ParserRet { PsiRichText::markerFormat("test"),
+                                                                               QString() };
+                                           } } };
 
         PsiRichText::appendText(&doc, cursor, "<img src=\"icon:test\" /><marker>", true, parsers);
         QTextCursor marker = PsiRichText::findMarker(QTextCursor(&doc), "test");

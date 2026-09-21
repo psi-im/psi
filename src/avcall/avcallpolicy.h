@@ -18,10 +18,7 @@ inline Origin peerRole(Origin localRole)
     return localRole == Origin::Initiator ? Origin::Responder : Origin::Initiator;
 }
 
-inline bool allowsSender(Origin senders, Origin role)
-{
-    return senders == Origin::Both || senders == role;
-}
+inline bool allowsSender(Origin senders, Origin role) { return senders == Origin::Both || senders == role; }
 
 inline Origin withoutLocalSender(Origin senders, Origin localRole)
 {

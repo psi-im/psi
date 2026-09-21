@@ -130,8 +130,7 @@ public:
         ui.le_to->setText(sess->jid().full());
         ui.le_to->setReadOnly(true);
 
-        if (AvCallManager::isVideoSupported()
-            && (sess->mode() == AvCall::Video || sess->mode() == AvCall::Both)) {
+        if (AvCallManager::isVideoSupported() && (sess->mode() == AvCall::Video || sess->mode() == AvCall::Both)) {
             ui.ck_useVideo->setChecked(true);
 
             // video-only session, don't allow deselecting video

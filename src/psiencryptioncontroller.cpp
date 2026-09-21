@@ -10,9 +10,9 @@
 
 #include "psiencryptioncontroller.h"
 
+#include "iconset.h"
 #include "iris/xmpp_caps.h"
 #include "iris/xmpp_client.h"
-#include "iconset.h"
 #include "psiaccount.h"
 #include "psioptions.h"
 #include "userlist.h"
@@ -24,9 +24,9 @@
 
 #include <QAbstractItemView>
 #include <QApplication>
+#include <QDateTime>
 #include <QDialog>
 #include <QDialogButtonBox>
-#include <QDateTime>
 #include <QHeaderView>
 #include <QLabel>
 #include <QPointer>
@@ -184,25 +184,13 @@ public:
                 method_->sessions_.remove(this);
         }
 
-        XMPP::EncryptionJob *encrypt(const QDomElement &xml) override
-        {
-            return runStanza(true, xml);
-        }
+        XMPP::EncryptionJob *encrypt(const QDomElement &xml) override { return runStanza(true, xml); }
 
-        XMPP::EncryptionJob *decrypt(const QDomElement &xml) override
-        {
-            return runStanza(false, xml);
-        }
+        XMPP::EncryptionJob *decrypt(const QDomElement &xml) override { return runStanza(false, xml); }
 
-        XMPP::EncryptionJob *encrypt(const QByteArray &data) override
-        {
-            return runData(true, data);
-        }
+        XMPP::EncryptionJob *encrypt(const QByteArray &data) override { return runData(true, data); }
 
-        XMPP::EncryptionJob *decrypt(const QByteArray &data) override
-        {
-            return runData(false, data);
-        }
+        XMPP::EncryptionJob *decrypt(const QByteArray &data) override { return runData(false, data); }
 
     private:
         void detachProvider()
@@ -280,9 +268,9 @@ public:
             return job;
         }
 
-        QPointer<PluginMethodAdapter>                    method_;
+        QPointer<PluginMethodAdapter>                      method_;
         std::unique_ptr<EncryptionMethodProvider::Session> pluginSession_;
-        QHash<XMPP::EncryptionJob *, QObject *>          activeOperations_;
+        QHash<XMPP::EncryptionJob *, QObject *>            activeOperations_;
 
         friend class PluginMethodAdapter;
     };
@@ -299,8 +287,7 @@ public:
     {
         return provider_ ? toIrisCapabilities(provider_->capabilities()) : Capabilities {};
     }
-    XMPP::EncryptedSession *startSession(Capabilities capabilities,
-                                         const XMPP::EncryptionContext &context) override
+    XMPP::EncryptedSession *startSession(Capabilities capabilities, const XMPP::EncryptionContext &context) override
     {
         if (!provider_ || !(capabilities & this->capabilities()))
             return nullptr;
@@ -851,7 +838,7 @@ bool PsiEncryptionController::requestTrustDecision(const QString &methodId, cons
         return false;
     const QString peerAddress = deviceId != 0 && !peer.resource().isEmpty() ? peer.full() : peerBare;
 
-    const QString ownBare = client_->jid().bare();
+    const QString                      ownBare = client_->jid().bare();
     std::optional<XMPP::OmemoProtocol> profileFilter;
     if (profile == QLatin1String("legacy"))
         profileFilter = XMPP::OmemoProtocol::Legacy;
@@ -868,9 +855,8 @@ bool PsiEncryptionController::requestTrustDecision(const QString &methodId, cons
                     continue;
                 if (device.identityKey.isEmpty() || !device.active)
                     continue;
-                const bool include = deviceId != 0
-                    ? device.trust != XMPP::EncryptionTrustLevel::Distrusted
-                    : needsManualTrustDecision(device.trust);
+                const bool include = deviceId != 0 ? device.trust != XMPP::EncryptionTrustLevel::Distrusted
+                                                   : needsManualTrustDecision(device.trust);
                 if (!include)
                     continue;
 
@@ -913,147 +899,153 @@ bool PsiEncryptionController::requestTrustDecision(const QString &methodId, cons
     trustPromptsActive_.insert(promptKey);
 
     QPointer<QWidget> parentGuard(parent);
-    QTimer::singleShot(0, this,
-                       [this, promptKey, peerBare, peerAddress, includeOwnDevices, deviceId, parentGuard,
-                        collectDevices]() mutable {
-        auto pending      = collectDevices();
-        bool retryAllowed = false;
+    QTimer::singleShot(
+        0, this,
+        [this, promptKey, peerBare, peerAddress, includeOwnDevices, deviceId, parentGuard, collectDevices]() mutable {
+            auto pending      = collectDevices();
+            bool retryAllowed = false;
 
-        if (!pending.isEmpty()) {
-            auto   *dialogParent = parentGuard ? parentGuard.data() : QApplication::activeWindow();
-            QDialog dialog(dialogParent);
-            dialog.setWindowTitle(tr("Review OMEMO devices"));
-            dialog.setModal(true);
+            if (!pending.isEmpty()) {
+                auto   *dialogParent = parentGuard ? parentGuard.data() : QApplication::activeWindow();
+                QDialog dialog(dialogParent);
+                dialog.setWindowTitle(tr("Review OMEMO devices"));
+                dialog.setModal(true);
 
-            auto *layout = new QVBoxLayout(&dialog);
-            bool recoveryNeedsTrust = false;
-            for (const auto &device : std::as_const(pending))
-                recoveryNeedsTrust = recoveryNeedsTrust || needsManualTrustDecision(device.trust);
+                auto *layout             = new QVBoxLayout(&dialog);
+                bool  recoveryNeedsTrust = false;
+                for (const auto &device : std::as_const(pending))
+                    recoveryNeedsTrust = recoveryNeedsTrust || needsManualTrustDecision(device.trust);
 
-            const QString introText = deviceId == 0
-                ? tr("New OMEMO device keys need a trust decision before they can be used for outgoing encrypted "
-                     "messages. Device names are provided by the device owner and, for OMEMO 2, verified against its "
-                     "identity key.")
-                : tr("Psi could not decrypt a message from this device because the local session is missing. Review "
-                     "the device and explicitly approve creating a new session. Device names are provided by the "
-                     "device owner and, for OMEMO 2, verified against its identity key.");
-            auto *intro = new QLabel(introText, &dialog);
-            intro->setWordWrap(true);
-            layout->addWidget(intro);
+                const QString introText = deviceId == 0
+                    ? tr("New OMEMO device keys need a trust decision before they can be used for outgoing encrypted "
+                         "messages. Device names are provided by the device owner and, for OMEMO 2, verified against "
+                         "its "
+                         "identity key.")
+                    : tr("Psi could not decrypt a message from this device because the local session is missing. "
+                         "Review "
+                         "the device and explicitly approve creating a new session. Device names are provided by the "
+                         "device owner and, for OMEMO 2, verified against its identity key.");
+                auto         *intro     = new QLabel(introText, &dialog);
+                intro->setWordWrap(true);
+                layout->addWidget(intro);
 
-            auto *tree = new QTreeWidget(&dialog);
-            tree->setColumnCount(4);
-            tree->setHeaderLabels({ tr("Device"), tr("Address"), tr("Profile"), tr("Fingerprint") });
-            tree->setRootIsDecorated(false);
-            tree->setSelectionMode(QAbstractItemView::NoSelection);
-            tree->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-            tree->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
-            tree->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
-            tree->header()->setSectionResizeMode(3, QHeaderView::Stretch);
+                auto *tree = new QTreeWidget(&dialog);
+                tree->setColumnCount(4);
+                tree->setHeaderLabels({ tr("Device"), tr("Address"), tr("Profile"), tr("Fingerprint") });
+                tree->setRootIsDecorated(false);
+                tree->setSelectionMode(QAbstractItemView::NoSelection);
+                tree->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+                tree->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+                tree->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+                tree->header()->setSectionResizeMode(3, QHeaderView::Stretch);
 
-            for (qsizetype i = 0; i < pending.size(); ++i) {
-                const auto   &device     = pending.at(i);
-                auto         *item       = new QTreeWidgetItem(tree);
-                const QString deviceName = device.label.isEmpty() ? tr("Unnamed device (%1)").arg(device.id)
-                                                                  : tr("%1 (%2)").arg(device.label).arg(device.id);
-                const bool    ownDevice  = device.owner.bare() == client_->jid().bare();
-                const QString address = deviceId != 0 && device.owner.bare() == peerBare ? peerAddress
-                                                                                         : device.owner.bare();
-                item->setText(0, deviceName);
-                item->setText(1, ownDevice ? tr("Your account (%1)").arg(address) : address);
-                item->setText(2, omemoProtocolText(device.protocols));
-                item->setText(3, formatFingerprint(device.identityKey));
-                item->setToolTip(0, device.label.isEmpty()
-                                        ? tr("This device did not publish a verifiable name.")
-                                        : tr("The device name was verified against this OMEMO identity key."));
-                if (deviceId == 0) {
-                    item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-                    item->setCheckState(0, Qt::Checked);
+                for (qsizetype i = 0; i < pending.size(); ++i) {
+                    const auto   &device     = pending.at(i);
+                    auto         *item       = new QTreeWidgetItem(tree);
+                    const QString deviceName = device.label.isEmpty() ? tr("Unnamed device (%1)").arg(device.id)
+                                                                      : tr("%1 (%2)").arg(device.label).arg(device.id);
+                    const bool    ownDevice  = device.owner.bare() == client_->jid().bare();
+                    const QString address
+                        = deviceId != 0 && device.owner.bare() == peerBare ? peerAddress : device.owner.bare();
+                    item->setText(0, deviceName);
+                    item->setText(1, ownDevice ? tr("Your account (%1)").arg(address) : address);
+                    item->setText(2, omemoProtocolText(device.protocols));
+                    item->setText(3, formatFingerprint(device.identityKey));
+                    item->setToolTip(0,
+                                     device.label.isEmpty()
+                                         ? tr("This device did not publish a verifiable name.")
+                                         : tr("The device name was verified against this OMEMO identity key."));
+                    if (deviceId == 0) {
+                        item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+                        item->setCheckState(0, Qt::Checked);
+                    }
+                    item->setData(0, Qt::UserRole, static_cast<int>(i));
                 }
-                item->setData(0, Qt::UserRole, static_cast<int>(i));
-            }
-            layout->addWidget(tree);
+                layout->addWidget(tree);
 
-            QString hintText;
-            if (deviceId != 0) {
-                hintText = tr("Repair creates a fresh Double Ratchet session and sends an empty OMEMO key exchange. "
-                              "It cannot recover the missed message; the sender must send it again. Distrust prevents "
-                              "session recovery.");
-            } else if (includeOwnDevices) {
-                hintText = tr("Trust allows selected contact devices to receive encrypted messages and selected "
-                              "devices of your own account to decrypt message copies. Distrust excludes those devices. "
-                              "Not now leaves them undecided and cancels this encrypted send.");
-            } else {
-                hintText = tr("Trust marks the selected sender devices as trusted. Distrust marks them as explicitly "
-                              "untrusted. Not now keeps the message visible but leaves the devices undecided.");
-            }
-            auto *hint = new QLabel(hintText, &dialog);
-            hint->setWordWrap(true);
-            layout->addWidget(hint);
-
-            auto *buttons = new QDialogButtonBox(&dialog);
-            const QString trustText = deviceId == 0
-                ? tr("Trust selected")
-                : (recoveryNeedsTrust ? tr("Trust and repair") : tr("Repair session"));
-            auto *trustButton = buttons->addButton(trustText, QDialogButtonBox::AcceptRole);
-            auto *distrustButton = buttons->addButton(deviceId == 0 ? tr("Distrust selected") : tr("Distrust device"),
-                                                      QDialogButtonBox::DestructiveRole);
-            auto *notNowButton   = buttons->addButton(tr("Not now"), QDialogButtonBox::RejectRole);
-            layout->addWidget(buttons);
-
-            enum class Action { None, Trust, Distrust };
-            Action action = Action::None;
-            connect(trustButton, &QPushButton::clicked, &dialog, [&dialog, &action]() {
-                action = Action::Trust;
-                dialog.accept();
-            });
-            connect(distrustButton, &QPushButton::clicked, &dialog, [&dialog, &action]() {
-                action = Action::Distrust;
-                dialog.accept();
-            });
-            connect(notNowButton, &QPushButton::clicked, &dialog, &QDialog::reject);
-
-            dialog.resize(760, 340);
-            dialog.exec();
-
-            if (action != Action::None) {
-                for (int row = 0; row < tree->topLevelItemCount(); ++row) {
-                    auto *item = tree->topLevelItem(row);
-                    if (deviceId == 0 && item->checkState(0) != Qt::Checked)
-                        continue;
-                    const int index = item->data(0, Qt::UserRole).toInt();
-                    if (index < 0 || index >= static_cast<int>(pending.size()))
-                        continue;
-                    const auto &device = pending.at(index);
-                    if (action == Action::Trust && !needsManualTrustDecision(device.trust))
-                        continue;
-                    const auto level = action == Action::Trust ? XMPP::EncryptionTrustLevel::ManuallyTrusted
-                                                                : XMPP::EncryptionTrustLevel::Distrusted;
-                    if (!omemo_->setTrustLevel(device.owner, device.identityKey, level))
-                        emit encryptionError(device.owner, tr("Could not save the OMEMO trust decision."));
+                QString hintText;
+                if (deviceId != 0) {
+                    hintText
+                        = tr("Repair creates a fresh Double Ratchet session and sends an empty OMEMO key exchange. "
+                             "It cannot recover the missed message; the sender must send it again. Distrust prevents "
+                             "session recovery.");
+                } else if (includeOwnDevices) {
+                    hintText
+                        = tr("Trust allows selected contact devices to receive encrypted messages and selected "
+                             "devices of your own account to decrypt message copies. Distrust excludes those devices. "
+                             "Not now leaves them undecided and cancels this encrypted send.");
+                } else {
+                    hintText
+                        = tr("Trust marks the selected sender devices as trusted. Distrust marks them as explicitly "
+                             "untrusted. Not now keeps the message visible but leaves the devices undecided.");
                 }
-                if (deviceId == 0) {
-                    retryAllowed = collectDevices().isEmpty();
-                } else if (action == Action::Trust) {
-                    retryAllowed = true;
-                    const auto accepted = omemo_->acceptedSessionBuildingTrustLevels();
-                    for (const auto &device : std::as_const(pending)) {
-                        if (!accepted.testFlag(omemo_->trustLevel(device.owner, device.identityKey))) {
-                            retryAllowed = false;
-                            break;
+                auto *hint = new QLabel(hintText, &dialog);
+                hint->setWordWrap(true);
+                layout->addWidget(hint);
+
+                auto         *buttons        = new QDialogButtonBox(&dialog);
+                const QString trustText      = deviceId == 0
+                         ? tr("Trust selected")
+                         : (recoveryNeedsTrust ? tr("Trust and repair") : tr("Repair session"));
+                auto         *trustButton    = buttons->addButton(trustText, QDialogButtonBox::AcceptRole);
+                auto         *distrustButton = buttons->addButton(
+                    deviceId == 0 ? tr("Distrust selected") : tr("Distrust device"), QDialogButtonBox::DestructiveRole);
+                auto *notNowButton = buttons->addButton(tr("Not now"), QDialogButtonBox::RejectRole);
+                layout->addWidget(buttons);
+
+                enum class Action { None, Trust, Distrust };
+                Action action = Action::None;
+                connect(trustButton, &QPushButton::clicked, &dialog, [&dialog, &action]() {
+                    action = Action::Trust;
+                    dialog.accept();
+                });
+                connect(distrustButton, &QPushButton::clicked, &dialog, [&dialog, &action]() {
+                    action = Action::Distrust;
+                    dialog.accept();
+                });
+                connect(notNowButton, &QPushButton::clicked, &dialog, &QDialog::reject);
+
+                dialog.resize(760, 340);
+                dialog.exec();
+
+                if (action != Action::None) {
+                    for (int row = 0; row < tree->topLevelItemCount(); ++row) {
+                        auto *item = tree->topLevelItem(row);
+                        if (deviceId == 0 && item->checkState(0) != Qt::Checked)
+                            continue;
+                        const int index = item->data(0, Qt::UserRole).toInt();
+                        if (index < 0 || index >= static_cast<int>(pending.size()))
+                            continue;
+                        const auto &device = pending.at(index);
+                        if (action == Action::Trust && !needsManualTrustDecision(device.trust))
+                            continue;
+                        const auto level = action == Action::Trust ? XMPP::EncryptionTrustLevel::ManuallyTrusted
+                                                                   : XMPP::EncryptionTrustLevel::Distrusted;
+                        if (!omemo_->setTrustLevel(device.owner, device.identityKey, level))
+                            emit encryptionError(device.owner, tr("Could not save the OMEMO trust decision."));
+                    }
+                    if (deviceId == 0) {
+                        retryAllowed = collectDevices().isEmpty();
+                    } else if (action == Action::Trust) {
+                        retryAllowed        = true;
+                        const auto accepted = omemo_->acceptedSessionBuildingTrustLevels();
+                        for (const auto &device : std::as_const(pending)) {
+                            if (!accepted.testFlag(omemo_->trustLevel(device.owner, device.identityKey))) {
+                                retryAllowed = false;
+                                break;
+                            }
                         }
                     }
                 }
             }
-        }
 
-        trustPromptsActive_.remove(promptKey);
-        const auto waiters = trustPromptWaiters_.take(promptKey);
-        for (const auto &waiter : waiters) {
-            if (waiter)
-                waiter(retryAllowed);
-        }
-    });
+            trustPromptsActive_.remove(promptKey);
+            const auto waiters = trustPromptWaiters_.take(promptKey);
+            for (const auto &waiter : waiters) {
+                if (waiter)
+                    waiter(retryAllowed);
+            }
+        });
     return true;
 #else
     Q_UNUSED(methodId);

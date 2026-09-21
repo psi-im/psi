@@ -126,8 +126,8 @@ private:
     QMenu *pm_settings_;
     QMenu *encryptionMenu_ = nullptr;
 
-    QString                            selectedEncryptionMethod_;
-    QPointer<XMPP::EncryptedSession>   encryptionSession_;
+    QString                          selectedEncryptionMethod_;
+    QPointer<XMPP::EncryptedSession> encryptionSession_;
 
     ActionList       *actions_;
     QAction          *act_mini_cmd_;

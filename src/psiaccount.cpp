@@ -3986,7 +3986,6 @@ void PsiAccount::itemPublished(const Jid &j, const QString &n, const PubSubItem 
                     d->vcardPhotoUpdate(vcard.photo());
                 }
                 setNick(nick);
-
             }
         }
     }
@@ -4192,9 +4191,8 @@ void PsiAccount::actionVoice(const Jid &j)
         if (u && u->isAvailable()) {
             const UserResource *bestCallResource = nullptr;
             for (const auto &resource : u->userResourceList()) {
-                const auto features = d->client->capsManager()->features(j.withResource(resource.name()));
-                const bool callCapable
-                    = features.test(QStringLiteral("urn:xmpp:jingle:1"))
+                const auto features    = d->client->capsManager()->features(j.withResource(resource.name()));
+                const bool callCapable = features.test(QStringLiteral("urn:xmpp:jingle:1"))
                     && features.test(QStringLiteral("urn:xmpp:jingle:transports:ice-udp:1"))
                     && features.test(QStringLiteral("urn:xmpp:jingle:apps:rtp:1"))
                     && features.test(QStringLiteral("urn:xmpp:jingle:apps:dtls:0"))

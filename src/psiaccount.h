@@ -544,15 +544,15 @@ private:
     void          processPgpEncryptedMessage(const Message &);
     void          processPgpEncryptedMessageNext();
     void          processPgpEncryptedMessageDone();
-    void          sendMessageInternal(Message &message, bool log, XMPP::EncryptedSession *session,
-                                      const QString &methodId, bool allowTransientSession);
-    void          finishSentMessage(const Message &message, bool log);
-    void          sendEncryptedMessage(const Message &message, bool log, const QString &methodId,
-                                       XMPP::EncryptedSession *session, bool allowTransientSession);
-    void          verifyStatus(const Jid &j, const Status &s);
-    bool          passwordPrompt();
-    void          sentInitialPresence();
-    void          requestAvatarsForAllContacts();
+    void sendMessageInternal(Message &message, bool log, XMPP::EncryptedSession *session, const QString &methodId,
+                             bool allowTransientSession);
+    void finishSentMessage(const Message &message, bool log);
+    void sendEncryptedMessage(const Message &message, bool log, const QString &methodId,
+                              XMPP::EncryptedSession *session, bool allowTransientSession);
+    void verifyStatus(const Jid &j, const Status &s);
+    bool passwordPrompt();
+    void sentInitialPresence();
+    void requestAvatarsForAllContacts();
 
     void      processChatsHelper(const Jid &jid, bool removeEvents);
     void      processChats(const Jid &);

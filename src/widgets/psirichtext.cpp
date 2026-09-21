@@ -889,7 +889,7 @@ void PsiRichText::markAutoForeground(QTextCursor cursor, const QColor &currentCo
     QList<Range> ranges;
 
     for (QTextBlock block = cursor.document()->findBlock(start); block.isValid() && block.position() < end;
-         block = block.next()) {
+         block            = block.next()) {
         for (auto it = block.begin(); !it.atEnd(); ++it) {
             const QTextFragment fragment = it.fragment();
             const int           first    = fragment.position();
@@ -917,13 +917,13 @@ void PsiRichText::markAutoForeground(QTextCursor cursor, const QColor &currentCo
     editCursor.endEditBlock();
 }
 
-void PsiRichText::recolorAutoForegrounds(
-    QTextDocument *doc, const std::function<QColor(int kind, const QVariant &data)> &resolveColor)
+void PsiRichText::recolorAutoForegrounds(QTextDocument                                               *doc,
+                                         const std::function<QColor(int kind, const QVariant &data)> &resolveColor)
 {
     struct Update {
-        int      position;
-        int      length;
-        QColor   color;
+        int    position;
+        int    length;
+        QColor color;
     };
     QList<Update> updates;
 

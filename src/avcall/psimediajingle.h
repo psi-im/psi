@@ -23,7 +23,7 @@ class VideoWidget;
 namespace XMPP::Jingle {
 class Session;
 namespace RTP {
-class MediaProvider;
+    class MediaProvider;
 }
 }
 
@@ -37,11 +37,11 @@ struct PsiMediaJingleCapabilities {
     bool audioOutput      = false;
     bool videoInput       = false;
 
-    bool operator==(const PsiMediaJingleCapabilities &) const = default;
-    bool available() const { return backendAvailable && probeComplete && secureRtp && (audio || video); }
-    bool supportsMedia(const QString &media) const;
+    bool        operator==(const PsiMediaJingleCapabilities &) const = default;
+    bool        available() const { return backendAvailable && probeComplete && secureRtp && (audio || video); }
+    bool        supportsMedia(const QString &media) const;
     QStringList mediaTypes() const;
-    QString unavailableReason() const;
+    QString     unavailableReason() const;
 };
 
 std::shared_ptr<XMPP::Jingle::RTP::MediaProvider>
