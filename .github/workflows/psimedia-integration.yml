@@ -48,11 +48,11 @@ jobs:
         shell: bash
         run: git submodule update --init --depth 1 iris
 
-      - name: Checkout psimedia master
+      - name: Checkout matching psimedia SRTP branch
         uses: actions/checkout@v4
         with:
           repository: psi-im/psimedia
-          ref: master
+          ref: ai/jingle-srtp-psimedia
           path: _psimedia
           fetch-depth: 1
 
@@ -291,9 +291,34 @@ jobs:
                   delete session;
                   return 3;
               }
-
+              if (qobject_cast<PsiMedia::SecureRtpSessionContext *>(session->qobject())) {
+                  qCritical() << "Legacy RTP session falsely advertises the secure RTP IID";
+                  delete session;
+                  return 4;
+              }
               delete session;
-              qInfo() << "Real psimedia provider smoke passed";
+
+              auto *secureProvider = qobject_cast<PsiMedia::SecureRtpProvider *>(provider.qobject());
+              if (!secureProvider || secureProvider->supportedSecureRtpProfiles().isEmpty()) {
+                  qCritical() << "GstProvider did not expose usable secure RTP capability";
+                  return 5;
+              }
+
+              auto *secureSession = secureProvider->createSecureRtpSession();
+              if (!secureSession || !secureSession->qobject()
+                  || !qobject_cast<PsiMedia::SecureRtpSessionContext *>(secureSession->qobject())
+                  || !qobject_cast<PsiMedia::RtpSessionContext *>(secureSession->qobject())) {
+                  qCritical() << "Secure RTP factory did not return a dual-interface media session";
+                  delete secureSession;
+                  return 6;
+              }
+
+              // Session ownership is caller-side and must end before provider/plugin unload.
+              secureSession->setProtectedPacketHandler({});
+              secureSession->setRuntimeErrorHandler({});
+              delete secureSession;
+
+              qInfo() << "Real psimedia provider and secure RTP ABI smoke passed";
               return 0;
           }
           EOF
