@@ -44,9 +44,13 @@ jobs:
         with:
           submodules: false
 
-      - name: Initialize pinned Iris
-        shell: bash
-        run: git submodule update --init --depth 1 iris
+      - name: Checkout matching Iris SRTP branch
+        uses: actions/checkout@v4
+        with:
+          repository: psi-im/iris
+          ref: ai/jingle-srtp-psimedia
+          path: iris
+          fetch-depth: 1
 
       - name: Checkout matching psimedia SRTP branch
         uses: actions/checkout@v4
