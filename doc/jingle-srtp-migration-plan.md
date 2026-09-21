@@ -161,12 +161,19 @@ Current psimedia branch: `ai/jingle-srtp-psimedia`.
 - **Passed:** one GStreamer `rtpsession` can carry Opus 48 kHz and VP8 90 kHz in one group,
   consume compound RTCP once, and remove video while audio continues without replacing the
   RTP session. This closes the implementation gate in step 5.
-- **In progress:** `SecureRtpGroup` now composes libSRTP with the shared RTP group boundary so
-  plaintext RTP/RTCP stays inside psimedia; end-to-end two-peer regression is being validated.
-- **Still required before Phase 2:** make the optional public secure-RTP session API expose the
-  group boundary (rather than the temporary standalone crypto context), finish callback/lifetime
-  and plugin-unload semantics, add BUILD_PSIPLUGIN/subproject/SDK coverage, and run external
-  libwebrtc/webrtcbin peer tests.
+- **Passed at psimedia `7e1b1bb`:** SRTP-enabled provider regressions and the explicit
+  `PSIMEDIA_ENABLE_SRTP=OFF` build both pass; the audio+video shared-`rtpsession` prototype is
+  therefore the last known green baseline before the secure public-API integration.
+- **Implemented, CI pending on the current psimedia head:** `SecureRtpGroup` composes libSRTP
+  with the shared RTP group boundary so plaintext RTP/RTCP stays inside psimedia. The public
+  `SecureRtpSessionContext/1.0` is now protected-only and group-oriented: endpoint route
+  metadata, association activation/invalidation, protected ingress and protected egress callback.
+  The secure factory returns `GstSecureRtpSessionContext`, which is the same codec/device media
+  context as Provider/1.6 plus the new secure IID. A normal legacy session does not advertise
+  that IID. Encoder-thread RTP is queued onto the Qt owner thread before group routing/crypto.
+- **Still required before Phase 2:** get the dual-interface secure media context and two-peer
+  `SecureRtpGroup` regression green, finish callback/lifetime and plugin-unload semantics, add
+  BUILD_PSIPLUGIN/subproject/SDK coverage, and run external libwebrtc/webrtcbin peer tests.
 
 1. Add a new optional secure-RTP session interface with its own Qt interface IID instead of
    appending virtual methods to `RtpSessionContext/1.6`. Add provider-level discovery/factory
