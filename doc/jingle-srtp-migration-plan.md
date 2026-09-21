@@ -199,17 +199,25 @@ Current psimedia branch: `ai/jingle-srtp-psimedia`.
 - **Passed:** the group bridge stamps the negotiated MID RTP header extension on outgoing
   bundled RTP before the shared rtpsession/libSRTP boundary; the regression covers audio/video
   MID values and a fresh audio packet after video membership removal.
-- **CI pending:** psimedia `ac619b6` adds a `BUILD_PSIPLUGIN=ON` build against the matching
-  Psi branch's real plugin API header plus a Qt5 compatibility build.
-- **Implemented, CI pending:** the secure media session now owns an
+- **Passed through the Qt6/plugin stages at psimedia `e77531e`:** provider build/tests,
+  `PSIMEDIA_ENABLE_SRTP=OFF`, and `BUILD_PSIPLUGIN=ON` against the matching Psi branch's
+  real plugin API header all pass with the multi-association implementation. That run failed
+  only in the final Qt5 compile because `securertpgroup.cpp` relied on a transitive QDebug
+  include; `7a30ad0` adds the explicit include.
+- **Passed in the Qt6 provider regressions at `e77531e`:** the secure media session owns an
   `associationId -> SecureRtpGroup` map. Bundled endpoints share one ID/group; unbundled
   audio/video use independent group/rtpsession/libSRTP state inside the same codec/device
-  session. Endpoint metadata carries associationId, protected packets already carry it, and the
-  public regression activates/invalidate two associations independently.
-- **Implemented, CI pending:** the encoder-to-secure-group handoff is now a bounded producer
-  queue (256 packets, 512 KiB, 1 s age) with route-generation and crypto-epoch fencing. This
-  replaces the temporary one-Qt-event-per-packet handoff and restores the bounded-backpressure
-  invariant before SRTP. Runtime errors now carry associationId+epoch as well as the error code.
+  session. Endpoint metadata carries associationId, protected packets carry it, and the public
+  regression activates/invalidates two associations independently.
+- **Built in the green Qt6/plugin stages, direct queue regression still required:** the
+  encoder-to-secure-group handoff is a bounded producer queue (256 packets, 512 KiB, 1 s age)
+  with route-generation and crypto-epoch fencing. This replaces the temporary one-Qt-event-per-
+  packet handoff and restores the bounded-backpressure invariant before SRTP. Runtime errors
+  carry associationId+epoch as well as the error code.
+- **Implemented, full matrix pending at psimedia `490c79b`:** authenticated RTP/SRTCP which
+  passes libSRTP but fails the negotiated group route is reported as nonfatal `InvalidPacket`,
+  distinct from authentication/replay/fatal backend failures; a regression covers this path.
+  The same run also rechecks the explicit Qt5 QDebug fixes.
 - **Still required before Phase 2:** finish plugin-unload/callback lifetime coverage and
   subproject/SDK packaging coverage. External libwebrtc/webrtcbin peer tests remain a
   cross-repository gate after Psi negotiates/passes the XEP-0294 MID extension instead of
