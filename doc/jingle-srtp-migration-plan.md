@@ -378,6 +378,33 @@ Repository: `psi-im/iris`.
    Retain this guard until the separate active-call recovery gate below is implemented/tested;
    successful pre-Connecting replacement is not evidence of live-call ICE restart.
 
+### Phase 2 implementation shape
+
+The chosen Iris boundary is additive at first:
+
+- `MediaEndpoint` remains responsible for per-content codec negotiation only.
+- `MediaProvider` gains a secure-RTP profile capability query so the manager can intersect the
+  actual backend with `Dtls::supportedSRTPProfiles()` before DTLS starts.
+- `MediaSession`, not `MediaEndpoint`, gains the protected group packet API. It accepts
+  transactional endpoint-route metadata, configures/invalidates multiple opaque associations,
+  receives protected packets tagged with association+epoch, and exposes one protected egress
+  callback for the whole media session.
+- An opaque association token maps one-to-one to an Iris `IceConnection`/DTLS association.
+  Bundled endpoints share the token; unbundled audio/video use distinct tokens. The token has
+  session-local identity only and must not expose Jingle/BUNDLE classes to the backend.
+- Iris keeps key material in secure storage through the DTLS/export boundary and the Psi adapter
+  performs only the synchronous conversion required by the psimedia ABI. No key is logged or
+  retained in ordinary signaling objects.
+- The existing per-endpoint `supportsPacketIo()/attachPacketIo()/receivePacket()` path remains
+  temporarily as migration compatibility while Iris/Psi tests are converted, then is removed
+  together with `SrtpSession` packet crypto.
+
+Incoming flow becomes `ICE -> RFC7983/RFC5761 classification -> protected MediaSession ingress
+-> psimedia/libSRTP authentication -> group router/rtpsession`. Iris must not route on unauthenticated
+SSRC/PT/MID. Outgoing flow is the exact reverse; psimedia returns association+epoch with every
+protected packet and Iris only validates that the association/epoch still names the active DTLS
+transport before writing to ICE.
+
 Iris tests must continue to cover DTLS verification, key direction/profile selection, BUNDLE
 association ownership, atomic transport replacement and stale-epoch rejection, but packet
 cipher/authentication vector tests move to psimedia.
