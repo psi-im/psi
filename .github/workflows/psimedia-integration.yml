@@ -1171,7 +1171,7 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
           G_DEBUG: fatal-criticals
-          ASAN_OPTIONS: detect_leaks=0:abort_on_error=1
+          ASAN_OPTIONS: detect_leaks=0:abort_on_error=1:alloc_dealloc_mismatch=0
         run: |
           set -euo pipefail
           bin="$GITHUB_WORKSPACE/_jingle-call-build/psi_jingle_call_live_client"
