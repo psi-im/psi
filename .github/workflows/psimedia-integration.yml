@@ -439,6 +439,7 @@ jobs:
           int main(int argc, char **argv)
           {
               QCoreApplication app(argc, argv);
+              QCA::Initializer qca;
 
               PsiMedia::GstProvider gstProvider;
               if (!gstProvider.isInitialized()) {
@@ -787,11 +788,8 @@ jobs:
 
           ccache --zero-stats
           cmake -S _psimedia-smoke -B _psimedia-smoke-build -G Ninja \
-            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_CXX_FLAGS="-fsanitize=address -fno-omit-frame-pointer" \
-            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address" \
-            -DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=address" \
             -DPSI_SOURCE_DIR="$GITHUB_WORKSPACE" \
             -DPSIMEDIA_SOURCE_DIR="$GITHUB_WORKSPACE/_psimedia"
 
@@ -810,7 +808,6 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
           G_DEBUG: fatal-criticals
-          ASAN_OPTIONS: detect_leaks=0:abort_on_error=1
         run: |
           ctest --test-dir _psimedia-smoke-build \
             -R '^(psimedia_(provider_smoke|plugin_load_smoke|opusrtppay|rtpsessioncontext_sender|rtpsessionbridge|rtpsessionbridge_packets|rtpsessionbridge_periodic|rtpsessionbridge_backpressure)|psi_(backend_lifecycle_test|native_media_(adapter|runtime_error)_smoke))$' \
@@ -1135,7 +1132,9 @@ jobs:
         run: |
           set -euo pipefail
           cmake -S qa/integration/jingle-live -B _jingle-call-build -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_CXX_FLAGS="-fsanitize=address -fno-omit-frame-pointer" \
+            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address" \
             -DPSI_SOURCE_DIR="$GITHUB_WORKSPACE" \
             -DPSIMEDIA_SOURCE_DIR="$GITHUB_WORKSPACE/_psimedia"
           cmake --build _jingle-call-build --target psi_jingle_call_live_client --parallel 4
@@ -1172,6 +1171,7 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
           G_DEBUG: fatal-criticals
+          ASAN_OPTIONS: detect_leaks=0:abort_on_error=1
         run: |
           set -euo pipefail
           bin="$GITHUB_WORKSPACE/_jingle-call-build/psi_jingle_call_live_client"
