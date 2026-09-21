@@ -301,10 +301,24 @@ public:
     {
         if (isTerminalOrStopping() || !parameters.isValid())
             return false;
-        return rtp_.configureSecureAssociation(
+
+        // SecureRtpSessionContext's ABI accepts QByteArray for plugin
+        // compatibility. Keep those non-secure copies scoped to the synchronous
+        // configure call and overwrite them immediately afterwards.
+        auto localMasterKey   = parameters.localMasterKey.toByteArray();
+        auto localMasterSalt  = parameters.localMasterSalt.toByteArray();
+        auto remoteMasterKey  = parameters.remoteMasterKey.toByteArray();
+        auto remoteMasterSalt = parameters.remoteMasterSalt.toByteArray();
+
+        const bool configured = rtp_.configureSecureAssociation(
             parameters.associationId, parameters.epoch, parameters.profile,
-            parameters.localMasterKey.toByteArray(), parameters.localMasterSalt.toByteArray(),
-            parameters.remoteMasterKey.toByteArray(), parameters.remoteMasterSalt.toByteArray());
+            localMasterKey, localMasterSalt, remoteMasterKey, remoteMasterSalt);
+
+        localMasterKey.fill('\0');
+        localMasterSalt.fill('\0');
+        remoteMasterKey.fill('\0');
+        remoteMasterSalt.fill('\0');
+        return configured;
     }
 
     void invalidateSecureRtpAssociation(const QByteArray &associationId, quint64 epoch) override
