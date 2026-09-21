@@ -64,9 +64,11 @@ private:
     QQueue<PsiMedia::PRtpPacket> written_;
 };
 
-class FakeRtpSessionContext final : public QObject, public PsiMedia::RtpSessionContext {
+class FakeRtpSessionContext final : public QObject,
+                                    public PsiMedia::RtpSessionContext,
+                                    public PsiMedia::SecureRtpSessionContext {
     Q_OBJECT
-    Q_INTERFACES(PsiMedia::RtpSessionContext)
+    Q_INTERFACES(PsiMedia::RtpSessionContext PsiMedia::SecureRtpSessionContext)
 public:
     explicit FakeRtpSessionContext(BackendStats *stats) : stats_(stats) { }
 
@@ -176,6 +178,59 @@ public:
     PsiMedia::RtpChannelContext  *videoRtpChannel() override { return &video_; }
     void dumpPipeline(std::function<void(const QStringList &)> callback) override { callback({}); }
 
+    bool configureEndpoints(const QList<PsiMedia::PSecureRtpEndpoint> &endpoints) override
+    {
+        secureEndpoints_ = endpoints;
+        return true;
+    }
+
+    bool configureAssociation(const QByteArray &associationId, quint64 epoch, const QString &profile,
+                              const QByteArray &localMasterKey, const QByteArray &localMasterSalt,
+                              const QByteArray &remoteMasterKey, const QByteArray &remoteMasterSalt) override
+    {
+        if (associationId.isEmpty() || !epoch || profile.isEmpty() || localMasterKey.isEmpty()
+            || localMasterSalt.isEmpty() || remoteMasterKey.isEmpty() || remoteMasterSalt.isEmpty())
+            return false;
+        associationEpochs_.insert(associationId, epoch);
+        return true;
+    }
+
+    void invalidateAssociation(const QByteArray &associationId, quint64 epoch) override
+    {
+        if (associationEpochs_.value(associationId) == epoch)
+            associationEpochs_.remove(associationId);
+    }
+
+    bool associationReady(const QByteArray &associationId) const override
+    {
+        return associationEpochs_.contains(associationId);
+    }
+
+    quint64 associationEpoch(const QByteArray &associationId) const override
+    {
+        return associationEpochs_.value(associationId);
+    }
+
+    PsiMedia::SecureRtpSessionContext::Error lastError(const QByteArray &) const override
+    {
+        return PsiMedia::SecureRtpSessionContext::Error::None;
+    }
+
+    void setProtectedPacketHandler(ProtectedPacketHandler handler) override
+    {
+        protectedPacketHandler_ = std::move(handler);
+    }
+
+    void setRuntimeErrorHandler(RuntimeErrorHandler handler) override
+    {
+        runtimeErrorHandler_ = std::move(handler);
+    }
+
+    bool receiveProtectedPacket(const PsiMedia::PSecureRtpPacket &packet) override
+    {
+        return associationEpochs_.value(packet.associationId) == packet.epoch;
+    }
+
     FakeRtpChannel *audioChannel() { return &audio_; }
 
     void completeStart()
@@ -229,11 +284,17 @@ private:
     Error          error_        = ErrorGeneric;
     FakeRtpChannel audio_;
     FakeRtpChannel video_;
+    QList<PsiMedia::PSecureRtpEndpoint> secureEndpoints_;
+    QHash<QByteArray, quint64>          associationEpochs_;
+    ProtectedPacketHandler              protectedPacketHandler_;
+    RuntimeErrorHandler                 runtimeErrorHandler_;
 };
 
-class FakeProvider final : public QObject, public PsiMedia::Provider {
+class FakeProvider final : public QObject,
+                           public PsiMedia::Provider,
+                           public PsiMedia::SecureRtpProvider {
     Q_OBJECT
-    Q_INTERFACES(PsiMedia::Provider)
+    Q_INTERFACES(PsiMedia::Provider PsiMedia::SecureRtpProvider)
 public:
     QObject *qobject() override { return this; }
     bool     isInitialized() const override { return true; }
@@ -243,6 +304,18 @@ public:
     PsiMedia::FeaturesContext *createFeatures() override { return nullptr; }
 
     PsiMedia::RtpSessionContext *createRtpSession() override
+    {
+        auto context = new FakeRtpSessionContext(&stats_);
+        context_     = context;
+        return context;
+    }
+
+    QStringList supportedSecureRtpProfiles() const override
+    {
+        return { QStringLiteral("SRTP_AES128_CM_HMAC_SHA1_80") };
+    }
+
+    PsiMedia::SecureRtpSessionContext *createSecureRtpSession() override
     {
         auto context = new FakeRtpSessionContext(&stats_);
         context_     = context;
