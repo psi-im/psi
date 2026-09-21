@@ -151,10 +151,6 @@ public:
     Endpoint(BackendSession *session, QString media);
     ~Endpoint() override;
 
-    bool supportsPacketIo() const override { return true; }
-    bool attachPacketIo(PacketWriter writer) override;
-    void receivePacket(const QByteArray &data, RTP::SrtpContext::Packet kind) override;
-
     RTP::Description                localOffer() const override { return prepared_.value_or(RTP::Description {}); }
     std::optional<RTP::Description> makeAnswer(const RTP::Description &) const override { return {}; }
     bool acceptsAnswer(const RTP::Description &, const RTP::Description &answer) const override
@@ -170,23 +166,25 @@ public:
 
 private:
     friend class BackendSession;
-    void detachPacketIo();
     void backendUnavailable();
     void invalidateSession();
-    void drainOutgoing();
 
     BackendSession                 *session_ = nullptr;
     QString                         media_;
     std::optional<RTP::Description> prepared_;
-    PacketWriter                    writer_;
-    QMetaObject::Connection         readyReadConnection_;
     bool                            stopped_ = false;
 };
 
 class BackendSession final : public RTP::MediaSession {
 public:
-    explicit BackendSession(QStringList mediaTypes) : mediaTypes_(std::move(mediaTypes))
+    explicit BackendSession(QStringList mediaTypes) :
+        mediaTypes_(std::move(mediaTypes)), rtp_(PsiMedia::RtpSession::Mode::Secure)
     {
+        if (!rtp_.isValid() || !rtp_.isSecure()) {
+            state_ = State::Failed;
+            return;
+        }
+
         // Negotiation is intentionally device-independent. Capture gets enabled
         // only by AvCall after the Jingle session has been accepted.
         rtp_.setAudioInputDevice(QString());
@@ -268,15 +266,100 @@ public:
         return std::make_unique<Endpoint>(this, media);
     }
 
-    PsiMedia::RtpChannel *channel(const QString &media)
+    bool configureSecureRtpEndpoints(const QList<RTP::SecureRtpEndpoint> &endpoints) override
     {
-        if (state_ != State::Running)
-            return nullptr;
-        if (media == QLatin1String("audio"))
-            return rtp_.audioRtpChannel();
-        if (media == QLatin1String("video"))
-            return rtp_.videoRtpChannel();
-        return nullptr;
+        QList<PsiMedia::SecureRtpEndpoint> out;
+        out.reserve(endpoints.size());
+        for (const auto &endpoint : endpoints) {
+            PsiMedia::SecureRtpEndpoint item;
+            item.endpointId           = endpoint.endpointId;
+            item.associationId        = endpoint.associationId;
+            item.media                = endpoint.media;
+            item.mid                  = endpoint.mid;
+            item.midExtensionId       = endpoint.midExtensionId;
+            item.incomingPayloadTypes.reserve(endpoint.incomingPayloadTypes.size());
+            for (auto payload : endpoint.incomingPayloadTypes)
+                item.incomingPayloadTypes.append(int(payload));
+            item.incomingSsrcs.reserve(endpoint.incomingSsrcs.size());
+            for (auto ssrc : endpoint.incomingSsrcs)
+                item.incomingSsrcs.append(ssrc);
+            item.localSsrcs.reserve(endpoint.localSsrcs.size());
+            for (auto ssrc : endpoint.localSsrcs)
+                item.localSsrcs.append(ssrc);
+            out.append(std::move(item));
+        }
+        return rtp_.configureSecureEndpoints(out);
+    }
+
+    bool configureSecureRtpAssociation(const RTP::SecureRtpParameters &parameters) override
+    {
+        if (!parameters.isValid())
+            return false;
+        return rtp_.configureSecureAssociation(
+            parameters.associationId, parameters.epoch, parameters.profile,
+            parameters.localMasterKey.toByteArray(), parameters.localMasterSalt.toByteArray(),
+            parameters.remoteMasterKey.toByteArray(), parameters.remoteMasterSalt.toByteArray());
+    }
+
+    void invalidateSecureRtpAssociation(const QByteArray &associationId, quint64 epoch) override
+    {
+        rtp_.invalidateSecureAssociation(associationId, epoch);
+    }
+
+    bool receiveProtectedRtpPacket(const RTP::SecureRtpPacket &packet) override
+    {
+        PsiMedia::SecureRtpPacket in;
+        in.associationId = packet.associationId;
+        in.epoch         = packet.epoch;
+        in.rawValue      = packet.data;
+        in.type = packet.kind == RTP::PacketKind::Rtp ? PsiMedia::RtpPacket::Type::Rtp
+                                                       : PsiMedia::RtpPacket::Type::Rtcp;
+        return rtp_.receiveProtectedPacket(in);
+    }
+
+    bool attachSecureRtpPacketIo(ProtectedPacketWriter writer) override
+    {
+        detachSecureRtpPacketIo();
+        if (!writer || !rtp_.isSecure())
+            return false;
+
+        protectedWriter_ = std::move(writer);
+        rtp_.setProtectedPacketHandler([this](const PsiMedia::SecureRtpPacket &packet) {
+            if (!protectedWriter_)
+                return;
+            RTP::SecureRtpPacket out;
+            out.associationId = packet.associationId;
+            out.epoch         = packet.epoch;
+            out.data          = packet.rawValue;
+            out.kind = packet.type == PsiMedia::RtpPacket::Type::Rtp ? RTP::PacketKind::Rtp
+                                                                      : RTP::PacketKind::Rtcp;
+            const auto writer = protectedWriter_;
+            QPointer<BackendSession> guard(this);
+            writer(out);
+            if (!guard)
+                return;
+        });
+        rtp_.setSecureRuntimeErrorHandler(
+            [this](const QByteArray &associationId, quint64 epoch, PsiMedia::SecureRtpError error) {
+                Q_UNUSED(associationId)
+                Q_UNUSED(epoch)
+                if (state_ == State::Failed || state_ == State::Stopped)
+                    return;
+                const auto failure = backendError(
+                    QStringLiteral("psimedia secure RTP runtime error (%1)").arg(int(error)));
+                state_ = State::Failed;
+                revokeEndpoints();
+                failDeferred(failure);
+                failCurrentAndCall(failure);
+            });
+        return true;
+    }
+
+    void detachSecureRtpPacketIo() override
+    {
+        protectedWriter_ = {};
+        rtp_.setProtectedPacketHandler({});
+        rtp_.setSecureRuntimeErrorHandler({});
     }
 
     void pause(const QString &media)
@@ -722,6 +805,7 @@ private:
 
     QStringList                  mediaTypes_;
     PsiMedia::RtpSession         rtp_;
+    ProtectedPacketWriter        protectedWriter_;
     State                        state_        = State::Unstarted;
     bool                         audioEnabled_ = false;
     bool                         videoEnabled_ = false;
@@ -746,55 +830,8 @@ Endpoint::~Endpoint()
         session_->unregisterEndpoint(this);
 }
 
-void Endpoint::detachPacketIo()
-{
-    QObject::disconnect(readyReadConnection_);
-    readyReadConnection_ = {};
-    writer_              = {};
-}
-
-void Endpoint::backendUnavailable()
-{
-    detachPacketIo();
-    stopped_ = true;
-}
-
-void Endpoint::invalidateSession()
-{
-    backendUnavailable();
-    session_ = nullptr;
-}
-
-bool Endpoint::attachPacketIo(PacketWriter writer)
-{
-    detachPacketIo();
-    if (!session_ || stopped_ || !writer)
-        return false;
-    auto channel = session_->channel(media_);
-    if (!channel)
-        return false;
-    writer_ = std::move(writer);
-    readyReadConnection_
-        = QObject::connect(channel, &PsiMedia::RtpChannel::readyRead, session_, [this] { drainOutgoing(); });
-    drainOutgoing();
-    return true;
-}
-
-void Endpoint::receivePacket(const QByteArray &data, RTP::SrtpContext::Packet kind)
-{
-    if (!session_ || stopped_)
-        return;
-    auto channel = session_->channel(media_);
-    if (!channel)
-        return;
-    channel->write(PsiMedia::RtpPacket(data,
-                                       kind == RTP::SrtpContext::Packet::Rtp ? PsiMedia::RtpPacket::Type::Rtp
-                                                                             : PsiMedia::RtpPacket::Type::Rtcp));
-}
-
 void Endpoint::stop()
 {
-    detachPacketIo();
     if (stopped_)
         return;
     stopped_ = true;
@@ -802,38 +839,6 @@ void Endpoint::stop()
         session_->pause(media_);
 }
 
-void Endpoint::drainOutgoing()
-{
-    if (!session_ || stopped_ || !writer_)
-        return;
-    auto channel = session_->channel(media_);
-    if (!channel)
-        return;
-
-    struct OutgoingPacket {
-        QByteArray               data;
-        RTP::SrtpContext::Packet kind;
-    };
-    QList<OutgoingPacket> batch;
-    while (channel->packetsAvailable() > 0) {
-        const auto packet = channel->read();
-        if (packet.isNull())
-            continue;
-        if (packet.type() == PsiMedia::RtpPacket::Type::Rtp)
-            batch.append({ packet.rawValue(), RTP::SrtpContext::Packet::Rtp });
-        else
-            batch.append({ packet.rawValue(), RTP::SrtpContext::Packet::Rtcp });
-    }
-
-    // PacketWriter is external code and may synchronously tear down the Jingle
-    // application, this endpoint and its backend session. Keep everything used
-    // after the first callback in local values only.
-    const auto writer = writer_;
-    for (auto &packet : batch) {
-        if (!writer(std::move(packet.data), packet.kind))
-            break;
-    }
-}
 
 class Provider final : public RTP::MediaProvider {
 public:
@@ -842,9 +847,14 @@ public:
     std::unique_ptr<RTP::MediaSession> createSession() override
     {
         const auto types = capabilities_.mediaTypes();
-        return types.isEmpty() ? nullptr : std::make_unique<BackendSession>(types);
+        return types.isEmpty() || secureRtpProfiles().isEmpty() ? nullptr
+                                                                : std::make_unique<BackendSession>(types);
     }
     QStringList mediaTypes() const override { return capabilities_.mediaTypes(); }
+    QStringList secureRtpProfiles() const override
+    {
+        return capabilities_.secureRtp ? PsiMedia::RtpSession::supportedSecureRtpProfiles() : QStringList {};
+    }
 
 private:
     const PsiMediaJingleCapabilities capabilities_;
