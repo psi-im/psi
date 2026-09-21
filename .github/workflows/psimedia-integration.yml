@@ -29,7 +29,7 @@ permissions:
   contents: read
 
 env:
-  QCA_TAG: v3.0.7
+  QCA_TAG: v3.0.8
 
 concurrency:
   group: psimedia-integration-${{ github.workflow }}-${{ github.ref }}
@@ -108,7 +108,7 @@ jobs:
           echo "Psi: $(git rev-parse HEAD)"
           echo "Iris: $(git -C iris rev-parse HEAD)"
           echo "psimedia: $(git -C _psimedia rev-parse HEAD)"
-          echo "QCA: psi-im/qca v3.0.7 release package (qca-ossl)"
+          echo "QCA: psi-im/qca $QCA_TAG release package (qca-ossl)"
           qmake6 -v
           openssl version
           gst-launch-1.0 --version
@@ -1171,7 +1171,7 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
           G_DEBUG: fatal-criticals
-          ASAN_OPTIONS: detect_leaks=0:abort_on_error=1:alloc_dealloc_mismatch=0
+          ASAN_OPTIONS: detect_leaks=0:abort_on_error=1
         run: |
           set -euo pipefail
           bin="$GITHUB_WORKSPACE/_jingle-call-build/psi_jingle_call_live_client"
