@@ -4,6 +4,7 @@
 
 #include <iris/jingle-ice.h>
 #include <iris/jingle-rtp.h>
+#include <iris/dtls.h>
 #include <iris/jingle-session.h>
 #include <iris/tcpportreserver.h>
 #include <iris/xmpp.h>
@@ -255,7 +256,12 @@ int main(int argc, char **argv)
         PsiMediaJingleCapabilities caps;
         caps.backendAvailable = true;
         caps.probeComplete = true;
-        caps.secureRtp = !RTP::supportedSecureRtpProfiles().isEmpty();
+        const auto backendProfiles = PsiMedia::RtpSession::supportedSecureRtpProfiles();
+        const auto dtlsProfiles    = XMPP::Dtls::supportedSRTPProfiles();
+        caps.secureRtp = std::any_of(backendProfiles.cbegin(), backendProfiles.cend(),
+                                     [&dtlsProfiles](const QString &profile) {
+                                         return dtlsProfiles.contains(profile);
+                                     });
         caps.audio = true;
         caps.audioInput = true;
         caps.audioOutput = true;
