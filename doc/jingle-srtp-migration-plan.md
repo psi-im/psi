@@ -201,6 +201,14 @@ Current psimedia branch: `ai/jingle-srtp-psimedia`.
   MID values and a fresh audio packet after video membership removal.
 - **CI pending:** psimedia `ac619b6` adds a `BUILD_PSIPLUGIN=ON` build against the matching
   Psi branch's real plugin API header plus a Qt5 compatibility build.
+- **Open before API freeze:** the current secure session object still owns one `SecureRtpGroup`.
+  That is correct for audio-only and negotiated audio+video BUNDLE, but it cannot represent
+  unbundled audio+video, which require two independent RTP/DTLS/SRTP associations while sharing
+  the higher-level codec/device session. Refactor the secure session into an
+  `associationId -> SecureRtpGroup` map before Phase 2. Endpoint metadata must identify its
+  association; protected packets already carry associationId. Add a regression proving two
+  unbundled groups have independent RTP/RTCP/libSRTP state while the bundled case still shares
+  one group.
 - **Still required before Phase 2:** finish plugin-unload/callback lifetime coverage and
   subproject/SDK packaging coverage. External libwebrtc/webrtcbin peer tests remain a
   cross-repository gate after Psi negotiates/passes the XEP-0294 MID extension instead of
@@ -488,6 +496,9 @@ A missing peer leaves that row pending; it does not prevent independent implemen
   SSRC/MID/extension and feedback mappings. Store sanitized signaling fixtures without secrets.
 - Preserve audio-only and unbundled operation as well as negotiated BUNDLE. Do not force all
   calls into one session or require the peer to change its offer to match the internal refactor.
+  The psimedia secure-session API must therefore support more than one simultaneous association
+  inside the higher-level media session: one group object per negotiated BUNDLE group and one
+  group object per standalone/unbundled RTP content.
 - Do not make MID mandatory as part of moving crypto: the current Psi adapter rejects answer
   header extensions/feedback it cannot implement. Retain signaled SSRC and unambiguous PT
   routing for the existing subset. Enable MID or other extensions only with complete negotiated
