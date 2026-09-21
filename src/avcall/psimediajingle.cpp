@@ -14,7 +14,6 @@
 #include <iris/jingle-rtp.h>
 #include <iris/jingle-session.h>
 
-#include <QDebug>
 #include <QMetaObject>
 #include <QPointer>
 #include <QSet>
@@ -181,8 +180,7 @@ private:
     std::optional<RTP::Description> prepared_;
     PacketWriter                    writer_;
     QMetaObject::Connection         readyReadConnection_;
-    bool                            stopped_              = false;
-    bool                            loggedIncomingPacket_ = false;
+    bool                            stopped_ = false;
 };
 
 class BackendSession final : public RTP::MediaSession {
@@ -789,15 +787,6 @@ void Endpoint::receivePacket(const QByteArray &data, RTP::SrtpContext::Packet ki
     auto channel = session_->channel(media_);
     if (!channel)
         return;
-    if (!loggedIncomingPacket_) {
-        loggedIncomingPacket_ = true;
-        qInfo().noquote() << "PsiMedia RTP ingress: first packet"
-                          << "media=" << media_ << "kind=" << (kind == RTP::SrtpContext::Packet::Rtp ? "RTP" : "RTCP")
-                          << "pt="
-                          << (kind == RTP::SrtpContext::Packet::Rtp && data.size() >= 2 ? int(quint8(data[1]) & 0x7f)
-                                                                                        : -1)
-                          << "bytes=" << data.size();
-    }
     channel->write(PsiMedia::RtpPacket(data,
                                        kind == RTP::SrtpContext::Packet::Rtp ? PsiMedia::RtpPacket::Type::Rtp
                                                                              : PsiMedia::RtpPacket::Type::Rtcp));
