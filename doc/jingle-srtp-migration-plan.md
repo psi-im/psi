@@ -185,9 +185,10 @@ Current psimedia branch: `ai/jingle-srtp-psimedia`.
 - **Passed:** one GStreamer `rtpsession` can carry Opus 48 kHz and VP8 90 kHz in one group,
   consume compound RTCP once, and remove video while audio continues without replacing the
   RTP session. This closes the implementation gate in step 5.
-- **Passed at psimedia `7e1b1bb`:** SRTP-enabled provider regressions and the explicit
-  `PSIMEDIA_ENABLE_SRTP=OFF` build both pass; the audio+video shared-`rtpsession` prototype is
-  therefore the last known green baseline before the secure public-API integration.
+- **Passed at psimedia `de697c2`:** the group-oriented secure public API, dual-interface
+  secure media session, direct libSRTP two-peer/group regressions, outgoing MID stamping,
+  SRTP-enabled provider suite, and explicit `PSIMEDIA_ENABLE_SRTP=OFF` build all pass. This is
+  the current known-green Phase 1 baseline.
 - **Implemented, CI pending on the current psimedia head:** `SecureRtpGroup` composes libSRTP
   with the shared RTP group boundary so plaintext RTP/RTCP stays inside psimedia. The public
   `SecureRtpSessionContext/1.0` is now protected-only and group-oriented: endpoint route
@@ -195,14 +196,15 @@ Current psimedia branch: `ai/jingle-srtp-psimedia`.
   The secure factory returns `GstSecureRtpSessionContext`, which is the same codec/device media
   context as Provider/1.6 plus the new secure IID. A normal legacy session does not advertise
   that IID. Encoder-thread RTP is queued onto the Qt owner thread before group routing/crypto.
-- **Implemented, CI pending:** the group bridge now stamps the negotiated MID RTP header
-  extension on outgoing bundled RTP before the shared rtpsession/libSRTP boundary; the regression
-  covers audio/video MID values and a fresh audio packet after video membership removal.
-- **Still required before Phase 2:** get the dual-interface secure media context, MID stamping and
-  two-peer `SecureRtpGroup` regressions green; finish callback/lifetime and plugin-unload
-  semantics; and add BUILD_PSIPLUGIN/subproject/SDK coverage. External libwebrtc/webrtcbin peer
-  tests remain a cross-repository gate after Psi negotiates/passes the XEP-0294 MID extension
-  instead of rejecting header extensions.
+- **Passed:** the group bridge stamps the negotiated MID RTP header extension on outgoing
+  bundled RTP before the shared rtpsession/libSRTP boundary; the regression covers audio/video
+  MID values and a fresh audio packet after video membership removal.
+- **CI pending:** psimedia `ac619b6` adds a `BUILD_PSIPLUGIN=ON` build against the matching
+  Psi branch's real plugin API header plus a Qt5 compatibility build.
+- **Still required before Phase 2:** finish plugin-unload/callback lifetime coverage and
+  subproject/SDK packaging coverage. External libwebrtc/webrtcbin peer tests remain a
+  cross-repository gate after Psi negotiates/passes the XEP-0294 MID extension instead of
+  rejecting header extensions.
 
 1. Add a new optional secure-RTP session interface with its own Qt interface IID instead of
    appending virtual methods to `RtpSessionContext/1.6`. Add provider-level discovery/factory
