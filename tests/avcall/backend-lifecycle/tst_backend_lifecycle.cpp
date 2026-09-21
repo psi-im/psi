@@ -233,6 +233,13 @@ public:
 
     FakeRtpChannel *audioChannel() { return &audio_; }
 
+    void emitProtectedPacket(const PsiMedia::PSecureRtpPacket &packet)
+    {
+        const auto handler = protectedPacketHandler_;
+        if (handler)
+            handler(packet);
+    }
+
     void completeStart()
     {
         Q_ASSERT(controlAlive_);
@@ -846,21 +853,20 @@ private slots:
 
         auto context = QPointer<FakeRtpSessionContext>(provider_.context());
         QVERIFY(context);
-        PsiMedia::PRtpPacket first;
-        first.rawValue = QByteArray(12, 'a');
-        first.type     = PsiMedia::PRtpPacket::Type::Rtp;
-        PsiMedia::PRtpPacket second;
-        second.rawValue = QByteArray(12, 'b');
-        second.type     = PsiMedia::PRtpPacket::Type::Rtcp;
-        context->audioChannel()->queueOutgoing(first);
-        context->audioChannel()->queueOutgoing(second);
 
         int writes = 0;
-        QVERIFY(harness.endpoint->attachPacketIo([&](QByteArray, RTP::SrtpContext::Packet) {
+        QVERIFY(harness.session->attachSecureRtpPacketIo([&](const RTP::SecureRtpPacket &) {
             ++writes;
             harness.session.reset();
             return false;
         }));
+
+        PsiMedia::PSecureRtpPacket packet;
+        packet.associationId = QByteArrayLiteral("reentrant-association");
+        packet.epoch         = 1;
+        packet.rawValue      = QByteArray(12, 'a');
+        packet.type          = PsiMedia::PRtpPacket::Type::Rtp;
+        context->emitProtectedPacket(packet);
 
         QCOMPARE(writes, 1);
         QVERIFY(!harness.session);
