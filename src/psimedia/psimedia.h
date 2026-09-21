@@ -21,6 +21,8 @@
 #ifndef PSIMEDIA_H
 #define PSIMEDIA_H
 
+#include <QByteArray>
+#include <QList>
 #include <QMetaType>
 #include <QSharedDataPointer>
 #include <QSize>
@@ -200,6 +202,39 @@ private:
     QSharedDataPointer<Private> d;
 };
 
+struct SecureRtpPacket {
+    QByteArray       associationId;
+    quint64          epoch = 0;
+    QByteArray       rawValue;
+    RtpPacket::Type  type = RtpPacket::Type::Rtp;
+};
+
+struct SecureRtpEndpoint {
+    QByteArray      endpointId;
+    QByteArray      associationId;
+    QString         media;
+    QByteArray      mid;
+    quint16         midExtensionId = 0;
+    QList<int>      incomingPayloadTypes;
+    QList<quint32>  incomingSsrcs;
+    QList<quint32>  localSsrcs;
+};
+
+enum class SecureRtpError : int {
+    None = 0,
+    NotReady,
+    UnsupportedProfile,
+    InvalidKey,
+    InvalidPacket,
+    Authentication,
+    Replay,
+    StaleEpoch,
+    StreamLimit,
+    KeyExpired,
+    IndexLimit,
+    LibraryFailure
+};
+
 // may drop packets if not read fast enough.
 // may queue no packets at all, if nobody is listening to readyRead.
 class RtpChannel : public QObject {
@@ -282,8 +317,15 @@ class RtpSession : public QObject {
 public:
     enum Error { ErrorGeneric, ErrorSystem, ErrorCodec };
 
+    enum class Mode { Plain, Secure };
+
     explicit RtpSession(QObject *parent = nullptr);
+    explicit RtpSession(Mode mode, QObject *parent = nullptr);
     ~RtpSession() override;
+
+    bool isValid() const;
+    bool isSecure() const;
+    static QStringList supportedSecureRtpProfiles();
 
     void reset();
 
@@ -449,6 +491,25 @@ public:
 
     RtpChannel *audioRtpChannel();
     RtpChannel *videoRtpChannel();
+
+    using ProtectedPacketHandler = std::function<void(const SecureRtpPacket &)>;
+    using SecureRuntimeErrorHandler
+        = std::function<void(const QByteArray &associationId, quint64 epoch, SecureRtpError error)>;
+
+    // Secure mode only. The provider owns SRTP/SRTCP crypto and authenticated
+    // BUNDLE routing; the host supplies DTLS-exported keys and protected network
+    // datagrams tagged with an opaque association/epoch.
+    bool configureSecureEndpoints(const QList<SecureRtpEndpoint> &endpoints);
+    bool configureSecureAssociation(const QByteArray &associationId, quint64 epoch, const QString &profile,
+                                    const QByteArray &localMasterKey, const QByteArray &localMasterSalt,
+                                    const QByteArray &remoteMasterKey, const QByteArray &remoteMasterSalt);
+    void invalidateSecureAssociation(const QByteArray &associationId, quint64 epoch);
+    bool secureAssociationReady(const QByteArray &associationId) const;
+    quint64 secureAssociationEpoch(const QByteArray &associationId) const;
+    SecureRtpError secureLastError(const QByteArray &associationId) const;
+    void setProtectedPacketHandler(ProtectedPacketHandler handler);
+    void setSecureRuntimeErrorHandler(SecureRuntimeErrorHandler handler);
+    bool receiveProtectedPacket(const SecureRtpPacket &packet);
 
 signals:
     void started();
