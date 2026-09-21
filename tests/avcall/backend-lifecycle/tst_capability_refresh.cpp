@@ -23,9 +23,11 @@ const QString AudioRtp   = QStringLiteral("urn:xmpp:jingle:apps:rtp:audio");
 const QString VideoRtp   = QStringLiteral("urn:xmpp:jingle:apps:rtp:video");
 const QString Baseline   = QStringLiteral("urn:psi:test:baseline");
 
-class CapabilityRtpSessionContext final : public QObject, public PsiMedia::RtpSessionContext {
+class CapabilityRtpSessionContext final : public QObject,
+                                          public PsiMedia::RtpSessionContext,
+                                          public PsiMedia::SecureRtpSessionContext {
     Q_OBJECT
-    Q_INTERFACES(PsiMedia::RtpSessionContext)
+    Q_INTERFACES(PsiMedia::RtpSessionContext PsiMedia::SecureRtpSessionContext)
 public:
     QObject *qobject() override { return this; }
 
@@ -70,6 +72,33 @@ public:
     PsiMedia::RtpChannelContext  *videoRtpChannel() override { return nullptr; }
     void dumpPipeline(std::function<void(const QStringList &)> callback) override { callback({}); }
 
+    bool configureEndpoints(const QList<PsiMedia::PSecureRtpEndpoint> &) override { return true; }
+    bool configureAssociation(const QByteArray &associationId, quint64 epoch, const QString &profile,
+                              const QByteArray &, const QByteArray &, const QByteArray &, const QByteArray &) override
+    {
+        if (associationId.isEmpty() || !epoch || profile.isEmpty())
+            return false;
+        epochs_.insert(associationId, epoch);
+        return true;
+    }
+    void invalidateAssociation(const QByteArray &associationId, quint64 epoch) override
+    {
+        if (epochs_.value(associationId) == epoch)
+            epochs_.remove(associationId);
+    }
+    bool associationReady(const QByteArray &associationId) const override { return epochs_.contains(associationId); }
+    quint64 associationEpoch(const QByteArray &associationId) const override { return epochs_.value(associationId); }
+    PsiMedia::SecureRtpSessionContext::Error lastError(const QByteArray &) const override
+    {
+        return PsiMedia::SecureRtpSessionContext::Error::None;
+    }
+    void setProtectedPacketHandler(ProtectedPacketHandler handler) override { protectedHandler_ = std::move(handler); }
+    void setRuntimeErrorHandler(RuntimeErrorHandler handler) override { runtimeHandler_ = std::move(handler); }
+    bool receiveProtectedPacket(const PsiMedia::PSecureRtpPacket &packet) override
+    {
+        return epochs_.value(packet.associationId) == packet.epoch;
+    }
+
 signals:
     void started();
     void preferencesUpdated();
@@ -79,11 +108,18 @@ signals:
     void stopped();
     void finished();
     void error();
+
+private:
+    QHash<QByteArray, quint64> epochs_;
+    ProtectedPacketHandler     protectedHandler_;
+    RuntimeErrorHandler        runtimeHandler_;
 };
 
-class CapabilityProvider final : public QObject, public PsiMedia::Provider {
+class CapabilityProvider final : public QObject,
+                                 public PsiMedia::Provider,
+                                 public PsiMedia::SecureRtpProvider {
     Q_OBJECT
-    Q_INTERFACES(PsiMedia::Provider)
+    Q_INTERFACES(PsiMedia::Provider PsiMedia::SecureRtpProvider)
 public:
     QObject                        *qobject() override { return this; }
     bool                            isInitialized() const override { return true; }
@@ -91,6 +127,14 @@ public:
     QString                         creditText() const override { return {}; }
     PsiMedia::FeaturesContext      *createFeatures() override { return nullptr; }
     PsiMedia::RtpSessionContext    *createRtpSession() override { return new CapabilityRtpSessionContext; }
+    QStringList supportedSecureRtpProfiles() const override
+    {
+        return { QStringLiteral("SRTP_AES128_CM_HMAC_SHA1_80") };
+    }
+    PsiMedia::SecureRtpSessionContext *createSecureRtpSession() override
+    {
+        return new CapabilityRtpSessionContext;
+    }
     PsiMedia::AudioRecorderContext *createAudioRecorder() override { return nullptr; }
 
 signals:
