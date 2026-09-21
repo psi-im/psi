@@ -201,14 +201,15 @@ Current psimedia branch: `ai/jingle-srtp-psimedia`.
   MID values and a fresh audio packet after video membership removal.
 - **CI pending:** psimedia `ac619b6` adds a `BUILD_PSIPLUGIN=ON` build against the matching
   Psi branch's real plugin API header plus a Qt5 compatibility build.
-- **Open before API freeze:** the current secure session object still owns one `SecureRtpGroup`.
-  That is correct for audio-only and negotiated audio+video BUNDLE, but it cannot represent
-  unbundled audio+video, which require two independent RTP/DTLS/SRTP associations while sharing
-  the higher-level codec/device session. Refactor the secure session into an
-  `associationId -> SecureRtpGroup` map before Phase 2. Endpoint metadata must identify its
-  association; protected packets already carry associationId. Add a regression proving two
-  unbundled groups have independent RTP/RTCP/libSRTP state while the bundled case still shares
-  one group.
+- **Implemented, CI pending:** the secure media session now owns an
+  `associationId -> SecureRtpGroup` map. Bundled endpoints share one ID/group; unbundled
+  audio/video use independent group/rtpsession/libSRTP state inside the same codec/device
+  session. Endpoint metadata carries associationId, protected packets already carry it, and the
+  public regression activates/invalidate two associations independently.
+- **Implemented, CI pending:** the encoder-to-secure-group handoff is now a bounded producer
+  queue (256 packets, 512 KiB, 1 s age) with route-generation and crypto-epoch fencing. This
+  replaces the temporary one-Qt-event-per-packet handoff and restores the bounded-backpressure
+  invariant before SRTP. Runtime errors now carry associationId+epoch as well as the error code.
 - **Still required before Phase 2:** finish plugin-unload/callback lifetime coverage and
   subproject/SDK packaging coverage. External libwebrtc/webrtcbin peer tests remain a
   cross-repository gate after Psi negotiates/passes the XEP-0294 MID extension instead of
