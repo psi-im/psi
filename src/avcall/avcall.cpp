@@ -33,6 +33,7 @@
 #include <QPointer>
 #include <QtCrypto>
 
+#include <algorithm>
 #include <memory>
 #include <utility>
 
