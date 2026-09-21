@@ -9,10 +9,12 @@
 #include <iris/xmpp_client.h>
 
 #include <QCryptographicHash>
+#include <QHash>
 #include <QTest>
 #include <QtCrypto>
 
 #include <memory>
+#include <utility>
 
 namespace {
 namespace Jingle = XMPP::Jingle;
