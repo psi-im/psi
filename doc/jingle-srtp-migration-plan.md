@@ -209,15 +209,18 @@ Current psimedia branch: `ai/jingle-srtp-psimedia`.
   audio/video use independent group/rtpsession/libSRTP state inside the same codec/device
   session. Endpoint metadata carries associationId, protected packets carry it, and the public
   regression activates/invalidates two associations independently.
-- **Built in the green Qt6/plugin stages, direct queue regression still required:** the
-  encoder-to-secure-group handoff is a bounded producer queue (256 packets, 512 KiB, 1 s age)
-  with route-generation and crypto-epoch fencing. This replaces the temporary one-Qt-event-per-
-  packet handoff and restores the bounded-backpressure invariant before SRTP. Runtime errors
-  carry associationId+epoch as well as the error code.
-- **Implemented, full matrix pending at psimedia `490c79b`:** authenticated RTP/SRTCP which
-  passes libSRTP but fails the negotiated group route is reported as nonfatal `InvalidPacket`,
-  distinct from authentication/replay/fatal backend failures; a regression covers this path.
-  The same run also rechecks the explicit Qt5 QDebug fixes.
+- **Fully green at psimedia `490c79b`:** Qt6 provider regressions, `PSIMEDIA_ENABLE_SRTP=OFF`,
+  `BUILD_PSIPLUGIN=ON` against the matching Psi header, and the Qt5 compatibility build all pass
+  with the multi-association secure media implementation and authenticated route-drop semantics.
+- **Implemented, CI pending:** the encoder-to-secure-group handoff is a bounded producer queue
+  (256 packets, 512 KiB, 1 s age) with route-generation and crypto-epoch fencing. A deterministic
+  regression now fills the queue without running the Qt event loop, verifies the byte bound,
+  age eviction/accounting, and full clearing on route-generation change. Runtime errors carry
+  associationId+epoch as well as the error code.
+- **Passed at psimedia `490c79b`:** authenticated RTP/SRTCP which passes libSRTP but fails
+  the negotiated group route is reported as nonfatal `InvalidPacket`, distinct from
+  authentication/replay/fatal backend failures; the regression and explicit Qt5 QDebug fixes
+  pass in the full matrix.
 - **Still required before Phase 2:** finish plugin-unload/callback lifetime coverage and
   subproject/SDK packaging coverage. External libwebrtc/webrtcbin peer tests remain a
   cross-repository gate after Psi negotiates/passes the XEP-0294 MID extension instead of
