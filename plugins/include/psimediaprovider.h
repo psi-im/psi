@@ -27,6 +27,7 @@
 #include <QObject>
 #include <QSize>
 #include <QString>
+#include <QStringList>
 #include <QVariantMap>
 
 #include <functional>
@@ -178,6 +179,7 @@ public:
         InvalidPacket,
         Authentication,
         Replay,
+        StaleEpoch,
         StreamLimit,
         KeyExpired,
         IndexLimit,
