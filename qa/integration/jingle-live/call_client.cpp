@@ -22,6 +22,7 @@
 #include <QPointer>
 #include <QTimer>
 
+#include <algorithm>
 #include <functional>
 #include <utility>
 
