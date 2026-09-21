@@ -235,6 +235,7 @@ public:
     ~BackendSession() override
     {
         cancelAll();
+        detachSecureRtpPacketIo();
         invalidateEndpoints();
         deferred_.reset();
         running_.reset();
