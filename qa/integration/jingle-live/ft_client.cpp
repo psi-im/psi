@@ -379,17 +379,24 @@ int main(int argc, char **argv)
                                                   }
                                                   if (state != J::State::Finished)
                                                       return;
+                                                  const auto reason = transfer->lastReason();
                                                   if (!receiverSawFinishing) {
-                                                      finish(27, QStringLiteral("receiver skipped Finishing state"));
+                                                      // Finishing is the successful payload-complete/drain tail.
+                                                      // A fatal error before all declared bytes arrive must not
+                                                      // pretend that the payload completed merely to pass through it.
+                                                      if (reason.isValid() && reason.condition() != J::Reason::Success) {
+                                                          finish(24, QStringLiteral("receiver transfer failed before payload completion"));
+                                                          return;
+                                                      }
+                                                      finish(27, QStringLiteral("successful receiver skipped Finishing state"));
                                                       return;
                                                   }
                                                   if (transfer->connection()) {
                                                       finish(28, QStringLiteral("receiver retained connection after drain"));
                                                       return;
                                                   }
-                                                  const auto reason = transfer->lastReason();
                                                   if (!reason.isValid() || reason.condition() != J::Reason::Success) {
-                                                      finish(24, QStringLiteral("receiver transfer finished unsuccessfully"));
+                                                      finish(24, QStringLiteral("receiver failed from Finishing state"));
                                                       return;
                                                   }
                                                   receiverTransferFinished = true;
@@ -530,17 +537,24 @@ int main(int argc, char **argv)
                                  }
                                  if (state != J::State::Finished)
                                      return;
+                                 const auto reason = transfer->lastReason();
                                  if (!senderSawFinishing) {
-                                     finish(54, QStringLiteral("sender skipped Finishing state"));
+                                     // Premature EOF / source failure is terminal before payload
+                                     // completion. Only successful completion is required to enter
+                                     // the Finishing drain/signaling tail.
+                                     if (reason.isValid() && reason.condition() != J::Reason::Success) {
+                                         finish(44, QStringLiteral("sender transfer failed before payload completion"));
+                                         return;
+                                     }
+                                     finish(54, QStringLiteral("successful sender skipped Finishing state"));
                                      return;
                                  }
                                  if (transfer->connection()) {
                                      finish(55, QStringLiteral("sender retained connection after drain"));
                                      return;
                                  }
-                                 const auto reason = transfer->lastReason();
                                  if (!reason.isValid() || reason.condition() != J::Reason::Success) {
-                                     finish(44, QStringLiteral("sender transfer finished unsuccessfully"));
+                                     finish(44, QStringLiteral("sender failed from Finishing state"));
                                      return;
                                  }
                                  senderTransferFinished = true;
