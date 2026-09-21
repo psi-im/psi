@@ -581,41 +581,73 @@ jobs:
               audioApply.reset();
               videoApply.reset();
 
-              std::vector<QByteArray> rtcpPackets;
-              if (!audioEndpoint->attachPacketIo([&](QByteArray packet, RTP::SrtpContext::Packet kind) {
-                      if (kind == RTP::SrtpContext::Packet::Rtcp)
-                          rtcpPackets.push_back(std::move(packet));
-                      return true;
-                  })) {
-                  qCritical() << "Production Psi audio endpoint refused packet I/O";
+              if (!session->attachSecureRtpPacketIo([](const RTP::SecureRtpPacket &) { return true; })) {
+                  qCritical() << "Production Psi media session refused protected packet I/O";
                   return 8;
               }
-              if (!videoEndpoint->attachPacketIo([](QByteArray, RTP::SrtpContext::Packet) { return true; })) {
-                  qCritical() << "Production Psi video endpoint refused packet I/O";
+
+              RTP::SecureRtpEndpoint audioRoute;
+              audioRoute.endpointId    = QByteArrayLiteral("audio");
+              audioRoute.associationId = QByteArrayLiteral("audio-association");
+              audioRoute.media         = QStringLiteral("audio");
+              for (const auto &payload : audioLocal->payloads)
+                  audioRoute.incomingPayloadTypes.insert(payload.id);
+
+              RTP::SecureRtpEndpoint videoRoute;
+              videoRoute.endpointId    = QByteArrayLiteral("video");
+              videoRoute.associationId = QByteArrayLiteral("video-association");
+              videoRoute.media         = QStringLiteral("video");
+              for (const auto &payload : videoLocal->payloads)
+                  videoRoute.incomingPayloadTypes.insert(payload.id);
+
+              if (!session->configureSecureRtpEndpoints({ audioRoute, videoRoute })) {
+                  qCritical() << "Production Psi media session rejected secure endpoint routing";
                   return 9;
               }
 
-              constexpr quint32 RemoteSsrc = 0x44556677;
-              for (quint16 sequence = 1; sequence <= 4; ++sequence) {
-                  audioEndpoint->receivePacket(
-                      makeOpusRtp(sequence, 48000u + quint32(sequence - 1) * 960u, RemoteSsrc, opus->id),
-                      RTP::SrtpContext::Packet::Rtp);
-              }
-
-              if (!waitUntil([&] {
-                      if (runtimeFailed)
-                          return true;
-                      for (const auto &packet : rtcpPackets) {
-                          if (containsReceiverReport(packet))
-                              return true;
-                      }
-                      return false;
-                  }, 12000)
-                  || runtimeFailed) {
-                  qCritical() << "Production Psi adapter did not return an RTCP receiver report"
-                              << int(runtimeError.code) << runtimeError.text;
+              const auto profiles = provider->secureRtpProfiles();
+              if (profiles.isEmpty()) {
+                  qCritical() << "Production Psi media provider exposed no secure RTP profiles";
                   return 10;
               }
+              const QString profile = profiles.contains(QStringLiteral("SRTP_AES128_CM_HMAC_SHA1_80"))
+                  ? QStringLiteral("SRTP_AES128_CM_HMAC_SHA1_80")
+                  : profiles.first();
+              const int keyBytes
+                  = profile == QLatin1String("SRTP_AEAD_AES_256_GCM") ? 32 : 16;
+              const int saltBytes
+                  = profile.contains(QLatin1String("GCM")) ? 12 : 14;
+
+              auto configureAssociation = [&](const QByteArray &id, quint64 epoch, char localFill, char remoteFill) {
+                  RTP::SecureRtpParameters parameters;
+                  parameters.associationId   = id;
+                  parameters.epoch           = epoch;
+                  parameters.profile         = profile;
+                  parameters.localMasterKey  = QCA::SecureArray(QByteArray(keyBytes, localFill));
+                  parameters.localMasterSalt = QCA::SecureArray(QByteArray(saltBytes, localFill + 1));
+                  parameters.remoteMasterKey = QCA::SecureArray(QByteArray(keyBytes, remoteFill));
+                  parameters.remoteMasterSalt= QCA::SecureArray(QByteArray(saltBytes, remoteFill + 1));
+                  return session->configureSecureRtpAssociation(parameters);
+              };
+              if (!configureAssociation(audioRoute.associationId, 1, 'a', 'c')
+                  || !configureAssociation(videoRoute.associationId, 1, 'e', 'g')) {
+                  qCritical() << "Production Psi adapter rejected valid SRTP association material" << profile;
+                  return 11;
+              }
+
+              RTP::SecureRtpPacket unauthenticated;
+              unauthenticated.associationId = audioRoute.associationId;
+              unauthenticated.epoch         = 1;
+              unauthenticated.kind          = RTP::PacketKind::Rtp;
+              unauthenticated.data          = makeOpusRtp(1, 48000, 0x44556677, opus->id);
+              if (session->receiveProtectedRtpPacket(unauthenticated)) {
+                  qCritical() << "Production Psi adapter accepted plaintext as protected SRTP";
+                  return 12;
+              }
+
+              session->invalidateSecureRtpAssociation(audioRoute.associationId, 1);
+              session->invalidateSecureRtpAssociation(videoRoute.associationId, 1);
+              session->detachSecureRtpPacketIo();
 
               audioEndpoint->stop();
               videoEndpoint->stop();
@@ -736,8 +768,8 @@ jobs:
               check(runtimeErrors == 0 && !applyError,
                     "real backend runtime-error apply failed before stimulus");
 
-              check(endpoint->attachPacketIo([](QByteArray, RTP::SrtpContext::Packet) { return true; }),
-                    "real backend runtime-error endpoint refused packet I/O");
+              check(media->attachSecureRtpPacketIo([](const RTP::SecureRtpPacket &) { return true; }),
+                    "real backend runtime-error media session refused protected packet I/O");
 
               // Cross the actual psimedia device-update boundary with a source
               // string that GStreamer cannot instantiate. The helper returns
@@ -753,8 +785,8 @@ jobs:
               check(runtimeErrors == 1 && runtimeError.code == RTP::MediaError::Code::Backend,
                     "real psimedia capture failure produced wrong or duplicate runtime error");
 
-              check(!endpoint->attachPacketIo([](QByteArray, RTP::SrtpContext::Packet) { return true; }),
-                    "failed real backend allowed packet I/O to be reattached");
+              check(!media->attachSecureRtpPacketIo([](const RTP::SecureRtpPacket &) { return true; }),
+                    "failed real backend allowed protected packet I/O to be reattached");
               check(!startPsiMediaJingleTransmit(
                         &jingleSession, true, true,
                         QStringLiteral("audiotestsrc is-live=true wave=sine"), false, QString()),
