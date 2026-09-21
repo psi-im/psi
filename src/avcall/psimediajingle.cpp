@@ -257,9 +257,9 @@ public:
     {
         if (!mediaTypes_.contains(media))
             return {};
-        // psimedia exposes one RTP channel per media type. Reserve that channel
-        // for the full Endpoint lifetime: stop()/packet-I/O detach must not let a
-        // second Jingle content silently share and mutate the same backend state.
+        // The psimedia session exposes one negotiated media path per media type.
+        // Reserve it for the full Endpoint lifetime so a second Jingle content
+        // cannot silently share and mutate the same backend negotiation state.
         for (auto endpoint : endpoints_) {
             if (endpoint && endpoint->media() == media)
                 return {};
@@ -269,6 +269,11 @@ public:
 
     bool configureSecureRtpEndpoints(const QList<RTP::SecureRtpEndpoint> &endpoints) override
     {
+        // Empty is teardown and remains valid after failure. New routing state
+        // must never revive a terminal backend.
+        if (!endpoints.isEmpty() && isTerminalOrStopping())
+            return false;
+
         QList<PsiMedia::SecureRtpEndpoint> out;
         out.reserve(endpoints.size());
         for (const auto &endpoint : endpoints) {
@@ -294,7 +299,7 @@ public:
 
     bool configureSecureRtpAssociation(const RTP::SecureRtpParameters &parameters) override
     {
-        if (!parameters.isValid())
+        if (isTerminalOrStopping() || !parameters.isValid())
             return false;
         return rtp_.configureSecureAssociation(
             parameters.associationId, parameters.epoch, parameters.profile,
@@ -309,6 +314,8 @@ public:
 
     bool receiveProtectedRtpPacket(const RTP::SecureRtpPacket &packet) override
     {
+        if (isTerminalOrStopping())
+            return false;
         PsiMedia::SecureRtpPacket in;
         in.associationId = packet.associationId;
         in.epoch         = packet.epoch;
@@ -326,7 +333,7 @@ public:
 
         protectedWriter_ = std::move(writer);
         rtp_.setProtectedPacketHandler([this](const PsiMedia::SecureRtpPacket &packet) {
-            if (!protectedWriter_)
+            if (!protectedWriter_ || isTerminalOrStopping())
                 return;
             RTP::SecureRtpPacket out;
             out.associationId = packet.associationId;
@@ -344,7 +351,7 @@ public:
             [this](const QByteArray &associationId, quint64 epoch, PsiMedia::SecureRtpError error) {
                 Q_UNUSED(associationId)
                 Q_UNUSED(epoch)
-                if (state_ == State::Failed || state_ == State::Stopped)
+                if (isTerminalOrStopping())
                     return;
                 const auto failure = backendError(
                     QStringLiteral("psimedia secure RTP runtime error (%1)").arg(int(error)));
