@@ -170,9 +170,11 @@ public:
 
 class PSecureRtpEndpoint {
 public:
-    // Opaque media endpoint identity chosen by the host. No Jingle/XMPP types
-    // cross the provider ABI.
+    // Opaque identities chosen by the host. associationId identifies one
+    // authenticated DTLS/RTP group: bundled endpoints share it, standalone
+    // endpoints use distinct values. No Jingle/XMPP types cross the provider ABI.
     QByteArray endpointId;
+    QByteArray associationId;
     QString    media;
 
     // Authenticated post-SRTP RTP demultiplexing metadata.
@@ -201,16 +203,15 @@ public:
     };
 
     using ProtectedPacketHandler = std::function<void(const PSecureRtpPacket &)>;
-    using RuntimeErrorHandler    = std::function<void(Error)>;
+    using RuntimeErrorHandler
+        = std::function<void(const QByteArray &associationId, quint64 epoch, Error error)>;
 
     virtual ~SecureRtpSessionContext() { }
 
-    // The same QObject MUST also implement RtpSessionContext/1.6. The secure
-    // factory therefore adds protected group packet I/O without replacing the
-    // existing codec/device/session control API.
-    //
-    // Route updates are independent of crypto epochs. They are transactional
-    // and use backend-neutral metadata only.
+    // The same QObject MUST also implement RtpSessionContext/1.6. Endpoint
+    // configuration describes all active RTP groups transactionally. Bundled
+    // endpoints share associationId; unbundled endpoints use independent IDs.
+    // Route changes are independent of crypto epochs.
     virtual bool configureEndpoints(const QList<PSecureRtpEndpoint> &endpoints) = 0;
 
     // Keys are borrowed only for this synchronous call. Implementations make
@@ -218,22 +219,21 @@ public:
     // material on replacement/destruction. Re-activating the same association
     // and identical material may advance epoch without resetting ROC/replay or
     // SRTCP index state.
-    virtual bool configure(const QByteArray &associationId, quint64 epoch, const QString &profile,
-                           const QByteArray &localMasterKey, const QByteArray &localMasterSalt,
-                           const QByteArray &remoteMasterKey, const QByteArray &remoteMasterSalt)
+    virtual bool configureAssociation(const QByteArray &associationId, quint64 epoch, const QString &profile,
+                                      const QByteArray &localMasterKey, const QByteArray &localMasterSalt,
+                                      const QByteArray &remoteMasterKey, const QByteArray &remoteMasterSalt)
         = 0;
 
     // Stale invalidation is a no-op: identity and epoch must both match.
-    virtual void invalidate(const QByteArray &associationId, quint64 epoch) = 0;
+    virtual void invalidateAssociation(const QByteArray &associationId, quint64 epoch) = 0;
 
-    virtual bool       isReady() const       = 0;
-    virtual QByteArray associationId() const = 0;
-    virtual quint64    epoch() const         = 0;
-    virtual Error      lastError() const     = 0;
+    virtual bool    associationReady(const QByteArray &associationId) const = 0;
+    virtual quint64 associationEpoch(const QByteArray &associationId) const = 0;
+    virtual Error   lastError(const QByteArray &associationId) const = 0;
 
-    // Network I/O is protected-only. Plain RTP/RTCP never crosses this IID.
-    // Callbacks execute on the session object's Qt thread and are disconnected
-    // by setting an empty handler before destruction/plugin unload.
+    // Network I/O is protected-only. Every packet/callback carries the
+    // association identity and security epoch. Callbacks execute on the media
+    // session QObject thread and must be cleared before destruction/plugin unload.
     virtual void setProtectedPacketHandler(ProtectedPacketHandler handler) = 0;
     virtual void setRuntimeErrorHandler(RuntimeErrorHandler handler)       = 0;
     virtual bool receiveProtectedPacket(const PSecureRtpPacket &packet)    = 0;
