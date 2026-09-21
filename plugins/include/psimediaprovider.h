@@ -50,6 +50,8 @@ class FeaturesContext;
 class Provider;
 class RtpSessionContext;
 class AudioRecorderContext;
+class SecureRtpProvider;
+class SecureRtpSessionContext;
 
 class Plugin {
 public:
@@ -153,6 +155,75 @@ public:
 
     QByteArray rawValue;
     Type       type = Type::Rtp;
+};
+
+class PSecureRtpPacket {
+public:
+    // associationId is opaque to psimedia. epoch fences every packet against
+    // stale DTLS/keying state. rawValue is plain or protected according to the
+    // method that consumes/produces the packet.
+    QByteArray       associationId;
+    quint64          epoch = 0;
+    QByteArray       rawValue;
+    PRtpPacket::Type type = PRtpPacket::Type::Rtp;
+};
+
+class SecureRtpSessionContext : public QObjectInterface {
+public:
+    enum class Error : int {
+        None = 0,
+        NotReady,
+        UnsupportedProfile,
+        InvalidKey,
+        InvalidPacket,
+        Authentication,
+        Replay,
+        StreamLimit,
+        KeyExpired,
+        IndexLimit,
+        LibraryFailure
+    };
+
+    virtual ~SecureRtpSessionContext() { }
+
+    // Keys are borrowed only for this synchronous call. Implementations must
+    // make private non-implicitly-shared copies as needed and wipe them on
+    // replacement/destruction. Callers retain ownership of their input buffers.
+    //
+    // Reconfiguring the same association/profile/key material may advance epoch
+    // without resetting libSRTP replay/ROC/SRTCP-index state. Changing the
+    // association identity or crypto material creates a new security context.
+    virtual bool configure(const QByteArray &associationId, quint64 epoch, const QString &profile,
+                           const QByteArray &localMasterKey, const QByteArray &localMasterSalt,
+                           const QByteArray &remoteMasterKey, const QByteArray &remoteMasterSalt)
+        = 0;
+
+    // Stale invalidation is a no-op. The association identity and epoch must
+    // both match the currently active binding.
+    virtual void invalidate(const QByteArray &associationId, quint64 epoch) = 0;
+
+    virtual bool       isReady() const       = 0;
+    virtual QByteArray associationId() const = 0;
+    virtual quint64    epoch() const         = 0;
+    virtual Error      lastError() const     = 0;
+
+    // Both input and output carry the opaque association identity and epoch.
+    // No plaintext network fallback is implied by failure.
+    virtual bool protect(const PSecureRtpPacket &plain, PSecureRtpPacket *protectedPacket) = 0;
+    virtual bool unprotect(const PSecureRtpPacket &protectedPacket, PSecureRtpPacket *plain) = 0;
+};
+
+class SecureRtpProvider {
+public:
+    virtual ~SecureRtpProvider() { }
+
+    // Probe the actual packet engine/backend, not only compile-time constants.
+    virtual QStringList supportedSecureRtpProfiles() const = 0;
+
+    // Returns a parentless object owned by the caller. It must be destroyed
+    // before the provider/plugin is unloaded. All control calls are made on
+    // the object's Qt thread; implementations serialize packet crypto.
+    virtual SecureRtpSessionContext *createSecureRtpSession() = 0;
 };
 
 class Provider : public QObjectInterface {
@@ -295,6 +366,8 @@ public:
 
 Q_DECLARE_INTERFACE(PsiMedia::Plugin, "org.psi-im.psimedia.Plugin/1.6")
 Q_DECLARE_INTERFACE(PsiMedia::Provider, "org.psi-im.psimedia.Provider/1.6")
+Q_DECLARE_INTERFACE(PsiMedia::SecureRtpProvider, "org.psi-im.psimedia.SecureRtpProvider/1.0")
+Q_DECLARE_INTERFACE(PsiMedia::SecureRtpSessionContext, "org.psi-im.psimedia.SecureRtpSessionContext/1.0")
 Q_DECLARE_INTERFACE(PsiMedia::FeaturesContext, "org.psi-im.psimedia.FeaturesContext/1.6")
 Q_DECLARE_INTERFACE(PsiMedia::RtpChannelContext, "org.psi-im.psimedia.RtpChannelContext/1.6")
 Q_DECLARE_INTERFACE(PsiMedia::RtpSessionContext, "org.psi-im.psimedia.RtpSessionContext/1.6")
