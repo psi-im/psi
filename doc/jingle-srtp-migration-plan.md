@@ -405,8 +405,19 @@ Repository: `psi-im/iris`.
   have been moved off the removed Iris crypto/per-endpoint API. `bundlemedia` now verifies backend-
   owned BUNDLE routing using the association/endpoint metadata passed by Iris; `icertp` verifies
   opaque protected transport plus backend PT validation rather than reintroducing Iris packet parsing.
-- **Current gate:** wait for the first complete qca3 Jingle compile/runtime pass on the fully ported
-  tests, fix actual runtime/lifetime failures, then update the Psi adapter to the secure psimedia API.
+- **Iris gate:** the fully ported qca3 Jingle suite reached 59/59 green together with the
+  transport ASan/UBSan suite. The mixed DTLS-SRTP/SCTP regression is green.
+- **Security lifecycle hardening:** backend key export and route installation are treated as one
+  transaction. A rejected first route invalidates newly staged keys; a shared BUNDLE association is
+  never invalidated by another member's rejected route. Association identity collisions are rejected
+  before key export. ICE teardown calls `SecureRtpAssociation::close()` before disconnecting
+  callbacks so psimedia key material is invalidated even during connection destruction.
+- **Build switches:** Iris uses `IRIS_BUILD_TESTS=OFF` by default and CI verifies OFF/ON root
+  builds; Psi uses CTest's standard `BUILD_TESTING`; psimedia uses
+  `PSIMEDIA_BUILD_TESTS=OFF` by default. Product/package builds therefore have an explicit way to
+  omit unit/regression targets in all three repositories.
+- **Current gate:** finish the cross-repository Psi/psimedia compile and runtime smokes, then pin
+  Psi's Iris gitlink to the final green Iris branch commit before merge.
 
 ### Phase 2 implementation shape
 
