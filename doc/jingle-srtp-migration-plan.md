@@ -55,6 +55,30 @@ does not prove compatibility with libwebrtc/webrtcbin/Firefox until the external
 passes. Conversations is a particularly important first peer because its call implementation
 uses libwebrtc.
 
+#### MID interoperability gate
+
+RFC 8843/9143 requires the RTP MID header extension on every RTP-based m-line in a BUNDLE
+group. Iris already parses/serializes XEP-0294 header extensions and its authenticated
+BundleRouter understands the SDES MID URI, but the current Psi psimedia adapter rejects any
+`Description::headerExtensions` in `hasUnsupportedAnswerFeatures()`. Therefore the current
+working internal BUNDLE path is not yet sufficient for libwebrtc/webrtcbin interoperability.
+
+Before the external BUNDLE gate can pass:
+
+- Psi must offer/accept the SDES MID RTP header extension for bundled RTP contents instead of
+  rejecting all header extensions;
+- the negotiated MID extension ID and opaque content/endpoint MID must be passed into the new
+  psimedia group route metadata;
+- psimedia must stamp the negotiated MID extension on outgoing RTP before libSRTP protection
+  (at least until the peer can reliably associate the SSRC), while authenticated incoming MID
+  continues to participate in route learning;
+- incompatible PT reuse across bundled media remains fail-closed. RFC 8843/9143 permits the
+  same PT in multiple bundled m-lines only when the codec configuration is identical, which
+  matches the shared rtpsession PT-map validation already implemented.
+
+Do not mark libwebrtc/webrtcbin BUNDLE interoperability complete based only on SSRC or unique-PT
+fallback routing.
+
 The target boundary is:
 
 ```
@@ -173,7 +197,9 @@ Current psimedia branch: `ai/jingle-srtp-psimedia`.
   that IID. Encoder-thread RTP is queued onto the Qt owner thread before group routing/crypto.
 - **Still required before Phase 2:** get the dual-interface secure media context and two-peer
   `SecureRtpGroup` regression green, finish callback/lifetime and plugin-unload semantics, add
-  BUILD_PSIPLUGIN/subproject/SDK coverage, and run external libwebrtc/webrtcbin peer tests.
+  BUILD_PSIPLUGIN/subproject/SDK coverage, and add outgoing MID stamping support to the group
+  bridge. External libwebrtc/webrtcbin peer tests remain a cross-repository gate after Psi
+  negotiates/passes the XEP-0294 MID extension instead of rejecting header extensions.
 
 1. Add a new optional secure-RTP session interface with its own Qt interface IID instead of
    appending virtual methods to `RtpSessionContext/1.6`. Add provider-level discovery/factory
