@@ -69,7 +69,7 @@ public:
     void                          setOutputVolume(int) override { }
     int                           inputVolume() const override { return 100; }
     void                          setInputVolume(int) override { }
-    Error                         errorCode() const override { return ErrorGeneric; }
+    PsiMedia::RtpSessionContext::Error errorCode() const override { return ErrorGeneric; }
     PsiMedia::RtpChannelContext  *audioRtpChannel() override { return nullptr; }
     PsiMedia::RtpChannelContext  *videoRtpChannel() override { return nullptr; }
     void dumpPipeline(std::function<void(const QStringList &)> callback) override { callback({}); }
