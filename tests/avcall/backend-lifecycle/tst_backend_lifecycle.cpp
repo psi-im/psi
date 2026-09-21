@@ -173,7 +173,7 @@ public:
     void                          setOutputVolume(int) override { }
     int                           inputVolume() const override { return 100; }
     void                          setInputVolume(int) override { }
-    Error                         errorCode() const override { return error_; }
+    PsiMedia::RtpSessionContext::Error errorCode() const override { return error_; }
     PsiMedia::RtpChannelContext  *audioRtpChannel() override { return &audio_; }
     PsiMedia::RtpChannelContext  *videoRtpChannel() override { return &video_; }
     void dumpPipeline(std::function<void(const QStringList &)> callback) override { callback({}); }
@@ -252,7 +252,7 @@ public:
         emit preferencesUpdated();
     }
 
-    void failAfterCleanup(Error code)
+    void failAfterCleanup(PsiMedia::RtpSessionContext::Error code)
     {
         error_        = code;
         controlAlive_ = false;
@@ -288,7 +288,7 @@ private:
 
     BackendStats  *stats_        = nullptr;
     bool           controlAlive_ = false;
-    Error          error_        = ErrorGeneric;
+    PsiMedia::RtpSessionContext::Error error_ = PsiMedia::RtpSessionContext::ErrorGeneric;
     FakeRtpChannel audio_;
     FakeRtpChannel video_;
     QList<PsiMedia::PSecureRtpEndpoint> secureEndpoints_;
