@@ -321,7 +321,7 @@ public:
     bool attachSecureRtpPacketIo(ProtectedPacketWriter writer) override
     {
         detachSecureRtpPacketIo();
-        if (!writer || !rtp_.isSecure())
+        if (!writer || !rtp_.isSecure() || isTerminalOrStopping())
             return false;
 
         protectedWriter_ = std::move(writer);
