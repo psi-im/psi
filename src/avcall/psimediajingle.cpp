@@ -831,6 +831,17 @@ Endpoint::~Endpoint()
         session_->unregisterEndpoint(this);
 }
 
+void Endpoint::backendUnavailable()
+{
+    stopped_ = true;
+}
+
+void Endpoint::invalidateSession()
+{
+    backendUnavailable();
+    session_ = nullptr;
+}
+
 void Endpoint::stop()
 {
     if (stopped_)
