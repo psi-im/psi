@@ -283,11 +283,6 @@ if (BUNDLED_IRIS_ALL)
     endif()
 endif()
 
-if(BUNDLED_IRIS AND ENABLE_AVCALL)
-    # Native RTP calls are DTLS-SRTP only. Keep SRTP optional for Iris itself,
-    # but require it for Psi builds that expose the call feature.
-    set(IRIS_ENABLE_SRTP ON CACHE BOOL "Enable libSRTP packet protection for native Jingle RTP" FORCE)
-endif()
 if(ENABLE_AVCALL)
     add_compile_definitions(PSI_ENABLE_AVCALL)
 endif()
