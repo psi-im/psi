@@ -174,6 +174,15 @@ Repository: `psi-im/psimedia`.
 
 Current psimedia branch: `ai/jingle-srtp-psimedia`.
 
+- **Phase 1 gate: CLOSED.** psimedia `bdb48d9` is fully green with the deterministic
+  bounded-queue regression, and Psi cross-repository integration run `35648124713` is green
+  against the matching psimedia branch with the real plugin API/subproject build. The secure
+  provider/session IID boundary, direct libSRTP ownership, BUNDLE/unbundled multi-association
+  model, Qt5 compatibility, no-SRTP build, queue fencing and plugin ABI are all covered.
+- **Follow-up after the closed gate:** psimedia now accepts an empty endpoint table as a
+  transactional "clear all routes" operation without destroying staged crypto state. This is
+  required by the direct Iris group-level teardown path; a regression was added.
+
 - **Passed:** additive provider/session secure-RTP IID scaffolding is mirrored in both public
   provider headers without changing Provider/RtpSessionContext 1.6 vtables.
 - **Passed:** direct libSRTP association engine builds with `PSIMEDIA_ENABLE_SRTP=ON`; profile
