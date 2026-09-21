@@ -2,10 +2,10 @@
 
 ## Validation baseline
 
-Reviewed against the local working trees on 2026-09-21: Psi `30b7ad5a`, Iris `7bfed37`
-and psimedia `ecc6146`. These identify the inspected checkout heads, not a tested release
-triplet. This is an implementation plan; the branch-local migration marker documents do not
-mean the secure API or engine has already been implemented.
+Reviewed against the active branches on 2026-09-21: Psi `8d02305`, Iris `e35eff1`
+and psimedia `0816b2a`. These identify the current implementation heads, not a tested release
+triplet. Phase 1 is now partially implemented on `ai/jingle-srtp-psimedia`; the status markers
+below distinguish code that has passed provider regressions from work that is still in progress.
 
 The ownership change is sound, but completion depends on group RTCP processing, an additive
 plugin ABI, and a coordinated cutover. The concrete boundaries below are implementation gates.
@@ -35,6 +35,25 @@ Move SRTP/SRTCP packet protection out of Iris and into psimedia while keeping si
 transport topology and DTLS ownership in Iris. Preserve working Conversations audio and
 establish tested wire interoperability with clients using either libwebrtc or GStreamer
 webrtcbin for audio/video. This is not a claim of complete WebRTC feature parity.
+
+### Interoperability model
+
+The primary compatibility target is the wire behavior of current Jingle peers whose media
+engines are based on libwebrtc, GStreamer webrtcbin, or browser WebRTC implementations. Internal
+psimedia structure does not need to match those engines, but negotiated RTP/RTCP/DTLS-SRTP
+semantics must.
+
+For BUNDLE this means one RTP session per negotiated BUNDLE group, not one RTP session per
+audio/video m-line. RFC 8843/9143 explicitly defines all RTP-based media in one BUNDLE group as
+one RTP session with one SSRC space, and RFC 8834 requires WebRTC endpoints to support multiple
+media types in such a single RTP session. Therefore the group-owned rtpsession design is an
+interoperability requirement rather than a GStreamer-specific optimization.
+
+Compatibility validation must nevertheless use independent external peers. Passing the internal
+group-session regressions proves the psimedia model can represent WebRTC/BUNDLE semantics; it
+does not prove compatibility with libwebrtc/webrtcbin/Firefox until the external call matrix
+passes. Conversations is a particularly important first peer because its call implementation
+uses libwebrtc.
 
 The target boundary is:
 
@@ -127,6 +146,28 @@ context per endpoint.
 
 Repository: `psi-im/psimedia`.
 
+### Phase 1 implementation status
+
+Current psimedia branch: `ai/jingle-srtp-psimedia`.
+
+- **Passed:** additive provider/session secure-RTP IID scaffolding is mirrored in both public
+  provider headers without changing Provider/RtpSessionContext 1.6 vtables.
+- **Passed:** direct libSRTP association engine builds with `PSIMEDIA_ENABLE_SRTP=ON`; profile
+  probing, RTP/SRTCP round trips, tamper/authentication failure, replay preservation across
+  identical-key epoch advancement, invalid-key reset and SSRC bounds are covered.
+- **Passed:** `PSIMEDIA_ENABLE_SRTP=OFF` configures and builds successfully.
+- **Passed:** backend-neutral authenticated RTP BUNDLE router is ported to psimedia; RTCP is
+  validated for group ingress rather than routed/split per endpoint.
+- **Passed:** one GStreamer `rtpsession` can carry Opus 48 kHz and VP8 90 kHz in one group,
+  consume compound RTCP once, and remove video while audio continues without replacing the
+  RTP session. This closes the implementation gate in step 5.
+- **In progress:** `SecureRtpGroup` now composes libSRTP with the shared RTP group boundary so
+  plaintext RTP/RTCP stays inside psimedia; end-to-end two-peer regression is being validated.
+- **Still required before Phase 2:** make the optional public secure-RTP session API expose the
+  group boundary (rather than the temporary standalone crypto context), finish callback/lifetime
+  and plugin-unload semantics, add BUILD_PSIPLUGIN/subproject/SDK coverage, and run external
+  libwebrtc/webrtcbin peer tests.
+
 1. Add a new optional secure-RTP session interface with its own Qt interface IID instead of
    appending virtual methods to `RtpSessionContext/1.6`. Add provider-level discovery/factory
    access as an optional interface too, so profiles can be queried before opening a session.
@@ -178,10 +219,12 @@ Repository: `psi-im/psimedia`.
    scheduling, CNAME/synchronization policy and per-source statistics. Include SR/RR report
    blocks, SDES, BYE and supported negotiated feedback.
 
-   The remaining implementation gate is an audio+video prototype of this group bridge,
-   including different clock rates, group RTCP and endpoint removal without stopping siblings.
-   If `rtpbin` is adopted, remove or bypass duplicate jitter buffering currently in `bins.cpp`.
-   Do not instantiate `webrtcbin` in production: ICE/DTLS/Jingle remain in Iris.
+   **Gate status: passed in psimedia provider regressions.** The prototype uses one
+   `rtpsession` for Opus at 48 kHz and VP8 at 90 kHz, accepts group compound RTCP once, and
+   removes the video endpoint while audio continues on the same RTP session. Keep `rtpbin`
+   as the fallback only if later SSRC demux/jitter/feedback requirements expose a real gap.
+   If `rtpbin` is adopted, remove or bypass duplicate jitter buffering currently in
+   `bins.cpp`. Do not instantiate `webrtcbin` in production: ICE/DTLS/Jingle remain in Iris.
 6. Integrate libSRTP at the group bridge's network boundary. GStreamer continues to see plain
    RTP/RTCP; protection happens once per outgoing datagram and authentication once per incoming
    datagram, before any dispatch. Preserve bounded queues and thread/lifetime handling from
