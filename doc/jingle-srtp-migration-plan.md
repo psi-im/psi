@@ -389,6 +389,13 @@ Repository: `psi-im/iris`.
 
 ### Phase 2 live implementation status
 
+- **CMake test switches verified:** Psi uses the standard CTest `BUILD_TESTING` switch, so
+  `-DBUILD_TESTING=OFF` omits its unit/regression targets; psimedia uses
+  `-DPSIMEDIA_BUILD_TESTS=OFF`; Iris now exposes `-DIRIS_BUILD_TESTS=OFF` at the root
+  (default OFF) and can also build the Jingle regression suite through the root build when enabled.
+  The historical standalone `tests/jingle` CI entry remains supported without recursive test builds.
+
+
 - **Iris packet crypto removed:** `SrtpContext`, `SrtpSession`, libSRTP linkage/configuration,
   `FindSRTP.cmake`, pkg-config SRTP metadata and the Iris crypto-vector test are gone.
 - **Transport boundary implemented:** `SecureRtpAssociation` owns only verified DTLS key export,
