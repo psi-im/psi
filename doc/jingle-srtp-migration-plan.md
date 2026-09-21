@@ -387,6 +387,27 @@ Repository: `psi-im/iris`.
    Retain this guard until the separate active-call recovery gate below is implemented/tested;
    successful pre-Connecting replacement is not evidence of live-call ICE restart.
 
+### Phase 2 live implementation status
+
+- **Iris packet crypto removed:** `SrtpContext`, `SrtpSession`, libSRTP linkage/configuration,
+  `FindSRTP.cmake`, pkg-config SRTP metadata and the Iris crypto-vector test are gone.
+- **Transport boundary implemented:** `SecureRtpAssociation` owns only verified DTLS key export,
+  opaque association identity/epoch and RFC 7983/5761 classification. ICE sends/receives protected
+  SRTP/SRTCP unchanged; BUNDLE shares the `IceConnection` token and unbundled transports do not.
+- **Media boundary implemented:** per-endpoint plaintext packet callbacks are gone. `MediaSession`
+  owns protected packet IO, transactional endpoint route metadata and association configure/invalidate.
+  The old Iris plaintext `BundleRouter` and its tests were removed.
+- **SCTP protected:** the DTLS-SRTP regression now routes encrypted DTLS records through
+  `SecureRtpAssociation` while running an SCTP echo. The sanitizer transport suite was green on
+  this architecture before the remaining stale RTP tests were ported.
+- **Regression migration in progress:** `dtlssrtp`, `iceownership`, `bundleice`,
+  `rtpcapsselection`, `rtpapplication`, `bundlesignaling`, `bundlemedia` and `icertp`
+  have been moved off the removed Iris crypto/per-endpoint API. `bundlemedia` now verifies backend-
+  owned BUNDLE routing using the association/endpoint metadata passed by Iris; `icertp` verifies
+  opaque protected transport plus backend PT validation rather than reintroducing Iris packet parsing.
+- **Current gate:** wait for the first complete qca3 Jingle compile/runtime pass on the fully ported
+  tests, fix actual runtime/lifetime failures, then update the Psi adapter to the secure psimedia API.
+
 ### Phase 2 implementation shape
 
 The chosen Iris boundary is a direct replacement; no compatibility layer for the short-lived
