@@ -414,6 +414,14 @@ SSRC/PT/MID. Outgoing flow is the exact reverse; psimedia returns association+ep
 protected packet and Iris only validates that the association/epoch still names the active DTLS
 transport before writing to ICE.
 
+**SCTP/DataChannel invariant:** data channels remain entirely in Iris. `SecureRtpAssociation`
+is an RFC 7983 front-door mux, not an owner of DTLS application data: DTLS records are always
+forwarded unchanged into QCA `Dtls`; decrypted DTLS application records continue through
+`Dtls::readyRead -> SCTP::Association::writeIncoming()`, while SCTP egress remains
+`SCTP::Association -> Dtls::writeDatagram() -> ICE`. A DTLS-SRTP regression now runs an SCTP
+echo while SRTP negotiation is active and routes the encrypted DTLS records through
+`SecureRtpAssociation`, so moving SRTP crypto to psimedia cannot silently break datachannels.
+
 Iris tests must continue to cover DTLS verification, key direction/profile selection, BUNDLE
 association ownership, atomic transport replacement and stale-epoch rejection, but packet
 cipher/authentication vector tests move to psimedia.
