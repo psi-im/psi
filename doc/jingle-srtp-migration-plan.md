@@ -234,11 +234,11 @@ Current psimedia branch: `ai/jingle-srtp-psimedia`.
   CMake subproject coverage, plugin API build coverage and the Linux/macOS secure-provider build
   gates are now green. Psi now negotiates SDES MID while keeping unsupported RTP header extensions
   fail-closed, and psimedia stamps negotiated MID before libSRTP protection. Desktop packaging is
-  partially closed: the psimedia Windows plugin build verifies its PE dependency on libSRTP, the Psi
-  Windows SDK stages the libSRTP headers/import library/runtime DLL and `win32-prepare-deps.cmake`
-  collects `srtp2*.dll`; Ubuntu 24.04/Qt5 and 26.04/Qt6 build installable `.deb` packages and install
-  them in clean distro fixtures. macOS still needs an installed Psi-plugin/runtime-link inspection;
-  external libwebrtc/webrtcbin peers remain live interoperability gates rather than Phase 1
+  closed at the component/package level: the psimedia Windows plugin build verifies its PE dependency
+  on libSRTP; the Psi Windows SDK stages the libSRTP headers/import library/runtime DLL and
+  `win32-prepare-deps.cmake` collects `srtp2*.dll`; macOS verifies installed-plugin runtime linkage;
+  Ubuntu 24.04/Qt5 and 26.04/Qt6 build installable `.deb` packages and install them in clean distro
+  fixtures. External libwebrtc/webrtcbin peers remain live interoperability gates rather than Phase 1
   implementation work.
 
 1. Add a new optional secure-RTP session interface with its own Qt interface IID instead of
@@ -520,12 +520,15 @@ Repository: `psi-im/psi`.
 
 ## Compatibility decision and evidence
 
-The user has verified **audio calls only** between Psi and Conversations. This is a positive
-manual interoperability baseline; missing version/fixture metadata does not negate the result.
-The tested Conversations/library versions, call directions and network paths are not yet recorded.
-Video, audio+video BUNDLE, shared RTCP, restart and other libwebrtc/webrtcbin clients remain
-unverified. Do not generalize this audio result to them or to every version of the library.
-The older plan's blanket “Conversations interop open” status is superseded by this narrower result.
+The user has verified live interoperability with **Conversations 2.20.3** on Android 15
+(HyperOS 3.0.6): the previously working audio path remains valid, and Psi -> Conversations
+audio+video over the direct Wi-Fi path now starts video promptly and remains stable after the
+PipeWire/video-start fixes. The exact negotiated BUNDLE/association shape for that run, reverse
+A/V direction, TURN relay and loss-recovery behavior are not yet recorded as passed. A separate
+Conversations incoming-call UI/notification issue is currently under investigation; the peer does
+send JMI <ringing/> in response to Psi's audio proposal, so that symptom is tracked separately from
+RTP/SRTP wire interoperability. Other libwebrtc/webrtcbin clients remain unverified. Do not
+generalize the Conversations result to every version or implementation.
 
 Internal session ownership is not signaled to the peer. The architecture change should preserve
 negotiated codecs, payload numbers, extensions, ICE/DTLS setup and SRTP profiles. BUNDLE changes
@@ -583,7 +586,7 @@ re-originate media/DTLS to hide an incompatibility: translation is limited to si
 
 | Peer | Current evidence | Required coverage |
 | --- | --- | --- |
-| Conversations | User-verified audio only; exact version/direction/network metadata pending | Repeat audio baseline; both initiation directions, A/V, BUNDLE where negotiated, direct and TURN. |
+| Conversations 2.20.3 / Android 15 | User-verified audio and Psi -> Conversations A/V over direct Wi-Fi; prompt/stable video after current psimedia fixes; JMI <ringing/> observed for Psi -> Conversations audio proposal | Complete reverse A/V direction, record negotiated BUNDLE/association details and ongoing RTCP/loss behavior, then test TURN relay. Incoming-call UI presentation is a separate Android/Conversations gate. |
 | Another client using libwebrtc | Not verified; select and pin client and library builds | Audio and A/V in both directions, handshake/profile/packet gates; do not reuse Conversations' result as proof. |
 | Client using GStreamer webrtcbin | Not verified; select and pin client plus GStreamer/plugin builds | Same audio/A/V gates, including shared RTCP and negotiated feedback. |
 | Chromium and Firefox test peers | Not verified | Additional independent wire tests via a signaling-only harness; not substitutes for native-Jingle client tests. |
