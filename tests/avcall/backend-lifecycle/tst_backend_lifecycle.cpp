@@ -89,8 +89,14 @@ public:
     void setLocalAudioPreferences(const QList<PsiMedia::PAudioParams> &) override { }
     void setLocalVideoPreferences(const QList<PsiMedia::PVideoParams> &) override { }
     void setMaximumSendingBitrate(int) override { }
-    void setRemoteAudioPreferences(const QList<PsiMedia::PPayloadInfo> &) override { }
-    void setRemoteVideoPreferences(const QList<PsiMedia::PPayloadInfo> &) override { }
+    void setRemoteAudioPreferences(const QList<PsiMedia::PPayloadInfo> &payloads) override
+    {
+        remoteAudio_ = payloads;
+    }
+    void setRemoteVideoPreferences(const QList<PsiMedia::PPayloadInfo> &payloads) override
+    {
+        remoteVideo_ = payloads;
+    }
 
     void start() override
     {
@@ -232,6 +238,7 @@ public:
     }
 
     FakeRtpChannel *audioChannel() { return &audio_; }
+    const QList<PsiMedia::PPayloadInfo> &remoteVideoPreferences() const { return remoteVideo_; }
 
     void emitProtectedPacket(const PsiMedia::PSecureRtpPacket &packet)
     {
@@ -291,6 +298,8 @@ private:
     PsiMedia::RtpSessionContext::Error error_ = PsiMedia::RtpSessionContext::ErrorGeneric;
     FakeRtpChannel audio_;
     FakeRtpChannel video_;
+    QList<PsiMedia::PPayloadInfo> remoteAudio_;
+    QList<PsiMedia::PPayloadInfo> remoteVideo_;
     QList<PsiMedia::PSecureRtpEndpoint> secureEndpoints_;
     QHash<QByteArray, quint64>          associationEpochs_;
     ProtectedPacketHandler              protectedPacketHandler_;
@@ -353,6 +362,25 @@ RTP::Description audioDescription()
     payload.name      = QStringLiteral("opus");
     payload.clockrate = 48000;
     payload.channels  = 2;
+    description.payloads.append(payload);
+    return description;
+}
+
+RTP::Description videoDescription(bool withPli = false)
+{
+    RTP::Description description;
+    description.media   = QStringLiteral("video");
+    description.rtcpMux = true;
+    RTP::PayloadType payload;
+    payload.id        = 96;
+    payload.name      = QStringLiteral("VP8");
+    payload.clockrate = 90000;
+    if (withPli) {
+        RTP::Feedback feedback;
+        feedback.type    = QStringLiteral("nack");
+        feedback.subtype = QStringLiteral("pli");
+        payload.feedback.append(feedback);
+    }
     description.payloads.append(payload);
     return description;
 }
@@ -481,6 +509,61 @@ private slots:
                  QStringLiteral("urn:ietf:params:rtp-hdrext:sdes:mid"));
         QCOMPARE(prepared->headerExtensions.constFirst().senders, XMPP::Jingle::Origin::Both);
         QVERIFY(prepared->headerExtensions.constFirst().parameters.isEmpty());
+    }
+
+    void localVideoOfferAdvertisesPliFeedback()
+    {
+        auto provider = makePsiMediaJingleProvider(fullCapabilities());
+        auto session  = provider->createSession();
+        auto video    = session->createEndpoint(QStringLiteral("video"), QStringLiteral("video"));
+        QVERIFY(video);
+
+        std::optional<RTP::Description> prepared;
+        auto operation = session->prepareLocalOffer(
+            video.get(),
+            [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description, RTP::MediaError error) {
+                QVERIFY(!error);
+                prepared = std::move(description);
+            });
+        QTRY_COMPARE(provider_.stats().startCalls, 1);
+        provider_.context()->completeStart();
+        QTRY_VERIFY(prepared.has_value());
+        QCOMPARE(prepared->payloads.size(), 1);
+        QCOMPARE(prepared->payloads.constFirst().feedback.size(), 1);
+        QCOMPARE(prepared->payloads.constFirst().feedback.constFirst().type, QStringLiteral("nack"));
+        QCOMPARE(prepared->payloads.constFirst().feedback.constFirst().subtype, QStringLiteral("pli"));
+    }
+
+    void incomingVideoOfferNegotiatesPliIntoBackendCaps()
+    {
+        auto provider = makePsiMediaJingleProvider(fullCapabilities());
+        auto session  = provider->createSession();
+        auto video    = session->createEndpoint(QStringLiteral("video"), QStringLiteral("video"));
+        QVERIFY(video);
+
+        const auto remote = videoDescription(true);
+        std::optional<RTP::Description> prepared;
+        auto operation = session->prepareAnswer(
+            video.get(), remote,
+            [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description, RTP::MediaError error) {
+                QVERIFY(!error);
+                prepared = std::move(description);
+            });
+        QTRY_COMPARE(provider_.stats().startCalls, 1);
+
+        const auto backend = provider_.context()->remoteVideoPreferences();
+        QCOMPARE(backend.size(), 1);
+        QVERIFY(std::any_of(backend.constFirst().parameters.cbegin(), backend.constFirst().parameters.cend(),
+                            [](const auto &parameter) {
+                                return parameter.name == QLatin1String("rtcp-fb-nack-pli");
+                            }));
+
+        provider_.context()->completeStart();
+        QTRY_VERIFY(prepared.has_value());
+        QCOMPARE(prepared->payloads.size(), 1);
+        QCOMPARE(prepared->payloads.constFirst().feedback.size(), 1);
+        QCOMPARE(prepared->payloads.constFirst().feedback.constFirst().type, QStringLiteral("nack"));
+        QCOMPARE(prepared->payloads.constFirst().feedback.constFirst().subtype, QStringLiteral("pli"));
     }
 
     void incomingOfferSelectsMidAndIgnoresUnknownExtensions()
