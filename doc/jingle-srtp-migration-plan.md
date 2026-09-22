@@ -429,12 +429,18 @@ Repository: `psi-im/iris`.
   builds; Psi uses CTest's standard `BUILD_TESTING`; psimedia uses
   `PSIMEDIA_BUILD_TESTS=OFF` by default. Product/package builds therefore have an explicit way to
   omit unit/regression targets in all three repositories.
-- **Cross-repository gate:** the previous audio/FT baseline was green against Iris
-  `6bcd64a9a36b1f4ed64e5c7a775c26974e8419d0`; current live A/V+BUNDLE validation is testing the
-  deferred shared-ICE fix at Iris `0568730e1cea43893511ce2584cb835139c57c13` with psimedia
-  `fb6f58131a2bc9c3ccba918b95314c74688875b6`. Linux/Windows packaging validation is closed;
-  macOS installed-plugin runtime-link validation, live A/V+BUNDLE/lifecycle evidence and external-peer
-  below. Pin the final Psi Iris gitlink only after the current triplet is green.
+- **Cross-repository internal gate: CLOSED on the tested triplet.** Psi
+  `61aa2e22c8d3e3f0319dca962e913b1fbfdd2642` passed `PsiMedia integration` run `35725996477`
+  against Iris `67e86c86c10e82ffd17df491f75db5dfc0b6a4df` and psimedia
+  `270605cc9e44bf747341f3ff402dc22da094bc21`: audio, A/V+BUNDLE, FT, Linux smoke and two
+  sequential A/V+BUNDLE calls in the same client processes/XMPP connections all passed under
+  strict ASan. The second call recreates the Jingle/ICE/DTLS/SRTP/media session after teardown,
+  so stale callbacks or association state cannot satisfy the gate. psimedia run `35724486203` is
+  green across provider regressions, Windows plugin linkage, macOS installed-plugin linkage and
+  Ubuntu 24.04/Qt5 + 26.04/Qt6 `.deb` packaging. Iris production code at `671481c5` passed both
+  full build/test and Jingle regressions; `67e86c86` differs only by documentation. The Psi branch
+  now pins its Iris gitlink to that final Iris head and must stay green on the post-pin integration
+  rerun. Remaining live gates are external peers/devices below, not internal implementation work.
 
 ### Phase 2 implementation shape
 
@@ -581,7 +587,7 @@ re-originate media/DTLS to hide an incompatibility: translation is limited to si
 | Another client using libwebrtc | Not verified; select and pin client and library builds | Audio and A/V in both directions, handshake/profile/packet gates; do not reuse Conversations' result as proof. |
 | Client using GStreamer webrtcbin | Not verified; select and pin client plus GStreamer/plugin builds | Same audio/A/V gates, including shared RTCP and negotiated feedback. |
 | Chromium and Firefox test peers | Not verified | Additional independent wire tests via a signaling-only harness; not substitutes for native-Jingle client tests. |
-| Psi <-> Psi | Older plan records audio CI evidence on historical commits | Rerun real provider audio/A/V on the migration triplet; no inference from old green jobs. |
+| Psi <-> Psi | Migration triplet verified in run `35725996477`: audio, A/V+BUNDLE, decoded video, MID/BUNDLE signaling and two sequential in-process calls after teardown all passed | Keep this automated gate green on the final pinned SHAs. |
 
 For each execution record client/library versions, Psi/Iris/psimedia SHAs, QCA/provider,
 libSRTP and GStreamer versions, actual loaded media plugin, initiator/DTLS roles, server/TURN,
@@ -604,10 +610,11 @@ A missing peer leaves that row pending; it does not prevent independent implemen
   The psimedia secure-session API must therefore support more than one simultaneous association
   inside the higher-level media session: one group object per negotiated BUNDLE group and one
   group object per standalone/unbundled RTP content.
-- Do not make MID mandatory as part of moving crypto: the current Psi adapter rejects answer
-  header extensions/feedback it cannot implement. Retain signaled SSRC and unambiguous PT
-  routing for the existing subset. Enable MID or other extensions only with complete negotiated
-  send/receive support; reject ambiguous mappings rather than guess audio vs video.
+- MID is implemented for negotiated BUNDLE rather than assumed globally: Psi offers/accepts the
+  SDES MID header extension, psimedia stamps it before SRTP protection and authenticates it before
+  BUNDLE routing, ordinary wire IDs are constrained to 1..255, and extended offer IDs are remapped
+  to a free wire ID. Unbundled media does not require MID. Unsupported header extensions/feedback
+  remain fail-closed, and ambiguous PT/SSRC/MID mappings are rejected rather than guessed.
 - Handle compound RTCP covering both media and standalone feedback when reduced-size RTCP is
   negotiated. Process known blocks when an otherwise valid compound contains unknown types;
   do not reject the whole packet merely because a block has no endpoint route.
@@ -763,7 +770,10 @@ Development happens on matching `ai/jingle-srtp-psimedia` branches in all three 
    - BUNDLE audio+video;
    - transport teardown/new-call restart and supported pre-Connecting replacement;
    - the mandatory Conversations baseline and external media-peer matrix described above.
-   Missing peer/device access leaves the corresponding live gate unverified, not passed.
+   The automated Psi <-> Psi audio/A/V/BUNDLE and in-process new-call restart rows are green;
+   pre-Connecting replacement is covered by Iris atomic BUNDLE/ICE regressions. Active-call ICE
+   restart remains an explicit follow-up. Missing external peer/device access leaves only the
+   corresponding external row unverified, not passed.
 6. Merge only after the three branch heads are mutually compatible, all required CI is green,
    and the user explicitly instructs merging. Implementing this plan does not authorize a
    merge to `master`. Publish additive API headers before dependent plugin builds.
