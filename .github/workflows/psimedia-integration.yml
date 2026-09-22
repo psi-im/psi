@@ -31,7 +31,7 @@ permissions:
 env:
   QCA_TAG: v3.0.8
   IRIS_SRTP_REF: 8a64c569557f957c7a89b61610b7453829d143db
-  PSIMEDIA_SRTP_REF: c1b9a87a0b2fe553120b4b4e3c9426e7589453be
+  PSIMEDIA_SRTP_REF: 61d0b94f529e17170fda865f8998df6d97390e94
 
 concurrency:
   group: psimedia-integration-${{ github.workflow }}-${{ github.ref }}
@@ -801,8 +801,9 @@ jobs:
             --target gstprovidersrc mediaplugin psimedia_provider_smoke psimedia_plugin_load_smoke \
                      psi_native_media_adapter_smoke psi_backend_lifecycle_test \
                      psi_native_media_runtime_error_smoke \
-                     psimedia_opusrtppay_test psimedia_rtpworker_receive_order_test psimedia_videoprep_test \
-                     psimedia_video_capture_caps_test psimedia_rtpsessioncontext_sender_test psimedia_rtpsessionbridge_test \
+                     psimedia_opusrtppay_test psimedia_rtpworker_receive_order_test psimedia_rtpworker_send_order_test \
+                     psimedia_videoprep_test psimedia_video_capture_caps_test psimedia_rtpsessioncontext_sender_test \
+                     psimedia_rtpsessionbridge_test \
                      psimedia_rtpsessionbridge_packets_test psimedia_rtpsessionbridge_periodic_test \
                      psimedia_rtpsessionbridge_backpressure_test \
             --parallel 4
