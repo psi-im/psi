@@ -233,9 +233,12 @@ Current psimedia branch: `ai/jingle-srtp-psimedia`.
 - **Post-Phase-1 follow-up status:** deterministic queued-callback/RwControl teardown coverage,
   CMake subproject coverage, plugin API build coverage and the Linux/macOS secure-provider build
   gates are now green. Psi now negotiates SDES MID while keeping unsupported RTP header extensions
-  fail-closed, and psimedia stamps negotiated MID before libSRTP protection. The remaining
-  implementation-side packaging gap is the Windows secure-plugin/runtime dependency gate; external
-  libwebrtc/webrtcbin peers remain live interoperability gates rather than Phase 1 implementation work.
+  fail-closed, and psimedia stamps negotiated MID before libSRTP protection. Desktop packaging is
+  also covered: the psimedia Windows plugin build verifies its PE dependency on libSRTP, the Psi
+  Windows SDK stages the libSRTP headers/import library/runtime DLL and `win32-prepare-deps.cmake`
+  collects `srtp2*.dll`; Ubuntu 24.04/Qt5 and 26.04/Qt6 build installable `.deb` packages and install
+  them in clean distro fixtures. External libwebrtc/webrtcbin peers remain live interoperability
+  gates rather than Phase 1 implementation work.
 
 1. Add a new optional secure-RTP session interface with its own Qt interface IID instead of
    appending virtual methods to `RtpSessionContext/1.6`. Add provider-level discovery/factory
@@ -425,11 +428,12 @@ Repository: `psi-im/iris`.
   builds; Psi uses CTest's standard `BUILD_TESTING`; psimedia uses
   `PSIMEDIA_BUILD_TESTS=OFF` by default. Product/package builds therefore have an explicit way to
   omit unit/regression targets in all three repositories.
-- **Cross-repository gate: CLOSED for the current tested triplet.** Psi integration is green
-  against Iris `6bcd64a9a36b1f4ed64e5c7a775c26974e8419d0` and psimedia
-  `de2e69db0bf1b510342fadfb4e92e5314a895b67`; the Psi Iris gitlink is pinned to the matching
-  green Iris branch head. Remaining pre-merge work is desktop packaging validation plus the live
-  A/V/BUNDLE and external-peer interoperability gates below.
+- **Cross-repository gate:** the previous audio/FT baseline was green against Iris
+  `6bcd64a9a36b1f4ed64e5c7a775c26974e8419d0`; current live A/V+BUNDLE validation is testing the
+  deferred shared-ICE fix at Iris `0568730e1cea43893511ce2584cb835139c57c13` with psimedia
+  `fb6f58131a2bc9c3ccba918b95314c74688875b6`. Desktop packaging validation is closed; remaining
+  pre-merge work is the live A/V+BUNDLE/lifecycle evidence and external-peer interoperability gates
+  below. Pin the final Psi Iris gitlink only after the current triplet is green.
 
 ### Phase 2 implementation shape
 
