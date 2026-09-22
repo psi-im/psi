@@ -386,6 +386,11 @@ int main(int argc, char **argv)
             maybeStartMedia();
         });
         QObject::connect(session, &J::Session::terminated, session, [&, session]() {
+            if (liveSession != session) {
+                qWarning("CALL_STALE_TERMINATION_IGNORED=1");
+                return;
+            }
+
             qInfo().noquote() << QStringLiteral("CALL_SESSION=terminated state=%1").arg(int(session->state()));
             if (!localMediaVerified)
                 localMediaVerified = outputHasMedia();
@@ -406,9 +411,37 @@ int main(int argc, char **argv)
                     return;
                 }
             }
-            finish(0, role == QLatin1String("caller")
-                          ? QStringLiteral("caller completed")
-                          : QStringLiteral("callee completed"));
+
+            stopPsiMediaJingleTransmit(session);
+            ++completedCalls;
+            qInfo().noquote() << QStringLiteral("CALL_ITERATION_RESULT=success %1/%2")
+                                     .arg(completedCalls)
+                                     .arg(targetCalls);
+
+            if (completedCalls >= targetCalls) {
+                finish(0, role == QLatin1String("caller")
+                              ? QStringLiteral("caller completed")
+                              : QStringLiteral("callee completed"));
+                return;
+            }
+
+            liveSession = nullptr;
+            audioApp = nullptr;
+            videoApp = nullptr;
+
+            const int completedSnapshot = completedCalls;
+            const int restartDelayMs = role == QLatin1String("caller") ? 800 : 300;
+            QTimer::singleShot(restartDelayMs, &app, [&, completedSnapshot]() {
+                if (finishing || completedCalls != completedSnapshot)
+                    return;
+                prepareIteration();
+                if (role == QLatin1String("caller")) {
+                    qInfo("CALL_RESTART=caller-starting-next");
+                    startOutgoingCall();
+                } else {
+                    qInfo("CALL_RESTART=callee-ready-next");
+                }
+            });
         });
     };
 
@@ -444,6 +477,63 @@ int main(int argc, char **argv)
                        .arg(remote ? remote->payloads.size() : 0);
             maybeStartMedia();
         });
+    };
+
+    startOutgoingCall = [&]() {
+        if (finishing || role != QLatin1String("caller"))
+            return;
+
+        auto *manager = endpoint.client()->jingleManager();
+        auto *rtpManager = manager ? manager->rtpManager() : nullptr;
+        if (!manager || !rtpManager) {
+            finish(13, QStringLiteral("cannot access outgoing Jingle/RTP managers"));
+            return;
+        }
+
+        qInfo().noquote()
+            << QStringLiteral("CALL_ITERATION_START=%1/%2").arg(completedCalls + 1).arg(targetCalls);
+
+        auto *session = manager->newSession(peerJid);
+        if (!session) {
+            finish(13, QStringLiteral("cannot create outgoing Jingle session"));
+            return;
+        }
+        wireSession(session);
+
+        auto *outgoingAudio = rtpManager->createOutgoing(session, QStringLiteral("audio"), J::Origin::Both);
+        if (!outgoingAudio) {
+            finish(14, QStringLiteral("cannot create outgoing audio RTP application"));
+            return;
+        }
+        wireAudio(outgoingAudio);
+
+        RTP::Application *outgoingVideo = nullptr;
+        if (avBundle) {
+            outgoingVideo = rtpManager->createOutgoing(session, QStringLiteral("video"), J::Origin::Both);
+            if (!outgoingVideo) {
+                finish(18, QStringLiteral("cannot create outgoing video RTP application"));
+                return;
+            }
+            wireVideo(outgoingVideo);
+            if (!session->setGroupings(
+                    { J::ContentGroup { QStringLiteral("BUNDLE"),
+                                        { outgoingAudio->contentName(), outgoingVideo->contentName() } } })) {
+                finish(19, QStringLiteral("cannot propose outgoing A/V BUNDLE"));
+                return;
+            }
+        }
+
+        const QString sink = QStringLiteral("filesink location=\"%1\" sync=false").arg(outputPath);
+        if (!configurePsiMediaJingleSession(session, sink, QString(), false, 128)) {
+            finish(15, QStringLiteral("cannot configure caller psimedia backend"));
+            return;
+        }
+        if (avBundle && !setPsiMediaJingleVideoOutput(session, videoOutput.get())) {
+            finish(26, QStringLiteral("cannot configure caller video output"));
+            return;
+        }
+
+        session->initiate();
     };
 
     if (role == QLatin1String("callee")) {
@@ -494,6 +584,8 @@ int main(int argc, char **argv)
                 }
             }
 
+            qInfo().noquote()
+                << QStringLiteral("CALL_ITERATION_START=%1/%2").arg(completedCalls + 1).arg(targetCalls);
             wireSession(session);
             wireAudio(incomingAudio);
             if (avBundle)
@@ -543,6 +635,8 @@ int main(int argc, char **argv)
         });
     }
 
+    prepareIteration();
+
     endpoint.start(
         [&]() {
             if (!configureClient()) {
@@ -568,49 +662,7 @@ int main(int argc, char **argv)
                 return;
             }
 
-            auto *manager = endpoint.client()->jingleManager();
-            auto *rtpManager = manager->rtpManager();
-            auto *session = manager->newSession(peerJid);
-            if (!session) {
-                finish(13, QStringLiteral("cannot create outgoing Jingle session"));
-                return;
-            }
-            wireSession(session);
-
-            auto *outgoingAudio = rtpManager->createOutgoing(session, QStringLiteral("audio"), J::Origin::Both);
-            if (!outgoingAudio) {
-                finish(14, QStringLiteral("cannot create outgoing audio RTP application"));
-                return;
-            }
-            wireAudio(outgoingAudio);
-
-            RTP::Application *outgoingVideo = nullptr;
-            if (avBundle) {
-                outgoingVideo = rtpManager->createOutgoing(session, QStringLiteral("video"), J::Origin::Both);
-                if (!outgoingVideo) {
-                    finish(18, QStringLiteral("cannot create outgoing video RTP application"));
-                    return;
-                }
-                wireVideo(outgoingVideo);
-                if (!session->setGroupings(
-                        { J::ContentGroup { QStringLiteral("BUNDLE"),
-                                            { outgoingAudio->contentName(), outgoingVideo->contentName() } } })) {
-                    finish(19, QStringLiteral("cannot propose outgoing A/V BUNDLE"));
-                    return;
-                }
-            }
-
-            const QString sink = QStringLiteral("filesink location=\"%1\" sync=false").arg(outputPath);
-            if (!configurePsiMediaJingleSession(session, sink, QString(), false, 128)) {
-                finish(15, QStringLiteral("cannot configure caller psimedia backend"));
-                return;
-            }
-            if (avBundle && !setPsiMediaJingleVideoOutput(session, videoOutput.get())) {
-                finish(26, QStringLiteral("cannot configure caller video output"));
-                return;
-            }
-
-            session->initiate();
+            startOutgoingCall();
         },
         [&](const QString &message) { finish(9, message); });
 
