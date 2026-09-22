@@ -15,6 +15,7 @@
 
 #include <QtCrypto>
 
+#include <QApplication>
 #include <QCoreApplication>
 #include <QDebug>
 #include <QFile>
@@ -24,6 +25,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <memory>
 #include <utility>
 
 using namespace XMPP;
@@ -156,12 +158,13 @@ private:
 
 int main(int argc, char **argv)
 {
-    QCoreApplication app(argc, argv);
+    QApplication app(argc, argv);
     QCA::Initializer qca;
 
-    if (argc < 7) {
+    if (argc < 7 || argc > 8) {
         qCritical() << "Usage:" << argv[0]
-                    << "<caller|callee> <jid/resource> <password> <peer/resource> <output.raw> <ready-file>";
+                    << "<caller|callee> <jid/resource> <password> <peer/resource> <output.raw> <ready-file>"
+                       " [audio|av-bundle]";
         return 2;
     }
 
@@ -171,8 +174,11 @@ int main(int argc, char **argv)
     const Jid peerJid(QString::fromLocal8Bit(argv[4]));
     const QString outputPath = QString::fromLocal8Bit(argv[5]);
     const QString readyPath = QString::fromLocal8Bit(argv[6]);
+    const QString mode = argc == 8 ? QString::fromLocal8Bit(argv[7]) : QStringLiteral("audio");
+    const bool avBundle = mode == QLatin1String("av-bundle");
 
     if ((role != QLatin1String("caller") && role != QLatin1String("callee"))
+        || (mode != QLatin1String("audio") && !avBundle)
         || !localJid.isValid() || localJid.resource().isEmpty()
         || !peerJid.isValid() || peerJid.resource().isEmpty()) {
         qCritical() << "Invalid live-call arguments";
@@ -190,12 +196,25 @@ int main(int argc, char **argv)
 
     bool finishing = false;
     bool sessionActive = false;
-    bool mediaActive = false;
+    bool audioActive = false;
+    bool videoActive = false;
     bool mediaStarted = false;
     bool mediaWindowArmed = false;
     bool localMediaVerified = false;
+    bool videoDecoded = false;
     QPointer<J::Session> liveSession;
     QPointer<RTP::Application> audioApp;
+    QPointer<RTP::Application> videoApp;
+    std::unique_ptr<PsiMedia::VideoWidget> videoOutput;
+    if (avBundle) {
+        videoOutput = std::make_unique<PsiMedia::VideoWidget>();
+        QObject::connect(videoOutput.get(), &PsiMedia::VideoWidget::videoSizeChanged, &app, [&]() {
+            videoDecoded = true;
+            qInfo().noquote() << QStringLiteral("CALL_VIDEO_SIZE=%1x%2")
+                                     .arg(videoOutput->sizeHint().width())
+                                     .arg(videoOutput->sizeHint().height());
+        });
+    }
 
     auto outputHasMedia = [&]() {
         QFileInfo fi(outputPath);
