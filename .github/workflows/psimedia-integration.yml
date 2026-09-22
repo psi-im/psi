@@ -31,7 +31,7 @@ permissions:
 env:
   QCA_TAG: v3.0.8
   IRIS_SRTP_REF: 67e86c86c10e82ffd17df491f75db5dfc0b6a4df
-  PSIMEDIA_SRTP_REF: 77e4de99b02a236e8ef22540d397e1bcc58eb42b
+  PSIMEDIA_SRTP_REF: 64b487d19e9b77409dd6fe7976d814d5d0d17337
 
 concurrency:
   group: psimedia-integration-${{ github.workflow }}-${{ github.ref }}
@@ -1241,7 +1241,6 @@ jobs:
           QT_QPA_PLATFORM: offscreen
           G_DEBUG: fatal-criticals
           ASAN_OPTIONS: detect_leaks=0:abort_on_error=1
-          PSIMEDIA_TRACE_SECURE_RTP: "1"
         run: |
           set -euo pipefail
           bin="$GITHUB_WORKSPACE/_jingle-call-build/psi_jingle_call_live_client"
