@@ -230,10 +230,12 @@ Current psimedia branch: `ai/jingle-srtp-psimedia`.
   the negotiated group route is reported as nonfatal `InvalidPacket`, distinct from
   authentication/replay/fatal backend failures; the regression and explicit Qt5 QDebug fixes
   pass in the full matrix.
-- **Still required before Phase 2:** finish plugin-unload/callback lifetime coverage and
-  subproject/SDK packaging coverage. External libwebrtc/webrtcbin peer tests remain a
-  cross-repository gate after Psi negotiates/passes the XEP-0294 MID extension instead of
-  rejecting header extensions.
+- **Post-Phase-1 follow-up status:** deterministic queued-callback/RwControl teardown coverage,
+  CMake subproject coverage, plugin API build coverage and the Linux/macOS secure-provider build
+  gates are now green. Psi now negotiates SDES MID while keeping unsupported RTP header extensions
+  fail-closed, and psimedia stamps negotiated MID before libSRTP protection. The remaining
+  implementation-side packaging gap is the Windows secure-plugin/runtime dependency gate; external
+  libwebrtc/webrtcbin peers remain live interoperability gates rather than Phase 1 implementation work.
 
 1. Add a new optional secure-RTP session interface with its own Qt interface IID instead of
    appending virtual methods to `RtpSessionContext/1.6`. Add provider-level discovery/factory
@@ -423,8 +425,11 @@ Repository: `psi-im/iris`.
   builds; Psi uses CTest's standard `BUILD_TESTING`; psimedia uses
   `PSIMEDIA_BUILD_TESTS=OFF` by default. Product/package builds therefore have an explicit way to
   omit unit/regression targets in all three repositories.
-- **Current gate:** finish the cross-repository Psi/psimedia compile and runtime smokes, then pin
-  Psi's Iris gitlink to the final green Iris branch commit before merge.
+- **Cross-repository gate: CLOSED for the current tested triplet.** Psi integration is green
+  against Iris `6bcd64a9a36b1f4ed64e5c7a775c26974e8419d0` and psimedia
+  `de2e69db0bf1b510342fadfb4e92e5314a895b67`; the Psi Iris gitlink is pinned to the matching
+  green Iris branch head. Remaining pre-merge work is desktop packaging validation plus the live
+  A/V/BUNDLE and external-peer interoperability gates below.
 
 ### Phase 2 implementation shape
 
