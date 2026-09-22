@@ -30,6 +30,8 @@ permissions:
 
 env:
   QCA_TAG: v3.0.8
+  IRIS_SRTP_REF: 6bcd64a9a36b1f4ed64e5c7a775c26974e8419d0
+  PSIMEDIA_SRTP_REF: 898056a2d8496ee32e36c1a0101a3e2591b4ef9b
 
 concurrency:
   group: psimedia-integration-${{ github.workflow }}-${{ github.ref }}
@@ -48,7 +50,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: psi-im/iris
-          ref: ai/jingle-srtp-psimedia
+          ref: ${{ env.IRIS_SRTP_REF }}
           path: iris
           fetch-depth: 1
 
@@ -56,7 +58,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: psi-im/psimedia
-          ref: ai/jingle-srtp-psimedia
+          ref: ${{ env.PSIMEDIA_SRTP_REF }}
           path: _psimedia
           fetch-depth: 1
 
@@ -832,7 +834,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: psi-im/iris
-          ref: ai/jingle-srtp-psimedia
+          ref: ${{ env.IRIS_SRTP_REF }}
           path: iris
           fetch-depth: 1
 
@@ -1088,7 +1090,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: psi-im/iris
-          ref: ai/jingle-srtp-psimedia
+          ref: ${{ env.IRIS_SRTP_REF }}
           path: iris
           fetch-depth: 1
 
@@ -1096,7 +1098,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: psi-im/psimedia
-          ref: ai/jingle-srtp-psimedia
+          ref: ${{ env.PSIMEDIA_SRTP_REF }}
           path: _psimedia
           fetch-depth: 1
 
