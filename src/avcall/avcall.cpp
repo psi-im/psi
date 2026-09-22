@@ -19,10 +19,10 @@
 #include "psimediajingle.h"
 #include "psimediajinglecapabilitytransaction.h"
 
+#include <iris/dtls.h>
 #include <iris/jingle-ice.h>
 #include <iris/jingle-rtp-description.h>
 #include <iris/jingle-rtp.h>
-#include <iris/dtls.h>
 #include <iris/jingle-session.h>
 #include <iris/xmpp-im/xmpp_jinglemessage.h>
 #include <iris/xmpp_client.h>
@@ -69,10 +69,8 @@ static PsiMediaJingleCapabilities currentNativeCallCapabilities()
 #ifdef PSI_ENABLE_AVCALL
     const auto backendProfiles = PsiMedia::RtpSession::supportedSecureRtpProfiles();
     const auto dtlsProfiles    = XMPP::Dtls::supportedSRTPProfiles();
-    result.secureRtp = std::any_of(backendProfiles.cbegin(), backendProfiles.cend(),
-                                   [&dtlsProfiles](const QString &profile) {
-                                       return dtlsProfiles.contains(profile);
-                                   });
+    result.secureRtp           = std::any_of(backendProfiles.cbegin(), backendProfiles.cend(),
+                                             [&dtlsProfiles](const QString &profile) { return dtlsProfiles.contains(profile); });
 #else
     result.secureRtp = false;
 #endif

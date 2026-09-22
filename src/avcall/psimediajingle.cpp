@@ -56,15 +56,14 @@ QString PsiMediaJingleCapabilities::unavailableReason() const
 namespace {
 namespace RTP = XMPP::Jingle::RTP;
 
-constexpr auto MidUri = "urn:ietf:params:rtp-hdrext:sdes:mid";
-constexpr auto RtcpFbNackPliParameter = "rtcp-fb-nack-pli";
-constexpr quint16 DefaultMidExtensionId = 1;
+constexpr auto    MidUri                 = "urn:ietf:params:rtp-hdrext:sdes:mid";
+constexpr auto    RtcpFbNackPliParameter = "rtcp-fb-nack-pli";
+constexpr quint16 DefaultMidExtensionId  = 1;
 
 bool isPliFeedback(const RTP::Feedback &feedback)
 {
     return feedback.type.compare(QLatin1String("nack"), Qt::CaseInsensitive) == 0
-        && feedback.subtype.compare(QLatin1String("pli"), Qt::CaseInsensitive) == 0
-        && feedback.parameters.isEmpty();
+        && feedback.subtype.compare(QLatin1String("pli"), Qt::CaseInsensitive) == 0 && feedback.parameters.isEmpty();
 }
 
 bool feedbackListIsPliOnly(const QList<RTP::Feedback> &feedback)
@@ -150,10 +149,8 @@ std::optional<QList<PsiMedia::PayloadInfo>> toPsiPayloads(const RTP::Description
 
 bool isSupportedMidExtension(const RTP::HeaderExtension &extension)
 {
-    return extension.id >= 1 && extension.id <= 255
-        && extension.uri == QLatin1String(MidUri)
-        && extension.senders == XMPP::Jingle::Origin::Both
-        && extension.parameters.isEmpty();
+    return extension.id >= 1 && extension.id <= 255 && extension.uri == QLatin1String(MidUri)
+        && extension.senders == XMPP::Jingle::Origin::Both && extension.parameters.isEmpty();
 }
 
 std::optional<RTP::HeaderExtension> midAnswerForOffer(const RTP::Description &offer)
@@ -165,8 +162,7 @@ std::optional<RTP::HeaderExtension> midAnswerForOffer(const RTP::Description &of
     }
 
     for (const auto &extension : offer.headerExtensions) {
-        if (extension.uri != QLatin1String(MidUri)
-            || extension.senders != XMPP::Jingle::Origin::Both
+        if (extension.uri != QLatin1String(MidUri) || extension.senders != XMPP::Jingle::Origin::Both
             || !extension.parameters.isEmpty())
             continue;
 
@@ -368,11 +364,11 @@ public:
         out.reserve(endpoints.size());
         for (const auto &endpoint : endpoints) {
             PsiMedia::SecureRtpEndpoint item;
-            item.endpointId           = endpoint.endpointId;
-            item.associationId        = endpoint.associationId;
-            item.media                = endpoint.media;
-            item.mid                  = endpoint.mid;
-            item.midExtensionId       = endpoint.midExtensionId;
+            item.endpointId     = endpoint.endpointId;
+            item.associationId  = endpoint.associationId;
+            item.media          = endpoint.media;
+            item.mid            = endpoint.mid;
+            item.midExtensionId = endpoint.midExtensionId;
             item.incomingPayloadTypes.reserve(endpoint.incomingPayloadTypes.size());
             for (auto payload : endpoint.incomingPayloadTypes)
                 item.incomingPayloadTypes.append(int(payload));
@@ -400,9 +396,9 @@ public:
         auto remoteMasterKey  = parameters.remoteMasterKey.toByteArray();
         auto remoteMasterSalt = parameters.remoteMasterSalt.toByteArray();
 
-        const bool configured = rtp_.configureSecureAssociation(
-            parameters.associationId, parameters.epoch, parameters.profile,
-            localMasterKey, localMasterSalt, remoteMasterKey, remoteMasterSalt);
+        const bool configured
+            = rtp_.configureSecureAssociation(parameters.associationId, parameters.epoch, parameters.profile,
+                                              localMasterKey, localMasterSalt, remoteMasterKey, remoteMasterSalt);
 
         localMasterKey.fill('\0');
         localMasterSalt.fill('\0');
@@ -424,8 +420,8 @@ public:
         in.associationId = packet.associationId;
         in.epoch         = packet.epoch;
         in.rawValue      = packet.data;
-        in.type = packet.kind == RTP::PacketKind::Rtp ? PsiMedia::RtpPacket::Type::Rtp
-                                                       : PsiMedia::RtpPacket::Type::Rtcp;
+        in.type
+            = packet.kind == RTP::PacketKind::Rtp ? PsiMedia::RtpPacket::Type::Rtp : PsiMedia::RtpPacket::Type::Rtcp;
         return rtp_.receiveProtectedPacket(in);
     }
 
@@ -443,27 +439,25 @@ public:
             out.associationId = packet.associationId;
             out.epoch         = packet.epoch;
             out.data          = packet.rawValue;
-            out.kind = packet.type == PsiMedia::RtpPacket::Type::Rtp ? RTP::PacketKind::Rtp
-                                                                      : RTP::PacketKind::Rtcp;
-            const auto writer = protectedWriter_;
+            out.kind = packet.type == PsiMedia::RtpPacket::Type::Rtp ? RTP::PacketKind::Rtp : RTP::PacketKind::Rtcp;
+            const auto               writer = protectedWriter_;
             QPointer<BackendSession> guard(this);
             writer(out);
             if (!guard)
                 return;
         });
-        rtp_.setSecureRuntimeErrorHandler(
-            [this](const QByteArray &associationId, quint64 epoch, PsiMedia::SecureRtpError error) {
-                Q_UNUSED(associationId)
-                Q_UNUSED(epoch)
-                if (isTerminalOrStopping())
-                    return;
-                const auto failure = backendError(
-                    QStringLiteral("psimedia secure RTP runtime error (%1)").arg(int(error)));
-                state_ = State::Failed;
-                revokeEndpoints();
-                failDeferred(failure);
-                failCurrentAndCall(failure);
-            });
+        rtp_.setSecureRuntimeErrorHandler([this](const QByteArray &associationId, quint64 epoch,
+                                                 PsiMedia::SecureRtpError error) {
+            Q_UNUSED(associationId)
+            Q_UNUSED(epoch)
+            if (isTerminalOrStopping())
+                return;
+            const auto failure = backendError(QStringLiteral("psimedia secure RTP runtime error (%1)").arg(int(error)));
+            state_             = State::Failed;
+            revokeEndpoints();
+            failDeferred(failure);
+            failCurrentAndCall(failure);
+        });
         return true;
     }
 
@@ -770,8 +764,8 @@ private:
         return false;
     }
 
-    std::optional<RTP::Description> backendDescription(Endpoint *endpoint,
-                                                        const RTP::Description *remoteOffer = nullptr) const
+    std::optional<RTP::Description> backendDescription(Endpoint               *endpoint,
+                                                       const RTP::Description *remoteOffer = nullptr) const
     {
         if (!endpoint || !endpoints_.contains(endpoint) || state_ != State::Running)
             return {};
@@ -798,9 +792,9 @@ private:
                 && converted->name.compare(QLatin1String("VP8"), Qt::CaseInsensitive) == 0) {
                 bool enablePli = !remoteOffer;
                 if (remoteOffer) {
-                    const auto offered = std::find_if(
-                        remoteOffer->payloads.cbegin(), remoteOffer->payloads.cend(),
-                        [&](const auto &candidate) { return candidate.id == converted->id; });
+                    const auto offered
+                        = std::find_if(remoteOffer->payloads.cbegin(), remoteOffer->payloads.cend(),
+                                       [&](const auto &candidate) { return candidate.id == converted->id; });
                     enablePli = offered != remoteOffer->payloads.cend() && descriptionOffersPli(*remoteOffer, *offered);
                 }
                 if (enablePli)
@@ -811,8 +805,8 @@ private:
         return result.payloads.isEmpty() ? std::nullopt : std::optional<RTP::Description>(std::move(result));
     }
 
-    std::optional<RTP::Description> preparedDescription(Endpoint *endpoint,
-                                                         const RTP::Description *remoteOffer = nullptr)
+    std::optional<RTP::Description> preparedDescription(Endpoint               *endpoint,
+                                                        const RTP::Description *remoteOffer = nullptr)
     {
         auto result = backendDescription(endpoint, remoteOffer);
         if (result)
@@ -969,10 +963,7 @@ Endpoint::~Endpoint()
         session_->unregisterEndpoint(this);
 }
 
-void Endpoint::backendUnavailable()
-{
-    stopped_ = true;
-}
+void Endpoint::backendUnavailable() { stopped_ = true; }
 
 void Endpoint::invalidateSession()
 {
@@ -989,7 +980,6 @@ void Endpoint::stop()
         session_->pause(media_);
 }
 
-
 class Provider final : public RTP::MediaProvider {
 public:
     explicit Provider(PsiMediaJingleCapabilities capabilities) : capabilities_(std::move(capabilities)) { }
@@ -997,8 +987,7 @@ public:
     std::unique_ptr<RTP::MediaSession> createSession() override
     {
         const auto types = capabilities_.mediaTypes();
-        return types.isEmpty() || secureRtpProfiles().isEmpty() ? nullptr
-                                                                : std::make_unique<BackendSession>(types);
+        return types.isEmpty() || secureRtpProfiles().isEmpty() ? nullptr : std::make_unique<BackendSession>(types);
     }
     QStringList mediaTypes() const override { return capabilities_.mediaTypes(); }
     QStringList secureRtpProfiles() const override

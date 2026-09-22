@@ -89,14 +89,8 @@ public:
     void setLocalAudioPreferences(const QList<PsiMedia::PAudioParams> &) override { }
     void setLocalVideoPreferences(const QList<PsiMedia::PVideoParams> &) override { }
     void setMaximumSendingBitrate(int) override { }
-    void setRemoteAudioPreferences(const QList<PsiMedia::PPayloadInfo> &payloads) override
-    {
-        remoteAudio_ = payloads;
-    }
-    void setRemoteVideoPreferences(const QList<PsiMedia::PPayloadInfo> &payloads) override
-    {
-        remoteVideo_ = payloads;
-    }
+    void setRemoteAudioPreferences(const QList<PsiMedia::PPayloadInfo> &payloads) override { remoteAudio_ = payloads; }
+    void setRemoteVideoPreferences(const QList<PsiMedia::PPayloadInfo> &payloads) override { remoteVideo_ = payloads; }
 
     void start() override
     {
@@ -169,19 +163,19 @@ public:
         return { payload };
     }
 
-    QList<PsiMedia::PPayloadInfo> remoteAudioPayloadInfo() const override { return {}; }
-    QList<PsiMedia::PPayloadInfo> remoteVideoPayloadInfo() const override { return {}; }
-    QList<PsiMedia::PAudioParams> audioParams() const override { return {}; }
-    QList<PsiMedia::PVideoParams> videoParams() const override { return {}; }
-    bool                          canTransmitAudio() const override { return controlAlive_; }
-    bool                          canTransmitVideo() const override { return controlAlive_; }
-    int                           outputVolume() const override { return 100; }
-    void                          setOutputVolume(int) override { }
-    int                           inputVolume() const override { return 100; }
-    void                          setInputVolume(int) override { }
+    QList<PsiMedia::PPayloadInfo>      remoteAudioPayloadInfo() const override { return {}; }
+    QList<PsiMedia::PPayloadInfo>      remoteVideoPayloadInfo() const override { return {}; }
+    QList<PsiMedia::PAudioParams>      audioParams() const override { return {}; }
+    QList<PsiMedia::PVideoParams>      videoParams() const override { return {}; }
+    bool                               canTransmitAudio() const override { return controlAlive_; }
+    bool                               canTransmitVideo() const override { return controlAlive_; }
+    int                                outputVolume() const override { return 100; }
+    void                               setOutputVolume(int) override { }
+    int                                inputVolume() const override { return 100; }
+    void                               setInputVolume(int) override { }
     PsiMedia::RtpSessionContext::Error errorCode() const override { return error_; }
-    PsiMedia::RtpChannelContext  *audioRtpChannel() override { return &audio_; }
-    PsiMedia::RtpChannelContext  *videoRtpChannel() override { return &video_; }
+    PsiMedia::RtpChannelContext       *audioRtpChannel() override { return &audio_; }
+    PsiMedia::RtpChannelContext       *videoRtpChannel() override { return &video_; }
     void dumpPipeline(std::function<void(const QStringList &)> callback) override { callback({}); }
 
     bool configureEndpoints(const QList<PsiMedia::PSecureRtpEndpoint> &endpoints) override
@@ -227,17 +221,14 @@ public:
         protectedPacketHandler_ = std::move(handler);
     }
 
-    void setRuntimeErrorHandler(RuntimeErrorHandler handler) override
-    {
-        runtimeErrorHandler_ = std::move(handler);
-    }
+    void setRuntimeErrorHandler(RuntimeErrorHandler handler) override { runtimeErrorHandler_ = std::move(handler); }
 
     bool receiveProtectedPacket(const PsiMedia::PSecureRtpPacket &packet) override
     {
         return associationEpochs_.value(packet.associationId) == packet.epoch;
     }
 
-    FakeRtpChannel *audioChannel() { return &audio_; }
+    FakeRtpChannel                      *audioChannel() { return &audio_; }
     const QList<PsiMedia::PPayloadInfo> &remoteVideoPreferences() const { return remoteVideo_; }
 
     void emitProtectedPacket(const PsiMedia::PSecureRtpPacket &packet)
@@ -293,22 +284,20 @@ private:
         return false;
     }
 
-    BackendStats  *stats_        = nullptr;
-    bool           controlAlive_ = false;
-    PsiMedia::RtpSessionContext::Error error_ = PsiMedia::RtpSessionContext::ErrorGeneric;
-    FakeRtpChannel audio_;
-    FakeRtpChannel video_;
-    QList<PsiMedia::PPayloadInfo> remoteAudio_;
-    QList<PsiMedia::PPayloadInfo> remoteVideo_;
+    BackendStats                       *stats_        = nullptr;
+    bool                                controlAlive_ = false;
+    PsiMedia::RtpSessionContext::Error  error_        = PsiMedia::RtpSessionContext::ErrorGeneric;
+    FakeRtpChannel                      audio_;
+    FakeRtpChannel                      video_;
+    QList<PsiMedia::PPayloadInfo>       remoteAudio_;
+    QList<PsiMedia::PPayloadInfo>       remoteVideo_;
     QList<PsiMedia::PSecureRtpEndpoint> secureEndpoints_;
     QHash<QByteArray, quint64>          associationEpochs_;
     ProtectedPacketHandler              protectedPacketHandler_;
     RuntimeErrorHandler                 runtimeErrorHandler_;
 };
 
-class FakeProvider final : public QObject,
-                           public PsiMedia::Provider,
-                           public PsiMedia::SecureRtpProvider {
+class FakeProvider final : public QObject, public PsiMedia::Provider, public PsiMedia::SecureRtpProvider {
     Q_OBJECT
     Q_INTERFACES(PsiMedia::Provider PsiMedia::SecureRtpProvider)
 public:
@@ -492,9 +481,9 @@ private slots:
 
     void localOfferAdvertisesOnlyMidHeaderExtension()
     {
-        Harness harness;
+        Harness                         harness;
         std::optional<RTP::Description> prepared;
-        auto operation = harness.session->prepareLocalOffer(
+        auto                            operation = harness.session->prepareLocalOffer(
             harness.endpoint.get(),
             [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description, RTP::MediaError error) {
                 QVERIFY(!error);
@@ -505,8 +494,7 @@ private slots:
         QTRY_VERIFY(prepared.has_value());
         QCOMPARE(prepared->headerExtensions.size(), 1);
         QCOMPARE(prepared->headerExtensions.constFirst().id, quint16(1));
-        QCOMPARE(prepared->headerExtensions.constFirst().uri,
-                 QStringLiteral("urn:ietf:params:rtp-hdrext:sdes:mid"));
+        QCOMPARE(prepared->headerExtensions.constFirst().uri, QStringLiteral("urn:ietf:params:rtp-hdrext:sdes:mid"));
         QCOMPARE(prepared->headerExtensions.constFirst().senders, XMPP::Jingle::Origin::Both);
         QVERIFY(prepared->headerExtensions.constFirst().parameters.isEmpty());
     }
@@ -519,7 +507,7 @@ private slots:
         QVERIFY(video);
 
         std::optional<RTP::Description> prepared;
-        auto operation = session->prepareLocalOffer(
+        auto                            operation = session->prepareLocalOffer(
             video.get(),
             [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description, RTP::MediaError error) {
                 QVERIFY(!error);
@@ -541,9 +529,9 @@ private slots:
         auto video    = session->createEndpoint(QStringLiteral("video"), QStringLiteral("video"));
         QVERIFY(video);
 
-        const auto remote = videoDescription(true);
+        const auto                      remote = videoDescription(true);
         std::optional<RTP::Description> prepared;
-        auto operation = session->prepareAnswer(
+        auto                            operation = session->prepareAnswer(
             video.get(), remote,
             [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description, RTP::MediaError error) {
                 QVERIFY(!error);
@@ -554,9 +542,7 @@ private slots:
         const auto backend = provider_.context()->remoteVideoPreferences();
         QCOMPARE(backend.size(), 1);
         QVERIFY(std::any_of(backend.constFirst().parameters.cbegin(), backend.constFirst().parameters.cend(),
-                            [](const auto &parameter) {
-                                return parameter.name == QLatin1String("rtcp-fb-nack-pli");
-                            }));
+                            [](const auto &parameter) { return parameter.name == QLatin1String("rtcp-fb-nack-pli"); }));
 
         provider_.context()->completeStart();
         QTRY_VERIFY(prepared.has_value());
@@ -568,8 +554,8 @@ private slots:
 
     void incomingOfferSelectsMidAndIgnoresUnknownExtensions()
     {
-        Harness harness;
-        auto remote = audioDescription();
+        Harness              harness;
+        auto                 remote = audioDescription();
         RTP::HeaderExtension unknown;
         unknown.id      = 3;
         unknown.uri     = QStringLiteral("urn:example:unsupported");
@@ -582,7 +568,7 @@ private slots:
         remote.headerExtensions.append(mid);
 
         std::optional<RTP::Description> prepared;
-        auto operation = harness.session->prepareAnswer(
+        auto                            operation = harness.session->prepareAnswer(
             harness.endpoint.get(), remote,
             [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description, RTP::MediaError error) {
                 QVERIFY(!error);
@@ -593,14 +579,13 @@ private slots:
         QTRY_VERIFY(prepared.has_value());
         QCOMPARE(prepared->headerExtensions.size(), 1);
         QCOMPARE(prepared->headerExtensions.constFirst().id, quint16(7));
-        QCOMPARE(prepared->headerExtensions.constFirst().uri,
-                 QStringLiteral("urn:ietf:params:rtp-hdrext:sdes:mid"));
+        QCOMPARE(prepared->headerExtensions.constFirst().uri, QStringLiteral("urn:ietf:params:rtp-hdrext:sdes:mid"));
     }
 
     void incomingExtendedMidOfferRemapsToFreeWireId()
     {
         Harness harness;
-        auto remote = audioDescription();
+        auto    remote = audioDescription();
 
         RTP::HeaderExtension occupied;
         occupied.id      = 1;
@@ -615,7 +600,7 @@ private slots:
         remote.headerExtensions.append(mid);
 
         std::optional<RTP::Description> prepared;
-        auto operation = harness.session->prepareAnswer(
+        auto                            operation = harness.session->prepareAnswer(
             harness.endpoint.get(), remote,
             [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description, RTP::MediaError error) {
                 QVERIFY(!error);
@@ -626,14 +611,13 @@ private slots:
         QTRY_VERIFY(prepared.has_value());
         QCOMPARE(prepared->headerExtensions.size(), 1);
         QCOMPARE(prepared->headerExtensions.constFirst().id, quint16(2));
-        QCOMPARE(prepared->headerExtensions.constFirst().uri,
-                 QStringLiteral("urn:ietf:params:rtp-hdrext:sdes:mid"));
+        QCOMPARE(prepared->headerExtensions.constFirst().uri, QStringLiteral("urn:ietf:params:rtp-hdrext:sdes:mid"));
     }
 
     void answerPolicyAcceptsMidButRejectsOtherHeaderExtensions()
     {
-        Harness harness;
-        auto answer = audioDescription();
+        Harness              harness;
+        auto                 answer = audioDescription();
         RTP::HeaderExtension mid;
         mid.id      = 1;
         mid.uri     = QStringLiteral("urn:ietf:params:rtp-hdrext:sdes:mid");
@@ -644,11 +628,11 @@ private slots:
         answer.headerExtensions[0].uri = QStringLiteral("urn:example:unsupported");
         QVERIFY(!harness.endpoint->acceptsAnswer(audioDescription(), answer));
 
-        answer.headerExtensions[0] = mid;
+        answer.headerExtensions[0]    = mid;
         answer.headerExtensions[0].id = 256;
         QVERIFY(!harness.endpoint->acceptsAnswer(audioDescription(), answer));
 
-        answer.headerExtensions[0] = mid;
+        answer.headerExtensions[0]         = mid;
         answer.headerExtensions[0].senders = XMPP::Jingle::Origin::Initiator;
         QVERIFY(!harness.endpoint->acceptsAnswer(audioDescription(), answer));
     }

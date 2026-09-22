@@ -43,35 +43,35 @@ public:
     void setVideoOutputWidget(PsiMedia::VideoWidgetContext *) override { }
     void setVideoPreviewWidget(PsiMedia::VideoWidgetContext *) override { }
 #endif
-    void                          setRecorder(QIODevice *) override { }
-    void                          stopRecording() override { }
-    void                          setLocalAudioPreferences(const QList<PsiMedia::PAudioParams> &) override { }
-    void                          setLocalVideoPreferences(const QList<PsiMedia::PVideoParams> &) override { }
-    void                          setMaximumSendingBitrate(int) override { }
-    void                          setRemoteAudioPreferences(const QList<PsiMedia::PPayloadInfo> &) override { }
-    void                          setRemoteVideoPreferences(const QList<PsiMedia::PPayloadInfo> &) override { }
-    void                          start() override { }
-    void                          updatePreferences() override { }
-    void                          transmitAudio() override { }
-    void                          transmitVideo() override { }
-    void                          pauseAudio() override { }
-    void                          pauseVideo() override { }
-    void                          stop() override { }
-    QList<PsiMedia::PPayloadInfo> localAudioPayloadInfo() const override { return {}; }
-    QList<PsiMedia::PPayloadInfo> localVideoPayloadInfo() const override { return {}; }
-    QList<PsiMedia::PPayloadInfo> remoteAudioPayloadInfo() const override { return {}; }
-    QList<PsiMedia::PPayloadInfo> remoteVideoPayloadInfo() const override { return {}; }
-    QList<PsiMedia::PAudioParams> audioParams() const override { return {}; }
-    QList<PsiMedia::PVideoParams> videoParams() const override { return {}; }
-    bool                          canTransmitAudio() const override { return false; }
-    bool                          canTransmitVideo() const override { return false; }
-    int                           outputVolume() const override { return 100; }
-    void                          setOutputVolume(int) override { }
-    int                           inputVolume() const override { return 100; }
-    void                          setInputVolume(int) override { }
+    void                               setRecorder(QIODevice *) override { }
+    void                               stopRecording() override { }
+    void                               setLocalAudioPreferences(const QList<PsiMedia::PAudioParams> &) override { }
+    void                               setLocalVideoPreferences(const QList<PsiMedia::PVideoParams> &) override { }
+    void                               setMaximumSendingBitrate(int) override { }
+    void                               setRemoteAudioPreferences(const QList<PsiMedia::PPayloadInfo> &) override { }
+    void                               setRemoteVideoPreferences(const QList<PsiMedia::PPayloadInfo> &) override { }
+    void                               start() override { }
+    void                               updatePreferences() override { }
+    void                               transmitAudio() override { }
+    void                               transmitVideo() override { }
+    void                               pauseAudio() override { }
+    void                               pauseVideo() override { }
+    void                               stop() override { }
+    QList<PsiMedia::PPayloadInfo>      localAudioPayloadInfo() const override { return {}; }
+    QList<PsiMedia::PPayloadInfo>      localVideoPayloadInfo() const override { return {}; }
+    QList<PsiMedia::PPayloadInfo>      remoteAudioPayloadInfo() const override { return {}; }
+    QList<PsiMedia::PPayloadInfo>      remoteVideoPayloadInfo() const override { return {}; }
+    QList<PsiMedia::PAudioParams>      audioParams() const override { return {}; }
+    QList<PsiMedia::PVideoParams>      videoParams() const override { return {}; }
+    bool                               canTransmitAudio() const override { return false; }
+    bool                               canTransmitVideo() const override { return false; }
+    int                                outputVolume() const override { return 100; }
+    void                               setOutputVolume(int) override { }
+    int                                inputVolume() const override { return 100; }
+    void                               setInputVolume(int) override { }
     PsiMedia::RtpSessionContext::Error errorCode() const override { return ErrorGeneric; }
-    PsiMedia::RtpChannelContext  *audioRtpChannel() override { return nullptr; }
-    PsiMedia::RtpChannelContext  *videoRtpChannel() override { return nullptr; }
+    PsiMedia::RtpChannelContext       *audioRtpChannel() override { return nullptr; }
+    PsiMedia::RtpChannelContext       *videoRtpChannel() override { return nullptr; }
     void dumpPipeline(std::function<void(const QStringList &)> callback) override { callback({}); }
 
     bool configureEndpoints(const QList<PsiMedia::PSecureRtpEndpoint> &) override { return true; }
@@ -88,7 +88,7 @@ public:
         if (epochs_.value(associationId) == epoch)
             epochs_.remove(associationId);
     }
-    bool associationReady(const QByteArray &associationId) const override { return epochs_.contains(associationId); }
+    bool    associationReady(const QByteArray &associationId) const override { return epochs_.contains(associationId); }
     quint64 associationEpoch(const QByteArray &associationId) const override { return epochs_.value(associationId); }
     PsiMedia::SecureRtpSessionContext::Error lastError(const QByteArray &) const override
     {
@@ -117,27 +117,22 @@ private:
     RuntimeErrorHandler        runtimeHandler_;
 };
 
-class CapabilityProvider final : public QObject,
-                                 public PsiMedia::Provider,
-                                 public PsiMedia::SecureRtpProvider {
+class CapabilityProvider final : public QObject, public PsiMedia::Provider, public PsiMedia::SecureRtpProvider {
     Q_OBJECT
     Q_INTERFACES(PsiMedia::Provider PsiMedia::SecureRtpProvider)
 public:
-    QObject                        *qobject() override { return this; }
-    bool                            isInitialized() const override { return true; }
-    QString                         creditName() const override { return QStringLiteral("capability-test"); }
-    QString                         creditText() const override { return {}; }
-    PsiMedia::FeaturesContext      *createFeatures() override { return nullptr; }
-    PsiMedia::RtpSessionContext    *createRtpSession() override { return new CapabilityRtpSessionContext; }
-    QStringList supportedSecureRtpProfiles() const override
+    QObject                     *qobject() override { return this; }
+    bool                         isInitialized() const override { return true; }
+    QString                      creditName() const override { return QStringLiteral("capability-test"); }
+    QString                      creditText() const override { return {}; }
+    PsiMedia::FeaturesContext   *createFeatures() override { return nullptr; }
+    PsiMedia::RtpSessionContext *createRtpSession() override { return new CapabilityRtpSessionContext; }
+    QStringList                  supportedSecureRtpProfiles() const override
     {
         return { QStringLiteral("SRTP_AES128_CM_HMAC_SHA1_80") };
     }
-    PsiMedia::SecureRtpSessionContext *createSecureRtpSession() override
-    {
-        return new CapabilityRtpSessionContext;
-    }
-    PsiMedia::AudioRecorderContext *createAudioRecorder() override { return nullptr; }
+    PsiMedia::SecureRtpSessionContext *createSecureRtpSession() override { return new CapabilityRtpSessionContext; }
+    PsiMedia::AudioRecorderContext    *createAudioRecorder() override { return nullptr; }
 
 signals:
     void initialized();

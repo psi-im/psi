@@ -178,11 +178,11 @@ public:
     QString    media;
 
     // Authenticated post-SRTP RTP demultiplexing metadata.
-    QByteArray      mid;
-    quint16         midExtensionId = 0;
-    QList<int>      incomingPayloadTypes;
-    QList<quint32>  incomingSsrcs;
-    QList<quint32>  localSsrcs;
+    QByteArray     mid;
+    quint16        midExtensionId = 0;
+    QList<int>     incomingPayloadTypes;
+    QList<quint32> incomingSsrcs;
+    QList<quint32> localSsrcs;
 };
 
 class SecureRtpSessionContext : public QObjectInterface {
@@ -203,8 +203,7 @@ public:
     };
 
     using ProtectedPacketHandler = std::function<void(const PSecureRtpPacket &)>;
-    using RuntimeErrorHandler
-        = std::function<void(const QByteArray &associationId, quint64 epoch, Error error)>;
+    using RuntimeErrorHandler    = std::function<void(const QByteArray &associationId, quint64 epoch, Error error)>;
 
     virtual ~SecureRtpSessionContext() { }
 
@@ -229,7 +228,7 @@ public:
 
     virtual bool    associationReady(const QByteArray &associationId) const = 0;
     virtual quint64 associationEpoch(const QByteArray &associationId) const = 0;
-    virtual Error   lastError(const QByteArray &associationId) const = 0;
+    virtual Error   lastError(const QByteArray &associationId) const        = 0;
 
     // Network I/O is protected-only. Every packet/callback carries the
     // association identity and security epoch. Callbacks execute on the media

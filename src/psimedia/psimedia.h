@@ -203,21 +203,21 @@ private:
 };
 
 struct SecureRtpPacket {
-    QByteArray       associationId;
-    quint64          epoch = 0;
-    QByteArray       rawValue;
-    RtpPacket::Type  type = RtpPacket::Type::Rtp;
+    QByteArray      associationId;
+    quint64         epoch = 0;
+    QByteArray      rawValue;
+    RtpPacket::Type type = RtpPacket::Type::Rtp;
 };
 
 struct SecureRtpEndpoint {
-    QByteArray      endpointId;
-    QByteArray      associationId;
-    QString         media;
-    QByteArray      mid;
-    quint16         midExtensionId = 0;
-    QList<int>      incomingPayloadTypes;
-    QList<quint32>  incomingSsrcs;
-    QList<quint32>  localSsrcs;
+    QByteArray     endpointId;
+    QByteArray     associationId;
+    QString        media;
+    QByteArray     mid;
+    quint16        midExtensionId = 0;
+    QList<int>     incomingPayloadTypes;
+    QList<quint32> incomingSsrcs;
+    QList<quint32> localSsrcs;
 };
 
 enum class SecureRtpError : int {
@@ -323,8 +323,8 @@ public:
     explicit RtpSession(Mode mode, QObject *parent = nullptr);
     ~RtpSession() override;
 
-    bool isValid() const;
-    bool isSecure() const;
+    bool               isValid() const;
+    bool               isSecure() const;
     static QStringList supportedSecureRtpProfiles();
 
     void reset();
@@ -499,17 +499,17 @@ public:
     // Secure mode only. The provider owns SRTP/SRTCP crypto and authenticated
     // BUNDLE routing; the host supplies DTLS-exported keys and protected network
     // datagrams tagged with an opaque association/epoch.
-    bool configureSecureEndpoints(const QList<SecureRtpEndpoint> &endpoints);
-    bool configureSecureAssociation(const QByteArray &associationId, quint64 epoch, const QString &profile,
-                                    const QByteArray &localMasterKey, const QByteArray &localMasterSalt,
-                                    const QByteArray &remoteMasterKey, const QByteArray &remoteMasterSalt);
-    void invalidateSecureAssociation(const QByteArray &associationId, quint64 epoch);
-    bool secureAssociationReady(const QByteArray &associationId) const;
-    quint64 secureAssociationEpoch(const QByteArray &associationId) const;
+    bool           configureSecureEndpoints(const QList<SecureRtpEndpoint> &endpoints);
+    bool           configureSecureAssociation(const QByteArray &associationId, quint64 epoch, const QString &profile,
+                                              const QByteArray &localMasterKey, const QByteArray &localMasterSalt,
+                                              const QByteArray &remoteMasterKey, const QByteArray &remoteMasterSalt);
+    void           invalidateSecureAssociation(const QByteArray &associationId, quint64 epoch);
+    bool           secureAssociationReady(const QByteArray &associationId) const;
+    quint64        secureAssociationEpoch(const QByteArray &associationId) const;
     SecureRtpError secureLastError(const QByteArray &associationId) const;
-    void setProtectedPacketHandler(ProtectedPacketHandler handler);
-    void setSecureRuntimeErrorHandler(SecureRuntimeErrorHandler handler);
-    bool receiveProtectedPacket(const SecureRtpPacket &packet);
+    void           setProtectedPacketHandler(ProtectedPacketHandler handler);
+    void           setSecureRuntimeErrorHandler(SecureRuntimeErrorHandler handler);
+    bool           receiveProtectedPacket(const SecureRtpPacket &packet);
 
 signals:
     void started();

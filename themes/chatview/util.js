@@ -344,7 +344,7 @@ function initPsiTheme() {
         likeButton.textContent = emojiIcon || "❤️";
         const pdata = {};
         likeButton.addEventListener("click", () => reactionsSelector.show(pdata.parent.id, likeButton, chatElement));
-        
+
         that = {
             setupForMessageElement: function(el)  {
                 el.addEventListener("mouseleave", function () {
@@ -491,13 +491,13 @@ function initPsiTheme() {
                     reject();
                 };
                 document.addEventListener("click", menu.destroyMenu, { "once": true });
-        
+
                 if (x + menu.clientWidth > document.body.clientWidth) {
                     x = document.body.clientWidth - menu.clientWidth - 5;
                     if (x < 0) x = 0;
                 }
                 menu.style.left = x + "px";
-                
+
                 const docEl = document.documentElement;
                 const bottom = docEl.clientHeight + docEl.scrollTop + document.body.scrollTop;
                 if (y + menu.clientHeight > bottom) {
@@ -505,7 +505,7 @@ function initPsiTheme() {
                     if (y < docEl.scrollTop) y = docEl.scrollTop;
                 }
                 menu.style.top = y + "px";
-                
+
                 window.activeMenu = menu;
             });
         }
@@ -658,7 +658,7 @@ function initPsiTheme() {
                     <source src="${source}"/>
                 </video>
             </div>`;
-            return chat.util.createHtmlNode(html); 
+            return chat.util.createHtmlNode(html);
         },
 
         replaceYoutube : function(linkEl) {

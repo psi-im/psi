@@ -1,10 +1,10 @@
 #include <iris/jingle-ft.h>
-#include <iris/xmpp-im/jingle-ibb.h>
 #include <iris/jingle-ice.h>
-#include <iris/xmpp-im/jingle-s5b.h>
-#include <iris/s5b.h>
 #include <iris/jingle-session.h>
+#include <iris/s5b.h>
 #include <iris/tcpportreserver.h>
+#include <iris/xmpp-im/jingle-ibb.h>
+#include <iris/xmpp-im/jingle-s5b.h>
 #include <iris/xmpp.h>
 #include <iris/xmpp_caps.h>
 #include <iris/xmpp_client.h>
@@ -24,13 +24,10 @@
 #include <optional>
 
 using namespace XMPP;
-namespace J = XMPP::Jingle;
+namespace J  = XMPP::Jingle;
 namespace FT = XMPP::Jingle::FileTransfer;
 
-static bool isIceNamespace(const QString &ns)
-{
-    return ns == J::ICE::NS || ns == J::ICE::NS_ICE_UDP;
-}
+static bool isIceNamespace(const QString &ns) { return ns == J::ICE::NS || ns == J::ICE::NS_ICE_UDP; }
 
 static bool isKnownTransportNamespace(const QString &ns)
 {
@@ -39,9 +36,9 @@ static bool isKnownTransportNamespace(const QString &ns)
 
 static bool transportProfileSupported(const QString &profile)
 {
-    return profile == QLatin1String("all") || profile == QLatin1String("ice")
-        || profile == QLatin1String("s5b") || profile == QLatin1String("ibb")
-        || profile == QLatin1String("ice-s5b-replace") || profile == QLatin1String("s5b-ibb-replace");
+    return profile == QLatin1String("all") || profile == QLatin1String("ice") || profile == QLatin1String("s5b")
+        || profile == QLatin1String("ibb") || profile == QLatin1String("ice-s5b-replace")
+        || profile == QLatin1String("s5b-ibb-replace");
 }
 
 static bool transportProfileAllows(const QString &profile, const QString &ns)
@@ -61,10 +58,7 @@ static bool transportProfileAllows(const QString &profile, const QString &ns)
     return false;
 }
 
-static bool transportProfileNeedsReplace(const QString &profile)
-{
-    return profile.endsWith(QLatin1String("-replace"));
-}
+static bool transportProfileNeedsReplace(const QString &profile) { return profile.endsWith(QLatin1String("-replace")); }
 
 static QString expectedInitialTransport(const QString &profile)
 {
@@ -109,8 +103,8 @@ static void installPeerFeatures(Client &client, const Jid &peer, const QString &
 
 class XmppEndpoint final : public QObject {
 public:
-    XmppEndpoint(Jid jid, QString password, QObject *parent = nullptr)
-        : QObject(parent), jid_(std::move(jid)), password_(std::move(password))
+    XmppEndpoint(Jid jid, QString password, QObject *parent = nullptr) :
+        QObject(parent), jid_(std::move(jid)), password_(std::move(password))
     {
         // Production Psi registers the S5B server scope before handing the
         // reserver to Iris. Mirror that setup in the live fixture so
@@ -129,12 +123,12 @@ public:
         delete connector_;
     }
 
-    Client *client() { return &client_; }
+    Client    *client() { return &client_; }
     const Jid &requestedJid() const { return jid_; }
 
     void start(std::function<void()> ready, std::function<void(const QString &)> failed)
     {
-        ready_ = std::move(ready);
+        ready_  = std::move(ready);
         failed_ = std::move(failed);
 
         connector_ = new AdvancedConnector;
@@ -147,22 +141,21 @@ public:
         stream_->setCompress(false);
         stream_->setNoopTime(0);
 
-        connect(stream_, &ClientStream::needAuthParams, this,
-                [this](bool user, bool pass, bool realm) {
-                    if (user)
-                        stream_->setUsername(jid_.node());
-                    if (pass)
-                        stream_->setPassword(password_);
-                    if (realm)
-                        stream_->setRealm(jid_.domain());
-                    stream_->continueAfterParams();
-                });
+        connect(stream_, &ClientStream::needAuthParams, this, [this](bool user, bool pass, bool realm) {
+            if (user)
+                stream_->setUsername(jid_.node());
+            if (pass)
+                stream_->setPassword(password_);
+            if (realm)
+                stream_->setRealm(jid_.domain());
+            stream_->continueAfterParams();
+        });
         connect(stream_, &ClientStream::warning, this, [this](int warning) {
             qInfo() << "XMPP warning" << warning << "- continuing in local CI mode";
             stream_->continueAfterWarning();
         });
         connect(stream_, &ClientStream::authenticated, this, [this]() {
-            const Jid bound = stream_->jid();
+            const Jid     bound    = stream_->jid();
             const QString resource = bound.resource().isEmpty() ? jid_.resource() : bound.resource();
             client_.start(jid_.domain(), jid_.node(), password_, resource);
             if (client_.isSessionRequired()) {
@@ -179,9 +172,8 @@ public:
                 becomeReady();
             }
         });
-        connect(stream_, &Stream::error, this, [this](int error) {
-            fail(QStringLiteral("XMPP stream error %1").arg(error));
-        });
+        connect(stream_, &Stream::error, this,
+                [this](int error) { fail(QStringLiteral("XMPP stream error %1").arg(error)); });
         connect(stream_, &Stream::connectionClosed, this, [this]() {
             if (!readyState_)
                 fail(QStringLiteral("XMPP stream closed before authentication"));
@@ -231,14 +223,14 @@ private:
             failed_(message);
     }
 
-    TcpPortReserver portReserver_;
-    Client client_;
-    Jid jid_;
-    QString password_;
-    AdvancedConnector *connector_ = nullptr;
-    ClientStream *stream_ = nullptr;
-    bool readyState_ = false;
-    std::function<void()> ready_;
+    TcpPortReserver                      portReserver_;
+    Client                               client_;
+    Jid                                  jid_;
+    QString                              password_;
+    AdvancedConnector                   *connector_  = nullptr;
+    ClientStream                        *stream_     = nullptr;
+    bool                                 readyState_ = false;
+    std::function<void()>                ready_;
     std::function<void(const QString &)> failed_;
 };
 
@@ -248,22 +240,22 @@ int main(int argc, char **argv)
     QCA::Initializer qca;
 
     if (argc < 6) {
-        qCritical() << "Usage:" << argv[0]
-                    << "<sender|receiver> <jid/resource> <password> <peer/resource> <file> [ready-file] [transport-profile]";
+        qCritical()
+            << "Usage:" << argv[0]
+            << "<sender|receiver> <jid/resource> <password> <peer/resource> <file> [ready-file] [transport-profile]";
         return 2;
     }
 
     const QString role = QString::fromLocal8Bit(argv[1]);
-    const Jid localJid(QString::fromLocal8Bit(argv[2]));
+    const Jid     localJid(QString::fromLocal8Bit(argv[2]));
     const QString password = QString::fromLocal8Bit(argv[3]);
-    const Jid peerJid(QString::fromLocal8Bit(argv[4]));
-    const QString filePath = QString::fromLocal8Bit(argv[5]);
-    const QString readyPath = argc > 6 ? QString::fromLocal8Bit(argv[6]) : QString();
+    const Jid     peerJid(QString::fromLocal8Bit(argv[4]));
+    const QString filePath         = QString::fromLocal8Bit(argv[5]);
+    const QString readyPath        = argc > 6 ? QString::fromLocal8Bit(argv[6]) : QString();
     const QString transportProfile = argc > 7 ? QString::fromLocal8Bit(argv[7]) : QStringLiteral("all");
 
-    if ((role != QLatin1String("sender") && role != QLatin1String("receiver"))
-        || !localJid.isValid() || localJid.resource().isEmpty()
-        || !peerJid.isValid() || peerJid.resource().isEmpty()
+    if ((role != QLatin1String("sender") && role != QLatin1String("receiver")) || !localJid.isValid()
+        || localJid.resource().isEmpty() || !peerJid.isValid() || peerJid.resource().isEmpty()
         || !transportProfileSupported(transportProfile)) {
         qCritical() << "Invalid role, full JID arguments, or transport profile";
         return 3;
@@ -271,16 +263,16 @@ int main(int argc, char **argv)
 
     qInfo().noquote() << QStringLiteral("FT_PROFILE=%1").arg(transportProfile);
 
-    bool finishing = false;
-    bool senderSawFinishing = false;
-    bool receiverSawFinishing = false;
-    bool senderTransferFinished = false;
-    bool receiverTransferFinished = false;
-    bool replaceRequested = false;
-    bool gotSession = false;
+    bool    finishing                = false;
+    bool    senderSawFinishing       = false;
+    bool    receiverSawFinishing     = false;
+    bool    senderTransferFinished   = false;
+    bool    receiverTransferFinished = false;
+    bool    replaceRequested         = false;
+    bool    gotSession               = false;
     QString initialTransport;
     QString activeTransport;
-    auto finish = [&](int code, const QString &message) {
+    auto    finish = [&](int code, const QString &message) {
         if (finishing)
             return;
         finishing = true;
@@ -299,113 +291,108 @@ int main(int argc, char **argv)
     XmppEndpoint endpoint(localJid, password, &app);
 
     if (role == QLatin1String("receiver")) {
-        QObject::connect(endpoint.client()->jingleManager(), &J::Manager::incomingSession, &app,
-                         [&](J::Session *session) {
-                             if (gotSession) {
-                                 finish(20, QStringLiteral("duplicate incoming Jingle session"));
-                                 return;
-                             }
-                             gotSession = true;
+        QObject::connect(
+            endpoint.client()->jingleManager(), &J::Manager::incomingSession, &app, [&](J::Session *session) {
+                if (gotSession) {
+                    finish(20, QStringLiteral("duplicate incoming Jingle session"));
+                    return;
+                }
+                gotSession = true;
 
-                             if (session->preferredApplication() != FT::NS || session->contentList().size() != 1) {
-                                 session->terminate(J::Reason::Condition::UnsupportedApplications);
-                                 finish(21, QStringLiteral("unexpected incoming Jingle application"));
-                                 return;
-                             }
+                if (session->preferredApplication() != FT::NS || session->contentList().size() != 1) {
+                    session->terminate(J::Reason::Condition::UnsupportedApplications);
+                    finish(21, QStringLiteral("unexpected incoming Jingle application"));
+                    return;
+                }
 
-                             auto *base = session->contentList().constBegin().value();
-                             if (!base || base->pad()->ns() != FT::NS) {
-                                 session->terminate(J::Reason::Condition::UnsupportedApplications);
-                                 finish(22, QStringLiteral("incoming content is not Jingle file transfer"));
-                                 return;
-                             }
-                             auto *transfer = static_cast<FT::Application *>(base);
-                             QObject::connect(session, &J::Session::activated, session, []() {
-                                 qInfo("FT_RECEIVER_SESSION=activated");
-                             });
-                             QObject::connect(session, &J::Session::terminated, session, [&, session]() {
-                                 qInfo().noquote()
-                                     << QStringLiteral("FT_RECEIVER_SESSION=terminated state=%1")
-                                            .arg(int(session->state()));
-                                 const auto error = session->lastError();
-                                 if (error) {
-                                     qInfo().noquote()
-                                         << QStringLiteral("FT_RECEIVER_SESSION_ERROR=%1 cond=%2 app=%3")
-                                                .arg(error->toString())
-                                                .arg(int(error->condition))
-                                                .arg(error->appSpec.tagName());
-                                 }
-                                 if (receiverTransferFinished)
-                                     finish(0, QStringLiteral("receiver completed"));
-                                 else if (!finishing)
-                                     finish(25, QStringLiteral("receiver session terminated before file completion"));
-                             });
-                             qInfo().noquote()
-                                 << QStringLiteral("FT_INCOMING_FILE=%1 SIZE=%2")
-                                        .arg(transfer->file().name())
-                                        .arg(transfer->file().size().value_or(0));
+                auto *base = session->contentList().constBegin().value();
+                if (!base || base->pad()->ns() != FT::NS) {
+                    session->terminate(J::Reason::Condition::UnsupportedApplications);
+                    finish(22, QStringLiteral("incoming content is not Jingle file transfer"));
+                    return;
+                }
+                auto *transfer = static_cast<FT::Application *>(base);
+                QObject::connect(session, &J::Session::activated, session,
+                                 []() { qInfo("FT_RECEIVER_SESSION=activated"); });
+                QObject::connect(
+                    session, &J::Session::terminated, session, [&, session]() {
+                        qInfo().noquote()
+                            << QStringLiteral("FT_RECEIVER_SESSION=terminated state=%1").arg(int(session->state()));
+                        const auto error = session->lastError();
+                        if (error) {
+                            qInfo().noquote() << QStringLiteral("FT_RECEIVER_SESSION_ERROR=%1 cond=%2 app=%3")
+                                                     .arg(error->toString())
+                                                     .arg(int(error->condition))
+                                                     .arg(error->appSpec.tagName());
+                        }
+                        if (receiverTransferFinished)
+                            finish(0, QStringLiteral("receiver completed"));
+                        else if (!finishing)
+                            finish(25, QStringLiteral("receiver session terminated before file completion"));
+                    });
+                qInfo().noquote() << QStringLiteral("FT_INCOMING_FILE=%1 SIZE=%2")
+                                         .arg(transfer->file().name())
+                                         .arg(transfer->file().size().value_or(0));
 
-                             if (transfer->transport()) {
-                                 qInfo().noquote()
-                                     << QStringLiteral("FT_RECEIVER_TRANSPORT=%1")
-                                            .arg(transfer->transport()->pad()->ns());
-                             }
+                if (transfer->transport()) {
+                    qInfo().noquote()
+                        << QStringLiteral("FT_RECEIVER_TRANSPORT=%1").arg(transfer->transport()->pad()->ns());
+                }
 
-                             QObject::connect(transfer, &FT::Application::deviceRequested, transfer,
-                                              [&, transfer](quint64 offset, std::optional<quint64>) {
-                                                  auto *out = new QFile(filePath, transfer);
-                                                  QIODevice::OpenMode mode = QIODevice::WriteOnly;
-                                                  if (offset == 0)
-                                                      mode |= QIODevice::Truncate;
-                                                  if (!out->open(mode) || !out->seek(qint64(offset))) {
-                                                      delete out;
-                                                      transfer->setDevice(nullptr);
-                                                      finish(23, QStringLiteral("cannot open destination file"));
-                                                      return;
-                                                  }
-                                                  transfer->setDevice(out);
-                                              });
+                QObject::connect(transfer, &FT::Application::deviceRequested, transfer,
+                                 [&, transfer](quint64 offset, std::optional<quint64>) {
+                                     auto               *out  = new QFile(filePath, transfer);
+                                     QIODevice::OpenMode mode = QIODevice::WriteOnly;
+                                     if (offset == 0)
+                                         mode |= QIODevice::Truncate;
+                                     if (!out->open(mode) || !out->seek(qint64(offset))) {
+                                         delete out;
+                                         transfer->setDevice(nullptr);
+                                         finish(23, QStringLiteral("cannot open destination file"));
+                                         return;
+                                     }
+                                     transfer->setDevice(out);
+                                 });
 
-                             QObject::connect(transfer, &J::Application::stateChanged, transfer,
-                                              [&, session, transfer](J::State state) {
-                                                  qInfo().noquote()
-                                                      << QStringLiteral("FT_RECEIVER_APP_STATE=%1").arg(int(state));
-                                                  if (state == J::State::Finishing) {
-                                                      receiverSawFinishing = true;
-                                                      qInfo("FT_RECEIVER_DRAIN=finishing");
-                                                      if (!transfer->connection())
-                                                          finish(26, QStringLiteral("receiver lost connection before drain"));
-                                                      return;
-                                                  }
-                                                  if (state != J::State::Finished)
-                                                      return;
-                                                  const auto reason = transfer->lastReason();
-                                                  if (!receiverSawFinishing) {
-                                                      // Finishing is the successful payload-complete/drain tail.
-                                                      // A fatal error before all declared bytes arrive must not
-                                                      // pretend that the payload completed merely to pass through it.
-                                                      if (reason.isValid() && reason.condition() != J::Reason::Success) {
-                                                          finish(24, QStringLiteral("receiver transfer failed before payload completion"));
-                                                          return;
-                                                      }
-                                                      finish(27, QStringLiteral("successful receiver skipped Finishing state"));
-                                                      return;
-                                                  }
-                                                  if (transfer->connection()) {
-                                                      finish(28, QStringLiteral("receiver retained connection after drain"));
-                                                      return;
-                                                  }
-                                                  if (!reason.isValid() || reason.condition() != J::Reason::Success) {
-                                                      finish(24, QStringLiteral("receiver failed from Finishing state"));
-                                                      return;
-                                                  }
-                                                  receiverTransferFinished = true;
-                                                  qInfo("FT_RECEIVER_TRANSFER=finished; terminating Jingle session");
-                                                  session->terminate(J::Reason::Condition::Success);
-                                              });
+                QObject::connect(
+                    transfer, &J::Application::stateChanged, transfer, [&, session, transfer](J::State state) {
+                        qInfo().noquote() << QStringLiteral("FT_RECEIVER_APP_STATE=%1").arg(int(state));
+                        if (state == J::State::Finishing) {
+                            receiverSawFinishing = true;
+                            qInfo("FT_RECEIVER_DRAIN=finishing");
+                            if (!transfer->connection())
+                                finish(26, QStringLiteral("receiver lost connection before drain"));
+                            return;
+                        }
+                        if (state != J::State::Finished)
+                            return;
+                        const auto reason = transfer->lastReason();
+                        if (!receiverSawFinishing) {
+                            // Finishing is the successful payload-complete/drain tail.
+                            // A fatal error before all declared bytes arrive must not
+                            // pretend that the payload completed merely to pass through it.
+                            if (reason.isValid() && reason.condition() != J::Reason::Success) {
+                                finish(24, QStringLiteral("receiver transfer failed before payload completion"));
+                                return;
+                            }
+                            finish(27, QStringLiteral("successful receiver skipped Finishing state"));
+                            return;
+                        }
+                        if (transfer->connection()) {
+                            finish(28, QStringLiteral("receiver retained connection after drain"));
+                            return;
+                        }
+                        if (!reason.isValid() || reason.condition() != J::Reason::Success) {
+                            finish(24, QStringLiteral("receiver failed from Finishing state"));
+                            return;
+                        }
+                        receiverTransferFinished = true;
+                        qInfo("FT_RECEIVER_TRANSFER=finished; terminating Jingle session");
+                        session->terminate(J::Reason::Condition::Success);
+                    });
 
-                             session->accept();
-                         });
+                session->accept();
+            });
     }
 
     endpoint.start(
@@ -432,8 +419,7 @@ int main(int argc, char **argv)
             const J::TransportFeatures requirements
                 = J::TransportFeature::Reliable | J::TransportFeature::Ordered | J::TransportFeature::DataOriented;
             const QStringList transports = endpoint.client()->jingleManager()->availableTransports(requirements);
-            qInfo().noquote()
-                << QStringLiteral("FT_AVAILABLE_TRANSPORTS=%1").arg(transports.join(QLatin1Char(',')));
+            qInfo().noquote() << QStringLiteral("FT_AVAILABLE_TRANSPORTS=%1").arg(transports.join(QLatin1Char(',')));
             bool hasIce = false;
             for (const auto &ns : transports)
                 hasIce = hasIce || isIceNamespace(ns);
@@ -448,15 +434,13 @@ int main(int argc, char **argv)
                 return;
             }
             QObject::connect(session, &J::Session::terminated, session, [&, session]() {
-                qInfo().noquote()
-                    << QStringLiteral("FT_SENDER_SESSION=terminated state=%1").arg(int(session->state()));
+                qInfo().noquote() << QStringLiteral("FT_SENDER_SESSION=terminated state=%1").arg(int(session->state()));
                 const auto error = session->lastError();
                 if (error) {
-                    qInfo().noquote()
-                        << QStringLiteral("FT_SENDER_SESSION_ERROR=%1 cond=%2 app=%3")
-                               .arg(error->toString())
-                               .arg(int(error->condition))
-                               .arg(error->appSpec.tagName());
+                    qInfo().noquote() << QStringLiteral("FT_SENDER_SESSION_ERROR=%1 cond=%2 app=%3")
+                                             .arg(error->toString())
+                                             .arg(int(error->condition))
+                                             .arg(error->appSpec.tagName());
                 }
                 if (senderTransferFinished)
                     finish(0, QStringLiteral("sender completed"));
@@ -464,7 +448,7 @@ int main(int argc, char **argv)
                     finish(46, QStringLiteral("Jingle session terminated before file completion"));
             });
 
-            auto *base = session->newContent(FT::NS, session->role());
+            auto *base     = session->newContent(FT::NS, session->role());
             auto *transfer = static_cast<FT::Application *>(base);
             if (!transfer) {
                 finish(42, QStringLiteral("Jingle file-transfer application unavailable"));
@@ -476,8 +460,8 @@ int main(int argc, char **argv)
                 if (!transportProfileNeedsReplace(transportProfile) || replaceRequested)
                     return;
 
-                const auto current = transfer->transport();
-                const auto expected = expectedInitialTransport(transportProfile);
+                const auto current   = transfer->transport();
+                const auto expected  = expectedInitialTransport(transportProfile);
                 const auto currentNs = current ? current->pad()->ns() : QString();
                 if (!current || transfer->state() != J::State::Connecting || currentNs != expected) {
                     finish(48, QStringLiteral("replacement boundary did not retain expected initial transport"));
@@ -496,70 +480,65 @@ int main(int argc, char **argv)
                     finish(50, QStringLiteral("replacement transport is null"));
                     return;
                 }
-                qInfo().noquote()
-                    << QStringLiteral("FT_REPLACE_SELECTED=%1").arg(replacement->pad()->ns());
+                qInfo().noquote() << QStringLiteral("FT_REPLACE_SELECTED=%1").arg(replacement->pad()->ns());
             });
 
-            QObject::connect(transfer, &J::Application::stateChanged, transfer,
-                             [&, transfer](J::State state) {
-                                 qInfo().noquote()
-                                     << QStringLiteral("FT_SENDER_APP_STATE=%1").arg(int(state));
-                                 if (initialTransport.isEmpty() && transfer->transport()) {
-                                     initialTransport = transfer->transport()->pad()->ns();
-                                     qInfo().noquote()
-                                         << QStringLiteral("FT_INITIAL_TRANSPORT=%1").arg(initialTransport);
-                                     const auto expected = expectedInitialTransport(transportProfile);
-                                     if (!expected.isEmpty() && initialTransport != expected) {
-                                         finish(43, QStringLiteral("file transfer selected unexpected initial transport"));
-                                         return;
-                                     }
-                                 }
-                                 if (state == J::State::Active && transfer->transport()) {
-                                     activeTransport = transfer->transport()->pad()->ns();
-                                     qInfo().noquote()
-                                         << QStringLiteral("FT_ACTIVE_TRANSPORT=%1").arg(activeTransport);
-                                     const auto expected = expectedActiveTransport(transportProfile);
-                                     if (!expected.isEmpty() && activeTransport != expected) {
-                                         finish(51, QStringLiteral("file transfer activated unexpected transport"));
-                                         return;
-                                     }
-                                     if (transportProfileNeedsReplace(transportProfile) && !replaceRequested) {
-                                         finish(52, QStringLiteral("replacement profile reached Active without replacement"));
-                                         return;
-                                     }
-                                 }
-                                 if (state == J::State::Finishing) {
-                                     senderSawFinishing = true;
-                                     qInfo("FT_SENDER_DRAIN=finishing");
-                                     if (!transfer->connection())
-                                         finish(53, QStringLiteral("sender lost connection before drain"));
-                                     return;
-                                 }
-                                 if (state != J::State::Finished)
-                                     return;
-                                 const auto reason = transfer->lastReason();
-                                 if (!senderSawFinishing) {
-                                     // Premature EOF / source failure is terminal before payload
-                                     // completion. Only successful completion is required to enter
-                                     // the Finishing drain/signaling tail.
-                                     if (reason.isValid() && reason.condition() != J::Reason::Success) {
-                                         finish(44, QStringLiteral("sender transfer failed before payload completion"));
-                                         return;
-                                     }
-                                     finish(54, QStringLiteral("successful sender skipped Finishing state"));
-                                     return;
-                                 }
-                                 if (transfer->connection()) {
-                                     finish(55, QStringLiteral("sender retained connection after drain"));
-                                     return;
-                                 }
-                                 if (!reason.isValid() || reason.condition() != J::Reason::Success) {
-                                     finish(44, QStringLiteral("sender failed from Finishing state"));
-                                     return;
-                                 }
-                                 senderTransferFinished = true;
-                                 qInfo("FT_SENDER_TRANSFER=finished; waiting for peer session-terminate");
-                             });
+            QObject::connect(transfer, &J::Application::stateChanged, transfer, [&, transfer](J::State state) {
+                qInfo().noquote() << QStringLiteral("FT_SENDER_APP_STATE=%1").arg(int(state));
+                if (initialTransport.isEmpty() && transfer->transport()) {
+                    initialTransport = transfer->transport()->pad()->ns();
+                    qInfo().noquote() << QStringLiteral("FT_INITIAL_TRANSPORT=%1").arg(initialTransport);
+                    const auto expected = expectedInitialTransport(transportProfile);
+                    if (!expected.isEmpty() && initialTransport != expected) {
+                        finish(43, QStringLiteral("file transfer selected unexpected initial transport"));
+                        return;
+                    }
+                }
+                if (state == J::State::Active && transfer->transport()) {
+                    activeTransport = transfer->transport()->pad()->ns();
+                    qInfo().noquote() << QStringLiteral("FT_ACTIVE_TRANSPORT=%1").arg(activeTransport);
+                    const auto expected = expectedActiveTransport(transportProfile);
+                    if (!expected.isEmpty() && activeTransport != expected) {
+                        finish(51, QStringLiteral("file transfer activated unexpected transport"));
+                        return;
+                    }
+                    if (transportProfileNeedsReplace(transportProfile) && !replaceRequested) {
+                        finish(52, QStringLiteral("replacement profile reached Active without replacement"));
+                        return;
+                    }
+                }
+                if (state == J::State::Finishing) {
+                    senderSawFinishing = true;
+                    qInfo("FT_SENDER_DRAIN=finishing");
+                    if (!transfer->connection())
+                        finish(53, QStringLiteral("sender lost connection before drain"));
+                    return;
+                }
+                if (state != J::State::Finished)
+                    return;
+                const auto reason = transfer->lastReason();
+                if (!senderSawFinishing) {
+                    // Premature EOF / source failure is terminal before payload
+                    // completion. Only successful completion is required to enter
+                    // the Finishing drain/signaling tail.
+                    if (reason.isValid() && reason.condition() != J::Reason::Success) {
+                        finish(44, QStringLiteral("sender transfer failed before payload completion"));
+                        return;
+                    }
+                    finish(54, QStringLiteral("successful sender skipped Finishing state"));
+                    return;
+                }
+                if (transfer->connection()) {
+                    finish(55, QStringLiteral("sender retained connection after drain"));
+                    return;
+                }
+                if (!reason.isValid() || reason.condition() != J::Reason::Success) {
+                    finish(44, QStringLiteral("sender failed from Finishing state"));
+                    return;
+                }
+                senderTransferFinished = true;
+                qInfo("FT_SENDER_TRANSFER=finished; waiting for peer session-terminate");
+            });
 
             QObject::connect(transfer, &FT::Application::deviceRequested, transfer,
                              [&, transfer](quint64 offset, std::optional<quint64>) {
@@ -590,10 +569,9 @@ int main(int argc, char **argv)
                     finish(57, QStringLiteral("cannot truncate source for fault injection"));
                     return;
                 }
-                qInfo().noquote()
-                    << QStringLiteral("FT_TEST_SOURCE_TRUNCATED advertised=%1 actual=%2")
-                           .arg(advertisedSize)
-                           .arg(truncated.size());
+                qInfo().noquote() << QStringLiteral("FT_TEST_SOURCE_TRUNCATED advertised=%1 actual=%2")
+                                         .arg(advertisedSize)
+                                         .arg(truncated.size());
                 truncated.close();
             }
             session->addContent(transfer);

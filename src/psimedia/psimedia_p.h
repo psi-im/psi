@@ -178,12 +178,12 @@ class RtpSessionPrivate : public QObject {
     Q_OBJECT
 
 public:
-    RtpSession                 *q;
-    RtpSessionContext          *c       = nullptr;
-    SecureRtpSessionContext    *secureC = nullptr; // same QObject as c in secure mode
-    bool                        secureMode = false;
-    RtpChannel                  audioRtpChannel;
-    RtpChannel                  videoRtpChannel;
+    RtpSession              *q;
+    RtpSessionContext       *c          = nullptr;
+    SecureRtpSessionContext *secureC    = nullptr; // same QObject as c in secure mode
+    bool                     secureMode = false;
+    RtpChannel               audioRtpChannel;
+    RtpChannel               videoRtpChannel;
 
     RtpSessionPrivate(RtpSession *_q, bool secure) : QObject(_q), q(_q), secureMode(secure)
     {

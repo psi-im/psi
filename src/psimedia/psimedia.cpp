@@ -776,9 +776,8 @@ quint64 RtpSession::secureAssociationEpoch(const QByteArray &associationId) cons
 
 SecureRtpError RtpSession::secureLastError(const QByteArray &associationId) const
 {
-    return d && d->secureC
-        ? static_cast<SecureRtpError>(d->secureC->lastError(associationId))
-        : SecureRtpError::NotReady;
+    return d && d->secureC ? static_cast<SecureRtpError>(d->secureC->lastError(associationId))
+                           : SecureRtpError::NotReady;
 }
 
 void RtpSession::setProtectedPacketHandler(ProtectedPacketHandler handler)
@@ -789,16 +788,14 @@ void RtpSession::setProtectedPacketHandler(ProtectedPacketHandler handler)
         d->secureC->setProtectedPacketHandler({});
         return;
     }
-    d->secureC->setProtectedPacketHandler(
-        [handler = std::move(handler)](const PSecureRtpPacket &packet) {
-            SecureRtpPacket out;
-            out.associationId = packet.associationId;
-            out.epoch         = packet.epoch;
-            out.rawValue      = packet.rawValue;
-            out.type          = packet.type == PRtpPacket::Type::Rtp ? RtpPacket::Type::Rtp
-                                                                      : RtpPacket::Type::Rtcp;
-            handler(out);
-        });
+    d->secureC->setProtectedPacketHandler([handler = std::move(handler)](const PSecureRtpPacket &packet) {
+        SecureRtpPacket out;
+        out.associationId = packet.associationId;
+        out.epoch         = packet.epoch;
+        out.rawValue      = packet.rawValue;
+        out.type          = packet.type == PRtpPacket::Type::Rtp ? RtpPacket::Type::Rtp : RtpPacket::Type::Rtcp;
+        handler(out);
+    });
 }
 
 void RtpSession::setSecureRuntimeErrorHandler(SecureRuntimeErrorHandler handler)
@@ -809,11 +806,10 @@ void RtpSession::setSecureRuntimeErrorHandler(SecureRuntimeErrorHandler handler)
         d->secureC->setRuntimeErrorHandler({});
         return;
     }
-    d->secureC->setRuntimeErrorHandler(
-        [handler = std::move(handler)](const QByteArray &associationId, quint64 epoch,
-                                       SecureRtpSessionContext::Error error) {
-            handler(associationId, epoch, static_cast<SecureRtpError>(error));
-        });
+    d->secureC->setRuntimeErrorHandler([handler = std::move(handler)](const QByteArray &associationId, quint64 epoch,
+                                                                      SecureRtpSessionContext::Error error) {
+        handler(associationId, epoch, static_cast<SecureRtpError>(error));
+    });
 }
 
 bool RtpSession::receiveProtectedPacket(const SecureRtpPacket &packet)
