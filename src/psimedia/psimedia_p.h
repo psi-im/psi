@@ -178,14 +178,38 @@ class RtpSessionPrivate : public QObject {
     Q_OBJECT
 
 public:
-    RtpSession        *q;
-    RtpSessionContext *c;
-    RtpChannel         audioRtpChannel;
-    RtpChannel         videoRtpChannel;
+    RtpSession              *q;
+    RtpSessionContext       *c          = nullptr;
+    SecureRtpSessionContext *secureC    = nullptr; // same QObject as c in secure mode
+    bool                     secureMode = false;
+    RtpChannel               audioRtpChannel;
+    RtpChannel               videoRtpChannel;
 
-    RtpSessionPrivate(RtpSession *_q) : QObject(_q), q(_q)
+    RtpSessionPrivate(RtpSession *_q, bool secure) : QObject(_q), q(_q), secureMode(secure)
     {
-        c = provider()->createRtpSession();
+        auto *p = provider();
+        if (!p)
+            return;
+
+        if (secureMode) {
+            auto secureProvider = qobject_cast<SecureRtpProvider *>(p->qobject());
+            if (!secureProvider)
+                return;
+            secureC = secureProvider->createSecureRtpSession();
+            if (!secureC)
+                return;
+            c = qobject_cast<RtpSessionContext *>(secureC->qobject());
+            if (!c) {
+                delete secureC;
+                secureC = nullptr;
+                return;
+            }
+        } else {
+            c = p->createRtpSession();
+        }
+
+        if (!c)
+            return;
         c->qobject()->setParent(this);
         connect(c->qobject(), SIGNAL(started()), SLOT(c_started()));
         connect(c->qobject(), SIGNAL(preferencesUpdated()), SLOT(c_preferencesUpdated()));
@@ -197,7 +221,19 @@ public:
         connect(c->qobject(), SIGNAL(error()), SLOT(c_error()));
     }
 
-    ~RtpSessionPrivate() { delete c; }
+    ~RtpSessionPrivate()
+    {
+        if (secureC) {
+            secureC->setProtectedPacketHandler({});
+            secureC->setRuntimeErrorHandler({});
+            delete secureC;
+            secureC = nullptr;
+            c       = nullptr;
+        } else {
+            delete c;
+            c = nullptr;
+        }
+    }
 
 private slots:
     void c_started()

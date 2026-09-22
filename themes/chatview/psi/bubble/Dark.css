@@ -1,35 +1,35 @@
 body {
-	background-color: #180808;
-	color: white;
+    background-color: #180808;
+    color: white;
 }
 
 .sysmsg {
     background-color: #233;
-	color: #bbb;
+    color: #bbb;
 }
 
 .sysmsg .usertext {
-	color: white;
+    color: white;
 }
 
 .msg {
-	background-color: #282828;
+    background-color: #282828;
 }
 
 .msg::before {
-	border-color: #282828;
+    border-color: #282828;
 }
 
 .mymsg {
-	background-color: #346;
+    background-color: #346;
 }
 
 .mymsg::before {
-	border-color: #346;
+    border-color: #346;
 }
 
 .msgtext {
-	color: #eee;
+    color: #eee;
 }
 
 .grnext:hover {
@@ -37,33 +37,33 @@ body {
 }
 
 .time {
-	color: #aaa
+    color: #aaa
 }
 
 .reactions>span {
-	border-color: #777
+    border-color: #777
 }
 
 blockquote {
-	background: #f0f0f080;
-	border-color: #444;
-	color: #ccc;
+    background: #f0f0f080;
+    border-color: #444;
+    color: #ccc;
 }
 
 blockquote>div {
-	background-color: #444;
+    background-color: #444;
 }
 
 .reactions_selector {
-	background-color: #033;
+    background-color: #033;
 }
 
 .context_menu {
-	background-color: #033;
+    background-color: #033;
 }
 
 .context_menu>div+div {
-	border-color: #555;
+    border-color: #555;
 }
 
 .context_menu>div:hover {

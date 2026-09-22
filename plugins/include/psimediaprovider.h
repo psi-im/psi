@@ -27,6 +27,7 @@
 #include <QObject>
 #include <QSize>
 #include <QString>
+#include <QStringList>
 #include <QVariantMap>
 
 #include <functional>
@@ -50,6 +51,8 @@ class FeaturesContext;
 class Provider;
 class RtpSessionContext;
 class AudioRecorderContext;
+class SecureRtpProvider;
+class SecureRtpSessionContext;
 
 class Plugin {
 public:
@@ -153,6 +156,99 @@ public:
 
     QByteArray rawValue;
     Type       type = Type::Rtp;
+};
+
+class PSecureRtpPacket {
+public:
+    // Always a protected SRTP/SRTCP network datagram. associationId/epoch fence
+    // queued packets against DTLS transport replacement.
+    QByteArray       associationId;
+    quint64          epoch = 0;
+    QByteArray       rawValue;
+    PRtpPacket::Type type = PRtpPacket::Type::Rtp;
+};
+
+class PSecureRtpEndpoint {
+public:
+    // Opaque identities chosen by the host. associationId identifies one
+    // authenticated DTLS/RTP group: bundled endpoints share it, standalone
+    // endpoints use distinct values. No Jingle/XMPP types cross the provider ABI.
+    QByteArray endpointId;
+    QByteArray associationId;
+    QString    media;
+
+    // Authenticated post-SRTP RTP demultiplexing metadata.
+    QByteArray     mid;
+    quint16        midExtensionId = 0;
+    QList<int>     incomingPayloadTypes;
+    QList<quint32> incomingSsrcs;
+    QList<quint32> localSsrcs;
+};
+
+class SecureRtpSessionContext : public QObjectInterface {
+public:
+    enum class Error : int {
+        None = 0,
+        NotReady,
+        UnsupportedProfile,
+        InvalidKey,
+        InvalidPacket,
+        Authentication,
+        Replay,
+        StaleEpoch,
+        StreamLimit,
+        KeyExpired,
+        IndexLimit,
+        LibraryFailure
+    };
+
+    using ProtectedPacketHandler = std::function<void(const PSecureRtpPacket &)>;
+    using RuntimeErrorHandler    = std::function<void(const QByteArray &associationId, quint64 epoch, Error error)>;
+
+    virtual ~SecureRtpSessionContext() { }
+
+    // The same QObject MUST also implement RtpSessionContext/1.6. Endpoint
+    // configuration describes all active RTP groups transactionally. Bundled
+    // endpoints share associationId; unbundled endpoints use independent IDs.
+    // Route changes are independent of crypto epochs.
+    virtual bool configureEndpoints(const QList<PSecureRtpEndpoint> &endpoints) = 0;
+
+    // Keys are borrowed only for this synchronous call. Implementations make
+    // private non-implicitly-shared copies as needed and wipe backend-owned
+    // material on replacement/destruction. Re-activating the same association
+    // and identical material may advance epoch without resetting ROC/replay or
+    // SRTCP index state.
+    virtual bool configureAssociation(const QByteArray &associationId, quint64 epoch, const QString &profile,
+                                      const QByteArray &localMasterKey, const QByteArray &localMasterSalt,
+                                      const QByteArray &remoteMasterKey, const QByteArray &remoteMasterSalt)
+        = 0;
+
+    // Stale invalidation is a no-op: identity and epoch must both match.
+    virtual void invalidateAssociation(const QByteArray &associationId, quint64 epoch) = 0;
+
+    virtual bool    associationReady(const QByteArray &associationId) const = 0;
+    virtual quint64 associationEpoch(const QByteArray &associationId) const = 0;
+    virtual Error   lastError(const QByteArray &associationId) const        = 0;
+
+    // Network I/O is protected-only. Every packet/callback carries the
+    // association identity and security epoch. Callbacks execute on the media
+    // session QObject thread and must be cleared before destruction/plugin unload.
+    virtual void setProtectedPacketHandler(ProtectedPacketHandler handler) = 0;
+    virtual void setRuntimeErrorHandler(RuntimeErrorHandler handler)       = 0;
+    virtual bool receiveProtectedPacket(const PSecureRtpPacket &packet)    = 0;
+};
+
+class SecureRtpProvider {
+public:
+    virtual ~SecureRtpProvider() { }
+
+    // Probe the actual packet engine/backend, not only compile-time constants.
+    virtual QStringList supportedSecureRtpProfiles() const = 0;
+
+    // Returns a parentless object owned by the caller. Its QObject also
+    // implements RtpSessionContext/1.6. Destroy it before provider/plugin
+    // unload, on its Qt owner thread.
+    virtual SecureRtpSessionContext *createSecureRtpSession() = 0;
 };
 
 class Provider : public QObjectInterface {
@@ -295,6 +391,8 @@ public:
 
 Q_DECLARE_INTERFACE(PsiMedia::Plugin, "org.psi-im.psimedia.Plugin/1.6")
 Q_DECLARE_INTERFACE(PsiMedia::Provider, "org.psi-im.psimedia.Provider/1.6")
+Q_DECLARE_INTERFACE(PsiMedia::SecureRtpProvider, "org.psi-im.psimedia.SecureRtpProvider/1.0")
+Q_DECLARE_INTERFACE(PsiMedia::SecureRtpSessionContext, "org.psi-im.psimedia.SecureRtpSessionContext/1.0")
 Q_DECLARE_INTERFACE(PsiMedia::FeaturesContext, "org.psi-im.psimedia.FeaturesContext/1.6")
 Q_DECLARE_INTERFACE(PsiMedia::RtpChannelContext, "org.psi-im.psimedia.RtpChannelContext/1.6")
 Q_DECLARE_INTERFACE(PsiMedia::RtpSessionContext, "org.psi-im.psimedia.RtpSessionContext/1.6")

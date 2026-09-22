@@ -552,14 +552,33 @@ bool PayloadInfo::operator==(const PayloadInfo &other) const { return (*d == *ot
 // RtpSession
 //----------------------------------------------------------------------------
 
-RtpSession::RtpSession(QObject *parent) : QObject(parent) { d = new RtpSessionPrivate(this); }
+RtpSession::RtpSession(QObject *parent) : RtpSession(Mode::Plain, parent) { }
+
+RtpSession::RtpSession(Mode mode, QObject *parent) : QObject(parent)
+{
+    d = new RtpSessionPrivate(this, mode == Mode::Secure);
+}
 
 RtpSession::~RtpSession() { delete d; }
 
+bool RtpSession::isValid() const { return d && d->c; }
+
+bool RtpSession::isSecure() const { return d && d->secureC; }
+
+QStringList RtpSession::supportedSecureRtpProfiles()
+{
+    auto p = provider();
+    if (!p)
+        return {};
+    auto secureProvider = qobject_cast<SecureRtpProvider *>(p->qobject());
+    return secureProvider ? secureProvider->supportedSecureRtpProfiles() : QStringList {};
+}
+
 void RtpSession::reset()
 {
+    const bool secure = d && d->secureMode;
     delete d;
-    d = new RtpSessionPrivate(this);
+    d = new RtpSessionPrivate(this, secure);
 }
 
 void RtpSession::setAudioOutputDevice(const QString &deviceId) { d->c->setAudioOutputDevice(deviceId); }
@@ -708,5 +727,101 @@ RtpSession::Error RtpSession::errorCode() const { return static_cast<RtpSession:
 RtpChannel *RtpSession::audioRtpChannel() { return &d->audioRtpChannel; }
 
 RtpChannel *RtpSession::videoRtpChannel() { return &d->videoRtpChannel; }
+
+bool RtpSession::configureSecureEndpoints(const QList<SecureRtpEndpoint> &endpoints)
+{
+    if (!d || !d->secureC)
+        return false;
+    QList<PSecureRtpEndpoint> out;
+    out.reserve(endpoints.size());
+    for (const auto &endpoint : endpoints) {
+        PSecureRtpEndpoint item;
+        item.endpointId           = endpoint.endpointId;
+        item.associationId        = endpoint.associationId;
+        item.media                = endpoint.media;
+        item.mid                  = endpoint.mid;
+        item.midExtensionId       = endpoint.midExtensionId;
+        item.incomingPayloadTypes = endpoint.incomingPayloadTypes;
+        item.incomingSsrcs        = endpoint.incomingSsrcs;
+        item.localSsrcs           = endpoint.localSsrcs;
+        out.append(std::move(item));
+    }
+    return d->secureC->configureEndpoints(out);
+}
+
+bool RtpSession::configureSecureAssociation(const QByteArray &associationId, quint64 epoch, const QString &profile,
+                                            const QByteArray &localMasterKey, const QByteArray &localMasterSalt,
+                                            const QByteArray &remoteMasterKey, const QByteArray &remoteMasterSalt)
+{
+    return d && d->secureC
+        && d->secureC->configureAssociation(associationId, epoch, profile, localMasterKey, localMasterSalt,
+                                            remoteMasterKey, remoteMasterSalt);
+}
+
+void RtpSession::invalidateSecureAssociation(const QByteArray &associationId, quint64 epoch)
+{
+    if (d && d->secureC)
+        d->secureC->invalidateAssociation(associationId, epoch);
+}
+
+bool RtpSession::secureAssociationReady(const QByteArray &associationId) const
+{
+    return d && d->secureC && d->secureC->associationReady(associationId);
+}
+
+quint64 RtpSession::secureAssociationEpoch(const QByteArray &associationId) const
+{
+    return d && d->secureC ? d->secureC->associationEpoch(associationId) : 0;
+}
+
+SecureRtpError RtpSession::secureLastError(const QByteArray &associationId) const
+{
+    return d && d->secureC ? static_cast<SecureRtpError>(d->secureC->lastError(associationId))
+                           : SecureRtpError::NotReady;
+}
+
+void RtpSession::setProtectedPacketHandler(ProtectedPacketHandler handler)
+{
+    if (!d || !d->secureC)
+        return;
+    if (!handler) {
+        d->secureC->setProtectedPacketHandler({});
+        return;
+    }
+    d->secureC->setProtectedPacketHandler([handler = std::move(handler)](const PSecureRtpPacket &packet) {
+        SecureRtpPacket out;
+        out.associationId = packet.associationId;
+        out.epoch         = packet.epoch;
+        out.rawValue      = packet.rawValue;
+        out.type          = packet.type == PRtpPacket::Type::Rtp ? RtpPacket::Type::Rtp : RtpPacket::Type::Rtcp;
+        handler(out);
+    });
+}
+
+void RtpSession::setSecureRuntimeErrorHandler(SecureRuntimeErrorHandler handler)
+{
+    if (!d || !d->secureC)
+        return;
+    if (!handler) {
+        d->secureC->setRuntimeErrorHandler({});
+        return;
+    }
+    d->secureC->setRuntimeErrorHandler([handler = std::move(handler)](const QByteArray &associationId, quint64 epoch,
+                                                                      SecureRtpSessionContext::Error error) {
+        handler(associationId, epoch, static_cast<SecureRtpError>(error));
+    });
+}
+
+bool RtpSession::receiveProtectedPacket(const SecureRtpPacket &packet)
+{
+    if (!d || !d->secureC)
+        return false;
+    PSecureRtpPacket in;
+    in.associationId = packet.associationId;
+    in.epoch         = packet.epoch;
+    in.rawValue      = packet.rawValue;
+    in.type          = packet.type == RtpPacket::Type::Rtp ? PRtpPacket::Type::Rtp : PRtpPacket::Type::Rtcp;
+    return d->secureC->receiveProtectedPacket(in);
+}
 
 }; // namespace PsiMedia

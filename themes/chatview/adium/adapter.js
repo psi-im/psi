@@ -46,7 +46,7 @@ var adapter = {
                 "Incoming/Context.html", "Incoming/NextContext.html",
                 "Outgoing/Content.html", "Outgoing/NextContent.html",
                 "Outgoing/Context.html", "Outgoing/NextContext.html"];
-    
+
             var toCache = {};
             for (var i=0; i<resources.length; i++) {
                 toCache[resources[i]] = baseDir + "Contents/Resources/" + resources[i];
@@ -108,8 +108,8 @@ var adapter = {
 
             var resources = [
                 "Incoming/buddy_icon.png",
-                "Outgoing/buddy_icon.png", 
-                "incoming_icon.png", 
+                "Outgoing/buddy_icon.png",
+                "incoming_icon.png",
                 "outgoing_icon.png"
             ];
             if (chat.async) {
