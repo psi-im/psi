@@ -32,9 +32,9 @@ The older document remains historical context for the wider native-calls work.
 ## Goal
 
 Move SRTP/SRTCP packet protection out of Iris and into psimedia while keeping signaling,
-transport topology and DTLS ownership in Iris. Preserve working Conversations audio and
-establish tested wire interoperability with clients using either libwebrtc or GStreamer
-webrtcbin for audio/video. This is not a claim of complete WebRTC feature parity.
+transport topology and DTLS ownership in Iris. Preserve the verified native-Jingle call
+baseline and establish tested wire interoperability with clients using either libwebrtc or
+GStreamer webrtcbin for audio/video. This is not a claim of complete WebRTC feature parity.
 
 ### Interoperability model
 
@@ -520,15 +520,17 @@ Repository: `psi-im/psi`.
 
 ## Compatibility decision and evidence
 
-The user has verified live interoperability with **Conversations 2.20.3** on Android 15
-(HyperOS 3.0.6): the previously working audio path remains valid, and Psi -> Conversations
-audio+video over the direct Wi-Fi path now starts video promptly and remains stable after the
-PipeWire/video-start fixes. The exact negotiated BUNDLE/association shape for that run, reverse
-A/V direction, TURN relay and loss-recovery behavior are not yet recorded as passed. A separate
-Conversations incoming-call UI/notification issue is currently under investigation; the peer does
-send JMI <ringing/> in response to Psi's audio proposal, so that symptom is tracked separately from
-RTP/SRTP wire interoperability. Other libwebrtc/webrtcbin clients remain unverified. Do not
-generalize the Conversations result to every version or implementation.
+The strongest current live native-Jingle evidence is **Monocles** (exact app version still to be
+recorded): the user has verified audio/video calls in both directions over the direct Wi-Fi path
+on the current migration build. Psi -> Monocles exposed a real DTLS/ICE startup race: when the peer
+answered `setup=active`, Psi became the DTLS passive/server side and could start QCA DTLS before ICE
+had a writable candidate pair. Iris now defers Jingle DTLS engine startup until the ICE transport
+reports media-writable state; the bidirectional Monocles calls pass with that fix.
+
+**Conversations 2.20.3** on Android 15 remains useful secondary evidence: audio worked and
+Psi -> Conversations A/V over direct Wi-Fi was verified after the PipeWire/video-start fixes.
+Its incoming-call UI issue is not a migration gate. Other libwebrtc/webrtcbin clients remain
+unverified; do not generalize either Android client result to every version or implementation.
 
 Internal session ownership is not signaled to the peer. The architecture change should preserve
 negotiated codecs, payload numbers, extensions, ICE/DTLS setup and SRTP profiles. BUNDLE changes
@@ -586,8 +588,9 @@ re-originate media/DTLS to hide an incompatibility: translation is limited to si
 
 | Peer | Current evidence | Required coverage |
 | --- | --- | --- |
-| Conversations 2.20.3 / Android 15 | User-verified audio and Psi -> Conversations A/V over direct Wi-Fi; prompt/stable video after current psimedia fixes; JMI <ringing/> observed for Psi -> Conversations audio proposal | Complete reverse A/V direction, record negotiated BUNDLE/association details and ongoing RTCP/loss behavior, then test TURN relay. Incoming-call UI presentation is a separate Android/Conversations gate. |
-| Another client using libwebrtc | Not verified; select and pin client and library builds | Audio and A/V in both directions, handshake/profile/packet gates; do not reuse Conversations' result as proof. |
+| Monocles / Android (version pending record) | User-verified audio/A/V in both call directions over direct Wi-Fi on the current migration build; Psi -> Monocles also verified the deferred-DTLS race fix | Record exact app/build and migration SHAs, negotiated BUNDLE/association details, ongoing RTCP/loss behavior and TURN relay. |
+| Conversations 2.20.3 / Android 15 | Secondary evidence: audio and Psi -> Conversations A/V over direct Wi-Fi passed; prompt/stable video after current psimedia fixes | Keep as a non-blocking regression peer if useful; incoming-call UI presentation is outside the SRTP migration gate. |
+| Another client using libwebrtc | Not verified; select and pin client and library builds | Audio and A/V in both directions, handshake/profile/packet gates; do not reuse Android-client results as proof. |
 | Client using GStreamer webrtcbin | Not verified; select and pin client plus GStreamer/plugin builds | Same audio/A/V gates, including shared RTCP and negotiated feedback. |
 | Chromium and Firefox test peers | Not verified | Additional independent wire tests via a signaling-only harness; not substitutes for native-Jingle client tests. |
 | Psi <-> Psi | Migration triplet verified in run `35725996477`: audio, A/V+BUNDLE, decoded video, MID/BUNDLE signaling and two sequential in-process calls after teardown all passed | Keep this automated gate green on the final pinned SHAs. |
@@ -598,16 +601,18 @@ negotiated profile/codecs/features, expected/observed results and artifacts. Use
 for pass, failure, unsupported, skipped and not tested. Keep sanitized stanzas and synthetic packet
 fixtures; never retain exporter/private keys, credentials or user media in diagnostic artifacts.
 
-Native-Jingle audio/A/V with pinned clients from **both library families**, plus the Conversations
-audio regression, are required for the expanded interoperability claim. Library harness results
-are useful independently but cannot prove a client's discovery/JMI/SDP-to-Jingle behavior.
-A missing peer leaves that row pending; it does not prevent independent implementation/unit work.
+The Monocles live full-Jingle baseline is confirmed, but the exact Monocles version/build still
+needs to be recorded. Native-Jingle/media tests with pinned clients from **both library families**
+remain required for the expanded interoperability claim. Library harness results are useful
+independently but cannot prove a client's discovery/JMI/SDP-to-Jingle behavior. A missing peer
+leaves that row pending; it does not prevent independent implementation/unit work.
 
 ### Wire compatibility and regression gates
 
-- Capture the working Psi/Conversations baseline before implementation: exact app/build versions,
-  audio-only result, actual initiator/network paths, negotiated group/mux/profile, codec/PT,
-  SSRC/MID/extension and feedback mappings. Store sanitized signaling fixtures without secrets.
+- Preserve and document the working Psi/Monocles baseline: record the exact app/build version,
+  current Psi/Iris/psimedia SHAs, both call directions, actual network path, negotiated
+  group/mux/profile, codec/PT, SSRC/MID/extension and feedback mappings. Store sanitized signaling
+  fixtures without secrets. Conversations remains optional secondary regression evidence.
 - Preserve audio-only and unbundled operation as well as negotiated BUNDLE. Do not force all
   calls into one session or require the peer to change its offer to match the internal refactor.
   The psimedia secure-session API must therefore support more than one simultaneous association
@@ -628,9 +633,9 @@ A missing peer leaves that row pending; it does not prevent independent implemen
 - With mixed audio/video, verify independent clock rates and sequence spaces, RTCP statistics,
   synchronization, and that removing/muting video leaves audio and shared crypto alive.
   Check feedback under controlled packet loss for each feature actually negotiated.
-- Require live Psi <-> Conversations tests in both call directions for audio and audio+video,
-  including BUNDLE where negotiated, direct ICE and TURN relay. Compare the captured baseline;
-  verify more than audible sound/visible video (ongoing RTCP and loss recovery where supported).
+- Keep live Psi <-> Monocles audio and audio+video working in both call directions. Direct ICE is
+  now user-verified; still record BUNDLE/association shape, ongoing RTCP/loss behavior and TURN
+  relay. Verify more than audible sound/visible video where the peer exposes enough evidence.
 - Add the external client and browser/library peer tests in the matrix above. Browsers/webrtcbin
   do not provide Jingle signaling themselves: use a test SDP/Jingle bridge or suitable XMPP
   peer and identify what is covered by media-only vs full Jingle tests.
@@ -707,6 +712,17 @@ listed scenario is already implemented or tested on the migration branches.
 These need their own implementation and evidence before being advertised; they must not be
 silently reported as delivered by the SRTP ownership change.
 
+- **Early DTLS/media on a valid ICE pair (RFC 8445):** the current race fix deliberately waits
+  for the existing ICE `canSendMedia()`/selected-pair boundary before starting Jingle DTLS, which
+  is correct but unnecessarily late. RFC 8445 Section 12.1 allows an ICE agent to send data on
+  any **valid** pair before selected pairs have been produced; once selected pairs exist, data
+  MUST use only those selected pairs. Introduce an explicit provisional-writable boundary that
+  is distinct from final nomination/selection. Start DTLS as soon as the relevant component has
+  a valid pair, never merely because a candidate pair exists or a check was scheduled; route
+  handshake/data over that valid pair and atomically switch egress to the selected pair when
+  nomination completes without restarting the authenticated DTLS/SRTP association. Cover both
+  DTLS roles, retransmitted flights, two unbundled A/V associations, BUNDLE, pair switching,
+  TURN/direct paths and the invariant that no DTLS datagram is emitted before a valid pair exists.
 - **Active-call ICE restart/migration:** keep the current pre-Connecting guard until a shared
   restart coordinator, transactional accept/reject/timeout/glare/rollback and cancellation
   are tested. Decide explicitly whether DTLS is retained or recreated; retained keys require
@@ -772,7 +788,7 @@ Development happens on matching `ai/jingle-srtp-psimedia` branches in all three 
    - audio+video;
    - BUNDLE audio+video;
    - transport teardown/new-call restart and supported pre-Connecting replacement;
-   - the mandatory Conversations baseline and external media-peer matrix described above.
+   - the confirmed Monocles baseline and external media-peer matrix described above.
    The automated Psi <-> Psi audio/A/V/BUNDLE and in-process new-call restart rows are green;
    pre-Connecting replacement is covered by Iris atomic BUNDLE/ICE regressions. Active-call ICE
    restart remains an explicit follow-up. Missing external peer/device access leaves only the
@@ -798,8 +814,8 @@ The migration is complete when:
 - shared BUNDLE RTCP is handled through group-level media ingress rather than intentionally
   dropped;
 - rekey/transport replacement cannot consume packets or keys from the previous security epoch;
-- all three repositories are green together and the user-verified Conversations audio path
-  remains working on the recorded migration build;
+- all three repositories are green together and the user-verified Monocles audio/A/V paths
+  remain working in both call directions on the recorded migration build;
 - the external native-Jingle client matrix for libwebrtc and webrtcbin has passed before claiming
   expanded audio/video interoperability; pending rows and follow-up features remain explicit.
 
@@ -808,6 +824,9 @@ The migration is complete when:
 Checked against the published texts during validation:
 
 - [XEP-0320](https://xmpp.org/extensions/xep-0320.html): Jingle fingerprints and DTLS setup.
+- [RFC 8445, Sections 2.3 and 12.1](https://www.rfc-editor.org/rfc/rfc8445.html): valid,
+  nominated and selected ICE pairs; data may use any valid pair before selection and must use
+  only selected pairs after selection.
 - [RFC 5764, sections 4–5](https://www.rfc-editor.org/rfc/rfc5764): profiles, exporter,
   key direction and SRTP/SRTCP processing.
 - [RFC 7714](https://www.rfc-editor.org/rfc/rfc7714.html): AEAD profile parameters.
