@@ -56,6 +56,9 @@ QString PsiMediaJingleCapabilities::unavailableReason() const
 namespace {
 namespace RTP = XMPP::Jingle::RTP;
 
+constexpr auto MidUri = "urn:ietf:params:rtp-hdrext:sdes:mid";
+constexpr quint16 DefaultMidExtensionId = 1;
+
 RTP::MediaError backendError(const QString &text) { return { RTP::MediaError::Code::Backend, text }; }
 
 RTP::MediaError unsupportedError(const QString &text) { return { RTP::MediaError::Code::Unsupported, text }; }
@@ -109,11 +112,54 @@ std::optional<QList<PsiMedia::PayloadInfo>> toPsiPayloads(const RTP::Description
     return result;
 }
 
+bool isSupportedMidExtension(const RTP::HeaderExtension &extension)
+{
+    return extension.id >= 1 && extension.id <= 255
+        && extension.uri == QLatin1String(MidUri)
+        && extension.senders == XMPP::Jingle::Origin::Both
+        && extension.parameters.isEmpty();
+}
+
+std::optional<RTP::HeaderExtension> midAnswerForOffer(const RTP::Description &offer)
+{
+    QSet<quint16> usedIds;
+    for (const auto &extension : offer.headerExtensions) {
+        if (extension.id >= 1 && extension.id <= 255)
+            usedIds.insert(extension.id);
+    }
+
+    for (const auto &extension : offer.headerExtensions) {
+        if (extension.uri != QLatin1String(MidUri)
+            || extension.senders != XMPP::Jingle::Origin::Both
+            || !extension.parameters.isEmpty())
+            continue;
+
+        if (extension.id >= 1 && extension.id <= 255)
+            return extension;
+
+        // RFC 8285 extended offer IDs are capability alternatives. Remap one
+        // to a free provider-supported wire ID in the answer.
+        if (extension.id >= 4096 && extension.id <= 4351) {
+            for (quint16 id = 1; id <= 255; ++id) {
+                if (usedIds.contains(id))
+                    continue;
+                auto answer = extension;
+                answer.id   = id;
+                return answer;
+            }
+        }
+    }
+    return {};
+}
+
 bool hasUnsupportedAnswerFeatures(const RTP::Description &answer)
 {
-    if (!answer.feedback.isEmpty() || answer.feedbackTrrInt || !answer.headerExtensions.isEmpty()
-        || answer.extmapAllowMixed || !answer.extensions.isEmpty())
+    if (!answer.feedback.isEmpty() || answer.feedbackTrrInt || answer.extmapAllowMixed || !answer.extensions.isEmpty())
         return true;
+    for (const auto &extension : answer.headerExtensions) {
+        if (!isSupportedMidExtension(extension))
+            return true;
+    }
     for (const auto &payload : answer.payloads) {
         if (!payload.feedback.isEmpty() || payload.feedbackTrrInt || !payload.extensions.isEmpty())
             return true;
@@ -680,7 +726,8 @@ private:
         return false;
     }
 
-    std::optional<RTP::Description> backendDescription(Endpoint *endpoint) const
+    std::optional<RTP::Description> backendDescription(Endpoint *endpoint,
+                                                        const RTP::Description *remoteOffer = nullptr) const
     {
         if (!endpoint || !endpoints_.contains(endpoint) || state_ != State::Running)
             return {};
@@ -689,6 +736,16 @@ private:
         RTP::Description result;
         result.media   = endpoint->media();
         result.rtcpMux = true;
+        if (remoteOffer) {
+            if (auto mid = midAnswerForOffer(*remoteOffer))
+                result.headerExtensions.append(*mid);
+        } else {
+            RTP::HeaderExtension mid;
+            mid.id      = DefaultMidExtensionId;
+            mid.uri     = QString::fromLatin1(MidUri);
+            mid.senders = XMPP::Jingle::Origin::Both;
+            result.headerExtensions.append(std::move(mid));
+        }
         for (const auto &payload : payloads) {
             auto converted = toRtpPayload(payload);
             if (!converted)
@@ -698,9 +755,10 @@ private:
         return result.payloads.isEmpty() ? std::nullopt : std::optional<RTP::Description>(std::move(result));
     }
 
-    std::optional<RTP::Description> preparedDescription(Endpoint *endpoint)
+    std::optional<RTP::Description> preparedDescription(Endpoint *endpoint,
+                                                         const RTP::Description *remoteOffer = nullptr)
     {
-        auto result = backendDescription(endpoint);
+        auto result = backendDescription(endpoint, remoteOffer);
         if (result)
             endpoint->setPrepared(*result);
         return result;
@@ -741,8 +799,11 @@ private:
                 completion(std::move(error));
         } else {
             std::optional<RTP::Description> description;
-            if (!error)
-                description = preparedDescription(operation.endpoint);
+            if (!error) {
+                const RTP::Description *remoteOffer
+                    = operation.kind == Kind::PrepareAnswer && operation.remote ? &*operation.remote : nullptr;
+                description = preparedDescription(operation.endpoint, remoteOffer);
+            }
             if (!error && !description)
                 error = unsupportedError(QStringLiteral("psimedia produced no usable RTP payloads"));
             auto completion = std::move(operation.prepareCompletion);
