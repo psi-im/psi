@@ -30,7 +30,7 @@ permissions:
 
 env:
   QCA_TAG: v3.0.8
-  IRIS_SRTP_REF: e4282fe24582780ac39543c508dcfdb94f00bcf2
+  IRIS_SRTP_REF: 719dee8c5d1dfb35fd8cec749e2f1ffdd494bdfe
   PSIMEDIA_SRTP_REF: ce8df212f6f738e58c3ffe961899400f2131f782
 
 concurrency:
