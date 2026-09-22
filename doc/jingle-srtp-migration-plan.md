@@ -727,12 +727,15 @@ silently reported as delivered by the SRTP ownership change.
      such as mbedTLS are also libSRTP backends;
    - do not introduce QCA-based libSRTP cipher hooks unless a future platform genuinely needs
      a crypto backend libSRTP cannot use directly.
-4. Verify Windows, Linux and macOS packaging for the desktop media stack. Android is an Iris-only
-   gate for this migration: Iris must keep its supported Android build green, while Psi and psimedia do
-   not require Android packaging/build coverage because Psi is desktop-only and psimedia currently has
-   no Android product consumer. Do not add Android CI to Psi/psimedia solely to satisfy this migration.
-   Remove the old Iris SRTP option from release documentation only after the relevant desktop packaging
-   gates and the Iris Android build are green.
+4. Verify Windows, Linux and macOS packaging for the desktop media stack. For Linux, psimedia must
+   produce installable Debian packages for Ubuntu 24.04 and Ubuntu 26.04, with the secure media plugin
+   and an explicit runtime dependency on libSRTP 2.x; CI must install each generated package into a clean
+   packaging fixture before the gate is considered closed. Android is an Iris-only gate for this migration:
+   Iris must keep its supported Android build green, while Psi and psimedia do not require Android
+   packaging/build coverage because Psi is desktop-only and psimedia currently has no Android product
+   consumer. Do not add Android CI to Psi/psimedia solely to satisfy this migration. Remove the old Iris
+   SRTP option from release documentation only after the relevant desktop packaging gates, both Ubuntu
+   psimedia packages, and the Iris Android build are green.
 
 ## Cross-repository execution order
 
