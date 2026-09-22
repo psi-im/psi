@@ -165,7 +165,7 @@ int main(int argc, char **argv)
     if (argc < 7 || argc > 8) {
         qCritical() << "Usage:" << argv[0]
                     << "<caller|callee> <jid/resource> <password> <peer/resource> <output.raw> <ready-file>"
-                       " [audio|av-bundle]";
+                       " [audio|av-bundle|av-bundle-repeat]";
         return 2;
     }
 
@@ -176,7 +176,9 @@ int main(int argc, char **argv)
     const QString outputPath = QString::fromLocal8Bit(argv[5]);
     const QString readyPath = QString::fromLocal8Bit(argv[6]);
     const QString mode = argc == 8 ? QString::fromLocal8Bit(argv[7]) : QStringLiteral("audio");
-    const bool avBundle = mode == QLatin1String("av-bundle");
+    const bool repeatBundle = mode == QLatin1String("av-bundle-repeat");
+    const bool avBundle = mode == QLatin1String("av-bundle") || repeatBundle;
+    const int targetCalls = repeatBundle ? 2 : 1;
 
     if ((role != QLatin1String("caller") && role != QLatin1String("callee"))
         || (mode != QLatin1String("audio") && !avBundle)
@@ -203,19 +205,36 @@ int main(int argc, char **argv)
     bool mediaWindowArmed = false;
     bool localMediaVerified = false;
     bool videoDecoded = false;
+    int completedCalls = 0;
     QPointer<J::Session> liveSession;
     QPointer<RTP::Application> audioApp;
     QPointer<RTP::Application> videoApp;
     std::unique_ptr<PsiMedia::VideoWidget> videoOutput;
-    if (avBundle) {
-        videoOutput = std::make_unique<PsiMedia::VideoWidget>();
-        QObject::connect(videoOutput.get(), &PsiMedia::VideoWidget::videoSizeChanged, &app, [&]() {
-            videoDecoded = true;
-            qInfo().noquote() << QStringLiteral("CALL_VIDEO_SIZE=%1x%2")
-                                     .arg(videoOutput->sizeHint().width())
-                                     .arg(videoOutput->sizeHint().height());
-        });
-    }
+
+    auto prepareIteration = [&]() {
+        QFile::remove(outputPath);
+        sessionActive = false;
+        audioActive = false;
+        videoActive = false;
+        mediaStarted = false;
+        mediaWindowArmed = false;
+        localMediaVerified = false;
+        videoDecoded = false;
+        audioApp = nullptr;
+        videoApp = nullptr;
+        videoOutput.reset();
+        if (avBundle) {
+            videoOutput = std::make_unique<PsiMedia::VideoWidget>();
+            QObject::connect(videoOutput.get(), &PsiMedia::VideoWidget::videoSizeChanged, &app, [&]() {
+                videoDecoded = true;
+                qInfo().noquote() << QStringLiteral("CALL_VIDEO_SIZE=%1x%2")
+                                         .arg(videoOutput->sizeHint().width())
+                                         .arg(videoOutput->sizeHint().height());
+            });
+        }
+        qInfo().noquote()
+            << QStringLiteral("CALL_ITERATION_ARMED=%1/%2").arg(completedCalls + 1).arg(targetCalls);
+    };
 
     auto outputHasMedia = [&]() {
         QFileInfo fi(outputPath);
@@ -224,6 +243,7 @@ int main(int argc, char **argv)
 
     std::function<void()> armMediaWindow;
     std::function<void()> maybeStartMedia;
+    std::function<void()> startOutgoingCall;
 
     auto descriptionHasMid = [](const std::optional<RTP::Description> &description) {
         if (!description)
@@ -321,7 +341,7 @@ int main(int argc, char **argv)
         armMediaWindow();
     };
 
-    QTimer::singleShot(45000, &app, [&]() {
+    QTimer::singleShot(repeatBundle ? 90000 : 45000, &app, [&]() {
         if (!finishing)
             finish(124, QStringLiteral("timeout"));
     });
