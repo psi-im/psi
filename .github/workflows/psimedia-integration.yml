@@ -31,7 +31,7 @@ permissions:
 env:
   QCA_TAG: v3.0.8
   IRIS_SRTP_REF: 6bcd64a9a36b1f4ed64e5c7a775c26974e8419d0
-  PSIMEDIA_SRTP_REF: de2e69db0bf1b510342fadfb4e92e5314a895b67
+  PSIMEDIA_SRTP_REF: fb6f58131a2bc9c3ccba918b95314c74688875b6
 
 concurrency:
   group: psimedia-integration-${{ github.workflow }}-${{ github.ref }}
@@ -1223,8 +1223,8 @@ jobs:
           test "$callee_rc" -eq 0
           grep -Fx "CALL_MEDIA_STARTED=1" "$caller_log"
           grep -Fx "CALL_MEDIA_STARTED=1" "$callee_log"
-          grep -F "CALL_NEGOTIATED local_payloads=" "$caller_log"
-          grep -F "CALL_NEGOTIATED local_payloads=" "$callee_log"
+          grep -F "CALL_NEGOTIATED media=audio local_payloads=" "$caller_log"
+          grep -F "CALL_NEGOTIATED media=audio local_payloads=" "$callee_log"
           grep -F "CALL_DECODED_BYTES=" "$caller_log"
           grep -F "CALL_DECODED_BYTES=" "$callee_log"
           grep -Fx "LIVE_CALL_RESULT=success caller completed" "$caller_log"
@@ -1234,6 +1234,80 @@ jobs:
           test "$(stat -c %s "$caller_out")" -ge 4096
           test "$(stat -c %s "$callee_out")" -ge 4096
           echo "LIVE_CALL_PCM_BYTES caller=$(stat -c %s "$caller_out") callee=$(stat -c %s "$callee_out")"
+
+      - name: Place bidirectional headless A/V BUNDLE call through Prosody
+        shell: bash
+        env:
+          QT_QPA_PLATFORM: offscreen
+          G_DEBUG: fatal-criticals
+          ASAN_OPTIONS: detect_leaks=0:abort_on_error=1
+        run: |
+          set -euo pipefail
+          bin="$GITHUB_WORKSPACE/_jingle-call-build/psi_jingle_call_live_client"
+          ready="$RUNNER_TEMP/jingle-av-bundle.ready"
+          caller_out="$RUNNER_TEMP/jingle-av-bundle-caller.raw"
+          callee_out="$RUNNER_TEMP/jingle-av-bundle-callee.raw"
+          caller_log="$RUNNER_TEMP/jingle-av-bundle-caller.log"
+          callee_log="$RUNNER_TEMP/jingle-av-bundle-callee.log"
+          caller_jid="user01@localhost/av-bundle-caller"
+          callee_requested="user02@localhost/av-bundle-callee"
+
+          rm -f "$ready" "$caller_out" "$callee_out" "$caller_log" "$callee_log"
+
+          "$bin" callee "$callee_requested" ci-pass-02 "$caller_jid" \
+            "$callee_out" "$ready" av-bundle >"$callee_log" 2>&1 &
+          callee_pid=$!
+
+          for i in $(seq 1 200); do
+            if [[ -s "$ready" ]]; then break; fi
+            if ! kill -0 "$callee_pid" 2>/dev/null; then
+              cat "$callee_log"
+              exit 1
+            fi
+            sleep 0.1
+          done
+          test -s "$ready"
+          callee_jid="$(tr -d '\r\n' < "$ready")"
+
+          set +e
+          "$bin" caller "$caller_jid" ci-pass-01 "$callee_jid" \
+            "$caller_out" '' av-bundle >"$caller_log" 2>&1
+          caller_rc=$?
+          if [[ "$caller_rc" -ne 0 ]]; then
+            kill "$callee_pid" 2>/dev/null || true
+          fi
+          wait "$callee_pid"
+          callee_rc=$?
+          set -e
+
+          echo "LIVE_AV_BUNDLE_PROCESS_RC caller=$caller_rc callee=$callee_rc"
+          echo "--- A/V BUNDLE caller log ---"
+          cat "$caller_log"
+          echo "--- A/V BUNDLE callee log ---"
+          cat "$callee_log"
+
+          test "$caller_rc" -eq 0
+          test "$callee_rc" -eq 0
+          grep -Fx "CALL_MEDIA_STARTED=1" "$caller_log"
+          grep -Fx "CALL_MEDIA_STARTED=1" "$callee_log"
+          grep -F "CALL_NEGOTIATED media=audio local_payloads=" "$caller_log"
+          grep -F "CALL_NEGOTIATED media=audio local_payloads=" "$callee_log"
+          grep -F "CALL_NEGOTIATED media=video local_payloads=" "$caller_log"
+          grep -F "CALL_NEGOTIATED media=video local_payloads=" "$callee_log"
+          grep -Fx "CALL_VIDEO_DECODED=1" "$caller_log"
+          grep -Fx "CALL_VIDEO_DECODED=1" "$callee_log"
+          grep -Fx "CALL_MID_NEGOTIATED=1" "$caller_log"
+          grep -Fx "CALL_MID_NEGOTIATED=1" "$callee_log"
+          grep -Fx "CALL_BUNDLE_NEGOTIATED=1" "$caller_log"
+          grep -Fx "CALL_BUNDLE_NEGOTIATED=1" "$callee_log"
+          grep -F "urn:ietf:params:rtp-hdrext:sdes:mid" "$caller_log"
+          grep -F "urn:ietf:params:rtp-hdrext:sdes:mid" "$callee_log"
+          grep -F "semantics=\"BUNDLE\"" "$caller_log"
+          grep -F "semantics=\"BUNDLE\"" "$callee_log"
+          grep -Fx "LIVE_CALL_RESULT=success caller completed" "$caller_log"
+          grep -Fx "LIVE_CALL_RESULT=success callee completed" "$callee_log"
+          test "$(stat -c %s "$caller_out")" -ge 4096
+          test "$(stat -c %s "$callee_out")" -ge 4096
 
       - name: Show Prosody call log
         if: always()
