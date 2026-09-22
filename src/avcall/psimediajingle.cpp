@@ -57,7 +57,37 @@ namespace {
 namespace RTP = XMPP::Jingle::RTP;
 
 constexpr auto MidUri = "urn:ietf:params:rtp-hdrext:sdes:mid";
+constexpr auto RtcpFbNackPliParameter = "rtcp-fb-nack-pli";
 constexpr quint16 DefaultMidExtensionId = 1;
+
+bool isPliFeedback(const RTP::Feedback &feedback)
+{
+    return feedback.type.compare(QLatin1String("nack"), Qt::CaseInsensitive) == 0
+        && feedback.subtype.compare(QLatin1String("pli"), Qt::CaseInsensitive) == 0
+        && feedback.parameters.isEmpty();
+}
+
+bool feedbackListIsPliOnly(const QList<RTP::Feedback> &feedback)
+{
+    return std::all_of(feedback.cbegin(), feedback.cend(), isPliFeedback);
+}
+
+bool descriptionOffersPli(const RTP::Description &description, const RTP::PayloadType &payload)
+{
+    if (description.media != QLatin1String("video")
+        || payload.name.compare(QLatin1String("VP8"), Qt::CaseInsensitive) != 0)
+        return false;
+    return std::any_of(description.feedback.cbegin(), description.feedback.cend(), isPliFeedback)
+        || std::any_of(payload.feedback.cbegin(), payload.feedback.cend(), isPliFeedback);
+}
+
+RTP::Feedback pliFeedback()
+{
+    RTP::Feedback feedback;
+    feedback.type    = QStringLiteral("nack");
+    feedback.subtype = QStringLiteral("pli");
+    return feedback;
+}
 
 RTP::MediaError backendError(const QString &text) { return { RTP::MediaError::Code::Backend, text }; }
 
@@ -102,6 +132,12 @@ std::optional<QList<PsiMedia::PayloadInfo>> toPsiPayloads(const RTP::Description
             PsiMedia::PayloadInfo::Parameter parameter;
             parameter.name  = it.key();
             parameter.value = it.value();
+            parameters.append(parameter);
+        }
+        if (descriptionOffersPli(description, payload)) {
+            PsiMedia::PayloadInfo::Parameter parameter;
+            parameter.name  = QString::fromLatin1(RtcpFbNackPliParameter);
+            parameter.value = QStringLiteral("true");
             parameters.append(parameter);
         }
         out.setParameters(parameters);
@@ -154,14 +190,22 @@ std::optional<RTP::HeaderExtension> midAnswerForOffer(const RTP::Description &of
 
 bool hasUnsupportedAnswerFeatures(const RTP::Description &answer)
 {
-    if (!answer.feedback.isEmpty() || answer.feedbackTrrInt || answer.extmapAllowMixed || !answer.extensions.isEmpty())
+    if (answer.feedbackTrrInt || answer.extmapAllowMixed || !answer.extensions.isEmpty())
+        return true;
+    if (!answer.feedback.isEmpty()
+        && (answer.media != QLatin1String("video") || !feedbackListIsPliOnly(answer.feedback)))
         return true;
     for (const auto &extension : answer.headerExtensions) {
         if (!isSupportedMidExtension(extension))
             return true;
     }
     for (const auto &payload : answer.payloads) {
-        if (!payload.feedback.isEmpty() || payload.feedbackTrrInt || !payload.extensions.isEmpty())
+        if (payload.feedbackTrrInt || !payload.extensions.isEmpty())
+            return true;
+        if (!payload.feedback.isEmpty()
+            && (answer.media != QLatin1String("video")
+                || payload.name.compare(QLatin1String("VP8"), Qt::CaseInsensitive) != 0
+                || !feedbackListIsPliOnly(payload.feedback)))
             return true;
     }
     return false;
@@ -750,6 +794,18 @@ private:
             auto converted = toRtpPayload(payload);
             if (!converted)
                 return {};
+            if (result.media == QLatin1String("video")
+                && converted->name.compare(QLatin1String("VP8"), Qt::CaseInsensitive) == 0) {
+                bool enablePli = !remoteOffer;
+                if (remoteOffer) {
+                    const auto offered = std::find_if(
+                        remoteOffer->payloads.cbegin(), remoteOffer->payloads.cend(),
+                        [&](const auto &candidate) { return candidate.id == converted->id; });
+                    enablePli = offered != remoteOffer->payloads.cend() && descriptionOffersPli(*remoteOffer, *offered);
+                }
+                if (enablePli)
+                    converted->feedback.append(pliFeedback());
+            }
             result.payloads.append(*converted);
         }
         return result.payloads.isEmpty() ? std::nullopt : std::optional<RTP::Description>(std::move(result));
