@@ -697,7 +697,9 @@ AvCallManagerPrivate::AvCallManagerPrivate(PsiAccount *account, AvCallManager *q
     // native call manager exists; RTP::Manager and the handlers below validate
     // concrete media/transport capability separately.
     jingleManager->setMessageInitiationEnabled(true);
-    // NSTransportsList treats the last namespace as the highest priority.\n    // Prefer RFC 8445/XEP-0371 for Psi peers while keeping XEP-0176 as fallback.\n    rtpManager->setTransportNamespaces({ ICE::NS_ICE_UDP, ICE::NS });
+    // NSTransportsList treats the last namespace as the highest priority.
+    // Prefer RFC 8445/XEP-0371 for Psi peers while keeping XEP-0176 as fallback.
+    rtpManager->setTransportNamespaces({ ICE::NS_ICE_UDP, ICE::NS });
 
     auto watcher = MediaDeviceWatcher::instance();
     // PsiAccount used to listen to the watcher independently. That made caps
