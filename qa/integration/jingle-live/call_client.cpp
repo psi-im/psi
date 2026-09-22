@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <utility>
 
 using namespace XMPP;
@@ -373,6 +374,17 @@ int main(int argc, char **argv)
             if (!localMediaVerified) {
                 finish(32, QStringLiteral("no decoded remote audio reached output sink"));
                 return;
+            }
+            if (avBundle) {
+                const bool midOk = midNegotiated();
+                const bool bundleOk = bundleNegotiated();
+                qInfo().noquote() << QStringLiteral("CALL_VIDEO_DECODED=%1").arg(videoDecoded ? 1 : 0);
+                qInfo().noquote() << QStringLiteral("CALL_MID_NEGOTIATED=%1").arg(midOk ? 1 : 0);
+                qInfo().noquote() << QStringLiteral("CALL_BUNDLE_NEGOTIATED=%1").arg(bundleOk ? 1 : 0);
+                if (!videoDecoded || !midOk || !bundleOk) {
+                    finish(34, QStringLiteral("terminated A/V call missed video/MID/BUNDLE evidence"));
+                    return;
+                }
             }
             finish(0, role == QLatin1String("caller")
                           ? QStringLiteral("caller completed")
