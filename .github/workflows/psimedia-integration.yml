@@ -813,7 +813,1165 @@ jobs:
           G_DEBUG: fatal-criticals
         run: |
           ctest --test-dir _psimedia-smoke-build \
-            -R '^(psimedia_(provider_smoke|plugin_load_smoke|opusrtppay|rtpworker_receive_order|videoprep|rtpsessioncontext_sender|rtpsessionbridge|rtpsessionbridge_packets|rtpsessionbridge_periodic|rtpsessionbridge_backpressure)|psi_(backend_lifecycle_test|native_media_(adapter|runtime_error)_smoke)) \
+            -R '^(psimedia_(provider_smoke|plugin_load_smoke|opusrtppay|rtpworker_receive_order|videoprep|rtpsessioncontext_sender|rtpsessionbridge|rtpsessionbridge_packets|rtpsessionbridge_periodic|rtpsessionbridge_backpressure)|psi_(backend_lifecycle_test|native_media_(adapter|runtime_error)_smoke))
+            --no-tests=error \
+            --output-on-failure \
+            -V \
+            -j1
+
+      - name: Show compiler cache stats
+        if: always()
+        run: ccache --show-stats
+
+  xmpp-prosody-ft:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout Psi
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Checkout matching Iris SRTP branch
+        uses: actions/checkout@v4
+        with:
+          repository: psi-im/iris
+          ref: ${{ env.IRIS_SRTP_REF }}
+          path: iris
+          fetch-depth: 1
+
+      - name: Install XMPP live-test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            g++ \
+            ninja-build \
+            pkg-config \
+            qt6-base-dev \
+            libssl-dev \
+            libusrsctp-dev \
+            zlib1g-dev \
+            prosody
+          sudo systemctl stop prosody.service 2>/dev/null || true
+          sudo service prosody stop 2>/dev/null || true
+
+      - name: Install QCA3 release package
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          rm -rf qca-release qca3.zip
+          mkdir qca-release
+          gh release download "$QCA_TAG" --repo psi-im/qca \
+            -p 'qca3-deb-ubuntu-24.04.zip' -O qca3.zip
+          (cd qca-release && cmake -E tar xvf ../qca3.zip)
+          test -n "$(find qca-release -type f -name '*.deb' -print -quit)"
+          sudo apt-get install -y ./qca-release/*.deb
+
+      - name: Build SCTP-enabled Jingle FT client
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S qa/integration/jingle-live -B _jingle-live-build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DPSI_SOURCE_DIR="$GITHUB_WORKSPACE" \
+            -DJINGLE_LIVE_ENABLE_FT=ON
+          cmake --build _jingle-live-build --target psi_jingle_ft_live_client --parallel 4
+
+      - name: Start local Prosody
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PROSODY_DATA_DIR="$RUNNER_TEMP/prosody-data"
+          export PROSODY_PID_FILE="$RUNNER_TEMP/prosody.pid"
+          mkdir -p "$PROSODY_DATA_DIR"
+          cfg="$GITHUB_WORKSPACE/qa/integration/jingle-live/prosody.cfg.lua"
+          mkdir -p "$(dirname "$cfg")/certs"
+          prosodyctl --config "$cfg" check config
+          prosodyctl --config "$cfg" register user01 localhost ci-pass-01
+          prosodyctl --config "$cfg" register user02 localhost ci-pass-02
+          prosody -F --config "$cfg" >"$RUNNER_TEMP/prosody-live.log" 2>&1 &
+          echo $! >"$RUNNER_TEMP/prosody-live.pid"
+          for i in $(seq 1 100); do
+            if (echo > /dev/tcp/127.0.0.1/5222) 2>/dev/null; then
+              exit 0
+            fi
+            if ! kill -0 "$(cat "$RUNNER_TEMP/prosody-live.pid")" 2>/dev/null; then
+              cat "$RUNNER_TEMP/prosody-live.log"
+              exit 1
+            fi
+            sleep 0.1
+          done
+          cat "$RUNNER_TEMP/prosody-live.log"
+          exit 1
+
+      - name: Transfer deterministic file through Prosody transport matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          input="$RUNNER_TEMP/jingle-ft-input.bin"
+          bin="$GITHUB_WORKSPACE/_jingle-live-build/psi_jingle_ft_live_client"
+          python3 - "$input" <<'PY'
+          import sys
+          path = sys.argv[1]
+          data = bytes(((i * 37 + 11) & 0xff) for i in range(256 * 1024))
+          with open(path, 'wb') as f:
+              f.write(data)
+          PY
+
+          run_case() {
+            local case_name="$1"
+            local profile="$2"
+            local expected_initial="$3"
+            local expected_active="$4"
+            local expect_replace="$5"
+            local output="$RUNNER_TEMP/jingle-ft-${case_name}.bin"
+            local ready="$RUNNER_TEMP/jingle-ft-${case_name}.ready"
+            local receiver_log="$RUNNER_TEMP/jingle-ft-${case_name}-receiver.log"
+            local sender_log="$RUNNER_TEMP/jingle-ft-${case_name}-sender.log"
+            local sender_jid="user01@localhost/ft-sender-${case_name}"
+            local receiver_jid_requested="user02@localhost/ft-receiver-${case_name}"
+
+            rm -f "$output" "$ready" "$receiver_log" "$sender_log"
+
+            "$bin" receiver "$receiver_jid_requested" ci-pass-02               "$sender_jid" "$output" "$ready" "$profile" >"$receiver_log" 2>&1 &
+            local receiver_pid=$!
+
+            for i in $(seq 1 200); do
+              if [[ -s "$ready" ]]; then
+                break
+              fi
+              if ! kill -0 "$receiver_pid" 2>/dev/null; then
+                cat "$receiver_log"
+                return 1
+              fi
+              sleep 0.1
+            done
+            test -s "$ready"
+            local receiver_jid
+            receiver_jid="$(tr -d '\r\n' < "$ready")"
+
+            set +e
+            "$bin" sender "$sender_jid" ci-pass-01               "$receiver_jid" "$input" '' "$profile" >"$sender_log" 2>&1
+            local sender_rc=$?
+            if [[ "$sender_rc" -ne 0 ]]; then
+              kill "$receiver_pid" 2>/dev/null || true
+            fi
+            wait "$receiver_pid"
+            local receiver_rc=$?
+            set -e
+
+            echo "LIVE_FT_PROCESS_RC case=${case_name} sender=${sender_rc} receiver=${receiver_rc}"
+            echo "--- ${case_name}: sender log ---"
+            cat "$sender_log"
+            echo "--- ${case_name}: receiver log ---"
+            cat "$receiver_log"
+
+            test "$sender_rc" -eq 0
+            test "$receiver_rc" -eq 0
+            grep -Fx "FT_PROFILE=$profile" "$sender_log"
+            grep -Fx "FT_INITIAL_TRANSPORT=$expected_initial" "$sender_log"
+            grep -Fx "FT_ACTIVE_TRANSPORT=$expected_active" "$sender_log"
+            grep -Fx "FT_SENDER_DRAIN=finishing" "$sender_log"
+            grep -Fx "FT_RECEIVER_DRAIN=finishing" "$receiver_log"
+            grep -Fx "LIVE_FT_RESULT=success sender completed" "$sender_log"
+            grep -Fx "LIVE_FT_RESULT=success receiver completed" "$receiver_log"
+
+            if [[ "$expect_replace" == yes ]]; then
+              grep -Fx "FT_REPLACE_FROM=$expected_initial" "$sender_log"
+              grep -Fx "FT_REPLACE_SELECTED=$expected_active" "$sender_log"
+              grep -Eq 'action="transport-replace"|action=.transport-replace.' "$sender_log"
+              grep -Eq 'action="transport-replace"|action=.transport-replace.' "$receiver_log"
+            else
+              if grep -Eq 'action="transport-replace"|action=.transport-replace.' "$sender_log"; then
+                echo "unexpected transport-replace in $case_name" >&2
+                return 1
+              fi
+            fi
+
+            cmp "$input" "$output"
+            sha256sum "$input" "$output"
+          }
+
+          run_case ice ice             'urn:xmpp:jingle:transports:ice:0'             'urn:xmpp:jingle:transports:ice:0' no
+          run_case s5b s5b             'urn:xmpp:jingle:transports:s5b:1'             'urn:xmpp:jingle:transports:s5b:1' no
+          run_case ibb ibb             'urn:xmpp:jingle:transports:ibb:1'             'urn:xmpp:jingle:transports:ibb:1' no
+          run_case ice-to-s5b ice-s5b-replace             'urn:xmpp:jingle:transports:ice:0'             'urn:xmpp:jingle:transports:s5b:1' yes
+          run_case s5b-to-ibb s5b-ibb-replace             'urn:xmpp:jingle:transports:s5b:1'             'urn:xmpp:jingle:transports:ibb:1' yes
+
+          run_truncated_source_case() {
+            local case_name="ice-truncated-source"
+            local profile="ice"
+            local bad_input="$RUNNER_TEMP/jingle-ft-truncated-input.bin"
+            local output="$RUNNER_TEMP/jingle-ft-${case_name}.bin"
+            local ready="$RUNNER_TEMP/jingle-ft-${case_name}.ready"
+            local receiver_log="$RUNNER_TEMP/jingle-ft-${case_name}-receiver.log"
+            local sender_log="$RUNNER_TEMP/jingle-ft-${case_name}-sender.log"
+            local sender_jid="user01@localhost/ft-sender-${case_name}"
+            local receiver_jid_requested="user02@localhost/ft-receiver-${case_name}"
+
+            cp "$input" "$bad_input"
+            rm -f "$output" "$ready" "$receiver_log" "$sender_log"
+
+            "$bin" receiver "$receiver_jid_requested" ci-pass-02 \
+              "$sender_jid" "$output" "$ready" "$profile" >"$receiver_log" 2>&1 &
+            local receiver_pid=$!
+
+            for i in $(seq 1 200); do
+              if [[ -s "$ready" ]]; then
+                break
+              fi
+              if ! kill -0 "$receiver_pid" 2>/dev/null; then
+                cat "$receiver_log"
+                return 1
+              fi
+              sleep 0.1
+            done
+            test -s "$ready"
+            local receiver_jid
+            receiver_jid="$(tr -d '\r\n' < "$ready")"
+
+            set +e
+            PSI_JINGLE_FT_TEST_TRUNCATE_SOURCE=1 \
+              "$bin" sender "$sender_jid" ci-pass-01 \
+              "$receiver_jid" "$bad_input" '' "$profile" >"$sender_log" 2>&1
+            local sender_rc=$?
+            wait "$receiver_pid"
+            local receiver_rc=$?
+            set -e
+
+            echo "LIVE_FT_PROCESS_RC case=${case_name} sender=${sender_rc} receiver=${receiver_rc}"
+            echo "--- ${case_name}: sender log ---"
+            cat "$sender_log"
+            echo "--- ${case_name}: receiver log ---"
+            cat "$receiver_log"
+
+            test "$sender_rc" -ne 0
+            test "$receiver_rc" -ne 0
+            test "$sender_rc" -ne 124
+            test "$receiver_rc" -ne 124
+            grep -F "FT_TEST_SOURCE_TRUNCATED" "$sender_log"
+            grep -F "LIVE_FT_RESULT=failure" "$sender_log"
+            grep -F "LIVE_FT_RESULT=failure" "$receiver_log"
+            grep -E 'action="content-remove"|action=.content-remove.' "$sender_log"
+            grep -E 'action="content-remove"|action=.content-remove.' "$receiver_log"
+            grep -F "failed-application" "$sender_log"
+            grep -F "failed-application" "$receiver_log"
+
+            if grep -Fq "LIVE_FT_RESULT=success" "$sender_log" || grep -Fq "LIVE_FT_RESULT=success" "$receiver_log"; then
+              echo "truncated source was reported as successful" >&2
+              return 1
+            fi
+          }
+
+          run_truncated_source_case
+
+      - name: Show Prosody log
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f "$RUNNER_TEMP/prosody-live.pid" ]]; then
+            kill "$(cat "$RUNNER_TEMP/prosody-live.pid")" 2>/dev/null || true
+          fi
+          if [[ -f "$RUNNER_TEMP/prosody-live.log" ]]; then
+            tail -n 250 "$RUNNER_TEMP/prosody-live.log"
+          fi
+
+
+  xmpp-prosody-call:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout Psi
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Checkout matching Iris SRTP branch
+        uses: actions/checkout@v4
+        with:
+          repository: psi-im/iris
+          ref: ${{ env.IRIS_SRTP_REF }}
+          path: iris
+          fetch-depth: 1
+
+      - name: Checkout matching psimedia SRTP branch
+        uses: actions/checkout@v4
+        with:
+          repository: psi-im/psimedia
+          ref: ${{ env.PSIMEDIA_SRTP_REF }}
+          path: _psimedia
+          fetch-depth: 1
+
+      - name: Install audio-call live-test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake g++ ninja-build pkg-config qt6-base-dev \
+            libssl-dev libsrtp2-dev libusrsctp-dev zlib1g-dev \
+            libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
+            libgstreamer-plugins-bad1.0-dev \
+            gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
+            gstreamer1.0-plugins-bad gstreamer1.0-tools prosody
+          sudo systemctl stop prosody.service 2>/dev/null || true
+          sudo service prosody stop 2>/dev/null || true
+
+      - name: Install QCA3 release package
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          rm -rf qca-release qca3.zip
+          mkdir qca-release
+          gh release download "$QCA_TAG" --repo psi-im/qca \
+            -p 'qca3-deb-ubuntu-24.04.zip' -O qca3.zip
+          (cd qca-release && cmake -E tar xvf ../qca3.zip)
+          test -n "$(find qca-release -type f -name '*.deb' -print -quit)"
+          sudo apt-get install -y ./qca-release/*.deb
+
+      - name: Build real psimedia Jingle audio-call client
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S qa/integration/jingle-live -B _jingle-call-build -G Ninja \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_CXX_FLAGS="-fsanitize=address -fno-omit-frame-pointer" \
+            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address" \
+            -DPSI_SOURCE_DIR="$GITHUB_WORKSPACE" \
+            -DPSIMEDIA_SOURCE_DIR="$GITHUB_WORKSPACE/_psimedia"
+          cmake --build _jingle-call-build --target psi_jingle_call_live_client --parallel 4
+
+      - name: Start local Prosody
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PROSODY_DATA_DIR="$RUNNER_TEMP/prosody-data"
+          export PROSODY_PID_FILE="$RUNNER_TEMP/prosody.pid"
+          mkdir -p "$PROSODY_DATA_DIR"
+          cfg="$GITHUB_WORKSPACE/qa/integration/jingle-live/prosody.cfg.lua"
+          mkdir -p "$(dirname "$cfg")/certs"
+          prosodyctl --config "$cfg" check config
+          prosodyctl --config "$cfg" register user01 localhost ci-pass-01
+          prosodyctl --config "$cfg" register user02 localhost ci-pass-02
+          prosody -F --config "$cfg" >"$RUNNER_TEMP/prosody-call.log" 2>&1 &
+          echo $! >"$RUNNER_TEMP/prosody-call.pid"
+          for i in $(seq 1 100); do
+            if (echo > /dev/tcp/127.0.0.1/5222) 2>/dev/null; then
+              exit 0
+            fi
+            if ! kill -0 "$(cat "$RUNNER_TEMP/prosody-call.pid")" 2>/dev/null; then
+              cat "$RUNNER_TEMP/prosody-call.log"
+              exit 1
+            fi
+            sleep 0.1
+          done
+          cat "$RUNNER_TEMP/prosody-call.log"
+          exit 1
+
+      - name: Place bidirectional headless audio call through Prosody
+        shell: bash
+        env:
+          QT_QPA_PLATFORM: offscreen
+          G_DEBUG: fatal-criticals
+          ASAN_OPTIONS: detect_leaks=0:abort_on_error=1
+        run: |
+          set -euo pipefail
+          bin="$GITHUB_WORKSPACE/_jingle-call-build/psi_jingle_call_live_client"
+          ready="$RUNNER_TEMP/jingle-call.ready"
+          caller_out="$RUNNER_TEMP/jingle-call-caller.raw"
+          callee_out="$RUNNER_TEMP/jingle-call-callee.raw"
+          caller_log="$RUNNER_TEMP/jingle-call-caller.log"
+          callee_log="$RUNNER_TEMP/jingle-call-callee.log"
+          caller_jid="user01@localhost/call-caller"
+          callee_requested="user02@localhost/call-callee"
+
+          rm -f "$ready" "$caller_out" "$callee_out" "$caller_log" "$callee_log"
+
+          "$bin" callee "$callee_requested" ci-pass-02 "$caller_jid" \
+            "$callee_out" "$ready" >"$callee_log" 2>&1 &
+          callee_pid=$!
+
+          for i in $(seq 1 200); do
+            if [[ -s "$ready" ]]; then break; fi
+            if ! kill -0 "$callee_pid" 2>/dev/null; then
+              cat "$callee_log"
+              exit 1
+            fi
+            sleep 0.1
+          done
+          test -s "$ready"
+          callee_jid="$(tr -d '\r\n' < "$ready")"
+
+          set +e
+          "$bin" caller "$caller_jid" ci-pass-01 "$callee_jid" \
+            "$caller_out" '' >"$caller_log" 2>&1
+          caller_rc=$?
+          if [[ "$caller_rc" -ne 0 ]]; then
+            kill "$callee_pid" 2>/dev/null || true
+          fi
+          wait "$callee_pid"
+          callee_rc=$?
+          set -e
+
+          echo "LIVE_CALL_PROCESS_RC caller=$caller_rc callee=$callee_rc"
+          echo "--- caller log ---"
+          cat "$caller_log"
+          echo "--- callee log ---"
+          cat "$callee_log"
+
+          test "$caller_rc" -eq 0
+          test "$callee_rc" -eq 0
+          grep -Fx "CALL_MEDIA_STARTED=1" "$caller_log"
+          grep -Fx "CALL_MEDIA_STARTED=1" "$callee_log"
+          grep -F "CALL_NEGOTIATED media=audio local_payloads=" "$caller_log"
+          grep -F "CALL_NEGOTIATED media=audio local_payloads=" "$callee_log"
+          grep -F "CALL_DECODED_BYTES=" "$caller_log"
+          grep -F "CALL_DECODED_BYTES=" "$callee_log"
+          grep -Fx "LIVE_CALL_RESULT=success caller completed" "$caller_log"
+          grep -Fx "LIVE_CALL_RESULT=success callee completed" "$callee_log"
+          grep -Eq 'action="session-initiate"|action=.session-initiate.' "$caller_log"
+          grep -Eq 'action="session-accept"|action=.session-accept.' "$callee_log"
+          test "$(stat -c %s "$caller_out")" -ge 4096
+          test "$(stat -c %s "$callee_out")" -ge 4096
+          echo "LIVE_CALL_PCM_BYTES caller=$(stat -c %s "$caller_out") callee=$(stat -c %s "$callee_out")"
+
+      - name: Place bidirectional headless A/V BUNDLE call through Prosody
+        shell: bash
+        env:
+          QT_QPA_PLATFORM: offscreen
+          G_DEBUG: fatal-criticals
+          ASAN_OPTIONS: detect_leaks=0:abort_on_error=1
+        run: |
+          set -euo pipefail
+          bin="$GITHUB_WORKSPACE/_jingle-call-build/psi_jingle_call_live_client"
+          ready="$RUNNER_TEMP/jingle-av-bundle.ready"
+          caller_out="$RUNNER_TEMP/jingle-av-bundle-caller.raw"
+          callee_out="$RUNNER_TEMP/jingle-av-bundle-callee.raw"
+          caller_log="$RUNNER_TEMP/jingle-av-bundle-caller.log"
+          callee_log="$RUNNER_TEMP/jingle-av-bundle-callee.log"
+          caller_jid="user01@localhost/av-bundle-caller"
+          callee_requested="user02@localhost/av-bundle-callee"
+
+          rm -f "$ready" "$caller_out" "$callee_out" "$caller_log" "$callee_log"
+
+          "$bin" callee "$callee_requested" ci-pass-02 "$caller_jid" \
+            "$callee_out" "$ready" av-bundle >"$callee_log" 2>&1 &
+          callee_pid=$!
+
+          for i in $(seq 1 200); do
+            if [[ -s "$ready" ]]; then break; fi
+            if ! kill -0 "$callee_pid" 2>/dev/null; then
+              cat "$callee_log"
+              exit 1
+            fi
+            sleep 0.1
+          done
+          test -s "$ready"
+          callee_jid="$(tr -d '\r\n' < "$ready")"
+
+          set +e
+          "$bin" caller "$caller_jid" ci-pass-01 "$callee_jid" \
+            "$caller_out" '' av-bundle >"$caller_log" 2>&1
+          caller_rc=$?
+          if [[ "$caller_rc" -ne 0 ]]; then
+            kill "$callee_pid" 2>/dev/null || true
+          fi
+          wait "$callee_pid"
+          callee_rc=$?
+          set -e
+
+          echo "LIVE_AV_BUNDLE_PROCESS_RC caller=$caller_rc callee=$callee_rc"
+          echo "--- A/V BUNDLE caller log ---"
+          cat "$caller_log"
+          echo "--- A/V BUNDLE callee log ---"
+          cat "$callee_log"
+
+          test "$caller_rc" -eq 0
+          test "$callee_rc" -eq 0
+          grep -Fx "CALL_MEDIA_STARTED=1" "$caller_log"
+          grep -Fx "CALL_MEDIA_STARTED=1" "$callee_log"
+          grep -F "CALL_NEGOTIATED media=audio local_payloads=" "$caller_log"
+          grep -F "CALL_NEGOTIATED media=audio local_payloads=" "$callee_log"
+          grep -F "CALL_NEGOTIATED media=video local_payloads=" "$caller_log"
+          grep -F "CALL_NEGOTIATED media=video local_payloads=" "$callee_log"
+          grep -Fx "CALL_VIDEO_DECODED=1" "$caller_log"
+          grep -Fx "CALL_VIDEO_DECODED=1" "$callee_log"
+          grep -Fx "CALL_MID_NEGOTIATED=1" "$caller_log"
+          grep -Fx "CALL_MID_NEGOTIATED=1" "$callee_log"
+          grep -Fx "CALL_BUNDLE_NEGOTIATED=1" "$caller_log"
+          grep -Fx "CALL_BUNDLE_NEGOTIATED=1" "$callee_log"
+          grep -F "urn:ietf:params:rtp-hdrext:sdes:mid" "$caller_log"
+          grep -F "urn:ietf:params:rtp-hdrext:sdes:mid" "$callee_log"
+          grep -F "semantics=\"BUNDLE\"" "$caller_log"
+          grep -F "semantics=\"BUNDLE\"" "$callee_log"
+          grep -Fx "LIVE_CALL_RESULT=success caller completed" "$caller_log"
+          grep -Fx "LIVE_CALL_RESULT=success callee completed" "$callee_log"
+          test "$(stat -c %s "$caller_out")" -ge 4096
+          test "$(stat -c %s "$callee_out")" -ge 4096
+
+      - name: Repeat A/V BUNDLE after in-process teardown
+        shell: bash
+        env:
+          QT_QPA_PLATFORM: offscreen
+          G_DEBUG: fatal-criticals
+          ASAN_OPTIONS: detect_leaks=0:abort_on_error=1
+        run: |
+          set -euo pipefail
+          bin="$GITHUB_WORKSPACE/_jingle-call-build/psi_jingle_call_live_client"
+          ready="$RUNNER_TEMP/jingle-av-repeat.ready"
+          caller_out="$RUNNER_TEMP/jingle-av-repeat-caller.raw"
+          callee_out="$RUNNER_TEMP/jingle-av-repeat-callee.raw"
+          caller_log="$RUNNER_TEMP/jingle-av-repeat-caller.log"
+          callee_log="$RUNNER_TEMP/jingle-av-repeat-callee.log"
+          caller_jid="user01@localhost/av-repeat-caller"
+          callee_requested="user02@localhost/av-repeat-callee"
+
+          rm -f "$ready" "$caller_out" "$callee_out" "$caller_log" "$callee_log"
+
+          "$bin" callee "$callee_requested" ci-pass-02 "$caller_jid" \
+            "$callee_out" "$ready" av-bundle-repeat >"$callee_log" 2>&1 &
+          callee_pid=$!
+
+          for i in $(seq 1 200); do
+            if [[ -s "$ready" ]]; then break; fi
+            if ! kill -0 "$callee_pid" 2>/dev/null; then
+              cat "$callee_log"
+              exit 1
+            fi
+            sleep 0.1
+          done
+          test -s "$ready"
+          callee_jid="$(tr -d '\r\n' < "$ready")"
+
+          set +e
+          "$bin" caller "$caller_jid" ci-pass-01 "$callee_jid" \
+            "$caller_out" '' av-bundle-repeat >"$caller_log" 2>&1
+          caller_rc=$?
+          if [[ "$caller_rc" -ne 0 ]]; then
+            kill "$callee_pid" 2>/dev/null || true
+          fi
+          wait "$callee_pid"
+          callee_rc=$?
+          set -e
+
+          echo "LIVE_AV_REPEAT_PROCESS_RC caller=$caller_rc callee=$callee_rc"
+          echo "--- repeated A/V BUNDLE caller log ---"
+          cat "$caller_log"
+          echo "--- repeated A/V BUNDLE callee log ---"
+          cat "$callee_log"
+
+          test "$caller_rc" -eq 0
+          test "$callee_rc" -eq 0
+
+          for log in "$caller_log" "$callee_log"; do
+            test "$(grep -Fc 'CALL_ITERATION_RESULT=success 1/2' "$log")" -eq 1
+            test "$(grep -Fc 'CALL_ITERATION_RESULT=success 2/2' "$log")" -eq 1
+            test "$(grep -Fc 'CALL_VIDEO_DECODED=1' "$log")" -ge 2
+            test "$(grep -Fc 'CALL_MID_NEGOTIATED=1' "$log")" -ge 2
+            test "$(grep -Fc 'CALL_BUNDLE_NEGOTIATED=1' "$log")" -ge 2
+            test "$(grep -Fc 'CALL_MEDIA_STARTED=1' "$log")" -ge 2
+            ! grep -Fq 'CALL_STALE_TERMINATION_IGNORED=1' "$log"
+            ! grep -Fq 'AddressSanitizer' "$log"
+          done
+
+          grep -Fq "CALL_RESTART=caller-starting-next" "$caller_log"
+          grep -Fq "CALL_RESTART=callee-ready-next" "$callee_log"
+          grep -Fx "LIVE_CALL_RESULT=success caller completed" "$caller_log"
+          grep -Fx "LIVE_CALL_RESULT=success callee completed" "$callee_log"
+          test "$(stat -c %s "$caller_out")" -ge 4096
+          test "$(stat -c %s "$callee_out")" -ge 4096
+
+      - name: Show Prosody call log
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f "$RUNNER_TEMP/prosody-call.pid" ]]; then
+            kill "$(cat "$RUNNER_TEMP/prosody-call.pid")" 2>/dev/null || true
+          fi
+          if [[ -f "$RUNNER_TEMP/prosody-call.log" ]]; then
+            tail -n 250 "$RUNNER_TEMP/prosody-call.log"
+          fi
+ \
+            --no-tests=error \
+            --output-on-failure \
+            -V \
+            -j1
+
+      - name: Show compiler cache stats
+        if: always()
+        run: ccache --show-stats
+
+  xmpp-prosody-ft:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout Psi
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Checkout matching Iris SRTP branch
+        uses: actions/checkout@v4
+        with:
+          repository: psi-im/iris
+          ref: ${{ env.IRIS_SRTP_REF }}
+          path: iris
+          fetch-depth: 1
+
+      - name: Install XMPP live-test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            g++ \
+            ninja-build \
+            pkg-config \
+            qt6-base-dev \
+            libssl-dev \
+            libusrsctp-dev \
+            zlib1g-dev \
+            prosody
+          sudo systemctl stop prosody.service 2>/dev/null || true
+          sudo service prosody stop 2>/dev/null || true
+
+      - name: Install QCA3 release package
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          rm -rf qca-release qca3.zip
+          mkdir qca-release
+          gh release download "$QCA_TAG" --repo psi-im/qca \
+            -p 'qca3-deb-ubuntu-24.04.zip' -O qca3.zip
+          (cd qca-release && cmake -E tar xvf ../qca3.zip)
+          test -n "$(find qca-release -type f -name '*.deb' -print -quit)"
+          sudo apt-get install -y ./qca-release/*.deb
+
+      - name: Build SCTP-enabled Jingle FT client
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S qa/integration/jingle-live -B _jingle-live-build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DPSI_SOURCE_DIR="$GITHUB_WORKSPACE" \
+            -DJINGLE_LIVE_ENABLE_FT=ON
+          cmake --build _jingle-live-build --target psi_jingle_ft_live_client --parallel 4
+
+      - name: Start local Prosody
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PROSODY_DATA_DIR="$RUNNER_TEMP/prosody-data"
+          export PROSODY_PID_FILE="$RUNNER_TEMP/prosody.pid"
+          mkdir -p "$PROSODY_DATA_DIR"
+          cfg="$GITHUB_WORKSPACE/qa/integration/jingle-live/prosody.cfg.lua"
+          mkdir -p "$(dirname "$cfg")/certs"
+          prosodyctl --config "$cfg" check config
+          prosodyctl --config "$cfg" register user01 localhost ci-pass-01
+          prosodyctl --config "$cfg" register user02 localhost ci-pass-02
+          prosody -F --config "$cfg" >"$RUNNER_TEMP/prosody-live.log" 2>&1 &
+          echo $! >"$RUNNER_TEMP/prosody-live.pid"
+          for i in $(seq 1 100); do
+            if (echo > /dev/tcp/127.0.0.1/5222) 2>/dev/null; then
+              exit 0
+            fi
+            if ! kill -0 "$(cat "$RUNNER_TEMP/prosody-live.pid")" 2>/dev/null; then
+              cat "$RUNNER_TEMP/prosody-live.log"
+              exit 1
+            fi
+            sleep 0.1
+          done
+          cat "$RUNNER_TEMP/prosody-live.log"
+          exit 1
+
+      - name: Transfer deterministic file through Prosody transport matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          input="$RUNNER_TEMP/jingle-ft-input.bin"
+          bin="$GITHUB_WORKSPACE/_jingle-live-build/psi_jingle_ft_live_client"
+          python3 - "$input" <<'PY'
+          import sys
+          path = sys.argv[1]
+          data = bytes(((i * 37 + 11) & 0xff) for i in range(256 * 1024))
+          with open(path, 'wb') as f:
+              f.write(data)
+          PY
+
+          run_case() {
+            local case_name="$1"
+            local profile="$2"
+            local expected_initial="$3"
+            local expected_active="$4"
+            local expect_replace="$5"
+            local output="$RUNNER_TEMP/jingle-ft-${case_name}.bin"
+            local ready="$RUNNER_TEMP/jingle-ft-${case_name}.ready"
+            local receiver_log="$RUNNER_TEMP/jingle-ft-${case_name}-receiver.log"
+            local sender_log="$RUNNER_TEMP/jingle-ft-${case_name}-sender.log"
+            local sender_jid="user01@localhost/ft-sender-${case_name}"
+            local receiver_jid_requested="user02@localhost/ft-receiver-${case_name}"
+
+            rm -f "$output" "$ready" "$receiver_log" "$sender_log"
+
+            "$bin" receiver "$receiver_jid_requested" ci-pass-02               "$sender_jid" "$output" "$ready" "$profile" >"$receiver_log" 2>&1 &
+            local receiver_pid=$!
+
+            for i in $(seq 1 200); do
+              if [[ -s "$ready" ]]; then
+                break
+              fi
+              if ! kill -0 "$receiver_pid" 2>/dev/null; then
+                cat "$receiver_log"
+                return 1
+              fi
+              sleep 0.1
+            done
+            test -s "$ready"
+            local receiver_jid
+            receiver_jid="$(tr -d '\r\n' < "$ready")"
+
+            set +e
+            "$bin" sender "$sender_jid" ci-pass-01               "$receiver_jid" "$input" '' "$profile" >"$sender_log" 2>&1
+            local sender_rc=$?
+            if [[ "$sender_rc" -ne 0 ]]; then
+              kill "$receiver_pid" 2>/dev/null || true
+            fi
+            wait "$receiver_pid"
+            local receiver_rc=$?
+            set -e
+
+            echo "LIVE_FT_PROCESS_RC case=${case_name} sender=${sender_rc} receiver=${receiver_rc}"
+            echo "--- ${case_name}: sender log ---"
+            cat "$sender_log"
+            echo "--- ${case_name}: receiver log ---"
+            cat "$receiver_log"
+
+            test "$sender_rc" -eq 0
+            test "$receiver_rc" -eq 0
+            grep -Fx "FT_PROFILE=$profile" "$sender_log"
+            grep -Fx "FT_INITIAL_TRANSPORT=$expected_initial" "$sender_log"
+            grep -Fx "FT_ACTIVE_TRANSPORT=$expected_active" "$sender_log"
+            grep -Fx "FT_SENDER_DRAIN=finishing" "$sender_log"
+            grep -Fx "FT_RECEIVER_DRAIN=finishing" "$receiver_log"
+            grep -Fx "LIVE_FT_RESULT=success sender completed" "$sender_log"
+            grep -Fx "LIVE_FT_RESULT=success receiver completed" "$receiver_log"
+
+            if [[ "$expect_replace" == yes ]]; then
+              grep -Fx "FT_REPLACE_FROM=$expected_initial" "$sender_log"
+              grep -Fx "FT_REPLACE_SELECTED=$expected_active" "$sender_log"
+              grep -Eq 'action="transport-replace"|action=.transport-replace.' "$sender_log"
+              grep -Eq 'action="transport-replace"|action=.transport-replace.' "$receiver_log"
+            else
+              if grep -Eq 'action="transport-replace"|action=.transport-replace.' "$sender_log"; then
+                echo "unexpected transport-replace in $case_name" >&2
+                return 1
+              fi
+            fi
+
+            cmp "$input" "$output"
+            sha256sum "$input" "$output"
+          }
+
+          run_case ice ice             'urn:xmpp:jingle:transports:ice:0'             'urn:xmpp:jingle:transports:ice:0' no
+          run_case s5b s5b             'urn:xmpp:jingle:transports:s5b:1'             'urn:xmpp:jingle:transports:s5b:1' no
+          run_case ibb ibb             'urn:xmpp:jingle:transports:ibb:1'             'urn:xmpp:jingle:transports:ibb:1' no
+          run_case ice-to-s5b ice-s5b-replace             'urn:xmpp:jingle:transports:ice:0'             'urn:xmpp:jingle:transports:s5b:1' yes
+          run_case s5b-to-ibb s5b-ibb-replace             'urn:xmpp:jingle:transports:s5b:1'             'urn:xmpp:jingle:transports:ibb:1' yes
+
+          run_truncated_source_case() {
+            local case_name="ice-truncated-source"
+            local profile="ice"
+            local bad_input="$RUNNER_TEMP/jingle-ft-truncated-input.bin"
+            local output="$RUNNER_TEMP/jingle-ft-${case_name}.bin"
+            local ready="$RUNNER_TEMP/jingle-ft-${case_name}.ready"
+            local receiver_log="$RUNNER_TEMP/jingle-ft-${case_name}-receiver.log"
+            local sender_log="$RUNNER_TEMP/jingle-ft-${case_name}-sender.log"
+            local sender_jid="user01@localhost/ft-sender-${case_name}"
+            local receiver_jid_requested="user02@localhost/ft-receiver-${case_name}"
+
+            cp "$input" "$bad_input"
+            rm -f "$output" "$ready" "$receiver_log" "$sender_log"
+
+            "$bin" receiver "$receiver_jid_requested" ci-pass-02 \
+              "$sender_jid" "$output" "$ready" "$profile" >"$receiver_log" 2>&1 &
+            local receiver_pid=$!
+
+            for i in $(seq 1 200); do
+              if [[ -s "$ready" ]]; then
+                break
+              fi
+              if ! kill -0 "$receiver_pid" 2>/dev/null; then
+                cat "$receiver_log"
+                return 1
+              fi
+              sleep 0.1
+            done
+            test -s "$ready"
+            local receiver_jid
+            receiver_jid="$(tr -d '\r\n' < "$ready")"
+
+            set +e
+            PSI_JINGLE_FT_TEST_TRUNCATE_SOURCE=1 \
+              "$bin" sender "$sender_jid" ci-pass-01 \
+              "$receiver_jid" "$bad_input" '' "$profile" >"$sender_log" 2>&1
+            local sender_rc=$?
+            wait "$receiver_pid"
+            local receiver_rc=$?
+            set -e
+
+            echo "LIVE_FT_PROCESS_RC case=${case_name} sender=${sender_rc} receiver=${receiver_rc}"
+            echo "--- ${case_name}: sender log ---"
+            cat "$sender_log"
+            echo "--- ${case_name}: receiver log ---"
+            cat "$receiver_log"
+
+            test "$sender_rc" -ne 0
+            test "$receiver_rc" -ne 0
+            test "$sender_rc" -ne 124
+            test "$receiver_rc" -ne 124
+            grep -F "FT_TEST_SOURCE_TRUNCATED" "$sender_log"
+            grep -F "LIVE_FT_RESULT=failure" "$sender_log"
+            grep -F "LIVE_FT_RESULT=failure" "$receiver_log"
+            grep -E 'action="content-remove"|action=.content-remove.' "$sender_log"
+            grep -E 'action="content-remove"|action=.content-remove.' "$receiver_log"
+            grep -F "failed-application" "$sender_log"
+            grep -F "failed-application" "$receiver_log"
+
+            if grep -Fq "LIVE_FT_RESULT=success" "$sender_log" || grep -Fq "LIVE_FT_RESULT=success" "$receiver_log"; then
+              echo "truncated source was reported as successful" >&2
+              return 1
+            fi
+          }
+
+          run_truncated_source_case
+
+      - name: Show Prosody log
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f "$RUNNER_TEMP/prosody-live.pid" ]]; then
+            kill "$(cat "$RUNNER_TEMP/prosody-live.pid")" 2>/dev/null || true
+          fi
+          if [[ -f "$RUNNER_TEMP/prosody-live.log" ]]; then
+            tail -n 250 "$RUNNER_TEMP/prosody-live.log"
+          fi
+
+
+  xmpp-prosody-call:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout Psi
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Checkout matching Iris SRTP branch
+        uses: actions/checkout@v4
+        with:
+          repository: psi-im/iris
+          ref: ${{ env.IRIS_SRTP_REF }}
+          path: iris
+          fetch-depth: 1
+
+      - name: Checkout matching psimedia SRTP branch
+        uses: actions/checkout@v4
+        with:
+          repository: psi-im/psimedia
+          ref: ${{ env.PSIMEDIA_SRTP_REF }}
+          path: _psimedia
+          fetch-depth: 1
+
+      - name: Install audio-call live-test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake g++ ninja-build pkg-config qt6-base-dev \
+            libssl-dev libsrtp2-dev libusrsctp-dev zlib1g-dev \
+            libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
+            libgstreamer-plugins-bad1.0-dev \
+            gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
+            gstreamer1.0-plugins-bad gstreamer1.0-tools prosody
+          sudo systemctl stop prosody.service 2>/dev/null || true
+          sudo service prosody stop 2>/dev/null || true
+
+      - name: Install QCA3 release package
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          rm -rf qca-release qca3.zip
+          mkdir qca-release
+          gh release download "$QCA_TAG" --repo psi-im/qca \
+            -p 'qca3-deb-ubuntu-24.04.zip' -O qca3.zip
+          (cd qca-release && cmake -E tar xvf ../qca3.zip)
+          test -n "$(find qca-release -type f -name '*.deb' -print -quit)"
+          sudo apt-get install -y ./qca-release/*.deb
+
+      - name: Build real psimedia Jingle audio-call client
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S qa/integration/jingle-live -B _jingle-call-build -G Ninja \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_CXX_FLAGS="-fsanitize=address -fno-omit-frame-pointer" \
+            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address" \
+            -DPSI_SOURCE_DIR="$GITHUB_WORKSPACE" \
+            -DPSIMEDIA_SOURCE_DIR="$GITHUB_WORKSPACE/_psimedia"
+          cmake --build _jingle-call-build --target psi_jingle_call_live_client --parallel 4
+
+      - name: Start local Prosody
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PROSODY_DATA_DIR="$RUNNER_TEMP/prosody-data"
+          export PROSODY_PID_FILE="$RUNNER_TEMP/prosody.pid"
+          mkdir -p "$PROSODY_DATA_DIR"
+          cfg="$GITHUB_WORKSPACE/qa/integration/jingle-live/prosody.cfg.lua"
+          mkdir -p "$(dirname "$cfg")/certs"
+          prosodyctl --config "$cfg" check config
+          prosodyctl --config "$cfg" register user01 localhost ci-pass-01
+          prosodyctl --config "$cfg" register user02 localhost ci-pass-02
+          prosody -F --config "$cfg" >"$RUNNER_TEMP/prosody-call.log" 2>&1 &
+          echo $! >"$RUNNER_TEMP/prosody-call.pid"
+          for i in $(seq 1 100); do
+            if (echo > /dev/tcp/127.0.0.1/5222) 2>/dev/null; then
+              exit 0
+            fi
+            if ! kill -0 "$(cat "$RUNNER_TEMP/prosody-call.pid")" 2>/dev/null; then
+              cat "$RUNNER_TEMP/prosody-call.log"
+              exit 1
+            fi
+            sleep 0.1
+          done
+          cat "$RUNNER_TEMP/prosody-call.log"
+          exit 1
+
+      - name: Place bidirectional headless audio call through Prosody
+        shell: bash
+        env:
+          QT_QPA_PLATFORM: offscreen
+          G_DEBUG: fatal-criticals
+          ASAN_OPTIONS: detect_leaks=0:abort_on_error=1
+        run: |
+          set -euo pipefail
+          bin="$GITHUB_WORKSPACE/_jingle-call-build/psi_jingle_call_live_client"
+          ready="$RUNNER_TEMP/jingle-call.ready"
+          caller_out="$RUNNER_TEMP/jingle-call-caller.raw"
+          callee_out="$RUNNER_TEMP/jingle-call-callee.raw"
+          caller_log="$RUNNER_TEMP/jingle-call-caller.log"
+          callee_log="$RUNNER_TEMP/jingle-call-callee.log"
+          caller_jid="user01@localhost/call-caller"
+          callee_requested="user02@localhost/call-callee"
+
+          rm -f "$ready" "$caller_out" "$callee_out" "$caller_log" "$callee_log"
+
+          "$bin" callee "$callee_requested" ci-pass-02 "$caller_jid" \
+            "$callee_out" "$ready" >"$callee_log" 2>&1 &
+          callee_pid=$!
+
+          for i in $(seq 1 200); do
+            if [[ -s "$ready" ]]; then break; fi
+            if ! kill -0 "$callee_pid" 2>/dev/null; then
+              cat "$callee_log"
+              exit 1
+            fi
+            sleep 0.1
+          done
+          test -s "$ready"
+          callee_jid="$(tr -d '\r\n' < "$ready")"
+
+          set +e
+          "$bin" caller "$caller_jid" ci-pass-01 "$callee_jid" \
+            "$caller_out" '' >"$caller_log" 2>&1
+          caller_rc=$?
+          if [[ "$caller_rc" -ne 0 ]]; then
+            kill "$callee_pid" 2>/dev/null || true
+          fi
+          wait "$callee_pid"
+          callee_rc=$?
+          set -e
+
+          echo "LIVE_CALL_PROCESS_RC caller=$caller_rc callee=$callee_rc"
+          echo "--- caller log ---"
+          cat "$caller_log"
+          echo "--- callee log ---"
+          cat "$callee_log"
+
+          test "$caller_rc" -eq 0
+          test "$callee_rc" -eq 0
+          grep -Fx "CALL_MEDIA_STARTED=1" "$caller_log"
+          grep -Fx "CALL_MEDIA_STARTED=1" "$callee_log"
+          grep -F "CALL_NEGOTIATED media=audio local_payloads=" "$caller_log"
+          grep -F "CALL_NEGOTIATED media=audio local_payloads=" "$callee_log"
+          grep -F "CALL_DECODED_BYTES=" "$caller_log"
+          grep -F "CALL_DECODED_BYTES=" "$callee_log"
+          grep -Fx "LIVE_CALL_RESULT=success caller completed" "$caller_log"
+          grep -Fx "LIVE_CALL_RESULT=success callee completed" "$callee_log"
+          grep -Eq 'action="session-initiate"|action=.session-initiate.' "$caller_log"
+          grep -Eq 'action="session-accept"|action=.session-accept.' "$callee_log"
+          test "$(stat -c %s "$caller_out")" -ge 4096
+          test "$(stat -c %s "$callee_out")" -ge 4096
+          echo "LIVE_CALL_PCM_BYTES caller=$(stat -c %s "$caller_out") callee=$(stat -c %s "$callee_out")"
+
+      - name: Place bidirectional headless A/V BUNDLE call through Prosody
+        shell: bash
+        env:
+          QT_QPA_PLATFORM: offscreen
+          G_DEBUG: fatal-criticals
+          ASAN_OPTIONS: detect_leaks=0:abort_on_error=1
+        run: |
+          set -euo pipefail
+          bin="$GITHUB_WORKSPACE/_jingle-call-build/psi_jingle_call_live_client"
+          ready="$RUNNER_TEMP/jingle-av-bundle.ready"
+          caller_out="$RUNNER_TEMP/jingle-av-bundle-caller.raw"
+          callee_out="$RUNNER_TEMP/jingle-av-bundle-callee.raw"
+          caller_log="$RUNNER_TEMP/jingle-av-bundle-caller.log"
+          callee_log="$RUNNER_TEMP/jingle-av-bundle-callee.log"
+          caller_jid="user01@localhost/av-bundle-caller"
+          callee_requested="user02@localhost/av-bundle-callee"
+
+          rm -f "$ready" "$caller_out" "$callee_out" "$caller_log" "$callee_log"
+
+          "$bin" callee "$callee_requested" ci-pass-02 "$caller_jid" \
+            "$callee_out" "$ready" av-bundle >"$callee_log" 2>&1 &
+          callee_pid=$!
+
+          for i in $(seq 1 200); do
+            if [[ -s "$ready" ]]; then break; fi
+            if ! kill -0 "$callee_pid" 2>/dev/null; then
+              cat "$callee_log"
+              exit 1
+            fi
+            sleep 0.1
+          done
+          test -s "$ready"
+          callee_jid="$(tr -d '\r\n' < "$ready")"
+
+          set +e
+          "$bin" caller "$caller_jid" ci-pass-01 "$callee_jid" \
+            "$caller_out" '' av-bundle >"$caller_log" 2>&1
+          caller_rc=$?
+          if [[ "$caller_rc" -ne 0 ]]; then
+            kill "$callee_pid" 2>/dev/null || true
+          fi
+          wait "$callee_pid"
+          callee_rc=$?
+          set -e
+
+          echo "LIVE_AV_BUNDLE_PROCESS_RC caller=$caller_rc callee=$callee_rc"
+          echo "--- A/V BUNDLE caller log ---"
+          cat "$caller_log"
+          echo "--- A/V BUNDLE callee log ---"
+          cat "$callee_log"
+
+          test "$caller_rc" -eq 0
+          test "$callee_rc" -eq 0
+          grep -Fx "CALL_MEDIA_STARTED=1" "$caller_log"
+          grep -Fx "CALL_MEDIA_STARTED=1" "$callee_log"
+          grep -F "CALL_NEGOTIATED media=audio local_payloads=" "$caller_log"
+          grep -F "CALL_NEGOTIATED media=audio local_payloads=" "$callee_log"
+          grep -F "CALL_NEGOTIATED media=video local_payloads=" "$caller_log"
+          grep -F "CALL_NEGOTIATED media=video local_payloads=" "$callee_log"
+          grep -Fx "CALL_VIDEO_DECODED=1" "$caller_log"
+          grep -Fx "CALL_VIDEO_DECODED=1" "$callee_log"
+          grep -Fx "CALL_MID_NEGOTIATED=1" "$caller_log"
+          grep -Fx "CALL_MID_NEGOTIATED=1" "$callee_log"
+          grep -Fx "CALL_BUNDLE_NEGOTIATED=1" "$caller_log"
+          grep -Fx "CALL_BUNDLE_NEGOTIATED=1" "$callee_log"
+          grep -F "urn:ietf:params:rtp-hdrext:sdes:mid" "$caller_log"
+          grep -F "urn:ietf:params:rtp-hdrext:sdes:mid" "$callee_log"
+          grep -F "semantics=\"BUNDLE\"" "$caller_log"
+          grep -F "semantics=\"BUNDLE\"" "$callee_log"
+          grep -Fx "LIVE_CALL_RESULT=success caller completed" "$caller_log"
+          grep -Fx "LIVE_CALL_RESULT=success callee completed" "$callee_log"
+          test "$(stat -c %s "$caller_out")" -ge 4096
+          test "$(stat -c %s "$callee_out")" -ge 4096
+
+      - name: Repeat A/V BUNDLE after in-process teardown
+        shell: bash
+        env:
+          QT_QPA_PLATFORM: offscreen
+          G_DEBUG: fatal-criticals
+          ASAN_OPTIONS: detect_leaks=0:abort_on_error=1
+        run: |
+          set -euo pipefail
+          bin="$GITHUB_WORKSPACE/_jingle-call-build/psi_jingle_call_live_client"
+          ready="$RUNNER_TEMP/jingle-av-repeat.ready"
+          caller_out="$RUNNER_TEMP/jingle-av-repeat-caller.raw"
+          callee_out="$RUNNER_TEMP/jingle-av-repeat-callee.raw"
+          caller_log="$RUNNER_TEMP/jingle-av-repeat-caller.log"
+          callee_log="$RUNNER_TEMP/jingle-av-repeat-callee.log"
+          caller_jid="user01@localhost/av-repeat-caller"
+          callee_requested="user02@localhost/av-repeat-callee"
+
+          rm -f "$ready" "$caller_out" "$callee_out" "$caller_log" "$callee_log"
+
+          "$bin" callee "$callee_requested" ci-pass-02 "$caller_jid" \
+            "$callee_out" "$ready" av-bundle-repeat >"$callee_log" 2>&1 &
+          callee_pid=$!
+
+          for i in $(seq 1 200); do
+            if [[ -s "$ready" ]]; then break; fi
+            if ! kill -0 "$callee_pid" 2>/dev/null; then
+              cat "$callee_log"
+              exit 1
+            fi
+            sleep 0.1
+          done
+          test -s "$ready"
+          callee_jid="$(tr -d '\r\n' < "$ready")"
+
+          set +e
+          "$bin" caller "$caller_jid" ci-pass-01 "$callee_jid" \
+            "$caller_out" '' av-bundle-repeat >"$caller_log" 2>&1
+          caller_rc=$?
+          if [[ "$caller_rc" -ne 0 ]]; then
+            kill "$callee_pid" 2>/dev/null || true
+          fi
+          wait "$callee_pid"
+          callee_rc=$?
+          set -e
+
+          echo "LIVE_AV_REPEAT_PROCESS_RC caller=$caller_rc callee=$callee_rc"
+          echo "--- repeated A/V BUNDLE caller log ---"
+          cat "$caller_log"
+          echo "--- repeated A/V BUNDLE callee log ---"
+          cat "$callee_log"
+
+          test "$caller_rc" -eq 0
+          test "$callee_rc" -eq 0
+
+          for log in "$caller_log" "$callee_log"; do
+            test "$(grep -Fc 'CALL_ITERATION_RESULT=success 1/2' "$log")" -eq 1
+            test "$(grep -Fc 'CALL_ITERATION_RESULT=success 2/2' "$log")" -eq 1
+            test "$(grep -Fc 'CALL_VIDEO_DECODED=1' "$log")" -ge 2
+            test "$(grep -Fc 'CALL_MID_NEGOTIATED=1' "$log")" -ge 2
+            test "$(grep -Fc 'CALL_BUNDLE_NEGOTIATED=1' "$log")" -ge 2
+            test "$(grep -Fc 'CALL_MEDIA_STARTED=1' "$log")" -ge 2
+            ! grep -Fq 'CALL_STALE_TERMINATION_IGNORED=1' "$log"
+            ! grep -Fq 'AddressSanitizer' "$log"
+          done
+
+          grep -Fq "CALL_RESTART=caller-starting-next" "$caller_log"
+          grep -Fq "CALL_RESTART=callee-ready-next" "$callee_log"
+          grep -Fx "LIVE_CALL_RESULT=success caller completed" "$caller_log"
+          grep -Fx "LIVE_CALL_RESULT=success callee completed" "$callee_log"
+          test "$(stat -c %s "$caller_out")" -ge 4096
+          test "$(stat -c %s "$callee_out")" -ge 4096
+
+      - name: Show Prosody call log
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f "$RUNNER_TEMP/prosody-call.pid" ]]; then
+            kill "$(cat "$RUNNER_TEMP/prosody-call.pid")" 2>/dev/null || true
+          fi
+          if [[ -f "$RUNNER_TEMP/prosody-call.log" ]]; then
+            tail -n 250 "$RUNNER_TEMP/prosody-call.log"
+          fi
+ \
             --no-tests=error \
             --output-on-failure \
             -V \
