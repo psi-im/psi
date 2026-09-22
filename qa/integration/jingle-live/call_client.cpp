@@ -222,6 +222,40 @@ int main(int argc, char **argv)
     };
 
     std::function<void()> armMediaWindow;
+    std::function<void()> maybeStartMedia;
+
+    auto descriptionHasMid = [](const std::optional<RTP::Description> &description) {
+        if (!description)
+            return false;
+        return std::any_of(description->headerExtensions.cbegin(), description->headerExtensions.cend(),
+                           [](const RTP::HeaderExtension &extension) {
+                               return extension.uri
+                                   == QLatin1String("urn:ietf:params:rtp-hdrext:sdes:mid");
+                           });
+    };
+
+    auto bundleNegotiated = [&]() {
+        if (!avBundle || !liveSession || !audioApp || !videoApp)
+            return !avBundle;
+        auto containsPair = [&](const QList<J::ContentGroup> &groups) {
+            return std::any_of(groups.cbegin(), groups.cend(), [&](const J::ContentGroup &group) {
+                return group.semantics == QLatin1String("BUNDLE")
+                    && group.contents.contains(audioApp->contentName())
+                    && group.contents.contains(videoApp->contentName());
+            });
+        };
+        return containsPair(liveSession->groupings()) && containsPair(liveSession->remoteGroupings());
+    };
+
+    auto midNegotiated = [&]() {
+        if (!avBundle)
+            return true;
+        return audioApp && videoApp
+            && descriptionHasMid(audioApp->localDescription())
+            && descriptionHasMid(audioApp->remoteDescription())
+            && descriptionHasMid(videoApp->localDescription())
+            && descriptionHasMid(videoApp->remoteDescription());
+    };
 
     auto finish = [&](int code, const QString &message) {
         if (finishing)
@@ -241,15 +275,26 @@ int main(int argc, char **argv)
             return;
         mediaWindowArmed = true;
         qInfo("CALL_MEDIA_WINDOW=started");
-        QTimer::singleShot(3500, &app, [&]() {
+        QTimer::singleShot(avBundle ? 6000 : 3500, &app, [&]() {
             if (finishing || !liveSession || liveSession->state() == J::State::Finished)
                 return;
             localMediaVerified = outputHasMedia();
             qInfo().noquote()
                 << QStringLiteral("CALL_DECODED_BYTES=%1").arg(QFileInfo(outputPath).size());
-            if (!sessionActive || !mediaActive || !mediaStarted || !localMediaVerified) {
+            if (!sessionActive || !audioActive || !mediaStarted || !localMediaVerified) {
                 finish(16, QStringLiteral("call did not carry decoded bidirectional audio"));
                 return;
+            }
+            if (avBundle) {
+                qInfo().noquote() << QStringLiteral("CALL_VIDEO_DECODED=%1").arg(videoDecoded ? 1 : 0);
+                const bool midOk = midNegotiated();
+                const bool bundleOk = bundleNegotiated();
+                qInfo().noquote() << QStringLiteral("CALL_MID_NEGOTIATED=%1").arg(midOk ? 1 : 0);
+                qInfo().noquote() << QStringLiteral("CALL_BUNDLE_NEGOTIATED=%1").arg(bundleOk ? 1 : 0);
+                if (!videoActive || !videoDecoded || !midOk || !bundleOk) {
+                    finish(17, QStringLiteral("A/V BUNDLE call did not satisfy video/MID/grouping gates"));
+                    return;
+                }
             }
             if (role == QLatin1String("caller")) {
                 qInfo("CALL_HANGUP=local-success");
@@ -257,6 +302,22 @@ int main(int argc, char **argv)
                 liveSession->terminate(J::Reason::Success);
             }
         });
+    };
+
+    maybeStartMedia = [&]() {
+        if (!liveSession || mediaStarted || !sessionActive || !audioActive || (avBundle && !videoActive))
+            return;
+        mediaStarted = startPsiMediaJingleTransmit(
+            liveSession, true, true,
+            QStringLiteral("audiotestsrc is-live=true wave=sine freq=440"),
+            avBundle,
+            avBundle ? QStringLiteral("videotestsrc is-live=true pattern=ball") : QString());
+        qInfo().noquote() << QStringLiteral("CALL_MEDIA_STARTED=%1").arg(mediaStarted ? 1 : 0);
+        if (!mediaStarted) {
+            finish(31, QStringLiteral("psimedia transmit did not start"));
+            return;
+        }
+        armMediaWindow();
     };
 
     QTimer::singleShot(45000, &app, [&]() {
@@ -285,6 +346,8 @@ int main(int argc, char **argv)
         caps.audio = true;
         caps.audioInput = true;
         caps.audioOutput = true;
+        caps.video = avBundle;
+        caps.videoInput = avBundle;
         if (!caps.secureRtp)
             return false;
 
@@ -299,17 +362,7 @@ int main(int argc, char **argv)
         QObject::connect(session, &J::Session::activated, session, [&]() {
             sessionActive = true;
             qInfo("CALL_SESSION=activated");
-            if (mediaActive && !mediaStarted && liveSession) {
-                mediaStarted = startPsiMediaJingleTransmit(
-                    liveSession, true, true,
-                    QStringLiteral("audiotestsrc is-live=true wave=sine freq=440"),
-                    false, QString());
-                qInfo().noquote() << QStringLiteral("CALL_MEDIA_STARTED=%1").arg(mediaStarted ? 1 : 0);
-                if (!mediaStarted)
-                    finish(31, QStringLiteral("psimedia audio transmit did not start"));
-                else
-                    armMediaWindow();
-            }
+            maybeStartMedia();
         });
         QObject::connect(session, &J::Session::terminated, session, [&, session]() {
             qInfo().noquote() << QStringLiteral("CALL_SESSION=terminated state=%1").arg(int(session->state()));
@@ -333,24 +386,31 @@ int main(int argc, char **argv)
             qInfo().noquote() << QStringLiteral("CALL_AUDIO_STATE=%1").arg(int(state));
             if (state != J::State::Active)
                 return;
-            mediaActive = true;
+            audioActive = true;
             const auto local = rtp->localDescription();
             const auto remote = rtp->remoteDescription();
             qInfo().noquote()
-                << QStringLiteral("CALL_NEGOTIATED local_payloads=%1 remote_payloads=%2")
+                << QStringLiteral("CALL_NEGOTIATED media=audio local_payloads=%1 remote_payloads=%2")
                        .arg(local ? local->payloads.size() : 0)
                        .arg(remote ? remote->payloads.size() : 0);
-            if (sessionActive && !mediaStarted && liveSession) {
-                mediaStarted = startPsiMediaJingleTransmit(
-                    liveSession, true, true,
-                    QStringLiteral("audiotestsrc is-live=true wave=sine freq=440"),
-                    false, QString());
-                qInfo().noquote() << QStringLiteral("CALL_MEDIA_STARTED=%1").arg(mediaStarted ? 1 : 0);
-                if (!mediaStarted)
-                    finish(33, QStringLiteral("psimedia audio transmit did not start"));
-                else
-                    armMediaWindow();
-            }
+            maybeStartMedia();
+        });
+    };
+
+    auto wireVideo = [&](RTP::Application *rtp) {
+        videoApp = rtp;
+        QObject::connect(rtp, &J::Application::stateChanged, rtp, [&, rtp](J::State state) {
+            qInfo().noquote() << QStringLiteral("CALL_VIDEO_STATE=%1").arg(int(state));
+            if (state != J::State::Active)
+                return;
+            videoActive = true;
+            const auto local = rtp->localDescription();
+            const auto remote = rtp->remoteDescription();
+            qInfo().noquote()
+                << QStringLiteral("CALL_NEGOTIATED media=video local_payloads=%1 remote_payloads=%2")
+                       .arg(local ? local->payloads.size() : 0)
+                       .arg(remote ? remote->payloads.size() : 0);
+            maybeStartMedia();
         });
     };
 
