@@ -229,6 +229,7 @@ public:
     }
 
     FakeRtpChannel                      *audioChannel() { return &audio_; }
+    const QList<PsiMedia::PPayloadInfo> &remoteAudioPreferences() const { return remoteAudio_; }
     const QList<PsiMedia::PPayloadInfo> &remoteVideoPreferences() const { return remoteVideo_; }
 
     void emitProtectedPacket(const PsiMedia::PSecureRtpPacket &packet)
@@ -550,6 +551,42 @@ private slots:
         QCOMPARE(prepared->payloads.constFirst().feedback.size(), 1);
         QCOMPARE(prepared->payloads.constFirst().feedback.constFirst().type, QStringLiteral("nack"));
         QCOMPARE(prepared->payloads.constFirst().feedback.constFirst().subtype, QStringLiteral("pli"));
+    }
+
+    void videoFirstThenAudioNegotiationReachesBackend()
+    {
+        auto provider = makePsiMediaJingleProvider(fullCapabilities());
+        auto session  = provider->createSession();
+        auto video    = session->createEndpoint(QStringLiteral("video"), QStringLiteral("video"));
+        auto audio    = session->createEndpoint(QStringLiteral("audio"), QStringLiteral("audio"));
+        QVERIFY(video);
+        QVERIFY(audio);
+
+        std::optional<RTP::Description> videoAnswer;
+        auto videoOperation = session->prepareAnswer(
+            video.get(), videoDescription(true),
+            [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description, RTP::MediaError error) {
+                QVERIFY(!error);
+                videoAnswer = std::move(description);
+            });
+        QTRY_COMPARE(provider_.stats().startCalls, 1);
+        QCOMPARE(provider_.context()->remoteVideoPreferences().size(), 1);
+        provider_.context()->completeStart();
+        QTRY_VERIFY(videoAnswer.has_value());
+
+        std::optional<RTP::Description> audioAnswer;
+        auto audioOperation = session->prepareAnswer(
+            audio.get(), audioDescription(),
+            [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description, RTP::MediaError error) {
+                QVERIFY(!error);
+                audioAnswer = std::move(description);
+            });
+        QTRY_COMPARE(provider_.stats().updateCalls, 1);
+        QCOMPARE(provider_.context()->remoteAudioPreferences().size(), 1);
+        QCOMPARE(provider_.context()->remoteAudioPreferences().constFirst().name, QStringLiteral("opus"));
+        provider_.context()->completePreferences();
+        QTRY_VERIFY(audioAnswer.has_value());
+        QCOMPARE(provider_.stats().invalidCalls, 0);
     }
 
     void incomingOfferSelectsMidAndIgnoresUnknownExtensions()
