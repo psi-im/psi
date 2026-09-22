@@ -428,24 +428,51 @@ int main(int argc, char **argv)
                 return;
             }
 
-            RTP::Application *rtp = nullptr;
+            RTP::Application *incomingAudio = nullptr;
+            RTP::Application *incomingVideo = nullptr;
             for (auto *base : session->contentList()) {
-                rtp = dynamic_cast<RTP::Application *>(base);
-                if (rtp && rtp->media() == QLatin1String("audio"))
-                    break;
-                rtp = nullptr;
+                auto *rtp = dynamic_cast<RTP::Application *>(base);
+                if (!rtp)
+                    continue;
+                if (rtp->media() == QLatin1String("audio"))
+                    incomingAudio = rtp;
+                else if (rtp->media() == QLatin1String("video"))
+                    incomingVideo = rtp;
             }
-            if (!rtp) {
+            if (!incomingAudio || (avBundle && !incomingVideo)) {
                 session->terminate(J::Reason::UnsupportedApplications);
-                finish(22, QStringLiteral("incoming call has no audio RTP content"));
+                finish(22, QStringLiteral("incoming call is missing required RTP content"));
                 return;
             }
 
+            if (avBundle) {
+                std::optional<J::ContentGroup> offeredBundle;
+                for (const auto &group : session->remoteGroupings()) {
+                    if (group.semantics == QLatin1String("BUNDLE")
+                        && group.contents.contains(incomingAudio->contentName())
+                        && group.contents.contains(incomingVideo->contentName())) {
+                        offeredBundle = group;
+                        break;
+                    }
+                }
+                if (!offeredBundle || !session->setGroupings({ *offeredBundle })) {
+                    session->terminate(J::Reason::IncompatibleParameters);
+                    finish(24, QStringLiteral("incoming A/V call did not offer acceptable BUNDLE"));
+                    return;
+                }
+            }
+
             wireSession(session);
-            wireAudio(rtp);
+            wireAudio(incomingAudio);
+            if (avBundle)
+                wireVideo(incomingVideo);
             const QString sink = QStringLiteral("filesink location=\"%1\" sync=false").arg(outputPath);
             if (!configurePsiMediaJingleSession(session, sink, QString(), false, 128)) {
                 finish(23, QStringLiteral("cannot configure callee psimedia backend"));
+                return;
+            }
+            if (avBundle && !setPsiMediaJingleVideoOutput(session, videoOutput.get())) {
+                finish(25, QStringLiteral("cannot configure callee video output"));
                 return;
             }
             session->accept();
@@ -473,7 +500,7 @@ int main(int argc, char **argv)
                 ready.write(endpoint.client()->jid().full().toUtf8());
                 ready.write("\n");
                 ready.close();
-                qInfo("Callee armed for incoming audio call");
+                qInfo().noquote() << QStringLiteral("Callee armed for incoming %1 call").arg(mode);
                 return;
             }
 
@@ -486,16 +513,36 @@ int main(int argc, char **argv)
             }
             wireSession(session);
 
-            auto *rtp = rtpManager->createOutgoing(session, QStringLiteral("audio"), J::Origin::Both);
-            if (!rtp) {
+            auto *outgoingAudio = rtpManager->createOutgoing(session, QStringLiteral("audio"), J::Origin::Both);
+            if (!outgoingAudio) {
                 finish(14, QStringLiteral("cannot create outgoing audio RTP application"));
                 return;
             }
-            wireAudio(rtp);
+            wireAudio(outgoingAudio);
+
+            RTP::Application *outgoingVideo = nullptr;
+            if (avBundle) {
+                outgoingVideo = rtpManager->createOutgoing(session, QStringLiteral("video"), J::Origin::Both);
+                if (!outgoingVideo) {
+                    finish(18, QStringLiteral("cannot create outgoing video RTP application"));
+                    return;
+                }
+                wireVideo(outgoingVideo);
+                if (!session->setGroupings(
+                        { J::ContentGroup { QStringLiteral("BUNDLE"),
+                                            { outgoingAudio->contentName(), outgoingVideo->contentName() } } })) {
+                    finish(19, QStringLiteral("cannot propose outgoing A/V BUNDLE"));
+                    return;
+                }
+            }
 
             const QString sink = QStringLiteral("filesink location=\"%1\" sync=false").arg(outputPath);
             if (!configurePsiMediaJingleSession(session, sink, QString(), false, 128)) {
                 finish(15, QStringLiteral("cannot configure caller psimedia backend"));
+                return;
+            }
+            if (avBundle && !setPsiMediaJingleVideoOutput(session, videoOutput.get())) {
+                finish(26, QStringLiteral("cannot configure caller video output"));
                 return;
             }
 
