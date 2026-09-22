@@ -462,6 +462,81 @@ private slots:
         QCOMPARE(provider_.stats().invalidCalls, 0);
     }
 
+    void localOfferAdvertisesOnlyMidHeaderExtension()
+    {
+        Harness harness;
+        std::optional<RTP::Description> prepared;
+        auto operation = harness.session->prepareLocalOffer(
+            harness.endpoint.get(),
+            [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description, RTP::MediaError error) {
+                QVERIFY(!error);
+                prepared = std::move(description);
+            });
+        QTRY_COMPARE(provider_.stats().startCalls, 1);
+        provider_.context()->completeStart();
+        QTRY_VERIFY(prepared.has_value());
+        QCOMPARE(prepared->headerExtensions.size(), 1);
+        QCOMPARE(prepared->headerExtensions.constFirst().id, quint16(1));
+        QCOMPARE(prepared->headerExtensions.constFirst().uri,
+                 QStringLiteral("urn:ietf:params:rtp-hdrext:sdes:mid"));
+        QCOMPARE(prepared->headerExtensions.constFirst().senders, XMPP::Jingle::Origin::Both);
+        QVERIFY(prepared->headerExtensions.constFirst().parameters.isEmpty());
+    }
+
+    void incomingOfferSelectsMidAndIgnoresUnknownExtensions()
+    {
+        Harness harness;
+        auto remote = audioDescription();
+        RTP::HeaderExtension unknown;
+        unknown.id      = 3;
+        unknown.uri     = QStringLiteral("urn:example:unsupported");
+        unknown.senders = XMPP::Jingle::Origin::Both;
+        remote.headerExtensions.append(unknown);
+        RTP::HeaderExtension mid;
+        mid.id      = 7;
+        mid.uri     = QStringLiteral("urn:ietf:params:rtp-hdrext:sdes:mid");
+        mid.senders = XMPP::Jingle::Origin::Both;
+        remote.headerExtensions.append(mid);
+
+        std::optional<RTP::Description> prepared;
+        auto operation = harness.session->prepareAnswer(
+            harness.endpoint.get(), remote,
+            [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description, RTP::MediaError error) {
+                QVERIFY(!error);
+                prepared = std::move(description);
+            });
+        QTRY_COMPARE(provider_.stats().startCalls, 1);
+        provider_.context()->completeStart();
+        QTRY_VERIFY(prepared.has_value());
+        QCOMPARE(prepared->headerExtensions.size(), 1);
+        QCOMPARE(prepared->headerExtensions.constFirst().id, quint16(7));
+        QCOMPARE(prepared->headerExtensions.constFirst().uri,
+                 QStringLiteral("urn:ietf:params:rtp-hdrext:sdes:mid"));
+    }
+
+    void answerPolicyAcceptsMidButRejectsOtherHeaderExtensions()
+    {
+        Harness harness;
+        auto answer = audioDescription();
+        RTP::HeaderExtension mid;
+        mid.id      = 1;
+        mid.uri     = QStringLiteral("urn:ietf:params:rtp-hdrext:sdes:mid");
+        mid.senders = XMPP::Jingle::Origin::Both;
+        answer.headerExtensions.append(mid);
+        QVERIFY(harness.endpoint->acceptsAnswer(audioDescription(), answer));
+
+        answer.headerExtensions[0].uri = QStringLiteral("urn:example:unsupported");
+        QVERIFY(!harness.endpoint->acceptsAnswer(audioDescription(), answer));
+
+        answer.headerExtensions[0] = mid;
+        answer.headerExtensions[0].id = 256;
+        QVERIFY(!harness.endpoint->acceptsAnswer(audioDescription(), answer));
+
+        answer.headerExtensions[0] = mid;
+        answer.headerExtensions[0].senders = XMPP::Jingle::Origin::Initiator;
+        QVERIFY(!harness.endpoint->acceptsAnswer(audioDescription(), answer));
+    }
+
     void silentBackendTimeoutIsFailClosed()
     {
         Harness harness;
