@@ -1309,6 +1309,78 @@ jobs:
           test "$(stat -c %s "$caller_out")" -ge 4096
           test "$(stat -c %s "$callee_out")" -ge 4096
 
+      - name: Repeat A/V BUNDLE after in-process teardown
+        shell: bash
+        env:
+          QT_QPA_PLATFORM: offscreen
+          G_DEBUG: fatal-criticals
+          ASAN_OPTIONS: detect_leaks=0:abort_on_error=1
+        run: |
+          set -euo pipefail
+          bin="$GITHUB_WORKSPACE/_jingle-call-build/psi_jingle_call_live_client"
+          ready="$RUNNER_TEMP/jingle-av-repeat.ready"
+          caller_out="$RUNNER_TEMP/jingle-av-repeat-caller.raw"
+          callee_out="$RUNNER_TEMP/jingle-av-repeat-callee.raw"
+          caller_log="$RUNNER_TEMP/jingle-av-repeat-caller.log"
+          callee_log="$RUNNER_TEMP/jingle-av-repeat-callee.log"
+          caller_jid="user01@localhost/av-repeat-caller"
+          callee_requested="user02@localhost/av-repeat-callee"
+
+          rm -f "$ready" "$caller_out" "$callee_out" "$caller_log" "$callee_log"
+
+          "$bin" callee "$callee_requested" ci-pass-02 "$caller_jid" \
+            "$callee_out" "$ready" av-bundle-repeat >"$callee_log" 2>&1 &
+          callee_pid=$!
+
+          for i in $(seq 1 200); do
+            if [[ -s "$ready" ]]; then break; fi
+            if ! kill -0 "$callee_pid" 2>/dev/null; then
+              cat "$callee_log"
+              exit 1
+            fi
+            sleep 0.1
+          done
+          test -s "$ready"
+          callee_jid="$(tr -d '\r\n' < "$ready")"
+
+          set +e
+          "$bin" caller "$caller_jid" ci-pass-01 "$callee_jid" \
+            "$caller_out" '' av-bundle-repeat >"$caller_log" 2>&1
+          caller_rc=$?
+          if [[ "$caller_rc" -ne 0 ]]; then
+            kill "$callee_pid" 2>/dev/null || true
+          fi
+          wait "$callee_pid"
+          callee_rc=$?
+          set -e
+
+          echo "LIVE_AV_REPEAT_PROCESS_RC caller=$caller_rc callee=$callee_rc"
+          echo "--- repeated A/V BUNDLE caller log ---"
+          cat "$caller_log"
+          echo "--- repeated A/V BUNDLE callee log ---"
+          cat "$callee_log"
+
+          test "$caller_rc" -eq 0
+          test "$callee_rc" -eq 0
+
+          for log in "$caller_log" "$callee_log"; do
+            test "$(grep -Fc 'CALL_ITERATION_RESULT=success 1/2' "$log")" -eq 1
+            test "$(grep -Fc 'CALL_ITERATION_RESULT=success 2/2' "$log")" -eq 1
+            test "$(grep -Fc 'CALL_VIDEO_DECODED=1' "$log")" -ge 2
+            test "$(grep -Fc 'CALL_MID_NEGOTIATED=1' "$log")" -ge 2
+            test "$(grep -Fc 'CALL_BUNDLE_NEGOTIATED=1' "$log")" -ge 2
+            test "$(grep -Fc 'CALL_MEDIA_STARTED=1' "$log")" -ge 2
+            ! grep -Fq 'CALL_STALE_TERMINATION_IGNORED=1' "$log"
+            ! grep -Fq 'AddressSanitizer' "$log"
+          done
+
+          grep -Fq "CALL_RESTART=caller-starting-next" "$caller_log"
+          grep -Fq "CALL_RESTART=callee-ready-next" "$callee_log"
+          grep -Fx "LIVE_CALL_RESULT=success caller completed" "$caller_log"
+          grep -Fx "LIVE_CALL_RESULT=success callee completed" "$callee_log"
+          test "$(stat -c %s "$caller_out")" -ge 4096
+          test "$(stat -c %s "$callee_out")" -ge 4096
+
       - name: Show Prosody call log
         if: always()
         shell: bash
