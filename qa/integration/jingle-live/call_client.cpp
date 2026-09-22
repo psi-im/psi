@@ -487,7 +487,39 @@ int main(int argc, char **argv)
                 finish(25, QStringLiteral("cannot configure callee video output"));
                 return;
             }
-            session->accept();
+
+            if (!avBundle) {
+                session->accept();
+                return;
+            }
+
+            // Incoming transport payloads are committed asynchronously by Iris.
+            // Do not accept a BUNDLE offer from inside incomingSession() before
+            // both deferred ICE updates have reached Pending; otherwise shared
+            // DTLS setup can run without the committed remote fingerprint.
+            auto acceptBundleWhenReady = std::make_shared<std::function<void(int)>>();
+            *acceptBundleWhenReady = [&, session, incomingAudio, incomingVideo, acceptBundleWhenReady](int attempts) {
+                if (!session || session->state() >= J::State::Finishing)
+                    return;
+                const auto audioTransport = incomingAudio ? incomingAudio->transport() : QSharedPointer<J::Transport>();
+                const auto videoTransport = incomingVideo ? incomingVideo->transport() : QSharedPointer<J::Transport>();
+                const bool ready = audioTransport && videoTransport
+                    && audioTransport->state() >= J::State::Pending
+                    && videoTransport->state() >= J::State::Pending;
+                if (ready) {
+                    qInfo("CALL_BUNDLE_REMOTE_TRANSPORTS=ready");
+                    session->accept();
+                    return;
+                }
+                if (attempts >= 100) {
+                    finish(27, QStringLiteral("incoming BUNDLE ICE updates did not commit"));
+                    return;
+                }
+                QTimer::singleShot(10, session, [acceptBundleWhenReady, attempts]() {
+                    (*acceptBundleWhenReady)(attempts + 1);
+                });
+            };
+            QTimer::singleShot(0, session, [acceptBundleWhenReady]() { (*acceptBundleWhenReady)(0); });
         });
     }
 
