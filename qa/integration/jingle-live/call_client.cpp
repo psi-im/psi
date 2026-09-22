@@ -641,8 +641,7 @@ int main(int argc, char **argv)
                     return;
                 }
                 ready.write(endpoint.client()->jid().full().toUtf8());
-                ready.write("
-");
+                ready.write("\n");
                 ready.close();
                 qInfo().noquote() << QStringLiteral("Callee armed for incoming %1 call").arg(mode);
                 return;
