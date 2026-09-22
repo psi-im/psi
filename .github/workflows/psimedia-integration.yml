@@ -1117,7 +1117,8 @@ jobs:
           sudo service prosody stop 2>/dev/null || true
 
       - name: Restore Jingle call compiler cache
-        uses: actions/cache@v4
+        id: jingle-call-ccache
+        uses: actions/cache/restore@v4
         with:
           path: ~/.cache/ccache
           key: ${{ runner.os }}-jingle-call-ccache-${{ env.IRIS_SRTP_REF }}-${{ env.PSIMEDIA_SRTP_REF }}-${{ github.sha }}
@@ -1156,6 +1157,13 @@ jobs:
       - name: Show Jingle call compiler cache stats
         if: always()
         run: ccache --show-stats
+
+      - name: Save Jingle call compiler cache
+        if: always() && steps.jingle-call-ccache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/ccache
+          key: ${{ runner.os }}-jingle-call-ccache-${{ env.IRIS_SRTP_REF }}-${{ env.PSIMEDIA_SRTP_REF }}-${{ github.sha }}
 
       - name: Start local Prosody
         shell: bash
