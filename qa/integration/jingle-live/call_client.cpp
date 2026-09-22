@@ -362,7 +362,8 @@ int main(int argc, char **argv)
             return false;
 
         rtpManager->setMediaProvider(makePsiMediaJingleProvider(caps));
-        // Match production preference: NSTransportsList selects from the end.\n        rtpManager->setTransportNamespaces({ ICE::NS_ICE_UDP, ICE::NS });
+        // Match production preference: NSTransportsList selects from the end.
+        rtpManager->setTransportNamespaces({ ICE::NS_ICE_UDP, ICE::NS });
         iceManager->setAllowIpExposure(true);
         return true;
     };
@@ -640,7 +641,8 @@ int main(int argc, char **argv)
                     return;
                 }
                 ready.write(endpoint.client()->jid().full().toUtf8());
-                ready.write("\n");
+                ready.write("
+");
                 ready.close();
                 qInfo().noquote() << QStringLiteral("Callee armed for incoming %1 call").arg(mode);
                 return;
