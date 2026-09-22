@@ -31,7 +31,7 @@ permissions:
 env:
   QCA_TAG: v3.0.8
   IRIS_SRTP_REF: 67e86c86c10e82ffd17df491f75db5dfc0b6a4df
-  PSIMEDIA_SRTP_REF: db8bd805c068b7c3f691512766c1198777d6fc15
+  PSIMEDIA_SRTP_REF: 1709a764742e30909a70a1e1bba174a4f1dc00d6
 
 concurrency:
   group: psimedia-integration-${{ github.workflow }}-${{ github.ref }}
