@@ -814,7 +814,7 @@ jobs:
           G_DEBUG: fatal-criticals
         run: |
           ctest --test-dir _psimedia-smoke-build \
-            -R '^(psimedia_(provider_smoke|plugin_load_smoke|opusrtppay|rtpworker_receive_order|videoprep|video_capture_caps|rtpsessioncontext_sender|rtpsessionbridge|rtpsessionbridge_packets|rtpsessionbridge_periodic|rtpsessionbridge_backpressure)|psi_(backend_lifecycle_test|native_media_(adapter|runtime_error)_smoke)) \
+            -R '^(psimedia_(provider_smoke|plugin_load_smoke|opusrtppay|rtpworker_receive_order|rtpworker_send_order|videoprep|video_capture_caps|rtpsessioncontext_sender|rtpsessionbridge|rtpsessionbridge_packets|rtpsessionbridge_periodic|rtpsessionbridge_backpressure)|psi_(backend_lifecycle_test|native_media_(adapter|runtime_error)_smoke))$' \
             --no-tests=error \
             --output-on-failure \
             -V \
