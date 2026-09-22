@@ -514,6 +514,39 @@ private slots:
                  QStringLiteral("urn:ietf:params:rtp-hdrext:sdes:mid"));
     }
 
+    void incomingExtendedMidOfferRemapsToFreeWireId()
+    {
+        Harness harness;
+        auto remote = audioDescription();
+
+        RTP::HeaderExtension occupied;
+        occupied.id      = 1;
+        occupied.uri     = QStringLiteral("urn:example:occupied");
+        occupied.senders = XMPP::Jingle::Origin::Both;
+        remote.headerExtensions.append(occupied);
+
+        RTP::HeaderExtension mid;
+        mid.id      = 4096;
+        mid.uri     = QStringLiteral("urn:ietf:params:rtp-hdrext:sdes:mid");
+        mid.senders = XMPP::Jingle::Origin::Both;
+        remote.headerExtensions.append(mid);
+
+        std::optional<RTP::Description> prepared;
+        auto operation = harness.session->prepareAnswer(
+            harness.endpoint.get(), remote,
+            [&](RTP::MediaOperation::Id, std::optional<RTP::Description> description, RTP::MediaError error) {
+                QVERIFY(!error);
+                prepared = std::move(description);
+            });
+        QTRY_COMPARE(provider_.stats().startCalls, 1);
+        provider_.context()->completeStart();
+        QTRY_VERIFY(prepared.has_value());
+        QCOMPARE(prepared->headerExtensions.size(), 1);
+        QCOMPARE(prepared->headerExtensions.constFirst().id, quint16(2));
+        QCOMPARE(prepared->headerExtensions.constFirst().uri,
+                 QStringLiteral("urn:ietf:params:rtp-hdrext:sdes:mid"));
+    }
+
     void answerPolicyAcceptsMidButRejectsOtherHeaderExtensions()
     {
         Harness harness;
