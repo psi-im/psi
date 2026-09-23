@@ -362,7 +362,8 @@ int main(int argc, char **argv)
             return false;
 
         rtpManager->setMediaProvider(makePsiMediaJingleProvider(caps));
-        rtpManager->setTransportNamespaces({ ICE::NS, ICE::NS_ICE_UDP });
+        // Match production preference: NSTransportsList selects from the end.
+        rtpManager->setTransportNamespaces({ ICE::NS_ICE_UDP, ICE::NS });
         iceManager->setAllowIpExposure(true);
         return true;
     };

@@ -30,7 +30,7 @@ permissions:
 
 env:
   QCA_TAG: v3.0.8
-  IRIS_SRTP_REF: 9c09c899eafb403e4d96c2afd3958d8fa2e52f41
+  IRIS_SRTP_REF: 719dee8c5d1dfb35fd8cec749e2f1ffdd494bdfe
   PSIMEDIA_SRTP_REF: ce8df212f6f738e58c3ffe961899400f2131f782
 
 concurrency:
@@ -1107,7 +1107,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            cmake g++ ninja-build pkg-config qt6-base-dev \
+            cmake ccache g++ ninja-build pkg-config qt6-base-dev \
             libssl-dev libsrtp2-dev libusrsctp-dev zlib1g-dev \
             libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
             libgstreamer-plugins-bad1.0-dev \
@@ -1115,6 +1115,16 @@ jobs:
             gstreamer1.0-plugins-bad gstreamer1.0-tools prosody
           sudo systemctl stop prosody.service 2>/dev/null || true
           sudo service prosody stop 2>/dev/null || true
+
+      - name: Restore Jingle call compiler cache
+        id: jingle-call-ccache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/ccache
+          key: ${{ runner.os }}-jingle-call-ccache-${{ env.IRIS_SRTP_REF }}-${{ env.PSIMEDIA_SRTP_REF }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-jingle-call-ccache-${{ env.IRIS_SRTP_REF }}-${{ env.PSIMEDIA_SRTP_REF }}-
+            ${{ runner.os }}-jingle-call-ccache-
 
       - name: Install QCA3 release package
         shell: bash
@@ -1134,13 +1144,26 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          ccache --zero-stats
           cmake -S qa/integration/jingle-live -B _jingle-call-build -G Ninja \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_FLAGS="-fsanitize=address -fno-omit-frame-pointer" \
             -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address" \
             -DPSI_SOURCE_DIR="$GITHUB_WORKSPACE" \
             -DPSIMEDIA_SOURCE_DIR="$GITHUB_WORKSPACE/_psimedia"
           cmake --build _jingle-call-build --target psi_jingle_call_live_client --parallel 4
+
+      - name: Show Jingle call compiler cache stats
+        if: always()
+        run: ccache --show-stats
+
+      - name: Save Jingle call compiler cache
+        if: always() && steps.jingle-call-ccache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/ccache
+          key: ${{ runner.os }}-jingle-call-ccache-${{ env.IRIS_SRTP_REF }}-${{ env.PSIMEDIA_SRTP_REF }}-${{ github.sha }}
 
       - name: Start local Prosody
         shell: bash
