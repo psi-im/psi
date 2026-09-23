@@ -327,6 +327,7 @@ if(WIN32)
             ${CMAKE_SHARED_LIBRARY_PREFIX}jpeg8.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}jpeg-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}png16-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}srtp2*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}vorbis-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}vorbisenc-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}winpthread-*.dll
@@ -400,7 +401,6 @@ if(WIN32)
         legacy.dll
         ${CMAKE_SHARED_LIBRARY_PREFIX}protobuf-c${D}.dll
         ${CMAKE_SHARED_LIBRARY_PREFIX}ssleay32.dll
-        ${CMAKE_SHARED_LIBRARY_PREFIX}srtp2*.dll
         ${CMAKE_SHARED_LIBRARY_PREFIX}z${D}.dll
         )
     if(USE_MXE)
