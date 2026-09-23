@@ -56,7 +56,7 @@ endfunction()
 
 function(obtain_git_version GIT_VERSION GIT_FULL_VERSION)
   if(EXISTS "${PROJECT_SOURCE_DIR}/\.git" AND (NOT IS_SNAPSHOT))
-    run_git(MAIN_VER describe --tags --abbrev=0)
+    run_git(MAIN_VER describe --tags --abbrev=0 --exclude "windows-sdk-*")
     if(MAIN_VER)
       set(APP_VERSION
           "${MAIN_VER}"
