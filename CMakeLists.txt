@@ -95,6 +95,7 @@ set(IRIS_ENABLE_OMEMO ${ENABLE_OMEMO} CACHE BOOL "Enable Iris OMEMO support" FOR
 option(IRIS_BUNDLED_OMEMO_C "Build libomemo-c and protobuf-c when OMEMO is enabled"  ${DEFAULT_BUNDLED_OMEMO_C})
 option( BUNDLED_KEYCHAIN "Build QtKeychain library bundled" OFF )
 option( USE_TASKBARNOTIFIER "Use taskbar notifications for incoming events" ON )
+option( USE_CPACK "Enable CPACK package generation" OFF )
 
 if (UNIX AND "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     option( ENABLE_ASAN "Enable compilation with address sanitizer" OFF )
