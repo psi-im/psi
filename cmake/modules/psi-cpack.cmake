@@ -2,10 +2,6 @@
 # Included from src/CMakeLists.txt after the project metadata and install rules
 # have been defined.
 
-if(NOT USE_CPACK)
-    return()
-endif()
-
 find_program(PSI_CPACK_DPKG_DEB_EXECUTABLE dpkg-deb)
 find_program(PSI_CPACK_RPMBUILD_EXECUTABLE rpmbuild)
 
