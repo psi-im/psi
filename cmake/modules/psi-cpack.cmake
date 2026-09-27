@@ -13,6 +13,10 @@ else()
     set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Psi XMPP client")
 endif()
 
+if(NOT DEFAULT_VER)
+    set(DEFAULT_VER "1.5")
+endif()
+
 set(CPACK_PACKAGE_VENDOR "psi-im.org")
 set(CPACK_PACKAGE_CONTACT "psi-im.org")
 set(CPACK_PACKAGE_HOMEPAGE_URL "https://psi-im.org/")
@@ -21,7 +25,7 @@ set(CPACK_DESCRIPTION_SUFFIX "designed for experienced users.")
 
 # PSI_VERSION can contain a date or revision suffix. CPack package versions
 # must be numeric, so retain only its numeric prefix.
-set(_PSI_CPACK_VERSION "${PSI_VERSION}")
+set(_PSI_CPACK_VERSION "${CPACK_PSI_VERSION}")
 string(REGEX MATCH "^[0-9]+(\\.[0-9]+)*" _PSI_CPACK_VERSION "${_PSI_CPACK_VERSION}")
 if(NOT _PSI_CPACK_VERSION)
     set(_PSI_CPACK_VERSION "${DEFAULT_VER}.0")
@@ -62,23 +66,46 @@ endif()
 
 if(_PSI_CPACK_GENERATORS)
     set(CPACK_GENERATOR "${_PSI_CPACK_GENERATORS}")
+    if(ENABLE_PLUGINS AND PSI_CPACK_DPKG_DEB_EXECUTABLE)
+        list(APPEND CPACK_DEBIAN_PLUGINS_PACKAGE_DEPENDS "${CPACK_PACKAGE_NAME}-im")
+    endif()
+    if(LANGS_EXISTS AND PSI_CPACK_DPKG_DEB_EXECUTABLE)
+        list(APPEND CPACK_DEBIAN_L10N_PACKAGE_DEPENDS "${CPACK_PACKAGE_NAME}-im")
+    endif()
+    if(INSTALL_PLUGINS_SDK AND PSI_CPACK_DPKG_DEB_EXECUTABLE)
+        list(APPEND CPACK_DEBIAN_DEV_PACKAGE_DEPENDS "${CPACK_PACKAGE_NAME}-im")
+    endif()
+
+    include(CPackComponent)
+    set(CPACK_COMPONENTS_ALL im)
+    cpack_add_component(im
+        DISPLAY_NAME "Main"
+        DESCRIPTION "Main program files"
+        REQUIRED
+    )
     if(ENABLE_PLUGINS)
-        if(PSI_CPACK_DPKG_DEB_EXECUTABLE)
-            list(APPEND CPACK_DEBIAN_PLUGINS_PACKAGE_DEPENDS "${CPACK_PACKAGE_NAME}-im")
-        endif()
+        list(APPEND CPACK_COMPONENTS_ALL plugins)
+        cpack_add_component(plugins
+            DISPLAY_NAME "Plugins"
+            DESCRIPTION "Useful plugins for program"
+        )
         message(STATUS "CPack: plugins included as plugins component")
     endif()
-    if(LANGS_EXISTS)
-        if(PSI_CPACK_DPKG_DEB_EXECUTABLE)
-            list(APPEND CPACK_DEBIAN_L10N_PACKAGE_DEPENDS "${CPACK_PACKAGE_NAME}-im")
-        endif()
-        message(STATUS "CPack: translations included as ${LANGS_COMPONENT} component")
+    if(EXISTS "${TRANSLATIONS_DIR}")
+        list(APPEND CPACK_COMPONENTS_ALL "l10n")
+        cpack_add_component(l10n
+            DISPLAY_NAME "Translations"
+            DESCRIPTION "Program translation files"
+        )
+        message(STATUS "CPack: translations included as l10n component")
     endif()
     if(INSTALL_PLUGINS_SDK)
-        if(PSI_CPACK_DPKG_DEB_EXECUTABLE)
-            list(APPEND CPACK_DEBIAN_DEV_PACKAGE_DEPENDS "${CPACK_PACKAGE_NAME}-im")
-        endif()
-        message(STATUS "CPack: plugins SDK included as ${DEV_COMPONENT} component")
+        list(APPEND CPACK_COMPONENTS_ALL "dev")
+        cpack_add_component(dev
+            DISPLAY_NAME "SDK"
+            DESCRIPTION "Plugins SDK"
+        )
+        message(STATUS "CPack: plugins SDK included as dev component")
     endif()
 else()
     message(WARNING "USE_CPACK is enabled, but neither dpkg-deb nor rpmbuild was found")
