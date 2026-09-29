@@ -579,10 +579,16 @@ set(DOC_FILES
     "${PROJECT_SOURCE_DIR}/COPYING"
     "${PROJECT_SOURCE_DIR}/README.html"
 )
-
+#APP DATA FILE
+if(PSI_PLUS)
+    set(APP_DATA_ID "com.psi_plus")
+else()
+    set(APP_DATA_ID "org.psi_im.Psi")
+endif()
 set(APP_DATA_FILE
-    "${PROJECT_SOURCE_DIR}/linux/${PROJECT_NAME}.appdata.xml"
+    "${CMAKE_CURRENT_BINARY_DIR}/${APP_DATA_ID}.appdata.xml"
 )
+configure_file("${PROJECT_SOURCE_DIR}/linux/${PROJECT_NAME}.appdata.xml" "${APP_DATA_FILE}" COPYONLY)
 
 #PREPARE SECTION
 copy("${PROJECT_SOURCE_DIR}/certs/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/certs/" prepare-bin)
@@ -670,6 +676,7 @@ if(LINUX)
     endif()
     if(USE_CPACK)
         set(CPACK_PSI_VERSION ${PSI_VERSION} PARENT_SCOPE)
+        set(CPACK_PSI_ICON "${VERBOSED_NAME}.png" PARENT_SCOPE)
     endif()
 elseif(HAIKU)
     if(PSI_PLUS)
