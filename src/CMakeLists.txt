@@ -580,10 +580,9 @@ set(DOC_FILES
     "${PROJECT_SOURCE_DIR}/README.html"
 )
 #APP DATA FILE
+set(APP_DATA_ID "org.psi_im.Psi")
 if(PSI_PLUS)
     set(APP_DATA_ID "com.psi_plus")
-else()
-    set(APP_DATA_ID "org.psi_im.Psi")
 endif()
 set(APP_DATA_FILE
     "${CMAKE_CURRENT_BINARY_DIR}/${APP_DATA_ID}.appdata.xml"
