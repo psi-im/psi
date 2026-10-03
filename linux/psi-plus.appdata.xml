@@ -32,6 +32,9 @@
   </description>
   <url type="homepage">https://psi-im.org/</url>
   <url type="bugtracker">https://github.com/psi-im/psi/issues</url>
+  <developer id="org.psi_im">
+    <name>Psi Team</name>
+  </developer>
   <screenshots>
     <screenshot type="default">
       <image>https://psi-im.org/wiki/lib/exe/fetch.php?cache=&media=psiplus_screen_linux_big.png</image>
