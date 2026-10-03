@@ -43,6 +43,9 @@ if(CPACK_GENERATOR STREQUAL \"AppImage\")
     set(CPACK_MONOLITHIC_INSTALL 1)
     set(CPACK_SET_DESTDIR ON)
     set(CPACK_PACKAGING_INSTALL_PREFIX \"/\")
+elseif(CPACK_GENERATOR STREQUAL \"DragNDrop\")
+    set(CPACK_COMPONENTS_GROUPING \"ALL_COMPONENTS_IN_ONE\")
+    set(CPACK_MONOLITHIC_INSTALL 1)
 else()
     set(CPACK_COMPONENTS_GROUPING \"ONE_PER_GROUP\")
     set(CPACK_MONOLITHIC_INSTALL 0)
@@ -174,6 +177,23 @@ Translations = ${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}/translations
         endif()
       message(STATUS "CPack: AppImage generator added")
     endif()
+endif()
+
+#DragNDrop CPack generator for macOS
+if(APPLE)
+    list(APPEND _PSI_CPACK_GENERATORS "DragNDrop")
+    set(CPACK_DMG_VOLUME_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}")
+    set(CPACK_DMG_DS_STORE_DIR "${CMAKE_SOURCE_DIR}")
+    set(CPACK_DMG_BACKGROUND_IMAGE "${CMAKE_SOURCE_DIR}/src/iconsets/system/default/psi_icon.png")
+    set(CPACK_DMG_FORMAT "UDZO")
+    set(CPACK_DMG_FILESYSTEM "HFS+")
+    # Set icon for the .dmg file if available
+    if(APPLE AND CPACK_PSI_ICON)
+        set(CPACK_DMG_ICON "${CPACK_PSI_ICON}")
+    endif()
+    # Configure DMG window appearance
+    set(CPACK_DMG_WINDOW_STYLE "styled")
+    message(STATUS "CPack: DragNDrop generator enabled for macOS")
 endif()
 
 if(_PSI_CPACK_GENERATORS)
