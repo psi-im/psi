@@ -193,6 +193,27 @@ if(APPLE)
     endif()
     # Configure DMG window appearance
     set(CPACK_DMG_WINDOW_STYLE "styled")
+    # Directories where fixup_bundle will search for libraries. 
+    # CMAKE_BINARY_DIR — the project build directory. 
+    # Additional directories can be added here, for example:
+    # /opt/homebrew/lib
+    # /usr/local/lib
+    set(APP_LIBRARY_DIRS
+        "${CMAKE_BINARY_DIR}"
+        "/opt/homebrew/lib"
+        "/usr/local/lib"
+    )
+    # It is important to escape variables that need to be evaluated
+    # during install/CPack, rather than during configure.
+    install(CODE "
+        include(BundleUtilities)
+        set(BU_CHMOD_BUNDLE_ITEMS TRUE)
+        fixup_bundle(
+            \"\\\$ENV{DESTDIR}\\\${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}\"
+            \"\"
+            \"${APP_LIBRARY_DIRS}\"
+        )
+    ")
     message(STATUS "CPack: DragNDrop generator enabled for macOS")
 endif()
 
