@@ -205,6 +205,7 @@ if(APPLE)
     )
     # It is important to escape variables that need to be evaluated
     # during install/CPack, rather than during configure.
+    # Search for additional libraries
     install(CODE "
         include(BundleUtilities)
         set(BU_CHMOD_BUNDLE_ITEMS TRUE)
@@ -213,6 +214,18 @@ if(APPLE)
             \"\"
             \"${APP_LIBRARY_DIRS}\"
         )
+    ")
+    # Deploy Qt libs and plugins
+    find_program(CPACK_MACDEPLOYQT_BIN macdeployqt)
+    install(CODE "
+        execute_process(
+            COMMAND ${CPACK_MACDEPLOYQT_BIN}
+            \"\\\$ENV{DESTDIR}\\\${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}\"
+            RESULT_VARIABLE MACDEPLOYQT_RESULT
+        )
+        if(NOT MACDEPLOYQT_RESULT EQUAL 0)
+            message(FATAL_ERROR \"macdeployqt failed\")
+        endif()
     ")
     message(STATUS "CPack: DragNDrop generator enabled for macOS")
 endif()
