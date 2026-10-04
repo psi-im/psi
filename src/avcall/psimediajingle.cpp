@@ -459,8 +459,11 @@ public:
             // Older providers/tests may omit the name when only one codec path exists.
             if (!owner && endpoint.contentName.isEmpty() && children_.empty())
                 owner = this;
-            if (!owner)
+            if (!owner) {
+                qWarning("psi media content=%s endpoint=%s route rejected: codec owner unavailable",
+                         qUtf8Printable(endpoint.contentName), endpoint.endpointId.toHex().constData());
                 return false;
+            }
             routes[owner].append(endpoint);
         }
         QHash<BackendSession *, QList<RTP::SecureRtpEndpoint>> previous;
@@ -469,6 +472,8 @@ public:
         for (auto it = routes.cbegin(); it != routes.cend(); ++it) {
             if (it.key()->applyEndpointRoutes(it.value()))
                 continue;
+            qWarning("psi media owner=%p route update rejected endpoints=%d; restoring previous routes",
+                     static_cast<void *>(it.key()), int(it.value().size()));
             for (auto old = previous.cbegin(); old != previous.cend(); ++old)
                 old.key()->applyEndpointRoutes(old.value());
             return false;
@@ -480,8 +485,11 @@ public:
     {
         // Empty is teardown and remains valid after failure. New routing state
         // must never revive a terminal backend.
-        if (!endpoints.isEmpty() && isTerminalOrStopping())
+        if (!endpoints.isEmpty() && isTerminalOrStopping()) {
+            qWarning("psi media owner=%p route rejected: codec session terminal or stopping",
+                     static_cast<void *>(this));
             return false;
+        }
 
         QList<PsiMedia::SecureRtpEndpoint> out;
         out.reserve(endpoints.size());

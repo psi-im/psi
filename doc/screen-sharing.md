@@ -64,6 +64,23 @@ produce different presentation layouts. External-client interoperability and
 real compositor permission dialogs require manual call testing; synthetic
 GStreamer and mock portal tests cannot establish those results.
 
+## Diagnosing a failed addition
+
+Collect both clients' application logs and the XMPP exchange for the same attempt.
+The `jingle sid=...` entries identify outgoing actions and IQ results. A successful
+`content-add` IQ result acknowledges receipt; look for `content-accept`,
+`content-reject`, or an IQ error to learn the actual decision.
+
+`jingle-rtp content=...` entries show media parameter application, secure route
+binding, activation, and local/remote removal with its reason. BUNDLE commit and
+rollback entries distinguish provisional membership from accepted membership.
+Match the association and endpoint identifiers to psimedia's group configuration
+messages. Those messages distinguish missing codec payloads, invalid MID/SSRC
+routes, rejected codec mappings, and runtime errors. Worker/context addresses
+identify which codec graph was cleaned up; cleanup alone does not identify the
+failure that caused it. GStreamer errors include the element, error code and
+debug detail. These diagnostics do not print ICE passwords or SRTP key material.
+
 Psi automatically prepares a receive-only answer to a new video content in an
 active call. This includes screen sharing during an audio-only call and additions
 to an existing audio/video BUNDLE group. The IQ result acknowledging `content-add`
