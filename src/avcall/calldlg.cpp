@@ -28,6 +28,7 @@
 #include "xmpp_caps.h"
 #include "xmpp_client.h"
 #include <QElapsedTimer>
+#include <QIcon>
 #include <QPointer>
 #include <QTimer>
 #include <QVBoxLayout>
