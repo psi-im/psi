@@ -17,47 +17,35 @@
  */
 
 #include "calldlg.h"
-
-#include "../avcall/mediadevicewatcher.h"
 #include "../psimedia/psimedia.h"
 #include "avcall.h"
-#include "common.h"
+#include "callview.h"
 #include "iconset.h"
+#include "mediadevicewatcher.h"
 #include "psiaccount.h"
 #include "psioptions.h"
-#include "ui_call.h"
+#include "screensharecapture.h"
 #include "xmpp_caps.h"
 #include "xmpp_client.h"
-
-#include <QMessageBox>
-#include <QTime>
+#include <QElapsedTimer>
+#include <QPointer>
 #include <QTimer>
+#include <QVBoxLayout>
 
 class CallDlg::Private : public QObject {
-    Q_OBJECT
-
 public:
-    CallDlg               *q;
-    Ui::Call               ui;
-    PsiAccount            *pa;
-    bool                   incoming;
-    bool                   active;
-    bool                   activated;
-    bool                   sessionFinished;
-    AvCall                *sess;
-    PsiMedia::VideoWidget *vw_remote;
-    QTimer                *timer;
-    QTime                  call_duration;
-
-    explicit Private(CallDlg *_q) :
-        QObject(_q), q(_q), active(false), activated(false), sessionFinished(false), sess(nullptr), timer(nullptr)
+    explicit Private(CallDlg *dialog) : QObject(dialog), q(dialog), capture(this)
     {
-        ui.setupUi(q);
-        q->setWindowTitle(tr("Voice Call"));
+        q->setWindowTitle(tr("Call"));
         q->setWindowIcon(IconsetFactory::icon("psi/avcall").icon());
-
+        q->resize(860, 640);
+        auto layout = new QVBoxLayout(q);
+        layout->setContentsMargins(0, 0, 0, 0);
+        view = new CallView(q);
+        layout->addWidget(view);
+        view->setVideoSupported(AvCallManager::isVideoSupported());
         if (AvCallManager::isSupported()) {
-            auto config = MediaDeviceWatcher::instance()->configuration();
+            const auto config = MediaDeviceWatcher::instance()->configuration();
             AvCallManager::setAudioOutDevice(config.audioOutDeviceId);
             AvCallManager::setAudioInDevice(config.audioInDeviceId);
             AvCallManager::setVideoInDevice(config.videoInDeviceId);
@@ -66,210 +54,158 @@ public:
             AvCallManager::setExternalAddress(
                 PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString());
         }
-
-        if (!AvCallManager::isVideoSupported()) {
-            ui.ck_useVideo->setChecked(false);
-            ui.ck_useVideo->setEnabled(false);
-        }
-
-        ui.lb_bandwidth->setEnabled(false);
-        ui.cb_bandwidth->setEnabled(false);
-        connect(ui.ck_useVideo, SIGNAL(toggled(bool)), ui.lb_bandwidth, SLOT(setEnabled(bool)));
-        connect(ui.ck_useVideo, SIGNAL(toggled(bool)), ui.cb_bandwidth, SLOT(setEnabled(bool)));
-
-        ui.cb_bandwidth->addItem(tr("High (1Mbps)"), 1000);
-        ui.cb_bandwidth->addItem(tr("Average (400Kbps)"), 400);
-        ui.cb_bandwidth->addItem(tr("Low (160Kbps)"), 160);
-        ui.cb_bandwidth->setCurrentIndex(1);
-
-        connect(ui.pb_accept, SIGNAL(clicked()), SLOT(ok_clicked()));
-        connect(ui.pb_reject, SIGNAL(clicked()), SLOT(cancel_clicked()));
-
-        ui.pb_accept->setDefault(true);
-        ui.pb_accept->setFocus();
-
-        timer = new QTimer(q);
-        connect(timer, SIGNAL(timeout()), SLOT(update_call_duration()));
-
-        q->resize(q->minimumSizeHint());
+        connect(view, &CallView::accepted, this, [this] { accept(); });
+        connect(view, &CallView::ended, q, &QDialog::close);
+        connect(view, &CallView::microphoneChanged, this, [this](bool enabled) {
+            if (session)
+                session->setMicrophoneEnabled(enabled);
+        });
+        connect(view, &CallView::cameraChanged, this, [this](bool enabled) {
+            if (session)
+                session->setCameraEnabled(enabled);
+        });
+        connect(view, &CallView::shareRequested, this, [this] {
+            if (!session || !active)
+                return;
+            if (capture.selecting() || session->screenSharing())
+                capture.stop();
+            else
+                capture.select(q);
+        });
+        connect(&capture, &ScreenShareCapture::ready, this, [this](const QString &source, const QString &label) {
+            if (!session || !active || !session->startScreenSharing(source, capture.sourceLease())) {
+                capture.stop();
+                return;
+            }
+            shareLabel = label;
+            view->setSharing(true, label, true);
+        });
+        connect(&capture, &ScreenShareCapture::stopped, this, [this] {
+            if (session)
+                session->stopScreenSharing();
+            view->setSharing(false);
+        });
+        connect(&capture, &ScreenShareCapture::selectingChanged, view, &CallView::setShareSelecting);
+        connect(&capture, &ScreenShareCapture::failed, view, &CallView::setStatus);
+        connect(&timer, &QTimer::timeout, this, [this] { view->setDuration(elapsed.elapsed() / 1000); });
     }
 
     ~Private() override
     {
-        if (sess) {
-            if ((active || incoming) && !sessionFinished)
-                sess->reject();
-
-            sess->setIncomingVideo(nullptr);
-            sess->disconnect(this);
-            sess->unlink();
-            sess->deleteLater();
+        capture.stop();
+        if (session) {
+            session->disconnect(this);
+            if (!finished)
+                session->reject();
+            session->setIncomingVideo(nullptr);
+            session->setIncomingPresentation(nullptr);
+            session->unlink();
+            session->deleteLater();
         }
     }
 
-    void setOutgoing(const XMPP::Jid &jid)
+    void bind(AvCall *call)
     {
-        incoming = false;
-
-        ui.le_to->setText(jid.full());
-
-        ui.pb_reject->setText(tr("&Close"));
-        ui.pb_accept->setText(tr("C&all"));
-        ui.lb_status->setText(tr("Ready"));
+        session = call;
+        connect(call, &AvCall::activated, this, [this] {
+            active = true;
+            view->setConnecting(false);
+            view->setActive(true);
+            view->setSharingSupported(session->screenSharingSupported());
+            view->setStatus(tr("Connected"));
+            session->setIncomingVideo(view->remoteVideo());
+            session->setIncomingPresentation(view->remotePresentation());
+            elapsed.start();
+            timer.start(1000);
+        });
+        connect(call, &AvCall::error, this, [this] {
+            finished = true;
+            active   = false;
+            capture.stop();
+            timer.stop();
+            view->setConnecting(false);
+            view->setFinished();
+            view->setStatus(session ? session->errorString() : tr("Call ended"));
+        });
+        connect(call, &AvCall::cancelled, this, [this] {
+            finished = true;
+            active   = false;
+            capture.stop();
+            timer.stop();
+            view->setFinished();
+            view->setStatus(tr("Call cancelled"));
+        });
+        connect(call, &AvCall::screenSharingChanged, this, [this](bool sharing) {
+            if (!sharing) {
+                capture.stop();
+                view->setSharing(false);
+            }
+        });
+        connect(call, &AvCall::mediaControlError, view, &CallView::setStatus);
+        connect(call, &AvCall::incomingVideoRemoved, view, &CallView::hideRemoteVideo);
+        connect(call, &AvCall::cameraEnabledChanged, view, &CallView::setCameraEnabled);
+        connect(call, &AvCall::screenSharingStarted, this, [this] { view->setSharing(true, shareLabel); });
     }
 
-    void setIncoming(AvCall *_sess)
+    void accept()
     {
-        incoming = true;
-        sess     = _sess;
-        connect(sess, SIGNAL(activated()), SLOT(sess_activated()));
-        connect(sess, SIGNAL(error()), SLOT(sess_error()));
-        connect(sess, SIGNAL(cancelled()), SLOT(sess_cancelled()));
-
-        ui.lb_to->setText(tr("From:"));
-        ui.le_to->setText(sess->jid().full());
-        ui.le_to->setReadOnly(true);
-
-        if (AvCallManager::isVideoSupported() && (sess->mode() == AvCall::Video || sess->mode() == AvCall::Both)) {
-            ui.ck_useVideo->setChecked(true);
-
-            // video-only session, don't allow deselecting video
-            if (sess->mode() == AvCall::Video)
-                ui.ck_useVideo->setEnabled(false);
-        }
-
-        ui.lb_status->setText(tr("Accept call?"));
-    }
-
-private slots:
-    void ok_clicked()
-    {
-        AvCall::Mode mode = AvCall::Audio;
-        int          kbps = -1;
-        if (ui.ck_useVideo->isChecked()) {
-            mode = AvCall::Both;
-            kbps = ui.cb_bandwidth->itemData(ui.cb_bandwidth->currentIndex()).toInt();
-        }
-
+        if (finished || active)
+            return;
+        view->setConnecting(true);
         if (!incoming) {
-            ui.le_to->setReadOnly(true);
-            ui.le_to->setEnabled(false);
-            ui.ck_useVideo->setEnabled(false);
-            ui.cb_bandwidth->setEnabled(false);
-
-            ui.pb_accept->setEnabled(false);
-            ui.pb_reject->setText(tr("&Cancel"));
-            ui.pb_reject->setFocus();
-            ui.busy->start();
-            ui.lb_status->setText(tr("Calling..."));
-
-            sess = pa->avCallManager()->createOutgoing();
-            connect(sess, SIGNAL(activated()), SLOT(sess_activated()));
-            connect(sess, SIGNAL(error()), SLOT(sess_error()));
-
-            active                    = true;
-            auto                 caps = pa->client()->capsManager()->features(ui.le_to->text());
+            view->setStatus(tr("Calling…"));
+            bind(account->avCallManager()->createOutgoing());
+            session->setMicrophoneEnabled(view->microphoneEnabled());
+            session->setCameraEnabled(view->cameraEnabled());
+            const auto           caps = account->client()->capsManager()->features(view->peer());
             AvCall::PeerFeatures features;
             if (caps.hasJingleIce())
                 features |= AvCall::IceTransport;
             if (caps.hasJingleIceUdp())
                 features |= AvCall::IceUdpTransport;
-            sess->connectToJid(ui.le_to->text(), mode, kbps, features);
-        } else {
-            ui.le_to->setEnabled(false);
-            ui.ck_useVideo->setEnabled(false);
-            ui.cb_bandwidth->setEnabled(false);
-
-            ui.pb_accept->setEnabled(false);
-            ui.pb_reject->setText(tr("&Cancel"));
-            ui.pb_reject->setFocus();
-            ui.busy->start();
-            ui.lb_status->setText(tr("Accepting..."));
-
-            active = true;
-            sess->accept(mode, kbps);
+            session->connectToJid(view->peer(), view->cameraEnabled() ? AvCall::Both : AvCall::Audio, view->bitrate(),
+                                  features);
+        } else if (session) {
+            view->setStatus(tr("Connecting…"));
+            session->setMicrophoneEnabled(view->microphoneEnabled());
+            session->setCameraEnabled(view->cameraEnabled());
+            session->accept(session->mode(), view->bitrate());
         }
     }
 
-    void cancel_clicked()
-    {
-        if (sess && incoming && !active) {
-            sess->reject();
-            sessionFinished = true;
-        }
-        q->close();
-    }
-
-    void sess_activated()
-    {
-        ui.le_to->setEnabled(true);
-        ui.lb_bandwidth->hide();
-        ui.cb_bandwidth->hide();
-
-        if (sess->mode() == AvCall::Video || sess->mode() == AvCall::Both) {
-            vw_remote = new PsiMedia::VideoWidget(q);
-            replaceWidget(ui.ck_useVideo, vw_remote);
-            sess->setIncomingVideo(vw_remote);
-            vw_remote->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-            vw_remote->setMinimumSize(320, 240);
-            ui.fake_spacer->hide();
-        } else
-            ui.ck_useVideo->hide();
-
-        ui.busy->stop();
-        ui.busy->hide();
-        ui.pb_accept->hide();
-        ui.pb_reject->setText(tr("&Hang up"));
-        ui.lb_status->setText(tr("Call active"));
-
-        call_duration = QTime(0, 0, 0, 0);
-        timer->start(1000);
-        activated = true;
-    }
-
-    void sess_error()
-    {
-        sessionFinished = true;
-        if (!activated)
-            ui.busy->stop();
-
-        if (timer->isActive())
-            timer->stop();
-
-        QMessageBox::information(q, tr("Call is ended"), sess->errorString());
-        q->close();
-    }
-
-    void sess_cancelled()
-    {
-        sessionFinished = true;
-        if (timer->isActive())
-            timer->stop();
-        q->close();
-    }
-
-    void update_call_duration()
-    {
-        call_duration = call_duration.addSecs(1);
-        ui.lb_status->setText(tr("Call duration: %1").arg(call_duration.toString("mm:ss")));
-    }
+    CallDlg           *q;
+    PsiAccount        *account = nullptr;
+    CallView          *view    = nullptr;
+    QPointer<AvCall>   session;
+    ScreenShareCapture capture;
+    QTimer             timer;
+    QElapsedTimer      elapsed;
+    bool               incoming = false;
+    bool               active   = false;
+    bool               finished = false;
+    QString            shareLabel;
 };
 
-CallDlg::CallDlg(PsiAccount *pa, QWidget *parent) : QDialog(parent)
+CallDlg::CallDlg(PsiAccount *account, QWidget *parent) : QDialog(parent), d(new Private(this))
 {
-    d     = new Private(this);
-    d->pa = pa;
-    d->pa->dialogRegister(this);
+    d->account = account;
+    account->dialogRegister(this);
 }
-
 CallDlg::~CallDlg()
 {
-    d->pa->dialogUnregister(this);
+    d->account->dialogUnregister(this);
     delete d;
 }
-
-void CallDlg::setOutgoing(const XMPP::Jid &jid) { d->setOutgoing(jid); }
-
-void CallDlg::setIncoming(AvCall *sess) { d->setIncoming(sess); }
-
-#include "calldlg.moc"
+void CallDlg::setOutgoing(const XMPP::Jid &jid)
+{
+    d->view->setPeer(jid.full(), true);
+    d->view->setIncoming(false);
+}
+void CallDlg::setIncoming(AvCall *session)
+{
+    d->incoming = true;
+    d->bind(session);
+    d->view->setPeer(session->jid().full(), false);
+    d->view->setIncoming(true);
+    d->view->setStatus(tr("Incoming call"));
+}

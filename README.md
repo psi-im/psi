@@ -158,3 +158,6 @@ If you want to donate some money for development of Psi and Psi+ project, it is 
 * [Page on Wikipedia](https://en.wikipedia.org/wiki/Psi_\(instant_messaging_client\))
 
 Have fun!
+
+For call controls, Linux display/window selection and media plugin requirements, see
+[Calls and screen sharing](doc/screen-sharing.md).

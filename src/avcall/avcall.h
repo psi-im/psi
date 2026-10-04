@@ -22,6 +22,7 @@
 #include "iris/xmpp.h"
 
 #include <QObject>
+#include <memory>
 
 class AvCallManagerPrivate;
 class AvCallPrivate;
@@ -56,6 +57,13 @@ public:
     void reject();
 
     void setIncomingVideo(PsiMedia::VideoWidget *widget);
+    void setIncomingPresentation(PsiMedia::VideoWidget *widget);
+    void setMicrophoneEnabled(bool enabled);
+    void setCameraEnabled(bool enabled);
+    bool startScreenSharing(const QString &source, std::shared_ptr<const void> sourceLease = {});
+    void stopScreenSharing();
+    bool screenSharing() const;
+    bool screenSharingSupported() const;
 
     QString errorString() const;
 
@@ -68,6 +76,11 @@ signals:
     void activated();
     void error();
     void cancelled();
+    void screenSharingChanged(bool sharing);
+    void screenSharingStarted();
+    void cameraEnabledChanged(bool enabled);
+    void incomingVideoRemoved(bool presentation);
+    void mediaControlError(const QString &message);
 
 private:
     friend class AvCallPrivate;

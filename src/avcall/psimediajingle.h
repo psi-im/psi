@@ -15,6 +15,7 @@
 #include <memory>
 
 class QString;
+class QSize;
 
 namespace PsiMedia {
 class VideoWidget;
@@ -55,5 +56,14 @@ bool setPsiMediaJingleVideoOutput(XMPP::Jingle::Session *session, PsiMedia::Vide
 bool startPsiMediaJingleTransmit(XMPP::Jingle::Session *session, bool liveInput, bool audio,
                                  const QString &audioInputDevice, bool video, const QString &videoInputDevice);
 void stopPsiMediaJingleTransmit(XMPP::Jingle::Session *session);
+bool setPsiMediaJingleContentCapture(XMPP::Jingle::Session *, const QString &contentName, bool enabled,
+                                     const QString &source);
+bool setPsiMediaJingleContentVideoOutput(XMPP::Jingle::Session *, const QString &contentName,
+                                         PsiMedia::VideoWidget *widget);
+
+bool setPsiMediaJingleContentVideoProfile(XMPP::Jingle::Session *, const QString &contentName, const QSize &, int fps);
+bool psiMediaJingleSupportsGroupedCapture(XMPP::Jingle::Session *);
+bool setPsiMediaJingleContentCaptureLease(XMPP::Jingle::Session *, const QString &contentName,
+                                          std::shared_ptr<const void>);
 
 #endif // PSIMEDIAJINGLE_H

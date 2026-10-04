@@ -478,6 +478,8 @@ public:
     //   which might have varying media contained.
     bool canTransmitAudio() const;
     bool canTransmitVideo() const;
+    bool supportsGroupedCapture() const;
+    bool shareSecureGroupsWith(RtpSession *owner);
 
     // speaker
     int  outputVolume() const; // 0 (mute) to 100

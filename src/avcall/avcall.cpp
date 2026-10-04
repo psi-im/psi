@@ -31,6 +31,7 @@
 #include <QHash>
 #include <QHostAddress>
 #include <QPointer>
+#include <QUuid>
 #include <QtCrypto>
 
 #include <algorithm>
@@ -57,6 +58,20 @@ static QString resolvedAudioInputDevice()
         if (device.isDefault())
             return device.id();
     }
+    return devices.isEmpty() ? QString() : devices.first().id();
+}
+
+static QString resolvedVideoInputDevice()
+{
+    if (!g_config->liveInput)
+        return {};
+    const auto devices = MediaDeviceWatcher::instance()->videoInputDevices();
+    for (const auto &device : devices)
+        if (!g_config->videoInDeviceId.isEmpty() && device.id() == g_config->videoInDeviceId)
+            return device.id();
+    for (const auto &device : devices)
+        if (device.isDefault())
+            return device.id();
     return devices.isEmpty() ? QString() : devices.first().id();
 }
 
@@ -119,6 +134,8 @@ public:
     explicit AvCallPrivate(AvCall *q) : QObject(q), q(q)
     {
         connect(&audioDirection, &AvCallAudioDirection::changed, this, [this] { syncActiveTransmit(); });
+        connect(&cameraDirection, &AvCallAudioDirection::changed, this, [this] { syncActiveTransmit(); });
+        connect(&screenDirection, &AvCallAudioDirection::changed, this, [this] { syncActiveTransmit(); });
     }
     ~AvCallPrivate() override
     {
@@ -260,8 +277,8 @@ public:
 
         requestedAudio      = needAudio;
         requestedVideo      = needVideo;
-        captureAudioConsent = needAudio;
-        captureVideoConsent = needVideo;
+        captureAudioConsent = needAudio && microphoneWanted;
+        captureVideoConsent = needVideo && cameraWanted;
 
         if (manager->jingleManager->messageInitiationEnabled()) {
             RTP::MediaSet media;
@@ -313,10 +330,18 @@ public:
             fail(tr("Unable to create the requested RTP media."));
             return;
         }
+        for (auto app : session->contentList()) {
+            auto rtp = dynamic_cast<RTP::Application *>(app);
+            if (rtp && rtp->media() == QLatin1String("video")) {
+                cameraContent = rtp;
+                cameraDirection.bind(rtp, true, (!g_config->liveInput || !resolvedVideoInputDevice().isEmpty()));
+                break;
+            }
+        }
         wireApplications();
 
         if (needAudio)
-            audioDirection.bind(audioApplication(), true, audioCaptureAvailable());
+            audioDirection.bind(audioApplication(), captureAudioConsent, audioCaptureAvailable());
 
         if (!configureBackend()) {
             fail(errorString.isEmpty() ? tr("Unable to initialize the media backend.") : errorString);
@@ -368,8 +393,8 @@ public:
             return;
         }
 
-        captureAudioConsent = acceptAudio;
-        captureVideoConsent = acceptVideo;
+        captureAudioConsent = acceptAudio && microphoneWanted;
+        captureVideoConsent = acceptVideo && cameraWanted;
         for (auto app : session->contentList()) {
             auto rtp = dynamic_cast<RTP::Application *>(app);
             if (!rtp)
@@ -378,8 +403,13 @@ public:
                 || (rtp->media() == QLatin1String("video") && acceptVideo);
             if (!accepted) {
                 rtp->remove(Jingle::Reason::Decline, QStringLiteral("Media type declined locally"));
+            } else if (rtp->media() == QLatin1String("video")) {
+                cameraContent = rtp;
+                cameraDirection.bind(rtp, captureVideoConsent,
+                                     (!g_config->liveInput || !resolvedVideoInputDevice().isEmpty()));
             } else if (rtp->media() == QLatin1String("audio")) {
-                audioDirection.bind(rtp, AvCallPolicy::allowsSender(rtp->senders(), session->role()),
+                audioDirection.bind(rtp,
+                                    captureAudioConsent && AvCallPolicy::allowsSender(rtp->senders(), session->role()),
                                     audioCaptureAvailable());
             }
         }
@@ -433,6 +463,97 @@ public:
         return nullptr;
     }
 
+    RTP::Application *cameraApplication() const
+    {
+        if (cameraContent && cameraContent->state() < Jingle::State::Finishing)
+            return cameraContent;
+        return nullptr;
+    }
+
+    void setMicrophoneEnabled(bool enabled)
+    {
+        microphoneWanted    = enabled;
+        captureAudioConsent = enabled;
+        audioDirection.setLocalSending(enabled);
+        syncActiveTransmit();
+    }
+
+    void setCameraEnabled(bool enabled)
+    {
+        cameraWanted        = enabled;
+        captureVideoConsent = enabled;
+        if (!active || !session)
+            return;
+        if (enabled && !cameraApplication()) {
+            if (!manager || !manager->capabilities.video || resolvedVideoInputDevice().isEmpty()) {
+                captureVideoConsent = false;
+                emit q->cameraEnabledChanged(false);
+                emit q->mediaControlError(tr("No camera is available."));
+                return;
+            }
+            if (screenContent && screenContent->state() < Jingle::State::Active) {
+                captureVideoConsent = false;
+                emit q->cameraEnabledChanged(false);
+                emit q->mediaControlError(tr("Wait for screen sharing to connect before enabling the camera."));
+                return;
+            }
+            cameraContent = manager->rtpManager->createOutgoing(session, RTP::Media::Video, session->role(),
+                                                                QStringLiteral("camera-")
+                                                                    + QUuid::createUuid().toString(QUuid::Id128));
+            if (!cameraContent) {
+                captureVideoConsent = false;
+                emit q->cameraEnabledChanged(false);
+                emit q->mediaControlError(tr("Unable to add a camera to this call."));
+                return;
+            }
+            wireApplications();
+            cameraDirection.bind(cameraContent, true, (!g_config->liveInput || !resolvedVideoInputDevice().isEmpty()));
+        } else {
+            cameraDirection.setLocalSending(enabled);
+        }
+        syncActiveTransmit();
+    }
+
+    bool startScreenSharing(const QString &source, std::shared_ptr<const void> lease)
+    {
+        if (!session || !active || !manager || !manager->capabilities.video || source.isEmpty() || screenContent
+            || !psiMediaJingleSupportsGroupedCapture(session))
+            return false;
+        if (cameraContent && cameraContent->state() < Jingle::State::Active) {
+            emit q->mediaControlError(tr("Wait for the camera to connect before sharing your screen."));
+            return false;
+        }
+        screenSource  = source;
+        screenContent = manager->rtpManager->createOutgoing(session, RTP::Media::Video, session->role(),
+                                                            QStringLiteral("screen-")
+                                                                + QUuid::createUuid().toString(QUuid::Id128));
+        if (!screenContent) {
+            screenSource.clear();
+            emit q->mediaControlError(tr("The media backend cannot add screen sharing to this call."));
+            return false;
+        }
+        wireApplications();
+        setPsiMediaJingleContentCaptureLease(session, screenContent->contentName(), std::move(lease));
+        setPsiMediaJingleContentVideoProfile(session, screenContent->contentName(), QSize(1920, 1080), 15);
+        screenDirection.bind(screenContent, true, true);
+        emit q->screenSharingChanged(true);
+        syncActiveTransmit();
+        return true;
+    }
+
+    void stopScreenSharing()
+    {
+        const auto content = screenContent;
+        screenSource.clear();
+        screenDirection.setLocalSending(false);
+        if (session && content)
+            setPsiMediaJingleContentCapture(session, content->contentName(), false, QString());
+        screenContent.clear();
+        if (content && content->state() < Jingle::State::Finishing)
+            content->remove(Jingle::Reason::Success, tr("Screen sharing stopped"));
+        emit q->screenSharingChanged(false);
+    }
+
     bool audioCaptureAvailable() const { return !g_config->liveInput || !resolvedAudioInputDevice().isEmpty(); }
 
     void syncAudioDirection() { audioDirection.setCaptureAvailable(audioCaptureAvailable()); }
@@ -457,7 +578,8 @@ public:
     {
         if (!session)
             return;
-        for (auto app : session->contentList()) {
+        const auto contents = session->contentList().values();
+        for (auto app : contents) {
             auto rtp = dynamic_cast<RTP::Application *>(app);
             if (!rtp)
                 continue;
@@ -465,6 +587,27 @@ public:
                     Qt::UniqueConnection);
             connect(rtp, &Jingle::Application::sendersChanged, this, &AvCallPrivate::applicationSendersChanged,
                     Qt::UniqueConnection);
+            if (active && rtp->isRemote() && rtp->state() == Jingle::State::Pending) {
+                if (rtp->media() != QLatin1String("video")) {
+                    rtp->remove(Jingle::Reason::UnsupportedApplications);
+                    continue;
+                }
+                auto pad = rtp->pad().staticCast<RTP::Pad>();
+                pad->directionController()->setLocalSending(rtp, false);
+                rtp->prepare();
+            }
+            if (rtp->media() == QLatin1String("video") && rtp->state() < Jingle::State::Finishing) {
+                const bool receive = AvCallPolicy::allowsSender(rtp->senders(), AvCallPolicy::peerRole(session->role()));
+                const bool presentation = rtp != cameraContent
+                    && (rtp->contentName().startsWith(QStringLiteral("screen-"))
+                        || (cameraContent && !rtp->contentName().startsWith(QStringLiteral("camera-"))));
+                auto widget = receive ? (presentation ? presentationWidget : videoWidget) : nullptr;
+                setPsiMediaJingleContentVideoOutput(session, rtp->contentName(), widget);
+                if (widget) {
+                    if (presentation) displayedScreen = rtp;
+                    else displayedCamera = rtp;
+                }
+            }
         }
     }
 
@@ -472,38 +615,31 @@ public:
     {
         if (!session || !active)
             return;
-
-        bool hasAudio     = false;
-        bool hasVideo     = false;
-        bool audioMaySend = false;
-        bool videoMaySend = false;
+        const bool audioAvailable = audioCaptureAvailable();
         for (auto app : session->contentList()) {
             auto rtp = dynamic_cast<RTP::Application *>(app);
             if (!rtp || rtp->state() >= Jingle::State::Finishing)
                 continue;
-
-            const bool localMaySend = AvCallPolicy::allowsSender(rtp->senders(), session->role());
+            bool    enabled = false;
+            QString source;
             if (rtp->media() == QLatin1String("audio")) {
-                hasAudio     = true;
-                audioMaySend = audioMaySend || audioDirection.allowsCapture(rtp);
-            } else if (rtp->media() == QLatin1String("video")) {
-                hasVideo     = true;
-                videoMaySend = videoMaySend || localMaySend;
+                enabled = rtp->state() == Jingle::State::Active && captureAudioConsent && audioAvailable
+                    && audioDirection.allowsCapture(rtp);
+                source = resolvedAudioInputDevice();
+            } else if (rtp == screenContent) {
+                enabled = rtp->state() == Jingle::State::Active && !screenSource.isEmpty()
+                    && screenDirection.allowsCapture(rtp);
+                source = screenSource;
+            } else if (rtp == cameraContent) {
+                enabled = rtp->state() == Jingle::State::Active && captureVideoConsent
+                    && cameraDirection.allowsCapture(rtp);
+                source = resolvedVideoInputDevice();
             }
+            if (g_config->liveInput)
+                setPsiMediaJingleContentCapture(session, rtp->contentName(), enabled, source);
         }
-
-        acceptedAudio                    = hasAudio;
-        acceptedVideo                    = hasVideo;
-        const auto audioInput            = resolvedAudioInputDevice();
-        const bool audioCaptureAvailable = !g_config->liveInput || !audioInput.isEmpty();
-        const bool videoCaptureAvailable = !g_config->liveInput || (manager && manager->capabilities.videoInput);
-        const bool transmitAudio
-            = AvCallPolicy::shouldTransmit(hasAudio, captureAudioConsent, audioMaySend, audioCaptureAvailable);
-        const bool transmitVideo
-            = AvCallPolicy::shouldTransmit(hasVideo, captureVideoConsent, videoMaySend, videoCaptureAvailable);
-
-        startPsiMediaJingleTransmit(session, g_config->liveInput, transmitAudio, audioInput, transmitVideo,
-                                    g_config->videoInDeviceId);
+        if (!g_config->liveInput)
+            startPsiMediaJingleTransmit(session, false, captureAudioConsent, QString(), captureVideoConsent, QString());
     }
 
     void maybeActivateMedia()
@@ -550,6 +686,9 @@ public:
         syncAudioDirection();
         if (!guard)
             return;
+        cameraDirection.setCaptureAvailable((!g_config->liveInput || !resolvedVideoInputDevice().isEmpty()));
+        if (!guard)
+            return;
         if (active)
             syncActiveTransmit();
         else
@@ -583,8 +722,41 @@ private slots:
             maybeActivateMedia();
     }
 
-    void applicationStateChanged(Jingle::State)
+    void applicationStateChanged(Jingle::State state)
     {
+        QPointer<AvCallPrivate>    guard(this);
+        QPointer<RTP::Application> changed = qobject_cast<RTP::Application *>(sender());
+        if (changed && state >= Jingle::State::Finishing
+            && (changed == displayedCamera || changed == displayedScreen)) {
+            const bool presentation = changed == displayedScreen;
+            if (presentation) displayedScreen.clear();
+            else displayedCamera.clear();
+            emit q->incomingVideoRemoved(presentation);
+            if (!guard) return;
+        }
+        if (changed && changed == screenContent && state == Jingle::State::Active)
+            emit q->screenSharingStarted();
+        if (!guard)
+            return;
+        if (changed && changed == cameraContent && state >= Jingle::State::Finishing) {
+            cameraContent.clear();
+            captureVideoConsent = false;
+            emit q->cameraEnabledChanged(false);
+            if (!guard)
+                return;
+        }
+        if (changed && changed == screenContent && state >= Jingle::State::Finishing) {
+            screenContent.clear();
+            screenSource.clear();
+            const auto reason = changed->lastReason().condition();
+            emit       q->screenSharingChanged(false);
+            if (!guard)
+                return;
+            if (reason != Jingle::Reason::Success)
+                emit q->mediaControlError(tr("Screen sharing was declined or could not connect."));
+        }
+        if (!guard)
+            return;
         if (active)
             syncActiveTransmit();
         else
@@ -593,6 +765,19 @@ private slots:
 
     void applicationSendersChanged(Jingle::Origin)
     {
+        QPointer<AvCallPrivate> guard(this);
+        auto changed = qobject_cast<RTP::Application *>(sender());
+        if (changed && session && !AvCallPolicy::allowsSender(changed->senders(), AvCallPolicy::peerRole(session->role()))
+            && (changed == displayedCamera || changed == displayedScreen)) {
+            const bool presentation = changed == displayedScreen;
+            if (presentation) displayedScreen.clear();
+            else displayedCamera.clear();
+            setPsiMediaJingleContentVideoOutput(session, changed->contentName(), nullptr);
+            emit q->incomingVideoRemoved(presentation);
+            if (!guard) return;
+        }
+        wireApplications();
+        if (!guard) return;
         if (active)
             syncActiveTransmit();
         else
@@ -626,6 +811,12 @@ public:
     int                       bitrate = -1;
     QString                   errorString;
     PsiMedia::VideoWidget    *videoWidget         = nullptr;
+    PsiMedia::VideoWidget     *presentationWidget  = nullptr;
+    QPointer<RTP::Application> cameraContent;
+    QPointer<RTP::Application> screenContent;
+    QPointer<RTP::Application> displayedCamera;
+    QPointer<RTP::Application> displayedScreen;
+    QString                    screenSource;
     bool                      incoming            = false;
     bool                      signalingActive     = false;
     bool                      active              = false;
@@ -634,6 +825,8 @@ public:
     bool                      requestedVideo      = false;
     bool                      acceptedAudio       = false;
     bool                      acceptedVideo       = false;
+    bool                       microphoneWanted    = true;
+    bool                       cameraWanted        = true;
     bool                      captureAudioConsent = false;
     bool                      captureVideoConsent = false;
     QString                   jmiId;
@@ -641,6 +834,8 @@ public:
     bool                      jmiFinishSent  = false;
     bool                      jmiClosed      = false;
     AvCallAudioDirection      audioDirection;
+    AvCallAudioDirection       cameraDirection;
+    AvCallAudioDirection       screenDirection;
 };
 
 AvCall::AvCall() : d(new AvCallPrivate(this)) { }
@@ -678,9 +873,26 @@ void AvCall::reject() { d->reject(); }
 void AvCall::setIncomingVideo(PsiMedia::VideoWidget *widget)
 {
     d->videoWidget = widget;
-    if (d->session)
-        setPsiMediaJingleVideoOutput(d->session, widget);
+    d->wireApplications();
 }
+
+void AvCall::setIncomingPresentation(PsiMedia::VideoWidget *widget)
+{
+    d->presentationWidget = widget;
+    d->wireApplications();
+}
+void AvCall::setMicrophoneEnabled(bool enabled) { d->setMicrophoneEnabled(enabled); }
+void AvCall::setCameraEnabled(bool enabled) { d->setCameraEnabled(enabled); }
+bool AvCall::startScreenSharing(const QString &source, std::shared_ptr<const void> lease)
+{
+    return d->startScreenSharing(source, std::move(lease));
+}
+bool AvCall::screenSharingSupported() const
+{
+    return d->active && d->session && psiMediaJingleSupportsGroupedCapture(d->session);
+}
+void AvCall::stopScreenSharing() { d->stopScreenSharing(); }
+bool AvCall::screenSharing() const { return d->screenContent && d->screenContent->state() < Jingle::State::Finishing; }
 
 QString AvCall::errorString() const { return d->errorString; }
 

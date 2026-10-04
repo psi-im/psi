@@ -367,6 +367,13 @@ public:
                    HINT_METHOD(error())
 };
 
+// Optional extension: independent codec/capture paths can join one RTP/SRTP
+// owner without creating a second crypto/replay or RTCP session for BUNDLE.
+class GroupedSecureRtpSessionContext : public QObjectInterface {
+public:
+    virtual bool shareSecureGroupsWith(QObject *owner) = 0;
+};
+
 class AudioRecorderContext : public QObjectInterface {
 public:
     enum Error { ErrorGeneric, ErrorSystem, ErrorCodec };
@@ -393,6 +400,7 @@ Q_DECLARE_INTERFACE(PsiMedia::Plugin, "org.psi-im.psimedia.Plugin/1.6")
 Q_DECLARE_INTERFACE(PsiMedia::Provider, "org.psi-im.psimedia.Provider/1.6")
 Q_DECLARE_INTERFACE(PsiMedia::SecureRtpProvider, "org.psi-im.psimedia.SecureRtpProvider/1.0")
 Q_DECLARE_INTERFACE(PsiMedia::SecureRtpSessionContext, "org.psi-im.psimedia.SecureRtpSessionContext/1.0")
+Q_DECLARE_INTERFACE(PsiMedia::GroupedSecureRtpSessionContext, "org.psi-im.psimedia.GroupedSecureRtpSessionContext/1.0")
 Q_DECLARE_INTERFACE(PsiMedia::FeaturesContext, "org.psi-im.psimedia.FeaturesContext/1.6")
 Q_DECLARE_INTERFACE(PsiMedia::RtpChannelContext, "org.psi-im.psimedia.RtpChannelContext/1.6")
 Q_DECLARE_INTERFACE(PsiMedia::RtpSessionContext, "org.psi-im.psimedia.RtpSessionContext/1.6")

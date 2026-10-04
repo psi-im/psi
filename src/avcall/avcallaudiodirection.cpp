@@ -35,7 +35,7 @@ void AvCallAudioDirection::bind(RTP::Application *content, bool wanted, bool ava
         controller_ = content_->pad().staticCast<RTP::Pad>()->directionController();
         connect(controller_, &RTP::DirectionController::policyChanged, this, &AvCallAudioDirection::changed);
         if (!available)
-            unavailable_ = controller_->suspendLocalSending(content_, QStringLiteral("audio input unavailable"));
+            unavailable_ = controller_->suspendLocalSending(content_, QStringLiteral("capture input unavailable"));
         observe(wanted);
     }
     emit changed(); // callbacks may delete the entire call
@@ -63,7 +63,7 @@ void AvCallAudioDirection::setCaptureAvailable(bool available)
     if (controller_ && content_) {
         const auto policy = controller_->policy(content_);
         if (!available)
-            unavailable_ = controller_->suspendLocalSending(content_, QStringLiteral("audio input unavailable"));
+            unavailable_ = controller_->suspendLocalSending(content_, QStringLiteral("capture input unavailable"));
         else
             unavailable_.reset();
         if (policy)

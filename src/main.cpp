@@ -56,6 +56,10 @@
 #endif
 #include <time.h>
 
+#ifdef HAVE_X11
+extern "C" int XInitThreads(void);
+#endif
+
 #ifdef Q_OS_WIN
 #define URI_RESTART
 #endif
@@ -533,6 +537,11 @@ PSI_EXPORT_FUNC int main(int argc, char *argv[])
 #endif
 #endif
 
+#ifdef HAVE_X11
+    // GStreamer desktop capture uses Xlib from a worker thread. This must run
+    // before Qt opens its X connection, rather than when sharing first starts.
+    XInitThreads();
+#endif
     PsiApplication app(argc, argv);
     QApplication::setApplicationName(ApplicationInfo::name());
     QApplication::setApplicationVersion(ApplicationInfo::version());

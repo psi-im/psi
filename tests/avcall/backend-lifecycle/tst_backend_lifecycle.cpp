@@ -64,9 +64,9 @@ private:
     QQueue<PsiMedia::PRtpPacket> written_;
 };
 
-class FakeRtpSessionContext final : public QObject,
-                                    public PsiMedia::RtpSessionContext,
-                                    public PsiMedia::SecureRtpSessionContext {
+class FakeRtpSessionContext : public QObject,
+                              public PsiMedia::RtpSessionContext,
+                              public PsiMedia::SecureRtpSessionContext {
     Q_OBJECT
     Q_INTERFACES(PsiMedia::RtpSessionContext PsiMedia::SecureRtpSessionContext)
 public:
@@ -298,6 +298,23 @@ private:
     RuntimeErrorHandler                 runtimeErrorHandler_;
 };
 
+class FakeGroupedRtpSessionContext final : public FakeRtpSessionContext,
+                                           public PsiMedia::GroupedSecureRtpSessionContext {
+    Q_OBJECT
+    Q_INTERFACES(PsiMedia::GroupedSecureRtpSessionContext)
+public:
+    explicit FakeGroupedRtpSessionContext(BackendStats *stats) : FakeRtpSessionContext(stats) { }
+    QObject *qobject() override { return this; }
+    bool     shareSecureGroupsWith(QObject *value) override
+    {
+        if (!value || value == this || owner)
+            return false;
+        owner = value;
+        return true;
+    }
+    QPointer<QObject> owner;
+};
+
 class FakeProvider final : public QObject, public PsiMedia::Provider, public PsiMedia::SecureRtpProvider {
     Q_OBJECT
     Q_INTERFACES(PsiMedia::Provider PsiMedia::SecureRtpProvider)
@@ -323,14 +340,21 @@ public:
 
     PsiMedia::SecureRtpSessionContext *createSecureRtpSession() override
     {
-        auto context = new FakeRtpSessionContext(&stats_);
+        FakeRtpSessionContext *context = grouped
+            ? static_cast<FakeRtpSessionContext *>(new FakeGroupedRtpSessionContext(&stats_))
+            : new FakeRtpSessionContext(&stats_);
         context_     = context;
         return context;
     }
 
     PsiMedia::AudioRecorderContext *createAudioRecorder() override { return nullptr; }
 
-    void                   resetStats() { stats_ = {}; }
+    bool grouped = false;
+    void resetStats()
+    {
+        stats_  = {};
+        grouped = false;
+    }
     BackendStats          &stats() { return stats_; }
     FakeRtpSessionContext *context() const { return context_; }
 
@@ -415,6 +439,92 @@ private slots:
     {
         QVERIFY(provider_.context() == nullptr);
         provider_.resetStats();
+    }
+
+    void independentCameraAndScreenEndpointsShareOwner()
+    {
+        provider_.grouped  = true;
+        auto provider      = makePsiMediaJingleProvider(fullCapabilities());
+        auto session       = provider->createSession();
+        auto owner         = provider_.context();
+        auto camera        = session->createEndpoint(QStringLiteral("camera"), QStringLiteral("video"));
+        auto cameraContext = qobject_cast<FakeGroupedRtpSessionContext *>(provider_.context());
+        auto screen        = session->createEndpoint(QStringLiteral("screen"), QStringLiteral("video"));
+        auto screenContext = qobject_cast<FakeGroupedRtpSessionContext *>(provider_.context());
+        QVERIFY(camera && screen);
+        QVERIFY(!session->createEndpoint(QStringLiteral("screen"), QStringLiteral("video")));
+        QCOMPARE(provider_.context(), screenContext);
+        QVERIFY(cameraContext != screenContext);
+        QCOMPARE(cameraContext->owner.data(), owner);
+        QCOMPARE(screenContext->owner.data(), owner);
+        QCOMPARE(provider_.stats().startCalls, 0);
+        bool cameraReady = false, screenReady = false;
+        auto first  = session->prepareLocalOffer(camera.get(), [&](auto, auto description, auto error) {
+            QVERIFY(!error && description);
+            cameraReady = true;
+        });
+        auto second = session->prepareLocalOffer(screen.get(), [&](auto, auto description, auto error) {
+            QVERIFY(!error && description);
+            screenReady = true;
+        });
+        QTRY_COMPARE(provider_.stats().startCalls, 1);
+        QVERIFY(!cameraReady && !screenReady);
+        cameraContext->completeStart();
+        QTRY_VERIFY(cameraReady);
+        QTRY_COMPARE(provider_.stats().startCalls, 2);
+        screenContext->completeStart();
+        QTRY_VERIFY(screenReady);
+        // Teardown of one codec path must not destroy the other path or its owner.
+        QPointer<FakeRtpSessionContext> screenGuard(screenContext), cameraGuard(cameraContext), ownerGuard(owner);
+        screen.reset();
+        QTRY_VERIFY(!screenGuard);
+        QVERIFY(cameraGuard && ownerGuard);
+        camera.reset();
+        QTRY_VERIFY(!cameraGuard);
+        QVERIFY(ownerGuard);
+        QCOMPARE(provider_.stats().invalidCalls, 0);
+    }
+
+    void screenFailureDoesNotFailCameraBackend()
+    {
+        provider_.grouped  = true;
+        auto session       = makePsiMediaJingleProvider(fullCapabilities())->createSession();
+        auto camera        = session->createEndpoint(QStringLiteral("camera"), QStringLiteral("video"));
+        auto cameraContext = provider_.context();
+        auto screen        = session->createEndpoint(QStringLiteral("screen"), QStringLiteral("video"));
+        auto screenContext = provider_.context();
+        int  globalErrors = 0, endpointErrors = 0;
+        QObject::connect(session.get(), &RTP::MediaSession::runtimeError, [&](const auto &) { ++globalErrors; });
+        QObject::connect(session.get(), &RTP::MediaSession::endpointError, [&](auto endpoint, const auto &) {
+            QCOMPARE(endpoint, screen.get());
+            ++endpointErrors;
+        });
+        bool cameraReady = false, screenFailed = false;
+        auto first  = session->prepareLocalOffer(camera.get(), [&](auto, auto description, auto error) {
+            QVERIFY(!error && description);
+            cameraReady = true;
+        });
+        auto second = session->prepareLocalOffer(screen.get(), [&](auto, auto description, auto error) {
+            QVERIFY(error && !description);
+            screenFailed = true;
+        });
+        QTRY_COMPARE(provider_.stats().startCalls, 1);
+        cameraContext->completeStart();
+        QTRY_VERIFY(cameraReady);
+        QTRY_COMPARE(provider_.stats().startCalls, 2);
+        screenContext->failAfterCleanup(PsiMedia::RtpSessionContext::ErrorCodec);
+        QTRY_VERIFY(screenFailed);
+        QTRY_COMPARE(endpointErrors, 1);
+        QCOMPARE(globalErrors, 0);
+        bool answerReady = false;
+        auto third = session->prepareAnswer(camera.get(), videoDescription(), [&](auto, auto description, auto error) {
+            QVERIFY(!error && description);
+            answerReady = true;
+        });
+        QTRY_COMPARE(provider_.stats().updateCalls, 1);
+        cameraContext->completePreferences();
+        QTRY_VERIFY(answerReady);
+        QCOMPARE(provider_.stats().invalidCalls, 0);
     }
 
     void capabilitySnapshotLimitsMediaTypes()

@@ -565,6 +565,19 @@ bool RtpSession::isValid() const { return d && d->c; }
 
 bool RtpSession::isSecure() const { return d && d->secureC; }
 
+bool RtpSession::supportsGroupedCapture() const
+{
+    return d && d->secureC && qobject_cast<GroupedSecureRtpSessionContext *>(d->secureC->qobject());
+}
+
+bool RtpSession::shareSecureGroupsWith(RtpSession *owner)
+{
+    if (!d || !d->secureC || !owner || owner == this || !owner->d || !owner->d->secureC)
+        return false;
+    auto context = qobject_cast<GroupedSecureRtpSessionContext *>(d->secureC->qobject());
+    return context && context->shareSecureGroupsWith(owner->d->secureC->qobject());
+}
+
 QStringList RtpSession::supportedSecureRtpProfiles()
 {
     auto p = provider();

@@ -234,7 +234,7 @@ class BackendSession;
 
 class Endpoint final : public RTP::MediaEndpoint {
 public:
-    Endpoint(BackendSession *session, QString media);
+    Endpoint(BackendSession *session, QString media, QString name);
     ~Endpoint() override;
 
     RTP::Description                localOffer() const override { return prepared_.value_or(RTP::Description {}); }
@@ -247,6 +247,7 @@ public:
     void stop() override;
 
     const QString  &media() const { return media_; }
+    const QString  &name() const { return name_; }
     BackendSession *session() const { return session_; }
     void            setPrepared(RTP::Description description) { prepared_ = std::move(description); }
 
@@ -257,14 +258,15 @@ private:
 
     BackendSession                 *session_ = nullptr;
     QString                         media_;
+    QString                         name_;
     std::optional<RTP::Description> prepared_;
     bool                            stopped_ = false;
 };
 
 class BackendSession final : public RTP::MediaSession {
 public:
-    explicit BackendSession(QStringList mediaTypes) :
-        mediaTypes_(std::move(mediaTypes)), rtp_(PsiMedia::RtpSession::Mode::Secure)
+    explicit BackendSession(QStringList mediaTypes, BackendSession *owner = nullptr) :
+        mediaTypes_(std::move(mediaTypes)), rtp_(PsiMedia::RtpSession::Mode::Secure), owner_(owner)
     {
         if (!rtp_.isValid() || !rtp_.isSecure()) {
             state_ = State::Failed;
@@ -321,6 +323,7 @@ public:
     ~BackendSession() override
     {
         cancelAll();
+        children_.clear(); // codec contexts leave the shared RTP owner before it is destroyed
         detachSecureRtpPacketIo();
         invalidateEndpoints();
         deferred_.reset();
@@ -339,21 +342,141 @@ public:
         }
     }
 
-    std::unique_ptr<RTP::MediaEndpoint> createEndpoint(const QString &, const QString &media) override
+    std::unique_ptr<RTP::MediaEndpoint> createEndpoint(const QString &name, const QString &media) override
     {
-        if (!mediaTypes_.contains(media))
+        if (!mediaTypes_.contains(media) || isTerminalOrStopping() || ownerForContent(name))
             return {};
-        // The psimedia session exposes one negotiated media path per media type.
-        // Reserve it for the full Endpoint lifetime so a second Jingle content
-        // cannot silently share and mutate the same backend negotiation state.
-        for (auto endpoint : endpoints_) {
+        if (media == QLatin1String("video") && !owner_ && rtp_.supportsGroupedCapture()) {
+            auto child = std::make_unique<BackendSession>(QStringList { media }, this);
+            if (!child->rtp_.shareSecureGroupsWith(&rtp_))
+                return {};
+            child->configurePolicy(QString(), fileInput_, loopFile_, maximumBitrate_);
+            auto childPointer = child.get();
+            connect(child.get(), &RTP::MediaSession::runtimeError, this,
+                    [this, childPointer](const RTP::MediaError &error) {
+                        const auto               endpoints = childPointer->endpoints_;
+                        QPointer<BackendSession> guard(this);
+                        for (auto endpoint : endpoints) {
+                            emit endpointError(endpoint, error);
+                            if (!guard)
+                                return;
+                        }
+                    });
+            auto result = child->createEndpoint(name, media);
+            if (result)
+                children_.push_back(std::move(child));
+            return result;
+        }
+        for (auto endpoint : endpoints_)
             if (endpoint && endpoint->media() == media)
                 return {};
+        return std::make_unique<Endpoint>(this, media, name);
+    }
+
+    bool supportsGroupedCapture() const { return rtp_.supportsGroupedCapture(); }
+
+    bool setContentLease(const QString &name, std::shared_ptr<const void> lease)
+    {
+        auto owner = ownerForContent(name);
+        if (!owner || owner->isTerminalOrStopping())
+            return false;
+        owner->captureLease_ = std::move(lease);
+        return true;
+    }
+
+    BackendSession *ownerForContent(const QString &name)
+    {
+        for (auto endpoint : endpoints_)
+            if (endpoint && endpoint->name() == name)
+                return this;
+        for (const auto &child : children_)
+            if (auto owner = child->ownerForContent(name))
+                return owner;
+        return nullptr;
+    }
+
+    bool setContentCapture(const QString &name, bool enabled, const QString &source)
+    {
+        auto owner = ownerForContent(name);
+        if (!owner || owner->state_ != State::Running)
+            return false;
+        for (auto endpoint : owner->endpoints_) {
+            if (endpoint->name() != name)
+                continue;
+            if (endpoint->media() == QLatin1String("video")) {
+                const auto selected = enabled ? source : QString();
+                if (owner->videoCaptureSource_ != selected) {
+                    owner->videoCaptureSource_ = selected;
+                    owner->rtp_.setVideoInputDevice(selected);
+                }
+                if (enabled && !source.isEmpty())
+                    owner->rtp_.transmitVideo();
+                else
+                    owner->rtp_.pauseVideo();
+            } else {
+                const auto selected = enabled ? source : QString();
+                if (owner->audioCaptureSource_ != selected) {
+                    owner->audioCaptureSource_ = selected;
+                    owner->rtp_.setAudioInputDevice(selected);
+                }
+                if (enabled && !source.isEmpty())
+                    owner->rtp_.transmitAudio();
+                else
+                    owner->rtp_.pauseAudio();
+            }
+            return true;
         }
-        return std::make_unique<Endpoint>(this, media);
+        return false;
+    }
+
+    bool setContentVideoProfile(const QString &name, const QSize &size, int fps)
+    {
+        auto owner = ownerForContent(name);
+        if (!owner || owner->videoEnabled_ || !size.isValid() || fps <= 0)
+            return false;
+        owner->videoPreference_.setSize(size);
+        owner->videoPreference_.setFps(fps);
+        return true;
+    }
+
+    bool setContentVideoOutput(const QString &name, PsiMedia::VideoWidget *widget)
+    {
+        auto owner = ownerForContent(name);
+        if (!owner)
+            return false;
+        owner->setVideoOutput(widget);
+        return true;
     }
 
     bool configureSecureRtpEndpoints(const QList<RTP::SecureRtpEndpoint> &endpoints) override
+    {
+        QHash<BackendSession *, QList<RTP::SecureRtpEndpoint>> routes;
+        routes.insert(this, {});
+        for (const auto &child : children_)
+            routes.insert(child.get(), {});
+        for (const auto &endpoint : endpoints) {
+            auto owner = ownerForContent(endpoint.contentName);
+            // Older providers/tests may omit the name when only one codec path exists.
+            if (!owner && endpoint.contentName.isEmpty() && children_.empty())
+                owner = this;
+            if (!owner)
+                return false;
+            routes[owner].append(endpoint);
+        }
+        QHash<BackendSession *, QList<RTP::SecureRtpEndpoint>> previous;
+        for (auto it = routes.cbegin(); it != routes.cend(); ++it)
+            previous.insert(it.key(), it.key()->configuredEndpoints_);
+        for (auto it = routes.cbegin(); it != routes.cend(); ++it) {
+            if (it.key()->applyEndpointRoutes(it.value()))
+                continue;
+            for (auto old = previous.cbegin(); old != previous.cend(); ++old)
+                old.key()->applyEndpointRoutes(old.value());
+            return false;
+        }
+        return true;
+    }
+
+    bool applyEndpointRoutes(const QList<RTP::SecureRtpEndpoint> &endpoints)
     {
         // Empty is teardown and remains valid after failure. New routing state
         // must never revive a terminal backend.
@@ -380,7 +503,10 @@ public:
                 item.localSsrcs.append(ssrc);
             out.append(std::move(item));
         }
-        return rtp_.configureSecureEndpoints(out);
+        if (!rtp_.configureSecureEndpoints(out))
+            return false;
+        configuredEndpoints_ = endpoints;
+        return true;
     }
 
     bool configureSecureRtpAssociation(const RTP::SecureRtpParameters &parameters) override
@@ -486,15 +612,25 @@ public:
         if (!audioOutputDevice.isEmpty())
             rtp_.setAudioOutputDevice(audioOutputDevice);
         if (!fileInput.isEmpty()) {
+            fileInput_ = fileInput;
+            loopFile_  = loopFile;
             rtp_.setFileInput(fileInput);
             rtp_.setFileLoopEnabled(loopFile);
         }
-        if (maximumSendingBitrate >= 0)
+        for (const auto &child : children_)
+            child->configurePolicy(QString(), fileInput, loopFile, maximumSendingBitrate);
+        if (maximumSendingBitrate >= 0) {
+            maximumBitrate_ = maximumSendingBitrate;
             rtp_.setMaximumSendingBitrate(maximumSendingBitrate);
+        }
     }
 
     void setVideoOutput(PsiMedia::VideoWidget *widget)
     {
+        if (!owner_ && !children_.empty()) {
+            children_.front()->setVideoOutput(widget);
+            return;
+        }
         if (isTerminalOrStopping())
             return;
 #ifdef QT_GUI_LIB
@@ -507,10 +643,13 @@ public:
     bool startTransmit(bool liveInput, bool audio, const QString &audioInputDevice, bool video,
                        const QString &videoInputDevice)
     {
-        if (state_ != State::Running)
-            return false;
-
         bool transmitting = false;
+        if (!owner_ && !children_.empty()) {
+            transmitting = children_.front()->startTransmit(liveInput, false, QString(), video, videoInputDevice);
+            video        = false;
+        }
+        if (state_ != State::Running)
+            return transmitting;
         if (liveInput) {
             rtp_.setAudioInputDevice(audio ? audioInputDevice : QString());
             rtp_.setVideoInputDevice(video ? videoInputDevice : QString());
@@ -533,6 +672,8 @@ public:
 
     void stopTransmit()
     {
+        for (const auto &child : children_)
+            child->stopTransmit();
         if (state_ != State::Running)
             return;
         rtp_.pauseAudio();
@@ -546,6 +687,17 @@ public:
     void unregisterEndpoint(Endpoint *endpoint)
     {
         endpoints_.remove(endpoint);
+        if (owner_) {
+            QPointer<BackendSession> guard(owner_);
+            QTimer::singleShot(0, owner_, [guard] {
+                if (!guard)
+                    return;
+                auto &children = guard->children_;
+                children.erase(std::remove_if(children.begin(), children.end(),
+                                              [](const auto &child) { return child->endpoints_.isEmpty(); }),
+                               children.end());
+            });
+        }
         if (deferred_ && deferred_->endpoint == endpoint)
             deferred_.reset();
         if (running_ && running_->endpoint == endpoint)
@@ -591,6 +743,8 @@ protected:
 
     void cancelMediaOperation(RTP::MediaOperation::Id id) override
     {
+        for (const auto &child : children_)
+            child->cancelMediaOperation(id);
         if (deferred_ && deferred_->id == id) {
             deferred_.reset();
             return;
@@ -601,6 +755,8 @@ protected:
 
     void timeoutMediaOperation(RTP::MediaOperation::Id id) override
     {
+        for (const auto &child : children_)
+            child->timeoutMediaOperation(id);
         if (isTerminalOrStopping())
             return;
         const bool ownsRunning  = running_ && running_->id == id;
@@ -646,11 +802,18 @@ private:
     Endpoint *checkedEndpoint(RTP::MediaEndpoint *base)
     {
         auto endpoint = dynamic_cast<Endpoint *>(base);
-        return endpoint && endpoint->session() == this && endpoints_.contains(endpoint) ? endpoint : nullptr;
+        if (!endpoint)
+            return nullptr;
+        auto owner = ownerForContent(endpoint->name());
+        return owner && endpoint->session() == owner && owner->endpoints_.contains(endpoint) ? endpoint : nullptr;
     }
 
     void submit(Pending operation)
     {
+        if (operation.endpoint && operation.endpoint->session() != this) {
+            operation.endpoint->session()->submit(std::move(operation));
+            return;
+        }
         if (!operation.endpoint || !endpoints_.contains(operation.endpoint)) {
             complete(std::move(operation), backendError(QStringLiteral("Invalid psimedia RTP endpoint")));
             return;
@@ -737,7 +900,7 @@ private:
             if (videoEnabled_)
                 return false;
             QList<PsiMedia::VideoParams> preferences;
-            preferences.append(PsiMedia::VideoParams());
+            preferences.append(videoPreference_);
             rtp_.setLocalVideoPreferences(preferences);
             videoEnabled_ = true;
             return true;
@@ -937,6 +1100,8 @@ private:
     }
 
     QStringList                  mediaTypes_;
+    // Declared before rtp_: its descriptor must outlive worker/source destruction.
+    std::shared_ptr<const void>                  captureLease_;
     PsiMedia::RtpSession         rtp_;
     ProtectedPacketWriter        protectedWriter_;
     State                        state_        = State::Unstarted;
@@ -947,10 +1112,20 @@ private:
     Await                        await_ = Await::None;
     std::optional<Pending>       running_;
     std::optional<Pending>       deferred_;
+    QPointer<BackendSession>                     owner_;
     QSet<Endpoint *>             endpoints_;
+    std::vector<std::unique_ptr<BackendSession>> children_;
+    QList<RTP::SecureRtpEndpoint>                configuredEndpoints_;
+    int                                          maximumBitrate_ = -1;
+    QString                                      audioCaptureSource_;
+    QString                                      videoCaptureSource_;
+    QString                                      fileInput_;
+    bool                                         loopFile_ = false;
+    PsiMedia::VideoParams                        videoPreference_;
 };
 
-Endpoint::Endpoint(BackendSession *session, QString media) : session_(session), media_(std::move(media))
+Endpoint::Endpoint(BackendSession *session, QString media, QString name) :
+    session_(session), media_(std::move(media)), name_(std::move(name))
 {
     if (session_)
         session_->registerEndpoint(this);
@@ -1044,4 +1219,38 @@ void stopPsiMediaJingleTransmit(XMPP::Jingle::Session *session)
 {
     if (auto backend = backendSession(session))
         backend->stopTransmit();
+}
+
+bool setPsiMediaJingleContentCapture(XMPP::Jingle::Session *session, const QString &name, bool enabled,
+                                     const QString &source)
+{
+    auto backend = backendSession(session);
+    return backend && backend->setContentCapture(name, enabled, source);
+}
+
+bool setPsiMediaJingleContentVideoOutput(XMPP::Jingle::Session *session, const QString &name,
+                                         PsiMedia::VideoWidget *widget)
+{
+    auto backend = backendSession(session);
+    return backend && backend->setContentVideoOutput(name, widget);
+}
+
+bool setPsiMediaJingleContentVideoProfile(XMPP::Jingle::Session *session, const QString &name, const QSize &size,
+                                          int fps)
+{
+    auto backend = backendSession(session);
+    return backend && backend->setContentVideoProfile(name, size, fps);
+}
+
+bool psiMediaJingleSupportsGroupedCapture(XMPP::Jingle::Session *session)
+{
+    auto backend = backendSession(session);
+    return backend && backend->supportsGroupedCapture();
+}
+
+bool setPsiMediaJingleContentCaptureLease(XMPP::Jingle::Session *session, const QString &name,
+                                          std::shared_ptr<const void> lease)
+{
+    auto backend = backendSession(session);
+    return backend && backend->setContentLease(name, std::move(lease));
 }
