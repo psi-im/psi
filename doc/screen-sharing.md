@@ -67,6 +67,7 @@ GStreamer and mock portal tests cannot establish those results.
 ## Diagnosing a failed addition
 
 Collect both clients' application logs and the XMPP exchange for the same attempt.
+
 The `jingle sid=...` entries identify outgoing actions and IQ results. A successful
 `content-add` IQ result acknowledges receipt; look for `content-accept`,
 `content-reject`, or an IQ error to learn the actual decision.
@@ -87,6 +88,18 @@ to an existing audio/video BUNDLE group. The IQ result acknowledging `content-ad
 does not accept the stream; acceptance uses a separate `content-accept` with the
 RTP answer and transport. Receiving a new stream never grants permission to start
 local camera or desktop capture. Initial call acceptance remains a user decision.
+
+## Memory-pressure diagnostics
+
+On Linux, a memory-pressure kill may come from `systemd-oomd`, which kills an
+entire application cgroup. A Qt Creator group can include Psi, language servers
+and build processes. Its reported memory usage is their aggregate, not Psi's
+individual RSS. Check `journalctl -b -u systemd-oomd` as well as the kernel log.
+To investigate growth during a call, record Psi's RSS over time while repeating
+camera/screen start and stop, separately from compilations and IDE indexing.
+psimedia releases discarded UI frames and stop-queue commands, and bounds each
+RTP `appsrc` input to 512 KiB. An `RTP input overload` message indicates that a
+stalled consumer is losing packets; increasing the queue limit is not a remedy.
 
 ## Ownership
 
