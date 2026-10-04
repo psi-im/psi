@@ -49,6 +49,14 @@ the new application is active and local consent and sender policy permit it.
 Stopping revokes capture immediately, including while negotiation is pending;
 Iris handles the subsequent content removal and rollback.
 
+New audio-only calls can negotiate a BUNDLE group containing just the audio
+content when both endpoints support grouping. Screen sharing can then extend
+that group without another ICE/DTLS handshake. The peer must accept the group
+in the initial answer; an audio call whose group was declined remains unbundled.
+Existing calls established without BUNDLE also use a separate screen transport.
+STUN remains part of the call's initial ICE negotiation even when BUNDLE is used;
+adding a member to an established group reuses that ICE association.
+
 The `screen-` and `camera-` content name prefixes are Psi presentation hints,
 not an XEP-defined declaration of source type. Other clients must support active
 video additions to receive a new screen stream. Their naming conventions can
