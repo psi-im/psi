@@ -30,8 +30,8 @@ permissions:
 
 env:
   QCA_TAG: v3.0.8
-  IRIS_SRTP_REF: 9c09c899eafb403e4d96c2afd3958d8fa2e52f41
-  PSIMEDIA_SRTP_REF: ce8df212f6f738e58c3ffe961899400f2131f782
+  # Iris follows the Psi gitlink; psimedia is pinned to the matching provider API.
+  PSIMEDIA_SRTP_REF: 52cebb52299b130ae727ca6b597b833da5e445e3
 
 concurrency:
   group: psimedia-integration-${{ github.workflow }}-${{ github.ref }}
@@ -46,15 +46,10 @@ jobs:
         with:
           submodules: false
 
-      - name: Checkout matching Iris SRTP branch
-        uses: actions/checkout@v4
-        with:
-          repository: psi-im/iris
-          ref: ${{ env.IRIS_SRTP_REF }}
-          path: iris
-          fetch-depth: 1
+      - name: Initialize Iris pinned by Psi
+        run: git submodule update --init --depth 1 iris
 
-      - name: Checkout matching psimedia SRTP branch
+      - name: Checkout pinned psimedia provider
         uses: actions/checkout@v4
         with:
           repository: psi-im/psimedia
@@ -797,15 +792,8 @@ jobs:
 
       - name: Build real provider, plugin and RTP session regressions
         run: |
-          cmake --build _psimedia-smoke-build \
-            --target gstprovidersrc mediaplugin psimedia_provider_smoke psimedia_plugin_load_smoke \
-                     psi_native_media_adapter_smoke psi_backend_lifecycle_test \
-                     psi_native_media_runtime_error_smoke \
-                     psimedia_opusrtppay_test psimedia_rtpworker_receive_order_test psimedia_rtpworker_send_order_test \
-                     psimedia_videoprep_test psimedia_video_capture_caps_test psimedia_rtpsessioncontext_sender_test \
-                     psimedia_rtpsessionbridge_test psimedia_rtpsessionbridge_packets_test \
-                     psimedia_rtpsessionbridge_periodic_test psimedia_rtpsessionbridge_backpressure_test \
-            --parallel 4
+          # Build every enabled regression, including screen/BUNDLE and worker lifetime tests.
+          cmake --build _psimedia-smoke-build --parallel 4
 
       - name: Run provider and RTP session smoke
         env:
@@ -813,7 +801,7 @@ jobs:
           G_DEBUG: fatal-criticals
         run: |
           ctest --test-dir _psimedia-smoke-build \
-            -R '^(psimedia_(provider_smoke|plugin_load_smoke|opusrtppay|rtpworker_receive_order|rtpworker_send_order|videoprep|video_capture_caps|rtpsessioncontext_sender|rtpsessionbridge|rtpsessionbridge_packets|rtpsessionbridge_periodic|rtpsessionbridge_backpressure)|psi_(backend_lifecycle_test|native_media_(adapter|runtime_error)_smoke))$' \
+            -R '^(psimedia_.*|psi_(backend_lifecycle_test|native_media_(adapter|runtime_error)_smoke))$' \
             --no-tests=error \
             --output-on-failure \
             -V \
@@ -831,13 +819,8 @@ jobs:
         with:
           submodules: false
 
-      - name: Checkout matching Iris SRTP branch
-        uses: actions/checkout@v4
-        with:
-          repository: psi-im/iris
-          ref: ${{ env.IRIS_SRTP_REF }}
-          path: iris
-          fetch-depth: 1
+      - name: Initialize Iris pinned by Psi
+        run: git submodule update --init --depth 1 iris
 
       - name: Install XMPP live-test dependencies
         run: |
@@ -1087,15 +1070,10 @@ jobs:
         with:
           submodules: false
 
-      - name: Checkout matching Iris SRTP branch
-        uses: actions/checkout@v4
-        with:
-          repository: psi-im/iris
-          ref: ${{ env.IRIS_SRTP_REF }}
-          path: iris
-          fetch-depth: 1
+      - name: Initialize Iris pinned by Psi
+        run: git submodule update --init --depth 1 iris
 
-      - name: Checkout matching psimedia SRTP branch
+      - name: Checkout pinned psimedia provider
         uses: actions/checkout@v4
         with:
           repository: psi-im/psimedia

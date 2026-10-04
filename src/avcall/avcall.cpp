@@ -587,15 +587,10 @@ public:
                     Qt::UniqueConnection);
             connect(rtp, &Jingle::Application::sendersChanged, this, &AvCallPrivate::applicationSendersChanged,
                     Qt::UniqueConnection);
-            if (active && rtp->isRemote() && rtp->state() == Jingle::State::Pending) {
-                if (rtp->media() != QLatin1String("video")) {
-                    rtp->remove(Jingle::Reason::UnsupportedApplications);
-                    continue;
-                }
-                auto pad = rtp->pad().staticCast<RTP::Pad>();
-                pad->directionController()->setLocalSending(rtp, false);
-                rtp->prepare();
-            }
+            const QPointer<RTP::Application> guard(rtp);
+            AvCallPolicy::prepareIncomingContent(rtp, active);
+            if (!guard)
+                continue;
             if (rtp->media() == QLatin1String("video") && rtp->state() < Jingle::State::Finishing) {
                 const bool receive = AvCallPolicy::allowsSender(rtp->senders(), AvCallPolicy::peerRole(session->role()));
                 const bool presentation = rtp != cameraContent

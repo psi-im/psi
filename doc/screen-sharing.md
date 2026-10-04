@@ -56,6 +56,13 @@ produce different presentation layouts. External-client interoperability and
 real compositor permission dialogs require manual call testing; synthetic
 GStreamer and mock portal tests cannot establish those results.
 
+Psi automatically prepares a receive-only answer to a new video content in an
+active call. This includes screen sharing during an audio-only call and additions
+to an existing audio/video BUNDLE group. The IQ result acknowledging `content-add`
+does not accept the stream; acceptance uses a separate `content-accept` with the
+RTP answer and transport. Receiving a new stream never grants permission to start
+local camera or desktop capture. Initial call acceptance remains a user decision.
+
 ## Ownership
 
 Each video content owns its codec worker and capture graph. The call's media

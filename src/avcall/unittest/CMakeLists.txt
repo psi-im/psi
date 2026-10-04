@@ -14,6 +14,12 @@ target_link_libraries(avcallpolicy_test PRIVATE
 
 add_test(NAME avcallpolicy_test COMMAND avcallpolicy_test)
 
+add_executable(avcallincomingcontent_test incomingcontent.cpp)
+target_include_directories(avcallincomingcontent_test PRIVATE ${PROJECT_SOURCE_DIR}/iris/include)
+target_link_libraries(avcallincomingcontent_test PRIVATE ${iris_LIB} Qt${QT_DEFAULT_MAJOR_VERSION}::Core)
+add_test(NAME avcallincomingcontent_test COMMAND avcallincomingcontent_test)
+set_tests_properties(avcallincomingcontent_test PROPERTIES TIMEOUT 10)
+
 add_executable(avcallaudiodirection_test
     audiodirection.cpp
     ../avcallaudiodirection.cpp

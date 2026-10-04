@@ -2,6 +2,7 @@
 #ifndef AVCALLPOLICY_H
 #define AVCALLPOLICY_H
 
+#include <iris/jingle-rtp.h>
 #include <iris/jingle.h>
 
 namespace AvCallPolicy {
@@ -38,6 +39,26 @@ inline Origin sendersForCaptureAvailability(Origin desiredWithCapture, Origin lo
 inline bool shouldTransmit(bool hasMedia, bool captureConsent, bool senderAllowed, bool captureAvailable)
 {
     return hasMedia && captureConsent && senderAllowed && captureAvailable;
+}
+
+// Application policy for content-add in an established call. Incoming offers
+// remain Created until the application decides to prepare their answer; Pending
+// is a signaling state reached later, not an invitation to accept the offer.
+inline void prepareIncomingContent(XMPP::Jingle::RTP::Application *content, bool callActive)
+{
+    namespace Jingle = XMPP::Jingle;
+    namespace RTP    = Jingle::RTP;
+    if (!callActive || !content || !content->isRemote() || content->state() != Jingle::State::Created)
+        return;
+    if (content->media() != QLatin1String("video")) {
+        content->remove(Jingle::Reason::UnsupportedApplications);
+        return;
+    }
+    QPointer<RTP::Application> guard(content);
+    auto                       pad = content->pad().staticCast<RTP::Pad>();
+    pad->directionController()->setLocalSending(content, false);
+    if (guard)
+        content->prepare();
 }
 
 } // namespace AvCallPolicy
