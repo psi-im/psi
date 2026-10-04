@@ -571,6 +571,7 @@ jobs:
               audioRoute.endpointId    = QByteArrayLiteral("audio");
               audioRoute.associationId = QByteArrayLiteral("audio-association");
               audioRoute.media         = QStringLiteral("audio");
+              audioRoute.contentName   = QStringLiteral("audio");
               for (const auto &payload : audioLocal->payloads)
                   audioRoute.incomingPayloadTypes.insert(payload.id);
 
@@ -578,6 +579,7 @@ jobs:
               videoRoute.endpointId    = QByteArrayLiteral("video");
               videoRoute.associationId = QByteArrayLiteral("video-association");
               videoRoute.media         = QStringLiteral("video");
+              videoRoute.contentName   = QStringLiteral("video");
               for (const auto &payload : videoLocal->payloads)
                   videoRoute.incomingPayloadTypes.insert(payload.id);
 
