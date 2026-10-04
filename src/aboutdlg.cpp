@@ -64,10 +64,11 @@ AboutDlg::AboutDlg(QWidget *parent) : QDialog(parent)
     authors += details(QString::fromUtf8("Vitaly Tonkacheyev"), "thetvg@gmail.com", "", "", tr("Developer"));
     authors += details(QString::fromUtf8("Boris Pek"), "tehnick-8@yandex.ru", "", "",
                        tr("Developer and Language Coordinator"));
+    authors += details(QString::fromUtf8("Ivan Romanov"), "", "", "", tr("Past Developer and Plugins Author"));
     authors += details(QString::fromUtf8("Vladimir Shelukhin"), "vladimir.shelukhin@gmail.com", "", "",
-                       tr("Psi+ Developer"));
-    authors += details(QString::fromUtf8("Ivan Romanov"), "", "", "", tr("Developer and Plugins Author"));
-    authors += details(QString::fromUtf8("Maksim A. Yakovenko"), "maksim.maj@gmail.com", "", "", tr("Psi+ Designer"));
+                       tr("Past Psi+ Developer"));
+    authors += details(QString::fromUtf8("Maksim A. Yakovenko"), "maksim.maj@gmail.com", "", "",
+                       tr("Past Psi+ Developer and Designer"));
     ui_.te_authors->setText(authors);
 
     // fill in Thanks To tab...
@@ -89,11 +90,13 @@ AboutDlg::AboutDlg(QWidget *parent) : QDialog(parent)
     thanks += details(QString::fromUtf8("Hal Rottenberg"), "", "", "", tr("Webmaster, Marketing"));
     thanks += details(QString::fromUtf8("Mircea Bardac"), "", "", "", tr("Bug Tracker Management"));
     thanks += details(QString::fromUtf8("Jacek Tomasiak"), "", "", "", tr("Patches"));
-    thanks += details(QString::fromUtf8("Ivan Borzenkov (ivan1986)"), "", "", "", tr("Ubuntu Packager"));
+    thanks += details(QString::fromUtf8("Ivan Borzenkov (ivan1986)"), "", "", "",
+                      tr("Past Psi+ Developer and Ubuntu Packager"));
     thanks += details(QString::fromUtf8("Ivan Tyumentsev (ivan101)"), "ivan101@users.sourceforge.net", "", "",
                       tr("Russian Translator"));
-    thanks += details(QString::fromUtf8("nexor (aka zerkalica)"), "", "", "", tr("Former Ubuntu Packager"));
-    thanks += details(QString::fromUtf8("Flint (aka Флинт)"), "", "", "", tr("Former Mandriva Linux Packager"));
+    thanks += details(QString::fromUtf8("nexor (aka zerkalica)"), "", "", "", tr("Past Psi+ Ubuntu Packager"));
+    thanks += details(QString::fromUtf8("Flint (aka Флинт)"), "", "", "", tr("Past Psi+ Mandriva Linux Packager"));
+    thanks += details(QString::fromUtf8("tux-den"), "", "", "", tr("Past Psi+ Designer"));
     thanks += details(QString::fromUtf8("Z_God"), "", "", "", tr("Psimedia Developer"));
 
     // sponsor thanks
