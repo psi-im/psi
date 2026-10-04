@@ -228,7 +228,7 @@ private slots:
 
         auto rtpManager = client.jingleManager()->rtpManager();
         QVERIFY(rtpManager);
-        rtpManager->setTransportNamespaces({ Jingle::ICE::NS, Jingle::ICE::NS_ICE_UDP });
+        rtpManager->setTransportNamespaces({ Jingle::ICE::NS_ICE_UDP, Jingle::ICE::NS });
 
         PsiMediaJingleCapabilities          current;
         std::shared_ptr<RTP::MediaProvider> provider;
@@ -295,7 +295,7 @@ private slots:
 
         auto rtpManager = client.jingleManager()->rtpManager();
         QVERIFY(rtpManager);
-        rtpManager->setTransportNamespaces({ Jingle::ICE::NS, Jingle::ICE::NS_ICE_UDP });
+        rtpManager->setTransportNamespaces({ Jingle::ICE::NS_ICE_UDP, Jingle::ICE::NS });
 
         PsiMediaJingleCapabilities          current;
         std::shared_ptr<RTP::MediaProvider> provider;
@@ -330,7 +330,7 @@ private slots:
 
         auto rtpManager = client.jingleManager()->rtpManager();
         QVERIFY(rtpManager);
-        rtpManager->setTransportNamespaces({ Jingle::ICE::NS, Jingle::ICE::NS_ICE_UDP });
+        rtpManager->setTransportNamespaces({ Jingle::ICE::NS_ICE_UDP, Jingle::ICE::NS });
 
         PsiMediaJingleCapabilities          current;
         std::shared_ptr<RTP::MediaProvider> provider;
