@@ -37,6 +37,7 @@ jobs:
         submodules: false
     - name: Initializing non-Iris submodules
       run: |
+        git config --global --add safe.directory "$GITHUB_WORKSPACE"
         git submodule update --init --depth 1 \
             3rdparty/http-parser \
             3rdparty/qhttp \
