@@ -12,7 +12,7 @@
 
 #include "psimediajingle.h"
 
-#include <iris/jingle-rtp.h>
+#include <iris/xmpp-im/jingle-rtp.h>
 
 #include <functional>
 #include <memory>
