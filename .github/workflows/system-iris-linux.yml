@@ -1,0 +1,100 @@
+name: System Iris Linux
+
+on:
+  push:
+    branches:
+      - ai/system-iris-linux
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  QCA_TAG: v3.0.8
+  IRIS_TAG: v1.1
+
+jobs:
+  build:
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Checkout Psi without Iris
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Initialize required non-Iris submodules
+        shell: bash
+        run: |
+          set -euo pipefail
+          git submodule update --init --depth 1 \
+            3rdparty/http-parser \
+            3rdparty/qhttp \
+            3rdparty/qite
+          test ! -e iris/CMakeLists.txt
+
+      - name: Install build dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            cmake \
+            g++ \
+            libhttp-parser-dev \
+            libminizip-dev \
+            libotr5-dev \
+            libssl-dev \
+            libtidy-dev \
+            ninja-build \
+            pkg-config \
+            qt6-base-dev \
+            qt6-multimedia-dev \
+            qt6-svg-dev \
+            qt6-tools-dev \
+            qt6-tools-dev-tools \
+            zlib1g-dev
+
+      - name: Install QCA3 release packages
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir qca-release
+          gh release download "$QCA_TAG" --repo psi-im/qca \
+            -p 'qca3-deb-ubuntu-26.04.zip' -O qca3.zip
+          (cd qca-release && cmake -E tar xvf ../qca3.zip)
+          sudo apt-get install -y ./qca-release/*.deb
+
+      - name: Install Iris release packages
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir iris-release
+          gh release download "$IRIS_TAG" --repo psi-im/iris \
+            -p 'iris-deb-ubuntu-26.04.zip' -O iris.zip
+          (cd iris-release && cmake -E tar xvf ../iris.zip)
+          sudo apt-get install -y ./iris-release/*.deb
+          dpkg-query -W 'libiris-qt6-1' 'libiris-qt6-dev'
+
+      - name: Configure against system Iris
+        shell: bash
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=/usr \
+            -DBUNDLED_IRIS=OFF \
+            -DCHAT_TYPE=BASIC \
+            -DENABLE_PLUGINS=OFF \
+            -DBUILD_PSIMEDIA=OFF \
+            -DIRIS_BUNDLED_QCA=OFF \
+            -DIRIS_BUNDLED_USRSCTP=OFF \
+            -DUSE_DBUS=OFF \
+            -DUSE_HUNSPELL=OFF \
+            -DUSE_KEYCHAIN=OFF \
+            -DUSE_QT6=ON \
+            -DUSE_X11=OFF
+
+      - name: Build until first system-Iris link failure
+        run: cmake --build build --parallel 2
