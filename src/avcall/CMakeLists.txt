@@ -3,11 +3,6 @@ unset(FORMS)
 unset(SOURCES)
 unset(UI_FORMS)
 
-include_directories(
-    ${PROJECT_SOURCE_DIR}/iris/include/iris
-    ${PROJECT_SOURCE_DIR}/iris/src
-)
-
 add_definitions(-DDEBUG_POSTFIX="")
 
 set(HEADERS
