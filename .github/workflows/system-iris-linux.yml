@@ -79,17 +79,6 @@ jobs:
           sudo apt-get install -y ./iris-release/*.deb
           dpkg-query -W 'libiris-qt6-1' 'libiris-qt6-dev'
 
-      - name: Work around broken Iris RTP compatibility header for probe
-        shell: bash
-        run: |
-          set -euo pipefail
-          grep -RIl --include='*.h' --include='*.cpp' '<iris/jingle-rtp.h>' src \
-            | xargs -r sed -i 's#<iris/jingle-rtp.h>#<iris/xmpp-im/jingle-rtp.h>#g'
-          if grep -R --include='*.h' --include='*.cpp' -n '<iris/jingle-rtp.h>' src; then
-            echo 'Unpatched production jingle-rtp include remains' >&2
-            exit 1
-          fi
-
       - name: Configure against system Iris
         shell: bash
         run: |
