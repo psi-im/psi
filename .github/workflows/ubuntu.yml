@@ -103,6 +103,7 @@ jobs:
             -DBUILD_DEV_PLUGINS=${ENABLE_PLUGINS} \
             -DBUILD_PSIMEDIA=${ENABLE_PLUGINS} \
             -DBUNDLED_IRIS=OFF \
+            -DCHAT_TYPE:STRING=${{ matrix.chattype }} \
             -DENABLE_PLUGINS=${ENABLE_PLUGINS} \
             -DUSE_HUNSPELL=ON \
             -DUSE_KEYCHAIN=ON \
