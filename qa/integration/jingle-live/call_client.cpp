@@ -4,7 +4,7 @@
 
 #include <iris/dtls.h>
 #include <iris/jingle-ice.h>
-#include <iris/jingle-rtp.h>
+#include <iris/xmpp-im/jingle-rtp.h>
 #include <iris/jingle-session.h>
 #include <iris/tcpportreserver.h>
 #include <iris/xmpp.h>

@@ -11,7 +11,7 @@
 
 #include "../psimedia/psimedia.h"
 
-#include <iris/jingle-rtp.h>
+#include <iris/xmpp-im/jingle-rtp.h>
 #include <iris/jingle-session.h>
 
 #include <QMetaObject>

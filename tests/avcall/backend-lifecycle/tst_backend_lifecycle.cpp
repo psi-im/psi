@@ -3,7 +3,7 @@
 #include "psimedia.h"
 #include "psimediaprovider.h"
 
-#include <iris/jingle-rtp.h>
+#include <iris/xmpp-im/jingle-rtp.h>
 
 #include <QCoreApplication>
 #include <QEventLoop>
