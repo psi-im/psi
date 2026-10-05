@@ -11,7 +11,7 @@ permissions:
 
 env:
   QCA_TAG: v3.0.8
-  IRIS_REF: 258047a3641d83059fd2db190cf6982893169b6c
+  IRIS_REF: 22be174003d5da118d98e540fa9bc5c830f448f9
   IRIS_VERSION: 1.1
 
 jobs:
