@@ -2,7 +2,7 @@
 #ifndef AVCALLAUDIODIRECTION_H
 #define AVCALLAUDIODIRECTION_H
 
-#include <iris/jingle-rtp.h>
+#include <iris/xmpp-im/jingle-rtp.h>
 
 // Call-owned adapter of explicit user consent/device facts to Iris policy.
 // No signaling, retry or negotiated-direction state is duplicated here.
