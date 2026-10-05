@@ -1,0 +1,47 @@
+name: Temporary Iris history patch
+
+on:
+  push:
+    branches:
+      - ci/iris-version-history
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ci/iris-version-history
+
+      - name: Patch PsiMedia integration and remove this workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('.github/workflows/psimedia-integration.yml')
+          text = path.read_text()
+          old = """      - name: Initialize Iris pinned by Psi
+                run: git submodule update --init --depth 1 iris
+          """
+          new = """      - name: Initialize Iris pinned by Psi
+                run: |
+                  git submodule update --init --depth 1 iris
+                  bash .github/scripts/ensure-iris-version-history.sh
+          """
+          count = text.count(old)
+          if count != 3:
+              raise SystemExit(f'Expected 3 Iris initialization blocks, found {count}')
+          path.write_text(text.replace(old, new))
+          PY
+
+          rm .github/workflows/tmp-patch-iris-history.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows/psimedia-integration.yml .github/workflows/tmp-patch-iris-history.yml
+          git commit -m 'Fetch Iris release history in integration CI [skip ci]'
+          git push origin HEAD:ci/iris-version-history
