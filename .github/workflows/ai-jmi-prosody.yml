@@ -32,7 +32,9 @@ jobs:
 
       - name: Initialize pinned Iris
         shell: bash
-        run: git submodule update --init --depth 1 iris
+        run: |
+          git submodule update --init --depth 1 iris
+          bash .github/scripts/ensure-iris-version-history.sh
 
       - name: Install JMI live-test dependencies
         run: |
