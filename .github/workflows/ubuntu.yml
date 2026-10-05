@@ -30,7 +30,14 @@ jobs:
     - name: Fetching sources
       uses: actions/checkout@v4
       with:
-        submodules: true
+        submodules: false
+    - name: Initializing non-Iris submodules
+      run: |
+        git submodule update --init --depth 1 \
+            3rdparty/http-parser \
+            3rdparty/qhttp \
+            3rdparty/qite
+        test ! -e iris/CMakeLists.txt
     - name: Updating apt package metadata
       run: |
         sudo apt-get update
@@ -52,7 +59,7 @@ jobs:
         sudo apt-get remove libunwind-*
     - name: Installing build system
       run: |
-        sudo apt-get -y install cmake make
+        sudo apt-get -y install cmake make ninja-build
     - name: Installing development packages
       run: |
         sudo apt-get -y install --no-install-recommends \
@@ -70,12 +77,20 @@ jobs:
             libssl-dev \
             libsrtp2-dev \
             libtidy-dev \
+            libusrsctp-dev \
             libxss-dev \
             qt5keychain-dev \
             qtbase5-dev \
             qtmultimedia5-dev \
             qtwebengine5-dev \
             zlib1g-dev
+    - name: Building and installing external Iris
+      shell: bash
+      env:
+        IRIS_INSTALL_PREFIX: ${{ runner.temp }}/iris-sdk
+        IRIS_C_COMPILER: ${{ matrix.cc }}
+        IRIS_CXX_COMPILER: ${{ matrix.cxx }}
+      run: bash .github/scripts/build-system-iris.sh
     - name: Building project with CMake
       run: |
         [ -d "./plugins/generic" ] && ENABLE_PLUGINS="ON" || ENABLE_PLUGINS="OFF"
@@ -83,11 +98,11 @@ jobs:
             -DCMAKE_C_COMPILER=${{ matrix.cc }} \
             -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} \
             -DCMAKE_INSTALL_PREFIX:PATH=/usr \
+            -DCMAKE_PREFIX_PATH="${{ runner.temp }}/iris-sdk" \
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_DEV_PLUGINS=${ENABLE_PLUGINS} \
             -DBUILD_PSIMEDIA=${ENABLE_PLUGINS} \
-            -DIRIS_BUNDLED_QCA=ON \
-            -DIRIS_BUNDLED_USRSCTP=ON \
+            -DBUNDLED_IRIS=OFF \
             -DENABLE_PLUGINS=${ENABLE_PLUGINS} \
             -DUSE_HUNSPELL=ON \
             -DUSE_KEYCHAIN=ON \
