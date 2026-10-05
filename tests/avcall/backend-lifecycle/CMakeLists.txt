@@ -7,8 +7,6 @@ target_include_directories(avcall_backend_lifecycle_test PRIVATE
     ${PROJECT_SOURCE_DIR}/src/avcall
     ${PROJECT_SOURCE_DIR}/src/psimedia
     ${PROJECT_SOURCE_DIR}/plugins/include
-    ${PROJECT_SOURCE_DIR}/iris/include/iris
-    ${PROJECT_SOURCE_DIR}/iris/src
 )
 target_link_libraries(avcall_backend_lifecycle_test PRIVATE
     avcall
@@ -28,8 +26,6 @@ target_include_directories(avcall_capability_refresh_test PRIVATE
     ${PROJECT_SOURCE_DIR}/src/avcall
     ${PROJECT_SOURCE_DIR}/src/psimedia
     ${PROJECT_SOURCE_DIR}/plugins/include
-    ${PROJECT_SOURCE_DIR}/iris/include/iris
-    ${PROJECT_SOURCE_DIR}/iris/src
 )
 target_link_libraries(avcall_capability_refresh_test PRIVATE
     avcall
