@@ -44,6 +44,7 @@ jobs:
             libotr5-dev \
             libssl-dev \
             libtidy-dev \
+            libxss-dev \
             ninja-build \
             pkg-config \
             qt6-base-dev \
@@ -84,6 +85,7 @@ jobs:
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_PREFIX=/usr \
+            -DBUILD_TESTING=OFF \
             -DBUNDLED_IRIS=OFF \
             -DCHAT_TYPE=BASIC \
             -DENABLE_PLUGINS=OFF \
