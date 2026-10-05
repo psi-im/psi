@@ -11,7 +11,7 @@ permissions:
 
 env:
   QCA_TAG: v3.0.8
-  IRIS_REF: ai/install-safe-rtp-headers
+  IRIS_REF: 258047a3641d83059fd2db190cf6982893169b6c
   IRIS_VERSION: 1.1
 
 jobs:
@@ -73,7 +73,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git clone --depth 1 --branch "$IRIS_REF" https://github.com/psi-im/iris.git "$RUNNER_TEMP/iris-src"
+          git init "$RUNNER_TEMP/iris-src"
+          git -C "$RUNNER_TEMP/iris-src" remote add origin https://github.com/psi-im/iris.git
+          git -C "$RUNNER_TEMP/iris-src" fetch --depth 1 origin "$IRIS_REF"
+          git -C "$RUNNER_TEMP/iris-src" checkout --detach FETCH_HEAD
           cmake -S "$RUNNER_TEMP/iris-src" -B "$RUNNER_TEMP/iris-build" -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_PREFIX=/usr/local \
@@ -88,10 +91,22 @@ jobs:
             -DUSE_QT6=ON
           cmake --build "$RUNNER_TEMP/iris-build" --parallel 2
           sudo cmake --install "$RUNNER_TEMP/iris-build"
+          cp -a "$RUNNER_TEMP/iris-src/tests/installed-sdk" "$RUNNER_TEMP/iris-sdk-consumer"
           rm -rf "$RUNNER_TEMP/iris-src" "$RUNNER_TEMP/iris-build"
           test -f /usr/local/lib/cmake/Iris/IrisConfig.cmake
           test -f /usr/local/lib/libiris-qt6.so
           test ! -e iris/CMakeLists.txt
+
+      - name: Verify installed shared SDK without producer trees
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 "$RUNNER_TEMP/iris-sdk-consumer/check-exports.py" /usr/local/lib/libiris-qt6.so
+          cmake -S "$RUNNER_TEMP/iris-sdk-consumer" -B "$RUNNER_TEMP/iris-sdk-consumer-build" -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DIris_DIR=/usr/local/lib/cmake/Iris
+          cmake --build "$RUNNER_TEMP/iris-sdk-consumer-build" --parallel 2
+          ctest --test-dir "$RUNNER_TEMP/iris-sdk-consumer-build" --output-on-failure
 
       - name: Configure against system Iris
         shell: bash
@@ -101,6 +116,7 @@ jobs:
             -DCMAKE_INSTALL_PREFIX=/usr \
             -DBUILD_TESTING=OFF \
             -DBUNDLED_IRIS=OFF \
+            -DIris_DIR=/usr/local/lib/cmake/Iris \
             -DCHAT_TYPE=BASIC \
             -DENABLE_PLUGINS=OFF \
             -DBUILD_PSIMEDIA=OFF \
@@ -112,5 +128,5 @@ jobs:
             -DUSE_QT6=ON \
             -DUSE_X11=OFF
 
-      - name: Build until first system-Iris link failure
+      - name: Build Psi against installed shared Iris
         run: cmake --build build --parallel 2
