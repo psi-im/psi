@@ -11,7 +11,8 @@ permissions:
 
 env:
   QCA_TAG: v3.0.8
-  IRIS_TAG: v1.1
+  IRIS_REF: ai/install-safe-rtp-headers
+  IRIS_VERSION: 1.1
 
 jobs:
   build:
@@ -41,9 +42,11 @@ jobs:
             g++ \
             libhttp-parser-dev \
             libminizip-dev \
+            libomemo-c-dev \
             libotr5-dev \
             libssl-dev \
             libtidy-dev \
+            libusrsctp-dev \
             libxss-dev \
             ninja-build \
             pkg-config \
@@ -66,18 +69,29 @@ jobs:
           (cd qca-release && cmake -E tar xvf ../qca3.zip)
           sudo apt-get install -y ./qca-release/*.deb
 
-      - name: Install Iris release packages
+      - name: Build and install shared Iris
         shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          mkdir iris-release
-          gh release download "$IRIS_TAG" --repo psi-im/iris \
-            -p 'iris-deb-ubuntu-26.04.zip' -O iris.zip
-          (cd iris-release && cmake -E tar xvf ../iris.zip)
-          sudo apt-get install -y ./iris-release/*.deb
-          dpkg-query -W 'libiris-qt6-1' 'libiris-qt6-dev'
+          git clone --depth 1 --branch "$IRIS_REF" https://github.com/psi-im/iris.git "$RUNNER_TEMP/iris-src"
+          cmake -S "$RUNNER_TEMP/iris-src" -B "$RUNNER_TEMP/iris-build" -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=/usr/local \
+            -DBUILD_SHARED_LIBS=ON \
+            -DIRIS_VERSION="$IRIS_VERSION" \
+            -DIRIS_BUILD_TESTS=OFF \
+            -DIRIS_ENABLE_OMEMO=ON \
+            -DIRIS_BUNDLED_OMEMO_C=OFF \
+            -DIRIS_BUNDLED_QCA=OFF \
+            -DIRIS_BUNDLED_USRSCTP=OFF \
+            -DIRIS_SYSTEM_QCA=3 \
+            -DUSE_QT6=ON
+          cmake --build "$RUNNER_TEMP/iris-build" --parallel 2
+          sudo cmake --install "$RUNNER_TEMP/iris-build"
+          rm -rf "$RUNNER_TEMP/iris-src" "$RUNNER_TEMP/iris-build"
+          test -f /usr/local/lib/cmake/Iris/IrisConfig.cmake
+          test -f /usr/local/lib/libiris-qt6.so
+          test ! -e iris/CMakeLists.txt
 
       - name: Configure against system Iris
         shell: bash
