@@ -22,21 +22,26 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
           path = Path('.github/workflows/psimedia-integration.yml')
           text = path.read_text()
-          old = """      - name: Initialize Iris pinned by Psi
-                run: git submodule update --init --depth 1 iris
-          """
-          new = """      - name: Initialize Iris pinned by Psi
-                run: |
-                  git submodule update --init --depth 1 iris
-                  bash .github/scripts/ensure-iris-version-history.sh
-          """
-          count = text.count(old)
+          pattern = re.compile(
+              r'(?m)^(\s*)run: git submodule update --init --depth 1 iris$'
+          )
+
+          def replace(match):
+              indent = match.group(1)
+              return (
+                  f'{indent}run: |\n'
+                  f'{indent}  git submodule update --init --depth 1 iris\n'
+                  f'{indent}  bash .github/scripts/ensure-iris-version-history.sh'
+              )
+
+          text, count = pattern.subn(replace, text)
           if count != 3:
-              raise SystemExit(f'Expected 3 Iris initialization blocks, found {count}')
-          path.write_text(text.replace(old, new))
+              raise SystemExit(f'Expected 3 Iris initialization commands, found {count}')
+          path.write_text(text)
           PY
 
           rm .github/workflows/tmp-patch-iris-history.yml
