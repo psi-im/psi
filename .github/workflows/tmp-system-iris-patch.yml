@@ -1,0 +1,109 @@
+name: Temporary system Iris patch
+
+on:
+  push:
+    branches:
+      - ai/system-iris-linux
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ai/system-iris-linux
+
+      - name: Patch Psi CMake system Iris path
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('CMakeLists.txt')
+          text = path.read_text()
+
+          old = '''set(SBM_LIST
+              ${PROJECT_SOURCE_DIR}/3rdparty/http-parser/http_parser.h
+              ${PROJECT_SOURCE_DIR}/3rdparty/qhttp/qhttp.pro
+              ${PROJECT_SOURCE_DIR}/3rdparty/qite/qite.pro
+              ${PROJECT_SOURCE_DIR}/iris/CMakeLists.txt
+          )'''
+          new = '''set(SBM_LIST
+              ${PROJECT_SOURCE_DIR}/3rdparty/http-parser/http_parser.h
+              ${PROJECT_SOURCE_DIR}/3rdparty/qhttp/qhttp.pro
+              ${PROJECT_SOURCE_DIR}/3rdparty/qite/qite.pro
+          )'''
+          if text.count(old) != 1:
+              raise SystemExit('Unexpected common submodule list')
+          text = text.replace(old, new)
+
+          marker = '''if (BUNDLED_IRIS_ALL)
+              message(STATUS "BUNDLED_IRIS_ALL - ENABLED")
+              if(NOT BUNDLED_IRIS)
+                  set(BUNDLED_IRIS ON)
+              endif()
+              if(NOT IRIS_BUNDLED_QCA)
+                  set(IRIS_BUNDLED_QCA ON)
+              endif()
+              if(NOT IRIS_BUNDLED_USRSCTP)
+                  set(IRIS_BUNDLED_USRSCTP ON)
+              endif()
+              if(NOT IRIS_BUNDLED_OMEMO_C)
+                  set(IRIS_BUNDLED_OMEMO_C ON)
+              endif()
+          endif()
+          '''
+          replacement = marker + '''
+          if(BUNDLED_IRIS)
+              if(NOT EXISTS "${PROJECT_SOURCE_DIR}/iris/CMakeLists.txt")
+                  message(FATAL_ERROR "Bundled Iris requested, but the iris submodule is not initialized. Run git submodule update --init iris")
+              endif()
+          elseif(NOT LINUX)
+              message(FATAL_ERROR "Using a system Iris is currently supported only on Linux")
+          else()
+              message(STATUS "Iris source - SYSTEM")
+          endif()
+          '''
+          if text.count(marker) != 1:
+              raise SystemExit('Unexpected BUNDLED_IRIS_ALL block')
+          text = text.replace(marker, replacement)
+
+          old = '''    if(BUNDLED_IRIS)
+                  set(IRIS_ENABLE_INSTALL OFF CACHE BOOL "Install iris headers" FORCE)
+                  add_subdirectory(iris)
+              else()
+                  find_package( Iris REQUIRED )
+                  include_directories(${Iris_INCLUDE_DIR})
+              endif()
+              set( iris_LIB iris )'''
+          new = '''    if(BUNDLED_IRIS)
+                  set(IRIS_ENABLE_INSTALL OFF CACHE BOOL "Install iris headers" FORCE)
+                  add_subdirectory(iris)
+                  set(iris_LIB iris)
+              else()
+                  find_package(Iris CONFIG REQUIRED)
+                  if(DEFINED Iris_QT_MAJOR_VERSION AND NOT Iris_QT_MAJOR_VERSION EQUAL QT_DEFAULT_MAJOR_VERSION)
+                      message(FATAL_ERROR "System Iris uses Qt${Iris_QT_MAJOR_VERSION}, but Psi is configured for Qt${QT_DEFAULT_MAJOR_VERSION}")
+                  endif()
+                  message(STATUS "System Iris version - ${Iris_VERSION}")
+                  set(iris_LIB Iris::Iris)
+              endif()'''
+          if text.count(old) != 1:
+              raise SystemExit('Unexpected Iris integration block')
+          text = text.replace(old, new)
+
+          path.write_text(text)
+          PY
+
+          git diff --check
+          git diff -- CMakeLists.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add CMakeLists.txt
+          git commit -m 'Support system Iris on Linux [skip ci]'
+          git push origin HEAD:ai/system-iris-linux
