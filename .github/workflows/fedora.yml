@@ -32,9 +32,16 @@ jobs:
       run: |
         sudo dnf -y install git-core
     - name: Fetching sources
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
-        submodules: true
+        submodules: false
+    - name: Initializing non-Iris submodules
+      run: |
+        git submodule update --init --depth 1 \
+            3rdparty/http-parser \
+            3rdparty/qhttp \
+            3rdparty/qite
+        test ! -e iris/CMakeLists.txt
     - name: Installing compiler ${{ matrix.compiler }}
       run: |
         sudo dnf -y install '/usr/bin/${{ matrix.cc }}' '/usr/bin/${{ matrix.cxx }}'
@@ -68,6 +75,13 @@ jobs:
             qtkeychain-qt5-devel \
             usrsctp-devel \
             zlib-devel
+    - name: Building and installing external Iris
+      shell: bash
+      env:
+        IRIS_INSTALL_PREFIX: ${{ runner.temp }}/iris-sdk
+        IRIS_C_COMPILER: ${{ matrix.cc }}
+        IRIS_CXX_COMPILER: ${{ matrix.cxx }}
+      run: bash .github/scripts/build-system-iris.sh
     - name: Building project with CMake
       run: |
         [ -d "./plugins/generic" ] && ENABLE_PLUGINS="ON" || ENABLE_PLUGINS="OFF"
@@ -76,11 +90,11 @@ jobs:
             -DCMAKE_C_COMPILER=${{ matrix.cc }} \
             -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} \
             -DCMAKE_INSTALL_PREFIX:PATH=/usr \
+            -DCMAKE_PREFIX_PATH="${{ runner.temp }}/iris-sdk" \
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_DEMO:BOOL=OFF \
             -DBUILD_PSIMEDIA:BOOL=${ENABLE_PLUGINS} \
-            -DIRIS_BUNDLED_QCA:BOOL=OFF \
-            -DIRIS_BUNDLED_USRSCTP:BOOL=OFF \
+            -DBUNDLED_IRIS:BOOL=OFF \
             -DCHAT_TYPE:STRING=${{ matrix.chattype }} \
             -DENABLE_DEV_PLUGINS=${ENABLE_PLUGINS} \
             -DENABLE_PLUGINS:BOOL=${ENABLE_PLUGINS} \
