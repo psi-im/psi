@@ -1,0 +1,42 @@
+name: Patch PsiMedia Iris history
+
+on:
+  push:
+    branches:
+      - ai/patch-psimedia-history
+    paths:
+      - '.github/workflows/patch-psimedia-history.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare patched workflow blob
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('.github/workflows/psimedia-integration.yml')
+          text = path.read_text()
+          old = 'run: git submodule update --init --depth 1 iris'
+          new = 'run: bash .github/scripts/ensure-iris-version-history.sh'
+          count = text.count(old)
+          if count != 6:
+              raise SystemExit(f'expected 6 replacements, found {count}')
+          path.write_text(text.replace(old, new))
+          PY
+
+          blob_sha=$(gh api --method POST "repos/$GITHUB_REPOSITORY/git/blobs" \
+            -f content="$(cat .github/workflows/psimedia-integration.yml)" \
+            -f encoding=utf-8 --jq .sha)
+          echo "PATCHED_BLOB_SHA=$blob_sha"
