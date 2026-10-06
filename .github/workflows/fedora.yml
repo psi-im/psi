@@ -2,8 +2,8 @@ name: Fedora CI
 
 on:
   push:
-    branches-ignore:
-    - 'ai/**'
+    branches:
+    - master
   pull_request:
     branches:
     - '*'
