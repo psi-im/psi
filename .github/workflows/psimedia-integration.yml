@@ -790,7 +790,8 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DPSI_SOURCE_DIR="$GITHUB_WORKSPACE" \
-            -DPSIMEDIA_SOURCE_DIR="$GITHUB_WORKSPACE/_psimedia"
+            -DPSIMEDIA_SOURCE_DIR="$GITHUB_WORKSPACE/_psimedia" \
+            -DIRIS_VERSION=0.0.0
 
       - name: Build real provider, plugin and RTP session regressions
         run: |

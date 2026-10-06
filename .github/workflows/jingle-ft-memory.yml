@@ -128,11 +128,11 @@ jobs:
           "$bin" \
             user01@localhost/ft-memory-sender ci-pass-01 \
             user02@localhost/ft-memory-receiver ci-pass-02 \
-            "$input" "$output" 12 2>&1 | tee "$log"
+            "$input" "$output" 100 2>&1 | tee "$log"
 
           grep -F 'LIVE_FT_MEMORY_RESULT=success' "$log"
-          grep -F 'FT_MEMORY_RESULT iterations=12' "$log"
-          test "$(grep -c '^FT_MEMORY iteration=' "$log")" -eq 13
+          grep -F 'FT_MEMORY_RESULT iterations=100' "$log"
+          test "$(grep -c '^FT_MEMORY iteration=' "$log")" -eq 101
           cmp "$input" "$output"
 
       - name: Upload memory probe logs

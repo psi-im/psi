@@ -23,6 +23,7 @@
 #include <malloc.h>
 #endif
 
+#include <algorithm>
 #include <cmath>
 #include <functional>
 #include <optional>
@@ -164,9 +165,10 @@ struct MemorySample {
 
 static qint64 smapsValueKb(const QByteArray &line, const QByteArray &key)
 {
-    if (!line.startsWith(key))
+    const auto normalized = line.trimmed();
+    if (!normalized.startsWith(key))
         return -1;
-    const auto value = line.mid(key.size()).trimmed().split(' ').value(0);
+    const auto value = normalized.mid(key.size()).simplified().split(' ').value(0);
     bool       ok    = false;
     const auto parsed = value.toLongLong(&ok);
     return ok ? parsed : -1;
@@ -185,19 +187,40 @@ static MemorySample sampleMemory(int iteration)
     if (smaps.open(QIODevice::ReadOnly)) {
         qint64 privateClean = 0;
         qint64 privateDirty = 0;
+        bool   sawPrivate   = false;
         while (!smaps.atEnd()) {
             const auto line = smaps.readLine();
             const auto rss  = smapsValueKb(line, QByteArrayLiteral("Rss:"));
             if (rss >= 0)
                 sample.rssKb = rss;
             const auto clean = smapsValueKb(line, QByteArrayLiteral("Private_Clean:"));
-            if (clean >= 0)
+            if (clean >= 0) {
                 privateClean = clean;
+                sawPrivate   = true;
+            }
             const auto dirty = smapsValueKb(line, QByteArrayLiteral("Private_Dirty:"));
-            if (dirty >= 0)
+            if (dirty >= 0) {
                 privateDirty = dirty;
+                sawPrivate   = true;
+            }
         }
-        sample.privateKb = privateClean + privateDirty;
+        if (sawPrivate)
+            sample.privateKb = privateClean + privateDirty;
+    }
+
+    // Some CI/container kernels expose smaps_rollup incompletely. VmRSS is
+    // still useful for the repeated-operation trend in that case.
+    if (sample.rssKb < 0) {
+        QFile status(QStringLiteral("/proc/self/status"));
+        if (status.open(QIODevice::ReadOnly)) {
+            while (!status.atEnd()) {
+                const auto rss = smapsValueKb(status.readLine(), QByteArrayLiteral("VmRSS:"));
+                if (rss >= 0) {
+                    sample.rssKb = rss;
+                    break;
+                }
+            }
+        }
     }
 
 #ifdef __GLIBC__
@@ -271,7 +294,7 @@ public:
         destinationPath_(std::move(destinationPath)), iterations_(iterations)
     {
         timeout_.setSingleShot(true);
-        timeout_.setInterval(180000);
+        timeout_.setInterval(std::max(180000, iterations_ * 5000));
         connect(&timeout_, &QTimer::timeout, this, [this]() { fail(124, QStringLiteral("probe timeout")); });
 
         connect(receiver_.client()->jingleManager(), &J::Manager::incomingSession, this,
