@@ -71,6 +71,12 @@ if(JINGLE_LIVE_ENABLE_FT)
     )
 
     add_executable(psi_jingle_ft_memory_probe ft_memory_probe.cpp)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options(psi_jingle_ft_memory_probe PRIVATE
+            -include iris/xmpp-im/jingle-s5b.h
+            -include iris/xmpp-im/jingle-ibb.h
+        )
+    endif()
     target_link_libraries(psi_jingle_ft_memory_probe PRIVATE
         Iris::Iris
         Qt6::Core
