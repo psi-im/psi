@@ -59,24 +59,16 @@ AboutDlg::AboutDlg(QWidget *parent) : QDialog(parent)
     authors += details(QString::fromUtf8("Maciej Niedzielski"), "", "", "", tr("Developer"));
     authors += details(QString::fromUtf8("Martin Hostettler"), "", "", "", tr("Developer"));
     authors += details(QString::fromUtf8("Evgeny Khryukin"), "wadealer@gmail.com", "", "",
-                       tr("Lead Patcher and Plugins Writer; former macOS Packager"));
-    authors += details(QString::fromUtf8("Aleksey Andreev"), "liuch@mail.ru", "", "", tr("Patcher and Plugins Writer"));
+                       tr("Developer and Plugins Author"));
+    authors += details(QString::fromUtf8("Aleksey Andreev"), "liuch@mail.ru", "", "", tr("Developer and Plugins Author"));
     authors += details(QString::fromUtf8("Vitaly Tonkacheyev"), "thetvg@gmail.com", "", "", tr("Developer"));
     authors += details(QString::fromUtf8("Boris Pek"), "tehnick-8@yandex.ru", "", "",
-                       tr("Language coordinator; Patcher; Debian and Ubuntu Packager; MS Windows and macOS Packager"));
-    authors += details(QString::fromUtf8("zet"), "vladimir.shelukhin@gmail.com", "", "",
-                       tr("Patcher and former MS Windows Packager"));
-    authors += details(QString::fromUtf8("majik"), "maksim.maj@gmail.com", "", "", tr("Patcher and former Designer"));
-    authors
-        += details(QString::fromUtf8("KukuRuzo"), "", "", "", tr("Patcher and Plugins Writer; MS Windows Packager"));
-    authors
-        += details(QString::fromUtf8("taurus"), "", "", "", tr("Patcher and Plugins Writer; former Fedora Packager"));
-    authors += details(QString::fromUtf8("ivan1986"), "", "", "", tr("Patcher and former Ubuntu Packager"));
-    authors += details(QString::fromUtf8("nexor (aka zerkalica)"), "", "", "", tr("former Ubuntu Packager"));
-    authors += details(QString::fromUtf8("Flint (aka Флинт)"), "", "", "", tr("former Mandriva Linux Packager"));
-    authors += details(QString::fromUtf8("ivan101"), "ivan101@users.sourceforge.net", "", "",
-                       tr("Patcher and former Russian translator"));
-    authors += details(QString::fromUtf8("Z_God"), "", "", "", tr("Psimedia Patcher and Wiki English localization"));
+                       tr("Developer and Language Coordinator"));
+    authors += details(QString::fromUtf8("Ivan Romanov"), "", "", "", tr("Past Developer and Plugins Author"));
+    authors += details(QString::fromUtf8("Vladimir Shelukhin"), "vladimir.shelukhin@gmail.com", "", "",
+                       tr("Past Psi+ Developer"));
+    authors += details(QString::fromUtf8("Maksim A. Yakovenko"), "maksim.maj@gmail.com", "", "",
+                       tr("Past Psi+ Developer and Designer"));
     ui_.te_authors->setText(authors);
 
     // fill in Thanks To tab...
@@ -98,6 +90,14 @@ AboutDlg::AboutDlg(QWidget *parent) : QDialog(parent)
     thanks += details(QString::fromUtf8("Hal Rottenberg"), "", "", "", tr("Webmaster, Marketing"));
     thanks += details(QString::fromUtf8("Mircea Bardac"), "", "", "", tr("Bug Tracker Management"));
     thanks += details(QString::fromUtf8("Jacek Tomasiak"), "", "", "", tr("Patches"));
+    thanks += details(QString::fromUtf8("Ivan Borzenkov (ivan1986)"), "", "", "",
+                      tr("Past Psi+ Developer and Ubuntu Packager"));
+    thanks += details(QString::fromUtf8("Ivan Tyumentsev (ivan101)"), "ivan101@users.sourceforge.net", "", "",
+                      tr("Russian Translator"));
+    thanks += details(QString::fromUtf8("nexor (aka zerkalica)"), "", "", "", tr("Past Psi+ Ubuntu Packager"));
+    thanks += details(QString::fromUtf8("Flint (aka Флинт)"), "", "", "", tr("Past Psi+ Mandriva Linux Packager"));
+    thanks += details(QString::fromUtf8("tux-den"), "", "", "", tr("Past Psi+ Designer"));
+    thanks += details(QString::fromUtf8("Z_God"), "", "", "", tr("Psimedia Developer"));
 
     // sponsor thanks
     thanks += details(QString::fromUtf8("Barracuda Networks, Inc."), "", "", "", tr("Sponsor"));
