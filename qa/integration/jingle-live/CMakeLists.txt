@@ -17,6 +17,14 @@ if(DEFINED PSIMEDIA_SOURCE_DIR)
     find_package(Qt6 REQUIRED COMPONENTS Gui Widgets)
 endif()
 
+# Keep the live FT reproducer fully instrumented, including Iris itself. The
+# crash we are chasing occurs while unwinding synchronous SCTP/readyRead paths,
+# so instrumenting only the small driver would miss accesses made in Iris.
+if(JINGLE_LIVE_ENABLE_FT AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer -O1 -g)
+    add_link_options(-fsanitize=address,undefined -fno-omit-frame-pointer)
+endif()
+
 # Live integration jobs deliberately build arbitrary Iris gitlink commits from
 # shallow clones. Such commits need not have a release tag reachable from their
 # one-commit history, so provide the build version explicitly rather than
