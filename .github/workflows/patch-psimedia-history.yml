@@ -35,8 +35,8 @@ jobs:
           old = 'run: git submodule update --init --depth 1 iris'
           new = 'run: bash .github/scripts/ensure-iris-version-history.sh'
           count = text.count(old)
-          if count != 6:
-              raise SystemExit(f'expected 6 replacements, found {count}')
+          if count != 3:
+              raise SystemExit(f'expected 3 replacements, found {count}')
           path.write_text(text.replace(old, new))
           PY
 
