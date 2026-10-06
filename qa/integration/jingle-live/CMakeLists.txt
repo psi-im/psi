@@ -17,6 +17,11 @@ if(DEFINED PSIMEDIA_SOURCE_DIR)
     find_package(Qt6 REQUIRED COMPONENTS Gui Widgets)
 endif()
 
+# Live integration jobs deliberately build arbitrary Iris gitlink commits from
+# shallow clones. Such commits need not have a release tag reachable from their
+# one-commit history, so provide the build version explicitly rather than
+# weakening Iris' strict standalone version resolution.
+set(IRIS_VERSION 1.1 CACHE STRING "" FORCE)
 set(IRIS_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
 set(IRIS_ENABLE_JINGLE_SCTP ${JINGLE_LIVE_ENABLE_FT} CACHE BOOL "" FORCE)
 set(IRIS_ENABLE_OMEMO OFF CACHE BOOL "" FORCE)
