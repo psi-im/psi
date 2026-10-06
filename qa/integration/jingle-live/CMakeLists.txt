@@ -7,6 +7,7 @@ set(CMAKE_AUTOMOC ON)
 set(QT_DEFAULT_MAJOR_VERSION 6)
 
 option(JINGLE_LIVE_ENABLE_FT "Build SCTP-enabled Jingle file-transfer live client" OFF)
+option(JINGLE_LIVE_FT_SANITIZE "Instrument the live Jingle FT client and Iris with ASan/UBSan" ON)
 
 if(NOT DEFINED PSI_SOURCE_DIR)
     message(FATAL_ERROR "PSI_SOURCE_DIR is required")
@@ -21,7 +22,7 @@ endif()
 # crash we are chasing occurs while unwinding synchronous SCTP/readyRead paths,
 # so instrumenting only the small driver would miss accesses made in Iris.
 set(JINGLE_LIVE_FT_ASAN_OPTIONS_SOURCE "")
-if(JINGLE_LIVE_ENABLE_FT AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+if(JINGLE_LIVE_ENABLE_FT AND JINGLE_LIVE_FT_SANITIZE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer -O1 -g)
     add_link_options(-fsanitize=address,undefined -fno-omit-frame-pointer)
 
@@ -63,6 +64,14 @@ if(JINGLE_LIVE_ENABLE_FT)
         ${JINGLE_LIVE_FT_ASAN_OPTIONS_SOURCE}
     )
     target_link_libraries(psi_jingle_ft_live_client PRIVATE
+        Iris::Iris
+        Qt6::Core
+        Qt6::Network
+        Qt6::Xml
+    )
+
+    add_executable(psi_jingle_ft_memory_probe ft_memory_probe.cpp)
+    target_link_libraries(psi_jingle_ft_memory_probe PRIVATE
         Iris::Iris
         Qt6::Core
         Qt6::Network
