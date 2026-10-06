@@ -959,6 +959,7 @@ jobs:
             grep -Fx "FT_INITIAL_TRANSPORT=$expected_initial" "$sender_log"
             grep -Fx "FT_ACTIVE_TRANSPORT=$expected_active" "$sender_log"
             grep -Fx "FT_SENDER_DRAIN=finishing" "$sender_log"
+            grep -Fx "FT_SENDER_RECEIPT=received" "$sender_log"
             grep -Fx "FT_RECEIVER_DRAIN=finishing" "$receiver_log"
             grep -Fx "LIVE_FT_RESULT=success sender completed" "$sender_log"
             grep -Fx "LIVE_FT_RESULT=success receiver completed" "$receiver_log"
