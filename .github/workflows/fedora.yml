@@ -79,7 +79,7 @@ jobs:
     - name: Building and installing external Iris
       shell: bash
       env:
-        IRIS_INSTALL_PREFIX: ${{ runner.temp }}/iris-sdk
+        IRIS_INSTALL_PREFIX: ${{ github.workspace }}/_iris-sdk
         IRIS_C_COMPILER: ${{ matrix.cc }}
         IRIS_CXX_COMPILER: ${{ matrix.cxx }}
       run: bash .github/scripts/build-system-iris.sh
@@ -91,7 +91,7 @@ jobs:
             -DCMAKE_C_COMPILER=${{ matrix.cc }} \
             -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} \
             -DCMAKE_INSTALL_PREFIX:PATH=/usr \
-            -DCMAKE_PREFIX_PATH="${{ runner.temp }}/iris-sdk" \
+            -DCMAKE_PREFIX_PATH="$GITHUB_WORKSPACE/_iris-sdk" \
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_DEMO:BOOL=OFF \
             -DBUILD_PSIMEDIA:BOOL=${ENABLE_PLUGINS} \
