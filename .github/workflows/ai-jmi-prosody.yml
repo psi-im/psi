@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 env:
-  QCA_TAG: v3.0.7
+  QCA_TAG: v3.0.9
 
 concurrency:
   group: ai-jmi-prosody-${{ github.ref }}

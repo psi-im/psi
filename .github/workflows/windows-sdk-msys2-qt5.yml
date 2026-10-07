@@ -6,7 +6,7 @@ on:
       sdk_tag:
         description: SDK release tag
         required: false
-        default: windows-sdk-msys2-qt5-v1
+        default: windows-sdk-msys2-qt5-v2
         type: string
       force_rebuild:
         description: Rebuild and replace the SDK asset even if it already exists
@@ -18,7 +18,7 @@ on:
       sdk_tag:
         description: SDK release tag
         required: false
-        default: windows-sdk-msys2-qt5-v1
+        default: windows-sdk-msys2-qt5-v2
         type: string
       force_rebuild:
         description: Rebuild and replace the SDK asset even if it already exists
@@ -34,7 +34,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  QCA_TAG: v3.0.1
+  QCA_TAG: v3.0.9
   QTKEYCHAIN_TAG: 0.17.0
   SDK_ARCHIVE: psi-windows-sdk-msys2-qt5.zip
 

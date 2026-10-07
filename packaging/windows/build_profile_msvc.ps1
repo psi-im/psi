@@ -79,7 +79,6 @@ $configureArgs = @(
     '-DCHAT_TYPE=WEBENGINE',
     '-DBUNDLED_IRIS=ON',
     '-DBUNDLED_IRIS_ALL=ON',
-    '-DIRIS_BUNDLED_QCA_GIT_TAG=v3.0.1',
     '-DENABLE_OMEMO=ON',
     '-DUSE_HUNSPELL=ON',
     '-DUSE_KEYCHAIN=ON',

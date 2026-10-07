@@ -29,7 +29,7 @@ permissions:
   contents: read
 
 env:
-  QCA_TAG: v3.0.8
+  QCA_TAG: v3.0.9
   # Iris follows the Psi gitlink; psimedia is pinned to the matching provider API.
   PSIMEDIA_SRTP_REF: 52cebb52299b130ae727ca6b597b833da5e445e3
 

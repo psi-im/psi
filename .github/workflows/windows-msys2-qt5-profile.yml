@@ -30,7 +30,7 @@ on:
       sdk_tag:
         description: Dependency SDK release tag
         required: false
-        default: windows-sdk-msys2-qt5-v1
+        default: windows-sdk-msys2-qt5-v2
         type: string
       sdk_archive:
         description: Dependency SDK release asset
