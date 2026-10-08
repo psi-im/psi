@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 env:
-  QCA_TAG: v3.0.7
+  QCA_TAG: v3.0.9
 
 concurrency:
   group: ai-jmi-prosody-${{ github.ref }}
@@ -32,7 +32,7 @@ jobs:
 
       - name: Initialize pinned Iris
         shell: bash
-        run: git submodule update --init --depth 1 iris
+        run: bash .github/scripts/ensure-iris-version-history.sh
 
       - name: Install JMI live-test dependencies
         run: |

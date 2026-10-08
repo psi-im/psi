@@ -17,7 +17,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  SDK_TAG: windows-sdk-msys2-qt5-v1
+  SDK_TAG: windows-sdk-msys2-qt5-v2
   SDK_ARCHIVE: psi-windows-sdk-msys2-qt5.zip
 
 jobs:
@@ -91,7 +91,7 @@ jobs:
       contents: write
     uses: ./.github/workflows/windows-sdk-msys2-qt5.yml
     with:
-      sdk_tag: windows-sdk-msys2-qt5-v1
+      sdk_tag: windows-sdk-msys2-qt5-v2
       force_rebuild: false
 
   legacy-win7:
@@ -110,5 +110,5 @@ jobs:
     with:
       profile: legacy-win7
       allow_failure: true
-      sdk_tag: windows-sdk-msys2-qt5-v1
+      sdk_tag: windows-sdk-msys2-qt5-v2
       sdk_archive: psi-windows-sdk-msys2-qt5.zip

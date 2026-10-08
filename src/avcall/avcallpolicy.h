@@ -2,7 +2,7 @@
 #ifndef AVCALLPOLICY_H
 #define AVCALLPOLICY_H
 
-#include <iris/jingle-rtp.h>
+#include <iris/xmpp-im/jingle-rtp.h>
 #include <iris/jingle.h>
 
 namespace AvCallPolicy {

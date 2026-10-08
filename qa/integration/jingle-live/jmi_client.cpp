@@ -1,4 +1,4 @@
-#include <iris/jingle-rtp.h>
+#include <iris/xmpp-im/jingle-rtp.h>
 #include <iris/jingle.h>
 #include <iris/xmpp.h>
 #include <iris/xmpp_client.h>

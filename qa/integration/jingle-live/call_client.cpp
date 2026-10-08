@@ -4,7 +4,7 @@
 
 #include <iris/dtls.h>
 #include <iris/jingle-ice.h>
-#include <iris/jingle-rtp.h>
+#include <iris/xmpp-im/jingle-rtp.h>
 #include <iris/jingle-session.h>
 #include <iris/tcpportreserver.h>
 #include <iris/xmpp.h>
@@ -203,6 +203,8 @@ int main(int argc, char **argv)
     bool                                   mediaWindowArmed   = false;
     bool                                   localMediaVerified = false;
     bool                                   videoDecoded       = false;
+    bool                                   midVerified        = false;
+    bool                                   bundleVerified     = false;
     int                                    completedCalls     = 0;
     QPointer<J::Session>                   liveSession;
     QPointer<RTP::Application>             audioApp;
@@ -218,6 +220,8 @@ int main(int argc, char **argv)
         mediaWindowArmed   = false;
         localMediaVerified = false;
         videoDecoded       = false;
+        midVerified        = false;
+        bundleVerified     = false;
         audioApp           = nullptr;
         videoApp           = nullptr;
         videoOutput.reset();
@@ -260,7 +264,8 @@ int main(int argc, char **argv)
                     && group.contents.contains(videoApp->contentName());
             });
         };
-        return containsPair(liveSession->groupings()) && containsPair(liveSession->remoteGroupings());
+        return containsPair(liveSession->groupings()) && containsPair(liveSession->remoteGroupings())
+            && containsPair(liveSession->negotiatedGroupings());
     };
 
     auto midNegotiated = [&]() {
@@ -320,6 +325,10 @@ int main(int argc, char **argv)
     maybeStartMedia = [&]() {
         if (!liveSession || mediaStarted || !sessionActive || !audioActive || (avBundle && !videoActive))
             return;
+        // Record negotiation while both contents are active. terminated() is
+        // emitted after application teardown, which retires BUNDLE membership.
+        midVerified    = midNegotiated();
+        bundleVerified = bundleNegotiated();
         mediaStarted = startPsiMediaJingleTransmit(
             liveSession, true, true, QStringLiteral("audiotestsrc is-live=true wave=sine freq=440"), avBundle,
             avBundle ? QStringLiteral("videotestsrc is-live=true pattern=ball") : QString());
@@ -389,8 +398,8 @@ int main(int argc, char **argv)
                 return;
             }
             if (avBundle) {
-                const bool midOk    = midNegotiated();
-                const bool bundleOk = bundleNegotiated();
+                const bool midOk    = midVerified;
+                const bool bundleOk = bundleVerified;
                 qInfo().noquote() << QStringLiteral("CALL_VIDEO_DECODED=%1").arg(videoDecoded ? 1 : 0);
                 qInfo().noquote() << QStringLiteral("CALL_MID_NEGOTIATED=%1").arg(midOk ? 1 : 0);
                 qInfo().noquote() << QStringLiteral("CALL_BUNDLE_NEGOTIATED=%1").arg(bundleOk ? 1 : 0);

@@ -15,6 +15,7 @@
 
 #include <QCoreApplication>
 #include <QDebug>
+#include <QDomDocument>
 #include <QFile>
 #include <QFileInfo>
 #include <QPointer>
@@ -267,6 +268,7 @@ int main(int argc, char **argv)
     bool    senderSawFinishing       = false;
     bool    receiverSawFinishing     = false;
     bool    senderTransferFinished   = false;
+    bool    senderSawReceipt         = false;
     bool    receiverTransferFinished = false;
     bool    replaceRequested         = false;
     bool    gotSession               = false;
@@ -455,6 +457,30 @@ int main(int argc, char **argv)
                 return;
             }
 
+            QObject::connect(endpoint.client(), &Client::xmlIncoming, transfer,
+                             [&, session, transfer](const QString &xml) {
+                QDomDocument doc;
+                if (!doc.setContent(xml, true))
+                    return;
+                const auto iq = doc.documentElement();
+                const auto jingle = iq.firstChildElement(QStringLiteral("jingle"));
+                if (iq.tagName() != QLatin1String("iq") || iq.attribute(QStringLiteral("type")) != QLatin1String("set")
+                    || !Jid(iq.attribute(QStringLiteral("from"))).compare(peerJid)
+                    || jingle.namespaceURI() != QLatin1String("urn:xmpp:jingle:1")
+                    || jingle.attribute(QStringLiteral("sid")) != session->sid()
+                    || jingle.attribute(QStringLiteral("action")) != QLatin1String("session-info"))
+                    return;
+                for (auto received = jingle.firstChildElement(); !received.isNull();
+                     received = received.nextSiblingElement()) {
+                    if (received.tagName() == QLatin1String("received") && received.namespaceURI() == FT::NS
+                        && received.attribute(QStringLiteral("name")) == transfer->contentName()
+                        && received.attribute(QStringLiteral("creator")) == QLatin1String("initiator")) {
+                        senderSawReceipt = true;
+                        qInfo("FT_SENDER_RECEIPT=received");
+                    }
+                }
+            });
+
             QObject::connect(session, &J::Session::activated, session, [&, transfer]() {
                 qInfo("FT_SENDER_SESSION=activated");
                 if (!transportProfileNeedsReplace(transportProfile) || replaceRequested)
@@ -534,6 +560,10 @@ int main(int argc, char **argv)
                 }
                 if (!reason.isValid() || reason.condition() != J::Reason::Success) {
                     finish(44, QStringLiteral("sender failed from Finishing state"));
+                    return;
+                }
+                if (!senderSawReceipt) {
+                    finish(58, QStringLiteral("sender finished without matching file receipt"));
                     return;
                 }
                 senderTransferFinished = true;

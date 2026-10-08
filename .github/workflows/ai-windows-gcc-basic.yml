@@ -29,5 +29,5 @@ jobs:
       run_tests: true
       package: false
       allow_failure: false
-      sdk_tag: windows-sdk-msys2-qt5-v1
+      sdk_tag: windows-sdk-msys2-qt5-v2
       sdk_archive: psi-windows-sdk-msys2-qt5.zip
