@@ -17,6 +17,16 @@
     </icon>
 
     <icon>
+        <x xmlns='name'>clients/asterisk</x>
+        <object mime='image/png'>asterisk.png</object>
+    </icon>
+
+    <icon>
+        <x xmlns='name'>clients/atalk</x>
+        <object mime='image/png'>atalk.png</object>
+    </icon>
+
+    <icon>
         <x xmlns='name'>clients/bitlbee</x>
         <object mime='image/png'>bitlbee.png</object>
     </icon>
@@ -42,8 +52,18 @@
     </icon>
 
     <icon>
+        <x xmlns='name'>clients/converse</x>
+        <object mime='image/png'>converse.png</object>
+    </icon>
+
+    <icon>
         <x xmlns='name'>clients/dino</x>
         <object mime='image/png'>dino.png</object>
+    </icon>
+
+    <icon>
+        <x xmlns='name'>clients/eyecu</x>
+        <object mime='image/png'>eyecu.png</object>
     </icon>
 
     <icon>
@@ -52,13 +72,28 @@
     </icon>
 
     <icon>
+        <x xmlns='name'>clients/fluux</x>
+        <object mime='image/png'>fluux.png</object>
+    </icon>
+
+    <icon>
         <x xmlns='name'>clients/gajim</x>
         <object mime='image/png'>gajim.png</object>
     </icon>
 
     <icon>
+        <x xmlns='name'>clients/jitsi</x>
+        <object mime='image/png'>jitsi.png</object>
+    </icon>
+
+    <icon>
         <x xmlns='name'>clients/jtalk</x>
         <object mime='image/png'>jtalk.png</object>
+    </icon>
+
+    <icon>
+        <x xmlns='name'>clients/kaidan</x>
+        <object mime='image/png'>kaidan.png</object>
     </icon>
 
     <icon>
@@ -72,18 +107,23 @@
     </icon>
 
     <icon>
+        <x xmlns='name'>clients/libervia</x>
+        <object mime='image/png'>libervia.png</object>
+    </icon>
+
+    <icon>
         <x xmlns='name'>clients/mcabber</x>
         <object mime='image/png'>mcabber.png</object>
     </icon>
 
     <icon>
-        <x xmlns='name'>clients/miranda</x>
-        <object mime='image/png'>miranda.png</object>
+        <x xmlns='name'>clients/miranda-ng</x>
+        <object mime='image/png'>miranda-ng.png</object>
     </icon>
 
     <icon>
-        <x xmlns='name'>clients/miranda-ng</x>
-        <object mime='image/png'>miranda-ng.png</object>
+        <x xmlns='name'>clients/monal</x>
+        <object mime='image/png'>monal.png</object>
     </icon>
 
     <icon>
@@ -94,6 +134,11 @@
     <icon>
         <x xmlns='name'>clients/movim</x>
         <object mime='image/png'>movim.png</object>
+    </icon>
+
+    <icon>
+        <x xmlns='name'>clients/mozilla</x>
+        <object mime='image/png'>mozilla.png</object>
     </icon>
 
     <icon>
@@ -127,8 +172,23 @@
     </icon>
 
     <icon>
+        <x xmlns='name'>clients/quicksy</x>
+        <object mime='image/png'>quicksy.png</object>
+    </icon>
+
+    <icon>
         <x xmlns='name'>clients/qutim</x>
         <object mime='image/png'>qutim.png</object>
+    </icon>
+
+    <icon>
+        <x xmlns='name'>clients/smack-api</x>
+        <object mime='image/png'>smack-api.png</object>
+    </icon>
+
+    <icon>
+        <x xmlns='name'>clients/snikket</x>
+        <object mime='image/png'>snikket.png</object>
     </icon>
 
     <icon>
@@ -137,13 +197,28 @@
     </icon>
 
     <icon>
+        <x xmlns='name'>clients/spectrum</x>
+        <object mime='image/png'>spectrum.png</object>
+    </icon>
+
+    <icon>
         <x xmlns='name'>clients/swift</x>
         <object mime='image/png'>swift.png</object>
     </icon>
 
     <icon>
+        <x xmlns='name'>clients/tigase</x>
+        <object mime='image/png'>tigase.png</object>
+    </icon>
+
+    <icon>
         <x xmlns='name'>clients/tkabber</x>
         <object mime='image/png'>tkabber.png</object>
+    </icon>
+
+    <icon>
+        <x xmlns='name'>clients/trillian</x>
+        <object mime='image/png'>trillian.png</object>
     </icon>
 
     <icon>
@@ -154,6 +229,11 @@
     <icon>
         <x xmlns='name'>clients/vk4xmpp</x>
         <object mime='image/png'>vk4xmpp.png</object>
+    </icon>
+
+    <icon>
+        <x xmlns='name'>clients/vkontakte</x>
+        <object mime='image/png'>vkontakte.png</object>
     </icon>
 
     <icon>
