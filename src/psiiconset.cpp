@@ -600,62 +600,53 @@ void PsiIconset::loadStatusIconDefinitions()
 {
     d->status_icons.list.clear();
     d->status_icons.customList.clear();
-    const auto &servicesV = PsiOptions::instance()->mapKeyList("options.iconsets.service-status");
-    for (const QVariant &serviceV : servicesV) {
-        QString                                          service = serviceV.toString();
-        PsiIconset::Private::StatusIconsets::IconsetItem item;
-        bool                                             find = true;
-        if (service == "disk")
-            item.regexp = QRegularExpression("^disk");
-        else if (service == "gadugadu")
-            item.regexp = QRegularExpression("^gg");
-        else if (service == "telegram")
-            item.regexp = QRegularExpression("^telegram");
-        else if (service == "irc")
-            item.regexp = QRegularExpression("^irc");
-        else if (service == "xmpp")
-            item.regexp = QRegularExpression("^j2j|^xmpp\\.[a-z1-9]+\\..*");
-        else if (service == "mrim")
-            item.regexp = QRegularExpression("^mrim");
-        else if (service == "skype")
-            item.regexp = QRegularExpression("^skype");
-        else if (service == "muc")
-            item.regexp = QRegularExpression("^conference|^rooms");
-        else if (service == "rss")
-            item.regexp = QRegularExpression("^rss");
-        else if (service == "sms")
-            item.regexp = QRegularExpression("^sms");
-        else if (service == "smtp")
-            item.regexp = QRegularExpression("^smtp");
-        else if (service == "vkontakte")
-            item.regexp = QRegularExpression("^vk.com|^vkontakte|^vk-t");
-        else if (service == "weather")
-            item.regexp = QRegularExpression("^weather|^gism");
-        else
-            find = false;
 
-        if (find) {
-            auto mapPath = PsiOptions::instance()->mapLookup("options.iconsets.service-status", service);
+    auto *options = PsiOptions::instance();
+    // Map known service names to their regex patterns to eliminate branching overhead and simplify maintenance
+    static const QHash<QString, QString> servicePatterns = {
+        { "disk", "^disk" },
+        { "gadugadu", "^gg" },
+        { "telegram", "^telegram" },
+        { "irc", "^irc" },
+        { "xmpp", "^j2j|^xmpp\\.[a-z1-9]+\\..*" },
+        { "muc", "^conference|^rooms" },
+        { "rss", "^rss" },
+        { "sms", "^sms" },
+        { "smtp", "^smtp" },
+        { "vkontakte", "^vk.com|^vkontakte|^vk-t" },
+        { "weather", "^weather|^gism" }
+    };
+
+    const auto &servicesV = options->mapKeyList("options.iconsets.service-status");
+    for (const QVariant &serviceV : servicesV) {
+        const QString service = serviceV.toString();
+        const auto    patternIt = servicePatterns.constFind(service);
+        if (patternIt != servicePatterns.constEnd()) {
+            auto mapPath = options->mapLookup("options.iconsets.service-status", service);
             if (mapPath) {
-                item.iconset = PsiOptions::instance()->getOption(*mapPath + ".iconset").toString();
+                PsiIconset::Private::StatusIconsets::IconsetItem item;
+                item.regexp  = QRegularExpression(patternIt.value());
+                item.iconset = options->getOption(*mapPath + ".iconset").toString();
                 d->status_icons.list.append(item);
             }
         }
     }
+
     // default transport icon set
-    auto trnasportMapOptionsPath = PsiOptions::instance()->mapLookup("options.iconsets.service-status", "transport");
-    if (trnasportMapOptionsPath) {
+    auto transportMapOptionsPath = options->mapLookup("options.iconsets.service-status", "transport");
+    if (transportMapOptionsPath) {
         PsiIconset::Private::StatusIconsets::IconsetItem item;
-        item.iconset = PsiOptions::instance()->getOption(*trnasportMapOptionsPath + ".iconset").toString();
+        item.iconset = options->getOption(*transportMapOptionsPath + ".iconset").toString();
         d->status_icons.list.append(item);
     }
+
     // custom icon sets
-    foreach (const QString &base,
-             PsiOptions::instance()->getChildOptionNames("options.iconsets.custom-status", true, true)) {
+    const auto customStatusNames = options->getChildOptionNames("options.iconsets.custom-status", true, true);
+    for (const QString &base : customStatusNames) {
         PsiIconset::Private::StatusIconsets::IconsetItem item;
-        item.regexp = QRegularExpression(PsiOptions::instance()->getOption(base + ".regexp").toString());
+        item.regexp = QRegularExpression(options->getOption(base + ".regexp").toString());
         if (item.regexp.isValid()) {
-            item.iconset = PsiOptions::instance()->getOption(base + ".iconset").toString();
+            item.iconset = options->getOption(base + ".iconset").toString();
             d->status_icons.customList.append(item);
         }
     }
@@ -832,47 +823,31 @@ PsiIcon *PsiIconset::event2icon(const PsiEvent::Ptr &e)
 
 QString status2name(int s)
 {
-    QString name;
     switch (s) {
     case STATUS_OFFLINE:
-        name = "status/offline";
-        break;
+        return QStringLiteral("status/offline");
     case STATUS_AWAY:
-        name = "status/away";
-        break;
+        return QStringLiteral("status/away");
     case STATUS_XA:
-        name = "status/xa";
-        break;
+        return QStringLiteral("status/xa");
     case STATUS_DND:
-        name = "status/dnd";
-        break;
+        return QStringLiteral("status/dnd");
     case STATUS_INVISIBLE:
-        name = "status/invisible";
-        break;
+        return QStringLiteral("status/invisible");
     case STATUS_CHAT:
-        name = "status/chat";
-        break;
-
+        return QStringLiteral("status/chat");
     case STATUS_ASK:
-        name = "status/ask";
-        break;
+        return QStringLiteral("status/ask");
     case STATUS_NOAUTH:
-        name = "status/noauth";
-        break;
+        return QStringLiteral("status/noauth");
     case STATUS_ERROR:
-        name = "status/error";
-        break;
-
-    case -1:
-        name = "psi/connect";
-        break;
-
+        return QStringLiteral("status/error");
+    case STATUS_CONNECT:
+        return QStringLiteral("psi/connect");
     case STATUS_ONLINE:
     default:
-        name = "status/online";
+        return QStringLiteral("status/online");
     }
-
-    return name;
 }
 
 PsiIcon *PsiIconset::statusPtr(int s) { return const_cast<PsiIcon *>(IconsetFactory::iconPtr(status2name(s))); }

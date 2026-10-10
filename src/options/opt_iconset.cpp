@@ -1280,13 +1280,11 @@ QWidget *OptionsTabIconsetRoster::widget()
     addService("irc", "IRC");
     addService("xmpp", "XMPP");
     addService("disk", "Jabber Disk");
-    addService("mrim", "Mail.Ru-IM");
-    addService("skype", "Skype");
     addService("rss", "RSS");
     addService("sms", "SMS");
     addService("smtp", "SMTP");
     addService("transport", tr("Transport"));
-    addService("vkontakte", tr("vk.com"));
+    addService("vkontakte", "VKontakte");
     addService("weather", tr("Weather"));
 
     d->tw_isServices->resizeColumnToContents(0);
