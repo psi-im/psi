@@ -117,11 +117,6 @@
     </icon>
 
     <icon>
-        <x xmlns='name'>clients/miranda</x>
-        <object mime='image/png'>miranda.png</object>
-    </icon>
-
-    <icon>
         <x xmlns='name'>clients/miranda-ng</x>
         <object mime='image/png'>miranda-ng.png</object>
     </icon>

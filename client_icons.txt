@@ -19,8 +19,7 @@ kopete kopete
 leechcraft-azoth leechcraft
 libervia libervia,sat,salut-a-toi
 mcabber mcabber
-miranda miranda
-miranda-ng miranda#ng
+miranda-ng miranda,miranda#ng
 monal monal
 monocles monocles
 movim movim,moxl.movim
