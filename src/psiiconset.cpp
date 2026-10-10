@@ -823,47 +823,31 @@ PsiIcon *PsiIconset::event2icon(const PsiEvent::Ptr &e)
 
 QString status2name(int s)
 {
-    QString name;
     switch (s) {
     case STATUS_OFFLINE:
-        name = "status/offline";
-        break;
+        return QStringLiteral("status/offline");
     case STATUS_AWAY:
-        name = "status/away";
-        break;
+        return QStringLiteral("status/away");
     case STATUS_XA:
-        name = "status/xa";
-        break;
+        return QStringLiteral("status/xa");
     case STATUS_DND:
-        name = "status/dnd";
-        break;
+        return QStringLiteral("status/dnd");
     case STATUS_INVISIBLE:
-        name = "status/invisible";
-        break;
+        return QStringLiteral("status/invisible");
     case STATUS_CHAT:
-        name = "status/chat";
-        break;
-
+        return QStringLiteral("status/chat");
     case STATUS_ASK:
-        name = "status/ask";
-        break;
+        return QStringLiteral("status/ask");
     case STATUS_NOAUTH:
-        name = "status/noauth";
-        break;
+        return QStringLiteral("status/noauth");
     case STATUS_ERROR:
-        name = "status/error";
-        break;
-
-    case -1:
-        name = "psi/connect";
-        break;
-
+        return QStringLiteral("status/error");
+    case STATUS_CONNECT:
+        return QStringLiteral("psi/connect");
     case STATUS_ONLINE:
     default:
-        name = "status/online";
+        return QStringLiteral("status/online");
     }
-
-    return name;
 }
 
 PsiIcon *PsiIconset::statusPtr(int s) { return const_cast<PsiIcon *>(IconsetFactory::iconPtr(status2name(s))); }

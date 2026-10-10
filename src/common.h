@@ -122,6 +122,7 @@ int computeScaleFactor(QPaintDevice *pd);
 #define STATUS_ASK 100
 #define STATUS_NOAUTH 101
 #define STATUS_ERROR 102
+#define STATUS_CONNECT (-1)
 
 QString            status2txt(int status);
 bool               lastPriorityNotEmpty();
