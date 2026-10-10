@@ -1280,8 +1280,6 @@ QWidget *OptionsTabIconsetRoster::widget()
     addService("irc", "IRC");
     addService("xmpp", "XMPP");
     addService("disk", "Jabber Disk");
-    addService("mrim", "Mail.Ru-IM");
-    addService("skype", "Skype");
     addService("rss", "RSS");
     addService("sms", "SMS");
     addService("smtp", "SMTP");

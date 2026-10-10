@@ -615,10 +615,6 @@ void PsiIconset::loadStatusIconDefinitions()
             item.regexp = QRegularExpression("^irc");
         else if (service == "xmpp")
             item.regexp = QRegularExpression("^j2j|^xmpp\\.[a-z1-9]+\\..*");
-        else if (service == "mrim")
-            item.regexp = QRegularExpression("^mrim");
-        else if (service == "skype")
-            item.regexp = QRegularExpression("^skype");
         else if (service == "muc")
             item.regexp = QRegularExpression("^conference|^rooms");
         else if (service == "rss")
