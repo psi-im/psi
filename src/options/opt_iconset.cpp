@@ -1284,7 +1284,7 @@ QWidget *OptionsTabIconsetRoster::widget()
     addService("sms", "SMS");
     addService("smtp", "SMTP");
     addService("transport", tr("Transport"));
-    addService("vkontakte", tr("vk.com"));
+    addService("vkontakte", "VKontakte");
     addService("weather", tr("Weather"));
 
     d->tw_isServices->resizeColumnToContents(0);
