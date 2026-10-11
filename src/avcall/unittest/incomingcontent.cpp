@@ -65,7 +65,7 @@ public:
 };
 class TransportPad : public J::TransportManagerPad {
 public:
-    explicit TransportPad(J::Session *s) : s(s) { }
+    explicit TransportPad(J::Session *s) : J::TransportManagerPad(s), s(s) { }
     J::Session          *session() const override { return s; }
     QString              ns() const override { return "urn:psi:test:incoming-video"; }
     J::TransportManager *manager() const override { return nullptr; }
@@ -74,7 +74,7 @@ public:
 class Transport : public J::Transport, public R::PacketTransport {
 public:
     Transport(J::Session *s, J::Origin creator) :
-        J::Transport(QSharedPointer<TransportPad>::create(s), creator), association(nullptr, "incoming-video-test")
+        J::Transport(new TransportPad(s), creator), association(nullptr, "incoming-video-test")
     {
     }
     void prepare() override
@@ -103,15 +103,15 @@ public:
 };
 static void incomingVideo(J::Origin role, J::Origin senders)
 {
-    XMPP::Client client;
-    J::Session   session(client.jingleManager(), XMPP::Jid("peer@example.test/resource"), role);
-    auto         counters = std::make_shared<Counters>();
-    auto         provider = std::make_shared<Provider>(counters);
-    auto pad = QSharedPointer<R::Pad>::create(client.jingleManager()->rtpManager(), &session, provider, QStringList());
-    R::Application content(pad, "screen-new", AvCallPolicy::peerRole(role), senders);
-    auto           transport = QSharedPointer<Transport>::create(&session, content.creator());
-    Endpoint       offered(counters, "video");
-    QDomDocument   doc;
+    XMPP::Client     client;
+    J::Session       session(client.jingleManager(), XMPP::Jid("peer@example.test/resource"), role);
+    auto             counters = std::make_shared<Counters>();
+    auto             provider = std::make_shared<Provider>(counters);
+    QPointer<R::Pad> pad      = new R::Pad(client.jingleManager()->rtpManager(), &session, provider, QStringList());
+    R::Application   content(pad, "screen-new", AvCallPolicy::peerRole(role), senders);
+    auto            *transport = new Transport(&session, content.creator()); // Owned by its pad.
+    Endpoint         offered(counters, "video");
+    QDomDocument     doc;
     check(content.setRemoteOffer(offered.localOffer().toXml(doc)) == R::Application::Ok, "remote video offer rejected");
     check(content.setTransport(transport), "incoming video transport rejected");
     check(content.state() == J::State::Created, "offer was approved before application decision");

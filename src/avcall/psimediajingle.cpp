@@ -10,6 +10,7 @@
 #include "psimediajingle.h"
 
 #include "../psimedia/psimedia.h"
+#include "avcallpolicy.h"
 
 #include <iris/xmpp-im/jingle-rtp.h>
 #include <iris/jingle-session.h>
@@ -1186,7 +1187,7 @@ BackendSession *backendSession(XMPP::Jingle::Session *session)
 {
     if (!session)
         return nullptr;
-    auto pad = qSharedPointerDynamicCast<RTP::Pad>(session->applicationPad(RTP::Description::ns()));
+    auto pad = qobject_cast<RTP::Pad *>(AvCallPolicy::rawPad(session->applicationPad(RTP::Description::ns())));
     return pad ? dynamic_cast<BackendSession *>(pad->mediaSession()) : nullptr;
 }
 }

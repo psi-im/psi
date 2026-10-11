@@ -9,6 +9,16 @@ namespace AvCallPolicy {
 
 using Origin = XMPP::Jingle::Origin;
 
+// Older Iris returned shared pad handles; newer Iris returns pads owned by their session.
+#ifdef IRIS_JINGLE_PAD_OWNERSHIP
+inline XMPP::Jingle::ApplicationManagerPad *rawPad(XMPP::Jingle::ApplicationManagerPad *pad) { return pad; }
+#else
+inline XMPP::Jingle::ApplicationManagerPad *rawPad(const XMPP::Jingle::ApplicationManagerPad::Ptr &pad)
+{
+    return pad.data();
+}
+#endif
+
 inline bool mediaTypeSupported(bool backendAvailable, bool probeComplete, bool secureRtp, bool hasModes)
 {
     return backendAvailable && probeComplete && secureRtp && hasModes;
@@ -55,7 +65,7 @@ inline void prepareIncomingContent(XMPP::Jingle::RTP::Application *content, bool
         return;
     }
     QPointer<RTP::Application> guard(content);
-    auto                       pad = content->pad().staticCast<RTP::Pad>();
+    auto                       pad = static_cast<RTP::Pad *>(rawPad(content->pad()));
     pad->directionController()->setLocalSending(content, false);
     if (guard)
         content->prepare();

@@ -37,10 +37,10 @@ public:
 };
 class Content : public R::Application {
 public:
-    Content(const QSharedPointer<R::Pad> &pad, J::Origin senders = J::Origin::Both) :
+    Content(const QPointer<R::Pad> &pad, J::Origin senders = J::Origin::Both) :
         R::Application(pad, "audio", J::Origin::Initiator, senders)
     {
-        _transport = QSharedPointer<Transport>::create();
+        _transport = new Transport(); // Released by Application when it stops using it.
         setState(J::State::Active);
     }
 };
@@ -61,13 +61,13 @@ static J::OutgoingUpdate consume(Content &content)
 }
 static void ack(const J::OutgoingUpdate &update, Result &result) { std::get<1>(update)(&result); }
 struct Fixture {
-    XMPP::Client client;
-    J::Session   session { client.jingleManager(), XMPP::Jid("peer@example.test/resource"), J::Origin::Responder };
-    QSharedPointer<R::Pad> pad = QSharedPointer<R::Pad>::create(client.jingleManager()->rtpManager(), &session,
-                                                                std::shared_ptr<R::MediaProvider>(), QStringList());
-    Content                content { pad };
-    Result                 success { client.rootTask() };
-    AvCallAudioDirection   policy;
+    XMPP::Client     client;
+    J::Session       session { client.jingleManager(), XMPP::Jid("peer@example.test/resource"), J::Origin::Responder };
+    QPointer<R::Pad> pad = new R::Pad(client.jingleManager()->rtpManager(), &session,
+                                      std::shared_ptr<R::MediaProvider>(), QStringList()); // Owned by session.
+    Content          content { pad };
+    Result           success { client.rootTask() };
+    AvCallAudioDirection policy;
 };
 
 int main(int argc, char **argv)
