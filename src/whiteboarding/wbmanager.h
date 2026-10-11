@@ -24,28 +24,27 @@
 #ifndef WBMANAGER_H
 #define WBMANAGER_H
 
-#include "../sxe/sxemanager.h"
 #include "wbdlg.h"
 
-#include <QInputDialog>
-
-#define WBNS "http://www.w3.org/2000/svg"
-
-class WbRequest;
+#include <QList>
+#include <QPointer>
 
 namespace XMPP {
 class Client;
 class Jid;
-class Message;
+namespace Jingle {
+    class Session;
 }
+}
+class PsiAccount;
 using namespace XMPP;
 
 /*! \brief The manager for whiteboard dialogs.
- *  The manager listen to SxeManager to pick up any new sessions negotiated by
- *  it and creates a dialog for each session.
+ *  Whiteboards are Jingle sessions with the SVG whiteboard application type,
+ *  synchronized with Shared XML Editing (XEP-0284). The manager starts
+ *  outgoing sessions, presents incoming ones and creates a dialog for each.
  *
- *  The manager also provides a possibillity for the local client to start
- *  a new session negotiation with the desired contact.
+ *  One instance per PsiAccount should be created.
  *
  *  \sa WbDlg
  */
@@ -53,44 +52,44 @@ class WbManager : public QObject {
     Q_OBJECT
 
 public:
-    /*! \brief Constructor.
-     *  Creates a new manager for the specified Client and PsiAccount
-     */
-    WbManager(XMPP::Client *client, PsiAccount *pa, SxeManager *sxemanager);
+    WbManager(XMPP::Client *client, PsiAccount *pa);
     ~WbManager();
-    /*! \brief Returns true if features contains WBNS and the user wishes to accept the invitation. */
-    // static bool checkInvitation(const Jid &peer, const QList<QString> &features);
+
+    /*! \brief Takes an incoming Jingle session if it is a whiteboard. Returns false otherwise.*/
+    bool incomingSession(XMPP::Jingle::Session *session);
+    /*! \brief Asks the user about the incoming whiteboard request with \a id.*/
     void requestActivated(int id);
+    /*! \brief Returns true if \a jid advertises whiteboarding over Jingle SXE.*/
+    bool checkSupport(const Jid &jid) const;
 
 public slots:
-    /*! \brief Opens the existing dialog to the specified contact or starts a new session negotiation if necessary.*/
+    /*! \brief Opens the existing dialog to the specified contact or starts a new session if necessary.*/
     void openWhiteboard(const Jid &target, const Jid &ownJid, bool groupChat, bool promptInitialDoc = true);
-
-private:
-    /*! \brief Return a pointer to a dialog to the specified contact.
-     *  If such dialog doesn't exits, returns 0.
-     */
-    WbDlg *findWbDlg(const Jid &target);
-
-    /*! \brief A pointer to the PsiAccount to pass to new dialogs.*/
-    PsiAccount *pa_;
-    /*! \brief A list of dialogs of established sessions.*/
-    QList<WbDlg *> dialogs_;
-    /*! \brief A pointer to the SxeManager used for negotiating sessions.*/
-    SxeManager *sxemanager_;
-
-    QList<WbRequest *> requests_;
 
 signals:
     void wbRequest(const Jid &peer, int id);
 
+private:
+    struct Request {
+        int                                id = 0;
+        QPointer<XMPP::Jingle::Session>    session;
+        QPointer<Jingle::SXE::Application> application;
+    };
+
+    /*! \brief Returns the dialog of an active session with the contact, if any.*/
+    WbDlg *findWbDlg(const Jid &target);
+    /*! \brief Creates and shows a dialog for the whiteboard content.*/
+    WbDlg *createWbDlg(Jingle::SXE::Application *application);
+
+    XMPP::Client  *client_;
+    PsiAccount    *pa_;
+    QList<WbDlg *> dialogs_;
+    QList<Request> requests_;
+    int            nextRequestId_ = 0;
+
 private slots:
     /*! \brief Removes and deletes the dialog for the given session.*/
     void removeDialog(WbDlg *dialog);
-    /*! \brief Returns a pointer to a new dialog to with given contact and session set.*/
-    void createWbDlg(SxeSession *session);
-
-    void checkInvitation(const Jid &peer, const QList<QString> &features, bool *result);
 };
 
 #endif // WBMANAGER_H

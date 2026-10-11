@@ -41,7 +41,7 @@ public:
     /*! \brief Constructor
      *  Constructs a new scene with parent \a parent.
      */
-    WbScene(SxeSession *session, QObject *parent = nullptr);
+    WbScene(XMPP::Jingle::SXE::Document *document, QObject *parent = nullptr);
 
     /*! \brief Appends the item to a list of items whose "transform" attribute is to be regenerated.*/
     void queueTransformationRegeneration(WbItem *item);
@@ -72,7 +72,7 @@ private:
      */
     void bring(int n, bool toExtremum);
 
-    SxeSession             *session_;
+    XMPP::Jingle::SXE::Document *document_;
     QList<QPointer<WbItem>> pendingTranformations_;
 
     QPointF selectionCenter_;

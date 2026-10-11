@@ -20,7 +20,7 @@
 #ifndef WBITEM_H
 #define WBITEM_H
 
-#include "../sxe/sxesession.h"
+#include <iris/xmpp-im/jingle-sxe-document.h>
 
 #include <QGraphicsScene>
 #include <QGraphicsSceneMouseEvent>
@@ -64,7 +64,8 @@ public:
     /*! \brief Constructor
      *  Constructs a new whiteboard item that visualized \a node.
      */
-    WbItem(SxeSession *session, QSvgRenderer *renderer, QDomElement node, WbScene *scene, WbWidget *widget);
+    WbItem(XMPP::Jingle::SXE::Document *document, QSvgRenderer *renderer, QDomElement node, WbScene *scene,
+           WbWidget *widget);
     /*! \brief Destructor
      *  Makes sure that the item gets deleted from the underlying <svg/> document
      */
@@ -111,7 +112,7 @@ private:
     QPointF center();
 
     // The session that the item belongs to
-    SxeSession *session_;
+    XMPP::Jingle::SXE::Document *document_;
     // The WbScene that the item belongs to
     WbScene *scene_;
     // The WbWidget that shows the item

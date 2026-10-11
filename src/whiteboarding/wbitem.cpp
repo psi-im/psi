@@ -61,11 +61,11 @@ void WbItemMenu::destructSelf() { deleteLater(); }
  *   WbItem
  */
 
-WbItem::WbItem(SxeSession *session, QSvgRenderer *renderer, QDomElement node, WbScene *scene, WbWidget *widget) :
-    QGraphicsSvgItem()
+WbItem::WbItem(XMPP::Jingle::SXE::Document *document, QSvgRenderer *renderer, QDomElement node, WbScene *scene,
+               WbWidget *widget) : QGraphicsSvgItem()
 {
     // Store a pointer to the underlying session, scene and node
-    session_ = session;
+    document_ = document;
     scene_   = scene;
     widget_  = widget;
     node_    = node;
@@ -252,7 +252,7 @@ void WbItem::regenerateTransform()
 
     if (newValue != oldValue) {
         resetTransform();
-        session_->setAttribute(node_, "transform", newValue);
+        document_->setAttribute(node_, "transform", newValue);
     }
 }
 
@@ -270,10 +270,10 @@ void WbItem::addToScene()
     if (node_.hasAttribute("id")) {
         id = node_.attribute("id");
     } else {
-        id = "e" + SxeSession::generateUUID();
+        id = "e" + XMPP::Jingle::SXE::Document::generateUUID();
         // qDebug() << QString("Setting new id to %1").arg(id).toLatin1();
-        session_->setAttribute(node_, "id", id);
-        session_->flush();
+        document_->setAttribute(node_, "id", id);
+        document_->flush();
     }
 
     // Only render the indicated item

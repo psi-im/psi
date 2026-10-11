@@ -29,7 +29,7 @@
 #include <QRandomGenerator>
 #endif
 
-WbWidget::WbWidget(SxeSession *session, QWidget *parent) : QGraphicsView(parent)
+WbWidget::WbWidget(XMPP::Jingle::SXE::Document *document, QWidget *parent) : QGraphicsView(parent)
 {
     newWbItem_   = nullptr;
     adding_      = nullptr;
@@ -37,7 +37,7 @@ WbWidget::WbWidget(SxeSession *session, QWidget *parent) : QGraphicsView(parent)
     strokeColor_ = Qt::black;
     fillColor_   = Qt::transparent;
     strokeWidth_ = 1;
-    session_     = session;
+    document_    = document;
 
     //    setCacheMode(CacheBackground);
     setRenderHint(QPainter::Antialiasing);
@@ -50,7 +50,7 @@ WbWidget::WbWidget(SxeSession *session, QWidget *parent) : QGraphicsView(parent)
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 
     // create the scene
-    scene_ = new WbScene(session_, this);
+    scene_ = new WbScene(document_, this);
     scene_->setItemIndexMethod(QGraphicsScene::NoIndex);
     setRenderHint(QPainter::Antialiasing);
     setTransformationAnchor(AnchorUnderMouse);
@@ -60,10 +60,10 @@ WbWidget::WbWidget(SxeSession *session, QWidget *parent) : QGraphicsView(parent)
     // render the initial document
     rerender();
     // rerender on update
-    connect(session_, SIGNAL(documentUpdated(bool)), SLOT(handleDocumentUpdated(bool)));
+    connect(document_, SIGNAL(documentUpdated(bool)), SLOT(handleDocumentUpdated(bool)));
 
     // add the initial items
-    const QDomNodeList children = session_->document().documentElement().childNodes();
+    const QDomNodeList children = document_->document().documentElement().childNodes();
     for (int i = 0; i < int(children.length()); i++) {
         const QDomNode node = children.at(i);
         if (node.isElement()) {
@@ -74,22 +74,22 @@ WbWidget::WbWidget(SxeSession *session, QWidget *parent) : QGraphicsView(parent)
 
     // add new items as nodes are added
     // remove/add items if corresponding nodes are moved
-    connect(session_, SIGNAL(nodeAdded(QDomNode, bool)), SLOT(queueNodeInspection(QDomNode)));
-    connect(session_, SIGNAL(nodeMoved(QDomNode, bool)), SLOT(queueNodeInspection(QDomNode)));
+    connect(document_, SIGNAL(nodeAdded(QDomNode, bool)), SLOT(queueNodeInspection(QDomNode)));
+    connect(document_, SIGNAL(nodeMoved(QDomNode, bool)), SLOT(queueNodeInspection(QDomNode)));
     // remove items if corresponding nodes are deleted
-    connect(session_, SIGNAL(nodeToBeRemoved(QDomNode, bool)), SLOT(removeWbItem(QDomNode)));
-    connect(session_, SIGNAL(nodeToBeRemoved(QDomNode, bool)), SLOT(checkForRemovalOfId(QDomNode)));
+    connect(document_, SIGNAL(nodeToBeRemoved(QDomNode, bool)), SLOT(removeWbItem(QDomNode)));
+    connect(document_, SIGNAL(nodeToBeRemoved(QDomNode, bool)), SLOT(checkForRemovalOfId(QDomNode)));
     // adjust the viewBox as necessary
-    connect(session_, SIGNAL(nodeAdded(QDomNode, bool)), SLOT(checkForViewBoxChange(QDomNode)));
-    connect(session_, SIGNAL(nodeMoved(QDomNode, bool)), SLOT(checkForViewBoxChange(QDomNode)));
-    connect(session_, SIGNAL(chdataChanged(QDomNode, bool)), SLOT(checkForViewBoxChange(QDomNode)));
+    connect(document_, SIGNAL(nodeAdded(QDomNode, bool)), SLOT(checkForViewBoxChange(QDomNode)));
+    connect(document_, SIGNAL(nodeMoved(QDomNode, bool)), SLOT(checkForViewBoxChange(QDomNode)));
+    connect(document_, SIGNAL(chdataChanged(QDomNode, bool)), SLOT(checkForViewBoxChange(QDomNode)));
 
     // set the default mode to select
     setMode(Mode::Select);
 
     // set the initial size
-    if (session_->document().documentElement().hasAttribute("viewBox"))
-        checkForViewBoxChange(session_->document().documentElement().attributeNode("viewBox"));
+    if (document_->document().documentElement().hasAttribute("viewBox"))
+        checkForViewBoxChange(document_->document().documentElement().attributeNode("viewBox"));
     else {
         QSize  size;
         QRectF rect = scene_->sceneRect();
@@ -102,7 +102,7 @@ WbWidget::WbWidget(SxeSession *session, QWidget *parent) : QGraphicsView(parent)
     }
 }
 
-SxeSession *WbWidget::session() { return session_; }
+XMPP::Jingle::SXE::Document *WbWidget::document() { return document_; }
 
 WbWidget::Mode WbWidget::mode() { return mode_; }
 
@@ -145,9 +145,9 @@ void WbWidget::setMode(Mode mode)
 
 void WbWidget::setSize(const QSize &size)
 {
-    session_->setAttribute(session_->document().documentElement(), "viewBox",
-                           QString("0 0 %1 %2").arg(size.width()).arg(size.height()));
-    session_->flush();
+    document_->setAttribute(document_->document().documentElement(), "viewBox",
+                            QString("0 0 %1 %2").arg(size.width()).arg(size.height()));
+    document_->flush();
 }
 
 /*! \brief Generates a QRectF based on \a string provided in the SVG viewBox format. */
@@ -177,7 +177,7 @@ static QRectF parseSvgViewBox(QString string)
 void WbWidget::checkForViewBoxChange(const QDomNode &node)
 {
     if (node.isAttr() && node.nodeName().toLower() == "viewbox"
-        && node.parentNode() == session_->document().documentElement()) {
+        && node.parentNode() == document_->document().documentElement()) {
         QRectF box = parseSvgViewBox(node.nodeValue());
         if (box.width() > 0 && box.height() > 0) {
             scene_->setSceneRect(box);
@@ -197,9 +197,9 @@ void WbWidget::clear()
     for (QGraphicsItem *graphicsitem : gItems) {
         WbItem *wbitem = dynamic_cast<WbItem *>(graphicsitem);
         if (wbitem)
-            session_->removeNode(wbitem->node());
+            document_->removeNode(wbitem->node());
     }
-    session_->flush();
+    document_->flush();
 }
 
 QSize WbWidget::sizeHint() const
@@ -267,8 +267,8 @@ void WbWidget::mousePressEvent(QMouseEvent *event)
         if (!filename.isEmpty()) {
             newWbItem_ = new WbNewImage(scene_, startPoint, filename);
             QDomDocument tempDoc;
-            session_->insertNodeAfter(newWbItem_->serializeToSvg(&tempDoc), session_->document().documentElement());
-            session_->flush();
+            document_->insertNodeAfter(newWbItem_->serializeToSvg(&tempDoc), document_->document().documentElement());
+            document_->flush();
             delete newWbItem_;
             newWbItem_ = nullptr;
         }
@@ -307,7 +307,7 @@ void WbWidget::mouseMoveEvent(QMouseEvent *event)
         for (QGraphicsItem *item : gItems) {
             WbItem *wbitem = dynamic_cast<WbItem *>(item);
             if (wbitem)
-                session_->removeNode(wbitem->node());
+                document_->removeNode(wbitem->node());
         }
         delete eraseRect;
         eraseRect = nullptr;
@@ -331,8 +331,8 @@ void WbWidget::mouseReleaseEvent(QMouseEvent *event)
 
     if (newWbItem_ && mode_ >= Mode::DrawPath && mode_ != Mode::DrawImage) {
         QDomDocument tempDoc;
-        session_->insertNodeAfter(newWbItem_->serializeToSvg(&tempDoc), session_->document().documentElement());
-        session_->flush();
+        document_->insertNodeAfter(newWbItem_->serializeToSvg(&tempDoc), document_->document().documentElement());
+        document_->flush();
         delete newWbItem_;
         newWbItem_ = nullptr;
         return;
@@ -369,7 +369,7 @@ void WbWidget::inspectNodes()
         WbItem *item = wbItem(node);
 
         // We don't need to do anything iff node is child of <svg/> and item exists or vice versa
-        if ((item != nullptr) == (node.parentNode() == session_->document().documentElement()))
+        if ((item != nullptr) == (node.parentNode() == document_->document().documentElement()))
             continue;
 
         // Otherwise, either item exists and needs to be removed
@@ -377,7 +377,7 @@ void WbWidget::inspectNodes()
         if (item)
             removeWbItem(item);
         else
-            items_.append(new WbItem(session_, &renderer_, node.toElement(), scene_, this));
+            items_.append(new WbItem(document_, &renderer_, node.toElement(), scene_, this));
     }
 }
 
@@ -408,12 +408,12 @@ void WbWidget::addIds()
     while (!idlessItems_.isEmpty())
         idlessItems_.takeFirst()->addToScene();
 
-    session_->flush();
+    document_->flush();
 }
 
 void WbWidget::addToIdLess(const QDomElement &element)
 {
-    if (element.parentNode() != session_->document().documentElement())
+    if (element.parentNode() != document_->document().documentElement())
         return;
 
     WbItem *item = wbItem(element);
@@ -449,7 +449,7 @@ void WbWidget::rerender()
 {
     QString     xmldump;
     QTextStream stream(&xmldump);
-    session_->document().save(stream, 1);
+    document_->document().save(stream, 1);
 
     // qDebug("Document in WbWidget:");
     // qDebug() << xmldump.toLatin1();

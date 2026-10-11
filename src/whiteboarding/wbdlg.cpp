@@ -35,6 +35,7 @@
 #include <QMessageBox>
 #include <QToolButton>
 #include <QVBoxLayout>
+#include <iris/jingle-session.h>
 
 static const QString geometryOption = "options.ui.chat.wb-size";
 
@@ -42,9 +43,14 @@ static const QString geometryOption = "options.ui.chat.wb-size";
 // WbDlg
 //----------------------------------------------------------------------------
 
-WbDlg::WbDlg(SxeSession *session, PsiAccount *pa)
+WbDlg::WbDlg(XMPP::Jingle::SXE::Application *application, PsiAccount *pa) :
+    application_(application), document_(application->document())
 {
-    groupChat_  = session->groupChat();
+    // Keep the document readable and savable after the session ends.
+    document_->setParent(this);
+    peer_       = application->pad()->session()->peer();
+    sid_        = application->pad()->session()->sid();
+    groupChat_  = false;
     pending_    = 0;
     keepOpen_   = false;
     allowEdits_ = true;
@@ -70,7 +76,7 @@ WbDlg::WbDlg(SxeSession *session, PsiAccount *pa)
     vb1->addLayout(hb1);
 
     // mid area
-    wbWidget_ = new WbWidget(session, this);
+    wbWidget_ = new WbWidget(document_, this);
     wbWidget_->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding));
     vb1->addWidget(wbWidget_);
 
@@ -203,9 +209,9 @@ WbDlg::WbDlg(SxeSession *session, PsiAccount *pa)
     X11WM_CLASS("whiteboard");
 
     // set the Jid -> le_jid.
-    le_jid_->setText(QString("%1 (session: %2)").arg(session->target().full(), session->session()));
+    le_jid_->setText(QString("%1 (session: %2)").arg(peer_.full(), sid_));
     le_jid_->setCursorPosition(0);
-    le_jid_->setToolTip(session->target().full());
+    le_jid_->setToolTip(peer_.full());
 
     // update the widget icon
     setWindowIcon(IconsetFactory::icon("psi/whiteboard").icon());
@@ -214,11 +220,30 @@ WbDlg::WbDlg(SxeSession *session, PsiAccount *pa)
                      / 100);
 
     setGeometryOptionPath(geometryOption);
+
+    connect(application, &XMPP::Jingle::SXE::Application::syncStateChanged, this, &WbDlg::syncStateChanged);
+    connect(application, &QObject::destroyed, this,
+            [this]() { syncStateChanged(XMPP::Jingle::SXE::Application::SyncState::Offline); });
+    syncStateChanged(application->syncState());
 }
 
 WbDlg::~WbDlg() { qDebug("destruct WbDlg"); }
 
-SxeSession *WbDlg::session() const { return wbWidget_->session(); }
+XMPP::Jingle::SXE::Application *WbDlg::application() const { return application_; }
+
+Jid WbDlg::peer() const { return peer_; }
+
+void WbDlg::syncStateChanged(XMPP::Jingle::SXE::Application::SyncState state)
+{
+    using SyncState = XMPP::Jingle::SXE::Application::SyncState;
+    // The host edits its document right away; the peer gets it with the state.
+    // A joiner waits for that state, and nothing is sent once the session ended.
+    const bool ended = !application_ || application_->state() >= XMPP::Jingle::State::Finishing;
+    const bool host  = application_ && application_->isHost();
+    setAllowEdits(!ended && (host || state == SyncState::Synchronized));
+    if (ended)
+        peerLeftSession(peer_);
+}
 
 bool WbDlg::allowEdits() const { return allowEdits_; }
 
@@ -229,10 +254,7 @@ void WbDlg::setAllowEdits(bool a)
         wbWidget_->setMode(WbWidget::Mode::Scroll);
 }
 
-void WbDlg::peerLeftSession(const Jid &peer)
-{
-    le_jid_->setText(tr("%1 left (session: %2).").arg(peer.full(), session()->session()));
-}
+void WbDlg::peerLeftSession(const Jid &peer) { le_jid_->setText(tr("%1 left (session: %2).").arg(peer.full(), sid_)); }
 
 void WbDlg::endSession()
 {
@@ -244,8 +266,9 @@ void WbDlg::endSession()
         if (n != 0)
             return;
     }
-    // terminate the underlying SXE session
-    session()->endSession();
+    // terminate the underlying Jingle session
+    if (application_ && application_->pad()->session()->state() != XMPP::Jingle::State::Finished)
+        application_->pad()->session()->terminate(XMPP::Jingle::Reason::Success);
 
     emit sessionEnded(this);
 }
@@ -382,7 +405,7 @@ void WbDlg::save()
         return;
 
     QTextStream stream(&file);
-    wbWidget_->session()->document().save(stream, 2);
+    document_->document().save(stream, 2);
 
     file.close();
 }
@@ -420,7 +443,7 @@ void WbDlg::updateCaption()
         if (pending_ > 1)
             cap += QString("[%1] ").arg(pending_);
     }
-    cap += session()->target().full();
+    cap += peer_.full();
 
     setWindowTitle(cap);
 }

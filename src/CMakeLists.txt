@@ -287,7 +287,6 @@ add_subdirectory(psimedia)
 add_subdirectory(contactmanager)
 add_subdirectory(tools)
 add_subdirectory(widgets)
-add_subdirectory(sxe)
 add_subdirectory(whiteboarding)
 if(APPLE)
     add_subdirectory(CocoaUtilities)
@@ -512,7 +511,6 @@ target_link_libraries(${PROJECT_NAME}
     contactmanager
     avcall
     whiteboarding
-    sxe
     tools
     widgets
     privacy

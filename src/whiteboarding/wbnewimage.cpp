@@ -20,7 +20,7 @@
 
 #include "wbnewimage.h"
 
-#include "../sxe/sxesession.h"
+#include <iris/xmpp-im/jingle-sxe-document.h>
 
 #include <QFile>
 #include <QGraphicsScene>
@@ -46,7 +46,7 @@ QDomNode WbNewImage::serializeToSvg(QDomDocument *doc)
     QFile file(filename_);
     if (file.open(QIODevice::ReadOnly)) {
         QDomElement image = doc->createElement("image");
-        image.setAttribute("id", "e" + SxeSession::generateUUID());
+        image.setAttribute("id", "e" + XMPP::Jingle::SXE::Document::generateUUID());
         image.setAttribute("x", graphicsitem_.x());
         image.setAttribute("y", graphicsitem_.y());
         image.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
@@ -56,7 +56,7 @@ QDomNode WbNewImage::serializeToSvg(QDomDocument *doc)
                 .arg(filename_.mid(filename_.lastIndexOf(".") + 1).toLower(), file.readAll().toBase64().constData()));
 
         // QDomElement g = QDomDocument().createElement("g");
-        // g.setAttribute("id", "e" + SxeSession::generateUUID());
+        // g.setAttribute("id", "e" + XMPP::Jingle::SXE::Document::generateUUID());
         // g.appendChild(image);
 
         return image;

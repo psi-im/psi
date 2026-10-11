@@ -19,7 +19,10 @@
 
 #include "wbscene.h"
 
-WbScene::WbScene(SxeSession *session, QObject *parent) : QGraphicsScene(parent) { session_ = session; };
+WbScene::WbScene(XMPP::Jingle::SXE::Document *document, QObject *parent) : QGraphicsScene(parent)
+{
+    document_ = document;
+};
 
 void WbScene::queueTransformationRegeneration(WbItem *item)
 {
@@ -36,7 +39,7 @@ void WbScene::regenerateTransformations()
         }
     }
     pendingTranformations_.clear();
-    session_->flush();
+    document_->flush();
 }
 
 QPointF WbScene::selectionCenter() const
@@ -72,8 +75,8 @@ void WbScene::group()
     if (selectedItems().size() > 1) {
         // Create the group
         QDomElement temp = QDomDocument().createElement("g");
-        temp.setAttribute("id", "e" + SxeSession::generateUUID());
-        const QDomNode group = session_->insertNodeAfter(temp, session_->document().documentElement());
+        temp.setAttribute("id", "e" + XMPP::Jingle::SXE::Document::generateUUID());
+        const QDomNode group = document_->insertNodeAfter(temp, document_->document().documentElement());
 
         // Arrange the items by Z coordinate
         QList<QGraphicsItem *> selected = selectedItems();
@@ -83,11 +86,11 @@ void WbScene::group()
         for (QGraphicsItem *item : std::as_const(selected)) {
             WbItem *wbitem = dynamic_cast<WbItem *>(item);
             if (wbitem)
-                session_->insertNodeAfter(wbitem->node(), group);
+                document_->insertNodeAfter(wbitem->node(), group);
         }
         clearSelection();
 
-        session_->flush();
+        document_->flush();
     }
 }
 
@@ -112,23 +115,23 @@ void WbScene::ungroup()
                         if (!groupTransform.isIdentity()) {
                             // combine the transformations of the group and the child
                             QTransform childTransform = WbItem::parseSvgTransform(child.attribute("transform"));
-                            session_->setAttribute(child, "transform",
-                                                   WbItem::toSvgTransform(childTransform * groupTransform));
+                            document_->setAttribute(child, "transform",
+                                                    WbItem::toSvgTransform(childTransform * groupTransform));
                         }
 
                         // move the child from the group to the root <svg/>
-                        session_->insertNodeAfter(children.at(i), session_->document().documentElement(), group);
+                        document_->insertNodeAfter(children.at(i), document_->document().documentElement(), group);
                     }
                 }
 
                 // delete the group itself
-                session_->removeNode(group);
+                document_->removeNode(group);
             }
         }
     }
     clearSelection();
 
-    session_->flush();
+    document_->flush();
 }
 
 void WbScene::bring(int n, bool toExtremum)
@@ -179,16 +182,16 @@ void WbScene::bring(int n, bool toExtremum)
 
                     if (referencewbitem && !referencewbitem->node().isNull()) {
                         if (n > 0)
-                            session_->insertNodeAfter(selectedwbitem->node(), selectedwbitem->node().parentNode(),
-                                                      referencewbitem->node());
-                        else
-                            session_->insertNodeBefore(selectedwbitem->node(), selectedwbitem->node().parentNode(),
+                            document_->insertNodeAfter(selectedwbitem->node(), selectedwbitem->node().parentNode(),
                                                        referencewbitem->node());
+                        else
+                            document_->insertNodeBefore(selectedwbitem->node(), selectedwbitem->node().parentNode(),
+                                                        referencewbitem->node());
                     }
                 }
             }
         }
     }
 
-    session_->flush();
+    document_->flush();
 }

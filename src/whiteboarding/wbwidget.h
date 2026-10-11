@@ -21,10 +21,10 @@
 #ifndef WBWIDGET_H
 #define WBWIDGET_H
 
-#include "../sxe/sxesession.h"
 #include "wbitem.h"
 #include "wbnewitem.h"
 #include "wbscene.h"
+#include <iris/xmpp-im/jingle-sxe-document.h>
 
 #include <QFileDialog>
 #include <QGraphicsView>
@@ -69,9 +69,9 @@ public:
     /*! \brief Constructor
      *  Constructs a new widget with \a session and parent \a parent.
      */
-    WbWidget(SxeSession *session, QWidget *parent = nullptr);
-    /*! \brief Returns the session this widget is visualizing.*/
-    SxeSession *session();
+    WbWidget(XMPP::Jingle::SXE::Document *document, QWidget *parent = nullptr);
+    /*! \brief Returns the shared document this widget is visualizing.*/
+    XMPP::Jingle::SXE::Document *document();
     /*! \brief Returns the mode this widget is in.*/
     Mode mode();
     /*! \brief Sets the mode which determines how to react to user interaction.*/
@@ -106,8 +106,8 @@ private:
     /*! \brief Returns the item representing the node (if any).*/
     WbItem *wbItem(const QDomNode &node);
 
-    /*! \brief The SxeSession synchronizing the document.*/
-    SxeSession *session_;
+    /*! \brief The SXE document synchronized with the peer.*/
+    XMPP::Jingle::SXE::Document *document_;
     /*! \brief The WbScene used for visualizing the document.*/
     WbScene *scene_;
     /*! \brief The user interaction mode the widget is in.*/

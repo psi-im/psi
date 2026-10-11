@@ -20,7 +20,7 @@
 
 #include "wbnewpath.h"
 
-#include "../sxe/sxesession.h"
+#include <iris/xmpp-im/jingle-sxe-document.h>
 
 #include <QGraphicsScene>
 #include <QPainterPath>
@@ -105,7 +105,7 @@ QDomNode WbNewPath::serializeToSvg(QDomDocument *doc)
         }
 
         // add a unique 'id' attribute in anticipation of WbWidget's requirements
-        trimmed.setAttribute("id", "e" + SxeSession::generateUUID());
+        trimmed.setAttribute("id", "e" + XMPP::Jingle::SXE::Document::generateUUID());
     }
 
     return trimmed;

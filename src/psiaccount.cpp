@@ -134,7 +134,6 @@
 #include "pgputil.h"
 #endif
 #ifdef WHITEBOARDING
-#include "sxe/sxemanager.h"
 #include "whiteboarding/wbmanager.h"
 #endif
 
@@ -443,8 +442,6 @@ public:
 #endif
 
 #ifdef WHITEBOARDING
-    // SXE
-    SxeManager *sxeManager = nullptr;
     // Whiteboard
     WbManager *wbManager = nullptr;
 #endif
@@ -1183,10 +1180,8 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
     d->pepAvailable = false;
 
 #ifdef WHITEBOARDING
-    // Initialize SXE manager
-    d->sxeManager = new SxeManager(d->client, this);
-    // Initialize Whiteboard manager
-    d->wbManager = new WbManager(d->client, this, d->sxeManager);
+    // Whiteboards are Jingle SXE sessions (XEP-0284)
+    d->wbManager = new WbManager(d->client, this);
     connect(d->wbManager, &WbManager::wbRequest, this, &PsiAccount::wbRequest);
 #endif
 
@@ -1313,7 +1308,6 @@ PsiAccount::~PsiAccount()
     delete d->client->serverInfoManager();
 #ifdef WHITEBOARDING
     delete d->wbManager;
-    delete d->sxeManager;
 #endif
     delete d->bookmarkManager;
     delete d->client;
@@ -1596,9 +1590,6 @@ void PsiAccount::updateFeatures()
     if (d->voiceCaller) {
         features << "http://www.google.com/xmpp/protocol/voice/v1"; // isn't obsoleted?
     }
-#ifdef WHITEBOARDING
-    features << SXENS << WBNS;
-#endif
 
 #ifdef PSI_PLUGINS
     features << PluginManager::instance()->pluginFeatures();
@@ -3156,6 +3147,10 @@ void PsiAccount::client_incomingJingle(Jingle::Session *session)
 {
     if (!session)
         return;
+#ifdef WHITEBOARDING
+    if (d->wbManager && d->wbManager->incomingSession(session))
+        return;
+#endif
     QString ns = session->preferredApplication();
 #ifdef FILETRANSFER
     if (ns == Jingle::FileTransfer::NS) {

@@ -20,7 +20,7 @@
 
 #include "wbnewitem.h"
 
-#include "../sxe/sxesession.h"
+#include <iris/xmpp-im/jingle-sxe-document.h>
 
 #include <QBuffer>
 #include <QPainter>
@@ -60,7 +60,7 @@ QDomNode WbNewItem::serializeToSvg(QDomDocument *doc)
     for (QDomNode n = doc->documentElement().lastChild(); !n.isNull(); n = n.previousSibling()) {
         // skip <title/>, <desc/>, and <defs/>
         if (n.isElement() && !(n.nodeName() == "title" || n.nodeName() == "desc" || n.nodeName() == "defs")) {
-            n.toElement().setAttribute("id", "e" + SxeSession::generateUUID());
+            n.toElement().setAttribute("id", "e" + XMPP::Jingle::SXE::Document::generateUUID());
             fragment.insertBefore(n, QDomNode());
         }
     }

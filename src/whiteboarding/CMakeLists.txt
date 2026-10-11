@@ -31,4 +31,4 @@ set(HEADERS
 
 add_library(whiteboarding STATIC ${HEADERS} ${SOURCES})
 add_dependencies(whiteboarding build_ui_files)
-target_link_libraries(whiteboarding ${QT_LIBRARIES} tools widgets)
+target_link_libraries(whiteboarding ${QT_LIBRARIES} ${iris_LIB} tools widgets)

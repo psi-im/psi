@@ -23,194 +23,155 @@
 
 #include "wbmanager.h"
 
-#include "psipopup.h"
+#include "psiaccount.h"
 
 #include <QDebug>
-#include <QEventLoop>
+#include <QDir>
+#include <QFile>
+#include <QFileDialog>
 #include <QMessageBox>
-
-#define EMPTYWB                                                                                                        \
-    "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\"> <svg "     \
-    "xmlns=\"http://www.w3.org/2000/svg\" version=\"1.2\" viewBox=\"0 0 600 400\" baseProfile=\"tiny\" />"
+#include <iris/jingle-session.h>
+#include <iris/xmpp_caps.h>
+#include <iris/xmpp_client.h>
 
 using namespace XMPP;
+namespace SXE = XMPP::Jingle::SXE;
 
-class WbRequest {
-public:
-    WbRequest() : loop_(new QEventLoop), id_(lastRequetsId++) { }
+WbManager::WbManager(XMPP::Client *client, PsiAccount *pa) : client_(client), pa_(pa) { }
 
-    ~WbRequest()
-    {
-        if (loop_->isRunning())
-            loop_->exit();
-        delete loop_;
-    }
+WbManager::~WbManager() { qDeleteAll(dialogs_); }
 
-    void startLoop() { loop_->exec(); }
-
-    void stopLoop() { loop_->exit(); }
-
-    int id() const { return id_; }
-
-private:
-    QEventLoop *loop_;
-    int         id_;
-
-    static int lastRequetsId;
-};
-
-int WbRequest::lastRequetsId = 0;
-
-// -----------------------------------------------------------------------------
-WbManager::WbManager(XMPP::Client *client, PsiAccount *pa, SxeManager *sxemanager)
+bool WbManager::checkSupport(const Jid &jid) const
 {
-    pa_         = pa;
-    sxemanager_ = sxemanager;
-
-    Q_UNUSED(client)
-
-    connect(sxemanager_, SIGNAL(sessionNegotiated(SxeSession *)), SLOT(createWbDlg(SxeSession *)));
-    // sxemanager_->addInvitationCallback(WbManager::checkInvitation);
-    connect(sxemanager, SIGNAL(invitationCallback(Jid, QList<QString>, bool *)), this,
-            SLOT(checkInvitation(Jid, QList<QString>, bool *)));
-}
-
-WbManager::~WbManager()
-{
-    qDeleteAll(dialogs_);
-    qDeleteAll(requests_);
+    // XEP-0284 and the whiteboard profile: the peer must support the application type and the SXE transport.
+    const auto features = client_->capsManager()->features(jid);
+    return features.test(QStringList { XMPP::Jingle::NS, SXE::NS, SXE::NS_TRANSPORT, SXE::NS_SVG_WHITEBOARD });
 }
 
 void WbManager::openWhiteboard(const Jid &target, const Jid &ownJid, bool groupChat, bool promptInitialDoc)
 {
-
-    // check that the target supports whiteboarding via SXE
-    QList<QString> features;
-    features += WBNS;
-    if (!sxemanager_->checkSupport(target, features)) {
+    Q_UNUSED(ownJid)
+    if (groupChat) {
+        QMessageBox::information(nullptr, tr("Unsupported"), tr("Group chat whiteboards are not supported yet."));
+        return;
+    }
+    if (!checkSupport(target)) {
         QMessageBox::information(nullptr, tr("Unsupported"), tr("The contact does not support whiteboarding."));
         return;
     }
 
-    // See if we have a session for the JID
-    WbDlg *w = findWbDlg(target);
-    if (!w) {
-        // else negotiate a new session and return null
-
-        QDomDocument doc;
-
-        if (promptInitialDoc) {
-            bool openExisting
-                = (QMessageBox::Yes
-                   == QMessageBox::question(nullptr, tr("Open Existing SVG?"),
-                                            tr("Would you like to open an existing SVG document in the whitebaord?"),
-                                            QMessageBox::Yes | QMessageBox::No, QMessageBox::No));
-
-            if (openExisting) {
-                // prompt for an existing file
-                QString fileName
-                    = QFileDialog::getOpenFileName(nullptr, tr("Initial SVG Document for the Whiteboard"),
-                                                   QDir::homePath(), tr("Scalable Vector Graphics (*.svg)"));
-
-                QFile file(fileName);
-                if (file.open(QIODevice::ReadOnly)) {
-#if QT_VERSION < QT_VERSION_CHECK(6, 8, 0)
-                    doc.setContent(&file, true);
-#else
-                    doc.setContent(&file, QDomDocument::ParseOption::UseNamespaceProcessing);
-#endif
-                    file.close();
-                }
-            }
-        }
-
-        if (doc.documentElement().nodeName() != "svg") {
-
-            // initialize with an empty whiteboarding document
-            doc = QDomDocument();
-#if QT_VERSION < QT_VERSION_CHECK(6, 8, 0)
-            doc.setContent(QString(EMPTYWB), true);
-#else
-            doc.setContent(QString(EMPTYWB), QDomDocument::ParseOption::UseNamespaceProcessing);
-#endif
-        }
-
-        // negotiate the session
-        sxemanager_->startNewSession(target, ownJid, groupChat, doc, features);
-    } else
-        bringToFront(w);
-}
-
-void WbManager::removeDialog(WbDlg *dialog)
-{
-    dialogs_.removeAt(dialogs_.indexOf(dialog));
-    delete dialog;
-}
-
-WbDlg *WbManager::findWbDlg(const Jid &jid)
-{
-    // find if a dialog for the jid already exists
-    for (WbDlg *w : std::as_const(dialogs_)) {
-        // does the jid match?
-        if (w->session()->target().compare(jid)) {
-            return w;
-        }
-    }
-    return nullptr;
-}
-
-void WbManager::createWbDlg(SxeSession *session)
-{
-    // check if the session is a whiteboarding session
-    bool whiteboarding = false;
-    for (const QString &feature : session->features()) {
-        if (feature == WBNS)
-            whiteboarding = true;
-    }
-
-    if (whiteboarding) {
-        // create the WbDlg
-        WbDlg *w = new WbDlg(session, pa_);
-
-        // connect the signals
-        connect(w, SIGNAL(sessionEnded(WbDlg *)), SLOT(removeDialog(WbDlg *)));
-        connect(session, SIGNAL(peerLeftSession(Jid)), w, SLOT(peerLeftSession(Jid)));
-
-        dialogs_.append(w);
-
-        bringToFront(w);
-    }
-}
-
-void WbManager::checkInvitation(const Jid &peer, const QList<QString> &features, bool *result)
-{
-    if (*result)
-        return;
-
-    if (!features.contains(WBNS)) {
-        *result = false;
+    if (auto dialog = findWbDlg(target)) {
+        bringToFront(dialog);
         return;
     }
 
-    WbRequest *wr = new WbRequest();
-    requests_.append(wr);
-    emit wbRequest(peer, wr->id());
-    wr->startLoop();
-    requests_.removeAll(wr);
-    delete wr;
-    *result = (QMessageBox::Yes
-               == QMessageBox::question(
-                   nullptr, tr("Whiteboarding Invitation?"),
-                   tr("%1 has invited you to a whiteboarding session. Would you like to join?").arg(peer.full()),
-                   QMessageBox::Yes | QMessageBox::No, QMessageBox::No));
+    QDomDocument doc;
+    if (promptInitialDoc
+        && QMessageBox::question(nullptr, tr("Open Existing SVG?"),
+                                 tr("Would you like to open an existing SVG document in the whiteboard?"),
+                                 QMessageBox::Yes | QMessageBox::No, QMessageBox::No)
+            == QMessageBox::Yes) {
+        const QString fileName = QFileDialog::getOpenFileName(nullptr, tr("Initial SVG Document for the Whiteboard"),
+                                                              QDir::homePath(), tr("Scalable Vector Graphics (*.svg)"));
+        QFile         file(fileName);
+        if (file.open(QIODevice::ReadOnly)) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 8, 0)
+            doc.setContent(&file, true);
+#else
+            doc.setContent(&file, QDomDocument::ParseOption::UseNamespaceProcessing);
+#endif
+        }
+    }
+
+    auto session     = client_->jingleManager()->newSession(target);
+    auto application = qobject_cast<SXE::Application *>(session->newContent(SXE::NS_SVG_WHITEBOARD));
+    if (!application) {
+        session->terminate(XMPP::Jingle::Reason::FailedApplication);
+        return;
+    }
+    // Without a user document the application starts from the empty whiteboard of the profile.
+    if (doc.documentElement().localName() == QLatin1String("svg"))
+        application->setInitialDocument(doc);
+    session->addContent(application);
+    createWbDlg(application);
+    session->initiate();
+}
+
+bool WbManager::incomingSession(XMPP::Jingle::Session *session)
+{
+    if (!session || session->preferredApplication() != SXE::NS_SVG_WHITEBOARD)
+        return false;
+
+    SXE::Application *application = nullptr;
+    for (auto content : session->contentList()) {
+        auto whiteboard = qobject_cast<SXE::Application *>(content);
+        if (!whiteboard || application) {
+            session->terminate(XMPP::Jingle::Reason::UnsupportedApplications,
+                               QStringLiteral("a whiteboard session has exactly one whiteboard content"));
+            return true;
+        }
+        application = whiteboard;
+    }
+    if (!application) {
+        session->terminate(XMPP::Jingle::Reason::UnsupportedApplications);
+        return true;
+    }
+
+    Request request;
+    request.id          = nextRequestId_++;
+    request.session     = session;
+    request.application = application;
+    requests_.append(request);
+    emit wbRequest(session->peer(), request.id);
+    return true;
 }
 
 void WbManager::requestActivated(int id)
 {
-    for (WbRequest *wr : std::as_const(requests_)) {
-        if (wr->id() == id) {
-            wr->stopLoop();
-            return;
-        }
+    auto it = std::find_if(requests_.begin(), requests_.end(), [id](const Request &r) { return r.id == id; });
+    if (it == requests_.end())
+        return;
+    const auto request = *it;
+    requests_.erase(it);
+    if (!request.session || !request.application || request.session->state() >= XMPP::Jingle::State::Finishing)
+        return; // the peer gave up meanwhile
+
+    const auto answer
+        = QMessageBox::question(nullptr, tr("Whiteboarding Invitation?"),
+                                tr("%1 has invited you to a whiteboarding session. Would you like to join?")
+                                    .arg(request.session->peer().full()),
+                                QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+    // The modal question runs an event loop: the session may have ended meanwhile.
+    if (!request.session || !request.application || request.session->state() >= XMPP::Jingle::State::Finishing)
+        return;
+    if (answer != QMessageBox::Yes) {
+        request.session->terminate(XMPP::Jingle::Reason::Decline);
+        return;
     }
+    createWbDlg(request.application);
+    request.session->accept();
+}
+
+void WbManager::removeDialog(WbDlg *dialog)
+{
+    dialogs_.removeAll(dialog);
+    dialog->deleteLater();
+}
+
+WbDlg *WbManager::findWbDlg(const Jid &jid)
+{
+    for (WbDlg *w : std::as_const(dialogs_)) {
+        if (w->application() && w->peer().compare(jid))
+            return w;
+    }
+    return nullptr;
+}
+
+WbDlg *WbManager::createWbDlg(SXE::Application *application)
+{
+    auto w = new WbDlg(application, pa_);
+    connect(w, &WbDlg::sessionEnded, this, &WbManager::removeDialog);
+    dialogs_.append(w);
+    bringToFront(w);
+    return w;
 }

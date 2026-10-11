@@ -30,12 +30,15 @@
 #include "psioptions.h"
 #include "wbwidget.h"
 
+#include <iris/xmpp-im/jingle-sxe.h>
+
 #include <QCloseEvent>
 #include <QContextMenuEvent>
 #include <QInputDialog>
 #include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
+#include <QPointer>
 #include <QResizeEvent>
 #include <QShowEvent>
 #include <QToolBar>
@@ -62,16 +65,19 @@ class WbDlg : public AdvancedWidget<QWidget> {
 
 public:
     /*! \brief Constructor.
-     *  Creates a new dialog for the specified jid and session.
+     *  Creates a new dialog for the Jingle whiteboard content. The dialog takes
+     *  over the shared document so that it stays available after the session.
      */
-    WbDlg(SxeSession *session, PsiAccount *pa);
+    WbDlg(XMPP::Jingle::SXE::Application *application, PsiAccount *pa);
     /*! \brief Destructor.
      *  Emits sessionEnded()
      */
     ~WbDlg();
 
-    /*! \brief Returns the session identifier.*/
-    SxeSession *session() const;
+    /*! \brief Returns the whiteboard content, or null once the Jingle session is gone.*/
+    XMPP::Jingle::SXE::Application *application() const;
+    /*! \brief Returns the peer of the whiteboard session.*/
+    Jid peer() const;
     /*! \brief Returns whether further edits to the session are allowed.*/
     bool allowEdits() const;
     /*! \brief Sets whether further edits to the session are allowed.*/
@@ -119,6 +125,8 @@ private slots:
     void setKeepOpenFalse();
     /*! \brief Constructs the context menu.*/
     void buildMenu();
+    /*! \brief Follows the synchronization state of the shared document.*/
+    void syncStateChanged(XMPP::Jingle::SXE::Application::SyncState state);
 
 private:
     /*! \brief Pops up the context menu.*/
@@ -154,6 +162,13 @@ private:
     QMenu      *menu_modes_;
     QAction    *act_color_, *act_fill_;
     IconAction *act_end_, *act_clear_, *act_save_, *act_geometry_, *act_widths_, *act_modes_;
+    /*! \brief The Jingle whiteboard content.*/
+    QPointer<XMPP::Jingle::SXE::Application> application_;
+    /*! \brief The shared document, owned by the dialog.*/
+    XMPP::Jingle::SXE::Document *document_;
+    /*! \brief The peer and Jingle session id.*/
+    Jid     peer_;
+    QString sid_;
     /*! \brief True if the target is a groupchat.*/
     bool groupChat_;
     /*! \brief The number of whiteboard messages since last activation.*/
