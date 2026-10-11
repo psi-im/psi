@@ -8,6 +8,7 @@ class QLineEdit;
 class QPushButton;
 class QComboBox;
 class QFrame;
+class CallStage;
 namespace PsiMedia {
 class VideoWidget;
 }
@@ -47,7 +48,6 @@ private:
     QLineEdit             *peer_;
     QLabel                *status_;
     QLabel                *duration_;
-    QLabel                *placeholder_;
     QLabel                *sharingLabel_;
     QPushButton           *microphone_;
     QPushButton           *camera_;
@@ -56,6 +56,7 @@ private:
     QPushButton           *end_;
     QComboBox             *quality_;
     QFrame                *sharingBar_;
+    CallStage             *stage_;
     PsiMedia::VideoWidget *video_;
     PsiMedia::VideoWidget *presentation_;
     bool                   active_         = false;

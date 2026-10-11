@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "callview.h"
+#include "callstage.h"
 #include "../psimedia/psimedia.h"
 #include "screensharecapture.h"
 #include <QComboBox>
 #include <QFrame>
-#include <QGridLayout>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
@@ -65,6 +65,7 @@ CallView::CallView(QWidget *parent) : QWidget(parent)
         "padding: 4px; }"
         "QLabel#callStatus, QLabel#callDuration { color: #9ca3af; }"
         "QFrame#callStage { background: #1b2435; border: 1px solid #2b3548; border-radius: 18px; }"
+        "QFrame#callTile { background: #0b1220; border: none; border-radius: 10px; }"
         "QFrame#sharingBar { background: #153b37; border: 1px solid #2dd4bf; border-radius: 10px; }"
         "QPushButton { color: #f3f4f6; background: #293447; border: 1px solid #39465c; border-radius: 12px; padding: "
         "12px 18px; font-weight: 600; }"
@@ -97,37 +98,20 @@ CallView::CallView(QWidget *parent) : QWidget(parent)
     header->addWidget(duration_);
     layout->addLayout(header);
 
-    auto stage = new QFrame(this);
-    stage->setObjectName(QStringLiteral("callStage"));
-    stage->setMinimumSize(420, 260);
-    auto stageLayout = new QGridLayout(stage);
-    stageLayout->setSpacing(12);
-    stageLayout->setColumnStretch(0, 4);
-    stageLayout->setColumnStretch(1, 1);
-    stageLayout->setContentsMargins(12, 12, 12, 12);
-    placeholder_ = new QLabel(tr("Audio call\nTurn on your camera or share your screen"), stage);
-    placeholder_->setAlignment(Qt::AlignCenter);
-    placeholder_->setStyleSheet(QStringLiteral("color: #aab6c8; font-size: 18px;"));
-    stageLayout->addWidget(placeholder_, 0, 0, 1, 2);
-    video_ = new PsiMedia::VideoWidget(stage);
-    video_->setMinimumSize(160, 120);
-    video_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    presentation_ = new PsiMedia::VideoWidget(stage);
-    presentation_->setMinimumSize(320, 180);
-    presentation_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    stage_ = new CallStage(this);
+    stage_->setMinimumSize(420, 260);
+    stage_->setPlaceholderText(tr("Audio call\nTurn on your camera or share your screen"));
+    video_        = new PsiMedia::VideoWidget;
+    presentation_ = new PsiMedia::VideoWidget;
+    stage_->addTile(presentation_, tr("Shared screen"), CallStage::ScreenPriority);
+    stage_->addTile(video_, tr("Camera"), CallStage::CameraPriority);
     for (auto video : { video_, presentation_ }) {
-        video->hide();
-
         connect(video, &PsiMedia::VideoWidget::videoSizeChanged, this, [this, video] {
-            if (!active_)
-                return;
-            video->show();
-            placeholder_->hide();
+            if (active_)
+                stage_->setTileVisible(video, true);
         });
     }
-    stageLayout->addWidget(presentation_, 0, 0);
-    stageLayout->addWidget(video_, 0, 1);
-    layout->addWidget(stage, 1);
+    layout->addWidget(stage_, 1);
 
     sharingBar_ = new QFrame(this);
     sharingBar_->setObjectName(QStringLiteral("sharingBar"));
@@ -215,7 +199,7 @@ void    CallView::setActive(bool active)
     end_->setText(active ? tr("End call") : tr("Close"));
     share_->setEnabled(active && shareSupported_ && ScreenShareCapture::available());
     if (active)
-        placeholder_->setText(tr("Connected · waiting for video"));
+        stage_->setPlaceholderText(tr("Connected · waiting for video"));
 }
 void CallView::setConnecting(bool connecting)
 {
@@ -252,10 +236,8 @@ void CallView::setFinished()
     microphone_->setEnabled(false);
     camera_->setEnabled(false);
     share_->setEnabled(false);
-    video_->hide();
-    presentation_->hide();
-    placeholder_->setText(tr("Call ended"));
-    placeholder_->show();
+    stage_->hideAllTiles();
+    stage_->setPlaceholderText(tr("Call ended"));
     peer_->setReadOnly(true);
 }
 void CallView::setSharing(bool sharing, const QString &source, bool connecting)
@@ -287,7 +269,5 @@ PsiMedia::VideoWidget *CallView::remotePresentation() const { return presentatio
 
 void CallView::hideRemoteVideo(bool presentation)
 {
-    (presentation ? presentation_ : video_)->hide();
-    if (video_->isHidden() && presentation_->isHidden())
-        placeholder_->show();
+    stage_->setTileVisible(presentation ? presentation_ : video_, false);
 }

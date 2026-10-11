@@ -167,9 +167,11 @@ One action starts calls and whiteboards. It replaces **Voice Call** and the sepa
 
 ### Structure
 
-- `CallView` becomes a stage with tiles and a control bar. Video tiles wrap
-  `PsiMedia::VideoWidget`; the whiteboard tile wraps `WbWidget` with the whiteboard toolbar
-  taken out of `WbDlg`.
+- `CallView` is a stage with tiles and a control bar. `CallStage` (`src/avcall/callstage.h`)
+  places the visible tiles: the main tile by the default order or the viewer's choice, the others
+  as clickable previews, and a placeholder when nothing is visible. The remote camera and the
+  remote screen are `PsiMedia::VideoWidget` tiles; the whiteboard tile will wrap `WbWidget`
+  with the whiteboard toolbar taken out of `WbDlg`.
 - `AvCall` grows into a session object with one controller per content type: the existing RTP
   logic (audio, camera, screen) and a whiteboard controller (`Jingle::SXE::Application` and its
   document). Incoming sessions with any mix of these contents open one window.
@@ -182,7 +184,8 @@ One action starts calls and whiteboards. It replaces **Voice Call** and the sepa
 
 1. Iris: senders for SXE contents (`content-modify`), regression tests for RTP and SXE contents
    in one session (content-add in both directions) and SXE descriptions in XEP-0353 proposals.
-2. Stage and tiles in `CallView`, first with the existing camera and screen tiles.
+2. Stage and tiles in `CallView`, first with the existing camera and screen tiles (done;
+   `avcallstage_test` covers the tile order and the viewer's choice).
 3. The whiteboard as a tile and controller; whiteboard sessions open in the call window, and
    one call/whiteboard action replaces the separate whiteboard menu entries.
 4. Turning contents on and off from the control bar through senders; screen sharing keeps

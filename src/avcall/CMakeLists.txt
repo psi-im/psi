@@ -14,6 +14,7 @@ set(HEADERS
     psimediajingle.h
     screensharecapture.h
     callview.h
+    callstage.h
 )
 
 set(SOURCES
@@ -24,6 +25,7 @@ set(SOURCES
     psimediajingle.cpp
     screensharecapture.cpp
     callview.cpp
+    callstage.cpp
 )
 
 add_library(avcall STATIC ${SOURCES} ${HEADERS})
