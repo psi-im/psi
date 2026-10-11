@@ -20,6 +20,8 @@
 
 #include "wbwidget.h"
 
+#include <QRegularExpression>
+
 #include "wbnewimage.h"
 #include "wbnewpath.h"
 
@@ -150,28 +152,23 @@ void WbWidget::setSize(const QSize &size)
     document_->flush();
 }
 
-/*! \brief Generates a QRectF based on \a string provided in the SVG viewBox format. */
-static QRectF parseSvgViewBox(QString string)
+/*! \brief Generates a QRectF based on \a string provided in the SVG viewBox format.
+ *  Returns a null rectangle unless the value consists of exactly four numbers. */
+static QRectF parseSvgViewBox(const QString &string)
 {
-    QString strings[4];
-    qreal   numbers[4];
-    for (int i = 0, j = 0; i < 4; i++) {
-        // skip spaces before number
-        while (string[j].isSpace() && j < string.length())
-            j++;
-
-        while (!string[j].isSpace() && j < string.length()) {
-            if (string[j].isNumber())
-                strings[i] += string[j];
-            j++;
-        }
-
-        numbers[i] = strings[i].toDouble();
+    // SVG: four numbers separated by whitespace and/or a comma.
+    static const QRegularExpression separators(QStringLiteral("[\\s,]+"));
+    const auto parts = string.trimmed().split(separators, Qt::SkipEmptyParts);
+    if (parts.size() != 4)
+        return {};
+    qreal numbers[4];
+    for (int i = 0; i < 4; ++i) {
+        bool ok    = false;
+        numbers[i] = parts[i].toDouble(&ok);
+        if (!ok)
+            return {};
     }
-
-    // qDebug() << QString("QRectF(%1 %2 %3
-    // %4)").arg(numbers[0]).arg(numbers[1]).arg(numbers[2]).arg(numbers[3]).toLatin1();
-    return QRect(int(numbers[0]), int(numbers[1]), int(numbers[2]), int(numbers[3]));
+    return QRectF(numbers[0], numbers[1], numbers[2], numbers[3]);
 }
 
 void WbWidget::checkForViewBoxChange(const QDomNode &node)
