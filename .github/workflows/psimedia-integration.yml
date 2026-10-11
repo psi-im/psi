@@ -29,7 +29,6 @@ permissions:
   contents: read
 
 env:
-  QCA_TAG: v3.0.10
   # Iris follows the Psi gitlink; psimedia is pinned to the matching provider API.
   PSIMEDIA_SRTP_REF: 52cebb52299b130ae727ca6b597b833da5e445e3
 
@@ -86,19 +85,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-psimedia-integration-ccache-
 
-      - name: Install QCA3 release package
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          rm -rf qca-release qca3.zip
-          mkdir qca-release
-          gh release download "$QCA_TAG" --repo psi-im/qca \
-            -p 'qca3-deb-ubuntu-24.04.zip' -O qca3.zip
-          (cd qca-release && cmake -E tar xvf ../qca3.zip)
-          test -n "$(find qca-release -type f -name '*.deb' -print -quit)"
-          sudo apt-get install -y ./qca-release/*.deb
+      - name: Install QCA from Iris dependency lock
+        uses: ./iris/.github/actions/load-dependencies
+        with:
+          lock-path: iris/dependencies.lock.json
+          qca-asset: qca3-deb-ubuntu-24.04.zip
+          install-mode: apt
+          qca-directory: qca-release
 
       - name: Record integration versions
         run: |
@@ -841,19 +834,13 @@ jobs:
           sudo systemctl stop prosody.service 2>/dev/null || true
           sudo service prosody stop 2>/dev/null || true
 
-      - name: Install QCA3 release package
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          rm -rf qca-release qca3.zip
-          mkdir qca-release
-          gh release download "$QCA_TAG" --repo psi-im/qca \
-            -p 'qca3-deb-ubuntu-24.04.zip' -O qca3.zip
-          (cd qca-release && cmake -E tar xvf ../qca3.zip)
-          test -n "$(find qca-release -type f -name '*.deb' -print -quit)"
-          sudo apt-get install -y ./qca-release/*.deb
+      - name: Install QCA from Iris dependency lock
+        uses: ./iris/.github/actions/load-dependencies
+        with:
+          lock-path: iris/dependencies.lock.json
+          qca-asset: qca3-deb-ubuntu-24.04.zip
+          install-mode: apt
+          qca-directory: qca-release
 
       - name: Build SCTP-enabled Jingle FT client
         shell: bash
@@ -1098,19 +1085,13 @@ jobs:
           sudo systemctl stop prosody.service 2>/dev/null || true
           sudo service prosody stop 2>/dev/null || true
 
-      - name: Install QCA3 release package
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          rm -rf qca-release qca3.zip
-          mkdir qca-release
-          gh release download "$QCA_TAG" --repo psi-im/qca \
-            -p 'qca3-deb-ubuntu-24.04.zip' -O qca3.zip
-          (cd qca-release && cmake -E tar xvf ../qca3.zip)
-          test -n "$(find qca-release -type f -name '*.deb' -print -quit)"
-          sudo apt-get install -y ./qca-release/*.deb
+      - name: Install QCA from Iris dependency lock
+        uses: ./iris/.github/actions/load-dependencies
+        with:
+          lock-path: iris/dependencies.lock.json
+          qca-asset: qca3-deb-ubuntu-24.04.zip
+          install-mode: apt
+          qca-directory: qca-release
 
       - name: Build real psimedia Jingle audio-call client
         shell: bash
