@@ -649,11 +649,12 @@ void ChatDlg::doSend()
         return;
     }
 
-    if (chatEdit()->toPlainText().isEmpty() && !fileShareReferences_.count()) {
+    auto textToSend = chatEdit()->toPlainText().trimmed();
+    if (textToSend.isEmpty() && !fileShareReferences_.count()) {
         return;
     }
 
-    if (chatEdit()->toPlainText() == "/clear") {
+    if (textToSend == "/clear") {
         chatEdit()->clear();
         doClear();
         QString line1, line2;
@@ -690,7 +691,7 @@ void ChatDlg::doSend()
         m.setReferences(fileShareReferences_);
         m.setBody(fileShareDesc_);
     } else {
-        m.setBody(chatEdit()->toPlainText());
+        m.setBody(textToSend);
         HTMLElement html = chatEdit()->toHTMLElement();
         if (!html.body().isNull())
             m.setHTML(html);

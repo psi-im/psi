@@ -1435,23 +1435,23 @@ void MiniCommand_Depreciation_Message(const QString &old, const QString &newCmd,
 void GCMainDlg::mle_returnPressed()
 {
     d->tabCompletion.reset();
-    QString str = d->mle()->toPlainText();
+    QString textToSend = d->mle()->toPlainText().trimmed();
 
     if (d->mCmdSite.isActive()) {
-        if (!d->mCmdManager.processCommand(str)) {
-            appendSysMsg(tr("Error: Cannot parse command: ") + str, false);
+        if (!d->mCmdManager.processCommand(textToSend)) {
+            appendSysMsg(tr("Error: Cannot parse command: ") + textToSend, false);
         }
         return;
     }
 
-    if (str.isEmpty())
+    if (textToSend.isEmpty())
         return;
 
-    if (str == "/clear") {
+    if (textToSend == "/clear") {
         doClear();
 
         d->histAt = 0;
-        d->hist.prepend(str);
+        d->hist.prepend(textToSend);
         ui_.mle->chatEdit()->setText("");
 
         QString line1, line2;
@@ -1461,8 +1461,8 @@ void GCMainDlg::mle_returnPressed()
         return;
     }
 
-    if (str.startsWith("/nick ", Qt::CaseInsensitive)) {
-        QString   nick   = str.mid(6).trimmed();
+    if (textToSend.startsWith("/nick ", Qt::CaseInsensitive)) {
+        QString   nick   = textToSend.mid(6).trimmed();
         XMPP::Jid newJid = jid().withResource(nick);
         if (!nick.isEmpty() && newJid.isValid()) {
             d->prev_self = d->self;
@@ -1483,7 +1483,7 @@ void GCMainDlg::mle_returnPressed()
 
     Message m(jid());
     m.setType(Message::Type::Groupchat);
-    m.setBody(str);
+    m.setBody(textToSend);
     QString id = account()->client()->genUniqueId();
     m.setId(id); // we need id early for message manipulations in chatview
     if (ui_.mle->chatEdit()->isCorrection()) {
@@ -1502,7 +1502,7 @@ void GCMainDlg::mle_returnPressed()
     emit aSend(m);
 
     d->histAt = 0;
-    d->hist.prepend(str);
+    d->hist.prepend(textToSend);
     ui_.mle->chatEdit()->setText("");
 }
 
