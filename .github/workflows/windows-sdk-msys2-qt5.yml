@@ -6,7 +6,7 @@ on:
       sdk_tag:
         description: SDK release tag
         required: false
-        default: windows-sdk-msys2-qt5-v2
+        default: windows-sdk-msys2-qt5-v3
         type: string
       force_rebuild:
         description: Rebuild and replace the SDK asset even if it already exists
@@ -18,7 +18,7 @@ on:
       sdk_tag:
         description: SDK release tag
         required: false
-        default: windows-sdk-msys2-qt5-v2
+        default: windows-sdk-msys2-qt5-v3
         type: string
       force_rebuild:
         description: Rebuild and replace the SDK asset even if it already exists
@@ -34,7 +34,6 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  QCA_TAG: v3.0.10
   QTKEYCHAIN_TAG: 0.17.0
   SDK_ARCHIVE: psi-windows-sdk-msys2-qt5.zip
 
@@ -80,6 +79,20 @@ jobs:
     timeout-minutes: 45
 
     steps:
+      - name: Checkout Psi and its locked Iris dependency
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Initialize pinned Iris
+        shell: bash
+        run: git submodule update --init --depth 1 iris
+
+      - name: Load QCA version from Iris dependency lock
+        uses: ./iris/.github/actions/load-dependencies
+        with:
+          lock-path: iris/dependencies.lock.json
+
       - name: Set up MSYS2 MINGW64
         uses: msys2/setup-msys2@v2
         with:
@@ -119,6 +132,7 @@ jobs:
         run: |
           set -euo pipefail
           git clone --depth 1 --branch "$QCA_TAG" https://github.com/psi-im/qca.git qca
+          test "$(git -C qca rev-parse HEAD)" = "$QCA_COMMIT"
 
           cmake -S qca -B qca-build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
