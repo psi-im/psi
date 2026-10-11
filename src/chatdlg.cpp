@@ -649,11 +649,12 @@ void ChatDlg::doSend()
         return;
     }
 
-    if (chatEdit()->toPlainText().isEmpty() && !fileShareReferences_.count()) {
+    auto textToSend = chatEdit()->getTextToSend();
+    if (textToSend.isEmpty() && !fileShareReferences_.count()) {
         return;
     }
 
-    if (chatEdit()->toPlainText() == "/clear") {
+    if (textToSend == "/clear") {
         chatEdit()->clear();
         doClear();
         QString line1, line2;
@@ -690,10 +691,12 @@ void ChatDlg::doSend()
         m.setReferences(fileShareReferences_);
         m.setBody(fileShareDesc_);
     } else {
-        m.setBody(chatEdit()->toPlainText());
-        HTMLElement html = chatEdit()->toHTMLElement();
-        if (!html.body().isNull())
-            m.setHTML(html);
+        m.setBody(textToSend);
+        if (PsiOptions::instance()->getOption("options.html.chat.send", true).toBool()) {
+            HTMLElement html = chatEdit()->toHTMLElement();
+            if (!html.body().isNull())
+                m.setHTML(html);
+        }
     }
 
     QString id = account()->client()->genUniqueId();

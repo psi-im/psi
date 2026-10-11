@@ -43,7 +43,9 @@ QWidget *OptionsTabMsgCommon::widget()
                                      " Check this if you want to know how long is your message."
                                      " Can be useful when you're using SMS transport."));
     d->ck_contactsMessageFormatting->setToolTip(
-        tr("If enabled, Psi will display incoming messages formatted in the style specified by the contact"));
+        tr("If enabled, Psi will display incoming messages formatted in the style specified by the contact by using the deprecated XHTML-IM (XEP-0071)"));
+    d->ck_sendHtmlsMessageFormatting->setToolTip(
+        tr("If enabled, Psi will send outcoming formatted messages with additional XHTML-IM (XEP-0071). Note: it's deprecated badly supported."));
 
     d->cb_tabMdlClick->addItems(clickActList);
     d->cb_tabDblClick->addItems(clickActList);
@@ -61,6 +63,7 @@ void OptionsTabMsgCommon::applyOptions()
     PsiOptions     *o = PsiOptions::instance();
     o->setOption("options.ui.message.show-character-count", d->ck_showCounter->isChecked());
     o->setOption("options.html.chat.render", d->ck_contactsMessageFormatting->isChecked());
+    o->setOption("options.html.chat.send", d->ck_sendHtmlsMessageFormatting->isChecked());
     o->setOption("options.media.audio-message", d->ck_audioMessage->isChecked());
     if (d->ck_showTabButtons->isEnabled())
         o->setOption("options.ui.tabs.show-tab-buttons", d->ck_showTabButtons->isChecked());
@@ -113,7 +116,8 @@ void OptionsTabMsgCommon::restoreOptions()
     OptMsgCommonUI *d = static_cast<OptMsgCommonUI *>(w_);
     PsiOptions     *o = PsiOptions::instance();
     d->ck_showCounter->setChecked(o->getOption("options.ui.message.show-character-count").toBool());
-    d->ck_contactsMessageFormatting->setChecked(o->getOption("options.html.chat.render").toBool());
+    d->ck_contactsMessageFormatting->setChecked(o->getOption("options.html.chat.render", true).toBool());
+    d->ck_sendHtmlsMessageFormatting->setChecked(o->getOption("options.html.chat.send", true).toBool());
     d->ck_showTabButtons->setChecked(o->getOption("options.ui.tabs.show-tab-buttons").toBool());
     d->ck_tabChats->setChecked(o->getOption("options.ui.tabs.use-tabs").toBool());
     d->cb_tabGrouping->setEnabled(o->getOption("options.ui.tabs.use-tabs").toBool());

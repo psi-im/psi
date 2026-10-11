@@ -466,7 +466,7 @@ void ChatEdit::showHistoryMessagePrev()
     if (!typedMsgsHistory.isEmpty() && (typedMsgsIndex > 0 || !_correctionId.isEmpty())) {
         // Save current typed text
         if (typedMsgsIndex == typedMsgsHistory.size()) {
-            currentText   = toPlainText();
+            currentText   = getTextToSend();
             _correctionId = lastId;
         }
         if (typedMsgsIndex == typedMsgsHistory.size() - 1 && !_correctionId.isEmpty()) {
@@ -587,6 +587,13 @@ void ChatEdit::clearMessageHistory()
 {
     typedMsgsHistory.clear();
     typedMsgsIndex = 0;
+}
+
+QString ChatEdit::getTextToSend()
+{
+    // When the QTextEdit have a formatting then it will be converted to Markdown but it's not compatible with XEP-0393.
+    // So some clients will render it diferently but this must be not cricial.
+    return toMarkdown().trimmed();
 }
 
 XMPP::HTMLElement ChatEdit::toHTMLElement()

@@ -1435,23 +1435,23 @@ void MiniCommand_Depreciation_Message(const QString &old, const QString &newCmd,
 void GCMainDlg::mle_returnPressed()
 {
     d->tabCompletion.reset();
-    QString str = d->mle()->toPlainText();
+    QString textToSend = d->mle()->getTextToSend();
 
     if (d->mCmdSite.isActive()) {
-        if (!d->mCmdManager.processCommand(str)) {
-            appendSysMsg(tr("Error: Cannot parse command: ") + str, false);
+        if (!d->mCmdManager.processCommand(textToSend)) {
+            appendSysMsg(tr("Error: Cannot parse command: ") + textToSend, false);
         }
         return;
     }
 
-    if (str.isEmpty())
+    if (textToSend.isEmpty())
         return;
 
-    if (str == "/clear") {
+    if (textToSend == "/clear") {
         doClear();
 
         d->histAt = 0;
-        d->hist.prepend(str);
+        d->hist.prepend(textToSend);
         ui_.mle->chatEdit()->setText("");
 
         QString line1, line2;
@@ -1461,8 +1461,8 @@ void GCMainDlg::mle_returnPressed()
         return;
     }
 
-    if (str.startsWith("/nick ", Qt::CaseInsensitive)) {
-        QString   nick   = str.mid(6).trimmed();
+    if (textToSend.startsWith("/nick ", Qt::CaseInsensitive)) {
+        QString   nick   = textToSend.mid(6).trimmed();
         XMPP::Jid newJid = jid().withResource(nick);
         if (!nick.isEmpty() && newJid.isValid()) {
             d->prev_self = d->self;
@@ -1483,7 +1483,7 @@ void GCMainDlg::mle_returnPressed()
 
     Message m(jid());
     m.setType(Message::Type::Groupchat);
-    m.setBody(str);
+    m.setBody(textToSend);
     QString id = account()->client()->genUniqueId();
     m.setId(id); // we need id early for message manipulations in chatview
     if (ui_.mle->chatEdit()->isCorrection()) {
@@ -1492,9 +1492,11 @@ void GCMainDlg::mle_returnPressed()
     ui_.mle->chatEdit()->setLastMessageId(id);
     ui_.mle->chatEdit()->resetCorrection();
 
-    HTMLElement html = d->mle()->toHTMLElement();
-    if (!html.body().isNull())
-        m.setHTML(html);
+    if (PsiOptions::instance()->getOption("options.html.chat.send", true).toBool()) {
+        HTMLElement html = d->mle()->toHTMLElement();
+        if (!html.body().isNull())
+            m.setHTML(html);
+    }
 
     m.setTimeStamp(QDateTime::currentDateTime());
     d->mle()->appendMessageHistory(m.body());
@@ -1502,7 +1504,7 @@ void GCMainDlg::mle_returnPressed()
     emit aSend(m);
 
     d->histAt = 0;
-    d->hist.prepend(str);
+    d->hist.prepend(textToSend);
     ui_.mle->chatEdit()->setText("");
 }
 
@@ -2315,7 +2317,7 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
     }
 
     MessageView mv(MessageView::Message);
-    if (dm.containsHTML() && PsiOptions::instance()->getOption("options.html.muc.render").toBool()
+    if (dm.containsHTML() && PsiOptions::instance()->getOption("options.html.chat.render").toBool()
         && !dm.html().text().isEmpty()) {
         mv.setHtml(dm.html().toString("span"));
     } else {

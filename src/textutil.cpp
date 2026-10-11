@@ -645,19 +645,25 @@ QString TextUtil::img2title(const QString &in)
     return ret;
 }
 
+/**
+ * Format XEP-0393 Message Styling to HTML.
+ * Additional formatting for Markdown (**bold**), and Discord __underline__.
+ * But they rendered without styling directives i.e. <b>bold</b>, not <b>**bold**</b>.
+ * FIXME: formatting must ignore `code block` that may be a code i.e `volume=length*width*height`
+ */
 QString TextUtil::legacyFormat(const QString &in)
 {
-
-    // enable *bold* stuff
-    // //old code
-    // out=out.replace(QRegularExpression("(^[^<>\\s]*|\\s[^<>\\s]*)\\*(\\S+)\\*([^<>\\s]*\\s|[^<>\\s]*$)"),"\\1<b>*\\2*</b>\\3");
-    // out=out.replace(QRegularExpression("(^[^<>\\s\\/]*|\\s[^<>\\s\\/]*)\\/([^\\/\\s]+)\\/([^<>\\s\\/]*\\s|[^<>\\s\\/]*$)"),"\\1<i>/\\2/</i>\\3");
-    // out=out.replace(QRegularExpression("(^[^<>\\s]*|\\s[^<>\\s]*)_(\\S+)_([^<>\\s]*\\s|[^<>\\s]*$)"),"\\1<u>_\\2_</u>\\3");
-
     QString out = in;
-    out = out.replace(QRegularExpression("(^|\\s|>)_(\\S+)_(?=<|\\s|$)"), "\\1<u>_\\2_</u>"); // underline inside _text_
+    out = out.replace(QRegularExpression("(^|\\s|>)\\*\\*\\*(\\S+)\\*\\*\\*(?=<|\\s|$)"), "\\1<b><i>\\2</i></b>"); // MD ***bold italic***
+    out = out.replace(QRegularExpression("(^|\\s|>)\\*\\*(\\S+)\\*\\*(?=<|\\s|$)"), "\\1<b>\\2</b>"); // MD **bold**
     out = out.replace(QRegularExpression("(^|\\s|>)\\*(\\S+)\\*(?=<|\\s|$)"), "\\1<b>*\\2*</b>"); // bold *text*
+    out = out.replace(QRegularExpression("(^|\\s|>)__(\\S+)__(?=<|\\s|$)"), "\\1<u>\\2</u>"); // TG,Discord __underline__
+    out = out.replace(QRegularExpression("(^|\\s|>)_(\\S+)_(?=<|\\s|$)"), "\\1<u>_\\2_</u>"); // _underline_
     out = out.replace(QRegularExpression("(^|\\s|>)\\/(\\S+)\\/(?=<|\\s|$)"), "\\1<i>/\\2/</i>"); // italic /text/
+    out = out.replace(QRegularExpression("(^|\\s|>)\\~\\~(\\S+)\\~\\~(?=<|\\s|$)"), "\\1<s>\\2</s>"); // MD ~~striked~~
+    out = out.replace(QRegularExpression("(^|\\s|>)\\~(\\S+)\\~(?=<|\\s|$)"), "\\1<s>~\\2~</s>"); // ~striked~
+    out = out.replace(QRegularExpression("(^|\\s|>)```(\\S+)```(?=<|\\s|$)"), "\\1<pre>\n\\2\n</pre>\n"); // ```code block```
+    out = out.replace(QRegularExpression("(^|\\s|>)`(\\S+)`(?=<|\\s|$)"), "\\1<code>\\2</code>"); // `preformatted`
 
     return out;
 }
