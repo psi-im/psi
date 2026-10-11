@@ -25,6 +25,7 @@
         <html comment="Hypertext markup options">
             <chat comment="HTML in chats">
                 <render comment="Display received messages in deprecated XHTML-IM formatting (XEP-0071)" type="bool">true</render>
+                <send comment="Send messages in deprecated XHTML-IM formatting" type="bool">true</send>
             </chat>
         </html>
         <extended-presence comment="Extended presence options">

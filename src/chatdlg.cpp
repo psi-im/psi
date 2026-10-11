@@ -692,9 +692,11 @@ void ChatDlg::doSend()
         m.setBody(fileShareDesc_);
     } else {
         m.setBody(textToSend);
-        HTMLElement html = chatEdit()->toHTMLElement();
-        if (!html.body().isNull())
-            m.setHTML(html);
+        if (PsiOptions::instance()->getOption("options.html.chat.send", true).toBool()) {
+            HTMLElement html = chatEdit()->toHTMLElement();
+            if (!html.body().isNull())
+                m.setHTML(html);
+        }
     }
 
     QString id = account()->client()->genUniqueId();

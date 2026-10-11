@@ -18,6 +18,8 @@
  */
 #include "htmltextcontroller.h"
 
+#include "psioptions.h"
+
 #include <QColorDialog>
 #include <QFontDialog>
 #include <QMenu>
@@ -43,20 +45,23 @@ public:
         actStrikeOut->setCheckable(true);
         actStrikeOut->setData(QVariant(HTMLTextController::StateStrikeOut));
 
-        actTextColor = addAction(tr("Text Color"));
-        actTextColor->setCheckable(true);
-        actTextColor->setData(QVariant(HTMLTextController::StateTextColorChanged));
-
-        actBackgroundColor = addAction(tr("Background Color"));
-        actBackgroundColor->setCheckable(true);
-        actBackgroundColor->setData(QVariant(HTMLTextController::StateBackgroundColorChanged));
-
-        actText = addAction(tr("Font"));
-        actText->setCheckable(true);
-        actText->setData(QVariant(HTMLTextController::StateTextStyleChanged));
-
         addSeparator();
 
+        if (PsiOptions::instance()->getOption("options.html.chat.send", true).toBool()) {
+            actTextColor = addAction(tr("Text Color"));
+            actTextColor->setCheckable(false);
+            actTextColor->setData(QVariant(HTMLTextController::StateTextColorChanged));
+
+            actBackgroundColor = addAction(tr("Background Color"));
+            actBackgroundColor->setCheckable(true);
+            actBackgroundColor->setData(QVariant(HTMLTextController::StateBackgroundColorChanged));
+
+            actText = addAction(tr("Font"));
+            actText->setCheckable(true);
+            actText->setData(QVariant(HTMLTextController::StateTextStyleChanged));
+
+            addSeparator();
+        }
         actReset = addAction(tr("Reset"));
         actReset->setData(QVariant(HTMLTextController::StateNone));
     };

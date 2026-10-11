@@ -42,6 +42,13 @@
     </widget>
    </item>
    <item>
+    <widget class="QCheckBox" name="ck_sendHtmlsMessageFormatting">
+     <property name="text">
+      <string>Send messages in deprecated XHTML-IM formatting (XEP-0071)</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QCheckBox" name="ck_showCounter">
      <property name="text">
       <string>Show character counter</string>

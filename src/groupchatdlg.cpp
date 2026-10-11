@@ -1492,9 +1492,11 @@ void GCMainDlg::mle_returnPressed()
     ui_.mle->chatEdit()->setLastMessageId(id);
     ui_.mle->chatEdit()->resetCorrection();
 
-    HTMLElement html = d->mle()->toHTMLElement();
-    if (!html.body().isNull())
-        m.setHTML(html);
+    if (PsiOptions::instance()->getOption("options.html.chat.send", true).toBool()) {
+        HTMLElement html = d->mle()->toHTMLElement();
+        if (!html.body().isNull())
+            m.setHTML(html);
+    }
 
     m.setTimeStamp(QDateTime::currentDateTime());
     d->mle()->appendMessageHistory(m.body());
