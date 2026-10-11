@@ -20,14 +20,24 @@
 
 #include "wbwidget.h"
 
-#include <QRegularExpression>
-#include <QTextStream>
-
-#include "wbnewimage.h"
 #include "wbnewpath.h"
+#include "wbnewshape.h"
 
 #include <QApplication>
+#include <QBuffer>
+#include <QClipboard>
+#include <QFile>
+#include <QImageReader>
+#include <QInputDialog>
+#include <QMimeData>
 #include <QMouseEvent>
+#include <QNativeGestureEvent>
+#include <QScrollBar>
+#include <QtMath>
+
+#include <cmath>
+#include <QRegularExpression>
+#include <QTextStream>
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
 #include <QRandomGenerator>
 #endif
@@ -35,8 +45,6 @@
 WbWidget::WbWidget(XMPP::Jingle::SXE::Document *document, QWidget *parent) : QGraphicsView(parent)
 {
     newWbItem_   = nullptr;
-    adding_      = nullptr;
-    addVertex_   = false;
     strokeColor_ = Qt::black;
     fillColor_   = Qt::transparent;
     strokeWidth_ = 1;
@@ -46,11 +54,9 @@ WbWidget::WbWidget(XMPP::Jingle::SXE::Document *document, QWidget *parent) : QGr
     setRenderHint(QPainter::Antialiasing);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    // Make the scroll bars always stay on because otherwise the resize event can cause
-    // an infinite loop as the effective size of the widget changes when scroll bars are
-    // added/removed
-    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
-    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    // The whole canvas is always fitted into the view, so there is nothing to scroll.
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     // create the scene
     scene_ = new WbScene(document_, this);
@@ -59,6 +65,15 @@ WbWidget::WbWidget(XMPP::Jingle::SXE::Document *document, QWidget *parent) : QGr
     setTransformationAnchor(AnchorUnderMouse);
     setResizeAnchor(AnchorViewCenter);
     setScene(scene_);
+    // All interaction is interpreted here; items don't handle mouse events themselves.
+    setInteractive(false);
+    setDragMode(QGraphicsView::NoDrag);
+    setFocusPolicy(Qt::StrongFocus);
+    setAcceptDrops(true);
+    // Context menus are opened on a right click without dragging (a right drag rotates).
+    setContextMenuPolicy(Qt::PreventContextMenu);
+    viewport()->setContextMenuPolicy(Qt::PreventContextMenu);
+    rubberBand_ = new QRubberBand(QRubberBand::Rectangle, viewport());
 
     // render the initial document
     rerender();
@@ -112,38 +127,47 @@ WbWidget::Mode WbWidget::mode() { return mode_; }
 void WbWidget::setMode(Mode mode)
 {
     mode_ = mode;
-
-    if (mode_ < Mode::DrawPath) {
-        if (newWbItem_) {
-            delete newWbItem_;
-            newWbItem_ = nullptr;
-        }
+    if (mode_ < Mode::DrawPath && newWbItem_) {
+        delete newWbItem_;
+        newWbItem_ = nullptr;
     }
+    updateCursor();
+}
 
-    if (mode_ >= Mode::Erase) {
-        setDragMode(QGraphicsView::NoDrag);
-        setInteractive(false);
-        setCursor(Qt::CrossCursor);
-    } else {
-        setInteractive(true);
+void WbWidget::setEditable(bool editable)
+{
+    editable_ = editable;
+    if (!editable_ && newWbItem_) {
+        delete newWbItem_;
+        newWbItem_ = nullptr;
     }
+    updateCursor();
+}
 
-    if (mode_ == Mode::Select) {
-        setDragMode(QGraphicsView::RubberBandDrag);
-        setCursor(Qt::ArrowCursor);
-    } else if (mode_ == Mode::Translate) {
-        setDragMode(QGraphicsView::RubberBandDrag);
-        setCursor(Qt::SizeAllCursor);
-    } else if (mode_ == Mode::Rotate) {
-        setDragMode(QGraphicsView::RubberBandDrag);
-        unsetCursor();
-        // TODO: load cursor from image
-    } else if (mode_ == Mode::Scale) {
-        setDragMode(QGraphicsView::RubberBandDrag);
-        setCursor(Qt::SizeBDiagCursor);
-    } else if (mode_ == Mode::Scroll) {
-        setDragMode(QGraphicsView::ScrollHandDrag);
-    }
+void WbWidget::fitToView()
+{
+    fitToView_          = true;
+    const QRectF canvas = scene_->sceneRect();
+    if (canvas.isEmpty() || viewport()->width() <= 0 || viewport()->height() <= 0)
+        return;
+    // Unlike fitInView() no margin is added: the background shows only where the aspect ratios differ.
+    const qreal scale = qMin(viewport()->width() / canvas.width(), viewport()->height() / canvas.height());
+    setTransform(QTransform::fromScale(scale, scale));
+    centerOn(canvas.center());
+}
+
+void WbWidget::drawBackground(QPainter *painter, const QRectF &rect)
+{
+    painter->fillRect(rect, palette().color(QPalette::Mid));
+    const QRectF canvas = scene_->sceneRect();
+    painter->fillRect(canvas.intersected(rect), Qt::white);
+    painter->save();
+    QPen border(palette().color(QPalette::Dark));
+    border.setCosmetic(true); // one device pixel at any zoom
+    painter->setPen(border);
+    painter->setBrush(Qt::NoBrush);
+    painter->drawRect(canvas);
+    painter->restore();
 }
 
 void WbWidget::setSize(const QSize &size)
@@ -179,6 +203,8 @@ void WbWidget::checkForViewBoxChange(const QDomNode &node)
         QRectF box = parseSvgViewBox(node.nodeValue());
         if (box.width() > 0 && box.height() > 0) {
             scene_->setSceneRect(box);
+            if (fitToView_)
+                fitToView();
         }
     }
 }
@@ -210,133 +236,239 @@ QSize WbWidget::sizeHint() const
 
 void WbWidget::resizeEvent(QResizeEvent *event)
 {
-    // Never show areas outside the sceneRect
-    // Doesn't consider rotated views.
-    QTransform t;
-    qreal      sx = event->size().width() / scene_->sceneRect().width();
-    qreal      sy = event->size().height() / scene_->sceneRect().height();
-
-    // Never shrink the view. Only enlarge if necessary.
-    if (sx > 1 || sy > 1) {
-        if (sx > sy)
-            t.scale(sx, sx);
-        else
-            t.scale(sy, sy);
-    }
-
-    setTransform(t);
     QGraphicsView::resizeEvent(event);
+    if (fitToView_)
+        fitToView();
 }
+
+namespace {
+QPoint eventPos(const QMouseEvent *event)
+{
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    return event->pos();
+#else
+    return event->position().toPoint();
+#endif
+}
+
+QPoint eventGlobalPos(const QMouseEvent *event)
+{
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    return event->globalPos();
+#else
+    return event->globalPosition().toPoint();
+#endif
+}
+
+qreal angleOf(const QPointF &vector) { return qRadiansToDegrees(qAtan2(vector.y(), vector.x())); }
+} // namespace
 
 void WbWidget::mousePressEvent(QMouseEvent *event)
 {
-    // ignore non-leftclicks when not in Select mode
-    if (event->button() != Qt::LeftButton && mode_ != Mode::Select)
-        return;
+    if (gesture_ != Gesture::None)
+        return; // one gesture at a time
+    setFocus(Qt::MouseFocusReason);
 
-    // delete any temporary item being drawn
-    if (newWbItem_) {
-        delete newWbItem_;
-        newWbItem_ = nullptr;
+    const auto pos  = eventPos(event);
+    const auto mods = event->modifiers();
+    pressPos_       = pos;
+    lastViewPos_    = pos;
+    lastScenePos_   = mapToScene(pos);
+    gestureButton_  = event->button();
+    pressItem_      = nullptr;
+
+    // Panning works in every mode and also on a read-only board.
+    if (event->button() == Qt::MiddleButton || (event->button() == Qt::LeftButton && spaceHeld_)) {
+        gesture_ = Gesture::Pan;
+        viewport()->setCursor(Qt::ClosedHandCursor);
+        return;
     }
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    QPointF startPoint = mapToScene(mapFromGlobal(event->globalPos()));
-#else
-    QPointF startPoint = mapToScene(mapFromGlobal(event->globalPosition().toPoint()));
+
+    bool contextClick = event->button() == Qt::RightButton;
+#ifdef Q_OS_MACOS
+    // Control-click is the right click of one-button trackpads. Qt reports Control as Meta on macOS.
+    contextClick = contextClick || (event->button() == Qt::LeftButton && (mods & Qt::MetaModifier));
 #endif
-    if (mode_ == Mode::DrawPath) {
-        // // Create the element with starting position
-        // QPointF sp = mapToScene(mapFromGlobal(event->globalPos()));
-        // qDebug() << QString("1: (%1, %2)").arg(sp.x()).arg(sp.y());
-        newWbItem_ = new WbNewPath(scene_, startPoint, strokeWidth_, strokeColor_, fillColor_);
+    if (contextClick) {
+        gesture_   = Gesture::ContextPending;
+        pressItem_ = wbItemAt(pos);
         return;
+    }
+    if (event->button() != Qt::LeftButton || !editable_) {
+        gestureButton_ = Qt::NoButton;
+        return;
+    }
+
+    // The selection modifier is Command on macOS: Qt maps it to ControlModifier there.
+    if (mode_ == Mode::Select || (mods & Qt::ControlModifier)) {
+        WbItem *item = wbItemAt(pos);
+        pressItem_   = item;
+        if (!item) {
+            if (!(mods & Qt::ShiftModifier))
+                scene_->clearSelection();
+            gesture_ = Gesture::RubberBand;
+            rubberBand_->setGeometry(QRect(pos, QSize()));
+            rubberBand_->show();
+        } else if (mods & Qt::ShiftModifier) {
+            gesture_ = Gesture::TogglePending; // click toggles, drag on the selection scales
+        } else {
+            if (!item->isSelected()) {
+                scene_->clearSelection();
+                item->setSelected(true);
+            }
+            gesture_ = Gesture::Move;
+        }
+        return;
+    }
+
+    if (mode_ == Mode::Erase) {
+        gesture_ = Gesture::Erase;
+        eraseAt(pos);
+    } else if (mode_ == Mode::DrawPath || mode_ == Mode::DrawLine) {
+        delete newWbItem_;
+        // Shift draws a straight line with the pen.
+        newWbItem_ = new WbNewPath(scene_, lastScenePos_, strokeWidth_, strokeColor_, fillColor_,
+                                   mode_ == Mode::DrawLine || (mods & Qt::ShiftModifier));
+        gesture_   = Gesture::Draw;
+    } else if (mode_ == Mode::DrawRectangle || mode_ == Mode::DrawEllipse || mode_ == Mode::DrawRhombus) {
+        delete newWbItem_;
+        const auto shape = mode_ == Mode::DrawRectangle ? WbNewShape::Shape::Rectangle
+            : mode_ == Mode::DrawEllipse                ? WbNewShape::Shape::Ellipse
+                                                        : WbNewShape::Shape::Rhombus;
+        auto       item  = new WbNewShape(scene_, lastScenePos_, shape, strokeWidth_, strokeColor_, fillColor_);
+        item->setConstrained(mods & Qt::ShiftModifier); // square, circle
+        newWbItem_ = item;
+        gesture_   = Gesture::Draw;
     } else if (mode_ == Mode::DrawText) {
-
-    } else if (mode_ == Mode::DrawRectangle) {
-
-    } else if (mode_ == Mode::DrawEllipse) {
-
-    } else if (mode_ == Mode::DrawCircle) {
-
-    } else if (mode_ == Mode::DrawLine) {
-
+        gestureButton_ = Qt::NoButton;
+        insertText(lastScenePos_);
     } else if (mode_ == Mode::DrawImage) {
-        QString filename = QFileDialog::getOpenFileName(this, "Choose an image", QString(), "Images (*.png *.jpg)");
-        if (!filename.isEmpty()) {
-            newWbItem_ = new WbNewImage(scene_, startPoint, filename);
+        gestureButton_       = Qt::NoButton;
+        const auto scenePos  = lastScenePos_;
+        const auto fileName  = QFileDialog::getOpenFileName(this, tr("Choose an image"), QString(),
+                                                            tr("Images (*.png *.jpg *.jpeg *.gif *.bmp *.webp)"));
+        if (!fileName.isEmpty())
+            insertImageFile(fileName, scenePos);
+    }
+}
+
+void WbWidget::mouseMoveEvent(QMouseEvent *event)
+{
+    const auto pos      = eventPos(event);
+    const auto scenePos = mapToScene(pos);
+    const bool dragged
+        = (pos - pressPos_).manhattanLength() >= QApplication::startDragDistance();
+
+    switch (gesture_) {
+    case Gesture::None:
+        return;
+    case Gesture::Pan: {
+        const auto delta = pos - lastViewPos_;
+        horizontalScrollBar()->setValue(horizontalScrollBar()->value() - delta.x());
+        verticalScrollBar()->setValue(verticalScrollBar()->value() - delta.y());
+        break;
+    }
+    case Gesture::ContextPending:
+        // A right drag over the selection rotates it.
+        if (!dragged || !editable_ || selectedWbItems().isEmpty())
+            return;
+        gesture_ = Gesture::Rotate;
+        pivot_   = scene_->selectionCenter();
+        Q_FALLTHROUGH();
+    case Gesture::Rotate:
+        if ((lastScenePos_ - pivot_).manhattanLength() > 1 && (scenePos - pivot_).manhattanLength() > 1)
+            rotateSelection(angleOf(scenePos - pivot_) - angleOf(lastScenePos_ - pivot_), pivot_);
+        break;
+    case Gesture::TogglePending:
+        if (!dragged || !pressItem_ || !pressItem_->isSelected())
+            return;
+        gesture_ = Gesture::Scale;
+        pivot_   = scene_->selectionCenter();
+        Q_FALLTHROUGH();
+    case Gesture::Scale: {
+        const auto before = QLineF(pivot_, lastScenePos_).length();
+        const auto after  = QLineF(pivot_, scenePos).length();
+        if (before > 1 && after > 1)
+            scaleSelection(after / before, pivot_);
+        break;
+    }
+    case Gesture::Move:
+        translateSelection(lastScenePos_, scenePos);
+        break;
+    case Gesture::RubberBand:
+        rubberBand_->setGeometry(QRect(pressPos_, pos).normalized());
+        break;
+    case Gesture::Draw:
+        if (auto shape = dynamic_cast<WbNewShape *>(newWbItem_))
+            shape->setConstrained(event->modifiers() & Qt::ShiftModifier);
+        if (newWbItem_)
+            newWbItem_->parseCursorMove(scenePos);
+        break;
+    case Gesture::Erase:
+        eraseAt(pos);
+        break;
+    }
+    lastViewPos_  = pos;
+    lastScenePos_ = scenePos;
+}
+
+void WbWidget::mouseReleaseEvent(QMouseEvent *event)
+{
+    if (gesture_ == Gesture::None || event->button() != gestureButton_)
+        return;
+    const auto gesture = gesture_;
+    gesture_           = Gesture::None;
+    gestureButton_     = Qt::NoButton;
+
+    switch (gesture) {
+    case Gesture::ContextPending:
+        if (pressItem_ && editable_) {
+            if (!pressItem_->isSelected()) {
+                scene_->clearSelection();
+                pressItem_->setSelected(true);
+            }
+            pressItem_->showContextMenu(eventGlobalPos(event));
+        } else {
+            emit canvasContextMenuRequested(eventGlobalPos(event));
+        }
+        break;
+    case Gesture::TogglePending:
+        if (pressItem_)
+            pressItem_->setSelected(!pressItem_->isSelected());
+        break;
+    case Gesture::Move:
+    case Gesture::Scale:
+    case Gesture::Rotate:
+        commitTransformations();
+        break;
+    case Gesture::RubberBand: {
+        QPainterPath area;
+        area.addPolygon(mapToScene(rubberBand_->geometry()));
+        rubberBand_->hide();
+        for (WbItem *item : std::as_const(items_)) {
+            if (area.intersects(item->sceneBoundingRect()))
+                item->setSelected(true);
+        }
+        break;
+    }
+    case Gesture::Draw:
+        if (newWbItem_) {
             QDomDocument tempDoc;
             document_->insertNodeAfter(newWbItem_->serializeToSvg(&tempDoc), document_->document().documentElement());
             document_->flush();
             delete newWbItem_;
             newWbItem_ = nullptr;
         }
-    }
-
-    QGraphicsView::mousePressEvent(event);
-}
-
-void WbWidget::mouseMoveEvent(QMouseEvent *event)
-{
-    if (mode_ < Mode::Erase) {
-        QGraphicsView::mouseMoveEvent(event);
-        return;
-    }
-
-    if (QApplication::mouseButtons() != Qt::MouseButtons(Qt::LeftButton)) {
-        if (newWbItem_) {
-            delete newWbItem_;
-            newWbItem_ = nullptr;
-        }
-        return;
-    }
-
-    if (mode_ == Mode::Erase) {
-        if (event->buttons() != Qt::MouseButtons(Qt::LeftButton))
-            return;
-        // Erase all items that appear in a 2*strokeWidth_ square with center at the event position
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-        QPointF p = mapToScene(mapFromGlobal(event->globalPos()));
-#else
-        QPointF p = mapToScene(mapFromGlobal(event->globalPosition().toPoint()));
-#endif
-        QGraphicsRectItem *eraseRect
-            = scene_->addRect(QRectF(p.x() - strokeWidth_, p.y() - strokeWidth_, 2 * strokeWidth_, 2 * strokeWidth_));
-        const auto &gItems = eraseRect->collidingItems();
-        for (QGraphicsItem *item : gItems) {
-            WbItem *wbitem = dynamic_cast<WbItem *>(item);
-            if (wbitem)
-                document_->removeNode(wbitem->node());
-        }
-        delete eraseRect;
-        eraseRect = nullptr;
-
-        event->ignore();
-        return;
-    } else if (mode_ >= Mode::DrawPath && newWbItem_) {
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-        newWbItem_->parseCursorMove(mapToScene(mapFromGlobal(event->globalPos())));
-#else
-        newWbItem_->parseCursorMove(mapToScene(mapFromGlobal(event->globalPosition().toPoint())));
-#endif
-    }
-}
-
-void WbWidget::mouseReleaseEvent(QMouseEvent *event)
-{
-
-    if (event->button() != Qt::LeftButton && mode_ >= Mode::Erase)
-        return;
-
-    if (newWbItem_ && mode_ >= Mode::DrawPath && mode_ != Mode::DrawImage) {
-        QDomDocument tempDoc;
-        document_->insertNodeAfter(newWbItem_->serializeToSvg(&tempDoc), document_->document().documentElement());
+        break;
+    case Gesture::Erase:
         document_->flush();
-        delete newWbItem_;
-        newWbItem_ = nullptr;
-        return;
+        break;
+    case Gesture::Pan:
+    case Gesture::None:
+        break;
     }
-
-    QGraphicsView::mouseReleaseEvent(event);
+    pressItem_ = nullptr;
+    updateCursor();
 }
 
 WbItem *WbWidget::wbItem(const QDomNode &node)
@@ -463,4 +595,581 @@ void WbWidget::rerender()
         // qDebug() << QString("Rerendering %1").arg((unsigned int) wbitem).toLatin1();
         wbitem->resetPos();
     }
+}
+
+namespace {
+bool isShortcut(const QKeyEvent *event, const char *sequence)
+{
+    const auto modifiers = event->modifiers() & ~Qt::KeypadModifier;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    const QKeySequence pressed(QKeyCombination(modifiers, Qt::Key(event->key())));
+#else
+    const QKeySequence pressed(int(modifiers) | event->key());
+#endif
+    return pressed == QKeySequence(QString::fromLatin1(sequence));
+}
+
+QPoint dropPos(const QDropEvent *event)
+{
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    return event->pos();
+#else
+    return event->position().toPoint();
+#endif
+}
+
+bool hasImagePayload(const QMimeData *mime)
+{
+    if (mime->hasImage())
+        return true;
+    const auto urls = mime->urls();
+    return std::any_of(urls.cbegin(), urls.cend(), [](const QUrl &url) { return url.isLocalFile(); });
+}
+
+void renewIds(QDomElement element)
+{
+    if (element.hasAttribute(QStringLiteral("id")))
+        element.setAttribute(QStringLiteral("id"), QLatin1String("e") + XMPP::Jingle::SXE::Document::generateUUID());
+    for (auto child = element.firstChildElement(); !child.isNull(); child = child.nextSiblingElement())
+        renewIds(child);
+}
+} // namespace
+
+void WbWidget::wheelEvent(QWheelEvent *event)
+{
+    const auto delta = event->angleDelta();
+    // Some platforms turn Alt+wheel into horizontal scrolling.
+    const int steps = delta.y() != 0 ? delta.y() : delta.x();
+    if (event->modifiers() & Qt::ControlModifier) {
+        if (steps)
+            zoomBy(qPow(1.0015, steps));
+        event->accept();
+        return;
+    }
+    if ((event->modifiers() & Qt::AltModifier) && editable_ && !selectedWbItems().isEmpty()) {
+        if (steps) {
+            rotateSelection(steps / 120.0 * 5, scene_->selectionCenter());
+            commitTransformations();
+        }
+        event->accept();
+        return;
+    }
+    if (fitToView_) {
+        event->accept(); // nothing to scroll while the whole canvas is visible
+        return;
+    }
+    QGraphicsView::wheelEvent(event);
+}
+
+bool WbWidget::viewportEvent(QEvent *event)
+{
+    if (event->type() == QEvent::NativeGesture) {
+        auto gesture = static_cast<QNativeGestureEvent *>(event);
+        if (gesture->gestureType() == Qt::ZoomNativeGesture) {
+            zoomBy(1 + gesture->value());
+            return true;
+        }
+        if (gesture->gestureType() == Qt::SmartZoomNativeGesture) {
+            if (fitToView_)
+                zoomBy(2);
+            else
+                fitToView();
+            return true;
+        }
+    }
+    return QGraphicsView::viewportEvent(event);
+}
+
+void WbWidget::keyPressEvent(QKeyEvent *event)
+{
+    const int  key       = event->key();
+    const auto modifiers = event->modifiers() & ~Qt::KeypadModifier;
+    const bool plain     = !(modifiers & (Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier));
+
+    if (key == Qt::Key_Space && modifiers == Qt::NoModifier) {
+        if (!event->isAutoRepeat()) {
+            spaceHeld_ = true;
+            updateCursor();
+        }
+        return;
+    }
+    if (event->matches(QKeySequence::ZoomIn) || isShortcut(event, "Ctrl+=")) {
+        zoomBy(1.25, false);
+        return;
+    }
+    if (event->matches(QKeySequence::ZoomOut)) {
+        zoomBy(0.8, false);
+        return;
+    }
+    if (isShortcut(event, "Ctrl+0")) {
+        fitToView();
+        return;
+    }
+    if (key == Qt::Key_Escape) {
+        if (gesture_ == Gesture::Draw || gesture_ == Gesture::RubberBand) {
+            delete newWbItem_;
+            newWbItem_ = nullptr;
+            rubberBand_->hide();
+            gesture_ = Gesture::None;
+        } else if (!scene_->selectedItems().isEmpty()) {
+            scene_->clearSelection();
+        } else {
+            event->ignore(); // let the dialog handle it
+        }
+        return;
+    }
+    if (!editable_) {
+        QGraphicsView::keyPressEvent(event);
+        return;
+    }
+
+    if (event->matches(QKeySequence::SelectAll)) {
+        selectAll();
+        return;
+    }
+    if (event->matches(QKeySequence::Delete) || key == Qt::Key_Backspace) {
+        deleteSelection();
+        return;
+    }
+    if (event->matches(QKeySequence::Paste)) {
+        const auto image = QApplication::clipboard()->image();
+        if (!image.isNull())
+            insertImage(image, mapToScene(viewport()->rect().center()));
+        return;
+    }
+    if (isShortcut(event, "Ctrl+D")) {
+        duplicateSelection();
+        return;
+    }
+    if (isShortcut(event, "Ctrl+G")) {
+        scene_->group();
+        return;
+    }
+    if (isShortcut(event, "Ctrl+Shift+G")) {
+        scene_->ungroup();
+        return;
+    }
+
+    if (plain && !selectedWbItems().isEmpty()) {
+        const qreal step = (modifiers & Qt::ShiftModifier) ? 10 : 1;
+        QPointF     nudge;
+        switch (key) {
+        case Qt::Key_Left:
+            nudge = { -step, 0 };
+            break;
+        case Qt::Key_Right:
+            nudge = { step, 0 };
+            break;
+        case Qt::Key_Up:
+            nudge = { 0, -step };
+            break;
+        case Qt::Key_Down:
+            nudge = { 0, step };
+            break;
+        case Qt::Key_PageUp:
+            scene_->bringForward();
+            return;
+        case Qt::Key_PageDown:
+            scene_->sendBackwards();
+            return;
+        case Qt::Key_Home:
+            scene_->bringToFront();
+            return;
+        case Qt::Key_End:
+            scene_->sendToBack();
+            return;
+        case Qt::Key_Comma:
+        case Qt::Key_Period:
+        case Qt::Key_Less:
+        case Qt::Key_Greater: {
+            // , and . rotate by 15 degrees, < and > (Shift) by 1 degree.
+            const bool  fine  = key == Qt::Key_Less || key == Qt::Key_Greater || (modifiers & Qt::ShiftModifier);
+            const bool  back  = key == Qt::Key_Comma || key == Qt::Key_Less;
+            const qreal angle = fine ? 1 : 15;
+            rotateSelection(back ? -angle : angle, scene_->selectionCenter());
+            commitTransformations();
+            return;
+        }
+        case Qt::Key_Plus:
+        case Qt::Key_Equal:
+            scaleSelection(1.1, scene_->selectionCenter());
+            commitTransformations();
+            return;
+        case Qt::Key_Minus:
+            scaleSelection(1 / 1.1, scene_->selectionCenter());
+            commitTransformations();
+            return;
+        default:
+            break;
+        }
+        if (!nudge.isNull()) {
+            translateSelection(QPointF(), nudge);
+            commitTransformations();
+            return;
+        }
+    }
+
+    if (plain) {
+        switch (key) {
+        case Qt::Key_P:
+            setModeFromKeyboard(Mode::DrawPath);
+            return;
+        case Qt::Key_E:
+            setModeFromKeyboard(Mode::Erase);
+            return;
+        case Qt::Key_V:
+            setModeFromKeyboard(Mode::Select);
+            return;
+        case Qt::Key_I:
+            setModeFromKeyboard(Mode::DrawImage);
+            return;
+        case Qt::Key_L:
+            setModeFromKeyboard(Mode::DrawLine);
+            return;
+        case Qt::Key_R:
+            setModeFromKeyboard(Mode::DrawRectangle);
+            return;
+        case Qt::Key_O:
+            setModeFromKeyboard(Mode::DrawEllipse);
+            return;
+        case Qt::Key_D:
+            setModeFromKeyboard(Mode::DrawRhombus);
+            return;
+        case Qt::Key_T:
+            setModeFromKeyboard(Mode::DrawText);
+            return;
+        case Qt::Key_BracketLeft:
+        case Qt::Key_BracketRight:
+            strokeWidth_ = qBound(1, strokeWidth_ + (key == Qt::Key_BracketRight ? 1 : -1), 64);
+            emit strokeWidthChanged(strokeWidth_);
+            return;
+        default:
+            break;
+        }
+    }
+    QGraphicsView::keyPressEvent(event);
+}
+
+void WbWidget::keyReleaseEvent(QKeyEvent *event)
+{
+    if (event->key() == Qt::Key_Space && !event->isAutoRepeat()) {
+        spaceHeld_ = false;
+        updateCursor();
+        return;
+    }
+    QGraphicsView::keyReleaseEvent(event);
+}
+
+void WbWidget::focusOutEvent(QFocusEvent *event)
+{
+    spaceHeld_ = false;
+    updateCursor();
+    QGraphicsView::focusOutEvent(event);
+}
+
+void WbWidget::dragEnterEvent(QDragEnterEvent *event)
+{
+    if (editable_ && hasImagePayload(event->mimeData()))
+        event->acceptProposedAction();
+    else
+        event->ignore();
+}
+
+void WbWidget::dragMoveEvent(QDragMoveEvent *event)
+{
+    if (editable_ && hasImagePayload(event->mimeData()))
+        event->acceptProposedAction();
+    else
+        event->ignore();
+}
+
+void WbWidget::dropEvent(QDropEvent *event)
+{
+    if (!editable_)
+        return;
+    const auto mime = event->mimeData();
+    QPointF    pos  = mapToScene(dropPos(event));
+    if (mime->hasImage()) {
+        insertImage(qvariant_cast<QImage>(mime->imageData()), pos);
+    } else {
+        const auto urls = mime->urls();
+        for (const auto &url : urls) {
+            if (!url.isLocalFile())
+                continue;
+            insertImageFile(url.toLocalFile(), pos);
+            pos += QPointF(20, 20);
+        }
+    }
+    event->acceptProposedAction();
+}
+
+WbItem *WbWidget::wbItemAt(const QPoint &viewPos) const
+{
+    const auto under = items(viewPos);
+    for (QGraphicsItem *item : under) {
+        if (auto wbitem = dynamic_cast<WbItem *>(item))
+            return wbitem;
+    }
+    return nullptr;
+}
+
+QList<WbItem *> WbWidget::selectedWbItems() const
+{
+    QList<WbItem *> result;
+    const auto      selected = scene_->selectedItems();
+    for (QGraphicsItem *item : selected) {
+        if (auto wbitem = dynamic_cast<WbItem *>(item))
+            result.append(wbitem);
+    }
+    return result;
+}
+
+void WbWidget::translateSelection(const QPointF &from, const QPointF &to)
+{
+    const auto selected = selectedWbItems();
+    for (WbItem *item : selected) {
+        const QPointF d = item->mapFromScene(to) - item->mapFromScene(from);
+        item->setTransform(QTransform::fromTranslate(d.x(), d.y()), true);
+        scene_->queueTransformationRegeneration(item);
+    }
+}
+
+void WbWidget::rotateSelection(qreal degrees, const QPointF &pivot)
+{
+    QTransform delta;
+    delta.rotate(degrees);
+    const auto selected = selectedWbItems();
+    for (WbItem *item : selected) {
+        const QPointF itemPivot = item->mapFromScene(pivot);
+        QTransform    translation;
+        translation.translate(-itemPivot.x(), -itemPivot.y());
+        item->setTransform(translation * delta * translation.inverted(), true);
+        scene_->queueTransformationRegeneration(item);
+    }
+}
+
+void WbWidget::scaleSelection(qreal factor, const QPointF &pivot)
+{
+    QTransform delta;
+    delta.scale(factor, factor);
+    const auto selected = selectedWbItems();
+    for (WbItem *item : selected) {
+        const QPointF itemPivot = item->mapFromScene(pivot);
+        QTransform    translation;
+        translation.translate(-itemPivot.x(), -itemPivot.y());
+        item->setTransform(translation * delta * translation.inverted(), true);
+        scene_->queueTransformationRegeneration(item);
+    }
+}
+
+void WbWidget::commitTransformations() { scene_->regenerateTransformations(); }
+
+void WbWidget::deleteSelection()
+{
+    QList<QDomNode> nodes;
+    const auto      selected = selectedWbItems();
+    for (WbItem *item : selected)
+        nodes.append(item->node());
+    for (const auto &node : std::as_const(nodes))
+        document_->removeNode(node);
+    document_->flush();
+}
+
+void WbWidget::duplicateSelection()
+{
+    QList<QDomElement> elements;
+    const auto         selected = selectedWbItems();
+    for (WbItem *item : selected)
+        elements.append(item->node().toElement());
+    const auto root = document_->document().documentElement();
+    for (const auto &element : std::as_const(elements)) {
+        auto clone = element.cloneNode(true).toElement();
+        renewIds(clone);
+        // Offset the copy in canvas coordinates, after its own transformation.
+        const auto transform = WbItem::parseSvgTransform(clone.attribute(QStringLiteral("transform")))
+            * QTransform::fromTranslate(10, 10);
+        clone.setAttribute(QStringLiteral("transform"), WbItem::toSvgTransform(transform));
+        document_->insertNodeAfter(clone, root, element);
+    }
+    scene_->clearSelection();
+    document_->flush();
+}
+
+void WbWidget::selectAll()
+{
+    for (WbItem *item : std::as_const(items_))
+        item->setSelected(true);
+}
+
+void WbWidget::eraseAt(const QPoint &viewPos)
+{
+    const QPointF p = mapToScene(viewPos);
+    // Erase within the stroke width, but at least a few screen pixels.
+    const qreal r = qMax<qreal>(strokeWidth_, 4 / qMax<qreal>(transform().m11(), 0.01));
+    // Collect the nodes first: removing a node deletes its item.
+    QList<QDomNode> nodes;
+    const auto      under = scene_->items(QRectF(p.x() - r, p.y() - r, 2 * r, 2 * r));
+    for (QGraphicsItem *item : under) {
+        if (auto wbitem = dynamic_cast<WbItem *>(item))
+            nodes.append(wbitem->node());
+    }
+    for (const auto &node : std::as_const(nodes))
+        document_->removeNode(node);
+}
+
+void WbWidget::zoomBy(qreal factor, bool underMouse)
+{
+    const QRectF canvas = scene_->sceneRect();
+    if (canvas.isEmpty() || factor <= 0)
+        return;
+    const qreal fitScale = qMin(viewport()->width() / canvas.width(), viewport()->height() / canvas.height());
+    const qreal current  = transform().m11();
+    const qreal target   = qMin(current * factor, fitScale * 32);
+    if (target <= fitScale * 1.001) {
+        fitToView();
+        return;
+    }
+
+    QPoint anchor = viewport()->rect().center();
+    if (underMouse) {
+        const auto cursor = viewport()->mapFromGlobal(QCursor::pos());
+        if (viewport()->rect().contains(cursor))
+            anchor = cursor;
+    }
+    const QPointF anchorScene = mapToScene(anchor);
+    fitToView_                = false;
+    setTransformationAnchor(NoAnchor);
+    scale(target / current, target / current);
+    setTransformationAnchor(AnchorUnderMouse);
+    // Keep the canvas point under the anchor where it was.
+    const QPoint shift = mapFromScene(anchorScene) - anchor;
+    horizontalScrollBar()->setValue(horizontalScrollBar()->value() + shift.x());
+    verticalScrollBar()->setValue(verticalScrollBar()->value() + shift.y());
+}
+
+void WbWidget::insertImageFile(const QString &fileName, const QPointF &scenePos)
+{
+    QImageReader reader(fileName);
+    reader.setAutoTransform(true);
+    const QImage image = reader.read();
+    if (image.isNull()) {
+        qDebug("Whiteboard: can't read image %s: %s", qPrintable(fileName), qPrintable(reader.errorString()));
+        return;
+    }
+    insertImage(image, scenePos);
+}
+
+void WbWidget::insertImage(const QImage &source, const QPointF &scenePos)
+{
+    if (source.isNull())
+        return;
+    // Images travel inline as data: URIs; keep them reasonably small.
+    constexpr int maxSide = 1600;
+    QImage        image   = source;
+    if (image.width() > maxSide || image.height() > maxSide)
+        image = image.scaled(maxSide, maxSide, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+    QByteArray data;
+    QBuffer    buffer(&data);
+    buffer.open(QIODevice::WriteOnly);
+    QString mime;
+    if (image.hasAlphaChannel()) {
+        image.save(&buffer, "PNG");
+        mime = QStringLiteral("image/png");
+    } else {
+        image.save(&buffer, "JPEG", 85);
+        mime = QStringLiteral("image/jpeg");
+    }
+
+    // Fit large images into the canvas.
+    QSizeF       size   = image.size();
+    const QRectF canvas = scene_->sceneRect();
+    if (!canvas.isEmpty() && (size.width() > canvas.width() * 0.8 || size.height() > canvas.height() * 0.8))
+        size.scale(canvas.size() * 0.8, Qt::KeepAspectRatio);
+
+    QDomDocument temp;
+    auto         element = temp.createElement(QStringLiteral("image"));
+    element.setAttribute(QStringLiteral("id"), QLatin1String("e") + XMPP::Jingle::SXE::Document::generateUUID());
+    element.setAttribute(QStringLiteral("x"), scenePos.x() - size.width() / 2);
+    element.setAttribute(QStringLiteral("y"), scenePos.y() - size.height() / 2);
+    element.setAttribute(QStringLiteral("width"), size.width());
+    element.setAttribute(QStringLiteral("height"), size.height());
+    element.setAttributeNS(QStringLiteral("http://www.w3.org/1999/xlink"), QStringLiteral("xlink:href"),
+                           QStringLiteral("data:%1;base64,%2").arg(mime, QString::fromLatin1(data.toBase64())));
+    document_->insertNodeAfter(element, document_->document().documentElement());
+    document_->flush();
+}
+
+namespace {
+QString svgPathData(const QPainterPath &path)
+{
+    auto    number = [](qreal value) { return QString::number(std::round(value * 100) / 100); };
+    QString data;
+    for (int i = 0; i < path.elementCount(); ++i) {
+        const auto e = path.elementAt(i);
+        switch (e.type) {
+        case QPainterPath::MoveToElement:
+            data += QStringLiteral("M%1 %2").arg(number(e.x), number(e.y));
+            break;
+        case QPainterPath::LineToElement:
+            data += QStringLiteral("L%1 %2").arg(number(e.x), number(e.y));
+            break;
+        case QPainterPath::CurveToElement: {
+            const auto c2 = path.elementAt(i + 1);
+            const auto to = path.elementAt(i + 2);
+            data += QStringLiteral("C%1 %2 %3 %4 %5 %6")
+                        .arg(number(e.x), number(e.y), number(c2.x), number(c2.y), number(to.x), number(to.y));
+            i += 2;
+            break;
+        }
+        case QPainterPath::CurveToDataElement:
+            break;
+        }
+    }
+    return data;
+}
+} // namespace
+
+void WbWidget::insertText(const QPointF &scenePos)
+{
+    bool          ok   = false;
+    const QString text = QInputDialog::getMultiLineText(this, tr("Add text"), tr("Text:"), QString(), &ok);
+    if (!ok || text.trimmed().isEmpty())
+        return;
+
+    // The size follows the stroke width so [ and ] work for text too.
+    QFont font;
+    font.setPixelSize(12 + 4 * strokeWidth_);
+    const QFontMetricsF metrics(font);
+    QPainterPath        path;
+    const auto          lines = text.split(QLatin1Char('\n'));
+    for (int i = 0; i < lines.size(); ++i)
+        path.addText(scenePos + QPointF(0, metrics.ascent() + i * metrics.lineSpacing()), font, lines[i]);
+    if (path.isEmpty())
+        return;
+
+    QDomDocument temp;
+    auto         element = temp.createElement(QStringLiteral("path"));
+    element.setAttribute(QStringLiteral("id"), QLatin1String("e") + XMPP::Jingle::SXE::Document::generateUUID());
+    element.setAttribute(QStringLiteral("d"), svgPathData(path));
+    element.setAttribute(QStringLiteral("fill"), strokeColor_.name());
+    element.setAttribute(QStringLiteral("stroke"), QStringLiteral("none"));
+    document_->insertNodeAfter(element, document_->document().documentElement());
+    document_->flush();
+}
+
+void WbWidget::setModeFromKeyboard(Mode mode)
+{
+    setMode(mode);
+    emit modeChanged(mode);
+}
+
+void WbWidget::updateCursor()
+{
+    if (spaceHeld_ || gesture_ == Gesture::Pan)
+        viewport()->setCursor(gesture_ == Gesture::Pan ? Qt::ClosedHandCursor : Qt::OpenHandCursor);
+    else if (!editable_ || mode_ == Mode::Select)
+        viewport()->setCursor(Qt::ArrowCursor);
+    else
+        viewport()->setCursor(Qt::CrossCursor);
 }

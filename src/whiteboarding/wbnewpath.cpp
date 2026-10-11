@@ -26,7 +26,8 @@
 #include <QPainterPath>
 
 WbNewPath::WbNewPath(QGraphicsScene *s, QPointF startPos, int strokeWidth, const QColor &strokeColor,
-                     const QColor &fillColor) : WbNewItem(s)
+                     const QColor &fillColor, bool straightLine) :
+    WbNewItem(s), startPos_(startPos), straightLine_(straightLine)
 {
     controlPoint_ = nullptr;
 
@@ -51,6 +52,12 @@ WbNewPath::~WbNewPath()
 
 void WbNewPath::parseCursorMove(QPointF newPos)
 {
+    if (straightLine_) {
+        QPainterPath painterpath(startPos_);
+        painterpath.lineTo(newPos);
+        graphicsitem_.setPath(painterpath);
+        return;
+    }
     if (controlPoint_) {
         QPainterPath painterpath = graphicsitem_.path();
         // FIXME: the path should actually go through the "controlPoint_".

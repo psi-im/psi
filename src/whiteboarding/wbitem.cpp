@@ -77,12 +77,8 @@ WbItem::WbItem(XMPP::Jingle::SXE::Document *document, QSvgRenderer *renderer, QD
         return;
     }
 
-    // Make the item selectable and movable
+    // The widget selects and transforms items itself.
     setFlag(QGraphicsItem::ItemIsSelectable);
-    setFlag(QGraphicsItem::ItemIsMovable);
-
-    // Enable drag-n-drop
-    setAcceptDrops(true);
 
     // Don't cache the SVG
     setCachingEnabled(false);
@@ -103,110 +99,7 @@ QString WbItem::id() { return node_.toElement().attribute("id"); }
 
 QDomNode WbItem::node() { return node_; }
 
-void WbItem::contextMenuEvent(QGraphicsSceneContextMenuEvent *event)
-{
-    constructContextMenu()->exec(event->screenPos());
-}
-
-void WbItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
-{
-    event->accept();
-
-    if (isSelected()) {
-        if (widget_->mode() == WbWidget::Mode::Translate) {
-
-            // Translate each selected item
-            const auto &gItems = scene()->selectedItems();
-            for (QGraphicsItem *graphicsitem : gItems) {
-                if (!graphicsitem->parentItem() || !graphicsitem->parentItem()->isSelected()) {
-                    QPointF d = graphicsitem->mapFromScene(event->scenePos())
-                        - graphicsitem->mapFromScene(event->lastScenePos());
-                    graphicsitem->setTransform(QTransform::fromTranslate(d.x(), d.y()), true);
-                    // qDebug() QString("Translated %1 by %2 %3").arg((unsigned int)
-                    // graphicsitem).arg(d.x()).arg(d.y()).toLatin1();
-
-                    // Regenerate the SVG transformation matrix later
-                    WbItem *wbitem = dynamic_cast<WbItem *>(graphicsitem);
-                    if (wbitem)
-                        scene_->queueTransformationRegeneration(wbitem);
-                }
-            }
-
-        } else if (widget_->mode() == WbWidget::Mode::Rotate) {
-
-            // Rotate each selected item
-            // get center coordinates of selected items in scene coordinates
-            QPointF scenePivot = scene_->selectionCenter();
-            // Determine the direction relative to the center
-            // Divide the sum by two to reduce the "speed" of rotation
-            QPointF difference = event->scenePos() - event->lastScenePos();
-            //          qDebug() << QString("d: %1 %2 = %3 %4 + %5
-            //          %6").arg(difference.x()).arg(difference.y()).arg(event->scenePos().x()).arg(event->scenePos().y()).arg(event->lastScenePos().x()).arg(event->lastScenePos().y());
-            QPointF    p = event->scenePos();
-            QTransform delta;
-            if (p.x() >= scenePivot.x() && p.y() >= scenePivot.y()) {
-                delta.rotate((-difference.x() + difference.y()) / 2);
-            } else if (p.x() < scenePivot.x() && p.y() >= scenePivot.y()) {
-                delta.rotate((-difference.x() - difference.y()) / 2);
-            } else if (p.x() < scenePivot.x() && p.y() < scenePivot.y()) {
-                delta.rotate((difference.x() - difference.y()) / 2);
-            } else if (p.x() >= scenePivot.x() && p.y() < scenePivot.y()) {
-                delta.rotate((difference.x() + difference.y()) / 2);
-            }
-
-            const auto &gItems = scene()->selectedItems();
-            for (QGraphicsItem *graphicsitem : gItems) {
-                if (!graphicsitem->parentItem() || !graphicsitem->parentItem()->isSelected()) {
-                    QTransform translation;
-                    // get center coordinates of selected items in item coordinates
-                    QPointF itemPivot = graphicsitem->mapFromScene(scenePivot);
-                    // translates the the item's center to the origin of the item coordinates
-                    translation.translate(-itemPivot.x(), -itemPivot.y());
-                    // set the matrix
-                    graphicsitem->setTransform(QTransform(translation * delta * translation.inverted()), true);
-
-                    // Regenerate the SVG transformation matrix later
-                    WbItem *wbitem = dynamic_cast<WbItem *>(graphicsitem);
-                    if (wbitem)
-                        scene_->queueTransformationRegeneration(wbitem);
-                }
-            }
-
-        } else if (widget_->mode() == WbWidget::Mode::Scale) {
-
-            // Scale each selected item
-            const auto &gItems = scene()->selectedItems();
-            for (QGraphicsItem *graphicsitem : gItems) {
-                if (!graphicsitem->parentItem() || !graphicsitem->parentItem()->isSelected()) {
-
-                    // get center coordinates in item coordinates
-                    QPointF    c = center();
-                    QTransform translation, delta;
-                    // translates the the item's center to the origin of the item coordinates
-                    translation.translate(-c.x(), -c.y());
-                    // Scale.
-                    // Moving mouse up enlarges, down shrinks, y axis.
-                    // Moving mouse right enlarges, left shrinks, x axis.
-                    QPointF difference = event->scenePos() - event->lastScenePos();
-                    // Note: the y axis points downwards in scene coordinates
-                    delta.scale(1 + difference.x() / 50, 1 - difference.y() / 50);
-                    // set the matrix
-                    setTransform(translation * delta * translation.inverted(), true);
-
-                    // Regenerate the SVG transformation matrix later
-                    scene_->queueTransformationRegeneration(dynamic_cast<WbItem *>(graphicsitem));
-                }
-            }
-        }
-    }
-}
-
-void WbItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
-{
-    QGraphicsSvgItem::mouseReleaseEvent(event);
-
-    scene_->regenerateTransformations();
-}
+void WbItem::showContextMenu(const QPoint &globalPos) { constructContextMenu()->exec(globalPos); }
 
 QTransform WbItem::parseSvgTransform(QString string)
 {
@@ -369,16 +262,6 @@ WbItemMenu *WbItem::constructContextMenu()
     }
 
     return menu;
-}
-
-QPointF WbItem::center()
-{
-    // Determine the center of the item in item coordinates before transformation
-    QRectF  r = boundingRect();
-    QPointF c(r.x() + r.width() / 2, r.y() + r.height() / 2);
-    //  qDebug() << QString("center: %1 + %2    %3 + %4").arg(r.x()).arg(r.width()/2).arg(r.y()).arg(r.height()/2);
-    // return the center with transformation applied
-    return transform().map(c);
 }
 
 // The following functions are from qt-mac-opensource-src-4.3.1/src/svg/qsvghandler.cpp

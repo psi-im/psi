@@ -31,8 +31,12 @@
 
 #include <QActionGroup>
 #include <QColorDialog>
+#include <QDialog>
+#include <QDialogButtonBox>
 #include <QHBoxLayout>
 #include <QMessageBox>
+#include <QPainter>
+#include <QStyle>
 #include <QToolButton>
 #include <QVBoxLayout>
 #include <iris/jingle-session.h>
@@ -83,8 +87,8 @@ WbDlg::WbDlg(XMPP::Jingle::SXE::Application *application, PsiAccount *pa) :
     // Bottom (tool) area
     act_save_ = new IconAction(tr("Save session"), "psi/saveBoard", tr("Save the contents of the whiteboard"), 0, this);
     act_geometry_ = new IconAction(tr("Change the geometry"), "psi/whiteboard", tr("Change the geometry"), 0, this);
-    act_clear_    = new IconAction(tr("End session"), "psi/clearChat", tr("Clear the whiteboard"), 0, this);
-    act_end_      = new IconAction(tr("End session"), "psi/closetab", tr("End session"), 0, this);
+    act_clear_    = new IconAction(tr("Clear the whiteboard for everyone"), "psi/clearChat", tr("Clear the whiteboard"),
+                                   0, this);
 
     // Black is the default color
     QPixmap pixmap(16, 16);
@@ -107,7 +111,6 @@ WbDlg::WbDlg(XMPP::Jingle::SXE::Application *application, PsiAccount *pa) :
     connect(act_save_, SIGNAL(triggered()), SLOT(save()));
     connect(act_geometry_, SIGNAL(triggered()), SLOT(setGeometry()));
     connect(act_clear_, SIGNAL(triggered()), wbWidget_, SLOT(clear()));
-    connect(act_end_, SIGNAL(triggered()), SLOT(endSession()));
 
     pixmap = QPixmap(2, 2);
     pixmap.fill(QColor(Qt::black));
@@ -126,51 +129,56 @@ WbDlg::WbDlg(XMPP::Jingle::SXE::Application *application, PsiAccount *pa) :
     widthaction->setData(QVariant(6));
     widthaction->setCheckable(true);
 
-    IconAction *action;
-    action = new IconAction(tr("Select"), "psi/select", tr("Select"), 0, group_modes_);
-    action->setData(QVariant(int(WbWidget::Mode::Select)));
-    action->setCheckable(true);
-    action = new IconAction(tr("Translate"), "psi/translate", tr("Translate"), 0, group_modes_);
-    action->setData(QVariant(int(WbWidget::Mode::Translate)));
-    action->setCheckable(true);
-    action = new IconAction(tr("Rotate"), "psi/rotate", tr("Rotate"), 0, group_modes_);
-    action->setData(QVariant(int(WbWidget::Mode::Rotate)));
-    action->setCheckable(true);
-    action = new IconAction(tr("Scale"), "psi/scale", tr("Scale"), 0, group_modes_);
-    action->setData(QVariant(int(WbWidget::Mode::Scale)));
-    action->setCheckable(true);
-    action = new IconAction(tr("Erase"), "psi/erase", tr("Erase"), 0, group_modes_);
-    action->setData(QVariant(int(WbWidget::Mode::Erase)));
-    action->setCheckable(true);
-    QAction *separator = new QAction(group_modes_);
-    separator->setSeparator(true);
-    action = new IconAction(tr("Scroll view"), "psi/scroll", tr("Scroll"), 0, group_modes_);
-    action->setData(QVariant(int(WbWidget::Mode::Scroll)));
-    action->setCheckable(true);
-    separator = new QAction(group_modes_);
-    separator->setSeparator(true);
-    action = new IconAction(tr("Draw paths"), "psi/drawPaths", tr("Draw paths"), 0, group_modes_);
-    action->setData(QVariant(int(WbWidget::Mode::DrawPath)));
-    action->setCheckable(true);
-    action->trigger();
-    // action = new IconAction(tr( "Draw lines"), "psi/drawLines", tr("Draw lines"), 0, group_modes_ );
-    // action->setData(QVariant(WbWidget::DrawLine));
-    // action->setCheckable(true);
-    // action = new IconAction(tr( "Draw ellipses"), "psi/drawEllipses", tr("Draw ellipses"), 0, group_modes_ );
-    // action->setData(QVariant(WbWidget::DrawEllipse));
-    // action->setCheckable(true);
-    // action = new IconAction(tr( "Draw circles"), "psi/drawCircles", tr("Draw circles"), 0, group_modes_ );
-    // action->setData(QVariant(WbWidget::DrawCircle));
-    // action->setCheckable(true);
-    // action = new IconAction(tr( "Draw rectangles"), "psi/drawRectangles", tr("Draw rectangles"), 0, group_modes_ );
-    // action->setData(QVariant(WbWidget::DrawRectangle));
-    // action->setCheckable(true);
-    //     action = new IconAction(tr( "Add text"), "psi/addText", tr("Add text"), 0, group_modes_ );
-    //     action->setData(QVariant(WbWidget::DrawText));
-    //     action->setCheckable(true);
-    action = new IconAction(tr("Add images"), "psi/addImage", tr("Add images"), 0, group_modes_);
-    action->setData(QVariant(int(WbWidget::Mode::DrawImage)));
-    action->setCheckable(true);
+    // Moving, scaling, rotating and panning are gestures (see the controls help), not modes.
+    auto addMode = [this](const QString &text, const char *icon, WbWidget::Mode mode, const QString &key) {
+        auto action = new IconAction(text, icon, text, 0, group_modes_);
+        action->setData(QVariant(int(mode)));
+        action->setCheckable(true);
+        action->setToolTip(tr("%1 (%2)").arg(text, key));
+        return action;
+    };
+    addMode(tr("Select"), "psi/select", WbWidget::Mode::Select, QStringLiteral("V"));
+    addMode(tr("Draw paths"), "psi/drawPaths", WbWidget::Mode::DrawPath, QStringLiteral("P"))->trigger();
+    addMode(tr("Draw lines"), "psi/drawLines", WbWidget::Mode::DrawLine, QStringLiteral("L"));
+    addMode(tr("Draw rectangles"), "psi/drawRectangles", WbWidget::Mode::DrawRectangle, QStringLiteral("R"));
+    addMode(tr("Draw ellipses"), "psi/drawEllipses", WbWidget::Mode::DrawEllipse, QStringLiteral("O"));
+    {
+        // The iconset has no rhombus.
+        QPixmap rhombus(16, 16);
+        rhombus.fill(Qt::transparent);
+        QPainter painter(&rhombus);
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.setPen(QPen(palette().color(QPalette::WindowText), 1.5));
+        painter.drawPolygon(QPolygonF() << QPointF(8, 1.5) << QPointF(14.5, 8) << QPointF(8, 14.5) << QPointF(1.5, 8));
+        painter.end();
+        auto action = addMode(tr("Draw rhombuses"), "", WbWidget::Mode::DrawRhombus, QStringLiteral("D"));
+        action->setIcon(QIcon(rhombus));
+    }
+    addMode(tr("Add text"), "psi/addText", WbWidget::Mode::DrawText, QStringLiteral("T"));
+    addMode(tr("Add images"), "psi/addImage", WbWidget::Mode::DrawImage, QStringLiteral("I"));
+    addMode(tr("Erase"), "psi/erase", WbWidget::Mode::Erase, QStringLiteral("E"));
+
+    connect(wbWidget_, &WbWidget::modeChanged, this, [this](WbWidget::Mode mode) {
+        const auto actions = group_modes_->actions();
+        for (QAction *action : actions) {
+            if (action->isCheckable() && action->data().toInt() == int(mode))
+                action->setChecked(true);
+        }
+    });
+    connect(wbWidget_, &WbWidget::strokeWidthChanged, this, [this](int width) {
+        const auto actions = group_widths_->actions();
+        for (QAction *action : actions) {
+            if (action->data().toInt() == width)
+                action->setChecked(true);
+        }
+    });
+    connect(wbWidget_, &WbWidget::canvasContextMenuRequested, this,
+            [this](const QPoint &globalPos) { pm_settings_->exec(globalPos); });
+
+    act_help_ = new QAction(style()->standardIcon(QStyle::SP_DialogHelpButton), tr("Controls"), this);
+    act_help_->setToolTip(tr("Mouse and keyboard controls"));
+    act_help_->setShortcut(QKeySequence::HelpContents);
+    connect(act_help_, &QAction::triggered, this, &WbDlg::showHelp);
 
     menu_widths_ = new QMenu(this);
     menu_widths_->addActions(group_widths_->actions());
@@ -183,10 +191,8 @@ WbDlg::WbDlg(XMPP::Jingle::SXE::Application *application, PsiAccount *pa) :
     toolbar_ = new QToolBar(tr("Whiteboard toolbar"), this);
     toolbar_->setIconSize(QSize(16, 16));
     toolbar_->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum));
-    toolbar_->addAction(act_end_);
-    toolbar_->addAction(act_clear_);
-    toolbar_->addAction(act_save_);
-    toolbar_->addAction(act_geometry_);
+    // Tools are one click away; the rest of the actions follow on the right.
+    toolbar_->addActions(group_modes_->actions());
     toolbar_->addWidget(new StretchWidget(this));
     toolbar_->addAction(act_fill_);
     toolbar_->addAction(act_color_);
@@ -195,11 +201,11 @@ WbDlg::WbDlg(XMPP::Jingle::SXE::Application *application, PsiAccount *pa) :
     bw->setMenu(menu_widths_);
     bw->setPopupMode(QToolButton::InstantPopup);
     toolbar_->addWidget(bw);
-    QToolButton *bm = new QToolButton;
-    bm->setIcon(IconsetFactory::icon("psi/select").icon());
-    bm->setMenu(menu_modes_);
-    bm->setPopupMode(QToolButton::InstantPopup);
-    toolbar_->addWidget(bm);
+    toolbar_->addSeparator();
+    toolbar_->addAction(act_save_);
+    toolbar_->addAction(act_geometry_);
+    toolbar_->addAction(act_clear_);
+    toolbar_->addAction(act_help_);
     vb1->addWidget(toolbar_);
 
     // Context menu
@@ -250,23 +256,98 @@ bool WbDlg::allowEdits() const { return allowEdits_; }
 void WbDlg::setAllowEdits(bool a)
 {
     allowEdits_ = a;
-    if (!allowEdits_)
-        wbWidget_->setMode(WbWidget::Mode::Scroll);
+    wbWidget_->setEditable(a);
+}
+
+void WbDlg::showHelp()
+{
+    if (helpDialog_) {
+        bringToFront(helpDialog_);
+        return;
+    }
+
+    // Qt reports Command as Control on macOS; the hints use the platform's names.
+#ifdef Q_OS_MACOS
+    const QString cmd          = QStringLiteral("\u2318");
+    const QString alt          = QStringLiteral("\u2325");
+    const QString shift        = QStringLiteral("\u21E7");
+    const QString contextClick = tr("Right-click or Control-click");
+    const QString rightDrag    = tr("Right-drag (two-finger click and drag on a trackpad)");
+    const QString pan          = tr("Space + drag, or two-finger scroll");
+    const QString zoom         = tr("%1 + scroll, or pinch").arg(cmd);
+#else
+    const QString cmd          = tr("Ctrl");
+    const QString alt          = tr("Alt");
+    const QString shift        = tr("Shift");
+    const QString contextClick = tr("Right-click");
+    const QString rightDrag    = tr("Right-drag");
+    const QString pan          = tr("Middle-drag or Space + drag; the wheel scrolls");
+    const QString zoom         = tr("%1 + wheel, or pinch on a touchpad").arg(cmd);
+#endif
+    auto key = [](const char *sequence) {
+        return QKeySequence(QString::fromLatin1(sequence)).toString(QKeySequence::NativeText);
+    };
+    auto keys = [](QKeySequence::StandardKey standard) {
+        return QKeySequence(standard).toString(QKeySequence::NativeText);
+    };
+
+    const QList<QPair<QString, QList<QPair<QString, QString>>>> sections {
+        { tr("Drawing"),
+          { { tr("Draw with the current tool"), tr("Left button") },
+            { tr("Straight line"), tr("%1 + drag with the pen").arg(shift) },
+            { tr("Tools"), tr("V select, P pen, L line, R rectangle, O ellipse, D rhombus, T text, I image, E eraser") },
+            { tr("Square, circle"), tr("%1 + drag with the rectangle or ellipse tool").arg(shift) },
+            { tr("Stroke width and text size"), QStringLiteral("[  ]") } } },
+        { tr("Selection"),
+          { { tr("Select and move"), tr("%1 + drag an item (or the Select tool)").arg(cmd) },
+            { tr("Select an area"), tr("%1 + drag on the empty canvas").arg(cmd) },
+            { tr("Add to or remove from the selection"), tr("%1 + %2 + click").arg(cmd, shift) },
+            { tr("Select all / deselect"), tr("%1 / Esc").arg(keys(QKeySequence::SelectAll)) },
+            { tr("Move by 1 or 10 units"), tr("Arrow keys / %1 + arrow keys").arg(shift) },
+            { tr("Scale"), tr("%1 + %2 + drag the selection, or + and \u2212").arg(cmd, shift) },
+            { tr("Rotate"), tr("%1, %2 + wheel, or , and . (15\u00B0), < and > (1\u00B0)").arg(rightDrag, alt) },
+            { tr("Duplicate"), key("Ctrl+D") },
+            { tr("Delete"), tr("Delete or Backspace") },
+            { tr("Group / ungroup"), tr("%1 / %2").arg(key("Ctrl+G"), key("Ctrl+Shift+G")) },
+            { tr("Bring forward / send backward"), tr("Page Up / Page Down") },
+            { tr("Bring to front / send to back"), tr("Home / End") },
+            { tr("Item menu"), contextClick } } },
+        { tr("View"),
+          { { tr("Zoom"), tr("%1, %2 / %3").arg(zoom, key("Ctrl+="), keys(QKeySequence::ZoomOut)) },
+            { tr("Fit the canvas"), key("Ctrl+0") },
+            { tr("Pan a zoomed canvas"), pan } } },
+        { tr("Images"),
+          { { tr("Insert"), tr("Drop image files on the canvas, paste with %1, or click with the image tool")
+                                .arg(keys(QKeySequence::Paste)) } } },
+    };
+
+    QString html = QStringLiteral("<table cellspacing='0' cellpadding='3'>");
+    for (const auto &section : sections) {
+        html += QStringLiteral("<tr><td colspan='2'><b>%1</b></td></tr>").arg(section.first.toHtmlEscaped());
+        for (const auto &row : section.second)
+            html += QStringLiteral("<tr><td>%1</td><td>%2</td></tr>")
+                        .arg(row.first.toHtmlEscaped(), row.second.toHtmlEscaped());
+    }
+    html += QStringLiteral("</table>");
+
+    helpDialog_ = new QDialog(this);
+    helpDialog_->setAttribute(Qt::WA_DeleteOnClose);
+    helpDialog_->setWindowTitle(tr("Whiteboard Controls"));
+    auto layout = new QVBoxLayout(helpDialog_);
+    auto label  = new QLabel(html, helpDialog_);
+    label->setTextFormat(Qt::RichText);
+    layout->addWidget(label);
+    auto buttons = new QDialogButtonBox(QDialogButtonBox::Close, helpDialog_);
+    connect(buttons, &QDialogButtonBox::rejected, helpDialog_, &QDialog::close);
+    layout->addWidget(buttons);
+    helpDialog_->show();
 }
 
 void WbDlg::peerLeftSession(const Jid &peer) { le_jid_->setText(tr("%1 left (session: %2).").arg(peer.full(), sid_)); }
 
 void WbDlg::endSession()
 {
-    if (sender() == act_end_) {
-        int n = QMessageBox::information(
-            this, tr("Warning"),
-            tr("Are you sure you want to end the session?\nThe contents of the whiteboard will be lost."),
-            QMessageBox::Yes | QMessageBox::No);
-        if (n != 0)
-            return;
-    }
-    // terminate the underlying Jingle session
+    // Closing the window is the way to leave a whiteboard: terminate the underlying Jingle session
     if (application_ && application_->pad()->session()->state() != XMPP::Jingle::State::Finished)
         application_->pad()->session()->terminate(XMPP::Jingle::Reason::Success);
 
@@ -301,7 +382,7 @@ void WbDlg::closeEvent(QCloseEvent *e)
             this, tr("Warning"),
             tr("A new whiteboard message was just received.\nDo you still want to close the window?"),
             QMessageBox::Yes | QMessageBox::No);
-        if (n != 0) {
+        if (n != QMessageBox::Yes) {
             e->ignore();
             return;
         }
@@ -349,13 +430,7 @@ void WbDlg::setFillColor(bool fill)
 
 void WbDlg::setStrokeWidth(QAction *a) { wbWidget_->setStrokeWidth(a->data().toInt()); }
 
-void WbDlg::setMode(QAction *a)
-{
-    if (allowEdits_)
-        wbWidget_->setMode(WbWidget::Mode(a->data().toInt()));
-    else
-        wbWidget_->setMode(WbWidget::Mode::Scroll);
-}
+void WbDlg::setMode(QAction *a) { wbWidget_->setMode(WbWidget::Mode(a->data().toInt())); }
 
 void WbDlg::setKeepOpenFalse() { keepOpen_ = false; }
 
@@ -368,7 +443,8 @@ void WbDlg::buildMenu()
     pm_settings_->addSeparator();
     pm_settings_->addAction(act_save_);
     pm_settings_->addAction(act_clear_);
-    pm_settings_->addAction(act_end_);
+    pm_settings_->addSeparator();
+    pm_settings_->addAction(act_help_);
 }
 
 void WbDlg::setGeometry()

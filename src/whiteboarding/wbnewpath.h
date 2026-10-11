@@ -25,7 +25,9 @@
 
 class WbNewPath : public WbNewItem {
 public:
-    WbNewPath(QGraphicsScene *s, QPointF startPos, int strokeWidth, const QColor &strokeColor, const QColor &fillColor);
+    /*! \brief With \a straightLine the path is a single segment from the start to the cursor. */
+    WbNewPath(QGraphicsScene *s, QPointF startPos, int strokeWidth, const QColor &strokeColor, const QColor &fillColor,
+              bool straightLine = false);
     ~WbNewPath();
     void     parseCursorMove(QPointF newPos);
     QDomNode serializeToSvg(QDomDocument *doc);
@@ -36,6 +38,8 @@ protected:
 private:
     QGraphicsPathItem graphicsitem_;
     QPointF          *controlPoint_;
+    QPointF           startPos_;
+    bool              straightLine_;
 };
 
 #endif // WBNEWPATH_H

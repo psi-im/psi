@@ -28,17 +28,19 @@
 
 #include <QFileDialog>
 #include <QGraphicsView>
+#include <QPointer>
+#include <QRubberBand>
 #include <QSvgRenderer>
 #include <QTime>
 #include <QTimer>
 #include <QWidget>
 
 /*! \brief The whiteboard widget.
- *  Visualizes the whiteboard scene and provides different modes for editing and adding new elements.
- *  Local edits to existing elements are handled by the elements themselves
- *  as mouse events are passed on to them but new items are temporarily
- *  added to the scene while being drawn and only when finished, added to
- *  the WbScene.
+ *  Visualizes the whiteboard scene. The current tool (mode) acts on the left
+ *  button; selecting, moving, scaling, rotating, zooming and panning are
+ *  temporary gestures with modifiers, other buttons and the keyboard, so they
+ *  don't need a mode switch. New items are temporarily added to the scene
+ *  while being drawn and only when finished, added to the document.
  *
  *  \sa WbScene
  *  \sa WbDlg
@@ -51,17 +53,12 @@ public:
      */
     enum class Mode : char {
         Select,
-        Translate,
-        Rotate,
-        Scale,
-        Scroll,
         Erase,
         DrawPath,
         DrawLine,
         DrawRectangle,
         DrawEllipse,
-        DrawCircle,
-        DrawPolyline,
+        DrawRhombus,
         DrawText,
         DrawImage
     };
@@ -84,6 +81,10 @@ public:
     void setFillColor(const QColor &color);
     /*! \brief Sets the stroke width of new items.*/
     void setStrokeWidth(int width);
+    /*! \brief Allows or forbids changing the document. Viewing (zoom, pan) stays possible.*/
+    void setEditable(bool editable);
+    /*! \brief Fits the whole canvas into the view.*/
+    void fitToView();
 
     /*! \brief Returns the size set by setSize().*/
     virtual QSize sizeHint() const;
@@ -92,17 +93,78 @@ public slots:
     /*! \brief Clears the whiteboard. */
     void clear();
 
+signals:
+    /*! \brief The tool was changed from the keyboard.*/
+    void modeChanged(WbWidget::Mode mode);
+    /*! \brief The stroke width was changed from the keyboard.*/
+    void strokeWidthChanged(int width);
+    /*! \brief A context menu was requested over an empty part of the canvas.*/
+    void canvasContextMenuRequested(const QPoint &globalPos);
+
 protected:
-    /*! \brief Makes sure that area outside the whiteboard is not shown by zooming if necessary.*/
-    virtual void resizeEvent(QResizeEvent *event);
-    /*! \brief Passes events to items as specified by the mode.*/
-    virtual void mousePressEvent(QMouseEvent *event);
-    /*! \brief Passes events to items as specified by the mode.*/
-    virtual void mouseMoveEvent(QMouseEvent *event);
-    /*! \brief Passes events to items as specified by the mode.*/
-    virtual void mouseReleaseEvent(QMouseEvent *event);
+    /*! \brief Keeps the canvas fitted into the view unless the user zoomed in.*/
+    void resizeEvent(QResizeEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+    void wheelEvent(QWheelEvent *event) override;
+    void keyPressEvent(QKeyEvent *event) override;
+    void keyReleaseEvent(QKeyEvent *event) override;
+    void focusOutEvent(QFocusEvent *event) override;
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    void dragMoveEvent(QDragMoveEvent *event) override;
+    void dropEvent(QDropEvent *event) override;
+    /*! \brief Handles touchpad pinch zoom.*/
+    bool viewportEvent(QEvent *event) override;
+    /*! \brief Shows the canvas as a white sheet on a gray background.*/
+    void drawBackground(QPainter *painter, const QRectF &rect) override;
 
 private:
+    /*! \brief A temporary interaction started by a mouse press.*/
+    enum class Gesture { None, Draw, Erase, Move, Scale, Rotate, RubberBand, Pan, ContextPending, TogglePending };
+
+    /*! \brief Returns the topmost whiteboard item at \a viewPos.*/
+    WbItem *wbItemAt(const QPoint &viewPos) const;
+    /*! \brief Returns the selected whiteboard items.*/
+    QList<WbItem *> selectedWbItems() const;
+    /*! \brief Moves the selection by the difference of two scene points.*/
+    void translateSelection(const QPointF &from, const QPointF &to);
+    /*! \brief Rotates the selection by \a degrees around \a pivot (scene coordinates).*/
+    void rotateSelection(qreal degrees, const QPointF &pivot);
+    /*! \brief Scales the selection by \a factor around \a pivot (scene coordinates).*/
+    void scaleSelection(qreal factor, const QPointF &pivot);
+    /*! \brief Writes pending item transformations to the document.*/
+    void commitTransformations();
+    void deleteSelection();
+    void duplicateSelection();
+    void selectAll();
+    /*! \brief Removes the items under \a viewPos.*/
+    void eraseAt(const QPoint &viewPos);
+    /*! \brief Zooms the view by \a factor. Zooming out never goes beyond the fitted canvas.*/
+    void zoomBy(qreal factor, bool underMouse = true);
+    /*! \brief Inserts an image at \a scenePos. Large images are scaled down.*/
+    void insertImage(const QImage &image, const QPointF &scenePos);
+    void insertImageFile(const QString &fileName, const QPointF &scenePos);
+    /*! \brief Asks for a text and inserts it at \a scenePos as outlines (the profile represents text as paths).*/
+    void insertText(const QPointF &scenePos);
+    void setModeFromKeyboard(Mode mode);
+    void updateCursor();
+
+    /*! \brief True if the document may be changed.*/
+    bool editable_ = true;
+    /*! \brief True while the whole canvas is fitted into the view (no user zoom).*/
+    bool fitToView_ = true;
+    /*! \brief True while Space is held for panning.*/
+    bool spaceHeld_ = false;
+    Gesture         gesture_       = Gesture::None;
+    Qt::MouseButton gestureButton_ = Qt::NoButton;
+    QPoint          pressPos_;
+    QPoint          lastViewPos_;
+    QPointF         lastScenePos_;
+    QPointF         pivot_;
+    QPointer<WbItem> pressItem_;
+    QRubberBand     *rubberBand_ = nullptr;
+
     /*! \brief Returns the item representing the node (if any).*/
     WbItem *wbItem(const QDomNode &node);
 
@@ -129,10 +191,6 @@ private:
     QList<WbItem *> idlessItems_;
     /*! \brief Pointer to a new item that is being drawn.*/
     WbNewItem *newWbItem_;
-    /*! \brief Boolean used to force adding a vertex to a path being drawn.*/
-    bool addVertex_;
-    /*! \brief Timer used for forcing the addition of a new vertex.*/
-    QTimer *adding_;
     /*! \brief The primary renderer used for rendering the document.*/
     QSvgRenderer renderer_;
 

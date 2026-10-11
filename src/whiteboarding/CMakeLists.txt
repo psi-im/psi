@@ -10,9 +10,9 @@ set(SOURCES
     wbdlg.cpp
     wbitem.cpp
     wbmanager.cpp
-    wbnewimage.cpp
     wbnewitem.cpp
     wbnewpath.cpp
+    wbnewshape.cpp
     wbscene.cpp
     wbwidget.cpp
 )
@@ -24,9 +24,9 @@ set(HEADERS
     wbscene.h
     wbwidget.h
 
-    wbnewimage.h
     wbnewitem.h
     wbnewpath.h
+    wbnewshape.h
 )
 
 add_library(whiteboarding STATIC ${HEADERS} ${SOURCES})

@@ -125,6 +125,8 @@ private slots:
     void setKeepOpenFalse();
     /*! \brief Constructs the context menu.*/
     void buildMenu();
+    /*! \brief Shows the mouse and keyboard controls.*/
+    void showHelp();
     /*! \brief Follows the synchronization state of the shared document.*/
     void syncStateChanged(XMPP::Jingle::SXE::Application::SyncState state);
 
@@ -161,7 +163,9 @@ private:
     /*! \brief The menu for modes.*/
     QMenu      *menu_modes_;
     QAction    *act_color_, *act_fill_;
-    IconAction *act_end_, *act_clear_, *act_save_, *act_geometry_, *act_widths_, *act_modes_;
+    QAction    *act_help_;
+    QPointer<QDialog> helpDialog_;
+    IconAction *act_clear_, *act_save_, *act_geometry_, *act_widths_, *act_modes_;
     /*! \brief The Jingle whiteboard content.*/
     QPointer<XMPP::Jingle::SXE::Application> application_;
     /*! \brief The shared document, owned by the dialog.*/

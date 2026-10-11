@@ -93,23 +93,12 @@ public:
     /*! \brief Returns a QString in the SVG 'transform' attribute format based on \a matrix.*/
     static QString toSvgTransform(const QTransform &matrix);
 
-protected:
-    /*! \brief Constructs and popsup the default context menu.*/
-    virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent *);
-    /*! \brief Implements the default item interaction behaviour.
-     *  The action depends on the mode of widget_;
-     */
-    virtual void mouseMoveEvent(QGraphicsSceneMouseEvent *);
-    /*! \brief Implements the default item interaction behaviour.
-     *  The action depends on the mode of widget_;
-     */
-    virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent *);
+    /*! \brief Pops up the context menu of the item (z-order, grouping) at \a globalPos. */
+    void showContextMenu(const QPoint &globalPos);
 
 private:
     /*! \brief Construct a context menu with the default items.*/
     WbItemMenu *constructContextMenu();
-    /*! \brief Return the center of the item in item coordinates.*/
-    QPointF center();
 
     // The session that the item belongs to
     XMPP::Jingle::SXE::Document *document_;
