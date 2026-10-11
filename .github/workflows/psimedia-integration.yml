@@ -706,7 +706,7 @@ jobs:
               rtpManager->setMediaProvider(provider);
 
               auto basePad = jingleSession.applicationPadFactory(RTP::Description::ns());
-              auto pad = qSharedPointerDynamicCast<RTP::Pad>(basePad);
+              auto *pad = qobject_cast<RTP::Pad *>(basePad);
               check(bool(pad) && pad->mediaSession(), "registered real RTP media session unavailable");
               auto *media = pad->mediaSession();
               auto endpoint = media->createEndpoint(QStringLiteral("runtime-audio"), QStringLiteral("audio"));
