@@ -43,7 +43,7 @@ QWidget *OptionsTabMsgCommon::widget()
                                      " Check this if you want to know how long is your message."
                                      " Can be useful when you're using SMS transport."));
     d->ck_contactsMessageFormatting->setToolTip(
-        tr("If enabled, Psi will display incoming messages formatted in the style specified by the contact"));
+        tr("If enabled, Psi will display incoming messages formatted in the style specified by the contact by using the deprecated XHTML-IM (XEP-0071)"));
 
     d->cb_tabMdlClick->addItems(clickActList);
     d->cb_tabDblClick->addItems(clickActList);

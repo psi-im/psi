@@ -37,7 +37,7 @@
    <item>
     <widget class="QCheckBox" name="ck_contactsMessageFormatting">
      <property name="text">
-      <string>Use contacts' message formatting</string>
+      <string>Display received messages in deprecated XHTML-IM formatting (XEP-0071)</string>
      </property>
     </widget>
    </item>

@@ -24,7 +24,7 @@
         <enable-multicast comment="Enable multicasting messages to multiple recipients" type="bool">false</enable-multicast>
         <html comment="Hypertext markup options">
             <chat comment="HTML in chats">
-                <render comment="Display received HTML" type="bool">true</render>
+                <render comment="Display received messages in deprecated XHTML-IM formatting (XEP-0071)" type="bool">true</render>
             </chat>
             <muc comment="HTML in group chats">
                 <render comment="Display received HTML" type="bool">false</render>
