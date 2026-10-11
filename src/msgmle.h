@@ -59,6 +59,7 @@ public:
 
     static bool       checkSpellingGloballyEnabled();
     void              setCheckSpelling(bool);
+    QString           getTextToSend();
     XMPP::HTMLElement toHTMLElement();
     bool              isCorrection() { return !_correctionId.isEmpty(); }
     void              setLastMessageId(const QString &id) { lastId = id; }

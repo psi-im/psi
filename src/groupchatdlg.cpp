@@ -1435,7 +1435,7 @@ void MiniCommand_Depreciation_Message(const QString &old, const QString &newCmd,
 void GCMainDlg::mle_returnPressed()
 {
     d->tabCompletion.reset();
-    QString textToSend = d->mle()->toPlainText().trimmed();
+    QString textToSend = d->mle()->getTextToSend();
 
     if (d->mCmdSite.isActive()) {
         if (!d->mCmdManager.processCommand(textToSend)) {

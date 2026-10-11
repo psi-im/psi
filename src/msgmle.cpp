@@ -466,7 +466,7 @@ void ChatEdit::showHistoryMessagePrev()
     if (!typedMsgsHistory.isEmpty() && (typedMsgsIndex > 0 || !_correctionId.isEmpty())) {
         // Save current typed text
         if (typedMsgsIndex == typedMsgsHistory.size()) {
-            currentText   = toPlainText();
+            currentText   = getTextToSend();
             _correctionId = lastId;
         }
         if (typedMsgsIndex == typedMsgsHistory.size() - 1 && !_correctionId.isEmpty()) {
@@ -587,6 +587,11 @@ void ChatEdit::clearMessageHistory()
 {
     typedMsgsHistory.clear();
     typedMsgsIndex = 0;
+}
+
+QString ChatEdit::getTextToSend()
+{
+    return toPlainText().trimmed();
 }
 
 XMPP::HTMLElement ChatEdit::toHTMLElement()

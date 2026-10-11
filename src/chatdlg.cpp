@@ -649,7 +649,7 @@ void ChatDlg::doSend()
         return;
     }
 
-    auto textToSend = chatEdit()->toPlainText().trimmed();
+    auto textToSend = chatEdit()->getTextToSend();
     if (textToSend.isEmpty() && !fileShareReferences_.count()) {
         return;
     }
