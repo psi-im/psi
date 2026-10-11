@@ -61,6 +61,12 @@ endfunction()
 # Deploy function
 function(deploy_binary_deps BINARY_NAME)
     install(CODE "
+if(CMAKE_VERSION GREATER_EQUAL 4.3.0)
+    if(POLICY CMP0207)
+        cmake_policy(SET CMP0207 NEW)
+    endif()
+endif()
+
 file(GET_RUNTIME_DEPENDENCIES
     EXECUTABLES \"${BINARY_NAME}\"
     RESOLVED_DEPENDENCIES_VAR resolved_deps
@@ -86,24 +92,32 @@ endforeach()
 "
     )
 endfunction()
-# Install plugins function
-function(install_qt_plugin PLUG_TYPE_NAME PLUG_SEARCH_PATH)
-    file(GLOB _PLUGINS
-        "${PLUG_SEARCH_PATH}/${PLUG_TYPE_NAME}/libq*.so"
+# Install additional files function
+function(install_add_files _RES_FILE_NAME _RES_FILE_SEARCH_PATH _RES_INSTALL_PATH)
+    file(GLOB _RESOURCES
+        "${_RES_FILE_SEARCH_PATH}/${_RES_FILE_NAME}"
     )
-    message(STATUS "CPack: AppImage ${PLUG_TYPE_NAME} plugins added")
-    foreach(_plugin ${_PLUGINS})
-        if(EXISTS "${_plugin}")
+    foreach(_resource IN LISTS _RESOURCES)
+        if(EXISTS "${_resource}")
             install(
-                FILES
-                "${_plugin}"
+                FILES "${_resource}"
                 DESTINATION
-                "${CMAKE_INSTALL_LIBDIR}/qt${QT_DEFAULT_MAJOR_VERSION}/plugins/${PLUG_TYPE_NAME}"
+                "${_RES_INSTALL_PATH}"
             )
         endif()
     endforeach()
-    unset(_PLUGINS)
+    unset(_RESOURCES)
+ endfunction()
+# Install plugins function
+function(install_qt_plugin PLUG_TYPE_NAME PLUG_SEARCH_PATH)
+    install_add_files(
+        "libq*.so"
+        "${PLUG_SEARCH_PATH}/${PLUG_TYPE_NAME}"
+        "${CMAKE_INSTALL_LIBDIR}/qt${QT_DEFAULT_MAJOR_VERSION}/plugins/${PLUG_TYPE_NAME}"
+    )
+    message(STATUS "CPack: AppImage ${PLUG_TYPE_NAME} plugins added")
 endfunction()
+
 
 set(CPACK_PACKAGE_VENDOR "psi-im.org")
 set(CPACK_PACKAGE_CONTACT "psi-im.org")
@@ -203,6 +217,18 @@ if(CMAKE_VERSION GREATER_EQUAL 4.2.0)
             foreach(plugin ${_QT_PLUGINS})
                 install_qt_plugin("${plugin}" "${QT_INSTALL_PLUGINS}")
             endforeach()
+            install_add_files("*.so" "/usr/${CMAKE_INSTALL_LIBDIR}/qca3-qt6/crypto"
+            "${CMAKE_INSTALL_LIBDIR}/qt${QT_DEFAULT_MAJOR_VERSION}/plugins/crypto")
+            install_add_files("lib*.so" "${QT_INSTALL_PLUGINS}/wayland-shell-integration"
+            "${CMAKE_INSTALL_LIBDIR}/qt${QT_DEFAULT_MAJOR_VERSION}/plugins/wayland-shell-integration")
+        endif()
+        get_qt_path("QT_INSTALL_TRANSLATIONS" QT_INSTALL_TRANSLATIONS)
+        if(QT_INSTALL_TRANSLATIONS)
+            install_add_files(
+                "qt*.qm"
+                "${QT_INSTALL_TRANSLATIONS}"
+                "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/translations"
+            )
         endif()
         if(IS_WEBENGINE)
             get_qt_path("QT_INSTALL_ARCHDATA" QT_INSTALL_ARCHDATA)
@@ -249,8 +275,13 @@ file(INSTALL
                     get_qt_path("QT_INSTALL_DATA" QT_INSTALL_DATA)
                     if(QT_INSTALL_DATA)
                         install(DIRECTORY "${QT_INSTALL_DATA}/resources" DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}")
-                        install(DIRECTORY "${QT_INSTALL_DATA}/translations/qtwebengine_locales" DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/translations")
                     endif()
+                    if(QT_INSTALL_TRANSLATIONS)
+                        install_add_files(
+                        "*.pak"
+                        "${QT_INSTALL_TRANSLATIONS}/qtwebengine_locales"
+                        "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/translations/qtwebengine_locales")
+                     endif()
                 endif()
             endif()
         endif()
@@ -267,7 +298,7 @@ if(APPLE)
     set(CPACK_DMG_FORMAT "UDZO")
     set(CPACK_DMG_FILESYSTEM "HFS+")
     # Set icon for the .dmg file if available
-    if(APPLE AND CPACK_PSI_ICON)
+    if(CPACK_PSI_ICON)
         set(CPACK_DMG_ICON "${CPACK_PSI_ICON}")
     endif()
     # Configure DMG window appearance
