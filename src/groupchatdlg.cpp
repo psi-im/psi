@@ -2315,7 +2315,7 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
     }
 
     MessageView mv(MessageView::Message);
-    if (dm.containsHTML() && PsiOptions::instance()->getOption("options.html.muc.render").toBool()
+    if (dm.containsHTML() && PsiOptions::instance()->getOption("options.html.chat.render").toBool()
         && !dm.html().text().isEmpty()) {
         mv.setHtml(dm.html().toString("span"));
     } else {

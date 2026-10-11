@@ -26,9 +26,6 @@
             <chat comment="HTML in chats">
                 <render comment="Display received messages in deprecated XHTML-IM formatting (XEP-0071)" type="bool">true</render>
             </chat>
-            <muc comment="HTML in group chats">
-                <render comment="Display received HTML" type="bool">false</render>
-            </muc>
         </html>
         <extended-presence comment="Extended presence options">
             <notify comment="Get notified of extended presence changes" type="bool">true</notify>

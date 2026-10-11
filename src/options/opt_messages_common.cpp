@@ -113,7 +113,7 @@ void OptionsTabMsgCommon::restoreOptions()
     OptMsgCommonUI *d = static_cast<OptMsgCommonUI *>(w_);
     PsiOptions     *o = PsiOptions::instance();
     d->ck_showCounter->setChecked(o->getOption("options.ui.message.show-character-count").toBool());
-    d->ck_contactsMessageFormatting->setChecked(o->getOption("options.html.chat.render").toBool());
+    d->ck_contactsMessageFormatting->setChecked(o->getOption("options.html.chat.render", true).toBool());
     d->ck_showTabButtons->setChecked(o->getOption("options.ui.tabs.show-tab-buttons").toBool());
     d->ck_tabChats->setChecked(o->getOption("options.ui.tabs.use-tabs").toBool());
     d->cb_tabGrouping->setEnabled(o->getOption("options.ui.tabs.use-tabs").toBool());
