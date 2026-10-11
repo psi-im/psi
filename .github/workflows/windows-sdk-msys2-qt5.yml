@@ -34,7 +34,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  QCA_TAG: v3.0.9
+  QCA_TAG: v3.0.10
   QTKEYCHAIN_TAG: 0.17.0
   SDK_ARCHIVE: psi-windows-sdk-msys2-qt5.zip
 
