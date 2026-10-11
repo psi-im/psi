@@ -572,9 +572,9 @@ void PsiChatDlg::updateCallAction()
         callMenu_->addAction(IconsetFactory::icon("psi/whiteboard").icon(), tr("Whiteboard only"), this,
                              &PsiChatDlg::doWhiteboard);
     }
-    // A whiteboard without audio is offered next to the call when both are possible.
+    // A whiteboard without audio is offered next to the call when both are possible. The menu belongs to
+    // the buttons only: a menu on the action would make it a submenu of an action list.
     const bool split = media && whiteboard;
-    action->setMenu(split ? callMenu_ : nullptr);
     const auto mode = split ? QToolButton::MenuButtonPopup : QToolButton::DelayedPopup;
     if (auto button = qobject_cast<QToolButton *>(ui_.toolbar->widgetForAction(action))) {
         button->setMenu(split ? callMenu_ : nullptr);

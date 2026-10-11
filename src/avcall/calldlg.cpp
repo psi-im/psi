@@ -306,6 +306,10 @@ public:
     // as a whiteboard cannot carry media yet.
     void watchSession(Jingle::Session *jingle)
     {
+        // Qt::UniqueConnection does not work with lambdas: remember the session instead.
+        if (watchedSession == jingle)
+            return;
+        watchedSession = jingle;
         connect(
             jingle, &Jingle::Session::newContentReceived, this,
             [this, jingle] {
@@ -321,8 +325,7 @@ public:
                         content->remove(Jingle::Reason::UnsupportedApplications);
                     }
                 }
-            },
-            Qt::UniqueConnection);
+            });
     }
 
     void addWhiteboard(Jingle::Session *jingle)
@@ -405,6 +408,7 @@ public:
     QPointer<SXE::Application> whiteboard;
     QPointer<SXE::Document>    wbDocument;
     QPointer<Jingle::Session>  wbSession;
+    QPointer<Jingle::Session>  watchedSession;
     WbView                    *wbView           = nullptr;
     bool                       whiteboardWanted = false;
     bool                       joined           = false;
