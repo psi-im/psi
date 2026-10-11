@@ -21,6 +21,7 @@
 #include "wbwidget.h"
 
 #include <QRegularExpression>
+#include <QTextStream>
 
 #include "wbnewimage.h"
 #include "wbnewpath.h"
