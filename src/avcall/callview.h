@@ -36,6 +36,13 @@ public:
     int                    bitrate() const;
     PsiMedia::VideoWidget *remoteVideo() const;
     PsiMedia::VideoWidget *remotePresentation() const;
+    CallStage             *stage() const;
+    // A session without media: the whiteboard is the content, media controls are disabled.
+    void setWhiteboardOnly(bool whiteboardOnly);
+    bool whiteboardOnly() const;
+    void setWhiteboardSupported(bool supported);
+    void setWhiteboardEnabled(bool enabled);
+    bool whiteboardEnabled() const;
 
 signals:
     void accepted();
@@ -43,6 +50,7 @@ signals:
     void microphoneChanged(bool enabled);
     void cameraChanged(bool enabled);
     void shareRequested();
+    void whiteboardChanged(bool enabled);
 
 private:
     QLineEdit             *peer_;
@@ -52,6 +60,7 @@ private:
     QPushButton           *microphone_;
     QPushButton           *camera_;
     QPushButton           *share_;
+    QPushButton           *whiteboard_;
     QPushButton           *accept_;
     QPushButton           *end_;
     QComboBox             *quality_;
@@ -64,5 +73,8 @@ private:
     bool                   selecting_      = false;
     bool                   shareSupported_ = true;
     bool                   videoSupported_ = true;
+    bool                   whiteboardOnly_ = false;
+    bool                   whiteboardSupported_ = false;
+    bool                   finished_       = false;
 };
 #endif

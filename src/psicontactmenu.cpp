@@ -91,10 +91,6 @@ PsiContactMenu::Private::Private(PsiContactMenu *menu, PsiContact *_contact) :
     connect(openChatAction_, SIGNAL(triggered()), SLOT(openChat()));
     openChatAction_->setShortcuts(ShortcutManager::instance()->shortcuts("contactlist.chat"));
 
-#ifdef WHITEBOARDING
-    openWhiteboardAction_ = new IconAction(tr("Open a &Whiteboard"), this, "psi/whiteboard");
-    connect(openWhiteboardAction_, SIGNAL(triggered()), SLOT(openWhiteboard()));
-#endif
     voiceCallAction_ = new IconAction(tr("Voice Call"), this, "psi/avcall");
     connect(voiceCallAction_, SIGNAL(triggered()), SLOT(voiceCall()));
 
@@ -147,11 +143,6 @@ PsiContactMenu::Private::Private(PsiContactMenu *menu, PsiContact *_contact) :
     connect(openChatToMenu_, SIGNAL(resourceActivated(PsiContact *, const XMPP::Jid &)),
             SLOT(openChatTo(PsiContact *, const XMPP::Jid &)));
 
-#ifdef WHITEBOARDING
-    openWhiteboardToMenu_ = new ResourceMenu(tr("Open a White&board To"), contact_, menu_);
-    connect(openWhiteboardToMenu_, SIGNAL(resourceActivated(PsiContact *, const XMPP::Jid &)),
-            SLOT(openWhiteboardTo(PsiContact *, const XMPP::Jid &)));
-#endif
     executeCommandMenu_ = new ResourceMenu(tr("E&xecute Command"), contact_, menu_);
     connect(executeCommandMenu_, SIGNAL(resourceActivated(PsiContact *, const XMPP::Jid &)),
             SLOT(executeCommand(PsiContact *, const XMPP::Jid &)));
@@ -263,10 +254,6 @@ PsiContactMenu::Private::Private(PsiContactMenu *menu, PsiContact *_contact) :
         _advancedMenu->addAction(customStatusAction_);
         _advancedMenu->addAction(visibleAction_);
         _advancedMenu->addAction(authRemoveAction_);
-#ifdef WHITEBOARDING
-        _advancedMenu->addAction(openWhiteboardAction_);
-        _advancedMenu->addMenu(openWhiteboardToMenu_);
-#endif
 
 #ifdef PSI_PLUGINS
         PluginManager::instance()->addContactMenu(_advancedMenu, contact_->account(), contact_->jid().full());
@@ -311,9 +298,6 @@ void PsiContactMenu::Private::updateActions()
     sendMessageAction_->setEnabled(contact_->account()->isAvailable());
     sendMessageToMenu_->setEnabled(!sendMessageToMenu_->isEmpty());
     openChatToMenu_->setEnabled(!openChatToMenu_->isEmpty());
-#ifdef WHITEBOARDING
-    openWhiteboardToMenu_->setEnabled(!openWhiteboardToMenu_->isEmpty());
-#endif
     if (contact_->account()->isAvailable() && executeCommandMenu_->isEmpty()
         && contact_->status().type() == Status::Offline)
         executeCommandMenu_->addResource(XMPP::Status::Offline, "");
@@ -321,11 +305,15 @@ void PsiContactMenu::Private::updateActions()
     activeChatsMenu_->setEnabled(!activeChatsMenu_->isEmpty());
     activeChatsMenu_->menuAction()->setVisible(
         PsiOptions::instance()->getOption("options.ui.menu.contact.active-chats").toBool());
-    voiceCallAction_->setVisible(contact_->account()->avCallManager() && !contact_->isAgent());
+    // One action starts calls and whiteboards: the phone when media can be used, otherwise the whiteboard.
+    const bool callMedia = contact_->account()->callUsesMedia(contact_->jid());
+    voiceCallAction_->setPsiIcon(callMedia ? QStringLiteral("psi/avcall") : QStringLiteral("psi/whiteboard"));
+    voiceCallAction_->setText(callMedia ? tr("Voice Call") : tr("&Whiteboard"));
+    voiceCallAction_->setVisible(!contact_->isAgent()
+                                 && (AvCallManager::isSupported() || contact_->account()->canWhiteboard(contact_->jid())));
     voiceCallAction_->setEnabled(contact_->account()->isAvailable());
     sendFileAction_->setVisible(!contact_->isAgent());
     sendFileAction_->setEnabled(contact_->account()->isAvailable());
-    voiceCallAction_->setVisible(AvCallManager::isSupported());
     inviteToGroupchatMenu_->setEnabled(!inviteToGroupchatMenu_->isEmpty() && contact_->account()->isAvailable());
     renameAction_->setVisible(!PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool());
     renameAction_->setEnabled(contact_->isEditable());
@@ -472,16 +460,6 @@ void PsiContactMenu::Private::openChat()
     contact_->account()->actionOpenChat(contact_->jid());
 }
 
-#ifdef WHITEBOARDING
-void PsiContactMenu::Private::openWhiteboard()
-{
-    if (!contact_)
-        return;
-
-    contact_->account()->actionOpenWhiteboard(contact_->jid());
-}
-#endif
-
 void PsiContactMenu::Private::voiceCall()
 {
     if (!contact_)
@@ -610,16 +588,6 @@ void PsiContactMenu::Private::openChatTo(PsiContact *, const XMPP::Jid &jid)
 
     contact_->account()->actionOpenChatSpecific(jid);
 }
-
-#ifdef WHITEBOARDING
-void PsiContactMenu::Private::openWhiteboardTo(PsiContact *, const XMPP::Jid &jid)
-{
-    if (!contact_)
-        return;
-
-    contact_->account()->actionOpenWhiteboardSpecific(jid);
-}
-#endif
 
 void PsiContactMenu::Private::executeCommand(PsiContact *, const XMPP::Jid &jid)
 {

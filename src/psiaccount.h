@@ -142,6 +142,11 @@ public:
     VoiceCaller             *voiceCaller() const;
 #ifdef WHITEBOARDING
     WbManager *wbManager() const;
+    // Whether \a jid, or one of its resources for a bare JID, advertises calls or whiteboards.
+    bool canCall(const Jid &jid) const;
+    bool canWhiteboard(const Jid &jid) const;
+    // Whether the call action starts a call (true) or a whiteboard-only session (false).
+    bool callUsesMedia(const Jid &jid) const;
 #endif
     Status        status() const;
     static Status loggedOutStatus();

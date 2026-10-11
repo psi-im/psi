@@ -7,7 +7,7 @@ unset(EXTRA_LDFLAGS)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 set(SOURCES
-    wbdlg.cpp
+    wbview.cpp
     wbitem.cpp
     wbmanager.cpp
     wbnewitem.cpp
@@ -18,7 +18,7 @@ set(SOURCES
 )
 
 set(HEADERS
-    wbdlg.h
+    wbview.h
     wbitem.h
     wbmanager.h
     wbscene.h

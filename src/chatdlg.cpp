@@ -549,6 +549,7 @@ void ChatDlg::contactUpdated(UserListItem *u, int status, const QString &statusS
 }
 
 void ChatDlg::doVoice() { emit aVoice(jid()); }
+void ChatDlg::doWhiteboard() { emit aWhiteboard(jid()); }
 
 void ChatDlg::updateAvatar(const Jid &j)
 {

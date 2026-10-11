@@ -1,9 +1,12 @@
 # Whiteboards
 
-A whiteboard is a shared SVG drawing. Open it from a contact's menu (**Open a Whiteboard**); the
-contact sees an invitation and joins after accepting it. Both sides can draw at the same time.
-Closing the window leaves the session. **Save** writes the current drawing to an SVG file, also
-after the session has ended.
+A whiteboard is a shared SVG drawing shown in the call window. Start one with the contact's call
+action: it shows the whiteboard icon when calls are not possible (no media backend, or the
+contact advertises whiteboards but no calls); otherwise use **Whiteboard only** in the menu of
+the chat toolbar's call button, or the **Whiteboard** button of a running call. The contact sees
+an invitation and joins after accepting it in the window. Both sides can draw at the same time.
+**End** or closing the window leaves the session. **Save** writes the current drawing to an SVG
+file, also after the session has ended; **Import SVG** adds the drawing of an SVG file.
 
 The protocol is a Jingle session with the SVG whiteboard application type, synchronized with
 Shared XML Editing (XEP-0284). It is implemented in Iris; see `iris/docs/jingle-sxe.md`. The
@@ -48,8 +51,9 @@ embedded in the document; large images are scaled down to 1600 pixels.
 
 | Class | Role |
 | --- | --- |
-| `WbManager` | Starts outgoing Jingle whiteboard sessions, presents incoming ones (`SxeEvent`) and owns the dialogs |
-| `WbDlg` | Window, toolbar, controls help; takes over the shared `Jingle::SXE::Document` |
+| `CallDlg` (`src/avcall`) | Call window; starts and accepts whiteboard sessions and adds whiteboards to calls |
+| `WbManager` | Keeps incoming whiteboard sessions until their event (`SxeEvent`) is opened; checks contact support |
+| `WbView` | Whiteboard tile: canvas, toolbar, controls help, save and import |
 | `WbWidget` | `QGraphicsView`: tools, gestures, zoom and keyboard handling |
 | `WbScene` | Selection operations: grouping, stacking order, writing item transformations |
 | `WbItem` | One top-level SVG element rendered with `QSvgRenderer` |
@@ -76,12 +80,17 @@ ringing.
   Where the platform notification has no actions, the event in the roster opens the usual
   question. The notification closes when another device answers or the caller withdraws.
 
-## Planned: one window for calls and whiteboards
+## One window for calls and whiteboards
 
 A call and a whiteboard are both Jingle sessions, and one session can carry several contents
 (audio, camera, screen, whiteboard) added and removed with `content-add`/`content-remove`.
-Psi will therefore show them in one window: a whiteboard can get a microphone or camera, and a
-call can get a whiteboard.
+Psi therefore shows them in one window: a call can get a whiteboard, and later a whiteboard can
+get a microphone or camera. Implemented so far: the stage with tiles, whiteboard-only sessions in
+the call window, adding a whiteboard to a call (either side), switching the whiteboard on and off
+through senders, and the single call/whiteboard action. A whiteboard switched on before a call
+is added with `content-add` once the call connects. Still planned: media in a session that
+started as a whiteboard, senders for the media buttons, proposals and ringing (see the order of
+work below).
 
 ### Window
 
@@ -167,15 +176,19 @@ One action starts calls and whiteboards. It replaces **Voice Call** and the sepa
 
 ### Structure
 
+- `CallDlg` drives whiteboard contents itself: a whiteboard-only session has no `AvCall`, and in
+  a call it uses `AvCall::jingleSession()` to add the whiteboard and to accept one added by the
+  peer. A session that started as a whiteboard refuses media contents added by the peer until
+  `AvCall` can join an existing session.
 - `CallView` is a stage with tiles and a control bar. `CallStage` (`src/avcall/callstage.h`)
   places the visible tiles: the main tile by the default order or the viewer's choice, the others
   as clickable previews, and a placeholder when nothing is visible. The remote camera and the
-  remote screen are `PsiMedia::VideoWidget` tiles; the whiteboard tile will wrap `WbWidget`
-  with the whiteboard toolbar taken out of `WbDlg`.
+  remote screen are `PsiMedia::VideoWidget` tiles; the whiteboard tile is a `WbView`, whose
+  toolbar is hidden while it is a preview.
 - `AvCall` grows into a session object with one controller per content type: the existing RTP
   logic (audio, camera, screen) and a whiteboard controller (`Jingle::SXE::Application` and its
   document). Incoming sessions with any mix of these contents open one window.
-- The standalone whiteboard window goes away; whiteboards open in the call window.
+- The standalone whiteboard window is gone; whiteboards open in the call window.
 - One XEP-0353 proposal can describe several applications, so "call with whiteboard" rings
   once. The ringing and the notification with Accept/Decline described above serve every kind of
   session.
@@ -187,7 +200,8 @@ One action starts calls and whiteboards. It replaces **Voice Call** and the sepa
 2. Stage and tiles in `CallView`, first with the existing camera and screen tiles (done;
    `avcallstage_test` covers the tile order and the viewer's choice).
 3. The whiteboard as a tile and controller; whiteboard sessions open in the call window, and
-   one call/whiteboard action replaces the separate whiteboard menu entries.
+   one call/whiteboard action replaces the separate whiteboard menu entries (done; the group
+   chat participant menu still has no whiteboard).
 4. Turning contents on and off from the control bar through senders; screen sharing keeps
    its content and reopens the source picker.
 5. XEP-0353 proposals for whiteboards and mixed sessions.

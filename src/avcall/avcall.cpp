@@ -891,6 +891,8 @@ bool AvCall::screenSharing() const { return d->screenContent && d->screenContent
 
 QString AvCall::errorString() const { return d->errorString; }
 
+XMPP::Jingle::Session *AvCall::jingleSession() const { return d->session; }
+
 void AvCall::unlink() { d->unlink(); }
 
 AvCallManagerPrivate::AvCallManagerPrivate(PsiAccount *account, AvCallManager *q) : QObject(q), q(q), pa(account)

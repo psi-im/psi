@@ -2,6 +2,7 @@
 #include "../callstage.h"
 #include <QAbstractButton>
 #include <QApplication>
+#include <QPointer>
 #include <QSignalSpy>
 
 static void check(bool ok, const char *message)
@@ -52,10 +53,14 @@ int main(int argc, char **argv)
     stage.setMainTile(camera);
     check(stage.mainTile() == screen, "a hidden tile was put on the main stage");
 
+    QPointer<QWidget> removed(board);
+    stage.removeTile(board);
+    check(!removed && stage.mainTile() == screen, "a removed tile was not deleted");
+
     QSignalSpy changed(&stage, &CallStage::mainTileChanged);
     stage.hideAllTiles();
     check(!stage.mainTile() && changed.count() == 1, "hiding all tiles did not clear the main stage");
-    check(!camera->isVisible() && !screen->isVisible() && !board->isVisible(), "hidden tiles are still shown");
+    check(!camera->isVisible() && !screen->isVisible(), "hidden tiles are still shown");
 
     qInfo("call stage tests passed");
     return 0;

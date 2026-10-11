@@ -35,6 +35,9 @@ class VideoWidget;
 
 namespace XMPP {
 class Jid;
+namespace Jingle {
+    class Session;
+}
 }
 
 class AvCall : public QObject {
@@ -66,6 +69,8 @@ public:
     bool screenSharingSupported() const;
 
     QString errorString() const;
+    // The Jingle session of the call once it exists; other contents (a whiteboard) can be added to it.
+    XMPP::Jingle::Session *jingleSession() const;
 
     // if we use deleteLater() on a call, then it won't detach from the
     //   manager until the deletion resolves.  use unlink() to immediately

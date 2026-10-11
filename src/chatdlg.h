@@ -95,6 +95,7 @@ signals:
     void aInfo(const XMPP::Jid &);
     void aHistory(const XMPP::Jid &);
     void aVoice(const XMPP::Jid &);
+    void aWhiteboard(const XMPP::Jid &);
     void messagesRead(const XMPP::Jid &);
     void aSend(XMPP::Message &);
     void aFile(const XMPP::Jid &);
@@ -134,6 +135,7 @@ protected slots:
     virtual void doClear();
     virtual void doSend();
     void         doVoice();
+    void         doWhiteboard();
     void         doFile();
 
 private slots:

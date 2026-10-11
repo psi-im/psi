@@ -1,5 +1,5 @@
 /*
- * wbdlg.cpp - dialog for whiteboarding
+ * wbview.cpp - whiteboard canvas with its toolbar
  * Copyright (C) 2006  Joonas Govenius
  *
  * Originally developed from:
@@ -21,70 +21,42 @@
  *
  */
 
-#include "wbdlg.h"
+#include "wbview.h"
 
-#include "accountlabel.h"
+#include "common.h"
 #include "iconaction.h"
 #include "iconset.h"
-#include "psiaccount.h"
 #include "stretchwidget.h"
 
 #include <QActionGroup>
 #include <QColorDialog>
+#include <QContextMenuEvent>
 #include <QDialog>
 #include <QDialogButtonBox>
-#include <QHBoxLayout>
+#include <QDir>
+#include <QFile>
+#include <QFileDialog>
+#include <QInputDialog>
+#include <QLabel>
+#include <QMenu>
 #include <QMessageBox>
 #include <QPainter>
 #include <QStyle>
+#include <QTextStream>
+#include <QToolBar>
 #include <QToolButton>
 #include <QVBoxLayout>
-#include <iris/jingle-session.h>
 
-static const QString geometryOption = "options.ui.chat.wb-size";
-
-//----------------------------------------------------------------------------
-// WbDlg
-//----------------------------------------------------------------------------
-
-WbDlg::WbDlg(XMPP::Jingle::SXE::Application *application, PsiAccount *pa) :
-    application_(application), document_(application->document())
+WbView::WbView(XMPP::Jingle::SXE::Document *document, QWidget *parent) : QWidget(parent), document_(document)
 {
-    // Keep the document readable and savable after the session ends.
-    document_->setParent(this);
-    peer_       = application->pad()->session()->peer();
-    sid_        = application->pad()->session()->sid();
-    groupChat_  = false;
-    pending_    = 0;
-    keepOpen_   = false;
-    allowEdits_ = true;
+    auto layout = new QVBoxLayout(this);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(0);
 
-    selfDestruct_ = nullptr;
-    setAttribute(Qt::WA_DeleteOnClose, false); // we want deferred endSession call and delete from manager
-
-    setWindowTitle(CAP(tr("Whiteboard (%1)").arg(pa->jid().bare())));
-    QVBoxLayout *vb1 = new QVBoxLayout(this);
-
-    // first row
-    le_jid_ = new QLineEdit(this);
-    le_jid_->setReadOnly(true);
-    le_jid_->setFocusPolicy(Qt::NoFocus);
-    le_jid_->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum));
-    lb_ident_ = new AccountLabel(this);
-    lb_ident_->setAccount(pa);
-    lb_ident_->setShowJid(false);
-    lb_ident_->setSizePolicy(QSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum));
-    QHBoxLayout *hb1 = new QHBoxLayout();
-    hb1->addWidget(le_jid_);
-    hb1->addWidget(lb_ident_);
-    vb1->addLayout(hb1);
-
-    // mid area
-    wbWidget_ = new WbWidget(document_, this);
+    wbWidget_ = new WbWidget(document, this);
     wbWidget_->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding));
-    vb1->addWidget(wbWidget_);
+    layout->addWidget(wbWidget_);
 
-    // Bottom (tool) area
     act_save_ = new IconAction(tr("Save session"), "psi/saveBoard", tr("Save the contents of the whiteboard"), 0, this);
     act_geometry_ = new IconAction(tr("Change the geometry"), "psi/whiteboard", tr("Change the geometry"), 0, this);
     act_clear_    = new IconAction(tr("Clear the whiteboard for everyone"), "psi/clearChat", tr("Clear the whiteboard"),
@@ -104,13 +76,18 @@ WbDlg::WbDlg(XMPP::Jingle::SXE::Application *application, PsiAccount *pa) :
     group_widths_ = new QActionGroup(this);
     group_modes_  = new QActionGroup(this);
 
-    connect(act_color_, SIGNAL(triggered()), SLOT(setStrokeColor()));
-    connect(act_fill_, SIGNAL(triggered(bool)), SLOT(setFillColor(bool)));
-    connect(group_widths_, SIGNAL(triggered(QAction *)), SLOT(setStrokeWidth(QAction *)));
-    connect(group_modes_, SIGNAL(triggered(QAction *)), SLOT(setMode(QAction *)));
-    connect(act_save_, SIGNAL(triggered()), SLOT(save()));
-    connect(act_geometry_, SIGNAL(triggered()), SLOT(setGeometry()));
-    connect(act_clear_, SIGNAL(triggered()), wbWidget_, SLOT(clear()));
+    act_import_ = new IconAction(tr("Import SVG"), "psi/open", tr("Add the drawing of an SVG file"), 0, this);
+
+    connect(act_color_, &QAction::triggered, this, &WbView::setStrokeColor);
+    connect(act_fill_, &QAction::triggered, this, &WbView::setFillColor);
+    connect(group_widths_, &QActionGroup::triggered, this,
+            [this](QAction *action) { wbWidget_->setStrokeWidth(action->data().toInt()); });
+    connect(group_modes_, &QActionGroup::triggered, this,
+            [this](QAction *action) { wbWidget_->setMode(WbWidget::Mode(action->data().toInt())); });
+    connect(act_save_, &QAction::triggered, this, &WbView::save);
+    connect(act_import_, &QAction::triggered, this, &WbView::importSvg);
+    connect(act_geometry_, &QAction::triggered, this, &WbView::setCanvasSize);
+    connect(act_clear_, &QAction::triggered, wbWidget_, &WbWidget::clear);
 
     pixmap = QPixmap(2, 2);
     pixmap.fill(QColor(Qt::black));
@@ -173,20 +150,20 @@ WbDlg::WbDlg(XMPP::Jingle::SXE::Application *application, PsiAccount *pa) :
         }
     });
     connect(wbWidget_, &WbWidget::canvasContextMenuRequested, this,
-            [this](const QPoint &globalPos) { pm_settings_->exec(globalPos); });
+            [this](const QPoint &globalPos) { menu_->exec(globalPos); });
 
     act_help_ = new QAction(style()->standardIcon(QStyle::SP_DialogHelpButton), tr("Controls"), this);
     act_help_->setToolTip(tr("Mouse and keyboard controls"));
     act_help_->setShortcut(QKeySequence::HelpContents);
-    connect(act_help_, &QAction::triggered, this, &WbDlg::showHelp);
+    connect(act_help_, &QAction::triggered, this, &WbView::showHelp);
 
-    menu_widths_ = new QMenu(this);
-    menu_widths_->addActions(group_widths_->actions());
-    act_widths_->setMenu(menu_widths_);
+    auto menuWidths = new QMenu(this);
+    menuWidths->addActions(group_widths_->actions());
+    act_widths_->setMenu(menuWidths);
 
-    menu_modes_ = new QMenu(this);
-    menu_modes_->addActions(group_modes_->actions());
-    act_modes_->setMenu(menu_modes_);
+    auto menuModes = new QMenu(this);
+    menuModes->addActions(group_modes_->actions());
+    act_modes_->setMenu(menuModes);
 
     toolbar_ = new QToolBar(tr("Whiteboard toolbar"), this);
     toolbar_->setIconSize(QSize(16, 16));
@@ -198,68 +175,52 @@ WbDlg::WbDlg(XMPP::Jingle::SXE::Application *application, PsiAccount *pa) :
     toolbar_->addAction(act_color_);
     QToolButton *bw = new QToolButton;
     bw->setIcon(IconsetFactory::icon("psi/drawPaths").icon());
-    bw->setMenu(menu_widths_);
+    bw->setMenu(menuWidths);
     bw->setPopupMode(QToolButton::InstantPopup);
     toolbar_->addWidget(bw);
     toolbar_->addSeparator();
     toolbar_->addAction(act_save_);
+    toolbar_->addAction(act_import_);
     toolbar_->addAction(act_geometry_);
     toolbar_->addAction(act_clear_);
     toolbar_->addAction(act_help_);
-    vb1->addWidget(toolbar_);
+    layout->addWidget(toolbar_);
 
-    // Context menu
-    pm_settings_ = new QMenu(this);
-    connect(pm_settings_, SIGNAL(aboutToShow()), SLOT(buildMenu()));
-
-    X11WM_CLASS("whiteboard");
-
-    // set the Jid -> le_jid.
-    le_jid_->setText(QString("%1 (session: %2)").arg(peer_.full(), sid_));
-    le_jid_->setCursorPosition(0);
-    le_jid_->setToolTip(peer_.full());
-
-    // update the widget icon
-    setWindowIcon(IconsetFactory::icon("psi/whiteboard").icon());
-
-    setWindowOpacity(double(qMax(MINIMUM_OPACITY, PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt()))
-                     / 100);
-
-    setGeometryOptionPath(geometryOption);
-
-    connect(application, &XMPP::Jingle::SXE::Application::syncStateChanged, this, &WbDlg::syncStateChanged);
-    connect(application, &QObject::destroyed, this,
-            [this]() { syncStateChanged(XMPP::Jingle::SXE::Application::SyncState::Offline); });
-    syncStateChanged(application->syncState());
+    menu_ = new QMenu(this);
+    connect(menu_, &QMenu::aboutToShow, this, &WbView::buildMenu);
 }
 
-WbDlg::~WbDlg() { qDebug("destruct WbDlg"); }
+XMPP::Jingle::SXE::Document *WbView::document() const { return document_; }
 
-XMPP::Jingle::SXE::Application *WbDlg::application() const { return application_; }
-
-Jid WbDlg::peer() const { return peer_; }
-
-void WbDlg::syncStateChanged(XMPP::Jingle::SXE::Application::SyncState state)
+void WbView::setEditable(bool editable)
 {
-    using SyncState = XMPP::Jingle::SXE::Application::SyncState;
-    // The host edits its document right away; the peer gets it with the state.
-    // A joiner waits for that state, and nothing is sent once the session ended.
-    const bool ended = !application_ || application_->state() >= XMPP::Jingle::State::Finishing;
-    const bool host  = application_ && application_->isHost();
-    setAllowEdits(!ended && (host || state == SyncState::Synchronized));
-    if (ended)
-        peerLeftSession(peer_);
+    editable_ = editable;
+    updateTools();
 }
 
-bool WbDlg::allowEdits() const { return allowEdits_; }
+bool WbView::isEditable() const { return editable_; }
 
-void WbDlg::setAllowEdits(bool a)
+void WbView::setPreview(bool preview)
 {
-    allowEdits_ = a;
-    wbWidget_->setEditable(a);
+    preview_ = preview;
+    toolbar_->setVisible(!preview);
+    wbWidget_->setFocusPolicy(preview ? Qt::NoFocus : Qt::StrongFocus);
+    if (preview)
+        wbWidget_->fitToView();
+    updateTools();
 }
 
-void WbDlg::showHelp()
+void WbView::updateTools()
+{
+    const bool editable = editable_ && !preview_;
+    wbWidget_->setEditable(editable);
+    group_modes_->setEnabled(editable);
+    act_clear_->setEnabled(editable);
+    act_import_->setEnabled(editable);
+    act_geometry_->setEnabled(editable);
+}
+
+void WbView::showHelp()
 {
     if (helpDialog_) {
         bringToFront(helpDialog_);
@@ -343,65 +304,7 @@ void WbDlg::showHelp()
     helpDialog_->show();
 }
 
-void WbDlg::peerLeftSession(const Jid &peer) { le_jid_->setText(tr("%1 left (session: %2).").arg(peer.full(), sid_)); }
-
-void WbDlg::endSession()
-{
-    // Closing the window is the way to leave a whiteboard: terminate the underlying Jingle session
-    if (application_ && application_->pad()->session()->state() != XMPP::Jingle::State::Finished)
-        application_->pad()->session()->terminate(XMPP::Jingle::Reason::Success);
-
-    emit sessionEnded(this);
-}
-
-void WbDlg::activated()
-{
-    if (pending_ > 0) {
-        pending_ = 0;
-        updateCaption();
-    }
-    doFlash(false);
-}
-
-void WbDlg::keyPressEvent(QKeyEvent *e)
-{
-    if (e->key() == Qt::Key_Escape && !PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool())
-        close();
-    else if (e->key() == Qt::Key_W && e->modifiers() & Qt::ControlModifier
-             && !PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool())
-        close();
-    else
-        e->ignore();
-}
-
-void WbDlg::closeEvent(QCloseEvent *e)
-{
-    e->accept();
-    if (keepOpen_) {
-        int n = QMessageBox::information(
-            this, tr("Warning"),
-            tr("A new whiteboard message was just received.\nDo you still want to close the window?"),
-            QMessageBox::Yes | QMessageBox::No);
-        if (n != QMessageBox::Yes) {
-            e->ignore();
-            return;
-        }
-    }
-
-    endSession();
-}
-
-void WbDlg::showEvent(QShowEvent *) { setSelfDestruct(0); }
-
-void WbDlg::changeEvent(QEvent *e)
-{
-    if (e->type() == QEvent::ActivationChange && isActiveWindow()) {
-        activated();
-    }
-    e->ignore();
-}
-
-void WbDlg::setStrokeColor()
+void WbView::setStrokeColor()
 {
     QColor newColor = QColorDialog::getColor();
     if (newColor.isValid()) {
@@ -412,7 +315,7 @@ void WbDlg::setStrokeColor()
     }
 }
 
-void WbDlg::setFillColor(bool fill)
+void WbView::setFillColor(bool fill)
 {
     QColor newColor;
     if (fill) {
@@ -428,26 +331,21 @@ void WbDlg::setFillColor(bool fill)
     wbWidget_->setFillColor(newColor);
 }
 
-void WbDlg::setStrokeWidth(QAction *a) { wbWidget_->setStrokeWidth(a->data().toInt()); }
-
-void WbDlg::setMode(QAction *a) { wbWidget_->setMode(WbWidget::Mode(a->data().toInt())); }
-
-void WbDlg::setKeepOpenFalse() { keepOpen_ = false; }
-
-void WbDlg::buildMenu()
+void WbView::buildMenu()
 {
-    pm_settings_->clear();
-    pm_settings_->addAction(act_modes_);
-    pm_settings_->addAction(act_widths_);
-    pm_settings_->addAction(act_color_);
-    pm_settings_->addSeparator();
-    pm_settings_->addAction(act_save_);
-    pm_settings_->addAction(act_clear_);
-    pm_settings_->addSeparator();
-    pm_settings_->addAction(act_help_);
+    menu_->clear();
+    menu_->addAction(act_modes_);
+    menu_->addAction(act_widths_);
+    menu_->addAction(act_color_);
+    menu_->addSeparator();
+    menu_->addAction(act_save_);
+    menu_->addAction(act_import_);
+    menu_->addAction(act_clear_);
+    menu_->addSeparator();
+    menu_->addAction(act_help_);
 }
 
-void WbDlg::setGeometry()
+void WbView::setCanvasSize()
 {
     // TODO: make a proper dialog
     QSize size;
@@ -468,11 +366,15 @@ void WbDlg::setGeometry()
     wbWidget_->setSize(size);
 }
 
-void WbDlg::save()
+void WbView::save()
 {
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Save Whitebaord"), QDir::homePath(),
+    if (!document_)
+        return;
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save Whiteboard"), QDir::homePath(),
                                                     tr("Scalable Vector Graphics (*.svg)"));
     fileName         = fileName.trimmed();
+    if (fileName.isEmpty())
+        return;
     if (!fileName.endsWith(".svg", Qt::CaseInsensitive))
         fileName += ".svg";
 
@@ -482,44 +384,39 @@ void WbDlg::save()
 
     QTextStream stream(&file);
     document_->document().save(stream, 2);
-
-    file.close();
 }
 
-void WbDlg::contextMenuEvent(QContextMenuEvent *e)
+void WbView::importSvg()
 {
-    pm_settings_->exec(QCursor::pos());
-    e->accept();
-}
-
-void WbDlg::setSelfDestruct(int minutes)
-{
-    if (minutes <= 0) {
-        if (selfDestruct_) {
-            delete selfDestruct_;
-            selfDestruct_ = nullptr;
-        }
+    if (!document_ || !editable_)
+        return;
+    const QString fileName = QFileDialog::getOpenFileName(this, tr("Import SVG"), QDir::homePath(),
+                                                          tr("Scalable Vector Graphics (*.svg)"));
+    QFile         file(fileName);
+    if (fileName.isEmpty() || !file.open(QIODevice::ReadOnly))
+        return;
+    QDomDocument svg;
+#if QT_VERSION < QT_VERSION_CHECK(6, 5, 0)
+    const bool parsed = svg.setContent(&file, true);
+#else
+    const bool parsed = bool(svg.setContent(&file, QDomDocument::ParseOption::UseNamespaceProcessing));
+#endif
+    if (!parsed || svg.documentElement().localName() != QLatin1String("svg")) {
+        QMessageBox::warning(this, tr("Import SVG"), tr("The file is not an SVG document."));
         return;
     }
-
-    if (!selfDestruct_) {
-        selfDestruct_ = new QTimer(this);
-        connect(selfDestruct_, SIGNAL(timeout()), SLOT(endSession()));
-    }
-
-    selfDestruct_->start(minutes * 60000);
+    // The elements are added on top of the current drawing; the canvas keeps its size.
+    const auto root = document_->document().documentElement();
+    for (auto child = svg.documentElement().firstChildElement(); !child.isNull();
+         child      = child.nextSiblingElement())
+        document_->insertNodeAfter(child, root);
+    document_->flush();
 }
 
-void WbDlg::updateCaption()
+void WbView::contextMenuEvent(QContextMenuEvent *event)
 {
-    QString cap = "";
-
-    if (pending_ > 0) {
-        cap += "* ";
-        if (pending_ > 1)
-            cap += QString("[%1] ").arg(pending_);
-    }
-    cap += peer_.full();
-
-    setWindowTitle(cap);
+    if (preview_)
+        return;
+    menu_->exec(event->globalPos());
+    event->accept();
 }

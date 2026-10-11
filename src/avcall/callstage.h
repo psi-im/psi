@@ -20,6 +20,8 @@ public:
 
     // Adds a hidden tile. The stage takes ownership of the content widget.
     void     addTile(QWidget *content, const QString &title, int priority);
+    // Removes the tile and deletes its content widget.
+    void     removeTile(QWidget *content);
     void     setTileVisible(QWidget *content, bool visible);
     bool     isTileVisible(QWidget *content) const;
     void     hideAllTiles();

@@ -26,6 +26,9 @@ class PsiAccount;
 
 namespace XMPP {
 class Jid;
+namespace Jingle { namespace SXE {
+    class Application;
+}}
 }
 
 class CallDlg : public QDialog {
@@ -36,7 +39,11 @@ public:
     ~CallDlg() override;
 
     void setOutgoing(const XMPP::Jid &jid);
+    // An outgoing session with only a whiteboard.
+    void setOutgoingWhiteboard(const XMPP::Jid &jid);
     void setIncoming(AvCall *sess);
+    // An incoming session with only a whiteboard.
+    void setIncomingWhiteboard(XMPP::Jingle::SXE::Application *whiteboard);
 
 private:
     class Private;

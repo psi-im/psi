@@ -4110,6 +4110,7 @@ ChatDlg *PsiAccount::ensureChatDlg(const Jid &j)
         connect(c, &ChatDlg::aHistory, this, &PsiAccount::actionHistory);
         connect(c, &ChatDlg::aFile, this, [this](const XMPP::Jid &jid) { sendFiles(jid); });
         connect(c, &ChatDlg::aVoice, this, &PsiAccount::actionVoice);
+        connect(c, &ChatDlg::aWhiteboard, this, [this](const XMPP::Jid &jid) { actionOpenWhiteboardSpecific(jid); });
         connect(d->psi, &PsiCon::emitOptionsUpdate, c, &ChatDlg::optionsUpdate);
         connect(this, static_cast<void (PsiAccount::*)(const XMPP::Jid &, bool)>(&PsiAccount::updateContact), c,
                 &ChatDlg::updateContact);
@@ -4178,21 +4179,60 @@ void PsiAccount::changeStatus(int x, bool forceDialog)
     }
 }
 
+static bool callCapable(const XMPP::Features &features)
+{
+    return features.test(QStringLiteral("urn:xmpp:jingle:1"))
+        && features.test(QStringLiteral("urn:xmpp:jingle:transports:ice-udp:1"))
+        && features.test(QStringLiteral("urn:xmpp:jingle:apps:rtp:1"))
+        && features.test(QStringLiteral("urn:xmpp:jingle:apps:dtls:0"))
+        && features.test(QStringLiteral("urn:xmpp:jingle:apps:rtp:audio"));
+}
+
+// Calls \a test for the full JID, or for every available resource of a bare JID.
+template <typename Test> static bool anyResource(const PsiAccount *account, const Jid &jid, Test test)
+{
+    if (!jid.resource().isEmpty())
+        return test(jid);
+    const UserListItem *u = account->find(jid);
+    if (!u)
+        return false;
+    for (const auto &resource : u->userResourceList())
+        if (test(jid.withResource(resource.name())))
+            return true;
+    return false;
+}
+
+bool PsiAccount::canCall(const Jid &jid) const
+{
+    return anyResource(this, jid, [this](const Jid &full) { return callCapable(d->client->capsManager()->features(full)); });
+}
+
+bool PsiAccount::canWhiteboard(const Jid &jid) const
+{
+    return d->wbManager && anyResource(this, jid, [this](const Jid &full) { return d->wbManager->checkSupport(full); });
+}
+
+bool PsiAccount::callUsesMedia(const Jid &jid) const
+{
+    // Without a media backend, or for a contact that has whiteboards but no calls, the action opens a whiteboard.
+    // Contacts with unknown capabilities are called as before.
+    return AvCallManager::isSupported() && (canCall(jid) || !canWhiteboard(jid));
+}
+
 void PsiAccount::actionVoice(const Jid &j)
 {
+    if (!callUsesMedia(j)) {
+        actionOpenWhiteboardSpecific(j);
+        return;
+    }
     Jid j2 = j;
     if (j.resource().isEmpty()) {
         UserListItem *u = find(j);
         if (u && u->isAvailable()) {
             const UserResource *bestCallResource = nullptr;
             for (const auto &resource : u->userResourceList()) {
-                const auto features    = d->client->capsManager()->features(j.withResource(resource.name()));
-                const bool callCapable = features.test(QStringLiteral("urn:xmpp:jingle:1"))
-                    && features.test(QStringLiteral("urn:xmpp:jingle:transports:ice-udp:1"))
-                    && features.test(QStringLiteral("urn:xmpp:jingle:apps:rtp:1"))
-                    && features.test(QStringLiteral("urn:xmpp:jingle:apps:dtls:0"))
-                    && features.test(QStringLiteral("urn:xmpp:jingle:apps:rtp:audio"));
-                if (callCapable && (!bestCallResource || resource.priority() > bestCallResource->priority()))
+                const bool capable = callCapable(d->client->capsManager()->features(j.withResource(resource.name())));
+                if (capable && (!bestCallResource || resource.priority() > bestCallResource->priority()))
                     bestCallResource = &resource;
             }
             if (bestCallResource)
@@ -4563,25 +4603,8 @@ void PsiAccount::actionOpenPassiveChatSpecific(const Jid &j) { openChat(j, UserP
 #ifdef WHITEBOARDING
 void PsiAccount::actionOpenWhiteboard(const Jid &j)
 {
-    UserListItem *u = find(j);
-    if (!u)
-        return;
-
-    // if 'j' is bare, we might want to switch to a specific resource
-    QString res;
-    if (j.resource().isEmpty()) {
-        if (u->isAvailable()) {
-            QString pr = (*u->userResourceList().priority()).name();
-            if (!pr.isEmpty())
-                res = pr;
-        }
-    }
-
-    if (!res.isEmpty()) {
-        actionOpenWhiteboardSpecific(j.withResource(res));
-    } else {
-        actionOpenWhiteboardSpecific(j);
-    }
+    // The call window picks the contact's capable resource with the highest priority.
+    actionOpenWhiteboardSpecific(j);
 }
 
 /*! \brief Opens a whiteboard to \a target.
@@ -4590,10 +4613,15 @@ void PsiAccount::actionOpenWhiteboard(const Jid &j)
 
 void PsiAccount::actionOpenWhiteboardSpecific(const Jid &target, Jid ownJid, bool groupChat)
 {
-    if (ownJid.isEmpty())
-        ownJid = jid();
-
-    d->wbManager->openWhiteboard(target, ownJid, groupChat, true);
+    Q_UNUSED(ownJid)
+    if (groupChat) {
+        QMessageBox::information(nullptr, tr("Unsupported"), tr("Group chat whiteboards are not supported yet."));
+        return;
+    }
+    CallDlg *w = new CallDlg(this, nullptr);
+    w->setAttribute(Qt::WA_DeleteOnClose);
+    w->setOutgoingWhiteboard(target);
+    w->show();
 }
 #endif
 

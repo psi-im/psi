@@ -1841,7 +1841,12 @@ void PsiCon::processEvent(const PsiEvent::Ptr &e, ActivationType activationType)
         e->account()->eventQueue()->dequeue(e);
         emit e->account()->queueChanged();
         e->account()->cpUpdate(*u);
-        e->account()->wbManager()->requestActivated((e.staticCast<SxeEvent>())->id());
+        if (auto whiteboard = e->account()->wbManager()->takeRequest((e.staticCast<SxeEvent>())->id())) {
+            CallDlg *w = new CallDlg(e->account(), nullptr);
+            w->setAttribute(Qt::WA_DeleteOnClose);
+            w->setIncomingWhiteboard(whiteboard);
+            bringToFront(w);
+        }
         return;
     }
 #endif

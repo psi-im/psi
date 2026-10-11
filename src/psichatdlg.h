@@ -105,6 +105,8 @@ private:
     // reimplemented
     void      initUi();
     void      capsChanged();
+    // Shows the call action as a call or as a whiteboard, with "Whiteboard only" when both are possible.
+    void      updateCallAction();
     bool      isPgpEncryptionEnabled() const override;
     void      updateJidWidget(const QList<UserListItem *> &ul, int status, bool fromPresence);
     void      contactUpdated(UserListItem *u, int status, const QString &statusString);
@@ -125,6 +127,7 @@ private:
 
     QMenu *pm_settings_;
     QMenu *encryptionMenu_ = nullptr;
+    QMenu *callMenu_       = nullptr;
 
     QString                          selectedEncryptionMethod_;
     QPointer<XMPP::EncryptedSession> encryptionSession_;

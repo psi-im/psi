@@ -43,6 +43,14 @@ QIcon callIcon(int kind)
         painter.drawLine(QPointF(12, 14), QPointF(12, 7));
         painter.drawLine(QPointF(12, 7), QPointF(9, 10));
         painter.drawLine(QPointF(12, 7), QPointF(15, 10));
+    } else if (kind == 4) {
+        painter.drawRoundedRect(QRectF(2, 3, 20, 14), 1.5, 1.5);
+        painter.drawLine(QPointF(9, 17), QPointF(6, 22));
+        painter.drawLine(QPointF(15, 17), QPointF(18, 22));
+        QPainterPath stroke;
+        stroke.moveTo(6, 13);
+        stroke.cubicTo(9, 6, 12, 14, 18, 7);
+        painter.drawPath(stroke);
     } else {
         QPainterPath receiver;
         receiver.moveTo(3, 14);
@@ -151,10 +159,17 @@ CallView::CallView(QWidget *parent) : QWidget(parent)
     share_->setEnabled(false);
     share_->setToolTip(tr("Share a display or an individual window"));
     connect(share_, &QPushButton::clicked, this, &CallView::shareRequested);
+    whiteboard_ = new QPushButton(tr("Whiteboard"), this);
+    whiteboard_->setObjectName(QStringLiteral("callWhiteboard"));
+    whiteboard_->setCheckable(true);
+    whiteboard_->setEnabled(false);
+    whiteboard_->setToolTip(tr("Draw together on a shared whiteboard"));
+    connect(whiteboard_, &QPushButton::toggled, this, &CallView::whiteboardChanged);
     microphone_->setIcon(callIcon(0));
     camera_->setIcon(callIcon(1));
     share_->setIcon(callIcon(2));
-    for (auto button : { microphone_, camera_, share_ })
+    whiteboard_->setIcon(callIcon(4));
+    for (auto button : { microphone_, camera_, share_, whiteboard_ })
         button->setIconSize(QSize(22, 22));
     quality_ = new QComboBox(this);
     quality_->addItem(tr("HD · 2 Mbps"), 2000);
@@ -165,6 +180,7 @@ CallView::CallView(QWidget *parent) : QWidget(parent)
     controls->addWidget(microphone_);
     controls->addWidget(camera_);
     controls->addWidget(share_);
+    controls->addWidget(whiteboard_);
     controls->addStretch();
     layout->addLayout(controls);
     auto actions = new QHBoxLayout;
@@ -196,31 +212,37 @@ void    CallView::setActive(bool active)
     active_ = active;
     accept_->setVisible(!active);
     quality_->setVisible(!active);
-    end_->setText(active ? tr("End call") : tr("Close"));
-    share_->setEnabled(active && shareSupported_ && ScreenShareCapture::available());
+    end_->setText(active ? (whiteboardOnly_ ? tr("End") : tr("End call")) : tr("Close"));
+    share_->setEnabled(active && !whiteboardOnly_ && shareSupported_ && ScreenShareCapture::available());
     if (active)
-        stage_->setPlaceholderText(tr("Connected · waiting for video"));
+        stage_->setPlaceholderText(whiteboardOnly_ ? tr("Connected") : tr("Connected · waiting for video"));
 }
 void CallView::setConnecting(bool connecting)
 {
     accept_->setEnabled(!connecting);
     peer_->setReadOnly(connecting);
     quality_->setEnabled(!connecting);
-    camera_->setEnabled(!connecting && videoSupported_);
+    camera_->setEnabled(!connecting && videoSupported_ && !whiteboardOnly_);
     end_->setText(connecting ? tr("Cancel") : tr("Close"));
 }
-void CallView::setIncoming(bool incoming) { accept_->setText(incoming ? tr("Accept call") : tr("Call")); }
+void CallView::setIncoming(bool incoming)
+{
+    if (whiteboardOnly_)
+        accept_->setText(incoming ? tr("Join whiteboard") : tr("Invite"));
+    else
+        accept_->setText(incoming ? tr("Accept call") : tr("Call"));
+}
 void CallView::setVideoSupported(bool supported)
 {
     videoSupported_ = supported;
-    camera_->setEnabled(supported);
+    camera_->setEnabled(supported && !whiteboardOnly_);
     if (!supported)
         camera_->setChecked(false);
 }
 void CallView::setSharingSupported(bool supported)
 {
     shareSupported_ = supported;
-    share_->setEnabled(active_ && supported && ScreenShareCapture::available());
+    share_->setEnabled(active_ && !whiteboardOnly_ && supported && ScreenShareCapture::available());
 }
 void CallView::setCameraEnabled(bool enabled)
 {
@@ -230,14 +252,16 @@ void CallView::setCameraEnabled(bool enabled)
 }
 void CallView::setFinished()
 {
+    finished_ = true;
     setActive(false);
     accept_->hide();
     quality_->hide();
     microphone_->setEnabled(false);
     camera_->setEnabled(false);
     share_->setEnabled(false);
+    whiteboard_->setEnabled(false);
     stage_->hideAllTiles();
-    stage_->setPlaceholderText(tr("Call ended"));
+    stage_->setPlaceholderText(whiteboardOnly_ ? tr("Session ended") : tr("Call ended"));
     peer_->setReadOnly(true);
 }
 void CallView::setSharing(bool sharing, const QString &source, bool connecting)
@@ -251,7 +275,7 @@ void CallView::setSharing(bool sharing, const QString &source, bool connecting)
 void CallView::setShareSelecting(bool selecting)
 {
     selecting_ = selecting;
-    share_->setEnabled(active_ && shareSupported_ && ScreenShareCapture::available());
+    share_->setEnabled(active_ && !whiteboardOnly_ && shareSupported_ && ScreenShareCapture::available());
     share_->setText(selecting ? tr("Cancel selection") : (sharing_ ? tr("Sharing screen") : tr("Share screen")));
 }
 void CallView::setDuration(qint64 seconds)
@@ -266,6 +290,37 @@ bool                   CallView::microphoneEnabled() const { return microphone_-
 int                    CallView::bitrate() const { return quality_->currentData().toInt(); }
 PsiMedia::VideoWidget *CallView::remoteVideo() const { return video_; }
 PsiMedia::VideoWidget *CallView::remotePresentation() const { return presentation_; }
+CallStage             *CallView::stage() const { return stage_; }
+
+void CallView::setWhiteboardOnly(bool whiteboardOnly)
+{
+    whiteboardOnly_ = whiteboardOnly;
+    microphone_->setEnabled(!whiteboardOnly);
+    if (whiteboardOnly) {
+        const QSignalBlocker blocked(microphone_);
+        microphone_->setChecked(false);
+        microphone_->setText(tr("Microphone"));
+    }
+    microphone_->setToolTip(whiteboardOnly ? tr("Not available in a whiteboard session")
+                                           : tr("Turn your microphone on or off"));
+    camera_->setEnabled(!whiteboardOnly && videoSupported_);
+    share_->setEnabled(active_ && !whiteboardOnly && shareSupported_ && ScreenShareCapture::available());
+    quality_->setEnabled(!whiteboardOnly);
+    stage_->setPlaceholderText(whiteboardOnly ? tr("Whiteboard")
+                                              : tr("Audio call\nTurn on your camera or share your screen"));
+}
+bool CallView::whiteboardOnly() const { return whiteboardOnly_; }
+void CallView::setWhiteboardSupported(bool supported)
+{
+    whiteboardSupported_ = supported;
+    whiteboard_->setEnabled(supported && !finished_);
+}
+void CallView::setWhiteboardEnabled(bool enabled)
+{
+    const QSignalBlocker blocked(whiteboard_);
+    whiteboard_->setChecked(enabled);
+}
+bool CallView::whiteboardEnabled() const { return whiteboard_->isChecked(); }
 
 void CallView::hideRemoteVideo(bool presentation)
 {

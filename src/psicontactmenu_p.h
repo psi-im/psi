@@ -21,6 +21,7 @@
 #include "psicontactmenu.h"
 #include "resourcemenu.h"
 
+class IconAction;
 class InviteToGroupChatMenu;
 class PsiAccount;
 
@@ -46,10 +47,6 @@ public slots:
     void receiveIncomingEvent();
     void sendMessage();
     void openChat();
-#ifdef WHITEBOARDING
-    void openWhiteboard();
-    void openWhiteboardTo(PsiContact *, const XMPP::Jid &jid);
-#endif
     void voiceCall();
     void sendFile();
     void transportLogon();
@@ -87,13 +84,9 @@ public:
     QMenu   *sendMessageToMenu_;
     QAction *openChatAction_;
     QMenu   *openChatToMenu_;
-#ifdef WHITEBOARDING
-    QAction *openWhiteboardAction_;
-    QMenu   *openWhiteboardToMenu_;
-#endif
     ResourceMenu          *executeCommandMenu_;
     ResourceMenu          *activeChatsMenu_;
-    QAction               *voiceCallAction_;
+    IconAction            *voiceCallAction_;
     QAction               *sendFileAction_;
     QAction               *customStatusAction_;
     InviteToGroupChatMenu *inviteToGroupchatMenu_;

@@ -457,7 +457,7 @@ void PsiChatDlg::setLooks()
             ui_.toolbar->hide();
             ui_.tb_emoticons->setVisible(
                 PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool());
-            ui_.tb_voice->setVisible(AvCallManager::isSupported());
+            ui_.tb_voice->setVisible(AvCallManager::isSupported() || account()->canWhiteboard(jid()));
         }
     }
 
@@ -526,10 +526,6 @@ void PsiChatDlg::updateToolbuttons()
     PsiOptions *options      = PsiOptions::instance();
     QStringList actionsNames = options->getOption("options.ui.contactlist.toolbars.m0.actions").toStringList();
     for (const QString &actionName : std::as_const(actionsNames)) {
-        if (actionName == "chat_voice" && !AvCallManager::isSupported()) {
-            continue;
-        }
-
 #ifdef PSI_PLUGINS
         if (actionName.endsWith("-plugin")) {
             QString name = actionName.mid(0, actionName.length() - 7);
@@ -557,6 +553,35 @@ void PsiChatDlg::updateToolbuttons()
             }
         }
     }
+    updateCallAction();
+}
+
+void PsiChatDlg::updateCallAction()
+{
+    auto action = actions_->action("chat_voice");
+    if (!action)
+        return;
+    const bool media      = account()->callUsesMedia(jid());
+    const bool whiteboard = account()->canWhiteboard(jid());
+    action->setPsiIcon(media ? QStringLiteral("psi/avcall") : QStringLiteral("psi/whiteboard"));
+    action->setText(media ? tr("Voice Call") : tr("Whiteboard"));
+    action->setToolTip(action->text());
+    action->setVisible(AvCallManager::isSupported() || whiteboard);
+    if (!callMenu_) {
+        callMenu_ = new QMenu(this);
+        callMenu_->addAction(IconsetFactory::icon("psi/whiteboard").icon(), tr("Whiteboard only"), this,
+                             &PsiChatDlg::doWhiteboard);
+    }
+    // A whiteboard without audio is offered next to the call when both are possible.
+    const bool split = media && whiteboard;
+    action->setMenu(split ? callMenu_ : nullptr);
+    const auto mode = split ? QToolButton::MenuButtonPopup : QToolButton::DelayedPopup;
+    if (auto button = qobject_cast<QToolButton *>(ui_.toolbar->widgetForAction(action))) {
+        button->setMenu(split ? callMenu_ : nullptr);
+        button->setPopupMode(mode);
+    }
+    ui_.tb_voice->setMenu(split ? callMenu_ : nullptr);
+    ui_.tb_voice->setPopupMode(mode);
 }
 
 void PsiChatDlg::copyUserJid() { QApplication::clipboard()->setText(jid().bare()); }
@@ -654,14 +679,7 @@ void PsiChatDlg::contextMenuEvent(QContextMenuEvent *) { pm_settings_->exec(QCur
 void PsiChatDlg::capsChanged()
 {
     ChatDlg::capsChanged();
-
-    QString       resource = jid().resource();
-    UserListItem *ul       = account()->findFirstRelevant(jid());
-    if (resource.isEmpty() && ul && !ul->userResourceList().isEmpty()) {
-        resource = (*(ul->userResourceList().priority())).name();
-    }
-    // act_voice_->setEnabled(!account()->capsManager()->isEnabled() || (ul && ul->isAvailable() &&
-    // account()->capsManager()->features(jid().withResource(resource)).canVoice()));
+    updateCallAction();
 }
 
 void PsiChatDlg::activated()
@@ -1112,7 +1130,7 @@ void PsiChatDlg::buildMenu()
     pm_settings_->addAction(actions_->action("chat_clear"));
     pm_settings_->addSeparator();
 
-    if (AvCallManager::isSupported()) {
+    if (AvCallManager::isSupported() || account()->canWhiteboard(jid())) {
         pm_settings_->addAction(actions_->action("chat_voice"));
     }
     pm_settings_->addAction(actions_->action("chat_pgp"));

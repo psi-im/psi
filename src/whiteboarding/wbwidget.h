@@ -43,7 +43,7 @@
  *  while being drawn and only when finished, added to the document.
  *
  *  \sa WbScene
- *  \sa WbDlg
+ *  \sa WbView
  */
 class WbWidget : public QGraphicsView {
     Q_OBJECT

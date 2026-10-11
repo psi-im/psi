@@ -119,6 +119,18 @@ void CallStage::addTile(QWidget *content, const QString &title, int priority)
     tiles_.append(frame);
 }
 
+void CallStage::removeTile(QWidget *content)
+{
+    auto frame = frameOf(content);
+    if (!frame)
+        return;
+    tiles_.removeOne(frame);
+    mainLayout_->removeWidget(frame);
+    sideLayout_->removeWidget(frame);
+    delete frame;
+    updateLayout();
+}
+
 void CallStage::setTileVisible(QWidget *content, bool visible)
 {
     auto frame = frameOf(content);
