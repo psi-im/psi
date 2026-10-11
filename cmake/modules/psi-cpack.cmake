@@ -9,11 +9,16 @@ find_program(CPACK_APPIMAGE_PATCHELF_EXECUTABLE patchelf)
 
 include(GNUInstallDirs)
 
+set(_CPACK_PACKAGE_NAME "${PROJECT_NAME}")
+if(CPACK_VERBOSED_NAME)
+    set(_CPACK_PACKAGE_NAME "${CPACK_VERBOSED_NAME}")
+endif()
+
+set(CPACK_PACKAGE_NAME ${_CPACK_PACKAGE_NAME})
+
 if(PSI_PLUS)
-    set(CPACK_PACKAGE_NAME "psi-plus")
     set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Psi+ XMPP client")
 else()
-    set(CPACK_PACKAGE_NAME "psi")
     set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Psi XMPP client")
 endif()
 
@@ -171,7 +176,7 @@ if(CMAKE_VERSION GREATER_EQUAL 4.2.0)
         set(CPACK_PACKAGE_ICON "${CPACK_PSI_ICON}")
         # Generate dependency lists for binary file
         # And create install rules for dependencies
-        deploy_binary_deps("${CMAKE_CURRENT_BINARY_DIR}/psi/${PROJECT_NAME}")
+        deploy_binary_deps("${CMAKE_CURRENT_BINARY_DIR}/psi/${CPACK_PACKAGE_NAME}")
         # Create qt.conf file in bin catalog
         cpack_generate_qconf(${CMAKE_INSTALL_BINDIR})
         # Get path to Qt plugins
@@ -215,21 +220,20 @@ if(CMAKE_VERSION GREATER_EQUAL 4.2.0)
                     )
                     deploy_binary_deps("${QTWEBENGINE_PROCESS}")
                     # Create custom AppRun to avoid rendering problems
-                    file(WRITE "${CMAKE_BINARY_DIR}/AppRun.sh" [=[
-#!/bin/sh
-HERE="$(dirname "$(readlink -f "${0}")")"
+                    file(WRITE "${CMAKE_BINARY_DIR}/AppRun.sh" "#!/bin/sh
+HERE=\"$(dirname \"$(readlink -f \"\${0}\")\")\"
 
 # Rendering variables for Qt 6 / QtWebEngine
 export QT_QUICK_BACKEND=software
-export QTWEBENGINE_CHROMIUM_FLAGS="--disable-gpu --no-sandbox"
+export QTWEBENGINE_CHROMIUM_FLAGS=\"--disable-gpu --no-sandbox\"
 export QTWEBENGINE_DISABLE_SANDBOX=1
 
 # Path to the libraries inside of AppImage
-export LD_LIBRARY_PATH="${HERE}/usr/lib:${LD_LIBRARY_PATH}"
+export LD_LIBRARY_PATH=\"\${HERE}/usr/lib:\${LD_LIBRARY_PATH}\"
 
 # Run binary file
-exec "${HERE}/usr/bin/psi" "$@"
-]=]
+exec \"\${HERE}/usr/bin/${CPACK_PACKAGE_NAME}\" \"$@\"
+"
                     )
                     install(CODE "
 file(INSTALL
@@ -285,7 +289,7 @@ if(APPLE)
         include(BundleUtilities)
         set(BU_CHMOD_BUNDLE_ITEMS TRUE)
         fixup_bundle(
-            \"\\\$ENV{DESTDIR}\\\${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}\"
+            \"\\\$ENV{DESTDIR}\\\${CMAKE_INSTALL_PREFIX}/${CPACK_PACKAGE_NAME}\"
             \"\"
             \"${APP_LIBRARY_DIRS}\"
         )
@@ -295,7 +299,7 @@ if(APPLE)
     install(CODE "
         execute_process(
             COMMAND ${CPACK_MACDEPLOYQT_BIN}
-            \"\\\$ENV{DESTDIR}\\\${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}\"
+            \"\\\$ENV{DESTDIR}\\\${CMAKE_INSTALL_PREFIX}/${CPACK_PACKAGE_NAME}\"
             RESULT_VARIABLE MACDEPLOYQT_RESULT
         )
         if(NOT MACDEPLOYQT_RESULT EQUAL 0)
@@ -360,5 +364,6 @@ include(CPack)
 
 unset(_PSI_CPACK_GENERATORS)
 unset(_PSI_CPACK_VERSION)
+unset(_CPACK_PACKAGE_NAME)
 unset(PSI_CPACK_DPKG_DEB_EXECUTABLE)
 unset(PSI_CPACK_RPMBUILD_EXECUTABLE)
