@@ -158,7 +158,12 @@ One action starts calls and whiteboards. It replaces **Voice Call** and the sepa
 - In the chat toolbar the call button gets a menu (split button) with **Whiteboard only**, for
   a whiteboard without audio when a call would be possible. The group chat participant menu
   uses the same action.
-- A resource is chosen as for calls today: the capable resource with the highest priority.
+- The target follows the user's choice. In a chat with a resource selected in the header, the
+  session goes directly to that full JID (`session-initiate`, no proposal). Otherwise, and from
+  the roster menu, a XEP-0353 proposal goes to the bare JID and the first device that answers
+  `<proceed/>` gets the session; without XEP-0353 the session goes to the capable resource with
+  the highest priority. Calls follow the same rule; today they always send the proposal to the
+  bare JID when XEP-0353 is enabled.
 
 ### Structure
 
