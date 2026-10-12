@@ -295,6 +295,62 @@
        </property>
       </widget>
      </item>
+     <item row="11" column="0">
+      <widget class="QCheckBox" name="ck_oeIncomingCall">
+       <property name="text">
+        <string>Incoming call (repeated):</string>
+       </property>
+      </widget>
+     </item>
+     <item row="11" column="1">
+      <widget class="QLineEdit" name="le_oeIncomingCall">
+       <property name="toolTip">
+        <string>Enter a filename or !beep for a system beep</string>
+       </property>
+      </widget>
+     </item>
+     <item row="11" column="2">
+      <widget class="IconToolButton" name="tb_seIncomingCall" native="true">
+       <property name="text" stdset="0">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="11" column="3">
+      <widget class="IconToolButton" name="tb_seIncomingCallPlay" native="true">
+       <property name="text" stdset="0">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="12" column="0">
+      <widget class="QCheckBox" name="ck_oeOutgoingCall">
+       <property name="text">
+        <string>Calling (repeated):</string>
+       </property>
+      </widget>
+     </item>
+     <item row="12" column="1">
+      <widget class="QLineEdit" name="le_oeOutgoingCall">
+       <property name="toolTip">
+        <string>Enter a filename or !beep for a system beep</string>
+       </property>
+      </widget>
+     </item>
+     <item row="12" column="2">
+      <widget class="IconToolButton" name="tb_seOutgoingCall" native="true">
+       <property name="text" stdset="0">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="12" column="3">
+      <widget class="IconToolButton" name="tb_seOutgoingCallPlay" native="true">
+       <property name="text" stdset="0">
+        <string/>
+       </property>
+      </widget>
+     </item>
      <item row="5" column="2">
       <widget class="IconToolButton" name="tb_seSystem" native="true">
        <property name="text" stdset="0">
@@ -502,6 +558,12 @@
   <tabstop>le_oeFTComplete</tabstop>
   <tabstop>tb_seFTComplete</tabstop>
   <tabstop>tb_seFTCompletePlay</tabstop>
+  <tabstop>le_oeIncomingCall</tabstop>
+  <tabstop>tb_seIncomingCall</tabstop>
+  <tabstop>tb_seIncomingCallPlay</tabstop>
+  <tabstop>le_oeOutgoingCall</tabstop>
+  <tabstop>tb_seOutgoingCall</tabstop>
+  <tabstop>tb_seOutgoingCallPlay</tabstop>
   <tabstop>pb_soundReset</tabstop>
  </tabstops>
  <resources/>

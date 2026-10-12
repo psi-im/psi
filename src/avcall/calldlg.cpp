@@ -19,6 +19,7 @@
 #include "calldlg.h"
 #include "../psimedia/psimedia.h"
 #include "avcall.h"
+#include "callringer.h"
 #include "callstage.h"
 #include "callview.h"
 #include "iconset.h"
@@ -147,7 +148,9 @@ public:
     void bind(AvCall *call)
     {
         session = call;
+        connect(call, &AvCall::ringing, this, [this] { ring(CallRinger::Outgoing); });
         connect(call, &AvCall::activated, this, [this] {
+            stopRinging();
             active = true;
             view->setConnecting(false);
             view->setActive(true);
@@ -168,6 +171,7 @@ public:
             }
         });
         connect(call, &AvCall::error, this, [this] {
+            stopRinging();
             finished = true;
             active   = false;
             capture.stop();
@@ -178,6 +182,7 @@ public:
             updateWhiteboard();
         });
         connect(call, &AvCall::cancelled, this, [this] {
+            stopRinging();
             finished = true;
             active   = false;
             capture.stop();
@@ -203,6 +208,7 @@ public:
     {
         if (finished || active)
             return;
+        stopRinging();
         joined = true;
         if (view->whiteboardOnly()) {
             acceptWhiteboard();
@@ -227,6 +233,9 @@ public:
                 features |= AvCall::IceTransport;
             if (caps.hasJingleIceUdp())
                 features |= AvCall::IceUdpTransport;
+            // A proposal rings back once a device answers <ringing/>; a direct session rings right away.
+            if (!target.resource().isEmpty())
+                ring(CallRinger::Outgoing);
             session->connectToJid(target, view->cameraEnabled() ? AvCall::Both : AvCall::Audio, view->bitrate(),
                                   features);
         } else if (session) {
@@ -348,6 +357,7 @@ public:
         }
         view->setConnecting(true);
         view->setStatus(sid.isEmpty() ? tr("Inviting…") : tr("Connecting…"));
+        ring(CallRinger::Outgoing);
         jingle->addContent(app);
         bindWhiteboardSession(jingle);
         bindWhiteboard(app);
@@ -359,6 +369,7 @@ public:
     {
         wbSession = jingle;
         connect(jingle, &Jingle::Session::activated, this, [this] {
+            stopRinging();
             active = true;
             if (wbSession)
                 view->setMediaAvailable(mediaAvailable(wbSession->peer()));
@@ -371,6 +382,7 @@ public:
             updateWhiteboard();
         });
         connect(jingle, &Jingle::Session::terminated, this, [this] {
+            stopRinging();
             const bool wasActive = active;
             if (!proposalId.isEmpty())
                 account->wbManager()->finish(proposalId, wasActive);
@@ -437,13 +449,23 @@ public:
         return true;
     }
 
+    void ring(CallRinger::Kind kind, bool playNow = true)
+    {
+        if (!ringer)
+            ringer = new CallRinger(account, kind, playNow, this);
+    }
+
+    void stopRinging() { delete ringer.data(); }
+
     // Answers to the proposal of this dialog.
     void watchProposals()
     {
         auto wb = account->wbManager();
         connect(wb, &WbManager::proposalRinging, this, [this](const QString &id) {
-            if (id == proposalId && !wbSession)
+            if (id == proposalId && !wbSession) {
                 view->setStatus(tr("Ringing…"));
+                ring(CallRinger::Outgoing);
+            }
         });
         connect(wb, &WbManager::proposalAccepted, this, [this](const QString &id, const XMPP::Jid &peer) {
             if (id != proposalId || wbSession || finished)
@@ -463,6 +485,7 @@ public:
         connect(wb, &WbManager::proposalClosed, this, [this](const QString &id, const QString &message) {
             if (id != proposalId || wbSession || finished)
                 return;
+            stopRinging();
             finished = true;
             view->setConnecting(false);
             view->setFinished();
@@ -552,6 +575,7 @@ public:
     QPointer<Jingle::Session>  wbSession;
     QPointer<Jingle::Session>  watchedSession;
     QString                    proposalId;
+    QPointer<CallRinger>       ringer;
     WbView                    *wbView           = nullptr;
     bool                       whiteboardWanted = false;
     bool                       joined           = false;
@@ -568,6 +592,11 @@ CallDlg::~CallDlg()
 {
     d->account->dialogUnregister(this);
     delete d;
+}
+void CallDlg::acceptIncoming()
+{
+    if (d->incoming)
+        d->accept();
 }
 void CallDlg::setOutgoing(const XMPP::Jid &jid)
 {
@@ -594,6 +623,7 @@ void CallDlg::setIncoming(AvCall *session)
     d->view->setIncoming(true);
     d->view->setStatus(tr("Incoming call"));
     d->updateWhiteboardSupport();
+    d->ring(CallRinger::Incoming, false);
 }
 void CallDlg::setIncomingWhiteboard(XMPP::Jingle::SXE::Application *whiteboard)
 {
@@ -609,6 +639,7 @@ void CallDlg::setIncomingWhiteboard(XMPP::Jingle::SXE::Application *whiteboard)
     d->bindWhiteboardSession(jingle);
     d->bindWhiteboard(whiteboard);
     d->updateWhiteboardSupport();
+    d->ring(CallRinger::Incoming, false);
 }
 void CallDlg::setIncomingWhiteboardProposal(const XMPP::Jid &peer, const QString &proposalId)
 {
@@ -623,4 +654,5 @@ void CallDlg::setIncomingWhiteboardProposal(const XMPP::Jid &peer, const QString
     d->view->setIncoming(true);
     d->view->setStatus(tr("Whiteboard invitation"));
     d->updateWhiteboardSupport();
+    d->ring(CallRinger::Incoming, false);
 }

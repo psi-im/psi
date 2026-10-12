@@ -190,6 +190,9 @@ void PsiDBusNotifier::popup(PsiAccount *account, PopupManager::PopupType type, c
     }
 
     title = this->title(type, &doAlert, &ico);
+    const bool invitation = isInvitation();
+    if (invitation && event->type() == PsiEvent::Sxe)
+        title = tr("Whiteboard invitation");
 
     QVariantMap hints;
     if (PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.dbus.transient-hint").toBool()
@@ -198,9 +201,11 @@ void PsiDBusNotifier::popup(PsiAccount *account, PopupManager::PopupType type, c
         || type == PopupManager::AlertNone) {
         hints.insert("transient", QVariant(true));
     }
-    //    if(doAlert) {
-    //        hints.insert("urgency", QVariant(2));
-    //    }
+    if (invitation) {
+        hints.remove("transient");
+        hints.insert("category", QStringLiteral("call.incoming"));
+        hints.insert("urgency", QVariant::fromValue(uchar(2))); // critical: stays until answered
+    }
     QImage im;
     if (account) {
         if (uli && uli->isPrivate())
@@ -272,7 +277,10 @@ void PsiDBusNotifier::popup(PsiAccount *account, PopupManager::PopupType type, c
         text = QObject::tr("Incoming file from %1").arg(contact);
         break;
     case PopupManager::AlertAvCall:
-        text = QObject::tr("Incoming call from %1").arg(contact);
+        if (event && event->type() == PsiEvent::Sxe)
+            text = QObject::tr("%1 invites you to a whiteboard").arg(contact);
+        else
+            text = QObject::tr("Incoming call from %1").arg(contact);
         break;
     default:
         break;
@@ -294,8 +302,20 @@ void PsiDBusNotifier::popup(PsiAccount *account, PopupManager::PopupType type, c
     args << QVariant("");
     args << QString(title);
     args << QString(text);
-    args << (QStringList() << "open" << tr("Open"));
+    if (invitation && capabilities().contains(QStringLiteral("actions"))) {
+        args << (QStringList() << QStringLiteral("default") << tr("Open") << QStringLiteral("accept") << tr("Accept")
+                               << QStringLiteral("decline") << tr("Decline"));
+    } else {
+        args << (QStringList() << "open" << tr("Open"));
+    }
     args << hints;
+    if (invitation) {
+        lifeTime = 0; // never expires; closed when the invitation leaves the event queue
+        connect(account->eventQueue(), &EventQueue::queueChanged, this, [this]() {
+            if (!event_ || !account_ || !account_->eventQueue()->contains(event_))
+                closeNotification();
+        });
+    }
     args << lifeTime;
     m.setArguments(args);
     QDBusPendingCall         call    = QDBusConnection::sessionBus().asyncCall(m);
@@ -303,9 +323,28 @@ void PsiDBusNotifier::popup(PsiAccount *account, PopupManager::PopupType type, c
 
     connect(watcher, &QDBusPendingCallWatcher::finished, this, &PsiDBusNotifier::asyncCallFinished);
 
+    if (invitation)
+        return;
     lifeTime = (lifeTime < 0) ? lifeTime : qMax(minLifeTime, lifeTime);
     if (lifeTime >= 0)
         lifeTimer_->start(lifeTime);
+}
+
+bool PsiDBusNotifier::isInvitation() const
+{
+    return event_ && account_ && (event_->type() == PsiEvent::AvCallType || event_->type() == PsiEvent::Sxe);
+}
+
+void PsiDBusNotifier::closeNotification()
+{
+    if (id_ == 0) {
+        closeWhenShown_ = true; // the Notify reply is still pending
+        return;
+    }
+    QDBusMessage m = createMessage("CloseNotification");
+    m.setArguments(QVariantList() << id_);
+    QDBusConnection::sessionBus().asyncCall(m);
+    readyToDie();
 }
 
 void PsiDBusNotifier::popup(PsiAccount *account, PopupManager::PopupType /*type*/, const Jid &j,
@@ -370,6 +409,8 @@ void PsiDBusNotifier::asyncCallFinished(QDBusPendingCallWatcher *watcher)
         readyToDie();
     } else {
         id_ = repl.toUInt();
+        if (closeWhenShown_)
+            closeNotification();
     }
 }
 
@@ -384,8 +425,11 @@ void PsiDBusNotifier::popupClosed(uint id, uint reason)
 void PsiDBusNotifier::actionInvoked(uint id, const QString &actionKey)
 {
     if (id_ != 0 && id_ == id && account_) {
-        Q_UNUSED(actionKey);
-        if (event_) {
+        if (event_ && isInvitation() && (actionKey == QLatin1String("accept") || actionKey == QLatin1String("decline"))) {
+            account_->psi()->answerCallEvent(event_, actionKey == QLatin1String("accept")
+                                                         ? PsiCon::CallEventAction::Accept
+                                                         : PsiCon::CallEventAction::Decline);
+        } else if (event_) {
             account_->psi()->processEvent(event_, UserAction);
         } else if (jid_.isValid()) {
             account_->actionDefault(Jid(jid_.bare()));

@@ -57,6 +57,10 @@ private slots:
 private:
     static bool        checkServer();
     static QStringList capabilities();
+    // An incoming call or whiteboard invitation: the notification has Accept and Decline and stays
+    // until the invitation leaves the event queue.
+    bool isInvitation() const;
+    void closeNotification();
 
 private:
     Jid                jid_;
@@ -64,6 +68,7 @@ private:
     PsiAccount        *account_;
     PsiEvent::Ptr      event_;
     QTimer            *lifeTimer_;
+    bool               closeWhenShown_ = false;
     static QStringList caps_;
 };
 

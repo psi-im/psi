@@ -39,6 +39,7 @@
 #include "avatars.h"
 #include "avcall/avcall.h"
 #include "avcall/calldlg.h"
+#include "avcall/callringer.h"
 #include "avcall/mediadevicewatcher.h"
 #include "bobfilecache.h"
 #include "bookmarkmanagedlg.h"
@@ -665,7 +666,33 @@ public:
     }
 
 public slots:
-    void queueChanged() { eventQueue->toFile(pathToProfileEvents()); }
+    void queueChanged()
+    {
+        eventQueue->toFile(pathToProfileEvents());
+        updateRinging();
+    }
+
+public:
+    // Incoming calls and whiteboard invitations ring while their events wait in the queue. An opened
+    // invitation rings in its call window until it is answered.
+    QList<QWeakPointer<PsiEvent>> ringingEvents;
+    QPointer<CallRinger>          incomingRinger;
+
+    void updateRinging()
+    {
+        ringingEvents.erase(std::remove_if(ringingEvents.begin(), ringingEvents.end(),
+                                           [this](const QWeakPointer<PsiEvent> &weak) {
+                                               const auto event = weak.toStrongRef();
+                                               return !event || !eventQueue->contains(event);
+                                           }),
+                            ringingEvents.end());
+        if (ringingEvents.isEmpty())
+            delete incomingRinger.data();
+        else if (!incomingRinger)
+            incomingRinger = new CallRinger(account, CallRinger::Incoming, true, this);
+    }
+
+public slots:
 
     void loadQueue()
     {
@@ -3512,6 +3539,12 @@ void PsiAccount::playSound(PsiAccount::SoundType _onevent)
     case eFTComplete:
         str = PsiOptions::instance()->getOption("options.ui.notifications.sounds.completed-file-transfer").toString();
         break;
+    case eIncomingCall:
+        str = PsiOptions::instance()->getOption("options.ui.notifications.sounds.incoming-call").toString();
+        break;
+    case eOutgoingCall:
+        str = PsiOptions::instance()->getOption("options.ui.notifications.sounds.outgoing-call").toString();
+        break;
     default:
         Q_ASSERT(false);
     }
@@ -5469,9 +5502,9 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
     }
 #ifdef WHITEBOARDING
     else if (e->type() == PsiEvent::Sxe) {
-        soundType = eHeadline;
+        soundType = eNone; // rings, see Private::updateRinging()
         doPopup   = true;
-        popupType = PopupManager::AlertHeadline;
+        popupType = PopupManager::AlertAvCall;
     }
 #endif
     else if (e->type() == PsiEvent::File) {
@@ -5479,7 +5512,7 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
         doPopup   = true;
         popupType = PopupManager::AlertFile;
     } else if (e->type() == PsiEvent::AvCallType) {
-        soundType = eIncomingFT;
+        soundType = eNone; // rings, see Private::updateRinging()
         doPopup   = true;
         popupType = PopupManager::AlertAvCall;
     } else if (e->type() == PsiEvent::RosterExchange) {
@@ -5569,6 +5602,11 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 
     if (putToQueue)
         queueEvent(e, activationType);
+    if (putToQueue && activationType != FromXml
+        && (e->type() == PsiEvent::AvCallType || e->type() == PsiEvent::Sxe)) {
+        d->ringingEvents.append(e.toWeakRef());
+        d->updateRinging();
+    }
 }
 
 UserListItem *PsiAccount::addUserListItem(const Jid &jid, const QString &nick)

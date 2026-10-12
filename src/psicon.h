@@ -127,6 +127,10 @@ public:
     IconSelectPopup *iconSelectPopup() const;
     bool             filterEvent(const PsiAccount *, const PsiEvent::Ptr &) const;
     void             processEvent(const PsiEvent::Ptr &, ActivationType activationType);
+    // Opens, accepts or declines the incoming call or whiteboard invitation of the event, e.g. from the
+    // buttons of a notification. Other events are ignored.
+    enum class CallEventAction { Open, Accept, Decline };
+    void answerCallEvent(const PsiEvent::Ptr &, CallEventAction action);
     void             removeEvent(const PsiEvent::Ptr &e);
 
     Status::Type currentStatusType() const;

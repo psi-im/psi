@@ -119,6 +119,20 @@ QWidget *OptionsTabSound::widget()
                              QStringLiteral("completed-file-transfer"),
                              QStringLiteral("sound/ft_complete.wav") };
 
+    sounds_ << UiSoundItem { d->ck_oeIncomingCall,
+                             d->le_oeIncomingCall,
+                             d->tb_seIncomingCall,
+                             d->tb_seIncomingCallPlay,
+                             QStringLiteral("incoming-call"),
+                             QStringLiteral("sound/ring.wav") };
+
+    sounds_ << UiSoundItem { d->ck_oeOutgoingCall,
+                             d->le_oeOutgoingCall,
+                             d->tb_seOutgoingCall,
+                             d->tb_seOutgoingCallPlay,
+                             QStringLiteral("outgoing-call"),
+                             QStringLiteral("sound/ringback.wav") };
+
     bg_se     = new QButtonGroup;
     bg_sePlay = new QButtonGroup;
 

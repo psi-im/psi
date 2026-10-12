@@ -479,11 +479,13 @@ QLineEdit#le_status_text {
                     <contact-offline type="QString">sound/offline.wav</contact-offline>
                     <contact-online type="QString">sound/online.wav</contact-online>
                     <enable type="bool">true</enable>
+                    <incoming-call type="QString">sound/ring.wav</incoming-call>
                     <incoming-file-transfer type="QString">sound/ft_incoming.wav</incoming-file-transfer>
                     <incoming-headline type="QString">sound/chat2.wav</incoming-headline>
                     <incoming-message type="QString">sound/chat2.wav</incoming-message>
                     <new-chat type="QString">sound/chat1.wav</new-chat>
                     <notify-every-muc-message type="bool">false</notify-every-muc-message>
+                    <outgoing-call type="QString">sound/ringback.wav</outgoing-call>
                     <outgoing-chat type="QString">sound/send.wav</outgoing-chat>
                     <silent-while-away type="bool">false</silent-while-away>
                     <system-message type="QString">sound/chat2.wav</system-message>

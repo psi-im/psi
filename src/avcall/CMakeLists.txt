@@ -15,6 +15,7 @@ set(HEADERS
     screensharecapture.h
     callview.h
     callstage.h
+    callringer.h
 )
 
 set(SOURCES
@@ -26,6 +27,7 @@ set(SOURCES
     screensharecapture.cpp
     callview.cpp
     callstage.cpp
+    callringer.cpp
 )
 
 add_library(avcall STATIC ${SOURCES} ${HEADERS})

@@ -79,6 +79,8 @@ public:
 
 signals:
     void activated();
+    // A device of the contact rings for the outgoing proposal (XEP-0353 <ringing/>).
+    void ringing();
     void error();
     void cancelled();
     void screenSharingChanged(bool sharing);

@@ -78,18 +78,26 @@ highest priority. `WbManager` implements this for whiteboard-only proposals
 (`src/whiteboarding/unittest/proposal.cpp` tests it with two clients); a proposal of a call with
 a whiteboard is not supported yet.
 
-Still planned:
+Calls and whiteboard invitations ring and can be answered from the notification:
 
-- **Ringing.** While an incoming call or whiteboard proposal is pending, Psi repeats a ring tone
-  until it is accepted, declined, withdrawn by the caller or times out. The caller hears a
-  ringback tone after the contact's devices answer `<ringing/>`. A shared helper serves calls
-  and whiteboards; it respects Do Not Disturb, "silent while away" and the sound switch. New
-  sound options: `options.ui.notifications.sounds.incoming-call` (ring tone) and
-  `options.ui.notifications.sounds.outgoing-call` (ringback), with generated default sounds.
-- **Notification with buttons.** The invitation popup gets **Accept** and **Decline**. The
-  freedesktop notifier provides them as notification actions; the built-in popup gets buttons.
-  Where the platform notification has no actions, the event in the roster opens the usual
-  question. The notification closes when another device answers or the caller withdraws.
+- **Ringing.** An incoming call or whiteboard invitation repeats the ring tone while its event
+  waits in the roster and, once opened, in the call window until it is accepted, declined,
+  withdrawn by the caller, answered on another device or a minute has passed. The caller hears a
+  ringback tone after the contact's devices answer `<ringing/>`, or right away for a session
+  sent directly to one resource, until the contact answers (at most 90 seconds). `CallRinger`
+  (`src/avcall/callringer.h`) repeats the sound every 3.5 seconds through
+  `PsiAccount::playSound()`, so Do Not Disturb, "silent while away" and the sound switch apply.
+  The sounds are the options `options.ui.notifications.sounds.incoming-call` (`sound/ring.wav`)
+  and `options.ui.notifications.sounds.outgoing-call` (`sound/ringback.wav`), on the Sounds page
+  of the options. Both default sounds are generated tones: two bursts of an E5–G♯5 major third
+  with a light tremolo, and a soft 425 Hz tone.
+- **Notification with buttons.** The notification of an invitation has **Accept** and
+  **Decline**: the freedesktop notifier sends them as notification actions (category
+  `call.incoming`, critical urgency, no expiry), the built-in popup shows buttons. Accepting
+  opens the call window and accepts; declining answers without opening a window; clicking the
+  notification opens the window as before. The notification closes when the invitation leaves
+  the event queue, e.g. when the caller withdraws or another device answers. Notifiers without
+  actions (Growl) keep their usual behavior. `PsiCon::answerCallEvent()` serves all of them.
 
 ## One window for calls and whiteboards
 
@@ -100,7 +108,7 @@ get a microphone or camera. Implemented so far: the stage with tiles, whiteboard
 the call window, adding a whiteboard to a call and a microphone or camera to a whiteboard
 (either side), switching contents on and off through senders, and the single call/whiteboard
 action. A whiteboard switched on before a call is added with `content-add` once the call
-connects. Still planned: proposals and ringing (see the order of work below).
+connects. Still planned: a call with a whiteboard in one proposal (see the order of work below).
 
 ### Window
 
@@ -226,7 +234,7 @@ One action starts calls and whiteboards. It replaces **Voice Call** and the sepa
    sessions).
 5. XEP-0353 proposals for whiteboards (done) and mixed sessions (to do: a call with a
    whiteboard in one proposal, and incoming sessions with both RTP and SXE contents).
-6. Ringing and actionable notifications.
+6. Ringing and actionable notifications (done).
 7. SXE payload on Jingle connections (done: an ICE SCTP data channel when both sides support
    it, falling back to messages; see `iris/docs/jingle-sxe.md`). Still to do: sharing the
    call's BUNDLE association when a whiteboard is added to a call.

@@ -39,7 +39,9 @@
 #include <QLabel>
 #include <QLayout>
 #include <QList>
+#include <QPushButton>
 #include <QTextDocument>
+#include <QTimer>
 #include <QVBoxLayout>
 #include <QtPlugin>
 
@@ -67,6 +69,10 @@ public:
 
     void        init(const PsiIcon *titleIcon, const QString &titleText, PsiAccount *_acc);
     QBoxLayout *createContactInfo(const QPixmap &avatar, const PsiIcon *icon, const QString &text);
+    // An incoming call or whiteboard invitation: Accept and Decline buttons, shown until it is answered.
+    bool        isInvitation() const;
+    QBoxLayout *createInvitationButtons();
+    void        answer(PsiCon::CallEventAction action);
 
 private slots:
     void popupDestroyed();
@@ -162,6 +168,41 @@ void PsiPopup::Private::popupClicked(int button)
     }
 
     popup->deleteLater();
+}
+
+bool PsiPopup::Private::isInvitation() const
+{
+    return event && account && (event->type() == PsiEvent::AvCallType || event->type() == PsiEvent::Sxe);
+}
+
+QBoxLayout *PsiPopup::Private::createInvitationButtons()
+{
+    auto buttons = new QHBoxLayout;
+    buttons->addStretch();
+    auto accept  = new QPushButton(tr("Accept"), popup);
+    auto decline = new QPushButton(tr("Decline"), popup);
+    connect(accept, &QPushButton::clicked, this, [this]() { answer(PsiCon::CallEventAction::Accept); });
+    connect(decline, &QPushButton::clicked, this, [this]() { answer(PsiCon::CallEventAction::Decline); });
+    buttons->addWidget(accept);
+    buttons->addWidget(decline);
+
+    // The popup stays while the invitation waits and goes away when it is answered anywhere.
+    auto keepAlive = new QTimer(popup);
+    connect(keepAlive, &QTimer::timeout, popup, &FancyPopup::restartHideTimer);
+    keepAlive->start(1000);
+    connect(account->eventQueue(), &EventQueue::queueChanged, popup, [this]() {
+        if (popup && (!event || !account->eventQueue()->contains(event)))
+            popup->deleteLater();
+    });
+    return buttons;
+}
+
+void PsiPopup::Private::answer(PsiCon::CallEventAction action)
+{
+    if (event && event->account())
+        event->account()->psi()->answerCallEvent(event, action);
+    if (popup)
+        popup->deleteLater();
 }
 
 QBoxLayout *PsiPopup::Private::createContactInfo(const QPixmap &avatar, const PsiIcon *icon, const QString &text)
@@ -336,6 +377,19 @@ void PsiPopup::setData(const Jid &j, const Resource &r, const UserListItem *u, c
             if (!message.isEmpty()) {
                 contactText += "<br/><font size=\"+1\">" + message + "</font>";
             }
+        }
+        if (d->isInvitation()) {
+            contactText += "<br/>"
+                + (event->type() == PsiEvent::Sxe ? tr("invites you to a whiteboard") : tr("is calling you"));
+            auto vbox = new QVBoxLayout;
+            vbox->addLayout(d->createContactInfo(avatar, icon, contactText));
+            vbox->addLayout(d->createInvitationButtons());
+            d->popup->addLayout(vbox);
+            if (icon)
+                d->id += icon->name();
+            d->id += contactText;
+            show();
+            return;
         }
         setData(avatar, icon, contactText);
     } else if (d->popupType == PopupManager::AlertComposing) {

@@ -255,6 +255,8 @@ public:
         eSend,
         eIncomingFT,
         eFTComplete,
+        eIncomingCall, // repeated while a call or whiteboard invitation rings
+        eOutgoingCall, // repeated while the contact's devices ring
         eSoundLast
     };
     void playSound(SoundType onevent);

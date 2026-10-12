@@ -368,6 +368,7 @@ public:
     int           count(const XMPP::Jid &, bool compareRes = true) const;
     void          enqueue(const PsiEvent::Ptr &);
     void          dequeue(const PsiEvent::Ptr &);
+    bool          contains(const PsiEvent::Ptr &) const;
     PsiEvent::Ptr dequeue(const XMPP::Jid &, bool compareRes = true);
     PsiEvent::Ptr peek(const XMPP::Jid &, bool compareRes = true) const;
     PsiEvent::Ptr dequeueNext();

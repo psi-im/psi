@@ -707,6 +707,14 @@ void EventQueue::dequeue(const PsiEvent::Ptr &e)
     }
 }
 
+bool EventQueue::contains(const PsiEvent::Ptr &e) const
+{
+    for (const EventItem *i : std::as_const(list_))
+        if (e == i->event())
+            return true;
+    return false;
+}
+
 PsiEvent::Ptr EventQueue::dequeue(const Jid &j, bool compareRes)
 {
     for (EventItem *i : std::as_const(list_)) {

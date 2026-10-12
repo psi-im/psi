@@ -1210,6 +1210,10 @@ void AvCallManagerPrivate::incomingMessageInitiation(const XMPP::Message        
         return;
 
     case Jingle::MessageInitiation::Action::Ringing:
+        if (!ownMessage && call && call->d && !call->d->incoming && !call->d->jmiClosed && !call->d->session
+            && message.from().compare(call->d->peer, false))
+            emit call->ringing();
+        return;
     case Jingle::MessageInitiation::Action::None:
         return;
     }

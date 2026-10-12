@@ -93,6 +93,7 @@
 #include "iris/xmpp_xmlcommon.h"
 #ifdef WHITEBOARDING
 #include "whiteboarding/wbmanager.h"
+#include <iris/jingle-session.h>
 #include <iris/xmpp-im/jingle-sxe.h>
 #endif
 #ifdef FILETRANSFER
@@ -1730,6 +1731,67 @@ bool PsiCon::filterEvent(const PsiAccount *acc, const PsiEvent::Ptr &e) const
     return false;
 }
 
+void PsiCon::answerCallEvent(const PsiEvent::Ptr &e, CallEventAction action)
+{
+    PsiAccount *account = e ? e->account() : nullptr;
+    if (!account || (e->type() != PsiEvent::AvCallType && e->type() != PsiEvent::Sxe))
+        return;
+    // A notification can outlive its event: only a queued invitation is answered.
+    if (!account->eventQueue()->contains(e))
+        return;
+    account->eventQueue()->dequeue(e);
+    emit account->queueChanged();
+    if (auto u = account->find(e->jid()))
+        account->cpUpdate(*u);
+
+    CallDlg *w = nullptr;
+    if (e->type() == PsiEvent::AvCallType) {
+        AvCall *sess = e.staticCast<AvCallEvent>()->takeAvCall();
+        if (!sess)
+            return;
+        if (sess->jid().isEmpty()) {
+            if (action == CallEventAction::Open)
+                QMessageBox::information(nullptr, tr("Call ended"), tr("Other party canceled call."));
+            delete sess;
+            return;
+        }
+        if (action == CallEventAction::Decline) {
+            sess->reject();
+            sess->unlink();
+            sess->deleteLater();
+            return;
+        }
+        w = new CallDlg(account, nullptr);
+        w->setAttribute(Qt::WA_DeleteOnClose);
+        w->setIncoming(sess);
+    }
+#ifdef WHITEBOARDING
+    else {
+        const auto request = account->wbManager()->takeRequest(e.staticCast<SxeEvent>()->id());
+        if (!request.application && request.proposalId.isEmpty())
+            return; // withdrawn meanwhile
+        if (action == CallEventAction::Decline) {
+            if (request.application)
+                request.application->pad()->session()->terminate(XMPP::Jingle::Reason::Decline);
+            else
+                account->wbManager()->reject(request.proposalId);
+            return;
+        }
+        w = new CallDlg(account, nullptr);
+        w->setAttribute(Qt::WA_DeleteOnClose);
+        if (request.application)
+            w->setIncomingWhiteboard(request.application);
+        else
+            w->setIncomingWhiteboardProposal(request.peer, request.proposalId);
+    }
+#endif
+    if (!w)
+        return;
+    bringToFront(w);
+    if (action == CallEventAction::Accept)
+        w->acceptIncoming();
+}
+
 void PsiCon::processEvent(const PsiEvent::Ptr &e, ActivationType activationType)
 {
     if (!e->account()) {
@@ -1774,22 +1836,7 @@ void PsiCon::processEvent(const PsiEvent::Ptr &e, ActivationType activationType)
 #endif
 
     if (e->type() == PsiEvent::AvCallType) {
-        AvCallEvent::Ptr ae   = e.staticCast<AvCallEvent>();
-        AvCall          *sess = ae->takeAvCall();
-        e->account()->eventQueue()->dequeue(e);
-        emit e->account()->queueChanged();
-        e->account()->cpUpdate(*u);
-        if (sess) {
-            if (!sess->jid().isEmpty()) {
-                CallDlg *w = new CallDlg(e->account(), nullptr);
-                w->setAttribute(Qt::WA_DeleteOnClose);
-                w->setIncoming(sess);
-                bringToFront(w);
-            } else {
-                QMessageBox::information(nullptr, tr("Call ended"), tr("Other party canceled call."));
-                delete sess;
-            }
-        }
+        answerCallEvent(e, CallEventAction::Open);
         return;
     }
 
@@ -1839,19 +1886,7 @@ void PsiCon::processEvent(const PsiEvent::Ptr &e, ActivationType activationType)
     }
 #ifdef WHITEBOARDING
     else if (e->type() == PsiEvent::Sxe) {
-        e->account()->eventQueue()->dequeue(e);
-        emit e->account()->queueChanged();
-        e->account()->cpUpdate(*u);
-        const auto request = e->account()->wbManager()->takeRequest((e.staticCast<SxeEvent>())->id());
-        if (request.application || !request.proposalId.isEmpty()) {
-            CallDlg *w = new CallDlg(e->account(), nullptr);
-            w->setAttribute(Qt::WA_DeleteOnClose);
-            if (request.application)
-                w->setIncomingWhiteboard(request.application);
-            else
-                w->setIncomingWhiteboardProposal(request.peer, request.proposalId);
-            bringToFront(w);
-        }
+        answerCallEvent(e, CallEventAction::Open);
         return;
     }
 #endif
