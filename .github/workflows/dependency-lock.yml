@@ -1,0 +1,45 @@
+name: Dependency lock verification
+
+on:
+  push:
+    branches:
+      - master
+      - 'ai/**'
+    paths:
+      - dependencies.lock.json
+      - '.github/actions/load-dependencies/**'
+      - '.github/scripts/resolve-dependencies.py'
+      - '.github/workflows/**'
+      - 'tests/dependency_lock/**'
+      - iris
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Run lock and CI contract tests
+        run: python3 -m unittest discover -s tests/dependency_lock -p 'test_*.py' -v
+
+      - name: Load Psi and Iris lock through shared action
+        run: git submodule update --init --depth 1 iris
+
+      - uses: ./.github/actions/load-dependencies
+        with:
+          require-iris: 'true'
+
+      - name: Verify lock exports
+        shell: bash
+        run: |
+          test "$QCA_TAG" = "$(python3 -c 'import json; print(json.load(open("iris/dependencies.lock.json"))["qca"]["tag"])')"
+          test "$PSIMEDIA_SRTP_REF" = "$(python3 -c 'import json; print(json.load(open("dependencies.lock.json"))["psimedia"]["commit"])')"

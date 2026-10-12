@@ -606,10 +606,10 @@ int main(int argc, char **argv)
                                           acceptBundleWhenReady](int attempts) {
                     if (!session || session->state() >= J::State::Finishing)
                         return;
-                    const auto audioTransport
-                        = incomingAudio ? incomingAudio->transport() : QSharedPointer<J::Transport>();
-                    const auto videoTransport
-                        = incomingVideo ? incomingVideo->transport() : QSharedPointer<J::Transport>();
+                    const QPointer<J::Transport> audioTransport
+                        = incomingAudio ? incomingAudio->transport() : QPointer<J::Transport>();
+                    const QPointer<J::Transport> videoTransport
+                        = incomingVideo ? incomingVideo->transport() : QPointer<J::Transport>();
                     const bool ready = audioTransport && videoTransport && audioTransport->state() >= J::State::Pending
                         && videoTransport->state() >= J::State::Pending;
                     if (ready) {

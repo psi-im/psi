@@ -11,6 +11,9 @@ on:
       - 'plugins/include/psimediaprovider.h'
       - 'tests/avcall/**'
       - 'qa/integration/jingle-live/**'
+      - 'dependencies.lock.json'
+      - '.github/actions/load-dependencies/**'
+      - '.github/scripts/resolve-dependencies.py'
       - '.github/workflows/psimedia-integration.yml'
   pull_request:
     branches:
@@ -22,15 +25,14 @@ on:
       - 'plugins/include/psimediaprovider.h'
       - 'tests/avcall/**'
       - 'qa/integration/jingle-live/**'
+      - 'dependencies.lock.json'
+      - '.github/actions/load-dependencies/**'
+      - '.github/scripts/resolve-dependencies.py'
       - '.github/workflows/psimedia-integration.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
-
-env:
-  # Iris follows the Psi gitlink; psimedia is pinned to the matching provider API.
-  PSIMEDIA_SRTP_REF: 52cebb52299b130ae727ca6b597b833da5e445e3
 
 concurrency:
   group: psimedia-integration-${{ github.workflow }}-${{ github.ref }}
@@ -47,6 +49,11 @@ jobs:
 
       - name: Initialize Iris pinned by Psi
         run: git submodule update --init --depth 1 iris
+
+      - name: Resolve PsiMedia from dependency lock
+        uses: ./.github/actions/load-dependencies
+        with:
+          require-iris: 'true'
 
       - name: Checkout pinned psimedia provider
         uses: actions/checkout@v4
@@ -86,11 +93,11 @@ jobs:
             ${{ runner.os }}-psimedia-integration-ccache-
 
       - name: Install QCA from Iris dependency lock
-        uses: ./iris/.github/actions/load-dependencies
+        uses: ./.github/actions/load-dependencies
         with:
-          lock-path: iris/dependencies.lock.json
+          require-iris: 'true'
+          qca-install-mode: apt
           qca-asset: qca3-deb-ubuntu-24.04.zip
-          install-mode: apt
           qca-directory: qca-release
 
       - name: Record integration versions
@@ -835,11 +842,11 @@ jobs:
           sudo service prosody stop 2>/dev/null || true
 
       - name: Install QCA from Iris dependency lock
-        uses: ./iris/.github/actions/load-dependencies
+        uses: ./.github/actions/load-dependencies
         with:
-          lock-path: iris/dependencies.lock.json
+          require-iris: 'true'
+          qca-install-mode: apt
           qca-asset: qca3-deb-ubuntu-24.04.zip
-          install-mode: apt
           qca-directory: qca-release
 
       - name: Build SCTP-enabled Jingle FT client
@@ -1064,6 +1071,11 @@ jobs:
       - name: Initialize Iris pinned by Psi
         run: git submodule update --init --depth 1 iris
 
+      - name: Resolve PsiMedia from dependency lock
+        uses: ./.github/actions/load-dependencies
+        with:
+          require-iris: 'true'
+
       - name: Checkout pinned psimedia provider
         uses: actions/checkout@v4
         with:
@@ -1086,11 +1098,11 @@ jobs:
           sudo service prosody stop 2>/dev/null || true
 
       - name: Install QCA from Iris dependency lock
-        uses: ./iris/.github/actions/load-dependencies
+        uses: ./.github/actions/load-dependencies
         with:
-          lock-path: iris/dependencies.lock.json
+          require-iris: 'true'
+          qca-install-mode: apt
           qca-asset: qca3-deb-ubuntu-24.04.zip
-          install-mode: apt
           qca-directory: qca-release
 
       - name: Build real psimedia Jingle audio-call client

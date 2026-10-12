@@ -16,10 +16,6 @@ concurrency:
   group: windows-legacy-msys2-qt5-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  SDK_TAG: windows-sdk-msys2-qt5-v3
-  SDK_ARCHIVE: psi-windows-sdk-msys2-qt5.zip
-
 jobs:
   check-sdk:
     if: >-
@@ -31,6 +27,8 @@ jobs:
     outputs:
       exists: ${{ steps.check.outputs.exists }}
       run_ci: ${{ steps.policy.outputs.run_ci }}
+      sdk_tag: ${{ steps.deps.outputs.msys2_sdk_tag }}
+      sdk_archive: ${{ steps.deps.outputs.msys2_sdk_archive }}
 
     steps:
       - name: Resolve ai branch CI policy
@@ -61,11 +59,21 @@ jobs:
 
           echo "run_ci=$run_ci" >> "$GITHUB_OUTPUT"
 
+      - uses: actions/checkout@v4
+        if: steps.policy.outputs.run_ci == 'true'
+
+      - name: Resolve locked Windows SDK
+        id: deps
+        if: steps.policy.outputs.run_ci == 'true'
+        uses: ./.github/actions/load-dependencies
+
       - name: Check release asset
         if: steps.policy.outputs.run_ci == 'true'
         id: check
         env:
           GH_TOKEN: ${{ github.token }}
+          SDK_TAG: ${{ steps.deps.outputs.msys2_sdk_tag }}
+          SDK_ARCHIVE: ${{ steps.deps.outputs.msys2_sdk_archive }}
         run: |
           set -euo pipefail
           assets="$(gh release view "$SDK_TAG" \
@@ -91,7 +99,7 @@ jobs:
       contents: write
     uses: ./.github/workflows/windows-sdk-msys2-qt5.yml
     with:
-      sdk_tag: windows-sdk-msys2-qt5-v3
+      sdk_tag: ${{ needs.check-sdk.outputs.sdk_tag }}
       force_rebuild: false
 
   legacy-win7:
@@ -110,5 +118,5 @@ jobs:
     with:
       profile: legacy-win7
       allow_failure: true
-      sdk_tag: windows-sdk-msys2-qt5-v3
-      sdk_archive: psi-windows-sdk-msys2-qt5.zip
+      sdk_tag: ${{ needs.check-sdk.outputs.sdk_tag }}
+      sdk_archive: ${{ needs.check-sdk.outputs.sdk_archive }}

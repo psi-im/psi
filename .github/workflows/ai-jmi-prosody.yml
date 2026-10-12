@@ -7,14 +7,14 @@ on:
     paths:
       - 'iris'
       - 'qa/integration/jingle-live/**'
+      - 'dependencies.lock.json'
+      - '.github/actions/load-dependencies/**'
+      - '.github/scripts/resolve-dependencies.py'
       - '.github/workflows/ai-jmi-prosody.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
-
-env:
-  QCA_TAG: v3.0.10
 
 concurrency:
   group: ai-jmi-prosody-${{ github.ref }}
@@ -24,10 +24,9 @@ jobs:
   xmpp-prosody-jmi:
     runs-on: ubuntu-24.04
     steps:
-      - name: Checkout Psi JMI branch
+      - name: Checkout selected Psi revision
         uses: actions/checkout@v4
         with:
-          ref: ai/xep-0353-jmi
           submodules: false
 
       - name: Initialize pinned Iris
@@ -43,19 +42,12 @@ jobs:
           sudo systemctl stop prosody.service 2>/dev/null || true
           sudo service prosody stop 2>/dev/null || true
 
-      - name: Install QCA3 release package
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          rm -rf qca-release qca3.zip
-          mkdir qca-release
-          gh release download "$QCA_TAG" --repo psi-im/qca \
-            -p 'qca3-deb-ubuntu-24.04.zip' -O qca3.zip
-          (cd qca-release && cmake -E tar xvf ../qca3.zip)
-          test -n "$(find qca-release -type f -name '*.deb' -print -quit)"
-          sudo apt-get install -y ./qca-release/*.deb
+      - name: Install QCA from locked Iris
+        uses: ./.github/actions/load-dependencies
+        with:
+          require-iris: 'true'
+          qca-asset: qca3-deb-ubuntu-24.04.zip
+          qca-install-mode: apt
 
       - name: Build JMI live client
         shell: bash

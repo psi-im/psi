@@ -17,7 +17,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  resolve-dependencies:
+    runs-on: ubuntu-24.04
+    outputs:
+      sdk_tag: ${{ steps.deps.outputs.msys2_sdk_tag }}
+      sdk_archive: ${{ steps.deps.outputs.msys2_sdk_archive }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/load-dependencies
+        id: deps
+
   windows-gcc-basic:
+    needs: resolve-dependencies
     if: >-
       github.event_name == 'workflow_dispatch' ||
       startsWith(github.ref_name, 'ai/') ||
@@ -29,5 +40,5 @@ jobs:
       run_tests: true
       package: false
       allow_failure: false
-      sdk_tag: windows-sdk-msys2-qt5-v3
-      sdk_archive: psi-windows-sdk-msys2-qt5.zip
+      sdk_tag: ${{ needs.resolve-dependencies.outputs.sdk_tag }}
+      sdk_archive: ${{ needs.resolve-dependencies.outputs.sdk_archive }}

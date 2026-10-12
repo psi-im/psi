@@ -6,7 +6,7 @@ on:
       sdk_tag:
         description: SDK release tag
         required: false
-        default: windows-sdk-msys2-qt5-v3
+        default: ''
         type: string
       force_rebuild:
         description: Rebuild and replace the SDK asset even if it already exists
@@ -18,7 +18,7 @@ on:
       sdk_tag:
         description: SDK release tag
         required: false
-        default: windows-sdk-msys2-qt5-v3
+        default: ''
         type: string
       force_rebuild:
         description: Rebuild and replace the SDK asset even if it already exists
@@ -33,26 +33,34 @@ concurrency:
   group: windows-sdk-msys2-qt5-${{ inputs.sdk_tag }}
   cancel-in-progress: false
 
-env:
-  QTKEYCHAIN_TAG: 0.17.0
-  SDK_ARCHIVE: psi-windows-sdk-msys2-qt5.zip
-
 jobs:
   check:
     name: Check SDK release
     runs-on: ubuntu-24.04
     outputs:
       need_build: ${{ steps.check.outputs.need_build }}
+      sdk_tag: ${{ steps.deps.outputs.msys2_sdk_tag }}
+      sdk_archive: ${{ steps.deps.outputs.msys2_sdk_archive }}
 
     steps:
+      - uses: actions/checkout@v4
+      - name: Resolve locked Windows SDK
+        id: deps
+        uses: ./.github/actions/load-dependencies
+
       - name: Check release asset
         id: check
         env:
           GH_TOKEN: ${{ github.token }}
-          SDK_TAG: ${{ inputs.sdk_tag }}
+          SDK_TAG: ${{ steps.deps.outputs.msys2_sdk_tag }}
+          SDK_ARCHIVE: ${{ steps.deps.outputs.msys2_sdk_archive }}
+          REQUESTED_TAG: ${{ inputs.sdk_tag }}
           FORCE_REBUILD: ${{ inputs.force_rebuild }}
         run: |
           set -euo pipefail
+          if [[ -n "$REQUESTED_TAG" && "$REQUESTED_TAG" != "$SDK_TAG" ]]; then
+            echo "::error::SDK tag must match dependencies.lock.json" >&2; exit 1
+          fi
           if [[ "$FORCE_REBUILD" == "true" ]]; then
             echo "need_build=true" >> "$GITHUB_OUTPUT"
             exit 0
@@ -77,6 +85,8 @@ jobs:
     if: needs.check.outputs.need_build == 'true'
     runs-on: windows-2022
     timeout-minutes: 45
+    env:
+      SDK_ARCHIVE: ${{ needs.check.outputs.sdk_archive }}
 
     steps:
       - name: Checkout Psi and its locked Iris dependency
@@ -88,10 +98,10 @@ jobs:
         shell: bash
         run: git submodule update --init --depth 1 iris
 
-      - name: Load QCA version from Iris dependency lock
-        uses: ./iris/.github/actions/load-dependencies
+      - name: Resolve SDK dependencies from Psi and Iris locks
+        uses: ./.github/actions/load-dependencies
         with:
-          lock-path: iris/dependencies.lock.json
+          require-iris: 'true'
 
       - name: Set up MSYS2 MINGW64
         uses: msys2/setup-msys2@v2
@@ -161,6 +171,7 @@ jobs:
         run: |
           set -euo pipefail
           git clone --depth 1 --branch "$QTKEYCHAIN_TAG" https://github.com/frankosterfeld/qtkeychain.git qtkeychain
+          test "$(git -C qtkeychain rev-parse HEAD)" = "$QTKEYCHAIN_COMMIT"
 
           cmake -S qtkeychain -B qtkeychain-build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
@@ -267,6 +278,8 @@ jobs:
       - build
     if: needs.check.outputs.need_build == 'true' && needs.build.result == 'success'
     runs-on: ubuntu-24.04
+    env:
+      SDK_ARCHIVE: ${{ needs.check.outputs.sdk_archive }}
 
     steps:
       - name: Download SDK artifact
@@ -278,7 +291,7 @@ jobs:
       - name: Create or update SDK release
         env:
           GH_TOKEN: ${{ github.token }}
-          SDK_TAG: ${{ inputs.sdk_tag }}
+          SDK_TAG: ${{ needs.check.outputs.sdk_tag }}
         run: |
           set -euo pipefail
           archive="release/$SDK_ARCHIVE"

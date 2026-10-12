@@ -1,0 +1,67 @@
+name: Resolve Psi dependencies
+description: Export versions from Psi lock and, when requested, delegate locked QCA installation to Iris
+
+inputs:
+  require-iris:
+    description: Require checked-out Iris to resolve its own QCA lock
+    required: false
+    default: 'false'
+  qca-asset:
+    description: QCA release asset to install (the version always comes from Iris's lock)
+    required: false
+    default: ''
+  qca-install-mode:
+    description: none, apt or sdk
+    required: false
+    default: none
+  qca-directory:
+    description: Where to extract QCA assets
+    required: false
+    default: qca-release
+
+outputs:
+  psimedia_ref:
+    value: ${{ steps.resolve.outputs.PSIMEDIA_SRTP_REF }}
+  qtkeychain_tag:
+    value: ${{ steps.resolve.outputs.QTKEYCHAIN_TAG }}
+  qtkeychain_commit:
+    value: ${{ steps.resolve.outputs.QTKEYCHAIN_COMMIT }}
+  msvc_sdk_tag:
+    value: ${{ steps.resolve.outputs.MSVC_QT6_SDK_TAG }}
+  msvc_sdk_archive:
+    value: ${{ steps.resolve.outputs.MSVC_QT6_SDK_ARCHIVE }}
+  msys2_sdk_tag:
+    value: ${{ steps.resolve.outputs.MSYS2_QT5_SDK_TAG }}
+  msys2_sdk_archive:
+    value: ${{ steps.resolve.outputs.MSYS2_QT5_SDK_ARCHIVE }}
+  qca_tag:
+    value: ${{ steps.resolve.outputs.QCA_TAG }}
+  qca_commit:
+    value: ${{ steps.resolve.outputs.QCA_COMMIT }}
+  qca_min_version:
+    value: ${{ steps.resolve.outputs.QCA_MIN_VERSION }}
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve and validate dependency lock
+      id: resolve
+      shell: bash
+      env:
+        REQUIRE_IRIS: ${{ inputs.require-iris }}
+      run: |
+        set -euo pipefail
+        if [[ "$REQUIRE_IRIS" == "true" ]]; then
+          python3 .github/scripts/resolve-dependencies.py --require-iris
+        else
+          python3 .github/scripts/resolve-dependencies.py
+        fi
+
+    - name: Install locked QCA via Iris
+      if: inputs.qca-install-mode != 'none'
+      uses: ./iris/.github/actions/load-dependencies
+      with:
+        lock-path: iris/dependencies.lock.json
+        qca-asset: ${{ inputs.qca-asset }}
+        install-mode: ${{ inputs.qca-install-mode }}
+        qca-directory: ${{ inputs.qca-directory }}

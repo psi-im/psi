@@ -6,12 +6,12 @@ on:
       sdk_tag:
         description: Dependency SDK release tag
         required: false
-        default: windows-sdk-msvc-qt6-v2
+        default: ''
         type: string
       sdk_archive:
         description: Dependency SDK release asset
         required: false
-        default: psi-windows-sdk-msvc-qt6.zip
+        default: ''
         type: string
 
 permissions:
@@ -45,6 +45,10 @@ jobs:
           git submodule sync --recursive
           git submodule update --init --recursive --depth=1
           bash .github/scripts/ensure-iris-version-history.sh
+
+      - name: Resolve dependency SDK from Psi lock
+        id: deps
+        uses: ./.github/actions/load-dependencies
 
       - name: Restore compiler cache
         uses: actions/cache/restore@v4
@@ -93,9 +97,17 @@ jobs:
       - name: Download dependency SDK
         env:
           GH_TOKEN: ${{ github.token }}
-          SDK_TAG: ${{ inputs.sdk_tag }}
-          SDK_ARCHIVE: ${{ inputs.sdk_archive }}
+          SDK_TAG: ${{ steps.deps.outputs.msvc_sdk_tag }}
+          SDK_ARCHIVE: ${{ steps.deps.outputs.msvc_sdk_archive }}
+          REQUESTED_SDK_TAG: ${{ inputs.sdk_tag }}
+          REQUESTED_SDK_ARCHIVE: ${{ inputs.sdk_archive }}
         run: |
+          if ($env:REQUESTED_SDK_TAG -and $env:REQUESTED_SDK_TAG -ne $env:SDK_TAG) {
+            throw 'SDK tag disagrees with dependencies.lock.json'
+          }
+          if ($env:REQUESTED_SDK_ARCHIVE -and $env:REQUESTED_SDK_ARCHIVE -ne $env:SDK_ARCHIVE) {
+            throw 'SDK archive disagrees with dependencies.lock.json'
+          }
           New-Item -ItemType Directory -Force sdk-artifact | Out-Null
           gh release download $env:SDK_TAG `
             --repo $env:GITHUB_REPOSITORY `
@@ -108,7 +120,7 @@ jobs:
 
       - name: Extract SDK
         env:
-          SDK_ARCHIVE: ${{ inputs.sdk_archive }}
+          SDK_ARCHIVE: ${{ steps.deps.outputs.msvc_sdk_archive }}
         run: |
           New-Item -ItemType Directory -Force sdk | Out-Null
           Expand-Archive "sdk-artifact\$env:SDK_ARCHIVE" sdk -Force
