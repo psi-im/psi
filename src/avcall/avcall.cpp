@@ -308,7 +308,13 @@ public:
         captureAudioConsent = needAudio && microphoneWanted;
         captureVideoConsent = needVideo && cameraWanted;
 
-        if (manager->jingleManager->messageInitiationEnabled()) {
+        // A bare JID rings all of the contact's devices with a proposal; a full JID (a group chat occupant or a
+        // chosen resource) gets the session directly.
+        if (peer.resource().isEmpty()) {
+            if (!manager->jingleManager->messageInitiationEnabled()) {
+                fail(tr("The contact has no device to call."));
+                return;
+            }
             RTP::MediaSet media;
             if (needAudio)
                 media |= RTP::Media::Audio;
@@ -323,6 +329,8 @@ public:
                 manager->jmiCalls.insert(jmiId, q);
                 return;
             }
+            fail(tr("Unable to send the call proposal."));
+            return;
         }
 
         startOutgoingSession();

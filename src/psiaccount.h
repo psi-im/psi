@@ -147,6 +147,8 @@ public:
     bool canWhiteboard(const Jid &jid) const;
     // Whether the call action starts a call (true) or a whiteboard-only session (false).
     bool callUsesMedia(const Jid &jid) const;
+    // The JID a call or whiteboard action addresses: the bare JID of a contact, the full JID of a group chat occupant.
+    Jid sessionTarget(const Jid &jid) const;
 #endif
     Status        status() const;
     static Status loggedOutStatus();
@@ -418,7 +420,10 @@ public slots:
     void actionJoin(const ConferenceBookmark &bookmark, bool connectImmediately, bool custom = true);
     void actionDisco(const Jid &, const QString &);
     void actionInvite(const Jid &, const QString &);
+    // To the contact (all its devices) or a group chat occupant.
     void actionVoice(const Jid &);
+    // To exactly this JID.
+    void actionVoiceSpecific(const Jid &);
     void actionExecuteCommand(const Jid &j, const QString & = QString());
     void actionExecuteCommandSpecific(const Jid &, const QString & = QString());
     void actionSetBlock(bool);

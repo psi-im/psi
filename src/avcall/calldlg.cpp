@@ -35,6 +35,7 @@
 #include <iris/xmpp-im/jingle-rtp.h>
 #include <iris/xmpp-im/jingle-sxe.h>
 #include <QElapsedTimer>
+#include <functional>
 #include <QIcon>
 #include <QPointer>
 #include <QTimer>
@@ -209,17 +210,24 @@ public:
         }
         view->setConnecting(true);
         if (!incoming) {
+            const auto target
+                = outgoingTarget(XMPP::Jid(view->peer()), [this](const XMPP::Jid &full) { return callCapable(full); });
+            if (!target.isValid()) {
+                view->setConnecting(false);
+                view->setStatus(tr("The contact cannot be called."));
+                return;
+            }
             view->setStatus(tr("Calling…"));
             bind(account->avCallManager()->createOutgoing());
             session->setMicrophoneEnabled(view->microphoneEnabled());
             session->setCameraEnabled(view->cameraEnabled());
-            const auto           caps = account->client()->capsManager()->features(view->peer());
+            const auto           caps = account->client()->capsManager()->features(target);
             AvCall::PeerFeatures features;
             if (caps.hasJingleIce())
                 features |= AvCall::IceTransport;
             if (caps.hasJingleIceUdp())
                 features |= AvCall::IceUdpTransport;
-            session->connectToJid(view->peer(), view->cameraEnabled() ? AvCall::Both : AvCall::Audio, view->bitrate(),
+            session->connectToJid(target, view->cameraEnabled() ? AvCall::Both : AvCall::Audio, view->bitrate(),
                                   features);
         } else if (session) {
             view->setStatus(tr("Connecting…"));
@@ -229,24 +237,42 @@ public:
         }
     }
 
-    // The resource to invite to a whiteboard: the given one, or the capable resource with the highest priority.
-    XMPP::Jid whiteboardTarget(const XMPP::Jid &jid) const
+    // Where an outgoing session goes. A full JID (a group chat occupant or a resource chosen explicitly) is used as
+    // is. A bare JID stays bare when a proposal (XEP-0353) can ring the contact's devices: some capable device
+    // advertises proposals, or no device is known. Otherwise the capable resource with the highest priority.
+    XMPP::Jid outgoingTarget(const XMPP::Jid &peer, const std::function<bool(const XMPP::Jid &)> &capable) const
     {
-        auto wb = account->wbManager();
-        if (!wb || !jid.isValid())
-            return {};
-        if (!jid.resource().isEmpty())
-            return wb->checkSupport(jid) ? jid : XMPP::Jid();
-        const UserListItem *best = account->find(jid);
-        if (!best)
-            return {};
-        const UserResource *bestResource = nullptr;
-        for (const auto &resource : best->userResourceList()) {
-            if (wb->checkSupport(jid.withResource(resource.name()))
-                && (!bestResource || resource.priority() > bestResource->priority()))
-                bestResource = &resource;
+        if (!peer.isValid() || !peer.resource().isEmpty())
+            return peer;
+        const bool          proposals = account->client()->jingleManager()->messageInitiationEnabled();
+        const UserListItem *item      = account->find(peer);
+        if (!item || item->userResourceList().isEmpty())
+            return proposals ? peer : XMPP::Jid();
+        const UserResource *best      = nullptr;
+        bool                ringable = false;
+        for (const auto &resource : item->userResourceList()) {
+            const auto full = peer.withResource(resource.name());
+            if (!capable(full))
+                continue;
+            ringable = ringable
+                || account->client()->capsManager()->features(full).test(Jingle::MessageInitiation::ns());
+            if (!best || resource.priority() > best->priority())
+                best = &resource;
         }
-        return bestResource ? jid.withResource(bestResource->name()) : XMPP::Jid();
+        if (proposals && ringable)
+            return peer;
+        return best ? peer.withResource(best->name()) : XMPP::Jid();
+    }
+
+    bool whiteboardCapable(const XMPP::Jid &full) const
+    {
+        return account->wbManager() && account->wbManager()->checkSupport(full);
+    }
+
+    bool callCapable(const XMPP::Jid &full) const
+    {
+        // Resources whose capabilities are not known yet are tried, as before.
+        return account->canCall(full) || account->client()->capsManager()->features(full).isEmpty();
     }
 
     void updateWhiteboardSupport()
@@ -254,7 +280,7 @@ public:
         Jingle::Session *jingle = jingleSession();
         const bool       supported
             = jingle ? account->wbManager() && account->wbManager()->checkSupport(jingle->peer())
-                     : whiteboardTarget(XMPP::Jid(view->peer())).isValid();
+                     : account->canWhiteboard(XMPP::Jid(view->peer()));
         // In a whiteboard-only session the whiteboard is the session; it cannot be chosen away before it starts.
         view->setWhiteboardSupported(supported && (!view->whiteboardOnly() || active));
     }
@@ -287,37 +313,25 @@ public:
             return;
         }
 
-        const XMPP::Jid peer(view->peer());
-        // Without a chosen resource the invitation rings all devices that support proposals; the first one
-        // that accepts gets the session.
-        if (peer.resource().isEmpty() && proposalsSupported(peer)) {
-            proposalId = account->wbManager()->propose(peer);
-            if (!proposalId.isEmpty()) {
-                view->setConnecting(true);
-                view->setStatus(tr("Inviting…"));
-                return;
-            }
-        }
-        const auto target = whiteboardTarget(peer);
-        if (!target.isValid()) {
+        const auto target = outgoingTarget(XMPP::Jid(view->peer()), [this](const XMPP::Jid &full) {
+            return whiteboardCapable(full);
+        });
+        if (!target.isValid() || (!target.resource().isEmpty() && !whiteboardCapable(target))) {
             view->setStatus(tr("The contact does not support whiteboards."));
             return;
         }
+        if (target.resource().isEmpty()) {
+            // The invitation rings all devices; the first one that accepts gets the session.
+            proposalId = account->wbManager()->propose(target);
+            if (proposalId.isEmpty()) {
+                view->setStatus(tr("Unable to send the whiteboard invitation."));
+                return;
+            }
+            view->setConnecting(true);
+            view->setStatus(tr("Inviting…"));
+            return;
+        }
         startWhiteboardSession(target, QString());
-    }
-
-    bool proposalsSupported(const XMPP::Jid &bare) const
-    {
-        auto wb = account->wbManager();
-        if (!wb || !account->client()->jingleManager()->messageInitiationEnabled())
-            return false;
-        const UserListItem *item = account->find(bare);
-        if (!item)
-            return false;
-        for (const auto &resource : item->userResourceList())
-            if (wb->checkProposalSupport(bare.withResource(resource.name())))
-                return true;
-        return false;
     }
 
     void startWhiteboardSession(const XMPP::Jid &target, const QString &sid)

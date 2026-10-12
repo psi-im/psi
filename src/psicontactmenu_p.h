@@ -48,6 +48,7 @@ public slots:
     void sendMessage();
     void openChat();
     void voiceCall();
+    void voiceCallTo(PsiContact *, const XMPP::Jid &jid);
     void sendFile();
     void transportLogon();
     void transportLogoff();
@@ -87,6 +88,7 @@ public:
     ResourceMenu          *executeCommandMenu_;
     ResourceMenu          *activeChatsMenu_;
     IconAction            *voiceCallAction_;
+    ResourceMenu          *voiceCallToMenu_;
     QAction               *sendFileAction_;
     QAction               *customStatusAction_;
     InviteToGroupChatMenu *inviteToGroupchatMenu_;

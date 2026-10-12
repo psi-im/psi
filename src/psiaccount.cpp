@@ -4123,7 +4123,7 @@ ChatDlg *PsiAccount::ensureChatDlg(const Jid &j)
         connect(c, &ChatDlg::aHistory, this, &PsiAccount::actionHistory);
         connect(c, &ChatDlg::aFile, this, [this](const XMPP::Jid &jid) { sendFiles(jid); });
         connect(c, &ChatDlg::aVoice, this, &PsiAccount::actionVoice);
-        connect(c, &ChatDlg::aWhiteboard, this, [this](const XMPP::Jid &jid) { actionOpenWhiteboardSpecific(jid); });
+        connect(c, &ChatDlg::aWhiteboard, this, &PsiAccount::actionOpenWhiteboard);
         connect(d->psi, &PsiCon::emitOptionsUpdate, c, &ChatDlg::optionsUpdate);
         connect(this, static_cast<void (PsiAccount::*)(const XMPP::Jid &, bool)>(&PsiAccount::updateContact), c,
                 &ChatDlg::updateContact);
@@ -4232,28 +4232,24 @@ bool PsiAccount::callUsesMedia(const Jid &jid) const
     return AvCallManager::isSupported() && (canCall(jid) || !canWhiteboard(jid));
 }
 
-void PsiAccount::actionVoice(const Jid &j)
+Jid PsiAccount::sessionTarget(const Jid &jid) const
+{
+    // A call or whiteboard to a contact rings all of its devices; the window sends a proposal to the bare JID
+    // or picks a resource when the devices cannot take proposals. A group chat occupant has only its full JID.
+    if (!jid.resource().isEmpty() && d->groupchats.contains(jid.bare()))
+        return jid;
+    return jid.withResource(QString());
+}
+
+void PsiAccount::actionVoice(const Jid &j) { actionVoiceSpecific(sessionTarget(j)); }
+
+void PsiAccount::actionVoiceSpecific(const Jid &j)
 {
     if (!callUsesMedia(j)) {
         actionOpenWhiteboardSpecific(j);
         return;
     }
-    Jid j2 = j;
-    if (j.resource().isEmpty()) {
-        UserListItem *u = find(j);
-        if (u && u->isAvailable()) {
-            const UserResource *bestCallResource = nullptr;
-            for (const auto &resource : u->userResourceList()) {
-                const bool capable = callCapable(d->client->capsManager()->features(j.withResource(resource.name())));
-                if (capable && (!bestCallResource || resource.priority() > bestCallResource->priority()))
-                    bestCallResource = &resource;
-            }
-            if (bestCallResource)
-                j2 = j2.withResource(bestCallResource->name());
-            else if (auto priority = u->userResourceList().priority(); priority != u->userResourceList().end())
-                j2 = j2.withResource(priority->name());
-        }
-    }
+    const Jid j2 = j;
 
     CallDlg *w = new CallDlg(this, nullptr);
     w->setAttribute(Qt::WA_DeleteOnClose);
@@ -4614,11 +4610,7 @@ void PsiAccount::actionOpenChatSpecific(const Jid &j) { openChat(j, UserAction);
 void PsiAccount::actionOpenPassiveChatSpecific(const Jid &j) { openChat(j, UserPassiveAction); }
 
 #ifdef WHITEBOARDING
-void PsiAccount::actionOpenWhiteboard(const Jid &j)
-{
-    // The call window picks the contact's capable resource with the highest priority.
-    actionOpenWhiteboardSpecific(j);
-}
+void PsiAccount::actionOpenWhiteboard(const Jid &j) { actionOpenWhiteboardSpecific(sessionTarget(j)); }
 
 /*! \brief Opens a whiteboard to \a target.
  *  \a ownJid and \a groupChat should be specified in the case of a group chat session.

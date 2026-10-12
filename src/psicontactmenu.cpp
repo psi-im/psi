@@ -139,6 +139,10 @@ PsiContactMenu::Private::Private(PsiContactMenu *menu, PsiContact *_contact) :
     connect(sendMessageToMenu_, SIGNAL(resourceActivated(PsiContact *, const XMPP::Jid &)),
             SLOT(sendMessageTo(PsiContact *, const XMPP::Jid &)));
 
+    voiceCallToMenu_ = new ResourceMenu(tr("Call &To"), contact_, menu_);
+    connect(voiceCallToMenu_, SIGNAL(resourceActivated(PsiContact *, const XMPP::Jid &)),
+            SLOT(voiceCallTo(PsiContact *, const XMPP::Jid &)));
+
     openChatToMenu_ = new ResourceMenu(tr("Open Chat &To"), contact_, menu_);
     connect(openChatToMenu_, SIGNAL(resourceActivated(PsiContact *, const XMPP::Jid &)),
             SLOT(openChatTo(PsiContact *, const XMPP::Jid &)));
@@ -254,6 +258,7 @@ PsiContactMenu::Private::Private(PsiContactMenu *menu, PsiContact *_contact) :
         _advancedMenu->addAction(customStatusAction_);
         _advancedMenu->addAction(visibleAction_);
         _advancedMenu->addAction(authRemoveAction_);
+        _advancedMenu->addMenu(voiceCallToMenu_);
 
 #ifdef PSI_PLUGINS
         PluginManager::instance()->addContactMenu(_advancedMenu, contact_->account(), contact_->jid().full());
@@ -312,6 +317,8 @@ void PsiContactMenu::Private::updateActions()
     voiceCallAction_->setVisible(!contact_->isAgent()
                                  && (AvCallManager::isSupported() || contact_->account()->canWhiteboard(contact_->jid())));
     voiceCallAction_->setEnabled(contact_->account()->isAvailable());
+    voiceCallToMenu_->menuAction()->setVisible(voiceCallAction_->isVisible());
+    voiceCallToMenu_->setEnabled(contact_->account()->isAvailable() && !voiceCallToMenu_->isEmpty());
     sendFileAction_->setVisible(!contact_->isAgent());
     sendFileAction_->setEnabled(contact_->account()->isAvailable());
     inviteToGroupchatMenu_->setEnabled(!inviteToGroupchatMenu_->isEmpty() && contact_->account()->isAvailable());
@@ -465,6 +472,13 @@ void PsiContactMenu::Private::voiceCall()
     if (!contact_)
         return;
     contact_->account()->actionVoice(contact_->jid());
+}
+
+void PsiContactMenu::Private::voiceCallTo(PsiContact *, const XMPP::Jid &jid)
+{
+    if (!contact_)
+        return;
+    contact_->account()->actionVoiceSpecific(jid);
 }
 
 void PsiContactMenu::Private::sendFile()

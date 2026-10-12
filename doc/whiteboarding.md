@@ -65,7 +65,7 @@ then `flush()`); remote edits arrive as document signals (`nodeAdded`, `nodeMove
 
 ## Invitations that ring
 
-Whiteboard invitations to a contact without a chosen resource use Jingle Message Initiation
+Whiteboard invitations to a contact use Jingle Message Initiation
 (XEP-0353), like calls: the proposal goes to the bare JID, all of the contact's online devices
 show the invitation and answer `<ringing/>`, the one that accepts with `<proceed/>` gets the
 session (its sid is the proposal id), and the others drop the invitation when the carbon of the
@@ -179,12 +179,16 @@ One action starts calls and whiteboards. It replaces **Voice Call** and the sepa
 - In the chat toolbar the call button gets a menu (split button) with **Whiteboard only**, for
   a whiteboard without audio when a call would be possible. The group chat participant menu
   uses the same action.
-- The target follows the user's choice. In a chat with a resource selected in the header, the
-  session goes directly to that full JID (`session-initiate`, no proposal). Otherwise, and from
-  the roster menu, a XEP-0353 proposal goes to the bare JID and the first device that answers
-  `<proceed/>` gets the session; without XEP-0353 the session goes to the capable resource with
-  the highest priority. Whiteboards follow this rule. Calls still send the proposal to the bare
-  JID whenever XEP-0353 is enabled.
+- Calls and whiteboards to a contact ring all of its devices, from the roster and from a chat
+  alike: a XEP-0353 proposal goes to the bare JID and the first device that answers
+  `<proceed/>` gets the session. The resource shown in the chat header is not used: Psi often
+  locks it to the last resource that wrote, which is not a choice of the user. A direct
+  `session-initiate` is an IQ to one resource and is not copied by message carbons, so it would
+  ring only that device.
+- The session goes directly to a full JID (`session-initiate`, no proposal) only for a group
+  chat occupant, for a resource chosen in **Advanced → Call To** of the contact menu, and when no
+  capable device of the contact advertises XEP-0353; then the capable resource with the highest
+  priority is used. A contact without known devices still gets a proposal.
 
 ### Structure
 
