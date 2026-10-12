@@ -40,9 +40,15 @@ public:
     // A session without media: the whiteboard is the content, media controls are disabled.
     void setWhiteboardOnly(bool whiteboardOnly);
     bool whiteboardOnly() const;
+    // Whether this side and the peer can use audio and video; without it the media buttons are disabled.
+    void setMediaAvailable(bool available);
+    void setMicrophoneChecked(bool enabled);
     void setWhiteboardSupported(bool supported);
     void setWhiteboardEnabled(bool enabled);
     bool whiteboardEnabled() const;
+
+private:
+    void updateMediaButtons();
 
 signals:
     void accepted();
@@ -76,5 +82,7 @@ private:
     bool                   whiteboardOnly_ = false;
     bool                   whiteboardSupported_ = false;
     bool                   finished_       = false;
+    bool                   connecting_     = false;
+    bool                   mediaAvailable_ = true;
 };
 #endif

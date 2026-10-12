@@ -84,6 +84,7 @@ signals:
     void screenSharingChanged(bool sharing);
     void screenSharingStarted();
     void cameraEnabledChanged(bool enabled);
+    void microphoneEnabledChanged(bool enabled);
     void incomingVideoRemoved(bool presentation);
     void mediaControlError(const QString &message);
 
@@ -106,6 +107,9 @@ public:
 
     AvCall *createOutgoing();
     AvCall *takeIncoming();
+    // Media for a running session that started without it (a whiteboard). The call adds audio or video
+    // with content-add and accepts media added by the peer; the session stays owned by its creator.
+    AvCall *joinSession(XMPP::Jingle::Session *session);
 
     static void    config();
     static bool    isSupported();

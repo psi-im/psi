@@ -213,7 +213,7 @@ void    CallView::setActive(bool active)
     accept_->setVisible(!active);
     quality_->setVisible(!active);
     end_->setText(active ? (whiteboardOnly_ ? tr("End") : tr("End call")) : tr("Close"));
-    share_->setEnabled(active && !whiteboardOnly_ && shareSupported_ && ScreenShareCapture::available());
+    updateMediaButtons();
     if (active)
         stage_->setPlaceholderText(whiteboardOnly_ ? tr("Connected") : tr("Connected · waiting for video"));
 }
@@ -221,8 +221,9 @@ void CallView::setConnecting(bool connecting)
 {
     accept_->setEnabled(!connecting);
     peer_->setReadOnly(connecting);
-    quality_->setEnabled(!connecting);
-    camera_->setEnabled(!connecting && videoSupported_ && !whiteboardOnly_);
+    quality_->setEnabled(!connecting && !whiteboardOnly_);
+    connecting_ = connecting;
+    updateMediaButtons();
     end_->setText(connecting ? tr("Cancel") : tr("Close"));
 }
 void CallView::setIncoming(bool incoming)
@@ -235,14 +236,14 @@ void CallView::setIncoming(bool incoming)
 void CallView::setVideoSupported(bool supported)
 {
     videoSupported_ = supported;
-    camera_->setEnabled(supported && !whiteboardOnly_);
+    updateMediaButtons();
     if (!supported)
         camera_->setChecked(false);
 }
 void CallView::setSharingSupported(bool supported)
 {
     shareSupported_ = supported;
-    share_->setEnabled(active_ && !whiteboardOnly_ && supported && ScreenShareCapture::available());
+    updateMediaButtons();
 }
 void CallView::setCameraEnabled(bool enabled)
 {
@@ -256,9 +257,7 @@ void CallView::setFinished()
     setActive(false);
     accept_->hide();
     quality_->hide();
-    microphone_->setEnabled(false);
-    camera_->setEnabled(false);
-    share_->setEnabled(false);
+    updateMediaButtons();
     whiteboard_->setEnabled(false);
     stage_->hideAllTiles();
     stage_->setPlaceholderText(whiteboardOnly_ ? tr("Session ended") : tr("Call ended"));
@@ -275,7 +274,7 @@ void CallView::setSharing(bool sharing, const QString &source, bool connecting)
 void CallView::setShareSelecting(bool selecting)
 {
     selecting_ = selecting;
-    share_->setEnabled(active_ && !whiteboardOnly_ && shareSupported_ && ScreenShareCapture::available());
+    updateMediaButtons();
     share_->setText(selecting ? tr("Cancel selection") : (sharing_ ? tr("Sharing screen") : tr("Share screen")));
 }
 void CallView::setDuration(qint64 seconds)
@@ -295,21 +294,42 @@ CallStage             *CallView::stage() const { return stage_; }
 void CallView::setWhiteboardOnly(bool whiteboardOnly)
 {
     whiteboardOnly_ = whiteboardOnly;
-    microphone_->setEnabled(!whiteboardOnly);
     if (whiteboardOnly) {
+        // Screen sharing needs running media; it is offered again once audio or video is connected.
+        shareSupported_ = false;
         const QSignalBlocker blocked(microphone_);
         microphone_->setChecked(false);
         microphone_->setText(tr("Microphone"));
     }
-    microphone_->setToolTip(whiteboardOnly ? tr("Not available in a whiteboard session")
-                                           : tr("Turn your microphone on or off"));
-    camera_->setEnabled(!whiteboardOnly && videoSupported_);
-    share_->setEnabled(active_ && !whiteboardOnly && shareSupported_ && ScreenShareCapture::available());
     quality_->setEnabled(!whiteboardOnly);
+    updateMediaButtons();
     stage_->setPlaceholderText(whiteboardOnly ? tr("Whiteboard")
                                               : tr("Audio call\nTurn on your camera or share your screen"));
 }
 bool CallView::whiteboardOnly() const { return whiteboardOnly_; }
+void CallView::setMediaAvailable(bool available)
+{
+    mediaAvailable_ = available;
+    updateMediaButtons();
+}
+void CallView::setMicrophoneChecked(bool enabled)
+{
+    const QSignalBlocker blocked(microphone_);
+    microphone_->setChecked(enabled);
+    microphone_->setText(enabled ? tr("Microphone") : tr("Muted"));
+}
+void CallView::updateMediaButtons()
+{
+    // A session that started as a whiteboard gets media once it is connected, if both sides can use it.
+    const bool media = !finished_ && mediaAvailable_ && (!whiteboardOnly_ || active_);
+    microphone_->setEnabled(media);
+    camera_->setEnabled(media && videoSupported_ && !connecting_);
+    share_->setEnabled(media && active_ && shareSupported_ && ScreenShareCapture::available());
+    const QString unavailable = whiteboardOnly_ && !mediaAvailable_ ? tr("Calls are not available with this contact")
+                                                                    : QString();
+    microphone_->setToolTip(unavailable.isEmpty() ? tr("Turn your microphone on or off") : unavailable);
+    camera_->setToolTip(unavailable.isEmpty() ? tr("Turn your camera on or off") : unavailable);
+}
 void CallView::setWhiteboardSupported(bool supported)
 {
     whiteboardSupported_ = supported;

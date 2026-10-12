@@ -86,11 +86,10 @@ A call and a whiteboard are both Jingle sessions, and one session can carry seve
 (audio, camera, screen, whiteboard) added and removed with `content-add`/`content-remove`.
 Psi therefore shows them in one window: a call can get a whiteboard, and later a whiteboard can
 get a microphone or camera. Implemented so far: the stage with tiles, whiteboard-only sessions in
-the call window, adding a whiteboard to a call (either side), switching the whiteboard on and off
-through senders, and the single call/whiteboard action. A whiteboard switched on before a call
-is added with `content-add` once the call connects. Still planned: media in a session that
-started as a whiteboard, senders for the media buttons, proposals and ringing (see the order of
-work below).
+the call window, adding a whiteboard to a call and a microphone or camera to a whiteboard
+(either side), switching contents on and off through senders, and the single call/whiteboard
+action. A whiteboard switched on before a call is added with `content-add` once the call
+connects. Still planned: proposals and ringing (see the order of work below).
 
 ### Window
 
@@ -121,7 +120,7 @@ work below).
 Switching something off in a call does not remove its content, and only **End** ends the
 session. The first time a kind of content is switched on, it is negotiated with `content-add`;
 afterwards the buttons change the content's senders (XEP-0166 `content-modify`), and switching
-on again resumes the same content. Microphone and camera already work this way.
+on again resumes the same content.
 
 | Button | First use | Off | On again |
 | --- | --- | --- | --- |
@@ -139,15 +138,19 @@ on again resumes the same content. Microphone and camera already work this way.
   document is kept, so switching it on continues from the same drawing. A whiteboard-only
   session shows the same control bar, so turning on the microphone makes it a call.
 - Screen sharing on again opens the source picker like the first time. The new source is sent
-  on the existing content; whether the backend can switch the capture source of a running
-  content, or needs a renegotiation (`description-info`), is to be checked in the RTP code.
+  on the existing content without renegotiation: the media backend switches the video input of
+  a running content (`setContentCapture()` in `psimediajingle.cpp`). The peer detaches its
+  video output while the screen is not sent, so the tile reappears with the first new frame.
 - Media buttons depend on both sides. Without a local media backend (Psi built or running without
   PsiMedia) the microphone, camera and screen buttons are hidden and the peer is not offered
   RTP: Iris then advertises no RTP features and refuses incoming RTP contents. The buttons are
   also disabled when the peer does not advertise RTP. Whiteboard-only sessions need neither.
 - An RTP content added by the peer to a running session is accepted for receiving: the session
   itself was already accepted. Local capture stays off until the user switches the microphone
-  or camera on, as for incoming calls today.
+  or camera on, as for incoming calls today. In a call this applies to video (audio is part of
+  the call); in a session that started as a whiteboard also to audio.
+- In a whiteboard session the microphone and camera become available once it is connected, if
+  this side has a media backend and the peer advertises calls.
 - Possible later: a whiteboard where only one side draws (senders = initiator or responder),
   for presentations.
 
@@ -178,8 +181,9 @@ One action starts calls and whiteboards. It replaces **Voice Call** and the sepa
 
 - `CallDlg` drives whiteboard contents itself: a whiteboard-only session has no `AvCall`, and in
   a call it uses `AvCall::jingleSession()` to add the whiteboard and to accept one added by the
-  peer. A session that started as a whiteboard refuses media contents added by the peer until
-  `AvCall` can join an existing session.
+  peer. For a session that started as a whiteboard, `AvCallManager::joinSession()` creates an
+  `AvCall` that adds audio or video with `content-add` and accepts RTP contents added by the
+  peer; it never terminates the session, which stays owned by the dialog.
 - `CallView` is a stage with tiles and a control bar. `CallStage` (`src/avcall/callstage.h`)
   places the visible tiles: the main tile by the default order or the viewer's choice, the others
   as clickable previews, and a placeholder when nothing is visible. The remote camera and the
@@ -203,7 +207,8 @@ One action starts calls and whiteboards. It replaces **Voice Call** and the sepa
    one call/whiteboard action replaces the separate whiteboard menu entries (done; the group
    chat participant menu still has no whiteboard).
 4. Turning contents on and off from the control bar through senders; screen sharing keeps
-   its content and reopens the source picker.
+   its content and reopens the source picker (done, together with media in whiteboard
+   sessions).
 5. XEP-0353 proposals for whiteboards and mixed sessions.
 6. Ringing and actionable notifications.
 7. SXE payload over ICE/S5B (`iris/docs/jingle-sxe.md`), which also lets a whiteboard share the

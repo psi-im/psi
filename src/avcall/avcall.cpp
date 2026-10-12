@@ -259,6 +259,34 @@ public:
         return true;
     }
 
+    bool joinSession(Jingle::Session *existing)
+    {
+        if (!existing || existing->state() >= Jingle::State::Finishing)
+            return false;
+        session  = existing;
+        peer     = session->peer();
+        incoming = session->role() == Jingle::Origin::Responder;
+        joined   = true;
+        // Nobody consented to capture yet: the user switches the microphone or camera on.
+        microphoneWanted    = false;
+        cameraWanted        = false;
+        signalingActive     = session->state() == Jingle::State::Active;
+        manager->applyNetworkConfiguration();
+        setupSession();
+        return true;
+    }
+
+    // The backend of a joined session is configured once its first RTP content exists.
+    bool ensureJoinedBackend()
+    {
+        if (!joined || backendConfigured)
+            return true;
+        if (!configureBackend())
+            return false;
+        backendConfigured = true;
+        return true;
+    }
+
     void startOutgoing()
     {
         if (!manager || session || !jmiId.isEmpty())
@@ -419,6 +447,13 @@ public:
 
     void reject()
     {
+        if (joined) {
+            // The session belongs to its other content; only stop sending media.
+            localTermination = true;
+            if (session)
+                stopPsiMediaJingleTransmit(session);
+            return;
+        }
         localTermination = true;
         jmiClosed        = true;
 
@@ -472,6 +507,24 @@ public:
 
     void setMicrophoneEnabled(bool enabled)
     {
+        if (enabled && joined && session && !audioApplication()) {
+            if (!manager || !manager->capabilities.audio || !audioCaptureAvailable()) {
+                emit q->microphoneEnabledChanged(false);
+                emit q->mediaControlError(tr("No microphone is available."));
+                return;
+            }
+            auto audio = manager->rtpManager->createOutgoing(session, RTP::Media::Audio, Jingle::Origin::Both,
+                                                             QStringLiteral("audio-")
+                                                                 + QUuid::createUuid().toString(QUuid::Id128));
+            if (!audio || !ensureJoinedBackend()) {
+                emit q->microphoneEnabledChanged(false);
+                emit q->mediaControlError(tr("Unable to add a microphone to this session."));
+                return;
+            }
+            requestedAudio = true;
+            wireApplications();
+            audioDirection.bind(audio, true, audioCaptureAvailable());
+        }
         microphoneWanted    = enabled;
         captureAudioConsent = enabled;
         audioDirection.setLocalSending(enabled);
@@ -482,7 +535,7 @@ public:
     {
         cameraWanted        = enabled;
         captureVideoConsent = enabled;
-        if (!active || !session)
+        if ((!active && !joined) || !session)
             return;
         if (enabled && !cameraApplication()) {
             if (!manager || !manager->capabilities.video || resolvedVideoInputDevice().isEmpty()) {
@@ -500,12 +553,13 @@ public:
             cameraContent = manager->rtpManager->createOutgoing(session, RTP::Media::Video, session->role(),
                                                                 QStringLiteral("camera-")
                                                                     + QUuid::createUuid().toString(QUuid::Id128));
-            if (!cameraContent) {
+            if (!cameraContent || !ensureJoinedBackend()) {
                 captureVideoConsent = false;
                 emit q->cameraEnabledChanged(false);
                 emit q->mediaControlError(tr("Unable to add a camera to this call."));
                 return;
             }
+            requestedVideo = true;
             wireApplications();
             cameraDirection.bind(cameraContent, true, (!g_config->liveInput || !resolvedVideoInputDevice().isEmpty()));
         } else {
@@ -516,9 +570,22 @@ public:
 
     bool startScreenSharing(const QString &source, std::shared_ptr<const void> lease)
     {
-        if (!session || !active || !manager || !manager->capabilities.video || source.isEmpty() || screenContent
+        if (!session || !active || !manager || !manager->capabilities.video || source.isEmpty()
             || !psiMediaJingleSupportsGroupedCapture(session))
             return false;
+        if (screenContent && screenContent->state() < Jingle::State::Finishing) {
+            // Sharing again: the new source is sent on the content kept by stopScreenSharing().
+            if (!screenSource.isEmpty())
+                return false;
+            screenSource = source;
+            setPsiMediaJingleContentCaptureLease(session, screenContent->contentName(), std::move(lease));
+            screenDirection.setLocalSending(true);
+            emit q->screenSharingChanged(true);
+            syncActiveTransmit();
+            if (screenContent && screenContent->state() == Jingle::State::Active)
+                emit q->screenSharingStarted();
+            return true;
+        }
         if (cameraContent && cameraContent->state() < Jingle::State::Active) {
             emit q->mediaControlError(tr("Wait for the camera to connect before sharing your screen."));
             return false;
@@ -541,17 +608,19 @@ public:
         return true;
     }
 
+    // Stops sending the screen but keeps the content: sharing again reuses it with a new source.
     void stopScreenSharing()
     {
         const auto content = screenContent;
+        const bool wasSharing = !screenSource.isEmpty();
         screenSource.clear();
         screenDirection.setLocalSending(false);
-        if (session && content)
+        if (session && content) {
             setPsiMediaJingleContentCapture(session, content->contentName(), false, QString());
-        screenContent.clear();
-        if (content && content->state() < Jingle::State::Finishing)
-            content->remove(Jingle::Reason::Success, tr("Screen sharing stopped"));
-        emit q->screenSharingChanged(false);
+            setPsiMediaJingleContentCaptureLease(session, content->contentName(), {});
+        }
+        if (wasSharing)
+            emit q->screenSharingChanged(false);
     }
 
     bool audioCaptureAvailable() const { return !g_config->liveInput || !resolvedAudioInputDevice().isEmpty(); }
@@ -588,7 +657,11 @@ public:
             connect(rtp, &Jingle::Application::sendersChanged, this, &AvCallPrivate::applicationSendersChanged,
                     Qt::UniqueConnection);
             const QPointer<RTP::Application> guard(rtp);
-            AvCallPolicy::prepareIncomingContent(rtp, active);
+            if (joined && rtp->isRemote() && rtp->state() == Jingle::State::Created && !ensureJoinedBackend()) {
+                rtp->remove(Jingle::Reason::FailedApplication);
+                continue;
+            }
+            AvCallPolicy::prepareIncomingContent(rtp, active || joined, joined);
             if (!guard)
                 continue;
             if (rtp->media() == QLatin1String("video") && rtp->state() < Jingle::State::Finishing) {
@@ -662,6 +735,9 @@ public:
         }
 
         if (!acceptedAudio && !acceptedVideo) {
+            // A joined session lives on without media.
+            if (joined)
+                return;
             fail(tr("The peer did not accept any usable RTP media."));
             return;
         }
@@ -692,6 +768,12 @@ public:
 
     void fail(const QString &message)
     {
+        if (joined) {
+            // The session belongs to its other content: report the media problem only.
+            errorString = message;
+            emit q->mediaControlError(message);
+            return;
+        }
         errorString      = message;
         localTermination = true;
         if (!session && !jmiId.isEmpty())
@@ -788,7 +870,7 @@ private slots:
         if (!jmiId.isEmpty() && jmiProceedSent)
             sendJmiFinish(wasActive ? QStringLiteral("success") : QStringLiteral("expired"),
                           wasActive ? QStringLiteral("Success") : QStringLiteral("Session ended before activation"));
-        if (!localTermination) {
+        if (!localTermination && !joined) {
             errorString = wasActive ? tr("Call was terminated.") : tr("Call was rejected or negotiation failed.");
             emit q->error();
         }
@@ -813,6 +895,8 @@ public:
     QPointer<RTP::Application> displayedScreen;
     QString                    screenSource;
     bool                      incoming            = false;
+    bool                      joined              = false;
+    bool                      backendConfigured   = false;
     bool                      signalingActive     = false;
     bool                      active              = false;
     bool                      localTermination    = false;
@@ -887,7 +971,10 @@ bool AvCall::screenSharingSupported() const
     return d->active && d->session && psiMediaJingleSupportsGroupedCapture(d->session);
 }
 void AvCall::stopScreenSharing() { d->stopScreenSharing(); }
-bool AvCall::screenSharing() const { return d->screenContent && d->screenContent->state() < Jingle::State::Finishing; }
+bool AvCall::screenSharing() const
+{
+    return d->screenContent && d->screenContent->state() < Jingle::State::Finishing && !d->screenSource.isEmpty();
+}
 
 QString AvCall::errorString() const { return d->errorString; }
 
@@ -1129,6 +1216,21 @@ AvCall *AvCallManager::createOutgoing()
     auto call        = new AvCall;
     call->d->manager = d;
     d->sessions.append(call);
+    return call;
+}
+
+AvCall *AvCallManager::joinSession(XMPP::Jingle::Session *session)
+{
+    if (!d->capabilities.available())
+        return nullptr;
+    auto call        = new AvCall;
+    call->d->manager = d;
+    d->sessions.append(call);
+    if (!call->d->joinSession(session)) {
+        d->unlink(call);
+        delete call;
+        return nullptr;
+    }
     return call;
 }
 

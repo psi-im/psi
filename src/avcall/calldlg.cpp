@@ -32,6 +32,7 @@
 #include "xmpp_caps.h"
 #include "xmpp_client.h"
 #include <iris/jingle-session.h>
+#include <iris/xmpp-im/jingle-rtp.h>
 #include <iris/xmpp-im/jingle-sxe.h>
 #include <QElapsedTimer>
 #include <QIcon>
@@ -67,10 +68,18 @@ public:
         connect(view, &CallView::accepted, this, [this] { accept(); });
         connect(view, &CallView::ended, q, &QDialog::close);
         connect(view, &CallView::microphoneChanged, this, [this](bool enabled) {
+            if (!session && enabled && !joinMedia()) {
+                view->setMicrophoneChecked(false);
+                return;
+            }
             if (session)
                 session->setMicrophoneEnabled(enabled);
         });
         connect(view, &CallView::cameraChanged, this, [this](bool enabled) {
+            if (!session && enabled && !joinMedia()) {
+                view->setCameraEnabled(false);
+                return;
+            }
             if (session)
                 session->setCameraEnabled(enabled);
         });
@@ -137,8 +146,11 @@ public:
             view->setStatus(tr("Connected"));
             session->setIncomingVideo(view->remoteVideo());
             session->setIncomingPresentation(view->remotePresentation());
-            elapsed.start();
-            timer.start(1000);
+            // Media joining a running whiteboard session keeps the session's duration.
+            if (!timer.isActive()) {
+                elapsed.start();
+                timer.start(1000);
+            }
             if (auto jingle = session->jingleSession()) {
                 watchSession(jingle);
                 updateWhiteboardSupport();
@@ -174,6 +186,7 @@ public:
         connect(call, &AvCall::mediaControlError, view, &CallView::setStatus);
         connect(call, &AvCall::incomingVideoRemoved, view, &CallView::hideRemoteVideo);
         connect(call, &AvCall::cameraEnabledChanged, view, &CallView::setCameraEnabled);
+        connect(call, &AvCall::microphoneEnabledChanged, view, &CallView::setMicrophoneChecked);
         connect(call, &AvCall::screenSharingStarted, this, [this] { view->setSharing(true, shareLabel); });
     }
 
@@ -281,6 +294,8 @@ public:
         wbSession = jingle;
         connect(jingle, &Jingle::Session::activated, this, [this] {
             active = true;
+            if (wbSession)
+                view->setMediaAvailable(mediaAvailable(wbSession->peer()));
             view->setConnecting(false);
             view->setActive(true);
             view->setStatus(tr("Connected"));
@@ -321,11 +336,37 @@ public:
                     if (app && app != whiteboard) {
                         app->prepare();
                         bindWhiteboard(app);
-                    } else if (!app && jingle == wbSession) {
-                        content->remove(Jingle::Reason::UnsupportedApplications);
+                    } else if (!app && jingle == wbSession && !session) {
+                        // Media added by the peer to a whiteboard session: AvCall accepts it for receiving.
+                        if (!dynamic_cast<XMPP::Jingle::RTP::Application *>(content) || !joinMedia())
+                            content->remove(Jingle::Reason::UnsupportedApplications);
                     }
                 }
             });
+    }
+
+    bool mediaAvailable(const XMPP::Jid &peer) const
+    {
+        return AvCallManager::isSupported() && account->avCallManager() && account->canCall(peer);
+    }
+
+    // Media for a session that started as a whiteboard: AvCall joins the session and adds or accepts RTP
+    // contents.
+    bool joinMedia()
+    {
+        if (session)
+            return true;
+        if (!wbSession || !active || finished || !mediaAvailable(wbSession->peer()))
+            return false;
+        auto call = account->avCallManager()->joinSession(wbSession);
+        if (!call) {
+            view->setStatus(tr("Audio and video are not available."));
+            return false;
+        }
+        bind(call);
+        session->setIncomingVideo(view->remoteVideo());
+        session->setIncomingPresentation(view->remotePresentation());
+        return true;
     }
 
     void addWhiteboard(Jingle::Session *jingle)
@@ -435,6 +476,7 @@ void CallDlg::setOutgoingWhiteboard(const XMPP::Jid &jid)
     setWindowTitle(tr("Whiteboard"));
     setWindowIcon(IconsetFactory::icon("psi/whiteboard").icon());
     d->view->setWhiteboardOnly(true);
+    d->view->setMediaAvailable(d->mediaAvailable(jid));
     d->view->setWhiteboardEnabled(true);
     d->view->setPeer(jid.full(), true);
     d->view->setIncoming(false);
@@ -456,6 +498,7 @@ void CallDlg::setIncomingWhiteboard(XMPP::Jingle::SXE::Application *whiteboard)
     setWindowIcon(IconsetFactory::icon("psi/whiteboard").icon());
     d->incoming = true;
     d->view->setWhiteboardOnly(true);
+    d->view->setMediaAvailable(d->mediaAvailable(jingle->peer()));
     d->view->setPeer(jingle->peer().full(), false);
     d->view->setIncoming(true);
     d->view->setStatus(tr("Whiteboard invitation"));

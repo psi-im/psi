@@ -101,26 +101,32 @@ public:
     bool                    sendProtectedRtpPacket(QByteArray, R::PacketKind, quint64) override { return false; }
     R::SecureRtpAssociation association;
 };
-static void incomingVideo(J::Origin role, J::Origin senders)
+static void incomingContent(J::Origin role, J::Origin senders, const char *media, bool acceptAudio)
 {
     XMPP::Client     client;
     J::Session       session(client.jingleManager(), XMPP::Jid("peer@example.test/resource"), role);
     auto             counters = std::make_shared<Counters>();
     auto             provider = std::make_shared<Provider>(counters);
     QPointer<R::Pad> pad      = new R::Pad(client.jingleManager()->rtpManager(), &session, provider, QStringList());
-    R::Application   content(pad, "screen-new", AvCallPolicy::peerRole(role), senders);
+    const QString    name = QLatin1String(media) == QLatin1String("video") ? "screen-new" : "audio-new";
+    R::Application   content(pad, name, AvCallPolicy::peerRole(role), senders);
     auto            *transport = new Transport(&session, content.creator()); // Owned by its pad.
-    Endpoint         offered(counters, "video");
+    Endpoint         offered(counters, media);
     QDomDocument     doc;
-    check(content.setRemoteOffer(offered.localOffer().toXml(doc)) == R::Application::Ok, "remote video offer rejected");
+    check(content.setRemoteOffer(offered.localOffer().toXml(doc)) == R::Application::Ok, "remote offer rejected");
     check(content.setTransport(transport), "incoming video transport rejected");
     check(content.state() == J::State::Created, "offer was approved before application decision");
-    AvCallPolicy::prepareIncomingContent(&content, false);
+    AvCallPolicy::prepareIncomingContent(&content, false, acceptAudio);
     flush();
-    check(counters->answers == 0, "inactive call accepted video without initial call consent");
-    AvCallPolicy::prepareIncomingContent(&content, true);
-    AvCallPolicy::prepareIncomingContent(&content, true);
+    check(counters->answers == 0, "inactive call accepted media without initial call consent");
+    AvCallPolicy::prepareIncomingContent(&content, true, acceptAudio);
+    AvCallPolicy::prepareIncomingContent(&content, true, acceptAudio);
     flush();
+    if (QLatin1String(media) == QLatin1String("audio") && !acceptAudio) {
+        check(counters->answers == 0 && content.state() >= J::State::Finishing,
+              "audio added to an established call was not refused");
+        return;
+    }
     check(counters->answers == 1, "active call did not prepare exactly one video answer");
     check(!pad->directionController()->allowsLocalSending(&content), "incoming video granted local capture consent");
     if (XMPP::Dtls::supportedSRTPProfiles().isEmpty()) {
@@ -131,12 +137,12 @@ static void incomingVideo(J::Origin role, J::Origin senders)
     const auto           update = content.takeOutgoingUpdate();
     const auto           xml    = std::get<0>(update).first();
     const J::ContentBase answer(xml);
-    check(answer.name == "screen-new" && answer.creator == content.creator(),
+    check(answer.name == name && answer.creator == content.creator(),
           "content-accept lost the offered content identity");
     check(answer.senders == AvCallPolicy::peerRole(role), "content-accept did not preserve receive-only policy");
     check(!xml.firstChildElement("description").isNull() && !xml.firstChildElement("transport").isNull(),
           "content-accept lacks RTP answer or transport");
-    AvCallPolicy::prepareIncomingContent(&content, true);
+    AvCallPolicy::prepareIncomingContent(&content, true, acceptAudio);
     flush();
     check(counters->answers == 1, "rewiring pending content renegotiated its answer");
 }
@@ -145,8 +151,11 @@ int main(int argc, char **argv)
     QCoreApplication app(argc, argv);
     QCA::Initializer qca;
     for (const auto role : { J::Origin::Initiator, J::Origin::Responder }) {
-        incomingVideo(role, AvCallPolicy::peerRole(role));
-        incomingVideo(role, J::Origin::Both);
+        incomingContent(role, AvCallPolicy::peerRole(role), "video", false);
+        incomingContent(role, J::Origin::Both, "video", false);
+        incomingContent(role, J::Origin::Both, "audio", false);
+        // Audio added to a session that started as a whiteboard.
+        incomingContent(role, J::Origin::Both, "audio", true);
     }
-    qInfo("Active-call incoming video answer and capture-consent regressions passed");
+    qInfo("Active-call incoming media answer and capture-consent regressions passed");
 }

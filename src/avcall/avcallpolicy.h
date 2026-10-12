@@ -54,13 +54,14 @@ inline bool shouldTransmit(bool hasMedia, bool captureConsent, bool senderAllowe
 // Application policy for content-add in an established call. Incoming offers
 // remain Created until the application decides to prepare their answer; Pending
 // is a signaling state reached later, not an invitation to accept the offer.
-inline void prepareIncomingContent(XMPP::Jingle::RTP::Application *content, bool callActive)
+// A session that started without media (a whiteboard) also accepts added audio, for receiving.
+inline void prepareIncomingContent(XMPP::Jingle::RTP::Application *content, bool callActive, bool acceptAudio = false)
 {
     namespace Jingle = XMPP::Jingle;
     namespace RTP    = Jingle::RTP;
     if (!callActive || !content || !content->isRemote() || content->state() != Jingle::State::Created)
         return;
-    if (content->media() != QLatin1String("video")) {
+    if (content->media() != QLatin1String("video") && !(acceptAudio && content->media() == QLatin1String("audio"))) {
         content->remove(Jingle::Reason::UnsupportedApplications);
         return;
     }
