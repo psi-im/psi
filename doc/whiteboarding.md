@@ -15,6 +15,23 @@ images; otherwise, or when the connection breaks, it goes through the server. It
 contact must advertise whiteboard support. Group chat whiteboards are not supported yet, and the
 pre-2026 Psi whiteboard protocol is not supported anymore.
 
+## Encryption
+
+Calls, and whiteboards on an ICE data channel, are encrypted with DTLS. With OMEMO set up, Psi
+also verifies the DTLS fingerprints end to end, compatible with Conversations and Dino: the device
+that accepts an invitation names its OMEMO device in `<proceed/>`, and both sides send their
+fingerprints encrypted for the other's device (`iris/docs/jingle-e2e.md`). The call window shows
+the result under the status: verified with OMEMO, encrypted but from an untrusted device,
+encrypted but not verified, or, for a whiteboard that goes through the server, not end-to-end
+encrypted.
+
+**Options → Security → OMEMO → Configuration → Calls and whiteboards: Only with end-to-end
+encryption verified by OMEMO** (`options.media.require-end-to-end`) makes this a requirement:
+a call or whiteboard is then refused, with a message in the window, unless the contact's
+fingerprints are verified by a trusted OMEMO device; a whiteboard then needs an ICE data channel.
+Sessions sent directly to a resource (without XEP-0353) cannot be verified, since the peer's
+device is unknown.
+
 ## Controls
 
 The current tool acts on the left mouse button. Selecting, moving, scaling, rotating, zooming

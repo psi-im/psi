@@ -98,8 +98,13 @@ CallView::CallView(QWidget *parent) : QWidget(parent)
     status_ = new QLabel(tr("Ready to call"), this);
     status_->setTextFormat(Qt::PlainText);
     status_->setObjectName(QStringLiteral("callStatus"));
+    security_ = new QLabel(this);
+    security_->setObjectName(QStringLiteral("callSecurity"));
+    security_->setTextFormat(Qt::PlainText);
+    security_->hide();
     identity->addWidget(peer_);
     identity->addWidget(status_);
+    identity->addWidget(security_);
     header->addLayout(identity, 1);
     duration_ = new QLabel(this);
     duration_->setObjectName(QStringLiteral("callDuration"));
@@ -206,6 +211,12 @@ void CallView::setPeer(const QString &peer, bool editable)
     peer_->setReadOnly(!editable);
 }
 QString CallView::peer() const { return peer_->text().trimmed(); }
+void    CallView::setSecurity(const QString &text, bool endToEnd)
+{
+    security_->setText(text);
+    security_->setStyleSheet(endToEnd ? QStringLiteral("color: #34d399;") : QStringLiteral("color: #fbbf24;"));
+    security_->setVisible(!text.isEmpty());
+}
 void    CallView::setStatus(const QString &text) { status_->setText(text); }
 void    CallView::setActive(bool active)
 {

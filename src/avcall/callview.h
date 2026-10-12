@@ -20,6 +20,8 @@ public:
     void                   setPeer(const QString &peer, bool editable);
     QString                peer() const;
     void                   setStatus(const QString &text);
+    // How the session is protected; an empty text hides it.
+    void                   setSecurity(const QString &text, bool endToEnd);
     void                   setActive(bool active);
     void                   setConnecting(bool connecting);
     void                   setIncoming(bool incoming);
@@ -61,6 +63,7 @@ signals:
 private:
     QLineEdit             *peer_;
     QLabel                *status_;
+    QLabel                *security_;
     QLabel                *duration_;
     QLabel                *sharingLabel_;
     QPushButton           *microphone_;

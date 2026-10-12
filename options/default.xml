@@ -787,6 +787,7 @@ QLineEdit#le_status_text {
             <enable-at-login type="bool">false</enable-at-login>
         </xml-console>
         <media>
+            <require-end-to-end comment="Calls and whiteboards only with OMEMO-verified encryption" type="bool">false</require-end-to-end>
             <devices>
                 <audio-output type="QString"/>
                 <audio-input type="QString"/>

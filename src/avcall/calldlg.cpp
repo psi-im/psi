@@ -33,6 +33,7 @@
 #include "xmpp_caps.h"
 #include "xmpp_client.h"
 #include <iris/jingle-session.h>
+#include <iris/xmpp_encryption.h>
 #include <iris/xmpp-im/jingle-rtp.h>
 #include <iris/xmpp-im/jingle-sxe.h>
 #include <QElapsedTimer>
@@ -44,6 +45,11 @@
 
 namespace Jingle = XMPP::Jingle;
 namespace SXE    = XMPP::Jingle::SXE;
+
+static bool endToEndRequired()
+{
+    return PsiOptions::instance()->getOption(QStringLiteral("options.media.require-end-to-end"), false).toBool();
+}
 
 class CallDlg::Private : public QObject {
 public:
@@ -164,6 +170,7 @@ public:
                 timer.start(1000);
             }
             if (auto jingle = session->jingleSession()) {
+                watchSecurity(jingle);
                 watchSession(jingle);
                 updateWhiteboardSupport();
                 if (whiteboardWanted && !whiteboard)
@@ -178,7 +185,8 @@ public:
             timer.stop();
             view->setConnecting(false);
             view->setFinished();
-            view->setStatus(session ? session->errorString() : tr("Call ended"));
+            view->setStatus(refusedForSecurity() ? securityRefusal()
+                                                 : (session ? session->errorString() : tr("Call ended")));
             updateWhiteboard();
         });
         connect(call, &AvCall::cancelled, this, [this] {
@@ -209,6 +217,7 @@ public:
         if (finished || active)
             return;
         stopRinging();
+        requiresEndToEnd = endToEndRequired();
         joined = true;
         if (view->whiteboardOnly()) {
             acceptWhiteboard();
@@ -347,6 +356,8 @@ public:
     {
         auto jingleManager = account->client()->jingleManager();
         auto jingle = sid.isEmpty() ? jingleManager->newSession(target) : jingleManager->newSession(target, sid);
+        if (jingle)
+            jingle->setEndToEndRequired(endToEndRequired());
         auto app = jingle ? qobject_cast<SXE::Application *>(jingle->newContent(SXE::NS_SVG_WHITEBOARD)) : nullptr;
         if (!app) {
             delete jingle;
@@ -368,6 +379,9 @@ public:
     void bindWhiteboardSession(Jingle::Session *jingle)
     {
         wbSession = jingle;
+        if (jingle->role() == Jingle::Origin::Responder)
+            jingle->setEndToEndRequired(endToEndRequired());
+        watchSecurity(jingle);
         connect(jingle, &Jingle::Session::activated, this, [this] {
             stopRinging();
             active = true;
@@ -391,7 +405,9 @@ public:
             timer.stop();
             view->setConnecting(false);
             view->setFinished();
-            view->setStatus(wasActive ? tr("Session ended") : tr("The invitation was declined or failed"));
+            view->setStatus(refusedForSecurity()
+                                ? securityRefusal()
+                                : (wasActive ? tr("Session ended") : tr("The invitation was declined or failed")));
             updateWhiteboard();
         });
         watchSession(jingle);
@@ -505,6 +521,50 @@ public:
         bindWhiteboard(app);
     }
 
+    // The protection of the session, shown under the status.
+    void watchSecurity(Jingle::Session *jingle)
+    {
+        requiresEndToEnd = jingle->isEndToEndRequired();
+        connect(jingle, &Jingle::Session::peerAuthenticationChanged, this, &Private::updateSecurity,
+                Qt::UniqueConnection);
+        updateSecurity();
+    }
+
+    void updateSecurity()
+    {
+        auto jingle = jingleSession();
+        if (!jingle) {
+            if (!finished)
+                view->setSecurity({}, false);
+            return;
+        }
+        const auto auth    = jingle->peerAuthentication();
+        const auto trust   = XMPP::EncryptionTrustLevel(auth.trustLevel);
+        const bool trusted = trust == XMPP::EncryptionTrustLevel::AutomaticallyTrusted
+            || trust == XMPP::EncryptionTrustLevel::ManuallyTrusted || trust == XMPP::EncryptionTrustLevel::Authenticated;
+        verifiedEndToEnd = auth.isValid() && trusted;
+        // A whiteboard that only has the message transport goes through the server.
+        const bool throughServer = !session && whiteboard && whiteboard->transport()
+            && whiteboard->transport()->pad()->ns() == SXE::NS_TRANSPORT;
+        if (auth.isValid() && trusted)
+            view->setSecurity(tr("End-to-end encrypted, verified with OMEMO"), true);
+        else if (auth.isValid())
+            view->setSecurity(tr("Encrypted, but the contact's OMEMO device is not trusted"), false);
+        else if (throughServer)
+            view->setSecurity(tr("Not end-to-end encrypted: the whiteboard goes through the server"), false);
+        else if (active)
+            view->setSecurity(tr("Encrypted, not verified end-to-end"), false);
+        else
+            view->setSecurity({}, false);
+    }
+
+    bool    refusedForSecurity() const { return requiresEndToEnd && !verifiedEndToEnd; }
+    QString securityRefusal() const
+    {
+        return tr("Refused: the encryption could not be verified with a trusted OMEMO device of the contact. "
+                  "See Options > Security.");
+    }
+
     void bindWhiteboard(SXE::Application *app)
     {
         if (wbView) {
@@ -528,6 +588,7 @@ public:
 
     void updateWhiteboard()
     {
+        updateSecurity();
         if (!wbView)
             return;
         const bool live = whiteboard && whiteboard->state() < Jingle::State::Finishing && !finished;
@@ -576,6 +637,8 @@ public:
     QPointer<Jingle::Session>  watchedSession;
     QString                    proposalId;
     QPointer<CallRinger>       ringer;
+    bool                       requiresEndToEnd = endToEndRequired();
+    bool                       verifiedEndToEnd = false;
     WbView                    *wbView           = nullptr;
     bool                       whiteboardWanted = false;
     bool                       joined           = false;

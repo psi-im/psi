@@ -21,6 +21,7 @@
 
 #include <QApplication>
 #include <QButtonGroup>
+#include <QCheckBox>
 #include <QClipboard>
 #include <QComboBox>
 #include <QFormLayout>
@@ -39,6 +40,7 @@
 namespace {
 constexpr auto OmemoAlwaysEnabledOption    = "plugins.options.omemo.always-enabled";
 constexpr auto OmemoEnabledByDefaultOption = "plugins.options.omemo.enabled-by-default";
+constexpr auto RequireEndToEndCallsOption  = "options.media.require-end-to-end";
 constexpr auto DeviceOwnerRole             = Qt::UserRole;
 constexpr auto DeviceIdentityKeyRole       = Qt::UserRole + 1;
 constexpr auto OwnDeviceIdRole             = Qt::UserRole;
@@ -204,6 +206,14 @@ QWidget *OptionsTabSecurity::widget()
         configurationPage);
     policyHint->setWordWrap(true);
     configurationLayout->addWidget(policyHint);
+    auto *callsGroup  = new QGroupBox(tr("Calls and whiteboards"), configurationPage);
+    auto *callsLayout = new QVBoxLayout(callsGroup);
+    requireEndToEnd_  = new QCheckBox(tr("Only with end-to-end encryption verified by OMEMO"), callsGroup);
+    requireEndToEnd_->setToolTip(
+        tr("The encryption keys of a call or whiteboard are confirmed with a trusted OMEMO device of the "
+           "contact. Sessions that cannot be verified are refused instead of running unverified."));
+    callsLayout->addWidget(requireEndToEnd_);
+    configurationLayout->addWidget(callsGroup);
     configurationLayout->addStretch();
     tabs->addTab(configurationPage, tr("Configuration"));
 
@@ -326,6 +336,7 @@ void OptionsTabSecurity::applyOptions()
 
     PsiOptions::instance()->setOption(OmemoAlwaysEnabledOption, alwaysEnabled_->isChecked());
     PsiOptions::instance()->setOption(OmemoEnabledByDefaultOption, enabledByDefault_->isChecked());
+    PsiOptions::instance()->setOption(RequireEndToEndCallsOption, requireEndToEnd_->isChecked());
 }
 
 void OptionsTabSecurity::restoreOptions()
@@ -338,6 +349,7 @@ void OptionsTabSecurity::restoreOptions()
     alwaysEnabled_->setChecked(alwaysEnabled);
     enabledByDefault_->setChecked(!alwaysEnabled && enabledByDefault);
     disabledByDefault_->setChecked(!alwaysEnabled && !enabledByDefault);
+    requireEndToEnd_->setChecked(PsiOptions::instance()->getOption(RequireEndToEndCallsOption, false).toBool());
 }
 
 PsiAccount *OptionsTabSecurity::currentAccount() const

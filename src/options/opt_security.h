@@ -17,6 +17,7 @@
 
 #include <QMetaObject>
 
+class QCheckBox;
 class QComboBox;
 class QLabel;
 class QLineEdit;
@@ -67,6 +68,7 @@ private:
     QPushButton  *sanitizePep_       = nullptr;
     QRadioButton *alwaysEnabled_     = nullptr;
     QRadioButton *enabledByDefault_  = nullptr;
+    QCheckBox    *requireEndToEnd_   = nullptr;
     QRadioButton *disabledByDefault_ = nullptr;
 
     QMetaObject::Connection methodsConnection_;

@@ -37,6 +37,9 @@ class Client;
 class PsiOmemoStorage;
 namespace XMPP {
 class OmemoEncryption;
+namespace Jingle {
+    class OmemoDtlsVerification;
+}
 }
 #endif
 
@@ -137,6 +140,8 @@ private:
 #ifdef IRIS_ENABLE_OMEMO
     std::unique_ptr<PsiOmemoStorage> omemoStorage_;
     XMPP::OmemoEncryption           *omemo_ = nullptr;
+    // OMEMO-verified DTLS fingerprints for calls, whiteboards and file transfer over ICE.
+    XMPP::Jingle::OmemoDtlsVerification *jingleVerification_ = nullptr;
     QSet<QString>                    legacyOmemoEnabled_;
     QSet<QString>                    legacyOmemoDisabled_;
 #endif
