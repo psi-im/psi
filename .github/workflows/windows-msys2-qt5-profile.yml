@@ -30,12 +30,12 @@ on:
       sdk_tag:
         description: Dependency SDK release tag
         required: false
-        default: windows-sdk-msys2-qt5-v3
+        default: ''
         type: string
       sdk_archive:
         description: Dependency SDK release asset
         required: false
-        default: psi-windows-sdk-msys2-qt5.zip
+        default: ''
         type: string
 
 permissions:
@@ -73,6 +73,10 @@ jobs:
           git submodule sync --recursive
           git submodule update --init --recursive --depth=1
           bash .github/scripts/ensure-iris-version-history.sh
+
+      - name: Resolve dependency SDK from Psi lock
+        id: deps
+        uses: ./.github/actions/load-dependencies
 
       - name: Restore compiler cache
         id: ccache-restore
@@ -122,10 +126,16 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          SDK_TAG: ${{ inputs.sdk_tag }}
-          SDK_ARCHIVE: ${{ inputs.sdk_archive }}
+          SDK_TAG: ${{ steps.deps.outputs.msys2_sdk_tag }}
+          SDK_ARCHIVE: ${{ steps.deps.outputs.msys2_sdk_archive }}
+          REQUESTED_SDK_TAG: ${{ inputs.sdk_tag }}
+          REQUESTED_SDK_ARCHIVE: ${{ inputs.sdk_archive }}
         run: |
           set -euo pipefail
+          if [[ -n "$REQUESTED_SDK_TAG" && "$REQUESTED_SDK_TAG" != "$SDK_TAG" ]] || [[ -n "$REQUESTED_SDK_ARCHIVE" && "$REQUESTED_SDK_ARCHIVE" != "$SDK_ARCHIVE" ]]; then
+            echo "::error::SDK coordinates disagree with dependencies.lock.json" >&2
+            exit 1
+          fi
           mkdir -p sdk-artifact
           gh release download "$SDK_TAG" \
             --repo "$GITHUB_REPOSITORY" \
@@ -136,7 +146,7 @@ jobs:
       - name: Extract SDK
         shell: msys2 {0}
         env:
-          SDK_ARCHIVE: ${{ inputs.sdk_archive }}
+          SDK_ARCHIVE: ${{ steps.deps.outputs.msys2_sdk_archive }}
         run: |
           set -euo pipefail
           mkdir sdk

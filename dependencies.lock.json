@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "iris": {
+    "source": "git-submodule",
+    "path": "iris",
+    "lock_path": "iris/dependencies.lock.json"
+  },
+  "psimedia": {
+    "commit": "52cebb52299b130ae727ca6b597b833da5e445e3"
+  },
+  "qtkeychain": {
+    "tag": "0.17.0",
+    "commit": "875f77d9f61bd97fd84cca47ce3bc71186dfbd09"
+  },
+  "windows_sdks": {
+    "msvc_qt6": {
+      "tag": "windows-sdk-msvc-qt6-v2",
+      "archive": "psi-windows-sdk-msvc-qt6.zip"
+    },
+    "msys2_qt5": {
+      "tag": "windows-sdk-msys2-qt5-v3",
+      "archive": "psi-windows-sdk-msys2-qt5.zip"
+    }
+  }
+}
