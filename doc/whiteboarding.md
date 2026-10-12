@@ -63,11 +63,20 @@ Edits go through `Jingle::SXE::Document` (`insertNodeAfter()`, `setAttribute()`,
 then `flush()`); remote edits arrive as document signals (`nodeAdded`, `nodeMoved`,
 `nodeToBeRemoved`, `chdataChanged`).
 
-## Planned: invitations that ring
+## Invitations that ring
 
-Whiteboard invitations will use Jingle Message Initiation (XEP-0353), like calls: all of the
-contact's online devices ring, the one that accepts joins the session, and the others stop
-ringing.
+Whiteboard invitations to a contact without a chosen resource use Jingle Message Initiation
+(XEP-0353), like calls: the proposal goes to the bare JID, all of the contact's online devices
+show the invitation and answer `<ringing/>`, the one that accepts with `<proceed/>` gets the
+session (its sid is the proposal id), and the others drop the invitation when the carbon of the
+answer arrives. Closing the window before an answer withdraws the proposal (`<retract/>`);
+declining sends `<reject/>`; `<finish/>` follows the end of the session. Without a device that
+advertises XEP-0353 and whiteboards, the session goes directly to the capable resource with the
+highest priority. `WbManager` implements this for whiteboard-only proposals
+(`src/whiteboarding/unittest/proposal.cpp` tests it with two clients); a proposal of a call with
+a whiteboard is not supported yet.
+
+Still planned:
 
 - **Ringing.** While an incoming call or whiteboard proposal is pending, Psi repeats a ring tone
   until it is accepted, declined, withdrawn by the caller or times out. The caller hears a
@@ -174,8 +183,8 @@ One action starts calls and whiteboards. It replaces **Voice Call** and the sepa
   session goes directly to that full JID (`session-initiate`, no proposal). Otherwise, and from
   the roster menu, a XEP-0353 proposal goes to the bare JID and the first device that answers
   `<proceed/>` gets the session; without XEP-0353 the session goes to the capable resource with
-  the highest priority. Calls follow the same rule; today they always send the proposal to the
-  bare JID when XEP-0353 is enabled.
+  the highest priority. Whiteboards follow this rule. Calls still send the proposal to the bare
+  JID whenever XEP-0353 is enabled.
 
 ### Structure
 
@@ -209,7 +218,8 @@ One action starts calls and whiteboards. It replaces **Voice Call** and the sepa
 4. Turning contents on and off from the control bar through senders; screen sharing keeps
    its content and reopens the source picker (done, together with media in whiteboard
    sessions).
-5. XEP-0353 proposals for whiteboards and mixed sessions.
+5. XEP-0353 proposals for whiteboards (done) and mixed sessions (to do: a call with a
+   whiteboard in one proposal, and incoming sessions with both RTP and SXE contents).
 6. Ringing and actionable notifications.
 7. SXE payload over ICE/S5B (`iris/docs/jingle-sxe.md`), which also lets a whiteboard share the
    call's BUNDLE association.

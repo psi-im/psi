@@ -2887,6 +2887,19 @@ void PsiAccount::wbRequest(const Jid &j, int id)
     m.setFrom(j);
     se->setFrom(j);
     se->setMessage(m);
+
+    // The invitation can be withdrawn or answered on another device before the event is opened.
+    const auto weakEvent  = se.toWeakRef();
+    auto       connection = std::make_shared<QMetaObject::Connection>();
+    *connection = connect(d->wbManager, &WbManager::requestCancelled, this, [this, id, weakEvent, connection](int cancelled) {
+        if (cancelled != id)
+            return;
+        disconnect(*connection);
+        QTimer::singleShot(0, this, [this, weakEvent] {
+            if (const auto event = weakEvent.toStrongRef())
+                eventQueue()->dequeue(event);
+        });
+    });
     handleEvent(se, IncomingStanza);
 }
 #endif

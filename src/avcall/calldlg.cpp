@@ -120,8 +120,16 @@ public:
             whiteboard->disconnect(this);
         if (wbSession) {
             wbSession->disconnect(this);
+            if (!proposalId.isEmpty())
+                account->wbManager()->finish(proposalId, active);
             if (wbSession->state() < Jingle::State::Finishing)
                 wbSession->terminate(active || !incoming ? Jingle::Reason::Success : Jingle::Reason::Decline);
+        } else if (!proposalId.isEmpty() && !finished && account->wbManager()) {
+            // A proposal without a session yet: decline it, or withdraw our own.
+            if (incoming)
+                account->wbManager()->reject(proposalId);
+            else
+                account->wbManager()->retract(proposalId);
         }
         capture.stop();
         if (session) {
@@ -257,6 +265,17 @@ public:
     {
         if (finished || active)
             return;
+        if (incoming && !proposalId.isEmpty() && !wbSession) {
+            // Accepting a proposal: the session follows from the proposing side.
+            if (!account->wbManager()->proceed(proposalId)) {
+                view->setStatus(tr("Unable to accept the whiteboard invitation."));
+                return;
+            }
+            joined = true;
+            view->setConnecting(true);
+            view->setStatus(tr("Connecting…"));
+            return;
+        }
         if (incoming) {
             if (!wbSession || !whiteboard || wbSession->state() >= Jingle::State::Finishing)
                 return;
@@ -268,20 +287,53 @@ public:
             return;
         }
 
-        const auto target = whiteboardTarget(XMPP::Jid(view->peer()));
+        const XMPP::Jid peer(view->peer());
+        // Without a chosen resource the invitation rings all devices that support proposals; the first one
+        // that accepts gets the session.
+        if (peer.resource().isEmpty() && proposalsSupported(peer)) {
+            proposalId = account->wbManager()->propose(peer);
+            if (!proposalId.isEmpty()) {
+                view->setConnecting(true);
+                view->setStatus(tr("Inviting…"));
+                return;
+            }
+        }
+        const auto target = whiteboardTarget(peer);
         if (!target.isValid()) {
             view->setStatus(tr("The contact does not support whiteboards."));
             return;
         }
-        auto jingle = account->client()->jingleManager()->newSession(target);
-        auto app    = qobject_cast<SXE::Application *>(jingle->newContent(SXE::NS_SVG_WHITEBOARD));
+        startWhiteboardSession(target, QString());
+    }
+
+    bool proposalsSupported(const XMPP::Jid &bare) const
+    {
+        auto wb = account->wbManager();
+        if (!wb || !account->client()->jingleManager()->messageInitiationEnabled())
+            return false;
+        const UserListItem *item = account->find(bare);
+        if (!item)
+            return false;
+        for (const auto &resource : item->userResourceList())
+            if (wb->checkProposalSupport(bare.withResource(resource.name())))
+                return true;
+        return false;
+    }
+
+    void startWhiteboardSession(const XMPP::Jid &target, const QString &sid)
+    {
+        auto jingleManager = account->client()->jingleManager();
+        auto jingle = sid.isEmpty() ? jingleManager->newSession(target) : jingleManager->newSession(target, sid);
+        auto app = jingle ? qobject_cast<SXE::Application *>(jingle->newContent(SXE::NS_SVG_WHITEBOARD)) : nullptr;
         if (!app) {
             delete jingle;
+            if (!sid.isEmpty())
+                account->wbManager()->finish(sid, false);
             view->setStatus(tr("Unable to create a whiteboard."));
             return;
         }
         view->setConnecting(true);
-        view->setStatus(tr("Inviting…"));
+        view->setStatus(sid.isEmpty() ? tr("Inviting…") : tr("Connecting…"));
         jingle->addContent(app);
         bindWhiteboardSession(jingle);
         bindWhiteboard(app);
@@ -306,6 +358,8 @@ public:
         });
         connect(jingle, &Jingle::Session::terminated, this, [this] {
             const bool wasActive = active;
+            if (!proposalId.isEmpty())
+                account->wbManager()->finish(proposalId, wasActive);
             finished             = true;
             active               = false;
             timer.stop();
@@ -367,6 +421,39 @@ public:
         session->setIncomingVideo(view->remoteVideo());
         session->setIncomingPresentation(view->remotePresentation());
         return true;
+    }
+
+    // Answers to the proposal of this dialog.
+    void watchProposals()
+    {
+        auto wb = account->wbManager();
+        connect(wb, &WbManager::proposalRinging, this, [this](const QString &id) {
+            if (id == proposalId && !wbSession)
+                view->setStatus(tr("Ringing…"));
+        });
+        connect(wb, &WbManager::proposalAccepted, this, [this](const QString &id, const XMPP::Jid &peer) {
+            if (id != proposalId || wbSession || finished)
+                return;
+            view->setPeer(peer.full(), false);
+            view->setStatus(tr("Connecting…"));
+            startWhiteboardSession(peer, id);
+        });
+        connect(wb, &WbManager::proposalSession, this, [this](const QString &id, SXE::Application *app) {
+            if (id != proposalId || wbSession || finished)
+                return;
+            auto jingle = app->pad()->session();
+            bindWhiteboardSession(jingle);
+            bindWhiteboard(app);
+            jingle->accept();
+        });
+        connect(wb, &WbManager::proposalClosed, this, [this](const QString &id, const QString &message) {
+            if (id != proposalId || wbSession || finished)
+                return;
+            finished = true;
+            view->setConnecting(false);
+            view->setFinished();
+            view->setStatus(message);
+        });
     }
 
     void addWhiteboard(Jingle::Session *jingle)
@@ -450,6 +537,7 @@ public:
     QPointer<SXE::Document>    wbDocument;
     QPointer<Jingle::Session>  wbSession;
     QPointer<Jingle::Session>  watchedSession;
+    QString                    proposalId;
     WbView                    *wbView           = nullptr;
     bool                       whiteboardWanted = false;
     bool                       joined           = false;
@@ -458,6 +546,8 @@ public:
 CallDlg::CallDlg(PsiAccount *account, QWidget *parent) : QDialog(parent), d(new Private(this))
 {
     d->account = account;
+    if (account->wbManager())
+        d->watchProposals();
     account->dialogRegister(this);
 }
 CallDlg::~CallDlg()
@@ -504,5 +594,19 @@ void CallDlg::setIncomingWhiteboard(XMPP::Jingle::SXE::Application *whiteboard)
     d->view->setStatus(tr("Whiteboard invitation"));
     d->bindWhiteboardSession(jingle);
     d->bindWhiteboard(whiteboard);
+    d->updateWhiteboardSupport();
+}
+void CallDlg::setIncomingWhiteboardProposal(const XMPP::Jid &peer, const QString &proposalId)
+{
+    setWindowTitle(tr("Whiteboard"));
+    setWindowIcon(IconsetFactory::icon("psi/whiteboard").icon());
+    d->incoming   = true;
+    d->proposalId = proposalId;
+    d->view->setWhiteboardOnly(true);
+    d->view->setMediaAvailable(d->mediaAvailable(peer));
+    d->view->setWhiteboardEnabled(true);
+    d->view->setPeer(peer.full(), false);
+    d->view->setIncoming(true);
+    d->view->setStatus(tr("Whiteboard invitation"));
     d->updateWhiteboardSupport();
 }

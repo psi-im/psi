@@ -1,0 +1,5 @@
+add_executable(wbproposal_test proposal.cpp ../wbmanager.cpp ../wbmanager.h)
+target_include_directories(wbproposal_test PRIVATE ${PROJECT_SOURCE_DIR}/iris/include)
+target_link_libraries(wbproposal_test PRIVATE ${iris_LIB} Qt${QT_DEFAULT_MAJOR_VERSION}::Core)
+add_test(NAME wbproposal_test COMMAND wbproposal_test)
+set_tests_properties(wbproposal_test PROPERTIES TIMEOUT 15)

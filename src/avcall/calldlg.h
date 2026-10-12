@@ -44,6 +44,8 @@ public:
     void setIncoming(AvCall *sess);
     // An incoming session with only a whiteboard.
     void setIncomingWhiteboard(XMPP::Jingle::SXE::Application *whiteboard);
+    // An incoming whiteboard proposal (XEP-0353); the session follows after it is accepted.
+    void setIncomingWhiteboardProposal(const XMPP::Jid &peer, const QString &proposalId);
 
 private:
     class Private;

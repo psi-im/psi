@@ -93,6 +93,7 @@
 #include "iris/xmpp_xmlcommon.h"
 #ifdef WHITEBOARDING
 #include "whiteboarding/wbmanager.h"
+#include <iris/xmpp-im/jingle-sxe.h>
 #endif
 #ifdef FILETRANSFER
 #include "filetransdlg.h"
@@ -1841,10 +1842,14 @@ void PsiCon::processEvent(const PsiEvent::Ptr &e, ActivationType activationType)
         e->account()->eventQueue()->dequeue(e);
         emit e->account()->queueChanged();
         e->account()->cpUpdate(*u);
-        if (auto whiteboard = e->account()->wbManager()->takeRequest((e.staticCast<SxeEvent>())->id())) {
+        const auto request = e->account()->wbManager()->takeRequest((e.staticCast<SxeEvent>())->id());
+        if (request.application || !request.proposalId.isEmpty()) {
             CallDlg *w = new CallDlg(e->account(), nullptr);
             w->setAttribute(Qt::WA_DeleteOnClose);
-            w->setIncomingWhiteboard(whiteboard);
+            if (request.application)
+                w->setIncomingWhiteboard(request.application);
+            else
+                w->setIncomingWhiteboardProposal(request.peer, request.proposalId);
             bringToFront(w);
         }
         return;
