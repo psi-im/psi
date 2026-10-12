@@ -9,7 +9,9 @@ an invitation and joins after accepting it in the window. Both sides can draw at
 file, also after the session has ended; **Import SVG** adds the drawing of an SVG file.
 
 The protocol is a Jingle session with the SVG whiteboard application type, synchronized with
-Shared XML Editing (XEP-0284). It is implemented in Iris; see `iris/docs/jingle-sxe.md`. The
+Shared XML Editing (XEP-0284). When both clients can, the drawing goes peer-to-peer over an ICE
+data channel, which is much faster than messages through the server for large drawings and
+images; otherwise, or when the connection breaks, it goes through the server. It is implemented in Iris; see `iris/docs/jingle-sxe.md`. The
 contact must advertise whiteboard support. Group chat whiteboards are not supported yet, and the
 pre-2026 Psi whiteboard protocol is not supported anymore.
 
@@ -225,6 +227,7 @@ One action starts calls and whiteboards. It replaces **Voice Call** and the sepa
 5. XEP-0353 proposals for whiteboards (done) and mixed sessions (to do: a call with a
    whiteboard in one proposal, and incoming sessions with both RTP and SXE contents).
 6. Ringing and actionable notifications.
-7. SXE payload over ICE/S5B (`iris/docs/jingle-sxe.md`), which also lets a whiteboard share the
-   call's BUNDLE association.
+7. SXE payload on Jingle connections (done: an ICE SCTP data channel when both sides support
+   it, falling back to messages; see `iris/docs/jingle-sxe.md`). Still to do: sharing the
+   call's BUNDLE association when a whiteboard is added to a call.
 
