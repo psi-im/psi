@@ -71,7 +71,10 @@ jobs:
         run: |
           set -euo pipefail
           git submodule sync --recursive
-          git submodule update --init --recursive --depth=1
+          # Initialize other submodules independently. A direct shallow
+          # Iris SHA fetch can be refused; the helper also checks the gitlink.
+          git submodule update --init --recursive --depth=1 -- \
+            3rdparty/http-parser 3rdparty/qhttp 3rdparty/qite
           bash .github/scripts/ensure-iris-version-history.sh
 
       - name: Resolve dependency SDK from Psi lock
