@@ -353,8 +353,10 @@ public:
     {
         auto jingleManager = account->client()->jingleManager();
         auto jingle = sid.isEmpty() ? jingleManager->newSession(target) : jingleManager->newSession(target, sid);
-        if (jingle)
+        if (jingle) {
             jingle->setEndToEndRequired(endToEndRequired(target));
+            jingle->setEndToEndPreferred(endToEndPreferred(target));
+        }
         auto app = jingle ? qobject_cast<SXE::Application *>(jingle->newContent(SXE::NS_SVG_WHITEBOARD)) : nullptr;
         if (!app) {
             delete jingle;
@@ -376,8 +378,10 @@ public:
     void bindWhiteboardSession(Jingle::Session *jingle)
     {
         wbSession = jingle;
-        if (jingle->role() == Jingle::Origin::Responder)
+        if (jingle->role() == Jingle::Origin::Responder) {
             jingle->setEndToEndRequired(endToEndRequired(jingle->peer()));
+            jingle->setEndToEndPreferred(endToEndPreferred(jingle->peer()));
+        }
         watchSecurity(jingle);
         connect(jingle, &Jingle::Session::activated, this, [this] {
             stopRinging();
@@ -525,6 +529,12 @@ public:
             && account->encryptionController()->jingleEndToEndRequired(peer);
     }
 
+    bool endToEndPreferred(const XMPP::Jid &peer) const
+    {
+        return account && account->encryptionController()
+            && account->encryptionController()->jingleEndToEndPreferred(peer);
+    }
+
     // The protection of the session, shown under the status.
     void watchSecurity(Jingle::Session *jingle)
     {
@@ -547,10 +557,12 @@ public:
         const bool trusted = trust == XMPP::EncryptionTrustLevel::AutomaticallyTrusted
             || trust == XMPP::EncryptionTrustLevel::ManuallyTrusted || trust == XMPP::EncryptionTrustLevel::Authenticated;
         verifiedEndToEnd = auth.isValid() && trusted;
-        // A whiteboard that only has the message transport goes through the server.
-        const bool throughServer = !session && whiteboard && whiteboard->transport()
-            && whiteboard->transport()->pad()->ns() == SXE::NS_TRANSPORT;
-        if (auth.isValid() && trusted)
+        // A whiteboard that only has the message transport goes through the server, maybe protected.
+        const auto messages      = whiteboard ? qobject_cast<SXE::Transport *>(whiteboard->transport().data()) : nullptr;
+        const bool throughServer = !session && messages;
+        if (throughServer && !messages->encryption().isEmpty())
+            view->setSecurity(tr("End-to-end encrypted with OMEMO; the whiteboard goes through the server"), true);
+        else if (auth.isValid() && trusted)
             view->setSecurity(tr("End-to-end encrypted, verified with OMEMO"), true);
         else if (auth.isValid())
             view->setSecurity(tr("Encrypted, but the contact's OMEMO device is not trusted"), false);

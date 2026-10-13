@@ -22,8 +22,13 @@ also verifies the DTLS fingerprints end to end, compatible with Conversations an
 that accepts an invitation names its OMEMO device in `<proceed/>`, and both sides send their
 fingerprints encrypted for the other's device (`iris/docs/jingle-e2e.md`). The call window shows
 the result under the status: verified with OMEMO, encrypted but from an untrusted device,
-encrypted but not verified, or, for a whiteboard that goes through the server, not end-to-end
-encrypted.
+encrypted but not verified, or, for a whiteboard that goes through the server, whether its
+payload is end-to-end encrypted.
+
+A whiteboard with a contact whose chat uses OMEMO protects its payload end to end even when it
+goes through the server: when both clients advertise `urn:xmpp:sxe:0#omemo`, every edit travels
+OMEMO 2 encrypted (`iris/docs/jingle-sxe.md`, `iris/docs/xsf-proposals/`). Files to such contacts
+use JET-OMEMO, with OMEMO 2 between Psi clients and the legacy profile with Conversations and Dino.
 
 Files sent to a contact whose chat uses OMEMO are encrypted end to end with JET-OMEMO when the
 contact supports it (Conversations and Dino do), on any transport; the transfer shows
@@ -33,7 +38,8 @@ contact supports it (Conversations and Dino do), on any transport; the transfer 
 makes this a requirement for contacts whose chat uses OMEMO (the chat's encryption choice is
 remembered per contact; the OMEMO defaults apply until one is made): a call or whiteboard with
 such a contact is refused, with a message in the window, unless the contact's fingerprints are
-verified by a trusted OMEMO device; a whiteboard then needs an ICE data channel. A contact whose
+verified by a trusted OMEMO device; a whiteboard then needs an ICE data channel or OMEMO-protected
+payload on the message transport. A contact whose
 chat is switched to no encryption is not affected. Files to and from such contacts are then
 refused unless they are encrypted with JET-OMEMO.
 Sessions sent directly to a resource (without XEP-0353) cannot be verified, since the peer's

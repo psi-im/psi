@@ -51,6 +51,13 @@ static bool endToEndRequired(PsiAccount *account, const XMPP::Jid &peer)
     return account && account->encryptionController()
         && account->encryptionController()->jingleEndToEndRequired(peer);
 }
+
+// Whiteboards added to a call with an OMEMO contact protect their payload when possible.
+static bool endToEndPreferred(PsiAccount *account, const XMPP::Jid &peer)
+{
+    return account && account->encryptionController()
+        && account->encryptionController()->jingleEndToEndPreferred(peer);
+}
 static QString resolvedAudioInputDevice()
 {
     if (!g_config->liveInput)
@@ -241,6 +248,7 @@ public:
         peer     = session->peer();
         incoming = true;
         session->setEndToEndRequired(endToEndRequired(manager ? manager->pa : nullptr, peer));
+        session->setEndToEndPreferred(endToEndPreferred(manager ? manager->pa : nullptr, peer));
         setupSession();
 
         bool audio = false;
@@ -353,7 +361,10 @@ public:
         session = jmiId.isEmpty() ? manager->jingleManager->newSession(peer)
                                   : manager->jingleManager->newSession(peer, jmiId);
         if (session)
+        {
             session->setEndToEndRequired(endToEndRequired(manager->pa, peer));
+            session->setEndToEndPreferred(endToEndPreferred(manager->pa, peer));
+        }
         if (!session) {
             if (!jmiId.isEmpty() && jmiProceedSent)
                 sendJmiFinish(QStringLiteral("expired"), QString());

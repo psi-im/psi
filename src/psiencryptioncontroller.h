@@ -40,6 +40,9 @@ class OmemoEncryption;
 namespace Jingle {
     class JetOmemo;
     class OmemoDtlsVerification;
+    namespace SXE {
+        class SxeOmemo;
+    }
 }
 }
 #endif
@@ -150,6 +153,8 @@ private:
     XMPP::Jingle::OmemoDtlsVerification *jingleVerification_ = nullptr;
     // JET-OMEMO for files; registered before jingleVerification_, which honours JET contents.
     XMPP::Jingle::JetOmemo *jingleJet_ = nullptr;
+    // OMEMO 2 protected whiteboard payload on the SXE message transport.
+    XMPP::Jingle::SXE::SxeOmemo *jingleSxe_ = nullptr;
     QSet<QString>                    legacyOmemoEnabled_;
     QSet<QString>                    legacyOmemoDisabled_;
 #endif
