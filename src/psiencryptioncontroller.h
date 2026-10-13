@@ -80,6 +80,10 @@ public:
     bool jingleEndToEndRequired(const XMPP::Jid &jid) const;
     // Files to @a jid are offered end-to-end encrypted when possible: the chat uses OMEMO.
     bool jingleEndToEndPreferred(const XMPP::Jid &jid) const;
+    // Before an encrypted call or whiteboard with @a jid (jingleEndToEndPreferred()), asks about the contact's
+    // undecided OMEMO devices like an encrypted chat message does. Returns false when nothing needs a decision;
+    // otherwise @a completion runs after the answer.
+    bool    requestJingleTrustDecision(const XMPP::Jid &jid, QWidget *parent, std::function<void()> completion);
     bool    setSelectedMethod(const XMPP::Jid &jid, const QString &methodId);
 
     QMap<QString, QString> selectedMethods() const;

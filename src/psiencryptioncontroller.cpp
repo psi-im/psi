@@ -570,6 +570,26 @@ bool PsiEncryptionController::jingleEndToEndPreferred(const XMPP::Jid &jid) cons
 #endif
 }
 
+bool PsiEncryptionController::requestJingleTrustDecision(const XMPP::Jid &jid, QWidget *parent,
+                                                         std::function<void()> completion)
+{
+#ifdef IRIS_ENABLE_OMEMO
+    if (!jingleEndToEndPreferred(jid))
+        return false;
+    // The call goes on whatever the answer is; the end-to-end policy decides what it may use.
+    return requestTrustDecision(XMPP::OmemoEncryption::methodId(), jid.withResource(QString()), false, parent,
+                                [completion = std::move(completion)](bool) {
+                                    if (completion)
+                                        completion();
+                                });
+#else
+    Q_UNUSED(jid)
+    Q_UNUSED(parent)
+    Q_UNUSED(completion)
+    return false;
+#endif
+}
+
 bool PsiEncryptionController::setSelectedMethod(const XMPP::Jid &jid, const QString &methodId)
 {
     const QString bare = jid.bare();

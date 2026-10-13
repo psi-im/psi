@@ -245,6 +245,20 @@ public:
         if (finished || active)
             return;
         stopRinging();
+        // Like an encrypted chat message, an encrypted call first asks about the contact's undecided OMEMO devices.
+        if (!trustAsked) {
+            trustAsked      = true;
+            auto controller = account->encryptionController();
+            if (controller
+                && controller->requestJingleTrustDecision(XMPP::Jid(view->peer()), q,
+                                                          [guard = QPointer<CallDlg>(q), this] {
+                                                              if (guard)
+                                                                  accept();
+                                                          })) {
+                view->setStatus(tr("Waiting for the decision about the contact's OMEMO devices…"));
+                return;
+            }
+        }
         requiresEndToEnd = endToEndRequired(XMPP::Jid(view->peer()));
         joined           = true;
         if (view->whiteboardOnly()) {
@@ -735,6 +749,7 @@ public:
     bool                       whiteboardRetried = false;
     Jingle::Origin             whiteboardSenders = Jingle::Origin::Both;
     bool                       joined            = false;
+    bool                       trustAsked        = false;
 };
 
 CallDlg::CallDlg(PsiAccount *account, QWidget *parent) : QDialog(parent), d(new Private(this))
