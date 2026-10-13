@@ -19,6 +19,7 @@
 #ifndef AVCALL_H
 #define AVCALL_H
 
+#include "iris/xmpp-im/xmpp_jinglemessage.h"
 #include "iris/xmpp.h"
 
 #include <QObject>
@@ -71,6 +72,10 @@ public:
     QString errorString() const;
     // The Jingle session of the call once it exists; other contents (a whiteboard) can be added to it.
     XMPP::Jingle::Session *jingleSession() const;
+    // Descriptions of other applications (a whiteboard) proposed with an outgoing call to a bare JID.
+    void setProposalCompanions(const QList<XMPP::Jingle::MessageInitiation::Description> &descriptions);
+    // Applications the peer proposed with an incoming call, before its session comes.
+    QStringList proposedCompanions() const;
 
     // if we use deleteLater() on a call, then it won't detach from the
     //   manager until the deletion resolves.  use unlink() to immediately
@@ -89,6 +94,9 @@ signals:
     void microphoneEnabledChanged(bool enabled);
     void incomingVideoRemoved(bool presentation);
     void mediaControlError(const QString &message);
+    // Right before session-initiate or session-accept: the owner may add other contents (a whiteboard)
+    // or answer the offered ones. Offered contents other than media that nobody prepared are declined.
+    void sessionAboutToStart(XMPP::Jingle::Session *session);
 
 private:
     friend class AvCallPrivate;
@@ -112,6 +120,9 @@ public:
     // Media for a running session that started without it (a whiteboard). The call adds audio or video
     // with content-add and accepts media added by the peer; the session stays owned by its creator.
     AvCall *joinSession(XMPP::Jingle::Session *session);
+    // Applications besides media an incoming call may carry (a whiteboard); its owner answers them
+    // on AvCall::sessionAboutToStart.
+    void setCompanionApplications(const QStringList &namespaces);
 
     static void    config();
     static bool    isSupported();
