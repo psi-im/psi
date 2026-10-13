@@ -1945,12 +1945,10 @@ void PsiAccount::cs_connected()
     if (!bs)
         return;
 
-    if (bs->inherits("BSocket") || bs->inherits("XMPP::BSocket")) {
+    // ICE gathers candidates on all interfaces (RFC 8445); the server connection's address is only one of them and
+    // may be a VPN the peer cannot reach.
+    if (bs->inherits("BSocket") || bs->inherits("XMPP::BSocket"))
         d->localAddress = static_cast<BSocket *>(bs)->address();
-
-        if (d->avCallManager)
-            d->avCallManager->setSelfAddress(d->localAddress);
-    }
 }
 
 void PsiAccount::cs_securityLayerActivated(int layer)
