@@ -4,7 +4,6 @@
 
 #include <QWidget>
 class QLabel;
-class QLineEdit;
 class QPushButton;
 class QComboBox;
 class CallStage;
@@ -17,7 +16,7 @@ class CallView : public QWidget {
     Q_OBJECT
 public:
     explicit CallView(QWidget *parent = nullptr);
-    void                   setPeer(const QString &peer, bool editable);
+    void                   setPeer(const QString &peer);
     QString                peer() const;
     void                   setStatus(const QString &text);
     // How the session is protected; an empty text hides it.
@@ -56,7 +55,6 @@ private:
     void updateMediaButtons();
     void updateAppearance();
     void updateControlPresentation();
-    void updatePeerVisibility();
 
 signals:
     void headingChanged();
@@ -68,7 +66,7 @@ signals:
     void whiteboardChanged(bool enabled);
 
 private:
-    QLineEdit             *peer_;
+    QString                peer_;
     QLabel                *status_;
     QLabel                *security_;
     QLabel                *duration_;
@@ -93,7 +91,6 @@ private:
     bool                   finished_       = false;
     bool                   connecting_     = false;
     bool                   mediaAvailable_ = true;
-    bool                   peerEditable_   = false;
     bool                   updatingAppearance_ = false;
     QString                shareSource_;
     bool                   shareConnecting_ = false;
