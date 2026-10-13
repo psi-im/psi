@@ -131,7 +131,17 @@ try_release_package() {
 if ! try_release_package; then
     git init "$iris_src"
     git -C "$iris_src" remote add origin https://github.com/psi-im/iris.git
-    git -C "$iris_src" fetch --filter=blob:none --tags origin "$iris_ref"
+    # A direct fetch of the gitlink SHA can be refused by GitHub's
+    # upload-pack even though the commit is reachable from master.
+    if ! git -C "$iris_src" fetch --filter=blob:none --tags origin "$iris_ref"; then
+        echo "::warning::Direct Iris SHA fetch failed; fetching advertised master branch"
+        git -C "$iris_src" fetch --filter=blob:none --tags origin \
+            '+refs/heads/master:refs/remotes/origin/master'
+    fi
+    git -C "$iris_src" cat-file -e "${iris_ref}^{commit}" || {
+        echo "::error::Pinned Iris gitlink $iris_ref cannot be resolved" >&2
+        exit 1
+    }
     git -C "$iris_src" checkout --detach "$iris_ref"
 
     cmake -S "$iris_src" -B "$iris_build" -G Ninja \
