@@ -58,6 +58,13 @@ public:
         layout->setContentsMargins(0, 0, 0, 0);
         view = new CallView(q);
         layout->addWidget(view);
+        // Keep the peer in the native titlebar, not in a second large header.
+        // Both editable outgoing JIDs and fixed incoming JIDs update this title.
+        connect(view, &CallView::headingChanged, this, [this] {
+            const QString kind = view->whiteboardOnly() ? tr("Whiteboard") : tr("Call");
+            const QString peer = view->peer();
+            q->setWindowTitle(peer.isEmpty() ? kind : tr("%1 — %2").arg(kind, peer));
+        });
         view->setVideoSupported(AvCallManager::isVideoSupported());
         if (AvCallManager::isSupported()) {
             const auto config = MediaDeviceWatcher::instance()->configuration();
@@ -627,7 +634,7 @@ public:
         const auto messages = whiteboard ? qobject_cast<SXE::Transport *>(whiteboard->transport().data()) : nullptr;
         const bool throughServer = !session && messages;
         if (throughServer && !messages->encryption().isEmpty())
-            view->setSecurity(tr("End-to-end encrypted with OMEMO; the whiteboard goes through the server"), true);
+            view->setSecurity(tr("End-to-end encrypted with OMEMO; the whiteboard goes through the server"), true, true);
         else if (auth.isValid() && trusted)
             view->setSecurity(tr("End-to-end encrypted, verified with OMEMO"), true);
         else if (auth.isValid())

@@ -4,25 +4,30 @@
 #include "../psimedia/psimedia.h"
 #include "screensharecapture.h"
 #include <QComboBox>
+#include <QEvent>
+#include <QFontMetrics>
+#include <QPalette>
 #include <QFrame>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPainter>
 #include <QPainterPath>
+#include <QPolygonF>
 #include <QPushButton>
 #include <QSignalBlocker>
+#include <QSizePolicy>
 #include <QVBoxLayout>
 
 namespace {
-QIcon callIcon(int kind)
+QIcon callIcon(int kind, const QColor &color, bool inactive = false)
 {
     QPixmap image(48, 48);
     image.fill(Qt::transparent);
     QPainter painter(&image);
     painter.setRenderHint(QPainter::Antialiasing);
     painter.scale(2, 2);
-    painter.setPen(QPen(QColor("#e6eef9"), 1.7, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+    painter.setPen(QPen(color, 1.7, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
     if (kind == 0) {
         painter.drawRoundedRect(QRectF(9, 3, 6, 11), 3, 3);
         painter.drawArc(QRectF(6, 6, 12, 12), 180 * 16, 180 * 16);
@@ -59,55 +64,73 @@ QIcon callIcon(int kind)
         painter.drawLine(QPointF(3, 14), QPointF(7, 16));
         painter.drawLine(QPointF(21, 14), QPointF(17, 16));
     }
+    if (inactive && (kind == 0 || kind == 1))
+        painter.drawLine(QPointF(3, 3), QPointF(21, 21));
     return QIcon(image);
+}
+
+QPixmap statusIcon(const QColor &color, bool secure = false, bool warning = false)
+{
+    QPixmap image(20, 20);
+    image.fill(Qt::transparent);
+    QPainter painter(&image);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setPen(QPen(color, 1.9, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+    if (secure || warning) {
+        if (warning) {
+            painter.drawPolygon(QPolygonF() << QPointF(10, 2) << QPointF(18, 17) << QPointF(2, 17));
+            painter.drawLine(QPointF(10, 7), QPointF(10, 12));
+            painter.drawPoint(QPointF(10, 15));
+        } else {
+            painter.drawArc(QRectF(5, 2, 10, 11), 0, 180 * 16);
+            painter.drawRoundedRect(QRectF(4, 9, 12, 9), 2, 2);
+        }
+    } else {
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(color);
+        painter.drawEllipse(QRectF(6, 6, 8, 8));
+    }
+    return image;
 }
 }
 
 CallView::CallView(QWidget *parent) : QWidget(parent)
 {
     setObjectName(QStringLiteral("callView"));
-    setStyleSheet(QStringLiteral(
-        "QWidget#callView { background: #111827; color: #f3f4f6; }"
-        "QLabel { color: #f3f4f6; background: transparent; }"
-        "QLineEdit { color: #f3f4f6; background: transparent; border: none; font-size: 20px; font-weight: 600; "
-        "padding: 4px; }"
-        "QLabel#callStatus, QLabel#callDuration { color: #9ca3af; }"
-        "QFrame#callStage { background: #1b2435; border: 1px solid #2b3548; border-radius: 18px; }"
-        "QFrame#callTile { background: #0b1220; border: none; border-radius: 10px; }"
-        "QFrame#sharingBar { background: #153b37; border: 1px solid #2dd4bf; border-radius: 10px; }"
-        "QPushButton { color: #f3f4f6; background: #293447; border: 1px solid #39465c; border-radius: 12px; padding: "
-        "12px 18px; font-weight: 600; }"
-        "QPushButton:hover { background: #36445c; }"
-        "QPushButton:focus { border: 2px solid #93c5fd; }"
-        "QPushButton:disabled { color: #718096; background: #202a3a; border-color: #293447; }"
-        "QPushButton:checked { background: #145c55; border-color: #2dd4bf; }"
-        "QPushButton#callAccept { background: #0f766e; border-color: #2dd4bf; }"
-        "QPushButton#callEnd { background: #be354b; border-color: #e35b70; }"
-        "QPushButton#callEnd:hover { background: #d4435a; }"
-        "QComboBox { color: #d1d5db; background: #293447; border: 1px solid #39465c; border-radius: 8px; padding: 8px; "
-        "}"
-        "QComboBox QAbstractItemView { color: #f3f4f6; background: #293447; selection-background-color: #0f766e; }"));
+    // Style only the call controls; never impose QLabel/QPushButton colors
+    // on the embedded whiteboard or other child widgets.
     auto layout = new QVBoxLayout(this);
-    layout->setContentsMargins(24, 22, 24, 22);
-    layout->setSpacing(18);
-    auto header   = new QHBoxLayout;
-    auto identity = new QVBoxLayout;
-    peer_         = new QLineEdit(this);
+    layout->setContentsMargins(16, 12, 16, 12);
+    layout->setSpacing(10);
+    auto header = new QHBoxLayout;
+    header->setContentsMargins(2, 0, 2, 0);
+    header->setSpacing(10);
+
+    peer_ = new QLineEdit(this);
     peer_->setObjectName(QStringLiteral("callPeer"));
     peer_->setPlaceholderText(tr("Contact or address"));
+    peer_->setClearButtonEnabled(true);
+    connect(peer_, &QLineEdit::textChanged, this, &CallView::headingChanged);
+    header->addWidget(peer_, 1);
+
     status_ = new QLabel(tr("Ready to call"), this);
-    status_->setTextFormat(Qt::PlainText);
     status_->setObjectName(QStringLiteral("callStatus"));
+    status_->setTextFormat(Qt::PlainText);
+    status_->setToolTip(tr("Ready to call"));
+    status_->setMaximumWidth(360);
+    header->addWidget(status_);
+
     security_ = new QLabel(this);
     security_->setObjectName(QStringLiteral("callSecurity"));
     security_->setTextFormat(Qt::PlainText);
     security_->hide();
-    identity->addWidget(peer_);
-    identity->addWidget(status_);
-    identity->addWidget(security_);
-    header->addLayout(identity, 1);
+    header->addWidget(security_);
+
     duration_ = new QLabel(this);
     duration_->setObjectName(QStringLiteral("callDuration"));
+    duration_->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    duration_->setVisible(false);
+    header->addStretch(1);
     header->addWidget(duration_);
     layout->addLayout(header);
 
@@ -126,81 +149,88 @@ CallView::CallView(QWidget *parent) : QWidget(parent)
     }
     layout->addWidget(stage_, 1);
 
-    sharingBar_ = new QFrame(this);
-    sharingBar_->setObjectName(QStringLiteral("sharingBar"));
-    auto sharingLayout = new QHBoxLayout(sharingBar_);
-    sharingLabel_      = new QLabel(sharingBar_);
-    sharingLabel_->setWordWrap(true);
-    sharingLabel_->setTextFormat(Qt::PlainText);
-    sharingLayout->addWidget(sharingLabel_, 1);
-    auto stop = new QPushButton(tr("Stop sharing"), sharingBar_);
-    connect(stop, &QPushButton::clicked, this, &CallView::shareRequested);
-    sharingLayout->addWidget(stop);
-    sharingBar_->hide();
-    layout->addWidget(sharingBar_);
+    auto controlBar = new QFrame(this);
+    controlBar->setObjectName(QStringLiteral("callControls"));
+    auto controls = new QHBoxLayout(controlBar);
+    controls->setContentsMargins(8, 6, 8, 6);
+    controls->setSpacing(6);
 
-    auto controls = new QHBoxLayout;
-    controls->setSpacing(10);
-    microphone_ = new QPushButton(tr("Microphone"), this);
+    microphone_ = new QPushButton(this);
     microphone_->setObjectName(QStringLiteral("callMicrophone"));
     microphone_->setCheckable(true);
     microphone_->setChecked(true);
-    microphone_->setToolTip(tr("Turn your microphone on or off"));
     connect(microphone_, &QPushButton::toggled, this, [this](bool enabled) {
-        microphone_->setText(enabled ? tr("Microphone") : tr("Muted"));
+        updateControlPresentation();
         emit microphoneChanged(enabled);
     });
-    camera_ = new QPushButton(tr("Camera off"), this);
+
+    camera_ = new QPushButton(this);
     camera_->setObjectName(QStringLiteral("callCamera"));
     camera_->setCheckable(true);
-    camera_->setToolTip(tr("Turn your camera on or off"));
     connect(camera_, &QPushButton::toggled, this, [this](bool enabled) {
-        camera_->setText(enabled ? tr("Camera on") : tr("Camera off"));
+        updateControlPresentation();
         emit cameraChanged(enabled);
     });
-    share_ = new QPushButton(tr("Share screen"), this);
+
+    share_ = new QPushButton(this);
     share_->setObjectName(QStringLiteral("callShare"));
     share_->setCheckable(true);
     share_->setEnabled(false);
-    share_->setToolTip(tr("Share a display or an individual window"));
-    connect(share_, &QPushButton::clicked, this, &CallView::shareRequested);
-    whiteboard_ = new QPushButton(tr("Whiteboard"), this);
+    connect(share_, &QPushButton::clicked, this, [this] {
+        // Clicking opens a picker; only the backend confirms active sharing.
+        share_->setChecked(sharing_);
+        emit shareRequested();
+    });
+
+    whiteboard_ = new QPushButton(this);
     whiteboard_->setObjectName(QStringLiteral("callWhiteboard"));
     whiteboard_->setCheckable(true);
     whiteboard_->setEnabled(false);
-    whiteboard_->setToolTip(tr("Draw together on a shared whiteboard"));
-    connect(whiteboard_, &QPushButton::toggled, this, &CallView::whiteboardChanged);
-    microphone_->setIcon(callIcon(0));
-    camera_->setIcon(callIcon(1));
-    share_->setIcon(callIcon(2));
-    whiteboard_->setIcon(callIcon(4));
-    for (auto button : { microphone_, camera_, share_, whiteboard_ })
-        button->setIconSize(QSize(22, 22));
+    connect(whiteboard_, &QPushButton::toggled, this, [this](bool enabled) {
+        updateControlPresentation();
+        emit whiteboardChanged(enabled);
+    });
+    for (auto button : { microphone_, camera_, share_, whiteboard_ }) {
+        button->setIconSize(QSize(21, 21));
+        button->setFixedSize(44, 42);
+        button->setCursor(Qt::PointingHandCursor);
+    }
+
+    sharingHint_ = new QLabel(controlBar);
+    sharingHint_->setObjectName(QStringLiteral("callSharingHint"));
+    sharingHint_->setTextFormat(Qt::PlainText);
+    sharingHint_->setMaximumWidth(220);
+    sharingHint_->hide();
+
     quality_ = new QComboBox(this);
+    quality_->setObjectName(QStringLiteral("callQuality"));
     quality_->addItem(tr("HD · 2 Mbps"), 2000);
     quality_->addItem(tr("Balanced · 1 Mbps"), 1000);
     quality_->addItem(tr("Low bandwidth · 400 kbps"), 400);
     quality_->setCurrentIndex(1);
     quality_->setAccessibleName(tr("Video quality"));
+
+    accept_ = new QPushButton(tr("Call"), this);
+    accept_->setObjectName(QStringLiteral("callAccept"));
+    accept_->setDefault(true);
+
+    end_ = new QPushButton(tr("Close"), this);
+    end_->setObjectName(QStringLiteral("callEnd"));
+    end_->setIconSize(QSize(20, 20));
+
     controls->addWidget(microphone_);
     controls->addWidget(camera_);
     controls->addWidget(share_);
     controls->addWidget(whiteboard_);
-    controls->addStretch();
-    layout->addLayout(controls);
-    auto actions = new QHBoxLayout;
-    actions->addWidget(quality_);
-    actions->addStretch();
-    accept_ = new QPushButton(tr("Call"), this);
-    accept_->setObjectName(QStringLiteral("callAccept"));
-    accept_->setDefault(true);
-    end_ = new QPushButton(tr("Close"), this);
-    end_->setIcon(callIcon(3));
-    end_->setIconSize(QSize(22, 22));
-    end_->setObjectName(QStringLiteral("callEnd"));
-    actions->addWidget(accept_);
-    actions->addWidget(end_);
-    layout->addLayout(actions);
+    controls->addWidget(sharingHint_);
+    controls->addStretch(1);
+    controls->addWidget(quality_);
+    controls->addWidget(accept_);
+    controls->addWidget(end_);
+    layout->addWidget(controlBar);
+
+    updateAppearance();
+    updateControlPresentation();
     connect(accept_, &QPushButton::clicked, this, &CallView::accepted);
     connect(end_, &QPushButton::clicked, this, &CallView::ended);
 }
@@ -208,16 +238,135 @@ CallView::CallView(QWidget *parent) : QWidget(parent)
 void CallView::setPeer(const QString &peer, bool editable)
 {
     peer_->setText(peer);
+    peerEditable_ = editable;
     peer_->setReadOnly(!editable);
+    updatePeerVisibility();
+    emit headingChanged();
 }
 QString CallView::peer() const { return peer_->text().trimmed(); }
-void    CallView::setSecurity(const QString &text, bool endToEnd)
+
+void CallView::setSecurity(const QString &text, bool endToEnd, bool partiallyEncrypted)
 {
-    security_->setText(text);
-    security_->setStyleSheet(endToEnd ? QStringLiteral("color: #34d399;") : QStringLiteral("color: #fbbf24;"));
+    security_->setToolTip(text);
+    security_->setAccessibleName(text);
+    security_->setProperty("endToEnd", endToEnd);
+    security_->setProperty("partialSecurity", partiallyEncrypted);
+    // A server-backed whiteboard is not covered by the media encryption.
+    const bool verified = endToEnd && !partiallyEncrypted;
+    const QColor ink = verified ? QColor(QStringLiteral("#16976c")) : QColor(QStringLiteral("#c48622"));
+    security_->setPixmap(statusIcon(ink, verified, !verified));
     security_->setVisible(!text.isEmpty());
 }
-void    CallView::setStatus(const QString &text) { status_->setText(text); }
+
+void CallView::setStatus(const QString &text)
+{
+    status_->setToolTip(text);
+    status_->setAccessibleName(text);
+    if (text == tr("Connected")) {
+        status_->setText(QString());
+        status_->setPixmap(statusIcon(QColor(QStringLiteral("#16976c"))));
+    } else {
+        status_->setPixmap(QPixmap());
+        status_->setText(status_->fontMetrics().elidedText(text, Qt::ElideRight, 350));
+    }
+}
+
+void CallView::changeEvent(QEvent *event)
+{
+    QWidget::changeEvent(event);
+    if (event->type() == QEvent::PaletteChange || event->type() == QEvent::ApplicationPaletteChange)
+        updateAppearance();
+}
+
+void CallView::updateAppearance()
+{
+    if (updatingAppearance_)
+        return;
+    updatingAppearance_ = true;
+    const auto colors = palette();
+    const QColor surface = colors.color(QPalette::Window);
+    const QColor canvas = colors.color(QPalette::Base);
+    const QColor text = colors.color(QPalette::WindowText);
+    const QColor muted = colors.color(QPalette::Disabled, QPalette::WindowText);
+    const QColor button = colors.color(QPalette::Button);
+    const QColor buttonText = colors.color(QPalette::ButtonText);
+    const QColor border = colors.color(QPalette::Mid);
+    const QColor accent = colors.color(QPalette::Highlight);
+    const QColor accentText = colors.color(QPalette::HighlightedText);
+    // Scoped selectors leave the whiteboard's native canvas and toolbar alone.
+    setStyleSheet(QStringLiteral(
+        "QWidget#callView { background-color: %1; color: %2; }"
+        "QLineEdit#callPeer { color: %2; background: %3; border: 1px solid %6;"
+        " border-radius: 7px; padding: 6px; }"
+        "QLabel#callStatus, QLabel#callDuration, QLabel#callSharingHint { color: %4; }"
+        "QFrame#callStage { background: %3; border: 1px solid %6; border-radius: 10px; }"
+        "QFrame#callTile { background: %3; border: none; border-radius: 6px; }"
+        "QFrame#callControls { background: %5; border: 1px solid %6; border-radius: 10px; }"
+        "QPushButton#callMicrophone, QPushButton#callCamera, QPushButton#callShare,"
+        " QPushButton#callWhiteboard { color: %7; background: %5; border: 1px solid %6;"
+        " border-radius: 8px; padding: 6px; }"
+        "QPushButton#callMicrophone:hover, QPushButton#callCamera:hover,"
+        " QPushButton#callShare:hover, QPushButton#callWhiteboard:hover { border-color: %8; }"
+        "QPushButton#callMicrophone:checked, QPushButton#callCamera:checked,"
+        " QPushButton#callShare:checked, QPushButton#callWhiteboard:checked"
+        " { color: %9; background: %8; border-color: %8; }"
+        "QPushButton#callMicrophone:focus, QPushButton#callCamera:focus,"
+        " QPushButton#callShare:focus, QPushButton#callWhiteboard:focus"
+        " { border: 2px solid %8; }"
+        "QPushButton#callMicrophone:disabled, QPushButton#callCamera:disabled,"
+        " QPushButton#callShare:disabled, QPushButton#callWhiteboard:disabled"
+        " { color: %4; background: %5; border-color: %6; }"
+        "QPushButton#callEnd { color: white; background: #bf3650; border: none;"
+        " border-radius: 8px; padding: 10px 13px; font-weight: 600; }"
+        "QPushButton#callEnd:hover { background: #a92f46; }"
+        "QPushButton#callEnd:focus { border: 2px solid %8; }"
+        "QPushButton#callAccept { color: %9; background: %8; border: none;"
+        " border-radius: 8px; padding: 10px 13px; font-weight: 600; }"
+        "QComboBox#callQuality { color: %7; background: %5; border: 1px solid %6;"
+        " border-radius: 7px; padding: 7px; }")
+        .arg(surface.name(), text.name(), canvas.name(), muted.name(), button.name(),
+             border.name(), buttonText.name(), accent.name(), accentText.name()));
+    updateControlPresentation();
+    if (!security_->toolTip().isEmpty())
+        setSecurity(security_->toolTip(), security_->property("endToEnd").toBool(),
+                    security_->property("partialSecurity").toBool());
+    updatingAppearance_ = false;
+}
+
+void CallView::updatePeerVisibility()
+{
+    peer_->setVisible(peerEditable_ && !connecting_ && !active_ && !finished_);
+}
+
+void CallView::updateControlPresentation()
+{
+    const auto colors = palette();
+    const QColor regular = colors.color(QPalette::ButtonText);
+    const QColor selected = colors.color(QPalette::HighlightedText);
+    microphone_->setToolTip(microphone_->isChecked() ? tr("Mute microphone") : tr("Unmute microphone"));
+    camera_->setToolTip(camera_->isChecked() ? tr("Turn camera off") : tr("Turn camera on"));
+    share_->setToolTip(selecting_ ? tr("Cancel screen selection")
+                     : sharing_ ? tr("Stop sharing: %1").arg(shareSource_)
+                                : tr("Share a display or window"));
+    whiteboard_->setToolTip(whiteboard_->isChecked() ? tr("Hide whiteboard") : tr("Show whiteboard"));
+    microphone_->setAccessibleName(microphone_->toolTip());
+    camera_->setAccessibleName(camera_->toolTip());
+    share_->setAccessibleName(share_->toolTip());
+    whiteboard_->setAccessibleName(whiteboard_->toolTip());
+    microphone_->setIcon(callIcon(0, microphone_->isChecked() ? selected : regular, !microphone_->isChecked()));
+    camera_->setIcon(callIcon(1, camera_->isChecked() ? selected : regular, !camera_->isChecked()));
+    share_->setIcon(callIcon(2, sharing_ ? selected : regular));
+    whiteboard_->setIcon(callIcon(4, whiteboard_->isChecked() ? selected : regular));
+    end_->setIcon(callIcon(3, QColor(Qt::white)));
+    sharingHint_->setVisible(sharing_ || selecting_);
+    const QString hint = selecting_ ? tr("Selecting screen…")
+                         : shareConnecting_ ? tr("Connecting screen…")
+                                            : tr("Sharing: %1").arg(shareSource_);
+    sharingHint_->setText(sharingHint_->fontMetrics().elidedText(hint, Qt::ElideMiddle, 205));
+    sharingHint_->setToolTip(hint);
+    sharingHint_->setAccessibleName(hint);
+}
+
 void    CallView::setActive(bool active)
 {
     active_ = active;
@@ -225,17 +374,21 @@ void    CallView::setActive(bool active)
     quality_->setVisible(!active);
     end_->setText(active ? (whiteboardOnly_ ? tr("End") : tr("End call")) : tr("Close"));
     updateMediaButtons();
+    updatePeerVisibility();
+    duration_->setVisible(active);
     if (active)
         stage_->setPlaceholderText(whiteboardOnly_ ? tr("Connected") : tr("Connected · waiting for video"));
 }
 void CallView::setConnecting(bool connecting)
 {
     accept_->setEnabled(!connecting);
-    peer_->setReadOnly(connecting);
+    peer_->setReadOnly(connecting || !peerEditable_);
     quality_->setEnabled(!connecting && !whiteboardOnly_);
     connecting_ = connecting;
+    updatePeerVisibility();
     updateMediaButtons();
-    end_->setText(connecting ? tr("Cancel") : tr("Close"));
+    end_->setText(connecting ? tr("Cancel") : active_ ? (whiteboardOnly_ ? tr("End") : tr("End call"))
+                                                        : tr("Close"));
 }
 void CallView::setIncoming(bool incoming)
 {
@@ -260,7 +413,7 @@ void CallView::setCameraEnabled(bool enabled)
 {
     const QSignalBlocker blocked(camera_);
     camera_->setChecked(enabled);
-    camera_->setText(enabled ? tr("Camera on") : tr("Camera off"));
+    updateControlPresentation();
 }
 void CallView::setFinished()
 {
@@ -273,20 +426,21 @@ void CallView::setFinished()
     stage_->hideAllTiles();
     stage_->setPlaceholderText(whiteboardOnly_ ? tr("Session ended") : tr("Call ended"));
     peer_->setReadOnly(true);
+    updatePeerVisibility();
 }
 void CallView::setSharing(bool sharing, const QString &source, bool connecting)
 {
     sharing_ = sharing;
+    shareConnecting_ = sharing && connecting;
+    shareSource_ = sharing ? source : QString();
     share_->setChecked(sharing);
-    share_->setText(sharing ? (connecting ? tr("Connecting screen…") : tr("Sharing screen")) : tr("Share screen"));
-    sharingLabel_->setText((connecting ? tr("Connecting screen sharing: %1") : tr("You are sharing: %1")).arg(source));
-    sharingBar_->setVisible(sharing);
+    updateControlPresentation();
 }
 void CallView::setShareSelecting(bool selecting)
 {
     selecting_ = selecting;
     updateMediaButtons();
-    share_->setText(selecting ? tr("Cancel selection") : (sharing_ ? tr("Sharing screen") : tr("Share screen")));
+    updateControlPresentation();
 }
 void CallView::setDuration(qint64 seconds)
 {
@@ -305,12 +459,13 @@ CallStage             *CallView::stage() const { return stage_; }
 void CallView::setWhiteboardOnly(bool whiteboardOnly)
 {
     whiteboardOnly_ = whiteboardOnly;
+    emit headingChanged();
     if (whiteboardOnly) {
         // Screen sharing needs running media; it is offered again once audio or video is connected.
         shareSupported_ = false;
         const QSignalBlocker blocked(microphone_);
         microphone_->setChecked(false);
-        microphone_->setText(tr("Microphone"));
+        updateControlPresentation();
     }
     quality_->setEnabled(!whiteboardOnly);
     updateMediaButtons();
@@ -327,7 +482,7 @@ void CallView::setMicrophoneChecked(bool enabled)
 {
     const QSignalBlocker blocked(microphone_);
     microphone_->setChecked(enabled);
-    microphone_->setText(enabled ? tr("Microphone") : tr("Muted"));
+    updateControlPresentation();
 }
 void CallView::updateMediaButtons()
 {
@@ -338,8 +493,13 @@ void CallView::updateMediaButtons()
     share_->setEnabled(media && active_ && shareSupported_ && ScreenShareCapture::available());
     const QString unavailable = whiteboardOnly_ && !mediaAvailable_ ? tr("Calls are not available with this contact")
                                                                     : QString();
-    microphone_->setToolTip(unavailable.isEmpty() ? tr("Turn your microphone on or off") : unavailable);
-    camera_->setToolTip(unavailable.isEmpty() ? tr("Turn your camera on or off") : unavailable);
+    updateControlPresentation();
+    if (!unavailable.isEmpty()) {
+        microphone_->setToolTip(unavailable);
+        camera_->setToolTip(unavailable);
+        microphone_->setAccessibleName(unavailable);
+        camera_->setAccessibleName(unavailable);
+    }
 }
 void CallView::setWhiteboardSupported(bool supported)
 {
@@ -350,6 +510,7 @@ void CallView::setWhiteboardEnabled(bool enabled)
 {
     const QSignalBlocker blocked(whiteboard_);
     whiteboard_->setChecked(enabled);
+    updateControlPresentation();
 }
 bool CallView::whiteboardEnabled() const { return whiteboard_->isChecked(); }
 

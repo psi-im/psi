@@ -7,8 +7,8 @@ class QLabel;
 class QLineEdit;
 class QPushButton;
 class QComboBox;
-class QFrame;
 class CallStage;
+class QEvent;
 namespace PsiMedia {
 class VideoWidget;
 }
@@ -21,7 +21,7 @@ public:
     QString                peer() const;
     void                   setStatus(const QString &text);
     // How the session is protected; an empty text hides it.
-    void                   setSecurity(const QString &text, bool endToEnd);
+    void                   setSecurity(const QString &text, bool endToEnd, bool partiallyEncrypted = false);
     void                   setActive(bool active);
     void                   setConnecting(bool connecting);
     void                   setIncoming(bool incoming);
@@ -49,10 +49,17 @@ public:
     void setWhiteboardEnabled(bool enabled);
     bool whiteboardEnabled() const;
 
+protected:
+    void changeEvent(QEvent *event) override;
+
 private:
     void updateMediaButtons();
+    void updateAppearance();
+    void updateControlPresentation();
+    void updatePeerVisibility();
 
 signals:
+    void headingChanged();
     void accepted();
     void ended();
     void microphoneChanged(bool enabled);
@@ -65,7 +72,7 @@ private:
     QLabel                *status_;
     QLabel                *security_;
     QLabel                *duration_;
-    QLabel                *sharingLabel_;
+    QLabel                *sharingHint_;
     QPushButton           *microphone_;
     QPushButton           *camera_;
     QPushButton           *share_;
@@ -73,7 +80,6 @@ private:
     QPushButton           *accept_;
     QPushButton           *end_;
     QComboBox             *quality_;
-    QFrame                *sharingBar_;
     CallStage             *stage_;
     PsiMedia::VideoWidget *video_;
     PsiMedia::VideoWidget *presentation_;
@@ -87,5 +93,9 @@ private:
     bool                   finished_       = false;
     bool                   connecting_     = false;
     bool                   mediaAvailable_ = true;
+    bool                   peerEditable_   = false;
+    bool                   updatingAppearance_ = false;
+    QString                shareSource_;
+    bool                   shareConnecting_ = false;
 };
 #endif

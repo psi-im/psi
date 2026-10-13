@@ -166,10 +166,17 @@ WbView::WbView(XMPP::Jingle::SXE::Document *document, QWidget *parent) : QWidget
     act_modes_->setMenu(menuModes);
 
     toolbar_ = new QToolBar(tr("Whiteboard toolbar"), this);
-    toolbar_->setIconSize(QSize(16, 16));
+    toolbar_->setObjectName(QStringLiteral("whiteboardTools"));
+    toolbar_->setMovable(false);
+    toolbar_->setFloatable(false);
+    toolbar_->setIconSize(QSize(20, 20));
+    toolbar_->setToolButtonStyle(Qt::ToolButtonIconOnly);
+    toolbar_->setContentsMargins(4, 2, 4, 2);
     toolbar_->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum));
-    // Tools are one click away; the rest of the actions follow on the right.
+    // Native toolbar and icon-only tools respect the whiteboard's own palette.
+    // The parent call dialog styles only its named call controls.
     toolbar_->addActions(group_modes_->actions());
+    toolbar_->addSeparator();
     toolbar_->addWidget(new StretchWidget(this));
     toolbar_->addAction(act_fill_);
     toolbar_->addAction(act_color_);
