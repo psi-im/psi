@@ -301,8 +301,9 @@ public:
     }
 
     // Where an outgoing session goes. A full JID (a group chat occupant or a resource chosen explicitly) is used as
-    // is. A bare JID stays bare when a proposal (XEP-0353) can ring the contact's devices: some capable device
-    // advertises proposals, or no device is known. Otherwise the capable resource with the highest priority.
+    // is. A bare JID stays bare when proposals (XEP-0353) are enabled, so all of the contact's devices ring; the
+    // protocol deliberately has no discovery feature. Without proposals, the capable resource with the highest
+    // priority.
     XMPP::Jid outgoingTarget(const XMPP::Jid &peer, const std::function<bool(const XMPP::Jid &)> &capable) const
     {
         if (!peer.isValid() || !peer.resource().isEmpty())
@@ -311,20 +312,14 @@ public:
         const UserListItem *item      = account->find(peer);
         if (!item || item->userResourceList().isEmpty())
             return proposals ? peer : XMPP::Jid();
-        const UserResource *best     = nullptr;
-        bool                ringable = false;
+        const UserResource *best = nullptr;
         for (const auto &resource : item->userResourceList()) {
-            const auto full = peer.withResource(resource.name());
-            if (!capable(full))
-                continue;
-            ringable
-                = ringable || account->client()->capsManager()->features(full).test(Jingle::MessageInitiation::ns());
-            if (!best || resource.priority() > best->priority())
+            if (capable(peer.withResource(resource.name())) && (!best || resource.priority() > best->priority()))
                 best = &resource;
         }
-        if (proposals && ringable)
-            return peer;
-        return best ? peer.withResource(best->name()) : XMPP::Jid();
+        if (!best)
+            return {};
+        return proposals ? peer : peer.withResource(best->name());
     }
 
     bool whiteboardCapable(const XMPP::Jid &full) const

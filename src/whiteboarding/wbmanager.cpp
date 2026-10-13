@@ -58,12 +58,6 @@ bool WbManager::checkSupport(const Jid &jid) const
     return features.test(QStringList { XMPP::Jingle::NS, SXE::NS, SXE::NS_TRANSPORT, SXE::NS_SVG_WHITEBOARD });
 }
 
-bool WbManager::checkProposalSupport(const Jid &jid) const
-{
-    return checkSupport(jid)
-        && client_->capsManager()->features(jid).test(XMPP::Jingle::MessageInitiation::ns());
-}
-
 bool WbManager::incomingSession(XMPP::Jingle::Session *session)
 {
     if (!session || session->preferredApplication() != SXE::NS_SVG_WHITEBOARD)

@@ -4225,8 +4225,13 @@ ChatDlg *PsiAccount::ensureChatDlg(const Jid &j)
         connect(c, &ChatDlg::aInfo, this, [this](const XMPP::Jid &jid) { actionInfo(jid); });
         connect(c, &ChatDlg::aHistory, this, &PsiAccount::actionHistory);
         connect(c, &ChatDlg::aFile, this, [this](const XMPP::Jid &jid) { sendFiles(jid); });
-        connect(c, &ChatDlg::aVoice, this, &PsiAccount::actionVoice);
-        connect(c, &ChatDlg::aWhiteboard, this, &PsiAccount::actionOpenWhiteboard);
+        // A resource chosen in the chat is called as is; otherwise all of the contact's devices ring.
+        connect(c, &ChatDlg::aVoice, this, [this, c](const XMPP::Jid &jid) {
+            c->autoSelectContact() ? actionVoice(jid) : actionVoiceSpecific(jid);
+        });
+        connect(c, &ChatDlg::aWhiteboard, this, [this, c](const XMPP::Jid &jid) {
+            c->autoSelectContact() ? actionOpenWhiteboard(jid) : actionOpenWhiteboardSpecific(jid);
+        });
         connect(d->psi, &PsiCon::emitOptionsUpdate, c, &ChatDlg::optionsUpdate);
         connect(this, static_cast<void (PsiAccount::*)(const XMPP::Jid &, bool)>(&PsiAccount::updateContact), c,
                 &ChatDlg::updateContact);

@@ -76,8 +76,6 @@ public:
     Request takeRequest(int id);
     /*! \brief Returns true if \a jid advertises whiteboarding over Jingle SXE.*/
     bool checkSupport(const XMPP::Jid &jid) const;
-    /*! \brief Returns true if \a jid also advertises Jingle Message Initiation.*/
-    bool checkProposalSupport(const XMPP::Jid &jid) const;
 
     /*! \brief Proposes a whiteboard to all resources of \a jid. Returns the proposal id or an empty string.*/
     QString propose(const XMPP::Jid &jid);
