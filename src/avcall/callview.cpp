@@ -10,7 +10,6 @@
 #include <QFrame>
 #include <QHBoxLayout>
 #include <QLabel>
-#include <QLineEdit>
 #include <QPainter>
 #include <QPainterPath>
 #include <QPolygonF>
@@ -105,13 +104,6 @@ CallView::CallView(QWidget *parent) : QWidget(parent)
     auto header = new QHBoxLayout;
     header->setContentsMargins(2, 0, 2, 0);
     header->setSpacing(10);
-
-    peer_ = new QLineEdit(this);
-    peer_->setObjectName(QStringLiteral("callPeer"));
-    peer_->setPlaceholderText(tr("Contact or address"));
-    peer_->setClearButtonEnabled(true);
-    connect(peer_, &QLineEdit::textChanged, this, &CallView::headingChanged);
-    header->addWidget(peer_, 1);
 
     status_ = new QLabel(tr("Ready to call"), this);
     status_->setObjectName(QStringLiteral("callStatus"));
@@ -235,15 +227,12 @@ CallView::CallView(QWidget *parent) : QWidget(parent)
     connect(end_, &QPushButton::clicked, this, &CallView::ended);
 }
 
-void CallView::setPeer(const QString &peer, bool editable)
+void CallView::setPeer(const QString &peer)
 {
-    peer_->setText(peer);
-    peerEditable_ = editable;
-    peer_->setReadOnly(!editable);
-    updatePeerVisibility();
+    peer_ = peer;
     emit headingChanged();
 }
-QString CallView::peer() const { return peer_->text().trimmed(); }
+QString CallView::peer() const { return peer_.trimmed(); }
 
 void CallView::setSecurity(const QString &text, bool endToEnd, bool partiallyEncrypted)
 {
@@ -296,8 +285,6 @@ void CallView::updateAppearance()
     // Scoped selectors leave the whiteboard's native canvas and toolbar alone.
     setStyleSheet(QStringLiteral(
         "QWidget#callView { background-color: %1; color: %2; }"
-        "QLineEdit#callPeer { color: %2; background: %3; border: 1px solid %6;"
-        " border-radius: 7px; padding: 6px; }"
         "QLabel#callStatus, QLabel#callDuration, QLabel#callSharingHint { color: %4; }"
         "QFrame#callStage { background: %3; border: 1px solid %6; border-radius: 10px; }"
         "QFrame#callTile { background: %3; border: none; border-radius: 6px; }"
@@ -331,11 +318,6 @@ void CallView::updateAppearance()
         setSecurity(security_->toolTip(), security_->property("endToEnd").toBool(),
                     security_->property("partialSecurity").toBool());
     updatingAppearance_ = false;
-}
-
-void CallView::updatePeerVisibility()
-{
-    peer_->setVisible(peerEditable_ && !connecting_ && !active_ && !finished_);
 }
 
 void CallView::updateControlPresentation()
@@ -374,7 +356,6 @@ void    CallView::setActive(bool active)
     quality_->setVisible(!active);
     end_->setText(active ? (whiteboardOnly_ ? tr("End") : tr("End call")) : tr("Close"));
     updateMediaButtons();
-    updatePeerVisibility();
     duration_->setVisible(active);
     if (active)
         stage_->setPlaceholderText(whiteboardOnly_ ? tr("Connected") : tr("Connected · waiting for video"));
@@ -382,10 +363,8 @@ void    CallView::setActive(bool active)
 void CallView::setConnecting(bool connecting)
 {
     accept_->setEnabled(!connecting);
-    peer_->setReadOnly(connecting || !peerEditable_);
     quality_->setEnabled(!connecting && !whiteboardOnly_);
     connecting_ = connecting;
-    updatePeerVisibility();
     updateMediaButtons();
     end_->setText(connecting ? tr("Cancel") : active_ ? (whiteboardOnly_ ? tr("End") : tr("End call"))
                                                         : tr("Close"));
@@ -425,8 +404,6 @@ void CallView::setFinished()
     whiteboard_->setEnabled(false);
     stage_->hideAllTiles();
     stage_->setPlaceholderText(whiteboardOnly_ ? tr("Session ended") : tr("Call ended"));
-    peer_->setReadOnly(true);
-    updatePeerVisibility();
 }
 void CallView::setSharing(bool sharing, const QString &source, bool connecting)
 {
