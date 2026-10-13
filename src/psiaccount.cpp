@@ -26,6 +26,7 @@
 #include "psiaccount.h"
 #include "Certificates/CertificateDisplayDialog.h"
 #include "Certificates/CertificateHelpers.h"
+#include "accountconnectionguard.h"
 #include "accountmanagedlg.h"
 #include "accountmodifydlg.h"
 #include "activity.h"
@@ -157,6 +158,7 @@
 #include <QPointer>
 #include <QPushButton>
 #include <QQueue>
+#include <QScopedValueRollback>
 #include <QTimer>
 #include <QUrl>
 #include <QtCrypto>
@@ -369,9 +371,12 @@ class PsiAccount::Private : public Alertable {
 public:
     Private(PsiAccount *parent) : Alertable(parent), account(parent), xmlRingbuf(1000)
     {
+        reconnectDelayTimer_ = new QTimer(this);
+        reconnectDelayTimer_->setSingleShot(true);
+        connect(reconnectDelayTimer_, &QTimer::timeout, account, &PsiAccount::reconnect);
+
         reconnectTimeoutTimer_ = new QTimer(this);
         reconnectTimeoutTimer_->setSingleShot(true);
-        connect(reconnectTimeoutTimer_, &QTimer::timeout, this, &Private::reconnectTimerTimeout);
 
         updateOnlineContactsCountTimer_ = new QTimer(this);
         updateOnlineContactsCountTimer_->setInterval(500);
@@ -399,6 +404,8 @@ public:
     Jid                      jid, nextJid;
     Status                   loginStatus;
     QMetaObject::Connection  reconnectConnection;
+    quint64                  connectionGeneration = 0;
+    bool                     loginInProgress      = false;
     bool                     loginWithPriority = false;
     // bool reconnectingOnce;
     bool                     nickFromVCard = false;
@@ -1031,7 +1038,7 @@ public slots:
 
         reconnectScheduledAt_ = QDateTime::currentDateTime();
         reconnectScheduledAt_ = reconnectScheduledAt_.addSecs(data.delay);
-        QTimer::singleShot(delay, account, SLOT(reconnect()));
+        reconnectDelayTimer_->start(delay);
         account->stateChanged();
     }
 
@@ -1039,6 +1046,12 @@ public slots:
     {
         reconnectScheduledAt_ = QDateTime();
         account->doReconnect  = false;
+        reconnectDelayTimer_->stop();
+        // A timeout must never tear down a newer stream.
+        QObject::disconnect(reconnectTimeoutConnection_);
+        const AccountConnectionGuard<ClientStream> guard(stream.data(), connectionGeneration);
+        reconnectTimeoutConnection_ = connect(reconnectTimeoutTimer_, &QTimer::timeout, this,
+                                              guard.callback(this, &Private::reconnectTimerTimeout));
         reconnectTimeoutTimer_->start();
     }
 
@@ -1047,6 +1060,7 @@ public slots:
         reconnectScheduledAt_ = QDateTime();
         reconnectData_        = -1;
         account->doReconnect  = false;
+        reconnectDelayTimer_->stop();
         reconnectTimeoutTimer_->stop();
     }
 
@@ -1060,7 +1074,9 @@ private slots:
 
 public:
     QDateTime reconnectScheduledAt_;
+    QTimer   *reconnectDelayTimer_   = nullptr;
     QTimer   *reconnectTimeoutTimer_ = nullptr;
+    QMetaObject::Connection reconnectTimeoutConnection_;
     int       reconnectData_         = -1;
     bool      reconnectInfrequently_ = false;
 };
@@ -1362,6 +1378,13 @@ PsiAccount::~PsiAccount()
 
 void PsiAccount::cleanupStream()
 {
+    // Invalidate queued stream signals and pending credential lookups before
+    // deleting anything: teardown may itself emit signals.
+    ++d->connectionGeneration;
+    d->reconnectDelayTimer_->stop();
+    d->reconnectTimeoutTimer_->stop();
+    d->reconnectScheduledAt_ = QDateTime();
+    doReconnect = false;
     // GSOC: Get SM state out of stream
     delete d->stream;
 
@@ -1699,8 +1722,11 @@ void PsiAccount::reconnectOnce()
 // logs on with the active account settings
 void PsiAccount::login()
 {
-    if (isActive() && !doReconnect)
+    // Only cleanupStream() may retire an attempt. Never overwrite its stream,
+    // even if a reconnect timer or a nested event loop asks us to log in again.
+    if (isDisconnecting || d->loginInProgress || d->stream || (isActive() && !doReconnect))
         return;
+    QScopedValueRollback<bool> starting(d->loginInProgress, true);
 
     const bool tlsSupported             = QCA::isSupported("tls");
     const bool keyStoreManagerAvailable = !QCA::KeyStoreManager().isBusy();
@@ -1732,10 +1758,19 @@ void PsiAccount::login()
         }
     }
 
+    const bool reconnectAttempt = doReconnect;
+    d->reconnectDelayTimer_->stop();
+    d->reconnectTimeoutTimer_->stop();
+    d->reconnectScheduledAt_ = QDateTime();
+    doReconnect = false;
+    const auto generation = ++d->connectionGeneration;
+
 #ifdef PSI_PLUGINS
     PluginManager::instance()->startLogin(this);
 #endif
     updateClientVersionInfo();
+    if (generation != d->connectionGeneration || isDisconnecting)
+        return;
 
     d->jid = d->nextJid;
 
@@ -1746,6 +1781,8 @@ void PsiAccount::login()
     presenceSent    = false;
 
     stateChanged();
+    if (generation != d->connectionGeneration || !v_isActive || isDisconnecting)
+        return;
 
     bool    useHost = false;
     QString host;
@@ -1768,7 +1805,9 @@ void PsiAccount::login()
         d->tls->setTrustedCertificates(CertificateHelpers::allCertificates(ApplicationInfo::getCertificateStoreDirs()));
         d->tlsHandler = new QCATLSHandler(d->tls);
         d->tlsHandler->setXMPPCertCheck(true);
-        connect(d->tlsHandler, &QCATLSHandler::tlsHandshaken, this, &PsiAccount::tls_handshaken);
+        const AccountConnectionGuard<QCATLSHandler> guard(d->tlsHandler.data(), d->connectionGeneration);
+        connect(d->tlsHandler, &QCATLSHandler::tlsHandshaken, this,
+                guard.callback(this, &PsiAccount::tls_handshaken));
     }
     d->conn->setProxy(p);
     d->conn->setOptTlsSrv(d->acc.ssl == UserAccount::TLS_Auto || d->acc.ssl == UserAccount::TLS_Yes);
@@ -1788,17 +1827,23 @@ void PsiAccount::login()
     } else {
         d->stream->setNoopTime(0);
     }
-    connect(d->stream, &ClientStream::connected, this, &PsiAccount::cs_connected);
-    connect(d->stream, &ClientStream::securityLayerActivated, this, &PsiAccount::cs_securityLayerActivated);
-    connect(d->stream, &ClientStream::needAuthParams, this, &PsiAccount::cs_needAuthParams);
-    connect(d->stream, &ClientStream::authenticated, this, &PsiAccount::cs_authenticated);
-    connect(d->stream, &ClientStream::connectionClosed, this, &PsiAccount::cs_connectionClosed, Qt::QueuedConnection);
-    connect(d->stream, &ClientStream::delayedCloseFinished, this, &PsiAccount::cs_delayedCloseFinished);
-    connect(d->stream, &ClientStream::warning, this, &PsiAccount::cs_warning);
-    connect(d->stream, &ClientStream::error, this, &PsiAccount::cs_error, Qt::QueuedConnection);
+    const AccountConnectionGuard<ClientStream> guard(d->stream.data(), d->connectionGeneration);
+    connect(d->stream, &ClientStream::connected, this, guard.callback(this, &PsiAccount::cs_connected));
+    connect(d->stream, &ClientStream::securityLayerActivated, this,
+            guard.callback(this, &PsiAccount::cs_securityLayerActivated));
+    connect(d->stream, &ClientStream::needAuthParams, this, guard.callback(this, &PsiAccount::cs_needAuthParams));
+    connect(d->stream, &ClientStream::authenticated, this, guard.callback(this, &PsiAccount::cs_authenticated));
+    connect(d->stream, &ClientStream::connectionClosed, this, guard.callback(this, &PsiAccount::cs_connectionClosed),
+            Qt::QueuedConnection);
+    connect(d->stream, &ClientStream::delayedCloseFinished, this,
+            guard.callback(this, &PsiAccount::cs_delayedCloseFinished));
+    connect(d->stream, &ClientStream::warning, this, guard.callback(this, &PsiAccount::cs_warning));
+    connect(d->stream, &ClientStream::error, this, guard.callback(this, &PsiAccount::cs_error), Qt::QueuedConnection);
 
     Jid j = d->jid.withResource((d->acc.opt_automatic_resource ? localHostName() : d->acc.resource));
     d->stream->setSMEnabled(d->acc.opt_sm);
+    if (reconnectAttempt)
+        d->startReconnectTimeout();
     d->client->connectToServer(d->stream, j);
 }
 
@@ -1864,12 +1909,16 @@ bool PsiAccount::loggedIn() const { return (v_isActive && presenceSent); }
 
 void PsiAccount::tls_handshaken()
 {
+    const AccountConnectionGuard<QCATLSHandler> guard(d->tlsHandler.data(), d->connectionGeneration);
     bool certificateOk = CertificateHelpers::checkCertificate(
         d->tls, d->tlsHandler, d->acc.tlsOverrideDomain, d->acc.tlsOverrideCert, this,
         (d->psi->contactList()->enabledAccounts().count() > 1 ? QString("%1: ").arg(name()) : "")
             + tr("Server Authentication"),
         d->jid.domain());
-    if (certificateOk && !d->tlsHandler.isNull()) {
+    // Certificate approval may run a nested event loop and retire this attempt.
+    if (!guard.isCurrent() || isDisconnecting)
+        return;
+    if (certificateOk) {
         d->tlsHandler->continueAfterHandshake();
     } else {
         logout(false, loggedOutStatus());
@@ -1916,6 +1965,9 @@ void PsiAccount::cs_securityLayerActivated(int layer)
 
 void PsiAccount::cs_needAuthParams(bool user, bool pass, bool realm)
 {
+    const AccountConnectionGuard<ClientStream> guard(d->stream.data(), d->connectionGeneration);
+    if (!guard.isCurrent() || isDisconnecting)
+        return;
     if (user) {
         if (d->acc.customAuth && !d->acc.authid.isEmpty())
             d->stream->setUsername(d->acc.authid);
@@ -1941,19 +1993,18 @@ void PsiAccount::cs_needAuthParams(bool user, bool pass, bool realm)
     if (d->acc.customAuth)
         d->stream->setAuthzid(d->jid.bare());
 
-    if (pass) {
-        if (d->acc.storeSaltedHashedPassword)
-            d->stream->setSCRAMStoredSaltedHash(d->acc.scramSaltedHashPassword);
-    }
 #ifdef HAVE_KEYCHAIN
-    bool useKeyring = isKeychainEnabled();
+    const bool useKeyring = pass && isKeychainEnabled();
     if (pass) {
         if (useKeyring) {
             auto pwJob = new QKeychain::ReadPasswordJob(QLatin1String("xmpp"),
                                                         this); // qApp is kind of wrong, but "this" is not QObject
             pwJob->setKey(d->jid.bare());
             pwJob->setAutoDelete(true);
-            QObject::connect(pwJob, &QKeychain::ReadPasswordJob::finished, this, [this](QKeychain::Job *job) {
+            QObject::connect(pwJob, &QKeychain::ReadPasswordJob::finished, this, [this, guard](QKeychain::Job *job) {
+                // Unlocking the keyring may finish after logout or another login.
+                if (!guard.isCurrent() || isDisconnecting)
+                    return;
                 if (job->error() == QKeychain::AccessDeniedByUser) {
                     if (d->stream) {
                         d->stream->abortAuth();
@@ -1976,8 +2027,10 @@ void PsiAccount::cs_needAuthParams(bool user, bool pass, bool realm)
                             false, PopupManager::AlertNone);
                         qWarning("KeyChain error=%d: %s", job->error(), qPrintable(job->errorString()));
                     }
+                    if (!guard.isCurrent() || isDisconnecting)
+                        return;
                     if (!passwordPrompt()) { // this will also save password on success
-                        if (d->stream) {
+                        if (guard.isCurrent() && !isDisconnecting) {
                             d->stream->abortAuth();
                         }
                         return;
@@ -1986,18 +2039,16 @@ void PsiAccount::cs_needAuthParams(bool user, bool pass, bool realm)
                     // the password was already set to stream (see above)
                     savePassword();
                 }
-                // we have non-empty password here and should continue with login
-                if (d->stream) {
+                // The password dialog and updatedAccount handlers may reconnect.
+                if (guard.isCurrent() && !isDisconnecting) {
                     d->stream->setPassword(d->acc.pass);
                     if (job->error() == QKeychain::NoError && d->acc.opt_pass) {
                         // keychain read success. erase from xml if any
                         d->acc.opt_pass = false;
                         emit updatedAccount();
                     }
-                    d->stream->continueAfterParams();
-                } else {
-                    login(); // eventually we will come here again and rerequest the password. likely without
-                             // interruption for the master password
+                    if (guard.isCurrent() && !isDisconnecting)
+                        d->stream->continueAfterParams();
                 }
             });
             pwJob->start();
@@ -2018,16 +2069,23 @@ void PsiAccount::cs_needAuthParams(bool user, bool pass, bool realm)
 
 void PsiAccount::cs_authenticated()
 {
+    if (isDisconnecting)
+        return;
     if (d->conn.isNull() || d->stream.isNull()) {
         cs_error(RECONNECT_TIMEOUT_ERROR);
         return;
     }
 
     if (d->acc.storeSaltedHashedPassword) {
-        d->acc.scramSaltedHashPassword = d->stream->getSCRAMStoredSaltedHash();
-        d->acc.pass                    = "";
+        const auto hash = d->stream->getSCRAMStoredSaltedHash();
+        // No new SCRAM credential was negotiated: retain the existing secret.
+        if (!hash.isEmpty()) {
+            d->acc.scramSaltedHashPassword = hash;
+            d->acc.pass.clear();
+        }
     }
 
+    QObject::disconnect(d->reconnectConnection);
     d->reconnectConnection = QMetaObject::Connection();
 
     // printf("PsiAccount: [%s] authenticated\n", name().latin1());
@@ -2045,7 +2103,8 @@ void PsiAccount::cs_authenticated()
     d->client->start(d->jid.domain(), d->jid.node(), d->acc.pass, resource);
     if (d->client->isSessionRequired()) {
         JT_Session *j = new JT_Session(d->client->rootTask());
-        connect(j, &JT_Session::finished, this, &PsiAccount::sessionStart_finished);
+        const AccountConnectionGuard<ClientStream> guard(d->stream.data(), d->connectionGeneration);
+        connect(j, &JT_Session::finished, this, guard.callback(this, &PsiAccount::sessionStart_finished));
         j->go(true);
     } else {
         sessionStarted();
@@ -2317,8 +2376,8 @@ void PsiAccount::cs_error(int err)
     bool    isTemporaryAuthFailure;
     bool    needAlert;
 
-    if (!isActive())
-        return; // all cleaned up already
+    if (!isActive() || isDisconnecting)
+        return; // already cleaned up, or currently retiring this attempt
 
     bool disableAutoConnect;
     getErrorInfo(err, d->conn, d->stream, d->tlsHandler, &str, &reconn, &badPass, &disableAutoConnect,
@@ -2332,13 +2391,14 @@ void PsiAccount::cs_error(int err)
         d->currentConnectionErrorCondition = d->stream->errorCondition();
     }
 
+    // Closing the client emits signals too. Do not allow those handlers to
+    // start a replacement until this attempt has been fully cleaned up.
+    isDisconnecting = true;
     d->client->close();
     cleanupStream();
 
     emit connectionError(d->currentConnectionError);
     // printf("Error: [%s]\n", str.latin1());
-
-    isDisconnecting = true;
 
     if (loggedIn()) { // FIXME: is this condition okay?
         simulateRosterOffline();
@@ -3229,12 +3289,13 @@ FileSharingDeviceOpener *PsiAccount::fileSharingDeviceOpener() const { return d-
 
 void PsiAccount::reconnect()
 {
-    if (doReconnect && !isConnected()) {
+    if (doReconnect && !d->stream && !d->loginInProgress && !isDisconnecting) {
         // printf("PsiAccount: [%s] reconnecting...\n", name().latin1());
+        const auto generation = d->connectionGeneration;
         emit reconnecting();
-        v_isActive = false;
-        d->startReconnectTimeout();
-        login();
+        // A reconnecting handler can cancel the retry or start it itself.
+        if (generation == d->connectionGeneration && doReconnect && !d->stream && !isDisconnecting)
+            login();
     }
 }
 
@@ -3336,10 +3397,12 @@ int PsiAccount::defaultPriority(const XMPP::Status &s) { return d->acc.defaultPr
  */
 bool PsiAccount::passwordPrompt()
 {
+    const auto generation = d->connectionGeneration;
     PassDialog dialog(d->jid.full());
     dialog.setSavePassword(d->acc.opt_pass);
 
-    if (dialog.exec() == QDialog::Accepted && !dialog.password().isEmpty()) {
+    if (dialog.exec() == QDialog::Accepted && generation == d->connectionGeneration
+        && !dialog.password().isEmpty()) {
         d->acc.pass     = dialog.password();
         d->acc.opt_pass = dialog.savePassword();
         savePassword();

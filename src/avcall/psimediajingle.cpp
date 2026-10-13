@@ -1176,7 +1176,7 @@ public:
     QStringList mediaTypes() const override { return capabilities_.mediaTypes(); }
     QStringList secureRtpProfiles() const override
     {
-        return capabilities_.secureRtp ? PsiMedia::RtpSession::supportedSecureRtpProfiles() : QStringList {};
+        return capabilities_.available() ? PsiMedia::RtpSession::supportedSecureRtpProfiles() : QStringList {};
     }
 
 private:

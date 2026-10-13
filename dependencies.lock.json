@@ -6,7 +6,7 @@
     "lock_path": "iris/dependencies.lock.json"
   },
   "psimedia": {
-    "commit": "52cebb52299b130ae727ca6b597b833da5e445e3"
+    "commit": "faa256f635b8f0cd56d921952ff9280de8272bd9"
   },
   "qtkeychain": {
     "tag": "0.17.0",

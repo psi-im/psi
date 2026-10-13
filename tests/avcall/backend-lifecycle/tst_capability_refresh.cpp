@@ -121,6 +121,7 @@ class CapabilityProvider final : public QObject, public PsiMedia::Provider, publ
     Q_OBJECT
     Q_INTERFACES(PsiMedia::Provider PsiMedia::SecureRtpProvider)
 public:
+    mutable int profileQueries = 0;
     QObject                     *qobject() override { return this; }
     bool                         isInitialized() const override { return true; }
     QString                      creditName() const override { return QStringLiteral("capability-test"); }
@@ -129,6 +130,7 @@ public:
     PsiMedia::RtpSessionContext *createRtpSession() override { return new CapabilityRtpSessionContext; }
     QStringList                  supportedSecureRtpProfiles() const override
     {
+        ++profileQueries;
         return { QStringLiteral("SRTP_AES128_CM_HMAC_SHA1_80") };
     }
     PsiMedia::SecureRtpSessionContext *createSecureRtpSession() override { return new CapabilityRtpSessionContext; }
@@ -337,6 +339,7 @@ private slots:
         int                                 featureRefreshes = 0;
         client.setFeatures(clientFeatures(current));
 
+        const auto queriesBefore = provider_.profileQueries;
         auto probing          = fullCapabilities();
         probing.probeComplete = false;
         commitCapabilities(client, rtpManager, current, probing, provider, featureRefreshes);
@@ -345,6 +348,8 @@ private slots:
         verifyJingleDisco(client, false, false);
         verifyDisco(client, false, false);
         const auto probingHash = advertisedHash(client);
+        QVERIFY(provider->secureRtpProfiles().isEmpty());
+        QCOMPARE(provider_.profileQueries, queriesBefore);
 
         const auto full = fullCapabilities();
         commitCapabilities(client, rtpManager, current, full, provider, featureRefreshes);

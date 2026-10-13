@@ -344,3 +344,7 @@ endif()
 if(USE_CPACK)
     include(psi-cpack)
 endif()
+
+if(BUILD_TESTING)
+    add_subdirectory(tests/account)
+endif()

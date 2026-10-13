@@ -199,6 +199,7 @@ list(APPEND HEADERS
     profiledlg.h
     profiles.h
     proxy.h
+    accountconnectionguard.h
     psiaccount.h
     psiactionlist.h
     psiactions.h

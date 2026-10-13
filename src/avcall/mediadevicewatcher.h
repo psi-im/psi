@@ -18,6 +18,7 @@
 #define MEDIADEVICEWATCHER_H
 
 #include "../psimedia/psimedia.h"
+#include "mediacryptocapabilities.h"
 
 #include <QObject>
 
@@ -52,6 +53,8 @@ public:
     inline QList<PsiMedia::AudioParams> supportedAudioModes() { return _features.supportedAudioModes(); }
     inline QList<PsiMedia::VideoParams> supportedVideoModes() { return _features.supportedVideoModes(); }
     inline bool                         featuresReady() const { return _featuresReady; }
+    bool                                cryptoReady() const { return _crypto.complete(); }
+    QStringList                         dtlsSrtpProfiles() const { return _crypto.profiles(); }
 
 signals:
     void updated();
@@ -61,6 +64,7 @@ signals:
 private:
     MediaConfiguration         _configuration;
     PsiMedia::Features         _features;
+    MediaCryptoCapabilities    _crypto;
     bool                       _featuresReady = false;
     static MediaDeviceWatcher *_instance;
 };

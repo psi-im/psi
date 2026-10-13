@@ -50,3 +50,6 @@ if(LINUX AND USE_DBUS)
         set_tests_properties(avcall_screenshare_test PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 20)
     endif()
 endif()
+
+add_subdirectory(${PROJECT_SOURCE_DIR}/tests/avcall/crypto-capabilities
+    ${CMAKE_CURRENT_BINARY_DIR}/crypto-capabilities)

@@ -19,6 +19,7 @@
 
 #include "avatars.h"
 #include "avcall/avcall.h"
+#include "avcall/mediadevicewatcher.h"
 #include "bookmarkmanager.h"
 #include "contactlistmodel.h"
 #include "groupchatdlg.h"
@@ -275,6 +276,9 @@ PsiContactMenu::Private::Private(PsiContactMenu *menu, PsiContact *_contact) :
         menu_->addAction(customStatusAction_);
         menu_->addAction(_copyMucJid);
     }
+    // All actions must exist before an asynchronous readiness update can run.
+    connect(MediaDeviceWatcher::instance(), &MediaDeviceWatcher::capabilitiesChanged, this,
+            &PsiContactMenu::Private::updateActions);
 }
 
 void PsiContactMenu::Private::updateActions()

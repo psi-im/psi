@@ -95,7 +95,8 @@ static PsiMediaJingleCapabilities currentNativeCallCapabilities()
     result.probeComplete               = watcher->featuresReady();
 #ifdef PSI_ENABLE_AVCALL
     const auto backendProfiles = PsiMedia::RtpSession::supportedSecureRtpProfiles();
-    const auto dtlsProfiles    = XMPP::Dtls::supportedSRTPProfiles();
+    result.probeComplete      = result.probeComplete && watcher->cryptoReady();
+    const auto dtlsProfiles    = watcher->dtlsSrtpProfiles();
     result.secureRtp           = std::any_of(backendProfiles.cbegin(), backendProfiles.cend(),
                                              [&dtlsProfiles](const QString &profile) { return dtlsProfiles.contains(profile); });
 #else

@@ -20,9 +20,16 @@
 #include "psioptions.h"
 
 #include <QApplication>
+#ifdef PSI_ENABLE_AVCALL
+#include <iris/dtls.h>
+#endif
 
 MediaDeviceWatcher::MediaDeviceWatcher(QObject *parent) : QObject(parent)
 {
+    connect(&_crypto, &MediaCryptoCapabilities::changed, this, &MediaDeviceWatcher::capabilitiesChanged);
+#ifdef PSI_ENABLE_AVCALL
+    _crypto.start([] { return XMPP::Dtls::supportedSRTPProfiles(); });
+#endif
     connect(&_features, &PsiMedia::Features::availibityChanged, this, [this] {
         _featuresReady = false;
         emit availibityChanged();
