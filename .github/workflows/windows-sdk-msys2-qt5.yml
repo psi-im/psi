@@ -96,7 +96,7 @@ jobs:
 
       - name: Initialize pinned Iris
         shell: bash
-        run: git submodule update --init --depth 1 iris
+        run: bash .github/scripts/checkout-pinned-iris.sh
 
       - name: Resolve SDK dependencies from Psi and Iris locks
         uses: ./.github/actions/load-dependencies
