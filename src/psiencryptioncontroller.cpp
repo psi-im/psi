@@ -545,6 +545,17 @@ QString PsiEncryptionController::selectedMethod(const XMPP::Jid &jid) const
     return {};
 }
 
+bool PsiEncryptionController::jingleEndToEndRequired(const XMPP::Jid &jid) const
+{
+#ifdef IRIS_ENABLE_OMEMO
+    return PsiOptions::instance()->getOption(QStringLiteral("options.media.require-end-to-end"), false).toBool()
+        && selectedMethod(jid) == XMPP::OmemoEncryption::methodId();
+#else
+    Q_UNUSED(jid)
+    return false;
+#endif
+}
+
 bool PsiEncryptionController::setSelectedMethod(const XMPP::Jid &jid, const QString &methodId)
 {
     const QString bare = jid.bare();

@@ -17,7 +17,7 @@
 #include "mediadevicewatcher.h"
 #include "psiaccount.h"
 #include "psimediajingle.h"
-#include "psioptions.h"
+#include "psiencryptioncontroller.h"
 #include "psimediajinglecapabilitytransaction.h"
 
 #include <iris/dtls.h>
@@ -45,12 +45,12 @@ namespace ICE    = XMPP::Jingle::ICE;
 
 static MediaConfiguration *g_config = new MediaConfiguration;
 
-// The user's policy: calls only with end-to-end encryption verified by OMEMO (docs/whiteboarding.md).
-static bool endToEndRequired()
+// The user's policy for this contact: calls only with end-to-end encryption verified by OMEMO.
+static bool endToEndRequired(PsiAccount *account, const XMPP::Jid &peer)
 {
-    return PsiOptions::instance()->getOption(QStringLiteral("options.media.require-end-to-end"), false).toBool();
+    return account && account->encryptionController()
+        && account->encryptionController()->jingleEndToEndRequired(peer);
 }
-
 static QString resolvedAudioInputDevice()
 {
     if (!g_config->liveInput)
@@ -240,7 +240,7 @@ public:
         session  = incomingSession;
         peer     = session->peer();
         incoming = true;
-        session->setEndToEndRequired(endToEndRequired());
+        session->setEndToEndRequired(endToEndRequired(manager ? manager->pa : nullptr, peer));
         setupSession();
 
         bool audio = false;
@@ -353,7 +353,7 @@ public:
         session = jmiId.isEmpty() ? manager->jingleManager->newSession(peer)
                                   : manager->jingleManager->newSession(peer, jmiId);
         if (session)
-            session->setEndToEndRequired(endToEndRequired());
+            session->setEndToEndRequired(endToEndRequired(manager->pa, peer));
         if (!session) {
             if (!jmiId.isEmpty() && jmiProceedSent)
                 sendJmiFinish(QStringLiteral("expired"), QString());

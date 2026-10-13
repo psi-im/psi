@@ -25,10 +25,12 @@ the result under the status: verified with OMEMO, encrypted but from an untruste
 encrypted but not verified, or, for a whiteboard that goes through the server, not end-to-end
 encrypted.
 
-**Options → Security → OMEMO → Configuration → Calls and whiteboards: Only with end-to-end
-encryption verified by OMEMO** (`options.media.require-end-to-end`) makes this a requirement:
-a call or whiteboard is then refused, with a message in the window, unless the contact's
-fingerprints are verified by a trusted OMEMO device; a whiteboard then needs an ICE data channel.
+**Options → Security → OMEMO → Configuration → Calls and whiteboards** (`options.media.require-end-to-end`)
+makes this a requirement for contacts whose chat uses OMEMO (the chat's encryption choice is
+remembered per contact; the OMEMO defaults apply until one is made): a call or whiteboard with
+such a contact is refused, with a message in the window, unless the contact's fingerprints are
+verified by a trusted OMEMO device; a whiteboard then needs an ICE data channel. A contact whose
+chat is switched to no encryption is not affected.
 Sessions sent directly to a resource (without XEP-0353) cannot be verified, since the peer's
 device is unknown.
 

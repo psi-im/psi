@@ -208,10 +208,12 @@ QWidget *OptionsTabSecurity::widget()
     configurationLayout->addWidget(policyHint);
     auto *callsGroup  = new QGroupBox(tr("Calls and whiteboards"), configurationPage);
     auto *callsLayout = new QVBoxLayout(callsGroup);
-    requireEndToEnd_  = new QCheckBox(tr("Only with end-to-end encryption verified by OMEMO"), callsGroup);
+    requireEndToEnd_  = new QCheckBox(tr("With contacts whose chat uses OMEMO: only with encryption verified by OMEMO"),
+                                      callsGroup);
     requireEndToEnd_->setToolTip(
         tr("The encryption keys of a call or whiteboard are confirmed with a trusted OMEMO device of the "
-           "contact. Sessions that cannot be verified are refused instead of running unverified."));
+           "contact. Sessions that cannot be verified are refused instead of running unverified. Contacts whose "
+           "chat is not encrypted with OMEMO are not affected."));
     callsLayout->addWidget(requireEndToEnd_);
     configurationLayout->addWidget(callsGroup);
     configurationLayout->addStretch();

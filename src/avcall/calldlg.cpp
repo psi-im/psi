@@ -26,6 +26,7 @@
 #include "mediadevicewatcher.h"
 #include "psiaccount.h"
 #include "psioptions.h"
+#include "psiencryptioncontroller.h"
 #include "screensharecapture.h"
 #include "userlist.h"
 #include "../whiteboarding/wbmanager.h"
@@ -46,10 +47,6 @@
 namespace Jingle = XMPP::Jingle;
 namespace SXE    = XMPP::Jingle::SXE;
 
-static bool endToEndRequired()
-{
-    return PsiOptions::instance()->getOption(QStringLiteral("options.media.require-end-to-end"), false).toBool();
-}
 
 class CallDlg::Private : public QObject {
 public:
@@ -217,7 +214,7 @@ public:
         if (finished || active)
             return;
         stopRinging();
-        requiresEndToEnd = endToEndRequired();
+        requiresEndToEnd = endToEndRequired(XMPP::Jid(view->peer()));
         joined = true;
         if (view->whiteboardOnly()) {
             acceptWhiteboard();
@@ -357,7 +354,7 @@ public:
         auto jingleManager = account->client()->jingleManager();
         auto jingle = sid.isEmpty() ? jingleManager->newSession(target) : jingleManager->newSession(target, sid);
         if (jingle)
-            jingle->setEndToEndRequired(endToEndRequired());
+            jingle->setEndToEndRequired(endToEndRequired(target));
         auto app = jingle ? qobject_cast<SXE::Application *>(jingle->newContent(SXE::NS_SVG_WHITEBOARD)) : nullptr;
         if (!app) {
             delete jingle;
@@ -380,7 +377,7 @@ public:
     {
         wbSession = jingle;
         if (jingle->role() == Jingle::Origin::Responder)
-            jingle->setEndToEndRequired(endToEndRequired());
+            jingle->setEndToEndRequired(endToEndRequired(jingle->peer()));
         watchSecurity(jingle);
         connect(jingle, &Jingle::Session::activated, this, [this] {
             stopRinging();
@@ -521,6 +518,13 @@ public:
         bindWhiteboard(app);
     }
 
+    // The policy for the contact: Options > Security and the chat's encryption choice.
+    bool endToEndRequired(const XMPP::Jid &peer) const
+    {
+        return account && account->encryptionController()
+            && account->encryptionController()->jingleEndToEndRequired(peer);
+    }
+
     // The protection of the session, shown under the status.
     void watchSecurity(Jingle::Session *jingle)
     {
@@ -637,7 +641,7 @@ public:
     QPointer<Jingle::Session>  watchedSession;
     QString                    proposalId;
     QPointer<CallRinger>       ringer;
-    bool                       requiresEndToEnd = endToEndRequired();
+    bool                       requiresEndToEnd = false;
     bool                       verifiedEndToEnd = false;
     WbView                    *wbView           = nullptr;
     bool                       whiteboardWanted = false;

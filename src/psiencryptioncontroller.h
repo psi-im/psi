@@ -71,6 +71,9 @@ public:
     // Persistent per-contact preference. An open chat copies this value when
     // it is created and then owns an independent active method/session.
     QString selectedMethod(const XMPP::Jid &jid) const;
+    // Calls and whiteboards with @a jid must be end-to-end verified: the option is on and the chat
+    // with the contact uses OMEMO (an explicitly unencrypted chat keeps them unverified).
+    bool jingleEndToEndRequired(const XMPP::Jid &jid) const;
     bool    setSelectedMethod(const XMPP::Jid &jid, const QString &methodId);
 
     QMap<QString, QString> selectedMethods() const;
