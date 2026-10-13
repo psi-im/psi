@@ -9,6 +9,10 @@
 #include <QDBusObjectPath>
 #include <QDBusUnixFileDescriptor>
 #include <QPushButton>
+#include <QFrame>
+#include <QLabel>
+#include <QLineEdit>
+#include <QPalette>
 #include <QRegularExpression>
 #include <QSignalSpy>
 #include <QTest>
@@ -250,11 +254,83 @@ private slots:
         QVERIFY(!portal.selection.contains(QStringLiteral("cursor_mode")));
     }
 
+    void compactCallControlsAndStatus()
+    {
+        CallView view;
+        auto status = view.findChild<QLabel *>(QStringLiteral("callStatus"));
+        auto security = view.findChild<QLabel *>(QStringLiteral("callSecurity"));
+        auto duration = view.findChild<QLabel *>(QStringLiteral("callDuration"));
+        auto hint = view.findChild<QLabel *>(QStringLiteral("callSharingHint"));
+        auto share = view.findChild<QPushButton *>(QStringLiteral("callShare"));
+        auto board = view.findChild<QPushButton *>(QStringLiteral("callWhiteboard"));
+        QVERIFY(status && security && duration && hint && share && board);
+        QVERIFY(!view.findChild<QWidget *>(QStringLiteral("callPeer")));
+        QVERIFY(!view.findChild<QFrame *>(QStringLiteral("sharingBar")));
+        QSignalSpy changed(&view, &CallView::headingChanged);
+        view.setPeer(QStringLiteral("peer@example.test/device"));
+        QCOMPARE(view.peer(), QStringLiteral("peer@example.test/device"));
+        QCOMPARE(changed.count(), 1);
+        QVERIFY(view.findChildren<QLineEdit *>().isEmpty());
+        view.setStatus(QStringLiteral("Connected"));
+        QVERIFY(status->text().isEmpty());
+        QCOMPARE(status->toolTip(), QStringLiteral("Connected"));
+        view.setSecurity(QStringLiteral("End-to-end encrypted, verified with OMEMO"), true);
+        QVERIFY(!security->isHidden());
+        QCOMPARE(security->accessibleName(), security->toolTip());
+        view.setSecurity(QStringLiteral("Whiteboard travels through the server"), true, true);
+        QCOMPARE(security->property("partialSecurity").toBool(), true);
+        QCOMPARE(security->accessibleName(), security->toolTip());
+        view.setActive(true);
+        view.setDuration(127);
+        QCOMPARE(duration->text(), QStringLiteral("00:02:07"));
+
+        view.setSharing(true, QStringLiteral("Display 1 — 1920x1080"));
+        QVERIFY(share->isChecked());
+        QVERIFY(!hint->isHidden());
+        QVERIFY(share->toolTip().contains(QStringLiteral("Display 1")));
+        view.setSharing(false);
+        QVERIFY(!share->isChecked());
+        QVERIFY(hint->isHidden());
+        view.setShareSelecting(true);
+        QVERIFY(!hint->isHidden());
+        QVERIFY(share->accessibleName().contains(QStringLiteral("Cancel")));
+        view.setShareSelecting(false);
+        QVERIFY(hint->isHidden());
+
+        view.setWhiteboardSupported(true);
+        view.setWhiteboardEnabled(true);
+        QVERIFY(board->isChecked());
+        view.setWhiteboardOnly(true);
+        QVERIFY(changed.count() >= 2);
+        view.setFinished();
+        QVERIFY(duration->isHidden());
+    }
+
+    void paletteFollowsSystemThemeWithoutStylingWhiteboardChildren()
+    {
+        CallView view;
+        auto colors = view.palette();
+        colors.setColor(QPalette::Window, QColor(QStringLiteral("#212731")));
+        colors.setColor(QPalette::WindowText, QColor(QStringLiteral("#f2f5f9")));
+        colors.setColor(QPalette::ButtonText, QColor(QStringLiteral("#f2f5f9")));
+        colors.setColor(QPalette::Base, QColor(QStringLiteral("#181d24")));
+        colors.setColor(QPalette::Highlight, QColor(QStringLiteral("#267fa2")));
+        colors.setColor(QPalette::HighlightedText, Qt::white);
+        view.setPalette(colors);
+        QVERIFY(view.styleSheet().contains(QStringLiteral("#212731")));
+        QVERIFY(!view.styleSheet().contains(QStringLiteral("QLabel {")));
+        QVERIFY(!view.styleSheet().contains(QStringLiteral("QPushButton {")));
+        auto mic = view.findChild<QPushButton *>(QStringLiteral("callMicrophone"));
+        QVERIFY(mic && !mic->icon().isNull());
+        mic->click();
+        QVERIFY(mic->toolTip().contains(QStringLiteral("Unmute")));
+    }
+
     void controlsAndPreview()
     {
         CallView view;
         view.resize(860, 640);
-        view.setPeer(QStringLiteral("alex@example.org"), false);
+        view.setPeer(QStringLiteral("alex@example.org"));
         view.setActive(true);
         view.setStatus(QStringLiteral("Connected"));
         view.setDuration(127);

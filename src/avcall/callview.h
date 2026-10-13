@@ -2,13 +2,13 @@
 #ifndef CALLVIEW_H
 #define CALLVIEW_H
 
+#include <QString>
 #include <QWidget>
 class QLabel;
-class QLineEdit;
 class QPushButton;
 class QComboBox;
-class QFrame;
 class CallStage;
+class QEvent;
 namespace PsiMedia {
 class VideoWidget;
 }
@@ -17,11 +17,11 @@ class CallView : public QWidget {
     Q_OBJECT
 public:
     explicit CallView(QWidget *parent = nullptr);
-    void                   setPeer(const QString &peer, bool editable);
+    void                   setPeer(const QString &peer);
     QString                peer() const;
     void                   setStatus(const QString &text);
     // How the session is protected; an empty text hides it.
-    void                   setSecurity(const QString &text, bool endToEnd);
+    void                   setSecurity(const QString &text, bool endToEnd, bool partiallyEncrypted = false);
     void                   setActive(bool active);
     void                   setConnecting(bool connecting);
     void                   setIncoming(bool incoming);
@@ -49,10 +49,16 @@ public:
     void setWhiteboardEnabled(bool enabled);
     bool whiteboardEnabled() const;
 
+protected:
+    void changeEvent(QEvent *event) override;
+
 private:
     void updateMediaButtons();
+    void updateAppearance();
+    void updateControlPresentation();
 
 signals:
+    void headingChanged();
     void accepted();
     void ended();
     void microphoneChanged(bool enabled);
@@ -61,11 +67,11 @@ signals:
     void whiteboardChanged(bool enabled);
 
 private:
-    QLineEdit             *peer_;
+    QString                peer_;
     QLabel                *status_;
     QLabel                *security_;
     QLabel                *duration_;
-    QLabel                *sharingLabel_;
+    QLabel                *sharingHint_;
     QPushButton           *microphone_;
     QPushButton           *camera_;
     QPushButton           *share_;
@@ -73,7 +79,6 @@ private:
     QPushButton           *accept_;
     QPushButton           *end_;
     QComboBox             *quality_;
-    QFrame                *sharingBar_;
     CallStage             *stage_;
     PsiMedia::VideoWidget *video_;
     PsiMedia::VideoWidget *presentation_;
@@ -87,5 +92,8 @@ private:
     bool                   finished_       = false;
     bool                   connecting_     = false;
     bool                   mediaAvailable_ = true;
+    bool                   updatingAppearance_ = false;
+    QString                shareSource_;
+    bool                   shareConnecting_ = false;
 };
 #endif

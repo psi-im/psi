@@ -1,9 +1,11 @@
 # Calls and screen sharing
 
-In a connected call, choose **Share screen**, select a display or an individual
-window, and confirm **Share**. The camera and screen can be transmitted together.
-The green sharing strip identifies the selected source. **Stop sharing** ends
-only that video content; microphone and camera controls remain independent.
+In a connected call, choose the **Share screen** icon (monitor), select a
+display or an individual window, and confirm **Share**. The camera and screen
+can be transmitted together. The highlighted screen icon, a compact sharing
+source label in the bottom control dock and its tooltip indicate active
+sharing. Press the same icon to **Stop sharing**; this ends only that video
+content. Microphone and camera controls remain independent.
 Cancelling the picker never starts capture. Incoming video does not grant access
 to a local camera or screen. Incoming calls initially have the camera switched off.
 

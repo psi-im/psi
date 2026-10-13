@@ -100,7 +100,7 @@ CallStage::CallStage(QWidget *parent) : QFrame(parent)
     mainLayout_->setContentsMargins(0, 0, 0, 0);
     placeholder_ = new QLabel(this);
     placeholder_->setAlignment(Qt::AlignCenter);
-    placeholder_->setStyleSheet(QStringLiteral("color: #aab6c8; font-size: 18px;"));
+    placeholder_->setStyleSheet(QStringLiteral("color: palette(mid); font-size: 16px;"));
     mainLayout_->addWidget(placeholder_);
     layout->addLayout(mainLayout_, 1);
     side_       = new QWidget(this);
