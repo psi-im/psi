@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ ! -e iris/.git ]]; then
-    git submodule update --init --depth 1 iris
-fi
+bash .github/scripts/checkout-pinned-iris.sh
 
 if [[ "$(git -C iris rev-parse --is-shallow-repository)" == "true" ]]; then
     git -C iris fetch --unshallow --tags origin
