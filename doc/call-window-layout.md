@@ -7,8 +7,9 @@ joining an already-running whiteboard, and whiteboard-only sessions.
 ## Layout
 
 - The native window title contains **Call — peer** or **Whiteboard — peer**.
-  The JID editor appears inside the window only while the user can still
-  change the outgoing destination. Incoming, connecting and active sessions
+  No JID editor is present in the dialog. The recipient/resource is chosen
+  before opening it, from the contact or chat; changing the destination
+  requires starting another call. Incoming, connecting and active sessions
   must not duplicate the identity as a large in-window header.
 - The compact status row contains the current connection status (a green dot
   and accessible tooltip when connected), the security icon (padlock for
@@ -45,8 +46,8 @@ and scoped styles in response to palette changes without recursive repolish.
 ## Behaviors worth regression testing
 
 `src/avcall/unittest/screenshare.cpp` exercises the call view on Linux
-with a mock ScreenCast portal. It should continue covering outgoing/incoming
-peer visibility, microphone and camera signal semantics, real share-selection
+with a mock ScreenCast portal. It should continue covering the titlebar peer
+and absence of editable JID fields, microphone and camera signal semantics, real share-selection
 cancel and stop, security accessibility descriptions, and dark theme palette
 changes. Programmatic state updates must use signal blockers so toggling the
 session's state from the backend does not emit a second user request.
