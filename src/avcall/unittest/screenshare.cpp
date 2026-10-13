@@ -257,23 +257,20 @@ private slots:
     void compactCallControlsAndStatus()
     {
         CallView view;
-        auto peer = view.findChild<QLineEdit *>(QStringLiteral("callPeer"));
         auto status = view.findChild<QLabel *>(QStringLiteral("callStatus"));
         auto security = view.findChild<QLabel *>(QStringLiteral("callSecurity"));
         auto duration = view.findChild<QLabel *>(QStringLiteral("callDuration"));
         auto hint = view.findChild<QLabel *>(QStringLiteral("callSharingHint"));
         auto share = view.findChild<QPushButton *>(QStringLiteral("callShare"));
         auto board = view.findChild<QPushButton *>(QStringLiteral("callWhiteboard"));
-        QVERIFY(peer && status && security && duration && hint && share && board);
+        QVERIFY(status && security && duration && hint && share && board);
+        QVERIFY(!view.findChild<QWidget *>(QStringLiteral("callPeer")));
         QVERIFY(!view.findChild<QFrame *>(QStringLiteral("sharingBar")));
         QSignalSpy changed(&view, &CallView::headingChanged);
-        view.setPeer(QStringLiteral("peer@example.test/device"), true);
+        view.setPeer(QStringLiteral("peer@example.test/device"));
         QCOMPARE(view.peer(), QStringLiteral("peer@example.test/device"));
-        QVERIFY(!peer->isHidden());
-        QVERIFY(changed.count() > 0);
-
-        view.setPeer(view.peer(), false);
-        QVERIFY(peer->isHidden());
+        QCOMPARE(changed.count(), 1);
+        QVERIFY(view.findChildren<QLineEdit *>().isEmpty());
         view.setStatus(QStringLiteral("Connected"));
         QVERIFY(status->text().isEmpty());
         QCOMPARE(status->toolTip(), QStringLiteral("Connected"));
@@ -304,7 +301,7 @@ private slots:
         view.setWhiteboardEnabled(true);
         QVERIFY(board->isChecked());
         view.setWhiteboardOnly(true);
-        QVERIFY(changed.count() >= 3);
+        QVERIFY(changed.count() >= 2);
         view.setFinished();
         QVERIFY(duration->isHidden());
     }
@@ -333,7 +330,7 @@ private slots:
     {
         CallView view;
         view.resize(860, 640);
-        view.setPeer(QStringLiteral("alex@example.org"), false);
+        view.setPeer(QStringLiteral("alex@example.org"));
         view.setActive(true);
         view.setStatus(QStringLiteral("Connected"));
         view.setDuration(127);
