@@ -2,6 +2,7 @@
 #ifndef CALLVIEW_H
 #define CALLVIEW_H
 
+#include <QString>
 #include <QWidget>
 class QLabel;
 class QPushButton;
