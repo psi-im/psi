@@ -59,8 +59,8 @@ WbView::WbView(XMPP::Jingle::SXE::Document *document, QWidget *parent) : QWidget
 
     act_save_ = new IconAction(tr("Save session"), "psi/saveBoard", tr("Save the contents of the whiteboard"), 0, this);
     act_geometry_ = new IconAction(tr("Change the geometry"), "psi/whiteboard", tr("Change the geometry"), 0, this);
-    act_clear_    = new IconAction(tr("Clear the whiteboard for everyone"), "psi/clearChat", tr("Clear the whiteboard"),
-                                   0, this);
+    act_clear_
+        = new IconAction(tr("Clear the whiteboard for everyone"), "psi/clearChat", tr("Clear the whiteboard"), 0, this);
 
     // Black is the default color
     QPixmap pixmap(16, 16);
@@ -76,7 +76,7 @@ WbView::WbView(XMPP::Jingle::SXE::Document *document, QWidget *parent) : QWidget
     group_widths_ = new QActionGroup(this);
     group_modes_  = new QActionGroup(this);
 
-    act_import_ = new IconAction(tr("Import SVG"), "psi/open", tr("Add the drawing of an SVG file"), 0, this);
+    act_import_ = new IconAction(tr("Import SVG"), "psi/import", tr("Add the drawing of an SVG file"), 0, this);
 
     connect(act_color_, &QAction::triggered, this, &WbView::setStrokeColor);
     connect(act_fill_, &QAction::triggered, this, &WbView::setFillColor);
@@ -248,15 +248,15 @@ void WbView::showHelp()
     auto key = [](const char *sequence) {
         return QKeySequence(QString::fromLatin1(sequence)).toString(QKeySequence::NativeText);
     };
-    auto keys = [](QKeySequence::StandardKey standard) {
-        return QKeySequence(standard).toString(QKeySequence::NativeText);
-    };
+    auto keys
+        = [](QKeySequence::StandardKey standard) { return QKeySequence(standard).toString(QKeySequence::NativeText); };
 
     const QList<QPair<QString, QList<QPair<QString, QString>>>> sections {
         { tr("Drawing"),
           { { tr("Draw with the current tool"), tr("Left button") },
             { tr("Straight line"), tr("%1 + drag with the pen").arg(shift) },
-            { tr("Tools"), tr("V select, P pen, L line, R rectangle, O ellipse, D rhombus, T text, I image, E eraser") },
+            { tr("Tools"),
+              tr("V select, P pen, L line, R rectangle, O ellipse, D rhombus, T text, I image, E eraser") },
             { tr("Square, circle"), tr("%1 + drag with the rectangle or ellipse tool").arg(shift) },
             { tr("Stroke width and text size"), QStringLiteral("[  ]") } } },
         { tr("Selection"),
@@ -278,8 +278,9 @@ void WbView::showHelp()
             { tr("Fit the canvas"), key("Ctrl+0") },
             { tr("Pan a zoomed canvas"), pan } } },
         { tr("Images"),
-          { { tr("Insert"), tr("Drop image files on the canvas, paste with %1, or click with the image tool")
-                                .arg(keys(QKeySequence::Paste)) } } },
+          { { tr("Insert"),
+              tr("Drop image files on the canvas, paste with %1, or click with the image tool")
+                  .arg(keys(QKeySequence::Paste)) } } },
     };
 
     QString html = QStringLiteral("<table cellspacing='0' cellpadding='3'>");
@@ -407,8 +408,7 @@ void WbView::importSvg()
     }
     // The elements are added on top of the current drawing; the canvas keeps its size.
     const auto root = document_->document().documentElement();
-    for (auto child = svg.documentElement().firstChildElement(); !child.isNull();
-         child      = child.nextSiblingElement())
+    for (auto child = svg.documentElement().firstChildElement(); !child.isNull(); child = child.nextSiblingElement())
         document_->insertNodeAfter(child, root);
     document_->flush();
 }
