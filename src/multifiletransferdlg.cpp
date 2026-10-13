@@ -34,10 +34,12 @@
 #include "psiaccount.h"
 #include "psicon.h"
 #include "psicontact.h"
+#include "psiencryptioncontroller.h"
 #include "ui_multifiletransferdlg.h"
 #include "userlist.h"
 
 #include <QBuffer>
+#include <QFile>
 #include <QDragEnterEvent>
 #include <QDragLeaveEvent>
 #include <QDragMoveEvent>
@@ -145,7 +147,8 @@ static void setMFTItemStateFromJingleState(MultiFileTransferItem *item, Jingle::
         break;
     case Jingle::State::Active:
         state   = MultiFileTransferModel::State::Active;
-        comment = QObject::tr("Transferring");
+        comment = app->isTransportEncrypted() ? QObject::tr("Transferring, end-to-end encrypted")
+                                              : QObject::tr("Transferring");
         break;
     case Jingle::State::Finishing:
         state   = MultiFileTransferModel::State::Active;
@@ -177,6 +180,11 @@ void MultiFileTransferDlg::initOutgoing(const XMPP::Jid &jid, const QStringList 
     connect(ui->buttonBox->button(QDialogButtonBox::Apply), &QPushButton::clicked, this, [this]() {
         ui->buttonBox->button(QDialogButtonBox::Apply)->setEnabled(false);
         d->session = d->account->client()->jingleManager()->newSession(d->peer);
+        if (auto encryption = d->account->encryptionController()) {
+            // Files of an OMEMO chat travel end-to-end encrypted when the contact supports it (JET-OMEMO).
+            d->session->setEndToEndPreferred(encryption->jingleEndToEndPreferred(d->peer));
+            d->session->setEndToEndRequired(encryption->jingleEndToEndRequired(d->peer));
+        }
         setupSessionSignals();
 
         for (int i = 0; i < d->model->rowCount() - 1; ++i) {
@@ -230,6 +238,12 @@ void MultiFileTransferDlg::setupCommonSignals(Jingle::FileTransfer::Application 
             item->setOffset(quint64(app->acceptFile().range().offset));
         }
         setMFTItemStateFromJingleState(item, app);
+        if (state == Jingle::State::Finished && app->senders() == Jingle::negateOrigin(d->session->role())
+            && app->lastReason().condition() == Jingle::Reason::Condition::SecurityError
+            && app->isTransportEncrypted() && !item->filePath().isEmpty()) {
+            // The received data failed authentication: do not keep it.
+            QFile::remove(item->filePath());
+        }
         if (state == Jingle::State::Finished && app->senders() == Jingle::negateOrigin(d->session->role())) {
             const auto reason = app->lastReason();
             if (!reason.isValid() || reason.condition() != Jingle::Reason::Condition::Success)
@@ -258,6 +272,9 @@ void MultiFileTransferDlg::setupCommonSignals(Jingle::FileTransfer::Application 
 void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
 {
     d->session = session;
+    // With the policy, an unprotected offer from an OMEMO contact is refused when it is accepted.
+    if (auto encryption = d->account->encryptionController())
+        session->setEndToEndRequired(encryption->jingleEndToEndRequired(session->peer()));
     setupSessionSignals();
     d->peer = session->peer();
     updatePeerVisuals();

@@ -18,6 +18,7 @@
 #include "userlist.h"
 
 #ifdef IRIS_ENABLE_OMEMO
+#include "iris/jingle-jet-omemo.h"
 #include "iris/jingle-omemo-verification.h"
 #include "iris/xmpp_omemo.h"
 #include "psiomemostorage.h"
@@ -420,6 +421,7 @@ PsiEncryptionController::PsiEncryptionController(PsiAccount *account, XMPP::Clie
                 [this](bool) { emit methodStateChanged(XMPP::OmemoEncryption::methodId()); });
         connect(omemo_, &XMPP::OmemoEncryption::warning, this,
                 [this](const QString &message) { emit encryptionError({}, message); });
+        jingleJet_          = new XMPP::Jingle::JetOmemo(client_->jingleManager(), omemo_, this);
         jingleVerification_ = new XMPP::Jingle::OmemoDtlsVerification(client_->jingleManager(), omemo_, this);
     } else {
         qWarning() << "Could not open OMEMO storage:" << omemoStorage_->errorString();
@@ -550,6 +552,16 @@ bool PsiEncryptionController::jingleEndToEndRequired(const XMPP::Jid &jid) const
 #ifdef IRIS_ENABLE_OMEMO
     return PsiOptions::instance()->getOption(QStringLiteral("options.media.require-end-to-end"), false).toBool()
         && selectedMethod(jid) == XMPP::OmemoEncryption::methodId();
+#else
+    Q_UNUSED(jid)
+    return false;
+#endif
+}
+
+bool PsiEncryptionController::jingleEndToEndPreferred(const XMPP::Jid &jid) const
+{
+#ifdef IRIS_ENABLE_OMEMO
+    return selectedMethod(jid) == XMPP::OmemoEncryption::methodId();
 #else
     Q_UNUSED(jid)
     return false;

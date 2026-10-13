@@ -25,12 +25,17 @@ the result under the status: verified with OMEMO, encrypted but from an untruste
 encrypted but not verified, or, for a whiteboard that goes through the server, not end-to-end
 encrypted.
 
-**Options → Security → OMEMO → Configuration → Calls and whiteboards** (`options.media.require-end-to-end`)
+Files sent to a contact whose chat uses OMEMO are encrypted end to end with JET-OMEMO when the
+contact supports it (Conversations and Dino do), on any transport; the transfer shows
+"end-to-end encrypted" while it runs, and a received file that fails authentication is deleted.
+
+**Options → Security → OMEMO → Configuration → Calls, whiteboards and files** (`options.media.require-end-to-end`)
 makes this a requirement for contacts whose chat uses OMEMO (the chat's encryption choice is
 remembered per contact; the OMEMO defaults apply until one is made): a call or whiteboard with
 such a contact is refused, with a message in the window, unless the contact's fingerprints are
 verified by a trusted OMEMO device; a whiteboard then needs an ICE data channel. A contact whose
-chat is switched to no encryption is not affected.
+chat is switched to no encryption is not affected. Files to and from such contacts are then
+refused unless they are encrypted with JET-OMEMO.
 Sessions sent directly to a resource (without XEP-0353) cannot be verified, since the peer's
 device is unknown.
 
