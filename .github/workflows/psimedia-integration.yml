@@ -48,7 +48,7 @@ jobs:
           submodules: false
 
       - name: Initialize Iris pinned by Psi
-        run: git submodule update --init --depth 1 iris
+        run: bash .github/scripts/checkout-pinned-iris.sh
 
       - name: Resolve PsiMedia from dependency lock
         uses: ./.github/actions/load-dependencies
@@ -823,7 +823,7 @@ jobs:
           submodules: false
 
       - name: Initialize Iris pinned by Psi
-        run: git submodule update --init --depth 1 iris
+        run: bash .github/scripts/checkout-pinned-iris.sh
 
       - name: Install XMPP live-test dependencies
         run: |
@@ -1069,7 +1069,7 @@ jobs:
           submodules: false
 
       - name: Initialize Iris pinned by Psi
-        run: git submodule update --init --depth 1 iris
+        run: bash .github/scripts/checkout-pinned-iris.sh
 
       - name: Resolve PsiMedia from dependency lock
         uses: ./.github/actions/load-dependencies
