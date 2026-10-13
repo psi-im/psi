@@ -32,7 +32,7 @@ jobs:
         run: python3 -m unittest discover -s tests/dependency_lock -p 'test_*.py' -v
 
       - name: Load Psi and Iris lock through shared action
-        run: git submodule update --init --depth 1 iris
+        run: bash .github/scripts/checkout-pinned-iris.sh
 
       - uses: ./.github/actions/load-dependencies
         with:
