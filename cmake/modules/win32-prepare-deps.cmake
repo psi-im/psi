@@ -310,22 +310,28 @@ if(WIN32)
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstbadaudio-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstbadbase-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstbase-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstd3d11-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstd3dshader-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstnet-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstpbutils-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstreamer-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstriff-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstrtp-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstrtsp-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstsctp-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstsdp-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gsttag-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gthread-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstvideo-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstwebrtc-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstwebrtcnice-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstwinrt-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gthread-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}harfbuzz.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}intl-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}jpeg8.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}jpeg-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}nice-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}png16-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}srtp2*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}vorbis-*.dll
@@ -338,6 +344,7 @@ if(WIN32)
             ${CMAKE_SHARED_LIBRARY_PREFIX}orc-[0-9]*-[0-9].dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}pcre2-[0-9]*-[0-9].dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}png16.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}srtp2*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}xml2-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}z-*.dll
         )
@@ -351,6 +358,7 @@ if(WIN32)
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstdirectsoundsrc.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstjpeg.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstlevel.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstmediafoundation.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstogg.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstopus.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstopusparse.dll
@@ -365,6 +373,7 @@ if(WIN32)
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstvorbis.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstvpx.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstwasapi*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstwebrtc.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstwinks.dll
         )
         if(MSVC)
@@ -388,11 +397,11 @@ if(WIN32)
     # other libs and executables
     set(LIBRARIES_LIST
         gpg.exe
-        ${CMAKE_SHARED_LIBRARY_PREFIX}crypto-*.dll
+        *crypto-*.dll
         ${CMAKE_SHARED_LIBRARY_PREFIX}eay32.dll
         ${CMAKE_SHARED_LIBRARY_PREFIX}gcc_s_*.dll
         ${CMAKE_SHARED_LIBRARY_PREFIX}omemo-c.dll
-        ${CMAKE_SHARED_LIBRARY_PREFIX}ssl-*.dll
+        *ssl-*.dll
         ${CMAKE_SHARED_LIBRARY_PREFIX}stdc++-*.dll
         ${CMAKE_SHARED_LIBRARY_PREFIX}winpthread-*.dll
         ${CMAKE_SHARED_LIBRARY_PREFIX}xslt-*.dll

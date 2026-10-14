@@ -29,6 +29,11 @@ set(DEPLOY_QT_PLUGIN_PATTERNS
     "tls/libqopensslbackend.so"
     "xcbglintegrations/libqxcb-glx-integration.so"
     "wayland-decoration-client/libbradient.so"
+    "wayland-shell-integration/libfullscreen-shell-v1.so"
+    "wayland-shell-integration/libivi-shell.so"
+    "wayland-shell-integration/libqt-shell.so"
+    "wayland-shell-integration/libwl-shell-plugin.so"
+    "wayland-shell-integration/libxdg-shell.so"
     "/usr/${CMAKE_INSTALL_LIBDIR}/qca3-qt${QT_DEFAULT_MAJOR_VERSION}/crypto/*.so"
     "/usr/lib/qca3-qt${QT_DEFAULT_MAJOR_VERSION}/crypto/*.so"
 )
