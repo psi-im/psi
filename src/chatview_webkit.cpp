@@ -185,6 +185,9 @@ class ChatViewJSObject : public ChatViewThemeSession {
     Q_PROPERTY(QString chatName READ chatName CONSTANT)
     Q_PROPERTY(QString jid READ jid CONSTANT)
     Q_PROPERTY(QString account READ account CONSTANT)
+#ifdef WEBENGINE
+    Q_PROPERTY(QVariantMap sharedMediaStrings READ sharedMediaStrings CONSTANT)
+#endif
     Q_PROPERTY(QString remoteUserImage READ remoteUserImage NOTIFY
                    remoteUserImageChanged) // associated with chat(e.g. MUC's own avatar)
     Q_PROPERTY(QString remoteUserAvatar READ remoteUserAvatar NOTIFY
@@ -225,6 +228,45 @@ public:
     QString jid() const { return _view->d->jid_.full(); }
 
     QString account() const { return _view->d->account_->id(); }
+
+#ifdef WEBENGINE
+    QVariantMap sharedMediaStrings() const
+    {
+        return { { QStringLiteral("open"), tr("Open in external player") },
+                 { QStringLiteral("choose"), tr("Choose external player") },
+                 { QStringLiteral("unsupported"), tr("This media cannot be played inside the chat.") },
+                 { QStringLiteral("network"), tr("Could not load this media. Check the connection and try again.") },
+                 { QStringLiteral("decode"), tr("The built-in player could not decode this media.") },
+                 { QStringLiteral("failed"),
+                   tr("The built-in player could not open this media.") } };
+    }
+
+    Q_INVOKABLE void openSharedMedia(const QString &source, bool choosePlayer)
+    {
+        const auto id = XMPP::Hash::from(QStringView(source));
+        if (!id.isValid())
+            return;
+        const auto item = _view->d->account_->psi()->fileSharingManager()->item(id);
+        if (!item
+            || (!item->mimeType().startsWith(QLatin1String("audio/"))
+                && !item->mimeType().startsWith(QLatin1String("video/"))))
+            return;
+        QUrl                    url(QStringLiteral("share:") + id.toString());
+        FileSharingDeviceOpener opener(_view->d->account_);
+        if (auto device = opener.open(url)) {
+            delete device;
+            return;
+        }
+        if (url.scheme() == QLatin1String("share"))
+            return;
+        auto options = PsiOptions::instance();
+        auto player  = choosePlayer ? QString()
+                                    : options->getOption("options.ui.chat.external-media-player", QString()).toString();
+        // Dialogs can outlive the chat view; keep their parent independent of it.
+        DesktopUtil::openMediaUrl(url, player);
+        options->setOption("options.ui.chat.external-media-player", player);
+    }
+#endif
 
     inline static QString avatarUrl(const QByteArray &hash)
     {

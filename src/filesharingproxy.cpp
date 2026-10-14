@@ -40,6 +40,7 @@
 #include <QNetworkReply>
 #include <QPointer>
 
+#include <algorithm>
 #include <cstring>
 
 #define HTTP_CHUNK (512 * 1024)
@@ -156,8 +157,9 @@ public:
         case Http::NotImplementedMultirange:
             return StatusCode::NotImplemented;
         case Http::OutOfRange:
-            static_cast<Impl *>(this)->setResponseHeader(
-                "Content-Range", QByteArray("bytes */") + QByteArray::number(quint64(*item->fileSize())));
+            if (item->fileSize())
+                static_cast<Impl *>(this)->setResponseHeader(
+                    "Content-Range", QByteArray("bytes */") + QByteArray::number(*item->fileSize()));
             return StatusCode::RangeNotSatisfied;
         }
         return StatusCode::NotImplemented;
@@ -190,17 +192,18 @@ public:
                 return;
             }
             if (requestedRange->size)
-                actualRange->size = qint64(requestedRange->start + requestedRange->size) > fi.size()
-                    ? quint64(fi.size()) - requestedRange->start
-                    : requestedRange->size;
+                actualRange->size = std::min(requestedRange->size, size - requestedRange->start);
             else // remaining part
                 actualRange->size = quint64(fi.size()) - requestedRange->start;
             file->seek(requestedRange->start);
         }
         // TODO If-Modified-Since
         setupHeaders(fi.size(), item->mimeType(), fi.lastModified(), actualRange);
-        self->connectReadyWrite(file, [this, file, size]() {
-            qint64 toWrite = (requestedRange ? requestedRange->start : 0) + size - file->pos();
+        const auto end = actualRange ? actualRange->start + actualRange->size : size;
+        self->connectReadyWrite(file, [this, file, end]() {
+            if (finished)
+                return;
+            qint64 toWrite = qint64(end) - file->pos();
             if (!toWrite) {
                 return;
             }
@@ -212,8 +215,9 @@ public:
             }
         });
 
-        if (size < HTTP_CHUNK) {
-            _write(file->read(size));
+        const auto length = actualRange ? actualRange->size : size;
+        if (length <= HTTP_CHUNK) {
+            _write(file->read(qint64(length)));
             _finish();
         }
     }
@@ -241,8 +245,12 @@ public:
 
         auto reqsponseRange = requestedRange;
         if (requestedRange && !responseRange) {
-            qWarning("FSP: remote doesn't support ranged. transfer everything");
-            reqsponseRange = {};
+            // A full upstream response can satisfy a range beginning at zero.
+            // For other offsets, preserve the full response's HTTP semantics.
+            if (requestedRange->start || !file.size()) {
+                qWarning("FSP: remote doesn't support ranged. transfer everything");
+                reqsponseRange = {};
+            }
         }
 
         if (reqsponseRange && !reqsponseRange->size) {

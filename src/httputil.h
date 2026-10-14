@@ -36,13 +36,13 @@ enum ParseResult {
 /**
  * @brief parseRangeHeader parses http bytes uni-"Range" header
  * @param value    - heder value
- * @param fileSize - if destination file size is known it will be checked. set -1 when not known
+ * @param fileSize - optional destination file size, used to resolve suffix ranges and clamp the end
  * @return (result, start, size)
  *
- * While it's allowed by standard this parser will return error is start is not set in the header
+ * A zero returned size means an open-ended range when the file size is unknown.
  */
 std::tuple<ParseResult, quint64, quint64> parseRangeHeader(const QByteArray      &value,
-                                                           std::optional<quint64> fileSize = -1);
+                                                           std::optional<quint64> fileSize = std::nullopt);
 
 std::optional<std::tuple<quint64, quint64, std::optional<quint64>>> parseContentRangeHeader(const QByteArray &value);
 

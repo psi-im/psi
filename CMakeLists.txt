@@ -347,4 +347,5 @@ endif()
 
 if(BUILD_TESTING)
     add_subdirectory(tests/account)
+    add_subdirectory(tests/filesharing)
 endif()
