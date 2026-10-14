@@ -357,8 +357,29 @@ PsiEncryptionController::PsiEncryptionController(PsiAccount *account, XMPP::Clie
             [this](const QString &methodId, const XMPP::Jid &peer, XMPP::EncryptionJob::Error errorCode,
                    const QString &error, const XMPP::EncryptionMetadata &metadata) {
                 qWarning().noquote() << QStringLiteral("%1 stanza decryption failed: %2").arg(methodId, error);
-                emit encryptionError(peer, tr("Decryption failed: %1").arg(error));
-                if (errorCode == XMPP::EncryptionJob::Error::NoSession)
+                // libomemo-c codes: a message received twice is ignored silently (XEP-0384 section 6); a message
+                // no ratchet state accepts comes from a broken session, which the user may repair.
+                constexpr int DuplicateMessage = -1001, InvalidMac = -1004, InvalidMessage = -1005;
+                const int     signalError = metadata.details.value(QStringLiteral("signalError")).toInt();
+                if (signalError == DuplicateMessage)
+                    return;
+                const bool broken = signalError == InvalidMac || signalError == InvalidMessage;
+                // One notice per sending device and kind of failure, not one per message.
+                const QString key = QStringLiteral("%1|%2|%3|%4")
+                                        .arg(methodId, metadata.sender.bare())
+                                        .arg(metadata.senderDeviceId)
+                                        .arg(int(errorCode));
+                const qint64     now              = QDateTime::currentMSecsSinceEpoch();
+                constexpr qint64 NoticeIntervalMs = 10 * 60 * 1000;
+                if (now - decryptionFailureNotices_.value(key, -NoticeIntervalMs) >= NoticeIntervalMs) {
+                    decryptionFailureNotices_.insert(key, now);
+                    emit encryptionError(peer,
+                                         broken ? tr("Could not decrypt a message: the encryption session with this "
+                                                     "device is broken (%1)")
+                                                      .arg(error)
+                                                : tr("Decryption failed: %1").arg(error));
+                }
+                if (errorCode == XMPP::EncryptionJob::Error::NoSession || broken)
                     recoverDecryption(methodId, peer, metadata);
             });
     connect(account_, &PsiAccount::pgpKeyChanged, this, [this]() {
@@ -1115,8 +1136,22 @@ void PsiEncryptionController::setUpOmemo(const QString &deviceLabel)
         return;
     auto      *job    = omemo_->setUp(deviceLabel);
     const auto report = [this, job]() {
-        if (!job->success())
+        if (!job->success()) {
             emit encryptionError({}, tr("OMEMO setup failed: %1").arg(job->errorString()));
+            return;
+        }
+        // Own devices that publish no bundle at all cannot receive anything; they are retired from the device
+        // lists so contacts stop seeing them. A device that is alive announces itself again.
+        auto      *sanitize = omemo_->sanitizeOwnPep();
+        const auto done     = [sanitize]() {
+            if (!sanitize->success())
+                qWarning("OMEMO own device check failed: %s", qUtf8Printable(sanitize->errorString()));
+            sanitize->deleteLater();
+        };
+        if (sanitize->isFinished())
+            done();
+        else
+            connect(sanitize, &XMPP::EncryptionJob::finished, this, done);
     };
     if (job->isFinished()) {
         report();

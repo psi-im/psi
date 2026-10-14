@@ -149,6 +149,7 @@ private:
     QSet<QString>                                           trustPromptsActive_;
     QHash<QString, qint64>                                  decryptionRecoveryAttempts_;
     QSet<QString>                                           decryptionRecoveriesActive_;
+    QHash<QString, qint64>                                  decryptionFailureNotices_;
 
 #ifdef IRIS_ENABLE_OMEMO
     std::unique_ptr<PsiOmemoStorage> omemoStorage_;
