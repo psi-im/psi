@@ -655,7 +655,13 @@ QString ChatViewThemeJSUtil::strftime(const QDateTime &dt, const QString &format
     return QString();
 }
 
-void ChatViewThemeJSUtil::console(const QString &text) const { qDebug("%s", qPrintable(text)); }
+void ChatViewThemeJSUtil::console(const QString &text) const
+{
+    if (text.startsWith(QLatin1String("[fs-media]")))
+        qInfo("%s", qPrintable(text));
+    else
+        qDebug("%s", qPrintable(text));
+}
 
 QString ChatViewThemeJSUtil::status2text(int status) const { return ::status2txt(status); }
 

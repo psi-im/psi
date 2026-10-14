@@ -34,6 +34,7 @@
 
 #include <QByteArray>
 #include <QDir>
+#include <QElapsedTimer>
 #include <QFileInfo>
 #include <QNetworkReply>
 #include <QTimer>
@@ -159,6 +160,11 @@ public:
         app->setFile(file);
         app->setStreamingMode(true);
         session->addContent(app);
+        qInfo() << "[fs-media] jingle-downloader=" << static_cast<void *>(this)
+                << "outer=" << static_cast<void *>(parent()) << "sid=" << session->sid()
+                << "content=" << app->contentName() << "request-offset=" << (_requestRange ? _requestRange->start : 0)
+                << "request-length=" << (_requestRange ? _requestRange->size : 0)
+                << "file-size=" << (file.size() ? QString::number(*file.size()) : QStringLiteral("unknown"));
 
         connect(session, &Jingle::Session::newContentReceived, this, [session, this]() {
             // we don't expect any new content on the session
@@ -173,6 +179,10 @@ public:
                 _responseRange = FileShareDownloader::Range { r.offset, r.length };
             }
             connection = app->connection();
+            qInfo() << "[fs-media] jingle-downloader=" << static_cast<void *>(this)
+                    << "sid=" << app->pad()->session()->sid()
+                    << "connection-ready buffered=" << connection->bytesAvailable() << "response-offset=" << r.offset
+                    << "response-length=" << r.length;
             connect(connection.data(), &XMPP::Jingle::Connection::readyRead, this,
                     &JingleFileShareDownloader::readyRead);
             emit metaDataChanged();
@@ -181,6 +191,11 @@ public:
         });
 
         connect(app, &Jingle::Application::stateChanged, this, [this](Jingle::State state) {
+            if (app)
+                qInfo() << "[fs-media] jingle-downloader=" << static_cast<void *>(this)
+                        << "sid=" << app->pad()->session()->sid() << "state=" << int(state)
+                        << "reason=" << int(app->lastReason().condition()) << "text=" << app->lastReason().text()
+                        << "buffered=" << bytesAvailable();
             if (state != Jingle::State::Finished)
                 return;
             auto r = app->lastReason();
@@ -201,6 +216,8 @@ public:
 
     void abort(bool isFailure, const QString &reason)
     {
+        qInfo() << "[fs-media] jingle-downloader=" << static_cast<void *>(this) << "abort failure=" << isFailure
+                << "reason=" << reason << "app=" << static_cast<void *>(app) << "buffered=" << bytesAvailable();
         if (app) {
             if (connection) {
                 connection->disconnect(this);
@@ -214,6 +231,8 @@ public:
 
     void close()
     {
+        qInfo() << "[fs-media] jingle-downloader=" << static_cast<void *>(this)
+                << "close-success app=" << static_cast<void *>(app) << "buffered=" << bytesAvailable();
         if (app) {
             if (connection) {
                 connection->disconnect(this);
@@ -444,12 +463,16 @@ public:
     std::optional<FileShareDownloader::Range> requestRange;
     std::optional<FileShareDownloader::Range> responseRange;
     std::optional<quint64>                    bytesLeft;
-    AbstractFileShareDownloader              *downloader  = nullptr;
-    bool                                      metaReady   = false;
-    bool                                      finished    = false;
-    bool                                      success     = false;
-    bool                                      selfDelete  = false;
-    FileSharingItem::SourceType               currentType = FileSharingItem::SourceType::None;
+    AbstractFileShareDownloader              *downloader      = nullptr;
+    bool                                      metaReady       = false;
+    bool                                      finished        = false;
+    bool                                      success         = false;
+    bool                                      selfDelete      = false;
+    FileSharingItem::SourceType               currentType     = FileSharingItem::SourceType::None;
+    quint64                                   readTotal       = 0;
+    quint64                                   nextProgressLog = 0;
+    bool                                      loggedEmptyRead = false;
+    QElapsedTimer                             elapsed;
 
     void finishWithError(const QString &errStr)
     {
@@ -457,6 +480,8 @@ public:
         finished  = true;
         success   = false;
         lastError = errStr;
+        qInfo() << "[fs-media] downloader=" << static_cast<void *>(q) << "failure=" << errStr << "read=" << readTotal
+                << "metadata=" << metaReady;
         if (tmpFile) {
             tmpFile->close();
             tmpFile->remove();
@@ -502,6 +527,8 @@ public:
         }
         QString uri  = uris.takeLast();
         auto    type = FileSharingItem::sourceType(uri);
+        qInfo() << "[fs-media] downloader=" << static_cast<void *>(q) << "source-type=" << int(type)
+                << "scheme=" << QUrl(uri).scheme() << "sources-left=" << uris.size() << "previous-error=" << lastError;
         switch (type) {
         case FileSharingItem::SourceType::HTTP:
         case FileSharingItem::SourceType::FTP:
@@ -533,6 +560,11 @@ public:
         connect(downloader, &AbstractFileShareDownloader::metaDataChanged, q, [this]() {
             metaReady     = true;
             responseRange = downloader->responseRange();
+            qInfo() << "[fs-media] downloader=" << static_cast<void *>(q)
+                    << "metadata source=" << static_cast<void *>(downloader) << "size="
+                    << (downloader->fileSize() ? QString::number(*downloader->fileSize()) : QStringLiteral("unknown"))
+                    << "range=" << bool(responseRange) << "offset=" << (responseRange ? responseRange->start : 0)
+                    << "length=" << (responseRange ? responseRange->size : 0);
 
             if (downloader->responseRange()) {
                 bytesLeft = downloader->responseRange()->size;
@@ -556,6 +588,10 @@ public:
 
         connect(downloader, &AbstractFileShareDownloader::readyRead, q, &FileShareDownloader::readyRead);
         connect(downloader, &AbstractFileShareDownloader::disconnected, q, [this]() {
+            qInfo() << "[fs-media] downloader=" << static_cast<void *>(q) << "disconnected read=" << readTotal
+                    << "buffered=" << downloader->bytesAvailable()
+                    << "left=" << (bytesLeft ? QString::number(*bytesLeft) : QStringLiteral("unknown"))
+                    << "finished=" << finished;
             if (!finished)
                 checkCacheReady(); // TODO avoid double emit
             emit q->disconnected();
@@ -575,10 +611,14 @@ FileShareDownloader::FileShareDownloader(PsiAccount *acc, const QList<XMPP::Hash
     d->file = file;
     d->jids = jids;
     d->uris = FileSharingItem::sortSourcesByPriority(uris);
+    d->elapsed.start();
 }
 
 FileShareDownloader::~FileShareDownloader()
 {
+    qInfo() << "[fs-media] downloader=" << static_cast<void *>(this) << "destroy read=" << d->readTotal
+            << "left=" << (d->bytesLeft ? QString::number(*d->bytesLeft) : QStringLiteral("unknown"))
+            << "finished=" << d->finished << "error=" << d->lastError;
     abort();
     qDebug("FSD destroyed");
 }
@@ -604,6 +644,8 @@ bool FileShareDownloader::open(QIODevice::OpenMode mode)
 
 void FileShareDownloader::abort()
 {
+    qInfo() << "[fs-media] downloader=" << static_cast<void *>(this) << "abort read=" << d->readTotal
+            << "connected=" << isConnected() << "buffered=" << bytesAvailable();
     if (d->downloader) {
         d->downloader->abort();
     }
@@ -633,6 +675,17 @@ qint64 FileShareDownloader::readData(char *data, qint64 maxSize)
         return 0;
 
     qint64 bytesRead = d->downloader->read(data, maxSize);
+    if (bytesRead > 0) {
+        d->readTotal += quint64(bytesRead);
+        d->loggedEmptyRead = false;
+    }
+    if (d->readTotal >= d->nextProgressLog || (bytesRead <= 0 && !d->loggedEmptyRead)) {
+        qInfo() << "[fs-media] downloader=" << static_cast<void *>(this) << "read requested=" << maxSize
+                << "result=" << bytesRead << "total=" << d->readTotal << "elapsed-ms=" << d->elapsed.elapsed()
+                << "connected=" << isConnected() << "buffered=" << bytesAvailable();
+        d->nextProgressLog = d->readTotal + 1024 * 1024;
+        d->loggedEmptyRead = bytesRead <= 0;
+    }
     if (d->tmpFile && d->tmpFile->write(data, bytesRead) != bytesRead) {
         // file engine tries to write everything unless it's a system error
         d->downloader->abort();

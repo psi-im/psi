@@ -25,6 +25,7 @@
 #include "httputil.h"
 #include "psiaccount.h"
 #include "psicon.h"
+#include <QElapsedTimer>
 
 #include "iris/jingle-session.h"
 #include "iris/xmpp_client.h"
@@ -279,11 +280,33 @@ bool FileSharingManager::jingleAutoAcceptIncomingDownloadRequest(Jingle::Session
         auto acceptFile = ft->file();
         acceptFile.setHashes(item->sums());
         ft->setAcceptFile(acceptFile);
+        qInfo() << "[fs-media] owner sid=" << session->sid() << "content=" << ft->contentName()
+                << "size=" << (acceptFile.size() ? QString::number(*acceptFile.size()) : QStringLiteral("unknown"))
+                << "mime=" << acceptFile.mediaType() << "range-offset=" << acceptFile.range().offset
+                << "range-length=" << acceptFile.range().length;
+        connect(ft, &Jingle::Application::stateChanged, ft, [ft](Jingle::State state) {
+            qInfo() << "[fs-media] owner sid=" << ft->pad()->session()->sid() << "content=" << ft->contentName()
+                    << "state=" << int(state) << "reason=" << int(ft->lastReason().condition())
+                    << "text=" << ft->lastReason().text();
+        });
+        QElapsedTimer elapsed;
+        elapsed.start();
+        connect(ft, &Jingle::FileTransfer::Application::progress, ft,
+                [ft, next = quint64(0), elapsed](quint64 position) mutable {
+                    if (position >= next) {
+                        qInfo() << "[fs-media] owner sid=" << ft->pad()->session()->sid()
+                                << "file-position=" << position << "elapsed-ms=" << elapsed.elapsed();
+                        next = position + 1024 * 1024;
+                    }
+                });
 
         // TODO hashes for ranges
 
         connect(ft, &Jingle::FileTransfer::Application::deviceRequested, this,
-                [ft, item, this](quint64 offset, std::optional<quint64> /*size*/) {
+                [ft, item, this](quint64 offset, std::optional<quint64> size) {
+                    qInfo() << "[fs-media] owner sid=" << ft->pad()->session()->sid()
+                            << "device-request offset=" << offset
+                            << "length=" << (size ? QString::number(*size) : QStringLiteral("unbounded"));
                     auto    vm       = item->metadata();
                     QString fileName = vm.value(QString::fromLatin1("link")).toString();
                     if (fileName.isEmpty()) {
@@ -291,10 +314,21 @@ bool FileSharingManager::jingleAutoAcceptIncomingDownloadRequest(Jingle::Session
                     }
                     auto f = new QFile(fileName, ft);
                     if (!f->open(QIODevice::ReadOnly)) {
+                        qInfo() << "[fs-media] owner sid=" << ft->pad()->session()->sid()
+                                << "file-open-error=" << f->errorString();
                         ft->setDevice(nullptr);
                         return;
                     }
                     f->seek(qint64(offset));
+                    qInfo() << "[fs-media] owner sid=" << ft->pad()->session()->sid() << "file-open size=" << f->size()
+                            << "pos-after-seek=" << f->pos() << "error=" << f->errorString();
+                    connect(ft, &Jingle::Application::stateChanged, f, [ft, f](Jingle::State state) {
+                        if (state >= Jingle::State::Finishing)
+                            qInfo() << "[fs-media] owner sid=" << ft->pad()->session()->sid()
+                                    << "device-terminal state=" << int(state) << "pos=" << f->pos()
+                                    << "size=" << f->size() << "file-open=" << f->isOpen()
+                                    << "file-error=" << f->errorString();
+                    });
                     ft->setDevice(f);
                 });
     }

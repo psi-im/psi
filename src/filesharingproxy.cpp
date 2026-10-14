@@ -29,10 +29,13 @@
 #include "psicon.h"
 #ifdef HAVE_WEBSERVER
 #include "qhttpfwd.hpp"
+#include "qhttpserverconnection.hpp"
+#include "qhttpserverrequest.hpp"
 #include "qhttpserverresponse.hpp"
 #include "webserver.h"
 #endif
 
+#include <QElapsedTimer>
 #include <QFileInfo>
 #include <QNetworkReply>
 #include <QPointer>
@@ -64,13 +67,32 @@ public:
     bool                                  headersSent     = false;
     bool                                  dataHungry      = true;
     bool                                  finished        = false;
+    qint64                                nextProgressLog = 0;
+    qint64                                nextReadyLog    = 0;
+    QElapsedTimer                         elapsed;
 
     ControlBase(PsiAccount *acc, const QString &sourceIdHex, QObject *parent) :
         QObject(parent), acc(acc), item(acc->psi()->fileSharingManager()->item(XMPP::Hash::from(sourceIdHex)))
     {
+        elapsed.start();
     }
 
-    ~ControlBase() { qDebug("FSP destroyed. Total transferred bytes: %lld", totalTranferred); }
+    ~ControlBase()
+    {
+        trace("destroy");
+        qDebug("FSP destroyed. Total transferred bytes: %lld", totalTranferred);
+    }
+
+    void trace(const char *event) const
+    {
+        qInfo().nospace() << "[fs-media] proxy=" << static_cast<const void *>(this) << " event=" << event
+                          << " downloader=" << static_cast<const void *>(downloader.data())
+                          << " transferred=" << totalTranferred << " elapsed-ms=" << elapsed.elapsed()
+                          << " left=" << (bytesLeft ? QString::number(*bytesLeft) : QStringLiteral("unknown"))
+                          << " headers=" << headersSent << " hungry=" << dataHungry << " finished=" << finished
+                          << " upstream-connected=" << (downloader && downloader->isConnected())
+                          << " upstream-buffered=" << (downloader ? downloader->bytesAvailable() : 0);
+    }
 
     void process()
     {
@@ -81,6 +103,9 @@ public:
         }
 
         QByteArray rangeHeaderValue = self->requestHeader("range");
+        qInfo() << "[fs-media] proxy=" << static_cast<void *>(this) << "request range=" << rangeHeaderValue
+                << "item-size=" << (item->fileSize() ? QString::number(*item->fileSize()) : QStringLiteral("unknown"))
+                << "mime=" << item->mimeType();
         if (rangeHeaderValue.size()) {
             auto status = parseHttpRangeRequest(rangeHeaderValue);
             if (status != StatusCode::Ok) {
@@ -92,6 +117,7 @@ public:
 
         auto cache = item->cache();
         if (cache) {
+            trace("cache-hit");
             proxyCache();
             return; // handled with success
         }
@@ -99,9 +125,11 @@ public:
         downloader = item->download(requestedRange);
         Q_ASSERT(downloader);
         downloader->setParent(this);
+        trace("download-created");
 
         connect(downloader, &FileShareDownloader::metaDataChanged, this, &ControlBase::onMetadataChanged);
         connect(downloader, &FileShareDownloader::failed, this, [this]() {
+            trace("download-failed");
             if (!headersSent) {
                 _finishWithMetadataError(StatusCode::BadGateway);
             }
@@ -114,6 +142,8 @@ public:
     StatusCode parseHttpRangeRequest(const QByteArray &rangeValue)
     {
         auto const [parseResult, start, size] = Http::parseRangeHeader(rangeValue, item->fileSize());
+        qInfo() << "[fs-media] proxy=" << static_cast<void *>(this) << "range-parse result=" << int(parseResult)
+                << "start=" << start << "length=" << size;
 
         switch (parseResult) {
         case Http::Parsed:
@@ -190,6 +220,7 @@ public:
 
     void onMetadataChanged()
     {
+        trace("download-metadata");
         auto const &responseRange = downloader->responseRange();
         auto const  file          = downloader->jingleFile();
 
@@ -223,15 +254,23 @@ public:
 
         setupHeaders(file.size(), file.mediaType(), file.date(), reqsponseRange);
         headersSent = true;
+        trace("headers-ready");
 
         connect(downloader, &FileShareDownloader::readyRead, this, [this]() {
             if (dataHungry) {
                 transfer();
             }
         });
-        connect(downloader, &FileShareDownloader::disconnected, this, &ControlBase::transfer);
+        connect(downloader, &FileShareDownloader::disconnected, this, [this] {
+            trace("upstream-disconnected");
+            transfer();
+        });
         static_cast<Impl *>(this)->connectReadyWrite(this, [this]() {
             dataHungry = true;
+            if (totalTranferred >= nextReadyLog) {
+                trace("downstream-ready");
+                nextReadyLog = totalTranferred + 1024 * 1024;
+            }
             transfer();
         });
     }
@@ -316,6 +355,7 @@ public:
 
     void ensureUpstreamStopped()
     {
+        trace("stop-upstream");
         if (downloader) {
             downloader->disconnect(this);
             downloader->deleteLater();
@@ -328,6 +368,10 @@ public:
         static_cast<Impl *>(this)->write(data);
         totalTranferred += data.size();
         dataHungry = false;
+        if (totalTranferred >= nextProgressLog) {
+            trace("write-progress");
+            nextProgressLog = totalTranferred + 1024 * 1024;
+        }
     }
 
     void _finish()
@@ -336,6 +380,7 @@ public:
             return;
         }
         finished = true;
+        trace("finish");
         static_cast<Impl *>(this)->finish();
     }
 
@@ -345,6 +390,7 @@ public:
             return;
         }
         qDebug() << "FS finishWithMetadataError " << int(code) << httpReason;
+        trace("metadata-error");
         auto self = static_cast<Impl *>(this);
         ensureUpstreamStopped();
         if (downloader) { // TODO we need download manager instead
@@ -470,6 +516,12 @@ public:
         ControlBase<NAMProxy>(acc, sourceIdHex, reply), request(req), reply(reply)
     {
         qDebug("FSP GET %s range: %s", qUtf8Printable(req.url().toString()), qPrintable(request.rawHeader("range")));
+        qInfo() << "[fs-media] proxy=" << static_cast<void *>(this) << "kind=NAM source=" << sourceIdHex;
+        connect(reply, &QNetworkReply::finished, this, [this] {
+            trace("nam-reply-finished");
+            qInfo() << "[fs-media] proxy=" << static_cast<void *>(this) << "NAM error=" << this->reply->error()
+                    << this->reply->errorString();
+        });
         connect(reply, &QNetworkReply::finished, this, &ControlBase<NAMProxy>::ensureUpstreamStopped);
     }
 
@@ -503,10 +555,16 @@ public:
     }
     void              finish() { reply->finish(); }
     inline QByteArray requestHeader(const char *headerName) { return request.rawHeader(headerName); }
-    inline void setResponseHeader(const char *headerName, QByteArray value) { reply->setRawHeader(headerName, value); }
+    inline void       setResponseHeader(const char *headerName, QByteArray value)
+    {
+        qInfo() << "[fs-media] proxy=" << static_cast<void *>(this) << "NAM header=" << headerName << value;
+        reply->setRawHeader(headerName, value);
+    }
     inline void setResponseStatusCode(StatusCode code)
     {
         reply->setAttribute(QNetworkRequest::HttpStatusCodeAttribute, std::get<1>(mapStatusCode(code)));
+        qInfo() << "[fs-media] proxy=" << static_cast<void *>(this)
+                << "NAM status=" << std::get<1>(mapStatusCode(code));
     }
     void connectReadyWrite(QObject *ctx, std::function<void()> &&callback)
     {
@@ -534,6 +592,17 @@ public:
         auto baseUrl = acc->psi()->webServer()->serverUrl().toString();
         qDebug("FSP %s %s%s range: %s", qPrintable(request->methodString()), qPrintable(baseUrl),
                qPrintable(request->url().toString()), qPrintable(request->headers().value("range")));
+        qInfo() << "[fs-media] proxy=" << static_cast<void *>(this) << "kind=HTTP source=" << sourceIdHex
+                << "request=" << static_cast<void *>(request) << "response=" << static_cast<void *>(response)
+                << "method=" << request->methodString() << "range=" << request->headers().value("range");
+        connect(response->connection(), &qhttp::server::QHttpConnection::disconnected, this,
+                [this] { trace("http-client-disconnected"); });
+        connect(response, &QObject::destroyed, this, [this] { trace("http-response-destroyed"); });
+        connect(request, &QObject::destroyed, this, [this] { trace("http-request-destroyed"); });
+        connect(response, &qhttp::server::QHttpResponse::done, this, [this](bool last) {
+            trace("http-response-done");
+            qInfo() << "[fs-media] proxy=" << static_cast<void *>(this) << "last-packet=" << last;
+        });
     }
 
     static qhttp::TStatusCode mapStatusCode(ControlBase::StatusCode code)
@@ -562,14 +631,24 @@ public:
     void finishWithMetadataError(ControlBase::StatusCode code, QByteArray httpReason = {})
     {
         Q_UNUSED(httpReason);
+        qInfo() << "[fs-media] proxy=" << static_cast<void *>(this)
+                << "HTTP metadata-error status=" << int(mapStatusCode(code));
         response->setStatusCode(mapStatusCode(code));
         response->end();
     }
     void              finish() { response->end(); }
     inline QByteArray requestHeader(const char *headerName) { return request->headers().value(headerName); }
-    inline void setResponseHeader(const char *headerName, QByteArray value) { response->addHeader(headerName, value); }
-    inline void setResponseStatusCode(StatusCode code) { response->setStatusCode(mapStatusCode(code)); }
-    void        connectReadyWrite(QObject *ctx, std::function<void()> &&callback)
+    inline void       setResponseHeader(const char *headerName, QByteArray value)
+    {
+        qInfo() << "[fs-media] proxy=" << static_cast<void *>(this) << "HTTP header=" << headerName << value;
+        response->addHeader(headerName, value);
+    }
+    inline void setResponseStatusCode(StatusCode code)
+    {
+        qInfo() << "[fs-media] proxy=" << static_cast<void *>(this) << "HTTP status=" << int(mapStatusCode(code));
+        response->setStatusCode(mapStatusCode(code));
+    }
+    void connectReadyWrite(QObject *ctx, std::function<void()> &&callback)
     {
         connect(response, &qhttp::server::QHttpResponse::allBytesWritten, ctx, std::move(callback));
     }

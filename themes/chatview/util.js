@@ -9,6 +9,7 @@ function initPsiTheme() {
     var nextServerTransaction = 0;
     var serverTransctions = {};
     var uniqReplId = Number(0);
+    var nextMediaTraceId = 0;
     var previewsEnabled = true;
     var optionChangeHandlers = {}
 
@@ -652,13 +653,62 @@ function initPsiTheme() {
             return range.createContextualFragment(html);
         },
 
-        videoPreview: function(source) {
+        traceSharedMedia: function(media, source, mime) {
+            // Diagnostics for the shared-media branch; do not change playback policy.
+            if (source.indexOf("/sharedfile/") === -1)
+                return;
+            var id = ++nextMediaTraceId;
+            var lastProgress = 0;
+            function ranges(value) {
+                var result = [];
+                for (var i = 0; i < Math.min(value.length, 8); i++)
+                    result.push([value.start(i), value.end(i)]);
+                return result;
+            }
+            function report(event) {
+                if (event === "progress") {
+                    var now = Date.now();
+                    if (lastProgress && now - lastProgress < 5000)
+                        return;
+                    lastProgress = now;
+                }
+                try {
+                    server.console("[fs-media] browser=" + id + " " + JSON.stringify({
+                        event: event, source: source, mime: mime || "unknown",
+                        canPlayType: mime ? media.canPlayType(mime) : "unknown",
+                        networkState: media.networkState, readyState: media.readyState,
+                        paused: media.paused, ended: media.ended, time: media.currentTime,
+                        duration: String(media.duration), buffered: ranges(media.buffered),
+                        seekable: ranges(media.seekable), width: media.videoWidth || 0,
+                        height: media.videoHeight || 0,
+                        errorCode: media.error ? media.error.code : 0,
+                        errorName: media.error ? ["none", "aborted", "network", "decode", "unsupported-source"][media.error.code] : "none",
+                        errorMessage: media.error ? media.error.message || "" : ""
+                    }));
+                } catch (error) {
+                    server.console("[fs-media] browser=" + id + " trace-error=" + String(error));
+                }
+            }
+            ["loadstart", "loadedmetadata", "loadeddata", "durationchange", "canplay", "canplaythrough",
+             "error", "abort", "emptied", "stalled", "suspend", "waiting", "seeking", "seeked",
+             "playing", "ended", "progress"].forEach(function(event) {
+                media.addEventListener(event, function() { report(event); });
+            });
+            var mediaSource = media.querySelector("source");
+            if (mediaSource)
+                mediaSource.addEventListener("error", function() { report("source-error"); });
+            report("created");
+        },
+
+        videoPreview: function(source, mime) {
             const html = `<div class="video psi-preview">
                 <video width="560" height="315" controls="1">
                     <source src="${source}"/>
                 </video>
             </div>`;
-            return chat.util.createHtmlNode(html);
+            var fragment = chat.util.createHtmlNode(html);
+            chat.util.traceSharedMedia(fragment.querySelector("video"), source, mime);
+            return fragment;
         },
 
         replaceYoutube : function(linkEl) {
@@ -784,6 +834,8 @@ ${info}
 </audio>
 </div>`);
                     var player = playerFragment.firstChild;
+                    chat.util.traceSharedMedia(player.querySelector("audio"),
+                        `/psi/account/${session.account}/sharedfile/${source}`, type);
                     if (share.nextSibling)
                         share.parentNode.insertBefore(playerFragment, share.nextSibling);
                     else
@@ -797,7 +849,7 @@ ${info}
                     else
                         share.parentNode.appendChild(img);
                 } else if (type.startsWith("video"))  {
-                    player = chat.util.videoPreview(`/psi/account/${session.account}/sharedfile/${source}`);
+                    player = chat.util.videoPreview(`/psi/account/${session.account}/sharedfile/${source}`, type);
                     if (share.nextSibling)
                         share.parentNode.insertBefore(player, share.nextSibling);
                     else
