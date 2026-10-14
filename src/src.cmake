@@ -138,6 +138,9 @@ list(APPEND HEADERS
     filecache.h
     filesharedlg.h
     filesharingdownloader.h
+    filesharingchunksource.h
+    mediachunkcache.h
+    mediachunkscheduler.h
     filesharingitem.h
     filesharingmanager.h
     filesharingproxy.h
@@ -384,6 +387,9 @@ list(APPEND SOURCES
     filecache.cpp
     filesharedlg.cpp
     filesharingdownloader.cpp
+    filesharingchunksource.cpp
+    mediachunkcache.cpp
+    mediachunkscheduler.cpp
     filesharingitem.cpp
     filesharingmanager.cpp
     filesharingproxy.cpp

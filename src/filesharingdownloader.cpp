@@ -36,6 +36,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QNetworkReply>
+#include <QPointer>
 #include <QTimer>
 #include <QUrlQuery>
 #include <QVariant>
@@ -106,10 +107,10 @@ signals:
 class JingleFileShareDownloader : public AbstractFileShareDownloader {
     Q_OBJECT
 
-    XMPP::Jingle::Connection::Ptr      connection;
-    Jingle::FileTransfer::Application *app = nullptr;
-    XMPP::Jingle::FileTransfer::File   file;
-    QList<Jid>                         jids;
+    XMPP::Jingle::Connection::Ptr               connection;
+    QPointer<Jingle::FileTransfer::Application> app;
+    XMPP::Jingle::FileTransfer::File            file;
+    QList<Jid>                                  jids;
 
 public:
     JingleFileShareDownloader(PsiAccount *acc_, const QString &uri, const XMPP::Jingle::FileTransfer::File &file,
@@ -186,6 +187,7 @@ public:
             auto r = app->lastReason();
             app    = nullptr;
             if (r.isValid() && r.condition() == Jingle::Reason::Success) {
+                emit success();
                 emit disconnected();
                 return;
             }
@@ -236,7 +238,7 @@ public:
 class NAMFileShareDownloader : public AbstractFileShareDownloader {
     Q_OBJECT
 
-    QNetworkReply *reply = nullptr;
+    QPointer<QNetworkReply> reply;
 
     void namFailed(const QString &err = QString())
     {
@@ -294,7 +296,7 @@ public:
                 }
             }
 
-            if (!_totalSize) {
+            if (!_totalSize && !_responseRange) {
                 auto clHeader = reply->header(QNetworkRequest::ContentLengthHeader);
                 if (clHeader.isValid()) {
                     bool ok;
@@ -321,9 +323,10 @@ public:
         connect(reply, &QNetworkReply::finished, this, [this]() {
             qDebug("FSD reply is finished. error code=%d. bytes available=%lld", reply->error(),
                    reply->bytesAvailable());
-            if (reply->error() == QNetworkReply::NoError)
+            if (reply->error() == QNetworkReply::NoError) {
+                emit success();
                 emit disconnected();
-            else
+            } else
                 emit failed();
         });
     }
@@ -398,6 +401,7 @@ public:
                     this,
                     [this]() {
                         connected = false;
+                        emit success();
                         emit disconnected();
                     },
                     Qt::QueuedConnection);
@@ -444,19 +448,23 @@ public:
     std::optional<FileShareDownloader::Range> requestRange;
     std::optional<FileShareDownloader::Range> responseRange;
     std::optional<quint64>                    bytesLeft;
-    AbstractFileShareDownloader              *downloader  = nullptr;
-    bool                                      metaReady   = false;
-    bool                                      finished    = false;
-    bool                                      success     = false;
-    bool                                      selfDelete  = false;
-    FileSharingItem::SourceType               currentType = FileSharingItem::SourceType::None;
+    AbstractFileShareDownloader              *downloader       = nullptr;
+    bool                                      metaReady        = false;
+    bool                                      finished         = false;
+    bool                                      success          = false;
+    bool                                      failureSignalled = false;
+    bool                                      selfDelete       = false;
+    FileSharingItem::SourceType               currentType      = FileSharingItem::SourceType::None;
 
     void finishWithError(const QString &errStr)
     {
-        Q_ASSERT(!finished);
-        finished  = true;
-        success   = false;
-        lastError = errStr;
+        if (failureSignalled)
+            return;
+        failureSignalled = true;
+        finished         = true;
+        success          = false;
+        lastError        = errStr;
+        q->setErrorString(errStr);
         if (tmpFile) {
             tmpFile->close();
             tmpFile->remove();
@@ -533,12 +541,20 @@ public:
         connect(downloader, &AbstractFileShareDownloader::metaDataChanged, q, [this]() {
             metaReady     = true;
             responseRange = downloader->responseRange();
+            if (const auto actualSize = downloader->fileSize())
+                file.setSize(*actualSize);
+            if (responseRange && !responseRange->size && file.size() && responseRange->start <= *file.size())
+                responseRange->size = *file.size() - responseRange->start;
 
-            if (downloader->responseRange()) {
-                bytesLeft = downloader->responseRange()->size;
+            if (responseRange) {
+                bytesLeft = responseRange->size ? std::optional<quint64>(responseRange->size) : std::nullopt;
             } else if (downloader->fileSize()) { // definitely not ranged and full size is known
                 bytesLeft = *downloader->fileSize();
 
+                if (requestRange) {
+                    emit q->metaDataChanged();
+                    return; // A ranged probe must not overwrite a whole-file cache download.
+                }
                 // then we are going to cache it as well. TODO: review caching when size is unknown
                 auto partDir = QDir(acc->psi()->fileSharingManager()->cacheDir() + "/partial");
                 partDir.mkpath(".");
@@ -555,6 +571,10 @@ public:
         });
 
         connect(downloader, &AbstractFileShareDownloader::readyRead, q, &FileShareDownloader::readyRead);
+        connect(downloader, &AbstractFileShareDownloader::success, q, [this] {
+            success = true;
+            emit q->transferCompleted();
+        });
         connect(downloader, &AbstractFileShareDownloader::disconnected, q, [this]() {
             if (!finished)
                 checkCacheReady(); // TODO avoid double emit
@@ -632,7 +652,14 @@ qint64 FileShareDownloader::readData(char *data, qint64 maxSize)
     if (!maxSize || !d->downloader) // wtf?
         return 0;
 
+    if (d->bytesLeft) {
+        if (!*d->bytesLeft)
+            return -1;
+        maxSize = qint64(std::min<quint64>(quint64(maxSize), *d->bytesLeft));
+    }
     qint64 bytesRead = d->downloader->read(data, maxSize);
+    if (bytesRead <= 0)
+        return bytesRead;
     if (d->tmpFile && d->tmpFile->write(data, bytesRead) != bytesRead) {
         // file engine tries to write everything unless it's a system error
         d->downloader->abort();
@@ -656,7 +683,10 @@ qint64 FileShareDownloader::writeData(const char *, qint64)
 
 bool FileShareDownloader::isSequential() const { return true; }
 
-qint64 FileShareDownloader::bytesAvailable() const { return d->downloader ? d->downloader->bytesAvailable() : 0; }
+qint64 FileShareDownloader::bytesAvailable() const
+{
+    return QIODevice::bytesAvailable() + (d->downloader ? d->downloader->bytesAvailable() : 0);
+}
 
 void FileShareDownloader::setSelfDelete(bool enable) { d->selfDelete = enable; }
 

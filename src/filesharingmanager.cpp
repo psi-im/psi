@@ -23,6 +23,7 @@
 #include "filecache.h"
 #include "filesharingdownloader.h"
 #include "httputil.h"
+#include "mediachunkcache.h"
 #include "psiaccount.h"
 #include "psicon.h"
 
@@ -48,6 +49,7 @@
 class FileSharingManager::Private {
 public:
     FileCache                           *cache;
+    MediaChunkCache                     *chunkCache = nullptr;
     QHash<XMPP::Hash, FileSharingItem *> items;
 
     void rememberItem(FileSharingItem *item)
@@ -63,7 +65,14 @@ FileSharingManager::FileSharingManager(QObject *parent) : QObject(parent), d(new
     d->cache = new FileCache(cacheDir(), this);
 }
 
-FileSharingManager::~FileSharingManager() { }
+FileSharingManager::~FileSharingManager() { delete d->chunkCache; }
+
+MediaChunkCache *FileSharingManager::mediaChunkCache()
+{
+    if (!d->chunkCache)
+        d->chunkCache = new MediaChunkCache(cacheDir() + QStringLiteral("/media-chunks-v1"), this);
+    return d->chunkCache;
+}
 
 QString FileSharingManager::cacheDir()
 {

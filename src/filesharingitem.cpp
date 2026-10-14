@@ -376,6 +376,8 @@ void FileSharingItem::publish(const XMPP::Jid &myJid)
     }
 }
 
+PsiAccount *FileSharingItem::account() const { return _acc; }
+
 FileShareDownloader *FileSharingItem::download(std::optional<Range> range)
 {
     // if (range && range->start == 0 && _fileSize && range->size == *_fileSize)

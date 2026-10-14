@@ -71,6 +71,7 @@ protected:
     qint64 writeData(const char *data, qint64 maxSize) override;
 
 signals:
+    void transferCompleted(); // Successful bounded transfer, including Jingle checksum/receipt processing.
     void metaDataChanged();
     void disconnected();
     void failed(); // when last piece of data saved to file or on error

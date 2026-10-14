@@ -32,6 +32,7 @@ class FileSharingDownloader;
 class FileSharingManager;
 class MessageView;
 class PsiAccount;
+class MediaChunkCache;
 class QFileInfo;
 class QImage;
 class QMimeData;
@@ -68,9 +69,10 @@ public:
     explicit FileSharingManager(QObject *parent = nullptr);
     ~FileSharingManager();
 
-    static QString cacheDir();
-    FileCacheItem *cacheItem(const QList<XMPP::Hash> &hashes, bool reborn = false, QString *fileName = nullptr);
-    FileCacheItem *cacheItem(const XMPP::Hash &id, bool reborn = false, QString *fileName = nullptr);
+    static QString   cacheDir();
+    MediaChunkCache *mediaChunkCache();
+    FileCacheItem   *cacheItem(const QList<XMPP::Hash> &hashes, bool reborn = false, QString *fileName = nullptr);
+    FileCacheItem   *cacheItem(const XMPP::Hash &id, bool reborn = false, QString *fileName = nullptr);
     // id - usually hex(sha1(image data))
     FileCacheItem *saveToCache(const QList<XMPP::Hash> &sums, const QByteArray &data, const QVariantMap &metadata,
                                unsigned int maxAge);

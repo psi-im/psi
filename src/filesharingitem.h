@@ -24,6 +24,7 @@
 
 #include <QDateTime>
 #include <QObject>
+#include <QPointer>
 
 class FileCacheItem;
 class FileShareDownloader;
@@ -124,8 +125,8 @@ signals:
     void logChanged();
 
 private:
-    PsiAccount         *_acc     = nullptr;
-    FileSharingManager *_manager = nullptr;
+    QPointer<PsiAccount> _acc;
+    FileSharingManager  *_manager = nullptr;
     // FileShareDownloader         *_downloader = nullptr;
     FileType                     _fileType;
     Flags                        _flags;
