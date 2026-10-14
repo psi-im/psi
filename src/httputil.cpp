@@ -20,6 +20,8 @@
 #include "httputil.h"
 
 #include <QList>
+#include <algorithm>
+#include <limits>
 
 namespace Http {
 
@@ -44,10 +46,26 @@ std::tuple<ParseResult, quint64, quint64> parseRangeHeader(const QByteArray &ran
     quint64                start;
     std::optional<quint64> end;
 
-    if (!l[0].size()) { // bytes from the end are requested. Jingle-ft doesn't support this
-        return { NotImplementedTailLoad, 0, 0 };
+    auto decimal = [](const QByteArray &number) {
+        return !number.isEmpty()
+            && std::all_of(number.begin(), number.end(), [](char c) { return c >= '0' && c <= '9'; });
+    };
+    if (l[0].isEmpty()) {
+        if (!decimal(l[1]))
+            return { Unparsed, 0, 0 };
+        const auto suffix = l[1].toULongLong(&ok);
+        if (!ok)
+            return { Unparsed, 0, 0 };
+        if (!suffix || (fileSize && !*fileSize))
+            return { OutOfRange, 0, 0 };
+        if (!fileSize)
+            return { NotImplementedTailLoad, 0, 0 };
+        const auto length = std::min(suffix, *fileSize);
+        return { Parsed, *fileSize - length, length };
     }
 
+    if (!decimal(l[0]) || (!l[1].isEmpty() && !decimal(l[1])))
+        return { Unparsed, 0, 0 };
     start = l[0].toULongLong(&ok);
     if (!ok) {
         return { Unparsed, 0, 0 };
@@ -62,6 +80,10 @@ std::tuple<ParseResult, quint64, quint64> parseRangeHeader(const QByteArray &ran
     if (fileSize && start >= *fileSize) {
         return { OutOfRange, 0, 0 };
     }
+    if (fileSize)
+        end = end ? std::min(*end, *fileSize - 1) : *fileSize - 1;
+    if (end && *end - start == std::numeric_limits<quint64>::max())
+        return { Unparsed, 0, 0 };
     return { Parsed, start, end ? (*end - start + 1) : 0 };
 }
 
@@ -83,12 +105,12 @@ std::optional<std::tuple<quint64, quint64, std::optional<quint64>>> parseContent
     }
 
     arr = arr[0].split('-');
-    if (arr.size() != 2) {
+    if (arr.size() == 2) {
         start = arr[0].toULongLong(&ok);
         if (ok) {
-            end = arr[0].toULongLong(&ok);
+            end = arr[1].toULongLong(&ok);
             if (ok && start <= end) {
-                if (!totalSize || (start < *totalSize && end < *totalSize)) {
+                if ((!totalSize || end < *totalSize) && end - start != std::numeric_limits<quint64>::max()) {
                     return std::make_tuple(start, end - start + 1, totalSize);
                 }
             }
