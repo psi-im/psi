@@ -26,18 +26,6 @@ if(NOT DEFAULT_VER)
     set(DEFAULT_VER "1.5")
 endif()
 
-# Functions section
-function(get_qt_path _IN_VARIABLE _OUT_VARIABLE)
-    execute_process(
-        COMMAND "${QT_HOST_PATH}/bin/qmake${QT_DEFAULT_MAJOR_VERSION}" -query ${_IN_VARIABLE}
-        OUTPUT_VARIABLE OUT_VARIABLE
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    if(OUT_VARIABLE)
-        message(STATUS "${_OUT_VARIABLE} ${OUT_VARIABLE}")
-        set(${_OUT_VARIABLE} "${OUT_VARIABLE}" PARENT_SCOPE)
-    endif()
-endfunction()
 # Generate qt.conf function
 function(cpack_generate_qconf _INSTALL_PATH)
     set(QTCONF_TEXT
@@ -58,40 +46,6 @@ Translations = ../${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/translations
     )
     unset(QTCONF_TEXT)
 endfunction()
-# Deploy function
-function(deploy_binary_deps BINARY_NAME)
-    install(CODE "
-if(CMAKE_VERSION GREATER_EQUAL 4.3.0)
-    if(POLICY CMP0207)
-        cmake_policy(SET CMP0207 NEW)
-    endif()
-endif()
-
-file(GET_RUNTIME_DEPENDENCIES
-    EXECUTABLES \"${BINARY_NAME}\"
-    RESOLVED_DEPENDENCIES_VAR resolved_deps
-    POST_EXCLUDE_REGEXES
-    \".*/ld-linux[^/]*\\\\.so.*\"
-    \".*/libc\\\\.so.*\"
-    \".*/libm\\\\.so.*\"
-    \".*/libpthread\\\\.so.*\"
-    \".*/libdl\\\\.so.*\"
-    \".*/librt\\\\.so.*\"
-)
-
-foreach(dep \${resolved_deps})
-    # copy the symlink
-    file(INSTALL DESTINATION \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}\" TYPE FILE FILES \${dep})
-
-    # Resolve the real path of the dependency (follows symlinks)
-    file(REAL_PATH \${dep} resolved_dep_path)
-
-    # Copy the resolved file to the destination
-    file(INSTALL DESTINATION \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}\" TYPE FILE FILES \${resolved_dep_path})
-endforeach()
-"
-    )
-endfunction()
 # Install additional files function
 function(install_add_files _RES_FILE_NAME _RES_FILE_SEARCH_PATH _RES_INSTALL_PATH)
     file(GLOB _RESOURCES
@@ -107,17 +61,7 @@ function(install_add_files _RES_FILE_NAME _RES_FILE_SEARCH_PATH _RES_INSTALL_PAT
         endif()
     endforeach()
     unset(_RESOURCES)
- endfunction()
-# Install plugins function
-function(install_qt_plugin PLUG_TYPE_NAME PLUG_SEARCH_PATH)
-    install_add_files(
-        "libq*.so"
-        "${PLUG_SEARCH_PATH}/${PLUG_TYPE_NAME}"
-        "${CMAKE_INSTALL_LIBDIR}/qt${QT_DEFAULT_MAJOR_VERSION}/plugins/${PLUG_TYPE_NAME}"
-    )
-    message(STATUS "CPack: AppImage ${PLUG_TYPE_NAME} plugins added")
 endfunction()
-
 
 set(CPACK_PACKAGE_VENDOR "psi-im.org")
 set(CPACK_PACKAGE_CONTACT "psi-im.org")
@@ -188,65 +132,11 @@ if(CMAKE_VERSION GREATER_EQUAL 4.2.0)
     if(CPACK_APPIMAGE_TOOL_EXECUTABLE AND CPACK_APPIMAGE_PATCHELF_EXECUTABLE)
         list(APPEND _PSI_CPACK_GENERATORS "AppImage")
         set(CPACK_PACKAGE_ICON "${CPACK_PSI_ICON}")
-        # Generate dependency lists for binary file
-        # And create install rules for dependencies
-        deploy_binary_deps("${CMAKE_CURRENT_BINARY_DIR}/psi/${CPACK_PACKAGE_NAME}")
         # Create qt.conf file in bin catalog
         cpack_generate_qconf(${CMAKE_INSTALL_BINDIR})
-        # Get path to Qt plugins
-        get_qt_path("QT_INSTALL_PLUGINS" QT_INSTALL_PLUGINS)
-        if(QT_INSTALL_PLUGINS)
-            # List of Qt plugins needed to Psi
-            set(_QT_PLUGINS
-                audio
-                bearer
-                iconengines
-                imageformats
-                generic
-                mediaservice
-                multimedia
-                networkinformation
-                platforms
-                platformthemes
-                position
-                printsupport
-                sqldrivers
-                styles
-                tls
-            )
-            foreach(plugin ${_QT_PLUGINS})
-                install_qt_plugin("${plugin}" "${QT_INSTALL_PLUGINS}")
-            endforeach()
-            install_add_files("*.so" "/usr/${CMAKE_INSTALL_LIBDIR}/qca3-qt6/crypto"
-            "${CMAKE_INSTALL_LIBDIR}/qt${QT_DEFAULT_MAJOR_VERSION}/plugins/crypto")
-            install_add_files("lib*.so" "${QT_INSTALL_PLUGINS}/wayland-shell-integration"
-            "${CMAKE_INSTALL_LIBDIR}/qt${QT_DEFAULT_MAJOR_VERSION}/plugins/wayland-shell-integration")
-        endif()
-        get_qt_path("QT_INSTALL_TRANSLATIONS" QT_INSTALL_TRANSLATIONS)
-        if(QT_INSTALL_TRANSLATIONS)
-            install_add_files(
-                "qt*.qm"
-                "${QT_INSTALL_TRANSLATIONS}"
-                "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/translations"
-            )
-        endif()
         if(IS_WEBENGINE)
-            get_qt_path("QT_INSTALL_ARCHDATA" QT_INSTALL_ARCHDATA)
-            if(QT_INSTALL_ARCHDATA)
-                find_program(QTWEBENGINE_PROCESS QtWebEngineProcess PATHS "${QT_INSTALL_ARCHDATA}")
-                if(QTWEBENGINE_PROCESS)
-                    message(STATUS "QtWebEngineProcess found: ${QTWEBENGINE_PROCESS}")
-                    # Install QtWebEngineProcess and make it executable
-                    install(
-                        FILES
-                        "${QTWEBENGINE_PROCESS}"
-                        DESTINATION
-                        ${CMAKE_INSTALL_BINDIR}
-                        PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-                    )
-                    deploy_binary_deps("${QTWEBENGINE_PROCESS}")
-                    # Create custom AppRun to avoid rendering problems
-                    file(WRITE "${CMAKE_BINARY_DIR}/AppRun.sh" "#!/bin/sh
+            # Create custom AppRun to avoid rendering problems
+            file(WRITE "${CMAKE_BINARY_DIR}/AppRun.sh" "#!/bin/sh
 HERE=\"$(dirname \"$(readlink -f \"\${0}\")\")\"
 
 # Rendering variables for Qt 6 / QtWebEngine
@@ -255,13 +145,13 @@ export QTWEBENGINE_CHROMIUM_FLAGS=\"--disable-gpu --no-sandbox\"
 export QTWEBENGINE_DISABLE_SANDBOX=1
 
 # Path to the libraries inside of AppImage
-export LD_LIBRARY_PATH=\"\${HERE}/usr/lib:\${LD_LIBRARY_PATH}\"
+export LD_LIBRARY_PATH=\"\${HERE}/usr/${CMAKE_INSTALL_LIBDIR}:\${LD_LIBRARY_PATH}\"
 
 # Run binary file
 exec \"\${HERE}/usr/bin/${CPACK_PACKAGE_NAME}\" \"$@\"
 "
-                    )
-                    install(CODE "
+            )
+            install(CODE "
 file(INSTALL
     FILES \"${CMAKE_BINARY_DIR}/AppRun.sh\"
     DESTINATION \"\${CMAKE_INSTALL_PREFIX}/..\"
@@ -271,20 +161,10 @@ file(INSTALL
         GROUP_READ GROUP_EXECUTE
         WORLD_READ WORLD_EXECUTE
 )
-                    ")
-                    get_qt_path("QT_INSTALL_DATA" QT_INSTALL_DATA)
-                    if(QT_INSTALL_DATA)
-                        install(DIRECTORY "${QT_INSTALL_DATA}/resources" DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}")
-                    endif()
-                    if(QT_INSTALL_TRANSLATIONS)
-                        install_add_files(
-                        "*.pak"
-                        "${QT_INSTALL_TRANSLATIONS}/qtwebengine_locales"
-                        "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/translations/qtwebengine_locales")
-                     endif()
-                endif()
-            endif()
+            ")
         endif()
+        include(psi-linux-deploy)
+        install_appimage_runtime_deps()
         message(STATUS "CPack: AppImage generator added")
     endif()
 endif()
