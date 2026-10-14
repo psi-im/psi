@@ -8,11 +8,11 @@
 #include <QDBusMetaType>
 #include <QDBusObjectPath>
 #include <QDBusUnixFileDescriptor>
-#include <QPushButton>
 #include <QFrame>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPalette>
+#include <QPushButton>
 #include <QRegularExpression>
 #include <QSignalSpy>
 #include <QTest>
@@ -257,12 +257,12 @@ private slots:
     void compactCallControlsAndStatus()
     {
         CallView view;
-        auto status = view.findChild<QLabel *>(QStringLiteral("callStatus"));
-        auto security = view.findChild<QLabel *>(QStringLiteral("callSecurity"));
-        auto duration = view.findChild<QLabel *>(QStringLiteral("callDuration"));
-        auto hint = view.findChild<QLabel *>(QStringLiteral("callSharingHint"));
-        auto share = view.findChild<QPushButton *>(QStringLiteral("callShare"));
-        auto board = view.findChild<QPushButton *>(QStringLiteral("callWhiteboard"));
+        auto     status   = view.findChild<QLabel *>(QStringLiteral("callStatus"));
+        auto     security = view.findChild<QLabel *>(QStringLiteral("callSecurity"));
+        auto     duration = view.findChild<QLabel *>(QStringLiteral("callDuration"));
+        auto     hint     = view.findChild<QLabel *>(QStringLiteral("callSharingHint"));
+        auto     share    = view.findChild<QPushButton *>(QStringLiteral("callShare"));
+        auto     board    = view.findChild<QPushButton *>(QStringLiteral("callWhiteboard"));
         QVERIFY(status && security && duration && hint && share && board);
         QVERIFY(!view.findChild<QWidget *>(QStringLiteral("callPeer")));
         QVERIFY(!view.findChild<QFrame *>(QStringLiteral("sharingBar")));
@@ -309,7 +309,7 @@ private slots:
     void paletteFollowsSystemThemeWithoutStylingWhiteboardChildren()
     {
         CallView view;
-        auto colors = view.palette();
+        auto     colors = view.palette();
         colors.setColor(QPalette::Window, QColor(QStringLiteral("#212731")));
         colors.setColor(QPalette::WindowText, QColor(QStringLiteral("#f2f5f9")));
         colors.setColor(QPalette::ButtonText, QColor(QStringLiteral("#f2f5f9")));
@@ -348,6 +348,32 @@ private slots:
         view.show();
         QTest::qWait(20);
         QVERIFY(view.grab().save(QStringLiteral("/tmp/psi-screen-call.png")));
+    }
+
+    void mediaControlsAfterWhiteboardConnects()
+    {
+        CallView view;
+        view.setWhiteboardOnly(true);
+        view.setMediaAvailable(true);
+        view.setVideoSupported(true);
+        view.setSharingSupported(true);
+        auto mic    = view.findChild<QPushButton *>(QStringLiteral("callMicrophone"));
+        auto camera = view.findChild<QPushButton *>(QStringLiteral("callCamera"));
+        auto screen = view.findChild<QPushButton *>(QStringLiteral("callShare"));
+        QVERIFY(mic && camera && screen);
+        QVERIFY(!mic->isEnabled() && !camera->isEnabled() && !screen->isEnabled());
+        view.setConnecting(false);
+        view.setActive(true);
+        QVERIFY(mic->isEnabled() && camera->isEnabled() && screen->isEnabled());
+        QSignalSpy microphone(&view, &CallView::microphoneChanged), video(&view, &CallView::cameraChanged);
+        QSignalSpy share(&view, &CallView::shareRequested);
+        mic->click();
+        camera->click();
+        screen->click();
+        QCOMPARE(microphone.count(), 1);
+        QCOMPARE(video.count(), 1);
+        QCOMPARE(share.count(), 1);
+        QVERIFY(view.microphoneEnabled() && view.cameraEnabled());
     }
 };
 QTEST_MAIN(ScreenShareTest)

@@ -95,7 +95,7 @@ static PsiMediaJingleCapabilities currentNativeCallCapabilities()
     result.probeComplete               = watcher->featuresReady();
 #ifdef PSI_ENABLE_AVCALL
     const auto backendProfiles = PsiMedia::RtpSession::supportedSecureRtpProfiles();
-    result.probeComplete      = result.probeComplete && watcher->cryptoReady();
+    result.probeComplete       = result.probeComplete && watcher->cryptoReady();
     const auto dtlsProfiles    = watcher->dtlsSrtpProfiles();
     result.secureRtp           = std::any_of(backendProfiles.cbegin(), backendProfiles.cend(),
                                              [&dtlsProfiles](const QString &profile) { return dtlsProfiles.contains(profile); });
@@ -295,6 +295,10 @@ public:
         peer     = session->peer();
         incoming = session->role() == Jingle::Origin::Responder;
         joined   = true;
+        // Make the backend capability surface available before the first RTP
+        // content, so screen sharing can be the first medium added to a board.
+        if (!session->applicationPadFactory(RTP::Description::ns()))
+            return false;
         // Nobody consented to capture yet: the user switches the microphone or camera on.
         microphoneWanted = false;
         cameraWanted     = false;
@@ -623,8 +627,8 @@ public:
 
     bool startScreenSharing(const QString &source, std::shared_ptr<const void> lease)
     {
-        if (!session || !active || !manager || !manager->capabilities.video || source.isEmpty()
-            || !psiMediaJingleSupportsGroupedCapture(session))
+        if (!session || (!active && !(joined && signalingActive)) || !manager || !manager->capabilities.video
+            || source.isEmpty() || !psiMediaJingleSupportsGroupedCapture(session))
             return false;
         if (screenContent && screenContent->state() < Jingle::State::Finishing) {
             // Sharing again: the new source is sent on the content kept by stopScreenSharing().
@@ -647,7 +651,7 @@ public:
         screenContent = manager->rtpManager->createOutgoing(session, RTP::Media::Video, session->role(),
                                                             QStringLiteral("screen-")
                                                                 + QUuid::createUuid().toString(QUuid::Id128));
-        if (!screenContent) {
+        if (!screenContent || !ensureJoinedBackend()) {
             screenSource.clear();
             emit q->mediaControlError(tr("The media backend cannot add screen sharing to this call."));
             return false;
@@ -1035,7 +1039,8 @@ bool AvCall::startScreenSharing(const QString &source, std::shared_ptr<const voi
 }
 bool AvCall::screenSharingSupported() const
 {
-    return d->active && d->session && psiMediaJingleSupportsGroupedCapture(d->session);
+    return (d->active || (d->joined && d->signalingActive)) && d->session
+        && psiMediaJingleSupportsGroupedCapture(d->session);
 }
 void AvCall::stopScreenSharing() { d->stopScreenSharing(); }
 bool AvCall::screenSharing() const

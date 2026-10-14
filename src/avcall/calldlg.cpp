@@ -95,7 +95,7 @@ public:
                 session->setCameraEnabled(enabled);
         });
         connect(view, &CallView::shareRequested, this, [this] {
-            if (!session || !active)
+            if (!active || (!session && !joinMedia()))
                 return;
             if (capture.selecting() || session->screenSharing())
                 capture.stop();
@@ -163,6 +163,7 @@ public:
             active = true;
             view->setConnecting(false);
             view->setActive(true);
+            view->setWhiteboardOnly(false);
             view->setSharingSupported(session->screenSharingSupported());
             view->setStatus(tr("Connected"));
             session->setIncomingVideo(view->remoteVideo());
@@ -455,6 +456,8 @@ public:
             view->setConnecting(false);
             view->setActive(true);
             view->setStatus(tr("Connected"));
+            if (mediaAvailable(wbSession->peer()) && joinMedia())
+                view->setSharingSupported(session->screenSharingSupported());
             elapsed.start();
             timer.start(1000);
             updateWhiteboardSupport();
@@ -478,8 +481,7 @@ public:
         watchSession(jingle);
     }
 
-    // Contents added by the peer: a whiteboard is accepted like added media. A session that started
-    // as a whiteboard cannot carry media yet.
+    // Contents added by the peer: a whiteboard is accepted like added media.
     void watchSession(Jingle::Session *jingle)
     {
         // Qt::UniqueConnection does not work with lambdas: remember the session instead.
@@ -646,9 +648,10 @@ public:
         verifiedEndToEnd = auth.isValid() && trusted;
         // A whiteboard that only has the message transport goes through the server, maybe protected.
         const auto messages = whiteboard ? qobject_cast<SXE::Transport *>(whiteboard->transport().data()) : nullptr;
-        const bool throughServer = !session && messages;
+        const bool throughServer = messages;
         if (throughServer && !messages->encryption().isEmpty())
-            view->setSecurity(tr("End-to-end encrypted with OMEMO; the whiteboard goes through the server"), true, true);
+            view->setSecurity(tr("End-to-end encrypted with OMEMO; the whiteboard goes through the server"), true,
+                              true);
         else if (auth.isValid() && trusted)
             view->setSecurity(tr("End-to-end encrypted, verified with OMEMO"), true);
         else if (auth.isValid())
