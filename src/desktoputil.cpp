@@ -19,12 +19,17 @@
 
 #include "desktoputil.h"
 
+#include <QCoreApplication>
 #include <QDesktopServices>
+#include <QFileDialog>
 #include <QFileInfo>
+#include <QInputDialog>
+#include <QMessageBox>
 #include <QProcess>
 #include <QRegularExpression>
 #include <QSet>
 #include <QSettings>
+#include <QStandardPaths>
 #include <QUrl>
 #ifdef Q_OS_WIN
 #include <QOperatingSystemVersion>
@@ -94,6 +99,44 @@ bool DesktopUtil::openUrl(const QString &url)
 }
 
 bool DesktopUtil::openUrl(const QUrl &url) { return doOpenUrl(url); }
+
+bool DesktopUtil::openMediaUrl(const QUrl &url, QString &player, QWidget *parent)
+{
+    const auto tr = [](const char *text) { return QCoreApplication::translate("DesktopUtil", text); };
+    if (player.isEmpty() || !QFileInfo(player).isExecutable()) {
+        QStringList names, executables;
+        for (const auto &name : { QStringLiteral("mpv"), QStringLiteral("vlc"), QStringLiteral("smplayer") }) {
+            const auto executable = QStandardPaths::findExecutable(name);
+            if (!executable.isEmpty()) {
+                names.append(name);
+                executables.append(executable);
+            }
+        }
+        const auto browse = tr("Choose another player…");
+        names.append(browse);
+        bool       accepted = false;
+        const auto choice
+            = QInputDialog::getItem(parent, tr("External media player"), tr("Player:"), names, 0, false, &accepted);
+        if (!accepted)
+            return false;
+        if (choice == browse) {
+            player = QFileDialog::getOpenFileName(parent, tr("Choose media player executable"));
+            if (player.isEmpty())
+                return false;
+        } else {
+            player = executables.value(names.indexOf(choice));
+        }
+    }
+    const auto argument = url.isLocalFile() ? url.toLocalFile() : QString::fromLatin1(url.toEncoded());
+    if (!QFileInfo(player).isFile() || !QFileInfo(player).isExecutable()
+        || !QProcess::startDetached(player, { argument })) {
+        QMessageBox::warning(parent, tr("External media player"),
+                             tr("Could not start the media player. Choose another player and try again."));
+        player.clear();
+        return false;
+    }
+    return true;
+}
 
 /**
  * \brief Sets the handler for the given \a scheme to be the \a handler method provided by the \a receiver object.

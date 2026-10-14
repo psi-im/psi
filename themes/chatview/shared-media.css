@@ -1,0 +1,151 @@
+/* Loaded only by the WebEngine shared-media controls, independent of the chat theme. */
+.psi-shared-media {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+    vertical-align: top;
+    line-height: normal;
+    isolation: isolate;
+}
+
+.psi-shared-media-video {
+    width: 560px;
+}
+
+.psi-shared-media-video > video {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.psi-shared-media .psi-media-actions {
+    position: absolute;
+    z-index: 1;
+    top: 10px;
+    right: 10px;
+}
+
+.psi-shared-media .psi-media-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    max-width: 100%;
+}
+
+.psi-shared-media .psi-media-button {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-sizing: border-box;
+    min-height: 34px;
+    margin: 0;
+    padding: 7px;
+    border: 1px solid #536076;
+    border-radius: 8px;
+    background: #293548;
+    color: #f5f7fb;
+    font: 600 13px/1.35 sans-serif;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, .25);
+}
+
+.psi-shared-media .psi-media-open {
+    border-color: #5793ec;
+    background: #2868c8;
+    color: #fff;
+}
+
+.psi-shared-media .psi-media-button:hover {
+    border-color: #91a5c4;
+    background: #3b4a61;
+}
+
+.psi-shared-media .psi-media-open:hover {
+    border-color: #a3c8ff;
+    background: #3579db;
+}
+
+.psi-shared-media .psi-media-button:active {
+    transform: translateY(1px);
+    box-shadow: none;
+}
+
+.psi-shared-media .psi-media-button:focus-visible {
+    outline: 2px solid #c1dbff;
+    outline-offset: 3px;
+}
+
+.psi-shared-media .psi-media-icon,
+.psi-shared-media .psi-media-icon svg {
+    display: block;
+    flex: 0 0 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.psi-shared-media .psi-media-label {
+    display: none;
+    min-width: 0;
+    overflow-wrap: break-word;
+}
+
+.psi-shared-media-video.psi-media-failed {
+    min-height: 210px;
+}
+
+.psi-shared-media.psi-media-failed {
+    display: inline-grid;
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.psi-shared-media.psi-media-failed > video,
+.psi-shared-media.psi-media-failed > .psi-audio-msg {
+    grid-area: 1 / 1;
+}
+
+.psi-shared-media.psi-media-failed .psi-media-actions {
+    position: relative;
+    grid-area: 1 / 1;
+    top: auto;
+    right: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    box-sizing: border-box;
+    min-width: 0;
+    padding: 22px;
+    border-radius: 8px;
+    background: #1b222d;
+    color: #e5ebf5;
+}
+
+.psi-shared-media .psi-media-status {
+    width: 100%;
+    max-width: 28em;
+    overflow-wrap: break-word;
+    color: inherit;
+    font: 14px/1.5 sans-serif;
+    text-align: center;
+}
+
+.psi-shared-media.psi-media-failed .psi-media-button {
+    min-height: 40px;
+    max-width: 100%;
+    padding: 10px 14px;
+}
+
+.psi-shared-media.psi-media-failed .psi-media-label {
+    display: inline;
+}
+
+.psi-shared-media-audio.psi-media-failed {
+    min-height: 200px;
+}

@@ -23,6 +23,7 @@
         <file>chatview/psi/adapter.js</file>
         <file>chatview/moment-with-locales.js</file>
         <file>chatview/util.js</file>
+        <file>chatview/shared-media.css</file>
         <file>chatview/psi/bubble/Dark.css</file>
     </qresource>
 </RCC>

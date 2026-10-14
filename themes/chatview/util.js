@@ -149,7 +149,9 @@ function initPsiTheme() {
                 sign.className = sign.className.replace(/\bpsi-am-sign-play\b/, "");
                 sign.className += " psi-am-sign-stop";
                 playing = true;
-                audio.play();
+                var playRequest = audio.play();
+                if (typeof session.openSharedMedia === "function" && playRequest && playRequest.catch)
+                    playRequest.catch(markStopped);
                 updateTitleScroller();
             },
 
@@ -186,6 +188,10 @@ function initPsiTheme() {
             //server.console("time updated: " + audio.currentTime + " set progress bar current value: " + progressBar.value + " duration: " + audio.duration);
         });
         audio.addEventListener("ended", markStopped);
+        if (typeof session.openSharedMedia === "function") {
+            audio.addEventListener("pause", markStopped);
+            audio.addEventListener("error", markStopped);
+        }
         progressBar.addEventListener("click", function(event) { that.seekFraction(event.offsetX / progressBar.clientWidth) });
 
         updateTitleScroller();
@@ -658,7 +664,83 @@ function initPsiTheme() {
                     <source src="${source}"/>
                 </video>
             </div>`;
-            return chat.util.createHtmlNode(html);
+            var fragment = chat.util.createHtmlNode(html);
+            chat.util.addSharedMediaActions(fragment.querySelector("video"), fragment.firstChild, source);
+            return fragment;
+        },
+
+        addSharedMediaActions: function(media, container, source) {
+            // Only WebEngine exposes this operation; keep WebKit and Qite unchanged.
+            if (typeof session.openSharedMedia !== "function" || source.indexOf("/sharedfile/") === -1)
+                return;
+            if (!document.getElementById("psi-shared-media-style")) {
+                var style = document.createElement("link");
+                style.id = "psi-shared-media-style";
+                style.rel = "stylesheet";
+                style.href = "/psi/themes/chatview/shared-media.css";
+                document.head.appendChild(style);
+            }
+            var strings = session.sharedMediaStrings;
+            var sourceId = source.slice(source.lastIndexOf("/sharedfile/") + "/sharedfile/".length);
+            container.classList.add("psi-shared-media", "psi-shared-media-" + media.tagName.toLowerCase());
+            var actions = document.createElement("div");
+            actions.className = "psi-media-actions";
+            var status = document.createElement("div");
+            status.className = "psi-media-status";
+            status.setAttribute("role", "status");
+            status.hidden = true;
+            actions.appendChild(status);
+            var buttons = document.createElement("div");
+            buttons.className = "psi-media-buttons";
+            actions.appendChild(buttons);
+            function addButton(label, choosePlayer) {
+                var button = document.createElement("button");
+                button.type = "button";
+                button.className = "psi-media-button " + (choosePlayer ? "psi-media-choose" : "psi-media-open");
+                button.title = label;
+                button.setAttribute("aria-label", label);
+                var icon = document.createElement("span");
+                icon.className = "psi-media-icon";
+                icon.setAttribute("aria-hidden", "true");
+                icon.innerHTML = choosePlayer
+                    ? '<svg viewBox="0 0 20 20" fill="currentColor"><circle cx="4" cy="10" r="1.6"/><circle cx="10" cy="10" r="1.6"/><circle cx="16" cy="10" r="1.6"/></svg>'
+                    : '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4H4v12h12v-4M11 3h6v6M9 11l8-8"/></svg>';
+                button.appendChild(icon);
+                var text = document.createElement("span");
+                text.className = "psi-media-label";
+                text.textContent = label;
+                button.appendChild(text);
+                button.addEventListener("click", function(event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    media.pause();
+                    session.openSharedMedia(sourceId, choosePlayer);
+                });
+                buttons.appendChild(button);
+            }
+            addButton(strings.open, false);
+            addButton(strings.choose, true);
+            var originalControls = media.controls;
+            function failed() {
+                var code = media.error ? media.error.code : 0;
+                if (code === 1)
+                    return; // An intentional abort is not a playback failure.
+                status.textContent = code === 2 ? strings.network : code === 3 ? strings.decode
+                    : code === 4 ? strings.unsupported : strings.failed;
+                status.hidden = false;
+                container.classList.add("psi-media-failed");
+                media.controls = false;
+            }
+            media.addEventListener("error", failed);
+            var mediaSource = media.querySelector("source");
+            if (mediaSource)
+                mediaSource.addEventListener("error", failed);
+            media.addEventListener("canplay", function() {
+                status.hidden = true;
+                container.classList.remove("psi-media-failed");
+                media.controls = originalControls;
+            });
+            container.appendChild(actions);
         },
 
         replaceYoutube : function(linkEl) {
@@ -784,6 +866,13 @@ ${info}
 </audio>
 </div>`);
                     var player = playerFragment.firstChild;
+                    if (typeof session.openSharedMedia === "function") {
+                        var wrapper = document.createElement("div");
+                        wrapper.appendChild(player);
+                        playerFragment.appendChild(wrapper);
+                        chat.util.addSharedMediaActions(player.querySelector("audio"), wrapper,
+                            `/psi/account/${session.account}/sharedfile/${source}`);
+                    }
                     if (share.nextSibling)
                         share.parentNode.insertBefore(playerFragment, share.nextSibling);
                     else

@@ -99,6 +99,7 @@
                 <size type="QString"></size> <!-- will be invalid when converted to QSize so we can detect first load -->
             </message>
             <chat comment="Chat dialog options">
+                <external-media-player type="QString"></external-media-player>
                 <theme comment="The theme used for chat messages rendering" type="QString">psi/new_classic</theme>
                 <central-toolbar comment="Have a central toolbar" type="bool">true</central-toolbar>
                 <size comment="Remembered window size" type="QSize">

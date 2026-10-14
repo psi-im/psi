@@ -23,10 +23,13 @@
 class QObject;
 class QString;
 class QUrl;
+class QWidget;
 
 namespace DesktopUtil {
 bool openUrl(const QString &url);
 bool openUrl(const QUrl &url);
+// Select a media executable when needed, and pass the URL as a single argument.
+bool openMediaUrl(const QUrl &url, QString &player, QWidget *parent = nullptr);
 
 void setUrlHandler(const QString &scheme, QObject *receiver, const char *method);
 void unsetUrlHandler(const QString &scheme);
