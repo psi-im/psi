@@ -32,6 +32,7 @@
 #include "filesharingmanager.h"
 #include "psirichtext.h"
 #include "qiteaudio.h"
+#include "qitevideo.h"
 #include "textutil.h"
 #include "urlobject.h"
 
@@ -51,6 +52,7 @@ public:
     bool                     keepAtBottom             = true;
     FileSharingDeviceOpener *mediaOpener              = nullptr;
     ITEAudioController      *voiceMsgCtrl             = nullptr;
+    ITEVideoController      *videoCtrl                = nullptr;
 
     // handler function accepts everything after tag name upto but exluding final ">"
     PsiRichText::ParsersMap objectParsers;
@@ -109,6 +111,7 @@ span.emojis {
     auto itc        = new InteractiveText(this, QTextFormat::UserObject + 2); // +1 was allocated for MarkerFormatType
     d->voiceMsgCtrl = new ITEAudioController(itc, viewport());
     d->voiceMsgCtrl->setAutoFetchMetadata(true);
+    d->videoCtrl = new ITEVideoController(itc, viewport());
 
     d->objectParsers = PsiRichText::ParsersMap {
         { "share",
@@ -126,6 +129,10 @@ span.emojis {
 
               if (item->mimeType().startsWith(QLatin1String("audio/"))) {
                   return { d->voiceMsgCtrl->makeFormat(QUrl(QLatin1String("share:") + id), d->mediaOpener), "" };
+              }
+
+              if (item->mimeType().startsWith(QLatin1String("video/"))) {
+                  return { d->videoCtrl->makeFormat(QUrl(QLatin1String("share:") + id), d->mediaOpener), "" };
               }
 
               if (item->mimeType().startsWith("image/")) {
@@ -218,6 +225,7 @@ span.emojis {
 
 PsiTextView::~PsiTextView()
 {
+    delete d->videoCtrl;
     delete d->voiceMsgCtrl; // remove before QTextDocument is destroyed
 }
 
