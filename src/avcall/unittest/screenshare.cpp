@@ -313,6 +313,14 @@ private slots:
         view.setFinished();
         QCOMPARE(end->text(), QStringLiteral("Close"));
         QVERIFY(security->parentWidget() == dock);
+
+        CallView pending;
+        auto pendingEnd = pending.findChild<QPushButton *>(QStringLiteral("callEnd"));
+        QVERIFY(pendingEnd);
+        pending.setConnecting(true);
+        QCOMPARE(pendingEnd->text(), QStringLiteral("Cancel"));
+        pending.setFinished();
+        QCOMPARE(pendingEnd->text(), QStringLiteral("Close"));
     }
 
     void paletteFollowsSystemThemeWithoutStylingWhiteboardChildren()
