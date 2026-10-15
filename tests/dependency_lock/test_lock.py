@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -38,6 +39,7 @@ class DependencyLockTests(unittest.TestCase):
         self.assertEqual(values["QTKEYCHAIN_COMMIT"], self.lock["qtkeychain"]["commit"])
         self.assertEqual(values["MSVC_QT6_SDK_TAG"], self.lock["windows_sdks"]["msvc_qt6"]["tag"])
         self.assertNotIn("QCA_TAG", values)
+        self.assertEqual(values["IRIS_RELEASE_TAG"], self.lock["iris"]["release_tag"])
 
     def test_inherits_qca_from_iris_without_second_pin(self):
         self.assertNotIn("qca", self.lock)
@@ -64,9 +66,48 @@ class DependencyLockTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             resolver.read_dependencies(self.root)
 
+    def test_iris_release_requires_a_versioned_tag_without_a_second_sha(self):
+        for tag in ("master", "v1.3/other", "../v1.3", "v1.3^{commit}", ""):
+            with self.subTest(tag=tag):
+                self.lock["iris"]["release_tag"] = tag
+                (self.root / "dependencies.lock.json").write_text(json.dumps(self.lock))
+                with self.assertRaisesRegex(ValueError, "Invalid Iris release tag"):
+                    resolver.read_dependencies(self.root)
+        self.lock["iris"]["release_tag"] = "v1.3"
+        self.lock["iris"]["commit"] = "a" * 40
+        (self.root / "dependencies.lock.json").write_text(json.dumps(self.lock))
+        with self.assertRaisesRegex(ValueError, "exact gitlink"):
+            resolver.read_dependencies(self.root)
+
+    def verify_release(self, remote, entry=None):
+        entry = entry if entry is not None else "160000 commit " + "a" * 40 + "\tiris\n"
+        tag = self.lock["iris"]["release_tag"]
+        with patch.object(resolver.subprocess, "check_output", side_effect=[entry, remote]) as run:
+            resolver.verify_iris_release(self.root, tag)
+            self.assertEqual(run.call_args_list[1].args[0][-2:],
+                             ["refs/tags/" + tag, "refs/tags/" + tag + "^{}"])
+
+    def test_release_verification_accepts_lightweight_and_annotated_tags(self):
+        ref = "refs/tags/" + self.lock["iris"]["release_tag"]
+        self.verify_release("a" * 40 + "\t" + ref + "\n")
+        # Annotated tag objects have their own SHA; compare the peeled commit.
+        self.verify_release("b" * 40 + "\t" + ref + "\n" + "a" * 40 + "\t" + ref + "^{}\n")
+
+    def test_release_verification_rejects_missing_or_different_source(self):
+        ref = "refs/tags/" + self.lock["iris"]["release_tag"]
+        with self.assertRaisesRegex(ValueError, "does not exist"):
+            self.verify_release("")
+        with self.assertRaisesRegex(ValueError, "does not match"):
+            self.verify_release("b" * 40 + "\t" + ref + "\n")
+        with self.assertRaisesRegex(ValueError, "does not match"):
+            self.verify_release("a" * 40 + "\t" + ref + "\n" + "b" * 40 + "\t" + ref + "^{}\n")
+        with self.assertRaisesRegex(ValueError, "gitlink"):
+            self.verify_release("", entry="040000 tree " + "a" * 40 + "\tiris\n")
+
     def test_dependency_pins_are_not_duplicated_in_workflows(self):
         workflow_dir = ROOT / ".github/workflows"
         pins = [
+            self.lock["iris"]["release_tag"],
             self.lock["psimedia"]["commit"],
             self.lock["qtkeychain"]["tag"],
             self.lock["windows_sdks"]["msvc_qt6"]["tag"],

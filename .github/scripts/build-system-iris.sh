@@ -11,26 +11,17 @@ if [[ ! "$iris_ref" =~ ^[0-9a-f]{40}$ ]]; then
     exit 1
 fi
 
+# Check the SDK coordinate before deleting work directories or downloading any
+# package. A release tag must never substitute another commit for the gitlink.
+dependency_values=$(GITHUB_ENV= GITHUB_OUTPUT= python3 .github/scripts/resolve-dependencies.py --verify-iris-release)
+iris_release_tag=$(awk -F= '$1 == "IRIS_RELEASE_TAG" { print $2 }' <<< "$dependency_values")
+
 work_root="${RUNNER_TEMP:-${TMPDIR:-/tmp}}"
 iris_src="$work_root/psi-system-iris-src"
 iris_build="$work_root/psi-system-iris-build"
 iris_release="$work_root/psi-system-iris-release"
 iris_probe="$work_root/psi-system-iris-probe"
 rm -rf "$iris_src" "$iris_build" "$iris_release" "$iris_probe" "$IRIS_INSTALL_PREFIX"
-
-find_release_tag() {
-    git ls-remote --tags https://github.com/psi-im/iris.git 'refs/tags/v*' 2>/dev/null \
-        | awk -v sha="$iris_ref" '
-            $1 == sha {
-                tag = $2
-                sub(/^refs\/tags\//, "", tag)
-                sub(/\^\{\}$/, "", tag)
-                print tag
-            }
-        ' \
-        | sort -Vu \
-        | tail -n 1
-}
 
 probe_installed_iris() {
     rm -rf "$iris_probe"
@@ -39,6 +30,12 @@ probe_installed_iris() {
 cmake_minimum_required(VERSION 3.16)
 project(psi_iris_release_probe LANGUAGES CXX)
 find_package(Iris CONFIG REQUIRED)
+if(NOT Iris_VERSION VERSION_EQUAL PSI_EXPECTED_IRIS_VERSION)
+    message(FATAL_ERROR "Installed Iris SDK version does not match the locked release")
+endif()
+if(NOT Iris_QT_MAJOR_VERSION EQUAL PSI_EXPECTED_QT_MAJOR)
+    message(FATAL_ERROR "Installed Iris SDK Qt major version does not match Psi")
+endif()
 add_executable(psi-iris-release-probe main.cpp)
 target_link_libraries(psi-iris-release-probe PRIVATE Iris::Iris)
 CMAKE
@@ -55,6 +52,8 @@ CPP
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_C_COMPILER="$IRIS_C_COMPILER" \
         -DCMAKE_CXX_COMPILER="$IRIS_CXX_COMPILER" \
+        -DPSI_EXPECTED_IRIS_VERSION="${iris_release_tag#v}" \
+        -DPSI_EXPECTED_QT_MAJOR=5 \
         -DCMAKE_PREFIX_PATH="$IRIS_INSTALL_PREFIX" >/dev/null \
         && cmake --build "$iris_probe/build" --parallel >/dev/null
 }
@@ -62,11 +61,7 @@ CPP
 try_release_package() {
     local tag asset archive extract_root
 
-    tag=$(find_release_tag)
-    if [[ -z "$tag" ]]; then
-        echo "Iris $iris_ref has no exact release tag; building from source"
-        return 1
-    fi
+    tag=$iris_release_tag
 
     if [[ ! -r /etc/os-release ]]; then
         echo "Cannot identify Linux distribution; building Iris $tag from source"

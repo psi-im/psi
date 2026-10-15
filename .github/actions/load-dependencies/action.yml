@@ -20,6 +20,8 @@ inputs:
     default: qca-release
 
 outputs:
+  iris_release_tag:
+    value: ${{ steps.resolve.outputs.IRIS_RELEASE_TAG }}
   psimedia_ref:
     value: ${{ steps.resolve.outputs.PSIMEDIA_SRTP_REF }}
   qtkeychain_tag:

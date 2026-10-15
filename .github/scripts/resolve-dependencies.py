@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import re
+import subprocess
 import sys
 
 HEX_SHA = re.compile(r"[0-9a-f]{40}\Z")
@@ -25,9 +26,13 @@ def read_dependencies(root, require_iris=False):
     lock = json.loads((root / "dependencies.lock.json").read_text(encoding="utf-8"))
     require(lock.get("schema_version") == 1, "Unsupported Psi dependency lock schema")
     iris = lock["iris"]
-    require(iris == {"source": "git-submodule", "path": "iris",
-                     "lock_path": "iris/dependencies.lock.json"},
+    require(isinstance(iris, dict) and set(iris) == {"source", "path", "lock_path", "release_tag"}
+            and iris["source"] == "git-submodule" and iris["path"] == "iris"
+            and iris["lock_path"] == "iris/dependencies.lock.json",
             "Iris must be an exact gitlink with its own dependency lock")
+    require(isinstance(iris["release_tag"], str)
+            and re.fullmatch(r"v\d+\.\d+(?:\.\d+){0,2}", iris["release_tag"]),
+            "Invalid Iris release tag")
 
     psimedia = lock["psimedia"]["commit"]
     require(isinstance(psimedia, str) and HEX_SHA.fullmatch(psimedia), "Invalid psimedia SHA")
@@ -38,6 +43,7 @@ def read_dependencies(root, require_iris=False):
             "Invalid QtKeychain commit")
 
     values = {
+        "IRIS_RELEASE_TAG": iris["release_tag"],
         "PSIMEDIA_SRTP_REF": psimedia,
         "QTKEYCHAIN_TAG": keychain["tag"],
         "QTKEYCHAIN_COMMIT": keychain["commit"],
@@ -70,12 +76,37 @@ def read_dependencies(root, require_iris=False):
     return values
 
 
+def verify_iris_release(root, tag):
+    """The release is an SDK coordinate; the gitlink remains the source pin."""
+    entry = subprocess.check_output(
+        ["git", "ls-tree", "HEAD", "--", "iris"], cwd=root, text=True, timeout=30).split()
+    require(len(entry) == 4 and entry[0:2] == ["160000", "commit"]
+            and HEX_SHA.fullmatch(entry[2]) and entry[3] == "iris",
+            "Cannot resolve the pinned Iris gitlink")
+    ref = "refs/tags/" + tag
+    output = subprocess.check_output(
+        ["git", "ls-remote", "--tags", "https://github.com/psi-im/iris.git", ref, ref + "^{}"],
+        cwd=root, text=True, timeout=30)
+    refs = {}
+    for line in output.splitlines():
+        fields = line.split()
+        require(len(fields) == 2 and HEX_SHA.fullmatch(fields[0]), "Invalid Iris tag response")
+        refs[fields[1]] = fields[0]
+    resolved = refs.get(ref + "^{}", refs.get(ref))
+    require(resolved is not None, "Locked Iris release tag does not exist: " + tag)
+    require(resolved == entry[2], "Locked Iris release " + tag + " does not match the Psi gitlink")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--workspace", type=Path, default=Path.cwd())
     parser.add_argument("--require-iris", action="store_true")
+    parser.add_argument("--verify-iris-release", action="store_true",
+                        help="Verify the remote release tag against Psi's gitlink (requires network)")
     args = parser.parse_args()
     values = read_dependencies(args.workspace, require_iris=args.require_iris)
+    if args.verify_iris_release:
+        verify_iris_release(args.workspace, values["IRIS_RELEASE_TAG"])
     output = "\n".join(f"{name}={value}" for name, value in values.items()) + "\n"
     for target in ("GITHUB_ENV", "GITHUB_OUTPUT"):
         if os.environ.get(target):
@@ -87,5 +118,5 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
+    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError, subprocess.SubprocessError) as error:
         sys.exit(f"Invalid dependency lock: {error}")

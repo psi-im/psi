@@ -3,7 +3,8 @@
   "iris": {
     "source": "git-submodule",
     "path": "iris",
-    "lock_path": "iris/dependencies.lock.json"
+    "lock_path": "iris/dependencies.lock.json",
+    "release_tag": "v1.3"
   },
   "psimedia": {
     "commit": "faa256f635b8f0cd56d921952ff9280de8272bd9"
