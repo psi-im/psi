@@ -9,7 +9,7 @@
 
 namespace FT = J::FileTransfer;
 
-static void queuedRanges(bool grouping)
+static void queuedRanges(bool grouping, bool cancelLast = false)
 {
     TcpPortReserver reserver;
     Endpoint        alice(QStringLiteral("alice")), bob(QStringLiteral("bob"));
@@ -28,24 +28,29 @@ static void queuedRanges(bool grouping)
     file.setName(QStringLiteral("movie.bin"));
     file.setSize(quint64(payload.size()));
     file.addHash(Hash::from(Hash::Sha256, payload));
-    int                    sessions = 0, additions = 0, accepted = 0, receipts = 0, verified = 0;
-    J::ICE::IceConnection *association = nullptr;
-    onStanza                           = [&](const Endpoint &from, QDomElement &stanza) {
+    int                         sessions = 0, additions = 0, accepted = 0, receipts = 0, verified = 0;
+    int                         removals = 0;
+    QList<QPointer<J::Session>> sourceSessions, requestSessions;
+    J::ICE::IceConnection      *association = nullptr;
+    onStanza                                = [&](const Endpoint &from, QDomElement &stanza) {
         const auto jingle = stanza.firstChildElement(QStringLiteral("jingle"));
         const auto action = jingle.attribute(QStringLiteral("action"));
         if (from.jid == alice.jid && action == QLatin1String("content-add"))
             ++additions;
+        if (from.jid == alice.jid && action == QLatin1String("content-remove"))
+            ++removals;
         if (from.jid == bob.jid && action == QLatin1String("content-accept"))
             ++accepted;
         if (from.jid == alice.jid && !jingle.firstChildElement(QStringLiteral("received")).isNull()) {
             ++receipts;
             // Once the last receipt retires, no successor is expected.
-            if (grouping && receipts < 3)
+            if (grouping && (cancelLast || receipts < 3))
                 check(accepted >= receipts, "receipt preceded successor content-accept");
         }
     };
     QObject::connect(bob.client.jingleManager(), &J::Manager::incomingSession, &bob.client, [&](J::Session *s) {
         ++sessions;
+        sourceSessions.append(s);
         auto accept = [s, payload] {
             for (auto *content : s->contentList()) {
                 if (content->state() != J::State::Created)
@@ -84,6 +89,9 @@ static void queuedRanges(bool grouping)
         rangeFile.setRange(FT::Range(quint64(i * 8192), 8192));
         cancel.append(pool.request(bob.jid, rangeFile, &consumers[i], [&, i](FT::Application *a) {
             check(a, "request setup failed");
+            auto *session = a->pad()->session();
+            if (!requestSessions.contains(session))
+                requestSessions.append(session);
             QObject::connect(a, &FT::Application::connectionReady, &consumers[i], [&, i, a] {
                 if (grouping) {
                     check(a->transport()->pad()->ns() == J::ICE::NS, "unexpected media transport");
@@ -97,6 +105,10 @@ static void queuedRanges(bool grouping)
                           "handover replaced the physical ICE/DTLS association");
                     association = network;
                 }
+                if (cancelLast && i == 2) {
+                    cancel[i](); // Close the player while its last prefetched range is active.
+                    return;
+                }
                 auto connection = a->connection();
                 auto read       = [&, i, connection] { received[i] += connection->readAll(); };
                 QObject::connect(connection.data(), &QIODevice::readyRead, &consumers[i], read);
@@ -108,12 +120,33 @@ static void queuedRanges(bool grouping)
             });
         }));
     }
-    check(pumpUntil(alice, bob, [&] { return verified == 3 && receipts == 3; }), "queued ranges did not finish");
-    for (int i = 0; i < 3; ++i)
+    const int completed = cancelLast ? 2 : 3;
+    check(pumpUntil(alice, bob,
+                    [&] { return verified == completed && receipts == completed && (!cancelLast || removals == 1); }),
+          "queued ranges did not finish");
+    for (int i = 0; i < completed; ++i)
         check(received[i] == payload.mid(i * 8192, 8192), "range payload or offset corrupted");
     check(sessions == (grouping ? 1 : 3), "wrong number of physical Jingle sessions");
     check(additions == (grouping ? 2 : 0), "ranges did not reuse content-add");
     check(!cancelledStarted, "cancelled queued request started");
+    check(pumpUntil(
+              alice, bob,
+              [&] {
+                  for (const auto &s : sourceSessions)
+                      if (s && s->state() != J::State::Finished)
+                          return false;
+                  for (const auto &s : requestSessions)
+                      if (s && s->state() != J::State::Finished)
+                          return false;
+                  return true;
+              },
+              1000),
+          "completed/cancelled ranges left a Jingle session alive");
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    for (const auto &s : sourceSessions)
+        check(!s, "sender session was not destroyed after termination");
+    for (const auto &s : requestSessions)
+        check(!s, "receiver session was not destroyed after termination");
     onStanza = {};
     pumpUntil(alice, bob, [] { return false; }, 50);
 }
@@ -147,6 +180,7 @@ int main(int argc, char **argv)
     }
     queuedRanges(true);
     queuedRanges(false);
+    queuedRanges(true, true);
     deletionDuringSetup();
     qInfo("Jingle media queue and BUNDLE handover passed");
 }

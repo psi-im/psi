@@ -79,6 +79,10 @@ ICE/DTLS/SCTP data between two local clients. Three queued ranges use one sessio
 and two `content-add` exchanges; each predecessor receipt follows successor
 `content-accept`. Without BUNDLE the same requests use three sessions. A canceled
 queued request never starts. The test explicitly skips without a DTLS/SCTP backend.
+After success or cancellation of the final prefetched range, both session objects
+must terminate and be destroyed. Iris's backend-independent `jingle_sessionretirement`
+also checks success and last-content removal in both sending roles over IBB,
+retaining the first finished FT object while a second content remains active.
 It also checks that handover keeps the same physical ICE association, and that
 the queue can be destroyed inside its setup callback. The standalone component
 tests run with ASan/UBSan/LeakSanitizer. The Jingle test uses ASan/UBSan with the
