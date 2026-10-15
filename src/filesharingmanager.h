@@ -32,6 +32,8 @@ class FileSharingDownloader;
 class FileSharingManager;
 class MessageView;
 class PsiAccount;
+class MediaChunkCache;
+class FileSharingJingleSession;
 class QFileInfo;
 class QImage;
 class QMimeData;
@@ -68,7 +70,9 @@ public:
     explicit FileSharingManager(QObject *parent = nullptr);
     ~FileSharingManager();
 
-    static QString cacheDir();
+    static QString            cacheDir();
+    MediaChunkCache          *mediaChunkCache();
+    FileSharingJingleSession *jingleMediaSessions(PsiAccount *account);
     FileCacheItem *cacheItem(const QList<XMPP::Hash> &hashes, bool reborn = false, QString *fileName = nullptr);
     FileCacheItem *cacheItem(const XMPP::Hash &id, bool reborn = false, QString *fileName = nullptr);
     // id - usually hex(sha1(image data))
@@ -93,6 +97,7 @@ signals:
 public slots:
 
 private:
+    bool acceptIncomingDownloadContents(XMPP::Jingle::Session *session);
     class Private;
     std::unique_ptr<Private> d;
 };

@@ -21,14 +21,17 @@
 
 #define QHTTP_MEMORY_LOG 1
 
+#include "filesharingchunksource.h"
 #include "filesharingdownloader.h"
 #include "filesharingitem.h"
 #include "filesharingmanager.h"
 #include "httputil.h"
+#include "mediachunkcache.h"
 #include "psiaccount.h"
 #include "psicon.h"
 #ifdef HAVE_WEBSERVER
 #include "qhttpfwd.hpp"
+#include "qhttpserverconnection.hpp"
 #include "qhttpserverresponse.hpp"
 #include "webserver.h"
 #endif
@@ -39,6 +42,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <limits>
 
 #define HTTP_CHUNK (512 * 1024)
 
@@ -56,9 +60,10 @@ public:
         ServiceUnavailable, // 503
     };
 
-    PsiAccount                           *acc;
-    FileSharingItem                      *item = nullptr;
+    QPointer<PsiAccount>                  acc;
+    QPointer<FileSharingItem>             item;
     QPointer<FileShareDownloader>         downloader;
+    QPointer<MediaChunkReader>            chunkReader;
     std::optional<FileSharingItem::Range> requestedRange;
     std::optional<quint64>                bytesLeft; // if not set - unknown
     qint64                                totalTranferred = 0;
@@ -82,6 +87,10 @@ public:
         }
 
         QByteArray rangeHeaderValue = self->requestHeader("range");
+        if constexpr (Impl::supportsChunkCache) {
+            if (self->isHeadRequest())
+                rangeHeaderValue.clear(); // RFC 9110: Range is defined for GET, not HEAD.
+        }
         if (rangeHeaderValue.size()) {
             auto status = parseHttpRangeRequest(rangeHeaderValue);
             if (status != StatusCode::Ok) {
@@ -91,24 +100,95 @@ public:
             }
         }
 
+        if constexpr (Impl::supportsChunkCache) {
+            if (self->isHeadRequest()) {
+                setupHeaders(item->fileSize(), item->mimeType(), {}, requestedRange);
+                _finish();
+                return;
+            }
+        }
+
         auto cache = item->cache();
         if (cache) {
             proxyCache();
             return; // handled with success
         }
 
+        if constexpr (Impl::supportsChunkCache) {
+            if (startChunkReader())
+                return;
+        }
+
+        startRawDownload();
+    }
+
+    void startRawDownload()
+    {
+        if (!item || !item->account()) {
+            _finishWithMetadataError(StatusCode::ServiceUnavailable);
+            return;
+        }
         downloader = item->download(requestedRange);
         Q_ASSERT(downloader);
         downloader->setParent(this);
 
         connect(downloader, &FileShareDownloader::metaDataChanged, this, &ControlBase::onMetadataChanged);
-        connect(downloader, &FileShareDownloader::failed, this, [this]() {
-            if (!headersSent) {
-                _finishWithMetadataError(StatusCode::BadGateway);
-            }
-        });
+        connect(downloader, &FileShareDownloader::failed, this, [this] { failUpstream(); });
 
         downloader->open();
+    }
+
+    bool startChunkReader()
+    {
+        const auto size = item->fileSize();
+        const auto hash = item->sums().value(0);
+        if (!size || !*size || *size > quint64(std::numeric_limits<qint64>::max()) || hash.data().isEmpty()
+            || (!item->mimeType().startsWith(QLatin1String("video/"))
+                && !item->mimeType().startsWith(QLatin1String("audio/"))))
+            return false;
+        auto owner = item->account();
+        if (!owner)
+            return false;
+        auto          cache  = acc->psi()->fileSharingManager()->mediaChunkCache();
+        const auto    source = owner->id() + QChar(0) + hash.toString();
+        const quint64 offset = requestedRange ? requestedRange->start : 0;
+        const quint64 length = requestedRange && requestedRange->size ? requestedRange->size : *size - offset;
+        const QPointer<FileSharingItem> resource(item);
+        const QPointer<MediaChunkCache> cacheGuard(cache);
+        auto fetch = [resource, cacheGuard](quint64 offset, quint64 length, MediaChunkCache::Completion done) {
+            return FileSharingChunkSource::fetch(resource, offset, length, std::move(done), cacheGuard);
+        };
+        chunkReader = new MediaChunkReader(cache, source, *size, offset, length, owner->id(), std::move(fetch), this);
+        connect(chunkReader, &QIODevice::readyRead, this, [this, size, length, mime = item->mimeType()] {
+            if (!headersSent) {
+                bytesLeft = length;
+                setupHeaders(size, mime, {}, requestedRange);
+                headersSent = true;
+            }
+            if (dataHungry)
+                transfer();
+        });
+        connect(chunkReader, &MediaChunkReader::disconnected, this, [this] { transfer(); });
+        connect(chunkReader, &MediaChunkReader::failed, this, [this] {
+            const bool unsupported = chunkReader->errorCode() == MediaChunkError::RangeUnsupported;
+            if (!headersSent && unsupported) {
+                ensureUpstreamStopped();
+                chunkReader = nullptr;
+                startRawDownload(); // Keep servers without bounded ranges working.
+            } else if (!headersSent) {
+                _finishWithMetadataError(StatusCode::BadGateway);
+            } else {
+                finished = true;
+                ensureUpstreamStopped();
+                static_cast<Impl *>(this)->abortBody();
+            }
+        });
+        static_cast<Impl *>(this)->connectReadyWrite(chunkReader, [this] {
+            dataHungry = true;
+            transfer();
+        });
+        chunkReader->open();
+        return true;
     }
 
     // returns <parsed,list of start/size>
@@ -278,54 +358,64 @@ public:
         }
     }
 
+    void failUpstream()
+    {
+        if (finished)
+            return;
+        if (!headersSent) {
+            _finishWithMetadataError(StatusCode::BadGateway);
+            return;
+        }
+        finished = true;
+        ensureUpstreamStopped();
+        static_cast<Impl *>(this)->abortBody();
+    }
+
     void transfer()
     {
-        if (finished) {
+        if (finished || !dataHungry)
             return;
-        }
-        qint64 bytesAvail  = downloader ? downloader->bytesAvailable() : 0;
-        bool   isConnected = downloader ? downloader->isConnected() : false;
-
-        if (isConnected) {
-            if (bytesAvail) {
-                qint64 toTransfer = bytesAvail > HTTP_CHUNK ? HTTP_CHUNK : bytesAvail;
-                auto   data       = downloader->read(toTransfer);
-                // qDebug("read %lld bytes from available %lld", qint64(data.size()), bytesAvail);
-                if (bytesLeft.has_value()) {
-                    if (data.size() < bytesLeft)
-                        _write(data);
-                    else {
-                        // if (data.size() > bytesLeft)
-                        //    data.resize(bytesLeft);
-                        _write(data);
-                        _finish();
-                    }
-                    *bytesLeft -= data.size();
-                } else {
-                    _write(data);
-                }
-                // qDebug("FSP transferred %lld bytes of %lld bytes", qint64(data.size()), toTransfer);
-            } else {
-                // qDebug("FSP we have to wait for readyRead or disconnected");
+        QIODevice *input     = chunkReader ? static_cast<QIODevice *>(chunkReader.data()) : downloader.data();
+        const bool connected = chunkReader ? chunkReader->isConnected() : downloader && downloader->isConnected();
+        const auto available = input ? input->bytesAvailable() : 0;
+        const QPointer<ControlBase> guard(this);
+        if (available > 0) {
+            auto count = std::min<quint64>(quint64(available), HTTP_CHUNK);
+            if (bytesLeft)
+                count = std::min(count, *bytesLeft);
+            const auto data = input->read(qint64(count));
+            // The source can synchronously fail and close the HTTP response.
+            if (!guard || finished)
+                return;
+            if (!data.isEmpty()) {
+                if (bytesLeft)
+                    *bytesLeft -= quint64(data.size());
+                _write(data);
+                if (!guard)
+                    return;
+                if (bytesLeft && !*bytesLeft)
+                    _finish();
+                return; // Resume after downstream allBytesWritten.
             }
+        }
+        if (connected)
             return;
-        }
-
-        // so we are not connected
-        if (bytesAvail) {
-            _write(downloader->read(bytesAvail));
+        if (bytesLeft && *bytesLeft)
+            failUpstream();
+        else
             _finish();
-            qDebug("FSP transferred final %lld bytes", bytesAvail);
-        } else {
-            _finish();
-            qDebug("FSP ended with no additional data");
-        }
     }
 
     void ensureUpstreamStopped()
     {
+        if (chunkReader) {
+            chunkReader->disconnect(this);
+            chunkReader->abort();
+            chunkReader->deleteLater();
+        }
         if (downloader) {
             downloader->disconnect(this);
+            downloader->abort();
             downloader->deleteLater();
         }
     }
@@ -333,9 +423,9 @@ public:
     void _write(const QByteArray &data)
     {
         // qDebug("FSP: write %lld bytes", qint64(data.size()));
-        static_cast<Impl *>(this)->write(data);
         totalTranferred += data.size();
         dataHungry = false;
+        static_cast<Impl *>(this)->write(data);
     }
 
     void _finish()
@@ -357,6 +447,7 @@ public:
         ensureUpstreamStopped();
         if (downloader) { // TODO we need download manager instead
             downloader->disconnect(this);
+            downloader->abort();
             downloader->deleteLater();
         }
         finished = true;
@@ -472,7 +563,8 @@ class NAMProxy : public ControlBase<NAMProxy> {
     QNetworkRequest request;
 
 public:
-    FileSharingNAMReply *reply;
+    static constexpr bool supportsChunkCache = false;
+    FileSharingNAMReply  *reply;
 
     NAMProxy(PsiAccount *acc, const QString &sourceIdHex, const QNetworkRequest &req, FileSharingNAMReply *reply) :
         ControlBase<NAMProxy>(acc, sourceIdHex, reply), request(req), reply(reply)
@@ -510,6 +602,7 @@ public:
         reply->finishWithError(replyError, httpCode, httpReason);
     }
     void              finish() { reply->finish(); }
+    void              abortBody() { reply->abort(); }
     inline QByteArray requestHeader(const char *headerName) { return request.rawHeader(headerName); }
     inline void setResponseHeader(const char *headerName, QByteArray value) { reply->setRawHeader(headerName, value); }
     inline void setResponseStatusCode(StatusCode code)
@@ -535,6 +628,7 @@ class HTTPProxy : public ControlBase<HTTPProxy> {
     qhttp::server::QHttpResponse *response;
 
 public:
+    static constexpr bool supportsChunkCache = true;
     HTTPProxy(PsiAccount *acc, const QString &sourceIdHex, qhttp::server::QHttpRequest *request,
               qhttp::server::QHttpResponse *response) :
         ControlBase<HTTPProxy>(acc, sourceIdHex, response), request(request), response(response)
@@ -542,7 +636,16 @@ public:
         auto baseUrl = acc->psi()->webServer()->serverUrl().toString();
         qDebug("FSP %s %s%s range: %s", qPrintable(request->methodString()), qPrintable(baseUrl),
                qPrintable(request->url().toString()), qPrintable(request->headers().value("range")));
+        auto stopped = [this] {
+            finished = true;
+            ensureUpstreamStopped();
+        };
+        connect(request->connection(), &qhttp::server::QHttpConnection::disconnected, this, stopped);
+        connect(response, &qhttp::server::QHttpResponse::done, this, stopped);
     }
+
+    bool isHeadRequest() const { return request->methodString() == QLatin1String("HEAD"); }
+    void abortBody() { response->connection()->killConnection(); }
 
     static qhttp::TStatusCode mapStatusCode(ControlBase::StatusCode code)
     {

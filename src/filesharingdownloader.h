@@ -25,6 +25,7 @@
 #include <optional>
 
 class PsiAccount;
+class FileSharingJingleSession;
 
 namespace XMPP {
 class Jid;
@@ -50,11 +51,13 @@ public:
                         const QList<XMPP::Jid> &jids, const QStringList &uris, QObject *manager);
     ~FileShareDownloader();
 
+    std::optional<quint64>      responseSize() const; // Actual upstream metadata, not advertised size.
     bool                        isSuccess() const;
     bool                        isConnected() const;
     bool                        open(QIODevice::OpenMode mode = QIODevice::ReadOnly) override;
     void                        abort();
     void                        setRequestRange(const std::optional<Range> &range);
+    void                        setJingleSessionPool(FileSharingJingleSession *pool);
     const std::optional<Range> &requestRange() const;
     const std::optional<Range> &responseRange() const;
 
@@ -71,6 +74,9 @@ protected:
     qint64 writeData(const char *data, qint64 maxSize) override;
 
 signals:
+    // Validated payload. Pooled media requests may release their receipt later,
+    // after the successor content has been accepted.
+    void transferCompleted();
     void metaDataChanged();
     void disconnected();
     void failed(); // when last piece of data saved to file or on error

@@ -19,6 +19,7 @@
 
 #include "filesharingdownloader.h"
 #include "filesharingitem.h"
+#include "filesharingjinglesession.h"
 #include "filesharingmanager.h"
 #include "fileutil.h"
 #include "httputil.h"
@@ -36,6 +37,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QNetworkReply>
+#include <QPointer>
 #include <QTimer>
 #include <QUrlQuery>
 #include <QVariant>
@@ -106,15 +108,18 @@ signals:
 class JingleFileShareDownloader : public AbstractFileShareDownloader {
     Q_OBJECT
 
-    XMPP::Jingle::Connection::Ptr      connection;
-    Jingle::FileTransfer::Application *app = nullptr;
-    XMPP::Jingle::FileTransfer::File   file;
-    QList<Jid>                         jids;
+    XMPP::Jingle::Connection::Ptr               connection;
+    QPointer<Jingle::FileTransfer::Application> app;
+    XMPP::Jingle::FileTransfer::File            file;
+    QList<Jid>                                  jids;
+    QPointer<FileSharingJingleSession>          pool;
+    MediaChunkAbort                             cancelRequest;
+    bool                                        verified = false;
 
 public:
     JingleFileShareDownloader(PsiAccount *acc_, const QString &uri, const XMPP::Jingle::FileTransfer::File &file,
-                              const QList<Jid> &jids, QObject *parent) :
-        AbstractFileShareDownloader(acc_, uri, parent), file(file), jids(jids)
+                              const QList<Jid> &jids, FileSharingJingleSession *pool, QObject *parent) :
+        AbstractFileShareDownloader(acc_, uri, parent), file(file), jids(jids), pool(pool)
     {
     }
 
@@ -147,6 +152,23 @@ public:
             return;
         }
 
+        if (_requestRange)
+            file.setRange(XMPP::Jingle::FileTransfer::Range(_requestRange->start, _requestRange->size));
+        if (pool) {
+            cancelRequest = pool->request(dataSource, file, this, [this](Jingle::FileTransfer::Application *a) {
+                if (!a) {
+                    downloadError(tr("Jingle file transfer is disabled"));
+                    return;
+                }
+                app = a;
+                wireApplication();
+                connect(app, &Jingle::FileTransfer::Application::payloadVerified, this, [this] {
+                    verified = true;
+                    emit success();
+                });
+            });
+            return;
+        }
         auto *session = acc->client()->jingleManager()->newSession(dataSource);
         app           = static_cast<Jingle::FileTransfer::Application *>(
             session->newContent(Jingle::FileTransfer::NS, Jingle::Origin::Responder));
@@ -154,8 +176,6 @@ public:
             downloadError(QString::fromLatin1("Jingle file transfer is disabled"));
             return;
         }
-        if (_requestRange)
-            file.setRange(XMPP::Jingle::FileTransfer::Range(_requestRange->start, _requestRange->size));
         app->setFile(file);
         app->setStreamingMode(true);
         session->addContent(app);
@@ -166,6 +186,12 @@ public:
             session->terminate(Jingle::Reason::Condition::Decline, _lastError);
         });
 
+        wireApplication();
+        session->initiate();
+    }
+
+    void wireApplication()
+    {
         connect(app, &Jingle::FileTransfer::Application::connectionReady, this, [this]() {
             qDebug("FSP connectionReady");
             auto r = app->acceptFile().range();
@@ -185,14 +211,15 @@ public:
                 return;
             auto r = app->lastReason();
             app    = nullptr;
+            if (verified)
+                return; // The pool owns receipt retirement after validated payload delivery.
             if (r.isValid() && r.condition() == Jingle::Reason::Success) {
+                emit success();
                 emit disconnected();
                 return;
             }
             downloadError(tr("Jingle download failed: %s").arg(r.text()));
         });
-
-        session->initiate();
     }
 
     qint64 bytesAvailable() const { return connection ? connection->bytesAvailable() : 0; }
@@ -201,6 +228,17 @@ public:
 
     void abort(bool isFailure, const QString &reason)
     {
+        if (cancelRequest) {
+            auto cancel = std::exchange(cancelRequest, {});
+            if (app)
+                app->disconnect(this);
+            if (connection)
+                connection->disconnect(this);
+            connection.reset();
+            app = nullptr;
+            cancel();
+            return;
+        }
         if (app) {
             if (connection) {
                 connection->disconnect(this);
@@ -214,6 +252,10 @@ public:
 
     void close()
     {
+        if (pool) {
+            abort(false, {});
+            return;
+        }
         if (app) {
             if (connection) {
                 connection->disconnect(this);
@@ -236,7 +278,7 @@ public:
 class NAMFileShareDownloader : public AbstractFileShareDownloader {
     Q_OBJECT
 
-    QNetworkReply *reply = nullptr;
+    QPointer<QNetworkReply> reply;
 
     void namFailed(const QString &err = QString())
     {
@@ -294,7 +336,7 @@ public:
                 }
             }
 
-            if (!_totalSize) {
+            if (!_totalSize && !_responseRange) {
                 auto clHeader = reply->header(QNetworkRequest::ContentLengthHeader);
                 if (clHeader.isValid()) {
                     bool ok;
@@ -321,9 +363,10 @@ public:
         connect(reply, &QNetworkReply::finished, this, [this]() {
             qDebug("FSD reply is finished. error code=%d. bytes available=%lld", reply->error(),
                    reply->bytesAvailable());
-            if (reply->error() == QNetworkReply::NoError)
+            if (reply->error() == QNetworkReply::NoError) {
+                emit success();
                 emit disconnected();
-            else
+            } else
                 emit failed();
         });
     }
@@ -398,6 +441,7 @@ public:
                     this,
                     [this]() {
                         connected = false;
+                        emit success();
                         emit disconnected();
                     },
                     Qt::QueuedConnection);
@@ -434,6 +478,7 @@ class FileShareDownloader::Private : public QObject {
 public:
     FileShareDownloader                      *q   = nullptr;
     PsiAccount                               *acc = nullptr;
+    QPointer<FileSharingJingleSession>        pool;
     QList<XMPP::Hash>                         sums;
     Jingle::FileTransfer::File                file;
     QList<Jid>                                jids;
@@ -444,19 +489,24 @@ public:
     std::optional<FileShareDownloader::Range> requestRange;
     std::optional<FileShareDownloader::Range> responseRange;
     std::optional<quint64>                    bytesLeft;
-    AbstractFileShareDownloader              *downloader  = nullptr;
-    bool                                      metaReady   = false;
-    bool                                      finished    = false;
-    bool                                      success     = false;
-    bool                                      selfDelete  = false;
-    FileSharingItem::SourceType               currentType = FileSharingItem::SourceType::None;
+    std::optional<quint64>                    actualSize;
+    AbstractFileShareDownloader              *downloader       = nullptr;
+    bool                                      metaReady        = false;
+    bool                                      finished         = false;
+    bool                                      success          = false;
+    bool                                      failureSignalled = false;
+    bool                                      selfDelete       = false;
+    FileSharingItem::SourceType               currentType      = FileSharingItem::SourceType::None;
 
     void finishWithError(const QString &errStr)
     {
-        Q_ASSERT(!finished);
-        finished  = true;
-        success   = false;
-        lastError = errStr;
+        if (failureSignalled)
+            return;
+        failureSignalled = true;
+        finished         = true;
+        success          = false;
+        lastError        = errStr;
+        q->setErrorString(errStr);
         if (tmpFile) {
             tmpFile->close();
             tmpFile->remove();
@@ -511,7 +561,7 @@ public:
             downloader = new BOBFileShareDownloader(acc, uri, jids, q);
             break;
         case FileSharingItem::SourceType::Jingle:
-            downloader = new JingleFileShareDownloader(acc, uri, file, jids, q);
+            downloader = new JingleFileShareDownloader(acc, uri, file, jids, pool, q);
             break;
         default:
             finishWithError("Unhandled downloader");
@@ -533,12 +583,21 @@ public:
         connect(downloader, &AbstractFileShareDownloader::metaDataChanged, q, [this]() {
             metaReady     = true;
             responseRange = downloader->responseRange();
+            actualSize    = downloader->fileSize();
+            if (actualSize)
+                file.setSize(*actualSize);
+            if (responseRange && !responseRange->size && file.size() && responseRange->start <= *file.size())
+                responseRange->size = *file.size() - responseRange->start;
 
-            if (downloader->responseRange()) {
-                bytesLeft = downloader->responseRange()->size;
+            if (responseRange) {
+                bytesLeft = responseRange->size ? std::optional<quint64>(responseRange->size) : std::nullopt;
             } else if (downloader->fileSize()) { // definitely not ranged and full size is known
                 bytesLeft = *downloader->fileSize();
 
+                if (requestRange) {
+                    emit q->metaDataChanged();
+                    return; // A ranged probe must not overwrite a whole-file cache download.
+                }
                 // then we are going to cache it as well. TODO: review caching when size is unknown
                 auto partDir = QDir(acc->psi()->fileSharingManager()->cacheDir() + "/partial");
                 partDir.mkpath(".");
@@ -555,6 +614,10 @@ public:
         });
 
         connect(downloader, &AbstractFileShareDownloader::readyRead, q, &FileShareDownloader::readyRead);
+        connect(downloader, &AbstractFileShareDownloader::success, q, [this] {
+            success = true;
+            emit q->transferCompleted();
+        });
         connect(downloader, &AbstractFileShareDownloader::disconnected, q, [this]() {
             if (!finished)
                 checkCacheReady(); // TODO avoid double emit
@@ -582,6 +645,8 @@ FileShareDownloader::~FileShareDownloader()
     abort();
     qDebug("FSD destroyed");
 }
+
+std::optional<quint64> FileShareDownloader::responseSize() const { return d->actualSize; }
 
 bool FileShareDownloader::isSuccess() const { return d->success; }
 
@@ -611,6 +676,12 @@ void FileShareDownloader::abort()
 
 void FileShareDownloader::setRequestRange(const std::optional<Range> &range) { d->requestRange = range; }
 
+void FileShareDownloader::setJingleSessionPool(FileSharingJingleSession *pool)
+{
+    Q_ASSERT(!isOpen());
+    d->pool = pool;
+}
+
 const std::optional<FileShareDownloader::Range> &FileShareDownloader::requestRange() const { return d->requestRange; }
 
 const std::optional<FileShareDownloader::Range> &FileShareDownloader::responseRange() const { return d->responseRange; }
@@ -632,7 +703,14 @@ qint64 FileShareDownloader::readData(char *data, qint64 maxSize)
     if (!maxSize || !d->downloader) // wtf?
         return 0;
 
+    if (d->bytesLeft) {
+        if (!*d->bytesLeft)
+            return -1;
+        maxSize = qint64(std::min<quint64>(quint64(maxSize), *d->bytesLeft));
+    }
     qint64 bytesRead = d->downloader->read(data, maxSize);
+    if (bytesRead <= 0)
+        return bytesRead;
     if (d->tmpFile && d->tmpFile->write(data, bytesRead) != bytesRead) {
         // file engine tries to write everything unless it's a system error
         d->downloader->abort();
@@ -656,7 +734,10 @@ qint64 FileShareDownloader::writeData(const char *, qint64)
 
 bool FileShareDownloader::isSequential() const { return true; }
 
-qint64 FileShareDownloader::bytesAvailable() const { return d->downloader ? d->downloader->bytesAvailable() : 0; }
+qint64 FileShareDownloader::bytesAvailable() const
+{
+    return QIODevice::bytesAvailable() + (d->downloader ? d->downloader->bytesAvailable() : 0);
+}
 
 void FileShareDownloader::setSelfDelete(bool enable) { d->selfDelete = enable; }
 
