@@ -27,6 +27,8 @@
 #include "iconset.h"
 #include "mediadevicewatcher.h"
 #include "psiaccount.h"
+#include "psicon.h"
+#include "popupmanager.h"
 #include "psiencryptioncontroller.h"
 #include "psioptions.h"
 #include "screensharecapture.h"
@@ -36,6 +38,7 @@
 #include <QElapsedTimer>
 #include <QIcon>
 #include <QPointer>
+#include <QPixmap>
 #include <QTimer>
 #include <QVBoxLayout>
 #include <functional>
@@ -121,7 +124,7 @@ public:
                 wbView->setPreview(tile != wbView);
         });
         connect(&capture, &ScreenShareCapture::selectingChanged, view, &CallView::setShareSelecting);
-        connect(&capture, &ScreenShareCapture::failed, view, &CallView::setStatus);
+        connect(&capture, &ScreenShareCapture::failed, this, &Private::notifyError);
         connect(&timer, &QTimer::timeout, this, [this] { view->setDuration(elapsed.elapsed() / 1000); });
     }
 
@@ -165,7 +168,7 @@ public:
             view->setActive(true);
             view->setWhiteboardOnly(false);
             view->setSharingSupported(session->screenSharingSupported());
-            view->setStatus(tr("Connected"));
+            
             session->setIncomingVideo(view->remoteVideo());
             session->setIncomingPresentation(view->remotePresentation());
             // Media joining a running whiteboard session keeps the session's duration.
@@ -189,8 +192,8 @@ public:
             timer.stop();
             view->setConnecting(false);
             view->setFinished();
-            view->setStatus(refusedForSecurity() ? securityRefusal()
-                                                 : (session ? session->errorString() : tr("Call ended")));
+            notifyError(refusedForSecurity() ? securityRefusal()
+                                                 : (session ? session->errorString() : QString()));
             updateWhiteboard();
         });
         connect(call, &AvCall::cancelled, this, [this] {
@@ -200,7 +203,7 @@ public:
             capture.stop();
             timer.stop();
             view->setFinished();
-            view->setStatus(tr("Call cancelled"));
+            
             updateWhiteboard();
         });
         connect(call, &AvCall::screenSharingChanged, this, [this](bool sharing) {
@@ -209,7 +212,7 @@ public:
                 view->setSharing(false);
             }
         });
-        connect(call, &AvCall::mediaControlError, view, &CallView::setStatus);
+        connect(call, &AvCall::mediaControlError, this, &Private::notifyError);
         connect(call, &AvCall::incomingVideoRemoved, view, &CallView::hideRemoteVideo);
         connect(call, &AvCall::cameraEnabledChanged, view, &CallView::setCameraEnabled);
         connect(call, &AvCall::microphoneEnabledChanged, view, &CallView::setMicrophoneChecked);
@@ -256,7 +259,7 @@ public:
                                                               if (guard)
                                                                   accept();
                                                           })) {
-                view->setStatus(tr("Waiting for the decision about the contact's OMEMO devices…"));
+                
                 return;
             }
         }
@@ -281,10 +284,10 @@ public:
                 = outgoingTarget(XMPP::Jid(view->peer()), [this](const XMPP::Jid &full) { return callCapable(full); });
             if (!target.isValid()) {
                 view->setConnecting(false);
-                view->setStatus(tr("The contact cannot be called."));
+                notifyError(tr("The contact cannot be called."));
                 return;
             }
-            view->setStatus(tr("Calling…"));
+            
             bind(account->avCallManager()->createOutgoing());
             session->setMicrophoneEnabled(view->microphoneEnabled());
             session->setCameraEnabled(view->cameraEnabled());
@@ -303,7 +306,7 @@ public:
             session->connectToJid(target, view->cameraEnabled() ? AvCall::Both : AvCall::Audio, view->bitrate(),
                                   features);
         } else if (session) {
-            view->setStatus(tr("Connecting…"));
+            
             session->setMicrophoneEnabled(view->microphoneEnabled());
             session->setCameraEnabled(view->cameraEnabled());
             session->accept(session->mode(), view->bitrate());
@@ -373,12 +376,12 @@ public:
         if (incoming && !proposalId.isEmpty() && !wbSession) {
             // Accepting a proposal: the session follows from the proposing side.
             if (!account->wbManager()->proceed(proposalId)) {
-                view->setStatus(tr("Unable to accept the whiteboard invitation."));
+                notifyError(tr("Unable to accept the whiteboard invitation."));
                 return;
             }
             joined = true;
             view->setConnecting(true);
-            view->setStatus(tr("Connecting…"));
+            
             return;
         }
         if (incoming) {
@@ -386,7 +389,7 @@ public:
                 return;
             joined = true;
             view->setConnecting(true);
-            view->setStatus(tr("Connecting…"));
+            
             wbSession->accept();
             updateWhiteboard();
             return;
@@ -395,18 +398,18 @@ public:
         const auto target = outgoingTarget(XMPP::Jid(view->peer()),
                                            [this](const XMPP::Jid &full) { return whiteboardCapable(full); });
         if (!target.isValid() || (!target.resource().isEmpty() && !whiteboardCapable(target))) {
-            view->setStatus(tr("The contact does not support whiteboards."));
+            notifyError(tr("The contact does not support whiteboards."));
             return;
         }
         if (target.resource().isEmpty()) {
             // The invitation rings all devices; the first one that accepts gets the session.
             proposalId = account->wbManager()->propose(target);
             if (proposalId.isEmpty()) {
-                view->setStatus(tr("Unable to send the whiteboard invitation."));
+                notifyError(tr("Unable to send the whiteboard invitation."));
                 return;
             }
             view->setConnecting(true);
-            view->setStatus(tr("Inviting…"));
+            
             return;
         }
         startWhiteboardSession(target, QString());
@@ -427,11 +430,11 @@ public:
             delete jingle;
             if (!sid.isEmpty())
                 account->wbManager()->finish(sid, false);
-            view->setStatus(tr("Unable to create a whiteboard."));
+            notifyError(tr("Unable to create a whiteboard."));
             return;
         }
         view->setConnecting(true);
-        view->setStatus(sid.isEmpty() ? tr("Inviting…") : tr("Connecting…"));
+        
         ring(CallRinger::Outgoing);
         jingle->addContent(app);
         bindWhiteboardSession(jingle);
@@ -455,7 +458,7 @@ public:
                 view->setMediaAvailable(mediaAvailable(wbSession->peer()));
             view->setConnecting(false);
             view->setActive(true);
-            view->setStatus(tr("Connected"));
+            
             if (mediaAvailable(wbSession->peer()) && joinMedia())
                 view->setSharingSupported(session->screenSharingSupported());
             elapsed.start();
@@ -473,9 +476,10 @@ public:
             timer.stop();
             view->setConnecting(false);
             view->setFinished();
-            view->setStatus(refusedForSecurity()
-                                ? securityRefusal()
-                                : (wasActive ? tr("Session ended") : tr("The invitation was declined or failed")));
+            if (refusedForSecurity())
+                notifyError(securityRefusal());
+            else if (!wasActive)
+                notifyError(tr("The invitation was declined or failed"));
             updateWhiteboard();
         });
         watchSession(jingle);
@@ -521,7 +525,7 @@ public:
             return false;
         auto call = account->avCallManager()->joinSession(wbSession);
         if (!call) {
-            view->setStatus(tr("Audio and video are not available."));
+            notifyError(tr("Audio and video are not available."));
             return false;
         }
         bind(call);
@@ -536,6 +540,18 @@ public:
             ringer = new CallRinger(account, kind, playNow, this);
     }
 
+    // Use Psi's configured notification provider (including native DBus
+    // popups when enabled) instead of keeping stale errors in the call window.
+    void notifyError(const QString &message)
+    {
+        if (message.isEmpty() || !account || !account->psi())
+            return;
+        account->psi()->popupManager()->doPopup(
+            account, XMPP::Jid(view->peer()), IconsetFactory::iconPtr("status/error"),
+            tr("Call error"), QPixmap(), IconsetFactory::iconPtr("psi/avcall"),
+            message, false, PopupManager::AlertAvCall);
+    }
+
     void stopRinging() { delete ringer.data(); }
 
     // Answers to the proposal of this dialog.
@@ -544,7 +560,7 @@ public:
         auto wb = account->wbManager();
         connect(wb, &WbManager::proposalRinging, this, [this](const QString &id) {
             if (id == proposalId && !wbSession) {
-                view->setStatus(tr("Ringing…"));
+                
                 ring(CallRinger::Outgoing);
             }
         });
@@ -552,7 +568,7 @@ public:
             if (id != proposalId || wbSession || finished)
                 return;
             view->setPeer(peer.full());
-            view->setStatus(tr("Connecting…"));
+            
             startWhiteboardSession(peer, id);
         });
         connect(wb, &WbManager::proposalSession, this, [this](const QString &id, SXE::Application *app) {
@@ -570,7 +586,7 @@ public:
             finished = true;
             view->setConnecting(false);
             view->setFinished();
-            view->setStatus(message);
+            notifyError(message);
         });
     }
 
@@ -579,7 +595,7 @@ public:
         auto app = qobject_cast<SXE::Application *>(jingle->newContent(SXE::NS_SVG_WHITEBOARD));
         if (!app) {
             view->setWhiteboardEnabled(false);
-            view->setStatus(tr("Unable to add a whiteboard to this call."));
+            notifyError(tr("Unable to add a whiteboard to this call."));
             return;
         }
         // A content-add refused without an answer (one that crossed the peer's and lost the tie-break)
@@ -796,7 +812,7 @@ void CallDlg::setIncoming(AvCall *session)
     d->bind(session);
     d->view->setPeer(session->jid().full());
     d->view->setIncoming(true);
-    d->view->setStatus(tr("Incoming call"));
+    
     d->updateWhiteboardSupport();
     // A whiteboard offered with the call is shown as chosen; a call proposal shows it once the session comes.
     if (auto jingle = session->jingleSession();
@@ -816,7 +832,7 @@ void CallDlg::setIncomingWhiteboard(XMPP::Jingle::SXE::Application *whiteboard)
     d->view->setMediaAvailable(d->mediaAvailable(jingle->peer()));
     d->view->setPeer(jingle->peer().full());
     d->view->setIncoming(true);
-    d->view->setStatus(tr("Whiteboard invitation"));
+    
     d->bindWhiteboardSession(jingle);
     d->bindWhiteboard(whiteboard);
     d->updateWhiteboardSupport();
@@ -833,7 +849,7 @@ void CallDlg::setIncomingWhiteboardProposal(const XMPP::Jid &peer, const QString
     d->view->setWhiteboardEnabled(true);
     d->view->setPeer(peer.full());
     d->view->setIncoming(true);
-    d->view->setStatus(tr("Whiteboard invitation"));
+    
     d->updateWhiteboardSupport();
     d->ring(CallRinger::Incoming, false);
 }
