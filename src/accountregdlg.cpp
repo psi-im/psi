@@ -19,6 +19,7 @@
 
 #include "accountregdlg.h"
 
+#include "iris/xmpp_client.h"
 #include "iris/xmpp_tasks.h"
 #include "jidutil.h"
 #include "miniclient.h"

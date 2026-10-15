@@ -54,6 +54,7 @@ class QThread;
 class TabDlg;
 class TabManager;
 class TuneController;
+class TuneControllerManager;
 class UserListItem;
 class WebServer;
 

@@ -26,6 +26,7 @@
 #include "iris/jingle-ft.h"
 #include "iris/jingle-session.h"
 #include "iris/jingle.h"
+#include "iris/xmpp_client.h"
 #include "iris/xmpp_tasks.h"
 #include "multifiletransferdelegate.h"
 #include "multifiletransferitem.h"

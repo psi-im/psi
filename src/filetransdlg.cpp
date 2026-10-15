@@ -6,6 +6,7 @@
 #include "fileutil.h"
 #include "iris/filetransfer.h"
 #include "iris/s5b.h"
+#include "iris/xmpp_client.h"
 #include "iris/xmpp_tasks.h"
 #include "jidutil.h"
 #include "psiaccount.h"

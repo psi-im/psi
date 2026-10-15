@@ -1,6 +1,7 @@
 #include "opt_statuspep.h"
 
 #include "psioptions.h"
+#include "tunecontrollermanager.h"
 #include "ui_opt_statuspep.h"
 
 #include <QCheckBox>

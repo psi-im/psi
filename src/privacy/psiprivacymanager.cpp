@@ -19,6 +19,7 @@
 #include "psiprivacymanager.h"
 
 #include "contactupdatesmanager.h"
+#include "iris/xmpp_client.h"
 #include "iris/xmpp_jid.h"
 #include "iris/xmpp_task.h"
 #include "iris/xmpp_tasks.h"

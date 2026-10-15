@@ -115,6 +115,7 @@
 #include "textutil.h"
 #include "translationmanager.h"
 #include "tune.h"
+#include "tunecontrollermanager.h"
 #include "userlist.h"
 #include "vcardfactory.h"
 #include "voicecalldlg.h"

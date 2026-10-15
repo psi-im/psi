@@ -22,6 +22,7 @@
 #include "accountadddlg.h"
 #include "common.h"
 #include "iconaction.h"
+#include "iris/xmpp_client.h"
 #include "iris/xmpp_tasks.h"
 #include "miniclient.h"
 #include "psiaccount.h"
