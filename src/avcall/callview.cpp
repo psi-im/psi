@@ -383,6 +383,7 @@ void CallView::setCameraEnabled(bool enabled)
 void CallView::setFinished()
 {
     finished_ = true;
+    connecting_ = false;
     setActive(false);
     accept_->hide();
     quality_->hide();
