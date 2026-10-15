@@ -168,7 +168,7 @@ public:
             view->setActive(true);
             view->setWhiteboardOnly(false);
             view->setSharingSupported(session->screenSharingSupported());
-            
+
             session->setIncomingVideo(view->remoteVideo());
             session->setIncomingPresentation(view->remotePresentation());
             // Media joining a running whiteboard session keeps the session's duration.
@@ -193,7 +193,7 @@ public:
             view->setConnecting(false);
             view->setFinished();
             notifyError(refusedForSecurity() ? securityRefusal()
-                                                 : (session ? session->errorString() : QString()));
+                                             : (session ? session->errorString() : QString()));
             updateWhiteboard();
         });
         connect(call, &AvCall::cancelled, this, [this] {
@@ -203,7 +203,7 @@ public:
             capture.stop();
             timer.stop();
             view->setFinished();
-            
+
             updateWhiteboard();
         });
         connect(call, &AvCall::screenSharingChanged, this, [this](bool sharing) {
@@ -259,7 +259,7 @@ public:
                                                               if (guard)
                                                                   accept();
                                                           })) {
-                
+
                 return;
             }
         }
@@ -287,7 +287,7 @@ public:
                 notifyError(tr("The contact cannot be called."));
                 return;
             }
-            
+
             bind(account->avCallManager()->createOutgoing());
             session->setMicrophoneEnabled(view->microphoneEnabled());
             session->setCameraEnabled(view->cameraEnabled());
@@ -306,7 +306,7 @@ public:
             session->connectToJid(target, view->cameraEnabled() ? AvCall::Both : AvCall::Audio, view->bitrate(),
                                   features);
         } else if (session) {
-            
+
             session->setMicrophoneEnabled(view->microphoneEnabled());
             session->setCameraEnabled(view->cameraEnabled());
             session->accept(session->mode(), view->bitrate());
@@ -381,7 +381,7 @@ public:
             }
             joined = true;
             view->setConnecting(true);
-            
+
             return;
         }
         if (incoming) {
@@ -389,7 +389,7 @@ public:
                 return;
             joined = true;
             view->setConnecting(true);
-            
+
             wbSession->accept();
             updateWhiteboard();
             return;
@@ -409,7 +409,7 @@ public:
                 return;
             }
             view->setConnecting(true);
-            
+
             return;
         }
         startWhiteboardSession(target, QString());
@@ -434,7 +434,7 @@ public:
             return;
         }
         view->setConnecting(true);
-        
+
         ring(CallRinger::Outgoing);
         jingle->addContent(app);
         bindWhiteboardSession(jingle);
@@ -458,7 +458,7 @@ public:
                 view->setMediaAvailable(mediaAvailable(wbSession->peer()));
             view->setConnecting(false);
             view->setActive(true);
-            
+
             if (mediaAvailable(wbSession->peer()) && joinMedia())
                 view->setSharingSupported(session->screenSharingSupported());
             elapsed.start();
@@ -560,7 +560,7 @@ public:
         auto wb = account->wbManager();
         connect(wb, &WbManager::proposalRinging, this, [this](const QString &id) {
             if (id == proposalId && !wbSession) {
-                
+
                 ring(CallRinger::Outgoing);
             }
         });
@@ -568,7 +568,7 @@ public:
             if (id != proposalId || wbSession || finished)
                 return;
             view->setPeer(peer.full());
-            
+
             startWhiteboardSession(peer, id);
         });
         connect(wb, &WbManager::proposalSession, this, [this](const QString &id, SXE::Application *app) {
@@ -812,7 +812,7 @@ void CallDlg::setIncoming(AvCall *session)
     d->bind(session);
     d->view->setPeer(session->jid().full());
     d->view->setIncoming(true);
-    
+
     d->updateWhiteboardSupport();
     // A whiteboard offered with the call is shown as chosen; a call proposal shows it once the session comes.
     if (auto jingle = session->jingleSession();
@@ -832,7 +832,7 @@ void CallDlg::setIncomingWhiteboard(XMPP::Jingle::SXE::Application *whiteboard)
     d->view->setMediaAvailable(d->mediaAvailable(jingle->peer()));
     d->view->setPeer(jingle->peer().full());
     d->view->setIncoming(true);
-    
+
     d->bindWhiteboardSession(jingle);
     d->bindWhiteboard(whiteboard);
     d->updateWhiteboardSupport();
@@ -849,7 +849,7 @@ void CallDlg::setIncomingWhiteboardProposal(const XMPP::Jid &peer, const QString
     d->view->setWhiteboardEnabled(true);
     d->view->setPeer(peer.full());
     d->view->setIncoming(true);
-    
+
     d->updateWhiteboardSupport();
     d->ring(CallRinger::Incoming, false);
 }
