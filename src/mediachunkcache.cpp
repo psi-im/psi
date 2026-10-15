@@ -1,13 +1,9 @@
 #include "mediachunkcache.h"
-
+#include "mediachunkcallback.h"
+#include "mediachunkstore.h"
 #include <QCryptographicHash>
 #include <QDataStream>
-#include <QDir>
-#include <QFile>
-#include <QFileInfo>
 #include <QLoggingCategory>
-#include <QRegularExpression>
-#include <QSaveFile>
 #include <QTimer>
 #include <algorithm>
 #include <cstring>
@@ -16,32 +12,17 @@
 
 namespace {
 Q_LOGGING_CATEGORY(lcMediaChunks, "psi.filesharing.chunks", QtWarningMsg)
-const QByteArray magic("PSICHNK1");
-constexpr int    headerSize = 8 + 32 + 32;
-QByteArray       digest(const QByteArray &bytes) { return QCryptographicHash::hash(bytes, QCryptographicHash::Sha256); }
+QByteArray digest(const QByteArray &bytes) { return QCryptographicHash::hash(bytes, QCryptographicHash::Sha256); }
 }
 
 MediaChunkCache::MediaChunkCache(QString directory, QObject *parent, quint64 chunkSize, quint64 diskLimit) :
-    QObject(parent), directory_(std::move(directory)), chunkSize_(std::clamp<quint64>(chunkSize, 1, 4 * 1024 * 1024)),
-    diskLimit_(diskLimit), memory_(16 * 1024 * 1024)
+    QObject(parent), chunkSize_(std::clamp<quint64>(chunkSize, 1, MaxChunkSize)), memory_(16 * 1024 * 1024),
+    store_(new MediaChunkStore(std::move(directory), diskLimit))
 {
     scheduler_.setMaxActive(2);
-    QDir dir(directory_);
-    dir.mkpath(QStringLiteral("."));
-    const QRegularExpression name(QStringLiteral("^[0-9a-f]{64}\\.chunk$"));
-    const auto               files
-        = dir.entryInfoList({ QStringLiteral("*.chunk") }, QDir::Files | QDir::NoSymLinks, QDir::Time | QDir::Reversed);
-    for (const auto &file : files) {
-        if (!name.match(file.fileName()).hasMatch())
-            continue;
-        const auto key = file.completeBaseName();
-        entries_.insert(key, { quint64(file.size()), ++age_ });
-        diskBytes_ += quint64(file.size());
-    }
-    trim(0);
 }
-
 MediaChunkCache::~MediaChunkCache() { shutdown(); }
+quint64 MediaChunkCache::diskBytes() const { return store_->diskBytes(); }
 
 QString MediaChunkCache::recordKey(const QString &source, quint64 size, quint64 index) const
 {
@@ -52,91 +33,18 @@ QString MediaChunkCache::recordKey(const QString &source, quint64 size, quint64 
     return QString::fromLatin1(digest(identity).toHex());
 }
 
-void MediaChunkCache::discard(const QString &key)
-{
-    memory_.remove(key);
-    const auto it = entries_.find(key);
-    if (it == entries_.end())
-        return;
-    const QString path = directory_ + '/' + key + QStringLiteral(".chunk");
-    if (QFile::remove(path) || !QFileInfo::exists(path)) {
-        diskBytes_ -= it->size;
-        entries_.erase(it);
-    }
-}
-
-bool MediaChunkCache::trim(quint64 incoming)
-{
-    if (incoming > diskLimit_)
-        return false;
-    while ((diskBytes_ > diskLimit_ - incoming || entries_.size() + (incoming ? 1 : 0) > 2048) && !entries_.isEmpty()) {
-        auto oldest = entries_.begin();
-        for (auto it = entries_.begin(); it != entries_.end(); ++it)
-            if (it->age < oldest->age)
-                oldest = it;
-        const auto before = diskBytes_;
-        discard(oldest.key());
-        if (diskBytes_ == before)
-            return false; // A read-only cache must not exceed its disk budget.
-    }
-    return true;
-}
-
-QByteArray MediaChunkCache::load(const QString &key, quint64 expected)
-{
-    if (const auto bytes = memory_.object(key)) {
-        if (entries_.contains(key))
-            entries_[key].age = ++age_;
-        return *bytes;
-    }
-    if (!entries_.contains(key))
-        return {};
-    QFile file(directory_ + '/' + key + QStringLiteral(".chunk"));
-    if (file.open(QIODevice::ReadOnly) && quint64(file.size()) == headerSize + expected) {
-        const auto header = file.read(headerSize);
-        const auto bytes  = file.read(qint64(expected));
-        if (header.size() == headerSize && header.startsWith(magic)
-            && header.mid(8, 32) == QByteArray::fromHex(key.toLatin1()) && quint64(bytes.size()) == expected
-            && header.mid(40, 32) == digest(bytes)) {
-            entries_[key].age = ++age_;
-            memory_.insert(key, new QByteArray(bytes), bytes.size());
-            return bytes;
-        }
-    }
-    file.close();
-    discard(key); // Truncation or local corruption is a cache miss, never valid data.
-    return {};
-}
-
-void MediaChunkCache::store(const QString &key, const QByteArray &bytes)
-{
-    discard(key);
-    if (trim(headerSize + quint64(bytes.size()))) {
-        QSaveFile  file(directory_ + '/' + key + QStringLiteral(".chunk"));
-        const auto header = magic + QByteArray::fromHex(key.toLatin1()) + digest(bytes);
-        if (file.open(QIODevice::WriteOnly) && file.write(header) == header.size() && file.write(bytes) == bytes.size()
-            && file.commit()) {
-            const auto size = quint64(headerSize + bytes.size());
-            entries_.insert(key, { size, ++age_ });
-            diskBytes_ += size;
-        }
-    }
-    // Cache persistence is best-effort; a full/read-only disk must not prevent playback.
-    memory_.insert(key, new QByteArray(bytes), bytes.size());
-}
-
 quint64 MediaChunkCache::read(QString source, quint64 fileSize, quint64 offset, quint64 length, QString lane,
                               Fetch fetch, Completion done, bool urgent)
 {
-    if (!done)
+    if (!done || requests_.size() >= MaxRequests)
         return 0;
     const auto ticket = ++nextTicket_;
-    requests_.insert(ticket, { 0, std::move(done) });
-    auto fail = [this, ticket](QString error) {
+    requests_.insert(ticket, { 0, std::move(done), {} });
+    auto fail = [this, ticket](MediaChunkError error) {
         QTimer::singleShot(0, this, [this, ticket, error] { deliver(ticket, {}, error); });
     };
-    if (stopped_ || sourceDisabled(source) || requests_.size() > 256 || source.isEmpty() || lane.isEmpty() || !fetch
-        || !length || offset >= fileSize || fileSize > quint64(std::numeric_limits<qint64>::max())) {
+    if (stopped_ || source.isEmpty() || lane.isEmpty() || !fetch || !length || offset >= fileSize
+        || fileSize > quint64(std::numeric_limits<qint64>::max())) {
         fail(QStringLiteral("Invalid or unavailable media chunk request"));
         return ticket;
     }
@@ -146,9 +54,14 @@ quint64 MediaChunkCache::read(QString source, quint64 fileSize, quint64 offset, 
     const quint64 inside   = offset - start;
     const quint64 count    = std::min(length, expected - inside);
     const auto    key      = recordKey(source, fileSize, index);
-    if (auto bytes = load(key, expected); !bytes.isEmpty()) {
-        auto slice = bytes.mid(int(inside), int(count));
-        QTimer::singleShot(0, this, [this, ticket, slice] { deliver(ticket, slice, {}); });
+    if (const auto bytes = memory_.object(key)) {
+        store_->touch(key);
+        requests_[ticket].cachedSlice = bytes->mid(int(inside), int(count));
+        QTimer::singleShot(0, this, [this, ticket] {
+            auto it = requests_.find(ticket);
+            if (it != requests_.end())
+                deliver(ticket, std::move(it->cachedSlice), {});
+        });
         return ticket;
     }
     scheduler_.setLaneMaxActive(lane, 2);
@@ -156,41 +69,77 @@ quint64 MediaChunkCache::read(QString source, quint64 fileSize, quint64 offset, 
     const auto                      scheduled = scheduler_.requestCancelable(
         key, 0, lane, urgent ? 100 : 50,
         [guard, key, expected, start, fetch](Completion complete) {
-            qCDebug(lcMediaChunks) << "fetch" << key.left(16) << "offset" << start << "length" << expected;
-            auto completed = std::make_shared<bool>(false);
-            return fetch(start, expected, [guard, key, expected, complete, completed](QByteArray bytes, QString error) {
-                if (!guard)
-                    return;
-                QMetaObject::invokeMethod(
-                    guard,
-                    [guard, key, expected, complete, completed, bytes = std::move(bytes),
-                     error = std::move(error)]() mutable {
-                        if (!guard || *completed)
-                            return;
-                        *completed = true;
-                        if (error.isEmpty() && quint64(bytes.size()) != expected)
-                            error = QStringLiteral("Incomplete media chunk");
-                        if (error.isEmpty() && !guard->stopped_)
-                            guard->store(key, bytes);
-                        qCDebug(lcMediaChunks)
-                            << "complete" << key.left(16) << "bytes" << bytes.size() << "error" << error;
-                        complete(std::move(bytes), std::move(error));
-                    },
-                    Qt::QueuedConnection);
-            });
+            return guard->fetchChunk(key, start, expected, fetch, std::move(complete));
         },
-        [guard, ticket, inside, count](QByteArray bytes, QString error) {
+        [guard, ticket, inside, count](QByteArray bytes, MediaChunkError error) {
             if (guard)
                 guard->deliver(ticket, error.isEmpty() ? bytes.mid(int(inside), int(count)) : QByteArray(), error);
-        },
-        this);
+        });
     auto it = requests_.find(ticket);
     if (it != requests_.end())
         it->schedulerTicket = scheduled;
     return ticket;
 }
 
-void MediaChunkCache::deliver(quint64 ticket, QByteArray bytes, QString error)
+MediaChunkCache::Abort MediaChunkCache::fetchChunk(const QString &key, quint64 start, quint64 expected, Fetch fetch,
+                                                   Completion complete)
+{
+    struct State {
+        bool  cancelled = false, completed = false;
+        Abort abort;
+    };
+    auto                            state = std::make_shared<State>();
+    const QPointer<MediaChunkCache> guard(this);
+    store_->read(key, expected, [guard, key, start, expected, fetch, complete, state](QByteArray cached) {
+        if (!guard || guard->stopped_)
+            return;
+        if (!cached.isEmpty()) {
+            guard->memory_.insert(key, new QByteArray(cached), cached.size());
+            complete(std::move(cached), {});
+            return;
+        }
+        if (state->cancelled) {
+            complete({}, { MediaChunkError::Cancelled, QStringLiteral("Media read cancelled") });
+            return;
+        }
+        qCDebug(lcMediaChunks) << "fetch" << key.left(16) << "offset" << start << "length" << expected;
+        state->abort = fetch(
+            start, expected,
+            queuedMediaChunkCompletion(
+                guard, [guard, key, expected, complete, state](QByteArray bytes, MediaChunkError error) mutable {
+                    if (!guard || state->completed || guard->stopped_)
+                        return;
+                    state->completed = true;
+                    state->abort     = {}; // Providers may capture their completion in the abort callable.
+                    if (error.isEmpty() && quint64(bytes.size()) != expected)
+                        error = QStringLiteral("Incomplete media chunk");
+                    qCDebug(lcMediaChunks)
+                        << "complete" << key.left(16) << "bytes" << bytes.size() << "error" << error.message();
+                    if (!error.isEmpty()) {
+                        complete({}, std::move(error));
+                        return;
+                    }
+                    guard->memory_.insert(key, new QByteArray(bytes), bytes.size());
+                    guard->store_->write(key, bytes, [guard, complete, bytes](QByteArray) {
+                        if (guard && !guard->stopped_)
+                            complete(bytes, {});
+                    });
+                }));
+        if (state->cancelled) {
+            auto abort = std::exchange(state->abort, {});
+            if (abort)
+                abort();
+        }
+    });
+    return [state] {
+        state->cancelled = true;
+        auto abort       = std::exchange(state->abort, {});
+        if (abort)
+            abort();
+    };
+}
+
+void MediaChunkCache::deliver(quint64 ticket, QByteArray bytes, MediaChunkError error)
 {
     auto it = requests_.find(ticket);
     if (it == requests_.end())
@@ -212,7 +161,7 @@ bool MediaChunkCache::cancel(quint64 ticket)
     if (scheduled)
         scheduler_.cancel(scheduled);
     if (done)
-        done({}, QStringLiteral("Media read cancelled"));
+        done({}, { MediaChunkError::Cancelled, QStringLiteral("Media read cancelled") });
     return true;
 }
 
@@ -239,6 +188,8 @@ MediaChunkReader::~MediaChunkReader() { abort(); }
 
 bool MediaChunkReader::open(OpenMode mode)
 {
+    if (isOpen())
+        return mode == openMode();
     if (mode != ReadOnly || stopped_ || !cache_ || offset_ > size_ || left_ > size_ - offset_)
         return false;
     QIODevice::open(mode);
@@ -269,7 +220,8 @@ void MediaChunkReader::schedule()
         if (stopped_)
             return;
         if (!cache_) {
-            stopped_ = true;
+            stopped_   = true;
+            errorCode_ = MediaChunkError::Failed;
             setErrorString(QStringLiteral("Media cache unavailable"));
             emit failed();
             return;
@@ -277,13 +229,14 @@ void MediaChunkReader::schedule()
         const QPointer<MediaChunkReader> guard(this);
         ticket_ = cache_->read(
             source_, size_, offset_, std::min<quint64>(left_, 65536), lane_, fetch_,
-            [guard](QByteArray bytes, QString error) {
+            [guard](QByteArray bytes, MediaChunkError error) {
                 if (!guard || guard->stopped_)
                     return;
                 guard->ticket_ = 0;
                 if (!error.isEmpty()) {
-                    guard->stopped_ = true;
-                    guard->setErrorString(error);
+                    guard->stopped_   = true;
+                    guard->errorCode_ = error.code();
+                    guard->setErrorString(error.message());
                     emit guard->failed();
                     return;
                 }
@@ -291,6 +244,13 @@ void MediaChunkReader::schedule()
                 emit guard->readyRead();
             },
             first_);
+        if (!ticket_) {
+            stopped_ = true;
+            setErrorString(QStringLiteral("Too many pending media reads"));
+            errorCode_ = MediaChunkError::Failed;
+            emit failed();
+            return;
+        }
         first_ = false;
     });
 }
@@ -306,9 +266,13 @@ qint64 MediaChunkReader::readData(char *data, qint64 maxSize)
         offset_ += quint64(count);
         left_ -= quint64(count);
     }
-    if (!left_)
-        QTimer::singleShot(0, this, [this] { emit disconnected(); });
-    else
+    if (!left_ && !ended_) {
+        ended_ = true;
+        QTimer::singleShot(0, this, [this] {
+            if (!stopped_)
+                emit disconnected();
+        });
+    } else
         schedule();
     return count ? count : left_ ? 0 : -1;
 }

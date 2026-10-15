@@ -25,6 +25,112 @@ struct Pending {
 class ChunkCacheTest : public QObject {
     Q_OBJECT
 private slots:
+    void cancellingQueuedMemoryHitSettlesOnce()
+    {
+        QTemporaryDir   dir(QDir::currentPath() + "/chunks-XXXXXX");
+        MediaChunkCache cache(dir.path(), nullptr, 128);
+        int             delivered = 0, canceled = 0;
+        auto            fetch = [](quint64 offset, quint64 size, Completion done) -> MediaChunkCache::Abort {
+            done(pattern(offset, size), {});
+            return {};
+        };
+        cache.read("source", 1000, 0, 5, "lane", fetch, [&](QByteArray, MediaChunkError error) {
+            QVERIFY(error.isEmpty());
+            ++delivered;
+        });
+        QTRY_COMPARE(delivered, 1);
+        for (int i = 0; i < 1000; ++i) {
+            auto ticket = cache.read("source", 1000, 0, 5, "lane", fetch, [&](QByteArray bytes, MediaChunkError error) {
+                QVERIFY(bytes.isEmpty());
+                QCOMPARE(error.code(), MediaChunkError::Cancelled);
+                ++canceled;
+            });
+            QVERIFY(cache.cancel(ticket));
+        }
+        QTest::qWait(10);
+        QCOMPARE(canceled, 1000);
+        QCOMPARE(delivered, 1);
+    }
+    void workerCompletionAfterOwnerDestructionIsIgnored()
+    {
+        QTemporaryDir      dir(QDir::currentPath() + "/chunks-XXXXXX");
+        auto               cache = new MediaChunkCache(dir.path(), nullptr, 128);
+        Completion         complete;
+        int                failures = 0;
+        auto               lifetime = std::make_shared<int>(1);
+        std::weak_ptr<int> weak     = lifetime;
+        auto               fetch    = [&](quint64, quint64, Completion done) -> MediaChunkCache::Abort {
+            complete = done;
+            return [done, lifetime] { done({}, { MediaChunkError::Cancelled, QStringLiteral("aborted") }); };
+        };
+        cache->read("source", 1000, 0, 5, "lane", fetch, [&](QByteArray, MediaChunkError error) {
+            QVERIFY(!error.isEmpty());
+            ++failures;
+        });
+        QTRY_VERIFY(bool(complete));
+        lifetime.reset();
+        delete cache;
+        std::thread worker([done = std::move(complete)] { done(pattern(0, 128), {}); });
+        worker.join();
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+        QTest::qWait(10);
+        QCOMPARE(failures, 1);
+        QVERIFY(weak.expired()); // An abort capturing completion must not form a cycle.
+    }
+    void admissionIsBoundedAndCancelledBeforeDiskMiss()
+    {
+        QTemporaryDir   dir(QDir::currentPath() + "/chunks-XXXXXX");
+        MediaChunkCache cache(dir.path(), nullptr, 128);
+        int             starts = 0, callbacks = 0;
+        auto            fetch = [&](quint64, quint64, Completion) -> MediaChunkCache::Abort {
+            ++starts;
+            return {};
+        };
+        QList<quint64> tickets;
+        for (int i = 0; i < MediaChunkCache::MaxRequests; ++i) {
+            auto ticket = cache.read("source", 1000, 0, 5, "lane", fetch, [&](QByteArray, MediaChunkError error) {
+                QCOMPARE(error.code(), MediaChunkError::Cancelled);
+                ++callbacks;
+            });
+            QVERIFY(ticket);
+            tickets.append(ticket);
+        }
+        for (int i = 0; i < 10000; ++i)
+            QCOMPARE(cache.read("source", 1000, 0, 5, "lane", fetch,
+                                [](QByteArray, MediaChunkError) { QFAIL("Rejected request retained a callback"); }),
+                     quint64(0));
+        for (auto ticket : tickets)
+            QVERIFY(cache.cancel(ticket));
+        QCOMPARE(callbacks, MediaChunkCache::MaxRequests);
+        QTest::qWait(20);
+        QCOMPARE(starts, 0);
+    }
+
+    void unavailableDiskStillServesMemoryCache()
+    {
+        QTemporaryDir dir(QDir::currentPath() + "/chunks-XXXXXX");
+        QFile         blocker(dir.filePath("not-a-directory"));
+        QVERIFY(blocker.open(QIODevice::WriteOnly));
+        blocker.close();
+        MediaChunkCache cache(blocker.fileName(), nullptr, 128);
+        int             starts = 0, delivered = 0;
+        auto            fetch = [&](quint64 offset, quint64 size, Completion done) -> MediaChunkCache::Abort {
+            ++starts;
+            done(pattern(offset, size), {});
+            return {};
+        };
+        for (int i = 1; i <= 2; ++i) {
+            cache.read("source", 1000, 1, 5, "lane", fetch, [&](QByteArray bytes, MediaChunkError error) {
+                QVERIFY(error.isEmpty());
+                QCOMPARE(bytes, pattern(1, 5));
+                ++delivered;
+            });
+            QTRY_COMPARE(delivered, i);
+        }
+        QCOMPARE(starts, 1);
+        QCOMPARE(cache.diskBytes(), quint64(0));
+    }
+
     void sharedReadsAndIndependentCancellation()
     {
         QTemporaryDir dir(QDir::currentPath() + "/chunks-XXXXXX");
@@ -36,12 +142,13 @@ private slots:
             return [&] { ++aborts; };
         };
         MediaChunkCache cache(dir.path(), nullptr, 128);
-        const auto      a = cache.read("account:A:hash", 1000, 3, 7, "A", fetch, [&](QByteArray bytes, QString error) {
-            QVERIFY(bytes.isEmpty());
-            QVERIFY(!error.isEmpty());
-            ++canceled;
-        });
-        cache.read("account:A:hash", 1000, 50, 12, "A", fetch, [&](QByteArray bytes, QString error) {
+        const auto      a
+            = cache.read("account:A:hash", 1000, 3, 7, "A", fetch, [&](QByteArray bytes, MediaChunkError error) {
+                  QVERIFY(bytes.isEmpty());
+                  QVERIFY(!error.isEmpty());
+                  ++canceled;
+              });
+        cache.read("account:A:hash", 1000, 50, 12, "A", fetch, [&](QByteArray bytes, MediaChunkError error) {
             QVERIFY(error.isEmpty());
             QCOMPARE(bytes, pattern(50, 12));
             ++deliveries;
@@ -52,7 +159,7 @@ private slots:
         QCOMPARE(aborts, 0);
         pending.done(pattern(pending.offset, pending.length), {});
         QTRY_COMPARE(deliveries, 1);
-        cache.read("account:A:hash", 1000, 1, 5, "A", fetch, [&](QByteArray bytes, QString error) {
+        cache.read("account:A:hash", 1000, 1, 5, "A", fetch, [&](QByteArray bytes, MediaChunkError error) {
             QVERIFY(error.isEmpty());
             QCOMPARE(bytes, pattern(1, 5));
             ++deliveries;
@@ -71,7 +178,7 @@ private slots:
             done(pattern(offset, length), {});
             return {};
         };
-        auto done = [&](QByteArray bytes, QString error) {
+        auto done = [&](QByteArray bytes, MediaChunkError error) {
             QVERIFY(error.isEmpty());
             QCOMPARE(bytes, pattern(7, 10));
             ++delivered;
@@ -129,26 +236,37 @@ private slots:
             done(pattern(offset, shortRead ? length - 1 : length), {});
             return {};
         };
-        MediaChunkCache cache(dir.path(), nullptr, 128, 400); // Two records including headers.
-        cache.read("source", 1024, 0, 5, "lane", fetch, [&](QByteArray bytes, QString error) {
-            QVERIFY(bytes.isEmpty());
-            QVERIFY(!error.isEmpty());
-            ++delivered;
-        });
-        QTRY_COMPARE(delivered, 1);
-        QCOMPARE(cache.diskBytes(), quint64(0));
-        shortRead = false;
-        for (const quint64 offset : { 0, 128, 256, 0 }) {
-            const auto next = delivered + 1;
-            cache.read("source", 1024, offset, 5, "lane", fetch, [&, offset](QByteArray bytes, QString error) {
-                QVERIFY(error.isEmpty());
-                QCOMPARE(bytes, pattern(offset, 5));
+        {
+            MediaChunkCache cache(dir.path(), nullptr, 128, 400); // Two records including headers.
+            cache.read("source", 1024, 0, 5, "lane", fetch, [&](QByteArray bytes, MediaChunkError error) {
+                QVERIFY(bytes.isEmpty());
+                QVERIFY(!error.isEmpty());
                 ++delivered;
             });
-            QTRY_COMPARE(delivered, next);
-            QVERIFY(cache.diskBytes() <= 400);
+            QTRY_COMPARE(delivered, 1);
+            QCOMPARE(cache.diskBytes(), quint64(0));
+            shortRead = false;
+            for (const quint64 offset : { 0, 128, 256, 0 }) {
+                const auto next = delivered + 1;
+                cache.read("source", 1024, offset, 5, "lane", fetch,
+                           [&, offset](QByteArray bytes, MediaChunkError error) {
+                               QVERIFY(error.isEmpty());
+                               QCOMPARE(bytes, pattern(offset, 5));
+                               ++delivered;
+                           });
+                QTRY_COMPARE(delivered, next);
+                QVERIFY(cache.diskBytes() <= 400);
+            }
+            QCOMPARE(starts, 4); // The evicted disk record can remain hot in RAM.
         }
-        QCOMPARE(starts, 5); // Failed data and the evicted oldest chunk are fetched again.
+        MediaChunkCache reopened(dir.path(), nullptr, 128, 400);
+        reopened.read("source", 1024, 0, 5, "lane", fetch, [&](QByteArray bytes, MediaChunkError error) {
+            QVERIFY(error.isEmpty());
+            QCOMPARE(bytes, pattern(0, 5));
+            ++delivered;
+        });
+        QTRY_COMPARE(delivered, 6);
+        QCOMPARE(starts, 5); // Reopening proves that disk eviction actually happened.
     }
 
     void completionFromWorkerAndDuplicateCompletion()
@@ -161,7 +279,7 @@ private slots:
             return {};
         };
         MediaChunkCache cache(dir.path(), nullptr, 128);
-        auto            done = [&](QByteArray bytes, QString error) {
+        auto            done = [&](QByteArray bytes, MediaChunkError error) {
             QCOMPARE(QThread::currentThread(), qApp->thread());
             QVERIFY(error.isEmpty());
             QCOMPARE(bytes, pattern(0, 5));
@@ -187,7 +305,7 @@ private slots:
             return [&] { ++aborts; };
         };
         MediaChunkCache cache(dir.path(), nullptr, 128);
-        cache.read("source", 1000, 0, 5, "lane", fetch, [&](QByteArray bytes, QString error) {
+        cache.read("source", 1000, 0, 5, "lane", fetch, [&](QByteArray bytes, MediaChunkError error) {
             QVERIFY(bytes.isEmpty());
             QVERIFY(!error.isEmpty());
             ++failures;
@@ -247,7 +365,7 @@ private slots:
         QTRY_COMPARE(starts, 1);
         delete reader;
         QCOMPARE(aborts, 1);
-        pending({}, "aborted");
+        pending({}, QStringLiteral("aborted"));
         QTest::qWait(10);
         QCOMPARE(cache.diskBytes(), quint64(0));
     }
@@ -277,7 +395,7 @@ private slots:
         for (const auto offset : offsets) {
             const int next = delivered + 1;
             cache.read("account:movie-sha1", 2343036928ULL, offset, 16, "account", fetch,
-                       [&, offset](QByteArray bytes, QString error) {
+                       [&, offset](QByteArray bytes, MediaChunkError error) {
                            QVERIFY(error.isEmpty());
                            QCOMPARE(bytes, pattern(offset, 16));
                            ++delivered;

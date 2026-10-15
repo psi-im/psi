@@ -1,10 +1,9 @@
 // Adapted from Ri0n/AnyKeep PR #156, db77d42ef791225839d03ecb0c62cd06462b31e3.
 // Original implementation: Sergei Ilinykh (AnyKeep).
 #include "mediachunkscheduler.h"
+#include "mediachunkcallback.h"
 
-#include <QCoreApplication>
 #include <QPointer>
-#include <QThread>
 #include <QTimer>
 #include <algorithm>
 #include <limits>
@@ -12,14 +11,6 @@
 
 MediaChunkScheduler::MediaChunkScheduler(QObject *parent) : QObject(parent) { }
 MediaChunkScheduler::~MediaChunkScheduler() { shutdown(); }
-
-MediaChunkScheduler *MediaChunkScheduler::instance()
-{
-    static QPointer<MediaChunkScheduler> scheduler;
-    if (!scheduler && QCoreApplication::instance())
-        scheduler = new MediaChunkScheduler(QCoreApplication::instance());
-    return scheduler;
-}
 
 QString MediaChunkScheduler::makeKey(const QString &source, quint64 index)
 {
@@ -29,21 +20,21 @@ QString MediaChunkScheduler::makeKey(const QString &source, quint64 index)
 }
 
 quint64 MediaChunkScheduler::request(QString immutableSource, quint64 index, QString lane, int priority, Fetch fetch,
-                                     Completion done, QObject *fetchOwner)
+                                     Completion done)
 {
     return addWaiter(std::move(immutableSource), index, std::move(lane), priority, std::move(fetch), {},
-                     std::move(done), fetchOwner);
+                     std::move(done));
 }
 
 quint64 MediaChunkScheduler::requestCancelable(QString immutableSource, quint64 index, QString lane, int priority,
-                                               CancelableFetch fetch, Completion done, QObject *fetchOwner)
+                                               CancelableFetch fetch, Completion done)
 {
     return addWaiter(std::move(immutableSource), index, std::move(lane), priority, {}, std::move(fetch),
-                     std::move(done), fetchOwner);
+                     std::move(done));
 }
 
 quint64 MediaChunkScheduler::addWaiter(QString immutableSource, quint64 index, QString lane, int priority, Fetch fetch,
-                                       CancelableFetch cancelableFetch, Completion done, QObject *fetchOwner)
+                                       CancelableFetch cancelableFetch, Completion done)
 {
     if (stopped_ || immutableSource.isEmpty() || lane.isEmpty() || (!fetch && !cancelableFetch) || !done) {
         if (done)
@@ -64,7 +55,6 @@ quint64 MediaChunkScheduler::addWaiter(QString immutableSource, quint64 index, Q
         job->sequence        = ++nextSequence_;
         job->fetch           = std::move(fetch);
         job->cancelableFetch = std::move(cancelableFetch);
-        job->fetchOwner      = fetchOwner;
         jobs_.insert(key, job);
     }
     const quint64 ticket = ++nextTicket_;
@@ -90,76 +80,23 @@ bool MediaChunkScheduler::cancel(quint64 ticket)
             break;
         }
     }
+    const QPointer<MediaChunkScheduler> guard(this);
     if (job->waiters.isEmpty()) {
         if (!job->active)
             jobs_.remove(key);
         else if (job->abort && !job->aborting) {
-            // Keep the physical network slot occupied until the transport
-            // reports completion. A new waiter arriving during abort is
+            // Keep admission occupied until the provider reports completion.
+            // Protocol teardown below that provider may outlive its loader. A new waiter arriving during abort is
             // rescheduled if the aborted transfer does not return valid data.
             job->aborting = true;
             job->abort();
         }
     }
-    schedule();
+    if (guard)
+        schedule();
     if (done)
-        done({}, QStringLiteral("Media chunk request cancelled"));
+        done({}, { MediaChunkError::Cancelled, QStringLiteral("Media chunk request cancelled") });
     return true;
-}
-
-bool MediaChunkScheduler::abandonStopped(quint64 ticket)
-{
-    const auto key = ticketKeys_.value(ticket);
-    if (key.isEmpty())
-        return false;
-    const auto job = jobs_.value(key);
-    if (!job)
-        return false;
-    // Remove this consumer and deliver its cancellation exactly once.
-    const bool removed = cancel(ticket);
-    if (!removed || !job->waiters.isEmpty() || !job->active)
-        return removed;
-    // The transport has already been destroyed, so no future completion
-    // will settle this orphaned job. Release the reserved network slot.
-    if (jobs_.value(key) != job)
-        return removed;
-    jobs_.remove(key);
-    --active_;
-    if (--laneActive_[job->lane] == 0)
-        laneActive_.remove(job->lane);
-    schedule();
-    return removed;
-}
-
-void MediaChunkScheduler::retireStoppedOwner(QObject *fetchOwner)
-{
-    if (!fetchOwner)
-        return;
-    QList<std::shared_ptr<Job>> retired;
-    for (auto it = jobs_.begin(); it != jobs_.end();) {
-        const auto &job = it.value();
-        if (job->fetchOwner != fetchOwner) {
-            ++it;
-            continue;
-        }
-        retired.append(job);
-        if (job->active) {
-            --active_;
-            if (--laneActive_[job->lane] == 0)
-                laneActive_.remove(job->lane);
-        }
-        for (const auto &waiter : std::as_const(job->waiters))
-            ticketKeys_.remove(waiter.ticket);
-        it = jobs_.erase(it);
-    }
-    schedule();
-    // Only settle after removing all jobs: a callback may reenter request().
-    for (const auto &job : std::as_const(retired)) {
-        for (auto &waiter : job->waiters) {
-            if (waiter.done)
-                waiter.done({}, QStringLiteral("Media transport stopped"));
-        }
-    }
 }
 
 bool MediaChunkScheduler::reprioritize(quint64 ticket, int priority)
@@ -175,23 +112,6 @@ bool MediaChunkScheduler::reprioritize(quint64 ticket, int priority)
         }
     }
     return false;
-}
-
-void MediaChunkScheduler::observeExternalTransfer(QObject *physicalTransport)
-{
-    if (!physicalTransport || stopped_ || externalTransfers_.contains(physicalTransport))
-        return;
-    externalTransfers_.insert(physicalTransport);
-    // Neither cancellation nor later scheduler destruction should ever
-    // delete or terminate a Jingle session. Merely track its real lifetime.
-    connect(physicalTransport, &QObject::destroyed, this,
-            [this, physicalTransport] { releaseExternalTransfer(physicalTransport); });
-}
-
-void MediaChunkScheduler::releaseExternalTransfer(QObject *physicalTransport)
-{
-    if (externalTransfers_.remove(physicalTransport))
-        schedule();
 }
 
 void MediaChunkScheduler::setMaxActive(int count)
@@ -233,7 +153,7 @@ void MediaChunkScheduler::pump()
 {
     if (stopped_)
         return;
-    while (active_ + externalTransfers_.size() < maxActive_) {
+    while (active_ < maxActive_) {
         std::shared_ptr<Job> candidate;
         int                  bestPriority = std::numeric_limits<int>::min();
         for (const auto &job : jobs_) {
@@ -258,19 +178,18 @@ void MediaChunkScheduler::pump()
         const QString                       key      = candidate->key;
         const quint64                       sequence = candidate->sequence;
         const QPointer<MediaChunkScheduler> guard(this);
-        auto                                complete = [guard, key, sequence](QByteArray bytes, QString error) mutable {
-            if (!guard)
-                return;
-            QMetaObject::invokeMethod(
-                guard.data(),
-                [guard, key, sequence, bytes = std::move(bytes), error = std::move(error)]() mutable {
-                    if (guard)
-                        guard->finish(key, sequence, std::move(bytes), std::move(error));
-                },
-                Qt::QueuedConnection);
-        };
+        auto                                complete
+            = queuedMediaChunkCompletion(this, [guard, key, sequence](QByteArray bytes, MediaChunkError error) {
+                  if (guard)
+                      guard->finish(key, sequence, std::move(bytes), std::move(error));
+              });
         if (candidate->cancelableFetch) {
             candidate->abort = candidate->cancelableFetch(std::move(complete));
+            if (!guard || guard->stopped_) {
+                if (candidate->abort && !candidate->aborting)
+                    candidate->abort();
+                return;
+            }
             if (candidate->waiters.isEmpty() && candidate->abort && !candidate->aborting) {
                 candidate->aborting = true;
                 candidate->abort();
@@ -278,10 +197,12 @@ void MediaChunkScheduler::pump()
         } else {
             candidate->fetch(std::move(complete));
         }
+        if (!guard || guard->stopped_)
+            return;
     }
 }
 
-void MediaChunkScheduler::finish(const QString &key, quint64 sequence, QByteArray bytes, QString error)
+void MediaChunkScheduler::finish(const QString &key, quint64 sequence, QByteArray bytes, MediaChunkError error)
 {
     auto job = jobs_.value(key);
     if (!job || job->sequence != sequence || !job->active)
@@ -320,7 +241,6 @@ void MediaChunkScheduler::shutdown()
     jobs_.clear();
     ticketKeys_.clear();
     laneActive_.clear();
-    externalTransfers_.clear();
     active_ = 0;
     for (const auto &job : std::as_const(jobs)) {
         if (job->abort && !job->aborting)

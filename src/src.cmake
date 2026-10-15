@@ -388,6 +388,13 @@ list(APPEND SOURCES
     filesharedlg.cpp
     filesharingdownloader.cpp
     filesharingchunksource.cpp
+    mediachunkcallback.cpp
+    mediachunkcallback.h
+    mediachunkstore.cpp
+    mediachunkstore.h
+    mediachunktransfer.cpp
+    mediachunktransfer.h
+    mediachunktypes.h
     mediachunkcache.cpp
     mediachunkscheduler.cpp
     filesharingitem.cpp

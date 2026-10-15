@@ -448,6 +448,7 @@ public:
     std::optional<FileShareDownloader::Range> requestRange;
     std::optional<FileShareDownloader::Range> responseRange;
     std::optional<quint64>                    bytesLeft;
+    std::optional<quint64>                    actualSize;
     AbstractFileShareDownloader              *downloader       = nullptr;
     bool                                      metaReady        = false;
     bool                                      finished         = false;
@@ -541,7 +542,8 @@ public:
         connect(downloader, &AbstractFileShareDownloader::metaDataChanged, q, [this]() {
             metaReady     = true;
             responseRange = downloader->responseRange();
-            if (const auto actualSize = downloader->fileSize())
+            actualSize    = downloader->fileSize();
+            if (actualSize)
                 file.setSize(*actualSize);
             if (responseRange && !responseRange->size && file.size() && responseRange->start <= *file.size())
                 responseRange->size = *file.size() - responseRange->start;
@@ -602,6 +604,8 @@ FileShareDownloader::~FileShareDownloader()
     abort();
     qDebug("FSD destroyed");
 }
+
+std::optional<quint64> FileShareDownloader::responseSize() const { return d->actualSize; }
 
 bool FileShareDownloader::isSuccess() const { return d->success; }
 

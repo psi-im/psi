@@ -50,6 +50,7 @@ public:
                         const QList<XMPP::Jid> &jids, const QStringList &uris, QObject *manager);
     ~FileShareDownloader();
 
+    std::optional<quint64>      responseSize() const; // Actual upstream metadata, not advertised size.
     bool                        isSuccess() const;
     bool                        isConnected() const;
     bool                        open(QIODevice::OpenMode mode = QIODevice::ReadOnly) override;

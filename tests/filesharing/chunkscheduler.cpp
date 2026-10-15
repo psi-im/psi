@@ -1,6 +1,7 @@
 // Adapted from Ri0n/AnyKeep PR #156, db77d42ef791225839d03ecb0c62cd06462b31e3.
 // Original implementation: Sergei Ilinykh (AnyKeep).
 #include "mediachunkscheduler.h"
+#include <QPointer>
 #include <QtTest>
 #include <functional>
 #include <utility>
@@ -8,6 +9,35 @@
 class MediaChunkSchedulerTest : public QObject {
     Q_OBJECT
 private slots:
+    void providerCanDestroySchedulerDuringStartOrAbort()
+    {
+        for (bool duringStart : { false, true }) {
+            auto                          scheduler = new MediaChunkScheduler;
+            QPointer<MediaChunkScheduler> guard(scheduler);
+            int                           failures = 0, aborts = 0;
+            quint64                       ticket = 0;
+            ticket                               = scheduler->requestCancelable(
+                "source", 0, "lane", 1,
+                [&](MediaChunkScheduler::Completion) -> MediaChunkScheduler::Abort {
+                    if (duringStart)
+                        delete scheduler;
+                    else
+                        scheduler->cancel(ticket);
+                    return [&] {
+                        ++aborts;
+                        if (guard)
+                            delete scheduler;
+                    };
+                },
+                [&](QByteArray, MediaChunkError error) {
+                    QVERIFY(!error.isEmpty());
+                    ++failures;
+                });
+            QTRY_VERIFY(!guard);
+            QCOMPARE(aborts, 1);
+            QCOMPARE(failures, 1);
+        }
+    }
     void oneFetchForMultipleWaiters()
     {
         MediaChunkScheduler             scheduler;
@@ -18,7 +48,7 @@ private slots:
             ++starts;
             complete = std::move(done);
         };
-        const auto callback = [&](QByteArray bytes, QString error) {
+        const auto callback = [&](QByteArray bytes, MediaChunkError error) {
             QVERIFY(error.isEmpty());
             QCOMPARE(bytes, QByteArrayLiteral("verified"));
             ++deliveries;
@@ -51,7 +81,7 @@ private slots:
                 finish.insert(key, std::move(done));
             };
         };
-        const auto callback = [](QByteArray, QString error) { QVERIFY(error.isEmpty()); };
+        const auto callback = [](QByteArray, MediaChunkError error) { QVERIFY(error.isEmpty()); };
         scheduler.request(QStringLiteral("active"), 0, QStringLiteral("dav"), 0, fetch(QStringLiteral("active")),
                           callback);
         QTRY_COMPARE(started, QStringList({ QStringLiteral("active") }));
@@ -87,13 +117,13 @@ private slots:
             finish = std::move(callback);
         };
         const auto first = scheduler.request(QStringLiteral("rev"), 1, QStringLiteral("xmpp"), 10, fetch,
-                                             [&](QByteArray bytes, QString error) {
+                                             [&](QByteArray bytes, MediaChunkError error) {
                                                  QVERIFY(bytes.isEmpty());
                                                  QVERIFY(!error.isEmpty());
                                                  ++canceled;
                                              });
         scheduler.request(QStringLiteral("rev"), 1, QStringLiteral("xmpp"), 10, fetch,
-                          [&](QByteArray bytes, QString error) {
+                          [&](QByteArray bytes, MediaChunkError error) {
                               QVERIFY(error.isEmpty());
                               QCOMPARE(bytes, QByteArrayLiteral("ok"));
                               ++received;
@@ -118,7 +148,7 @@ private slots:
             ++starts;
             staleCompletion = std::move(done);
         };
-        const auto failed = [&](QByteArray bytes, QString error) {
+        const auto failed = [&](QByteArray bytes, MediaChunkError error) {
             QVERIFY(bytes.isEmpty());
             QVERIFY(!error.isEmpty());
             ++failures;
@@ -141,7 +171,7 @@ private slots:
         QCOMPARE(failures, 3);
     }
 
-    void cancelLastWaiterAbortsPhysicalFetchButHoldsNetworkSlot()
+    void cancelLastWaiterAbortsFetchButRetainsAdmission()
     {
         MediaChunkScheduler scheduler;
         scheduler.setMaxActive(1);
@@ -153,15 +183,16 @@ private slots:
             return [&] { ++aborts; };
         };
         const quint64 ticket = scheduler.requestCancelable(QStringLiteral("file"), 0, QStringLiteral("dav"), 100, fetch,
-                                                           [&](QByteArray bytes, QString error) {
+                                                           [&](QByteArray bytes, MediaChunkError error) {
                                                                QVERIFY(bytes.isEmpty());
                                                                QVERIFY(!error.isEmpty());
                                                                ++cancellations;
                                                            });
         QVERIFY(ticket);
         QTRY_COMPARE(starts, 1);
-        const quint64 next = scheduler.requestCancelable(QStringLiteral("another"), 0, QStringLiteral("dav"), 50, fetch,
-                                                         [&](QByteArray, QString error) { QVERIFY(error.isEmpty()); });
+        const quint64 next
+            = scheduler.requestCancelable(QStringLiteral("another"), 0, QStringLiteral("dav"), 50, fetch,
+                                          [&](QByteArray, MediaChunkError error) { QVERIFY(error.isEmpty()); });
         QVERIFY(next);
         QVERIFY(scheduler.cancel(ticket));
         QCOMPARE(aborts, 1);
@@ -187,7 +218,7 @@ private slots:
             return [&] { ++aborts; };
         };
         const quint64 oldTicket = scheduler.requestCancelable(QStringLiteral("rev"), 9, QStringLiteral("dav"), 10,
-                                                              fetch, [&](QByteArray, QString error) {
+                                                              fetch, [&](QByteArray, MediaChunkError error) {
                                                                   QVERIFY(!error.isEmpty());
                                                                   ++canceled;
                                                               });
@@ -195,7 +226,7 @@ private slots:
         QVERIFY(scheduler.cancel(oldTicket));
         QCOMPARE(aborts, 1);
         scheduler.requestCancelable(QStringLiteral("rev"), 9, QStringLiteral("dav"), 100, fetch,
-                                    [&](QByteArray bytes, QString error) {
+                                    [&](QByteArray bytes, MediaChunkError error) {
                                         QVERIFY(error.isEmpty());
                                         QCOMPARE(bytes, QByteArrayLiteral("authenticated"));
                                         ++delivered;
@@ -210,147 +241,6 @@ private slots:
         QCOMPARE(scheduler.activeCount(), 0);
     }
 
-    void stoppedTransportCanReleaseAnOrphanedActiveSlot()
-    {
-        MediaChunkScheduler scheduler;
-        scheduler.setMaxActive(1);
-        int                             started = 0, failures = 0;
-        MediaChunkScheduler::Completion stale;
-        auto                            fetch = [&](MediaChunkScheduler::Completion finish) {
-            ++started;
-            stale = std::move(finish);
-        };
-        const quint64 ticket = scheduler.request(QStringLiteral("abandoned"), 0, QStringLiteral("nextcloud"), 10, fetch,
-                                                 [&](QByteArray, QString error) {
-                                                     QVERIFY(!error.isEmpty());
-                                                     ++failures;
-                                                 });
-        QTRY_COMPARE(started, 1);
-        QVERIFY(scheduler.abandonStopped(ticket));
-        QCOMPARE(failures, 1);
-        QCOMPARE(scheduler.activeCount(), 0);
-        // A late completion from a defunct worker must not resurrect state.
-        stale(QByteArrayLiteral("obsolete"), {});
-        QTest::qWait(10);
-        QCOMPARE(scheduler.activeCount(), 0);
-        QCOMPARE(failures, 1);
-        QVERIFY(!scheduler.abandonStopped(ticket));
-    }
-
-    void observedJingleTransportDefersWebDavWithoutBreakingBundleHandover()
-    {
-        MediaChunkScheduler scheduler;
-        scheduler.setMaxActive(2);
-        auto *firstSession  = new QObject;
-        auto *secondSession = new QObject;
-        // Multiple Jingle contents in one BUNDLE share a physical session.
-        scheduler.observeExternalTransfer(firstSession);
-        scheduler.observeExternalTransfer(firstSession);
-        QCOMPARE(scheduler.externalActiveCount(), 1);
-        scheduler.observeExternalTransfer(secondSession);
-        QCOMPARE(scheduler.externalActiveCount(), 2);
-        QCOMPARE(scheduler.activeCount(), 2);
-
-        // SCTP/BUNDLE handover is not blocked or forcibly paused. It may
-        // briefly oversubscribe if another provider already has a slot.
-        auto *handoverSession = new QObject;
-        scheduler.observeExternalTransfer(handoverSession);
-        QCOMPARE(scheduler.externalActiveCount(), 3);
-        int                             starts = 0, deliveries = 0;
-        MediaChunkScheduler::Completion finish;
-        scheduler.request(
-            QStringLiteral("dav/account/rev"), 1, QStringLiteral("webdav"), 100,
-            [&](MediaChunkScheduler::Completion completion) {
-                ++starts;
-                finish = std::move(completion);
-            },
-            [&](QByteArray value, QString error) {
-                QVERIFY(error.isEmpty());
-                QCOMPARE(value, QByteArrayLiteral("verified"));
-                ++deliveries;
-            });
-        QCoreApplication::processEvents();
-        QCOMPARE(starts, 0);
-        // Draining an old session frees its physical reservation.
-        scheduler.releaseExternalTransfer(firstSession);
-        QCOMPARE(scheduler.externalActiveCount(), 2);
-        QCoreApplication::processEvents();
-        QCOMPARE(starts, 0);
-        delete firstSession;
-        QCOMPARE(scheduler.externalActiveCount(), 2);
-        delete secondSession; // QObject destruction also releases reservation.
-        QTRY_COMPARE(starts, 1);
-        QCOMPARE(scheduler.activeCount(), 2); // handover + WebDAV
-        finish(QByteArrayLiteral("verified"), {});
-        QTRY_COMPARE(deliveries, 1);
-        QCOMPARE(scheduler.activeCount(), 1);
-        delete handoverSession;
-        QCOMPARE(scheduler.activeCount(), 0);
-    }
-
-    void retiringProviderReleasesOrphanedAndSharedFetches()
-    {
-        QObject             workerOwner;
-        QObject             survivingOwner;
-        MediaChunkScheduler scheduler;
-        scheduler.setMaxActive(1);
-        int                             networkStarts     = 0;
-        int                             canceled          = 0;
-        int                             survivingFailures = 0;
-        MediaChunkScheduler::Completion abandonedNetwork;
-        auto                            fetch = [&](MediaChunkScheduler::Completion completion) {
-            ++networkStarts;
-            abandonedNetwork = std::move(completion);
-        };
-        const auto staleTicket = scheduler.request(
-            QStringLiteral("account:revisionA"), 2, QStringLiteral("dav"), 20, fetch,
-            [&](QByteArray, QString error) {
-                QVERIFY(!error.isEmpty());
-                ++canceled;
-            },
-            &workerOwner);
-        QVERIFY(staleTicket);
-        scheduler.request(
-            QStringLiteral("account:revisionA"), 2, QStringLiteral("dav"), 20, fetch,
-            [&](QByteArray, QString error) {
-                QVERIFY(!error.isEmpty());
-                ++survivingFailures;
-            },
-            &survivingOwner);
-        QTRY_COMPARE(networkStarts, 1);
-        QVERIFY(scheduler.cancel(staleTicket));
-        QCOMPARE(canceled, 1);
-        QCOMPARE(scheduler.activeCount(), 1);
-        // Even with no old ticket, the original fetch is still owned by the
-        // stopped worker. Consumers from another owner fail once and may retry.
-        scheduler.retireStoppedOwner(&workerOwner);
-        QCOMPARE(scheduler.activeCount(), 0);
-        QCOMPARE(survivingFailures, 1);
-        QCOMPARE(canceled, 1);
-        abandonedNetwork(QByteArrayLiteral("stale"), {});
-        QTest::qWait(10);
-        QCOMPARE(scheduler.activeCount(), 0);
-        QCOMPARE(survivingFailures, 1);
-
-        int        retried     = 0;
-        auto       finishRetry = MediaChunkScheduler::Completion();
-        const auto retry       = [&](MediaChunkScheduler::Completion completion) {
-            ++networkStarts;
-            finishRetry = std::move(completion);
-        };
-        scheduler.request(
-            QStringLiteral("account:revisionA"), 2, QStringLiteral("dav"), 20, retry,
-            [&](QByteArray bytes, QString error) {
-                QVERIFY(error.isEmpty());
-                QCOMPARE(bytes, QByteArrayLiteral("fresh"));
-                ++retried;
-            },
-            &survivingOwner);
-        QTRY_COMPARE(networkStarts, 2);
-        finishRetry(QByteArrayLiteral("fresh"), {});
-        QTRY_COMPARE(retried, 1);
-    }
-
     void immutableKeysAndTransportGroupsAreIsolated()
     {
         MediaChunkScheduler scheduler;
@@ -363,7 +253,7 @@ private slots:
             finishes.append(std::move(done));
         };
         int        completions = 0, mismatches = 0;
-        const auto okay = [&](QByteArray, QString error) {
+        const auto okay = [&](QByteArray, MediaChunkError error) {
             QVERIFY(error.isEmpty());
             ++completions;
         };
@@ -371,7 +261,7 @@ private slots:
         scheduler.request(QStringLiteral("accountB:etag1"), 0, QStringLiteral("dav"), 1, fetch, okay);
         scheduler.request(QStringLiteral("accountA:etag2"), 0, QStringLiteral("dav"), 1, fetch, okay);
         scheduler.request(QStringLiteral("accountA:etag1"), 0, QStringLiteral("xmpp"), 1, fetch,
-                          [&](QByteArray, QString error) {
+                          [&](QByteArray, MediaChunkError error) {
                               QVERIFY(!error.isEmpty());
                               ++mismatches;
                           });
