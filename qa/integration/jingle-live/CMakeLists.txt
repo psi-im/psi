@@ -118,6 +118,7 @@ if(DEFINED PSIMEDIA_SOURCE_DIR)
 
     add_executable(psi_jingle_call_live_client call_client.cpp)
     target_include_directories(psi_jingle_call_live_client PRIVATE
+        "${PSI_SOURCE_DIR}/qa/integration"
         "${PSI_SOURCE_DIR}/src"
         "${PSI_SOURCE_DIR}/src/psimedia"
         "${PSI_SOURCE_DIR}/src/avcall"

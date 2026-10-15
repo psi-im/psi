@@ -1,12 +1,13 @@
 #include "gstprovider.h"
+#include "media_backend_ready.h"
 #include "psimedia.h"
 #include "psimediajingle.h"
 
 #include <iris/dtls.h>
 #include <iris/jingle-ice.h>
-#include <iris/xmpp-im/jingle-rtp.h>
 #include <iris/jingle-session.h>
 #include <iris/tcpportreserver.h>
+#include <iris/xmpp-im/jingle-rtp.h>
 #include <iris/xmpp.h>
 #include <iris/xmpp_caps.h>
 #include <iris/xmpp_client.h>
@@ -193,6 +194,11 @@ int main(int argc, char **argv)
         qCritical("LIVE_CALL_RESULT=failure GstProvider failed to initialize");
         return 4;
     }
+    if (!waitForMediaBackend(gstProvider)) {
+        qCritical("LIVE_CALL_RESULT=failure media capability probe timed out");
+        return 5;
+    }
+    qInfo("CALL_BACKEND_READY=1");
     PsiMedia::setProvider(&gstProvider);
 
     bool                                   finishing          = false;
@@ -329,7 +335,7 @@ int main(int argc, char **argv)
         // emitted after application teardown, which retires BUNDLE membership.
         midVerified    = midNegotiated();
         bundleVerified = bundleNegotiated();
-        mediaStarted = startPsiMediaJingleTransmit(
+        mediaStarted   = startPsiMediaJingleTransmit(
             liveSession, true, true, QStringLiteral("audiotestsrc is-live=true wave=sine freq=440"), avBundle,
             avBundle ? QStringLiteral("videotestsrc is-live=true pattern=ball") : QString());
         qInfo().noquote() << QStringLiteral("CALL_MEDIA_STARTED=%1").arg(mediaStarted ? 1 : 0);

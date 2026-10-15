@@ -11,6 +11,7 @@ on:
       - 'plugins/include/psimediaprovider.h'
       - 'tests/avcall/**'
       - 'qa/integration/jingle-live/**'
+      - 'qa/integration/media_backend_ready.h'
       - 'dependencies.lock.json'
       - '.github/actions/load-dependencies/**'
       - '.github/scripts/resolve-dependencies.py'
@@ -25,6 +26,7 @@ on:
       - 'plugins/include/psimediaprovider.h'
       - 'tests/avcall/**'
       - 'qa/integration/jingle-live/**'
+      - 'qa/integration/media_backend_ready.h'
       - 'dependencies.lock.json'
       - '.github/actions/load-dependencies/**'
       - '.github/scripts/resolve-dependencies.py'
@@ -84,13 +86,10 @@ jobs:
             gstreamer1.0-plugins-bad \
             gstreamer1.0-tools
 
-      - name: Restore compiler cache
-        uses: actions/cache@v4
+      - name: Configure compiler cache
+        uses: hendrikmuhs/ccache-action@v1
         with:
-          path: ~/.cache/ccache
-          key: ${{ runner.os }}-psimedia-integration-ccache-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-psimedia-integration-ccache-
+          key: ${{ runner.os }}-psimedia-integration-qt6
 
       - name: Install QCA from Iris dependency lock
         uses: ./.github/actions/load-dependencies
@@ -242,10 +241,15 @@ jobs:
           add_test(NAME psi_native_media_runtime_error_smoke COMMAND psi_native_media_runtime_error_smoke)
           set_tests_properties(psi_native_media_runtime_error_smoke PROPERTIES TIMEOUT 30)
 
+          foreach(target psimedia_provider_smoke psi_native_media_adapter_smoke psi_native_media_runtime_error_smoke)
+              target_include_directories(${target} PRIVATE "${PSI_SOURCE_DIR}/qa/integration")
+          endforeach()
+
           EOF
 
           cat > _psimedia-smoke/smoke.cpp <<'EOF'
           #include "gstprovider.h"
+          #include "media_backend_ready.h"
           #include "psimediaprovider.h"
 
           #include <QCoreApplication>
@@ -263,6 +267,10 @@ jobs:
               if (!provider.isInitialized()) {
                   qCritical() << "GstProvider failed to initialize";
                   return 1;
+              }
+              if (!waitForMediaBackend(provider)) {
+                  qCritical() << "Media capability probe timed out";
+                  return 7;
               }
 
               auto *session = provider.createRtpSession();
@@ -359,6 +367,7 @@ jobs:
 
           cat > _psimedia-smoke/native_adapter_smoke.cpp <<'EOF'
           #include "gstprovider.h"
+          #include "media_backend_ready.h"
           #include "psimedia.h"
           #include "psimediajingle.h"
 
@@ -444,6 +453,10 @@ jobs:
                   return 1;
               }
               PsiMedia::setProvider(&gstProvider);
+              if (!waitForMediaBackend(gstProvider)) {
+                  qCritical() << "Media capability probe timed out";
+                  return 1;
+              }
 
               PsiMediaJingleCapabilities capabilities;
               capabilities.backendAvailable = true;
@@ -645,6 +658,7 @@ jobs:
 
           cat > _psimedia-smoke/runtime_error_smoke.cpp <<'EOF'
           #include "gstprovider.h"
+          #include "media_backend_ready.h"
           #include "psimedia.h"
           #include "psimediajingle.h"
 
@@ -689,6 +703,7 @@ jobs:
               PsiMedia::GstProvider gstProvider;
               check(gstProvider.isInitialized(), "GstProvider failed to initialize");
               PsiMedia::setProvider(&gstProvider);
+              check(waitForMediaBackend(gstProvider), "Media capability probe timed out");
 
               PsiMediaJingleCapabilities capabilities;
               capabilities.backendAvailable = true;
@@ -1105,11 +1120,17 @@ jobs:
           qca-asset: qca3-deb-ubuntu-24.04.zip
           qca-directory: qca-release
 
+      - name: Configure audio-call compiler cache
+        uses: hendrikmuhs/ccache-action@v1
+        with:
+          key: ${{ runner.os }}-psimedia-jingle-live-qt6-asan
+
       - name: Build real psimedia Jingle audio-call client
         shell: bash
         run: |
           set -euo pipefail
           cmake -S qa/integration/jingle-live -B _jingle-call-build -G Ninja \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DCMAKE_CXX_FLAGS="-fsanitize=address -fno-omit-frame-pointer" \
             -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address" \
