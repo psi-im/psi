@@ -257,13 +257,16 @@ private slots:
     void compactCallControlsAndStatus()
     {
         CallView view;
-        auto     status   = view.findChild<QLabel *>(QStringLiteral("callStatus"));
         auto     security = view.findChild<QLabel *>(QStringLiteral("callSecurity"));
-        auto     duration = view.findChild<QLabel *>(QStringLiteral("callDuration"));
         auto     hint     = view.findChild<QLabel *>(QStringLiteral("callSharingHint"));
         auto     share    = view.findChild<QPushButton *>(QStringLiteral("callShare"));
         auto     board    = view.findChild<QPushButton *>(QStringLiteral("callWhiteboard"));
-        QVERIFY(status && security && duration && hint && share && board);
+        auto     end      = view.findChild<QPushButton *>(QStringLiteral("callEnd"));
+        auto     dock     = view.findChild<QFrame *>(QStringLiteral("callControls"));
+        QVERIFY(security && hint && share && board && end && dock);
+        QVERIFY(!view.findChild<QLabel *>(QStringLiteral("callStatus")));
+        QVERIFY(!view.findChild<QLabel *>(QStringLiteral("callDuration")));
+        QCOMPARE(security->parentWidget(), static_cast<QWidget *>(dock));
         QVERIFY(!view.findChild<QWidget *>(QStringLiteral("callPeer")));
         QVERIFY(!view.findChild<QFrame *>(QStringLiteral("sharingBar")));
         QSignalSpy changed(&view, &CallView::headingChanged);
@@ -271,18 +274,23 @@ private slots:
         QCOMPARE(view.peer(), QStringLiteral("peer@example.test/device"));
         QCOMPARE(changed.count(), 1);
         QVERIFY(view.findChildren<QLineEdit *>().isEmpty());
-        view.setStatus(QStringLiteral("Connected"));
-        QVERIFY(status->text().isEmpty());
-        QCOMPARE(status->toolTip(), QStringLiteral("Connected"));
         view.setSecurity(QStringLiteral("End-to-end encrypted, verified with OMEMO"), true);
         QVERIFY(!security->isHidden());
         QCOMPARE(security->accessibleName(), security->toolTip());
         view.setSecurity(QStringLiteral("Whiteboard travels through the server"), true, true);
         QCOMPARE(security->property("partialSecurity").toBool(), true);
         QCOMPARE(security->accessibleName(), security->toolTip());
+        view.setConnecting(true);
+        QCOMPARE(end->text(), QStringLiteral("Cancel"));
+        view.setConnecting(false);
         view.setActive(true);
+        QCOMPARE(end->text(), QStringLiteral("00:00:00"));
         view.setDuration(127);
-        QCOMPARE(duration->text(), QStringLiteral("00:02:07"));
+        QCOMPARE(end->text(), QStringLiteral("00:02:07"));
+        QVERIFY(end->toolTip().contains(QStringLiteral("End call")));
+        QVERIFY(end->accessibleName().contains(QStringLiteral("00:02:07")));
+        view.setDuration(3605);
+        QCOMPARE(end->text(), QStringLiteral("01:00:05"));
 
         view.setSharing(true, QStringLiteral("Display 1 — 1920x1080"));
         QVERIFY(share->isChecked());
@@ -303,7 +311,8 @@ private slots:
         view.setWhiteboardOnly(true);
         QVERIFY(changed.count() >= 2);
         view.setFinished();
-        QVERIFY(duration->isHidden());
+        QCOMPARE(end->text(), QStringLiteral("Close"));
+        QVERIFY(security->parentWidget() == dock);
     }
 
     void paletteFollowsSystemThemeWithoutStylingWhiteboardChildren()
@@ -332,7 +341,6 @@ private slots:
         view.resize(860, 640);
         view.setPeer(QStringLiteral("alex@example.org"));
         view.setActive(true);
-        view.setStatus(QStringLiteral("Connected"));
         view.setDuration(127);
         QSignalSpy microphone(&view, &CallView::microphoneChanged), camera(&view, &CallView::cameraChanged);
         auto       microphoneButton = view.findChild<QPushButton *>(QStringLiteral("callMicrophone"));
