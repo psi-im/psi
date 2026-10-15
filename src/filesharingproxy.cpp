@@ -210,7 +210,7 @@ public:
         case Http::OutOfRange:
             if (item->fileSize())
                 static_cast<Impl *>(this)->setResponseHeader(
-                    "Content-Range", QByteArray("bytes */") + QByteArray::number(*item->fileSize()));
+                    "Content-Range", QByteArray("bytes */") + QByteArray::number(qulonglong(*item->fileSize())));
             return StatusCode::RangeNotSatisfied;
         }
         return StatusCode::NotImplemented;
