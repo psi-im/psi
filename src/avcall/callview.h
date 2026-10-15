@@ -19,7 +19,6 @@ public:
     explicit CallView(QWidget *parent = nullptr);
     void                   setPeer(const QString &peer);
     QString                peer() const;
-    void                   setStatus(const QString &text);
     // How the session is protected; an empty text hides it.
     void                   setSecurity(const QString &text, bool endToEnd, bool partiallyEncrypted = false);
     void                   setActive(bool active);
@@ -68,9 +67,7 @@ signals:
 
 private:
     QString                peer_;
-    QLabel                *status_;
     QLabel                *security_;
-    QLabel                *duration_;
     QLabel                *sharingHint_;
     QPushButton           *microphone_;
     QPushButton           *camera_;
@@ -93,6 +90,7 @@ private:
     bool                   connecting_     = false;
     bool                   mediaAvailable_ = true;
     bool                   updatingAppearance_ = false;
+    QString                elapsedText_ = QStringLiteral("00:00:00");
     QString                shareSource_;
     bool                   shareConnecting_ = false;
 };

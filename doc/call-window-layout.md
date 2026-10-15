@@ -11,19 +11,29 @@ joining an already-running whiteboard, and whiteboard-only sessions.
   before opening it, from the contact or chat; changing the destination
   requires starting another call. Incoming, connecting and active sessions
   must not duplicate the identity as a large in-window header.
-- The compact status row contains the current connection status (a green dot
-  and accessible tooltip when connected), the security icon (padlock for
-  verified end-to-end encryption, warning symbol otherwise) and elapsed time.
-  Keep the complete security explanation in the tooltip/accessibility name;
-  notably, OMEMO whiteboarding can still use a server-backed transport.
-  Such mixed-protection sessions use a warning icon, not a verified padlock.
-  Errors and connection-progress messages stay visible as text.
+- There is no in-window status/header row. The native titlebar holds
+  the peer identity. During an active call the **red hang-up button displays
+  elapsed time** instead of a text action label, alongside a phone icon
+  and an accessible "End call" tooltip/name. Before connection it shows
+  "Cancel"; after a finished call it shows "Close".
+- The security icon sits immediately beside hang-up: padlock for verified
+  end-to-end encryption, warning symbol otherwise. Keep the full OMEMO
+  description in its tooltip/accessibility name. OMEMO whiteboarding can
+  still use a server-backed transport; such mixed-protection sessions use
+  a warning symbol, not a verified padlock.
+- Connection progress and successful "Connected" states are not displayed
+  as permanent labels or system popups. Report **errors and failed
+  invitations** through Psi's configured notification provider
+  (`PopupManager` / `AlertAvCall`); do not leave outdated error text
+  in the dialog. Normal cancellation and established-session termination
+  should not produce spurious error popups.
 - The stage, including camera, screen presentation and the embedded SVG
   whiteboard, has priority for resize space.
 - Only one bottom control dock is used. Microphone, camera, screen-sharing and
   whiteboard toggles are icon-only with descriptive tooltips and accessible
   names. Their checked states remain synchronized with the actual session.
-  The Hang up button stays visibly destructive and labelled in text.
+  The Hang up button stays visibly destructive, retaining its phone icon,
+  timer label when connected and descriptive tooltip/accessibility name.
 - Sharing source/status is an elided dock caption with the complete source in
   tooltip/accessibility text. The share button itself stops an active share
   (or cancels an in-progress picker); never add a second stop button or a large
@@ -48,7 +58,8 @@ and scoped styles in response to palette changes without recursive repolish.
 `src/avcall/unittest/screenshare.cpp` exercises the call view on Linux
 with a mock ScreenCast portal. It should continue covering the titlebar peer
 and absence of editable JID fields, microphone and camera signal semantics, real share-selection
-cancel and stop, security accessibility descriptions, and dark theme palette
+cancel and stop, security accessibility descriptions, the timer embedded
+in the hang-up button, the absence of a status row, and dark theme palette
 changes. Programmatic state updates must use signal blockers so toggling the
 session's state from the backend does not emit a second user request.
 

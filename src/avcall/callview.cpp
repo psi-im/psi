@@ -101,31 +101,6 @@ CallView::CallView(QWidget *parent) : QWidget(parent)
     auto layout = new QVBoxLayout(this);
     layout->setContentsMargins(16, 12, 16, 12);
     layout->setSpacing(10);
-    auto header = new QHBoxLayout;
-    header->setContentsMargins(2, 0, 2, 0);
-    header->setSpacing(10);
-
-    status_ = new QLabel(tr("Ready to call"), this);
-    status_->setObjectName(QStringLiteral("callStatus"));
-    status_->setTextFormat(Qt::PlainText);
-    status_->setToolTip(tr("Ready to call"));
-    status_->setMaximumWidth(360);
-    header->addWidget(status_);
-
-    security_ = new QLabel(this);
-    security_->setObjectName(QStringLiteral("callSecurity"));
-    security_->setTextFormat(Qt::PlainText);
-    security_->hide();
-    header->addWidget(security_);
-
-    duration_ = new QLabel(this);
-    duration_->setObjectName(QStringLiteral("callDuration"));
-    duration_->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-    duration_->setVisible(false);
-    header->addStretch(1);
-    header->addWidget(duration_);
-    layout->addLayout(header);
-
     stage_ = new CallStage(this);
     stage_->setMinimumSize(420, 260);
     stage_->setPlaceholderText(tr("Audio call\nTurn on your camera or share your screen"));
@@ -194,6 +169,13 @@ CallView::CallView(QWidget *parent) : QWidget(parent)
     sharingHint_->setMaximumWidth(220);
     sharingHint_->hide();
 
+    security_ = new QLabel(controlBar);
+    security_->setObjectName(QStringLiteral("callSecurity"));
+    security_->setTextFormat(Qt::PlainText);
+    security_->setFixedSize(28, 32);
+    security_->setAlignment(Qt::AlignCenter);
+    security_->hide();
+
     quality_ = new QComboBox(this);
     quality_->setObjectName(QStringLiteral("callQuality"));
     quality_->addItem(tr("HD · 2 Mbps"), 2000);
@@ -209,6 +191,9 @@ CallView::CallView(QWidget *parent) : QWidget(parent)
     end_ = new QPushButton(tr("Close"), this);
     end_->setObjectName(QStringLiteral("callEnd"));
     end_->setIconSize(QSize(20, 20));
+    end_->setMinimumWidth(120);
+    end_->setToolTip(tr("Close call window"));
+    end_->setAccessibleName(end_->toolTip());
 
     controls->addWidget(microphone_);
     controls->addWidget(camera_);
@@ -218,6 +203,7 @@ CallView::CallView(QWidget *parent) : QWidget(parent)
     controls->addStretch(1);
     controls->addWidget(quality_);
     controls->addWidget(accept_);
+    controls->addWidget(security_);
     controls->addWidget(end_);
     layout->addWidget(controlBar);
 
@@ -247,19 +233,6 @@ void CallView::setSecurity(const QString &text, bool endToEnd, bool partiallyEnc
     security_->setVisible(!text.isEmpty());
 }
 
-void CallView::setStatus(const QString &text)
-{
-    status_->setToolTip(text);
-    status_->setAccessibleName(text);
-    if (text == tr("Connected")) {
-        status_->setText(QString());
-        status_->setPixmap(statusIcon(QColor(QStringLiteral("#16976c"))));
-    } else {
-        status_->setPixmap(QPixmap());
-        status_->setText(status_->fontMetrics().elidedText(text, Qt::ElideRight, 350));
-    }
-}
-
 void CallView::changeEvent(QEvent *event)
 {
     QWidget::changeEvent(event);
@@ -285,7 +258,7 @@ void CallView::updateAppearance()
     // Scoped selectors leave the whiteboard's native canvas and toolbar alone.
     setStyleSheet(QStringLiteral(
         "QWidget#callView { background-color: %1; color: %2; }"
-        "QLabel#callStatus, QLabel#callDuration, QLabel#callSharingHint { color: %4; }"
+        "QLabel#callSharingHint { color: %4; }"
         "QFrame#callStage { background: %3; border: 1px solid %6; border-radius: 10px; }"
         "QFrame#callTile { background: %3; border: none; border-radius: 6px; }"
         "QFrame#callControls { background: %5; border: 1px solid %6; border-radius: 10px; }"
@@ -340,6 +313,21 @@ void CallView::updateControlPresentation()
     share_->setIcon(callIcon(2, sharing_ ? selected : regular));
     whiteboard_->setIcon(callIcon(4, whiteboard_->isChecked() ? selected : regular));
     end_->setIcon(callIcon(3, QColor(Qt::white)));
+    // The elapsed clock doubles as the live hang-up button label. The red
+    // handset and accessible action name still identify its destructive role.
+    if (active_) {
+        end_->setText(elapsedText_);
+        end_->setToolTip(tr("End call (%1 elapsed)").arg(elapsedText_));
+        end_->setAccessibleName(end_->toolTip());
+    } else if (connecting_) {
+        end_->setText(tr("Cancel"));
+        end_->setToolTip(tr("Cancel call"));
+        end_->setAccessibleName(end_->toolTip());
+    } else {
+        end_->setText(tr("Close"));
+        end_->setToolTip(tr("Close call window"));
+        end_->setAccessibleName(end_->toolTip());
+    }
     sharingHint_->setVisible(sharing_ || selecting_);
     const QString hint = selecting_ ? tr("Selecting screen…")
                          : shareConnecting_ ? tr("Connecting screen…")
@@ -354,9 +342,8 @@ void    CallView::setActive(bool active)
     active_ = active;
     accept_->setVisible(!active);
     quality_->setVisible(!active);
-    end_->setText(active ? (whiteboardOnly_ ? tr("End") : tr("End call")) : tr("Close"));
+    updateControlPresentation();
     updateMediaButtons();
-    duration_->setVisible(active);
     if (active)
         stage_->setPlaceholderText(whiteboardOnly_ ? tr("Connected") : tr("Connected · waiting for video"));
 }
@@ -366,8 +353,7 @@ void CallView::setConnecting(bool connecting)
     quality_->setEnabled(!connecting && !whiteboardOnly_);
     connecting_ = connecting;
     updateMediaButtons();
-    end_->setText(connecting ? tr("Cancel") : active_ ? (whiteboardOnly_ ? tr("End") : tr("End call"))
-                                                        : tr("Close"));
+    updateControlPresentation();
 }
 void CallView::setIncoming(bool incoming)
 {
@@ -397,6 +383,7 @@ void CallView::setCameraEnabled(bool enabled)
 void CallView::setFinished()
 {
     finished_ = true;
+    connecting_ = false;
     setActive(false);
     accept_->hide();
     quality_->hide();
@@ -421,10 +408,12 @@ void CallView::setShareSelecting(bool selecting)
 }
 void CallView::setDuration(qint64 seconds)
 {
-    duration_->setText(QStringLiteral("%1:%2:%3")
-                           .arg(seconds / 3600, 2, 10, QLatin1Char('0'))
-                           .arg((seconds / 60) % 60, 2, 10, QLatin1Char('0'))
-                           .arg(seconds % 60, 2, 10, QLatin1Char('0')));
+    elapsedText_ = QStringLiteral("%1:%2:%3")
+                       .arg(seconds / 3600, 2, 10, QLatin1Char('0'))
+                       .arg((seconds / 60) % 60, 2, 10, QLatin1Char('0'))
+                       .arg(seconds % 60, 2, 10, QLatin1Char('0'));
+    if (active_)
+        updateControlPresentation();
 }
 bool                   CallView::cameraEnabled() const { return camera_->isChecked(); }
 bool                   CallView::microphoneEnabled() const { return microphone_->isChecked(); }
