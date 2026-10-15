@@ -22,6 +22,7 @@
 #include "applicationinfo.h"
 #include "filecache.h"
 #include "filesharingdownloader.h"
+#include "filesharingjinglesession.h"
 #include "httputil.h"
 #include "mediachunkcache.h"
 #include "psiaccount.h"
@@ -48,9 +49,10 @@
 // ======================================================================
 class FileSharingManager::Private {
 public:
-    FileCache                           *cache;
-    MediaChunkCache                     *chunkCache = nullptr;
-    QHash<XMPP::Hash, FileSharingItem *> items;
+    FileCache                                      *cache;
+    MediaChunkCache                                *chunkCache = nullptr;
+    QHash<PsiAccount *, FileSharingJingleSession *> mediaSessions;
+    QHash<XMPP::Hash, FileSharingItem *>            items;
 
     void rememberItem(FileSharingItem *item)
     {
@@ -66,6 +68,16 @@ FileSharingManager::FileSharingManager(QObject *parent) : QObject(parent), d(new
 }
 
 FileSharingManager::~FileSharingManager() { delete d->chunkCache; }
+
+FileSharingJingleSession *FileSharingManager::jingleMediaSessions(PsiAccount *account)
+{
+    auto &sessions = d->mediaSessions[account];
+    if (!sessions) {
+        sessions = new FileSharingJingleSession(account->client()->jingleManager(), account);
+        connect(account, &QObject::destroyed, this, [this, account] { d->mediaSessions.remove(account); });
+    }
+    return sessions;
+}
 
 MediaChunkCache *FileSharingManager::mediaChunkCache()
 {
@@ -267,12 +279,30 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
 
 bool FileSharingManager::jingleAutoAcceptIncomingDownloadRequest(Jingle::Session *session)
 {
+    if (!acceptIncomingDownloadContents(session))
+        return false;
+    connect(session, &Jingle::Session::newContentReceived, this, [this, session] {
+        if (acceptIncomingDownloadContents(session))
+            return;
+        // Only reject the new proposals. Existing accepted transfers continue.
+        for (auto *app : session->contentList())
+            if (app->isRemote() && app->state() == Jingle::State::Created)
+                app->remove(Jingle::Reason::Decline, QStringLiteral("Shared file unavailable"));
+    });
+    session->accept();
+    return true;
+}
+
+bool FileSharingManager::acceptIncomingDownloadContents(Jingle::Session *session)
+{
     QVector<QPair<Jingle::FileTransfer::Application *, FileCacheItem *>> toAccept;
     // check if we can accept the session immediately w/o user interaction
     for (auto const &a : session->contentList()) {
-        auto ft = static_cast<Jingle::FileTransfer::Application *>(a);
-        if (a->senders() == Jingle::Origin::Initiator)
+        if (!a->isRemote() || a->state() != Jingle::State::Created)
+            continue;
+        if (a->pad()->ns() != Jingle::FileTransfer::NS || a->senders() != session->role())
             return false;
+        auto ft = static_cast<Jingle::FileTransfer::Application *>(a);
 
         FileCacheItem *item = cacheItem(ft->file().computedHashes(), true);
         if (!item)
@@ -285,29 +315,38 @@ bool FileSharingManager::jingleAutoAcceptIncomingDownloadRequest(Jingle::Session
         auto ft   = p.first;  // jingle-ft app
         auto item = p.second; // FileCacheItem
 
+        ft->setKeepTransportUntilReceipt();
+
         auto acceptFile = ft->file();
         acceptFile.setHashes(item->sums());
         ft->setAcceptFile(acceptFile);
 
         // TODO hashes for ranges
-
-        connect(ft, &Jingle::FileTransfer::Application::deviceRequested, this,
-                [ft, item, this](quint64 offset, std::optional<quint64> /*size*/) {
-                    auto    vm       = item->metadata();
-                    QString fileName = vm.value(QString::fromLatin1("link")).toString();
-                    if (fileName.isEmpty()) {
-                        fileName = d->cache->cacheDir() + "/" + item->fileName();
-                    }
+        // Snapshot the source path before waiting for the transport. Cache
+        // maintenance may retire the FileCacheItem while a content-add waits.
+        QString fileName = item->metadata().value(QStringLiteral("link")).toString();
+        if (fileName.isEmpty())
+            fileName = d->cache->cacheDir() + "/" + item->fileName();
+        connect(ft, &Jingle::FileTransfer::Application::deviceRequested, ft,
+                [ft, fileName](quint64 offset, std::optional<quint64> /*size*/) {
                     auto f = new QFile(fileName, ft);
                     if (!f->open(QIODevice::ReadOnly)) {
-                        ft->setDevice(nullptr);
+                        const auto error = f->errorString();
+                        delete f;
+                        ft->remove(Jingle::Reason::FailedApplication, error);
                         return;
                     }
-                    f->seek(qint64(offset));
+                    if (offset > quint64(f->size()) || !f->seek(qint64(offset))) {
+                        delete f;
+                        ft->remove(Jingle::Reason::FailedApplication, QStringLiteral("Shared file range unavailable"));
+                        return;
+                    }
                     ft->setDevice(f);
                 });
     }
-    session->accept();
+    if (session->state() != Jingle::State::Created)
+        for (const auto &p : toAccept)
+            p.first->prepare();
 
     return true;
 }

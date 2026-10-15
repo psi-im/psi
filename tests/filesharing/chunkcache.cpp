@@ -343,29 +343,31 @@ private slots:
         MediaChunkReader paused(&cache, "second", 1024, 0, 1024, "lane", fetch);
         QVERIFY(paused.open());
         QTRY_VERIFY(paused.bytesAvailable() > 0);
+        QTRY_COMPARE(starts, 6); // Four previous chunks plus current and one lookahead.
         const int before = starts;
         QTest::qWait(20);
-        QCOMPARE(starts, before); // No next chunk until the current buffer is consumed.
+        QCOMPARE(starts, before); // At most one lookahead while the consumer is paused.
         paused.abort();
     }
 
     void deletingReaderCancelsItsDemand()
     {
-        QTemporaryDir dir(QDir::currentPath() + "/chunks-XXXXXX");
-        int           starts = 0, aborts = 0;
-        Completion    pending;
-        auto          fetch = [&](quint64, quint64, Completion done) {
+        QTemporaryDir     dir(QDir::currentPath() + "/chunks-XXXXXX");
+        int               starts = 0, aborts = 0;
+        QList<Completion> pending;
+        auto              fetch = [&](quint64, quint64, Completion done) {
             ++starts;
-            pending = std::move(done);
+            pending.append(std::move(done));
             return [&] { ++aborts; };
         };
         MediaChunkCache cache(dir.path(), nullptr, 128);
         auto            reader = new MediaChunkReader(&cache, "source", 1024, 0, 1024, "lane", fetch);
         QVERIFY(reader->open());
-        QTRY_COMPARE(starts, 1);
+        QTRY_COMPARE(starts, 2);
         delete reader;
-        QCOMPARE(aborts, 1);
-        pending({}, QStringLiteral("aborted"));
+        QCOMPARE(aborts, 2);
+        for (const auto &done : pending)
+            done({}, QStringLiteral("aborted"));
         QTest::qWait(10);
         QCOMPARE(cache.diskBytes(), quint64(0));
     }

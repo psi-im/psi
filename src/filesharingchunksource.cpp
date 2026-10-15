@@ -1,8 +1,10 @@
 #include "filesharingchunksource.h"
 #include "filesharingdownloader.h"
 #include "filesharingitem.h"
+#include "filesharingmanager.h"
 #include "mediachunktransfer.h"
 #include "psiaccount.h"
+#include "psicon.h"
 #include <QPointer>
 #include <QTimer>
 #include <utility>
@@ -15,6 +17,7 @@ MediaChunkAbort FileSharingChunkSource::fetch(FileSharingItem *item, quint64 off
         return {};
     }
     auto download = item->download(FileSharingItem::Range { offset, length });
+    download->setJingleSessionPool(item->account()->psi()->fileSharingManager()->jingleMediaSessions(item->account()));
     auto transfer = new MediaChunkTransfer(
         download, *item->fileSize(), offset, length, std::move(done), [download] { download->abort(); }, owner);
     QObject::connect(item, &QObject::destroyed, transfer,

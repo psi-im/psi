@@ -19,6 +19,7 @@
 
 #include "filesharingdownloader.h"
 #include "filesharingitem.h"
+#include "filesharingjinglesession.h"
 #include "filesharingmanager.h"
 #include "fileutil.h"
 #include "httputil.h"
@@ -111,11 +112,14 @@ class JingleFileShareDownloader : public AbstractFileShareDownloader {
     QPointer<Jingle::FileTransfer::Application> app;
     XMPP::Jingle::FileTransfer::File            file;
     QList<Jid>                                  jids;
+    QPointer<FileSharingJingleSession>          pool;
+    MediaChunkAbort                             cancelRequest;
+    bool                                        verified = false;
 
 public:
     JingleFileShareDownloader(PsiAccount *acc_, const QString &uri, const XMPP::Jingle::FileTransfer::File &file,
-                              const QList<Jid> &jids, QObject *parent) :
-        AbstractFileShareDownloader(acc_, uri, parent), file(file), jids(jids)
+                              const QList<Jid> &jids, FileSharingJingleSession *pool, QObject *parent) :
+        AbstractFileShareDownloader(acc_, uri, parent), file(file), jids(jids), pool(pool)
     {
     }
 
@@ -148,6 +152,23 @@ public:
             return;
         }
 
+        if (_requestRange)
+            file.setRange(XMPP::Jingle::FileTransfer::Range(_requestRange->start, _requestRange->size));
+        if (pool) {
+            cancelRequest = pool->request(dataSource, file, this, [this](Jingle::FileTransfer::Application *a) {
+                if (!a) {
+                    downloadError(tr("Jingle file transfer is disabled"));
+                    return;
+                }
+                app = a;
+                wireApplication();
+                connect(app, &Jingle::FileTransfer::Application::payloadVerified, this, [this] {
+                    verified = true;
+                    emit success();
+                });
+            });
+            return;
+        }
         auto *session = acc->client()->jingleManager()->newSession(dataSource);
         app           = static_cast<Jingle::FileTransfer::Application *>(
             session->newContent(Jingle::FileTransfer::NS, Jingle::Origin::Responder));
@@ -155,8 +176,6 @@ public:
             downloadError(QString::fromLatin1("Jingle file transfer is disabled"));
             return;
         }
-        if (_requestRange)
-            file.setRange(XMPP::Jingle::FileTransfer::Range(_requestRange->start, _requestRange->size));
         app->setFile(file);
         app->setStreamingMode(true);
         session->addContent(app);
@@ -167,6 +186,12 @@ public:
             session->terminate(Jingle::Reason::Condition::Decline, _lastError);
         });
 
+        wireApplication();
+        session->initiate();
+    }
+
+    void wireApplication()
+    {
         connect(app, &Jingle::FileTransfer::Application::connectionReady, this, [this]() {
             qDebug("FSP connectionReady");
             auto r = app->acceptFile().range();
@@ -186,6 +211,8 @@ public:
                 return;
             auto r = app->lastReason();
             app    = nullptr;
+            if (verified)
+                return; // The pool owns receipt retirement after validated payload delivery.
             if (r.isValid() && r.condition() == Jingle::Reason::Success) {
                 emit success();
                 emit disconnected();
@@ -193,8 +220,6 @@ public:
             }
             downloadError(tr("Jingle download failed: %s").arg(r.text()));
         });
-
-        session->initiate();
     }
 
     qint64 bytesAvailable() const { return connection ? connection->bytesAvailable() : 0; }
@@ -203,6 +228,17 @@ public:
 
     void abort(bool isFailure, const QString &reason)
     {
+        if (cancelRequest) {
+            auto cancel = std::exchange(cancelRequest, {});
+            if (app)
+                app->disconnect(this);
+            if (connection)
+                connection->disconnect(this);
+            connection.reset();
+            app = nullptr;
+            cancel();
+            return;
+        }
         if (app) {
             if (connection) {
                 connection->disconnect(this);
@@ -216,6 +252,10 @@ public:
 
     void close()
     {
+        if (pool) {
+            abort(false, {});
+            return;
+        }
         if (app) {
             if (connection) {
                 connection->disconnect(this);
@@ -438,6 +478,7 @@ class FileShareDownloader::Private : public QObject {
 public:
     FileShareDownloader                      *q   = nullptr;
     PsiAccount                               *acc = nullptr;
+    QPointer<FileSharingJingleSession>        pool;
     QList<XMPP::Hash>                         sums;
     Jingle::FileTransfer::File                file;
     QList<Jid>                                jids;
@@ -520,7 +561,7 @@ public:
             downloader = new BOBFileShareDownloader(acc, uri, jids, q);
             break;
         case FileSharingItem::SourceType::Jingle:
-            downloader = new JingleFileShareDownloader(acc, uri, file, jids, q);
+            downloader = new JingleFileShareDownloader(acc, uri, file, jids, pool, q);
             break;
         default:
             finishWithError("Unhandled downloader");
@@ -634,6 +675,12 @@ void FileShareDownloader::abort()
 }
 
 void FileShareDownloader::setRequestRange(const std::optional<Range> &range) { d->requestRange = range; }
+
+void FileShareDownloader::setJingleSessionPool(FileSharingJingleSession *pool)
+{
+    Q_ASSERT(!isOpen());
+    d->pool = pool;
+}
 
 const std::optional<FileShareDownloader::Range> &FileShareDownloader::requestRange() const { return d->requestRange; }
 

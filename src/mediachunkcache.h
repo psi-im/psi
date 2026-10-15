@@ -7,6 +7,7 @@
 #include <QIODevice>
 #include <QPointer>
 #include <memory>
+#include <optional>
 
 class MediaChunkStore;
 
@@ -52,8 +53,8 @@ private:
     std::unique_ptr<MediaChunkStore> store_;
 };
 
-// Only fetch while the consumer drains its 64 KiB buffer. Network work is
-// asynchronous; readData() never blocks or starts a nested event loop.
+// A 64 KiB consumer buffer and at most one chunk of lookahead within the
+// requested range. Network work never blocks readData().
 class MediaChunkReader : public QIODevice {
     Q_OBJECT
 public:
@@ -77,9 +78,12 @@ protected:
 
 private:
     void                      schedule();
+    void                      prefetch();
     QPointer<MediaChunkCache> cache_;
     QString                   source_, lane_;
     quint64                   size_, offset_, left_, ticket_ = 0;
+    quint64                   prefetchTicket_ = 0;
+    std::optional<quint64>    prefetchOffset_;
     MediaChunkCache::Fetch    fetch_;
     QByteArray                buffer_;
     bool                      stopped_ = false, scheduled_ = false, first_ = true, ended_ = false;

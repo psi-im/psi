@@ -23,11 +23,15 @@ stack.
   global count of physical Jingle sessions. Session teardown after cancellation
   can outlive the loader. This limits admission, not bandwidth.
 - A new seek has priority over continued sequential reading. A reader requests
-  more only as its consumer drains its 64 KiB buffer.
-- Each missing chunk currently needs its own existing downloader/Jingle transfer.
-  Transport reuse and adaptive bandwidth pacing are not implemented.
+  more as its consumer drains its 64 KiB buffer, with one chunk of lookahead
+  inside the requested range. Canceling the reader also cancels its lookahead.
+- Each missing chunk uses the existing downloader. Account-scoped Jingle queues
+  serialize requests to the same full peer JID and reuse a negotiated BUNDLE via
+  `content-add`. Peers without BUNDLE retain separate sessions. Adaptive bandwidth
+  pacing is not implemented.
 - The complete bounded transfer must succeed before its chunk is served. Jingle
-  success includes the existing checksum/receipt processing. This means an initial
+  success includes existing negotiated checksum validation. Pooled Jingle payloads
+  complete at `payloadVerified`; their receipt is retired separately. An initial
   read waits for a whole chunk, rather than streaming its first bytes immediately.
 - Identity includes the account, content hash, advertised size, chunk size and
   index. Received size and range must agree with the request. Servers that
@@ -70,9 +74,38 @@ this object. All network protocol processing remains in the existing downloader.
 Replaying the 67 AVI seek offsets from the reported mpv session uses three physical chunk fetches in
 the test fixture; this is not a measurement of live Jingle sessions.
 
-For a real playback check, rebuild the receiving Psi, open the same AVI externally,
+When built with Psi's Iris target, `filesharing_jingle_session` exchanges actual
+ICE/DTLS/SCTP data between two local clients. Three queued ranges use one session
+and two `content-add` exchanges; each predecessor receipt follows successor
+`content-accept`. Without BUNDLE the same requests use three sessions. A canceled
+queued request never starts. The test explicitly skips without a DTLS/SCTP backend.
+It also checks that handover keeps the same physical ICE association, and that
+the queue can be destroyed inside its setup callback. The standalone component
+tests run with ASan/UBSan/LeakSanitizer. The Jingle test uses ASan/UBSan with the
+existing Iris enum suppressions for `stunmessage.cpp` and `stringprep.cpp`, and
+with LeakSanitizer disabled for the previously documented Iris baseline leaks.
+
+## Jingle handover
+
+`FileSharingJingleSession` owns the request queue independently of downloader
+lifetimes. The downloader installs streaming callbacks before the pool submits
+its application. `setKeepTransportUntilReceipt()` preserves the previous BUNDLE
+member, and `setReceiptDeferred()` holds its receipt until the next application
+becomes active. A queued turn lets answer processing commit before the previous
+receipt is released. Another extension waits for the previous member's retirement.
+With no queued successor, the receipt is released promptly; no idle session timer
+or synthetic keepalive content is added. A stalled consumer can therefore require
+a new session when it resumes. This follows the same handover mechanism as
+[AnyKeep's IrisMediaSync](https://github.com/Ri0n/AnyKeep/blob/bc26ae6a7b133940b0198c4ab309a7cbe6899e68/plugins/xmpppubsub/iris/irismediasync.cpp).
+
+The sender accepts additional requests only for locally available shared files.
+It validates new applications separately and never reconfigures already accepted
+ones. A rejected or canceled successor also retires its predecessor's receipt.
+The HTTP cache and disk worker have no knowledge of Jingle sessions.
+
+For a real playback check, rebuild both Psi endpoints, open the same AVI externally,
 seek in both directions, and repeat the request to verify reuse. The sender uses
-the existing ranged-transfer protocol and does not require this cache change.
+the existing ranged-transfer protocol, with added support for incoming `content-add`.
 Enable `psi.filesharing.chunks.debug=true` in Qt logging rules to record cache
 fetch offsets, lengths and completion errors. Verify that repeated nearby HTTP
 ranges share chunks and no longer create a Jingle session per index entry.
@@ -94,8 +127,7 @@ The existing FT layer and the bounded-transfer adapter both need final-read
 reentrancy tests. Full consumers must be rebuilt with the changed Iris header.
 
 Remaining tradeoffs are explicit: 4 MiB initial latency and read amplification,
-per-chunk Jingle negotiation, and best-effort per-process disk quotas if multiple
-processes share a cache directory. Transport reuse belongs in the downloader/Jingle
-session lifecycle rather than in the disk store or HTTP widget. Initial streaming
+per-chunk content negotiation, and best-effort per-process disk quotas if multiple
+processes share a cache directory. Initial streaming
 before a chunk is verified would need a separate policy for tentative bytes; this
 implementation only serves completed chunks.

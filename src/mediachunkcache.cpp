@@ -203,6 +203,8 @@ void MediaChunkReader::abort()
     const auto ticket = std::exchange(ticket_, 0);
     if (cache_ && ticket)
         cache_->cancel(ticket);
+    if (cache_ && prefetchTicket_)
+        cache_->cancel(std::exchange(prefetchTicket_, 0));
     buffer_.clear();
     QIODevice::close();
 }
@@ -252,7 +254,32 @@ void MediaChunkReader::schedule()
             return;
         }
         first_ = false;
+        prefetch();
     });
+}
+
+void MediaChunkReader::prefetch()
+{
+    // Queue a real successor demand before the current fetch verifies its
+    // payload. The Jingle provider can then add it before releasing <received>.
+    // This never runs beyond the HTTP request and stops when the reader stalls.
+    const auto distance = cache_->chunkSize() - offset_ % cache_->chunkSize();
+    if (left_ <= distance)
+        return;
+    const auto next = offset_ + distance;
+    if (prefetchOffset_ == next)
+        return;
+    if (prefetchTicket_)
+        cache_->cancel(std::exchange(prefetchTicket_, 0));
+    prefetchOffset_ = next;
+    const QPointer<MediaChunkReader> guard(this);
+    prefetchTicket_ = cache_->read(
+        source_, size_, next, 1, lane_, fetch_,
+        [guard, next](QByteArray, MediaChunkError) {
+            if (guard && guard->prefetchOffset_ == next)
+                guard->prefetchTicket_ = 0;
+        },
+        false);
 }
 
 qint64 MediaChunkReader::readData(char *data, qint64 maxSize)
