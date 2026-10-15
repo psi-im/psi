@@ -192,8 +192,10 @@ public:
             timer.stop();
             view->setConnecting(false);
             view->setFinished();
-            notifyError(refusedForSecurity() ? securityRefusal()
-                                             : (session ? session->errorString() : QString()));
+            const QString error = refusedForSecurity() ? securityRefusal()
+                                    : (session && !session->errorString().isEmpty() ? session->errorString()
+                                                                                   : tr("Call failed"));
+            notifyError(error);
             updateWhiteboard();
         });
         connect(call, &AvCall::cancelled, this, [this] {
