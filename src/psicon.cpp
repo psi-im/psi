@@ -81,6 +81,7 @@
 #include "spellchecker/spellchecker.h"
 #include "statusdlg.h"
 #include "systemwatch/systemwatch.h"
+#include "tabbablewidget.h"
 #include "tabdlg.h"
 #include "tabmanager.h"
 #include "tunecontrollermanager.h"

@@ -23,8 +23,6 @@
 #include "profiles.h"
 #include "psiactions.h"
 #include "psievent.h"
-#include "tabbablewidget.h"
-#include "tunecontrollermanager.h"
 
 #include <QList>
 #include <functional>
