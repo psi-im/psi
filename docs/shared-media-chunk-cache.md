@@ -78,11 +78,14 @@ this object. All network protocol processing remains in the existing downloader.
 Replaying the 67 AVI seek offsets from the reported mpv session uses three physical chunk fetches in
 the test fixture; this is not a measurement of live Jingle sessions.
 
-When built with Psi's Iris target, `filesharing_jingle_session` exchanges actual
+When built with bundled Iris, `filesharing_jingle_session` exchanges actual
 ICE/DTLS/SCTP data between two local clients. Three queued ranges use one session
 and two `content-add` exchanges; each predecessor receipt follows successor
 `content-accept`. Without BUNDLE the same requests use three sessions. A canceled
 queued request never starts. The test explicitly skips without a DTLS/SCTP backend.
+It requires private Iris implementation headers and its loopback test fixture,
+so it is not built against an installed Iris SDK. The other file-sharing tests
+remain available with external Iris.
 After success or cancellation of the final prefetched range, both session objects
 must terminate and be destroyed. Iris's backend-independent `jingle_sessionretirement`
 also checks success and last-content removal in both sending roles over IBB,

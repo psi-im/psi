@@ -48,11 +48,18 @@ target_link_libraries(filesharing_chunk_transfer_test PRIVATE Qt${QT_DEFAULT_MAJ
 add_test(NAME filesharing_chunk_transfer COMMAND filesharing_chunk_transfer_test)
 set_tests_properties(filesharing_chunk_transfer PROPERTIES TIMEOUT 20)
 
-if(TARGET iris)
+# This integration test inspects private ICE state and reuses Iris's source-only
+# loopback fixture. An installed SDK may also export a target named iris, but
+# does not provide these implementation headers or test sources.
+if(BUNDLED_IRIS AND TARGET iris)
     add_executable(filesharing_jingle_session_test jinglesession.cpp ../../src/filesharingjinglesession.cpp)
     set_target_properties(filesharing_jingle_session_test PROPERTIES AUTOMOC ON)
-    target_include_directories(filesharing_jingle_session_test PRIVATE ../../src)
+    target_include_directories(filesharing_jingle_session_test PRIVATE ../../src
+        "${PROJECT_SOURCE_DIR}/iris/src/xmpp/xmpp-im"
+        "${PROJECT_SOURCE_DIR}/iris/tests/jingle")
     target_link_libraries(filesharing_jingle_session_test PRIVATE iris Qt${QT_DEFAULT_MAJOR_VERSION}::Core)
     add_test(NAME filesharing_jingle_session COMMAND filesharing_jingle_session_test)
     set_tests_properties(filesharing_jingle_session PROPERTIES TIMEOUT 60 SKIP_RETURN_CODE 77)
+elseif(TARGET iris)
+    message(STATUS "Skipping source-only shared-media Jingle integration test with external Iris SDK")
 endif()

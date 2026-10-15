@@ -4,8 +4,8 @@
 #define private public
 #include <iris/jingle-ice.h>
 #undef private
-#include "../../iris/src/xmpp/xmpp-im/jingle-ice-pad_p.h"
-#include "../../iris/tests/jingle/sxeconnectionfixture.h"
+#include "jingle-ice-pad_p.h"
+#include "sxeconnectionfixture.h"
 
 namespace FT = J::FileTransfer;
 
