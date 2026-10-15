@@ -26,6 +26,15 @@ const session = {
     sharedMediaStrings: { open: 'open', choose: 'choose', unsupported: 'unsupported', network: 'network', decode: 'decode', failed: 'failed' },
     openSharedMedia: (...args) => calls.push(args)
 };
+const urlBegin = source.indexOf('sharedMediaUrl: function(');
+const urlEnd = source.indexOf('\n        videoPreview:', urlBegin);
+const mediaUrl = vm.runInNewContext('({' + source.slice(urlBegin, urlEnd) + '})', {
+    URL, document: { baseURI: 'http://localhost:1234/chat' }, session
+}).sharedMediaUrl;
+const plain = '/psi/account/test/sharedfile/sha-1+abcdef';
+assert.equal(mediaUrl(plain, true), 'http://localhost:1234' + plain + '?mode=stream');
+assert.equal(mediaUrl(mediaUrl(plain, true), false), 'http://localhost:1234' + plain + '?mode=download');
+assert.equal(mediaUrl('https://example.org/movie.webm', true), 'https://example.org/movie.webm');
 const helper = vm.runInNewContext('({' + source.slice(begin, end) + '})', {
     document: { createElement: tag => new Element(tag), head,
         getElementById: id => head.children.find(child => child.id === id) }, session
@@ -35,7 +44,7 @@ for (const kind of ['video', 'audio']) {
     media.controls = kind === 'video';
     media.source = new Element('source');
     const container = new Element('div');
-    helper(media, container, '/psi/account/test/sharedfile/sha-1+abcdef');
+    helper(media, container, mediaUrl(plain, true));
     assert(container.classList.contains('psi-shared-media-' + kind));
     const [status, buttons] = container.children[0].children;
     const [open, choose] = buttons.children;
@@ -69,6 +78,7 @@ const outside = new Element('div');
 helper(new Element('video'), outside, 'https://example.org/video.webm');
 assert.equal(outside.children.length, 0);
 delete session.openSharedMedia;
+assert.equal(mediaUrl(plain, true), plain);
 const legacy = new Element('div');
 helper(new Element('audio'), legacy, '/psi/account/test/sharedfile/sha-1+abcdef');
 assert.equal(legacy.children.length, 0); // No WebKit/Qite UI changes.

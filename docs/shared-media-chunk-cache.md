@@ -1,10 +1,14 @@
 # Shared media chunk cache
 
 The local HTTP file-sharing proxy uses a shared range cache for remote audio and
-video with a known nonzero size and content hash. Both WebEngine and external
-players use this HTTP path. Qite's network access manager path and ordinary file
-downloads retain their existing behavior. Complete files in the existing file
-cache take precedence.
+video with a known nonzero size and content hash when the URL has `mode=stream`.
+WebEngine media sources and external-player links select this mode explicitly.
+`mode=download`, an absent mode, an unknown mode, or multiple mode values select
+the existing direct downloader. A sequential download is one transfer, rather
+than a chain of 4 MiB content requests. Range headers still work in either mode;
+they do not by themselves select playback. Qite's network access manager path
+retains its existing behavior. Complete files in the existing file cache take
+precedence in both modes.
 
 `MediaChunkScheduler` is adapted from
 [AnyKeep PR #156](https://github.com/Ri0n/AnyKeep/pull/156), reviewed at commit
@@ -79,11 +83,18 @@ ICE/DTLS/SCTP data between two local clients. Three queued ranges use one sessio
 and two `content-add` exchanges; each predecessor receipt follows successor
 `content-accept`. Without BUNDLE the same requests use three sessions. A canceled
 queued request never starts. The test explicitly skips without a DTLS/SCTP backend.
+After success or cancellation of the final prefetched range, both session objects
+must terminate and be destroyed. Iris's backend-independent `jingle_sessionretirement`
+also checks success and last-content removal in both sending roles over IBB,
+retaining the first finished FT object while a second content remains active.
 It also checks that handover keeps the same physical ICE association, and that
 the queue can be destroyed inside its setup callback. The standalone component
 tests run with ASan/UBSan/LeakSanitizer. The Jingle test uses ASan/UBSan with the
 existing Iris enum suppressions for `stunmessage.cpp` and `stringprep.cpp`, and
 with LeakSanitizer disabled for the previously documented Iris baseline leaks.
+The Psi handover test also holds the final range open and processes deferred
+deletions: both endpoints must already have destroyed the two preceding FT
+applications, with only the live content remaining in the session.
 
 ## Jingle handover
 
@@ -102,6 +113,9 @@ The sender accepts additional requests only for locally available shared files.
 It validates new applications separately and never reconfigures already accepted
 ones. A rejected or canceled successor also retires its predecessor's receipt.
 The HTTP cache and disk worker have no knowledge of Jingle sessions.
+Both shared-file adapters schedule finished applications for deletion. This is
+an ownership decision in Psi, not a change to generic Iris application lifetime:
+other callers may still retain a finished application for UI or result inspection.
 
 For a real playback check, rebuild both Psi endpoints, open the same AVI externally,
 seek in both directions, and repeat the request to verify reuse. The sender uses
@@ -131,3 +145,44 @@ per-chunk content negotiation, and best-effort per-process disk quotas if multip
 processes share a cache directory. Initial streaming
 before a chunk is verified would need a separate policy for tentative bytes; this
 implementation only serves completed chunks.
+
+## Durable partial downloads: proposed next storage change
+
+The current rolling playback cache survives restart, but is disposable and has
+no per-file manifest. It is not a durable resumable-download store. The ordinary
+downloader still truncates its temporary file when starting a new download.
+Splitting the URLs does not change that behavior.
+
+A durable implementation should extend the storage layer and existing downloader,
+with the following separation:
+
+- File identity: format version, stable account ID, content-hash algorithm and
+  digest, exact total size. Store the identity itself as well as the opaque disk
+  key. A filename, temporary URL or full peer resource JID is not a file identity.
+- Availability: ordered downloaded extents, independent of network request sizes.
+  An ordinary download can fetch a missing contiguous tail in one transfer while
+  committing multiple local checkpoints. Playback can continue using bounded
+  range requests against the same file identity.
+- Integrity: immutable leaf records with offset, length and a local SHA-256.
+  Coalesce adjacent extents in the availability map without merging leaf payloads
+  or replacing their hashes. Updating two neighbouring interval boundaries does
+  not require reading the downloaded bytes. An indexed journal/database avoids
+  rewriting an ever-growing JSON array after every checkpoint.
+- Commit/recovery: commit the payload before publishing its extent. A truncated
+  or corrupt leaf is a missing range after recovery, never an available range.
+  Keep unfinished explicit downloads until completion or explicit removal;
+  playback-only records retain an eviction budget. In-flight transfers are not
+  persistent progress. Concurrent readers and writers must share ownership of
+  the same entry rather than truncate one another's files.
+- Completion: verify the advertised whole-file hash in byte order before
+  promoting the result into the existing complete-file cache. Per-leaf hashes
+  detect local damage but are not a replacement for that verification. Standard
+  SHA digests of adjacent pieces cannot be combined into the standard digest of
+  their concatenation. Use a streaming hash as a contiguous prefix advances,
+  or one final ordered pass on the disk worker.
+
+JET policy must remain separate from at-rest storage. Iris currently authenticates
+JET as one whole-file stream and rejects ranges/streaming hooks for that mode.
+Plaintext local checkpoints do not make arbitrary JET range transfers possible.
+Adding JET resume or independently authenticated live ranges needs explicit
+protocol support; the URL mode must not silently bypass this restriction.

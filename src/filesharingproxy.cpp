@@ -25,6 +25,7 @@
 #include "filesharingdownloader.h"
 #include "filesharingitem.h"
 #include "filesharingmanager.h"
+#include "filesharingurl.h"
 #include "httputil.h"
 #include "mediachunkcache.h"
 #include "psiaccount.h"
@@ -115,7 +116,7 @@ public:
         }
 
         if constexpr (Impl::supportsChunkCache) {
-            if (startChunkReader())
+            if (self->isPlaybackRequest() && startChunkReader())
                 return;
         }
 
@@ -645,6 +646,7 @@ public:
     }
 
     bool isHeadRequest() const { return request->methodString() == QLatin1String("HEAD"); }
+    bool isPlaybackRequest() const { return FileSharingUrl::mode(request->url()) == FileSharingUrl::Mode::Stream; }
     void abortBody() { response->connection()->killConnection(); }
 
     static qhttp::TStatusCode mapStatusCode(ControlBase::StatusCode code)

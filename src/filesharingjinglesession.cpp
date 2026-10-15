@@ -172,6 +172,11 @@ public:
             } else if (state == J::State::Finished) {
                 // A rejected successor must not leave the old receipt stranded.
                 schedule();
+                // The next content is already accepted before its predecessor's
+                // receipt is released. Finished range applications have no more
+                // consumers and must not accumulate for the life of the session.
+                if (part->app)
+                    part->app->deleteLater();
                 close(previous);
             }
         });

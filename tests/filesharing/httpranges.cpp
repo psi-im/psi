@@ -1,3 +1,4 @@
+#include "filesharingurl.h"
 #include "httputil.h"
 
 #include <QTest>
@@ -7,6 +8,22 @@
 class HttpRangesTest : public QObject {
     Q_OBJECT
 private slots:
+    void sharingModes()
+    {
+        using namespace FileSharingUrl;
+        const QUrl original(QStringLiteral("http://localhost:1234/psi/account/test/sharedfile/sha-256+abcd?x=1#f"));
+        QCOMPARE(mode(original), Mode::Download);
+        const auto stream = withMode(original, Mode::Stream);
+        QCOMPARE(mode(stream), Mode::Stream);
+        const auto download = withMode(stream, Mode::Download);
+        QCOMPARE(mode(download), Mode::Download);
+        QCOMPARE(download.path(), original.path());
+        QCOMPARE(download.fragment(), original.fragment());
+        QCOMPARE(QUrlQuery(download).queryItemValue(QStringLiteral("x")), QStringLiteral("1"));
+        QCOMPARE(QUrlQuery(download).allQueryItemValues(QStringLiteral("mode")).size(), 1);
+        QCOMPARE(mode(QUrl(QStringLiteral("http://localhost/file?mode=stream&mode=download"))), Mode::Download);
+        QCOMPARE(mode(QUrl(QStringLiteral("http://localhost/file?mode=unknown"))), Mode::Download);
+    }
     void range_data()
     {
         QTest::addColumn<QByteArray>("header");

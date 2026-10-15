@@ -658,7 +658,16 @@ function initPsiTheme() {
             return range.createContextualFragment(html);
         },
 
+        sharedMediaUrl: function(source, playback) {
+            if (typeof session.openSharedMedia !== "function" || source.indexOf("/sharedfile/") === -1)
+                return source;
+            var url = new URL(source, document.baseURI);
+            url.searchParams.set("mode", playback ? "stream" : "download");
+            return url.href;
+        },
+
         videoPreview: function(source) {
+            source = chat.util.sharedMediaUrl(source, true);
             const html = `<div class="video psi-preview">
                 <video width="560" height="315" controls="1">
                     <source src="${source}"/>
@@ -681,7 +690,7 @@ function initPsiTheme() {
                 document.head.appendChild(style);
             }
             var strings = session.sharedMediaStrings;
-            var sourceId = source.slice(source.lastIndexOf("/sharedfile/") + "/sharedfile/".length);
+            var sourceId = source.slice(source.lastIndexOf("/sharedfile/") + "/sharedfile/".length).split(/[?#]/)[0];
             container.classList.add("psi-shared-media", "psi-shared-media-" + media.tagName.toLowerCase());
             var actions = document.createElement("div");
             actions.className = "psi-media-actions";
@@ -848,6 +857,7 @@ function initPsiTheme() {
                 var share = shares[li];
                 var info = ""; // TODO
                 var source = share.getAttribute("id");
+                var mediaUrl = chat.util.sharedMediaUrl(`/psi/account/${session.account}/sharedfile/${source}`, true);
                 var type = share.getAttribute("type");
                 if (type.startsWith("audio")) {
                     var hg = share.getAttribute("amplitudes");
@@ -862,7 +872,7 @@ ${info}
 </div>
 <progress class="psi-am-progressbar"/>
 <audio>
-<source src="/psi/account/${session.account}/sharedfile/${source}">
+<source src="${mediaUrl}">
 </audio>
 </div>`);
                     var player = playerFragment.firstChild;
@@ -871,7 +881,7 @@ ${info}
                         wrapper.appendChild(player);
                         playerFragment.appendChild(wrapper);
                         chat.util.addSharedMediaActions(player.querySelector("audio"), wrapper,
-                            `/psi/account/${session.account}/sharedfile/${source}`);
+                            mediaUrl);
                     }
                     if (share.nextSibling)
                         share.parentNode.insertBefore(playerFragment, share.nextSibling);

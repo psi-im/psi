@@ -145,6 +145,7 @@ list(APPEND HEADERS
     filesharingitem.h
     filesharingmanager.h
     filesharingproxy.h
+    filesharingurl.h
     filetransdlg.h
     fileutil.h
     gcuserview.h

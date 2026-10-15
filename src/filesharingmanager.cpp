@@ -23,6 +23,7 @@
 #include "filecache.h"
 #include "filesharingdownloader.h"
 #include "filesharingjinglesession.h"
+#include "filesharingurl.h"
 #include "httputil.h"
 #include "mediachunkcache.h"
 #include "psiaccount.h"
@@ -316,6 +317,10 @@ bool FileSharingManager::acceptIncomingDownloadContents(Jingle::Session *session
         auto item = p.second; // FileCacheItem
 
         ft->setKeepTransportUntilReceipt();
+        connect(ft, &Jingle::Application::stateChanged, ft, [ft](Jingle::State state) {
+            if (state == Jingle::State::Finished)
+                ft->deleteLater();
+        });
 
         auto acceptFile = ft->file();
         acceptFile.setHashes(item->sums());
@@ -387,7 +392,7 @@ QIODevice *FileSharingDeviceOpener::open(QUrl &url)
         path += '/';
     path += QString("psi/account/%1/sharedfile/%2").arg(acc->id(), sourceId.toString());
     localServerUrl.setPath(path);
-    url = localServerUrl;
+    url = FileSharingUrl::withMode(localServerUrl, FileSharingUrl::Mode::Stream);
     return nullptr;
 #else
 #ifndef Q_OS_WIN
