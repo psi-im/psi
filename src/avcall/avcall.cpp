@@ -56,31 +56,11 @@ static bool endToEndPreferred(PsiAccount *account, const XMPP::Jid &peer)
 {
     return account && account->encryptionController() && account->encryptionController()->jingleEndToEndPreferred(peer);
 }
-static QString resolvedAudioInputDevice()
+static QString resolvedInputDevice(const QList<PsiMedia::Device> &devices, const QString &preferred)
 {
-    if (!g_config->liveInput)
-        return {};
-
-    const auto devices = MediaDeviceWatcher::instance()->audioInputDevices();
-    for (const auto &device : devices) {
-        if (!g_config->audioInDeviceId.isEmpty() && device.id() == g_config->audioInDeviceId)
-            return device.id();
-    }
-    for (const auto &device : devices) {
-        if (device.isDefault())
-            return device.id();
-    }
-    return devices.isEmpty() ? QString() : devices.first().id();
-}
-
-static QString resolvedVideoInputDevice()
-{
-    if (!g_config->liveInput)
-        return {};
-    const auto devices = MediaDeviceWatcher::instance()->videoInputDevices();
     for (const auto &device : devices)
-        if (!g_config->videoInDeviceId.isEmpty() && device.id() == g_config->videoInDeviceId)
-            return device.id();
+        if (!preferred.isEmpty() && device.id() == preferred)
+            return preferred;
     for (const auto &device : devices)
         if (device.isDefault())
             return device.id();
@@ -152,6 +132,19 @@ public:
         connect(&cameraDirection, &AvCallAudioDirection::changed, this, [this] { syncActiveTransmit(); });
         connect(&screenDirection, &AvCallAudioDirection::changed, this, [this] { syncActiveTransmit(); });
     }
+    QString resolvedAudioInputDevice() const
+    {
+        return g_config->liveInput
+            ? resolvedInputDevice(MediaDeviceWatcher::instance()->audioInputDevices(), audioInputDevice)
+            : QString();
+    }
+    QString resolvedVideoInputDevice() const
+    {
+        return g_config->liveInput
+            ? resolvedInputDevice(MediaDeviceWatcher::instance()->videoInputDevices(), videoInputDevice)
+            : QString();
+    }
+
     ~AvCallPrivate() override
     {
         if (!incoming && !session && !jmiId.isEmpty() && !jmiProceedSent && !jmiClosed) {
@@ -962,6 +955,10 @@ public:
     QPointer<RTP::Application> displayedCamera;
     QPointer<RTP::Application> displayedScreen;
     QString                    screenSource;
+    // Each call owns its capture choice; selecting a device must not retarget
+    // another running call or the screen's independent capture source.
+    QString                    audioInputDevice    = g_config->audioInDeviceId;
+    QString                    videoInputDevice    = g_config->videoInDeviceId;
     bool                       incoming            = false;
     bool                       joined              = false;
     bool                       backendConfigured   = false;
@@ -1033,6 +1030,23 @@ void AvCall::setIncomingPresentation(PsiMedia::VideoWidget *widget)
 }
 void AvCall::setMicrophoneEnabled(bool enabled) { d->setMicrophoneEnabled(enabled); }
 void AvCall::setCameraEnabled(bool enabled) { d->setCameraEnabled(enabled); }
+void AvCall::setAudioInputDevice(const QString &id)
+{
+    if (d->audioInputDevice == id)
+        return;
+    d->audioInputDevice = id;
+    d->mediaCapabilitiesChanged();
+}
+void AvCall::setVideoInputDevice(const QString &id)
+{
+    if (d->videoInputDevice == id)
+        return;
+    d->videoInputDevice = id;
+    d->mediaCapabilitiesChanged();
+}
+QString AvCall::audioInputDevice() const { return d->audioInputDevice; }
+QString AvCall::videoInputDevice() const { return d->videoInputDevice; }
+
 bool AvCall::startScreenSharing(const QString &source, std::shared_ptr<const void> lease)
 {
     return d->startScreenSharing(source, std::move(lease));

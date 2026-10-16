@@ -20,7 +20,6 @@
 
 #include "psimedia.h"
 
-#include "pluginmanager.h"
 #include "psimediaprovider.h"
 
 #include <QCoreApplication>

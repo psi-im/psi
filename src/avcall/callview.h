@@ -2,10 +2,14 @@
 #ifndef CALLVIEW_H
 #define CALLVIEW_H
 
+#include <QList>
 #include <QString>
 #include <QWidget>
 class QLabel;
 class QPushButton;
+class QToolButton;
+class QMenu;
+class QActionGroup;
 class QComboBox;
 class CallStage;
 class QEvent;
@@ -17,6 +21,13 @@ class CallView : public QWidget {
     Q_OBJECT
 public:
     explicit CallView(QWidget *parent = nullptr);
+    struct InputDevice {
+        QString id;
+        QString name;
+        bool    isDefault = false;
+    };
+    void                   setInputDevices(const QList<InputDevice> &microphones, const QString &microphoneId,
+                                           const QList<InputDevice> &cameras, const QString &cameraId);
     void                   setPeer(const QString &peer);
     QString                peer() const;
     // How the session is protected; an empty text hides it.
@@ -63,6 +74,8 @@ signals:
     void ended();
     void microphoneChanged(bool enabled);
     void cameraChanged(bool enabled);
+    void microphoneDeviceSelected(const QString &id);
+    void cameraDeviceSelected(const QString &id);
     void shareRequested();
     void whiteboardChanged(bool enabled);
 
@@ -72,6 +85,14 @@ private:
     QLabel                *sharingHint_;
     QPushButton           *microphone_;
     QPushButton           *camera_;
+    QToolButton           *microphoneDevices_;
+    QToolButton           *cameraDevices_;
+    QMenu                 *microphoneMenu_;
+    QMenu                 *cameraMenu_;
+    QActionGroup          *microphoneDeviceGroup_ = nullptr;
+    QActionGroup          *cameraDeviceGroup_     = nullptr;
+    bool                   microphonesAvailable_  = false;
+    bool                   camerasAvailable_      = false;
     QPushButton           *share_;
     QPushButton           *whiteboard_;
     QPushButton           *accept_;

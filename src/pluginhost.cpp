@@ -1433,7 +1433,20 @@ void PluginHost::selectMediaDevices(const QString &audioInput, const QString &au
 void PluginHost::setMediaProvider(PsiMedia::Provider *provider)
 {
     PsiMedia::setProvider(provider);
-    MediaDeviceWatcher::instance()->setup();
+    auto *watcher = MediaDeviceWatcher::instance();
+    QObject::disconnect(mediaInputPreferencesConnection_);
+    // Keep one set of preferences: write through the host that owns the
+    // selected provider, using the same keys as its device settings page.
+    const QPointer<PluginHost> host(this);
+    mediaInputPreferencesConnection_
+        = connect(watcher, &MediaDeviceWatcher::inputDevicePreferencesChanged, provider->qobject(),
+                  [host](const QString &audio, const QString &video) {
+                      if (host) {
+                          host->setPluginOption(QStringLiteral("devices.audio-input"), audio);
+                          host->setPluginOption(QStringLiteral("devices.video-input"), video);
+                      }
+                  });
+    watcher->setup();
 }
 
 //-- helpers --------------------------------------------------------

@@ -1,5 +1,17 @@
 # Calls and screen sharing
 
+The arrows beside the microphone and camera buttons select their input devices.
+Selection is available before connecting and during a call. Choosing a device
+preserves the microphone mute and camera on/off state; it never starts capture
+by itself. An active input switches through the media provider without restarting
+the call or changing an independent screen stream.
+
+The choice is saved in the media plugin's existing device settings for future
+calls. Other open calls retain their own choices. **System default** follows the
+provider's default device. Device lists update when hardware changes; if a
+selected device disappears, the call falls back to the system default (or the
+first available device), retaining the preferred ID for reconnection.
+
 Choose the **Share screen** icon (monitor), select a display or an individual
 window, and confirm **Share**. Selection is available before calling or accepting,
 while ringing, and in a connected call. Before connection, the **Screen selected**

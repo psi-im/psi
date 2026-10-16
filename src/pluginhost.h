@@ -282,6 +282,7 @@ signals:
     void disabled();
 
 private:
+    QMetaObject::Connection mediaInputPreferencesConnection_;
     PluginManager    *manager_ = nullptr;
     QPointer<QObject> plugin_;
     QString           file_;

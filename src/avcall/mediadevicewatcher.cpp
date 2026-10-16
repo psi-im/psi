@@ -59,6 +59,17 @@ void MediaDeviceWatcher::selectDevices(const QString &audioInput, const QString 
     emit updated();
 }
 
+void MediaDeviceWatcher::selectInputDevices(const std::optional<QString> &audioInput,
+                                            const std::optional<QString> &videoInput)
+{
+    if (audioInput)
+        _configuration.audioInDeviceId = *audioInput;
+    if (videoInput)
+        _configuration.videoInDeviceId = *videoInput;
+    emit inputDevicePreferencesChanged(_configuration.audioInDeviceId, _configuration.videoInDeviceId);
+    emit updated();
+}
+
 QString MediaDeviceWatcher::defaultDeviceId(const QList<PsiMedia::Device> &devs, const QString &userPref)
 {
     QString def;

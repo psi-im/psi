@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "callview.h"
+#include <QAction>
 #include <QApplication>
 #include <QFrame>
 #include <QLabel>
 #include <QLineEdit>
+#include <QMenu>
 #include <QPushButton>
 #include <QSignalSpy>
 #include <QTest>
+#include <QToolButton>
 class ScreenShareTest : public QObject {
     Q_OBJECT
 private slots:
@@ -79,6 +82,76 @@ private slots:
         QCOMPARE(pendingEnd->text(), QStringLiteral("Close"));
     }
 
+    void inputDeviceSelectionDoesNotEnableCapture()
+    {
+        CallView                           view;
+        const QList<CallView::InputDevice> microphones { { "mic-a", "Desk microphone", true },
+                                                         { "mic-b", "Headset microphone", false } };
+        const QList<CallView::InputDevice> cameras { { "camera-a", "Built-in camera", true },
+                                                     { "camera-b", "USB camera", false } };
+        view.setMicrophoneChecked(false);
+        view.setCameraEnabled(false);
+        view.setInputDevices(microphones, "mic-a", cameras, "camera-a");
+        auto *mic    = view.findChild<QToolButton *>(QStringLiteral("callMicrophoneDevices"));
+        auto *camera = view.findChild<QToolButton *>(QStringLiteral("callCameraDevices"));
+        QVERIFY(mic && camera && mic->isEnabled() && camera->isEnabled());
+        QSignalSpy micDevice(&view, &CallView::microphoneDeviceSelected);
+        QSignalSpy cameraDevice(&view, &CallView::cameraDeviceSelected);
+        QSignalSpy micToggle(&view, &CallView::microphoneChanged);
+        QSignalSpy cameraToggle(&view, &CallView::cameraChanged);
+        const auto choose = [](QMenu *menu, const QString &id) {
+            for (auto *action : menu->actions())
+                if (action->data().toString() == id) {
+                    action->trigger();
+                    return true;
+                }
+            return false;
+        };
+        QVERIFY(choose(mic->menu(), "mic-b"));
+        QVERIFY(choose(camera->menu(), "camera-b"));
+        QCOMPARE(micDevice.count(), 1);
+        QCOMPARE(micDevice.first().first().toString(), QString("mic-b"));
+        QCOMPARE(cameraDevice.count(), 1);
+        QCOMPARE(cameraDevice.first().first().toString(), QString("camera-b"));
+        QCOMPARE(micToggle.count(), 0);
+        QCOMPARE(cameraToggle.count(), 0);
+        QVERIFY(!view.microphoneEnabled() && !view.cameraEnabled());
+        view.setConnecting(true);
+        QVERIFY(mic->isEnabled() && camera->isEnabled());
+        QVERIFY(choose(camera->menu(), QString()));
+        QCOMPARE(cameraDevice.last().first().toString(), QString());
+        view.setFinished();
+        QVERIFY(!mic->isEnabled() && !camera->isEnabled());
+    }
+
+    void deviceRefreshPreservesIdentityWithoutSelectionSignals()
+    {
+        CallView                           view;
+        const QList<CallView::InputDevice> devices { { "one", "Camera", true }, { "two", "Camera", false } };
+        QSignalSpy                         selected(&view, &CallView::cameraDeviceSelected);
+        view.setInputDevices({}, {}, devices, "two");
+        auto *camera = view.findChild<QToolButton *>(QStringLiteral("callCameraDevices"));
+        QVERIFY(camera && camera->isEnabled());
+        const auto checkedId = [](QMenu *menu) {
+            for (auto *action : menu->actions())
+                if (action->isChecked())
+                    return action->data().toString();
+            return QStringLiteral("no-selection");
+        };
+        QCOMPARE(checkedId(camera->menu()), QString("two"));
+        view.setInputDevices({}, {}, { devices.first() }, "two");
+        QCOMPARE(checkedId(camera->menu()), QString("two"));
+        QVERIFY(!camera->menu()->actions().last()->isEnabled());
+        QVERIFY(camera->toolTip().contains(QStringLiteral("unavailable")));
+        view.setInputDevices({}, {}, devices, "two");
+        QCOMPARE(checkedId(camera->menu()), QString("two"));
+        QVERIFY(camera->menu()->actions().last()->isEnabled());
+        QCOMPARE(selected.count(), 0);
+        view.setInputDevices({}, {}, {}, "two");
+        QVERIFY(!camera->isEnabled());
+        QCOMPARE(selected.count(), 0);
+    }
+
     void paletteFollowsSystemThemeWithoutStylingWhiteboardChildren()
     {
         CallView view;
@@ -104,6 +177,7 @@ private slots:
         CallView view;
         view.resize(860, 640);
         view.setPeer(QStringLiteral("alex@example.org"));
+        view.setInputDevices({ { "mic", "Microphone", true } }, {}, { { "camera", "Camera", true } }, {});
         view.setActive(true);
         view.setDuration(127);
         QSignalSpy microphone(&view, &CallView::microphoneChanged), camera(&view, &CallView::cameraChanged);

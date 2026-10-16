@@ -1,20 +1,24 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "callview.h"
-#include "callstage.h"
 #include "../psimedia/psimedia.h"
+#include "callstage.h"
+#include <QAction>
+#include <QActionGroup>
 #include <QComboBox>
 #include <QEvent>
 #include <QFontMetrics>
-#include <QPalette>
 #include <QFrame>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QMenu>
 #include <QPainter>
 #include <QPainterPath>
+#include <QPalette>
 #include <QPolygonF>
 #include <QPushButton>
 #include <QSignalBlocker>
 #include <QSizePolicy>
+#include <QToolButton>
 #include <QVBoxLayout>
 
 namespace {
@@ -138,6 +142,21 @@ CallView::CallView(QWidget *parent) : QWidget(parent)
         emit cameraChanged(enabled);
     });
 
+    microphoneDevices_ = new QToolButton(this);
+    cameraDevices_     = new QToolButton(this);
+    microphoneDevices_->setObjectName(QStringLiteral("callMicrophoneDevices"));
+    cameraDevices_->setObjectName(QStringLiteral("callCameraDevices"));
+    microphoneMenu_ = new QMenu(microphoneDevices_);
+    cameraMenu_     = new QMenu(cameraDevices_);
+    microphoneDevices_->setMenu(microphoneMenu_);
+    cameraDevices_->setMenu(cameraMenu_);
+    for (auto *button : { microphoneDevices_, cameraDevices_ }) {
+        button->setArrowType(Qt::DownArrow);
+        button->setPopupMode(QToolButton::InstantPopup);
+        button->setFixedSize(20, 42);
+        button->setCursor(Qt::PointingHandCursor);
+    }
+
     share_ = new QPushButton(this);
     share_->setObjectName(QStringLiteral("callShare"));
     share_->setCheckable(true);
@@ -175,6 +194,11 @@ CallView::CallView(QWidget *parent) : QWidget(parent)
     security_->setAlignment(Qt::AlignCenter);
     security_->hide();
 
+    microphoneDevices_->setToolTip(tr("Choose microphone"));
+    microphoneDevices_->setAccessibleName(microphoneDevices_->toolTip());
+    cameraDevices_->setToolTip(tr("Choose camera"));
+    cameraDevices_->setAccessibleName(cameraDevices_->toolTip());
+
     quality_ = new QComboBox(this);
     quality_->setObjectName(QStringLiteral("callQuality"));
     quality_->addItem(tr("HD · 2 Mbps"), 2000);
@@ -195,7 +219,9 @@ CallView::CallView(QWidget *parent) : QWidget(parent)
     end_->setAccessibleName(end_->toolTip());
 
     controls->addWidget(microphone_);
+    controls->addWidget(microphoneDevices_);
     controls->addWidget(camera_);
+    controls->addWidget(cameraDevices_);
     controls->addWidget(share_);
     controls->addWidget(whiteboard_);
     controls->addWidget(sharingHint_);
@@ -207,7 +233,7 @@ CallView::CallView(QWidget *parent) : QWidget(parent)
     layout->addWidget(controlBar);
 
     updateAppearance();
-    updateControlPresentation();
+    updateMediaButtons();
     connect(accept_, &QPushButton::clicked, this, &CallView::accepted);
     connect(end_, &QPushButton::clicked, this, &CallView::ended);
 }
@@ -255,36 +281,41 @@ void CallView::updateAppearance()
     const QColor accent = colors.color(QPalette::Highlight);
     const QColor accentText = colors.color(QPalette::HighlightedText);
     // Scoped selectors leave the whiteboard's native canvas and toolbar alone.
-    setStyleSheet(QStringLiteral(
-        "QWidget#callView { background-color: %1; color: %2; }"
-        "QLabel#callSharingHint { color: %4; }"
-        "QFrame#callStage { background: %3; border: 1px solid %6; border-radius: 10px; }"
-        "QFrame#callTile { background: %3; border: none; border-radius: 6px; }"
-        "QFrame#callControls { background: %5; border: 1px solid %6; border-radius: 10px; }"
-        "QPushButton#callMicrophone, QPushButton#callCamera, QPushButton#callShare,"
-        " QPushButton#callWhiteboard { color: %7; background: %5; border: 1px solid %6;"
-        " border-radius: 8px; padding: 6px; }"
-        "QPushButton#callMicrophone:hover, QPushButton#callCamera:hover,"
-        " QPushButton#callShare:hover, QPushButton#callWhiteboard:hover { border-color: %8; }"
-        "QPushButton#callMicrophone:checked, QPushButton#callCamera:checked,"
-        " QPushButton#callShare:checked, QPushButton#callWhiteboard:checked"
-        " { color: %9; background: %8; border-color: %8; }"
-        "QPushButton#callMicrophone:focus, QPushButton#callCamera:focus,"
-        " QPushButton#callShare:focus, QPushButton#callWhiteboard:focus"
-        " { border: 2px solid %8; }"
-        "QPushButton#callMicrophone:disabled, QPushButton#callCamera:disabled,"
-        " QPushButton#callShare:disabled, QPushButton#callWhiteboard:disabled"
-        " { color: %4; background: %5; border-color: %6; }"
-        "QPushButton#callEnd { color: white; background: #bf3650; border: none;"
-        " border-radius: 8px; padding: 10px 13px; font-weight: 600; }"
-        "QPushButton#callEnd:hover { background: #a92f46; }"
-        "QPushButton#callEnd:focus { border: 2px solid %8; }"
-        "QPushButton#callAccept { color: %9; background: %8; border: none;"
-        " border-radius: 8px; padding: 10px 13px; font-weight: 600; }"
-        "QComboBox#callQuality { color: %7; background: %5; border: 1px solid %6;"
-        " border-radius: 7px; padding: 7px; }")
-        .arg(surface.name(), text.name(), canvas.name(), muted.name(), button.name(),
-             border.name(), buttonText.name(), accent.name(), accentText.name()));
+    setStyleSheet(QStringLiteral("QWidget#callView { background-color: %1; color: %2; }"
+                                 "QLabel#callSharingHint { color: %4; }"
+                                 "QFrame#callStage { background: %3; border: 1px solid %6; border-radius: 10px; }"
+                                 "QFrame#callTile { background: %3; border: none; border-radius: 6px; }"
+                                 "QFrame#callControls { background: %5; border: 1px solid %6; border-radius: 10px; }"
+                                 "QPushButton#callMicrophone, QPushButton#callCamera, QPushButton#callShare,"
+                                 " QPushButton#callWhiteboard { color: %7; background: %5; border: 1px solid %6;"
+                                 " border-radius: 8px; padding: 6px; }"
+                                 "QPushButton#callMicrophone:hover, QPushButton#callCamera:hover,"
+                                 " QPushButton#callShare:hover, QPushButton#callWhiteboard:hover { border-color: %8; }"
+                                 "QPushButton#callMicrophone:checked, QPushButton#callCamera:checked,"
+                                 " QPushButton#callShare:checked, QPushButton#callWhiteboard:checked"
+                                 " { color: %9; background: %8; border-color: %8; }"
+                                 "QPushButton#callMicrophone:focus, QPushButton#callCamera:focus,"
+                                 " QPushButton#callShare:focus, QPushButton#callWhiteboard:focus"
+                                 " { border: 2px solid %8; }"
+                                 "QPushButton#callMicrophone:disabled, QPushButton#callCamera:disabled,"
+                                 " QPushButton#callShare:disabled, QPushButton#callWhiteboard:disabled"
+                                 " { color: %4; background: %5; border-color: %6; }"
+                                 "QToolButton#callMicrophoneDevices, QToolButton#callCameraDevices"
+                                 " { color: %7; background: %5; border: 1px solid %6; border-radius: 6px; }"
+                                 "QToolButton#callMicrophoneDevices:hover, QToolButton#callCameraDevices:hover"
+                                 " { border-color: %8; }"
+                                 "QToolButton#callMicrophoneDevices::menu-indicator,"
+                                 " QToolButton#callCameraDevices::menu-indicator { image: none; }"
+                                 "QPushButton#callEnd { color: white; background: #bf3650; border: none;"
+                                 " border-radius: 8px; padding: 10px 13px; font-weight: 600; }"
+                                 "QPushButton#callEnd:hover { background: #a92f46; }"
+                                 "QPushButton#callEnd:focus { border: 2px solid %8; }"
+                                 "QPushButton#callAccept { color: %9; background: %8; border: none;"
+                                 " border-radius: 8px; padding: 10px 13px; font-weight: 600; }"
+                                 "QComboBox#callQuality { color: %7; background: %5; border: 1px solid %6;"
+                                 " border-radius: 7px; padding: 7px; }")
+                      .arg(surface.name(), text.name(), canvas.name(), muted.name(), button.name(), border.name(),
+                           buttonText.name(), accent.name(), accentText.name()));
     updateControlPresentation();
     if (!security_->toolTip().isEmpty())
         setSecurity(security_->toolTip(), security_->property("endToEnd").toBool(),
@@ -468,6 +499,8 @@ void CallView::updateMediaButtons()
     const bool media = !finished_ && mediaAvailable_ && (!whiteboardOnly_ || active_);
     microphone_->setEnabled(media);
     camera_->setEnabled(media && videoSupported_ && !connecting_);
+    microphoneDevices_->setEnabled(!finished_ && mediaAvailable_ && microphonesAvailable_);
+    cameraDevices_->setEnabled(!finished_ && mediaAvailable_ && videoSupported_ && camerasAvailable_);
     // Selecting a source is allowed before a call starts. An existing selection
     // must also remain cancellable if media capabilities disappear meanwhile.
     share_->setEnabled(!finished_ && (sharing_ || selecting_ || (mediaAvailable_ && shareSupported_)));
@@ -497,4 +530,58 @@ bool CallView::whiteboardEnabled() const { return whiteboard_->isChecked(); }
 void CallView::hideRemoteVideo(bool presentation)
 {
     stage_->setTileVisible(presentation ? presentation_ : video_, false);
+}
+
+void CallView::setInputDevices(const QList<InputDevice> &microphones, const QString &microphoneId,
+                               const QList<InputDevice> &cameras, const QString &cameraId)
+{
+    const auto populate
+        = [this](QToolButton *button, QMenu *menu, QActionGroup *&group, const QList<InputDevice> &devices,
+                 const QString &selected, const QString &title, auto notify) {
+              delete group;
+              menu->clear();
+              group            = new QActionGroup(menu);
+              QString fallback = devices.isEmpty() ? tr("No devices available") : devices.first().name;
+              for (const auto &device : devices)
+                  if (device.isDefault)
+                      fallback = device.name;
+              auto *automatic = menu->addAction(tr("System default (%1)").arg(fallback));
+              automatic->setData(QString());
+              automatic->setCheckable(true);
+              automatic->setChecked(selected.isEmpty());
+              group->addAction(automatic);
+              QString current = selected.isEmpty() ? automatic->text() : QString();
+              for (const auto &device : devices) {
+                  auto *action = menu->addAction(device.name);
+                  action->setData(device.id);
+                  action->setCheckable(true);
+                  action->setChecked(device.id == selected);
+                  group->addAction(action);
+                  if (device.id == selected)
+                      current = device.name;
+              }
+              if (current.isEmpty()) {
+                  current       = tr("Device unavailable; using %1").arg(fallback);
+                  auto *missing = menu->addAction(current);
+                  missing->setData(selected);
+                  missing->setCheckable(true);
+                  missing->setChecked(true);
+                  missing->setEnabled(false);
+                  group->addAction(missing);
+              }
+              button->setToolTip(title + QStringLiteral(": ") + current);
+              button->setAccessibleName(button->toolTip());
+              connect(group, &QActionGroup::triggered, this, [button, title, notify](QAction *action) {
+                  button->setToolTip(title + QStringLiteral(": ") + action->text());
+                  button->setAccessibleName(button->toolTip());
+                  notify(action->data().toString());
+              });
+          };
+    microphonesAvailable_ = !microphones.isEmpty();
+    camerasAvailable_     = !cameras.isEmpty();
+    populate(microphoneDevices_, microphoneMenu_, microphoneDeviceGroup_, microphones, microphoneId,
+             tr("Choose microphone"), [this](const QString &id) { emit microphoneDeviceSelected(id); });
+    populate(cameraDevices_, cameraMenu_, cameraDeviceGroup_, cameras, cameraId, tr("Choose camera"),
+             [this](const QString &id) { emit cameraDeviceSelected(id); });
+    updateMediaButtons();
 }

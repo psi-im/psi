@@ -68,6 +68,28 @@ public:
             const QString peer = view->peer();
             q->setWindowTitle(peer.isEmpty() ? kind : tr("%1 — %2").arg(kind, peer));
         });
+        const auto inputConfig = MediaDeviceWatcher::instance()->configuration();
+        microphoneId           = inputConfig.audioInDeviceId;
+        cameraId               = inputConfig.videoInDeviceId;
+        updateInputDevices();
+        connect(MediaDeviceWatcher::instance(), &MediaDeviceWatcher::capabilitiesChanged, this,
+                &Private::updateInputDevices);
+        connect(view, &CallView::microphoneDeviceSelected, this, [this](const QString &id) {
+            if (finished)
+                return;
+            microphoneId = id;
+            if (session)
+                session->setAudioInputDevice(id);
+            MediaDeviceWatcher::instance()->selectInputDevices(id, std::nullopt);
+        });
+        connect(view, &CallView::cameraDeviceSelected, this, [this](const QString &id) {
+            if (finished)
+                return;
+            cameraId = id;
+            if (session)
+                session->setVideoInputDevice(id);
+            MediaDeviceWatcher::instance()->selectInputDevices(std::nullopt, id);
+        });
         view->setVideoSupported(AvCallManager::isVideoSupported());
         updateSharingSupport();
         connect(MediaDeviceWatcher::instance(), &MediaDeviceWatcher::capabilitiesChanged, this,
@@ -131,6 +153,19 @@ public:
         connect(&capture, &ScreenShareCapture::selectingChanged, view, &CallView::setShareSelecting);
         connect(&capture, &ScreenShareCapture::failed, this, &Private::notifyError);
         connect(&timer, &QTimer::timeout, this, [this] { view->setDuration(elapsed.elapsed() / 1000); });
+    }
+
+    void updateInputDevices()
+    {
+        const auto choices = [](const QList<PsiMedia::Device> &devices) {
+            QList<CallView::InputDevice> result;
+            for (const auto &device : devices)
+                result.append({ device.id(), device.name(), device.isDefault() });
+            return result;
+        };
+        auto *watcher = MediaDeviceWatcher::instance();
+        view->setInputDevices(choices(watcher->audioInputDevices()), microphoneId,
+                              choices(watcher->videoInputDevices()), cameraId);
     }
 
     void updateSharingSupport()
@@ -197,6 +232,8 @@ public:
     void bind(AvCall *call)
     {
         session = call;
+        session->setAudioInputDevice(microphoneId);
+        session->setVideoInputDevice(cameraId);
         connect(call, &AvCall::ringing, this, [this] { ring(CallRinger::Outgoing); });
         connect(call, &AvCall::activated, this, [this] {
             stopRinging();
@@ -801,6 +838,8 @@ public:
     bool               active   = false;
     bool               finished = false;
     QString            shareLabel;
+    QString            microphoneId;
+    QString            cameraId;
 
     QPointer<SXE::Application> whiteboard;
     QPointer<SXE::Document>    wbDocument;

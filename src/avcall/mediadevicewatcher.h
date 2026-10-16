@@ -21,6 +21,7 @@
 #include "mediacryptocapabilities.h"
 
 #include <QObject>
+#include <optional>
 
 class MediaConfiguration {
 public:
@@ -45,6 +46,8 @@ public:
     static MediaDeviceWatcher *instance();
     void                       setup();
     void selectDevices(const QString &audioInput, const QString &audioOutput, const QString &videoInput);
+    // User selection from a call updates defaults for future calls, not other calls' capture.
+    void selectInputDevices(const std::optional<QString> &audioInput, const std::optional<QString> &videoInput);
     inline const MediaConfiguration &configuration() const { return _configuration; }
 
     inline QList<PsiMedia::Device>      audioInputDevices() { return _features.audioInputDevices(); }
@@ -58,6 +61,7 @@ public:
 
 signals:
     void updated();
+    void inputDevicePreferencesChanged(const QString &audioInput, const QString &videoInput);
     void availibityChanged();
     void capabilitiesChanged();
 

@@ -64,6 +64,11 @@ public:
     void setIncomingPresentation(PsiMedia::VideoWidget *widget);
     void setMicrophoneEnabled(bool enabled);
     void setCameraEnabled(bool enabled);
+    // Empty ID follows the system default; selection does not unmute capture.
+    void    setAudioInputDevice(const QString &id);
+    void    setVideoInputDevice(const QString &id);
+    QString audioInputDevice() const;
+    QString videoInputDevice() const;
     bool startScreenSharing(const QString &source, std::shared_ptr<const void> sourceLease = {});
     void stopScreenSharing();
     bool screenSharing() const;
