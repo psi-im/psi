@@ -6,6 +6,7 @@
 #include <QHash>
 #include <QIODevice>
 #include <QPointer>
+#include <QSet>
 #include <memory>
 #include <optional>
 
@@ -14,6 +15,7 @@ class MediaChunkStore;
 // Plaintext, disposable range cache. A source identity must include account,
 // immutable content identity and size. Fetchers validate ranges before completion.
 class MediaChunkCache : public QObject {
+    Q_OBJECT
 public:
     static constexpr quint64 MaxChunkSize = MediaChunkMaxSize;
     static constexpr int     MaxRequests  = 256;
@@ -34,6 +36,13 @@ public:
     void    shutdown();
     quint64 diskBytes() const;
     quint64 chunkSize() const { return chunkSize_; }
+    // Verified chunks observed in this process, including disk cache hits.
+    // Byte ranges shrink on eviction; this is not a persistent file manifest.
+    using Ranges = QList<QPair<quint64, quint64>>; // offset, length
+    Ranges cachedRanges(const QString &source, quint64 fileSize) const;
+
+signals:
+    void rangesChanged(const QString &source, quint64 fileSize);
 
 private:
     struct Request {
@@ -44,6 +53,16 @@ private:
     QString recordKey(const QString &source, quint64 size, quint64 index) const;
     Abort   fetchChunk(const QString &key, quint64 start, quint64 expected, Fetch fetch, Completion complete);
     void    deliver(quint64 ticket, QByteArray bytes, MediaChunkError error);
+    void    remember(const QString &key, const QString &source, quint64 size, quint64 index);
+    void    refreshAvailability();
+    void    notifyRanges(const QString &source, quint64 size);
+    struct Record {
+        QString source;
+        quint64 size, index;
+    };
+    QHash<QString, Record>        records_;
+    QSet<QPair<QString, quint64>> pendingRanges_;
+    bool                          rangesPending_ = false;
 
     quint64                          chunkSize_, nextTicket_ = 0;
     bool                             stopped_ = false;

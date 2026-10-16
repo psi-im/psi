@@ -25,6 +25,44 @@ struct Pending {
 class ChunkCacheTest : public QObject {
     Q_OBJECT
 private slots:
+    void availabilityTracksVerifiedChunksAndEviction()
+    {
+        QTemporaryDir dir(QDir::currentPath() + "/chunks-XXXXXX");
+        const quint64 chunk = 4 * 1024 * 1024;
+        // No disk storage: the fifth full chunk evicts the oldest RAM chunk.
+        MediaChunkCache cache(dir.path(), nullptr, chunk, 0);
+        QSignalSpy      changed(&cache, &MediaChunkCache::rangesChanged);
+        auto            fetch = [](quint64, quint64 size, Completion done) -> MediaChunkCache::Abort {
+            done(QByteArray(int(size), 'a'), {});
+            return {};
+        };
+        const quint64 size = chunk * 8;
+        for (const auto index : { 0, 2, 3, 4, 5 }) {
+            bool done = false;
+            cache.read("source", size, quint64(index) * chunk, 1, "lane", fetch,
+                       [&](QByteArray bytes, MediaChunkError error) {
+                           QVERIFY(error.isEmpty());
+                           QCOMPARE(bytes.size(), 1);
+                           done = true;
+                       });
+            QTRY_VERIFY(done);
+        }
+        QCOMPARE(cache.cachedRanges("source", size), (MediaChunkCache::Ranges { { chunk * 2, chunk * 4 } }));
+        QVERIFY(cache.cachedRanges("other-account", size).isEmpty());
+        QVERIFY(cache.cachedRanges("source", size + 1).isEmpty());
+        QTRY_VERIFY(changed.count() > 0);
+        // Failure must never paint an unavailable chunk as cached.
+        bool failed = false;
+        cache.read(
+            "source", size, chunk * 7, 1, "lane",
+            [](quint64, quint64, Completion done) -> MediaChunkCache::Abort {
+                done({}, QStringLiteral("offline"));
+                return {};
+            },
+            [&](QByteArray, MediaChunkError error) { failed = !error.isEmpty(); });
+        QTRY_VERIFY(failed);
+        QCOMPARE(cache.cachedRanges("source", size), (MediaChunkCache::Ranges { { chunk * 2, chunk * 4 } }));
+    }
     void cancellingQueuedMemoryHitSettlesOnce()
     {
         QTemporaryDir   dir(QDir::currentPath() + "/chunks-XXXXXX");

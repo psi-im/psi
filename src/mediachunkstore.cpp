@@ -30,6 +30,7 @@ public:
                 continue;
             const auto key = file.completeBaseName();
             entries_.insert(key, { quint64(file.size()), ++age_ });
+            emit entryChanged(key, true);
             diskBytes_ += quint64(file.size());
         }
         trim(0);
@@ -52,6 +53,7 @@ public:
     }
 signals:
     void completed(quint64 id, QByteArray bytes, quint64 diskBytes);
+    void entryChanged(const QString &key, bool available);
 
 private:
     struct Entry {
@@ -73,7 +75,11 @@ void DiskWorker::discard(const QString &key)
     const QString path = directory_ + '/' + key + QStringLiteral(".chunk");
     if (QFile::remove(path) || !QFileInfo::exists(path)) {
         diskBytes_ -= it->size;
+        // trim() passes oldest.key() by reference. Own it before erasing the
+        // hash entry; queued availability notifications must copy a live key.
+        const auto removedKey = it.key();
         entries_.erase(it);
+        emit entryChanged(removedKey, false);
     }
 }
 
@@ -125,6 +131,7 @@ void DiskWorker::store(const QString &key, const QByteArray &bytes)
             const auto size = quint64(headerSize + bytes.size());
             entries_.insert(key, { size, ++age_ });
             diskBytes_ += size;
+            emit entryChanged(key, true);
         }
     }
 }
@@ -137,6 +144,7 @@ public:
     DiskWorker                *worker;
     quint64                    next = 0, diskBytes = 0;
     QHash<quint64, Completion> pending;
+    QSet<QString>              keys;
 };
 
 MediaChunkStore::MediaChunkStore(QString directory, quint64 diskLimit, QObject *parent) :
@@ -146,6 +154,13 @@ MediaChunkStore::MediaChunkStore(QString directory, quint64 diskLimit, QObject *
     d->thread.setObjectName(QStringLiteral("shared-media-cache"));
     d->worker->moveToThread(&d->thread);
     connect(&d->thread, &QThread::finished, d->worker, &QObject::deleteLater);
+    connect(d->worker, &DiskWorker::entryChanged, this, [this](const QString &key, bool available) {
+        if (available)
+            d->keys.insert(key);
+        else
+            d->keys.remove(key);
+        emit availabilityChanged();
+    });
     connect(d->worker, &DiskWorker::completed, this, [this](quint64 id, QByteArray bytes, quint64 size) {
         d->diskBytes = size;
         auto done    = d->pending.take(id);
@@ -165,6 +180,7 @@ MediaChunkStore::~MediaChunkStore()
 }
 
 quint64 MediaChunkStore::diskBytes() const { return d->diskBytes; }
+bool    MediaChunkStore::contains(const QString &key) const { return d->keys.contains(key); }
 void    MediaChunkStore::touch(const QString &key)
 {
     QMetaObject::invokeMethod(d->worker, [worker = d->worker, key] { worker->touch(key); }, Qt::QueuedConnection);

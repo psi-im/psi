@@ -402,6 +402,8 @@ list(APPEND SOURCES
     mediachunkscheduler.cpp
     filesharingitem.cpp
     filesharingmanager.cpp
+    filesharingmediasave.cpp
+    filesharingmediasave.h
     filesharingproxy.cpp
     filetransdlg.cpp
     fileutil.cpp

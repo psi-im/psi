@@ -23,11 +23,15 @@
 #include "filecache.h"
 #include "filesharingdownloader.h"
 #include "filesharingjinglesession.h"
+#include "filesharingmediasave.h"
 #include "filesharingurl.h"
+#include "fileutil.h"
 #include "httputil.h"
 #include "mediachunkcache.h"
 #include "psiaccount.h"
 #include "psicon.h"
+#include "qitemedia.h"
+#include <QFile>
 
 #include "iris/jingle-session.h"
 #include "iris/xmpp_client.h"
@@ -439,4 +443,71 @@ QVariant FileSharingDeviceOpener::metadata(const QUrl &url)
 FileSharingItem *FileSharingDeviceOpener::sharedItem(const QString &id)
 {
     return acc->psi()->fileSharingManager()->item(XMPP::Hash::from(id));
+}
+
+ITEMediaState *FileSharingDeviceOpener::mediaState(const QUrl &url)
+{
+    auto item = acc->psi()->fileSharingManager()->item(urlToSourceId(url));
+    if (!item)
+        return nullptr;
+    const auto name = QStringLiteral("qite-media-state");
+    if (auto existing = item->findChild<ITEMediaState *>(name, Qt::FindDirectChildrenOnly))
+        return existing;
+    auto state = new ITEMediaState(item);
+    state->setObjectName(name);
+    auto       cache  = acc->psi()->fileSharingManager()->mediaChunkCache();
+    const auto size   = item->fileSize();
+    const auto hash   = item->sums().value(0);
+    const auto source = item->account() ? item->account()->id() + QChar(0) + hash.toString() : QString();
+    auto       update = [item, cache, state, source, size] {
+        ITEMediaState::Ranges ranges;
+        if (item->isCached()) {
+            ranges.append({ 0, 1 });
+        } else if (size && *size && !source.isEmpty()) {
+            for (const auto &range : cache->cachedRanges(source, *size))
+                ranges.append({ qreal(range.first) / *size, qreal(range.first + range.second) / *size });
+        }
+        state->setCachedRanges(std::move(ranges));
+    };
+    QObject::connect(cache, &MediaChunkCache::rangesChanged, state,
+                     [update, source, size](const QString &changed, quint64 changedSize) {
+                         if (size && changed == source && changedSize == *size)
+                             update();
+                     });
+    QObject::connect(item, &FileSharingItem::downloadFinished, state, update);
+    update();
+    return state;
+}
+
+void FileSharingDeviceOpener::saveAs(const QUrl &url, QWidget *parent)
+{
+    QPointer<FileSharingItem> item  = acc->psi()->fileSharingManager()->item(urlToSourceId(url));
+    QPointer<ITEMediaState>   state = mediaState(url);
+    if (!item || !state || state->downloading())
+        return;
+    const auto path = FileUtil::getSaveFileName(parent, QObject::tr("Save media"), item->displayName());
+    // The dialog runs a nested event loop. Recheck lifetime and concurrent saves.
+    if (path.isEmpty() || !item || !state || state->downloading())
+        return;
+    QIODevice           *input    = nullptr;
+    auto                 size     = item->fileSize();
+    FileShareDownloader *download = nullptr;
+    if (item->isCached()) {
+        auto file = new QFile(item->fileName());
+        size      = quint64(file->size());
+        input     = file;
+    } else {
+        input = download = item->download(); // Full transfer, not playback chunks.
+    }
+    if (!input) {
+        state->setDownload(false, -1, QObject::tr("No download source"));
+        return;
+    }
+    auto save = new FileSharingMediaSave(input, size, download != nullptr, path, state, item);
+    if (download) {
+        QObject::connect(download, &FileShareDownloader::transferCompleted, save, &FileSharingMediaSave::validated);
+        QObject::connect(download, &FileShareDownloader::disconnected, save, &FileSharingMediaSave::sourceClosed);
+        QObject::connect(download, &FileShareDownloader::failed, save,
+                         [save, download] { save->fail(download->errorString()); });
+    }
 }

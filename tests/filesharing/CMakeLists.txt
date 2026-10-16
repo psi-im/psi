@@ -25,6 +25,13 @@ target_link_libraries(filesharing_chunk_cache_test PRIVATE Qt${QT_DEFAULT_MAJOR_
 add_test(NAME filesharing_chunk_cache COMMAND filesharing_chunk_cache_test)
 set_tests_properties(filesharing_chunk_cache PROPERTIES TIMEOUT 30)
 find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Widgets)
+add_executable(filesharing_media_save_test mediasave.cpp ../../src/filesharingmediasave.cpp
+    ../../3rdparty/qite/libqite/qitemedia.cpp)
+set_target_properties(filesharing_media_save_test PROPERTIES AUTOMOC ON)
+target_include_directories(filesharing_media_save_test PRIVATE ../../src ../../3rdparty/qite/libqite)
+target_link_libraries(filesharing_media_save_test PRIVATE Qt${QT_DEFAULT_MAJOR_VERSION}::Test Qt${QT_DEFAULT_MAJOR_VERSION}::Widgets)
+add_test(NAME filesharing_media_save COMMAND filesharing_media_save_test)
+set_tests_properties(filesharing_media_save PROPERTIES TIMEOUT 20)
 add_executable(filesharing_external_player_test externalplayer.cpp ../../src/desktoputil.cpp)
 set_target_properties(filesharing_external_player_test PROPERTIES AUTOMOC ON)
 target_include_directories(filesharing_external_player_test PRIVATE ../../src)

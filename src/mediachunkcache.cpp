@@ -20,6 +20,7 @@ MediaChunkCache::MediaChunkCache(QString directory, QObject *parent, quint64 chu
     store_(new MediaChunkStore(std::move(directory), diskLimit))
 {
     scheduler_.setMaxActive(2);
+    connect(store_.get(), &MediaChunkStore::availabilityChanged, this, &MediaChunkCache::refreshAvailability);
 }
 MediaChunkCache::~MediaChunkCache() { shutdown(); }
 quint64 MediaChunkCache::diskBytes() const { return store_->diskBytes(); }
@@ -54,6 +55,16 @@ quint64 MediaChunkCache::read(QString source, quint64 fileSize, quint64 offset, 
     const quint64 inside   = offset - start;
     const quint64 count    = std::min(length, expected - inside);
     const auto    key      = recordKey(source, fileSize, index);
+    // Store only identities of verified, available chunks; do not accumulate a
+    // history of every seek or retain payloads for the progress UI.
+    auto &request  = requests_[ticket];
+    auto  original = std::move(request.done);
+    request.done   = [this, key, source, fileSize, index, original = std::move(original)](QByteArray      bytes,
+                                                                                        MediaChunkError error) {
+        if (error.isEmpty() && !bytes.isEmpty())
+            remember(key, source, fileSize, index);
+        original(std::move(bytes), std::move(error));
+    };
     if (const auto bytes = memory_.object(key)) {
         store_->touch(key);
         requests_[ticket].cachedSlice = bytes->mid(int(inside), int(count));
@@ -79,6 +90,65 @@ quint64 MediaChunkCache::read(QString source, quint64 fileSize, quint64 offset, 
     if (it != requests_.end())
         it->schedulerTicket = scheduled;
     return ticket;
+}
+
+void MediaChunkCache::notifyRanges(const QString &source, quint64 size)
+{
+    pendingRanges_.insert({ source, size });
+    if (rangesPending_)
+        return;
+    rangesPending_ = true;
+    QTimer::singleShot(0, this, [this] {
+        rangesPending_                          = false;
+        const auto                      pending = std::exchange(pendingRanges_, {});
+        const QPointer<MediaChunkCache> guard(this);
+        for (const auto &id : pending) {
+            emit rangesChanged(id.first, id.second);
+            if (!guard)
+                return;
+        }
+    });
+}
+
+void MediaChunkCache::remember(const QString &key, const QString &source, quint64 size, quint64 index)
+{
+    const bool added = !records_.contains(key);
+    records_.insert(key, { source, size, index });
+    refreshAvailability();
+    if (added)
+        notifyRanges(source, size);
+}
+
+void MediaChunkCache::refreshAvailability()
+{
+    for (auto it = records_.begin(); it != records_.end();) {
+        if (!memory_.contains(it.key()) && !store_->contains(it.key())) {
+            notifyRanges(it->source, it->size);
+            it = records_.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
+MediaChunkCache::Ranges MediaChunkCache::cachedRanges(const QString &source, quint64 size) const
+{
+    Ranges ranges;
+    for (const auto &record : records_) {
+        if (record.source == source && record.size == size) {
+            const auto offset = record.index * chunkSize_;
+            ranges.append({ offset, std::min(chunkSize_, size - offset) });
+        }
+    }
+    std::sort(ranges.begin(), ranges.end());
+    Ranges merged;
+    for (const auto &range : ranges) {
+        if (!merged.isEmpty() && merged.last().first + merged.last().second == range.first)
+            merged.last().second += range.second;
+        else
+            merged.append(range);
+    }
+    return merged;
 }
 
 MediaChunkCache::Abort MediaChunkCache::fetchChunk(const QString &key, quint64 start, quint64 expected, Fetch fetch,

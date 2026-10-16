@@ -111,7 +111,13 @@ span.emojis {
     auto itc        = new InteractiveText(this, QTextFormat::UserObject + 2); // +1 was allocated for MarkerFormatType
     d->voiceMsgCtrl = new ITEAudioController(itc, viewport());
     d->voiceMsgCtrl->setAutoFetchMetadata(true);
-    d->videoCtrl = new ITEVideoController(itc, viewport());
+    d->videoCtrl   = new ITEVideoController(itc, viewport());
+    auto saveMedia = [this](const QUrl &source) {
+        if (d->mediaOpener)
+            d->mediaOpener->saveAs(source, this);
+    };
+    connect(d->voiceMsgCtrl, &ITEAudioController::downloadRequested, this, saveMedia);
+    connect(d->videoCtrl, &ITEVideoController::downloadRequested, this, saveMedia);
 
     d->objectParsers = PsiRichText::ParsersMap {
         { "share",
@@ -128,11 +134,13 @@ span.emojis {
                   return { QTextCharFormat(), "" };
 
               if (item->mimeType().startsWith(QLatin1String("audio/"))) {
-                  return { d->voiceMsgCtrl->makeFormat(QUrl(QLatin1String("share:") + id), d->mediaOpener), "" };
+                  return { d->voiceMsgCtrl->makeFormat(QUrl(QLatin1String("share:") + id), d->mediaOpener, true), "" };
               }
 
               if (item->mimeType().startsWith(QLatin1String("video/"))) {
-                  return { d->videoCtrl->makeFormat(QUrl(QLatin1String("share:") + id), d->mediaOpener), "" };
+                  return { d->videoCtrl->makeFormat(QUrl(QLatin1String("share:") + id), d->mediaOpener, QSize(320, 220),
+                                                    true),
+                           "" };
               }
 
               if (item->mimeType().startsWith("image/")) {

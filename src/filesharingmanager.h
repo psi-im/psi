@@ -113,6 +113,8 @@ public:
     QIODevice        *open(QUrl &url) override;
     void              close(QIODevice *dev) override;
     QVariant          metadata(const QUrl &url) override;
+    ITEMediaState    *mediaState(const QUrl &url) override;
+    void              saveAs(const QUrl &url, QWidget *parent);
 
     FileSharingItem *sharedItem(const QString &id);
 };
