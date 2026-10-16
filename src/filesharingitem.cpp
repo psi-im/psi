@@ -20,9 +20,11 @@
 #include "filesharingitem.h"
 #include "filecache.h"
 #include "filesharingmanager.h"
+#include "filesharingpublication.h"
 #include "fileutil.h"
 #include "iris/httpfileupload.h"
 #include "iris/xmpp_client.h"
+#include "iris/xmpp_message.h"
 #include "iris/xmpp_reference.h"
 #include "iris/xmpp_thumbs.h"
 #include "psiaccount.h"
@@ -53,7 +55,7 @@ FileSharingItem::FileSharingItem(FileCacheItem *cache, PsiAccount *acc, FileShar
 
 FileSharingItem::FileSharingItem(const MediaSharing &ms, const Jid &from, PsiAccount *acc,
                                  FileSharingManager *manager) :
-    _acc(acc), _manager(manager), _fileType(FileType::RemoteFile)
+    QObject(manager), _acc(acc), _manager(manager), _fileType(FileType::RemoteFile)
 {
     _sums = ms.file.computedHashes();
     if (initFromCache()) {
@@ -71,7 +73,10 @@ FileSharingItem::FileSharingItem(const MediaSharing &ms, const Jid &from, PsiAcc
     }
 
     _fileSize = ms.file.size();
-    _jids << from;
+    _modifyTime  = ms.file.date();
+    _description = ms.file.description();
+    if (from.isValid() && !from.isEmpty())
+        _jids << from;
 
     QByteArray ampl = ms.file.amplitudes();
     if (ampl.size()) {
@@ -198,14 +203,13 @@ bool FileSharingItem::initFromCache(FileCacheItem *cache)
         QUrl url(u);
         auto scheme = url.scheme();
         if (scheme.startsWith(httpScheme)) {
-            _flags |= HttpFinished;
+            _flags |= HttpFinished | HttpSucceeded;
         } else if (scheme == xmppScheme) {
-            _flags |= JingleFinished;
+            _flags |= JingleFinished | JingleSucceeded;
         }
     }
 
-    if ((_flags & (HttpFinished | JingleFinished)) == (HttpFinished | JingleFinished))
-        _flags |= PublishNotified;
+    // Cached URLs are reusable; register their Jingle factory on the next publish().
 
     return true;
 }
@@ -215,6 +219,7 @@ Reference FileSharingItem::toReference(const Jid &selfJid) const
     QStringList uris(_uris);
 
     uris.append(QString::fromLatin1("xmpp:%1?jingle-ft").arg(selfJid.full()));
+    uris.removeDuplicates();
     uris = sortSourcesByPriority(uris);
     std::reverse(uris.begin(), uris.end());
 
@@ -298,6 +303,21 @@ QString FileSharingItem::displayName() const
 
 QString FileSharingItem::fileName() const { return _fileName; }
 
+QString FileSharingItem::localFilePath() const { return _fileType == FileType::RemoteFile ? QString() : _fileName; }
+
+void FileSharingItem::mergeSources(const MediaSharing &media, const Jid &peer)
+{
+    _uris = media.sources + _uris;
+    _uris.removeDuplicates();
+    for (const auto &hash : media.file.computedHashes())
+        if (!_sums.contains(hash))
+            _sums.append(hash);
+    if (!peer.isEmpty() && !_jids.contains(peer))
+        _jids.append(peer);
+    if (!media.file.amplitudes().isEmpty())
+        _metaData.insert(QStringLiteral("amplitudes"), media.file.amplitudes());
+}
+
 FileCacheItem *FileSharingItem::cache(bool reborn) const
 {
     for (const auto &h : _sums) {
@@ -308,72 +328,113 @@ FileCacheItem *FileSharingItem::cache(bool reborn) const
     return nullptr;
 }
 
+bool FileSharingItem::savePublishedFile()
+{
+    QVariantMap meta = _metaData;
+    meta["type"]     = _mimeType;
+    meta["uris"]     = _uris;
+    if (auto existing = cache()) {
+        auto metadata = existing->metadata();
+        for (auto it = meta.cbegin(); it != meta.cend(); ++it)
+            metadata.insert(it.key(), it.value());
+        existing->setMetadata(metadata);
+        return true;
+    }
+    if (_fileType == FileType::TempFile) {
+        auto stored = _manager->moveToCache(_sums, QFileInfo(_fileName), meta, TEMP_TTL);
+        if (!stored)
+            return false;
+        _fileType = FileType::LocalFile;
+        _fileName = _manager->cacheDir() + "/" + stored->fileName();
+        return true;
+    }
+    if (!QFileInfo(_fileName).isReadable())
+        return false;
+    meta["link"] = _fileName;
+    return _manager->saveToCache(_sums, {}, meta, FILE_TTL) != nullptr;
+}
+
 void FileSharingItem::publish(const XMPP::Jid &myJid)
 {
-    Q_UNUSED(myJid)
     Q_ASSERT(_fileType != FileType::RemoteFile);
-
-    if (_flags & PublishNotified) {
-        emit publishFinished();
-        return;
-    }
-
     auto checkFinished = [this]() {
-        // if we didn't emit yet finished signal and everything is finished
-        auto ff = HttpFinished | JingleFinished;
-        if (!(_flags & PublishNotified) && ((_flags & ff) == ff)) { // TODO also check if any of them succeed
-            QVariantMap meta = _metaData;
-            meta["type"]     = _mimeType;
-            if (_uris.count()) // if ever published something on external service
-                // like http
-                meta["uris"] = _uris;
-            if (_fileType == FileType::TempFile) {
-                auto cache = _manager->moveToCache(_sums, QFileInfo(_fileName), meta, TEMP_TTL);
-                if (cache) {
-                    _fileType = FileType::LocalFile;
-                    _fileName = _manager->cacheDir() + "/" + cache->fileName();
-                }
-            } else {
-                meta["link"] = _fileName;
-                _manager->saveToCache(_sums, QByteArray(), meta, FILE_TTL);
-            }
+        const auto completed = HttpFinished | JingleFinished;
+        if (!(_flags & PublishNotified) && (isPublished() || (_flags & completed) == completed)) {
             _flags |= PublishNotified;
             emit publishFinished();
         }
     };
+    if (_flags & PublishNotified) {
+        if (isPublished()) {
+            emit publishFinished();
+            return;
+        }
+        _flags &= ~(PublishNotified | HttpFinished | JingleFinished);
+        _publicationStarted = false;
+    }
 
+    // The serving registry must be ready before the message exposes a Jingle URI.
+    if (!_publicationStarted) {
+        _publicationStarted = true;
+        _flags &= ~JingleSucceeded;
+        if (savePublishedFile()) {
+            const auto file = toReference(_acc->client()->jid()).mediaSharing().file;
+            const bool registered
+                = publishSharedFile(_acc->client(), file, _fileName, this, [this](bool success, const QString &error) {
+                      _log.append(success ? tr("Published in the private PubSub catalog")
+                                          : tr("PubSub publication failed: %1").arg(error));
+                      emit logChanged();
+                  });
+            if (registered) {
+                _uris.append(QString::fromLatin1("xmpp:%1?jingle-ft").arg(myJid.full()));
+                _uris.removeDuplicates();
+                _flags |= JingleSucceeded;
+                savePublishedFile();
+            }
+        }
+        _flags |= JingleFinished;
+    }
     if (!(_flags & HttpFinished)) {
         auto hm = _acc->client()->httpFileUploadManager();
         if (hm->discoveryStatus() == HttpFileUploadManager::DiscoNotFound) {
             _flags |= HttpFinished;
-            checkFinished();
         } else {
             auto hfu = hm->upload(_fileName, displayName(), _mimeType);
-            hfu->setParent(this);
-            connect(hfu, &HttpFileUpload::progress, this, [this](qint64 bytesReceived, qint64 bytesTotal) {
-                Q_UNUSED(bytesTotal)
-                emit publishProgress(size_t(bytesReceived));
-            });
+            if (!hfu) {
+                _flags |= HttpFinished;
+                _log.append(tr("Could not open the file for HTTP upload"));
+                emit logChanged();
+                checkFinished();
+                return;
+            }
+            // Keep the uploader owned by its Client: account teardown cancels it.
+            connect(this, &QObject::destroyed, hfu, &QObject::deleteLater);
+            connect(hfu, &HttpFileUpload::finished, hfu, &QObject::deleteLater);
+            connect(hfu, &HttpFileUpload::progress, this,
+                    [this](qint64 received, qint64) { emit publishProgress(size_t(received)); });
             connect(hfu, &HttpFileUpload::finished, this, [hfu, this, checkFinished]() {
+                if (!_acc)
+                    return;
                 _flags |= HttpFinished;
                 if (hfu->success()) {
+                    _flags |= HttpSucceeded;
+                    _uris.prepend(hfu->getHttpSlot().get.url);
+                    _uris.removeDuplicates();
+                    savePublishedFile();
+                    Message snapshot;
+                    snapshot.setFrom(_acc->client()->jid());
+                    snapshot.setReferences({ toReference(_acc->client()->jid()) });
+                    _manager->rememberMessage(snapshot, _acc);
                     _log.append(tr("Published on HttpUpload service"));
-                    _uris.append(hfu->getHttpSlot().get.url);
                 } else {
-                    _log.append(
-                        QString("%1: %2").arg(tr("Failed to publish on HttpUpload service"), hfu->statusString()));
+                    _log.append(tr("Failed to publish on HttpUpload service: %1").arg(hfu->statusString()));
                 }
                 emit logChanged();
                 checkFinished();
             });
         }
     }
-    if (!(_flags & JingleFinished)) {
-        // FIXME we have to add muc jids here if shared with muc
-        // readyUris.append(QString::fromLatin1("xmpp:%1?jingle").arg(acc->jid().full()));
-        _flags |= JingleFinished;
-        checkFinished();
-    }
+    checkFinished();
 }
 
 PsiAccount *FileSharingItem::account() const { return _acc; }

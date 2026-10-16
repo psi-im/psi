@@ -383,6 +383,8 @@ list(APPEND SOURCES
     discodlg.cpp
     dummystream.cpp
     edbflatfile.cpp
+    historymessageextras.cpp
+    filesharingstore.cpp
     edbsqlite.cpp
     eventdb.cpp
     eventdlg.cpp
@@ -401,6 +403,7 @@ list(APPEND SOURCES
     mediachunkcache.cpp
     mediachunkscheduler.cpp
     filesharingitem.cpp
+    filesharingpublication.cpp
     filesharingmanager.cpp
     filesharingmediasave.cpp
     filesharingmediasave.h

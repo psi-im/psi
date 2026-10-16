@@ -60,6 +60,8 @@ public:
         HttpFinished    = 0x1,
         JingleFinished  = 0x2,
         PublishNotified = 0x4,
+        HttpSucceeded   = 0x8,
+        JingleSucceeded = 0x10,
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
@@ -82,6 +84,7 @@ public:
     QImage                              preview(const QSize &maxSize) const;
     QString                             displayName() const;
     QString                             fileName() const;
+    QString                             localFilePath() const;
     inline const QString               &mimeType() const { return _mimeType; }
     inline const HashSums              &sums() const { return _sums; }
     inline QVariantMap                  metaData() const { return _metaData; }
@@ -96,7 +99,7 @@ public:
 
     XMPP::Reference toReference(const XMPP::Jid &selfJid) const;
     void            publish(const XMPP::Jid &myJid);
-    inline bool     isPublished() const { return _flags & HttpFinished && _flags & JingleFinished; }
+    inline bool     isPublished() const { return _flags & (HttpSucceeded | JingleSucceeded); }
 
     /**
      * @brief FileSharingItem::download starts downloading SIMS
@@ -116,6 +119,10 @@ public:
     QUrl simpleSource() const;
 
 private:
+    friend class FileSharingManager;
+    void mergeSources(const XMPP::MediaSharing &, const XMPP::Jid &);
+    bool savePublishedFile();
+    bool _publicationStarted = false;
     bool initFromCache(FileCacheItem *cache = nullptr);
 
 signals:

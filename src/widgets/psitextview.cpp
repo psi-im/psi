@@ -18,6 +18,7 @@
  */
 
 #include "psitextview.h"
+#include <QUrlQuery>
 
 #include <QAbstractTextDocumentLayout>
 #include <QMenu>
@@ -113,8 +114,11 @@ span.emojis {
     d->voiceMsgCtrl->setAutoFetchMetadata(true);
     d->videoCtrl   = new ITEVideoController(itc, viewport());
     auto saveMedia = [this](const QUrl &source) {
-        if (d->mediaOpener)
-            d->mediaOpener->saveAs(source, this);
+        auto opener = d->mediaOpener
+            ? d->mediaOpener->forAccount(QUrlQuery(source).queryItemValue(QStringLiteral("account")))
+            : nullptr;
+        if (opener)
+            opener->saveAs(source, this);
     };
     connect(d->voiceMsgCtrl, &ITEAudioController::downloadRequested, this, saveMedia);
     connect(d->videoCtrl, &ITEVideoController::downloadRequested, this, saveMedia);
@@ -129,18 +133,26 @@ span.emojis {
               if (id.isEmpty())
                   return { QTextCharFormat(), "" };
 
-              auto item = d->mediaOpener->sharedItem(id);
+              const auto account = attrs.value(QLatin1String("account"));
+              auto       opener  = d->mediaOpener->forAccount(account);
+              if (!opener)
+                  return { QTextCharFormat(), "" };
+              QUrl source(QLatin1String("share:") + id);
+              if (!account.isEmpty()) {
+                  QUrlQuery query;
+                  query.addQueryItem(QStringLiteral("account"), account);
+                  source.setQuery(query);
+              }
+              auto item = opener->sharedItem(id);
               if (!item)
                   return { QTextCharFormat(), "" };
 
               if (item->mimeType().startsWith(QLatin1String("audio/"))) {
-                  return { d->voiceMsgCtrl->makeFormat(QUrl(QLatin1String("share:") + id), d->mediaOpener, true), "" };
+                  return { d->voiceMsgCtrl->makeFormat(source, opener, true), "" };
               }
 
               if (item->mimeType().startsWith(QLatin1String("video/"))) {
-                  return { d->videoCtrl->makeFormat(QUrl(QLatin1String("share:") + id), d->mediaOpener, QSize(320, 220),
-                                                    true),
-                           "" };
+                  return { d->videoCtrl->makeFormat(source, opener, QSize(320, 220), true), "" };
               }
 
               if (item->mimeType().startsWith("image/")) {

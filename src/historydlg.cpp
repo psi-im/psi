@@ -21,8 +21,10 @@
 
 #include "coloropt.h"
 #include "common.h"
+#include "filesharingmanager.h"
 #include "fileutil.h"
 #include "jidutil.h"
+#include "messageview.h"
 #include "psiaccount.h"
 #include "psicon.h"
 #include "psicontact.h"
@@ -551,7 +553,14 @@ void DisplayProxy::displayResult(const EDBResult &r, int dir)
             if (formatting)
                 msg = TextUtil::legacyFormat(msg);
 
+            if (pa && !me->message().references().isEmpty()) {
+                auto view = MessageView::fromPlainText(me->message().body(), MessageView::Message);
+                pa->psi()->fileSharingManager()->fillMessageView(view, me->message(), pa);
+                msg = view.text();
+            }
             if (me->originLocal()) {
+                if (!me->message().to().isEmpty())
+                    from = getNick(pa, me->message().to());
                 QString nick = (pa) ? TextUtil::plain2rich(pa->nick()) : tr("deleted");
                 msg = "<span style='color:" + sentColor + "'>" + me->timeStamp().toString("[dd.MM.yyyy hh:mm:ss]")
                     + " &lt;" + nick + ((fAllContacts) ? QString(" -> %1").arg(TextUtil::plain2rich(from)) : QString())
@@ -606,6 +615,7 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa) :
     d->pa  = pa;
     pa->dialogRegister(this, d->jid);
 
+    ui_.msgLog->setMediaOpener(pa->fileSharingDeviceOpener());
     displayProxy = new DisplayProxy(pa->psi(), ui_.msgLog);
     searchProxy  = new SearchProxy(pa->psi(), displayProxy);
     connect(displayProxy, SIGNAL(updated()), this, SLOT(viewUpdated()));

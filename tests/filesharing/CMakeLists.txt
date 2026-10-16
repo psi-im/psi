@@ -70,3 +70,25 @@ if(BUNDLED_IRIS AND TARGET iris)
 elseif(TARGET iris)
     message(STATUS "Skipping source-only shared-media Jingle integration test with external Iris SDK")
 endif()
+
+# Uses only public Iris APIs, including when linked against the external SDK.
+if(TARGET iris)
+    find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Sql)
+    add_executable(filesharing_sims_history_test simshistory.cpp
+        ../../src/historymessageextras.cpp ../../src/filesharingstore.cpp)
+    set_target_properties(filesharing_sims_history_test PROPERTIES AUTOMOC ON)
+    target_include_directories(filesharing_sims_history_test PRIVATE ../../src)
+    target_link_libraries(filesharing_sims_history_test PRIVATE iris
+        Qt${QT_DEFAULT_MAJOR_VERSION}::Test Qt${QT_DEFAULT_MAJOR_VERSION}::Sql)
+    add_test(NAME filesharing_sims_history COMMAND filesharing_sims_history_test)
+    set_tests_properties(filesharing_sims_history PROPERTIES TIMEOUT 30)
+endif()
+
+if(TARGET iris)
+    add_executable(filesharing_publication_test publication.cpp ../../src/filesharingpublication.cpp)
+    set_target_properties(filesharing_publication_test PROPERTIES AUTOMOC ON)
+    target_include_directories(filesharing_publication_test PRIVATE ../../src)
+    target_link_libraries(filesharing_publication_test PRIVATE iris Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+    add_test(NAME filesharing_publication COMMAND filesharing_publication_test)
+    set_tests_properties(filesharing_publication PROPERTIES TIMEOUT 20)
+endif()

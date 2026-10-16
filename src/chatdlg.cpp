@@ -351,7 +351,7 @@ void ChatDlg::activated()
 void ChatDlg::dropEvent(QDropEvent *event)
 {
     FileShareDlg::shareFiles(
-        account(), jid(), event->mimeData(),
+        account(), account()->client()->jid(), event->mimeData(),
         [this](const QList<XMPP::Reference> &&rl, const QString &desc) { doFileShare(std::move(rl), desc); }, this);
 }
 

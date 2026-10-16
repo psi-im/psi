@@ -104,7 +104,7 @@ public:
 
     QString prepareShares(const QString &msg)
     {
-        static QRegularExpression re("<share id=\"([^\"]+)\"(?: +text=\"([^\"]+)\")?/>");
+        static QRegularExpression re("<share id=\"([^\"]+)\"(?: +account=\"[^\"]*\")?(?: +text=\"([^\"]+)\")?/>");
         int                       post = 0;
         QString                   ret;
         auto                      it = re.globalMatch(msg);
@@ -113,7 +113,7 @@ public:
             auto idStr = match.captured(1);
             auto text  = match.captured(2);
             auto id    = XMPP::Hash::from(idStr);
-            auto item  = account_->psi()->fileSharingManager()->item(id);
+            auto item  = account_->psi()->fileSharingManager()->item(id, account_);
 
             ret.append(QStringView { msg }.mid(post, match.capturedStart(0) - post));
             if (item) {
@@ -246,7 +246,7 @@ public:
         const auto id = XMPP::Hash::from(QStringView(source));
         if (!id.isValid())
             return;
-        const auto item = _view->d->account_->psi()->fileSharingManager()->item(id);
+        const auto item = _view->d->account_->psi()->fileSharingManager()->item(id, _view->d->account_);
         if (!item
             || (!item->mimeType().startsWith(QLatin1String("audio/"))
                 && !item->mimeType().startsWith(QLatin1String("video/"))))

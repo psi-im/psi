@@ -37,6 +37,7 @@
 #include <QFileInfo>
 #include <QMimeData>
 #include <QPainter>
+#include <QPointer>
 #include <QPushButton>
 #include <QScreen>
 #include <QUrl>
@@ -101,19 +102,16 @@ void FileShareDlg::publish()
     QList<FileSharingItem *> toPublish;
     filesModel->forEachTransfer([this, &toPublish](MultiFileTransferItem *item) {
         auto publisher = item->property("publisher").value<FileSharingItem *>();
-        if (publisher->isPublished()) {
-            item->setState(MultiFileTransferModel::Done);
-            if (item->fullSize()) {
-                item->setCurrentSize(*item->fullSize());
-            }
-            readyPublishers.append(publisher);
+        if (item->property("shared").toBool())
             return;
-        }
         item->setState(MultiFileTransferModel::Active);
+        QObject::disconnect(publisher, nullptr, this, nullptr);
         connect(publisher, &FileSharingItem::publishProgress, this,
                 [item](size_t progress) { item->setCurrentSize(progress); });
         connect(publisher, &FileSharingItem::publishFinished, this, [this, publisher, item]() {
-            if (publisher->uris().count()) {
+            if (publisher->isPublished()) {
+                item->setProperty("shared", true);
+                readyPublishers.append(publisher);
                 item->setState(MultiFileTransferModel::Done);
                 if (item->fullSize()) {
                     item->setCurrentSize(*item->fullSize());
@@ -123,7 +121,6 @@ void FileShareDlg::publish()
                 hasFailures = true;
             }
             inProgressCount--;
-            readyPublishers.append(publisher);
             if (!inProgressCount)
                 finish();
         });
@@ -165,11 +162,19 @@ void FileShareDlg::finish()
 
             references.append(r);
         }
-        delete i;
     }
-    publishedCallback(std::move(references), desc);
+    readyPublishers.clear();
+    const QPointer<FileShareDlg> guard(this);
+    if (!references.isEmpty())
+        publishedCallback(std::move(references), desc);
+    if (!guard)
+        return;
     if (!hasFailures)
-        deleteLater();
+        close();
+    else {
+        ui->buttonBox->button(QDialogButtonBox::Apply)->setEnabled(true);
+        hasFailures = false;
+    }
 }
 
 void FileShareDlg::shareFiles(PsiAccount *acc, const XMPP::Jid &myJid, const Callback &callback, QWidget *parent)

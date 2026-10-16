@@ -20,7 +20,9 @@
 #include "applicationinfo.h"
 // #include "common.h"
 #include "edbsqlite.h"
+#include "filesharingmanager.h"
 #include "historyimp.h"
+#include "historymessageextras.h"
 #include "jidutil.h"
 #include "psicontactlist.h"
 
@@ -453,24 +455,9 @@ bool EDBSqLite::appendEvent(const QString &accId, const XMPP::Jid &jid, const Ps
         query->bindValue(":subject", m.subject(lang));
         query->bindValue(":m_text", m.body(lang));
         query->bindValue(":lang", lang);
-        QString        extraData;
-        const UrlList &urls = m.urlList();
-        if (!urls.isEmpty()) {
-            QVariantMap  xepList;
-            QVariantList urlList;
-            for (const Url &url : urls)
-                if (!url.url().isEmpty()) {
-                    QVariantList urlItem;
-                    urlItem.append(QVariant(url.url()));
-                    if (!url.desc().isEmpty())
-                        urlItem.append(QVariant(url.desc()));
-                    urlList.append(QVariant(urlItem));
-                }
-            xepList["jabber:x:oob"] = QVariant(urlList);
-            QJsonDocument doc(QJsonObject::fromVariantMap(xepList));
-            extraData = QString::fromUtf8(doc.toJson());
-        }
-        query->bindValue(":extra_data", extraData);
+        query->bindValue(":extra_data", HistoryMessageExtras::encode(m));
+        if (auto account = psi()->contactList()->getAccount(accId))
+            psi()->fileSharingManager()->rememberMessage(m, account);
     } else {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         query->bindValue(":subject", QVariant(QVariant::String));
@@ -513,27 +500,7 @@ PsiEvent::Ptr EDBSqLite::getEvent(const QSqlRecord &record)
             m.setSubject(record.value("subject").toString());
         }
         m.setSpooled(true);
-        QString extraStr = record.value("extra_data").toString();
-        if (!extraStr.isEmpty()) {
-            bool          fOk;
-            QJsonDocument doc     = QJsonDocument::fromJson(extraStr.toUtf8());
-            fOk                   = !doc.isNull();
-            QVariantMap extraData = doc.object().toVariantMap();
-
-            if (fOk) {
-                const auto urls = extraData["jabber:x:oob"].toList();
-                for (const QVariant &urlItem : urls) {
-                    QVariantList itemList = urlItem.toList();
-                    if (!itemList.isEmpty()) {
-                        QString url = itemList.at(0).toString();
-                        QString desc;
-                        if (itemList.size() > 1)
-                            desc = itemList.at(1).toString();
-                        m.urlAdd(Url(url, desc));
-                    }
-                }
-            }
-        }
+        HistoryMessageExtras::restore(record.value("extra_data").toString(), m);
         MessageEvent::Ptr me(new MessageEvent(m, pa));
         me->setOriginLocal((record.value("direction").toInt() == 1));
         return me.staticCast<PsiEvent>();

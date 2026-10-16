@@ -81,7 +81,8 @@ public:
     FileCacheItem *moveToCache(const QList<XMPP::Hash> &sums, const QFileInfo &data, const QVariantMap &metadata,
                                unsigned int maxAge);
 
-    FileSharingItem *item(const XMPP::Hash &id);
+    FileSharingItem *item(const XMPP::Hash &id, PsiAccount *account = nullptr);
+    void             rememberMessage(const XMPP::Message &message, PsiAccount *account);
     // FileSharingItem* fromReference(const XMPP::Reference &ref, PsiAccount *acc);
     QList<FileSharingItem *> createFromMimeData(const QMimeData *data, PsiAccount *acc);
     QList<FileSharingItem *> fromFilesList(const QStringList &fileList, PsiAccount *acc);
@@ -117,6 +118,7 @@ public:
     void              saveAs(const QUrl &url, QWidget *parent);
 
     FileSharingItem *sharedItem(const QString &id);
+    FileSharingDeviceOpener *forAccount(const QString &id) const;
 };
 
 #endif // FILESHARINGMANAGER_H

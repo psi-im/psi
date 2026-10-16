@@ -74,7 +74,7 @@ public:
     bool                                  finished        = false;
 
     ControlBase(PsiAccount *acc, const QString &sourceIdHex, QObject *parent) :
-        QObject(parent), acc(acc), item(acc->psi()->fileSharingManager()->item(XMPP::Hash::from(sourceIdHex)))
+        QObject(parent), acc(acc), item(acc->psi()->fileSharingManager()->item(XMPP::Hash::from(sourceIdHex), acc))
     {
     }
 

@@ -24,12 +24,14 @@
 #include "filesharingdownloader.h"
 #include "filesharingjinglesession.h"
 #include "filesharingmediasave.h"
+#include "filesharingstore.h"
 #include "filesharingurl.h"
 #include "fileutil.h"
 #include "httputil.h"
 #include "mediachunkcache.h"
 #include "psiaccount.h"
 #include "psicon.h"
+#include "psicontactlist.h"
 #include "qitemedia.h"
 #include <QFile>
 
@@ -58,18 +60,24 @@ public:
     MediaChunkCache                                *chunkCache = nullptr;
     QHash<PsiAccount *, FileSharingJingleSession *> mediaSessions;
     QHash<XMPP::Hash, FileSharingItem *>            items;
+    QHash<QString, QHash<XMPP::Hash, FileSharingItem *>> accountItems;
+    std::unique_ptr<FileSharingStore>                    store;
 
     void rememberItem(FileSharingItem *item)
     {
         Q_ASSERT(item->sums().size());
-        for (auto const &v : item->sums())
+        for (auto const &v : item->sums()) {
             items.insert(v, item); // TODO ensure we don't overwrite
+            if (item->account())
+                accountItems[item->account()->id()].insert(v, item);
+        }
     }
 };
 
 FileSharingManager::FileSharingManager(QObject *parent) : QObject(parent), d(new Private)
 {
     d->cache = new FileCache(cacheDir(), this);
+    d->store.reset(new FileSharingStore(cacheDir() + QStringLiteral("/shared-files.sqlite")));
 }
 
 FileSharingManager::~FileSharingManager() { delete d->chunkCache; }
@@ -140,7 +148,57 @@ FileCacheItem *FileSharingManager::moveToCache(const QList<XMPP::Hash> &sums, co
     return d->cache->moveToCache(sums, file, metadata, maxAge);
 }
 
-FileSharingItem *FileSharingManager::item(const Hash &id) { return d->items.value(id); }
+FileSharingItem *FileSharingManager::item(const Hash &id, PsiAccount *account)
+{
+    if (!account)
+        return d->items.value(id);
+    if (auto existing = d->accountItems.value(account->id()).value(id))
+        if (existing->account() == account)
+            return existing;
+    const auto stored = d->store->find(account->id(), id);
+    if (!stored)
+        return nullptr;
+    const auto media = stored->reference.mediaSharing();
+    const auto path  = stored->readableLocalPath();
+    if (!path.isEmpty() && !cacheItem(media.file.computedHashes())) {
+        QVariantMap metadata { { "type", media.file.mediaType() },
+                               { "link", path },
+                               { "uris", media.sources },
+                               { "amplitudes", media.file.amplitudes() } };
+        saveToCache(media.file.computedHashes(), {}, metadata, FileCache::Forever);
+    }
+    auto restored = new FileSharingItem(media, Jid(), account, this);
+    for (const auto &peer : stored->peers)
+        restored->mergeSources(media, Jid(peer));
+    d->rememberItem(restored);
+    return restored;
+}
+
+void FileSharingManager::rememberMessage(const Message &message, PsiAccount *account)
+{
+    if (!account)
+        return;
+    for (const auto &reference : message.references()) {
+        if (!reference.isValid() || !reference.mediaSharing().isValid())
+            continue;
+        const auto hashes = reference.mediaSharing().file.computedHashes();
+        if (hashes.isEmpty())
+            continue;
+        if (message.spooled() && d->store->find(account->id(), hashes.first()))
+            continue;
+        QString localPath;
+        for (const auto &hash : hashes) {
+            auto known = d->accountItems.value(account->id()).value(hash);
+            if (known && known->account() == account && !known->localFilePath().isEmpty()) {
+                localPath = known->localFilePath();
+                break;
+            }
+        }
+        const auto peer = message.from().isEmpty() ? account->jid() : message.from();
+        if (!d->store->remember(account->id(), reference, peer, localPath))
+            qWarning("Could not persist a shared file descriptor");
+    }
+}
 
 QList<FileSharingItem *> FileSharingManager::createFromMimeData(const QMimeData *data, PsiAccount *acc)
 {
@@ -227,6 +285,9 @@ QList<FileSharingItem *> FileSharingManager::fromFilesList(const QStringList &fi
 
 void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiAccount *acc)
 {
+    if (!acc)
+        return;
+    rememberMessage(m, acc);
     auto refs = m.references();
     if (refs.count()) {
         QString tailReferences;
@@ -238,7 +299,6 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
         std::sort(refs.begin(), refs.end(), [](auto &a, auto &b) { return a.begin() < b.begin(); });
 
         int         lastEnd = 0;
-        const auto &refs    = m.references();
         for (auto const &r : refs) {
             MediaSharing ms = r.mediaSharing();
             // qDebug() << "BEGIN:" << r.begin() << "END:" << r.end();
@@ -249,28 +309,32 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
                      || ms.file.mediaType().startsWith(QLatin1String("video")))) {
                 continue;
             }
-            auto item = new FileSharingItem(ms, m.from(), acc, this);
+            auto item = this->item(ms.file.computedHashes().first(), acc);
+            if (!item)
+                item = new FileSharingItem(ms, m.from(), acc, this);
+            else
+                item->mergeSources(ms, m.from());
             d->rememberItem(item);
             mv.addReference(item);
 
-            if (r.begin() != -1 && r.begin() >= lastEnd) {
+            if (r.begin() >= lastEnd && r.end() >= r.begin() && r.end() < desc.size()) {
                 auto refText = desc.mid(r.begin(), r.end() - r.begin() + 1);
 
                 QUrl url(refText.trimmed());
                 if (url.isValid())
                     refText = url.toString(QUrl::FullyEncoded);
-                else
-                    refText = TextUtil::escape(refText);
 
                 QString shareStr(
-                    QString::fromLatin1("<share id=\"%1\" text=\"%2\"/>").arg(item->sums()[0].toString(), refText));
+                    QString::fromLatin1("<share id=\"%1\" account=\"%2\" text=\"%3\"/>")
+                        .arg(item->sums()[0].toString(), TextUtil::escape(acc->id()), TextUtil::escape(refText)));
 
                 // add text before reference
                 htmlDesc += TextUtil::linkify(TextUtil::plain2rich(desc.mid(lastEnd, r.begin() - lastEnd)));
                 htmlDesc += shareStr; // something instead of link
                 lastEnd = r.end() + 1;
             } else {
-                tailReferences += QString::fromLatin1("<share id=\"%1\"/>").arg(item->sums()[0].toString());
+                tailReferences += QString::fromLatin1("<share id=\"%1\" account=\"%2\"/>")
+                                      .arg(item->sums()[0].toString(), TextUtil::escape(acc->id()));
             }
         }
         if (lastEnd < desc.size()) {
@@ -379,7 +443,7 @@ QIODevice *FileSharingDeviceOpener::open(QUrl &url)
         return nullptr;
 
     auto             fsm  = acc->psi()->fileSharingManager();
-    FileSharingItem *item = fsm->item(sourceId);
+    FileSharingItem *item = fsm->item(sourceId, acc);
     if (!item)
         return nullptr;
 
@@ -426,7 +490,7 @@ void FileSharingDeviceOpener::close(QIODevice *dev)
 QVariant FileSharingDeviceOpener::metadata(const QUrl &url)
 {
     auto sourceId = urlToSourceId(url);
-    auto item     = acc->psi()->fileSharingManager()->item(sourceId);
+    auto item     = acc->psi()->fileSharingManager()->item(sourceId, acc);
     if (!item)
         return QVariant();
     auto       vm   = item->metaData();
@@ -442,12 +506,20 @@ QVariant FileSharingDeviceOpener::metadata(const QUrl &url)
 
 FileSharingItem *FileSharingDeviceOpener::sharedItem(const QString &id)
 {
-    return acc->psi()->fileSharingManager()->item(XMPP::Hash::from(id));
+    return acc->psi()->fileSharingManager()->item(XMPP::Hash::from(id), acc);
+}
+
+FileSharingDeviceOpener *FileSharingDeviceOpener::forAccount(const QString &id) const
+{
+    if (id.isEmpty() || id == acc->id())
+        return const_cast<FileSharingDeviceOpener *>(this);
+    auto account = acc->psi()->contactList()->getAccount(id);
+    return account ? account->fileSharingDeviceOpener() : nullptr;
 }
 
 ITEMediaState *FileSharingDeviceOpener::mediaState(const QUrl &url)
 {
-    auto item = acc->psi()->fileSharingManager()->item(urlToSourceId(url));
+    auto item = acc->psi()->fileSharingManager()->item(urlToSourceId(url), acc);
     if (!item)
         return nullptr;
     const auto name = QStringLiteral("qite-media-state");
@@ -481,7 +553,7 @@ ITEMediaState *FileSharingDeviceOpener::mediaState(const QUrl &url)
 
 void FileSharingDeviceOpener::saveAs(const QUrl &url, QWidget *parent)
 {
-    QPointer<FileSharingItem> item  = acc->psi()->fileSharingManager()->item(urlToSourceId(url));
+    QPointer<FileSharingItem> item  = acc->psi()->fileSharingManager()->item(urlToSourceId(url), acc);
     QPointer<ITEMediaState>   state = mediaState(url);
     if (!item || !state || state->downloading())
         return;
