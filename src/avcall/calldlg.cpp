@@ -106,8 +106,10 @@ public:
         }
         connect(view, &CallView::accepted, this, [this] { accept(); });
         connect(view, &CallView::ended, q, &QDialog::close);
+        // Before calling, these buttons only choose the initial media. Joining
+        // RTP is needed only for an already active whiteboard-only session.
         connect(view, &CallView::microphoneChanged, this, [this](bool enabled) {
-            if (!session && enabled && !joinMedia()) {
+            if (active && !session && enabled && !joinMedia()) {
                 view->setMicrophoneChecked(false);
                 return;
             }
@@ -115,7 +117,7 @@ public:
                 session->setMicrophoneEnabled(enabled);
         });
         connect(view, &CallView::cameraChanged, this, [this](bool enabled) {
-            if (!session && enabled && !joinMedia()) {
+            if (active && !session && enabled && !joinMedia()) {
                 view->setCameraEnabled(false);
                 return;
             }
