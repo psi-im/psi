@@ -353,6 +353,7 @@ if(WIN32)
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstaudioconvert.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstaudiomixer.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstaudioresample.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstd3d11.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstcoreelements.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstdirectsound.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstdirectsoundsrc.dll

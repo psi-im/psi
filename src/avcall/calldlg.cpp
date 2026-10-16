@@ -69,6 +69,9 @@ public:
             q->setWindowTitle(peer.isEmpty() ? kind : tr("%1 — %2").arg(kind, peer));
         });
         view->setVideoSupported(AvCallManager::isVideoSupported());
+        updateSharingSupport();
+        connect(MediaDeviceWatcher::instance(), &MediaDeviceWatcher::capabilitiesChanged, this,
+                &Private::updateSharingSupport);
         if (AvCallManager::isSupported()) {
             const auto config = MediaDeviceWatcher::instance()->configuration();
             AvCallManager::setAudioOutDevice(config.audioOutDeviceId);
@@ -98,24 +101,26 @@ public:
                 session->setCameraEnabled(enabled);
         });
         connect(view, &CallView::shareRequested, this, [this] {
-            if (!active || (!session && !joinMedia()))
+            if (finished)
                 return;
-            if (capture.selecting() || session->screenSharing())
+            if (capture.selecting() || !capture.source().isEmpty())
                 capture.stop();
             else
                 capture.select(q);
         });
-        connect(&capture, &ScreenShareCapture::ready, this, [this](const QString &source, const QString &label) {
-            if (!session || !active || !session->startScreenSharing(source, capture.sourceLease())) {
+        connect(&capture, &ScreenShareCapture::ready, this, [this](const QString &, const QString &label) {
+            if (finished) {
                 capture.stop();
                 return;
             }
             shareLabel = label;
-            view->setSharing(true, label, true);
+            view->setSharePrepared(label);
+            startSelectedScreen();
         });
         connect(&capture, &ScreenShareCapture::stopped, this, [this] {
             if (session)
                 session->stopScreenSharing();
+            shareLabel.clear();
             view->setSharing(false);
         });
         connect(view, &CallView::whiteboardChanged, this, &Private::toggleWhiteboard);
@@ -126,6 +131,38 @@ public:
         connect(&capture, &ScreenShareCapture::selectingChanged, view, &CallView::setShareSelecting);
         connect(&capture, &ScreenShareCapture::failed, this, &Private::notifyError);
         connect(&timer, &QTimer::timeout, this, [this] { view->setDuration(elapsed.elapsed() / 1000); });
+    }
+
+    void updateSharingSupport()
+    {
+        const bool supported = active && session ? session->screenSharingSupported()
+                                                 : AvCallManager::isVideoSupported() && ScreenShareCapture::available();
+        view->setSharingSupported(supported);
+    }
+
+    void startSelectedScreen()
+    {
+        const auto source = capture.source();
+        if (!active || finished || source.isEmpty() || (session && session->screenSharing()))
+            return;
+        // Selection owns only consent and a source lease. Negotiation/capture
+        // use the ordinary content-add path once the call has been accepted.
+        const QPointer<Private> guard(this);
+        if (!session && !joinMedia()) {
+            if (guard)
+                capture.stop();
+            return;
+        }
+        if (!guard || finished || capture.source() != source)
+            return;
+        // Reusing an active content can emit screenSharingStarted synchronously.
+        // Set the pending state first so it cannot overwrite that confirmation.
+        view->setSharing(true, shareLabel, true);
+        const bool started = session->startScreenSharing(source, capture.sourceLease());
+        if (!guard || capture.source() != source)
+            return;
+        if (!started)
+            capture.stop();
     }
 
     ~Private() override
@@ -167,7 +204,7 @@ public:
             view->setConnecting(false);
             view->setActive(true);
             view->setWhiteboardOnly(false);
-            view->setSharingSupported(session->screenSharingSupported());
+            updateSharingSupport();
 
             session->setIncomingVideo(view->remoteVideo());
             session->setIncomingPresentation(view->remotePresentation());
@@ -183,6 +220,7 @@ public:
                 if (whiteboardWanted && !whiteboard)
                     addWhiteboard(jingle);
             }
+            startSelectedScreen();
         });
         connect(call, &AvCall::error, this, [this] {
             stopRinging();
@@ -218,7 +256,10 @@ public:
         connect(call, &AvCall::incomingVideoRemoved, view, &CallView::hideRemoteVideo);
         connect(call, &AvCall::cameraEnabledChanged, view, &CallView::setCameraEnabled);
         connect(call, &AvCall::microphoneEnabledChanged, view, &CallView::setMicrophoneChecked);
-        connect(call, &AvCall::screenSharingStarted, this, [this] { view->setSharing(true, shareLabel); });
+        connect(call, &AvCall::screenSharingStarted, this, [this] {
+            if (!capture.source().isEmpty() && session && session->screenSharing())
+                view->setSharing(true, shareLabel);
+        });
         connect(call, &AvCall::sessionAboutToStart, this, &Private::startWhiteboardWithCall);
     }
 
@@ -315,13 +356,14 @@ public:
         }
     }
 
-    // An outgoing call without chosen audio or video starts as a whiteboard; with nothing chosen at all it is
+    // An outgoing call without chosen microphone, camera or screen starts as a whiteboard; with nothing chosen it is
     // an audio call, unless there is no media for the contact.
     bool startsAsWhiteboard() const
     {
         const XMPP::Jid peer(view->peer());
         const bool      media  = account->callUsesMedia(peer);
-        const bool      chosen = media && (view->microphoneEnabled() || view->cameraEnabled());
+        const bool      chosen
+            = media && (view->microphoneEnabled() || view->cameraEnabled() || !capture.source().isEmpty());
         if (chosen || (media && !whiteboardWanted))
             return false;
         return account->canWhiteboard(peer) || !peer.resource().isEmpty();
@@ -461,8 +503,10 @@ public:
             view->setConnecting(false);
             view->setActive(true);
 
-            if (mediaAvailable(wbSession->peer()) && joinMedia())
-                view->setSharingSupported(session->screenSharingSupported());
+            if (mediaAvailable(wbSession->peer()) && joinMedia()) {
+                updateSharingSupport();
+                startSelectedScreen();
+            }
             elapsed.start();
             timer.start(1000);
             updateWhiteboardSupport();
@@ -475,6 +519,7 @@ public:
                 account->wbManager()->finish(proposalId, wasActive);
             finished = true;
             active   = false;
+            capture.stop();
             timer.stop();
             view->setConnecting(false);
             view->setFinished();
@@ -586,6 +631,7 @@ public:
                 return;
             stopRinging();
             finished = true;
+            capture.stop();
             view->setConnecting(false);
             view->setFinished();
             notifyError(message);

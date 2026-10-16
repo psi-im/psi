@@ -31,6 +31,7 @@
 #include <QWidget>
 #endif
 #include <functional>
+#include "screencapture.h"
 
 class QMetaMethod;
 

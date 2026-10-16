@@ -30,6 +30,7 @@ public:
     void                   setFinished();
     void                   hideRemoteVideo(bool presentation);
     void                   setSharing(bool sharing, const QString &source = {}, bool connecting = false);
+    void                   setSharePrepared(const QString &source);
     void                   setShareSelecting(bool selecting);
     void                   setDuration(qint64 seconds);
     bool                   cameraEnabled() const;
@@ -38,7 +39,7 @@ public:
     PsiMedia::VideoWidget *remoteVideo() const;
     PsiMedia::VideoWidget *remotePresentation() const;
     CallStage             *stage() const;
-    // A session without media: the whiteboard is the content, media controls are disabled.
+    // A session starting with a whiteboard; capture may be selected before media joins.
     void setWhiteboardOnly(bool whiteboardOnly);
     bool whiteboardOnly() const;
     // Whether this side and the peer can use audio and video; without it the media buttons are disabled.
@@ -82,7 +83,7 @@ private:
     bool                   active_         = false;
     bool                   sharing_        = false;
     bool                   selecting_      = false;
-    bool                   shareSupported_ = true;
+    bool                   shareSupported_ = false;
     bool                   videoSupported_ = true;
     bool                   whiteboardOnly_ = false;
     bool                   whiteboardSupported_ = false;
@@ -93,5 +94,6 @@ private:
     QString                elapsedText_ = QStringLiteral("00:00:00");
     QString                shareSource_;
     bool                   shareConnecting_ = false;
+    bool                   sharePrepared_   = false;
 };
 #endif

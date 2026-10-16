@@ -36,20 +36,19 @@ target_link_libraries(avcallstage_test PRIVATE Qt${QT_DEFAULT_MAJOR_VERSION}::Te
 add_test(NAME avcallstage_test COMMAND avcallstage_test)
 set_tests_properties(avcallstage_test PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 10)
 
-if(LINUX AND USE_DBUS)
-    find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Test)
-    find_program(DBUS_RUN_SESSION dbus-run-session)
-    if(DBUS_RUN_SESSION)
-        add_executable(avcall_screenshare_test screenshare.cpp ../screensharecapture.cpp ../screensharecapture.h
-                       ../callview.cpp ../callview.h ../callstage.cpp ../callstage.h)
-        target_include_directories(avcall_screenshare_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/..)
-        target_compile_definitions(avcall_screenshare_test PRIVATE PSI_SCREENSHARE_PORTAL)
-        target_link_libraries(avcall_screenshare_test PRIVATE psimedia Qt${QT_DEFAULT_MAJOR_VERSION}::Test
-                              ${QT_LIBRARIES})
-        add_test(NAME avcall_screenshare_test COMMAND ${DBUS_RUN_SESSION} -- $<TARGET_FILE:avcall_screenshare_test>)
-        set_tests_properties(avcall_screenshare_test PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 20)
-    endif()
-endif()
+add_executable(avcall_screenshare_test screenshare.cpp ../callview.cpp ../callview.h ../callstage.cpp ../callstage.h)
+target_include_directories(avcall_screenshare_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/..)
+target_link_libraries(avcall_screenshare_test PRIVATE psimedia Qt${QT_DEFAULT_MAJOR_VERSION}::Test ${QT_LIBRARIES})
+add_test(NAME avcall_screenshare_test COMMAND avcall_screenshare_test)
+set_tests_properties(avcall_screenshare_test PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 20)
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/tests/avcall/crypto-capabilities
     ${CMAKE_CURRENT_BINARY_DIR}/crypto-capabilities)
+
+add_executable(avcall_screenpicker_test screenpicker.cpp ../screensharecapture.cpp ../screensharecapture.h)
+target_include_directories(avcall_screenpicker_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/.. ${PROJECT_SOURCE_DIR}/plugins/include)
+target_link_libraries(avcall_screenpicker_test PRIVATE psimedia Qt${QT_DEFAULT_MAJOR_VERSION}::Test
+    Qt${QT_DEFAULT_MAJOR_VERSION}::Widgets)
+set_target_properties(avcall_screenpicker_test PROPERTIES AUTOMOC ON)
+add_test(NAME avcall_screenpicker COMMAND avcall_screenpicker_test)
+set_tests_properties(avcall_screenpicker PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 20)

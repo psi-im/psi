@@ -1,0 +1,50 @@
+name: Screen picker
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'src/avcall/screenshare*'
+      - 'src/avcall/CMakeLists.txt'
+      - 'src/psimedia/**'
+      - 'plugins/include/psimediascreencapture.h'
+      - 'src/avcall/unittest/CMakeLists.txt'
+      - 'src/avcall/unittest/screenpicker.cpp'
+      - 'tests/avcall/screen-picker/**'
+      - '.github/workflows/screen-sharing.yml'
+  pull_request:
+    paths:
+      - 'src/avcall/screenshare*'
+      - 'src/avcall/CMakeLists.txt'
+      - 'src/psimedia/**'
+      - 'plugins/include/psimediascreencapture.h'
+      - 'src/avcall/unittest/CMakeLists.txt'
+      - 'src/avcall/unittest/screenpicker.cpp'
+      - 'tests/avcall/screen-picker/**'
+      - '.github/workflows/screen-sharing.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  screen-picker:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, macos-15]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          cache: true
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+      - uses: hendrikmuhs/ccache-action@v1
+        with:
+          key: ${{ runner.os }}-screen-picker
+      - name: Configure picker checks
+        run: cmake -S tests/avcall/screen-picker -B build-screen-picker -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+      - name: Build picker and provider interface checks
+        run: cmake --build build-screen-picker --config Debug --parallel 2
+      - name: Test selection lifecycle without desktop permissions
+        run: ctest --test-dir build-screen-picker -C Debug --output-on-failure

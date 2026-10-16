@@ -35,6 +35,12 @@
     </dict>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
+    <key>NSScreenCaptureUsageDescription</key>
+    <string>Share a display or window with the participants in your call.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Use your camera in video calls.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Use your microphone in calls.</string>
     <key>NSHighResolutionCapable</key>
     <true/>
 </dict>

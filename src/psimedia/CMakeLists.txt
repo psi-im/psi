@@ -4,12 +4,14 @@ unset(SOURCES)
 unset(UI_FORMS)
 
 list(APPEND HEADERS
+    screencapture.h
     psimedia.h
     psimedia_p.h
 )
 
 list(APPEND SOURCES
     psimedia.cpp
+    screencapture.cpp
 )
 
 add_definitions( -DQT_GUI_LIB )

@@ -1,7 +1,13 @@
 # Calls and screen sharing
 
-In a connected call, choose the **Share screen** icon (monitor), select a
-display or an individual window, and confirm **Share**. The camera and screen
+Choose the **Share screen** icon (monitor), select a display or an individual
+window, and confirm **Share**. Selection is available before calling or accepting,
+while ringing, and in a connected call. Before connection, the **Screen selected**
+status marks a prepared source: transmission waits until the call is accepted
+and its initial media is ready, then uses the existing video content-add path.
+Press the icon again to cancel the selection. Ending or declining the call
+releases the source and its permissions, including a pending system picker.
+The camera and screen
 can be transmitted together. The highlighted screen icon, a compact sharing
 source label in the bottom control dock and its tooltip indicate active
 sharing. Press the same icon to **Stop sharing**; this ends only that video
@@ -30,9 +36,42 @@ active. A peer declining the content or a capture error ends sharing without
 terminating the existing call. The screen profile is VP8, up to 1920 × 1080 at
 15 fps, within the call's selected bitrate limit.
 
-This implementation provides local source selection on Linux. Windows and macOS
-capture pickers are not implemented. Receiving screen video uses ordinary Jingle
-RTP video and does not require a local capture picker.
+On Windows, Psi offers native monitors and visible windows. GStreamer's
+`d3d11screencapturesrc` captures a monitor through DXGI Desktop Duplication;
+window capture uses Windows Graphics Capture on Windows 10 version 1903 or later.
+Window capture requires the MSVC GStreamer build; MinGW builds offer monitor
+capture. Source handles identify the selected monitor/window independently of
+Qt's logical coordinates and display scaling. The Windows runtime package must
+include the `d3d11` plugin.
+
+On macOS 12.3 or later, Psi lists displays and visible application windows and
+requests Screen Recording permission when the user opens the picker. Selection
+alone never starts a stream: capture starts only when the screen content
+becomes active. Denied permission is reported
+with instructions to enable Psi in System Settings (some macOS versions require
+an app restart after granting access). Stopping sharing cancels pending native
+starts and stops the stream; old asynchronous enumeration results cannot restart
+it. System audio is not captured. macOS builds require an SDK with ScreenCaptureKit
+headers and GStreamer 1.20 or later. Older macOS versions keep ordinary calls and
+receiving screen video, with local screen sharing disabled.
+
+All platforms use PsiMedia's optional `ScreenCaptureProvider/1.0` interface.
+Psi owns the common selection dialog and call policy. The media provider owns
+platform enumeration, system pickers, permission sessions, capture configuration
+and resource lifetime. Psi passes an opaque provider-issued device ID to the
+media session; no GStreamer description or native capture handle enters the call
+controller. A backend using a different media framework can implement the same
+interface. Old plugins without this extension keep ordinary calls and receiving
+screen video, with local screen sharing unavailable.
+
+The GStreamer provider uses its existing platform elements on Linux and Windows,
+and its `psiscreencapturekitsrc` element on macOS. Each selected device is revoked
+on stop, so retaining an old ID cannot reopen it. The old media graph retains its
+source resources until teardown; a PipeWire file descriptor cannot be recycled
+while the source is still releasing it.
+
+Receiving screen video uses ordinary Jingle RTP video and does not require a
+local capture picker.
 
 ## Build and interoperability
 
@@ -40,8 +79,14 @@ Update **both Psi and psimedia** and rebuild the media plugin. The optional
 `GroupedSecureRtpSessionContext/1.0` interface enables independent video codec
 contexts sharing protected RTP groups. An older secure media plugin can still
 handle its existing call modes; it does not enable the Share screen button.
-Linux portal support requires the existing D-Bus build option; X11 selection
-requires the existing X11 build option. Qt 5 and Qt 6 remain supported.
+The macOS backend weak-links ScreenCaptureKit so launching Psi and its media
+plugin on older macOS does not require this framework. Native macOS and Windows
+capture and permission behavior still need manual call testing on those systems;
+Linux and synthetic-source tests cannot establish these results.
+Linux portal support is built by PsiMedia when Qt D-Bus is available; its X11
+source enumeration requires the X11 development libraries. These are media plugin
+capabilities and do not depend on Psi's D-Bus/X11 UI build options. Qt 5 and Qt 6
+remain supported.
 
 Screen sharing uses a separate, locally sending RTP video content added to an
 active Jingle session with `content-add` / `content-accept`. Iris extends an

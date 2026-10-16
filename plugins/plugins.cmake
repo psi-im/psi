@@ -38,6 +38,7 @@ list(APPEND PLUGINS_INCLUDES
     ${CMAKE_CURRENT_LIST_DIR}/include/psiaccountcontroller.h
     ${CMAKE_CURRENT_LIST_DIR}/include/psiaccountcontrollinghost.h
     ${CMAKE_CURRENT_LIST_DIR}/include/psimediaprovider.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/psimediascreencapture.h
     ${CMAKE_CURRENT_LIST_DIR}/include/psimediaaccessor.h
     ${CMAKE_CURRENT_LIST_DIR}/include/psimediahost.h
     ${CMAKE_CURRENT_LIST_DIR}/include/psiplugin.h

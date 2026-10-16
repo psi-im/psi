@@ -2,7 +2,6 @@
 #include "callview.h"
 #include "callstage.h"
 #include "../psimedia/psimedia.h"
-#include "screensharecapture.h"
 #include <QComboBox>
 #include <QEvent>
 #include <QFontMetrics>
@@ -144,7 +143,7 @@ CallView::CallView(QWidget *parent) : QWidget(parent)
     share_->setCheckable(true);
     share_->setEnabled(false);
     connect(share_, &QPushButton::clicked, this, [this] {
-        // Clicking opens a picker; only the backend confirms active sharing.
+        // Clicking opens/cancels selection; the controller owns its state.
         share_->setChecked(sharing_);
         emit shareRequested();
     });
@@ -300,9 +299,10 @@ void CallView::updateControlPresentation()
     const QColor selected = colors.color(QPalette::HighlightedText);
     microphone_->setToolTip(microphone_->isChecked() ? tr("Mute microphone") : tr("Unmute microphone"));
     camera_->setToolTip(camera_->isChecked() ? tr("Turn camera off") : tr("Turn camera on"));
-    share_->setToolTip(selecting_ ? tr("Cancel screen selection")
-                     : sharing_ ? tr("Stop sharing: %1").arg(shareSource_)
-                                : tr("Share a display or window"));
+    share_->setToolTip(selecting_           ? tr("Cancel screen selection")
+                           : sharePrepared_ ? tr("Cancel selected screen: %1").arg(shareSource_)
+                           : sharing_       ? tr("Stop sharing: %1").arg(shareSource_)
+                                            : tr("Share a display or window"));
     whiteboard_->setToolTip(whiteboard_->isChecked() ? tr("Hide whiteboard") : tr("Show whiteboard"));
     microphone_->setAccessibleName(microphone_->toolTip());
     camera_->setAccessibleName(camera_->toolTip());
@@ -330,8 +330,9 @@ void CallView::updateControlPresentation()
     }
     sharingHint_->setVisible(sharing_ || selecting_);
     const QString hint = selecting_ ? tr("Selecting screen…")
-                         : shareConnecting_ ? tr("Connecting screen…")
-                                            : tr("Sharing: %1").arg(shareSource_);
+        : sharePrepared_            ? tr("Screen selected: %1").arg(shareSource_)
+        : shareConnecting_          ? tr("Connecting screen…")
+                                    : tr("Sharing: %1").arg(shareSource_);
     sharingHint_->setText(sharingHint_->fontMetrics().elidedText(hint, Qt::ElideMiddle, 205));
     sharingHint_->setToolTip(hint);
     sharingHint_->setAccessibleName(hint);
@@ -384,6 +385,8 @@ void CallView::setFinished()
 {
     finished_ = true;
     connecting_ = false;
+    setSharing(false);
+    setShareSelecting(false);
     setActive(false);
     accept_->hide();
     quality_->hide();
@@ -394,11 +397,21 @@ void CallView::setFinished()
 }
 void CallView::setSharing(bool sharing, const QString &source, bool connecting)
 {
+    sharePrepared_   = false;
     sharing_ = sharing;
     shareConnecting_ = sharing && connecting;
     shareSource_ = sharing ? source : QString();
     share_->setChecked(sharing);
-    updateControlPresentation();
+    updateMediaButtons();
+}
+void CallView::setSharePrepared(const QString &source)
+{
+    sharing_         = true;
+    sharePrepared_   = true;
+    shareConnecting_ = false;
+    shareSource_     = source;
+    share_->setChecked(true);
+    updateMediaButtons();
 }
 void CallView::setShareSelecting(bool selecting)
 {
@@ -427,8 +440,7 @@ void CallView::setWhiteboardOnly(bool whiteboardOnly)
     whiteboardOnly_ = whiteboardOnly;
     emit headingChanged();
     if (whiteboardOnly) {
-        // Screen sharing needs running media; it is offered again once audio or video is connected.
-        shareSupported_ = false;
+        // Capture can be selected now; transmitting still waits for the session.
         const QSignalBlocker blocked(microphone_);
         microphone_->setChecked(false);
         updateControlPresentation();
@@ -456,7 +468,9 @@ void CallView::updateMediaButtons()
     const bool media = !finished_ && mediaAvailable_ && (!whiteboardOnly_ || active_);
     microphone_->setEnabled(media);
     camera_->setEnabled(media && videoSupported_ && !connecting_);
-    share_->setEnabled(media && active_ && shareSupported_ && ScreenShareCapture::available());
+    // Selecting a source is allowed before a call starts. An existing selection
+    // must also remain cancellable if media capabilities disappear meanwhile.
+    share_->setEnabled(!finished_ && (sharing_ || selecting_ || (mediaAvailable_ && shareSupported_)));
     const QString unavailable = whiteboardOnly_ && !mediaAvailable_ ? tr("Calls are not available with this contact")
                                                                     : QString();
     updateControlPresentation();

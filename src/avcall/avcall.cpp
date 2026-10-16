@@ -1040,7 +1040,7 @@ bool AvCall::startScreenSharing(const QString &source, std::shared_ptr<const voi
 bool AvCall::screenSharingSupported() const
 {
     return (d->active || (d->joined && d->signalingActive)) && d->session
-        && psiMediaJingleSupportsGroupedCapture(d->session);
+        && psiMediaJingleSupportsGroupedCapture(d->session) && PsiMedia::ScreenCapture::available();
 }
 void AvCall::stopScreenSharing() { d->stopScreenSharing(); }
 bool AvCall::screenSharing() const
