@@ -40,6 +40,7 @@
 #include <QFileInfo>
 #include <QNetworkReply>
 #include <QPointer>
+#include <QTimer>
 
 #include <algorithm>
 #include <cstring>
