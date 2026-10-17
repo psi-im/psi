@@ -694,46 +694,14 @@ bool profileRename(const QString &oldname, const QString &name)
     return true;
 }
 
-static bool folderRemove(const QDir &_d)
-{
-    QDir d = _d;
-
-    QStringList entries = d.entryList();
-    for (QStringList::Iterator it = entries.begin(); it != entries.end(); ++it) {
-        if (*it == "." || *it == "..")
-            continue;
-        QFileInfo info(d, *it);
-        if (info.isDir()) {
-            if (!folderRemove(QDir(info.filePath())))
-                return false;
-        } else {
-            // printf("deleting [%s]\n", info.filePath().latin1());
-            d.remove(info.fileName());
-        }
-    }
-    QString name = d.dirName();
-    if (!d.cdUp())
-        return false;
-    // printf("removing folder [%s]\n", d.filePath(name).latin1());
-    d.rmdir(name);
-
-    return true;
-}
-
 bool profileDelete(const QStringList &paths)
 {
-    bool ret = true;
     for (const QString &path : paths) {
-        QDir d(path);
-        if (!d.exists())
-            continue;
-
-        ret = folderRemove(QDir(path));
-        if (!ret) {
-            break;
-        }
+        QDir dir(path);
+        if (dir.exists() && !dir.removeRecursively())
+            return false;
     }
-    return ret;
+    return true;
 }
 
 QString activeProfile;

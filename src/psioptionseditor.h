@@ -7,7 +7,6 @@
 #include <QKeyEvent>
 #include <QLabel>
 #include <QPushButton>
-#include <QToolButton>
 #include <QTreeView>
 #include <QtCore>
 
@@ -18,7 +17,6 @@ class PsiOptionsEditor : public QWidget {
     Q_OBJECT
 public:
     PsiOptionsEditor(QWidget *parent = nullptr);
-    void bringToFront();
 
 private slots:
     void tv_edit(const QModelIndex &idx);
@@ -28,7 +26,6 @@ private slots:
     void edit();
     void deleteit();
     void resetit();
-    void detach();
 
 protected:
     void keyPressEvent(QKeyEvent *e);
@@ -48,7 +45,6 @@ private:
     QPushButton           *pb_reset;
     QPushButton           *pb_edit;
     QPushButton           *pb_new;
-    QToolButton           *pb_detach;
     QLineEdit             *le_filter;
 };
 
