@@ -21,7 +21,6 @@
 #define PROFILEDLG_H
 
 #include "ui_profilemanage.h"
-#include "ui_profilenew.h"
 #include "ui_profileopen.h"
 #include "varlist.h"
 
@@ -58,21 +57,6 @@ private slots:
     void slotProfileRename();
     void slotProfileDelete();
     void updateSelection();
-};
-
-class ProfileNewDlg : public QDialog, public Ui::ProfileNew {
-    Q_OBJECT
-public:
-    ProfileNewDlg(QWidget *parent = nullptr);
-
-    QString name;
-
-private slots:
-    void slotCreate();
-    void nameModified();
-
-private:
-    QButtonGroup *buttonGroup_;
 };
 
 #endif // PROFILEDLG_H
