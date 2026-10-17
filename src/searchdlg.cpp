@@ -31,6 +31,7 @@
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPointer>
+#include <QSplitter>
 
 using namespace XMPP;
 
@@ -157,6 +158,11 @@ SearchDlg::SearchDlg(const Jid &jid, PsiAccount *pa) : QDialog(nullptr)
     d = new Private(this);
     setupUi(this);
     setModal(false);
+
+    searchSplitter->setChildrenCollapsible(false);
+    searchSplitter->setStretchFactor(0, 0);
+    searchSplitter->setStretchFactor(1, 1);
+    searchSplitter->setSizes({280, 360});
     d->pa  = pa;
     d->jid = jid;
     d->pa->dialogRegister(this, d->jid);
@@ -189,7 +195,7 @@ SearchDlg::SearchDlg(const Jid &jid, PsiAccount *pa) : QDialog(nullptr)
     connect(pb_add, SIGNAL(clicked()), SLOT(doAdd()));
     connect(pb_info, SIGNAL(clicked()), SLOT(doInfo()));
 
-    resize(600, 440);
+    resize(640, 480);
 
     doSearchGet();
 }
@@ -357,9 +363,6 @@ void SearchDlg::jt_finished()
             d->gr_form->show();
             pb_search->setEnabled(true);
             show();
-
-            qApp->processEvents();
-            resize(sizeHint());
         } else {
             lv_results->setUpdatesEnabled(false);
 
