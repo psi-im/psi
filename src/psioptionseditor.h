@@ -48,7 +48,6 @@ private:
     QPushButton           *pb_reset;
     QPushButton           *pb_edit;
     QPushButton           *pb_new;
-    QToolButton           *pb_detach;
     QLineEdit             *le_filter;
 };
 
