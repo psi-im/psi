@@ -39,9 +39,13 @@ QString HistoryMessageExtras::encode(const XMPP::Message &message)
         doc.appendChild(reference.toXml(&doc));
         references.append(doc.toString(-1));
     }
-    if (!references.isEmpty()) {
+    if (!references.isEmpty())
         extra.insert(XMPP::REFERENCE_NS, references);
-        // In particular retain the full sender resource for Jingle retrieval.
+
+    // Preserve message identity even without media references. This is
+    // essential for correlating existing local history with MAM later.
+    // The stanza id is *not* an authenticated MAM archive UID.
+    if (!message.id().isEmpty() || !message.from().isEmpty() || !message.to().isEmpty()) {
         extra.insert(QStringLiteral("psi:message"),
                      QJsonObject { { "version", 1 },
                                    { "id", message.id() },
@@ -67,16 +71,16 @@ void HistoryMessageExtras::restore(const QString &json, XMPP::Message &message)
             && doc.documentElement().namespaceURI() == XMPP::REFERENCE_NS && reference.fromXml(doc.documentElement()))
             references.append(reference);
     }
-    if (!references.isEmpty()) {
+    if (!references.isEmpty())
         message.setReferences(references);
-        const auto envelope = extra.value(QStringLiteral("psi:message")).toObject();
-        if (envelope.value("version").toInt() == 1) {
-            message.setId(envelope.value("id").toString());
-            const XMPP::Jid from(envelope.value("from").toString()), to(envelope.value("to").toString());
-            if (from.isValid() && !from.isEmpty())
-                message.setFrom(from);
-            if (to.isValid() && !to.isEmpty())
-                message.setTo(to);
-        }
+
+    const auto envelope = extra.value(QStringLiteral("psi:message")).toObject();
+    if (envelope.value("version").toInt() == 1) {
+        message.setId(envelope.value("id").toString());
+        const XMPP::Jid from(envelope.value("from").toString()), to(envelope.value("to").toString());
+        if (from.isValid() && !from.isEmpty())
+            message.setFrom(from);
+        if (to.isValid() && !to.isEmpty())
+            message.setTo(to);
     }
 }

@@ -75,6 +75,29 @@ private slots:
         QCOMPARE(restored.urlList().size(), 1);
         QVERIFY(restored.spooled());
     }
+    void plainMessageIdentity()
+    {
+        Message original;
+        original.setId(QStringLiteral("client-message-42"));
+        original.setFrom(Jid(QStringLiteral("room@conference.example/alice")));
+        original.setTo(Jid(QStringLiteral("juliet@example/desktop")));
+
+        // Unlike media-bearing messages, ordinary chat messages previously
+        // lost their stanza IDs and original full JIDs on SQLite round trips.
+        const QString encoded = HistoryMessageExtras::encode(original);
+        QVERIFY(!encoded.isEmpty());
+        Message restored;
+        restored.setBody(QStringLiteral("a plain message"));
+        HistoryMessageExtras::restore(encoded, restored);
+        QCOMPARE(restored.id(), original.id());
+        QCOMPARE(restored.from().full(), original.from().full());
+        QCOMPARE(restored.to().full(), original.to().full());
+        QCOMPARE(restored.body(), QStringLiteral("a plain message"));
+        QVERIFY(restored.references().isEmpty());
+
+        Message empty;
+        QVERIFY(HistoryMessageExtras::encode(empty).isEmpty());
+    }
     void legacyAndMalformed()
     {
         Message message;
@@ -86,6 +109,15 @@ private slots:
         HistoryMessageExtras::restore("{\"urn:xmpp:reference:0\":[\"<reference/>\"]}", message);
         QCOMPARE(message.body(), QString("old message"));
         QVERIFY(message.references().isEmpty());
+
+        // The v1 envelope from older media-bearing rows must still load,
+        // regardless of which valid references survived parsing.
+        HistoryMessageExtras::restore(
+            QStringLiteral("{\"psi:message\":{\"version\":1,\"id\":\"old-id\","
+                           "\"from\":\"old@example/phone\",\"to\":\"new@example/desktop\"}}"), message);
+        QCOMPARE(message.id(), QStringLiteral("old-id"));
+        QCOMPARE(message.from().full(), QStringLiteral("old@example/phone"));
+        QCOMPARE(message.to().full(), QStringLiteral("new@example/desktop"));
     }
     void catalogReopen()
     {
