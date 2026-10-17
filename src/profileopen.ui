@@ -1,210 +1,155 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ui version="4.0" stdsetdef="1">
- <author></author>
- <comment></comment>
- <exportmacro></exportmacro>
+<ui version="4.0">
  <class>ProfileOpen</class>
  <widget class="QDialog" name="ProfileOpen">
   <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>305</width>
-    <height>197</height>
-   </rect>
+   <rect><x>0</x><y>0</y><width>700</width><height>410</height></rect>
   </property>
   <property name="windowTitle">
-   <string>Open Profile</string>
+   <string>Profiles</string>
   </property>
-  <layout class="QVBoxLayout">
-   <property name="margin">
-    <number>0</number>
-   </property>
-   <property name="spacing">
-    <number>0</number>
-   </property>
+  <layout class="QVBoxLayout" name="outerLayout">
+   <property name="spacing"><number>0</number></property>
+   <property name="leftMargin"><number>0</number></property>
+   <property name="topMargin"><number>0</number></property>
+   <property name="rightMargin"><number>0</number></property>
+   <property name="bottomMargin"><number>0</number></property>
    <item>
-    <layout class="QHBoxLayout">
-     <property name="margin">
-      <number>0</number>
-     </property>
-     <property name="spacing">
-      <number>0</number>
-     </property>
+    <layout class="QHBoxLayout" name="bannerLayout">
+     <property name="spacing"><number>0</number></property>
      <item>
       <widget class="QLabel" name="lb_left">
-       <property name="text">
-        <string>left</string>
-       </property>
+       <property name="text"><string>left</string></property>
       </widget>
      </item>
      <item>
       <widget class="QLabel" name="lb_logo">
-       <property name="text">
-        <string>Image goes here</string>
-       </property>
+       <property name="text"><string>Image goes here</string></property>
       </widget>
      </item>
      <item>
       <widget class="QLabel" name="lb_right">
-       <property name="text">
-        <string>right</string>
-       </property>
+       <property name="text"><string>right</string></property>
       </widget>
      </item>
     </layout>
    </item>
    <item>
-    <layout class="QVBoxLayout">
-     <property name="margin">
-      <number>11</number>
-     </property>
+    <layout class="QVBoxLayout" name="mainLayout">
+     <property name="leftMargin"><number>12</number></property>
+     <property name="topMargin"><number>12</number></property>
+     <property name="rightMargin"><number>12</number></property>
+     <property name="bottomMargin"><number>12</number></property>
      <item>
-      <widget class="QGroupBox" name="gb_open">
-       <property name="title">
-        <string>Open Profile</string>
-       </property>
-       <layout class="QVBoxLayout">
-        <property name="margin">
-         <number>11</number>
-        </property>
-        <property name="spacing">
-         <number>6</number>
-        </property>
-        <item>
-         <layout class="QHBoxLayout">
-          <property name="margin">
-           <number>0</number>
-          </property>
-          <property name="spacing">
-           <number>6</number>
-          </property>
-          <item>
-           <widget class="QLabel" name="TextLabel4">
-            <property name="text">
-             <string>Profile:</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QComboBox" name="cb_profile">
-            <property name="sizePolicy">
-             <sizepolicy>
-              <hsizetype>7</hsizetype>
-              <vsizetype>0</vsizetype>
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="ck_auto">
-          <property name="text">
-           <string>&amp;Automatically open on startup</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-     </item>
-     <item>
-      <layout class="QHBoxLayout">
-       <property name="margin">
-        <number>0</number>
-       </property>
-       <property name="spacing">
-        <number>6</number>
-       </property>
+      <layout class="QHBoxLayout" name="profilesAndOptions">
+       <property name="spacing"><number>16</number></property>
        <item>
-        <widget class="QLabel" name="lb_lang">
-         <property name="text">
-          <string>Language:</string>
-         </property>
-        </widget>
+        <layout class="QVBoxLayout" name="profileColumn">
+         <item>
+          <widget class="QLabel" name="lb_profilesHeader">
+           <property name="text"><string>Profiles</string></property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QListWidget" name="lbx_profiles">
+           <property name="minimumSize">
+            <size><width>220</width><height>180</height></size>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="addRow">
+           <item>
+            <widget class="QLineEdit" name="le_newProfile">
+             <property name="placeholderText"><string>New profile</string></property>
+             <property name="clearButtonEnabled"><bool>true</bool></property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="pb_add">
+             <property name="text"><string>+</string></property>
+             <property name="toolTip"><string>Add profile</string></property>
+             <property name="accessibleName"><string>Add profile</string></property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
        </item>
        <item>
-        <widget class="QComboBox" name="cb_lang">
+        <widget class="QGroupBox" name="gb_options">
          <property name="sizePolicy">
-          <sizepolicy>
-           <hsizetype>7</hsizetype>
-           <vsizetype>0</vsizetype>
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
+          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+           <horstretch>1</horstretch><verstretch>0</verstretch>
           </sizepolicy>
          </property>
+         <property name="title"><string>Startup and language</string></property>
+         <layout class="QVBoxLayout" name="optionsLayout">
+          <item>
+           <widget class="QLabel" name="lb_current">
+            <property name="text"><string>Select or create a profile.</string></property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="ck_auto">
+            <property name="text"><string>&amp;Automatically open this profile on startup</string></property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lb_startupHint">
+            <property name="text">
+             <string>Startup uses the last opened profile.</string>
+            </property>
+            <property name="wordWrap"><bool>true</bool></property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lb_lang">
+            <property name="text"><string>Application language:</string></property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="cb_lang"/>
+          </item>
+          <item>
+           <spacer name="optionsSpacer">
+            <property name="orientation"><enum>Qt::Vertical</enum></property>
+            <property name="sizeHint" stdset="0">
+             <size><width>20</width><height>40</height></size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
         </widget>
        </item>
       </layout>
      </item>
      <item>
-      <widget class="Line" name="Line1">
-       <property name="frameShape">
-        <enum>QFrame::HLine</enum>
-       </property>
-       <property name="frameShadow">
-        <enum>QFrame::Sunken</enum>
-       </property>
+      <widget class="QLabel" name="lb_feedback">
+       <property name="text"><string></string></property>
+       <property name="wordWrap"><bool>true</bool></property>
       </widget>
      </item>
      <item>
-      <layout class="QHBoxLayout">
-       <property name="margin">
-        <number>0</number>
+      <widget class="QDialogButtonBox" name="buttonBox">
+       <property name="standardButtons">
+        <set>QDialogButtonBox::Open|QDialogButtonBox::Close</set>
        </property>
-       <item>
-        <widget class="IconButton" name="pb_close">
-         <property name="text">
-          <string>&amp;Quit</string>
-         </property>
-         <property name="psiIconName" stdset="0">
-          <string>psi/quit</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="Spacer1">
-         <property name="sizeHint">
-          <size>
-           <width>59</width>
-           <height>20</height>
-          </size>
-         </property>
-         <property name="sizeType">
-          <enum>Expanding</enum>
-         </property>
-         <property name="orientation">
-          <enum>Horizontal</enum>
-         </property>
-        </spacer>
-       </item>
-       <item>
-        <widget class="IconButton" name="pb_profiles">
-         <property name="text">
-          <string>&amp;Profiles...</string>
-         </property>
-         <property name="psiIconName" stdset="0">
-          <string>psi/profile</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="IconButton" name="pb_open">
-         <property name="text">
-          <string>&amp;Open</string>
-         </property>
-         <property name="psiIconName" stdset="0">
-          <string>psi/logo_16</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
+      </widget>
      </item>
     </layout>
    </item>
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <tabstops>
+  <tabstop>lbx_profiles</tabstop>
+  <tabstop>le_newProfile</tabstop>
+  <tabstop>pb_add</tabstop>
+  <tabstop>ck_auto</tabstop>
+  <tabstop>cb_lang</tabstop>
+  <tabstop>buttonBox</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
 </ui>
