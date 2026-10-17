@@ -103,7 +103,11 @@ We like constructive comments and wishes to functions of program. You may contac
 
 ### Translations
 
-The work of translators is quite routine and boring. People who do it usually lose interests and their translations become incomplete. If you see such situation for translation to your native language, please join to our [translations team](https://www.transifex.com/tehnick/psi-plus/). It is extremely welcome!
+The work of translators is quite routine and boring.
+People who do it usually lose interests and their translations become incomplete.
+If you see such situation for translation to your native language,
+please join to our [translations team](https://explore.transifex.com/tehnick/psi-plus/).
+It is extremely welcome!
 
 ### Graphics
 
