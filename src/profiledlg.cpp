@@ -197,20 +197,41 @@ ProfileManageDlg::ProfileManageDlg(const QString &choose, QWidget *parent) : QDi
 void ProfileManageDlg::slotProfileNew()
 {
     QString name;
+    while (true) {
+        bool ok = false;
+        name = QInputDialog::getText(this, CAP(tr("New Profile")),
+                                        tr("Please enter a name for the profile. Keep it simple.\nOnly use letters "
+                                              "or numbers.  No punctuation or spaces."),
+                                        QLineEdit::Normal, name, &ok);
+        if (!ok)
+            return;
 
-    ProfileNewDlg *w = new ProfileNewDlg(this);
-    int            r = w->exec();
-    if (r == QDialog::Accepted) {
-        name = w->name;
+        if (profileExists(name)) {
+            QMessageBox::information(this, CAP(tr("New Profile")),
+                                     tr("There is already an existing profile with this name.  Please choose another."));
+            continue;
+        }
 
-        lbx_profiles->addItem(name);
-        lbx_profiles->setCurrentRow(lbx_profiles->count() - 1);
+        if (!profileNew(name)) {
+            QMessageBox::information(this, CAP(tr("New Profile")),
+                                     tr("Unable to create the profile.  Please do not use any special characters."));
+            continue;
+        }
+        break;
     }
-    delete w;
 
-    if (r == QDialog::Accepted) {
-        close();
+    // save config
+    PsiOptions o;
+    if (!o.newProfile()) {
+        qWarning("ERROR: Failed to new profile default options");
     }
+    o.save(pathToProfile(name, ApplicationInfo::ConfigLocation) + "/options.xml");
+
+    lbx_profiles->addItem(name);
+    lbx_profiles->setCurrentRow(lbx_profiles->count() - 1);
+
+    // Assume that the new profie is what a user wanted and close the profile manager
+    accept();
 }
 
 void ProfileManageDlg::slotProfileRename()
@@ -222,10 +243,10 @@ void ProfileManageDlg::slotProfileRename()
     QString oldname = lbx_profiles->item(x)->text();
     QString name;
 
-    while (1) {
+    while (true) {
         bool ok = false;
         name    = QInputDialog::getText(this, CAP(tr("Rename Profile")),
-                                        tr("Please enter a new name for the profile.  Keep it simple.\nOnly use letters "
+                                        tr("Please enter a name for the profile. Keep it simple.\nOnly use letters "
                                               "or numbers.  No punctuation or spaces."),
                                         QLineEdit::Normal, name, &ok);
         if (!ok)
@@ -303,54 +324,3 @@ void ProfileManageDlg::updateSelection()
 
     pb_delete->setEnabled(x != -1);
 }
-
-//----------------------------------------------------------------------------
-// ProfileNewDlg
-//----------------------------------------------------------------------------
-
-ProfileNewDlg::ProfileNewDlg(QWidget *parent) : QDialog(parent)
-{
-    setupUi(this);
-    setModal(true);
-    setWindowTitle(CAP(windowTitle()));
-
-    buttonGroup_ = new QButtonGroup(this);
-
-    le_name->setFocus();
-
-    connect(pb_create, SIGNAL(clicked()), SLOT(slotCreate()));
-    connect(pb_close, SIGNAL(clicked()), SLOT(reject()));
-    connect(le_name, SIGNAL(textChanged(const QString &)), SLOT(nameModified()));
-
-    nameModified();
-}
-
-void ProfileNewDlg::slotCreate()
-{
-    name = le_name->text();
-
-    if (profileExists(name)) {
-        QMessageBox::information(this, CAP(tr("New Profile")),
-                                 tr("There is already an existing profile with this name.  Please choose another."));
-        return;
-    }
-
-    if (!profileNew(name)) {
-        QMessageBox::information(this, CAP(tr("New Profile")),
-                                 tr("Unable to create the profile.  Please do not use any special characters."));
-        return;
-    }
-
-    // save config
-    PsiOptions o;
-
-    if (!o.newProfile()) {
-        qWarning("ERROR: Failed to new profile default options");
-    }
-
-    o.save(pathToProfile(name, ApplicationInfo::ConfigLocation) + "/options.xml");
-
-    accept();
-}
-
-void ProfileNewDlg::nameModified() { pb_create->setEnabled(!le_name->text().isEmpty()); }
