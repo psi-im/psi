@@ -24,7 +24,7 @@
     <language>en</language>
 
     <schema:logo rdf:resource='https://raw.githubusercontent.com/psi-im/psi/master/iconsets/system/default/logo_128.png'/>
-    <schema:screenshot rdf:resource='https://psi-im.org/content/home/feature_linux.png'/>
+    <schema:screenshot rdf:resource='https://psi-im.org/static/images/feature_linux.png'/>
 
     <programming-language>C++</programming-language>
 
