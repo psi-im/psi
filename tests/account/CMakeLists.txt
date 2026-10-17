@@ -13,3 +13,18 @@ target_link_libraries(account_connection_guard_test PRIVATE
     Qt${QT_DEFAULT_MAJOR_VERSION}::Core Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
 add_test(NAME account_connection_guard COMMAND account_connection_guard_test)
 set_tests_properties(account_connection_guard PROPERTIES TIMEOUT 10)
+
+if(TARGET iris)
+    set(ACCOUNT_IRIS_TARGET iris)
+elseif(TARGET Iris::Iris)
+    set(ACCOUNT_IRIS_TARGET Iris::Iris)
+endif()
+if(ACCOUNT_IRIS_TARGET)
+    add_executable(account_message_receipt_test messagereceipt.cpp ../../src/accountincomingmessage.cpp)
+    set_target_properties(account_message_receipt_test PROPERTIES AUTOMOC ON)
+    target_include_directories(account_message_receipt_test PRIVATE ../../src)
+    target_link_libraries(account_message_receipt_test PRIVATE ${ACCOUNT_IRIS_TARGET}
+        Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+    add_test(NAME account_message_receipt COMMAND account_message_receipt_test)
+    set_tests_properties(account_message_receipt PROPERTIES TIMEOUT 15)
+endif()

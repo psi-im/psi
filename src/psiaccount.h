@@ -40,6 +40,7 @@
 #include <functional>
 
 class AvatarFactory;
+struct AccountIncomingMessage;
 class AvCallManager;
 class BookmarkManager;
 class ChatDlg;
@@ -551,7 +552,7 @@ private:
     void          updateReadNext(const Jid &);
     ChatDlg      *ensureChatDlg(const Jid &);
     void          lastStepLogin();
-    void          processIncomingMessage(const Message &);
+    void          processIncomingMessage(const AccountIncomingMessage &);
     void          processMessageQueue();
     void          processPgpEncryptedMessage(const Message &);
     void          processPgpEncryptedMessageNext();

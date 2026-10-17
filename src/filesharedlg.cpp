@@ -145,7 +145,7 @@ void FileShareDlg::finish()
 
     // append reference main links to description and setup their range
     for (auto const &i : std::as_const(readyPublishers)) {
-        auto r = i->toReference(myJid);
+        auto r = i->toReference();
         if (r.isValid()) {
             auto    uri = i->simpleSource();
             QString text;

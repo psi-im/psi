@@ -205,6 +205,7 @@ list(APPEND HEADERS
     profiles.h
     proxy.h
     accountconnectionguard.h
+    accountincomingmessage.h
     psiaccount.h
     psiactionlist.h
     psiactions.h
@@ -404,6 +405,7 @@ list(APPEND SOURCES
     mediachunkscheduler.cpp
     filesharingitem.cpp
     filesharingpublication.cpp
+    accountincomingmessage.cpp
     filesharingmanager.cpp
     filesharingmediasave.cpp
     filesharingmediasave.h

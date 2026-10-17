@@ -29,6 +29,7 @@
 class FileCacheItem;
 class FileShareDownloader;
 class FileSharingManager;
+class FileSharingPublication;
 class PsiAccount;
 
 namespace XMPP {
@@ -55,15 +56,6 @@ public:
         TempFile,   // a temporary file supposed to be eventually moved to the cache
         LocalFile   // cached local file
     };
-
-    enum Flag {
-        HttpFinished    = 0x1,
-        JingleFinished  = 0x2,
-        PublishNotified = 0x4,
-        HttpSucceeded   = 0x8,
-        JingleSucceeded = 0x10,
-    };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
     using HashSums = QList<XMPP::Hash>;
 
@@ -97,9 +89,9 @@ public:
     PsiAccount              *account() const;
     inline const QStringList log() const { return _log; }
 
-    XMPP::Reference toReference(const XMPP::Jid &selfJid) const;
+    XMPP::Reference toReference() const;
     void            publish(const XMPP::Jid &myJid);
-    inline bool     isPublished() const { return _flags & (HttpSucceeded | JingleSucceeded); }
+    inline bool     isPublished() const { return _published; }
 
     /**
      * @brief FileSharingItem::download starts downloading SIMS
@@ -120,10 +112,12 @@ public:
 
 private:
     friend class FileSharingManager;
-    void mergeSources(const XMPP::MediaSharing &, const XMPP::Jid &);
-    bool savePublishedFile();
-    bool _publicationStarted = false;
-    bool initFromCache(FileCacheItem *cache = nullptr);
+    void                             mergeSources(const XMPP::MediaSharing &, const XMPP::Jid &);
+    bool                             savePublishedFile();
+    XMPP::Jingle::FileTransfer::File fileInfo() const;
+    QPointer<FileSharingPublication> _publication;
+    bool                             _published = false;
+    bool                             initFromCache(FileCacheItem *cache = nullptr);
 
 signals:
     void publishFinished();
@@ -136,7 +130,6 @@ private:
     FileSharingManager  *_manager = nullptr;
     // FileShareDownloader         *_downloader = nullptr;
     FileType                     _fileType;
-    Flags                        _flags;
     std::optional<std::uint64_t> _fileSize;
     QDateTime                    _modifyTime; // utc
     QStringList                  _uris;
@@ -148,7 +141,5 @@ private:
     QStringList                  _log;
     QList<XMPP::Jid>             _jids;
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(FileSharingItem::Flags)
 
 // Q_DECLARE_METATYPE(FileSharingItem::Ptr)

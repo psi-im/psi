@@ -27,6 +27,7 @@
 #include "Certificates/CertificateDisplayDialog.h"
 #include "Certificates/CertificateHelpers.h"
 #include "accountconnectionguard.h"
+#include "accountincomingmessage.h"
 #include "accountmanagedlg.h"
 #include "accountmodifydlg.h"
 #include "activity.h"
@@ -417,7 +418,7 @@ public:
     UserList                 userList;
     UserListItem             self;
     QString                  cur_pgpSecretKey;
-    QList<Message>           messageQueue;
+    QList<AccountIncomingMessage> messageQueue;
     BlockTransportPopupList *blockTransportPopupList = nullptr;
     int                      userCounter             = 0;
     PsiPrivacyManager       *privacyManager          = nullptr;
@@ -2914,6 +2915,7 @@ void PsiAccount::client_messageReceived(const Message &m)
 {
     Message _m(m);
     Message dm = _m.displayMessage();
+    const AccountIncomingMessage incoming(_m, d->client->currentEncryptionMetadata());
 
     // check if it's a server message without a from, and set the from appropriately
     if (dm.from().isEmpty()) {
@@ -2939,9 +2941,9 @@ void PsiAccount::client_messageReceived(const Message &m)
     }
 
     // if the sender is already in the queue, then queue this message also
-    for (const Message &mi : std::as_const(d->messageQueue)) {
-        if (mi.from().compare(dm.from())) {
-            d->messageQueue.append(_m);
+    for (const auto &mi : std::as_const(d->messageQueue)) {
+        if (mi.message.from().compare(dm.from())) {
+            d->messageQueue.append(incoming);
             return;
         }
     }
@@ -2961,13 +2963,13 @@ void PsiAccount::client_messageReceived(const Message &m)
 #ifdef HAVE_PGPUTIL
     // encrypted message?
     if (PGPUtil::instance().pgpAvailable() && !dm.xencrypted().isEmpty()) {
-        d->messageQueue.append(_m);
+        d->messageQueue.append(incoming);
         processMessageQueue();
         return;
     }
 #endif
 
-    processIncomingMessage(_m);
+    processIncomingMessage(incoming);
 }
 
 #ifdef WHITEBOARDING
@@ -3005,8 +3007,9 @@ void PsiAccount::wbRequest(const Jid &j, int id)
  * processing in one common function that could be applied to the messages
  * loaded from the event queue, and settings were changed prior to that.
  */
-void PsiAccount::processIncomingMessage(const Message &_m)
+void PsiAccount::processIncomingMessage(const AccountIncomingMessage &incoming)
 {
+    const Message &_m = incoming.message;
     bool    selfMessage = _m.forwarded().type() == Forwarding::ForwardedCarbonsSent;
     Message dm          = _m.displayMessage();
     // skip empty messages, but not if the message contains a data form
@@ -3170,10 +3173,7 @@ void PsiAccount::processIncomingMessage(const Message &_m)
                     || (!d->loginStatus.isInvisible() && (u = d->userList.find(dj))
                         && (u->subscription().type() == Subscription::To
                             || u->subscription().type() == Subscription::Both))) {
-                    Message tm(dm2.from());
-                    tm.setMessageReceiptId(id);
-                    tm.setMessageReceipt(ReceiptReceived);
-                    dj_sendMessage(tm, false);
+                    incoming.sendReceipt(d->client);
                 }
             }
         }
@@ -5358,7 +5358,7 @@ void PsiAccount::createNewMessageEvent(const QDomElement &element)
 
     XMPP::Message message;
     message.fromStanza(stanza, client()->manualTimeZoneOffset(), client()->timeZoneOffset());
-    processIncomingMessage(message);
+    processIncomingMessage(AccountIncomingMessage(message));
 }
 #endif
 
@@ -6493,7 +6493,7 @@ void PsiAccount::pgp_decryptFinished()
         dm.setXEncrypted({});
         dm.setWasEncrypted(true);
         dm.setEncryptionProtocol("Legacy OpenPGP");
-        processIncomingMessage(m);
+        processIncomingMessage(AccountIncomingMessage(m));
     } else {
         if (loggedIn() && m.forwarded().type() != Forwarding::ForwardedCarbonsSent) {
             Message m;
@@ -6517,25 +6517,25 @@ void PsiAccount::pgp_decryptFinished()
 void PsiAccount::processMessageQueue()
 {
     while (!d->messageQueue.isEmpty()) {
-        Message mp = d->messageQueue.first();
+        const auto incoming = d->messageQueue.first();
 
 #ifdef HAVE_PGPUTIL
         // encrypted?
-        if (PGPUtil::instance().pgpAvailable() && !mp.displayMessage().xencrypted().isEmpty()) {
+        if (PGPUtil::instance().pgpAvailable() && !incoming.message.displayMessage().xencrypted().isEmpty()) {
             processPgpEncryptedMessageNext();
             break;
         }
 #endif
 
-        processIncomingMessage(mp);
-        d->messageQueue.removeAll(mp);
+        processIncomingMessage(incoming);
+        d->messageQueue.removeFirst();
     }
 }
 
 void PsiAccount::processPgpEncryptedMessageNext()
 {
     // 'peek' and try to process it
-    processPgpEncryptedMessage(d->messageQueue.first());
+    processPgpEncryptedMessage(d->messageQueue.first().message);
 }
 
 void PsiAccount::processPgpEncryptedMessageDone()

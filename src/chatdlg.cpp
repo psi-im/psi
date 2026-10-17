@@ -24,6 +24,7 @@
 #include "eventdb.h"
 #include "filesharedlg.h"
 #include "filesharingmanager.h"
+#include "filesharingpublication.h"
 #include "iconaction.h"
 #include "iconselect.h"
 #include "jidutil.h"
@@ -690,6 +691,7 @@ void ChatDlg::doSend()
 
     if (fileShareReferences_.count()) {
         m.setReferences(fileShareReferences_);
+        m.setUrlList(fileSharingHttpUrls(fileShareReferences_));
         m.setBody(fileShareDesc_);
     } else {
         m.setBody(textToSend);

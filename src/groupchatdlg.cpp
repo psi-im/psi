@@ -26,6 +26,7 @@
 #include "bookmarkmanager.h"
 #include "coloropt.h"
 #include "filesharingmanager.h"
+#include "filesharingpublication.h"
 #include "gcuserview.h"
 #include "groupchattopicdlg.h"
 #include "iconaction.h"
@@ -509,6 +510,7 @@ public:
         Message m(dlg->jid());
         m.setType(Message::Type::Groupchat);
         m.setReferences(refs);
+        m.setUrlList(fileSharingHttpUrls(refs));
         m.setBody(desc);
         emit dlg->aSend(m);
     }
