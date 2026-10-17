@@ -50,11 +50,7 @@
       </size>
      </property>
      <property name="text" stdset="0">
-      <string>Keep your&lt;i&gt; Profile Name&lt;/i&gt; simple. It should be a single word comprised of only letters or numbers.&lt;br&gt;
-&lt;br&gt;
-The&lt;i&gt; Default Action&lt;/i&gt; is what happens when you double click a contact in your list. The choices are&lt;b&gt; Message&lt;/b&gt; and&lt;b&gt; Chat&lt;/b&gt;. You can change this later from the Options menu.&lt;br&gt;
-&lt;br&gt;
-Check the &lt;i&gt;Enable Emoticons&lt;/i&gt; checkbox if you'd like text such as &lt;b&gt;:-)&lt;/b&gt; to be turned into graphics like &lt;icon name=&quot;psi/smile&quot;&gt;.</string>
+      <string>Keep your &lt;i&gt;Profile Name&lt;/i&gt; simple. It should be a single word comprised of only letters or numbers.</string>
      </property>
      <property name="readOnly" stdset="0">
       <bool>true</bool>
@@ -103,54 +99,6 @@ Check the &lt;i&gt;Enable Emoticons&lt;/i&gt; checkbox if you'd like text such a
         <widget class="QLineEdit" name="le_name"/>
        </item>
       </layout>
-     </item>
-     <item>
-      <widget class="QGroupBox" name="bg_defAct">
-       <property name="title">
-        <string>Default Action</string>
-       </property>
-       <layout class="QHBoxLayout">
-        <property name="spacing">
-         <number>6</number>
-        </property>
-        <property name="leftMargin">
-         <number>11</number>
-        </property>
-        <property name="topMargin">
-         <number>11</number>
-        </property>
-        <property name="rightMargin">
-         <number>11</number>
-        </property>
-        <property name="bottomMargin">
-         <number>11</number>
-        </property>
-        <item>
-         <widget class="QRadioButton" name="rb_message">
-          <property name="text">
-           <string>&amp;Message</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QRadioButton" name="rb_chat">
-          <property name="text">
-           <string>&amp;Chat</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="ck_useEmoticons">
-       <property name="text">
-        <string>Enable Emoticons</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
      </item>
      <item>
       <spacer name="spacer">

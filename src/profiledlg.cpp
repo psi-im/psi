@@ -315,9 +315,6 @@ ProfileNewDlg::ProfileNewDlg(QWidget *parent) : QDialog(parent)
     setWindowTitle(CAP(windowTitle()));
 
     buttonGroup_ = new QButtonGroup(this);
-    buttonGroup_->addButton(rb_message, 0);
-    buttonGroup_->addButton(rb_chat, 1);
-    rb_chat->setChecked(true);
 
     le_name->setFocus();
 
@@ -351,8 +348,6 @@ void ProfileNewDlg::slotCreate()
         qWarning("ERROR: Failed to new profile default options");
     }
 
-    o.setOption("options.messages.default-outgoing-message-type", rb_message->isChecked() ? "message" : "chat");
-    o.setOption("options.ui.emoticons.use-emoticons", ck_useEmoticons->isChecked());
     o.save(pathToProfile(name, ApplicationInfo::ConfigLocation) + "/options.xml");
 
     accept();
