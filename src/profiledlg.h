@@ -20,59 +20,33 @@
 #ifndef PROFILEDLG_H
 #define PROFILEDLG_H
 
-#include "ui_profilemanage.h"
-#include "ui_profilenew.h"
 #include "ui_profileopen.h"
 #include "varlist.h"
 
 #include <QDialog>
 
-class QButtonGroup;
+class QListWidgetItem;
 
 class ProfileOpenDlg : public QDialog, public Ui::ProfileOpen {
     Q_OBJECT
 public:
-    ProfileOpenDlg(const QString &, const VarList &, const QString &, QWidget *parent = nullptr);
-    ~ProfileOpenDlg();
+    ProfileOpenDlg(const QString &preferred, const VarList &langs, const QString &curLang,
+                   QWidget *parent = nullptr);
 
-    QString newLang;
-
-private slots:
-    void manageProfiles();
-    void langChange(int);
+    QString selectedProfile() const;
+    QString preferredProfile() const;
+    QString selectedLanguage() const;
 
 private:
-    void reload(const QString &);
-
-    VarList langs;
-    int     langSel;
-};
-
-class ProfileManageDlg : public QDialog, public Ui::ProfileManage {
-    Q_OBJECT
-public:
-    ProfileManageDlg(const QString &, QWidget *parent = nullptr);
-
-private slots:
-    void slotProfileNew();
-    void slotProfileRename();
-    void slotProfileDelete();
+    void reload(const QString &preferred);
+    void addProfile();
+    void updateAddButton();
     void updateSelection();
-};
+    void profileRenamed(QListWidgetItem *item);
+    void confirmDelete(const QString &name);
+    void deleteProfile(const QString &name);
 
-class ProfileNewDlg : public QDialog, public Ui::ProfileNew {
-    Q_OBJECT
-public:
-    ProfileNewDlg(QWidget *parent = nullptr);
-
-    QString name;
-
-private slots:
-    void slotCreate();
-    void nameModified();
-
-private:
-    QButtonGroup *buttonGroup_;
+    QString _preferredProfile;
 };
 
 #endif // PROFILEDLG_H

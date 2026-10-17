@@ -25,38 +25,59 @@
 #include "profiles.h"
 #include "psioptions.h"
 
-#include <QButtonGroup>
-#include <QCheckBox>
-#include <QComboBox>
-#include <QFile>
-#include <QFileInfo>
-#include <QInputDialog>
+#include <QAbstractItemView>
+#include <QDialogButtonBox>
+#include <QHelpEvent>
 #include <QLabel>
+#include <QLineEdit>
+#include <QListWidget>
 #include <QMessageBox>
+#include <QMouseEvent>
 #include <QPainter>
-#include <QPixmap>
 #include <QPushButton>
+#include <QRegularExpression>
+#include <QRegularExpressionValidator>
+#include <QShortcut>
+#include <QSignalBlocker>
+#include <QStyle>
+#include <QStyledItemDelegate>
+#include <QTimer>
+#include <QToolTip>
+
+#include <functional>
+
+namespace {
+
+bool validProfileName(const QString &name)
+{
+    if (name.isEmpty())
+        return false;
+    for (const QChar &ch : name) {
+        if (!ch.isLetterOrNumber())
+            return false;
+    }
+    return true;
+}
 
 class StretchLogoLabel : public QLabel {
 public:
-    StretchLogoLabel(QPixmap pix, QWidget *label) : QLabel(label->parentWidget()), pixmap_(pix)
+    StretchLogoLabel(const QPixmap &pix, QWidget *label) : QLabel(label->parentWidget()), pixmap_(pix)
     {
         replaceWidget(label, this);
         setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Maximum));
     }
 
-    // reimplemented
-    QSize sizeHint() const
+    QSize sizeHint() const override
     {
         QSize sh = QLabel::sizeHint();
         sh.setHeight(pixmap_.height());
         return sh;
     }
 
-    void paintEvent(QPaintEvent *event)
+protected:
+    void paintEvent(QPaintEvent *event) override
     {
         Q_UNUSED(event)
-
         QPainter p(this);
         p.fillRect(rect(), Qt::red);
         p.drawTiledPixmap(0, 0, width(), height(), pixmap_);
@@ -66,296 +87,323 @@ private:
     QPixmap pixmap_;
 };
 
-//----------------------------------------------------------------------------
-// ProfileOpenDlg
-//----------------------------------------------------------------------------
+// Keep native list editing (double-click/F2), but reserve the trailing
+// area of each row for a delete action.
+class ProfileItemDelegate : public QStyledItemDelegate {
+public:
+    explicit ProfileItemDelegate(QObject *parent) : QStyledItemDelegate(parent)
+    {
+        removeIcon_ = IconsetFactory::icon("psi/remove").icon();
+    }
 
-ProfileOpenDlg::ProfileOpenDlg(const QString &def, const VarList &_langs, const QString &curLang, QWidget *parent) :
-    QDialog(parent)
+    std::function<void(int)> deleteClicked;
+
+    void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override
+    {
+        QStyleOptionViewItem textOption = option;
+        textOption.rect.setRight(deleteArea(option).left() - 1);
+        QStyledItemDelegate::paint(painter, textOption, index);
+
+        if (index.flags() & Qt::ItemIsEnabled) {
+            QRect iconRect(QPoint(0, 0), QSize(16, 16));
+            iconRect.moveCenter(deleteArea(option).center());
+            removeIcon_.paint(painter, iconRect);
+        }
+    }
+
+    bool editorEvent(QEvent *event, QAbstractItemModel *model, const QStyleOptionViewItem &option,
+                     const QModelIndex &index) override
+    {
+        if (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseButtonRelease
+            || event->type() == QEvent::MouseButtonDblClick) {
+            auto *mouse = static_cast<QMouseEvent *>(event);
+            if (deleteArea(option).contains(mouse->pos())) {
+                if (event->type() == QEvent::MouseButtonRelease && mouse->button() == Qt::LeftButton
+                    && deleteClicked) {
+                    deleteClicked(index.row());
+                }
+                return true;
+            }
+        }
+        return QStyledItemDelegate::editorEvent(event, model, option, index);
+    }
+
+    bool helpEvent(QHelpEvent *event, QAbstractItemView *view, const QStyleOptionViewItem &option,
+                   const QModelIndex &index) override
+    {
+        if (deleteArea(option).contains(event->pos())) {
+            QToolTip::showText(event->globalPos(), tr("Delete profile"), view);
+            return true;
+        }
+        return QStyledItemDelegate::helpEvent(event, view, option, index);
+    }
+
+    QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option,
+                          const QModelIndex &index) const override
+    {
+        QWidget *editor = QStyledItemDelegate::createEditor(parent, option, index);
+        if (auto *line = qobject_cast<QLineEdit *>(editor)) {
+            line->setValidator(new QRegularExpressionValidator(
+                QRegularExpression(QStringLiteral("[\\p{L}\\p{N}]+")), line));
+        }
+        return editor;
+    }
+
+    void updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option,
+                              const QModelIndex &index) const override
+    {
+        QStyleOptionViewItem textOption = option;
+        textOption.rect.setRight(deleteArea(option).left() - 1);
+        QStyledItemDelegate::updateEditorGeometry(editor, textOption, index);
+    }
+
+private:
+    QRect deleteArea(const QStyleOptionViewItem &option) const
+    {
+        return QRect(option.rect.right() - 27, option.rect.top(), 28, option.rect.height());
+    }
+
+    QIcon removeIcon_;
+};
+
+} // namespace
+
+ProfileOpenDlg::ProfileOpenDlg(const QString &preferred, const VarList &langs, const QString &curLang,
+                               QWidget *parent) : QDialog(parent), _preferredProfile(preferred)
 {
     setupUi(this);
-    setModal(true);
     setWindowTitle(CAP(windowTitle()));
     setWindowIcon(IconsetFactory::icon("psi/profile").icon());
-    pb_open->setDefault(true);
+    pb_add->setIcon(IconsetFactory::icon("psi/add").icon());
+    pb_add->setIconSize(QSize(16, 16));
 
-    langs = _langs;
-
-    QPixmap logo = QPixmap(IconsetFactory::icon("psi/logo").pixmap());
+    const QPixmap logo = IconsetFactory::icon("psi/logo").pixmap();
     lb_logo->setPixmap(logo);
-    lb_logo->setFixedSize(logo.width(), logo.height());
-    lb_logo->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
-    // setFixedWidth(logo->width());
+    lb_logo->setFixedSize(logo.size());
+    lb_logo->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    const QImage logoImage = logo.toImage();
+    new StretchLogoLabel(
+        QPixmap::fromImage(logoImage.copy(logoImage.width() - 1, 0, 1, logoImage.height())), lb_right);
 
-    QImage logoImg = logo.toImage();
-    new StretchLogoLabel(QPixmap::fromImage(logoImg.copy(0, 0, 1, logoImg.height())), lb_left);
-    new StretchLogoLabel(QPixmap::fromImage(logoImg.copy(logoImg.width() - 1, 0, 1, logoImg.height())), lb_right);
-
-    connect(pb_open, SIGNAL(clicked()), SLOT(accept()));
-    connect(pb_close, SIGNAL(clicked()), SLOT(reject()));
-    connect(pb_profiles, SIGNAL(clicked()), SLOT(manageProfiles()));
-    connect(cb_lang, SIGNAL(activated(int)), SLOT(langChange(int)));
-
-    int x   = 0;
-    langSel = x;
-    for (const auto &lang : std::as_const(langs)) {
-        cb_lang->addItem(lang.data());
-        if ((curLang.isEmpty() && x == 0) || (curLang == lang.key())) {
-            cb_lang->setCurrentIndex(x);
-            langSel = x;
+    for (const auto &lang : langs) {
+        cb_lang->addItem(lang.data(), lang.key());
+    }
+    for (int i = 0; i < cb_lang->count(); ++i) {
+        if (cb_lang->itemData(i).toString() == curLang) {
+            cb_lang->setCurrentIndex(i);
+            break;
         }
-        ++x;
     }
 
-    cb_profile->setToolTip(tr("Select a profile to open from this list."));
-    cb_lang->setToolTip(tr("Select a language you would like Psi to use from this "
-                           "list.  You can download extra language packs from the Psi homepage."));
-    ck_auto->setToolTip(tr("Automatically open this profile when Psi is started.  Useful if "
-                           "you only have one profile."));
+    auto *delegate = new ProfileItemDelegate(lbx_profiles);
+    delegate->deleteClicked = [this](int row) {
+        if (auto *item = lbx_profiles->item(row)) {
+            const QString name = item->data(Qt::UserRole).toString();
+            // Don't remove list items from inside the delegate's event handler.
+            QTimer::singleShot(0, this, [this, name]() { confirmDelete(name); });
+        }
+    };
+    lbx_profiles->setItemDelegate(delegate);
+    lbx_profiles->setEditTriggers(QAbstractItemView::DoubleClicked | QAbstractItemView::EditKeyPressed);
+    lbx_profiles->setToolTip(tr("Double-click or press F2 to rename a profile. Press Delete to remove it."));
+    le_newProfile->setValidator(new QRegularExpressionValidator(
+        QRegularExpression(QStringLiteral("[\\p{L}\\p{N}]+")), le_newProfile));
 
-    reload(def);
+    auto *deleteShortcut = new QShortcut(QKeySequence(Qt::Key_Delete), lbx_profiles);
+    deleteShortcut->setContext(Qt::WidgetShortcut);
+    connect(deleteShortcut, &QShortcut::activated, this, [this]() {
+        if (auto *item = lbx_profiles->currentItem())
+            confirmDelete(item->data(Qt::UserRole).toString());
+    });
+
+    connect(le_newProfile, &QLineEdit::textChanged, this, &ProfileOpenDlg::updateAddButton);
+    connect(le_newProfile, &QLineEdit::returnPressed, this, &ProfileOpenDlg::addProfile);
+    connect(pb_add, &QToolButton::clicked, this, &ProfileOpenDlg::addProfile);
+    connect(lbx_profiles, &QListWidget::currentRowChanged, this, &ProfileOpenDlg::updateSelection);
+    connect(lbx_profiles, &QListWidget::itemChanged, this, &ProfileOpenDlg::profileRenamed);
+    connect(buttonBox, &QDialogButtonBox::accepted, this, [this]() {
+        if (!selectedProfile().isEmpty())
+            accept();
+    });
+    connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
+
+    cb_lang->setToolTip(tr("Choose the application language. This setting applies to all profiles."));
+    ck_auto->setToolTip(tr("Open the selected profile automatically the next time Psi starts."));
+
+    // Align the secondary hint with the checkbox text, using the active Qt style.
+    const int hintIndent = ck_auto->style()->pixelMetric(QStyle::PM_IndicatorWidth, nullptr, ck_auto)
+        + ck_auto->style()->pixelMetric(QStyle::PM_CheckBoxLabelSpacing, nullptr, ck_auto);
+    lb_startupHint->setIndent(hintIndent);
+
+    QFont hintFont = lb_startupHint->font();
+    if (hintFont.pointSizeF() > 0)
+        hintFont.setPointSizeF(hintFont.pointSizeF() * 0.8);
+    else if (hintFont.pixelSize() > 0)
+        hintFont.setPixelSize(qMax(1, qRound(hintFont.pixelSize() * 0.8)));
+    lb_startupHint->setFont(hintFont);
+
+    QPalette hintPalette = lb_startupHint->palette();
+    QColor hintColor = hintPalette.color(lb_startupHint->foregroundRole());
+    hintColor.setAlphaF(0.65);
+    hintPalette.setColor(lb_startupHint->foregroundRole(), hintColor);
+    lb_startupHint->setPalette(hintPalette);
+
+    buttonBox->button(QDialogButtonBox::Open)->setDefault(true);
+    reload(preferred);
 }
 
-ProfileOpenDlg::~ProfileOpenDlg() { }
-
-void ProfileOpenDlg::reload(const QString &choose)
+QString ProfileOpenDlg::selectedProfile() const
 {
-    QStringList list = getProfilesList();
+    auto *item = lbx_profiles->currentItem();
+    return item ? item->data(Qt::UserRole).toString() : QString();
+}
 
-    cb_profile->clear();
+QString ProfileOpenDlg::preferredProfile() const { return _preferredProfile; }
 
-    if (list.count() == 0) {
-        gb_open->setEnabled(false);
-        pb_open->setEnabled(false);
-        pb_profiles->setFocus();
-    } else {
-        int x = 0;
-        for (const auto &it : std::as_const(list)) {
-            cb_profile->addItem(it);
-            if ((choose.isEmpty() && x == 0) || (choose == it)) {
-                cb_profile->setCurrentIndex(x);
+QString ProfileOpenDlg::selectedLanguage() const { return cb_lang->currentData().toString(); }
+
+void ProfileOpenDlg::reload(const QString &preferred)
+{
+    lbx_profiles->clear();
+    for (const QString &name : getProfilesList()) {
+        auto *item = new QListWidgetItem(name);
+        item->setData(Qt::UserRole, name);
+        item->setFlags(item->flags() | Qt::ItemIsEditable);
+        lbx_profiles->addItem(item);
+    }
+
+    int row = 0;
+    if (!preferred.isEmpty()) {
+        for (int i = 0; i < lbx_profiles->count(); ++i) {
+            if (lbx_profiles->item(i)->text() == preferred) {
+                row = i;
+                break;
             }
-            ++x;
         }
-
-        gb_open->setEnabled(true);
-        pb_open->setEnabled(true);
-        pb_open->setFocus();
     }
-}
-
-void ProfileOpenDlg::manageProfiles()
-{
-    ProfileManageDlg *w = new ProfileManageDlg(cb_profile->currentText(), this);
-    w->exec();
-    QString last = w->lbx_profiles->currentItem()->text();
-    delete w;
-
-    reload(last);
-}
-
-void ProfileOpenDlg::langChange(int x)
-{
-    if (x == langSel)
-        return;
-    langSel = x;
-
-    VarList::Iterator it = langs.findByNum(x);
-    newLang              = (*it).key();
-    done(10);
-}
-
-//----------------------------------------------------------------------------
-// ProfileManageDlg
-//----------------------------------------------------------------------------
-
-ProfileManageDlg::ProfileManageDlg(const QString &choose, QWidget *parent) : QDialog(parent)
-{
-    setupUi(this);
-    setModal(true);
-    setWindowTitle(CAP(windowTitle()));
-
-    // setup signals
-    connect(pb_new, SIGNAL(clicked()), SLOT(slotProfileNew()));
-    connect(pb_rename, SIGNAL(clicked()), SLOT(slotProfileRename()));
-    connect(pb_delete, SIGNAL(clicked()), SLOT(slotProfileDelete()));
-    connect(lbx_profiles, SIGNAL(currentRowChanged(int)), SLOT(updateSelection()));
-
-    // load the listing
-    QStringList list = getProfilesList();
-    int         x    = 0;
-    for (const auto &it : std::as_const(list)) {
-        lbx_profiles->addItem(it);
-        if (it == choose)
-            lbx_profiles->setCurrentRow(x);
-        ++x;
-    }
-
+    if (lbx_profiles->count())
+        lbx_profiles->setCurrentRow(row);
     updateSelection();
+    updateAddButton();
 }
 
-void ProfileManageDlg::slotProfileNew()
+void ProfileOpenDlg::updateAddButton()
 {
-    QString name;
-
-    ProfileNewDlg *w = new ProfileNewDlg(this);
-    int            r = w->exec();
-    if (r == QDialog::Accepted) {
-        name = w->name;
-
-        lbx_profiles->addItem(name);
-        lbx_profiles->setCurrentRow(lbx_profiles->count() - 1);
-    }
-    delete w;
-
-    if (r == QDialog::Accepted) {
-        close();
-    }
+    const QString name = le_newProfile->text();
+    pb_add->setEnabled(validProfileName(name) && !profileExists(name));
 }
 
-void ProfileManageDlg::slotProfileRename()
+void ProfileOpenDlg::addProfile()
 {
-    int x = lbx_profiles->currentRow();
-    if (x == -1)
+    if (!pb_add->isEnabled())
         return;
 
-    QString oldname = lbx_profiles->item(x)->text();
-    QString name;
-
-    while (1) {
-        bool ok = false;
-        name    = QInputDialog::getText(this, CAP(tr("Rename Profile")),
-                                        tr("Please enter a new name for the profile.  Keep it simple.\nOnly use letters "
-                                              "or numbers.  No punctuation or spaces."),
-                                        QLineEdit::Normal, name, &ok);
-        if (!ok)
-            return;
-
-        if (profileExists(name)) {
-            QMessageBox::information(this, CAP(tr("Rename Profile")),
-                                     tr("There is already another profile with this name.  Please choose another."));
-            continue;
-        } else if (!profileRename(oldname, name)) {
-            QMessageBox::information(this, CAP(tr("Rename Profile")),
-                                     tr("Unable to rename the profile.  Please do not use any special characters."));
-            continue;
-        }
-        break;
-    }
-
-    lbx_profiles->item(x)->setText(name);
-}
-
-void ProfileManageDlg::slotProfileDelete()
-{
-    int x = lbx_profiles->currentRow();
-    if (x == -1)
-        return;
-    QString name = lbx_profiles->item(x)->text();
-
-    QStringList paths;
-    paths << ApplicationInfo::profilesDir(ApplicationInfo::ConfigLocation) + "/" + name;
-    if (!paths.contains(ApplicationInfo::profilesDir(ApplicationInfo::DataLocation) + "/" + name)) {
-        paths << ApplicationInfo::profilesDir(ApplicationInfo::DataLocation) + "/" + name;
-    }
-    if (!paths.contains(ApplicationInfo::profilesDir(ApplicationInfo::CacheLocation) + "/" + name)) {
-        paths << ApplicationInfo::profilesDir(ApplicationInfo::CacheLocation) + "/" + name;
-    }
-
-    // prompt first
-    auto msgBox
-        = QMessageBox(QMessageBox::Warning, CAP(tr("Delete Profile")),
-                      tr("<qt>Are you sure you want to delete the \"<b>%1</b>\" profile?  "
-                         "This will delete all of the profile's message history as well as associated settings!</qt>")
-                          .arg(name));
-    msgBox.addButton(tr("No, I changed my mind"), QMessageBox::RejectRole);
-    auto acceptButton = msgBox.addButton(tr("Delete it!"), QMessageBox::AcceptRole);
-    msgBox.exec();
-
-    if (msgBox.clickedButton() != acceptButton)
-        return;
-
-    auto r = QMessageBox::information(
-        this, CAP(tr("Delete Profile")),
-        tr("<qt>As a precaution, you are being asked one last time if this is what you really want.  "
-           "The following folders will be deleted!<br><br>\n"
-           "<b>%1</b><br><br>\n"
-           "Proceed?")
-            .arg(paths.join("\n")),
-        QMessageBox::Yes | QMessageBox::No);
-
-    if (r == QMessageBox::Yes) {
-        if (!profileDelete(paths)) {
-            QMessageBox::critical(
-                this, CAP("Error"),
-                tr("Unable to delete the folders completely.  Ensure you have the proper permission."));
-            return;
-        }
-
-        // FIXME
-        delete lbx_profiles->item(x);
-    }
-}
-
-void ProfileManageDlg::updateSelection()
-{
-    int x = lbx_profiles->currentRow();
-
-    pb_delete->setEnabled(x != -1);
-}
-
-//----------------------------------------------------------------------------
-// ProfileNewDlg
-//----------------------------------------------------------------------------
-
-ProfileNewDlg::ProfileNewDlg(QWidget *parent) : QDialog(parent)
-{
-    setupUi(this);
-    setModal(true);
-    setWindowTitle(CAP(windowTitle()));
-
-    buttonGroup_ = new QButtonGroup(this);
-    buttonGroup_->addButton(rb_message, 0);
-    buttonGroup_->addButton(rb_chat, 1);
-    rb_chat->setChecked(true);
-
-    le_name->setFocus();
-
-    connect(pb_create, SIGNAL(clicked()), SLOT(slotCreate()));
-    connect(pb_close, SIGNAL(clicked()), SLOT(reject()));
-    connect(le_name, SIGNAL(textChanged(const QString &)), SLOT(nameModified()));
-
-    nameModified();
-}
-
-void ProfileNewDlg::slotCreate()
-{
-    name = le_name->text();
-
-    if (profileExists(name)) {
-        QMessageBox::information(this, CAP(tr("New Profile")),
-                                 tr("There is already an existing profile with this name.  Please choose another."));
-        return;
-    }
-
+    const QString name = le_newProfile->text();
     if (!profileNew(name)) {
-        QMessageBox::information(this, CAP(tr("New Profile")),
-                                 tr("Unable to create the profile.  Please do not use any special characters."));
+        lb_feedback->setText(tr("Unable to create this profile. Check folder permissions."));
         return;
     }
 
-    // save config
-    PsiOptions o;
+    PsiOptions options;
+    const bool initialized = options.newProfile();
+    const bool saved = options.save(pathToProfile(name, ApplicationInfo::ConfigLocation) + "/options.xml");
+    if (!initialized || !saved)
+        lb_feedback->setText(tr("Profile created, but its default options could not be saved."));
+    else
+        lb_feedback->clear();
 
-    if (!o.newProfile()) {
-        qWarning("ERROR: Failed to new profile default options");
-    }
-
-    o.setOption("options.messages.default-outgoing-message-type", rb_message->isChecked() ? "message" : "chat");
-    o.setOption("options.ui.emoticons.use-emoticons", ck_useEmoticons->isChecked());
-    o.save(pathToProfile(name, ApplicationInfo::ConfigLocation) + "/options.xml");
-
-    accept();
+    auto *item = new QListWidgetItem(name);
+    item->setData(Qt::UserRole, name);
+    item->setFlags(item->flags() | Qt::ItemIsEditable);
+    lbx_profiles->addItem(item);
+    lbx_profiles->sortItems();
+    lbx_profiles->setCurrentItem(item);
+    le_newProfile->clear();
 }
 
-void ProfileNewDlg::nameModified() { pb_create->setEnabled(!le_name->text().isEmpty()); }
+void ProfileOpenDlg::profileRenamed(QListWidgetItem *item)
+{
+    const QString oldName = item->data(Qt::UserRole).toString();
+    const QString newName = item->text();
+    if (oldName == newName)
+        return;
+
+    QString error;
+    if (!validProfileName(newName))
+        error = tr("Profile names may contain only letters and numbers.");
+    else if (profileExists(newName))
+        error = tr("A profile with this name already exists.");
+    else if (!profileRename(oldName, newName))
+        error = tr("Unable to rename the profile. Check folder permissions.");
+
+    if (!error.isEmpty()) {
+        QSignalBlocker blocker(lbx_profiles);
+        item->setText(oldName);
+        lb_feedback->setText(error);
+        return;
+    }
+
+    item->setData(Qt::UserRole, newName);
+    if (_preferredProfile == oldName)
+        _preferredProfile = newName;
+    lb_feedback->clear();
+    lbx_profiles->sortItems();
+    updateSelection();
+    updateAddButton();
+}
+
+void ProfileOpenDlg::confirmDelete(const QString &name)
+{
+    if (!profileExists(name))
+        return;
+
+    auto *confirm = new QMessageBox(
+        QMessageBox::Warning, CAP(tr("Delete Profile")),
+        tr("Delete profile \"%1\"?\n\nAll of its message history, settings, and cached files will be deleted.")
+            .arg(name),
+        QMessageBox::Yes | QMessageBox::No, this);
+    confirm->setDefaultButton(QMessageBox::No);
+    confirm->setAttribute(Qt::WA_DeleteOnClose);
+    connect(confirm, &QMessageBox::finished, this, [this, name](int result) {
+        if (result == QMessageBox::Yes)
+            deleteProfile(name);
+    });
+    confirm->open();
+}
+
+void ProfileOpenDlg::deleteProfile(const QString &name)
+{
+    QStringList paths;
+    for (const auto location : { ApplicationInfo::ConfigLocation, ApplicationInfo::DataLocation,
+                                 ApplicationInfo::CacheLocation }) {
+        const QString path = pathToProfile(name, location);
+        if (!paths.contains(path))
+            paths << path;
+    }
+
+    if (!profileDelete(paths)) {
+        lb_feedback->setText(tr("Unable to delete the profile completely. Check folder permissions."));
+        return;
+    }
+
+    for (int i = 0; i < lbx_profiles->count(); ++i) {
+        if (lbx_profiles->item(i)->data(Qt::UserRole).toString() == name) {
+            delete lbx_profiles->takeItem(i);
+            if (lbx_profiles->count())
+                lbx_profiles->setCurrentRow(qMin(i, lbx_profiles->count() - 1));
+            break;
+        }
+    }
+    if (_preferredProfile == name)
+        _preferredProfile.clear();
+    lb_feedback->clear();
+    updateSelection();
+    updateAddButton();
+}
+
+void ProfileOpenDlg::updateSelection()
+{
+    const QString name = selectedProfile();
+    buttonBox->button(QDialogButtonBox::Open)->setEnabled(!name.isEmpty());
+    ck_auto->setEnabled(!name.isEmpty());
+}

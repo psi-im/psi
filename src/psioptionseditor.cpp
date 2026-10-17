@@ -1,7 +1,6 @@
 #include "psioptionseditor.h"
 
 #include "common.h"
-#include "iconset.h"
 #include "psioptions.h"
 #include "textutil.h"
 #include "ui_optioneditor.h"
@@ -221,17 +220,6 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent) : QWidget(parent)
     buttonLine->addWidget(pb_reset);
     connect(pb_reset, SIGNAL(clicked()), SLOT(resetit()));
 
-    if (parent) {
-        pb_detach = new QToolButton(this);
-        pb_detach->setIcon(IconsetFactory::iconPtr("psi/advanced")->icon());
-        pb_detach->setIconSize(QSize(16, 16));
-        pb_detach->setToolTip(tr("Open a detached option editor window."));
-        buttonLine->addWidget(pb_detach);
-        connect(pb_detach, SIGNAL(clicked()), SLOT(detach()));
-    } else {
-        setWindowIcon(IconsetFactory::icon("psi/advanced-plus").icon());
-        setWindowTitle(CAP(tr("Advanced")));
-    }
 
     connect(tv_->selectionModel(), SIGNAL(currentChanged(const QModelIndex &, const QModelIndex &)),
             SLOT(selectionChanged(const QModelIndex &)));
@@ -351,14 +339,6 @@ void PsiOptionsEditor::resetit()
         PsiOptions::instance()->resetOption(option);
     }
 }
-
-void PsiOptionsEditor::detach()
-{
-    auto dlg = new PsiOptionsEditor();
-    dlg->resize(pointToPixel(800), pointToPixel(600));
-}
-
-void PsiOptionsEditor::bringToFront() { ::bringToFront(this, true); }
 
 void PsiOptionsEditor::keyPressEvent(QKeyEvent *e)
 {
