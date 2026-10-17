@@ -100,7 +100,7 @@
           <item>
            <widget class="QLabel" name="lb_startupHint">
             <property name="text">
-             <string>Startup uses the last opened profile.</string>
+             <string>The last opened profile will be used.</string>
             </property>
             <property name="wordWrap"><bool>true</bool></property>
            </widget>
