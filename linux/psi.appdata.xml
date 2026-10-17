@@ -6,8 +6,8 @@
   <project_license>GPL-2.0+</project_license>
   <name>Psi</name>
   <name xml:lang="ru">Пси</name>
-  <summary>The XMPP client designed for experienced users</summary>
-  <summary xml:lang="ru">XMPP клиент для опытных пользователей</summary>
+  <summary>The XMPP сhat and messanger designed for experienced users</summary>
+  <summary xml:lang="ru">XMPP Чат и месенджер для опытных пользователей</summary>
   <description>
     <p>
       Psi is an XMPP client designed for experienced users.
