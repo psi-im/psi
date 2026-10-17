@@ -205,65 +205,61 @@ void PsiMain::chooseProfile()
         pcon = nullptr;
     }
 
-    QString str = "";
-
-    // dirty, dirty, dirty hack
+    // The profile chooser also handles creating, renaming, and deleting profiles.
     PsiIconset::instance()->loadSystem();
 
-    while (1) {
-        std::unique_ptr<ProfileOpenDlg> w(new ProfileOpenDlg(lastProfile,
-                                                             TranslationManager::instance()->availableTranslations(),
-                                                             TranslationManager::instance()->currentLanguage()));
-        w->ck_auto->setChecked(autoOpen);
-        int r = w->exec();
-        // lang change
-        if (r == 10) {
-            TranslationManager::instance()->loadTranslation(w->newLang);
-            lastLang = TranslationManager::instance()->currentLanguage();
-            continue;
-        } else {
-            bool again = false;
-            autoOpen   = w->ck_auto->isChecked();
-            if (r == QDialog::Accepted) {
-                str   = w->cb_profile->currentText();
-                again = !ActiveProfiles::instance()->setThisProfile(str);
-                if (again) {
-                    QMessageBox mb(
-                        QMessageBox::Question, CAP(tr("Profile already in use")),
-                        QString(
-                            tr("The \"%1\" profile is already in use.\nWould you like to activate that session now?"))
-                            .arg(str),
-                        QMessageBox::Cancel);
-                    QPushButton *activate = mb.addButton(tr("Activate"), QMessageBox::AcceptRole);
-                    mb.exec();
-                    if (mb.clickedButton() == activate) {
-                        lastProfile = str;
-                        saveSettings();
-                        ActiveProfiles::instance()->raise(str, true);
-                        emit quit();
-                        return;
-                    }
-                }
-            }
-            if (again) {
-                str = "";
-                continue;
-            }
-            break;
-        }
-    }
+    while (true) {
+        std::unique_ptr<ProfileOpenDlg> dialog(new ProfileOpenDlg(
+            lastProfile, TranslationManager::instance()->availableTranslations(),
+            TranslationManager::instance()->currentLanguage()));
+        dialog->ck_auto->setChecked(autoOpen);
 
-    if (str.isEmpty()) {
-        emit quit();
+        const int result = dialog->exec();
+        // Filesystem changes take effect even when the chooser is closed.
+        if (lastProfile != dialog->preferredProfile()) {
+            lastProfile = dialog->preferredProfile();
+            saveSettings();
+        }
+        if (result != QDialog::Accepted) {
+            emit quit();
+            return;
+        }
+
+        const QString profile = dialog->selectedProfile();
+        if (profile.isEmpty())
+            continue;
+
+        if (!ActiveProfiles::instance()->setThisProfile(profile)) {
+            QMessageBox mb(
+                QMessageBox::Question, CAP(tr("Profile already in use")),
+                tr("The \"%1\" profile is already in use.\nWould you like to activate that session now?")
+                    .arg(profile),
+                QMessageBox::Cancel);
+            QPushButton *activate = mb.addButton(tr("Activate"), QMessageBox::AcceptRole);
+            mb.exec();
+            if (mb.clickedButton() == activate) {
+                lastProfile = profile;
+                autoOpen = dialog->ck_auto->isChecked();
+                saveSettings();
+                ActiveProfiles::instance()->raise(profile, true);
+                emit quit();
+                return;
+            }
+            continue;
+        }
+
+        autoOpen = dialog->ck_auto->isChecked();
+        const QString language = dialog->selectedLanguage();
+        if (!language.isEmpty() && language != TranslationManager::instance()->currentLanguage()) {
+            TranslationManager::instance()->loadTranslation(language);
+            lastLang = TranslationManager::instance()->currentLanguage();
+        }
+
+        lastProfile = activeProfile = profile;
+        saveSettings();
+        sessionStart();
         return;
     }
-
-    // only set lastProfile if the user opened it
-    lastProfile = str;
-    saveSettings();
-
-    activeProfile = str;
-    sessionStart();
 }
 
 void PsiMain::sessionStart()

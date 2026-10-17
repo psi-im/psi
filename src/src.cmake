@@ -56,8 +56,6 @@ list(APPEND FORMS
     optioneditor.ui
     password.ui
     pgpkey.ui
-    profilemanage.ui
-    profilenew.ui
     profileopen.ui
     proxy.ui
     rosteravatarframe.ui
