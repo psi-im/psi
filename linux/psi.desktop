@@ -16,6 +16,13 @@ Keywords=XMPP;Jabber;Chat;InstantMessaging;
 Actions=SelectProfile;RunWithVulkan;QuitApplication;
 
 # Translations
+Name[be]=Псі
+Name[bg]=Пси
+Name[kk]=Пси
+Name[mk]=Пси
+Name[ru]=Пси
+Name[sr]=Пси
+Name[uk]=Псі
 GenericName[be]=Кліент XMPP
 GenericName[bg]=Клиент за XMPP
 GenericName[ca]=Client XMPP
