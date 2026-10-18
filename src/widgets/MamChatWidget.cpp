@@ -183,6 +183,12 @@ QBoxLayout *buildThemeLayout(const QJsonObject &node, const QHash<QString, QWidg
 
 }
 
+void MamChatWidget::scrollToIndex(int index, Mattermost::LongListWidget::Alignment alignment)
+{
+    followingInitialTail_ = false;
+    Mattermost::LongListWidget::scrollToIndex(index, alignment);
+}
+
 void MamChatWidget::appendMessage(const MessageView &view)
 {
     if (((view.type() == MessageView::MUCJoin || view.type() == MessageView::MUCPart) && view.isJoinLeaveHidden())

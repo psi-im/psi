@@ -179,6 +179,11 @@ private slots:
             room.appendMessage(message(QStringLiteral("new-%1").arg(i),
                                        QStringLiteral("Second conversation"), i));
         QTRY_VERIFY(room.isAtEnd());
+        room.scrollToIndex(0, Mattermost::LongListWidget::Alignment::Top);
+        QTRY_VERIFY(!room.isAtEnd());
+        room.appendMessage(message(QStringLiteral("new-tail"),
+                                   QStringLiteral("Explicit navigation remains in place"), 50));
+        QVERIFY(!room.isAtEnd());
     }
 
     void timeFontColorAndClassicNicknamePaletteAreStable()

@@ -29,6 +29,10 @@ public:
     void setHistoryExhausted(bool exhausted);
     bool historyExhausted() const { return historyExhausted_; }
     int messageCount() const { return items_.size(); }
+    // An explicit seek is a navigation intent, not initial open-at-end.
+    void scrollToIndex(int index,
+                       Mattermost::LongListWidget::Alignment alignment
+                           = Mattermost::LongListWidget::Alignment::EnsureVisible);
 
     void setGroupChat(bool enabled) { groupChat_ = enabled; }
     void setTheme(const NativeChatTheme &theme);
