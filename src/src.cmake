@@ -103,6 +103,9 @@ list(APPEND HEADERS
     captchadlg.h
     changepwdlg.h
     chatdlg.h
+    widgets/LongListWidget.h
+    widgets/OverlayScrollBarManager.h
+    widgets/MamChatWidget.h
     chateditproxy.h
     chatsplitter.h
     chatview.h
@@ -359,6 +362,9 @@ list(APPEND SOURCES
     captchadlg.cpp
     changepwdlg.cpp
     chatdlg.cpp
+    widgets/LongListWidget.cpp
+    widgets/OverlayScrollBarManager.cpp
+    widgets/MamChatWidget.cpp
     chateditproxy.cpp
     chatsplitter.cpp
     chatviewcommon.cpp

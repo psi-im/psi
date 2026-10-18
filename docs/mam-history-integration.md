@@ -229,3 +229,126 @@ No destructive migration, arbitrary 5,000-row DELETE query, automatic
 whole-archive download, per-message MAM network requests, or force-merging
 the server archive onto legacy history. Those are easy ways to lose users'
 existing messages or produce duplicates.
+
+## Native BASIC chat MVP (experimental, PR #997)
+
+The initial widget implementation lives in the dependent Draft PR #997
+(`ai/mam-native-chat-scrollback`). It uses the real MIT-licensed
+`LongListWidget` virtualization/viewport-anchor engine and LGPLv3
+`OverlayScrollBarManager` from MatterLeast, plus a small Psi-specific
+`MamChatWidget` that renders actual Qt row widgets. The overlay is enabled
+only on the new view. Widget-only CI runs original MatterLeast behavioral
+tests on Qt5 and Qt6, including scroll anchors, resizing and edge actions.
+
+The BASIC `PsiChatDlg` currently replaces only its visible presentation;
+`chatview_te` is still a hidden compatibility adapter for the rest of
+Psi's chat API. It must not be removed until selection, correction/retraction,
+reactions, file and message context menus, trackbar and custom rendering are
+ported. WEBKIT/WEBENGINE view types are explicitly excluded from the BASIC
+replacement.
+
+A `MAMManager` query fetches at most 40 archived results. The first page
+is shown newest-last; scrolling to the top requests the preceding page
+using the server's **opaque archive UID**, not a timestamp or arithmetic
+index. A current request suppresses duplicate requests; completed results
+prepend without moving the visible semantic anchor. MAM replay is dispatched
+only to the view, never through the live PsiAccount event pipeline.
+
+### Important runtime and release restrictions
+
+Psi currently locks Iris v1.3, whose old MAMTask ignores normal
+`<fin/>` termination and requires non-portable extended metadata.
+The MVP is therefore **not functionally qualified on the release pin**.
+The special `mam-native-integration.yml` job builds BASIC against
+the known post-audit Iris revision
+`292b150f8e97fa480a0def4ae6cd25abc21a1529` for development
+only, without silently changing the release lock. A future audited Iris
+release+gitlink/lock update is necessary before enabling this in production.
+
+Other MVP limitations: online EDB preload is temporarily suppressed to
+avoid overlapping anonymous legacy rows; offline local preload is retained.
+MAM body-only replay does not yet reconstruct all message reactions,
+corrections, rich attachments, sender profile or encrypted media. Live
+messages can overlap MAM results until trusted archive-ID deduplication
+is wired through the existing event/storage model. This branch must remain
+Draft until tested with an actual MAM-capable server and full Psi CI.
+
+### Transitional BASIC chat compatibility and live/MAM overlap (WIP)
+
+The native widget timeline now correlates a live delivery with a subsequently
+returned MAM result only within its current conversation and only when original
+stanza ID, direction, rendered text and timestamps (within five minutes) agree.
+A match adopts the authenticated archive UID without inserting a duplicate row.
+The ordinary stanza ID is **never** treated as a MAM cursor or server UID.
+SQLite rows still need origin-ID/stanza-ID provenance and archive coverage for
+complete durable reconciliation; the heuristic must not delete any local record.
+The hidden QTextEdit adapter continues to receive live message updates while
+native reaction/retraction and composer interactions remain unfinished.
+
+An interrupted MAM task is cancelled when an account disconnects. If the
+archive fetch was in flight, reauthentication restarts from the same opaque
+server cursor regardless of how many rows the native timeline already contains;
+this does not clear or scroll the current viewport. Initial MAM discovery is
+still skipped when offline-only SQLite rows have already populated the view,
+until durable identity/coverage reconciliation is implemented.
+
+If a chat is opened offline and its SQLite tail is still loading when account
+authentication finishes, the first MAM request waits for the local preload
+completion. A nonempty local result remains displayed unchanged until proper
+archive-UID reconciliation is available; an empty result permits normal MAM
+startup. The native chat controller never races two unrelated history sources.
+
+### Guarding the offline SQLite-to-MAM transition
+
+The BASIC timeline now remembers whether asynchronous local EDB history has
+**actually populated** the visible chat. Both an in-flight local query and a
+completed nonempty local result suppress **every initial** MAM fetch, including
+one requested manually by scrolling to the top after reconnect. Later server
+pages with an established archive UID are unaffected. The flag resets when the
+native timeline is cleared or the bare chat peer changes.
+
+Every local EDB query stores the originating full chat JID; its completion
+drops historical rows when the dialog has changed peer before the callback.
+The preload completion signal still releases held live messages. This avoids
+showing the previous contact's SQLite records in the next conversation.
+
+This is an explicit conservative boundary, not a completed SQLite/MAM merge.
+Durable identity and archive-coverage reconciliation must precede mixing
+the two sources or using the server to evict any local message.
+
+### Live MAM network acceptance (Prosody, WIP)
+
+The independent `mam-prosody-runtime.yml` workflow starts an ephemeral local
+Prosody with `mod_mam`, logs in with the same development Iris MAMManager
+API used by BASIC, sends 85 messages and verifies three chronological
+backward pages of 40, 40 and 5, including unique opaque archive UIDs, peer
+identity and last-page `isComplete()`. Unlike compile-only CI this exercises
+a real XMPP connection, SASL, server MAM storage, streamed results and RSM
+page boundaries. It does **not** instantiate the complete Psi BASIC chat
+window; a separate end-to-end native UI test is still required. Runtime
+qualification must wait for this workflow to pass.
+
+### Native QWidget regression coverage
+
+In addition to upstream `LongListWidget` virtual scrolling and overlay
+scrollbar tests, the Qt5/Qt6 `mam_chat_widget` target compiles the real
+`MamChatWidget.cpp` and checks physical `QFrame`/`QLabel` creation,
+message correction in place, adopting archive UIDs for already shown live
+messages, bounded materialization after inserting 40 older rows, and
+continuation when a nonterminal page contains no visible messages. It uses
+a deliberately minimal test-only `MessageView` contract to avoid injecting
+a fully initialized Psi account into a presentation test; full BASIC CI
+separately compiles against the actual `MessageView` implementation.
+
+### Multi-message copy (MatterLeast selection model)
+
+A mouse drag that leaves its initial row enters whole-message range selection;
+ordinary drag within one text label keeps Qt's normal text selection. Ctrl+click
+toggles an individual message, Shift+click selects a contiguous range, and a
+floating Copy / Cancel toolbar appears with the selection count. Ctrl+C copies
+the selected *messages*; Escape exits the mode. Clipboard blocks include sender,
+local timestamp and plain message body, in chronological order. Selected
+identities live in the model rather than the materialized widget collection, so
+virtualization, prepending old archive pages and live-to-MAM UID promotion do
+not lose the selection. The original MatterLeast bulk deletion action is not
+ported because Psi does not yet expose its equivalent safe operation.

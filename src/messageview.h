@@ -115,6 +115,9 @@ public:
     inline const QString                  &nick() const { return _nick; }
     inline void                            setMessageId(const QString &id) { _messageId = id; }
     inline const QString                  &messageId() const { return _messageId; }
+    // Verified archive UID from a MAM result; never substitute for stanza id.
+    inline void                            setArchiveId(const QString &id) { _archiveId = id; }
+    inline const QString                  &archiveId() const { return _archiveId; }
     inline void                            setUserId(const QString &id) { _userId = id; }
     inline const QString                  &userId() const { return _userId; }
     inline void                            setDateTime(const QDateTime &dt) { _dateTime = dt; }
@@ -139,6 +142,7 @@ private:
     int                      _status;
     int                      _statusPriority;
     QString                  _messageId;
+    QString                  _archiveId;
     QString                  _userId;   // TODO: convert to XMPP::Jid, only used in message corrections as of now
     QString                  _nick;     // rich / as is
     QString                  _text;     // always rich (plain text converted to rich)

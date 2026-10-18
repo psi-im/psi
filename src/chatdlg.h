@@ -84,7 +84,9 @@ public:
     Jid                             realJid() const;
     bool                            autoSelectContact() const { return autoSelectContact_; }
     static UserStatus               userStatusFor(const Jid &jid, QList<UserListItem *> ul, bool forceEmptyResource);
-    void                            preloadHistory();
+    void                            preloadHistory(bool forceLocal = false);
+    bool                            localHistoryPreloadPending() const { return localHistoryPending_; }
+    bool                            localHistoryPopulated() const { return localHistoryPopulated_; }
     void                            dispatchMessage(const MessageView &mv);
     virtual void                    appendSysMsg(const QString &txt) = 0;
     void                            appendMessage(const Message &, bool local = false);
@@ -92,6 +94,7 @@ public:
     virtual QString                 encryptionMethodId() const;
 
 signals:
+    void localHistoryPreloadFinished();
     void aInfo(const XMPP::Jid &);
     void aHistory(const XMPP::Jid &);
     void aVoice(const XMPP::Jid &);
@@ -165,6 +168,11 @@ protected:
     void         doneSend();
     void         holdMessages(bool hold);
     void         displayMessage(const MessageView &mv);
+    // Basic widget timeline overrides these without changing event-delivery semantics.
+    virtual bool displayNativeMessage(const MessageView &) { return false; }
+    virtual bool scrollNativeHistory(bool) { return false; }
+    virtual void clearNativeHistory() { }
+    void         resetLocalHistorySource() { localHistoryPopulated_ = false; }
     void         sendMessage(Message &message, bool log = true);
     virtual void setLooks();
     virtual void chatEditCreated();
@@ -219,6 +227,8 @@ private:
     bool                isComposing_;
     bool                sendComposingEvents_;
     bool                historyState;
+    bool                localHistoryPending_ = false;
+    bool                localHistoryPopulated_ = false;
     QString             eventId_;
     ChatState           contactChatState_;
     ChatState           lastChatState_;
