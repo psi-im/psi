@@ -465,13 +465,38 @@ QWidget *MamChatWidget::createItemWidget(int index)
     body->setToolTip(row->toolTip());
     body->viewport()->setToolTip(row->toolTip());
 
-    const QJsonObject layout = resolvedLayout(theme_);
-    content->setLayout(buildThemeLayout(layout, elements, theme_));
-    QSet<QString> used;
-    validateLayout(layout, used);
-    for (auto it = elements.cbegin(); it != elements.cend(); ++it)
-        if (!used.contains(it.key()))
-            it.value()->hide();
+    if (modern && theme_.layoutSpec.isEmpty()) {
+        // Keep Psi's original Modern presentation geometry intact. Qt6 treats
+        // nested QBoxLayouts differently from Qt5 when the body has a custom
+        // height-for-width and the header is not a separate QWidget.
+        if (auto *avatar = elements.value(QStringLiteral("avatar"), nullptr))
+            outer->insertWidget(1, avatar, 0, Qt::AlignTop);
+        auto *column = new QVBoxLayout(content);
+        column->setContentsMargins(0, 0, 0, 0);
+        column->setSpacing(3);
+        if (message) {
+            auto *header = new QWidget(content);
+            header->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+            auto *headerLayout = new QHBoxLayout(header);
+            headerLayout->setContentsMargins(0, 0, 0, 0);
+            headerLayout->setSpacing(10);
+            headerLayout->addWidget(elements.value(QStringLiteral("author")));
+            headerLayout->addWidget(elements.value(QStringLiteral("timestamp")));
+            headerLayout->addStretch();
+            column->addWidget(header, 0, Qt::AlignTop);
+        }
+        column->addWidget(body, 0, Qt::AlignTop);
+    } else {
+        // Classic and plugin themes can choose any nested row/column
+        // arrangement without owning or replacing the message widget.
+        const QJsonObject layout = resolvedLayout(theme_);
+        content->setLayout(buildThemeLayout(layout, elements, theme_));
+        QSet<QString> used;
+        validateLayout(layout, used);
+        for (auto it = elements.cbegin(); it != elements.cend(); ++it)
+            if (!used.contains(it.key()))
+                it.value()->hide();
+    }
     if (!message) {
         QTextCursor cursor(body->document());
         cursor.select(QTextCursor::Document);

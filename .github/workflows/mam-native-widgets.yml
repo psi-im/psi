@@ -57,7 +57,7 @@ jobs:
           if [ "${{ matrix.qt }}" = "6" ]; then
             sudo apt-get install -y ccache cmake ninja-build qt6-base-dev qt6-multimedia-dev libqt6sql6-sqlite
           else
-            sudo apt-get install -y cmake ninja-build qtbase5-dev qtmultimedia5-dev libqt5sql5-sqlite
+            sudo apt-get install -y ccache cmake ninja-build qtbase5-dev qtmultimedia5-dev libqt5sql5-sqlite
           fi
       - name: Restore compiler cache
         uses: actions/cache@v4
