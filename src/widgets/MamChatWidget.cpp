@@ -278,60 +278,74 @@ void MamChatWidget::mergeMessage(int index, const MessageView &incoming, const Q
 
 void MamChatWidget::coalesceRevisionRows()
 {
-    // A live correction might arrive while an older EDB original exists but
-    // the intermediate edit has not yet been downloaded. Once a MAM page
-    // supplies the connecting revision, those temporarily independent rows
-    // must collapse without losing either row's source UIDs or selection.
-    for (int i = 0; i < items_.size(); ++i) {
-        for (int j = i + 1; j < items_.size();) {
-            const auto &older = items_.at(i);
-            const auto &other = items_.at(j);
-            if (older.message.type() != MessageView::Message
-                || other.message.type() != MessageView::Message
-                || !sameSender(older.message, other.message)
-                || (!older.message.isEdited() && !other.message.isEdited())) {
-                ++j;
-                continue;
-            }
-            bool linked = false;
-            for (const auto &id : older.stanzaIds) {
-                if (other.stanzaIds.contains(id)) {
-                    linked = true;
-                    break;
-                }
-            }
-            if (!linked) {
-                ++j;
-                continue;
-            }
-
-            const QString survivingKey = items_.at(i).key;
-            const QString removedKey = items_.at(j).key;
-            Row merged = items_.at(i);
-            const Row discarded = items_.at(j);
-            merged.stanzaIds.unite(discarded.stanzaIds);
-            if (discarded.message.dateTime().isValid()
-                && (!merged.message.dateTime().isValid()
-                    || discarded.message.dateTime() > merged.message.dateTime()))
-                merged.message = discarded.message;
-            merged.message.setEdited();
-            items_[i] = merged;
-            for (auto it = sourceAliases_.begin(); it != sourceAliases_.end(); ++it)
-                if (it.value() == removedKey)
-                    it.value() = survivingKey;
-            sourceAliases_.insert(removedKey, survivingKey);
-            if (selectedKeys_.remove(removedKey))
-                selectedKeys_.insert(survivingKey);
-            if (selectionAnchorKey_ == removedKey)
-                selectionAnchorKey_ = survivingKey;
-            if (pressedKey_ == removedKey)
-                pressedKey_ = survivingKey;
-            items_.removeAt(j);
-            removeItems(j, 1);
-            replaceItem(i);
-            // Repeat with index j: multiple intermediary revisions may have
-            // been displayed before the server supplied their common parent.
+    // Connecting an earlier EDB original and a live correction may require
+    // merging two rows when intermediate edits arrive out of order. Index
+    // stanza IDs once instead of comparing every row against every other row
+    // on a long history (linear in rows and revision IDs).
+    QHash<QString, int> seen;
+    for (int i = 0; i < items_.size();) {
+        const Row &candidate = items_.at(i);
+        if (candidate.message.type() != MessageView::Message) {
+            ++i;
+            continue;
         }
+        const QString sender = (candidate.message.isLocal()
+                                    ? QStringLiteral("local:")
+                                    : QStringLiteral("remote:"))
+            + (groupChat_ ? candidate.message.nick() : QString());
+        const auto identityKey = [&sender](const QString &id) {
+            return sender + QLatin1Char('\x1f') + id;
+        };
+
+        int keeper = -1;
+        for (const QString &id : candidate.stanzaIds) {
+            const auto it = seen.constFind(identityKey(id));
+            if (it == seen.cend())
+                continue;
+            const int prior = it.value();
+            if (prior < i
+                && (items_.at(prior).message.isEdited() || candidate.message.isEdited())) {
+                keeper = prior;
+                break;
+            }
+        }
+
+        if (keeper < 0) {
+            for (const QString &id : candidate.stanzaIds)
+                seen.insert(identityKey(id), i);
+            ++i;
+            continue;
+        }
+
+        const QString survivingKey = items_.at(keeper).key;
+        const QString removedKey = candidate.key;
+        Row merged = items_.at(keeper);
+        merged.stanzaIds.unite(candidate.stanzaIds);
+        if (candidate.message.dateTime().isValid()
+            && (!merged.message.dateTime().isValid()
+                || candidate.message.dateTime() > merged.message.dateTime()))
+            merged.message = candidate.message;
+        merged.message.setEdited();
+        items_[keeper] = merged;
+
+        for (auto it = sourceAliases_.begin(); it != sourceAliases_.end(); ++it)
+            if (it.value() == removedKey)
+                it.value() = survivingKey;
+        sourceAliases_.insert(removedKey, survivingKey);
+        if (selectedKeys_.remove(removedKey))
+            selectedKeys_.insert(survivingKey);
+        if (selectionAnchorKey_ == removedKey)
+            selectionAnchorKey_ = survivingKey;
+        if (pressedKey_ == removedKey)
+            pressedKey_ = survivingKey;
+
+        // These indices are all before i; removing i never invalidates them.
+        for (const QString &id : merged.stanzaIds)
+            seen.insert(identityKey(id), keeper);
+        items_.removeAt(i);
+        removeItems(i, 1);
+        replaceItem(keeper);
+        // Re-check the same index: it now contains the next logical row.
     }
 }
 
