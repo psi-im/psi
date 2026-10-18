@@ -352,7 +352,10 @@ void PsiChatDlg::loadOlderMamMessages()
             XMPP::Forwarding wrapper;
             if (!wrapper.fromXml(forwarded, account()->client()))
                 continue;
-            auto archived = wrapper.message();
+            auto      archived = task->message(uid);
+            QDateTime revisionTime;
+            QString   originalTarget = MessageView::reactionTarget(archived);
+            QString   retractionTarget = MessageView::retractionTarget(archived);
             // A validated MAM result may be an older revision whose latest
             // corrected text lives in another page. The persisted revision
             // graph resolves it before the native timeline sees this row.
@@ -361,9 +364,12 @@ void PsiChatDlg::loadOlderMamMessages()
             if (auto resolved = account()->edb()->resolvedHistoryEvent(task->eventId(uid))) {
                 if (resolved->event()->type() == PsiEvent::Message) {
                     const auto actual = resolved->event().staticCast<MessageEvent>()->message().displayMessage();
-                    archived.setBody(actual.body());
-                    archived.setId(actual.id());
-                    archived.setReplaceId(actual.replaceId());
+                    archived          = actual;
+                    revisionTime      = resolved->revisionTime();
+                    if (!resolved->reactionTarget().isEmpty())
+                        originalTarget = resolved->reactionTarget();
+                    if (!resolved->retractionTarget().isEmpty())
+                        retractionTarget = resolved->retractionTarget();
                     archivedTime = actual.timeStamp();
                 }
             }
@@ -374,21 +380,28 @@ void PsiChatDlg::loadOlderMamMessages()
             if (!PsiMam::belongsToConversation(owner, peer,
                                                archived.from().bare(), archived.to().bare()))
                 continue;
-            const QString text = archived.body();
-            if (text.isEmpty())
-                continue; // Protocol-only messages are not standalone text rows.
+            MessageView protocol(MessageView::System);
+            archived.setTimeStamp(archivedTime);
+            if (MessageView::protocolMessage(archived, archived.from().bare() == account()->jid().bare(), protocol)) {
+                nativeTimeline_->appendMessage(protocol);
+                continue;
+            }
+            if (task->protocolOnly(uid))
+                continue;
             const bool local = archived.from().bare() == account()->jid().bare();
-            auto mv = MessageView::fromPlainText(text, MessageView::Message);
+            auto       mv    = nativeHistoryMessage(account(), jid().bare(), archived, local);
             mv.setMessageId(archived.id());
             mv.setReplaceId(archived.replaceId());
             mv.setUserId(archived.from().full());
             mv.setArchiveId(uid);
             mv.setHistoryId(task->eventId(uid));
+            mv.setRevisionTime(revisionTime);
+            mv.setReactionTargetId(originalTarget);
+            mv.setRetractionTargetId(retractionTarget);
             mv.setLocal(local);
             mv.setSpooled(true);
             mv.setNick(whoNick(local));
             mv.setDateTime(archivedTime);
-            account()->psi()->fileSharingManager()->fillMessageView(mv, archived, account());
             page.append(qMakePair(uid, mv));
         }
         // The non-flipped MAM page is in chronological order, so its first
@@ -502,6 +515,8 @@ void PsiChatDlg::initUi()
     delete ui_.topFrame->layout()->replaceWidget(ui_.log, nativeTimeline_);
     ui_.log->hide();
     configureNativeChat(nativeTimeline_, account(), jid(), false);
+    connect(nativeTimeline_, &MamChatWidget::outgoingReactions, this, &PsiChatDlg::sendOutgoingReactions);
+    connect(nativeTimeline_, &MamChatWidget::outgoingMessageRetraction, this, &PsiChatDlg::sendMessageRetraction);
     connect(nativeTimeline_, &MamChatWidget::avatarClicked, this,
             [this](const QString &, bool local) {
         account()->actionInfo(local ? account()->jid() : jid());

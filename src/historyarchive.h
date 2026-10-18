@@ -6,6 +6,7 @@
 #include <QSqlDatabase>
 #include <QSqlRecord>
 #include <QString>
+#include <functional>
 
 namespace HistoryArchive {
 // Low bits describe provenance; adjacency is independent of provenance.
@@ -26,6 +27,7 @@ struct Entry {
 };
 struct Page {
     QList<Entry> entries;
+    QString      previous; // Proven neighbour before the first entry, for forward catch-up.
     bool         found    = false;
     bool         complete = false;
     bool         stable   = false;
@@ -33,18 +35,19 @@ struct Page {
 
 // Additive, atomic migration of the original EDB schema. Never reimports or
 // rewrites existing event payloads. Safe to call again after an interrupted start.
-bool migrate(QSqlDatabase db);
+bool needsMigration(QSqlDatabase db);
+bool migrate(QSqlDatabase db, const std::function<void(qint64)> &progress = {});
 // Return a unique original delivery, or zero when identity is absent/ambiguous.
 // Index revision relationships transactionally whenever a live or MAM event
 // is persisted. The earliest known revision anchors the row; its newest
 // known child supplies text regardless of requested page boundaries.
-bool recordRevision(QSqlDatabase db, qint64 eventId, qint64 contactId, int type,
-                    int direction, const QString &sender,
+bool recordRevision(QSqlDatabase db, qint64 eventId, qint64 contactId, int type, int direction, const QString &sender,
                     const QString &messageId, const QString &replaceId);
-QSqlRecord resolvedRecord(QSqlDatabase db, qint64 eventId);
+QSqlRecord        resolvedRecord(QSqlDatabase db, qint64 eventId);
 QList<QSqlRecord> localRecords(QSqlDatabase db, const QString &account, const QString &peer, qint64 before, int limit);
 qint64            matchingDelivery(QSqlDatabase db, qint64 contact, const Entry &, bool archived);
-Page              readPage(QSqlDatabase db, const Key &, const QString &before, int limit);
+qint64 matchingOwnPlaintext(QSqlDatabase db, const Key &, const QString &id, const QString &sender, const QDateTime &);
+Page   readPage(QSqlDatabase db, const Key &, const QString &before, int limit);
 // Caller has flushed pending EDB writes. This transaction includes events,
 // identities, adjacency and the page checkpoint, or rolls all of them back.
 bool storePage(QSqlDatabase db, const Key &, const QString &before, int limit, Page &);

@@ -471,6 +471,13 @@ void ChatDlg::getHistory()
             if (e->type() == PsiEvent::Message) {
                 localHistoryPopulated_ = true;
                 MessageEvent::Ptr me = e.staticCast<MessageEvent>();
+                MessageView       protocol(MessageView::System);
+                if (MessageView::protocolMessage(me->message(), me->originLocal(), protocol)) {
+                    displayMessage(protocol);
+                    continue;
+                }
+                if (item->protocolOnly())
+                    continue;
                 appendMessage(me->message(), me->originLocal(), item->id().toLongLong(), item->archiveId());
             }
         }
@@ -796,16 +803,20 @@ void ChatDlg::doneSend()
 void ChatDlg::sendOutgoingReactions(const QString &messageId, const QSet<QString> &reactions)
 {
     Message m(jid());
+    m.setId(account()->client()->genUniqueId());
     m.setType(Message::Type::Chat);
     m.setReactions({ messageId, reactions });
+    m.setProcessingHints(Message::Store);
     emit aSend(m);
 }
 
 void ChatDlg::sendMessageRetraction(const QString &messageId)
 {
     Message m(jid());
+    m.setId(account()->client()->genUniqueId());
     m.setType(Message::Type::Chat);
     m.setRetraction(messageId);
+    m.setProcessingHints(Message::Store);
     emit aSend(m);
 }
 
@@ -840,17 +851,9 @@ void ChatDlg::incomingMessage(const Message &m)
         if (dm.chatState() != XMPP::StateNone) {
             setContactChatState(dm.chatState());
         }
-        if (dm.messageReceipt() == ReceiptReceived) {
-            chatView()->markReceived(dm.messageReceiptId());
-        }
-        if (!m.reactions().targetId.isEmpty()) {
-            auto mv = MessageView::reactionsMessage({}, m.reactions().targetId, m.reactions().reactions);
-            chatView()->dispatchMessage(mv);
-        }
-        if (!m.retraction().isEmpty()) {
-            auto mv = MessageView::retractionMessage(m.retraction());
-            chatView()->dispatchMessage(mv);
-        }
+        MessageView protocol(MessageView::System);
+        if (MessageView::protocolMessage(dm, m.forwarded().type() == Forwarding::ForwardedCarbonsSent, protocol))
+            displayMessage(protocol);
     } else {
         // Normal message
         // Check if user requests event messages
@@ -883,6 +886,11 @@ QString ChatDlg::whoNick(bool local) const
 void ChatDlg::appendMessage(const Message &m, bool local, qint64 historyId, const QString &archiveId)
 {
     Message dm = m.displayMessage();
+    MessageView protocol(MessageView::System);
+    if (MessageView::protocolMessage(dm, local, protocol)) {
+        displayMessage(protocol);
+        return;
+    }
     if (trackBar_)
         doTrackBar();
 
@@ -948,6 +956,8 @@ void ChatDlg::appendMessage(const Message &m, bool local, qint64 historyId, cons
         mv.setPlainText(body);
     }
     mv.setMessageId(dm.id());
+    mv.setReactionTargetId(MessageView::reactionTarget(dm));
+    mv.setRetractionTargetId(MessageView::retractionTarget(dm));
     mv.setHistoryId(historyId);
     mv.setArchiveId(archiveId);
     mv.setLocal(local);
@@ -1008,11 +1018,18 @@ void ChatDlg::dispatchMessage(const MessageView &mv)
 
 void ChatDlg::displayMessage(const MessageView &mv)
 {
+    if (mv.type() == MessageView::DeliveryReceipt) {
+        displayNativeMessage(mv);
+        chatView()->markReceived(mv.messageId());
+        return;
+    }
     // The legacy view is hidden but still owns message receipts, reactions,
     // corrections and composer integration. Keep it synchronized until those
     // interactions have equivalent native implementations.
     displayNativeMessage(mv);
     chatView()->dispatchMessage(mv);
+    if (mv.type() == MessageView::Reactions || mv.type() == MessageView::MessageRetraction)
+        return;
 
     // if we're not active, notify the user by changing the title
     MessageView::Type type = mv.type();

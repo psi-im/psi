@@ -677,6 +677,7 @@ void GCMainDlg::outgoingReactions(const QString &messageId, const QSet<QString> 
     Message m(jid());
     m.setType(Message::Type::Groupchat);
     m.setReactions({ messageId, reactions });
+    m.setProcessingHints(Message::Store);
     QString id = account()->client()->genUniqueId();
     m.setId(id); // we need id early for message manipulations in chatview
     m.setTimeStamp(QDateTime::currentDateTime());
@@ -688,8 +689,10 @@ void GCMainDlg::outgoingReactions(const QString &messageId, const QSet<QString> 
 void GCMainDlg::sendMessageRetraction(const QString &messageId)
 {
     Message m(jid());
+    m.setId(account()->client()->genUniqueId());
     m.setType(Message::Type::Groupchat);
     m.setRetraction(messageId);
+    m.setProcessingHints(Message::Store);
     // QString id = account()->client()->genUniqueId();
     // m.setId(id); // we need id early for message manipulations in chatview
     // m.setTimeStamp(QDateTime::currentDateTime());
@@ -893,6 +896,8 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     ui_.log->setParent(ui_.topFrame);
     ui_.log->hide();
     configureNativeChat(nativeTimeline_, account(), jid(), true);
+    connect(nativeTimeline_, &MamChatWidget::outgoingReactions, this, &GCMainDlg::outgoingReactions);
+    connect(nativeTimeline_, &MamChatWidget::outgoingMessageRetraction, this, &GCMainDlg::sendMessageRetraction);
     // Preserve Psi's established per-nickname coloring policy in both native
     // layouts, including fixed/hash palettes and muted MAM/history records.
     QPointer<ChatView> oldView(ui_.log);
@@ -2292,15 +2297,9 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
         return;
     }
 
-    if (!dm.reactions().targetId.isEmpty()) {
-        auto mv = MessageView::reactionsMessage(from, dm.reactions().targetId, dm.reactions().reactions);
-        ui_.log->dispatchMessage(mv);
-        return;
-    }
-
-    if (!dm.retraction().isEmpty()) {
-        auto mv = MessageView::retractionMessage(dm.retraction());
-        ui_.log->dispatchMessage(mv);
+    MessageView protocol(MessageView::System);
+    if (MessageView::protocolMessage(dm, from == nick(), protocol)) {
+        dispatchMessage(protocol);
         return;
     }
 
@@ -2390,6 +2389,12 @@ void GCMainDlg::appendSysMsg(const QString &str, bool alert)
 
 void GCMainDlg::dispatchMessage(const MessageView &mv)
 {
+    if (mv.type() == MessageView::DeliveryReceipt) {
+        if (nativeTimeline_)
+            nativeTimeline_->appendMessage(mv);
+        ui_.log->markReceived(mv.messageId());
+        return;
+    }
     if (d->trackBar && !mv.isLocal() && !mv.isSpooled() && mv.reactionsId().isEmpty())
         d->doTrackBar();
 
@@ -2448,24 +2453,45 @@ void GCMainDlg::loadOlderMamMessages()
             XMPP::Forwarding wrapper;
             if (!wrapper.fromXml(forwarded, account()->client()))
                 continue;
-            auto archived = wrapper.message();
+            auto      archived = task->message(uid);
+            QDateTime revisionTime;
+            QString   originalTarget = MessageView::reactionTarget(archived);
+            QString   retractionTarget = MessageView::retractionTarget(archived);
+            if (originalTarget.isEmpty())
+                originalTarget = uid;
+            if (retractionTarget.isEmpty())
+                retractionTarget = uid;
             QDateTime archivedTime = wrapper.timeStamp().isValid()
                 ? wrapper.timeStamp() : archived.timeStamp();
             if (auto resolved = account()->edb()->resolvedHistoryEvent(task->eventId(uid))) {
                 if (resolved->event()->type() == PsiEvent::Message) {
                     const auto actual = resolved->event().staticCast<MessageEvent>()->message().displayMessage();
-                    archived.setBody(actual.body());
-                    archived.setId(actual.id());
-                    archived.setReplaceId(actual.replaceId());
+                    archived          = actual;
+                    revisionTime      = resolved->revisionTime();
+                    if (!resolved->reactionTarget().isEmpty())
+                        originalTarget = resolved->reactionTarget();
+                    if (!resolved->retractionTarget().isEmpty())
+                        retractionTarget = resolved->retractionTarget();
                     archivedTime = actual.timeStamp();
                 }
             }
-            if (!archived.from().compare(room, false) || archived.type() != XMPP::Message::Type::Groupchat
-                || archived.from().resource().isEmpty() || archived.body().isEmpty())
+            MessageView protocol(MessageView::System);
+            archived.setTimeStamp(archivedTime);
+            if (MessageView::protocolMessage(archived, archived.from().resource() == nick(), protocol)) {
+                nativeTimeline_->appendMessage(protocol);
                 continue;
-            auto mv = MessageView::fromPlainText(archived.body(), MessageView::Message);
+            }
+            if (task->protocolOnly(uid))
+                continue;
+            if (!archived.from().compare(room, false) || archived.type() != XMPP::Message::Type::Groupchat
+                || archived.from().resource().isEmpty())
+                continue;
+            auto mv = nativeHistoryMessage(account(), jid().bare(), archived, archived.from().resource() == nick());
             mv.setArchiveId(uid);
             mv.setHistoryId(task->eventId(uid));
+            mv.setRevisionTime(revisionTime);
+            mv.setReactionTargetId(originalTarget);
+            mv.setRetractionTargetId(retractionTarget);
             mv.setMessageId(archived.id());
             mv.setReplaceId(archived.replaceId());
             mv.setUserId(archived.from().full());
@@ -2473,7 +2499,6 @@ void GCMainDlg::loadOlderMamMessages()
             mv.setLocal(mv.nick() == nick());
             mv.setSpooled(true);
             mv.setDateTime(archivedTime);
-            account()->psi()->fileSharingManager()->fillMessageView(mv, archived, account());
             page.append(qMakePair(uid, mv));
         }
         const bool initial = requestedBefore.isEmpty();
@@ -2527,6 +2552,8 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
     if (!PsiOptions::instance()->getOption("options.ui.muc.use-highlighting").toBool())
         alert = false;
     mv.setMessageId(dm.id());
+    mv.setReactionTargetId(MessageView::reactionTarget(dm));
+    mv.setRetractionTargetId(MessageView::retractionTarget(dm));
     mv.setAlert(alert);
     mv.setUserId(dm.from().full()); // theoretically, this can be inferred from the chat dialog properties
     mv.setNick(dm.from().resource());

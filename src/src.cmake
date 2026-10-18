@@ -397,6 +397,7 @@ list(APPEND SOURCES
     edbflatfile.cpp
     historyarchive.cpp
     historysync.cpp
+    historysyncaccount.cpp
     nativechathistory.cpp
     historymessageextras.cpp
     filesharingstore.cpp

@@ -15,6 +15,7 @@ on:
       - 'src/accountincomingmessage.*'
       - 'src/psiencryptioncontroller.*'
       - 'tests/account/**'
+      - 'tests/mamhistory/**'
       - 'src/groupchatdlg.*'
       - 'src/nativechattheme.*'
       - 'src/desktopcolorpalette.h'
@@ -48,6 +49,7 @@ on:
       - 'src/accountincomingmessage.*'
       - 'src/psiencryptioncontroller.*'
       - 'tests/account/**'
+      - 'tests/mamhistory/**'
       - 'src/groupchatdlg.*'
       - 'src/nativechattheme.*'
       - 'src/desktopcolorpalette.h'
@@ -125,8 +127,8 @@ jobs:
       - name: Build and run account plaintext/encryption regression
         run: |
           cmake -S . -B build-mam-chat -DBUILD_TESTING=ON
-          cmake --build build-mam-chat --target account_message_receipt_test --parallel 4
-          ctest --test-dir build-mam-chat --output-on-failure -R account_message_receipt
+          cmake --build build-mam-chat --target account_message_receipt_test history_sync_test history_archive_test filesharing_sims_history_test --parallel 4
+          ctest --test-dir build-mam-chat --output-on-failure -R '^(account_message_receipt|history_sync|history_archive|filesharing_sims_history)$'
 
       - name: Compiler cache statistics
         if: always()

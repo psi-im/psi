@@ -85,6 +85,9 @@ option( PLUGINS_NO_DEBUG "Add -DPLUGINS_NO_DEBUG definition" OFF )
 option( DEV_MODE "Enable prepare-bin-libs target for MS Windows only. Set PSI_DATADIR and PSI_LIBDIR to CMAKE_RUNTIME_OUTPUT_DIRECTORY to debug plugins for Linux only" OFF )
 # Iris options
 option( BUNDLED_IRIS "Build iris library bundled" ON )
+if(NOT BUNDLED_IRIS)
+    message(FATAL_ERROR "This development version requires bundled Iris while the MAM/cache API stabilizes. Configure with -DBUNDLED_IRIS=ON.")
+endif()
 option( BUNDLED_IRIS_ALL "Build bundled iris library with bundled QCA and bundled USRSCTP" OFF )
 # note Blake2b is needed only with Qt5. Qt6 has its own implementation
 option( IRIS_BUNDLED_QCA "Adds: DTLS, Blake2b (needed with Qt5) and other useful for XMPP crypto-stuff" ${DEFAULT_BUNDLED_QCA} )

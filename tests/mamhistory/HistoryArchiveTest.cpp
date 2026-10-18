@@ -69,6 +69,59 @@ private slots:
         db = {};
         QSqlDatabase::removeDatabase("test-history");
     }
+    void confirmedResultRepairsAnUnverifiedProjection()
+    {
+        QVERIFY(migrate(db));
+        auto p                 = page({ "one" }, false, false);
+        p.entries.first().body = "provisional";
+        QVERIFY(storePage(db, key, "", 1, p));
+        p.stable               = true;
+        p.entries.first().body = "confirmed";
+        QVERIFY(storePage(db, key, "", 1, p));
+        QCOMPARE(scalar("SELECT m_text FROM events").toString(), QString("confirmed"));
+        QCOMPARE(scalar("SELECT history_state & 3 FROM events").toInt(), int(Archived));
+    }
+
+    void forwardTailCheckpointConnectsToAlreadyDownloadedHistory()
+    {
+        QVERIFY(migrate(db));
+        auto p = page({ "one", "two", "three" }, true);
+        QVERIFY(storePage(db, key, "", 3, p));
+        auto next     = page({ "four", "five", "six" }, false);
+        next.previous = "three";
+        QVERIFY(storePage(db, key, "", 3, next));
+        const auto tail = readPage(db, key, "", 3);
+        QVERIFY(tail.found);
+        QCOMPARE(tail.entries.last().uid, QString("six"));
+        const auto older = readPage(db, key, "four", 3);
+        QVERIFY(older.found);
+        QCOMPARE(older.entries.first().uid, QString("one"));
+        QCOMPARE(older.entries.last().uid, QString("three"));
+        QVERIFY(older.complete);
+    }
+
+    void ownPlaintextLookupRejectsOtherSendersAndAmbiguousIds()
+    {
+        QVERIFY(migrate(db));
+        auto p                      = page({ "own" }, true);
+        p.entries.first().direction = 1;
+        p.entries.first().sender    = "me@example.org/desktop";
+        p.entries.first().extra
+            = "{\"psi:message\":{\"version\":1,\"id\":\"own-id\",\"from\":\"me@example.org/desktop\"}}";
+        p.entries.first().messageId = "own-id";
+        QVERIFY(storePage(db, key, "", 1, p));
+        const auto time = p.entries.first().timestamp;
+        QCOMPARE(matchingOwnPlaintext(db, key, "own-id", "me@example.org/desktop", time), p.entries.first().eventId);
+        QCOMPARE(matchingOwnPlaintext(db, key, "own-id", "someone@example.org/phone", time), qint64(0));
+        auto other    = key;
+        other.account = "other";
+        QCOMPARE(matchingOwnPlaintext(db, other, "own-id", "me@example.org/desktop", time), qint64(0));
+        p.entries.first().uid  = "different-delivery";
+        p.entries.first().body = "different body";
+        QVERIFY(storePage(db, key, "", 1, p));
+        QCOMPARE(matchingOwnPlaintext(db, key, "own-id", "me@example.org/desktop", time), qint64(0));
+    }
+
     void migrationKeepsLegacyData()
     {
         QSqlQuery q(db);
@@ -347,6 +400,8 @@ private slots:
         QCOMPARE(scalar("SELECT m_text FROM events WHERE id=1").toString(),QStringLiteral("6"));
         QCOMPARE(resolvedRecord(db,3).value("id").toInt(),1);
         QCOMPARE(resolvedRecord(db,3).value("m_text").toString(),QStringLiteral("8"));
+        QVERIFY(resolvedRecord(db, 3).value("revision_date").toDateTime()
+                > resolvedRecord(db, 3).value("date").toDateTime());
         const auto extra=QJsonDocument::fromJson(page.first().value("extra_data").toString().toUtf8())
                              .object().value("psi:message").toObject();
         QCOMPARE(extra.value("replace").toString(),QStringLiteral("id-7"));

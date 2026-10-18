@@ -26,10 +26,67 @@
 #include "psicontact.h"
 #include "psicontactlist.h"
 
+#include "historyarchive.h"
+#include <QCloseEvent>
 #include <QDir>
 #include <QLayout>
 #include <QMessageBox>
+#include <QProgressDialog>
+#include <QSqlDatabase>
+#include <QThread>
 #include <QTimer>
+
+bool HistoryImport::upgradeDatabase(const QString &path)
+{
+    // Reuse history import's startup gate: refusing an upgrade stops startup,
+    // and no account may use an incomplete schema. Never touch the GUI's SQL
+    // connection from the worker.
+    if (QMessageBox::question(
+            nullptr, tr("Upgrade history"),
+            tr("The history database needs to be upgraded. This can take some time for a large history. "
+               "Psi will continue starting after the upgrade finishes. Continue?"),
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::No)
+        != QMessageBox::Yes)
+        return false;
+    class UpgradeProgress final : public QProgressDialog {
+    public:
+        UpgradeProgress() : QProgressDialog(HistoryImport::tr("Upgrading history…"), QString(), 0, 0) { }
+        void reject() override { } // A transaction already running must finish before startup can continue.
+        void closeEvent(QCloseEvent *event) override { event->ignore(); }
+    } progress;
+    progress.setWindowModality(Qt::ApplicationModal);
+    progress.setMinimumDuration(0);
+    progress.setCancelButton(nullptr);
+    bool  success = false;
+    auto *worker  = QThread::create([path, &success, &progress] {
+        const QString connection = QStringLiteral("history-upgrade-worker");
+        {
+            auto db = QSqlDatabase::addDatabase("QSQLITE", connection);
+            db.setDatabaseName(path);
+            if (db.open()) {
+                QSqlQuery foreignKeys(db);
+                foreignKeys.exec("PRAGMA foreign_keys=ON");
+                success = HistoryArchive::migrate(db, [&progress](qint64 id) {
+                    QMetaObject::invokeMethod(
+                        &progress,
+                        [&progress, id] { progress.setLabelText(tr("Upgrading history (record %1)…").arg(id)); },
+                        Qt::QueuedConnection);
+                });
+                db.close();
+            }
+        }
+        QSqlDatabase::removeDatabase(connection);
+    });
+    QObject::connect(worker, &QThread::finished, &progress, &QDialog::accept);
+    worker->start();
+    progress.exec();
+    worker->wait();
+    delete worker;
+    if (!success)
+        QMessageBox::critical(nullptr, tr("Upgrade history"),
+                              tr("The history upgrade failed. Changes were rolled back; Psi cannot continue."));
+    return success;
+}
 
 HistoryImport::HistoryImport(PsiCon *psi) :
     QObject(), psi_(psi), srcEdb(nullptr), dstEdb(nullptr), hErase(nullptr), hRead(nullptr), hWrite(nullptr),

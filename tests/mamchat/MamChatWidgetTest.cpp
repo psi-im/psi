@@ -6,22 +6,25 @@
 #include "qiteaudio.h"
 #include "qitevideo.h"
 
-#include <QApplication>
 #include <QAbstractTextDocumentLayout>
-#include <QTextBlock>
-#include <QTextFragment>
-#include <cmath>
-#include <QClipboard>
+#include <QApplication>
 #include <QCheckBox>
+#include <QClipboard>
 #include <QFrame>
 #include <QLabel>
+#include <QLayout>
+#include <QMenu>
 #include <QMouseEvent>
-#include <QSignalSpy>
+#include <QPushButton>
 #include <QScrollBar>
+#include <QSignalSpy>
+#include <QTextBlock>
+#include <QTextFragment>
 #include <QTimer>
-#include <QWheelEvent>
 #include <QUrlQuery>
+#include <QWheelEvent>
 #include <QtTest/QtTest>
+#include <cmath>
 
 namespace {
 MessageView message(const QString &id, const QString &body, int seconds = 0, bool local = false)
@@ -40,6 +43,228 @@ MessageView message(const QString &id, const QString &body, int seconds = 0, boo
 class MamChatWidgetTest final : public QObject {
     Q_OBJECT
 private slots:
+    void distinctPayloadsWithReusedClientIdAreNotDiscarded()
+    {
+        MamChatWidget chat;
+        chat.setHistoryLoading(true);
+        chat.appendMessage(message("same-id", "first"));
+        chat.appendMessage(message("same-id", "second", 1));
+        QCOMPARE(chat.messageCount(), 2);
+    }
+
+    void resolvedCorrectionUpdatesKnownArchiveKeyWithoutMovingOriginalTime()
+    {
+        MamChatWidget chat;
+        chat.resize(400, 250);
+        chat.setHistoryLoading(true);
+        auto original = message("a", "original");
+        original.setHistoryId(1);
+        chat.prependArchivePage({ qMakePair(QString("uid-a"), original) });
+        auto corrected = original;
+        corrected.setMessageId("b");
+        corrected.setReplaceId("a");
+        corrected.setPlainText("corrected");
+        corrected.setRevisionTime(original.dateTime().addSecs(30));
+        chat.prependArchivePage({ qMakePair(QString("uid-a"), corrected) });
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        QCOMPARE(chat.messageCount(), 1);
+        QCOMPARE(chat.itemWidget(0)->findChild<ChatMessageText *>()->toPlainText(), QString("corrected"));
+        QCOMPARE(chat.itemWidget(0)->findChild<QLabel *>("mamTimestamp")->toolTip(),
+                 MamChatWidget::fullTimestamp(original.dateTime()));
+    }
+
+    void reactionsReplaceAnActorsWholeSetAndSurviveLateMessageArrival()
+    {
+        MamChatWidget chat;
+        chat.resize(400, 250);
+        chat.setHistoryLoading(true);
+        MessageView reaction(MessageView::Reactions);
+        reaction.setReactionsId("original");
+        reaction.setReactions({ QString::fromUtf8("👍"), QString::fromUtf8("❤️") });
+        chat.appendMessage(reaction);
+        chat.appendMessage(message("original", "hello"));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        QCOMPARE(chat.messageCount(), 1);
+        QCOMPARE(chat.itemWidget(0)->findChildren<QPushButton *>("mamReactionChip").size(), 2);
+        reaction.setReactions({ QString::fromUtf8("❤️") });
+        chat.appendMessage(reaction);
+        QTRY_COMPARE(chat.itemWidget(0)->findChildren<QPushButton *>("mamReactionChip").size(), 1);
+        QSignalSpy outgoing(&chat, &MamChatWidget::outgoingReactions);
+        chat.toggleReaction("original", QString::fromUtf8("❤️"));
+        QCOMPARE(outgoing.size(), 1);
+        QCOMPARE(qvariant_cast<QSet<QString>>(outgoing.first().at(1)).size(), 1);
+        chat.toggleReaction("original", QString::fromUtf8("❤️"));
+        QCOMPARE(qvariant_cast<QSet<QString>>(outgoing.last().at(1)).size(), 0);
+        reaction.setReactions({});
+        chat.appendMessage(reaction);
+        QTRY_VERIFY(chat.itemWidget(0)->findChildren<QPushButton *>("mamReactionChip").isEmpty());
+    }
+
+    void floatingReactionBarUsesPsiChooserSignalAndOriginalTarget()
+    {
+        MamChatWidget chat;
+        chat.resize(500, 250);
+        chat.setHistoryLoading(true);
+        auto original = message("client-id", "hello");
+        original.setReactionTargetId("origin-id");
+        chat.appendMessage(original);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        QEvent enter(QEvent::Enter);
+        QApplication::sendEvent(chat.itemWidget(0), &enter);
+        auto *bar = chat.findChild<QFrame *>("mamMessageActions");
+        QTRY_VERIFY(bar->isVisible());
+        QSignalSpy chooser(&chat, &MamChatWidget::emojiChooserRequested);
+        auto      *choose = bar->findChild<QPushButton *>("mamChooseReaction");
+        QTest::mouseClick(choose, Qt::LeftButton);
+        QCOMPARE(chooser.size(), 1);
+        QCOMPARE(chooser.first().first().toString(), QString("origin-id"));
+        QEvent leave(QEvent::Leave);
+        QApplication::sendEvent(bar, &leave);
+        QTRY_VERIFY(!bar->isVisible());
+    }
+
+    void messageActionsKeepRetractionBehindMoreMenu()
+    {
+        MamChatWidget chat;
+        chat.resize(500, 250);
+        chat.setHistoryLoading(true);
+        auto own = message("message-id", "mine", 0, true);
+        own.setReactionTargetId("origin-id");
+        own.setRetractionTargetId("message-id");
+        chat.appendMessage(own);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        QEvent enter(QEvent::Enter);
+        QApplication::sendEvent(chat.itemWidget(0), &enter);
+        auto *bar = chat.findChild<QFrame *>("mamMessageActions");
+        QTRY_VERIFY(bar->isVisible());
+        // Left to right: quick slot, react, more. No direct retract button.
+        auto *quick  = bar->findChild<QWidget *>("mamQuickReactions");
+        auto *choose = bar->findChild<QPushButton *>("mamChooseReaction");
+        auto *more   = bar->findChild<QPushButton *>("mamMoreActions");
+        QVERIFY(quick && choose && more);
+        QVERIFY(more->isVisible());
+        QCOMPARE(quick->maximumWidth(), 0);
+        QVERIFY(choose->mapTo(bar, QPoint()).x() < more->mapTo(bar, QPoint()).x());
+        for (auto *button : bar->findChildren<QPushButton *>())
+            QVERIFY(!button->text().contains("Retract"));
+
+        // Expanding quick reactions grows leftwards; react/more stay put.
+        const QPoint chooseAt = choose->mapTo(chat.viewport(), QPoint());
+        QApplication::sendEvent(choose, &enter);
+        QTRY_VERIFY(quick->maximumWidth() > 0);
+        QTRY_COMPARE(quick->maximumWidth(), quick->layout()->sizeHint().width());
+        QCOMPARE(choose->mapTo(chat.viewport(), QPoint()), chooseAt);
+        QVERIFY(quick->mapTo(bar, QPoint()).x() < choose->mapTo(bar, QPoint()).x());
+
+        // XEP-0424: a direct chat retracts message@id, not the origin-id.
+        QSignalSpy retraction(&chat, &MamChatWidget::outgoingMessageRetraction);
+        more->click();
+        auto *retract = chat.findChild<QAction *>("mamRetractMessage");
+        QVERIFY(retract);
+        retract->trigger();
+        QCOMPARE(retraction.size(), 1);
+        QCOMPARE(retraction.first().first().toString(), QString("message-id"));
+        QTRY_COMPARE(chat.itemWidget(0)->findChild<ChatMessageText *>()->toPlainText(), QString("Message retracted"));
+        if (auto *menu = chat.findChild<QMenu *>("mamMessageMenu"))
+            menu->hide();
+    }
+
+    void peerMessageActionsHaveNoMoreMenu()
+    {
+        MamChatWidget chat;
+        chat.resize(500, 250);
+        chat.setHistoryLoading(true);
+        chat.appendMessage(message("peer-id", "theirs"));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        QEvent enter(QEvent::Enter);
+        QApplication::sendEvent(chat.itemWidget(0), &enter);
+        auto *bar = chat.findChild<QFrame *>("mamMessageActions");
+        QTRY_VERIFY(bar->isVisible());
+        QVERIFY(bar->findChild<QPushButton *>("mamChooseReaction")->isVisible());
+        QVERIFY(!bar->findChild<QPushButton *>("mamMoreActions")->isVisible());
+    }
+
+    void roomRowLearnsArchiveStanzaIdForActions()
+    {
+        MamChatWidget room;
+        room.setGroupChat(true);
+        room.resize(500, 250);
+        room.setHistoryLoading(true);
+        // Live copy without a room-assigned stanza-id: nothing to react to.
+        room.appendMessage(message("client-id", "hello"));
+        room.show();
+        QTRY_VERIFY(room.itemWidget(0));
+        QEvent enter(QEvent::Enter);
+        QApplication::sendEvent(room.itemWidget(0), &enter);
+        auto *bar = room.findChild<QFrame *>("mamMessageActions");
+        QVERIFY(!bar->isVisible());
+
+        // The archived copy of the same message carries the stanza-id.
+        auto archived = message("client-id", "hello");
+        archived.setReactionTargetId("room-stanza-id");
+        archived.setRetractionTargetId("room-stanza-id");
+        archived.setSpooled(true);
+        QCOMPARE(room.prependArchivePage({ qMakePair(QString("room-stanza-id"), archived) }), 0);
+        QCOMPARE(room.messageCount(), 1);
+        QTRY_VERIFY(room.itemWidget(0));
+        QApplication::sendEvent(room.itemWidget(0), &enter);
+        QTRY_VERIFY(bar->isVisible());
+        QSignalSpy chooser(&room, &MamChatWidget::emojiChooserRequested);
+        bar->findChild<QPushButton *>("mamChooseReaction")->click();
+        QCOMPARE(chooser.size(), 1);
+        QCOMPARE(chooser.first().first().toString(), QString("room-stanza-id"));
+    }
+
+    void olderArchiveReactionCannotReplaceNewLiveSet()
+    {
+        MamChatWidget chat;
+        chat.resize(400, 250);
+        chat.setHistoryLoading(true);
+        chat.appendMessage(message("original", "hello"));
+        MessageView current(MessageView::Reactions);
+        current.setReactionsId("original");
+        current.setReactions({ QString::fromUtf8("❤️") });
+        chat.appendMessage(current);
+        auto old = current;
+        old.setReactions({ QString::fromUtf8("👍") });
+        old.setDateTime(current.dateTime().addSecs(-60));
+        old.setSpooled(true);
+        chat.appendMessage(old);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        const auto chips = chat.itemWidget(0)->findChildren<QPushButton *>("mamReactionChip");
+        QCOMPARE(chips.size(), 1);
+        QVERIFY(chips.first()->text().contains(QString::fromUtf8("❤️")));
+    }
+
+    void retractionRequiresTheOriginalSenderAndDoesNotCreateARow()
+    {
+        MamChatWidget chat;
+        chat.resize(400, 250);
+        chat.setHistoryLoading(true);
+        chat.appendMessage(message("original", "visible"));
+        chat.show();
+        MessageView event(MessageView::MessageRetraction);
+        event.setRetractionId("original");
+        event.setLocal(true); // Our account cannot retract a peer's message.
+        chat.appendMessage(event);
+        QTRY_VERIFY(chat.itemWidget(0));
+        QCOMPARE(chat.itemWidget(0)->findChild<ChatMessageText *>()->toPlainText(), QString("visible"));
+        event.setLocal(false);
+        chat.appendMessage(event);
+        QTRY_COMPARE(chat.itemWidget(0)->findChild<ChatMessageText *>()->toPlainText(), QString("Message retracted"));
+        QCOMPARE(chat.messageCount(), 1);
+        MessageView receipt(MessageView::DeliveryReceipt);
+        receipt.setMessageId("original");
+        chat.appendMessage(receipt);
+        QCOMPARE(chat.messageCount(), 1);
+    }
+
     void simsMediaUsesExistingPsiTextViewObjects()
     {
         FileSharingDeviceOpener opener;

@@ -34,17 +34,26 @@
 class EDBItem {
 public:
     EDBItem(const PsiEvent::Ptr &, const QString &id, int historyState = HistoryArchive::Unverified,
-            const QString &archiveId = {});
+            const QString &archiveId = {}, const QDateTime &revisionTime = {}, bool protocolOnly = false,
+            const QString &reactionTarget = {}, const QString &retractionTarget = {});
     ~EDBItem();
 
     PsiEvent::Ptr  event() const;
     const QString &id() const;
     int            historyState() const { return historyState_; }
     const QString &archiveId() const { return archiveId_; }
+    QDateTime      revisionTime() const { return revisionTime_; }
+    bool           protocolOnly() const { return protocolOnly_; }
+    QString        reactionTarget() const { return reactionTarget_; }
+    QString        retractionTarget() const { return retractionTarget_; }
 
 private:
     int           historyState_;
     QString       archiveId_;
+    QDateTime     revisionTime_;
+    bool          protocolOnly_ = false;
+    QString       reactionTarget_;
+    QString       retractionTarget_;
     QString       v_id;
     PsiEvent::Ptr e;
 };
@@ -113,6 +122,14 @@ public:
     // Resolve any archived revision to its original anchored position and
     // latest known text, including corrections outside the requested page.
     virtual EDBItemPtr resolvedHistoryEvent(qint64) { return {}; }
+    virtual EDBItemPtr archivedEvent(const HistoryArchive::Key &, const QString &, const QDateTime & = {})
+    {
+        return {};
+    }
+    virtual EDBItemPtr ownPlaintext(const HistoryArchive::Key &, const QString &, const QString &, const QDateTime &)
+    {
+        return {};
+    }
 
     // Optional persistent MAM support. Flat-file history keeps working without it.
     virtual HistoryArchive::Page archivePage(const HistoryArchive::Key &, const QString &, int) { return {}; }

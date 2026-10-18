@@ -3,6 +3,14 @@
 #include <QString>
 class MamChatWidget;
 class PsiAccount;
+class MessageView;
+namespace XMPP {
+class Message;
+class Jid;
+}
+
+// The same content/extension projection is used for EDB and MAM replay.
+MessageView nativeHistoryMessage(PsiAccount *, const XMPP::Jid &peer, const XMPP::Message &, bool local);
 
 // Presentation adapter for the existing EDB, with a separate local keyset
 // cursor. Local-only originals remain reachable after MAM reaches its start.

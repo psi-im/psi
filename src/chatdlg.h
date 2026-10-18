@@ -153,10 +153,10 @@ private slots:
     void         initComposing();
     void         setComposing();
     void         getHistory();
-    void         sendOutgoingReactions(const QString &messageId, const QSet<QString> &reactions);
-    void         sendMessageRetraction(const QString &messageId);
 
 protected slots:
+    void sendOutgoingReactions(const QString &messageId, const QSet<QString> &reactions);
+    void sendMessageRetraction(const QString &messageId);
     void checkComposing();
 
 protected:

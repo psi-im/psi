@@ -23,7 +23,9 @@
 #include "filesharingmanager.h"
 #include "historyimp.h"
 #include "historymessageextras.h"
+#include "iris/xmpp_forwarding.h"
 #include "jidutil.h"
+#include "psiaccount.h"
 #include "psicontactlist.h"
 
 #include <QJsonArray>
@@ -31,10 +33,50 @@
 #include <QJsonObject>
 #include <QSqlDriver>
 #include <QSqlError>
+#include <QXmlStreamReader>
 
 #define FAKEDELAY 0
 
 using namespace XMPP;
+
+namespace {
+bool decodedRecord(const QSqlRecord &record)
+{
+    const auto extra = QJsonDocument::fromJson(record.value("extra_data").toString().toUtf8()).object();
+    if (extra.contains("psi:decoded"))
+        return extra.value("psi:decoded").toBool();
+    // Legacy unprocessed encrypted MAM rows must be decoded, not mistaken for
+    // an already processed empty user message.
+    QXmlStreamReader reader(record.value("archive_xml").toString());
+    while (!reader.atEnd()) {
+        reader.readNext();
+        if (reader.isStartElement() && reader.name() == QLatin1String("encrypted"))
+            return false;
+    }
+    return true;
+}
+bool protocolOnlyRecord(const QSqlRecord &record)
+{
+    const auto extra = QJsonDocument::fromJson(record.value("extra_data").toString().toUtf8()).object();
+    if (extra.contains("psi:protocol-only"))
+        return extra.value("psi:protocol-only").toBool();
+    if (!record.value("m_text").toString().isEmpty())
+        return false;
+    QDomDocument doc;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+    const bool parsed = bool(
+        doc.setContent(record.value("archive_xml").toString(), QDomDocument::ParseOption::UseNamespaceProcessing));
+#else
+    const bool parsed = doc.setContent(record.value("archive_xml").toString(), true);
+#endif
+    if (!parsed)
+        return false;
+    const auto message = doc.documentElement().firstChildElement("forwarded").firstChildElement("message");
+    return !message.isNull() && message.firstChildElement("body").isNull()
+        && message.firstChildElement("subject").isNull() && message.firstChildElement("html").isNull()
+        && message.firstChildElement("reference").isNull() && message.firstChildElement("x").isNull();
+}
+}
 
 //----------------------------------------------------------------------------
 // EDBSqLite
@@ -98,10 +140,6 @@ EDBSqLite::EDBSqLite(PsiCon *psi) :
     } else
         status = Commited;
 
-    if (status != NotActive && !HistoryArchive::migrate(db)) {
-        qWarning("Cannot migrate history database; leaving existing history untouched.");
-        status = NotActive;
-    }
 }
 
 EDBSqLite::~EDBSqLite()
@@ -125,8 +163,11 @@ EDBResult EDBSqLite::localHistoryPage(const QString &account, const Jid &peer, q
         = HistoryArchive::localRecords(QSqlDatabase::database("history"), account, peer.full(), before, limit);
     for (const auto &row : rows) {
         if (auto event = getEvent(row))
-            result.append(EDBItemPtr(new EDBItem(event, row.value("id").toString(), row.value("history_state").toInt(),
-                                                 row.value("archive_uid").toString())));
+            result.append(
+                EDBItemPtr(new EDBItem(event, row.value("id").toString(), row.value("history_state").toInt(),
+                                       row.value("archive_uid").toString(), row.value("revision_date").toDateTime(),
+                                       protocolOnlyRecord(row), row.value("reaction_target").toString(),
+                                       row.value("retraction_target").toString())));
     }
     return result;
 }
@@ -139,9 +180,64 @@ EDBItemPtr EDBSqLite::resolvedHistoryEvent(qint64 eventId)
     if (row.isEmpty())
         return {};
     const auto event = getEvent(row);
-    return event ? EDBItemPtr(new EDBItem(event,row.value("id").toString(),
-                                           row.value("history_state").toInt(),
-                                           row.value("archive_uid").toString())) : EDBItemPtr();
+    return event ? EDBItemPtr(new EDBItem(event, row.value("id").toString(), row.value("history_state").toInt(),
+                                          row.value("archive_uid").toString(), row.value("revision_date").toDateTime(),
+                                          protocolOnlyRecord(row), row.value("reaction_target").toString(),
+                                          row.value("retraction_target").toString()))
+                 : EDBItemPtr();
+}
+
+EDBItemPtr EDBSqLite::archivedEvent(const HistoryArchive::Key &key, const QString &uid, const QDateTime &time)
+{
+    if (!commit())
+        return {};
+    QSqlQuery q(QSqlDatabase::database("history"));
+    q.prepare("SELECT e.*,c.acc_id,c.jid,i.xml AS archive_xml FROM archive_items i JOIN events e ON e.id=i.event_id "
+              "JOIN contacts c ON c.id=e.contact_id WHERE i.account=:account AND i.archive=:archive "
+              "AND i.peer=:peer AND i.uid=:uid");
+    q.bindValue(":account", key.account);
+    q.bindValue(":archive", key.archive);
+    q.bindValue(":peer", key.peer);
+    q.bindValue(":uid", uid);
+    if (!q.exec())
+        return {};
+    if (q.next()) {
+        auto event = getEvent(q.record());
+        if (event && decodedRecord(q.record()))
+            return EDBItemPtr(new EDBItem(event, q.record().value("id").toString(), 0, uid, {},
+                                          QJsonDocument::fromJson(q.record().value("extra_data").toString().toUtf8())
+                                              .object()
+                                              .value("psi:protocol-only")
+                                              .toBool()));
+    }
+    if (!time.isValid())
+        return {};
+    q.finish();
+    // A live stanza may already carry the authenticated archive-assigned ID
+    // before any MAM page has associated it with its existing EDB event.
+    q.prepare("SELECT e.*,c.acc_id,c.jid FROM events e JOIN contacts c ON c.id=e.contact_id "
+              "WHERE c.acc_id=:account AND c.jid=:peer AND e.history_date_ms BETWEEN :start AND :end");
+    q.bindValue(":account", key.account);
+    q.bindValue(":peer", key.peer);
+    q.bindValue(":start", time.toMSecsSinceEpoch() - 300000);
+    q.bindValue(":end", time.toMSecsSinceEpoch() + 300000);
+    if (!q.exec())
+        return {};
+    EDBItemPtr match;
+    while (q.next()) {
+        if (!decodedRecord(q.record()))
+            continue;
+        const auto event = getEvent(q.record());
+        if (!event || event->type() != PsiEvent::Message)
+            continue;
+        const auto message = event.staticCast<MessageEvent>()->message();
+        if (message.stanzaId(XMPP::Jid(key.archive)).id != uid)
+            continue;
+        if (match)
+            return {}; // Ambiguous metadata must not suppress decryption.
+        match = EDBItemPtr(new EDBItem(event, q.record().value("id").toString(), 0, uid));
+    }
+    return match;
 }
 
 HistoryArchive::Page EDBSqLite::archivePage(const HistoryArchive::Key &key, const QString &before, int limit)
@@ -149,6 +245,23 @@ HistoryArchive::Page EDBSqLite::archivePage(const HistoryArchive::Key &key, cons
     if (!commit())
         return {};
     return HistoryArchive::readPage(QSqlDatabase::database("history"), key, before, limit);
+}
+
+EDBItemPtr EDBSqLite::ownPlaintext(const HistoryArchive::Key &key, const QString &id, const QString &sender,
+                                   const QDateTime &time)
+{
+    if (!commit())
+        return {};
+    const auto eventId = HistoryArchive::matchingOwnPlaintext(QSqlDatabase::database("history"), key, id, sender, time);
+    if (!eventId)
+        return {};
+    QSqlQuery q(QSqlDatabase::database("history"));
+    q.prepare("SELECT e.*,c.acc_id,c.jid FROM events e JOIN contacts c ON c.id=e.contact_id WHERE e.id=:id");
+    q.bindValue(":id", eventId);
+    if (!q.exec() || !q.next())
+        return {};
+    const auto event = getEvent(q.record());
+    return event ? EDBItemPtr(new EDBItem(event, QString::number(eventId))) : EDBItemPtr();
 }
 
 bool EDBSqLite::mergeArchivePage(const HistoryArchive::Key &key, const QString &before, int limit,
@@ -165,6 +278,17 @@ bool EDBSqLite::init()
 {
     if (status == NotActive)
         return false;
+    auto db = QSqlDatabase::database("history");
+    if (HistoryArchive::needsMigration(db)) {
+        QSqlQuery  count(db);
+        const bool empty = count.exec("SELECT 1 FROM events LIMIT 1") && !count.next();
+        count.finish();
+        const bool migrated = empty ? HistoryArchive::migrate(db) : HistoryImport::upgradeDatabase(db.databaseName());
+        if (!migrated) {
+            status = NotActive;
+            return false;
+        }
+    }
 
     if (!getStorageParam("import_start").isEmpty()) {
         if (!importExecute()) {
@@ -231,7 +355,15 @@ int EDBSqLite::append(const QString &accId, const XMPP::Jid &jid, const PsiEvent
 
     QTimer::singleShot(FAKEDELAY, this, SLOT(performRequests()));
 
-    if (mirror_)
+    bool protocolEvent = false;
+    if (e->type() == PsiEvent::Message) {
+        const auto message = e.staticCast<MessageEvent>()->message().displayMessage();
+        protocolEvent      = message.messageReceipt() == ReceiptReceived || !message.reactions().targetId.isEmpty()
+            || !message.retraction().isEmpty();
+    }
+    // The legacy text mirror cannot represent protocol attributes. Keep its
+    // user-message history unchanged rather than writing blank receipt lines.
+    if (mirror_ && !protocolEvent)
         mirror_->append(accId, jid, e, type);
 
     return r->id;
@@ -399,7 +531,8 @@ void EDBSqLite::performRequests()
                 if (e) {
                     QString id = query->record().value("id").toString();
                     result.append(EDBItemPtr(new EDBItem(e, id, query->record().value("history_state").toInt(),
-                                                       query->record().value("archive_uid").toString())));
+                                                         query->record().value("archive_uid").toString(), {},
+                                                         protocolOnlyRecord(query->record()))));
                 }
             }
             query->freeResult();
@@ -583,8 +716,31 @@ PsiEvent::Ptr EDBSqLite::getEvent(const QSqlRecord &record)
             m.setLang(record.value("lang").toString());
             m.setSubject(record.value("subject").toString());
         }
+        // Older development versions stored protocol-only MAM rows without
+        // their event attributes. Recover those from the retained raw envelope.
+        if (pa && !record.value("archive_xml").toString().isEmpty()) {
+            QDomDocument doc;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+            const bool parsed = bool(doc.setContent(record.value("archive_xml").toString(),
+                                                    QDomDocument::ParseOption::UseNamespaceProcessing));
+#else
+            const bool parsed = doc.setContent(record.value("archive_xml").toString(), true);
+#endif
+            XMPP::Forwarding wrapper;
+            if (parsed && wrapper.fromXml(doc.documentElement().firstChildElement("forwarded"), pa->client())) {
+                const auto raw = wrapper.message();
+                if (raw.messageReceipt() == ReceiptReceived || !raw.reactions().targetId.isEmpty()
+                    || !raw.retraction().isEmpty())
+                    m = raw;
+            }
+        }
         m.setSpooled(true);
         HistoryMessageExtras::restore(record.value("extra_data").toString(), m);
+        if (QJsonDocument::fromJson(record.value("extra_data").toString().toUtf8())
+                .object()
+                .value("psi:decryption-error")
+                .toBool())
+            m.setBody(tr("Unable to decrypt archived message"));
         MessageEvent::Ptr me(new MessageEvent(m, pa));
         me->setOriginLocal((record.value("direction").toInt() == 1));
         return me.staticCast<PsiEvent>();
@@ -838,7 +994,8 @@ QString EDBSqLite::QueryStorage::getQueryString(QueryType type, bool allAccounts
     case QueryDateForward:
         queryStr = "SELECT `acc_id`, `events`.`id`, `jid`, `date`, `events`.`type`, `direction`, `subject`, `m_text`, "
                    "`lang`, `extra_data`, `history_state`, "
-                   "(SELECT uid FROM archive_items WHERE event_id=events.id LIMIT 1) AS archive_uid"
+                   "(SELECT uid FROM archive_items WHERE event_id=events.id LIMIT 1) AS archive_uid, "
+                   "(SELECT xml FROM archive_items WHERE event_id=events.id LIMIT 1) AS archive_xml"
                    " FROM `events`, `contacts`"
                    " WHERE `contacts`.`id` = `contact_id`";
         if (!allContacts)
@@ -874,7 +1031,8 @@ QString EDBSqLite::QueryStorage::getQueryString(QueryType type, bool allAccounts
     case QueryFindText:
         queryStr = "SELECT `acc_id`, `events`.`id`, `jid`, `date`, `events`.`type`, `direction`, `subject`, `m_text`, "
                    "`lang`, `extra_data`, `history_state`, "
-                   "(SELECT uid FROM archive_items WHERE event_id=events.id LIMIT 1) AS archive_uid"
+                   "(SELECT uid FROM archive_items WHERE event_id=events.id LIMIT 1) AS archive_uid, "
+                   "(SELECT xml FROM archive_items WHERE event_id=events.id LIMIT 1) AS archive_xml"
                    " FROM `events`, `contacts`"
                    " WHERE `contacts`.`id` = `contact_id`";
         if (!allContacts)

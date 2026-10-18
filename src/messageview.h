@@ -40,7 +40,8 @@ public:
         FileTransferRequest,
         FileTransferFinished,
         Reactions,
-        MessageRetraction
+        MessageRetraction,
+        DeliveryReceipt
     };
 
     enum Flag {
@@ -77,6 +78,16 @@ public:
     static MessageView reactionsMessage(const QString &nick, const QString &targetMessageId,
                                         const QSet<QString> &reactions);
     static MessageView retractionMessage(const QString &targetMessageId);
+    // Protocol events update an existing row; they never create a text row.
+    static MessageView receiptMessage(const QString &targetMessageId)
+    {
+        MessageView mv(DeliveryReceipt);
+        mv.setMessageId(targetMessageId);
+        return mv;
+    }
+    static bool    protocolMessage(const XMPP::Message &, bool local, MessageView &);
+    static QString reactionTarget(const XMPP::Message &);
+    static QString retractionTarget(const XMPP::Message &);
 
     inline Type           type() const { return _type; }
     inline const QString &text() const { return _text; }
@@ -123,6 +134,12 @@ public:
     inline const QString                  &archiveId() const { return _archiveId; }
     void setHistoryId(qint64 id) { _historyId = id; }
     qint64 historyId() const { return _historyId; }
+    void                                   setRevisionTime(const QDateTime &time) { _revisionTime = time; }
+    QDateTime revisionTime() const { return _revisionTime.isValid() ? _revisionTime : _dateTime; }
+    void      setReactionTargetId(const QString &id) { _reactionTargetId = id; }
+    QString   reactionTargetId() const { return _reactionTargetId; }
+    void      setRetractionTargetId(const QString &id) { _retractionTargetId = id; }
+    QString   retractionTargetId() const { return _retractionTargetId; }
     inline void                            setUserId(const QString &id) { _userId = id; }
     inline const QString                  &userId() const { return _userId; }
     inline void                            setDateTime(const QDateTime &dt) { _dateTime = dt; }
@@ -159,6 +176,9 @@ private:
     QString                  _text;     // always rich (plain text converted to rich)
     QString                  _userText; // rich
     QDateTime                _dateTime;
+    QDateTime                _revisionTime;
+    QString                  _reactionTargetId;
+    QString                  _retractionTargetId;
     QMap<QString, QString>   _urls;
     QString                  _replaceId;
     QString                  _quoteId;

@@ -3,10 +3,13 @@
 #include "avatars.h"
 #include "coloropt.h"
 #include "psiaccount.h"
+#include "psicon.h"
 #include "psioptions.h"
 #include "theme_p.h"
 #include "widgets/MamChatWidget.h"
 #include "widgets/OverlayScrollBarManager.h"
+#include "widgets/emojiregistry.h"
+#include "widgets/iconselect.h"
 #include <QApplication>
 #include <QSignalBlocker>
 
@@ -77,6 +80,20 @@ QString NativeChatViewThemeProvider::optionsDescription() const { return tr("Cho
 void configureNativeChat(MamChatWidget *view, PsiAccount *account, const XMPP::Jid &peer, bool groupChat)
 {
     view->setMediaOpener(account->fileSharingDeviceOpener());
+    // A separate instance of Psi's picker avoids also inserting the chosen
+    // reaction into the composer's shared emoticon popup.
+    auto *picker = new IconSelectPopup(view);
+    picker->setIconset(account->psi()->iconSelectPopup()->iconset());
+    picker->setEmojiSortingEnabled(true);
+    QObject::connect(view, &MamChatWidget::emojiChooserRequested, picker,
+                     [picker](const QString &target, const QPoint &where) {
+                         picker->setProperty("messageTarget", target);
+                         picker->popup(where);
+                     });
+    QObject::connect(picker, &IconSelectPopup::textSelected, view, [view, picker](const QString &emoji) {
+        if (EmojiRegistry::instance().isEmoji(emoji))
+            view->toggleReaction(picker->property("messageTarget").toString(), emoji);
+    });
     const QString option
         = groupChat ? QStringLiteral("options.ui.muc.native-theme") : QStringLiteral("options.ui.chat.native-theme");
     auto apply = [view, option] {

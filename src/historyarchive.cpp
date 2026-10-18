@@ -1,13 +1,15 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "historyarchive.h"
 
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSet>
 #include <QSqlError>
+#include <QSqlField>
 #include <QSqlQuery>
-#include <QXmlStreamReader>
 #include <QVariant>
+#include <QXmlStreamReader>
 
 namespace HistoryArchive {
 namespace {
@@ -27,11 +29,10 @@ namespace {
     }
     const QString scope = QStringLiteral("account=:account AND archive=:archive AND peer=:peer");
     QString       nonNull(const QString &s) { return s.isNull() ? QStringLiteral("") : s; }
-    bool revisionsExist(QSqlDatabase db)
+    bool          revisionsExist(QSqlDatabase db)
     {
         QSqlQuery q(db);
-        return q.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='message_revisions'")
-            && q.next();
+        return q.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='message_revisions'") && q.next();
     }
     QString cachedReplaceId(const QString &xml)
     {
@@ -46,7 +47,16 @@ namespace {
     }
 }
 
-bool migrate(QSqlDatabase db)
+bool needsMigration(QSqlDatabase db)
+{
+    QSqlQuery q(db);
+    if (!q.exec("SELECT value FROM system WHERE key='version'") || !q.next() || q.value(0).toString() != "0.2"
+        || !revisionsExist(db))
+        return true;
+    return !q.exec("SELECT 1 FROM events WHERE history_date_ms IS NULL LIMIT 1") || q.next();
+}
+
+bool migrate(QSqlDatabase db, const std::function<void(qint64)> &progress)
 {
     QSqlQuery version(db);
     if (!version.exec("SELECT value FROM system WHERE key='version'"))
@@ -105,8 +115,10 @@ bool migrate(QSqlDatabase db)
             }
         }
         lastId = batch.last().first;
+        if (progress)
+            progress(lastId);
     }
-    const bool backfillRevisions = !revisionsExist(db);
+    const bool        backfillRevisions = !revisionsExist(db);
     const QStringList statements {
         "CREATE TABLE IF NOT EXISTS archive_items ("
         "account TEXT NOT NULL, archive TEXT NOT NULL, peer TEXT NOT NULL, uid TEXT NOT NULL, "
@@ -160,32 +172,38 @@ bool migrate(QSqlDatabase db)
                          "FROM events e WHERE e.id>:id AND e.type IN (1,9) "
                          "ORDER BY e.id LIMIT 500");
             read.bindValue(":id", last);
-            if (!read.exec()) { ok = false; break; }
+            if (!read.exec()) {
+                ok = false;
+                break;
+            }
             struct Legacy {
-                qint64 id, contact;
-                int type, direction;
+                qint64  id, contact;
+                int     type, direction;
                 QString sender, stanza, replace;
             };
             QList<Legacy> rows;
-            int count = 0;
+            int           count = 0;
             while (read.next()) {
                 ++count;
-                last = read.value(0).toLongLong();
+                last                = read.value(0).toLongLong();
                 const auto envelope = QJsonDocument::fromJson(read.value(4).toString().toUtf8())
-                                          .object().value("psi:message").toObject();
+                                          .object()
+                                          .value("psi:message")
+                                          .toObject();
                 if (envelope.value("id").toString().isEmpty())
                     continue;
                 QString replace = envelope.value("replace").toString();
                 if (replace.isEmpty())
                     replace = cachedReplaceId(read.value(5).toString());
-                rows.append({last,read.value(1).toLongLong(),read.value(2).toInt(),
-                             read.value(3).toInt(),envelope.value("from").toString(),
-                             envelope.value("id").toString(),replace});
+                rows.append({ last, read.value(1).toLongLong(), read.value(2).toInt(), read.value(3).toInt(),
+                              envelope.value("from").toString(), envelope.value("id").toString(), replace });
             }
             read.finish();
+            if (progress)
+                progress(last);
             for (const auto &item : rows)
-                if (!recordRevision(db,item.id,item.contact,item.type,item.direction,
-                                    item.sender,item.stanza,item.replace)) {
+                if (!recordRevision(db, item.id, item.contact, item.type, item.direction, item.sender, item.stanza,
+                                    item.replace)) {
                     ok = false;
                     break;
                 }
@@ -199,15 +217,13 @@ bool migrate(QSqlDatabase db)
     return false;
 }
 
-bool recordRevision(QSqlDatabase db, qint64 eventId, qint64 contactId, int type,
-                    int direction, const QString &sender,
+bool recordRevision(QSqlDatabase db, qint64 eventId, qint64 contactId, int type, int direction, const QString &sender,
                     const QString &messageId, const QString &replaceId)
 {
-    if (eventId <= 0 || contactId <= 0 || messageId.isEmpty()
-        || (type == 9 && sender.isEmpty()))
+    if (eventId <= 0 || contactId <= 0 || messageId.isEmpty() || (type == 9 && sender.isEmpty()))
         return true; // Cannot prove identity without an ID or MUC sender.
     const QString who = type == 9 ? sender : QStringLiteral("direct");
-    QSqlQuery q(db);
+    QSqlQuery     q(db);
     q.prepare("INSERT INTO message_revisions("
               "event_id,contact_id,type,direction,sender,stanza_id,replace_id,root_id)"
               " VALUES(:id,:contact,:type,:direction,:sender,:stanza,:replace,:root)"
@@ -215,14 +231,14 @@ bool recordRevision(QSqlDatabase db, qint64 eventId, qint64 contactId, int type,
               " stanza_id=excluded.stanza_id,"
               " replace_id=CASE WHEN excluded.replace_id<>'' THEN excluded.replace_id"
               " ELSE message_revisions.replace_id END");
-    q.bindValue(":id",eventId);
-    q.bindValue(":contact",contactId);
-    q.bindValue(":type",type);
-    q.bindValue(":direction",direction);
-    q.bindValue(":sender",who);
-    q.bindValue(":stanza",messageId);
-    q.bindValue(":replace",nonNull(replaceId));
-    q.bindValue(":root",eventId);
+    q.bindValue(":id", eventId);
+    q.bindValue(":contact", contactId);
+    q.bindValue(":type", type);
+    q.bindValue(":direction", direction);
+    q.bindValue(":sender", who);
+    q.bindValue(":stanza", messageId);
+    q.bindValue(":replace", nonNull(replaceId));
+    q.bindValue(":root", eventId);
     if (!q.exec()) {
         qWarning().noquote() << "[history-revisions] insert:" << q.lastError().text();
         return false;
@@ -241,7 +257,7 @@ bool recordRevision(QSqlDatabase db, qint64 eventId, qint64 contactId, int type,
               " OR (next.replace_id<>'' AND next.replace_id=cur.stanza_id))"
               ") SELECT related.id FROM related JOIN events e ON e.id=related.id"
               " ORDER BY e.history_date_ms,e.id");
-    q.bindValue(":id",eventId);
+    q.bindValue(":id", eventId);
     if (!q.exec()) {
         qWarning().noquote() << "[history-revisions] traverse:" << q.lastError().text();
         return false;
@@ -255,8 +271,8 @@ bool recordRevision(QSqlDatabase db, qint64 eventId, qint64 contactId, int type,
     QSqlQuery update(db);
     update.prepare("UPDATE message_revisions SET root_id=:root WHERE event_id=:id");
     for (auto id : ids) {
-        update.bindValue(":root",ids.first());
-        update.bindValue(":id",id);
+        update.bindValue(":root", ids.first());
+        update.bindValue(":id", id);
         if (!update.exec()) {
             qWarning().noquote() << "[history-revisions] update:" << update.lastError().text();
             return false;
@@ -272,35 +288,59 @@ QSqlRecord resolvedRecord(QSqlDatabase db, qint64 eventId)
     QSqlQuery q(db);
     q.prepare("SELECT COALESCE(r.root_id,e.id) FROM events e"
               " LEFT JOIN message_revisions r ON r.event_id=e.id WHERE e.id=:id");
-    q.bindValue(":id",eventId);
+    q.bindValue(":id", eventId);
     if (!q.exec() || !q.next())
         return {};
     const qint64 root = q.value(0).toLongLong();
     q.finish();
     q.prepare("SELECT e.*,c.acc_id,c.jid,"
-              "(SELECT uid FROM archive_items WHERE event_id=e.id LIMIT 1) AS archive_uid"
+              "(SELECT uid FROM archive_items WHERE event_id=e.id LIMIT 1) AS archive_uid, "
+              "(SELECT xml FROM archive_items WHERE event_id=e.id LIMIT 1) AS archive_xml"
               " FROM events e JOIN contacts c ON c.id=e.contact_id WHERE e.id=:id");
-    q.bindValue(":id",root);
+    q.bindValue(":id", root);
     if (!q.exec() || !q.next())
         return {};
-    QSqlRecord record = q.record();
+    QSqlRecord record   = q.record();
+    const auto original = QJsonDocument::fromJson(record.value("extra_data").toString().toUtf8()).object();
+    QString    target   = original.value("psi:origin").toString();
+    if (record.value("type").toInt() == 9) {
+        target.clear();
+        for (const auto &value : original.value("psi:ids").toArray())
+            if (value.toObject().value("by").toString() == record.value("jid").toString())
+                target = value.toObject().value("id").toString();
+        if (target.isEmpty())
+            target = record.value("archive_uid").toString();
+    } else if (target.isEmpty())
+        target = original.value("psi:message").toObject().value("id").toString();
+    auto targetField = record.field(record.indexOf("m_text"));
+    targetField.setName("reaction_target");
+    record.append(targetField);
+    record.setValue("reaction_target", target);
+    targetField.setName("retraction_target");
+    record.append(targetField);
+    record.setValue("retraction_target", record.value("type").toInt() == 9 ? target
+        : original.value("psi:message").toObject().value("id").toString());
     q.finish();
     q.prepare("SELECT e.m_text,e.subject,e.lang,e.extra_data,"
-              "(SELECT uid FROM archive_items WHERE event_id=e.id LIMIT 1)"
+              "(SELECT uid FROM archive_items WHERE event_id=e.id LIMIT 1),e.date"
               " FROM message_revisions r JOIN events e ON e.id=r.event_id"
               " WHERE r.root_id=:root ORDER BY e.history_date_ms DESC,e.id DESC LIMIT 1");
-    q.bindValue(":root",root);
+    q.bindValue(":root", root);
     if (q.exec() && q.next()) {
-        const char *names[] = {"m_text","subject","lang","extra_data"};
-        for (int i=0;i<4;++i) {
+        auto revision = record.field(record.indexOf("date"));
+        revision.setName("revision_date");
+        record.append(revision);
+        record.setValue("revision_date", q.value(5));
+        const char *names[] = { "m_text", "subject", "lang", "extra_data" };
+        for (int i = 0; i < 4; ++i) {
             const int col = record.indexOf(QLatin1String(names[i]));
             if (col >= 0)
-                record.setValue(col,q.value(i));
+                record.setValue(col, q.value(i));
         }
         if (record.value("archive_uid").toString().isEmpty()) {
             const int col = record.indexOf("archive_uid");
             if (col >= 0)
-                record.setValue(col,q.value(4));
+                record.setValue(col, q.value(4));
         }
     }
     return record;
@@ -332,7 +372,7 @@ QList<QSqlRecord> localRecords(QSqlDatabase db, const QString &account, const QS
             ids.prepend(q.value(0).toLongLong());
     q.finish();
     for (qint64 id : ids) {
-        const auto resolved = resolvedRecord(db,id);
+        const auto resolved = resolvedRecord(db, id);
         if (!resolved.isEmpty())
             result.append(resolved);
     }
@@ -358,7 +398,9 @@ qint64 matchingDelivery(QSqlDatabase db, qint64 contact, const Entry &entry, boo
     while (q.next()) {
         const auto envelope
             = QJsonDocument::fromJson(q.value(2).toString().toUtf8()).object().value("psi:message").toObject();
-        if (envelope.value("id").toString() != entry.messageId || envelope.value("from").toString() != entry.sender
+        const QString sender = envelope.value("from").toString();
+        if (envelope.value("id").toString() != entry.messageId
+            || (sender != entry.sender && !(entry.direction == 1 && sender.isEmpty()))
             || !q.value(1).toDateTime().isValid() || qAbs(q.value(1).toDateTime().msecsTo(entry.timestamp)) > 300000)
             continue;
         if (match)
@@ -366,6 +408,39 @@ qint64 matchingDelivery(QSqlDatabase db, qint64 contact, const Entry &entry, boo
         match = q.value(0).toLongLong();
     }
     return match;
+}
+
+qint64 matchingOwnPlaintext(QSqlDatabase db, const Key &key, const QString &id, const QString &sender,
+                            const QDateTime &time)
+{
+    if (key.room || id.isEmpty() || sender.isEmpty() || !time.isValid())
+        return 0;
+    QSqlQuery q(db);
+    q.prepare("SELECT e.id,e.extra_data,e.m_text FROM events e JOIN contacts c ON c.id=e.contact_id "
+              "WHERE c.acc_id=:account AND c.jid=:peer AND e.direction=1 "
+              "AND e.history_date_ms BETWEEN :start AND :end");
+    q.bindValue(":account", key.account);
+    q.bindValue(":peer", key.peer);
+    q.bindValue(":start", time.toMSecsSinceEpoch() - 300000);
+    q.bindValue(":end", time.toMSecsSinceEpoch() + 300000);
+    qint64 found = 0;
+    if (!q.exec())
+        return 0;
+    while (q.next()) {
+        const auto extra = QJsonDocument::fromJson(q.value(1).toString().toUtf8()).object();
+        if (q.value(2).toString().isEmpty() && extra.value("psi:events").toObject().isEmpty())
+            continue;
+        const auto envelope = extra.value("psi:message").toObject();
+        if (envelope.value("id").toString() != id)
+            continue;
+        const auto from = envelope.value("from").toString();
+        if (!from.isEmpty() && from != sender)
+            continue;
+        if (found)
+            return 0; // A reused ID is ambiguous even among our own records.
+        found = q.value(0).toLongLong();
+    }
+    return found;
 }
 
 Page readPage(QSqlDatabase db, const Key &key, const QString &before, int limit)
@@ -419,6 +494,15 @@ Page readPage(QSqlDatabase db, const Key &key, const QString &before, int limit)
             page.entries.prepend(entry);
             cursor = previous;
             q.finish();
+        }
+        // Reaching exactly the requested count can also reach the proven
+        // archive start; preserve that boundary for the next UI request.
+        if (!page.complete && page.entries.size() == limit) {
+            q.prepare("SELECT previous_uid FROM archive_items WHERE " + scope + " AND uid=:uid AND stable=1");
+            bindKey(q, key);
+            q.bindValue(":uid", cursor);
+            if (q.exec() && q.next() && !q.value(0).isNull() && q.value(0).toString().isEmpty())
+                page.complete = true;
         }
         page.found = page.stable = true;
         return page;
@@ -505,6 +589,7 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
         q.finish();
         if (!eventId)
             eventId = matchingDelivery(db, contact, entry, false);
+        const bool existingEvent = eventId > 0;
         if (!eventId) {
             q.prepare("INSERT INTO "
                       "events(contact_id,resource,date,history_date_ms,type,direction,subject,m_text,lang,extra_data,"
@@ -525,14 +610,51 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
             eventId = q.lastInsertId().toLongLong();
         }
         entry.eventId = eventId;
+        if (existingEvent && page.stable) {
+            q.prepare("SELECT extra_data FROM events WHERE id=:id");
+            q.bindValue(":id", eventId);
+            if (!q.exec() || !q.next())
+                return fail();
+            const QString originalExtra    = q.value(0).toString();
+            auto          merged           = QJsonDocument::fromJson(originalExtra.toUtf8()).object();
+            const bool    repairProjection = !merged.value("psi:decoded").toBool();
+            q.finish();
+            if (merged.isEmpty() && !originalExtra.isEmpty() && originalExtra != "{}")
+                merged.insert("psi:legacy-extra", originalExtra);
+            // Replace known protocol fields, retaining extension/plugin data.
+            for (const auto &name : { "psi:message", "psi:events", "psi:html", "psi:ids", "psi:origin", "psi:encrypted",
+                                      "psi:encryption-protocol", "psi:decoded", "psi:has-body", "psi:decryption-error",
+                                      "psi:protocol-only", "urn:xmpp:reference:0", "jabber:x:oob" })
+                merged.remove(QLatin1String(name));
+            const auto incoming = QJsonDocument::fromJson(entry.extra.toUtf8()).object();
+            for (auto it = incoming.begin(); it != incoming.end(); ++it)
+                merged.insert(it.key(), it.value());
+            const QString combinedExtra = QString::fromUtf8(QJsonDocument(merged).toJson(QJsonDocument::Compact));
+            // An unverified/provisional projection is repaired by a confirmed
+            // server result. A trusted local plaintext body is not replaced
+            // by a failed decryption's empty projection.
+            q.prepare(
+                "UPDATE events SET m_text=CASE WHEN :repair OR (history_state & 3)=0 OR (m_text='' AND :body<>'') THEN "
+                ":body ELSE m_text END,"
+                "subject=CASE WHEN (history_state & 3)=0 THEN :subject ELSE subject END,"
+                "lang=CASE WHEN (history_state & 3)=0 THEN :lang ELSE lang END,extra_data=:extra WHERE id=:id");
+            q.bindValue(":id", eventId);
+            q.bindValue(":repair", repairProjection);
+            q.bindValue(":body", nonNull(entry.body));
+            q.bindValue(":subject", nonNull(entry.subject));
+            q.bindValue(":lang", nonNull(entry.language));
+            q.bindValue(":extra", combinedExtra);
+            if (!q.exec())
+                return fail();
+        }
         if (page.stable) {
             q.prepare("UPDATE events SET history_state=(history_state & ~3) | 1 WHERE id=:id");
             q.bindValue(":id", eventId);
             if (!q.exec())
                 return fail();
         }
-        if (!recordRevision(db,eventId,contact,entry.type,entry.direction,
-                            entry.sender,entry.messageId,entry.replaceId))
+        if (!recordRevision(db, eventId, contact, entry.type, entry.direction, entry.sender, entry.messageId,
+                            entry.replaceId))
             return fail();
         // Never overwrite an already stable payload with a provisional result.
         q.prepare(
@@ -577,9 +699,17 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
             return fail();
     }
     if (reusable) {
+        if (!page.previous.isEmpty() && !page.entries.isEmpty()) {
+            q.prepare("UPDATE archive_items SET next_uid=:next WHERE " + scope + " AND uid=:uid AND stable=1");
+            bindKey(q, key);
+            q.bindValue(":uid", page.previous);
+            q.bindValue(":next", page.entries.first().uid);
+            if (!q.exec())
+                return fail();
+        }
         for (int i = 0; i < page.entries.size(); ++i) {
             const auto   &entry    = page.entries.at(i);
-            const QString previous = i > 0 ? page.entries.at(i - 1).uid : QString();
+            const QString previous = i > 0 ? page.entries.at(i - 1).uid : page.previous;
             const QString next     = i + 1 < page.entries.size() ? page.entries.at(i + 1).uid : before;
             // NULL denotes an unknown neighbour. Empty string is a proven
             // archive start; there is deliberately no permanent "live end".
@@ -588,11 +718,12 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
                       + scope + " AND uid=:uid");
             bindKey(q, key);
             q.bindValue(":uid", entry.uid);
-            q.bindValue(":previous", i > 0 || page.complete ? nonNull(previous) : previous);
+            q.bindValue(":previous", i > 0 || page.complete || !page.previous.isEmpty() ? nonNull(previous) : previous);
             q.bindValue(":next", next);
             if (!q.exec())
                 return fail();
-            const int flags = (i > 0 || page.complete ? LinkedPrevious : 0) | (!next.isEmpty() ? LinkedNext : 0);
+            const int flags = (i > 0 || page.complete || !page.previous.isEmpty() ? LinkedPrevious : 0)
+                | (!next.isEmpty() ? LinkedNext : 0);
             q.prepare("UPDATE events SET history_state=history_state | :flags WHERE id=:id");
             q.bindValue(":flags", flags);
             q.bindValue(":id", entry.eventId);

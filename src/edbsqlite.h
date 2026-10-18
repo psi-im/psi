@@ -104,6 +104,8 @@ public:
     EDBSqLite(PsiCon *psi);
     ~EDBSqLite();
     bool init();
+    EDBItemPtr archivedEvent(const HistoryArchive::Key &, const QString &, const QDateTime & = {}) override;
+    EDBItemPtr ownPlaintext(const HistoryArchive::Key &, const QString &, const QString &, const QDateTime &) override;
 
     int features() const;
     int get(const QString &accId, const XMPP::Jid &jid, const QDateTime date, int direction, int start, int len);

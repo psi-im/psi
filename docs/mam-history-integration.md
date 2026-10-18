@@ -7,6 +7,55 @@ plans below are retained as design context; the implementation section describes
 what is currently active. No automatic pruning or whole-archive background sweep
 is enabled.
 
+## Incremental tail and protocol replay
+
+Reopening a connected chat uses the last UID of its persisted stable tail as
+RSM `after`, with a maximum of 40 events per network page. An unchanged archive
+therefore returns no events. Catch-up commits rolling tail pages and proven
+previous/next links; older scrollback remains independently pageable. Missing
+UIDs after server retention fall back to a fresh last-page request without
+assuming a connection across the gap. Provisional pages remain unverified and
+cannot advance a reusable checkpoint. This baseline path does not require MAM
+`#extended`; newest-first ranges with an `after-id` lower bound would require it.
+
+Receipt, reaction and retraction payloads, origin/stanza IDs, encryption metadata
+and XHTML are retained in the existing extra_data JSON. Legacy readers still
+understand the old OOB/SIMS fields. Old protocol-only cache records can recover
+metadata from their original archive XML. DeliveryReceipt is an explicit
+MessageView event: neither live delivery nor EDB/MAM replay creates a blank
+message row for it. Bare protocol entries continue to count toward archive
+coverage and cursors. EDB and MAM native replay share content/plugin/media
+projection; rendering a correction uses the full resolved message, not a body
+copied onto older attachments.
+
+A logical row keeps its original timestamp, while revision time determines
+content freshness. Reactions address the original reaction target, including a
+verified room-assigned UID in MUC. Native chips aggregate complete per-actor
+reaction sets, and a floating quick bar opens Psi's emoji selector. Retractions
+replace content with a tombstone only for the original sender/direction.
+
+Decrypting an archived stanza sets `EncryptionContext::setArchiveReplay()`.
+OMEMO then suppresses historical key-exchange/ratchet acknowledgements. Cached
+plaintext is reused before decryption; a decryption error is displayed but not
+persisted as canonical body text. Stable raw XML and its archive coverage remain
+cached independently of decoding: `psi:decoded=false` lets subsequent replay
+retry decryption without downloading the same archive events again. This flag
+uses the existing options map and does not change EncryptionContext's object layout.
+
+Database upgrades with existing history run through HistoryImport's startup
+gate: explicit consent, a modal progress window, a worker-owned SQL connection,
+and an atomic transaction. Declining stops startup; a failure rolls back. New
+empty databases are initialized directly. Normal page SQL is still bounded
+synchronous EDB work; moving that queue off the GUI thread is separate work.
+This development build requires bundled Iris until the new APIs stabilize.
+
+An eventual Iris external-cache interface should be asynchronous and scoped by
+account/archive/filter/opaque cursor. It should expose raw results and stable,
+complete, coverage and transaction outcomes; it must not depend on EDB, widgets
+or MessageView. Storage policy, local-only records and user projections remain
+application responsibilities. The current adapter remains in Psi; that broader
+Iris cache interface is not implemented by this change.
+
 ## Implemented EDB/MAM bridge
 
 `HistorySync` is the account/application adapter over Iris MAMTask. Each request

@@ -27,6 +27,31 @@ class SimsHistoryTest : public QObject {
         return reference;
     }
 private slots:
+    void protocolEventsAndArchiveIdentitiesRoundTrip()
+    {
+        Message original;
+        original.setId("receipt-id");
+        original.setFrom(Jid("alice@example.org/phone"));
+        original.setMessageReceipt(ReceiptReceived);
+        original.setMessageReceiptId("delivered-message");
+        original.setReactions({ "target", { QString::fromUtf8("👍") } });
+        original.setRetraction("another-target");
+        original.setReplaceId("original-id");
+        original.setOriginId("origin-id");
+        original.addStanzaId({ Jid("alice@example.org"), "server-id" });
+        original.setWasEncrypted(true);
+        Message restored;
+        HistoryMessageExtras::restore(HistoryMessageExtras::encode(original), restored);
+        QCOMPARE(restored.messageReceipt(), ReceiptReceived);
+        QCOMPARE(restored.messageReceiptId(), QString("delivered-message"));
+        QCOMPARE(restored.reactions().targetId, QString("target"));
+        QCOMPARE(restored.reactions().reactions, original.reactions().reactions);
+        QCOMPARE(restored.retraction(), QString("another-target"));
+        QCOMPARE(restored.replaceId(), QString("original-id"));
+        QCOMPARE(restored.originId(), QString("origin-id"));
+        QCOMPARE(restored.stanzaId(Jid("alice@example.org")).id, QString("server-id"));
+        QVERIFY(restored.wasEncrypted());
+    }
     void roundTrip()
     {
         QTemporaryDir dir;
