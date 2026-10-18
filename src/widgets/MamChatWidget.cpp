@@ -152,7 +152,12 @@ QBoxLayout *buildThemeLayout(const QJsonObject &node, const QHash<QString, QWidg
     layout->setSpacing(horizontal ? (theme.layout == NativeChatTheme::Classic ? 4 : 10) : 3);
     for (const auto &item : node.value(QStringLiteral("items")).toArray()) {
         if (item.isObject()) {
-            layout->addLayout(buildThemeLayout(item.toObject(), elements, theme), horizontal ? 1 : 0);
+            auto *nested = buildThemeLayout(item.toObject(), elements, theme);
+            layout->addLayout(nested, horizontal ? 1 : 0);
+            // Nested headers must stay compact: otherwise Qt6 distributes
+            // spare row height into the author/body gap.
+            if (!horizontal)
+                layout->setAlignment(nested, Qt::AlignTop);
         } else if (auto *widget = elements.value(item.toString(), nullptr)) {
             const bool bodyOnLine = horizontal && item.toString() == QLatin1String("body");
             layout->addWidget(widget, bodyOnLine ? 1 : 0, Qt::AlignTop);
