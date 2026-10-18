@@ -210,7 +210,7 @@ bool recordRevision(QSqlDatabase db, qint64 eventId, qint64 contactId, int type,
     QSqlQuery q(db);
     q.prepare("INSERT INTO message_revisions("
               "event_id,contact_id,type,direction,sender,stanza_id,replace_id,root_id)"
-              " VALUES(:id,:contact,:type,:direction,:sender,:stanza,:replace,:id)"
+              " VALUES(:id,:contact,:type,:direction,:sender,:stanza,:replace,:root)"
               " ON CONFLICT(event_id) DO UPDATE SET"
               " stanza_id=excluded.stanza_id,"
               " replace_id=CASE WHEN excluded.replace_id<>'' THEN excluded.replace_id"
@@ -222,8 +222,11 @@ bool recordRevision(QSqlDatabase db, qint64 eventId, qint64 contactId, int type,
     q.bindValue(":sender",who);
     q.bindValue(":stanza",messageId);
     q.bindValue(":replace",replaceId);
-    if (!q.exec())
+    q.bindValue(":root",eventId);
+    if (!q.exec()) {
+        qWarning().noquote() << "[history-revisions] insert:" << q.lastError().text();
         return false;
+    }
 
     // Both traversal directions matter: original and correction may arrive
     // in separate pages, and the newer revision may be stored first.
@@ -239,8 +242,10 @@ bool recordRevision(QSqlDatabase db, qint64 eventId, qint64 contactId, int type,
               ") SELECT related.id FROM related JOIN events e ON e.id=related.id"
               " ORDER BY e.history_date_ms,e.id");
     q.bindValue(":id",eventId);
-    if (!q.exec())
+    if (!q.exec()) {
+        qWarning().noquote() << "[history-revisions] traverse:" << q.lastError().text();
         return false;
+    }
     QList<qint64> ids;
     while (q.next())
         ids.append(q.value(0).toLongLong());
@@ -252,8 +257,10 @@ bool recordRevision(QSqlDatabase db, qint64 eventId, qint64 contactId, int type,
     for (auto id : ids) {
         update.bindValue(":root",ids.first());
         update.bindValue(":id",id);
-        if (!update.exec())
+        if (!update.exec()) {
+            qWarning().noquote() << "[history-revisions] update:" << update.lastError().text();
             return false;
+        }
     }
     return true;
 }

@@ -44,6 +44,7 @@
 #include "lastactivitytask.h"
 #include "messageview.h"
 #include "historysync.h"
+#include "eventdb.h"
 #include "nativechathistory.h"
 #include "nativechattheme.h"
 #include "widgets/MamChatWidget.h"
