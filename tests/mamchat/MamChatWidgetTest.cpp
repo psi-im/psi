@@ -558,7 +558,9 @@ private slots:
             }
             list.show();
             QTRY_VERIFY(list.itemWidget(types.size()));
-            QVERIFY(list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamTimestamp")));
+            auto *stamp = list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
+            QVERIFY(stamp);
+            QCOMPARE(stamp->toolTip(), MamChatWidget::fullTimestamp(ordinary.dateTime()));
             for (int i = 1; i <= types.size(); ++i) {
                 auto *row = list.itemWidget(i);
                 auto *body = row->findChild<ChatMessageText *>();
@@ -566,7 +568,8 @@ private slots:
                 QVERIFY(!row->findChild<QLabel *>(QStringLiteral("mamTimestamp")));
                 QVERIFY(!row->findChild<QLabel *>(QStringLiteral("mamAuthor")));
                 QCOMPARE(body->palette().color(QPalette::Text), QColor(0, 128, 0));
-                QCOMPARE(body->viewport()->toolTip(), MamChatWidget::fullTimestamp(ordinary.dateTime()));
+                QVERIFY(body->viewport()->toolTip().isEmpty());
+                QVERIFY(row->toolTip().isEmpty());
                 QCOMPARE(body->document()->begin().blockFormat().alignment() & Qt::AlignHorizontal_Mask,
                          Qt::Alignment(types.at(i - 1) == MessageView::Subject ? Qt::AlignLeft : Qt::AlignHCenter));
             }
@@ -863,15 +866,17 @@ private slots:
         list.resize(500, 220);
         list.setHistoryLoading(true);
         auto view = message(QStringLiteral("clock"), QStringLiteral("Time refresh"));
-        view.setDateTime(QDateTime::currentDateTime().addSecs(-1));
+        // Near the first minute boundary: old 1-second polling is unnecessary,
+        // but a single-shot wakeup must still update the existing row.
+        view.setDateTime(QDateTime::currentDateTime().addMSecs(-58000));
         list.appendMessage(view);
         list.show();
         QTRY_VERIFY(list.itemWidget(0));
         QWidget *row = list.itemWidget(0);
         auto *time = row->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
         QVERIFY(time);
-        const QString before = time->text();
-        QTRY_VERIFY_WITH_TIMEOUT(time->text() != before, 2500);
+        QCOMPARE(time->text(), QStringLiteral("just now"));
+        QTRY_COMPARE_WITH_TIMEOUT(time->text(), QStringLiteral("1 minute ago"), 6000);
         QCOMPARE(list.itemWidget(0), row);
     }
 
