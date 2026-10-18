@@ -122,6 +122,7 @@ if [[ "$build_testing" == ON ]]; then
 
     for test_exe in \
         "$build_dir"/src/avcall/unittest/*.exe \
+        "$build_dir"/psi/avcall*_test.exe \
         "$build_dir"/tests/avcall/backend-lifecycle/*.exe; do
         [[ -f "$test_exe" ]] || continue
         echo "Runtime imports for $test_exe:"

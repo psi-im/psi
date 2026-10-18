@@ -38,7 +38,8 @@ set_tests_properties(avcallstage_test PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=of
 
 add_executable(avcall_screenshare_test screenshare.cpp ../callview.cpp ../callview.h ../callstage.cpp ../callstage.h)
 target_include_directories(avcall_screenshare_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/..)
-target_link_libraries(avcall_screenshare_test PRIVATE psimedia Qt${QT_DEFAULT_MAJOR_VERSION}::Test ${QT_LIBRARIES})
+target_link_libraries(avcall_screenshare_test PRIVATE psimedia Qt${QT_DEFAULT_MAJOR_VERSION}::Test
+    Qt${QT_DEFAULT_MAJOR_VERSION}::Widgets)
 add_test(NAME avcall_screenshare_test COMMAND avcall_screenshare_test)
 set_tests_properties(avcall_screenshare_test PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 20)
 
