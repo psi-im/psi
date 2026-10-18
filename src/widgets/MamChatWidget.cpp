@@ -85,8 +85,8 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
 
     connect(this, &Mattermost::LongListWidget::visibleRangeChanged, this,
             [this](int first, int) {
-        if (first <= 1)
-            requestOlderIfNeeded(false);
+        if (first <= 1 && !historyLoading_ && !historyExhausted_)
+            emit olderMessagesRequested();
         updateTimestamps();
     });
     connect(this, &Mattermost::LongListWidget::materializedRangeChanged,
@@ -352,13 +352,6 @@ void MamChatWidget::coalesceRevisionRows()
 
 void MamChatWidget::appendMessage(const MessageView &view)
 {
-    // The legacy message dispatch path also sees receipts, OMEMO wrappers,
-    // and other protocol-only events with an empty display body. Rendering
-    // them as chat messages produces blank avatar/timestamp rows.
-    if (view.type() == MessageView::Message
-        && view.formattedText().isEmpty() && view.formattedUserText().isEmpty()
-        && view.references().isEmpty() && view.urls().isEmpty())
-        return;
     if (((view.type() == MessageView::MUCJoin || view.type() == MessageView::MUCPart) && view.isJoinLeaveHidden())
         || (view.type() == MessageView::Status && view.isStatusChangeHidden()))
         return;
@@ -421,10 +414,6 @@ int MamChatWidget::prependArchivePage(const QList<QPair<QString, MessageView>> &
     QSet<QString> preMergedKeys;
     for (auto it = page.crbegin(); it != page.crend(); ++it) {
         const auto &incoming = it->second;
-        if (incoming.type() == MessageView::Message
-            && incoming.formattedText().isEmpty() && incoming.formattedUserText().isEmpty()
-            && incoming.references().isEmpty() && incoming.urls().isEmpty())
-            continue;
         if (incoming.type() != MessageView::Message
             || (it->first.isEmpty() && incoming.historyId() <= 0))
             continue;
@@ -444,10 +433,6 @@ int MamChatWidget::prependArchivePage(const QList<QPair<QString, MessageView>> &
     // tail row, otherwise older unrelated messages land after the tail.
     for (const auto &entry : page) {
         const auto &incoming = entry.second;
-        if (incoming.type() == MessageView::Message
-            && incoming.formattedText().isEmpty() && incoming.formattedUserText().isEmpty()
-            && incoming.references().isEmpty() && incoming.urls().isEmpty())
-            continue;
         if (entry.first.isEmpty() && incoming.historyId() <= 0)
             continue;
         const QString key = !entry.first.isEmpty()
@@ -514,40 +499,25 @@ void MamChatWidget::clearMessages()
     pressedKey_.clear();
     generatedKey_ = 0;
     followingInitialTail_ = true;
-    automaticInitialFillRemaining_ = 1;
-    olderRequestQueued_ = false;
     historyLoading_ = false;
     historyExhausted_ = false;
     setItemCount(0);
     timestampTimer_->stop();
 }
 
-void MamChatWidget::requestOlderIfNeeded(bool viewportShort)
-{
-    if (historyLoading_ || historyExhausted_ || olderRequestQueued_)
-        return;
-    if (followingInitialTail_ && automaticInitialFillRemaining_ <= 0)
-        return;
-    if (viewportShort && contentHeight() > viewport()->height())
-        return;
-    olderRequestQueued_ = true;
-    QTimer::singleShot(0, this, [this, viewportShort] {
-        olderRequestQueued_ = false;
-        if (historyLoading_ || historyExhausted_
-            || (viewportShort && contentHeight() > viewport()->height())
-            || (followingInitialTail_ && automaticInitialFillRemaining_ <= 0))
-            return;
-        if (followingInitialTail_)
-            --automaticInitialFillRemaining_;
-        emit olderMessagesRequested();
-    });
-}
-
 void MamChatWidget::setHistoryLoading(bool loading)
 {
     historyLoading_ = loading;
-    if (!loading)
-        requestOlderIfNeeded(true);
+    if (!loading && !historyExhausted_
+        && contentHeight() <= viewport()->height()) {
+        // No scroll event is possible for an empty or short initial page.
+        // Continue from the next MAM cursor while HistorySync is not complete.
+        QTimer::singleShot(0, this, [this] {
+            if (!historyLoading_ && !historyExhausted_
+                && contentHeight() <= viewport()->height())
+                emit olderMessagesRequested();
+        });
+    }
 }
 
 void MamChatWidget::setHistoryExhausted(bool exhausted)

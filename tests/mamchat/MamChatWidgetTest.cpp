@@ -962,45 +962,6 @@ private slots:
         QCOMPARE(chat.messageCount(),45);
     }
 
-    void emptyProtocolEventsNeverBecomeMessageRows()
-    {
-        MamChatWidget list;
-        list.resize(460, 200);
-        list.setHistoryLoading(true);
-        auto empty = message(QStringLiteral("receipt"), QString(), 1);
-        list.appendMessage(empty);
-        QCOMPARE(list.messageCount(), 0);
-        QCOMPARE(list.prependArchivePage({{QStringLiteral("uid-receipt"), empty}}), 0);
-        QCOMPARE(list.messageCount(), 0);
-
-        // Full MAM pages can mix receipts/OMEMO wrappers with real text.
-        auto visible = message(QStringLiteral("corrected"), QStringLiteral("e"), 2);
-        visible.setReplaceId(QStringLiteral("d"));
-        QCOMPARE(list.prependArchivePage({{QStringLiteral("uid-empty"), empty},
-                                         {QStringLiteral("uid-message"), visible}}), 1);
-        QCOMPARE(list.messageCount(), 1);
-        list.show();
-        QTRY_VERIFY(list.itemWidget(0));
-        QCOMPARE(list.itemWidget(0)->findChild<ChatMessageText *>()->toPlainText(),
-                 QStringLiteral("e"));
-        QVERIFY(list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamEditedIndicator")));
-    }
-
-    void autoFillHasBoundWhenArchiveContainsOnlyNonTextEvents()
-    {
-        MamChatWidget list;
-        list.resize(500, 250);
-        list.show();
-        QSignalSpy requests(&list, &MamChatWidget::olderMessagesRequested);
-        list.setHistoryLoading(true);
-        list.setHistoryLoading(false); // One empty initial page.
-        QTRY_COMPARE(requests.count(), 1); // At most one eager refill.
-        list.setHistoryLoading(true);
-        list.setHistoryLoading(false); // Empty non-text page again.
-        QTest::qWait(70);
-        QCOMPARE(requests.count(), 1); // No unbounded background loop.
-    }
-
     void archivedCorrectionChainMergesInBothLoadOrders()
     {
         auto scenario = [this](bool archiveFirst) {

@@ -103,9 +103,6 @@ private:
     // Opening a chat always starts at the live tail, even while Qt measures
     // new rows or MAM/EDB prepends history. A real user scroll takes ownership.
     bool followingInitialTail_ = true;
-    int automaticInitialFillRemaining_ = 1; // Avoid fetching pages of non-text stanzas indefinitely.
-    bool olderRequestQueued_ = false;
-    void requestOlderIfNeeded(bool viewportShort);
     quint64 generatedKey_ = 0;
 
     QSet<QString> selectedKeys_;
