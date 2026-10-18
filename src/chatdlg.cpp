@@ -212,11 +212,17 @@ void ChatDlg::initActions()
 
     act_scrollup_ = new QAction(this);
     addAction(act_scrollup_);
-    connect(act_scrollup_, SIGNAL(triggered()), chatView(), SLOT(scrollUp()));
+    connect(act_scrollup_, &QAction::triggered, this, [this] {
+        if (!scrollNativeHistory(false))
+            chatView()->scrollUp();
+    });
 
     act_scrolldown_ = new QAction(this);
     addAction(act_scrolldown_);
-    connect(act_scrolldown_, SIGNAL(triggered()), chatView(), SLOT(scrollDown()));
+    connect(act_scrolldown_, &QAction::triggered, this, [this] {
+        if (!scrollNativeHistory(true))
+            chatView()->scrollDown();
+    });
 }
 
 void ChatDlg::setShortcuts()
@@ -421,14 +427,26 @@ UserStatus ChatDlg::userStatusFor(const Jid &jid, QList<UserListItem *> ul, bool
     return u;
 }
 
-void ChatDlg::preloadHistory()
+void ChatDlg::preloadHistory(bool forceLocal)
 {
+    // The widget-chat MVP uses a MAM-backed timeline when online. Do not
+    // independently prepend the SQLite tail: old records lack archive UIDs
+    // and would otherwise duplicate the initial MAM page. Offline chats still
+    // display the legacy local history until EDB/MAM correlation lands.
+#ifndef WEBKIT
+    if (!forceLocal && account()->isConnected() && !account()->findGCContact(jid()))
+        return; // Keep private MUC occupant history in EDB.
+#endif
     int cnt = PsiOptions::instance()->getOption("options.ui.chat.history.preload-history-size").toInt();
-    if (cnt > 0) {
+    if (cnt > 0 && !localHistoryPending_) {
+        localHistoryPending_ = true;
         holdMessages(true);
         if (cnt > 100) // This is limit, just in case.
             cnt = 100;
         EDBHandle *h = new EDBHandle(account()->edb());
+        // Remember which exact chat owned this asynchronous SQLite request.
+        // A dialog can switch peer before finished() is delivered.
+        h->setProperty("_psiPreloadPeerJid", jid().full());
         connect(h, SIGNAL(finished()), this, SLOT(getHistory()));
         Jid j = jid();
         if (!account()->findGCContact(j))
@@ -444,18 +462,26 @@ void ChatDlg::getHistory()
     if (!h)
         return;
 
-    historyState       = true;
-    const EDBResult &r = h->result();
-    for (int i = r.count() - 1; i >= 0; --i) {
-        const EDBItemPtr &item = r.at(i);
-        PsiEvent::Ptr     e    = item->event();
-        if (e->type() == PsiEvent::Message) {
-            MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-            appendMessage(me->message(), me->originLocal());
+    const bool stillSamePeer = h->property("_psiPreloadPeerJid").toString() == jid().full();
+    if (stillSamePeer) {
+        historyState       = true;
+        const EDBResult &r = h->result();
+        for (int i = r.count() - 1; i >= 0; --i) {
+            const EDBItemPtr &item = r.at(i);
+            PsiEvent::Ptr     e    = item->event();
+            if (e->type() == PsiEvent::Message) {
+                // No verified archive UID exists for legacy EDB rows.
+                // Never splice an anonymous SQLite tail into a MAM timeline.
+                localHistoryPopulated_ = true;
+                MessageEvent::Ptr me = e.staticCast<MessageEvent>();
+                appendMessage(me->message(), me->originLocal());
+            }
         }
     }
     delete h;
     holdMessages(false);
+    localHistoryPending_ = false;
+    emit localHistoryPreloadFinished();
 }
 
 void ChatDlg::ensureTabbedCorrectly()
@@ -605,7 +631,11 @@ void ChatDlg::doHistory() { emit aHistory(jid()); }
 
 void ChatDlg::doFile() { emit aFile(jid()); }
 
-void ChatDlg::doClear() { chatView()->clear(); }
+void ChatDlg::doClear()
+{
+    chatView()->clear();
+    clearNativeHistory();
+}
 
 QString ChatDlg::desiredCaption() const
 {
@@ -979,6 +1009,10 @@ void ChatDlg::dispatchMessage(const MessageView &mv)
 
 void ChatDlg::displayMessage(const MessageView &mv)
 {
+    // The legacy view is hidden but still owns message receipts, reactions,
+    // corrections and composer integration. Keep it synchronized until those
+    // interactions have equivalent native implementations.
+    displayNativeMessage(mv);
     chatView()->dispatchMessage(mv);
 
     // if we're not active, notify the user by changing the title
