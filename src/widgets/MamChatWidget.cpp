@@ -599,8 +599,17 @@ QWidget *MamChatWidget::createItemWidget(int index)
             timeLayout->setContentsMargins(0, 0, 0, 0);
             timeLayout->setSpacing(7);
             timeLayout->addWidget(time);
-            auto *pencil = new QLabel(QString(QChar(0x270e)), timeGroup);
+            auto *pencil = new QLabel(timeGroup);
             pencil->setObjectName(QStringLiteral("mamEditedIndicator"));
+            // Use the existing Psi system icon, not a font-dependent Unicode
+            // glyph. Match the time font so the marker fits either layout.
+            const int iconSize = qMax(12, QFontMetrics(time->font()).height());
+            if (editedIconResolver_) {
+                const QPixmap icon = editedIconResolver_(iconSize);
+                if (!icon.isNull())
+                    pencil->setPixmap(icon.scaled(iconSize, iconSize, Qt::KeepAspectRatio,
+                                                  Qt::SmoothTransformation));
+            }
             pencil->setToolTip(tr("The message was corrected"));
             pencil->setAccessibleName(tr("Edited message"));
             pencil->setForegroundRole(QPalette::Text);
@@ -854,6 +863,14 @@ void MamChatWidget::updateNicknameColor(QLabel *author, const MessageView &messa
     if (auto *time = author->parentWidget()->findChild<QLabel *>(
             QStringLiteral("mamTimestamp")))
         updateTimestampAppearance(time);
+}
+
+void MamChatWidget::setEditedIconResolver(std::function<QPixmap(int)> resolver)
+{
+    editedIconResolver_ = std::move(resolver);
+    for (int index : materializedIndices())
+        if (items_.at(index).message.isEdited())
+            replaceItem(index);
 }
 
 void MamChatWidget::setAvatarResolver(std::function<QPixmap(const MessageView &)> resolver)

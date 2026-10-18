@@ -2,6 +2,7 @@
 #include "nativechattheme.h"
 #include "avatars.h"
 #include "coloropt.h"
+#include "iconset.h"
 #include "psiaccount.h"
 #include "psioptions.h"
 #include "theme_p.h"
@@ -77,6 +78,10 @@ QString NativeChatViewThemeProvider::optionsDescription() const { return tr("Cho
 void configureNativeChat(MamChatWidget *view, PsiAccount *account, const XMPP::Jid &peer, bool groupChat)
 {
     view->setMediaOpener(account->fileSharingDeviceOpener());
+    view->setEditedIconResolver([](int size) {
+        // Same Psi iconset entry used by chatview_te's log_icon_corrected.
+        return IconsetFactory::iconPixmap(QStringLiteral("psi/action_templates_edit"), size);
+    });
     const QString option
         = groupChat ? QStringLiteral("options.ui.muc.native-theme") : QStringLiteral("options.ui.chat.native-theme");
     auto apply = [view, option] {

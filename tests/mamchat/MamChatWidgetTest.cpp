@@ -921,6 +921,21 @@ private slots:
         auto *pencil = list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamEditedIndicator"));
         QVERIFY(pencil);
         QCOMPARE(pencil->toolTip(), QStringLiteral("The message was corrected"));
+        // Native UI receives the existing system icon through its resolver.
+        QPixmap editIcon(18, 18);
+        editIcon.fill(Qt::blue);
+        int requestedSize = 0;
+        list.setEditedIconResolver([editIcon, &requestedSize](int size) {
+            requestedSize = size;
+            return editIcon;
+        });
+        QTRY_VERIFY(list.itemWidget(0));
+        pencil = list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamEditedIndicator"));
+        QVERIFY(pencil);
+        QVERIFY(requestedSize > 0);
+        const QPixmap actual = pencil->pixmap(Qt::ReturnByValue);
+        QVERIFY(!actual.isNull());
+        QCOMPARE(actual.toImage().pixelColor(0, 0), QColor(Qt::blue));
         auto *timestamp = list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
         QVERIFY(timestamp);
         QVERIFY(pencil->mapTo(list.itemWidget(0), QPoint()).x()
