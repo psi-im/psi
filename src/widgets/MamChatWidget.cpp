@@ -104,12 +104,6 @@ public:
     }
 };
 
-bool sameDelivery(const MessageView &a, const MessageView &b)
-{
-    return PsiMam::sameDelivery(
-        {a.messageId(), a.text(), a.isLocal(), a.dateTime()},
-        {b.messageId(), b.text(), b.isLocal(), b.dateTime()});
-}
 
 bool validateLayout(const QJsonValue &node, QSet<QString> &seen, int depth = 0)
 {
@@ -199,34 +193,94 @@ void MamChatWidget::scrollToIndex(int index, Mattermost::LongListWidget::Alignme
     Mattermost::LongListWidget::scrollToIndex(index, alignment);
 }
 
+bool MamChatWidget::sameSender(const MessageView &a, const MessageView &b) const
+{
+    // The widget is scoped to one conversation. A direct-chat sender can use
+    // several resources or display names, whereas a MUC nick is the sender.
+    return a.isLocal() == b.isLocal()
+        && (!groupChat_ || a.nick() == b.nick());
+}
+
+int MamChatWidget::findRelatedMessage(const MessageView &incoming, bool allowHistory) const
+{
+    if (incoming.type() != MessageView::Message)
+        return -1;
+    for (int i = items_.size() - 1; i >= 0; --i) {
+        const auto &row = items_.at(i);
+        const auto &previous = row.message;
+        if (previous.type() != MessageView::Message || !sameSender(previous, incoming))
+            continue;
+        if (allowHistory && incoming.historyId() > 0
+            && incoming.historyId() == previous.historyId())
+            return i;
+
+        // Explicit correction edges connect revisions even when the target
+        // was fetched before or after the correction, or hours earlier.
+        if (!incoming.replaceId().isEmpty()
+            && row.stanzaIds.contains(incoming.replaceId()))
+            return i;
+        if (!incoming.messageId().isEmpty()
+            && row.stanzaIds.contains(incoming.messageId())) {
+            if (incoming.messageId() != previous.messageId())
+                return i; // Already proven to be an earlier revision.
+            // Bare client stanza IDs aren't verified archive identities.
+            // Limit same-version matching to a nearby delivery interval.
+            if (incoming.dateTime().isValid() && previous.dateTime().isValid()
+                && qAbs(incoming.dateTime().secsTo(previous.dateTime())) <= 300)
+                return i;
+        }
+    }
+    return -1;
+}
+
+void MamChatWidget::mergeMessage(int index, const MessageView &incoming, const QString &sourceKey)
+{
+    Row &row = items_[index];
+    const auto previous = row.message;
+    const bool edited = previous.isEdited() || incoming.isEdited()
+        || !previous.replaceId().isEmpty() || !incoming.replaceId().isEmpty();
+    if (!previous.messageId().isEmpty())
+        row.stanzaIds.insert(previous.messageId());
+    if (!previous.replaceId().isEmpty())
+        row.stanzaIds.insert(previous.replaceId());
+    if (!incoming.messageId().isEmpty())
+        row.stanzaIds.insert(incoming.messageId());
+    if (!incoming.replaceId().isEmpty())
+        row.stanzaIds.insert(incoming.replaceId());
+
+    // An archive fetch after a live edit must not overwrite the latest
+    // revision with the old text or the raw JID nick from history.
+    const bool newer = incoming.dateTime().isValid()
+        && (!previous.dateTime().isValid() || incoming.dateTime() > previous.dateTime());
+    if (newer) {
+        MessageView updated = incoming;
+        updated.setEdited(edited);
+        if (!groupChat_ && !previous.nick().isEmpty())
+            updated.setNick(previous.nick());
+        if (updated.archiveId().isEmpty())
+            updated.setArchiveId(previous.archiveId());
+        if (updated.historyId() <= 0)
+            updated.setHistoryId(previous.historyId());
+        row.message = updated;
+        replaceItem(index);
+    } else if (edited && !previous.isEdited()) {
+        row.message.setEdited();
+        replaceItem(index);
+    }
+
+    // Multiple MAM archive UIDs (one per edit) and any local EDB key belong
+    // to this one row; never replace its stable selection/scroll anchor key.
+    if (!sourceKey.isEmpty() && sourceKey != row.key) {
+        keys_.insert(sourceKey);
+        sourceAliases_.insert(sourceKey, row.key);
+    }
+}
+
 void MamChatWidget::appendMessage(const MessageView &view)
 {
     if (((view.type() == MessageView::MUCJoin || view.type() == MessageView::MUCPart) && view.isJoinLeaveHidden())
         || (view.type() == MessageView::Status && view.isStatusChangeHidden()))
         return;
-    // Corrections change the existing logical identity and must preserve its
-    // verified archive UID. The hidden legacy ChatView still receives the
-    // protocol update during this incremental UI migration.
-    if (view.type() == MessageView::Message && !view.replaceId().isEmpty()) {
-        for (int i = items_.size() - 1; i >= 0; --i) {
-            const auto &previous = items_.at(i).message;
-            if (previous.type() == MessageView::Message
-                && previous.messageId() == view.replaceId()
-                && previous.isLocal() == view.isLocal()
-                && (!groupChat_ || previous.nick() == view.nick())) {
-                MessageView corrected = view;
-                if (corrected.archiveId().isEmpty())
-                    corrected.setArchiveId(previous.archiveId());
-                items_[i].message = corrected;
-                replaceItem(i);
-                return;
-            }
-        }
-    }
-
-    // Receipt/reaction/retraction payloads are updates rather than standalone
-    // text rows. Until authenticated per-sender state is migrated, the hidden
-    // ChatView remains their compatibility implementation.
     if (view.type() == MessageView::Reactions
         || view.type() == MessageView::MessageRetraction)
         return;
@@ -236,30 +290,29 @@ void MamChatWidget::appendMessage(const MessageView &view)
         return;
     }
 
-    // Archive UIDs and client stanza IDs are different identity namespaces.
+    if (view.type() == MessageView::Message) {
+        const int existing = findRelatedMessage(view, false);
+        if (existing >= 0) {
+            mergeMessage(existing, view);
+            return;
+        }
+    }
+
     const QString key = !view.archiveId().isEmpty()
         ? QStringLiteral("mam:") + view.archiveId()
         : QStringLiteral("live:generated:") + QString::number(++generatedKey_);
     if (keys_.contains(key))
         return;
 
-    // A live echo may arrive just after the same message's initial MAM page.
-    // Correlation requires matching sender direction, stanza ID, original text
-    // and a small timestamp window; never deduplicate solely on client ID.
-    if (view.type() == MessageView::Message && !view.messageId().isEmpty()) {
-        const int first = qMax(0, items_.size() - 256);
-        for (int i = items_.size() - 1; i >= first; --i) {
-            if (items_.at(i).key.startsWith(QLatin1String("mam:"))
-                && (!groupChat_ || items_.at(i).message.nick() == view.nick())
-                && sameDelivery(items_.at(i).message, view))
-                return;
-        }
-    }
-
     const bool followTail = followingInitialTail_ || isAtEnd();
     keys_.insert(key);
+    Row row {key, view, {}};
+    if (!view.messageId().isEmpty())
+        row.stanzaIds.insert(view.messageId());
+    if (!view.replaceId().isEmpty())
+        row.stanzaIds.insert(view.replaceId());
     const int at = items_.size();
-    items_.append({key, view});
+    items_.append(row);
     insertItems(at, 1);
     setRangeAvailable(at, at, true);
     if (followTail)
@@ -269,82 +322,70 @@ void MamChatWidget::appendMessage(const MessageView &view)
 int MamChatWidget::prependArchivePage(const QList<QPair<QString, MessageView>> &page)
 {
     const bool followTail = followingInitialTail_ || isAtEnd();
-    QList<Row> added;
-    QStringList pageOrder;
-    for (const auto &entry : page) {
-        if (entry.first.isEmpty() && entry.second.historyId() <= 0)
+    int added = 0;
+    int floor = 0;
+    // Reconcile revisions backwards FIRST: the live row might be revision 8,
+    // while this historical page starts at revision 6. Doing only an
+    // ascending pass inserts 6 before learning from 7 that it belongs to 8.
+    QSet<QString> preMergedKeys;
+    for (auto it = page.crbegin(); it != page.crend(); ++it) {
+        const auto &incoming = it->second;
+        if (incoming.type() != MessageView::Message
+            || (it->first.isEmpty() && incoming.historyId() <= 0))
             continue;
-        const auto key = !entry.first.isEmpty() ? QStringLiteral("mam:") + entry.first
-            : QStringLiteral("edb:") + QString::number(entry.second.historyId());
-        pageOrder.append(key);
+        const QString key = !it->first.isEmpty()
+            ? QStringLiteral("mam:") + it->first
+            : QStringLiteral("edb:") + QString::number(incoming.historyId());
         if (keys_.contains(key))
             continue;
-
-        // Adopt the archive UID on an already displayed live counterpart.
-        // This avoids creating a duplicate row while a network page was in
-        // flight, and still remembers the UID for later overlapping pages.
-        bool overlap = false;
-        if (entry.second.type() == MessageView::Message) {
-            const int first = entry.second.historyId() > 0 ? 0 : qMax(0, items_.size() - 256);
-            for (int i = items_.size() - 1; i >= first; --i) {
-                const auto &previous = items_.at(i).message;
-                const bool sameHistory = entry.second.historyId() > 0
-                    && previous.historyId() == entry.second.historyId();
-                const bool sameLive = items_.at(i).key.startsWith(QLatin1String("live:"))
-                    && (!groupChat_ || previous.nick() == entry.second.nick())
-                    && sameDelivery(previous, entry.second);
-                if (sameHistory || sameLive) {
-                    // Promote the adopted live row into the MAM identity
-                    // namespace. Otherwise a second live echo cannot find
-                    // this archived counterpart and creates a duplicate.
-                    const QString oldKey = items_[i].key;
-                    keys_.remove(oldKey);
-                    items_[i].key = key;
-                    if (selectedKeys_.remove(oldKey))
-                        selectedKeys_.insert(key);
-                    if (selectionAnchorKey_ == oldKey)
-                        selectionAnchorKey_ = key;
-                    if (auto *liveWidget = itemWidget(i))
-                        liveWidget->setProperty("_psiMamRowKey", key);
-                    items_[i].message.setArchiveId(entry.first);
-                    items_[i].message.setHistoryId(entry.second.historyId());
-                    overlap = true;
-                    break;
-                }
-            }
-        }
-        keys_.insert(key);
-        if (!overlap)
-            added.append({key, entry.second});
+        const int existing = findRelatedMessage(incoming, true);
+        if (existing < 0)
+            continue;
+        mergeMessage(existing, incoming, key);
+        preMergedKeys.insert(key);
     }
-    if (added.isEmpty())
-        return 0;
+    // Then insert genuinely new messages in chronological page order.
+    // Pre-merged corrections must not move the ordering floor to a live
+    // tail row, otherwise older unrelated messages land after the tail.
+    for (const auto &entry : page) {
+        const auto &incoming = entry.second;
+        if (entry.first.isEmpty() && incoming.historyId() <= 0)
+            continue;
+        const QString key = !entry.first.isEmpty()
+            ? QStringLiteral("mam:") + entry.first
+            : QStringLiteral("edb:") + QString::number(incoming.historyId());
+        if (keys_.contains(key)) {
+            const int existing = indexOfKey(key);
+            if (existing >= 0 && !preMergedKeys.contains(key))
+                floor = qMax(floor, existing + 1);
+            continue;
+        }
 
-    // EDB can contain messages absent from MAM. Insert archive rows among
-    // these originals instead of putting a new server tail above older local
-    // messages. Keep page order even when multiple server stamps are equal.
-    int floor = 0;
-    for (const auto &key : pageOrder) {
-        const int existing = indexOfKey(key);
+        const int existing = findRelatedMessage(incoming, true);
         if (existing >= 0) {
+            mergeMessage(existing, incoming, key);
             floor = qMax(floor, existing + 1);
             continue;
         }
-        const auto candidate = std::find_if(added.cbegin(), added.cend(), [&key](const Row &row) { return row.key == key; });
-        if (candidate == added.cend())
-            continue;
-        const auto &row = *candidate;
         int at = floor;
-        while (at < items_.size() && items_.at(at).message.dateTime() < row.message.dateTime())
+        while (at < items_.size()
+               && items_.at(at).message.dateTime() < incoming.dateTime())
             ++at;
+        keys_.insert(key);
+        Row row {key, incoming, {}};
+        if (!incoming.messageId().isEmpty())
+            row.stanzaIds.insert(incoming.messageId());
+        if (!incoming.replaceId().isEmpty())
+            row.stanzaIds.insert(incoming.replaceId());
         items_.insert(at, row);
         insertItems(at, 1, InsertViewportPolicy::PreserveVisibleContent);
         setRangeAvailable(at, at, true);
         floor = at + 1;
+        ++added;
     }
-    if (followTail)
+    if (followTail && !page.isEmpty())
         scrollToEnd();
-    return added.size();
+    return added;
 }
 
 void MamChatWidget::setMediaOpener(FileSharingDeviceOpener *opener)
@@ -362,6 +403,7 @@ void MamChatWidget::clearMessages()
     cancelMessageSelection();
     items_.clear();
     keys_.clear();
+    sourceAliases_.clear();
     // A plain click may leave an anchor without a selected range. Reset it
     // when changing conversations, including keys reused by the next model.
     selectionAnchorKey_.clear();
@@ -462,8 +504,26 @@ QWidget *MamChatWidget::createItemWidget(int index)
         time->setTextFormat(Qt::PlainText);
         time->setToolTip(fullTimestamp(mv.dateTime()));
         time->setForegroundRole(QPalette::Text);
-        elements.insert(QStringLiteral("timestamp"), time);
         time->installEventFilter(this);
+        if (mv.isEdited()) {
+            // Keep the edit marker inside the timestamp slot, so plugins
+            // can place the entire semantic header wherever they choose.
+            auto *timeGroup = new QWidget(content);
+            timeGroup->setObjectName(QStringLiteral("mamTimestampGroup"));
+            auto *timeLayout = new QHBoxLayout(timeGroup);
+            timeLayout->setContentsMargins(0, 0, 0, 0);
+            timeLayout->setSpacing(7);
+            timeLayout->addWidget(time);
+            auto *pencil = new QLabel(QString(QChar(0x270e)), timeGroup);
+            pencil->setObjectName(QStringLiteral("mamEditedIndicator"));
+            pencil->setToolTip(tr("The message was corrected"));
+            pencil->setAccessibleName(tr("Edited message"));
+            pencil->setForegroundRole(QPalette::Text);
+            timeLayout->addWidget(pencil);
+            elements.insert(QStringLiteral("timestamp"), timeGroup);
+        } else {
+            elements.insert(QStringLiteral("timestamp"), time);
+        }
         if (theme_.avatarSize > 0) {
             auto *avatar = new QLabel(content);
             avatar->setObjectName(QStringLiteral("mamAvatar"));
@@ -762,8 +822,9 @@ int MamChatWidget::indexOfKey(const QString &key) const
 {
     if (key.isEmpty())
         return -1;
+    const QString canonical = sourceAliases_.value(key, key);
     for (int i = 0; i < items_.size(); ++i) {
-        if (items_.at(i).key == key)
+        if (items_.at(i).key == canonical)
             return i;
     }
     return -1;

@@ -916,6 +916,99 @@ private slots:
         QTRY_VERIFY(list.itemWidget(0) != nullptr);
         QTRY_COMPARE(list.itemWidget(0)->findChild<ChatMessageText *>()->toPlainText(),
                      QStringLiteral("edited body"));
+        auto *pencil = list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamEditedIndicator"));
+        QVERIFY(pencil);
+        QCOMPARE(pencil->toolTip(), QStringLiteral("The message was corrected"));
+        auto *timestamp = list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
+        QVERIFY(timestamp);
+        QVERIFY(pencil->mapTo(list.itemWidget(0), QPoint()).x()
+                > timestamp->mapTo(list.itemWidget(0), QPoint()).x() + timestamp->width());
+        NativeChatTheme classic;
+        classic.layout = NativeChatTheme::Classic;
+        classic.avatarSize = 0;
+        list.setTheme(classic);
+        QTRY_VERIFY(list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamEditedIndicator")));
+    }
+
+    void archivedCorrectionChainMergesInBothLoadOrders()
+    {
+        auto scenario = [this](bool archiveFirst) {
+            MamChatWidget list;
+            list.resize(510, 280);
+            list.setHistoryLoading(true);
+            list.show();
+            auto original = message(QStringLiteral("a476b502-original"), QStringLiteral("6"), 1);
+            auto edit7 = message(QStringLiteral("a476b502-edit7"), QStringLiteral("7"), 2);
+            edit7.setReplaceId(original.messageId());
+            auto edit8 = message(QStringLiteral("3f59b103-edit8"), QStringLiteral("8"), 3);
+            edit8.setReplaceId(edit7.messageId());
+            edit8.setNick(QStringLiteral("rion"));
+            auto archived8 = edit8;
+            archived8.setNick(QStringLiteral("rion@jabber.ru")); // A different display name is not a different peer.
+            auto archived7 = edit7;
+            archived7.setNick(QStringLiteral("rion@jabber.ru"));
+            auto archived6 = original;
+            archived6.setNick(QStringLiteral("rion@jabber.ru"));
+            QList<QPair<QString, MessageView>> page {
+                {QStringLiteral("mam-6"), archived6},
+                {QStringLiteral("mam-7"), archived7},
+                {QStringLiteral("mam-8"), archived8}
+            };
+
+            if (archiveFirst) {
+                QCOMPARE(list.prependArchivePage(page), 1);
+                list.appendMessage(edit8);
+            } else {
+                list.appendMessage(edit8);
+                QCOMPARE(list.prependArchivePage(page), 0);
+            }
+            QCOMPARE(list.messageCount(), 1);
+            QTRY_VERIFY(list.itemWidget(0));
+            QCOMPARE(list.itemWidget(0)->findChild<ChatMessageText *>()->toPlainText(),
+                     QStringLiteral("8"));
+            QVERIFY(list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamEditedIndicator")));
+            QCOMPARE(list.prependArchivePage(page), 0);
+            list.appendMessage(edit8);
+            QCOMPARE(list.messageCount(), 1);
+        };
+        scenario(false);
+        scenario(true);
+    }
+
+    void archiveCorrectionCanFindEarlierRevisionAcrossPages()
+    {
+        MamChatWidget list;
+        list.resize(420, 260);
+        list.setHistoryLoading(true);
+        auto original = message(QStringLiteral("id-6"), QStringLiteral("6"), 0);
+        auto edited = message(QStringLiteral("id-7"), QStringLiteral("7"), 10);
+        edited.setReplaceId(original.messageId());
+        list.prependArchivePage({{QStringLiteral("uid-7"), edited}});
+        QCOMPARE(list.messageCount(), 1);
+        QCOMPARE(list.prependArchivePage({{QStringLiteral("uid-6"), original}}), 0);
+        QCOMPARE(list.messageCount(), 1);
+        list.show();
+        QTRY_COMPARE(list.itemWidget(0)->findChild<ChatMessageText *>()->toPlainText(),
+                     QStringLiteral("7"));
+    }
+
+    void correctionCannotCrossMucSenderOrDirection()
+    {
+        MamChatWidget list;
+        list.setGroupChat(true);
+        auto alice = message(QStringLiteral("base"), QStringLiteral("Alice"), 0);
+        alice.setNick(QStringLiteral("Alice"));
+        list.appendMessage(alice);
+        auto bob = message(QStringLiteral("corrected"), QStringLiteral("Bob"), 2);
+        bob.setNick(QStringLiteral("Bob"));
+        bob.setReplaceId(QStringLiteral("base"));
+        list.appendMessage(bob);
+        QCOMPARE(list.messageCount(), 2);
+        auto outgoing = message(QStringLiteral("another"), QStringLiteral("Outgoing"), 3, true);
+        outgoing.setNick(QStringLiteral("Alice"));
+        outgoing.setReplaceId(QStringLiteral("base"));
+        list.appendMessage(outgoing);
+        QCOMPARE(list.messageCount(), 3);
     }
 
     void liveArchiveOverlap()

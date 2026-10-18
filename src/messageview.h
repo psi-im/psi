@@ -51,6 +51,7 @@ public:
         AwaitingReceipt  = 0x10,
         HideStatusChange = 0x20,
         HideJoinLeave    = 0x40,
+        Edited           = 0x80,
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
@@ -99,6 +100,8 @@ public:
     inline bool isEmote() const { return bool(_flags & Emote); }
     inline void setSpooled(bool state = true) { _flags.setFlag(Spooled, state); }
     inline bool isSpooled() const { return bool(_flags & Spooled); }
+    inline void setEdited(bool edited = true) { _flags.setFlag(Edited, edited); }
+    inline bool isEdited() const { return bool(_flags & Edited); }
     inline void setAwaitingReceipt(bool b = true) { _flags.setFlag(AwaitingReceipt, b); }
     inline bool isAwaitingReceipt() const { return bool(_flags & AwaitingReceipt); }
     inline void setStatusChangeHidden(bool b = true) { _flags.setFlag(HideStatusChange, b); }
@@ -125,7 +128,12 @@ public:
     inline void                            setDateTime(const QDateTime &dt) { _dateTime = dt; }
     inline const QDateTime                &dateTime() const { return _dateTime; }
     inline QMap<QString, QString>          urls() const { return _urls; }
-    inline void                            setReplaceId(const QString &id) { _replaceId = id; }
+    inline void                            setReplaceId(const QString &id)
+    {
+        _replaceId = id;
+        if (!id.isEmpty())
+            setEdited();
+    }
     inline const QString                  &replaceId() const { return _replaceId; }
     inline void                            setQuoteId(const QString &id) { _quoteId = id; }
     inline const QString                  &quoteId() const { return _quoteId; }

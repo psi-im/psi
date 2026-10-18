@@ -22,7 +22,9 @@ public:
     const QString &archiveId() const { return archiveId_; }
     void setArchiveId(const QString &id) { archiveId_ = id; }
     const QString &replaceId() const { return replaceId_; }
-    void setReplaceId(const QString &id) { replaceId_ = id; }
+    void setReplaceId(const QString &id) { replaceId_ = id; if (!id.isEmpty()) edited_ = true; }
+    void setEdited(bool edited = true) { edited_ = edited; }
+    bool isEdited() const { return edited_; }
     const QString &retractionId() const { return retractionId_; }
     void setRetractionId(const QString &id) { retractionId_ = id; }
     bool isLocal() const { return local_; }
@@ -48,4 +50,5 @@ private:
     QString nick_;
     QDateTime when_;
     bool local_ = false;
+    bool edited_ = false;
 };

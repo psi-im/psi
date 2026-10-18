@@ -9,6 +9,7 @@
 
 #include <QList>
 #include <QSet>
+#include <QHash>
 
 class FileSharingDeviceOpener;
 class QFrame;
@@ -88,9 +89,14 @@ private:
     struct Row {
         QString key;
         MessageView message;
+        QSet<QString> stanzaIds; // Revision stanza IDs of one logical message.
     };
     QList<Row> items_;
     QSet<QString> keys_;
+    QHash<QString, QString> sourceAliases_; // EDB/MAM source key -> stable row key
+    bool sameSender(const MessageView &a, const MessageView &b) const;
+    int findRelatedMessage(const MessageView &incoming, bool allowHistory) const;
+    void mergeMessage(int index, const MessageView &incoming, const QString &sourceKey = {});
     bool historyLoading_ = false;
     bool historyExhausted_ = false;
     // Opening a chat always starts at the live tail, even while Qt measures

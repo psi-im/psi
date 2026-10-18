@@ -35,6 +35,7 @@ void prependLocalChatHistory(MamChatWidget *timeline, PsiAccount *account, const
         mv.setHistoryId(entry->id().toLongLong());
         mv.setArchiveId(entry->archiveId());
         mv.setMessageId(message.id());
+        mv.setReplaceId(message.replaceId());
         mv.setUserId(message.from().full());
         mv.setNick(room ? message.from().resource() : me->originLocal() ? ownNick : peer);
         mv.setLocal(room ? mv.nick() == ownNick : me->originLocal());

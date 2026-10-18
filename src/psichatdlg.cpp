@@ -365,11 +365,13 @@ void PsiChatDlg::loadOlderMamMessages()
             const bool local = archived.from().bare() == account()->jid().bare();
             auto mv = MessageView::fromPlainText(text, MessageView::Message);
             mv.setMessageId(archived.id());
+            mv.setReplaceId(archived.replaceId());
+            mv.setUserId(archived.from().full());
             mv.setArchiveId(uid);
             mv.setHistoryId(task->eventId(uid));
             mv.setLocal(local);
             mv.setSpooled(true);
-            mv.setNick(local ? account()->nick() : peer);
+            mv.setNick(whoNick(local));
             mv.setDateTime(wrapper.timeStamp().isValid()
                                ? wrapper.timeStamp() : archived.timeStamp());
             account()->psi()->fileSharingManager()->fillMessageView(mv, archived, account());

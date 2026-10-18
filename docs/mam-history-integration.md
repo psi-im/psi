@@ -432,6 +432,13 @@ WebEngine keep their existing theme providers. In Appearance → Themes, BASIC
 has separate Chat Message Style and Groupchat Message Style selections:
 
 - **Modern** (default): avatar column, bold author, time beside the author, body below.
+- **Corrections (XEP-0308)**: the visible message keeps one logical row with
+  all its stanza revision IDs even when EDB/MAM pages arrive after a live edit.
+  MAM's archive UID is a distinct source key and does not identify the
+  corrected content. Revision ancestry and sender direction are used for
+  reconciliation; raw peer JIDs versus contact display names are not distinct
+  senders in a 1:1 conversation. Each edited row shows a pencil after the
+  timestamp, with a correction tooltip.
 - **Classic**: compact inline `[HH:mm:ss] Nickname: message` rows with wrapped rich text.
   Modern remains an avatar/header-over-body layout with relative timestamps.
   Groupchat nickname colors in both styles use the existing Psi MUC options,
