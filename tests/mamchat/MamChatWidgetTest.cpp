@@ -295,7 +295,9 @@ private slots:
         list.prependArchivePage({qMakePair(archived.archiveId(),archived)});
         QCOMPARE(list.messageCount(),1);
         QCOMPARE(list.selectedMessageCount(),1);
-        QCOMPARE(list.itemWidget(0)->property("_psiMamRowKey").toString(),QStringLiteral("mam:server-uid"));
+        // A source UID aliases the original EDB row, preserving semantic
+        // selection anchors instead of replacing them on archive adoption.
+        QCOMPARE(list.itemWidget(0)->property("_psiMamRowKey").toString(),QStringLiteral("edb:42"));
         list.appendMessage(archived);
         QCOMPARE(list.messageCount(),1);
     }
@@ -988,8 +990,39 @@ private slots:
         QCOMPARE(list.prependArchivePage({{QStringLiteral("uid-6"), original}}), 0);
         QCOMPARE(list.messageCount(), 1);
         list.show();
+        QTRY_VERIFY(list.itemWidget(0));
         QTRY_COMPARE(list.itemWidget(0)->findChild<ChatMessageText *>()->toPlainText(),
                      QStringLiteral("7"));
+    }
+
+    void intermediateEditUnifiesPreviouslySeparateEDBAndLiveRows()
+    {
+        MamChatWidget list;
+        list.resize(480, 260);
+        list.setHistoryLoading(true);
+        list.show();
+        auto original = message(QStringLiteral("id-6"), QStringLiteral("6"), 1);
+        original.setHistoryId(42);
+        list.appendMessage(original); // Local EDB supplied the older version.
+        auto edit8 = message(QStringLiteral("id-8"), QStringLiteral("8"), 3);
+        edit8.setReplaceId(QStringLiteral("id-7"));
+        list.appendMessage(edit8); // Middle revision is not loaded yet.
+        QCOMPARE(list.messageCount(), 2);
+        auto archive6 = original;
+        archive6.setHistoryId(0);
+        auto edit7 = message(QStringLiteral("id-7"), QStringLiteral("7"), 2);
+        edit7.setReplaceId(original.messageId());
+        QCOMPARE(list.prependArchivePage({
+                     {QStringLiteral("mam-6"), archive6},
+                     {QStringLiteral("mam-7"), edit7},
+                     {QStringLiteral("mam-8"), edit8}}), 0);
+        QCOMPARE(list.messageCount(), 1);
+        QTRY_VERIFY(list.itemWidget(0));
+        QCOMPARE(list.itemWidget(0)->findChild<ChatMessageText *>()->toPlainText(),
+                 QStringLiteral("8"));
+        QCOMPARE(list.itemWidget(0)->property("_psiMamRowKey").toString(),
+                 QStringLiteral("edb:42"));
+        QVERIFY(list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamEditedIndicator")));
     }
 
     void correctionCannotCrossMucSenderOrDirection()

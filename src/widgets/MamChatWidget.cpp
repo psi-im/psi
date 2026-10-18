@@ -276,6 +276,65 @@ void MamChatWidget::mergeMessage(int index, const MessageView &incoming, const Q
     }
 }
 
+void MamChatWidget::coalesceRevisionRows()
+{
+    // A live correction might arrive while an older EDB original exists but
+    // the intermediate edit has not yet been downloaded. Once a MAM page
+    // supplies the connecting revision, those temporarily independent rows
+    // must collapse without losing either row's source UIDs or selection.
+    for (int i = 0; i < items_.size(); ++i) {
+        for (int j = i + 1; j < items_.size();) {
+            const auto &older = items_.at(i);
+            const auto &other = items_.at(j);
+            if (older.message.type() != MessageView::Message
+                || other.message.type() != MessageView::Message
+                || !sameSender(older.message, other.message)
+                || (!older.message.isEdited() && !other.message.isEdited())) {
+                ++j;
+                continue;
+            }
+            bool linked = false;
+            for (const auto &id : older.stanzaIds) {
+                if (other.stanzaIds.contains(id)) {
+                    linked = true;
+                    break;
+                }
+            }
+            if (!linked) {
+                ++j;
+                continue;
+            }
+
+            const QString survivingKey = items_.at(i).key;
+            const QString removedKey = items_.at(j).key;
+            Row merged = items_.at(i);
+            const Row discarded = items_.at(j);
+            merged.stanzaIds.unite(discarded.stanzaIds);
+            if (discarded.message.dateTime().isValid()
+                && (!merged.message.dateTime().isValid()
+                    || discarded.message.dateTime() > merged.message.dateTime()))
+                merged.message = discarded.message;
+            merged.message.setEdited();
+            items_[i] = merged;
+            for (auto it = sourceAliases_.begin(); it != sourceAliases_.end(); ++it)
+                if (it.value() == removedKey)
+                    it.value() = survivingKey;
+            sourceAliases_.insert(removedKey, survivingKey);
+            if (selectedKeys_.remove(removedKey))
+                selectedKeys_.insert(survivingKey);
+            if (selectionAnchorKey_ == removedKey)
+                selectionAnchorKey_ = survivingKey;
+            if (pressedKey_ == removedKey)
+                pressedKey_ = survivingKey;
+            items_.removeAt(j);
+            removeItems(j, 1);
+            replaceItem(i);
+            // Repeat with index j: multiple intermediary revisions may have
+            // been displayed before the server supplied their common parent.
+        }
+    }
+}
+
 void MamChatWidget::appendMessage(const MessageView &view)
 {
     if (((view.type() == MessageView::MUCJoin || view.type() == MessageView::MUCPart) && view.isJoinLeaveHidden())
@@ -324,6 +383,9 @@ int MamChatWidget::prependArchivePage(const QList<QPair<QString, MessageView>> &
     const bool followTail = followingInitialTail_ || isAtEnd();
     int added = 0;
     int floor = 0;
+    bool containsCorrection = false;
+    for (const auto &entry : page)
+        containsCorrection |= entry.second.isEdited();
     // Reconcile revisions backwards FIRST: the live row might be revision 8,
     // while this historical page starts at revision 6. Doing only an
     // ascending pass inserts 6 before learning from 7 that it belongs to 8.
@@ -383,6 +445,8 @@ int MamChatWidget::prependArchivePage(const QList<QPair<QString, MessageView>> &
         floor = at + 1;
         ++added;
     }
+    if (containsCorrection)
+        coalesceRevisionRows();
     if (followTail && !page.isEmpty())
         scrollToEnd();
     return added;

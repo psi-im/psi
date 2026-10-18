@@ -97,6 +97,7 @@ private:
     bool sameSender(const MessageView &a, const MessageView &b) const;
     int findRelatedMessage(const MessageView &incoming, bool allowHistory) const;
     void mergeMessage(int index, const MessageView &incoming, const QString &sourceKey = {});
+    void coalesceRevisionRows();
     bool historyLoading_ = false;
     bool historyExhausted_ = false;
     // Opening a chat always starts at the live tail, even while Qt measures
