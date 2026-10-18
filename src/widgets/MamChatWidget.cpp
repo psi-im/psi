@@ -1,9 +1,14 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "MamChatWidget.h"
 #include "MamMessageIdentity.h"
+#include "ChatMessageText.h"
+#include "psirichtext.h"
 
+#include <algorithm>
 #include <QApplication>
 #include <QClipboard>
+#include <QCheckBox>
+#include <QSignalBlocker>
 #include <QFrame>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -12,13 +17,23 @@
 #include <QResizeEvent>
 #include <QShortcut>
 #include <QPalette>
+#include <QLocale>
+#include <QPainter>
+#include <QPainterPath>
 #include <QSizePolicy>
 #include <QTextDocument>
+#include <QTextBlockFormat>
 #include <QTimer>
 #include <QVBoxLayout>
 
 MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(parent)
 {
+    setProperty("psiMamOverlay", true);
+    theme_.layout = NativeChatTheme::Modern;
+    auto *clock = new QTimer(this);
+    clock->setInterval(1000);
+    connect(clock, &QTimer::timeout, this, &MamChatWidget::updateTimestamps);
+    clock->start();
     setDefaultItemHeight(72);
     setMaterializationLimit(160);
     setRequestBlockSize(40);
@@ -59,6 +74,17 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
 }
 
 namespace {
+// QLayout's preferred height uses its preferred width. For a wrapped document
+// that width can be much narrower than the timeline, inflating the whole row.
+// LongListWidget measures at the viewport width, so report the same height here.
+class ChatMessageRow : public QFrame {
+public:
+    QSize sizeHint() const override
+    {
+        return QSize(0, qMax(1, heightForWidth(qMax(1, width()))));
+    }
+};
+
 bool sameDelivery(const MessageView &a, const MessageView &b)
 {
     return PsiMam::sameDelivery(
@@ -69,6 +95,9 @@ bool sameDelivery(const MessageView &a, const MessageView &b)
 
 void MamChatWidget::appendMessage(const MessageView &view)
 {
+    if (((view.type() == MessageView::MUCJoin || view.type() == MessageView::MUCPart) && view.isJoinLeaveHidden())
+        || (view.type() == MessageView::Status && view.isStatusChangeHidden()))
+        return;
     // Corrections change the existing logical identity and must preserve its
     // verified archive UID. The hidden legacy ChatView still receives the
     // protocol update during this incremental UI migration.
@@ -77,7 +106,8 @@ void MamChatWidget::appendMessage(const MessageView &view)
             const auto &previous = items_.at(i).message;
             if (previous.type() == MessageView::Message
                 && previous.messageId() == view.replaceId()
-                && previous.isLocal() == view.isLocal()) {
+                && previous.isLocal() == view.isLocal()
+                && (!groupChat_ || previous.nick() == view.nick())) {
                 MessageView corrected = view;
                 if (corrected.archiveId().isEmpty())
                     corrected.setArchiveId(previous.archiveId());
@@ -95,6 +125,11 @@ void MamChatWidget::appendMessage(const MessageView &view)
         || view.type() == MessageView::MessageRetraction)
         return;
 
+    if (view.historyId() > 0) {
+        prependArchivePage({qMakePair(view.archiveId(), view)});
+        return;
+    }
+
     // Archive UIDs and client stanza IDs are different identity namespaces.
     const QString key = !view.archiveId().isEmpty()
         ? QStringLiteral("mam:") + view.archiveId()
@@ -109,6 +144,7 @@ void MamChatWidget::appendMessage(const MessageView &view)
         const int first = qMax(0, items_.size() - 256);
         for (int i = items_.size() - 1; i >= first; --i) {
             if (items_.at(i).key.startsWith(QLatin1String("mam:"))
+                && (!groupChat_ || items_.at(i).message.nick() == view.nick())
                 && sameDelivery(items_.at(i).message, view))
                 return;
         }
@@ -124,10 +160,13 @@ void MamChatWidget::appendMessage(const MessageView &view)
 int MamChatWidget::prependArchivePage(const QList<QPair<QString, MessageView>> &page)
 {
     QList<Row> added;
+    QStringList pageOrder;
     for (const auto &entry : page) {
-        if (entry.first.isEmpty())
-            continue; // Only verified archive UIDs can anchor pagination.
-        const auto key = QStringLiteral("mam:") + entry.first;
+        if (entry.first.isEmpty() && entry.second.historyId() <= 0)
+            continue;
+        const auto key = !entry.first.isEmpty() ? QStringLiteral("mam:") + entry.first
+            : QStringLiteral("edb:") + QString::number(entry.second.historyId());
+        pageOrder.append(key);
         if (keys_.contains(key))
             continue;
 
@@ -135,12 +174,16 @@ int MamChatWidget::prependArchivePage(const QList<QPair<QString, MessageView>> &
         // This avoids creating a duplicate row while a network page was in
         // flight, and still remembers the UID for later overlapping pages.
         bool overlap = false;
-        if (entry.second.type() == MessageView::Message
-            && !entry.second.messageId().isEmpty()) {
-            const int first = qMax(0, items_.size() - 256);
+        if (entry.second.type() == MessageView::Message) {
+            const int first = entry.second.historyId() > 0 ? 0 : qMax(0, items_.size() - 256);
             for (int i = items_.size() - 1; i >= first; --i) {
-                if (items_.at(i).key.startsWith(QLatin1String("live:"))
-                    && sameDelivery(items_.at(i).message, entry.second)) {
+                const auto &previous = items_.at(i).message;
+                const bool sameHistory = entry.second.historyId() > 0
+                    && previous.historyId() == entry.second.historyId();
+                const bool sameLive = items_.at(i).key.startsWith(QLatin1String("live:"))
+                    && (!groupChat_ || previous.nick() == entry.second.nick())
+                    && sameDelivery(previous, entry.second);
+                if (sameHistory || sameLive) {
                     // Promote the adopted live row into the MAM identity
                     // namespace. Otherwise a second live echo cannot find
                     // this archived counterpart and creates a duplicate.
@@ -154,6 +197,7 @@ int MamChatWidget::prependArchivePage(const QList<QPair<QString, MessageView>> &
                     if (auto *liveWidget = itemWidget(i))
                         liveWidget->setProperty("_psiMamRowKey", key);
                     items_[i].message.setArchiveId(entry.first);
+                    items_[i].message.setHistoryId(entry.second.historyId());
                     overlap = true;
                     break;
                 }
@@ -166,19 +210,46 @@ int MamChatWidget::prependArchivePage(const QList<QPair<QString, MessageView>> &
     if (added.isEmpty())
         return 0;
 
-    // LongListWidget preserves the concrete viewport anchor across prepends.
-    for (int i = added.size() - 1; i >= 0; --i)
-        items_.prepend(added.at(i));
-    insertItems(0, added.size(), InsertViewportPolicy::PreserveVisibleContent);
-    setRangeAvailable(0, added.size() - 1, true);
+    // EDB can contain messages absent from MAM. Insert archive rows among
+    // these originals instead of putting a new server tail above older local
+    // messages. Keep page order even when multiple server stamps are equal.
+    int floor = 0;
+    for (const auto &key : pageOrder) {
+        const int existing = indexOfKey(key);
+        if (existing >= 0) {
+            floor = qMax(floor, existing + 1);
+            continue;
+        }
+        const auto candidate = std::find_if(added.cbegin(), added.cend(), [&key](const Row &row) { return row.key == key; });
+        if (candidate == added.cend())
+            continue;
+        const auto &row = *candidate;
+        int at = floor;
+        while (at < items_.size() && items_.at(at).message.dateTime() < row.message.dateTime())
+            ++at;
+        items_.insert(at, row);
+        insertItems(at, 1, InsertViewportPolicy::PreserveVisibleContent);
+        setRangeAvailable(at, at, true);
+        floor = at + 1;
+    }
     return added.size();
+}
+
+void MamChatWidget::setMediaOpener(FileSharingDeviceOpener *opener)
+{
+    if (mediaOpener_ == opener)
+        return;
+    mediaOpener_ = opener;
+    for (int i = 0; i < items_.size(); ++i)
+        if (itemWidget(i))
+            replaceItem(i);
 }
 
 void MamChatWidget::clearMessages()
 {
+    cancelMessageSelection();
     items_.clear();
     keys_.clear();
-    cancelMessageSelection();
     // A plain click may leave an anchor without a selected range. Reset it
     // when changing conversations, including keys reused by the next model.
     selectionAnchorKey_.clear();
@@ -217,51 +288,232 @@ void MamChatWidget::setHistoryExhausted(bool exhausted)
 QWidget *MamChatWidget::createItemWidget(int index)
 {
     const auto &mv = items_.at(index).message;
-    auto *row = new QFrame;
+    auto *row = new ChatMessageRow;
     row->setFrameShape(QFrame::NoFrame);
     row->setObjectName(QStringLiteral("mamMessageRow"));
     row->setProperty("_psiMamRowKey", items_.at(index).key);
     row->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+    row->setFont(font());
+    row->setProperty("_psiMamInformational", mv.type() != MessageView::Message);
+    row->setToolTip(fullTimestamp(mv.dateTime()));
     row->installEventFilter(this);
 
-    auto *layout = new QVBoxLayout(row);
-    layout->setContentsMargins(10, 5, 14, 6);
-    layout->setSpacing(3);
-
-    auto *header = new QLabel(row);
-    const auto timestamp = mv.dateTime().isValid()
-        ? mv.dateTime().toLocalTime().toString(QStringLiteral("yyyy-MM-dd HH:mm"))
-        : QString();
-    const QString nick = mv.nick().isEmpty()
-        ? (mv.isLocal() ? tr("Me") : tr("Message")) : mv.nick();
-    header->setTextFormat(Qt::PlainText); // Nicknames and JIDs are untrusted text.
-    header->setText(QStringLiteral("%1    %2").arg(nick, timestamp));
-    header->setTextInteractionFlags(Qt::TextSelectableByMouse);
-    header->setForegroundRole(QPalette::Mid);
-    layout->addWidget(header);
-    header->installEventFilter(this);
-
-    auto *body = new QLabel(row);
-    body->setTextFormat(Qt::RichText);
-    body->setText(mv.formattedUserText().isEmpty()
-                      ? mv.formattedText() : mv.formattedUserText());
-    body->setWordWrap(true);
-    body->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::LinksAccessibleByMouse);
-    body->setOpenExternalLinks(true);
-    body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    layout->addWidget(body);
-    body->installEventFilter(this);
-    if (selectedKeys_.contains(items_.at(index).key)) {
-        QPalette pal = row->palette();
-        const QColor base = viewport()->palette().color(QPalette::Base);
-        const QColor accent = pal.color(QPalette::Highlight);
-        pal.setColor(QPalette::Window, QColor((base.red() * 3 + accent.red()) / 4,
-                                            (base.green() * 3 + accent.green()) / 4,
-                                            (base.blue() * 3 + accent.blue()) / 4));
-        row->setPalette(pal);
-        row->setAutoFillBackground(true);
+    row->setStyleSheet(theme_.styleSheet);
+    auto *outer = new QHBoxLayout(row);
+    const bool modern = theme_.layout == NativeChatTheme::Modern;
+    const bool message = mv.type() == MessageView::Message;
+    outer->setContentsMargins(12, modern ? 8 : 2, 12, modern ? 8 : 2);
+    outer->setSpacing(theme_.spacing);
+    auto *selection = new QCheckBox(row);
+    selection->setObjectName(QStringLiteral("mamMessageSelection"));
+    selection->setToolTip(tr("Select message"));
+    selection->setAccessibleName(tr("Select message"));
+    selection->setVisible(!selectedKeys_.isEmpty());
+    selection->setChecked(selectedKeys_.contains(items_.at(index).key));
+    outer->addWidget(selection, 0, Qt::AlignTop);
+    connect(selection, &QCheckBox::toggled, this, [this, row](bool checked) {
+        // A prepend shifts indices, and a MAM overlap can adopt a new key.
+        // Resolve the row's current identity at the time of the click.
+        const QString key = row->property("_psiMamRowKey").toString();
+        const int index = indexOfKey(key);
+        if (index >= 0) {
+            if (checked)
+                selectionAnchorKey_ = key;
+            setMessageSelected(index, checked);
+        }
+    });
+    if (modern && message && theme_.avatarSize > 0) {
+        auto *avatar = new QLabel(row);
+        avatar->setObjectName(QStringLiteral("mamAvatar"));
+        avatar->setFixedSize(theme_.avatarSize, theme_.avatarSize);
+        updateAvatar(avatar, mv);
+        outer->addWidget(avatar, 0, Qt::AlignTop);
+        avatar->installEventFilter(this);
     }
+    auto *content = new QWidget(row);
+    content->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    outer->addWidget(content, 1, Qt::AlignTop);
+    QBoxLayout *layout = modern ? static_cast<QBoxLayout *>(new QVBoxLayout(content))
+                               : static_cast<QBoxLayout *>(new QHBoxLayout(content));
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(modern ? 3 : 6);
+
+    if (message) {
+        const QString nick = mv.nick().isEmpty()
+            ? (mv.isLocal() ? tr("Me") : tr("Message")) : mv.nick();
+        auto *header = new QWidget(content);
+        header->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+        auto *headerLayout = new QHBoxLayout(header);
+        headerLayout->setContentsMargins(0, 0, 0, 0);
+        headerLayout->setSpacing(10);
+        auto *author = new QLabel(nick, header);
+        author->setObjectName(QStringLiteral("mamAuthor"));
+        author->setTextFormat(Qt::PlainText);
+        author->setTextInteractionFlags(Qt::TextSelectableByMouse);
+        author->setForegroundRole(QPalette::Text);
+        QFont nameFont = author->font();
+        nameFont.setBold(true);
+        author->setFont(nameFont);
+        headerLayout->addWidget(author);
+        author->installEventFilter(this);
+        auto *time = new QLabel(displayTime(mv.dateTime()), header);
+        time->setObjectName(QStringLiteral("mamTimestamp"));
+        time->setTextFormat(Qt::PlainText);
+        time->setToolTip(fullTimestamp(mv.dateTime()));
+        time->setForegroundRole(QPalette::Text);
+        headerLayout->addWidget(time);
+        if (modern)
+            headerLayout->addStretch();
+        layout->addWidget(header, 0, Qt::AlignTop);
+        time->installEventFilter(this);
+    }
+
+    auto *body = new ChatMessageText(content);
+    body->setObjectName(QStringLiteral("mamBody"));
+    body->setMediaOpener(mediaOpener_);
+    body->setFont(font());
+    body->setForegroundRole(QPalette::Text);
+    QString richText = mv.formattedText();
+    if (!mv.formattedUserText().isEmpty())
+        richText += (richText.isEmpty() ? QString() : QStringLiteral(" — ")) + mv.formattedUserText();
+    body->setRichText(richText);
+    layout->addWidget(body, modern ? 0 : 1, Qt::AlignTop);
+    body->installEventFilter(this);
+    body->viewport()->installEventFilter(this);
+    body->setToolTip(row->toolTip());
+    body->viewport()->setToolTip(row->toolTip());
+    if (!message) {
+        QTextCursor cursor(body->document());
+        cursor.select(QTextCursor::Document);
+        QTextBlockFormat format;
+        format.setAlignment(mv.type() == MessageView::Subject ? Qt::AlignLeft : Qt::AlignHCenter);
+        cursor.mergeBlockFormat(format);
+    }
+    updateRowSelection(row, selectedKeys_.contains(items_.at(index).key));
     return row;
+}
+
+QString MamChatWidget::displayTime(const QDateTime &when, const QDateTime &now)
+{
+    if (!when.isValid())
+        return {};
+    const qint64 age = now.toMSecsSinceEpoch() - when.toMSecsSinceEpoch();
+    if (age < 0 || age >= 24 * 60 * 60 * 1000)
+        return when.toLocalTime().toString(QStringLiteral("HH:mm"));
+    const int seconds = int(age / 1000);
+    if (seconds < 60)
+        return (seconds == 1 ? tr("1 second ago") : tr("%n seconds ago", nullptr, seconds));
+    if (seconds < 3600)
+        return (seconds / 60 == 1 ? tr("1 minute ago") : tr("%n minutes ago", nullptr, seconds / 60));
+    return (seconds / 3600 == 1 ? tr("1 hour ago") : tr("%n hours ago", nullptr, seconds / 3600));
+}
+
+QString MamChatWidget::fullTimestamp(const QDateTime &when)
+{
+    if (!when.isValid())
+        return {};
+    const auto local = when.toLocalTime();
+    return QLocale().toString(local.date(), QLocale::LongFormat) + QStringLiteral(" ")
+        + local.toString(QStringLiteral("HH:mm:ss t"));
+}
+
+void MamChatWidget::updateTimestamps()
+{
+    if (!isVisible())
+        return;
+    const auto now = QDateTime::currentDateTime();
+    for (int i : materializedIndices()) {
+        if (auto *row = itemWidget(i)) {
+            if (auto *label = row->findChild<QLabel *>(QStringLiteral("mamTimestamp"))) {
+                const auto text = displayTime(items_.at(i).message.dateTime(), now);
+                if (label->text() != text)
+                    label->setText(text);
+            }
+        }
+    }
+}
+
+void MamChatWidget::changeEvent(QEvent *event)
+{
+    Mattermost::LongListWidget::changeEvent(event);
+    if (event->type() == QEvent::FontChange) {
+        for (int index : materializedIndices()) {
+            auto *row = itemWidget(index);
+            if (!row)
+                continue;
+            row->setFont(font());
+            if (auto *author = row->findChild<QLabel *>(QStringLiteral("mamAuthor"))) {
+                QFont authorFont = font();
+                authorFont.setBold(true);
+                author->setFont(authorFont);
+            }
+            if (auto *body = row->findChild<ChatMessageText *>())
+                body->setFont(font());
+        }
+        if (!items_.isEmpty())
+            itemsChanged(0, items_.size() - 1);
+    }
+    else if (event->type() == QEvent::PaletteChange) {
+        // QAbstractScrollArea can retain the old resolved viewport palette.
+        viewport()->setPalette({});
+        refreshAvatars();
+        refreshSelection();
+        emit paletteChanged();
+    }
+}
+
+void MamChatWidget::setTheme(const NativeChatTheme &theme)
+{
+    theme_ = theme;
+    for (int index : materializedIndices())
+        replaceItem(index);
+}
+
+void MamChatWidget::setAvatarResolver(std::function<QPixmap(const MessageView &)> resolver)
+{
+    avatarResolver_ = std::move(resolver);
+    refreshAvatars();
+}
+
+void MamChatWidget::updateAvatar(QLabel *label, const MessageView &message)
+{
+    const auto source = avatarResolver_ ? avatarResolver_(message) : QPixmap();
+    const int size = label->width();
+    const auto ratio = devicePixelRatioF();
+    QPixmap picture(qRound(size * ratio), qRound(size * ratio));
+    picture.setDevicePixelRatio(ratio);
+    picture.fill(Qt::transparent);
+    QPainter painter(&picture);
+    painter.setRenderHint(QPainter::Antialiasing);
+    QPainterPath clip;
+    clip.addRoundedRect(QRectF(0, 0, size, size), 6, 6);
+    painter.setClipPath(clip);
+    if (source.isNull()) {
+        painter.fillRect(QRect(0, 0, size, size), palette().brush(QPalette::Highlight));
+        painter.setPen(palette().color(QPalette::HighlightedText));
+        QFont initial = font();
+        initial.setPixelSize(qMax(12, size / 2));
+        painter.setFont(initial);
+        const QString nick = message.nick().isEmpty()
+            ? (message.isLocal() ? tr("Me") : tr("Message")) : message.nick();
+        painter.drawText(QRect(0, 0, size, size), Qt::AlignCenter, nick.left(1).toUpper());
+    } else {
+        const auto scaled = source.scaled(picture.size(), Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+        const QRect crop((scaled.width() - picture.width()) / 2, (scaled.height() - picture.height()) / 2,
+                         picture.width(), picture.height());
+        painter.drawPixmap(QRect(0, 0, size, size), scaled, crop);
+    }
+    painter.end();
+    label->setPixmap(picture);
+}
+
+void MamChatWidget::refreshAvatars()
+{
+    for (int i : materializedIndices()) {
+        if (auto *row = itemWidget(i))
+            if (auto *avatar = row->findChild<QLabel *>(QStringLiteral("mamAvatar")))
+                updateAvatar(avatar, items_.at(i).message);
+    }
 }
 
 int MamChatWidget::indexOfKey(const QString &key) const
@@ -333,19 +585,61 @@ void MamChatWidget::copySelectedMessages()
             continue;
         const auto &message = row.message;
         QTextDocument document;
-        const QString rich = message.formattedUserText().isEmpty()
-            ? message.formattedText() : message.formattedUserText();
-        document.setHtml(rich);
+        QString rich = message.formattedText();
+        if (!message.formattedUserText().isEmpty())
+            rich += (rich.isEmpty() ? QString() : QStringLiteral(" — ")) + message.formattedUserText();
+        PsiRichText::setText(&document, rich);
         const QString nick = message.nick().isEmpty()
             ? (message.isLocal() ? tr("Me") : tr("Message")) : message.nick();
         const QString timestamp = message.dateTime().isValid()
             ? message.dateTime().toLocalTime().toString(QStringLiteral("yyyy-MM-dd HH:mm"))
             : QString();
         blocks.append(QStringLiteral("%1\t[%2]\n%3")
-                          .arg(nick, timestamp, document.toPlainText().trimmed()));
+                          .arg(nick, timestamp, PsiRichText::convertToPlainText(&document).trimmed()));
     }
     if (!blocks.isEmpty())
         QApplication::clipboard()->setText(blocks.join(QStringLiteral("\n\n")));
+}
+
+void MamChatWidget::setInformationalColor(const QColor &color)
+{
+    informationalColor_ = color;
+    refreshSelection();
+}
+
+void MamChatWidget::updateRowSelection(QFrame *row, bool selected)
+{
+    const bool selecting = !selectedKeys_.isEmpty();
+    if (auto *check = row->findChild<QCheckBox *>(QStringLiteral("mamMessageSelection"))) {
+        const QSignalBlocker blocker(check);
+        check->setChecked(selected);
+        check->setVisible(selecting);
+    }
+    const QColor base = viewport()->palette().color(QPalette::Base);
+    const QColor accent = viewport()->palette().color(QPalette::Highlight);
+    const QColor surface = selected
+        ? QColor((base.red() * 3 + accent.red()) / 4,
+                 (base.green() * 3 + accent.green()) / 4,
+                 (base.blue() * 3 + accent.blue()) / 4) : base;
+    QPalette palette = viewport()->palette();
+    palette.setColor(QPalette::Window, surface);
+    palette.setColor(QPalette::Base, surface); // QTextDocument's surface, too.
+    row->setPalette(palette);
+    row->setAutoFillBackground(true);
+    if (auto *author = row->findChild<QLabel *>(QStringLiteral("mamAuthor"))) {
+        author->setTextInteractionFlags(selecting ? Qt::NoTextInteraction : Qt::TextSelectableByMouse);
+        if (selecting)
+            author->setSelection(0, 0);
+    }
+    if (auto *body = row->findChild<ChatMessageText *>()) {
+        QPalette textPalette = palette;
+        if (row->property("_psiMamInformational").toBool())
+            textPalette.setColor(QPalette::Text, informationalColor_.isValid()
+                ? informationalColor_ : palette.color(QPalette::Link));
+        body->setPalette(textPalette);
+        body->setWholeMessageSelectionMode(selecting);
+    }
+    row->update();
 }
 
 void MamChatWidget::refreshSelection()
@@ -358,21 +652,7 @@ void MamChatWidget::refreshSelection()
             auto *row = qobject_cast<QFrame *>(itemWidget(i));
             if (!row || row->objectName() != QLatin1String("mamMessageRow"))
                 continue;
-            const bool selected = selectedKeys_.contains(items_.at(i).key);
-            const QColor base = viewport()->palette().color(QPalette::Base);
-            const QColor accent = row->palette().color(QPalette::Highlight);
-            QPalette palette = row->palette();
-            palette.setColor(QPalette::Window, selected
-                ? QColor((base.red() * 3 + accent.red()) / 4,
-                         (base.green() * 3 + accent.green()) / 4,
-                         (base.blue() * 3 + accent.blue()) / 4) : base);
-            row->setPalette(palette);
-            row->setAutoFillBackground(selected);
-            if (selected) {
-                for (auto *label : row->findChildren<QLabel *>())
-                    label->setSelection(0, 0); // Clear partial QLabel selection.
-            }
-            row->update();
+            updateRowSelection(row, selectedKeys_.contains(items_.at(i).key));
         }
     }
     if (auto *shortcut = findChild<QShortcut *>(QStringLiteral("mamCopyShortcut")))
@@ -457,6 +737,13 @@ bool MamChatWidget::eventFilter(QObject *target, QEvent *event)
                     swallowMouseRelease_ = false;
                     if (consumed)
                         return true;
+                    if (groupChat_ && selectedKeys_.isEmpty()
+                        && target->objectName() == QLatin1String("mamAuthor")) {
+                        auto *author = qobject_cast<QLabel *>(target);
+                        if (author && !author->hasSelectedText() && author->rect().contains(mouse->pos())) {
+                            emit nicknameClicked(items_.at(index).message.nick());
+                        }
+                    }
                 }
             }
         }

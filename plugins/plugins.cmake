@@ -28,6 +28,7 @@ list(APPEND PLUGINS_INCLUDES
     ${CMAKE_CURRENT_LIST_DIR}/include/iqfilteringhost.h
     ${CMAKE_CURRENT_LIST_DIR}/include/iqnamespacefilter.h
     ${CMAKE_CURRENT_LIST_DIR}/include/menuaccessor.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/nativechatthemeprovider.h
     ${CMAKE_CURRENT_LIST_DIR}/include/optionaccessinghost.h
     ${CMAKE_CURRENT_LIST_DIR}/include/optionaccessor.h
     ${CMAKE_CURRENT_LIST_DIR}/include/pluginaccessinghost.h

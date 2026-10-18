@@ -207,12 +207,13 @@ void animateOpacity(QGraphicsOpacityEffect* effect,
     if (!effect || !animation) {
         return;
     }
+    // Cancel the opposite in-flight animation even when its first frame still
+    // equals the new target (e.g. leaving immediately after a reveal starts).
+    animation->stop();
     if (std::abs(effect->opacity() - target) < 0.01) {
         effect->setOpacity(target);
         return;
     }
-
-    animation->stop();
     animation->setDuration(duration);
     animation->setStartValue(effect->opacity());
     animation->setEndValue(target);
@@ -353,22 +354,14 @@ void OverlayScrollBarManager::registerArea(QAbstractScrollArea* area)
             sync(*state);
             layout(*state);
             if (cursorOverOverlay(*state)) {
-                if (state->fadeTimer) {
-                    state->fadeTimer->stop();
-                }
+                scheduleFade(*state);
                 reveal(*state);
             }
         });
         connect(source, &QScrollBar::valueChanged, this, [this, state](int) {
             sync(*state);
             reveal(*state);
-            if (cursorOverOverlay(*state)) {
-                if (state->fadeTimer) {
-                    state->fadeTimer->stop();
-                }
-            } else {
-                scheduleFade(*state);
-            }
+            scheduleFade(*state);
         });
 
         // Mirror the overlay's user interaction onto the hidden source scrollbar
@@ -389,11 +382,9 @@ void OverlayScrollBarManager::registerArea(QAbstractScrollArea* area)
         });
         connect(overlay, &QScrollBar::sliderReleased, this, [this, state, source] {
             source->setSliderDown(false);
-            if (cursorOverOverlay(*state)) {
+            if (cursorOverOverlay(*state))
                 reveal(*state);
-            } else {
-                scheduleFade(*state);
-            }
+            scheduleFade(*state);
         });
 
         // Page-step, wheel and keyboard actions over the overlay do not put the
@@ -420,6 +411,7 @@ void OverlayScrollBarManager::registerArea(QAbstractScrollArea* area)
             || (state->overlayHorizontal && state->overlayHorizontal->isSliderDown());
         if (dragging || cursorOverOverlay(*state)) {
             reveal(*state);
+            scheduleFade(*state); // Recheck even if Qt loses the eventual Leave event.
             return;
         }
         fade(*state);
@@ -658,7 +650,7 @@ bool OverlayScrollBarManager::cursorOverOverlay(const State& state) const
 
     const QPoint local = state.area->mapFromGlobal(QCursor::pos());
     const auto containsBar = [local](const QScrollBar* bar) {
-        return bar && scrollable(bar) && bar->geometry().contains(local);
+        return bar && bar->isVisible() && scrollable(bar) && bar->geometry().contains(local);
     };
     const auto containsButton = [local](const QToolButton* button) {
         return button && button->isVisible() && button->geometry().contains(local);
@@ -694,13 +686,7 @@ bool OverlayScrollBarManager::eventFilter(QObject* watched, QEvent* event)
                     statePtr->cursorInside = containsCursor(*statePtr);
                     if (statePtr->cursorInside) {
                         reveal(*statePtr);
-                        if (cursorOverOverlay(*statePtr)) {
-                            if (statePtr->fadeTimer) {
-                                statePtr->fadeTimer->stop();
-                            }
-                        } else {
-                            scheduleFade(*statePtr);
-                        }
+                        scheduleFade(*statePtr);
                     }
                 });
                 break;
@@ -767,20 +753,12 @@ bool OverlayScrollBarManager::eventFilter(QObject* watched, QEvent* event)
                 }
             }
             if (overlayWidget) {
-                if (state->fadeTimer) {
-                    state->fadeTimer->stop();
-                }
+                scheduleFade(*state);
                 reveal(*state);
             } else if (areaBoundary && !state->cursorInside && containsCursor(*state)) {
                 state->cursorInside = true;
                 reveal(*state);
-                if (cursorOverOverlay(*state)) {
-                    if (state->fadeTimer) {
-                        state->fadeTimer->stop();
-                    }
-                } else {
-                    scheduleFade(*state);
-                }
+                scheduleFade(*state);
             }
             break;
         case QEvent::Leave:
@@ -794,9 +772,7 @@ bool OverlayScrollBarManager::eventFilter(QObject* watched, QEvent* event)
             if (overlayWidget && state->area) {
                 QTimer::singleShot(0, state->area, [this, state] {
                     if (cursorOverOverlay(*state)) {
-                        if (state->fadeTimer) {
-                            state->fadeTimer->stop();
-                        }
+                        scheduleFade(*state);
                         reveal(*state);
                     } else if (containsCursor(*state)) {
                         state->cursorInside = true;
@@ -818,13 +794,7 @@ bool OverlayScrollBarManager::eventFilter(QObject* watched, QEvent* event)
         case QEvent::Wheel:
             state->cursorInside = containsCursor(*state);
             reveal(*state);
-            if (cursorOverOverlay(*state)) {
-                if (state->fadeTimer) {
-                    state->fadeTimer->stop();
-                }
-            } else {
-                scheduleFade(*state);
-            }
+            scheduleFade(*state);
             break;
         default:
             break;

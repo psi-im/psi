@@ -36,6 +36,8 @@ class ColorOpt : public QObject {
     Q_OBJECT
 public:
     static ColorOpt    *instance();
+    static QString      paletteName();
+    static QString      optionPath(const QString &logical, const QString &scheme = {});
     QColor              color(const QString &opt, const QColor &defaultColor = QColor()) const;
     QPalette::ColorRole colorRole(const QString &opt) const;
     static bool         compatibleColors(const QColor &foreground, const QColor &background);
@@ -53,6 +55,7 @@ public slots:
 
 private slots:
     void optionChanged(const QString &opt);
+    void reloadPalette();
 
 private:
     static std::unique_ptr<ColorOpt> instance_;

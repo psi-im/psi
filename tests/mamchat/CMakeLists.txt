@@ -4,7 +4,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_AUTOMOC ON)
 enable_testing()
 set(QT_DEFAULT_MAJOR_VERSION 6 CACHE STRING "Qt major version")
-find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Core Widgets Test)
+find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Core Widgets Test Multimedia Network)
 set(PSI_WIDGETS ${CMAKE_CURRENT_LIST_DIR}/../../src/widgets)
 add_executable(mam_long_list_test LongListWidgetTest.cpp
     ${PSI_WIDGETS}/LongListWidget.cpp ${PSI_WIDGETS}/LongListWidget.h)
@@ -40,12 +40,33 @@ add_test(NAME mam_archive_peer_policy COMMAND mam_archive_peer_policy_test)
 
 # Actual MamChatWidget/LongListWidget implementation, backed by a small
 # MessageView test double so no PsiAccount or application singleton is needed.
+# PsiTextView, PsiRichText and qite are real, including media parsers/players.
+# Test doubles supply deterministic icon assets and the account/storage boundary.
 add_executable(mam_chat_widget_test MamChatWidgetTest.cpp
     ${PSI_WIDGETS}/MamChatWidget.cpp ${PSI_WIDGETS}/MamChatWidget.h
+    ${PSI_WIDGETS}/ChatMessageText.cpp ${PSI_WIDGETS}/ChatMessageText.h
+    ${PSI_WIDGETS}/psirichtext.cpp
+    ${PSI_WIDGETS}/psitextview.cpp ${PSI_WIDGETS}/psitextview.h
+    ${PSI_WIDGETS}/urlobject.h mock/urlobject.cpp
+    mock/filesharingmanager.h mock/filesharingdownloader.h
+    ../../3rdparty/qite/libqite/qite.cpp
+    ../../3rdparty/qite/libqite/qitemedia.cpp
+    ../../3rdparty/qite/libqite/qiteaudio.cpp
+    ../../3rdparty/qite/libqite/qitevideo.cpp
+    ../../3rdparty/qite/libqite/qitevideoframe.cpp
     ${PSI_WIDGETS}/LongListWidget.cpp ${PSI_WIDGETS}/LongListWidget.h)
 target_include_directories(mam_chat_widget_test BEFORE PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/mock
-    ${CMAKE_CURRENT_LIST_DIR}/../../src)
+    ${CMAKE_CURRENT_LIST_DIR}/../../src
+    ${CMAKE_CURRENT_LIST_DIR}/../../3rdparty/qite/libqite)
 target_link_libraries(mam_chat_widget_test PRIVATE
-    Qt${QT_DEFAULT_MAJOR_VERSION}::Widgets Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+    Qt${QT_DEFAULT_MAJOR_VERSION}::Widgets Qt${QT_DEFAULT_MAJOR_VERSION}::Test
+    Qt${QT_DEFAULT_MAJOR_VERSION}::Multimedia Qt${QT_DEFAULT_MAJOR_VERSION}::Network)
 add_test(NAME mam_chat_widget COMMAND mam_chat_widget_test)
+
+add_executable(mam_native_theme_test NativeChatThemeTest.cpp
+    ${PSI_WIDGETS}/NativeChatThemeRegistry.cpp ${PSI_WIDGETS}/NativeChatThemeRegistry.h)
+target_include_directories(mam_native_theme_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../src)
+target_link_libraries(mam_native_theme_test PRIVATE
+    Qt${QT_DEFAULT_MAJOR_VERSION}::Widgets Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+add_test(NAME mam_native_theme COMMAND mam_native_theme_test)

@@ -322,6 +322,11 @@ void PsiTextView::scrollToBottom() { verticalScrollBar()->setValue(verticalScrol
  */
 void PsiTextView::scrollToTop() { verticalScrollBar()->setValue(verticalScrollBar()->minimum()); }
 
+void PsiTextView::setRichText(const QString &text)
+{
+    PsiRichText::setText(document(), text, d->objectParsers);
+}
+
 /**
  * This function is provided for convenience. Please see
  * PsiRichText::appendText() documentation for usage details.

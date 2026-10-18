@@ -545,6 +545,8 @@ void DisplayProxy::displayResult(const EDBResult &r, int dir)
             PsiAccount       *pa   = (acc) ? acc : e->account();
             QString           from = getNick(e->account(), e->from());
             MessageEvent::Ptr me   = e.staticCast<MessageEvent>();
+            if (me->message().type() == Message::Type::Groupchat)
+                from = me->message().from().resource();
             QString           msg  = me->message().body();
             msg                    = TextUtil::linkify(TextUtil::plain2rich(msg));
 

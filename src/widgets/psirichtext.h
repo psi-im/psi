@@ -35,6 +35,7 @@ public:
     using ParsersMap = QMap<QString, Parser>;
 
     static void install(QTextDocument *doc);
+    static void recolorLinks(QTextDocument *doc, const QColor &color);
     static void ensureTextLayouted(QTextDocument *doc, int documentWidth, Qt::Alignment align = Qt::AlignLeft,
                                    Qt::LayoutDirection layoutDirection = Qt::LeftToRight, bool textWordWrap = true);
     static void setText(QTextDocument *doc, const QString &text, const ParsersMap &parsers = ParsersMap());

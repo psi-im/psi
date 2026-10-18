@@ -42,6 +42,7 @@
 class IconAction;
 class PsiContact;
 class MamChatWidget;
+class HistorySync;
 namespace XMPP { class MAMTask; }
 
 class PsiChatDlg : public ChatDlg {
@@ -131,8 +132,11 @@ private:
 private:
     Ui::ChatDlg ui_;
     MamChatWidget *nativeTimeline_ = nullptr;
-    QPointer<XMPP::MAMTask> mamTask_;
+    QPointer<HistorySync> mamTask_;
     QString mamBeforeId_;
+    bool mamRefreshTail_ = false;
+    qint64 localBeforeId_ = 0;
+    bool localExhausted_ = false;
     bool mamExhausted_ = false;
     bool mamResumeAfterConnect_ = false;
 

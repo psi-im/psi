@@ -97,6 +97,11 @@ EDBSqLite::EDBSqLite(PsiCon *psi) :
         }
     } else
         status = Commited;
+
+    if (status != NotActive && !HistoryArchive::migrate(db)) {
+        qWarning("Cannot migrate history database; leaving existing history untouched.");
+        status = NotActive;
+    }
 }
 
 EDBSqLite::~EDBSqLite()
@@ -109,6 +114,38 @@ EDBSqLite::~EDBSqLite()
     }
     QSqlDatabase::removeDatabase("history");
     delete mirror_;
+}
+
+EDBResult EDBSqLite::localHistoryPage(const QString &account, const Jid &peer, qint64 before, int limit)
+{
+    EDBResult result;
+    if (!commit() || account.isEmpty() || peer.isEmpty() || limit <= 0)
+        return result;
+    const auto rows
+        = HistoryArchive::localRecords(QSqlDatabase::database("history"), account, peer.full(), before, limit);
+    for (const auto &row : rows) {
+        if (auto event = getEvent(row))
+            result.append(EDBItemPtr(new EDBItem(event, row.value("id").toString(), row.value("history_state").toInt(),
+                                                 row.value("archive_uid").toString())));
+    }
+    return result;
+}
+
+HistoryArchive::Page EDBSqLite::archivePage(const HistoryArchive::Key &key, const QString &before, int limit)
+{
+    if (!commit())
+        return {};
+    return HistoryArchive::readPage(QSqlDatabase::database("history"), key, before, limit);
+}
+
+bool EDBSqLite::mergeArchivePage(const HistoryArchive::Key &key, const QString &before, int limit,
+                                 HistoryArchive::Page &page)
+{
+    if (!commit())
+        return false;
+    const bool ok = HistoryArchive::storePage(QSqlDatabase::database("history"), key, before, limit, page);
+    jidsCache.clear(); // A failed transaction must not retain an inserted contact ID.
+    return ok;
 }
 
 bool EDBSqLite::init()
@@ -127,7 +164,7 @@ bool EDBSqLite::init()
     return true;
 }
 
-int EDBSqLite::features() const { return SeparateAccounts | PrivateContacts | AllContacts | AllAccounts; }
+int EDBSqLite::features() const { return SeparateAccounts | PrivateContacts | AllContacts | AllAccounts | ArchiveCache; }
 
 int EDBSqLite::get(const QString &accId, const XMPP::Jid &jid, QDateTime date, int direction, int start, int len)
 {
@@ -339,7 +376,7 @@ void EDBSqLite::performRequests()
         if (!fAccAll)
             query->bindValue(":acc_id", r->accId);
         if (!r->date.isNull())
-            query->bindValue(":date", r->date);
+            query->bindValue(":date", r->date.toMSecsSinceEpoch());
         query->bindValue(":start", r->start);
         query->bindValue(":cnt", r->len);
         EDBResult result;
@@ -348,7 +385,8 @@ void EDBSqLite::performRequests()
                 PsiEvent::Ptr e(getEvent(query->record()));
                 if (e) {
                     QString id = query->record().value("id").toString();
-                    result.append(EDBItemPtr(new EDBItem(e, id)));
+                    result.append(EDBItemPtr(new EDBItem(e, id, query->record().value("history_state").toInt(),
+                                                       query->record().value("archive_uid").toString())));
                 }
             }
             query->freeResult();
@@ -387,7 +425,8 @@ void EDBSqLite::performRequests()
                 PsiEvent::Ptr e(getEvent(rec));
                 if (e) {
                     QString    id  = rec.value("id").toString();
-                    EDBItemPtr eip = EDBItemPtr(new EDBItem(e, id));
+                    EDBItemPtr eip = EDBItemPtr(new EDBItem(e, id, query->record().value("history_state").toInt(),
+                                                            query->record().value("archive_uid").toString()));
                     result.append(eip);
                 }
             }
@@ -422,6 +461,8 @@ bool EDBSqLite::appendEvent(const QString &accId, const XMPP::Jid &jid, const Ps
             nType = 4;
         else if (m.type() == Message::Type::Headline)
             nType = 5;
+        else if (m.type() == Message::Type::Groupchat)
+            nType = 9;
 
     } else if (e->type() == PsiEvent::Auth) {
         AuthEvent::Ptr ae = e.staticCast<AuthEvent>();
@@ -439,6 +480,21 @@ bool EDBSqLite::appendEvent(const QString &accId, const XMPP::Jid &jid, const Ps
         return false;
 
     int nDirection = e->originLocal() ? 1 : 2;
+    if (e->type() == PsiEvent::Message) {
+        const auto           &m = e.staticCast<MessageEvent>()->message().displayMessage();
+        HistoryArchive::Entry delivery;
+        delivery.messageId = m.id();
+        delivery.sender    = m.from().full();
+        delivery.timestamp = dTime;
+        delivery.type      = nType;
+        delivery.direction = nDirection;
+        delivery.body      = m.body();
+        delivery.subject   = m.subject();
+        // A live delivery can be logged after its MAM page finished. Reuse
+        // that archived row rather than creating a second local original.
+        if (HistoryArchive::matchingDelivery(db, contactId, delivery, true))
+            return true;
+    }
     if (!transaction(false))
         return false;
 
@@ -446,9 +502,13 @@ bool EDBSqLite::appendEvent(const QString &accId, const XMPP::Jid &jid, const Ps
     query->bindValue(":contact_id", contactId);
     query->bindValue(":resource", (jidType != GroupChatContact) ? jid.resource() : "");
     query->bindValue(":date", dTime);
+    query->bindValue(":history_date_ms", dTime.isValid() ? dTime.toMSecsSinceEpoch() : qint64(0));
     query->bindValue(":type", nType);
     query->bindValue(":direction", nDirection);
-    if (nType == 0 || nType == 1 || nType == 4 || nType == 5) {
+    // Authentication events are local history, never MAM message stanzas.
+    query->bindValue(":history_state",
+                     e->type() == PsiEvent::Auth ? HistoryArchive::LocalOnly : HistoryArchive::Unverified);
+    if (nType == 0 || nType == 1 || nType == 4 || nType == 5 || nType == 9) {
         MessageEvent::Ptr me   = e.staticCast<MessageEvent>();
         const Message    &m    = me->message().displayMessage();
         QString           lang = m.lang();
@@ -481,7 +541,7 @@ PsiEvent::Ptr EDBSqLite::getEvent(const QSqlRecord &record)
 
     int type = record.value("type").toInt();
 
-    if (type == 0 || type == 1 || type == 4 || type == 5) {
+    if (type == 0 || type == 1 || type == 4 || type == 5 || type == 9) {
         Message m;
         m.setTimeStamp(record.value("date").toDateTime());
         if (type == 1)
@@ -490,6 +550,8 @@ PsiEvent::Ptr EDBSqLite::getEvent(const QSqlRecord &record)
             m.setType(Message::Type::Error);
         else if (type == 5)
             m.setType(Message::Type::Headline);
+        else if (type == 9)
+            m.setType(Message::Type::Groupchat);
         else
             m.setType(Message::Type::Normal);
         m.setFrom(Jid(record.value("jid").toString()));
@@ -575,7 +637,7 @@ int EDBSqLite::rowCount(const QString &accId, const XMPP::Jid &jid, QDateTime be
     if (!fAccAll)
         query->bindValue(":acc_id", accId);
     if (!before.isNull())
-        query->bindValue(":date", before);
+        query->bindValue(":date", before.toMSecsSinceEpoch());
     int res = 0;
     if (query->exec()) {
         if (query->next()) {
@@ -623,6 +685,8 @@ bool EDBSqLite::eraseHistory(const QString &accId, const XMPP::Jid &jid)
             query->freeResult();
         }
     }
+    if (res)
+        res = HistoryArchive::invalidate(QSqlDatabase::database("history"), accId, jid.full());
     if (res)
         res = commit();
     else
@@ -751,7 +815,8 @@ QString EDBSqLite::QueryStorage::getQueryString(QueryType type, bool allAccounts
     case QueryDateBackward:
     case QueryDateForward:
         queryStr = "SELECT `acc_id`, `events`.`id`, `jid`, `date`, `events`.`type`, `direction`, `subject`, `m_text`, "
-                   "`lang`, `extra_data`"
+                   "`lang`, `extra_data`, `history_state`, "
+                   "(SELECT uid FROM archive_items WHERE event_id=events.id LIMIT 1) AS archive_uid"
                    " FROM `events`, `contacts`"
                    " WHERE `contacts`.`id` = `contact_id`";
         if (!allContacts)
@@ -759,13 +824,13 @@ QString EDBSqLite::QueryStorage::getQueryString(QueryType type, bool allAccounts
         if (!allAccounts)
             queryStr.append(" AND `acc_id` = :acc_id");
         if (type == QueryDateBackward)
-            queryStr.append(" AND `date` < :date");
+            queryStr.append(" AND `history_date_ms` < :date");
         else if (type == QueryDateForward)
-            queryStr.append(" AND `date` >= :date");
+            queryStr.append(" AND `history_date_ms` >= :date");
         if (type == QueryLatest || type == QueryDateBackward)
-            queryStr.append(" ORDER BY `date` DESC");
+            queryStr.append(" ORDER BY `history_date_ms` DESC, `events`.`id` DESC");
         else
-            queryStr.append(" ORDER BY `date` ASC");
+            queryStr.append(" ORDER BY `history_date_ms` ASC, `events`.`id` ASC");
         queryStr.append(" LIMIT :start, :cnt;");
         break;
     case QueryRowCount:
@@ -778,7 +843,7 @@ QString EDBSqLite::QueryStorage::getQueryString(QueryType type, bool allAccounts
         if (!allAccounts)
             queryStr.append(" AND `acc_id` = :acc_id");
         if (type == QueryRowCountBefore)
-            queryStr.append(" AND `date` < :date");
+            queryStr.append(" AND `history_date_ms` < :date");
         queryStr.append(";");
         break;
     case QueryJidRowId:
@@ -786,7 +851,8 @@ QString EDBSqLite::QueryStorage::getQueryString(QueryType type, bool allAccounts
         break;
     case QueryFindText:
         queryStr = "SELECT `acc_id`, `events`.`id`, `jid`, `date`, `events`.`type`, `direction`, `subject`, `m_text`, "
-                   "`lang`, `extra_data`"
+                   "`lang`, `extra_data`, `history_state`, "
+                   "(SELECT uid FROM archive_items WHERE event_id=events.id LIMIT 1) AS archive_uid"
                    " FROM `events`, `contacts`"
                    " WHERE `contacts`.`id` = `contact_id`";
         if (!allContacts)
@@ -794,13 +860,15 @@ QString EDBSqLite::QueryStorage::getQueryString(QueryType type, bool allAccounts
         if (!allAccounts)
             queryStr.append(" AND `acc_id` = :acc_id");
         queryStr.append(" AND `m_text` IS NOT NULL");
-        queryStr.append(" ORDER BY `date`;");
+        queryStr.append(" ORDER BY `history_date_ms`, `events`.`id`;");
         break;
     case QueryInsertEvent:
         queryStr = "INSERT INTO `events` ("
-                   "`contact_id`, `resource`, `date`, `type`, `direction`, `subject`, `m_text`, `lang`, `extra_data`"
+                   "`contact_id`, `resource`, `date`, `type`, `direction`, `subject`, `m_text`, `lang`, `extra_data`, "
+                   "`history_state`, `history_date_ms`"
                    ") VALUES ("
-                   ":contact_id, :resource, :date, :type, :direction, :subject, :m_text, :lang, :extra_data"
+                   ":contact_id, :resource, :date, :type, :direction, :subject, :m_text, :lang, :extra_data, "
+                   ":history_state, :history_date_ms"
                    ");";
         break;
     }

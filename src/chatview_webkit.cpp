@@ -18,6 +18,7 @@
  */
 
 #include "chatview_webkit.h"
+#include "coloropt.h"
 
 #include "applicationinfo.h"
 #include "avatars.h"
@@ -567,6 +568,19 @@ ChatView::ChatView(QWidget *parent) : QFrame(parent), d(new ChatViewPrivate(this
     setFrameShadow(QFrame::Sunken);
     setFrameShape(QFrame::StyledPanel);
     setLooks(d->webView);
+    auto applyChatPalette = [this] {
+        QPalette palette = qApp->palette();
+        palette.setColor(QPalette::Base, ColorOpt::instance()->color(QStringLiteral("options.ui.look.colors.chat.background")));
+        palette.setColor(QPalette::Window, palette.color(QPalette::Base));
+        palette.setColor(QPalette::Text, ColorOpt::instance()->color(QStringLiteral("options.ui.look.colors.chat.text")));
+        setPalette(palette);
+        d->webView->setPalette(palette);
+    };
+    applyChatPalette();
+    connect(ColorOpt::instance(), &ColorOpt::changed, this, [applyChatPalette](const QString &option) {
+        if (option.startsWith(QLatin1String("options.ui.look.colors.chat.")))
+            applyChatPalette();
+    });
 
 #ifndef HAVE_X11 // linux has this feature built-in
     connect(PsiOptions::instance(), SIGNAL(optionChanged(QString)),

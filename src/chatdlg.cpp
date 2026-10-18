@@ -429,13 +429,12 @@ UserStatus ChatDlg::userStatusFor(const Jid &jid, QList<UserListItem *> ul, bool
 
 void ChatDlg::preloadHistory(bool forceLocal)
 {
-    // The widget-chat MVP uses a MAM-backed timeline when online. Do not
-    // independently prepend the SQLite tail: old records lack archive UIDs
-    // and would otherwise duplicate the initial MAM page. Offline chats still
-    // display the legacy local history until EDB/MAM correlation lands.
 #ifndef WEBKIT
-    if (!forceLocal && account()->isConnected() && !account()->findGCContact(jid()))
-        return; // Keep private MUC occupant history in EDB.
+    if (!forceLocal && account()->isConnected() && !account()->findGCContact(jid())
+        && !(account()->edb()->features() & EDB::ArchiveCache))
+        return; // The optional flat-file backend has no persistent archive identity.
+#else
+    Q_UNUSED(forceLocal)
 #endif
     int cnt = PsiOptions::instance()->getOption("options.ui.chat.history.preload-history-size").toInt();
     if (cnt > 0 && !localHistoryPending_) {
@@ -470,11 +469,9 @@ void ChatDlg::getHistory()
             const EDBItemPtr &item = r.at(i);
             PsiEvent::Ptr     e    = item->event();
             if (e->type() == PsiEvent::Message) {
-                // No verified archive UID exists for legacy EDB rows.
-                // Never splice an anonymous SQLite tail into a MAM timeline.
                 localHistoryPopulated_ = true;
                 MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-                appendMessage(me->message(), me->originLocal());
+                appendMessage(me->message(), me->originLocal(), item->id().toLongLong(), item->archiveId());
             }
         }
     }
@@ -883,7 +880,7 @@ QString ChatDlg::whoNick(bool local) const
     return result;
 }
 
-void ChatDlg::appendMessage(const Message &m, bool local)
+void ChatDlg::appendMessage(const Message &m, bool local, qint64 historyId, const QString &archiveId)
 {
     Message dm = m.displayMessage();
     if (trackBar_)
@@ -951,6 +948,8 @@ void ChatDlg::appendMessage(const Message &m, bool local)
         mv.setPlainText(body);
     }
     mv.setMessageId(dm.id());
+    mv.setHistoryId(historyId);
+    mv.setArchiveId(archiveId);
     mv.setLocal(local);
     mv.setNick(whoNick(local));
     mv.setUserId(local ? account()->jid().full()

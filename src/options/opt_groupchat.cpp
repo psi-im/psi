@@ -1,4 +1,5 @@
 #include "opt_groupchat.h"
+#include "coloropt.h"
 
 #include "common.h"
 #include "iconwidget.h"
@@ -82,7 +83,7 @@ void OptionsTabGroupchat::applyOptions()
     QStringList colors;
     for (i = 0; i < int(d->lw_nickColors->count()); i++)
         colors << d->lw_nickColors->item(i)->text();
-    o->setOption("options.ui.look.colors.muc.nick-colors", colors);
+    o->setOption(ColorOpt::optionPath(QStringLiteral("options.ui.look.colors.muc.nick-colors")), colors);
 }
 
 void OptionsTabGroupchat::restoreOptions()
@@ -115,7 +116,7 @@ void OptionsTabGroupchat::restoreOptions()
     d->ck_showStatusChanges->setChecked(o->getOption("options.muc.show-status-changes").toBool());
     d->ck_showStatusPriority->setChecked(o->getOption("options.ui.muc.status-with-priority").toBool());
 
-    const auto nickColors = o->getOption("options.ui.look.colors.muc.nick-colors").toStringList();
+    const auto nickColors = o->getOption(ColorOpt::optionPath(QStringLiteral("options.ui.look.colors.muc.nick-colors"))).toStringList();
     for (const QString &col : nickColors) {
         addNickColor(col);
     }

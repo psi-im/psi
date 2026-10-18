@@ -346,6 +346,7 @@ if(USE_CPACK)
 endif()
 
 if(BUILD_TESTING)
+    add_subdirectory(tests/mamhistory)
     add_subdirectory(tests/account)
     add_subdirectory(tests/filesharing)
     if(NOT ONLY_PLUGINS)

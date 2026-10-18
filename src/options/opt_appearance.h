@@ -5,9 +5,11 @@
 
 #include <QAbstractButton>
 #include <QHash>
+#include <QColor>
 #include <QLineEdit>
 
 class QButtonGroup;
+class QComboBox;
 class QCheckBox;
 class QLineEdit;
 class QWidget;
@@ -86,6 +88,11 @@ private:
 
     typedef QHash<QCheckBox *, QPair<QAbstractButton *, QString>> ColorWidgetsMap;
     ColorWidgetsMap                                               colorWidgetsMap;
+    void savePaletteControls();
+    void restorePaletteControls();
+    QHash<QString, QHash<QString, QColor>> paletteColors_;
+    QString editingPalette_;
+    QComboBox *paletteSelector_ = nullptr;
 };
 
 #endif // OPT_APPEARANCEGENERAL_H

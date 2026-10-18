@@ -1,9 +1,81 @@
 # Psi history and XEP-0313 MAM: architecture and cache policy
 
-Status: **design / implementation plan** (2026-10-18). This document records an
-incremental integration plan, not a claim that Psi already synchronizes history.
-The accompanying initial patch only preserves message identity for ordinary
-SQLite rows. Do not enable automatic MAM backfill or pruning at this stage.
+Status: **bounded native history synchronization implemented** (2026-10-18).
+The native timelines share the existing SQLite EDB with the history window and
+legacy importer. The initial architecture analysis and longer-term retention
+plans below are retained as design context; the implementation section describes
+what is currently active. No automatic pruning or whole-archive background sweep
+is enabled.
+
+## Implemented EDB/MAM bridge
+
+`HistorySync` is the account/application adapter over Iris MAMTask. Each request
+has a 40-result limit. It checks the persistent EDB cache first, authenticates
+conversation/room ownership again when reading cached XML, and merges successful
+server pages directly into EDB. Replays never enter the live notification/event
+queue or the legacy flat-file mirror. Both direct and room native timelines use
+this adapter; the WebKit chat path continues to use the existing EDB preload.
+
+SQLite schema **0.2** adds `events.history_state` and `history_date_ms`, plus
+`archive_items`, `archive_pages` and `archive_page_items`. Migration is one
+transaction, keeps all original event IDs, payloads, dates and `extra_data`, and
+does not set `import_start` or restart HistoryImport. UTC millisecond ordering
+keys are filled in batches, preserving original date strings. This avoids
+lexically misordering MAM UTC stamps and old desktop-local timestamps. Rows
+written by an older client after downgrade receive their ordering keys at the
+next migration pass. Unknown future schema versions are refused without edits.
+
+`HistoryArchive::State` is an enum bit field:
+
+- `Unverified = 0`: the default for legacy, imported and new live messages, and
+  provisional MAM results.
+- `Archived = 1`: confirmed by a successful stable MAM result.
+- `LocalOnly = 2`: proven local events; authentication/subscription records can
+  be classified directly because they are not MAM message stanzas.
+- `LinkedPrevious = 4` / `LinkedNext = 8`: proven archive adjacency. Provenance
+  uses `ProvenanceMask = 3`; adjacency is independent of it. Exact scoped UID
+  neighbours are also retained in `archive_items`, with NULL meaning unknown
+  and an empty previous UID denoting the proven start of the archive.
+
+A missing local message in one server page, an error, a date coincidence or a
+retention-limited archive does not prove that an old message was never archived.
+Ambiguous records remain unverified and are retained. Correlation requires a
+unique matching client ID, original sender, direction, type, body, subject and a
+bounded timestamp difference; IDs or bodies alone never collapse originals.
+Matching preserves the local event ID and payload. The reverse race, where live
+logging follows an already stored MAM result, uses the same delivery check.
+
+Cache identity is scoped by local account ID, archive bare JID and peer filter.
+Stable page events, identities, neighbour links and checkpoints commit together.
+No reusable checkpoint is written for `stable=false`, omitted privacy-hinted
+results or failed parsing. Deleting event rows invalidates their cached pages;
+EDB history erasure also removes empty boundary checkpoints. A moving tail is
+always refreshed online on opening/reconnecting. Older pages skip MAM only if
+all requested rows are covered, or a stable response proves the archive start.
+Rows can be assembled along verified neighbour links across old page boundaries,
+so incoming tail messages do not force all previously loaded pages to be fetched
+again. Opaque UIDs are never sorted or interpreted as local row numbers.
+
+Local EDB keyset pagination has its own `(history_date_ms,id)` cursor. It remains
+available offline and after MAM exhaustion/failure, preserving local originals
+that no longer exist on the server. Native rows adopt durable EDB IDs when MAM
+and live deliveries overlap. Archive page order takes precedence for equal
+stamps; merging retains local-only rows and whole-message selection identities.
+
+Public room cache contacts use `EDB::GroupChat = 3`, separate from the existing
+`GroupChatContact = 2` occupant-private history. The history dialog lists cached
+rooms under **Group chats** and displays occupant nicknames. Persistent MAM
+writes respect the account's logging option and message storage hints. Ordinary
+public room live logging policy remains unchanged; fetching a room's MAM page
+persists that page in the shared EDB.
+
+SQLite regression tests cover old-schema migration and rollback, payload
+preservation, timezone ordering, equal-stamp keyset pages, provenance and
+adjacency, shifted boundaries, gaps, unstable results, empty complete pages,
+ambiguous deliveries, account/archive isolation, explicit deletion and storage
+hints. The native widget tests cover EDB ID adoption, mixed local/server ordering,
+overlapping equal-stamp pages and retained selection. Both suites run on Qt5 and
+Qt6; the integration build also compiles the actual EDB and Iris adapter.
 
 ## Sources and standard requirements
 
@@ -33,7 +105,7 @@ cached as permanently verified without re-query. `fin/@complete=true`
 completes the requested result window; it **does not** mean the client has
 downloaded or permanently secured the whole archive.
 
-## Ground truth in current Psi
+## Initial architecture inventory (before the bridge)
 
 - `src/edbsqlite.cpp`: one SQLite `history.db` with `contacts` and `events`.
   Event fields are date, direction, type, body, subject, language and
@@ -265,13 +337,12 @@ the known post-audit Iris revision
 only, without silently changing the release lock. A future audited Iris
 release+gitlink/lock update is necessary before enabling this in production.
 
-Other MVP limitations: online EDB preload is temporarily suppressed to
-avoid overlapping anonymous legacy rows; offline local preload is retained.
-MAM body-only replay does not yet reconstruct all message reactions,
-corrections, rich attachments, sender profile or encrypted media. Live
-messages can overlap MAM results until trusted archive-ID deduplication
-is wired through the existing event/storage model. This branch must remain
-Draft until tested with an actual MAM-capable server and full Psi CI.
+Remaining native limitations include full reaction/retraction handling,
+sender profile reconstruction and encrypted replay. EDB preload, media
+references, persistent UID reconciliation and page caching are now connected
+through the bridge described at the start of this document. Ambiguous old
+messages remain unverified. This branch must remain Draft until tested with an
+actual MAM-capable server and full Psi CI.
 
 ### Transitional BASIC chat compatibility and live/MAM overlap (WIP)
 
@@ -352,3 +423,159 @@ identities live in the model rather than the materialized widget collection, so
 virtualization, prepending old archive pages and live-to-MAM UID promotion do
 not lose the selection. The original MatterLeast bulk deletion action is not
 ported because Psi does not yet expose its equivalent safe operation.
+
+### Native themes and conference presentation
+
+BASIC personal chats and conference windows now use the same `MamChatWidget`.
+The old ChatView stays hidden for the remaining compatibility APIs; WebKit and
+WebEngine keep their existing theme providers. In Appearance → Themes, BASIC
+has separate Chat Message Style and Groupchat Message Style selections:
+
+- **Modern** (default): avatar column, bold author, time beside the author, body below.
+- **Classic**: compact text rows without avatars, with author/time beside the body.
+
+Both layouts use the application palette for ordinary text, the configured chat
+font, and the existing AvatarFactory cache (occupant avatars for conferences).
+Missing avatars use an initial. Ordinary message timestamps update every second: seconds,
+minutes or hours ago for ages below 24 hours, otherwise `HH:mm` in local time.
+Future timestamps also use `HH:mm`. Hovering the time always shows a full local
+date and time with seconds and the time zone. Timestamp refresh touches only
+materialized labels, without rebuilding the list or its logical identities.
+
+Plugins can implement `NativeChatThemeProvider` from
+`plugins/include/nativechatthemeprovider.h` and declare it in `Q_INTERFACES`.
+After a successful enable, Psi copies each theme description (unique ID, name,
+Modern/Classic base layout, avatar size, spacing, row stylesheet) into the native
+theme registry. IDs `modern` and `classic` are reserved; duplicate IDs are
+ignored. Stylesheets may target `mamMessageRow`, `mamAvatar`, `mamAuthor`,
+`mamTimestamp` and `mamBody`. Use palette colours to support light/dark desktops.
+Descriptions contain no callbacks or plugin-owned widgets. String data is
+explicitly detached from plugin static storage. Disable/unload removes the
+plugin's themes, refreshes open settings and views, and falls back to Modern if
+the selected theme disappeared. The saved ID is retained for the next enable.
+
+Conference MAM requests start after joining and address the room's bare JID,
+without a `with` filter, as required by [XEP-0313](https://xmpp.org/extensions/xep-0313.html).
+Pages use Iris MAMTask, 40-result limits and opaque backward cursors. Replays
+never enter the live event/notification/storage path. Missing/forbidden room
+archives leave the ordinary room history visible; disconnect cancels the pending
+query and rejoining resumes its cursor. Clearing a conference cancels loading
+and suppresses immediate history replay. Correlation of live and archived rows,
+and message corrections, require the same occupant nickname in addition to the
+existing delivery checks: different occupants can reuse the same stanza ID.
+Durable EDB reconciliation and media references are now connected as described
+above; the remaining native reaction/retraction/composer APIs are still pending.
+
+Message bodies use `ChatMessageText`, a scroll-free QTextBrowser with the existing
+PsiRichText parser and inline object handler, as used by PsiTextView. A plain
+QLabel cannot display Psi's `<icon>` emoticons. Copying partial text or whole
+messages converts inline icons back to their textual emoticons. The body and row
+report document height for the available width, rather than QTextEdit's editor
+size or QLayout's wrapped height at its narrower preferred width. Header and body
+are aligned at the top without vertical stretch. Width probes restore the
+painted document width, preserving selection and wrapping after window resizes.
+Widget regressions exercise both layouts through narrow/wide/narrow geometry,
+actual inline-icon painting, and both clipboard paths using the real PsiRichText
+implementation with only the icon asset provider substituted.
+
+While whole-message selection is active, both native layouts show a checkbox
+column on the left, including unchecked controls for the other messages. Clicking
+a checkbox updates the model-backed selection; cancel hides the column. Newly
+materialized rows restore visibility and check state from the logical selection.
+Checkbox callbacks resolve the row's current key instead of capturing an index,
+so prepending history or adopting a MAM UID cannot toggle the wrong message.
+Selection is cancelled before clearing model entries, while existing rows can
+still safely synchronize their controls.
+
+Whole-message selection colours both the row Window and the document Base
+surface, including on dark palettes. Entering this mode clears text selections
+in every materialized row and temporarily disables partial text selection and
+link activation; cancelling restores normal text interaction. This also applies
+to newly materialized rows. Regressions check actual painted document pixels
+and a drag that starts as partial text selection and crosses message boundaries.
+
+Only ordinary messages have author/time headers. Informational/system rows are
+centred; subjects are left aligned. These rows have no visible clock and expose
+the full timestamp on the row/body tooltip instead. Their foreground comes from
+`options.ui.look.colors.messages.informational` through the existing ColorOpt
+contrast adjustment. Changes to this option or the application palette update
+open views without rebuilding the conversation model.
+
+### Desktop palettes, fonts and native chat input
+
+Appearance → Fonts & Colors edits independent **Light desktop** and **Dark
+desktop** colour sets, including chat background and ordinary text. Switching the
+editor selector preserves pending edits to both sets; Apply stores both. Runtime
+selection is automatic, based on Qt's desktop Base colour, and never overwrites
+the application-wide Qt palette. Invalid colours inherit the corresponding Qt
+palette role. Explicit defaults are chosen separately for light/dark desktops.
+
+Storage is `options.ui.look.palettes.light.*` / `palettes.dark.*`. The old single
+`options.ui.look.colors.*` storage is intentionally not migrated. Those names
+remain logical identifiers for ColorOpt consumers and WebKit theme scripts;
+ColorOpt and the JavaScript settings bridge resolve them against the active
+set. Qt desktop palette changes reload every colour, notify existing consumers,
+and update native chat viewports and materialized rows, including explicit
+backgrounds. The existing WebKit settings notification path also receives the
+resolved colour changes. Groupchat nickname-colour lists and tooltip/tab colours
+use the same active storage.
+
+Changing the chat font updates existing document fragments and nickname labels
+in place and remeasures their rows, rather than relying on document default font
+inheritance or replacing message rows. Explicit fragment sizes left by the rich
+text parser would otherwise retain the old size. Font changes preserve emphasis,
+inline object metadata and logical selection. A normal groupchat nickname click
+uses the conference's existing nickname insertion handler; text dragging and
+whole-message selection do not insert nicknames.
+
+Overlay hover keeps a periodic fade check running. This prevents a lost Leave
+notification after a geometry/window transition from permanently pinning the
+scrollbar. Fading still respects an actual thumb drag or pointer over the
+controls; keyboard focus changes alone do not change that hover policy.
+
+Reveal/fade transitions also cancel an opposite animation before taking the
+already-at-target shortcut. Otherwise leaving before the first reveal frame
+would leave the reveal running after a zero-opacity fade, making the bar visible
+again. The scrollbar suite reproduces this race and a lost Leave notification.
+
+Palette refresh also recolours link fragments already stored in message
+documents. Native rows and the legacy text view share PsiRichText's link
+recolouring helper; inline foregrounds produced by linkify on a light desktop
+must not survive unchanged after switching to a dark palette.
+
+### SIMS compatibility and native inline media
+
+The SIMS history change (`eec9b456`, followed by `c3ec21c1`) extended JSON in
+`events.extra_data`; it did not change the SQLite schema. Existing OOB-only JSON,
+SIMS reference XML and the v1 message envelope remain readable. Schema 0.2 keeps
+that field byte-for-byte, so SIMS does not need another ALTER or data rewrite.
+The independent account-scoped `shared-files.sqlite` catalog creates its own
+`shared_files` table and is not a replacement for EDB history. A disk-backed
+regression now migrates both SIMS and old OOB rows through the actual 0.1→0.2
+migration and checks sender/recipient, reference sources and sizes above 2^53.
+Metadata that was never stored by older versions cannot be recreated by a schema
+migration alone.
+
+`ChatMessageText` now derives from `PsiTextView`. Full document replacement goes
+through the same icon, `<share>` and marker parsers as the classic view. Native
+rows receive their account's `FileSharingDeviceOpener` before parsing their body,
+including recreated rows after theme changes and archive/local history replay.
+Audio/video use the existing qite controllers, images use the existing shared
+image path. Document measurement, font/palette updates and outer timeline scrolling
+remain in `ChatMessageText`/LongListWidget. Audio/video state and streams belong
+to the row's existing media controllers; deleting a virtualized row destroys
+them. File cache/download state stays account-owned. Video display remains lazy
+and does not open the source merely to construct a row.
+
+The widget regressions now compile the real PsiTextView, PsiRichText and qite
+implementations. Only account storage/network resolution, icon assets and external
+URL launching are substituted. They check audio/video/image object registration,
+account-scoped source URLs, document replacement and media row recreation, in
+addition to the text/font/layout/selection tests.
+
+qite is an interaction/media layer over Qt text objects, not a prerequisite for
+inline drawing: [QTextObjectInterface](https://doc.qt.io/qt-6/qtextobjectinterface.html)
+provides custom size/draw hooks directly. Animated PsiIcon emoticons can use their
+existing frame-change notifications with balanced activation/stop and targeted
+viewport updates. They do not require a new text layout engine or media player;
+this change restores SIMS and does not implement that animation lifecycle.

@@ -596,6 +596,7 @@ ChatViewThemeJSUtil::ChatViewThemeJSUtil(ChatViewThemePrivate *theme, QObject *p
     optChangeTimer.setInterval(0);
     connect(&optChangeTimer, SIGNAL(timeout()), SLOT(sendOptionsChanges()));
     connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString &)), SLOT(optionsChanged(const QString &)));
+    connect(ColorOpt::instance(), &ColorOpt::changed, this, [this](const QString &option) { optionsChanged(option); });
 }
 
 void ChatViewThemeJSUtil::sendOptionsChanges()
@@ -621,14 +622,14 @@ QVariant ChatViewThemeJSUtil::cache(const QString &name) const { return theme->c
 
 QString ChatViewThemeJSUtil::psiOption(const QString &option) const
 {
-    return JSUtil::variant2js(PsiOptions::instance()->getOption(option));
+    return JSUtil::variant2js(PsiOptions::instance()->getOption(ColorOpt::optionPath(option)));
 }
 
 QString ChatViewThemeJSUtil::psiOptions(const QStringList &options) const
 {
     QVariantList ret;
     for (auto &option : options) {
-        ret.append(PsiOptions::instance()->getOption(option));
+        ret.append(PsiOptions::instance()->getOption(ColorOpt::optionPath(option)));
     }
     QString retStr = JSUtil::variant2js(ret);
     return retStr;

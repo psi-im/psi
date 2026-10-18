@@ -114,6 +114,10 @@ public:
     QString            getStorageParam(const QString &key);
     void               setStorageParam(const QString &key, const QString &val);
 
+    EDBResult            localHistoryPage(const QString &, const XMPP::Jid &, qint64, int) override;
+    HistoryArchive::Page archivePage(const HistoryArchive::Key &, const QString &, int) override;
+    bool mergeArchivePage(const HistoryArchive::Key &, const QString &, int, HistoryArchive::Page &) override;
+
     void         setInsertingMode(InsertMode mode);
     void         setMirror(EDBFlatFile *mirr);
     EDBFlatFile *mirror() const;

@@ -42,6 +42,12 @@
        <number>9</number>
       </property>
       <item>
+       <layout class="QHBoxLayout" name="paletteLayout">
+        <item><widget class="QLabel" name="paletteLabel"><property name="text"><string>Desktop palette:</string></property></widget></item>
+        <item><widget class="QComboBox" name="paletteSelector"/></item>
+       </layout>
+      </item>
+      <item>
        <widget class="QScrollArea" name="scrollArea">
         <property name="widgetResizable">
          <bool>true</bool>
@@ -56,6 +62,11 @@
           </rect>
          </property>
          <layout class="QGridLayout" name="gridLayout">
+          <item row="25" column="0"><widget class="QCheckBox" name="ck_cChatBackground"><property name="text"><string>Chat background</string></property></widget></item>
+          <item row="25" column="1"><widget class="QToolButton" name="pb_cChatBackground"><property name="maximumSize"><size><width>20</width><height>20</height></size></property></widget></item>
+          <item row="26" column="0"><widget class="QCheckBox" name="ck_cChatText"><property name="text"><string>Chat text</string></property></widget></item>
+          <item row="26" column="1"><widget class="QToolButton" name="pb_cChatText"><property name="maximumSize"><size><width>20</width><height>20</height></size></property></widget></item>
+
           <item row="23" column="1">
            <widget class="QToolButton" name="pb_cToolTipText">
             <property name="maximumSize">

@@ -57,6 +57,8 @@ public:
 
 signals:
     void themeChanged();
+    // Dynamic providers emit after all outstanding theme loads have settled.
+    void themeListChanged();
     void currentLoadFailed(); // loading of the current therme has failed
 };
 

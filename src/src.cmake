@@ -105,11 +105,15 @@ list(APPEND HEADERS
     chatdlg.h
     widgets/LongListWidget.h
     widgets/OverlayScrollBarManager.h
+    widgets/NativeChatThemeRegistry.h
+    nativechattheme.h
+    widgets/ChatMessageText.h
     widgets/MamChatWidget.h
     chateditproxy.h
     chatsplitter.h
     chatview.h
     chatviewcommon.h
+    desktopcolorpalette.h
     coloropt.h
     common.h
     conferencebookmark.h
@@ -364,6 +368,9 @@ list(APPEND SOURCES
     chatdlg.cpp
     widgets/LongListWidget.cpp
     widgets/OverlayScrollBarManager.cpp
+    widgets/NativeChatThemeRegistry.cpp
+    nativechattheme.cpp
+    widgets/ChatMessageText.cpp
     widgets/MamChatWidget.cpp
     chateditproxy.cpp
     chatsplitter.cpp
@@ -388,6 +395,9 @@ list(APPEND SOURCES
     discodlg.cpp
     dummystream.cpp
     edbflatfile.cpp
+    historyarchive.cpp
+    historysync.cpp
+    nativechathistory.cpp
     historymessageextras.cpp
     filesharingstore.cpp
     edbsqlite.cpp

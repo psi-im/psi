@@ -3,10 +3,14 @@
 
 #include "LongListWidget.h"
 #include "messageview.h"
+#include "../../plugins/include/nativechatthemeprovider.h"
+#include <QPixmap>
+#include <functional>
 
 #include <QList>
 #include <QSet>
 
+class FileSharingDeviceOpener;
 class QFrame;
 class QLabel;
 class QResizeEvent;
@@ -25,6 +29,15 @@ public:
     bool historyExhausted() const { return historyExhausted_; }
     int messageCount() const { return items_.size(); }
 
+    void setGroupChat(bool enabled) { groupChat_ = enabled; }
+    void setTheme(const NativeChatTheme &theme);
+    void setAvatarResolver(std::function<QPixmap(const MessageView &)> resolver);
+    void refreshAvatars();
+    void setMediaOpener(FileSharingDeviceOpener *opener);
+    void setInformationalColor(const QColor &color);
+    static QString displayTime(const QDateTime &when, const QDateTime &now = QDateTime::currentDateTime());
+    static QString fullTimestamp(const QDateTime &when);
+
     // Whole-message selection uses logical model keys, not materialized QWidget pointers.
     int selectedMessageCount() const { return selectedKeys_.size(); }
     void selectMessageRange(int first, int last);
@@ -34,13 +47,24 @@ public:
 
 signals:
     void olderMessagesRequested();
+    void paletteChanged();
+    void nicknameClicked(const QString &nick);
 
 protected:
     QWidget *createItemWidget(int index) override;
     bool eventFilter(QObject *target, QEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
+    void changeEvent(QEvent *event) override;
 
 private:
+    void updateTimestamps();
+    void updateRowSelection(QFrame *row, bool selected);
+    QColor informationalColor_;
+    void updateAvatar(QLabel *label, const MessageView &message);
+    NativeChatTheme theme_;
+    bool groupChat_ = false;
+    FileSharingDeviceOpener *mediaOpener_ = nullptr;
+    std::function<QPixmap(const MessageView &)> avatarResolver_;
     int indexOfKey(const QString &key) const;
     void refreshSelection();
     void positionSelectionToolbar();

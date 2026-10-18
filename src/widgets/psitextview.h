@@ -38,6 +38,7 @@ public:
     void setKeepAtBottom(bool v = true); // keep scrolls at bottom on resize
     bool atBottom();
 
+    void setRichText(const QString &text); // Full replacement through the same icon/media parsers.
     virtual void appendText(const QString &text);
     virtual void insertText(const QString &text, QTextCursor &cursor);
     QTextCursor  appendTextWithRange(const QString &text);

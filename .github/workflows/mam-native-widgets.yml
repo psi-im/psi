@@ -6,14 +6,34 @@ on:
       - 'src/widgets/LongListWidget.*'
       - 'src/widgets/OverlayScrollBarManager.*'
       - 'src/widgets/MamChatWidget.*'
+      - 'src/widgets/ChatMessageText.*'
+      - 'src/desktopcolorpalette.h'
+      - 'src/widgets/psirichtext.*'
+      - 'src/widgets/psitextview.*'
+      - '3rdparty/qite'
+      - 'src/widgets/NativeChatThemeRegistry.*'
+      - 'plugins/include/nativechatthemeprovider.h'
       - 'tests/mamchat/**'
+      - 'tests/mamhistory/**'
+      - 'src/historyarchive.*'
+      - 'src/widgets/MamHistorySourcePolicy.h'
       - '.github/workflows/mam-native-widgets.yml'
   pull_request:
     paths:
       - 'src/widgets/LongListWidget.*'
       - 'src/widgets/OverlayScrollBarManager.*'
       - 'src/widgets/MamChatWidget.*'
+      - 'src/widgets/ChatMessageText.*'
+      - 'src/desktopcolorpalette.h'
+      - 'src/widgets/psirichtext.*'
+      - 'src/widgets/psitextview.*'
+      - '3rdparty/qite'
+      - 'src/widgets/NativeChatThemeRegistry.*'
+      - 'plugins/include/nativechatthemeprovider.h'
       - 'tests/mamchat/**'
+      - 'tests/mamhistory/**'
+      - 'src/historyarchive.*'
+      - 'src/widgets/MamHistorySourcePolicy.h'
       - '.github/workflows/mam-native-widgets.yml'
   workflow_dispatch:
 
@@ -29,13 +49,15 @@ jobs:
         qt: [5, 6]
     steps:
       - uses: actions/checkout@v4
+      - name: Resolve qite
+        run: git submodule update --init --depth 1 3rdparty/qite
       - name: Install Qt
         run: |
           sudo apt-get update
           if [ "${{ matrix.qt }}" = "6" ]; then
-            sudo apt-get install -y cmake ninja-build qt6-base-dev
+            sudo apt-get install -y cmake ninja-build qt6-base-dev qt6-multimedia-dev libqt6sql6-sqlite
           else
-            sudo apt-get install -y cmake ninja-build qtbase5-dev
+            sudo apt-get install -y cmake ninja-build qtbase5-dev qtmultimedia5-dev libqt5sql5-sqlite
           fi
       - name: Configure
         run: cmake -S tests/mamchat -B build-mam-widgets -G Ninja -DQT_DEFAULT_MAJOR_VERSION=${{ matrix.qt }}
@@ -46,3 +68,9 @@ jobs:
           QT_QPA_PLATFORM: offscreen
         run: ctest --test-dir build-mam-widgets --output-on-failure
 
+      - name: Configure SQLite history regressions
+        run: cmake -S tests/mamhistory -B build-mam-history -G Ninja -DQT_DEFAULT_MAJOR_VERSION=${{ matrix.qt }}
+      - name: Build SQLite history regressions
+        run: cmake --build build-mam-history --parallel 4
+      - name: Test SQLite history regressions
+        run: ctest --test-dir build-mam-history --output-on-failure

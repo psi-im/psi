@@ -9,12 +9,16 @@
 
 class MessageView {
 public:
-    enum Type { Message, System, Reactions, MessageRetraction };
+    enum Type { Message, System, Reactions, MessageRetraction, MUCJoin, MUCPart, Status, Subject, Urls, NickChange, FileTransferRequest, FileTransferFinished };
     explicit MessageView(Type type = Message) : type_(type) { }
 
+    bool isJoinLeaveHidden() const { return false; }
+    bool isStatusChangeHidden() const { return false; }
     Type type() const { return type_; }
     const QString &messageId() const { return id_; }
     void setMessageId(const QString &id) { id_ = id; }
+    void setHistoryId(qint64 id) { historyId_ = id; }
+    qint64 historyId() const { return historyId_; }
     const QString &archiveId() const { return archiveId_; }
     void setArchiveId(const QString &id) { archiveId_ = id; }
     const QString &replaceId() const { return replaceId_; }
@@ -33,6 +37,7 @@ public:
     QString formattedUserText() const { return userText_; }
     void setUserText(const QString &text) { userText_ = text; }
 private:
+    qint64 historyId_ = 0;
     Type type_;
     QString id_;
     QString archiveId_;

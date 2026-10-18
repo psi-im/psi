@@ -1,0 +1,140 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#include "nativechattheme.h"
+#include "avatars.h"
+#include "coloropt.h"
+#include "psiaccount.h"
+#include "psioptions.h"
+#include "theme_p.h"
+#include "widgets/MamChatWidget.h"
+#include "widgets/OverlayScrollBarManager.h"
+#include <QApplication>
+#include <QSignalBlocker>
+
+namespace {
+class NativeThemePrivate : public ThemePrivate {
+public:
+    NativeThemePrivate(PsiThemeProvider *provider, const NativeChatTheme &theme) : ThemePrivate(provider)
+    {
+        id          = theme.id;
+        name        = theme.name;
+        description = theme.layout == NativeChatTheme::Classic ? QObject::tr("Compact text layout")
+                                                               : QObject::tr("Avatars and message headers");
+    }
+    bool exists() override { return true; }
+    bool load(const QString &) override
+    {
+        state = Theme::State::Loaded;
+        return true;
+    }
+    bool load(const QString &style, std::function<void(bool)> callback) override
+    {
+        callback(load(style));
+        return true;
+    }
+};
+}
+NativeChatViewThemeProvider::NativeChatViewThemeProvider(PsiCon *psi, bool groupChat) :
+    PsiThemeProvider(psi), groupChat_(groupChat)
+{
+    connect(NativeChatThemes::instance(), &NativeChatThemes::changed, this, [this] {
+        emit themeListChanged();
+        emit themeChanged();
+    });
+}
+const char *NativeChatViewThemeProvider::type() const { return groupChat_ ? "groupchatview" : "chatview"; }
+QString     NativeChatViewThemeProvider::option() const
+{
+    return groupChat_ ? QStringLiteral("options.ui.muc.native-theme") : QStringLiteral("options.ui.chat.native-theme");
+}
+const QStringList NativeChatViewThemeProvider::themeIds() const
+{
+    QStringList ids;
+    for (const auto &theme : NativeChatThemes::instance()->themes())
+        ids.append(theme.id);
+    return ids;
+}
+Theme NativeChatViewThemeProvider::theme(const QString &id)
+{
+    return Theme(new NativeThemePrivate(this, NativeChatThemes::instance()->theme(id)));
+}
+PsiThemeProvider::LoadRestult NativeChatViewThemeProvider::loadCurrent() { return LoadSuccess; }
+Theme                         NativeChatViewThemeProvider::current() const
+{
+    return const_cast<NativeChatViewThemeProvider *>(this)->theme(
+        PsiOptions::instance()->getOption(option()).toString());
+}
+void NativeChatViewThemeProvider::setCurrentTheme(const QString &id, const QString &)
+{
+    PsiOptions::instance()->setOption(option(), id);
+    emit themeChanged();
+}
+QString NativeChatViewThemeProvider::optionsName() const
+{
+    return groupChat_ ? tr("Groupchat Message Style") : tr("Chat Message Style");
+}
+QString NativeChatViewThemeProvider::optionsDescription() const { return tr("Choose the native message layout"); }
+
+void configureNativeChat(MamChatWidget *view, PsiAccount *account, const XMPP::Jid &peer, bool groupChat)
+{
+    view->setMediaOpener(account->fileSharingDeviceOpener());
+    const QString option
+        = groupChat ? QStringLiteral("options.ui.muc.native-theme") : QStringLiteral("options.ui.chat.native-theme");
+    auto apply = [view, option] {
+        view->setTheme(NativeChatThemes::instance()->theme(PsiOptions::instance()->getOption(option).toString()));
+    };
+    apply();
+    auto applyFont = [view] {
+        QFont font;
+        font.fromString(PsiOptions::instance()->getOption(QStringLiteral("options.ui.look.font.chat")).toString());
+        view->setFont(font);
+    };
+    applyFont();
+    QObject::connect(PsiOptions::instance(), &PsiOptions::optionChanged, view, [apply, option](const QString &name) {
+        if (name == option)
+            apply();
+    });
+    QObject::connect(PsiOptions::instance(), &PsiOptions::optionChanged, view, [applyFont](const QString &name) {
+        if (name == QLatin1String("options.ui.look.font.chat"))
+            applyFont();
+    });
+    QObject::connect(NativeChatThemes::instance(), &NativeChatThemes::changed, view, apply);
+    auto applyColors = [view] {
+        QPalette palette = QApplication::palette();
+        palette.setColor(QPalette::Base,
+                         ColorOpt::instance()->color(QStringLiteral("options.ui.look.colors.chat.background")));
+        palette.setColor(QPalette::Window, palette.color(QPalette::Base));
+        palette.setColor(QPalette::Text,
+                         ColorOpt::instance()->color(QStringLiteral("options.ui.look.colors.chat.text")));
+        palette.setColor(QPalette::Link,
+                         ColorOpt::instance()->color(QStringLiteral("options.ui.look.colors.messages.link")));
+        palette.setColor(QPalette::LinkVisited,
+                         ColorOpt::instance()->color(QStringLiteral("options.ui.look.colors.messages.link-visited")));
+        {
+            const QSignalBlocker blocker(view);
+            view->setPalette(palette);
+            view->viewport()->setPalette({});
+        }
+        view->setInformationalColor(ColorOpt::ensureContrast(
+            ColorOpt::instance()->color(QStringLiteral("options.ui.look.colors.messages.informational")),
+            view->palette().color(QPalette::Base), view->palette().color(QPalette::Text)));
+    };
+    applyColors();
+    QObject::connect(ColorOpt::instance(), &ColorOpt::changed, view, [applyColors](const QString &name) {
+        if (name == QLatin1String("options.ui.look.colors.messages.informational")
+            || name.startsWith(QLatin1String("options.ui.look.colors.chat."))
+            || name.startsWith(QLatin1String("options.ui.look.colors.messages.link")))
+            applyColors();
+    });
+    QObject::connect(view, &MamChatWidget::paletteChanged, view, applyColors);
+    view->setProperty("nativeChatPeer", peer.full());
+    view->setAvatarResolver([account, view, groupChat](const MessageView &message) {
+        const XMPP::Jid peer(view->property("nativeChatPeer").toString());
+        const auto      sender = groupChat ? peer.withResource(message.nick())
+                                           : (message.isLocal() ? account->jid().withResource({}) : peer);
+        return groupChat ? account->avatarFactory()->getMucAvatar(sender) : account->avatarFactory()->getAvatar(sender);
+    });
+    QObject::connect(account->avatarFactory(), &AvatarFactory::avatarChanged, view,
+                     [view](const XMPP::Jid &) { view->refreshAvatars(); });
+    Mattermost::OverlayScrollBarManager::install(*qApp);
+    Mattermost::OverlayScrollBarManager::setScrollToStartButtonEnabled(*view, false);
+}

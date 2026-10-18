@@ -204,6 +204,17 @@ void HistoryContactListModel::loadContacts(PsiCon *psi, const QString &acc_id)
         notInList->appendChild(new TreeItem(NotInRosterContact, ci.jid.bare(), tooltipStr, cId));
         c_list[cId] = true;
     }
+    // Public MUC archive cache is distinct from occupant private messages.
+    const auto rooms = psi->edb()->contacts(acc_id, EDB::GroupChat);
+    if (!rooms.isEmpty()) {
+        auto *roomGroup = new TreeItem(Group, tr("Group chats"), "group-chats", 11);
+        rootItem->appendChild(roomGroup);
+        for (const auto &room : rooms) {
+            const QString cId = room.accId + "|" + room.jid.bare();
+            roomGroup->appendChild(new TreeItem(NotInRosterContact, room.jid.bare(),
+                                                makeContactToolTip(psi, acc_id, room.jid, true), cId));
+        }
+    }
     // Private messages
     if (dispPrivateContacts) {
         const auto &cis = psi->edb()->contacts(acc_id, EDB::GroupChatContact);

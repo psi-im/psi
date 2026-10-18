@@ -67,7 +67,7 @@ QString ChatViewCommon::getMucNickColor(const QString &nick, bool isSelf)
         }
 
         QStringList nickColors
-            = PsiOptions::instance()->getOption("options.ui.look.colors.muc.nick-colors").toStringList();
+            = PsiOptions::instance()->getOption(ColorOpt::optionPath(QStringLiteral("options.ui.look.colors.muc.nick-colors"))).toStringList();
 
         if (nickColors.empty()) {
             break;

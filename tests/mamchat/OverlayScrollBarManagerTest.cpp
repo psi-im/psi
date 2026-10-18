@@ -2,6 +2,8 @@
 
 #include <QAbstractScrollArea>
 #include <QApplication>
+#include <QCursor>
+#include <QGraphicsOpacityEffect>
 #include <QScrollBar>
 #include <QToolButton>
 
@@ -26,6 +28,59 @@ private slots:
     void initTestCase()
     {
         Mattermost::OverlayScrollBarManager::install(*qApp);
+    }
+
+    void leavingDuringRevealCancelsTheRevealAnimation()
+    {
+        QAbstractScrollArea area;
+        area.setProperty("psiMamOverlay", true);
+        area.resize(320, 240);
+        area.move(200, 200);
+        QCursor::setPos(50, 50);
+        area.verticalScrollBar()->setRange(0, 100);
+        area.verticalScrollBar()->setPageStep(20);
+        area.show();
+        settleEvents();
+        auto *overlay = area.findChild<QScrollBar *>(QStringLiteral("mattermostOverlayVerticalScrollBar"));
+        QVERIFY(overlay);
+        auto *opacity = qobject_cast<QGraphicsOpacityEffect *>(overlay->graphicsEffect());
+        QVERIFY(opacity);
+        area.verticalScrollBar()->setValue(1);
+        // Leave before the first reveal animation frame. A fade to the current
+        // zero opacity must still stop the pending animation towards one.
+        QEvent leave(QEvent::Leave);
+        QApplication::sendEvent(area.viewport(), &leave);
+        QTest::qWait(300);
+        QVERIFY(opacity->opacity() < 0.01);
+    }
+
+    void lostLeaveDoesNotKeepOverlayVisible()
+    {
+        QAbstractScrollArea area;
+        area.setProperty("psiMamOverlay", true);
+        area.resize(320, 240);
+        area.move(200, 200);
+        area.verticalScrollBar()->setRange(0, 100);
+        area.verticalScrollBar()->setPageStep(20);
+        area.show();
+        settleEvents();
+        auto *overlay = area.findChild<QScrollBar *>(QStringLiteral("mattermostOverlayVerticalScrollBar"));
+        QVERIFY(overlay);
+        QCursor::setPos(overlay->mapToGlobal(overlay->rect().center()));
+        QEvent enter(QEvent::Enter);
+        QApplication::sendEvent(overlay, &enter);
+        auto *opacity = qobject_cast<QGraphicsOpacityEffect *>(overlay->graphicsEffect());
+        QVERIFY(opacity);
+        QTRY_VERIFY(opacity->opacity() > 0.9);
+        // Simulate the missing Leave notification that can occur on geometry
+        // changes or desktop/window transitions, rather than changing focus policy.
+        class DropLeave : public QObject {
+            bool eventFilter(QObject *, QEvent *event) override { return event->type() == QEvent::Leave; }
+        } filter;
+        qApp->installEventFilter(&filter);
+        QCursor::setPos(area.mapToGlobal(QPoint(-50, -50)));
+        QTRY_VERIFY_WITH_TIMEOUT(opacity->opacity() < 0.01, 4000);
+        qApp->removeEventFilter(&filter);
     }
 
     void edgeButtonsTrackPositionAndTriggerRealSliderActions()

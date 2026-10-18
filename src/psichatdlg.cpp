@@ -43,6 +43,9 @@
 #include "jidutil.h"
 #include "lastactivitytask.h"
 #include "messageview.h"
+#include "historysync.h"
+#include "nativechathistory.h"
+#include "nativechattheme.h"
 #include "widgets/MamChatWidget.h"
 #include "widgets/MamHistorySourcePolicy.h"
 #include "widgets/MamArchivePeerPolicy.h"
@@ -271,37 +274,46 @@ void PsiChatDlg::clearNativeHistory()
         nativeTimeline_->clearMessages();
     resetLocalHistorySource();
     mamBeforeId_.clear();
-    mamExhausted_ = false;
+    mamRefreshTail_ = false;
+    localBeforeId_ = 0;
+    localExhausted_ = true;
+    mamExhausted_ = true; // Clearing the view must not immediately reload saved rows.
     mamResumeAfterConnect_ = false;
 }
 
 void PsiChatDlg::loadOlderMamMessages()
 {
-    constexpr int PageSize = 40;
-    if (!nativeTimeline_ || mamTask_ || mamExhausted_ || !account()->isConnected()
-        || account()->findGCContact(jid())
-        || !PsiMam::mayFetchArchive(mamBeforeId_.isEmpty(),
-                                    localHistoryPreloadPending(),
-                                    localHistoryPopulated()))
-        return; // Prevent mixed anonymous EDB/MAM rows, including user scroll.
+    if (!nativeTimeline_ || mamTask_
+        || !PsiMam::mayFetchArchive(mamBeforeId_.isEmpty(), localHistoryPreloadPending(), localHistoryPopulated()))
+        return;
 
     nativeTimeline_->setHistoryLoading(true);
-    // This MVP uses a bounded MAM page, never a full archive or a second DB.
-    // Queries address our account's archive and filter by the peer bare JID.
-    XMPP::MAMManager manager(account()->client(), PageSize, PageSize, false, true);
-    // The convenience getMessagesBeforeID() unconditionally enables XEP-0313
-    // flip-page. A flipped reverse page arrives newest-first, whereas the
-    // timeline and its RSM 'first' cursor require oldest-first order.
-    // Keep reverse RSM traversal but request ordinary chronological pages.
-    auto *task = manager.getArchiveByIDRange(jid().bare(), QString(), mamBeforeId_, false);
+    const bool atEndBeforeLocal = nativeTimeline_->isAtEnd();
+    const bool occupantPrivate = account()->findGCContact(jid());
+    prependLocalChatHistory(nativeTimeline_, account(), occupantPrivate ? jid().full() : jid().bare(), false,
+                            account()->nick(), localBeforeId_, localExhausted_);
+    if (occupantPrivate)
+        mamExhausted_ = true; // Occupant private messages keep their existing local-only history path.
+    if (atEndBeforeLocal && mamBeforeId_.isEmpty())
+        nativeTimeline_->scrollToEnd();
+    if (occupantPrivate || (mamExhausted_ && !(mamRefreshTail_ && account()->isConnected()))) {
+        nativeTimeline_->setHistoryLoading(false);
+        nativeTimeline_->setHistoryExhausted(localExhausted_);
+        return;
+    }
+    const bool refreshTail = mamRefreshTail_ && account()->isConnected();
+    const QString requestedBefore = refreshTail ? QString() : mamBeforeId_;
+    if (account()->isConnected())
+        mamRefreshTail_ = false;
+    auto *task = new HistorySync(account(), jid().bare(), false, requestedBefore, this);
     mamTask_ = task;
     const QString peer = jid().bare();
-    const bool initialPage = mamBeforeId_.isEmpty();
-    connect(task, &XMPP::Task::finished, this, [this, task, peer, initialPage] {
+    const bool initialPage = requestedBefore.isEmpty();
+    connect(task, &HistorySync::finished, this, [this, task, peer, initialPage, requestedBefore] {
         if (mamTask_ != task)
             return;
         mamTask_.clear();
-        if (!account()->isConnected() || jid().bare() != peer || !task->success()) {
+        if (jid().bare() != peer || !task->success()) {
             // If the authenticated stream drops before the completion signal,
             // resume the same opaque cursor on the next successful login.
             if (!account()->isConnected() && jid().bare() == peer)
@@ -310,14 +322,13 @@ void PsiChatDlg::loadOlderMamMessages()
                 qWarning().noquote() << "[mam-history] Query failed:" << task->statusString();
             nativeTimeline_->setHistoryLoading(false);
             task->deleteLater();
-            if (initialPage && account()->isConnected() && jid().bare() == peer) {
-                // No MAM: show available local history instead of a blank
-                // window. Avoid repeated network retries on every scroll.
+            if (jid().bare() == peer) {
+                // Do not retry a failed page in a tight viewport-fill loop.
+                // Offline pagination resumes after login; local rows remain
+                // independently pageable even without a usable server cursor.
                 mamExhausted_ = true;
-                nativeTimeline_->setHistoryExhausted(true);
-                // Offline EDB may already have populated the native timeline.
-                // Do not enqueue a second copy of the same local history.
-                if (nativeTimeline_->messageCount() == 0)
+                nativeTimeline_->setHistoryExhausted(localExhausted_);
+                if (initialPage && nativeTimeline_->messageCount() == 0 && !localHistoryPopulated())
                     preloadHistory(true);
             }
             return;
@@ -355,23 +366,25 @@ void PsiChatDlg::loadOlderMamMessages()
             auto mv = MessageView::fromPlainText(text, MessageView::Message);
             mv.setMessageId(archived.id());
             mv.setArchiveId(uid);
+            mv.setHistoryId(task->eventId(uid));
             mv.setLocal(local);
             mv.setSpooled(true);
             mv.setNick(local ? account()->nick() : peer);
             mv.setDateTime(wrapper.timeStamp().isValid()
                                ? wrapper.timeStamp() : archived.timeStamp());
+            account()->psi()->fileSharingManager()->fillMessageView(mv, archived, account());
             page.append(qMakePair(uid, mv));
         }
         // The non-flipped MAM page is in chronological order, so its first
         // archive UID is the RSM 'before' cursor for the next older page.
         // Honor <fin complete='true'/> even when the last page has messages.
-        mamExhausted_ = task->isComplete();
-        if (!oldestId.isEmpty() && oldestId != mamBeforeId_)
+        mamExhausted_ = task->isComplete() || oldestId.isEmpty() || oldestId == requestedBefore;
+        if (!oldestId.isEmpty())
             mamBeforeId_ = oldestId;
-        else
-            mamExhausted_ = true; // No advancing opaque cursor: avoid retry loops.
-        if (results.isEmpty())
-            mamExhausted_ = true;
+        if (initialPage && !account()->isConnected()) {
+            mamRefreshTail_ = true;
+            mamResumeAfterConnect_ = true;
+        }
         const bool wasAtEnd = nativeTimeline_->isAtEnd();
         nativeTimeline_->prependArchivePage(page);
         if (initialPage && page.isEmpty() && mamExhausted_
@@ -379,7 +392,7 @@ void PsiChatDlg::loadOlderMamMessages()
             preloadHistory(true); // Empty/textless server archive: show saved local history.
         if (initialPage && wasAtEnd)
             nativeTimeline_->scrollToEnd();
-        nativeTimeline_->setHistoryExhausted(mamExhausted_);
+        nativeTimeline_->setHistoryExhausted(mamExhausted_ && localExhausted_);
         nativeTimeline_->setHistoryLoading(false);
         task->deleteLater();
     });
@@ -407,11 +420,15 @@ void PsiChatDlg::setJid(const Jid &newJid)
 {
     const Jid oldJid = jid();
     ChatDlg::setJid(newJid);
+    if (nativeTimeline_)
+        nativeTimeline_->setProperty("nativeChatPeer", jid().full());
     if (oldJid == jid())
         return;
 
     if (oldJid.bare() != jid().bare()) {
         clearNativeHistory();
+        localExhausted_ = false;
+        mamExhausted_ = false;
         if (nativeTimeline_)
             QTimer::singleShot(0, this, [this] { loadOlderMamMessages(); });
         if (auto *controller = account()->encryptionController())
@@ -466,16 +483,16 @@ void PsiChatDlg::initUi()
     // during this first vertical slice; visible rows are real Qt widgets.
 #ifndef WEBKIT
     nativeTimeline_ = new MamChatWidget(ui_.topFrame);
-    nativeTimeline_->setProperty("psiMamOverlay", true);
-    ui_.topFrame->layout()->replaceWidget(ui_.log, nativeTimeline_);
+    delete ui_.topFrame->layout()->replaceWidget(ui_.log, nativeTimeline_);
     ui_.log->hide();
-    Mattermost::OverlayScrollBarManager::install(*qApp);
-    Mattermost::OverlayScrollBarManager::setScrollToStartButtonEnabled(*nativeTimeline_, false);
+    configureNativeChat(nativeTimeline_, account(), jid(), false);
     connect(nativeTimeline_, &MamChatWidget::olderMessagesRequested,
-            this, &PsiChatDlg::loadOlderMamMessages);
+            this, &PsiChatDlg::loadOlderMamMessages, Qt::QueuedConnection);
     // A pending task belongs to one authenticated stream. Cancel it on logout
     // so a stale pointer cannot suppress pagination after reconnection.
     connect(account(), &PsiAccount::disconnected, this, [this] {
+        mamRefreshTail_ = true;
+        mamResumeAfterConnect_ = true;
         // The currently visible portion must survive transient disconnects.
         // Remember an interrupted page even when earlier pages are present,
         // otherwise no further visibleRangeChanged signal may arrive.
@@ -487,32 +504,26 @@ void PsiChatDlg::initUi()
         if (nativeTimeline_)
             nativeTimeline_->setHistoryLoading(false);
     });
-    // Opening a chat while offline schedules no MAM request. Start one when
-    // the account authenticates, provided no offline SQLite rows were shown:
-    // anonymous EDB rows cannot yet be reconciled with server archive UIDs.
+    // Login can follow an offline EDB preload. MAM and local event IDs now
+    // merge, so populated local history no longer blocks synchronization.
     connect(account(), &PsiAccount::updatedActivity, this, [this] {
-        if (!nativeTimeline_ || !account()->isConnected() || mamTask_ || mamExhausted_)
+        if (!nativeTimeline_ || !account()->isConnected() || mamTask_)
             return;
-        const bool initialEmpty = mamBeforeId_.isEmpty()
-            && PsiMam::mayFetchArchive(true, localHistoryPreloadPending(),
-                                       localHistoryPopulated())
-            && nativeTimeline_->messageCount() == 0;
+        if (mamExhausted_ && !mamResumeAfterConnect_)
+            return;
+        const bool initialEmpty = mamBeforeId_.isEmpty() && !localHistoryPreloadPending();
         if (!mamResumeAfterConnect_ && !initialEmpty)
             return;
-        // Resume interrupted pagination after login even when rows already
-        // exist. Keep the existing archive UID boundary and viewport anchor.
+        // Refresh the moving tail after login. Rewalk its preceding chain
+        // on demand, using cached pages and filling any disconnected gap.
         mamResumeAfterConnect_ = false;
         loadOlderMamMessages();
     });
-    // A login can race the asynchronous SQLite preload started while
-    // offline. Start the archive only once that query has finished and only
-    // if it provided no local rows. Never mix anonymous SQLite and MAM pages.
+    // Finish the EDB preload before merging the initial archive page.
     connect(this, &ChatDlg::localHistoryPreloadFinished, this, [this] {
-        if (nativeTimeline_ && account()->isConnected() && !mamTask_
+        if (nativeTimeline_ && !mamTask_
             && !mamExhausted_ && mamBeforeId_.isEmpty()
-            && PsiMam::mayFetchArchive(true, localHistoryPreloadPending(),
-                                       localHistoryPopulated())
-            && nativeTimeline_->messageCount() == 0)
+            && !localHistoryPreloadPending())
             loadOlderMamMessages();
     });
     QTimer::singleShot(0, this, [this] { loadOlderMamMessages(); });

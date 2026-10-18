@@ -20,6 +20,7 @@
 #ifndef EVENTDB_H
 #define EVENTDB_H
 
+#include "historyarchive.h"
 #include "iris/xmpp_jid.h"
 #include "psicon.h"
 #include "psievent.h"
@@ -32,13 +33,18 @@
 
 class EDBItem {
 public:
-    EDBItem(const PsiEvent::Ptr &, const QString &id);
+    EDBItem(const PsiEvent::Ptr &, const QString &id, int historyState = HistoryArchive::Unverified,
+            const QString &archiveId = {});
     ~EDBItem();
 
     PsiEvent::Ptr  event() const;
     const QString &id() const;
+    int            historyState() const { return historyState_; }
+    const QString &archiveId() const { return archiveId_; }
 
 private:
+    int           historyState_;
+    QString       archiveId_;
     QString       v_id;
     PsiEvent::Ptr e;
 };
@@ -83,8 +89,8 @@ class EDB : public QObject {
     Q_OBJECT
 public:
     enum { Forward, Backward };
-    enum { Contact = 1, GroupChatContact = 2 };
-    enum { SeparateAccounts = 1, PrivateContacts = 2, AllContacts = 4, AllAccounts = 8 };
+    enum { Contact = 1, GroupChatContact = 2, GroupChat = 3 };
+    enum { SeparateAccounts = 1, PrivateContacts = 2, AllContacts = 4, AllAccounts = 8, ArchiveCache = 16 };
     struct ContactItem {
         QString   accId;
         XMPP::Jid jid;
@@ -102,6 +108,15 @@ public:
     virtual quint64            eventsCount(const QString &accId, const XMPP::Jid &jid) = 0;
     virtual QString            getStorageParam(const QString &key)                     = 0;
     virtual void               setStorageParam(const QString &key, const QString &val) = 0;
+
+    virtual EDBResult localHistoryPage(const QString &, const XMPP::Jid &, qint64, int) { return {}; }
+
+    // Optional persistent MAM support. Flat-file history keeps working without it.
+    virtual HistoryArchive::Page archivePage(const HistoryArchive::Key &, const QString &, int) { return {}; }
+    virtual bool mergeArchivePage(const HistoryArchive::Key &, const QString &, int, HistoryArchive::Page &)
+    {
+        return false;
+    }
 
 protected:
     int         genUniqueId() const;

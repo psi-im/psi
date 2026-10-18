@@ -2,14 +2,18 @@
 #pragma once
 
 namespace PsiMam {
-
-// No legacy SQLite row has a verified MAM archive UID. Mixing SQLite's tail
-// with initial MAM pagination would duplicate messages and scramble ordering.
-// Once an archive cursor exists, ordinary previous-page fetches may continue.
-inline bool mayFetchArchive(bool initialPage, bool localPreloadPending,
-                            bool localHistoryPopulated)
+inline bool mayFetchArchive(bool /*initialPage*/, bool localPreloadPending,
+                            bool /*localHistoryPopulated*/)
 {
-    return !initialPage || (!localPreloadPending && !localHistoryPopulated);
+    // Wait for EDB identity metadata, then merge instead of choosing one source.
+    return !localPreloadPending;
 }
 
+inline bool mayReuseArchivePage(bool initialPage, bool connected, bool found, bool stable,
+                               int entries, int requested, bool complete)
+{
+    // A trusted row alone says nothing about gaps. Only a whole contiguous
+    // page or a certified archive boundary permits skipping the network.
+    return found && stable && (entries == requested || complete) && (!initialPage || !connected);
+}
 } // namespace PsiMam

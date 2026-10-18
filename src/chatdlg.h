@@ -89,7 +89,7 @@ public:
     bool                            localHistoryPopulated() const { return localHistoryPopulated_; }
     void                            dispatchMessage(const MessageView &mv);
     virtual void                    appendSysMsg(const QString &txt) = 0;
-    void                            appendMessage(const Message &, bool local = false);
+    void appendMessage(const Message &, bool local = false, qint64 historyId = 0, const QString &archiveId = {});
     virtual XMPP::EncryptedSession *encryptionSession() const;
     virtual QString                 encryptionMethodId() const;
 

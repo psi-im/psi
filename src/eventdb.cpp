@@ -34,7 +34,8 @@ using namespace XMPP;
 //----------------------------------------------------------------------------
 // EDBItem
 //----------------------------------------------------------------------------
-EDBItem::EDBItem(const PsiEvent::Ptr &event, const QString &id)
+EDBItem::EDBItem(const PsiEvent::Ptr &event, const QString &id, int historyState, const QString &archiveId) :
+    historyState_(historyState), archiveId_(archiveId)
 {
     e    = event;
     v_id = id;
