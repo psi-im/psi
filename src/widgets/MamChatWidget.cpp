@@ -153,11 +153,22 @@ QBoxLayout *buildThemeLayout(const QJsonObject &node, const QHash<QString, QWidg
     for (const auto &item : node.value(QStringLiteral("items")).toArray()) {
         if (item.isObject()) {
             auto *nested = buildThemeLayout(item.toObject(), elements, theme);
-            layout->addLayout(nested, horizontal ? 1 : 0);
-            // Nested headers must stay compact: otherwise Qt6 distributes
-            // spare row height into the author/body gap.
-            if (!horizontal)
-                layout->setAlignment(nested, Qt::AlignTop);
+            if (!horizontal && item.toObject().value(QStringLiteral("direction"))
+                                   == QLatin1String("horizontal")) {
+                // A horizontal header inside a vertical message column needs
+                // its own height-for-width boundary. Qt6 otherwise distributes
+                // available height inside the nested layout, leaving a large
+                // blank gap between the header and the message document.
+                auto *header = new QWidget;
+                header->setObjectName(QStringLiteral("mamHeaderGroup"));
+                header->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
+                header->setLayout(nested);
+                layout->addWidget(header, 0, Qt::AlignTop);
+            } else {
+                layout->addLayout(nested, horizontal ? 1 : 0);
+                if (!horizontal)
+                    layout->setAlignment(nested, Qt::AlignTop);
+            }
         } else if (auto *widget = elements.value(item.toString(), nullptr)) {
             const bool bodyOnLine = horizontal && item.toString() == QLatin1String("body");
             layout->addWidget(widget, bodyOnLine ? 1 : 0, Qt::AlignTop);

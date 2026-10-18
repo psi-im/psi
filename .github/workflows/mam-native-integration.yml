@@ -85,15 +85,28 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            cmake ninja-build g++ pkg-config zlib1g-dev \
+            ccache cmake ninja-build g++ pkg-config zlib1g-dev \
             qtbase5-dev libqt5svg5-dev libqt5x11extras5-dev qtmultimedia5-dev \
             libqca-qt5-2-dev libotr5-dev libhttp-parser-dev \
             libminizip-dev libsm-dev libssl-dev libusrsctp-dev \
             libsrtp2-dev libtidy-dev libxss-dev
+      - name: Restore compiler cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: psi-mam-basic-qt5-${{ runner.os }}-${{ github.head_ref || github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            psi-mam-basic-qt5-${{ runner.os }}-${{ github.head_ref || github.ref_name }}-
+            psi-mam-basic-qt5-${{ runner.os }}-
+      - name: Configure compiler cache
+        run: |
+          ccache --max-size=600M
+          ccache --zero-stats
       - name: Configure basic chat with bundled development Iris
         run: |
           cmake -S . -B build-mam-chat -G Ninja \
             -DCMAKE_BUILD_TYPE=Release -DCHAT_TYPE=BASIC \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DBUNDLED_IRIS=ON -DBUNDLED_IRIS_ALL=OFF \
             -DIRIS_SYSTEM_QCA=2 -DIRIS_ENABLE_OMEMO=OFF \
             -DENABLE_OMEMO=OFF -DENABLE_PLUGINS=OFF \
@@ -101,3 +114,6 @@ jobs:
             -DBUILD_TESTING=OFF
       - name: Build Psi basic with MAM widget timeline
         run: cmake --build build-mam-chat --parallel 4
+      - name: Compiler cache statistics
+        if: always()
+        run: ccache --show-stats
