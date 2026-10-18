@@ -141,7 +141,7 @@ QJsonObject resolvedLayout(const NativeChatTheme &theme)
     return theme.layout == NativeChatTheme::Classic ? classic : modern;
 }
 
-QBoxLayout *buildThemeLayout(const QJsonObject &node, const QHash<QString, QWidget *> &slots,
+QBoxLayout *buildThemeLayout(const QJsonObject &node, const QHash<QString, QWidget *> &elements,
                               const NativeChatTheme &theme)
 {
     const bool horizontal = node.value(QStringLiteral("direction")).toString()
@@ -152,8 +152,8 @@ QBoxLayout *buildThemeLayout(const QJsonObject &node, const QHash<QString, QWidg
     layout->setSpacing(horizontal ? (theme.layout == NativeChatTheme::Classic ? 4 : 10) : 3);
     for (const auto &item : node.value(QStringLiteral("items")).toArray()) {
         if (item.isObject()) {
-            layout->addLayout(buildThemeLayout(item.toObject(), slots, theme), horizontal ? 1 : 0);
-        } else if (auto *widget = slots.value(item.toString(), nullptr)) {
+            layout->addLayout(buildThemeLayout(item.toObject(), elements, theme), horizontal ? 1 : 0);
+        } else if (auto *widget = elements.value(item.toString(), nullptr)) {
             const bool bodyOnLine = horizontal && item.toString() == QLatin1String("body");
             layout->addWidget(widget, bodyOnLine ? 1 : 0, Qt::AlignTop);
         }
@@ -399,7 +399,7 @@ QWidget *MamChatWidget::createItemWidget(int index)
     auto *content = new QWidget(row);
     content->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     outer->addWidget(content, 1, Qt::AlignTop);
-    QHash<QString, QWidget *> slots;
+    QHash<QString, QWidget *> elements;
 
     if (message) {
         const QString nick = mv.nick().isEmpty()
@@ -412,7 +412,7 @@ QWidget *MamChatWidget::createItemWidget(int index)
         QFont nameFont = author->font();
         nameFont.setBold(modern);
         author->setFont(nameFont);
-        slots.insert(QStringLiteral("author"), author);
+        elements.insert(QStringLiteral("author"), author);
         author->installEventFilter(this);
         auto *time = new QLabel(modern ? displayTime(mv.dateTime())
                          : QStringLiteral("[") + mv.dateTime().toLocalTime().toString(
@@ -421,14 +421,14 @@ QWidget *MamChatWidget::createItemWidget(int index)
         time->setTextFormat(Qt::PlainText);
         time->setToolTip(fullTimestamp(mv.dateTime()));
         time->setForegroundRole(QPalette::Text);
-        slots.insert(QStringLiteral("timestamp"), time);
+        elements.insert(QStringLiteral("timestamp"), time);
         time->installEventFilter(this);
         if (theme_.avatarSize > 0) {
             auto *avatar = new QLabel(content);
             avatar->setObjectName(QStringLiteral("mamAvatar"));
             avatar->setFixedSize(theme_.avatarSize, theme_.avatarSize);
             updateAvatar(avatar, mv);
-            slots.insert(QStringLiteral("avatar"), avatar);
+            elements.insert(QStringLiteral("avatar"), avatar);
             avatar->installEventFilter(this);
         }
         updateNicknameColor(author, mv);
@@ -443,17 +443,17 @@ QWidget *MamChatWidget::createItemWidget(int index)
     if (!mv.formattedUserText().isEmpty())
         richText += (richText.isEmpty() ? QString() : QStringLiteral(" — ")) + mv.formattedUserText();
     body->setRichText(richText);
-    slots.insert(QStringLiteral("body"), body);
+    elements.insert(QStringLiteral("body"), body);
     body->installEventFilter(this);
     body->viewport()->installEventFilter(this);
     body->setToolTip(row->toolTip());
     body->viewport()->setToolTip(row->toolTip());
 
     const QJsonObject layout = resolvedLayout(theme_);
-    content->setLayout(buildThemeLayout(layout, slots, theme_));
+    content->setLayout(buildThemeLayout(layout, elements, theme_));
     QSet<QString> used;
     validateLayout(layout, used);
-    for (auto it = slots.cbegin(); it != slots.cend(); ++it)
+    for (auto it = elements.cbegin(); it != elements.cend(); ++it)
         if (!used.contains(it.key()))
             it.value()->hide();
     if (!message) {
