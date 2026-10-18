@@ -486,6 +486,10 @@ void PsiChatDlg::initUi()
     delete ui_.topFrame->layout()->replaceWidget(ui_.log, nativeTimeline_);
     ui_.log->hide();
     configureNativeChat(nativeTimeline_, account(), jid(), false);
+    connect(nativeTimeline_, &MamChatWidget::avatarClicked, this,
+            [this](const QString &, bool local) {
+        account()->actionInfo(local ? account()->jid() : jid());
+    });
     connect(nativeTimeline_, &MamChatWidget::olderMessagesRequested,
             this, &PsiChatDlg::loadOlderMamMessages, Qt::QueuedConnection);
     // A pending task belongs to one authenticated stream. Cancel it on logout

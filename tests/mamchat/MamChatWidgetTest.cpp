@@ -18,6 +18,7 @@
 #include <QMouseEvent>
 #include <QSignalSpy>
 #include <QScrollBar>
+#include <QTimer>
 #include <QWheelEvent>
 #include <QUrlQuery>
 #include <QtTest/QtTest>
@@ -747,7 +748,8 @@ private slots:
     {
         const auto now = QDateTime::fromString(QStringLiteral("2026-10-18T12:34:56+03:00"), Qt::ISODate);
         QCOMPARE(MamChatWidget::displayTime({}, now), QString());
-        QVERIFY(MamChatWidget::displayTime(now.addSecs(-59), now).contains(QStringLiteral("59")));
+        QCOMPARE(MamChatWidget::displayTime(now, now), QStringLiteral("just now"));
+        QCOMPARE(MamChatWidget::displayTime(now.addSecs(-59), now), QStringLiteral("just now"));
         QVERIFY(MamChatWidget::displayTime(now.addSecs(-60), now).contains(QStringLiteral("1")));
         QVERIFY(MamChatWidget::displayTime(now.addSecs(-3600), now).contains(QStringLiteral("1")));
         QVERIFY(MamChatWidget::displayTime(now.addSecs(-86399), now).contains(QStringLiteral("23")));
@@ -756,6 +758,63 @@ private slots:
         QCOMPARE(MamChatWidget::displayTime(now.addSecs(60), now),
                  now.addSecs(60).toLocalTime().toString(QStringLiteral("HH:mm")));
         QVERIFY(MamChatWidget::fullTimestamp(now).contains(now.toLocalTime().toString(QStringLiteral("HH:mm:ss"))));
+    }
+
+    void timestampUpdatesOnlyWhileVisibleAndOnlyAtBoundaries()
+    {
+        MamChatWidget list;
+        auto *clock = list.findChild<QTimer *>(QStringLiteral("mamTimestampRefresh"));
+        QVERIFY(clock);
+        QVERIFY(clock->isSingleShot());
+        QVERIFY(!clock->isActive());
+        list.resize(460, 180);
+        auto recent = message(QStringLiteral("recent"), QStringLiteral("Now"));
+        recent.setDateTime(QDateTime::currentDateTime());
+        list.appendMessage(recent);
+        QVERIFY(!clock->isActive()); // Creation while hidden does no polling.
+        list.show();
+        QTRY_VERIFY(list.itemWidget(0));
+        QTRY_VERIFY(clock->isActive());
+        QVERIFY(clock->remainingTime() > 1000); // No more per-second wakeups.
+        auto *row = list.itemWidget(0);
+        auto *time = row->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
+        auto *body = row->findChild<ChatMessageText *>();
+        QVERIFY(time && body);
+        QCOMPARE(time->text(), QStringLiteral("just now"));
+        QVERIFY(!time->toolTip().isEmpty());
+        QVERIFY(row->toolTip().isEmpty());
+        QVERIFY(body->toolTip().isEmpty());
+        QVERIFY(body->viewport()->toolTip().isEmpty());
+        list.hide();
+        QVERIFY(!clock->isActive());
+        list.show();
+        QTRY_VERIFY(clock->isActive());
+        NativeChatTheme classic;
+        classic.layout = NativeChatTheme::Classic;
+        classic.avatarSize = 0;
+        list.setTheme(classic);
+        QVERIFY(!clock->isActive());
+    }
+
+    void avatarClickRequestsContactCard()
+    {
+        MamChatWidget list;
+        list.resize(480, 200);
+        list.setGroupChat(true);
+        list.setHistoryLoading(true);
+        QSignalSpy requested(&list, &MamChatWidget::avatarClicked);
+        auto sender = message(QStringLiteral("avatar"), QStringLiteral("Hello"));
+        sender.setNick(QStringLiteral("Alice"));
+        list.appendMessage(sender);
+        list.show();
+        QTRY_VERIFY(list.itemWidget(0));
+        auto *avatar = list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamAvatar"));
+        QVERIFY(avatar);
+        QTest::mouseClick(avatar, Qt::LeftButton);
+        QCOMPARE(requested.count(), 1);
+        QCOMPARE(requested.at(0).at(0).toString(), QStringLiteral("Alice"));
+        QCOMPARE(requested.at(0).at(1).toBool(), false);
+        QCOMPARE(list.selectedMessageCount(), 0);
     }
 
     void layoutsAvatarsAndThemeSwitch()

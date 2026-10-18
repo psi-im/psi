@@ -15,6 +15,8 @@ class QFrame;
 class QLabel;
 class QResizeEvent;
 class QShowEvent;
+class QHideEvent;
+class QTimer;
 
 class MamChatWidget final : public Mattermost::LongListWidget {
     Q_OBJECT
@@ -56,12 +58,14 @@ signals:
     void olderMessagesRequested();
     void paletteChanged();
     void nicknameClicked(const QString &nick);
+    void avatarClicked(const QString &nick, bool local);
 
 protected:
     QWidget *createItemWidget(int index) override;
     bool eventFilter(QObject *target, QEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
     void showEvent(QShowEvent *event) override;
+    void hideEvent(QHideEvent *event) override;
     void changeEvent(QEvent *event) override;
 
 private:
@@ -102,4 +106,5 @@ private:
     bool swallowMouseRelease_ = false;
     QFrame *selectionToolbar_ = nullptr;
     QLabel *selectionCountLabel_ = nullptr;
+    QTimer *timestampTimer_ = nullptr;
 };

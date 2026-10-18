@@ -916,6 +916,11 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
             nativeTimeline_->refreshNicknameColors();
     });
     connect(nativeTimeline_, &MamChatWidget::nicknameClicked, this, &GCMainDlg::onNickInsertClick);
+    connect(nativeTimeline_, &MamChatWidget::avatarClicked, this,
+            [this](const QString &nickname, bool) {
+        if (!nickname.isEmpty())
+            account()->invokeGCInfo(jid().withResource(nickname));
+    });
     connect(nativeTimeline_, &MamChatWidget::olderMessagesRequested, this, &GCMainDlg::loadOlderMamMessages,
             Qt::QueuedConnection);
     connect(account(), &PsiAccount::disconnected, this, [this] {

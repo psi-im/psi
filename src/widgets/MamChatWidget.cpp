@@ -21,6 +21,9 @@
 #include <QPushButton>
 #include <QResizeEvent>
 #include <QShowEvent>
+#include <QHideEvent>
+#include <QDateTime>
+#include <limits>
 #include <QShortcut>
 #include <QPalette>
 #include <QLocale>
@@ -36,10 +39,14 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
 {
     setProperty("psiMamOverlay", true);
     theme_.layout = NativeChatTheme::Modern;
-    auto *clock = new QTimer(this);
-    clock->setInterval(1000);
-    connect(clock, &QTimer::timeout, this, &MamChatWidget::updateTimestamps);
-    clock->start();
+    // Coalesced single-shot timer: no updates while a chat is hidden and
+    // no per-second activity. Only the next visible relative-time boundary
+    // schedules a wake-up.
+    timestampTimer_ = new QTimer(this);
+    timestampTimer_->setObjectName(QStringLiteral("mamTimestampRefresh"));
+    timestampTimer_->setSingleShot(true);
+    timestampTimer_->setTimerType(Qt::CoarseTimer);
+    connect(timestampTimer_, &QTimer::timeout, this, &MamChatWidget::updateTimestamps);
     setDefaultItemHeight(72);
     setMaterializationLimit(160);
     setRequestBlockSize(40);
@@ -79,7 +86,10 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
             [this](int first, int) {
         if (first <= 1 && !historyLoading_ && !historyExhausted_)
             emit olderMessagesRequested();
+        updateTimestamps();
     });
+    connect(this, &Mattermost::LongListWidget::materializedRangeChanged,
+            this, [this](int, int) { updateTimestamps(); });
 }
 
 namespace {
@@ -364,6 +374,7 @@ void MamChatWidget::clearMessages()
     historyLoading_ = false;
     historyExhausted_ = false;
     setItemCount(0);
+    timestampTimer_->stop();
 }
 
 void MamChatWidget::setHistoryLoading(bool loading)
@@ -398,7 +409,7 @@ QWidget *MamChatWidget::createItemWidget(int index)
     row->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     row->setFont(font());
     row->setProperty("_psiMamInformational", mv.type() != MessageView::Message);
-    row->setToolTip(fullTimestamp(mv.dateTime()));
+    // Only the timestamp owns the full date/time tooltip.
     row->installEventFilter(this);
 
     row->setStyleSheet(theme_.styleSheet);
@@ -456,6 +467,7 @@ QWidget *MamChatWidget::createItemWidget(int index)
         if (theme_.avatarSize > 0) {
             auto *avatar = new QLabel(content);
             avatar->setObjectName(QStringLiteral("mamAvatar"));
+            avatar->setCursor(Qt::PointingHandCursor);
             avatar->setFixedSize(theme_.avatarSize, theme_.avatarSize);
             updateAvatar(avatar, mv);
             elements.insert(QStringLiteral("avatar"), avatar);
@@ -477,8 +489,6 @@ QWidget *MamChatWidget::createItemWidget(int index)
     elements.insert(QStringLiteral("body"), body);
     body->installEventFilter(this);
     body->viewport()->installEventFilter(this);
-    body->setToolTip(row->toolTip());
-    body->viewport()->setToolTip(row->toolTip());
 
     if (modern && theme_.layoutSpec.isEmpty()) {
         // Keep Psi's original Modern presentation geometry intact. Qt6 treats
@@ -532,7 +542,7 @@ QString MamChatWidget::displayTime(const QDateTime &when, const QDateTime &now)
         return when.toLocalTime().toString(QStringLiteral("HH:mm"));
     const int seconds = int(age / 1000);
     if (seconds < 60)
-        return (seconds == 1 ? tr("1 second ago") : tr("%n seconds ago", nullptr, seconds));
+        return tr("just now");
     if (seconds < 3600)
         return (seconds / 60 == 1 ? tr("1 minute ago") : tr("%n minutes ago", nullptr, seconds / 60));
     return (seconds / 3600 == 1 ? tr("1 hour ago") : tr("%n hours ago", nullptr, seconds / 3600));
@@ -580,22 +590,52 @@ void MamChatWidget::updateTimestampAppearance(QLabel *label)
 
 void MamChatWidget::updateTimestamps()
 {
-    if (!isVisible())
+    timestampTimer_->stop();
+    // Hidden tabs/windows and Classic's absolute timestamps require no clock.
+    if (!isVisible() || window()->isMinimized()
+        || theme_.layout == NativeChatTheme::Classic)
+        return;
+
+    const auto range = visibleRange();
+    if (!range.isValid())
         return;
     const auto now = QDateTime::currentDateTime();
-    for (int i : materializedIndices()) {
-        if (auto *row = itemWidget(i)) {
-            if (auto *label = row->findChild<QLabel *>(QStringLiteral("mamTimestamp"))) {
-                const auto when = items_.at(i).message.dateTime();
-                const auto text = theme_.layout == NativeChatTheme::Classic
-                    ? QStringLiteral("[") + when.toLocalTime().toString(QStringLiteral("HH:mm:ss"))
-                        + QStringLiteral("]")
-                    : displayTime(when, now);
-                if (label->text() != text)
-                    label->setText(text);
-            }
-        }
+    const qint64 minute = 60 * 1000;
+    const qint64 hour = 60 * minute;
+    const qint64 day = 24 * hour;
+    qint64 nextRefresh = std::numeric_limits<int>::max();
+
+    // The prefetch/materialization buffer can be much larger than the
+    // viewport. Touch only rows that actually intersect the visible area.
+    for (int i = range.first; i <= range.last; ++i) {
+        auto *row = itemWidget(i);
+        if (!row || !row->isVisibleTo(viewport())
+            || !QRect(row->mapTo(viewport(), QPoint()), row->size()).intersects(viewport()->rect()))
+            continue;
+        auto *label = row->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
+        if (!label)
+            continue;
+        const auto when = items_.at(i).message.dateTime();
+        if (!when.isValid())
+            continue;
+        const auto text = displayTime(when, now);
+        if (label->text() != text)
+            label->setText(text);
+
+        const qint64 age = when.msecsTo(now);
+        qint64 untilNext = 0;
+        if (age < 0)
+            untilNext = -age; // Future timestamp becomes "just now".
+        else if (age < hour)
+            untilNext = minute - age % minute;
+        else if (age < day)
+            untilNext = hour - age % hour;
+        // Beyond 24 hours we show a fixed clock time, with no timer.
+        if (untilNext > 0)
+            nextRefresh = qMin(nextRefresh, untilNext + 50);
     }
+    if (nextRefresh < std::numeric_limits<int>::max())
+        timestampTimer_->start(int(nextRefresh));
 }
 
 void MamChatWidget::changeEvent(QEvent *event)
@@ -639,6 +679,7 @@ void MamChatWidget::setTheme(const NativeChatTheme &theme)
     theme_ = theme;
     for (int index : materializedIndices())
         replaceItem(index);
+    updateTimestamps();
 }
 
 void MamChatWidget::setNicknameColorResolver(std::function<QColor(const MessageView &)> resolver)
@@ -894,7 +935,14 @@ void MamChatWidget::showEvent(QShowEvent *event)
     QTimer::singleShot(0, this, [this] {
         if (followingInitialTail_ && !items_.isEmpty())
             scrollToEnd();
+        updateTimestamps();
     });
+}
+
+void MamChatWidget::hideEvent(QHideEvent *event)
+{
+    timestampTimer_->stop();
+    Mattermost::LongListWidget::hideEvent(event);
 }
 
 bool MamChatWidget::eventFilter(QObject *target, QEvent *event)
@@ -953,6 +1001,15 @@ bool MamChatWidget::eventFilter(QObject *target, QEvent *event)
                     swallowMouseRelease_ = false;
                     if (consumed)
                         return true;
+                    if (selectedKeys_.isEmpty()
+                        && target->objectName() == QLatin1String("mamAvatar")) {
+                        auto *avatar = qobject_cast<QLabel *>(target);
+                        if (avatar && avatar->rect().contains(mouse->pos())) {
+                            const auto &sender = items_.at(index).message;
+                            emit avatarClicked(sender.nick(), sender.isLocal());
+                            return true;
+                        }
+                    }
                     if (groupChat_ && selectedKeys_.isEmpty()
                         && target->objectName() == QLatin1String("mamAuthor")) {
                         auto *author = qobject_cast<QLabel *>(target);
