@@ -26,6 +26,7 @@
 #include "bookmarkmanager.h"
 #include "coloropt.h"
 #include "chatview.h"
+#include "eventdb.h"
 #include "filesharingmanager.h"
 #include "filesharingpublication.h"
 #include "gcuserview.h"
