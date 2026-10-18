@@ -310,6 +310,114 @@ private slots:
         QVERIFY(invalidate(db, key.account, key.peer));
         QVERIFY(!readPage(db, key, "begin", 2).found);
     }
+    void revisionsPersistAcrossDisconnectedPages()
+    {
+        QVERIFY(migrate(db));
+        QSqlQuery q(db);
+        QVERIFY(q.exec("INSERT INTO contacts VALUES(1,'account-a',1,'you@example.org',-1)"));
+        // Edit 8 exists well outside the archive page containing original 6.
+        auto insert = [this](int id, int seconds, const QString &stanza,
+                             const QString &replace, const QString &body, int direction = 2) {
+            QSqlQuery query(db);
+            query.prepare("INSERT INTO events(id,contact_id,type,direction,date,history_date_ms,"
+                          "m_text,extra_data) VALUES(:id,1,1,:direction,:date,:ms,:body,:extra)");
+            const auto stamp=QDateTime::fromMSecsSinceEpoch(1700000000000LL+seconds*1000).toUTC();
+            const auto envelope=QJsonObject{{"version",1},{"id",stanza},
+                                             {"from","you@example.org/mobile"},
+                                             {"to","me@example.org"},{"replace",replace}};
+            query.bindValue(":id",id);
+            query.bindValue(":direction",direction);
+            query.bindValue(":date",stamp);
+            query.bindValue(":ms",stamp.toMSecsSinceEpoch());
+            query.bindValue(":body",body);
+            query.bindValue(":extra",QString::fromUtf8(
+                QJsonDocument(QJsonObject{{"psi:message",envelope}}).toJson(QJsonDocument::Compact)));
+            return query.exec() && recordRevision(db,id,1,1,direction,
+                                                   "you@example.org/mobile",stanza,replace);
+        };
+        QVERIFY(insert(1,1,"id-6",{},"6"));
+        QVERIFY(insert(2,2,"unrelated",{},"other"));
+        QVERIFY(insert(3,80,"id-8","id-7","8")); // Later revision before intermediate.
+        QVERIFY(insert(4,50,"id-7","id-6","7"));
+        const auto page = localRecords(db,key.account,key.peer,0,2);
+        QCOMPARE(page.size(),2);
+        QCOMPARE(page.first().value("id").toInt(),1);
+        QCOMPARE(page.first().value("m_text").toString(),QStringLiteral("8"));
+        QCOMPARE(page.last().value("m_text").toString(),QStringLiteral("other"));
+        QCOMPARE(scalar("SELECT m_text FROM events WHERE id=1").toString(),QStringLiteral("6"));
+        QCOMPARE(resolvedRecord(db,3).value("id").toInt(),1);
+        QCOMPARE(resolvedRecord(db,3).value("m_text").toString(),QStringLiteral("8"));
+        const auto extra=QJsonDocument::fromJson(page.first().value("extra_data").toString().toUtf8())
+                             .object().value("psi:message").toObject();
+        QCOMPARE(extra.value("replace").toString(),QStringLiteral("id-7"));
+        QVERIFY(migrate(db));
+        QCOMPARE(localRecords(db,key.account,key.peer,0,2).size(),2);
+        QVERIFY(insert(5,90,"id-9","id-8","different direction",1));
+        QCOMPARE(localRecords(db,key.account,key.peer,0,5).size(),3);
+    }
+
+    void mamRevisionsAcrossDistinctCachedPagesResolveToOriginal()
+    {
+        QVERIFY(migrate(db));
+        Page original;
+        original.stable=true;
+        auto o=entry("uid-original");
+        o.body="6";
+        o.messageId="client-6";
+        original.entries.append(o);
+        QVERIFY(storePage(db,key,"uid-after",1,original));
+
+        Page edit;
+        edit.stable=true;
+        auto e=entry("uid-correction",300);
+        e.body="8";
+        e.messageId="client-8";
+        e.replaceId="client-6";
+        const auto envelope=QJsonObject{{"version",1},{"id",e.messageId},
+                                         {"from",e.sender},{"to","me@example.org"},
+                                         {"replace",e.replaceId}};
+        e.extra=QString::fromUtf8(QJsonDocument(QJsonObject{
+            {"psi:message",envelope}}).toJson(QJsonDocument::Compact));
+        edit.entries.append(e);
+        QVERIFY(storePage(db,key,"",1,edit));
+        QCOMPARE(resolvedRecord(db,original.entries.first().eventId)
+                     .value("m_text").toString(),QStringLiteral("8"));
+        QCOMPARE(resolvedRecord(db,edit.entries.first().eventId)
+                     .value("id").toLongLong(),original.entries.first().eventId);
+        const auto logical=localRecords(db,key.account,key.peer,0,10);
+        QCOMPARE(logical.size(),1);
+        QCOMPARE(logical.first().value("m_text").toString(),QStringLiteral("8"));
+        QCOMPARE(readPage(db,key,"",1).entries.first().uid,QStringLiteral("uid-correction"));
+        QCOMPARE(readPage(db,key,"uid-after",1).entries.first().uid,QStringLiteral("uid-original"));
+    }
+
+    void migrationBackfillsSavedReplacementEdges()
+    {
+        QSqlQuery q(db);
+        QVERIFY(q.exec("INSERT INTO contacts VALUES(1,'account-a',1,'you@example.org',-1)"));
+        auto extra = [](QString id, QString replace) {
+            return QString::fromUtf8(QJsonDocument(QJsonObject {
+                {"psi:message",QJsonObject{{"version",1},{"id",id},
+                 {"replace",replace},{"from","you@example.org/mobile"},
+                 {"to","me@example.org"}}}
+            }).toJson(QJsonDocument::Compact));
+        };
+        q.prepare("INSERT INTO events(id,contact_id,type,direction,date,m_text,extra_data)"
+                  " VALUES(:id,1,1,2,:stamp,:text,:extra)");
+        for (int i=0;i<2;++i) {
+            q.bindValue(":id",i+1);
+            q.bindValue(":stamp",QDateTime::fromMSecsSinceEpoch(1700000000000LL+i*60000));
+            q.bindValue(":text",i ? "8" : "6");
+            q.bindValue(":extra",extra(i ? "id-8" : "id-6",i ? "id-6" : QString()));
+            QVERIFY(q.exec());
+        }
+        QVERIFY(migrate(db));
+        QCOMPARE(localRecords(db,key.account,key.peer,0,10).size(),1);
+        QCOMPARE(localRecords(db,key.account,key.peer,0,10).first().value("m_text").toString(),
+                 QStringLiteral("8"));
+        QVERIFY(migrate(db));
+        QCOMPARE(scalar("SELECT COUNT(*) FROM events").toInt(),2);
+    }
     void privacyOmissionDoesNotCertifyPage()
     {
         QVERIFY(migrate(db));

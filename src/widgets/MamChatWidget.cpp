@@ -363,10 +363,17 @@ void MamChatWidget::appendMessage(const MessageView &view)
         return;
     }
 
+    // A newly sent local message is an explicit navigation intent: go to the
+    // live tail even if the user was reading older history. Editing an old
+    // message must NOT change the viewport.
+    const bool sentNewMessage = view.type() == MessageView::Message
+        && view.isLocal() && !view.isSpooled() && view.replaceId().isEmpty();
     if (view.type() == MessageView::Message) {
         const int existing = findRelatedMessage(view, false);
         if (existing >= 0) {
             mergeMessage(existing, view);
+            if (sentNewMessage)
+                scrollToEnd();
             return;
         }
     }
@@ -377,7 +384,7 @@ void MamChatWidget::appendMessage(const MessageView &view)
     if (keys_.contains(key))
         return;
 
-    const bool followTail = followingInitialTail_ || isAtEnd();
+    const bool followTail = followingInitialTail_ || isAtEnd() || sentNewMessage;
     keys_.insert(key);
     Row row {key, view, {}};
     if (!view.messageId().isEmpty())

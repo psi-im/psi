@@ -2447,7 +2447,18 @@ void GCMainDlg::loadOlderMamMessages()
             XMPP::Forwarding wrapper;
             if (!wrapper.fromXml(forwarded, account()->client()))
                 continue;
-            const auto archived = wrapper.message();
+            auto archived = wrapper.message();
+            QDateTime archivedTime = wrapper.timeStamp().isValid()
+                ? wrapper.timeStamp() : archived.timeStamp();
+            if (auto resolved = account()->edb()->resolvedHistoryEvent(task->eventId(uid))) {
+                if (resolved->event()->type() == PsiEvent::Message) {
+                    const auto actual = resolved->event().staticCast<MessageEvent>()->message().displayMessage();
+                    archived.setBody(actual.body());
+                    archived.setId(actual.id());
+                    archived.setReplaceId(actual.replaceId());
+                    archivedTime = actual.timeStamp();
+                }
+            }
             if (!archived.from().compare(room, false) || archived.type() != XMPP::Message::Type::Groupchat
                 || archived.from().resource().isEmpty() || archived.body().isEmpty())
                 continue;
@@ -2455,11 +2466,12 @@ void GCMainDlg::loadOlderMamMessages()
             mv.setArchiveId(uid);
             mv.setHistoryId(task->eventId(uid));
             mv.setMessageId(archived.id());
+            mv.setReplaceId(archived.replaceId());
             mv.setUserId(archived.from().full());
             mv.setNick(archived.from().resource());
             mv.setLocal(mv.nick() == nick());
             mv.setSpooled(true);
-            mv.setDateTime(wrapper.timeStamp().isValid() ? wrapper.timeStamp() : archived.timeStamp());
+            mv.setDateTime(archivedTime);
             account()->psi()->fileSharingManager()->fillMessageView(mv, archived, account());
             page.append(qMakePair(uid, mv));
         }

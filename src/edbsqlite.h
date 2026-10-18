@@ -75,6 +75,7 @@ class EDBSqLite : public EDB {
         bool first() { return QSqlQuery::first(); }
         bool next() { return QSqlQuery::next(); }
         QSqlRecord record() const { return QSqlQuery::record(); }
+        QVariant lastInsertId() const { return QSqlQuery::lastInsertId(); }
         void       freeResult() { QSqlQuery::finish(); }
 
     private:
@@ -115,6 +116,7 @@ public:
     void               setStorageParam(const QString &key, const QString &val);
 
     EDBResult            localHistoryPage(const QString &, const XMPP::Jid &, qint64, int) override;
+    EDBItemPtr            resolvedHistoryEvent(qint64 eventId) override;
     HistoryArchive::Page archivePage(const HistoryArchive::Key &, const QString &, int) override;
     bool mergeArchivePage(const HistoryArchive::Key &, const QString &, int, HistoryArchive::Page &) override;
 

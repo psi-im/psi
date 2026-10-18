@@ -50,7 +50,8 @@ QString HistoryMessageExtras::encode(const XMPP::Message &message)
                      QJsonObject { { "version", 1 },
                                    { "id", message.id() },
                                    { "from", message.from().full() },
-                                   { "to", message.to().full() } });
+                                   { "to", message.to().full() },
+                                    { "replace", message.replaceId() } });
     }
     return extra.isEmpty() ? QString() : QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact));
 }
@@ -77,6 +78,7 @@ void HistoryMessageExtras::restore(const QString &json, XMPP::Message &message)
     const auto envelope = extra.value(QStringLiteral("psi:message")).toObject();
     if (envelope.value("version").toInt() == 1) {
         message.setId(envelope.value("id").toString());
+        message.setReplaceId(envelope.value("replace").toString());
         const XMPP::Jid from(envelope.value("from").toString()), to(envelope.value("to").toString());
         if (from.isValid() && !from.isEmpty())
             message.setFrom(from);

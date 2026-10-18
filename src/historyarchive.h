@@ -20,7 +20,7 @@ struct Entry {
     qint64  eventId = 0;
     // Application-parsed fields for the existing EDB events table.
     QDateTime timestamp;
-    QString   body, subject, language, extra, messageId, sender;
+    QString   body, subject, language, extra, messageId, sender, replaceId;
     int       type = 1, direction = 2;
     bool      storable = true;
 };
@@ -35,6 +35,13 @@ struct Page {
 // rewrites existing event payloads. Safe to call again after an interrupted start.
 bool migrate(QSqlDatabase db);
 // Return a unique original delivery, or zero when identity is absent/ambiguous.
+// Index revision relationships transactionally whenever a live or MAM event
+// is persisted. The earliest known revision anchors the row; its newest
+// known child supplies text regardless of requested page boundaries.
+bool recordRevision(QSqlDatabase db, qint64 eventId, qint64 contactId, int type,
+                    int direction, const QString &sender,
+                    const QString &messageId, const QString &replaceId);
+QSqlRecord resolvedRecord(QSqlDatabase db, qint64 eventId);
 QList<QSqlRecord> localRecords(QSqlDatabase db, const QString &account, const QString &peer, qint64 before, int limit);
 qint64            matchingDelivery(QSqlDatabase db, qint64 contact, const Entry &, bool archived);
 Page              readPage(QSqlDatabase db, const Key &, const QString &before, int limit);

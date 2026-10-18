@@ -932,6 +932,31 @@ private slots:
         QTRY_VERIFY(list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamEditedIndicator")));
     }
 
+    void sendingNewMessageScrollsToLiveTailButEditingDoesNot()
+    {
+        MamChatWidget chat;
+        chat.resize(400,220);
+        chat.setHistoryLoading(true);
+        for (int i=0;i<44;++i)
+            chat.appendMessage(message(QString::number(i),QStringLiteral("Earlier message"),i));
+        chat.show();
+        QTRY_VERIFY(chat.verticalScrollBar()->maximum()>0);
+        chat.verticalScrollBar()->triggerAction(QAbstractSlider::SliderToMinimum);
+        QTRY_VERIFY(!chat.isAtEnd());
+        auto outgoing=message(QStringLiteral("my-new"),QStringLiteral("Sent"),100,true);
+        chat.appendMessage(outgoing);
+        QTRY_VERIFY(chat.isAtEnd());
+        QCOMPARE(chat.messageCount(),45);
+
+        chat.scrollToIndex(0,Mattermost::LongListWidget::Alignment::Top);
+        QTRY_VERIFY(!chat.isAtEnd());
+        auto corrected=message(QStringLiteral("my-edit"),QStringLiteral("Edited"),101,true);
+        corrected.setReplaceId(outgoing.messageId());
+        chat.appendMessage(corrected);
+        QVERIFY(!chat.isAtEnd());
+        QCOMPARE(chat.messageCount(),45);
+    }
+
     void archivedCorrectionChainMergesInBothLoadOrders()
     {
         auto scenario = [this](bool archiveFirst) {

@@ -352,6 +352,20 @@ void PsiChatDlg::loadOlderMamMessages()
             if (!wrapper.fromXml(forwarded, account()->client()))
                 continue;
             auto archived = wrapper.message();
+            // A validated MAM result may be an older revision whose latest
+            // corrected text lives in another page. The persisted revision
+            // graph resolves it before the native timeline sees this row.
+            QDateTime archivedTime = wrapper.timeStamp().isValid()
+                ? wrapper.timeStamp() : archived.timeStamp();
+            if (auto resolved = account()->edb()->resolvedHistoryEvent(task->eventId(uid))) {
+                if (resolved->event()->type() == PsiEvent::Message) {
+                    const auto actual = resolved->event().staticCast<MessageEvent>()->message().displayMessage();
+                    archived.setBody(actual.body());
+                    archived.setId(actual.id());
+                    archived.setReplaceId(actual.replaceId());
+                    archivedTime = actual.timeStamp();
+                }
+            }
             // A 'with' filter alone is not a sufficient sender check. This
             // account's 1:1 conversation consists exclusively of messages
             // between our bare JID and the selected peer, in either direction.
@@ -372,8 +386,7 @@ void PsiChatDlg::loadOlderMamMessages()
             mv.setLocal(local);
             mv.setSpooled(true);
             mv.setNick(whoNick(local));
-            mv.setDateTime(wrapper.timeStamp().isValid()
-                               ? wrapper.timeStamp() : archived.timeStamp());
+            mv.setDateTime(archivedTime);
             account()->psi()->fileSharingManager()->fillMessageView(mv, archived, account());
             page.append(qMakePair(uid, mv));
         }

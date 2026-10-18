@@ -131,6 +131,19 @@ EDBResult EDBSqLite::localHistoryPage(const QString &account, const Jid &peer, q
     return result;
 }
 
+EDBItemPtr EDBSqLite::resolvedHistoryEvent(qint64 eventId)
+{
+    if (eventId <= 0 || !commit())
+        return {};
+    const auto row = HistoryArchive::resolvedRecord(QSqlDatabase::database("history"),eventId);
+    if (row.isEmpty())
+        return {};
+    const auto event = getEvent(row);
+    return event ? EDBItemPtr(new EDBItem(event,row.value("id").toString(),
+                                           row.value("history_state").toInt(),
+                                           row.value("archive_uid").toString())) : EDBItemPtr();
+}
+
 HistoryArchive::Page EDBSqLite::archivePage(const HistoryArchive::Key &key, const QString &before, int limit)
 {
     if (!commit())
@@ -532,6 +545,15 @@ bool EDBSqLite::appendEvent(const QString &accId, const XMPP::Jid &jid, const Ps
 #endif
     }
     bool res = query->exec();
+    if (res && e->type() == PsiEvent::Message) {
+        const Message &m = e.staticCast<MessageEvent>()->message().displayMessage();
+        if (!HistoryArchive::recordRevision(db,query->lastInsertId().toLongLong(),
+                                             contactId,nType,nDirection,m.from().full(),
+                                             m.id(),m.replaceId())) {
+            rollback();
+            return false;
+        }
+    }
     return res;
 }
 

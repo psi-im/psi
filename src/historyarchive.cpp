@@ -6,6 +6,7 @@
 #include <QSet>
 #include <QSqlError>
 #include <QSqlQuery>
+#include <QXmlStreamReader>
 #include <QVariant>
 
 namespace HistoryArchive {
@@ -26,6 +27,23 @@ namespace {
     }
     const QString scope = QStringLiteral("account=:account AND archive=:archive AND peer=:peer");
     QString       nonNull(const QString &s) { return s.isNull() ? QStringLiteral("") : s; }
+    bool revisionsExist(QSqlDatabase db)
+    {
+        QSqlQuery q(db);
+        return q.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='message_revisions'")
+            && q.next();
+    }
+    QString cachedReplaceId(const QString &xml)
+    {
+        QXmlStreamReader reader(xml);
+        while (!reader.atEnd()) {
+            reader.readNext();
+            if (reader.isStartElement() && reader.name() == QLatin1String("replace")
+                && reader.namespaceUri() == QLatin1String("urn:xmpp:message-correct:0"))
+                return reader.attributes().value(QStringLiteral("id")).toString();
+        }
+        return {};
+    }
 }
 
 bool migrate(QSqlDatabase db)
@@ -88,6 +106,7 @@ bool migrate(QSqlDatabase db)
         }
         lastId = batch.last().first;
     }
+    const bool backfillRevisions = !revisionsExist(db);
     const QStringList statements {
         "CREATE TABLE IF NOT EXISTS archive_items ("
         "account TEXT NOT NULL, archive TEXT NOT NULL, peer TEXT NOT NULL, uid TEXT NOT NULL, "
@@ -107,7 +126,17 @@ bool migrate(QSqlDatabase db)
         "page_id INTEGER NOT NULL REFERENCES archive_pages(id) ON DELETE CASCADE, position INTEGER NOT NULL, "
         "event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE, uid TEXT NOT NULL, "
         "PRIMARY KEY(page_id,position))",
-        "CREATE INDEX IF NOT EXISTS archive_page_event ON archive_page_items(event_id)"
+        "CREATE INDEX IF NOT EXISTS archive_page_event ON archive_page_items(event_id)",
+        "CREATE TABLE IF NOT EXISTS message_revisions ("
+        "event_id INTEGER PRIMARY KEY REFERENCES events(id) ON DELETE CASCADE,"
+        "contact_id INTEGER NOT NULL,type INTEGER NOT NULL,direction INTEGER NOT NULL,"
+        "sender TEXT NOT NULL,stanza_id TEXT NOT NULL,replace_id TEXT NOT NULL,"
+        "root_id INTEGER NOT NULL)",
+        "CREATE INDEX IF NOT EXISTS revision_stanza ON message_revisions("
+        "contact_id,type,direction,sender,stanza_id)",
+        "CREATE INDEX IF NOT EXISTS revision_replace ON message_revisions("
+        "contact_id,type,direction,sender,replace_id)",
+        "CREATE INDEX IF NOT EXISTS revision_root ON message_revisions(root_id)"
     };
     for (const auto &sql : statements)
         if (ok)
@@ -120,10 +149,154 @@ bool migrate(QSqlDatabase db)
         ok = version.exec("DELETE FROM system WHERE key='version'")
             && version.exec("INSERT INTO system(key,value) VALUES('version','0.2')");
     }
+    // Index old EDB identity metadata and previously cached MAM correction
+    // XML once. Never rewrite the user's original event payloads.
+    if (ok && backfillRevisions) {
+        qint64 last = 0;
+        while (ok) {
+            QSqlQuery read(db);
+            read.prepare("SELECT e.id,e.contact_id,e.type,e.direction,e.extra_data,"
+                         "(SELECT xml FROM archive_items WHERE event_id=e.id LIMIT 1) "
+                         "FROM events e WHERE e.id>:id AND e.type IN (1,9) "
+                         "ORDER BY e.id LIMIT 500");
+            read.bindValue(":id", last);
+            if (!read.exec()) { ok = false; break; }
+            struct Legacy {
+                qint64 id, contact;
+                int type, direction;
+                QString sender, stanza, replace;
+            };
+            QList<Legacy> rows;
+            int count = 0;
+            while (read.next()) {
+                ++count;
+                last = read.value(0).toLongLong();
+                const auto envelope = QJsonDocument::fromJson(read.value(4).toString().toUtf8())
+                                          .object().value("psi:message").toObject();
+                if (envelope.value("id").toString().isEmpty())
+                    continue;
+                QString replace = envelope.value("replace").toString();
+                if (replace.isEmpty())
+                    replace = cachedReplaceId(read.value(5).toString());
+                rows.append({last,read.value(1).toLongLong(),read.value(2).toInt(),
+                             read.value(3).toInt(),envelope.value("from").toString(),
+                             envelope.value("id").toString(),replace});
+            }
+            read.finish();
+            for (const auto &item : rows)
+                if (!recordRevision(db,item.id,item.contact,item.type,item.direction,
+                                    item.sender,item.stanza,item.replace)) {
+                    ok = false;
+                    break;
+                }
+            if (count < 500)
+                break;
+        }
+    }
     if (ok && db.commit())
         return true;
     db.rollback();
     return false;
+}
+
+bool recordRevision(QSqlDatabase db, qint64 eventId, qint64 contactId, int type,
+                    int direction, const QString &sender,
+                    const QString &messageId, const QString &replaceId)
+{
+    if (eventId <= 0 || contactId <= 0 || messageId.isEmpty()
+        || (type == 9 && sender.isEmpty()))
+        return true; // Cannot prove identity without an ID or MUC sender.
+    const QString who = type == 9 ? sender : QStringLiteral("direct");
+    QSqlQuery q(db);
+    q.prepare("INSERT INTO message_revisions("
+              "event_id,contact_id,type,direction,sender,stanza_id,replace_id,root_id)"
+              " VALUES(:id,:contact,:type,:direction,:sender,:stanza,:replace,:id)"
+              " ON CONFLICT(event_id) DO UPDATE SET"
+              " stanza_id=excluded.stanza_id,"
+              " replace_id=CASE WHEN excluded.replace_id<>'' THEN excluded.replace_id"
+              " ELSE message_revisions.replace_id END");
+    q.bindValue(":id",eventId);
+    q.bindValue(":contact",contactId);
+    q.bindValue(":type",type);
+    q.bindValue(":direction",direction);
+    q.bindValue(":sender",who);
+    q.bindValue(":stanza",messageId);
+    q.bindValue(":replace",replaceId);
+    if (!q.exec())
+        return false;
+
+    // Both traversal directions matter: original and correction may arrive
+    // in separate pages, and the newer revision may be stored first.
+    q.prepare("WITH RECURSIVE related(id) AS ("
+              " SELECT :id UNION"
+              " SELECT next.event_id FROM related chain"
+              " JOIN message_revisions cur ON cur.event_id=chain.id"
+              " JOIN message_revisions next ON next.contact_id=cur.contact_id"
+              " AND next.type=cur.type AND next.direction=cur.direction"
+              " AND next.sender=cur.sender"
+              " AND ((cur.replace_id<>'' AND next.stanza_id=cur.replace_id)"
+              " OR (next.replace_id<>'' AND next.replace_id=cur.stanza_id))"
+              ") SELECT related.id FROM related JOIN events e ON e.id=related.id"
+              " ORDER BY e.history_date_ms,e.id");
+    q.bindValue(":id",eventId);
+    if (!q.exec())
+        return false;
+    QList<qint64> ids;
+    while (q.next())
+        ids.append(q.value(0).toLongLong());
+    q.finish();
+    if (ids.isEmpty())
+        return false;
+    QSqlQuery update(db);
+    update.prepare("UPDATE message_revisions SET root_id=:root WHERE event_id=:id");
+    for (auto id : ids) {
+        update.bindValue(":root",ids.first());
+        update.bindValue(":id",id);
+        if (!update.exec())
+            return false;
+    }
+    return true;
+}
+
+QSqlRecord resolvedRecord(QSqlDatabase db, qint64 eventId)
+{
+    if (eventId <= 0)
+        return {};
+    QSqlQuery q(db);
+    q.prepare("SELECT COALESCE(r.root_id,e.id) FROM events e"
+              " LEFT JOIN message_revisions r ON r.event_id=e.id WHERE e.id=:id");
+    q.bindValue(":id",eventId);
+    if (!q.exec() || !q.next())
+        return {};
+    const qint64 root = q.value(0).toLongLong();
+    q.finish();
+    q.prepare("SELECT e.*,c.acc_id,c.jid,"
+              "(SELECT uid FROM archive_items WHERE event_id=e.id LIMIT 1) AS archive_uid"
+              " FROM events e JOIN contacts c ON c.id=e.contact_id WHERE e.id=:id");
+    q.bindValue(":id",root);
+    if (!q.exec() || !q.next())
+        return {};
+    QSqlRecord record = q.record();
+    q.finish();
+    q.prepare("SELECT e.m_text,e.subject,e.lang,e.extra_data,"
+              "(SELECT uid FROM archive_items WHERE event_id=e.id LIMIT 1)"
+              " FROM message_revisions r JOIN events e ON e.id=r.event_id"
+              " WHERE r.root_id=:root ORDER BY e.history_date_ms DESC,e.id DESC LIMIT 1");
+    q.bindValue(":root",root);
+    if (q.exec() && q.next()) {
+        const char *names[] = {"m_text","subject","lang","extra_data"};
+        for (int i=0;i<4;++i) {
+            const int col = record.indexOf(QLatin1String(names[i]));
+            if (col >= 0)
+                record.setValue(col,q.value(i));
+        }
+        if (record.value("archive_uid").toString().isEmpty()) {
+            const int col = record.indexOf("archive_uid");
+            if (col >= 0)
+                record.setValue(col,q.value(4));
+        }
+    }
+    return record;
 }
 
 QList<QSqlRecord> localRecords(QSqlDatabase db, const QString &account, const QString &peer, qint64 before, int limit)
@@ -132,9 +305,10 @@ QList<QSqlRecord> localRecords(QSqlDatabase db, const QString &account, const QS
     if (account.isEmpty() || peer.isEmpty() || limit <= 0)
         return result;
     QSqlQuery q(db);
-    QString   sql = "SELECT e.*, c.acc_id, c.jid, "
-                    "(SELECT uid FROM archive_items WHERE event_id=e.id LIMIT 1) AS archive_uid "
-                    "FROM events e JOIN contacts c ON c.id=e.contact_id WHERE c.acc_id=:account AND c.jid=:peer";
+    QString   sql = "SELECT e.id FROM events e JOIN contacts c ON c.id=e.contact_id "
+                    "LEFT JOIN message_revisions r ON r.event_id=e.id "
+                    "WHERE c.acc_id=:account AND c.jid=:peer "
+                    "AND (r.event_id IS NULL OR r.root_id=e.id)";
     if (before > 0)
         sql += " AND (e.history_date_ms,e.id) < (SELECT history_date_ms,id FROM events WHERE id=:before AND "
                "contact_id=c.id)";
@@ -145,9 +319,16 @@ QList<QSqlRecord> localRecords(QSqlDatabase db, const QString &account, const QS
     q.bindValue(":limit", limit);
     if (before > 0)
         q.bindValue(":before", before);
+    QList<qint64> ids;
     if (q.exec())
         while (q.next())
-            result.prepend(q.record());
+            ids.prepend(q.value(0).toLongLong());
+    q.finish();
+    for (qint64 id : ids) {
+        const auto resolved = resolvedRecord(db,id);
+        if (!resolved.isEmpty())
+            result.append(resolved);
+    }
     return result;
 }
 
@@ -343,6 +524,9 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
             if (!q.exec())
                 return fail();
         }
+        if (!recordRevision(db,eventId,contact,entry.type,entry.direction,
+                            entry.sender,entry.messageId,entry.replaceId))
+            return fail();
         // Never overwrite an already stable payload with a provisional result.
         q.prepare(
             "INSERT INTO archive_items(account,archive,peer,uid,event_id,xml,stable) "

@@ -110,6 +110,9 @@ public:
     virtual void               setStorageParam(const QString &key, const QString &val) = 0;
 
     virtual EDBResult localHistoryPage(const QString &, const XMPP::Jid &, qint64, int) { return {}; }
+    // Resolve any archived revision to its original anchored position and
+    // latest known text, including corrections outside the requested page.
+    virtual EDBItemPtr resolvedHistoryEvent(qint64) { return {}; }
 
     // Optional persistent MAM support. Flat-file history keeps working without it.
     virtual HistoryArchive::Page archivePage(const HistoryArchive::Key &, const QString &, int) { return {}; }

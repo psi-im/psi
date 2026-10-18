@@ -595,3 +595,18 @@ provides custom size/draw hooks directly. Animated PsiIcon emoticons can use the
 existing frame-change notifications with balanced activation/stop and targeted
 viewport updates. They do not require a new text layout engine or media player;
 this change restores SIMS and does not implement that animation lifecycle.
+
+### Persistent corrected-message resolution across EDB/MAM page boundaries
+
+SQLite records keep original payloads. The message_revisions index records
+contact, sender, direction, stanza and replace IDs, and resolves the earliest
+revision as the ordering anchor. Live EDB appends and MAM page transactions
+update this graph; migration indexes old envelopes and cached MAM XML.
+The local history page selects logical rows by original date but resolves
+the latest known revision from the same database, even if it belongs to a
+different archive page. Archive UIDs, XML and cursors remain per revision.
+MAM pages use resolvedHistoryEvent(eventId) for consistent contents.
+
+Only edits already known locally can be resolved offline. MAM tail refresh
+on reconnect remains essential for corrections not yet received. Outgoing
+new messages scroll to the tail; corrections of old rows do not.

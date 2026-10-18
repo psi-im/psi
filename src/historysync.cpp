@@ -96,6 +96,7 @@ bool HistorySync::parseResults(const QList<QDomElement> &results, HistoryArchive
         doc.appendChild(doc.importNode(result, true));
         entry.xml       = doc.toString(-1);
         entry.messageId = message.id();
+        entry.replaceId = message.replaceId();
         entry.sender    = message.from().full();
         entry.body      = message.body();
         entry.subject   = message.subject();
