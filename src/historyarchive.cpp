@@ -221,7 +221,7 @@ bool recordRevision(QSqlDatabase db, qint64 eventId, qint64 contactId, int type,
     q.bindValue(":direction",direction);
     q.bindValue(":sender",who);
     q.bindValue(":stanza",messageId);
-    q.bindValue(":replace",replaceId);
+    q.bindValue(":replace",nonNull(replaceId));
     q.bindValue(":root",eventId);
     if (!q.exec()) {
         qWarning().noquote() << "[history-revisions] insert:" << q.lastError().text();
