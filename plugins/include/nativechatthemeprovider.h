@@ -16,6 +16,9 @@ struct NativeChatTheme {
     int     avatarSize = 40;
     int     spacing    = 10;
     QString styleSheet; // Scoped to each message row. Prefer palette() colours.
+    // Optional JSON layout tree: direction = horizontal/vertical; items are nested
+    // groups or the author, timestamp, avatar, body slots. No plugin-owned widgets.
+    QString layoutSpec;
 };
 
 class NativeChatThemeProvider {

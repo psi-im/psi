@@ -114,6 +114,79 @@ private slots:
         QVERIFY(body->document()->toPlainText().contains(QChar::ObjectReplacementCharacter));
         QCOMPARE(opener.opens,0); // Merely displaying video never opens a decoder/source.
     }
+    void archivePrependKeepsAtEndUntilUserScrollsUp()
+    {
+        MamChatWidget list;
+        list.resize(400, 220);
+        list.setHistoryLoading(true);
+        list.show();
+        QList<QPair<QString, MessageView>> page;
+        for (int i = 0; i < 35; ++i) {
+            auto entry = message(QString::number(i), QStringLiteral("History"), i);
+            entry.setHistoryId(i + 1);
+            page.append(qMakePair(QString(), entry));
+        }
+        QCOMPARE(list.prependArchivePage(page), 35);
+        QTRY_VERIFY(list.verticalScrollBar()->maximum() > 0);
+        QVERIFY(list.isAtEnd());
+        list.appendMessage(message(QStringLiteral("incoming"), QStringLiteral("Live"), 36));
+        QVERIFY(list.isAtEnd());
+        list.verticalScrollBar()->setValue(0);
+        QVERIFY(!list.isAtEnd());
+        auto older = message(QStringLiteral("old"), QStringLiteral("Older"), -10);
+        older.setHistoryId(101);
+        list.prependArchivePage({qMakePair(QString(), older)});
+        QVERIFY(!list.isAtEnd());
+    }
+
+    void nativeModernClassicAndPluginPlacement()
+    {
+        MamChatWidget list;
+        list.setHistoryLoading(true);
+        list.resize(620, 360);
+        list.appendMessage(message(QStringLiteral("layout"), QStringLiteral("Message body")));
+        list.show();
+        QTRY_VERIFY(list.itemWidget(0) != nullptr);
+        auto *modern = list.itemWidget(0);
+        auto *modernNick = modern->findChild<QLabel *>(QStringLiteral("mamAuthor"));
+        auto *modernBody = modern->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+        QCOMPARE(modernNick->text(), QStringLiteral("Peer"));
+        QVERIFY(modernBody->mapTo(modern, QPoint()).y() > modernNick->mapTo(modern, QPoint()).y());
+
+        NativeChatTheme classic;
+        classic.layout = NativeChatTheme::Classic;
+        classic.avatarSize = 0;
+        list.setTheme(classic);
+        auto *row = list.itemWidget(0);
+        QVERIFY(row);
+        auto *nick = row->findChild<QLabel *>(QStringLiteral("mamAuthor"));
+        auto *time = row->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
+        auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+        QCOMPARE(nick->text(), QStringLiteral("Peer:"));
+        const QString hhmmss = QDateTime::fromString(QStringLiteral("2026-10-18T10:00:00Z"),
+                                                      Qt::ISODate).toLocalTime().toString(QStringLiteral("HH:mm:ss"));
+        QCOMPARE(time->text(), QStringLiteral("[") + hhmmss + QStringLiteral("]"));
+        QVERIFY(time->mapTo(row, QPoint()).x() < nick->mapTo(row, QPoint()).x());
+        QVERIFY(nick->mapTo(row, QPoint()).x() < body->mapTo(row, QPoint()).x());
+
+        NativeChatTheme plugin;
+        plugin.layout = NativeChatTheme::Modern;
+        plugin.avatarSize = 0;
+        plugin.layoutSpec = QStringLiteral(R"({"direction":"vertical","items":["body",{"direction":"horizontal","items":["timestamp","author"]}]})");
+        list.setTheme(plugin);
+        row = list.itemWidget(0);
+        nick = row->findChild<QLabel *>(QStringLiteral("mamAuthor"));
+        time = row->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
+        body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+        QVERIFY(body->mapTo(row, QPoint()).y() <= nick->mapTo(row, QPoint()).y());
+        QVERIFY(time->mapTo(row, QPoint()).x() < nick->mapTo(row, QPoint()).x());
+        list.setNicknameColorResolver([](const MessageView &) { return QColor(Qt::red); });
+        QCOMPARE(nick->palette().color(QPalette::Text), QColor(Qt::red));
+        list.setTheme(classic);
+        QCOMPARE(list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamAuthor"))->palette().color(QPalette::Text),
+                 QColor(Qt::red));
+    }
+
     void localIdentityMergesWithoutClientStanzaId()
     {
         MamChatWidget list;

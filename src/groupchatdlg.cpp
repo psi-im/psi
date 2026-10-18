@@ -25,6 +25,7 @@
 #include "avcall/avcall.h"
 #include "bookmarkmanager.h"
 #include "coloropt.h"
+#include "chatview.h"
 #include "filesharingmanager.h"
 #include "filesharingpublication.h"
 #include "gcuserview.h"
@@ -891,6 +892,29 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     ui_.log->setParent(ui_.topFrame);
     ui_.log->hide();
     configureNativeChat(nativeTimeline_, account(), jid(), true);
+    // Preserve Psi's established per-nickname coloring policy in both native
+    // layouts, including fixed/hash palettes and muted MAM/history records.
+    QPointer<ChatView> oldView(ui_.log);
+    nativeTimeline_->setNicknameColorResolver([oldView](const MessageView &message) -> QColor {
+        if (!oldView)
+            return {};
+        if (message.isSpooled() && !PsiOptions::instance()->getOption(
+                QStringLiteral("options.ui.muc.colored-history")).toBool())
+            return ColorOpt::instance()->color(QStringLiteral("options.ui.look.colors.messages.informational"));
+        return QColor(oldView->getMucNickColor(message.nick(), message.isLocal()));
+    });
+    connect(PsiOptions::instance(), &PsiOptions::optionChanged, nativeTimeline_,
+            [this](const QString &option) {
+        if (option == QLatin1String("options.ui.muc.use-nick-coloring")
+            || option == QLatin1String("options.ui.muc.use-hash-nick-coloring")
+            || option == QLatin1String("options.ui.muc.colored-history")
+            || option == QLatin1String("options.ui.look.colors.muc.nick-colors"))
+            nativeTimeline_->refreshNicknameColors();
+    });
+    connect(ColorOpt::instance(), &ColorOpt::changed, nativeTimeline_, [this](const QString &option) {
+        if (option == QLatin1String("options.ui.look.colors.messages.informational"))
+            nativeTimeline_->refreshNicknameColors();
+    });
     connect(nativeTimeline_, &MamChatWidget::nicknameClicked, this, &GCMainDlg::onNickInsertClick);
     connect(nativeTimeline_, &MamChatWidget::olderMessagesRequested, this, &GCMainDlg::loadOlderMamMessages,
             Qt::QueuedConnection);

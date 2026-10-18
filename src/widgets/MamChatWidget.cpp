@@ -11,6 +11,11 @@
 #include <QSignalBlocker>
 #include <QFrame>
 #include <QHBoxLayout>
+#include <QHash>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QJsonValue>
 #include <QLabel>
 #include <QMouseEvent>
 #include <QPushButton>
@@ -91,6 +96,71 @@ bool sameDelivery(const MessageView &a, const MessageView &b)
         {a.messageId(), a.text(), a.isLocal(), a.dateTime()},
         {b.messageId(), b.text(), b.isLocal(), b.dateTime()});
 }
+
+bool validateLayout(const QJsonValue &node, QSet<QString> &seen, int depth = 0)
+{
+    if (depth > 8)
+        return false;
+    if (node.isString()) {
+        const QString slot = node.toString();
+        if (slot != QLatin1String("author") && slot != QLatin1String("timestamp")
+            && slot != QLatin1String("avatar") && slot != QLatin1String("body"))
+            return false;
+        if (seen.contains(slot))
+            return false;
+        seen.insert(slot);
+        return true;
+    }
+    if (!node.isObject())
+        return false;
+    const QJsonObject group = node.toObject();
+    const QString direction = group.value(QStringLiteral("direction")).toString();
+    const QJsonArray items = group.value(QStringLiteral("items")).toArray();
+    if ((direction != QLatin1String("horizontal") && direction != QLatin1String("vertical"))
+        || items.isEmpty() || items.size() > 12)
+        return false;
+    for (const auto &child : items)
+        if (!validateLayout(child, seen, depth + 1))
+            return false;
+    return true;
+}
+
+QJsonObject resolvedLayout(const NativeChatTheme &theme)
+{
+    if (!theme.layoutSpec.isEmpty()) {
+        const auto custom = QJsonDocument::fromJson(theme.layoutSpec.toUtf8());
+        QSet<QString> seen;
+        if (custom.isObject() && validateLayout(custom.object(), seen)
+            && seen.contains(QStringLiteral("body")))
+            return custom.object();
+    }
+    static const auto modern = QJsonDocument::fromJson(
+        R"({"direction":"horizontal","items":["avatar",{"direction":"vertical","items":[{"direction":"horizontal","items":["author","timestamp"]},"body"]}]})").object();
+    static const auto classic = QJsonDocument::fromJson(
+        R"({"direction":"horizontal","items":["timestamp","author","body"]})").object();
+    return theme.layout == NativeChatTheme::Classic ? classic : modern;
+}
+
+QBoxLayout *buildThemeLayout(const QJsonObject &node, const QHash<QString, QWidget *> &slots,
+                              const NativeChatTheme &theme)
+{
+    const bool horizontal = node.value(QStringLiteral("direction")).toString()
+        == QLatin1String("horizontal");
+    QBoxLayout *layout = horizontal ? static_cast<QBoxLayout *>(new QHBoxLayout)
+                                    : static_cast<QBoxLayout *>(new QVBoxLayout);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(horizontal ? (theme.layout == NativeChatTheme::Classic ? 4 : 10) : 3);
+    for (const auto &item : node.value(QStringLiteral("items")).toArray()) {
+        if (item.isObject()) {
+            layout->addLayout(buildThemeLayout(item.toObject(), slots, theme), horizontal ? 1 : 0);
+        } else if (auto *widget = slots.value(item.toString(), nullptr)) {
+            const bool bodyOnLine = horizontal && item.toString() == QLatin1String("body");
+            layout->addWidget(widget, bodyOnLine ? 1 : 0, Qt::AlignTop);
+        }
+    }
+    return layout;
+}
+
 }
 
 void MamChatWidget::appendMessage(const MessageView &view)
@@ -159,6 +229,7 @@ void MamChatWidget::appendMessage(const MessageView &view)
 
 int MamChatWidget::prependArchivePage(const QList<QPair<QString, MessageView>> &page)
 {
+    const bool followTail = isAtEnd();
     QList<Row> added;
     QStringList pageOrder;
     for (const auto &entry : page) {
@@ -232,6 +303,8 @@ int MamChatWidget::prependArchivePage(const QList<QPair<QString, MessageView>> &
         setRangeAvailable(at, at, true);
         floor = at + 1;
     }
+    if (followTail)
+        scrollToEnd();
     return added.size();
 }
 
@@ -322,50 +395,43 @@ QWidget *MamChatWidget::createItemWidget(int index)
             setMessageSelected(index, checked);
         }
     });
-    if (modern && message && theme_.avatarSize > 0) {
-        auto *avatar = new QLabel(row);
-        avatar->setObjectName(QStringLiteral("mamAvatar"));
-        avatar->setFixedSize(theme_.avatarSize, theme_.avatarSize);
-        updateAvatar(avatar, mv);
-        outer->addWidget(avatar, 0, Qt::AlignTop);
-        avatar->installEventFilter(this);
-    }
+
     auto *content = new QWidget(row);
     content->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     outer->addWidget(content, 1, Qt::AlignTop);
-    QBoxLayout *layout = modern ? static_cast<QBoxLayout *>(new QVBoxLayout(content))
-                               : static_cast<QBoxLayout *>(new QHBoxLayout(content));
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(modern ? 3 : 6);
+    QHash<QString, QWidget *> slots;
 
     if (message) {
         const QString nick = mv.nick().isEmpty()
             ? (mv.isLocal() ? tr("Me") : tr("Message")) : mv.nick();
-        auto *header = new QWidget(content);
-        header->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-        auto *headerLayout = new QHBoxLayout(header);
-        headerLayout->setContentsMargins(0, 0, 0, 0);
-        headerLayout->setSpacing(10);
-        auto *author = new QLabel(nick, header);
+        auto *author = new QLabel(modern ? nick : nick + QLatin1Char(':'), content);
         author->setObjectName(QStringLiteral("mamAuthor"));
         author->setTextFormat(Qt::PlainText);
         author->setTextInteractionFlags(Qt::TextSelectableByMouse);
         author->setForegroundRole(QPalette::Text);
         QFont nameFont = author->font();
-        nameFont.setBold(true);
+        nameFont.setBold(modern);
         author->setFont(nameFont);
-        headerLayout->addWidget(author);
+        slots.insert(QStringLiteral("author"), author);
         author->installEventFilter(this);
-        auto *time = new QLabel(displayTime(mv.dateTime()), header);
+        auto *time = new QLabel(modern ? displayTime(mv.dateTime())
+                         : QStringLiteral("[") + mv.dateTime().toLocalTime().toString(
+                               QStringLiteral("HH:mm:ss")) + QStringLiteral("]"), content);
         time->setObjectName(QStringLiteral("mamTimestamp"));
         time->setTextFormat(Qt::PlainText);
         time->setToolTip(fullTimestamp(mv.dateTime()));
         time->setForegroundRole(QPalette::Text);
-        headerLayout->addWidget(time);
-        if (modern)
-            headerLayout->addStretch();
-        layout->addWidget(header, 0, Qt::AlignTop);
+        slots.insert(QStringLiteral("timestamp"), time);
         time->installEventFilter(this);
+        if (theme_.avatarSize > 0) {
+            auto *avatar = new QLabel(content);
+            avatar->setObjectName(QStringLiteral("mamAvatar"));
+            avatar->setFixedSize(theme_.avatarSize, theme_.avatarSize);
+            updateAvatar(avatar, mv);
+            slots.insert(QStringLiteral("avatar"), avatar);
+            avatar->installEventFilter(this);
+        }
+        updateNicknameColor(author, mv);
     }
 
     auto *body = new ChatMessageText(content);
@@ -377,11 +443,19 @@ QWidget *MamChatWidget::createItemWidget(int index)
     if (!mv.formattedUserText().isEmpty())
         richText += (richText.isEmpty() ? QString() : QStringLiteral(" — ")) + mv.formattedUserText();
     body->setRichText(richText);
-    layout->addWidget(body, modern ? 0 : 1, Qt::AlignTop);
+    slots.insert(QStringLiteral("body"), body);
     body->installEventFilter(this);
     body->viewport()->installEventFilter(this);
     body->setToolTip(row->toolTip());
     body->viewport()->setToolTip(row->toolTip());
+
+    const QJsonObject layout = resolvedLayout(theme_);
+    content->setLayout(buildThemeLayout(layout, slots, theme_));
+    QSet<QString> used;
+    validateLayout(layout, used);
+    for (auto it = slots.cbegin(); it != slots.cend(); ++it)
+        if (!used.contains(it.key()))
+            it.value()->hide();
     if (!message) {
         QTextCursor cursor(body->document());
         cursor.select(QTextCursor::Document);
@@ -425,7 +499,11 @@ void MamChatWidget::updateTimestamps()
     for (int i : materializedIndices()) {
         if (auto *row = itemWidget(i)) {
             if (auto *label = row->findChild<QLabel *>(QStringLiteral("mamTimestamp"))) {
-                const auto text = displayTime(items_.at(i).message.dateTime(), now);
+                const auto when = items_.at(i).message.dateTime();
+                const auto text = theme_.layout == NativeChatTheme::Classic
+                    ? QStringLiteral("[") + when.toLocalTime().toString(QStringLiteral("HH:mm:ss"))
+                        + QStringLiteral("]")
+                    : displayTime(when, now);
                 if (label->text() != text)
                     label->setText(text);
             }
@@ -444,7 +522,7 @@ void MamChatWidget::changeEvent(QEvent *event)
             row->setFont(font());
             if (auto *author = row->findChild<QLabel *>(QStringLiteral("mamAuthor"))) {
                 QFont authorFont = font();
-                authorFont.setBold(true);
+                authorFont.setBold(theme_.layout == NativeChatTheme::Modern);
                 author->setFont(authorFont);
             }
             if (auto *body = row->findChild<ChatMessageText *>())
@@ -458,6 +536,7 @@ void MamChatWidget::changeEvent(QEvent *event)
         viewport()->setPalette({});
         refreshAvatars();
         refreshSelection();
+        refreshNicknameColors();
         emit paletteChanged();
     }
 }
@@ -467,6 +546,32 @@ void MamChatWidget::setTheme(const NativeChatTheme &theme)
     theme_ = theme;
     for (int index : materializedIndices())
         replaceItem(index);
+}
+
+void MamChatWidget::setNicknameColorResolver(std::function<QColor(const MessageView &)> resolver)
+{
+    nicknameColorResolver_ = std::move(resolver);
+    refreshNicknameColors();
+}
+
+void MamChatWidget::refreshNicknameColors()
+{
+    for (int index : materializedIndices()) {
+        if (auto *row = itemWidget(index))
+            if (auto *author = row->findChild<QLabel *>(QStringLiteral("mamAuthor")))
+                updateNicknameColor(author, items_.at(index).message);
+    }
+}
+
+void MamChatWidget::updateNicknameColor(QLabel *author, const MessageView &message)
+{
+    if (!nicknameColorResolver_)
+        return;
+    const QColor color = nicknameColorResolver_(message);
+    QPalette palette = author->palette();
+    palette.setColor(QPalette::Text, color.isValid() ? color : this->palette().color(QPalette::Text));
+    palette.setColor(QPalette::WindowText, palette.color(QPalette::Text));
+    author->setPalette(palette);
 }
 
 void MamChatWidget::setAvatarResolver(std::function<QPixmap(const MessageView &)> resolver)

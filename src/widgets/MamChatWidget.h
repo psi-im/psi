@@ -32,6 +32,8 @@ public:
     void setGroupChat(bool enabled) { groupChat_ = enabled; }
     void setTheme(const NativeChatTheme &theme);
     void setAvatarResolver(std::function<QPixmap(const MessageView &)> resolver);
+    void setNicknameColorResolver(std::function<QColor(const MessageView &)> resolver);
+    void refreshNicknameColors();
     void refreshAvatars();
     void setMediaOpener(FileSharingDeviceOpener *opener);
     void setInformationalColor(const QColor &color);
@@ -61,10 +63,12 @@ private:
     void updateRowSelection(QFrame *row, bool selected);
     QColor informationalColor_;
     void updateAvatar(QLabel *label, const MessageView &message);
+    void updateNicknameColor(QLabel *label, const MessageView &message);
     NativeChatTheme theme_;
     bool groupChat_ = false;
     FileSharingDeviceOpener *mediaOpener_ = nullptr;
     std::function<QPixmap(const MessageView &)> avatarResolver_;
+    std::function<QColor(const MessageView &)> nicknameColorResolver_;
     int indexOfKey(const QString &key) const;
     void refreshSelection();
     void positionSelectionToolbar();

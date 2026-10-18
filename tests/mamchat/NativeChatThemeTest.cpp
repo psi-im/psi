@@ -19,6 +19,7 @@ private slots:
                                  500,
                                  -10,
                                  QStringLiteral("QLabel { color: palette(text); }") };
+        plugin.layoutSpec = QStringLiteral(R"({"direction":"horizontal","items":["body","author"]})");
         registry->add(&owner, { plugin, plugin, registry->themes().first() });
         QCOMPARE(changed.count(), 1);
         QCOMPARE(registry->themes().size(), 3);
@@ -29,6 +30,7 @@ private slots:
         QVERIFY(copied.id.constData() != plugin.id.constData());
         QVERIFY(copied.name.constData() != plugin.name.constData());
         QVERIFY(copied.styleSheet.constData() != plugin.styleSheet.constData());
+        QVERIFY(copied.layoutSpec.constData() != plugin.layoutSpec.constData());
         registry->remove(&owner);
         QCOMPARE(changed.count(), 2);
         QCOMPARE(registry->themes().size(), 2);

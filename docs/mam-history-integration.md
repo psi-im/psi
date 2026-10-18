@@ -432,7 +432,10 @@ WebEngine keep their existing theme providers. In Appearance → Themes, BASIC
 has separate Chat Message Style and Groupchat Message Style selections:
 
 - **Modern** (default): avatar column, bold author, time beside the author, body below.
-- **Classic**: compact text rows without avatars, with author/time beside the body.
+- **Classic**: compact inline `[HH:mm:ss] Nickname: message` rows with wrapped rich text.
+  Modern remains an avatar/header-over-body layout with relative timestamps.
+  Groupchat nickname colors in both styles use the existing Psi MUC options,
+  hash/palette policy and uncolored-history preference.
 
 Both layouts use the application palette for ordinary text, the configured chat
 font, and the existing AvatarFactory cache (occupant avatars for conferences).
@@ -445,8 +448,14 @@ materialized labels, without rebuilding the list or its logical identities.
 Plugins can implement `NativeChatThemeProvider` from
 `plugins/include/nativechatthemeprovider.h` and declare it in `Q_INTERFACES`.
 After a successful enable, Psi copies each theme description (unique ID, name,
-Modern/Classic base layout, avatar size, spacing, row stylesheet) into the native
-theme registry. IDs `modern` and `classic` are reserved; duplicate IDs are
+Modern/Classic base layout, avatar size, spacing, row stylesheet, optional
+nested JSON `layoutSpec`) into the native
+theme registry. A layout tree has `direction` (`horizontal`/`vertical`)
+and `items` (nested groups or any ordering of `author`, `timestamp`,
+`avatar`, `body`). Each leaf is unique and `body` is required; invalid
+definitions fall back to the native Modern/Classic layout. The tree is copied
+on plugin registration and creates only Psi-owned widgets, remaining safe
+after a plugin unload. IDs `modern` and `classic` are reserved; duplicate IDs are
 ignored. Stylesheets may target `mamMessageRow`, `mamAvatar`, `mamAuthor`,
 `mamTimestamp` and `mamBody`. Use palette colours to support light/dark desktops.
 Descriptions contain no callbacks or plugin-owned widgets. String data is

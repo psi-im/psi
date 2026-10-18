@@ -42,6 +42,7 @@ void NativeChatThemes::add(QObject *owner, const QList<NativeChatTheme> &themes)
         theme.id.detach();
         theme.name.detach();
         theme.styleSheet.detach();
+        theme.layoutSpec.detach();
         theme.avatarSize = qBound(0, theme.avatarSize, 96);
         theme.spacing    = qBound(0, theme.spacing, 32);
         accepted.append(theme);
