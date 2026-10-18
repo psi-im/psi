@@ -131,12 +131,92 @@ private slots:
         QVERIFY(list.isAtEnd());
         list.appendMessage(message(QStringLiteral("incoming"), QStringLiteral("Live"), 36));
         QVERIFY(list.isAtEnd());
-        list.verticalScrollBar()->setValue(0);
+        // A real scrollbar action (unlike geometry restoration) releases the
+        // opening-at-end behavior before another MAM page arrives.
+        list.verticalScrollBar()->triggerAction(QAbstractSlider::SliderToMinimum);
         QVERIFY(!list.isAtEnd());
         auto older = message(QStringLiteral("old"), QStringLiteral("Older"), -10);
         older.setHistoryId(101);
         list.prependArchivePage({qMakePair(QString(), older)});
         QVERIFY(!list.isAtEnd());
+    }
+
+    void openingRoomWhileHiddenFollowsTailUntilUserScroll()
+    {
+        MamChatWidget room;
+        room.setGroupChat(true);
+        room.setHistoryLoading(true);
+        room.resize(400, 210);
+        // MUC presence/status events and local history can arrive BEFORE show().
+        for (int i = 0; i < 42; ++i)
+            room.appendMessage(message(QStringLiteral("status-%1").arg(i),
+                                       QStringLiteral("Room message"), i));
+        room.show();
+        QTRY_VERIFY(room.verticalScrollBar()->maximum() > 0);
+        QTRY_VERIFY(room.isAtEnd());
+        room.resize(480, 180); // Initial splitter and font geometry settle.
+        QTRY_VERIFY(room.isAtEnd());
+
+        QList<QPair<QString, MessageView>> page;
+        for (int i = 0; i < 20; ++i) {
+            auto historical = message(QStringLiteral("arch-%1").arg(i),
+                                      QStringLiteral("Archived"), -100 + i);
+            page.append(qMakePair(QStringLiteral("mam-%1").arg(i), historical));
+        }
+        QCOMPARE(room.prependArchivePage(page), 20);
+        QTRY_VERIFY(room.isAtEnd());
+
+        QSignalSpy userScroll(&room, &Mattermost::LongListWidget::userScrollStarted);
+        room.verticalScrollBar()->triggerAction(QAbstractSlider::SliderToMinimum);
+        QTRY_VERIFY(userScroll.count() > 0);
+        QVERIFY(!room.isAtEnd());
+        room.appendMessage(message(QStringLiteral("live-after-scroll"),
+                                   QStringLiteral("Do not steal the viewport"), 100));
+        QVERIFY(!room.isAtEnd());
+
+        room.clearMessages();
+        for (int i = 0; i < 25; ++i)
+            room.appendMessage(message(QStringLiteral("new-%1").arg(i),
+                                       QStringLiteral("Second conversation"), i));
+        QTRY_VERIFY(room.isAtEnd());
+    }
+
+    void timeFontColorAndClassicNicknamePaletteAreStable()
+    {
+        MamChatWidget list;
+        list.setGroupChat(true);
+        QFont configured = list.font();
+        configured.setPointSize(12);
+        list.setFont(configured);
+        list.resize(500, 280);
+        list.setHistoryLoading(true);
+        list.setNicknameColorResolver([](const MessageView &) { return QColor(60, 95, 150); });
+        list.appendMessage(message(QStringLiteral("time"), QStringLiteral("Time style")));
+        list.show();
+        QTRY_VERIFY(list.itemWidget(0));
+        auto timestamp = [&]() -> QLabel * {
+            return list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
+        };
+        QCOMPARE(timestamp()->font().pointSizeF(), 11.0);
+        QCOMPARE(timestamp()->palette().color(QPalette::Text).alpha(), 188);
+
+        NativeChatTheme classic;
+        classic.layout = NativeChatTheme::Classic;
+        classic.avatarSize = 0;
+        list.setTheme(classic);
+        QTRY_COMPARE(timestamp()->font().pointSizeF(), 12.0);
+        QCOMPARE(timestamp()->palette().color(QPalette::Text),
+                 QColor(60, 95, 150));
+        NativeChatTheme modern;
+        modern.layout = NativeChatTheme::Modern;
+        modern.avatarSize = 40;
+        list.setTheme(modern);
+        QTRY_COMPARE(timestamp()->font().pointSizeF(), 11.0);
+        QCOMPARE(timestamp()->palette().color(QPalette::Text).alpha(), 188);
+        list.setTheme(classic);
+        QTRY_COMPARE(timestamp()->font().pointSizeF(), 12.0);
+        list.setTheme(modern);
+        QTRY_COMPARE(timestamp()->font().pointSizeF(), 11.0);
     }
 
     void nativeModernClassicAndPluginPlacement()

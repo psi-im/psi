@@ -14,6 +14,7 @@ class FileSharingDeviceOpener;
 class QFrame;
 class QLabel;
 class QResizeEvent;
+class QShowEvent;
 
 class MamChatWidget final : public Mattermost::LongListWidget {
     Q_OBJECT
@@ -56,10 +57,12 @@ protected:
     QWidget *createItemWidget(int index) override;
     bool eventFilter(QObject *target, QEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
+    void showEvent(QShowEvent *event) override;
     void changeEvent(QEvent *event) override;
 
 private:
     void updateTimestamps();
+    void updateTimestampAppearance(QLabel *label);
     void updateRowSelection(QFrame *row, bool selected);
     QColor informationalColor_;
     void updateAvatar(QLabel *label, const MessageView &message);
@@ -82,6 +85,9 @@ private:
     QSet<QString> keys_;
     bool historyLoading_ = false;
     bool historyExhausted_ = false;
+    // Opening a chat always starts at the live tail, even while Qt measures
+    // new rows or MAM/EDB prepends history. A real user scroll takes ownership.
+    bool followingInitialTail_ = true;
     quint64 generatedKey_ = 0;
 
     QSet<QString> selectedKeys_;

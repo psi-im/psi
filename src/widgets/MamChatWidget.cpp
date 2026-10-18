@@ -20,6 +20,7 @@
 #include <QMouseEvent>
 #include <QPushButton>
 #include <QResizeEvent>
+#include <QShowEvent>
 #include <QShortcut>
 #include <QPalette>
 #include <QLocale>
@@ -70,6 +71,9 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
     auto *escapeShortcut = new QShortcut(QKeySequence(Qt::Key_Escape), this);
     escapeShortcut->setContext(Qt::WidgetWithChildrenShortcut);
     connect(escapeShortcut, &QShortcut::activated, this, &MamChatWidget::cancelMessageSelection);
+
+    connect(this, &Mattermost::LongListWidget::userScrollStarted, this,
+            [this] { followingInitialTail_ = false; });
 
     connect(this, &Mattermost::LongListWidget::visibleRangeChanged, this,
             [this](int first, int) {
@@ -236,16 +240,19 @@ void MamChatWidget::appendMessage(const MessageView &view)
         }
     }
 
+    const bool followTail = followingInitialTail_ || isAtEnd();
     keys_.insert(key);
     const int at = items_.size();
     items_.append({key, view});
     insertItems(at, 1);
     setRangeAvailable(at, at, true);
+    if (followTail)
+        scrollToEnd();
 }
 
 int MamChatWidget::prependArchivePage(const QList<QPair<QString, MessageView>> &page)
 {
-    const bool followTail = isAtEnd();
+    const bool followTail = followingInitialTail_ || isAtEnd();
     QList<Row> added;
     QStringList pageOrder;
     for (const auto &entry : page) {
@@ -347,6 +354,7 @@ void MamChatWidget::clearMessages()
     swallowMouseRelease_ = false;
     pressedKey_.clear();
     generatedKey_ = 0;
+    followingInitialTail_ = true;
     historyLoading_ = false;
     historyExhausted_ = false;
     setItemCount(0);
@@ -448,6 +456,7 @@ QWidget *MamChatWidget::createItemWidget(int index)
             avatar->installEventFilter(this);
         }
         updateNicknameColor(author, mv);
+        updateTimestampAppearance(time);
     }
 
     auto *body = new ChatMessageText(content);
@@ -532,6 +541,37 @@ QString MamChatWidget::fullTimestamp(const QDateTime &when)
         + local.toString(QStringLiteral("HH:mm:ss t"));
 }
 
+void MamChatWidget::updateTimestampAppearance(QLabel *label)
+{
+    // Always derive the timestamp font from the CHAT font, never the label's
+    // previous font: recreating a row or switching themes must not progressively
+    // shrink it. Classic keeps the full-size legacy [HH:mm:ss] presentation.
+    QFont timeFont = font();
+    const bool classic = theme_.layout == NativeChatTheme::Classic;
+    if (!classic) {
+        if (timeFont.pointSizeF() > 0)
+            timeFont.setPointSizeF(qMax(7.0, timeFont.pointSizeF() - 1.0));
+        else if (timeFont.pixelSize() > 0)
+            timeFont.setPixelSize(qMax(9, timeFont.pixelSize() - 1));
+    }
+    label->setFont(timeFont);
+
+    QColor color = palette().color(QPalette::Text);
+    if (classic && groupChat_) {
+        // The QTextEdit-based MUC Classic painted [time] and nickname with
+        // the SAME nick color, including informational/uncolored history.
+        if (auto *author = label->parentWidget()->findChild<QLabel *>(
+                QStringLiteral("mamAuthor")))
+            color = author->palette().color(QPalette::Text);
+    } else if (!classic) {
+        color.setAlpha(188); // The Modern time stays legible but unobtrusive.
+    }
+    QPalette colors = label->palette();
+    colors.setColor(QPalette::Text, color);
+    colors.setColor(QPalette::WindowText, color);
+    label->setPalette(colors);
+}
+
 void MamChatWidget::updateTimestamps()
 {
     if (!isVisible())
@@ -566,6 +606,8 @@ void MamChatWidget::changeEvent(QEvent *event)
                 authorFont.setBold(theme_.layout == NativeChatTheme::Modern);
                 author->setFont(authorFont);
             }
+            if (auto *time = row->findChild<QLabel *>(QStringLiteral("mamTimestamp")))
+                updateTimestampAppearance(time);
             if (auto *body = row->findChild<ChatMessageText *>())
                 body->setFont(font());
         }
@@ -578,6 +620,10 @@ void MamChatWidget::changeEvent(QEvent *event)
         refreshAvatars();
         refreshSelection();
         refreshNicknameColors();
+        for (int index : materializedIndices())
+            if (auto *row = itemWidget(index))
+                if (auto *time = row->findChild<QLabel *>(QStringLiteral("mamTimestamp")))
+                    updateTimestampAppearance(time);
         emit paletteChanged();
     }
 }
@@ -613,6 +659,9 @@ void MamChatWidget::updateNicknameColor(QLabel *author, const MessageView &messa
     palette.setColor(QPalette::Text, color.isValid() ? color : this->palette().color(QPalette::Text));
     palette.setColor(QPalette::WindowText, palette.color(QPalette::Text));
     author->setPalette(palette);
+    if (auto *time = author->parentWidget()->findChild<QLabel *>(
+            QStringLiteral("mamTimestamp")))
+        updateTimestampAppearance(time);
 }
 
 void MamChatWidget::setAvatarResolver(std::function<QPixmap(const MessageView &)> resolver)
@@ -824,7 +873,22 @@ void MamChatWidget::positionSelectionToolbar()
 void MamChatWidget::resizeEvent(QResizeEvent *event)
 {
     Mattermost::LongListWidget::resizeEvent(event);
+    // The first layout pass may run while the room is still hidden; restoring
+    // its old geometric anchor must never cancel the initial at-end intent.
+    if (followingInitialTail_ && !items_.isEmpty())
+        scrollToEnd();
     positionSelectionToolbar();
+}
+
+void MamChatWidget::showEvent(QShowEvent *event)
+{
+    Mattermost::LongListWidget::showEvent(event);
+    // Revisit after Qt has measured the splitter/viewport on first display.
+    // Any intervening user scroll has already released the initial tail.
+    QTimer::singleShot(0, this, [this] {
+        if (followingInitialTail_ && !items_.isEmpty())
+            scrollToEnd();
+    });
 }
 
 bool MamChatWidget::eventFilter(QObject *target, QEvent *event)
