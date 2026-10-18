@@ -3,6 +3,7 @@
 #include "MamMessageIdentity.h"
 #include "ChatMessageText.h"
 #include "psirichtext.h"
+#include "iconset.h"
 
 #include <algorithm>
 #include <QApplication>
@@ -84,8 +85,8 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
 
     connect(this, &Mattermost::LongListWidget::visibleRangeChanged, this,
             [this](int first, int) {
-        if (first <= 1 && !historyLoading_ && !historyExhausted_)
-            emit olderMessagesRequested();
+        if (first <= 1)
+            requestOlderIfNeeded(false);
         updateTimestamps();
     });
     connect(this, &Mattermost::LongListWidget::materializedRangeChanged,
@@ -351,6 +352,13 @@ void MamChatWidget::coalesceRevisionRows()
 
 void MamChatWidget::appendMessage(const MessageView &view)
 {
+    // The legacy message dispatch path also sees receipts, OMEMO wrappers,
+    // and other protocol-only events with an empty display body. Rendering
+    // them as chat messages produces blank avatar/timestamp rows.
+    if (view.type() == MessageView::Message
+        && view.formattedText().isEmpty() && view.formattedUserText().isEmpty()
+        && view.references().isEmpty() && view.urls().isEmpty())
+        return;
     if (((view.type() == MessageView::MUCJoin || view.type() == MessageView::MUCPart) && view.isJoinLeaveHidden())
         || (view.type() == MessageView::Status && view.isStatusChangeHidden()))
         return;
@@ -413,6 +421,10 @@ int MamChatWidget::prependArchivePage(const QList<QPair<QString, MessageView>> &
     QSet<QString> preMergedKeys;
     for (auto it = page.crbegin(); it != page.crend(); ++it) {
         const auto &incoming = it->second;
+        if (incoming.type() == MessageView::Message
+            && incoming.formattedText().isEmpty() && incoming.formattedUserText().isEmpty()
+            && incoming.references().isEmpty() && incoming.urls().isEmpty())
+            continue;
         if (incoming.type() != MessageView::Message
             || (it->first.isEmpty() && incoming.historyId() <= 0))
             continue;
@@ -432,6 +444,10 @@ int MamChatWidget::prependArchivePage(const QList<QPair<QString, MessageView>> &
     // tail row, otherwise older unrelated messages land after the tail.
     for (const auto &entry : page) {
         const auto &incoming = entry.second;
+        if (incoming.type() == MessageView::Message
+            && incoming.formattedText().isEmpty() && incoming.formattedUserText().isEmpty()
+            && incoming.references().isEmpty() && incoming.urls().isEmpty())
+            continue;
         if (entry.first.isEmpty() && incoming.historyId() <= 0)
             continue;
         const QString key = !entry.first.isEmpty()
@@ -498,27 +514,40 @@ void MamChatWidget::clearMessages()
     pressedKey_.clear();
     generatedKey_ = 0;
     followingInitialTail_ = true;
+    automaticInitialFillRemaining_ = 1;
+    olderRequestQueued_ = false;
     historyLoading_ = false;
     historyExhausted_ = false;
     setItemCount(0);
     timestampTimer_->stop();
 }
 
+void MamChatWidget::requestOlderIfNeeded(bool viewportShort)
+{
+    if (historyLoading_ || historyExhausted_ || olderRequestQueued_)
+        return;
+    if (followingInitialTail_ && automaticInitialFillRemaining_ <= 0)
+        return;
+    if (viewportShort && contentHeight() > viewport()->height())
+        return;
+    olderRequestQueued_ = true;
+    QTimer::singleShot(0, this, [this, viewportShort] {
+        olderRequestQueued_ = false;
+        if (historyLoading_ || historyExhausted_
+            || (viewportShort && contentHeight() > viewport()->height())
+            || (followingInitialTail_ && automaticInitialFillRemaining_ <= 0))
+            return;
+        if (followingInitialTail_)
+            --automaticInitialFillRemaining_;
+        emit olderMessagesRequested();
+    });
+}
+
 void MamChatWidget::setHistoryLoading(bool loading)
 {
     historyLoading_ = loading;
-    if (!loading && !historyExhausted_
-        && contentHeight() <= viewport()->height()) {
-        // If the page has only non-text MAM events (zero visible rows),
-        // or cannot fill a viewport, there is no scroll gesture to trigger
-        // another request. Continue until rows fill the view or MAM ends.
-        // Queue the request to avoid re-entering the MAM completion handler.
-        QTimer::singleShot(0, this, [this] {
-            if (!historyLoading_ && !historyExhausted_
-                && contentHeight() <= viewport()->height())
-                emit olderMessagesRequested();
-        });
-    }
+    if (!loading)
+        requestOlderIfNeeded(true);
 }
 
 void MamChatWidget::setHistoryExhausted(bool exhausted)
@@ -604,12 +633,11 @@ QWidget *MamChatWidget::createItemWidget(int index)
             // Use the existing Psi system icon, not a font-dependent Unicode
             // glyph. Match the time font so the marker fits either layout.
             const int iconSize = qMax(12, QFontMetrics(time->font()).height());
-            if (editedIconResolver_) {
-                const QPixmap icon = editedIconResolver_(iconSize);
-                if (!icon.isNull())
-                    pencil->setPixmap(icon.scaled(iconSize, iconSize, Qt::KeepAspectRatio,
-                                                  Qt::SmoothTransformation));
-            }
+            const QPixmap icon = IconsetFactory::iconPixmap(
+                QStringLiteral("psi/action_templates_edit"), QSize(iconSize, iconSize));
+            if (!icon.isNull())
+                pencil->setPixmap(icon.scaled(iconSize, iconSize, Qt::KeepAspectRatio,
+                                              Qt::SmoothTransformation));
             pencil->setToolTip(tr("The message was corrected"));
             pencil->setAccessibleName(tr("Edited message"));
             pencil->setForegroundRole(QPalette::Text);
@@ -863,14 +891,6 @@ void MamChatWidget::updateNicknameColor(QLabel *author, const MessageView &messa
     if (auto *time = author->parentWidget()->findChild<QLabel *>(
             QStringLiteral("mamTimestamp")))
         updateTimestampAppearance(time);
-}
-
-void MamChatWidget::setEditedIconResolver(std::function<QPixmap(int)> resolver)
-{
-    editedIconResolver_ = std::move(resolver);
-    for (int index : materializedIndices())
-        if (items_.at(index).message.isEdited())
-            replaceItem(index);
 }
 
 void MamChatWidget::setAvatarResolver(std::function<QPixmap(const MessageView &)> resolver)

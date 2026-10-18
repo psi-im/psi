@@ -40,9 +40,6 @@ public:
     void setGroupChat(bool enabled) { groupChat_ = enabled; }
     void setTheme(const NativeChatTheme &theme);
     void setAvatarResolver(std::function<QPixmap(const MessageView &)> resolver);
-    // Psi supplies the iconset-aware pixmap; the timeline owns only Qt rows.
-    // This avoids coupling standalone widget tests to the app iconset.
-    void setEditedIconResolver(std::function<QPixmap(int)> resolver);
     void setNicknameColorResolver(std::function<QColor(const MessageView &)> resolver);
     void refreshNicknameColors();
     void refreshAvatars();
@@ -83,7 +80,6 @@ private:
     bool groupChat_ = false;
     FileSharingDeviceOpener *mediaOpener_ = nullptr;
     std::function<QPixmap(const MessageView &)> avatarResolver_;
-    std::function<QPixmap(int)> editedIconResolver_;
     std::function<QColor(const MessageView &)> nicknameColorResolver_;
     int indexOfKey(const QString &key) const;
     void refreshSelection();
@@ -107,6 +103,9 @@ private:
     // Opening a chat always starts at the live tail, even while Qt measures
     // new rows or MAM/EDB prepends history. A real user scroll takes ownership.
     bool followingInitialTail_ = true;
+    int automaticInitialFillRemaining_ = 1; // Avoid fetching pages of non-text stanzas indefinitely.
+    bool olderRequestQueued_ = false;
+    void requestOlderIfNeeded(bool viewportShort);
     quint64 generatedKey_ = 0;
 
     QSet<QString> selectedKeys_;
