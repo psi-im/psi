@@ -29,6 +29,8 @@ public:
     void setRetractionId(const QString &id) { retractionId_ = id; }
     bool isLocal() const { return local_; }
     void setLocal(bool local) { local_ = local; }
+    void setSpooled(bool value) { spooled_ = value; }
+    bool isSpooled() const { return spooled_; }
     const QDateTime &dateTime() const { return when_; }
     void setDateTime(const QDateTime &dateTime) { when_ = dateTime; }
     const QString &nick() const { return nick_; }
@@ -50,5 +52,6 @@ private:
     QString nick_;
     QDateTime when_;
     bool local_ = false;
+    bool spooled_ = false;
     bool edited_ = false;
 };
