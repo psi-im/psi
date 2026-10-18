@@ -87,8 +87,8 @@ jobs:
       - name: Use reviewed Iris MAM implementation for development
         run: |
           git submodule update --init iris
-          git -C iris fetch --depth=1 origin 292b150f8e97fa480a0def4ae6cd25abc21a1529
-          git -C iris checkout --detach 292b150f8e97fa480a0def4ae6cd25abc21a1529
+          git -C iris fetch --depth=1 origin 87bf32c0d34e01813a1391a23474bd61723a6346
+          git -C iris checkout --detach 87bf32c0d34e01813a1391a23474bd61723a6346
           git -C iris submodule update --init --depth 1
           git -C iris rev-parse HEAD
       - name: Install Qt5 and Psi dependencies

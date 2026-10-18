@@ -112,10 +112,18 @@ jobs:
             mingw-w64-x86_64-hunspell
             mingw-w64-x86_64-minizip
             mingw-w64-x86_64-openssl
-            mingw-w64-x86_64-libsrtp
             mingw-w64-x86_64-usrsctp
             mingw-w64-x86_64-libomemo-c
             mingw-w64-x86_64-libotr
+
+      # MSYS2 stopped building libsrtp for the deprecated MINGW64 environment
+      # (2.8.1 exists only for UCRT64/CLANG64). Its last MINGW64 build is still
+      # published and signed; pin it until this profile migrates to UCRT64.
+      - name: Install last MINGW64 libsrtp build
+        shell: msys2 {0}
+        run: >-
+          pacman --noconfirm -U --needed
+          https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-libsrtp-2.8.0-1-any.pkg.tar.zst
 
       - name: Install QtWebKit for WEBKIT profile
         if: inputs.chat_type == 'WEBKIT'
