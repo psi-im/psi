@@ -584,7 +584,13 @@ private slots:
             QVERIFY2(bodyTop - authorBottom <= 6, "Header/body spacing must not absorb excess row height");
         else
             QVERIFY(qAbs(bodyTop - author->mapTo(row, QPoint()).y()) <= 1);
-        QVERIFY(row->height() <= author->height() + body->heightForWidth(body->width()) + 22);
+        // Rich QTextDocument height-for-width settles after the initial
+        // materialization/layout pass, notably on Qt6. Assert the final
+        // geometry rather than the intermediate estimated row height.
+        QTRY_VERIFY2(row->height() <= author->height() + body->heightForWidth(body->width()) + 22,
+                     qPrintable(QStringLiteral("row=%1 author=%2 body=%3 width=%4")
+                                    .arg(row->height()).arg(author->height())
+                                    .arg(body->heightForWidth(body->width())).arg(body->width())));
         auto *wrapped = list.itemWidget(1)->findChild<ChatMessageText *>();
         QVERIFY(wrapped);
         QTRY_VERIFY(qAbs(wrapped->height() - wrapped->heightForWidth(wrapped->width())) <= 1);
