@@ -496,14 +496,16 @@ void DiscoListItem::updateItemsFinished(const DiscoList &list)
     treeWidget()->setUpdatesEnabled(false);
 
     QHash<QString, DiscoListItem *> children;
-    DiscoBaseItem                  *child = static_cast<DiscoBaseItem *>(QTreeWidgetItem::child(0));
     DiscoListItem                  *item;
-    for (int i = 1; child; ++i) {
+    for (int i = 0; i < childCount(); i++) {
+        auto *child = static_cast<DiscoListItem *>(QTreeWidgetItem::child(i));
+        if (!child) {
+            break;
+        }
         if (!moreItem && child->type() != MoreItemsType) {
-            item = static_cast<DiscoListItem *>(child);
+            item = child;
             children.insert(item->hash(), item);
         }
-        child = static_cast<DiscoListItem *>(QTreeWidgetItem::child(i));
     }
 
     auto canPubsub = std::any_of(di.identities().begin(), di.identities().end(),
@@ -554,11 +556,14 @@ void DiscoListItem::autoItemsChildren() const
     if (!autoItemsEnabled())
         return;
 
-    DiscoListItem *child = static_cast<DiscoListItem *>(QTreeWidgetItem::child(0));
-    for (int i = 1; child; ++i) {
-        child->updateItems(true);
-
-        child = static_cast<DiscoListItem *>(QTreeWidgetItem::child(i));
+    for (int i = 0; i < childCount(); i++) {
+        auto *child = static_cast<DiscoListItem *>(QTreeWidgetItem::child(i));
+        if (!child) {
+            break;
+        }
+        if (child->type() != MoreItemsType) {
+            child->updateItems(true);
+        }
     }
 }
 
