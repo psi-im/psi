@@ -16,6 +16,9 @@ struct AccountIncomingMessage {
 
     // The caller applies the account's receipt/subscription policy first.
     void sendReceipt(XMPP::Client *client) const;
+    // A true incoming plaintext direct chat message, not a receipt, an
+    // archived event, a sent carbon or an already decrypted secure delivery.
+    bool isPlaintextDirectMessage() const;
 
     XMPP::Message                           message;
     std::optional<XMPP::EncryptionMetadata> encryption;

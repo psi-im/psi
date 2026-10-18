@@ -1211,6 +1211,16 @@ void PsiChatDlg::updateEncryption()
 {
     auto *controller = account()->encryptionController();
     auto *action     = actions_->action("chat_pgp"); // legacy action id, now generic encryption selector
+    // A contact's preference may be switched externally by an incoming
+    // plaintext message. Rebuilding the active session (not just the button)
+    // is necessary or the next reply still uses stale OMEMO/OpenPGP.
+    if (controller) {
+        const QString selected = controller->selectedMethod(jid());
+        if (selectedEncryptionMethod_ != selected) {
+            selectedEncryptionMethod_ = selected;
+            rebuildEncryptionSession();
+        }
+    }
     if (!controller) {
         action->setEnabled(false);
         action->setChecked(false);

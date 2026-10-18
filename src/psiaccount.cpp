@@ -3120,6 +3120,18 @@ void PsiAccount::processIncomingMessage(const AccountIncomingMessage &incoming)
             && _m.rosterExchangeItems().isEmpty())
             toggleSecurity(dj, _m.wasEncrypted());
 
+        // toggleSecurity() changes roster indicators only. Updating the
+        // outgoing per-contact encryption method is a separate operation.
+        // Scope this to genuine inbound direct plaintext, excluding MUC
+        // private messages and traffic from this account's other resources.
+        if (!selfMessage && incoming.isPlaintextDirectMessage()
+            && _m.invite().isEmpty() && _m.mucInvites().isEmpty()
+            && _m.rosterExchangeItems().isEmpty()
+            && !groupchats().contains(dj.bare()) && dj.bare() != jid().bare()
+            && d->encryptionController
+            && !d->encryptionController->selectedMethod(dj).isEmpty())
+            d->encryptionController->setSelectedMethod(dj, {});
+
         // Roster item exchange
         if (!_m.forwarded().isCarbons() && !_m.rosterExchangeItems().isEmpty()) {
             RosterExchangeEvent::Ptr ree(new RosterExchangeEvent(dj, _m.rosterExchangeItems(), _m.body(), this));

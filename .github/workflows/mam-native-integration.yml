@@ -11,6 +11,10 @@ on:
       - 'src/messageview.*'
       - 'src/widgets/MamHistorySourcePolicy.h'
       - 'src/psichatdlg.*'
+      - 'src/psiaccount.*'
+      - 'src/accountincomingmessage.*'
+      - 'src/psiencryptioncontroller.*'
+      - 'tests/account/**'
       - 'src/groupchatdlg.*'
       - 'src/nativechattheme.*'
       - 'src/desktopcolorpalette.h'
@@ -40,6 +44,10 @@ on:
       - 'src/messageview.*'
       - 'src/widgets/MamHistorySourcePolicy.h'
       - 'src/psichatdlg.*'
+      - 'src/psiaccount.*'
+      - 'src/accountincomingmessage.*'
+      - 'src/psiencryptioncontroller.*'
+      - 'tests/account/**'
       - 'src/groupchatdlg.*'
       - 'src/nativechattheme.*'
       - 'src/desktopcolorpalette.h'
@@ -114,6 +122,12 @@ jobs:
             -DBUILD_TESTING=OFF
       - name: Build Psi basic with MAM widget timeline
         run: cmake --build build-mam-chat --parallel 4
+      - name: Build and run account plaintext/encryption regression
+        run: |
+          cmake -S . -B build-mam-chat -DBUILD_TESTING=ON
+          cmake --build build-mam-chat --target account_message_receipt_test --parallel 4
+          ctest --test-dir build-mam-chat --output-on-failure -R '^account_message_receipt
+
       - name: Compiler cache statistics
         if: always()
         run: ccache --show-stats

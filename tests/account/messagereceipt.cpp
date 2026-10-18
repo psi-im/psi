@@ -104,6 +104,42 @@ struct Fixture {
 class MessageReceiptTest : public QObject {
     Q_OBJECT
 private slots:
+    void incomingPlaintextDirectMessages()
+    {
+        Fixture f;
+        auto message = f.request();
+        message.setType(Message::Type::Chat);
+        QVERIFY(AccountIncomingMessage(message).isPlaintextDirectMessage());
+        message.setType(Message::Type::Normal);
+        QVERIFY(AccountIncomingMessage(message).isPlaintextDirectMessage());
+
+        message.setBody({});
+        QVERIFY(!AccountIncomingMessage(message).isPlaintextDirectMessage());
+        message.setBody(QStringLiteral("Hello"));
+        message.setType(Message::Type::Groupchat);
+        QVERIFY(!AccountIncomingMessage(message).isPlaintextDirectMessage());
+        message.setType(Message::Type::Error);
+        QVERIFY(!AccountIncomingMessage(message).isPlaintextDirectMessage());
+    }
+
+    void encryptedAndSpooledMessagesDoNotDowngrade()
+    {
+        Fixture f;
+        auto message = f.request();
+        message.setType(Message::Type::Chat);
+        message.setWasEncrypted(true);
+        QVERIFY(!AccountIncomingMessage(message).isPlaintextDirectMessage());
+        message.setWasEncrypted(false);
+
+        EncryptionMetadata metadata;
+        metadata.methodId = QStringLiteral("omemo");
+        metadata.sender = message.from();
+        QVERIFY(!AccountIncomingMessage(message, &metadata).isPlaintextDirectMessage());
+
+        message.setSpooled(true);
+        QVERIFY(!AccountIncomingMessage(message).isPlaintextDirectMessage());
+    }
+
     void plaintextWithEncryptionAvailable_data()
     {
         QTest::addColumn<bool>("claimedEncryption");
