@@ -157,8 +157,10 @@ private slots:
         classic.layout = NativeChatTheme::Classic;
         classic.avatarSize = 0;
         list.setTheme(classic);
+        // Virtual rows stage replacement until Qt's rich-text height settles.
+        QTRY_COMPARE(list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamAuthor"))->text(),
+                     QStringLiteral("Peer:"));
         auto *row = list.itemWidget(0);
-        QVERIFY(row);
         auto *nick = row->findChild<QLabel *>(QStringLiteral("mamAuthor"));
         auto *time = row->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
         auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
@@ -174,6 +176,10 @@ private slots:
         plugin.avatarSize = 0;
         plugin.layoutSpec = QStringLiteral(R"({"direction":"vertical","items":["body",{"direction":"horizontal","items":["timestamp","author"]}]})");
         list.setTheme(plugin);
+        QTRY_VERIFY(list.itemWidget(0)->findChild<ChatMessageText *>(QStringLiteral("mamBody"))
+                        ->mapTo(list.itemWidget(0), QPoint()).y()
+                    <= list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamAuthor"))
+                        ->mapTo(list.itemWidget(0), QPoint()).y());
         row = list.itemWidget(0);
         nick = row->findChild<QLabel *>(QStringLiteral("mamAuthor"));
         time = row->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
@@ -183,8 +189,8 @@ private slots:
         list.setNicknameColorResolver([](const MessageView &) { return QColor(Qt::red); });
         QCOMPARE(nick->palette().color(QPalette::Text), QColor(Qt::red));
         list.setTheme(classic);
-        QCOMPARE(list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamAuthor"))->palette().color(QPalette::Text),
-                 QColor(Qt::red));
+        QTRY_COMPARE(list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamAuthor"))
+                         ->palette().color(QPalette::Text), QColor(Qt::red));
     }
 
     void localIdentityMergesWithoutClientStanzaId()
