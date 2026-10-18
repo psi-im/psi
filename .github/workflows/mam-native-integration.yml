@@ -126,7 +126,7 @@ jobs:
         run: |
           cmake -S . -B build-mam-chat -DBUILD_TESTING=ON
           cmake --build build-mam-chat --target account_message_receipt_test --parallel 4
-          ctest --test-dir build-mam-chat --output-on-failure -R '^account_message_receipt
+          ctest --test-dir build-mam-chat --output-on-failure -R account_message_receipt
 
       - name: Compiler cache statistics
         if: always()
