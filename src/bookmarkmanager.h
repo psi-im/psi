@@ -25,6 +25,7 @@
 
 #include <QList>
 #include <QObject>
+#include <memory>
 
 class PsiAccount;
 
@@ -33,6 +34,7 @@ class BookmarkManager : public QObject {
 
 public:
     BookmarkManager(PsiAccount *account);
+    ~BookmarkManager() override;
 
     bool isAvailable() const;
     bool isBookmarked(const XMPP::Jid &);
@@ -58,10 +60,12 @@ private slots:
     void getBookmarks_finished();
     void setBookmarks_finished();
     void accountStateChanged();
+    void maybeEnableNativeBookmarks();
 
 private:
     void getBookmarks();
     void setIsAvailable(bool available);
+    void loadNativeBookmarks();
 
 private:
     PsiAccount               *account_;
@@ -69,6 +73,8 @@ private:
     bool                      isAvailable_;
     QList<URLBookmark>        urls_;
     QList<ConferenceBookmark> conferences_;
+    struct PepState;
+    std::unique_ptr<PepState> pep_;
 };
 
 #endif // BOOKMARKMANAGER_H
