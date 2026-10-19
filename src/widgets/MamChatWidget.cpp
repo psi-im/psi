@@ -988,7 +988,18 @@ QWidget *MamChatWidget::createItemWidget(int index)
         time->setObjectName(QStringLiteral("mamTimestamp"));
         time->setTextFormat(Qt::PlainText);
         const bool read = mv.isLocal() && !groupChat_ && displayedTargetIndex() >= index;
-        const bool delivered = mv.isLocal() && !groupChat_ && receipts_.contains(mv.messageId());
+        bool delivered = false;
+        if (mv.isLocal() && !groupChat_) {
+            // A receipt may reference any revision of a corrected message.
+            // The visible row represents one logical message, not only the
+            // latest revision's stanza id.
+            for (const auto &id : items_.at(index).stanzaIds) {
+                if (receipts_.contains(id)) {
+                    delivered = true;
+                    break;
+                }
+            }
+        }
         time->setToolTip(fullTimestamp(mv.dateTime()));
         time->setForegroundRole(QPalette::Text);
         time->installEventFilter(this);
