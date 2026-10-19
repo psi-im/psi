@@ -543,6 +543,40 @@ int MamChatWidget::displayedTargetIndex() const
     return lastDisplayedRowKey_.isEmpty() ? -1 : indexOfKey(lastDisplayedRowKey_);
 }
 
+void MamChatWidget::resolveDisplayedMarkers()
+{
+    if (unresolvedDisplayedIds_.isEmpty())
+        return;
+
+    int highest = displayedTargetIndex();
+    int changed = -1;
+    for (auto it = unresolvedDisplayedIds_.begin(); it != unresolvedDisplayedIds_.end();) {
+        int target = -1;
+        for (int i = 0; i < items_.size(); ++i) {
+            if (items_.at(i).message.isLocal() && items_.at(i).stanzaIds.contains(*it)) {
+                target = i;
+                break;
+            }
+        }
+        if (target < 0) {
+            ++it;
+            continue;
+        }
+        if (target > highest) {
+            highest = target;
+            lastDisplayedRowKey_ = items_.at(target).key;
+            changed = highest;
+        }
+        it = unresolvedDisplayedIds_.erase(it);
+    }
+    if (changed >= 0) {
+        for (const int index : materializedIndices()) {
+            if (index <= changed && items_.at(index).message.isLocal())
+                replaceItem(index);
+        }
+    }
+}
+
 QString MamChatWidget::takeVisibleMarkableIncomingId()
 {
     if (!isVisible() || window()->isMinimized() || groupChat_)
@@ -578,24 +612,17 @@ bool MamChatWidget::applyProtocolEvent(const MessageView &event)
         target = event.messageId();
         receipts_.insert(target);
     } else if (event.type() == MessageView::DisplayedMarker) {
-        // XEP-0333 marks all earlier messages. Ignore unrecognized / backward
-        // positions, never infer read status from an unrelated stanza id.
         if (event.isLocal() || groupChat_ || event.messageId().isEmpty())
             return true;
-        const int previous = displayedTargetIndex();
-        int at = -1;
-        for (int i = 0; i < items_.size(); ++i) {
-            if (items_.at(i).message.isLocal() && items_.at(i).stanzaIds.contains(event.messageId())) {
-                at = i;
-                break;
-            }
+        // MAM can deliver a marker before the referenced older page. Do not
+        // claim any message was read until its id is actually known. Keep only
+        // a small bounded set of unresolved references for later pages.
+        if (!unresolvedDisplayedIds_.contains(event.messageId())) {
+            unresolvedDisplayedIds_.append(event.messageId());
+            if (unresolvedDisplayedIds_.size() > 64)
+                unresolvedDisplayedIds_.removeFirst();
         }
-        if (at < 0 || (previous >= 0 && at <= previous))
-            return true;
-        lastDisplayedRowKey_ = items_.at(at).key;
-        for (const int index : materializedIndices())
-            if (index <= at && items_.at(index).message.isLocal())
-                replaceItem(index);
+        resolveDisplayedMarkers();
         return true;
     } else if (event.type() == MessageView::Reactions) {
         target              = event.reactionsId();
@@ -741,6 +768,7 @@ void MamChatWidget::appendMessage(const MessageView &view)
         const int existing = findRelatedMessage(view, false);
         if (existing >= 0) {
             mergeMessage(existing, view);
+            resolveDisplayedMarkers();
             if (sentNewMessage)
                 scrollToEnd();
             return;
@@ -764,6 +792,7 @@ void MamChatWidget::appendMessage(const MessageView &view)
     items_.append(row);
     insertItems(at, 1);
     setRangeAvailable(at, at, true);
+    resolveDisplayedMarkers();
     if (followTail)
         scrollToEnd();
 }
@@ -837,6 +866,7 @@ int MamChatWidget::prependArchivePage(const QList<QPair<QString, MessageView>> &
     }
     if (containsCorrection)
         coalesceRevisionRows();
+    resolveDisplayedMarkers();
     if (followTail && !page.isEmpty())
         scrollToEnd();
     return added;
@@ -860,6 +890,7 @@ void MamChatWidget::clearMessages()
     receipts_.clear();
     lastDisplayedRowKey_.clear();
     lastMarkedIncomingRowKey_.clear();
+    unresolvedDisplayedIds_.clear();
     cancelMessageSelection();
     items_.clear();
     keys_.clear();
