@@ -37,6 +37,7 @@
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QInputDialog>
+#include <QLineEdit>
 #include <QLabel>
 #include <QListWidget>
 #include <QPushButton>
