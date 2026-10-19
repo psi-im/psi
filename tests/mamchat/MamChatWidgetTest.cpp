@@ -44,6 +44,27 @@ MessageView message(const QString &id, const QString &body, int seconds = 0, boo
 class MamChatWidgetTest final : public QObject {
     Q_OBJECT
 private slots:
+    void emoteUsesSenderPrefixWithoutChangingStoredMessage()
+    {
+        MamChatWidget chat;
+        chat.resize(500, 280);
+        chat.setHistoryLoading(true);
+        auto action = message(QStringLiteral("action"), QStringLiteral("танцует"));
+        action.setEmote();
+        action.setNick(QStringLiteral("Алиса <&>"));
+        chat.appendMessage(action);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *body = chat.itemWidget(0)->findChild<ChatMessageText *>();
+        QVERIFY(body);
+        QCOMPARE(body->toPlainText(), QStringLiteral("*Алиса <&> танцует"));
+        QCOMPARE(chat.messageCount(), 1);
+        // Regular messages are not decorated with the emote prefix.
+        chat.appendMessage(message(QStringLiteral("normal"), QStringLiteral("танцует"), 1));
+        QTRY_VERIFY(chat.itemWidget(1));
+        QCOMPARE(chat.itemWidget(1)->findChild<ChatMessageText *>()->toPlainText(), QStringLiteral("танцует"));
+    }
+
     void distinctPayloadsWithReusedClientIdAreNotDiscarded()
     {
         MamChatWidget chat;
