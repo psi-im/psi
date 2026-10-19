@@ -400,6 +400,7 @@ void PsiChatDlg::loadOlderMamMessages()
             mv.setRevisionTime(revisionTime);
             mv.setReactionTargetId(originalTarget);
             mv.setRetractionTargetId(retractionTarget);
+            mv.setEncrypted(archived.wasEncrypted(), archived.encryptionProtocol());
             mv.setLocal(local);
             mv.setSpooled(true);
             mv.setMarkable(archived.isMarkable());

@@ -72,6 +72,7 @@ void prependLocalChatHistory(MamChatWidget *timeline, PsiAccount *account, const
         if (!entry->reactionTarget().isEmpty())
             mv.setReactionTargetId(entry->reactionTarget());
         mv.setRetractionTargetId(MessageView::retractionTarget(message));
+        mv.setEncrypted(message.wasEncrypted(), message.encryptionProtocol());
         if (!entry->retractionTarget().isEmpty())
             mv.setRetractionTargetId(entry->retractionTarget());
         mv.setArchiveId(entry->archiveId());

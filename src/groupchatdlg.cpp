@@ -2492,6 +2492,7 @@ void GCMainDlg::loadOlderMamMessages()
             mv.setRevisionTime(revisionTime);
             mv.setReactionTargetId(originalTarget);
             mv.setRetractionTargetId(retractionTarget);
+            mv.setEncrypted(archived.wasEncrypted(), archived.encryptionProtocol());
             mv.setMessageId(archived.id());
             mv.setReplaceId(archived.replaceId());
             mv.setUserId(archived.from().full());
@@ -2554,6 +2555,7 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
     mv.setMessageId(dm.id());
     mv.setReactionTargetId(MessageView::reactionTarget(dm));
     mv.setRetractionTargetId(MessageView::retractionTarget(dm));
+    mv.setEncrypted(dm.wasEncrypted(), dm.encryptionProtocol());
     mv.setAlert(alert);
     mv.setUserId(dm.from().full()); // theoretically, this can be inferred from the chat dialog properties
     mv.setNick(dm.from().resource());

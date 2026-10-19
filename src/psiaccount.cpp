@@ -5074,6 +5074,10 @@ void PsiAccount::sendMessageInternal(Message &m, bool log, XMPP::EncryptedSessio
 
 void PsiAccount::finishSentMessage(const Message &sent, bool log)
 {
+    // Let the chat show whether this message actually went out encrypted.
+    if (sent.type() != Message::Type::Groupchat && !sent.id().isEmpty() && !sent.body().isEmpty())
+        if (ChatDlg *chat = findChatDialog(sent.to(), false))
+            chat->outgoingMessageSecurity(sent.id(), sent.wasEncrypted(), sent.encryptionProtocol());
     // only toggle if not an invite or body is not empty
     if (sent.invite().isEmpty() && !sent.body().isEmpty())
         toggleSecurity(sent.to(), sent.wasEncrypted());

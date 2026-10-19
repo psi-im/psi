@@ -24,7 +24,8 @@ public:
         FileTransferRequest,
         FileTransferFinished,
         DeliveryReceipt,
-        DisplayedMarker
+        DisplayedMarker,
+        MessageSecurity
     };
     explicit MessageView(Type type = Message) : type_(type) { }
 
@@ -59,6 +60,15 @@ public:
             edited_ = true;
     }
     void             setEdited(bool edited = true) { edited_ = edited; }
+    void             setEncrypted(bool encrypted, const QString &protocol = {})
+    {
+        securityKnown_      = true;
+        encrypted_          = encrypted;
+        encryptionProtocol_ = encrypted ? protocol : QString();
+    }
+    bool           isSecurityKnown() const { return securityKnown_; }
+    bool           isEncrypted() const { return encrypted_; }
+    const QString &encryptionProtocol() const { return encryptionProtocol_; }
     bool             isEdited() const { return edited_; }
     const QString   &retractionId() const { return retractionId_; }
     void             setRetractionId(const QString &id) { retractionId_ = id; }
@@ -94,4 +104,7 @@ private:
     bool          spooled_ = false;
     bool          edited_  = false;
     bool          markable_ = false;
+    bool          securityKnown_ = false;
+    bool          encrypted_     = false;
+    QString       encryptionProtocol_;
 };

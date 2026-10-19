@@ -959,6 +959,10 @@ void ChatDlg::appendMessage(const Message &m, bool local, qint64 historyId, cons
     mv.setMessageId(dm.id());
     mv.setReactionTargetId(MessageView::reactionTarget(dm));
     mv.setRetractionTargetId(MessageView::retractionTarget(dm));
+    // A local echo of a message being sent learns its encryption state later
+    // (outgoingMessageSecurity); received and stored messages know it now.
+    if (!local || historyId > 0 || !archiveId.isEmpty())
+        mv.setEncrypted(dm.wasEncrypted(), dm.encryptionProtocol());
     mv.setHistoryId(historyId);
     mv.setArchiveId(archiveId);
     mv.setLocal(local);
@@ -1018,9 +1022,15 @@ void ChatDlg::dispatchMessage(const MessageView &mv)
         displayMessage(mv);
 }
 
+void ChatDlg::outgoingMessageSecurity(const QString &messageId, bool encrypted, const QString &protocol)
+{
+    if (!messageId.isEmpty())
+        dispatchMessage(MessageView::securityMessage(messageId, encrypted, protocol));
+}
+
 void ChatDlg::displayMessage(const MessageView &mv)
 {
-    if (mv.type() == MessageView::DisplayedMarker) {
+    if (mv.type() == MessageView::DisplayedMarker || mv.type() == MessageView::MessageSecurity) {
         displayNativeMessage(mv);
         return;
     }

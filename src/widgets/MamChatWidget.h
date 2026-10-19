@@ -106,6 +106,7 @@ private:
     QHash<QString, QHash<QString, ReactionState>> reactionEvents_;
     QHash<QString, QList<MessageView>>            retractions_;
     QSet<QString>                                 receipts_;
+    QHash<QString, QPair<bool, QString>>          security_; // message id -> (encrypted, protocol)
     // Stable row identity, not an index: prepending MAM pages shifts indices.
     QString                                       lastDisplayedRowKey_;
     QString                                       lastMarkedIncomingRowKey_;
