@@ -20,6 +20,9 @@
 
 #include "contactupdatesmanager.h"
 #include "iris/xmpp_client.h"
+#include "iris/xmpp_blocking.h"
+#include "iris/xmpp_features.h"
+#include "iris/xmpp_serverinfomanager.h"
 #include "iris/xmpp_jid.h"
 #include "iris/xmpp_task.h"
 #include "iris/xmpp_tasks.h"
@@ -32,6 +35,7 @@
 
 #include <QDebug>
 #include <QObject>
+#include <QTimer>
 
 #define PRIVACY_NS "jabber:iq:privacy"
 
@@ -278,6 +282,10 @@ PsiPrivacyManager::PsiPrivacyManager(PsiAccount *account, XMPP::Task *rootTask) 
     connect(listener_, SIGNAL(privacyListChanged(const QString &)), SLOT(privacyListChanged(const QString &)));
 
     connect(account, SIGNAL(updatedActivity()), SLOT(accountStateChanged()));
+    connect(account->client()->serverInfoManager(), &XMPP::ServerInfoManager::featuresChanged,
+            this, &PsiPrivacyManager::serverFeaturesChanged);
+    nativePushTask_ = new XMPP::BlockingPushTask(rootTask_);
+    connect(nativePushTask_, &XMPP::BlockingPushTask::pushed, this, &PsiPrivacyManager::nativePush);
 
     connect(this, SIGNAL(listReceived(const PrivacyList &)), SLOT(newListReceived(const PrivacyList &)));
     connect(this, SIGNAL(listsReceived(const QString &, const QString &, const QStringList &)),
@@ -305,6 +313,8 @@ void PsiPrivacyManager::privacyListChanged(const QString &name)
 
 void PsiPrivacyManager::requestListNames()
 {
+    if (nativeBlocking_)
+        return;
     GetPrivacyListsTask *t = new GetPrivacyListsTask(rootTask_);
     connect(t, SIGNAL(finished()), SLOT(receiveLists()));
     t->go(true);
@@ -319,6 +329,10 @@ void PsiPrivacyManager::requestList(const QString &name)
 
 void PsiPrivacyManager::block(const QString &target)
 {
+    if (nativeBlocking_) {
+        setContactBlocked(Jid(target), true);
+        return;
+    }
     block_targets_.push_back(target);
     if (!block_waiting_) {
         block_waiting_ = true;
@@ -511,15 +525,97 @@ void PsiPrivacyManager::setIsAvailable(bool available)
 
 void PsiPrivacyManager::accountStateChanged()
 {
-    if (!account_->isAvailable()) {
+    const bool available = account_->isAvailable();
+    if (!available) {
         setIsAvailable(false);
+        backendSelected_ = false;
+        nativeBlocking_ = false;
+        nativeBlocked_.clear();
     }
+    if (available && !accountAvailable_) {
+        // Prefer server disco before manipulating privacy lists: on XEP-0191
+        // servers creating and activating an XEP-0016 list is undesirable.
+        selectBlockingBackend();
+        QTimer::singleShot(3000, this, [this] {
+            if (account_->isAvailable() && !backendSelected_) {
+                backendSelected_ = true;
+                requestListNames(); // Discovery unavailable: legacy fallback.
+            }
+        });
+    }
+    accountAvailable_ = available;
+}
 
-    if (account_->isAvailable() && !accountAvailable_) {
+void PsiPrivacyManager::serverFeaturesChanged()
+{
+    if (account_->isAvailable())
+        selectBlockingBackend();
+}
+
+void PsiPrivacyManager::selectBlockingBackend()
+{
+    if (backendSelected_ || !account_->isAvailable())
+        return;
+    const auto &features = account_->client()->serverInfoManager()->serverFeatures();
+    if (features.test("urn:xmpp:blocking")) {
+        backendSelected_ = true;
+        nativeBlocking_ = true;
+        auto *task = new XMPP::BlockingTask(rootTask_);
+        connect(task, &XMPP::BlockingTask::finished, this, [this, task] { nativeBlocklistFinished(task); });
+        task->get();
+        task->go(true);
+    } else if (!features.isEmpty()) {
+        backendSelected_ = true;
         requestListNames();
     }
+}
 
-    accountAvailable_ = account_->isAvailable();
+void PsiPrivacyManager::nativeBlocklistFinished(XMPP::BlockingTask *task)
+{
+    if (!nativeBlocking_ || !account_->isAvailable())
+        return;
+    if (!task->success()) {
+        setIsAvailable(false);
+        return;
+    }
+    const auto before = nativeBlocked_;
+    nativeBlocked_.clear();
+    for (const auto &jid : task->blockedJids())
+        nativeBlocked_.insert(processJid(jid).full());
+    QStringList changed;
+    for (const auto &jid : nativeBlocked_)
+        if (!before.contains(jid))
+            changed.append(jid);
+    for (const auto &jid : before)
+        if (!nativeBlocked_.contains(jid))
+            changed.append(jid);
+    setIsAvailable(true);
+    if (!changed.isEmpty())
+        emit listChanged(changed);
+}
+
+void PsiPrivacyManager::nativePush(const QList<XMPP::Jid> &jids, bool blocked, bool all)
+{
+    if (!nativeBlocking_ || !account_->isAvailable())
+        return;
+    QStringList changed;
+    if (all) {
+        changed = nativeBlocked_.values();
+        nativeBlocked_.clear();
+    } else {
+        for (const auto &jid : jids) {
+            const QString id = processJid(jid).full();
+            const bool existed = nativeBlocked_.contains(id);
+            if (blocked)
+                nativeBlocked_.insert(id);
+            else
+                nativeBlocked_.remove(id);
+            if (existed != blocked)
+                changed.append(id);
+        }
+    }
+    if (!changed.isEmpty())
+        emit listChanged(changed);
 }
 
 static QStringList findDifferences(QStringList previous, QStringList current)
@@ -649,7 +745,13 @@ void PsiPrivacyManager::invalidateBlockedListCache()
 
 bool PsiPrivacyManager::isContactBlocked(const XMPP::Jid &jid) const
 {
-    return isBlocked_.contains(processJid(jid).full());
+    const QString bare = processJid(jid).full();
+    return nativeBlocking_ ? nativeBlocked_.contains(bare) : isBlocked_.contains(bare);
+}
+
+QStringList PsiPrivacyManager::blockedJids() const
+{
+    return nativeBlocking_ ? nativeBlocked_.values() : blockedContacts();
 }
 
 PrivacyListItem PsiPrivacyManager::blockItemFor(const XMPP::Jid &jid) const
@@ -664,6 +766,27 @@ PrivacyListItem PsiPrivacyManager::blockItemFor(const XMPP::Jid &jid) const
 
 void PsiPrivacyManager::setContactBlocked(const XMPP::Jid &jid, bool blocked)
 {
+    if (nativeBlocking_) {
+        if (!isAvailable_ || !jid.isValid() || isContactBlocked(jid) == blocked)
+            return;
+        auto *task = new XMPP::BlockingTask(rootTask_);
+        const Jid bare = processJid(jid);
+        connect(task, &XMPP::BlockingTask::finished, this, [this, task, bare, blocked] {
+            if (!task->success() || !nativeBlocking_)
+                return;
+            // Pushes usually update the cache first. This also supports
+            // servers that acknowledge successfully before their push arrives.
+            nativePush({ bare }, blocked, false);
+        });
+        if (blocked)
+            task->block({ bare });
+        else
+            task->unblock({ bare });
+        task->go(true);
+        if (blocked)
+            account_->psi()->contactUpdatesManager()->contactBlocked(account_, jid);
+        return;
+    }
     if (blocked) {
         account_->psi()->contactUpdatesManager()->contactBlocked(account_, jid);
     }
