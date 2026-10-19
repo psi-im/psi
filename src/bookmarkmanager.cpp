@@ -283,6 +283,33 @@ void BookmarkManager::loadNativeBookmarks()
         }
         pep_->originals = originals;
         pep_->active = true;
+
+        // Even on a server advertising #compat, pre-existing private-XML
+        // bookmarks may not yet have been migrated. Preserve unmatched
+        // legacy rooms locally and publish them individually with whitelist
+        // options. Never overwrite an already existing PEP bookmark.
+        for (const auto &legacy : conferences_) {
+            if (!legacy.jid().isValid() || legacy.jid().isEmpty()
+                || originals.contains(legacy.jid().bare()))
+                continue;
+            result.append(legacy);
+            const bool sharedAutoJoin = legacy.autoJoin() == ConferenceBookmark::Always
+                || legacy.autoJoin() == ConferenceBookmark::ExceptThisComputer;
+            auto native = XMPP::NativeBookmark::create(legacy.jid(), legacy.name(), sharedAutoJoin,
+                                                        legacy.nick(), legacy.password());
+            if (!native.isValid())
+                continue;
+            QDomDocument doc;
+            auto *publish = account_->client()->pubSubManager()->publish(
+                XMPP::Jid(), XMPP::NativeBookmark::node(), native.toItem(doc),
+                XMPP::NativeBookmark::privatePublishOptions());
+            connect(publish, &XMPP::PubSubPublishTask::finished, this, [this, publish, native] {
+                if (publish->success() && pep_->active)
+                    pep_->originals.insert(native.room().bare(), native);
+            });
+            publish->go(true);
+        }
+
         // The old Private XML fetch still supplies URL bookmarks, which
         // XEP-0402 intentionally doesn't encode.
         for (auto &room : result) {
@@ -355,11 +382,14 @@ void BookmarkManager::setBookmarks(const QList<URLBookmark> &urls, const QList<C
                     native = XMPP::NativeBookmark::fromItem(originalUpdates->value(edit.room).toItem(copy));
                 } else {
                     native = XMPP::NativeBookmark::create(edit.bookmark.jid(), edit.bookmark.name(),
-                                                         edit.bookmark.needJoin(), edit.bookmark.nick(),
+                                                         edit.bookmark.autoJoin() == ConferenceBookmark::Always
+                                                             || edit.bookmark.autoJoin() == ConferenceBookmark::ExceptThisComputer,
+                                                         edit.bookmark.nick(),
                                                          edit.bookmark.password());
                 }
                 native.setName(edit.bookmark.name());
-                native.setAutoJoin(edit.bookmark.needJoin());
+                native.setAutoJoin(edit.bookmark.autoJoin() == ConferenceBookmark::Always
+                                   || edit.bookmark.autoJoin() == ConferenceBookmark::ExceptThisComputer);
                 native.setNick(edit.bookmark.nick());
                 native.setPassword(edit.bookmark.password());
                 QDomDocument document;
