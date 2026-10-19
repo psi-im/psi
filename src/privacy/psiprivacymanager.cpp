@@ -577,7 +577,7 @@ void PsiPrivacyManager::nativeBlocklistFinished(XMPP::BlockingTask *task)
     const auto before = nativeBlocked_;
     nativeBlocked_.clear();
     for (const auto &jid : task->blockedJids())
-        nativeBlocked_.insert(processJid(jid).full());
+        nativeBlocked_.insert(jid.full()); // XEP-0191 also supports full-resource JIDs.
     QStringList changed;
     for (const auto &jid : nativeBlocked_)
         if (!before.contains(jid))
@@ -600,7 +600,7 @@ void PsiPrivacyManager::nativePush(const QList<XMPP::Jid> &jids, bool blocked, b
         nativeBlocked_.clear();
     } else {
         for (const auto &jid : jids) {
-            const QString id = processJid(jid).full();
+            const QString id = jid.full();
             const bool existed = nativeBlocked_.contains(id);
             if (blocked)
                 nativeBlocked_.insert(id);
@@ -742,7 +742,10 @@ void PsiPrivacyManager::invalidateBlockedListCache()
 bool PsiPrivacyManager::isContactBlocked(const XMPP::Jid &jid) const
 {
     const QString bare = processJid(jid).full();
-    return nativeBlocking_ ? nativeBlocked_.contains(bare) : isBlocked_.contains(bare);
+    if (!nativeBlocking_)
+        return isBlocked_.contains(bare);
+    return nativeBlocked_.contains(jid.full()) || nativeBlocked_.contains(bare)
+        || nativeBlocked_.contains(jid.domain());
 }
 
 QStringList PsiPrivacyManager::blockedJids() const
@@ -766,18 +769,18 @@ void PsiPrivacyManager::setContactBlocked(const XMPP::Jid &jid, bool blocked)
         if (!isAvailable_ || !jid.isValid() || isContactBlocked(jid) == blocked)
             return;
         auto *task = new XMPP::BlockingTask(rootTask_);
-        const Jid bare = processJid(jid);
-        connect(task, &XMPP::BlockingTask::finished, this, [this, task, bare, blocked] {
+        const Jid target = jid;
+        connect(task, &XMPP::BlockingTask::finished, this, [this, task, target, blocked] {
             if (!task->success() || !nativeBlocking_)
                 return;
             // Pushes usually update the cache first. This also supports
             // servers that acknowledge successfully before their push arrives.
-            nativePush({ bare }, blocked, false);
+            nativePush({ target }, blocked, false);
         });
         if (blocked)
-            task->block({ bare });
+            task->block({ target });
         else
-            task->unblock({ bare });
+            task->unblock({ target });
         task->go(true);
         if (blocked)
             account_->psi()->contactUpdatesManager()->contactBlocked(account_, jid);
