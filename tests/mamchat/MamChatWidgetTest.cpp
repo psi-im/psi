@@ -280,31 +280,42 @@ private slots:
         delivered.setMessageId("out-1");
         chat.appendMessage(delivered);
         QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator"));
-        QCOMPARE(chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator")->text(),
-                     QString::fromUtf8("✓"));
+        QCOMPARE(chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator")->property("deliveryState").toString(),
+                     QString("delivered"));
+        auto *single = chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator");
+        QVERIFY(single->text().isEmpty()); // No font-dependent Unicode ticks.
+        const int singleWidth = single->width();
+        QVERIFY(singleWidth > 0);
+        QCOMPARE(single->palette().color(QPalette::WindowText),
+                 chat.itemWidget(0)->findChild<QLabel *>("mamTimestamp")->palette().color(QPalette::WindowText));
         QVERIFY(!chat.itemWidget(1)->findChild<QLabel *>("mamDeliveryIndicator"));
 
         MessageView read(MessageView::DisplayedMarker);
         read.setMessageId("out-2");
         chat.appendMessage(read);
         QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator"));
-        QCOMPARE(chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator")->text(),
-                     QString::fromUtf8("✓✓"));
+        QCOMPARE(chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator")->property("deliveryState").toString(),
+                     QString("read"));
         QTRY_VERIFY(chat.itemWidget(1) && chat.itemWidget(1)->findChild<QLabel *>("mamDeliveryIndicator"));
         QCOMPARE(chat.itemWidget(1)->findChild<QLabel *>("mamDeliveryIndicator")->toolTip(),
                      QString("Read"));
+        auto *doubleChecks = chat.itemWidget(1)->findChild<QLabel *>("mamDeliveryIndicator");
+        QVERIFY(doubleChecks->text().isEmpty());
+        QVERIFY(doubleChecks->width() > singleWidth);
+        QVERIFY(doubleChecks->width() < singleWidth * 2); // Overlap, not two separate glyphs.
+
         read.setMessageId("out-1"); // A stale marker may not roll back the cursor.
         chat.appendMessage(read);
-        QCOMPARE(chat.itemWidget(1)->findChild<QLabel *>("mamDeliveryIndicator")->text(),
-                 QString::fromUtf8("✓✓"));
+        QCOMPARE(chat.itemWidget(1)->findChild<QLabel *>("mamDeliveryIndicator")->property("deliveryState").toString(),
+                 QString("read"));
 
         // A history prepend shifts indices, not the semantic read cursor.
         auto older = message("out-0", "older", 0, true);
         older.setHistoryId(10);
         chat.prependArchivePage({ qMakePair(QString("older-archive"), older) });
         QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator"));
-        QCOMPARE(chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator")->text(),
-                     QString::fromUtf8("✓✓"));
+        QCOMPARE(chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator")->property("deliveryState").toString(),
+                     QString("read"));
     }
 
     void archiveReadMarkerIsAppliedWhenTargetArrivesOnAnOlderPage()
@@ -322,8 +333,8 @@ private slots:
         chat.prependArchivePage({ qMakePair(QString("older-mam-id"), original) });
         chat.show();
         QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator"));
-        QCOMPARE(chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator")->text(),
-                 QString::fromUtf8("✓✓"));
+        QCOMPARE(chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator")->property("deliveryState").toString(),
+                 QString("read"));
         QCOMPARE(chat.messageCount(), 1);
     }
 
