@@ -266,6 +266,182 @@ private slots:
         QCOMPARE(chat.messageCount(), 1);
     }
 
+    void deliveryAndDisplayedMarkersUpdateTimestampChecksAndNeverRegress()
+    {
+        MamChatWidget chat;
+        // A large font separates x-height from cap height by several pixels,
+        // so a check sized to the line box fails the alignment check below.
+        QFont font = chat.font();
+        font.setPixelSize(28);
+        chat.setFont(font);
+        chat.resize(720, 360);
+        chat.setHistoryLoading(true);
+        chat.appendMessage(message("out-1", "one", 1, true));
+        chat.appendMessage(message("out-2", "two", 2, true));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(1));
+
+        MessageView delivered(MessageView::DeliveryReceipt);
+        delivered.setMessageId("out-1");
+        chat.appendMessage(delivered);
+        QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator"));
+        QCOMPARE(chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator")->property("deliveryState").toString(),
+                     QString("delivered"));
+        auto *single = chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator");
+        QVERIFY(single->text().isEmpty()); // No font-dependent Unicode ticks.
+        const auto *timestamp = chat.itemWidget(0)->findChild<QLabel *>("mamTimestamp");
+        const QFontMetrics timestampMetrics(timestamp->font());
+        // The icon's widget occupies the complete timestamp line box so the
+        // check vertex can be painted at the text baseline inside that box.
+        QCOMPARE(single->height(), timestampMetrics.height());
+        // Measure the painted ink: the checks stand on the timestamp baseline
+        // and reach midway between the x-height and the cap height, so they
+        // suit both digit ("22:43") and lowercase ("minutes ago") timestamps.
+        const auto inkRows = [](QWidget *widget) {
+            const QImage image = widget->grab().toImage().convertToFormat(QImage::Format_ARGB32);
+            const qreal  ratio = image.devicePixelRatio();
+            int          top = -1, bottom = -1;
+            for (int y = 0; y < image.height(); ++y)
+                for (int x = 0; x < image.width(); ++x)
+                    if (qAlpha(image.pixel(x, y)) > 64
+                        && qGray(image.pixel(x, y)) < qGray(widget->palette().color(QPalette::Window).rgb()) - 40) {
+                        if (top < 0)
+                            top = y;
+                        bottom = y;
+                        break;
+                    }
+            return qMakePair(qRound(top / ratio), qRound(bottom / ratio));
+        };
+        const int baseline = timestampMetrics.ascent();
+        const auto ink = inkRows(single);
+        QVERIFY2(ink.first >= 0, "Delivery check painted nothing");
+        QVERIFY2(qAbs(ink.second - baseline) <= 1, "Check vertex is not on the timestamp baseline");
+        const QFontMetricsF exact(timestamp->font());
+        QVERIFY2(qAbs(ink.first - (baseline - (exact.xHeight() + exact.capHeight()) / 2.0)) <= 1,
+                 "Check top is not midway between the x-height and the cap height");
+        const int singleWidth = single->width();
+        QVERIFY(singleWidth > 0);
+        QCOMPARE(single->palette().color(QPalette::WindowText),
+                 chat.itemWidget(0)->findChild<QLabel *>("mamTimestamp")->palette().color(QPalette::WindowText));
+        QVERIFY(!chat.itemWidget(1)->findChild<QLabel *>("mamDeliveryIndicator"));
+
+        MessageView read(MessageView::DisplayedMarker);
+        read.setMessageId("out-2");
+        chat.appendMessage(read);
+        QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator"));
+        QCOMPARE(chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator")->property("deliveryState").toString(),
+                     QString("read"));
+        QTRY_VERIFY(chat.itemWidget(1) && chat.itemWidget(1)->findChild<QLabel *>("mamDeliveryIndicator"));
+        QCOMPARE(chat.itemWidget(1)->findChild<QLabel *>("mamDeliveryIndicator")->toolTip(),
+                     QString("Read"));
+        auto *doubleChecks = chat.itemWidget(1)->findChild<QLabel *>("mamDeliveryIndicator");
+        QVERIFY(doubleChecks->text().isEmpty());
+        QCOMPARE(doubleChecks->height(), timestampMetrics.height());
+        QCOMPARE(inkRows(doubleChecks), ink); // Both states share one vertical alignment.
+        // What the user sees: in the laid-out timestamp group, the checks
+        // occupy the same rows as lowercase timestamp text. Psi derives the
+        // timestamp font from the chat font in points, whose fractional
+        // metrics shifted the checks by a pixel, so try several sizes.
+        const auto alignedWithText = [&chat](const QFont &chatFont) {
+            chat.setFont(chatFont);
+            auto *row   = chat.itemWidget(1);
+            auto *time  = row->findChild<QLabel *>("mamTimestamp");
+            auto *marks = row->findChild<QLabel *>("mamDeliveryIndicator");
+            auto *group = time->parentWidget();
+            const auto rows = [group](const QString &text, QWidget *widget) {
+                qobject_cast<QLabel *>(group->findChild<QLabel *>("mamTimestamp"))->setText(text);
+                group->layout()->activate();
+                const QImage image      = group->grab().toImage().convertToFormat(QImage::Format_ARGB32);
+                const qreal  ratio      = image.devicePixelRatio();
+                const int    background = qGray(image.pixel(0, 0)); // above lowercase text
+                const QRect  rect       = widget->geometry();
+                int          top = -1, bottom = -1;
+                for (int y = 0; y < image.height(); ++y)
+                    for (int x = qRound(rect.left() * ratio); x <= qRound(rect.right() * ratio) && x < image.width(); ++x)
+                        if (qAbs(qGray(image.pixel(x, y)) - background) > 48) {
+                            if (top < 0)
+                                top = y;
+                            bottom = y;
+                            break;
+                        }
+                return qMakePair(top, bottom);
+            };
+            const auto lower  = rows(QStringLiteral("xxxx"), time);
+            const auto digits = rows(QStringLiteral("0000"), time);
+            const auto checks = rows(QStringLiteral("xxxx"), marks);
+            // On the baseline, no taller than digits, at least as tall as lowercase.
+            if (lower.first < 0 || digits.first < 0 || checks.first < 0 || checks.second != lower.second
+                || checks.first < digits.first - 1 || checks.first > lower.first + 1) {
+                qWarning() << chatFont << "lowercase rows" << lower << "digit rows" << digits << "check rows" << checks;
+                return false;
+            }
+            return true;
+        };
+        for (const qreal points : { 8.0, 9.0, 10.0, 11.0, 12.5, 14.0 }) {
+            QFont pointFont = font;
+            pointFont.setPointSizeF(points);
+            QVERIFY2(alignedWithText(pointFont), "Checks are not aligned with the timestamp text");
+        }
+        QVERIFY2(alignedWithText(font), "Checks are not aligned with the timestamp text");
+        QVERIFY(doubleChecks->width() > singleWidth);
+        QVERIFY(doubleChecks->width() < singleWidth * 2); // Overlap, not two separate glyphs.
+
+        read.setMessageId("out-1"); // A stale marker may not roll back the cursor.
+        chat.appendMessage(read);
+        QCOMPARE(chat.itemWidget(1)->findChild<QLabel *>("mamDeliveryIndicator")->property("deliveryState").toString(),
+                 QString("read"));
+
+        // A history prepend shifts indices, not the semantic read cursor.
+        auto older = message("out-0", "older", 0, true);
+        older.setHistoryId(10);
+        chat.prependArchivePage({ qMakePair(QString("older-archive"), older) });
+        QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator"));
+        QCOMPARE(chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator")->property("deliveryState").toString(),
+                     QString("read"));
+    }
+
+    void archiveReadMarkerIsAppliedWhenTargetArrivesOnAnOlderPage()
+    {
+        MamChatWidget chat;
+        chat.resize(520, 320);
+        chat.setHistoryLoading(true);
+        MessageView marker(MessageView::DisplayedMarker);
+        marker.setMessageId("archived-out");
+        chat.appendMessage(marker); // Newest MAM page contains marker, not target.
+        QCOMPARE(chat.messageCount(), 0);
+
+        auto original = message("archived-out", "older outgoing", 0, true);
+        original.setHistoryId(10);
+        chat.prependArchivePage({ qMakePair(QString("older-mam-id"), original) });
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator"));
+        QCOMPARE(chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator")->property("deliveryState").toString(),
+                 QString("read"));
+        QCOMPARE(chat.messageCount(), 1);
+    }
+
+    void visibleMarkableIncomingMessagesAdvanceCursorOnlyOnce()
+    {
+        MamChatWidget chat;
+        chat.resize(520, 320);
+        chat.setHistoryLoading(true);
+        auto first = message("in-1", "first", 1);
+        first.setMarkable(true);
+        chat.appendMessage(first);
+        auto second = message("in-2", "second", 2);
+        second.setMarkable(true);
+        chat.appendMessage(second);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(1));
+        QCOMPARE(chat.takeVisibleMarkableIncomingId(), QString("in-2"));
+        QCOMPARE(chat.takeVisibleMarkableIncomingId(), QString());
+        // Receiving a delivery event never affects the outgoing read cursor.
+        MessageView receipt(MessageView::DeliveryReceipt);
+        receipt.setMessageId("in-1");
+        chat.appendMessage(receipt);
+        QCOMPARE(chat.takeVisibleMarkableIncomingId(), QString());
+    }
+
     void linkContextMenuSelectsLinkFillingWholeMessage()
     {
         // A message that is only a link: the anchor touches both ends of the
@@ -1144,6 +1320,66 @@ private slots:
         QCOMPARE(list.messageCount(), 2);
     }
 
+    void encryptionLockShowsHowTheMessageTravelled()
+    {
+        MamChatWidget chat;
+        chat.resize(560, 320);
+        chat.setHistoryLoading(true);
+
+        // A received encrypted message knows its state immediately.
+        auto incoming = message("in-1", "secret");
+        incoming.setEncrypted(true, "OMEMO");
+        chat.appendMessage(incoming);
+        // A freshly sent message: unknown until its encryption job finishes.
+        chat.appendMessage(message("out-1", "pending", 1, true));
+        // The plaintext outcome can arrive before the local row exists.
+        MessageView plain(MessageView::MessageSecurity);
+        plain.setMessageId("out-2");
+        plain.setEncrypted(false);
+        chat.appendMessage(plain);
+        QCOMPARE(chat.messageCount(), 2); // A security event never creates a row.
+        auto sent = message("out-2", "plain", 2, true);
+        sent.setEdited();
+        chat.appendMessage(sent);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(1) && chat.itemWidget(2));
+
+        auto *closed = chat.itemWidget(0)->findChild<QLabel *>("mamEncryptionIndicator");
+        QVERIFY(closed);
+        QVERIFY(closed->property("encrypted").toBool());
+        QCOMPARE(closed->toolTip(), QString("Encrypted with OMEMO"));
+        QVERIFY(!chat.itemWidget(1)->findChild<QLabel *>("mamEncryptionIndicator"));
+
+        MessageView secured(MessageView::MessageSecurity);
+        secured.setMessageId("out-1");
+        secured.setEncrypted(true, "OMEMO");
+        chat.appendMessage(secured);
+        QTRY_VERIFY(chat.itemWidget(1) && chat.itemWidget(1)->findChild<QLabel *>("mamEncryptionIndicator"));
+        QVERIFY(chat.itemWidget(1)->findChild<QLabel *>("mamEncryptionIndicator")->property("encrypted").toBool());
+
+        auto *open = chat.itemWidget(2)->findChild<QLabel *>("mamEncryptionIndicator");
+        QVERIFY(open);
+        QVERIFY(!open->property("encrypted").toBool());
+        QCOMPARE(open->toolTip(), QString("Not encrypted"));
+
+        // Order: time, (checks), lock, pencil; the lock matches the pencil's
+        // size and vertical position.
+        MessageView delivered(MessageView::DeliveryReceipt);
+        delivered.setMessageId("out-2");
+        chat.appendMessage(delivered);
+        QTRY_VERIFY(chat.itemWidget(2) && chat.itemWidget(2)->findChild<QLabel *>("mamDeliveryIndicator"));
+        auto *row    = chat.itemWidget(2);
+        auto *checks = row->findChild<QLabel *>("mamDeliveryIndicator");
+        auto *lock   = row->findChild<QLabel *>("mamEncryptionIndicator");
+        auto *pencil = row->findChild<QLabel *>("mamEditedIndicator");
+        QVERIFY(checks && lock && pencil);
+        QVERIFY(checks->geometry().right() < lock->geometry().left());
+        QVERIFY(lock->geometry().right() < pencil->geometry().left());
+        QCOMPARE(lock->size(), pencil->size());
+        QCOMPARE(lock->geometry().top(), pencil->geometry().top());
+        QCOMPARE(lock->pixmap(Qt::ReturnByValue).size(), pencil->pixmap(Qt::ReturnByValue).size());
+    }
+
     void nativeRowsAndCorrections()
     {
         MamChatWidget list;
@@ -1177,6 +1413,84 @@ private slots:
         QVERIFY(timestamp);
         QVERIFY(pencil->mapTo(list.itemWidget(0), QPoint()).x()
                 > timestamp->mapTo(list.itemWidget(0), QPoint()).x() + timestamp->width());
+        // The pencil is drawn at the timestamp font size (unscaled when
+        // within a pixel of the 16 px icon) and centred on the check band:
+        // the baseline up to midway between the x-height and cap height.
+        // Psi's timestamp font is the chat font minus 1pt (or 1px for pixel
+        // fonts). Point-to-pixel conversion depends on the environment, so
+        // the near-native cases use pixel fonts.
+        const auto pencilPlacement = [&list](const QFont &chatFont, int expectedSize) {
+            list.setFont(chatFont);
+            const auto timestampFontApplied = [&list, chatFont] {
+                auto *row = list.itemWidget(0);
+                auto *t   = row ? row->findChild<QLabel *>(QStringLiteral("mamTimestamp")) : nullptr;
+                if (!t)
+                    return false;
+                return chatFont.pixelSize() > 0 ? t->font().pixelSize() == chatFont.pixelSize() - 1
+                                                : qAbs(t->font().pointSizeF() - (chatFont.pointSizeF() - 1.0)) < 0.01;
+            };
+            if (!QTest::qWaitFor(timestampFontApplied) || !timestampFontApplied())
+                return false;
+            auto *row  = list.itemWidget(0);
+            auto *time = row->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
+            auto *mark = row->findChild<QLabel *>(QStringLiteral("mamEditedIndicator"));
+            if (!mark)
+                return false;
+            const int size = expectedSize > 0 ? expectedSize : QFontInfo(time->font()).pixelSize();
+            if (qAbs(size - 16) <= 1 && expectedSize <= 0)
+                return true; // Covered by the explicit unscaled case.
+            time->setText(QStringLiteral("xxxx"));
+            auto *group = time->parentWidget();
+            // Let the recreated row lay out top-down for the new font before
+            // measuring; activating only the group keeps its stale size.
+            QTest::qWait(50);
+            if (row->layout())
+                row->layout()->activate();
+            QCoreApplication::processEvents();
+            const QImage image = group->grab().toImage().convertToFormat(QImage::Format_ARGB32);
+            const qreal  ratio = image.devicePixelRatio();
+            const QRect  rect  = mark->geometry();
+            int          top = -1, bottom = -1;
+            for (int y = 0; y < image.height(); ++y)
+                for (int x = qRound(rect.left() * ratio); x <= qRound(rect.right() * ratio) && x < image.width(); ++x) {
+                    const QColor c = image.pixelColor(x, y);
+                    if (c.red() > 180 && c.green() < 90 && c.blue() > 160) { // stub icon is magenta
+                        if (top < 0)
+                            top = y;
+                        bottom = y;
+                        break;
+                    }
+                }
+            const QFontMetricsF metrics(time->font());
+            const qreal baseline = time->mapTo(group, QPoint()).y() * ratio
+                + ((time->contentsRect().height() - (metrics.ascent() + metrics.descent())) / 2.0 + metrics.ascent()
+                   + time->contentsRect().top())
+                    * ratio;
+            const qreal bandCentre = baseline - (metrics.xHeight() + metrics.capHeight()) / 4.0 * ratio;
+            const int   height     = bottom - top + 1;
+            const qreal centre     = (top + bottom + 1) / 2.0;
+            if (top < 0 || qAbs(height - qRound(size * ratio)) > 1 || qAbs(centre - bandCentre) > 1.0) {
+                qWarning() << chatFont << "pencil rows" << top << bottom << "expected size" << size << "centre"
+                           << centre << "band centre" << bandCentre;
+                return false;
+            }
+            return true;
+        };
+        const auto pixels = [&list](int px) {
+            QFont f = list.font();
+            f.setPixelSize(px);
+            return f;
+        };
+        const auto points = [&list](qreal pt) {
+            QFont f = list.font();
+            f.setPointSizeF(pt);
+            return f;
+        };
+        // Timestamp fonts of 16 and 17 px keep the icon's own 16 px.
+        QVERIFY2(pencilPlacement(pixels(17), 16), "Edit pencil near its native size was resized");
+        QVERIFY2(pencilPlacement(pixels(18), 16), "Edit pencil near its native size was resized");
+        QVERIFY2(pencilPlacement(pixels(23), 22), "Edit pencil is not font-sized and centred on the checks");
+        QVERIFY2(pencilPlacement(points(20.0), 0), "Edit pencil is not font-sized and centred on the checks");
         NativeChatTheme classic;
         classic.layout = NativeChatTheme::Classic;
         classic.avatarSize = 0;

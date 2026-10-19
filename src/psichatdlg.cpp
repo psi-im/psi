@@ -253,6 +253,8 @@ bool PsiChatDlg::displayNativeMessage(const MessageView &mv)
     if (!nativeTimeline_)
         return false;
     nativeTimeline_->appendMessage(mv);
+    if (mv.type() == MessageView::Message && !mv.isLocal() && mv.isMarkable())
+        QTimer::singleShot(0, this, [this] { sendDisplayedMarkerForVisibleMessage(); });
     return true;
 }
 
@@ -398,8 +400,10 @@ void PsiChatDlg::loadOlderMamMessages()
             mv.setRevisionTime(revisionTime);
             mv.setReactionTargetId(originalTarget);
             mv.setRetractionTargetId(retractionTarget);
+            mv.setEncrypted(archived.wasEncrypted(), archived.encryptionProtocol());
             mv.setLocal(local);
             mv.setSpooled(true);
+            mv.setMarkable(archived.isMarkable());
             mv.setNick(whoNick(local));
             mv.setDateTime(archivedTime);
             page.append(qMakePair(uid, mv));
@@ -517,6 +521,10 @@ void PsiChatDlg::initUi()
     configureNativeChat(nativeTimeline_, account(), jid(), false);
     connect(nativeTimeline_, &MamChatWidget::outgoingReactions, this, &PsiChatDlg::sendOutgoingReactions);
     connect(nativeTimeline_, &MamChatWidget::outgoingMessageRetraction, this, &PsiChatDlg::sendMessageRetraction);
+    connect(nativeTimeline_, &Mattermost::LongListWidget::visibleRangeChanged, this,
+            [this](int, int) {
+        QTimer::singleShot(0, this, [this] { sendDisplayedMarkerForVisibleMessage(); });
+    });
     connect(nativeTimeline_, &MamChatWidget::avatarClicked, this,
             [this](const QString &, bool local) {
         account()->actionInfo(local ? account()->jid() : jid());
@@ -950,6 +958,41 @@ void PsiChatDlg::activated()
     ChatDlg::activated();
 
     updateCountVisibility();
+    QTimer::singleShot(0, this, [this] { sendDisplayedMarkerForVisibleMessage(); });
+}
+
+void PsiChatDlg::sendDisplayedMarkerForVisibleMessage()
+{
+    if (!nativeTimeline_ || !account()->isConnected() || !isActiveTab() || !window()->isActiveWindow()
+        || window()->isMinimized()
+        || !PsiOptions::instance()->getOption("options.ui.notifications.send-receipts").toBool())
+        return;
+
+    // Read markers reveal that we're present. For ordinary 1:1 conversations
+    // send only to peers authorized to see our presence, even if someone else
+    // manages to send us a markable message. Private MUC chats already share
+    // our presence with room occupants.
+    const bool privateRoomChat = account()->groupchats().contains(jid().bare());
+    if (!privateRoomChat && jid().bare() != account()->jid().bare()) {
+        const auto *contact = account()->findFirstRelevant(jid());
+        if (account()->status().isInvisible() || !contact
+            || (contact->subscription().type() != Subscription::From
+                && contact->subscription().type() != Subscription::Both))
+            return;
+    }
+
+    // XEP-0333 is opt-in in one-to-one chats: only acknowledge an incoming
+    // message explicitly marked <markable/> and actually visible to the user.
+    const QString target = nativeTimeline_->takeVisibleMarkableIncomingId();
+    if (target.isEmpty())
+        return;
+
+    XMPP::Message marker(privateRoomChat ? jid() : XMPP::Jid(jid().bare()));
+    marker.setType(XMPP::Message::Type::Chat);
+    marker.setId(account()->client()->genUniqueId());
+    marker.setDisplayedMarkerId(target);
+    marker.setProcessingHints(XMPP::Message::Store); // Keep the read cursor available through MAM.
+    emit aSend(marker);
 }
 
 void PsiChatDlg::setContactToolTip(QString text)

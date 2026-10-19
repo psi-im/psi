@@ -127,6 +127,8 @@ bool MessageView::protocolMessage(const XMPP::Message &message, bool local, Mess
         view = retractionMessage(message.retraction());
     else if (!message.reactions().targetId.isEmpty())
         view = reactionsMessage(message.from().resource(), message.reactions().targetId, message.reactions().reactions);
+    else if (!message.displayedMarkerId().isEmpty())
+        view = displayedMarkerMessage(message.displayedMarkerId());
     else if (message.messageReceipt() == XMPP::ReceiptReceived)
         view = receiptMessage(message.messageReceiptId());
     else

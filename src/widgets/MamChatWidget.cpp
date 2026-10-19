@@ -9,7 +9,9 @@
 #include <QCheckBox>
 #include <QClipboard>
 #include <QDateTime>
+#include <QFontInfo>
 #include <QFrame>
+#include <QFontMetrics>
 #include <QGraphicsOpacityEffect>
 #include <QHBoxLayout>
 #include <QHash>
@@ -25,6 +27,7 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QPalette>
+#include <QPointer>
 #include <QPropertyAnimation>
 #include <QPushButton>
 #include <QResizeEvent>
@@ -35,9 +38,184 @@
 #include <QTextBlockFormat>
 #include <QTextDocument>
 #include <QTimer>
+#include <QtMath>
 #include <QVBoxLayout>
 #include <algorithm>
 #include <limits>
+
+namespace {
+
+// Base for the marks beside a timestamp (delivery checks, edit pencil). They
+// share one height and sit on the timestamp's text baseline.
+class TimestampMark : public QLabel {
+public:
+    TimestampMark(QLabel *timestamp, QWidget *parent) : QLabel(parent), timestamp_(timestamp) { }
+
+    void setTimestampFont(const QFont &timeFont)
+    {
+        setFont(timeFont);
+        fontChanged(QFontMetricsF(timeFont));
+        update();
+    }
+
+protected:
+    // Timestamps are either digits ("22:43") or mostly lowercase ("34 minutes
+    // ago"). A mark as tall as the digits looks raised beside lowercase text,
+    // one as tall as the x-height looks small beside digits; use the middle.
+    static qreal markHeight(const QFontMetricsF &metrics)
+    {
+        return qMax<qreal>(6.0, (metrics.xHeight() + metrics.capHeight()) / 2.0);
+    }
+
+    // The timestamp's baseline in this widget's coordinates. QLabel centres
+    // its line vertically in its contents rect using fractional metrics, and
+    // the widgets may differ in height inside the layout. A baseline derived
+    // from this widget's own box drifted by a pixel for point-sized fonts, so
+    // take it from the label itself.
+    qreal textBaseline() const
+    {
+        const QLabel       *label   = timestamp_ ? timestamp_.data() : this;
+        const QFontMetricsF metrics(label->font());
+        const QRect         box     = label->contentsRect();
+        const qreal         lineTop = box.top() + (box.height() - (metrics.ascent() + metrics.descent())) / 2.0;
+        const qreal         offset
+            = label == this ? 0 : label->mapTo(window(), QPoint()).y() - mapTo(window(), QPoint()).y();
+        return qRound(lineTop + metrics.ascent()) + offset;
+    }
+
+    virtual void fontChanged(const QFontMetricsF &metrics) = 0;
+
+private:
+    QPointer<QLabel> timestamp_;
+};
+
+// Compact, overlapping checks (like a messenger read indicator), never two
+// font glyphs. Using a painter keeps the shape identical under Qt5/Qt6,
+// regardless of the platform font, palette, or device pixel ratio.
+class DeliveryIndicator final : public TimestampMark {
+public:
+    DeliveryIndicator(bool read, QLabel *timestamp, QWidget *parent) : TimestampMark(timestamp, parent), read_(read)
+    {
+        setObjectName(QStringLiteral("mamDeliveryIndicator"));
+        setProperty("deliveryState", read ? QStringLiteral("read") : QStringLiteral("delivered"));
+        setForegroundRole(QPalette::WindowText);
+        setTimestampFont(font());
+    }
+
+protected:
+    void fontChanged(const QFontMetricsF &metrics) override
+    {
+        penWidth_ = qMax<qreal>(1.2, metrics.xHeight() * 0.11);
+        // Round caps and joins extend half a pen width beyond the stroke
+        // centre line, so the centre lines span the mark height minus one pen
+        // width across the 7 design units between the stroke tips (y=2) and
+        // the vertex (y=9).
+        scale_ = qMax<qreal>(0.5, (markHeight(metrics) - penWidth_) / 7.0);
+        // Match the timestamp label's line box so both share one baseline.
+        setFixedSize(qCeil((designRight() - designLeft) * scale_ + penWidth_), QFontMetrics(font()).height());
+    }
+
+    void paintEvent(QPaintEvent *) override
+    {
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::Antialiasing);
+        const qreal baseline = textBaseline();
+        const qreal half     = penWidth_ / 2.0;
+        painter.translate(half - designLeft * scale_, baseline - half - designVertex * scale_);
+        painter.scale(scale_, scale_);
+
+        QColor color = palette().color(QPalette::Text);
+        color.setAlpha(155); // Keep each narrow diagonal distinct at small sizes.
+        QPen pen(color, penWidth_, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+        pen.setCosmetic(true); // Device pixels, so the edge math above holds at any scale.
+        painter.setPen(pen);
+
+        // Keep the long rising strokes separated. The former geometry put
+        // the two check vertices only 2.4 design units apart, which collapsed
+        // to a blurred line at the small native-chat timestamp size.
+        QPainterPath first;
+        first.moveTo(designLeft, 6.0);
+        first.lineTo(4.0, designVertex);
+        first.lineTo(10.7, designTip);
+        painter.drawPath(first);
+
+        if (read_) {
+            // Only the short exposed portion of the second downstroke is
+            // drawn. Its hidden start would fall behind the first check.
+            // The second vertex and rising stroke are 4.5 units to the
+            // right, making both strokes independently visible when scaled.
+            QPainterPath second;
+            second.moveTo(7.4, 7.9);
+            second.lineTo(8.5, designVertex);
+            second.lineTo(15.2, designTip);
+            painter.drawPath(second);
+        }
+    }
+
+private:
+    static constexpr qreal designLeft   = 1.0; // leftmost stroke point
+    static constexpr qreal designTip    = 2.0; // y of the rising stroke tips
+    static constexpr qreal designVertex = 9.0; // y of the check vertices
+    qreal                  designRight() const { return read_ ? 15.2 : 10.7; }
+
+    bool  read_;
+    qreal penWidth_ = 1.2;
+    qreal scale_    = 1.0;
+};
+
+// A Psi iconset icon (edit pencil, encryption lock) at the timestamp font
+// size, centred on the delivery checks. These icons are thin shapes filling
+// their 16 px box, so shrinking them to the check height made them nearly
+// invisible.
+class IconMark final : public TimestampMark {
+public:
+    IconMark(const QString &iconName, QLabel *timestamp, QWidget *parent) :
+        TimestampMark(timestamp, parent), iconName_(iconName)
+    {
+        setTimestampFont(font());
+    }
+
+protected:
+    void fontChanged(const QFontMetricsF &metrics) override
+    {
+        const QString &name = iconName_;
+        const PsiIcon *icon = IconsetFactory::iconPtr(name);
+        const int            native = icon && icon->size().height() > 0 ? icon->size().height() : 16;
+        const int            target = qMax(8, QFontInfo(font()).pixelSize());
+        // Within a pixel of the icon's own size, draw it unscaled and crisp.
+        size_       = qAbs(target - native) <= 1 ? native : target;
+        markCenter_ = markHeight(metrics) / 2.0;
+        setFixedSize(size_, qMax(size_, QFontMetrics(font()).height()));
+
+        const qreal ratio  = size_ == native ? 1.0 : devicePixelRatioF();
+        QPixmap     pixmap = IconsetFactory::iconPixmap(name, QSize(qRound(size_ * ratio), qRound(size_ * ratio)));
+        if (!pixmap.isNull() && pixmap.height() != qRound(size_ * ratio))
+            pixmap = pixmap.scaled(qRound(size_ * ratio), qRound(size_ * ratio), Qt::KeepAspectRatio,
+                                   Qt::SmoothTransformation);
+        pixmap.setDevicePixelRatio(ratio);
+        setPixmap(pixmap); // Keeps pixmap() meaningful for tests and tools.
+    }
+
+    void paintEvent(QPaintEvent *) override
+    {
+        const QPixmap icon = pixmap(Qt::ReturnByValue);
+        if (icon.isNull())
+            return;
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::SmoothPixmapTransform);
+        // Same vertical centre as the checks beside it; whole pixels keep an
+        // unscaled icon sharp.
+        const int top = qRound(textBaseline() - markCenter_ - size_ / 2.0);
+        painter.drawPixmap(QRect(0, top, size_, size_), icon);
+    }
+
+private:
+    QString iconName_;
+    int     size_       = 16;
+    qreal   markCenter_ = 4.0;
+};
+
+} // namespace
 
 MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(parent)
 {
@@ -397,6 +575,9 @@ void MamChatWidget::mergeMessage(int index, const MessageView &incoming, const Q
         updated.setDateTime(previous.dateTime()); // Editing never moves the original row.
         updated.setReactionTargetId(reactionId);
         updated.setRetractionTargetId(retractionId);
+        // Keep a known encryption state (e.g. the live copy) over an unknown one.
+        if (!updated.isSecurityKnown() && previous.isSecurityKnown())
+            updated.setEncrypted(previous.isEncrypted(), previous.encryptionProtocol());
         updated.setEdited(edited);
         if (!groupChat_ && !previous.nick().isEmpty())
             updated.setNick(previous.nick());
@@ -407,7 +588,10 @@ void MamChatWidget::mergeMessage(int index, const MessageView &incoming, const Q
         row.message = updated;
         replaceItem(index);
     } else if ((edited && !previous.isEdited()) || reactionId != previous.reactionTargetId()
-               || retractionId != previous.retractionTargetId()) {
+               || retractionId != previous.retractionTargetId()
+               || (!previous.isSecurityKnown() && incoming.isSecurityKnown())) {
+        if (!previous.isSecurityKnown() && incoming.isSecurityKnown())
+            row.message.setEncrypted(incoming.isEncrypted(), incoming.encryptionProtocol());
         row.message.setEdited(edited);
         row.message.setReactionTargetId(reactionId);
         row.message.setRetractionTargetId(retractionId);
@@ -538,14 +722,98 @@ bool MamChatWidget::isRetracted(const Row &row) const
     return false;
 }
 
+int MamChatWidget::displayedTargetIndex() const
+{
+    return lastDisplayedRowKey_.isEmpty() ? -1 : indexOfKey(lastDisplayedRowKey_);
+}
+
+void MamChatWidget::resolveDisplayedMarkers()
+{
+    if (unresolvedDisplayedIds_.isEmpty())
+        return;
+
+    int highest = displayedTargetIndex();
+    int changed = -1;
+    for (auto it = unresolvedDisplayedIds_.begin(); it != unresolvedDisplayedIds_.end();) {
+        int target = -1;
+        for (int i = 0; i < items_.size(); ++i) {
+            if (items_.at(i).message.isLocal() && items_.at(i).stanzaIds.contains(*it)) {
+                target = i;
+                break;
+            }
+        }
+        if (target < 0) {
+            ++it;
+            continue;
+        }
+        if (target > highest) {
+            highest = target;
+            lastDisplayedRowKey_ = items_.at(target).key;
+            changed = highest;
+        }
+        it = unresolvedDisplayedIds_.erase(it);
+    }
+    if (changed >= 0) {
+        for (const int index : materializedIndices()) {
+            if (index <= changed && items_.at(index).message.isLocal())
+                replaceItem(index);
+        }
+    }
+}
+
+QString MamChatWidget::takeVisibleMarkableIncomingId()
+{
+    if (!isVisible() || window()->isMinimized() || groupChat_)
+        return {};
+    const auto range = visibleRange();
+    if (!range.isValid())
+        return {};
+    const int previouslyMarked = lastMarkedIncomingRowKey_.isEmpty() ? -1 : indexOfKey(lastMarkedIncomingRowKey_);
+    for (int i = range.last; i >= range.first; --i) {
+        if (previouslyMarked >= i)
+            break; // XEP-0333 markers advance only.
+        const auto &message = items_.at(i).message;
+        if (message.type() != MessageView::Message || message.isLocal() || !message.isMarkable()
+            || message.messageId().isEmpty())
+            continue;
+        auto *row = itemWidget(i);
+        if (row && row->isVisibleTo(viewport())
+            && QRect(row->mapTo(viewport(), QPoint()), row->size()).intersects(viewport()->rect()))
+        {
+            lastMarkedIncomingRowKey_ = items_.at(i).key;
+            return message.messageId();
+        }
+    }
+    return {};
+}
+
 bool MamChatWidget::applyProtocolEvent(const MessageView &event)
 {
     QString target;
-    if (event.type() == MessageView::DeliveryReceipt) {
+    if (event.type() == MessageView::MessageSecurity) {
+        // Outgoing encryption outcome; it may arrive before the local row.
+        if (event.messageId().isEmpty() || !event.isSecurityKnown())
+            return true;
+        target = event.messageId();
+        security_.insert(target, qMakePair(event.isEncrypted(), event.encryptionProtocol()));
+    } else if (event.type() == MessageView::DeliveryReceipt) {
         if (event.isLocal())
             return true;
         target = event.messageId();
         receipts_.insert(target);
+    } else if (event.type() == MessageView::DisplayedMarker) {
+        if (event.isLocal() || groupChat_ || event.messageId().isEmpty())
+            return true;
+        // MAM can deliver a marker before the referenced older page. Do not
+        // claim any message was read until its id is actually known. Keep only
+        // a small bounded set of unresolved references for later pages.
+        if (!unresolvedDisplayedIds_.contains(event.messageId())) {
+            unresolvedDisplayedIds_.append(event.messageId());
+            if (unresolvedDisplayedIds_.size() > 64)
+                unresolvedDisplayedIds_.removeFirst();
+        }
+        resolveDisplayedMarkers();
+        return true;
     } else if (event.type() == MessageView::Reactions) {
         target              = event.reactionsId();
         const QString actor = event.isLocal() ? QStringLiteral("self")
@@ -690,6 +958,7 @@ void MamChatWidget::appendMessage(const MessageView &view)
         const int existing = findRelatedMessage(view, false);
         if (existing >= 0) {
             mergeMessage(existing, view);
+            resolveDisplayedMarkers();
             if (sentNewMessage)
                 scrollToEnd();
             return;
@@ -713,6 +982,7 @@ void MamChatWidget::appendMessage(const MessageView &view)
     items_.append(row);
     insertItems(at, 1);
     setRangeAvailable(at, at, true);
+    resolveDisplayedMarkers();
     if (followTail)
         scrollToEnd();
 }
@@ -786,6 +1056,7 @@ int MamChatWidget::prependArchivePage(const QList<QPair<QString, MessageView>> &
     }
     if (containsCorrection)
         coalesceRevisionRows();
+    resolveDisplayedMarkers();
     if (followTail && !page.isEmpty())
         scrollToEnd();
     return added;
@@ -807,6 +1078,10 @@ void MamChatWidget::clearMessages()
     reactionEvents_.clear();
     retractions_.clear();
     receipts_.clear();
+    security_.clear();
+    lastDisplayedRowKey_.clear();
+    lastMarkedIncomingRowKey_.clear();
+    unresolvedDisplayedIds_.clear();
     cancelMessageSelection();
     items_.clear();
     keys_.clear();
@@ -903,33 +1178,75 @@ QWidget *MamChatWidget::createItemWidget(int index)
                          content);
         time->setObjectName(QStringLiteral("mamTimestamp"));
         time->setTextFormat(Qt::PlainText);
-        time->setToolTip(fullTimestamp(mv.dateTime())
-                         + (mv.isLocal() && receipts_.contains(mv.messageId()) ? QStringLiteral("\n") + tr("Delivered")
-                                                                               : QString()));
+        const bool read = mv.isLocal() && !groupChat_ && displayedTargetIndex() >= index;
+        bool delivered = false;
+        if (mv.isLocal() && !groupChat_) {
+            // A receipt may reference any revision of a corrected message.
+            // The visible row represents one logical message, not only the
+            // latest revision's stanza id.
+            for (const auto &id : items_.at(index).stanzaIds) {
+                if (receipts_.contains(id)) {
+                    delivered = true;
+                    break;
+                }
+            }
+        }
+        time->setToolTip(fullTimestamp(mv.dateTime()));
         time->setForegroundRole(QPalette::Text);
         time->installEventFilter(this);
-        if (mv.isEdited()) {
-            // Keep the edit marker inside the timestamp slot, so plugins
-            // can place the entire semantic header wherever they choose.
+        // Encryption state of the message, possibly learnt after it was
+        // sent (the encryption job finishes asynchronously).
+        bool    securityKnown = mv.isSecurityKnown();
+        bool    encrypted     = mv.isEncrypted();
+        QString protocol      = mv.encryptionProtocol();
+        if (!securityKnown) {
+            for (const auto &id : items_.at(index).stanzaIds) {
+                const auto it = security_.constFind(id);
+                if (it != security_.cend()) {
+                    securityKnown = true;
+                    encrypted     = it->first;
+                    protocol      = it->second;
+                    break;
+                }
+            }
+        }
+        if (mv.isEdited() || read || delivered || securityKnown) {
+            // One semantic timestamp slot: time, delivery/read state, edit mark.
+            // Do not append glyphs to the time QLabel itself: its text is
+            // refreshed for relative-time display and themes can reposition it.
             auto *timeGroup = new QWidget(content);
             timeGroup->setObjectName(QStringLiteral("mamTimestampGroup"));
             auto *timeLayout = new QHBoxLayout(timeGroup);
             timeLayout->setContentsMargins(0, 0, 0, 0);
-            timeLayout->setSpacing(7);
+            timeLayout->setSpacing(5);
             timeLayout->addWidget(time);
-            auto *pencil = new QLabel(timeGroup);
+            if (read || delivered) {
+                auto *checkmarks = new DeliveryIndicator(read, time, timeGroup);
+                const QString status = read ? tr("Read") : tr("Delivered");
+                checkmarks->setToolTip(status);
+                checkmarks->setAccessibleName(status);
+                timeLayout->addWidget(checkmarks, 0, Qt::AlignVCenter);
+            }
+            if (securityKnown) {
+                auto *lock = new IconMark(encrypted ? QStringLiteral("psi/cryptoYes") : QStringLiteral("psi/cryptoNo"),
+                                          time, timeGroup);
+                lock->setObjectName(QStringLiteral("mamEncryptionIndicator"));
+                lock->setProperty("encrypted", encrypted);
+                const QString status = !encrypted   ? tr("Not encrypted")
+                    : protocol.isEmpty()            ? tr("Encrypted")
+                                                    : tr("Encrypted with %1").arg(protocol);
+                lock->setToolTip(status);
+                lock->setAccessibleName(status);
+                timeLayout->addWidget(lock, 0, Qt::AlignVCenter);
+            }
+            if (mv.isEdited()) {
+            // Psi's edit icon at the shared timestamp-mark size and baseline.
+            auto *pencil = new IconMark(QStringLiteral("psi/action_templates_edit"), time, timeGroup);
             pencil->setObjectName(QStringLiteral("mamEditedIndicator"));
-            // Use the existing Psi system icon, not a font-dependent Unicode
-            // glyph. Match the time font so the marker fits either layout.
-            const int     iconSize = qMax(12, QFontMetrics(time->font()).height());
-            const QPixmap icon
-                = IconsetFactory::iconPixmap(QStringLiteral("psi/action_templates_edit"), QSize(iconSize, iconSize));
-            if (!icon.isNull())
-                pencil->setPixmap(icon.scaled(iconSize, iconSize, Qt::KeepAspectRatio, Qt::SmoothTransformation));
             pencil->setToolTip(tr("The message was corrected"));
             pencil->setAccessibleName(tr("Edited message"));
-            pencil->setForegroundRole(QPalette::Text);
-            timeLayout->addWidget(pencil);
+            timeLayout->addWidget(pencil, 0, Qt::AlignVCenter);
+            }
             elements.insert(QStringLiteral("timestamp"), timeGroup);
         } else {
             elements.insert(QStringLiteral("timestamp"), time);
@@ -1105,6 +1422,14 @@ void MamChatWidget::updateTimestampAppearance(QLabel *label)
     colors.setColor(QPalette::Text, color);
     colors.setColor(QPalette::WindowText, color);
     label->setPalette(colors);
+    // Timestamp marks have no Q_OBJECT, so Qt6's findChild<T>() rejects
+    // them; find the sibling QLabels and cast with RTTI instead.
+    for (auto *sibling : label->parentWidget()->findChildren<QLabel *>(QString(), Qt::FindDirectChildrenOnly)) {
+        if (auto *mark = dynamic_cast<TimestampMark *>(sibling)) {
+            mark->setPalette(colors);
+            mark->setTimestampFont(timeFont);
+        }
+    }
 }
 
 void MamChatWidget::updateTimestamps()

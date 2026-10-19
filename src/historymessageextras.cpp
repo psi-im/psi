@@ -81,6 +81,10 @@ QString HistoryMessageExtras::encode(const XMPP::Message &message)
     QJsonObject events;
     if (message.messageReceipt() == XMPP::ReceiptReceived)
         events.insert("receipt", message.messageReceiptId());
+    if (!message.displayedMarkerId().isEmpty())
+        events.insert("displayed", message.displayedMarkerId());
+    if (message.isMarkable())
+        extra.insert(QStringLiteral("urn:xmpp:chat-markers:0"), true);
     if (!message.reactions().targetId.isEmpty()) {
         events.insert("target", message.reactions().targetId);
         QJsonArray reactions;
@@ -134,6 +138,10 @@ void HistoryMessageExtras::restore(const QString &json, XMPP::Message &message)
         message.setMessageReceipt(XMPP::ReceiptReceived);
         message.setMessageReceiptId(events.value("receipt").toString());
     }
+    if (events.contains("displayed"))
+        message.setDisplayedMarkerId(events.value("displayed").toString());
+    if (extra.value(QStringLiteral("urn:xmpp:chat-markers:0")).toBool())
+        message.setMarkable(true);
     if (events.contains("target")) {
         QSet<QString> reactions;
         for (const auto &reaction : events.value("reactions").toArray())

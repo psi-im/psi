@@ -36,6 +36,7 @@ MessageView nativeHistoryMessage(PsiAccount *account, const XMPP::Jid &peer, con
     if (PsiOptions::instance()->getOption("options.html.chat.render").toBool() && !html.body().isNull())
         view.setHtml(html.toString("span"));
     account->psi()->fileSharingManager()->fillMessageView(view, message, account);
+    view.setMarkable(message.isMarkable());
     return view;
 }
 
@@ -71,6 +72,7 @@ void prependLocalChatHistory(MamChatWidget *timeline, PsiAccount *account, const
         if (!entry->reactionTarget().isEmpty())
             mv.setReactionTargetId(entry->reactionTarget());
         mv.setRetractionTargetId(MessageView::retractionTarget(message));
+        mv.setEncrypted(message.wasEncrypted(), message.encryptionProtocol());
         if (!entry->retractionTarget().isEmpty())
             mv.setRetractionTargetId(entry->retractionTarget());
         mv.setArchiveId(entry->archiveId());
@@ -81,6 +83,7 @@ void prependLocalChatHistory(MamChatWidget *timeline, PsiAccount *account, const
         mv.setLocal(room ? mv.nick() == ownNick : me->originLocal());
         mv.setDateTime(message.timeStamp());
         mv.setSpooled(true);
+        mv.setMarkable(message.isMarkable());
         page.append(qMakePair(mv.archiveId(), mv));
     }
     timeline->prependArchivePage(page);

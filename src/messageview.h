@@ -41,7 +41,9 @@ public:
         FileTransferFinished,
         Reactions,
         MessageRetraction,
-        DeliveryReceipt
+        DeliveryReceipt,
+        DisplayedMarker,
+        MessageSecurity // Outgoing message: whether it went out encrypted.
     };
 
     enum Flag {
@@ -53,6 +55,8 @@ public:
         HideStatusChange = 0x20,
         HideJoinLeave    = 0x40,
         Edited           = 0x80,
+        SecurityKnown    = 0x100,
+        Encrypted        = 0x200,
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
@@ -85,6 +89,12 @@ public:
         mv.setMessageId(targetMessageId);
         return mv;
     }
+    static MessageView displayedMarkerMessage(const QString &targetMessageId)
+    {
+        MessageView mv(DisplayedMarker);
+        mv.setMessageId(targetMessageId);
+        return mv;
+    }
     static bool    protocolMessage(const XMPP::Message &, bool local, MessageView &);
     static QString reactionTarget(const XMPP::Message &);
     static QString retractionTarget(const XMPP::Message &);
@@ -112,9 +122,29 @@ public:
     inline void setSpooled(bool state = true) { _flags.setFlag(Spooled, state); }
     inline bool isSpooled() const { return bool(_flags & Spooled); }
     inline void setEdited(bool edited = true) { _flags.setFlag(Edited, edited); }
+    // Whether the message travelled encrypted. Unknown until set: a freshly
+    // sent message learns it only when its encryption job finishes.
+    inline void setEncrypted(bool encrypted, const QString &protocol = {})
+    {
+        _flags.setFlag(SecurityKnown);
+        _flags.setFlag(Encrypted, encrypted);
+        _encryptionProtocol = encrypted ? protocol : QString();
+    }
+    inline bool           isSecurityKnown() const { return bool(_flags & SecurityKnown); }
+    inline bool           isEncrypted() const { return bool(_flags & Encrypted); }
+    inline const QString &encryptionProtocol() const { return _encryptionProtocol; }
+    static MessageView    securityMessage(const QString &messageId, bool encrypted, const QString &protocol)
+    {
+        MessageView mv(MessageSecurity);
+        mv.setMessageId(messageId);
+        mv.setEncrypted(encrypted, protocol);
+        return mv;
+    }
     inline bool isEdited() const { return bool(_flags & Edited); }
     inline void setAwaitingReceipt(bool b = true) { _flags.setFlag(AwaitingReceipt, b); }
     inline bool isAwaitingReceipt() const { return bool(_flags & AwaitingReceipt); }
+    inline void setMarkable(bool markable = true) { _markable = markable; }
+    inline bool isMarkable() const { return _markable; }
     inline void setStatusChangeHidden(bool b = true) { _flags.setFlag(HideStatusChange, b); }
     inline bool isStatusChangeHidden() const { return bool(_flags & HideStatusChange); }
     inline void setJoinLeaveHidden(bool b = true) { _flags.setFlag(HideJoinLeave, b); }
@@ -186,6 +216,8 @@ private:
     QString                  _reactionsId;
     QList<FileSharingItem *> _references;
     QSet<QString>            _reactions;
+    bool                     _markable = false;
+    QString                  _encryptionProtocol;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(MessageView::Flags)

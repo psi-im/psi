@@ -23,7 +23,9 @@ public:
         NickChange,
         FileTransferRequest,
         FileTransferFinished,
-        DeliveryReceipt
+        DeliveryReceipt,
+        DisplayedMarker,
+        MessageSecurity
     };
     explicit MessageView(Type type = Message) : type_(type) { }
 
@@ -32,6 +34,8 @@ public:
     Type           type() const { return type_; }
     const QString &messageId() const { return id_; }
     void           setMessageId(const QString &id) { id_ = id; }
+    void           setMarkable(bool value = true) { markable_ = value; }
+    bool           isMarkable() const { return markable_; }
     void           setHistoryId(qint64 id) { historyId_ = id; }
     qint64         historyId() const { return historyId_; }
     void           setRevisionTime(const QDateTime &time) { revisionTime_ = time; }
@@ -56,6 +60,15 @@ public:
             edited_ = true;
     }
     void             setEdited(bool edited = true) { edited_ = edited; }
+    void             setEncrypted(bool encrypted, const QString &protocol = {})
+    {
+        securityKnown_      = true;
+        encrypted_          = encrypted;
+        encryptionProtocol_ = encrypted ? protocol : QString();
+    }
+    bool           isSecurityKnown() const { return securityKnown_; }
+    bool           isEncrypted() const { return encrypted_; }
+    const QString &encryptionProtocol() const { return encryptionProtocol_; }
     bool             isEdited() const { return edited_; }
     const QString   &retractionId() const { return retractionId_; }
     void             setRetractionId(const QString &id) { retractionId_ = id; }
@@ -90,4 +103,8 @@ private:
     bool          local_   = false;
     bool          spooled_ = false;
     bool          edited_  = false;
+    bool          markable_ = false;
+    bool          securityKnown_ = false;
+    bool          encrypted_     = false;
+    QString       encryptionProtocol_;
 };

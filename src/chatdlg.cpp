@@ -752,6 +752,7 @@ void ChatDlg::doSend()
         //    account()->capsManager()->features(jid()).test(sl))) {
         // if (true) {
         m.setMessageReceipt(ReceiptRequest);
+        m.setMarkable(true); // XEP-0333; the peer may confirm display separately.
         // rememberPosition(id);
         //}
     }
@@ -958,6 +959,10 @@ void ChatDlg::appendMessage(const Message &m, bool local, qint64 historyId, cons
     mv.setMessageId(dm.id());
     mv.setReactionTargetId(MessageView::reactionTarget(dm));
     mv.setRetractionTargetId(MessageView::retractionTarget(dm));
+    // A local echo of a message being sent learns its encryption state later
+    // (outgoingMessageSecurity); received and stored messages know it now.
+    if (!local || historyId > 0 || !archiveId.isEmpty())
+        mv.setEncrypted(dm.wasEncrypted(), dm.encryptionProtocol());
     mv.setHistoryId(historyId);
     mv.setArchiveId(archiveId);
     mv.setLocal(local);
@@ -967,6 +972,7 @@ void ChatDlg::appendMessage(const Message &m, bool local, qint64 historyId, cons
     mv.setDateTime(dm.timeStamp());
     mv.setSpooled(historyState);
     mv.setAwaitingReceipt(local && dm.messageReceipt() == ReceiptRequest);
+    mv.setMarkable(dm.isMarkable());
     mv.setReplaceId(dm.replaceId());
     account()->psi()->fileSharingManager()->fillMessageView(mv, dm, account());
 
@@ -1016,8 +1022,18 @@ void ChatDlg::dispatchMessage(const MessageView &mv)
         displayMessage(mv);
 }
 
+void ChatDlg::outgoingMessageSecurity(const QString &messageId, bool encrypted, const QString &protocol)
+{
+    if (!messageId.isEmpty())
+        dispatchMessage(MessageView::securityMessage(messageId, encrypted, protocol));
+}
+
 void ChatDlg::displayMessage(const MessageView &mv)
 {
+    if (mv.type() == MessageView::DisplayedMarker || mv.type() == MessageView::MessageSecurity) {
+        displayNativeMessage(mv);
+        return;
+    }
     if (mv.type() == MessageView::DeliveryReceipt) {
         displayNativeMessage(mv);
         chatView()->markReceived(mv.messageId());
