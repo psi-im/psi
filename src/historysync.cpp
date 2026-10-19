@@ -160,6 +160,7 @@ XMPP::Message HistorySync::message(const QString &uid) const
         const auto &plain = saved.message;
         if (!plain.isNull()
             && (!plain.body().isEmpty() || saved.protocolOnly || plain.messageReceipt() == XMPP::ReceiptReceived
+                || !plain.displayedMarkerId().isEmpty()
                 || !plain.reactions().targetId.isEmpty() || !plain.retraction().isEmpty()))
             return plain;
         XMPP::Forwarding wrapper;
