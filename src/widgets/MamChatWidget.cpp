@@ -1261,8 +1261,10 @@ void MamChatWidget::updateTimestampAppearance(QLabel *label)
     colors.setColor(QPalette::Text, color);
     colors.setColor(QPalette::WindowText, color);
     label->setPalette(colors);
-    if (auto *indicator = label->parentWidget()->findChild<DeliveryIndicator *>(
-            QStringLiteral("mamDeliveryIndicator"))) {
+    // DeliveryIndicator has no Q_OBJECT, so Qt6's findChild<T>() rejects it;
+    // look it up by object name and cast with RTTI instead.
+    if (auto *indicator = dynamic_cast<DeliveryIndicator *>(
+            label->parentWidget()->findChild<QLabel *>(QStringLiteral("mamDeliveryIndicator")))) {
         indicator->setPalette(colors);
         indicator->setIconHeight(qRound(QFontMetrics(timeFont).height() * 0.85));
     }
