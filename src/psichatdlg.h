@@ -67,6 +67,7 @@ private:
     void setContactToolTip(QString text);
     void setEncryptionMethod(const QString &methodId, bool persist);
     void loadOlderMamMessages();
+    void sendDisplayedMarkerForVisibleMessage();
     bool displayNativeMessage(const MessageView &mv) override;
     bool scrollNativeHistory(bool down) override;
     void clearNativeHistory() override;
