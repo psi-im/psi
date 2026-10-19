@@ -24,6 +24,7 @@
 #include "privacymanager.h"
 
 #include <QHash>
+#include <QSet>
 #include <QObject>
 #include <QStringList>
 
@@ -35,6 +36,8 @@ class QString;
 
 namespace XMPP {
 class Task;
+class BlockingPushTask;
+class BlockingTask;
 }
 
 class PsiPrivacyManager : public PrivacyManager {
@@ -87,6 +90,8 @@ public:
     bool isAvailable() const;
 
     bool isContactBlocked(const XMPP::Jid &jid) const;
+    bool usesBlockingCommand() const { return nativeBlocking_; }
+    QStringList blockedJids() const;
     void setContactBlocked(const XMPP::Jid &jid, bool blocked);
 
 signals:
@@ -101,6 +106,7 @@ private slots:
     void newListsError();
 
     void accountStateChanged();
+    void serverFeaturesChanged();
 
     void newChangeDefaultList_success();
     void newChangeDefaultList_error();
@@ -119,6 +125,9 @@ private:
 
     void invalidateBlockedListCache();
     void setIsAvailable(bool available);
+    void selectBlockingBackend();
+    void nativeBlocklistFinished(XMPP::BlockingTask *task);
+    void nativePush(const QList<XMPP::Jid> &jids, bool blocked, bool all);
 
     void            createBlockedList();
     PrivacyList    *blockedList() const;
@@ -126,6 +135,10 @@ private:
 
     QStringList blockedContacts() const;
 
+    bool nativeBlocking_ = false;
+    bool backendSelected_ = false;
+    QSet<QString> nativeBlocked_;
+    XMPP::BlockingPushTask *nativePushTask_ = nullptr;
     QString blockedListName_, tmpActiveListName_;
     bool    isAuthorized(const XMPP::Jid &jid) const;
 };
