@@ -109,7 +109,9 @@ private:
     // Stable row identity, not an index: prepending MAM pages shifts indices.
     QString                                       lastDisplayedRowKey_;
     QString                                       lastMarkedIncomingRowKey_;
+    QList<QString>                                unresolvedDisplayedIds_;
     int                                           displayedTargetIndex() const;
+    void                                          resolveDisplayedMarkers();
     void                                          updateTimestamps();
     void                                          updateTimestampAppearance(QLabel *label);
     void                                          updateRowSelection(QFrame *row, bool selected);
