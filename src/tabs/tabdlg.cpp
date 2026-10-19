@@ -20,6 +20,7 @@
 #include "tabdlg.h"
 
 #include "chatdlg.h"
+#include "coloropt.h"
 #include "iconset.h"
 #include "iconwidget.h"
 #include "psiapplication.h"
@@ -122,6 +123,11 @@ TabDlg::TabDlg(TabManager *tabManager, const QString &geometryOption, TabDlgDele
     vert1->addWidget(tabWidget_);
 
     setAcceptDrops(true);
+    connect(ColorOpt::instance(), &ColorOpt::changed, this, [this](const QString &option) {
+        if (option.startsWith(QLatin1String("options.ui.look.colors.chat.")))
+            for (TabbableWidget *tab : std::as_const(tabs_))
+                updateTab(tab);
+    });
     if (auto *app = qobject_cast<PsiApplication *>(qApp)) {
         connect(app, &PsiApplication::applicationPaletteChanged, this, [this]() {
             if (!styleSheet().isEmpty())
@@ -575,16 +581,16 @@ void TabDlg::updateTab(TabbableWidget *chat)
     TabbableWidget::State state = chat->state();
     if (state == TabbableWidget::State::Composing) {
         tabWidget_->setTabTextColor(
-            chat, PsiOptions::instance()->getOption("options.ui.look.colors.chat.composing-color").value<QColor>());
+            chat, ColorOpt::instance()->color("options.ui.look.colors.chat.composing-color"));
         tabWidget_->setTabIcon(chat, IconsetFactory::iconPtr("psi/typing")->icon());
     } else {
         if (state == TabbableWidget::State::Highlighted) {
             tabWidget_->setTabTextColor(
                 chat,
-                PsiOptions::instance()->getOption("options.ui.look.colors.chat.unread-message-color").value<QColor>());
+                ColorOpt::instance()->color("options.ui.look.colors.chat.unread-message-color"));
         } else if (state == TabbableWidget::State::Inactive) {
             tabWidget_->setTabTextColor(
-                chat, PsiOptions::instance()->getOption("options.ui.look.colors.chat.inactive-color").value<QColor>());
+                chat, ColorOpt::instance()->color("options.ui.look.colors.chat.inactive-color"));
         } else {
             tabWidget_->setTabTextColor(chat, qApp->palette().color(QPalette::Text));
         }

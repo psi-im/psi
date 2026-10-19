@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "filesharingstore.h"
+#include "historyarchive.h"
 #include "historymessageextras.h"
 #include <QCryptographicHash>
 #include <QFile>
@@ -26,6 +27,31 @@ class SimsHistoryTest : public QObject {
         return reference;
     }
 private slots:
+    void protocolEventsAndArchiveIdentitiesRoundTrip()
+    {
+        Message original;
+        original.setId("receipt-id");
+        original.setFrom(Jid("alice@example.org/phone"));
+        original.setMessageReceipt(ReceiptReceived);
+        original.setMessageReceiptId("delivered-message");
+        original.setReactions({ "target", { QString::fromUtf8("👍") } });
+        original.setRetraction("another-target");
+        original.setReplaceId("original-id");
+        original.setOriginId("origin-id");
+        original.addStanzaId({ Jid("alice@example.org"), "server-id" });
+        original.setWasEncrypted(true);
+        Message restored;
+        HistoryMessageExtras::restore(HistoryMessageExtras::encode(original), restored);
+        QCOMPARE(restored.messageReceipt(), ReceiptReceived);
+        QCOMPARE(restored.messageReceiptId(), QString("delivered-message"));
+        QCOMPARE(restored.reactions().targetId, QString("target"));
+        QCOMPARE(restored.reactions().reactions, original.reactions().reactions);
+        QCOMPARE(restored.retraction(), QString("another-target"));
+        QCOMPARE(restored.replaceId(), QString("original-id"));
+        QCOMPARE(restored.originId(), QString("origin-id"));
+        QCOMPARE(restored.stanzaId(Jid("alice@example.org")).id, QString("server-id"));
+        QVERIFY(restored.wasEncrypted());
+    }
     void roundTrip()
     {
         QTemporaryDir dir;
@@ -75,6 +101,91 @@ private slots:
         QCOMPARE(restored.urlList().size(), 1);
         QVERIFY(restored.spooled());
     }
+    void edbMigrationPreservesSimsAndLegacyOob()
+    {
+        QTemporaryDir dir;
+        const auto    name = QStringLiteral("sims-edb-migration");
+        {
+            auto db = QSqlDatabase::addDatabase("QSQLITE", name);
+            db.setDatabaseName(dir.filePath("history.db"));
+            QVERIFY(db.open());
+            QSqlQuery query(db);
+            QVERIFY(query.exec("PRAGMA foreign_keys=ON"));
+            QVERIFY(query.exec("CREATE TABLE system(key TEXT,value TEXT)"));
+            QVERIFY(query.exec("INSERT INTO system VALUES('version','0.1')"));
+            QVERIFY(query.exec(
+                "CREATE TABLE contacts(id INTEGER PRIMARY KEY,acc_id TEXT,type INTEGER,jid TEXT,lifetime INTEGER)"));
+            QVERIFY(query.exec("INSERT INTO contacts VALUES(1,'account',1,'alice@example.org',-1)"));
+            QVERIFY(query.exec("CREATE TABLE events(id INTEGER PRIMARY KEY,contact_id INTEGER REFERENCES contacts(id),"
+                               "resource TEXT,date TEXT,type INTEGER,direction INTEGER,subject TEXT,m_text TEXT,lang "
+                               "TEXT,extra_data TEXT)"));
+            Message original;
+            original.setId("sims-before-migration");
+            original.setFrom(Jid("alice@example.org/desktop"));
+            original.setTo(Jid("bob@example.org/laptop"));
+            original.setReferences({ sample(9007199254740993ULL) });
+            original.urlAdd(Url("https://example.org/movie", "movie"));
+            const QString encoded = HistoryMessageExtras::encode(original);
+            const QString legacy  = QStringLiteral("{\"jabber:x:oob\":[[\"https://example.org/old\",\"Old\"]]}");
+            query.prepare("INSERT INTO events(id,contact_id,date,type,direction,m_text,extra_data) "
+                          "VALUES(:id,1,'2026-10-16T13:00:00+03:00',1,2,'original body',:extra)");
+            query.bindValue(":id", 42);
+            query.bindValue(":extra", encoded);
+            QVERIFY(query.exec());
+            query.bindValue(":id", 43);
+            query.bindValue(":extra", legacy);
+            QVERIFY(query.exec());
+            QVERIFY(HistoryArchive::migrate(db));
+            QVERIFY(HistoryArchive::migrate(db));
+            QVERIFY(query.exec("SELECT id,m_text,extra_data,history_state FROM events ORDER BY id"));
+            QVERIFY(query.next());
+            QCOMPARE(query.value(0).toInt(), 42);
+            QCOMPARE(query.value(1).toString(), QString("original body"));
+            QCOMPARE(query.value(2).toString(), encoded);
+            QCOMPARE(query.value(3).toInt(), int(HistoryArchive::Unverified));
+            Message restored;
+            HistoryMessageExtras::restore(query.value(2).toString(), restored);
+            QCOMPARE(restored.id(), original.id());
+            QCOMPARE(restored.from().full(), original.from().full());
+            QCOMPARE(restored.to().full(), original.to().full());
+            QCOMPARE(restored.references().size(), 1);
+            QCOMPARE(restored.references().first().mediaSharing().file.size().value(), quint64(9007199254740993ULL));
+            QCOMPARE(restored.references().first().mediaSharing().sources,
+                     original.references().first().mediaSharing().sources);
+            QCOMPARE(restored.urlList().size(), 1);
+            QVERIFY(query.next());
+            QCOMPARE(query.value(0).toInt(), 43);
+            QCOMPARE(query.value(2).toString(), legacy);
+            Message oldMessage;
+            HistoryMessageExtras::restore(query.value(2).toString(), oldMessage);
+            QCOMPARE(oldMessage.urlList().size(), 1);
+            QVERIFY(!query.next());
+        }
+        QSqlDatabase::removeDatabase(name);
+    }
+    void plainMessageIdentity()
+    {
+        Message original;
+        original.setId(QStringLiteral("client-message-42"));
+        original.setFrom(Jid(QStringLiteral("room@conference.example/alice")));
+        original.setTo(Jid(QStringLiteral("juliet@example/desktop")));
+
+        // Unlike media-bearing messages, ordinary chat messages previously
+        // lost their stanza IDs and original full JIDs on SQLite round trips.
+        const QString encoded = HistoryMessageExtras::encode(original);
+        QVERIFY(!encoded.isEmpty());
+        Message restored;
+        restored.setBody(QStringLiteral("a plain message"));
+        HistoryMessageExtras::restore(encoded, restored);
+        QCOMPARE(restored.id(), original.id());
+        QCOMPARE(restored.from().full(), original.from().full());
+        QCOMPARE(restored.to().full(), original.to().full());
+        QCOMPARE(restored.body(), QStringLiteral("a plain message"));
+        QVERIFY(restored.references().isEmpty());
+
+        Message empty;
+        QVERIFY(HistoryMessageExtras::encode(empty).isEmpty());
+    }
     void legacyAndMalformed()
     {
         Message message;
@@ -86,6 +197,15 @@ private slots:
         HistoryMessageExtras::restore("{\"urn:xmpp:reference:0\":[\"<reference/>\"]}", message);
         QCOMPARE(message.body(), QString("old message"));
         QVERIFY(message.references().isEmpty());
+
+        // The v1 envelope from older media-bearing rows must still load,
+        // regardless of which valid references survived parsing.
+        HistoryMessageExtras::restore(QStringLiteral("{\"psi:message\":{\"version\":1,\"id\":\"old-id\","
+                                                     "\"from\":\"old@example/phone\",\"to\":\"new@example/desktop\"}}"),
+                                      message);
+        QCOMPARE(message.id(), QStringLiteral("old-id"));
+        QCOMPARE(message.from().full(), QStringLiteral("old@example/phone"));
+        QCOMPARE(message.to().full(), QStringLiteral("new@example/desktop"));
     }
     void catalogReopen()
     {

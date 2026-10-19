@@ -100,6 +100,7 @@
             </message>
             <chat comment="Chat dialog options">
                 <external-media-player type="QString"></external-media-player>
+                <native-theme type="QString">modern</native-theme>
                 <theme comment="The theme used for chat messages rendering" type="QString">psi/new_classic</theme>
                 <central-toolbar comment="Have a central toolbar" type="bool">true</central-toolbar>
                 <size comment="Remembered window size" type="QSize">
@@ -331,6 +332,7 @@ QLineEdit#le_status_text {
                 <log-width type="int">500</log-width>
                 <roster-width type="int">150</roster-width>
                 <roster-at-left type="bool">false</roster-at-left>
+                <native-theme type="QString">modern</native-theme>
                 <theme comment="The theme used for groupchat messages rendering" type="QString">psi/new_classic</theme>
                 <highlight-words type="QStringList" />
                 <size comment="Remembered window size" type="QSize">
@@ -361,63 +363,126 @@ QLineEdit#le_status_text {
             <last-used-open-path type="QString"></last-used-open-path>
             <last-used-save-path type="QString"></last-used-save-path>
             <look>
-                <colors>
-                    <contactlist>
-                        <background type="QColor"/>
-                        <grouping>
-                            <header-background type="QColor">#f0f0f0</header-background>
-                            <header-foreground type="QColor">#5a5a5a</header-foreground>
-                        </grouping>
-                        <profile>
-                            <header-background type="QColor">#969696</header-background>
-                            <header-foreground type="QColor">#ffffff</header-foreground>
-                        </profile>
-                        <status>
-                            <away type="QColor">#004bb4</away>
-                            <do-not-disturb type="QColor">#7e0000</do-not-disturb>
-                            <offline type="QColor">#646464</offline>
-                            <online type="QColor"/>
-                        </status>
-                        <status-change-animation1 type="QColor">#000000</status-change-animation1>
-                        <status-change-animation2 type="QColor">#969696</status-change-animation2>
-                        <status-messages type="QColor">#808080</status-messages>
-                    </contactlist>
-                    <tooltip>
-                        <enable comment="Enable tooltip coloring feature" type="bool">true</enable>
-                        <background comment="Tooltip background color" type="QColor">#e9ecc7</background>
-                        <text comment="Tooltip text color" type="QColor">#000000</text>
-                    </tooltip>
-                    <muc>
-                        <nick-colors type="QStringList" >
-                            <item>Blue</item>
-                            <item>Green</item>
-                            <item>Orange</item>
-                            <item>Purple</item>
-                            <item>Red</item>
-                        </nick-colors>
-                        <role-moderator type="QColor">#910000</role-moderator>
-                        <role-participant type="QColor">#00008a</role-participant>
-                        <role-visitor type="QColor">#336600</role-visitor>
-                        <role-norole type="QColor">black</role-norole>
-                    </muc>
-                    <messages comment="Message coloring.">
-                        <received type="QColor" comment="Color used to indicate received messages.">#0000ff</received>
-                        <sent type="QColor" comment="Color used to indicate sent messages.">#ff0000</sent>
-                        <informational type="QColor" comment="Color used to indicate informational (status change, spooled) messages.">#008000</informational>
-                        <usertext type="QColor" comment="Color used to indicate additional text for informational messages.">#606060</usertext>
-                        <highlighting type="QColor">#FF0000</highlighting>
-                        <link type="QColor">#000080</link>
-                        <link-visited type="QColor">#400080</link-visited>
-                    </messages>
-                    <chat>
-                        <composing-color type="QColor">darkGreen</composing-color>
-                        <unread-message-color type="QColor">red</unread-message-color>
-                        <inactive-color type="QColor">grey</inactive-color>
-                    </chat>
-                    <passive-popup>
-                        <border type="QColor">#5297f9</border>
-                    </passive-popup>
-                </colors>
+                <palettes>
+                    <light>
+                        <contactlist>
+                            <background type="QColor"/>
+                            <grouping>
+                                <header-background type="QColor">#f0f0f0</header-background>
+                                <header-foreground type="QColor">#5a5a5a</header-foreground>
+                            </grouping>
+                            <profile>
+                                <header-background type="QColor">#969696</header-background>
+                                <header-foreground type="QColor">#ffffff</header-foreground>
+                            </profile>
+                            <status>
+                                <away type="QColor">#004bb4</away>
+                                <do-not-disturb type="QColor">#7e0000</do-not-disturb>
+                                <offline type="QColor">#646464</offline>
+                                <online type="QColor"/>
+                            </status>
+                            <status-change-animation1 type="QColor">#000000</status-change-animation1>
+                            <status-change-animation2 type="QColor">#969696</status-change-animation2>
+                            <status-messages type="QColor">#808080</status-messages>
+                        </contactlist>
+                        <tooltip>
+                            <enable comment="Enable tooltip coloring feature" type="bool">true</enable>
+                            <background comment="Tooltip background color" type="QColor">#e9ecc7</background>
+                            <text comment="Tooltip text color" type="QColor">#000000</text>
+                        </tooltip>
+                        <muc>
+                            <nick-colors type="QStringList" >
+                                <item>Blue</item>
+                                <item>Green</item>
+                                <item>Orange</item>
+                                <item>Purple</item>
+                                <item>Red</item>
+                            </nick-colors>
+                            <role-moderator type="QColor">#910000</role-moderator>
+                            <role-participant type="QColor">#00008a</role-participant>
+                            <role-visitor type="QColor">#336600</role-visitor>
+                            <role-norole type="QColor">black</role-norole>
+                        </muc>
+                        <messages comment="Message coloring.">
+                            <received type="QColor" comment="Color used to indicate received messages.">#0000ff</received>
+                            <sent type="QColor" comment="Color used to indicate sent messages.">#ff0000</sent>
+                            <informational type="QColor" comment="Color used to indicate informational (status change, spooled) messages.">#008000</informational>
+                            <usertext type="QColor" comment="Color used to indicate additional text for informational messages.">#606060</usertext>
+                            <highlighting type="QColor">#FF0000</highlighting>
+                            <link type="QColor">#000080</link>
+                            <link-visited type="QColor">#400080</link-visited>
+                        </messages>
+                        <chat>
+                            <background type="QColor"/>
+                            <text type="QColor"/>
+                            <composing-color type="QColor">darkGreen</composing-color>
+                            <unread-message-color type="QColor">red</unread-message-color>
+                            <inactive-color type="QColor">grey</inactive-color>
+                        </chat>
+                        <passive-popup>
+                            <border type="QColor">#5297f9</border>
+                        </passive-popup>
+                    </light>
+                    <dark>
+                        <contactlist>
+                            <background type="QColor"/>
+                            <grouping>
+                                <header-background type="QColor">#383838</header-background>
+                                <header-foreground type="QColor">#cccccc</header-foreground>
+                            </grouping>
+                            <profile>
+                                <header-background type="QColor">#505050</header-background>
+                                <header-foreground type="QColor">#ffffff</header-foreground>
+                            </profile>
+                            <status>
+                                <away type="QColor">#80b8ff</away>
+                                <do-not-disturb type="QColor">#ff9090</do-not-disturb>
+                                <offline type="QColor">#aaaaaa</offline>
+                                <online type="QColor"/>
+                            </status>
+                            <status-change-animation1 type="QColor">#eeeeee</status-change-animation1>
+                            <status-change-animation2 type="QColor">#505050</status-change-animation2>
+                            <status-messages type="QColor">#b0b0b0</status-messages>
+                        </contactlist>
+                        <tooltip>
+                            <enable comment="Enable tooltip coloring feature" type="bool">true</enable>
+                            <background comment="Tooltip background color" type="QColor">#34382a</background>
+                            <text comment="Tooltip text color" type="QColor">#eeeeee</text>
+                        </tooltip>
+                        <muc>
+                            <nick-colors type="QStringList" >
+                                <item>#90b8ff</item>
+                                <item>#8bd58b</item>
+                                <item>#ffbc78</item>
+                                <item>#c797ff</item>
+                                <item>#ff9696</item>
+                            </nick-colors>
+                            <role-moderator type="QColor">#ff9292</role-moderator>
+                            <role-participant type="QColor">#a0b8ff</role-participant>
+                            <role-visitor type="QColor">#a8d780</role-visitor>
+                            <role-norole type="QColor">#eeeeee</role-norole>
+                        </muc>
+                        <messages comment="Message coloring.">
+                            <received type="QColor" comment="Color used to indicate received messages.">#90b8ff</received>
+                            <sent type="QColor" comment="Color used to indicate sent messages.">#ff9696</sent>
+                            <informational type="QColor" comment="Color used to indicate informational (status change, spooled) messages.">#8bd58b</informational>
+                            <usertext type="QColor" comment="Color used to indicate additional text for informational messages.">#bbbbbb</usertext>
+                            <highlighting type="QColor">#ff9696</highlighting>
+                            <link type="QColor">#80b8ff</link>
+                            <link-visited type="QColor">#c797ff</link-visited>
+                        </messages>
+                        <chat>
+                            <background type="QColor"/>
+                            <text type="QColor"/>
+                            <composing-color type="QColor">#8bd58b</composing-color>
+                            <unread-message-color type="QColor">#ff9696</unread-message-color>
+                            <inactive-color type="QColor">#aaaaaa</inactive-color>
+                        </chat>
+                        <passive-popup>
+                            <border type="QColor">#5297f9</border>
+                        </passive-popup>
+                    </dark>
+                </palettes>
                 <contactlist>
                     <use-outlined-group-headings type="bool">false</use-outlined-group-headings>
                     <use-slim-group-headings type="bool">false</use-slim-group-headings>

@@ -18,6 +18,7 @@
  */
 
 #include "coloropt.h"
+#include "desktopcolorpalette.h"
 
 #include "psiapplication.h"
 #include "psioptions.h"
@@ -31,14 +32,7 @@ ColorOpt::ColorOpt() : QObject(nullptr)
     connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString &)), SLOT(optionChanged(const QString &)));
     connect(PsiOptions::instance(), SIGNAL(destroyed()), SLOT(reset()));
     if (auto *app = qobject_cast<PsiApplication *>(qApp)) {
-        connect(app, &PsiApplication::applicationPaletteChanged, this, [this]() {
-            // Invalid option colors mean "use the current application palette".
-            // Re-emit them when the desktop theme changes so cached users repaint.
-            for (auto it = colors.cbegin(); it != colors.cend(); ++it) {
-                if (!it.value().color.isValid())
-                    emit changed(it.key());
-            }
-        });
+        connect(app, &PsiApplication::applicationPaletteChanged, this, &ColorOpt::reloadPalette);
     }
 
     typedef struct {
@@ -63,6 +57,11 @@ ColorOpt::ColorOpt() : QObject(nullptr)
                                               { "muc.role-norole", QPalette::Text },
                                               { "tooltip.background", QPalette::ToolTipBase },
                                               { "tooltip.text", QPalette::ToolTipText },
+                                              { "chat.background", QPalette::Base },
+                                              { "chat.text", QPalette::Text },
+                                              { "chat.composing-color", QPalette::Text },
+                                              { "chat.unread-message-color", QPalette::Text },
+                                              { "chat.inactive-color", QPalette::Text },
                                               { "messages.received", QPalette::Text },
                                               { "messages.sent", QPalette::Text },
                                               { "messages.informational", QPalette::Text },
@@ -73,7 +72,7 @@ ColorOpt::ColorOpt() : QObject(nullptr)
                                               { "passive-popup.border", QPalette::Window } });
     for (const auto &item : source) {
         QString opt = QString("options.ui.look.colors.%1").arg(item.opt);
-        colors.insert(opt, ColorData(PsiOptions::instance()->getOption(opt).value<QColor>(), item.role));
+        colors.insert(opt, ColorData(PsiOptions::instance()->getOption(optionPath(opt)).value<QColor>(), item.role));
     }
 }
 
@@ -83,7 +82,7 @@ QColor ColorOpt::color(const QString &opt, const QColor &defaultColor) const
     // qDebug("get option: %s from data %s", qPrintable(opt), qPrintable(cd.color.isValid()? cd.color.name() : "Invalid
     // " + cd.color.name()));
     if (!cd.valid) {
-        return PsiOptions::instance()->getOption(opt, defaultColor).value<QColor>();
+        return PsiOptions::instance()->getOption(optionPath(opt), defaultColor).value<QColor>();
     }
     if (cd.color.isValid()) {
         return cd.color;
@@ -138,14 +137,29 @@ QColor ColorOpt::adaptBackground(const QColor &background, const QPalette &palet
     return background;
 }
 
+QString ColorOpt::paletteName() { return DesktopColorPalette::name(QApplication::palette()); }
+QString ColorOpt::optionPath(const QString &logical, const QString &scheme)
+{
+    return DesktopColorPalette::optionPath(logical, scheme.isEmpty() ? paletteName() : scheme);
+}
+void ColorOpt::reloadPalette()
+{
+    for (auto it = colors.begin(); it != colors.end(); ++it)
+        it.value().color = PsiOptions::instance()->getOption(optionPath(it.key())).value<QColor>();
+    const auto keys = colors.keys();
+    for (const auto &key : keys)
+        emit changed(key);
+    emit changed(QStringLiteral("options.ui.look.colors.muc.nick-colors"));
+}
 void ColorOpt::optionChanged(const QString &opt)
 {
-    if (opt.startsWith(QLatin1String("options.ui.look.colors")) && colors.contains(opt)) {
-        colors[opt].color = PsiOptions::instance()->getOption(opt).value<QColor>();
-        // qDebug("%s changed to %s", qPrintable(opt), qPrintable(colors[opt].color.isValid()? colors[opt].color.name()
-        // : "Invalid " + colors[opt].color.name()));
-        emit changed(opt);
-    }
+    const QString prefix = QStringLiteral("options.ui.look.palettes.") + paletteName() + QLatin1Char('.');
+    if (!opt.startsWith(prefix))
+        return;
+    const QString logical = QStringLiteral("options.ui.look.colors.") + opt.mid(prefix.size());
+    if (colors.contains(logical))
+        colors[logical].color = PsiOptions::instance()->getOption(opt).value<QColor>();
+    emit changed(logical);
 }
 
 /**

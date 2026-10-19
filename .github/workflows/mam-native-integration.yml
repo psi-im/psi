@@ -1,0 +1,135 @@
+name: MAM native chat integration (development Iris)
+
+on:
+  push:
+    paths:
+      - 'src/chatdlg.*'
+      - 'src/history*'
+      - 'src/edbsqlite.*'
+      - 'src/eventdb.*'
+      - 'src/nativechathistory.*'
+      - 'src/messageview.*'
+      - 'src/widgets/MamHistorySourcePolicy.h'
+      - 'src/psichatdlg.*'
+      - 'src/psiaccount.*'
+      - 'src/accountincomingmessage.*'
+      - 'src/psiencryptioncontroller.*'
+      - 'tests/account/**'
+      - 'tests/mamhistory/**'
+      - 'src/groupchatdlg.*'
+      - 'src/nativechattheme.*'
+      - 'src/desktopcolorpalette.h'
+      - 'src/coloropt.*'
+      - 'src/options/opt_appearance.*'
+      - 'src/psitheme*'
+      - 'src/psicon.cpp'
+      - 'src/pluginhost.cpp'
+      - 'plugins/include/nativechatthemeprovider.h'
+      - 'plugins/plugins.cmake'
+      - 'src/widgets/NativeChatThemeRegistry.*'
+      - 'options/default.xml'
+      - 'src/widgets/LongListWidget.*'
+      - 'src/widgets/MamChatWidget.*'
+      - 'src/widgets/ChatMessageText.*'
+      - 'src/widgets/psirichtext.*'
+      - 'src/widgets/OverlayScrollBarManager.*'
+      - 'src/src.cmake'
+      - '.github/workflows/mam-native-integration.yml'
+  pull_request:
+    paths:
+      - 'src/chatdlg.*'
+      - 'src/history*'
+      - 'src/edbsqlite.*'
+      - 'src/eventdb.*'
+      - 'src/nativechathistory.*'
+      - 'src/messageview.*'
+      - 'src/widgets/MamHistorySourcePolicy.h'
+      - 'src/psichatdlg.*'
+      - 'src/psiaccount.*'
+      - 'src/accountincomingmessage.*'
+      - 'src/psiencryptioncontroller.*'
+      - 'tests/account/**'
+      - 'tests/mamhistory/**'
+      - 'src/groupchatdlg.*'
+      - 'src/nativechattheme.*'
+      - 'src/desktopcolorpalette.h'
+      - 'src/coloropt.*'
+      - 'src/options/opt_appearance.*'
+      - 'src/psitheme*'
+      - 'src/psicon.cpp'
+      - 'src/pluginhost.cpp'
+      - 'plugins/include/nativechatthemeprovider.h'
+      - 'plugins/plugins.cmake'
+      - 'src/widgets/NativeChatThemeRegistry.*'
+      - 'options/default.xml'
+      - 'src/widgets/LongListWidget.*'
+      - 'src/widgets/MamChatWidget.*'
+      - 'src/widgets/ChatMessageText.*'
+      - 'src/widgets/psirichtext.*'
+      - 'src/widgets/OverlayScrollBarManager.*'
+      - 'src/src.cmake'
+      - '.github/workflows/mam-native-integration.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  basic-qt5:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - name: Resolve non-Iris submodules
+        run: |
+          git submodule update --init --depth 1 3rdparty/http-parser 3rdparty/qhttp 3rdparty/qite
+      - name: Use reviewed Iris MAM implementation for development
+        run: |
+          git submodule update --init iris
+          git -C iris fetch --depth=1 origin 87bf32c0d34e01813a1391a23474bd61723a6346
+          git -C iris checkout --detach 87bf32c0d34e01813a1391a23474bd61723a6346
+          git -C iris submodule update --init --depth 1
+          git -C iris rev-parse HEAD
+      - name: Install Qt5 and Psi dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ccache cmake ninja-build g++ pkg-config zlib1g-dev \
+            qtbase5-dev libqt5svg5-dev libqt5x11extras5-dev qtmultimedia5-dev \
+            libqca-qt5-2-dev libotr5-dev libhttp-parser-dev \
+            libminizip-dev libsm-dev libssl-dev libusrsctp-dev \
+            libsrtp2-dev libtidy-dev libxss-dev libqt5sql5-sqlite
+      - name: Restore compiler cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: psi-mam-basic-qt5-${{ runner.os }}-${{ github.head_ref || github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            psi-mam-basic-qt5-${{ runner.os }}-${{ github.head_ref || github.ref_name }}-
+            psi-mam-basic-qt5-${{ runner.os }}-
+      - name: Configure compiler cache
+        run: |
+          ccache --max-size=600M
+          ccache --zero-stats
+      - name: Configure basic chat with bundled development Iris
+        run: |
+          cmake -S . -B build-mam-chat -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DCHAT_TYPE=BASIC \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DBUNDLED_IRIS=ON -DBUNDLED_IRIS_ALL=OFF \
+            -DIRIS_SYSTEM_QCA=2 -DIRIS_ENABLE_OMEMO=OFF \
+            -DENABLE_OMEMO=OFF -DENABLE_PLUGINS=OFF \
+            -DUSE_KEYCHAIN=OFF -DUSE_HUNSPELL=OFF -DUSE_SPARKLE=OFF \
+            -DBUILD_TESTING=OFF
+      - name: Build Psi basic with MAM widget timeline
+        run: cmake --build build-mam-chat --parallel 4
+      - name: Build and run account plaintext/encryption regression
+        run: |
+          cmake -S . -B build-mam-chat -DBUILD_TESTING=ON
+          cmake --build build-mam-chat --target account_message_receipt_test history_sync_test history_archive_test filesharing_sims_history_test --parallel 4
+          ctest --test-dir build-mam-chat --output-on-failure -R '^(account_message_receipt|history_sync|history_archive|filesharing_sims_history)$'
+
+      - name: Compiler cache statistics
+        if: always()
+        run: ccache --show-stats

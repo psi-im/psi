@@ -2,6 +2,7 @@
 #include "callview.h"
 #include <QAction>
 #include <QApplication>
+#include <QDir>
 #include <QFrame>
 #include <QLabel>
 #include <QLineEdit>
@@ -193,7 +194,7 @@ private slots:
         view.setSharing(true, QStringLiteral("Display 1 · 1920 × 1080"));
         view.show();
         QTest::qWait(20);
-        QVERIFY(view.grab().save(QStringLiteral("/tmp/psi-screen-call.png")));
+        QVERIFY(view.grab().save(QDir::temp().filePath(QStringLiteral("psi-screen-call.png"))));
     }
 
     void mediaControlsAfterWhiteboardConnects()

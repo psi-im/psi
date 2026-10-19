@@ -40,7 +40,8 @@ public:
         FileTransferRequest,
         FileTransferFinished,
         Reactions,
-        MessageRetraction
+        MessageRetraction,
+        DeliveryReceipt
     };
 
     enum Flag {
@@ -51,6 +52,7 @@ public:
         AwaitingReceipt  = 0x10,
         HideStatusChange = 0x20,
         HideJoinLeave    = 0x40,
+        Edited           = 0x80,
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
@@ -76,6 +78,16 @@ public:
     static MessageView reactionsMessage(const QString &nick, const QString &targetMessageId,
                                         const QSet<QString> &reactions);
     static MessageView retractionMessage(const QString &targetMessageId);
+    // Protocol events update an existing row; they never create a text row.
+    static MessageView receiptMessage(const QString &targetMessageId)
+    {
+        MessageView mv(DeliveryReceipt);
+        mv.setMessageId(targetMessageId);
+        return mv;
+    }
+    static bool    protocolMessage(const XMPP::Message &, bool local, MessageView &);
+    static QString reactionTarget(const XMPP::Message &);
+    static QString retractionTarget(const XMPP::Message &);
 
     inline Type           type() const { return _type; }
     inline const QString &text() const { return _text; }
@@ -99,6 +111,8 @@ public:
     inline bool isEmote() const { return bool(_flags & Emote); }
     inline void setSpooled(bool state = true) { _flags.setFlag(Spooled, state); }
     inline bool isSpooled() const { return bool(_flags & Spooled); }
+    inline void setEdited(bool edited = true) { _flags.setFlag(Edited, edited); }
+    inline bool isEdited() const { return bool(_flags & Edited); }
     inline void setAwaitingReceipt(bool b = true) { _flags.setFlag(AwaitingReceipt, b); }
     inline bool isAwaitingReceipt() const { return bool(_flags & AwaitingReceipt); }
     inline void setStatusChangeHidden(bool b = true) { _flags.setFlag(HideStatusChange, b); }
@@ -115,12 +129,28 @@ public:
     inline const QString                  &nick() const { return _nick; }
     inline void                            setMessageId(const QString &id) { _messageId = id; }
     inline const QString                  &messageId() const { return _messageId; }
+    // Verified archive UID from a MAM result; never substitute for stanza id.
+    inline void                            setArchiveId(const QString &id) { _archiveId = id; }
+    inline const QString                  &archiveId() const { return _archiveId; }
+    void setHistoryId(qint64 id) { _historyId = id; }
+    qint64 historyId() const { return _historyId; }
+    void                                   setRevisionTime(const QDateTime &time) { _revisionTime = time; }
+    QDateTime revisionTime() const { return _revisionTime.isValid() ? _revisionTime : _dateTime; }
+    void      setReactionTargetId(const QString &id) { _reactionTargetId = id; }
+    QString   reactionTargetId() const { return _reactionTargetId; }
+    void      setRetractionTargetId(const QString &id) { _retractionTargetId = id; }
+    QString   retractionTargetId() const { return _retractionTargetId; }
     inline void                            setUserId(const QString &id) { _userId = id; }
     inline const QString                  &userId() const { return _userId; }
     inline void                            setDateTime(const QDateTime &dt) { _dateTime = dt; }
     inline const QDateTime                &dateTime() const { return _dateTime; }
     inline QMap<QString, QString>          urls() const { return _urls; }
-    inline void                            setReplaceId(const QString &id) { _replaceId = id; }
+    inline void                            setReplaceId(const QString &id)
+    {
+        _replaceId = id;
+        if (!id.isEmpty())
+            setEdited();
+    }
     inline const QString                  &replaceId() const { return _replaceId; }
     inline void                            setQuoteId(const QString &id) { _quoteId = id; }
     inline const QString                  &quoteId() const { return _quoteId; }
@@ -139,11 +169,16 @@ private:
     int                      _status;
     int                      _statusPriority;
     QString                  _messageId;
+    QString                  _archiveId;
+    qint64                   _historyId = 0;
     QString                  _userId;   // TODO: convert to XMPP::Jid, only used in message corrections as of now
     QString                  _nick;     // rich / as is
     QString                  _text;     // always rich (plain text converted to rich)
     QString                  _userText; // rich
     QDateTime                _dateTime;
+    QDateTime                _revisionTime;
+    QString                  _reactionTargetId;
+    QString                  _retractionTargetId;
     QMap<QString, QString>   _urls;
     QString                  _replaceId;
     QString                  _quoteId;

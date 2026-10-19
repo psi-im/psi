@@ -52,6 +52,17 @@ typedef Qt::TimeSpec TimeZomeEnum;
 
 static const QString geometryOption = "options.ui.history.size";
 
+static bool isProtocolRecord(const EDBItemPtr &item)
+{
+    if (item->protocolOnly())
+        return true;
+    if (item->event()->type() != PsiEvent::Message)
+        return false;
+    MessageView event(MessageView::System);
+    auto        message = item->event().staticCast<MessageEvent>();
+    return MessageView::protocolMessage(message->message(), message->originLocal(), event);
+}
+
 static QString getNext(QString *str)
 {
     int n = 0;
@@ -541,10 +552,16 @@ void DisplayProxy::displayResult(const EDBResult &r, int dir)
     while (i >= 0 && i < r.count()) {
         EDBItemPtr    item = r.value(i);
         PsiEvent::Ptr e(item->event());
+        if (isProtocolRecord(item)) {
+            i += d;
+            continue;
+        }
         if (e->type() == PsiEvent::Message) {
             PsiAccount       *pa   = (acc) ? acc : e->account();
             QString           from = getNick(e->account(), e->from());
             MessageEvent::Ptr me   = e.staticCast<MessageEvent>();
+            if (me->message().type() == Message::Type::Groupchat)
+                from = me->message().from().resource();
             QString           msg  = me->message().body();
             msg                    = TextUtil::linkify(TextUtil::plain2rich(msg));
 
@@ -1008,6 +1025,8 @@ void HistoryDlg::exportHistory()
         for (int i = 0; i < cnt; ++i) {
             EDBItemPtr    item = r.value(i);
             PsiEvent::Ptr e(item->event());
+            if (isProtocolRecord(item))
+                continue;
             QString       txt;
 
             QString ts = QLocale().toString(e->timeStamp(), QLocale::ShortFormat);

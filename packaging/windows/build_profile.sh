@@ -122,13 +122,32 @@ if [[ "$build_testing" == ON ]]; then
 
     for test_exe in \
         "$build_dir"/src/avcall/unittest/*.exe \
+        "$build_dir"/psi/avcall*_test.exe \
         "$build_dir"/tests/avcall/backend-lifecycle/*.exe; do
         [[ -f "$test_exe" ]] || continue
         echo "Runtime imports for $test_exe:"
         objdump -p "$test_exe" | sed -n 's/^[[:space:]]*DLL Name: /  /p'
     done
 
-    PATH="$test_path" ctest --test-dir "$build_dir" --output-on-failure --no-tests=error -V -R '^avcall'
+    if ! PATH="$test_path" ctest --test-dir "$build_dir" --output-on-failure --no-tests=error -V -R '^avcall'; then
+        # A Windows process that aborts loses its pipe-buffered QTest output.
+        # Run each QTest function separately to report where it terminates.
+        for test_exe in "$build_dir"/psi/avcall*_test.exe; do
+            functions=$(PATH="$test_path" QT_QPA_PLATFORM=offscreen "$test_exe" -functions 2>/dev/null \
+                | tr -d '\r' | sed -n 's/()$//p') || true
+            [[ -n "$functions" ]] || continue
+            for function in $functions; do
+                status=0
+                PATH="$test_path" QT_QPA_PLATFORM=offscreen "$test_exe" "$function" \
+                    > "$build_dir/qtest-function.log" 2>&1 || status=$?
+                if [[ $status -ne 0 ]]; then
+                    echo "$(basename "$test_exe") $function exited with $status"
+                    cat "$build_dir/qtest-function.log"
+                fi
+            done
+        done
+        exit 8
+    fi
 fi
 ccache --show-stats
 

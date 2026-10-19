@@ -4,6 +4,8 @@
  */
 
 #include "pluginhost.h"
+#include "nativechattheme.h"
+#include "../plugins/include/nativechatthemeprovider.h"
 
 #include "../avcall/mediadevicewatcher.h"
 #include "accountinfoaccessor.h"
@@ -525,6 +527,8 @@ bool PluginHost::enable()
         enableHandler = new QObject(this);
         enabled_      = qobject_cast<PsiPlugin *>(plugin_)->enable();
         if (enabled_) {
+            if (auto *themes = qobject_cast<NativeChatThemeProvider *>(plugin_))
+                NativeChatThemes::instance()->add(this, themes->nativeChatThemes());
             emit enabled();
         } else {
             manager_->unregisterEncryptionMethods(this);
@@ -548,6 +552,7 @@ bool PluginHost::disable()
     if (enabled_) {
         enabled_ = !qobject_cast<PsiPlugin *>(plugin_)->disable();
         if (!enabled_) {
+            NativeChatThemes::instance()->remove(this);
             manager_->unregisterEncryptionMethods(this);
             delete enableHandler;
             emit disabled();

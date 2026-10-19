@@ -76,6 +76,7 @@
 #include "psioptions.h"
 #include "psirichtext.h"
 #include "psithememanager.h"
+#include "nativechattheme.h"
 #include "psitoolbar.h"
 #include "shortcutmanager.h"
 #include "spellchecker/spellchecker.h"
@@ -561,6 +562,9 @@ bool PsiCon::init()
 #ifdef WEBKIT
     d->themeManager->registerProvider(new ChatViewThemeProvider(this), true);
     d->themeManager->registerProvider(new GroupChatViewThemeProvider(this), true);
+#else
+    d->themeManager->registerProvider(new NativeChatViewThemeProvider(this, false), true);
+    d->themeManager->registerProvider(new NativeChatViewThemeProvider(this, true), true);
 #endif
 
     const auto reportThemeError = [this]() {

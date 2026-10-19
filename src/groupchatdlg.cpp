@@ -25,6 +25,8 @@
 #include "avcall/avcall.h"
 #include "bookmarkmanager.h"
 #include "coloropt.h"
+#include "chatview.h"
+#include "eventdb.h"
 #include "filesharingmanager.h"
 #include "filesharingpublication.h"
 #include "gcuserview.h"
@@ -38,6 +40,13 @@
 #include "mcmdmanager.h"
 #include "mcmdsimplesite.h"
 #include "messageview.h"
+#include "historysync.h"
+#include "nativechathistory.h"
+#include "nativechattheme.h"
+#include "widgets/MamChatWidget.h"
+#include "iris/xmpp_mammanager.h"
+#include "iris/xmpp_forwarding.h"
+#include "iris/xmpp_xmlcommon.h"
 #include "msgmle.h"
 #include "mucconfigdlg.h"
 #include "mucmanager.h"
@@ -82,6 +91,7 @@
 #include <QMessageBox>
 #include <QMimeData>
 #include <QPointer>
+#include <QScrollBar>
 #include <QPushButton>
 #include <QTextCursor>
 #include <QTimer>
@@ -667,6 +677,7 @@ void GCMainDlg::outgoingReactions(const QString &messageId, const QSet<QString> 
     Message m(jid());
     m.setType(Message::Type::Groupchat);
     m.setReactions({ messageId, reactions });
+    m.setProcessingHints(Message::Store);
     QString id = account()->client()->genUniqueId();
     m.setId(id); // we need id early for message manipulations in chatview
     m.setTimeStamp(QDateTime::currentDateTime());
@@ -678,8 +689,10 @@ void GCMainDlg::outgoingReactions(const QString &messageId, const QSet<QString> 
 void GCMainDlg::sendMessageRetraction(const QString &messageId)
 {
     Message m(jid());
+    m.setId(account()->client()->genUniqueId());
     m.setType(Message::Type::Groupchat);
     m.setRetraction(messageId);
+    m.setProcessingHints(Message::Store);
     // QString id = account()->client()->genUniqueId();
     // m.setId(id); // we need id early for message manipulations in chatview
     // m.setTimeStamp(QDateTime::currentDateTime());
@@ -875,6 +888,58 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     setAcceptDrops(true);
 
     ui_.setupUi(this);
+#ifndef WEBKIT
+    nativeTimeline_ = new MamChatWidget(ui_.topFrame);
+    nativeTimeline_->setGroupChat(true);
+    const int logIndex = ui_.hsplitter->indexOf(ui_.log);
+    ui_.hsplitter->replaceWidget(logIndex, nativeTimeline_);
+    ui_.log->setParent(ui_.topFrame);
+    ui_.log->hide();
+    configureNativeChat(nativeTimeline_, account(), jid(), true);
+    connect(nativeTimeline_, &MamChatWidget::outgoingReactions, this, &GCMainDlg::outgoingReactions);
+    connect(nativeTimeline_, &MamChatWidget::outgoingMessageRetraction, this, &GCMainDlg::sendMessageRetraction);
+    // Preserve Psi's established per-nickname coloring policy in both native
+    // layouts, including fixed/hash palettes and muted MAM/history records.
+    QPointer<ChatView> oldView(ui_.log);
+    nativeTimeline_->setNicknameColorResolver([oldView](const MessageView &message) -> QColor {
+        if (!oldView)
+            return {};
+        if (message.isSpooled() && !PsiOptions::instance()->getOption(
+                QStringLiteral("options.ui.muc.colored-history")).toBool())
+            return ColorOpt::instance()->color(QStringLiteral("options.ui.look.colors.messages.informational"));
+        return QColor(oldView->getMucNickColor(message.nick(), message.isLocal()));
+    });
+    connect(PsiOptions::instance(), &PsiOptions::optionChanged, nativeTimeline_,
+            [this](const QString &option) {
+        if (option == QLatin1String("options.ui.muc.use-nick-coloring")
+            || option == QLatin1String("options.ui.muc.use-hash-nick-coloring")
+            || option == QLatin1String("options.ui.muc.colored-history")
+            || option == QLatin1String("options.ui.look.colors.muc.nick-colors"))
+            nativeTimeline_->refreshNicknameColors();
+    });
+    connect(ColorOpt::instance(), &ColorOpt::changed, nativeTimeline_, [this](const QString &option) {
+        if (option == QLatin1String("options.ui.look.colors.messages.informational"))
+            nativeTimeline_->refreshNicknameColors();
+    });
+    connect(nativeTimeline_, &MamChatWidget::nicknameClicked, this, &GCMainDlg::onNickInsertClick);
+    connect(nativeTimeline_, &MamChatWidget::avatarClicked, this,
+            [this](const QString &nickname, bool) {
+        if (!nickname.isEmpty())
+            account()->invokeGCInfo(jid().withResource(nickname));
+    });
+    connect(nativeTimeline_, &MamChatWidget::olderMessagesRequested, this, &GCMainDlg::loadOlderMamMessages,
+            Qt::QueuedConnection);
+    connect(account(), &PsiAccount::disconnected, this, [this] {
+        mamArchiveReady_ = false;
+        if (mamTask_) {
+            mamTask_->safeDelete();
+            mamTask_.clear();
+        }
+        nativeTimeline_->setHistoryExhausted(localExhausted_);
+        nativeTimeline_->setHistoryLoading(false);
+    });
+    QTimer::singleShot(0, this, &GCMainDlg::loadOlderMamMessages);
+#endif
     d->tabmode = PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool();
 
     ui_.log->setSessionData(true, false, jid(), jid().full()); // FIXME change conference name
@@ -1110,6 +1175,8 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
 
 GCMainDlg::~GCMainDlg()
 {
+    if (mamTask_)
+        mamTask_->safeDelete();
     //  Save splitters size
     PsiOptions::instance()->setOption("options.ui.muc.log-width", d->logSize);
     PsiOptions::instance()->setOption("options.ui.muc.roster-width", d->rosterSize);
@@ -1212,9 +1279,21 @@ void GCMainDlg::setShortcuts()
     d->act_minimize->setShortcuts(ShortcutManager::instance()->shortcuts("chat.minimize"));
 }
 
-void GCMainDlg::scrollUp() { ui_.log->scrollUp(); }
+void GCMainDlg::scrollUp()
+{
+    if (nativeTimeline_)
+        nativeTimeline_->verticalScrollBar()->triggerAction(QAbstractSlider::SliderPageStepSub);
+    else
+        ui_.log->scrollUp();
+}
 
-void GCMainDlg::scrollDown() { ui_.log->scrollDown(); }
+void GCMainDlg::scrollDown()
+{
+    if (nativeTimeline_)
+        nativeTimeline_->verticalScrollBar()->triggerAction(QAbstractSlider::SliderPageStepAdd);
+    else
+        ui_.log->scrollDown();
+}
 
 void GCMainDlg::closeEvent(QCloseEvent *e)
 {
@@ -1581,7 +1660,24 @@ void GCMainDlg::doShowInfo()
     dlg->show();
 }
 
-void GCMainDlg::doClear() { ui_.log->clear(); }
+void GCMainDlg::doClear()
+{
+    ui_.log->clear();
+    if (mamTask_) {
+        mamTask_->safeDelete();
+        mamTask_.clear();
+    }
+    if (nativeTimeline_) {
+        nativeTimeline_->clearMessages();
+        nativeTimeline_->setHistoryLoading(false);
+        nativeTimeline_->setHistoryExhausted(true);
+    }
+    mamBeforeId_.clear();
+    localBeforeId_ = 0;
+    localExhausted_ = true;
+    mamRefreshTail_ = false;
+    mamExhausted_ = true; // Clearing the window must not immediately replay its history.
+}
 
 void GCMainDlg::doClearButton()
 {
@@ -1729,7 +1825,18 @@ void GCMainDlg::reactivate()
 
 void GCMainDlg::setJid(const Jid &j)
 {
+    const QString oldRoom = jid().bare();
     TabbableWidget::setJid(j);
+    if (oldRoom != jid().bare()) {
+        doClear();
+        localExhausted_ = false;
+        mamExhausted_ = false;
+        mamArchiveReady_ = false;
+        if (nativeTimeline_)
+            nativeTimeline_->setHistoryExhausted(false);
+    }
+    if (nativeTimeline_)
+        nativeTimeline_->setProperty("nativeChatPeer", jid().full());
     d->self = d->prev_self = j.resource();
     ui_.log->setLocalNickname(d->self);
 }
@@ -1979,7 +2086,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
                 bool statusWithPriority = options_->getOption("options.ui.muc.status-with-priority").toBool();
                 if (s.status() != contact->status.status() || s.show() != contact->status.show()
                     || (statusWithPriority && s.priority() != contact->status.priority())) {
-                    ui_.log->dispatchMessage(MessageView::statusMessage(nick, int(s.type()), s.status(), s.priority()));
+                    dispatchMessage(MessageView::statusMessage(nick, int(s.type()), s.status(), s.priority()));
                 }
             }
         }
@@ -2190,15 +2297,9 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
         return;
     }
 
-    if (!dm.reactions().targetId.isEmpty()) {
-        auto mv = MessageView::reactionsMessage(from, dm.reactions().targetId, dm.reactions().reactions);
-        ui_.log->dispatchMessage(mv);
-        return;
-    }
-
-    if (!dm.retraction().isEmpty()) {
-        auto mv = MessageView::retractionMessage(dm.retraction());
-        ui_.log->dispatchMessage(mv);
+    MessageView protocol(MessageView::System);
+    if (MessageView::protocolMessage(dm, from == nick(), protocol)) {
+        dispatchMessage(protocol);
         return;
     }
 
@@ -2264,6 +2365,11 @@ void GCMainDlg::joined()
         appendSysMsg(tr("Connected."), true);
     }
     account()->addMucItem(d->dlg->jid().bare());
+    mamArchiveReady_ = true;
+    mamRefreshTail_ = !mamBeforeId_.isEmpty();
+    if (nativeTimeline_)
+        nativeTimeline_->setHistoryExhausted(false);
+    QTimer::singleShot(0, this, &GCMainDlg::loadOlderMamMessages);
 }
 
 void GCMainDlg::setPassword(const QString &p) { d->password = p; }
@@ -2283,12 +2389,130 @@ void GCMainDlg::appendSysMsg(const QString &str, bool alert)
 
 void GCMainDlg::dispatchMessage(const MessageView &mv)
 {
+    if (mv.type() == MessageView::DeliveryReceipt) {
+        if (nativeTimeline_)
+            nativeTimeline_->appendMessage(mv);
+        ui_.log->markReceived(mv.messageId());
+        return;
+    }
     if (d->trackBar && !mv.isLocal() && !mv.isSpooled() && mv.reactionsId().isEmpty())
         d->doTrackBar();
 
+    if (nativeTimeline_)
+        nativeTimeline_->appendMessage(mv);
     ui_.log->dispatchMessage(mv);
     if (mv.isAlert())
         doAlert();
+}
+
+void GCMainDlg::loadOlderMamMessages()
+{
+    if (!nativeTimeline_ || mamTask_)
+        return;
+    nativeTimeline_->setHistoryLoading(true);
+    const bool initialAtEnd = mamBeforeId_.isEmpty() && nativeTimeline_->isAtEnd();
+    prependLocalChatHistory(nativeTimeline_, account(), jid().bare(), true, nick(), localBeforeId_, localExhausted_);
+    if (initialAtEnd)
+        nativeTimeline_->scrollToEnd();
+    if ((mamExhausted_ && !mamRefreshTail_) || !mamArchiveReady_ || !account()->isConnected() || d->state != Private::Connected) {
+        nativeTimeline_->setHistoryLoading(false);
+        nativeTimeline_->setHistoryExhausted(localExhausted_);
+        return;
+    }
+    const auto room = jid().withResource({});
+    const bool refreshTail = mamRefreshTail_;
+    const QString requestedBefore = refreshTail ? QString() : mamBeforeId_;
+    mamRefreshTail_ = false;
+    auto *task = new HistorySync(account(), room.bare(), true, requestedBefore, this);
+    mamTask_ = task;
+    connect(task, &HistorySync::finished, this, [this, task, room, requestedBefore] {
+        if (mamTask_ != task)
+            return;
+        mamTask_.clear();
+        nativeTimeline_->setHistoryLoading(false);
+        if (!task->success() || !room.compare(jid(), false)) {
+            // A missing/forbidden archive leaves the ordinary live room history intact.
+            // A reconnect retries from the same cursor after joining the room again.
+            if (account()->isConnected()) {
+                mamExhausted_ = true;
+                nativeTimeline_->setHistoryExhausted(localExhausted_);
+            }
+            task->deleteLater();
+            return;
+        }
+        QList<QPair<QString, MessageView>> page;
+        QString oldest;
+        for (const auto &result : task->archive()) {
+            const QString uid = result.attribute(QStringLiteral("id"));
+            if (uid.isEmpty())
+                continue;
+            if (oldest.isEmpty())
+                oldest = uid;
+            const auto forwarded = childElementsByTagNameNS(result, QStringLiteral("urn:xmpp:forward:0"),
+                                                           QStringLiteral("forwarded")).item(0).toElement();
+            XMPP::Forwarding wrapper;
+            if (!wrapper.fromXml(forwarded, account()->client()))
+                continue;
+            auto      archived = task->message(uid);
+            QDateTime revisionTime;
+            QString   originalTarget = MessageView::reactionTarget(archived);
+            QString   retractionTarget = MessageView::retractionTarget(archived);
+            if (originalTarget.isEmpty())
+                originalTarget = uid;
+            if (retractionTarget.isEmpty())
+                retractionTarget = uid;
+            QDateTime archivedTime = wrapper.timeStamp().isValid()
+                ? wrapper.timeStamp() : archived.timeStamp();
+            if (auto resolved = account()->edb()->resolvedHistoryEvent(task->eventId(uid))) {
+                if (resolved->event()->type() == PsiEvent::Message) {
+                    const auto actual = resolved->event().staticCast<MessageEvent>()->message().displayMessage();
+                    archived          = actual;
+                    revisionTime      = resolved->revisionTime();
+                    if (!resolved->reactionTarget().isEmpty())
+                        originalTarget = resolved->reactionTarget();
+                    if (!resolved->retractionTarget().isEmpty())
+                        retractionTarget = resolved->retractionTarget();
+                    archivedTime = actual.timeStamp();
+                }
+            }
+            MessageView protocol(MessageView::System);
+            archived.setTimeStamp(archivedTime);
+            if (MessageView::protocolMessage(archived, archived.from().resource() == nick(), protocol)) {
+                nativeTimeline_->appendMessage(protocol);
+                continue;
+            }
+            if (task->protocolOnly(uid))
+                continue;
+            if (!archived.from().compare(room, false) || archived.type() != XMPP::Message::Type::Groupchat
+                || archived.from().resource().isEmpty())
+                continue;
+            auto mv = nativeHistoryMessage(account(), jid().bare(), archived, archived.from().resource() == nick());
+            mv.setArchiveId(uid);
+            mv.setHistoryId(task->eventId(uid));
+            mv.setRevisionTime(revisionTime);
+            mv.setReactionTargetId(originalTarget);
+            mv.setRetractionTargetId(retractionTarget);
+            mv.setMessageId(archived.id());
+            mv.setReplaceId(archived.replaceId());
+            mv.setUserId(archived.from().full());
+            mv.setNick(archived.from().resource());
+            mv.setLocal(mv.nick() == nick());
+            mv.setSpooled(true);
+            mv.setDateTime(archivedTime);
+            page.append(qMakePair(uid, mv));
+        }
+        const bool initial = requestedBefore.isEmpty();
+        const bool atEnd = nativeTimeline_->isAtEnd();
+        mamExhausted_ = task->isComplete() || oldest.isEmpty() || oldest == requestedBefore;
+        if (!oldest.isEmpty())
+            mamBeforeId_ = oldest;
+        nativeTimeline_->prependArchivePage(page);
+        nativeTimeline_->setHistoryExhausted(mamExhausted_ && localExhausted_);
+        if (initial && atEnd)
+            nativeTimeline_->scrollToEnd();
+        task->deleteLater();
+    });
+    task->go();
 }
 
 void GCMainDlg::appendMessage(const Message &m, bool alert)
@@ -2328,6 +2552,8 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
     if (!PsiOptions::instance()->getOption("options.ui.muc.use-highlighting").toBool())
         alert = false;
     mv.setMessageId(dm.id());
+    mv.setReactionTargetId(MessageView::reactionTarget(dm));
+    mv.setRetractionTargetId(MessageView::retractionTarget(dm));
     mv.setAlert(alert);
     mv.setUserId(dm.from().full()); // theoretically, this can be inferred from the chat dialog properties
     mv.setNick(dm.from().resource());

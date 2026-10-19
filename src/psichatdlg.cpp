@@ -43,6 +43,17 @@
 #include "jidutil.h"
 #include "lastactivitytask.h"
 #include "messageview.h"
+#include "historysync.h"
+#include "eventdb.h"
+#include "nativechathistory.h"
+#include "nativechattheme.h"
+#include "widgets/MamChatWidget.h"
+#include "widgets/MamHistorySourcePolicy.h"
+#include "widgets/MamArchivePeerPolicy.h"
+#include "widgets/OverlayScrollBarManager.h"
+#include "iris/xmpp_mammanager.h"
+#include "iris/xmpp_forwarding.h"
+#include "iris/xmpp_xmlcommon.h"
 #include "msgmle.h"
 #include "pgputil.h"
 #include "psiaccount.h"
@@ -68,6 +79,10 @@
 #endif
 
 #include <QClipboard>
+#include <QApplication>
+#include <QScrollBar>
+#include <QTimer>
+#include <algorithm>
 #include <QCloseEvent>
 #include <QColor>
 #include <QContextMenuEvent>
@@ -232,8 +247,193 @@ PsiChatDlg::PsiChatDlg(const Jid &jid, PsiAccount *pa, TabManager *tabManager) :
     }
 }
 
+
+bool PsiChatDlg::displayNativeMessage(const MessageView &mv)
+{
+    if (!nativeTimeline_)
+        return false;
+    nativeTimeline_->appendMessage(mv);
+    return true;
+}
+
+bool PsiChatDlg::scrollNativeHistory(bool down)
+{
+    if (!nativeTimeline_)
+        return false;
+    auto *bar = nativeTimeline_->verticalScrollBar();
+    bar->setValue(bar->value() + (down ? 1 : -1) * bar->pageStep());
+    return true;
+}
+
+void PsiChatDlg::clearNativeHistory()
+{
+    if (mamTask_) {
+        mamTask_->safeDelete();
+        mamTask_.clear();
+    }
+    if (nativeTimeline_)
+        nativeTimeline_->clearMessages();
+    resetLocalHistorySource();
+    mamBeforeId_.clear();
+    mamRefreshTail_ = false;
+    localBeforeId_ = 0;
+    localExhausted_ = true;
+    mamExhausted_ = true; // Clearing the view must not immediately reload saved rows.
+    mamResumeAfterConnect_ = false;
+}
+
+void PsiChatDlg::loadOlderMamMessages()
+{
+    if (!nativeTimeline_ || mamTask_
+        || !PsiMam::mayFetchArchive(mamBeforeId_.isEmpty(), localHistoryPreloadPending(), localHistoryPopulated()))
+        return;
+
+    nativeTimeline_->setHistoryLoading(true);
+    const bool atEndBeforeLocal = nativeTimeline_->isAtEnd();
+    const bool occupantPrivate = account()->findGCContact(jid());
+    prependLocalChatHistory(nativeTimeline_, account(), occupantPrivate ? jid().full() : jid().bare(), false,
+                            account()->nick(), localBeforeId_, localExhausted_);
+    if (occupantPrivate)
+        mamExhausted_ = true; // Occupant private messages keep their existing local-only history path.
+    if (atEndBeforeLocal && mamBeforeId_.isEmpty())
+        nativeTimeline_->scrollToEnd();
+    if (occupantPrivate || (mamExhausted_ && !(mamRefreshTail_ && account()->isConnected()))) {
+        nativeTimeline_->setHistoryLoading(false);
+        nativeTimeline_->setHistoryExhausted(localExhausted_);
+        return;
+    }
+    const bool refreshTail = mamRefreshTail_ && account()->isConnected();
+    const QString requestedBefore = refreshTail ? QString() : mamBeforeId_;
+    if (account()->isConnected())
+        mamRefreshTail_ = false;
+    auto *task = new HistorySync(account(), jid().bare(), false, requestedBefore, this);
+    mamTask_ = task;
+    const QString peer = jid().bare();
+    const bool initialPage = requestedBefore.isEmpty();
+    connect(task, &HistorySync::finished, this, [this, task, peer, initialPage, requestedBefore] {
+        if (mamTask_ != task)
+            return;
+        mamTask_.clear();
+        if (jid().bare() != peer || !task->success()) {
+            // If the authenticated stream drops before the completion signal,
+            // resume the same opaque cursor on the next successful login.
+            if (!account()->isConnected() && jid().bare() == peer)
+                mamResumeAfterConnect_ = true;
+            if (!task->success())
+                qWarning().noquote() << "[mam-history] Query failed:" << task->statusString();
+            nativeTimeline_->setHistoryLoading(false);
+            task->deleteLater();
+            if (jid().bare() == peer) {
+                // Do not retry a failed page in a tight viewport-fill loop.
+                // Offline pagination resumes after login; local rows remain
+                // independently pageable even without a usable server cursor.
+                mamExhausted_ = true;
+                nativeTimeline_->setHistoryExhausted(localExhausted_);
+                if (initialPage && nativeTimeline_->messageCount() == 0 && !localHistoryPopulated())
+                    preloadHistory(true);
+            }
+            return;
+        }
+
+        QList<QPair<QString, MessageView>> page;
+        QString oldestId;
+        const auto &results = task->archive();
+        for (const QDomElement &result : results) {
+            const auto uid = result.attribute(QStringLiteral("id"));
+            if (uid.isEmpty())
+                continue;
+            if (oldestId.isEmpty())
+                oldestId = uid;
+            const auto forwarded = childElementsByTagNameNS(
+                result, QStringLiteral("urn:xmpp:forward:0"), QStringLiteral("forwarded"))
+                                       .item(0).toElement();
+            if (forwarded.isNull())
+                continue;
+            XMPP::Forwarding wrapper;
+            if (!wrapper.fromXml(forwarded, account()->client()))
+                continue;
+            auto      archived = task->message(uid);
+            QDateTime revisionTime;
+            QString   originalTarget = MessageView::reactionTarget(archived);
+            QString   retractionTarget = MessageView::retractionTarget(archived);
+            // A validated MAM result may be an older revision whose latest
+            // corrected text lives in another page. The persisted revision
+            // graph resolves it before the native timeline sees this row.
+            QDateTime archivedTime = wrapper.timeStamp().isValid()
+                ? wrapper.timeStamp() : archived.timeStamp();
+            if (auto resolved = account()->edb()->resolvedHistoryEvent(task->eventId(uid))) {
+                if (resolved->event()->type() == PsiEvent::Message) {
+                    const auto actual = resolved->event().staticCast<MessageEvent>()->message().displayMessage();
+                    archived          = actual;
+                    revisionTime      = resolved->revisionTime();
+                    if (!resolved->reactionTarget().isEmpty())
+                        originalTarget = resolved->reactionTarget();
+                    if (!resolved->retractionTarget().isEmpty())
+                        retractionTarget = resolved->retractionTarget();
+                    archivedTime = actual.timeStamp();
+                }
+            }
+            // A 'with' filter alone is not a sufficient sender check. This
+            // account's 1:1 conversation consists exclusively of messages
+            // between our bare JID and the selected peer, in either direction.
+            const QString owner = account()->jid().bare();
+            if (!PsiMam::belongsToConversation(owner, peer,
+                                               archived.from().bare(), archived.to().bare()))
+                continue;
+            MessageView protocol(MessageView::System);
+            archived.setTimeStamp(archivedTime);
+            if (MessageView::protocolMessage(archived, archived.from().bare() == account()->jid().bare(), protocol)) {
+                nativeTimeline_->appendMessage(protocol);
+                continue;
+            }
+            if (task->protocolOnly(uid))
+                continue;
+            const bool local = archived.from().bare() == account()->jid().bare();
+            auto       mv    = nativeHistoryMessage(account(), jid().bare(), archived, local);
+            mv.setMessageId(archived.id());
+            mv.setReplaceId(archived.replaceId());
+            mv.setUserId(archived.from().full());
+            mv.setArchiveId(uid);
+            mv.setHistoryId(task->eventId(uid));
+            mv.setRevisionTime(revisionTime);
+            mv.setReactionTargetId(originalTarget);
+            mv.setRetractionTargetId(retractionTarget);
+            mv.setLocal(local);
+            mv.setSpooled(true);
+            mv.setNick(whoNick(local));
+            mv.setDateTime(archivedTime);
+            page.append(qMakePair(uid, mv));
+        }
+        // The non-flipped MAM page is in chronological order, so its first
+        // archive UID is the RSM 'before' cursor for the next older page.
+        // Honor <fin complete='true'/> even when the last page has messages.
+        mamExhausted_ = task->isComplete() || oldestId.isEmpty() || oldestId == requestedBefore;
+        if (!oldestId.isEmpty())
+            mamBeforeId_ = oldestId;
+        if (initialPage && !account()->isConnected()) {
+            mamRefreshTail_ = true;
+            mamResumeAfterConnect_ = true;
+        }
+        const bool wasAtEnd = nativeTimeline_->isAtEnd();
+        nativeTimeline_->prependArchivePage(page);
+        if (initialPage && page.isEmpty() && mamExhausted_
+            && nativeTimeline_->messageCount() == 0)
+            preloadHistory(true); // Empty/textless server archive: show saved local history.
+        if (initialPage && wasAtEnd)
+            nativeTimeline_->scrollToEnd();
+        nativeTimeline_->setHistoryExhausted(mamExhausted_ && localExhausted_);
+        nativeTimeline_->setHistoryLoading(false);
+        task->deleteLater();
+    });
+    task->go();
+}
+
 PsiChatDlg::~PsiChatDlg()
 {
+    if (mamTask_) {
+        mamTask_->safeDelete();
+        mamTask_.clear();
+    }
     if (encryptionSession_)
         encryptionSession_->close();
     SendButtonTemplatesMenu *menu = getTemplateMenu();
@@ -249,10 +449,17 @@ void PsiChatDlg::setJid(const Jid &newJid)
 {
     const Jid oldJid = jid();
     ChatDlg::setJid(newJid);
+    if (nativeTimeline_)
+        nativeTimeline_->setProperty("nativeChatPeer", jid().full());
     if (oldJid == jid())
         return;
 
     if (oldJid.bare() != jid().bare()) {
+        clearNativeHistory();
+        localExhausted_ = false;
+        mamExhausted_ = false;
+        if (nativeTimeline_)
+            QTimer::singleShot(0, this, [this] { loadOlderMamMessages(); });
         if (auto *controller = account()->encryptionController())
             selectedEncryptionMethod_ = controller->selectedMethod(jid());
     }
@@ -300,6 +507,62 @@ void PsiChatDlg::rebuildEncryptionSession()
 void PsiChatDlg::initUi()
 {
     ui_.setupUi(this);
+
+    // The historical QTextEdit remains an internal compatibility adapter
+    // during this first vertical slice; visible rows are real Qt widgets.
+#ifndef WEBKIT
+    nativeTimeline_ = new MamChatWidget(ui_.topFrame);
+    delete ui_.topFrame->layout()->replaceWidget(ui_.log, nativeTimeline_);
+    ui_.log->hide();
+    configureNativeChat(nativeTimeline_, account(), jid(), false);
+    connect(nativeTimeline_, &MamChatWidget::outgoingReactions, this, &PsiChatDlg::sendOutgoingReactions);
+    connect(nativeTimeline_, &MamChatWidget::outgoingMessageRetraction, this, &PsiChatDlg::sendMessageRetraction);
+    connect(nativeTimeline_, &MamChatWidget::avatarClicked, this,
+            [this](const QString &, bool local) {
+        account()->actionInfo(local ? account()->jid() : jid());
+    });
+    connect(nativeTimeline_, &MamChatWidget::olderMessagesRequested,
+            this, &PsiChatDlg::loadOlderMamMessages, Qt::QueuedConnection);
+    // A pending task belongs to one authenticated stream. Cancel it on logout
+    // so a stale pointer cannot suppress pagination after reconnection.
+    connect(account(), &PsiAccount::disconnected, this, [this] {
+        mamRefreshTail_ = true;
+        mamResumeAfterConnect_ = true;
+        // The currently visible portion must survive transient disconnects.
+        // Remember an interrupted page even when earlier pages are present,
+        // otherwise no further visibleRangeChanged signal may arrive.
+        if (mamTask_) {
+            mamResumeAfterConnect_ = true;
+            mamTask_->safeDelete();
+            mamTask_.clear();
+        }
+        if (nativeTimeline_)
+            nativeTimeline_->setHistoryLoading(false);
+    });
+    // Login can follow an offline EDB preload. MAM and local event IDs now
+    // merge, so populated local history no longer blocks synchronization.
+    connect(account(), &PsiAccount::updatedActivity, this, [this] {
+        if (!nativeTimeline_ || !account()->isConnected() || mamTask_)
+            return;
+        if (mamExhausted_ && !mamResumeAfterConnect_)
+            return;
+        const bool initialEmpty = mamBeforeId_.isEmpty() && !localHistoryPreloadPending();
+        if (!mamResumeAfterConnect_ && !initialEmpty)
+            return;
+        // Refresh the moving tail after login. Rewalk its preceding chain
+        // on demand, using cached pages and filling any disconnected gap.
+        mamResumeAfterConnect_ = false;
+        loadOlderMamMessages();
+    });
+    // Finish the EDB preload before merging the initial archive page.
+    connect(this, &ChatDlg::localHistoryPreloadFinished, this, [this] {
+        if (nativeTimeline_ && !mamTask_
+            && !mamExhausted_ && mamBeforeId_.isEmpty()
+            && !localHistoryPreloadPending())
+            loadOlderMamMessages();
+    });
+    QTimer::singleShot(0, this, [this] { loadOlderMamMessages(); });
+#endif
 
     le_autojid = new ActionLineEdit(ui_.le_jid);
     ui_.le_jid->setLineEdit(le_autojid);
@@ -963,6 +1226,16 @@ void PsiChatDlg::updateEncryption()
 {
     auto *controller = account()->encryptionController();
     auto *action     = actions_->action("chat_pgp"); // legacy action id, now generic encryption selector
+    // A contact's preference may be switched externally by an incoming
+    // plaintext message. Rebuilding the active session (not just the button)
+    // is necessary or the next reply still uses stale OMEMO/OpenPGP.
+    if (controller) {
+        const QString selected = controller->selectedMethod(jid());
+        if (selectedEncryptionMethod_ != selected) {
+            selectedEncryptionMethod_ = selected;
+            rebuildEncryptionSession();
+        }
+    }
     if (!controller) {
         action->setEnabled(false);
         action->setChecked(false);

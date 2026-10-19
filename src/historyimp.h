@@ -48,6 +48,7 @@ class HistoryImport : public QObject {
     Q_OBJECT
 
 public:
+    static bool upgradeDatabase(const QString &path);
     enum { ResultNone, ResultNormal, ResultCancel, ResultError };
     HistoryImport(PsiCon *psi);
     ~HistoryImport();

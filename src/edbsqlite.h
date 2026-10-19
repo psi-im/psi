@@ -75,6 +75,7 @@ class EDBSqLite : public EDB {
         bool first() { return QSqlQuery::first(); }
         bool next() { return QSqlQuery::next(); }
         QSqlRecord record() const { return QSqlQuery::record(); }
+        QVariant lastInsertId() const { return QSqlQuery::lastInsertId(); }
         void       freeResult() { QSqlQuery::finish(); }
 
     private:
@@ -103,6 +104,8 @@ public:
     EDBSqLite(PsiCon *psi);
     ~EDBSqLite();
     bool init();
+    EDBItemPtr archivedEvent(const HistoryArchive::Key &, const QString &, const QDateTime & = {}) override;
+    EDBItemPtr ownPlaintext(const HistoryArchive::Key &, const QString &, const QString &, const QDateTime &) override;
 
     int features() const;
     int get(const QString &accId, const XMPP::Jid &jid, const QDateTime date, int direction, int start, int len);
@@ -113,6 +116,11 @@ public:
     quint64            eventsCount(const QString &accId, const XMPP::Jid &jid);
     QString            getStorageParam(const QString &key);
     void               setStorageParam(const QString &key, const QString &val);
+
+    EDBResult            localHistoryPage(const QString &, const XMPP::Jid &, qint64, int) override;
+    EDBItemPtr            resolvedHistoryEvent(qint64 eventId) override;
+    HistoryArchive::Page archivePage(const HistoryArchive::Key &, const QString &, int) override;
+    bool mergeArchivePage(const HistoryArchive::Key &, const QString &, int, HistoryArchive::Page &) override;
 
     void         setInsertingMode(InsertMode mode);
     void         setMirror(EDBFlatFile *mirr);

@@ -41,6 +41,9 @@
 
 class IconAction;
 class PsiContact;
+class MamChatWidget;
+class HistorySync;
+namespace XMPP { class MAMTask; }
 
 class PsiChatDlg : public ChatDlg {
     Q_OBJECT
@@ -63,6 +66,10 @@ protected:
 private:
     void setContactToolTip(QString text);
     void setEncryptionMethod(const QString &methodId, bool persist);
+    void loadOlderMamMessages();
+    bool displayNativeMessage(const MessageView &mv) override;
+    bool scrollNativeHistory(bool down) override;
+    void clearNativeHistory() override;
     void rebuildEncryptionSession();
     void showOwnFingerprint();
     void sendOwnPublicKey();
@@ -124,6 +131,14 @@ private:
 
 private:
     Ui::ChatDlg ui_;
+    MamChatWidget *nativeTimeline_ = nullptr;
+    QPointer<HistorySync> mamTask_;
+    QString mamBeforeId_;
+    bool mamRefreshTail_ = false;
+    qint64 localBeforeId_ = 0;
+    bool localExhausted_ = false;
+    bool mamExhausted_ = false;
+    bool mamResumeAfterConnect_ = false;
 
     QMenu *pm_settings_;
     QMenu *encryptionMenu_ = nullptr;

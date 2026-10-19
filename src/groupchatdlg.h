@@ -28,9 +28,12 @@
 #include "ui_groupchatdlg.h"
 
 #include <QDialog>
+#include <QPointer>
 #include <QWidget>
 
 class GCMainDlg;
+class MamChatWidget;
+class HistorySync;
 class MessageView;
 class PsiAccount;
 class PsiCon;
@@ -40,11 +43,20 @@ class QRect;
 
 namespace XMPP {
 class Message;
+class MAMTask;
 }
 using namespace XMPP;
 
 class GCMainDlg : public TabbableWidget {
     Q_OBJECT
+    MamChatWidget *nativeTimeline_ = nullptr;
+    QPointer<HistorySync> mamTask_;
+    QString mamBeforeId_;
+    bool mamRefreshTail_ = false;
+    qint64 localBeforeId_ = 0;
+    bool localExhausted_ = false;
+    bool mamExhausted_ = false;
+    bool mamArchiveReady_ = false;
 public:
     GCMainDlg(PsiAccount *, const Jid &, TabManager *tabManager);
     ~GCMainDlg();
@@ -79,6 +91,7 @@ public:
 
 protected:
     void setShortcuts();
+    void loadOlderMamMessages();
 
     // reimplemented
     void resizeEvent(QResizeEvent *e);

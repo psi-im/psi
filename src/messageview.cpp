@@ -106,6 +106,39 @@ MessageView MessageView::retractionMessage(const QString &targetMessageId)
     return mv;
 }
 
+QString MessageView::reactionTarget(const XMPP::Message &message)
+{
+    if (message.type() == XMPP::Message::Type::Groupchat)
+        return message.stanzaId(XMPP::Jid(message.from().bare())).id;
+    return message.originId().isEmpty() ? message.id() : message.originId();
+}
+
+QString MessageView::retractionTarget(const XMPP::Message &message)
+{
+    if (message.type() != XMPP::Message::Type::Groupchat)
+        return message.id();
+    const auto roomId = message.stanzaId(XMPP::Jid(message.from().bare())).id;
+    return roomId.isEmpty() ? message.originId() : roomId;
+}
+
+bool MessageView::protocolMessage(const XMPP::Message &message, bool local, MessageView &view)
+{
+    if (!message.retraction().isEmpty())
+        view = retractionMessage(message.retraction());
+    else if (!message.reactions().targetId.isEmpty())
+        view = reactionsMessage(message.from().resource(), message.reactions().targetId, message.reactions().reactions);
+    else if (message.messageReceipt() == XMPP::ReceiptReceived)
+        view = receiptMessage(message.messageReceiptId());
+    else
+        return false;
+    view.setLocal(local);
+    view.setNick(message.from().resource());
+    view.setUserId(message.from().full());
+    view.setDateTime(message.timeStamp());
+    view.setSpooled(message.spooled());
+    return true;
+}
+
 MessageView MessageView::statusMessage(const QString &nick, int status, const QString &statusText, int priority)
 {
     QString message = QObject::tr("%1 is now %2").arg(nick, status2txt(status));

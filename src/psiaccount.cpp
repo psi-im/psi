@@ -3120,6 +3120,18 @@ void PsiAccount::processIncomingMessage(const AccountIncomingMessage &incoming)
             && _m.rosterExchangeItems().isEmpty())
             toggleSecurity(dj, _m.wasEncrypted());
 
+        // toggleSecurity() changes roster indicators only. Updating the
+        // outgoing per-contact encryption method is a separate operation.
+        // Scope this to genuine inbound direct plaintext, excluding MUC
+        // private messages and traffic from this account's other resources.
+        if (!selfMessage && incoming.isPlaintextDirectMessage()
+            && _m.invite().isEmpty() && _m.mucInvites().isEmpty()
+            && _m.rosterExchangeItems().isEmpty()
+            && !groupchats().contains(dj.bare()) && dj.bare() != jid().bare()
+            && d->encryptionController
+            && !d->encryptionController->selectedMethod(dj).isEmpty())
+            d->encryptionController->setSelectedMethod(dj, {});
+
         // Roster item exchange
         if (!_m.forwarded().isCarbons() && !_m.rosterExchangeItems().isEmpty()) {
             RosterExchangeEvent::Ptr ree(new RosterExchangeEvent(dj, _m.rosterExchangeItems(), _m.body(), this));
@@ -5068,7 +5080,10 @@ void PsiAccount::finishSentMessage(const Message &sent, bool log)
     // don't log groupchat or OpenPGP-wrapped messages
     if (log && sent.type() != Message::Type::Groupchat && sent.xencrypted().isEmpty()) {
         int               type = findGCContact(sent.to()) ? EDB::GroupChatContact : EDB::Contact;
-        MessageEvent::Ptr me(new MessageEvent(sent, this));
+        Message           recorded = sent;
+        if (recorded.from().isEmpty())
+            recorded.setFrom(jid());
+        MessageEvent::Ptr me(new MessageEvent(recorded, this));
         me->setOriginLocal(true);
         me->setTimeStamp(QDateTime::currentDateTime());
         const AddressList al = sent.addresses();
@@ -5424,7 +5439,10 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 
     if (activationType != FromXml) {
         if (e->type() == PsiEvent::Message || e->type() == PsiEvent::Auth) {
-            if (!me || !me->message().displayMessage().body().isEmpty()) {
+            if (!me || !me->message().displayMessage().body().isEmpty()
+                || me->message().displayMessage().messageReceipt() == ReceiptReceived
+                || !me->message().displayMessage().reactions().targetId.isEmpty()
+                || !me->message().displayMessage().retraction().isEmpty()) {
                 bool isMuc = false;
 #ifdef GROUPCHAT
                 if (me && me->message().displayMessage().type() == Message::Type::Groupchat)

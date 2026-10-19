@@ -1,0 +1,80 @@
+name: MAM Prosody runtime (development Iris)
+
+on:
+  push:
+    paths:
+      - 'qa/integration/mam-live/**'
+      - '.github/workflows/mam-prosody-runtime.yml'
+  pull_request:
+    paths:
+      - 'qa/integration/mam-live/**'
+      - '.github/workflows/mam-prosody-runtime.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mam-prosody-runtime:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - name: Use reviewed development Iris MAM revision
+        run: |
+          git submodule update --init iris
+          git -C iris fetch --depth=1 origin 292b150f8e97fa480a0def4ae6cd25abc21a1529
+          git -C iris checkout --detach 292b150f8e97fa480a0def4ae6cd25abc21a1529
+          git -C iris submodule update --init --depth 1
+      - name: Install Qt5, QCA and Prosody
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build g++ pkg-config \
+            qtbase5-dev libqca-qt5-2-dev libssl-dev zlib1g-dev prosody
+          sudo systemctl stop prosody.service 2>/dev/null || true
+          sudo service prosody stop 2>/dev/null || true
+      - name: Build network-level Iris MAM smoke client
+        run: |
+          cmake -S qa/integration/mam-live -B build-mam-live -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DPSI_SOURCE_DIR="$GITHUB_WORKSPACE"
+          cmake --build build-mam-live --target psi_mam_prosody_client --parallel 4
+      - name: Start temporary Prosody with mod_mam
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PROSODY_DATA_DIR="$RUNNER_TEMP/psi-mam-prosody-data"
+          export PROSODY_PID_FILE="$RUNNER_TEMP/psi-mam-prosody.pid"
+          mkdir -p "$PROSODY_DATA_DIR"
+          cfg="$GITHUB_WORKSPACE/qa/integration/mam-live/prosody.cfg.lua"
+          mkdir -p "$GITHUB_WORKSPACE/qa/integration/mam-live/certs"
+          prosodyctl --config "$cfg" check config
+          prosodyctl --config "$cfg" register user01 localhost ci-pass-01
+          prosodyctl --config "$cfg" register user02 localhost ci-pass-02
+          prosody -F --config "$cfg" >"$RUNNER_TEMP/psi-mam-prosody.log" 2>&1 &
+          echo $! >"$RUNNER_TEMP/psi-mam-prosody-process.pid"
+          for i in $(seq 1 100); do
+            if (echo > /dev/tcp/127.0.0.1/5222) 2>/dev/null; then exit 0; fi
+            if ! kill -0 "$(cat "$RUNNER_TEMP/psi-mam-prosody-process.pid")" 2>/dev/null; then
+              cat "$RUNNER_TEMP/psi-mam-prosody.log"
+              exit 1
+            fi
+            sleep 0.1
+          done
+          cat "$RUNNER_TEMP/psi-mam-prosody.log"
+          exit 1
+      - name: Verify live MAM archive and three-page backward scrollback
+        run: |
+          set -euo pipefail
+          timeout 80s ./build-mam-live/psi_mam_prosody_client 2>&1 | tee "$RUNNER_TEMP/psi-mam-runtime.log"
+          grep -F 'MAM_RUNTIME_RESULT=success' "$RUNNER_TEMP/psi-mam-runtime.log"
+      - name: Collect Prosody runtime diagnostics
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/psi-mam-prosody-process.pid" ]; then
+            kill "$(cat "$RUNNER_TEMP/psi-mam-prosody-process.pid")" 2>/dev/null || true
+          fi
+          if [ -f "$RUNNER_TEMP/psi-mam-prosody.log" ]; then
+            tail -n 250 "$RUNNER_TEMP/psi-mam-prosody.log"
+          fi

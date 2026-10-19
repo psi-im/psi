@@ -77,27 +77,7 @@ void recolorLinks(QTextDocument *document, const QPalette &palette)
     const QColor linkColor
         = ColorOpt::ensureContrast(ColorOpt::instance()->color("options.ui.look.colors.messages.link"),
                                    palette.color(QPalette::Base), palette.color(QPalette::Text));
-    QList<QPair<int, int>> ranges;
-    for (QTextBlock block = document->begin(); block.isValid(); block = block.next()) {
-        for (auto it = block.begin(); !it.atEnd(); ++it) {
-            const QTextFragment fragment = it.fragment();
-            if (!fragment.isValid())
-                continue;
-            const QTextCharFormat format = fragment.charFormat();
-            const QString         href   = format.anchorHref();
-            if (format.isAnchor() && !href.isEmpty() && !href.startsWith(QLatin1String("addnick://psi/")))
-                ranges.append({ fragment.position(), fragment.length() });
-        }
-    }
-
-    QTextCharFormat format;
-    format.setForeground(linkColor);
-    for (const auto &[position, length] : std::as_const(ranges)) {
-        QTextCursor cursor(document);
-        cursor.setPosition(position);
-        cursor.setPosition(position + length, QTextCursor::KeepAnchor);
-        cursor.mergeCharFormat(format);
-    }
+    PsiRichText::recolorLinks(document, linkColor);
 }
 }
 
@@ -527,7 +507,7 @@ void ChatView::renderMucMessage(const MessageView &mv, QTextCursor &insertCursor
     }
     if (mv.isAlert()) {
         textcolor
-            = PsiOptions::instance()->getOption("options.ui.look.colors.messages.highlighting").value<QColor>().name();
+            = ColorOpt::instance()->color("options.ui.look.colors.messages.highlighting").name();
         alerttagso = "<b>";
         alerttagsc = "</b>";
     }

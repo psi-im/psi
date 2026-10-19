@@ -107,6 +107,17 @@ PsiThemeModel::PsiThemeModel(PsiThemeProvider *provider, QObject *parent) :
 
     connect(&themeWatcher, SIGNAL(resultReadyAt(int)), SLOT(onThreadedResultReadyAt(int)));
     connect(&themeWatcher, SIGNAL(finished()), SLOT(loadComplete()));
+    connect(provider, &PsiThemeProvider::themeListChanged, this, [this] {
+        if (!loader)
+            return; // The initial load has not started yet.
+        gcTimer->stop();
+        beginResetModel();
+        themesInfo.clear();
+        delete loader;
+        loader = nullptr;
+        endResetModel();
+        load();
+    });
 }
 
 PsiThemeModel::~PsiThemeModel() { delete loader; }

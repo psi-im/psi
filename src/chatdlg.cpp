@@ -212,11 +212,17 @@ void ChatDlg::initActions()
 
     act_scrollup_ = new QAction(this);
     addAction(act_scrollup_);
-    connect(act_scrollup_, SIGNAL(triggered()), chatView(), SLOT(scrollUp()));
+    connect(act_scrollup_, &QAction::triggered, this, [this] {
+        if (!scrollNativeHistory(false))
+            chatView()->scrollUp();
+    });
 
     act_scrolldown_ = new QAction(this);
     addAction(act_scrolldown_);
-    connect(act_scrolldown_, SIGNAL(triggered()), chatView(), SLOT(scrollDown()));
+    connect(act_scrolldown_, &QAction::triggered, this, [this] {
+        if (!scrollNativeHistory(true))
+            chatView()->scrollDown();
+    });
 }
 
 void ChatDlg::setShortcuts()
@@ -421,14 +427,25 @@ UserStatus ChatDlg::userStatusFor(const Jid &jid, QList<UserListItem *> ul, bool
     return u;
 }
 
-void ChatDlg::preloadHistory()
+void ChatDlg::preloadHistory(bool forceLocal)
 {
+#ifndef WEBKIT
+    if (!forceLocal && account()->isConnected() && !account()->findGCContact(jid())
+        && !(account()->edb()->features() & EDB::ArchiveCache))
+        return; // The optional flat-file backend has no persistent archive identity.
+#else
+    Q_UNUSED(forceLocal)
+#endif
     int cnt = PsiOptions::instance()->getOption("options.ui.chat.history.preload-history-size").toInt();
-    if (cnt > 0) {
+    if (cnt > 0 && !localHistoryPending_) {
+        localHistoryPending_ = true;
         holdMessages(true);
         if (cnt > 100) // This is limit, just in case.
             cnt = 100;
         EDBHandle *h = new EDBHandle(account()->edb());
+        // Remember which exact chat owned this asynchronous SQLite request.
+        // A dialog can switch peer before finished() is delivered.
+        h->setProperty("_psiPreloadPeerJid", jid().full());
         connect(h, SIGNAL(finished()), this, SLOT(getHistory()));
         Jid j = jid();
         if (!account()->findGCContact(j))
@@ -444,18 +461,31 @@ void ChatDlg::getHistory()
     if (!h)
         return;
 
-    historyState       = true;
-    const EDBResult &r = h->result();
-    for (int i = r.count() - 1; i >= 0; --i) {
-        const EDBItemPtr &item = r.at(i);
-        PsiEvent::Ptr     e    = item->event();
-        if (e->type() == PsiEvent::Message) {
-            MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-            appendMessage(me->message(), me->originLocal());
+    const bool stillSamePeer = h->property("_psiPreloadPeerJid").toString() == jid().full();
+    if (stillSamePeer) {
+        historyState       = true;
+        const EDBResult &r = h->result();
+        for (int i = r.count() - 1; i >= 0; --i) {
+            const EDBItemPtr &item = r.at(i);
+            PsiEvent::Ptr     e    = item->event();
+            if (e->type() == PsiEvent::Message) {
+                localHistoryPopulated_ = true;
+                MessageEvent::Ptr me = e.staticCast<MessageEvent>();
+                MessageView       protocol(MessageView::System);
+                if (MessageView::protocolMessage(me->message(), me->originLocal(), protocol)) {
+                    displayMessage(protocol);
+                    continue;
+                }
+                if (item->protocolOnly())
+                    continue;
+                appendMessage(me->message(), me->originLocal(), item->id().toLongLong(), item->archiveId());
+            }
         }
     }
     delete h;
     holdMessages(false);
+    localHistoryPending_ = false;
+    emit localHistoryPreloadFinished();
 }
 
 void ChatDlg::ensureTabbedCorrectly()
@@ -605,7 +635,11 @@ void ChatDlg::doHistory() { emit aHistory(jid()); }
 
 void ChatDlg::doFile() { emit aFile(jid()); }
 
-void ChatDlg::doClear() { chatView()->clear(); }
+void ChatDlg::doClear()
+{
+    chatView()->clear();
+    clearNativeHistory();
+}
 
 QString ChatDlg::desiredCaption() const
 {
@@ -769,16 +803,20 @@ void ChatDlg::doneSend()
 void ChatDlg::sendOutgoingReactions(const QString &messageId, const QSet<QString> &reactions)
 {
     Message m(jid());
+    m.setId(account()->client()->genUniqueId());
     m.setType(Message::Type::Chat);
     m.setReactions({ messageId, reactions });
+    m.setProcessingHints(Message::Store);
     emit aSend(m);
 }
 
 void ChatDlg::sendMessageRetraction(const QString &messageId)
 {
     Message m(jid());
+    m.setId(account()->client()->genUniqueId());
     m.setType(Message::Type::Chat);
     m.setRetraction(messageId);
+    m.setProcessingHints(Message::Store);
     emit aSend(m);
 }
 
@@ -813,17 +851,9 @@ void ChatDlg::incomingMessage(const Message &m)
         if (dm.chatState() != XMPP::StateNone) {
             setContactChatState(dm.chatState());
         }
-        if (dm.messageReceipt() == ReceiptReceived) {
-            chatView()->markReceived(dm.messageReceiptId());
-        }
-        if (!m.reactions().targetId.isEmpty()) {
-            auto mv = MessageView::reactionsMessage({}, m.reactions().targetId, m.reactions().reactions);
-            chatView()->dispatchMessage(mv);
-        }
-        if (!m.retraction().isEmpty()) {
-            auto mv = MessageView::retractionMessage(m.retraction());
-            chatView()->dispatchMessage(mv);
-        }
+        MessageView protocol(MessageView::System);
+        if (MessageView::protocolMessage(dm, m.forwarded().type() == Forwarding::ForwardedCarbonsSent, protocol))
+            displayMessage(protocol);
     } else {
         // Normal message
         // Check if user requests event messages
@@ -853,9 +883,14 @@ QString ChatDlg::whoNick(bool local) const
     return result;
 }
 
-void ChatDlg::appendMessage(const Message &m, bool local)
+void ChatDlg::appendMessage(const Message &m, bool local, qint64 historyId, const QString &archiveId)
 {
     Message dm = m.displayMessage();
+    MessageView protocol(MessageView::System);
+    if (MessageView::protocolMessage(dm, local, protocol)) {
+        displayMessage(protocol);
+        return;
+    }
     if (trackBar_)
         doTrackBar();
 
@@ -921,6 +956,10 @@ void ChatDlg::appendMessage(const Message &m, bool local)
         mv.setPlainText(body);
     }
     mv.setMessageId(dm.id());
+    mv.setReactionTargetId(MessageView::reactionTarget(dm));
+    mv.setRetractionTargetId(MessageView::retractionTarget(dm));
+    mv.setHistoryId(historyId);
+    mv.setArchiveId(archiveId);
     mv.setLocal(local);
     mv.setNick(whoNick(local));
     mv.setUserId(local ? account()->jid().full()
@@ -979,7 +1018,18 @@ void ChatDlg::dispatchMessage(const MessageView &mv)
 
 void ChatDlg::displayMessage(const MessageView &mv)
 {
+    if (mv.type() == MessageView::DeliveryReceipt) {
+        displayNativeMessage(mv);
+        chatView()->markReceived(mv.messageId());
+        return;
+    }
+    // The legacy view is hidden but still owns message receipts, reactions,
+    // corrections and composer integration. Keep it synchronized until those
+    // interactions have equivalent native implementations.
+    displayNativeMessage(mv);
     chatView()->dispatchMessage(mv);
+    if (mv.type() == MessageView::Reactions || mv.type() == MessageView::MessageRetraction)
+        return;
 
     // if we're not active, notify the user by changing the title
     MessageView::Type type = mv.type();

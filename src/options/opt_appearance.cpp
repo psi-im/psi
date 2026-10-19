@@ -1,4 +1,5 @@
 #include "opt_appearance.h"
+#include "desktopcolorpalette.h"
 
 #include "coloropt.h"
 #include "opt_iconset.h"
@@ -10,6 +11,8 @@
 #include "ui_opt_appearance_misc.h"
 
 #include <QButtonGroup>
+#include <QComboBox>
+#include <QSignalBlocker>
 #include <QCheckBox>
 #include <QColorDialog>
 #include <QFontDialog>
@@ -229,6 +232,8 @@ QWidget *OptionsTabAppearanceGeneral::widget()
           { d->ck_cMessageReceived, d->pb_cMessageReceived, "messages.received", "" },
           { d->ck_cSysMsg, d->pb_cSysMsg, "messages.informational", "" },
           { d->ck_cUserText, d->pb_cUserText, "messages.usertext", "" },
+          { d->ck_cChatBackground, d->pb_cChatBackground, "chat.background", "" },
+          { d->ck_cChatText, d->pb_cChatText, "chat.text", "" },
           { d->ck_cOnline, d->pb_cOnline, "contactlist.status.online", s.arg(tr("online")) },
           { d->ck_cAway, d->pb_cAway, "contactlist.status.away", s.arg(tr("away")) },
           { d->ck_cDND, d->pb_cDND, "contactlist.status.do-not-disturb", s.arg(tr("do not disturb")) },
@@ -268,6 +273,15 @@ QWidget *OptionsTabAppearanceGeneral::widget()
         d->pb_cStatus->hide();
     }
 
+    paletteSelector_ = d->paletteSelector;
+    paletteSelector_->addItem(tr("Light desktop"), QStringLiteral("light"));
+    paletteSelector_->addItem(tr("Dark desktop"), QStringLiteral("dark"));
+    paletteSelector_->setToolTip(tr("Edit each palette independently. Psi automatically uses the palette matching the desktop theme."));
+    connect(paletteSelector_, qOverload<int>(&QComboBox::currentIndexChanged), this, [this](int) {
+        savePaletteControls();
+        editingPalette_ = paletteSelector_->currentData().toString();
+        restorePaletteControls();
+    });
     return w;
 }
 
@@ -286,13 +300,12 @@ void OptionsTabAppearanceGeneral::applyOptions()
     PsiOptions::instance()->setOption("options.ui.look.font.chat", d->le_fChat->fontName());
     PsiOptions::instance()->setOption("options.ui.look.font.passive-popup", d->le_fPopup->fontName());
 
-    ColorWidgetsMap::ConstIterator i = colorWidgetsMap.constBegin();
-    while (i != colorWidgetsMap.constEnd()) {
-        PsiOptions::instance()->setOption("options.ui.look.colors." + i.value().second,
-                                          i.key()->isChecked() ? getColor(static_cast<QToolButton *>(i.value().first))
-                                                               : QColor());
-        ++i;
-    }
+    savePaletteControls();
+    for (auto scheme = paletteColors_.cbegin(); scheme != paletteColors_.cend(); ++scheme)
+        for (auto color = scheme.value().cbegin(); color != scheme.value().cend(); ++color)
+            PsiOptions::instance()->setOption(
+                ColorOpt::optionPath(QStringLiteral("options.ui.look.colors.") + color.key(), scheme.key()), color.value());
+
 }
 
 static void restoreColor(QToolButton *button, QColor c)
@@ -314,14 +327,35 @@ void OptionsTabAppearanceGeneral::restoreOptions()
     d->le_fChat->setFont(PsiOptions::instance()->getOption("options.ui.look.font.chat").toString());
     d->le_fPopup->setFont(PsiOptions::instance()->getOption("options.ui.look.font.passive-popup").toString());
 
-    ColorWidgetsMap::ConstIterator i = colorWidgetsMap.constBegin();
-    while (i != colorWidgetsMap.constEnd()) {
-        QColor color = ColorOpt::instance()->color("options.ui.look.colors." + i.value().second);
-        QColor realColor
-            = PsiOptions::instance()->getOption("options.ui.look.colors." + i.value().second).value<QColor>();
-        i.key()->setChecked(realColor.isValid());
-        restoreColor(static_cast<QToolButton *>(i.value().first), color);
-        ++i;
+    paletteColors_.clear();
+    for (const auto &scheme : {QStringLiteral("light"), QStringLiteral("dark")})
+        for (const auto &widgets : colorWidgetsMap)
+            paletteColors_[scheme][widgets.second] = PsiOptions::instance()->getOption(
+                ColorOpt::optionPath(QStringLiteral("options.ui.look.colors.") + widgets.second, scheme)).value<QColor>();
+    editingPalette_ = ColorOpt::paletteName();
+    const QSignalBlocker blocker(paletteSelector_);
+    paletteSelector_->setCurrentIndex(paletteSelector_->findData(editingPalette_));
+    restorePaletteControls();
+
+}
+
+void OptionsTabAppearanceGeneral::savePaletteControls()
+{
+    if (editingPalette_.isEmpty())
+        return;
+    for (auto it = colorWidgetsMap.cbegin(); it != colorWidgetsMap.cend(); ++it)
+        paletteColors_[editingPalette_][it.value().second] = it.key()->isChecked() ? getColor(it.value().first) : QColor();
+}
+
+void OptionsTabAppearanceGeneral::restorePaletteControls()
+{
+    const auto preview = DesktopColorPalette::preview(editingPalette_, QApplication::palette());
+    for (auto it = colorWidgetsMap.cbegin(); it != colorWidgetsMap.cend(); ++it) {
+        const auto color = paletteColors_.value(editingPalette_).value(it.value().second);
+        const QSignalBlocker blocker(it.key());
+        it.key()->setChecked(color.isValid());
+        const auto role = ColorOpt::instance()->colorRole(QStringLiteral("options.ui.look.colors.") + it.value().second);
+        restoreColor(static_cast<QToolButton *>(it.value().first), color.isValid() ? color : preview.color(role));
     }
 }
 
@@ -352,6 +386,9 @@ void OptionsTabAppearanceGeneral::chooseColor(QAbstractButton *button)
 
     c = QColorDialog::getColor(c, parentWidget);
     if (c.isValid()) {
+        for (auto it = colorWidgetsMap.cbegin(); it != colorWidgetsMap.cend(); ++it)
+            if (it.value().first == button)
+                it.key()->setChecked(true);
         button->setProperty("psi_color", c);
         //((QPushButton*) bg_color->buttons()[x])->setIcon(name2color(o->color[x].name()));
         button->setIcon(color2pixmap(c));
@@ -369,11 +406,10 @@ void OptionsTabAppearanceGeneral::colorCheckBoxClicked(Qt::CheckState state)
     QPair<QAbstractButton *, QString> data = colorWidgetsMap[static_cast<QCheckBox *>(sender())];
     if (state) {
         data.first->setDisabled(false);
-        restoreColor(static_cast<QToolButton *>(data.first),
-                     ColorOpt::instance()->color("options.ui.look.colors." + data.second));
+        data.first->setIcon(color2pixmap(getColor(data.first)));
     } else {
         // data.first->setDisabled(true); // TODO disable color changing
         QPalette::ColorRole role = ColorOpt::instance()->colorRole("options.ui.look.colors." + data.second);
-        data.first->setIcon(color2pixmap(QApplication::palette().color(role)));
+        data.first->setIcon(color2pixmap(DesktopColorPalette::preview(editingPalette_, QApplication::palette()).color(role)));
     }
 }
