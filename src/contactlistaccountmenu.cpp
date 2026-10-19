@@ -28,11 +28,19 @@
 #include "mucjoindlg.h"
 #include "pluginmanager.h"
 #include "privacy/privacydlg.h"
+#include "privacy/psiprivacymanager.h"
 #include "psiaccount.h"
 #include "psiiconset.h"
 #include "psioptions.h"
 
 #include <QPointer>
+#include <QDialog>
+#include <QDialogButtonBox>
+#include <QInputDialog>
+#include <QLabel>
+#include <QListWidget>
+#include <QPushButton>
+#include <QVBoxLayout>
 #include <ranges>
 
 class ContactListAccountMenu::Private : public QObject {
@@ -236,6 +244,10 @@ private slots:
         serviceDiscoveryAction_->setEnabled(account->isAvailable());
         contactManagerAction_->setEnabled(account->isAvailable());
         privacyListsAction_->setEnabled(account->isAvailable());
+        auto *privacy = dynamic_cast<PsiPrivacyManager *>(account->privacyManager());
+        privacyListsAction_->setText(privacy && privacy->usesBlockingCommand()
+                                        ? tr("Blocked Contacts...")
+                                        : tr("Privacy Lists"));
         if (!PsiOptions::instance()->getOption("options.ui.menu.account.admin").toBool()) {
             adminMenu_->menuAction()->setVisible(false);
         }
@@ -346,6 +358,61 @@ private slots:
     {
         if (!account)
             return;
+
+        auto *privacy = dynamic_cast<PsiPrivacyManager *>(account->privacyManager());
+        if (privacy && privacy->usesBlockingCommand()) {
+            auto *dialog = new QDialog();
+            dialog->setAttribute(Qt::WA_DeleteOnClose);
+            dialog->setWindowTitle(tr("Blocked Contacts"));
+            auto *layout = new QVBoxLayout(dialog);
+            layout->addWidget(new QLabel(tr("Server blocklist (XEP-0191)"), dialog));
+            auto *list = new QListWidget(dialog);
+            layout->addWidget(list);
+            auto *controls = new QHBoxLayout();
+            auto *add = new QPushButton(tr("Block JID..."), dialog);
+            auto *remove = new QPushButton(tr("Unblock"), dialog);
+            controls->addWidget(add);
+            controls->addWidget(remove);
+            layout->addLayout(controls);
+            auto *buttons = new QDialogButtonBox(QDialogButtonBox::Close, dialog);
+            layout->addWidget(buttons);
+            connect(buttons, &QDialogButtonBox::rejected, dialog, &QDialog::close);
+            const QPointer<PsiPrivacyManager> manager(privacy);
+            const auto refresh = [manager, list, remove] {
+                if (!manager)
+                    return;
+                const QString selected = list->currentItem() ? list->currentItem()->text() : QString();
+                list->clear();
+                auto jids = manager->blockedJids();
+                jids.sort(Qt::CaseInsensitive);
+                list->addItems(jids);
+                auto matches = list->findItems(selected, Qt::MatchExactly);
+                if (!matches.isEmpty())
+                    list->setCurrentItem(matches.first());
+                remove->setEnabled(list->currentItem() != nullptr);
+            };
+            connect(list, &QListWidget::currentItemChanged, dialog,
+                    [remove](QListWidgetItem *current) { remove->setEnabled(current != nullptr); });
+            connect(privacy, &PsiPrivacyManager::listChanged, dialog, [refresh](const QStringList &) { refresh(); });
+            connect(add, &QPushButton::clicked, dialog, [manager, dialog] {
+                if (!manager)
+                    return;
+                bool ok = false;
+                const QString value = QInputDialog::getText(dialog, tr("Block JID"),
+                    tr("XMPP address:"), QLineEdit::Normal, QString(), &ok);
+                const XMPP::Jid jid(value.trimmed());
+                if (ok && jid.isValid() && !jid.isEmpty())
+                    manager->setContactBlocked(jid, true);
+            });
+            connect(remove, &QPushButton::clicked, dialog, [manager, list] {
+                if (manager && list->currentItem())
+                    manager->setContactBlocked(XMPP::Jid(list->currentItem()->text()), false);
+            });
+            refresh();
+            dialog->resize(440, 340);
+            dialog->show();
+            return;
+        }
 
         PrivacyDlg *dlg = account->findDialog<PrivacyDlg *>();
         if (!dlg) {
