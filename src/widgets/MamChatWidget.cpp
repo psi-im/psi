@@ -1483,6 +1483,9 @@ void MamChatWidget::updateTimestamps()
 
 void MamChatWidget::changeEvent(QEvent *event)
 {
+    if (event->type() == QEvent::PaletteChange || event->type() == QEvent::ApplicationPaletteChange
+        || event->type() == QEvent::StyleChange)
+        schedulePaletteRefresh();
     Mattermost::LongListWidget::changeEvent(event);
     if (event->type() == QEvent::FontChange) {
         for (int index : materializedIndices()) {
@@ -1503,17 +1506,37 @@ void MamChatWidget::changeEvent(QEvent *event)
         if (!items_.isEmpty())
             itemsChanged(0, items_.size() - 1);
     } else if (event->type() == QEvent::PaletteChange) {
-        // QAbstractScrollArea can retain the old resolved viewport palette.
-        viewport()->setPalette({});
-        refreshAvatars();
-        refreshSelection();
-        refreshNicknameColors();
-        for (int index : materializedIndices())
-            if (auto *row = itemWidget(index))
-                if (auto *time = row->findChild<QLabel *>(QStringLiteral("mamTimestamp")))
-                    updateTimestampAppearance(time);
+        refreshPalette();
         emit paletteChanged();
     }
+}
+
+void MamChatWidget::schedulePaletteRefresh()
+{
+    if (paletteRefreshPending_)
+        return;
+    paletteRefreshPending_ = true;
+    QTimer::singleShot(0, this, [this] {
+        paletteRefreshPending_ = false;
+        // TabDlg reapplies its stylesheet on application palette changes.
+        // Qt's stylesheet repolish restores cached palettes on existing rows
+        // after our synchronous PaletteChange handler has already updated them.
+        refreshPalette();
+    });
+}
+
+void MamChatWidget::refreshPalette()
+{
+    // With a stylesheet, the viewport need not inherit the configured chat
+    // colors. Resolve rows from the chat palette, including custom link colors.
+    viewport()->setPalette(palette());
+    refreshSelection();
+    refreshNicknameColors();
+    refreshAvatars();
+    for (int index : materializedIndices())
+        if (auto *row = itemWidget(index))
+            if (auto *time = row->findChild<QLabel *>(QStringLiteral("mamTimestamp")))
+                updateTimestampAppearance(time);
 }
 
 void MamChatWidget::setTheme(const NativeChatTheme &theme)
@@ -1541,9 +1564,9 @@ void MamChatWidget::refreshNicknameColors()
 
 void MamChatWidget::updateNicknameColor(QLabel *author, const MessageView &message)
 {
-    if (!nicknameColorResolver_)
-        return;
-    const QColor color   = nicknameColorResolver_(message);
+    // Even an uncolored nickname needs an explicit refresh: a stylesheet on
+    // the chat window can leave this nested QLabel with its old resolved palette.
+    const QColor color   = nicknameColorResolver_ ? nicknameColorResolver_(message) : QColor();
     QPalette     palette = author->palette();
     palette.setColor(QPalette::Text, color.isValid() ? color : this->palette().color(QPalette::Text));
     palette.setColor(QPalette::WindowText, palette.color(QPalette::Text));

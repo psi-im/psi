@@ -16,6 +16,7 @@
 #include <QMenu>
 #include <QMouseEvent>
 #include <QPushButton>
+#include <QScopeGuard>
 #include <QScrollBar>
 #include <QSignalSpy>
 #include <QTextBlock>
@@ -876,6 +877,95 @@ private slots:
         QCOMPARE(row->findChild<ChatMessageText *>()->palette().color(QPalette::Text), dark.color(QPalette::Text));
         list.setPalette(light);
         QCOMPARE(row->palette().color(QPalette::Base), QColor(Qt::white));
+    }
+
+    void applicationPaletteUpdatesExistingRows_data()
+    {
+        QTest::addColumn<bool>("classic");
+        QTest::addColumn<bool>("groupChat");
+        QTest::newRow("modern-chat") << false << false;
+        QTest::newRow("classic-chat") << true << false;
+        QTest::newRow("modern-muc") << false << true;
+        QTest::newRow("classic-muc") << true << true;
+    }
+
+    void applicationPaletteUpdatesExistingRows()
+    {
+        QFETCH(bool, classic);
+        QFETCH(bool, groupChat);
+        const QPalette original = QApplication::palette();
+        const auto     restore  = qScopeGuard([&] { QApplication::setPalette(original); });
+        QPalette       light    = DesktopColorPalette::preview(QStringLiteral("light"),
+                                                               DesktopColorPalette::preview(QStringLiteral("dark"), original));
+        const QPalette dark     = DesktopColorPalette::preview(QStringLiteral("dark"), light);
+        QApplication::setPalette(light);
+        QWidget window;
+        // Chat windows have a stylesheet, even when it only styles correction
+        // mode in the composer. Qt then changes palette propagation for all
+        // of the window's children, including unrelated message widgets.
+        window.setStyleSheet(QStringLiteral("QTextEdit[correction=\"true\"] { background-color: rgb(160,160,0); }"));
+        window.resize(550, 450);
+        MamChatWidget list(&window);
+        list.setGroupChat(groupChat);
+        const QColor nickColor(0, 170, 170);
+        if (groupChat)
+            list.setNicknameColorResolver([nickColor](const MessageView &) { return nickColor; });
+        if (classic)
+            list.setTheme({ "classic", "Classic", NativeChatTheme::Classic, 0, 4, {} });
+        list.resize(550, 450);
+        list.setHistoryLoading(true);
+        auto apply = [&] {
+            QPalette palette = QApplication::palette();
+            palette.setColor(QPalette::Base, palette.color(QPalette::Base));
+            palette.setColor(QPalette::Window, palette.color(QPalette::Base));
+            palette.setColor(QPalette::Text, palette.color(QPalette::Text));
+            const QSignalBlocker blocker(&list);
+            list.setPalette(palette);
+            list.viewport()->setPalette(list.palette());
+            list.setInformationalColor(palette.color(QPalette::Base).lightness() < 128 ? QColor("#8bd58b")
+                                                                                       : QColor("#008000"));
+        };
+        connect(&list, &MamChatWidget::paletteChanged, &list, apply);
+        apply();
+        list.appendMessage(message("existing",
+                                   "<b>Existing text</b> <a href='https://example.org'>link</a> "
+                                   "<span style='color:#ff0000'>red</span>"));
+        MessageView subject(MessageView::Subject);
+        subject.setPlainText("Room subject");
+        list.appendMessage(subject);
+        window.show();
+        list.show();
+        QTRY_VERIFY(list.itemWidget(0) && list.itemWidget(1));
+        auto *row      = list.itemWidget(0);
+        auto *body     = row->findChild<ChatMessageText *>();
+        auto *document = body->document();
+        body->selectAll();
+        for (const auto &palette : { dark, light }) {
+            QApplication::setPalette(palette);
+            apply();
+            window.setStyleSheet(window.styleSheet()); // KDE/Psi repolishes after the palette update.
+            QCoreApplication::processEvents();
+            QCOMPARE(list.itemWidget(0), row);
+            QCOMPARE(row->palette().color(QPalette::Base), palette.color(QPalette::Base));
+            QCOMPARE(body->palette().color(QPalette::Text), palette.color(QPalette::Text));
+            QCOMPARE(body->viewport()->palette().color(QPalette::Base), palette.color(QPalette::Base));
+            QCOMPARE(body->viewport()->palette().color(QPalette::Text), palette.color(QPalette::Text));
+            QCOMPARE(row->findChild<QLabel *>("mamAuthor")->palette().color(QPalette::Text),
+                     groupChat ? nickColor : palette.color(QPalette::Text));
+            QColor timeColor = classic && groupChat ? nickColor : palette.color(QPalette::Text);
+            if (!classic)
+                timeColor.setAlpha(188);
+            QCOMPARE(row->findChild<QLabel *>("mamTimestamp")->palette().color(QPalette::Text), timeColor);
+            auto *subjectBody = list.itemWidget(1)->findChild<ChatMessageText *>();
+            QCOMPARE(subjectBody->palette().color(QPalette::Base), palette.color(QPalette::Base));
+            QCOMPARE(subjectBody->palette().color(QPalette::Text),
+                     palette.color(QPalette::Base).lightness() < 128 ? QColor("#8bd58b") : QColor("#008000"));
+            QCOMPARE(body->document(), document);
+            QCOMPARE(body->textCursor().selectedText(), QString("Existing text link red"));
+            QCOMPARE(document->find("link").charFormat().foreground().color(), palette.color(QPalette::Link));
+            QCOMPARE(document->find("red").charFormat().foreground().color(), QColor(Qt::red));
+            QCOMPARE(document->find("Existing").charFormat().fontWeight(), int(QFont::Bold));
+        }
     }
 
     void wholeMessageSelectionColorsAndText_data()

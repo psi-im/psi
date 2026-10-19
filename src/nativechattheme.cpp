@@ -129,7 +129,7 @@ void configureNativeChat(MamChatWidget *view, PsiAccount *account, const XMPP::J
         {
             const QSignalBlocker blocker(view);
             view->setPalette(palette);
-            view->viewport()->setPalette({});
+            view->viewport()->setPalette(view->palette());
         }
         view->setInformationalColor(ColorOpt::ensureContrast(
             ColorOpt::instance()->color(QStringLiteral("options.ui.look.colors.messages.informational")),

@@ -79,8 +79,13 @@ void ChatMessageText::changeEvent(QEvent *event)
     PsiTextView::changeEvent(event);
     if (event->type() == QEvent::FontChange)
         applyDocumentFont();
-    else if (event->type() == QEvent::PaletteChange)
+    else if (event->type() == QEvent::PaletteChange) {
+        // A chat window stylesheet can stop Qt propagating the new palette
+        // into an existing QTextEdit viewport, even if no rule matches it.
+        // Keep the painted surface/text in sync without rebuilding the document.
+        viewport()->setPalette(palette());
         PsiRichText::recolorLinks(document(), palette().color(QPalette::Link));
+    }
 }
 
 int ChatMessageText::heightForWidth(int width) const
