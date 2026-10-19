@@ -400,6 +400,7 @@ void PsiChatDlg::loadOlderMamMessages()
             mv.setRetractionTargetId(retractionTarget);
             mv.setLocal(local);
             mv.setSpooled(true);
+            mv.setMarkable(archived.isMarkable());
             mv.setNick(whoNick(local));
             mv.setDateTime(archivedTime);
             page.append(qMakePair(uid, mv));
