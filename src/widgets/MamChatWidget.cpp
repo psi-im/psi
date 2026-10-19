@@ -1677,6 +1677,10 @@ void MamChatWidget::copySelectedMessages()
         QTextDocument document;
         const bool    retracted = isRetracted(row);
         QString       rich      = retracted ? tr("Message retracted") : message.formattedText();
+        if (!retracted && message.isEmote()) {
+            const QString actor = message.nick().isEmpty() ? tr("Contact") : message.nick();
+            rich = QStringLiteral("*") + actor.toHtmlEscaped() + QStringLiteral(" ") + rich;
+        }
         if (!retracted && !message.formattedUserText().isEmpty())
             rich += (rich.isEmpty() ? QString() : QStringLiteral(" — ")) + message.formattedUserText();
         PsiRichText::setText(&document, rich);
