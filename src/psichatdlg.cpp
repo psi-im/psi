@@ -967,13 +967,25 @@ void PsiChatDlg::sendDisplayedMarkerForVisibleMessage()
         || !PsiOptions::instance()->getOption("options.ui.notifications.send-receipts").toBool())
         return;
 
+    // Read markers reveal that we're present. For ordinary 1:1 conversations
+    // send only to peers authorized to see our presence, even if someone else
+    // manages to send us a markable message. Private MUC chats already share
+    // our presence with room occupants.
+    const bool privateRoomChat = account()->groupchats().contains(jid().bare());
+    if (!privateRoomChat && jid().bare() != account()->jid().bare()) {
+        const auto *contact = account()->findFirstRelevant(jid());
+        if (account()->status().isInvisible() || !contact
+            || (contact->subscription().type() != Subscription::From
+                && contact->subscription().type() != Subscription::Both))
+            return;
+    }
+
     // XEP-0333 is opt-in in one-to-one chats: only acknowledge an incoming
     // message explicitly marked <markable/> and actually visible to the user.
     const QString target = nativeTimeline_->takeVisibleMarkableIncomingId();
     if (target.isEmpty())
         return;
 
-    const bool privateRoomChat = account()->groupchats().contains(jid().bare());
     XMPP::Message marker(privateRoomChat ? jid() : XMPP::Jid(jid().bare()));
     marker.setType(XMPP::Message::Type::Chat);
     marker.setId(account()->client()->genUniqueId());
