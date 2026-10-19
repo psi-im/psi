@@ -898,7 +898,8 @@ QStringList PsiCon::xmppFatures() const
                                        << "urn:xmpp:contacts+notify")
         << OptFeatureMap("options.messages.send-composing-events",
                          QStringList() << "http://jabber.org/protocol/chatstates")
-        << OptFeatureMap("options.ui.notifications.send-receipts", QStringList() << "urn:xmpp:receipts");
+        << OptFeatureMap("options.ui.notifications.send-receipts",
+                         QStringList() << "urn:xmpp:receipts" << "urn:xmpp:chat-markers:0");
 
     for (const OptFeatureMap &f : std::as_const(fmap)) {
         if (PsiOptions::instance()->getOption(f.option).toBool()) {
