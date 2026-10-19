@@ -10,6 +10,7 @@
 #include <QClipboard>
 #include <QDateTime>
 #include <QFrame>
+#include <QFontMetrics>
 #include <QGraphicsOpacityEffect>
 #include <QHBoxLayout>
 #include <QHash>
@@ -38,6 +39,56 @@
 #include <QVBoxLayout>
 #include <algorithm>
 #include <limits>
+
+namespace {
+
+// Compact, overlapping checks (like a messenger read indicator), never two
+// font glyphs. Using a painter keeps the shape identical under Qt5/Qt6,
+// regardless of the platform font, palette, or device pixel ratio.
+class DeliveryIndicator final : public QLabel {
+public:
+    explicit DeliveryIndicator(bool read, QWidget *parent = nullptr) : QLabel(parent), read_(read)
+    {
+        setObjectName(QStringLiteral("mamDeliveryIndicator"));
+        setProperty("deliveryState", read ? QStringLiteral("read") : QStringLiteral("delivered"));
+        setForegroundRole(QPalette::WindowText);
+        setIconHeight(12);
+    }
+
+    void setIconHeight(int height)
+    {
+        height = qMax(10, height);
+        const int width = qRound(height * (read_ ? 20.0 : 14.0) / 12.0);
+        setFixedSize(width, height);
+        update();
+    }
+
+protected:
+    void paintEvent(QPaintEvent *) override
+    {
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.scale(width() / (read_ ? 20.0 : 14.0), height() / 12.0);
+        painter.setPen(QPen(palette().color(QPalette::WindowText), 1.7, Qt::SolidLine,
+                            Qt::RoundCap, Qt::RoundJoin));
+
+        const auto drawCheck = [&painter](qreal x) {
+            QPainterPath path;
+            path.moveTo(x + 1.5, 6.0);
+            path.lineTo(x + 5.3, 9.5);
+            path.lineTo(x + 12.0, 2.3);
+            painter.drawPath(path);
+        };
+        drawCheck(0);
+        if (read_)
+            drawCheck(6.0); // Shared/overlapping diagonal region, not "✓✓".
+    }
+
+private:
+    bool read_;
+};
+
+} // namespace
 
 MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(parent)
 {
@@ -1011,14 +1062,10 @@ QWidget *MamChatWidget::createItemWidget(int index)
             timeGroup->setObjectName(QStringLiteral("mamTimestampGroup"));
             auto *timeLayout = new QHBoxLayout(timeGroup);
             timeLayout->setContentsMargins(0, 0, 0, 0);
-            timeLayout->setSpacing(7);
+            timeLayout->setSpacing(5);
             timeLayout->addWidget(time);
             if (read || delivered) {
-                auto *checkmarks = new QLabel(read ? QString::fromUtf8("✓✓") : QString::fromUtf8("✓"), timeGroup);
-                checkmarks->setObjectName(QStringLiteral("mamDeliveryIndicator"));
-                checkmarks->setTextFormat(Qt::PlainText);
-                checkmarks->setFont(time->font());
-                checkmarks->setForegroundRole(QPalette::Text);
+                auto *checkmarks = new DeliveryIndicator(read, timeGroup);
                 const QString status = read ? tr("Read") : tr("Delivered");
                 checkmarks->setToolTip(status);
                 checkmarks->setAccessibleName(status);
@@ -1214,6 +1261,11 @@ void MamChatWidget::updateTimestampAppearance(QLabel *label)
     colors.setColor(QPalette::Text, color);
     colors.setColor(QPalette::WindowText, color);
     label->setPalette(colors);
+    if (auto *indicator = label->parentWidget()->findChild<DeliveryIndicator *>(
+            QStringLiteral("mamDeliveryIndicator"))) {
+        indicator->setPalette(colors);
+        indicator->setIconHeight(qRound(QFontMetrics(timeFont).height() * 0.85));
+    }
 }
 
 void MamChatWidget::updateTimestamps()
