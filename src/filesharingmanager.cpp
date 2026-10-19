@@ -296,6 +296,29 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
         QString htmlDesc;
         htmlDesc.reserve(desc.size() + refs.count() * 64);
 
+        // XEP-0385 senders may locate a share's body text with XEP-0428
+        // fallbacks instead of reference begin/end. Assign those ranges, in
+        // body order, to the media shares that have no range of their own.
+        QList<QPair<int, int>> fallbackRanges; // UTF-16 [from, to)
+        for (const auto &ns : { QStringLiteral("urn:xmpp:sims:1"), QStringLiteral("jabber:x:oob") }) {
+            for (const auto &range : m.bodyFallbacks(ns)) {
+                int from = -1, to = -1;
+                if (range.toUtf16(desc, from, to) && to > from && !fallbackRanges.contains({ from, to }))
+                    fallbackRanges.append({ from, to });
+            }
+            if (!fallbackRanges.isEmpty())
+                break; // SIMS ranges take precedence; OOB ranges are a fallback for them.
+        }
+        std::sort(fallbackRanges.begin(), fallbackRanges.end());
+        for (auto &r : refs) {
+            if (fallbackRanges.isEmpty())
+                break;
+            if (r.begin() < 0 && r.mediaSharing().isValid()) {
+                const auto range = fallbackRanges.takeFirst();
+                r.setRange(range.first, range.second - 1); // Psi treats 'end' as inclusive
+            }
+        }
+
         std::sort(refs.begin(), refs.end(), [](auto &a, auto &b) { return a.begin() < b.begin(); });
 
         int         lastEnd = 0;
