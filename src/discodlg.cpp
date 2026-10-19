@@ -499,6 +499,7 @@ void DiscoListItem::updateItemsFinished(const DiscoList &list)
     DiscoListItem                  *item;
     for (int i = 0; i < childCount(); i++) {
         auto *child = static_cast<DiscoListItem *>(QTreeWidgetItem::child(i));
+        Q_ASSERT(child != NULL);
         if (!child) {
             break;
         }
@@ -558,6 +559,7 @@ void DiscoListItem::autoItemsChildren() const
 
     for (int i = 0; i < childCount(); i++) {
         auto *child = static_cast<DiscoListItem *>(QTreeWidgetItem::child(i));
+        Q_ASSERT(child != NULL);
         if (!child) {
             break;
         }
