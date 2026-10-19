@@ -378,8 +378,7 @@ void BookmarkManager::setBookmarks(const QList<URLBookmark> &urls, const QList<C
             } else {
                 XMPP::NativeBookmark native;
                 if (originalUpdates->contains(edit.room)) {
-                    QDomDocument copy;
-                    native = XMPP::NativeBookmark::fromItem(originalUpdates->value(edit.room).toItem(copy));
+                    native = originalUpdates->value(edit.room);
                 } else {
                     native = XMPP::NativeBookmark::create(edit.bookmark.jid(), edit.bookmark.name(),
                                                          edit.bookmark.autoJoin() == ConferenceBookmark::Always
