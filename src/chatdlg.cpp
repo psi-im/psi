@@ -752,6 +752,7 @@ void ChatDlg::doSend()
         //    account()->capsManager()->features(jid()).test(sl))) {
         // if (true) {
         m.setMessageReceipt(ReceiptRequest);
+        m.setMarkable(true); // XEP-0333; the peer may confirm display separately.
         // rememberPosition(id);
         //}
     }
@@ -967,6 +968,7 @@ void ChatDlg::appendMessage(const Message &m, bool local, qint64 historyId, cons
     mv.setDateTime(dm.timeStamp());
     mv.setSpooled(historyState);
     mv.setAwaitingReceipt(local && dm.messageReceipt() == ReceiptRequest);
+    mv.setMarkable(dm.isMarkable());
     mv.setReplaceId(dm.replaceId());
     account()->psi()->fileSharingManager()->fillMessageView(mv, dm, account());
 
@@ -1018,6 +1020,10 @@ void ChatDlg::dispatchMessage(const MessageView &mv)
 
 void ChatDlg::displayMessage(const MessageView &mv)
 {
+    if (mv.type() == MessageView::DisplayedMarker) {
+        displayNativeMessage(mv);
+        return;
+    }
     if (mv.type() == MessageView::DeliveryReceipt) {
         displayNativeMessage(mv);
         chatView()->markReceived(mv.messageId());
