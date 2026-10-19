@@ -284,6 +284,9 @@ private slots:
                      QString("delivered"));
         auto *single = chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator");
         QVERIFY(single->text().isEmpty()); // No font-dependent Unicode ticks.
+        const auto *timestamp = chat.itemWidget(0)->findChild<QLabel *>("mamTimestamp");
+        const int expectedHeight = qMax(8, qRound(QFontMetrics(timestamp->font()).height() * 0.68));
+        QCOMPARE(single->height(), expectedHeight); // ~20% smaller than the previous 0.85 scale.
         const int singleWidth = single->width();
         QVERIFY(singleWidth > 0);
         QCOMPARE(single->palette().color(QPalette::WindowText),
@@ -301,6 +304,7 @@ private slots:
                      QString("Read"));
         auto *doubleChecks = chat.itemWidget(1)->findChild<QLabel *>("mamDeliveryIndicator");
         QVERIFY(doubleChecks->text().isEmpty());
+        QCOMPARE(doubleChecks->height(), expectedHeight);
         QVERIFY(doubleChecks->width() > singleWidth);
         QVERIFY(doubleChecks->width() < singleWidth * 2); // Overlap, not two separate glyphs.
 
