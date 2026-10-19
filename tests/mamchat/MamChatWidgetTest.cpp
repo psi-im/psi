@@ -307,6 +307,26 @@ private slots:
                      QString::fromUtf8("✓✓"));
     }
 
+    void archiveReadMarkerIsAppliedWhenTargetArrivesOnAnOlderPage()
+    {
+        MamChatWidget chat;
+        chat.resize(520, 320);
+        chat.setHistoryLoading(true);
+        MessageView marker(MessageView::DisplayedMarker);
+        marker.setMessageId("archived-out");
+        chat.appendMessage(marker); // Newest MAM page contains marker, not target.
+        QCOMPARE(chat.messageCount(), 0);
+
+        auto original = message("archived-out", "older outgoing", 0, true);
+        original.setHistoryId(10);
+        chat.prependArchivePage({ qMakePair(QString("older-mam-id"), original) });
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator"));
+        QCOMPARE(chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator")->text(),
+                 QString::fromUtf8("✓✓"));
+        QCOMPARE(chat.messageCount(), 1);
+    }
+
     void visibleMarkableIncomingMessagesAdvanceCursorOnlyOnce()
     {
         MamChatWidget chat;
