@@ -41,7 +41,8 @@ public:
         FileTransferFinished,
         Reactions,
         MessageRetraction,
-        DeliveryReceipt
+        DeliveryReceipt,
+        DisplayedMarker
     };
 
     enum Flag {
@@ -85,6 +86,12 @@ public:
         mv.setMessageId(targetMessageId);
         return mv;
     }
+    static MessageView displayedMarkerMessage(const QString &targetMessageId)
+    {
+        MessageView mv(DisplayedMarker);
+        mv.setMessageId(targetMessageId);
+        return mv;
+    }
     static bool    protocolMessage(const XMPP::Message &, bool local, MessageView &);
     static QString reactionTarget(const XMPP::Message &);
     static QString retractionTarget(const XMPP::Message &);
@@ -115,6 +122,8 @@ public:
     inline bool isEdited() const { return bool(_flags & Edited); }
     inline void setAwaitingReceipt(bool b = true) { _flags.setFlag(AwaitingReceipt, b); }
     inline bool isAwaitingReceipt() const { return bool(_flags & AwaitingReceipt); }
+    inline void setMarkable(bool markable = true) { _markable = markable; }
+    inline bool isMarkable() const { return _markable; }
     inline void setStatusChangeHidden(bool b = true) { _flags.setFlag(HideStatusChange, b); }
     inline bool isStatusChangeHidden() const { return bool(_flags & HideStatusChange); }
     inline void setJoinLeaveHidden(bool b = true) { _flags.setFlag(HideJoinLeave, b); }
@@ -186,6 +195,7 @@ private:
     QString                  _reactionsId;
     QList<FileSharingItem *> _references;
     QSet<QString>            _reactions;
+    bool                     _markable = false;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(MessageView::Flags)
