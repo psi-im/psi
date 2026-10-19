@@ -25,6 +25,7 @@
 #include <QWheelEvent>
 #include <QtTest/QtTest>
 #include <cmath>
+#include <memory>
 
 namespace {
 MessageView message(const QString &id, const QString &body, int seconds = 0, bool local = false)
@@ -263,6 +264,27 @@ private slots:
         receipt.setMessageId("original");
         chat.appendMessage(receipt);
         QCOMPARE(chat.messageCount(), 1);
+    }
+
+    void linkContextMenuSelectsLinkFillingWholeMessage()
+    {
+        // A message that is only a link: the anchor touches both ends of the
+        // per-message document, where cursor movement stops succeeding.
+        ChatMessageText body;
+        body.resize(400, 80);
+        body.setRichText(QStringLiteral("<a href=\"mailto:user@example.org\">user@example.org</a>"));
+        body.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&body));
+        const QString link = QStringLiteral("user@example.org");
+        for (const int at : { 1, int(link.size()) - 1 }) {
+            QTextCursor probe(body.document());
+            probe.setPosition(at);
+            const QPoint position = body.cursorRect(probe).center();
+            QVERIFY(!body.anchorAt(position).isEmpty());
+            std::unique_ptr<QMenu> menu(body.createStandardContextMenu(position));
+            QVERIFY(menu);
+            QCOMPARE(body.textCursor().selectedText(), link);
+        }
     }
 
     void simsMediaUsesExistingPsiTextViewObjects()
