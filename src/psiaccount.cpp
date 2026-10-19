@@ -3016,7 +3016,8 @@ void PsiAccount::processIncomingMessage(const AccountIncomingMessage &incoming)
     if (dm.type() != Message::Type::Error && dm.body().isEmpty() && dm.urlList().isEmpty() && dm.invite().isEmpty()
         && !dm.containsEvents() && dm.chatState() == StateNone && dm.subject().isNull()
         && dm.rosterExchangeItems().isEmpty() && dm.mucInvites().isEmpty() && dm.getForm().fields().empty()
-        && dm.messageReceipt() == ReceiptNone && dm.getMUCStatuses().isEmpty() && dm.reactions().targetId.isEmpty()
+        && dm.messageReceipt() == ReceiptNone && dm.displayedMarkerId().isEmpty()
+        && dm.getMUCStatuses().isEmpty() && dm.reactions().targetId.isEmpty()
         && dm.retraction().isEmpty())
         return;
 
@@ -5441,6 +5442,7 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
         if (e->type() == PsiEvent::Message || e->type() == PsiEvent::Auth) {
             if (!me || !me->message().displayMessage().body().isEmpty()
                 || me->message().displayMessage().messageReceipt() == ReceiptReceived
+                || !me->message().displayMessage().displayedMarkerId().isEmpty()
                 || !me->message().displayMessage().reactions().targetId.isEmpty()
                 || !me->message().displayMessage().retraction().isEmpty()) {
                 bool isMuc = false;
@@ -5474,7 +5476,7 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
             // PluginManager::instance()->message(this,e->from(),ulItem,((MessageEvent*)e)->message().body());
         }
 #endif
-        if (dm.messageReceipt() == ReceiptReceived) {
+        if (dm.messageReceipt() == ReceiptReceived || !dm.displayedMarkerId().isEmpty()) {
             if (o->getOption("options.ui.notifications.request-receipts").toBool()) {
                 const auto &dialogs = findChatDialogs(e->from(), false);
                 for (ChatDlg *c : dialogs) {
