@@ -80,6 +80,9 @@ protected:
     void     changeEvent(QEvent *event) override;
 
 private:
+    void schedulePaletteRefresh();
+    void refreshPalette();
+    bool paletteRefreshPending_ = false;
     struct Row;
     QString             reactionTarget(const MessageView &) const;
     QString             retractionTarget(const MessageView &) const;
