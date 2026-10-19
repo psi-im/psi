@@ -146,11 +146,29 @@ static void incomingContent(J::Origin role, J::Origin senders, const char *media
     flush();
     check(counters->answers == 1, "rewiring pending content renegotiated its answer");
 }
+static void outgoingContentNames(J::Origin role)
+{
+    XMPP::Client client;
+    J::Session   session(client.jingleManager(), XMPP::Jid("peer@example.test/resource"), role);
+    auto         provider = std::make_shared<Provider>(std::make_shared<Counters>());
+    auto pad = new R::Pad(client.jingleManager()->rtpManager(), &session, provider, QStringList());
+    auto occupied = new R::Application(pad, QStringLiteral("camera-1"), role, role);
+    session.addContent(occupied);
+
+    AvCallPolicy::ContentNameGenerator names;
+    const auto                         camera = names.next(QStringLiteral("camera-"), &session);
+    check(camera != occupied->contentName(), "new camera reused an existing Jingle content name");
+    check(camera.toUtf8().size() <= 16, "added camera cannot be represented as a WebRTC MID");
+    check(names.next(QStringLiteral("camera-"), &session) != camera,
+          "removing and adding a camera can reuse its old MID");
+}
+
 int main(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
     QCA::Initializer qca;
     for (const auto role : { J::Origin::Initiator, J::Origin::Responder }) {
+        outgoingContentNames(role);
         incomingContent(role, AvCallPolicy::peerRole(role), "video", false);
         incomingContent(role, J::Origin::Both, "video", false);
         incomingContent(role, J::Origin::Both, "audio", false);

@@ -2,12 +2,30 @@
 #ifndef AVCALLPOLICY_H
 #define AVCALLPOLICY_H
 
-#include <iris/xmpp-im/jingle-rtp.h>
+#include <iris/jingle-session.h>
 #include <iris/jingle.h>
+#include <iris/xmpp-im/jingle-rtp.h>
 
 namespace AvCallPolicy {
 
 using Origin = XMPP::Jingle::Origin;
+
+// Content names also become RTP MIDs. Keep the audio-/camera-/screen- prefixes
+// used by the UI, with a per-call counter that fits WebRTC's 16-byte MID limit.
+class ContentNameGenerator {
+public:
+    QString next(const QString &prefix, XMPP::Jingle::Session *session = nullptr)
+    {
+        QString name;
+        do {
+            name = prefix + QString::number(++sequence_, 36);
+        } while (session && (session->content(name, Origin::Initiator) || session->content(name, Origin::Responder)));
+        return name;
+    }
+
+private:
+    quint32 sequence_ = 0;
+};
 
 // Older Iris returned shared pad handles; newer Iris returns pads owned by their session.
 #ifdef IRIS_JINGLE_PAD_OWNERSHIP

@@ -32,7 +32,6 @@
 #include <QHash>
 #include <QHostAddress>
 #include <QPointer>
-#include <QUuid>
 #include <QtCrypto>
 
 #include <algorithm>
@@ -564,8 +563,7 @@ public:
                 return;
             }
             auto audio = manager->rtpManager->createOutgoing(session, RTP::Media::Audio, Jingle::Origin::Both,
-                                                             QStringLiteral("audio-")
-                                                                 + QUuid::createUuid().toString(QUuid::Id128));
+                                                             contentNames.next(QStringLiteral("audio-"), session));
             if (!audio || !ensureJoinedBackend()) {
                 emit q->microphoneEnabledChanged(false);
                 emit q->mediaControlError(tr("Unable to add a microphone to this session."));
@@ -601,8 +599,7 @@ public:
                 return;
             }
             cameraContent = manager->rtpManager->createOutgoing(session, RTP::Media::Video, session->role(),
-                                                                QStringLiteral("camera-")
-                                                                    + QUuid::createUuid().toString(QUuid::Id128));
+                                                                contentNames.next(QStringLiteral("camera-"), session));
             if (!cameraContent || !ensureJoinedBackend()) {
                 captureVideoConsent = false;
                 emit q->cameraEnabledChanged(false);
@@ -642,8 +639,7 @@ public:
         }
         screenSource  = source;
         screenContent = manager->rtpManager->createOutgoing(session, RTP::Media::Video, session->role(),
-                                                            QStringLiteral("screen-")
-                                                                + QUuid::createUuid().toString(QUuid::Id128));
+                                                            contentNames.next(QStringLiteral("screen-"), session));
         if (!screenContent || !ensureJoinedBackend()) {
             screenSource.clear();
             emit q->mediaControlError(tr("The media backend cannot add screen sharing to this call."));
@@ -955,6 +951,7 @@ public:
     QPointer<RTP::Application> displayedCamera;
     QPointer<RTP::Application> displayedScreen;
     QString                    screenSource;
+    AvCallPolicy::ContentNameGenerator contentNames;
     // Each call owns its capture choice; selecting a device must not retarget
     // another running call or the screen's independent capture source.
     QString                    audioInputDevice    = g_config->audioInDeviceId;

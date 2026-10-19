@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "../avcallpolicy.h"
 
+#include <QSet>
 #include <cstdio>
 #include <cstdlib>
 
@@ -28,6 +29,23 @@ static Origin expectedWithoutLocal(Origin senders, Origin localRole)
 
 int main()
 {
+    // Adding media to a live call must not produce a MID rejected by WebRTC.
+    // Prefixes distinguish camera and screen in the receive UI; names cannot
+    // repeat when a removed source is added again during the same call.
+    Policy::ContentNameGenerator names;
+    QSet<QString>                issued;
+    const QStringList            prefixes { "audio-", "camera-", "screen-" };
+    for (int i = 0; i < 1024; ++i) {
+        for (const auto &prefix : prefixes) {
+            const auto name = names.next(prefix);
+            check(name.startsWith(prefix), "media source classification prefix lost");
+            check(!name.isEmpty() && name.toUtf8().size() <= 16, "media content name exceeds WebRTC MID limit");
+            check(name.toLatin1() == name.toUtf8(), "locally generated MID is not ASCII");
+            check(!issued.contains(name), "content name reused during the same call");
+            issued.insert(name);
+        }
+    }
+
     const Origin roles[]      = { Origin::Initiator, Origin::Responder };
     const Origin directions[] = { Origin::None, Origin::Both, Origin::Initiator, Origin::Responder };
 

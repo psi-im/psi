@@ -184,7 +184,15 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/3rdparty/qite/libqite
 )
 
-if(NOT BUNDLED_IRIS)
+if(BUNDLED_IRIS)
+    # SDK dependencies can expose a common include directory containing an
+    # installed Iris. Prefer the bundled headers in Psi and its subdirectories.
+    include_directories(BEFORE
+        "${PROJECT_SOURCE_DIR}/iris/include"
+        "${PROJECT_SOURCE_DIR}/iris/include/iris"
+        "${PROJECT_SOURCE_DIR}/iris/include/iris/jid"
+    )
+else()
     include_directories(${Iris_INCLUDE_DIR})
 endif()
 
