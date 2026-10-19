@@ -538,6 +538,31 @@ bool MamChatWidget::isRetracted(const Row &row) const
     return false;
 }
 
+int MamChatWidget::displayedTargetIndex() const
+{
+    return lastDisplayedRowKey_.isEmpty() ? -1 : indexOfKey(lastDisplayedRowKey_);
+}
+
+QString MamChatWidget::lastVisibleMarkableIncomingId() const
+{
+    if (!isVisible() || window()->isMinimized() || groupChat_)
+        return {};
+    const auto range = visibleRange();
+    if (!range.isValid())
+        return {};
+    for (int i = range.last; i >= range.first; --i) {
+        const auto &message = items_.at(i).message;
+        if (message.type() != MessageView::Message || message.isLocal() || !message.isMarkable()
+            || message.messageId().isEmpty())
+            continue;
+        auto *row = itemWidget(i);
+        if (row && row->isVisibleTo(viewport())
+            && QRect(row->mapTo(viewport(), QPoint()), row->size()).intersects(viewport()->rect()))
+            return message.messageId();
+    }
+    return {};
+}
+
 bool MamChatWidget::applyProtocolEvent(const MessageView &event)
 {
     QString target;
@@ -546,6 +571,26 @@ bool MamChatWidget::applyProtocolEvent(const MessageView &event)
             return true;
         target = event.messageId();
         receipts_.insert(target);
+    } else if (event.type() == MessageView::DisplayedMarker) {
+        // XEP-0333 marks all earlier messages. Ignore unrecognized / backward
+        // positions, never infer read status from an unrelated stanza id.
+        if (event.isLocal() || groupChat_ || event.messageId().isEmpty())
+            return true;
+        const int previous = displayedTargetIndex();
+        int at = -1;
+        for (int i = 0; i < items_.size(); ++i) {
+            if (items_.at(i).message.isLocal() && items_.at(i).stanzaIds.contains(event.messageId())) {
+                at = i;
+                break;
+            }
+        }
+        if (at < 0 || (previous >= 0 && at <= previous))
+            return true;
+        lastDisplayedRowKey_ = items_.at(at).key;
+        for (const int index : materializedIndices())
+            if (index <= at && items_.at(index).message.isLocal())
+                replaceItem(index);
+        return true;
     } else if (event.type() == MessageView::Reactions) {
         target              = event.reactionsId();
         const QString actor = event.isLocal() ? QStringLiteral("self")
@@ -807,6 +852,7 @@ void MamChatWidget::clearMessages()
     reactionEvents_.clear();
     retractions_.clear();
     receipts_.clear();
+    lastDisplayedRowKey_.clear();
     cancelMessageSelection();
     items_.clear();
     keys_.clear();
@@ -903,20 +949,33 @@ QWidget *MamChatWidget::createItemWidget(int index)
                          content);
         time->setObjectName(QStringLiteral("mamTimestamp"));
         time->setTextFormat(Qt::PlainText);
-        time->setToolTip(fullTimestamp(mv.dateTime())
-                         + (mv.isLocal() && receipts_.contains(mv.messageId()) ? QStringLiteral("\n") + tr("Delivered")
-                                                                               : QString()));
+        const bool read = mv.isLocal() && !groupChat_ && displayedTargetIndex() >= index;
+        const bool delivered = mv.isLocal() && !groupChat_ && receipts_.contains(mv.messageId());
+        time->setToolTip(fullTimestamp(mv.dateTime()));
         time->setForegroundRole(QPalette::Text);
         time->installEventFilter(this);
-        if (mv.isEdited()) {
-            // Keep the edit marker inside the timestamp slot, so plugins
-            // can place the entire semantic header wherever they choose.
+        if (mv.isEdited() || read || delivered) {
+            // One semantic timestamp slot: time, delivery/read state, edit mark.
+            // Do not append glyphs to the time QLabel itself: its text is
+            // refreshed for relative-time display and themes can reposition it.
             auto *timeGroup = new QWidget(content);
             timeGroup->setObjectName(QStringLiteral("mamTimestampGroup"));
             auto *timeLayout = new QHBoxLayout(timeGroup);
             timeLayout->setContentsMargins(0, 0, 0, 0);
             timeLayout->setSpacing(7);
             timeLayout->addWidget(time);
+            if (read || delivered) {
+                auto *checkmarks = new QLabel(read ? QString::fromUtf8("✓✓") : QString::fromUtf8("✓"), timeGroup);
+                checkmarks->setObjectName(QStringLiteral("mamDeliveryIndicator"));
+                checkmarks->setTextFormat(Qt::PlainText);
+                checkmarks->setFont(time->font());
+                checkmarks->setForegroundRole(QPalette::Text);
+                const QString status = read ? tr("Read") : tr("Delivered");
+                checkmarks->setToolTip(status);
+                checkmarks->setAccessibleName(status);
+                timeLayout->addWidget(checkmarks);
+            }
+            if (mv.isEdited()) {
             auto *pencil = new QLabel(timeGroup);
             pencil->setObjectName(QStringLiteral("mamEditedIndicator"));
             // Use the existing Psi system icon, not a font-dependent Unicode
@@ -930,6 +989,7 @@ QWidget *MamChatWidget::createItemWidget(int index)
             pencil->setAccessibleName(tr("Edited message"));
             pencil->setForegroundRole(QPalette::Text);
             timeLayout->addWidget(pencil);
+            }
             elements.insert(QStringLiteral("timestamp"), timeGroup);
         } else {
             elements.insert(QStringLiteral("timestamp"), time);
