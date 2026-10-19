@@ -35,7 +35,6 @@
 
 #include <QDebug>
 #include <QObject>
-#include <QTimer>
 
 #define PRIVACY_NS "jabber:iq:privacy"
 
@@ -536,12 +535,6 @@ void PsiPrivacyManager::accountStateChanged()
         // Prefer server disco before manipulating privacy lists: on XEP-0191
         // servers creating and activating an XEP-0016 list is undesirable.
         selectBlockingBackend();
-        QTimer::singleShot(3000, this, [this] {
-            if (account_->isAvailable() && !backendSelected_) {
-                backendSelected_ = true;
-                requestListNames(); // Discovery unavailable: legacy fallback.
-            }
-        });
     }
     accountAvailable_ = available;
 }
@@ -556,7 +549,10 @@ void PsiPrivacyManager::selectBlockingBackend()
 {
     if (backendSelected_ || !account_->isAvailable())
         return;
-    const auto &features = account_->client()->serverInfoManager()->serverFeatures();
+    const auto *server = account_->client()->serverInfoManager();
+    if (!server->serverFeaturesReady())
+        return; // Wait for disco, including its explicit failure/timeout.
+    const auto &features = server->serverFeatures();
     if (features.test("urn:xmpp:blocking")) {
         backendSelected_ = true;
         nativeBlocking_ = true;
@@ -564,7 +560,7 @@ void PsiPrivacyManager::selectBlockingBackend()
         connect(task, &XMPP::BlockingTask::finished, this, [this, task] { nativeBlocklistFinished(task); });
         task->get();
         task->go(true);
-    } else if (!features.isEmpty()) {
+    } else {
         backendSelected_ = true;
         requestListNames();
     }
