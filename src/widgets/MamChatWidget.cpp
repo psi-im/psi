@@ -1271,6 +1271,13 @@ QWidget *MamChatWidget::createItemWidget(int index)
     body->setForegroundRole(QPalette::Text);
     const bool retracted = isRetracted(items_.at(index));
     QString    richText  = retracted ? tr("Message retracted") : mv.formattedText();
+    // XEP-0245 is a presentation rule, not a wire transformation. MessageView
+    // has already stripped "/me " but retains isEmote(); restore the sender
+    // prefix for the native widget log, just as the legacy ChatView did.
+    if (!retracted && mv.isEmote()) {
+        const QString actor = mv.nick().isEmpty() ? tr("Contact") : mv.nick();
+        richText = QStringLiteral("*") + actor.toHtmlEscaped() + QStringLiteral(" ") + richText;
+    }
     if (!retracted && !mv.formattedUserText().isEmpty())
         richText += (richText.isEmpty() ? QString() : QStringLiteral(" — ")) + mv.formattedUserText();
     body->setRichText(richText);
