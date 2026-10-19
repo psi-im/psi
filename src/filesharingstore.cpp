@@ -86,9 +86,10 @@ bool FileSharingStore::remember(const QString &account, const XMPP::Reference &r
                                 const QString &trustedLocalPath)
 {
     if (!ready_ || account.isEmpty() || !reference.isValid() || !reference.mediaSharing().isValid()
-        || !reference.mediaSharing().file.hasComputedHashes() || reference.mediaSharing().sources.isEmpty()
-        || reference.uri().isEmpty())
+        || !reference.mediaSharing().file.hasComputedHashes() || reference.mediaSharing().sources.isEmpty())
         return false;
+    // XEP-0385 shares may omit the outer reference URI; use the first source.
+    const QString uri = !reference.uri().isEmpty() ? reference.uri() : reference.mediaSharing().sources.first();
     Record record;
     auto   media = reference.mediaSharing();
     for (const auto &hash : media.file.computedHashes()) {
@@ -107,7 +108,7 @@ bool FileSharingStore::remember(const QString &account, const XMPP::Reference &r
         break;
     }
     media.sources.removeDuplicates();
-    record.reference = XMPP::Reference(XMPP::Reference::Data, reference.uri());
+    record.reference = XMPP::Reference(XMPP::Reference::Data, uri);
     record.reference.setMediaSharing(media);
     if (peer.isValid() && !peer.isEmpty() && !record.peers.contains(peer.full()))
         record.peers.append(peer.full());

@@ -331,7 +331,8 @@ if(NOT ONLY_PLUGINS)
         set(iris_LIB iris)
     else()
         # 1.4: MAM/cache API, Stanza::fromXml() and archive-replay decryption.
-        find_package(Iris 1.4 CONFIG REQUIRED)
+        # 1.4.1: XEP-0428 fallbacks and XEP-0385 shares without a reference URI.
+        find_package(Iris 1.4.1 CONFIG REQUIRED)
         if(DEFINED Iris_QT_MAJOR_VERSION AND NOT Iris_QT_MAJOR_VERSION EQUAL QT_DEFAULT_MAJOR_VERSION)
             message(FATAL_ERROR "System Iris uses Qt${Iris_QT_MAJOR_VERSION}, but Psi is configured for Qt${QT_DEFAULT_MAJOR_VERSION}")
         endif()

@@ -7,6 +7,30 @@
 #include <QJsonObject>
 
 namespace {
+const QString fallbackNS = QStringLiteral("urn:xmpp:fallback:0");
+
+// XEP-0428 ranges as [start, end] pairs; an empty pair is a whole element.
+QJsonArray encodeRanges(const QList<XMPP::Message::FallbackRange> &ranges)
+{
+    QJsonArray array;
+    for (const auto &range : ranges)
+        array.append(range.isWhole() ? QJsonArray() : QJsonArray { range.start, range.end });
+    return array;
+}
+
+QList<XMPP::Message::FallbackRange> decodeRanges(const QJsonArray &array)
+{
+    QList<XMPP::Message::FallbackRange> ranges;
+    for (const auto &value : array) {
+        const auto pair = value.toArray();
+        if (pair.isEmpty())
+            ranges.append(XMPP::Message::FallbackRange());
+        else if (pair.size() == 2 && pair.at(0).toInt(-1) >= 0 && pair.at(1).toInt(-1) >= pair.at(0).toInt())
+            ranges.append({ pair.at(0).toInt(), pair.at(1).toInt() });
+    }
+    return ranges;
+}
+
 bool parseReferenceXml(QDomDocument &doc, const QString &xml)
 {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
@@ -45,6 +69,14 @@ QString HistoryMessageExtras::encode(const XMPP::Message &message)
     }
     if (!references.isEmpty())
         extra.insert(XMPP::REFERENCE_NS, references);
+    // Shares may locate their body text only through XEP-0428 fallbacks.
+    QJsonArray fallbacks;
+    for (const auto &fallback : message.fallbacks())
+        fallbacks.append(QJsonObject { { "for", fallback.for_ },
+                                       { "body", encodeRanges(fallback.body) },
+                                       { "subject", encodeRanges(fallback.subject) } });
+    if (!fallbacks.isEmpty())
+        extra.insert(fallbackNS, fallbacks);
 
     QJsonObject events;
     if (message.messageReceipt() == XMPP::ReceiptReceived)
@@ -134,6 +166,14 @@ void HistoryMessageExtras::restore(const QString &json, XMPP::Message &message)
     }
     if (!references.isEmpty())
         message.setReferences(references);
+    QList<XMPP::Message::Fallback> fallbacks;
+    for (const auto &value : extra.value(fallbackNS).toArray()) {
+        const auto object = value.toObject();
+        fallbacks.append({ object.value("for").toString(), decodeRanges(object.value("body").toArray()),
+                           decodeRanges(object.value("subject").toArray()) });
+    }
+    if (!fallbacks.isEmpty())
+        message.setFallbacks(fallbacks);
 
     const auto envelope = extra.value(QStringLiteral("psi:message")).toObject();
     if (envelope.value("version").toInt() == 1) {

@@ -207,6 +207,40 @@ private slots:
         QCOMPARE(message.from().full(), QStringLiteral("old@example/phone"));
         QCOMPARE(message.to().full(), QStringLiteral("new@example/desktop"));
     }
+    void uriLessShareAndFallbackSurviveHistory()
+    {
+        // XEP-0385 form: no outer reference URI; the body URL is located by
+        // XEP-0428 fallbacks instead of reference begin/end.
+        auto media = sample(7).mediaSharing();
+        media.sources = QStringList { "https://example.org/whiteboard.png" };
+        Reference share(Reference::Data, QString());
+        share.setMediaSharing(media);
+        Message original;
+        original.setBody(QString::fromUtf8("Переслано:\n> https://example.org/whiteboard.png\n"));
+        original.setReferences({ share });
+        original.setFallbacks({ { "urn:xmpp:sims:1", { { 13, 47 } }, {} }, { "urn:xmpp:reply:0", { {} }, {} } });
+
+        Message restored;
+        HistoryMessageExtras::restore(HistoryMessageExtras::encode(original), restored);
+        QCOMPARE(restored.references().size(), 1);
+        QVERIFY(restored.references().first().uri().isEmpty());
+        QCOMPARE(restored.references().first().mediaSharing().sources, media.sources);
+        const auto sims = restored.bodyFallbacks("urn:xmpp:sims:1");
+        QCOMPARE(sims.size(), 1);
+        QCOMPARE(sims.first().start, 13);
+        QCOMPARE(sims.first().end, 47);
+        const auto reply = restored.bodyFallbacks("urn:xmpp:reply:0");
+        QCOMPARE(reply.size(), 1);
+        QVERIFY(reply.first().isWhole());
+
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        FileSharingStore store(dir.filePath("shares.sqlite"));
+        QVERIFY(store.remember("alice-account", share, Jid("alice@example.org/desktop")));
+        const auto record = store.find("alice-account", media.file.computedHashes().first());
+        QVERIFY(record);
+        QCOMPARE(record->reference.uri(), media.sources.first());
+    }
     void catalogReopen()
     {
         QTemporaryDir dir;
