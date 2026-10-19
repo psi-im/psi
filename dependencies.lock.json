@@ -15,7 +15,7 @@
   },
   "windows_sdks": {
     "msvc_qt6": {
-      "tag": "windows-sdk-msvc-qt6-v2",
+      "tag": "windows-sdk-msvc-qt6-v3",
       "archive": "psi-windows-sdk-msvc-qt6.zip"
     },
     "msys2_qt5": {

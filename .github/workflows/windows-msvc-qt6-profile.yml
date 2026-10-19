@@ -130,6 +130,9 @@ jobs:
           if (-not (Test-Path sdk\lib\cmake\Qt6Keychain\Qt6KeychainConfig.cmake)) {
             throw 'Qt6Keychain package missing from SDK'
           }
+          if (-not (Test-Path sdk\lib\cmake\Qca3-qt6\Qca3-qt6Config.cmake)) {
+            throw 'Shared QCA package missing from SDK'
+          }
 
       - name: Build and package modern profile
         env:

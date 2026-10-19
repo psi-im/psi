@@ -97,8 +97,22 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Resolve SDK dependencies from Psi lock
+        with:
+          submodules: false
+
+      - name: Initialize pinned Iris
+        shell: bash
+        run: git submodule update --init --depth 1 iris
+
+      # QCA is shared by Psi and its dynamically loaded plugins (OTR), so the
+      # SDK ships the released shared QCA instead of a copy bundled into Psi.
+      - name: Download locked shared QCA release
         uses: ./.github/actions/load-dependencies
+        with:
+          require-iris: 'true'
+          qca-asset: qca3-qt6-windows-x64.zip
+          qca-install-mode: sdk
+          qca-directory: qca-release
 
       - name: Install Qt 6.11
         uses: jurplel/install-qt-action@v4
@@ -181,6 +195,26 @@ jobs:
             throw 'libSRTP import library missing from SDK'
           }
 
+      - name: Stage shared QCA
+        run: |
+          # The SDK's vcpkg OpenSSL stays authoritative; only QCA itself and
+          # its OpenSSL provider are taken from the QCA release.
+          New-Item -ItemType Directory -Force sdk\lib\cmake, sdk\lib\qca3-qt6\crypto | Out-Null
+          Copy-Item qca-release\bin\qca3-qt6.dll sdk\bin -Force
+          Copy-Item qca-release\lib\qca3-qt6.lib sdk\lib -Force
+          Copy-Item qca-release\lib\cmake\Qca3-qt6 sdk\lib\cmake -Recurse -Force
+          Copy-Item qca-release\include\Qca3-qt6 sdk\include -Recurse -Force
+          Copy-Item qca-release\lib\qca3-qt6\crypto\qca-ossl.dll sdk\lib\qca3-qt6\crypto -Force
+
+          foreach ($required in @(
+              'sdk\bin\qca3-qt6.dll',
+              'sdk\lib\qca3-qt6.lib',
+              'sdk\lib\cmake\Qca3-qt6\Qca3-qt6Config.cmake',
+              'sdk\include\Qca3-qt6\QtCrypto\qca.h',
+              'sdk\lib\qca3-qt6\crypto\qca-ossl.dll')) {
+            if (-not (Test-Path $required)) { throw "Shared QCA file missing from SDK: $required" }
+          }
+
       - name: Build static Qt6Keychain
         run: |
           git clone --depth 1 --branch $env:QTKEYCHAIN_TAG https://github.com/frankosterfeld/qtkeychain.git qtkeychain
@@ -224,25 +258,33 @@ jobs:
           project(psi_msvc_sdk_consumer LANGUAGES CXX)
           find_package(Qt6 REQUIRED COMPONENTS Core)
           find_package(Qt6Keychain CONFIG REQUIRED)
+          find_package(Qca3-qt6 CONFIG REQUIRED)
           find_package(OpenSSL REQUIRED)
           find_package(ZLIB REQUIRED)
           add_executable(psi-sdk-consumer main.cpp)
           target_link_libraries(psi-sdk-consumer PRIVATE
               Qt6::Core
               Qt6Keychain::Qt6Keychain
+              Qca3::Qca
               OpenSSL::Crypto
               ZLIB::ZLIB)
           '@ | Set-Content consumer\CMakeLists.txt -Encoding utf8
           @'
+          #include <QCoreApplication>
+          #include <QtCrypto>
           #include <openssl/crypto.h>
           #include <qt6keychain/keychain.h>
           #include <zlib.h>
 
-          int main()
+          int main(int argc, char **argv)
           {
+              QCA::Initializer init;
+              QCoreApplication app(argc, argv);
               QKeychain::ReadPasswordJob job(QStringLiteral("psi-sdk-test"));
+              // The shared OpenSSL provider must load against the SDK's OpenSSL.
+              const bool dtls = QCA::isSupported("dtls");
               return (OpenSSL_version_num() != 0 && zlibVersion()[0] != '\0'
-                      && !job.service().isEmpty()) ? 0 : 1;
+                      && !job.service().isEmpty() && dtls) ? 0 : 1;
           }
           '@ | Set-Content consumer\main.cpp -Encoding utf8
 
@@ -250,12 +292,14 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release `
             "-DCMAKE_PREFIX_PATH=$pwd/relocated-sdk;$env:QT_ROOT_DIR" `
             "-DQt6Keychain_DIR=$pwd/relocated-sdk/lib/cmake/Qt6Keychain" `
+            "-DQca3-qt6_DIR=$pwd/relocated-sdk/lib/cmake/Qca3-qt6" `
             "-DOPENSSL_ROOT_DIR=$pwd/relocated-sdk"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           cmake --build consumer-build --parallel 2
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
           $env:PATH = "$pwd\relocated-sdk\bin;$env:QT_ROOT_DIR\bin;$env:PATH"
+          $env:QCA_PLUGIN_PATH = "$pwd\relocated-sdk\lib\qca3-qt6"
           & "$pwd\consumer-build\psi-sdk-consumer.exe"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Move-Item relocated-sdk sdk
@@ -270,6 +314,7 @@ jobs:
           Build environment: MSVC 2022 / Qt $qtVersion
           Target: Windows x64
           QtKeychain source: frankosterfeld/qtkeychain $env:QTKEYCHAIN_TAG (static)
+          QCA: psi-im/qca $env:QCA_TAG release qca3-qt6-windows-x64 (shared, with qca-ossl)
           vcpkg revision: $vcpkgRevision
           vcpkg packages: openssl, zlib, hunspell, minizip, libsrtp[openssl] and transitive runtime dependencies
           SDK purpose: non-Qt development/runtime dependencies for the modern Psi MSVC/Qt6 build
@@ -322,5 +367,5 @@ jobs:
               --repo "$GITHUB_REPOSITORY" \
               --target infra/windows-sdk-releases \
               --title "Psi Windows SDK (MSVC 2022 / Qt6)" \
-              --notes "Development/runtime SDK for the modern Windows build. Qt itself is installed from the official Qt binary repository; this SDK contains OpenSSL, libSRTP, zlib, Hunspell, minizip and static Qt6Keychain."
+              --notes "Development/runtime SDK for the modern Windows build. Qt itself is installed from the official Qt binary repository; this SDK contains shared QCA with qca-ossl, OpenSSL, libSRTP, zlib, Hunspell, minizip and static Qt6Keychain."
           fi
