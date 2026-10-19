@@ -358,7 +358,8 @@ int EDBSqLite::append(const QString &accId, const XMPP::Jid &jid, const PsiEvent
     bool protocolEvent = false;
     if (e->type() == PsiEvent::Message) {
         const auto message = e.staticCast<MessageEvent>()->message().displayMessage();
-        protocolEvent      = message.messageReceipt() == ReceiptReceived || !message.reactions().targetId.isEmpty()
+        protocolEvent      = message.messageReceipt() == ReceiptReceived || !message.displayedMarkerId().isEmpty()
+            || !message.reactions().targetId.isEmpty()
             || !message.retraction().isEmpty();
     }
     // The legacy text mirror cannot represent protocol attributes. Keep its
@@ -729,7 +730,8 @@ PsiEvent::Ptr EDBSqLite::getEvent(const QSqlRecord &record)
             XMPP::Forwarding wrapper;
             if (parsed && wrapper.fromXml(doc.documentElement().firstChildElement("forwarded"), pa->client())) {
                 const auto raw = wrapper.message();
-                if (raw.messageReceipt() == ReceiptReceived || !raw.reactions().targetId.isEmpty()
+                if (raw.messageReceipt() == ReceiptReceived || !raw.displayedMarkerId().isEmpty()
+                    || !raw.reactions().targetId.isEmpty()
                     || !raw.retraction().isEmpty())
                     m = raw;
             }
