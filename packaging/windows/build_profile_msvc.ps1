@@ -130,7 +130,25 @@ if ($RunTests) {
     )
     & cmake @testArgs
     if ($LASTEXITCODE -ne 0) {
-        throw "AvCall regression tests failed with exit code $LASTEXITCODE"
+        $ctestStatus = $LASTEXITCODE
+        # QTest's console output can be lost on Windows; write it to a file
+        # and report the raw exit status (an NTSTATUS for crashes).
+        $previousPath = $env:PATH
+        $env:PATH = $testPath
+        $env:QT_QPA_PLATFORM = 'offscreen'
+        foreach ($name in @('avcallpolicy_test', 'avcall_backend_lifecycle_test', 'avcall_capability_refresh_test')) {
+            $exe = Get-ChildItem -Path $buildDir -Recurse -Filter "$name.exe" | Select-Object -First 1
+            if (-not $exe) { continue }
+            $log = Join-Path $buildDir "$name-qtest.txt"
+            & $exe.FullName -o "$log,txt"
+            $status = $LASTEXITCODE
+            if ($status -ne 0) {
+                Write-Host ("{0} exited with {1} (0x{2:X8})" -f $name, $status, $status)
+                if (Test-Path $log) { Get-Content $log }
+            }
+        }
+        $env:PATH = $previousPath
+        throw "AvCall regression tests failed with exit code $ctestStatus"
     }
 }
 Invoke-Checked cmake --install $buildDir
