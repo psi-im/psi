@@ -34,8 +34,9 @@ set(DEPLOY_QT_PLUGIN_PATTERNS
     "wayland-shell-integration/libqt-shell.so"
     "wayland-shell-integration/libwl-shell-plugin.so"
     "wayland-shell-integration/libxdg-shell.so"
-    "/usr/${CMAKE_INSTALL_LIBDIR}/qca3-qt${QT_DEFAULT_MAJOR_VERSION}/crypto/*.so"
-    "/usr/lib/qca3-qt${QT_DEFAULT_MAJOR_VERSION}/crypto/*.so"
+    "/usr/${CMAKE_INSTALL_LIBDIR}/qca3-qt${QT_DEFAULT_MAJOR_VERSION}/crypto/*ossl.so"
+    "/usr/lib/qca3-qt${QT_DEFAULT_MAJOR_VERSION}/crypto/*ossl.so"
+    "/usr/${CMAKE_INSTALL_LIBDIR}/ossl-modules/legacy.so"
 )
 
 # GStreamer plugin masks, if they are to be bundled with the AppImage.
@@ -65,6 +66,18 @@ set(DEPLOY_GSTREAMER_PLUGIN_PATTERNS
     "gstreamer-1.0/libgstvorbis.so"
     "gstreamer-1.0/libgstvpx.so"
     "gstreamer-1.0/libgstwebrtcdsp.so"
+    "spa-*/audioconvert/libspa-audioconvert.so"
+    "spa-*/audiomixer/libspa-audiomixer.so"
+    "spa-*/support/libspa-dbus.so"
+    "spa-*/support/libspa-support.so"
+    "pipewire-*/libpipewire-module-adapter.so"
+    "pipewire-*/libpipewire-module-client-device.so"
+    "pipewire-*/libpipewire-module-client-node.so"
+    "pipewire-*/libpipewire-module-metadata.so"
+    "pipewire-*/libpipewire-module-protocol-native.so"
+    "pipewire-*/libpipewire-module-rt.so"
+    "pipewire-*/libpipewire-module-session-manager.so"
+    "pulseaudio/libpulsecommon-17.0.so"
 )
 
 set(_qmake "qmake${QT_DEFAULT_MAJOR_VERSION}")
@@ -273,20 +286,24 @@ endforeach()
 
 # Install qt plugins and gstreamer plugins if BUILD_PSIMEDIA enabled
 foreach(_dep_plugin IN LISTS _plugins_to_scan)
-    string(FIND "${_dep_plugin}" "gstreamer" gstpos)
-    string(FIND "${_dep_plugin}" "/usr/lib/qca3-qt@QT_DEFAULT_MAJOR_VERSION@" qcapos)
     set(_destination_prefix "${_lib_dest}/qt@QT_DEFAULT_MAJOR_VERSION@/plugins")
-    if(NOT gstpos EQUAL -1)
+    if(_dep_plugin MATCHES "^gstr|^spa|^pipew|^pulse\\.*")
         file(RELATIVE_PATH _plugin_relative
             "${_lib_dir}"
             "${_dep_plugin}"
         )
         set(_destination_prefix "${_lib_dest}")
-    elseif(NOT qcapos EQUAL -1)
+    elseif(_dep_plugin MATCHES "^/usr/lib/qca3\\.*")
         file(RELATIVE_PATH _plugin_relative
             "/usr/lib/qca3-qt@QT_DEFAULT_MAJOR_VERSION@"
             "${_dep_plugin}"
         )
+    elseif(_dep_plugin MATCHES "^/usr/\\.*/ossl\\.*")
+        file(RELATIVE_PATH _plugin_relative
+            "${_lib_dir}"
+            "${_dep_plugin}"
+        )
+        set(_destination_prefix "${_lib_dest}")
     else()
         file(RELATIVE_PATH _plugin_relative
             "${_plugin_dir}"

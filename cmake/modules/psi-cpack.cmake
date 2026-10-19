@@ -143,6 +143,7 @@ HERE=\"$(dirname \"$(readlink -f \"\${0}\")\")\"
 export QT_QUICK_BACKEND=software
 export QTWEBENGINE_CHROMIUM_FLAGS=\"--disable-gpu --no-sandbox\"
 export QTWEBENGINE_DISABLE_SANDBOX=1
+export GST_PLUGIN_PATH=\"\${HERE}/usr/${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0\"
 
 # Path to the libraries inside of AppImage
 export LD_LIBRARY_PATH=\"\${HERE}/usr/${CMAKE_INSTALL_LIBDIR}:\${LD_LIBRARY_PATH}\"
@@ -225,6 +226,13 @@ if(_PSI_CPACK_GENERATORS)
     #Set psi-im/psi-plus-im as a dependency for all other components
     if(ENABLE_PLUGINS AND PSI_CPACK_DPKG_DEB_EXECUTABLE)
         list(APPEND CPACK_DEBIAN_PLUGINS_PACKAGE_DEPENDS "${CPACK_PACKAGE_NAME}-im")
+        if(BUILD_PSIMEDIA)
+            list(APPEND CPACK_DEBIAN_PLUGINS_PACKAGE_DEPENDS
+            "gstreamer1.0-plugins-bad"
+            "gstreamer1.0-plugins-base"
+            "gstreamer1.0-plugins-good"
+            )
+        endif()
     endif()
     if(LANGS_EXISTS AND PSI_CPACK_DPKG_DEB_EXECUTABLE)
         list(APPEND CPACK_DEBIAN_L10N_PACKAGE_DEPENDS "${CPACK_PACKAGE_NAME}-im")

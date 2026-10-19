@@ -310,8 +310,11 @@ if(WIN32)
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstbadaudio-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstbadbase-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstbase-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstcodecparsers-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstcodecs-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstd3d11-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstd3dshader-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstdxva-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstnet-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstpbutils-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstreamer-*.dll
@@ -353,21 +356,24 @@ if(WIN32)
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstaudioconvert.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstaudiomixer.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstaudioresample.dll
-            ${CMAKE_SHARED_LIBRARY_PREFIX}gstd3d11.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstcoreelements.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstd3d11.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstdirectsound.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstdirectsoundsrc.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstjpeg.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstlevel.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstmediafoundation.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstmulaw.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstogg.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstopus.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstopusparse.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstplayback.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstrtp.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstrtpmanager.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gsttypefindfunctions.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstvideoconvertscale.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstvideoconvert.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstvideoparsersbad.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstvideoscale.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstvideorate.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstvolume.dll
@@ -375,7 +381,9 @@ if(WIN32)
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstvpx.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstwasapi*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstwebrtc.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstwebrtcdsp.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstwinks.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstwinscreencap.dll
         )
         if(MSVC)
             set(PSIMEDIA_DEPS_DIR "${GST_SDK}/bin")
