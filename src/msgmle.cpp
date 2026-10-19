@@ -591,9 +591,7 @@ void ChatEdit::clearMessageHistory()
 
 QString ChatEdit::getTextToSend()
 {
-    // When the QTextEdit have a formatting then it will be converted to Markdown but it's not compatible with XEP-0393.
-    // So some clients will render it diferently but this must be not cricial.
-    return toMarkdown().trimmed();
+    return toPlainText().trimmed();
 }
 
 XMPP::HTMLElement ChatEdit::toHTMLElement()
