@@ -261,17 +261,22 @@ QMenu *PsiTextView::createStandardContextMenu(const QPoint &position)
     QString     anc = anchorAt(position);
     if (!anc.isEmpty()) {
         // menu = URLObject::getInstance()->createPopupMenu(anc);
-        const QString href     = textcursor.charFormat().anchorHref();
-        auto          clickPos = textcursor.position();
-        // we rely on cow to quickly find boundaries
-        while (textcursor.charFormat().isAnchor() && textcursor.charFormat().anchorHref() == href) {
-            textcursor.movePosition(QTextCursor::PreviousCharacter);
-        }
-        textcursor.setPosition(clickPos + 1, QTextCursor::KeepAnchor);
-        while (textcursor.charFormat().isAnchor() && textcursor.charFormat().anchorHref() == href) {
-            textcursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
-        }
-        textcursor.movePosition(QTextCursor::PreviousCharacter, QTextCursor::KeepAnchor);
+        const QString href      = textcursor.charFormat().anchorHref();
+        auto          clickPos  = textcursor.position();
+        const auto    inAnchor  = [&href](const QTextCursor &c) {
+            const auto format = c.charFormat();
+            return format.isAnchor() && format.anchorHref() == href;
+        };
+        // we rely on cow to quickly find boundaries. A link may start or end
+        // the whole document (one message per document in the native chat),
+        // where movePosition() fails; stop there instead of looping forever.
+        while (inAnchor(textcursor) && !textcursor.atBlockStart()
+               && textcursor.movePosition(QTextCursor::PreviousCharacter)) { }
+        textcursor.setPosition(qMin(clickPos + 1, document()->characterCount() - 1), QTextCursor::KeepAnchor);
+        while (inAnchor(textcursor) && !textcursor.atBlockEnd()
+               && textcursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor)) { }
+        if (!inAnchor(textcursor))
+            textcursor.movePosition(QTextCursor::PreviousCharacter, QTextCursor::KeepAnchor);
         setTextCursor(textcursor);
 
         menu = URLObject::getInstance()->createPopupMenu(anc);
