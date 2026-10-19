@@ -51,6 +51,8 @@ public:
     void           setInformationalColor(const QColor &color);
     static QString displayTime(const QDateTime &when, const QDateTime &now = QDateTime::currentDateTime());
     static QString fullTimestamp(const QDateTime &when);
+    // Most recent actually visible incoming message requesting a read marker.
+    QString lastVisibleMarkableIncomingId() const;
 
     // Whole-message selection uses logical model keys, not materialized QWidget pointers.
     int  selectedMessageCount() const { return selectedKeys_.size(); }
@@ -104,6 +106,9 @@ private:
     QHash<QString, QHash<QString, ReactionState>> reactionEvents_;
     QHash<QString, QList<MessageView>>            retractions_;
     QSet<QString>                                 receipts_;
+    // Stable row identity, not an index: prepending MAM pages shifts indices.
+    QString                                       lastDisplayedRowKey_;
+    int                                           displayedTargetIndex() const;
     void                                          updateTimestamps();
     void                                          updateTimestampAppearance(QLabel *label);
     void                                          updateRowSelection(QFrame *row, bool selected);
