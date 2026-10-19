@@ -52,14 +52,18 @@ public:
         setObjectName(QStringLiteral("mamDeliveryIndicator"));
         setProperty("deliveryState", read ? QStringLiteral("read") : QStringLiteral("delivered"));
         setForegroundRole(QPalette::WindowText);
-        setIconHeight(12);
+        setTimestampFont(font());
     }
 
-    void setIconHeight(int height)
+    void setTimestampFont(const QFont &timeFont)
     {
-        height = qMax(8, height);
+        setFont(timeFont);
+        const QFontMetrics metrics(timeFont);
+        iconHeight_ = qMax(8, qRound(metrics.height() * 0.75));
         const qreal designWidth = read_ ? 18.0 : 11.0;
-        setFixedSize(qRound(height * designWidth / 12.0), height);
+        // Match the timestamp line box; artwork is positioned relative to
+        // its text baseline rather than the widget's vertical center.
+        setFixedSize(qRound(iconHeight_ * designWidth / 12.0), metrics.height());
         update();
     }
 
@@ -69,10 +73,13 @@ protected:
         QPainter painter(this);
         painter.setRenderHint(QPainter::Antialiasing);
         const qreal designWidth = read_ ? 18.0 : 11.0;
-        // Center the strokes optically against the timestamp's text baseline.
-        // The 12-unit icon artwork has unused space below its lowest stroke.
-        painter.translate(0, 1);
-        painter.scale(width() / designWidth, (height() - 1.0) / 12.0);
+        const QFontMetrics metrics(font());
+        // QLabel centers the font line box vertically. Align the check's
+        // lowest vertex (artwork y=9) with that same text baseline, not with
+        // the label/widget center; this also works for different font sizes.
+        const qreal baseline = (height() - metrics.height()) / 2.0 + metrics.ascent();
+        painter.translate(0, baseline - iconHeight_ * 9.0 / 12.0);
+        painter.scale(width() / designWidth, iconHeight_ / 12.0);
 
         QColor color = palette().color(QPalette::Text);
         color.setAlpha(155); // Keep each narrow diagonal distinct at small sizes.
@@ -102,6 +109,7 @@ protected:
 
 private:
     bool read_;
+    int  iconHeight_ = 12;
 };
 
 } // namespace
@@ -1282,7 +1290,7 @@ void MamChatWidget::updateTimestampAppearance(QLabel *label)
     if (auto *indicator = dynamic_cast<DeliveryIndicator *>(
             label->parentWidget()->findChild<QLabel *>(QStringLiteral("mamDeliveryIndicator")))) {
         indicator->setPalette(colors);
-        indicator->setIconHeight(qRound(QFontMetrics(timeFont).height() * 0.75));
+        indicator->setTimestampFont(timeFont);
     }
 }
 
