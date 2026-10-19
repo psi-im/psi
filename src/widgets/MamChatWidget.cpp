@@ -71,9 +71,9 @@ protected:
         const qreal designWidth = read_ ? 15.5 : 10.8;
         painter.scale(width() / designWidth, height() / 12.0);
 
-        QColor color = palette().color(QPalette::Mid);
-        color.setAlpha(210); // Neutral, unobtrusive gray in light and dark themes.
-        painter.setPen(QPen(color, 1.55, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        QColor color = palette().color(QPalette::Text);
+        color.setAlpha(110); // Legible neutral gray in both light and dark themes.
+        painter.setPen(QPen(color, 1.65, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
 
         // Main check.
         QPainterPath left;
@@ -1276,7 +1276,7 @@ void MamChatWidget::updateTimestampAppearance(QLabel *label)
     if (auto *indicator = dynamic_cast<DeliveryIndicator *>(
             label->parentWidget()->findChild<QLabel *>(QStringLiteral("mamDeliveryIndicator")))) {
         indicator->setPalette(colors);
-        indicator->setIconHeight(qRound(QFontMetrics(timeFont).height() * 0.68));
+        indicator->setIconHeight(qRound(QFontMetrics(timeFont).height() * 0.75));
     }
 }
 
