@@ -226,7 +226,8 @@ private slots:
         // RTP is advertised only with DTLS-SRTP. A test binary run from the
         // build tree may lack the QCA OpenSSL plugin (e.g. the MSVC profile).
         QCA::Initializer qca;
-        if (XMPP::Dtls::supportedSRTPProfiles().isEmpty())
+        // Probing profiles without a DTLS provider is not safe; check first.
+        if (!XMPP::Dtls::isSupported() || XMPP::Dtls::supportedSRTPProfiles().isEmpty())
             QSKIP("This QCA build has no DTLS-SRTP profiles; RTP is never advertised");
         PsiMedia::setProvider(&provider_);
     }
