@@ -69,7 +69,10 @@ protected:
         QPainter painter(this);
         painter.setRenderHint(QPainter::Antialiasing);
         const qreal designWidth = read_ ? 18.0 : 11.0;
-        painter.scale(width() / designWidth, height() / 12.0);
+        // Center the strokes optically against the timestamp's text baseline.
+        // The 12-unit icon artwork has unused space below its lowest stroke.
+        painter.translate(0, 1);
+        painter.scale(width() / designWidth, (height() - 1.0) / 12.0);
 
         QColor color = palette().color(QPalette::Text);
         color.setAlpha(155); // Keep each narrow diagonal distinct at small sizes.
@@ -1082,7 +1085,7 @@ QWidget *MamChatWidget::createItemWidget(int index)
                 const QString status = read ? tr("Read") : tr("Delivered");
                 checkmarks->setToolTip(status);
                 checkmarks->setAccessibleName(status);
-                timeLayout->addWidget(checkmarks);
+                timeLayout->addWidget(checkmarks, 0, Qt::AlignVCenter);
             }
             if (mv.isEdited()) {
             auto *pencil = new QLabel(timeGroup);
