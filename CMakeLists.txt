@@ -46,8 +46,11 @@ endforeach()
 # Detect MXE cross-compilation
 check_MXE(DEFAULT_USE_MXE)
 
+# QCA is shared with dynamically loaded plugins (OTR), which cannot use a
+# copy bundled into Psi. Bundle it only on request (BUNDLED_IRIS_ALL) and on
+# platforms whose packaging still embeds QCA (macOS, MXE).
 set( DEFAULT_BUNDLED_QCA OFF )
-if (APPLE OR ((MSVC OR DEFAULT_USE_MXE) OR BUNDLED_IRIS_ALL))
+if (APPLE OR DEFAULT_USE_MXE OR BUNDLED_IRIS_ALL)
     set( DEFAULT_BUNDLED_QCA ON )
 endif()
 

@@ -56,6 +56,16 @@ $qtKeychainDir = Join-Path $sdkDir 'lib\cmake\Qt6Keychain'
 if (-not (Test-Path (Join-Path $qtKeychainDir 'Qt6KeychainConfig.cmake'))) {
     throw "Qt6Keychain SDK is missing: $qtKeychainDir"
 }
+# Psi and its dynamically loaded plugins (OTR) must share one QCA instance,
+# so QCA comes from the SDK as a shared library, never bundled into Psi.
+$qcaDir = Join-Path $sdkDir 'lib\cmake\Qca3-qt6'
+if (-not (Test-Path (Join-Path $qcaDir 'Qca3-qt6Config.cmake'))) {
+    throw "Shared QCA SDK is missing: $qcaDir"
+}
+$qcaPluginPath = Join-Path $sdkDir 'lib\qca3-qt6'
+if (-not (Test-Path (Join-Path $qcaPluginPath 'crypto\qca-ossl.dll'))) {
+    throw "QCA OpenSSL provider is missing from the SDK: $qcaPluginPath"
+}
 
 $configureLog = Join-Path $outputDir 'configure-modern.log'
 $configureArgs = @(
@@ -67,6 +77,7 @@ $configureArgs = @(
     "-DCMAKE_PREFIX_PATH=$sdkDir;$env:QT_ROOT_DIR",
     "-DSDK_PATH=$sdkDir",
     "-DQt6Keychain_DIR=$qtKeychainDir",
+    "-DQca3-qt6_DIR=$qcaDir",
     "-DTRANSLATIONS_DIR=$l10nDir\translations",
     '-DCMAKE_C_FLAGS=/D_WIN32_WINNT=0x0A00 /DWINVER=0x0A00',
     '-DCMAKE_CXX_FLAGS=/D_WIN32_WINNT=0x0A00 /DWINVER=0x0A00',
@@ -78,7 +89,12 @@ $configureArgs = @(
     '-DCMAKE_CXX_COMPILER_LAUNCHER=ccache',
     '-DCHAT_TYPE=WEBENGINE',
     '-DBUNDLED_IRIS=ON',
-    '-DBUNDLED_IRIS_ALL=ON',
+    '-DBUNDLED_IRIS_ALL=OFF',
+    '-DIRIS_BUNDLED_QCA=OFF',
+    '-DIRIS_SYSTEM_QCA=3',
+    # Not in the MSVC SDK and not shared with plugins: keep them in Iris.
+    '-DIRIS_BUNDLED_USRSCTP=ON',
+    '-DIRIS_BUNDLED_OMEMO_C=ON',
     '-DENABLE_OMEMO=ON',
     '-DUSE_HUNSPELL=ON',
     '-DUSE_KEYCHAIN=ON',
@@ -102,12 +118,22 @@ if ($LASTEXITCODE -ne 0) {
 $configureText = Get-Content $configureLog -Raw
 foreach ($required in @(
     'Chatlog type - QtWebEngine',
-    'BUNDLED_IRIS_ALL - ENABLED',
+    'QCA: selected system QCA 3',
     'Psi SDK Found at',
     'Qt6 found'
 )) {
     if ($configureText -notmatch [regex]::Escape($required)) {
         throw "Expected configure marker was not found: $required"
+    }
+}
+$cacheText = Get-Content (Join-Path $buildDir 'CMakeCache.txt') -Raw
+foreach ($required in @(
+    'IRIS_BUNDLED_QCA:BOOL=OFF',
+    'IRIS_BUNDLED_USRSCTP:BOOL=ON',
+    'IRIS_BUNDLED_OMEMO_C:BOOL=ON'
+)) {
+    if ($cacheText -notmatch "(?m)^$([regex]::Escape($required))\r?$") {
+        throw "Expected CMake cache entry was not found: $required"
     }
 }
 
@@ -121,8 +147,10 @@ if ($RunTests) {
     Invoke-Checked cmake @configureArgs
     Invoke-Checked cmake --build $buildDir --target avcallpolicy_test avcall_backend_lifecycle_test avcall_capability_refresh_test --parallel 4
     $testPath = "$(Join-Path $env:QT_ROOT_DIR 'bin');$(Join-Path $sdkDir 'bin');$env:PATH"
+    # The test binaries run from the build tree; point QCA at the SDK provider
+    # and fail instead of skipping when DTLS-SRTP is unavailable.
     $testArgs = @(
-        '-E', 'env', "PATH=$testPath", 'ctest',
+        '-E', 'env', "PATH=$testPath", "QCA_PLUGIN_PATH=$qcaPluginPath", 'PSI_TEST_REQUIRE_DTLS=1', 'ctest',
         '--test-dir', $buildDir,
         '--output-on-failure',
         '-R', '^avcall(policy|_(backend_lifecycle|capability_refresh))_test$',
@@ -135,6 +163,8 @@ if ($RunTests) {
         # and report the raw exit status (an NTSTATUS for crashes).
         $previousPath = $env:PATH
         $env:PATH = $testPath
+        $env:QCA_PLUGIN_PATH = $qcaPluginPath
+        $env:PSI_TEST_REQUIRE_DTLS = '1'
         $env:QT_QPA_PLATFORM = 'offscreen'
         foreach ($name in @('avcallpolicy_test', 'avcall_backend_lifecycle_test', 'avcall_capability_refresh_test')) {
             $exe = Get-ChildItem -Path $buildDir -Recurse -Filter "$name.exe" | Select-Object -First 1

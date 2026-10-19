@@ -223,12 +223,16 @@ class CapabilityRefreshTest : public QObject {
 private slots:
     void initTestCase()
     {
-        // RTP is advertised only with DTLS-SRTP. A test binary run from the
-        // build tree may lack the QCA OpenSSL plugin (e.g. the MSVC profile).
+        // RTP is advertised only with DTLS-SRTP, provided by QCA's OpenSSL
+        // plugin. Developer builds may lack it; CI sets PSI_TEST_REQUIRE_DTLS
+        // so a missing provider fails instead of silently skipping.
         QCA::Initializer qca;
         // Probing profiles without a DTLS provider is not safe; check first.
-        if (!XMPP::Dtls::isSupported() || XMPP::Dtls::supportedSRTPProfiles().isEmpty())
+        if (!XMPP::Dtls::isSupported() || XMPP::Dtls::supportedSRTPProfiles().isEmpty()) {
+            if (qEnvironmentVariableIsSet("PSI_TEST_REQUIRE_DTLS"))
+                QFAIL("QCA provides no DTLS-SRTP profiles, but PSI_TEST_REQUIRE_DTLS is set");
             QSKIP("This QCA build has no DTLS-SRTP profiles; RTP is never advertised");
+        }
         PsiMedia::setProvider(&provider_);
     }
 
