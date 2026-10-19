@@ -1,4 +1,4 @@
-name: MAM native chat integration (development Iris)
+name: MAM native chat integration
 
 on:
   push:
@@ -84,11 +84,9 @@ jobs:
       - name: Resolve non-Iris submodules
         run: |
           git submodule update --init --depth 1 3rdparty/http-parser 3rdparty/qhttp 3rdparty/qite
-      - name: Use reviewed Iris MAM implementation for development
+      - name: Initialize pinned Iris
         run: |
           git submodule update --init iris
-          git -C iris fetch --depth=1 origin 3d2328ab4ea354202b04a78f32d7e130b80dd547
-          git -C iris checkout --detach 3d2328ab4ea354202b04a78f32d7e130b80dd547
           git -C iris submodule update --init --depth 1
           git -C iris rev-parse HEAD
       - name: Install Qt5 and Psi dependencies
@@ -112,7 +110,7 @@ jobs:
         run: |
           ccache --max-size=600M
           ccache --zero-stats
-      - name: Configure basic chat with bundled development Iris
+      - name: Configure basic chat with bundled Iris
         run: |
           cmake -S . -B build-mam-chat -G Ninja \
             -DCMAKE_BUILD_TYPE=Release -DCHAT_TYPE=BASIC \

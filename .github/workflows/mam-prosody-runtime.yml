@@ -1,4 +1,4 @@
-name: MAM Prosody runtime (development Iris)
+name: MAM Prosody runtime
 
 on:
   push:
@@ -22,11 +22,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: false
-      - name: Use reviewed development Iris MAM revision
+      - name: Initialize pinned Iris
         run: |
           git submodule update --init iris
-          git -C iris fetch --depth=1 origin 292b150f8e97fa480a0def4ae6cd25abc21a1529
-          git -C iris checkout --detach 292b150f8e97fa480a0def4ae6cd25abc21a1529
           git -C iris submodule update --init --depth 1
       - name: Install Qt5, QCA and Prosody
         run: |

@@ -330,9 +330,17 @@ if(NOT ONLY_PLUGINS)
         add_subdirectory(iris)
         set(iris_LIB iris)
     else()
-        # 1.4: MAM/cache API, Stanza::fromXml() and archive-replay decryption.
-        # 1.4.1: XEP-0428 fallbacks and XEP-0385 shares without a reference URI.
-        find_package(Iris 1.4.1 CONFIG REQUIRED)
+        # The API floor lives in the same lock CI uses (as Iris does for QCA);
+        # parse it with a regex to stay compatible with old CMake.
+        file(READ "${CMAKE_CURRENT_SOURCE_DIR}/dependencies.lock.json" _psi_dependency_lock)
+        string(REGEX MATCH "\"iris\"[ \t\r\n]*:[ \t\r\n]*\\{[^}]*\\}" _psi_iris_entry "${_psi_dependency_lock}")
+        string(REGEX MATCH "\"minimum_version\"[ \t\r\n]*:[ \t\r\n]*\"([^\"]*)\"" _psi_iris_min_match "${_psi_iris_entry}")
+        set(PSI_IRIS_MIN_VERSION "${CMAKE_MATCH_1}")
+        if(NOT PSI_IRIS_MIN_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
+            message(FATAL_ERROR "dependencies.lock.json: Iris minimum_version must be a numeric X.Y.Z string")
+        endif()
+        set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/dependencies.lock.json")
+        find_package(Iris ${PSI_IRIS_MIN_VERSION} CONFIG REQUIRED)
         if(DEFINED Iris_QT_MAJOR_VERSION AND NOT Iris_QT_MAJOR_VERSION EQUAL QT_DEFAULT_MAJOR_VERSION)
             message(FATAL_ERROR "System Iris uses Qt${Iris_QT_MAJOR_VERSION}, but Psi is configured for Qt${QT_DEFAULT_MAJOR_VERSION}")
         endif()
