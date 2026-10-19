@@ -1416,20 +1416,25 @@ private slots:
         // The pencil is drawn at the timestamp font size (unscaled when
         // within a pixel of the 16 px icon) and centred on the check band:
         // the baseline up to midway between the x-height and cap height.
-        const auto pencilPlacement = [&list](qreal points, int expectedSize) {
-            QFont chatFont = list.font();
-            chatFont.setPointSizeF(points);
+        // Psi's timestamp font is the chat font minus 1pt (or 1px for pixel
+        // fonts). Point-to-pixel conversion depends on the environment, so
+        // the near-native cases use pixel fonts.
+        const auto pencilPlacement = [&list](const QFont &chatFont, int expectedSize) {
             list.setFont(chatFont);
-            if (!QTest::qWaitFor([&list, points] {
-                    auto *row = list.itemWidget(0);
-                    auto *t   = row ? row->findChild<QLabel *>(QStringLiteral("mamTimestamp")) : nullptr;
-                    return t && qAbs(t->font().pointSizeF() - (points - 1.0)) < 0.01;
-                }))
+            const auto timestampFontApplied = [&list, chatFont] {
+                auto *row = list.itemWidget(0);
+                auto *t   = row ? row->findChild<QLabel *>(QStringLiteral("mamTimestamp")) : nullptr;
+                if (!t)
+                    return false;
+                return chatFont.pixelSize() > 0 ? t->font().pixelSize() == chatFont.pixelSize() - 1
+                                                : qAbs(t->font().pointSizeF() - (chatFont.pointSizeF() - 1.0)) < 0.01;
+            };
+            if (!QTest::qWaitFor(timestampFontApplied) || !timestampFontApplied())
                 return false;
             auto *row  = list.itemWidget(0);
             auto *time = row->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
             auto *mark = row->findChild<QLabel *>(QStringLiteral("mamEditedIndicator"));
-            if (!time || !mark || qAbs(time->font().pointSizeF() - (points - 1.0)) > 0.01)
+            if (!mark)
                 return false;
             const int size = expectedSize > 0 ? expectedSize : QFontInfo(time->font()).pixelSize();
             if (qAbs(size - 16) <= 1 && expectedSize <= 0)
@@ -1465,17 +1470,27 @@ private slots:
             const int   height     = bottom - top + 1;
             const qreal centre     = (top + bottom + 1) / 2.0;
             if (top < 0 || qAbs(height - qRound(size * ratio)) > 1 || qAbs(centre - bandCentre) > 1.0) {
-                qWarning() << points << "pt: pencil rows" << top << bottom << "expected size" << size << "centre"
+                qWarning() << chatFont << "pencil rows" << top << bottom << "expected size" << size << "centre"
                            << centre << "band centre" << bandCentre;
                 return false;
             }
             return true;
         };
+        const auto pixels = [&list](int px) {
+            QFont f = list.font();
+            f.setPixelSize(px);
+            return f;
+        };
+        const auto points = [&list](qreal pt) {
+            QFont f = list.font();
+            f.setPointSizeF(pt);
+            return f;
+        };
         // Timestamp fonts of 16 and 17 px keep the icon's own 16 px.
-        QVERIFY2(pencilPlacement(13.0, 16), "Edit pencil near its native size was resized");
-        QVERIFY2(pencilPlacement(13.75, 16), "Edit pencil near its native size was resized");
-        QVERIFY2(pencilPlacement(14.0, 0), "Edit pencil is not font-sized and centred on the checks");
-        QVERIFY2(pencilPlacement(20.0, 0), "Edit pencil is not font-sized and centred on the checks");
+        QVERIFY2(pencilPlacement(pixels(17), 16), "Edit pencil near its native size was resized");
+        QVERIFY2(pencilPlacement(pixels(18), 16), "Edit pencil near its native size was resized");
+        QVERIFY2(pencilPlacement(pixels(23), 22), "Edit pencil is not font-sized and centred on the checks");
+        QVERIFY2(pencilPlacement(points(20.0), 0), "Edit pencil is not font-sized and centred on the checks");
         NativeChatTheme classic;
         classic.layout = NativeChatTheme::Classic;
         classic.avatarSize = 0;
