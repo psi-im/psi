@@ -57,9 +57,9 @@ public:
 
     void setIconHeight(int height)
     {
-        height = qMax(10, height);
-        const int width = qRound(height * (read_ ? 20.0 : 14.0) / 12.0);
-        setFixedSize(width, height);
+        height = qMax(8, height);
+        const qreal designWidth = read_ ? 15.5 : 10.8;
+        setFixedSize(qRound(height * designWidth / 12.0), height);
         update();
     }
 
@@ -68,20 +68,30 @@ protected:
     {
         QPainter painter(this);
         painter.setRenderHint(QPainter::Antialiasing);
-        painter.scale(width() / (read_ ? 20.0 : 14.0), height() / 12.0);
-        painter.setPen(QPen(palette().color(QPalette::WindowText), 1.7, Qt::SolidLine,
-                            Qt::RoundCap, Qt::RoundJoin));
+        const qreal designWidth = read_ ? 15.5 : 10.8;
+        painter.scale(width() / designWidth, height() / 12.0);
 
-        const auto drawCheck = [&painter](qreal x) {
-            QPainterPath path;
-            path.moveTo(x + 1.5, 6.0);
-            path.lineTo(x + 5.3, 9.5);
-            path.lineTo(x + 12.0, 2.3);
-            painter.drawPath(path);
-        };
-        drawCheck(0);
-        if (read_)
-            drawCheck(6.0); // Shared/overlapping diagonal region, not "✓✓".
+        QColor color = palette().color(QPalette::Mid);
+        color.setAlpha(210); // Neutral, unobtrusive gray in light and dark themes.
+        painter.setPen(QPen(color, 1.55, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+
+        // Main check.
+        QPainterPath left;
+        left.moveTo(0.9, 6.2);
+        left.lineTo(3.7, 8.9);
+        left.lineTo(8.9, 3.0);
+
+        if (read_) {
+            // The right check shares the rising stroke of the left check.
+            // Start its short left leg exactly at the intersection: no
+            // protruding tail on the other side, as in Telegram.
+            QPainterPath right;
+            right.moveTo(5.0, 7.4);
+            right.lineTo(6.1, 9.0);
+            right.lineTo(11.2, 3.0);
+            painter.drawPath(right);
+        }
+        painter.drawPath(left);
     }
 
 private:
@@ -1266,7 +1276,7 @@ void MamChatWidget::updateTimestampAppearance(QLabel *label)
     if (auto *indicator = dynamic_cast<DeliveryIndicator *>(
             label->parentWidget()->findChild<QLabel *>(QStringLiteral("mamDeliveryIndicator")))) {
         indicator->setPalette(colors);
-        indicator->setIconHeight(qRound(QFontMetrics(timeFont).height() * 0.85));
+        indicator->setIconHeight(qRound(QFontMetrics(timeFont).height() * 0.68));
     }
 }
 
