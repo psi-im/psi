@@ -26,13 +26,23 @@ def read_dependencies(root, require_iris=False):
     lock = json.loads((root / "dependencies.lock.json").read_text(encoding="utf-8"))
     require(lock.get("schema_version") == 1, "Unsupported Psi dependency lock schema")
     iris = lock["iris"]
-    require(isinstance(iris, dict) and set(iris) == {"source", "path", "lock_path", "release_tag"}
+    require(isinstance(iris, dict)
+            and set(iris) == {"source", "path", "lock_path", "release_tag", "minimum_version"}
             and iris["source"] == "git-submodule" and iris["path"] == "iris"
             and iris["lock_path"] == "iris/dependencies.lock.json",
             "Iris must be an exact gitlink with its own dependency lock")
     require(isinstance(iris["release_tag"], str)
             and re.fullmatch(r"v\d+\.\d+(?:\.\d+){0,2}", iris["release_tag"]),
             "Invalid Iris release tag")
+    # The release tag pins CI and packages; the minimum is the API floor for
+    # builds against an installed Iris SDK (read by CMakeLists.txt).
+    require(isinstance(iris["minimum_version"], str)
+            and re.fullmatch(r"\d+\.\d+\.\d+", iris["minimum_version"]),
+            "Invalid Iris minimum version")
+    selected = tuple(int(part) for part in iris["release_tag"][1:].split("."))
+    minimum = tuple(map(int, iris["minimum_version"].split(".")))
+    selected += (0,) * (len(minimum) - len(selected))
+    require(selected >= minimum, "Iris release tag below the minimum supported version")
 
     psimedia = lock["psimedia"]["commit"]
     require(isinstance(psimedia, str) and HEX_SHA.fullmatch(psimedia), "Invalid psimedia SHA")
@@ -44,6 +54,7 @@ def read_dependencies(root, require_iris=False):
 
     values = {
         "IRIS_RELEASE_TAG": iris["release_tag"],
+        "IRIS_MIN_VERSION": iris["minimum_version"],
         "PSIMEDIA_SRTP_REF": psimedia,
         "QTKEYCHAIN_TAG": keychain["tag"],
         "QTKEYCHAIN_COMMIT": keychain["commit"],
