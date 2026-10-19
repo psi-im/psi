@@ -266,6 +266,65 @@ private slots:
         QCOMPARE(chat.messageCount(), 1);
     }
 
+    void deliveryAndDisplayedMarkersUpdateTimestampChecksAndNeverRegress()
+    {
+        MamChatWidget chat;
+        chat.resize(520, 320);
+        chat.setHistoryLoading(true);
+        chat.appendMessage(message("out-1", "one", 1, true));
+        chat.appendMessage(message("out-2", "two", 2, true));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(1));
+
+        MessageView delivered(MessageView::DeliveryReceipt);
+        delivered.setMessageId("out-1");
+        chat.appendMessage(delivered);
+        QTRY_COMPARE(chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator")->text(),
+                     QString::fromUtf8("✓"));
+        QVERIFY(!chat.itemWidget(1)->findChild<QLabel *>("mamDeliveryIndicator"));
+
+        MessageView read(MessageView::DisplayedMarker);
+        read.setMessageId("out-2");
+        chat.appendMessage(read);
+        QTRY_COMPARE(chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator")->text(),
+                     QString::fromUtf8("✓✓"));
+        QTRY_COMPARE(chat.itemWidget(1)->findChild<QLabel *>("mamDeliveryIndicator")->toolTip(),
+                     QString("Read"));
+        read.setMessageId("out-1"); // A stale marker may not roll back the cursor.
+        chat.appendMessage(read);
+        QCOMPARE(chat.itemWidget(1)->findChild<QLabel *>("mamDeliveryIndicator")->text(),
+                 QString::fromUtf8("✓✓"));
+
+        // A history prepend shifts indices, not the semantic read cursor.
+        auto older = message("out-0", "older", 0, true);
+        older.setHistoryId(10);
+        chat.prependArchivePage({ qMakePair(QString("older-archive"), older) });
+        QTRY_COMPARE(chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator")->text(),
+                     QString::fromUtf8("✓✓"));
+    }
+
+    void visibleMarkableIncomingMessagesAdvanceCursorOnlyOnce()
+    {
+        MamChatWidget chat;
+        chat.resize(520, 320);
+        chat.setHistoryLoading(true);
+        auto first = message("in-1", "first", 1);
+        first.setMarkable(true);
+        chat.appendMessage(first);
+        auto second = message("in-2", "second", 2);
+        second.setMarkable(true);
+        chat.appendMessage(second);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(1));
+        QCOMPARE(chat.takeVisibleMarkableIncomingId(), QString("in-2"));
+        QCOMPARE(chat.takeVisibleMarkableIncomingId(), QString());
+        // Receiving a delivery event never affects the outgoing read cursor.
+        MessageView receipt(MessageView::DeliveryReceipt);
+        receipt.setMessageId("in-1");
+        chat.appendMessage(receipt);
+        QCOMPARE(chat.takeVisibleMarkableIncomingId(), QString());
+    }
+
     void linkContextMenuSelectsLinkFillingWholeMessage()
     {
         // A message that is only a link: the anchor touches both ends of the
