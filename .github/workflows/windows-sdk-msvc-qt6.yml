@@ -364,17 +364,20 @@ jobs:
               --clobber
           else
             # SDK tags must stay off application history so `git describe`
-            # keeps deriving Psi versions from release tags. Let the release
-            # create the tag on the commit carrying the existing SDK tags.
-            anchor=$(gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/tags/windows-sdk-" \
-              --jq '[.[] | select(.object.type == "commit") | .object.sha] | unique | if length == 1 then .[0] else empty end')
-            if [[ -z "$anchor" ]]; then
-              echo "::error::Cannot determine a unique Windows SDK tag anchor commit" >&2
-              exit 1
+            # keeps deriving Psi versions from release tags. Anchor a new SDK
+            # tag on the commit that already carries the existing SDK tags.
+            if ! gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$SDK_TAG" >/dev/null 2>&1; then
+              anchor=$(gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/tags/windows-sdk-" \
+                --jq '[.[] | select(.object.type == "commit") | .object.sha] | unique | if length == 1 then .[0] else empty end')
+              if [[ -z "$anchor" ]]; then
+                echo "::error::Cannot determine a unique Windows SDK tag anchor commit" >&2
+                exit 1
+              fi
+              gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$SDK_TAG" -f sha="$anchor" >/dev/null
             fi
             gh release create "$SDK_TAG" "$archive" \
               --repo "$GITHUB_REPOSITORY" \
-              --target "$anchor" \
+              --verify-tag \
               --title "Psi Windows SDK (MSVC 2022 / Qt6)" \
               --notes "Development/runtime SDK for the modern Windows build. Qt itself is installed from the official Qt binary repository; this SDK contains shared QCA with qca-ossl, OpenSSL, libSRTP, zlib, Hunspell, minizip and static Qt6Keychain."
           fi
