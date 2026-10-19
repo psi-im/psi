@@ -23,7 +23,8 @@ public:
         NickChange,
         FileTransferRequest,
         FileTransferFinished,
-        DeliveryReceipt
+        DeliveryReceipt,
+        DisplayedMarker
     };
     explicit MessageView(Type type = Message) : type_(type) { }
 
@@ -32,6 +33,8 @@ public:
     Type           type() const { return type_; }
     const QString &messageId() const { return id_; }
     void           setMessageId(const QString &id) { id_ = id; }
+    void           setMarkable(bool value = true) { markable_ = value; }
+    bool           isMarkable() const { return markable_; }
     void           setHistoryId(qint64 id) { historyId_ = id; }
     qint64         historyId() const { return historyId_; }
     void           setRevisionTime(const QDateTime &time) { revisionTime_ = time; }
@@ -90,4 +93,5 @@ private:
     bool          local_   = false;
     bool          spooled_ = false;
     bool          edited_  = false;
+    bool          markable_ = false;
 };
