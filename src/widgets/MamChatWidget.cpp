@@ -543,14 +543,17 @@ int MamChatWidget::displayedTargetIndex() const
     return lastDisplayedRowKey_.isEmpty() ? -1 : indexOfKey(lastDisplayedRowKey_);
 }
 
-QString MamChatWidget::lastVisibleMarkableIncomingId() const
+QString MamChatWidget::takeVisibleMarkableIncomingId()
 {
     if (!isVisible() || window()->isMinimized() || groupChat_)
         return {};
     const auto range = visibleRange();
     if (!range.isValid())
         return {};
+    const int previouslyMarked = lastMarkedIncomingRowKey_.isEmpty() ? -1 : indexOfKey(lastMarkedIncomingRowKey_);
     for (int i = range.last; i >= range.first; --i) {
+        if (previouslyMarked >= i)
+            break; // XEP-0333 markers advance only.
         const auto &message = items_.at(i).message;
         if (message.type() != MessageView::Message || message.isLocal() || !message.isMarkable()
             || message.messageId().isEmpty())
@@ -558,7 +561,10 @@ QString MamChatWidget::lastVisibleMarkableIncomingId() const
         auto *row = itemWidget(i);
         if (row && row->isVisibleTo(viewport())
             && QRect(row->mapTo(viewport(), QPoint()), row->size()).intersects(viewport()->rect()))
+        {
+            lastMarkedIncomingRowKey_ = items_.at(i).key;
             return message.messageId();
+        }
     }
     return {};
 }
@@ -853,6 +859,7 @@ void MamChatWidget::clearMessages()
     retractions_.clear();
     receipts_.clear();
     lastDisplayedRowKey_.clear();
+    lastMarkedIncomingRowKey_.clear();
     cancelMessageSelection();
     items_.clear();
     keys_.clear();
