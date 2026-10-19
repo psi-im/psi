@@ -58,7 +58,7 @@ public:
     void setIconHeight(int height)
     {
         height = qMax(8, height);
-        const qreal designWidth = read_ ? 15.5 : 10.8;
+        const qreal designWidth = read_ ? 18.0 : 11.0;
         setFixedSize(qRound(height * designWidth / 12.0), height);
         update();
     }
@@ -68,30 +68,33 @@ protected:
     {
         QPainter painter(this);
         painter.setRenderHint(QPainter::Antialiasing);
-        const qreal designWidth = read_ ? 15.5 : 10.8;
+        const qreal designWidth = read_ ? 18.0 : 11.0;
         painter.scale(width() / designWidth, height() / 12.0);
 
         QColor color = palette().color(QPalette::Text);
-        color.setAlpha(110); // Legible neutral gray in both light and dark themes.
-        painter.setPen(QPen(color, 1.65, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        color.setAlpha(155); // Keep each narrow diagonal distinct at small sizes.
+        painter.setPen(QPen(color, 1.5, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
 
-        // Main check.
-        QPainterPath left;
-        left.moveTo(0.9, 6.2);
-        left.lineTo(3.7, 8.9);
-        left.lineTo(8.9, 3.0);
+        // Keep the long rising strokes separated. The former geometry put
+        // the two check vertices only 2.4 design units apart, which collapsed
+        // to a blurred line at the small native-chat timestamp size.
+        QPainterPath first;
+        first.moveTo(1.0, 6.0);
+        first.lineTo(4.0, 9.0);
+        first.lineTo(10.7, 2.0);
+        painter.drawPath(first);
 
         if (read_) {
-            // The right check shares the rising stroke of the left check.
-            // Start its short left leg exactly at the intersection: no
-            // protruding tail on the other side, as in Telegram.
-            QPainterPath right;
-            right.moveTo(5.0, 7.4);
-            right.lineTo(6.1, 9.0);
-            right.lineTo(11.2, 3.0);
-            painter.drawPath(right);
+            // Only the short exposed portion of the second downstroke is
+            // drawn. Its hidden start would fall behind the first check.
+            // The second vertex and rising stroke are 4.5 units to the
+            // right, making both strokes independently visible when scaled.
+            QPainterPath second;
+            second.moveTo(7.4, 7.9);
+            second.lineTo(8.5, 9.0);
+            second.lineTo(15.2, 2.0);
+            painter.drawPath(second);
         }
-        painter.drawPath(left);
     }
 
 private:
