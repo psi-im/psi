@@ -3,6 +3,7 @@
 #include "psimedia.h"
 #include "psimediaprovider.h"
 
+#include <iris/dtls.h>
 #include <iris/jingle-ice.h>
 #include <iris/xmpp-im/jingle-rtp.h>
 #include <iris/jingle.h>
@@ -220,7 +221,15 @@ class CapabilityRefreshTest : public QObject {
     Q_OBJECT
 
 private slots:
-    void initTestCase() { PsiMedia::setProvider(&provider_); }
+    void initTestCase()
+    {
+        // RTP is advertised only with DTLS-SRTP. A test binary run from the
+        // build tree may lack the QCA OpenSSL plugin (e.g. the MSVC profile).
+        QCA::Initializer qca;
+        if (XMPP::Dtls::supportedSRTPProfiles().isEmpty())
+            QSKIP("This QCA build has no DTLS-SRTP profiles; RTP is never advertised");
+        PsiMedia::setProvider(&provider_);
+    }
 
     void advertisedTransitionsStayInSync()
     {
