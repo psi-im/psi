@@ -20,6 +20,10 @@
 #include "bookmarkmanager.h"
 
 #include "iris/xmpp_client.h"
+#include "iris/xmpp_bookmarks.h"
+#include "iris/xmpp_features.h"
+#include "iris/xmpp_pubsub.h"
+#include "iris/xmpp_serverinfomanager.h"
 #include "iris/xmpp_task.h"
 #include "iris/xmpp_xmlcommon.h"
 #include "psiaccount.h"
@@ -110,10 +114,59 @@ private:
 
 // -----------------------------------------------------------------------------
 
-BookmarkManager::BookmarkManager(PsiAccount *account) : account_(account), accountAvailable_(false), isAvailable_(false)
+struct BookmarkManager::PepState {
+    bool active = false;
+    bool loading = false;
+    bool writing = false;
+    QHash<QString, XMPP::NativeBookmark> originals;
+};
+
+BookmarkManager::BookmarkManager(PsiAccount *account) :
+    account_(account), accountAvailable_(false), isAvailable_(false), pep_(std::make_unique<PepState>())
 {
     connect(account_, SIGNAL(updatedActivity()), SLOT(accountStateChanged()));
+    connect(account_->client()->serverInfoManager(), &XMPP::ServerInfoManager::featuresChanged,
+            this, &BookmarkManager::maybeEnableNativeBookmarks);
+    auto *pubsub = account_->client()->pubSubManager();
+    connect(pubsub, &XMPP::PubSubManager::itemPublished, this,
+            [this](const XMPP::Jid &service, const QString &node, const XMPP::PubSubItem &item) {
+        if (!pep_->active || service.bare() != account_->jid().bare() || node != XMPP::NativeBookmark::node())
+            return;
+        const auto native = XMPP::NativeBookmark::fromItem(item);
+        if (!native.isValid())
+            return;
+        pep_->originals.insert(native.room().bare(), native);
+        const ConferenceBookmark conference(native.name(), native.room(),
+            native.autoJoin() ? ConferenceBookmark::Always : ConferenceBookmark::Never,
+            native.nick(), native.password());
+        auto result = conferences_;
+        const auto it = std::find_if(result.begin(), result.end(),
+             [&native](const ConferenceBookmark &b) { return b.jid().bare() == native.room().bare(); });
+        if (it == result.end())
+            result.append(conference);
+        else
+            *it = conference;
+        if (result != conferences_) {
+            conferences_ = result;
+            emit conferencesChanged(conferences_);
+        }
+    });
+    connect(pubsub, &XMPP::PubSubManager::itemRetracted, this,
+            [this](const XMPP::Jid &service, const QString &node, const QString &id) {
+        if (!pep_->active || service.bare() != account_->jid().bare() || node != XMPP::NativeBookmark::node())
+            return;
+        pep_->originals.remove(id);
+        auto result = conferences_;
+        result.erase(std::remove_if(result.begin(), result.end(),
+                      [&id](const ConferenceBookmark &b) { return b.jid().bare() == id; }), result.end());
+        if (result != conferences_) {
+            conferences_ = result;
+            emit conferencesChanged(conferences_);
+        }
+    });
 }
+
+BookmarkManager::~BookmarkManager() = default;
 
 bool BookmarkManager::isAvailable() const { return isAvailable_; }
 
@@ -184,6 +237,9 @@ void BookmarkManager::accountStateChanged()
 {
     if (!account_->isAvailable()) {
         setIsAvailable(false);
+        pep_->active = false;
+        pep_->loading = false;
+        pep_->originals.clear();
     }
 
     if (account_->isAvailable() && !accountAvailable_) {
@@ -191,6 +247,54 @@ void BookmarkManager::accountStateChanged()
     }
 
     accountAvailable_ = account_->isAvailable();
+}
+
+void BookmarkManager::maybeEnableNativeBookmarks()
+{
+    if (!account_->isAvailable() || !isAvailable_ || pep_->active || pep_->loading)
+        return;
+    auto *server = account_->client()->serverInfoManager();
+    // #compat means the server itself mirrors legacy private XML bookmarks.
+    // publish-options + whitelist are mandatory to avoid leaking room passwords.
+    const bool pubOptions = server->accountFeatures().test("http://jabber.org/protocol/pubsub#publish-options")
+        || server->serverFeatures().test("http://jabber.org/protocol/pubsub#publish-options");
+    if (server->hasPEP() && server->accountFeatures().test("urn:xmpp:bookmarks:1#compat") && pubOptions)
+        loadNativeBookmarks();
+}
+
+void BookmarkManager::loadNativeBookmarks()
+{
+    pep_->loading = true;
+    auto *task = account_->client()->pubSubManager()->items(XMPP::Jid(), XMPP::NativeBookmark::node());
+    connect(task, &XMPP::PubSubItemsTask::finished, this, [this, task] {
+        pep_->loading = false;
+        if (!account_->isAvailable() || !task->success())
+            return; // Keep the working private-XML backend on retrieval error.
+        QHash<QString, XMPP::NativeBookmark> originals;
+        QList<ConferenceBookmark> result;
+        for (const auto &item : task->items()) {
+            const auto bookmark = XMPP::NativeBookmark::fromItem(item);
+            if (!bookmark.isValid())
+                continue;
+            originals.insert(bookmark.room().bare(), bookmark);
+            result.append(ConferenceBookmark(bookmark.name(), bookmark.room(),
+                bookmark.autoJoin() ? ConferenceBookmark::Always : ConferenceBookmark::Never,
+                bookmark.nick(), bookmark.password()));
+        }
+        pep_->originals = originals;
+        pep_->active = true;
+        // The old Private XML fetch still supplies URL bookmarks, which
+        // XEP-0402 intentionally doesn't encode.
+        for (auto &room : result) {
+            if (account_->ignoreMucBookmarks().contains(room.jid().bare()))
+                room.setAutoJoin(ConferenceBookmark::ExceptThisComputer);
+        }
+        if (result != conferences_) {
+            conferences_ = result;
+            emit conferencesChanged(conferences_);
+        }
+    });
+    task->go(true);
 }
 
 void BookmarkManager::getBookmarks()
@@ -203,6 +307,93 @@ void BookmarkManager::getBookmarks()
 
 void BookmarkManager::setBookmarks(const QList<URLBookmark> &urls, const QList<ConferenceBookmark> &conferences)
 {
+    if (pep_->active) {
+        if (pep_->writing)
+            return; // Do not issue overlapping non-atomic PubSub edits.
+        struct Edit {
+            bool removal;
+            QString room;
+            ConferenceBookmark bookmark;
+        };
+        QList<Edit> edits;
+        QHash<QString, ConferenceBookmark> requested;
+        for (const auto &room : conferences) {
+            if (!room.jid().isValid() || room.jid().resource().size())
+                return;
+            requested.insert(room.jid().bare(), room);
+            const auto old = std::find_if(conferences_.cbegin(), conferences_.cend(),
+                [&room](const ConferenceBookmark &b) { return b.jid().bare() == room.jid().bare(); });
+            if (old == conferences_.cend() || *old != room)
+                edits.append({ false, room.jid().bare(), room });
+        }
+        for (const auto &room : conferences_)
+            if (!requested.contains(room.jid().bare()))
+                edits.append({ true, room.jid().bare(), room });
+        if (edits.isEmpty()) {
+            if (urls != urls_) {
+                BookmarkTask *t = new BookmarkTask(account_->client()->rootTask());
+                connect(t, SIGNAL(finished()), SLOT(setBookmarks_finished()));
+                t->set(urls, conferences_);
+                t->go(true);
+            }
+            return;
+        }
+        pep_->writing = true;
+        auto remaining = std::make_shared<int>(edits.size());
+        auto failed = std::make_shared<bool>(false);
+        auto originalUpdates = std::make_shared<QHash<QString, XMPP::NativeBookmark>>(pep_->originals);
+        auto *pubsub = account_->client()->pubSubManager();
+        for (const auto &edit : edits) {
+            XMPP::Task *task;
+            if (edit.removal) {
+                task = pubsub->retract(XMPP::Jid(), XMPP::NativeBookmark::node(), edit.room);
+                originalUpdates->remove(edit.room);
+            } else {
+                XMPP::NativeBookmark native;
+                if (originalUpdates->contains(edit.room)) {
+                    QDomDocument copy;
+                    native = XMPP::NativeBookmark::fromItem(originalUpdates->value(edit.room).toItem(copy));
+                } else {
+                    native = XMPP::NativeBookmark::create(edit.bookmark.jid(), edit.bookmark.name(),
+                                                         edit.bookmark.needJoin(), edit.bookmark.nick(),
+                                                         edit.bookmark.password());
+                }
+                native.setName(edit.bookmark.name());
+                native.setAutoJoin(edit.bookmark.needJoin());
+                native.setNick(edit.bookmark.nick());
+                native.setPassword(edit.bookmark.password());
+                QDomDocument document;
+                task = pubsub->publish(XMPP::Jid(), XMPP::NativeBookmark::node(), native.toItem(document),
+                                       XMPP::NativeBookmark::privatePublishOptions());
+                originalUpdates->insert(edit.room, native);
+            }
+            connect(task, &XMPP::Task::finished, this,
+                    [this, task, remaining, failed, originalUpdates, urls, conferences] {
+                if (!task->success())
+                    *failed = true;
+                if (--*remaining != 0)
+                    return;
+                pep_->writing = false;
+                if (*failed) {
+                    // Partial writes may have happened: reload before allowing
+                    // another change rather than pretending the batch was atomic.
+                    pep_->active = false;
+                    loadNativeBookmarks();
+                    return;
+                }
+                pep_->originals = *originalUpdates;
+                const bool changed = conferences_ != conferences;
+                conferences_ = conferences;
+                if (changed)
+                    emit conferencesChanged(conferences_);
+                emit bookmarksSaved();
+                if (urls != urls_)
+                    setBookmarks(urls); // private XML retains URL bookmarks.
+            });
+            task->go(true);
+        }
+        return;
+    }
     BookmarkTask *t = new BookmarkTask(account_->client()->rootTask());
     connect(t, SIGNAL(finished()), SLOT(setBookmarks_finished()));
     t->set(urls, conferences);
@@ -241,6 +432,7 @@ void BookmarkManager::getBookmarks_finished()
         }
 
         setIsAvailable(true);
+        maybeEnableNativeBookmarks();
         if (urlsWereChanged)
             emit urlsChanged(urls_);
         if (conferencesWereChanged)
