@@ -279,16 +279,19 @@ private slots:
         MessageView delivered(MessageView::DeliveryReceipt);
         delivered.setMessageId("out-1");
         chat.appendMessage(delivered);
-        QTRY_COMPARE(chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator")->text(),
+        QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator"));
+        QCOMPARE(chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator")->text(),
                      QString::fromUtf8("✓"));
         QVERIFY(!chat.itemWidget(1)->findChild<QLabel *>("mamDeliveryIndicator"));
 
         MessageView read(MessageView::DisplayedMarker);
         read.setMessageId("out-2");
         chat.appendMessage(read);
-        QTRY_COMPARE(chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator")->text(),
+        QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator"));
+        QCOMPARE(chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator")->text(),
                      QString::fromUtf8("✓✓"));
-        QTRY_COMPARE(chat.itemWidget(1)->findChild<QLabel *>("mamDeliveryIndicator")->toolTip(),
+        QTRY_VERIFY(chat.itemWidget(1) && chat.itemWidget(1)->findChild<QLabel *>("mamDeliveryIndicator"));
+        QCOMPARE(chat.itemWidget(1)->findChild<QLabel *>("mamDeliveryIndicator")->toolTip(),
                      QString("Read"));
         read.setMessageId("out-1"); // A stale marker may not roll back the cursor.
         chat.appendMessage(read);
@@ -299,7 +302,8 @@ private slots:
         auto older = message("out-0", "older", 0, true);
         older.setHistoryId(10);
         chat.prependArchivePage({ qMakePair(QString("older-archive"), older) });
-        QTRY_COMPARE(chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator")->text(),
+        QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator"));
+        QCOMPARE(chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator")->text(),
                      QString::fromUtf8("✓✓"));
     }
 
