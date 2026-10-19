@@ -285,8 +285,12 @@ private slots:
         auto *single = chat.itemWidget(0)->findChild<QLabel *>("mamDeliveryIndicator");
         QVERIFY(single->text().isEmpty()); // No font-dependent Unicode ticks.
         const auto *timestamp = chat.itemWidget(0)->findChild<QLabel *>("mamTimestamp");
-        const int expectedHeight = qMax(8, qRound(QFontMetrics(timestamp->font()).height() * 0.68));
-        QCOMPARE(single->height(), expectedHeight); // ~20% smaller than the previous 0.85 scale.
+        const QFontMetrics timestampMetrics(timestamp->font());
+        const int iconHeight = qMax(8, qRound(timestampMetrics.height() * 0.75));
+        // The icon's widget occupies the complete timestamp line box so the
+        // check vertex can be painted at the text baseline inside that box.
+        QCOMPARE(single->height(), timestampMetrics.height());
+        QCOMPARE(single->width(), qRound(iconHeight * 11.0 / 12.0));
         const int singleWidth = single->width();
         QVERIFY(singleWidth > 0);
         QCOMPARE(single->palette().color(QPalette::WindowText),
@@ -304,7 +308,8 @@ private slots:
                      QString("Read"));
         auto *doubleChecks = chat.itemWidget(1)->findChild<QLabel *>("mamDeliveryIndicator");
         QVERIFY(doubleChecks->text().isEmpty());
-        QCOMPARE(doubleChecks->height(), expectedHeight);
+        QCOMPARE(doubleChecks->height(), timestampMetrics.height());
+        QCOMPARE(doubleChecks->width(), qRound(iconHeight * 18.0 / 12.0));
         QVERIFY(doubleChecks->width() > singleWidth);
         QVERIFY(doubleChecks->width() < singleWidth * 2); // Overlap, not two separate glyphs.
 
