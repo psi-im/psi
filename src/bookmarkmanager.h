@@ -33,10 +33,10 @@ public:
     int indexOfConference(const XMPP::Jid &) const;
     QString conferenceName(const XMPP::Jid &) const;
 
-    void setBookmarks(const QList<URLBookmark> &, const QList<ConferenceBookmark> &);
-    void setBookmarks(const QList<URLBookmark> &);
-    void setBookmarks(const QList<ConferenceBookmark> &);
-    void applyConferenceEdits(const QList<ConferenceBookmark> &baseline,
+    bool setBookmarks(const QList<URLBookmark> &, const QList<ConferenceBookmark> &);
+    bool setBookmarks(const QList<URLBookmark> &);
+    bool setBookmarks(const QList<ConferenceBookmark> &);
+    bool applyConferenceEdits(const QList<ConferenceBookmark> &baseline,
                               const QList<ConferenceBookmark> &edited);
     void addConference(const ConferenceBookmark &);
     void removeConference(const XMPP::Jid &);
@@ -46,6 +46,8 @@ signals:
     void urlsChanged(const QList<URLBookmark> &);
     void conferencesChanged(const QList<ConferenceBookmark> &);
     void bookmarksSaved();
+    void syncError(const QString &message);
+    void remoteConferenceChanged(const XMPP::Jid &room, bool autoJoin, bool removed);
 
 private:
     void syncConferences();
