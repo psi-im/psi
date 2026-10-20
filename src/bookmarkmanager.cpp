@@ -136,9 +136,18 @@ BookmarkManager::BookmarkManager(PsiAccount *account) :
         if (!native.isValid())
             return;
         pep_->originals.insert(native.room().bare(), native);
-        const ConferenceBookmark conference(native.name(), native.room(),
+        ConferenceBookmark conference(native.name(), native.room(),
             native.autoJoin() ? ConferenceBookmark::Always : ConferenceBookmark::Never,
             native.nick(), native.password());
+        // PEP notifications must not overwrite this device's local MUC flags.
+        if (account_->ignoreMucBookmarks().contains(native.room().bare()))
+            conference.setAutoJoin(ConferenceBookmark::ExceptThisComputer);
+        for (const auto &localJid : account_->localMucBookmarks()) {
+            if (XMPP::Jid(localJid).bare() == native.room().bare()) {
+                conference.setAutoJoin(ConferenceBookmark::OnlyThisComputer);
+                break;
+            }
+        }
         auto result = conferences_;
         const auto it = std::find_if(result.begin(), result.end(),
              [&native](const ConferenceBookmark &b) { return b.jid().bare() == native.room().bare(); });
