@@ -47,6 +47,10 @@ public:
     void setBookmarks(const QList<URLBookmark> &, const QList<ConferenceBookmark> &);
     void setBookmarks(const QList<URLBookmark> &);
     void setBookmarks(const QList<ConferenceBookmark> &);
+    // Apply only changes made relative to the dialog's opening snapshot.
+    // Unchanged/previously unseen rooms must survive concurrent PEP pushes.
+    void applyConferenceEdits(const QList<ConferenceBookmark> &baseline,
+                              const QList<ConferenceBookmark> &edited);
     void addConference(const ConferenceBookmark &newb);
     void removeConference(const XMPP::Jid &);
 

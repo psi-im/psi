@@ -99,8 +99,9 @@ void BookmarkManageDlg::accept()
 void BookmarkManageDlg::loadBookmarks()
 {
     model_->clear();
+    baseline_ = account_->bookmarkManager()->conferences();
 
-    for (const ConferenceBookmark &c : account_->bookmarkManager()->conferences()) {
+    for (const ConferenceBookmark &c : baseline_) {
         QStandardItem *item = new QStandardItem(c.name());
         item->setData(QVariant(c.name()), MucNameRole);
         item->setData(QVariant(c.jid().full()), JidRole);
@@ -126,7 +127,7 @@ void BookmarkManageDlg::saveBookmarks()
         conferences += bookmarkFor(index);
     }
 
-    account_->bookmarkManager()->setBookmarks(conferences);
+    account_->bookmarkManager()->applyConferenceEdits(baseline_, conferences);
 }
 
 void BookmarkManageDlg::addBookmark()
