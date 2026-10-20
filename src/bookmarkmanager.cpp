@@ -312,35 +312,16 @@ void BookmarkManager::loadNativeBookmarks()
                 bookmark.autoJoin() ? ConferenceBookmark::Always : ConferenceBookmark::Never,
                 bookmark.nick(), bookmark.password()));
         }
+        // An absent native item is not necessarily an unconverted legacy room:
+        // another device may have explicitly removed it. Re-publishing every
+        // unmatched Private XML room would resurrect deleted PEP bookmarks on
+        // each reconnect (especially on servers without #compat). If only the
+        // legacy store has data, retain that working backend; migration must
+        // be explicit or performed by the server's compatibility layer.
+        if (originals.isEmpty() && !conferences_.isEmpty())
+            return;
         pep_->originals = originals;
         pep_->active = true;
-
-        // Even on a server advertising #compat, pre-existing private-XML
-        // bookmarks may not yet have been migrated. Preserve unmatched
-        // legacy rooms locally and publish them individually with whitelist
-        // options. Never overwrite an already existing PEP bookmark.
-        for (const auto &legacy : conferences_) {
-            if (!legacy.jid().isValid() || legacy.jid().isEmpty()
-                || originals.contains(legacy.jid().bare()))
-                continue;
-            result.append(legacy);
-            const bool sharedAutoJoin = legacy.autoJoin() == ConferenceBookmark::Always
-                || legacy.autoJoin() == ConferenceBookmark::ExceptThisComputer;
-            auto native = XMPP::NativeBookmark::create(legacy.jid(), legacy.name(), sharedAutoJoin,
-                                                        legacy.nick(), legacy.password());
-            if (!native.isValid())
-                continue;
-            QDomDocument doc;
-            auto *publish = account_->client()->pubSubManager()->publish(
-                XMPP::Jid(), XMPP::NativeBookmark::node(), native.toItem(doc),
-                XMPP::NativeBookmark::privatePublishOptions());
-            const auto generation = pep_->generation;
-            connect(publish, &XMPP::PubSubPublishTask::finished, this, [this, publish, native, generation] {
-                if (generation == pep_->generation && publish->success() && pep_->active)
-                    pep_->originals.insert(native.room().bare(), native);
-            });
-            publish->go(true);
-        }
 
         // The old Private XML fetch still supplies URL bookmarks, which
         // XEP-0402 intentionally doesn't encode.
