@@ -49,9 +49,9 @@ public:
     void markReceived(QString id);
 
     // reimplemented
-    QSize  sizeHint() const;
+    QSize  sizeHint() const override;
     void   clear();
-    void   contextMenuEvent(QContextMenuEvent *e);
+    void   contextMenuEvent(QContextMenuEvent *e) override;
     QMenu *createStandardContextMenu(const QPoint &position);
 
     void init();
@@ -59,10 +59,10 @@ public:
     void setSessionData(bool isMuc, bool isMucPrivate, const XMPP::Jid &jid, const QString name);
     void setLocalNickname(const QString &nickname);
 
-    void        insertText(const QString &text, QTextCursor &insertCursor);
+    void        insertText(const QString &text, QTextCursor &insertCursor) override;
     QTextCursor insertTextWithRange(const QString &text, QTextCursor &insertCursor);
     QTextCursor insertTextFragmentWithRange(const QString &text, QTextCursor &insertCursor);
-    void        appendText(const QString &text);
+    void        appendText(const QString &text) override;
     void        dispatchMessage(const MessageView &);
     bool        handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdit);
 
@@ -81,8 +81,8 @@ public slots:
 protected:
     // override the tab/esc behavior
     void changeEvent(QEvent *event) override;
-    bool focusNextPrevChild(bool next);
-    void keyPressEvent(QKeyEvent *);
+    bool focusNextPrevChild(bool next) override;
+    void keyPressEvent(QKeyEvent *) override;
 
     QString formatTimeStamp(const QDateTime &time);
     QString colorString(bool local, bool spooled) const;

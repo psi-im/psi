@@ -87,7 +87,7 @@ public:
     void fitToView();
 
     /*! \brief Returns the size set by setSize().*/
-    virtual QSize sizeHint() const;
+    QSize sizeHint() const override;
 
 public slots:
     /*! \brief Clears the whiteboard. */

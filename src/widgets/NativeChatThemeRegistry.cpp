@@ -11,8 +11,8 @@ NativeChatThemes *NativeChatThemes::instance()
 }
 QList<NativeChatTheme> NativeChatThemes::themes() const
 {
-    QList<NativeChatTheme> result { { QStringLiteral("modern"), tr("Modern"), NativeChatTheme::Modern, 40, 10, {} },
-                                    { QStringLiteral("classic"), tr("Classic"), NativeChatTheme::Classic, 0, 4, {} } };
+    QList<NativeChatTheme> result { { QStringLiteral("modern"), tr("Modern"), NativeChatTheme::Modern, 40, 10, {}, {} },
+                                    { QStringLiteral("classic"), tr("Classic"), NativeChatTheme::Classic, 0, 4, {}, {} } };
     for (const auto &themes : plugins_)
         result.append(themes);
     return result;

@@ -54,7 +54,6 @@ class VCardFactory::QueuedLoader : public QObject {
 
     static const int VcardReqInterval = 500; // query vcards
 
-    VCardFactory              *q;
     VCardRequestQueue          queue_;
     QHash<Jid, VCardRequest *> jid2req;
     QTimer                     timer_;
@@ -444,7 +443,7 @@ QString VCardRequest::errorString() const { return d->statusString.isEmpty() ? d
 
 VCardRequest::~VCardRequest() = default;
 
-VCardFactory::QueuedLoader::QueuedLoader(VCardFactory *vcf) : QObject(vcf), q(vcf)
+VCardFactory::QueuedLoader::QueuedLoader(VCardFactory *vcf) : QObject(vcf)
 {
     timer_.setSingleShot(false);
     timer_.setInterval(VcardReqInterval);

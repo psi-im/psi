@@ -1,8 +1,11 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "ChatMessageText.h"
 #include "psirichtext.h"
+#include "urlobject.h"
 
 #include <QAbstractTextDocumentLayout>
+#include <QApplication>
+#include <QMouseEvent>
 #include <QCoreApplication>
 #include <QMimeData>
 #include <QSignalBlocker>
@@ -108,6 +111,37 @@ QSize ChatMessageText::sizeHint() const
 }
 QSize ChatMessageText::minimumSizeHint() const { return QSize(0, fontMetrics().height()); }
 
+void ChatMessageText::mousePressEvent(QMouseEvent *event)
+{
+    pressedLink_.clear();
+    if (event->button() == Qt::LeftButton && (textInteractionFlags() & Qt::LinksAccessibleByMouse)) {
+        pressedLink_ = anchorAt(event->pos());
+        pressedLinkPosition_ = event->pos();
+    }
+    PsiTextView::mousePressEvent(event);
+}
+
+void ChatMessageText::mouseReleaseEvent(QMouseEvent *event)
+{
+    const QString pressedLink = pressedLink_;
+    pressedLink_.clear();
+
+    // Use QTextEdit's selection behavior but not PsiTextView's generic link
+    // handler. That handler can open an anchor when link interaction is disabled
+    // (whole-message selection), and does not reliably distinguish selection
+    // state during a click inside the virtualized timeline.
+    QTextEdit::mouseReleaseEvent(event);
+    const bool clicked = event->button() == Qt::LeftButton
+        && !pressedLink.isEmpty()
+        && (textInteractionFlags() & Qt::LinksAccessibleByMouse)
+        && (event->pos() - pressedLinkPosition_).manhattanLength() <= QApplication::startDragDistance()
+        && anchorAt(event->pos()) == pressedLink;
+    if (clicked) {
+        URLObject::getInstance()->popupAction(pressedLink);
+        event->accept();
+    }
+}
+
 void ChatMessageText::resizeEvent(QResizeEvent *event)
 {
     PsiTextView::resizeEvent(event);
@@ -119,7 +153,7 @@ void ChatMessageText::wheelEvent(QWheelEvent *event)
     // timeline, rather than scrolling a document with hidden scrollbars.
     for (QWidget *parent = parentWidget(); parent; parent = parent->parentWidget()) {
         if (auto *area = qobject_cast<QAbstractScrollArea *>(parent)) {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
             const QPointF global = event->globalPosition();
 #else
             const QPointF global = event->globalPosF();

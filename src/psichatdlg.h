@@ -53,7 +53,7 @@ public:
     PsiChatDlg(const Jid &jid, PsiAccount *account, TabManager *tabManager);
     ~PsiChatDlg();
 
-    virtual void setVSplitterPosition(int log, int chat);
+    void setVSplitterPosition(int log, int chat) override;
     void         setJid(const Jid &jid) override;
 
     XMPP::EncryptedSession *encryptionSession() const override;
@@ -61,9 +61,9 @@ public:
 
 protected:
     // reimplemented
-    void contextMenuEvent(QContextMenuEvent *);
-    void doSend();
-    bool eventFilter(QObject *obj, QEvent *event);
+    void contextMenuEvent(QContextMenuEvent *) override;
+    void doSend() override;
+    bool eventFilter(QObject *obj, QEvent *event) override;
 
 private:
     void setContactToolTip(QString text);
@@ -107,29 +107,29 @@ private slots:
     void    psButtonEnabled();
 
     // reimplemented
-    void chatEditCreated();
+    void chatEditCreated() override;
 
 private:
     void initToolBar();
     void initToolButtons();
 
     // reimplemented
-    void      initUi();
-    void      capsChanged();
+    void      initUi() override;
+    void      capsChanged() override;
     // Shows the call action as a call or as a whiteboard, with "Whiteboard only" when both are possible.
     void      updateCallAction();
     bool      isPgpEncryptionEnabled() const override;
-    void      updateJidWidget(const QList<UserListItem *> &ul, int status, bool fromPresence);
-    void      contactUpdated(UserListItem *u, int status, const QString &statusString);
-    void      updateAvatar();
-    void      optionsUpdate();
+    void      updateJidWidget(const QList<UserListItem *> &ul, int status, bool fromPresence) override;
+    void      contactUpdated(UserListItem *u, int status, const QString &statusString) override;
+    void      updateAvatar() override;
+    void      optionsUpdate() override;
     void      updateEncryption() override;
-    void      activated();
-    void      setLooks();
-    void      setShortcuts();
-    void      appendSysMsg(const QString &);
-    ChatView *chatView() const;
-    ChatEdit *chatEdit() const;
+    void      activated() override;
+    void      setLooks() override;
+    void      setShortcuts() override;
+    void      appendSysMsg(const QString &) override;
+    ChatView *chatView() const override;
+    ChatEdit *chatEdit() const override;
     void      updateAutojidIcon();
     void      setJidComboItem(int pos, const QString &text, const Jid &jid, const QString &icon_str);
 

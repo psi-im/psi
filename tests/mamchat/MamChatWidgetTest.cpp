@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "widgets/MamChatWidget.h"
 #include "widgets/ChatMessageText.h"
+#include "widgets/urlobject.h"
 #include "desktopcolorpalette.h"
 #include "filesharingmanager.h"
 #include "qiteaudio.h"
@@ -462,6 +463,40 @@ private slots:
         receipt.setMessageId("in-1");
         chat.appendMessage(receipt);
         QCOMPARE(chat.takeVisibleMarkableIncomingId(), QString());
+    }
+
+    void directLinkClickOpensOnceWithoutStealingDragSelection()
+    {
+        ChatMessageText body;
+        body.resize(450, 80);
+        body.setRichText(QStringLiteral("Before <a href='https://example.org/path'>click here</a> after"));
+        body.show();
+        QTRY_VERIFY(body.viewport()->isVisible());
+
+        const QString href = QStringLiteral("https://example.org/path");
+        QTextCursor cursor = body.document()->find(QStringLiteral("click here"));
+        QVERIFY(!cursor.isNull());
+        cursor.setPosition(cursor.selectionStart() + 3); // Inside the anchor, not at its right edge.
+        const QPoint link = body.cursorRect(cursor).center();
+        QCOMPARE(body.anchorAt(link), href);
+        QSignalSpy opened(URLObject::getInstance(), &URLObject::openURL);
+        QVERIFY(opened.isValid());
+
+        QTest::mouseClick(body.viewport(), Qt::LeftButton, Qt::NoModifier, link);
+        QCOMPARE(opened.size(), 1);
+        QCOMPARE(opened.takeFirst().first().toString(), href);
+
+        // An ordinary drag beginning on an anchor selects text, not a URL.
+        const QPoint beyond = link + QPoint(QApplication::startDragDistance() + 35, 0);
+        QTest::mousePress(body.viewport(), Qt::LeftButton, Qt::NoModifier, link);
+        QTest::mouseMove(body.viewport(), beyond);
+        QTest::mouseRelease(body.viewport(), Qt::LeftButton, Qt::NoModifier, beyond);
+        QCOMPARE(opened.size(), 0);
+
+        // A whole-message selection replaces the text interaction mode.
+        body.setWholeMessageSelectionMode(true);
+        QTest::mouseClick(body.viewport(), Qt::LeftButton, Qt::NoModifier, link);
+        QCOMPARE(opened.size(), 0);
     }
 
     void linkContextMenuSelectsLinkFillingWholeMessage()

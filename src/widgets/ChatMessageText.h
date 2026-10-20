@@ -3,6 +3,7 @@
 
 #include "psitextview.h"
 #include <QTextDocument>
+#include <QPoint>
 
 // An inline Psi rich-text document. The surrounding timeline owns scrolling;
 // this widget reports the complete document height at the available width.
@@ -18,6 +19,8 @@ public:
     QSize   minimumSizeHint() const override;
 
 protected:
+    void       mousePressEvent(QMouseEvent *event) override;
+    void       mouseReleaseEvent(QMouseEvent *event) override;
     void       resizeEvent(QResizeEvent *event) override;
     void       changeEvent(QEvent *event) override;
     void       wheelEvent(QWheelEvent *event) override;
@@ -25,4 +28,7 @@ protected:
 
 private:
     void applyDocumentFont();
+
+    QString pressedLink_;
+    QPoint  pressedLinkPosition_;
 };
