@@ -403,7 +403,13 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
         // and near-oldest boundary must both match. Archive insertions, row
         // remeasurement and repainting never grant another history request.
         const int previousValue = verticalScrollBar()->value();
-        QTimer::singleShot(0, this, [this, previousValue] {
+        const auto requestSerial = historyRequestSerial_;
+        QTimer::singleShot(0, this, [this, previousValue, requestSerial] {
+            // A wheel can have requested the page synchronously while an older
+            // scrollbar check is still queued. Never consume that gesture twice,
+            // even if HistorySync replayed a cached page before this callback.
+            if (historyRequestSerial_ != requestSerial)
+                return;
             const auto visible = visibleRange();
             if (verticalScrollBar()->value() < previousValue
                 && visible.isValid() && visible.first <= 1)
@@ -1112,6 +1118,7 @@ void MamChatWidget::clearMessages()
     historyLoading_       = false;
     historyExhausted_     = false;
     historyRequestPending_ = false;
+    ++historyRequestSerial_; // Invalidate deferred gestures from the old conversation.
     setItemCount(0);
     timestampTimer_->stop();
 }
@@ -1121,6 +1128,7 @@ void MamChatWidget::requestOlderMessages()
     if (historyLoading_ || historyExhausted_ || historyRequestPending_)
         return;
     historyRequestPending_ = true;
+    ++historyRequestSerial_;
     emit olderMessagesRequested();
 }
 
