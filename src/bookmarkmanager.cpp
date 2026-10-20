@@ -312,8 +312,17 @@ void BookmarkManager::loadNativeBookmarks()
 
         // The old Private XML fetch still supplies URL bookmarks, which
         // XEP-0402 intentionally doesn't encode.
+        QSet<QString> localOnlyRooms;
+        for (const auto &localJid : account_->localMucBookmarks()) {
+            const XMPP::Jid jid(localJid);
+            if (jid.isValid())
+                localOnlyRooms.insert(jid.bare());
+        }
+        const QStringList ignoreRooms = account_->ignoreMucBookmarks();
         for (auto &room : result) {
-            if (account_->ignoreMucBookmarks().contains(room.jid().bare()))
+            if (localOnlyRooms.contains(room.jid().bare()))
+                room.setAutoJoin(ConferenceBookmark::OnlyThisComputer);
+            else if (ignoreRooms.contains(room.jid().bare()))
                 room.setAutoJoin(ConferenceBookmark::ExceptThisComputer);
         }
         if (result != conferences_) {
@@ -413,6 +422,16 @@ void BookmarkManager::setBookmarks(const QList<URLBookmark> &urls, const QList<C
                 pep_->originals = *originalUpdates;
                 const bool changed = conferences_ != conferences;
                 conferences_ = conferences;
+                QStringList localMucs;
+                QStringList ignoreMucs;
+                for (const auto &room : conferences_) {
+                    if (room.autoJoin() == ConferenceBookmark::OnlyThisComputer)
+                        localMucs.append(room.jid().withResource(room.nick()).full());
+                    else if (room.autoJoin() == ConferenceBookmark::ExceptThisComputer)
+                        ignoreMucs.append(room.jid().bare());
+                }
+                account_->setLocalMucBookmarks(localMucs);
+                account_->setIgnoreMucBookmarks(ignoreMucs);
                 if (changed)
                     emit conferencesChanged(conferences_);
                 emit bookmarksSaved();
