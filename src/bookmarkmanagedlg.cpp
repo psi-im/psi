@@ -91,8 +91,8 @@ void BookmarkManageDlg::accept()
             item->setData(QVariant(item->data(JidRole)), Qt::DisplayRole);
 
     if (account_->checkConnected(this)) {
-        saveBookmarks();
-        QDialog::accept();
+        if (saveBookmarks())
+            QDialog::accept();
     }
 }
 
@@ -119,7 +119,7 @@ ConferenceBookmark BookmarkManageDlg::bookmarkFor(const QModelIndex &index) cons
                               index.data(NickRole).toString(), index.data(PasswordRole).toString());
 }
 
-void BookmarkManageDlg::saveBookmarks()
+bool BookmarkManageDlg::saveBookmarks()
 {
     QList<ConferenceBookmark> conferences;
     for (int row = 0; row < model_->rowCount(); ++row) {
@@ -127,7 +127,18 @@ void BookmarkManageDlg::saveBookmarks()
         conferences += bookmarkFor(index);
     }
 
-    account_->bookmarkManager()->applyConferenceEdits(baseline_, conferences);
+    QString error;
+    auto *manager = account_->bookmarkManager();
+    const auto errorConnection = connect(manager, &BookmarkManager::syncError,
+                                         this, [&error](const QString &message) { error = message; });
+    const bool accepted = manager->applyConferenceEdits(baseline_, conferences);
+    disconnect(errorConnection);
+    if (!accepted) {
+        QMessageBox::warning(this, tr("Bookmark error"),
+                             error.isEmpty() ? tr("The bookmark changes could not be submitted.") : error);
+        return false;
+    }
+    return true;
 }
 
 void BookmarkManageDlg::addBookmark()
