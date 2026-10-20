@@ -11,6 +11,9 @@
 #include <QApplication>
 #include <QCheckBox>
 #include <QClipboard>
+#include <QElapsedTimer>
+#include <QImage>
+#include <QSplitter>
 #include <QFrame>
 #include <QLabel>
 #include <QLayout>
@@ -28,6 +31,18 @@
 #include <QtTest/QtTest>
 #include <cmath>
 #include <memory>
+
+#if defined(__has_include)
+#if __has_include(<valgrind/callgrind.h>)
+#include <valgrind/callgrind.h>
+#define PSI_MAM_CALLGRIND_START() do { CALLGRIND_ZERO_STATS; CALLGRIND_START_INSTRUMENTATION; } while (false)
+#define PSI_MAM_CALLGRIND_STOP() CALLGRIND_STOP_INSTRUMENTATION
+#endif
+#endif
+#ifndef PSI_MAM_CALLGRIND_START
+#define PSI_MAM_CALLGRIND_START() do {} while (false)
+#define PSI_MAM_CALLGRIND_STOP() do {} while (false)
+#endif
 
 namespace {
 MessageView message(const QString &id, const QString &body, int seconds = 0, bool local = false)
@@ -2499,6 +2514,98 @@ private slots:
         wheel(120);
         QCOMPARE(requests.count(), 2);
     }
+    // Opt-in profiling fixture: no network, deterministic MUC model, genuine
+    // splitter width changes and two in-document mock screenshots. Run with
+    // PSI_MAM_RESIZE_PROFILE=1 mam_chat_widget_test resizeProfilingScenario.
+    void resizeProfilingScenario()
+    {
+        if (!qEnvironmentVariableIsSet("PSI_MAM_RESIZE_PROFILE"))
+            QSKIP("Resize profiling is opt-in; set PSI_MAM_RESIZE_PROFILE=1");
+
+        QSplitter splitter(Qt::Horizontal);
+        auto *roster = new QWidget;
+        roster->setMinimumWidth(100);
+        auto *room = new MamChatWidget;
+        room->setGroupChat(true);
+        room->setHistoryLoading(true);
+        splitter.addWidget(roster);
+        splitter.addWidget(room);
+        splitter.resize(1000, 440);
+
+        const QString rich = QStringLiteral(
+            "This is a multiline room topic with several references "
+            "<a href='https://example.org/documentation'>documentation</a>, "
+            "<a href='https://example.org/issues/123'>bug tracker</a>, "
+            "<a href='https://example.org/wiki/overview'>wiki</a> and "
+            "<a href='xmpp:room@example.org?join'>room JID</a>. ")
+            .repeated(11);
+        for (int i = 0; i < 110; ++i) {
+            const QString body = (i % 7 == 0)
+                ? rich
+                : QStringLiteral("Normal MUC message %1 from another participant.").arg(i);
+            room->appendMessage(message(QStringLiteral("profile-%1").arg(i), body, i));
+        }
+        MessageView subject(MessageView::Subject);
+        subject.setPlainText(rich);
+        subject.setDateTime(QDateTime::currentDateTime());
+        room->appendMessage(subject);
+        for (int i = 0; i < 9; ++i)
+            room->appendMessage(message(QStringLiteral("last-%1").arg(i), rich, 200 + i));
+
+        splitter.show();
+        splitter.setSizes({ 250, 750 });
+        QCoreApplication::processEvents();
+        QVERIFY(room->messageCount() >= 120);
+        QVERIFY(room->viewport()->width() > 0);
+
+        // The production timeline's PsiRichText parser supports in-document
+        // images. Supply real QImage resources without network/file I/O so that
+        // Qt's document layout must account for screenshot-sized rectangles.
+        int screenshots = 0;
+        for (int index = room->messageCount() - 1; index >= 0 && screenshots < 2; --index) {
+            QWidget *row = room->itemWidget(index);
+            auto *body = row ? row->findChild<ChatMessageText *>() : nullptr;
+            if (!body)
+                continue;
+            const QString imageUrl = QStringLiteral("profile-screenshot-%1.png").arg(screenshots);
+            QImage screenshot(620, 340, QImage::Format_RGB32);
+            screenshot.fill(Qt::lightGray);
+            body->document()->addResource(QTextDocument::ImageResource, QUrl(imageUrl), screenshot);
+            body->setRichText(QStringLiteral("<p>%1</p><img src='%2' width='620' height='340'/>")
+                                  .arg(rich, imageUrl));
+            ++screenshots;
+        }
+        QCoreApplication::processEvents();
+        const int materialized = room->findChildren<ChatMessageText *>().size();
+
+        // A sequence of widths models an actual splitter drag; process pending
+        // layout/geometry events at every intermediate step.
+        const int widths[] = { 680, 620, 560, 500, 440, 380, 320, 380, 440, 500, 560, 620,
+                               680, 620, 560, 500, 440, 380, 320, 380, 440, 500, 560, 620 };
+        qint64 totalNs = 0;
+        qint64 worstNs = 0;
+        PSI_MAM_CALLGRIND_START();
+        for (int width : widths) {
+            QElapsedTimer step;
+            step.start();
+            splitter.setSizes({ 1000 - width, width });
+            QCoreApplication::processEvents();
+            const qint64 elapsedNs = step.nsecsElapsed();
+            totalNs += elapsedNs;
+            worstNs = qMax(worstNs, elapsedNs);
+        }
+        PSI_MAM_CALLGRIND_STOP();
+        qInfo().noquote() << "MAM_RESIZE_PROFILE"
+                          << "qt=" << QT_VERSION_STR
+                          << "messages=" << room->messageCount()
+                          << "materialized=" << materialized
+                          << "screenshots=" << screenshots
+                          << "steps=" << (sizeof(widths) / sizeof(widths[0]))
+                          << "total_ms=" << (totalNs / 1000000.0)
+                          << "worst_ms=" << (worstNs / 1000000.0);
+        QVERIFY(materialized > 0);
+    }
+
 };
 
 QTEST_MAIN(MamChatWidgetTest)
