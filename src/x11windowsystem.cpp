@@ -18,8 +18,10 @@ bool isPlatformX11()
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     return QX11Info::isPlatformX11();
 #else
+    if (QGuiApplication::platformName() != QLatin1String("xcb"))
+        return false;
     auto x11app = qApp->nativeInterface<QNativeInterface::QX11Application>();
-    return !!x11app;
+    return x11app && x11app->display();
 #endif
 }
 
@@ -76,7 +78,7 @@ auto getDisplay()
     return QX11Info::display();
 #else
     auto x11app = qApp->nativeInterface<QNativeInterface::QX11Application>();
-    return x11app->display();
+    return x11app ? x11app->display() : nullptr;
 #endif
 }
 
@@ -198,7 +200,10 @@ X11WindowSystem::X11WindowSystem()
         atoms[i] = 0;
 
 #if !defined(LIMIT_X11_USAGE)
-    XInternAtoms(getDisplay(), const_cast<char **>(names), atomsCount, true, atoms);
+    // MainWin creates this helper on every platform, including Wayland and
+    // the offscreen platform used by real-application integration tests.
+    if (auto *display = getDisplay())
+        XInternAtoms(display, const_cast<char **>(names), atomsCount, true, atoms);
 #endif
 
     i = atomsCount;
