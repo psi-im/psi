@@ -55,7 +55,7 @@ private:
     };
 
     void loadBookmarks();
-    void saveBookmarks();
+    bool saveBookmarks();
 
     void        appendItem(QStandardItem *item);
     XMPP::Jid   jid() const;
