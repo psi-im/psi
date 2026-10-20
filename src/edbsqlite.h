@@ -107,15 +107,15 @@ public:
     EDBItemPtr archivedEvent(const HistoryArchive::Key &, const QString &, const QDateTime & = {}) override;
     EDBItemPtr ownPlaintext(const HistoryArchive::Key &, const QString &, const QString &, const QDateTime &) override;
 
-    int features() const;
-    int get(const QString &accId, const XMPP::Jid &jid, const QDateTime date, int direction, int start, int len);
-    int find(const QString &accId, const QString &str, const XMPP::Jid &jid, const QDateTime date, int direction);
-    int append(const QString &accId, const XMPP::Jid &jid, const PsiEvent::Ptr &e, int type);
-    int erase(const QString &accId, const XMPP::Jid &jid);
-    QList<ContactItem> contacts(const QString &accId, int type);
-    quint64            eventsCount(const QString &accId, const XMPP::Jid &jid);
-    QString            getStorageParam(const QString &key);
-    void               setStorageParam(const QString &key, const QString &val);
+    int features() const override;
+    int get(const QString &accId, const XMPP::Jid &jid, const QDateTime date, int direction, int start, int len) override;
+    int find(const QString &accId, const QString &str, const XMPP::Jid &jid, const QDateTime date, int direction) override;
+    int append(const QString &accId, const XMPP::Jid &jid, const PsiEvent::Ptr &e, int type) override;
+    int erase(const QString &accId, const XMPP::Jid &jid) override;
+    QList<ContactItem> contacts(const QString &accId, int type) override;
+    quint64            eventsCount(const QString &accId, const XMPP::Jid &jid) override;
+    QString            getStorageParam(const QString &key) override;
+    void               setStorageParam(const QString &key, const QString &val) override;
 
     EDBResult            localHistoryPage(const QString &, const XMPP::Jid &, qint64, int) override;
     EDBItemPtr            resolvedHistoryEvent(qint64 eventId) override;
