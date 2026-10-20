@@ -1,6 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "ChatMessageText.h"
-#include "CachedTextImageHandler.h"
 #include "psirichtext.h"
 #include "urlobject.h"
 
@@ -32,7 +31,6 @@ ChatMessageText::ChatMessageText(QWidget *parent) : PsiTextView(parent)
     auto option = document()->defaultTextOption();
     option.setWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
     document()->setDefaultTextOption(option);
-    new CachedTextImageHandler(document()->documentLayout(), this);
     connect(document()->documentLayout(), &QAbstractTextDocumentLayout::documentSizeChanged, this,
             [this] { updateGeometry(); });
 }
