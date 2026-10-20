@@ -1129,6 +1129,8 @@ void MamChatWidget::clearMessages()
     initialFillFinished_ = false;
     initialFillCheckPending_ = false;
     initialFillRequests_ = 0;
+    initialFillStagnantPages_ = 0;
+    messagePixelsAtLastFillRequest_ = -1;
     setItemCount(0);
     timestampTimer_->stop();
 }
@@ -1151,11 +1153,77 @@ void MamChatWidget::requestOlderMessages(const char *gesture)
     emit olderMessagesRequested();
 }
 
+qint64 MamChatWidget::estimatedMessagePixels() const
+{
+    qint64 pixels = 0;
+    for (int i = 0; i < items_.size(); ++i) {
+        if (items_.at(i).message.type() != MessageView::Message)
+            continue; // System messages/markers do not satisfy message prefetch.
+        if (const auto *row = itemWidget(i))
+            pixels += qMax(1, row->height());
+        else
+            pixels += 72; // Non-materialized rows have no measured height yet.
+    }
+    return pixels;
+}
+
+qreal MamChatWidget::estimatedAverageMessageHeight() const
+{
+    const auto visible = visibleRange();
+    qint64 pixels = 0;
+    int count = 0;
+    if (visible.isValid()) {
+        for (int i = qMax(0, visible.first); i <= qMin(items_.size() - 1, visible.last); ++i) {
+            if (items_.at(i).message.type() != MessageView::Message)
+                continue;
+            if (const auto *row = itemWidget(i)) {
+                pixels += qMax(1, row->height());
+                ++count;
+            }
+        }
+    }
+    if (count)
+        return qreal(pixels) / count;
+    // Before a real visible sample, use the loaded materialized rows.
+    for (int i = 0; i < items_.size(); ++i) {
+        if (items_.at(i).message.type() == MessageView::Message) {
+            if (const auto *row = itemWidget(i)) {
+                pixels += qMax(1, row->height());
+                ++count;
+            }
+        }
+    }
+    return count ? qreal(pixels) / count : 72.0;
+}
+
+int MamChatWidget::suggestedOlderHistoryPageSize() const
+{
+    const qreal avgHeight = qMax(1.0, estimatedAverageMessageHeight());
+    const qint64 viewportPixels = qMax(1, viewport()->height());
+    // Opening: fill the screen AND half a screen of real message bodies
+    // above it. Later scrollback: request roughly half a screen each time.
+    const bool opening = followingInitialTail_ && initialFillEligible_ && !initialFillFinished_;
+    const qint64 missing = opening
+        ? qMax<qint64>(0, viewportPixels * 3 / 2 - estimatedMessagePixels())
+        : qMax<qint64>(1, viewportPixels / 2);
+    const int requiredMessages = qMax(1, int(qCeil(qreal(missing) / avgHeight)));
+    constexpr int ProtocolEventsPerMessage = 3; // message + displayed + receipt.
+    return qBound(1, qMin(40, requiredMessages * ProtocolEventsPerMessage), 40);
+}
+
 void MamChatWidget::maybeContinueInitialHistoryFill()
 {
     // Called only after a successfully handled MAM/EDB page. The first MUC
     // history burst is preserved; only missing older rows are prepended.
     initialFillEligible_ = true;
+    if (messagePixelsAtLastFillRequest_ >= 0) {
+        // Progress is measured in actual message pixels, not XML stanzas.
+        if (estimatedMessagePixels() > messagePixelsAtLastFillRequest_)
+            initialFillStagnantPages_ = 0;
+        else
+            ++initialFillStagnantPages_;
+        messagePixelsAtLastFillRequest_ = -1;
+    }
     scheduleInitialHistoryFillCheck();
 }
 
@@ -1171,25 +1239,38 @@ void MamChatWidget::scheduleInitialHistoryFillCheck()
         if (!initialFillEligible_ || initialFillFinished_ || !followingInitialTail_
             || historyLoading_ || historyExhausted_ || !isVisible() || viewport()->height() <= 0)
             return;
-        const bool underfilled = contentHeight() <= viewport()->height();
+        const qint64 messagePixels = estimatedMessagePixels();
+        const qint64 goal = qint64(viewport()->height()) * 3 / 2;
+        const bool underfilled = messagePixels < goal;
         qInfo().noquote() << "[mam-history] initial viewport check"
-                          << "rows=" << messageCount() << "height=" << contentHeight()
+                          << "rows=" << messageCount()
+                          << "contentPixels=" << contentHeight()
+                          << "messagePixels=" << messagePixels
                           << "viewport=" << viewport()->height()
+                          << "goal=" << goal
+                          << "averageMessageHeight=" << estimatedAverageMessageHeight()
                           << "underfilled=" << underfilled
                           << "followUps=" << initialFillRequests_
-                          << "atEnd=" << isAtEnd();
+                          << "stagnant=" << initialFillStagnantPages_;
         if (!underfilled) {
             initialFillFinished_ = true;
             return;
         }
-        // A room archive may consist entirely of protocol-only MAM events.
-        // Limit implicit prefetch independently of explicit user gestures.
-        constexpr int MaxInitialFillFollowUps = 6;
-        if (initialFillRequests_ >= MaxInitialFillFollowUps) {
+        // A server can return long runs of protocol-only stanzas. Never sweep
+        // thousands of pages in a runaway opening loop. A distinct user gesture
+        // can continue past this safety stop without resetting the RSM cursor.
+        constexpr int MaxStagnantPages = 8;
+        constexpr int MaxOpeningPages = 32;
+        if (initialFillStagnantPages_ >= MaxStagnantPages
+            || initialFillRequests_ >= MaxOpeningPages) {
+            qWarning().noquote() << "[mam-history] opening prefetch paused"
+                                 << "stagnant=" << initialFillStagnantPages_
+                                 << "pages=" << initialFillRequests_;
             initialFillFinished_ = true;
             return;
         }
         ++initialFillRequests_;
+        messagePixelsAtLastFillRequest_ = messagePixels;
         requestOlderMessages("initial-viewport-fill");
     });
 }
