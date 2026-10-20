@@ -1753,6 +1753,9 @@ bool LongListWidget::measureWidget(int index, QWidget* widget)
 
     const int width = std::max(1, viewport()->width());
     const int height = naturalWidgetHeight(widget);
+    // Any ordinary geometry pass can settle a pending width, not only a
+    // splitter resize transaction.
+    pendingWidthWidgets_.remove(widget);
     const bool changed = !measured.testBit(index)
         || heights.value(index) != height;
     heights.setValue(index, height);
