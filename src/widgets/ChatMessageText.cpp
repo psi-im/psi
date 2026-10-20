@@ -1,8 +1,11 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "ChatMessageText.h"
 #include "psirichtext.h"
+#include "urlobject.h"
 
 #include <QAbstractTextDocumentLayout>
+#include <QApplication>
+#include <QMouseEvent>
 #include <QCoreApplication>
 #include <QMimeData>
 #include <QSignalBlocker>
@@ -107,6 +110,40 @@ QSize ChatMessageText::sizeHint() const
     return minimumSizeHint();
 }
 QSize ChatMessageText::minimumSizeHint() const { return QSize(0, fontMetrics().height()); }
+
+void ChatMessageText::mousePressEvent(QMouseEvent *event)
+{
+    pressedLink_.clear();
+    if (event->button() == Qt::LeftButton && (textInteractionFlags() & Qt::LinksAccessibleByMouse)) {
+        pressedLink_ = anchorAt(event->pos());
+        pressedLinkPosition_ = event->pos();
+    }
+    PsiTextView::mousePressEvent(event);
+}
+
+void ChatMessageText::mouseReleaseEvent(QMouseEvent *event)
+{
+    const QString pressedLink = pressedLink_;
+    pressedLink_.clear();
+
+    if (!pressedLink.isEmpty()) {
+        // PsiTextView's generic QTextEdit release handler may see a temporary
+        // text selection on a link, especially in the embedded message
+        // timeline. Handle a click explicitly and let an actual drag retain
+        // normal QTextEdit selection behavior instead.
+        QTextEdit::mouseReleaseEvent(event);
+        const bool clicked = event->button() == Qt::LeftButton
+            && (textInteractionFlags() & Qt::LinksAccessibleByMouse)
+            && (event->pos() - pressedLinkPosition_).manhattanLength() <= QApplication::startDragDistance()
+            && anchorAt(event->pos()) == pressedLink;
+        if (clicked) {
+            URLObject::getInstance()->popupAction(pressedLink);
+            event->accept();
+        }
+        return;
+    }
+    PsiTextView::mouseReleaseEvent(event);
+}
 
 void ChatMessageText::resizeEvent(QResizeEvent *event)
 {
