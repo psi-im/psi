@@ -6231,6 +6231,9 @@ void PsiAccount::client_groupChatJoined(const Jid &j)
     connect(chat, &GCMainDlg::aSend, this, [this](Message &msg) { dj_sendMessage(msg); });
     connect(chat, &GCMainDlg::messagesRead, this, &PsiAccount::groupChatMessagesRead);
     connect(d->psi, &PsiCon::emitOptionsUpdate, chat, &GCMainDlg::optionsUpdate);
+    // This window did not exist when groupChatJoined was emitted. Complete
+    // the same transition as a rejoined window, including archive readiness.
+    chat->joined();
 
     if (r != MUCJoinDlg::MucAutoJoin
         || !PsiOptions::instance()->getOption("options.ui.muc.hide-on-autojoin").toBool()) {

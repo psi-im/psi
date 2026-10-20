@@ -15,6 +15,7 @@ class FileSharingDeviceOpener;
 class QFrame;
 class QLabel;
 class QResizeEvent;
+class QWheelEvent;
 class QShowEvent;
 class QHideEvent;
 class QTimer;
@@ -34,8 +35,14 @@ public:
     void clearMessages();
     void setHistoryLoading(bool loading);
     void setHistoryExhausted(bool exhausted);
+    // Continue an explicit pixel demand after a completed source page.
+    void maybeContinueInitialHistoryFill();
+    void stopHistoryFill();
     bool historyExhausted() const { return historyExhausted_; }
     int  messageCount() const { return items_.size(); }
+    // Dynamic MAM stanza budget inferred from measured message heights.
+    // Includes receipt/marker allowance but never exceeds HistorySync's 40.
+    int  suggestedOlderHistoryPageSize() const;
     // An explicit seek is a navigation intent, not initial open-at-end.
     void scrollToIndex(int                                   index,
                        Mattermost::LongListWidget::Alignment alignment
@@ -74,12 +81,17 @@ signals:
 protected:
     QWidget *createItemWidget(int index) override;
     bool     eventFilter(QObject *target, QEvent *event) override;
+    void     wheelEvent(QWheelEvent *event) override;
     void     resizeEvent(QResizeEvent *event) override;
     void     showEvent(QShowEvent *event) override;
     void     hideEvent(QHideEvent *event) override;
     void     changeEvent(QEvent *event) override;
 
 private:
+    void requestOlderMessages(const char *gesture);
+    void scheduleInitialHistoryFillCheck();
+    qint64 estimatedMessagePixels() const;
+    qreal estimatedAverageMessageHeight() const;
     void schedulePaletteRefresh();
     void refreshPalette();
     bool paletteRefreshPending_ = false;
@@ -138,6 +150,7 @@ private:
         QSet<QString> stanzaIds; // Revision stanza IDs of one logical message.
     };
     QList<Row>              items_;
+    mutable QHash<QString, QPair<int, int>> measuredMessageHeights_; // width, learned height
     QSet<QString>           keys_;
     QHash<QString, QString> sourceAliases_; // EDB/MAM source key -> stable row key
     bool                    sameSender(const MessageView &a, const MessageView &b) const;
@@ -146,6 +159,14 @@ private:
     void                    coalesceRevisionRows();
     bool                    historyLoading_   = false;
     bool                    historyExhausted_ = false;
+    bool                    historyRequestPending_ = false;
+    quint64                 historyRequestSerial_ = 0;
+    bool                    initialFillEligible_ = false;
+    bool                    initialFillFinished_ = false;
+    bool                    initialFillCheckPending_ = false;
+    qint64                                  historyFillTargetPixels_ = -1;
+    bool                                    historyFillPaused_       = false;
+    bool                                    historyFillReady_        = false;
     // Opening a chat always starts at the live tail, even while Qt measures
     // new rows or MAM/EDB prepends history. A real user scroll takes ownership.
     bool    followingInitialTail_ = true;

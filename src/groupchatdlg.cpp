@@ -20,6 +20,7 @@
 // TODO: Move all the 'logic' of groupchats into MUCManager
 
 #include "groupchatdlg.h"
+#include "widgets/MamHistoryLog.h"
 
 #include "avatars.h"
 #include "avcall/avcall.h"
@@ -2418,8 +2419,12 @@ void GCMainDlg::joined()
     d->noteRoomActivity();
     mamArchiveReady_ = true;
     mamRefreshTail_ = !mamBeforeId_.isEmpty();
-    if (nativeTimeline_)
+    if (nativeTimeline_) {
         nativeTimeline_->setHistoryExhausted(false);
+        nativeTimeline_->maybeContinueInitialHistoryFill();
+    }
+    qCDebug(PsiMam::historyLog) << "room-joined account=" << account()->id() << "peer=" << jid().bare()
+                                << "widget=" << nativeTimeline_ << "archiveReady=" << mamArchiveReady_;
     QTimer::singleShot(0, this, &GCMainDlg::loadOlderMamMessages);
 }
 
@@ -2460,6 +2465,10 @@ void GCMainDlg::loadOlderMamMessages()
 {
     if (!nativeTimeline_ || mamTask_)
         return;
+    qCDebug(PsiMam::historyLog) << "room-load account=" << account()->id() << "peer=" << jid().bare()
+                                << "ready=" << mamArchiveReady_ << "mamExhausted=" << mamExhausted_
+                                << "localExhausted=" << localExhausted_ << "refreshTail=" << mamRefreshTail_
+                                << "before=" << mamBeforeId_;
     nativeTimeline_->setHistoryLoading(true);
     const bool initialAtEnd = mamBeforeId_.isEmpty() && nativeTimeline_->isAtEnd();
     prependLocalChatHistory(nativeTimeline_, account(), jid().bare(), true, nick(), localBeforeId_, localExhausted_);
@@ -2468,13 +2477,22 @@ void GCMainDlg::loadOlderMamMessages()
     if ((mamExhausted_ && !mamRefreshTail_) || !mamArchiveReady_ || !account()->isConnected() || d->state != Private::Connected) {
         nativeTimeline_->setHistoryLoading(false);
         nativeTimeline_->setHistoryExhausted(localExhausted_);
+        if (mamExhausted_ && !localExhausted_)
+            nativeTimeline_->maybeContinueInitialHistoryFill();
         return;
     }
     const auto room = jid().withResource({});
     const bool refreshTail = mamRefreshTail_;
     const QString requestedBefore = refreshTail ? QString() : mamBeforeId_;
     mamRefreshTail_ = false;
-    auto *task = new HistorySync(account(), room.bare(), true, requestedBefore, this);
+    if (requestedBefore.isEmpty())
+        mamSeenBeforeIds_.clear();
+    const int stanzaLimit = nativeTimeline_->suggestedOlderHistoryPageSize();
+    qCDebug(PsiMam::historyLog).noquote()
+        << " room request" << room.bare() << "before=" << requestedBefore << "refreshTail=" << refreshTail
+        << "visibleRows=" << nativeTimeline_->messageCount() << "stanzas=" << stanzaLimit
+        << "localExhausted=" << localExhausted_;
+    auto *task = new HistorySync(account(), room.bare(), true, requestedBefore, this, stanzaLimit);
     mamTask_ = task;
     connect(task, &HistorySync::finished, this, [this, task, room, requestedBefore] {
         if (mamTask_ != task)
@@ -2482,12 +2500,14 @@ void GCMainDlg::loadOlderMamMessages()
         mamTask_.clear();
         nativeTimeline_->setHistoryLoading(false);
         if (!task->success() || !room.compare(jid(), false)) {
+            qCWarning(PsiMam::historyLog) << "room-query-failed account=" << account()->id() << "peer=" << room.bare()
+                                          << "before=" << requestedBefore << "error=" << task->statusString();
+            nativeTimeline_->stopHistoryFill();
             // A missing/forbidden archive leaves the ordinary live room history intact.
             // A reconnect retries from the same cursor after joining the room again.
-            if (account()->isConnected()) {
-                mamExhausted_ = true;
-                nativeTimeline_->setHistoryExhausted(localExhausted_);
-            }
+            // Failure is not proof of the archive boundary. Pause automatic
+            // filling, but let a later user gesture/rejoin retry this cursor.
+            nativeTimeline_->setHistoryExhausted(false);
             task->deleteLater();
             return;
         }
@@ -2555,13 +2575,26 @@ void GCMainDlg::loadOlderMamMessages()
         }
         const bool initial = requestedBefore.isEmpty();
         const bool atEnd = nativeTimeline_->isAtEnd();
-        mamExhausted_ = task->isComplete() || oldest.isEmpty() || oldest == requestedBefore;
-        if (!oldest.isEmpty())
+        const bool repeated = !oldest.isEmpty() && (oldest == requestedBefore || mamSeenBeforeIds_.contains(oldest));
+        mamExhausted_       = task->isComplete() || oldest.isEmpty() || repeated;
+        if (repeated) {
+            qCWarning(PsiMam::historyLog) << "room-cursor-cycle peer=" << room.bare() << "cursor=" << oldest;
+            nativeTimeline_->stopHistoryFill();
+        }
+        if (!oldest.isEmpty()) {
+            mamSeenBeforeIds_.insert(oldest);
             mamBeforeId_ = oldest;
-        nativeTimeline_->prependArchivePage(page);
+        }
+        const int added = nativeTimeline_->prependArchivePage(page);
         nativeTimeline_->setHistoryExhausted(mamExhausted_ && localExhausted_);
         if (initial && atEnd)
             nativeTimeline_->scrollToEnd();
+        qCDebug(PsiMam::historyLog).noquote()
+            << " room result" << room.bare() << "before=" << requestedBefore << "events=" << task->archive().size()
+            << "visibleCandidates=" << page.size() << "addedRows=" << added
+            << "totalRows=" << nativeTimeline_->messageCount() << "fromCache=" << task->fromCache()
+            << "mamExhausted=" << mamExhausted_ << "localExhausted=" << localExhausted_;
+        nativeTimeline_->maybeContinueInitialHistoryFill();
         task->deleteLater();
     });
     task->go();
@@ -2605,6 +2638,12 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
     if (!PsiOptions::instance()->getOption("options.ui.muc.use-highlighting").toBool())
         alert = false;
     mv.setMessageId(dm.id());
+    // The room-assigned XEP-0359 ID is the MAM UID for this archive. Keep
+    // that identity across the join-history/live/EDB/MAM delivery paths.
+    const auto archiveId = dm.stanzaId(jid().withResource({})).id;
+    mv.setArchiveId(archiveId);
+    if (dm.spooled() && !archiveId.isEmpty() && mamBeforeId_.isEmpty() && !mamTask_)
+        mamBeforeId_ = archiveId;
     mv.setReactionTargetId(MessageView::reactionTarget(dm));
     mv.setRetractionTargetId(MessageView::retractionTarget(dm));
     mv.setEncrypted(dm.wasEncrypted(), dm.encryptionProtocol());

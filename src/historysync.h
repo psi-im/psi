@@ -37,8 +37,8 @@ public:
             ownPlaintext;
     };
     static constexpr int PageSize = 40;
-    HistorySync(PsiAccount *, const QString &peer, bool room, const QString &before, QObject *parent);
-    HistorySync(Context, const QString &peer, bool room, const QString &before, QObject *parent = nullptr);
+    HistorySync(PsiAccount *, const QString &peer, bool room, const QString &before, QObject *parent, int pageSize = PageSize);
+    HistorySync(Context, const QString &peer, bool room, const QString &before, QObject *parent = nullptr, int pageSize = PageSize);
     ~HistorySync() override;
     void               go();
     void               safeDelete();
@@ -51,6 +51,7 @@ public:
     qint64             eventId(const QString &uid) const;
     XMPP::Message      message(const QString &uid) const;
     bool               protocolOnly(const QString &uid) const;
+    int                requestedPageSize() const { return pageSize_; }
 
 signals:
     void finished();
@@ -67,12 +68,14 @@ private:
     HistoryArchive::Key           key_;
     QString                       before_, error_;
     QString                       after_;
+    QSet<QString>                 visitedAfter_;
     HistoryArchive::Page          tail_;
     QList<QDomElement>            results_;
     QHash<QString, XMPP::Message> decoded_;
     QSet<QString>                 protocolOnly_;
     QSet<QString>                 decryptionFailures_;
     QSet<QString>                 bodyElements_;
+    int                           pageSize_        = PageSize;
     int                           decodeIndex_     = 0;
     bool                          networkComplete_ = false, networkStable_ = false;
     bool                          decodingSaved_ = false, replaySaved_ = false;

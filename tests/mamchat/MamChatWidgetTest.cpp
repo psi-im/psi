@@ -1967,20 +1967,348 @@ private slots:
         QVERIFY(!copied.contains(QStringLiteral("first-new")));
     }
 
-    void emptyArchiveRequestsAnotherPageWithoutScrollGesture()
+    void shortArchivePagesDoNotAutoPageAtTheLiveTail()
     {
         MamChatWidget list;
         list.resize(360, 240);
         list.setHistoryLoading(true);
         list.show();
         QSignalSpy requests(&list, &MamChatWidget::olderMessagesRequested);
+
+        // Protocol-only MUC pages can leave the native list short (or empty).
+        // Completing a page must not implicitly fetch the entire room archive.
+        for (int page = 0; page < 4; ++page) {
+            list.setHistoryLoading(false);
+            QCoreApplication::processEvents();
+            QCOMPARE(requests.count(), 0);
+            QVERIFY(list.isAtEnd());
+            list.setHistoryLoading(true);
+        }
+
+        // Replaying a small real page also must not trigger a background sweep.
+        list.prependArchivePage({qMakePair(QStringLiteral("uid-1"),
+                                          message(QStringLiteral("id-1"), QStringLiteral("Short reply")))});
         list.setHistoryLoading(false);
-        QTRY_VERIFY(!requests.isEmpty());
+        QCoreApplication::processEvents();
+        QCOMPARE(requests.count(), 0);
+        QVERIFY(list.isAtEnd());
+    }
+
+    void initialViewportFillContinuesThroughLongProtocolOnlyRuns()
+    {
+        MamChatWidget room;
+        room.resize(480, 900); // A short MUC backlog leaves ample empty space.
+        room.setHistoryLoading(true);
+        for (int i = 0; i < 4; ++i)
+            room.appendMessage(message(QStringLiteral("live-%1").arg(i),
+                                       QStringLiteral("Recent MUC body"), i));
+        room.show();
+        room.setHistoryLoading(false);
+        QSignalSpy requests(&room, &MamChatWidget::olderMessagesRequested);
+
+        QTest::qWait(70);
+        QCOMPARE(requests.count(), 0); // A passive layout update grants nothing.
+
+        room.maybeContinueInitialHistoryFill(); // First HistorySync page was handled.
+        QTRY_COMPARE(requests.count(), 1);
+        QCOMPARE(room.messageCount(), 4); // The already delivered MUC messages survive.
+
+        // More than the previous 8/32-page caps: protocol-only pages advance
+        // the source cursor but cannot satisfy the view's real-message demand.
+        for (int i = 2; i <= 36; ++i) {
+            room.setHistoryLoading(true);
+            room.setHistoryLoading(false);
+            room.maybeContinueInitialHistoryFill();
+            QTRY_COMPARE(requests.count(), i);
+        }
+        room.setHistoryExhausted(true);
+        room.setHistoryLoading(false);
+        room.maybeContinueInitialHistoryFill();
+        QTest::qWait(50);
+        QCOMPARE(requests.count(), 36);
+        QCOMPARE(room.messageCount(), 4);
+    }
+
+    void scrollFillPreservesAnchorAndContinuesPastProtocolOnlyPages()
+    {
+        MamChatWidget chat;
+        chat.resize(420, 300);
+        for (int i = 0; i < 30; ++i)
+            chat.appendMessage(message(QString::number(i), "Message body", i));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(29));
+        chat.scrollToIndex(0, Mattermost::LongListWidget::Alignment::Top);
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto       *anchor = chat.itemWidget(0);
+        const int   oldY   = anchor->y();
+        QSignalSpy  requests(&chat, &MamChatWidget::olderMessagesRequested);
+        QWheelEvent wheel(QPointF(5, 5), QPointF(chat.viewport()->mapToGlobal(QPoint(5, 5))), QPoint(), QPoint(0, 120),
+                          Qt::NoButton, Qt::NoModifier, Qt::NoScrollPhase, false);
+        QApplication::sendEvent(chat.viewport(), &wheel);
+        QTRY_COMPARE(requests.count(), 1);
+        for (int page = 2; page <= 4; ++page) {
+            chat.setHistoryLoading(true);
+            chat.setHistoryLoading(false);
+            chat.maybeContinueInitialHistoryFill(); // Distinct progressing source cursors, no visible rows.
+            QTRY_COMPARE(requests.count(), page);
+        }
+        chat.setHistoryLoading(true);
+        QList<QPair<QString, MessageView>> older;
+        for (int i = 0; i < 6; ++i)
+            older.append(qMakePair(QString("old-%1").arg(i), message(QString("old-%1").arg(i), "Older body", i - 20)));
+        chat.prependArchivePage(older);
+        chat.setHistoryLoading(false);
+        chat.maybeContinueInitialHistoryFill();
+        QTest::qWait(60);
+        QCOMPARE(requests.count(), 4); // Half a screen, rather than an archive sweep.
+        QCOMPARE(chat.itemWidget(6), anchor);
+        QCOMPARE(anchor->y(), oldY);
+    }
+
+    void roomArchiveIdentityMergesJoinHistoryWithDifferentClientIds()
+    {
+        MamChatWidget chat;
+        chat.setGroupChat(true);
+        auto joined = message("join-client-id", "Body");
+        joined.setArchiveId("room-stanza-id");
+        chat.appendMessage(joined);
+        auto archived = joined;
+        archived.setMessageId("rewritten-client-id");
+        QCOMPARE(chat.prependArchivePage({ qMakePair(QString("room-stanza-id"), archived) }), 0);
+        QCOMPARE(chat.messageCount(), 1);
+    }
+
+    void liveMessageSurvivesInitialFillAndRemainsAtTail()
+    {
+        MamChatWidget chat;
+        chat.resize(420, 600);
+        for (int i = 0; i < 4; ++i)
+            chat.appendMessage(message(QString("join-%1").arg(i), "MUC history", i));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(3));
+        QSignalSpy requests(&chat, &MamChatWidget::olderMessagesRequested);
+        chat.maybeContinueInitialHistoryFill();
+        QTRY_COMPARE(requests.count(), 1);
+        chat.setHistoryLoading(true);
+        chat.appendMessage(message("live-in-flight", "New live body", 20));
+        QList<QPair<QString, MessageView>> older;
+        for (int i = 0; i < 30; ++i)
+            older.append(qMakePair(QString("old-%1").arg(i), message(QString("old-%1").arg(i), "Older body", i - 40)));
+        chat.prependArchivePage(older);
+        chat.setHistoryLoading(false);
+        chat.maybeContinueInitialHistoryFill();
+        QTRY_VERIFY(chat.itemWidget(34));
+        QCOMPARE(chat.messageCount(), 35);
+        QCOMPARE(chat.itemWidget(34)->findChild<ChatMessageText *>()->toPlainText(), QString("New live body"));
+        QVERIFY(chat.isAtEnd());
+        QTest::qWait(60);
+        QCOMPARE(requests.count(), 1);
+    }
+
+    void pageSizeUsesVisibleMessageHeightsRatherThanArchiveEventCount()
+    {
+        MamChatWidget room;
+        room.resize(420, 900);
+        room.setHistoryLoading(true);
+        for (int i = 0; i < 4; ++i)
+            room.appendMessage(message(QString::number(i), QStringLiteral("Normal MUC body"), i));
+        room.show();
+        QTRY_VERIFY(room.itemWidget(0) != nullptr);
+        const int ordinarySize = room.suggestedOlderHistoryPageSize();
+        QVERIFY(ordinarySize >= 1 && ordinarySize <= 40);
+
+        // The opening request covers the missing screen plus an extra half
+        // screen; each message has three estimated protocol events.
+        room.maybeContinueInitialHistoryFill();
+        const int openingSize = room.suggestedOlderHistoryPageSize();
+        QVERIFY(openingSize >= ordinarySize);
+        QVERIFY(openingSize <= 40);
+        QVERIFY(openingSize == 40 || openingSize % 3 == 0);
+    }
+
+    void initialViewportFillStopsWhenRealRowsFillWindow()
+    {
+        MamChatWidget room;
+        room.resize(420, 220);
+        room.setHistoryLoading(true);
+        for (int i = 0; i < 24; ++i)
+            room.appendMessage(message(QStringLiteral("live-%1").arg(i),
+                                       QStringLiteral("Normal MUC body"), i));
+        room.show();
+        QTRY_VERIFY(room.verticalScrollBar()->maximum() > 0);
+        room.setHistoryLoading(false);
+        QSignalSpy requests(&room, &MamChatWidget::olderMessagesRequested);
+
+        room.maybeContinueInitialHistoryFill();
+        QTest::qWait(90);
+        QCOMPARE(requests.count(), 0);
+        room.resize(420, 420);
+        QTest::qWait(90);
+        QCOMPARE(requests.count(), 0); // No resize-triggered archive sweep.
+    }
+
+    void scrollBarOutwardActionAtOldestBoundaryFetchesHistory()
+    {
+        MamChatWidget room;
+        room.resize(360, 180);
+        room.setHistoryLoading(true);
+        for (int i = 0; i < 30; ++i)
+            room.appendMessage(message(QString::number(i), QStringLiteral("Visible body"), i));
+        room.show();
+        QTRY_VERIFY(room.verticalScrollBar()->maximum() > 0);
+        room.setHistoryLoading(false);
+        QSignalSpy requests(&room, &MamChatWidget::olderMessagesRequested);
+
+        auto *bar = room.verticalScrollBar();
+        bar->setValue(bar->minimum());
+        QCoreApplication::processEvents();
+        QCOMPARE(requests.count(), 0); // Programmatic position changes are passive.
+        // First showEvent may still finish tail restoration; establish the
+        // top boundary *after* those queued layout operations.
+        bar->setValue(bar->minimum());
+        QCOMPARE(bar->value(), bar->minimum());
+        // At zero, QAbstractSlider::triggerAction(SingleStepSub) can be
+        // discarded by Qt itself. Send genuine input to exercise the widget's
+        // outward-gesture path rather than relying on a valueChanged signal.
+        QWheelEvent upward(QPointF(4, 4), QPointF(bar->mapToGlobal(QPoint(4, 4))),
+                           QPoint(), QPoint(0, 120), Qt::NoButton, Qt::NoModifier,
+                           Qt::NoScrollPhase, false);
+        QApplication::sendEvent(bar, &upward);
+        QTRY_COMPARE(requests.count(), 1); // The value cannot decrease below zero.
+        room.setHistoryLoading(true);
+        room.setHistoryLoading(false);
+        QCoreApplication::processEvents();
+        QCOMPARE(requests.count(), 1);
+        QTest::keyClick(bar, Qt::Key_PageUp);
+        QTRY_COMPARE(requests.count(), 2); // New, distinct user gesture.
+    }
+
+    void scrollingFromTailToOldestRequestsHistory()
+    {
+        MamChatWidget list;
+        list.resize(400, 240);
+        list.setHistoryLoading(true);
+        for (int i = 0; i < 30; ++i)
+            list.appendMessage(message(QString::number(i), QStringLiteral("Visible body"), i));
+        list.show();
+        QTRY_VERIFY(list.verticalScrollBar()->maximum() > 0);
+        list.setHistoryLoading(false);
+        QSignalSpy requests(&list, &MamChatWidget::olderMessagesRequested);
+        QVERIFY(list.isAtEnd());
+        QCoreApplication::processEvents();
+        QCOMPARE(requests.count(), 0);
+
+        list.verticalScrollBar()->triggerAction(QAbstractSlider::SliderToMinimum);
+        QTRY_VERIFY(!list.isAtEnd());
+        QTRY_COMPARE(requests.count(), 1);
+    }
+
+    void smallScrollNearTailDoesNotRequestHistoryOrChainOnPrepend()
+    {
+        MamChatWidget list;
+        list.resize(400, 180);
+        list.setHistoryLoading(true);
+        for (int i = 0; i < 35; ++i)
+            list.appendMessage(message(QString::number(i), QStringLiteral("Visible body"), i));
+        list.show();
+        QTRY_VERIFY(list.verticalScrollBar()->maximum() > 0);
+        list.setHistoryLoading(false);
+        QSignalSpy requests(&list, &MamChatWidget::olderMessagesRequested);
+        QVERIFY(list.isAtEnd());
+
+        const auto wheelUp = [&list] {
+            QWheelEvent event(QPointF(4, 4), QPointF(list.viewport()->mapToGlobal(QPoint(4, 4))),
+                              QPoint(), QPoint(0, 120), Qt::NoButton, Qt::NoModifier,
+                              Qt::NoScrollPhase, false);
+            QApplication::sendEvent(list.viewport(), &event);
+        };
+        wheelUp(); // One wheel tick at the live tail is not an archive boundary.
+        QCoreApplication::processEvents();
+        QVERIFY(list.visibleRange().first > 1);
+        QCOMPARE(requests.count(), 0);
+
+        // Programmatic navigation/geometry must not masquerade as scroll intent.
+        list.verticalScrollBar()->setValue(list.verticalScrollBar()->minimum());
+        QCoreApplication::processEvents();
+        QCOMPARE(requests.count(), 0);
+
+        wheelUp(); // Explicit outward gesture at the oldest row.
+        QTRY_COMPARE(requests.count(), 1);
+        list.setHistoryLoading(true);
+        list.prependArchivePage({qMakePair(QStringLiteral("archive-old-1"),
+                                          message(QStringLiteral("old-1"), QStringLiteral("An older reply")))});
+        list.setHistoryLoading(false);
+        QCoreApplication::processEvents();
+        QCOMPARE(requests.count(), 1); // Prepending a short page cannot chain requests.
+
+        // A subsequent, separate upward gesture is allowed to page again.
+        wheelUp();
+        QTRY_COMPARE(requests.count(), 2);
+    }
+
+    void cachedPageCompletionCannotReplaySameWheelGesture()
+    {
+        MamChatWidget list;
+        list.resize(400, 240);
+        list.setHistoryLoading(true);
+        for (int i = 0; i < 35; ++i)
+            list.appendMessage(message(QString::number(i), QStringLiteral("Visible body"), i));
+        list.show();
+        QTRY_VERIFY(list.verticalScrollBar()->maximum() > 100);
+        list.setHistoryLoading(false);
+        QSignalSpy requests(&list, &MamChatWidget::olderMessagesRequested);
+
+        // Start just below the oldest boundary. One wheel both moves the
+        // scrollbar and requests a page. The deferred scrollbar check must not
+        // reuse that same gesture after a cached HistorySync reply completes.
+        QCoreApplication::processEvents(); // Drain initial show/tail restoration.
+        list.verticalScrollBar()->setValue(20);
+        QCOMPARE(list.verticalScrollBar()->value(), 20);
+        QWheelEvent event(QPointF(4, 4), QPointF(list.viewport()->mapToGlobal(QPoint(4, 4))),
+                          QPoint(), QPoint(0, 120), Qt::NoButton, Qt::NoModifier,
+                          Qt::NoScrollPhase, false);
+        QApplication::sendEvent(list.viewport(), &event);
+        QCOMPARE(requests.count(), 1);
+        list.setHistoryLoading(true);
+        list.setHistoryLoading(false);
+        QCoreApplication::processEvents();
+        QCOMPARE(requests.count(), 1);
+    }
+
+    void upwardWheelAtEmptyOrShortHistoryRequestsOnePagePerGesture()
+    {
+        MamChatWidget list;
+        list.resize(360, 240);
+        list.setHistoryLoading(true);
+        list.show();
+        list.setHistoryLoading(false);
+        QSignalSpy requests(&list, &MamChatWidget::olderMessagesRequested);
+
+        const auto wheel = [&list](int delta) {
+            QWheelEvent event(QPointF(4, 4), QPointF(list.viewport()->mapToGlobal(QPoint(4, 4))),
+                              QPoint(), QPoint(0, delta), Qt::NoButton, Qt::NoModifier,
+                              Qt::NoScrollPhase, false);
+            QApplication::sendEvent(list.viewport(), &event);
+        };
+        // Scrolling down at the live tail is not an older-history request.
+        wheel(-120);
+        QCOMPARE(requests.count(), 0);
+        wheel(120);
+        QCOMPARE(requests.count(), 1);
+        wheel(120); // A second gesture before the queued slot must not duplicate a request.
+        QCOMPARE(requests.count(), 1);
+
+        // Loading/completion alone must not queue subsequent MAM requests.
+        list.setHistoryLoading(true);
+        list.setHistoryLoading(false);
+        QCoreApplication::processEvents();
+        QCOMPARE(requests.count(), 1);
+        wheel(120);
+        QCOMPARE(requests.count(), 2);
+
         list.setHistoryExhausted(true);
-        const int atStop = requests.count();
-        list.setHistoryLoading(false);
-        QTest::qWait(40);
-        QCOMPARE(requests.count(), atStop);
+        wheel(120);
+        QCOMPARE(requests.count(), 2);
     }
 };
 

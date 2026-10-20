@@ -82,6 +82,29 @@ private slots:
         QCOMPARE(scalar("SELECT history_state & 3 FROM events").toInt(), int(Archived));
     }
 
+    void adaptiveSizesReuseCertifiedPagesAtUnstoredMucBoundary()
+    {
+        QVERIFY(migrate(db));
+        auto p = page({ "a", "b", "c", "d" });
+        QVERIFY(storePage(db, key, "join-history-uid", 4, p));
+        auto smaller = readPage(db, key, "join-history-uid", 2);
+        QVERIFY(smaller.found && smaller.stable && !smaller.complete);
+        QCOMPARE(smaller.entries.size(), 2);
+        QCOMPARE(smaller.entries.first().uid, QString("c"));
+        QCOMPARE(smaller.entries.last().uid, QString("d"));
+        // A larger request can extend across another verified page, without
+        // inventing an event for the MUC-history boundary itself.
+        auto older = page({ "old-1", "old-2" }, true);
+        QVERIFY(storePage(db, key, "a", 2, older));
+        auto larger = readPage(db, key, "join-history-uid", 8);
+        QVERIFY(larger.found && larger.stable && larger.complete);
+        QCOMPARE(larger.entries.size(), 6);
+        QCOMPARE(larger.entries.first().uid, QString("old-1"));
+        // The tail uses the same geometry-independent coverage rules offline.
+        QVERIFY(storePage(db, key, "", 4, p));
+        QCOMPARE(readPage(db, key, "", 2).entries.first().uid, QString("c"));
+    }
+
     void forwardTailCheckpointConnectsToAlreadyDownloadedHistory()
     {
         QVERIFY(migrate(db));
