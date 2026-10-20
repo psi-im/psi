@@ -150,6 +150,7 @@ private:
     bool                    historyLoading_   = false;
     bool                    historyExhausted_ = false;
     bool                    historyRequestPending_ = false;
+    quint64                 historyRequestSerial_ = 0;
     // Opening a chat always starts at the live tail, even while Qt measures
     // new rows or MAM/EDB prepends history. A real user scroll takes ownership.
     bool    followingInitialTail_ = true;
