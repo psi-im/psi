@@ -13,7 +13,7 @@ The native Psi `LongListWidget.cpp` is **identical** to MatterLeast's
 `sources/widgets/LongListWidget.cpp` at this review. Reuse it as the single
 owner of scroll geometry, estimated row heights, semantic anchors, scrollbar
 seeks, widget materialization and eviction. Do not introduce a second custom
-scroll handler or viewport-fill loop.
+scroll handler or geometry-driven unbounded viewport-fill loop.
 
 ### What already carries over unchanged
 
@@ -57,13 +57,14 @@ history source with:
    live in the source, not in scrollbar math.
 3. **Demand with reasons**: ordinary scrollback requests only when actual user
    navigation reaches the oldest loaded boundary; explicit seek/navigation is
-   separate from initial open-at-tail. Never request based solely on
-   `visibleRangeChanged`, `setHistoryLoading(false)`, a prepend or a resize.
+   separate from the bounded first-screen-fill policy. Never request based solely
+   on `visibleRangeChanged`, `setHistoryLoading(false)`, a prepend or a resize.
 4. **Coalescing/completion**: in-flight overlapping demand shares one response.
    Every request has a terminal success/error/no-progress state. An empty or
-   protocol-only page changes cursor metadata, but cannot silently spawn the
-   next page. A new explicit upward gesture may request it; reconnect can
-   explicitly refresh the tail.
+   protocol-only page changes cursor metadata, but cannot silently spawn an
+   unbounded chain. An opening-only viewport fill may request at most six more
+   pages while still underfilled; otherwise a new explicit upward gesture is
+   required. Reconnect can explicitly refresh the tail.
 5. **Memory residency**: continue using `LongListWidget`'s existing 160-widget
    eviction. The separate `items_` model currently grows with every history
    page; genuine bounded RAM usage ultimately requires DB-backed or evictable
@@ -75,12 +76,24 @@ history source with:
 ### Current MAM demand guard (PR #1008)
 
 With an unknown archive total, the first initial MAM page is requested
-explicitly by the dialog. Further older pages require upward user navigation
-to the beginning of the already visible history. `visibleRangeChanged`
-is presentation-only. A wheel at the top works even for an empty/short chat,
-where the scrollbar cannot physically move. Completed MAM pages and shifted
-indices do not authorize additional requests. A pending/active request is
-suppressed until the transport has acknowledged it.
+explicitly by the dialog. If the first rendered viewport remains shorter than
+the visible area, the dialog's successful page completion authorizes at most
+six additional opening-only pages. The check runs after row materialization and
+real-height measurement; it ends as soon as the viewport is full, archive is
+exhausted, user scrolls, or the six-page budget is consumed. It **never**
+resumes merely because a resize/layout change or a prior page completion occurred
+after the opening fill has ended.
+
+All subsequent older pages require upward user navigation to the beginning
+of the loaded history. `visibleRangeChanged` is presentation-only. A wheel
+at the top works for an empty/short chat; scrollbar wheel/Up/PageUp and scrollbar
+actions also work at minimum value, even when the scrollbar cannot move.
+Programmatic scroll/geometry and shifted indices do not authorize a new request.
+A pending/active request is suppressed until the transport acknowledges it.
+
+Diagnostic `[mam-history]` output now records which action authorized a page,
+the RSM before cursor, number of MAM events, visible candidates versus inserted
+rows, cache hits, exhaustion and measured opening viewport geometry.
 
 MatterLeast's channel transport size is 10 **posts**; Psi's `HistorySync`
 currently requests 40 **MAM stanzas**. These are not the same unit: MUC MAM
