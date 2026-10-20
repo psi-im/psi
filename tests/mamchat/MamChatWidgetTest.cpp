@@ -2066,13 +2066,19 @@ private slots:
         bar->setValue(bar->minimum());
         QCoreApplication::processEvents();
         QCOMPARE(requests.count(), 0); // Programmatic position changes are passive.
-        bar->triggerAction(QAbstractSlider::SliderSingleStepSub);
+        // At zero, QAbstractSlider::triggerAction(SingleStepSub) can be
+        // discarded by Qt itself. Send genuine input to exercise the widget's
+        // outward-gesture path rather than relying on a valueChanged signal.
+        QWheelEvent upward(QPointF(4, 4), QPointF(bar->mapToGlobal(QPoint(4, 4))),
+                           QPoint(), QPoint(0, 120), Qt::NoButton, Qt::NoModifier,
+                           Qt::NoScrollPhase, false);
+        QApplication::sendEvent(bar, &upward);
         QTRY_COMPARE(requests.count(), 1); // The value cannot decrease below zero.
         room.setHistoryLoading(true);
         room.setHistoryLoading(false);
         QCoreApplication::processEvents();
         QCOMPARE(requests.count(), 1);
-        bar->triggerAction(QAbstractSlider::SliderPageStepSub);
+        QTest::keyClick(bar, Qt::Key_PageUp);
         QTRY_COMPARE(requests.count(), 2); // New, distinct user gesture.
     }
 
@@ -2154,8 +2160,9 @@ private slots:
         // Start just below the oldest boundary. One wheel both moves the
         // scrollbar and requests a page. The deferred scrollbar check must not
         // reuse that same gesture after a cached HistorySync reply completes.
+        QCoreApplication::processEvents(); // Drain initial show/tail restoration.
         list.verticalScrollBar()->setValue(20);
-        QCoreApplication::processEvents();
+        QCOMPARE(list.verticalScrollBar()->value(), 20);
         QWheelEvent event(QPointF(4, 4), QPointF(list.viewport()->mapToGlobal(QPoint(4, 4))),
                           QPoint(), QPoint(0, 120), Qt::NoButton, Qt::NoModifier,
                           Qt::NoScrollPhase, false);
