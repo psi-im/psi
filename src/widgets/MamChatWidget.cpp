@@ -2030,12 +2030,14 @@ bool MamChatWidget::eventFilter(QObject *target, QEvent *event)
         }
         if (upward) {
             const quint64 serial = historyRequestSerial_;
-            QTimer::singleShot(0, this, [this, serial] {
-                if (historyRequestSerial_ != serial)
-                    return;
-                const auto visible = visibleRange();
-                if (verticalScrollBar()->value() == verticalScrollBar()->minimum()
-                    || (visible.isValid() && visible.first <= 1))
+            const auto visible = visibleRange();
+            // Capture the boundary at the moment of user input. Deferred
+            // showEvent/layout updates may move the scrollbar before we handle
+            // the gesture, but must not erase that initial user demand.
+            const bool atOldest = verticalScrollBar()->value() == verticalScrollBar()->minimum()
+                || (visible.isValid() && visible.first <= 1);
+            QTimer::singleShot(0, this, [this, serial, atOldest] {
+                if (historyRequestSerial_ == serial && atOldest)
                     requestOlderMessages("scrollbar-input");
             });
         }
