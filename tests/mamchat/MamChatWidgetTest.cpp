@@ -474,8 +474,9 @@ private slots:
         QTRY_VERIFY(body.viewport()->isVisible());
 
         const QString href = QStringLiteral("https://example.org/path");
-        const QTextCursor cursor = body.document()->find(QStringLiteral("click here"));
+        QTextCursor cursor = body.document()->find(QStringLiteral("click here"));
         QVERIFY(!cursor.isNull());
+        cursor.setPosition(cursor.selectionStart() + 3); // Inside the anchor, not at its right edge.
         const QPoint link = body.cursorRect(cursor).center();
         QCOMPARE(body.anchorAt(link), href);
         QSignalSpy opened(URLObject::getInstance(), &URLObject::openURL);
