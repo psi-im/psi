@@ -74,6 +74,7 @@ signals:
 protected:
     QWidget *createItemWidget(int index) override;
     bool     eventFilter(QObject *target, QEvent *event) override;
+    void     wheelEvent(QWheelEvent *event) override;
     void     resizeEvent(QResizeEvent *event) override;
     void     showEvent(QShowEvent *event) override;
     void     hideEvent(QHideEvent *event) override;
