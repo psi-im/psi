@@ -2014,6 +2014,49 @@ private slots:
         QTRY_COMPARE(requests.count(), 1);
     }
 
+    void smallScrollNearTailDoesNotRequestHistoryOrChainOnPrepend()
+    {
+        MamChatWidget list;
+        list.resize(400, 180);
+        list.setHistoryLoading(true);
+        for (int i = 0; i < 35; ++i)
+            list.appendMessage(message(QString::number(i), QStringLiteral("Visible body"), i));
+        list.show();
+        QTRY_VERIFY(list.verticalScrollBar()->maximum() > 0);
+        list.setHistoryLoading(false);
+        QSignalSpy requests(&list, &MamChatWidget::olderMessagesRequested);
+        QVERIFY(list.isAtEnd());
+
+        const auto wheelUp = [&list] {
+            QWheelEvent event(QPointF(4, 4), QPointF(list.viewport()->mapToGlobal(QPoint(4, 4))),
+                              QPoint(), QPoint(0, 120), Qt::NoButton, Qt::NoModifier,
+                              Qt::NoScrollPhase, false);
+            QApplication::sendEvent(list.viewport(), &event);
+        };
+        wheelUp(); // One wheel tick at the live tail is not an archive boundary.
+        QCoreApplication::processEvents();
+        QVERIFY(list.visibleRange().first > 1);
+        QCOMPARE(requests.count(), 0);
+
+        // Programmatic navigation/geometry must not masquerade as scroll intent.
+        list.verticalScrollBar()->setValue(list.verticalScrollBar()->minimum());
+        QCoreApplication::processEvents();
+        QCOMPARE(requests.count(), 0);
+
+        wheelUp(); // Explicit outward gesture at the oldest row.
+        QTRY_COMPARE(requests.count(), 1);
+        list.setHistoryLoading(true);
+        list.prependArchivePage({qMakePair(QStringLiteral("archive-old-1"),
+                                          message(QStringLiteral("old-1"), QStringLiteral("An older reply")))});
+        list.setHistoryLoading(false);
+        QCoreApplication::processEvents();
+        QCOMPARE(requests.count(), 1); // Prepending a short page cannot chain requests.
+
+        // A subsequent, separate upward gesture is allowed to page again.
+        wheelUp();
+        QTRY_COMPARE(requests.count(), 2);
+    }
+
     void upwardWheelAtEmptyOrShortHistoryRequestsOnePagePerGesture()
     {
         MamChatWidget list;
