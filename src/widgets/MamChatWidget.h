@@ -39,6 +39,9 @@ public:
     void maybeContinueInitialHistoryFill();
     bool historyExhausted() const { return historyExhausted_; }
     int  messageCount() const { return items_.size(); }
+    // Dynamic MAM stanza budget inferred from measured message heights.
+    // Includes receipt/marker allowance but never exceeds HistorySync's 40.
+    int  suggestedOlderHistoryPageSize() const;
     // An explicit seek is a navigation intent, not initial open-at-end.
     void scrollToIndex(int                                   index,
                        Mattermost::LongListWidget::Alignment alignment
@@ -86,6 +89,8 @@ protected:
 private:
     void requestOlderMessages(const char *gesture);
     void scheduleInitialHistoryFillCheck();
+    qint64 estimatedMessagePixels() const;
+    qreal estimatedAverageMessageHeight() const;
     void schedulePaletteRefresh();
     void refreshPalette();
     bool paletteRefreshPending_ = false;
@@ -158,6 +163,8 @@ private:
     bool                    initialFillFinished_ = false;
     bool                    initialFillCheckPending_ = false;
     int                     initialFillRequests_ = 0;
+    int                     initialFillStagnantPages_ = 0;
+    qint64                  messagePixelsAtLastFillRequest_ = -1;
     // Opening a chat always starts at the live tail, even while Qt measures
     // new rows or MAM/EDB prepends history. A real user scroll takes ownership.
     bool    followingInitialTail_ = true;
