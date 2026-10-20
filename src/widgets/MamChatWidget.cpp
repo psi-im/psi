@@ -31,12 +31,14 @@
 #include <QPropertyAnimation>
 #include <QPushButton>
 #include <QResizeEvent>
+#include <QScrollBar>
 #include <QShortcut>
 #include <QShowEvent>
 #include <QSignalBlocker>
 #include <QSizePolicy>
 #include <QTextBlockFormat>
 #include <QTextDocument>
+#include <QWheelEvent>
 #include <QTimer>
 #include <QtMath>
 #include <QVBoxLayout>
@@ -397,7 +399,10 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
     });
 
     connect(this, &Mattermost::LongListWidget::visibleRangeChanged, this, [this](int first, int) {
-        if (first <= 1 && !historyLoading_ && !historyExhausted_)
+        // Geometry updates and archive prepends are not user scrollback intent.
+        // While following the live tail, never fetch older pages implicitly.
+        if (first <= 1 && !followingInitialTail_ && !isAtEnd()
+            && !historyLoading_ && !historyExhausted_)
             emit olderMessagesRequested();
         updateTimestamps();
     });
@@ -1103,15 +1108,9 @@ void MamChatWidget::clearMessages()
 
 void MamChatWidget::setHistoryLoading(bool loading)
 {
+    // Completion is not a scrollback request. In particular, a room archive
+    // can contain many protocol-only records without filling the viewport.
     historyLoading_ = loading;
-    if (!loading && !historyExhausted_ && contentHeight() <= viewport()->height()) {
-        // No scroll event is possible for an empty or short initial page.
-        // Continue from the next MAM cursor while HistorySync is not complete.
-        QTimer::singleShot(0, this, [this] {
-            if (!historyLoading_ && !historyExhausted_ && contentHeight() <= viewport()->height())
-                emit olderMessagesRequested();
-        });
-    }
 }
 
 void MamChatWidget::setHistoryExhausted(bool exhausted) { historyExhausted_ = exhausted; }
@@ -1790,6 +1789,19 @@ void MamChatWidget::positionSelectionToolbar()
         return;
     selectionToolbar_->adjustSize();
     selectionToolbar_->move(qMax(8, (viewport()->width() - selectionToolbar_->width()) / 2), 8);
+}
+
+void MamChatWidget::wheelEvent(QWheelEvent *event)
+{
+    // A short or empty timeline has no scrollbar movement and therefore no
+    // visibleRangeChanged signal. An actual upward wheel gesture at the start
+    // must still be able to request another archive page.
+    const int delta = event->pixelDelta().y() != 0 ? event->pixelDelta().y()
+                                                    : event->angleDelta().y();
+    if (delta > 0 && verticalScrollBar()->value() == verticalScrollBar()->minimum()
+        && !historyLoading_ && !historyExhausted_)
+        emit olderMessagesRequested();
+    Mattermost::LongListWidget::wheelEvent(event);
 }
 
 void MamChatWidget::resizeEvent(QResizeEvent *event)
