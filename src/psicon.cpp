@@ -2083,14 +2083,14 @@ void PsiCon::invokeForwardMessage(const QString &fromMessageId, const Jid &from,
     auto roster = new PsiRosterWidget(d->mainwin);
     roster->setContactList(d->contactList);
     roster->setPickContactMode(true);
-    connect(roster, &PsiRosterWidget::contactPick, this, [this, roster, sender, dlg](PsiContact *c) {
+    connect(roster, &PsiRosterWidget::contactPick, this, [roster, sender, dlg](PsiContact *c) {
         sender(QList<PsiContact *> { c });
         roster->deleteLater();
         dlg->close();
     });
 
     auto btn = new QPushButton(tr("Forward"));
-    connect(btn, &QPushButton::clicked, dlg, [this, roster, sender, dlg](bool) {
+    connect(btn, &QPushButton::clicked, dlg, [roster, sender, dlg](bool) {
         auto contacts = roster->selectedContacts();
         if (!contacts.empty()) {
             sender(roster->selectedContacts());
