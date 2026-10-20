@@ -214,7 +214,8 @@ bool BookmarkManager::setBookmarks(const QList<URLBookmark> &urls,
     // Never treat URL save success as implicit consent to a destructive
     // Private XML write when the server uses XEP-0402.
     const auto old = d->conferences;
-    d->protocol->setBookmarks(asIrisUrls(urls), asNative(conferences));
+    if (!d->protocol->setBookmarks(asIrisUrls(urls), asNative(conferences)))
+        return false;
     updateLocalPreferences(old, conferences);
     return true;
 }
