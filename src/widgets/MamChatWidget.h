@@ -82,7 +82,7 @@ protected:
     void     changeEvent(QEvent *event) override;
 
 private:
-    void requestOlderMessages();
+    void requestOlderMessages(const char *gesture);
     void schedulePaletteRefresh();
     void refreshPalette();
     bool paletteRefreshPending_ = false;
