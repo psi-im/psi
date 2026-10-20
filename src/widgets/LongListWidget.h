@@ -362,6 +362,15 @@ private:
         qint64 offsetInsideItem = 0;
     };
 
+    // A transient resize anchor, distinct from ViewAnchor's normal top-row
+    // preservation. During width reflow the user either follows the live tail
+    // or keeps the central message's centre at the same screen Y.
+    struct ResizeAnchor {
+        bool atEnd = false;
+        int index = -1;
+        qint64 centerOffset = 0; // row centre minus viewport centre, in pixels
+    };
+
     struct ViewportLock {
         int index = -1;
         long double itemTopFraction = 0.0L;
@@ -389,6 +398,7 @@ private:
     void materializeAvailable(const Range& range);
     void evictOutside(const Range& keepRange, int preferredCenter);
     void layoutMaterialized();
+    void settleVisibleWidthGeometry(const ResizeAnchor& anchor, qint64 oldOffset);
     /** Measure one widget at viewport width without mutating the logical HeightIndex. */
     int naturalWidgetHeight(QWidget* widget);
     /** Measure one materialized row; returns true only if its logical height changed. */
@@ -413,6 +423,8 @@ private:
     bool hasMissingVisibleItems() const;
 
     ViewAnchor captureAnchor() const;
+    ResizeAnchor captureResizeAnchor() const;
+    void restoreResizeAnchor(const ResizeAnchor& anchor);
     void restoreAnchor(const ViewAnchor& anchor);
     void restoreSeekTarget();
     qint64 alignedContentOffset(int index, Alignment alignment) const;
@@ -453,6 +465,9 @@ private:
     QHash<int, QWidget*> materialized;
     QHash<QObject*, int> widgetIndexes;
     QSet<int> dirtyGeometry;
+    // Cached off-screen widgets may retain their old layout width until they
+    // approach the viewport. Never resize them during every splitter move.
+    QSet<QWidget*> pendingWidthWidgets_;
     QPointer<QWidget> hoveredWidget;
     QPointer<QWidget> hoverHighlightOverride;
 
