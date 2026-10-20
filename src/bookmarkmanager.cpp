@@ -293,11 +293,15 @@ void BookmarkManager::maybeEnableNativeBookmarks()
     if (!account_->isAvailable() || pep_->legacyPending || pep_->active || pep_->loading)
         return;
     auto *server = account_->client()->serverInfoManager();
-    // #compat announces legacy mirroring, not support for XEP-0402 itself.
-    // Require publish-options so the node cannot accidentally become public.
+    // PEP availability alone is insufficient: without #compat a legacy
+    // XEP-0048/0049 client sees independent bookmarks and deletions can be
+    // resurrected. Prefer the old storage until the server advertises that
+    // it mirrors native PEP bookmarks into Private XML (XEP-0402 section 5.3).
+    const bool legacyCompat = server->accountFeatures().test("urn:xmpp:bookmarks:1#compat");
+    // Publish-options must also be available to keep the PEP node private.
     const bool pubOptions = server->accountFeatures().test("http://jabber.org/protocol/pubsub#publish-options")
         || server->serverFeatures().test("http://jabber.org/protocol/pubsub#publish-options");
-    if (server->hasPEP() && pubOptions)
+    if (legacyCompat && server->hasPEP() && pubOptions)
         loadNativeBookmarks();
 }
 
