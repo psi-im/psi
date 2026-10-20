@@ -1241,6 +1241,11 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
     // Bookmarks
     d->bookmarkManager = new BookmarkManager(this);
     connect(d->bookmarkManager, &BookmarkManager::availabilityChanged, this, &PsiAccount::bookmarksAvailabilityChanged);
+    connect(d->bookmarkManager, &BookmarkManager::syncError, this, [this](const QString &message) {
+        psi()->popupManager()->doPopup(this, jid(), IconsetFactory::iconPtr("status/error"),
+            tr("Bookmark synchronization failed"), QPixmap(), nullptr, message, false,
+            PopupManager::AlertCustom);
+    });
 #ifdef GROUPCHAT
     connect(d->bookmarkManager, &BookmarkManager::remoteConferenceChanged, this,
             [this](const Jid &room, bool autoJoin, bool removed) {
