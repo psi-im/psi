@@ -405,6 +405,7 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
     // outward PageUp/StepUp at value == minimum (which cannot decrease).
     // Programmatic changes during prepends/layout never emit this signal.
     auto *bar = verticalScrollBar();
+    bar->installEventFilter(this); // Wheel/keyboard input can occur at an unmoving minimum.
     connect(bar, &QScrollBar::actionTriggered, this, [this, bar](int action) {
         const bool upward = action == QAbstractSlider::SliderSingleStepSub
             || action == QAbstractSlider::SliderPageStepSub
@@ -1933,6 +1934,31 @@ void MamChatWidget::hideEvent(QHideEvent *event)
 
 bool MamChatWidget::eventFilter(QObject *target, QEvent *event)
 {
+    if (target == verticalScrollBar()) {
+        // A scrollbar at zero cannot emit valueChanged; Qt may even omit
+        // actionTriggered for an outward user action that clamps to zero.
+        // Observe actual input, do not intercept it or react to geometry.
+        bool upward = false;
+        if (event->type() == QEvent::Wheel) {
+            auto *wheel = static_cast<QWheelEvent *>(event);
+            upward = (wheel->pixelDelta().y() != 0 ? wheel->pixelDelta().y()
+                                                    : wheel->angleDelta().y()) > 0;
+        } else if (event->type() == QEvent::KeyPress) {
+            const int key = static_cast<QKeyEvent *>(event)->key();
+            upward = key == Qt::Key_Up || key == Qt::Key_PageUp || key == Qt::Key_Home;
+        }
+        if (upward) {
+            const quint64 serial = historyRequestSerial_;
+            QTimer::singleShot(0, this, [this, serial] {
+                if (historyRequestSerial_ != serial)
+                    return;
+                const auto visible = visibleRange();
+                if (verticalScrollBar()->value() == verticalScrollBar()->minimum()
+                    || (visible.isValid() && visible.first <= 1))
+                    requestOlderMessages("scrollbar-input");
+            });
+        }
+    }
     auto      *widget  = qobject_cast<QWidget *>(target);
     const bool hover   = event->type() == QEvent::Enter || event->type() == QEvent::Leave;
     const bool inQuick = hover && widget && (widget == quickReactions_ || quickReactions_->isAncestorOf(widget));
