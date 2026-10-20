@@ -2468,12 +2468,19 @@ void GCMainDlg::loadOlderMamMessages()
     if ((mamExhausted_ && !mamRefreshTail_) || !mamArchiveReady_ || !account()->isConnected() || d->state != Private::Connected) {
         nativeTimeline_->setHistoryLoading(false);
         nativeTimeline_->setHistoryExhausted(localExhausted_);
+        if (mamExhausted_ && !localExhausted_)
+            nativeTimeline_->maybeContinueInitialHistoryFill();
         return;
     }
     const auto room = jid().withResource({});
     const bool refreshTail = mamRefreshTail_;
     const QString requestedBefore = refreshTail ? QString() : mamBeforeId_;
     mamRefreshTail_ = false;
+    qInfo().noquote() << "[mam-history] room request"
+                      << room.bare() << "before=" << requestedBefore
+                      << "refreshTail=" << refreshTail
+                      << "visibleRows=" << nativeTimeline_->messageCount()
+                      << "localExhausted=" << localExhausted_;
     auto *task = new HistorySync(account(), room.bare(), true, requestedBefore, this);
     mamTask_ = task;
     connect(task, &HistorySync::finished, this, [this, task, room, requestedBefore] {
@@ -2558,10 +2565,18 @@ void GCMainDlg::loadOlderMamMessages()
         mamExhausted_ = task->isComplete() || oldest.isEmpty() || oldest == requestedBefore;
         if (!oldest.isEmpty())
             mamBeforeId_ = oldest;
-        nativeTimeline_->prependArchivePage(page);
+        const int added = nativeTimeline_->prependArchivePage(page);
         nativeTimeline_->setHistoryExhausted(mamExhausted_ && localExhausted_);
         if (initial && atEnd)
             nativeTimeline_->scrollToEnd();
+        qInfo().noquote() << "[mam-history] room result"
+                          << room.bare() << "before=" << requestedBefore
+                          << "events=" << task->archive().size() << "visibleCandidates=" << page.size()
+                          << "addedRows=" << added << "totalRows=" << nativeTimeline_->messageCount()
+                          << "fromCache=" << task->fromCache()
+                          << "mamExhausted=" << mamExhausted_
+                          << "localExhausted=" << localExhausted_;
+        nativeTimeline_->maybeContinueInitialHistoryFill();
         task->deleteLater();
     });
     task->go();
