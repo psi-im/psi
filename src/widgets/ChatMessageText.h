@@ -4,6 +4,7 @@
 #include "psitextview.h"
 #include <QTextDocument>
 #include <QPoint>
+#include <QHash>
 
 // An inline Psi rich-text document. The surrounding timeline owns scrolling;
 // this widget reports the complete document height at the available width.
@@ -28,6 +29,12 @@ protected:
 
 private:
     void applyDocumentFont();
+    void invalidateHeightCache();
+
+    // Layouts can ask repeatedly for the same hypothetical width while
+    // resizing a row. The QTextDocument calculation must not run each time.
+    mutable QHash<int, int> heightCache_;
+    mutable int heightCacheRevision_ = -1;
 
     QString pressedLink_;
     QPoint  pressedLinkPosition_;
