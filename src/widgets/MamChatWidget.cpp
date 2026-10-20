@@ -9,6 +9,7 @@
 #include <QCheckBox>
 #include <QClipboard>
 #include <QDateTime>
+#include <QDebug>
 #include <QFontInfo>
 #include <QFrame>
 #include <QFontMetrics>
@@ -231,6 +232,9 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
     timestampTimer_->setSingleShot(true);
     timestampTimer_->setTimerType(Qt::CoarseTimer);
     connect(timestampTimer_, &QTimer::timeout, this, &MamChatWidget::updateTimestamps);
+    // Deliberately visible in normal terminal output. The reported XMPP
+    // software_version may be stale after a CMake reconfigure/rebuild.
+    qInfo().noquote() << "[mam-history] paging-guard-v3 activated; widget=" << this;
     setDefaultItemHeight(72);
     setMaterializationLimit(160);
     setRequestBlockSize(40);
@@ -413,7 +417,7 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
             const auto visible = visibleRange();
             if (verticalScrollBar()->value() < previousValue
                 && visible.isValid() && visible.first <= 1)
-                requestOlderMessages();
+                requestOlderMessages("scrollbar");
         });
     });
 
@@ -1123,12 +1127,21 @@ void MamChatWidget::clearMessages()
     timestampTimer_->stop();
 }
 
-void MamChatWidget::requestOlderMessages()
+void MamChatWidget::requestOlderMessages(const char *gesture)
 {
     if (historyLoading_ || historyExhausted_ || historyRequestPending_)
         return;
     historyRequestPending_ = true;
     ++historyRequestSerial_;
+    const auto visible = visibleRange();
+    qInfo().noquote() << "[mam-history] scrollback demand"
+                      << "gesture=" << gesture << "widget=" << this
+                      << "atEnd=" << isAtEnd() << "visible=" << visible.first << visible.last
+                      << "scroll=" << verticalScrollBar()->value()
+                      << "min=" << verticalScrollBar()->minimum()
+                      << "max=" << verticalScrollBar()->maximum()
+                      << "rows=" << messageCount()
+                      << "serial=" << historyRequestSerial_;
     emit olderMessagesRequested();
 }
 
@@ -1837,7 +1850,7 @@ void MamChatWidget::wheelEvent(QWheelEvent *event)
     const auto visible = visibleRange();
     if (verticalScrollBar()->value() == verticalScrollBar()->minimum()
         || (visible.isValid() && visible.first <= 1))
-        requestOlderMessages();
+        requestOlderMessages("wheel");
 }
 
 void MamChatWidget::resizeEvent(QResizeEvent *event)
