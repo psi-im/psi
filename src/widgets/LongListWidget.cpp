@@ -1274,6 +1274,7 @@ void LongListWidget::clearViewportLock()
 void LongListWidget::destroyItemWidget(int, QWidget* widget)
 {
     if (widget) {
+        pendingWidthWidgets_.remove(widget);
         widget->hide();
         widget->deleteLater();
     }
