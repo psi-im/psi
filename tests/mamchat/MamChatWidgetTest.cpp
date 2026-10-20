@@ -1994,6 +1994,26 @@ private slots:
         QVERIFY(list.isAtEnd());
     }
 
+    void scrollingFromTailToOldestRequestsHistory()
+    {
+        MamChatWidget list;
+        list.resize(400, 240);
+        list.setHistoryLoading(true);
+        for (int i = 0; i < 30; ++i)
+            list.appendMessage(message(QString::number(i), QStringLiteral("Visible body"), i));
+        list.show();
+        QTRY_VERIFY(list.verticalScrollBar()->maximum() > 0);
+        list.setHistoryLoading(false);
+        QSignalSpy requests(&list, &MamChatWidget::olderMessagesRequested);
+        QVERIFY(list.isAtEnd());
+        QCoreApplication::processEvents();
+        QCOMPARE(requests.count(), 0);
+
+        list.verticalScrollBar()->triggerAction(QAbstractSlider::SliderToMinimum);
+        QTRY_VERIFY(!list.isAtEnd());
+        QTRY_COMPARE(requests.count(), 1);
+    }
+
     void upwardWheelAtEmptyOrShortHistoryRequestsOnePagePerGesture()
     {
         MamChatWidget list;
