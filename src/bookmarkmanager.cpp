@@ -118,6 +118,8 @@ struct BookmarkManager::PepState {
     bool active = false;
     bool loading = false;
     bool writing = false;
+    bool legacyPending = false;
+    quint64 generation = 0;
     QHash<QString, XMPP::NativeBookmark> originals;
 };
 
@@ -246,8 +248,11 @@ void BookmarkManager::accountStateChanged()
 {
     if (!account_->isAvailable()) {
         setIsAvailable(false);
+        ++pep_->generation;
         pep_->active = false;
         pep_->loading = false;
+        pep_->writing = false;
+        pep_->legacyPending = false;
         pep_->originals.clear();
     }
 
@@ -260,25 +265,29 @@ void BookmarkManager::accountStateChanged()
 
 void BookmarkManager::maybeEnableNativeBookmarks()
 {
-    if (!account_->isAvailable() || !isAvailable_ || pep_->active || pep_->loading)
+    if (!account_->isAvailable() || pep_->legacyPending || pep_->active || pep_->loading)
         return;
     auto *server = account_->client()->serverInfoManager();
-    // #compat means the server itself mirrors legacy private XML bookmarks.
-    // publish-options + whitelist are mandatory to avoid leaking room passwords.
+    // #compat announces legacy mirroring, not support for XEP-0402 itself.
+    // Require publish-options so the node cannot accidentally become public.
     const bool pubOptions = server->accountFeatures().test("http://jabber.org/protocol/pubsub#publish-options")
         || server->serverFeatures().test("http://jabber.org/protocol/pubsub#publish-options");
-    if (server->hasPEP() && server->accountFeatures().test("urn:xmpp:bookmarks:1#compat") && pubOptions)
+    if (server->hasPEP() && pubOptions)
         loadNativeBookmarks();
 }
 
 void BookmarkManager::loadNativeBookmarks()
 {
     pep_->loading = true;
+    const auto generation = pep_->generation;
     auto *task = account_->client()->pubSubManager()->items(XMPP::Jid(), XMPP::NativeBookmark::node());
-    connect(task, &XMPP::PubSubItemsTask::finished, this, [this, task] {
+    connect(task, &XMPP::PubSubItemsTask::finished, this, [this, task, generation] {
+        if (generation != pep_->generation)
+            return;
         pep_->loading = false;
         if (!account_->isAvailable() || !task->success())
             return; // Keep the working private-XML backend on retrieval error.
+        setIsAvailable(true);
         QHash<QString, XMPP::NativeBookmark> originals;
         QList<ConferenceBookmark> result;
         for (const auto &item : task->items()) {
@@ -344,7 +353,9 @@ void BookmarkManager::loadNativeBookmarks()
 
 void BookmarkManager::getBookmarks()
 {
+    pep_->legacyPending = true;
     BookmarkTask *t = new BookmarkTask(account_->client()->rootTask());
+    t->setProperty("bookmarkGeneration", QVariant::fromValue<qulonglong>(pep_->generation));
     connect(t, SIGNAL(finished()), SLOT(getBookmarks_finished()));
     t->get();
     t->go(true);
@@ -464,49 +475,58 @@ void BookmarkManager::setBookmarks(const QList<ConferenceBookmark> &conferences)
 void BookmarkManager::getBookmarks_finished()
 {
     BookmarkTask *t = static_cast<BookmarkTask *>(sender());
+    if (t->property("bookmarkGeneration").toULongLong() != pep_->generation)
+        return;
+    pep_->legacyPending = false;
     if (t->success()) {
-        bool urlsWereChanged        = urls_ != t->urls();
-        bool conferencesWereChanged = conferences_ != t->conferences();
-        urls_                       = t->urls();
-        QStringList   localMucs     = account_->localMucBookmarks();
-        QStringList   mucIgnore     = account_->ignoreMucBookmarks();
-        QSet<QString> strippedMucs;
-        for (const QString &m : std::as_const(localMucs)) {
-            Jid j(m);
-            if (j.isValid()) {
-                strippedMucs.insert(j.bare());
+        const bool urlsWereChanged = urls_ != t->urls();
+        urls_ = t->urls();
+        bool conferencesWereChanged = false;
+        if (!pep_->active) {
+            auto conferences = t->conferences();
+            QSet<QString> localOnlyRooms;
+            for (const auto &localJid : account_->localMucBookmarks()) {
+                const Jid jid(localJid);
+                if (jid.isValid())
+                    localOnlyRooms.insert(jid.bare());
             }
+            const QStringList ignoreRooms = account_->ignoreMucBookmarks();
+            for (auto &room : conferences) {
+                if (localOnlyRooms.contains(room.jid().bare()))
+                    room.setAutoJoin(ConferenceBookmark::OnlyThisComputer);
+                else if (ignoreRooms.contains(room.jid().bare()))
+                    room.setAutoJoin(ConferenceBookmark::ExceptThisComputer);
+            }
+            conferencesWereChanged = conferences_ != conferences;
+            conferences_ = conferences;
         }
-
-        conferences_ = t->conferences();
-        for (auto &muc : conferences_) {
-            if (strippedMucs.contains(muc.jid().bare())) {
-                muc.setAutoJoin(ConferenceBookmark::OnlyThisComputer);
-            }
-            if (mucIgnore.contains(muc.jid().bare())) {
-                muc.setAutoJoin(ConferenceBookmark::ExceptThisComputer);
-            }
-        }
-
         setIsAvailable(true);
-        maybeEnableNativeBookmarks();
         if (urlsWereChanged)
             emit urlsChanged(urls_);
         if (conferencesWereChanged)
             emit conferencesChanged(conferences_);
-    } else {
+    } else if (!pep_->active) {
         setIsAvailable(false);
     }
+    // XEP-0402 can work without legacy Private XML or #compat.
+    maybeEnableNativeBookmarks();
 }
 
 void BookmarkManager::setBookmarks_finished()
 {
     BookmarkTask *t = static_cast<BookmarkTask *>(sender());
     if (t->success()) {
-        bool conferencesWereChanged = conferences_ != t->conferences();
-        bool urlsWereChanged        = urls_ != t->urls();
-        conferences_                = t->conferences();
-        urls_                       = t->urls();
+        const bool urlsWereChanged = urls_ != t->urls();
+        urls_ = t->urls();
+        if (pep_->active) {
+            // URL-only Private XML writes must not overwrite newer PEP events.
+            if (urlsWereChanged)
+                emit urlsChanged(urls_);
+            emit bookmarksSaved();
+            return;
+        }
+        const bool conferencesWereChanged = conferences_ != t->conferences();
+        conferences_ = t->conferences();
 
         QStringList localMucs;
         QStringList ignoreMucs;
