@@ -321,8 +321,9 @@ void BookmarkManager::loadNativeBookmarks()
             auto *publish = account_->client()->pubSubManager()->publish(
                 XMPP::Jid(), XMPP::NativeBookmark::node(), native.toItem(doc),
                 XMPP::NativeBookmark::privatePublishOptions());
-            connect(publish, &XMPP::PubSubPublishTask::finished, this, [this, publish, native] {
-                if (publish->success() && pep_->active)
+            const auto generation = pep_->generation;
+            connect(publish, &XMPP::PubSubPublishTask::finished, this, [this, publish, native, generation] {
+                if (generation == pep_->generation && publish->success() && pep_->active)
                     pep_->originals.insert(native.room().bare(), native);
             });
             publish->go(true);
@@ -388,6 +389,7 @@ void BookmarkManager::setBookmarks(const QList<URLBookmark> &urls, const QList<C
         if (edits.isEmpty()) {
             if (urls != urls_) {
                 BookmarkTask *t = new BookmarkTask(account_->client()->rootTask());
+                t->setProperty("bookmarkGeneration", QVariant::fromValue<qulonglong>(pep_->generation));
                 connect(t, SIGNAL(finished()), SLOT(setBookmarks_finished()));
                 t->set(urls, conferences_);
                 t->go(true);
@@ -395,6 +397,7 @@ void BookmarkManager::setBookmarks(const QList<URLBookmark> &urls, const QList<C
             return;
         }
         pep_->writing = true;
+        const auto generation = pep_->generation;
         auto remaining = std::make_shared<int>(edits.size());
         auto failed = std::make_shared<bool>(false);
         auto originalUpdates = std::make_shared<QHash<QString, XMPP::NativeBookmark>>(pep_->originals);
@@ -426,7 +429,9 @@ void BookmarkManager::setBookmarks(const QList<URLBookmark> &urls, const QList<C
                 originalUpdates->insert(edit.room, native);
             }
             connect(task, &XMPP::Task::finished, this,
-                    [this, task, remaining, failed, originalUpdates, urls, conferences] {
+                    [this, task, remaining, failed, originalUpdates, urls, conferences, generation] {
+                if (generation != pep_->generation)
+                    return;
                 if (!task->success())
                     *failed = true;
                 if (--*remaining != 0)
@@ -463,6 +468,7 @@ void BookmarkManager::setBookmarks(const QList<URLBookmark> &urls, const QList<C
         return;
     }
     BookmarkTask *t = new BookmarkTask(account_->client()->rootTask());
+    t->setProperty("bookmarkGeneration", QVariant::fromValue<qulonglong>(pep_->generation));
     connect(t, SIGNAL(finished()), SLOT(setBookmarks_finished()));
     t->set(urls, conferences);
     t->go(true);
@@ -515,6 +521,8 @@ void BookmarkManager::getBookmarks_finished()
 void BookmarkManager::setBookmarks_finished()
 {
     BookmarkTask *t = static_cast<BookmarkTask *>(sender());
+    if (t->property("bookmarkGeneration").toULongLong() != pep_->generation)
+        return;
     if (t->success()) {
         const bool urlsWereChanged = urls_ != t->urls();
         urls_ = t->urls();
