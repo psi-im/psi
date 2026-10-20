@@ -1241,6 +1241,27 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
     // Bookmarks
     d->bookmarkManager = new BookmarkManager(this);
     connect(d->bookmarkManager, &BookmarkManager::availabilityChanged, this, &PsiAccount::bookmarksAvailabilityChanged);
+#ifdef GROUPCHAT
+    connect(d->bookmarkManager, &BookmarkManager::remoteConferenceChanged, this,
+            [this](const Jid &room, bool autoJoin, bool removed) {
+        // PEP push is different from initial data loading: its autojoin
+        // transition should affect the room immediately, not just at login.
+        // Defer until the bookmark adapter has published its updated list.
+        QTimer::singleShot(0, this, [this, room, autoJoin, removed] {
+            if (!isAvailable()
+                || !PsiOptions::instance()->getOption("options.muc.bookmarks.auto-join").toBool())
+                return;
+            const Jid bare(room.bare());
+            if (autoJoin && !removed) {
+                const int index = d->bookmarkManager->indexOfConference(bare);
+                if (index >= 0 && d->bookmarkManager->conferences().at(index).needJoin())
+                    bookmarksAvailabilityChanged(); // Checks existing MUC dialogs.
+            } else if (findDialog<GCMainDlg *>(bare)) {
+                groupChatLeave(bare.domain(), bare.node());
+            }
+        });
+    });
+#endif
 
 #ifdef USE_PEP
     // Tune Controller
