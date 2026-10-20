@@ -96,7 +96,8 @@ jobs:
         run: |
           set -o pipefail
           echo "=== Baseline timings without profiler ==="
-          ./build-mam-widgets/mam_chat_widget_test resizeProfilingScenario 2>&1 | tee mam-resize-baseline.log
+          PSI_MAM_RESIZE_SCENARIO=simple ./build-mam-widgets/mam_chat_widget_test resizeProfilingScenario 2>&1 | tee mam-resize-simple.log
+          PSI_MAM_RESIZE_SCENARIO=rich ./build-mam-widgets/mam_chat_widget_test resizeProfilingScenario 2>&1 | tee mam-resize-rich.log
           echo "=== Try Linux perf (can be restricted on hosted runners) ==="
           if command -v perf >/dev/null 2>&1; then
             perf record --call-graph fp -g -o mam-resize.perf.data -- \
@@ -120,7 +121,8 @@ jobs:
         with:
           name: mam-resize-profile-qt6
           path: |
-            mam-resize-baseline.log
+            mam-resize-simple.log
+            mam-resize-rich.log
             mam-resize-perf.log
             mam-resize-perf-summary.txt
             mam-resize.perf.data
