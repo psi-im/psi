@@ -21,9 +21,11 @@
 #define BOOKMARKMANAGEDLG_H
 
 #include "iris/xmpp_jid.h"
+#include "conferencebookmark.h"
 #include "ui_bookmarkmanage.h"
 
 #include <QDialog>
+#include <QList>
 
 class ConferenceBookmark;
 class PsiAccount;
@@ -53,7 +55,7 @@ private:
     };
 
     void loadBookmarks();
-    void saveBookmarks();
+    bool saveBookmarks();
 
     void        appendItem(QStandardItem *item);
     XMPP::Jid   jid() const;
@@ -76,6 +78,7 @@ private:
     QPushButton        *addButton_;
     QPushButton        *removeButton_;
     QPushButton        *joinButton_;
+    QList<ConferenceBookmark> baseline_; // Original editor snapshot, not the live server cache.
 
     ConferenceBookmark bookmarkFor(const QModelIndex &index) const;
 };
