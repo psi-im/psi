@@ -32,11 +32,16 @@ ChatMessageText::ChatMessageText(QWidget *parent) : PsiTextView(parent)
     option.setWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
     document()->setDefaultTextOption(option);
     connect(document()->documentLayout(), &QAbstractTextDocumentLayout::documentSizeChanged, this,
-            [this] { updateGeometry(); });
+            [this] {
+                invalidateHeightCache();
+                updateGeometry();
+            });
+    connect(document(), &QTextDocument::contentsChanged, this, &ChatMessageText::invalidateHeightCache);
 }
 
 void ChatMessageText::setRichText(const QString &text)
 {
+    invalidateHeightCache();
     document()->setDefaultFont(font());
     PsiTextView::setRichText(text);
     applyDocumentFont();
@@ -58,6 +63,7 @@ void ChatMessageText::setWholeMessageSelectionMode(bool active)
 
 void ChatMessageText::applyDocumentFont()
 {
+    invalidateHeightCache();
     document()->setDefaultFont(font());
     // PsiRichText stores a font on inserted fragments. Updating the widget's
     // inherited font alone leaves those old fragments at the previous size.
@@ -83,6 +89,7 @@ void ChatMessageText::changeEvent(QEvent *event)
     if (event->type() == QEvent::FontChange)
         applyDocumentFont();
     else if (event->type() == QEvent::PaletteChange) {
+        invalidateHeightCache();
         // A chat window stylesheet can stop Qt propagating the new palette
         // into an existing QTextEdit viewport, even if no rule matches it.
         // Keep the painted surface/text in sync without rebuilding the document.
@@ -91,16 +98,44 @@ void ChatMessageText::changeEvent(QEvent *event)
     }
 }
 
+void ChatMessageText::invalidateHeightCache()
+{
+    heightCache_.clear();
+    heightCacheRevision_ = document()->revision();
+}
+
 int ChatMessageText::heightForWidth(int width) const
 {
-    // Layouts also ask about hypothetical widths while computing size hints.
-    // Measure those without changing the document currently painted/selected.
+    // Nested QBoxLayouts can request the same hypothetical width many times
+    // during a *single* splitter move (minimumHeightForWidth, sizeHint, etc.).
+    // Every uncached call otherwise triggers two full QTextDocument reflows:
+    // setTextWidth(width), followed by restoring its painted width.
+    width = qMax(1, width);
+    const int revision = document()->revision();
+    if (heightCacheRevision_ != revision) {
+        heightCache_.clear();
+        heightCacheRevision_ = revision;
+    }
+    const auto cached = heightCache_.constFind(width);
+    if (cached != heightCache_.cend())
+        return cached.value();
+
+    // Keep the document geometry untouched after probing an arbitrary width:
+    // painting and selection operate on the actual viewport's width.
     const QSignalBlocker blocker(document()->documentLayout());
-    const qreal          previousWidth = document()->textWidth();
-    document()->setTextWidth(qMax(1, width));
-    const int height = int(std::ceil(document()->documentLayout()->documentSize().height()));
-    document()->setTextWidth(previousWidth);
-    return qMax(fontMetrics().height(), height);
+    const qreal previousWidth = document()->textWidth();
+    if (previousWidth != width)
+        document()->setTextWidth(width);
+    const int height = qMax(fontMetrics().height(),
+                            int(std::ceil(document()->documentLayout()->documentSize().height())));
+    if (previousWidth != width)
+        document()->setTextWidth(previousWidth);
+
+    // Avoid unbounded growth if somebody drags through thousands of widths.
+    if (heightCache_.size() >= 64)
+        heightCache_.clear();
+    heightCache_.insert(width, height);
+    return height;
 }
 
 QSize ChatMessageText::sizeHint() const
