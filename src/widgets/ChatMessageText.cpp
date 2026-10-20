@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "ChatMessageText.h"
 #include "psirichtext.h"
+#include "urlobject.h"
+
+#include <QApplication>
 
 #include <QAbstractTextDocumentLayout>
 #include <QCoreApplication>
@@ -113,6 +116,35 @@ void ChatMessageText::resizeEvent(QResizeEvent *event)
     PsiTextView::resizeEvent(event);
     updateGeometry();
 }
+void ChatMessageText::mousePressEvent(QMouseEvent *event)
+{
+    pressedLink_.clear();
+    if (event->button() == Qt::LeftButton && (textInteractionFlags() & Qt::LinksAccessibleByMouse)) {
+        pressedLink_ = anchorAt(event->pos());
+        pressedLinkPosition_ = event->pos();
+    }
+    PsiTextView::mousePressEvent(event);
+}
+
+void ChatMessageText::mouseReleaseEvent(QMouseEvent *event)
+{
+    // QTextEdit handles selection and caret movement. The inherited
+    // PsiTextView implementation uses textCursor().hasSelection() as a link
+    // click discriminator, which is unreliable for the inline message bodies
+    // (especially a link covering the entire document).
+    // Skip only the inherited link activation and dispatch exactly once for
+    // a genuine press/release on the same anchor.
+    QTextEdit::mouseReleaseEvent(event);
+    const QString pressed = pressedLink_;
+    pressedLink_.clear();
+    if (event->button() != Qt::LeftButton || pressed.isEmpty()
+        || textInteractionFlags() == Qt::NoTextInteraction || textCursor().hasSelection()
+        || (event->pos() - pressedLinkPosition_).manhattanLength() > QApplication::startDragDistance()
+        || anchorAt(event->pos()) != pressed)
+        return;
+    URLObject::getInstance()->popupAction(pressed);
+}
+
 void ChatMessageText::wheelEvent(QWheelEvent *event)
 {
     // The text editor is a scroll area itself. Route wheel input to the enclosing
