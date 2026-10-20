@@ -35,6 +35,8 @@ public:
     void clearMessages();
     void setHistoryLoading(bool loading);
     void setHistoryExhausted(bool exhausted);
+    // Bounded opening-only viewport fill; never called from passive geometry.
+    void maybeContinueInitialHistoryFill();
     bool historyExhausted() const { return historyExhausted_; }
     int  messageCount() const { return items_.size(); }
     // An explicit seek is a navigation intent, not initial open-at-end.
@@ -83,6 +85,7 @@ protected:
 
 private:
     void requestOlderMessages(const char *gesture);
+    void scheduleInitialHistoryFillCheck();
     void schedulePaletteRefresh();
     void refreshPalette();
     bool paletteRefreshPending_ = false;
@@ -151,6 +154,10 @@ private:
     bool                    historyExhausted_ = false;
     bool                    historyRequestPending_ = false;
     quint64                 historyRequestSerial_ = 0;
+    bool                    initialFillEligible_ = false;
+    bool                    initialFillFinished_ = false;
+    bool                    initialFillCheckPending_ = false;
+    int                     initialFillRequests_ = 0;
     // Opening a chat always starts at the live tail, even while Qt measures
     // new rows or MAM/EDB prepends history. A real user scroll takes ownership.
     bool    followingInitialTail_ = true;
