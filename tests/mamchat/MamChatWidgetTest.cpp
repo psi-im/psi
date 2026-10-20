@@ -5,6 +5,7 @@
 #include "filesharingmanager.h"
 #include "qiteaudio.h"
 #include "qitevideo.h"
+#include "urlobject.h"
 
 #include <QAbstractTextDocumentLayout>
 #include <QApplication>
@@ -462,6 +463,64 @@ private slots:
         receipt.setMessageId("in-1");
         chat.appendMessage(receipt);
         QCOMPARE(chat.takeVisibleMarkableIncomingId(), QString());
+    }
+
+    void inlineLinkClickOpensOnlyOnceAndSelectionModeDoesNot()
+    {
+        // QTextEdit's selection cursor is not a reliable indication of a
+        // native-chat hyperlink click. Exercise the real viewport instead of
+        // only checking that the document contains a correct href.
+        ChatMessageText body;
+        body.resize(460, 100);
+        const QString url = QStringLiteral("https://example.org/native-chat");
+        body.setRichText(QStringLiteral("<a href='%1'>Click me</a> plain text").arg(url));
+        body.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&body));
+
+        QTextCursor link = body.document()->find(QStringLiteral("Click me"));
+        QVERIFY(!link.isNull());
+        link.setPosition(link.selectionStart() + 2);
+        const QPoint point = body.cursorRect(link).center();
+        QCOMPARE(body.anchorAt(point), url);
+
+        QSignalSpy opened(URLObject::getInstance(), &URLObject::openURL);
+        QVERIFY(opened.isValid());
+        QTest::mouseClick(body.viewport(), Qt::LeftButton, Qt::NoModifier, point);
+        QCOMPARE(opened.count(), 1);
+        QCOMPARE(opened.takeFirst().first().toString(), url);
+
+        QTest::mouseClick(body.viewport(), Qt::RightButton, Qt::NoModifier, point);
+        QCOMPARE(opened.count(), 0);
+
+        body.setWholeMessageSelectionMode(true);
+        QTest::mouseClick(body.viewport(), Qt::LeftButton, Qt::NoModifier, point);
+        QCOMPARE(opened.count(), 0);
+    }
+
+    void timelineLinkClickDoesNotEnterWholeMessageSelection()
+    {
+        MamChatWidget chat;
+        chat.resize(520, 300);
+        chat.setHistoryLoading(true);
+        MessageView linked = message(QStringLiteral("link-click"), QStringLiteral("fallback"));
+        linked.setRichText(QStringLiteral("<a href='https://example.org/in-chat'>Open me</a>"));
+        chat.appendMessage(linked);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *body = chat.itemWidget(0)->findChild<ChatMessageText *>();
+        QVERIFY(body);
+        QTRY_VERIFY(body->isVisible());
+        QTextCursor link = body->document()->find(QStringLiteral("Open me"));
+        QVERIFY(!link.isNull());
+        link.setPosition(link.selectionStart() + 2);
+        const QPoint point = body->cursorRect(link).center();
+        QCOMPARE(body->anchorAt(point), QStringLiteral("https://example.org/in-chat"));
+
+        QSignalSpy opened(URLObject::getInstance(), &URLObject::openURL);
+        QTest::mouseClick(body->viewport(), Qt::LeftButton, Qt::NoModifier, point);
+        QCOMPARE(opened.count(), 1);
+        QCOMPARE(opened.takeFirst().first().toString(), QStringLiteral("https://example.org/in-chat"));
+        QCOMPARE(chat.selectedMessageCount(), 0);
     }
 
     void linkContextMenuSelectsLinkFillingWholeMessage()
