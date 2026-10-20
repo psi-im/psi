@@ -401,9 +401,8 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
     connect(this, &Mattermost::LongListWidget::visibleRangeChanged, this, [this](int first, int) {
         // Geometry updates and archive prepends are not user scrollback intent.
         // While following the live tail, never fetch older pages implicitly.
-        if (first <= 1 && !followingInitialTail_ && !isAtEnd()
-            && !historyLoading_ && !historyExhausted_)
-            emit olderMessagesRequested();
+        if (first <= 1 && !followingInitialTail_ && !isAtEnd())
+            requestOlderMessages();
         updateTimestamps();
     });
     connect(this, &Mattermost::LongListWidget::materializedRangeChanged, this,
@@ -1102,8 +1101,17 @@ void MamChatWidget::clearMessages()
     followingInitialTail_ = true;
     historyLoading_       = false;
     historyExhausted_     = false;
+    historyRequestPending_ = false;
     setItemCount(0);
     timestampTimer_->stop();
+}
+
+void MamChatWidget::requestOlderMessages()
+{
+    if (historyLoading_ || historyExhausted_ || historyRequestPending_)
+        return;
+    historyRequestPending_ = true;
+    emit olderMessagesRequested();
 }
 
 void MamChatWidget::setHistoryLoading(bool loading)
@@ -1111,9 +1119,16 @@ void MamChatWidget::setHistoryLoading(bool loading)
     // Completion is not a scrollback request. In particular, a room archive
     // can contain many protocol-only records without filling the viewport.
     historyLoading_ = loading;
+    if (loading)
+        historyRequestPending_ = false;
 }
 
-void MamChatWidget::setHistoryExhausted(bool exhausted) { historyExhausted_ = exhausted; }
+void MamChatWidget::setHistoryExhausted(bool exhausted)
+{
+    historyExhausted_ = exhausted;
+    if (exhausted)
+        historyRequestPending_ = false;
+}
 
 QWidget *MamChatWidget::createItemWidget(int index)
 {
@@ -1798,9 +1813,8 @@ void MamChatWidget::wheelEvent(QWheelEvent *event)
     // must still be able to request another archive page.
     const int delta = event->pixelDelta().y() != 0 ? event->pixelDelta().y()
                                                     : event->angleDelta().y();
-    if (delta > 0 && verticalScrollBar()->value() == verticalScrollBar()->minimum()
-        && !historyLoading_ && !historyExhausted_)
-        emit olderMessagesRequested();
+    if (delta > 0 && verticalScrollBar()->value() == verticalScrollBar()->minimum())
+        requestOlderMessages();
     Mattermost::LongListWidget::wheelEvent(event);
 }
 
