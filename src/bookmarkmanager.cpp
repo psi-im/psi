@@ -125,6 +125,7 @@ struct BookmarkManager::PepState {
     quint64 eventSerial = 0;
     QHash<QString, quint64> eventRevisions;
     QHash<QString, XMPP::NativeBookmark> originals;
+    QHash<QString, std::optional<XMPP::NativeBookmark>> loadingEvents;
     // Store changes by room, not full snapshots that could delete newer PEP items.
     QHash<QString, std::optional<ConferenceBookmark>> queuedEdits;
     QList<URLBookmark> queuedUrls;
@@ -140,11 +141,16 @@ BookmarkManager::BookmarkManager(PsiAccount *account) :
     auto *pubsub = account_->client()->pubSubManager();
     connect(pubsub, &XMPP::PubSubManager::itemPublished, this,
             [this](const XMPP::Jid &service, const QString &node, const XMPP::PubSubItem &item) {
-        if (!pep_->active || service.bare() != account_->jid().bare() || node != XMPP::NativeBookmark::node())
+        if ((!pep_->active && !pep_->loading) || service.bare() != account_->jid().bare()
+            || node != XMPP::NativeBookmark::node())
             return;
         const auto native = XMPP::NativeBookmark::fromItem(item);
         if (!native.isValid())
             return;
+        if (!pep_->active) {
+            pep_->loadingEvents.insert(native.room().bare(), native);
+            return;
+        }
         pep_->originals.insert(native.room().bare(), native);
         pep_->eventRevisions.insert(native.room().bare(), ++pep_->eventSerial);
         ConferenceBookmark conference(native.name(), native.room(),
@@ -173,8 +179,13 @@ BookmarkManager::BookmarkManager(PsiAccount *account) :
     });
     connect(pubsub, &XMPP::PubSubManager::itemRetracted, this,
             [this](const XMPP::Jid &service, const QString &node, const QString &id) {
-        if (!pep_->active || service.bare() != account_->jid().bare() || node != XMPP::NativeBookmark::node())
+        if ((!pep_->active && !pep_->loading) || service.bare() != account_->jid().bare()
+            || node != XMPP::NativeBookmark::node())
             return;
+        if (!pep_->active) {
+            pep_->loadingEvents.insert(id, std::nullopt);
+            return;
+        }
         pep_->originals.remove(id);
         pep_->eventRevisions.insert(id, ++pep_->eventSerial);
         auto result = conferences_;
@@ -265,6 +276,7 @@ void BookmarkManager::accountStateChanged()
         pep_->legacyPending = false;
         pep_->originals.clear();
         pep_->eventRevisions.clear();
+        pep_->loadingEvents.clear();
         pep_->queuedEdits.clear();
         pep_->queuedUrlsValid = false;
     }
@@ -292,14 +304,17 @@ void BookmarkManager::maybeEnableNativeBookmarks()
 void BookmarkManager::loadNativeBookmarks()
 {
     pep_->loading = true;
+    pep_->loadingEvents.clear();
     const auto generation = pep_->generation;
     auto *task = account_->client()->pubSubManager()->items(XMPP::Jid(), XMPP::NativeBookmark::node());
     connect(task, &XMPP::PubSubItemsTask::finished, this, [this, task, generation] {
         if (generation != pep_->generation)
             return;
         pep_->loading = false;
-        if (!account_->isAvailable() || !task->success())
+        if (!account_->isAvailable() || !task->success()) {
+            pep_->loadingEvents.clear();
             return; // Keep the working private-XML backend on retrieval error.
+        }
         setIsAvailable(true);
         QHash<QString, XMPP::NativeBookmark> originals;
         QList<ConferenceBookmark> result;
@@ -312,6 +327,26 @@ void BookmarkManager::loadNativeBookmarks()
                 bookmark.autoJoin() ? ConferenceBookmark::Always : ConferenceBookmark::Never,
                 bookmark.nick(), bookmark.password()));
         }
+        // The initial IQ is a snapshot. Reconcile any +notify events that
+        // arrived while it was in flight, otherwise a newer publication or
+        // retraction would be undone by the delayed snapshot response.
+        for (auto it = pep_->loadingEvents.cbegin(); it != pep_->loadingEvents.cend(); ++it) {
+            const auto room = it.key();
+            result.erase(std::remove_if(result.begin(), result.end(),
+                [&room](const ConferenceBookmark &b) { return b.jid().bare() == room; }),
+                result.end());
+            if (it.value()) {
+                const auto &native = *it.value();
+                originals.insert(room, native);
+                result.append(ConferenceBookmark(native.name(), native.room(),
+                    native.autoJoin() ? ConferenceBookmark::Always : ConferenceBookmark::Never,
+                    native.nick(), native.password()));
+            } else {
+                originals.remove(room);
+            }
+        }
+        pep_->loadingEvents.clear();
+
         // An absent native item is not necessarily an unconverted legacy room:
         // another device may have explicitly removed it. Re-publishing every
         // unmatched Private XML room would resurrect deleted PEP bookmarks on
