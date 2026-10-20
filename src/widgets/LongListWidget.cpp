@@ -1331,33 +1331,25 @@ void LongListWidget::paintEvent(QPaintEvent* event)
 
 void LongListWidget::resizeEvent(QResizeEvent* event)
 {
-    const ViewAnchor anchor = captureAnchor();
-    lastSynchronizedViewportRange = {};
-    QAbstractScrollArea::resizeEvent(event);
-
-    for (auto it = materialized.cbegin(); it != materialized.cend(); ++it) {
-        dirtyGeometry.insert(it.key());
-    }
-
+    // Capture before Qt updates the viewport: at-end means the same last
+    // message remains against the bottom; otherwise preserve the central
+    // message's centre relative to the viewport centre. Explicit semantic
+    // locks continue to take precedence over both.
+    const ResizeAnchor anchor = captureResizeAnchor();
     const qint64 oldOffset = contentOffset();
+    lastSynchronizedViewportRange = {};
+
+    // Retain already-materialized rows for fast nearby scrolling, but defer
+    // their expensive width reflow while they are not actually on screen.
+    for (QWidget* widget : std::as_const(materialized))
+        if (widget)
+            pendingWidthWidgets_.insert(widget);
+
     QSignalBlocker blocker(verticalScrollBar());
     viewport()->setUpdatesEnabled(false);
     committingGeometry = true;
-    for (int index : std::as_const(dirtyGeometry)) {
-        if (QWidget* widget = materialized.value(index, nullptr)) {
-            measureWidget(index, widget);
-        }
-    }
-    dirtyGeometry.clear();
-    updateScrollBarRange(oldOffset);
-    if (hasViewportLock()) {
-        // If only viewport height changed, restoreViewportLock() preserves the
-        // old relative Y. If width reflow also changed the target's own height,
-        // it re-applies the semantic alignment instead.
-        restoreViewportLock();
-    } else {
-        restoreAnchor(anchor);
-    }
+    QAbstractScrollArea::resizeEvent(event);
+    settleVisibleWidthGeometry(anchor, oldOffset);
     layoutMaterialized();
     committingGeometry = false;
     viewport()->setUpdatesEnabled(true);
@@ -1365,6 +1357,39 @@ void LongListWidget::resizeEvent(QResizeEvent* event)
 
     emitRangeChanges(VisibilityChangeReason::LayoutChange);
     scheduleSync(RequestReason::Scroll);
+}
+
+void LongListWidget::settleVisibleWidthGeometry(const ResizeAnchor& anchor,
+                                                    qint64 oldOffset)
+{
+    // Changing a row's height can reveal another row at either edge of the
+    // viewport. Iterate until every currently visible resident is measured at
+    // the new width, without ever measuring the off-screen residency buffer.
+    // Each pass consumes at least one pending row; the loop is thus finite.
+    for (int pass = 0; pass <= materialized.size(); ++pass) {
+        bool measuredAny = false;
+        const Range visible = visibleRange();
+        if (visible.isValid()) {
+            for (int index = visible.first; index <= visible.last; ++index) {
+                QWidget* widget = materialized.value(index, nullptr);
+                if (!widget
+                    || (!pendingWidthWidgets_.contains(widget)
+                        && !dirtyGeometry.contains(index)))
+                    continue;
+                measureWidget(index, widget);
+                pendingWidthWidgets_.remove(widget);
+                dirtyGeometry.remove(index);
+                measuredAny = true;
+            }
+        }
+        updateScrollBarRange(oldOffset);
+        if (hasViewportLock())
+            restoreViewportLock();
+        else
+            restoreResizeAnchor(anchor);
+        if (!measuredAny)
+            break;
+    }
 }
 
 void LongListWidget::wheelEvent(QWheelEvent* event)
@@ -1605,6 +1630,12 @@ void LongListWidget::materializeAvailable(const Range& range)
         widget->installEventFilter(this);
         widgetIndexes.insert(widget, index);
         materialized.insert(index, widget);
+        // Pending width probes are keyed by widget identity, not logical
+        // index: remapping or inserting messages cannot corrupt the deferred
+        // resize state. Cleanup also covers delayed widget destruction.
+        connect(widget, &QObject::destroyed, this, [this, widget] {
+            pendingWidthWidgets_.remove(widget);
+        });
         widget->show();
 
         const int width = std::max(1, viewport()->width());
@@ -1666,6 +1697,7 @@ void LongListWidget::layoutMaterialized()
 
     const qint64 top = contentOffset();
     const int width = std::max(1, viewport()->width());
+    const Range visible = visibleRange();
     for (auto it = materialized.begin(); it != materialized.end(); ++it) {
         const int index = it.key();
         QWidget* widget = it.value();
@@ -1675,6 +1707,16 @@ void LongListWidget::layoutMaterialized()
         const qint64 y64 = heights.prefixHeight(index) - top;
         const int y = static_cast<int>(std::max<qint64>(INT_MIN,
             std::min<qint64>(INT_MAX, y64)));
+        if (pendingWidthWidgets_.contains(widget)) {
+            // Moving an off-screen widget is cheap, but changing its width
+            // triggers its entire QTextDocument layout. Preserve its existing
+            // width until it enters the viewport; then measure it before
+            // giving it its final rectangle.
+            widget->move(0, y);
+            if (visible.contains(index))
+                scheduleGeometryCommit(index);
+            continue;
+        }
         widget->setGeometry(0, y, width, heights.value(index));
     }
 }
@@ -1741,7 +1783,15 @@ void LongListWidget::commitGeometry(bool heightIndexChanged)
         return;
     }
 
-    const ViewAnchor anchor = captureAnchor();
+    bool settlingWidth = false;
+    for (int index : std::as_const(dirtyGeometry)) {
+        if (pendingWidthWidgets_.contains(materialized.value(index, nullptr))) {
+            settlingWidth = true;
+            break;
+        }
+    }
+    const ResizeAnchor resizeAnchor = settlingWidth ? captureResizeAnchor() : ResizeAnchor();
+    const ViewAnchor anchor = settlingWidth ? ViewAnchor() : captureAnchor();
     const qint64 oldOffset = contentOffset();
     QSignalBlocker blocker(verticalScrollBar());
     committingGeometry = true;
@@ -1750,6 +1800,7 @@ void LongListWidget::commitGeometry(bool heightIndexChanged)
     for (int index : std::as_const(dirtyGeometry)) {
         if (QWidget* widget = materialized.value(index, nullptr)) {
             geometryChanged = measureWidget(index, widget) || geometryChanged;
+            pendingWidthWidgets_.remove(widget);
         }
     }
     dirtyGeometry.clear();
@@ -1760,6 +1811,8 @@ void LongListWidget::commitGeometry(bool heightIndexChanged)
             restoreSeekTarget();
         } else if (hasViewportLock()) {
             restoreViewportLock();
+        } else if (settlingWidth) {
+            restoreResizeAnchor(resizeAnchor);
         } else {
             restoreAnchor(anchor);
         }
@@ -1852,6 +1905,38 @@ bool LongListWidget::hasMissingVisibleItems() const
 }
 
 
+
+LongListWidget::ResizeAnchor LongListWidget::captureResizeAnchor() const
+{
+    ResizeAnchor anchor;
+    if (logicalCount <= 0)
+        return anchor;
+    if (isAtEnd()) {
+        anchor.atEnd = true;
+        return anchor;
+    }
+    const int viewportHalf = viewport()->height() / 2;
+    anchor.index = heights.indexAtPixel(contentOffset() + viewportHalf);
+    if (anchor.index >= 0) {
+        const qint64 itemCenter = heights.prefixHeight(anchor.index)
+            + heights.value(anchor.index) / 2;
+        anchor.centerOffset = itemCenter - contentOffset() - viewportHalf;
+    }
+    return anchor;
+}
+
+void LongListWidget::restoreResizeAnchor(const ResizeAnchor& anchor)
+{
+    if (anchor.atEnd) {
+        verticalScrollBar()->setValue(verticalScrollBar()->maximum());
+    } else if (anchor.index >= 0 && anchor.index < logicalCount) {
+        const qint64 itemCenter = heights.prefixHeight(anchor.index)
+            + heights.value(anchor.index) / 2;
+        const qint64 offset = itemCenter - anchor.centerOffset
+            - viewport()->height() / 2;
+        verticalScrollBar()->setValue(scrollValueForContentOffset(offset));
+    }
+}
 
 LongListWidget::ViewAnchor LongListWidget::captureAnchor() const
 {
