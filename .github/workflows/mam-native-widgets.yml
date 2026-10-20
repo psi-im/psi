@@ -59,6 +59,9 @@ jobs:
           else
             sudo apt-get install -y ccache cmake ninja-build qtbase5-dev qtmultimedia5-dev libqt5sql5-sqlite
           fi
+      - name: Install callgrind and perf (Qt6 profile only)
+        if: matrix.qt == 6
+        run: sudo apt-get install -y valgrind linux-tools-common linux-tools-generic
       - name: Restore compiler cache
         uses: actions/cache@v4
         with:
@@ -75,6 +78,8 @@ jobs:
         run: |
           cmake -S tests/mamchat -B build-mam-widgets -G Ninja \
             -DQT_DEFAULT_MAJOR_VERSION=${{ matrix.qt }} \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_CXX_FLAGS_RELWITHDEBINFO="-O2 -g -DNDEBUG -fno-omit-frame-pointer" \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
       - name: Build
         run: cmake --build build-mam-widgets --parallel 4
@@ -82,6 +87,48 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
         run: ctest --test-dir build-mam-widgets --output-on-failure
+
+      - name: Profile splitter resize with perf and callgrind
+        if: matrix.qt == 6
+        env:
+          QT_QPA_PLATFORM: offscreen
+          PSI_MAM_RESIZE_PROFILE: '1'
+        run: |
+          set -o pipefail
+          echo "=== Baseline timings without profiler ==="
+          ./build-mam-widgets/mam_chat_widget_test resizeProfilingScenario 2>&1 | tee mam-resize-baseline.log
+          echo "=== Try Linux perf (can be restricted on hosted runners) ==="
+          if command -v perf >/dev/null 2>&1; then
+            perf record --call-graph fp -g -o mam-resize.perf.data -- \
+              ./build-mam-widgets/mam_chat_widget_test resizeProfilingScenario \
+              >mam-resize-perf.log 2>&1 && \
+              perf report --stdio --no-children --percent-limit 0.5 -i mam-resize.perf.data \
+                | head -n 100 | tee mam-resize-perf-summary.txt \
+              || { echo "Linux perf unavailable; see mam-resize-perf.log"; cat mam-resize-perf.log; }
+          else
+            echo "Linux perf binary unavailable; using callgrind"
+          fi
+          echo "=== Callgrind: collect only splitter resize loop ==="
+          valgrind --tool=callgrind --collect-atstart=no --callgrind-out-file=mam-resize.callgrind \
+            ./build-mam-widgets/mam_chat_widget_test resizeProfilingScenario \
+            2>&1 | tee mam-resize-callgrind.log
+          callgrind_annotate --auto=yes --threshold=98 mam-resize.callgrind \
+            | head -n 120 | tee mam-resize-top.txt
+      - name: Upload MAM resize profile
+        if: always() && matrix.qt == 6
+        uses: actions/upload-artifact@v4
+        with:
+          name: mam-resize-profile-qt6
+          path: |
+            mam-resize-baseline.log
+            mam-resize-perf.log
+            mam-resize-perf-summary.txt
+            mam-resize.perf.data
+            mam-resize-callgrind.log
+            mam-resize.callgrind
+            mam-resize-top.txt
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Configure SQLite history regressions
         run: |
