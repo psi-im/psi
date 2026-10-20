@@ -85,7 +85,7 @@ struct Fixture {
                            "id='%3'>%4</message></forwarded></result>")
                        .arg(uid, stamp, id.isEmpty() ? uid : id, payload));
     }
-    void seed()
+    void seed(const QString &before = {})
     {
         HistoryArchive::Page  page;
         HistoryArchive::Entry entry;
@@ -106,7 +106,7 @@ struct Fixture {
         entry.xml    = doc.toString(-1);
         page.entries = { entry };
         page.stable = page.complete = true;
-        if (!HistoryArchive::storePage(db, key, "", 40, page))
+        if (!HistoryArchive::storePage(db, key, before, 40, page))
             qFatal("Cannot seed archive");
     }
     HistorySync::Context context()
@@ -122,6 +122,12 @@ struct Fixture {
         };
         c.merge = [this](const HistoryArchive::Key &k, const QString &before, int limit, HistoryArchive::Page &p) {
             return HistoryArchive::storePage(db, k, before, limit, p);
+        };
+        c.readIndex = [this](const HistoryArchive::Key &k, int index, int limit, int snapshot) {
+            return HistoryArchive::readIndex(db, k, index, limit, snapshot);
+        };
+        c.readAfter = [this](const HistoryArchive::Key &k, const QString &after, int limit, int snapshot) {
+            return HistoryArchive::readAfter(db, k, after, limit, snapshot);
         };
         c.lookup = [this](const HistoryArchive::Key &, const QString &uid, const QDateTime &) {
             HistorySync::CachedMessage cached;
@@ -146,7 +152,8 @@ struct Fixture {
         };
         return c;
     }
-    bool reply(const QDomElement &request, const QList<QDomElement> &results, bool complete = true)
+    bool reply(const QDomElement &request, const QList<QDomElement> &results, bool complete = true, int firstIndex = -1,
+               int count = -1)
     {
         QString    first, last;
         const auto qid = request.firstChildElement("query").attribute("queryid");
@@ -165,10 +172,12 @@ struct Fixture {
             if (!client.rootTask()->take(message))
                 return false;
         }
-        return client.rootTask()->take(
-            xml(QString("<iq from='%1' type='result' id='%2'><fin xmlns='urn:xmpp:mam:2' complete='%3'>"
-                        "<set xmlns='http://jabber.org/protocol/rsm'><first>%4</first><last>%5</last></set></fin></iq>")
-                    .arg(key.archive, request.attribute("id"), complete ? "true" : "false", first, last)));
+        return client.rootTask()->take(xml(
+            QString("<iq from='%1' type='result' id='%2'><fin xmlns='urn:xmpp:mam:2' complete='%3'>"
+                    "<set xmlns='http://jabber.org/protocol/rsm'><first%6>%4</first><last>%5</last>%7</set></fin></iq>")
+                .arg(key.archive, request.attribute("id"), complete ? "true" : "false", first, last,
+                     firstIndex < 0 ? QString() : QString(" index='%1'").arg(firstIndex),
+                     count < 0 ? QString() : QString("<count>%1</count>").arg(count))));
     }
 };
 
@@ -218,6 +227,189 @@ public:
 class HistorySyncTest final : public QObject {
     Q_OBJECT
 private slots:
+    void cachedPageWithoutRsmMetadataDiscoversSnapshotOnce()
+    {
+        Fixture f;
+        f.seed("edge");
+        auto context         = f.context();
+        context.readSnapshot = [&f](const HistoryArchive::Key &key) { return HistoryArchive::readSnapshot(f.db, key); };
+        context.writeSnapshot = [&f](const HistoryArchive::Key &key, const HistoryArchive::Snapshot &snapshot) {
+            return HistoryArchive::storeSnapshot(f.db, key, snapshot);
+        };
+        HistorySync task(context, f.key.peer, false, "edge");
+        QSignalSpy  done(&task, &HistorySync::finished);
+        task.go();
+        QTRY_COMPARE(f.wire.sent.size(), 1);
+        auto set = f.wire.sent.last().firstChildElement("query").firstChildElement("set");
+        QCOMPARE(set.firstChildElement("max").text(), QString("1"));
+        QVERIFY(!set.firstChildElement("before").isNull());
+        QVERIFY(f.reply(f.wire.sent.last(),
+                        { f.result("latest-receipt", 999, "<received xmlns='urn:xmpp:receipts' id='seed'/>") }, false,
+                        899, 900));
+        QTRY_COMPARE(done.size(), 1);
+        QVERIFY(task.success());
+        QVERIFY(task.fromCache());
+        QCOMPARE(task.resultCount(), 900);
+        QCOMPARE(task.firstResultIndex(), -1); // Old page has no coordinates in the new snapshot.
+        QCOMPARE(task.archiveSnapshot().lastUid, QString("latest-receipt"));
+        QCOMPARE(task.archive().size(), 1);
+        QCOMPARE(task.archive().first().attribute("id"), QString("seed"));
+        // The metadata query neither projects a receipt as a row nor redownloads cached bodies.
+        QCOMPARE(HistoryArchive::readSnapshot(f.db, f.key).resultCount, 900);
+        HistorySync again(context, f.key.peer, false, "edge");
+        QSignalSpy  againDone(&again, &HistorySync::finished);
+        again.go();
+        QTRY_COMPARE(againDone.size(), 1);
+        QCOMPARE(f.wire.sent.size(), 1);
+        QCOMPARE(again.resultCount(), 900);
+    }
+    void ignoredIndexCannotPolluteCachedHistory()
+    {
+        Fixture f;
+        f.seed();
+        HistorySync::Query query { HistorySync::Query::Index, {}, 500, 12, 1000 };
+        HistorySync        task(f.context(), query, f.key.peer, false);
+        QSignalSpy         done(&task, &HistorySync::finished);
+        task.go();
+        QTRY_COMPARE(f.wire.sent.size(), 1);
+        QVERIFY(f.reply(f.wire.sent.last(), { f.result("wrong-beginning", 1) }, false, -1, 1000));
+        QTRY_COMPARE(done.size(), 1);
+        QVERIFY(!task.success());
+        QSqlQuery q(f.db);
+        QVERIFY(q.exec("SELECT count(*) FROM events"));
+        QVERIFY(q.next());
+        QCOMPARE(q.value(0).toInt(), 1); // Only the original seed remains.
+        QCOMPARE(HistoryArchive::readPage(f.db, f.key, "", 40).entries.last().uid, QString("seed"));
+    }
+    void omittedCountKeepsAnOlderActualSnapshotAsAnEstimate()
+    {
+        Fixture    f;
+        const auto observed = QDateTime::currentDateTimeUtc().addSecs(-10);
+        QVERIFY(HistoryArchive::storeSnapshot(f.db, f.key, { 900, "old-tail", observed, true }));
+        auto context         = f.context();
+        context.readSnapshot = [&f](const HistoryArchive::Key &key) { return HistoryArchive::readSnapshot(f.db, key); };
+        HistorySync::Query query { HistorySync::Query::After, "old-tail", -1, 1 };
+        HistorySync        task(context, query, f.key.peer, false);
+        QSignalSpy         done(&task, &HistorySync::finished);
+        task.go();
+        QTRY_COMPARE(f.wire.sent.size(), 1);
+        QVERIFY(f.reply(f.wire.sent.last(), { f.result("new-tail", 1) }, true));
+        QTRY_COMPARE(done.size(), 1);
+        QVERIFY(task.success());
+        QCOMPARE(task.resultCount(), -1); // This response gave no count.
+        QCOMPARE(task.archiveSnapshot().resultCount, 900);
+        QCOMPARE(task.archiveSnapshot().lastUid, QString("old-tail"));
+        QCOMPARE(task.archiveSnapshot().observedAt, observed);
+    }
+    void cachedSnapshotWithoutCountDoesNotProbeEveryPage()
+    {
+        Fixture f;
+        f.seed("edge");
+        auto context         = f.context();
+        context.readSnapshot = [&f](const HistoryArchive::Key &key) { return HistoryArchive::readSnapshot(f.db, key); };
+        context.writeSnapshot = [&f](const HistoryArchive::Key &key, const HistoryArchive::Snapshot &snapshot) {
+            return HistoryArchive::storeSnapshot(f.db, key, snapshot);
+        };
+        HistorySync task(context, f.key.peer, false, "edge");
+        QSignalSpy  done(&task, &HistorySync::finished);
+        task.go();
+        QTRY_COMPARE(f.wire.sent.size(), 1);
+        QVERIFY(f.reply(f.wire.sent.last(), { f.result("latest", 999) }, false));
+        QTRY_COMPARE(done.size(), 1);
+        QCOMPARE(task.resultCount(), -1);
+        QVERIFY(HistoryArchive::readSnapshot(f.db, f.key).observedAt.isValid());
+        HistorySync again(context, f.key.peer, false, "edge");
+        QSignalSpy  againDone(&again, &HistorySync::finished);
+        again.go();
+        QTRY_COMPARE(againDone.size(), 1);
+        QCOMPARE(f.wire.sent.size(), 1);
+    }
+
+    void indexedQueryPersistsAnIslandWithoutReplacingTailCheckpoint()
+    {
+        Fixture f;
+        f.seed();
+        HistorySync::Query query { HistorySync::Query::Index, {}, 400, 9 };
+        HistorySync        sync(f.context(), query, f.key.peer, false);
+        QSignalSpy         done(&sync, &HistorySync::finished);
+        sync.go();
+        QTRY_COMPARE(f.wire.sent.size(), 1);
+        const auto request = f.wire.sent.last();
+        const auto rsm     = request.firstChildElement("query").firstChildElement("set");
+        QCOMPARE(rsm.firstChildElement("index").text(), QString("400"));
+        QCOMPARE(rsm.firstChildElement("max").text(), QString("9"));
+        QVERIFY(f.reply(request, { f.result("middle", 400) }, false, 400, 1000));
+        QTRY_COMPARE(done.size(), 1);
+        QVERIFY(sync.success());
+        QCOMPARE(sync.resultCount(), 1000);
+        QCOMPARE(sync.firstResultIndex(), 400);
+        QCOMPARE(sync.archive().size(), 1);
+        QVERIFY(!sync.isComplete());
+        QTest::qWait(10);
+        QCOMPARE(f.wire.sent.size(), 1);
+        const auto tail = HistoryArchive::readPage(f.db, f.key, "", 40);
+        QVERIFY(tail.found && tail.complete);
+        QCOMPARE(tail.entries.last().uid, QString("seed"));
+        QVERIFY(sync.eventId("middle") > 0);
+    }
+
+    void verifiedIndexedPageCanBeReopenedAtAnotherSizeWithoutNetwork()
+    {
+        Fixture            f;
+        HistorySync::Query query { HistorySync::Query::Index, {}, 400, 9, 1000 };
+        HistorySync        first(f.context(), query, f.key.peer, false);
+        QSignalSpy         done(&first, &HistorySync::finished);
+        first.go();
+        QTRY_COMPARE(f.wire.sent.size(), 1);
+        QList<QDomElement> results;
+        for (int i = 0; i < 9; ++i)
+            results << f.result(QString("middle-%1").arg(i), 400 + i);
+        QVERIFY(f.reply(f.wire.sent.last(), results, false, 400, 1000));
+        QTRY_COMPARE(done.size(), 1);
+        QVERIFY(first.success());
+        query.index = 402;
+        query.limit = 3;
+        HistorySync cached(f.context(), query, f.key.peer, false);
+        QSignalSpy  replayed(&cached, &HistorySync::finished);
+        cached.go();
+        QTRY_COMPARE(replayed.size(), 1);
+        QVERIFY(cached.success() && cached.fromCache());
+        QCOMPARE(f.wire.sent.size(), 1);
+        QCOMPARE(cached.firstResultIndex(), 402);
+        QCOMPARE(cached.archive().size(), 3);
+        QCOMPARE(cached.archive().first().attribute("id"), QString("middle-2"));
+        // The opposite edge also reuses certified UID adjacency.
+        HistorySync::Query forward { HistorySync::Query::After, "middle-4", -1, 3, 1000 };
+        HistorySync        next(f.context(), forward, f.key.peer, false);
+        QSignalSpy         advanced(&next, &HistorySync::finished);
+        next.go();
+        QTRY_COMPARE(advanced.size(), 1);
+        QVERIFY(next.success() && next.fromCache());
+        QCOMPARE(f.wire.sent.size(), 1);
+        QCOMPARE(next.archive().first().attribute("id"), QString("middle-5"));
+        QVERIFY(!HistoryArchive::readIndex(f.db, f.key, 402, 3, 1001).found);
+    }
+
+    void explicitForwardPageIsBoundedAndDoesNotPretendToReachArchiveBeginning()
+    {
+        Fixture f;
+        f.seed();
+        HistorySync::Query query { HistorySync::Query::After, "seed", -1, 12 };
+        HistorySync        sync(f.context(), query, f.key.peer, false);
+        QSignalSpy         done(&sync, &HistorySync::finished);
+        sync.go();
+        QTRY_COMPARE(f.wire.sent.size(), 1);
+        const auto request = f.wire.sent.last();
+        QCOMPARE(request.firstChildElement("query").firstChildElement("set").firstChildElement("after").text(),
+                 QString("seed"));
+        QVERIFY(f.reply(request, { f.result("next", 1) }, true, 1, 2));
+        QTRY_COMPARE(done.size(), 1);
+        QVERIFY(sync.success() && sync.queryComplete() && !sync.isComplete());
+        QCOMPARE(sync.archive().size(), 1);
+        QCOMPARE(f.wire.sent.size(), 1);
+        QCOMPARE(HistoryArchive::readPage(f.db, f.key, "", 40).entries.last().uid, QString("seed"));
+    }
+
     void reopenFetchesOnlyNewCorrectionAndThenNothing()
     {
         Fixture f;
@@ -254,7 +446,7 @@ private slots:
         QVERIFY(again.success());
         QCOMPARE(again.archive().size(), 3);
     }
-    void multipleForwardPagesPreserveOlderCoverage()
+    void largeCatchupFetchesOneDeltaThenLatestPagePreservingCoverage()
     {
         Fixture f;
         f.seed();
@@ -267,13 +459,18 @@ private slots:
             results.append(f.result(QString("u%1").arg(i), i));
         QVERIFY(f.reply(f.wire.sent.last(), results, false));
         QTRY_COMPARE(f.wire.sent.size(), 2);
-        QCOMPARE(
-            f.wire.sent.last().firstChildElement("query").firstChildElement("set").firstChildElement("after").text(),
-            QString("u40"));
-        QVERIFY(f.reply(f.wire.sent.last(), { f.result("u41", 41) }));
+        const auto set = f.wire.sent.last().firstChildElement("query").firstChildElement("set");
+        QVERIFY(set.firstChildElement("after").isNull());
+        QVERIFY(!set.firstChildElement("before").isNull());
+        QList<QDomElement> latest;
+        for (int i = 1001; i <= 1040; ++i)
+            latest.append(f.result(QString("u%1").arg(i), i));
+        QVERIFY(f.reply(f.wire.sent.last(), latest, false));
         QTRY_COMPARE(done.size(), 1);
         QVERIFY(sync.success());
         QCOMPARE(sync.archive().size(), 40);
+        QCOMPARE(sync.archive().first().attribute("id"), QString("u1001"));
+        QCOMPARE(f.wire.sent.size(), 2); // Never scan the intervening 960 events.
         const auto older = HistoryArchive::readPage(f.db, f.key, "u2", 40);
         QVERIFY(older.found);
         QVERIFY(older.complete);

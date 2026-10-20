@@ -240,11 +240,40 @@ EDBItemPtr EDBSqLite::archivedEvent(const HistoryArchive::Key &key, const QStrin
     return match;
 }
 
+HistoryArchive::Snapshot EDBSqLite::archiveSnapshot(const HistoryArchive::Key &key)
+{
+    if (!commit())
+        return {};
+    return HistoryArchive::readSnapshot(QSqlDatabase::database("history"), key);
+}
+bool EDBSqLite::saveArchiveSnapshot(const HistoryArchive::Key &key, const HistoryArchive::Snapshot &snapshot)
+{
+    return commit() && HistoryArchive::storeSnapshot(QSqlDatabase::database("history"), key, snapshot);
+}
+
 HistoryArchive::Page EDBSqLite::archivePage(const HistoryArchive::Key &key, const QString &before, int limit)
 {
     if (!commit())
         return {};
     return HistoryArchive::readPage(QSqlDatabase::database("history"), key, before, limit);
+}
+
+HistoryArchive::Page EDBSqLite::archivePageAtIndex(const HistoryArchive::Key &key, int index, int limit, int snapshot)
+{
+    if (!commit())
+        return {};
+    return HistoryArchive::readIndex(QSqlDatabase::database("history"), key, index, limit, snapshot);
+}
+HistoryArchive::Page EDBSqLite::archivePageAfter(const HistoryArchive::Key &key, const QString &after, int limit,
+                                                 int snapshot)
+{
+    if (!commit())
+        return {};
+    return HistoryArchive::readAfter(QSqlDatabase::database("history"), key, after, limit, snapshot);
+}
+bool EDBSqLite::mergeArchiveIsland(const HistoryArchive::Key &key, int limit, HistoryArchive::Page &page)
+{
+    return mergeArchivePage(key, QString(), limit, page);
 }
 
 EDBItemPtr EDBSqLite::ownPlaintext(const HistoryArchive::Key &key, const QString &id, const QString &sender,

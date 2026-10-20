@@ -25,8 +25,22 @@ struct Entry {
     int       type = 1, direction = 2;
     bool      storable = true;
 };
+// A scoped observation, not a claim that the entire archive is cached. Count
+// describes MAM events and may be approximate. A valid observation with count
+// -1 records that this server omitted RSM metadata (avoid probing every page).
+struct Snapshot {
+    int       resultCount = -1;
+    QString   lastUid;
+    QDateTime observedAt;
+    bool      stable = false;
+};
 struct Page {
+    Snapshot     snapshot;
     QList<Entry> entries;
+    int          requestIndex  = -1;
+    bool         queryComplete = false;
+    int          resultCount = -1, firstIndex = -1; // Optional RSM event coordinates.
+    bool         checkpoint = true;                 // Indexed/forward islands do not replace a tail checkpoint.
     QString      previous; // Proven neighbour before the first entry, for forward catch-up.
     bool         found    = false;
     bool         complete = false;
@@ -47,7 +61,11 @@ QSqlRecord        resolvedRecord(QSqlDatabase db, qint64 eventId);
 QList<QSqlRecord> localRecords(QSqlDatabase db, const QString &account, const QString &peer, qint64 before, int limit);
 qint64            matchingDelivery(QSqlDatabase db, qint64 contact, const Entry &, bool archived);
 qint64 matchingOwnPlaintext(QSqlDatabase db, const Key &, const QString &id, const QString &sender, const QDateTime &);
+Snapshot          readSnapshot(QSqlDatabase db, const Key &);
+bool              storeSnapshot(QSqlDatabase db, const Key &, const Snapshot &);
 Page   readPage(QSqlDatabase db, const Key &, const QString &before, int limit);
+Page              readAfter(QSqlDatabase db, const Key &, const QString &after, int limit, int snapshotCount = -1);
+Page              readIndex(QSqlDatabase db, const Key &, int index, int limit, int snapshotCount);
 // Caller has flushed pending EDB writes. This transaction includes events,
 // identities, adjacency and the page checkpoint, or rolls all of them back.
 bool storePage(QSqlDatabase db, const Key &, const QString &before, int limit, Page &);

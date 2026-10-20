@@ -1,6 +1,6 @@
 # Psi history and XEP-0313 MAM: architecture and cache policy
 
-Status: **bounded native history synchronization implemented** (2026-10-18).
+Status: **adaptive native history with sparse archive navigation** (2026-10-20).
 The native timelines share the existing SQLite EDB with the history window and
 legacy importer. The initial architecture analysis and longer-term retention
 plans below are retained as design context; the implementation section describes
@@ -33,81 +33,44 @@ scroll handler or geometry-driven unbounded viewport-fill loop.
   actions, dragging, seeking and programmatic navigation. Geometry/visibility
   notifications can result from any of these or from layout changes.
 
-### The source/view boundary still missing in Psi
+### Source/view boundary
 
-MatterLeast's `ChatLogWidget` delegates `rangeRequested(first, last,
-reason, generation)` to an `AbstractPostSource`. The source owns logical
-identities, availability, transport pagination and cursor/boundary state. The
-view owns Qt widgets and scroll position. `ChannelPostSource` can interpret
-the *same logical request* as an exact page, cursor-before, cursor-after, or
-tail fetch. Its `PostSourceRequestGate` coalesces only overlapping in-flight
-requests and never queues stale far-away fetches.
+`MamHistorySource` owns resident row identities, optional event count, observed
+archive windows, estimated logical positions and navigation cursors. Unknown
+logical slots have no `MessageView` and no QWidget. `MamChatWidget` retains
+presentation, selection and canonical message/protocol rendering. Its `items_`
+reference points to the source's real rows; logical and resident indices are
+explicitly translated. `HistorySync` owns one bounded EDB/MAM request and the
+dialog adapters share `nativeArchivePage()` for replay projection and plugin
+hooks.
 
-Psi currently keeps all known `MessageView` rows directly in
-`MamChatWidget::items_`, and the dialog drives `HistorySync` via
-`olderMessagesRequested()`. This is an interim compatibility adapter, not
-the full `AbstractPostSource` architecture. The next step is a Psi-specific
-history source with:
+The previously missing `LongListWidgetLayout.cpp` is ported unchanged from
+MatterLeast, alongside the identical original cpp/header. Its existing semantic
+remap transaction carries widgets, measurements and viewport anchors when sparse
+positions change. Estimated-count changes remap an active seek before resizing
+logical geometry, preserving its generation. No private MAM scrollbar geometry
+is added.
 
-1. **Logical model**: stable EDB/verified MAM identities, order and availability
-   independent of concrete row widgets. A MAM result without a visible message
-   advances source cursor/coverage but inserts no blank logical widget.
-2. **One bounded request**: `HistorySync` performs one older-page request,
-   or a bounded tail catch-up, at a time. RSM UID and verified page coverage
-   live in the source, not in scrollbar math.
-3. **Demand with reasons**: ordinary scrollback requests only when actual user
-   navigation reaches the oldest loaded boundary; explicit seek/navigation is
-   separate from the bounded first-screen-fill policy. Never request based solely
-   on `visibleRangeChanged`, `setHistoryLoading(false)`, a prepend or a resize.
-4. **Coalescing/completion**: in-flight overlapping demand shares one response.
-   Every request has a terminal success/error/no-progress state. An empty or
-   protocol-only page changes cursor metadata, but cannot silently spawn an
-   unbounded chain. An opening-only viewport fill may request extra
-   pages while the screen and a half-screen buffer of real messages remain underfilled; otherwise a new explicit upward gesture is
-   required. Reconnect can explicitly refresh the tail.
-5. **Memory residency**: continue using `LongListWidget`'s existing 160-widget
-   eviction. The separate `items_` model currently grows with every history
-   page; genuine bounded RAM usage ultimately requires DB-backed or evictable
-   message-body residency while retaining stable identity/height estimates,
-   selection and correction/reaction metadata. Do not erase rows from the
-   widget model just to meet a widget-residency budget: that would corrupt
-   scroll coordinates and deduplication.
+A real gesture authorizes one navigation. Overlapping in-flight ranges share it;
+a newer distant seek cancels it. Protocol-only pages continue asynchronously by
+real UID until measured/estimated ordinary-message pixels meet the request:
+about half a screen for scroll and 1.5 screens for seek. Repeated cursors stop
+navigation. Finishing a navigation closes its request gate, so later layout or
+materialization cannot start another scan. Hidden tabs pause continuations;
+disconnect cancels the active range. Upward input at an unmoving scrollbar
+minimum is still explicit demand. Initial fill has its own tail-preserving
+pixel goal and never removes join-history or live messages.
 
-### Current MAM demand guard (PR #1008)
+Widget residency remains 160. Known message bodies remain resident independently
+of QWidget eviction; this is not a bound on the payload cache. Very large totals
+use at most one million estimated geometry slots, with proportional event
+addressing beyond that. This bounds the generic dense height index without
+allocating dummy messages.
 
-With an unknown archive total, the first initial MAM page is requested
-explicitly by the dialog. If the first rendered viewport remains shorter than
-the visible area, the dialog's successful page completion authorizes at most
-additional opening-only pages, sized from the measured mean visible message height (up to 40 MAM stanzas each). The check runs after row materialization and
-real-height measurement; it ends as soon as the viewport is full, archive is
-exhausted, user scrolls, or a safety limit stops protocol-only pages without visible progress (eight such pages) or the opening batch budget (32 pages) is consumed. It **never**
-resumes merely because a resize/layout change or a prior page completion occurred
-after the opening fill has ended.
-
-All subsequent older pages require upward user navigation to the beginning
-of the loaded history. `visibleRangeChanged` is presentation-only. A wheel
-at the top works for an empty/short chat; scrollbar wheel/Up/PageUp and scrollbar
-actions also work at minimum value, even when the scrollbar cannot move.
-Programmatic scroll/geometry and shifted indices do not authorize a new request.
-A pending/active request is suppressed until the transport acknowledges it.
-
-Diagnostic `[mam-history]` output now records which action authorized a page,
-the RSM before cursor, number of MAM events, visible candidates versus inserted
-rows, cache hits, exhaustion and measured opening viewport geometry.
-
-MatterLeast's channel transport size is 10 **posts**; Psi's `HistorySync`
-currently requests 40 **MAM stanzas**. These are not the same unit: MUC MAM
-contains delivery/read markers, reactions and corrections that produce no
-independent visible row. Keep MAM's protocol pagination distinct from
-`LongListWidget::requestBlockSize`; tuning the former should measure unique
-visible rows per fetched stanza rather than equate them mechanically.
-
-Regression tests should cover: a one-message upward movement near the newest
-edge, a true oldest-edge wheel/scrollbar action, dragging to a distant position,
-protocol-only and duplicate pages, immediate user-scroll while loading,
-no follow-up from resize or prepend, repeated explicit gestures, the
-160-widget residency bound, stable viewport anchors and EDB/MAM overlap.
-
+Diagnostics are opt-in: `QT_LOGGING_RULES=psi.history.debug=true`. They record
+account/peer, source/cache/network demand, optional coordinates, page limits,
+cursor progress, inserted versus protocol rows, measured geometry and stop
+reasons. They never log message bodies.
 
 ### Adaptive MAM event budget (opening and manual backscroll)
 
@@ -127,38 +90,56 @@ materialized rows (then 72 px) if no messages are currently visible.
   It is a heuristic, not a statement that the server must deliver three stanzas.
 - **Completion:** only an actual completed MAM/EDB page authorizes another
   opening fill check. The visible MUC backlog is never removed or invalidated.
-  Repeated pages that add no message pixels are bounded (eight consecutive
-  no-progress pages, or 32 opening follow-ups) to avoid a protocol-only sweep.
-  User-initiated backscroll can continue after a safety pause.
+  There is no small fixed page budget: protocol-only pages advance through
+  real UIDs until the pixel target or a proven boundary. Repeated cursors and
+  errors pause the demand; user input can cancel it.
 - **Cache:** the chosen stanza limit is passed all the way through
   `HistorySync` and is part of the verified EDB page-read/merge contract;
   `HistorySync::PageSize = 40` remains the absolute maximum.
 
-### Full archive count and random-access feasibility
+### Approximate full archive and seek
 
-RSM `<count/>` counts archive *stanzas*, not materialized message rows.
-The count and `<first index="...">` can be used to estimate a virtual
-timeline via a measured visible-stanza ratio, but the count may be absent,
-approximate or expensive, and indexed page requests are optional per XEP-0059.
+RSM count describes archive events, including receipts, corrections and reactions.
+The source estimates visible rows using sampled body/event density, refined as
+windows arrive. Windows distinguish reported event positions from derived
+positions. The scrollbar is an estimate, never an exact message count.
 
-Psi's current `MamChatWidget::items_` is still a dense list of *only loaded
-messages*, so merely setting a full-history scroll range would make valid
-pixel positions with no corresponding message/source identity. A real random
-seek requires a separate sparse logical source: convert target estimated
-message position to an archive RSM index, request a bounded window, remap
-loaded IDs to stable logical slots, preserve viewport anchors and leave
-unloaded slots unavailable until their bodies arrive. Never synthesize
-MessageViews for receipts or other invisible events. Iris PR #131 adds
-`MAMTask::resultCount()`, `firstResultIndex()` and indexed page requests,
-but a sparse Psi source and its indexed-seek fallback have not been merged
-into this PR.
+An explicit thumb seek into unknown history requests a bounded RSM index page.
+Adjacent scrolling prefers actual message UIDs (not an opaque UID manufactured
+from an index). An index response must report its first index; missing metadata
+or an error collapses estimated geometry to known rows and reports the server
+limitation in the conversation. Ordinary opaque-UID scrollback remains usable.
+Count and index are optional, including on servers that otherwise implement MAM.
+
+### Persistent snapshot and schema 0.4
+
+`archive_snapshots` stores an account/archive/peer-scoped count, last UID, UTC
+observation time and stability. This pair is a historical estimate, not proof
+that the entire archive has been downloaded. A response omitting optional count
+does not overwrite a useful older pair with a fabricated current value.
+
+Old verified EDB pages can have bodies but no RSM coordinates. On such a cache
+hit, one bounded last-event request (`max=1`) discovers count and last UID before
+replaying the cached bodies. The snapshot is reused across opens and refreshed
+when stale (five minutes). Omitted count is remembered as an observation too,
+so it is not probed on every old page. The cached history is still shown if
+metadata discovery fails. No body-page redownload is needed for discovery.
+
+Schema migration 0.1/0.2/0.3 -> 0.4 is additive and uses the existing blocking
+migration workflow. Body/SIMS/envelope data and verified UID coverage survive.
+Before-UID checkpoints remain independent of ordinal cache pages. Indexed pages
+are keyed by scoped count snapshot and can serve smaller adaptive requests;
+a different count invalidates ordinal cache reuse without deleting messages.
+Archive erasure invalidates snapshots and both checkpoint kinds.
 
 ## Incremental tail and protocol replay
 
 Reopening a connected chat uses the last UID of its persisted stable tail as
 RSM `after`, with a maximum of 40 events per network page. An unchanged archive
-therefore returns no events. Catch-up commits rolling tail pages and proven
-previous/next links; older scrollback remains independently pageable. Missing
+therefore returns no events. A small delta is merged with the cached tail. If the first forward delta is
+not complete, its verified links are persisted and one fresh latest page is
+requested, without scanning the offline gap; explicit scroll/seek can fill it.
+Older scrollback remains independently pageable. Missing
 UIDs after server retention fall back to a fresh last-page request without
 assuming a connection across the gap. Provisional pages remain unverified and
 cannot advance a reusable checkpoint. This baseline path does not require MAM

@@ -3,6 +3,7 @@
 
 #include "../../plugins/include/nativechatthemeprovider.h"
 #include "LongListWidget.h"
+#include "MamHistorySource.h"
 #include "messageview.h"
 #include <QPixmap>
 #include <functional>
@@ -40,6 +41,13 @@ public:
     void stopHistoryFill();
     bool historyExhausted() const { return historyExhausted_; }
     int  messageCount() const { return items_.size(); }
+    const MamHistorySource &historySource() const { return historySource_; }
+    void                    restoreArchiveSnapshot(int count, const QString &lastUid);
+    void observeArchivePage(const QStringList &uids, int count, int firstIndex, const QString &before = {},
+                            const QString &after = {}, bool tailChain = true, bool stable = true);
+    void cancelArchiveRanges();
+    void completeArchiveRange(const MamHistorySource::Request &, bool success, const QString &error = {},
+                              bool queryComplete = false);
     // Dynamic MAM stanza budget inferred from measured message heights.
     // Includes receipt/marker allowance but never exceeds HistorySync's 40.
     int  suggestedOlderHistoryPageSize() const;
@@ -71,6 +79,9 @@ public:
 
 signals:
     void olderMessagesRequested();
+    void archiveRangeRequested(const MamHistorySource::Request &request);
+    void archiveRangeCancelled();
+    void archiveSeekUnavailable(const QString &reason);
     void paletteChanged();
     void nicknameClicked(const QString &nick);
     void avatarClicked(const QString &nick, bool local);
@@ -80,6 +91,10 @@ signals:
 
 protected:
     QWidget *createItemWidget(int index) override;
+    QString  itemIdentity(const QWidget *widget) const override;
+    int      indexOfItemIdentity(const QString &identity) const override;
+    bool     isModelItemAvailable(int index) const override;
+    int      estimatedItemHeight(int index) const override;
     bool     eventFilter(QObject *target, QEvent *event) override;
     void     wheelEvent(QWheelEvent *event) override;
     void     resizeEvent(QResizeEvent *event) override;
@@ -95,7 +110,7 @@ private:
     void schedulePaletteRefresh();
     void refreshPalette();
     bool paletteRefreshPending_ = false;
-    struct Row;
+    using Row                     = MamHistorySource::Row;
     QString             reactionTarget(const MessageView &) const;
     QString             retractionTarget(const MessageView &) const;
     bool                applyProtocolEvent(const MessageView &);
@@ -144,12 +159,23 @@ private:
     void                                          positionSelectionToolbar();
     QFrame                                       *eventRow(QObject *target) const;
 
-    struct Row {
-        QString       key;
-        MessageView   message;
-        QSet<QString> stanzaIds; // Revision stanza IDs of one logical message.
-    };
-    QList<Row>              items_;
+    MamHistorySource historySource_;
+    QList<Row>      &items_ = historySource_.rows_;
+    QWidget         *rowWidget(int knownIndex) const;
+    QVector<int>     materializedRows() const;
+    Range            knownVisibleRange() const;
+    void             replaceRow(int knownIndex);
+    void insertHistoryRows(int at, int count, InsertViewportPolicy policy = InsertViewportPolicy::PreserveIntent);
+    void removeHistoryRows(int at, int count);
+    void syncSourceLayout(bool enableVirtual = false);
+    void requestArchiveRange(int first, int last, RequestReason, quint64 generation);
+    bool rangeDemandAllowed_ = false;
+    bool archiveRangeActive_ = false, archiveRangePaused_ = false;
+    MamHistorySource::Request               activeArchiveRange_;
+    quint64                                 archiveIntentSerial_ = 0, activeArchiveIntent_ = 0;
+    QSet<QString>                           archiveNavigationKeys_;
+    qint64                                  archiveNavigationPixels_ = 0, archiveNavigationGoal_ = 0;
+    QVector<QPair<int, int>>                archiveRangeWaiters_;
     mutable QHash<QString, QPair<int, int>> measuredMessageHeights_; // width, learned height
     QSet<QString>           keys_;
     QHash<QString, QString> sourceAliases_; // EDB/MAM source key -> stable row key

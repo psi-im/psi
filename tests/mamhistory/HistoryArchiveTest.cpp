@@ -69,6 +69,49 @@ private slots:
         db = {};
         QSqlDatabase::removeDatabase("test-history");
     }
+    void archiveSnapshotIsScopedAndDoesNotCertifyOrReplacePages()
+    {
+        QVERIFY(migrate(db));
+        auto cached = page({ "one", "two" });
+        QVERIFY(storePage(db, key, "three", 2, cached));
+        const auto now = QDateTime::currentDateTimeUtc();
+        Snapshot   observed { 12345, "latest-receipt", now, true };
+        QVERIFY(storeSnapshot(db, key, observed));
+        QCOMPARE(readSnapshot(db, key).resultCount, 12345);
+        QCOMPARE(readSnapshot(db, key).lastUid, QString("latest-receipt"));
+        QCOMPARE(readPage(db, key, "three", 2).entries.size(), 2);
+        QCOMPARE(scalar("SELECT count(*) FROM events").toInt(), 2);
+        auto other    = key;
+        other.archive = "other-archive";
+        QVERIFY(!readSnapshot(db, other).observedAt.isValid());
+        other         = key;
+        other.account = "other-account";
+        QVERIFY(!readSnapshot(db, other).observedAt.isValid());
+        QVERIFY(storeSnapshot(db, key, { 10, "obsolete", now.addSecs(-1), true }));
+        QCOMPARE(readSnapshot(db, key).resultCount, 12345);
+        // Retention/deletion changes the count, without deleting known bodies.
+        QVERIFY(storeSnapshot(db, key, { 15, "new-last", now.addSecs(1), false }));
+        QCOMPARE(readSnapshot(db, key).resultCount, 15);
+        QVERIFY(!readSnapshot(db, key).stable);
+        QCOMPARE(readPage(db, key, "three", 2).entries.size(), 2);
+        QVERIFY(invalidate(db, key.account, key.peer));
+        QVERIFY(!readSnapshot(db, key).observedAt.isValid());
+        QCOMPARE(scalar("SELECT count(*) FROM events").toInt(), 2);
+    }
+    void migrationFromSparseSchemaKeepsBodiesAndCoverage()
+    {
+        QVERIFY(migrate(db));
+        auto cached = page({ "sims-body" });
+        QVERIFY(storePage(db, key, "edge", 1, cached));
+        QSqlQuery q(db);
+        QVERIFY(q.exec("DROP TABLE archive_snapshots"));
+        QVERIFY(q.exec("UPDATE system SET value='0.3' WHERE key='version'"));
+        QVERIFY(needsMigration(db));
+        QVERIFY(migrate(db));
+        QVERIFY(!needsMigration(db));
+        QCOMPARE(readPage(db, key, "edge", 1).entries.first().uid, QString("sims-body"));
+        QCOMPARE(scalar("SELECT count(*) FROM events").toInt(), 1);
+    }
     void confirmedResultRepairsAnUnverifiedProjection()
     {
         QVERIFY(migrate(db));
@@ -103,6 +146,71 @@ private slots:
         // The tail uses the same geometry-independent coverage rules offline.
         QVERIFY(storePage(db, key, "", 4, p));
         QCOMPARE(readPage(db, key, "", 2).entries.first().uid, QString("c"));
+    }
+
+    void rsmCoordinatesSurviveAdaptiveCacheReadsAndIndexedIslands()
+    {
+        QVERIFY(migrate(db));
+        auto tail        = page({ "tail-0", "tail-1", "tail-2", "tail-3" });
+        tail.resultCount = 1000;
+        tail.firstIndex  = 996;
+        QVERIFY(storePage(db, key, "", 4, tail));
+        const auto smaller = readPage(db, key, "", 2);
+        QCOMPARE(smaller.resultCount, 1000);
+        QCOMPARE(smaller.firstIndex, 998);
+        auto island        = page({ "middle-0", "middle-1" });
+        island.resultCount = 1000;
+        island.firstIndex  = 500;
+        island.checkpoint  = false;
+        QVERIFY(storePage(db, key, "", 2, island));
+        // A random context is not a certified tail page or archive beginning.
+        const auto cachedTail = readPage(db, key, "", 4);
+        QVERIFY(cachedTail.found);
+        QCOMPARE(cachedTail.entries.first().uid, QString("tail-0"));
+        QCOMPARE(cachedTail.firstIndex, 996);
+        QCOMPARE(scalar("SELECT count(*) FROM events").toInt(), 6);
+        QVERIFY(scalar("SELECT previous_uid FROM archive_items WHERE uid='middle-0'").isNull());
+    }
+
+    void migrateVersion02PreservesPayloadAndVerifiedCoverage()
+    {
+        QVERIFY(migrate(db));
+        auto saved = page({ "sims-history" }, true);
+        saved.entries.first().extra
+            = R"({"reference":"<media-sharing xmlns='urn:xmpp:sims:1'/>","plugin-data":"keep"})";
+        QVERIFY(storePage(db, key, "", 1, saved));
+        const auto eventId = saved.entries.first().eventId;
+        QSqlQuery  q(db);
+        QVERIFY(q.exec("DROP TABLE archive_index_page_items"));
+        QVERIFY(q.exec("DROP TABLE archive_index_pages"));
+        QVERIFY(q.exec("DROP TABLE archive_page_items"));
+        QVERIFY(q.exec("DROP TABLE archive_pages"));
+        QVERIFY(q.exec("CREATE TABLE archive_pages(id INTEGER PRIMARY KEY,account TEXT,archive TEXT,peer TEXT,"
+                       "before_uid TEXT,page_size INTEGER,item_count INTEGER,complete INTEGER,stable INTEGER,"
+                       "UNIQUE(account,archive,peer,before_uid,page_size))"));
+        QVERIFY(
+            q.exec("CREATE TABLE archive_page_items(page_id INTEGER REFERENCES archive_pages(id) ON DELETE CASCADE,"
+                   "position INTEGER,event_id INTEGER REFERENCES events(id),uid TEXT,PRIMARY KEY(page_id,position))"));
+        q.prepare("INSERT INTO archive_pages VALUES(1,:account,:archive,:peer,'',1,1,1,1)");
+        q.bindValue(":account", key.account);
+        q.bindValue(":archive", key.archive);
+        q.bindValue(":peer", key.peer);
+        QVERIFY(q.exec());
+        q.prepare("INSERT INTO archive_page_items VALUES(1,0,:event,'sims-history')");
+        q.bindValue(":event", eventId);
+        QVERIFY(q.exec());
+        QVERIFY(q.exec("UPDATE system SET value='0.2' WHERE key='version'"));
+        QVERIFY(needsMigration(db));
+        const auto extra = scalar("SELECT extra_data FROM events").toString();
+        QVERIFY(migrate(db));
+        QVERIFY(!needsMigration(db));
+        QCOMPARE(scalar("SELECT extra_data FROM events").toString(), extra);
+        QCOMPARE(scalar("SELECT m_text FROM events").toString(), QString("hello"));
+        const auto page = readPage(db, key, "", 1);
+        QVERIFY(page.found && page.stable && page.complete);
+        QCOMPARE(page.entries.first().eventId, eventId);
+        QCOMPARE(page.resultCount, -1);
+        QCOMPARE(page.firstIndex, -1);
     }
 
     void forwardTailCheckpointConnectsToAlreadyDownloadedHistory()
@@ -157,7 +265,7 @@ private slots:
         QCOMPARE(scalar("SELECT m_text FROM events WHERE id=17").toString(), QString("original"));
         QCOMPARE(scalar("SELECT extra_data FROM events WHERE id=17").toString(),
                  QString("{\"jabber:x:oob\":[[\"https://example.org/file\"]]}"));
-        QCOMPARE(scalar("SELECT value FROM system WHERE key='version'").toString(), QString("0.2"));
+        QCOMPARE(scalar("SELECT value FROM system WHERE key='version'").toString(), QString("0.4"));
         QVERIFY(migrate(db));
         QCOMPARE(scalar("SELECT count(*) FROM events").toInt(), 1);
     }

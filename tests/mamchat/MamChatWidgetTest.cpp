@@ -2105,6 +2105,160 @@ private slots:
         QCOMPARE(requests.count(), 1);
     }
 
+    void sparseScrollbarSeekLoadsRealRowsAndPreservesLiveTail()
+    {
+        MamChatWidget chat;
+        chat.resize(420, 260);
+        chat.setGroupChat(true);
+        for (int i = 0; i < 4; ++i) {
+            auto entry = message(QString("join-%1").arg(i), "MUC body", i);
+            entry.setArchiveId(QString("join-uid-%1").arg(i));
+            chat.appendMessage(entry);
+        }
+        QList<QPair<QString, MessageView>> tail;
+        QStringList                        tailUids;
+        for (int i = 0; i < 10; ++i) {
+            const auto uid = QString("tail-%1").arg(i);
+            tail.append(qMakePair(uid, message(uid, "Older tail body", i - 20)));
+            tailUids << uid;
+        }
+        chat.prependArchivePage(tail);
+        chat.observeArchivePage(tailUids, 1000000, 999986, "join-uid-0");
+        chat.show();
+        chat.maybeContinueInitialHistoryFill();
+        QTRY_VERIFY(chat.historySource().isVirtual());
+        QCOMPARE(chat.messageCount(), 14);
+        QVERIFY(chat.itemCount() >= 999990);
+        QVERIFY(chat.isAtEnd());
+        QSignalSpy requests(&chat, &MamChatWidget::archiveRangeRequested);
+        auto      *bar = chat.verticalScrollBar();
+        bar->setSliderDown(true);
+        bar->setSliderPosition(bar->maximum() / 2);
+        bar->setSliderDown(false);
+        QTRY_VERIFY(!requests.isEmpty());
+        const auto request = qvariant_cast<MamHistorySource::Request>(requests.last().at(0));
+        QCOMPARE(request.kind, MamHistorySource::Request::Index);
+        QVERIFY(request.index > 450000 && request.index < 550000);
+        QVERIFY(request.limit <= 40);
+        chat.setHistoryLoading(true);
+        QList<QPair<QString, MessageView>> middle;
+        QStringList                        middleUids;
+        for (int i = 0; i < request.limit; ++i) {
+            const auto uid = QString("middle-%1").arg(i);
+            middle.append(qMakePair(uid, message(uid, "Actual middle body", i - 10000)));
+            middleUids << uid;
+        }
+        chat.prependArchivePage(middle);
+        chat.observeArchivePage(middleUids, 1000000, request.index, {}, {}, false);
+        chat.completeArchiveRange(request, true);
+        QTRY_VERIFY(chat.itemWidget(chat.historySource().indexOfKey(QString("mam:middle-%1").arg(request.limit / 2))));
+        QVERIFY(chat.messageCount() <= 54);
+        QVERIFY(chat.materializedCount() <= chat.materializationLimit());
+        QTRY_VERIFY(chat.itemWidget(chat.viewportCenterIndex()));
+        auto *shown = chat.itemWidget(chat.viewportCenterIndex());
+        QVERIFY(shown->findChild<ChatMessageText *>()->toPlainText().contains("Actual middle body"));
+        chat.appendMessage(message("live-at-tail", "Live while reading middle", 100));
+        QVERIFY(!chat.isAtEnd());
+        QCOMPARE(chat.historySource().rows().last().message.messageId(), QString("live-at-tail"));
+    }
+
+    void sparseSeekSurvivesDensityShrinkAcrossProtocolOnlyPage()
+    {
+        MamChatWidget chat;
+        chat.resize(420, 260);
+        QStringList                        uids;
+        QList<QPair<QString, MessageView>> tail;
+        for (int i = 0; i < 14; ++i) {
+            const auto uid = QString("tail-%1").arg(i);
+            uids << uid;
+            tail << qMakePair(uid, message(uid, "Tail body", i));
+        }
+        chat.prependArchivePage(tail);
+        chat.observeArchivePage(uids, 1000000, 999986);
+        chat.show();
+        chat.maybeContinueInitialHistoryFill();
+        QTRY_VERIFY(chat.historySource().isVirtual());
+        QSignalSpy requests(&chat, &MamChatWidget::archiveRangeRequested);
+        auto      *bar = chat.verticalScrollBar();
+        bar->setSliderDown(true);
+        bar->setSliderPosition(bar->maximum() / 2);
+        bar->setSliderDown(false);
+        QTRY_VERIFY(!requests.isEmpty());
+        auto request = qvariant_cast<MamHistorySource::Request>(requests.last().at(0));
+        QVERIFY(request.generation > 0);
+        QCOMPARE(request.kind, MamHistorySource::Request::Index);
+        const auto generation = request.generation;
+        const int  middle     = request.index;
+        int        firstEvent = middle;
+        for (int page = 0; page < 4; ++page) {
+            QStringList receipts;
+            for (int i = 0; i < request.limit; ++i)
+                receipts << QString("receipt-%1-%2").arg(page).arg(i);
+            chat.observeArchivePage(receipts, 1000000, firstEvent, {}, {}, false);
+            const int previousRequests = requests.size();
+            chat.completeArchiveRange(request, true, {}, false);
+            QTRY_VERIFY(requests.size() > previousRequests);
+            request = qvariant_cast<MamHistorySource::Request>(requests.last().at(0));
+            QCOMPARE(request.generation, generation);
+            QCOMPARE(request.kind, MamHistorySource::Request::Before);
+            firstEvent -= request.limit;
+        }
+        QVERIFY(chat.itemCount() < 500000); // Old seek slot is now outside the list.
+        const int  physicalRequests = requests.size();
+        QSignalSpy cancelled(&chat, &MamChatWidget::archiveRangeCancelled);
+        // Generic layout may request a far new logical range after density
+        // refinement. It must attach to the same in-flight user navigation.
+        chat.rangeRequested(0, 3, Mattermost::LongListWidget::RequestReason::Scroll, 0);
+        QCOMPARE(requests.size(), physicalRequests);
+        QCOMPARE(cancelled.size(), 0);
+        QList<QPair<QString, MessageView>> bodies;
+        QStringList                        bodyUids;
+        for (int i = 0; i < request.limit; ++i) {
+            const auto uid = QString("middle-body-%1").arg(i);
+            bodyUids << uid;
+            bodies << qMakePair(uid, message(uid, "Middle after receipts", i - 100));
+        }
+        chat.prependArchivePage(bodies);
+        chat.observeArchivePage(bodyUids, 1000000, firstEvent, request.cursor, {}, false);
+        chat.completeArchiveRange(request, true);
+        QTRY_VERIFY(chat.itemWidget(chat.viewportCenterIndex()));
+        QVERIFY(chat.itemWidget(chat.viewportCenterIndex())
+                    ->findChild<ChatMessageText *>()
+                    ->toPlainText()
+                    .contains("Middle after receipts"));
+    }
+
+    void rejectedIndexCollapsesToUsableCursorHistory()
+    {
+        MamChatWidget chat;
+        chat.resize(420, 260);
+        QStringList                        uids;
+        QList<QPair<QString, MessageView>> page;
+        for (int i = 0; i < 15; ++i) {
+            const auto uid = QString("tail-%1").arg(i);
+            uids << uid;
+            page << qMakePair(uid, message(uid, "Real cached body", i));
+        }
+        chat.prependArchivePage(page);
+        chat.observeArchivePage(uids, 10000, 9985);
+        chat.show();
+        chat.maybeContinueInitialHistoryFill();
+        QTRY_VERIFY(chat.historySource().isVirtual());
+        QSignalSpy requests(&chat, &MamChatWidget::archiveRangeRequested);
+        chat.scrollToIndex(5000, Mattermost::LongListWidget::Alignment::Center);
+        QTRY_VERIFY(!requests.isEmpty());
+        const auto request = qvariant_cast<MamHistorySource::Request>(requests.last().at(0));
+        QSignalSpy fallback(&chat, &MamChatWidget::archiveSeekUnavailable);
+        chat.completeArchiveRange(request, false, "feature-not-implemented");
+        QTRY_COMPARE(chat.itemCount(), 15);
+        QCOMPARE(chat.messageCount(), 15);
+        QCOMPARE(fallback.count(), 1);
+        QVERIFY(!chat.historySource().canSeek());
+        chat.scrollToIndex(0, Mattermost::LongListWidget::Alignment::Top);
+        QTRY_VERIFY(chat.itemWidget(0));
+        QCOMPARE(chat.itemWidget(0)->findChild<ChatMessageText *>()->toPlainText(), QString("Real cached body"));
+    }
+
     void pageSizeUsesVisibleMessageHeightsRatherThanArchiveEventCount()
     {
         MamChatWidget room;

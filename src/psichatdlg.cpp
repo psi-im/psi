@@ -342,77 +342,10 @@ void PsiChatDlg::loadOlderMamMessages()
             return;
         }
 
-        QList<QPair<QString, MessageView>> page;
-        QString oldestId;
-        const auto &results = task->archive();
-        for (const QDomElement &result : results) {
-            const auto uid = result.attribute(QStringLiteral("id"));
-            if (uid.isEmpty())
-                continue;
-            if (oldestId.isEmpty())
-                oldestId = uid;
-            const auto forwarded = childElementsByTagNameNS(
-                result, QStringLiteral("urn:xmpp:forward:0"), QStringLiteral("forwarded"))
-                                       .item(0).toElement();
-            if (forwarded.isNull())
-                continue;
-            XMPP::Forwarding wrapper;
-            if (!wrapper.fromXml(forwarded, account()->client()))
-                continue;
-            auto      archived = task->message(uid);
-            QDateTime revisionTime;
-            QString   originalTarget = MessageView::reactionTarget(archived);
-            QString   retractionTarget = MessageView::retractionTarget(archived);
-            // A validated MAM result may be an older revision whose latest
-            // corrected text lives in another page. The persisted revision
-            // graph resolves it before the native timeline sees this row.
-            QDateTime archivedTime = wrapper.timeStamp().isValid()
-                ? wrapper.timeStamp() : archived.timeStamp();
-            if (auto resolved = account()->edb()->resolvedHistoryEvent(task->eventId(uid))) {
-                if (resolved->event()->type() == PsiEvent::Message) {
-                    const auto actual = resolved->event().staticCast<MessageEvent>()->message().displayMessage();
-                    archived          = actual;
-                    revisionTime      = resolved->revisionTime();
-                    if (!resolved->reactionTarget().isEmpty())
-                        originalTarget = resolved->reactionTarget();
-                    if (!resolved->retractionTarget().isEmpty())
-                        retractionTarget = resolved->retractionTarget();
-                    archivedTime = actual.timeStamp();
-                }
-            }
-            // A 'with' filter alone is not a sufficient sender check. This
-            // account's 1:1 conversation consists exclusively of messages
-            // between our bare JID and the selected peer, in either direction.
-            const QString owner = account()->jid().bare();
-            if (!PsiMam::belongsToConversation(owner, peer,
-                                               archived.from().bare(), archived.to().bare()))
-                continue;
-            MessageView protocol(MessageView::System);
-            archived.setTimeStamp(archivedTime);
-            if (MessageView::protocolMessage(archived, archived.from().bare() == account()->jid().bare(), protocol)) {
-                nativeTimeline_->appendMessage(protocol);
-                continue;
-            }
-            if (task->protocolOnly(uid))
-                continue;
-            const bool local = archived.from().bare() == account()->jid().bare();
-            auto       mv    = nativeHistoryMessage(account(), jid().bare(), archived, local);
-            mv.setMessageId(archived.id());
-            mv.setReplaceId(archived.replaceId());
-            mv.setUserId(archived.from().full());
-            mv.setArchiveId(uid);
-            mv.setHistoryId(task->eventId(uid));
-            mv.setRevisionTime(revisionTime);
-            mv.setReactionTargetId(originalTarget);
-            mv.setRetractionTargetId(retractionTarget);
-            mv.setEncrypted(archived.wasEncrypted(), archived.encryptionProtocol());
-            mv.setLocal(local);
-            mv.setSpooled(true);
-            mv.setMarkable(archived.isMarkable());
-            mv.setNick(whoNick(local));
-            mv.setDateTime(archivedTime);
-            page.append(qMakePair(uid, mv));
-        }
+        const auto    loaded   = nativeArchivePage(account(), task, XMPP::Jid(peer), false, account()->nick(),
+                                                   [this](bool local) { return whoNick(local); });
+        const auto   &page     = loaded.messages;
+        const QString oldestId = loaded.uids.value(0);
         // The non-flipped MAM page is in chronological order, so its first
         // archive UID is the RSM 'before' cursor for the next older page.
         // Honor <fin complete='true'/> even when the last page has messages.
@@ -431,6 +364,9 @@ void PsiChatDlg::loadOlderMamMessages()
         }
         const bool wasAtEnd = nativeTimeline_->isAtEnd();
         nativeTimeline_->prependArchivePage(page);
+        nativeTimeline_->restoreArchiveSnapshot(task->archiveSnapshot().resultCount, task->archiveSnapshot().lastUid);
+        nativeTimeline_->observeArchivePage(loaded.uids, task->resultCount(), task->firstResultIndex(), requestedBefore,
+                                            {}, true, task->isStable());
         if (initialPage && page.isEmpty() && mamExhausted_
             && nativeTimeline_->messageCount() == 0)
             preloadHistory(true); // Empty/textless server archive: show saved local history.
@@ -439,6 +375,65 @@ void PsiChatDlg::loadOlderMamMessages()
         nativeTimeline_->setHistoryExhausted(mamExhausted_ && localExhausted_);
         nativeTimeline_->setHistoryLoading(false);
         nativeTimeline_->maybeContinueInitialHistoryFill();
+        task->deleteLater();
+    });
+    task->go();
+}
+
+void PsiChatDlg::loadMamRange(const MamHistorySource::Request &request)
+{
+    if (!nativeTimeline_ || !account()->isConnected()) {
+        if (nativeTimeline_)
+            nativeTimeline_->completeArchiveRange(request, false, tr("Account is offline"));
+        return;
+    }
+    if (mamTask_) {
+        mamTask_->safeDelete();
+        mamTask_.clear();
+    }
+    HistorySync::Query query;
+    query.mode          = request.kind == MamHistorySource::Request::Index ? HistorySync::Query::Index
+                 : request.kind == MamHistorySource::Request::After        ? HistorySync::Query::After
+                                                                           : HistorySync::Query::Before;
+    query.cursor        = request.cursor;
+    query.index         = request.index;
+    query.limit         = request.limit;
+    query.snapshotCount = request.snapshotCount;
+    const auto peer     = jid().withResource({});
+    auto      *task     = new HistorySync(account(), query, peer.bare(), false, this);
+    mamTask_            = task;
+    nativeTimeline_->setHistoryLoading(true);
+    connect(task, &HistorySync::finished, this, [this, task, request, peer] {
+        if (mamTask_ != task)
+            return;
+        mamTask_.clear();
+        const bool samePeer   = peer.compare(jid(), false);
+        const bool positioned = request.kind != MamHistorySource::Request::Index || task->firstResultIndex() >= 0;
+        if (task->success() && samePeer && positioned) {
+            const auto page = nativeArchivePage(account(), task, peer, false, account()->nick(),
+                                                [this](bool local) { return whoNick(local); });
+            if (!page.uids.isEmpty()
+                && (request.kind == MamHistorySource::Request::Before
+                    || (task->firstResultIndex() >= 0
+                        && (nativeTimeline_->historySource().rankOfUid(mamBeforeId_) < 0
+                            || task->firstResultIndex() < nativeTimeline_->historySource().rankOfUid(mamBeforeId_)))))
+                mamBeforeId_ = page.uids.first();
+            if ((request.kind == MamHistorySource::Request::Before && task->isComplete())
+                || (request.kind == MamHistorySource::Request::Index && task->firstResultIndex() == 0))
+                mamExhausted_ = true;
+            nativeTimeline_->setHistoryExhausted(mamExhausted_ && localExhausted_);
+            nativeTimeline_->prependArchivePage(page.messages);
+            nativeTimeline_->restoreArchiveSnapshot(task->archiveSnapshot().resultCount,
+                                                    task->archiveSnapshot().lastUid);
+            nativeTimeline_->observeArchivePage(
+                page.uids, task->resultCount(), task->firstResultIndex(),
+                request.kind == MamHistorySource::Request::Before ? request.cursor : QString(),
+                request.kind == MamHistorySource::Request::After ? request.cursor : QString(), false, task->isStable());
+        }
+        nativeTimeline_->completeArchiveRange(request, task->success() && samePeer && positioned,
+                                              positioned ? task->statusString()
+                                                         : tr("Archive response omitted the requested index"),
+                                              task->queryComplete());
         task->deleteLater();
     });
     task->go();
@@ -543,9 +538,22 @@ void PsiChatDlg::initUi()
     });
     connect(nativeTimeline_, &MamChatWidget::olderMessagesRequested,
             this, &PsiChatDlg::loadOlderMamMessages, Qt::QueuedConnection);
+    connect(nativeTimeline_, &MamChatWidget::archiveRangeRequested, this, &PsiChatDlg::loadMamRange,
+            Qt::QueuedConnection);
+    connect(nativeTimeline_, &MamChatWidget::archiveRangeCancelled, this, [this] {
+        if (mamTask_) {
+            mamTask_->safeDelete();
+            mamTask_.clear();
+        }
+    });
+    connect(nativeTimeline_, &MamChatWidget::archiveSeekUnavailable, this, [this](const QString &) {
+        appendSysMsg(
+            tr("This archive cannot position messages by index. Older history remains available by scrolling."));
+    });
     // A pending task belongs to one authenticated stream. Cancel it on logout
     // so a stale pointer cannot suppress pagination after reconnection.
     connect(account(), &PsiAccount::disconnected, this, [this] {
+        nativeTimeline_->cancelArchiveRanges();
         mamRefreshTail_ = true;
         mamResumeAfterConnect_ = true;
         // The currently visible portion must survive transient disconnects.

@@ -50,8 +50,9 @@ namespace {
 bool needsMigration(QSqlDatabase db)
 {
     QSqlQuery q(db);
-    if (!q.exec("SELECT value FROM system WHERE key='version'") || !q.next() || q.value(0).toString() != "0.2"
-        || !revisionsExist(db))
+    if (!q.exec("SELECT value FROM system WHERE key='version'") || !q.next() || q.value(0).toString() != "0.4"
+        || !revisionsExist(db) || !db.tables().contains(QStringLiteral("archive_index_pages"))
+        || !db.tables().contains(QStringLiteral("archive_snapshots")))
         return true;
     return !q.exec("SELECT 1 FROM events WHERE history_date_ms IS NULL LIMIT 1") || q.next();
 }
@@ -62,8 +63,8 @@ bool migrate(QSqlDatabase db, const std::function<void(qint64)> &progress)
     if (!version.exec("SELECT value FROM system WHERE key='version'"))
         return false;
     const QString originalVersion = version.next() ? version.value(0).toString() : QString();
-    if (!originalVersion.isEmpty() && originalVersion != QLatin1String("0.1")
-        && originalVersion != QLatin1String("0.2")) {
+    if (!originalVersion.isEmpty() && originalVersion != QLatin1String("0.1") && originalVersion != QLatin1String("0.2")
+        && originalVersion != QLatin1String("0.3") && originalVersion != QLatin1String("0.4")) {
         qWarning("[history-cache] Unsupported history schema version");
         return false; // Never downgrade a database created by a future client.
     }
@@ -120,6 +121,10 @@ bool migrate(QSqlDatabase db, const std::function<void(qint64)> &progress)
     }
     const bool        backfillRevisions = !revisionsExist(db);
     const QStringList statements {
+        "CREATE TABLE IF NOT EXISTS archive_snapshots ("
+        "account TEXT NOT NULL,archive TEXT NOT NULL,peer TEXT NOT NULL,"
+        "result_count INTEGER NOT NULL,last_uid TEXT,observed_at INTEGER NOT NULL,stable INTEGER NOT NULL,"
+        "PRIMARY KEY(account,archive,peer))",
         "CREATE TABLE IF NOT EXISTS archive_items ("
         "account TEXT NOT NULL, archive TEXT NOT NULL, peer TEXT NOT NULL, uid TEXT NOT NULL, "
         "event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE, xml TEXT NOT NULL, "
@@ -132,13 +137,25 @@ bool migrate(QSqlDatabase db, const std::function<void(qint64)> &progress)
         "CREATE TABLE IF NOT EXISTS archive_pages ("
         "id INTEGER PRIMARY KEY, account TEXT NOT NULL, archive TEXT NOT NULL, peer TEXT NOT NULL, "
         "before_uid TEXT NOT NULL, page_size INTEGER NOT NULL, item_count INTEGER NOT NULL, "
-        "complete INTEGER NOT NULL, stable INTEGER NOT NULL, "
+        "complete INTEGER NOT NULL, stable INTEGER NOT NULL, result_count INTEGER, first_index INTEGER, "
         "UNIQUE(account,archive,peer,before_uid,page_size))",
         "CREATE TABLE IF NOT EXISTS archive_page_items ("
         "page_id INTEGER NOT NULL REFERENCES archive_pages(id) ON DELETE CASCADE, position INTEGER NOT NULL, "
         "event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE, uid TEXT NOT NULL, "
         "PRIMARY KEY(page_id,position))",
         "CREATE INDEX IF NOT EXISTS archive_page_event ON archive_page_items(event_id)",
+        "CREATE TABLE IF NOT EXISTS archive_index_pages ("
+        "id INTEGER PRIMARY KEY,account TEXT NOT NULL,archive TEXT NOT NULL,peer TEXT NOT NULL,"
+        "request_index INTEGER NOT NULL,page_size INTEGER NOT NULL,item_count INTEGER NOT NULL,"
+        "result_count INTEGER NOT NULL,first_index INTEGER NOT NULL,complete INTEGER NOT NULL,"
+        "UNIQUE(account,archive,peer,request_index,page_size,result_count))",
+        "CREATE INDEX IF NOT EXISTS archive_index_lookup ON "
+        "archive_index_pages(account,archive,peer,result_count,first_index)",
+        "CREATE TABLE IF NOT EXISTS archive_index_page_items ("
+        "page_id INTEGER NOT NULL REFERENCES archive_index_pages(id) ON DELETE CASCADE,position INTEGER NOT NULL,"
+        "event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,uid TEXT NOT NULL,"
+        "PRIMARY KEY(page_id,position))",
+        "CREATE INDEX IF NOT EXISTS archive_index_page_event ON archive_index_page_items(event_id)",
         "CREATE TABLE IF NOT EXISTS message_revisions ("
         "event_id INTEGER PRIMARY KEY REFERENCES events(id) ON DELETE CASCADE,"
         "contact_id INTEGER NOT NULL,type INTEGER NOT NULL,direction INTEGER NOT NULL,"
@@ -153,13 +170,25 @@ bool migrate(QSqlDatabase db, const std::function<void(qint64)> &progress)
     for (const auto &sql : statements)
         if (ok)
             ok = exec(db, sql);
+    if (ok) {
+        QSqlQuery columns(db);
+        bool      hasCount = false, hasIndex = false;
+        ok = columns.exec("PRAGMA table_info(archive_pages)");
+        while (columns.next()) {
+            hasCount |= columns.value(1).toString() == QLatin1String("result_count");
+            hasIndex |= columns.value(1).toString() == QLatin1String("first_index");
+        }
+        columns.finish();
+        ok = ok && (hasCount || exec(db, "ALTER TABLE archive_pages ADD COLUMN result_count INTEGER"))
+            && (hasIndex || exec(db, "ALTER TABLE archive_pages ADD COLUMN first_index INTEGER"));
+    }
     // Authentication/old client system records are provably local events.
     if (ok && !hasState)
         ok = exec(db, "UPDATE events SET history_state=2 WHERE history_state=0 AND type IN (2,3,6,7,8)");
-    if (ok && originalVersion != QLatin1String("0.2")) {
+    if (ok && originalVersion != QLatin1String("0.4")) {
         QSqlQuery version(db);
         ok = version.exec("DELETE FROM system WHERE key='version'")
-            && version.exec("INSERT INTO system(key,value) VALUES('version','0.2')");
+            && version.exec("INSERT INTO system(key,value) VALUES('version','0.4')");
     }
     // Index old EDB identity metadata and previously cached MAM correction
     // XML once. Never rewrite the user's original event payloads.
@@ -443,13 +472,43 @@ qint64 matchingOwnPlaintext(QSqlDatabase db, const Key &key, const QString &id, 
     return found;
 }
 
+Snapshot readSnapshot(QSqlDatabase db, const Key &key)
+{
+    QSqlQuery q(db);
+    q.prepare("SELECT result_count,last_uid,observed_at,stable FROM archive_snapshots WHERE " + scope);
+    bindKey(q, key);
+    if (!q.exec() || !q.next())
+        return {};
+    return { q.value(0).toInt(), q.value(1).toString(),
+             QDateTime::fromMSecsSinceEpoch(q.value(2).toLongLong(), Qt::UTC), q.value(3).toBool() };
+}
+
+bool storeSnapshot(QSqlDatabase db, const Key &key, const Snapshot &snapshot)
+{
+    if (!snapshot.observedAt.isValid() || snapshot.resultCount < -1 || key.account.isEmpty() || key.archive.isEmpty()
+        || key.peer.isEmpty())
+        return false;
+    QSqlQuery q(db);
+    // Never let delayed completion of an older request replace a newer view.
+    q.prepare("INSERT OR REPLACE INTO archive_snapshots(account,archive,peer,result_count,last_uid,observed_at,stable) "
+              "SELECT :account,:archive,:peer,:count,:uid,:time,:stable "
+              "WHERE NOT EXISTS(SELECT 1 FROM archive_snapshots WHERE "
+              + scope + " AND observed_at>:time)");
+    bindKey(q, key);
+    q.bindValue(":count", snapshot.resultCount);
+    q.bindValue(":uid", nonNull(snapshot.lastUid));
+    q.bindValue(":time", snapshot.observedAt.toMSecsSinceEpoch());
+    q.bindValue(":stable", snapshot.stable);
+    return q.exec();
+}
+
 Page readPage(QSqlDatabase db, const Key &key, const QString &before, int limit)
 {
     Page page;
     if (limit <= 0 || key.account.isEmpty() || key.archive.isEmpty() || key.peer.isEmpty())
         return page;
     QSqlQuery q(db);
-    q.prepare("SELECT id,item_count,complete,stable FROM archive_pages WHERE " + scope
+    q.prepare("SELECT id,item_count,complete,stable,result_count,first_index FROM archive_pages WHERE " + scope
               + " AND before_uid=:before AND page_size=:limit");
     bindKey(q, key);
     q.bindValue(":before", nonNull(before));
@@ -478,6 +537,8 @@ Page readPage(QSqlDatabase db, const Key &key, const QString &before, int limit)
                 page = saved;
                 while (page.entries.size() > limit) {
                     page.entries.removeFirst();
+                    if (page.firstIndex >= 0)
+                        ++page.firstIndex;
                     page.complete = false;
                 }
                 if (page.entries.size() == limit || page.complete)
@@ -517,6 +578,8 @@ Page readPage(QSqlDatabase db, const Key &key, const QString &before, int limit)
             entry.xml     = q.value(1).toString();
             entry.eventId = q.value(2).toLongLong();
             page.entries.prepend(entry);
+            if (page.firstIndex >= 0)
+                --page.firstIndex;
             cursor = previous;
             q.finish();
         }
@@ -536,6 +599,8 @@ Page readPage(QSqlDatabase db, const Key &key, const QString &before, int limit)
     const int  count = q.value(1).toInt();
     page.complete    = q.value(2).toBool();
     page.stable      = q.value(3).toBool();
+    page.resultCount = q.value(4).isNull() ? -1 : q.value(4).toInt();
+    page.firstIndex  = q.value(5).isNull() ? -1 : q.value(5).toInt();
     q.finish();
     q.prepare("SELECT i.uid,i.xml,i.event_id FROM archive_page_items p JOIN archive_items i "
               "ON i.event_id=p.event_id AND i.uid=p.uid JOIN events e ON e.id=i.event_id "
@@ -555,6 +620,100 @@ Page readPage(QSqlDatabase db, const Key &key, const QString &before, int limit)
     // Detect damaged or explicitly deleted cache entries. A short page is only
     // complete when the server said so (a server may impose a smaller limit).
     page.found = page.entries.size() == count;
+    return page;
+}
+
+Page readAfter(QSqlDatabase db, const Key &key, const QString &after, int limit, int snapshotCount)
+{
+    Page page;
+    if (after.isEmpty() || limit < 1 || limit > 40)
+        return page;
+    QString       cursor = after;
+    QSet<QString> seen { after };
+    QSqlQuery     q(db);
+    while (page.entries.size() < limit) {
+        q.prepare("SELECT next_uid FROM archive_items WHERE " + scope + " AND uid=:uid AND stable=1");
+        bindKey(q, key);
+        q.bindValue(":uid", cursor);
+        if (!q.exec() || !q.next() || q.value(0).isNull())
+            return {};
+        const QString next = q.value(0).toString();
+        q.finish();
+        // There is no permanently certified live end. An uncovered suffix
+        // requires a fresh bounded query, even if an old count suggested an end.
+        if (next.isEmpty() || seen.contains(next))
+            return {};
+        seen.insert(next);
+        q.prepare("SELECT i.uid,i.xml,i.event_id FROM archive_items i JOIN events e ON e.id=i.event_id WHERE " + scope
+                  + " AND i.uid=:uid AND i.previous_uid=:previous AND i.stable=1 AND (e.history_state & 3)=1");
+        bindKey(q, key);
+        q.bindValue(":uid", next);
+        q.bindValue(":previous", cursor);
+        if (!q.exec() || !q.next())
+            return {};
+        Entry entry;
+        entry.uid     = q.value(0).toString();
+        entry.xml     = q.value(1).toString();
+        entry.eventId = q.value(2).toLongLong();
+        page.entries.append(entry);
+        cursor = next;
+        q.finish();
+    }
+    page.found = page.stable = true;
+    page.checkpoint          = false;
+    page.previous            = after;
+    page.resultCount         = snapshotCount;
+    return page;
+}
+
+Page readIndex(QSqlDatabase db, const Key &key, int index, int limit, int snapshotCount)
+{
+    Page page;
+    if (index < 0 || limit < 1 || limit > 40 || snapshotCount < 0)
+        return page;
+    QSqlQuery q(db);
+    q.prepare("SELECT id,item_count,first_index,complete FROM archive_index_pages WHERE " + scope
+              + " AND result_count=:snapshot AND first_index<=:position AND first_index+item_count>:position"
+                " AND (first_index+item_count>=:end OR complete=1) ORDER BY first_index DESC,page_size DESC LIMIT 1");
+    bindKey(q, key);
+    q.bindValue(":snapshot", snapshotCount);
+    q.bindValue(":position", index);
+    q.bindValue(":end", qint64(index) + limit);
+    if (!q.exec() || !q.next())
+        return page;
+    const auto id       = q.value(0);
+    const int  count    = q.value(1).toInt();
+    const int  first    = q.value(2).toInt();
+    const bool complete = q.value(3).toBool();
+    q.finish();
+    q.prepare("SELECT i.uid,i.xml,i.event_id FROM archive_index_page_items p JOIN archive_items i"
+              " ON i.event_id=p.event_id AND i.uid=p.uid JOIN events e ON e.id=i.event_id"
+              " WHERE p.page_id=:id AND i.stable=1 AND (e.history_state & 3)=1 AND "
+              + scope + " ORDER BY p.position");
+    bindKey(q, key);
+    q.bindValue(":id", id);
+    if (!q.exec())
+        return {};
+    while (q.next()) {
+        Entry entry;
+        entry.uid     = q.value(0).toString();
+        entry.xml     = q.value(1).toString();
+        entry.eventId = q.value(2).toLongLong();
+        page.entries.append(entry);
+    }
+    if (page.entries.size() != count)
+        return {};
+    for (int offset = index - first; offset > 0 && !page.entries.isEmpty(); --offset)
+        page.entries.removeFirst();
+    while (page.entries.size() > limit)
+        page.entries.removeLast();
+    page.found = page.stable = true;
+    page.checkpoint          = false;
+    page.requestIndex        = index;
+    page.resultCount         = snapshotCount;
+    page.firstIndex          = index;
+    page.complete            = index == 0;
+    page.queryComplete       = complete && index - first + page.entries.size() == count;
     return page;
 }
 
@@ -696,13 +855,15 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
         if (!q.exec())
             return fail();
     }
-    // Failed/unstable queries cannot leave an older reusable checkpoint behind.
-    q.prepare("DELETE FROM archive_pages WHERE " + scope + " AND before_uid=:before AND page_size=:limit");
-    bindKey(q, key);
-    q.bindValue(":before", nonNull(before));
-    q.bindValue(":limit", limit);
-    if (!q.exec())
-        return fail();
+    if (page.checkpoint) {
+        // Failed/unstable queries cannot leave an older reusable checkpoint behind.
+        q.prepare("DELETE FROM archive_pages WHERE " + scope + " AND before_uid=:before AND page_size=:limit");
+        bindKey(q, key);
+        q.bindValue(":before", nonNull(before));
+        q.bindValue(":limit", limit);
+        if (!q.exec())
+            return fail();
+    }
     // The supplied cursor is the neighbour immediately after this result
     // page. Link it back as well, so new page offsets can follow the chain.
     if (!before.isEmpty() && (!page.entries.isEmpty() || page.complete)) {
@@ -755,29 +916,74 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
             if (!q.exec())
                 return fail();
         }
-        // Record even short non-final pages: their exact request is complete,
-        // although it must not be combined into a larger assumed full page.
-        q.prepare("INSERT INTO archive_pages(account,archive,peer,before_uid,page_size,item_count,complete,stable) "
-                  "VALUES(:account,:archive,:peer,:before,:limit,:count,:complete,1)");
-        bindKey(q, key);
-        q.bindValue(":before", nonNull(before));
-        q.bindValue(":limit", limit);
-        q.bindValue(":count", page.entries.size());
-        q.bindValue(":complete", page.complete);
-        if (!q.exec())
-            return fail();
-        const auto pageId = q.lastInsertId();
-        for (int i = 0; i < page.entries.size(); ++i) {
-            q.prepare(
-                "INSERT INTO archive_page_items(page_id,position,event_id,uid) VALUES(:page,:position,:event,:uid)");
-            q.bindValue(":page", pageId);
-            q.bindValue(":position", i);
-            q.bindValue(":event", page.entries.at(i).eventId);
-            q.bindValue(":uid", page.entries.at(i).uid);
+        if (page.checkpoint) {
+            // Record even short non-final pages: their exact request is complete,
+            // although it must not be combined into a larger assumed full page.
+            q.prepare("INSERT INTO "
+                      "archive_pages(account,archive,peer,before_uid,page_size,item_count,complete,stable,result_count,"
+                      "first_index) "
+                      "VALUES(:account,:archive,:peer,:before,:limit,:count,:complete,1,:rsm_count,:first_index)");
+            bindKey(q, key);
+            q.bindValue(":before", nonNull(before));
+            q.bindValue(":limit", limit);
+            q.bindValue(":count", page.entries.size());
+            q.bindValue(":complete", page.complete);
+            q.bindValue(":rsm_count", page.resultCount >= 0 ? QVariant(page.resultCount) : QVariant());
+            q.bindValue(":first_index", page.firstIndex >= 0 ? QVariant(page.firstIndex) : QVariant());
             if (!q.exec())
                 return fail();
+            const auto pageId = q.lastInsertId();
+            for (int i = 0; i < page.entries.size(); ++i) {
+                q.prepare("INSERT INTO archive_page_items(page_id,position,event_id,uid) "
+                          "VALUES(:page,:position,:event,:uid)");
+                q.bindValue(":page", pageId);
+                q.bindValue(":position", i);
+                q.bindValue(":event", page.entries.at(i).eventId);
+                q.bindValue(":uid", page.entries.at(i).uid);
+                if (!q.exec())
+                    return fail();
+            }
         }
     }
+    if (page.requestIndex >= 0 && page.resultCount >= 0 && page.firstIndex >= 0) {
+        // Ordinal checkpoints belong to a count snapshot and must never share
+        // the before-UID/tail key space. Payloads and internal links are shared.
+        q.prepare("DELETE FROM archive_index_pages WHERE " + scope
+                  + " AND (result_count<>:snapshot OR (request_index=:position AND page_size=:limit))");
+        bindKey(q, key);
+        q.bindValue(":snapshot", page.resultCount);
+        q.bindValue(":position", page.requestIndex);
+        q.bindValue(":limit", limit);
+        if (!q.exec())
+            return fail();
+        if (reusable) {
+            q.prepare("INSERT INTO archive_index_pages(account,archive,peer,request_index,page_size,item_count,"
+                      "result_count,first_index,complete) VALUES(:account,:archive,:peer,:position,:limit,:count,"
+                      ":snapshot,:first,:complete)");
+            bindKey(q, key);
+            q.bindValue(":position", page.requestIndex);
+            q.bindValue(":limit", limit);
+            q.bindValue(":count", page.entries.size());
+            q.bindValue(":snapshot", page.resultCount);
+            q.bindValue(":first", page.firstIndex);
+            q.bindValue(":complete", page.queryComplete);
+            if (!q.exec())
+                return fail();
+            const auto pageId = q.lastInsertId();
+            for (int i = 0; i < page.entries.size(); ++i) {
+                q.prepare("INSERT INTO archive_index_page_items(page_id,position,event_id,uid) "
+                          "VALUES(:page,:at,:event,:uid)");
+                q.bindValue(":page", pageId);
+                q.bindValue(":at", i);
+                q.bindValue(":event", page.entries.at(i).eventId);
+                q.bindValue(":uid", page.entries.at(i).uid);
+                if (!q.exec())
+                    return fail();
+            }
+        }
+    }
+    if (page.snapshot.observedAt.isValid() && !storeSnapshot(db, key, page.snapshot))
+        return fail();
     if (!db.commit())
         return fail();
     return true;
@@ -791,11 +997,16 @@ bool invalidate(QSqlDatabase db, const QString &account, const QString &peer)
         filter = "account=:account";
     if (!peer.isEmpty())
         filter += (filter.isEmpty() ? "" : " AND ") + QStringLiteral("peer=:peer");
-    q.prepare("DELETE FROM archive_pages" + (filter.isEmpty() ? QString() : " WHERE " + filter));
-    if (!account.isEmpty())
-        q.bindValue(":account", account);
-    if (!peer.isEmpty())
-        q.bindValue(":peer", peer);
-    return q.exec();
+    for (const auto &table : { QStringLiteral("archive_pages"), QStringLiteral("archive_index_pages"),
+                               QStringLiteral("archive_snapshots") }) {
+        q.prepare("DELETE FROM " + table + (filter.isEmpty() ? QString() : " WHERE " + filter));
+        if (!account.isEmpty())
+            q.bindValue(":account", account);
+        if (!peer.isEmpty())
+            q.bindValue(":peer", peer);
+        if (!q.exec())
+            return false;
+    }
+    return true;
 }
 }

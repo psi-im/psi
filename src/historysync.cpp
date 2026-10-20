@@ -27,8 +27,16 @@ bool parseXml(QDomDocument &doc, const QString &xml)
 }
 }
 
-HistorySync::HistorySync(Context context, const QString &peer, bool room, const QString &before, QObject *parent, int pageSize) :
-    QObject(parent), context_(std::move(context)), before_(before), pageSize_(qBound(1, pageSize, PageSize))
+HistorySync::HistorySync(Context context, const QString &peer, bool room, const QString &before, QObject *parent,
+                         int pageSize) :
+    HistorySync(std::move(context), Query { Query::Before, before, -1, pageSize }, peer, room, parent)
+{
+}
+
+HistorySync::HistorySync(Context context, Query query, const QString &peer, bool room, QObject *parent) :
+    QObject(parent), context_(std::move(context)), query_(query),
+    before_(query.mode == Query::Before ? query.cursor : QString()),
+    after_(query.mode == Query::After ? query.cursor : QString()), pageSize_(qBound(1, query.limit, PageSize))
 {
     key_ = { context_.accountId, room ? peer : context_.owner.bare(), peer, room };
 }
@@ -186,9 +194,18 @@ void HistorySync::go()
             return;
         const bool logging = context_.logging();
         if (logging) {
-            const auto           saved = context_.read(key_, before_, pageSize_);
+            if (context_.readSnapshot)
+                snapshot_ = context_.readSnapshot(key_);
+            HistoryArchive::Page saved;
+            if (query_.mode == Query::Before)
+                saved = context_.read(key_, before_, pageSize_);
+            else if (query_.mode == Query::Index && context_.readIndex && query_.snapshotCount >= 0)
+                saved = context_.readIndex(key_, query_.index, pageSize_, query_.snapshotCount);
+            else if (query_.mode == Query::After && context_.readAfter)
+                saved = context_.readAfter(key_, after_, pageSize_, query_.snapshotCount);
             qCDebug(PsiMam::historyLog) << "cache account=" << key_.account << "peer=" << key_.peer
-                                        << "before=" << before_ << "limit=" << pageSize_ << "hit=" << saved.found
+                                        << "mode=" << query_.mode << "index=" << query_.index << "before=" << before_
+                                        << "after=" << after_ << "limit=" << pageSize_ << "hit=" << saved.found
                                         << "stable=" << saved.stable << "events=" << saved.entries.size();
             HistoryArchive::Page validated;
             QList<QDomElement>   xml;
@@ -219,16 +236,35 @@ void HistorySync::go()
                 validated.found    = true;
                 validated.stable   = saved.stable;
                 validated.complete = saved.complete;
+                validated.resultCount   = saved.resultCount;
+                validated.firstIndex    = saved.firstIndex;
+                validated.requestIndex  = saved.requestIndex;
+                validated.queryComplete = saved.queryComplete;
+                validated.checkpoint    = saved.checkpoint;
+                validated.previous      = saved.previous;
                 for (int i = 0; i < validated.entries.size(); ++i)
                     validated.entries[i].eventId = saved.entries.at(i).eventId;
-                replaySaved_ = PsiMam::mayReuseArchivePage(before_.isEmpty(), context_.connected(), true, true,
-                                                           saved.entries.size(), pageSize_, saved.complete);
-                if (replaySaved_ || (before_.isEmpty() && !validated.entries.isEmpty())) {
+                replaySaved_ = query_.mode == Query::Before
+                    ? PsiMam::mayReuseArchivePage(before_.isEmpty(), context_.connected(), true, true,
+                                                  saved.entries.size(), pageSize_, saved.complete)
+                    : saved.entries.size() == pageSize_ || saved.queryComplete;
+                if (replaySaved_
+                    || (query_.mode == Query::Before && before_.isEmpty() && !validated.entries.isEmpty())) {
                     tail_          = validated;
                     results_       = xml;
                     decodingSaved_ = true;
                     decodeIndex_   = 0;
-                    decodeNext();
+                    // Existing certified bodies do not need downloading again.
+                    // Bootstrap old caches with one bounded tail observation;
+                    // a missing count is remembered too. Refresh stale estimates
+                    // at most once per five minutes, never once per old page.
+                    if (replaySaved_ && context_.connected() && context_.writeSnapshot
+                        && (!snapshot_.observedAt.isValid()
+                            || (snapshot_.resultCount > 0 && snapshot_.lastUid.isEmpty())
+                            || snapshot_.observedAt.secsTo(QDateTime::currentDateTimeUtc()) >= 300))
+                        refreshSnapshot();
+                    else
+                        decodeNext();
                     return;
                 }
             }
@@ -251,6 +287,38 @@ void HistorySync::finishError(const QString &error)
     emit finished();
 }
 
+void HistorySync::refreshSnapshot()
+{
+    // Iris owns the protocol. Request one last event to obtain both the count
+    // and a real last UID; max=0 would provide no identity for the snapshot.
+    XMPP::MAMManager manager(context_.client, 1, 1, false, true);
+    task_ = manager.getArchiveByIDRange(key_.room ? XMPP::Jid() : XMPP::Jid(key_.peer), {}, {}, key_.room);
+    if (key_.room)
+        task_->setArchiveJid(XMPP::Jid(key_.archive));
+    qCDebug(PsiMam::historyLog) << "snapshot-request account=" << key_.account << "peer=" << key_.peer << "limit=1";
+    connect(task_, &XMPP::Task::finished, this, [this] {
+        auto *task = task_.data();
+        task_.clear();
+        if (task->success()) {
+            snapshot_.resultCount = task->resultCount();
+            snapshot_.lastUid     = task->archive().isEmpty() ? QString() : task->archive().last().attribute("id");
+            snapshot_.observedAt  = QDateTime::currentDateTimeUtc();
+            snapshot_.stable      = task->isStable();
+            if (!context_.writeSnapshot(key_, snapshot_))
+                qCWarning(PsiMam::historyLog) << "snapshot-write-failed peer=" << key_.peer;
+            qCDebug(PsiMam::historyLog) << "snapshot-result peer=" << key_.peer << "count=" << snapshot_.resultCount
+                                        << "last=" << snapshot_.lastUid << "stable=" << snapshot_.stable;
+        } else {
+            // Discovery failure must not hide already cached messages.
+            qCWarning(PsiMam::historyLog)
+                << "snapshot-unavailable peer=" << key_.peer << "error=" << task->statusString();
+        }
+        task->deleteLater();
+        decodeNext();
+    });
+    task_->go();
+}
+
 void HistorySync::requestPage()
 {
     if (cancelled_)
@@ -265,8 +333,12 @@ void HistorySync::requestPage()
                                 << "after=" << after_ << "limit=" << pageSize_;
     const bool       forward = !after_.isEmpty();
     XMPP::MAMManager manager(context_.client, pageSize_, pageSize_, false, !forward);
-    task_ = manager.getArchiveByIDRange(key_.room ? XMPP::Jid() : XMPP::Jid(key_.peer), after_,
-                                        forward ? QString() : before_, key_.room);
+    if (query_.mode == Query::Index)
+        task_ = manager.getArchiveAtIndex(key_.room ? XMPP::Jid() : XMPP::Jid(key_.peer), query_.index, pageSize_,
+                                          key_.room);
+    else
+        task_ = manager.getArchiveByIDRange(key_.room ? XMPP::Jid() : XMPP::Jid(key_.peer), after_,
+                                            forward ? QString() : before_, key_.room);
     if (key_.room)
         task_->setArchiveJid(XMPP::Jid(key_.archive));
     connect(task_, &XMPP::Task::finished, this, [this] {
@@ -274,9 +346,11 @@ void HistorySync::requestPage()
         task_.clear();
         networkComplete_ = task->isComplete();
         networkStable_   = task->isStable();
+        resultCount_      = task->resultCount();
+        firstResultIndex_ = task->firstResultIndex();
         if (!task->success()) {
-            const bool expired
-                = !after_.isEmpty() && task->error().condition == XMPP::Stanza::Error::ErrorCond::ItemNotFound;
+            const bool expired = query_.mode == Query::Before && !after_.isEmpty()
+                && task->error().condition == XMPP::Stanza::Error::ErrorCond::ItemNotFound;
             const QString error = task->statusString();
             task->deleteLater();
             if (expired) {
@@ -289,7 +363,18 @@ void HistorySync::requestPage()
                 finishError(error);
             return;
         }
+        if (query_.mode == Query::Index && firstResultIndex_ < 0) {
+            // An ignored index can return an unrelated beginning/tail page.
+            // Do not decrypt, cache or project it as the requested island.
+            task->deleteLater();
+            finishError(tr("Archive response omitted the requested index"));
+            return;
+        }
         results_ = task->archive();
+        qCDebug(PsiMam::historyLog) << "network-result account=" << key_.account << "peer=" << key_.peer
+                                    << "events=" << results_.size() << "count=" << resultCount_
+                                    << "firstIndex=" << firstResultIndex_ << "stable=" << networkStable_
+                                    << "complete=" << networkComplete_;
         task->deleteLater();
         decodeIndex_ = 0;
         decodeNext();
@@ -391,7 +476,12 @@ void HistorySync::acceptPage()
 {
     HistoryArchive::Page received;
     received.stable   = networkStable_;
-    received.complete = networkComplete_;
+    received.complete      = query_.mode == Query::Index ? firstResultIndex_ == 0 : networkComplete_;
+    received.resultCount   = resultCount_;
+    received.firstIndex    = firstResultIndex_;
+    received.checkpoint    = query_.mode == Query::Before;
+    received.requestIndex  = query_.mode == Query::Index ? query_.index : -1;
+    received.queryComplete = networkComplete_;
     if (!parseResults(results_, received)) {
         finishError(tr("Invalid archive page"));
         return;
@@ -400,6 +490,12 @@ void HistorySync::acceptPage()
         decodingSaved_    = false;
         received.complete = tail_.complete;
         received.stable   = tail_.stable;
+        received.resultCount   = tail_.resultCount;
+        received.firstIndex    = tail_.firstIndex;
+        received.requestIndex  = tail_.requestIndex;
+        received.queryComplete = tail_.queryComplete;
+        received.checkpoint    = tail_.checkpoint;
+        received.previous      = tail_.previous;
         for (int i = 0; i < received.entries.size(); ++i)
             received.entries[i].eventId = tail_.entries.at(i).eventId;
         // Repair old cache projections through the same transaction as a
@@ -419,9 +515,26 @@ void HistorySync::acceptPage()
         }
         return;
     }
+    const bool latest = (query_.mode == Query::Before && before_.isEmpty() && after_.isEmpty())
+        || (!after_.isEmpty() && networkComplete_)
+        || (query_.mode == Query::Index && firstResultIndex_ >= 0 && resultCount_ >= 0
+            && firstResultIndex_ + received.entries.size() == resultCount_);
+    // Optional metadata can disappear on individual responses. Keep the last
+    // actual count/UID pair as an estimate; don't invent a new count for a
+    // different tail or erase a useful old snapshot.
+    if (resultCount_ >= 0 || (latest && snapshot_.resultCount < 0)) {
+        snapshot_.observedAt = QDateTime::currentDateTimeUtc();
+        snapshot_.stable     = networkStable_;
+        if (resultCount_ != snapshot_.resultCount)
+            snapshot_.lastUid.clear();
+        snapshot_.resultCount = resultCount_;
+        if (latest)
+            snapshot_.lastUid = received.entries.isEmpty() ? after_ : received.entries.last().uid;
+    }
+    received.snapshot     = snapshot_;
     const QString next    = received.entries.isEmpty() ? QString() : received.entries.last().uid;
     const bool    forward = !after_.isEmpty();
-    if (forward) {
+    if (forward && query_.mode == Query::Before) {
         if (!networkComplete_ && (next.isEmpty() || next == after_)) {
             finishError(tr("Archive catch-up did not advance"));
             return;
@@ -430,16 +543,29 @@ void HistorySync::acceptPage()
         entries.append(received.entries);
         QString previous = tail_.previous;
         bool    complete = tail_.complete;
+        int     firstIndex = tail_.firstIndex >= 0            ? tail_.firstIndex
+                : received.firstIndex >= tail_.entries.size() ? received.firstIndex - tail_.entries.size()
+                                                              : -1;
         while (entries.size() > pageSize_) {
             previous = entries.takeFirst().uid;
+            if (firstIndex >= 0)
+                ++firstIndex;
             complete = false;
         }
         page_.entries  = entries;
         page_.previous = previous;
         page_.complete = complete;
         page_.stable   = tail_.stable && received.stable;
-    } else
+        page_.firstIndex  = firstIndex;
+        page_.resultCount = received.resultCount >= 0 ? received.resultCount : tail_.resultCount;
+        page_.snapshot    = snapshot_;
+    } else {
         page_ = received;
+        if (query_.mode == Query::After) {
+            page_.previous = after_;
+            page_.complete = false; // Forward fin does not certify the archive's beginning.
+        }
+    }
     if (context_.logging()) {
         if (!context_.merge(key_, before_, pageSize_, page_)) {
             // A failed write must never advance a persistent watermark.
@@ -447,21 +573,13 @@ void HistorySync::acceptPage()
             return;
         }
     }
-    if (forward && !networkComplete_ && networkStable_) {
-        // Keep only the rolling page's decoded payloads during large catch-up.
-        QSet<QString> kept;
-        for (const auto &entry : page_.entries)
-            kept.insert(entry.uid);
-        bodyElements_.intersect(kept);
-        protocolOnly_.intersect(kept);
-        decryptionFailures_.intersect(kept);
-        for (auto it = decoded_.begin(); it != decoded_.end();)
-            if (!kept.contains(it.key()))
-                it = decoded_.erase(it);
-            else
-                ++it;
-        tail_  = page_;
-        after_ = next;
+    if (query_.mode == Query::Before && forward && !networkComplete_ && networkStable_) {
+        // A large offline gap is not a request to scan the entire archive.
+        // The bounded delta is now persisted with real adjacency. Jump once
+        // to the latest page and leave the gap for explicit scroll/seek demand.
+        // No connection is invented between the delta and the new tail.
+        tail_ = {};
+        after_.clear();
         QTimer::singleShot(0, this, &HistorySync::requestPage);
         return;
     }
