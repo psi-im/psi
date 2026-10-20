@@ -78,6 +78,18 @@ BookmarkManager::BookmarkManager(PsiAccount *account) : QObject(account), d(std:
             this, &BookmarkManager::syncUrls);
     connect(d->protocol, &XMPP::BookmarksManager::bookmarksSaved,
             this, &BookmarkManager::bookmarksSaved);
+    connect(d->protocol, &XMPP::BookmarksManager::syncError,
+            this, &BookmarkManager::syncError);
+    connect(d->protocol, &XMPP::BookmarksManager::conferenceUpdated, this,
+            [this](const XMPP::NativeBookmark &room, XMPP::BookmarksManager::ChangeSource source) {
+        if (source == XMPP::BookmarksManager::ChangeSource::Push)
+            emit remoteConferenceChanged(room.room(), room.autoJoin(), false);
+    });
+    connect(d->protocol, &XMPP::BookmarksManager::conferenceRemoved, this,
+            [this](const XMPP::Jid &room, XMPP::BookmarksManager::ChangeSource source) {
+        if (source == XMPP::BookmarksManager::ChangeSource::Push)
+            emit remoteConferenceChanged(room, false, true);
+    });
     d->protocol->setOnline(account->isAvailable());
 }
 
@@ -192,52 +204,73 @@ void BookmarkManager::updateLocalPreferences(const QList<ConferenceBookmark> &ba
     }
 }
 
-void BookmarkManager::setBookmarks(const QList<URLBookmark> &urls,
+bool BookmarkManager::setBookmarks(const QList<URLBookmark> &urls,
                                     const QList<ConferenceBookmark> &conferences)
 {
-    if (!validConferences(conferences))
-        return;
+    if (!validConferences(conferences)) {
+        emit syncError(QStringLiteral("Invalid conference bookmark list"));
+        return false;
+    }
+    // Never treat URL save success as implicit consent to a destructive
+    // Private XML write when the server uses XEP-0402.
+    const auto old = d->conferences;
     d->protocol->setBookmarks(asIrisUrls(urls), asNative(conferences));
-    updateLocalPreferences(d->conferences, conferences);
+    updateLocalPreferences(old, conferences);
+    return true;
 }
 
-void BookmarkManager::setBookmarks(const QList<URLBookmark> &urls)
+bool BookmarkManager::setBookmarks(const QList<URLBookmark> &urls)
 {
-    d->protocol->setUrls(asIrisUrls(urls));
+    return d->protocol->setUrls(asIrisUrls(urls));
 }
 
-void BookmarkManager::setBookmarks(const QList<ConferenceBookmark> &conferences)
+bool BookmarkManager::setBookmarks(const QList<ConferenceBookmark> &conferences)
 {
-    if (!validConferences(conferences))
-        return;
-    d->protocol->setConferences(asNative(conferences));
-    updateLocalPreferences(d->conferences, conferences);
+    if (!validConferences(conferences)) {
+        emit syncError(QStringLiteral("Invalid conference bookmark list"));
+        return false;
+    }
+    const auto old = d->conferences;
+    if (!d->protocol->setConferences(asNative(conferences)))
+        return false;
+    updateLocalPreferences(old, conferences);
+    return true;
 }
 
-void BookmarkManager::applyConferenceEdits(const QList<ConferenceBookmark> &baseline,
+bool BookmarkManager::applyConferenceEdits(const QList<ConferenceBookmark> &baseline,
                                            const QList<ConferenceBookmark> &edited)
 {
-    if (!validConferences(edited))
-        return;
-    d->protocol->applyConferenceEdits(asNative(baseline), asNative(edited));
+    if (!validConferences(edited)) {
+        emit syncError(QStringLiteral("Invalid conference bookmark list"));
+        return false;
+    }
+    if (!d->protocol->applyConferenceEdits(asNative(baseline), asNative(edited)))
+        return false;
     updateLocalPreferences(baseline, edited);
+    return true;
 }
 
 void BookmarkManager::addConference(const ConferenceBookmark &room)
 {
     if (!isAvailable() || room.isNull() || indexOfConference(room.jid()) >= 0)
         return;
-    auto rooms = d->conferences;
-    rooms.append(room);
-    setBookmarks(rooms);
+    const auto before = d->conferences;
+    if (d->protocol->upsertConference(asNative(room))) {
+        auto after = before;
+        after.append(room);
+        updateLocalPreferences(before, after);
+    }
 }
 
 void BookmarkManager::removeConference(const XMPP::Jid &jid)
 {
     if (!isAvailable())
         return;
-    auto rooms = d->conferences;
-    rooms.erase(std::remove_if(rooms.begin(), rooms.end(),
-        [&jid](const ConferenceBookmark &room) { return room.jid().compare(jid, false); }), rooms.end());
-    setBookmarks(rooms);
+    const auto before = d->conferences;
+    if (d->protocol->removeConference(jid)) {
+        auto after = before;
+        after.erase(std::remove_if(after.begin(), after.end(),
+            [&jid](const ConferenceBookmark &room) { return room.jid().compare(jid, false); }), after.end());
+        updateLocalPreferences(before, after);
+    }
 }
