@@ -942,6 +942,9 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     nativeTimeline_->setGroupChat(true);
     const int logIndex = ui_.hsplitter->indexOf(ui_.log);
     ui_.hsplitter->replaceWidget(logIndex, nativeTimeline_);
+    // Qt 5 leaves the replacement explicitly hidden after reparenting.
+    // This suppresses both rendering and the visible-viewport fill demand.
+    nativeTimeline_->show();
     ui_.log->setParent(ui_.topFrame);
     ui_.log->hide();
     configureNativeChat(nativeTimeline_, account(), jid(), true);
