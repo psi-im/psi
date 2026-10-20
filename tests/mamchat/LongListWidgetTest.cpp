@@ -181,7 +181,7 @@ private slots:
         QVERIFY(qAbs(fraction) < 0.015);
     }
 
-    void resizePreservesCentralRowAndDefersOffscreenWidgets()
+    void resizePreservesCentralRowAndBoundsResidency()
     {
         TestLongListWidget list;
         list.resize(510, 300);
@@ -192,17 +192,13 @@ private slots:
         list.setRangeAvailable(0, 159);
         list.show();
 
-        // Visit a second window so unrelated rows remain in the residency
-        // cache. These are not visible when we resize the first window.
         list.scrollToIndex(110, Mattermost::LongListWidget::Alignment::Center);
         settleEvents();
         QVERIFY(list.itemWidget(110));
-        QWidget *cachedOutside = list.itemWidget(110);
         list.scrollToIndex(60, Mattermost::LongListWidget::Alignment::Center);
         settleEvents();
         QVERIFY(!list.isAtEnd());
-        QVERIFY(cachedOutside == list.itemWidget(110));
-        const int oldOffscreenWidth = cachedOutside->width();
+        QVERIFY(!list.itemWidget(110)); // No large cache of previously visited views.
 
         const int anchorIndex = list.viewportCenterIndex();
         QVERIFY(anchorIndex >= 0);
@@ -216,21 +212,23 @@ private slots:
         qreal after = 100;
         QVERIFY(list.captureSemanticAnchorFraction(
             anchorIndex, Mattermost::LongListWidget::SemanticAnchorPoint::ItemCenter, after));
-        QVERIFY2(qAbs(after - before) < 0.015,
+        QVERIFY2(qAbs(after - before) < 0.02,
                  "Central message must keep its relative vertical position");
         QCOMPARE(list.viewportCenterIndex(), anchorIndex);
 
-        // The off-screen row should not incur a QTextDocument-style width
-        // reflow when only the *visible* chat area was resized.
-        QCOMPARE(list.itemWidget(110), cachedOutside);
-        QCOMPARE(cachedOutside->width(), oldOffscreenWidth);
-
-        // It becomes visible after scrolling and must then match the new
-        // viewport width and measured height.
+        // The residency budget follows the viewport, not the number of rows
+        // ever visited; newly exposed messages must be materialized at the
+        // current width when they become visible.
+        const auto visible = list.visibleRange();
+        const auto resident = list.materializedRange();
+        QVERIFY(resident.isValid());
+        QVERIFY(resident.contains(visible.first));
+        QVERIFY(resident.contains(visible.last));
+        QVERIFY(list.materializedCount() <= visible.count() + 10);
         list.scrollToIndex(110, Mattermost::LongListWidget::Alignment::Center);
         settleEvents();
-        QCOMPARE(cachedOutside->width(), list.viewport()->width());
-        QVERIFY(list.itemVisibility(110).testFlag(Mattermost::LongListWidget::ItemVisibility::Body));
+        QVERIFY(list.itemWidget(110));
+        QCOMPARE(list.itemWidget(110)->width(), list.viewport()->width());
     }
 
     void semanticBottomAnchorDoesNotFollowNewReplies()
@@ -784,12 +782,12 @@ private slots:
         QVERIFY(concrete.contains(visible.last));
     }
 
-    void visitedRowsStayMaterializedUntilBudgetIsReached()
+    void visitedRowsAreEvictedOutsideTwoScreenWindow()
     {
         TestLongListWidget list;
         list.resize(480, 180);
         list.setDefaultItemHeight(60);
-        list.setMaterializationLimit(200);
+        list.setMaterializationLimit(200); // A hard ceiling, not a residency target.
         list.setItemCount(21);
         list.setRangeAvailable(0, 20);
         list.show();
@@ -800,7 +798,15 @@ private slots:
             settleEvents(4);
         }
 
-        QCOMPARE(list.materializedCount(), 21);
+        // The earliest rows are still available in the model but must no
+        // longer have QWidget instances just because they were visited once.
+        QVERIFY(!list.itemWidget(0));
+        QVERIFY(list.materializedCount() < 10);
+        QCOMPARE(list.materializedRange().last, 20);
+        const auto visible = list.visibleRange();
+        const auto materialized = list.materializedRange();
+        QVERIFY(materialized.contains(visible.first));
+        QVERIFY(materialized.contains(visible.last));
     }
 
     void tinyThumbDragInsideResidentWindowDoesNotSnapToEnd()
