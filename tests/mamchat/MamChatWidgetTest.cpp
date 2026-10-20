@@ -2066,6 +2066,10 @@ private slots:
         bar->setValue(bar->minimum());
         QCoreApplication::processEvents();
         QCOMPARE(requests.count(), 0); // Programmatic position changes are passive.
+        // First showEvent may still finish tail restoration; establish the
+        // top boundary *after* those queued layout operations.
+        bar->setValue(bar->minimum());
+        QCOMPARE(bar->value(), bar->minimum());
         // At zero, QAbstractSlider::triggerAction(SingleStepSub) can be
         // discarded by Qt itself. Send genuine input to exercise the widget's
         // outward-gesture path rather than relying on a valueChanged signal.
