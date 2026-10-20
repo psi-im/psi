@@ -66,6 +66,7 @@ private:
     void getBookmarks();
     void setIsAvailable(bool available);
     void loadNativeBookmarks();
+    void flushQueuedBookmarks();
 
 private:
     PsiAccount               *account_;
