@@ -4,8 +4,8 @@
     "source": "git-submodule",
     "path": "iris",
     "lock_path": "iris/dependencies.lock.json",
-    "release_tag": "v1.4.2",
-    "minimum_version": "1.4.2"
+    "release_tag": "v1.5",
+    "minimum_version": "1.5"
   },
   "psimedia": {
     "commit": "ad1b411f382dff2d9f5901343eccc25046ee4e90"
