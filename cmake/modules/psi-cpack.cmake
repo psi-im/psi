@@ -184,8 +184,8 @@ if(APPLE)
     endif()
     # Configure DMG window appearance
     set(CPACK_DMG_WINDOW_STYLE "styled")
-    # Directories where fixup_bundle will search for libraries. 
-    # CMAKE_BINARY_DIR — the project build directory. 
+    # Directories where fixup_bundle will search for libraries.
+    # CMAKE_BINARY_DIR — the project build directory.
     # Additional directories can be added here, for example:
     # /opt/homebrew/lib
     # /usr/local/lib
@@ -224,28 +224,31 @@ endif()
 if(_PSI_CPACK_GENERATORS)
     set(CPACK_GENERATOR "${_PSI_CPACK_GENERATORS}")
     #Set psi-im/psi-plus-im as a dependency for all other components
-    if(ENABLE_PLUGINS AND PSI_CPACK_DPKG_DEB_EXECUTABLE)
-        list(APPEND CPACK_DEBIAN_PLUGINS_PACKAGE_DEPENDS "${CPACK_PACKAGE_NAME}-im")
-        if(BUILD_PSIMEDIA)
-            list(APPEND CPACK_DEBIAN_PLUGINS_PACKAGE_DEPENDS
-            "gstreamer1.0-plugins-bad"
-            "gstreamer1.0-plugins-base"
-            "gstreamer1.0-plugins-good"
-            )
+    if(PSI_CPACK_DPKG_DEB_EXECUTABLE)
+        list(APPEND CPACK_DEBIAN_IM_PACKAGE_DEPENDS "libiris-qt6-1")
+        if(ENABLE_PLUGINS)
+            list(APPEND CPACK_DEBIAN_PLUGINS_PACKAGE_DEPENDS "${CPACK_PACKAGE_NAME}-im")
+            if(BUILD_PSIMEDIA)
+                list(APPEND CPACK_DEBIAN_PLUGINS_PACKAGE_DEPENDS
+                "gstreamer1.0-plugins-bad"
+                "gstreamer1.0-plugins-base"
+                "gstreamer1.0-plugins-good"
+                )
+            endif()
         endif()
-    endif()
-    if(LANGS_EXISTS AND PSI_CPACK_DPKG_DEB_EXECUTABLE)
-        list(APPEND CPACK_DEBIAN_L10N_PACKAGE_DEPENDS "${CPACK_PACKAGE_NAME}-im")
-    endif()
-    if(INSTALL_PLUGINS_SDK AND PSI_CPACK_DPKG_DEB_EXECUTABLE)
-        list(APPEND CPACK_DEBIAN_DEV_PACKAGE_DEPENDS "${CPACK_PACKAGE_NAME}-im")
+        if(TRANSLATIONS_DIR AND EXISTS "${TRANSLATIONS_DIR}")
+            list(APPEND CPACK_DEBIAN_L10N_PACKAGE_DEPENDS "${CPACK_PACKAGE_NAME}-im")
+        endif()
+        if(INSTALL_PLUGINS_SDK)
+            list(APPEND CPACK_DEBIAN_DEV_PACKAGE_DEPENDS "${CPACK_PACKAGE_NAME}-im")
+        endif()
     endif()
     #Create Main component - im
     include(CPackComponent)
     set(CPACK_COMPONENTS_ALL im)
     cpack_add_component(im
         DISPLAY_NAME "Main"
-        DESCRIPTION "Main program files"
+        DESCRIPTION "${CPACK_PACKAGE_DESCRIPTION_SUMMARY} main program files"
         REQUIRED
     )
     #Create plugins component - plugins
@@ -253,7 +256,7 @@ if(_PSI_CPACK_GENERATORS)
         list(APPEND CPACK_COMPONENTS_ALL plugins)
         cpack_add_component(plugins
             DISPLAY_NAME "Plugins"
-            DESCRIPTION "Useful plugins for program"
+            DESCRIPTION "${CPACK_PACKAGE_DESCRIPTION_SUMMARY} useful plugins"
         )
         message(STATUS "CPack: plugins included as plugins component")
     endif()
@@ -262,7 +265,7 @@ if(_PSI_CPACK_GENERATORS)
         list(APPEND CPACK_COMPONENTS_ALL "l10n")
         cpack_add_component(l10n
             DISPLAY_NAME "Translations"
-            DESCRIPTION "Program translation files"
+            DESCRIPTION "${CPACK_PACKAGE_DESCRIPTION_SUMMARY} translation files"
         )
         message(STATUS "CPack: translations included as l10n component")
     endif()

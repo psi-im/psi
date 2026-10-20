@@ -209,9 +209,9 @@ void PsiMain::chooseProfile()
     PsiIconset::instance()->loadSystem();
 
     while (true) {
-        std::unique_ptr<ProfileOpenDlg> dialog(new ProfileOpenDlg(
-            lastProfile, TranslationManager::instance()->availableTranslations(),
-            TranslationManager::instance()->currentLanguage()));
+        std::unique_ptr<ProfileOpenDlg> dialog(
+            new ProfileOpenDlg(lastProfile, TranslationManager::instance()->availableTranslations(),
+                               TranslationManager::instance()->currentLanguage()));
         dialog->ck_auto->setChecked(autoOpen);
 
         const int result = dialog->exec();
@@ -232,14 +232,13 @@ void PsiMain::chooseProfile()
         if (!ActiveProfiles::instance()->setThisProfile(profile)) {
             QMessageBox mb(
                 QMessageBox::Question, CAP(tr("Profile already in use")),
-                tr("The \"%1\" profile is already in use.\nWould you like to activate that session now?")
-                    .arg(profile),
+                tr("The \"%1\" profile is already in use.\nWould you like to activate that session now?").arg(profile),
                 QMessageBox::Cancel);
             QPushButton *activate = mb.addButton(tr("Activate"), QMessageBox::AcceptRole);
             mb.exec();
             if (mb.clickedButton() == activate) {
                 lastProfile = profile;
-                autoOpen = dialog->ck_auto->isChecked();
+                autoOpen    = dialog->ck_auto->isChecked();
                 saveSettings();
                 ActiveProfiles::instance()->raise(profile, true);
                 emit quit();
@@ -248,7 +247,7 @@ void PsiMain::chooseProfile()
             continue;
         }
 
-        autoOpen = dialog->ck_auto->isChecked();
+        autoOpen               = dialog->ck_auto->isChecked();
         const QString language = dialog->selectedLanguage();
         if (!language.isEmpty() && language != TranslationManager::instance()->currentLanguage()) {
             TranslationManager::instance()->loadTranslation(language);
@@ -525,6 +524,10 @@ PSI_EXPORT_FUNC int main(int argc, char *argv[])
     if (cmdline.contains("vulkanrender")) {
         qputenv("QT_WIDGETS_RHI", "1");
         qputenv("QT_WIDGETS_RHI_BACKEND", "Vulkan");
+    } else if (qEnvironmentVariableIsSet("DISPLAY") && qEnvironmentVariable("WAYLAND_DISPLAY").isEmpty()) {
+        qputenv("QT_QUICK_BACKEND", "software");
+        qputenv("QTWEBENGINE_CHROMIUM_FLAGS", "--disable-gpu --no-sandbox");
+        qputenv("QTWEBENGINE_DISABLE_SANDBOX", "1");
     }
 #endif
     if (cmdline.contains("swrender")) {
