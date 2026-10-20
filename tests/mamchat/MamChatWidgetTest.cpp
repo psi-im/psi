@@ -1287,6 +1287,7 @@ private slots:
         MamChatWidget list;
         list.resize(500, 220);
         list.setHistoryLoading(true);
+        const bool richScenario = qEnvironmentVariable("PSI_MAM_RESIZE_SCENARIO") != QLatin1String("simple");
         const QString rich = QStringLiteral("Hello <icon name=\"test/smile\" text=\":)\"> world");
         list.appendMessage(message(QStringLiteral("icon"), rich));
         list.show();
@@ -2540,17 +2541,18 @@ private slots:
             "<a href='xmpp:room@example.org?join'>room JID</a>. ")
             .repeated(11);
         for (int i = 0; i < 110; ++i) {
-            const QString body = (i % 7 == 0)
+            const QString body = (richScenario && i % 7 == 0)
                 ? rich
                 : QStringLiteral("Normal MUC message %1 from another participant.").arg(i);
             room->appendMessage(message(QStringLiteral("profile-%1").arg(i), body, i));
         }
         MessageView subject(MessageView::Subject);
-        subject.setPlainText(rich);
+        subject.setPlainText(richScenario ? rich : QStringLiteral("Short room topic"));
         subject.setDateTime(QDateTime::currentDateTime());
         room->appendMessage(subject);
         for (int i = 0; i < 9; ++i)
-            room->appendMessage(message(QStringLiteral("last-%1").arg(i), rich, 200 + i));
+            room->appendMessage(message(QStringLiteral("last-%1").arg(i),
+                                        richScenario ? rich : QStringLiteral("Short reply"), 200 + i));
 
         splitter.show();
         splitter.setSizes({ 250, 750 });
@@ -2562,7 +2564,7 @@ private slots:
         // images. Supply real QImage resources without network/file I/O so that
         // Qt's document layout must account for screenshot-sized rectangles.
         int screenshots = 0;
-        for (int index = room->messageCount() - 1; index >= 0 && screenshots < 2; --index) {
+        for (int index = room->messageCount() - 1; richScenario && index >= 0 && screenshots < 2; --index) {
             QWidget *row = room->itemWidget(index);
             auto *body = row ? row->findChild<ChatMessageText *>() : nullptr;
             if (!body)
@@ -2597,6 +2599,7 @@ private slots:
         PSI_MAM_CALLGRIND_STOP();
         qInfo().noquote() << "MAM_RESIZE_PROFILE"
                           << "qt=" << QT_VERSION_STR
+                          << "scenario=" << (richScenario ? "rich" : "simple")
                           << "messages=" << room->messageCount()
                           << "materialized=" << materialized
                           << "screenshots=" << screenshots
