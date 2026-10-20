@@ -400,23 +400,24 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
     connect(this, &Mattermost::LongListWidget::userScrollStarted, this, [this] {
         followingInitialTail_ = false;
         hideMessageActions();
-
-        // LongListWidget recognizes user scroll-bar actions as well as wheels.
-        // Check the position after Qt has applied the action; the same signal
-        // also fires before a slider move has updated its value. The direction
-        // and near-oldest boundary must both match. Archive insertions, row
-        // remeasurement and repainting never grant another history request.
-        const int previousValue = verticalScrollBar()->value();
-        const auto requestSerial = historyRequestSerial_;
-        QTimer::singleShot(0, this, [this, previousValue, requestSerial] {
-            // A wheel can have requested the page synchronously while an older
-            // scrollbar check is still queued. Never consume that gesture twice,
-            // even if HistorySync replayed a cached page before this callback.
-            if (historyRequestSerial_ != requestSerial)
-                return;
+    });
+    // actionTriggered is a user-directed scrollbar action, including an
+    // outward PageUp/StepUp at value == minimum (which cannot decrease).
+    // Programmatic changes during prepends/layout never emit this signal.
+    auto *bar = verticalScrollBar();
+    connect(bar, &QScrollBar::actionTriggered, this, [this, bar](int action) {
+        const bool upward = action == QAbstractSlider::SliderSingleStepSub
+            || action == QAbstractSlider::SliderPageStepSub
+            || action == QAbstractSlider::SliderToMinimum
+            || (action == QAbstractSlider::SliderMove && bar->sliderPosition() < bar->value());
+        if (!upward)
+            return;
+        const quint64 serial = historyRequestSerial_;
+        QTimer::singleShot(0, this, [this, bar, serial] {
+            if (historyRequestSerial_ != serial)
+                return; // Another handler already consumed this action.
             const auto visible = visibleRange();
-            if (verticalScrollBar()->value() < previousValue
-                && visible.isValid() && visible.first <= 1)
+            if (bar->value() == bar->minimum() || (visible.isValid() && visible.first <= 1))
                 requestOlderMessages("scrollbar");
         });
     });
@@ -1123,6 +1124,10 @@ void MamChatWidget::clearMessages()
     historyExhausted_     = false;
     historyRequestPending_ = false;
     ++historyRequestSerial_; // Invalidate deferred gestures from the old conversation.
+    initialFillEligible_ = false;
+    initialFillFinished_ = false;
+    initialFillCheckPending_ = false;
+    initialFillRequests_ = 0;
     setItemCount(0);
     timestampTimer_->stop();
 }
@@ -1143,6 +1148,49 @@ void MamChatWidget::requestOlderMessages(const char *gesture)
                       << "rows=" << messageCount()
                       << "serial=" << historyRequestSerial_;
     emit olderMessagesRequested();
+}
+
+void MamChatWidget::maybeContinueInitialHistoryFill()
+{
+    // Called only after a successfully handled MAM/EDB page. The first MUC
+    // history burst is preserved; only missing older rows are prepended.
+    initialFillEligible_ = true;
+    scheduleInitialHistoryFillCheck();
+}
+
+void MamChatWidget::scheduleInitialHistoryFillCheck()
+{
+    if (!initialFillEligible_ || initialFillFinished_ || initialFillCheckPending_
+        || !followingInitialTail_ || historyLoading_ || historyExhausted_)
+        return;
+    initialFillCheckPending_ = true;
+    // Let LongListWidget materialize and measure real widget heights first.
+    QTimer::singleShot(25, this, [this] {
+        initialFillCheckPending_ = false;
+        if (!initialFillEligible_ || initialFillFinished_ || !followingInitialTail_
+            || historyLoading_ || historyExhausted_ || !isVisible() || viewport()->height() <= 0)
+            return;
+        const bool underfilled = contentHeight() <= viewport()->height();
+        qInfo().noquote() << "[mam-history] initial viewport check"
+                          << "rows=" << messageCount() << "height=" << contentHeight()
+                          << "viewport=" << viewport()->height()
+                          << "underfilled=" << underfilled
+                          << "followUps=" << initialFillRequests_
+                          << "atEnd=" << isAtEnd();
+        if (!underfilled) {
+            initialFillFinished_ = true;
+            return;
+        }
+        // A room archive may consist entirely of protocol-only MAM events.
+        // Limit implicit prefetch independently of explicit user gestures.
+        constexpr int MaxInitialFillFollowUps = 6;
+        if (initialFillRequests_ >= MaxInitialFillFollowUps) {
+            initialFillFinished_ = true;
+            return;
+        }
+        ++initialFillRequests_;
+        requestOlderMessages("initial-viewport-fill");
+    });
 }
 
 void MamChatWidget::setHistoryLoading(bool loading)
@@ -1861,6 +1909,7 @@ void MamChatWidget::resizeEvent(QResizeEvent *event)
     if (followingInitialTail_ && !items_.isEmpty())
         scrollToEnd();
     positionSelectionToolbar();
+    scheduleInitialHistoryFillCheck();
 }
 
 void MamChatWidget::showEvent(QShowEvent *event)
@@ -1871,6 +1920,7 @@ void MamChatWidget::showEvent(QShowEvent *event)
     QTimer::singleShot(0, this, [this] {
         if (followingInitialTail_ && !items_.isEmpty())
             scrollToEnd();
+        scheduleInitialHistoryFillCheck();
         updateTimestamps();
     });
 }
