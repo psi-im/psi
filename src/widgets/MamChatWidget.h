@@ -15,6 +15,7 @@ class FileSharingDeviceOpener;
 class QFrame;
 class QLabel;
 class QResizeEvent;
+class QWheelEvent;
 class QShowEvent;
 class QHideEvent;
 class QTimer;
@@ -81,6 +82,7 @@ protected:
     void     changeEvent(QEvent *event) override;
 
 private:
+    void requestOlderMessages();
     void schedulePaletteRefresh();
     void refreshPalette();
     bool paletteRefreshPending_ = false;
@@ -147,6 +149,7 @@ private:
     void                    coalesceRevisionRows();
     bool                    historyLoading_   = false;
     bool                    historyExhausted_ = false;
+    bool                    historyRequestPending_ = false;
     // Opening a chat always starts at the live tail, even while Qt measures
     // new rows or MAM/EDB prepends history. A real user scroll takes ownership.
     bool    followingInitialTail_ = true;
