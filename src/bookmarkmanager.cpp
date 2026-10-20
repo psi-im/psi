@@ -28,6 +28,8 @@
 #include "iris/xmpp_xmlcommon.h"
 #include "psiaccount.h"
 
+#include <optional>
+
 // -----------------------------------------------------------------------------
 
 class BookmarkTask : public Task {
@@ -123,6 +125,10 @@ struct BookmarkManager::PepState {
     quint64 eventSerial = 0;
     QHash<QString, quint64> eventRevisions;
     QHash<QString, XMPP::NativeBookmark> originals;
+    // Store changes by room, not full snapshots that could delete newer PEP items.
+    QHash<QString, std::optional<ConferenceBookmark>> queuedEdits;
+    QList<URLBookmark> queuedUrls;
+    bool queuedUrlsValid = false;
 };
 
 BookmarkManager::BookmarkManager(PsiAccount *account) :
@@ -259,6 +265,8 @@ void BookmarkManager::accountStateChanged()
         pep_->legacyPending = false;
         pep_->originals.clear();
         pep_->eventRevisions.clear();
+        pep_->queuedEdits.clear();
+        pep_->queuedUrlsValid = false;
     }
 
     if (account_->isAvailable() && !accountAvailable_) {
@@ -353,6 +361,7 @@ void BookmarkManager::loadNativeBookmarks()
             conferences_ = result;
             emit conferencesChanged(conferences_);
         }
+        flushQueuedBookmarks();
     });
     task->go(true);
 }
@@ -370,8 +379,31 @@ void BookmarkManager::getBookmarks()
 void BookmarkManager::setBookmarks(const QList<URLBookmark> &urls, const QList<ConferenceBookmark> &conferences)
 {
     if (pep_->active) {
-        if (pep_->writing)
-            return; // Do not issue overlapping non-atomic PubSub edits.
+        if (pep_->writing) {
+            // Do not silently drop edits made while the preceding IQ batch is
+            // pending. Record only touched rooms, so unrelated PEP pushes survive.
+            QHash<QString, ConferenceBookmark> requested;
+            for (const auto &room : conferences) {
+                if (!room.jid().isValid() || room.jid().resource().size())
+                    return;
+                requested.insert(room.jid().bare(), room);
+            }
+            for (const auto &room : conferences) {
+                const auto old = std::find_if(conferences_.cbegin(), conferences_.cend(),
+                    [&room](const ConferenceBookmark &b) { return b.jid().bare() == room.jid().bare(); });
+                if (old == conferences_.cend() || *old != room)
+                    pep_->queuedEdits.insert(room.jid().bare(), room);
+            }
+            for (const auto &room : conferences_) {
+                if (!requested.contains(room.jid().bare()))
+                    pep_->queuedEdits.insert(room.jid().bare(), std::nullopt);
+            }
+            if (urls != urls_) {
+                pep_->queuedUrls = urls;
+                pep_->queuedUrlsValid = true;
+            }
+            return;
+        }
         struct Edit {
             bool removal;
             QString room;
@@ -483,8 +515,11 @@ void BookmarkManager::setBookmarks(const QList<URLBookmark> &urls, const QList<C
                 if (changed)
                     emit conferencesChanged(conferences_);
                 emit bookmarksSaved();
-                if (urls != urls_)
-                    setBookmarks(urls); // private XML retains URL bookmarks.
+                if (urls != urls_) {
+                    pep_->queuedUrls = urls;
+                    pep_->queuedUrlsValid = true;
+                }
+                flushQueuedBookmarks();
             });
             task->go(true);
         }
@@ -495,6 +530,25 @@ void BookmarkManager::setBookmarks(const QList<URLBookmark> &urls, const QList<C
     connect(t, SIGNAL(finished()), SLOT(setBookmarks_finished()));
     t->set(urls, conferences);
     t->go(true);
+}
+
+void BookmarkManager::flushQueuedBookmarks()
+{
+    if (!pep_->active || pep_->writing || (pep_->queuedEdits.isEmpty() && !pep_->queuedUrlsValid))
+        return;
+    auto pending = std::move(pep_->queuedEdits);
+    pep_->queuedEdits.clear();
+    const auto urls = pep_->queuedUrlsValid ? pep_->queuedUrls : urls_;
+    pep_->queuedUrlsValid = false;
+    auto conferences = conferences_;
+    for (auto it = pending.cbegin(); it != pending.cend(); ++it) {
+        conferences.erase(std::remove_if(conferences.begin(), conferences.end(),
+            [&it](const ConferenceBookmark &b) { return b.jid().bare() == it.key(); }),
+            conferences.end());
+        if (it.value().has_value())
+            conferences.append(*it.value());
+    }
+    setBookmarks(urls, conferences);
 }
 
 void BookmarkManager::setBookmarks(const QList<URLBookmark> &urls) { setBookmarks(urls, conferences()); }
