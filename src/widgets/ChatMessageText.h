@@ -21,8 +21,13 @@ protected:
     void       resizeEvent(QResizeEvent *event) override;
     void       changeEvent(QEvent *event) override;
     void       wheelEvent(QWheelEvent *event) override;
+    void       mousePressEvent(QMouseEvent *event) override;
+    void       mouseReleaseEvent(QMouseEvent *event) override;
     QMimeData *createMimeDataFromSelection() const override;
 
 private:
     void applyDocumentFont();
+
+    QString pressedLink_;
+    QPoint  pressedLinkPosition_;
 };
