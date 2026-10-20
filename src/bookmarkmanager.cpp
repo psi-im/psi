@@ -247,14 +247,25 @@ void BookmarkManager::accountStateChanged()
 {
     if (!account_->isAvailable()) {
         setIsAvailable(false);
-        pep_->active = false;
-        pep_->nativeWasActive = false;
-        pep_->legacyPending = false;
-        pep_->retryDelayMs = 0;
-        pep_->replica.reset();
-        pep_->preferences.clear();
-        pep_->inFlightPreferences.clear();
-        pep_->queuedUrlsValid = false;
+        if (accountAvailable_) {
+            pep_->active = false;
+            pep_->legacyPending = false;
+            pep_->retryDelayMs = 0;
+            // A disconnect invalidates network callbacks, not user intent.
+            // Retain unconfirmed PEP edits and this device's join preferences;
+            // the next fetch will reconcile them before any retry.
+            pep_->replica.reset(pep_->nativeWasActive);
+            if (pep_->nativeWasActive) {
+                for (auto it = pep_->inFlightPreferences.cbegin();
+                     it != pep_->inFlightPreferences.cend(); ++it)
+                    if (!pep_->preferences.contains(it.key()))
+                        pep_->preferences.insert(it.key(), it.value());
+            } else {
+                pep_->preferences.clear();
+                pep_->queuedUrlsValid = false;
+            }
+            pep_->inFlightPreferences.clear();
+        }
     }
 
     if (account_->isAvailable() && !accountAvailable_)
