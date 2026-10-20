@@ -2057,6 +2057,34 @@ private slots:
         QTRY_COMPARE(requests.count(), 2);
     }
 
+    void cachedPageCompletionCannotReplaySameWheelGesture()
+    {
+        MamChatWidget list;
+        list.resize(400, 240);
+        list.setHistoryLoading(true);
+        for (int i = 0; i < 35; ++i)
+            list.appendMessage(message(QString::number(i), QStringLiteral("Visible body"), i));
+        list.show();
+        QTRY_VERIFY(list.verticalScrollBar()->maximum() > 100);
+        list.setHistoryLoading(false);
+        QSignalSpy requests(&list, &MamChatWidget::olderMessagesRequested);
+
+        // Start just below the oldest boundary. One wheel both moves the
+        // scrollbar and requests a page. The deferred scrollbar check must not
+        // reuse that same gesture after a cached HistorySync reply completes.
+        list.verticalScrollBar()->setValue(20);
+        QCoreApplication::processEvents();
+        QWheelEvent event(QPointF(4, 4), QPointF(list.viewport()->mapToGlobal(QPoint(4, 4))),
+                          QPoint(), QPoint(0, 120), Qt::NoButton, Qt::NoModifier,
+                          Qt::NoScrollPhase, false);
+        QApplication::sendEvent(list.viewport(), &event);
+        QCOMPARE(requests.count(), 1);
+        list.setHistoryLoading(true);
+        list.setHistoryLoading(false);
+        QCoreApplication::processEvents();
+        QCOMPARE(requests.count(), 1);
+    }
+
     void upwardWheelAtEmptyOrShortHistoryRequestsOnePagePerGesture()
     {
         MamChatWidget list;
