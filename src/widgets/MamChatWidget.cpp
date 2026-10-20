@@ -396,13 +396,23 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
     connect(this, &Mattermost::LongListWidget::userScrollStarted, this, [this] {
         followingInitialTail_ = false;
         hideMessageActions();
+
+        // LongListWidget recognizes user scroll-bar actions as well as wheels.
+        // Check the position after Qt has applied the action; the same signal
+        // also fires before a slider move has updated its value. The direction
+        // and near-oldest boundary must both match. Archive insertions, row
+        // remeasurement and repainting never grant another history request.
+        const int previousValue = verticalScrollBar()->value();
+        QTimer::singleShot(0, this, [this, previousValue] {
+            const auto visible = visibleRange();
+            if (verticalScrollBar()->value() < previousValue
+                && visible.isValid() && visible.first <= 1)
+                requestOlderMessages();
+        });
     });
 
-    connect(this, &Mattermost::LongListWidget::visibleRangeChanged, this, [this](int first, int) {
-        // Geometry updates and archive prepends are not user scrollback intent.
-        // While following the live tail, never fetch older pages implicitly.
-        if (first <= 1 && !followingInitialTail_ && !isAtEnd())
-            requestOlderMessages();
+    connect(this, &Mattermost::LongListWidget::visibleRangeChanged, this, [this](int, int) {
+        // Visibility is a geometry fact, not authorization to fetch more MAM.
         updateTimestamps();
     });
     connect(this, &Mattermost::LongListWidget::materializedRangeChanged, this,
@@ -1808,14 +1818,18 @@ void MamChatWidget::positionSelectionToolbar()
 
 void MamChatWidget::wheelEvent(QWheelEvent *event)
 {
-    // A short or empty timeline has no scrollbar movement and therefore no
-    // visibleRangeChanged signal. An actual upward wheel gesture at the start
-    // must still be able to request another archive page.
+    // Delegate actual scroll geometry/anchors to the shared MatterLeast list.
+    // Unlike visibleRangeChanged, an upward wheel is an explicit demand. Test
+    // AFTER scrolling so a gesture reaching the oldest visible row counts too.
     const int delta = event->pixelDelta().y() != 0 ? event->pixelDelta().y()
                                                     : event->angleDelta().y();
-    if (delta > 0 && verticalScrollBar()->value() == verticalScrollBar()->minimum())
-        requestOlderMessages();
     Mattermost::LongListWidget::wheelEvent(event);
+    if (delta <= 0)
+        return;
+    const auto visible = visibleRange();
+    if (verticalScrollBar()->value() == verticalScrollBar()->minimum()
+        || (visible.isValid() && visible.first <= 1))
+        requestOlderMessages();
 }
 
 void MamChatWidget::resizeEvent(QResizeEvent *event)
