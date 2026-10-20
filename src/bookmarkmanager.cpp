@@ -120,6 +120,8 @@ struct BookmarkManager::PepState {
     bool writing = false;
     bool legacyPending = false;
     quint64 generation = 0;
+    quint64 eventSerial = 0;
+    QHash<QString, quint64> eventRevisions;
     QHash<QString, XMPP::NativeBookmark> originals;
 };
 
@@ -138,6 +140,7 @@ BookmarkManager::BookmarkManager(PsiAccount *account) :
         if (!native.isValid())
             return;
         pep_->originals.insert(native.room().bare(), native);
+        pep_->eventRevisions.insert(native.room().bare(), ++pep_->eventSerial);
         ConferenceBookmark conference(native.name(), native.room(),
             native.autoJoin() ? ConferenceBookmark::Always : ConferenceBookmark::Never,
             native.nick(), native.password());
@@ -167,6 +170,7 @@ BookmarkManager::BookmarkManager(PsiAccount *account) :
         if (!pep_->active || service.bare() != account_->jid().bare() || node != XMPP::NativeBookmark::node())
             return;
         pep_->originals.remove(id);
+        pep_->eventRevisions.insert(id, ++pep_->eventSerial);
         auto result = conferences_;
         result.erase(std::remove_if(result.begin(), result.end(),
                       [&id](const ConferenceBookmark &b) { return b.jid().bare() == id; }), result.end());
@@ -254,6 +258,7 @@ void BookmarkManager::accountStateChanged()
         pep_->writing = false;
         pep_->legacyPending = false;
         pep_->originals.clear();
+        pep_->eventRevisions.clear();
     }
 
     if (account_->isAvailable() && !accountAvailable_) {
@@ -398,6 +403,7 @@ void BookmarkManager::setBookmarks(const QList<URLBookmark> &urls, const QList<C
         }
         pep_->writing = true;
         const auto generation = pep_->generation;
+        const auto startedAt = pep_->eventSerial;
         auto remaining = std::make_shared<int>(edits.size());
         auto failed = std::make_shared<bool>(false);
         auto originalUpdates = std::make_shared<QHash<QString, XMPP::NativeBookmark>>(pep_->originals);
@@ -429,7 +435,7 @@ void BookmarkManager::setBookmarks(const QList<URLBookmark> &urls, const QList<C
                 originalUpdates->insert(edit.room, native);
             }
             connect(task, &XMPP::Task::finished, this,
-                    [this, task, remaining, failed, originalUpdates, urls, conferences, generation] {
+                    [this, task, remaining, failed, originalUpdates, edits, urls, generation, startedAt] {
                 if (generation != pep_->generation)
                     return;
                 if (!task->success())
@@ -444,9 +450,26 @@ void BookmarkManager::setBookmarks(const QList<URLBookmark> &urls, const QList<C
                     loadNativeBookmarks();
                     return;
                 }
-                pep_->originals = *originalUpdates;
-                const bool changed = conferences_ != conferences;
-                conferences_ = conferences;
+                // PubSub publishes are not an atomic snapshot replace. Apply only
+                // the rooms edited by this batch: other devices may have sent
+                // unrelated PEP events while the IQs were outstanding. For an
+                // edited room, prefer any newer PEP event to our stale request.
+                auto updated = conferences_;
+                for (const auto &edit : edits) {
+                    if (pep_->eventRevisions.value(edit.room, 0) > startedAt)
+                        continue;
+                    updated.erase(std::remove_if(updated.begin(), updated.end(),
+                        [&edit](const ConferenceBookmark &b) { return b.jid().bare() == edit.room; }),
+                        updated.end());
+                    if (edit.removal) {
+                        pep_->originals.remove(edit.room);
+                    } else {
+                        pep_->originals.insert(edit.room, originalUpdates->value(edit.room));
+                        updated.append(edit.bookmark);
+                    }
+                }
+                const bool changed = conferences_ != updated;
+                conferences_ = updated;
                 QStringList localMucs;
                 QStringList ignoreMucs;
                 for (const auto &room : conferences_) {
