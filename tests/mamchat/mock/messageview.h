@@ -36,6 +36,8 @@ public:
     void           setMessageId(const QString &id) { id_ = id; }
     void           setMarkable(bool value = true) { markable_ = value; }
     bool           isMarkable() const { return markable_; }
+    bool           isEmote() const { return emote_; }
+    void           setEmote(bool value = true) { emote_ = value; }
     void           setHistoryId(qint64 id) { historyId_ = id; }
     qint64         historyId() const { return historyId_; }
     void           setRevisionTime(const QDateTime &time) { revisionTime_ = time; }
@@ -104,6 +106,7 @@ private:
     bool          spooled_ = false;
     bool          edited_  = false;
     bool          markable_ = false;
+    bool          emote_ = false;
     bool          securityKnown_ = false;
     bool          encrypted_     = false;
     QString       encryptionProtocol_;

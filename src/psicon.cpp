@@ -884,7 +884,8 @@ QStringList PsiCon::xmppFatures() const
                                          << "http://jabber.org/protocol/geoloc"
                                          << "urn:ietf:params:xml:ns:vcard-4.0"
                                          << "urn:xmpp:avatar:data"
-                                         << "urn:xmpp:avatar:metadata";
+                                         << "urn:xmpp:avatar:metadata"
+                                         << "urn:xmpp:bookmarks:1+notify";
 
     static QList<OptFeatureMap> fmap = QList<OptFeatureMap>()
         << OptFeatureMap("options.service-discovery.last-activity", QStringList() << "jabber:iq:last")

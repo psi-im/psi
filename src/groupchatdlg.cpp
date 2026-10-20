@@ -126,8 +126,9 @@ public:
         QDomElement ping = doc()->createElementNS("urn:xmpp:ping", "ping");
         iq_.appendChild(ping);
         timeout.setSingleShot(true);
-        timeout.setInterval(1000 * 60 * 10);
+        timeout.setInterval(35 * 1000);
         connect(&timeout, SIGNAL(timeout()), SLOT(timeout_triggered()));
+        timeout.start();
         send(iq_);
     }
 
@@ -155,8 +156,16 @@ public:
                 XMPP::Stanza::Error err;
                 err.fromXml(tag, client()->stream().baseNS());
                 if (err.condition == XMPP::Stanza::Error::ErrorCond::ItemNotFound) {
-                    emit result(NoSuch, id());
-                } else if (err.condition == XMPP::Stanza::Error::ErrorCond::NotAcceptable) {
+                    emit result(NoSuch, id()); // Nick changed: not evidence of a lost join.
+                } else if (err.condition == XMPP::Stanza::Error::ErrorCond::ServiceUnavailable
+                           || err.condition == XMPP::Stanza::Error::ErrorCond::FeatureNotImplemented) {
+                    emit result(LoggedIn, id()); // Routed to an occupant client without XEP-0199.
+                } else if (err.condition == XMPP::Stanza::Error::ErrorCond::RemoteServerNotFound
+                           || err.condition == XMPP::Stanza::Error::ErrorCond::RemoteServerTimeout) {
+                    emit result(Timeout, id()); // Unknown state: don't rejoin blindly.
+                } else if (err.condition == XMPP::Stanza::Error::ErrorCond::NotAcceptable
+                           || err.condition == XMPP::Stanza::Error::ErrorCond::NotAllowed
+                           || err.condition == XMPP::Stanza::Error::ErrorCond::BadRequest) {
                     emit result(NotOccupant, id());
                 } else {
                     emit result(OtherErr, id());
@@ -204,6 +213,9 @@ public:
         trackBar = false;
         mCmdManager.registerProvider(this);
         actions = new ActionList("", 0, false);
+        selfPingIdle_.setSingleShot(true);
+        selfPingIdle_.setInterval(15 * 60 * 1000);
+        connect(&selfPingIdle_, &QTimer::timeout, this, &Private::automaticSelfPing);
     }
 
     ~Private() { delete actions; }
@@ -242,6 +254,8 @@ public:
     bool   gcSelfPresenceSupported = false;
     bool   gcSelfAvatarRequested   = false; // when self presence is not supported
     bool   forceQuit               = false; // ignore hide-when-closing option
+    QTimer selfPingIdle_;
+    bool selfPingPending_ = false;
 
     QStringList hist;
     int         histAt;
@@ -330,6 +344,40 @@ public slots:
                                   .arg(idle->jid().resource(), idle->time().toString(), idle->status()),
                               false);
         }
+    }
+
+    void noteRoomActivity()
+    {
+        if (state == Connected && dlg->account()->isConnected() && !self.isEmpty())
+            selfPingIdle_.start(); // Quiet for 15 minutes before a self-ping.
+    }
+
+    void automaticSelfPing()
+    {
+        if (state != Connected || !dlg->account()->isConnected() || self.isEmpty() || selfPingPending_)
+            return;
+        selfPingPending_ = true;
+        const Jid target = dlg->jid().withResource(self);
+        auto *task = new StatusPingTask(target, dlg->account()->client()->rootTask());
+        connect(task, &StatusPingTask::result, this, [this](StatusPingTask::Result result, const QString &) {
+            selfPingPending_ = false;
+            if (state != Connected || !dlg->account()->isConnected())
+                return;
+            if (result == StatusPingTask::NotOccupant || result == StatusPingTask::OtherErr) {
+                dlg->appendSysMsg(tr("Room membership lost; attempting to rejoin."), false);
+                // A room that forgot its occupant can remain locally 'joined'.
+                // Retire that state before attempting a fresh MUC join.
+                dlg->account()->groupChatLeave(dlg->jid().domain(), dlg->jid().node());
+                state = Idle;
+                dlg->goConn();
+            } else {
+                if (result == StatusPingTask::Timeout)
+                    selfPingIdle_.start(60 * 1000); // Uncertain; retry, don't rejoin.
+                else
+                    noteRoomActivity();
+            }
+        });
+        task->go(true);
     }
 
     void doSPing()
@@ -1886,6 +1934,7 @@ void GCMainDlg::dropEvent(QDropEvent *e)
 void GCMainDlg::pa_updatedActivity()
 {
     if (!account()->loggedIn()) {
+        d->selfPingIdle_.stop();
         goDisc();
     } else {
         if (d->state == Private::Idle) {
@@ -1960,6 +2009,7 @@ void GCMainDlg::gcSelfPresence(const Status &s)
 
 void GCMainDlg::presence(const QString &nick, const Status &s)
 {
+    d->noteRoomActivity();
     if (s.hasError()) {
         QString message;
         if (s.errorCode() == 409) {
@@ -2365,6 +2415,7 @@ void GCMainDlg::joined()
         appendSysMsg(tr("Connected."), true);
     }
     account()->addMucItem(d->dlg->jid().bare());
+    d->noteRoomActivity();
     mamArchiveReady_ = true;
     mamRefreshTail_ = !mamBeforeId_.isEmpty();
     if (nativeTimeline_)
@@ -2518,6 +2569,7 @@ void GCMainDlg::loadOlderMamMessages()
 
 void GCMainDlg::appendMessage(const Message &m, bool alert)
 {
+    d->noteRoomActivity();
     Message dm = m.displayMessage();
     // figure out the encryption state
     bool encChanged = false;
