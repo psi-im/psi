@@ -1,22 +1,8 @@
 /*
- * bookmarkmanager.h
- * Copyright (C) 2006-2008  Remko Troncon, Michail Pishchagin
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- *
+ * bookmarkmanager.h - Psi adapter for the Iris bookmark protocol manager
+ * Copyright (C) 2006-2008 Remko Troncon, Michail Pishchagin
+ * SPDX-License-Identifier: GPL-2.0-or-later
  */
-
 #ifndef BOOKMARKMANAGER_H
 #define BOOKMARKMANAGER_H
 
@@ -29,29 +15,30 @@
 
 class PsiAccount;
 
+/**
+ * Psi-facing bookmark model. XMPP and persistence are handled by
+ * XMPP::BookmarksManager in Iris; this class only translates values and
+ * applies this device's private MUC join preferences.
+ */
 class BookmarkManager : public QObject {
     Q_OBJECT
-
 public:
-    BookmarkManager(PsiAccount *account);
+    explicit BookmarkManager(PsiAccount *account);
     ~BookmarkManager() override;
 
     bool isAvailable() const;
     bool isBookmarked(const XMPP::Jid &);
-
-    const QList<URLBookmark>        &urls() const;
+    const QList<URLBookmark> &urls() const;
     const QList<ConferenceBookmark> &conferences() const;
-    int                              indexOfConference(const XMPP::Jid &) const;
-    QString                          conferenceName(const XMPP::Jid &) const; // convenient method
+    int indexOfConference(const XMPP::Jid &) const;
+    QString conferenceName(const XMPP::Jid &) const;
 
     void setBookmarks(const QList<URLBookmark> &, const QList<ConferenceBookmark> &);
     void setBookmarks(const QList<URLBookmark> &);
     void setBookmarks(const QList<ConferenceBookmark> &);
-    // Apply only changes made relative to the dialog's opening snapshot.
-    // Unchanged/previously unseen rooms must survive concurrent PEP pushes.
     void applyConferenceEdits(const QList<ConferenceBookmark> &baseline,
                               const QList<ConferenceBookmark> &edited);
-    void addConference(const ConferenceBookmark &newb);
+    void addConference(const ConferenceBookmark &);
     void removeConference(const XMPP::Jid &);
 
 signals:
@@ -60,26 +47,14 @@ signals:
     void conferencesChanged(const QList<ConferenceBookmark> &);
     void bookmarksSaved();
 
-private slots:
-    void getBookmarks_finished();
-    void setBookmarks_finished();
-    void accountStateChanged();
-    void maybeEnableNativeBookmarks();
-
 private:
-    void getBookmarks();
-    void setIsAvailable(bool available);
-    void loadNativeBookmarks();
-    void flushQueuedBookmarks();
+    void syncConferences();
+    void syncUrls();
+    void updateLocalPreferences(const QList<ConferenceBookmark> &baseline,
+                                const QList<ConferenceBookmark> &edited);
 
-private:
-    PsiAccount               *account_;
-    bool                      accountAvailable_;
-    bool                      isAvailable_;
-    QList<URLBookmark>        urls_;
-    QList<ConferenceBookmark> conferences_;
-    struct PepState;
-    std::unique_ptr<PepState> pep_;
+    class Private;
+    std::unique_ptr<Private> d;
 };
 
 #endif // BOOKMARKMANAGER_H
