@@ -7,6 +7,94 @@ plans below are retained as design context; the implementation section describes
 what is currently active. No automatic pruning or whole-archive background sweep
 is enabled.
 
+## Native scrollback design: MatterLeast implementation audit (2026-10-20)
+
+The native Psi `LongListWidget.cpp` is **identical** to MatterLeast's
+`sources/widgets/LongListWidget.cpp` at this review. Reuse it as the single
+owner of scroll geometry, estimated row heights, semantic anchors, scrollbar
+seeks, widget materialization and eviction. Do not introduce a second custom
+scroll handler or viewport-fill loop.
+
+### What already carries over unchanged
+
+- `desiredRangeForViewport()` uses measured heights and a half-screen margin
+  in rows. `setPrefetchScreens(0)` keeps the additional whole-screen buffer
+  disabled. Demand is about a logical range, not the network page size.
+- `LongListWidget::materializeAvailable()` constructs widgets only when rows
+  enter the desired range. `evictOutside()` retains nearby widgets until the
+  residency budget is exceeded, then destroys the farthest outside the desired
+  range first. Psi's current residency budget is **160 widgets**, MatterLeast's
+  `PostListWidget` sets **200**. Neither figure is a message-cache limit.
+- `insertItems(..., PreserveVisibleContent)` and semantic anchors keep the
+  user's viewport stable when older rows are prepended, even if individual row
+  heights change after media/layout resolution. `at_end` is a separate
+  sticky-tail intent, not simply `first visible == 0`.
+- `LongListWidget` already understands wheel input, scroll-bar button/page
+  actions, dragging, seeking and programmatic navigation. Geometry/visibility
+  notifications can result from any of these or from layout changes.
+
+### The source/view boundary still missing in Psi
+
+MatterLeast's `ChatLogWidget` delegates `rangeRequested(first, last,
+reason, generation)` to an `AbstractPostSource`. The source owns logical
+identities, availability, transport pagination and cursor/boundary state. The
+view owns Qt widgets and scroll position. `ChannelPostSource` can interpret
+the *same logical request* as an exact page, cursor-before, cursor-after, or
+tail fetch. Its `PostSourceRequestGate` coalesces only overlapping in-flight
+requests and never queues stale far-away fetches.
+
+Psi currently keeps all known `MessageView` rows directly in
+`MamChatWidget::items_`, and the dialog drives `HistorySync` via
+`olderMessagesRequested()`. This is an interim compatibility adapter, not
+the full `AbstractPostSource` architecture. The next step is a Psi-specific
+history source with:
+
+1. **Logical model**: stable EDB/verified MAM identities, order and availability
+   independent of concrete row widgets. A MAM result without a visible message
+   advances source cursor/coverage but inserts no blank logical widget.
+2. **One bounded request**: `HistorySync` performs one older-page request,
+   or a bounded tail catch-up, at a time. RSM UID and verified page coverage
+   live in the source, not in scrollbar math.
+3. **Demand with reasons**: ordinary scrollback requests only when actual user
+   navigation reaches the oldest loaded boundary; explicit seek/navigation is
+   separate from initial open-at-tail. Never request based solely on
+   `visibleRangeChanged`, `setHistoryLoading(false)`, a prepend or a resize.
+4. **Coalescing/completion**: in-flight overlapping demand shares one response.
+   Every request has a terminal success/error/no-progress state. An empty or
+   protocol-only page changes cursor metadata, but cannot silently spawn the
+   next page. A new explicit upward gesture may request it; reconnect can
+   explicitly refresh the tail.
+5. **Memory residency**: continue using `LongListWidget`'s existing 160-widget
+   eviction. The separate `items_` model currently grows with every history
+   page; genuine bounded RAM usage ultimately requires DB-backed or evictable
+   message-body residency while retaining stable identity/height estimates,
+   selection and correction/reaction metadata. Do not erase rows from the
+   widget model just to meet a widget-residency budget: that would corrupt
+   scroll coordinates and deduplication.
+
+### Current MAM demand guard (PR #1008)
+
+With an unknown archive total, the first initial MAM page is requested
+explicitly by the dialog. Further older pages require upward user navigation
+to the beginning of the already visible history. `visibleRangeChanged`
+is presentation-only. A wheel at the top works even for an empty/short chat,
+where the scrollbar cannot physically move. Completed MAM pages and shifted
+indices do not authorize additional requests. A pending/active request is
+suppressed until the transport has acknowledged it.
+
+MatterLeast's channel transport size is 10 **posts**; Psi's `HistorySync`
+currently requests 40 **MAM stanzas**. These are not the same unit: MUC MAM
+contains delivery/read markers, reactions and corrections that produce no
+independent visible row. Keep MAM's protocol pagination distinct from
+`LongListWidget::requestBlockSize`; tuning the former should measure unique
+visible rows per fetched stanza rather than equate them mechanically.
+
+Regression tests should cover: a one-message upward movement near the newest
+edge, a true oldest-edge wheel/scrollbar action, dragging to a distant position,
+protocol-only and duplicate pages, immediate user-scroll while loading,
+no follow-up from resize or prepend, repeated explicit gestures, the
+160-widget residency bound, stable viewport anchors and EDB/MAM overlap.
+
 ## Incremental tail and protocol replay
 
 Reopening a connected chat uses the last UID of its persisted stable tail as
