@@ -1650,43 +1650,28 @@ void LongListWidget::materializeAvailable(const Range& range)
 
 void LongListWidget::evictOutside(const Range& keepRange, int preferredCenter)
 {
-    // maxMaterializedItems is a residency budget, not the size of the current
-    // viewport window. Keep already-created widgets while there is budget so
-    // short chats and nearby back-scrolls never churn rows unnecessarily.
-    int excess = static_cast<int>(materialized.size()) - maxMaterializedItems;
-    if (excess <= 0) {
-        return;
-    }
+    Q_UNUSED(preferredCenter);
 
-    QVector<int> candidates;
+    // Residency follows the viewport, not the count of chats visited so far.
+    // desiredRangeForViewport() already asks for the visible screen plus
+    // approximately half a screen of rows on either side. Once an item
+    // leaves that range, its QWidget is discarded; its logical position and
+    // height estimate remain in HeightIndex. There is no offscreen reflow.
+    //
+    // maxMaterializedItems remains an emergency upper bound when messages
+    // are extremely short, not a target cache size.
     const QVector<int> current = materializedIndices();
-    candidates.reserve(materialized.size());
     for (int index : current) {
-        if (!keepRange.contains(index)) {
-            candidates.push_back(index);
-        }
-    }
-    std::sort(candidates.begin(), candidates.end(),
-              [preferredCenter](int lhs, int rhs) {
-        const int lhsDistance = lhs < preferredCenter
-            ? preferredCenter - lhs : lhs - preferredCenter;
-        const int rhsDistance = rhs < preferredCenter
-            ? preferredCenter - rhs : rhs - preferredCenter;
-        return lhsDistance > rhsDistance;
-    });
-
-    for (int index : candidates) {
-        if (excess <= 0) {
-            break;
-        }
-        QWidget* widget = materialized.take(index);
-        if (!widget) {
+        if (keepRange.contains(index))
             continue;
-        }
+        QWidget* widget = materialized.take(index);
+        if (!widget)
+            continue;
+        pendingWidthWidgets_.remove(widget);
+        dirtyGeometry.remove(index);
         widgetIndexes.remove(widget);
         widget->removeEventFilter(this);
         destroyItemWidget(index, widget);
-        --excess;
     }
 }
 
