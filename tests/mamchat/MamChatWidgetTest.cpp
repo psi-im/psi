@@ -1967,20 +1967,65 @@ private slots:
         QVERIFY(!copied.contains(QStringLiteral("first-new")));
     }
 
-    void emptyArchiveRequestsAnotherPageWithoutScrollGesture()
+    void shortArchivePagesDoNotAutoPageAtTheLiveTail()
     {
         MamChatWidget list;
         list.resize(360, 240);
         list.setHistoryLoading(true);
         list.show();
         QSignalSpy requests(&list, &MamChatWidget::olderMessagesRequested);
+
+        // Protocol-only MUC pages can leave the native list short (or empty).
+        // Completing a page must not implicitly fetch the entire room archive.
+        for (int page = 0; page < 4; ++page) {
+            list.setHistoryLoading(false);
+            QCoreApplication::processEvents();
+            QCOMPARE(requests.count(), 0);
+            QVERIFY(list.isAtEnd());
+            list.setHistoryLoading(true);
+        }
+
+        // Replaying a small real page also must not trigger a background sweep.
+        list.prependArchivePage({qMakePair(QStringLiteral("uid-1"),
+                                          message(QStringLiteral("id-1"), QStringLiteral("Short reply")))});
         list.setHistoryLoading(false);
-        QTRY_VERIFY(!requests.isEmpty());
+        QCoreApplication::processEvents();
+        QCOMPARE(requests.count(), 0);
+        QVERIFY(list.isAtEnd());
+    }
+
+    void upwardWheelAtEmptyOrShortHistoryRequestsOnePagePerGesture()
+    {
+        MamChatWidget list;
+        list.resize(360, 240);
+        list.setHistoryLoading(true);
+        list.show();
+        list.setHistoryLoading(false);
+        QSignalSpy requests(&list, &MamChatWidget::olderMessagesRequested);
+
+        const auto wheel = [&list](int delta) {
+            QWheelEvent event(QPointF(4, 4), QPointF(list.viewport()->mapToGlobal(QPoint(4, 4))),
+                              QPoint(), QPoint(0, delta), Qt::NoButton, Qt::NoModifier,
+                              Qt::NoScrollPhase, false);
+            QApplication::sendEvent(list.viewport(), &event);
+        };
+        // Scrolling down at the live tail is not an older-history request.
+        wheel(-120);
+        QCOMPARE(requests.count(), 0);
+        wheel(120);
+        QCOMPARE(requests.count(), 1);
+
+        // Loading/completion alone must not queue subsequent MAM requests.
+        list.setHistoryLoading(true);
+        list.setHistoryLoading(false);
+        QCoreApplication::processEvents();
+        QCOMPARE(requests.count(), 1);
+        wheel(120);
+        QCOMPARE(requests.count(), 2);
+
         list.setHistoryExhausted(true);
-        const int atStop = requests.count();
-        list.setHistoryLoading(false);
-        QTest::qWait(40);
-        QCOMPARE(requests.count(), atStop);
+        wheel(120);
+        QCOMPARE(requests.count(), 2);
     }
 };
 
