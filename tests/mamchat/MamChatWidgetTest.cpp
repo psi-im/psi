@@ -2029,6 +2029,27 @@ private slots:
         QCOMPARE(room.messageCount(), 4);
     }
 
+    void pageSizeUsesVisibleMessageHeightsRatherThanArchiveEventCount()
+    {
+        MamChatWidget room;
+        room.resize(420, 900);
+        room.setHistoryLoading(true);
+        for (int i = 0; i < 4; ++i)
+            room.appendMessage(message(QString::number(i), QStringLiteral("Normal MUC body"), i));
+        room.show();
+        QTRY_VERIFY(room.itemWidget(0) != nullptr);
+        const int ordinarySize = room.suggestedOlderHistoryPageSize();
+        QVERIFY(ordinarySize >= 1 && ordinarySize <= 40);
+
+        // The opening request covers the missing screen plus an extra half
+        // screen; each message has three estimated protocol events.
+        room.maybeContinueInitialHistoryFill();
+        const int openingSize = room.suggestedOlderHistoryPageSize();
+        QVERIFY(openingSize >= ordinarySize);
+        QVERIFY(openingSize <= 40);
+        QVERIFY(openingSize == 40 || openingSize % 3 == 0);
+    }
+
     void initialViewportFillStopsWhenRealRowsFillWindow()
     {
         MamChatWidget room;
