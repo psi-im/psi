@@ -2572,9 +2572,15 @@ private slots:
             const QString imageUrl = QStringLiteral("profile-screenshot-%1.png").arg(screenshots);
             QImage screenshot(620, 340, QImage::Format_RGB32);
             screenshot.fill(Qt::lightGray);
+            body->setRichText(rich);
             body->document()->addResource(QTextDocument::ImageResource, QUrl(imageUrl), screenshot);
-            body->setRichText(QStringLiteral("<p>%1</p><img src='%2' width='620' height='340'/>")
-                                  .arg(rich, imageUrl));
+            QTextImageFormat format;
+            format.setName(imageUrl);
+            format.setWidth(screenshot.width());
+            format.setHeight(screenshot.height());
+            QTextCursor cursor(body->document());
+            cursor.movePosition(QTextCursor::End);
+            cursor.insertImage(format); // Direct resource: PsiRichText rejects untrusted local HTML <img>.
             ++screenshots;
         }
         QCoreApplication::processEvents();
