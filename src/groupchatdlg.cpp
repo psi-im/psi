@@ -2476,12 +2476,14 @@ void GCMainDlg::loadOlderMamMessages()
     const bool refreshTail = mamRefreshTail_;
     const QString requestedBefore = refreshTail ? QString() : mamBeforeId_;
     mamRefreshTail_ = false;
+    const int stanzaLimit = nativeTimeline_->suggestedOlderHistoryPageSize();
     qInfo().noquote() << "[mam-history] room request"
                       << room.bare() << "before=" << requestedBefore
                       << "refreshTail=" << refreshTail
                       << "visibleRows=" << nativeTimeline_->messageCount()
+                      << "stanzas=" << stanzaLimit
                       << "localExhausted=" << localExhausted_;
-    auto *task = new HistorySync(account(), room.bare(), true, requestedBefore, this);
+    auto *task = new HistorySync(account(), room.bare(), true, requestedBefore, this, stanzaLimit);
     mamTask_ = task;
     connect(task, &HistorySync::finished, this, [this, task, room, requestedBefore] {
         if (mamTask_ != task)
