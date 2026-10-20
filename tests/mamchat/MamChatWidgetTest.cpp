@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "widgets/MamChatWidget.h"
 #include "widgets/ChatMessageText.h"
-#include "widgets/CachedTextImageHandler.h"
 #include "widgets/PixmapLruCache.h"
 #include "widgets/urlobject.h"
 #include "desktopcolorpalette.h"
@@ -121,16 +120,14 @@ private slots:
         cache.clear();
     }
 
-    void inlineImagesAreMeasuredWithoutPixmapConversion()
+    // Regression: an earlier document-handler override made inline images
+    // disappear entirely. Keep the default image handler and verify pixels,
+    // not only QTextDocument resources or row dimensions.
+    void inlineImagesRemainVisibleAcrossWidthChanges()
     {
-        auto &cache = Psi::PixmapLruCache::instance();
-        cache.clear();
-        cache.setIdleTimeoutMs(60000);
-        cache.setMaxBytes(32LL * 1024 * 1024);
         ChatMessageText body;
         body.resize(540, 300);
-
-        QImage screenshot(400, 200, QImage::Format_RGB32);
+        QImage screenshot(100, 60, QImage::Format_RGB32);
         screenshot.fill(Qt::yellow);
         const QUrl url(QStringLiteral("profile-image"));
         body.document()->addResource(QTextDocument::ImageResource, url, screenshot);
@@ -138,28 +135,27 @@ private slots:
         format.setName(url.toString());
         QTextCursor cursor(body.document());
         cursor.insertImage(format);
-        auto *handler = body.document()->documentLayout()->handlerForObject(QTextFormat::ImageObject);
-        QVERIFY(handler);
-        QVERIFY(qobject_cast<CachedTextImageHandler *>(body.findChild<CachedTextImageHandler *>()));
+        QVERIFY(body.document()->documentLayout()->handlerForObject(QTextFormat::ImageObject));
 
-        const QSizeF size = handler->intrinsicSize(body.document(), 0, format);
-        QVERIFY(qAbs(size.width() - 400) <= 2);
-        QVERIFY(qAbs(size.height() - 200) <= 2);
-        for (int w : { 250, 350, 450, 550 }) {
-            QVERIFY(body.heightForWidth(w) > 0);
+        for (int width : { 250, 450 }) {
+            QVERIFY(body.heightForWidth(width) > 0);
+            QImage canvas(500, 200, QImage::Format_RGB32);
+            canvas.fill(Qt::white);
+            QPainter painter(&canvas);
+            body.document()->setTextWidth(width);
+            body.document()->drawContents(&painter);
+            painter.end();
+            bool pixelsVisible = false;
+            for (int y = 0; y < canvas.height() && !pixelsVisible; y += 4)
+                for (int x = 0; x < canvas.width(); x += 4)
+                    if (canvas.pixelColor(x, y) == QColor(Qt::yellow)) {
+                        pixelsVisible = true;
+                        break;
+                    }
+            QVERIFY2(pixelsVisible, "QTextDocument lost the inline image");
         }
-        QCOMPARE(cache.entryCount(), 0); // No raster conversion during relayout.
-
-        QImage canvas(650, 400, QImage::Format_RGB32);
-        canvas.fill(Qt::white);
-        QPainter painter(&canvas);
-        body.document()->setTextWidth(500);
-        body.document()->drawContents(&painter);
-        painter.end();
-        QCOMPARE(cache.entryCount(), 1); // Rasterized once to draw.
-        const QVariant stillImage = body.document()->resource(QTextDocument::ImageResource, url);
-        QCOMPARE(stillImage.userType(), int(QMetaType::QImage)); // Document never owns pixmap.
-        cache.clear();
+        const QVariant resource = body.document()->resource(QTextDocument::ImageResource, url);
+        QCOMPARE(resource.userType(), int(QMetaType::QImage));
     }
 
     void emoteUsesSenderPrefixWithoutChangingStoredMessage()
