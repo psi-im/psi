@@ -34,15 +34,26 @@ void sendEnterEvent(QWidget* widget)
 class VariableRow : public QWidget
 {
 public:
-    explicit VariableRow(int height, QWidget* parent = nullptr)
+    explicit VariableRow(int height, QWidget* parent = nullptr, bool responsive = false)
         : QWidget(parent)
         , hintHeight(height)
+        , responsive_(responsive)
     {
+        if (responsive_) {
+            auto policy = sizePolicy();
+            policy.setHeightForWidth(true);
+            setSizePolicy(policy);
+        }
+    }
+
+    int heightForWidth(int width) const override
+    {
+        return responsive_ ? hintHeight + std::max(0, 600 - width) / 5 : hintHeight;
     }
 
     QSize sizeHint() const override
     {
-        return QSize(420, hintHeight);
+        return QSize(420, heightForWidth(std::max(1, width())));
     }
 
     QSize minimumSizeHint() const override
@@ -58,6 +69,7 @@ public:
 
 private:
     int hintHeight = 1;
+    bool responsive_ = false;
 };
 
 class TestLongListWidget : public Mattermost::LongListWidget
@@ -76,6 +88,8 @@ public:
             itemsChanged(index, index);
         }
     }
+
+    void setResponsiveRows(bool responsive) { responsiveRows_ = responsive; }
 
     void setFactoryHeight(int index, int height)
     {
@@ -105,7 +119,7 @@ protected:
     QWidget* createItemWidget(int index) override
     {
         auto* row =
-            new VariableRow(syntheticHeights.value(index, defaultItemHeight()));
+            new VariableRow(syntheticHeights.value(index, defaultItemHeight()), nullptr, responsiveRows_);
         if (deferredHeights.contains(index)) {
             const int settledHeight = deferredHeights.take(index);
             QTimer::singleShot(0, row, [row, settledHeight] {
@@ -125,6 +139,7 @@ protected:
 private:
     QHash<int, int> syntheticHeights;
     QHash<int, int> deferredHeights;
+    bool responsiveRows_ = false;
 };
 
 } // namespace
@@ -134,6 +149,90 @@ class LongListWidgetTest : public QObject
     Q_OBJECT
 
 private slots:
+    void resizeKeepsLiveTailAndBottomRowPinned()
+    {
+        TestLongListWidget list;
+        list.resize(510, 300);
+        list.setResponsiveRows(true);
+        list.setDefaultItemHeight(82);
+        list.setItemCount(100);
+        list.setRangeAvailable(0, 99);
+        list.show();
+        list.scrollToEnd();
+        settleEvents();
+        QVERIFY(list.isAtEnd());
+        QTRY_VERIFY(list.itemWidget(99));
+
+        // Narrower text makes rows taller; the last post must stay attached
+        // to the bottom even if everything above it changes height.
+        list.resize(310, 330);
+        settleEvents();
+        QVERIFY(list.isAtEnd());
+        qreal fraction = 1000;
+        QVERIFY(list.captureSemanticAnchorFraction(
+            99, Mattermost::LongListWidget::SemanticAnchorPoint::ItemBottom, fraction));
+        QVERIFY2(qAbs(fraction) < 0.015, "Last row must remain at the viewport bottom");
+
+        list.resize(570, 250);
+        settleEvents();
+        QVERIFY(list.isAtEnd());
+        QVERIFY(list.captureSemanticAnchorFraction(
+            99, Mattermost::LongListWidget::SemanticAnchorPoint::ItemBottom, fraction));
+        QVERIFY(qAbs(fraction) < 0.015);
+    }
+
+    void resizePreservesCentralRowAndDefersOffscreenWidgets()
+    {
+        TestLongListWidget list;
+        list.resize(510, 300);
+        list.setResponsiveRows(true);
+        list.setDefaultItemHeight(85);
+        list.setMaterializationLimit(200);
+        list.setItemCount(160);
+        list.setRangeAvailable(0, 159);
+        list.show();
+
+        // Visit a second window so unrelated rows remain in the residency
+        // cache. These are not visible when we resize the first window.
+        list.scrollToIndex(110, Mattermost::LongListWidget::Alignment::Center);
+        settleEvents();
+        QVERIFY(list.itemWidget(110));
+        QWidget *cachedOutside = list.itemWidget(110);
+        list.scrollToIndex(60, Mattermost::LongListWidget::Alignment::Center);
+        settleEvents();
+        QVERIFY(!list.isAtEnd());
+        QVERIFY(cachedOutside == list.itemWidget(110));
+        const int oldOffscreenWidth = cachedOutside->width();
+
+        const int anchorIndex = list.viewportCenterIndex();
+        QVERIFY(anchorIndex >= 0);
+        qreal before = 100;
+        QVERIFY(list.captureSemanticAnchorFraction(
+            anchorIndex, Mattermost::LongListWidget::SemanticAnchorPoint::ItemCenter, before));
+
+        list.resize(340, 370);
+        settleEvents();
+        QVERIFY(!list.isAtEnd());
+        qreal after = 100;
+        QVERIFY(list.captureSemanticAnchorFraction(
+            anchorIndex, Mattermost::LongListWidget::SemanticAnchorPoint::ItemCenter, after));
+        QVERIFY2(qAbs(after - before) < 0.015,
+                 "Central message must keep its relative vertical position");
+        QCOMPARE(list.viewportCenterIndex(), anchorIndex);
+
+        // The off-screen row should not incur a QTextDocument-style width
+        // reflow when only the *visible* chat area was resized.
+        QCOMPARE(list.itemWidget(110), cachedOutside);
+        QCOMPARE(cachedOutside->width(), oldOffscreenWidth);
+
+        // It becomes visible after scrolling and must then match the new
+        // viewport width and measured height.
+        list.scrollToIndex(110, Mattermost::LongListWidget::Alignment::Center);
+        settleEvents();
+        QCOMPARE(cachedOutside->width(), list.viewport()->width());
+        QVERIFY(list.itemVisibility(110).testFlag(Mattermost::LongListWidget::ItemVisibility::Body));
+    }
+
     void semanticBottomAnchorDoesNotFollowNewReplies()
     {
         TestLongListWidget list;
