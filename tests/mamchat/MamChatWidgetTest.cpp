@@ -2014,6 +2014,8 @@ private slots:
         QCOMPARE(requests.count(), 0);
         wheel(120);
         QCOMPARE(requests.count(), 1);
+        wheel(120); // A second gesture before the queued slot must not duplicate a request.
+        QCOMPARE(requests.count(), 1);
 
         // Loading/completion alone must not queue subsequent MAM requests.
         list.setHistoryLoading(true);
