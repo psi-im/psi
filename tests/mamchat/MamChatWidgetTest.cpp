@@ -1994,6 +1994,88 @@ private slots:
         QVERIFY(list.isAtEnd());
     }
 
+    void initialViewportFillIsBoundedAndOnlyRequestedAfterExplicitPageCompletion()
+    {
+        MamChatWidget room;
+        room.resize(480, 900); // A short MUC backlog leaves ample empty space.
+        room.setHistoryLoading(true);
+        for (int i = 0; i < 4; ++i)
+            room.appendMessage(message(QStringLiteral("live-%1").arg(i),
+                                       QStringLiteral("Recent MUC body"), i));
+        room.show();
+        room.setHistoryLoading(false);
+        QSignalSpy requests(&room, &MamChatWidget::olderMessagesRequested);
+
+        QTest::qWait(70);
+        QCOMPARE(requests.count(), 0); // A passive layout update grants nothing.
+
+        room.maybeContinueInitialHistoryFill(); // First HistorySync page was handled.
+        QTRY_COMPARE(requests.count(), 1);
+        QCOMPARE(room.messageCount(), 4); // The already delivered MUC messages survive.
+
+        // More MAM pages made no visible progress (e.g. only markers/reactions).
+        // We may try to fill the opening viewport, but NEVER sweep to 1970.
+        for (int i = 2; i <= 6; ++i) {
+            room.setHistoryLoading(true);
+            room.setHistoryLoading(false);
+            room.maybeContinueInitialHistoryFill();
+            QTRY_COMPARE(requests.count(), i);
+        }
+        room.setHistoryLoading(true);
+        room.setHistoryLoading(false);
+        room.maybeContinueInitialHistoryFill();
+        QTest::qWait(90);
+        QCOMPARE(requests.count(), 6);
+        QCOMPARE(room.messageCount(), 4);
+    }
+
+    void initialViewportFillStopsWhenRealRowsFillWindow()
+    {
+        MamChatWidget room;
+        room.resize(420, 220);
+        room.setHistoryLoading(true);
+        for (int i = 0; i < 24; ++i)
+            room.appendMessage(message(QStringLiteral("live-%1").arg(i),
+                                       QStringLiteral("Normal MUC body"), i));
+        room.show();
+        QTRY_VERIFY(room.verticalScrollBar()->maximum() > 0);
+        room.setHistoryLoading(false);
+        QSignalSpy requests(&room, &MamChatWidget::olderMessagesRequested);
+
+        room.maybeContinueInitialHistoryFill();
+        QTest::qWait(90);
+        QCOMPARE(requests.count(), 0);
+        room.resize(420, 420);
+        QTest::qWait(90);
+        QCOMPARE(requests.count(), 0); // No resize-triggered archive sweep.
+    }
+
+    void scrollBarOutwardActionAtOldestBoundaryFetchesHistory()
+    {
+        MamChatWidget room;
+        room.resize(360, 180);
+        room.setHistoryLoading(true);
+        for (int i = 0; i < 30; ++i)
+            room.appendMessage(message(QString::number(i), QStringLiteral("Visible body"), i));
+        room.show();
+        QTRY_VERIFY(room.verticalScrollBar()->maximum() > 0);
+        room.setHistoryLoading(false);
+        QSignalSpy requests(&room, &MamChatWidget::olderMessagesRequested);
+
+        auto *bar = room.verticalScrollBar();
+        bar->setValue(bar->minimum());
+        QCoreApplication::processEvents();
+        QCOMPARE(requests.count(), 0); // Programmatic position changes are passive.
+        bar->triggerAction(QAbstractSlider::SliderSingleStepSub);
+        QTRY_COMPARE(requests.count(), 1); // The value cannot decrease below zero.
+        room.setHistoryLoading(true);
+        room.setHistoryLoading(false);
+        QCoreApplication::processEvents();
+        QCOMPARE(requests.count(), 1);
+        bar->triggerAction(QAbstractSlider::SliderPageStepSub);
+        QTRY_COMPARE(requests.count(), 2); // New, distinct user gesture.
+    }
+
     void scrollingFromTailToOldestRequestsHistory()
     {
         MamChatWidget list;
