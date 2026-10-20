@@ -31,18 +31,19 @@ def read_dependencies(root, require_iris=False):
             and iris["source"] == "git-submodule" and iris["path"] == "iris"
             and iris["lock_path"] == "iris/dependencies.lock.json",
             "Iris must be an exact gitlink with its own dependency lock")
-    require(isinstance(iris["release_tag"], str)
-            and re.fullmatch(r"v\d+\.\d+(?:\.\d+){0,2}", iris["release_tag"]),
+    require(iris["release_tag"] is None or (isinstance(iris["release_tag"], str)
+            and re.fullmatch(r"v\d+\.\d+(?:\.\d+){0,2}", iris["release_tag"])),
             "Invalid Iris release tag")
     # The release tag pins CI and packages; the minimum is the API floor for
     # builds against an installed Iris SDK (read by CMakeLists.txt).
     require(isinstance(iris["minimum_version"], str)
             and re.fullmatch(r"\d+\.\d+\.\d+", iris["minimum_version"]),
             "Invalid Iris minimum version")
-    selected = tuple(int(part) for part in iris["release_tag"][1:].split("."))
-    minimum = tuple(map(int, iris["minimum_version"].split(".")))
-    selected += (0,) * (len(minimum) - len(selected))
-    require(selected >= minimum, "Iris release tag below the minimum supported version")
+    if iris["release_tag"] is not None:
+        selected = tuple(int(part) for part in iris["release_tag"][1:].split("."))
+        minimum = tuple(map(int, iris["minimum_version"].split(".")))
+        selected += (0,) * (len(minimum) - len(selected))
+        require(selected >= minimum, "Iris release tag below the minimum supported version")
 
     psimedia = lock["psimedia"]["commit"]
     require(isinstance(psimedia, str) and HEX_SHA.fullmatch(psimedia), "Invalid psimedia SHA")
@@ -53,7 +54,7 @@ def read_dependencies(root, require_iris=False):
             "Invalid QtKeychain commit")
 
     values = {
-        "IRIS_RELEASE_TAG": iris["release_tag"],
+        "IRIS_RELEASE_TAG": iris["release_tag"] or "",
         "IRIS_MIN_VERSION": iris["minimum_version"],
         "PSIMEDIA_SRTP_REF": psimedia,
         "QTKEYCHAIN_TAG": keychain["tag"],
@@ -94,6 +95,8 @@ def verify_iris_release(root, tag):
     require(len(entry) == 4 and entry[0:2] == ["160000", "commit"]
             and HEX_SHA.fullmatch(entry[2]) and entry[3] == "iris",
             "Cannot resolve the pinned Iris gitlink")
+    if not tag:
+        return  # Explicit source-only revision; there is no compatible released SDK.
     ref = "refs/tags/" + tag
     output = subprocess.check_output(
         ["git", "ls-remote", "--tags", "https://github.com/psi-im/iris.git", ref, ref + "^{}"],
