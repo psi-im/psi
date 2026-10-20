@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "historysync.h"
+#include "widgets/MamHistoryLog.h"
 
 #include "historymessageextras.h"
 #include "iris/xmpp_encryption.h"
@@ -186,6 +187,9 @@ void HistorySync::go()
         const bool logging = context_.logging();
         if (logging) {
             const auto           saved = context_.read(key_, before_, pageSize_);
+            qCDebug(PsiMam::historyLog) << "cache account=" << key_.account << "peer=" << key_.peer
+                                        << "before=" << before_ << "limit=" << pageSize_ << "hit=" << saved.found
+                                        << "stable=" << saved.stable << "events=" << saved.entries.size();
             HistoryArchive::Page validated;
             QList<QDomElement>   xml;
             for (const auto &entry : saved.entries) {
@@ -239,6 +243,8 @@ void HistorySync::go()
 
 void HistorySync::finishError(const QString &error)
 {
+    qCWarning(PsiMam::historyLog) << "source-error account=" << key_.account << "peer=" << key_.peer
+                                  << "before=" << before_ << "error=" << error;
     page_.entries.clear();
     success_ = false;
     error_   = error;
@@ -249,6 +255,14 @@ void HistorySync::requestPage()
 {
     if (cancelled_)
         return;
+    if (!after_.isEmpty() && visitedAfter_.contains(after_)) {
+        finishError(tr("Archive catch-up repeated a cursor"));
+        return;
+    }
+    if (!after_.isEmpty())
+        visitedAfter_.insert(after_);
+    qCDebug(PsiMam::historyLog) << "network account=" << key_.account << "peer=" << key_.peer << "before=" << before_
+                                << "after=" << after_ << "limit=" << pageSize_;
     const bool       forward = !after_.isEmpty();
     XMPP::MAMManager manager(context_.client, pageSize_, pageSize_, false, !forward);
     task_ = manager.getArchiveByIDRange(key_.room ? XMPP::Jid() : XMPP::Jid(key_.peer), after_,

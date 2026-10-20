@@ -68,6 +68,7 @@ private:
     HistoryArchive::Key           key_;
     QString                       before_, error_;
     QString                       after_;
+    QSet<QString>                 visitedAfter_;
     HistoryArchive::Page          tail_;
     QList<QDomElement>            results_;
     QHash<QString, XMPP::Message> decoded_;

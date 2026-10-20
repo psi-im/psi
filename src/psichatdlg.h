@@ -38,6 +38,7 @@
 #include "widgets/actionlineedit.h"
 
 #include <QPointer>
+#include <QSet>
 
 class IconAction;
 class PsiContact;
@@ -135,6 +136,7 @@ private:
     MamChatWidget *nativeTimeline_ = nullptr;
     QPointer<HistorySync> mamTask_;
     QString mamBeforeId_;
+    QSet<QString>         mamSeenBeforeIds_;
     bool mamRefreshTail_ = false;
     qint64 localBeforeId_ = 0;
     bool localExhausted_ = false;

@@ -461,10 +461,35 @@ Page readPage(QSqlDatabase db, const Key &key, const QString &before, int limit)
         // Page boundaries move after new tail messages arrive. Reuse an
         // already verified contiguous chain at the new boundary, rather than
         // requiring identical historical request offsets forever.
-        if (before.isEmpty())
+        // Adaptive requests can ask for a different size at the SAME boundary.
+        // The boundary need not have a stored event (e.g. MUC join-history).
+        // Bootstrap from a certified page, then extend only via verified links.
+        q.prepare("SELECT page_size FROM archive_pages WHERE " + scope
+                  + " AND before_uid=:before AND stable=1 ORDER BY page_size DESC LIMIT 1");
+        bindKey(q, key);
+        q.bindValue(":before", nonNull(before));
+        int savedSize = 0;
+        if (q.exec() && q.next())
+            savedSize = q.value(0).toInt();
+        q.finish();
+        if (savedSize > 0 && savedSize != limit) {
+            const auto saved = readPage(db, key, before, savedSize);
+            if (saved.found && saved.stable) {
+                page = saved;
+                while (page.entries.size() > limit) {
+                    page.entries.removeFirst();
+                    page.complete = false;
+                }
+                if (page.entries.size() == limit || page.complete)
+                    return page;
+            }
+        }
+        if (before.isEmpty() && page.entries.isEmpty())
             return page;
-        QString       cursor = before;
+        QString       cursor = page.entries.isEmpty() ? before : page.entries.first().uid;
         QSet<QString> seen;
+        for (const auto &entry : page.entries)
+            seen.insert(entry.uid);
         while (page.entries.size() < limit) {
             q.prepare("SELECT previous_uid FROM archive_items WHERE " + scope + " AND uid=:uid AND stable=1");
             bindKey(q, key);

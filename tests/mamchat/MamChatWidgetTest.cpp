@@ -1994,7 +1994,7 @@ private slots:
         QVERIFY(list.isAtEnd());
     }
 
-    void initialViewportFillIsBoundedAndOnlyRequestedAfterExplicitPageCompletion()
+    void initialViewportFillContinuesThroughLongProtocolOnlyRuns()
     {
         MamChatWidget room;
         room.resize(480, 900); // A short MUC backlog leaves ample empty space.
@@ -2013,20 +2013,96 @@ private slots:
         QTRY_COMPARE(requests.count(), 1);
         QCOMPARE(room.messageCount(), 4); // The already delivered MUC messages survive.
 
-        // More MAM pages made no visible progress (e.g. only markers/reactions).
-        // We may try to fill the opening viewport, but NEVER sweep to 1970.
-        for (int i = 2; i <= 8; ++i) {
+        // More than the previous 8/32-page caps: protocol-only pages advance
+        // the source cursor but cannot satisfy the view's real-message demand.
+        for (int i = 2; i <= 36; ++i) {
             room.setHistoryLoading(true);
             room.setHistoryLoading(false);
             room.maybeContinueInitialHistoryFill();
             QTRY_COMPARE(requests.count(), i);
         }
-        room.setHistoryLoading(true);
+        room.setHistoryExhausted(true);
         room.setHistoryLoading(false);
         room.maybeContinueInitialHistoryFill();
-        QTest::qWait(90);
-        QCOMPARE(requests.count(), 8); // Eight non-progress pages, then pause.
+        QTest::qWait(50);
+        QCOMPARE(requests.count(), 36);
         QCOMPARE(room.messageCount(), 4);
+    }
+
+    void scrollFillPreservesAnchorAndContinuesPastProtocolOnlyPages()
+    {
+        MamChatWidget chat;
+        chat.resize(420, 300);
+        for (int i = 0; i < 30; ++i)
+            chat.appendMessage(message(QString::number(i), "Message body", i));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(29));
+        chat.scrollToIndex(0, Mattermost::LongListWidget::Alignment::Top);
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto       *anchor = chat.itemWidget(0);
+        const int   oldY   = anchor->y();
+        QSignalSpy  requests(&chat, &MamChatWidget::olderMessagesRequested);
+        QWheelEvent wheel(QPointF(5, 5), QPointF(chat.viewport()->mapToGlobal(QPoint(5, 5))), QPoint(), QPoint(0, 120),
+                          Qt::NoButton, Qt::NoModifier, Qt::NoScrollPhase, false);
+        QApplication::sendEvent(chat.viewport(), &wheel);
+        QTRY_COMPARE(requests.count(), 1);
+        for (int page = 2; page <= 4; ++page) {
+            chat.setHistoryLoading(true);
+            chat.setHistoryLoading(false);
+            chat.maybeContinueInitialHistoryFill(); // Distinct progressing source cursors, no visible rows.
+            QTRY_COMPARE(requests.count(), page);
+        }
+        chat.setHistoryLoading(true);
+        QList<QPair<QString, MessageView>> older;
+        for (int i = 0; i < 6; ++i)
+            older.append(qMakePair(QString("old-%1").arg(i), message(QString("old-%1").arg(i), "Older body", i - 20)));
+        chat.prependArchivePage(older);
+        chat.setHistoryLoading(false);
+        chat.maybeContinueInitialHistoryFill();
+        QTest::qWait(60);
+        QCOMPARE(requests.count(), 4); // Half a screen, rather than an archive sweep.
+        QCOMPARE(chat.itemWidget(6), anchor);
+        QCOMPARE(anchor->y(), oldY);
+    }
+
+    void roomArchiveIdentityMergesJoinHistoryWithDifferentClientIds()
+    {
+        MamChatWidget chat;
+        chat.setGroupChat(true);
+        auto joined = message("join-client-id", "Body");
+        joined.setArchiveId("room-stanza-id");
+        chat.appendMessage(joined);
+        auto archived = joined;
+        archived.setMessageId("rewritten-client-id");
+        QCOMPARE(chat.prependArchivePage({ qMakePair(QString("room-stanza-id"), archived) }), 0);
+        QCOMPARE(chat.messageCount(), 1);
+    }
+
+    void liveMessageSurvivesInitialFillAndRemainsAtTail()
+    {
+        MamChatWidget chat;
+        chat.resize(420, 600);
+        for (int i = 0; i < 4; ++i)
+            chat.appendMessage(message(QString("join-%1").arg(i), "MUC history", i));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(3));
+        QSignalSpy requests(&chat, &MamChatWidget::olderMessagesRequested);
+        chat.maybeContinueInitialHistoryFill();
+        QTRY_COMPARE(requests.count(), 1);
+        chat.setHistoryLoading(true);
+        chat.appendMessage(message("live-in-flight", "New live body", 20));
+        QList<QPair<QString, MessageView>> older;
+        for (int i = 0; i < 30; ++i)
+            older.append(qMakePair(QString("old-%1").arg(i), message(QString("old-%1").arg(i), "Older body", i - 40)));
+        chat.prependArchivePage(older);
+        chat.setHistoryLoading(false);
+        chat.maybeContinueInitialHistoryFill();
+        QTRY_VERIFY(chat.itemWidget(34));
+        QCOMPARE(chat.messageCount(), 35);
+        QCOMPARE(chat.itemWidget(34)->findChild<ChatMessageText *>()->toPlainText(), QString("New live body"));
+        QVERIFY(chat.isAtEnd());
+        QTest::qWait(60);
+        QCOMPARE(requests.count(), 1);
     }
 
     void pageSizeUsesVisibleMessageHeightsRatherThanArchiveEventCount()

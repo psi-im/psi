@@ -4,10 +4,16 @@ on:
   push:
     paths:
       - 'qa/integration/mam-live/**'
+      - 'src/**'
+      - 'tests/mam*/**'
+      - 'iris'
       - '.github/workflows/mam-prosody-runtime.yml'
   pull_request:
     paths:
       - 'qa/integration/mam-live/**'
+      - 'src/**'
+      - 'tests/mam*/**'
+      - 'iris'
       - '.github/workflows/mam-prosody-runtime.yml'
   workflow_dispatch:
 
@@ -76,3 +82,60 @@ jobs:
           if [ -f "$RUNNER_TEMP/psi-mam-prosody.log" ]; then
             tail -n 250 "$RUNNER_TEMP/psi-mam-prosody.log"
           fi
+
+  native-muc-runtime:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        qt: [5, 6]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: hendrikmuhs/ccache-action@v1
+        with:
+          key: mam-native-qt${{ matrix.qt }}
+      - name: Install native client dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build g++ pkg-config python3 \
+            libssl-dev zlib1g-dev libhttp-parser-dev libminizip-dev libtidy-dev \
+            libsm-dev libxss-dev
+          if [ '${{ matrix.qt }}' = 5 ]; then
+            sudo apt-get install -y qtbase5-dev qtmultimedia5-dev libqt5svg5-dev \
+              libqt5x11extras5-dev libqca-qt5-2-dev libqt5sql5-sqlite
+          else
+            sudo apt-get install -y qt6-base-dev qt6-multimedia-dev qt6-svg-dev \
+              libqca-qt6-dev libqt6sql6-sqlite
+          fi
+      - name: Build actual Psi BASIC client
+        run: |
+          cmake -S . -B build-native -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DUSE_QT6=${{ matrix.qt == 6 && 'ON' || 'OFF' }} -DCHAT_TYPE=BASIC \
+            -DBUNDLED_IRIS=ON -DIRIS_SYSTEM_QCA=2 -DENABLE_OMEMO=OFF \
+            -DENABLE_AVCALL=OFF -DIRIS_ENABLE_JINGLE_SCTP=OFF \
+            -DUSE_KEYCHAIN=OFF -DUSE_HUNSPELL=OFF -DENABLE_PLUGINS=OFF \
+            -DPSI_DATADIR="$GITHUB_WORKSPACE" -DBUILD_TESTING=ON
+          cmake --build build-native --target psi --parallel 4
+      - name: Start isolated MUC archive
+        run: |
+          docker run -d --name mam-native -p 127.0.0.1:55323:5222 \
+            -v "$GITHUB_WORKSPACE/qa/integration/mam-live/muc-prosody.cfg.lua:/etc/prosody/prosody.cfg.lua:ro" \
+            prosodyim/prosody:13.0
+          docker exec mam-native prosodyctl register user01 localhost ci-pass-01
+      - name: Verify first MUC window, sparse protocol events and EDB reopen
+        run: |
+          python3 qa/integration/mam-live/muc_runtime.py \
+            --psi build-native/psi/psi --output "$RUNNER_TEMP/mam-native-runtime"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mam-native-qt${{ matrix.qt }}-logs
+          path: ${{ runner.temp }}/mam-native-runtime/*.log
+      - name: Collect server log
+        if: always()
+        run: |
+          docker logs mam-native || true
+          docker rm -f mam-native || true

@@ -35,8 +35,9 @@ public:
     void clearMessages();
     void setHistoryLoading(bool loading);
     void setHistoryExhausted(bool exhausted);
-    // Bounded opening-only viewport fill; never called from passive geometry.
+    // Continue an explicit pixel demand after a completed source page.
     void maybeContinueInitialHistoryFill();
+    void stopHistoryFill();
     bool historyExhausted() const { return historyExhausted_; }
     int  messageCount() const { return items_.size(); }
     // Dynamic MAM stanza budget inferred from measured message heights.
@@ -149,6 +150,7 @@ private:
         QSet<QString> stanzaIds; // Revision stanza IDs of one logical message.
     };
     QList<Row>              items_;
+    mutable QHash<QString, QPair<int, int>> measuredMessageHeights_; // width, learned height
     QSet<QString>           keys_;
     QHash<QString, QString> sourceAliases_; // EDB/MAM source key -> stable row key
     bool                    sameSender(const MessageView &a, const MessageView &b) const;
@@ -162,9 +164,9 @@ private:
     bool                    initialFillEligible_ = false;
     bool                    initialFillFinished_ = false;
     bool                    initialFillCheckPending_ = false;
-    int                     initialFillRequests_ = 0;
-    int                     initialFillStagnantPages_ = 0;
-    qint64                  messagePixelsAtLastFillRequest_ = -1;
+    qint64                                  historyFillTargetPixels_ = -1;
+    bool                                    historyFillPaused_       = false;
+    bool                                    historyFillReady_        = false;
     // Opening a chat always starts at the live tail, even while Qt measures
     // new rows or MAM/EDB prepends history. A real user scroll takes ownership.
     bool    followingInitialTail_ = true;

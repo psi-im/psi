@@ -24,6 +24,7 @@
  */
 
 #include "psichatdlg.h"
+#include "widgets/MamHistoryLog.h"
 
 #include "accountlabel.h"
 #include "actionlist.h"
@@ -308,7 +309,10 @@ void PsiChatDlg::loadOlderMamMessages()
     const QString requestedBefore = refreshTail ? QString() : mamBeforeId_;
     if (account()->isConnected())
         mamRefreshTail_ = false;
-    auto *task = new HistorySync(account(), jid().bare(), false, requestedBefore, this);
+    if (requestedBefore.isEmpty())
+        mamSeenBeforeIds_.clear();
+    auto *task                = new HistorySync(account(), jid().bare(), false, requestedBefore, this,
+                                                nativeTimeline_->suggestedOlderHistoryPageSize());
     mamTask_ = task;
     const QString peer = jid().bare();
     const bool initialPage = requestedBefore.isEmpty();
@@ -321,6 +325,7 @@ void PsiChatDlg::loadOlderMamMessages()
             // resume the same opaque cursor on the next successful login.
             if (!account()->isConnected() && jid().bare() == peer)
                 mamResumeAfterConnect_ = true;
+            nativeTimeline_->stopHistoryFill();
             if (!task->success())
                 qWarning().noquote() << "[mam-history] Query failed:" << task->statusString();
             nativeTimeline_->setHistoryLoading(false);
@@ -411,9 +416,15 @@ void PsiChatDlg::loadOlderMamMessages()
         // The non-flipped MAM page is in chronological order, so its first
         // archive UID is the RSM 'before' cursor for the next older page.
         // Honor <fin complete='true'/> even when the last page has messages.
-        mamExhausted_ = task->isComplete() || oldestId.isEmpty() || oldestId == requestedBefore;
-        if (!oldestId.isEmpty())
+        const bool repeated
+            = !oldestId.isEmpty() && (oldestId == requestedBefore || mamSeenBeforeIds_.contains(oldestId));
+        mamExhausted_ = task->isComplete() || oldestId.isEmpty() || repeated;
+        if (repeated)
+            nativeTimeline_->stopHistoryFill();
+        if (!oldestId.isEmpty()) {
+            mamSeenBeforeIds_.insert(oldestId);
             mamBeforeId_ = oldestId;
+        }
         if (initialPage && !account()->isConnected()) {
             mamRefreshTail_ = true;
             mamResumeAfterConnect_ = true;
@@ -427,6 +438,7 @@ void PsiChatDlg::loadOlderMamMessages()
             nativeTimeline_->scrollToEnd();
         nativeTimeline_->setHistoryExhausted(mamExhausted_ && localExhausted_);
         nativeTimeline_->setHistoryLoading(false);
+        nativeTimeline_->maybeContinueInitialHistoryFill();
         task->deleteLater();
     });
     task->go();
