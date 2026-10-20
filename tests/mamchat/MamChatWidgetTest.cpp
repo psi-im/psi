@@ -46,6 +46,31 @@ MessageView message(const QString &id, const QString &body, int seconds = 0, boo
 class MamChatWidgetTest final : public QObject {
     Q_OBJECT
 private slots:
+
+    void cachedRichTextHeightForWidthPreservesDocumentAndInvalidates()
+    {
+        ChatMessageText body;
+        body.resize(500, 200);
+        body.setRichText(QStringLiteral("Many links <a href='https://example.org'>docs</a> "
+                                       "and long phrases that wrap differently. ").repeated(80));
+        const qreal originalWidth = body.document()->textWidth();
+
+        const int narrowHeight = body.heightForWidth(220);
+        const int wideHeight = body.heightForWidth(480);
+        QVERIFY(narrowHeight > wideHeight);
+        for (int i = 0; i < 20; ++i) {
+            QCOMPARE(body.heightForWidth(220), narrowHeight);
+            QCOMPARE(body.heightForWidth(480), wideHeight);
+            QCOMPARE(body.document()->textWidth(), originalWidth);
+        }
+        QCOMPARE(body.toPlainText().count(QStringLiteral("docs")), 80);
+
+        // Changing document content must invalidate every width, even though
+        // the widget has not changed its geometry.
+        body.setRichText(QStringLiteral("Short message"));
+        QVERIFY(body.heightForWidth(220) < narrowHeight);
+        QVERIFY(body.heightForWidth(480) < wideHeight);
+    }
     void emoteUsesSenderPrefixWithoutChangingStoredMessage()
     {
         MamChatWidget chat;
