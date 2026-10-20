@@ -109,6 +109,7 @@ list(APPEND HEADERS
     nativechattheme.h
     widgets/ChatMessageText.h
     widgets/MamChatWidget.h
+    widgets/MamHistorySource.h
     chateditproxy.h
     chatsplitter.h
     chatview.h
@@ -367,11 +368,13 @@ list(APPEND SOURCES
     changepwdlg.cpp
     chatdlg.cpp
     widgets/LongListWidget.cpp
+    widgets/LongListWidgetLayout.cpp
     widgets/OverlayScrollBarManager.cpp
     widgets/NativeChatThemeRegistry.cpp
     nativechattheme.cpp
     widgets/ChatMessageText.cpp
     widgets/MamChatWidget.cpp
+    widgets/MamHistorySource.cpp
     chateditproxy.cpp
     chatsplitter.cpp
     chatviewcommon.cpp

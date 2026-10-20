@@ -62,6 +62,10 @@ try_release_package() {
     local tag asset archive extract_root
 
     tag=$iris_release_tag
+    if [[ -z "$tag" ]]; then
+        echo "Iris gitlink has no released SDK; building the exact pinned source"
+        return 1
+    fi
 
     if [[ ! -r /etc/os-release ]]; then
         echo "Cannot identify Linux distribution; building Iris $tag from source"

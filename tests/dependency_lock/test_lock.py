@@ -20,6 +20,9 @@ class DependencyLockTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         self.lock = json.loads((ROOT / "dependencies.lock.json").read_text())
+        # Most fixtures exercise the released-SDK contract independently of
+        # whether the working development lock currently has a published SDK.
+        self.lock["iris"]["release_tag"] = "v1.5"
         (self.root / "dependencies.lock.json").write_text(json.dumps(self.lock))
 
     def with_iris(self, tag="v3.0.11", minimum="3.0.10"):
@@ -40,6 +43,19 @@ class DependencyLockTests(unittest.TestCase):
         self.assertEqual(values["MSVC_QT6_SDK_TAG"], self.lock["windows_sdks"]["msvc_qt6"]["tag"])
         self.assertNotIn("QCA_TAG", values)
         self.assertEqual(values["IRIS_RELEASE_TAG"], self.lock["iris"]["release_tag"])
+
+    def test_source_only_revision_exports_no_sdk_and_never_checks_a_tag(self):
+        self.lock["iris"]["release_tag"] = None
+        (self.root / "dependencies.lock.json").write_text(json.dumps(self.lock))
+        values = resolver.read_dependencies(self.root)
+        self.assertEqual(values["IRIS_RELEASE_TAG"], "")
+        with patch.object(resolver.subprocess, "check_output", return_value=
+                          "160000 commit " + "a" * 40 + "\tiris\n") as run:
+            resolver.verify_iris_release(self.root, values["IRIS_RELEASE_TAG"])
+            self.assertEqual(run.call_count, 1)
+        with patch.object(resolver.subprocess, "check_output", return_value=""):
+            with self.assertRaisesRegex(ValueError, "gitlink"):
+                resolver.verify_iris_release(self.root, "")
 
     def test_inherits_qca_from_iris_without_second_pin(self):
         self.assertNotIn("qca", self.lock)

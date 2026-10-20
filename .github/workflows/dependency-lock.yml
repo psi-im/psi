@@ -42,7 +42,7 @@ jobs:
       - name: Verify lock exports
         shell: bash
         run: |
-          test "$IRIS_RELEASE_TAG" = "$(python3 -c 'import json; print(json.load(open("dependencies.lock.json"))["iris"]["release_tag"])')"
+          test "$IRIS_RELEASE_TAG" = "$(python3 -c 'import json; print(json.load(open("dependencies.lock.json"))["iris"]["release_tag"] or "")')"
           test "$QCA_TAG" = "$(python3 -c 'import json; print(json.load(open("iris/dependencies.lock.json"))["qca"]["tag"])')"
           test "$PSIMEDIA_SRTP_REF" = "$(python3 -c 'import json; print(json.load(open("dependencies.lock.json"))["psimedia"]["commit"])')"
 

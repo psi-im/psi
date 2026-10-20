@@ -26,6 +26,7 @@
 #include "psievent.h"
 #include "tabbablewidget.h"
 #include "ui_groupchatdlg.h"
+#include "widgets/MamHistorySource.h"
 
 #include <QDialog>
 #include <QPointer>
@@ -94,6 +95,7 @@ public:
 protected:
     void setShortcuts();
     void loadOlderMamMessages();
+    void loadMamRange(const MamHistorySource::Request &);
 
     // reimplemented
     void resizeEvent(QResizeEvent *e);

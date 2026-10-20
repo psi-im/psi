@@ -942,6 +942,9 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     nativeTimeline_->setGroupChat(true);
     const int logIndex = ui_.hsplitter->indexOf(ui_.log);
     ui_.hsplitter->replaceWidget(logIndex, nativeTimeline_);
+    // Qt 5 leaves the replacement explicitly hidden after reparenting.
+    // This suppresses both rendering and the visible-viewport fill demand.
+    nativeTimeline_->show();
     ui_.log->setParent(ui_.topFrame);
     ui_.log->hide();
     configureNativeChat(nativeTimeline_, account(), jid(), true);
@@ -978,7 +981,20 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     });
     connect(nativeTimeline_, &MamChatWidget::olderMessagesRequested, this, &GCMainDlg::loadOlderMamMessages,
             Qt::QueuedConnection);
+    connect(nativeTimeline_, &MamChatWidget::archiveRangeRequested, this, &GCMainDlg::loadMamRange,
+            Qt::QueuedConnection);
+    connect(nativeTimeline_, &MamChatWidget::archiveRangeCancelled, this, [this] {
+        if (mamTask_) {
+            mamTask_->safeDelete();
+            mamTask_.clear();
+        }
+    });
+    connect(nativeTimeline_, &MamChatWidget::archiveSeekUnavailable, this, [this](const QString &) {
+        appendSysMsg(
+            tr("This archive cannot position messages by index. Older history remains available by scrolling."));
+    });
     connect(account(), &PsiAccount::disconnected, this, [this] {
+        nativeTimeline_->cancelArchiveRanges();
         mamArchiveReady_ = false;
         if (mamTask_) {
             mamTask_->safeDelete();
@@ -2511,68 +2527,9 @@ void GCMainDlg::loadOlderMamMessages()
             task->deleteLater();
             return;
         }
-        QList<QPair<QString, MessageView>> page;
-        QString oldest;
-        for (const auto &result : task->archive()) {
-            const QString uid = result.attribute(QStringLiteral("id"));
-            if (uid.isEmpty())
-                continue;
-            if (oldest.isEmpty())
-                oldest = uid;
-            const auto forwarded = childElementsByTagNameNS(result, QStringLiteral("urn:xmpp:forward:0"),
-                                                           QStringLiteral("forwarded")).item(0).toElement();
-            XMPP::Forwarding wrapper;
-            if (!wrapper.fromXml(forwarded, account()->client()))
-                continue;
-            auto      archived = task->message(uid);
-            QDateTime revisionTime;
-            QString   originalTarget = MessageView::reactionTarget(archived);
-            QString   retractionTarget = MessageView::retractionTarget(archived);
-            if (originalTarget.isEmpty())
-                originalTarget = uid;
-            if (retractionTarget.isEmpty())
-                retractionTarget = uid;
-            QDateTime archivedTime = wrapper.timeStamp().isValid()
-                ? wrapper.timeStamp() : archived.timeStamp();
-            if (auto resolved = account()->edb()->resolvedHistoryEvent(task->eventId(uid))) {
-                if (resolved->event()->type() == PsiEvent::Message) {
-                    const auto actual = resolved->event().staticCast<MessageEvent>()->message().displayMessage();
-                    archived          = actual;
-                    revisionTime      = resolved->revisionTime();
-                    if (!resolved->reactionTarget().isEmpty())
-                        originalTarget = resolved->reactionTarget();
-                    if (!resolved->retractionTarget().isEmpty())
-                        retractionTarget = resolved->retractionTarget();
-                    archivedTime = actual.timeStamp();
-                }
-            }
-            MessageView protocol(MessageView::System);
-            archived.setTimeStamp(archivedTime);
-            if (MessageView::protocolMessage(archived, archived.from().resource() == nick(), protocol)) {
-                nativeTimeline_->appendMessage(protocol);
-                continue;
-            }
-            if (task->protocolOnly(uid))
-                continue;
-            if (!archived.from().compare(room, false) || archived.type() != XMPP::Message::Type::Groupchat
-                || archived.from().resource().isEmpty())
-                continue;
-            auto mv = nativeHistoryMessage(account(), jid().bare(), archived, archived.from().resource() == nick());
-            mv.setArchiveId(uid);
-            mv.setHistoryId(task->eventId(uid));
-            mv.setRevisionTime(revisionTime);
-            mv.setReactionTargetId(originalTarget);
-            mv.setRetractionTargetId(retractionTarget);
-            mv.setEncrypted(archived.wasEncrypted(), archived.encryptionProtocol());
-            mv.setMessageId(archived.id());
-            mv.setReplaceId(archived.replaceId());
-            mv.setUserId(archived.from().full());
-            mv.setNick(archived.from().resource());
-            mv.setLocal(mv.nick() == nick());
-            mv.setSpooled(true);
-            mv.setDateTime(archivedTime);
-            page.append(qMakePair(uid, mv));
-        }
+        const auto    loaded   = nativeArchivePage(account(), task, room, true, nick());
+        const auto   &page     = loaded.messages;
+        const QString oldest   = loaded.uids.value(0);
         const bool initial = requestedBefore.isEmpty();
         const bool atEnd = nativeTimeline_->isAtEnd();
         const bool repeated = !oldest.isEmpty() && (oldest == requestedBefore || mamSeenBeforeIds_.contains(oldest));
@@ -2586,15 +2543,77 @@ void GCMainDlg::loadOlderMamMessages()
             mamBeforeId_ = oldest;
         }
         const int added = nativeTimeline_->prependArchivePage(page);
+        nativeTimeline_->restoreArchiveSnapshot(task->archiveSnapshot().resultCount, task->archiveSnapshot().lastUid);
+        nativeTimeline_->observeArchivePage(loaded.uids, task->resultCount(), task->firstResultIndex(), requestedBefore,
+                                            {}, true, task->isStable());
         nativeTimeline_->setHistoryExhausted(mamExhausted_ && localExhausted_);
         if (initial && atEnd)
             nativeTimeline_->scrollToEnd();
         qCDebug(PsiMam::historyLog).noquote()
             << " room result" << room.bare() << "before=" << requestedBefore << "events=" << task->archive().size()
-            << "visibleCandidates=" << page.size() << "addedRows=" << added
-            << "totalRows=" << nativeTimeline_->messageCount() << "fromCache=" << task->fromCache()
-            << "mamExhausted=" << mamExhausted_ << "localExhausted=" << localExhausted_;
+            << "visibleCandidates=" << loaded.visibleMessages << "protocolEvents=" << loaded.protocolEvents
+            << "addedRows=" << added << "totalRows=" << nativeTimeline_->messageCount()
+            << "fromCache=" << task->fromCache() << "mamExhausted=" << mamExhausted_
+            << "localExhausted=" << localExhausted_;
         nativeTimeline_->maybeContinueInitialHistoryFill();
+        task->deleteLater();
+    });
+    task->go();
+}
+
+void GCMainDlg::loadMamRange(const MamHistorySource::Request &request)
+{
+    if (!nativeTimeline_ || !mamArchiveReady_ || !account()->isConnected()) {
+        if (nativeTimeline_)
+            nativeTimeline_->completeArchiveRange(request, false, tr("Account is offline"));
+        return;
+    }
+    if (mamTask_) {
+        mamTask_->safeDelete();
+        mamTask_.clear();
+    }
+    HistorySync::Query query;
+    query.mode          = request.kind == MamHistorySource::Request::Index ? HistorySync::Query::Index
+                 : request.kind == MamHistorySource::Request::After        ? HistorySync::Query::After
+                                                                           : HistorySync::Query::Before;
+    query.cursor        = request.cursor;
+    query.index         = request.index;
+    query.limit         = request.limit;
+    query.snapshotCount = request.snapshotCount;
+    const auto peer     = jid().withResource({});
+    auto      *task     = new HistorySync(account(), query, peer.bare(), true, this);
+    mamTask_            = task;
+    nativeTimeline_->setHistoryLoading(true);
+    connect(task, &HistorySync::finished, this, [this, task, request, peer] {
+        if (mamTask_ != task)
+            return;
+        mamTask_.clear();
+        const bool samePeer   = peer.compare(jid(), false);
+        const bool positioned = request.kind != MamHistorySource::Request::Index || task->firstResultIndex() >= 0;
+        if (task->success() && samePeer && positioned) {
+            const auto page = nativeArchivePage(account(), task, peer, true, nick());
+            if (!page.uids.isEmpty()
+                && (request.kind == MamHistorySource::Request::Before
+                    || (task->firstResultIndex() >= 0
+                        && (nativeTimeline_->historySource().rankOfUid(mamBeforeId_) < 0
+                            || task->firstResultIndex() < nativeTimeline_->historySource().rankOfUid(mamBeforeId_)))))
+                mamBeforeId_ = page.uids.first();
+            if ((request.kind == MamHistorySource::Request::Before && task->isComplete())
+                || (request.kind == MamHistorySource::Request::Index && task->firstResultIndex() == 0))
+                mamExhausted_ = true;
+            nativeTimeline_->setHistoryExhausted(mamExhausted_ && localExhausted_);
+            nativeTimeline_->prependArchivePage(page.messages);
+            nativeTimeline_->restoreArchiveSnapshot(task->archiveSnapshot().resultCount,
+                                                    task->archiveSnapshot().lastUid);
+            nativeTimeline_->observeArchivePage(
+                page.uids, task->resultCount(), task->firstResultIndex(),
+                request.kind == MamHistorySource::Request::Before ? request.cursor : QString(),
+                request.kind == MamHistorySource::Request::After ? request.cursor : QString(), false, task->isStable());
+        }
+        nativeTimeline_->completeArchiveRange(request, task->success() && samePeer && positioned,
+                                              positioned ? task->statusString()
+                                                         : tr("Archive response omitted the requested index"),
+                                              task->queryComplete());
         task->deleteLater();
     });
     task->go();

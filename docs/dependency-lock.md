@@ -8,6 +8,11 @@ Psi uses `dependencies.lock.json` for dependencies managed by the Psi CI. Do **n
 - `qtkeychain.tag` / `qtkeychain.commit`: the source tag and the resolved Git SHA for Windows Qt5/Qt6 dependency SDK builds. Clones check that the tag resolves to the locked commit.
 - `windows_sdks.msvc_qt6` and `windows_sdks.msys2_qt5`: release tags and ZIP archive names for Psi's platform-specific SDKs. These releases are artifacts produced by Psi; changing their contents requires changing the release tag in the lock to avoid reusing incompatible binaries.
 - `iris`: describes the submodule, its lock path and `release_tag`, the coordinate of the matching published SDK. Its source revision remains exclusively in the `iris` gitlink, not a duplicated SHA field. Update the gitlink and release tag together when moving to another release.
+  An unreleased development gitlink uses `release_tag: null`: the resolver exports
+  an empty SDK coordinate and validates the gitlink without contacting a release
+  tag. CI must build that exact source, never substitute the previous release's
+  headers or libraries. Set a versioned tag again only after a matching release
+  exists; the normal tag-to-gitlink verification remains mandatory.
 
 ## Consumption
 

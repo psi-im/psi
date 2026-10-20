@@ -223,6 +223,7 @@ private:
 
 MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(parent)
 {
+    qRegisterMetaType<MamHistorySource::Request>();
     setProperty("psiMamOverlay", true);
     theme_.layout = NativeChatTheme::Modern;
     // Coalesced single-shot timer: no updates while a chat is hidden and
@@ -399,7 +400,9 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
     connect(escapeShortcut, &QShortcut::activated, this, &MamChatWidget::cancelMessageSelection);
 
     connect(this, &Mattermost::LongListWidget::userScrollStarted, this, [this] {
+        ++archiveIntentSerial_;
         followingInitialTail_ = false;
+        rangeDemandAllowed_      = true;
         historyFillTargetPixels_ = -1; // A gesture cancels the previous fill demand.
         hideMessageActions();
     });
@@ -425,6 +428,7 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
         });
     });
 
+    connect(this, &Mattermost::LongListWidget::rangeRequested, this, &MamChatWidget::requestArchiveRange);
     connect(this, &Mattermost::LongListWidget::visibleRangeChanged, this, [this](int, int) {
         // Visibility is a geometry fact, not authorization to fetch more MAM.
         updateTimestamps();
@@ -433,6 +437,246 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
         updateTimestamps();
         scheduleInitialHistoryFillCheck();
     });
+}
+
+QWidget *MamChatWidget::rowWidget(int at) const
+{
+    return Mattermost::LongListWidget::itemWidget(historySource_.logicalIndex(at));
+}
+QVector<int> MamChatWidget::materializedRows() const
+{
+    QVector<int> result;
+    for (int logical : Mattermost::LongListWidget::materializedIndices()) {
+        const int at = historySource_.knownIndex(logical);
+        if (at >= 0)
+            result.append(at);
+    }
+    return result;
+}
+Mattermost::LongListWidget::Range MamChatWidget::knownVisibleRange() const
+{
+    const auto visible = visibleRange();
+    if (!visible.isValid())
+        return {};
+    const auto &positions = historySource_.positions_;
+    const auto  first     = std::lower_bound(positions.cbegin(), positions.cend(), visible.first);
+    const auto  end       = std::upper_bound(first, positions.cend(), visible.last);
+    return first == end ? Range {} : Range { int(first - positions.cbegin()), int(end - positions.cbegin()) - 1 };
+}
+QString MamChatWidget::itemIdentity(const QWidget *widget) const
+{
+    return widget ? widget->property("_psiMamRowKey").toString() : QString();
+}
+int  MamChatWidget::indexOfItemIdentity(const QString &key) const { return historySource_.indexOfKey(key); }
+bool MamChatWidget::isModelItemAvailable(int index) const { return historySource_.isAvailable(index); }
+void MamChatWidget::replaceRow(int at)
+{
+    const int logical = historySource_.logicalIndex(at);
+    if (logical >= 0)
+        Mattermost::LongListWidget::replaceItem(logical);
+}
+void MamChatWidget::insertHistoryRows(int at, int count, InsertViewportPolicy policy)
+{
+    if (historySource_.isVirtual())
+        syncSourceLayout();
+    else {
+        historySource_.rebuild();
+        Mattermost::LongListWidget::insertItems(at, count, policy);
+    }
+}
+void MamChatWidget::removeHistoryRows(int at, int count)
+{
+    if (historySource_.isVirtual())
+        syncSourceLayout();
+    else {
+        historySource_.rebuild();
+        Mattermost::LongListWidget::removeItems(at, count);
+    }
+}
+void MamChatWidget::syncSourceLayout(bool enableVirtual)
+{
+    // Let the existing semantic remap transaction carry widgets and measured
+    // heights. The source changes only identity -> logical-index mappings.
+    for (int at : materializedRows())
+        if (const auto *row = rowWidget(at))
+            measuredMessageHeights_.insert(row->property("_psiMamRowKey").toString(),
+                                           qMakePair(viewport()->width(), qMax(1, row->height())));
+    const auto previous = historySource_.positions_;
+    if (!followingInitialTail_ && !hasViewportLock()) {
+        const int logical  = viewportCenterIndex();
+        qreal     fraction = 0;
+        if (Mattermost::LongListWidget::itemWidget(logical)
+            && captureSemanticAnchorFraction(logical, SemanticAnchorPoint::ItemCenter, fraction))
+            lockViewportToSemanticAnchor(logical, SemanticAnchorPoint::ItemCenter, fraction);
+    }
+    if (enableVirtual) {
+        if (!historySource_.isVirtual())
+            setDefaultItemHeight(qMax(1, qRound(estimatedAverageMessageHeight())));
+        historySource_.enableVirtual();
+    } else
+        historySource_.rebuild();
+    const int count = historySource_.itemCount();
+    if (count > itemCount())
+        setItemCount(count);
+    // A density refinement can shrink estimated geometry below the old seek
+    // slot. Move the existing seek to the same event before setItemCount can
+    // retire its generation. LongListWidget still owns all geometry/locks.
+    if (archiveRangeActive_ && activeArchiveRange_.generation > 0 && count > 0)
+        resolveSeekTarget(historySource_.logicalPositionForEvent(historySource_.navigationTarget()),
+                          activeArchiveRange_.generation);
+    if (itemCount() > 0)
+        reconcileItemLayout(0, qMin(1, itemCount() - 1));
+    if (count < itemCount())
+        setItemCount(count);
+    for (int logical : previous)
+        if (logical < count && !historySource_.isAvailable(logical))
+            setRangeAvailable(logical, logical, false);
+    for (int logical : historySource_.positions_)
+        setRangeAvailable(logical, logical, true);
+    qCDebug(PsiMam::historyLog) << "source-layout known=" << items_.size() << "logical=" << count
+                                << "eventCount=" << historySource_.archiveCount()
+                                << "visibleRatio=" << historySource_.visibleRatio()
+                                << "virtual=" << historySource_.isVirtual();
+}
+void MamChatWidget::restoreArchiveSnapshot(int count, const QString &lastUid)
+{
+    historySource_.restoreSnapshot(count, lastUid);
+}
+void MamChatWidget::observeArchivePage(const QStringList &uids, int count, int firstIndex, const QString &before,
+                                       const QString &after, bool tailChain, bool stable)
+{
+    QStringList rowKeys;
+    for (const auto &uid : uids) {
+        const int at = indexOfKey(QStringLiteral("mam:") + uid);
+        rowKeys.append(at < 0 ? QString() : items_.at(at).key);
+    }
+    historySource_.observePage(uids, rowKeys, count, firstIndex, before, after, tailChain, stable);
+    if (historySource_.isVirtual() || (!followingInitialTail_ || initialFillFinished_))
+        syncSourceLayout(true);
+}
+void MamChatWidget::requestArchiveRange(int first, int last, RequestReason reason, quint64 generation)
+{
+    if (!historySource_.isVirtual() || !rangeDemandAllowed_) {
+        finishRangeRequest(first, last);
+        return;
+    }
+    const auto request = historySource_.requestForRange(first, last, suggestedOlderHistoryPageSize(), generation,
+                                                        reason == RequestReason::Seek);
+    if (request.kind == MamHistorySource::Request::None) {
+        finishRangeRequest(first, last);
+        return;
+    }
+    if (archiveRangeActive_) {
+        // Density/layout changes can move the same seek far from its old
+        // estimated slots. They join its existing navigation; only a new
+        // physical/programmatic intent may cancel it for a different area.
+        if (activeArchiveIntent_ == archiveIntentSerial_
+            || (first <= activeArchiveRange_.last + 1 && last >= activeArchiveRange_.first - 1)) {
+            const auto waiter = qMakePair(first, last);
+            if (!archiveRangeWaiters_.contains(waiter))
+                archiveRangeWaiters_.append(waiter);
+            return;
+        }
+        emit archiveRangeCancelled();
+        for (const auto &waiter : archiveRangeWaiters_)
+            finishRangeRequest(waiter.first, waiter.second);
+    }
+    activeArchiveIntent_ = archiveIntentSerial_;
+    archiveNavigationKeys_.clear();
+    archiveNavigationPixels_ = 0;
+    archiveNavigationGoal_   = qMax(1, viewport()->height() * (reason == RequestReason::Seek ? 3 : 1) / 2);
+    historySource_.beginNavigation(request);
+    activeArchiveRange_  = request;
+    archiveRangeWaiters_ = { qMakePair(first, last) };
+    archiveRangeActive_  = true;
+    qCDebug(PsiMam::historyLog) << "source-demand range=" << first << last << "kind=" << request.kind
+                                << "index=" << request.index << "cursor=" << request.cursor << "limit=" << request.limit
+                                << "generation=" << generation;
+    emit archiveRangeRequested(request);
+}
+void MamChatWidget::cancelArchiveRanges()
+{
+    archiveRangeActive_ = archiveRangePaused_ = false;
+    rangeDemandAllowed_                       = false;
+    emit       archiveRangeCancelled();
+    const auto waiters = archiveRangeWaiters_;
+    archiveRangeWaiters_.clear();
+    for (const auto &waiter : waiters)
+        finishRangeRequest(waiter.first, waiter.second);
+    setHistoryLoading(false);
+}
+void MamChatWidget::completeArchiveRange(const MamHistorySource::Request &request, bool success, const QString &error,
+                                         bool queryComplete)
+{
+    if (!archiveRangeActive_ || request.generation != activeArchiveRange_.generation
+        || request.kind != activeArchiveRange_.kind || request.index != activeArchiveRange_.index
+        || request.cursor != activeArchiveRange_.cursor)
+        return;
+    QString failure = error;
+    if (success && request.kind == MamHistorySource::Request::Index && !historySource_.lastPageWasIndexed()) {
+        success = false;
+        failure = tr("Archive response omitted the requested index");
+    }
+    if (success) {
+        for (const auto &key : historySource_.lastPageMessageKeys()) {
+            if (archiveNavigationKeys_.contains(key))
+                continue;
+            archiveNavigationKeys_.insert(key);
+            const int   at  = indexOfKey(key);
+            const auto *row = at >= 0 ? rowWidget(at) : nullptr;
+            archiveNavigationPixels_ += row ? qMax(1, row->height()) : qMax(1, qCeil(estimatedAverageMessageHeight()));
+        }
+        const auto next = historySource_.continueNavigation(request, queryComplete,
+                                                            archiveNavigationPixels_ < archiveNavigationGoal_);
+        if (next.kind != MamHistorySource::Request::None) {
+            activeArchiveRange_ = next;
+            qCDebug(PsiMam::historyLog) << "source-continue protocol-only kind=" << next.kind
+                                        << "cursor=" << next.cursor << "generation=" << next.generation;
+            if (isVisible())
+                emit archiveRangeRequested(next);
+            else {
+                archiveRangePaused_ = true;
+                setHistoryLoading(false);
+            }
+            return;
+        }
+    }
+    archiveRangeActive_ = false;
+    // One gesture authorizes this navigation, including its protocol-only
+    // continuations. Layout/materialization afterwards cannot start another
+    // independent scan of every still-estimated slot around the viewport.
+    rangeDemandAllowed_ = false;
+    setHistoryLoading(false);
+    if (!success) {
+        stopHistoryFill();
+        if (request.kind == MamHistorySource::Request::Index) {
+            historySource_.rejectIndex();
+            syncSourceLayout();
+            emit archiveSeekUnavailable(failure);
+        }
+    } else if (request.generation > 0) {
+        const auto key = historySource_.closestKnownKey(historySource_.navigationTarget());
+        const int  at  = historySource_.indexOfKey(key);
+        if (at >= 0)
+            resolveSeekTarget(at, request.generation);
+        if (historySource_.navigationStalled())
+            qCWarning(PsiMam::historyLog) << "source-stop repeated navigation cursor";
+    }
+    const auto waiters = archiveRangeWaiters_;
+    archiveRangeWaiters_.clear();
+    for (const auto &waiter : waiters)
+        finishRangeRequest(waiter.first, waiter.second);
+}
+
+int MamChatWidget::estimatedItemHeight(int index) const
+{
+    const int at = historySource_.knownIndex(index);
+    if (at >= 0) {
+        const auto saved = measuredMessageHeights_.value(items_.at(at).key);
+        if (saved.first == viewport()->width() && saved.second > 0)
+            return saved.second;
+    }
+    return defaultItemHeight();
 }
 
 namespace {
@@ -527,7 +771,9 @@ QBoxLayout *buildThemeLayout(const QJsonObject &node, const QHash<QString, QWidg
 
 void MamChatWidget::scrollToIndex(int index, Mattermost::LongListWidget::Alignment alignment)
 {
+    ++archiveIntentSerial_;
     followingInitialTail_ = false;
+    rangeDemandAllowed_   = true;
     Mattermost::LongListWidget::scrollToIndex(index, alignment);
 }
 
@@ -618,7 +864,7 @@ void MamChatWidget::mergeMessage(int index, const MessageView &incoming, const Q
         if (updated.historyId() <= 0)
             updated.setHistoryId(previous.historyId());
         row.message = updated;
-        replaceItem(index);
+        replaceRow(index);
     } else if ((edited && !previous.isEdited()) || reactionId != previous.reactionTargetId()
                || retractionId != previous.retractionTargetId()
                || (!previous.isSecurityKnown() && incoming.isSecurityKnown())) {
@@ -627,7 +873,7 @@ void MamChatWidget::mergeMessage(int index, const MessageView &incoming, const Q
         row.message.setEdited(edited);
         row.message.setReactionTargetId(reactionId);
         row.message.setRetractionTargetId(retractionId);
-        replaceItem(index);
+        replaceRow(index);
     }
 
     // Multiple MAM archive UIDs (one per edit) and any local EDB key belong
@@ -711,8 +957,8 @@ void MamChatWidget::coalesceRevisionRows()
         for (const QString &id : merged.stanzaIds)
             seen.insert(identityKey(id), keeper);
         items_.removeAt(i);
-        removeItems(i, 1);
-        replaceItem(keeper);
+        removeHistoryRows(i, 1);
+        replaceRow(keeper);
         // Re-check the same index: it now contains the next logical row.
     }
 }
@@ -786,9 +1032,9 @@ void MamChatWidget::resolveDisplayedMarkers()
         it = unresolvedDisplayedIds_.erase(it);
     }
     if (changed >= 0) {
-        for (const int index : materializedIndices()) {
+        for (const int index : materializedRows()) {
             if (index <= changed && items_.at(index).message.isLocal())
-                replaceItem(index);
+                replaceRow(index);
         }
     }
 }
@@ -797,7 +1043,7 @@ QString MamChatWidget::takeVisibleMarkableIncomingId()
 {
     if (!isVisible() || window()->isMinimized() || groupChat_)
         return {};
-    const auto range = visibleRange();
+    const auto range = knownVisibleRange();
     if (!range.isValid())
         return {};
     const int previouslyMarked = lastMarkedIncomingRowKey_.isEmpty() ? -1 : indexOfKey(lastMarkedIncomingRowKey_);
@@ -808,7 +1054,7 @@ QString MamChatWidget::takeVisibleMarkableIncomingId()
         if (message.type() != MessageView::Message || message.isLocal() || !message.isMarkable()
             || message.messageId().isEmpty())
             continue;
-        auto *row = itemWidget(i);
+        auto *row = rowWidget(i);
         if (row && row->isVisibleTo(viewport())
             && QRect(row->mapTo(viewport(), QPoint()), row->size()).intersects(viewport()->rect()))
         {
@@ -866,7 +1112,7 @@ bool MamChatWidget::applyProtocolEvent(const MessageView &event)
     for (int i = 0; i < items_.size(); ++i)
         if (reactionTarget(items_.at(i).message) == target || retractionTarget(items_.at(i).message) == target
             || items_.at(i).stanzaIds.contains(target))
-            replaceItem(i);
+            replaceRow(i);
     return true;
 }
 
@@ -943,7 +1189,7 @@ void MamChatWidget::showMessageActions(QFrame *row)
 void MamChatWidget::positionMessageActions()
 {
     const int at  = indexOfKey(actionKey_);
-    auto     *row = at >= 0 ? itemWidget(at) : nullptr;
+    auto     *row = at >= 0 ? rowWidget(at) : nullptr;
     if (!row)
         return;
     messageActions_->adjustSize();
@@ -1012,8 +1258,9 @@ void MamChatWidget::appendMessage(const MessageView &view)
         row.stanzaIds.insert(view.replaceId());
     const int at = items_.size();
     items_.append(row);
-    insertItems(at, 1);
-    setRangeAvailable(at, at, true);
+    insertHistoryRows(at, 1);
+    if (!historySource_.isVirtual())
+        setRangeAvailable(at, at, true);
     resolveDisplayedMarkers();
     if (followTail)
         scrollToEnd();
@@ -1081,8 +1328,9 @@ int MamChatWidget::prependArchivePage(const QList<QPair<QString, MessageView>> &
         if (!incoming.replaceId().isEmpty())
             row.stanzaIds.insert(incoming.replaceId());
         items_.insert(at, row);
-        insertItems(at, 1, InsertViewportPolicy::PreserveVisibleContent);
-        setRangeAvailable(at, at, true);
+        insertHistoryRows(at, 1, InsertViewportPolicy::PreserveVisibleContent);
+        if (!historySource_.isVirtual())
+            setRangeAvailable(at, at, true);
         floor = at + 1;
         ++added;
     }
@@ -1100,8 +1348,8 @@ void MamChatWidget::setMediaOpener(FileSharingDeviceOpener *opener)
         return;
     mediaOpener_ = opener;
     for (int i = 0; i < items_.size(); ++i)
-        if (itemWidget(i))
-            replaceItem(i);
+        if (rowWidget(i))
+            replaceRow(i);
 }
 
 void MamChatWidget::clearMessages()
@@ -1115,7 +1363,10 @@ void MamChatWidget::clearMessages()
     lastMarkedIncomingRowKey_.clear();
     unresolvedDisplayedIds_.clear();
     cancelMessageSelection();
-    items_.clear();
+    historySource_.clear();
+    rangeDemandAllowed_ = false;
+    archiveRangeActive_ = false;
+    archiveRangeWaiters_.clear();
     measuredMessageHeights_.clear();
     keys_.clear();
     sourceAliases_.clear();
@@ -1144,7 +1395,31 @@ void MamChatWidget::clearMessages()
 
 void MamChatWidget::requestOlderMessages(const char *gesture)
 {
-    if (historyLoading_ || historyExhausted_ || historyRequestPending_)
+    if (historyLoading_ || historyRequestPending_)
+        return;
+    if (historySource_.isVirtual()) {
+        if (qstrcmp(gesture, "viewport-fill") == 0 || archiveRangeActive_)
+            return;
+        rangeDemandAllowed_ = true;
+        const auto visible  = visibleRange();
+        const int  margin   = qMax(1, qCeil(viewport()->height() / qMax(1.0, estimatedAverageMessageHeight())) / 2);
+        const int  first    = qMax(0, visible.first - margin);
+        const int  last     = qMin(itemCount() - 1, visible.last);
+        for (int at = first; at <= last; ++at) {
+            if (historySource_.isAvailable(at))
+                continue;
+            int end = at;
+            while (end < last && !historySource_.isAvailable(end + 1))
+                ++end;
+            requestArchiveRange(at, end, RequestReason::Scroll, 0);
+            return;
+        }
+        // There may still be local-only EDB rows before the server archive.
+        // At the real beginning the legacy loader owns that bounded read.
+        if (visible.first > 0)
+            return;
+    }
+    if (historyExhausted_)
         return;
     if (qstrcmp(gesture, "viewport-fill") != 0) {
         historyFillPaused_       = false;
@@ -1170,7 +1445,7 @@ qint64 MamChatWidget::estimatedMessagePixels() const
         if (items_.at(i).message.type() != MessageView::Message)
             continue;
         const QString &key = items_.at(i).key;
-        if (const auto *row = itemWidget(i)) {
+        if (const auto *row = rowWidget(i)) {
             const int height = qMax(1, row->height());
             measuredMessageHeights_.insert(key, qMakePair(viewport()->width(), height));
             pixels += height;
@@ -1186,14 +1461,14 @@ qint64 MamChatWidget::estimatedMessagePixels() const
 
 qreal MamChatWidget::estimatedAverageMessageHeight() const
 {
-    const auto visible = visibleRange();
+    const auto visible = knownVisibleRange();
     qint64 pixels = 0;
     int count = 0;
     if (visible.isValid()) {
         for (int i = qMax(0, visible.first); i <= qMin(items_.size() - 1, visible.last); ++i) {
             if (items_.at(i).message.type() != MessageView::Message)
                 continue;
-            if (const auto *row = itemWidget(i)) {
+            if (const auto *row = rowWidget(i)) {
                 pixels += qMax(1, row->height());
                 ++count;
             }
@@ -1204,7 +1479,7 @@ qreal MamChatWidget::estimatedAverageMessageHeight() const
     // Before a real visible sample, use the loaded materialized rows.
     for (int i = 0; i < items_.size(); ++i) {
         if (items_.at(i).message.type() == MessageView::Message) {
-            if (const auto *row = itemWidget(i)) {
+            if (const auto *row = rowWidget(i)) {
                 pixels += qMax(1, row->height());
                 ++count;
             }
@@ -1272,6 +1547,8 @@ void MamChatWidget::scheduleInitialHistoryFillCheck()
                 initialFillFinished_ = true;
             historyFillTargetPixels_ = -1;
             qCDebug(PsiMam::historyLog) << "fill-stop target-reached widget=" << this;
+            if (historySource_.canSeek())
+                syncSourceLayout(true);
             return;
         }
         // No page-count cap: hundreds of protocol-only events can legitimately
@@ -1299,8 +1576,11 @@ void MamChatWidget::setHistoryExhausted(bool exhausted)
         historyRequestPending_ = false;
 }
 
-QWidget *MamChatWidget::createItemWidget(int index)
+QWidget *MamChatWidget::createItemWidget(int logicalIndex)
 {
+    const int index = historySource_.knownIndex(logicalIndex);
+    if (index < 0)
+        return nullptr;
     const auto &mv  = items_.at(index).message;
     auto       *row = new ChatMessageRow;
     row->setFrameShape(QFrame::NoFrame);
@@ -1629,7 +1909,7 @@ void MamChatWidget::updateTimestamps()
     if (!isVisible() || window()->isMinimized() || theme_.layout == NativeChatTheme::Classic)
         return;
 
-    const auto range = visibleRange();
+    const auto range = knownVisibleRange();
     if (!range.isValid())
         return;
     const auto   now         = QDateTime::currentDateTime();
@@ -1641,7 +1921,7 @@ void MamChatWidget::updateTimestamps()
     // The prefetch/materialization buffer can be much larger than the
     // viewport. Touch only rows that actually intersect the visible area.
     for (int i = range.first; i <= range.last; ++i) {
-        auto *row = itemWidget(i);
+        auto *row = rowWidget(i);
         if (!row || !row->isVisibleTo(viewport())
             || !QRect(row->mapTo(viewport(), QPoint()), row->size()).intersects(viewport()->rect()))
             continue;
@@ -1679,8 +1959,8 @@ void MamChatWidget::changeEvent(QEvent *event)
     Mattermost::LongListWidget::changeEvent(event);
     if (event->type() == QEvent::FontChange) {
         measuredMessageHeights_.clear();
-        for (int index : materializedIndices()) {
-            auto *row = itemWidget(index);
+        for (int index : materializedRows()) {
+            auto *row = rowWidget(index);
             if (!row)
                 continue;
             row->setFont(font());
@@ -1695,7 +1975,10 @@ void MamChatWidget::changeEvent(QEvent *event)
                 body->setFont(font());
         }
         if (!items_.isEmpty())
-            itemsChanged(0, items_.size() - 1);
+            for (int at : materializedRows()) {
+                const int logical = historySource_.logicalIndex(at);
+                itemsChanged(logical, logical);
+            }
     } else if (event->type() == QEvent::PaletteChange) {
         refreshPalette();
         emit paletteChanged();
@@ -1724,8 +2007,8 @@ void MamChatWidget::refreshPalette()
     refreshSelection();
     refreshNicknameColors();
     refreshAvatars();
-    for (int index : materializedIndices())
-        if (auto *row = itemWidget(index))
+    for (int index : materializedRows())
+        if (auto *row = rowWidget(index))
             if (auto *time = row->findChild<QLabel *>(QStringLiteral("mamTimestamp")))
                 updateTimestampAppearance(time);
 }
@@ -1734,8 +2017,8 @@ void MamChatWidget::setTheme(const NativeChatTheme &theme)
 {
     measuredMessageHeights_.clear();
     theme_ = theme;
-    for (int index : materializedIndices())
-        replaceItem(index);
+    for (int index : materializedRows())
+        replaceRow(index);
     updateTimestamps();
 }
 
@@ -1747,8 +2030,8 @@ void MamChatWidget::setNicknameColorResolver(std::function<QColor(const MessageV
 
 void MamChatWidget::refreshNicknameColors()
 {
-    for (int index : materializedIndices()) {
-        if (auto *row = itemWidget(index))
+    for (int index : materializedRows()) {
+        if (auto *row = rowWidget(index))
             if (auto *author = row->findChild<QLabel *>(QStringLiteral("mamAuthor")))
                 updateNicknameColor(author, items_.at(index).message);
     }
@@ -1806,8 +2089,8 @@ void MamChatWidget::updateAvatar(QLabel *label, const MessageView &message)
 
 void MamChatWidget::refreshAvatars()
 {
-    for (int i : materializedIndices()) {
-        if (auto *row = itemWidget(i))
+    for (int i : materializedRows()) {
+        if (auto *row = rowWidget(i))
             if (auto *avatar = row->findChild<QLabel *>(QStringLiteral("mamAvatar")))
                 updateAvatar(avatar, items_.at(i).message);
     }
@@ -1951,7 +2234,7 @@ void MamChatWidget::refreshSelection()
     const auto range = materializedRange();
     if (range.isValid()) {
         for (int i = range.first; i <= range.last; ++i) {
-            auto *row = qobject_cast<QFrame *>(itemWidget(i));
+            auto *row = qobject_cast<QFrame *>(rowWidget(i));
             if (!row || row->objectName() != QLatin1String("mamMessageRow"))
                 continue;
             updateRowSelection(row, selectedKeys_.contains(items_.at(i).key));
@@ -1995,6 +2278,7 @@ void MamChatWidget::wheelEvent(QWheelEvent *event)
 
 void MamChatWidget::resizeEvent(QResizeEvent *event)
 {
+    rangeDemandAllowed_ = false;
     Mattermost::LongListWidget::resizeEvent(event);
     // The first layout pass may run while the room is still hidden; restoring
     // its old geometric anchor must never cancel the initial at-end intent.
@@ -2007,6 +2291,10 @@ void MamChatWidget::resizeEvent(QResizeEvent *event)
 void MamChatWidget::showEvent(QShowEvent *event)
 {
     Mattermost::LongListWidget::showEvent(event);
+    if (archiveRangeActive_ && archiveRangePaused_) {
+        archiveRangePaused_ = false;
+        emit archiveRangeRequested(activeArchiveRange_);
+    }
     // Revisit after Qt has measured the splitter/viewport on first display.
     // Any intervening user scroll has already released the initial tail.
     QTimer::singleShot(0, this, [this] {
@@ -2020,6 +2308,7 @@ void MamChatWidget::showEvent(QShowEvent *event)
 void MamChatWidget::hideEvent(QHideEvent *event)
 {
     timestampTimer_->stop();
+    rangeDemandAllowed_ = false;
     Mattermost::LongListWidget::hideEvent(event);
 }
 
@@ -2121,7 +2410,7 @@ bool MamChatWidget::eventFilter(QObject *target, QEvent *event)
                     if (!selectingByDrag_ && where.y() >= rect.top() && where.y() <= rect.bottom())
                         return Mattermost::LongListWidget::eventFilter(target, event);
                     const int anchor = indexOfKey(pressedKey_);
-                    const int now    = indexAtViewportPosition(where.y());
+                    const int now    = historySource_.knownIndex(indexAtViewportPosition(where.y()));
                     if (anchor >= 0 && now >= 0) {
                         selectingByDrag_ = true;
                         selectMessageRange(anchor, now);

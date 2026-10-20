@@ -119,7 +119,12 @@ public:
 
     EDBResult            localHistoryPage(const QString &, const XMPP::Jid &, qint64, int) override;
     EDBItemPtr            resolvedHistoryEvent(qint64 eventId) override;
+    HistoryArchive::Snapshot archiveSnapshot(const HistoryArchive::Key &) override;
+    bool                 saveArchiveSnapshot(const HistoryArchive::Key &, const HistoryArchive::Snapshot &) override;
     HistoryArchive::Page archivePage(const HistoryArchive::Key &, const QString &, int) override;
+    HistoryArchive::Page archivePageAtIndex(const HistoryArchive::Key &, int, int, int) override;
+    HistoryArchive::Page archivePageAfter(const HistoryArchive::Key &, const QString &, int, int) override;
+    bool                 mergeArchiveIsland(const HistoryArchive::Key &, int, HistoryArchive::Page &) override;
     bool mergeArchivePage(const HistoryArchive::Key &, const QString &, int, HistoryArchive::Page &) override;
 
     void         setInsertingMode(InsertMode mode);

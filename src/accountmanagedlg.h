@@ -22,6 +22,11 @@
 
 #include <QTreeWidget>
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+// Qt 6.4 needs the complete element type for QList<PsiAccount *> signals.
+Q_MOC_INCLUDE("psiaccount.h")
+#endif
+
 class PsiAccount;
 class PsiCon;
 class QTreeWidgetItem;

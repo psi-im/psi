@@ -18,8 +18,19 @@ HistorySync::Context accountContext(PsiAccount *account)
     };
     context.merge
         = [account](const HistoryArchive::Key &key, const QString &before, int limit, HistoryArchive::Page &page) {
-              return account->edb()->mergeArchivePage(key, before, limit, page);
+              return page.checkpoint ? account->edb()->mergeArchivePage(key, before, limit, page)
+                                     : account->edb()->mergeArchiveIsland(key, limit, page);
           };
+    context.readSnapshot  = [account](const HistoryArchive::Key &key) { return account->edb()->archiveSnapshot(key); };
+    context.writeSnapshot = [account](const HistoryArchive::Key &key, const HistoryArchive::Snapshot &snapshot) {
+        return account->edb()->saveArchiveSnapshot(key, snapshot);
+    };
+    context.readIndex = [account](const HistoryArchive::Key &key, int index, int limit, int snapshot) {
+        return account->edb()->archivePageAtIndex(key, index, limit, snapshot);
+    };
+    context.readAfter = [account](const HistoryArchive::Key &key, const QString &after, int limit, int snapshot) {
+        return account->edb()->archivePageAfter(key, after, limit, snapshot);
+    };
     context.lookup = [account](const HistoryArchive::Key &key, const QString &uid, const QDateTime &time) {
         HistorySync::CachedMessage cached;
         if (auto saved = account->edb()->archivedEvent(key, uid, time))
@@ -48,5 +59,10 @@ HistorySync::Context accountContext(PsiAccount *account)
 
 HistorySync::HistorySync(PsiAccount *account, const QString &peer, bool room, const QString &before, QObject *parent, int pageSize) :
     HistorySync(accountContext(account), peer, room, before, parent, pageSize)
+{
+}
+
+HistorySync::HistorySync(PsiAccount *account, Query query, const QString &peer, bool room, QObject *parent) :
+    HistorySync(accountContext(account), query, peer, room, parent)
 {
 }

@@ -35,6 +35,7 @@
 #include "minicmd.h"
 #include "typeaheadfind.h"
 #include "ui_chatdlg.h"
+#include "widgets/MamHistorySource.h"
 #include "widgets/actionlineedit.h"
 
 #include <QPointer>
@@ -68,6 +69,7 @@ private:
     void setContactToolTip(QString text);
     void setEncryptionMethod(const QString &methodId, bool persist);
     void loadOlderMamMessages();
+    void loadMamRange(const MamHistorySource::Request &);
     void sendDisplayedMarkerForVisibleMessage();
     bool displayNativeMessage(const MessageView &mv) override;
     bool scrollNativeHistory(bool down) override;

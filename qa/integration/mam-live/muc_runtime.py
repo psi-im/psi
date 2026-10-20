@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 import re
 import socket
+import sqlite3
 import subprocess
 import time
 from xml.sax.saxutils import escape
@@ -69,21 +70,21 @@ class FixtureClient:
                     return result
             self.buffer += self.socket.recv(65536)
 
-    def seed(self, room, protocol_events):
+    def seed(self, room, protocol_events, body_count):
         self.send(f"<presence to='{room}/Seeder'><x xmlns='http://jabber.org/protocol/muc'>"
                   "<history maxstanzas='0'/></x></presence>")
         self.until(b"110")
         self.send(f"<iq to='{room}' type='set' id='config'><query xmlns='http://jabber.org/protocol/muc#owner'>"
                   "<x xmlns='jabber:x:data' type='submit'/></query></iq>")
         self.iq("config")
-        for i in range(80 + protocol_events + 4):
+        for i in range(body_count + protocol_events + 4):
             payload = ("<body>Runtime message %d</body>" % i
-                       if i < 80 or i >= 80 + protocol_events
+                       if i < body_count or i >= body_count + protocol_events
                        else "<received xmlns='urn:xmpp:receipts' id='fixture-target'/>"
                             "<store xmlns='urn:xmpp:hints'/>")
             self.send(f"<message to='{room}' type='groupchat' id='fixture-{i}'>{payload}</message>")
         # The last echo is a storage/order barrier; no arbitrary persistence sleep.
-        self.until(f"fixture-{80 + protocol_events + 3}".encode())
+        self.until(f"fixture-{body_count + protocol_events + 3}".encode())
         self.send(f"<iq type='set' id='bookmarks'><query xmlns='jabber:iq:private'>"
                   f"<storage xmlns='storage:bookmarks'><conference jid='{room}' autojoin='true' name='Runtime'>"
                   "<nick>Reader</nick></conference></storage></query></iq>")
@@ -94,8 +95,8 @@ class FixtureClient:
         self.socket.close()
 
 
-def profile(root, port):
-    directory = root / "profiles" / "mam-runtime"
+def profile(root, port, profile_name):
+    directory = root / "profiles" / profile_name
     directory.mkdir(parents=True)
     jid, password = "user01@localhost", "ci-pass-01"
     encoded = "".join(f"{ord(c) ^ ord(jid[i % len(jid)]):04x}" for i, c in enumerate(password))
@@ -126,41 +127,80 @@ def main():
     parser.add_argument("--port", type=int, default=55323)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--protocol-events", type=int, default=400)
+    parser.add_argument("--bodies", type=int, default=80)
+    parser.add_argument("--probe", type=Path, help="Qt generic probe build directory")
+    parser.add_argument("--mode", choices=("initial", "indexed", "fallback"), default="initial")
+    parser.add_argument("--check-metadata-upgrade", action="store_true",
+                        help="Reopen an old EDB cache without RSM metadata and verify one bounded bootstrap")
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
     with args.psi.open("rb") as executable:
         digest = hashlib.file_digest(executable, "sha256").hexdigest()
     print(f"MUC_RUNTIME_BINARY={args.psi.resolve()} sha256={digest}", flush=True)
-    room = "runtime-" + str(int(time.time())) + "@conference.localhost"
+    room = "runtime-" + str(time.time_ns()) + "@conference.localhost"
     client = FixtureClient(args.port)
-    client.seed(room, args.protocol_events)
+    client.seed(room, args.protocol_events, args.bodies)
     client.close()
-    profile(args.output / "profile", args.port)
+    profile_name = f"mam-runtime-{os.getpid()}"
+    profile(args.output / "profile", args.port, profile_name)
     env = dict(os.environ, PSIDATADIR=str((args.output / "profile").resolve()),
                QT_QPA_PLATFORM="offscreen", QT_LOGGING_RULES="psi.history.debug=true",
                QT_MESSAGE_PATTERN="%{category}: %{message}")
-    for run in ("cold", "cached"):
+    if args.probe:
+        env["QT_PLUGIN_PATH"] = str(args.probe.resolve()) + os.pathsep + env.get("QT_PLUGIN_PATH", "")
+        env["QT_QPA_GENERIC_PLUGINS"] = "mam-history-probe"
+        env["MAM_RUNTIME_PROBE_MODE"] = args.mode
+        env["MAM_RUNTIME_MESSAGE_COUNT"] = str(args.bodies + args.protocol_events + 4)
+    runs = ("cold", "cached", "metadata-upgrade", "cached-upgrade") if args.check_metadata_upgrade else ("cold", "cached")
+    for run in runs:
+        if run == "metadata-upgrade":
+            database = args.output / "profile" / "profiles" / profile_name / "history" / "history.db"
+            with sqlite3.connect(database) as db:
+                db.execute("DELETE FROM archive_snapshots")
+                db.execute("UPDATE archive_pages SET result_count=NULL,first_index=NULL")
+                db.execute("DELETE FROM archive_index_pages")
         log = args.output / (run + ".log")
         with log.open("w") as output:
-            process = subprocess.Popen([str(args.psi.resolve()), "--profile=mam-runtime"],
+            process = subprocess.Popen([str(args.psi.resolve()), f"--profile={profile_name}"],
                                        env=env, stdout=output, stderr=subprocess.STDOUT)
             try:
                 deadline = time.monotonic() + 45
                 while time.monotonic() < deadline and process.poll() is None:
                     text = log.read_text(errors="replace")
-                    if "fill-stop target-reached" in text:
-                        requests = text.count("room request")
+                    expected = {"initial": "MAM_PROBE_INITIAL_FILLED", "indexed": "MAM_PROBE_SEEK_FILLED",
+                                "fallback": "MAM_PROBE_SEEK_FALLBACK"}[args.mode]
+                    ready = expected in text if args.probe else "fill-stop target-reached" in text
+                    if ready:
+                        def demand_counts(log_text):
+                            return tuple(log_text.count(marker) for marker in
+                                         ("room request", "source-demand", "network account=", "snapshot-request"))
+                        requests = demand_counts(text)
                         time.sleep(1)
                         settled = log.read_text(errors="replace")
-                        assert settled.count("room request") == requests, "unbounded MAM demand"
+                        assert demand_counts(settled) == requests, "unbounded MAM demand after navigation completed"
                         assert "history-demand-v4" in text, "an outdated Psi executable was started"
                         assert "room-joined" in text and "archiveReady= true" in text, "new GCMainDlg never joined"
                         checks = re.findall(r"messagePixels=\s*(\d+).*goal=\s*(\d+)", text)
                         assert any(int(p) >= int(g) for p, g in checks), "viewport is not filled"
-                        assert "atEnd= true" in text.split("fill-check")[-1], "initial fill moved away from tail"
-                        if run == "cached":
+                        if args.mode == "initial":
+                            assert "atEnd= true" in text.split("fill-check")[-1], "initial fill moved away from tail"
+                        if run != "cold" and args.mode == "initial":
                             assert "network account=" not in settled, "verified EDB page was fetched again"
                             assert "fromCache= true" in settled, "EDB replay was not exercised"
+                        if args.mode == "indexed":
+                            indexes = re.findall(r"source-demand.*kind=\s*3 index=\s*(\d+)", settled)
+                            shown = re.search(r"MAM_PROBE_SEEK_FILLED messageNumber=\s*(\d+)", settled)
+                            assert indexes and shown, "index seek did not show a real message"
+                            # Sequence numbers match server event order in this fixture.
+                            assert abs(int(indexes[-1]) - int(shown.group(1))) <= 80, "wrong archive area was displayed"
+                        if run == "metadata-upgrade":
+                            assert settled.count("snapshot-request") == 1, "old cache needs one bounded metadata query"
+                            assert re.search(r"snapshot-result.*count=\s*[1-9]\d*", settled), "count was not discovered"
+                            with sqlite3.connect(database) as db:
+                                saved = db.execute("SELECT result_count,last_uid FROM archive_snapshots WHERE peer=?", (room,)).fetchone()
+                                assert saved and saved[0] > 0 and saved[1], "UID/count snapshot was not persisted"
+                        if run == "cached-upgrade":
+                            assert "snapshot-request" not in settled, "saved snapshot was not reused"
                         print(f"MUC_RUNTIME_RESULT=success run={run} requests={requests} log={log}")
                         break
                     time.sleep(.05)

@@ -119,6 +119,11 @@ jobs:
             -DUSE_KEYCHAIN=OFF -DUSE_HUNSPELL=OFF -DENABLE_PLUGINS=OFF \
             -DPSI_DATADIR="$GITHUB_WORKSPACE" -DBUILD_TESTING=ON
           cmake --build build-native --target psi --parallel 4
+      - name: Build native geometry probe
+        run: |
+          cmake -S qa/integration/mam-live/probe -B build-native-probe -G Ninja \
+            -DQT_DEFAULT_MAJOR_VERSION=${{ matrix.qt }}
+          cmake --build build-native-probe --parallel 4
       - name: Start isolated MUC archive
         run: |
           docker run -d --name mam-native -p 127.0.0.1:55323:5222 \
@@ -128,14 +133,31 @@ jobs:
       - name: Verify first MUC window, sparse protocol events and EDB reopen
         run: |
           python3 qa/integration/mam-live/muc_runtime.py \
-            --psi build-native/psi/psi --output "$RUNNER_TEMP/mam-native-runtime"
+            --psi build-native/psi/psi --output "$RUNNER_TEMP/mam-native-runtime" \
+            --probe build-native-probe --check-metadata-upgrade
+          python3 qa/integration/mam-live/muc_runtime.py \
+            --psi build-native/psi/psi --output "$RUNNER_TEMP/mam-native-fallback" \
+            --probe build-native-probe --mode fallback --bodies 1200
+      - name: Verify index seek with real MAM storage and test-only index adapter
+        run: |
+          docker stop mam-native
+          docker run -d --name mam-native-indexed -p 127.0.0.1:55324:5222 \
+            -e MAM_TEST_INDEX=1 \
+            -v "$GITHUB_WORKSPACE/qa/integration/mam-live/muc-prosody.cfg.lua:/etc/prosody/prosody.cfg.lua:ro" \
+            -v "$GITHUB_WORKSPACE/qa/integration/mam-live/modules/mod_mam_test_index.lua:/usr/lib/prosody/modules/mod_mam_test_index.lua:ro" \
+            prosodyim/prosody:13.0
+          docker exec mam-native-indexed prosodyctl register user01 localhost ci-pass-01
+          python3 qa/integration/mam-live/muc_runtime.py \
+            --psi build-native/psi/psi --port 55324 --output "$RUNNER_TEMP/mam-native-indexed" \
+            --probe build-native-probe --mode indexed --bodies 1200
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: mam-native-qt${{ matrix.qt }}-logs
-          path: ${{ runner.temp }}/mam-native-runtime/*.log
+          path: ${{ runner.temp }}/mam-native-*/*.log
       - name: Collect server log
         if: always()
         run: |
           docker logs mam-native || true
-          docker rm -f mam-native || true
+          docker logs mam-native-indexed || true
+          docker rm -f mam-native mam-native-indexed || true

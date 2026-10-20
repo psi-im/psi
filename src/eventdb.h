@@ -132,11 +132,19 @@ public:
     }
 
     // Optional persistent MAM support. Flat-file history keeps working without it.
+    virtual HistoryArchive::Snapshot archiveSnapshot(const HistoryArchive::Key &) { return {}; }
+    virtual bool saveArchiveSnapshot(const HistoryArchive::Key &, const HistoryArchive::Snapshot &) { return true; }
     virtual HistoryArchive::Page archivePage(const HistoryArchive::Key &, const QString &, int) { return {}; }
     virtual bool mergeArchivePage(const HistoryArchive::Key &, const QString &, int, HistoryArchive::Page &)
     {
         return false;
     }
+
+    virtual HistoryArchive::Page archivePageAtIndex(const HistoryArchive::Key &, int, int, int) { return {}; }
+    virtual HistoryArchive::Page archivePageAfter(const HistoryArchive::Key &, const QString &, int, int) { return {}; }
+    // Older storage providers may omit island persistence while still displaying
+    // them. Never reinterpret an island as their legacy tail checkpoint.
+    virtual bool mergeArchiveIsland(const HistoryArchive::Key &, int, HistoryArchive::Page &) { return true; }
 
 protected:
     int         genUniqueId() const;
