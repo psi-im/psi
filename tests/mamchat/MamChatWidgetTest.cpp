@@ -503,7 +503,7 @@ private slots:
         chat.resize(520, 300);
         chat.setHistoryLoading(true);
         MessageView linked = message(QStringLiteral("link-click"), QStringLiteral("fallback"));
-        linked.setRichText(QStringLiteral("<a href='https://example.org/in-chat'>Open me</a>"));
+        linked.setHtml(QStringLiteral("<a href='https://example.org/in-chat'>Open me</a>"));
         chat.appendMessage(linked);
         chat.show();
         QTRY_VERIFY(chat.itemWidget(0));
