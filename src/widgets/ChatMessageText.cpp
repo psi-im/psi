@@ -151,10 +151,10 @@ void ChatMessageText::wheelEvent(QWheelEvent *event)
     // timeline, rather than scrolling a document with hidden scrollbars.
     for (QWidget *parent = parentWidget(); parent; parent = parent->parentWidget()) {
         if (auto *area = qobject_cast<QAbstractScrollArea *>(parent)) {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
             const QPointF global = event->globalPosition();
 #else
-            const QPointF global = event->globalPosF();
+            const QPointF global = event->globalPos();
 #endif
             QWheelEvent forwarded(QPointF(area->viewport()->mapFromGlobal(global.toPoint())), global,
                                   event->pixelDelta(), event->angleDelta(), event->buttons(), event->modifiers(),
