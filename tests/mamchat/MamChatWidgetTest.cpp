@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "widgets/MamChatWidget.h"
 #include "widgets/ChatMessageText.h"
+#include "widgets/CachedTextImageHandler.h"
+#include "widgets/PixmapLruCache.h"
 #include "widgets/urlobject.h"
 #include "desktopcolorpalette.h"
 #include "filesharingmanager.h"
@@ -12,6 +14,9 @@
 #include <QCheckBox>
 #include <QClipboard>
 #include <QFrame>
+#include <QPainter>
+#include <QImage>
+#include <QTextImageFormat>
 #include <QLabel>
 #include <QLayout>
 #include <QMenu>
@@ -46,6 +51,117 @@ MessageView message(const QString &id, const QString &body, int seconds = 0, boo
 class MamChatWidgetTest final : public QObject {
     Q_OBJECT
 private slots:
+
+    void transientPixmapCacheHonorsLruAndBudget()
+    {
+        auto &cache = Psi::PixmapLruCache::instance();
+        cache.clear();
+        cache.setIdleTimeoutMs(60000);
+        cache.setMaxBytes(2 * 32 * 32 * 4);
+        cache.setCleanupIntervalMs(10000);
+        int decodes = 0;
+        auto get = [&](const QString &id) {
+            return cache.getOrCreate(id, [&] {
+                ++decodes;
+                QPixmap image(32, 32);
+                image.fill(Qt::red);
+                return image;
+            });
+        };
+        QVERIFY(!get(QStringLiteral("first")).isNull());
+        QVERIFY(!get(QStringLiteral("second")).isNull());
+        QCOMPARE(decodes, 2);
+        QVERIFY(!get(QStringLiteral("first")).isNull()); // Refresh LRU.
+        QCOMPARE(decodes, 2);
+        QVERIFY(!get(QStringLiteral("third")).isNull()); // Evict "second".
+        QCOMPARE(cache.entryCount(), 2);
+        QVERIFY(!get(QStringLiteral("first")).isNull());
+        QCOMPARE(decodes, 3);
+        QVERIFY(!get(QStringLiteral("second")).isNull());
+        QCOMPARE(decodes, 4);
+        QVERIFY(cache.usedBytes() <= cache.maxBytes());
+        cache.clear();
+        cache.setMaxBytes(32LL * 1024 * 1024);
+    }
+
+    void transientPixmapCacheExpiresAndInvalidatesChangedImages()
+    {
+        auto &cache = Psi::PixmapLruCache::instance();
+        cache.clear();
+        cache.setIdleTimeoutMs(5);
+        cache.setMaxBytes(32LL * 1024 * 1024);
+        int decodes = 0;
+        auto make = [&] {
+            return cache.getOrCreate(QStringLiteral("same-id"), [&] {
+                ++decodes;
+                QPixmap pixmap(20, 10);
+                pixmap.fill(Qt::blue);
+                return pixmap;
+            });
+        };
+        make();
+        make();
+        QCOMPARE(decodes, 1);
+        QTest::qWait(25);
+        cache.pruneStale();
+        QCOMPARE(cache.entryCount(), 0);
+        make();
+        QCOMPARE(decodes, 2);
+
+        cache.clear();
+        cache.setIdleTimeoutMs(60000);
+        QImage image(10, 10, QImage::Format_RGB32);
+        image.fill(Qt::red);
+        const auto oldPixmap = cache.fromImage(QStringLiteral("resource-42"), image);
+        image.fill(Qt::green); // Changes QImage::cacheKey(), not logical identity.
+        const auto newPixmap = cache.fromImage(QStringLiteral("resource-42"), image);
+        QCOMPARE(oldPixmap.toImage().pixelColor(0, 0), QColor(Qt::red));
+        QCOMPARE(newPixmap.toImage().pixelColor(0, 0), QColor(Qt::green));
+        QCOMPARE(cache.entryCount(), 2);
+        cache.clear();
+    }
+
+    void inlineImagesAreMeasuredWithoutPixmapConversion()
+    {
+        auto &cache = Psi::PixmapLruCache::instance();
+        cache.clear();
+        cache.setIdleTimeoutMs(60000);
+        cache.setMaxBytes(32LL * 1024 * 1024);
+        ChatMessageText body;
+        body.resize(540, 300);
+
+        QImage screenshot(400, 200, QImage::Format_RGB32);
+        screenshot.fill(Qt::yellow);
+        const QUrl url(QStringLiteral("profile-image"));
+        body.document()->addResource(QTextDocument::ImageResource, url, screenshot);
+        QTextImageFormat format;
+        format.setName(url.toString());
+        QTextCursor cursor(body.document());
+        cursor.insertImage(format);
+        auto *handler = body.document()->documentLayout()->handlerForObject(QTextFormat::ImageObject);
+        QVERIFY(handler);
+        QVERIFY(qobject_cast<CachedTextImageHandler *>(body.findChild<CachedTextImageHandler *>()));
+
+        const QSizeF size = handler->intrinsicSize(body.document(), 0, format);
+        QVERIFY(qAbs(size.width() - 400) <= 2);
+        QVERIFY(qAbs(size.height() - 200) <= 2);
+        for (int w : { 250, 350, 450, 550 }) {
+            QVERIFY(body.heightForWidth(w) > 0);
+        }
+        QCOMPARE(cache.entryCount(), 0); // No raster conversion during relayout.
+
+        QImage canvas(650, 400, QImage::Format_RGB32);
+        canvas.fill(Qt::white);
+        QPainter painter(&canvas);
+        body.document()->setTextWidth(500);
+        body.document()->drawContents(&painter);
+        painter.end();
+        QCOMPARE(cache.entryCount(), 1); // Rasterized once to draw.
+        const QVariant stillImage = body.document()->resource(QTextDocument::ImageResource, url);
+        QCOMPARE(stillImage.userType(), int(QMetaType::QImage)); // Document never owns pixmap.
+        cache.clear();
+    }
+
     void emoteUsesSenderPrefixWithoutChangingStoredMessage()
     {
         MamChatWidget chat;
