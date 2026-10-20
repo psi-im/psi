@@ -324,9 +324,13 @@ void ContactListModel::Private::addContact(PsiContact *contact)
 
 void ContactListModel::Private::removeContact(PsiContact *contact)
 {
-    // Q_ASSERT(monitoredContacts.contains(contact));
+    // A contact can disappear before the deferred AddContact commit. Cancel
+    // that queued operation even when no model row has been created yet;
+    // otherwise the next commit dereferences an already destroyed contact.
+    const bool wasQueued = operationQueue.remove(contact) > 0;
     if (!monitoredContacts.contains(contact)) {
-        qWarning("contact %s is not monitored", qUtf8Printable(contact->jid().full()));
+        if (!wasQueued)
+            qWarning("contact %s is not monitored", qUtf8Printable(contact->jid().full()));
         return;
     }
 
