@@ -26,8 +26,8 @@ bool parseXml(QDomDocument &doc, const QString &xml)
 }
 }
 
-HistorySync::HistorySync(Context context, const QString &peer, bool room, const QString &before, QObject *parent) :
-    QObject(parent), context_(std::move(context)), before_(before)
+HistorySync::HistorySync(Context context, const QString &peer, bool room, const QString &before, QObject *parent, int pageSize) :
+    QObject(parent), context_(std::move(context)), before_(before), pageSize_(qBound(1, pageSize, PageSize))
 {
     key_ = { context_.accountId, room ? peer : context_.owner.bare(), peer, room };
 }
@@ -185,7 +185,7 @@ void HistorySync::go()
             return;
         const bool logging = context_.logging();
         if (logging) {
-            const auto           saved = context_.read(key_, before_, PageSize);
+            const auto           saved = context_.read(key_, before_, pageSize_);
             HistoryArchive::Page validated;
             QList<QDomElement>   xml;
             for (const auto &entry : saved.entries) {
@@ -218,7 +218,7 @@ void HistorySync::go()
                 for (int i = 0; i < validated.entries.size(); ++i)
                     validated.entries[i].eventId = saved.entries.at(i).eventId;
                 replaySaved_ = PsiMam::mayReuseArchivePage(before_.isEmpty(), context_.connected(), true, true,
-                                                           saved.entries.size(), PageSize, saved.complete);
+                                                           saved.entries.size(), pageSize_, saved.complete);
                 if (replaySaved_ || (before_.isEmpty() && !validated.entries.isEmpty())) {
                     tail_          = validated;
                     results_       = xml;
@@ -250,7 +250,7 @@ void HistorySync::requestPage()
     if (cancelled_)
         return;
     const bool       forward = !after_.isEmpty();
-    XMPP::MAMManager manager(context_.client, PageSize, PageSize, false, !forward);
+    XMPP::MAMManager manager(context_.client, pageSize_, pageSize_, false, !forward);
     task_ = manager.getArchiveByIDRange(key_.room ? XMPP::Jid() : XMPP::Jid(key_.peer), after_,
                                         forward ? QString() : before_, key_.room);
     if (key_.room)
@@ -390,7 +390,7 @@ void HistorySync::acceptPage()
             received.entries[i].eventId = tail_.entries.at(i).eventId;
         // Repair old cache projections through the same transaction as a
         // network page; no message/receipt notifications are emitted.
-        if (context_.logging() && !context_.merge(key_, before_, PageSize, received)) {
+        if (context_.logging() && !context_.merge(key_, before_, pageSize_, received)) {
             finishError(tr("Could not repair cached archive page"));
             return;
         }
@@ -416,7 +416,7 @@ void HistorySync::acceptPage()
         entries.append(received.entries);
         QString previous = tail_.previous;
         bool    complete = tail_.complete;
-        while (entries.size() > PageSize) {
+        while (entries.size() > pageSize_) {
             previous = entries.takeFirst().uid;
             complete = false;
         }
@@ -427,7 +427,7 @@ void HistorySync::acceptPage()
     } else
         page_ = received;
     if (context_.logging()) {
-        if (!context_.merge(key_, before_, PageSize, page_)) {
+        if (!context_.merge(key_, before_, pageSize_, page_)) {
             // A failed write must never advance a persistent watermark.
             finishError(tr("Could not persist archive page"));
             return;
