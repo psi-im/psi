@@ -62,8 +62,8 @@ history source with:
 4. **Coalescing/completion**: in-flight overlapping demand shares one response.
    Every request has a terminal success/error/no-progress state. An empty or
    protocol-only page changes cursor metadata, but cannot silently spawn an
-   unbounded chain. An opening-only viewport fill may request at most six more
-   pages while still underfilled; otherwise a new explicit upward gesture is
+   unbounded chain. An opening-only viewport fill may request extra
+   pages while the screen and a half-screen buffer of real messages remain underfilled; otherwise a new explicit upward gesture is
    required. Reconnect can explicitly refresh the tail.
 5. **Memory residency**: continue using `LongListWidget`'s existing 160-widget
    eviction. The separate `items_` model currently grows with every history
@@ -78,9 +78,9 @@ history source with:
 With an unknown archive total, the first initial MAM page is requested
 explicitly by the dialog. If the first rendered viewport remains shorter than
 the visible area, the dialog's successful page completion authorizes at most
-six additional opening-only pages. The check runs after row materialization and
+additional opening-only pages, sized from the measured mean visible message height (up to 40 MAM stanzas each). The check runs after row materialization and
 real-height measurement; it ends as soon as the viewport is full, archive is
-exhausted, user scrolls, or the six-page budget is consumed. It **never**
+exhausted, user scrolls, or a safety limit stops protocol-only pages without visible progress (eight such pages) or the opening batch budget (32 pages) is consumed. It **never**
 resumes merely because a resize/layout change or a prior page completion occurred
 after the opening fill has ended.
 
@@ -107,6 +107,51 @@ edge, a true oldest-edge wheel/scrollbar action, dragging to a distant position,
 protocol-only and duplicate pages, immediate user-scroll while loading,
 no follow-up from resize or prepend, repeated explicit gestures, the
 160-widget residency bound, stable viewport anchors and EDB/MAM overlap.
+
+
+### Adaptive MAM event budget (opening and manual backscroll)
+
+The widget counts only concrete `MessageView::Message` rows when estimating
+how much actual conversation text has been loaded. It measures the real
+`ChatMessageRow` heights of visible messages and falls back to measured
+materialized rows (then 72 px) if no messages are currently visible.
+
+- **Opening target:** enough *real message pixels* for the whole viewport
+  plus another half viewport already cached above it (`1.5 × viewport`).
+  The initial request happens before there is a useful sample; subsequent
+  requests refine the mean from newly rendered rows.
+- **Manual scrollback:** estimate the number of messages needed for about
+  half a viewport, then ask for `min(40, ceil(targetPixels / avgMessageHeight) × 3)`
+  MAM stanzas. The factor of three allows the archive to contain both
+  displayed markers and delivery receipts in addition to message bodies.
+  It is a heuristic, not a statement that the server must deliver three stanzas.
+- **Completion:** only an actual completed MAM/EDB page authorizes another
+  opening fill check. The visible MUC backlog is never removed or invalidated.
+  Repeated pages that add no message pixels are bounded (eight consecutive
+  no-progress pages, or 32 opening follow-ups) to avoid a protocol-only sweep.
+  User-initiated backscroll can continue after a safety pause.
+- **Cache:** the chosen stanza limit is passed all the way through
+  `HistorySync` and is part of the verified EDB page-read/merge contract;
+  `HistorySync::PageSize = 40` remains the absolute maximum.
+
+### Full archive count and random-access feasibility
+
+RSM `<count/>` counts archive *stanzas*, not materialized message rows.
+The count and `<first index="...">` can be used to estimate a virtual
+timeline via a measured visible-stanza ratio, but the count may be absent,
+approximate or expensive, and indexed page requests are optional per XEP-0059.
+
+Psi's current `MamChatWidget::items_` is still a dense list of *only loaded
+messages*, so merely setting a full-history scroll range would make valid
+pixel positions with no corresponding message/source identity. A real random
+seek requires a separate sparse logical source: convert target estimated
+message position to an archive RSM index, request a bounded window, remap
+loaded IDs to stable logical slots, preserve viewport anchors and leave
+unloaded slots unavailable until their bodies arrive. Never synthesize
+MessageViews for receipts or other invisible events. Iris PR #131 adds
+`MAMTask::resultCount()`, `firstResultIndex()` and indexed page requests,
+but a sparse Psi source and its indexed-seek fallback have not been merged
+into this PR.
 
 ## Incremental tail and protocol replay
 
