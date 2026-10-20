@@ -46,7 +46,7 @@ HistorySync::Context accountContext(PsiAccount *account)
 }
 }
 
-HistorySync::HistorySync(PsiAccount *account, const QString &peer, bool room, const QString &before, QObject *parent) :
-    HistorySync(accountContext(account), peer, room, before, parent)
+HistorySync::HistorySync(PsiAccount *account, const QString &peer, bool room, const QString &before, QObject *parent, int pageSize) :
+    HistorySync(accountContext(account), peer, room, before, parent, pageSize)
 {
 }
