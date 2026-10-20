@@ -2015,7 +2015,7 @@ private slots:
 
         // More MAM pages made no visible progress (e.g. only markers/reactions).
         // We may try to fill the opening viewport, but NEVER sweep to 1970.
-        for (int i = 2; i <= 6; ++i) {
+        for (int i = 2; i <= 8; ++i) {
             room.setHistoryLoading(true);
             room.setHistoryLoading(false);
             room.maybeContinueInitialHistoryFill();
@@ -2025,7 +2025,7 @@ private slots:
         room.setHistoryLoading(false);
         room.maybeContinueInitialHistoryFill();
         QTest::qWait(90);
-        QCOMPARE(requests.count(), 6);
+        QCOMPARE(requests.count(), 8); // Eight non-progress pages, then pause.
         QCOMPARE(room.messageCount(), 4);
     }
 
