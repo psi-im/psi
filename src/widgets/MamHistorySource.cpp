@@ -285,7 +285,7 @@ MamHistorySource::Request MamHistorySource::requestForRange(int first, int last,
         }
     }
     request.kind  = Request::Index;
-    request.index = qBound(0, int(qreal(first + (last - first) / 2) * count_ / qMax(1, logicalCount_)) - limit / 2,
+    request.index = qBound(0, int(qreal(first + (last - first) / 2) * count_ / qMax(1, logicalCount_)) - request.limit / 2,
                            qMax(0, count_ - 1));
     return request;
 }
