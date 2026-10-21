@@ -22,7 +22,7 @@ class DependencyLockTests(unittest.TestCase):
         self.lock = json.loads((ROOT / "dependencies.lock.json").read_text())
         # Most fixtures exercise the released-SDK contract independently of
         # whether the working development lock currently has a published SDK.
-        self.lock["iris"]["release_tag"] = "v1.5"
+        self.lock["iris"]["release_tag"] = "v1.5.1"
         (self.root / "dependencies.lock.json").write_text(json.dumps(self.lock))
 
     def with_iris(self, tag="v3.0.11", minimum="3.0.10"):
