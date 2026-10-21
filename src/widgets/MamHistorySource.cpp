@@ -258,6 +258,28 @@ MamHistorySource::Request MamHistorySource::requestForRange(int first, int last,
     request.generation    = generation;
     if (!virtual_ || !canSeek() || first < 0 || last < first || first >= logicalCount_)
         return request;
+    // A genuine one-event hole needs exactly one stanza, not a viewport batch.
+    // Require two separately verified, stable RSM windows and a *single*
+    // unresolved logical slot. Estimated positions or cursor-derived windows
+    // are not sufficient evidence for an exact index query.
+    if (first == last && !isAvailable(first)) {
+        for (int i = 1; i < windows_.size(); ++i) {
+            const auto &left = windows_.at(i - 1);
+            const auto &right = windows_.at(i);
+            if (!left.serverReported || !right.serverReported || !left.stable || !right.stable
+                || left.last + 2 != right.first || !rankUids_.contains(left.last)
+                || !rankUids_.contains(right.first))
+                continue;
+            const int missingEvent = left.last + 1;
+            if (logicalPositionForEvent(missingEvent) != first)
+                continue;
+            request.kind        = Request::Index;
+            request.index       = missingEvent;
+            request.limit       = 1;
+            request.isolatedGap = true;
+            return request;
+        }
+    }
     // Prefer an adjacent proven UID edge. Only a disconnected gap needs RSM index.
     int left = -1, right = -1;
     for (int i = 0; i < positions_.size(); ++i) {
@@ -338,6 +360,10 @@ void MamHistorySource::beginNavigation(const Request &request)
 }
 MamHistorySource::Request MamHistorySource::continueNavigation(const Request &request, bool complete, bool wantMore)
 {
+    // The only permitted max=1 query repairs one verified ordinal hole.
+    // Continuing it as normal viewport prefetch would recreate tiny pages.
+    if (request.isolatedGap)
+        return {};
     Request next       = request;
     next.index         = -1;
     next.snapshotCount = count_;
