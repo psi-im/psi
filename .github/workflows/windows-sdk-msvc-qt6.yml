@@ -107,6 +107,7 @@ jobs:
       # QCA is shared by Psi and its dynamically loaded plugins (OTR), so the
       # SDK ships the released shared QCA instead of a copy bundled into Psi.
       - name: Download locked shared QCA release
+        id: deps
         uses: ./.github/actions/load-dependencies
         with:
           require-iris: 'true'
@@ -117,7 +118,7 @@ jobs:
       - name: Install Qt 6.12
         uses: jurplel/install-qt-action@v4
         with:
-          version: ${{ env.QT_SERIES }}
+          version: ${{ steps.deps.outputs.qt6_version }}
           arch: win64_msvc2022_64
           aqtsource: ${{ env.AQT_WINDOWS_QT612_SOURCE }}
           cache: true
