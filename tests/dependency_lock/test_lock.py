@@ -31,7 +31,7 @@ class DependencyLockTests(unittest.TestCase):
         (iris_dir / "dependencies.lock.json").write_text(json.dumps({
             "qca": {
                 "tag": tag,
-                "commit": "a" * 40,
+                "commit": self.lock["qca"]["commit"],
                 "minimum_version": minimum,
             }
         }))
@@ -41,7 +41,9 @@ class DependencyLockTests(unittest.TestCase):
         self.assertEqual(values["PSIMEDIA_SRTP_REF"], self.lock["psimedia"]["commit"])
         self.assertEqual(values["QTKEYCHAIN_COMMIT"], self.lock["qtkeychain"]["commit"])
         self.assertEqual(values["MSVC_QT6_SDK_TAG"], self.lock["windows_sdks"]["msvc_qt6"]["tag"])
-        self.assertNotIn("QCA_TAG", values)
+        self.assertEqual(values["QCA_TAG"], self.lock["qca"]["release_tag"])
+        self.assertEqual(values["QT6_VERSION"], "6.12.0")
+        self.assertEqual(values["PLUGINS_REF"], self.lock["plugins"]["commit"])
         self.assertEqual(values["IRIS_RELEASE_TAG"], self.lock["iris"]["release_tag"])
 
     def test_source_only_revision_exports_no_sdk_and_never_checks_a_tag(self):
@@ -57,12 +59,17 @@ class DependencyLockTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "gitlink"):
                 resolver.verify_iris_release(self.root, "")
 
-    def test_inherits_qca_from_iris_without_second_pin(self):
-        self.assertNotIn("qca", self.lock)
+    def test_direct_qca_pin_must_match_iris_lock(self):
+        self.assertIn("qca", self.lock)
         self.with_iris()
         values = resolver.read_dependencies(self.root, require_iris=True)
-        self.assertEqual(values["QCA_TAG"], "v3.0.11")
-        self.assertEqual(values["QCA_MIN_VERSION"], "3.0.10")
+        self.assertEqual(values["QCA_TAG"], self.lock["qca"]["release_tag"])
+        self.assertEqual(values["QCA_COMMIT"], self.lock["qca"]["commit"])
+        inherited = json.loads((self.root / "iris/dependencies.lock.json").read_text())
+        inherited["qca"]["tag"] = "v3.0.10"
+        (self.root / "iris/dependencies.lock.json").write_text(json.dumps(inherited))
+        with self.assertRaisesRegex(ValueError, "disagrees"):
+            resolver.read_dependencies(self.root, require_iris=True)
 
     def test_rejects_missing_iris_and_older_qca_than_minimum(self):
         with self.assertRaises(ValueError):
@@ -70,6 +77,17 @@ class DependencyLockTests(unittest.TestCase):
         self.with_iris(tag="v3.0.9")
         with self.assertRaises(ValueError):
             resolver.read_dependencies(self.root, require_iris=True)
+
+    def test_rejects_missing_direct_sources_and_qt_mismatch(self):
+        del self.lock["plugins"]
+        (self.root / "dependencies.lock.json").write_text(json.dumps(self.lock))
+        with self.assertRaises((KeyError, ValueError)):
+            resolver.read_dependencies(self.root)
+        self.lock["plugins"] = json.loads((ROOT / "dependencies.lock.json").read_text())["plugins"]
+        self.lock["qt"]["qt6"]["version"] = "6.10.2"
+        (self.root / "dependencies.lock.json").write_text(json.dumps(self.lock))
+        with self.assertRaisesRegex(ValueError, "Qt6.12"):
+            resolver.read_dependencies(self.root)
 
     def test_rejects_bad_revision_and_archive_path(self):
         self.lock["psimedia"]["commit"] = "master"
