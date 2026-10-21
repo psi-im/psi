@@ -1362,7 +1362,7 @@ void LongListWidget::resizeEvent(QResizeEvent* event)
     // drag. Later intermediate events must not accumulate positional drift.
     if (!resizeEvictionTimer_.isActive()
         || (!resizeAnchor_.atEnd && resizeAnchor_.index < 0))
-        resizeAnchor_ = captureResizeAnchor();
+        resizeAnchor_ = captureResizeAnchor(event->oldSize().height());
     const ResizeAnchor anchor = resizeAnchor_;
     const qint64 oldOffset = contentOffset();
     resizeEvictionTimer_.start(); // Restart grace period after each resize.
@@ -1662,12 +1662,9 @@ void LongListWidget::materializeAvailable(const Range& range)
         widget->installEventFilter(this);
         widgetIndexes.insert(widget, index);
         materialized.insert(index, widget);
-        // Pending width probes are keyed by widget identity, not logical
-        // index: remapping or inserting messages cannot corrupt the deferred
-        // resize state. Cleanup also covers delayed widget destruction.
-        connect(widget, &QObject::destroyed, this, [this, widget] {
-            pendingWidthWidgets_.remove(widget);
-        });
+        // destroyItemWidget() clears deferred width state before deleteLater().
+        // Do not access members from a child's destroyed signal: QWidget tears
+        // down its children after this class's members have been destroyed.
         widget->show();
 
         const int width = std::max(1, viewport()->width());
@@ -1939,23 +1936,34 @@ bool LongListWidget::hasMissingVisibleItems() const
 
 
 
-LongListWidget::ResizeAnchor LongListWidget::captureResizeAnchor() const
+LongListWidget::ResizeAnchor LongListWidget::captureResizeAnchor(int viewportHeight) const
 {
     ResizeAnchor anchor;
     if (logicalCount <= 0)
         return anchor;
-    if (isAtEnd()) {
+    // QAbstractScrollArea forwards the viewport resize after its geometry has
+    // changed. The offset and row heights still describe the previous viewport;
+    // using the new height here loses both sticky-bottom and centre anchoring.
+    if (viewportHeight <= 0)
+        viewportHeight = viewport()->height();
+    const qint64 maximumOffset = std::max<qint64>(0, contentHeight() - viewportHeight);
+    const QScrollBar* bar = verticalScrollBar();
+    const qint64 offset = maximumOffset > INT_MAX && bar->maximum() > 0
+        ? static_cast<qint64>(std::llround(static_cast<long double>(bar->value())
+              * maximumOffset / bar->maximum()))
+        : bar->value();
+    if (offset >= maximumOffset) {
         anchor.atEnd = true;
         return anchor;
     }
-    const int viewportHalf = viewport()->height() / 2;
-    anchor.index = heights.indexAtPixel(contentOffset() + viewportHalf);
+    const int viewportHalf = viewportHeight / 2;
+    anchor.index = heights.indexAtPixel(offset + viewportHalf);
     if (anchor.index >= 0) {
         const qint64 itemCenter = heights.prefixHeight(anchor.index)
             + heights.value(anchor.index) / 2;
         anchor.centerFraction = static_cast<long double>(
-            itemCenter - contentOffset() - viewportHalf)
-            / static_cast<long double>(std::max(1, viewport()->height()));
+            itemCenter - offset - viewportHalf)
+            / static_cast<long double>(std::max(1, viewportHeight));
     }
     return anchor;
 }

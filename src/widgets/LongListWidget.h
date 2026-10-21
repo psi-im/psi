@@ -423,7 +423,7 @@ private:
     bool hasMissingVisibleItems() const;
 
     ViewAnchor captureAnchor() const;
-    ResizeAnchor captureResizeAnchor() const;
+    ResizeAnchor captureResizeAnchor(int viewportHeight = -1) const;
     void restoreResizeAnchor(const ResizeAnchor& anchor);
     void restoreAnchor(const ViewAnchor& anchor);
     void restoreSeekTarget();

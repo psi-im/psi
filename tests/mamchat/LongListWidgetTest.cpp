@@ -19,6 +19,16 @@ void settleEvents(int rounds = 8)
     }
 }
 
+void addResizeCases()
+{
+    QTest::addColumn<QSize>("targetSize");
+    QTest::newRow("narrower-and-taller") << QSize(340, 370);
+    QTest::newRow("wider-and-shorter") << QSize(570, 250);
+    QTest::newRow("height-only-grow") << QSize(510, 370);
+    QTest::newRow("height-only-shrink") << QSize(510, 250);
+    QTest::newRow("width-only") << QSize(340, 300);
+}
+
 void sendEnterEvent(QWidget* widget)
 {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -183,8 +193,11 @@ private slots:
         QVERIFY(after.contains(visible.last));
     }
 
+    void resizeKeepsLiveTailAndBottomRowPinned_data() { addResizeCases(); }
+
     void resizeKeepsLiveTailAndBottomRowPinned()
     {
+        QFETCH(QSize, targetSize);
         TestLongListWidget list;
         list.resize(510, 300);
         list.setResponsiveRows(true);
@@ -197,9 +210,9 @@ private slots:
         QVERIFY(list.isAtEnd());
         QTRY_VERIFY(list.itemWidget(99));
 
-        // Narrower text makes rows taller; the last post must stay attached
-        // to the bottom even if everything above it changes height.
-        list.resize(310, 330);
+        // Width reflow and viewport height changes must both preserve the
+        // last post's bottom, using the geometry before the resize event.
+        list.resize(targetSize);
         settleEvents();
         QVERIFY(list.isAtEnd());
         qreal fraction = 1000;
@@ -207,7 +220,8 @@ private slots:
             99, Mattermost::LongListWidget::SemanticAnchorPoint::ItemBottom, fraction));
         QVERIFY2(qAbs(fraction) < 0.015, "Last row must remain at the viewport bottom");
 
-        list.resize(570, 250);
+        // A second resize within the grace period must preserve the same intent.
+        list.resize(510, 300);
         settleEvents();
         QVERIFY(list.isAtEnd());
         QVERIFY(list.captureSemanticAnchorFraction(
@@ -215,8 +229,11 @@ private slots:
         QVERIFY(qAbs(fraction) < 0.015);
     }
 
+    void resizePreservesCentralRowAndBoundsResidency_data() { addResizeCases(); }
+
     void resizePreservesCentralRowAndBoundsResidency()
     {
+        QFETCH(QSize, targetSize);
         TestLongListWidget list;
         list.resize(510, 300);
         list.setResponsiveRows(true);
@@ -240,7 +257,7 @@ private slots:
         QVERIFY(list.captureSemanticAnchorFraction(
             anchorIndex, Mattermost::LongListWidget::SemanticAnchorPoint::ItemCenter, before));
 
-        list.resize(340, 370);
+        list.resize(targetSize);
         settleEvents();
         QVERIFY(!list.isAtEnd());
         qreal after = 100;
@@ -248,7 +265,10 @@ private slots:
             anchorIndex, Mattermost::LongListWidget::SemanticAnchorPoint::ItemCenter, after));
         QVERIFY2(qAbs(after - before) < 0.02,
                  "Central message must keep its relative vertical position");
-        QCOMPARE(list.viewportCenterIndex(), anchorIndex);
+        // Preserving a nonzero centre fraction can move the viewport's exact
+        // midpoint into a neighbour when only its height grows. The original
+        // row must stay visible at that fraction, not become centred again.
+        QVERIFY(list.visibleRange().contains(anchorIndex));
 
         // The residency budget follows the viewport, not the number of rows
         // ever visited; newly exposed messages must be materialized at the
