@@ -1502,8 +1502,8 @@ int MamChatWidget::suggestedOlderHistoryPageSize() const
     constexpr int ProtocolEventsPerMessage = 3; // message + displayed + receipt.
     // At least five visible messages with up to two protocol events each.
     // Tiny remaining pixel targets must not degenerate into one-stanza pages.
-    constexpr int MinArchiveEvents = 15;
-    return qBound(MinArchiveEvents, requiredMessages * ProtocolEventsPerMessage, 40);
+    return qBound(MamHistorySource::MinRequestEvents, requiredMessages * ProtocolEventsPerMessage,
+                  MamHistorySource::MaxRequestEvents);
 }
 
 void MamChatWidget::maybeContinueInitialHistoryFill()
