@@ -34,8 +34,8 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  QT_SERIES: "6.11.*"
-  AQT_WINDOWS_QT611_SOURCE: "git+https://github.com/miurahr/aqtinstall.git@refs/pull/1000/head"
+  QT_SERIES: "6.12.0"
+  AQT_WINDOWS_QT612_SOURCE: "git+https://github.com/miurahr/aqtinstall.git@refs/pull/1000/head"
 
 jobs:
   check:
@@ -114,12 +114,12 @@ jobs:
           qca-install-mode: sdk
           qca-directory: qca-release
 
-      - name: Install Qt 6.11
+      - name: Install Qt 6.12
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_SERIES }}
           arch: win64_msvc2022_64
-          aqtsource: ${{ env.AQT_WINDOWS_QT611_SOURCE }}
+          aqtsource: ${{ env.AQT_WINDOWS_QT612_SOURCE }}
           cache: true
 
       - name: Set up MSVC environment
