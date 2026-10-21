@@ -5,7 +5,11 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$OutputDir,
 
-    [switch]$RunTests
+    [switch]$RunTests,
+
+    # Opt-in: production Windows CI keeps its existing plugin-free profile.
+    [switch]$IncludePlugins,
+    [string]$AlphaTag = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -67,6 +71,16 @@ if (-not (Test-Path (Join-Path $qcaPluginPath 'crypto\qca-ossl.dll'))) {
     throw "QCA OpenSSL provider is missing from the SDK: $qcaPluginPath"
 }
 
+$pluginsFlag = if ($IncludePlugins) { 'ON' } else { 'OFF' }
+if ($IncludePlugins) {
+    foreach ($required in @('plugins/CMakeLists.txt', 'plugins/generic/psimedia/CMakeLists.txt')) {
+        if (-not (Test-Path (Join-Path $sourceDir $required))) {
+            throw "Full alpha package requires source: $required"
+        }
+    }
+    if (-not $env:GSTREAMER_1_0_ROOT_MSVC_X86_64) { throw 'Full alpha package requires pinned GStreamer SDK' }
+    if (-not $env:PSIMEDIA_SRTP_ROOT) { throw 'Full alpha package requires libSRTP SDK' }
+}
 $configureLog = Join-Path $outputDir 'configure-modern.log'
 $configureArgs = @(
     '-S', '.',
@@ -104,11 +118,29 @@ $configureArgs = @(
     "-DHUNSPELL_ROOT=$sdkDir",
     "-DMINIZIP_ROOT=$sdkDir",
     '-DBUILD_TESTING=OFF',
-    '-DENABLE_PLUGINS=OFF',
-    '-DBUILD_PSIMEDIA=OFF',
+    "-DENABLE_PLUGINS=$pluginsFlag",
+    "-DBUILD_PSIMEDIA=$pluginsFlag",
     '-DONLY_BINARY=OFF',
     '-DINSTALL_EXTRA_FILES=ON'
 )
+if ($IncludePlugins) {
+    $configureArgs += @(
+        '-DBUILD_PLUGINS=ALL',
+        '-DBUILD_DEMO=OFF',
+        '-DPSIMEDIA_BUILD_TESTS=OFF',
+        '-DPSIMEDIA_ENABLE_SRTP=ON',
+        '-DPSIMEDIA_WINDOWS_VIDEO_SOURCE=mfvideosrc',
+        '-DPSIMEDIA_INSTALL_GSTREAMER_RUNTIME=ON',
+        "-DSRTP_ROOT=$env:PSIMEDIA_SRTP_ROOT",
+        "-DPKG_CONFIG_EXECUTABLE=$env:PSIMEDIA_PKGCONF",
+        '-DPKG_CONFIG_ARGN=--define-prefix'
+    )
+}
+if ($AlphaTag) {
+    # Win32 VERSIONINFO/NSIS require numeric components; the public alpha
+    # label is kept separately in package filenames and BUILD-INFO.
+    $configureArgs += '-DPSI_VERSION=2.0.0.1'
+}
 
 & cmake @configureArgs 2>&1 | Tee-Object -FilePath $configureLog
 if ($LASTEXITCODE -ne 0) {
@@ -184,6 +216,19 @@ if ($RunTests) {
 Invoke-Checked cmake --install $buildDir
 
 $psiExe = Join-Path $stageDir 'psi.exe'
+if ($IncludePlugins) {
+    $plugins = @(Get-ChildItem -Path $stageDir -Recurse -Filter '*.dll' -File |
+        Where-Object { $_.DirectoryName -match '[\\/]plugins([\\/]|$)' })
+    if ($plugins.Count -lt 2) { throw 'Plugins enabled but installed package has fewer than two DLLs' }
+    $media = @($plugins | Where-Object { $_.Name -ieq 'mediaplugin.dll' })
+    if ($media.Count -ne 1) { throw "Expected exactly one PsiMedia plugin, found $($media.Count)" }
+    $gstPlugins = @(Get-ChildItem -Path (Join-Path $stageDir 'gstreamer-1.0') -Filter '*.dll' -File -ErrorAction SilentlyContinue)
+    if ($gstPlugins.Count -lt 10) { throw 'GStreamer runtime plugins were not staged' }
+    if (-not (Test-Path (Join-Path $stageDir 'gstreamer-runtime.txt'))) {
+        throw 'Missing PsiMedia GStreamer runtime manifest'
+    }
+    Write-Host "Full alpha: $($plugins.Count) plugin DLLs; $($gstPlugins.Count) GStreamer modules"
+}
 if (-not (Test-Path $psiExe)) {
     throw "Installed Psi executable is missing: $psiExe"
 }
@@ -205,13 +250,92 @@ Invoke-Checked python packaging/windows/prepare_package_msvc.py `
     --qt-conf (Join-Path $sourceDir 'win32\qt.conf') `
     --report $report
 
-$baseTag = (git describe --tags --abbrev=0).Trim()
-if (-not $baseTag) {
-    throw 'Could not determine the base Psi version tag'
+if ($AlphaTag) {
+    if ($AlphaTag -notmatch '^2\\.0-alpha[0-9]+
+
+$versionForNsis = if ($AlphaTag) { '2.0.0.1' } else { $appVersion }
+$parts = @($versionForNsis.Split('.'))
+if ($parts.Count -eq 0 -or ($parts | Where-Object { $_ -notmatch '^\d+$' })) {
+    throw "NSIS requires a numeric application version, got: $versionForNsis"
 }
-$commitCountText = (git rev-list --count "$baseTag..HEAD").Trim()
-$commitCount = [int]$commitCountText
-$appVersion = if ($commitCount -gt 0) { "$baseTag.$commitCount" } else { $baseTag }
+while ($parts.Count -lt 4) {
+    $parts += '0'
+}
+if ($parts.Count -gt 4) {
+    $parts = $parts[0..3]
+}
+foreach ($part in $parts) {
+    if ([int]$part -gt 65535) {
+        throw "NSIS version component exceeds 65535: $versionForNsis"
+    }
+}
+$numericVersion = $parts -join '.'
+
+$psiRevision = (git rev-parse HEAD).Trim()
+$qtVersion = (& "$env:QT_ROOT_DIR\bin\qmake.exe" -query QT_VERSION).Trim()
+@"
+Psi Windows package
+===================
+Psi version: $appVersion
+Psi revision: $psiRevision
+Windows profile: modern
+Compiler: MSVC $env:VCToolsVersion
+Target baseline: Windows 10 (_WIN32_WINNT=0x0A00, WINVER=0x0A00)
+Qt: $qtVersion / QtWebEngine
+Translations: psi-im/psi-l10n $l10nRevision
+Full plugin + media bundle: $($IncludePlugins.IsPresent)
+GStreamer SDK: $env:GSTREAMER_1_0_ROOT_MSVC_X86_64
+"@ | Set-Content (Join-Path $stageDir 'BUILD-INFO.txt') -Encoding utf8
+
+$packageBase = "psi-$appVersion-win10-x64"
+$zipFile = Join-Path $outputDir "$packageBase.zip"
+$setupFile = Join-Path $outputDir "$packageBase-setup.exe"
+$manifest = Join-Path $outputDir 'uninstall-modern.nsh'
+
+Invoke-Checked python packaging/windows/generate_nsis_manifest.py `
+    --root $stageDir `
+    --output $manifest
+
+Remove-Item $zipFile, $setupFile -Force -ErrorAction SilentlyContinue
+Push-Location $stageDir
+try {
+    Invoke-Checked cmake '-E' tar cf $zipFile --format=zip .
+} finally {
+    Pop-Location
+}
+Invoke-Checked cmake '-E' tar tf $zipFile
+
+$makensis = (Get-Command makensis.exe -ErrorAction Stop).Source
+$nsisArgs = @(
+    "-DAPP_VERSION=$appVersion",
+    "-DAPP_VERSION_NUMERIC=$numericVersion",
+    "-DSOURCE_DIR=$stageDir",
+    "-DUNINSTALL_MANIFEST=$manifest",
+    "-DOUTPUT_FILE=$setupFile",
+    "-DAPP_ICON=$(Join-Path $sourceDir 'win32\app.ico')",
+    "-DLICENSE_FILE=$(Join-Path $sourceDir 'COPYING')",
+    (Join-Path $sourceDir 'packaging\windows\psi.nsi')
+)
+
+Invoke-Checked $makensis @nsisArgs
+
+if (-not (Test-Path $setupFile) -or (Get-Item $setupFile).Length -eq 0) {
+    throw "Installer was not created: $setupFile"
+}
+
+Set-Content (Join-Path $outputDir 'version-modern.txt') $appVersion -Encoding ascii
+Write-Host "Created $zipFile"
+Write-Host "Created $setupFile"
+) { throw "Unexpected alpha tag $AlphaTag" }
+    $appVersion = $AlphaTag
+    $numericVersion = '2.0.0.1'
+} else {
+    $baseTag = (git describe --tags --abbrev=0).Trim()
+    if (-not $baseTag) { throw 'Could not determine the base Psi version tag' }
+    $commitCountText = (git rev-list --count "$baseTag..HEAD").Trim()
+    $commitCount = [int]$commitCountText
+    $appVersion = if ($commitCount -gt 0) { "$baseTag.$commitCount" } else { $baseTag }
+}
 
 $parts = @($appVersion.Split('.'))
 if ($parts.Count -eq 0 -or ($parts | Where-Object { $_ -notmatch '^\d+$' })) {
