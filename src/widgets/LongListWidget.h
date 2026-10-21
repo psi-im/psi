@@ -475,6 +475,7 @@ private:
     QTimer geometryTimer;
     QTimer seekTimer;
     QTimer viewportLockTimer;
+    QTimer resizeEvictionTimer_;
     QVariantAnimation scrollAnimation;
     RequestReason pendingSyncReason = RequestReason::Initial;
 
