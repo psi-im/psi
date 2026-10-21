@@ -54,9 +54,9 @@ def read_dependencies(root, require_iris=False):
             and isinstance(qca_direct.get("commit"), str)
             and HEX_SHA.fullmatch(qca_direct["commit"])
             and isinstance(qca_direct.get("release_tag"), str)
-            and re.fullmatch(r"v\\d+\\.\\d+\\.\\d+", qca_direct["release_tag"])
+            and re.fullmatch(r"v\d+\.\d+\.\d+", qca_direct["release_tag"])
             and isinstance(qca_direct.get("minimum_version"), str)
-            and re.fullmatch(r"\\d+\\.\\d+\\.\\d+", qca_direct["minimum_version"]),
+            and re.fullmatch(r"\d+\.\d+\.\d+", qca_direct["minimum_version"]),
             "Invalid direct QCA dependency")
     for name in ("psimedia", "plugins"):
         dependency = lock[name]
