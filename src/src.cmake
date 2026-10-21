@@ -108,6 +108,9 @@ list(APPEND HEADERS
     widgets/NativeChatThemeRegistry.h
     nativechattheme.h
     widgets/ChatMessageText.h
+    widgets/MessagePreview.h
+    widgets/LinkButton.h
+    chatreply.h
     widgets/MamChatWidget.h
     widgets/MamHistorySource.h
     chateditproxy.h
@@ -373,6 +376,9 @@ list(APPEND SOURCES
     widgets/NativeChatThemeRegistry.cpp
     nativechattheme.cpp
     widgets/ChatMessageText.cpp
+    widgets/MessagePreview.cpp
+    widgets/LinkButton.cpp
+    chatreply.cpp
     widgets/MamChatWidget.cpp
     widgets/MamHistorySource.cpp
     chateditproxy.cpp

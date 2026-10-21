@@ -37,6 +37,7 @@ MessageView nativeHistoryMessage(PsiAccount *account, const XMPP::Jid &peer, con
         view.setHtml(html.toString("span"));
     account->psi()->fileSharingManager()->fillMessageView(view, message, account);
     view.setMarkable(message.isMarkable());
+    view.setReplyMetadata(message);
     return view;
 }
 

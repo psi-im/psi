@@ -124,7 +124,8 @@ jobs:
             -DENABLE_AVCALL=OFF -DIRIS_ENABLE_JINGLE_SCTP=OFF \
             -DUSE_KEYCHAIN=OFF -DUSE_HUNSPELL=OFF -DENABLE_PLUGINS=OFF \
             -DPSI_DATADIR="$GITHUB_WORKSPACE" -DBUILD_TESTING=ON
-          cmake --build build-native --target psi --parallel 4
+          cmake --build build-native --target psi chat_reply_test --parallel 4
+          ctest --test-dir build-native --output-on-failure -R '^chat_reply$'
       - name: Build native geometry probe
         run: |
           cmake -S qa/integration/mam-live/probe -B build-native-probe -G Ninja \
@@ -144,6 +145,11 @@ jobs:
           python3 qa/integration/mam-live/muc_runtime.py \
             --psi build-native/psi/psi --output "$RUNNER_TEMP/mam-native-fallback" \
             --probe build-native-probe --mode fallback --bodies 1200
+      - name: Verify native message menu and XEP-0461 reply round trip
+        run: |
+          python3 qa/integration/mam-live/muc_runtime.py \
+            --psi build-native/psi/psi --output "$RUNNER_TEMP/mam-native-message-actions" \
+            --probe build-native-probe --mode message-actions
       - name: Verify index seek with real MAM storage and test-only index adapter
         run: |
           docker stop mam-native

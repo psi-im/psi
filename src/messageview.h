@@ -19,12 +19,14 @@
 
 #ifndef MESSAGEVIEW_H
 #define MESSAGEVIEW_H
+#include "chatreply.h"
 
 #include "filesharingitem.h"
 #include "iris/xmpp_message.h"
 
 #include <QDateTime>
 #include <QVariantMap>
+#include <QSharedDataPointer>
 
 class MessageView {
 public:
@@ -98,6 +100,11 @@ public:
     static bool    protocolMessage(const XMPP::Message &, bool local, MessageView &);
     static QString reactionTarget(const XMPP::Message &);
     static QString retractionTarget(const XMPP::Message &);
+    void setReplyMetadata(const XMPP::Message &);
+    const ChatReply &reply() const;
+    void setReply(const ChatReply &);
+    const QString &replyFormattedText() const;
+    bool hasReplyFallback() const;
 
     inline Type           type() const { return _type; }
     inline const QString &text() const { return _text; }
@@ -216,6 +223,14 @@ private:
     QString                  _reactionsId;
     QList<FileSharingItem *> _references;
     QSet<QString>            _reactions;
+    // Ordinary history rows pay only for a null pointer. Reply presentation
+    // detaches on mutation, like the other implicitly shared Qt values here.
+    struct ReplyData : QSharedData {
+        ChatReply reply;
+        QString formatted;
+        bool hasFallback = false;
+    };
+    QSharedDataPointer<ReplyData> _replyData;
     bool                     _markable = false;
     QString                  _encryptionProtocol;
 };

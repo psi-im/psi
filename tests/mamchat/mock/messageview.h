@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #pragma once
+#include "chatreply.h"
 
 // Test-only MessageView contract. Keeps this widget test independent from
 // PsiAccount, PsiOptions and the full application while compiling the actual
@@ -86,9 +87,18 @@ public:
     void             setPlainText(const QString &body) { body_ = body; }
     QString          formattedText() const { return body_; }
     QString          formattedUserText() const { return userText_; }
+    const ChatReply &reply() const { return reply_; }
+    void setReply(const ChatReply &reply, const QString &body = {}, bool fallback = false)
+    { reply_ = reply; replyBody_ = body; hasReplyFallback_ = fallback; }
+    const QString &replyBody() const { return replyBody_; }
+    QString replyFormattedText() const { return replyBody_.toHtmlEscaped().replace(QLatin1Char('\n'), QStringLiteral("<br>")); }
+    bool hasReplyFallback() const { return hasReplyFallback_; }
     void             setUserText(const QString &text) { userText_ = text; }
 
 private:
+    ChatReply reply_;
+    QString replyBody_;
+    bool hasReplyFallback_ = false;
     QDateTime     revisionTime_;
     QString       target_, retractTarget_, userId_, reactionsId_;
     QSet<QString> reactions_;

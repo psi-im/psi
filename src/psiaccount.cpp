@@ -1695,6 +1695,9 @@ void PsiAccount::updateFeatures()
     }
 
     features << QLatin1String("jabber:x:conference"); // allow direct invites
+#ifndef WEBKIT
+    features << QLatin1String("urn:xmpp:reply:0");
+#endif
 
 #ifdef WEBKIT
     auto gcTheme   = psi()->themeManager()->provider("groupchatview")->current();
