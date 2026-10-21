@@ -571,7 +571,8 @@ ITEMediaState *FileSharingDeviceOpener::mediaState(const QUrl &url)
     return state;
 }
 
-bool FileSharingDeviceOpener::saveAs(const QUrl &url, QWidget *parent, const SaveCallback &completed)
+bool FileSharingDeviceOpener::saveAs(const QUrl &url, QWidget *parent, const SaveCallback &completed,
+                                      const ProgressCallback &progress)
 {
     QPointer<FileSharingItem> item  = acc->psi()->fileSharingManager()->item(urlToSourceId(url), acc);
     QPointer<ITEMediaState>   state = mediaState(url);
@@ -581,10 +582,11 @@ bool FileSharingDeviceOpener::saveAs(const QUrl &url, QWidget *parent, const Sav
     // The dialog runs a nested event loop. Recheck lifetime and concurrent saves.
     if (path.isEmpty() || !item || !state || state->downloading())
         return false;
-    return saveTo(url, path, completed);
+    return saveTo(url, path, completed, progress);
 }
 
-bool FileSharingDeviceOpener::saveTo(const QUrl &url, const QString &path, const SaveCallback &completed)
+bool FileSharingDeviceOpener::saveTo(const QUrl &url, const QString &path, const SaveCallback &completed,
+                                      const ProgressCallback &progress)
 {
     QPointer<FileSharingItem> item  = acc->psi()->fileSharingManager()->item(urlToSourceId(url), acc);
     QPointer<ITEMediaState>   state = mediaState(url);
@@ -607,7 +609,7 @@ bool FileSharingDeviceOpener::saveTo(const QUrl &url, const QString &path, const
             completed({}, error);
         return false;
     }
-    auto save = new FileSharingMediaSave(input, size, download != nullptr, path, state, item, completed);
+    auto save = new FileSharingMediaSave(input, size, download != nullptr, path, state, item, completed, progress);
     save->setObjectName(QStringLiteral("psi-sims-save"));
     if (download) {
         QObject::connect(download, &FileShareDownloader::transferCompleted, save, &FileSharingMediaSave::validated);
