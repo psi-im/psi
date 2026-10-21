@@ -14,10 +14,12 @@ class ITEMediaState;
 class FileSharingMediaSave : public QObject {
 public:
     using Callback = std::function<void(const QString &path, const QString &error)>;
+    using ProgressCallback = std::function<void(qreal)>;
     // Takes ownership and opens asynchronously, so validation/failure handlers
     // can be connected before the first read.
     FileSharingMediaSave(QIODevice *input, std::optional<quint64> size, bool waitForValidation, const QString &path,
-                         ITEMediaState *state, QObject *parent, Callback onFinished = {});
+                         ITEMediaState *state, QObject *parent, Callback onFinished = {},
+                         ProgressCallback onProgress = {});
     void validated();
     void sourceClosed();
     void fail(const QString &error);
@@ -28,6 +30,7 @@ private:
     void                    pump();
     void                    finish(const QString &error = {});
     Callback                onFinished_;
+    ProgressCallback        onProgress_;
     QSaveFile               output_;
     QPointer<QIODevice>     input_;
     QPointer<ITEMediaState> state_;
