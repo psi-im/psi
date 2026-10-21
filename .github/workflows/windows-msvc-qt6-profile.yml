@@ -18,8 +18,8 @@ permissions:
   contents: read
 
 env:
-  QT_SERIES: "6.11.*"
-  AQT_WINDOWS_QT611_SOURCE: "git+https://github.com/miurahr/aqtinstall.git@refs/pull/1000/head"
+  QT_SERIES: "6.12.0"
+  AQT_WINDOWS_QT612_SOURCE: "git+https://github.com/miurahr/aqtinstall.git@refs/pull/1000/head"
 
 jobs:
   build:
@@ -58,13 +58,13 @@ jobs:
           restore-keys: |
             windows-msvc-qt6-ccache-
 
-      - name: Install Qt 6.11 + WebEngine
+      - name: Install Qt 6.12 + WebEngine
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_SERIES }}
           arch: win64_msvc2022_64
           modules: qtmultimedia qtwebchannel qtpositioning qtwebengine qtimageformats
-          aqtsource: ${{ env.AQT_WINDOWS_QT611_SOURCE }}
+          aqtsource: ${{ env.AQT_WINDOWS_QT612_SOURCE }}
           cache: true
 
       - name: Set up MSVC environment
