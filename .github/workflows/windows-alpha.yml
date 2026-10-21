@@ -58,7 +58,7 @@ jobs:
           version: 6.11.*
           arch: win64_msvc2022_64
           modules: qtmultimedia qtwebchannel qtpositioning qtwebengine qtimageformats
-          aqtsource: git+https://github.com/miurahr/aqtinstall.git@refs/pull/1000/head
+          aqtsource: git+https://github.com/miurahr/aqtinstall.git@8c3695d4a4e1ceabf6a74dc6c79681656dc6b74b
           cache: true
 
       - uses: ilammy/msvc-dev-cmd@v1
