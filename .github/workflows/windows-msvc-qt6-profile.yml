@@ -61,7 +61,7 @@ jobs:
       - name: Install Qt 6.12 + WebEngine
         uses: jurplel/install-qt-action@v4
         with:
-          version: ${{ env.QT_SERIES }}
+          version: ${{ steps.deps.outputs.qt6_version }}
           arch: win64_msvc2022_64
           modules: qtmultimedia qtwebchannel qtpositioning qtwebengine qtimageformats
           aqtsource: ${{ env.AQT_WINDOWS_QT612_SOURCE }}
