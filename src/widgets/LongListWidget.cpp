@@ -199,6 +199,9 @@ LongListWidget::LongListWidget(QWidget* parent)
     resizeEvictionTimer_.setSingleShot(true);
     resizeEvictionTimer_.setInterval(1500);
     connect(&resizeEvictionTimer_, &QTimer::timeout, this, [this] {
+        // The last resize transaction is complete. Keep no stale semantic
+        // intent once ordinary navigation/height changes resume.
+        resizeAnchor_ = {};
         // The desired interval has not changed, but residency has: force a
         // sync so evictOutside() releases rows outside the viewport margin.
         lastSynchronizedViewportRange = {};
@@ -1145,6 +1148,7 @@ void LongListWidget::scrollToIndex(int index, Alignment alignment)
 
     // Explicit navigation ends splitter-resize residency retention.
     resizeEvictionTimer_.stop();
+    resizeAnchor_ = {};
     stopScrollAnimation();
 
     if (hasViewportLock() && viewportLock.index != index) {
@@ -1167,6 +1171,7 @@ void LongListWidget::scrollToIndex(int index, Alignment alignment)
 void LongListWidget::scrollToEnd()
 {
     resizeEvictionTimer_.stop();
+    resizeAnchor_ = {};
     stopScrollAnimation();
     if (hasViewportLock()) {
         releaseViewportLock(true);
@@ -1182,6 +1187,7 @@ void LongListWidget::scrollToEnd()
 void LongListWidget::scrollToEndAnimated(int durationMs)
 {
     resizeEvictionTimer_.stop();
+    resizeAnchor_ = {};
     if (hasViewportLock()) {
         releaseViewportLock(true);
     }
@@ -1352,7 +1358,12 @@ void LongListWidget::resizeEvent(QResizeEvent* event)
     // message remains against the bottom; otherwise preserve the central
     // message's centre relative to the viewport centre. Explicit semantic
     // locks continue to take precedence over both.
-    const ResizeAnchor anchor = captureResizeAnchor();
+    // The first geometry event establishes the semantic intent for the whole
+    // drag. Later intermediate events must not accumulate positional drift.
+    if (!resizeEvictionTimer_.isActive()
+        || (!resizeAnchor_.atEnd && resizeAnchor_.index < 0))
+        resizeAnchor_ = captureResizeAnchor();
+    const ResizeAnchor anchor = resizeAnchor_;
     const qint64 oldOffset = contentOffset();
     resizeEvictionTimer_.start(); // Restart grace period after each resize.
     lastSynchronizedViewportRange = {};
@@ -1522,6 +1533,9 @@ void LongListWidget::synchronizeRange(const Range& desired,
         restoreSeekTarget();
     } else if (hasViewportLock()) {
         restoreViewportLock();
+    } else if (resizeEvictionTimer_.isActive()
+               && (resizeAnchor_.atEnd || resizeAnchor_.index >= 0)) {
+        restoreResizeAnchor(resizeAnchor_);
     } else {
         restoreAnchor(anchor);
     }
@@ -1827,6 +1841,9 @@ void LongListWidget::commitGeometry(bool heightIndexChanged)
             restoreSeekTarget();
         } else if (hasViewportLock()) {
             restoreViewportLock();
+        } else if (resizeEvictionTimer_.isActive()
+                   && (resizeAnchor_.atEnd || resizeAnchor_.index >= 0)) {
+            restoreResizeAnchor(resizeAnchor_);
         } else if (settlingWidth) {
             restoreResizeAnchor(resizeAnchor);
         } else {
@@ -1936,7 +1953,9 @@ LongListWidget::ResizeAnchor LongListWidget::captureResizeAnchor() const
     if (anchor.index >= 0) {
         const qint64 itemCenter = heights.prefixHeight(anchor.index)
             + heights.value(anchor.index) / 2;
-        anchor.centerOffset = itemCenter - contentOffset() - viewportHalf;
+        anchor.centerFraction = static_cast<long double>(
+            itemCenter - contentOffset() - viewportHalf)
+            / static_cast<long double>(std::max(1, viewport()->height()));
     }
     return anchor;
 }
@@ -1948,7 +1967,8 @@ void LongListWidget::restoreResizeAnchor(const ResizeAnchor& anchor)
     } else if (anchor.index >= 0 && anchor.index < logicalCount) {
         const qint64 itemCenter = heights.prefixHeight(anchor.index)
             + heights.value(anchor.index) / 2;
-        const qint64 offset = itemCenter - anchor.centerOffset
+        const qint64 offset = itemCenter - static_cast<qint64>(std::llround(
+            anchor.centerFraction * std::max(1, viewport()->height())))
             - viewport()->height() / 2;
         verticalScrollBar()->setValue(scrollValueForContentOffset(offset));
     }
@@ -2074,6 +2094,7 @@ void LongListWidget::releaseViewportLock(bool notify)
 void LongListWidget::noteUserScrollStarted()
 {
     resizeEvictionTimer_.stop();
+    resizeAnchor_ = {};
     stopScrollAnimation();
     releaseViewportLock(true);
     // A new viewport consumes only progress observed after this gesture.
@@ -2159,8 +2180,10 @@ void LongListWidget::onScrollValueChanged()
     // signals. Only a real change outside the resize/layout transaction ends
     // the grace period.
     if (!committingGeometry && !synchronizing && !internalScrollChange
-        && !scrollAnimationApplying)
+        && !scrollAnimationApplying) {
         resizeEvictionTimer_.stop();
+        resizeAnchor_ = {};
+    }
 
     const bool userScroll =
         wheelInProgress || verticalScrollBar()->isSliderDown() || userScrollActionPending;
