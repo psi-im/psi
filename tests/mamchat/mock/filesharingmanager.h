@@ -8,12 +8,15 @@
 #include <QImage>
 #include <QUrl>
 #include <optional>
+#include <functional>
 
 class FileSharingItem : public QObject {
     Q_OBJECT
 public:
     explicit FileSharingItem(const QString &mime, QObject *parent = nullptr) : QObject(parent), mime_(mime) { }
     QString                mimeType() const { return mime_; }
+    QString                displayName() const { return QStringLiteral("test.7z"); }
+    QString                fileName() const { return {}; }
     bool                   isCached() const { return true; }
     QImage                 preview(const QSize &) const { return preview_; }
     std::optional<quint64> fileSize() const { return 100; }
@@ -36,7 +39,19 @@ public:
         return id.isEmpty() ? const_cast<FileSharingDeviceOpener *>(this) : accounts.value(id);
     }
     FileSharingItem *sharedItem(const QString &id) { return items.value(id); }
-    void             saveAs(const QUrl &, QWidget *) { ++saves; }
+    using SaveCallback = std::function<void(const QString &, const QString &)>;
+    using ProgressCallback = std::function<void(qreal)>;
+    bool             saveAs(const QUrl &, QWidget *, const SaveCallback & = {}, const ProgressCallback & = {})
+    {
+        ++saves;
+        return true;
+    }
+    bool             saveTo(const QUrl &, const QString &, const SaveCallback & = {}, const ProgressCallback & = {})
+    {
+        ++saves;
+        return true;
+    }
+    void             cancelSave(const QUrl &) { }
     QIODevice       *open(QUrl &) override
     {
         ++opens;
