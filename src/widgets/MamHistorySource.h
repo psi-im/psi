@@ -17,6 +17,8 @@ class MamChatWidget;
 // supplies a bounded, decoded page. RSM positions describe events, never rows.
 class MamHistorySource {
 public:
+    static constexpr int MinRequestEvents = 15;
+    static constexpr int MaxRequestEvents = 40;
     struct Row {
         QString       key;
         MessageView   message;
@@ -30,7 +32,7 @@ public:
         enum Kind { None, Before, After, Index } kind = None;
         QString cursor;
         int     index = -1;
-        int     limit = 40, snapshotCount = -1;
+        int     limit = MaxRequestEvents, snapshotCount = -1;
         int     first = -1, last = -1;
         quint64 generation = 0;
     };
