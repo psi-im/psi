@@ -12,6 +12,7 @@
 #include <QCheckBox>
 #include <QClipboard>
 #include <QFrame>
+#include <QGraphicsOpacityEffect>
 #include <QLabel>
 #include <QLayout>
 #include <QMenu>
@@ -25,11 +26,25 @@
 #include <QTimer>
 #include <QUrlQuery>
 #include <QWheelEvent>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QEnterEvent>
+#endif
 #include <QtTest/QtTest>
 #include <cmath>
 #include <memory>
 
 namespace {
+void enterWidget(QWidget *widget)
+{
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    const QPointF local(1, 1);
+    QEnterEvent enter(local, local, widget->mapToGlobal(QPoint(1, 1)));
+#else
+    QEvent enter(QEvent::Enter);
+#endif
+    QApplication::sendEvent(widget, &enter);
+}
+
 MessageView message(const QString &id, const QString &body, int seconds = 0, bool local = false)
 {
     MessageView view(MessageView::Message);
@@ -46,6 +61,86 @@ MessageView message(const QString &id, const QString &body, int seconds = 0, boo
 class MamChatWidgetTest final : public QObject {
     Q_OBJECT
 private slots:
+    void hoveredRowSurfaceFollowsPointerAndPreservesSelection_data()
+    {
+        QTest::addColumn<bool>("dark");
+        QTest::addColumn<bool>("classic");
+        QTest::newRow("light-modern") << false << false;
+        QTest::newRow("dark-modern") << true << false;
+        QTest::newRow("light-classic") << false << true;
+        QTest::newRow("dark-classic") << true << true;
+    }
+
+    void hoveredRowSurfaceFollowsPointerAndPreservesSelection()
+    {
+        QFETCH(bool, dark);
+        QFETCH(bool, classic);
+        MamChatWidget chat;
+        chat.resize(550, 350);
+        chat.setHistoryLoading(true);
+        if (classic)
+            chat.setTheme({ "classic", "Classic", NativeChatTheme::Classic, 0, 4, {} });
+        QPalette palette = chat.palette();
+        const QColor base = dark ? QColor(25, 25, 25) : QColor(Qt::white);
+        palette.setColor(QPalette::Base, base);
+        palette.setColor(QPalette::Window, base);
+        palette.setColor(QPalette::Text, dark ? Qt::white : Qt::black);
+        palette.setColor(QPalette::Highlight, QColor(0, 120, 230));
+        chat.setPalette(palette);
+        chat.appendMessage(message("hover-first", "First <a href='https://example.org'>message</a>"));
+        chat.appendMessage(message("hover-second", "Second message", 1));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(1));
+        QEvent leave(QEvent::Leave);
+        QApplication::sendEvent(chat.viewport(), &leave);
+        auto *first = chat.itemWidget(0);
+        auto *second = chat.itemWidget(1);
+        auto *body = first->findChild<ChatMessageText *>();
+        QVERIFY(body);
+        body->selectAll();
+        const auto selection = body->textCursor().selectedText();
+        const int revision = body->document()->revision();
+        enterWidget(first);
+        const auto hover = chat.hoverHighlightSurfaceColor();
+        QVERIFY(hover != base);
+        QCOMPARE(first->palette().color(QPalette::Base), hover);
+        QCOMPARE(second->palette().color(QPalette::Base), base);
+        QCOMPARE(body->textCursor().selectedText(), selection);
+        QCOMPARE(body->document()->revision(), revision);
+        // Check actual pixels, including QTextEdit's child viewport: changing
+        // just the outer list's paint does not show through opaque row surfaces.
+        const auto point = body->viewport()->mapTo(&chat, QPoint(body->viewport()->width() - 3,
+                                                                body->viewport()->height() - 3));
+        const auto image = chat.grab().toImage();
+        QCOMPARE(image.pixelColor(qRound(point.x() * image.devicePixelRatio()),
+                                  qRound(point.y() * image.devicePixelRatio())).rgba(), hover.rgba());
+        auto *actions = chat.findChild<QFrame *>("mamMessageActions");
+        QVERIFY(actions);
+        QTRY_VERIFY(actions->isVisible());
+        QApplication::sendEvent(first, &leave);
+        enterWidget(actions);
+        QCOMPARE(first->palette().color(QPalette::Base), hover);
+        enterWidget(second);
+        QCOMPARE(first->palette().color(QPalette::Base), base);
+        QCOMPARE(second->palette().color(QPalette::Base), hover);
+        chat.selectMessageRange(1, 1);
+        const auto selected = second->palette().color(QPalette::Base);
+        QVERIFY(selected != hover);
+        QApplication::sendEvent(chat.viewport(), &leave);
+        QCOMPARE(second->palette().color(QPalette::Base), selected);
+        chat.cancelMessageSelection();
+        QCOMPARE(second->palette().color(QPalette::Base), base);
+        enterWidget(first);
+        palette.setColor(QPalette::Highlight, QColor(200, 80, 20));
+        chat.setPalette(palette);
+        QTRY_COMPARE(first->palette().color(QPalette::Base), chat.hoverHighlightSurfaceColor());
+        QApplication::setActiveWindow(nullptr);
+        QTRY_COMPARE(first->palette().color(QPalette::Base), base);
+        enterWidget(first);
+        chat.hide();
+        QCOMPARE(first->palette().color(QPalette::Base), base);
+    }
+
     void emoteUsesSenderPrefixWithoutChangingStoredMessage()
     {
         MamChatWidget chat;
@@ -147,6 +242,66 @@ private slots:
         QCOMPARE(chooser.first().first().toString(), QString("origin-id"));
         QEvent leave(QEvent::Leave);
         QApplication::sendEvent(bar, &leave);
+        QTRY_VERIFY(!bar->isVisible());
+    }
+
+    void messageActionsRemainVisibleAcrossRowChildrenAndPadding()
+    {
+        MamChatWidget chat;
+        chat.resize(600, 400);
+        chat.setHistoryLoading(true);
+        auto own = message("actions-client", "Message text<br>Second line<br>Third line", 0, true);
+        own.setReactionTargetId("actions-origin");
+        own.setRetractionTargetId("actions-client");
+        chat.appendMessage(own);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *row = chat.itemWidget(0);
+        auto *body = row->findChild<ChatMessageText *>();
+        auto *author = row->findChild<QLabel *>("mamAuthor");
+        auto *bar = chat.findChild<QFrame *>("mamMessageActions");
+        QVERIFY(bar);
+        auto *opacity = qobject_cast<QGraphicsOpacityEffect *>(bar->graphicsEffect());
+        QVERIFY(body && author && opacity);
+
+        QTest::mouseMove(body->viewport(), body->viewport()->rect().center());
+        QTRY_VERIFY(bar->isVisible());
+        QTRY_COMPARE(opacity->opacity(), 1.0);
+        // The right/bottom padding belongs to the message row but to none of
+        // its text widgets. No child Enter follows the text viewport's Leave.
+        const QPoint padding(row->width() - 3, row->height() - 3);
+        QVERIFY(!body->viewport()->rect().contains(body->viewport()->mapFrom(row, padding)));
+        QTest::mouseMove(row, padding);
+        QTest::qWait(350); // Longer than hide delay plus fade duration.
+        QVERIFY(bar->isVisible());
+        QCOMPARE(opacity->opacity(), 1.0);
+        QTest::mouseMove(author, author->rect().center());
+        QTest::mouseMove(row, padding);
+        QTest::qWait(350);
+        QVERIFY(bar->isVisible());
+        QCOMPARE(opacity->opacity(), 1.0);
+
+        auto *choose = bar->findChild<QPushButton *>("mamChooseReaction");
+        auto *more = bar->findChild<QPushButton *>("mamMoreActions");
+        QVERIFY(choose && more && more->isVisible());
+        QTest::mouseMove(choose, choose->rect().center());
+        QTest::qWait(350);
+        QVERIFY(bar->isVisible());
+        QCOMPARE(opacity->opacity(), 1.0);
+        auto *quick = bar->findChild<QPushButton *>("mamQuickReaction");
+        QVERIFY(quick && quick->isVisible());
+        QTest::mouseMove(quick, quick->rect().center());
+        QTest::qWait(350);
+        QVERIFY(bar->isVisible());
+        QCOMPARE(opacity->opacity(), 1.0);
+        QTest::mouseMove(more, more->rect().center());
+        QTest::qWait(350);
+        QVERIFY(bar->isVisible());
+        QCOMPARE(opacity->opacity(), 1.0);
+
+        const QPoint outside(chat.viewport()->width() / 2, chat.viewport()->height() - 3);
+        QVERIFY(!QRect(row->mapTo(chat.viewport(), QPoint()), row->size()).contains(outside));
+        QTest::mouseMove(chat.viewport(), outside);
         QTRY_VERIFY(!bar->isVisible());
     }
 
@@ -920,6 +1075,7 @@ private slots:
         QCOMPARE(DesktopColorPalette::preview(QStringLiteral("dark"), dark), dark);
         QCOMPARE(DesktopColorPalette::preview(QStringLiteral("light"), dark).color(QPalette::Base), QColor(Qt::white));
         MamChatWidget list;
+        list.setHoverHighlightEnabled(false); // Assert the unhovered palette regardless of cursor position.
         list.resize(550, 450);
         list.setPalette(light);
         list.setHistoryLoading(true);
@@ -962,6 +1118,7 @@ private slots:
         window.setStyleSheet(QStringLiteral("QTextEdit[correction=\"true\"] { background-color: rgb(160,160,0); }"));
         window.resize(550, 450);
         MamChatWidget list(&window);
+        list.setHoverHighlightEnabled(false); // Hover/palette interaction is covered separately.
         list.setGroupChat(groupChat);
         const QColor nickColor(0, 170, 170);
         if (groupChat)
@@ -1034,6 +1191,7 @@ private slots:
     {
         QFETCH(bool, dark);
         MamChatWidget list;
+        list.setHoverHighlightEnabled(false); // Cancellation should restore the unhovered surface here.
         QPalette palette = list.palette();
         const QColor base = dark ? QColor(25, 25, 25) : QColor(Qt::white);
         palette.setColor(QPalette::Base, base);

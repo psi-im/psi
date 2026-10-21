@@ -240,7 +240,10 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
     setDefaultItemHeight(72);
     setMaterializationLimit(160);
     setRequestBlockSize(40);
-    setHoverHighlightEnabled(false);
+    // Keep one semantic hover owner across row gaps and the viewport-owned
+    // action bar, as MatterLeast does. Opaque row/text surfaces need the same
+    // highlight color as the overlay painted by LongListWidget underneath.
+    viewport()->installEventFilter(this);
 
     // MatterLeast-style floating whole-message selection controls.
     selectionToolbar_ = new QFrame(viewport());
@@ -1956,6 +1959,8 @@ void MamChatWidget::updateTimestamps()
 
 void MamChatWidget::changeEvent(QEvent *event)
 {
+    if (event->type() == QEvent::ActivationChange && !isActiveWindow())
+        setHoveredRow(nullptr);
     if (event->type() == QEvent::PaletteChange || event->type() == QEvent::ApplicationPaletteChange
         || event->type() == QEvent::StyleChange)
         schedulePaletteRefresh();
@@ -2203,29 +2208,46 @@ void MamChatWidget::updateRowSelection(QFrame *row, bool selected)
         check->setChecked(selected);
         check->setVisible(selecting);
     }
-    const QColor base    = viewport()->palette().color(QPalette::Base);
-    const QColor accent  = viewport()->palette().color(QPalette::Highlight);
-    const QColor surface = selected
-        ? QColor((base.red() * 3 + accent.red()) / 4, (base.green() * 3 + accent.green()) / 4,
-                 (base.blue() * 3 + accent.blue()) / 4)
-        : base;
-    QPalette     palette = viewport()->palette();
-    palette.setColor(QPalette::Window, surface);
-    palette.setColor(QPalette::Base, surface); // QTextDocument's surface, too.
-    row->setPalette(palette);
-    row->setAutoFillBackground(true);
+    updateRowPalette(row, selected);
     if (auto *author = row->findChild<QLabel *>(QStringLiteral("mamAuthor"))) {
         author->setTextInteractionFlags(selecting ? Qt::NoTextInteraction : Qt::TextSelectableByMouse);
         if (selecting)
             author->setSelection(0, 0);
     }
+    if (auto *body = row->findChild<ChatMessageText *>())
+        body->setWholeMessageSelectionMode(selecting);
+}
+
+void MamChatWidget::setHoveredRow(QFrame *row)
+{
+    auto *previous = qobject_cast<QFrame *>(hoverHighlightOverrideWidget());
+    if (previous == row)
+        return;
+    setHoverHighlightOverride(row);
+    for (auto *changed : { previous, row })
+        if (changed)
+            updateRowPalette(changed, selectedKeys_.contains(changed->property("_psiMamRowKey").toString()));
+}
+
+void MamChatWidget::updateRowPalette(QFrame *row, bool selected)
+{
+    const QColor base    = viewport()->palette().color(QPalette::Base);
+    const QColor accent  = viewport()->palette().color(QPalette::Highlight);
+    const QColor surface = selected
+        ? QColor((base.red() * 3 + accent.red()) / 4, (base.green() * 3 + accent.green()) / 4,
+                 (base.blue() * 3 + accent.blue()) / 4)
+        : (hoverHighlightOverrideWidget() == row ? hoverHighlightSurfaceColor() : base);
+    QPalette     palette = viewport()->palette();
+    palette.setColor(QPalette::Window, surface);
+    palette.setColor(QPalette::Base, surface); // QTextDocument's surface, too.
+    row->setPalette(palette);
+    row->setAutoFillBackground(true);
     if (auto *body = row->findChild<ChatMessageText *>()) {
         QPalette textPalette = palette;
         if (row->property("_psiMamInformational").toBool())
             textPalette.setColor(QPalette::Text,
                                  informationalColor_.isValid() ? informationalColor_ : palette.color(QPalette::Link));
         body->setPalette(textPalette);
-        body->setWholeMessageSelectionMode(selecting);
     }
     row->update();
 }
@@ -2310,6 +2332,7 @@ void MamChatWidget::showEvent(QShowEvent *event)
 
 void MamChatWidget::hideEvent(QHideEvent *event)
 {
+    setHoveredRow(nullptr);
     timestampTimer_->stop();
     rangeDemandAllowed_ = false;
     Mattermost::LongListWidget::hideEvent(event);
@@ -2317,6 +2340,10 @@ void MamChatWidget::hideEvent(QHideEvent *event)
 
 bool MamChatWidget::eventFilter(QObject *target, QEvent *event)
 {
+    // A Leave from a row can be just a handoff to the floating actions. The
+    // viewport encloses the complete hover session, including that overlay.
+    if (target == viewport() && (event->type() == QEvent::Enter || event->type() == QEvent::Leave))
+        setHoveredRow(nullptr);
     if (target == verticalScrollBar()) {
         // A scrollbar at zero cannot emit valueChanged; Qt may even omit
         // actionTriggered for an outward user action that clamps to zero.
@@ -2347,13 +2374,11 @@ bool MamChatWidget::eventFilter(QObject *target, QEvent *event)
     auto      *widget  = qobject_cast<QWidget *>(target);
     const bool hover   = event->type() == QEvent::Enter || event->type() == QEvent::Leave;
     const bool inQuick = hover && widget && (widget == quickReactions_ || quickReactions_->isAncestorOf(widget));
+    const bool inActions = hover && widget && (widget == messageActions_ || messageActions_->isAncestorOf(widget));
     if (event->type() == QEvent::Enter) {
-        if (target == chooseReaction_) {
-            actionHideTimer_->stop();
-            setQuickReactionsExpanded(true);
-        } else if (inQuick) {
-            quickHideTimer_->stop();
-        } else if (target == messageActions_ || (widget && messageActions_->isAncestorOf(widget))) {
+        // The toolbar and all of its children share the row's hover session,
+        // including the react button and the expanding quick-reaction slot.
+        if (inActions) {
             actionHideTimer_->stop();
             if (actionsFade_->state() == QAbstractAnimation::Running && actionsFade_->endValue().toReal() <= 0.0) {
                 actionsFade_->stop();
@@ -2361,12 +2386,24 @@ bool MamChatWidget::eventFilter(QObject *target, QEvent *event)
                 actionsFade_->setEndValue(1.0);
                 actionsFade_->start();
             }
-        } else if (auto *row = eventRow(target))
-            showMessageActions(row);
+        }
+        if (target == chooseReaction_)
+            setQuickReactionsExpanded(true);
+        else if (inQuick)
+            quickHideTimer_->stop();
+        else if (!inActions) {
+            if (auto *row = eventRow(target)) {
+                if (isHoverHighlightEnabled())
+                    setHoveredRow(row);
+                showMessageActions(row);
+            }
+        }
     } else if (event->type() == QEvent::Leave) {
         if (target == chooseReaction_ || inQuick)
             quickHideTimer_->start();
-        if (target == messageActions_ || eventRow(target))
+        // Leaving a text viewport/label for row padding is still inside the
+        // message. Only the enclosing row or toolbar can start dismissal.
+        if (target == messageActions_ || target == eventRow(target))
             actionHideTimer_->start();
     } else if (event->type() == QEvent::MouseButtonRelease && target == chooseReaction_) {
         // Do not change the toolbar geometry between the press and release

@@ -146,6 +146,8 @@ private:
     void                                          updateTimestamps();
     void                                          updateTimestampAppearance(QLabel *label);
     void                                          updateRowSelection(QFrame *row, bool selected);
+    void                                          updateRowPalette(QFrame *row, bool selected);
+    void                                          setHoveredRow(QFrame *row);
     QColor                                        informationalColor_;
     void                                          updateAvatar(QLabel *label, const MessageView &message);
     void                                          updateNicknameColor(QLabel *label, const MessageView &message);

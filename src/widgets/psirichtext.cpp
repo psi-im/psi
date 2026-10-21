@@ -438,7 +438,10 @@ void PsiRichText::recolorLinks(QTextDocument *document, const QColor &color)
                 continue;
             const QTextCharFormat format = fragment.charFormat();
             const QString         href   = format.anchorHref();
-            if (format.isAnchor() && !href.isEmpty() && !href.startsWith(QLatin1String("addnick://psi/")))
+            // Background-only palette changes (e.g. row hover) must not edit
+            // the document and trigger text reflow for already-colored links.
+            if (format.isAnchor() && !href.isEmpty() && !href.startsWith(QLatin1String("addnick://psi/"))
+                && format.foreground() != QBrush(color))
                 ranges.append({ fragment.position(), fragment.length() });
         }
     }
