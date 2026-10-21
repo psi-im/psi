@@ -34,12 +34,12 @@
   "psimedia": {
     "repository": "psi-im/psimedia",
     "release_tag": null,
-    "commit": "aca907fed0ff7634024bc81ec4a032e44d3f3406"
+    "commit": "0dcf24fc86da44decf2b9b48b3cd2f8cfecba9fc"
   },
   "plugins": {
     "repository": "psi-im/plugins",
     "release_tag": null,
-    "commit": "cf65ddf460eca3e93ae90732f5b1b19d979546af"
+    "commit": "7ce021544f7cc8f405f5e359ef24f11faa1a3560"
   },
   "qtkeychain": {
     "tag": "0.17.0",
