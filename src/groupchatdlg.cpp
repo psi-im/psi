@@ -571,7 +571,9 @@ public:
         m.setReferences(refs);
         m.setUrlList(fileSharingHttpUrls(refs));
         m.setBody(desc);
+        dlg->ui_.mle->applyReply(m);
         emit dlg->aSend(m);
+        dlg->ui_.mle->clearReply();
     }
 
 public:
@@ -752,8 +754,33 @@ void GCMainDlg::sendMessageRetraction(const QString &messageId)
 
 void GCMainDlg::doContactContextMenu(const QString &nick)
 {
+    showContactContextMenu(nick, QCursor::pos());
+}
+
+void GCMainDlg::showContactContextMenu(const QString &nick, const QPoint &globalPosition)
+{
     auto itm = d->usersModel->findEntry(nick);
     if (!itm) {
+        // History can outlive presence. Do not offer moderation/private-MUC
+        // actions against an absent (or possibly reused) occupant address.
+        auto *menu = new QMenu(this);
+        menu->setAttribute(Qt::WA_DeleteOnClose);
+        menu->addAction(tr("%1 is not in the room").arg(nick))->setEnabled(false);
+        connect(menu->addAction(tr("Insert nickname")), &QAction::triggered, this,
+                [this, nick] { onNickInsertClick(nick); });
+        connect(menu->addAction(tr("Copy nickname")), &QAction::triggered, this,
+                [nick] { QApplication::clipboard()->setText(nick); });
+        const auto real = formerParticipantAddresses_.value(nick);
+        if (real.isValid() && !real.isEmpty()) {
+            menu->addSeparator();
+            connect(menu->addAction(tr("Copy last known address")), &QAction::triggered, this,
+                    [real] { QApplication::clipboard()->setText(real.full()); });
+            connect(menu->addAction(tr("User Info")), &QAction::triggered, this,
+                    [this, real] { account()->actionInfo(real); });
+            connect(menu->addAction(tr("Open Chat Window")), &QAction::triggered, this,
+                    [this, real] { account()->actionOpenChat(real); });
+        }
+        menu->popup(globalPosition);
         return;
     }
 
@@ -894,7 +921,8 @@ void GCMainDlg::doContactContextMenu(const QString &nick)
     }
     int  x       = -1;
     bool enabled = false;
-    act          = pm->exec(QCursor::pos());
+    const QString actionNick = itm->name;
+    act          = pm->exec(globalPosition);
     if (act) {
         x       = act->data().toInt();
         enabled = act->isEnabled();
@@ -903,7 +931,9 @@ void GCMainDlg::doContactContextMenu(const QString &nick)
 
     if (x == -1 || !enabled)
         return;
-    lv_action(itm->name, itm->status, x);
+    // Presence may have changed while exec() ran its nested event loop.
+    if (auto *current = d->usersModel->findEntry(actionNick))
+        lv_action(current->name, current->status, x);
 }
 
 GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : TabbableWidget(j.bare(), pa, tabManager)
@@ -950,6 +980,12 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     configureNativeChat(nativeTimeline_, account(), jid(), true);
     connect(nativeTimeline_, &MamChatWidget::outgoingReactions, this, &GCMainDlg::outgoingReactions);
     connect(nativeTimeline_, &MamChatWidget::outgoingMessageRetraction, this, &GCMainDlg::sendMessageRetraction);
+    connect(nativeTimeline_, &MamChatWidget::contactMenuRequested, this, &GCMainDlg::showContactContextMenu);
+    connect(nativeTimeline_, &MamChatWidget::replyRequested, ui_.mle, &ChatEditProxy::setReply);
+    connect(nativeTimeline_, &MamChatWidget::forwardMessageRequested, this,
+            [this](const QString &id, const QString &sender, const QString &text) {
+        account()->psi()->invokeForwardMessage(id, XMPP::Jid(sender), text);
+    });
     // Preserve Psi's established per-nickname coloring policy in both native
     // layouts, including fixed/hash palettes and muted MAM/history records.
     QPointer<ChatView> oldView(ui_.log);
@@ -1645,10 +1681,12 @@ void GCMainDlg::mle_returnPressed()
     }
 
     m.setTimeStamp(QDateTime::currentDateTime());
-    d->mle()->appendMessageHistory(m.body());
+    ui_.mle->applyReply(m);
+    d->mle()->appendMessageHistory(textToSend);
 
     emit aSend(m);
 
+    ui_.mle->clearReply();
     d->histAt = 0;
     d->hist.prepend(textToSend);
     ui_.mle->chatEdit()->setText("");
@@ -2157,6 +2195,8 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
                 }
             }
         }
+        // A reused nickname must not inherit a former occupant's real JID.
+        formerParticipantAddresses_.remove(nick);
         d->usersModel->updateEntry(nick, s);
         // if(!nick.isEmpty())
         //    avatarUpdated(jidForNick(nick)); // only by event from AvatarFactory we should do this
@@ -2242,6 +2282,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
         if (!d->connecting && !suppressDefault && options_->getOption("options.muc.show-joins").toBool()) {
             if (s.getMUCStatuses().contains(303)) {
                 message = tr("%1 is now known as %2").arg(nick, s.mucItem().nick());
+                formerParticipantAddresses_.remove(s.mucItem().nick());
                 d->usersModel->updateEntry(s.mucItem().nick(), s);
                 dispatchMessage(MessageView::nickChangeMessage(nick, s.mucItem().nick()));
             } else {
@@ -2256,6 +2297,14 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
             MessageView mv = MessageView::mucPartMessage(nick);
             mv.setJoinLeaveHidden();
             dispatchMessage(mv);
+        }
+        if (auto *former = d->usersModel->findEntry(nick)) {
+            const auto real = former->status.mucItem().jid();
+            if (real.isValid() && !real.isEmpty()) {
+                if (formerParticipantAddresses_.size() >= 256)
+                    formerParticipantAddresses_.erase(formerParticipantAddresses_.begin());
+                formerParticipantAddresses_.insert(nick, real);
+            }
         }
         d->usersModel->removeEntry(nick);
     }
@@ -2674,6 +2723,7 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
     mv.setDateTime(dm.timeStamp());
     mv.setReplaceId(dm.replaceId());
     account()->psi()->fileSharingManager()->fillMessageView(mv, dm, account());
+    mv.setReplyMetadata(dm);
 
     dispatchMessage(mv);
 

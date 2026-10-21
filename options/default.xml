@@ -408,6 +408,7 @@ QLineEdit#le_status_text {
                             <sent type="QColor" comment="Color used to indicate sent messages.">#ff0000</sent>
                             <informational type="QColor" comment="Color used to indicate informational (status change, spooled) messages.">#008000</informational>
                             <usertext type="QColor" comment="Color used to indicate additional text for informational messages.">#606060</usertext>
+                            <quote type="QColor" comment="Muted color for quoted text and its vertical line.">#707070</quote>
                             <highlighting type="QColor">#FF0000</highlighting>
                             <link type="QColor">#000080</link>
                             <link-visited type="QColor">#400080</link-visited>
@@ -467,6 +468,7 @@ QLineEdit#le_status_text {
                             <sent type="QColor" comment="Color used to indicate sent messages.">#ff9696</sent>
                             <informational type="QColor" comment="Color used to indicate informational (status change, spooled) messages.">#8bd58b</informational>
                             <usertext type="QColor" comment="Color used to indicate additional text for informational messages.">#bbbbbb</usertext>
+                            <quote type="QColor" comment="Muted color for quoted text and its vertical line.">#a0a4a8</quote>
                             <highlighting type="QColor">#ff9696</highlighting>
                             <link type="QColor">#80b8ff</link>
                             <link-visited type="QColor">#c797ff</link-visited>

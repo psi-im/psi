@@ -46,6 +46,8 @@ add_executable(mam_chat_widget_test MamChatWidgetTest.cpp
     ${PSI_WIDGETS}/MamChatWidget.cpp ${PSI_WIDGETS}/MamChatWidget.h
     ${PSI_WIDGETS}/MamHistorySource.cpp ${PSI_WIDGETS}/MamHistorySource.h
     ${PSI_WIDGETS}/ChatMessageText.cpp ${PSI_WIDGETS}/ChatMessageText.h
+    ${PSI_WIDGETS}/MessagePreview.cpp ${PSI_WIDGETS}/MessagePreview.h
+    ${PSI_WIDGETS}/LinkButton.cpp ${PSI_WIDGETS}/LinkButton.h
     ${PSI_WIDGETS}/psirichtext.cpp
     ${PSI_WIDGETS}/psitextview.cpp ${PSI_WIDGETS}/psitextview.h
     ${PSI_WIDGETS}/urlobject.h mock/urlobject.cpp

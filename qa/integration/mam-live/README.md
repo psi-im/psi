@@ -52,3 +52,9 @@ index into a real UID for Prosody's normal MUC MAM handler and annotates its fin
 Authorization, persistence, ordinary MAM results, paging, count and the entire
 Psi path remain real. It does not establish native index support in Prosody.
 No adapter is used for initial fill, cache upgrade or unsupported-index tests.
+
+`--mode message-actions` uses the real message context menu to quote a MUC
+message, checks the selectable/read-only composer preview, types and sends an
+answer through the actual editor, then requires the server echo to render the
+reference alongside the answer without duplicating its compatibility fallback.
+Both cold and cached openings are exercised. No index adapter is required.

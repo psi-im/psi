@@ -52,6 +52,8 @@ using namespace XMPP;
 class GCMainDlg : public TabbableWidget {
     Q_OBJECT
     MamChatWidget *nativeTimeline_ = nullptr;
+    QHash<QString, XMPP::Jid> formerParticipantAddresses_;
+    void showContactContextMenu(const QString &nick, const QPoint &globalPosition);
     QPointer<HistorySync> mamTask_;
     QString mamBeforeId_;
     QSet<QString>         mamSeenBeforeIds_;

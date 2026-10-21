@@ -232,6 +232,7 @@ QWidget *OptionsTabAppearanceGeneral::widget()
           { d->ck_cMessageReceived, d->pb_cMessageReceived, "messages.received", "" },
           { d->ck_cSysMsg, d->pb_cSysMsg, "messages.informational", "" },
           { d->ck_cUserText, d->pb_cUserText, "messages.usertext", "" },
+          { d->ck_cQuote, d->pb_cQuote, "messages.quote", "" },
           { d->ck_cChatBackground, d->pb_cChatBackground, "chat.background", "" },
           { d->ck_cChatText, d->pb_cChatText, "chat.text", "" },
           { d->ck_cOnline, d->pb_cOnline, "contactlist.status.online", s.arg(tr("online")) },

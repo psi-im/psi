@@ -18,9 +18,12 @@
  */
 
 #include "chateditproxy.h"
+#include "coloropt.h"
 
 #include "msgmle.h"
 #include "psioptions.h"
+#include "widgets/MessagePreview.h"
+#include "iris/xmpp_message.h"
 
 #include <QVBoxLayout>
 
@@ -32,6 +35,22 @@ ChatEditProxy::ChatEditProxy(QWidget *parent) :
     layout_ = new QVBoxLayout(this);
     layout_->setContentsMargins(0, 0, 0, 0);
     layout_->setSpacing(0);
+    const auto quoteColor = ColorOpt::instance()->color(QStringLiteral("options.ui.look.colors.messages.quote"));
+    replyPreview_ = new MessagePreview(quoteColor, quoteColor, this);
+    replyPreview_->setLinkColor(ColorOpt::instance()->color(QStringLiteral("options.ui.look.colors.messages.link")));
+    replyPreview_->setObjectName(QStringLiteral("composerReplyPreview"));
+    replyPreview_->setClosable(true);
+    layout_->addWidget(replyPreview_);
+    replyPreview_->hide();
+    connect(replyPreview_, &MessagePreview::dismissed, this, &ChatEditProxy::clearReply);
+    connect(ColorOpt::instance(), &ColorOpt::changed, this, [this](const QString &option) {
+        if (option == QLatin1String("options.ui.look.colors.messages.quote")) {
+            const auto color = ColorOpt::instance()->color(option);
+            replyPreview_->setColors(color, color);
+        } else if (option == QLatin1String("options.ui.look.colors.messages.link")) {
+            replyPreview_->setLinkColor(ColorOpt::instance()->color(option));
+        }
+    });
 
     connect(PsiOptions::instance(), &PsiOptions::optionChanged, this, &ChatEditProxy::optionsChanged);
     optionsChanged(expandingLineEdit);
@@ -45,6 +64,34 @@ ChatEdit *ChatEditProxy::createTextEdit()
     if (lineEditEnabled())
         return new LineEdit(this);
     return new ChatEdit(this);
+}
+
+void ChatEditProxy::setReply(const ChatReply &reply)
+{
+    if (!reply.isValid())
+        return;
+    reply_ = reply;
+    replyPreview_->setContent(tr("Reply to %1").arg(reply.author), reply.text);
+    replyPreview_->show();
+    chatEdit()->resetCorrection();
+    chatEdit()->setFocus();
+}
+
+void ChatEditProxy::clearReply()
+{
+    reply_ = {};
+    replyPreview_->hide();
+}
+
+void ChatEditProxy::applyReply(XMPP::Message &message)
+{
+    const auto reply = reply_.isValid() ? reply_ : sentReplies_.value(message.replaceId());
+    applyMessageReply(message, reply);
+    if (!message.id().isEmpty()) {
+        if (sentReplies_.size() >= 128)
+            sentReplies_.erase(sentReplies_.begin());
+        sentReplies_.insert(message.id(), reply);
+    }
 }
 
 /**

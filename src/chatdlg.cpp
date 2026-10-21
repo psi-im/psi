@@ -18,6 +18,7 @@
  */
 
 #include "chatdlg.h"
+#include "chateditproxy.h"
 
 #include "avatars.h"
 #include "chatview.h"
@@ -757,8 +758,10 @@ void ChatDlg::doSend()
         //}
     }
 
+    if (auto *composer = qobject_cast<ChatEditProxy *>(chatEdit()->parentWidget()))
+        composer->applyReply(m);
     m_ = m;
-    chatEdit()->appendMessageHistory(m.body());
+    chatEdit()->appendMessageHistory(fileShareReferences_.isEmpty() ? textToSend : fileShareDesc_);
 
     // Request events
     if (PsiOptions::instance()->getOption("options.messages.send-composing-events").toBool()) {
@@ -790,6 +793,8 @@ void ChatDlg::doSend()
 
 void ChatDlg::doneSend()
 {
+    if (auto *composer = qobject_cast<ChatEditProxy *>(chatEdit()->parentWidget()))
+        composer->clearReply();
     historyState = false;
     appendMessage(m_, true);
     disconnect(chatEdit(), SIGNAL(textChanged()), this, SLOT(setComposing()));
@@ -975,6 +980,7 @@ void ChatDlg::appendMessage(const Message &m, bool local, qint64 historyId, cons
     mv.setMarkable(dm.isMarkable());
     mv.setReplaceId(dm.replaceId());
     account()->psi()->fileSharingManager()->fillMessageView(mv, dm, account());
+    mv.setReplyMetadata(dm);
 
     dispatchMessage(mv);
 

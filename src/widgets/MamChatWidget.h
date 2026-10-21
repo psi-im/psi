@@ -14,6 +14,7 @@
 
 class FileSharingDeviceOpener;
 class QFrame;
+class MessagePreview;
 class QLabel;
 class QResizeEvent;
 class QWheelEvent;
@@ -64,6 +65,7 @@ public:
     void           refreshAvatars();
     void           setMediaOpener(FileSharingDeviceOpener *opener);
     void           setInformationalColor(const QColor &color);
+    void           setQuoteColor(const QColor &color);
     static QString displayTime(const QDateTime &when, const QDateTime &now = QDateTime::currentDateTime());
     static QString fullTimestamp(const QDateTime &when);
     // Most recent actually visible incoming message requesting a read marker.
@@ -78,6 +80,9 @@ public:
     void toggleReaction(const QString &messageId, const QString &emoji);
 
 signals:
+    void contactMenuRequested(const QString &nick, const QPoint &globalPosition);
+    void replyRequested(const ChatReply &reply);
+    void forwardMessageRequested(const QString &messageId, const QString &sender, const QString &text);
     void olderMessagesRequested();
     void archiveRangeRequested(const MamHistorySource::Request &request);
     void archiveRangeCancelled();
@@ -147,8 +152,14 @@ private:
     void                                          updateTimestampAppearance(QLabel *label);
     void                                          updateRowSelection(QFrame *row, bool selected);
     void                                          updateRowPalette(QFrame *row, bool selected);
+    QString plainMessage(const Row &) const;
+    QString copiedMessage(const Row &) const;
+    QMenu *createMessageContextMenu(const QString &key, QWidget *target, const QPoint &globalPosition);
+    bool resolveReply(const ChatReply &, QString &author, QString &text) const;
+    void refreshReplyPreviews(bool force = false);
     void                                          setHoveredRow(QFrame *row);
     QColor                                        informationalColor_;
+    QColor                                        quoteColor_;
     void                                          updateAvatar(QLabel *label, const MessageView &message);
     void                                          updateNicknameColor(QLabel *label, const MessageView &message);
     NativeChatTheme                               theme_;

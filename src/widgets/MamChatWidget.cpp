@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "MamChatWidget.h"
 #include "ChatMessageText.h"
+#include "MessagePreview.h"
+#include "urlobject.h"
+#include <QContextMenuEvent>
 #include "MamHistoryLog.h"
 #include "MamMessageIdentity.h"
 #include "iconset.h"
@@ -223,6 +226,7 @@ private:
 
 MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(parent)
 {
+    qRegisterMetaType<ChatReply>();
     qRegisterMetaType<MamHistorySource::Request>();
     setProperty("psiMamOverlay", true);
     theme_.layout = NativeChatTheme::Modern;
@@ -839,7 +843,9 @@ void MamChatWidget::mergeMessage(int index, const MessageView &incoming, const Q
     const bool projectionChanged = !sourceKey.isEmpty() && incoming.messageId() == previous.messageId()
         && incoming.revisionTime() == previous.revisionTime()
         && (incoming.formattedText() != previous.formattedText()
-            || incoming.formattedUserText() != previous.formattedUserText());
+            || incoming.formattedUserText() != previous.formattedUserText()
+            || (incoming.reply().isValid() && (incoming.reply().id != previous.reply().id
+                                               || incoming.reply().to != previous.reply().to)));
     const bool newer = projectionChanged
         || (incoming.revisionTime().isValid()
             && (!previous.revisionTime().isValid() || incoming.revisionTime() > previous.revisionTime()
@@ -860,6 +866,8 @@ void MamChatWidget::mergeMessage(int index, const MessageView &incoming, const Q
         if (!updated.isSecurityKnown() && previous.isSecurityKnown())
             updated.setEncrypted(previous.isEncrypted(), previous.encryptionProtocol());
         updated.setEdited(edited);
+        if (!updated.reply().isValid() && previous.reply().isValid())
+            updated.setReply(previous.reply());
         if (!groupChat_ && !previous.nick().isEmpty())
             updated.setNick(previous.nick());
         if (updated.archiveId().isEmpty())
@@ -885,6 +893,8 @@ void MamChatWidget::mergeMessage(int index, const MessageView &incoming, const Q
         keys_.insert(sourceKey);
         sourceAliases_.insert(sourceKey, row.key);
     }
+    if (newer)
+        refreshReplyPreviews(true);
 }
 
 void MamChatWidget::coalesceRevisionRows()
@@ -1116,6 +1126,8 @@ bool MamChatWidget::applyProtocolEvent(const MessageView &event)
         if (reactionTarget(items_.at(i).message) == target || retractionTarget(items_.at(i).message) == target
             || items_.at(i).stanzaIds.contains(target))
             replaceRow(i);
+    if (event.type() == MessageView::MessageRetraction)
+        refreshReplyPreviews(true);
     return true;
 }
 
@@ -1267,6 +1279,7 @@ void MamChatWidget::appendMessage(const MessageView &view)
     resolveDisplayedMarkers();
     if (followTail)
         scrollToEnd();
+    refreshReplyPreviews();
 }
 
 int MamChatWidget::prependArchivePage(const QList<QPair<QString, MessageView>> &page)
@@ -1342,6 +1355,7 @@ int MamChatWidget::prependArchivePage(const QList<QPair<QString, MessageView>> &
     resolveDisplayedMarkers();
     if (followTail && !page.isEmpty())
         scrollToEnd();
+    refreshReplyPreviews();
     return added;
 }
 
@@ -1739,7 +1753,9 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     body->setFont(font());
     body->setForegroundRole(QPalette::Text);
     const bool retracted = isRetracted(items_.at(index));
-    QString    richText  = retracted ? tr("Message retracted") : mv.formattedText();
+    QString    richText  = retracted ? tr("Message retracted")
+        : mv.hasReplyFallback() ? mv.replyFormattedText()
+                                : mv.formattedText();
     // XEP-0245 is a presentation rule, not a wire transformation. MessageView
     // has already stripped "/me " but retains isEmote(); restore the sender
     // prefix for the native widget log, just as the legacy ChatView did.
@@ -1800,6 +1816,35 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
         }
         strip->addStretch();
         column->addWidget(chips);
+        elements[QStringLiteral("body")] = group;
+    }
+
+    if (!retracted && mv.reply().isValid()) {
+        auto *group = new QWidget(content);
+        auto *column = new QVBoxLayout(group);
+        column->setContentsMargins(0, 0, 0, 0);
+        column->setSpacing(4);
+        auto *preview = new MessagePreview(quoteColor_, quoteColor_, group);
+        preview->setLinkColor(palette().color(QPalette::Link));
+        preview->setObjectName(QStringLiteral("mamReplyPreview"));
+        QString author = mv.reply().author;
+        QString text = mv.reply().text;
+        const bool resolved = resolveReply(mv.reply(), author, text);
+        preview->setProperty("replyResolved", resolved);
+        preview->setContent(author.isEmpty() ? tr("Quoted message") : author,
+                            text.isEmpty() ? tr("Referenced message is not available locally") : text);
+        connect(preview, &MessagePreview::heightChanged, this, [this, key = items_.at(index).key] {
+            const int at = indexOfKey(key);
+            if (at >= 0) {
+                const int logical = historySource_.logicalIndex(at);
+                itemsChanged(logical, logical);
+            }
+        });
+        column->addWidget(preview);
+        preview->installEventFilter(this);
+        for (auto *child : preview->findChildren<QWidget *>())
+            child->installEventFilter(this);
+        column->addWidget(elements.value(QStringLiteral("body")));
         elements[QStringLiteral("body")] = group;
     }
 
@@ -2016,9 +2061,12 @@ void MamChatWidget::refreshPalette()
     refreshNicknameColors();
     refreshAvatars();
     for (int index : materializedRows())
-        if (auto *row = rowWidget(index))
+        if (auto *row = rowWidget(index)) {
             if (auto *time = row->findChild<QLabel *>(QStringLiteral("mamTimestamp")))
                 updateTimestampAppearance(time);
+            if (auto *preview = row->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview")))
+                preview->setLinkColor(palette().color(QPalette::Link));
+        }
 }
 
 void MamChatWidget::setTheme(const NativeChatTheme &theme)
@@ -2172,32 +2220,165 @@ void MamChatWidget::copySelectedMessages()
     for (const auto &row : items_) {
         if (!selectedKeys_.contains(row.key))
             continue;
-        const auto   &message = row.message;
-        QTextDocument document;
-        const bool    retracted = isRetracted(row);
-        QString       rich      = retracted ? tr("Message retracted") : message.formattedText();
-        if (!retracted && message.isEmote()) {
-            const QString actor = message.nick().isEmpty() ? tr("Contact") : message.nick();
-            rich = QStringLiteral("*") + actor.toHtmlEscaped() + QStringLiteral(" ") + rich;
-        }
-        if (!retracted && !message.formattedUserText().isEmpty())
-            rich += (rich.isEmpty() ? QString() : QStringLiteral(" — ")) + message.formattedUserText();
-        PsiRichText::setText(&document, rich);
-        const QString nick = message.nick().isEmpty() ? (message.isLocal() ? tr("Me") : tr("Message")) : message.nick();
-        const QString timestamp = message.dateTime().isValid()
-            ? message.dateTime().toLocalTime().toString(QStringLiteral("yyyy-MM-dd HH:mm"))
-            : QString();
-        blocks.append(
-            QStringLiteral("%1\t[%2]\n%3").arg(nick, timestamp, PsiRichText::convertToPlainText(&document).trimmed()));
+        blocks.append(copiedMessage(row));
     }
     if (!blocks.isEmpty())
         QApplication::clipboard()->setText(blocks.join(QStringLiteral("\n\n")));
+}
+
+QString MamChatWidget::plainMessage(const Row &row) const
+{
+    const auto   &message = row.message;
+    QTextDocument document;
+    const bool    retracted = isRetracted(row);
+    QString       rich      = retracted         ? tr("Message retracted")
+                   : message.hasReplyFallback() ? message.replyFormattedText()
+                                                : message.formattedText();
+    if (!retracted && message.isEmote()) {
+        const QString actor = message.nick().isEmpty() ? tr("Contact") : message.nick();
+        rich                = QStringLiteral("*") + actor.toHtmlEscaped() + QStringLiteral(" ") + rich;
+    }
+    if (!retracted && !message.formattedUserText().isEmpty())
+        rich += (rich.isEmpty() ? QString() : QStringLiteral(" — ")) + message.formattedUserText();
+    PsiRichText::setText(&document, rich);
+    return PsiRichText::convertToPlainText(&document).trimmed();
+}
+
+QString MamChatWidget::copiedMessage(const Row &row) const
+{
+    const auto   &message = row.message;
+    const QString nick    = message.nick().isEmpty() ? (message.isLocal() ? tr("Me") : tr("Message")) : message.nick();
+    const QString timestamp = message.dateTime().isValid()
+        ? message.dateTime().toLocalTime().toString(QStringLiteral("yyyy-MM-dd HH:mm"))
+        : QString();
+    return QStringLiteral("%1\t[%2]\n%3").arg(nick, timestamp, plainMessage(row));
+}
+
+bool MamChatWidget::resolveReply(const ChatReply &reply, QString &author, QString &text) const
+{
+    const Row *match = nullptr;
+    for (const auto &candidate : items_) {
+        const QString sender = candidate.message.userId();
+        const bool sameSender = reply.to.isEmpty() || sender == reply.to
+            || (!groupChat_ && !reply.to.contains(QLatin1Char('/')) && sender.section(QLatin1Char('/'), 0, 0) == reply.to);
+        if (candidate.message.type() != MessageView::Message || !sameSender)
+            continue;
+        if (reactionTarget(candidate.message) == reply.id || (!groupChat_ && candidate.stanzaIds.contains(reply.id))) {
+            if (match)
+                return false; // Reused IDs are ambiguous; keep the explicit fallback.
+            match = &candidate;
+        }
+    }
+    if (!match)
+        return false;
+    author = match->message.nick();
+    text = plainMessage(*match);
+    return true;
+}
+
+void MamChatWidget::refreshReplyPreviews(bool force)
+{
+    for (const int index : materializedRows()) {
+        auto *row = rowWidget(index);
+        auto *preview = row ? row->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview")) : nullptr;
+        if (!preview || (!force && preview->property("replyResolved").toBool()))
+            continue;
+        QString author, text;
+        if (resolveReply(items_.at(index).message.reply(), author, text)) {
+            preview->setProperty("replyResolved", true);
+            preview->setContent(author, text);
+        }
+    }
+}
+
+QMenu *MamChatWidget::createMessageContextMenu(const QString &key, QWidget *target, const QPoint &globalPosition)
+{
+    const int at = indexOfKey(key);
+    if (at < 0 || items_.at(at).message.type() != MessageView::Message)
+        return nullptr;
+    auto *menu = new QMenu(this);
+    menu->setObjectName(QStringLiteral("mamMessageContextMenu"));
+    menu->setToolTipsVisible(true);
+    menu->setAttribute(Qt::WA_DeleteOnClose);
+    auto *row = rowWidget(at);
+    QPointer<ChatMessageText> body = row ? row->findChild<ChatMessageText *>() : nullptr;
+    QPointer<QTextEdit> selectedTextView = body.data();
+    QPointer<QLabel> selectedLabel = qobject_cast<QLabel *>(target);
+    for (auto *child = target; child && child != row; child = child->parentWidget())
+        if (auto *text = qobject_cast<QTextEdit *>(child)) {
+            selectedTextView = text;
+            break;
+        }
+    auto *copy = menu->addAction(tr("Copy"));
+    copy->setObjectName(QStringLiteral("mamCopyMessage"));
+    connect(copy, &QAction::triggered, this, [this, key, selectedTextView, selectedLabel] {
+        if (selectedLabel && selectedLabel->hasSelectedText())
+            QApplication::clipboard()->setText(selectedLabel->selectedText());
+        else if (selectedTextView && selectedTextView->textCursor().hasSelection())
+            selectedTextView->copy();
+        else {
+            const int at = indexOfKey(key);
+            if (at >= 0)
+                QApplication::clipboard()->setText(copiedMessage(items_.at(at)));
+        }
+    });
+    auto *quote = menu->addAction(tr("Quote"));
+    quote->setObjectName(QStringLiteral("mamQuoteMessage"));
+    quote->setEnabled(!reactionTarget(items_.at(at).message).isEmpty() && !isRetracted(items_.at(at)));
+    if (!quote->isEnabled())
+        quote->setToolTip(tr("The message has no reply identifier assigned by its sender or room."));
+    connect(quote, &QAction::triggered, this, [this, key] {
+        const int at = indexOfKey(key);
+        if (at < 0 || isRetracted(items_.at(at)))
+            return;
+        const auto &message = items_.at(at).message;
+        emit replyRequested({reactionTarget(message), message.userId(), message.nick(), plainMessage(items_.at(at))});
+    });
+    auto *select = menu->addAction(tr("Select message"));
+    select->setObjectName(QStringLiteral("mamSelectMessage"));
+    select->setCheckable(true);
+    select->setChecked(selectedKeys_.contains(key));
+    connect(select, &QAction::triggered, this, [this, key](bool selected) {
+        const int at = indexOfKey(key);
+        if (at >= 0)
+            setMessageSelected(at, selected);
+    });
+    auto *forward = menu->addAction(tr("Forward"));
+    forward->setObjectName(QStringLiteral("mamForwardMessage"));
+    forward->setEnabled(!isRetracted(items_.at(at)));
+    connect(forward, &QAction::triggered, this, [this, key] {
+        const int at = indexOfKey(key);
+        if (at >= 0 && !isRetracted(items_.at(at))) {
+            const auto &message = items_.at(at).message;
+            emit forwardMessageRequested(message.messageId(), message.userId(), plainMessage(items_.at(at)));
+        }
+    });
+    if (body && (target == body || target == body->viewport())) {
+        const QString link = body->anchorAt(body->viewport()->mapFromGlobal(globalPosition));
+        if (!link.isEmpty()) {
+            menu->addSeparator();
+            connect(menu->addAction(tr("Open link")), &QAction::triggered, this,
+                    [link] { URLObject::getInstance()->popupAction(link); });
+            connect(menu->addAction(tr("Copy link address")), &QAction::triggered, this,
+                    [link] { QApplication::clipboard()->setText(link); });
+        }
+    }
+    return menu;
 }
 
 void MamChatWidget::setInformationalColor(const QColor &color)
 {
     informationalColor_ = color;
     refreshSelection();
+}
+
+void MamChatWidget::setQuoteColor(const QColor &color)
+{
+    quoteColor_ = color;
+    for (int index : materializedRows())
+        if (auto *row = rowWidget(index))
+            if (auto *preview = row->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview")))
+                preview->setColors(color, color);
 }
 
 void MamChatWidget::updateRowSelection(QFrame *row, bool selected)
@@ -2340,6 +2521,28 @@ void MamChatWidget::hideEvent(QHideEvent *event)
 
 bool MamChatWidget::eventFilter(QObject *target, QEvent *event)
 {
+    if (event->type() == QEvent::ContextMenu) {
+        if (auto *row = eventRow(target)) {
+            auto *context = static_cast<QContextMenuEvent *>(event);
+            for (auto *child = qobject_cast<QWidget *>(target); groupChat_ && child && child != row;
+                 child = child->parentWidget()) {
+                if (child->objectName() == QLatin1String("mamAuthor") || child->objectName() == QLatin1String("mamAvatar")) {
+                    const int at = indexOfKey(row->property("_psiMamRowKey").toString());
+                    if (at >= 0)
+                        emit contactMenuRequested(items_.at(at).message.nick(), context->globalPos());
+                    context->accept();
+                    return true;
+                }
+            }
+            if (auto *menu = createMessageContextMenu(row->property("_psiMamRowKey").toString(),
+                                                     qobject_cast<QWidget *>(target), context->globalPos())) {
+                hideMessageActions();
+                menu->popup(context->globalPos());
+                context->accept();
+                return true;
+            }
+        }
+    }
     // A Leave from a row can be just a handoff to the floating actions. The
     // viewport encloses the complete hover session, including that overlay.
     if (target == viewport() && (event->type() == QEvent::Enter || event->type() == QEvent::Leave))
@@ -2415,6 +2618,11 @@ bool MamChatWidget::eventFilter(QObject *target, QEvent *event)
         && (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseMove
             || event->type() == QEvent::MouseButtonRelease)) {
         if (QFrame *row = eventRow(target)) {
+            // Excerpts have independent text selection. Do not turn dragging
+            // inside a quote into whole-message selection in the outer list.
+            for (auto *child = qobject_cast<QWidget *>(target); child && child != row; child = child->parentWidget())
+                if (qobject_cast<MessagePreview *>(child))
+                    return Mattermost::LongListWidget::eventFilter(target, event);
             auto         *mouse = static_cast<QMouseEvent *>(event);
             const QString key   = row->property("_psiMamRowKey").toString();
             const int     index = indexOfKey(key);

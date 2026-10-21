@@ -129,10 +129,12 @@ def main():
     parser.add_argument("--protocol-events", type=int, default=400)
     parser.add_argument("--bodies", type=int, default=80)
     parser.add_argument("--probe", type=Path, help="Qt generic probe build directory")
-    parser.add_argument("--mode", choices=("initial", "indexed", "fallback"), default="initial")
+    parser.add_argument("--mode", choices=("initial", "indexed", "fallback", "message-actions"), default="initial")
     parser.add_argument("--check-metadata-upgrade", action="store_true",
                         help="Reopen an old EDB cache without RSM metadata and verify no snapshot-only archive probe")
     args = parser.parse_args()
+    if args.mode != "initial" and not args.probe:
+        parser.error("--probe is required for navigation and message-actions scenarios")
     args.output.mkdir(parents=True, exist_ok=False)
     with args.psi.open("rb") as executable:
         digest = hashlib.file_digest(executable, "sha256").hexdigest()
@@ -168,7 +170,8 @@ def main():
                 while time.monotonic() < deadline and process.poll() is None:
                     text = log.read_text(errors="replace")
                     expected = {"initial": "MAM_PROBE_INITIAL_FILLED", "indexed": "MAM_PROBE_SEEK_FILLED",
-                                "fallback": "MAM_PROBE_SEEK_FALLBACK"}[args.mode]
+                                "fallback": "MAM_PROBE_SEEK_FALLBACK",
+                                "message-actions": "MAM_PROBE_REPLY_RENDERED"}[args.mode]
                     ready = expected in text if args.probe else "fill-stop target-reached" in text
                     if ready:
                         def demand_counts(log_text):

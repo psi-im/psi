@@ -62,6 +62,17 @@
           </rect>
          </property>
          <layout class="QGridLayout" name="gridLayout">
+          <item row="27" column="0">
+           <widget class="QCheckBox" name="ck_cQuote">
+            <property name="toolTip"><string>Muted color for quoted text and the vertical quote line.</string></property>
+            <property name="text"><string>Quoted messages:</string></property>
+           </widget>
+          </item>
+          <item row="27" column="1">
+           <widget class="QToolButton" name="pb_cQuote">
+            <property name="maximumSize"><size><width>20</width><height>20</height></size></property>
+           </widget>
+          </item>
           <item row="25" column="0"><widget class="QCheckBox" name="ck_cChatBackground"><property name="text"><string>Chat background</string></property></widget></item>
           <item row="25" column="1"><widget class="QToolButton" name="pb_cChatBackground"><property name="maximumSize"><size><width>20</width><height>20</height></size></property></widget></item>
           <item row="26" column="0"><widget class="QCheckBox" name="ck_cChatText"><property name="text"><string>Chat text</string></property></widget></item>

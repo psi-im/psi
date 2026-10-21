@@ -528,6 +528,11 @@ void PsiChatDlg::initUi()
     configureNativeChat(nativeTimeline_, account(), jid(), false);
     connect(nativeTimeline_, &MamChatWidget::outgoingReactions, this, &PsiChatDlg::sendOutgoingReactions);
     connect(nativeTimeline_, &MamChatWidget::outgoingMessageRetraction, this, &PsiChatDlg::sendMessageRetraction);
+    connect(nativeTimeline_, &MamChatWidget::replyRequested, ui_.mle, &ChatEditProxy::setReply);
+    connect(nativeTimeline_, &MamChatWidget::forwardMessageRequested, this,
+            [this](const QString &id, const QString &sender, const QString &text) {
+        account()->psi()->invokeForwardMessage(id, sender.isEmpty() ? jid() : XMPP::Jid(sender), text);
+    });
     connect(nativeTimeline_, &Mattermost::LongListWidget::visibleRangeChanged, this,
             [this](int, int) {
         QTimer::singleShot(0, this, [this] { sendDisplayedMarkerForVisibleMessage(); });

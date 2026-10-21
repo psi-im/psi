@@ -21,10 +21,13 @@
 #define CHATEDITPROXY_H
 
 #include <QWidget>
+#include <QHash>
+#include "chatreply.h"
 
 class ChatEdit;
 class QLayout;
 class QTextEdit;
+class MessagePreview;
 
 class ChatEditProxy : public QWidget {
     Q_OBJECT
@@ -36,6 +39,9 @@ public:
      */
     ChatEdit *chatEdit() const { return textEdit_; }
     void      optionsChanged(const QString &option);
+    void setReply(const ChatReply &);
+    void clearReply();
+    void applyReply(XMPP::Message &);
 
 signals:
     /**
@@ -58,6 +64,9 @@ private:
     bool      lineEditEnabled_;
     ChatEdit *textEdit_;
     QLayout  *layout_;
+    MessagePreview *replyPreview_ = nullptr;
+    ChatReply reply_;
+    QHash<QString, ChatReply> sentReplies_;
 };
 
 #endif // CHATEDITPROXY_H

@@ -1,6 +1,11 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "widgets/MamChatWidget.h"
 #include "widgets/ChatMessageText.h"
+#include "widgets/MessagePreview.h"
+#include "widgets/LinkButton.h"
+#include <QContextMenuEvent>
+#include <QTextBrowser>
+#include <QVBoxLayout>
 #include "widgets/urlobject.h"
 #include "desktopcolorpalette.h"
 #include "filesharingmanager.h"
@@ -61,6 +66,401 @@ MessageView message(const QString &id, const QString &body, int seconds = 0, boo
 class MamChatWidgetTest final : public QObject {
     Q_OBJECT
 private slots:
+    void nativeMessageMenuCopiesQuotesSelectsAndForwards()
+    {
+        MamChatWidget chat;
+        chat.resize(550, 350);
+        chat.setHistoryLoading(true);
+        auto original = message("client", "First <b>message</b>");
+        original.setReactionTargetId("origin");
+        original.setUserId("peer@example.org/phone");
+        chat.appendMessage(original);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *row = chat.itemWidget(0);
+        auto *body = row->findChild<ChatMessageText *>();
+        QVERIFY(body);
+        const auto openMenu = [&]() -> QMenu * {
+            QContextMenuEvent event(QContextMenuEvent::Mouse, QPoint(3, 3), row->mapToGlobal(QPoint(3, 3)));
+            QApplication::sendEvent(row, &event);
+            return chat.findChild<QMenu *>("mamMessageContextMenu");
+        };
+        chat.selectMessageRange(0, 0);
+        chat.copySelectedMessages();
+        const auto fullCopy = QApplication::clipboard()->text();
+        chat.cancelMessageSelection();
+        auto *menu = openMenu();
+        QVERIFY(menu);
+        menu->findChild<QAction *>("mamCopyMessage")->trigger();
+        QCOMPARE(QApplication::clipboard()->text(), fullCopy);
+        delete menu;
+
+        auto cursor = body->textCursor();
+        cursor.setPosition(0);
+        cursor.setPosition(5, QTextCursor::KeepAnchor);
+        body->setTextCursor(cursor);
+        menu = openMenu();
+        QVERIFY(menu);
+        menu->findChild<QAction *>("mamCopyMessage")->trigger();
+        QCOMPARE(QApplication::clipboard()->text(), QString("First"));
+        QSignalSpy quote(&chat, &MamChatWidget::replyRequested);
+        menu->findChild<QAction *>("mamQuoteMessage")->trigger();
+        QCOMPARE(quote.size(), 1);
+        const auto reply = qvariant_cast<ChatReply>(quote.first().first());
+        QCOMPARE(reply.id, QString("origin"));
+        QCOMPARE(reply.to, QString("peer@example.org/phone"));
+        QCOMPARE(reply.text, QString("First message"));
+        QSignalSpy forwarded(&chat, &MamChatWidget::forwardMessageRequested);
+        menu->findChild<QAction *>("mamForwardMessage")->trigger();
+        QCOMPARE(forwarded.size(), 1);
+        QCOMPARE(forwarded.first().at(1).toString(), reply.to);
+        QCOMPARE(forwarded.first().at(2).toString(), reply.text);
+        menu->findChild<QAction *>("mamSelectMessage")->trigger();
+        QCOMPARE(chat.selectedMessageCount(), 1);
+        delete menu;
+    }
+
+    void mucContactMenuAndQuoteUseRoomIdentity()
+    {
+        MamChatWidget chat;
+        chat.resize(550, 350);
+        chat.setGroupChat(true);
+        chat.setHistoryLoading(true);
+        auto original = message("client-id", "MUC message");
+        original.setUserId("room@example.org/Peer");
+        chat.appendMessage(original);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        QSignalSpy contactMenu(&chat, &MamChatWidget::contactMenuRequested);
+        for (const auto &name : { "mamAuthor", "mamAvatar" }) {
+            auto *label = chat.itemWidget(0)->findChild<QLabel *>(name);
+            QVERIFY(label);
+            QContextMenuEvent event(QContextMenuEvent::Mouse, QPoint(2, 2), label->mapToGlobal(QPoint(2, 2)));
+            QApplication::sendEvent(label, &event);
+        }
+        QCOMPARE(contactMenu.size(), 2);
+        QCOMPARE(contactMenu.first().first().toString(), QString("Peer"));
+        const auto openMenu = [&]() -> QMenu * {
+            auto *row = chat.itemWidget(0);
+            QContextMenuEvent event(QContextMenuEvent::Mouse, QPoint(2, 2), row->mapToGlobal(QPoint(2, 2)));
+            QApplication::sendEvent(row, &event);
+            return chat.findChild<QMenu *>("mamMessageContextMenu");
+        };
+        auto *menu = openMenu();
+        QVERIFY(menu);
+        QVERIFY(!menu->findChild<QAction *>("mamQuoteMessage")->isEnabled());
+        delete menu;
+        original.setReactionTargetId("room-assigned-id");
+        original.setArchiveId("room-assigned-id");
+        chat.appendMessage(original);
+        QSignalSpy quote(&chat, &MamChatWidget::replyRequested);
+        menu = openMenu();
+        QVERIFY(menu);
+        QVERIFY(menu->findChild<QAction *>("mamQuoteMessage")->isEnabled());
+        menu->findChild<QAction *>("mamQuoteMessage")->trigger();
+        QCOMPARE(qvariant_cast<ChatReply>(quote.first().first()).id, QString("room-assigned-id"));
+        delete menu;
+    }
+
+    void replyPreviewResolvesLateArchiveTargetAndStripsOnlyMarkedFallback()
+    {
+        MamChatWidget chat;
+        chat.resize(550, 350);
+        chat.setHistoryLoading(true);
+        auto reply = message("reply", "> old fallback\nAnswer", 5);
+        reply.setReply({"origin", "peer@example.org", "Peer", "old fallback"}, "Answer", true);
+        chat.appendMessage(reply);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *row = chat.itemWidget(0);
+        QCOMPARE(row->findChild<ChatMessageText *>()->toPlainText(), QString("Answer"));
+        auto *preview = row->findChild<MessagePreview *>("mamReplyPreview");
+        QVERIFY(preview);
+        QCOMPARE(preview->findChild<QTextBrowser *>("previewText")->toPlainText(), QString("old fallback"));
+        auto original = message("client", "The original message");
+        original.setUserId("peer@example.org/phone");
+        original.setReactionTargetId("origin");
+        chat.prependArchivePage({qMakePair(QString("archive-original"), original)});
+        QTRY_COMPARE(preview->findChild<QTextBrowser *>("previewText")->toPlainText(), QString("The original message"));
+        QCOMPARE(chat.messageCount(), 2);
+        auto *excerpt = preview->findChild<QTextBrowser *>("previewText");
+        excerpt->selectAll();
+        QContextMenuEvent event(QContextMenuEvent::Mouse, QPoint(2, 2), excerpt->viewport()->mapToGlobal(QPoint(2, 2)));
+        QApplication::sendEvent(excerpt->viewport(), &event);
+        auto *menu = chat.findChild<QMenu *>("mamMessageContextMenu");
+        QVERIFY(menu);
+        menu->findChild<QAction *>("mamCopyMessage")->trigger();
+        QCOMPARE(QApplication::clipboard()->text(), QString("The original message"));
+        QVERIFY(menu->findChild<QAction *>("mamQuoteMessage"));
+        delete menu;
+        auto corrected = original;
+        corrected.setMessageId("correction");
+        corrected.setReplaceId("client");
+        corrected.setPlainText("Updated original");
+        corrected.setRevisionTime(original.dateTime().addSecs(20));
+        chat.appendMessage(corrected);
+        QTRY_COMPARE(excerpt->toPlainText(), QString("Updated original"));
+    }
+
+    void inlineReplyPreviewContributesToRowHeight_data()
+    {
+        QTest::addColumn<bool>("classic");
+        QTest::addColumn<bool>("longQuote");
+        QTest::newRow("modern") << false << false;
+        QTest::newRow("classic") << true << false;
+        QTest::newRow("modern-long") << false << true;
+        QTest::newRow("classic-long") << true << true;
+    }
+
+    void inlineReplyPreviewContributesToRowHeight()
+    {
+        QFETCH(bool, classic);
+        QFETCH(bool, longQuote);
+        MamChatWidget chat;
+        chat.resize(550, 450);
+        chat.setHistoryLoading(true);
+        chat.setQuoteColor(QColor("#707070"));
+        if (classic)
+            chat.setTheme({ "classic", "Classic", NativeChatTheme::Classic, 0, 4, {} });
+        auto reply = message("reply", "1234");
+        QString quoted = "Quoted first line\nQuoted second line";
+        if (longQuote)
+            for (int i = 0; i < 50; ++i)
+                quoted += QString("\nAdditional quoted line %1").arg(i);
+        reply.setReply({ "original", "peer@example.org", "Peer", quoted });
+        chat.appendMessage(reply);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *row = chat.itemWidget(0);
+        auto *preview = row->findChild<MessagePreview *>("mamReplyPreview");
+        QVERIFY(preview);
+        auto *excerpt = preview->findChild<QTextBrowser *>("previewText");
+        auto *title = preview->findChild<QLabel *>("previewTitle");
+        auto *body = row->findChild<ChatMessageText *>();
+        QVERIFY(excerpt && title && body);
+        QTRY_VERIFY2(preview->height() >= preview->minimumSizeHint().height(),
+                     qPrintable(QString("preview height=%1 minimum=%2 row=%3 rowHint=%4")
+                                    .arg(preview->height()).arg(preview->minimumSizeHint().height())
+                                    .arg(row->height()).arg(row->sizeHint().height())));
+        const auto insideRow = [row](QWidget *child) {
+            return row->rect().contains(QRect(child->mapTo(row, QPoint()), child->size()));
+        };
+        QTRY_VERIFY(insideRow(preview));
+        QTRY_VERIFY2(preview->rect().contains(QRect(excerpt->mapTo(preview, QPoint()), excerpt->size())),
+                     qPrintable(QString("preview=%1x%2 hint=%3x%4 excerpt=%5,%6 %7x%8 row=%9")
+                                    .arg(preview->width()).arg(preview->height())
+                                    .arg(preview->sizeHint().width()).arg(preview->sizeHint().height())
+                                    .arg(excerpt->mapTo(preview, QPoint()).x()).arg(excerpt->mapTo(preview, QPoint()).y())
+                                    .arg(excerpt->width()).arg(excerpt->height()).arg(row->height())));
+        QTRY_VERIFY(excerpt->height() >= 2 * excerpt->fontMetrics().lineSpacing());
+        QVERIFY(title->height() >= title->fontMetrics().height());
+        QCOMPARE(excerpt->palette().color(QPalette::Text), QColor("#707070"));
+        QCOMPARE(title->palette().color(QPalette::WindowText), QColor("#707070"));
+        QVERIFY(body->mapTo(row, QPoint()).y() >= preview->mapTo(row, QPoint()).y() + preview->height());
+        QVERIFY(insideRow(body));
+
+        if (longQuote) {
+            auto *more = preview->findChild<LinkButton *>("previewShowMore");
+            QVERIFY(more->isVisible());
+            const int collapsedRowHeight = row->height();
+            QTest::mouseClick(more, Qt::LeftButton);
+            QTRY_VERIFY(row->height() > collapsedRowHeight);
+            QPalette links = chat.palette();
+            links.setColor(QPalette::Link, QColor("#34789c"));
+            chat.setPalette(links);
+            QTRY_COMPARE(more->linkColor(), QColor("#34789c"));
+            chat.setQuoteColor(QColor("#a0a4a8"));
+            QVERIFY(preview->isExpanded());
+            QCOMPARE(excerpt->palette().color(QPalette::Text), QColor("#a0a4a8"));
+            QTRY_VERIFY(insideRow(preview) && insideRow(body));
+            QVERIFY(preview->rect().contains(QRect(more->mapTo(preview, QPoint()), more->size())));
+            QTest::mouseClick(more, Qt::LeftButton);
+            QTRY_COMPARE(row->height(), collapsedRowHeight);
+        }
+        for (int width : { 280, 700, 550 }) {
+            chat.resize(width, chat.height());
+            QTRY_VERIFY(insideRow(preview) && insideRow(body));
+            QTRY_VERIFY(preview->rect().contains(QRect(excerpt->mapTo(preview, QPoint()), excerpt->size())));
+        }
+    }
+
+    void previewColorsCanOverrideOrInheritText_data()
+    {
+        QTest::addColumn<bool>("dark");
+        QTest::addColumn<bool>("overrideText");
+        QTest::addColumn<bool>("stylesheet");
+        for (bool stylesheet : { false, true }) {
+            const QByteArray suffix = stylesheet ? "-stylesheet" : "";
+            QTest::newRow(("light-quote" + suffix).constData()) << false << true << stylesheet;
+            QTest::newRow(("dark-quote" + suffix).constData()) << true << true << stylesheet;
+            QTest::newRow(("light-link" + suffix).constData()) << false << false << stylesheet;
+            QTest::newRow(("dark-link" + suffix).constData()) << true << false << stylesheet;
+        }
+    }
+
+    void previewColorsCanOverrideOrInheritText()
+    {
+        QFETCH(bool, dark);
+        QFETCH(bool, overrideText);
+        QFETCH(bool, stylesheet);
+        QWidget window;
+        window.setObjectName(QStringLiteral("previewPaletteHost"));
+        if (stylesheet)
+            window.setStyleSheet(QStringLiteral("QWidget#previewPaletteHost { padding: 0px; }"));
+        window.resize(400, 400);
+        QPalette parentPalette = window.palette();
+        parentPalette.setColor(QPalette::Text, dark ? QColor("#eeeeee") : QColor("#202020"));
+        parentPalette.setColor(QPalette::WindowText, dark ? QColor("#dddddd") : QColor("#303030"));
+        window.setPalette(parentPalette);
+        const QColor quoteColor(dark ? "#a0a4a8" : "#707070");
+        const QColor lineColor = overrideText ? quoteColor : QColor("#4080c0");
+        auto *layout = new QVBoxLayout(&window);
+        auto *preview = new MessagePreview(lineColor, overrideText ? quoteColor : QColor(), &window);
+        // Qt's stylesheet propagation policy can use the application palette
+        // instead of a parent's custom palette. With no override we must match
+        // ordinary Qt controls, including that policy, rather than freeze a
+        // manually resolved parent color into the preview.
+        QTextBrowser normalText(preview);
+        QLabel normalTitle(preview);
+        normalText.hide();
+        normalTitle.hide();
+        normalText.ensurePolished();
+        normalTitle.ensurePolished();
+        layout->addWidget(preview);
+        layout->addStretch();
+        preview->setContent("Author", "Selectable quoted excerpt");
+        window.show();
+        auto *bar = preview->findChild<QFrame *>("previewBar");
+        auto *title = preview->findChild<QLabel *>("previewTitle");
+        auto *excerpt = preview->findChild<QTextBrowser *>("previewText");
+        QVERIFY(bar && title && excerpt);
+        QTRY_VERIFY(bar->height() >= excerpt->height());
+        QCOMPARE(excerpt->palette().color(QPalette::Text),
+                 overrideText ? quoteColor : normalText.palette().color(QPalette::Text));
+        QCOMPARE(excerpt->viewport()->palette().color(QPalette::Text), excerpt->palette().color(QPalette::Text));
+        QCOMPARE(title->palette().color(QPalette::WindowText),
+                 overrideText ? quoteColor : normalTitle.palette().color(QPalette::WindowText));
+        const QImage line = bar->grab().toImage();
+        QCOMPARE(line.pixelColor(line.width() / 2, line.height() / 2), lineColor);
+
+        // A parent palette change follows ordinary Qt color resolution, while
+        // explicitly supplied quote colors remain independent of those roles.
+        parentPalette.setColor(QPalette::Text, QColor("#467856"));
+        parentPalette.setColor(QPalette::WindowText, QColor("#566876"));
+        window.setPalette(parentPalette);
+        QTRY_COMPARE(excerpt->palette().color(QPalette::Text),
+                     overrideText ? quoteColor : normalText.palette().color(QPalette::Text));
+        QTRY_COMPARE(title->palette().color(QPalette::WindowText),
+                     overrideText ? quoteColor : normalTitle.palette().color(QPalette::WindowText));
+        QTRY_COMPARE(excerpt->viewport()->palette().color(QPalette::Text), excerpt->palette().color(QPalette::Text));
+        preview->setColors(lineColor); // Clear a previous text override, too.
+        QCOMPARE(excerpt->palette().color(QPalette::Text), normalText.palette().color(QPalette::Text));
+        QCOMPARE(title->palette().color(QPalette::WindowText), normalTitle.palette().color(QPalette::WindowText));
+        QCOMPARE(excerpt->palette().color(QPalette::Highlight), normalText.palette().color(QPalette::Highlight));
+    }
+
+    void linkButtonPaintsOnlyTextAndKeepsButtonInput()
+    {
+        LinkButton link;
+        link.setAttribute(Qt::WA_TranslucentBackground);
+        QFont font = link.font();
+        font.setPixelSize(24);
+        font.setBold(true);
+        link.setFont(font);
+        link.setText("More");
+        link.setLinkColor(QColor("#3070c0"));
+        const QSize textSize = link.fontMetrics().size(Qt::TextShowMnemonic, link.text());
+        QCOMPARE(link.sizeHint(), textSize); // No native button padding.
+        link.resize(link.sizeHint());
+        link.show();
+        const auto capture = [&] {
+            QImage result(link.size(), QImage::Format_ARGB32_Premultiplied);
+            result.fill(Qt::transparent);
+            link.render(&result, QPoint(), QRegion(), QWidget::DrawChildren);
+            return result;
+        };
+        const auto maxAlpha = [](const QImage &image) {
+            int alpha = 0;
+            for (int y = 0; y < image.height(); ++y)
+                for (int x = 0; x < image.width(); ++x)
+                    alpha = qMax(alpha, image.pixelColor(x, y).alpha());
+            return alpha;
+        };
+        QEvent leave(QEvent::Leave);
+        QApplication::sendEvent(&link, &leave);
+        const auto resting = capture();
+        QVERIFY(qAbs(maxAlpha(resting) - 204) <= 1);
+        QCOMPARE(resting.pixelColor(resting.width() - 1, 0).alpha(), 0); // No background or frame.
+        enterWidget(&link);
+        const auto hovered = capture();
+        QCOMPARE(maxAlpha(hovered), 255);
+        QCOMPARE(hovered.pixelColor(hovered.width() - 1, 0).alpha(), 0);
+        const auto strongColor = [](const QImage &image) {
+            for (int y = 0; y < image.height(); ++y)
+                for (int x = 0; x < image.width(); ++x)
+                    if (image.pixelColor(x, y).alpha() == 255)
+                        return image.pixelColor(x, y);
+            return QColor();
+        };
+        QCOMPARE(strongColor(hovered), QColor("#3070c0"));
+        link.setLinkColor(QColor("#906030"));
+        QCOMPARE(strongColor(capture()), QColor("#906030"));
+        QApplication::sendEvent(&link, &leave);
+        QVERIFY(qAbs(maxAlpha(capture()) - 204) <= 1);
+
+        QSignalSpy clicked(&link, &LinkButton::clicked);
+        QTest::mouseClick(&link, Qt::RightButton);
+        QCOMPARE(clicked.size(), 0);
+        QTest::mouseClick(&link, Qt::LeftButton);
+        QCOMPARE(clicked.size(), 1);
+        QTest::mousePress(&link, Qt::LeftButton);
+        QTest::mouseRelease(&link, Qt::LeftButton, Qt::NoModifier, QPoint(-5, -5));
+        QCOMPARE(clicked.size(), 1); // Releasing outside cancels a press.
+        QTest::keyClick(&link, Qt::Key_Space);
+        QTest::keyClick(&link, Qt::Key_Return);
+        QCOMPARE(clicked.size(), 3);
+        link.setEnabled(false);
+        QTest::mouseClick(&link, Qt::LeftButton);
+        QTest::keyClick(&link, Qt::Key_Return);
+        QCOMPARE(clicked.size(), 3);
+    }
+
+    void previewExpandsWithoutDiscardingSelectableContent()
+    {
+        QWidget window;
+        window.resize(400, 400);
+        auto *layout = new QVBoxLayout(&window);
+        auto *preview = new MessagePreview(Qt::gray, {}, &window);
+        layout->addWidget(preview);
+        layout->addStretch();
+        QString text;
+        for (int i = 0; i < 100; ++i)
+            text += QString("Selectable line %1\n").arg(i);
+        preview->setContent("Author", text);
+        preview->setClosable(true);
+        window.show();
+        auto *browser = preview->findChild<QTextBrowser *>("previewText");
+        auto *more = preview->findChild<LinkButton *>("previewShowMore");
+        QTRY_VERIFY(more->isVisible());
+        const int collapsedHeight = browser->height();
+        browser->selectAll();
+        browser->copy();
+        QCOMPARE(QApplication::clipboard()->text(), text);
+        QTest::mouseClick(more, Qt::LeftButton);
+        QVERIFY(preview->isExpanded());
+        QTRY_VERIFY(browser->height() > collapsedHeight);
+        QTRY_VERIFY(browser->verticalScrollBar()->maximum() > 0);
+        QVERIFY(browser->height() <= window.height() / 2);
+        QCOMPARE(browser->toPlainText(), text);
+        QTest::mouseClick(more, Qt::LeftButton);
+        QVERIFY(!preview->isExpanded());
+        QCOMPARE(browser->height(), collapsedHeight);
+        QCOMPARE(browser->verticalScrollBar()->value(), 0);
+        QSignalSpy dismissed(preview, &MessagePreview::dismissed);
+        QTest::mouseClick(preview->findChild<QPushButton *>("previewDismiss"), Qt::LeftButton);
+        QCOMPARE(dismissed.size(), 1);
+    }
+
     void hoveredRowSurfaceFollowsPointerAndPreservesSelection_data()
     {
         QTest::addColumn<bool>("dark");

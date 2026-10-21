@@ -66,6 +66,7 @@ ColorOpt::ColorOpt() : QObject(nullptr)
                                               { "messages.sent", QPalette::Text },
                                               { "messages.informational", QPalette::Text },
                                               { "messages.usertext", QPalette::Text },
+                                              { "messages.quote", QPalette::PlaceholderText },
                                               { "messages.highlighting", QPalette::Text },
                                               { "messages.link", QPalette::Link },
                                               { "messages.link-visited", QPalette::Link },

@@ -18,6 +18,9 @@
  */
 
 #include "messageview.h"
+#include <QTextDocument>
+#include <QTextCursor>
+#include <algorithm>
 
 #include "common.h"
 #include "psioptions.h"
@@ -112,6 +115,89 @@ QString MessageView::reactionTarget(const XMPP::Message &message)
         return message.stanzaId(XMPP::Jid(message.from().bare())).id;
     return message.originId().isEmpty() ? message.id() : message.originId();
 }
+
+void MessageView::setReplyMetadata(const XMPP::Message &message)
+{
+    setReply(messageReply(message));
+    if (!reply().isValid())
+        return;
+    _replyData->hasFallback = messageReplyBody(message) != message.body();
+    _replyData->formatted = formattedText();
+    if (_replyData->hasFallback) {
+        // Preserve XHTML and plugin-provided rendering. Only apply the wire
+        // offsets when the rendered text still contains that exact body.
+        // Try the original rich prefix before emoticonify() can replace text
+        // with inline objects. This also preserves SIMS/share objects in the
+        // rest of the message instead of round-tripping them through Qt HTML.
+        QString rich = _text;
+        int prefixEnd = 0;
+        for (const auto &range : message.bodyFallbacks(QStringLiteral("urn:xmpp:reply:0"))) {
+            int first, last;
+            if (range.toUtf16(message.body(), first, last) && first == 0)
+                prefixEnd = qMax(prefixEnd, last);
+        }
+        const QString prefix = TextUtil::linkify(TextUtil::plain2rich(message.body().left(prefixEnd)));
+        if (prefixEnd > 0 && rich.startsWith(prefix)) {
+            rich.remove(0, prefix.size());
+            MessageView presentation = *this;
+            presentation._text = rich;
+            _replyData->formatted = presentation.formattedText();
+            return;
+        }
+        QTextDocument document;
+        document.setHtml(_text);
+        if (document.toPlainText().startsWith(message.body())) {
+            QList<QPair<int, int>> ranges;
+            for (const auto &range : message.bodyFallbacks(QStringLiteral("urn:xmpp:reply:0"))) {
+                int first, last;
+                if (range.toUtf16(message.body(), first, last))
+                    ranges.append({first, last});
+            }
+            std::sort(ranges.begin(), ranges.end());
+            QList<QPair<int, int>> merged;
+            for (const auto &range : ranges) {
+                if (!merged.isEmpty() && range.first <= merged.last().second)
+                    merged.last().second = qMax(merged.last().second, range.second);
+                else
+                    merged.append(range);
+            }
+            for (auto it = merged.crbegin(); it != merged.crend(); ++it) {
+                QTextCursor cursor(&document);
+                cursor.setPosition(it->first);
+                cursor.setPosition(it->second, QTextCursor::KeepAnchor);
+                cursor.removeSelectedText();
+            }
+            MessageView presentation = *this;
+            presentation._text = document.toHtml();
+            _replyData->formatted = presentation.formattedText();
+        }
+    }
+}
+
+const ChatReply &MessageView::reply() const
+{
+    static const ChatReply empty;
+    return _replyData ? _replyData->reply : empty;
+}
+
+void MessageView::setReply(const ChatReply &reply)
+{
+    if (!reply.isValid()) {
+        _replyData = nullptr;
+        return;
+    }
+    if (!_replyData)
+        _replyData = new ReplyData;
+    _replyData->reply = reply;
+}
+
+const QString &MessageView::replyFormattedText() const
+{
+    static const QString empty;
+    return _replyData ? _replyData->formatted : empty;
+}
+
+bool MessageView::hasReplyFallback() const { return _replyData && _replyData->hasFallback; }
 
 QString MessageView::retractionTarget(const XMPP::Message &message)
 {

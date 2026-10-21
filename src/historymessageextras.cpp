@@ -47,6 +47,9 @@ QString HistoryMessageExtras::encode(const XMPP::Message &message)
         return {};
     QJsonObject extra;
     extra.insert("psi:decoded", true);
+    if (message.reply().isValid())
+        extra.insert(QStringLiteral("urn:xmpp:reply:0"),
+                     QJsonObject {{"id", message.reply().id}, {"to", message.reply().to.full()}});
     QJsonArray urls;
     for (const auto &url : message.urlList()) {
         if (url.url().isEmpty())
@@ -127,6 +130,9 @@ QString HistoryMessageExtras::encode(const XMPP::Message &message)
 void HistoryMessageExtras::restore(const QString &json, XMPP::Message &message)
 {
     const auto extra = QJsonDocument::fromJson(json.toUtf8()).object();
+    const auto reply = extra.value(QStringLiteral("urn:xmpp:reply:0")).toObject();
+    if (!reply.isEmpty())
+        message.setReply({XMPP::Jid(reply.value("to").toString()), reply.value("id").toString()});
     if (extra.value("psi:has-body").toBool() && message.body().isEmpty())
         message.setBody(QStringLiteral(""));
     if (extra.value("psi:encrypted").toBool()) {
