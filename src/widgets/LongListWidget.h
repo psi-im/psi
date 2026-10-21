@@ -368,7 +368,7 @@ private:
     struct ResizeAnchor {
         bool atEnd = false;
         int index = -1;
-        qint64 centerOffset = 0; // row centre minus viewport centre, in pixels
+        long double centerFraction = 0.0L; // row-centre offset / viewport height
     };
 
     struct ViewportLock {
@@ -476,6 +476,7 @@ private:
     QTimer seekTimer;
     QTimer viewportLockTimer;
     QTimer resizeEvictionTimer_;
+    ResizeAnchor resizeAnchor_;
     QVariantAnimation scrollAnimation;
     RequestReason pendingSyncReason = RequestReason::Initial;
 
