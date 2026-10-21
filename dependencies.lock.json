@@ -1,18 +1,71 @@
 {
   "schema_version": 1,
+  "qt": {
+    "qt6": {
+      "version": "6.12.0",
+      "platforms": [
+        "windows-x64",
+        "macos-arm64",
+        "macos-x86_64",
+        "android-arm64-v8a",
+        "android-x86_64",
+        "android-x86"
+      ]
+    },
+    "qt5_windows_legacy": {
+      "version": "5.15.2",
+      "source": "official-qt5-msvc-win7"
+    }
+  },
   "iris": {
     "source": "git-submodule",
     "path": "iris",
     "lock_path": "iris/dependencies.lock.json",
-    "release_tag": null,
-    "minimum_version": "1.5.0"
+    "release_tag": "v1.5.1",
+    "minimum_version": "1.5.1"
+  },
+  "qca": {
+    "repository": "psi-im/qca",
+    "release_tag": "v3.0.11",
+    "commit": "0adfcc757974ca865f6d1de0955df68e7a304676",
+    "minimum_version": "3.0.10",
+    "lock_path": "iris/dependencies.lock.json"
   },
   "psimedia": {
-    "commit": "ad1b411f382dff2d9f5901343eccc25046ee4e90"
+    "repository": "psi-im/psimedia",
+    "release_tag": null,
+    "commit": "aca907fed0ff7634024bc81ec4a032e44d3f3406"
+  },
+  "plugins": {
+    "repository": "psi-im/plugins",
+    "release_tag": null,
+    "commit": "cf65ddf460eca3e93ae90732f5b1b19d979546af"
   },
   "qtkeychain": {
     "tag": "0.17.0",
     "commit": "875f77d9f61bd97fd84cca47ce3bc71186dfbd09"
+  },
+  "source_submodules": {
+    "3rdparty/qhttp": {
+      "repository": "psi-im/qhttp",
+      "commit": "c385139abc1d51b0eae6a974641664df1995c8ac"
+    },
+    "3rdparty/http-parser": {
+      "repository": "nodejs/http-parser",
+      "commit": "ec8b5ee63f0e51191ea43bb0c6eac7bfbff3141d"
+    },
+    "3rdparty/qite": {
+      "repository": "Ri0n/qite",
+      "commit": "d3ab07c21578d352febf706a3acb2720690bee16"
+    }
+  },
+  "translations": {
+    "repository": "psi-im/psi-l10n",
+    "commit": "abce689a3ca86aaf7c77313ba7bc71ef558c5cc6"
+  },
+  "media_runtime": {
+    "windows_modern_gstreamer": "1.28.7",
+    "windows_legacy_gstreamer": "1.24.13"
   },
   "windows_sdks": {
     "msvc_qt6": {
