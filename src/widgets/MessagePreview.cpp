@@ -46,10 +46,10 @@ MessagePreview::MessagePreview(const QColor &barColor, const QColor &textColor, 
     bar_->setAutoFillBackground(true);
     bar_->setAttribute(Qt::WA_TransparentForMouseEvents);
     layout->addWidget(bar_);
-    auto *column = new QVBoxLayout;
-    column->setContentsMargins(0, 0, 0, 0);
-    column->setSpacing(0);
-    layout->addLayout(column, 1);
+    column_ = new QVBoxLayout;
+    column_->setContentsMargins(0, 0, 0, 0);
+    column_->setSpacing(0);
+    layout->addLayout(column_, 1);
     auto *header = new QHBoxLayout;
     title_       = new QLabel(this);
     title_->setObjectName(QStringLiteral("previewTitle"));
@@ -69,7 +69,7 @@ MessagePreview::MessagePreview(const QColor &barColor, const QColor &textColor, 
     close_->hide();
     header->addWidget(close_);
     connect(close_, &QPushButton::clicked, this, &MessagePreview::dismissed);
-    column->addLayout(header);
+    column_->addLayout(header);
     text_ = new PreviewText(this);
     text_->setObjectName(QStringLiteral("previewText"));
     text_->setFrameShape(QFrame::NoFrame);
@@ -85,10 +85,10 @@ MessagePreview::MessagePreview(const QColor &barColor, const QColor &textColor, 
         if (value && browser->verticalScrollBarPolicy() == Qt::ScrollBarAlwaysOff)
             browser->verticalScrollBar()->setValue(0);
     });
-    column->addWidget(text_);
+    column_->addWidget(text_);
     toggle_ = new LinkButton(this);
     toggle_->setObjectName(QStringLiteral("previewShowMore"));
-    column->addWidget(toggle_, 0, Qt::AlignLeft);
+    column_->addWidget(toggle_, 0, Qt::AlignLeft);
     connect(toggle_, &LinkButton::clicked, this, [this] {
         expanded_ = !expanded_;
         updatePreview();
@@ -136,6 +136,21 @@ void MessagePreview::setContent(const QString &title, const QString &text)
 }
 
 void MessagePreview::setClosable(bool enabled) { close_->setVisible(enabled); }
+
+void MessagePreview::setFooter(QWidget *widget)
+{
+    if (footer_ == widget)
+        return;
+    if (footer_)
+        delete footer_;
+    footer_ = widget;
+    if (footer_) {
+        footer_->setParent(this);
+        column_->addWidget(footer_);
+    }
+    updateGeometry();
+    emit heightChanged();
+}
 
 void MessagePreview::updatePreview()
 {
