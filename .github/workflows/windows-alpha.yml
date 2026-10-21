@@ -1,0 +1,202 @@
+name: Psi Windows full alpha
+run-name: Psi 2.0-alpha1 Windows full package
+
+on:
+  push:
+    branches: ['release/2.0-alpha1-windows']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: psi-alpha1-full-windows
+  cancel-in-progress: false
+
+jobs:
+  package:
+    name: Windows 10/11 x64 — Psi, plugins, PsiMedia
+    runs-on: windows-2022
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: false
+
+      - name: Checkout bundled Iris
+        shell: bash
+        run: |
+          set -euo pipefail
+          git submodule sync --recursive
+          git submodule update --init --recursive --depth 1
+          bash .github/scripts/ensure-iris-version-history.sh
+          git -C iris fetch origin tag v1.5.1
+          test "$(git -C iris rev-parse 'v1.5.1^{}')" = "$(git -C iris rev-parse HEAD)"
+
+      - name: Official Psi plugins
+        uses: actions/checkout@v4
+        with:
+          repository: psi-im/plugins
+          ref: eb8e30f09ba5373aa53cecc378bb9ff19180cbca
+          path: plugins
+          persist-credentials: false
+
+      - name: Matching PsiMedia source
+        uses: actions/checkout@v4
+        with:
+          repository: psi-im/psimedia
+          ref: 2aff564c079859b181ef320561f56c613a018fcc
+          path: plugins/generic/psimedia
+          persist-credentials: false
+
+      - name: Install Qt6 WebEngine
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: 6.11.*
+          arch: win64_msvc2022_64
+          modules: qtmultimedia qtwebchannel qtpositioning qtwebengine qtimageformats
+          aqtsource: git+https://github.com/miurahr/aqtinstall.git@refs/pull/1000/head
+          cache: true
+
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Install tools
+        shell: pwsh
+        run: |
+          choco install ccache ninja nsis --no-progress -y
+          if ($LASTEXITCODE -ne 0) { throw 'Windows build tool installation failed' }
+          "$(Join-Path ${env:ProgramFiles(x86)} 'NSIS')" >> $env:GITHUB_PATH
+
+      - name: Resolve locked SDK
+        id: deps
+        uses: ./.github/actions/load-dependencies
+
+      - name: Download locked Windows SDK
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SDK_TAG: ${{ steps.deps.outputs.msvc_sdk_tag }}
+          SDK_ARCHIVE: ${{ steps.deps.outputs.msvc_sdk_archive }}
+        run: |
+          New-Item -ItemType Directory -Force sdk-download, sdk | Out-Null
+          gh release download $env:SDK_TAG --repo $env:GITHUB_REPOSITORY --pattern $env:SDK_ARCHIVE --dir sdk-download
+          if ($LASTEXITCODE -ne 0) { throw 'Windows SDK download failed' }
+          Expand-Archive "sdk-download/$env:SDK_ARCHIVE" sdk -Force
+          if (-not (Test-Path 'sdk/SDK-MANIFEST.txt')) { throw 'Windows SDK manifest missing' }
+
+      - name: Install hash-verified GStreamer runtime and headers
+        shell: pwsh
+        run: |
+          & ./plugins/generic/psimedia/ci/windows/install-gstreamer.ps1 -BuildProfile modern -Root "$env:RUNNER_TEMP/psi-alpha-gstreamer"
+          if ($LASTEXITCODE -ne 0) { throw 'GStreamer installation failed' }
+
+      - name: Install shared media SRTP and pkgconf
+        shell: pwsh
+        run: |
+          $vcpkg = Join-Path $env:VCPKG_INSTALLATION_ROOT 'vcpkg.exe'
+          if (-not (Test-Path $vcpkg)) { throw 'Missing vcpkg.exe' }
+          & $vcpkg install 'openssl:x64-windows-release' 'libsrtp[openssl]:x64-windows-release' 'pkgconf:x64-windows' '--overlay-triplets=plugins/generic/psimedia/ci/windows'
+          if ($LASTEXITCODE -ne 0) { throw 'Media libSRTP installation failed' }
+          $srtp = Join-Path $env:VCPKG_INSTALLATION_ROOT 'installed/x64-windows-release'
+          $pkg = @(Get-ChildItem (Join-Path $env:VCPKG_INSTALLATION_ROOT 'installed/x64-windows/tools') -Filter pkgconf.exe -Recurse -File)
+          if ($pkg.Count -ne 1) { throw 'Missing pkgconf.exe' }
+          "PSIMEDIA_SRTP_ROOT=$($srtp.Replace('\', '/'))" >> $env:GITHUB_ENV
+          "PSIMEDIA_PKGCONF=$($pkg[0].FullName.Replace('\', '/'))" >> $env:GITHUB_ENV
+          "$srtp/bin" >> $env:GITHUB_PATH
+
+      - name: Build and stage full Psi alpha
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force artifacts | Out-Null
+          & packaging/windows/build_profile_msvc.ps1 -SdkDir "$pwd/sdk" -OutputDir "$pwd/artifacts" -IncludePlugins -AlphaTag '2.0-alpha1'
+          if ($LASTEXITCODE -ne 0) { throw 'Full Windows alpha build failed' }
+
+      - name: Audit ZIP and installer payload
+        shell: pwsh
+        run: |
+          $zip = 'artifacts/psi-2.0-alpha1-win10-x64.zip'
+          $exe = 'artifacts/psi-2.0-alpha1-win10-x64-setup.exe'
+          if (-not (Test-Path $zip) -or -not (Test-Path $exe)) { throw 'Missing release package' }
+          @'
+          import zipfile
+          with zipfile.ZipFile("artifacts/psi-2.0-alpha1-win10-x64.zip") as z:
+              files = [x.replace("\\","/").lower() for x in z.namelist()]
+              plugins = [x for x in files if "/plugins/" in ("/" + x) and x.endswith(".dll")]
+              media = [x for x in plugins if x.endswith("/mediaplugin.dll")]
+              gst = [x for x in files if "gstreamer-1.0/" in x and x.endswith(".dll")]
+              for required in ["psi.exe", "build-info.txt", "gstreamer-runtime.txt"]:
+                  if not any(x == required or x.endswith("/" + required) for x in files):
+                      raise SystemExit("Missing " + required)
+              if len(plugins) < 2 or len(media) != 1 or len(gst) < 10:
+                  raise SystemExit(f"Incomplete package: {len(plugins)} plugins, {len(media)} media, {len(gst)} GStreamer DLLs")
+              print(f"Verified {len(plugins)} Psi plugins, PsiMedia and {len(gst)} GStreamer plugin DLLs")
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { throw 'Release content check failed' }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: psi-2.0-alpha1-windows-full
+          path: |
+            artifacts/psi-2.0-alpha1-win10-x64.zip
+            artifacts/psi-2.0-alpha1-win10-x64-setup.exe
+            artifacts/version-modern.txt
+            artifacts/dependencies-modern.txt
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: psi-alpha-windows-logs
+          path: artifacts/*.log
+          if-no-files-found: warn
+
+  publish:
+    name: Publish Windows-only experimental alpha
+    needs: package
+    runs-on: ubuntu-24.04
+    if: github.event_name == 'push' && github.ref == 'refs/heads/release/2.0-alpha1-windows'
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Recheck Iris source and dependency lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          git submodule update --init iris
+          git -C iris fetch origin tag v1.5.1
+          test "$(git -C iris rev-parse 'v1.5.1^{}')" = "$(git -C iris rev-parse HEAD)"
+          python3 -c 'import json; assert json.load(open("dependencies.lock.json"))["iris"]["release_tag"] == "v1.5.1"'
+
+      - name: Retrieve packages and create checksums
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name psi-2.0-alpha1-windows-full --dir release
+          test -s release/psi-2.0-alpha1-win10-x64.zip
+          test -s release/psi-2.0-alpha1-win10-x64-setup.exe
+          (cd release && sha256sum psi-*.zip psi-*.exe > SHA256SUMS.txt)
+
+      - name: Create GitHub prerelease
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag=2.0-alpha1
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::Release already exists: refusing to replace published binaries"
+            exit 1
+          fi
+          gh release create "$tag" release/psi-2.0-alpha1-win10-x64.zip release/psi-2.0-alpha1-win10-x64-setup.exe release/SHA256SUMS.txt --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title 'Psi 2.0 Alpha 1 — Windows x64' --notes 'Experimental Windows 10/11 x64 release; includes Qt6, official Psi plugins and PsiMedia with GStreamer. Uses Iris v1.5.1. Back up your Psi profile before testing.'
