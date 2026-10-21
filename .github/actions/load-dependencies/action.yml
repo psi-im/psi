@@ -22,6 +22,16 @@ inputs:
 outputs:
   iris_release_tag:
     value: ${{ steps.resolve.outputs.IRIS_RELEASE_TAG }}
+  qt6_version:
+    value: ${{ steps.resolve.outputs.QT6_VERSION }}
+  plugins_ref:
+    value: ${{ steps.resolve.outputs.PLUGINS_REF }}
+  plugins_release_tag:
+    value: ${{ steps.resolve.outputs.PLUGINS_RELEASE_TAG }}
+  psimedia_release_tag:
+    value: ${{ steps.resolve.outputs.PSIMEDIA_RELEASE_TAG }}
+  psi_l10n_ref:
+    value: ${{ steps.resolve.outputs.PSI_L10N_REF }}
   psimedia_ref:
     value: ${{ steps.resolve.outputs.PSIMEDIA_SRTP_REF }}
   qtkeychain_tag:
