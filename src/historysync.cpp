@@ -254,17 +254,9 @@ void HistorySync::go()
                     results_       = xml;
                     decodingSaved_ = true;
                     decodeIndex_   = 0;
-                    // Existing certified bodies do not need downloading again.
-                    // Bootstrap old caches with one bounded tail observation;
-                    // a missing count is remembered too. Refresh stale estimates
-                    // at most once per five minutes, never once per old page.
-                    if (replaySaved_ && context_.connected() && context_.writeSnapshot
-                        && (!snapshot_.observedAt.isValid()
-                            || (snapshot_.resultCount > 0 && snapshot_.lastUid.isEmpty())
-                            || snapshot_.observedAt.secsTo(QDateTime::currentDateTimeUtc()) >= 300))
-                        refreshSnapshot();
-                    else
-                        decodeNext();
+                                    // Cached pages do not trigger snapshot-only MAM traffic.
+                    // A real, user-driven MAM page updates the count and UID.
+                    decodeNext();
                     return;
                 }
             }
@@ -285,38 +277,6 @@ void HistorySync::finishError(const QString &error)
     success_ = false;
     error_   = error;
     emit finished();
-}
-
-void HistorySync::refreshSnapshot()
-{
-    // Iris owns the protocol. Request one last event to obtain both the count
-    // and a real last UID; max=0 would provide no identity for the snapshot.
-    XMPP::MAMManager manager(context_.client, 1, 1, false, true);
-    task_ = manager.getArchiveByIDRange(key_.room ? XMPP::Jid() : XMPP::Jid(key_.peer), {}, {}, key_.room);
-    if (key_.room)
-        task_->setArchiveJid(XMPP::Jid(key_.archive));
-    qCDebug(PsiMam::historyLog) << "snapshot-request account=" << key_.account << "peer=" << key_.peer << "limit=1";
-    connect(task_, &XMPP::Task::finished, this, [this] {
-        auto *task = task_.data();
-        task_.clear();
-        if (task->success()) {
-            snapshot_.resultCount = task->resultCount();
-            snapshot_.lastUid     = task->archive().isEmpty() ? QString() : task->archive().last().attribute("id");
-            snapshot_.observedAt  = QDateTime::currentDateTimeUtc();
-            snapshot_.stable      = task->isStable();
-            if (!context_.writeSnapshot(key_, snapshot_))
-                qCWarning(PsiMam::historyLog) << "snapshot-write-failed peer=" << key_.peer;
-            qCDebug(PsiMam::historyLog) << "snapshot-result peer=" << key_.peer << "count=" << snapshot_.resultCount
-                                        << "last=" << snapshot_.lastUid << "stable=" << snapshot_.stable;
-        } else {
-            // Discovery failure must not hide already cached messages.
-            qCWarning(PsiMam::historyLog)
-                << "snapshot-unavailable peer=" << key_.peer << "error=" << task->statusString();
-        }
-        task->deleteLater();
-        decodeNext();
-    });
-    task_->go();
 }
 
 void HistorySync::requestPage()
