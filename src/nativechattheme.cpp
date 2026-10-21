@@ -189,9 +189,10 @@ void configureNativeChat(MamChatWidget *view, PsiAccount *account, const XMPP::J
     QObject::connect(account->avatarFactory(), &AvatarFactory::avatarChanged, view,
                      [view, avatarState](const XMPP::Jid &jid) {
         // Contacts use bare JIDs; MUC occupants use full JIDs.
-        avatarState->cache.remove(QStringLiteral("contact:") + jid.bare());
-        avatarState->cache.remove(QStringLiteral("muc:") + jid.full());
-        view->refreshAvatars();
+        const bool contactChanged = avatarState->cache.remove(QStringLiteral("contact:") + jid.bare()) > 0;
+        const bool mucChanged = avatarState->cache.remove(QStringLiteral("muc:") + jid.full()) > 0;
+        if (contactChanged || mucChanged)
+            view->refreshAvatars();
     });
     Mattermost::OverlayScrollBarManager::install(*qApp);
     Mattermost::OverlayScrollBarManager::setScrollToStartButtonEnabled(*view, false);
