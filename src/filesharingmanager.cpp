@@ -325,13 +325,10 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
         for (auto const &r : refs) {
             MediaSharing ms = r.mediaSharing();
             // qDebug() << "BEGIN:" << r.begin() << "END:" << r.end();
-            // only audio and image supported for now
-            if (!ms.isValid() || !ms.file.hasComputedHashes() || !ms.file.size().has_value()
-                || !(ms.file.mediaType().startsWith(QLatin1String("audio"))
-                     || ms.file.mediaType().startsWith(QLatin1String("image"))
-                     || ms.file.mediaType().startsWith(QLatin1String("video")))) {
+            // Every SIMS attachment needs a share object, not only inline media.
+            // Non-media files can have an unknown size (streaming sources).
+            if (!ms.isValid() || !ms.file.hasComputedHashes())
                 continue;
-            }
             auto item = this->item(ms.file.computedHashes().first(), acc);
             if (!item)
                 item = new FileSharingItem(ms, m.from(), acc, this);
@@ -574,16 +571,27 @@ ITEMediaState *FileSharingDeviceOpener::mediaState(const QUrl &url)
     return state;
 }
 
-void FileSharingDeviceOpener::saveAs(const QUrl &url, QWidget *parent)
+bool FileSharingDeviceOpener::saveAs(const QUrl &url, QWidget *parent, const SaveCallback &completed,
+                                      const ProgressCallback &progress)
 {
     QPointer<FileSharingItem> item  = acc->psi()->fileSharingManager()->item(urlToSourceId(url), acc);
     QPointer<ITEMediaState>   state = mediaState(url);
     if (!item || !state || state->downloading())
-        return;
-    const auto path = FileUtil::getSaveFileName(parent, QObject::tr("Save media"), item->displayName());
+        return false;
+    const auto path = FileUtil::getSaveFileName(parent, QObject::tr("Save file"), item->displayName());
     // The dialog runs a nested event loop. Recheck lifetime and concurrent saves.
     if (path.isEmpty() || !item || !state || state->downloading())
-        return;
+        return false;
+    return saveTo(url, path, completed, progress);
+}
+
+bool FileSharingDeviceOpener::saveTo(const QUrl &url, const QString &path, const SaveCallback &completed,
+                                      const ProgressCallback &progress)
+{
+    QPointer<FileSharingItem> item  = acc->psi()->fileSharingManager()->item(urlToSourceId(url), acc);
+    QPointer<ITEMediaState>   state = mediaState(url);
+    if (path.isEmpty() || !item || !state || state->downloading())
+        return false;
     QIODevice           *input    = nullptr;
     auto                 size     = item->fileSize();
     FileShareDownloader *download = nullptr;
@@ -595,14 +603,31 @@ void FileSharingDeviceOpener::saveAs(const QUrl &url, QWidget *parent)
         input = download = item->download(); // Full transfer, not playback chunks.
     }
     if (!input) {
-        state->setDownload(false, -1, QObject::tr("No download source"));
-        return;
+        const QString error = QObject::tr("No download source");
+        state->setDownload(false, -1, error);
+        if (completed)
+            completed({}, error);
+        return false;
     }
-    auto save = new FileSharingMediaSave(input, size, download != nullptr, path, state, item);
+    auto save = new FileSharingMediaSave(input, size, download != nullptr, path, state, item, completed, progress);
+    save->setObjectName(QStringLiteral("psi-sims-save"));
     if (download) {
         QObject::connect(download, &FileShareDownloader::transferCompleted, save, &FileSharingMediaSave::validated);
         QObject::connect(download, &FileShareDownloader::disconnected, save, &FileSharingMediaSave::sourceClosed);
         QObject::connect(download, &FileShareDownloader::failed, save,
                          [save, download] { save->fail(download->errorString()); });
     }
+    return true;
+}
+
+void FileSharingDeviceOpener::cancelSave(const QUrl &url)
+{
+    auto item = acc->psi()->fileSharingManager()->item(urlToSourceId(url), acc);
+    if (!item)
+        return;
+    // FileSharingMediaSave has no Q_OBJECT, so findChild<FileSharingMediaSave *>()
+    // fails the Qt 6 compile-time meta-object check. The object name is
+    // assigned only to FileSharingMediaSave instances created by saveTo().
+    if (auto save = item->findChild<QObject *>(QStringLiteral("psi-sims-save"), Qt::FindDirectChildrenOnly))
+        static_cast<FileSharingMediaSave *>(save)->cancel();
 }

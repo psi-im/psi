@@ -23,6 +23,7 @@
 #include <QMenu>
 #include <QMouseEvent>
 #include <QPushButton>
+#include <QToolButton>
 #include <QScopeGuard>
 #include <QScrollBar>
 #include <QSignalSpy>
@@ -1126,6 +1127,62 @@ private slots:
         QCoreApplication::processEvents(); // Deferred qite cursor/player cleanup.
         QCOMPARE(body.toPlainText(),QStringLiteral("Replaced"));
     }
+    void simsGenericFilesUsePreviewActionsWithoutChangingMediaRendering()
+    {
+        FileSharingDeviceOpener opener;
+        opener.accounts.insert(QStringLiteral("account-a"), &opener);
+        FileSharingItem archive(QStringLiteral("application/x-7z-compressed"));
+        FileSharingItem video(QStringLiteral("video/webm"));
+        opener.items.insert(QStringLiteral("archive"), &archive);
+        opener.items.insert(QStringLiteral("video"), &video);
+
+        MamChatWidget list;
+        list.resize(550, 400);
+        list.setHistoryLoading(true);
+        list.setMediaOpener(&opener);
+        list.appendMessage(message(QStringLiteral("file"), QStringLiteral(
+            "Before <share id=\"archive\" account=\"account-a\"/> and "
+            "<share id=\"video\" account=\"account-a\"/> after")));
+        list.show();
+        QTRY_VERIFY(list.itemWidget(0));
+        auto *row = list.itemWidget(0);
+        auto *file = row->findChild<MessagePreview *>(QStringLiteral("mamFilePreview"));
+        QVERIFY(file);
+        auto *title = file->findChild<QLabel *>(QStringLiteral("previewTitle"));
+        QVERIFY(title);
+        QCOMPARE(title->text(), QStringLiteral("test.7z"));
+        auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+        QVERIFY(body);
+        QVERIFY(body->toPlainText().contains(QStringLiteral("Before")));
+        QVERIFY(body->toPlainText().contains(QStringLiteral("after")));
+        QVERIFY(body->toPlainText().contains(QChar::ObjectReplacementCharacter)); // Video still inline.
+        auto buttons = file->findChildren<QToolButton *>();
+        QToolButton *download = nullptr;
+        QToolButton *open = nullptr;
+        QToolButton *reveal = nullptr;
+        for (auto *button : buttons) {
+            if (button->toolTip() == QStringLiteral("Download file")) download = button;
+            if (button->toolTip() == QStringLiteral("Open file")) open = button;
+            if (button->toolTip() == QStringLiteral("Show in file manager")) reveal = button;
+        }
+        QVERIFY(download);
+        QVERIFY(open);
+        QVERIFY(reveal);
+        QVERIFY(!reveal->isEnabled());
+        download->click();
+        QCOMPARE(opener.saves, 1);
+        QVERIFY(!download->isEnabled());
+        auto *status = file->findChild<QLabel *>(QStringLiteral("mamFileStatus"));
+        QVERIFY(status);
+        QCOMPARE(status->text(), QStringLiteral("Downloading…"));
+
+        NativeChatTheme classic;
+        classic.layout = NativeChatTheme::Classic;
+        list.setTheme(classic);
+        QTRY_VERIFY(list.itemWidget(0));
+        QCOMPARE(list.itemWidget(0)->findChildren<MessagePreview *>(QStringLiteral("mamFilePreview")).size(), 1);
+    }
+
     void virtualRowsReceiveMediaOpenerAndRecreateAttachments()
     {
         FileSharingDeviceOpener opener;

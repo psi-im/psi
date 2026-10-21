@@ -29,6 +29,14 @@
 #include <QProcess>
 #include <QStandardPaths>
 #include <QTextStream>
+#include <QUrl>
+
+#if defined(Q_OS_LINUX) && defined(USE_DBUS)
+#include <QDBusConnection>
+#include <QDBusMessage>
+#include <QDBusPendingCallWatcher>
+#include <QDBusPendingReply>
+#endif
 
 #include <sys/types.h>
 #ifdef Q_OS_WIN
@@ -219,14 +227,33 @@ void FileUtil::openFolder(const QString &path)
     QProcess::startDetached("explorer.exe",
                             QStringList() << QLatin1String("/select,") << QDir::toNativeSeparators(path));
 #elif defined(Q_OS_MAC)
-    QProcess::execute("/usr/bin/osascript",
-                      QStringList() << "-e"
-                                    << QString("tell application \"Finder\" to reveal POSIX file \"%1\"").arg(path));
-    QProcess::execute("/usr/bin/osascript", QStringList() << "-e" << "tell application \"Finder\" to activate");
+    QProcess::startDetached("/usr/bin/open", QStringList() << "-R" << path);
 #else
-    // we cannot select a file here, because no file browser really supports it...
     const QFileInfo fileInfo(path);
-    QProcess::startDetached("xdg-open", QStringList(fileInfo.path()));
+    const QString   folder = fileInfo.absolutePath();
+#if defined(Q_OS_LINUX) && defined(USE_DBUS)
+    // FileManager1 is implemented by common Linux file managers (e.g.
+    // Nautilus, Dolphin, Thunar). ShowItems reveals the file rather than
+    // merely opening its containing directory. Fall back if unsupported.
+    const auto bus = QDBusConnection::sessionBus();
+    if (bus.isConnected()) {
+        auto message = QDBusMessage::createMethodCall(QStringLiteral("org.freedesktop.FileManager1"),
+                                                      QStringLiteral("/org/freedesktop/FileManager1"),
+                                                      QStringLiteral("org.freedesktop.FileManager1"),
+                                                      QStringLiteral("ShowItems"));
+        message << QStringList { QUrl::fromLocalFile(fileInfo.absoluteFilePath()).toString(QUrl::FullyEncoded) }
+                << QString();
+        auto *watcher = new QDBusPendingCallWatcher(bus.asyncCall(message));
+        QObject::connect(watcher, &QDBusPendingCallWatcher::finished, watcher, [watcher, folder] {
+            QDBusPendingReply<> reply = *watcher;
+            if (reply.isError())
+                QProcess::startDetached(QStringLiteral("xdg-open"), QStringList { folder });
+            watcher->deleteLater();
+        });
+        return;
+    }
+#endif
+    QProcess::startDetached(QStringLiteral("xdg-open"), QStringList { folder });
 #endif
     // printf("item open dest: [%s]\n", path.latin1());
 }

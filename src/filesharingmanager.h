@@ -25,10 +25,12 @@
 
 #include <QNetworkReply>
 #include <QObject>
+#include <functional>
 
 class FileCache;
 class FileCacheItem;
 class FileSharingDownloader;
+class FileSharingMediaSave;
 class FileSharingManager;
 class MessageView;
 class PsiAccount;
@@ -115,7 +117,13 @@ public:
     void              close(QIODevice *dev) override;
     QVariant          metadata(const QUrl &url) override;
     ITEMediaState    *mediaState(const QUrl &url) override;
-    void              saveAs(const QUrl &url, QWidget *parent);
+    using SaveCallback = std::function<void(const QString &path, const QString &error)>;
+    using ProgressCallback = std::function<void(qreal)>;
+    bool              saveAs(const QUrl &url, QWidget *parent, const SaveCallback &completed = {},
+                             const ProgressCallback &progress = {});
+    bool              saveTo(const QUrl &url, const QString &path, const SaveCallback &completed = {},
+                             const ProgressCallback &progress = {});
+    void              cancelSave(const QUrl &url);
 
     FileSharingItem *sharedItem(const QString &id);
     FileSharingDeviceOpener *forAccount(const QString &id) const;
