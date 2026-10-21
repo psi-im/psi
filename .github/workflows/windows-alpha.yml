@@ -13,7 +13,7 @@ permissions:
 
 concurrency:
   group: psi-alpha1-full-windows
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   package:
@@ -196,6 +196,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          # Never publish artifacts from an earlier, superseded push while
+          # this release branch is still being corrected and rebuilt.
+          git fetch origin release/2.0-alpha1-windows
+          latest="$(git rev-parse FETCH_HEAD)"
+          if [[ "$latest" != "$GITHUB_SHA" ]]; then
+            echo "Skipping superseded alpha build $GITHUB_SHA; current head $latest"
+            exit 0
+          fi
           tag=2.0-alpha1
           if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "::error::Release already exists: refusing to replace published binaries"
