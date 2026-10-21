@@ -5,8 +5,10 @@
 #include <QTimer>
 
 FileSharingMediaSave::FileSharingMediaSave(QIODevice *input, std::optional<quint64> size, bool waitForValidation,
-                                           const QString &path, ITEMediaState *state, QObject *parent, Callback onFinished) :
-    QObject(parent), onFinished_(std::move(onFinished)), output_(path), input_(input), state_(state), size_(size),
+                                           const QString &path, ITEMediaState *state, QObject *parent, Callback onFinished,
+                         ProgressCallback onProgress) :
+    QObject(parent), onFinished_(std::move(onFinished)), onProgress_(std::move(onProgress)), output_(path),
+    input_(input), state_(state), size_(size),
     accepted_(!waitForValidation)
 {
     input->setParent(this);
@@ -106,8 +108,11 @@ void FileSharingMediaSave::pump()
     }
     if (input_->bytesAvailable() > 0)
         schedule();
+    const qreal progress = size_ && *size_ ? qreal(copied_) / *size_ : -1;
     if (state_)
-        state_->setDownload(true, size_ && *size_ ? qreal(copied_) / *size_ : -1);
+        state_->setDownload(true, progress);
+    if (onProgress_)
+        onProgress_(progress);
 }
 
 void FileSharingMediaSave::finish(const QString &error)
