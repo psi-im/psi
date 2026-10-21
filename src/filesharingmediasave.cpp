@@ -5,8 +5,9 @@
 #include <QTimer>
 
 FileSharingMediaSave::FileSharingMediaSave(QIODevice *input, std::optional<quint64> size, bool waitForValidation,
-                                           const QString &path, ITEMediaState *state, QObject *parent) :
-    QObject(parent), output_(path), input_(input), state_(state), size_(size), accepted_(!waitForValidation)
+                                           const QString &path, ITEMediaState *state, QObject *parent, Callback onFinished) :
+    QObject(parent), onFinished_(std::move(onFinished)), output_(path), input_(input), state_(state), size_(size),
+    accepted_(!waitForValidation)
 {
     input->setParent(this);
     connect(input, &QIODevice::readyRead, this, [this] { schedule(); });
@@ -45,6 +46,8 @@ void FileSharingMediaSave::fail(const QString &error)
     failure_ = error.isEmpty() ? tr("Download failed") : error;
     schedule();
 }
+
+void FileSharingMediaSave::cancel() { finish(tr("Download cancelled")); }
 
 void FileSharingMediaSave::schedule()
 {
@@ -118,4 +121,6 @@ void FileSharingMediaSave::finish(const QString &error)
     deleteLater();
     if (state_)
         state_->setDownload(false, error.isEmpty() ? 1 : -1, error);
+    if (onFinished_)
+        onFinished_(error.isEmpty() ? output_.fileName() : QString(), error);
 }
