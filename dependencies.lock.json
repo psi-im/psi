@@ -4,11 +4,13 @@
     "source": "git-submodule",
     "path": "iris",
     "lock_path": "iris/dependencies.lock.json",
-    "release_tag": null,
-    "minimum_version": "1.5.0"
+    "release_tag": "v1.5.1",
+    "minimum_version": "1.5.1"
   },
   "psimedia": {
-    "commit": "ad1b411f382dff2d9f5901343eccc25046ee4e90"
+    "repository": "psi-im/psimedia",
+    "commit": "3368f22642e374975f3c9e02c309ee8c2b53ee37",
+    "release_tag": "v1.2.1"
   },
   "qtkeychain": {
     "tag": "0.17.0",
@@ -16,12 +18,42 @@
   },
   "windows_sdks": {
     "msvc_qt6": {
-      "tag": "windows-sdk-msvc-qt6-v3",
+      "tag": "windows-sdk-msvc-qt6-v4",
       "archive": "psi-windows-sdk-msvc-qt6.zip"
     },
     "msys2_qt5": {
       "tag": "windows-sdk-msys2-qt5-v3",
       "archive": "psi-windows-sdk-msys2-qt5.zip"
     }
+  },
+  "qca": {
+    "repository": "psi-im/qca",
+    "source": "released-sdk-shared-with-iris",
+    "tag": "v3.0.12",
+    "commit": "96c88f9ee127d206691ff688e68676c022f505f8"
+  },
+  "plugins": {
+    "repository": "psi-im/plugins",
+    "commit": "d485d702079d9b54285cf83ce9ae4534e88b70f3",
+    "release_tag": "1.6"
+  },
+  "qt": {
+    "windows_msvc_qt6": "6.12.0",
+    "macos_qt6": "6.12.0",
+    "android_qt6": "6.12.0",
+    "windows_msys2_qt5": "distribution-managed"
+  },
+  "translations": {
+    "repository": "psi-im/psi-l10n",
+    "commit": "abce689a3ca86aaf7c77313ba7bc71ef558c5cc6"
+  },
+  "submodules": {
+    "source": "gitlink",
+    "paths": [
+      "iris",
+      "3rdparty/qhttp",
+      "3rdparty/http-parser",
+      "3rdparty/qite"
+    ]
   }
 }

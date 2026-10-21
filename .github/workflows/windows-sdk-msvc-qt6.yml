@@ -33,9 +33,6 @@ concurrency:
   group: windows-sdk-msvc-qt6-${{ inputs.sdk_tag }}
   cancel-in-progress: false
 
-env:
-  QT_SERIES: "6.11.*"
-  AQT_WINDOWS_QT611_SOURCE: "git+https://github.com/miurahr/aqtinstall.git@refs/pull/1000/head"
 
 jobs:
   check:
@@ -45,6 +42,7 @@ jobs:
       need_build: ${{ steps.check.outputs.need_build }}
       sdk_tag: ${{ steps.deps.outputs.msvc_sdk_tag }}
       sdk_archive: ${{ steps.deps.outputs.msvc_sdk_archive }}
+      qt6_version: ${{ steps.deps.outputs.qt6_version }}
 
     steps:
       - uses: actions/checkout@v4
@@ -91,6 +89,7 @@ jobs:
     timeout-minutes: 90
     env:
       SDK_ARCHIVE: ${{ needs.check.outputs.sdk_archive }}
+      QT_SERIES: ${{ needs.check.outputs.qt6_version }}
     defaults:
       run:
         shell: pwsh
@@ -114,12 +113,13 @@ jobs:
           qca-install-mode: sdk
           qca-directory: qca-release
 
-      - name: Install Qt 6.11
+      - name: Install Qt 6.12
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_SERIES }}
           arch: win64_msvc2022_64
-          aqtsource: ${{ env.AQT_WINDOWS_QT611_SOURCE }}
+          # Pin the merged aqtinstall#1000 Qt 6.11+ Windows repository fix.
+          aqtsource: git+https://github.com/miurahr/aqtinstall.git@8c3695d4a4e1ceabf6a74dc6c79681656dc6b74b
           cache: true
 
       - name: Set up MSVC environment
