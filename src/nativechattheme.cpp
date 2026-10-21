@@ -11,9 +11,18 @@
 #include "widgets/emojiregistry.h"
 #include "widgets/iconselect.h"
 #include <QApplication>
+#include <QHash>
 #include <QSignalBlocker>
+#include <memory>
 
 namespace {
+struct NativeChatAvatarState {
+    QString                peerJid;
+    XMPP::Jid              peer;
+    bool                   mucPrivate = false;
+    QHash<QString, QPixmap> cache;
+};
+
 class NativeThemePrivate : public ThemePrivate {
 public:
     NativeThemePrivate(PsiThemeProvider *provider, const NativeChatTheme &theme) : ThemePrivate(provider)
@@ -77,7 +86,8 @@ QString NativeChatViewThemeProvider::optionsName() const
 }
 QString NativeChatViewThemeProvider::optionsDescription() const { return tr("Choose the native message layout"); }
 
-void configureNativeChat(MamChatWidget *view, PsiAccount *account, const XMPP::Jid &peer, bool groupChat)
+void configureNativeChat(MamChatWidget *view, PsiAccount *account, const XMPP::Jid &peer, bool groupChat,
+                         bool mucPrivate)
 {
     view->setMediaOpener(account->fileSharingDeviceOpener());
     // A separate instance of Psi's picker avoids also inserting the chosen
@@ -145,24 +155,44 @@ void configureNativeChat(MamChatWidget *view, PsiAccount *account, const XMPP::J
             applyColors();
     });
     QObject::connect(view, &MamChatWidget::paletteChanged, view, applyColors);
+    // One cache per timeline: no AvatarFactory lookup for every message row.
+    auto avatarState = std::make_shared<NativeChatAvatarState>();
+    avatarState->peerJid = peer.full();
+    avatarState->peer = peer;
+    avatarState->mucPrivate = mucPrivate;
     view->setProperty("nativeChatPeer", peer.full());
-    view->setAvatarResolver([account, view, groupChat](const MessageView &message) {
-        const XMPP::Jid peer(view->property("nativeChatPeer").toString());
-        auto           *avatars = account->avatarFactory();
-        if (groupChat)
-            return avatars->getMucAvatar(peer.withResource(message.nick()));
-        if (message.isLocal())
-            return avatars->getAvatar(account->jid().withResource({}));
-        // A MUC private message comes from room@conference/nick. getAvatar()
-        // strips the resource and would show the *room's* avatar instead of
-        // the occupant's avatar (or MamChatWidget's initial-letter fallback).
-        if (!peer.resource().isEmpty()
-            && (account->findGCContact(peer) || account->groupchats().contains(peer.bare())))
-            return avatars->getMucAvatar(peer);
-        return avatars->getAvatar(peer);
+    view->setProperty("nativeChatMucPrivate", mucPrivate);
+    view->setAvatarResolver([account, view, groupChat, avatarState](const MessageView &message) {
+        // Only resolve a new JID when the chat itself changes its peer.
+        const QString currentPeer = view->property("nativeChatPeer").toString();
+        const bool currentPrivate = view->property("nativeChatMucPrivate").toBool();
+        if (avatarState->peerJid != currentPeer || avatarState->mucPrivate != currentPrivate) {
+            avatarState->peerJid = currentPeer;
+            avatarState->peer = XMPP::Jid(currentPeer);
+            avatarState->mucPrivate = currentPrivate;
+            avatarState->cache.clear();
+        }
+
+        const bool mucSender = groupChat || (!message.isLocal() && avatarState->mucPrivate);
+        const XMPP::Jid sender = groupChat ? avatarState->peer.withResource(message.nick())
+            : message.isLocal() ? account->jid().withResource({}) : avatarState->peer;
+        const QString key = mucSender ? QStringLiteral("muc:") + sender.full()
+                                      : QStringLiteral("contact:") + sender.bare();
+        const auto cached = avatarState->cache.constFind(key);
+        if (cached != avatarState->cache.cend())
+            return cached.value(); // Cache missing avatars as well as real pixmaps.
+        QPixmap avatar = mucSender ? account->avatarFactory()->getMucAvatar(sender)
+                                   : account->avatarFactory()->getAvatar(sender);
+        avatarState->cache.insert(key, avatar);
+        return avatar;
     });
     QObject::connect(account->avatarFactory(), &AvatarFactory::avatarChanged, view,
-                     [view](const XMPP::Jid &) { view->refreshAvatars(); });
+                     [view, avatarState](const XMPP::Jid &jid) {
+        // Contacts use bare JIDs; MUC occupants use full JIDs.
+        avatarState->cache.remove(QStringLiteral("contact:") + jid.bare());
+        avatarState->cache.remove(QStringLiteral("muc:") + jid.full());
+        view->refreshAvatars();
+    });
     Mattermost::OverlayScrollBarManager::install(*qApp);
     Mattermost::OverlayScrollBarManager::setScrollToStartButtonEnabled(*view, false);
 }
