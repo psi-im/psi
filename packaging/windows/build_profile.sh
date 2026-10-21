@@ -54,10 +54,14 @@ rm -rf "$build_dir" "$stage_dir" "$l10n_dir"
 
 # Psi translations are packaging input, not a CI compile dependency.
 if [[ "$package_enabled" == ON ]]; then
-    git clone --depth 1 --filter=blob:none --sparse \
+    l10n_expected=$(python -c 'import json;print(json.load(open("dependencies.lock.json"))["translations"]["commit"])')
+    [[ "$l10n_expected" =~ ^[0-9a-f]{40}$ ]] || { echo "Invalid pinned translations SHA" >&2; exit 1; }
+    git clone --filter=blob:none --sparse \
         https://github.com/psi-im/psi-l10n.git "$l10n_dir"
+    git -C "$l10n_dir" checkout --detach "$l10n_expected"
     git -C "$l10n_dir" sparse-checkout set translations
     l10n_revision=$(git -C "$l10n_dir" rev-parse HEAD)
+    [[ "$l10n_revision" == "$l10n_expected" ]] || exit 1
 else
     mkdir -p "$l10n_dir/translations"
     l10n_revision=not-packaged
