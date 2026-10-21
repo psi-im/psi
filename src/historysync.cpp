@@ -254,7 +254,7 @@ void HistorySync::go()
                     results_       = xml;
                     decodingSaved_ = true;
                     decodeIndex_   = 0;
-                                    // Cached pages do not trigger snapshot-only MAM traffic.
+                    // Cached pages do not trigger snapshot-only MAM traffic.
                     // A real, user-driven MAM page updates the count and UID.
                     decodeNext();
                     return;
