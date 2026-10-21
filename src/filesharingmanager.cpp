@@ -625,7 +625,9 @@ void FileSharingDeviceOpener::cancelSave(const QUrl &url)
     auto item = acc->psi()->fileSharingManager()->item(urlToSourceId(url), acc);
     if (!item)
         return;
-    if (auto save = item->findChild<FileSharingMediaSave *>(QStringLiteral("psi-sims-save"),
-                                                           Qt::FindDirectChildrenOnly))
-        save->cancel();
+    // FileSharingMediaSave has no Q_OBJECT, so findChild<FileSharingMediaSave *>()
+    // fails the Qt 6 compile-time meta-object check. The object name is
+    // assigned only to FileSharingMediaSave instances created by saveTo().
+    if (auto save = item->findChild<QObject *>(QStringLiteral("psi-sims-save"), Qt::FindDirectChildrenOnly))
+        static_cast<FileSharingMediaSave *>(save)->cancel();
 }
