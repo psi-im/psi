@@ -2178,13 +2178,11 @@ void LongListWidget::onScrollValueChanged()
 
     const bool userScroll =
         wheelInProgress || verticalScrollBar()->isSliderDown() || userScrollActionPending;
-    // A change to QAbstractScrollArea's own scrollbar geometry during a
-    // splitter resize is *not* an intentional scroll. Do not discard the
-    // resize anchor merely because Qt adjusts the scrollbar range after a
-    // deferred layout event. Wheel, thumb, and explicit user actions do end
-    // the resize transaction; scrollToIndex()/scrollToEnd() handle explicit
-    // programmatic navigation separately.
-    if (userScroll) {
+    // Explicit scrollbar changes, including an external setValue(), must
+    // cancel the resize anchor. Qt scrollbar updates inside our synchronous
+    // resize/geometry/synchronization transactions must not.
+    if (userScroll || (!committingGeometry && !synchronizing
+                       && !internalScrollChange && !scrollAnimationApplying)) {
         resizeEvictionTimer_.stop();
         resizeAnchor_ = {};
     }
