@@ -251,7 +251,9 @@ MamHistorySource::Request MamHistorySource::requestForRange(int first, int last,
     Request request;
     request.first         = first;
     request.last          = last;
-    request.limit         = qBound(1, limit, 40);
+    // Continuations of sparse, protocol-only archive ranges need the same
+    // minimum batch size as ordinary viewport-driven history loading.
+    request.limit         = qBound(15, limit, 40);
     request.snapshotCount = count_;
     request.generation    = generation;
     if (!virtual_ || !canSeek() || first < 0 || last < first || first >= logicalCount_)
