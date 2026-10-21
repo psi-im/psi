@@ -118,8 +118,11 @@ public:
     QVariant          metadata(const QUrl &url) override;
     ITEMediaState    *mediaState(const QUrl &url) override;
     using SaveCallback = std::function<void(const QString &path, const QString &error)>;
-    bool              saveAs(const QUrl &url, QWidget *parent, const SaveCallback &completed = {});
-    bool              saveTo(const QUrl &url, const QString &path, const SaveCallback &completed = {});
+    using ProgressCallback = std::function<void(qreal)>;
+    bool              saveAs(const QUrl &url, QWidget *parent, const SaveCallback &completed = {},
+                             const ProgressCallback &progress = {});
+    bool              saveTo(const QUrl &url, const QString &path, const SaveCallback &completed = {},
+                             const ProgressCallback &progress = {});
     void              cancelSave(const QUrl &url);
 
     FileSharingItem *sharedItem(const QString &id);
