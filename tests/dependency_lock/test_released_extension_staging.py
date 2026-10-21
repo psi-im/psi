@@ -23,12 +23,15 @@ class ReleasedExtensionsTests(unittest.TestCase):
         self.plugins = self.root / "plugins"
         self.plugins.mkdir()
         self.media = self.root / "media"
-        self.media_stage = self.media / "stage-msvc-modern" / "psi"
-        (self.media_stage / "psi" / "plugins").mkdir(parents=True)
-        (self.media_stage / "psi" / "gstreamer-1.0").mkdir()
-        (self.media_stage / "psi" / "plugins" / "mediaplugin.dll").write_bytes(b"media")
-        (self.media_stage / "psi" / "gstreamer-1.0" / "gstcore.dll").write_bytes(b"gstreamer")
-        (self.media_stage / "psi" / "gstreamer-runtime.txt").write_text("elements installed\n")
+        # Match the published PsiMedia archive layout: stage-msvc-modern/psi/.
+        # The staging script removes exactly one "psi" installation prefix.
+        self.media_stage = self.media / "stage-msvc-modern"
+        self.media_payload = self.media_stage / "psi"
+        (self.media_payload / "plugins").mkdir(parents=True)
+        (self.media_payload / "gstreamer-1.0").mkdir()
+        (self.media_payload / "plugins" / "mediaplugin.dll").write_bytes(b"media")
+        (self.media_payload / "gstreamer-1.0" / "gstcore.dll").write_bytes(b"gstreamer")
+        (self.media_payload / "gstreamer-runtime.txt").write_text("elements installed\n")
         self.lock = {
             "qt": {"windows_msvc_qt6": "6.12.0"},
             "plugins": {"commit": "a" * 40},
@@ -63,6 +66,7 @@ class ReleasedExtensionsTests(unittest.TestCase):
         self.stage()
         self.assertTrue((self.psi_stage / "plugins" / "official-00.dll").is_file())
         self.assertTrue((self.psi_stage / "plugins" / "mediaplugin.dll").is_file())
+        self.assertFalse((self.psi_stage / "psi").exists())
         self.assertTrue((self.psi_stage / "gstreamer-1.0" / "gstcore.dll").is_file())
         self.assertTrue((self.psi_stage / "PLUGINS-MANIFEST.json").is_file())
         source = json.loads((self.psi_stage / "PSIMEDIA-SOURCE.json").read_text())
@@ -88,7 +92,7 @@ class ReleasedExtensionsTests(unittest.TestCase):
             self.stage()
 
     def test_refuses_absent_gstreamer_runtime(self):
-        (self.media_stage / "psi" / "gstreamer-runtime.txt").unlink()
+        (self.media_payload / "gstreamer-runtime.txt").unlink()
         with self.assertRaisesRegex(ValueError, "runtime manifest missing"):
             self.stage()
 
