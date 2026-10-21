@@ -7,9 +7,9 @@ param(
 
     [switch]$RunTests,
 
-    # Opt-in: production Windows CI keeps its existing plugin-free profile.
-    [switch]$IncludePlugins,
-    [string]$AlphaTag = ''
+    [string]$AlphaTag = '',
+    [string]$PrebuiltPluginsDir = '',
+    [string]$PrebuiltMediaDir = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -71,16 +71,11 @@ if (-not (Test-Path (Join-Path $qcaPluginPath 'crypto\qca-ossl.dll'))) {
     throw "QCA OpenSSL provider is missing from the SDK: $qcaPluginPath"
 }
 
-$pluginsFlag = if ($IncludePlugins) { 'ON' } else { 'OFF' }
-if ($IncludePlugins) {
-    foreach ($required in @('plugins/CMakeLists.txt', 'plugins/generic/psimedia/CMakeLists.txt')) {
-        if (-not (Test-Path (Join-Path $sourceDir $required))) {
-            throw "Full alpha package requires source: $required"
-        }
-    }
-    if (-not $env:GSTREAMER_1_0_ROOT_MSVC_X86_64) { throw 'Full alpha package requires pinned GStreamer SDK' }
-    if (-not $env:PSIMEDIA_SRTP_ROOT) { throw 'Full alpha package requires libSRTP SDK' }
+$hasPrebuilt = -not [string]::IsNullOrWhiteSpace($PrebuiltPluginsDir) -and -not [string]::IsNullOrWhiteSpace($PrebuiltMediaDir)
+if (([bool]$PrebuiltPluginsDir) -ne ([bool]$PrebuiltMediaDir)) {
+    throw 'Specify both PrebuiltPluginsDir and PrebuiltMediaDir'
 }
+$pluginFlag = if ($hasPrebuilt) { 'ON' } else { 'OFF' }
 $configureLog = Join-Path $outputDir 'configure-modern.log'
 $configureArgs = @(
     '-S', '.',
@@ -118,27 +113,220 @@ $configureArgs = @(
     "-DHUNSPELL_ROOT=$sdkDir",
     "-DMINIZIP_ROOT=$sdkDir",
     '-DBUILD_TESTING=OFF',
-    "-DENABLE_PLUGINS=$pluginsFlag",
-    "-DBUILD_PSIMEDIA=$pluginsFlag",
+    "-DENABLE_PLUGINS=$pluginFlag",
+    '-DBUILD_PSIMEDIA=OFF',
+    "-DPSI_PREBUILT_PLUGINS=$pluginFlag",
     '-DONLY_BINARY=OFF',
     '-DINSTALL_EXTRA_FILES=ON'
 )
-if ($IncludePlugins) {
-    $configureArgs += @(
-        '-DBUILD_PLUGINS=ALL',
-        '-DBUILD_DEMO=OFF',
-        '-DPSIMEDIA_BUILD_TESTS=OFF',
-        '-DPSIMEDIA_ENABLE_SRTP=ON',
-        '-DPSIMEDIA_WINDOWS_VIDEO_SOURCE=mfvideosrc',
-        '-DPSIMEDIA_INSTALL_GSTREAMER_RUNTIME=ON',
-        "-DSRTP_ROOT=$env:PSIMEDIA_SRTP_ROOT",
-        "-DPKG_CONFIG_EXECUTABLE=$env:PSIMEDIA_PKGCONF",
-        '-DPKG_CONFIG_ARGN=--define-prefix'
-    )
-}
 if ($AlphaTag) {
-    # Win32 VERSIONINFO/NSIS require numeric components; the public alpha
-    # label is kept separately in package filenames and BUILD-INFO.
+    if ($AlphaTag -notmatch '^2[.]0-alpha[0-9]+
+
+& cmake @configureArgs 2>&1 | Tee-Object -FilePath $configureLog
+if ($LASTEXITCODE -ne 0) {
+    throw "CMake configure failed with exit code $LASTEXITCODE"
+}
+
+$configureText = Get-Content $configureLog -Raw
+foreach ($required in @(
+    'Chatlog type - QtWebEngine',
+    'QCA: selected system QCA 3',
+    'Psi SDK Found at',
+    'Qt6 found'
+)) {
+    if ($configureText -notmatch [regex]::Escape($required)) {
+        throw "Expected configure marker was not found: $required"
+    }
+}
+$cacheText = Get-Content (Join-Path $buildDir 'CMakeCache.txt') -Raw
+foreach ($required in @(
+    'IRIS_BUNDLED_QCA:BOOL=OFF',
+    'IRIS_BUNDLED_USRSCTP:BOOL=ON',
+    'IRIS_BUNDLED_OMEMO_C:BOOL=ON'
+)) {
+    if ($cacheText -notmatch "(?m)^$([regex]::Escape($required))\r?$") {
+        throw "Expected CMake cache entry was not found: $required"
+    }
+}
+
+Invoke-Checked cmake --build $buildDir --parallel 4
+if ($RunTests) {
+    $testingArg = [Array]::IndexOf($configureArgs, '-DBUILD_TESTING=OFF')
+    if ($testingArg -lt 0) {
+        throw 'BUILD_TESTING configure argument is missing'
+    }
+    $configureArgs[$testingArg] = '-DBUILD_TESTING=ON'
+    Invoke-Checked cmake @configureArgs
+    Invoke-Checked cmake --build $buildDir --target avcallpolicy_test avcall_backend_lifecycle_test avcall_capability_refresh_test --parallel 4
+    $testPath = "$(Join-Path $env:QT_ROOT_DIR 'bin');$(Join-Path $sdkDir 'bin');$env:PATH"
+    # The test binaries run from the build tree; point QCA at the SDK provider
+    # and fail instead of skipping when DTLS-SRTP is unavailable.
+    $testArgs = @(
+        '-E', 'env', "PATH=$testPath", "QCA_PLUGIN_PATH=$qcaPluginPath", 'PSI_TEST_REQUIRE_DTLS=1', 'ctest',
+        '--test-dir', $buildDir,
+        '--output-on-failure',
+        '-R', '^avcall(policy|_(backend_lifecycle|capability_refresh))_test$',
+        '-j', '1'
+    )
+    & cmake @testArgs
+    if ($LASTEXITCODE -ne 0) {
+        $ctestStatus = $LASTEXITCODE
+        # QTest's console output can be lost on Windows; write it to a file
+        # and report the raw exit status (an NTSTATUS for crashes).
+        $previousPath = $env:PATH
+        $env:PATH = $testPath
+        $env:QCA_PLUGIN_PATH = $qcaPluginPath
+        $env:PSI_TEST_REQUIRE_DTLS = '1'
+        $env:QT_QPA_PLATFORM = 'offscreen'
+        foreach ($name in @('avcallpolicy_test', 'avcall_backend_lifecycle_test', 'avcall_capability_refresh_test')) {
+            $exe = Get-ChildItem -Path $buildDir -Recurse -Filter "$name.exe" | Select-Object -First 1
+            if (-not $exe) { continue }
+            $log = Join-Path $buildDir "$name-qtest.txt"
+            & $exe.FullName -o "$log,txt"
+            $status = $LASTEXITCODE
+            if ($status -ne 0) {
+                Write-Host ("{0} exited with {1} (0x{2:X8})" -f $name, $status, $status)
+                if (Test-Path $log) { Get-Content $log }
+            }
+        }
+        $env:PATH = $previousPath
+        throw "AvCall regression tests failed with exit code $ctestStatus"
+    }
+}
+Invoke-Checked cmake --install $buildDir
+if ($hasPrebuilt) {
+    # Both components are produced by their OWN repositories. The input dirs
+    # contain unpacked installed/staged runtime trees, not source checkouts.
+    # Never rebuild the third-party plugin DLLs inside Psi packaging.
+    function Copy-StagedTree([string]$Source, [string]$Destination) {
+        $sourcePath = (Resolve-Path $Source).Path
+        foreach ($item in @(Get-ChildItem -LiteralPath $sourcePath -Force)) {
+            Copy-Item -LiteralPath $item.FullName -Destination $Destination -Recurse -Force
+        }
+    }
+    $pluginsRoot = (Resolve-Path $PrebuiltPluginsDir).Path
+    $mediaRoot = (Resolve-Path $PrebuiltMediaDir).Path
+    Copy-StagedTree $pluginsRoot $stageDir
+    Copy-StagedTree $mediaRoot $stageDir
+
+    $installedPlugins = @(Get-ChildItem (Join-Path $stageDir 'plugins') -Filter '*plugin.dll' -File -ErrorAction SilentlyContinue)
+    $media = @($installedPlugins | Where-Object { $_.Name -ieq 'mediaplugin.dll' })
+    $ordinary = @($installedPlugins | Where-Object { $_.Name -ine 'mediaplugin.dll' })
+    if ($ordinary.Count -lt 2 -or $media.Count -ne 1) {
+        throw "Incomplete externally staged plugins: ordinary=$($ordinary.Count), media=$($media.Count)"
+    }
+    if (-not (Test-Path (Join-Path $stageDir 'gstreamer-runtime.txt'))) {
+        throw 'PsiMedia GStreamer runtime manifest missing'
+    }
+    $gstPlugins = @(Get-ChildItem (Join-Path $stageDir 'gstreamer-1.0') -Filter '*.dll' -File -ErrorAction SilentlyContinue)
+    if ($gstPlugins.Count -lt 10) {
+        throw "PsiMedia runtime incomplete: $($gstPlugins.Count) GStreamer plugin DLLs"
+    }
+    Write-Host "Using prebuilt components: $($ordinary.Count) ordinary plugins, PsiMedia, $($gstPlugins.Count) GStreamer DLLs"
+}
+
+$psiExe = Join-Path $stageDir 'psi.exe'
+if (-not (Test-Path $psiExe)) {
+    throw "Installed Psi executable is missing: $psiExe"
+}
+
+$translation = Get-ChildItem (Join-Path $stageDir 'translations') -Filter 'psi_*.qm' -File -ErrorAction SilentlyContinue |
+    Select-Object -First 1
+if (-not $translation) {
+    throw 'No installed Psi translations were found'
+}
+
+Copy-Item (Join-Path $sourceDir 'COPYING') (Join-Path $stageDir 'COPYING')
+Copy-Item (Join-Path $sourceDir 'README.html') (Join-Path $stageDir 'README.html')
+
+Invoke-Checked python packaging/windows/prepare_package_msvc.py `
+    --root $stageDir `
+    --sdk $sdkDir `
+    --qt-root $env:QT_ROOT_DIR `
+    --source-root $sourceDir `
+    --qt-conf (Join-Path $sourceDir 'win32\qt.conf') `
+    --report $report
+
+if ($AlphaTag) {
+    $appVersion = $AlphaTag
+    $versionForNsis = '2.0.0.1'
+} else {
+    $baseTag = (git describe --tags --abbrev=0).Trim()
+    if (-not $baseTag) { throw 'Could not determine base Psi version tag' }
+    $commitCountText = (git rev-list --count "$baseTag..HEAD").Trim()
+    $commitCount = [int]$commitCountText
+    $appVersion = if ($commitCount -gt 0) { "$baseTag.$commitCount" } else { $baseTag }
+    $versionForNsis = $appVersion
+}
+
+$parts = @($versionForNsis.Split('.'))
+if ($parts.Count -eq 0 -or ($parts | Where-Object { $_ -notmatch '^\d+$' })) {
+    throw "NSIS requires numeric application version, got: $versionForNsis"
+}
+while ($parts.Count -lt 4) { $parts += '0' }
+if ($parts.Count -gt 4) { $parts = $parts[0..3] }
+foreach ($part in $parts) {
+    if ([int]$part -gt 65535) {
+        throw "NSIS version component exceeds 65535: $versionForNsis"
+    }
+}
+$numericVersion = $parts -join '.'
+
+$psiRevision = (git rev-parse HEAD).Trim()
+$qtVersion = (& "$env:QT_ROOT_DIR\bin\qmake.exe" -query QT_VERSION).Trim()
+@"
+Psi Windows package
+===================
+Psi version: $appVersion
+Psi revision: $psiRevision
+Windows profile: modern
+Compiler: MSVC $env:VCToolsVersion
+Target baseline: Windows 10 (_WIN32_WINNT=0x0A00, WINVER=0x0A00)
+Qt: $qtVersion / QtWebEngine
+Translations: psi-im/psi-l10n $l10nRevision
+External plugin and media bundles: $hasPrebuilt
+"@ | Set-Content (Join-Path $stageDir 'BUILD-INFO.txt') -Encoding utf8
+
+$packageBase = "psi-$appVersion-win10-x64"
+$zipFile = Join-Path $outputDir "$packageBase.zip"
+$setupFile = Join-Path $outputDir "$packageBase-setup.exe"
+$manifest = Join-Path $outputDir 'uninstall-modern.nsh'
+
+Invoke-Checked python packaging/windows/generate_nsis_manifest.py `
+    --root $stageDir `
+    --output $manifest
+
+Remove-Item $zipFile, $setupFile -Force -ErrorAction SilentlyContinue
+Push-Location $stageDir
+try {
+    Invoke-Checked cmake '-E' tar cf $zipFile --format=zip .
+} finally {
+    Pop-Location
+}
+Invoke-Checked cmake '-E' tar tf $zipFile
+
+$makensis = (Get-Command makensis.exe -ErrorAction Stop).Source
+$nsisArgs = @(
+    "-DAPP_VERSION=$appVersion",
+    "-DAPP_VERSION_NUMERIC=$numericVersion",
+    "-DSOURCE_DIR=$stageDir",
+    "-DUNINSTALL_MANIFEST=$manifest",
+    "-DOUTPUT_FILE=$setupFile",
+    "-DAPP_ICON=$(Join-Path $sourceDir 'win32\app.ico')",
+    "-DLICENSE_FILE=$(Join-Path $sourceDir 'COPYING')",
+    (Join-Path $sourceDir 'packaging\windows\psi.nsi')
+)
+
+Invoke-Checked $makensis @nsisArgs
+
+if (-not (Test-Path $setupFile) -or (Get-Item $setupFile).Length -eq 0) {
+    throw "Installer was not created: $setupFile"
+}
+
+Set-Content (Join-Path $outputDir 'version-modern.txt') $appVersion -Encoding ascii
+Write-Host "Created $zipFile"
+Write-Host "Created $setupFile"
+) { throw "Invalid alpha tag: $AlphaTag" }
     $configureArgs += '-DPSI_VERSION=2.0.0.1'
 }
 
@@ -216,19 +404,6 @@ if ($RunTests) {
 Invoke-Checked cmake --install $buildDir
 
 $psiExe = Join-Path $stageDir 'psi.exe'
-if ($IncludePlugins) {
-    $plugins = @(Get-ChildItem -Path $stageDir -Recurse -Filter '*.dll' -File |
-        Where-Object { $_.DirectoryName -match '[\\/]plugins([\\/]|$)' })
-    if ($plugins.Count -lt 2) { throw 'Plugins enabled but installed package has fewer than two DLLs' }
-    $media = @($plugins | Where-Object { $_.Name -ieq 'mediaplugin.dll' })
-    if ($media.Count -ne 1) { throw "Expected exactly one PsiMedia plugin, found $($media.Count)" }
-    $gstPlugins = @(Get-ChildItem -Path (Join-Path $stageDir 'gstreamer-1.0') -Filter '*.dll' -File -ErrorAction SilentlyContinue)
-    if ($gstPlugins.Count -lt 10) { throw 'GStreamer runtime plugins were not staged' }
-    if (-not (Test-Path (Join-Path $stageDir 'gstreamer-runtime.txt'))) {
-        throw 'Missing PsiMedia GStreamer runtime manifest'
-    }
-    Write-Host "Full alpha: $($plugins.Count) plugin DLLs; $($gstPlugins.Count) GStreamer modules"
-}
 if (-not (Test-Path $psiExe)) {
     throw "Installed Psi executable is missing: $psiExe"
 }
@@ -250,92 +425,13 @@ Invoke-Checked python packaging/windows/prepare_package_msvc.py `
     --qt-conf (Join-Path $sourceDir 'win32\qt.conf') `
     --report $report
 
-if ($AlphaTag) {
-    if ($AlphaTag -notmatch '^2\\.0-alpha[0-9]+
-
-$versionForNsis = if ($AlphaTag) { '2.0.0.1' } else { $appVersion }
-$parts = @($versionForNsis.Split('.'))
-if ($parts.Count -eq 0 -or ($parts | Where-Object { $_ -notmatch '^\d+$' })) {
-    throw "NSIS requires a numeric application version, got: $versionForNsis"
+$baseTag = (git describe --tags --abbrev=0).Trim()
+if (-not $baseTag) {
+    throw 'Could not determine the base Psi version tag'
 }
-while ($parts.Count -lt 4) {
-    $parts += '0'
-}
-if ($parts.Count -gt 4) {
-    $parts = $parts[0..3]
-}
-foreach ($part in $parts) {
-    if ([int]$part -gt 65535) {
-        throw "NSIS version component exceeds 65535: $versionForNsis"
-    }
-}
-$numericVersion = $parts -join '.'
-
-$psiRevision = (git rev-parse HEAD).Trim()
-$qtVersion = (& "$env:QT_ROOT_DIR\bin\qmake.exe" -query QT_VERSION).Trim()
-@"
-Psi Windows package
-===================
-Psi version: $appVersion
-Psi revision: $psiRevision
-Windows profile: modern
-Compiler: MSVC $env:VCToolsVersion
-Target baseline: Windows 10 (_WIN32_WINNT=0x0A00, WINVER=0x0A00)
-Qt: $qtVersion / QtWebEngine
-Translations: psi-im/psi-l10n $l10nRevision
-Full plugin + media bundle: $($IncludePlugins.IsPresent)
-GStreamer SDK: $env:GSTREAMER_1_0_ROOT_MSVC_X86_64
-"@ | Set-Content (Join-Path $stageDir 'BUILD-INFO.txt') -Encoding utf8
-
-$packageBase = "psi-$appVersion-win10-x64"
-$zipFile = Join-Path $outputDir "$packageBase.zip"
-$setupFile = Join-Path $outputDir "$packageBase-setup.exe"
-$manifest = Join-Path $outputDir 'uninstall-modern.nsh'
-
-Invoke-Checked python packaging/windows/generate_nsis_manifest.py `
-    --root $stageDir `
-    --output $manifest
-
-Remove-Item $zipFile, $setupFile -Force -ErrorAction SilentlyContinue
-Push-Location $stageDir
-try {
-    Invoke-Checked cmake '-E' tar cf $zipFile --format=zip .
-} finally {
-    Pop-Location
-}
-Invoke-Checked cmake '-E' tar tf $zipFile
-
-$makensis = (Get-Command makensis.exe -ErrorAction Stop).Source
-$nsisArgs = @(
-    "-DAPP_VERSION=$appVersion",
-    "-DAPP_VERSION_NUMERIC=$numericVersion",
-    "-DSOURCE_DIR=$stageDir",
-    "-DUNINSTALL_MANIFEST=$manifest",
-    "-DOUTPUT_FILE=$setupFile",
-    "-DAPP_ICON=$(Join-Path $sourceDir 'win32\app.ico')",
-    "-DLICENSE_FILE=$(Join-Path $sourceDir 'COPYING')",
-    (Join-Path $sourceDir 'packaging\windows\psi.nsi')
-)
-
-Invoke-Checked $makensis @nsisArgs
-
-if (-not (Test-Path $setupFile) -or (Get-Item $setupFile).Length -eq 0) {
-    throw "Installer was not created: $setupFile"
-}
-
-Set-Content (Join-Path $outputDir 'version-modern.txt') $appVersion -Encoding ascii
-Write-Host "Created $zipFile"
-Write-Host "Created $setupFile"
-) { throw "Unexpected alpha tag $AlphaTag" }
-    $appVersion = $AlphaTag
-    $numericVersion = '2.0.0.1'
-} else {
-    $baseTag = (git describe --tags --abbrev=0).Trim()
-    if (-not $baseTag) { throw 'Could not determine the base Psi version tag' }
-    $commitCountText = (git rev-list --count "$baseTag..HEAD").Trim()
-    $commitCount = [int]$commitCountText
-    $appVersion = if ($commitCount -gt 0) { "$baseTag.$commitCount" } else { $baseTag }
-}
+$commitCountText = (git rev-list --count "$baseTag..HEAD").Trim()
+$commitCount = [int]$commitCountText
+$appVersion = if ($commitCount -gt 0) { "$baseTag.$commitCount" } else { $baseTag }
 
 $parts = @($appVersion.Split('.'))
 if ($parts.Count -eq 0 -or ($parts | Where-Object { $_ -notmatch '^\d+$' })) {
