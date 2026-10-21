@@ -1,6 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "nativechattheme.h"
-#include "avatars.h"
 #include "coloropt.h"
 #include "psiaccount.h"
 #include "psicon.h"
@@ -77,7 +76,7 @@ QString NativeChatViewThemeProvider::optionsName() const
 }
 QString NativeChatViewThemeProvider::optionsDescription() const { return tr("Choose the native message layout"); }
 
-void configureNativeChat(MamChatWidget *view, PsiAccount *account, const XMPP::Jid &peer, bool groupChat)
+void configureNativeChat(MamChatWidget *view, PsiAccount *account, bool groupChat)
 {
     view->setMediaOpener(account->fileSharingDeviceOpener());
     // A separate instance of Psi's picker avoids also inserting the chosen
@@ -145,15 +144,6 @@ void configureNativeChat(MamChatWidget *view, PsiAccount *account, const XMPP::J
             applyColors();
     });
     QObject::connect(view, &MamChatWidget::paletteChanged, view, applyColors);
-    view->setProperty("nativeChatPeer", peer.full());
-    view->setAvatarResolver([account, view, groupChat](const MessageView &message) {
-        const XMPP::Jid peer(view->property("nativeChatPeer").toString());
-        const auto      sender = groupChat ? peer.withResource(message.nick())
-                                           : (message.isLocal() ? account->jid().withResource({}) : peer);
-        return groupChat ? account->avatarFactory()->getMucAvatar(sender) : account->avatarFactory()->getAvatar(sender);
-    });
-    QObject::connect(account->avatarFactory(), &AvatarFactory::avatarChanged, view,
-                     [view](const XMPP::Jid &) { view->refreshAvatars(); });
     Mattermost::OverlayScrollBarManager::install(*qApp);
     Mattermost::OverlayScrollBarManager::setScrollToStartButtonEnabled(*view, false);
 }

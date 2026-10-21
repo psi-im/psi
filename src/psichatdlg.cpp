@@ -225,7 +225,8 @@ private:
 };
 
 PsiChatDlg::PsiChatDlg(const Jid &jid, PsiAccount *pa, TabManager *tabManager) :
-    ChatDlg(jid, pa, tabManager), actions_(new ActionList("", 0, false)), mCmdManager_(&mCmdSite_),
+    ChatDlg(jid, pa, tabManager), nativeAvatars_(pa, false), actions_(new ActionList("", 0, false)),
+    mCmdManager_(&mCmdSite_),
     tabCompletion(&mCmdManager_)
 {
     encryptionMenu_ = new QMenu(this);
@@ -456,14 +457,34 @@ PsiChatDlg::~PsiChatDlg()
     delete actions_;
 }
 
+// A private chat with a room occupant (room@service/nick). Same test as the
+// composer avatar and popups (UserListItem::isPrivate()); evaluated once per
+// JID because it scans the roster.
+bool PsiChatDlg::isRoomOccupantChat() const
+{
+    if (jid().resource().isEmpty())
+        return false;
+    if (account()->groupchats().contains(jid().bare()))
+        return true;
+    const UserListItem *contact = account()->findFirstRelevant(jid());
+    return contact && contact->isPrivate();
+}
+
+void PsiChatDlg::updateAvatar(const Jid &jid)
+{
+    ChatDlg::updateAvatar(jid);
+    if (nativeTimeline_ && nativeAvatars_.invalidate(jid))
+        nativeTimeline_->refreshAvatars();
+}
+
 void PsiChatDlg::setJid(const Jid &newJid)
 {
     const Jid oldJid = jid();
     ChatDlg::setJid(newJid);
-    if (nativeTimeline_)
-        nativeTimeline_->setProperty("nativeChatPeer", jid().full());
     if (oldJid == jid())
         return;
+    if (nativeTimeline_ && nativeAvatars_.setPeer(jid(), isRoomOccupantChat()))
+        nativeTimeline_->refreshAvatars();
 
     if (oldJid.bare() != jid().bare()) {
         clearNativeHistory();
@@ -525,7 +546,9 @@ void PsiChatDlg::initUi()
     nativeTimeline_ = new MamChatWidget(ui_.topFrame);
     delete ui_.topFrame->layout()->replaceWidget(ui_.log, nativeTimeline_);
     ui_.log->hide();
-    configureNativeChat(nativeTimeline_, account(), jid(), false);
+    configureNativeChat(nativeTimeline_, account(), false);
+    nativeAvatars_.setPeer(jid(), isRoomOccupantChat());
+    nativeTimeline_->setAvatarResolver([this](const MessageView &message) { return nativeAvatars_.avatar(message); });
     connect(nativeTimeline_, &MamChatWidget::outgoingReactions, this, &PsiChatDlg::sendOutgoingReactions);
     connect(nativeTimeline_, &MamChatWidget::outgoingMessageRetraction, this, &PsiChatDlg::sendMessageRetraction);
     connect(nativeTimeline_, &MamChatWidget::replyRequested, ui_.mle, &ChatEditProxy::setReply);
@@ -652,7 +675,11 @@ void PsiChatDlg::initUi()
 
     PsiToolTip::install(ui_.avatar);
 
-    connect(account()->avatarFactory(), &AvatarFactory::avatarChanged, this, &PsiChatDlg::updateAvatar);
+    // The JID overload filters for the peer and our own account. The
+    // parameterless one used to be connected here (it hid the overload), so
+    // every avatar change in the account rescanned the roster in every chat.
+    connect(account()->avatarFactory(), &AvatarFactory::avatarChanged, this,
+            qOverload<const Jid &>(&PsiChatDlg::updateAvatar));
 
     pm_settings_ = new QMenu(this);
     connect(pm_settings_, SIGNAL(aboutToShow()), SLOT(buildMenu()));

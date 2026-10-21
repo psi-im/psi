@@ -6,9 +6,6 @@
 
 class MamChatWidget;
 class PsiAccount;
-namespace XMPP {
-class Jid;
-}
 
 class NativeChatViewThemeProvider : public PsiThemeProvider {
     Q_OBJECT
@@ -30,5 +27,7 @@ private:
     bool    groupChat_;
 };
 
-// Application policy (options, avatars) stays outside the presentation widget.
-void configureNativeChat(MamChatWidget *view, PsiAccount *account, const XMPP::Jid &peer, bool groupChat);
+// Application options (theme, fonts, colours, emoji picker) stay outside the
+// presentation widget. Sender avatars are chat-window policy: see
+// NativeChatAvatars.
+void configureNativeChat(MamChatWidget *view, PsiAccount *account, bool groupChat);
