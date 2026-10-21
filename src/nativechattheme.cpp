@@ -148,9 +148,18 @@ void configureNativeChat(MamChatWidget *view, PsiAccount *account, const XMPP::J
     view->setProperty("nativeChatPeer", peer.full());
     view->setAvatarResolver([account, view, groupChat](const MessageView &message) {
         const XMPP::Jid peer(view->property("nativeChatPeer").toString());
-        const auto      sender = groupChat ? peer.withResource(message.nick())
-                                           : (message.isLocal() ? account->jid().withResource({}) : peer);
-        return groupChat ? account->avatarFactory()->getMucAvatar(sender) : account->avatarFactory()->getAvatar(sender);
+        auto           *avatars = account->avatarFactory();
+        if (groupChat)
+            return avatars->getMucAvatar(peer.withResource(message.nick()));
+        if (message.isLocal())
+            return avatars->getAvatar(account->jid().withResource({}));
+        // A MUC private message comes from room@conference/nick. getAvatar()
+        // strips the resource and would show the *room's* avatar instead of
+        // the occupant's avatar (or MamChatWidget's initial-letter fallback).
+        if (!peer.resource().isEmpty()
+            && (account->findGCContact(peer) || account->groupchats().contains(peer.bare())))
+            return avatars->getMucAvatar(peer);
+        return avatars->getAvatar(peer);
     });
     QObject::connect(account->avatarFactory(), &AvatarFactory::avatarChanged, view,
                      [view](const XMPP::Jid &) { view->refreshAvatars(); });
