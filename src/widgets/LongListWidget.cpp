@@ -193,6 +193,21 @@ LongListWidget::LongListWidget(QWidget* parent)
     connect(&geometryTimer, &QTimer::timeout, this,
             [this] { commitGeometry(false); });
 
+    // Splitter drag repeatedly expands/contracts the viewport. Keep recently
+    // visible widgets briefly to avoid destroying and recreating them on every
+    // intermediate geometry, then return to the normal ~two-screen window.
+    resizeEvictionTimer_.setSingleShot(true);
+    resizeEvictionTimer_.setInterval(1500);
+    connect(&resizeEvictionTimer_, &QTimer::timeout, this, [this] {
+        // The last resize transaction is complete. Keep no stale semantic
+        // intent once ordinary navigation/height changes resume.
+        resizeAnchor_ = {};
+        // The desired interval has not changed, but residency has: force a
+        // sync so evictOutside() releases rows outside the viewport margin.
+        lastSynchronizedViewportRange = {};
+        scheduleSync(RequestReason::Scroll);
+    });
+
     seekTimer.setSingleShot(true);
     seekTimer.setInterval(seekDebounceInterval);
     connect(&seekTimer, &QTimer::timeout, this, &LongListWidget::activateSeekTarget);
@@ -1131,6 +1146,9 @@ void LongListWidget::scrollToIndex(int index, Alignment alignment)
         return;
     }
 
+    // Explicit navigation ends splitter-resize residency retention.
+    resizeEvictionTimer_.stop();
+    resizeAnchor_ = {};
     stopScrollAnimation();
 
     if (hasViewportLock() && viewportLock.index != index) {
@@ -1152,6 +1170,8 @@ void LongListWidget::scrollToIndex(int index, Alignment alignment)
 
 void LongListWidget::scrollToEnd()
 {
+    resizeEvictionTimer_.stop();
+    resizeAnchor_ = {};
     stopScrollAnimation();
     if (hasViewportLock()) {
         releaseViewportLock(true);
@@ -1166,6 +1186,8 @@ void LongListWidget::scrollToEnd()
 
 void LongListWidget::scrollToEndAnimated(int durationMs)
 {
+    resizeEvictionTimer_.stop();
+    resizeAnchor_ = {};
     if (hasViewportLock()) {
         releaseViewportLock(true);
     }
@@ -1274,6 +1296,7 @@ void LongListWidget::clearViewportLock()
 void LongListWidget::destroyItemWidget(int, QWidget* widget)
 {
     if (widget) {
+        pendingWidthWidgets_.remove(widget);
         widget->hide();
         widget->deleteLater();
     }
@@ -1331,33 +1354,31 @@ void LongListWidget::paintEvent(QPaintEvent* event)
 
 void LongListWidget::resizeEvent(QResizeEvent* event)
 {
-    const ViewAnchor anchor = captureAnchor();
-    lastSynchronizedViewportRange = {};
-    QAbstractScrollArea::resizeEvent(event);
-
-    for (auto it = materialized.cbegin(); it != materialized.cend(); ++it) {
-        dirtyGeometry.insert(it.key());
-    }
-
+    // Capture before Qt updates the viewport: at-end means the same last
+    // message remains against the bottom; otherwise preserve the central
+    // message's centre relative to the viewport centre. Explicit semantic
+    // locks continue to take precedence over both.
+    // The first geometry event establishes the semantic intent for the whole
+    // drag. Later intermediate events must not accumulate positional drift.
+    if (!resizeEvictionTimer_.isActive()
+        || (!resizeAnchor_.atEnd && resizeAnchor_.index < 0))
+        resizeAnchor_ = captureResizeAnchor(event->oldSize().height());
+    const ResizeAnchor anchor = resizeAnchor_;
     const qint64 oldOffset = contentOffset();
+    resizeEvictionTimer_.start(); // Restart grace period after each resize.
+    lastSynchronizedViewportRange = {};
+
+    // Retain already-materialized rows for fast nearby scrolling, but defer
+    // their expensive width reflow while they are not actually on screen.
+    for (QWidget* widget : std::as_const(materialized))
+        if (widget)
+            pendingWidthWidgets_.insert(widget);
+
     QSignalBlocker blocker(verticalScrollBar());
     viewport()->setUpdatesEnabled(false);
     committingGeometry = true;
-    for (int index : std::as_const(dirtyGeometry)) {
-        if (QWidget* widget = materialized.value(index, nullptr)) {
-            measureWidget(index, widget);
-        }
-    }
-    dirtyGeometry.clear();
-    updateScrollBarRange(oldOffset);
-    if (hasViewportLock()) {
-        // If only viewport height changed, restoreViewportLock() preserves the
-        // old relative Y. If width reflow also changed the target's own height,
-        // it re-applies the semantic alignment instead.
-        restoreViewportLock();
-    } else {
-        restoreAnchor(anchor);
-    }
+    QAbstractScrollArea::resizeEvent(event);
+    settleVisibleWidthGeometry(anchor, oldOffset);
     layoutMaterialized();
     committingGeometry = false;
     viewport()->setUpdatesEnabled(true);
@@ -1365,6 +1386,39 @@ void LongListWidget::resizeEvent(QResizeEvent* event)
 
     emitRangeChanges(VisibilityChangeReason::LayoutChange);
     scheduleSync(RequestReason::Scroll);
+}
+
+void LongListWidget::settleVisibleWidthGeometry(const ResizeAnchor& anchor,
+                                                    qint64 oldOffset)
+{
+    // Changing a row's height can reveal another row at either edge of the
+    // viewport. Iterate until every currently visible resident is measured at
+    // the new width, without ever measuring the off-screen residency buffer.
+    // Each pass consumes at least one pending row; the loop is thus finite.
+    for (int pass = 0; pass <= materialized.size(); ++pass) {
+        bool measuredAny = false;
+        const Range visible = visibleRange();
+        if (visible.isValid()) {
+            for (int index = visible.first; index <= visible.last; ++index) {
+                QWidget* widget = materialized.value(index, nullptr);
+                if (!widget
+                    || (!pendingWidthWidgets_.contains(widget)
+                        && !dirtyGeometry.contains(index)))
+                    continue;
+                measureWidget(index, widget);
+                pendingWidthWidgets_.remove(widget);
+                dirtyGeometry.remove(index);
+                measuredAny = true;
+            }
+        }
+        updateScrollBarRange(oldOffset);
+        if (hasViewportLock())
+            restoreViewportLock();
+        else
+            restoreResizeAnchor(anchor);
+        if (!measuredAny)
+            break;
+    }
 }
 
 void LongListWidget::wheelEvent(QWheelEvent* event)
@@ -1479,6 +1533,9 @@ void LongListWidget::synchronizeRange(const Range& desired,
         restoreSeekTarget();
     } else if (hasViewportLock()) {
         restoreViewportLock();
+    } else if (resizeEvictionTimer_.isActive()
+               && (resizeAnchor_.atEnd || resizeAnchor_.index >= 0)) {
+        restoreResizeAnchor(resizeAnchor_);
     } else {
         restoreAnchor(anchor);
     }
@@ -1605,6 +1662,9 @@ void LongListWidget::materializeAvailable(const Range& range)
         widget->installEventFilter(this);
         widgetIndexes.insert(widget, index);
         materialized.insert(index, widget);
+        // destroyItemWidget() clears deferred width state before deleteLater().
+        // Do not access members from a child's destroyed signal: QWidget tears
+        // down its children after this class's members have been destroyed.
         widget->show();
 
         const int width = std::max(1, viewport()->width());
@@ -1618,43 +1678,38 @@ void LongListWidget::materializeAvailable(const Range& range)
 
 void LongListWidget::evictOutside(const Range& keepRange, int preferredCenter)
 {
-    // maxMaterializedItems is a residency budget, not the size of the current
-    // viewport window. Keep already-created widgets while there is budget so
-    // short chats and nearby back-scrolls never churn rows unnecessarily.
-    int excess = static_cast<int>(materialized.size()) - maxMaterializedItems;
-    if (excess <= 0) {
-        return;
-    }
-
-    QVector<int> candidates;
+    // Usually residency follows the viewport, not the number of rows visited.
+    // The desired range is about two screens tall (visible + half a screen on
+    // each side). During interactive resize only, briefly retain offscreen
+    // rows to avoid repeated destruction/creation while dragging back and
+    // forth. Retained rows remain exempt from width reflow.
+    const bool keepDuringResize = resizeEvictionTimer_.isActive();
+    int extra = std::max(0, static_cast<int>(materialized.size()) - maxMaterializedItems);
     const QVector<int> current = materializedIndices();
-    candidates.reserve(materialized.size());
+    QVector<int> candidates;
     for (int index : current) {
-        if (!keepRange.contains(index)) {
-            candidates.push_back(index);
-        }
+        if (!keepRange.contains(index))
+            candidates.append(index);
     }
-    std::sort(candidates.begin(), candidates.end(),
-              [preferredCenter](int lhs, int rhs) {
-        const int lhsDistance = lhs < preferredCenter
-            ? preferredCenter - lhs : lhs - preferredCenter;
-        const int rhsDistance = rhs < preferredCenter
-            ? preferredCenter - rhs : rhs - preferredCenter;
-        return lhsDistance > rhsDistance;
-    });
 
+    // Even during the grace period, respect the hard widget count ceiling.
+    // Evict distant rows first if the combined old/new viewport range grows
+    // beyond that ceiling; otherwise preserve them for a short time.
+    std::sort(candidates.begin(), candidates.end(), [preferredCenter](int lhs, int rhs) {
+        return std::abs(lhs - preferredCenter) > std::abs(rhs - preferredCenter);
+    });
     for (int index : candidates) {
-        if (excess <= 0) {
+        if (keepDuringResize && extra <= 0)
             break;
-        }
         QWidget* widget = materialized.take(index);
-        if (!widget) {
+        if (!widget)
             continue;
-        }
+        pendingWidthWidgets_.remove(widget);
+        dirtyGeometry.remove(index);
         widgetIndexes.remove(widget);
         widget->removeEventFilter(this);
         destroyItemWidget(index, widget);
-        --excess;
+        --extra;
     }
 }
 
@@ -1666,6 +1721,7 @@ void LongListWidget::layoutMaterialized()
 
     const qint64 top = contentOffset();
     const int width = std::max(1, viewport()->width());
+    const Range visible = visibleRange();
     for (auto it = materialized.begin(); it != materialized.end(); ++it) {
         const int index = it.key();
         QWidget* widget = it.value();
@@ -1675,6 +1731,16 @@ void LongListWidget::layoutMaterialized()
         const qint64 y64 = heights.prefixHeight(index) - top;
         const int y = static_cast<int>(std::max<qint64>(INT_MIN,
             std::min<qint64>(INT_MAX, y64)));
+        if (pendingWidthWidgets_.contains(widget)) {
+            // Moving an off-screen widget is cheap, but changing its width
+            // triggers its entire QTextDocument layout. Preserve its existing
+            // width until it enters the viewport; then measure it before
+            // giving it its final rectangle.
+            widget->move(0, y);
+            if (visible.contains(index))
+                scheduleGeometryCommit(index);
+            continue;
+        }
         widget->setGeometry(0, y, width, heights.value(index));
     }
 }
@@ -1711,6 +1777,9 @@ bool LongListWidget::measureWidget(int index, QWidget* widget)
 
     const int width = std::max(1, viewport()->width());
     const int height = naturalWidgetHeight(widget);
+    // Any ordinary geometry pass can settle a pending width, not only a
+    // splitter resize transaction.
+    pendingWidthWidgets_.remove(widget);
     const bool changed = !measured.testBit(index)
         || heights.value(index) != height;
     heights.setValue(index, height);
@@ -1741,7 +1810,15 @@ void LongListWidget::commitGeometry(bool heightIndexChanged)
         return;
     }
 
-    const ViewAnchor anchor = captureAnchor();
+    bool settlingWidth = false;
+    for (int index : std::as_const(dirtyGeometry)) {
+        if (pendingWidthWidgets_.contains(materialized.value(index, nullptr))) {
+            settlingWidth = true;
+            break;
+        }
+    }
+    const ResizeAnchor resizeAnchor = settlingWidth ? captureResizeAnchor() : ResizeAnchor();
+    const ViewAnchor anchor = settlingWidth ? ViewAnchor() : captureAnchor();
     const qint64 oldOffset = contentOffset();
     QSignalBlocker blocker(verticalScrollBar());
     committingGeometry = true;
@@ -1750,6 +1827,7 @@ void LongListWidget::commitGeometry(bool heightIndexChanged)
     for (int index : std::as_const(dirtyGeometry)) {
         if (QWidget* widget = materialized.value(index, nullptr)) {
             geometryChanged = measureWidget(index, widget) || geometryChanged;
+            pendingWidthWidgets_.remove(widget);
         }
     }
     dirtyGeometry.clear();
@@ -1760,6 +1838,11 @@ void LongListWidget::commitGeometry(bool heightIndexChanged)
             restoreSeekTarget();
         } else if (hasViewportLock()) {
             restoreViewportLock();
+        } else if (resizeEvictionTimer_.isActive()
+                   && (resizeAnchor_.atEnd || resizeAnchor_.index >= 0)) {
+            restoreResizeAnchor(resizeAnchor_);
+        } else if (settlingWidth) {
+            restoreResizeAnchor(resizeAnchor);
         } else {
             restoreAnchor(anchor);
         }
@@ -1852,6 +1935,52 @@ bool LongListWidget::hasMissingVisibleItems() const
 }
 
 
+
+LongListWidget::ResizeAnchor LongListWidget::captureResizeAnchor(int viewportHeight) const
+{
+    ResizeAnchor anchor;
+    if (logicalCount <= 0)
+        return anchor;
+    // QAbstractScrollArea forwards the viewport resize after its geometry has
+    // changed. The offset and row heights still describe the previous viewport;
+    // using the new height here loses both sticky-bottom and centre anchoring.
+    if (viewportHeight <= 0)
+        viewportHeight = viewport()->height();
+    const qint64 maximumOffset = std::max<qint64>(0, contentHeight() - viewportHeight);
+    const QScrollBar* bar = verticalScrollBar();
+    const qint64 offset = maximumOffset > INT_MAX && bar->maximum() > 0
+        ? static_cast<qint64>(std::llround(static_cast<long double>(bar->value())
+              * maximumOffset / bar->maximum()))
+        : bar->value();
+    if (offset >= maximumOffset) {
+        anchor.atEnd = true;
+        return anchor;
+    }
+    const int viewportHalf = viewportHeight / 2;
+    anchor.index = heights.indexAtPixel(offset + viewportHalf);
+    if (anchor.index >= 0) {
+        const qint64 itemCenter = heights.prefixHeight(anchor.index)
+            + heights.value(anchor.index) / 2;
+        anchor.centerFraction = static_cast<long double>(
+            itemCenter - offset - viewportHalf)
+            / static_cast<long double>(std::max(1, viewportHeight));
+    }
+    return anchor;
+}
+
+void LongListWidget::restoreResizeAnchor(const ResizeAnchor& anchor)
+{
+    if (anchor.atEnd) {
+        verticalScrollBar()->setValue(verticalScrollBar()->maximum());
+    } else if (anchor.index >= 0 && anchor.index < logicalCount) {
+        const qint64 itemCenter = heights.prefixHeight(anchor.index)
+            + heights.value(anchor.index) / 2;
+        const qint64 offset = itemCenter - static_cast<qint64>(std::llround(
+            anchor.centerFraction * std::max(1, viewport()->height())))
+            - viewport()->height() / 2;
+        verticalScrollBar()->setValue(scrollValueForContentOffset(offset));
+    }
+}
 
 LongListWidget::ViewAnchor LongListWidget::captureAnchor() const
 {
@@ -1972,6 +2101,8 @@ void LongListWidget::releaseViewportLock(bool notify)
 
 void LongListWidget::noteUserScrollStarted()
 {
+    resizeEvictionTimer_.stop();
+    resizeAnchor_ = {};
     stopScrollAnimation();
     releaseViewportLock(true);
     // A new viewport consumes only progress observed after this gesture.
@@ -2055,6 +2186,14 @@ void LongListWidget::onScrollValueChanged()
 
     const bool userScroll =
         wheelInProgress || verticalScrollBar()->isSliderDown() || userScrollActionPending;
+    // Explicit scrollbar changes, including an external setValue(), must
+    // cancel the resize anchor. Qt scrollbar updates inside our synchronous
+    // resize/geometry/synchronization transactions must not.
+    if (userScroll || (!committingGeometry && !synchronizing
+                       && !internalScrollChange && !scrollAnimationApplying)) {
+        resizeEvictionTimer_.stop();
+        resizeAnchor_ = {};
+    }
     const VisibilityChangeReason visibilityReason = userScroll
         ? VisibilityChangeReason::UserScroll
         : ((internalScrollChange || scrollAnimationApplying)

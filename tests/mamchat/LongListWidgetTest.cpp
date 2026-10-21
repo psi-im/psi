@@ -19,6 +19,16 @@ void settleEvents(int rounds = 8)
     }
 }
 
+void addResizeCases()
+{
+    QTest::addColumn<QSize>("targetSize");
+    QTest::newRow("narrower-and-taller") << QSize(340, 370);
+    QTest::newRow("wider-and-shorter") << QSize(570, 250);
+    QTest::newRow("height-only-grow") << QSize(510, 370);
+    QTest::newRow("height-only-shrink") << QSize(510, 250);
+    QTest::newRow("width-only") << QSize(340, 300);
+}
+
 void sendEnterEvent(QWidget* widget)
 {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -34,15 +44,26 @@ void sendEnterEvent(QWidget* widget)
 class VariableRow : public QWidget
 {
 public:
-    explicit VariableRow(int height, QWidget* parent = nullptr)
+    explicit VariableRow(int height, QWidget* parent = nullptr, bool responsive = false)
         : QWidget(parent)
         , hintHeight(height)
+        , responsive_(responsive)
     {
+        if (responsive_) {
+            auto policy = sizePolicy();
+            policy.setHeightForWidth(true);
+            setSizePolicy(policy);
+        }
+    }
+
+    int heightForWidth(int width) const override
+    {
+        return responsive_ ? hintHeight + std::max(0, 600 - width) / 5 : hintHeight;
     }
 
     QSize sizeHint() const override
     {
-        return QSize(420, hintHeight);
+        return QSize(420, heightForWidth(std::max(1, width())));
     }
 
     QSize minimumSizeHint() const override
@@ -58,6 +79,7 @@ public:
 
 private:
     int hintHeight = 1;
+    bool responsive_ = false;
 };
 
 class TestLongListWidget : public Mattermost::LongListWidget
@@ -76,6 +98,8 @@ public:
             itemsChanged(index, index);
         }
     }
+
+    void setResponsiveRows(bool responsive) { responsiveRows_ = responsive; }
 
     void setFactoryHeight(int index, int height)
     {
@@ -105,7 +129,7 @@ protected:
     QWidget* createItemWidget(int index) override
     {
         auto* row =
-            new VariableRow(syntheticHeights.value(index, defaultItemHeight()));
+            new VariableRow(syntheticHeights.value(index, defaultItemHeight()), nullptr, responsiveRows_);
         if (deferredHeights.contains(index)) {
             const int settledHeight = deferredHeights.take(index);
             QTimer::singleShot(0, row, [row, settledHeight] {
@@ -125,6 +149,7 @@ protected:
 private:
     QHash<int, int> syntheticHeights;
     QHash<int, int> deferredHeights;
+    bool responsiveRows_ = false;
 };
 
 } // namespace
@@ -134,6 +159,132 @@ class LongListWidgetTest : public QObject
     Q_OBJECT
 
 private slots:
+    void resizeEvictionWaitsForQuietPeriod()
+    {
+        TestLongListWidget list;
+        list.resize(480, 360);
+        list.setResponsiveRows(true);
+        list.setDefaultItemHeight(60);
+        list.setItemCount(100);
+        list.setRangeAvailable(0, 99);
+        list.show();
+        list.scrollToIndex(30, Mattermost::LongListWidget::Alignment::Top);
+        settleEvents();
+
+        // Choose a real resident row before the visible area. Narrowing the
+        // viewport makes rows taller, so this row falls outside the new
+        // two-screen residency window.
+        const auto before = list.materializedRange();
+        QVERIFY(before.isValid());
+        const int cachedIndex = before.first;
+        QVERIFY(cachedIndex < list.visibleRange().first);
+        QVERIFY(list.itemWidget(cachedIndex));
+        QWidget* cached = list.itemWidget(cachedIndex);
+        list.resize(230, 200);
+        settleEvents();
+        QVERIFY2(list.itemWidget(cachedIndex) == cached,
+                 "Resize must temporarily retain the previous nearby rows");
+        // Once the final resize event has been quiet for 1.5 seconds, normal
+        // viewport-relative eviction resumes without a navigation gesture.
+        QTRY_VERIFY_WITH_TIMEOUT(list.itemWidget(cachedIndex) == nullptr, 4000);
+        const auto after = list.materializedRange();
+        const auto visible = list.visibleRange();
+        QVERIFY(after.contains(visible.first));
+        QVERIFY(after.contains(visible.last));
+    }
+
+    void resizeKeepsLiveTailAndBottomRowPinned_data() { addResizeCases(); }
+
+    void resizeKeepsLiveTailAndBottomRowPinned()
+    {
+        QFETCH(QSize, targetSize);
+        TestLongListWidget list;
+        list.resize(510, 300);
+        list.setResponsiveRows(true);
+        list.setDefaultItemHeight(82);
+        list.setItemCount(100);
+        list.setRangeAvailable(0, 99);
+        list.show();
+        list.scrollToEnd();
+        settleEvents();
+        QVERIFY(list.isAtEnd());
+        QTRY_VERIFY(list.itemWidget(99));
+
+        // Width reflow and viewport height changes must both preserve the
+        // last post's bottom, using the geometry before the resize event.
+        list.resize(targetSize);
+        settleEvents();
+        QVERIFY(list.isAtEnd());
+        qreal fraction = 1000;
+        QVERIFY(list.captureSemanticAnchorFraction(
+            99, Mattermost::LongListWidget::SemanticAnchorPoint::ItemBottom, fraction));
+        QVERIFY2(qAbs(fraction) < 0.015, "Last row must remain at the viewport bottom");
+
+        // A second resize within the grace period must preserve the same intent.
+        list.resize(510, 300);
+        settleEvents();
+        QVERIFY(list.isAtEnd());
+        QVERIFY(list.captureSemanticAnchorFraction(
+            99, Mattermost::LongListWidget::SemanticAnchorPoint::ItemBottom, fraction));
+        QVERIFY(qAbs(fraction) < 0.015);
+    }
+
+    void resizePreservesCentralRowAndBoundsResidency_data() { addResizeCases(); }
+
+    void resizePreservesCentralRowAndBoundsResidency()
+    {
+        QFETCH(QSize, targetSize);
+        TestLongListWidget list;
+        list.resize(510, 300);
+        list.setResponsiveRows(true);
+        list.setDefaultItemHeight(85);
+        list.setMaterializationLimit(200);
+        list.setItemCount(160);
+        list.setRangeAvailable(0, 159);
+        list.show();
+
+        list.scrollToIndex(110, Mattermost::LongListWidget::Alignment::Center);
+        settleEvents();
+        QVERIFY(list.itemWidget(110));
+        list.scrollToIndex(60, Mattermost::LongListWidget::Alignment::Center);
+        settleEvents();
+        QVERIFY(!list.isAtEnd());
+        QVERIFY(!list.itemWidget(110)); // No large cache of previously visited views.
+
+        const int anchorIndex = list.viewportCenterIndex();
+        QVERIFY(anchorIndex >= 0);
+        qreal before = 100;
+        QVERIFY(list.captureSemanticAnchorFraction(
+            anchorIndex, Mattermost::LongListWidget::SemanticAnchorPoint::ItemCenter, before));
+
+        list.resize(targetSize);
+        settleEvents();
+        QVERIFY(!list.isAtEnd());
+        qreal after = 100;
+        QVERIFY(list.captureSemanticAnchorFraction(
+            anchorIndex, Mattermost::LongListWidget::SemanticAnchorPoint::ItemCenter, after));
+        QVERIFY2(qAbs(after - before) < 0.02,
+                 "Central message must keep its relative vertical position");
+        // Preserving a nonzero centre fraction can move the viewport's exact
+        // midpoint into a neighbour when only its height grows. The original
+        // row must stay visible at that fraction, not become centred again.
+        QVERIFY(list.visibleRange().contains(anchorIndex));
+
+        // The residency budget follows the viewport, not the number of rows
+        // ever visited; newly exposed messages must be materialized at the
+        // current width when they become visible.
+        const auto visible = list.visibleRange();
+        const auto resident = list.materializedRange();
+        QVERIFY(resident.isValid());
+        QVERIFY(resident.contains(visible.first));
+        QVERIFY(resident.contains(visible.last));
+        QVERIFY(list.materializedCount() <= visible.count() + 10);
+        list.scrollToIndex(110, Mattermost::LongListWidget::Alignment::Center);
+        settleEvents();
+        QVERIFY(list.itemWidget(110));
+        QCOMPARE(list.itemWidget(110)->width(), list.viewport()->width());
+    }
+
     void semanticBottomAnchorDoesNotFollowNewReplies()
     {
         TestLongListWidget list;
@@ -222,7 +373,9 @@ private slots:
     void singleRowReplacementKeepsOtherWidgetsAndStickyBottom()
     {
         TestLongListWidget list;
-        list.resize(480, 120);
+        // Four rows must fit the current two-screen residency window for
+        // this test to assert that every *resident* widget survives replacement.
+        list.resize(480, 180);
         list.setDefaultItemHeight(60);
         list.setItemCount(4);
         list.setRangeAvailable(0, 3);
@@ -685,12 +838,12 @@ private slots:
         QVERIFY(concrete.contains(visible.last));
     }
 
-    void visitedRowsStayMaterializedUntilBudgetIsReached()
+    void visitedRowsAreEvictedOutsideTwoScreenWindow()
     {
         TestLongListWidget list;
         list.resize(480, 180);
         list.setDefaultItemHeight(60);
-        list.setMaterializationLimit(200);
+        list.setMaterializationLimit(200); // A hard ceiling, not a residency target.
         list.setItemCount(21);
         list.setRangeAvailable(0, 20);
         list.show();
@@ -701,7 +854,15 @@ private slots:
             settleEvents(4);
         }
 
-        QCOMPARE(list.materializedCount(), 21);
+        // The earliest rows are still available in the model but must no
+        // longer have QWidget instances just because they were visited once.
+        QVERIFY(!list.itemWidget(0));
+        QVERIFY(list.materializedCount() < 10);
+        QCOMPARE(list.materializedRange().last, 20);
+        const auto visible = list.visibleRange();
+        const auto materialized = list.materializedRange();
+        QVERIFY(materialized.contains(visible.first));
+        QVERIFY(materialized.contains(visible.last));
     }
 
     void tinyThumbDragInsideResidentWindowDoesNotSnapToEnd()
