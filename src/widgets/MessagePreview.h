@@ -7,6 +7,7 @@ class QLabel;
 class QPushButton;
 class QTextBrowser;
 class LinkButton;
+class QVBoxLayout;
 
 // A selectable, bounded context card for replies, links and message references.
 class MessagePreview : public QFrame {
@@ -18,6 +19,8 @@ public:
     void setLinkColor(const QColor &color);
     void setContent(const QString &title, const QString &text);
     void setClosable(bool);
+    // Optional controls below the preview text, owned by the preview.
+    void setFooter(QWidget *widget);
     bool isExpanded() const { return expanded_; }
 signals:
     void dismissed();
@@ -34,6 +37,8 @@ private:
     QColor        textColor_;
     QLabel       *title_ = nullptr;
     QFrame       *bar_ = nullptr;
+    QVBoxLayout  *column_ = nullptr;
+    QWidget      *footer_ = nullptr;
     QTextBrowser *text_ = nullptr;
     LinkButton   *toggle_ = nullptr;
     QPushButton  *close_ = nullptr;
