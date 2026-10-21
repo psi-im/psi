@@ -54,6 +54,25 @@ TOOLCHAIN_FILE="${CUR_DIR}/homebrew-toolchain.cmake"
 [ "${ENABLE_PSIMEDIA}" != "ON" ] && \
     ENABLE_PSIMEDIA="OFF"
 
+# Opt in to a Qt6.12 release build with PSI_QT6_RELEASE=ON.
+# Unlike the legacy Homebrew/Qt5 path, this requires an explicitly installed,
+# version-checked Qt SDK. It may be provisioned by install-qt-action on macOS.
+if [ "${PSI_QT6_RELEASE:-OFF}" = "ON" ]; then
+    EXPECTED_QT="$(python3 -c 'import json;print(json.load(open("dependencies.lock.json"))["qt"]["qt6"]["version"])')"
+    if [ -z "${QT_ROOT_DIR:-}" ] || [ ! -x "${QT_ROOT_DIR}/bin/qmake" ]; then
+        echo "Qt6 release requires QT_ROOT_DIR pointing to official Qt ${EXPECTED_QT}" >&2
+        exit 1
+    fi
+    ACTUAL_QT="$("${QT_ROOT_DIR}/bin/qmake" -query QT_VERSION)"
+    if [ "${ACTUAL_QT}" != "${EXPECTED_QT}" ]; then
+        echo "Expected Qt ${EXPECTED_QT}, found ${ACTUAL_QT}" >&2
+        exit 1
+    fi
+    QT6_OPTIONS="-DQT_DEFAULT_MAJOR_VERSION=6 -DUSE_QT6=ON -DCMAKE_PREFIX_PATH=${QT_ROOT_DIR}"
+else
+    QT6_OPTIONS=""
+fi
+
 BUILD_OPTIONS="-DCMAKE_BUILD_TYPE=Release \
                -DCHAT_TYPE=${CHAT_TYPE} \
                -DBUILD_DEV_PLUGINS=${ENABLE_DEV_PLUGINS} \
@@ -66,7 +85,8 @@ BUILD_OPTIONS="-DCMAKE_BUILD_TYPE=Release \
                -DBUNDLED_OMEMO_C_ALL=ON \
                -DIRIS_BUNDLED_QCA=ON \
                -DIRIS_BUNDLED_USRSCTP=ON \
-               -DVERBOSE_PROGRAM_NAME=ON"
+               -DVERBOSE_PROGRAM_NAME=ON \
+               ${QT6_OPTIONS}"
 
 mkdir -p "${MAIN_DIR}/builddir"
 cd "${MAIN_DIR}/builddir"
