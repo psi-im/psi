@@ -149,6 +149,40 @@ class LongListWidgetTest : public QObject
     Q_OBJECT
 
 private slots:
+    void resizeEvictionWaitsForQuietPeriod()
+    {
+        TestLongListWidget list;
+        list.resize(480, 360);
+        list.setResponsiveRows(true);
+        list.setDefaultItemHeight(60);
+        list.setItemCount(100);
+        list.setRangeAvailable(0, 99);
+        list.show();
+        list.scrollToIndex(30, Mattermost::LongListWidget::Alignment::Top);
+        settleEvents();
+
+        // Choose a real resident row before the visible area. Narrowing the
+        // viewport makes rows taller, so this row falls outside the new
+        // two-screen residency window.
+        const auto before = list.materializedRange();
+        QVERIFY(before.isValid());
+        const int cachedIndex = before.first;
+        QVERIFY(cachedIndex < list.visibleRange().first);
+        QVERIFY(list.itemWidget(cachedIndex));
+        QWidget* cached = list.itemWidget(cachedIndex);
+        list.resize(230, 200);
+        settleEvents();
+        QVERIFY2(list.itemWidget(cachedIndex) == cached,
+                 "Resize must temporarily retain the previous nearby rows");
+        // Once the final resize event has been quiet for 1.5 seconds, normal
+        // viewport-relative eviction resumes without a navigation gesture.
+        QTRY_VERIFY_WITH_TIMEOUT(list.itemWidget(cachedIndex) == nullptr, 4000);
+        const auto after = list.materializedRange();
+        const auto visible = list.visibleRange();
+        QVERIFY(after.contains(visible.first));
+        QVERIFY(after.contains(visible.last));
+    }
+
     void resizeKeepsLiveTailAndBottomRowPinned()
     {
         TestLongListWidget list;
