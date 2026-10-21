@@ -460,8 +460,12 @@ void PsiChatDlg::setJid(const Jid &newJid)
 {
     const Jid oldJid = jid();
     ChatDlg::setJid(newJid);
-    if (nativeTimeline_)
+    if (nativeTimeline_ && oldJid != jid()) {
         nativeTimeline_->setProperty("nativeChatPeer", jid().full());
+        nativeTimeline_->setProperty("nativeChatMucPrivate",
+                                     !jid().resource().isEmpty() && account()->groupchats().contains(jid().bare()));
+        nativeTimeline_->refreshAvatars();
+    }
     if (oldJid == jid())
         return;
 
@@ -525,7 +529,8 @@ void PsiChatDlg::initUi()
     nativeTimeline_ = new MamChatWidget(ui_.topFrame);
     delete ui_.topFrame->layout()->replaceWidget(ui_.log, nativeTimeline_);
     ui_.log->hide();
-    configureNativeChat(nativeTimeline_, account(), jid(), false);
+    const bool mucPrivate = !jid().resource().isEmpty() && account()->groupchats().contains(jid().bare());
+    configureNativeChat(nativeTimeline_, account(), jid(), false, mucPrivate);
     connect(nativeTimeline_, &MamChatWidget::outgoingReactions, this, &PsiChatDlg::sendOutgoingReactions);
     connect(nativeTimeline_, &MamChatWidget::outgoingMessageRetraction, this, &PsiChatDlg::sendMessageRetraction);
     connect(nativeTimeline_, &MamChatWidget::replyRequested, ui_.mle, &ChatEditProxy::setReply);
