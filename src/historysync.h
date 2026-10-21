@@ -38,7 +38,6 @@ public:
         std::function<HistoryArchive::Page(const HistoryArchive::Key &, const QString &, int)> read;
         std::function<bool(const HistoryArchive::Key &, const QString &, int, HistoryArchive::Page &)> merge;
         std::function<HistoryArchive::Snapshot(const HistoryArchive::Key &)>                           readSnapshot;
-        std::function<bool(const HistoryArchive::Key &, const HistoryArchive::Snapshot &)>             writeSnapshot;
         std::function<HistoryArchive::Page(const HistoryArchive::Key &, int, int, int)>                readIndex;
         std::function<HistoryArchive::Page(const HistoryArchive::Key &, const QString &, int, int)>    readAfter;
         std::function<CachedMessage(const HistoryArchive::Key &, const QString &, const QDateTime &)>  lookup;
@@ -85,7 +84,6 @@ private:
     QDomElement                   readResult(const QString &) const;
     mutable QList<QDomDocument>   documents_; // Qt5 child elements do not keep ownerDocument alive.
     void                          requestPage();
-    void                          refreshSnapshot();
     HistoryArchive::Snapshot      snapshot_;
     void                          decodeNext();
     void                          acceptPage();

@@ -131,7 +131,7 @@ def main():
     parser.add_argument("--probe", type=Path, help="Qt generic probe build directory")
     parser.add_argument("--mode", choices=("initial", "indexed", "fallback"), default="initial")
     parser.add_argument("--check-metadata-upgrade", action="store_true",
-                        help="Reopen an old EDB cache without RSM metadata and verify one bounded bootstrap")
+                        help="Reopen an old EDB cache without RSM metadata and verify no snapshot-only archive probe")
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
     with args.psi.open("rb") as executable:
@@ -194,13 +194,17 @@ def main():
                             # Sequence numbers match server event order in this fixture.
                             assert abs(int(indexes[-1]) - int(shown.group(1))) <= 80, "wrong archive area was displayed"
                         if run == "metadata-upgrade":
-                            assert settled.count("snapshot-request") == 1, "old cache needs one bounded metadata query"
-                            assert re.search(r"snapshot-result.*count=\s*[1-9]\d*", settled), "count was not discovered"
+                            # Cached archive pages remain usable without a count/UID
+                            # snapshot. Metadata is refreshed by the next real MAM
+                            # page, never by a one-stanza snapshot-only IQ.
+                            assert "snapshot-request" not in settled, "cache replay triggered a metadata-only MAM request"
+                            assert "network account=" not in settled, "cached archive was unnecessarily fetched again"
                             with sqlite3.connect(database) as db:
                                 saved = db.execute("SELECT result_count,last_uid FROM archive_snapshots WHERE peer=?", (room,)).fetchone()
-                                assert saved and saved[0] > 0 and saved[1], "UID/count snapshot was not persisted"
+                                assert saved is None, "a snapshot appeared without a real archive page"
                         if run == "cached-upgrade":
-                            assert "snapshot-request" not in settled, "saved snapshot was not reused"
+                            assert "snapshot-request" not in settled, "cached history triggered a metadata-only MAM request"
+                            assert "network account=" not in settled, "cached history triggered an unnecessary network fetch"
                         print(f"MUC_RUNTIME_RESULT=success run={run} requests={requests} log={log}")
                         break
                     time.sleep(.05)

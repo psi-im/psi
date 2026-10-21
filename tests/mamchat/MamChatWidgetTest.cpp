@@ -2174,7 +2174,7 @@ private slots:
         const auto request = qvariant_cast<MamHistorySource::Request>(requests.last().at(0));
         QCOMPARE(request.kind, MamHistorySource::Request::Index);
         QVERIFY(request.index > 450000 && request.index < 550000);
-        QVERIFY(request.limit <= 40);
+        QVERIFY(request.limit >= 15 && request.limit <= 40);
         chat.setHistoryLoading(true);
         QList<QPair<QString, MessageView>> middle;
         QStringList                        middleUids;
@@ -2304,7 +2304,7 @@ private slots:
         room.show();
         QTRY_VERIFY(room.itemWidget(0) != nullptr);
         const int ordinarySize = room.suggestedOlderHistoryPageSize();
-        QVERIFY(ordinarySize >= 1 && ordinarySize <= 40);
+        QVERIFY(ordinarySize >= 15 && ordinarySize <= 40);
 
         // The opening request covers the missing screen plus an extra half
         // screen; each message has three estimated protocol events.
@@ -2313,6 +2313,10 @@ private slots:
         QVERIFY(openingSize >= ordinarySize);
         QVERIFY(openingSize <= 40);
         QVERIFY(openingSize == 40 || openingSize % 3 == 0);
+
+        MamChatWidget small;
+        small.resize(420, 120);
+        QCOMPARE(small.suggestedOlderHistoryPageSize(), 15);
     }
 
     void initialViewportFillStopsWhenRealRowsFillWindow()

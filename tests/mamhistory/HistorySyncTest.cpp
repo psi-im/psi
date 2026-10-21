@@ -227,41 +227,29 @@ public:
 class HistorySyncTest final : public QObject {
     Q_OBJECT
 private slots:
-    void cachedPageWithoutRsmMetadataDiscoversSnapshotOnce()
+    void cachedPageWithoutRsmMetadataDoesNotProbeArchive()
     {
         Fixture f;
         f.seed("edge");
-        auto context         = f.context();
+        auto context = f.context();
         context.readSnapshot = [&f](const HistoryArchive::Key &key) { return HistoryArchive::readSnapshot(f.db, key); };
-        context.writeSnapshot = [&f](const HistoryArchive::Key &key, const HistoryArchive::Snapshot &snapshot) {
-            return HistoryArchive::storeSnapshot(f.db, key, snapshot);
-        };
         HistorySync task(context, f.key.peer, false, "edge");
         QSignalSpy  done(&task, &HistorySync::finished);
         task.go();
-        QTRY_COMPARE(f.wire.sent.size(), 1);
-        auto set = f.wire.sent.last().firstChildElement("query").firstChildElement("set");
-        QCOMPARE(set.firstChildElement("max").text(), QString("1"));
-        QVERIFY(!set.firstChildElement("before").isNull());
-        QVERIFY(f.reply(f.wire.sent.last(),
-                        { f.result("latest-receipt", 999, "<received xmlns='urn:xmpp:receipts' id='seed'/>") }, false,
-                        899, 900));
         QTRY_COMPARE(done.size(), 1);
         QVERIFY(task.success());
         QVERIFY(task.fromCache());
-        QCOMPARE(task.resultCount(), 900);
-        QCOMPARE(task.firstResultIndex(), -1); // Old page has no coordinates in the new snapshot.
-        QCOMPARE(task.archiveSnapshot().lastUid, QString("latest-receipt"));
+        QCOMPARE(f.wire.sent.size(), 0); // No metadata-only MAM request on a cached page.
+        QCOMPARE(task.resultCount(), -1);
+        QCOMPARE(task.firstResultIndex(), -1);
+        QCOMPARE(task.archiveSnapshot().lastUid, QString());
         QCOMPARE(task.archive().size(), 1);
         QCOMPARE(task.archive().first().attribute("id"), QString("seed"));
-        // The metadata query neither projects a receipt as a row nor redownloads cached bodies.
-        QCOMPARE(HistoryArchive::readSnapshot(f.db, f.key).resultCount, 900);
         HistorySync again(context, f.key.peer, false, "edge");
         QSignalSpy  againDone(&again, &HistorySync::finished);
         again.go();
         QTRY_COMPARE(againDone.size(), 1);
-        QCOMPARE(f.wire.sent.size(), 1);
-        QCOMPARE(again.resultCount(), 900);
+        QCOMPARE(f.wire.sent.size(), 0);
     }
     void ignoredIndexCannotPolluteCachedHistory()
     {
@@ -301,28 +289,25 @@ private slots:
         QCOMPARE(task.archiveSnapshot().lastUid, QString("old-tail"));
         QCOMPARE(task.archiveSnapshot().observedAt, observed);
     }
-    void cachedSnapshotWithoutCountDoesNotProbeEveryPage()
+    void cachedSnapshotWithoutCountDoesNotTriggerMetadataRequests()
     {
         Fixture f;
         f.seed("edge");
-        auto context         = f.context();
+        auto context = f.context();
         context.readSnapshot = [&f](const HistoryArchive::Key &key) { return HistoryArchive::readSnapshot(f.db, key); };
-        context.writeSnapshot = [&f](const HistoryArchive::Key &key, const HistoryArchive::Snapshot &snapshot) {
-            return HistoryArchive::storeSnapshot(f.db, key, snapshot);
-        };
         HistorySync task(context, f.key.peer, false, "edge");
         QSignalSpy  done(&task, &HistorySync::finished);
         task.go();
-        QTRY_COMPARE(f.wire.sent.size(), 1);
-        QVERIFY(f.reply(f.wire.sent.last(), { f.result("latest", 999) }, false));
         QTRY_COMPARE(done.size(), 1);
-        QCOMPARE(task.resultCount(), -1);
-        QVERIFY(HistoryArchive::readSnapshot(f.db, f.key).observedAt.isValid());
+        QVERIFY(task.success());
+        QVERIFY(task.fromCache());
+        QCOMPARE(f.wire.sent.size(), 0);
+        QVERIFY(!HistoryArchive::readSnapshot(f.db, f.key).observedAt.isValid());
         HistorySync again(context, f.key.peer, false, "edge");
         QSignalSpy  againDone(&again, &HistorySync::finished);
         again.go();
         QTRY_COMPARE(againDone.size(), 1);
-        QCOMPARE(f.wire.sent.size(), 1);
+        QCOMPARE(f.wire.sent.size(), 0);
     }
 
     void indexedQueryPersistsAnIslandWithoutReplacingTailCheckpoint()

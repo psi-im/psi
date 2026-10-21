@@ -22,9 +22,6 @@ HistorySync::Context accountContext(PsiAccount *account)
                                      : account->edb()->mergeArchiveIsland(key, limit, page);
           };
     context.readSnapshot  = [account](const HistoryArchive::Key &key) { return account->edb()->archiveSnapshot(key); };
-    context.writeSnapshot = [account](const HistoryArchive::Key &key, const HistoryArchive::Snapshot &snapshot) {
-        return account->edb()->saveArchiveSnapshot(key, snapshot);
-    };
     context.readIndex = [account](const HistoryArchive::Key &key, int index, int limit, int snapshot) {
         return account->edb()->archivePageAtIndex(key, index, limit, snapshot);
     };

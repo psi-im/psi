@@ -50,7 +50,62 @@ private slots:
         QVERIFY(qAbs(seek.index - 500000) <= 15);
         QCOMPARE(seek.limit, 15);
         QCOMPARE(seek.generation, quint64(3));
+        const auto tiny = source.requestForRange(499995, 500005, 1, 4);
+        QCOMPARE(tiny.limit, 15); // Even explicit sparse requests cannot degenerate into max=1.
     }
+    void oneVerifiedMissingEventMayUseMaxOne()
+    {
+        MamHistorySource source;
+        add(source, "left", "uid-8");
+        add(source, "right", "uid-10");
+        source.observePage({ "uid-8" }, { "left" }, 100, 8);
+        source.observePage({ "uid-10" }, { "right" }, 100, 10);
+        source.enableVirtual();
+        const int missingSlot = source.logicalPositionForEvent(9);
+        QVERIFY(!source.isAvailable(missingSlot));
+        const auto request = source.requestForRange(missingSlot, missingSlot, 15, 5);
+        QCOMPARE(request.kind, MamHistorySource::Request::Index);
+        QCOMPARE(request.index, 9);
+        QCOMPARE(request.limit, 1);
+        QVERIFY(request.isolatedGap);
+        source.beginNavigation(request);
+
+        // Even a receipt can be the missing event: it closes the hole without
+        // creating a message row, and never starts one-stanza pagination.
+        source.observePage({ "uid-9" }, { QString() }, 100, 9);
+        QCOMPARE(source.windows().size(), 1);
+        QCOMPARE(source.windows().first().first, 8);
+        QCOMPARE(source.windows().first().last, 10);
+        QCOMPARE(source.continueNavigation(request, false, true).kind, MamHistorySource::Request::None);
+    }
+
+    void unverifiedOrLargerEventGapUsesNormalBatch()
+    {
+        MamHistorySource unstable;
+        add(unstable, "left", "uid-8");
+        add(unstable, "right", "uid-10");
+        unstable.observePage({ "uid-8" }, { "left" }, 100, 8, {}, {}, false, false);
+        unstable.observePage({ "uid-10" }, { "right" }, 100, 10);
+        unstable.enableVirtual();
+        const int unstableSlot = unstable.logicalPositionForEvent(9);
+        const auto ordinary = unstable.requestForRange(unstableSlot, unstableSlot, 1, 5);
+        QVERIFY(ordinary.kind != MamHistorySource::Request::None);
+        QCOMPARE(ordinary.limit, 15);
+        QVERIFY(!ordinary.isolatedGap);
+
+        MamHistorySource larger;
+        add(larger, "left", "uid-8");
+        add(larger, "right", "uid-11");
+        larger.observePage({ "uid-8" }, { "left" }, 100, 8);
+        larger.observePage({ "uid-11" }, { "right" }, 100, 11);
+        larger.enableVirtual();
+        const int slot = larger.logicalPositionForEvent(9);
+        const auto wider = larger.requestForRange(slot, slot, 1, 5);
+        QVERIFY(wider.kind != MamHistorySource::Request::None);
+        QCOMPARE(wider.limit, 15);
+        QVERIFY(!wider.isolatedGap);
+    }
+
     void eventDensityAndTailIslandKeepJoinHistoryCompact()
     {
         MamHistorySource source;

@@ -84,7 +84,7 @@ materialized rows (then 72 px) if no messages are currently visible.
   The initial request happens before there is a useful sample; subsequent
   requests refine the mean from newly rendered rows.
 - **Manual scrollback:** estimate the number of messages needed for about
-  half a viewport, then ask for `min(40, ceil(targetPixels / avgMessageHeight) × 3)`
+  half a viewport, then ask for `clamp(15, ceil(targetPixels / avgMessageHeight) × 3, 40)`
   MAM stanzas. The factor of three allows the archive to contain both
   displayed markers and delivery receipts in addition to message bodies.
   It is a heuristic, not a statement that the server must deliver three stanzas.
@@ -95,6 +95,11 @@ materialized rows (then 72 px) if no messages are currently visible.
   errors pause the demand; user input can cancel it.
 - **Cache:** the chosen stanza limit is passed all the way through
   `HistorySync` and is part of the verified EDB page-read/merge contract;
+  ordinary viewport demand requests at least 15 archive events; the sole
+  exception is a confirmed one-event hole between stable, server-indexed
+  windows. Repair that hole with `RSM index=N, max=1` only if the requested
+  logical range contains exactly that one missing slot. This repair is a
+  terminal operation, not a prefetch page to be continued at size one.
   `HistorySync::PageSize = 40` remains the absolute maximum.
 
 ### Approximate full archive and seek
@@ -118,12 +123,12 @@ observation time and stability. This pair is a historical estimate, not proof
 that the entire archive has been downloaded. A response omitting optional count
 does not overwrite a useful older pair with a fabricated current value.
 
-Old verified EDB pages can have bodies but no RSM coordinates. On such a cache
-hit, one bounded last-event request (`max=1`) discovers count and last UID before
-replaying the cached bodies. The snapshot is reused across opens and refreshed
-when stale (five minutes). Omitted count is remembered as an observation too,
-so it is not probed on every old page. The cached history is still shown if
-metadata discovery fails. No body-page redownload is needed for discovery.
+Old verified EDB pages can have bodies but no RSM coordinates. Replaying
+these pages never triggers a separate, metadata-only MAM request. The latest
+persisted snapshot remains an estimate until normal, user-driven paging supplies
+fresh count and UID metadata. A missing count does not hide cached bodies;
+the virtual scrollbar becomes available once a real page or retained snapshot
+provides sufficient coordinates. No body-page redownload is needed for discovery.
 
 Schema migration 0.1/0.2/0.3 -> 0.4 is additive and uses the existing blocking
 migration workflow. Body/SIMS/envelope data and verified UID coverage survive.
