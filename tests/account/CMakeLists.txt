@@ -27,4 +27,24 @@ if(ACCOUNT_IRIS_TARGET)
         Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
     add_test(NAME account_message_receipt COMMAND account_message_receipt_test)
     set_tests_properties(account_message_receipt PROPERTIES TIMEOUT 15)
+
+    # The real NativeChatAvatars with PsiAccount/AvatarFactory/MessageView doubles.
+    find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Gui)
+    # Compile a copy outside src/, so its quoted includes resolve to the doubles.
+    configure_file(../../src/nativechatavatars.cpp ${CMAKE_CURRENT_BINARY_DIR}/nativechatavatars_impl.cpp COPYONLY)
+    add_executable(account_native_chat_avatars_test nativechatavatars.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/nativechatavatars_impl.cpp)
+    set_target_properties(account_native_chat_avatars_test PROPERTIES AUTOMOC ON)
+    target_include_directories(account_native_chat_avatars_test BEFORE PRIVATE nativechatavatars ../../src)
+    # Bundled static Iris archives reference each other (irisnet's DTLS uses
+    # XMPP::Hash). A consumer needing only Jid pulls too little from libiris on
+    # the first pass, so list libiris again after libirisnet.
+    set(ACCOUNT_IRIS_STATIC_CYCLE)
+    if(TARGET iris AND TARGET irisnet)
+        set(ACCOUNT_IRIS_STATIC_CYCLE $<TARGET_FILE:irisnet> $<TARGET_FILE:iris>)
+    endif()
+    target_link_libraries(account_native_chat_avatars_test PRIVATE ${ACCOUNT_IRIS_TARGET}
+        ${ACCOUNT_IRIS_STATIC_CYCLE} Qt${QT_DEFAULT_MAJOR_VERSION}::Gui Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+    add_test(NAME account_native_chat_avatars COMMAND account_native_chat_avatars_test)
+    set_tests_properties(account_native_chat_avatars PROPERTIES TIMEOUT 10 ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 endif()

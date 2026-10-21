@@ -26,6 +26,7 @@
 #ifndef PSICHATDLG_H
 #define PSICHATDLG_H
 
+#include "nativechatavatars.h"
 #include "actionlist.h"
 #include "applicationinfo.h"
 #include "chatdlg.h"
@@ -122,6 +123,7 @@ private:
     void      updateJidWidget(const QList<UserListItem *> &ul, int status, bool fromPresence) override;
     void      contactUpdated(UserListItem *u, int status, const QString &statusString) override;
     void      updateAvatar() override;
+    void      updateAvatar(const XMPP::Jid &jid) override;
     void      optionsUpdate() override;
     void      updateEncryption() override;
     void      activated() override;
@@ -136,6 +138,8 @@ private:
 private:
     Ui::ChatDlg ui_;
     MamChatWidget *nativeTimeline_ = nullptr;
+    NativeChatAvatars nativeAvatars_;
+    bool              isRoomOccupantChat() const;
     QPointer<HistorySync> mamTask_;
     QString mamBeforeId_;
     QSet<QString>         mamSeenBeforeIds_;

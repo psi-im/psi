@@ -133,7 +133,8 @@ public slots:
     void         updateContact(const XMPP::Jid &, bool);
     void         incomingMessage(const XMPP::Message &);
     virtual void updateAvatar() = 0;
-    void         updateAvatar(const XMPP::Jid &);
+    // AvatarFactory change handler; acts only on the peer and our own account.
+    virtual void updateAvatar(const XMPP::Jid &);
 
 protected slots:
     void         doInfo();
