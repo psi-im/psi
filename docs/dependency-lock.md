@@ -1,31 +1,58 @@
-# Dependency policy for Psi
+# Psi direct dependency lock and Qt release contract
 
-Psi uses `dependencies.lock.json` for dependencies managed by the Psi CI. Do **not** copy QCA's pinned release into this file: Iris is an exact Git submodule, and its own `iris/dependencies.lock.json` remains the authoritative QCA tag, Git commit and minimum compatible version.
+`dependencies.lock.json` is the single source for **direct** Psi build,
+packaging and plugin dependencies. Release profiles target **Qt 6.12.0** for
+Windows, macOS and Android SDK consumers. Windows legacy Qt5 remains isolated.
 
-## Lock contents
+## Locked coordinates
 
-- `psimedia.commit`: exact provider revision for the Jingle/media integration tests (changing the provider API requires updating the tests and this SHA).
-- `qtkeychain.tag` / `qtkeychain.commit`: the source tag and the resolved Git SHA for Windows Qt5/Qt6 dependency SDK builds. Clones check that the tag resolves to the locked commit.
-- `windows_sdks.msvc_qt6` and `windows_sdks.msys2_qt5`: release tags and ZIP archive names for Psi's platform-specific SDKs. These releases are artifacts produced by Psi; changing their contents requires changing the release tag in the lock to avoid reusing incompatible binaries.
-- `iris`: describes the submodule, its lock path and `release_tag`, the coordinate of the matching published SDK. Its source revision remains exclusively in the `iris` gitlink, not a duplicated SHA field. Update the gitlink and release tag together when moving to another release.
-  An unreleased development gitlink uses `release_tag: null`: the resolver exports
-  an empty SDK coordinate and validates the gitlink without contacting a release
-  tag. CI must build that exact source, never substitute the previous release's
-  headers or libraries. Set a versioned tag again only after a matching release
-  exists; the normal tag-to-gitlink verification remains mandatory.
+- `qt.qt6.version`: exact Qt 6.12.0 release baseline (not a floating 6.12.* series).
+- `qt.qt5_windows_legacy`: official Qt5.15.2 MSVC/Win7 media baseline;
+  MSYS2 Qt5 uses its independently updated distribution packages.
+- `iris.release_tag` and the Git `iris` submodule: source and released SDK
+  must resolve to the **same commit**.
+- `qca.repository/release_tag/commit/minimum_version`: Psi directly links
+  against a shared QCA SDK on Windows and loads its crypto provider. This
+  duplicate *consumer coordinate* must agree **exactly** with QCA pinned
+  inside the checked-out Iris `dependencies.lock.json`; the Iris lock
+  remains authoritative for the upstream QCA dependency relationship.
+- `psimedia` and `plugins`: exact commit and nullable release tag.
+  A null tag means source validation only: no unverified binary may be
+  substituted. PsiMedia must use the same Psi media/plugin API and Qt release.
+- `qtkeychain.tag/commit`: exact installed SDK revision.
+- `source_submodules`: exact source revision for qhttp, http-parser and qite,
+  which must match their respective Git submodule entries.
+- `translations.commit`: exact Psi translation snapshot; Windows packaging
+  uses a detached checkout of this commit, **not** the moving l10n master.
+- `media_runtime`: required GStreamer versions for supported Windows profiles.
+- `windows_sdks`: immutable release tag and archive for modern Qt6 and
+  legacy Qt5 dependency SDKs. **Bump the SDK release tag** whenever any
+  bundled QCA, QtKeychain or compiled SDK dependency changes.
 
-## Consumption
+## Release dependency sequence
 
-The shared `.github/actions/load-dependencies` action validates and exports the lock. It publishes `iris_release_tag`, `psimedia_ref`, `qtkeychain_tag`, `qtkeychain_commit`, `msvc_sdk_tag`, `msvc_sdk_archive`, `msys2_sdk_tag`, `msys2_sdk_archive` as step outputs, and their uppercase versions in the job environment.
+1. Build and test QCA with Qt 6.12.0 across Windows, macOS and Android,
+   then tag and publish a **new** QCA release with SDK artifacts. Do not
+   overwrite the old tag's binary assets with different Qt builds.
+2. Update Iris's QCA lock, run Qt5/Qt6 tests against the new QCA, tag and
+   release Iris; update Psi's Iris gitlink, Iris tag and direct QCA pin
+   atomically.
+3. Build PsiMedia and ordinary plugins separately, pinning the Psi plugin
+   API SHA. Publish their independently verified Windows/macOS binaries and
+   record exact commit/tag in Psi's lock.
+4. Build a new Psi Windows dependency SDK tagged for Qt6.12, then assemble
+   the Psi application, ordinary plugins, PsiMedia and GStreamer runtime
+   from immutable binaries. Verify expected plugin DLLs, ABI, runtime
+   closure and source/version manifests before producing NSIS and ZIP.
+5. Release Psi using exact source/tag revisions. Never report a complete
+   alpha while upstream component archives or runtime checks are missing.
 
-`resolve-dependencies.py --verify-iris-release` checks the remote release tag against the exact gitlink, including peeled annotated tags. Dependency CI and the external SDK builder perform this network check before consuming packages; missing tags or different commits fail instead of silently substituting another source. Normal lock resolution remains offline.
+`.github/actions/load-dependencies` exports validated source/tag coordinates.
+`resolve-dependencies.py --require-iris` additionally asserts that the
+direct QCA pin matches Iris. `--verify-iris-release` checks the tagged
+Iris commit against the `iris` Git submodule, including annotated tags.
+`tests/dependency_lock/test_lock.py` exercises these invariants.
 
-The external builder tries the explicitly locked Ubuntu SDK release and checks its installed Iris version and Qt major version. The current external-build jobs use Qt5; Iris's Qt6 Linux release packages are rejected even if Qt6 development tools also happen to be installed. Unavailable or incompatible packages fall back to building the same gitlink from source. Until the release's assets finish publishing, this source fallback keeps CI usable. Headers and binary libraries must come from the same SDK, especially across the Jingle connection layout change in Iris 1.3.
-
-Use the action **after** checkout. If the workflow needs QCA, initialize Iris first, then specify `require-iris: 'true'`. To install a QCA release package, pass `qca-install-mode: apt` and the platform-specific `qca-asset` (for Ubuntu 24.04 this is `qca3-deb-ubuntu-24.04.zip`); the Psi action delegates the installation to Iris's shared action. The version remains defined only by Iris.
-
-For reusable Windows workflows, the resolver job reads the Psi lock and passes its step outputs as reusable workflow inputs; the callee also validates that any explicitly supplied SDK coordinates match the lock. The SDK builders validate QtKeychain's commit, and the MSYS2 Qt5 builder also verifies QCA's Git commit.
-
-Do not write `QCA_TAG: v...`, QtKeychain version, PsiMedia SHA or versioned SDK tags directly into individual YAML workflows. A new version is changed once in the appropriate lock and propagated to all consumers. `tests/dependency_lock/test_lock.py` and the `Dependency lock verification` workflow guard the contract.
-
-System distribution packages (such as Fedora Qt5/QCA2), toolchain installation, and Qt installer package series are intentionally not treated as exact source locks. If we need reproducible toolchain binaries, they require separate pinned package indexes and hashes rather than merely moving a variable into this JSON file.
+This lock records exact coordinates but **does not** replace compilation or
+runtime ABI checks. The Qt5 distro CI and standalone macOS/Android app
+distribution paths have separate platform constraints.
