@@ -31,4 +31,5 @@ private:
 };
 
 // Application policy (options, avatars) stays outside the presentation widget.
-void configureNativeChat(MamChatWidget *view, PsiAccount *account, const XMPP::Jid &peer, bool groupChat);
+void configureNativeChat(MamChatWidget *view, PsiAccount *account, const XMPP::Jid &peer, bool groupChat,
+                         bool mucPrivate = false);
