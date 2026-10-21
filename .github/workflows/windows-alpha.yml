@@ -5,6 +5,8 @@ on:
   push:
     branches: ['release/2.0-alpha1-windows']
   workflow_dispatch:
+  pull_request:
+    branches: [master]
 
 permissions:
   contents: read
