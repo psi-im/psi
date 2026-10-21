@@ -5,6 +5,7 @@
 #include <QPointer>
 #include <QSaveFile>
 #include <optional>
+#include <functional>
 
 class ITEMediaState;
 
@@ -12,18 +13,21 @@ class ITEMediaState;
 // finishing a read must never delete/abort the stream inside its read hook.
 class FileSharingMediaSave : public QObject {
 public:
+    using Callback = std::function<void(const QString &path, const QString &error)>;
     // Takes ownership and opens asynchronously, so validation/failure handlers
     // can be connected before the first read.
     FileSharingMediaSave(QIODevice *input, std::optional<quint64> size, bool waitForValidation, const QString &path,
-                         ITEMediaState *state, QObject *parent);
+                         ITEMediaState *state, QObject *parent, Callback onFinished = {});
     void validated();
     void sourceClosed();
     void fail(const QString &error);
+    void cancel();
 
 private:
     void                    schedule();
     void                    pump();
     void                    finish(const QString &error = {});
+    Callback                onFinished_;
     QSaveFile               output_;
     QPointer<QIODevice>     input_;
     QPointer<ITEMediaState> state_;
