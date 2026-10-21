@@ -45,8 +45,44 @@ def read_dependencies(root, require_iris=False):
         selected += (0,) * (len(minimum) - len(selected))
         require(selected >= minimum, "Iris release tag below the minimum supported version")
 
-    psimedia = lock["psimedia"]["commit"]
-    require(isinstance(psimedia, str) and HEX_SHA.fullmatch(psimedia), "Invalid psimedia SHA")
+    qca_direct = lock["qca"]
+    require(qca_direct.get("repository") == "psi-im/qca"
+            and qca_direct.get("source") == "released-sdk-shared-with-iris"
+            and isinstance(qca_direct.get("tag"), str)
+            and re.fullmatch(r"v\d+\.\d+\.\d+", qca_direct["tag"])
+            and isinstance(qca_direct.get("commit"), str)
+            and HEX_SHA.fullmatch(qca_direct["commit"]),
+            "Invalid direct QCA release pin")
+    psimedia_entry = lock["psimedia"]
+    psimedia = psimedia_entry["commit"]
+    require(psimedia_entry.get("repository") == "psi-im/psimedia"
+            and isinstance(psimedia, str) and HEX_SHA.fullmatch(psimedia),
+            "Invalid psimedia source pin")
+    plugins_entry = lock["plugins"]
+    require(plugins_entry.get("repository") == "psi-im/plugins"
+            and isinstance(plugins_entry.get("commit"), str)
+            and HEX_SHA.fullmatch(plugins_entry["commit"]),
+            "Invalid plugin source pin")
+    for name, entry in (("psimedia", psimedia_entry), ("plugins", plugins_entry)):
+        tag = entry.get("release_tag")
+        require(tag is None or isinstance(tag, str) and TAG.fullmatch(tag),
+                "Invalid release tag for " + name)
+    qt = lock["qt"]
+    for platform in ("windows_msvc_qt6", "macos_qt6", "android_qt6"):
+        require(qt.get(platform) == "6.12.0",
+                "Qt 6.12.0 is required for " + platform)
+    require(qt.get("windows_msys2_qt5") == "distribution-managed",
+            "Do not hardcode an unavailable legacy Qt5 installer")
+    translations = lock["translations"]
+    require(translations.get("repository") == "psi-im/psi-l10n"
+            and isinstance(translations.get("commit"), str)
+            and HEX_SHA.fullmatch(translations["commit"]),
+            "Invalid Psi translations source pin")
+    submodules = lock["submodules"]
+    require(submodules.get("source") == "gitlink"
+            and sorted(submodules.get("paths", [])) == sorted((
+                "iris", "3rdparty/qhttp", "3rdparty/http-parser", "3rdparty/qite")),
+            "Invalid direct source gitlinks")
     keychain = lock["qtkeychain"]
     require(isinstance(keychain["tag"], str) and TAG.fullmatch(keychain["tag"]),
             "Invalid QtKeychain tag")
@@ -57,6 +93,11 @@ def read_dependencies(root, require_iris=False):
         "IRIS_RELEASE_TAG": iris["release_tag"] or "",
         "IRIS_MIN_VERSION": iris["minimum_version"],
         "PSIMEDIA_SRTP_REF": psimedia,
+        "PSIMEDIA_RELEASE_TAG": psimedia_entry["release_tag"] or "",
+        "PLUGINS_REF": plugins_entry["commit"],
+        "PLUGINS_RELEASE_TAG": plugins_entry["release_tag"] or "",
+        "PSI_L10N_REF": translations["commit"],
+        "QT6_RELEASE_VERSION": qt["windows_msvc_qt6"],
         "QTKEYCHAIN_TAG": keychain["tag"],
         "QTKEYCHAIN_COMMIT": keychain["commit"],
     }
@@ -83,6 +124,9 @@ def read_dependencies(root, require_iris=False):
         selected = tuple(map(int, qca["tag"][1:].split(".")))
         minimum = tuple(map(int, qca["minimum_version"].split(".")))
         require(selected >= minimum, "Iris QCA tag below the minimum supported version")
+        require(qca_direct["tag"] == qca["tag"]
+                and qca_direct["commit"] == qca["commit"],
+                "Psi direct QCA pin differs from Iris transitive QCA lock")
         values.update(QCA_TAG=qca["tag"], QCA_COMMIT=qca["commit"],
                       QCA_MIN_VERSION=qca["minimum_version"])
     return values

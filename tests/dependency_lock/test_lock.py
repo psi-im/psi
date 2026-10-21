@@ -22,16 +22,16 @@ class DependencyLockTests(unittest.TestCase):
         self.lock = json.loads((ROOT / "dependencies.lock.json").read_text())
         # Most fixtures exercise the released-SDK contract independently of
         # whether the working development lock currently has a published SDK.
-        self.lock["iris"]["release_tag"] = "v1.5"
+        self.lock["iris"]["release_tag"] = "v1.5.1"
         (self.root / "dependencies.lock.json").write_text(json.dumps(self.lock))
 
-    def with_iris(self, tag="v3.0.11", minimum="3.0.10"):
+    def with_iris(self, tag="v3.0.12", minimum="3.0.10"):
         iris_dir = self.root / "iris"
         iris_dir.mkdir()
         (iris_dir / "dependencies.lock.json").write_text(json.dumps({
             "qca": {
                 "tag": tag,
-                "commit": "a" * 40,
+                "commit": self.lock["qca"]["commit"],
                 "minimum_version": minimum,
             }
         }))
@@ -57,12 +57,16 @@ class DependencyLockTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "gitlink"):
                 resolver.verify_iris_release(self.root, "")
 
-    def test_inherits_qca_from_iris_without_second_pin(self):
-        self.assertNotIn("qca", self.lock)
+    def test_psi_qca_pin_matches_iris_and_rejects_divergence(self):
         self.with_iris()
         values = resolver.read_dependencies(self.root, require_iris=True)
-        self.assertEqual(values["QCA_TAG"], "v3.0.11")
+        self.assertEqual(values["QCA_TAG"], self.lock["qca"]["tag"])
+        self.assertEqual(values["QCA_COMMIT"], self.lock["qca"]["commit"])
         self.assertEqual(values["QCA_MIN_VERSION"], "3.0.10")
+        self.lock["qca"]["commit"] = "b" * 40
+        (self.root / "dependencies.lock.json").write_text(json.dumps(self.lock))
+        with self.assertRaisesRegex(ValueError, "differs from Iris"):
+            resolver.read_dependencies(self.root, require_iris=True)
 
     def test_rejects_missing_iris_and_older_qca_than_minimum(self):
         with self.assertRaises(ValueError):

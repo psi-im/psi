@@ -50,7 +50,13 @@ Remove-Item $buildDir, $stageDir, $l10nDir -Recurse -Force -ErrorAction Silently
 Invoke-Checked git clone --depth 1 --filter=blob:none --sparse `
     https://github.com/psi-im/psi-l10n.git $l10nDir
 Invoke-Checked git -C $l10nDir sparse-checkout set translations
+if (-not $env:PSI_L10N_REF -or $env:PSI_L10N_REF -notmatch '^[a-f0-9]{40}$') {
+    throw 'Expected an exact Psi translations SHA from dependencies.lock.json'
+}
+Invoke-Checked git -C $l10nDir fetch --depth 1 origin $env:PSI_L10N_REF
+Invoke-Checked git -C $l10nDir checkout --detach $env:PSI_L10N_REF
 $l10nRevision = (git -C $l10nDir rev-parse HEAD).Trim()
+if ($l10nRevision -ne $env:PSI_L10N_REF) { throw 'Psi translations checkout differs from lock' }
 
 $qtKeychainDir = Join-Path $sdkDir 'lib\cmake\Qt6Keychain'
 if (-not (Test-Path (Join-Path $qtKeychainDir 'Qt6KeychainConfig.cmake'))) {
@@ -182,6 +188,14 @@ if ($RunTests) {
     }
 }
 Invoke-Checked cmake --install $buildDir
+
+# Both extension projects were built and released independently. Stage their
+# verified binaries and GStreamer runtime, without rebuilding plugin sources.
+Invoke-Checked python packaging/windows/stage_released_extensions.py `
+    --root $stageDir `
+    --plugins (Join-Path $sourceDir 'released-plugins') `
+    --media (Join-Path $sourceDir 'released-media') `
+    --lock (Join-Path $sourceDir 'dependencies.lock.json')
 
 $psiExe = Join-Path $stageDir 'psi.exe'
 if (-not (Test-Path $psiExe)) {

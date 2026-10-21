@@ -17,9 +17,6 @@ on:
 permissions:
   contents: read
 
-env:
-  QT_SERIES: "6.11.*"
-  AQT_WINDOWS_QT611_SOURCE: "git+https://github.com/miurahr/aqtinstall.git@refs/pull/1000/head"
 
 jobs:
   build:
@@ -58,13 +55,14 @@ jobs:
           restore-keys: |
             windows-msvc-qt6-ccache-
 
-      - name: Install Qt 6.11 + WebEngine
+      - name: Install Qt 6.12 + WebEngine
         uses: jurplel/install-qt-action@v4
         with:
-          version: ${{ env.QT_SERIES }}
+          version: ${{ steps.deps.outputs.qt6_version }}
           arch: win64_msvc2022_64
+          # Pin the merged aqtinstall#1000 Qt 6.11+ Windows repository fix.
+          aqtsource: git+https://github.com/miurahr/aqtinstall.git@8c3695d4a4e1ceabf6a74dc6c79681656dc6b74b
           modules: qtmultimedia qtwebchannel qtpositioning qtwebengine qtimageformats
-          aqtsource: ${{ env.AQT_WINDOWS_QT611_SOURCE }}
           cache: true
 
       - name: Set up MSVC environment
@@ -132,6 +130,61 @@ jobs:
           }
           if (-not (Test-Path sdk\lib\cmake\Qca3-qt6\Qca3-qt6Config.cmake)) {
             throw 'Shared QCA package missing from SDK'
+          }
+
+      - name: Download verified released plugins and PsiMedia
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PLUGINS_RELEASE_TAG: ${{ steps.deps.outputs.plugins_release_tag }}
+          PLUGINS_SOURCE_SHA: ${{ steps.deps.outputs.plugins_ref }}
+          PSIMEDIA_RELEASE_TAG: ${{ steps.deps.outputs.psimedia_release_tag }}
+          PSIMEDIA_SOURCE_SHA: ${{ steps.deps.outputs.psimedia_ref }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          function Confirm-PinnedTag {
+            param([string]$Repository, [string]$Tag, [string]$Commit)
+            if (-not $Tag -or -not $Commit -or $Commit -notmatch '^[0-9a-f]{40}$') {
+              throw "Missing/invalid source lock for $Repository"
+            }
+            $ref = gh api "repos/$Repository/git/ref/tags/$Tag" | ConvertFrom-Json
+            if ($LASTEXITCODE -ne 0) { throw "Cannot resolve $Repository tag $Tag" }
+            $actual = $ref.object.sha
+            if ($ref.object.type -eq 'tag') {
+              $annotated = gh api "repos/$Repository/git/tags/$actual" | ConvertFrom-Json
+              if ($LASTEXITCODE -ne 0) { throw "Cannot peel $Repository tag $Tag" }
+              $actual = $annotated.object.sha
+            } elseif ($ref.object.type -ne 'commit') {
+              throw "Unexpected tag type for $Repository/$Tag"
+            }
+            if ($actual -ne $Commit) {
+              throw "Locked $Repository/$Tag references $actual rather than $Commit"
+            }
+          }
+          Confirm-PinnedTag psi-im/plugins $env:PLUGINS_RELEASE_TAG $env:PLUGINS_SOURCE_SHA
+          Confirm-PinnedTag psi-im/psimedia $env:PSIMEDIA_RELEASE_TAG $env:PSIMEDIA_SOURCE_SHA
+
+          $pluginsAsset = "psi-plugins-$env:PLUGINS_RELEASE_TAG-qt612-windows-x64.zip"
+          $mediaAsset = 'psimedia-windows-msvc-modern.zip'
+          New-Item -ItemType Directory -Force released-plugins, released-media, release-downloads | Out-Null
+
+          gh release download $env:PLUGINS_RELEASE_TAG --repo psi-im/plugins `
+            --pattern $pluginsAsset --dir release-downloads
+          if ($LASTEXITCODE -ne 0) { throw "Could not download $pluginsAsset" }
+          gh release download $env:PSIMEDIA_RELEASE_TAG --repo psi-im/psimedia `
+            --pattern $mediaAsset --dir release-downloads
+          if ($LASTEXITCODE -ne 0) { throw "Could not download $mediaAsset" }
+          if (-not (Test-Path "release-downloads/$pluginsAsset") -or
+              -not (Test-Path "release-downloads/$mediaAsset")) {
+            throw 'Required released extensions are missing'
+          }
+          Expand-Archive "release-downloads/$pluginsAsset" released-plugins -Force
+          Expand-Archive "release-downloads/$mediaAsset" released-media -Force
+          if (-not (Test-Path released-plugins/PLUGINS-MANIFEST.json)) {
+            throw 'Published plugins 1.6 lack their integrity manifest'
+          }
+          if (-not (Test-Path released-media/stage-msvc-modern)) {
+            throw 'Published PsiMedia artifact lacks the modern Windows stage'
           }
 
       - name: Build and package modern profile
