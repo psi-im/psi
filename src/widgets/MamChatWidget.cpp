@@ -1500,7 +1500,10 @@ int MamChatWidget::suggestedOlderHistoryPageSize() const
         = target >= 0 ? qMax<qint64>(1, target - estimatedMessagePixels()) : qMax<qint64>(1, viewportPixels / 2);
     const int requiredMessages = qMax(1, int(qCeil(qreal(missing) / avgHeight)));
     constexpr int ProtocolEventsPerMessage = 3; // message + displayed + receipt.
-    return qBound(1, qMin(40, requiredMessages * ProtocolEventsPerMessage), 40);
+    // At least five visible messages with up to two protocol events each.
+    // Tiny remaining pixel targets must not degenerate into one-stanza pages.
+    constexpr int MinArchiveEvents = 15;
+    return qBound(MinArchiveEvents, requiredMessages * ProtocolEventsPerMessage, 40);
 }
 
 void MamChatWidget::maybeContinueInitialHistoryFill()
