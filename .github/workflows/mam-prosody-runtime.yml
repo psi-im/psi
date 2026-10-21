@@ -20,6 +20,12 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  # Only the newest commit of a PR needs expensive build/test runners.
+  # Keep manual dispatches independent and keep master distinct from PRs.
+  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
+
 jobs:
   mam-prosody-runtime:
     runs-on: ubuntu-24.04
