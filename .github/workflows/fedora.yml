@@ -9,6 +9,12 @@ on:
     - '*'
   workflow_dispatch:
 
+concurrency:
+  # Only the newest commit of a PR needs expensive build/test runners.
+  # Keep manual dispatches independent and keep master distinct from PRs.
+  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
+
 jobs:
   build:
     if: ${{ github.event_name != 'pull_request' || (!startsWith(github.head_ref, 'ai/') && github.head_ref != 'ci/psimedia-integration') }}
