@@ -7,12 +7,14 @@
 #include "messageview.h"
 #include <QPixmap>
 #include <functional>
+#include <memory>
 
 #include <QHash>
 #include <QList>
 #include <QSet>
 
 class FileSharingDeviceOpener;
+class QTemporaryDir;
 class QFrame;
 class MessagePreview;
 class QLabel;
@@ -165,6 +167,8 @@ private:
     NativeChatTheme                               theme_;
     bool                                          groupChat_   = false;
     FileSharingDeviceOpener                      *mediaOpener_ = nullptr;
+    // Keep opened temporary attachments on disk for the lifetime of this chat.
+    QList<std::shared_ptr<QTemporaryDir>>         openedTemporaryFiles_;
     std::function<QPixmap(const MessageView &)>   avatarResolver_;
     std::function<QColor(const MessageView &)>    nicknameColorResolver_;
     int                                           indexOfKey(const QString &key) const;
