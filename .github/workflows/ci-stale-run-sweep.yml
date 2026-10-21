@@ -1,0 +1,51 @@
+name: Cancel historic superseded CI runs
+
+# This on-push run sweeps backlog created before branch-aware concurrency
+# was enabled. workflow_dispatch allows a deliberate rerun if necessary.
+on:
+  push:
+    branches: [master]
+    paths: ['.github/workflows/ci-stale-run-sweep.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+  pull-requests: read
+
+jobs:
+  cancel-old-ci:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Cancel superseded runs from the affected PR branches
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The two active PRs that accumulated obsolete Ubuntu/Fedora/MAM
+          # jobs before concurrency was introduced. Leave their head runs.
+          for pr in 1017 1019; do
+            branch="$(gh api "repos/$GH_REPO/pulls/$pr" --jq '.head.ref')"
+            head="$(gh api "repos/$GH_REPO/pulls/$pr" --jq '.head.sha')"
+            echo "PR #$pr: preserving $branch at $head"
+            gh api --paginate "repos/$GH_REPO/actions/runs?branch=$branch&per_page=100" \
+              --jq ".workflow_runs[] | select(.head_sha != \"$head\" and (.event == \"push\" or .event == \"pull_request\") and (.status == \"queued\" or .status == \"pending\" or .status == \"in_progress\" or .status == \"waiting\")) | .id" |
+              while read -r run_id; do
+                echo "Cancel superseded run $run_id"
+                gh api -X POST "repos/$GH_REPO/actions/runs/$run_id/cancel" >/dev/null ||
+                  echo "::warning::Could not cancel run $run_id (possibly already completed)"
+              done
+          done
+
+          # PR #1020 is already merged; its old verification runs are obsolete.
+          branch="ci/cancel-superseded-pr-runs-20261021"
+          gh api --paginate "repos/$GH_REPO/actions/runs?branch=$branch&per_page=100" \
+            --jq '.workflow_runs[] | select((.event == "push" or .event == "pull_request") and (.status == "queued" or .status == "pending" or .status == "in_progress" or .status == "waiting")) | .id' |
+            while read -r run_id; do
+              echo "Cancel merged PR #1020 run $run_id"
+              gh api -X POST "repos/$GH_REPO/actions/runs/$run_id/cancel" >/dev/null ||
+                echo "::warning::Could not cancel run $run_id (possibly already completed)"
+            done
