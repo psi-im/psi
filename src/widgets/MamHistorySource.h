@@ -35,6 +35,7 @@ public:
         int     limit = MaxRequestEvents, snapshotCount = -1;
         int     first = -1, last = -1;
         quint64 generation = 0;
+        bool    isolatedGap = false; // A single RSM event between two verified archive windows.
     };
 
     const QList<Row> &rows() const { return rows_; }
