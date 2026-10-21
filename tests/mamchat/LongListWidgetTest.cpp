@@ -353,7 +353,9 @@ private slots:
     void singleRowReplacementKeepsOtherWidgetsAndStickyBottom()
     {
         TestLongListWidget list;
-        list.resize(480, 120);
+        // Four rows must fit the current two-screen residency window for
+        // this test to assert that every *resident* widget survives replacement.
+        list.resize(480, 180);
         list.setDefaultItemHeight(60);
         list.setItemCount(4);
         list.setRangeAvailable(0, 3);
