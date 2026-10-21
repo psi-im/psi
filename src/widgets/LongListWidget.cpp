@@ -2176,17 +2176,18 @@ void LongListWidget::onScrollValueChanged()
 {
     layoutMaterialized();
 
-    // Scrollbar drags and programmatic navigation can move without wheel
-    // signals. Only a real change outside the resize/layout transaction ends
-    // the grace period.
-    if (!committingGeometry && !synchronizing && !internalScrollChange
-        && !scrollAnimationApplying) {
+    const bool userScroll =
+        wheelInProgress || verticalScrollBar()->isSliderDown() || userScrollActionPending;
+    // A change to QAbstractScrollArea's own scrollbar geometry during a
+    // splitter resize is *not* an intentional scroll. Do not discard the
+    // resize anchor merely because Qt adjusts the scrollbar range after a
+    // deferred layout event. Wheel, thumb, and explicit user actions do end
+    // the resize transaction; scrollToIndex()/scrollToEnd() handle explicit
+    // programmatic navigation separately.
+    if (userScroll) {
         resizeEvictionTimer_.stop();
         resizeAnchor_ = {};
     }
-
-    const bool userScroll =
-        wheelInProgress || verticalScrollBar()->isSliderDown() || userScrollActionPending;
     const VisibilityChangeReason visibilityReason = userScroll
         ? VisibilityChangeReason::UserScroll
         : ((internalScrollChange || scrollAnimationApplying)
