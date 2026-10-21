@@ -2,6 +2,8 @@
 #include "MamChatWidget.h"
 #include "ChatMessageText.h"
 #include "MessagePreview.h"
+#include "filesharingmanager.h"
+#include "fileutil.h"
 #include "urlobject.h"
 #include <QContextMenuEvent>
 #include "MamHistoryLog.h"
@@ -13,6 +15,9 @@
 #include <QCheckBox>
 #include <QClipboard>
 #include <QDateTime>
+#include <QDesktopServices>
+#include <QFileIconProvider>
+#include <QFileInfo>
 #include <QDebug>
 #include <QFontInfo>
 #include <QFrame>
@@ -28,6 +33,7 @@
 #include <QLabel>
 #include <QLocale>
 #include <QMenu>
+#include <QMimeDatabase>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
@@ -36,11 +42,16 @@
 #include <QPropertyAnimation>
 #include <QPushButton>
 #include <QResizeEvent>
+#include <QRegularExpression>
 #include <QScrollBar>
 #include <QShortcut>
 #include <QShowEvent>
 #include <QSignalBlocker>
 #include <QSizePolicy>
+#include <QStyle>
+#include <QTemporaryDir>
+#include <QToolButton>
+#include <QUrlQuery>
 #include <QTextBlockFormat>
 #include <QTextDocument>
 #include <QWheelEvent>
@@ -1765,8 +1776,246 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     }
     if (!retracted && !mv.formattedUserText().isEmpty())
         richText += (richText.isEmpty() ? QString() : QStringLiteral(" — ")) + mv.formattedUserText();
+    // The rich-text document can paint inline media, but not arbitrary QWidget
+    // attachments. Extract *only* non-media SIMS shares into native cards.
+    // Keep unknown shares in the text so an unavailable account/item does not
+    // silently erase the sender's fallback text.
+    struct BinaryAttachment {
+        QPointer<FileSharingItem> item;
+        QUrl url;
+        QString account;
+    };
+    QList<BinaryAttachment> files;
+    if (!retracted && mediaOpener_) {
+        static const QRegularExpression tagRx(QStringLiteral(R"(<share\s+([^<>]*?)/>)"));
+        static const QRegularExpression attrRx(QStringLiteral(R"((id|account)\s*=\s*"([^"]*)")"));
+        auto matches = tagRx.globalMatch(richText);
+        QString stripped;
+        int consumed = 0;
+        while (matches.hasNext()) {
+            const auto match = matches.next();
+            QString id, account;
+            auto attributes = attrRx.globalMatch(match.captured(1));
+            while (attributes.hasNext()) {
+                const auto attr = attributes.next();
+                if (attr.captured(1) == QLatin1String("id"))
+                    id = attr.captured(2);
+                else if (attr.captured(1) == QLatin1String("account"))
+                    account = attr.captured(2);
+            }
+            FileSharingDeviceOpener *opener = id.isEmpty() ? nullptr : mediaOpener_->forAccount(account);
+            FileSharingItem *item = opener ? opener->sharedItem(id) : nullptr;
+            if (!item || item->mimeType().startsWith(QLatin1String("audio/"))
+                || item->mimeType().startsWith(QLatin1String("video/"))
+                || item->mimeType().startsWith(QLatin1String("image/")))
+                continue;
+            stripped += richText.mid(consumed, match.capturedStart() - consumed);
+            consumed = match.capturedEnd();
+            QUrl source(QStringLiteral("share:") + id);
+            if (!account.isEmpty()) {
+                QUrlQuery query;
+                query.addQueryItem(QStringLiteral("account"), account);
+                source.setQuery(query);
+            }
+            files.append({ item, source, account });
+        }
+        if (!files.isEmpty()) {
+            stripped += richText.mid(consumed);
+            richText = stripped;
+        }
+    }
+
     body->setRichText(richText);
     elements.insert(QStringLiteral("body"), body);
+    if (!files.isEmpty()) {
+        auto *attachmentGroup = new QWidget(content);
+        auto *column = new QVBoxLayout(attachmentGroup);
+        column->setContentsMargins(0, 0, 0, 0);
+        column->setSpacing(5);
+        if (!richText.trimmed().isEmpty())
+            column->addWidget(body);
+        else
+            body->hide();
+
+        for (const auto &file : files) {
+            if (!file.item)
+                continue;
+            auto *preview = new MessagePreview(palette().color(QPalette::Link), {}, attachmentGroup);
+            preview->setObjectName(QStringLiteral("mamFilePreview"));
+            preview->setLinkColor(palette().color(QPalette::Link));
+            const QString name = file.item->displayName();
+            const QString mime = file.item->mimeType();
+            const QString size = file.item->fileSize()
+                ? QLocale().formattedDataSize(qint64(*file.item->fileSize()))
+                : tr("Unknown size");
+            preview->setContent(name, tr("Type: %1\nSize: %2").arg(mime, size));
+            auto *footer = new QWidget(preview);
+            auto *actions = new QVBoxLayout(footer);
+            actions->setContentsMargins(0, 4, 0, 0);
+            actions->setSpacing(3);
+            auto *controls = new QHBoxLayout;
+            controls->setContentsMargins(0, 0, 0, 0);
+            controls->setSpacing(5);
+            auto *fileIcon = new QLabel(footer);
+            QIcon icon = QIcon::fromTheme(QMimeDatabase().mimeTypeForFile(name, QMimeDatabase::MatchExtension).iconName());
+            if (icon.isNull())
+                icon = QFileIconProvider().icon(QFileIconProvider::File);
+            fileIcon->setPixmap(icon.pixmap(QSize(32, 32)));
+            controls->addWidget(fileIcon);
+            auto button = [this, footer, controls](QStyle::StandardPixmap iconType, const QString &tooltip) {
+                auto *b = new QToolButton(footer);
+                b->setIcon(style()->standardIcon(iconType));
+                b->setToolTip(tooltip);
+                b->setFixedSize(30, 30);
+                controls->addWidget(b);
+                return b;
+            };
+            auto *download = button(QStyle::SP_DialogSaveButton, tr("Download file"));
+            auto *open = button(QStyle::SP_DialogOpenButton, tr("Open file"));
+            auto *reveal = button(QStyle::SP_DirOpenIcon, tr("Show in file manager"));
+            auto *copy = button(QStyle::SP_FileDialogDetailedView, tr("Copy file path"));
+            auto *cancel = button(QStyle::SP_DialogCancelButton, tr("Cancel download"));
+            cancel->hide();
+            controls->addStretch();
+            actions->addLayout(controls);
+            auto *status = new QLabel(footer);
+            status->setObjectName(QStringLiteral("mamFileStatus"));
+            status->setTextFormat(Qt::PlainText);
+            status->setTextInteractionFlags(Qt::TextSelectableByMouse);
+            status->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+            status->setWordWrap(true);
+            actions->addWidget(status);
+            preview->setFooter(footer);
+
+            QString saved = file.item->property("_psiSavedFilePath").toString();
+            if (!QFileInfo(saved).isFile())
+                saved.clear();
+            status->setText(saved);
+            status->setVisible(!saved.isEmpty());
+            reveal->setEnabled(!saved.isEmpty());
+            copy->setEnabled(!saved.isEmpty());
+            const QUrl source = file.url;
+            const QString accountId = file.account;
+            const QPointer<FileSharingItem> item = file.item;
+            const QPointer<MamChatWidget> self(this);
+            const QPointer<QLabel> statusGuard(status);
+            const QPointer<QToolButton> downloadGuard(download), openGuard(open), revealGuard(reveal),
+                copyGuard(copy), cancelGuard(cancel);
+            const QString rowKey = items_.at(index).key;
+            const auto rowChanged = [self, rowKey] {
+                if (!self)
+                    return;
+                const int at = self->indexOfKey(rowKey);
+                if (at >= 0) {
+                    const int logical = self->historySource_.logicalIndex(at);
+                    self->itemsChanged(logical, logical);
+                }
+            };
+            const auto finished = [item, statusGuard, downloadGuard, openGuard, revealGuard, copyGuard,
+                                   cancelGuard, rowChanged](const QString &path, const QString &error,
+                                                             bool permanent) {
+                if (!item)
+                    return;
+                if (permanent && error.isEmpty())
+                    item->setProperty("_psiSavedFilePath", path);
+                if (!statusGuard)
+                    return; // The virtualized row was recycled during transfer.
+                const bool havePath = permanent && error.isEmpty() && QFileInfo(path).isFile();
+                statusGuard->setText(error.isEmpty() ? (havePath ? path : QString()) : error);
+                statusGuard->setVisible(!statusGuard->text().isEmpty());
+                if (downloadGuard) downloadGuard->setEnabled(true);
+                if (openGuard) openGuard->setEnabled(true);
+                if (revealGuard) revealGuard->setEnabled(havePath);
+                if (copyGuard) copyGuard->setEnabled(havePath);
+                if (cancelGuard) cancelGuard->hide();
+                rowChanged();
+            };
+            const auto progress = [statusGuard, rowChanged](qreal fraction) {
+                if (!statusGuard)
+                    return;
+                const QString text = fraction >= 0
+                    ? QObject::tr("Downloading: %1%").arg(qRound(fraction * 100))
+                    : QObject::tr("Downloading…");
+                if (statusGuard->text() != text) {
+                    statusGuard->setText(text);
+                    statusGuard->show();
+                    rowChanged();
+                }
+            };
+            const auto started = [downloadGuard, openGuard, cancelGuard, statusGuard, rowChanged] {
+                if (downloadGuard) downloadGuard->setEnabled(false);
+                if (openGuard) openGuard->setEnabled(false);
+                if (cancelGuard) cancelGuard->show();
+                if (statusGuard) {
+                    statusGuard->setText(QObject::tr("Downloading…"));
+                    statusGuard->show();
+                }
+                rowChanged();
+            };
+            connect(download, &QToolButton::clicked, this, [this, accountId, source, finished, progress, started] {
+                auto *opener = mediaOpener_ ? mediaOpener_->forAccount(accountId) : nullptr;
+                if (opener && opener->saveAs(source, this,
+                                           [finished](const QString &path, const QString &error) {
+                                               finished(path, error, true);
+                                           }, progress))
+                    started();
+            });
+            connect(open, &QToolButton::clicked, this,
+                    [this, item, accountId, source, finished, progress, started] {
+                if (!item)
+                    return;
+                QString existing = item->property("_psiSavedFilePath").toString();
+                if (!QFileInfo(existing).isFile() && item->isCached())
+                    existing = item->fileName();
+                if (QFileInfo(existing).isFile()) {
+                    QDesktopServices::openUrl(QUrl::fromLocalFile(existing));
+                    return;
+                }
+                auto *opener = mediaOpener_ ? mediaOpener_->forAccount(accountId) : nullptr;
+                if (!opener)
+                    return;
+                auto directory = std::make_shared<QTemporaryDir>();
+                if (!directory->isValid()) {
+                    finished({}, tr("Could not create a temporary directory"), false);
+                    return;
+                }
+                const QString fileName = QFileInfo(item->displayName()).fileName();
+                const QString path = directory->filePath(fileName.isEmpty() ? QStringLiteral("attachment") : fileName);
+                if (opener->saveTo(source, path,
+                    [finished, directory](const QString &saved, const QString &error) {
+                        finished(saved, error, false);
+                        if (error.isEmpty() && QFileInfo(saved).isFile())
+                            QDesktopServices::openUrl(QUrl::fromLocalFile(saved));
+                    }, progress)) {
+                    openedTemporaryFiles_.append(directory);
+                    started();
+                }
+            });
+            connect(cancel, &QToolButton::clicked, this, [this, source, accountId] {
+                if (auto *opener = mediaOpener_ ? mediaOpener_->forAccount(accountId) : nullptr)
+                    opener->cancelSave(source);
+            });
+            connect(reveal, &QToolButton::clicked, this, [item] {
+                if (!item)
+                    return;
+                const QString path = item->property("_psiSavedFilePath").toString();
+                if (QFileInfo(path).isFile())
+                    FileUtil::openFolder(path);
+            });
+            connect(copy, &QToolButton::clicked, this, [item] {
+                if (!item)
+                    return;
+                const QString path = item->property("_psiSavedFilePath").toString();
+                if (QFileInfo(path).isFile())
+                    QApplication::clipboard()->setText(path);
+            });
+            column->addWidget(preview);
+            preview->installEventFilter(this);
+            for (auto *child : preview->findChildren<QWidget *>())
+                child->installEventFilter(this);
+        }
+        elements[QStringLiteral("body")] = attachmentGroup;
+    }
     body->installEventFilter(this);
     body->viewport()->installEventFilter(this);
 
@@ -2066,6 +2315,10 @@ void MamChatWidget::refreshPalette()
                 updateTimestampAppearance(time);
             if (auto *preview = row->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview")))
                 preview->setLinkColor(palette().color(QPalette::Link));
+            for (auto *fileCard : row->findChildren<MessagePreview *>(QStringLiteral("mamFilePreview"))) {
+                fileCard->setColors(palette().color(QPalette::Link));
+                fileCard->setLinkColor(palette().color(QPalette::Link));
+            }
         }
 }
 
