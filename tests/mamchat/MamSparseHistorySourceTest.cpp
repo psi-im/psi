@@ -50,6 +50,8 @@ private slots:
         QVERIFY(qAbs(seek.index - 500000) <= 15);
         QCOMPARE(seek.limit, 15);
         QCOMPARE(seek.generation, quint64(3));
+        const auto tiny = source.requestForRange(499995, 500005, 1, 4);
+        QCOMPARE(tiny.limit, 15); // Even explicit sparse requests cannot degenerate into max=1.
     }
     void eventDensityAndTailIslandKeepJoinHistoryCompact()
     {
