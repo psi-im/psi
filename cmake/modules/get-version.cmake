@@ -142,6 +142,15 @@ function(obtain_psi_file_version VERSION_LINES OUTPUT_VERSION)
   endif()
 endfunction()
 
+# An explicitly selected alpha/release version must populate APP_VERSION too:
+# Windows VERSIONINFO uses numeric APP_VERSION for its FILEVERSION field.
+if(PSI_VERSION AND NOT APP_VERSION)
+  string(REGEX MATCH "^[0-9]+(\\\\.[0-9]+)*" APP_VERSION "${PSI_VERSION}")
+  if(NOT APP_VERSION)
+    message(FATAL_ERROR "PSI_VERSION must begin with a numeric version")
+  endif()
+endif()
+
 if(NOT PSI_VERSION)
   obtain_git_version(PSIVER GITVER)
   if(PSIVER AND GITVER)
