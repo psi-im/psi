@@ -95,7 +95,11 @@ materialized rows (then 72 px) if no messages are currently visible.
   errors pause the demand; user input can cancel it.
 - **Cache:** the chosen stanza limit is passed all the way through
   `HistorySync` and is part of the verified EDB page-read/merge contract;
-  the user-visible demand never requests fewer than 15 archive events;
+  ordinary viewport demand requests at least 15 archive events; the sole
+  exception is a confirmed one-event hole between stable, server-indexed
+  windows. Repair that hole with `RSM index=N, max=1` only if the requested
+  logical range contains exactly that one missing slot. This repair is a
+  terminal operation, not a prefetch page to be continued at size one.
   `HistorySync::PageSize = 40` remains the absolute maximum.
 
 ### Approximate full archive and seek
