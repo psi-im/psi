@@ -1788,7 +1788,7 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     QList<BinaryAttachment> files;
     if (!retracted && mediaOpener_) {
         static const QRegularExpression tagRx(QStringLiteral(R"(<share\s+([^<>]*?)/>)"));
-        static const QRegularExpression attrRx(QStringLiteral(R"((id|account)\s*=\s*"([^"]*)")"));
+        static const QRegularExpression attrRx(QStringLiteral(R"attr((id|account)\s*=\s*"([^"]*)")attr"));
         auto matches = tagRx.globalMatch(richText);
         QString stripped;
         int consumed = 0;
