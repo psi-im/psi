@@ -1,4 +1,4 @@
-name: Windows modern MSVC Qt6 CI
+name: Windows MSVC Qt 6.12 packaging (BASIC default)
 
 on:
   push:
@@ -8,6 +8,14 @@ on:
     branches:
       - '*'
   workflow_dispatch:
+    inputs:
+      chat_type:
+        description: Chat rendering backend (default BASIC)
+        type: choice
+        options:
+          - BASIC
+          - WEBENGINE
+        default: BASIC
 
 permissions:
   contents: read
@@ -103,7 +111,7 @@ jobs:
       force_rebuild: false
 
   modern:
-    name: Build modern Windows 10/11 x64 package
+    name: Build Windows 10/11 MSVC Qt 6.12 (${{ inputs.chat_type || 'BASIC' }})
     needs:
       - check-sdk
       - build-sdk
@@ -116,5 +124,6 @@ jobs:
       contents: read
     uses: ./.github/workflows/windows-msvc-qt6-profile.yml
     with:
+      chat_type: ${{ inputs.chat_type || 'BASIC' }}
       sdk_tag: ${{ needs.check-sdk.outputs.sdk_tag }}
       sdk_archive: ${{ needs.check-sdk.outputs.sdk_archive }}
