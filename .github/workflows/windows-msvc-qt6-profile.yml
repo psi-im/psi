@@ -3,6 +3,11 @@ name: Windows MSVC Qt6 profile
 on:
   workflow_call:
     inputs:
+      chat_type:
+        description: Chat renderer (BASIC default, WEBENGINE opt-in)
+        required: false
+        default: BASIC
+        type: string
       sdk_tag:
         description: Dependency SDK release tag
         required: false
@@ -20,7 +25,7 @@ permissions:
 
 jobs:
   build:
-    name: modern MSVC Qt6 x64
+    name: ${{ inputs.chat_type }} MSVC Qt 6.12 x64
     runs-on: windows-2022
     timeout-minutes: 120
     defaults:
@@ -55,14 +60,14 @@ jobs:
           restore-keys: |
             windows-msvc-qt6-ccache-
 
-      - name: Install Qt 6.12 + WebEngine
+      - name: Install Qt 6.12 (WebEngine only for WEBENGINE profile)
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ steps.deps.outputs.qt6_version }}
           arch: win64_msvc2022_64
           # Pin the merged aqtinstall#1000 Qt 6.11+ Windows repository fix.
           aqtsource: git+https://github.com/miurahr/aqtinstall.git@8c3695d4a4e1ceabf6a74dc6c79681656dc6b74b
-          modules: qtmultimedia qtwebchannel qtpositioning qtwebengine qtimageformats
+          modules: ${{ inputs.chat_type == 'WEBENGINE' && 'qtmultimedia qtwebchannel qtpositioning qtwebengine qtimageformats' || 'qtmultimedia qtimageformats' }}
           cache: true
 
       - name: Set up MSVC environment
@@ -190,6 +195,7 @@ jobs:
       - name: Build and package modern profile
         env:
           RUN_TESTS: ${{ startsWith(github.ref, 'refs/heads/ai/') }}
+          CHAT_TYPE: ${{ inputs.chat_type }}
         run: |
           New-Item -ItemType Directory -Force artifacts | Out-Null
           try {
@@ -197,18 +203,27 @@ jobs:
               & packaging\windows\build_profile_msvc.ps1 `
                 -SdkDir "$pwd\sdk" `
                 -OutputDir "$pwd\artifacts" `
+                -ChatType $env:CHAT_TYPE `
                 -RunTests 2>&1 |
                 Tee-Object -FilePath artifacts\build-modern.log
             } else {
               & packaging\windows\build_profile_msvc.ps1 `
                 -SdkDir "$pwd\sdk" `
-                -OutputDir "$pwd\artifacts" 2>&1 |
+                -OutputDir "$pwd\artifacts" `
+                -ChatType $env:CHAT_TYPE 2>&1 |
                 Tee-Object -FilePath artifacts\build-modern.log
             }
           } catch {
             $_ | Out-String | Tee-Object -FilePath artifacts\status-modern.txt
             throw
           }
+
+      - name: Smoke test installed ${{ inputs.chat_type }} NSIS package
+        run: |
+          $installer = Get-ChildItem artifacts -Filter '*-setup.exe' -File | Select-Object -First 1
+          if (-not $installer) { throw 'Missing built NSIS installer' }
+          & packaging\windows\smoke_installer.ps1 -Installer $installer.FullName -ChatType '${{ inputs.chat_type }}'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Show compiler cache statistics
         run: |
@@ -218,7 +233,7 @@ jobs:
       - name: Upload release packages
         uses: actions/upload-artifact@v4
         with:
-          name: psi-windows-modern-x64
+          name: psi-windows-msvc-qt612-${{ inputs.chat_type }}-x64
           path: |
             artifacts/*.zip
             artifacts/*-setup.exe
@@ -231,7 +246,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: psi-windows-modern-diagnostics
+          name: psi-windows-msvc-qt612-${{ inputs.chat_type }}-diagnostics
           path: |
             artifacts/*.log
             artifacts/*.txt
