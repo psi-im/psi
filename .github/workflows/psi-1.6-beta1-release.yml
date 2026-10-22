@@ -5,6 +5,9 @@ name: Psi 1.6 beta 1 Windows BASIC release
 # publication is gated on the NSIS installation and installed-app smoke test.
 on:
   create:
+  push:
+    branches:
+      - release/1.6_b1
   workflow_dispatch:
     inputs:
       release_version:
@@ -20,7 +23,7 @@ jobs:
   gate:
     name: Validate Psi beta release source
     if: >-
-      (github.event_name == 'create' && github.ref == 'refs/heads/release/1.6_b1') ||
+      ((github.event_name == 'create' || github.event_name == 'push') && github.ref == 'refs/heads/release/1.6_b1') ||
       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master')
     runs-on: ubuntu-24.04
     outputs:

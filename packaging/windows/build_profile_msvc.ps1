@@ -124,7 +124,13 @@ $configureArgs = @(
 # Do not infer a beta version from the last historical tag: it must be
 # explicitly selected by the release workflow and embedded in psi.exe.
 if ($ReleaseVersion) {
-    if ($ReleaseVersion -cnotmatch '^[0-9]+\.[0-9]+_b[0-9]+ @configureArgs 2>&1 | Tee-Object -FilePath $configureLog
+    if ($ReleaseVersion -cnotmatch '^[0-9]+\.[0-9]+_b[0-9]+$') {
+        throw "Unsupported beta release version: $ReleaseVersion"
+    }
+    $configureArgs += "-DPSI_VERSION=$ReleaseVersion"
+}
+
+& cmake @configureArgs 2>&1 | Tee-Object -FilePath $configureLog
 if ($LASTEXITCODE -ne 0) {
     throw "CMake configure failed with exit code $LASTEXITCODE"
 }
