@@ -42,12 +42,15 @@ function(run_git RESULT)
       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
       OUTPUT_VARIABLE RES
       OUTPUT_STRIP_TRAILING_WHITESPACE
+      RESULT_VARIABLE EXEC_RESULT
       ERROR_VARIABLE ERROR_1)
-    if(RES)
-      set(${RESULT}
-          ${RES}
-          PARENT_SCOPE)
-    elseif(ERROR_1)
+    if(EXEC_RESULT EQUAL 0)
+      if(NOT RES STREQUAL "")
+        set(${RESULT}
+            "${RES}"
+            PARENT_SCOPE)
+      endif()
+    else()
       string(JOIN " " GIT_ARGS ${ARGN})
       message(WARNING "Can't execute ${GIT_EXECUTABLE} ${GIT_ARGS}: ${ERROR_1}")
     endif()
@@ -65,9 +68,9 @@ function(obtain_git_version GIT_VERSION GIT_FULL_VERSION)
           ${MAIN_VER}
           PARENT_SCOPE)
       run_git(COMMITS rev-list --count "${MAIN_VER}\.\.HEAD")
-      if(COMMITS)
+      if(NOT COMMITS STREQUAL "")
         run_git(VER_HASH rev-parse --short HEAD)
-        if(COMMITS AND VER_HASH)
+        if(NOT VER_HASH STREQUAL "")
           set(PSI_REVISION
               ${VER_HASH}
               PARENT_SCOPE)
@@ -176,3 +179,4 @@ if(NOT APP_VERSION AND PSI_VERSION)
 endif()
 
 message(STATUS "${CLIENT_NAME} version set: ${PSI_VERSION}")
+message(STATUS "APP_VERSION: ${APP_VERSION}")
