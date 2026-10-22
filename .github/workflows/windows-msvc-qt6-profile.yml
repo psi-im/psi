@@ -8,6 +8,11 @@ on:
         required: false
         default: BASIC
         type: string
+      release_version:
+        description: Exact Psi beta version for a tagged prerelease build (empty for normal CI)
+        required: false
+        default: ''
+        type: string
       sdk_tag:
         description: Dependency SDK release tag
         required: false
@@ -196,6 +201,7 @@ jobs:
         env:
           RUN_TESTS: ${{ startsWith(github.ref, 'refs/heads/ai/') }}
           CHAT_TYPE: ${{ inputs.chat_type }}
+          RELEASE_VERSION: ${{ inputs.release_version }}
         run: |
           New-Item -ItemType Directory -Force artifacts | Out-Null
           try {
@@ -204,13 +210,15 @@ jobs:
                 -SdkDir "$pwd\sdk" `
                 -OutputDir "$pwd\artifacts" `
                 -ChatType $env:CHAT_TYPE `
+                -ReleaseVersion $env:RELEASE_VERSION `
                 -RunTests 2>&1 |
                 Tee-Object -FilePath artifacts\build-modern.log
             } else {
               & packaging\windows\build_profile_msvc.ps1 `
                 -SdkDir "$pwd\sdk" `
                 -OutputDir "$pwd\artifacts" `
-                -ChatType $env:CHAT_TYPE 2>&1 |
+                -ChatType $env:CHAT_TYPE `
+                -ReleaseVersion $env:RELEASE_VERSION 2>&1 |
                 Tee-Object -FilePath artifacts\build-modern.log
             }
           } catch {

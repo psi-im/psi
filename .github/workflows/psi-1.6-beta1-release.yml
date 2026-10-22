@@ -1,0 +1,133 @@
+name: Psi 1.6 beta 1 Windows BASIC release
+
+# A release branch is created from the reviewed master commit after the normal
+# CI passes. The branch creation starts a tagged Windows build; tag/release
+# publication is gated on the NSIS installation and installed-app smoke test.
+on:
+  create:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: Exact beta version (currently 1.6_b1)
+        required: true
+        default: 1.6_b1
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    name: Validate Psi beta release source
+    if: >-
+      (github.event_name == 'create' && github.ref == 'refs/heads/release/1.6_b1') ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master')
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.verify.outputs.version }}
+    steps:
+      - name: Verify release tag and source commit
+        id: verify
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.release_version || '1.6_b1' }}
+        run: |
+          set -euo pipefail
+          [[ "$VERSION" == "1.6_b1" ]] || { echo "::error::Unexpected version: $VERSION"; exit 1; }
+          master_sha="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/master" --jq '.object.sha')"
+          [[ "$GITHUB_SHA" == "$master_sha" ]] || {
+            echo "::error::Release source must exactly match reviewed master: $GITHUB_SHA != $master_sha"
+            exit 1
+          }
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$VERSION" >/dev/null 2>&1; then
+            echo "::error::Release tag $VERSION already exists"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+  package:
+    name: Package and smoke-test Psi 1.6 beta 1 BASIC
+    needs: gate
+    uses: ./.github/workflows/windows-msvc-qt6-profile.yml
+    with:
+      chat_type: BASIC
+      release_version: ${{ needs.gate.outputs.version }}
+    permissions:
+      contents: read
+
+  publish:
+    name: Publish Psi 1.6 beta 1 prerelease
+    needs:
+      - gate
+      - package
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Download verified Windows BASIC packages
+        uses: actions/download-artifact@v4
+        with:
+          name: psi-windows-msvc-qt612-BASIC-x64
+          path: release
+
+      - name: Verify artifact identity and checksums
+        env:
+          VERSION: ${{ needs.gate.outputs.version }}
+        run: |
+          set -euo pipefail
+          cd release
+          test -s "psi-$VERSION-win10-x64-basic.zip"
+          test -s "psi-$VERSION-win10-x64-basic-setup.exe"
+          python3 - <<'PY'
+          import glob
+          import zipfile
+          import os
+
+          version = os.environ["VERSION"]
+          archive = f"psi-{version}-win10-x64-basic.zip"
+          with zipfile.ZipFile(archive) as z:
+              names = {name.removeprefix("./"): name for name in z.namelist()}
+              required = ("BUILD-INFO.txt", "psi.exe", "Qt6Core.dll",
+                          "PLUGINS-MANIFEST.json", "PSIMEDIA-SOURCE.json",
+                          "gstreamer-runtime.txt")
+              missing = [n for n in required if n not in names]
+              if missing:
+                  raise SystemExit(f"Required release payload missing: {missing}")
+              info = z.read(names["BUILD-INFO.txt"]).decode("utf-8-sig")
+              if f"Psi version: {version}" not in info or "Chat rendering: BASIC" not in info:
+                  raise SystemExit(f"Incorrect beta source or chat backend: {info}")
+              if "Qt6WebEngineCore.dll" in names:
+                  raise SystemExit("BASIC installer unexpectedly bundles Qt WebEngine")
+          PY
+          sha256sum "psi-$VERSION-win10-x64-basic.zip" "psi-$VERSION-win10-x64-basic-setup.exe" > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Publish prerelease and attach ZIP, NSIS, hashes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.gate.outputs.version }}
+        run: |
+          set -euo pipefail
+          if gh release view "$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::Release already exists: $VERSION"
+            exit 1
+          fi
+          cat > release-notes.md <<'EOF'
+          Psi 1.6 beta 1 — Windows 10/11 x64 preview
+
+          - Built with MSVC 2022, Qt 6.12 and the BASIC native chat renderer (no Qt WebEngine).
+          - Includes separately released Plugins 1.6 and PsiMedia v1.2.1 with GStreamer.
+          - Installs via NSIS or runs from the portable ZIP.
+          - Automated verification silently installs the NSIS package and starts the installed psi.exe; manual verification also covered XMPP audio/video calling.
+          - Beta / testing release. Windows 7 / Qt5 remains a separate compatibility build.
+
+          Download the setup EXE for normal installation or ZIP for portable use.
+          See SHA256SUMS.txt to verify downloads.
+          EOF
+          gh release create "$VERSION" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Psi $VERSION — Windows x64 Qt 6.12 BASIC" \
+            --prerelease \
+            --notes-file release-notes.md \
+            release/*.zip release/*-setup.exe release/SHA256SUMS.txt
