@@ -44,6 +44,7 @@ add_test(NAME mam_archive_peer_policy COMMAND mam_archive_peer_policy_test)
 # Test doubles supply deterministic icon assets and the account/storage boundary.
 add_executable(mam_chat_widget_test MamChatWidgetTest.cpp
     ${PSI_WIDGETS}/MamChatWidget.cpp ${PSI_WIDGETS}/MamChatWidget.h
+    ${PSI_WIDGETS}/MamImageViewer.cpp ${PSI_WIDGETS}/MamImageViewer.h
     ${PSI_WIDGETS}/MamHistorySource.cpp ${PSI_WIDGETS}/MamHistorySource.h
     ${PSI_WIDGETS}/ChatMessageText.cpp ${PSI_WIDGETS}/ChatMessageText.h
     ${PSI_WIDGETS}/MessagePreview.cpp ${PSI_WIDGETS}/MessagePreview.h
