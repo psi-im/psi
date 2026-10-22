@@ -45,6 +45,25 @@ jobs:
           filter: blob:none
           submodules: false
 
+      - name: Validate PowerShell packaging script syntax
+        shell: pwsh
+        run: |
+          foreach ($path in @(
+            'packaging/windows/build_profile_msvc.ps1',
+            'packaging/windows/smoke_installer.ps1'
+          )) {
+            $tokens = $null
+            $parseErrors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path $path).Path, [ref]$tokens, [ref]$parseErrors
+            ) | Out-Null
+            if ($parseErrors.Count -gt 0) {
+              $parseErrors | ForEach-Object { Write-Host "::error::$($_.Message)" }
+              throw "PowerShell parsing failed: $path"
+            }
+            Write-Host "PowerShell syntax OK: $path"
+          }
+
       - name: Fetch bundled sources shallowly
         shell: bash
         run: |
