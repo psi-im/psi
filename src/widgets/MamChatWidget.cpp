@@ -2544,6 +2544,50 @@ void MamChatWidget::refreshReplyPreviews(bool force)
     }
 }
 
+// Return an external image URL only for an image under the pointer. SIMS
+// images are rendered with share: IDs, so their HTTP source has to be looked
+// up through the account-specific FileSharingItem instead of copying share:.
+static QString httpImageLink(const QTextImageFormat &format, const QString &messageHtml,
+                             FileSharingDeviceOpener *mediaOpener)
+{
+    const QUrl source(format.name());
+    const auto isHttp = [](const QUrl &url) {
+        return url.isValid() && !url.host().isEmpty()
+            && (url.scheme() == QLatin1String("http") || url.scheme() == QLatin1String("https"));
+    };
+    if (isHttp(source))
+        return source.toString(QUrl::FullyEncoded);
+    if (source.scheme() != QLatin1String("share") || !mediaOpener)
+        return {};
+
+    const QString id = source.path();
+    static const QRegularExpression tagRx(QStringLiteral(R"(<share\s+([^<>]*?)/>)"));
+    static const QRegularExpression attrRx(QStringLiteral(R"attr((id|account)\s*=\s*"([^"]*)")attr"));
+    auto tags = tagRx.globalMatch(messageHtml);
+    while (tags.hasNext()) {
+        const auto tag = tags.next();
+        QString tagId, account;
+        auto attrs = attrRx.globalMatch(tag.captured(1));
+        while (attrs.hasNext()) {
+            const auto attr = attrs.next();
+            if (attr.captured(1) == QLatin1String("id"))
+                tagId = attr.captured(2);
+            else if (attr.captured(1) == QLatin1String("account"))
+                account = attr.captured(2);
+        }
+        if (tagId != id)
+            continue;
+        auto *opener = mediaOpener->forAccount(account);
+        auto *item = opener ? opener->sharedItem(id) : nullptr;
+        if (item && item->mimeType().startsWith(QLatin1String("image/"))) {
+            const QUrl url = item->simpleSource();
+            if (isHttp(url))
+                return url.toString(QUrl::FullyEncoded);
+        }
+    }
+    return {};
+}
+
 QMenu *MamChatWidget::createMessageContextMenu(const QString &key, QWidget *target, const QPoint &globalPosition)
 {
     const int at = indexOfKey(key);
@@ -2607,13 +2651,32 @@ QMenu *MamChatWidget::createMessageContextMenu(const QString &key, QWidget *targ
         }
     });
     if (body && (target == body || target == body->viewport())) {
-        const QString link = body->anchorAt(body->viewport()->mapFromGlobal(globalPosition));
-        if (!link.isEmpty()) {
+        const QPoint point = body->viewport()->mapFromGlobal(globalPosition);
+        QTextCursor cursor = body->cursorForPosition(point);
+        QTextCharFormat format = cursor.charFormat();
+        if (!format.isImageFormat() && cursor.movePosition(QTextCursor::PreviousCharacter))
+            format = cursor.charFormat();
+        QString imageLink;
+        if (format.isImageFormat()) {
+            const auto &message = items_.at(at).message;
+            const QString html = message.hasReplyFallback() ? message.replyFormattedText() : message.formattedText();
+            imageLink = httpImageLink(format.toImageFormat(), html, mediaOpener_);
+        }
+        if (!imageLink.isEmpty()) {
             menu->addSeparator();
-            connect(menu->addAction(tr("Open link")), &QAction::triggered, this,
-                    [link] { URLObject::getInstance()->popupAction(link); });
-            connect(menu->addAction(tr("Copy link address")), &QAction::triggered, this,
-                    [link] { QApplication::clipboard()->setText(link); });
+            auto *copyImageLink = menu->addAction(tr("Copy image link"));
+            copyImageLink->setObjectName(QStringLiteral("mamCopyImageLink"));
+            connect(copyImageLink, &QAction::triggered, this,
+                    [imageLink] { QApplication::clipboard()->setText(imageLink); });
+        } else {
+            const QString link = body->anchorAt(point);
+            if (!link.isEmpty()) {
+                menu->addSeparator();
+                connect(menu->addAction(tr("Open link")), &QAction::triggered, this,
+                        [link] { URLObject::getInstance()->popupAction(link); });
+                connect(menu->addAction(tr("Copy link address")), &QAction::triggered, this,
+                        [link] { QApplication::clipboard()->setText(link); });
+            }
         }
     }
     return menu;
