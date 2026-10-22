@@ -164,7 +164,13 @@ def main():
     args = parser.parse_args()
     values = read_dependencies(args.workspace, require_iris=args.require_iris)
     if args.verify_iris_release:
-        verify_iris_release(args.workspace, values["IRIS_RELEASE_TAG"])
+        # Strict release matching applies only to Psi release-tag builds.
+        psi_tag = os.environ.get("GITHUB_REF", "")
+        is_release = (psi_tag.startswith("refs/tags/")
+                      and re.fullmatch(r"\d+\.\d+(?:[._-][A-Za-z0-9.]+)*",
+                                       psi_tag.removeprefix("refs/tags/")))
+        if is_release:
+            verify_iris_release(args.workspace, values["IRIS_RELEASE_TAG"])
     output = "\n".join(f"{name}={value}" for name, value in values.items()) + "\n"
     for target in ("GITHUB_ENV", "GITHUB_OUTPUT"):
         if os.environ.get(target):
