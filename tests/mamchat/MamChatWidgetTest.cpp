@@ -269,7 +269,7 @@ private slots:
 
         const auto viewerWindow = []() -> MamImageViewer * {
             for (auto *widget : QApplication::topLevelWidgets())
-                if (widget->objectName() == QLatin1String("mamImageViewer"))
+                if (widget->isVisible() && widget->objectName() == QLatin1String("mamImageViewer"))
                     return qobject_cast<MamImageViewer *>(widget);
             return nullptr;
         };
