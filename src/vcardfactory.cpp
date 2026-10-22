@@ -28,6 +28,7 @@
 #include "profiles.h"
 #include "psiaccount.h"
 #include "vcardrequestpolicy.h"
+#include "vcardrequestmerge.h"
 
 #include "iris/xmpp-im/xmpp_pubsubitem.h"
 #include "iris/xmpp-im/xmpp_serverinfomanager.h"
@@ -80,13 +81,10 @@ VCardFactory::VCardFactory() : QObject(qApp), dictSize_(5), queuedLoader_(new Qu
             if (request->flags() & PhotoOnly) {
                 // The server returns the whole vcard-temp stanza, but the
                 // photo request may update only the cached PHOTO field.
-                const auto photo = request->vcard().photo();
-                if (!photo.isEmpty()) {
-                    VCard4::VCard cached = (request->flags() & MucUser)
-                        ? mucVcard(request->jid()) : vcard(request->jid());
-                    cached.setPhoto(photo);
+                VCard4::VCard cached = (request->flags() & MucUser)
+                    ? mucVcard(request->jid()) : vcard(request->jid());
+                if (VCardRequestMerge::applyLegacyPhoto(cached, request->vcard()))
                     saveVCard(request->jid(), cached, request->flags() & ~PhotoOnly);
-                }
             } else {
                 saveVCard(request->jid(), request->vcard(), request->flags());
             }
@@ -389,34 +387,6 @@ bool VCardRequest::execute()
     return true;
 }
 
-// Prefer modern fields, supplement missing ones from the legacy store.
-static void supplementFromLegacy(VCard4::VCard &modern, const VCard4::VCard &legacy)
-{
-    if (!legacy)
-        return;
-    if (!modern || modern.isEmpty()) {
-        modern = legacy;
-        return;
-    }
-    if (modern.fullName().isEmpty()) modern.setFullName(legacy.fullName());
-    if (modern.names().data.isEmpty()) modern.setNames(legacy.names());
-    if (modern.nickName().isEmpty()) modern.setNickName(legacy.nickName());
-    if (modern.photo().isEmpty()) modern.setPhoto(legacy.photo());
-    if (modern.emails().isEmpty()) modern.setEmails(legacy.emails());
-    if (modern.phones().isEmpty()) modern.setPhones(legacy.phones());
-    if (modern.addresses().isEmpty()) modern.setAddresses(legacy.addresses());
-    if (modern.org().isEmpty()) modern.setOrg(legacy.org());
-    if (modern.title().isEmpty()) modern.setTitle(legacy.title());
-    if (modern.role().isEmpty()) modern.setRole(legacy.role());
-    if (modern.note().isEmpty()) modern.setNote(legacy.note());
-    if (modern.urls().isEmpty()) modern.setUrls(legacy.urls());
-    if (modern.bday().isEmpty()) modern.setBday(legacy.bday());
-    if (modern.categories().isEmpty()) modern.setCategories(legacy.categories());
-    if (modern.logo().isEmpty()) modern.setLogo(legacy.logo());
-    if (modern.impp().isEmpty()) modern.setImpp(legacy.impp());
-    if (modern.timeZone().isEmpty()) modern.setTimeZone(legacy.timeZone());
-}
-
 void VCardRequest::executeVCardTemp(PsiAccount *pa)
 {
     JT_VCard *task = new JT_VCard(pa->client()->rootTask());
@@ -424,7 +394,7 @@ void VCardRequest::executeVCardTemp(PsiAccount *pa)
         if (task->success()) {
             VCard4::VCard legacy;
             legacy.fromVCardTemp(task->vcard());
-            supplementFromLegacy(d->vcard, legacy);
+            VCardRequestMerge::supplement(d->vcard, legacy);
             d->storeAnswered = true;
             d->error.reset();
             d->statusString.clear();
