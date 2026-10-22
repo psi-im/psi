@@ -6,6 +6,7 @@
 // vCard4 (XEP-0292) and vcard-temp (XEP-0054) are independent stores.
 // Modern values win when present, while legacy fields can fill gaps.
 namespace VCardRequestMerge {
+namespace VCard4 = XMPP::VCard4;
 inline void supplement(VCard4::VCard &modern, const VCard4::VCard &legacy)
 {
     if (!legacy)
