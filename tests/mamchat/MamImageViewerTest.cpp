@@ -4,6 +4,7 @@
 #include <QApplication>
 #include <QMoveEvent>
 #include <QWheelEvent>
+#include <QWindowStateChangeEvent>
 #include <QtTest/QtTest>
 #include <cmath>
 
@@ -88,7 +89,7 @@ private slots:
 
         zoom(viewer, +1);
         QVERIFY(viewer.hasTemporaryZoom());
-        QEvent stateChanged(QEvent::WindowStateChange);
+        QWindowStateChangeEvent stateChanged(Qt::WindowNoState);
         QApplication::sendEvent(&viewer, &stateChanged);
         QVERIFY(!viewer.hasTemporaryZoom());
     }
