@@ -275,13 +275,15 @@ private slots:
         };
         auto *viewAction = menu->findChild<QAction *>(QStringLiteral("mamViewImage"));
         QVERIFY(viewAction);
+        QPointer<QMenu> menuGuard(menu); // Focus changes may auto-close/delete this popup.
         viewAction->trigger();
         QTRY_VERIFY(viewerWindow());
         auto *viewer = viewerWindow();
         QVERIFY(viewer->displayedImageRect().width() >= 300);
         viewer->close();
         QCoreApplication::processEvents();
-        delete menu;
+        if (menuGuard)
+            menuGuard->close();
 
         // A normal left-click also opens the viewer, but a drag does not.
         QTest::mouseClick(body->viewport(), Qt::LeftButton, Qt::NoModifier, click);
