@@ -11,7 +11,6 @@ private slots:
     {
         XMPP::VCard4::VCard modern;
         modern.setFullName(QStringLiteral("Modern"));
-        modern.setEmails(QStringList()); // No email in the modern store.
         XMPP::VCard4::VCard legacy;
         legacy.setFullName(QStringLiteral("Old name"));
         legacy.setNickName(QStringList { QStringLiteral("Old nickname") });
