@@ -78,9 +78,10 @@ private slots:
         QVERIFY(viewer.currentScale() < 1);
         QVERIFY(std::abs(viewer.currentScale() - fit) > 0.001);
 
+        const qreal newFit = viewer.currentScale();
         zoom(viewer, -4);
         QVERIFY(viewer.hasTemporaryZoom());
-        QVERIFY(viewer.currentScale() < viewer.displayedImageRect().width() / image.width() + 0.0001);
+        QVERIFY(viewer.currentScale() < newFit);
         viewer.move(viewer.pos() + QPoint(20, 15));
         QTRY_VERIFY(!viewer.hasTemporaryZoom());
         QVERIFY(viewer.currentScale() <= 1.0);
