@@ -161,4 +161,18 @@ if(NOT PSI_VERSION)
   unset(VER_LINES)
 endif()
 
+# An explicitly supplied PSI_VERSION bypasses obtain_git_version()/read_version_file(),
+# leaving APP_VERSION unset. Qt's Windows resource generator needs a strictly
+# numeric version independent from the user-facing version string.
+# E.g. show 1.6_b1 in Psi but embed 1.6.1.0 in the Windows PE resources.
+if(NOT APP_VERSION AND PSI_VERSION)
+  if(PSI_VERSION MATCHES "^([0-9]+)\\.([0-9]+)_b([0-9]+)$")
+    set(APP_VERSION "${CMAKE_MATCH_1}.${CMAKE_MATCH_2}.${CMAKE_MATCH_3}.0")
+  elseif(PSI_VERSION MATCHES "^([0-9]+(\\.[0-9]+)+)")
+    set(APP_VERSION "${CMAKE_MATCH_1}")
+  else()
+    message(FATAL_ERROR "Cannot derive numeric APP_VERSION from PSI_VERSION='${PSI_VERSION}'")
+  endif()
+endif()
+
 message(STATUS "${CLIENT_NAME} version set: ${PSI_VERSION}")
