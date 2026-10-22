@@ -49,13 +49,9 @@ class DependencyLockTests(unittest.TestCase):
         (self.root / "dependencies.lock.json").write_text(json.dumps(self.lock))
         values = resolver.read_dependencies(self.root)
         self.assertEqual(values["IRIS_RELEASE_TAG"], "")
-        with patch.object(resolver.subprocess, "check_output", return_value=
-                          "160000 commit " + "a" * 40 + "\tiris\n") as run:
-            resolver.verify_iris_release(self.root, values["IRIS_RELEASE_TAG"])
-            self.assertEqual(run.call_count, 1)
-        with patch.object(resolver.subprocess, "check_output", return_value=""):
-            with self.assertRaisesRegex(ValueError, "gitlink"):
-                resolver.verify_iris_release(self.root, "")
+        with patch.object(resolver.subprocess, "check_output") as run:
+            self.assertEqual(resolver.resolve_iris_release(self.root, "", strict=True), "")
+            run.assert_not_called()
 
     def test_psi_qca_pin_matches_iris_and_rejects_divergence(self):
         self.with_iris()
@@ -99,30 +95,77 @@ class DependencyLockTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "exact gitlink"):
             resolver.read_dependencies(self.root)
 
-    def verify_release(self, remote, entry=None):
+    def resolve_release(self, remote, entry=None, strict=False):
         entry = entry if entry is not None else "160000 commit " + "a" * 40 + "\tiris\n"
         tag = self.lock["iris"]["release_tag"]
-        with patch.object(resolver.subprocess, "check_output", side_effect=[entry, remote]) as run:
-            resolver.verify_iris_release(self.root, tag)
-            self.assertEqual(run.call_args_list[1].args[0][-2:],
-                             ["refs/tags/" + tag, "refs/tags/" + tag + "^{}"])
+        with patch.object(resolver.subprocess, "check_output",
+                          side_effect=[entry, remote]) as run:
+            result = resolver.resolve_iris_release(self.root, tag, strict=strict)
+            self.assertEqual(run.call_count, 2)
+            self.assertEqual(run.call_args_list[1].args[0],
+                             ["git", "ls-remote", "--tags", "https://github.com/psi-im/iris.git"])
+            return result
 
-    def test_release_verification_accepts_lightweight_and_annotated_tags(self):
+    def test_matching_lightweight_and_annotated_tags_use_sdk(self):
         ref = "refs/tags/" + self.lock["iris"]["release_tag"]
-        self.verify_release("a" * 40 + "\t" + ref + "\n")
-        # Annotated tag objects have their own SHA; compare the peeled commit.
-        self.verify_release("b" * 40 + "\t" + ref + "\n" + "a" * 40 + "\t" + ref + "^{}\n")
+        self.assertEqual(self.resolve_release("a" * 40 + "\t" + ref + "\n"), "v1.5.1")
+        self.assertEqual(self.resolve_release("b" * 40 + "\t" + ref + "\n"
+                                              + "a" * 40 + "\t" + ref + "^{}\n",
+                                              strict=True), "v1.5.1")
 
-    def test_release_verification_rejects_missing_or_different_source(self):
-        ref = "refs/tags/" + self.lock["iris"]["release_tag"]
-        with self.assertRaisesRegex(ValueError, "does not exist"):
-            self.verify_release("")
-        with self.assertRaisesRegex(ValueError, "does not match"):
-            self.verify_release("b" * 40 + "\t" + ref + "\n")
-        with self.assertRaisesRegex(ValueError, "does not match"):
-            self.verify_release("a" * 40 + "\t" + ref + "\n" + "b" * 40 + "\t" + ref + "^{}\n")
+    def test_branch_with_stale_iris_tag_uses_source_instead_of_old_sdk(self):
+        ref = "refs/tags/v1.5.1"
+        self.assertEqual(self.resolve_release("b" * 40 + "\t" + ref + "\n"), "")
+        self.assertEqual(self.resolve_release(""), "")
+        self.assertEqual(self.resolve_release(
+            "b" * 40 + "\t" + ref + "\n"
+            + "a" * 40 + "\trefs/tags/v1.5.2\n"), "")
+
+    def test_tagged_psi_with_untagged_iris_uses_source(self):
+        # A release of Psi can include a newer, unreleased Iris gitlink.
+        self.assertEqual(self.resolve_release(
+            "b" * 40 + "\trefs/tags/v1.5.1\n", strict=True), "")
+        self.assertEqual(self.resolve_release("", strict=True), "")
+
+    def test_tagged_psi_rejects_a_different_iris_release(self):
+        remote = ("b" * 40 + "\trefs/tags/v1.5.1\n"
+                  + "a" * 40 + "\trefs/tags/v1.5.2\n")
+        with self.assertRaisesRegex(ValueError, "tagged v1.5.2"):
+            self.resolve_release(remote, strict=True)
+        self.assertEqual(self.resolve_release(remote, strict=False), "")
+
+    def test_remote_failures_are_only_fatal_on_tagged_psi(self):
+        with patch.object(resolver.subprocess, "check_output",
+                          side_effect=OSError("offline")):
+            self.assertEqual(resolver.resolve_iris_release(self.root, "v1.5.1"), "")
+            with self.assertRaises(OSError):
+                resolver.resolve_iris_release(self.root, "v1.5.1", strict=True)
         with self.assertRaisesRegex(ValueError, "gitlink"):
-            self.verify_release("", entry="040000 tree " + "a" * 40 + "\tiris\n")
+            self.resolve_release("", entry="040000 tree " + "a" * 40 + "\tiris\n",
+                                 strict=True)
+        # Ordinary development builds are not failed by the release-only gate.
+        with patch.object(resolver.subprocess, "check_output",
+                          return_value="invalid"):
+            self.assertEqual(resolver.resolve_iris_release(self.root, "v1.5.1"), "")
+
+    def test_cli_marks_only_psi_tagged_builds_strict(self):
+        import io
+        from contextlib import redirect_stdout
+        for ref, expected in (("refs/heads/master", False),
+                              ("refs/pull/1032/merge", False),
+                              ("refs/tags/1.6_b2", True)):
+            with self.subTest(ref=ref), \
+                 patch.object(resolver, "read_dependencies",
+                              return_value={"IRIS_RELEASE_TAG": "v1.5.1"}), \
+                 patch.object(resolver, "resolve_iris_release",
+                              return_value="") as resolve, \
+                 patch.dict(resolver.os.environ, {"GITHUB_REF": ref}, clear=True), \
+                 patch.object(resolver.sys, "argv",
+                              ["resolve-dependencies.py", "--verify-iris-release"]), \
+                 redirect_stdout(io.StringIO()) as output:
+                resolver.main()
+                self.assertIn("IRIS_RELEASE_TAG=\n", output.getvalue())
+                self.assertEqual(resolve.call_args.kwargs["strict"], expected)
 
     def test_dependency_pins_are_not_duplicated_in_workflows(self):
         workflow_dir = ROOT / ".github/workflows"
