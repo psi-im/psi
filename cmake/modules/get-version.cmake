@@ -95,52 +95,42 @@ function(obtain_git_version GIT_VERSION GIT_FULL_VERSION)
 endfunction()
 
 function(obtain_psi_file_version VERSION_LINES OUTPUT_VERSION)
-  string(REGEX MATCHALL "^([0-9]+(\\.[0-9]+)+)+(.+, ([a-fA-F0-9]+)?)?"
-               VER_LINE_A ${VERSION_LINES})
-  if(${CMAKE_MATCH_COUNT} EQUAL 4)
-    if(CMAKE_MATCH_1)
-      set(_APP_VERSION ${CMAKE_MATCH_1})
-    endif()
-    if(CMAKE_MATCH_4)
-      set(_PSI_REVISION ${CMAKE_MATCH_4})
-    endif()
-  elseif(${CMAKE_MATCH_COUNT} EQUAL 2)
-    if(CMAKE_MATCH_1)
-      set(_APP_VERSION ${CMAKE_MATCH_1})
+  # match version in formats N.N.N and N.N_SN.N and even N.N_SN.N_SN
+  # where N - number and S - string (aA or bB)
+  string(REGEX MATCH "^([0-9]+(\\.[0-9a-bA-B_]+)+)+" VER_LINE_A "${VERSION_LINES}")
+  set(_APP_VERSION "${CMAKE_MATCH_1}")
+  # specifies the revision, if it is present within the parentheses
+  if("${VERSION_LINES}" MATCHES "\\(([^)]*)\\)")
+    set(_INNER_TEXT "${CMAKE_MATCH_1}")
+    if("${_INNER_TEXT}" MATCHES ", ([a-fA-F0-9]+)")
+      set(_PSI_REVISION "${CMAKE_MATCH_1}")
     endif()
   endif()
   if(_APP_VERSION)
-    set(APP_VERSION
-        ${_APP_VERSION}
-        PARENT_SCOPE)
     message(STATUS "Psi version found: ${_APP_VERSION}")
   else()
     message(
       WARNING "Psi+ version not found! ${DEFAULT_VER} version will be set")
-    set(_APP_VERSION ${DEFAULT_VER})
-    set(APP_VERSION
-        ${_APP_VERSION}
-        PARENT_SCOPE)
+      set(_APP_VERSION ${DEFAULT_VER})
   endif()
+  set(APP_VERSION ${_APP_VERSION} PARENT_SCOPE)
+  # Psi revision
   if(_PSI_REVISION)
-    set(PSI_REVISION
-        ${_PSI_REVISION}
-        PARENT_SCOPE)
+    set(PSI_REVISION ${_PSI_REVISION} PARENT_SCOPE)
     message(STATUS "Psi revision found: ${_PSI_REVISION}")
   endif()
+  # Form OUTPUT_VERSION
   if(_APP_VERSION AND _PSI_REVISION)
     set(${OUTPUT_VERSION}
-        "${_APP_VERSION} \(${PSI_COMPILATION_DATE}, ${_PSI_REVISION}${PSI_VER_SUFFIX}\)"
-        PARENT_SCOPE)
+    "${_APP_VERSION} \(${PSI_COMPILATION_DATE}, ${_PSI_REVISION}${PSI_VER_SUFFIX}\)"
+    PARENT_SCOPE)
   else()
     if(PRODUCTION AND (NOT PSI_PLUS))
-      set(${OUTPUT_VERSION}
-          "${_APP_VERSION}"
-          PARENT_SCOPE)
+      set(${OUTPUT_VERSION} "${_APP_VERSION}" PARENT_SCOPE)
     else()
       set(${OUTPUT_VERSION}
-          "${_APP_VERSION} \(${PSI_COMPILATION_DATE}${PSI_VER_SUFFIX}\)"
-          PARENT_SCOPE)
+      "${_APP_VERSION} \(${PSI_COMPILATION_DATE}${PSI_VER_SUFFIX}\)"
+      PARENT_SCOPE)
     endif()
   endif()
 endfunction()
