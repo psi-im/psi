@@ -497,12 +497,12 @@ VCardFactory::QueuedLoader::QueuedLoader(VCardFactory *vcf) : QObject(vcf)
             qDebug() << "received VCardRequest" << request->jid().full();
 #endif
             emit vcardReceived(request);
-            jid2req.remove(request->jid());
+            (request->flags() & PhotoOnly ? photoReqs_ : jid2req).remove(request->jid());
             request->deleteLater();
         });
         auto started = request->execute();
         if (!started) {
-            jid2req.remove(request->jid());
+            (request->flags() & PhotoOnly ? photoReqs_ : jid2req).remove(request->jid());
             request->deleteLater();
         }
         if (queue_.isEmpty()) {
@@ -511,7 +511,11 @@ VCardFactory::QueuedLoader::QueuedLoader(VCardFactory *vcf) : QObject(vcf)
     });
 }
 
-VCardFactory::QueuedLoader::~QueuedLoader() { qDeleteAll(jid2req); }
+VCardFactory::QueuedLoader::~QueuedLoader()
+{
+    qDeleteAll(jid2req);
+    qDeleteAll(photoReqs_);
+}
 
 VCardRequest *VCardFactory::QueuedLoader::enqueue(PsiAccount *acc, const Jid &jid, Flags flags, Priority prio)
 {
@@ -519,13 +523,14 @@ VCardRequest *VCardFactory::QueuedLoader::enqueue(PsiAccount *acc, const Jid &ji
     if (!(flags & MucUser)) {
         sanitized_jid = jid.withResource({});
     }
-    auto req = jid2req[sanitized_jid];
+    auto &requests = flags & PhotoOnly ? photoReqs_ : jid2req;
+    auto req = requests.value(sanitized_jid);
     if (!req) {
 #ifdef VCF_DEBUG
         qDebug() << "new VCardRequest" << sanitized_jid.full() << flags;
 #endif
         req                    = new VCardRequest(acc, sanitized_jid, flags);
-        jid2req[sanitized_jid] = req;
+        requests.insert(sanitized_jid, req);
         if (prio == HighPriority) {
             queue_.prepend(req);
         } else {
