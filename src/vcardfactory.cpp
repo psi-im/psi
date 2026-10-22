@@ -27,10 +27,8 @@
 #include "pepmanager.h"
 #include "profiles.h"
 #include "psiaccount.h"
-#include "userlist.h"
 #include "vcardrequestpolicy.h"
 
-#include "iris/xmpp-im/xmpp_caps.h"
 #include "iris/xmpp-im/xmpp_pubsubitem.h"
 #include "iris/xmpp-im/xmpp_serverinfomanager.h"
 #include "iris/xmpp-im/xmpp_vcard4.h"
@@ -58,6 +56,7 @@ class VCardFactory::QueuedLoader : public QObject {
 
     VCardRequestQueue          queue_;
     QHash<Jid, VCardRequest *> jid2req;
+    QHash<Jid, VCardRequest *> photoReqs_; // independent of full-card requests
     QTimer                     timer_;
 
 signals:
@@ -78,7 +77,18 @@ VCardFactory::VCardFactory() : QObject(qApp), dictSize_(5), queuedLoader_(new Qu
 {
     connect(queuedLoader_, &QueuedLoader::vcardReceived, this, [this](const VCardRequest *request) {
         if (request->success()) {
-            saveVCard(request->jid(), request->vcard(), request->flags());
+            if (request->flags() & PhotoOnly) {
+                // The server returns the whole vcard-temp stanza, but the
+                // photo request may update only the cached PHOTO field.
+                const auto photo = request->vcard().photo();
+                if (!photo.isEmpty()) {
+                    VCard4::VCard cached = vcard(request->jid());
+                    cached.setPhoto(photo);
+                    saveVCard(request->jid(), cached, request->flags() & ~PhotoOnly);
+                }
+            } else {
+                saveVCard(request->jid(), request->vcard(), request->flags());
+            }
         }
 #ifdef VCF_DEBUG
         else {
@@ -262,6 +272,11 @@ VCardRequest *VCardFactory::getVCard(PsiAccount *account, const Jid &jid, Flags 
     return queuedLoader_->enqueue(account, jid, flags, QueuedLoader::HighPriority);
 }
 
+VCardRequest *VCardFactory::getVCardPhoto(PsiAccount *account, const Jid &jid, Flags flags)
+{
+    return queuedLoader_->enqueue(account, jid, flags | PhotoOnly, QueuedLoader::HighPriority);
+}
+
 void VCardFactory::setPhoto(const Jid &j, const QByteArray &photo, Flags flags)
 {
     VCard4::VCard vc;
@@ -321,7 +336,7 @@ void VCardFactory::ensureVCardPhotoUpdated(PsiAccount *acc, const Jid &jid, Flag
         if (!newPhotoHash.isEmpty()) {
             flags |= VCardFactory::ForceVCardTemp;
         }
-        queuedLoader_->enqueue(acc, jid, flags, QueuedLoader::NormalPriority);
+        queuedLoader_->enqueue(acc, jid, flags | PhotoOnly, QueuedLoader::NormalPriority);
     }
 }
 
@@ -337,6 +352,7 @@ public:
     VCard4::VCard vcard;
     ErrorPtr      error;
     QString       statusString;
+    bool          storeAnswered = false;
 
     Private(PsiAccount *pa, const Jid &jid, VCardFactory::Flags flags) :
         accounts({ { pa } }), jid(jid), flags(flags) { }
