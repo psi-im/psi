@@ -45,6 +45,11 @@ jobs:
           filter: blob:none
           submodules: false
 
+      - name: Validate explicit beta version resources
+        run: |
+          cmake -P tests/cmake/test-explicit-beta-version.cmake
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Validate PowerShell packaging script syntax
         shell: pwsh
         run: |
