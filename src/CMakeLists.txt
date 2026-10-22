@@ -405,6 +405,9 @@ if(WIN32)
         set(APP_ICON "app.ico")
     endif()
     normalize_version("${APP_VERSION}" FILE_VERSION)
+    # normalize_version produces the comma-separated RC form (1,6,1,1).
+    # Qt 6 expects the equivalent dotted numeric form for QT_TARGET_VERSION.
+    string(REPLACE "," "." QT_RC_VERSION "${FILE_VERSION}")
     message(STATUS "Normalized version string: ${FILE_VERSION}")
     if(NOT IS_WIN64)
         set(MANIFEST_ARCH "X86")
@@ -440,7 +443,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE QITE_FIRST_USER_PROPERTY=0x10
 if(WIN32 AND (${QT_DEFAULT_MAJOR_VERSION} GREATER_EQUAL 6))
     set_target_properties(${PROJECT_NAME} PROPERTIES
         WIN32_EXECUTABLE TRUE
-        QT_TARGET_VERSION "${APP_VERSION}"
+        QT_TARGET_VERSION "${QT_RC_VERSION}"
         QT_TARGET_COMPANY_NAME "${COMPANY_NAME}"
         QT_TARGET_DESCRIPTION "${APP_DESCRIPTION}"
         QT_TARGET_COPYRIGHT "${APP_COPYRIGHT}"
