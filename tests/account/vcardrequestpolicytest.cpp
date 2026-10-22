@@ -6,31 +6,24 @@
 class VCardRequestPolicyTest final : public QObject {
     Q_OBJECT
 private slots:
-    void protocolFromContactResourceCaps_data()
-    {
-        using Caps = VCardRequestPolicy::ResourceCapabilities;
-        QTest::addColumn<QList<Caps>>("resources");
-        QTest::addColumn<bool>("temp");
-
-        // In particular, bare JID capabilities are unknown even when a
-        // contact's full JID has advertised the legacy vcard-temp feature.
-        QTest::newRow("roster contact with vcard-temp only") << QList<Caps> { { true, false } } << true;
-        QTest::newRow("known unrelated features") << QList<Caps> { { true, false } } << true;
-        QTest::newRow("vcard4 announced") << QList<Caps> { { true, true } } << false;
-        QTest::newRow("vcard4 on second resource")
-            << QList<Caps> { { true, false }, { true, true } } << false;
-        QTest::newRow("unknown resource cannot override known legacy")
-            << QList<Caps> { { false, false }, { true, false } } << true;
-        QTest::newRow("unresolved capabilities") << QList<Caps> { { false, false } } << false;
-        QTest::newRow("no online resources") << QList<Caps> {} << false;
-    }
-
     void protocolFromContactResourceCaps()
     {
-        QFETCH(QList<VCardRequestPolicy::ResourceCapabilities>, resources);
-        QFETCH(bool, temp);
-        QCOMPARE(VCardRequestPolicy::select(false, false, resources)
-                     == VCardRequestPolicy::Protocol::VCardTemp, temp);
+        using namespace VCardRequestPolicy;
+        const auto temp = Protocol::VCardTemp;
+        const auto modern = Protocol::VCard4;
+
+        // The legacy feature is on the resource's full JID, while requests
+        // target the bare JID.
+        QCOMPARE(select(false, false, { { true, false } }), temp);
+        QCOMPARE(select(false, false, { { true, true } }), modern);
+        QCOMPARE(select(false, false, { { true, false }, { true, true } }), modern);
+        QCOMPARE(select(false, false, { { true, true }, { true, false } }), modern);
+        // Unknown caps are not evidence that vCard4 is unsupported.
+        QCOMPARE(select(false, false, { { false, false } }), modern);
+        QCOMPARE(select(false, false, { }), modern);
+        // However, they must not negate known legacy-only capabilities.
+        QCOMPARE(select(false, false, { { false, false }, { true, false } }), temp);
+        QCOMPARE(select(false, false, { { true, false }, { false, false } }), temp);
     }
 
     void explicitLegacyAndMucFlagsOverrideCapabilities()
