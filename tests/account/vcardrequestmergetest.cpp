@@ -35,6 +35,18 @@ private slots:
         QCOMPARE(modern.fullName().preferred().data, QStringLiteral("Legacy only"));
     }
 
+    void embeddedLegacyPhotoWinsOverModernUriOnlyPhoto()
+    {
+        XMPP::VCard4::VCard modern;
+        modern.setFullName(QStringLiteral("Modern"));
+        modern.setPhoto(XMPP::VCard4::UriValue(QStringLiteral("https://example.org/photo")));
+        XMPP::VCard4::VCard legacy;
+        legacy.setPhoto(XMPP::VCard4::UriValue(QByteArray("embedded"), QStringLiteral("image/jpeg")));
+        VCardRequestMerge::supplement(modern, legacy);
+        QCOMPARE(modern.fullName().preferred().data, QStringLiteral("Modern"));
+        QCOMPARE(QByteArray(modern.photo()), QByteArray("embedded"));
+    }
+
     void avatarRefreshRetainsAllExistingFields()
     {
         XMPP::VCard4::VCard cached;
