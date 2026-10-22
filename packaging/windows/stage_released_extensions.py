@@ -118,22 +118,36 @@ def stage_extensions(
     media_rel = media_plugins[0].relative_to(media_payload)
     if not media_rel.parts or media_rel.parts[0].lower() != "plugins":
         fail(f"Unexpected media plugin location: {media_rel}")
-    gst = media_payload / "gstreamer-1.0"
-    if not gst.is_dir() or not any(gst.glob("*.dll")):
+    # PsiMedia's independent Windows install has two roots:
+    #   stage-msvc-modern/psi/plugins/mediaplugin.dll
+    #   stage-msvc-modern/gstreamer-1.0/*.dll, gstreamer-runtime.txt
+    # BIN_INSTALL_DIR is CMAKE_INSTALL_PREFIX, while PLUGINS_INSTALL_PATH
+    # includes the Psi application directory. Only the latter prefix needs
+    # stripping when overlaying an already-installed Psi package.
+    gst = media_stage / "gstreamer-1.0"
+    if not gst.is_dir() or not any(
+        p.is_file() and p.suffix.lower() == ".dll" for p in gst.iterdir()
+    ):
         fail("Prebuilt PsiMedia package lacks its GStreamer plugin runtime")
-    gst_manifest = media_payload / "gstreamer-runtime.txt"
+    gst_manifest = media_stage / "gstreamer-runtime.txt"
     if not gst_manifest.is_file():
         fail("Prebuilt PsiMedia GStreamer runtime manifest missing")
 
     media_hashes: dict[str, str] = {}
-    for file in sorted(media_payload.rglob("*")):
+    for file in sorted(media_stage.rglob("*")):
         if file.is_symlink():
             fail(f"Unexpected symlink in PsiMedia release: {file}")
         if not file.is_file():
             continue
-        relative = file.relative_to(media_payload)
+        relative = file.relative_to(media_stage)
+        if relative.parts[0].lower() == "psi":
+            if len(relative.parts) == 1:
+                fail(f"Invalid PsiMedia path: {relative}")
+            destination_relative = Path(*relative.parts[1:])
+        else:
+            destination_relative = relative
         media_hashes[relative.as_posix()] = hash_file(file)
-        copy_checked(file, target / relative)
+        copy_checked(file, target / destination_relative)
 
     (target / "PSIMEDIA-SOURCE.json").write_text(
         json.dumps(
