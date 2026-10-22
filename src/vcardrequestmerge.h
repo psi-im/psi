@@ -18,7 +18,10 @@ inline void supplement(VCard4::VCard &modern, const VCard4::VCard &legacy)
     if (modern.fullName().isEmpty()) modern.setFullName(legacy.fullName());
     if (modern.names().data.isEmpty()) modern.setNames(legacy.names());
     if (modern.nickName().isEmpty()) modern.setNickName(legacy.nickName());
-    if (modern.photo().isEmpty()) modern.setPhoto(legacy.photo());
+    // Prefer a directly usable legacy PHOTO over a modern URI-only image.
+    if (modern.photo().isEmpty()
+        || (QByteArray(modern.photo()).isEmpty() && !QByteArray(legacy.photo()).isEmpty()))
+        modern.setPhoto(legacy.photo());
     if (modern.emails().isEmpty()) modern.setEmails(legacy.emails());
     if (modern.phones().isEmpty()) modern.setPhones(legacy.phones());
     if (modern.addresses().isEmpty()) modern.setAddresses(legacy.addresses());
