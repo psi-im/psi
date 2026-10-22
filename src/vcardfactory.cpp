@@ -373,32 +373,46 @@ bool VCardRequest::execute()
     if (paIt == d->accounts.end())
         return false;
 
-    PsiAccount *pa = *paIt;
-    const bool forceTemp = (d->flags & VCardFactory::ForceVCardTemp) || (d->flags & VCardFactory::MucRoom)
-        || (d->flags & VCardFactory::MucUser);
-    const bool ownCard = d->jid.compare(pa->jid(), false);
-    QList<VCardRequestPolicy::ResourceCapabilities> resources;
-    if (!forceTemp && !ownCard) {
-        // The request queue normalizes ordinary contacts to bare JIDs, but
-        // entity capabilities belong to their *full* resource JIDs. Never
-        // query capabilities of the bare JID to decide the protocol.
-        auto *caps = pa->client()->capsManager();
-        for (const UserListItem *contact : pa->findRelevant(d->jid)) {
-            for (const UserResource &resource : contact->userResourceList()) {
-                const Features features = caps->features(d->jid.withResource(resource.name()));
-                resources.append({ !features.isEmpty(), features.hasVCard4() });
-            }
-        }
-    }
-    const bool doTemp = VCardRequestPolicy::select(forceTemp, ownCard, resources)
-        == VCardRequestPolicy::Protocol::VCardTemp;
+    const auto plan = VCardRequestPolicy::plan(
+        d->flags & VCardFactory::PhotoOnly,
+        d->flags & VCardFactory::ForceVCardTemp,
+        (d->flags & VCardFactory::MucRoom) || (d->flags & VCardFactory::MucUser));
 
-    if (doTemp) {
-        executeVCardTemp(pa);
-    } else {
-        executePubSub(pa);
-    }
+    // Both stores belong to the account's server, not individual resources.
+    // Entity caps advertise client support and are irrelevant here.
+    if (plan.fetchModern)
+        executePubSub(*paIt); // Always proceeds to vcard-temp after PEP.
+    else
+        executeVCardTemp(*paIt);
     return true;
+}
+
+// Prefer modern fields, supplement missing ones from the legacy store.
+static void supplementFromLegacy(VCard4::VCard &modern, const VCard4::VCard &legacy)
+{
+    if (!legacy)
+        return;
+    if (!modern || modern.isEmpty()) {
+        modern = legacy;
+        return;
+    }
+    if (modern.fullName().isEmpty()) modern.setFullName(legacy.fullName());
+    if (modern.names().isEmpty()) modern.setNames(legacy.names());
+    if (modern.nickName().isEmpty()) modern.setNickName(legacy.nickName());
+    if (modern.photo().isEmpty()) modern.setPhoto(legacy.photo());
+    if (modern.emails().isEmpty()) modern.setEmails(legacy.emails());
+    if (modern.phones().isEmpty()) modern.setPhones(legacy.phones());
+    if (modern.addresses().isEmpty()) modern.setAddresses(legacy.addresses());
+    if (modern.org().isEmpty()) modern.setOrg(legacy.org());
+    if (modern.title().isEmpty()) modern.setTitle(legacy.title());
+    if (modern.role().isEmpty()) modern.setRole(legacy.role());
+    if (modern.note().isEmpty()) modern.setNote(legacy.note());
+    if (modern.urls().isEmpty()) modern.setUrls(legacy.urls());
+    if (modern.bday().isEmpty()) modern.setBday(legacy.bday());
+    if (modern.categories().isEmpty()) modern.setCategories(legacy.categories());
+    if (modern.logo().isEmpty()) modern.setLogo(legacy.logo());
+    if (modern.impp().isEmpty()) modern.setImpp(legacy.impp());
+    if (modern.timeZone().isEmpty()) modern.setTimeZone(legacy.timeZone());
 }
 
 void VCardRequest::executeVCardTemp(PsiAccount *pa)
@@ -406,13 +420,21 @@ void VCardRequest::executeVCardTemp(PsiAccount *pa)
     JT_VCard *task = new JT_VCard(pa->client()->rootTask());
     task->connect(task, &JT_VCard::finished, this, [this, task]() {
         if (task->success()) {
-            d->vcard.fromVCardTemp(task->vcard());
-        } else if (!task->error().isCancel()
-                   || task->error().condition != XMPP::Stanza::Error::ErrorCond::ItemNotFound) {
-
+            VCard4::VCard legacy;
+            legacy.fromVCardTemp(task->vcard());
+            supplementFromLegacy(d->vcard, legacy);
+            d->storeAnswered = true;
+            d->error.reset();
+            d->statusString.clear();
+        } else if (task->error().condition == Stanza::Error::ErrorCond::ItemNotFound) {
+            d->storeAnswered = true;
+            d->error.reset();
+            d->statusString.clear();
+        } else if (!d->storeAnswered) {
             d->error.reset(new Stanza::Error(task->error()));
             d->statusString = task->statusString();
         }
+        // Emit exactly once after the last store, so cache is updated once.
         emit finished();
         deleteLater();
     });
@@ -425,26 +447,20 @@ void VCardRequest::executePubSub(PsiAccount *pa)
     auto task = pa->pepManager()->get(d->jid, QLatin1String(PEP_VCARD4_NODE), QLatin1String("current"));
     task->connect(task, &PEPGetTask::finished, this, [this, task, ppa = QPointer<PsiAccount>(pa)]() {
         if (task->success()) {
-            if (!task->items().empty()) {
+            d->storeAnswered = true;
+            if (!task->items().empty())
                 d->vcard = VCard4::VCard(task->items().last().payload());
-            } else {
-                if (ppa) {
-                    executeVCardTemp(ppa);
-                    return;
-                }
-            }
-        } else if (!task->error().isCancel()
-                   || task->error().condition != XMPP::Stanza::Error::ErrorCond::ItemNotFound) {
-            // consider not found vcard as not an error. maybe user removed their vcard intentionally
+        } else if (task->error().condition == Stanza::Error::ErrorCond::ItemNotFound) {
+            d->storeAnswered = true;
+        } else {
             d->error.reset(new Stanza::Error(task->error()));
             d->statusString = task->statusString();
-        } else {
-            // we can still try vcard-temp as a fallback
-            if (ppa) {
-                executeVCardTemp(ppa);
-                return;
-            }
         }
+        if (ppa && ppa->isConnected()) {
+            executeVCardTemp(ppa);
+            return;
+        }
+        // Disconnected between the two requests; terminate the queue entry.
         emit finished();
         deleteLater();
     });
