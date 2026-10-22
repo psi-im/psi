@@ -229,11 +229,12 @@ VCard4::VCard VCardFactory::vcard(const Jid &j, Flags flags)
             }
         }
     }
-    if (v4) {
+    if (v4)
         checkLimit(j.bare(), v4);
-    }
 
-    return {};
+    // A disk-cache hit must be returned as well as inserted into the small
+    // runtime cache. Photo-only refreshes preserve its modern fields.
+    return v4;
 }
 
 /**
