@@ -68,6 +68,13 @@ target_link_libraries(mam_chat_widget_test PRIVATE
     Qt${QT_DEFAULT_MAJOR_VERSION}::Multimedia Qt${QT_DEFAULT_MAJOR_VERSION}::Network)
 add_test(NAME mam_chat_widget COMMAND mam_chat_widget_test)
 
+add_executable(mam_image_viewer_test MamImageViewerTest.cpp
+    ${PSI_WIDGETS}/MamImageViewer.cpp ${PSI_WIDGETS}/MamImageViewer.h)
+target_include_directories(mam_image_viewer_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../src)
+target_link_libraries(mam_image_viewer_test PRIVATE
+    Qt${QT_DEFAULT_MAJOR_VERSION}::Widgets Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+add_test(NAME mam_image_viewer COMMAND mam_image_viewer_test)
+
 add_executable(mam_native_theme_test NativeChatThemeTest.cpp
     ${PSI_WIDGETS}/NativeChatThemeRegistry.cpp ${PSI_WIDGETS}/NativeChatThemeRegistry.h)
 target_include_directories(mam_native_theme_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../src)
