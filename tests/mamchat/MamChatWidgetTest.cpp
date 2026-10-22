@@ -121,6 +121,92 @@ private slots:
         delete menu;
     }
 
+    void imageContextMenuCopiesOnlyHttpLinks_data()
+    {
+        QTest::addColumn<QString>("source");
+        QTest::addColumn<QString>("expected");
+        QTest::newRow("https") << QStringLiteral("https://cdn.example.org/photo.png?key=123")
+                               << QStringLiteral("https://cdn.example.org/photo.png?key=123");
+        QTest::newRow("http") << QStringLiteral("http://cdn.example.org/photo.png")
+                              << QStringLiteral("http://cdn.example.org/photo.png");
+        QTest::newRow("file") << QStringLiteral("file:///tmp/photo.png") << QString();
+        QTest::newRow("share") << QStringLiteral("share:private-id") << QString();
+        QTest::newRow("mailto") << QStringLiteral("mailto:other@example.org") << QString();
+        QTest::newRow("http-without-host") << QStringLiteral("http:/photo.png") << QString();
+    }
+
+    void imageContextMenuCopiesOnlyHttpLinks()
+    {
+        QFETCH(QString, source);
+        QFETCH(QString, expected);
+
+        FileSharingDeviceOpener opener;
+        FileSharingDeviceOpener account;
+        opener.accounts.insert(QStringLiteral("account-a"), &account);
+        FileSharingItem image(QStringLiteral("image/png"));
+        image.source_ = QUrl(source);
+        image.preview_ = QImage(64, 48, QImage::Format_RGB32);
+        image.preview_.fill(Qt::green);
+        account.items.insert(QStringLiteral("picture"), &image);
+
+        MamChatWidget chat;
+        chat.resize(550, 350);
+        chat.setMediaOpener(&opener);
+        chat.setHistoryLoading(true);
+        chat.appendMessage(message(QStringLiteral("image-message"),
+                                   QStringLiteral("<share id=\"picture\" account=\"account-a\"/> after")));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *body = chat.itemWidget(0)->findChild<ChatMessageText *>();
+        QVERIFY(body);
+        QTRY_VERIFY(body->viewport()->isVisible());
+
+        QTextCursor imageCursor(body->document());
+        bool found = false;
+        for (auto block = body->document()->begin(); block.isValid(); block = block.next()) {
+            for (auto it = block.begin(); !it.atEnd(); ++it) {
+                if (!it.fragment().charFormat().isImageFormat())
+                    continue;
+                imageCursor.setPosition(it.fragment().position());
+                found = true;
+                break;
+            }
+            if (found)
+                break;
+        }
+        QVERIFY(found);
+        const QPoint imagePoint = body->cursorRect(imageCursor).topLeft() + QPoint(10, 10);
+        QVERIFY(body->viewport()->rect().contains(imagePoint));
+
+        QContextMenuEvent event(QContextMenuEvent::Mouse, imagePoint,
+                                body->viewport()->mapToGlobal(imagePoint));
+        QApplication::sendEvent(body->viewport(), &event);
+        auto *menu = chat.findChild<QMenu *>(QStringLiteral("mamMessageContextMenu"));
+        QVERIFY(menu);
+        auto *copy = menu->findChild<QAction *>(QStringLiteral("mamCopyImageLink"));
+        if (!expected.isEmpty()) {
+            QVERIFY(copy);
+            QApplication::clipboard()->setText(QStringLiteral("previous"));
+            copy->trigger();
+            QCOMPARE(QApplication::clipboard()->text(), expected);
+        } else {
+            QVERIFY(!copy);
+        }
+        delete menu;
+
+        // The image action must not appear for the surrounding text.
+        const QTextCursor textCursor = body->document()->find(QStringLiteral("after"));
+        QVERIFY(!textCursor.isNull());
+        const QPoint textPoint = body->cursorRect(textCursor).center();
+        QContextMenuEvent textEvent(QContextMenuEvent::Mouse, textPoint,
+                                    body->viewport()->mapToGlobal(textPoint));
+        QApplication::sendEvent(body->viewport(), &textEvent);
+        menu = chat.findChild<QMenu *>(QStringLiteral("mamMessageContextMenu"));
+        QVERIFY(menu);
+        QVERIFY(!menu->findChild<QAction *>(QStringLiteral("mamCopyImageLink")));
+        delete menu;
+    }
+
     void mucContactMenuAndQuoteUseRoomIdentity()
     {
         MamChatWidget chat;
