@@ -82,7 +82,8 @@ VCardFactory::VCardFactory() : QObject(qApp), dictSize_(5), queuedLoader_(new Qu
                 // photo request may update only the cached PHOTO field.
                 const auto photo = request->vcard().photo();
                 if (!photo.isEmpty()) {
-                    VCard4::VCard cached = vcard(request->jid());
+                    VCard4::VCard cached = (request->flags() & MucUser)
+                        ? mucVcard(request->jid()) : vcard(request->jid());
                     cached.setPhoto(photo);
                     saveVCard(request->jid(), cached, request->flags() & ~PhotoOnly);
                 }
