@@ -5,6 +5,9 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$OutputDir,
 
+    [ValidateSet('BASIC', 'WEBENGINE')]
+    [string]$ChatType = 'BASIC',
+
     [switch]$RunTests
 )
 
@@ -93,7 +96,7 @@ $configureArgs = @(
     '-DUSE_CCACHE=OFF',
     '-DCMAKE_C_COMPILER_LAUNCHER=ccache',
     '-DCMAKE_CXX_COMPILER_LAUNCHER=ccache',
-    '-DCHAT_TYPE=WEBENGINE',
+    "-DCHAT_TYPE=$ChatType",
     '-DBUNDLED_IRIS=ON',
     '-DBUNDLED_IRIS_ALL=OFF',
     '-DIRIS_BUNDLED_QCA=OFF',
@@ -123,7 +126,7 @@ if ($LASTEXITCODE -ne 0) {
 
 $configureText = Get-Content $configureLog -Raw
 foreach ($required in @(
-    'Chatlog type - QtWebEngine',
+    $(if ($ChatType -eq 'WEBENGINE') { 'Chatlog type - QtWebEngine' } else { 'Chatlog type - Basic' }),
     'QCA: selected system QCA 3',
     'Psi SDK Found at',
     'Qt6 found'
@@ -254,11 +257,12 @@ Psi revision: $psiRevision
 Windows profile: modern
 Compiler: MSVC $env:VCToolsVersion
 Target baseline: Windows 10 (_WIN32_WINNT=0x0A00, WINVER=0x0A00)
-Qt: $qtVersion / QtWebEngine
+Qt: $qtVersion
+Chat rendering: $ChatType
 Translations: psi-im/psi-l10n $l10nRevision
 "@ | Set-Content (Join-Path $stageDir 'BUILD-INFO.txt') -Encoding utf8
 
-$packageBase = "psi-$appVersion-win10-x64"
+$packageBase = "psi-$appVersion-win10-x64-$($ChatType.ToLowerInvariant())"
 $zipFile = Join-Path $outputDir "$packageBase.zip"
 $setupFile = Join-Path $outputDir "$packageBase-setup.exe"
 $manifest = Join-Path $outputDir 'uninstall-modern.nsh'
