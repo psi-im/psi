@@ -247,7 +247,7 @@ $appVersion = if ($ReleaseVersion) {
 # (or 1.6.1.N for post-beta development builds) for Windows file metadata.
 if ($appVersion -match '^([0-9]+)\.([0-9]+)_b([0-9]+)(?:\.([0-9]+))?$') {
     $parts = @($Matches[1], $Matches[2], $Matches[3],
-        $(if ($Matches[4]) { $Matches[4] } else { '0' }))
+        $(if ($Matches.ContainsKey('4') -and $Matches['4']) { $Matches['4'] } else { '0' }))
 } else {
     $parts = @($appVersion.Split('.'))
 }
