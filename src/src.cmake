@@ -113,6 +113,7 @@ list(APPEND HEADERS
     widgets/LinkButton.h
     chatreply.h
     widgets/MamChatWidget.h
+    widgets/MamImageViewer.h
     widgets/MamHistorySource.h
     chateditproxy.h
     chatsplitter.h
@@ -383,6 +384,7 @@ list(APPEND SOURCES
     widgets/LinkButton.cpp
     chatreply.cpp
     widgets/MamChatWidget.cpp
+    widgets/MamImageViewer.cpp
     widgets/MamHistorySource.cpp
     chateditproxy.cpp
     chatsplitter.cpp

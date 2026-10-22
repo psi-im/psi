@@ -6,6 +6,7 @@
 #include "MamHistorySource.h"
 #include "messageview.h"
 #include <QPixmap>
+#include <QPointer>
 #include <functional>
 #include <memory>
 
@@ -14,6 +15,7 @@
 #include <QSet>
 
 class FileSharingDeviceOpener;
+class ChatMessageText;
 class QTemporaryDir;
 class QFrame;
 class MessagePreview;
@@ -221,6 +223,8 @@ private:
     bool          mousePressed_        = false;
     bool          selectingByDrag_     = false;
     bool          swallowMouseRelease_ = false;
+    QPointer<ChatMessageText> pressedImageBody_;
+    QPoint                  pressedImagePoint_;
     QFrame       *selectionToolbar_    = nullptr;
     QLabel       *selectionCountLabel_ = nullptr;
     QTimer       *timestampTimer_      = nullptr;
