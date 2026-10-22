@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "iris/jingle-ft.h"
 #include "iris/xmpp_hash.h"
 #include "iris/xmpp_reference.h"
 
@@ -82,6 +83,7 @@ public:
     inline QVariantMap                  metaData() const { return _metaData; }
     inline std::optional<std::uint64_t> fileSize() const { return _fileSize; }
     inline const QStringList           &uris() const { return _uris; }
+    XMPP::Jingle::FileTransfer::File    fileMetadata() const;
 
     // reborn flag updates ttl for the item
     FileCacheItem           *cache(bool reborn = false) const;
@@ -102,7 +104,7 @@ public:
      *
      * It's responsibility of the caller to delete downloader when it's done, or one can call setSelfDelete(true)
      */
-    FileShareDownloader *download(std::optional<Range> range = {});
+    FileShareDownloader *download(std::optional<Range> range = { }, const QString &preferredSource = { });
 
     // accept public internet uri and returns it's type
     static SourceType  sourceType(const QString &uri);
@@ -140,6 +142,7 @@ private:
     QVariantMap                  _metaData;
     QStringList                  _log;
     QList<XMPP::Jid>             _jids;
+    XMPP::Jingle::FileTransfer::File _receivedMetadata;
 };
 
 // Q_DECLARE_METATYPE(FileSharingItem::Ptr)

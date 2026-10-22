@@ -111,7 +111,7 @@ public:
         }
 
         auto cache = item->cache();
-        if (cache) {
+        if (cache || !item->localFilePath().isEmpty()) {
             proxyCache();
             return; // handled with success
         }
@@ -151,8 +151,8 @@ public:
         auto owner = item->account();
         if (!owner)
             return false;
-        auto          cache  = acc->psi()->fileSharingManager()->mediaChunkCache();
-        const auto    source = owner->id() + QChar(0) + hash.toString();
+        auto          cache  = FileSharingChunkSource::configure(item);
+        const auto    source = FileSharingChunkSource::identity(item);
         const quint64 offset = requestedRange ? requestedRange->start : 0;
         const quint64 length = requestedRange && requestedRange->size ? requestedRange->size : *size - offset;
         const QPointer<FileSharingItem> resource(item);

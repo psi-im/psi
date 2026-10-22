@@ -21,6 +21,7 @@
 
 #include "applicationinfo.h"
 #include "filecache.h"
+#include "filesharingchunksource.h"
 #include "filesharingdownloader.h"
 #include "filesharingjinglesession.h"
 #include "filesharingmediasave.h"
@@ -94,8 +95,26 @@ FileSharingJingleSession *FileSharingManager::jingleMediaSessions(PsiAccount *ac
 
 MediaChunkCache *FileSharingManager::mediaChunkCache()
 {
-    if (!d->chunkCache)
-        d->chunkCache = new MediaChunkCache(cacheDir() + QStringLiteral("/media-chunks-v1"), this);
+    if (!d->chunkCache) {
+        d->chunkCache = new MediaChunkCache(cacheDir() + QStringLiteral("/media-files-v2"), this, 4 * 1024 * 1024,
+                                            256 * 1024 * 1024, [](const QString &algorithm, QIODevice *device) {
+                                                XMPP::Hash hash { QStringView(algorithm) };
+                                                return hash.compute(device) ? hash.data() : QByteArray();
+                                            });
+        connect(d->chunkCache, &MediaChunkCache::integrityError, this,
+                [this](const QString &source, quint64 size, const QString &) {
+                    const auto path = d->chunkCache->fileState(source, size).path;
+                    for (auto item : d->items) {
+                        if (!item || FileSharingChunkSource::identity(item) != source)
+                            continue;
+                        for (const auto &hash : item->sums()) {
+                            auto cached = d->cache->get(hash);
+                            if (cached && cached->metadata().value(QStringLiteral("link")).toString() == path)
+                                d->cache->remove(hash);
+                        }
+                    }
+                });
+    }
     return d->chunkCache;
 }
 
@@ -127,6 +146,8 @@ FileCacheItem *FileSharingManager::cacheItem(const XMPP::Hash &id, bool reborn, 
 
     QString link     = item->metadata().value(QLatin1String("link")).toString();
     QString fileName = link.size() ? link : d->cache->cacheDir() + "/" + item->fileName();
+    if (link.startsWith(cacheDir() + QStringLiteral("/media-files-v2/")) && !mediaChunkCache()->isCompleteFile(link))
+        return nullptr; // A restored payload is available only after worker verification.
     if (fileName.isEmpty() || !QFileInfo(fileName).isReadable()) {
         d->cache->remove(id);
         return nullptr;
@@ -394,6 +415,21 @@ bool FileSharingManager::acceptIncomingDownloadContents(Jingle::Session *session
         auto ft = static_cast<Jingle::FileTransfer::Application *>(a);
 
         FileCacheItem *item = cacheItem(ft->file().computedHashes(), true);
+        if (!item) {
+            for (const auto &hash : ft->file().computedHashes()) {
+                auto known = d->items.value(hash);
+                if (!known)
+                    continue;
+                const auto path = known->localFilePath();
+                if (path.isEmpty())
+                    continue;
+                QVariantMap metadata { { "type", known->mimeType() }, { "link", path }, { "uris", known->uris() } };
+                saveToCache(known->sums(), { }, metadata, FileCache::Session);
+                item = cacheItem(known->sums(), true);
+                if (item)
+                    break;
+            }
+        }
         if (!item)
             return false;
 
@@ -468,7 +504,15 @@ QIODevice *FileSharingDeviceOpener::open(QUrl &url)
         return nullptr;
 
     if (item->isCached()) {
+        qInfo() << "[media] opening cached file" << sourceId.toString() << "type=" << item->mimeType();
         url = QUrl::fromLocalFile(item->fileName());
+        return nullptr;
+    }
+    FileSharingChunkSource::configure(item);
+    const auto localFile = FileSharingChunkSource::localFile(item);
+    if (!localFile.isEmpty()) {
+        qInfo() << "[media] opening completed shared file" << sourceId.toString();
+        url = QUrl::fromLocalFile(localFile);
         return nullptr;
     }
 
@@ -481,6 +525,7 @@ QIODevice *FileSharingDeviceOpener::open(QUrl &url)
     path += QString("psi/account/%1/sharedfile/%2").arg(acc->id(), sourceId.toString());
     localServerUrl.setPath(path);
     url = FileSharingUrl::withMode(localServerUrl, FileSharingUrl::Mode::Stream);
+    qInfo() << "[media] opening HTTP stream" << sourceId.toString() << "type=" << item->mimeType();
     return nullptr;
 #else
 #ifndef Q_OS_WIN
@@ -505,6 +550,14 @@ void FileSharingDeviceOpener::close(QIODevice *dev)
 {
     dev->close();
     dev->deleteLater();
+}
+
+void FileSharingDeviceOpener::retry(const QUrl &url)
+{
+    auto item = sharedItem(urlToSourceId(url).toString());
+    if (item && item->fileSize())
+        if (auto cache = FileSharingChunkSource::configure(item))
+            cache->resume(FileSharingChunkSource::identity(item), *item->fileSize());
 }
 
 QVariant FileSharingDeviceOpener::metadata(const QUrl &url)
@@ -547,7 +600,9 @@ ITEMediaState *FileSharingDeviceOpener::mediaState(const QUrl &url)
         return existing;
     auto state = new ITEMediaState(item);
     state->setObjectName(name);
-    auto       cache  = acc->psi()->fileSharingManager()->mediaChunkCache();
+    auto cache = FileSharingChunkSource::configure(item);
+    if (!cache)
+        cache = acc->psi()->fileSharingManager()->mediaChunkCache();
     const auto size   = item->fileSize();
     const auto hash   = item->sums().value(0);
     const auto source = item->account() ? item->account()->id() + QChar(0) + hash.toString() : QString();
@@ -558,6 +613,10 @@ ITEMediaState *FileSharingDeviceOpener::mediaState(const QUrl &url)
         } else if (size && *size && !source.isEmpty()) {
             for (const auto &range : cache->cachedRanges(source, *size))
                 ranges.append({ qreal(range.first) / *size, qreal(range.first + range.second) / *size });
+        }
+        if (size && !source.isEmpty()) {
+            const auto error = cache->fileState(source, *size).error;
+            state->setSourceError(error);
         }
         state->setCachedRanges(std::move(ranges));
     };
@@ -595,12 +654,26 @@ bool FileSharingDeviceOpener::saveTo(const QUrl &url, const QString &path, const
     QIODevice           *input    = nullptr;
     auto                 size     = item->fileSize();
     FileShareDownloader *download = nullptr;
-    if (item->isCached()) {
-        auto file = new QFile(item->fileName());
+    const auto           localFile = item->isCached() ? item->fileName() : FileSharingChunkSource::localFile(item);
+    if (!localFile.isEmpty()) {
+        auto file = new QFile(localFile);
         size      = quint64(file->size());
         input     = file;
+    } else if (size && *size) {
+        auto cache = FileSharingChunkSource::configure(item);
+        cache->configure(FileSharingChunkSource::identity(item), *size, { },
+                         { { QStringLiteral("retain-partial"), true } });
+        cache->resume(FileSharingChunkSource::identity(item), *size); // Explicit save resumes a failed download.
+        const QPointer<FileSharingItem> resource(item);
+        const QPointer<MediaChunkCache> guard(cache);
+        auto                            reader = new MediaChunkReader(
+            cache, FileSharingChunkSource::identity(item), *size, 0, *size, acc->id(),
+            [resource, guard](quint64 offset, quint64 length, MediaChunkCompletion done) {
+                return FileSharingChunkSource::fetch(resource, offset, length, std::move(done), guard);
+            });
+        input = reader;
     } else {
-        input = download = item->download(); // Full transfer, not playback chunks.
+        input = download = item->download();
     }
     if (!input) {
         const QString error = QObject::tr("No download source");
@@ -609,13 +682,21 @@ bool FileSharingDeviceOpener::saveTo(const QUrl &url, const QString &path, const
             completed({}, error);
         return false;
     }
-    auto save = new FileSharingMediaSave(input, size, download != nullptr, path, state, item, completed, progress);
+    auto save = new FileSharingMediaSave(input, size, download != nullptr || qobject_cast<MediaChunkReader *>(input),
+                                         path, state, item, completed, progress);
     save->setObjectName(QStringLiteral("psi-sims-save"));
     if (download) {
         QObject::connect(download, &FileShareDownloader::transferCompleted, save, &FileSharingMediaSave::validated);
         QObject::connect(download, &FileShareDownloader::disconnected, save, &FileSharingMediaSave::sourceClosed);
         QObject::connect(download, &FileShareDownloader::failed, save,
                          [save, download] { save->fail(download->errorString()); });
+    } else if (auto reader = qobject_cast<MediaChunkReader *>(input)) {
+        QObject::connect(reader, &MediaChunkReader::disconnected, save, [save] {
+            save->validated();
+            save->sourceClosed();
+        });
+        QObject::connect(reader, &MediaChunkReader::failed, save,
+                         [save, reader] { save->fail(reader->errorString()); });
     }
     return true;
 }

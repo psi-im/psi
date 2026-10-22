@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10.0)
 
-if( UNIX OR IS_WEBENGINE )
-    include(qhttp.cmake)
-endif()
+# Native media playback also needs the range-capable loopback HTTP proxy,
+# including Windows BASIC builds with Qt's FFmpeg multimedia backend.
+include(qhttp.cmake)
