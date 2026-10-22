@@ -132,27 +132,61 @@ def read_dependencies(root, require_iris=False):
     return values
 
 
-def verify_iris_release(root, tag):
-    """The release is an SDK coordinate; the gitlink remains the source pin."""
-    entry = subprocess.check_output(
-        ["git", "ls-tree", "HEAD", "--", "iris"], cwd=root, text=True, timeout=30).split()
-    require(len(entry) == 4 and entry[0:2] == ["160000", "commit"]
-            and HEX_SHA.fullmatch(entry[2]) and entry[3] == "iris",
-            "Cannot resolve the pinned Iris gitlink")
+def resolve_iris_release(root, tag, strict=False):
+    """Return an SDK tag only when it resolves to Psi's exact Iris gitlink.
+
+    A source-only Iris revision is normal: it must never consume a previous
+    release's libraries. On a tagged Psi build, a *different* Iris release
+    at the gitlink is a lock mismatch, while an untagged gitlink is bundled.
+    """
     if not tag:
-        return  # Explicit source-only revision; there is no compatible released SDK.
-    ref = "refs/tags/" + tag
-    output = subprocess.check_output(
-        ["git", "ls-remote", "--tags", "https://github.com/psi-im/iris.git", ref, ref + "^{}"],
-        cwd=root, text=True, timeout=30)
-    refs = {}
-    for line in output.splitlines():
-        fields = line.split()
-        require(len(fields) == 2 and HEX_SHA.fullmatch(fields[0]), "Invalid Iris tag response")
-        refs[fields[1]] = fields[0]
-    resolved = refs.get(ref + "^{}", refs.get(ref))
-    require(resolved is not None, "Locked Iris release tag does not exist: " + tag)
-    require(resolved == entry[2], "Locked Iris release " + tag + " does not match the Psi gitlink")
+        return ""
+
+    try:
+        entry = subprocess.check_output(
+            ["git", "ls-tree", "HEAD", "--", "iris"],
+            cwd=root, text=True, timeout=30).split()
+        require(len(entry) == 4 and entry[0:2] == ["160000", "commit"]
+                and HEX_SHA.fullmatch(entry[2]) and entry[3] == "iris",
+                "Cannot resolve the pinned Iris gitlink")
+
+        # Enumerate tags so that a source commit without any release can be
+        # distinguished from a commit released under a *different* tag.
+        output = subprocess.check_output(
+            ["git", "ls-remote", "--tags", "https://github.com/psi-im/iris.git"],
+            cwd=root, text=True, timeout=30)
+        refs = {}
+        for line in output.splitlines():
+            fields = line.split()
+            require(len(fields) == 2 and HEX_SHA.fullmatch(fields[0]),
+                    "Invalid Iris tag response")
+            refs[fields[1]] = fields[0]
+
+        releases = {}
+        for ref, sha in refs.items():
+            if not ref.startswith("refs/tags/") or ref.endswith("^{}"):
+                continue
+            name = ref[len("refs/tags/"):]
+            if re.fullmatch(r"v\d+\.\d+(?:\.\d+){0,2}", name):
+                releases[name] = refs.get(ref + "^{}", sha)
+
+        if releases.get(tag) == entry[2]:
+            return tag
+
+        gitlink_tags = sorted(name for name, sha in releases.items() if sha == entry[2])
+        if strict and gitlink_tags:
+            raise ValueError(
+                "Iris gitlink is tagged " + ", ".join(gitlink_tags)
+                + ", but the locked release is " + tag)
+        # No release for this gitlink (or a development build with a stale
+        # lock coordinate). Never download an SDK for another source commit.
+        return ""
+    except (OSError, ValueError, subprocess.SubprocessError) as error:
+        if strict:
+            raise
+        print("Iris release lookup unavailable or inconsistent; using bundled Iris: "
+              + str(error), file=sys.stderr)
+        return ""
 
 
 def main():
@@ -160,11 +194,14 @@ def main():
     parser.add_argument("--workspace", type=Path, default=Path.cwd())
     parser.add_argument("--require-iris", action="store_true")
     parser.add_argument("--verify-iris-release", action="store_true",
-                        help="Verify the remote release tag against Psi's gitlink (requires network)")
+                        help="Resolve a compatible released Iris SDK; otherwise use the exact gitlink")
     args = parser.parse_args()
     values = read_dependencies(args.workspace, require_iris=args.require_iris)
     if args.verify_iris_release:
-        verify_iris_release(args.workspace, values["IRIS_RELEASE_TAG"])
+        # Strict provenance is a release requirement, not a branch/PR gate.
+        on_psi_tag = os.environ.get("GITHUB_REF", "").startswith("refs/tags/")
+        values["IRIS_RELEASE_TAG"] = resolve_iris_release(
+            args.workspace, values["IRIS_RELEASE_TAG"], strict=on_psi_tag)
     output = "\n".join(f"{name}={value}" for name, value in values.items()) + "\n"
     for target in ("GITHUB_ENV", "GITHUB_OUTPUT"):
         if os.environ.get(target):
