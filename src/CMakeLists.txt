@@ -412,14 +412,12 @@ if(WIN32)
         set(MANIFEST_ARCH "amd64")
     endif()
     # win resource creation
-    if(${QT_DEFAULT_MAJOR_VERSION} LESS 6)
-        configure_file(${PROJECT_SOURCE_DIR}/win32/psi_win.rc.in ${CMAKE_CURRENT_BINARY_DIR}/psi_win.rc @ONLY)
-        #configure_file(${PROJECT_SOURCE_DIR}/win32/psi.manifest.in ${CMAKE_CURRENT_BINARY_DIR}/psi.manifest @ONLY)
-        # win resource compilation
-        set(DECS_RC_NAME ${CMAKE_CURRENT_BINARY_DIR}/psi_win.rc)
-        set(RC_FILE ${CMAKE_CURRENT_BINARY_DIR}/psi_win.o)
-        compile_rc_file(${DECS_RC_NAME} ${RC_FILE})
-    endif()
+    configure_file(${PROJECT_SOURCE_DIR}/win32/psi_win.rc.in ${CMAKE_CURRENT_BINARY_DIR}/psi_win.rc @ONLY)
+    #configure_file(${PROJECT_SOURCE_DIR}/win32/psi.manifest.in ${CMAKE_CURRENT_BINARY_DIR}/psi.manifest @ONLY)
+    # win resource compilation
+    set(DECS_RC_NAME ${CMAKE_CURRENT_BINARY_DIR}/psi_win.rc)
+    set(RC_FILE ${CMAKE_CURRENT_BINARY_DIR}/psi_win.o)
+    compile_rc_file(${DECS_RC_NAME} ${RC_FILE})
 endif()
 
 #Main executable creation
@@ -437,7 +435,7 @@ add_executable(${PROJECT_NAME}
 target_compile_definitions(${PROJECT_NAME} PRIVATE QITE_FIRST_USER_PROPERTY=0x1000)
 
 #Generate .rc file for windows with Qt6
-if(WIN32 AND (${QT_DEFAULT_MAJOR_VERSION} GREATER_EQUAL 6))
+#[[if(WIN32 AND (${QT_DEFAULT_MAJOR_VERSION} GREATER_EQUAL 6))
     set_target_properties(${PROJECT_NAME} PROPERTIES
         WIN32_EXECUTABLE TRUE
         QT_TARGET_VERSION "${APP_VERSION}"
@@ -450,7 +448,7 @@ if(WIN32 AND (${QT_DEFAULT_MAJOR_VERSION} GREATER_EQUAL 6))
         QT_TARGET_RC_ICONS "${PROJECT_SOURCE_DIR}/win32/${APP_ICON}"
     )
     _qt_internal_generate_win32_rc_file(${PROJECT_NAME})
-endif()
+endif()]]
 
 include(fix-codestyle)
 
