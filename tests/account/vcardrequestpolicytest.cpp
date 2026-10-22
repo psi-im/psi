@@ -6,39 +6,42 @@
 class VCardRequestPolicyTest final : public QObject {
     Q_OBJECT
 private slots:
-    void protocolFromContactResourceCaps()
+    void fullRequestsQueryBothStoresRegardlessOfClientCaps()
     {
         using namespace VCardRequestPolicy;
-        const auto temp = Protocol::VCardTemp;
-        const auto modern = Protocol::VCard4;
-
-        // The legacy feature is on the resource's full JID, while requests
-        // target the bare JID.
-        QCOMPARE(select(false, false, { { true, false } }), temp);
-        QCOMPARE(select(false, false, { { true, true } }), modern);
-        QCOMPARE(select(false, false, { { true, false }, { true, true } }), modern);
-        QCOMPARE(select(false, false, { { true, true }, { true, false } }), modern);
-        // Unknown caps are not evidence that vCard4 is unsupported.
-        QCOMPARE(select(false, false, { { false, false } }), modern);
-        QCOMPARE(select(false, false, { }), modern);
-        // However, they must not negate known legacy-only capabilities.
-        QCOMPARE(select(false, false, { { false, false }, { true, false } }), temp);
-        QCOMPARE(select(false, false, { { true, false }, { false, false } }), temp);
+        const auto full = plan(false, false, false);
+        QVERIFY(full.fetchModern);
+        QVERIFY(full.fetchLegacy);
+        // The plan is intentionally independent of online-resource disco:
+        // resources may advertise only vcard-temp, only vCard4, or nothing.
     }
 
-    void explicitLegacyAndMucFlagsOverrideCapabilities()
+    void legacyPhotoRequestsSkipPep()
     {
         using namespace VCardRequestPolicy;
-        const QList<ResourceCapabilities> modern { { true, true } };
-        QCOMPARE(select(true, false, modern), Protocol::VCardTemp);
-        QCOMPARE(select(true, true, modern), Protocol::VCardTemp);
+        const auto photo = plan(true, false, false);
+        QVERIFY(!photo.fetchModern);
+        QVERIFY(photo.fetchLegacy);
     }
 
-    void selfCardRetainsPepFirstWithOrWithoutContactCaps()
+    void explicitLegacyAndMucFlags()
     {
         using namespace VCardRequestPolicy;
-        QCOMPARE(select(false, true, QList<ResourceCapabilities> { { true, false } }), Protocol::VCard4);
-        QCOMPARE(select(false, true, QList<ResourceCapabilities> {}), Protocol::VCard4);
+        for (auto request : { plan(false, true, false),
+                              plan(false, false, true),
+                              plan(true, true, true) }) {
+            QVERIFY(!request.fetchModern);
+            QVERIFY(request.fetchLegacy);
+        }
+    }
+
+    void selfCardAlsoQueriesBoth()
+    {
+        // The self-card is handled like any other full request. The account
+        // may hold additional data in the old server store.
+        const auto result = VCardRequestPolicy::plan(false, false, false);
+        QVERIFY(result.fetchModern);
+        QVERIFY(result.fetchLegacy);
     }
 };
 
