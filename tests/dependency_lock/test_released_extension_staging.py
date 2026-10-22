@@ -72,6 +72,12 @@ class ReleasedExtensionsTests(unittest.TestCase):
         source = json.loads((self.psi_stage / "PSIMEDIA-SOURCE.json").read_text())
         self.assertEqual(source["commit"], "b" * 40)
         self.assertEqual(source["qt"], "6.12.0")
+        # PsiMedia's original directory structure is retained in provenance,
+        # while both independent installation roots are merged into Psi.
+        self.assertIn("psi/plugins/mediaplugin.dll", source["files"])
+        self.assertIn("gstreamer-1.0/gstcore.dll", source["files"])
+        self.assertIn("gstreamer-runtime.txt", source["files"])
+        self.assertFalse((self.psi_stage / "psi").exists())
 
     def test_refuses_tampered_official_plugin(self):
         (self.plugins / "plugins" / "official-00.dll").write_bytes(b"tampered")
