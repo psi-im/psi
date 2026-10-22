@@ -11,8 +11,9 @@ if [[ ! "$iris_ref" =~ ^[0-9a-f]{40}$ ]]; then
     exit 1
 fi
 
-# Check the SDK coordinate before deleting work directories or downloading any
-# package. A release tag must never substitute another commit for the gitlink.
+# Resolve the effective SDK coordinate before downloading packages. A stale
+# lock tag must never cause us to install an SDK for another Iris gitlink.
+# Untagged Iris revisions are always compiled from their pinned source.
 dependency_values=$(GITHUB_ENV= GITHUB_OUTPUT= python3 .github/scripts/resolve-dependencies.py --verify-iris-release)
 iris_release_tag=$(awk -F= '$1 == "IRIS_RELEASE_TAG" { print $2 }' <<< "$dependency_values")
 
