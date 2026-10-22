@@ -2929,6 +2929,19 @@ bool MamChatWidget::eventFilter(QObject *target, QEvent *event)
             }
         }
     }
+    if (event->type() == QEvent::MouseButtonPress) {
+        pressedImageBody_.clear();
+        auto *widget = qobject_cast<QWidget *>(target);
+        auto *body = widget ? qobject_cast<ChatMessageText *>(widget->parentWidget()) : nullptr;
+        if (body && widget == body->viewport() && selectedKeys_.isEmpty()) {
+            auto *mouse = static_cast<QMouseEvent *>(event);
+            if (mouse->button() == Qt::LeftButton && mouse->modifiers() == Qt::NoModifier
+                && imageAt(body, mouse->pos())) {
+                pressedImageBody_ = body;
+                pressedImagePoint_ = mouse->pos();
+            }
+        }
+    }
     // A Leave from a row can be just a handoff to the floating actions. The
     // viewport encloses the complete hover session, including that overlay.
     if (target == viewport() && (event->type() == QEvent::Enter || event->type() == QEvent::Leave))
@@ -3069,6 +3082,34 @@ bool MamChatWidget::eventFilter(QObject *target, QEvent *event)
                         auto *author = qobject_cast<QLabel *>(target);
                         if (author && !author->hasSelectedText() && author->rect().contains(mouse->pos())) {
                             emit nicknameClicked(items_.at(index).message.nick());
+                        }
+                    }
+                }
+            }
+        }
+    }
+    // Open images on a genuine click, not when the user drags to select text.
+    // Keep this after whole-message selection handling so its press/release
+    // state has already been cleared.
+    if (event->type() == QEvent::MouseButtonRelease && pressedImageBody_) {
+        auto *mouse = static_cast<QMouseEvent *>(event);
+        QPointer<ChatMessageText> body = pressedImageBody_;
+        pressedImageBody_.clear();
+        if (body && target == body->viewport() && mouse->button() == Qt::LeftButton
+            && mouse->modifiers() == Qt::NoModifier && selectedKeys_.isEmpty()
+            && (pressedImagePoint_ - mouse->pos()).manhattanLength() <= QApplication::startDragDistance()) {
+            if (const auto format = imageAt(body, mouse->pos())) {
+                if (auto *row = eventRow(target)) {
+                    const int at = indexOfKey(row->property("_psiMamRowKey").toString());
+                    if (at >= 0) {
+                        const auto &message = items_.at(at).message;
+                        const QString html = message.hasReplyFallback() ? message.replyFormattedText()
+                                                                         : message.formattedText();
+                        const QImage image = fullImage(*format, html, body, mediaOpener_);
+                        if (!image.isNull()) {
+                            openImageViewer(image);
+                            mouse->accept();
+                            return true;
                         }
                     }
                 }
