@@ -27,8 +27,10 @@
 #include "pepmanager.h"
 #include "profiles.h"
 #include "psiaccount.h"
+#include "userlist.h"
+#include "vcardrequestpolicy.h"
 
-// #include "iris/xmpp-im/xmpp_caps.h"
+#include "iris/xmpp-im/xmpp_caps.h"
 #include "iris/xmpp-im/xmpp_pubsubitem.h"
 #include "iris/xmpp-im/xmpp_serverinfomanager.h"
 #include "iris/xmpp-im/xmpp_vcard4.h"
@@ -355,20 +357,25 @@ bool VCardRequest::execute()
     if (paIt == d->accounts.end())
         return false;
 
-    bool doTemp = (d->flags & VCardFactory::ForceVCardTemp) || (d->flags & VCardFactory::MucRoom)
+    PsiAccount *pa = *paIt;
+    const bool forceTemp = (d->flags & VCardFactory::ForceVCardTemp) || (d->flags & VCardFactory::MucRoom)
         || (d->flags & VCardFactory::MucUser);
-    auto pa = (*paIt);
-
-    // auto cm     = client->capsManager();
-    // if (!doTemp) {
-    //     if (d->jid.compare(pa->jid(), false)) {
-    //         // we can assume persistent storage is always there
-    //         doTemp = !client->serverInfoManager()->hasPersistentStorage();
-    //     } else {
-    //         // neither clients nor servers follow the XEP. so this check rather breaks stuff.
-    //         doTemp = !cm->features(d->jid).hasVCard4();
-    //     }
-    // }
+    const bool ownCard = d->jid.compare(pa->jid(), false);
+    QList<VCardRequestPolicy::ResourceCapabilities> resources;
+    if (!forceTemp && !ownCard) {
+        // The request queue normalizes ordinary contacts to bare JIDs, but
+        // entity capabilities belong to their *full* resource JIDs. Never
+        // query capabilities of the bare JID to decide the protocol.
+        auto *caps = pa->client()->capsManager();
+        for (const UserListItem *contact : pa->findRelevant(d->jid)) {
+            for (const UserResource &resource : contact->userResourceList()) {
+                const Features features = caps->features(d->jid.withResource(resource.name()));
+                resources.append({ !features.isEmpty(), features.hasVCard4() });
+            }
+        }
+    }
+    const bool doTemp = VCardRequestPolicy::select(forceTemp, ownCard, resources)
+        == VCardRequestPolicy::Protocol::VCardTemp;
 
     if (doTemp) {
         executeVCardTemp(pa);
