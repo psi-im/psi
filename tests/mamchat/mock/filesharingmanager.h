@@ -20,7 +20,8 @@ public:
     bool                   isCached() const { return true; }
     QImage                 preview(const QSize &) const { return preview_; }
     std::optional<quint64> fileSize() const { return 100; }
-    QUrl                   simpleSource() const { return QUrl("https://example.org/file"); }
+    QUrl                   simpleSource() const { return source_; }
+    QUrl                   source_ = QUrl(QStringLiteral("https://example.org/file"));
     FileShareDownloader   *download() { return new FileShareDownloader(this); }
     QImage                 preview_;
 signals:
