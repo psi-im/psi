@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "widgets/MamChatWidget.h"
+#include "widgets/MamImageViewer.h"
 #include "widgets/ChatMessageText.h"
 #include "widgets/MessagePreview.h"
 #include "widgets/LinkButton.h"
@@ -29,6 +30,7 @@
 #include <QSignalSpy>
 #include <QTextBlock>
 #include <QTextFragment>
+#include <QTemporaryDir>
 #include <QTimer>
 #include <QUrlQuery>
 #include <QWheelEvent>
@@ -183,6 +185,13 @@ private slots:
         QApplication::sendEvent(body->viewport(), &event);
         auto *menu = chat.findChild<QMenu *>(QStringLiteral("mamMessageContextMenu"));
         QVERIFY(menu);
+        auto *copyImage = menu->findChild<QAction *>(QStringLiteral("mamCopyImage"));
+        QVERIFY(copyImage); // Image pixels can be copied even without an HTTP URL.
+        copyImage->trigger();
+        const QImage copied = QApplication::clipboard()->image();
+        QCOMPARE(copied.size(), QSize(64, 48));
+        QCOMPARE(copied.pixelColor(0, 0), QColor(Qt::green));
+        QVERIFY(menu->findChild<QAction *>(QStringLiteral("mamViewImage")));
         auto *copy = menu->findChild<QAction *>(QStringLiteral("mamCopyImageLink"));
         if (!expected.isEmpty()) {
             QVERIFY(copy);
@@ -204,7 +213,87 @@ private slots:
         menu = chat.findChild<QMenu *>(QStringLiteral("mamMessageContextMenu"));
         QVERIFY(menu);
         QVERIFY(!menu->findChild<QAction *>(QStringLiteral("mamCopyImageLink")));
+        QVERIFY(!menu->findChild<QAction *>(QStringLiteral("mamCopyImage")));
+        QVERIFY(!menu->findChild<QAction *>(QStringLiteral("mamViewImage")));
         delete menu;
+    }
+
+    void imageActionsUseCachedOriginalAndViewer()
+    {
+        QTemporaryDir cache;
+        QVERIFY(cache.isValid());
+        const QString path = cache.filePath(QStringLiteral("original.png"));
+        QImage original(320, 180, QImage::Format_RGB32);
+        original.fill(Qt::red);
+        QVERIFY(original.save(path));
+
+        FileSharingDeviceOpener opener;
+        FileSharingItem item(QStringLiteral("image/png"));
+        item.cachedPath_ = path;
+        item.preview_ = QImage(60, 40, QImage::Format_RGB32);
+        item.preview_.fill(Qt::blue);
+        opener.items.insert(QStringLiteral("photo"), &item);
+
+        MamChatWidget chat;
+        chat.resize(550, 350);
+        chat.setMediaOpener(&opener);
+        chat.setHistoryLoading(true);
+        chat.appendMessage(message(QStringLiteral("photo-message"),
+                                   QStringLiteral("<share id=\"photo\"/> text")));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *body = chat.itemWidget(0)->findChild<ChatMessageText *>();
+        QVERIFY(body);
+        QTRY_VERIFY(body->viewport()->isVisible());
+
+        QTextCursor imageCursor(body->document());
+        bool found = false;
+        for (auto block = body->document()->begin(); block.isValid(); block = block.next())
+            for (auto it = block.begin(); !it.atEnd(); ++it)
+                if (it.fragment().charFormat().isImageFormat()) {
+                    imageCursor.setPosition(it.fragment().position());
+                    found = true;
+                    break;
+                }
+        QVERIFY(found);
+        const QPoint click = body->cursorRect(imageCursor).topLeft() + QPoint(10, 10);
+        QContextMenuEvent context(QContextMenuEvent::Mouse, click, body->viewport()->mapToGlobal(click));
+        QApplication::sendEvent(body->viewport(), &context);
+        auto *menu = chat.findChild<QMenu *>(QStringLiteral("mamMessageContextMenu"));
+        QVERIFY(menu);
+        auto *copyImage = menu->findChild<QAction *>(QStringLiteral("mamCopyImage"));
+        QVERIFY(copyImage);
+        copyImage->trigger();
+        QCOMPARE(QApplication::clipboard()->image().size(), original.size());
+        QCOMPARE(QApplication::clipboard()->image().pixelColor(0, 0), QColor(Qt::red));
+
+        const auto viewerWindow = []() -> MamImageViewer * {
+            for (auto *widget : QApplication::topLevelWidgets())
+                if (widget->objectName() == QLatin1String("mamImageViewer"))
+                    return qobject_cast<MamImageViewer *>(widget);
+            return nullptr;
+        };
+        auto *viewAction = menu->findChild<QAction *>(QStringLiteral("mamViewImage"));
+        QVERIFY(viewAction);
+        viewAction->trigger();
+        QTRY_VERIFY(viewerWindow());
+        auto *viewer = viewerWindow();
+        QVERIFY(viewer->displayedImageRect().width() >= 300);
+        viewer->close();
+        QCoreApplication::processEvents();
+        delete menu;
+
+        // A normal left-click also opens the viewer, but a drag does not.
+        QTest::mouseClick(body->viewport(), Qt::LeftButton, Qt::NoModifier, click);
+        QTRY_VERIFY(viewerWindow());
+        viewerWindow()->close();
+        QCoreApplication::processEvents();
+
+        const QPoint other = click + QPoint(QApplication::startDragDistance() + 40, 0);
+        QTest::mousePress(body->viewport(), Qt::LeftButton, Qt::NoModifier, click);
+        QTest::mouseMove(body->viewport(), other);
+        QTest::mouseRelease(body->viewport(), Qt::LeftButton, Qt::NoModifier, other);
+        QVERIFY(!viewerWindow());
     }
 
     void mucContactMenuAndQuoteUseRoomIdentity()
