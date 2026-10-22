@@ -12,6 +12,15 @@ target_include_directories(account_connection_guard_test PRIVATE ../../src)
 target_link_libraries(account_connection_guard_test PRIVATE
     Qt${QT_DEFAULT_MAJOR_VERSION}::Core Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
 add_test(NAME account_connection_guard COMMAND account_connection_guard_test)
+
+# Small, dependency-free policy test: the production request reads caps from
+# full roster resource JIDs and passes the resolved evidence to this selector.
+add_executable(account_vcard_request_policy_test vcardrequestpolicytest.cpp)
+set_target_properties(account_vcard_request_policy_test PROPERTIES AUTOMOC ON)
+target_include_directories(account_vcard_request_policy_test PRIVATE ../../src)
+target_link_libraries(account_vcard_request_policy_test PRIVATE
+    Qt${QT_DEFAULT_MAJOR_VERSION}::Core Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+add_test(NAME account_vcard_request_policy COMMAND account_vcard_request_policy_test)
 set_tests_properties(account_connection_guard PROPERTIES TIMEOUT 10)
 
 if(TARGET iris)
