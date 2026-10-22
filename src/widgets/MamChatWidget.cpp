@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "MamChatWidget.h"
+#include "MamImageViewer.h"
 #include "ChatMessageText.h"
 #include "MessagePreview.h"
 #include "filesharingmanager.h"
@@ -18,6 +19,7 @@
 #include <QDesktopServices>
 #include <QFileIconProvider>
 #include <QFileInfo>
+#include <QImageReader>
 #include <QDebug>
 #include <QFontInfo>
 #include <QFrame>
@@ -53,6 +55,8 @@
 #include <QToolButton>
 #include <QUrlQuery>
 #include <QTextBlockFormat>
+#include <QTextImageFormat>
+#include <QTextFragment>
 #include <QTextDocument>
 #include <QWheelEvent>
 #include <QTimer>
@@ -60,6 +64,7 @@
 #include <QVBoxLayout>
 #include <algorithm>
 #include <limits>
+#include <optional>
 
 namespace {
 
@@ -2544,21 +2549,36 @@ void MamChatWidget::refreshReplyPreviews(bool force)
     }
 }
 
-// Return an external image URL only for an image under the pointer. SIMS
-// images are rendered with share: IDs, so their HTTP source has to be looked
-// up through the account-specific FileSharingItem instead of copying share:.
-static QString httpImageLink(const QTextImageFormat &format, const QString &messageHtml,
-                             FileSharingDeviceOpener *mediaOpener)
+// A hit is an actual rendered image fragment, not simply a nearby text
+// cursor (QTextEdit can return the previous character at an image boundary).
+static std::optional<QTextImageFormat> imageAt(ChatMessageText *body, const QPoint &point)
+{
+    for (auto block = body->document()->begin(); block.isValid(); block = block.next()) {
+        for (auto it = block.begin(); !it.atEnd(); ++it) {
+            const auto fragment = it.fragment();
+            if (!fragment.isValid() || !fragment.charFormat().isImageFormat())
+                continue;
+            const QTextImageFormat format = fragment.charFormat().toImageFormat();
+            QTextCursor cursor(body->document());
+            cursor.setPosition(fragment.position());
+            const QPoint origin = body->cursorRect(cursor).topLeft();
+            const QSize size(qRound(format.width()), qRound(format.height()));
+            if (size.isValid() && QRect(origin, size).contains(point))
+                return format;
+        }
+    }
+    return std::nullopt;
+}
+
+// Image objects from SIMS have share: IDs instead of a public URL. Resolve
+// their owning account using the original markup; no cross-account ID lookup.
+static FileSharingItem *sharedImageItem(const QTextImageFormat &format,
+                                        const QString &messageHtml,
+                                        FileSharingDeviceOpener *mediaOpener)
 {
     const QUrl source(format.name());
-    const auto isHttp = [](const QUrl &url) {
-        return url.isValid() && !url.host().isEmpty()
-            && (url.scheme() == QLatin1String("http") || url.scheme() == QLatin1String("https"));
-    };
-    if (isHttp(source))
-        return source.toString(QUrl::FullyEncoded);
     if (source.scheme() != QLatin1String("share") || !mediaOpener)
-        return {};
+        return nullptr;
 
     const QString id = source.path();
     static const QRegularExpression tagRx(QStringLiteral(R"(<share\s+([^<>]*?)/>)"));
@@ -2575,17 +2595,58 @@ static QString httpImageLink(const QTextImageFormat &format, const QString &mess
             else if (attr.captured(1) == QLatin1String("account"))
                 account = attr.captured(2);
         }
-        if (tagId != id)
-            continue;
-        auto *opener = mediaOpener->forAccount(account);
-        auto *item = opener ? opener->sharedItem(id) : nullptr;
-        if (item && item->mimeType().startsWith(QLatin1String("image/"))) {
-            const QUrl url = item->simpleSource();
-            if (isHttp(url))
-                return url.toString(QUrl::FullyEncoded);
+        if (tagId == id) {
+            auto *opener = mediaOpener->forAccount(account);
+            auto *item = opener ? opener->sharedItem(id) : nullptr;
+            if (item && item->mimeType().startsWith(QLatin1String("image/")))
+                return item;
         }
     }
-    return {};
+    return nullptr;
+}
+
+static QString httpImageLink(const QTextImageFormat &format, const QString &messageHtml,
+                             FileSharingDeviceOpener *mediaOpener)
+{
+    QUrl url(format.name());
+    if (url.scheme() == QLatin1String("share")) {
+        auto *item = sharedImageItem(format, messageHtml, mediaOpener);
+        url = item ? item->simpleSource() : QUrl();
+    }
+    if (!url.isValid() || url.host().isEmpty()
+        || (url.scheme() != QLatin1String("http") && url.scheme() != QLatin1String("https")))
+        return {};
+    return url.toString(QUrl::FullyEncoded);
+}
+
+static QImage fullImage(const QTextImageFormat &format, const QString &messageHtml,
+                        ChatMessageText *body, FileSharingDeviceOpener *mediaOpener)
+{
+    if (auto *item = sharedImageItem(format, messageHtml, mediaOpener)) {
+        // Use the cached original when available. The chat's inline resource
+        // is commonly just a downscaled 640x480 preview.
+        const QString path = item->fileName();
+        if (!path.isEmpty() && QFileInfo(path).isFile()) {
+            QImageReader reader(path);
+            reader.setAutoTransform(true);
+            QImage original = reader.read();
+            if (!original.isNull())
+                return original;
+        }
+    }
+    const QVariant value = body->document()->resource(QTextDocument::ImageResource, QUrl(format.name()));
+    QImage preview = value.value<QImage>();
+    if (preview.isNull())
+        preview = value.value<QPixmap>().toImage();
+    return preview;
+}
+
+static void openImageViewer(const QImage &image)
+{
+    if (image.isNull())
+        return;
+    auto *viewer = new MamImageViewer(image);
+    viewer->show();
 }
 
 QMenu *MamChatWidget::createMessageContextMenu(const QString &key, QWidget *target, const QPoint &globalPosition)
@@ -2652,22 +2713,31 @@ QMenu *MamChatWidget::createMessageContextMenu(const QString &key, QWidget *targ
     });
     if (body && (target == body || target == body->viewport())) {
         const QPoint point = body->viewport()->mapFromGlobal(globalPosition);
-        QTextCursor cursor = body->cursorForPosition(point);
-        QTextCharFormat format = cursor.charFormat();
-        if (!format.isImageFormat() && cursor.movePosition(QTextCursor::PreviousCharacter))
-            format = cursor.charFormat();
-        QString imageLink;
-        if (format.isImageFormat()) {
+        const auto format = imageAt(body, point);
+        if (format) {
             const auto &message = items_.at(at).message;
             const QString html = message.hasReplyFallback() ? message.replyFormattedText() : message.formattedText();
-            imageLink = httpImageLink(format.toImageFormat(), html, mediaOpener_);
-        }
-        if (!imageLink.isEmpty()) {
-            menu->addSeparator();
-            auto *copyImageLink = menu->addAction(tr("Copy image link"));
-            copyImageLink->setObjectName(QStringLiteral("mamCopyImageLink"));
-            connect(copyImageLink, &QAction::triggered, this,
-                    [imageLink] { QApplication::clipboard()->setText(imageLink); });
+            const QImage image = fullImage(*format, html, body, mediaOpener_);
+            const QString link = httpImageLink(*format, html, mediaOpener_);
+            if (!image.isNull() || !link.isEmpty()) {
+                menu->addSeparator();
+                if (!image.isNull()) {
+                    auto *copyImage = menu->addAction(tr("Copy image"));
+                    copyImage->setObjectName(QStringLiteral("mamCopyImage"));
+                    connect(copyImage, &QAction::triggered, this,
+                            [image] { QApplication::clipboard()->setImage(image); });
+                    auto *viewImage = menu->addAction(tr("View image"));
+                    viewImage->setObjectName(QStringLiteral("mamViewImage"));
+                    connect(viewImage, &QAction::triggered, this,
+                            [image] { openImageViewer(image); });
+                }
+                if (!link.isEmpty()) {
+                    auto *copyImageLink = menu->addAction(tr("Copy image link"));
+                    copyImageLink->setObjectName(QStringLiteral("mamCopyImageLink"));
+                    connect(copyImageLink, &QAction::triggered, this,
+                            [link] { QApplication::clipboard()->setText(link); });
+                }
+            }
         } else {
             const QString link = body->anchorAt(point);
             if (!link.isEmpty()) {
