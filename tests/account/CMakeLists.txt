@@ -13,8 +13,7 @@ target_link_libraries(account_connection_guard_test PRIVATE
     Qt${QT_DEFAULT_MAJOR_VERSION}::Core Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
 add_test(NAME account_connection_guard COMMAND account_connection_guard_test)
 
-# Small, dependency-free policy test: the production request reads caps from
-# full roster resource JIDs and passes the resolved evidence to this selector.
+# Small, dependency-free test of the dual-store vs. legacy-photo request plan.
 add_executable(account_vcard_request_policy_test vcardrequestpolicytest.cpp)
 set_target_properties(account_vcard_request_policy_test PROPERTIES AUTOMOC ON)
 target_include_directories(account_vcard_request_policy_test PRIVATE ../../src)
@@ -52,6 +51,14 @@ if(ACCOUNT_IRIS_TARGET)
     if(TARGET iris AND TARGET irisnet)
         set(ACCOUNT_IRIS_STATIC_CYCLE $<TARGET_FILE:irisnet> $<TARGET_FILE:iris>)
     endif()
+    add_executable(account_vcard_request_merge_test vcardrequestmergetest.cpp)
+    set_target_properties(account_vcard_request_merge_test PROPERTIES AUTOMOC ON)
+    target_include_directories(account_vcard_request_merge_test PRIVATE ../../src)
+    target_link_libraries(account_vcard_request_merge_test PRIVATE ${ACCOUNT_IRIS_TARGET}
+        ${ACCOUNT_IRIS_STATIC_CYCLE} Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+    add_test(NAME account_vcard_request_merge COMMAND account_vcard_request_merge_test)
+    set_tests_properties(account_vcard_request_merge PROPERTIES TIMEOUT 15)
+
     target_link_libraries(account_native_chat_avatars_test PRIVATE ${ACCOUNT_IRIS_TARGET}
         ${ACCOUNT_IRIS_STATIC_CYCLE} Qt${QT_DEFAULT_MAJOR_VERSION}::Gui Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
     add_test(NAME account_native_chat_avatars COMMAND account_native_chat_avatars_test)
