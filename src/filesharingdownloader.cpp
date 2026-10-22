@@ -103,6 +103,8 @@ signals:
     void disconnected();
     void failed();
     void success();
+    void fileMetadataReceived(const XMPP::Jingle::FileTransfer::File &file);
+    void integrityFailure();
 };
 
 class JingleFileShareDownloader : public AbstractFileShareDownloader {
@@ -192,6 +194,8 @@ public:
 
     void wireApplication()
     {
+        connect(app, &Jingle::FileTransfer::Application::remoteChecksumReceived, this,
+                &JingleFileShareDownloader::fileMetadataReceived);
         connect(app, &Jingle::FileTransfer::Application::connectionReady, this, [this]() {
             qDebug("FSP connectionReady");
             auto r = app->acceptFile().range();
@@ -199,6 +203,7 @@ public:
                 _responseRange = FileShareDownloader::Range { r.offset, r.length };
             }
             connection = app->connection();
+            emit fileMetadataReceived(app->acceptFile());
             connect(connection.data(), &XMPP::Jingle::Connection::readyRead, this,
                     &JingleFileShareDownloader::readyRead);
             emit metaDataChanged();
@@ -210,6 +215,8 @@ public:
             if (state != Jingle::State::Finished)
                 return;
             auto r = app->lastReason();
+            if (r.isValid() && r.condition() == Jingle::Reason::MediaError)
+                emit integrityFailure();
             app    = nullptr;
             if (verified)
                 return; // The pool owns receipt retirement after validated payload delivery.
@@ -306,6 +313,8 @@ public:
         req.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
 #endif
         reply = acc->psi()->networkAccessManager()->get(req);
+        if (_requestRange)
+            reply->setReadBufferSize(4 * 1024 * 1024);
         connect(reply, &QNetworkReply::metaDataChanged, this, [this]() {
             int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
             if (status == 206) { // partial content
@@ -367,7 +376,7 @@ public:
                 emit success();
                 emit disconnected();
             } else
-                emit failed();
+                downloadError(reply->errorString());
         });
     }
 
@@ -496,6 +505,7 @@ public:
     bool                                      success          = false;
     bool                                      failureSignalled = false;
     bool                                      selfDelete       = false;
+    bool                                      integrityFailure = false;
     FileSharingItem::SourceType               currentType      = FileSharingItem::SourceType::None;
 
     void finishWithError(const QString &errStr)
@@ -507,6 +517,7 @@ public:
         success          = false;
         lastError        = errStr;
         q->setErrorString(errStr);
+        qWarning() << "[media] download failed" << q << errStr;
         if (tmpFile) {
             tmpFile->close();
             tmpFile->remove();
@@ -573,12 +584,14 @@ public:
 
         connect(downloader, &AbstractFileShareDownloader::failed, q, [this]() {
             success = false;
-            if (metaReady) {
+            if (metaReady || integrityFailure) {
                 finishWithError(downloader->lastError());
                 return;
             }
             startNextDownloader();
         });
+
+        connect(downloader, &AbstractFileShareDownloader::integrityFailure, q, [this] { integrityFailure = true; });
 
         connect(downloader, &AbstractFileShareDownloader::metaDataChanged, q, [this]() {
             metaReady     = true;
@@ -614,6 +627,8 @@ public:
         });
 
         connect(downloader, &AbstractFileShareDownloader::readyRead, q, &FileShareDownloader::readyRead);
+        connect(downloader, &AbstractFileShareDownloader::fileMetadataReceived, q,
+                &FileShareDownloader::fileMetadataReceived);
         connect(downloader, &AbstractFileShareDownloader::success, q, [this] {
             success = true;
             emit q->transferCompleted();
@@ -649,6 +664,7 @@ FileShareDownloader::~FileShareDownloader()
 std::optional<quint64> FileShareDownloader::responseSize() const { return d->actualSize; }
 
 bool FileShareDownloader::isSuccess() const { return d->success; }
+bool FileShareDownloader::hasIntegrityError() const { return d->integrityFailure; }
 
 bool FileShareDownloader::isConnected() const { return d->downloader ? d->downloader->isConnected() : false; }
 
@@ -740,5 +756,12 @@ qint64 FileShareDownloader::bytesAvailable() const
 }
 
 void FileShareDownloader::setSelfDelete(bool enable) { d->selfDelete = enable; }
+
+void FileShareDownloader::preferSource(const QString &uri)
+{
+    Q_ASSERT(!isOpen());
+    if (d->uris.removeAll(uri))
+        d->uris.append(uri);
+}
 
 #include "filesharingdownloader.moc"

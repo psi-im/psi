@@ -21,6 +21,7 @@
 
 #include <QIODevice>
 
+#include "iris/jingle-ft.h"
 #include <memory>
 #include <optional>
 
@@ -54,6 +55,7 @@ public:
     std::optional<quint64>      responseSize() const; // Actual upstream metadata, not advertised size.
     bool                        isSuccess() const;
     bool                        isConnected() const;
+    bool                        hasIntegrityError() const;
     bool                        open(QIODevice::OpenMode mode = QIODevice::ReadOnly) override;
     void                        abort();
     void                        setRequestRange(const std::optional<Range> &range);
@@ -68,6 +70,7 @@ public:
     qint64 bytesAvailable() const override;
 
     void setSelfDelete(bool enable);
+    void preferSource(const QString &uri);
 
 protected:
     qint64 readData(char *data, qint64 maxSize) override;
@@ -77,6 +80,7 @@ signals:
     // Validated payload. Pooled media requests may release their receipt later,
     // after the successor content has been accepted.
     void transferCompleted();
+    void fileMetadataReceived(const XMPP::Jingle::FileTransfer::File &file);
     void metaDataChanged();
     void disconnected();
     void failed(); // when last piece of data saved to file or on error

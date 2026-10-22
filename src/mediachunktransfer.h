@@ -18,6 +18,7 @@ public:
     void metadata(std::optional<quint64> size, std::optional<Range> range);
     void succeeded();
     void failed(QString message);
+    void integrityFailed(QString message);
     void disconnected();
     void cancel();
 

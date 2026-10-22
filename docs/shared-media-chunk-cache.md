@@ -1,191 +1,159 @@
-# Shared media chunk cache
+# Shared file storage and media ranges
 
-The local HTTP file-sharing proxy uses a shared range cache for remote audio and
-video with a known nonzero size and content hash when the URL has `mode=stream`.
-WebEngine media sources and external-player links select this mode explicitly.
-`mode=download`, an absent mode, an unknown mode, or multiple mode values select
-the existing direct downloader. A sequential download is one transfer, rather
-than a chain of 4 MiB content requests. Range headers still work in either mode;
-they do not by themselves select playback. Qite's network access manager path
-retains its existing behavior. Complete files in the existing file cache take
-precedence in both modes.
+Remote media with a known size and content hash uses the existing shared range
+cache for playback and explicit saves. Network requests remain bounded, but their
+payloads now go directly into one result file. All readers, seeks and saves for
+the same account and immutable file identity share its downloaded ranges.
+Unknown-size transfers retain the ordinary downloader.
 
-`MediaChunkScheduler` is adapted from
-[AnyKeep PR #156](https://github.com/Ri0n/AnyKeep/pull/156), reviewed at commit
-`db77d42ef791225839d03ecb0c62cd06462b31e3`. It provides shared in-flight requests,
-independent reader cancellation, priorities, and bounded admission. Unused
-AnyKeep owner-retirement, singleton and external WebDAV/Jingle accounting APIs
-are deliberately omitted from the Psi adaptation. Psi does not
-use AnyKeep's encrypted record format. `FileSharingChunkSource` delegates to
-Psi's existing downloader and transports; it does not introduce a second Jingle
-stack.
+`FileSharingChunkSource` uses Psi's existing downloader, HTTP support and Jingle
+session pool. There is no additional signaling or transport stack.
 
-## Storage and loading
+## Payload and sidecar
 
-- Chunks are aligned to 4 MiB boundaries. At most two cache fetches run at once,
-  also limited to two per account. These are logical cache-fetch slots, not a
-  global count of physical Jingle sessions. Session teardown after cancellation
-  can outlive the loader. This limits admission, not bandwidth.
-- A new seek has priority over continued sequential reading. A reader requests
-  more as its consumer drains its 64 KiB buffer, with one chunk of lookahead
-  inside the requested range. Canceling the reader also cancels its lookahead.
-- Each missing chunk uses the existing downloader. Account-scoped Jingle queues
-  serialize requests to the same full peer JID and reuse a negotiated BUNDLE via
-  `content-add`. Peers without BUNDLE retain separate sessions. Adaptive bandwidth
-  pacing is not implemented.
-- The complete bounded transfer must succeed before its chunk is served. Jingle
-  success includes existing negotiated checksum validation. Pooled Jingle payloads
-  complete at `payloadVerified`; their receipt is retired separately. An initial
-  read waits for a whole chunk, rather than streaming its first bytes immediately.
-- Identity includes the account, content hash, advertised size, chunk size and
-  index. Received size and range must agree with the request. Servers that
-  ignore a bounded range fall back to the existing direct path before headers
-  are sent. Wrong partial ranges fail instead of falling back. Typed error codes
-  control this decision; there is no process-wide source blacklist.
-- Upstream total size may be unknown for HTTP partial responses; an explicitly
-  conflicting total is rejected. Exact range length and provider completion are
-  still required.
-- Files live in `shares/media-chunks-v1` under Psi's cache directory. Records are
-  plaintext, atomically committed, and disposable. A record checksum detects local
-  corruption; it does not authenticate remote content.
-- The disk budget is 256 MiB and at most 2048 records, with oldest-use eviction.
-  Across restarts, eviction age is approximated by write time. Memory holds at most
-  16 MiB of cached payload, in addition to active transfers and reader buffers.
-  Disk and memory eviction are independent. Disk reads, hashing, writes and
-  pruning run on one worker thread; callbacks return to the application thread.
-  An unavailable/full disk leaves memory caching usable. Invalid or incomplete
-  records are cache misses.
-- Canceling a reader detaches its waiter. A shared fetch survives while another
-  reader needs it. The scheduler retains admission until an orphaned transfer has
-  acknowledged cancellation. At most 256 read callbacks are retained. Overload
-  rejects admission without queuing another callback.
+Files live in `shares/media-files-v2` under Psi's data directory:
 
-HTTP Range behavior follows [RFC 9110](https://www.rfc-editor.org/rfc/rfc9110.html#section-14),
-including ignoring Range on HEAD and allowing a partial response with an unknown
-complete length. Jingle ranges continue to use the existing
-[XEP-0234 implementation](https://xmpp.org/extensions/xep-0234.html#range).
+- `<key>.data` is the payload at its final byte offsets, without chunk headers.
+  Holes are unavailable data, not downloaded zero bytes. NTFS files are marked
+  sparse when supported; other filesystems retain their normal behavior.
+- `<key>.json` is the only sidecar. `QSaveFile` atomically replaces it after a
+  checkpoint. It contains the exact size, sorted downloaded ranges, received
+  checksums, supplementary signaled metadata and any integrity error.
+- The key hashes the account-scoped content identity and advertised total size.
+  It does not depend on network request sizes, chunk boundaries or source URLs.
+  A changed fetch granularity can therefore reuse the same partial file.
+
+The version 2 JSON layout is:
+
+```json
+{
+  "version": 2,
+  "size": "32",
+  "ranges": [["0", "8"], ["16", "16"]],
+  "checksums": [
+    {"offset": "8", "length": "16", "algorithm": "sha-256", "digest": "BASE64"}
+  ],
+  "metadata": {"name": "sample.bin", "media-type": "application/octet-stream"},
+  "error": ""
+}
+```
+
+Ranges are `[offset, length]`. Integers are decimal strings to preserve all 64
+bits in JSON. Adjacent and overlapping ranges merge. Checksums retain their own
+offsets and lengths independently of those merges. Metadata also preserves the
+signaled file XML, sources and available thumbnail/waveform information.
+
+Before overwriting available bytes, the worker checkpoints their invalidation.
+It then writes and flushes the payload, merges availability, verifies any newly
+covered checksum spans and checkpoints the result. A transfer is not reported
+as stored when a disk write or sidecar commit fails. Startup reloads the sidecar
+and rechecks fully covered hash spans. Unsupported sidecars and truncated
+payloads are not advertised as available. The old `media-chunks-v1` records are
+not migrated or deleted by this change.
+
+## Verification and user retry
+
+Whole-file hashes from SIMS metadata and range hashes from Jingle offers and
+late checksum messages enter the same checksum list. Each hash is verified when
+all bytes in its span have arrived. Disk I/O and hashing run on the existing
+`shared-media-cache` worker thread; callbacks and UI updates return to the
+application thread. The application supplies Iris's hash implementation, so
+verification uses its supported XMPP algorithm names.
+
+A mismatch removes the entire checksum span from availability, persists an
+error and stops readers and saves for that file. Bytes outside the failed span
+remain available for a later retry. There is no automatic retry or switch to
+another source after an integrity failure. Explicit playback retry or a new save
+request clears the halt and fetches only the missing ranges. Conflicting hashes
+for the same span and algorithm are retained and reported as an error; retry
+cannot make contradictory checksums agree.
+
+Downloaded bytes can be consumed before a larger, still incomplete hash span is
+verifiable. Completion and a successful explicit save require the entire file
+and all received applicable checksums to pass. An integrity error also stops an
+already open native player and prevents serving the failed payload as a source.
+
+## Scheduling, sources and retention
+
+- Fetches align to 4 MiB boundaries. Each fetch subtracts the already downloaded
+  extents and requests only its holes. Seek requests take priority over ordinary
+  continuation. Readers keep a 64 KiB consumer buffer and at most three chunks of
+  lookahead within their requested range.
+- At most four shared fetches run simultaneously, also limited to four per account.
+  A newly encountered source is probed; later selection estimates completion
+  time from measured throughput and its active request count. Available sources
+  may therefore supply different ranges concurrently. Existing HTTP/Jingle
+  fallback remains responsible for trying another usable URL after an ordinary
+  source failure. This is source selection, not bandwidth reservation.
+- The complete bounded transfer must succeed before its payload is committed.
+  Jingle success includes its existing checksum validation. A server ignoring
+  Range switches to one shared sequential transfer; that transfer writes bounded
+  blocks into the same payload and sidecar. Concurrent requests join it. A wrong
+  partial range is an error, rather than an unrestricted-download fallback.
+  This fallback waits for full transfer validation before satisfying its waiters.
+- Canceling a reader detaches its waiter; a shared fetch survives other consumers.
+  The scheduler retains admission until an orphaned transfer acknowledges
+  cancellation. At most 256 read callbacks are retained.
+- Active readers and fetches pin their files against eviction. Explicit saves
+  set `retain-partial` metadata, preserving unfinished progress after cancellation
+  and restart. Integrity failures are also retained until the user retries.
+  Disposable files use whole-file LRU eviction, with a soft 256 MiB payload
+  budget and 2048-entry limit. Published sources are retained too. Pinned files,
+  retained partial downloads, failed files and a sole oversized file can exceed
+  those limits. RAM holds at most
+  16 MiB of cached payload in addition to active transfers and reader buffers.
+
+Once complete, Qite initializes native playback directly from the payload file.
+Replay resolves the original shared-file identity again, so completion during
+the first HTTP playback is picked up on replay. Browser-based WebEngine media
+continues to use HTTP; the proxy serves the same completed file from disk.
+
+A completed receiver can serve incoming file requests and use the existing
+explicit publication path to advertise its own source. SIMS supports several
+source references for the same file. This change does not send unsolicited
+announcements or invent a protocol for advertising partially available pieces.
+
+## Protocol and session ownership
+
+HTTP Range handling follows [RFC 9110](https://www.rfc-editor.org/rfc/rfc9110.html#section-14).
+Jingle ranges and late checksums follow
+[XEP-0234](https://xmpp.org/extensions/xep-0234.html); hash identifiers follow
+[XEP-0300](https://xmpp.org/extensions/xep-0300.html). Shared-file references and
+multiple sources follow [XEP-0385](https://xmpp.org/extensions/xep-0385.html).
+
+`FileSharingJingleSession` owns the request queue independently of downloader
+lifetimes. Requests to the same full peer JID reuse a negotiated BUNDLE via
+`content-add`. `setKeepTransportUntilReceipt()` preserves the previous member;
+`setReceiptDeferred()` holds its receipt until the successor becomes active.
+With no successor the receipt is released promptly. Peers without BUNDLE retain
+separate sessions. The storage worker has no knowledge of Jingle sessions.
+
+JET remains separate from storage policy. Iris authenticates JET as a whole-file
+stream and rejects ranges/streaming hooks in that mode. Plaintext local
+checkpoints do not enable arbitrary authenticated JET ranges or resume.
+
+The scheduler originates from
+[AnyKeep PR #156](https://github.com/Ri0n/AnyKeep/pull/156), reviewed at
+`db77d42ef791225839d03ecb0c62cd06462b31e3`; Psi keeps its own storage format and
+existing transports.
 
 ## Validation
 
-Standalone tests in `tests/filesharing` build with Qt 5 or Qt 6. The scheduler and
-cache tests cover overlapping reads, cancellation, admission, persistence,
-corruption, quotas, overload, completion after owner destruction and shutdown.
-`MediaChunkTransfer` tests exercise the production bounded-transfer state machine
-with fake devices: success after the payload, integrity failure, missing/wrong
-ranges, EOF, cancellation, and success/disconnection emitted inside the final
-`readData()`. The Psi adapter only wires real downloader metadata and signals to
-this object. All network protocol processing remains in the existing downloader.
-Replaying the 67 AVI seek offsets from the reported mpv session uses three physical chunk fetches in
-the test fixture; this is not a measurement of live Jingle sessions.
+`tests/filesharing` covers merged out-of-order ranges, one payload plus one
+sidecar, restart, late checksums, conflicting announcements, corruption,
+invalidation of a complete hash span, explicit repair of only missing holes,
+worker-thread hashing, source selection, active-file retention, quotas,
+cancellation, admission, saves and bounded-transfer validation.
 
-When built with bundled Iris, `filesharing_jingle_session` exchanges actual
-ICE/DTLS/SCTP data between two local clients. Three queued ranges use one session
-and two `content-add` exchanges; each predecessor receipt follows successor
-`content-accept`. Without BUNDLE the same requests use three sessions. A canceled
-queued request never starts. The test explicitly skips without a DTLS/SCTP backend.
-It requires private Iris implementation headers and its loopback test fixture,
-so it is not built against an installed Iris SDK. The other file-sharing tests
-remain available with external Iris.
-After success or cancellation of the final prefetched range, both session objects
-must terminate and be destroyed. Iris's backend-independent `jingle_sessionretirement`
-also checks success and last-content removal in both sending roles over IBB,
-retaining the first finished FT object while a second content remains active.
-It also checks that handover keeps the same physical ICE association, and that
-the queue can be destroyed inside its setup callback. The standalone component
-tests run with ASan/UBSan/LeakSanitizer. The Jingle test uses ASan/UBSan with the
-existing Iris enum suppressions for `stunmessage.cpp` and `stringprep.cpp`, and
-with LeakSanitizer disabled for the previously documented Iris baseline leaks.
-The Psi handover test also holds the final range open and processes deferred
-deletions: both endpoints must already have destroyed the two preceding FT
-applications, with only the live content remaining in the session.
+With bundled Iris, `filesharing_jingle_session` exchanges actual ICE/DTLS/SCTP
+data between two loopback clients. Three queued ranges use one session and two
+`content-add` exchanges; without BUNDLE they use three sessions. A canceled
+queued request does not start. Finished predecessors retire while their
+successor remains live, and both endpoints eventually destroy their sessions.
+The test skips when the required backend is unavailable.
 
-## Jingle handover
-
-`FileSharingJingleSession` owns the request queue independently of downloader
-lifetimes. The downloader installs streaming callbacks before the pool submits
-its application. `setKeepTransportUntilReceipt()` preserves the previous BUNDLE
-member, and `setReceiptDeferred()` holds its receipt until the next application
-becomes active. A queued turn lets answer processing commit before the previous
-receipt is released. Another extension waits for the previous member's retirement.
-With no queued successor, the receipt is released promptly; no idle session timer
-or synthetic keepalive content is added. A stalled consumer can therefore require
-a new session when it resumes. This follows the same handover mechanism as
-[AnyKeep's IrisMediaSync](https://github.com/Ri0n/AnyKeep/blob/bc26ae6a7b133940b0198c4ab309a7cbe6899e68/plugins/xmpppubsub/iris/irismediasync.cpp).
-
-The sender accepts additional requests only for locally available shared files.
-It validates new applications separately and never reconfigures already accepted
-ones. A rejected or canceled successor also retires its predecessor's receipt.
-The HTTP cache and disk worker have no knowledge of Jingle sessions.
-Both shared-file adapters schedule finished applications for deletion. This is
-an ownership decision in Psi, not a change to generic Iris application lifetime:
-other callers may still retain a finished application for UI or result inspection.
-
-For a real playback check, rebuild both Psi endpoints, open the same AVI externally,
-seek in both directions, and repeat the request to verify reuse. The sender uses
-the existing ranged-transfer protocol, with added support for incoming `content-add`.
-Enable `psi.filesharing.chunks.debug=true` in Qt logging rules to record cache
-fetch offsets, lengths and completion errors. Verify that repeated nearby HTTP
-ranges share chunks and no longer create a Jingle session per index entry.
-
-## Architecture review
-
-The intended ownership path is HTTP response → reader/waiter, while the manager
-owns the cache/scheduler and active shared fetches. Destroying one response cancels
-its waiter without destroying other consumers' transfers. The cache owns its disk
-worker and drains outstanding disk work at teardown; the ordinary read path never
-blocks on the worker. Cross-thread completions use a Qt signal relay whose
-receiver connection is removed on destruction, rather than dereferencing a
-`QPointer` from another thread.
-
-The Iris read-hook change fixes callable lifetime at the connection abstraction:
-removing registration cannot destroy an executing callback, and mutable captures
-persist between invocations. It does not change FT signaling or bypass validation.
-The existing FT layer and the bounded-transfer adapter both need final-read
-reentrancy tests. Full consumers must be rebuilt with the changed Iris header.
-
-Remaining tradeoffs are explicit: 4 MiB initial latency and read amplification,
-per-chunk content negotiation, and best-effort per-process disk quotas if multiple
-processes share a cache directory. Initial streaming
-before a chunk is verified would need a separate policy for tentative bytes; this
-implementation only serves completed chunks.
-
-## Durable partial downloads: proposed next storage change
-
-The current rolling playback cache survives restart, but is disposable and has
-no per-file manifest. It is not a durable resumable-download store. The ordinary
-downloader still truncates its temporary file when starting a new download.
-Splitting the URLs does not change that behavior.
-
-A durable implementation should extend the storage layer and existing downloader,
-with the following separation:
-
-- File identity: format version, stable account ID, content-hash algorithm and
-  digest, exact total size. Store the identity itself as well as the opaque disk
-  key. A filename, temporary URL or full peer resource JID is not a file identity.
-- Availability: ordered downloaded extents, independent of network request sizes.
-  An ordinary download can fetch a missing contiguous tail in one transfer while
-  committing multiple local checkpoints. Playback can continue using bounded
-  range requests against the same file identity.
-- Integrity: immutable leaf records with offset, length and a local SHA-256.
-  Coalesce adjacent extents in the availability map without merging leaf payloads
-  or replacing their hashes. Updating two neighbouring interval boundaries does
-  not require reading the downloaded bytes. An indexed journal/database avoids
-  rewriting an ever-growing JSON array after every checkpoint.
-- Commit/recovery: commit the payload before publishing its extent. A truncated
-  or corrupt leaf is a missing range after recovery, never an available range.
-  Keep unfinished explicit downloads until completion or explicit removal;
-  playback-only records retain an eviction budget. In-flight transfers are not
-  persistent progress. Concurrent readers and writers must share ownership of
-  the same entry rather than truncate one another's files.
-- Completion: verify the advertised whole-file hash in byte order before
-  promoting the result into the existing complete-file cache. Per-leaf hashes
-  detect local damage but are not a replacement for that verification. Standard
-  SHA digests of adjacent pieces cannot be combined into the standard digest of
-  their concatenation. Use a streaming hash as a contiguous prefix advances,
-  or one final ordered pass on the disk worker.
-
-JET policy must remain separate from at-rest storage. Iris currently authenticates
-JET as one whole-file stream and rejects ranges/streaming hooks for that mode.
-Plaintext local checkpoints do not make arbitrary JET range transfers possible.
-Adding JET resume or independently authenticated live ranges needs explicit
-protocol support; the URL mode must not silently bypass this restriction.
+Qite playback tests cover a delayed HTTP response, switching replay to a
+completed local file, and stopping on source integrity failure until an explicit
+retry. Live multi-peer throughput and WebEngine playback still need an end-to-end
+check with actual peers. Enable `psi.filesharing.chunks.debug=true` in Qt logging
+rules to inspect fetch offsets, lengths and errors.

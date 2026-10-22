@@ -19,6 +19,7 @@
 
 #include "filesharingitem.h"
 #include "filecache.h"
+#include "filesharingchunksource.h"
 #include "filesharingmanager.h"
 #include "filesharingpublication.h"
 #include "fileutil.h"
@@ -26,6 +27,7 @@
 #include "iris/xmpp_message.h"
 #include "iris/xmpp_reference.h"
 #include "iris/xmpp_thumbs.h"
+#include "mediachunkcache.h"
 #include "psiaccount.h"
 #include "userlist.h"
 
@@ -57,6 +59,7 @@ FileSharingItem::FileSharingItem(const MediaSharing &ms, const Jid &from, PsiAcc
     QObject(manager), _acc(acc), _manager(manager), _fileType(FileType::RemoteFile)
 {
     _sums = ms.file.computedHashes();
+    _receivedMetadata = ms.file;
     if (initFromCache()) {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
         auto tmp  = ms.sources + uris();
@@ -82,7 +85,8 @@ FileSharingItem::FileSharingItem(const MediaSharing &ms, const Jid &from, PsiAcc
         _metaData.insert(QLatin1String("amplitudes"), ampl);
     }
 
-    // TODO remaining
+    if (_fileType == FileType::RemoteFile)
+        FileSharingChunkSource::configure(this);
 }
 
 FileSharingItem::FileSharingItem(const QImage &image, PsiAccount *acc, FileSharingManager *manager) :
@@ -208,7 +212,7 @@ Reference FileSharingItem::toReference() const
 
     Reference r(Reference::Data, uris.first());
     MediaSharing ms;
-    ms.file = fileInfo();
+    ms.file    = fileMetadata();
     ms.sources = uris;
     r.setMediaSharing(ms);
     return r;
@@ -287,12 +291,29 @@ QString FileSharingItem::displayName() const
     return QFileInfo(_fileName).fileName();
 }
 
-QString FileSharingItem::fileName() const { return _fileName; }
+QString FileSharingItem::fileName() const
+{
+    const auto local = localFilePath();
+    return local.isEmpty() ? _fileName : local;
+}
 
-QString FileSharingItem::localFilePath() const { return _fileType == FileType::RemoteFile ? QString() : _fileName; }
+QString FileSharingItem::localFilePath() const
+{
+    if (!FileSharingChunkSource::error(const_cast<FileSharingItem *>(this)).isEmpty())
+        return { };
+    QString path;
+    if (_manager->cacheItem(_sums, false, &path))
+        return path;
+    return _fileType == FileType::RemoteFile ? FileSharingChunkSource::localFile(const_cast<FileSharingItem *>(this))
+                                             : _fileName;
+}
 
 void FileSharingItem::mergeSources(const MediaSharing &media, const Jid &peer)
 {
+    if (_receivedMetadata.isValid())
+        _receivedMetadata.merge(media.file);
+    else
+        _receivedMetadata = media.file;
     _uris = media.sources + _uris;
     _uris.removeDuplicates();
     for (const auto &hash : media.file.computedHashes())
@@ -302,10 +323,13 @@ void FileSharingItem::mergeSources(const MediaSharing &media, const Jid &peer)
         _jids.append(peer);
     if (!media.file.amplitudes().isEmpty())
         _metaData.insert(QStringLiteral("amplitudes"), media.file.amplitudes());
+    FileSharingChunkSource::configure(this);
 }
 
 FileCacheItem *FileSharingItem::cache(bool reborn) const
 {
+    if (!FileSharingChunkSource::error(const_cast<FileSharingItem *>(this)).isEmpty())
+        return nullptr;
     for (const auto &h : _sums) {
         auto c = _manager->cacheItem(h, reborn);
         if (c)
@@ -334,22 +358,30 @@ bool FileSharingItem::savePublishedFile()
         _fileName = _manager->cacheDir() + "/" + stored->fileName();
         return true;
     }
-    if (!QFileInfo(_fileName).isReadable())
+    const auto path = localFilePath();
+    if (!QFileInfo(path).isReadable())
         return false;
-    meta["link"] = _fileName;
+    meta["link"] = path;
     return _manager->saveToCache(_sums, {}, meta, FILE_TTL) != nullptr;
 }
 
 void FileSharingItem::publish(const XMPP::Jid &myJid)
 {
-    Q_ASSERT(_fileType != FileType::RemoteFile);
+    const auto path = localFilePath();
+    if (path.isEmpty())
+        return;
     if (_publication || !_acc)
         return;
 
     _published = false;
     // Cache temporary files before registering a factory that will serve them.
     const bool serveLocally = savePublishedFile();
-    auto *publication = new FileSharingPublication(_acc->client(), fileInfo(), _fileName, myJid, this);
+    if (serveLocally && _fileSize) {
+        auto cache = _manager->mediaChunkCache();
+        if (cache->isCompleteFile(localFilePath()))
+            cache->configure(FileSharingChunkSource::identity(this), *_fileSize, { }, { { "published", true } });
+    }
+    auto *publication = new FileSharingPublication(_acc->client(), fileMetadata(), localFilePath(), myJid, this);
     _publication = publication;
     connect(publication, &FileSharingPublication::progress, this,
             [this](qint64 bytes) { emit publishProgress(size_t(bytes)); });
@@ -377,7 +409,14 @@ void FileSharingItem::publish(const XMPP::Jid &myJid)
 
 PsiAccount *FileSharingItem::account() const { return _acc; }
 
-FileShareDownloader *FileSharingItem::download(std::optional<Range> range)
+XMPP::Jingle::FileTransfer::File FileSharingItem::fileMetadata() const
+{
+    if (_receivedMetadata.isValid())
+        return _receivedMetadata;
+    return fileInfo();
+}
+
+FileShareDownloader *FileSharingItem::download(std::optional<Range> range, const QString &preferredSource)
 {
     // if (range && range->start == 0 && _fileSize && range->size == *_fileSize)
     //     range = {};
@@ -403,6 +442,8 @@ FileShareDownloader *FileSharingItem::download(std::optional<Range> range)
     // }
 
     auto downloader = new FileShareDownloader(_acc, _sums, file, _jids, _uris, this);
+    if (!preferredSource.isEmpty())
+        downloader->preferSource(preferredSource);
     if (downloaderRange) {
         downloader->setRequestRange(downloaderRange);
         return downloader;

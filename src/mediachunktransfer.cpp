@@ -59,6 +59,10 @@ void MediaChunkTransfer::failed(QString message)
 {
     finish(message.isEmpty() ? QStringLiteral("Media chunk transfer failed") : std::move(message));
 }
+void MediaChunkTransfer::integrityFailed(QString message)
+{
+    finish({ MediaChunkError::IntegrityError, std::move(message) });
+}
 void MediaChunkTransfer::cancel() { finish({ MediaChunkError::Cancelled, QStringLiteral("Media chunk cancelled") }); }
 void MediaChunkTransfer::disconnected()
 {
@@ -83,7 +87,7 @@ void MediaChunkTransfer::pump()
     reading_ = false;
     if (!finished_ && completed_) {
         if (quint64(bytes_.size()) == length_ && device_->bytesAvailable() == 0)
-            finish({});
+            finish({ });
         else
             failed(QStringLiteral("Unexpected media chunk payload length"));
     } else if (!finished_ && disconnected_)
@@ -100,7 +104,7 @@ void MediaChunkTransfer::finish(MediaChunkError error)
     QTimer::singleShot(0, this, [this, error] {
         const QPointer<MediaChunkTransfer> guard(this);
         device_->disconnect(this);
-        auto stop = std::exchange(stop_, {});
+        auto stop = std::exchange(stop_, { });
         if (stop)
             stop();
         if (!guard)
@@ -108,7 +112,7 @@ void MediaChunkTransfer::finish(MediaChunkError error)
         delete std::exchange(device_, nullptr);
         if (!guard)
             return;
-        auto done = std::exchange(done_, {});
+        auto done = std::exchange(done_, { });
         if (done)
             done(error.isEmpty() ? std::move(bytes_) : QByteArray(), error);
         if (guard)

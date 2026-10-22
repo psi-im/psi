@@ -149,6 +149,7 @@ list(APPEND HEADERS
     filesharedlg.h
     filesharingdownloader.h
     filesharingchunksource.h
+    filesourceselector.h
     filesharingjinglesession.h
     mediachunkcache.h
     mediachunkscheduler.h
@@ -279,7 +280,7 @@ list(APPEND HEADERS
     xmlconsole.h
     )
 
-if(UNIX OR IS_WEBENGINE)
+if(TARGET qhttp)
     list(APPEND SOURCES
         webserver.cpp)
     list(APPEND HEADERS
