@@ -384,6 +384,7 @@ list(APPEND SOURCES
     widgets/LinkButton.cpp
     chatreply.cpp
     widgets/MamChatWidget.cpp
+    widgets/MamImageViewer.cpp
     widgets/MamHistorySource.cpp
     chateditproxy.cpp
     chatsplitter.cpp
