@@ -399,7 +399,7 @@ static void supplementFromLegacy(VCard4::VCard &modern, const VCard4::VCard &leg
         return;
     }
     if (modern.fullName().isEmpty()) modern.setFullName(legacy.fullName());
-    if (modern.names().isEmpty()) modern.setNames(legacy.names());
+    if (modern.names().data.isEmpty()) modern.setNames(legacy.names());
     if (modern.nickName().isEmpty()) modern.setNickName(legacy.nickName());
     if (modern.photo().isEmpty()) modern.setPhoto(legacy.photo());
     if (modern.emails().isEmpty()) modern.setEmails(legacy.emails());
