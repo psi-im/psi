@@ -16,7 +16,7 @@ public:
     explicit FileSharingItem(const QString &mime, QObject *parent = nullptr) : QObject(parent), mime_(mime) { }
     QString                mimeType() const { return mime_; }
     QString                displayName() const { return QStringLiteral("test.7z"); }
-    QString                fileName() const { return {}; }
+    QString                fileName() const { return cachedPath_; }
     bool                   isCached() const { return true; }
     QImage                 preview(const QSize &) const { return preview_; }
     std::optional<quint64> fileSize() const { return 100; }
@@ -24,6 +24,7 @@ public:
     QUrl                   source_ = QUrl(QStringLiteral("https://example.org/file"));
     FileShareDownloader   *download() { return new FileShareDownloader(this); }
     QImage                 preview_;
+    QString                cachedPath_;
 signals:
     void downloadFinished();
 
