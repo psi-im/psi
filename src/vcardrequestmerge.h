@@ -30,7 +30,7 @@ inline void supplement(VCard4::VCard &modern, const VCard4::VCard &legacy)
     if (modern.role().isEmpty()) modern.setRole(legacy.role());
     if (modern.note().isEmpty()) modern.setNote(legacy.note());
     if (modern.urls().isEmpty()) modern.setUrls(legacy.urls());
-    if (modern.bday().isEmpty()) modern.setBday(legacy.bday());
+    if (QString(modern.bday()).isEmpty()) modern.setBday(legacy.bday());
     if (modern.categories().isEmpty()) modern.setCategories(legacy.categories());
     if (modern.logo().isEmpty()) modern.setLogo(legacy.logo());
     if (modern.impp().isEmpty()) modern.setImpp(legacy.impp());
