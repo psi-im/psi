@@ -30,10 +30,15 @@ jobs:
         run: |
           git submodule update --init --depth 1 iris
           git -C iris submodule update --init --depth 1
+      - name: Resolve locked Qt version
+        id: deps
+        uses: ./.github/actions/load-dependencies
+        with:
+          require-iris: 'true'
       - name: Install Qt 6.12
         uses: jurplel/install-qt-action@v4
         with:
-          version: '6.12.0'
+          version: ${{ steps.deps.outputs.qt6_version }}
           modules: qtmultimedia qtsvg qtimageformats
           cache: true
       - name: Install build tools and crypto dependencies
