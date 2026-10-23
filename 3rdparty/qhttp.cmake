@@ -14,7 +14,6 @@ if(WIN32)
         -D_WINDOWS
         -DWIN32_LEAN_AND_MEAN
         -DNOMINMAX
-        -DQHTTP_EXPORT
     )
 endif()
 
@@ -92,6 +91,15 @@ add_library(qhttp
     ${qhttp_srcs}
     ${MOCS}
 )
+
+# qhttp's Windows headers treat QHTTP_EXPORT as dllexport and, when it is
+# absent, mark symbols as dllimport. Here qhttp is always a *static* library:
+# its consumers must see the same macro as the library itself to prevent
+# unresolved __imp__ symbols with MinGW at final executable link time.
+# This PUBLIC definition also reaches Psi and its moc-generated sources.
+if(WIN32)
+    target_compile_definitions(qhttp PUBLIC QHTTP_EXPORT)
+endif()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
