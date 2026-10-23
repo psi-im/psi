@@ -111,7 +111,7 @@ jobs:
     uses: ./.github/workflows/windows-msys2-qt5-profile.yml
     with:
       profile: legacy-win7
-      chat_type: BASIC
+      chat_type: WEBKIT
       allow_failure: false
       run_tests: true
       package: false
