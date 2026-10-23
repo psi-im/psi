@@ -1,4 +1,4 @@
-name: Windows MSVC Qt 6.12 packaging (BASIC default)
+name: Windows MSVC Qt 6.12 compile/test CI (BASIC default)
 
 on:
   push:

@@ -101,7 +101,7 @@ class DependencyLockTests(unittest.TestCase):
     def test_release_only_stages_external_extensions(self):
         profile = (ROOT / ".github/workflows/windows-msvc-qt6-profile.yml").read_text()
         builder = (ROOT / "packaging/windows/build_profile_msvc.ps1").read_text()
-        self.assertIn("if: inputs.release_version != ''", profile)
+        self.assertIn("if: inputs.package", profile)
         self.assertIn("if ($ReleaseVersion) {\n    Invoke-Checked python packaging/windows/stage_released_extensions.py", builder)
 
     def test_windows_ci_and_release_share_explicit_packaging_entry_point(self):
@@ -114,7 +114,7 @@ class DependencyLockTests(unittest.TestCase):
         self.assertIn("package: false", ci)
         self.assertIn("if: inputs.package", profile)
         self.assertIn("'-BuildOnly', '-RunTests'", profile)
-        self.assertIn("if: inputs.package\\n        uses: actions/upload-artifact", profile)
+        self.assertIn("name: Upload all-in-one release packages\n        if: inputs.package", profile)
         self.assertIn("workflow_call:", packaging)
         self.assertIn("workflow_dispatch:", packaging)
         self.assertIn("package: true", packaging)
