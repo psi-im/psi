@@ -34,7 +34,7 @@ class ReleasedExtensionsTests(unittest.TestCase):
         (self.media_stage / "gstreamer-runtime.txt").write_text("elements installed\n")
         self.lock = {
             "qt": {"windows_msvc_qt6": "6.12.0"},
-            "plugins": {"commit": "a" * 40},
+            "plugins": {"commit": "a" * 40, "psi_api_commit": "d" * 40},
             "psimedia": {"repository": "psi-im/psimedia", "release_tag": "v1.2.1",
                          "commit": "b" * 40},
             "qca": {"tag": "v3.0.12", "commit": "c" * 40},
