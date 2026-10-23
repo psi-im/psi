@@ -19,7 +19,7 @@ jobs:
     runs-on: macos-15
     timeout-minutes: 75
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: false
       - name: Initialize non-Iris source submodules
@@ -48,7 +48,7 @@ jobs:
           brew list pkgconf >/dev/null 2>&1 || brew install pkgconf
           brew list openssl@3 >/dev/null 2>&1 || brew install openssl@3
           echo "OPENSSL_ROOT_DIR=$(brew --prefix openssl@3)" >> "$GITHUB_ENV"
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ~/Library/Caches/ccache
           key: psi-macos-arm64-qt6-${{ github.sha }}
