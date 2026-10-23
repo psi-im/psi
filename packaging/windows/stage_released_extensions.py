@@ -66,12 +66,13 @@ def stage_extensions(
         "qca_tag": lock["qca"]["tag"],
         "qca_commit": lock["qca"]["commit"],
     }
-    # Psi plugin API is independently pinned by Plugins 1.6; cross-check via
-    # the manifest's self-contained provenance instead of changing its source.
-    plugin_source_sha = manifest.get("psi_api_commit")
-    if not isinstance(plugin_source_sha, str) or len(plugin_source_sha) != 40:
-        fail("Released plugin package has invalid Psi plugin API provenance")
-    expected.pop("psi_api_commit")
+    # A valid SHA alone is insufficient: the independently built plugin package
+    # must target the exact Psi Plugin API source locked by this Psi release.
+    plugin_api_sha = expected["psi_api_commit"]
+    if not isinstance(plugin_api_sha, str) or len(plugin_api_sha) != 40 or any(
+        ch not in "0123456789abcdefABCDEF" for ch in plugin_api_sha
+    ):
+        fail("Psi dependency lock has invalid plugin API commit")
     for key, value in expected.items():
         if manifest.get(key) != value:
             fail(f"Released plugin {key} mismatch: {manifest.get(key)} != {value}")
