@@ -82,7 +82,7 @@ XMPP::Status::Type StatusComboBox::status() const
 
 void StatusComboBox::addStatus(XMPP::Status::Type status)
 {
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     addItem(status2txt(status), status);
 #else
     addItem(PsiIconset::instance()->status(status).icon(), status2txt(status), status);

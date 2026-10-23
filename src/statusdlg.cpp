@@ -181,7 +181,7 @@ void StatusSetDlg::init()
         StatusPreset sp;
         sp.fromOptions(PsiOptions::instance(), name.toString());
         sp.filterStatus();
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
         d->cb_preset->addItem(sp.name());
 #else
         d->cb_preset->addItem(PsiIconset::instance()->status(sp.status()).icon(), sp.name());

@@ -57,7 +57,7 @@ public:
         if (parent && parent->isWidgetType())
             static_cast<QWidget *>(parent)->addAction(action);
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
         action->setIconVisibleInMenu(false);
 #endif
     }

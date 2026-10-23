@@ -19,7 +19,7 @@
 
 #include "systemwatch.h"
 
-#if defined(Q_OS_MAC)
+#if defined(Q_OS_MACOS)
 #include "systemwatch_mac.h"
 #elif defined(Q_OS_WIN32)
 #include "systemwatch_win.h"
@@ -34,7 +34,7 @@ SystemWatch::SystemWatch() : QObject(qApp) { }
 SystemWatch *SystemWatch::instance()
 {
     if (!instance_) {
-#if defined(Q_OS_MAC)
+#if defined(Q_OS_MACOS)
         instance_ = new MacSystemWatch();
 #elif defined(Q_OS_WIN)
         instance_ = new WinSystemWatch();
