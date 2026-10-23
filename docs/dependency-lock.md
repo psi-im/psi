@@ -38,6 +38,9 @@ Ordinary full-client CI has exactly five compile/test targets: Windows 7 Qt5,
 Windows MSVC Qt6, Ubuntu 24.04 Qt6, macOS arm64 Qt6 and Fedora latest Qt6.
 All use compiler caching. Fedora exercises Qt6/WebEngine; the other four full
 CI targets use BASIC. The Linux/macOS profiles do not build official plugins.
+macOS always builds Iris from Psi's exact gitlink with the bundled QCA/UsrSCTP/
+OMEMO libraries (Qt6 has no MacExtras module), and never consumes a published
+Iris SDK just because the lock mentions a release tag.
 Expensive protocol integration suites remain manually dispatchable;
 small path-filtered widget and component regressions can run automatically.
 

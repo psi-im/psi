@@ -26,18 +26,15 @@ jobs:
         run: |
           git submodule update --init --depth 1 \
             3rdparty/http-parser 3rdparty/qhttp 3rdparty/qite
-      - name: Initialize pinned Iris metadata
-        run: git submodule update --init --depth 1 iris
-      - name: Resolve locked SDK release tags
-        id: deps
-        uses: ./.github/actions/load-dependencies
-        with:
-          require-iris: 'true'
+      - name: Initialize exact Iris gitlink
+        run: |
+          git submodule update --init --depth 1 iris
+          git -C iris submodule update --init --depth 1
       - name: Install Qt 6.12
         uses: jurplel/install-qt-action@v4
         with:
-          version: ${{ steps.deps.outputs.qt6_version }}
-          modules: qtmultimedia qtimageformats
+          version: '6.12.0'
+          modules: qtmultimedia qtsvg qtimageformats
           cache: true
       - name: Install build tools and crypto dependencies
         run: |
@@ -52,34 +49,20 @@ jobs:
           key: psi-macos-arm64-qt6-${{ github.sha }}
           restore-keys: |
             psi-macos-arm64-qt6-
-      - name: Install released QCA and Iris Qt6 SDKs
-        env:
-          GH_TOKEN: ${{ github.token }}
-          IRIS_TAG: ${{ steps.deps.outputs.iris_release_tag }}
-          QCA_TAG: ${{ steps.deps.outputs.qca_tag }}
-        run: |
-          set -euo pipefail
-          mkdir -p qca-sdk iris-sdk
-          gh release download "$QCA_TAG" --repo psi-im/qca \
-            -p qca3-qt6-macos-arm64.zip -O qca.zip
-          gh release download "$IRIS_TAG" --repo psi-im/iris \
-            -p iris-qt6-macos-arm64.zip -O iris.zip
-          (cd qca-sdk && cmake -E tar xvf ../qca.zip)
-          (cd iris-sdk && cmake -E tar xvf ../iris.zip)
-          test -d qca-sdk/lib/cmake/Qca3-qt6
-          test -d iris-sdk/lib/cmake/Iris
       - name: Configure and compile Psi
         run: |
           ccache --max-size=1G
           ccache --zero-stats
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_PREFIX_PATH="$PWD/qca-sdk;$PWD/iris-sdk;$QT_ROOT_DIR" \
+            -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR;$OPENSSL_ROOT_DIR" \
             -DOPENSSL_ROOT_DIR="$OPENSSL_ROOT_DIR" \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DUSE_QT6=ON -DQT_DEFAULT_MAJOR_VERSION=6 \
-            -DBUNDLED_IRIS=OFF -DCHAT_TYPE=BASIC \
+            -DBUNDLED_IRIS=ON -DIRIS_BUNDLED_QCA=ON \
+            -DIRIS_BUNDLED_USRSCTP=ON -DIRIS_BUNDLED_OMEMO_C=ON \
+            -DCHAT_TYPE=BASIC \
             -DENABLE_PLUGINS=OFF -DBUILD_PSIMEDIA=OFF \
             -DUSE_KEYCHAIN=OFF -DUSE_HUNSPELL=OFF \
             -DBUILD_TESTING=OFF
