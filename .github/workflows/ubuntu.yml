@@ -55,14 +55,22 @@ jobs:
         run: |
           ccache --max-size=1G
           ccache --zero-stats
+      - name: Select Iris release SDK or pinned submodule
+        env:
+          IRIS_INSTALL_PREFIX: ${{ runner.temp }}/iris-sdk
+          IRIS_C_COMPILER: gcc
+          IRIS_CXX_COMPILER: g++
+          IRIS_QT_MAJOR: '6'
+        run: bash .github/scripts/select-linux-iris.sh
       - name: Configure and build Psi
         run: |
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$IRIS_PREFIX" \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DUSE_QT6=ON -DQT_DEFAULT_MAJOR_VERSION=6 \
-            -DBUNDLED_IRIS=ON \
+            -DBUNDLED_IRIS="$IRIS_BUNDLED" \
             -DIRIS_BUNDLED_QCA=OFF -DIRIS_SYSTEM_QCA=3 \
             -DIRIS_BUNDLED_USRSCTP=OFF -DIRIS_BUNDLED_OMEMO_C=OFF \
             -DCHAT_TYPE=BASIC \

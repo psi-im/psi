@@ -26,13 +26,16 @@ and builds it from source, but rejects a gitlink released under a different tag
 than the lock declares. Failed remote verification on tagged Psi builds is fatal
 rather than risking an unverified SDK. Normal lock resolution remains offline.
 
-Linux full-client CI compiles the exact Iris gitlink directly within Psi's CMake
-build (BUNDLED_IRIS=ON), rather than separately building/installing a system
-Iris SDK. Ubuntu installs locked shared QCA3/Qt6 from Iris's release assets;
-Fedora builds shared QCA3/Qt6 from Iris's locked QCA source revision. Iris
-links to that QCA3 runtime rather than bundling another copy. Releases of Iris
-remain relevant to workflows that intentionally consume external Iris SDKs,
-but are not substituted for the gitlink in ordinary full-client Linux CI.
+Linux full-client CI selects the Iris provider from the exact gitlink. When the
+locked release tag resolves to that gitlink and a compatible SDK for the Linux
+distribution and Qt major is published, Psi uses that SDK with BUNDLED_IRIS=OFF.
+Otherwise, including unreleased commits, release lookup failure, or missing/
+incompatible distro packages, Psi compiles the initialized Iris git submodule
+in-tree with BUNDLED_IRIS=ON. We never build and install another Iris from the
+same source in a separate CI step. Ubuntu uses the locked shared QCA3/Qt6
+package; Fedora builds QCA3/Qt6 from Iris's locked QCA source. Fedora currently
+has no published Iris RPM release asset, so its normal path remains bundled
+until a compatible SDK distribution is available.
 
 Use the action **after** checkout. If the workflow needs QCA, initialize Iris first, then specify `require-iris: 'true'`. To install a QCA release package, pass `qca-install-mode: apt` and the platform-specific `qca-asset` (for Ubuntu 24.04 this is `qca3-deb-ubuntu-24.04.zip`); the Psi action delegates the installation to Iris's shared action. The version remains defined only by Iris.
 
