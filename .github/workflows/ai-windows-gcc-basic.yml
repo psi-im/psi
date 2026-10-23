@@ -1,12 +1,7 @@
 name: AI Windows GCC BASIC CI
 
+# Optional Qt5/MinGW compatibility smoke check, not part of ordinary CI.
 on:
-  push:
-    branches:
-      - 'ai/**'
-  pull_request:
-    branches:
-      - master
   workflow_dispatch:
 
 permissions:
