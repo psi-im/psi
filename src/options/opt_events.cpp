@@ -59,7 +59,7 @@ QWidget *OptionsTabEvents::widget()
     d->cb_bounce->setItemData(1, "once");
     d->cb_bounce->setItemData(2, "forever");
 
-#ifndef Q_OS_MAC
+#ifndef Q_OS_MACOS
     d->cb_bounce->hide();
     d->lb_bounce->hide();
 #endif

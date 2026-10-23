@@ -63,7 +63,7 @@ QWidget *OptionsTabApplication::widget()
     d->ck_dockToolMW->setToolTip(tr("Prevents Psi from taking up a slot on the taskbar and makes the main "
                                     "window use a small titlebar."));
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     d->gb_docklet->hide();
     d->ck_auto_load->hide();
 #endif

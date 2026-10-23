@@ -19,7 +19,7 @@
 
 #include "main.h"
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
 #include "CocoaUtilities/CocoaInitializer.h"
 #endif
 #include "activeprofiles.h"
@@ -481,7 +481,7 @@ PSI_EXPORT_FUNC int main(int argc, char *argv[])
 #endif
     }
 
-#if (defined(Q_OS_MAC) || defined(Q_OS_WIN)) && !defined(ALLOW_QT_PLUGINS_DIR)
+#if (defined(Q_OS_MACOS) || defined(Q_OS_WIN)) && !defined(ALLOW_QT_PLUGINS_DIR)
     // remove qt's own plugin path on these platforms, to enable safe
     //   distribution
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
@@ -499,7 +499,7 @@ PSI_EXPORT_FUNC int main(int argc, char *argv[])
     QCA::Initializer init;
     // END NOTE
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     CocoaInitializer cocoaInitializer;
 #endif
 
@@ -551,7 +551,7 @@ PSI_EXPORT_FUNC int main(int argc, char *argv[])
     QCoreApplication::setAttribute(Qt::AA_DisableWindowContextHelpButton, true);
 #endif
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     QDir dir(QApplication::applicationDirPath());
     dir.cdUp();
     dir.cd("Plugins");
