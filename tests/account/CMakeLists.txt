@@ -52,7 +52,7 @@ if(ACCOUNT_IRIS_TARGET)
         set(ACCOUNT_IRIS_STATIC_CYCLE $<TARGET_FILE:irisnet> $<TARGET_FILE:iris>)
     endif()
     add_executable(account_vcard_request_merge_test vcardrequestmergetest.cpp)
-    set_target_properties(account_vcard_request_merge_test PROPERTIES AUTOMOC ON)
+    set_target_properties(account_vcard_request_merge_test PROPERTIES AUTOMOC ON CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
     target_include_directories(account_vcard_request_merge_test PRIVATE ../../src)
     target_link_libraries(account_vcard_request_merge_test PRIVATE ${ACCOUNT_IRIS_TARGET}
         ${ACCOUNT_IRIS_STATIC_CYCLE} Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
