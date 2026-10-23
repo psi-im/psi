@@ -43,6 +43,10 @@ public:
     int     port;
     bool    useAuth;
     QString url;
+    QString dnsMode; // local, doh, tcp
+    QString dohUrl;
+    QString dnsHost;
+    int dnsPort;
 
     void        toOptions(OptionsTree *o, QString base) const;
     void        fromOptions(OptionsTree *o, QString base);
