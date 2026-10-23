@@ -66,24 +66,18 @@ jobs:
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           cmake --build _qca-build --parallel 4
           cmake --install _qca-build
-      - name: Build exact Iris gitlink for Qt6
-        env:
-          IRIS_INSTALL_PREFIX: ${{ github.workspace }}/_iris-sdk
-          IRIS_C_COMPILER: gcc
-          IRIS_CXX_COMPILER: g++
-          IRIS_QT_MAJOR: '6'
-          IRIS_QCA_MAJOR: '3'
-          CMAKE_PREFIX_PATH: ${{ github.workspace }}/_qca-sdk
-        run: bash .github/scripts/build-system-iris.sh
       - name: Configure and build Psi
         run: |
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_PREFIX_PATH="$GITHUB_WORKSPACE/_iris-sdk;$GITHUB_WORKSPACE/_qca-sdk" \
+            -DCMAKE_PREFIX_PATH="$GITHUB_WORKSPACE/_qca-sdk" \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DUSE_QT6=ON -DQT_DEFAULT_MAJOR_VERSION=6 \
-            -DBUNDLED_IRIS=OFF -DCHAT_TYPE=WEBENGINE \
+            -DBUNDLED_IRIS=ON \
+            -DIRIS_BUNDLED_QCA=OFF -DIRIS_SYSTEM_QCA=3 \
+            -DIRIS_BUNDLED_USRSCTP=OFF -DIRIS_BUNDLED_OMEMO_C=OFF \
+            -DCHAT_TYPE=WEBENGINE \
             -DENABLE_PLUGINS=OFF -DBUILD_PSIMEDIA=OFF \
             -DUSE_KEYCHAIN=OFF -DUSE_HUNSPELL=ON \
             -DBUILD_TESTING=ON
