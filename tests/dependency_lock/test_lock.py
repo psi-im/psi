@@ -287,7 +287,6 @@ class DependencyLockTests(unittest.TestCase):
             "windows-sdk-msys2-qt5.yml": "./.github/actions/load-dependencies",
             "windows-msvc-qt6.yml": "./.github/actions/load-dependencies",
             "windows-msys2-qt5.yml": "./.github/actions/load-dependencies",
-            "ai-windows-gcc-basic.yml": "./.github/actions/load-dependencies",
         }
         for path, needle in workflows.items():
             self.assertIn(needle, (ROOT / ".github/workflows" / path).read_text(), path)

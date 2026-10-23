@@ -34,6 +34,7 @@
 set -e
 
 [ -z "${HOMEBREW}" ] && HOMEBREW="$(brew --prefix)"
+export HOMEBREW
 
 PATH="${HOMEBREW}/bin:${PATH}"
 PATH="${HOMEBREW}/opt/ccache/libexec:${PATH}"
