@@ -8,8 +8,13 @@ on:
         required: false
         default: BASIC
         type: string
+      package:
+        description: Assemble all-in-one ZIP and NSIS (false for ordinary CI)
+        required: false
+        default: false
+        type: boolean
       release_version:
-        description: Exact Psi beta version for a tagged prerelease build (empty for normal CI)
+        description: Exact Psi version (set only by the packaging workflow)
         required: false
         default: ''
         type: string
@@ -120,9 +125,15 @@ jobs:
           cl.exe /nologo /c /D_WIN32_WINNT=0x0A00 /DWINVER=0x0A00 winver-check.cpp
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Install packaging tools
+      - name: Install compiler tools
         run: |
-          choco install ccache ninja nsis --no-progress -y
+          choco install ccache ninja --no-progress -y
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Install NSIS for packaging
+        if: inputs.package
+        run: |
+          choco install nsis --no-progress -y
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           "${env:ProgramFiles(x86)}\NSIS" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
@@ -167,7 +178,7 @@ jobs:
           }
 
       - name: Download released plugins and PsiMedia (all-in-one release only)
-        if: inputs.release_version != ''
+        if: inputs.package
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
@@ -223,36 +234,35 @@ jobs:
             throw 'Published PsiMedia artifact lacks the modern Windows stage'
           }
 
-      - name: Build and package modern profile
+      - name: Build Psi (package only when explicitly requested)
         env:
-          RUN_TESTS: ${{ startsWith(github.ref, 'refs/heads/ai/') }}
           CHAT_TYPE: ${{ inputs.chat_type }}
           RELEASE_VERSION: ${{ inputs.release_version }}
+          PACKAGE_BUILD: ${{ inputs.package }}
         run: |
           New-Item -ItemType Directory -Force artifacts | Out-Null
           try {
-            if ($env:RUN_TESTS -eq 'true') {
-              & packaging\windows\build_profile_msvc.ps1 `
-                -SdkDir "$pwd\sdk" `
-                -OutputDir "$pwd\artifacts" `
-                -ChatType $env:CHAT_TYPE `
-                -ReleaseVersion $env:RELEASE_VERSION `
-                -RunTests 2>&1 |
-                Tee-Object -FilePath artifacts\build-modern.log
+            $arguments = @(
+              '-SdkDir', "$pwd\sdk",
+              '-OutputDir', "$pwd\artifacts",
+              '-ChatType', $env:CHAT_TYPE
+            )
+            if ($env:PACKAGE_BUILD -eq 'true') {
+              if (-not $env:RELEASE_VERSION) { throw 'All-in-one packaging requires an explicit release version' }
+              $arguments += @('-ReleaseVersion', $env:RELEASE_VERSION)
             } else {
-              & packaging\windows\build_profile_msvc.ps1 `
-                -SdkDir "$pwd\sdk" `
-                -OutputDir "$pwd\artifacts" `
-                -ChatType $env:CHAT_TYPE `
-                -ReleaseVersion $env:RELEASE_VERSION 2>&1 |
-                Tee-Object -FilePath artifacts\build-modern.log
+              $arguments += @('-BuildOnly', '-RunTests')
             }
+            & packaging\windows\build_profile_msvc.ps1 @arguments 2>&1 |
+              Tee-Object -FilePath artifacts\build-modern.log
+            if ($LASTEXITCODE -ne 0) { throw "Psi build failed with exit code $LASTEXITCODE" }
           } catch {
             $_ | Out-String | Tee-Object -FilePath artifacts\status-modern.txt
             throw
           }
 
       - name: Smoke test installed ${{ inputs.chat_type }} NSIS package
+        if: inputs.package
         run: |
           $installer = Get-ChildItem artifacts -Filter '*-setup.exe' -File | Select-Object -First 1
           if (-not $installer) { throw 'Missing built NSIS installer' }
@@ -264,7 +274,8 @@ jobs:
           ccache --show-stats
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Upload release packages
+      - name: Upload all-in-one release packages
+        if: inputs.package
         uses: actions/upload-artifact@v4
         with:
           name: psi-windows-msvc-qt612-${{ inputs.chat_type }}-x64

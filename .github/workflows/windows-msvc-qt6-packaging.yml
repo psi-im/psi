@@ -1,0 +1,44 @@
+name: Windows MSVC Qt 6.12 all-in-one packaging
+
+# The only entry point that builds full Windows ZIP/NSIS packages.
+# Both manual packaging and Psi releases reuse this exact workflow.
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: Psi version embedded in the all-in-one package
+        required: true
+        default: 1.6_b1
+        type: string
+      chat_type:
+        description: Chat renderer (BASIC default, WEBENGINE opt-in)
+        required: true
+        default: BASIC
+        type: choice
+        options:
+          - BASIC
+          - WEBENGINE
+  workflow_call:
+    inputs:
+      release_version:
+        description: Psi version embedded in the all-in-one package
+        required: true
+        type: string
+      chat_type:
+        required: false
+        default: BASIC
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: All-in-one Windows ${{ inputs.chat_type }} ZIP/NSIS and smoke test
+    uses: ./.github/workflows/windows-msvc-qt6-profile.yml
+    with:
+      package: true
+      release_version: ${{ inputs.release_version }}
+      chat_type: ${{ inputs.chat_type }}
+    permissions:
+      contents: read

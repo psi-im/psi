@@ -111,7 +111,7 @@ jobs:
       force_rebuild: false
 
   modern:
-    name: Build Windows 10/11 MSVC Qt 6.12 (${{ inputs.chat_type || 'BASIC' }})
+    name: Compile and test Windows 10/11 MSVC Qt 6.12 (${{ inputs.chat_type || 'BASIC' }})
     needs:
       - check-sdk
       - build-sdk
@@ -124,6 +124,7 @@ jobs:
       contents: read
     uses: ./.github/workflows/windows-msvc-qt6-profile.yml
     with:
+      package: false
       chat_type: ${{ inputs.chat_type || 'BASIC' }}
       sdk_tag: ${{ needs.check-sdk.outputs.sdk_tag }}
       sdk_archive: ${{ needs.check-sdk.outputs.sdk_archive }}

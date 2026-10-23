@@ -10,6 +10,8 @@ param(
 
     [string]$ReleaseVersion = '',
 
+    [switch]$BuildOnly,
+
     [switch]$RunTests
 )
 
@@ -200,6 +202,17 @@ if ($RunTests) {
         $env:PATH = $previousPath
         throw "AvCall regression tests failed with exit code $ctestStatus"
     }
+}
+# Regular CI stops after compilation and regression tests. No install tree,
+# ZIP, NSIS, runtime deployment, or released extensions are needed.
+if ($BuildOnly) {
+    if ($ReleaseVersion) { throw 'BuildOnly must not set a release version' }
+    Write-Host 'Psi build and tests succeeded; packaging intentionally skipped.'
+    return
+}
+
+if (-not $ReleaseVersion) {
+    throw 'All-in-one packaging requires an explicit release version'
 }
 Invoke-Checked cmake --install $buildDir
 

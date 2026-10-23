@@ -104,6 +104,26 @@ class DependencyLockTests(unittest.TestCase):
         self.assertIn("if: inputs.release_version != ''", profile)
         self.assertIn("if ($ReleaseVersion) {\n    Invoke-Checked python packaging/windows/stage_released_extensions.py", builder)
 
+    def test_windows_ci_and_release_share_explicit_packaging_entry_point(self):
+        workflow_root = ROOT / ".github/workflows"
+        ci = (workflow_root / "windows-msvc-qt6.yml").read_text()
+        profile = (workflow_root / "windows-msvc-qt6-profile.yml").read_text()
+        packaging = (workflow_root / "windows-msvc-qt6-packaging.yml").read_text()
+        release = (workflow_root / "psi-1.6-beta1-release.yml").read_text()
+        builder = (ROOT / "packaging/windows/build_profile_msvc.ps1").read_text()
+        self.assertIn("package: false", ci)
+        self.assertIn("if: inputs.package", profile)
+        self.assertIn("'-BuildOnly', '-RunTests'", profile)
+        self.assertIn("if: inputs.package\\n        uses: actions/upload-artifact", profile)
+        self.assertIn("workflow_call:", packaging)
+        self.assertIn("workflow_dispatch:", packaging)
+        self.assertIn("package: true", packaging)
+        self.assertIn("windows-msvc-qt6-profile.yml", packaging)
+        self.assertIn("windows-msvc-qt6-packaging.yml", release)
+        self.assertNotIn("windows-msvc-qt6-profile.yml", release)
+        self.assertIn("if ($BuildOnly) {", builder)
+        self.assertIn("Invoke-Checked cmake --install $buildDir", builder)
+
     def test_iris_release_requires_a_versioned_tag_without_a_second_sha(self):
         for tag in ("master", "v1.3/other", "../v1.3", "v1.3^{commit}", ""):
             with self.subTest(tag=tag):
