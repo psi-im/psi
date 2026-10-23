@@ -107,7 +107,6 @@ if(QT_DEFAULT_MAJOR_VERSION GREATER_EQUAL 6)
     list(APPEND QT_LIBRARIES Qt${QT_DEFAULT_MAJOR_VERSION}::SvgWidgets)
 endif()
 
-
 if(LINUX)
     if(USE_DBUS)
         list(APPEND QT_LIBRARIES Qt${QT_DEFAULT_MAJOR_VERSION}::DBus)
@@ -119,7 +118,7 @@ if(LINUX)
         list(APPEND QT_LIBRARIES ${LIBXCB_LIBRARIES})
     endif()
 endif()
-list(APPEND EXTRA_LIBS qhttp)
+
 if(APPLE)
     list(APPEND QT_LIBRARIES Qt${QT_DEFAULT_MAJOR_VERSION}::MacExtras)
     if(USE_SPARKLE)
@@ -300,6 +299,8 @@ endif()
 
 # Both native and web chat media use the loopback HTTP proxy.
 if(TARGET qhttp)
+    message(STATUS "Adding qhttp library")
+    list(APPEND EXTRA_LIBS qhttp)
     add_definitions(-DHAVE_WEBSERVER)
     find_package(HttpParser 2.2 QUIET)
     if(NOT HttpParser_FOUND)
@@ -310,6 +311,7 @@ if(TARGET qhttp)
         include_directories(
             ${HttpParser_INCLUDE_DIR}
         )
+        list(APPEND EXTRA_LIBS ${HttpParser_LIBRARY})
     endif()
     include_directories(
         ${PROJECT_SOURCE_DIR}/3rdparty

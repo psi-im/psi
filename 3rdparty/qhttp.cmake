@@ -6,6 +6,8 @@ endif()
 
 project(qhttp)
 
+set(CMAKE_AUTOMOC ON)
+
 add_definitions(
     -DQHTTP_MEMORY_LOG=0
 )
@@ -19,16 +21,17 @@ if(WIN32)
 endif()
 
 include_directories(
-    .
-    ./qhttp/src
-    ./qhttp/src/private
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/qhttp/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/qhttp/src/private
 )
 
 find_package(Qt${QT_DEFAULT_MAJOR_VERSION} COMPONENTS Core Network REQUIRED)
 find_package(HttpParser 2.2 QUIET)
 
 if(NOT HttpParser_FOUND)
-    include_directories(./http-parser)
+    message(STATUS "Using bundled HttpParser")
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/http-parser)
     set(http_parser_srcs
         http-parser/http_parser.c
     )
@@ -37,7 +40,9 @@ if(NOT HttpParser_FOUND)
         http-parser/http_parser.h
     )
 else()
-    FIND_PACKAGE_MESSAGE(HttpParser "Found HttpParser-${HttpParser_VERSION}: ${HttpParser_LIBRARY}"
+    message(STATUS "Found HttpParser: ${HttpParser_LIBRARY}")
+    include(FindPackageMessage)
+    find_package_message(HttpParser "Found HttpParser-${HttpParser_VERSION}: ${HttpParser_LIBRARY}"
                      "[${HttpParser_LIBRARY}][${X11_INCLUDE_DIR}][${HttpParser_VERSION}]")
     include_directories(${HttpParser_INCLUDE_DIR})
     list(APPEND EXTRA_LIBS ${HttpParser_LIBRARY})
@@ -49,7 +54,6 @@ set(qhttp_srcs
     qhttp/src/qhttpserver.cpp
     qhttp/src/qhttpserverrequest.cpp
     qhttp/src/qhttpserverresponse.cpp
-
 )
 
 set(qhttp_hdrs
@@ -59,7 +63,6 @@ set(qhttp_hdrs
     qhttp/src/qhttpserver.hpp
     qhttp/src/qhttpserverrequest.hpp
     qhttp/src/qhttpserverresponse.hpp
-
 )
 
 set(qhttp_priv_hdrs
@@ -85,13 +88,25 @@ qt_wrap_cpp(MOCS
     qhttp/src/qhttpserverresponse.hpp
 )
 
+set(BLD_TYPE STATIC)
+if(WIN32)
+    set(BLD_TYPE SHARED)
+endif()
+
 add_library(qhttp
-    STATIC
+    ${BLD_TYPE}
     ${http_parser_srcs}
     ${http_parser_hdrs}
     ${qhttp_srcs}
     ${MOCS}
 )
+
+if(WIN32)
+    set_target_properties(qhttp PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/psi"
+    )
+    install(TARGETS qhttp DESTINATION ${CMAKE_INSTALL_PREFIX})
+endif()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -102,8 +117,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 target_link_libraries(qhttp Qt${QT_DEFAULT_MAJOR_VERSION}::Core Qt${QT_DEFAULT_MAJOR_VERSION}::Network ${EXTRA_LIBS})
 target_include_directories(qhttp
     PUBLIC
-    ./qhttp/src
-    ./qhttp/src/private
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/qhttp/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/qhttp/src/private
+    ${CMAKE_CURRENT_SOURCE_DIR}/http-parser
     ${CMAKE_CURRENT_BINARY_DIR}
 )
