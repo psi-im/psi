@@ -166,12 +166,12 @@ jobs:
             throw 'Shared QCA package missing from SDK'
           }
 
-      - name: Download verified released plugins and PsiMedia
+      - name: Download released plugins and PsiMedia (all-in-one release only)
+        if: inputs.release_version != ''
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
           PLUGINS_RELEASE_TAG: ${{ steps.deps.outputs.plugins_release_tag }}
-          PLUGINS_SOURCE_SHA: ${{ steps.deps.outputs.plugins_ref }}
           PSIMEDIA_RELEASE_TAG: ${{ steps.deps.outputs.psimedia_release_tag }}
           PSIMEDIA_SOURCE_SHA: ${{ steps.deps.outputs.psimedia_ref }}
         run: |
@@ -195,7 +195,9 @@ jobs:
               throw "Locked $Repository/$Tag references $actual rather than $Commit"
             }
           }
-          Confirm-PinnedTag psi-im/plugins $env:PLUGINS_RELEASE_TAG $env:PLUGINS_SOURCE_SHA
+          # Plugins are selected only by the versioned release tag. PsiMedia
+          # retains its independent source pin until its own policy changes.
+          if (-not $env:PLUGINS_RELEASE_TAG) { throw 'Missing official plugins release tag' }
           Confirm-PinnedTag psi-im/psimedia $env:PSIMEDIA_RELEASE_TAG $env:PSIMEDIA_SOURCE_SHA
 
           $pluginsAsset = "psi-plugins-$env:PLUGINS_RELEASE_TAG-qt612-windows-x64.zip"

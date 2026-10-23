@@ -203,13 +203,15 @@ if ($RunTests) {
 }
 Invoke-Checked cmake --install $buildDir
 
-# Both extension projects were built and released independently. Stage their
-# verified binaries and GStreamer runtime, without rebuilding plugin sources.
-Invoke-Checked python packaging/windows/stage_released_extensions.py `
-    --root $stageDir `
-    --plugins (Join-Path $sourceDir 'released-plugins') `
-    --media (Join-Path $sourceDir 'released-media') `
-    --lock (Join-Path $sourceDir 'dependencies.lock.json')
+# Only an explicit all-in-one Psi release includes externally released
+# plugins and PsiMedia. Ordinary CI/branch builds package Psi alone.
+if ($ReleaseVersion) {
+    Invoke-Checked python packaging/windows/stage_released_extensions.py `
+        --root $stageDir `
+        --plugins (Join-Path $sourceDir 'released-plugins') `
+        --media (Join-Path $sourceDir 'released-media') `
+        --lock (Join-Path $sourceDir 'dependencies.lock.json')
+}
 
 $psiExe = Join-Path $stageDir 'psi.exe'
 if (-not (Test-Path $psiExe)) {

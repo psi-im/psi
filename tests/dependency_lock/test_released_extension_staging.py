@@ -34,7 +34,7 @@ class ReleasedExtensionsTests(unittest.TestCase):
         (self.media_stage / "gstreamer-runtime.txt").write_text("elements installed\n")
         self.lock = {
             "qt": {"windows_msvc_qt6": "6.12.0"},
-            "plugins": {"commit": "a" * 40},
+            "plugins": {"release_tag": "1.6"},
             "psimedia": {"repository": "psi-im/psimedia", "release_tag": "v1.2.1",
                          "commit": "b" * 40},
             "qca": {"tag": "v3.0.12", "commit": "c" * 40},
@@ -84,10 +84,25 @@ class ReleasedExtensionsTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "checksum mismatch"):
             self.stage()
 
-    def test_refuses_qca_and_source_mismatch(self):
-        self.manifest["qca_commit"] = "f" * 40
+    def test_refuses_qca_tag_mismatch(self):
+        self.manifest["qca_tag"] = "v3.0.11"
         self.write_manifest()
-        with self.assertRaisesRegex(ValueError, "qca_commit mismatch"):
+        with self.assertRaisesRegex(ValueError, "qca_tag mismatch"):
+            self.stage()
+
+    def test_accepts_moved_source_shas_for_same_release_tag(self):
+        # Git release tags can move; artifact hashes still secure the payload.
+        self.manifest["plugins_commit"] = "e" * 40
+        self.manifest["psi_api_commit"] = "f" * 40
+        self.manifest["qca_commit"] = "1" * 40
+        self.write_manifest()
+        self.stage()
+        self.assertTrue((self.psi_stage / "plugins" / "official-00.dll").is_file())
+
+    def test_refuses_wrong_qt(self):
+        self.manifest["qt"] = "6.11.0"
+        self.write_manifest()
+        with self.assertRaisesRegex(ValueError, "qt mismatch"):
             self.stage()
 
     def test_refuses_overwriting_psi_runtime_or_other_plugins(self):

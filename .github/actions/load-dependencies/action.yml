@@ -26,8 +26,6 @@ outputs:
     value: ${{ steps.resolve.outputs.PSIMEDIA_SRTP_REF }}
   psimedia_release_tag:
     value: ${{ steps.resolve.outputs.PSIMEDIA_RELEASE_TAG }}
-  plugins_ref:
-    value: ${{ steps.resolve.outputs.PLUGINS_REF }}
   plugins_release_tag:
     value: ${{ steps.resolve.outputs.PLUGINS_RELEASE_TAG }}
   qt6_version:

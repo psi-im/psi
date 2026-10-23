@@ -59,14 +59,17 @@ def read_dependencies(root, require_iris=False):
             and isinstance(psimedia, str) and HEX_SHA.fullmatch(psimedia),
             "Invalid psimedia source pin")
     plugins_entry = lock["plugins"]
-    require(plugins_entry.get("repository") == "psi-im/plugins"
-            and isinstance(plugins_entry.get("commit"), str)
-            and HEX_SHA.fullmatch(plugins_entry["commit"]),
-            "Invalid plugin source pin")
-    for name, entry in (("psimedia", psimedia_entry), ("plugins", plugins_entry)):
-        tag = entry.get("release_tag")
-        require(tag is None or isinstance(tag, str) and TAG.fullmatch(tag),
-                "Invalid release tag for " + name)
+    # Official plugins are consumed only by all-in-one release packaging.
+    # The release tag selects the archive; do not pin its mutable source SHA.
+    require(isinstance(plugins_entry, dict)
+            and set(plugins_entry) == {"repository", "release_tag"}
+            and plugins_entry["repository"] == "psi-im/plugins"
+            and isinstance(plugins_entry["release_tag"], str)
+            and TAG.fullmatch(plugins_entry["release_tag"]),
+            "Invalid official plugin release tag")
+    tag = psimedia_entry.get("release_tag")
+    require(tag is None or isinstance(tag, str) and TAG.fullmatch(tag),
+            "Invalid release tag for psimedia")
     qt = lock["qt"]
     for platform in ("windows_msvc_qt6", "macos_qt6", "android_qt6"):
         require(qt.get(platform) == "6.12.0",
@@ -94,7 +97,6 @@ def read_dependencies(root, require_iris=False):
         "IRIS_MIN_VERSION": iris["minimum_version"],
         "PSIMEDIA_SRTP_REF": psimedia,
         "PSIMEDIA_RELEASE_TAG": psimedia_entry["release_tag"] or "",
-        "PLUGINS_REF": plugins_entry["commit"],
         "PLUGINS_RELEASE_TAG": plugins_entry["release_tag"] or "",
         "PSI_L10N_REF": translations["commit"],
         "QT6_RELEASE_VERSION": qt["windows_msvc_qt6"],

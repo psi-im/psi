@@ -43,6 +43,8 @@ class DependencyLockTests(unittest.TestCase):
         self.assertEqual(values["MSVC_QT6_SDK_TAG"], self.lock["windows_sdks"]["msvc_qt6"]["tag"])
         self.assertNotIn("QCA_TAG", values)
         self.assertEqual(values["IRIS_RELEASE_TAG"], self.lock["iris"]["release_tag"])
+        self.assertEqual(values["PLUGINS_RELEASE_TAG"], self.lock["plugins"]["release_tag"])
+        self.assertNotIn("PLUGINS_REF", values)
 
     def test_source_only_revision_exports_no_sdk_and_never_checks_a_tag(self):
         self.lock["iris"]["release_tag"] = None
@@ -81,6 +83,26 @@ class DependencyLockTests(unittest.TestCase):
         (self.root / "dependencies.lock.json").write_text(json.dumps(self.lock))
         with self.assertRaises(ValueError):
             resolver.read_dependencies(self.root)
+
+    def test_plugins_use_a_release_tag_without_source_commit_pins(self):
+        self.assertEqual(set(self.lock["plugins"]), {"repository", "release_tag"})
+        for tag in ("", None, "../1.6", "1.6^{commit}"):
+            with self.subTest(tag=tag):
+                self.lock["plugins"]["release_tag"] = tag
+                (self.root / "dependencies.lock.json").write_text(json.dumps(self.lock))
+                with self.assertRaisesRegex(ValueError, "Invalid official plugin release tag"):
+                    resolver.read_dependencies(self.root)
+        self.lock["plugins"]["release_tag"] = "1.6"
+        self.lock["plugins"]["commit"] = "a" * 40
+        (self.root / "dependencies.lock.json").write_text(json.dumps(self.lock))
+        with self.assertRaisesRegex(ValueError, "Invalid official plugin release tag"):
+            resolver.read_dependencies(self.root)
+
+    def test_release_only_stages_external_extensions(self):
+        profile = (ROOT / ".github/workflows/windows-msvc-qt6-profile.yml").read_text()
+        builder = (ROOT / "packaging/windows/build_profile_msvc.ps1").read_text()
+        self.assertIn("if: inputs.release_version != ''", profile)
+        self.assertIn("if ($ReleaseVersion) {\n    Invoke-Checked python packaging/windows/stage_released_extensions.py", builder)
 
     def test_iris_release_requires_a_versioned_tag_without_a_second_sha(self):
         for tag in ("master", "v1.3/other", "../v1.3", "v1.3^{commit}", ""):
