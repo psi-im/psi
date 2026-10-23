@@ -118,7 +118,7 @@ public:
     QString      nickname;
     PsiTrayIcon *tray;
     QMenu       *trayMenu;
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     QMenu *dockMenu;
 #endif
     QVBoxLayout *vb_roster;
@@ -179,7 +179,7 @@ public:
 MainWin::Private::Private(PsiCon *_psi, MainWin *_mainWin) :
     onTop(false), asTool(false), mainMenu(nullptr), optionsMenu(nullptr), toolsMenu(nullptr), statusMenu(nullptr),
     sbState(0), tray(nullptr), trayMenu(nullptr),
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     dockMenu(nullptr),
 #endif
     vb_roster(nullptr), splitter(nullptr), mainTabs(nullptr), viewToolBar(nullptr),
@@ -374,7 +374,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
     d->rosterWidget_->setContactList(psi->contactList());
 
     int layoutMargin = 2;
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     layoutMargin = 0;
     // FIXME
     // d->contactListView_->setFrameShape(QFrame::NoFrame);
@@ -455,7 +455,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
     decorateButton(STATUS_OFFLINE);
 
     // Mac-only menus
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     QMenu *mainMenu = new QMenu(tr("Menu"), this);
     mainMenu->setObjectName("macMainMenu");
     mainMenuBar()->addMenu(mainMenu);
@@ -490,7 +490,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
     d->getAction("show_statusmsg")->addTo(viewMenu);
 
     // Mac-only menus
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     d->toolsMenu = new QMenu(tr("Tools"), this);
     mainMenuBar()->addMenu(d->toolsMenu);
     connect(d->toolsMenu, SIGNAL(aboutToShow()), SLOT(buildToolsMenu()));
@@ -782,7 +782,7 @@ void MainWin::setUseDock(bool use)
             delete d->trayMenu;
             d->trayMenu = nullptr;
         }
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
         if (d->dockMenu) {
             delete d->dockMenu;
             d->dockMenu = nullptr;
@@ -829,7 +829,7 @@ void MainWin::buildStatusMenu(GlobalStatusMenu *statusMenu)
 
 QMenuBar *MainWin::mainMenuBar() const
 {
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     if (!d->squishEnabled) {
         return psiCon()->defaultMenuBar();
     }
@@ -1205,7 +1205,7 @@ void MainWin::buildTrayMenu()
         for (const QString &actionName : _actions) {
             addWrappedAction(actionName);
         }
-#ifndef Q_OS_MAC
+#ifndef Q_OS_MACOS
         d->trayMenu->addSeparator();
         addWrappedAction(QLatin1String("menu_quit"));
     }
@@ -1363,7 +1363,7 @@ void MainWin::tryCloseProgram()
 
 void MainWin::closeEvent(QCloseEvent *e)
 {
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     trayHide();
     e->accept();
 #else
@@ -1421,7 +1421,7 @@ void MainWin::changeEvent(QEvent *event)
 
 void MainWin::keyPressEvent(QKeyEvent *e)
 {
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     bool allowed = true;
 #else
     bool allowed = d->tray != nullptr;
@@ -1431,7 +1431,7 @@ void MainWin::keyPressEvent(QKeyEvent *e)
     if (e->key() == Qt::Key_Escape) {
         closekey = true;
     }
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     else if (e->key() == Qt::Key_W && e->modifiers() & Qt::ControlModifier) {
         closekey = true;
     }
@@ -1513,7 +1513,7 @@ void MainWin::optionsUpdate()
     d->lastStatus = -2;
     decorateButton(status);
 
-#ifndef Q_OS_MAC
+#ifndef Q_OS_MACOS
     if (!PsiOptions::instance()->getOption("options.ui.contactlist.show-menubar").toBool()) {
         mainMenuBar()->hide();
     } else {
@@ -1818,7 +1818,7 @@ void MainWin::searchTextEntered(QString const &text)
     }
 }
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
 void MainWin::setWindowIcon(const QIcon &) { }
 #else
 void MainWin::setWindowIcon(const QIcon &p) { QMainWindow::setWindowIcon(p); }

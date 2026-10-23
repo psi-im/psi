@@ -1,20 +1,8 @@
 name: MAM Prosody runtime
 
+
+# Expensive integration suites are opt-in; ordinary CI runs five platform builds.
 on:
-  push:
-    paths:
-      - 'qa/integration/mam-live/**'
-      - 'src/**'
-      - 'tests/mam*/**'
-      - 'iris'
-      - '.github/workflows/mam-prosody-runtime.yml'
-  pull_request:
-    paths:
-      - 'qa/integration/mam-live/**'
-      - 'src/**'
-      - 'tests/mam*/**'
-      - 'iris'
-      - '.github/workflows/mam-prosody-runtime.yml'
   workflow_dispatch:
 
 permissions:

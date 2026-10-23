@@ -665,7 +665,7 @@ void PsiChatDlg::initUi()
     connect(ui_.mle, &ChatEditProxy::textEditCreated, this, &PsiChatDlg::chatEditCreated);
     chatEditCreated();
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     // connect(chatView(), SIGNAL(selectionChanged()), SLOT(logSelectionChanged()));
 #endif
 

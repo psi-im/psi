@@ -6,6 +6,7 @@ Psi uses `dependencies.lock.json` for dependencies managed by the Psi CI. Do **n
 
 - `psimedia.commit`: exact provider revision for the Jingle/media integration tests (changing the provider API requires updating the tests and this SHA).
 - `qtkeychain.tag` / `qtkeychain.commit`: the source tag and the resolved Git SHA for Windows Qt5/Qt6 dependency SDK builds. Clones check that the tag resolves to the locked commit.
+- `plugins.release_tag`: the sole selector for official plugin binaries in an explicitly versioned Psi **all-in-one** release. Neither a Plugins source commit nor a Psi Plugin API source commit is pinned in Psi's lock: release tags may move. The released archive's Qt target, platform, QCA **tag**, and each DLL's SHA-256 hash are checked during staging. Ordinary Windows branch/PR CI only compiles and runs regression tests: no installation staging, NSIS, ZIP, or released plugins/PsiMedia. Manual all-in-one packaging and Psi release publishing use the same reusable `.github/workflows/windows-msvc-qt6-packaging.yml` entry point, which performs the installer smoke test before producing artifacts.
 - `windows_sdks.msvc_qt6` and `windows_sdks.msys2_qt5`: release tags and ZIP archive names for Psi's platform-specific SDKs. These releases are artifacts produced by Psi; changing their contents requires changing the release tag in the lock to avoid reusing incompatible binaries.
 - `iris`: describes the submodule, its lock path and `release_tag`, the coordinate of the matching published SDK. Its source revision remains exclusively in the `iris` gitlink, not a duplicated SHA field. Update the gitlink and release tag together when moving to another release.
   An unreleased development gitlink can use `release_tag: null`. Even if the lock
@@ -25,7 +26,16 @@ and builds it from source, but rejects a gitlink released under a different tag
 than the lock declares. Failed remote verification on tagged Psi builds is fatal
 rather than risking an unverified SDK. Normal lock resolution remains offline.
 
-The external builder tries the explicitly locked Ubuntu SDK release and checks its installed Iris version and Qt major version. The current external-build jobs use Qt5; Iris's Qt6 Linux release packages are rejected even if Qt6 development tools also happen to be installed. Unavailable or incompatible packages fall back to building the same gitlink from source. Until the release's assets finish publishing, this source fallback keeps CI usable. Headers and binary libraries must come from the same SDK, especially across the Jingle connection layout change in Iris 1.3.
+Linux full-client CI selects the Iris provider from the exact gitlink. When the
+locked release tag resolves to that gitlink and a compatible SDK for the Linux
+distribution and Qt major is published, Psi uses that SDK with BUNDLED_IRIS=OFF.
+Otherwise, including unreleased commits, release lookup failure, or missing/
+incompatible distro packages, Psi compiles the initialized Iris git submodule
+in-tree with BUNDLED_IRIS=ON. We never build and install another Iris from the
+same source in a separate CI step. Ubuntu uses the locked shared QCA3/Qt6
+package; Fedora builds QCA3/Qt6 from Iris's locked QCA source. Fedora currently
+has no published Iris RPM release asset, so its normal path remains bundled
+until a compatible SDK distribution is available.
 
 Use the action **after** checkout. If the workflow needs QCA, initialize Iris first, then specify `require-iris: 'true'`. To install a QCA release package, pass `qca-install-mode: apt` and the platform-specific `qca-asset` (for Ubuntu 24.04 this is `qca3-deb-ubuntu-24.04.zip`); the Psi action delegates the installation to Iris's shared action. The version remains defined only by Iris.
 
@@ -33,4 +43,16 @@ For reusable Windows workflows, the resolver job reads the Psi lock and passes i
 
 Do not write `QCA_TAG: v...`, QtKeychain version, PsiMedia SHA or versioned SDK tags directly into individual YAML workflows. A new version is changed once in the appropriate lock and propagated to all consumers. `tests/dependency_lock/test_lock.py` and the `Dependency lock verification` workflow guard the contract.
 
-System distribution packages (such as Fedora Qt5/QCA2), toolchain installation, and Qt installer package series are intentionally not treated as exact source locks. If we need reproducible toolchain binaries, they require separate pinned package indexes and hashes rather than merely moving a variable into this JSON file.
+Ordinary full-client CI has exactly five compile/test targets: Windows 7 Qt5,
+Windows MSVC Qt6, Ubuntu 24.04 Qt6, macOS arm64 Qt6 and Fedora latest Qt6.
+All use compiler caching. Fedora exercises Qt6/WebEngine; Windows 7 retains
+the legacy Qt5/WebKit coverage from its original CI; the remaining three
+full-client targets use BASIC. The Linux/macOS profiles do not build official plugins.
+macOS is Qt6-only and always builds Iris from Psi's exact gitlink with bundled
+QCA/UsrSCTP/OMEMO; it does not consume released Iris SDK binaries. Qt5 remains
+only in the Windows 7 (MSYS2) compatibility profile; Linux, Windows MSVC,
+macOS, and focused widget tests use Qt6.
+Expensive protocol integration suites remain manually dispatchable;
+small path-filtered widget and component regressions can run automatically.
+
+System distribution packages, toolchain installation, and Qt installer package series are intentionally not treated as exact source locks. If we need reproducible toolchain binaries, they require separate pinned package indexes and hashes rather than merely moving a variable into this JSON file.

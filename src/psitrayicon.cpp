@@ -76,7 +76,7 @@ QPixmap PsiTrayIcon::makeIcon()
 
 void PsiTrayIcon::trayicon_activated(QSystemTrayIcon::ActivationReason reason)
 {
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     Q_UNUSED(reason)
 #else
     if (reason == QSystemTrayIcon::Trigger)

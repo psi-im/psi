@@ -15,7 +15,7 @@
 #include <QSettings>
 #include <QStandardPaths>
 #include <QString>
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
 #include <CoreServices/CoreServices.h>
 #include <sys/stat.h> // chmod
 #endif
@@ -45,7 +45,7 @@
 #define PROG_OPTIONS_NS "http://psi-im.org/options"
 #define PROG_STORAGE_NS "http://psi-im.org/storage"
 #define PROG_FILECACHE_NS "http://psi-im.org/filecache"
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
 #define PROG_APPCAST_URL "https://psi-im.org/appcast/psi-mac.xml"
 #else
 #define PROG_APPCAST_URL ""
@@ -138,7 +138,7 @@ QString ApplicationInfo::resourcesDir()
 {
 #if defined(Q_OS_WIN) || defined(Q_OS_HAIKU)
     return qApp->applicationDirPath();
-#elif defined(Q_OS_MAC)
+#elif defined(Q_OS_MACOS)
     // FIXME: Clean this up (remko)
     // System routine locates resource files. We "know" that Psi.icns is
     // in the Resources directory.
@@ -226,7 +226,7 @@ QString ApplicationInfo::homeDir(ApplicationInfo::HomedirType type)
             QDir configDir(configDir_);
             QDir cacheDir(cacheDir_);
             QDir dataDir(dataDir_);
-#elif defined(Q_OS_MAC)
+#elif defined(Q_OS_MACOS)
             QDir configDir(QDir::homePath() + "/Library/Application Support/" + name());
             QDir cacheDir(QDir::homePath() + "/Library/Caches/" + name());
             QDir dataDir(configDir);

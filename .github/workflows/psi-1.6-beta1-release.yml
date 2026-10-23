@@ -51,7 +51,7 @@ jobs:
   package:
     name: Package and smoke-test Psi 1.6 beta 1 BASIC
     needs: gate
-    uses: ./.github/workflows/windows-msvc-qt6-profile.yml
+    uses: ./.github/workflows/windows-msvc-qt6-packaging.yml
     with:
       chat_type: BASIC
       release_version: ${{ needs.gate.outputs.version }}

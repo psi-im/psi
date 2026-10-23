@@ -19,7 +19,7 @@
 
 #include "psiapplication.h"
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
 #include "CocoaUtilities/CocoaTrayClick.h"
 #endif
 #include "resourcemenu.h"
@@ -27,7 +27,7 @@
 #include "systemwatch/systemwatch_win.h"
 #endif
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
 #include <Carbon/Carbon.h>
 #endif
 #include <QEvent>
@@ -41,7 +41,7 @@
 PsiApplication::PsiApplication(int &argc, char **argv, bool GUIenabled) : QApplication(argc, argv, GUIenabled)
 {
     init(GUIenabled);
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     connect(CocoaTrayClick::instance(), SIGNAL(trayClicked()), this, SIGNAL(dockActivated()));
 #endif
 }
@@ -64,12 +64,12 @@ bool PsiApplication::event(QEvent *event)
 void PsiApplication::init(bool GUIenabled)
 {
     Q_UNUSED(GUIenabled);
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     setAttribute(Qt::AA_DontShowIconsInMenus, true);
 #endif
 }
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
 bool PsiApplication::macEventFilter(EventHandlerCallRef, EventRef inEvent)
 {
     UInt32 eclass = GetEventClass(inEvent);

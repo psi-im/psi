@@ -394,7 +394,7 @@ void AttachView::addUrlList(const UrlList &list)
 AddUrlDlg::AddUrlDlg(QWidget *parent) : QDialog(parent)
 {
     setupUi(this);
-#ifndef Q_OS_MAC
+#ifndef Q_OS_MACOS
     setWindowIcon(IconsetFactory::icon("psi/www").icon());
 #endif
     setModal(true);

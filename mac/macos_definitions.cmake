@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1.0)
+cmake_minimum_required(VERSION 3.5)
 if(POLICY CMP0077)
     if(${CMAKE_VERSION} VERSION_LESS "3.13.0")
         cmake_policy(SET CMP0077 OLD)
@@ -24,12 +24,12 @@ set(MACOSX_BUNDLE_BUNDLE_NAME ${CLIENT_NAME})
 set(MACOSX_BUNDLE_SHORT_VERSION_STRING ${APP_VERSION})
 set(MACOSX_BUNDLE_BUNDLE_VERSION ${APP_VERSION})
 
-if(${_qt5Core_install_prefix} STREQUAL "")
-    message(WARNING "Warning! \"_qt5Core_install_prefix\" is not set, macdeployqt found in PATH will be used")
-    set (MACDEPLOYQT "macdeployqt")
-else(${_qt5Core_install_prefix} STREQUAL "")
-    set (MACDEPLOYQT "${_qt5Core_install_prefix}/bin/macdeployqt")
-endif(${_qt5Core_install_prefix} STREQUAL "")
+# macOS builds use Qt6 exclusively. macdeployqt comes from the same Qt prefix.
+find_program(MACDEPLOYQT NAMES macdeployqt
+    HINTS "${Qt6_DIR}/../../../bin" "${Qt6Core_DIR}/../../../bin" "$ENV{QT_ROOT_DIR}/bin")
+if(NOT MACDEPLOYQT)
+    message(WARNING "Qt6 macdeployqt not found; app packaging will require it")
+endif()
 
 if(CMAKE_OSX_DEPLOYMENT_TARGET)
     set(CPACK_PACKAGE_FILE_NAME "${CLIENT_NAME}-${APP_VERSION}${VERBOSE_SUFFIX}-macOS${CMAKE_OSX_DEPLOYMENT_TARGET}-${CMAKE_SYSTEM_PROCESSOR}")

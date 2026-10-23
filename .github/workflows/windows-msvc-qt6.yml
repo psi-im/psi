@@ -1,4 +1,4 @@
-name: Windows MSVC Qt 6.12 packaging (BASIC default)
+name: Windows MSVC Qt 6.12 compile/test CI (BASIC default)
 
 on:
   push:
@@ -26,10 +26,6 @@ concurrency:
 
 jobs:
   check-sdk:
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'push' && !startsWith(github.ref_name, 'ai/')) ||
-      (github.event_name == 'pull_request' && !startsWith(github.head_ref, 'ai/'))
     name: Check modern dependency SDK
     runs-on: ubuntu-24.04
     outputs:
@@ -59,9 +55,7 @@ jobs:
             message="$PUSH_COMMIT_MESSAGE"
           fi
 
-          if [[ "$EVENT_NAME" != "workflow_dispatch" && "$BRANCH_NAME" == "ci/psimedia-integration" ]]; then
-            run_ci=false
-          elif [[ "$EVENT_NAME" != "workflow_dispatch" && "$BRANCH_NAME" == ai/* && "$message" == *"[skip ci]"* ]]; then
+          if [[ "$EVENT_NAME" != "workflow_dispatch" && "$message" == *"[skip ci]"* ]]; then
             run_ci=false
           fi
 
@@ -111,7 +105,7 @@ jobs:
       force_rebuild: false
 
   modern:
-    name: Build Windows 10/11 MSVC Qt 6.12 (${{ inputs.chat_type || 'BASIC' }})
+    name: Compile and test Windows 10/11 MSVC Qt 6.12 (${{ inputs.chat_type || 'BASIC' }})
     needs:
       - check-sdk
       - build-sdk
@@ -124,6 +118,7 @@ jobs:
       contents: read
     uses: ./.github/workflows/windows-msvc-qt6-profile.yml
     with:
+      package: false
       chat_type: ${{ inputs.chat_type || 'BASIC' }}
       sdk_tag: ${{ needs.check-sdk.outputs.sdk_tag }}
       sdk_archive: ${{ needs.check-sdk.outputs.sdk_archive }}

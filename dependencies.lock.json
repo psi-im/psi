@@ -34,9 +34,7 @@
   },
   "plugins": {
     "repository": "psi-im/plugins",
-    "commit": "d485d702079d9b54285cf83ce9ae4534e88b70f3",
-    "release_tag": "1.6",
-    "psi_api_commit": "4c5dc13246871f1a5f5c8cdfb21f5673e92ad474"
+    "release_tag": "1.6"
   },
   "qt": {
     "windows_msvc_qt6": "6.12.0",

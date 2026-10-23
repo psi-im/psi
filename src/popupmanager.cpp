@@ -253,7 +253,7 @@ QString PopupManager::currentType() const
 
 Q_IMPORT_PLUGIN(PsiPopupPlugin)
 
-#if defined(Q_OS_MAC) && defined(HAVE_GROWL)
+#if defined(Q_OS_MACOS) && defined(HAVE_GROWL)
 Q_IMPORT_PLUGIN(PsiGrowlNotifierPlugin)
 #endif
 

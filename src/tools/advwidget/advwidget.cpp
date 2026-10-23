@@ -230,8 +230,12 @@ void GAdvancedWidget::Private::moveEvent(QMoveEvent *)
 {
     if (!parentWidget_->isWindow())
         return;
-#ifdef Q_OS_MAC
-    QRect r = qApp->desktop()->availableGeometry(parentWidget_);
+#ifdef Q_OS_MACOS
+    QScreen *screen = parentWidget_->screen();
+    if (!screen)
+        return;
+
+    QRect r = screen->availableGeometry();
     QRect g = parentWidget_->frameGeometry();
 
     int margin = 5;

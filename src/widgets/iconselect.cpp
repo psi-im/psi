@@ -369,7 +369,7 @@ void IconSelect::updateGrid()
     auto font = qApp->font();
 #if defined(Q_OS_WIN)
     font.setFamily("Segoe UI Emoji");
-#elif defined(Q_OS_MAC)
+#elif defined(Q_OS_MACOS)
     font.setFamily("Apple Color Emoji");
 #else
     font.setFamily("Noto Color Emoji");

@@ -33,7 +33,7 @@
 #include <sys/utsname.h>
 #endif
 
-#if defined(Q_OS_WIN) || defined(Q_OS_MAC)
+#if defined(Q_OS_WIN) || defined(Q_OS_MACOS)
 #include <QOperatingSystemVersion>
 #if defined(Q_OS_WIN)
 #include <versionhelpers.h>
@@ -44,7 +44,7 @@
 #error "Minimal supported version of Qt in this file is 5.9.0"
 #endif
 
-#if defined(Q_OS_UNIX) && !defined(Q_OS_MAC)
+#if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
 static QString lsbRelease(const QStringList &args)
 {
     QStringList path = QString(qgetenv("PATH")).split(':');
@@ -182,7 +182,7 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
     os_name_str_ = os_str_;
 
     // Detect
-#if defined(Q_OS_UNIX) && !defined(Q_OS_MAC) && !defined(Q_OS_HAIKU)
+#if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS) && !defined(Q_OS_HAIKU)
     // attempt to get LSB version before trying the distro-specific approach
     os_str_ = lsbRelease(QStringList() << "--description" << "--short");
 
@@ -210,7 +210,7 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
         os_str_ = os_name_str_ + " " + os_version_str_;
     }
 
-#elif defined(Q_OS_MAC)
+#elif defined(Q_OS_MACOS)
     os_str_.clear();
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 5)
     const auto current = QOperatingSystemVersion::current();

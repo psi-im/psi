@@ -226,7 +226,7 @@ void FileUtil::openFolder(const QString &path)
 #if defined(Q_OS_WIN)
     QProcess::startDetached("explorer.exe",
                             QStringList() << QLatin1String("/select,") << QDir::toNativeSeparators(path));
-#elif defined(Q_OS_MAC)
+#elif defined(Q_OS_MACOS)
     QProcess::startDetached("/usr/bin/open", QStringList() << "-R" << path);
 #else
     const QFileInfo fileInfo(path);

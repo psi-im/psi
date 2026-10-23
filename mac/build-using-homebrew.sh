@@ -23,7 +23,7 @@
 # Build dependencies for Psi and useful tools:
 # export HOMEBREW_NO_BOTTLE_SOURCE_FALLBACK=1
 # brew install ccache coreutils cmake
-# brew install hunspell minizip qt@5 qtkeychain
+# brew install hunspell minizip qt qtkeychain
 #
 # Build dependencies for Psi plugins:
 # brew install tidy-html5 libotr libomemo-c
@@ -33,7 +33,8 @@
 
 set -e
 
-[ -z "${HOMEBREW}" ] && HOMEBREW="/usr/local"
+[ -z "${HOMEBREW}" ] && HOMEBREW="$(brew --prefix)"
+export HOMEBREW
 
 PATH="${HOMEBREW}/bin:${PATH}"
 PATH="${HOMEBREW}/opt/ccache/libexec:${PATH}"
@@ -55,6 +56,9 @@ TOOLCHAIN_FILE="${CUR_DIR}/homebrew-toolchain.cmake"
     ENABLE_PSIMEDIA="OFF"
 
 BUILD_OPTIONS="-DCMAKE_BUILD_TYPE=Release \
+               -DUSE_QT6=ON \
+               -DQT_DEFAULT_MAJOR_VERSION=6 \
+               -DBUNDLED_IRIS=ON \
                -DCHAT_TYPE=${CHAT_TYPE} \
                -DBUILD_DEV_PLUGINS=${ENABLE_DEV_PLUGINS} \
                -DBUILD_PSIMEDIA=${ENABLE_PSIMEDIA} \

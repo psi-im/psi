@@ -74,7 +74,7 @@ public:
 
     void setWindowIcon(const QIcon &icon)
     {
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
         Q_UNUSED(icon);
 #else
         BaseClass::setWindowIcon(icon);

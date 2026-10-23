@@ -417,7 +417,7 @@ void TabBar::Private::layoutTabs()
         }
     }
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     if (rows == 1) {
         int offset = (barWidth - hackedTabs.last().rect.right()) / 2;
         for (int i = 0; i < hackedTabs.size(); ++i)

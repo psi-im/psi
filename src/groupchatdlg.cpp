@@ -1069,7 +1069,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
 */
     ui_.tb_emoticons->setIcon(IconsetFactory::icon("psi/smile").icon());
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     // seems its useless hack
     // connect(ui_.log, SIGNAL(selectionChanged()), SLOT(logSelectionChanged()));
 #endif
@@ -1464,7 +1464,7 @@ void GCMainDlg::mucInfoDialog(const QString &title, const QString &message, cons
 
 void GCMainDlg::logSelectionChanged()
 {
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     // A hack to only give the message log focus when text is selected
 // seems its already useless. at least copy works w/o this hack
 //    if (ui_.log->textCursor().hasSelection())

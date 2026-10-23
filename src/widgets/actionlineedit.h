@@ -52,7 +52,7 @@ private:
 class ActionLineEdit : public QLineEdit {
     Q_OBJECT
     Q_PROPERTY(Qt::ToolButtonStyle toolButtonStyle READ toolButtonStyle WRITE setToolButtonStyle)
-    Q_ENUMS(Qt::ToolButtonStyle)
+    // Qt::ToolButtonStyle is registered by Qt's namespace metaobject.
 
 public:
     ActionLineEdit(QWidget *parent);

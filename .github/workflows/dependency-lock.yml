@@ -9,7 +9,7 @@ on:
       - dependencies.lock.json
       - '.github/actions/load-dependencies/**'
       - '.github/scripts/resolve-dependencies.py'
-      - '.github/scripts/build-system-iris.sh'
+      - '.github/scripts/select-linux-iris.sh'
       - '.github/workflows/**'
       - 'tests/dependency_lock/**'
       - iris

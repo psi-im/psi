@@ -10,6 +10,8 @@ param(
 
     [string]$ReleaseVersion = '',
 
+    [switch]$BuildOnly,
+
     [switch]$RunTests
 )
 
@@ -201,15 +203,28 @@ if ($RunTests) {
         throw "AvCall regression tests failed with exit code $ctestStatus"
     }
 }
+# Regular CI stops after compilation and regression tests. No install tree,
+# ZIP, NSIS, runtime deployment, or released extensions are needed.
+if ($BuildOnly) {
+    if ($ReleaseVersion) { throw 'BuildOnly must not set a release version' }
+    Write-Host 'Psi build and tests succeeded; packaging intentionally skipped.'
+    return
+}
+
+if (-not $ReleaseVersion) {
+    throw 'All-in-one packaging requires an explicit release version'
+}
 Invoke-Checked cmake --install $buildDir
 
-# Both extension projects were built and released independently. Stage their
-# verified binaries and GStreamer runtime, without rebuilding plugin sources.
-Invoke-Checked python packaging/windows/stage_released_extensions.py `
-    --root $stageDir `
-    --plugins (Join-Path $sourceDir 'released-plugins') `
-    --media (Join-Path $sourceDir 'released-media') `
-    --lock (Join-Path $sourceDir 'dependencies.lock.json')
+# Only an explicit all-in-one Psi release includes externally released
+# plugins and PsiMedia. Ordinary CI/branch builds package Psi alone.
+if ($ReleaseVersion) {
+    Invoke-Checked python packaging/windows/stage_released_extensions.py `
+        --root $stageDir `
+        --plugins (Join-Path $sourceDir 'released-plugins') `
+        --media (Join-Path $sourceDir 'released-media') `
+        --lock (Join-Path $sourceDir 'dependencies.lock.json')
+}
 
 $psiExe = Join-Path $stageDir 'psi.exe'
 if (-not (Test-Path $psiExe)) {

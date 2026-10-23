@@ -293,7 +293,7 @@ void ChatEdit::keyPressEvent(QKeyEvent *e)
         e->ignore();
     else if(e->key() == Qt::Key_Return &&
            ((e->modifiers() & Qt::ControlModifier)
-#ifndef Q_OS_MAC
+#ifndef Q_OS_MACOS
            || (e->modifiers() & Qt::AltModifier)
 #endif
            ))
@@ -311,7 +311,7 @@ void ChatEdit::keyPressEvent(QKeyEvent *e)
    (e->modifiers() & Qt::AltModifier)) && LEGOPTS.chatSoftReturn) e->ignore(); else if((e->key() == Qt::Key_PageUp ||
    e->key() == Qt::Key_PageDown) && (e->modifiers() & Qt::ShiftModifier)) e->ignore(); else if((e->key() ==
    Qt::Key_PageUp || e->key() == Qt::Key_PageDown) && (e->modifiers() & Qt::ControlModifier)) e->ignore(); */
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     else if (e->key() == Qt::Key_QuoteLeft && e->modifiers() == Qt::ControlModifier) {
         e->ignore();
     }

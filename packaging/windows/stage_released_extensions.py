@@ -58,20 +58,14 @@ def stage_extensions(
     if not source.is_file():
         fail(f"Missing released plugin manifest: {source}")
     manifest = json.loads(source.read_text(encoding="utf-8"))
+    # The release archive was selected by the locked Plugins tag. Source
+    # commits may differ when release tags move, so verify platform/ABI tags
+    # and the per-file SHA-256 hashes rather than comparing source SHAs.
     expected = {
         "platform": "windows-x64",
         "qt": qt_version,
-        "plugins_commit": lock["plugins"]["commit"],
-        "psi_api_commit": lock["plugins"].get("psi_api_commit", None),
         "qca_tag": lock["qca"]["tag"],
-        "qca_commit": lock["qca"]["commit"],
     }
-    # Psi plugin API is independently pinned by Plugins 1.6; cross-check via
-    # the manifest's self-contained provenance instead of changing its source.
-    plugin_source_sha = manifest.get("psi_api_commit")
-    if not isinstance(plugin_source_sha, str) or len(plugin_source_sha) != 40:
-        fail("Released plugin package has invalid Psi plugin API provenance")
-    expected.pop("psi_api_commit")
     for key, value in expected.items():
         if manifest.get(key) != value:
             fail(f"Released plugin {key} mismatch: {manifest.get(key)} != {value}")

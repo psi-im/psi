@@ -37,7 +37,6 @@ class FancyLabel : public QWidget {
     Q_PROPERTY(QColor colorFont READ colorFont WRITE setColorFont)
     Q_PROPERTY(QString psiIconName READ psiIconName WRITE setPsiIcon)
 
-    Q_ENUMS(Shape Shadow)
     Q_PROPERTY(Shape frameShape READ frameShape WRITE setFrameShape)
     Q_PROPERTY(Shadow frameShadow READ frameShadow WRITE setFrameShadow)
     Q_PROPERTY(int lineWidth READ lineWidth WRITE setLineWidth)
@@ -84,6 +83,9 @@ public:
         Sunken  = 0x0030, // sunken shadow effect
         MShadow = 0x00f0
     }; // mask for the shadow
+
+    Q_ENUM(Shape)
+    Q_ENUM(Shadow)
 
     Shape frameShape() const;
     void  setFrameShape(Shape);
