@@ -89,7 +89,7 @@ qt_wrap_cpp(MOCS
 )
 
 set(BLD_TYPE STATIC)
-if(WIN32)
+if(WIN32 AND NOT MSVC)
     set(BLD_TYPE SHARED)
 endif()
 
@@ -101,7 +101,7 @@ add_library(qhttp
     ${MOCS}
 )
 
-if(WIN32)
+if(WIN32 AND NOT MSVC)
     set_target_properties(qhttp PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/psi"
     )
