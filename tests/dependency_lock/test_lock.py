@@ -134,9 +134,13 @@ class DependencyLockTests(unittest.TestCase):
         for workflow in (ubuntu, fedora, mac):
             self.assertIn("ccache", workflow)
             self.assertIn("USE_QT6=ON", workflow)
-            self.assertIn("CHAT_TYPE=BASIC", workflow)
             self.assertNotIn("matrix:", workflow)
             self.assertNotIn("cmake --install build", workflow)
+        for workflow in (ubuntu, mac):
+            self.assertIn("CHAT_TYPE=BASIC", workflow)
+        self.assertIn("CHAT_TYPE=WEBENGINE", fedora)
+        self.assertIn("qt6-qtwebengine-devel", fedora)
+        self.assertEqual(sum("CHAT_TYPE=WEBENGINE" in wf for wf in (ubuntu, fedora, mac)), 1)
         self.assertIn("runs-on: ubuntu-24.04", ubuntu)
         self.assertIn("container: fedora:latest", fedora)
         self.assertIn("runs-on: macos-15", mac)

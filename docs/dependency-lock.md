@@ -36,8 +36,9 @@ Do not write `QCA_TAG: v...`, QtKeychain version, PsiMedia SHA or versioned SDK 
 
 Ordinary full-client CI has exactly five compile/test targets: Windows 7 Qt5,
 Windows MSVC Qt6, Ubuntu 24.04 Qt6, macOS arm64 Qt6 and Fedora latest Qt6.
-All use compiler caching. The Linux/macOS profiles build BASIC without official
-plugins. Expensive protocol integration suites remain manually dispatchable;
+All use compiler caching. Fedora exercises Qt6/WebEngine; the other four full
+CI targets use BASIC. The Linux/macOS profiles do not build official plugins.
+Expensive protocol integration suites remain manually dispatchable;
 small path-filtered widget and component regressions can run automatically.
 
 System distribution packages, toolchain installation, and Qt installer package series are intentionally not treated as exact source locks. If we need reproducible toolchain binaries, they require separate pinned package indexes and hashes rather than merely moving a variable into this JSON file.
