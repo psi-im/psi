@@ -26,9 +26,13 @@ jobs:
         run: |
           git submodule update --init --depth 1 \
             3rdparty/http-parser 3rdparty/qhttp 3rdparty/qite
+      - name: Initialize pinned Iris metadata
+        run: git submodule update --init --depth 1 iris
       - name: Resolve locked SDK release tags
         id: deps
         uses: ./.github/actions/load-dependencies
+        with:
+          require-iris: 'true'
       - name: Install Qt 6.12
         uses: jurplel/install-qt-action@v4
         with:
@@ -37,7 +41,10 @@ jobs:
           cache: true
       - name: Install build tools and crypto dependencies
         run: |
-          brew install ccache ninja pkgconf openssl@3 || true
+          brew list ccache >/dev/null 2>&1 || brew install ccache
+          brew list ninja >/dev/null 2>&1 || brew install ninja
+          brew list pkgconf >/dev/null 2>&1 || brew install pkgconf
+          brew list openssl@3 >/dev/null 2>&1 || brew install openssl@3
           echo "OPENSSL_ROOT_DIR=$(brew --prefix openssl@3)" >> "$GITHUB_ENV"
       - uses: actions/cache@v4
         with:
@@ -49,7 +56,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           IRIS_TAG: ${{ steps.deps.outputs.iris_release_tag }}
-          QCA_TAG: v3.0.12
+          QCA_TAG: ${{ steps.deps.outputs.qca_tag }}
         run: |
           set -euo pipefail
           mkdir -p qca-sdk iris-sdk
