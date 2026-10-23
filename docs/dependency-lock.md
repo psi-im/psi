@@ -39,9 +39,10 @@ Windows MSVC Qt6, Ubuntu 24.04 Qt6, macOS arm64 Qt6 and Fedora latest Qt6.
 All use compiler caching. Fedora exercises Qt6/WebEngine; Windows 7 retains
 the legacy Qt5/WebKit coverage from its original CI; the remaining three
 full-client targets use BASIC. The Linux/macOS profiles do not build official plugins.
-macOS always builds Iris from Psi's exact gitlink with the bundled QCA/UsrSCTP/
-OMEMO libraries (Qt6 has no MacExtras module), and never consumes a published
-Iris SDK just because the lock mentions a release tag.
+macOS is Qt6-only and always builds Iris from Psi's exact gitlink with bundled
+QCA/UsrSCTP/OMEMO; it does not consume released Iris SDK binaries. Qt5 remains
+only in the Windows 7 (MSYS2) compatibility profile; Linux, Windows MSVC,
+macOS, and focused widget tests use Qt6.
 Expensive protocol integration suites remain manually dispatchable;
 small path-filtered widget and component regressions can run automatically.
 

@@ -55,30 +55,22 @@ concurrency:
 jobs:
   widget-regressions:
     runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        qt: [5, 6]
     steps:
       - uses: actions/checkout@v4
       - name: Resolve qite
         run: git submodule update --init --depth 1 3rdparty/qite
-      - name: Install Qt
+      - name: Install Qt6
         run: |
           sudo apt-get update
-          if [ "${{ matrix.qt }}" = "6" ]; then
-            sudo apt-get install -y ccache cmake ninja-build qt6-base-dev qt6-multimedia-dev libqt6sql6-sqlite
-          else
-            sudo apt-get install -y ccache cmake ninja-build qtbase5-dev qtmultimedia5-dev libqt5sql5-sqlite
-          fi
+          sudo apt-get install -y ccache cmake ninja-build qt6-base-dev qt6-multimedia-dev libqt6sql6-sqlite
       - name: Restore compiler cache
         uses: actions/cache@v4
         with:
           path: ~/.cache/ccache
-          key: psi-mam-widgets-qt${{ matrix.qt }}-${{ runner.os }}-${{ github.head_ref || github.ref_name }}-${{ github.sha }}
+          key: psi-mam-widgets-qt6-${{ runner.os }}-${{ github.head_ref || github.ref_name }}-${{ github.sha }}
           restore-keys: |
-            psi-mam-widgets-qt${{ matrix.qt }}-${{ runner.os }}-${{ github.head_ref || github.ref_name }}-
-            psi-mam-widgets-qt${{ matrix.qt }}-${{ runner.os }}-
+            psi-mam-widgets-qt6-${{ runner.os }}-${{ github.head_ref || github.ref_name }}-
+            psi-mam-widgets-qt6-${{ runner.os }}-
       - name: Configure compiler cache
         run: |
           ccache --max-size=400M
@@ -86,7 +78,7 @@ jobs:
       - name: Configure
         run: |
           cmake -S tests/mamchat -B build-mam-widgets -G Ninja \
-            -DQT_DEFAULT_MAJOR_VERSION=${{ matrix.qt }} \
+            -DQT_DEFAULT_MAJOR_VERSION=6 \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
       - name: Build
         run: cmake --build build-mam-widgets --parallel 4
@@ -98,7 +90,7 @@ jobs:
       - name: Configure SQLite history regressions
         run: |
           cmake -S tests/mamhistory -B build-mam-history -G Ninja \
-            -DQT_DEFAULT_MAJOR_VERSION=${{ matrix.qt }} \
+            -DQT_DEFAULT_MAJOR_VERSION=6 \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
       - name: Build SQLite history regressions
         run: cmake --build build-mam-history --parallel 4
