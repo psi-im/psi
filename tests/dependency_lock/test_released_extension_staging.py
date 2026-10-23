@@ -90,6 +90,19 @@ class ReleasedExtensionsTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "qca_commit mismatch"):
             self.stage()
 
+    def test_refuses_plugin_api_commit_mismatch(self):
+        # A well-formed but wrong SHA must never pass the release gate.
+        self.manifest["psi_api_commit"] = "e" * 40
+        self.write_manifest()
+        with self.assertRaisesRegex(ValueError, "psi_api_commit mismatch"):
+            self.stage()
+
+    def test_refuses_missing_plugin_api_commit_in_lock(self):
+        del self.lock["plugins"]["psi_api_commit"]
+        self.lock_path.write_text(json.dumps(self.lock))
+        with self.assertRaisesRegex(ValueError, "invalid plugin API commit"):
+            self.stage()
+
     def test_refuses_overwriting_psi_runtime_or_other_plugins(self):
         original = self.psi_stage / "plugins" / "official-00.dll"
         original.parent.mkdir()
