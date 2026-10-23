@@ -146,6 +146,8 @@ class DependencyLockTests(unittest.TestCase):
         self.assertIn("runs-on: macos-15", mac)
         self.assertIn("BUNDLED_IRIS=ON", mac)
         self.assertIn("IRIS_BUNDLED_QCA=ON", mac)
+        self.assertIn("modules: qtmultimedia qtimageformats", mac)
+        self.assertNotIn("modules: qtmultimedia qtsvg", mac)
         self.assertIn("git submodule update --init --depth 1 iris", mac)
         self.assertNotIn("iris-qt6-macos-arm64.zip", mac)
         self.assertNotIn("BUNDLED_IRIS=OFF", mac)

@@ -39,7 +39,7 @@ jobs:
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ steps.deps.outputs.qt6_version }}
-          modules: qtmultimedia qtsvg qtimageformats
+          modules: qtmultimedia qtimageformats
           cache: true
       - name: Install build tools and crypto dependencies
         run: |
