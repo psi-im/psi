@@ -8,11 +8,11 @@
 class PixmapRatioLabel : public QLabel {
     Q_OBJECT
 
-    Q_ENUMS(Policy)
     Q_PROPERTY(Policy resizePolicy READ resizePolicy WRITE setResizePolicy)
 
 public:
     enum class Policy : char { FitVertical, FitHorizontal, FitBoth };
+    Q_ENUM(Policy)
 
     explicit PixmapRatioLabel(QWidget *parent = nullptr);
     void   setPixmap(const QPixmap &pix);
