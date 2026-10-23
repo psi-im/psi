@@ -1,5 +1,4 @@
 [Desktop Entry]
-# This is the spec version, *not* the application version
 Version=1.1
 Type=Application
 Name=Psi
@@ -12,10 +11,17 @@ Terminal=false
 X-KDE-StartupNotify=true
 StartupWMClass=Psi
 Categories=Network;InstantMessaging;Qt;
-Keywords=XMPP;Jabber;Chat;InstantMessaging;
+Keywords=XMPP;Jabber;chat;Instant Messaging;im;messanger;talks;voip;calls;
 Actions=SelectProfile;RunWithVulkan;QuitApplication;
 
 # Translations
+Name[be]=Псі
+Name[bg]=Пси
+Name[kk]=Пси
+Name[mk]=Пси
+Name[ru]=Пси
+Name[sr]=Пси
+Name[uk]=Псі
 GenericName[be]=Кліент XMPP
 GenericName[bg]=Клиент за XMPP
 GenericName[ca]=Client XMPP
@@ -26,6 +32,7 @@ GenericName[eo]=XMPP Klientilo
 GenericName[es]=Cliente XMPP
 GenericName[fr]=Client XMPP
 GenericName[he]=לקוח XMPP
+GenericName[hr]=XMPP klijent
 GenericName[it]=Client XMPP
 GenericName[ja]=XMPPクライアント
 GenericName[kk]=XMPP клиенті
@@ -35,6 +42,7 @@ GenericName[pl]=Klient XMPP
 GenericName[pt_BR]=Cliente XMPP
 GenericName[ru]=XMPP-клиент
 GenericName[sl]=Odjemalec za XMPP
+GenericName[sr]=XMPP клијент
 GenericName[sq]=Klient XMPP
 GenericName[sv]=XMPPklient
 GenericName[uk]=XMPP клієнт
@@ -68,3 +76,5 @@ Comment[ur_PK]=جیبر نیٹ ورک پر مواصلت کریں
 Comment[vi]=Liên lạc qua mạng XMPP nhé
 Comment[zh_CN]=通过 XMPP 网络进行交流
 Comment[zh_TW]=通過XMPP網絡進行通信
+Keywords[ru]=XMPP;Jabber;чат;чат-клиент;мгновенные сообщения;im;месенджер;беседы;voip;звонки;звонилка;
+Keywords[uk]=XMPP;Jabber;чат;чат-клієнт;миттєві повідомлення;im;месенджер;бесіди;voip;дзвінки;дзвонилка;
