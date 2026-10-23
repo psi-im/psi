@@ -317,7 +317,7 @@ void ChatDlg::showEvent(QShowEvent *)
 
 void ChatDlg::logSelectionChanged()
 {
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     // A hack to only give the message log focus when text is selected
 // seems its already useless. at least copy works w/o this hack
 //    if (chatView()->textCursor().hasSelection()) {

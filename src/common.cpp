@@ -19,7 +19,7 @@
 
 #include "common.h"
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
 #include "CocoaUtilities/cocoacommon.h"
 #endif
 #include "activity.h"
@@ -58,7 +58,7 @@
 #endif
 #endif
 // #include <stdio.h>
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
 #include <Carbon/Carbon.h> // for HIToolbox/InternetConfig
 #include <CoreServices/CoreServices.h>
 #include <sys/stat.h>
@@ -281,7 +281,7 @@ void soundPlay(const QString &s)
     }
 
     QString fullPath;
-#if !(defined(Q_OS_WIN) || defined(Q_OS_MAC))
+#if !(defined(Q_OS_WIN) || defined(Q_OS_MACOS))
     QString player = PsiOptions::instance()
                          ->getOption("options.ui.notifications.sounds.unix-sound-player")
                          .toString()

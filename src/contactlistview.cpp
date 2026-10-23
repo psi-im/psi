@@ -61,7 +61,7 @@ ContactListView::ContactListView(QWidget *parent) : HoverableTreeView(parent), c
 #endif
     // setItemDelegate(new PsiContactListViewDelegate(this));
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     setFrameShape(QFrame::NoFrame);
 #endif
 

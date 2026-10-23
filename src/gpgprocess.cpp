@@ -127,7 +127,7 @@ QString GpgProcess::findBin() const
 #else
     QStringList paths = QString::fromLocal8Bit(qgetenv("PATH")).split(pathSep, QString::SkipEmptyParts);
 #endif
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     // On Mac OS bundled always uses system default PATH
     // so it need explicitly add extra paths which can
     // contain gpg
