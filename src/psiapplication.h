@@ -21,7 +21,7 @@
 #define PSIAPPLICATION_H
 
 #include <QApplication>
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
 #include <Carbon/Carbon.h>
 #endif
 
@@ -33,7 +33,7 @@ public:
     PsiApplication(int &argc, char **argv, bool GUIenabled = true);
     ~PsiApplication();
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     bool macEventFilter(EventHandlerCallRef, EventRef);
 #endif
 

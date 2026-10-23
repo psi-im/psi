@@ -249,7 +249,7 @@ PsiOptions::PsiOptions() : OptionsTree(), autoSaveTimer_(nullptr)
 
     if (!load(":/options/default.xml"))
         qWarning("ERROR: Failed to load default options");
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     if (!load(":/options/macosx.xml"))
         qWarning("ERROR: Failed to load Mac OS X-specific options");
 #endif

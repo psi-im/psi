@@ -115,7 +115,7 @@
 #ifdef HAVE_SPARKLE
 #include "AutoUpdater/SparkleAutoUpdater.h"
 #endif
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
 #include "mac_dock/mac_dock.h"
 #endif
 
@@ -1533,7 +1533,7 @@ void PsiCon::slotApplyOptions()
     PsiIconset::instance()->reloadRoster();
     PsiOptions *o = PsiOptions::instance();
 
-#ifndef Q_OS_MAC
+#ifndef Q_OS_MACOS
     if (!o->getOption("options.ui.contactlist.show-menubar").toBool()) {
         // check if all toolbars are disabled
         bool        toolbarsVisible = false;
@@ -1577,7 +1577,7 @@ void PsiCon::queueChanged()
     if (pa)
         nextAnim = PsiIconset::instance()->event2icon(pa->eventQueue()->peekNext());
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     {
         // Update the event count
         MacDock::overlay(nextAmount ? QString::number(nextAmount) : QString());
@@ -1593,7 +1593,7 @@ void PsiCon::queueChanged()
 
 void PsiCon::startBounce()
 {
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     QString bounce = PsiOptions::instance()->getOption("options.ui.notifications.bounce-dock").toString();
     if (bounce != "never") {
         MacDock::startBounce();

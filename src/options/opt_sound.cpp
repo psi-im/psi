@@ -166,7 +166,7 @@ QWidget *OptionsTabSound::widget()
 #if defined(Q_OS_WIN)
     d->lb_player->hide();
     d->le_player->hide();
-#elif defined(Q_OS_MAC)
+#elif defined(Q_OS_MACOS)
     d->lb_player->hide();
     d->le_player->hide();
 #endif
@@ -205,7 +205,7 @@ void OptionsTabSound::restoreOptions()
 
 #if defined(Q_OS_WIN)
     d->le_player->setText(tr("Windows Sound"));
-#elif defined(Q_OS_MAC)
+#elif defined(Q_OS_MACOS)
     d->le_player->setText(tr("Mac OS Sound"));
 #else
     d->le_player->setText(
