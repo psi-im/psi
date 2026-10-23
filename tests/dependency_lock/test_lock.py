@@ -144,6 +144,7 @@ class DependencyLockTests(unittest.TestCase):
         self.assertIn("runs-on: ubuntu-24.04", ubuntu)
         self.assertIn("container: fedora:latest", fedora)
         self.assertIn("runs-on: macos-15", mac)
+        self.assertIn("chat_type: BASIC", win5)
         self.assertIn("package: false", win5)
         self.assertIn("run_tests: true", win5)
         self.assertIn("package: false", win6)
