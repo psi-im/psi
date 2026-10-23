@@ -1,0 +1,81 @@
+name: macOS arm64 Qt6 BASIC CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macos-arm64-qt6-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
+
+jobs:
+  build:
+    name: macOS arm64 / Qt6 / Clang / BASIC
+    runs-on: macos-15
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - name: Initialize non-Iris source submodules
+        run: |
+          git submodule update --init --depth 1 \
+            3rdparty/http-parser 3rdparty/qhttp 3rdparty/qite
+      - name: Resolve locked SDK release tags
+        id: deps
+        uses: ./.github/actions/load-dependencies
+      - name: Install Qt 6.12
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ steps.deps.outputs.qt6_version }}
+          modules: qtmultimedia qtimageformats
+          cache: true
+      - name: Install build tools and crypto dependencies
+        run: |
+          brew install ccache ninja pkgconf openssl@3 || true
+          echo "OPENSSL_ROOT_DIR=$(brew --prefix openssl@3)" >> "$GITHUB_ENV"
+      - uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/ccache
+          key: psi-macos-arm64-qt6-${{ github.sha }}
+          restore-keys: |
+            psi-macos-arm64-qt6-
+      - name: Install released QCA and Iris Qt6 SDKs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IRIS_TAG: ${{ steps.deps.outputs.iris_release_tag }}
+          QCA_TAG: v3.0.12
+        run: |
+          set -euo pipefail
+          mkdir -p qca-sdk iris-sdk
+          gh release download "$QCA_TAG" --repo psi-im/qca \
+            -p qca3-qt6-macos-arm64.zip -O qca.zip
+          gh release download "$IRIS_TAG" --repo psi-im/iris \
+            -p iris-qt6-macos-arm64.zip -O iris.zip
+          (cd qca-sdk && cmake -E tar xvf ../qca.zip)
+          (cd iris-sdk && cmake -E tar xvf ../iris.zip)
+          test -d qca-sdk/lib/cmake/Qca3-qt6
+          test -d iris-sdk/lib/cmake/Iris
+      - name: Configure and compile Psi
+        run: |
+          ccache --max-size=1G
+          ccache --zero-stats
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$PWD/qca-sdk;$PWD/iris-sdk;$QT_ROOT_DIR" \
+            -DOPENSSL_ROOT_DIR="$OPENSSL_ROOT_DIR" \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DUSE_QT6=ON -DQT_DEFAULT_MAJOR_VERSION=6 \
+            -DBUNDLED_IRIS=OFF -DCHAT_TYPE=BASIC \
+            -DENABLE_PLUGINS=OFF -DBUILD_PSIMEDIA=OFF \
+            -DUSE_KEYCHAIN=OFF -DUSE_HUNSPELL=OFF \
+            -DBUILD_TESTING=OFF
+          cmake --build build --parallel 3
+      - name: Cache statistics
+        run: ccache --show-stats

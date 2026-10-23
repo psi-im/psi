@@ -4,6 +4,8 @@ set -euo pipefail
 : "${IRIS_INSTALL_PREFIX:?IRIS_INSTALL_PREFIX must be set}"
 : "${IRIS_C_COMPILER:?IRIS_C_COMPILER must be set}"
 : "${IRIS_CXX_COMPILER:?IRIS_CXX_COMPILER must be set}"
+: "${IRIS_QT_MAJOR:=5}"
+: "${IRIS_QCA_MAJOR:=2}"
 
 iris_ref=$(git ls-tree HEAD iris | awk '{print $3}')
 if [[ ! "$iris_ref" =~ ^[0-9a-f]{40}$ ]]; then
@@ -54,7 +56,7 @@ CPP
         -DCMAKE_C_COMPILER="$IRIS_C_COMPILER" \
         -DCMAKE_CXX_COMPILER="$IRIS_CXX_COMPILER" \
         -DPSI_EXPECTED_IRIS_VERSION="${iris_release_tag#v}" \
-        -DPSI_EXPECTED_QT_MAJOR=5 \
+        -DPSI_EXPECTED_QT_MAJOR="$IRIS_QT_MAJOR" \
         -DCMAKE_PREFIX_PATH="$IRIS_INSTALL_PREFIX" >/dev/null \
         && cmake --build "$iris_probe/build" --parallel >/dev/null
 }
@@ -139,11 +141,14 @@ if ! try_release_package; then
         -DCMAKE_C_COMPILER="$IRIS_C_COMPILER" \
         -DCMAKE_CXX_COMPILER="$IRIS_CXX_COMPILER" \
         -DCMAKE_INSTALL_PREFIX="$IRIS_INSTALL_PREFIX" \
+        -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+        -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
         -DBUILD_SHARED_LIBS=ON \
         -DIRIS_BUILD_TESTS=OFF \
         -DIRIS_ENABLE_INSTALL=ON \
-        -DIRIS_SYSTEM_QCA=2 \
+        -DIRIS_SYSTEM_QCA="$IRIS_QCA_MAJOR" \
         -DIRIS_BUNDLED_QCA=OFF \
+        -DUSE_QT6=$([[ "$IRIS_QT_MAJOR" == 6 ]] && echo ON || echo OFF) \
         -DIRIS_ENABLE_OMEMO=ON \
         -DIRIS_BUNDLED_OMEMO_C=OFF \
         -DIRIS_BUNDLED_USRSCTP=OFF

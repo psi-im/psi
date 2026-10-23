@@ -1,36 +1,8 @@
 name: PsiMedia integration
 
+
+# Expensive integration suites are opt-in; ordinary CI runs five platform builds.
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - 'iris'
-      - 'src/avcall/**'
-      - 'src/psimedia/**'
-      - 'plugins/include/psimediaprovider.h'
-      - 'tests/avcall/**'
-      - 'qa/integration/jingle-live/**'
-      - 'qa/integration/media_backend_ready.h'
-      - 'dependencies.lock.json'
-      - '.github/actions/load-dependencies/**'
-      - '.github/scripts/resolve-dependencies.py'
-      - '.github/workflows/psimedia-integration.yml'
-  pull_request:
-    branches:
-      - master
-    paths:
-      - 'iris'
-      - 'src/avcall/**'
-      - 'src/psimedia/**'
-      - 'plugins/include/psimediaprovider.h'
-      - 'tests/avcall/**'
-      - 'qa/integration/jingle-live/**'
-      - 'qa/integration/media_backend_ready.h'
-      - 'dependencies.lock.json'
-      - '.github/actions/load-dependencies/**'
-      - '.github/scripts/resolve-dependencies.py'
-      - '.github/workflows/psimedia-integration.yml'
   workflow_dispatch:
 
 permissions:

@@ -1,4 +1,4 @@
-name: Windows legacy MSYS2 Qt5 CI
+name: Windows 7 Qt5 compile/test CI
 
 on:
   push:
@@ -18,10 +18,6 @@ concurrency:
 
 jobs:
   check-sdk:
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'push' && !startsWith(github.ref_name, 'ai/')) ||
-      (github.event_name == 'pull_request' && !startsWith(github.head_ref, 'ai/'))
     name: Check legacy dependency SDK
     runs-on: ubuntu-24.04
     outputs:
@@ -51,9 +47,7 @@ jobs:
             message="$PUSH_COMMIT_MESSAGE"
           fi
 
-          if [[ "$EVENT_NAME" != "workflow_dispatch" && ( "$BRANCH_NAME" == ai/* || "$BRANCH_NAME" == "ci/psimedia-integration" ) ]]; then
-            run_ci=false
-          elif [[ "$EVENT_NAME" != "workflow_dispatch" && "$message" == *"[skip ci]"* ]]; then
+          if [[ "$EVENT_NAME" != "workflow_dispatch" && "$message" == *"[skip ci]"* ]]; then
             run_ci=false
           fi
 
@@ -103,7 +97,7 @@ jobs:
       force_rebuild: false
 
   legacy-win7:
-    name: Build legacy Windows 7 x64 package
+    name: Compile and test legacy Windows 7 Qt5
     needs:
       - check-sdk
       - build-sdk
@@ -117,6 +111,8 @@ jobs:
     uses: ./.github/workflows/windows-msys2-qt5-profile.yml
     with:
       profile: legacy-win7
-      allow_failure: true
+      allow_failure: false
+      run_tests: true
+      package: false
       sdk_tag: ${{ needs.check-sdk.outputs.sdk_tag }}
       sdk_archive: ${{ needs.check-sdk.outputs.sdk_archive }}

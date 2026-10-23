@@ -34,4 +34,10 @@ For reusable Windows workflows, the resolver job reads the Psi lock and passes i
 
 Do not write `QCA_TAG: v...`, QtKeychain version, PsiMedia SHA or versioned SDK tags directly into individual YAML workflows. A new version is changed once in the appropriate lock and propagated to all consumers. `tests/dependency_lock/test_lock.py` and the `Dependency lock verification` workflow guard the contract.
 
-System distribution packages (such as Fedora Qt5/QCA2), toolchain installation, and Qt installer package series are intentionally not treated as exact source locks. If we need reproducible toolchain binaries, they require separate pinned package indexes and hashes rather than merely moving a variable into this JSON file.
+Ordinary full-client CI has exactly five compile/test targets: Windows 7 Qt5,
+Windows MSVC Qt6, Ubuntu 24.04 Qt6, macOS arm64 Qt6 and Fedora latest Qt6.
+All use compiler caching. The Linux/macOS profiles build BASIC without official
+plugins. Expensive protocol integration suites remain manually dispatchable;
+small path-filtered widget and component regressions can run automatically.
+
+System distribution packages, toolchain installation, and Qt installer package series are intentionally not treated as exact source locks. If we need reproducible toolchain binaries, they require separate pinned package indexes and hashes rather than merely moving a variable into this JSON file.

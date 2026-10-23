@@ -1,127 +1,84 @@
-name: Ubuntu CI
+name: Ubuntu 24.04 Qt6 BASIC CI
 
 on:
   push:
-    branches:
-    - master
+    branches: [master]
   pull_request:
-    branches:
-    - '*'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
-  # Only the newest commit of a PR needs expensive build/test runners.
-  # Keep manual dispatches independent and keep master distinct from PRs.
-  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.event.pull_request.head.repo.full_name || github.repository }}-${{ github.head_ref || github.ref_name }}
+  group: ubuntu-qt6-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
 
 jobs:
   build:
-    if: ${{ github.event_name != 'pull_request' || (!startsWith(github.head_ref, 'ai/') && github.head_ref != 'ci/psimedia-integration') }}
-    name: Build and install project
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        compiler: ['clang', 'gcc']
-        chattype: ['BASIC', 'WEBENGINE']
-        include:
-          - compiler: 'clang'
-            cc: 'clang-17'
-            cxx: 'clang++-17'
-          - compiler: 'gcc'
-            cc: 'gcc'
-            cxx: 'g++'
+    name: Ubuntu 24.04 / Qt6 / GCC / BASIC
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
     steps:
-    - name: Fetching sources
-      uses: actions/checkout@v4
-      with:
-        submodules: false
-    - name: Initializing non-Iris submodules
-      run: |
-        git submodule update --init --depth 1 \
-            3rdparty/http-parser \
-            3rdparty/qhttp \
-            3rdparty/qite
-        test ! -e iris/CMakeLists.txt
-    - name: Updating apt package metadata
-      run: |
-        sudo apt-get update
-
-    - name: Installing compiler GCC
-      if: ${{ matrix.compiler == 'gcc' }}
-      run: |
-        sudo apt-get -y install ${{ matrix.compiler }}
-
-    - name: Installing compiler CLang
-      if: ${{ matrix.compiler == 'clang' }}
-      run: |
-        wget https://apt.llvm.org/llvm.sh
-        chmod +x ./llvm.sh
-        sudo ./llvm.sh 17
-
-    - name: Remove conflicting slotted packages
-      run: |
-        sudo apt-get remove libunwind-*
-    - name: Installing build system
-      run: |
-        sudo apt-get -y install cmake make ninja-build
-    - name: Installing development packages
-      run: |
-        sudo apt-get -y install --no-install-recommends \
-            gstreamer1.0-dev \
-            libhttp-parser-dev \
-            libhunspell-dev \
-            libminizip-dev \
-            libomemo-c-dev \
-            libotr5-dev \
-            libprotobuf-c-dev \
-            libqca-qt5-2-dev \
-            libqt5svg5-dev \
-            libqt5x11extras5-dev \
-            libsm-dev \
-            libssl-dev \
-            libsrtp2-dev \
-            libtidy-dev \
-            libusrsctp-dev \
-            libxss-dev \
-            qt5keychain-dev \
-            qtbase5-dev \
-            qtmultimedia5-dev \
-            qtwebengine5-dev \
-            zlib1g-dev
-    - name: Building and installing external Iris
-      shell: bash
-      env:
-        IRIS_INSTALL_PREFIX: ${{ runner.temp }}/iris-sdk
-        IRIS_C_COMPILER: ${{ matrix.cc }}
-        IRIS_CXX_COMPILER: ${{ matrix.cxx }}
-      run: bash .github/scripts/build-system-iris.sh
-    - name: Building project with CMake
-      run: |
-        [ -d "./plugins/generic" ] && ENABLE_PLUGINS="ON" || ENABLE_PLUGINS="OFF"
-        cmake -S . -B build \
-            -DCMAKE_C_COMPILER=${{ matrix.cc }} \
-            -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} \
-            -DCMAKE_INSTALL_PREFIX:PATH=/usr \
-            -DCMAKE_PREFIX_PATH="${{ runner.temp }}/iris-sdk" \
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - name: Restore compiler cache
+        uses: actions/cache@v4
+        with:
+          path: .ccache
+          key: psi-ubuntu2404-qt6-gcc-${{ github.sha }}
+          restore-keys: |
+            psi-ubuntu2404-qt6-gcc-
+      - name: Install Qt6 and build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ccache cmake ninja-build g++ pkg-config \
+            qt6-base-dev qt6-multimedia-dev qt6-svg-dev libqt6sql6-sqlite \
+            libhttp-parser-dev libhunspell-dev libminizip-dev libomemo-c-dev \
+            libotr5-dev libprotobuf-c-dev libsm-dev libssl-dev \
+            libsrtp2-dev libtidy-dev libusrsctp-dev libxss-dev zlib1g-dev
+      - name: Initialize pinned sources
+        run: |
+          git submodule update --init --depth 1 \
+            3rdparty/http-parser 3rdparty/qhttp 3rdparty/qite
+          git submodule update --init --depth 1 iris
+      - name: Install locked QCA3 Qt6
+        uses: ./.github/actions/load-dependencies
+        with:
+          require-iris: 'true'
+          qca-asset: qca3-deb-ubuntu-24.04.zip
+          qca-install-mode: apt
+      - name: Configure compiler cache
+        run: |
+          ccache --max-size=1G
+          ccache --zero-stats
+      - name: Build exact Iris gitlink for Qt6
+        env:
+          IRIS_INSTALL_PREFIX: ${{ runner.temp }}/iris-sdk
+          IRIS_C_COMPILER: gcc
+          IRIS_CXX_COMPILER: g++
+          IRIS_QT_MAJOR: '6'
+          IRIS_QCA_MAJOR: '3'
+        run: bash .github/scripts/build-system-iris.sh
+      - name: Configure and build Psi
+        run: |
+          cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
-            -DBUILD_DEV_PLUGINS=${ENABLE_PLUGINS} \
-            -DBUILD_PSIMEDIA=${ENABLE_PLUGINS} \
-            -DBUNDLED_IRIS=OFF \
-            -DCHAT_TYPE:STRING=${{ matrix.chattype }} \
-            -DENABLE_PLUGINS=${ENABLE_PLUGINS} \
-            -DUSE_HUNSPELL=ON \
-            -DUSE_KEYCHAIN=ON \
-            -DUSE_SPARKLE=OFF
-        cmake --build build
-      env:
-        CFLAGS: -O2 -fexceptions -pipe -Wall -Wextra -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS -fPIC -fstack-protector-strong -fasynchronous-unwind-tables -fcf-protection
-        CXXFLAGS: -O2 -fexceptions -pipe -Wall -Wextra -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS -fPIC -fstack-protector-strong -fasynchronous-unwind-tables -fcf-protection
-        LDFLAGS: -Wl,-z,relro -Wl,--as-needed -Wl,-z,now
-    - name: Running native call direction regression
-      run: |
-        ctest --test-dir build --output-on-failure --no-tests=error -R '^avcall(policy|audiodirection)_test$'
-    - name: Installing project with CMake
-      run: |
-        sudo cmake --install build
+            -DCMAKE_PREFIX_PATH="${{ runner.temp }}/iris-sdk" \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DUSE_QT6=ON -DQT_DEFAULT_MAJOR_VERSION=6 \
+            -DBUNDLED_IRIS=OFF -DCHAT_TYPE=BASIC \
+            -DENABLE_PLUGINS=OFF -DBUILD_PSIMEDIA=OFF \
+            -DUSE_KEYCHAIN=OFF -DUSE_HUNSPELL=ON \
+            -DBUILD_TESTING=ON
+          cmake --build build --parallel 4
+      - name: Run native regressions
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: ctest --test-dir build --output-on-failure --no-tests=error -R '^avcall(policy|audiodirection)_test$'
+      - name: Cache statistics
+        run: ccache --show-stats

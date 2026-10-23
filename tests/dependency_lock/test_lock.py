@@ -124,6 +124,34 @@ class DependencyLockTests(unittest.TestCase):
         self.assertIn("if ($BuildOnly) {", builder)
         self.assertIn("Invoke-Checked cmake --install $buildDir", builder)
 
+    def test_five_heavy_ci_platforms_no_automatic_installers(self):
+        root = ROOT / ".github/workflows"
+        ubuntu = (root / "ubuntu.yml").read_text()
+        fedora = (root / "fedora.yml").read_text()
+        mac = (root / "macos-arm64.yml").read_text()
+        win5 = (root / "windows-msys2-qt5.yml").read_text()
+        win6 = (root / "windows-msvc-qt6.yml").read_text()
+        for workflow in (ubuntu, fedora, mac):
+            self.assertIn("ccache", workflow)
+            self.assertIn("USE_QT6=ON", workflow)
+            self.assertIn("CHAT_TYPE=BASIC", workflow)
+            self.assertNotIn("matrix:", workflow)
+            self.assertNotIn("cmake --install build", workflow)
+        self.assertIn("runs-on: ubuntu-24.04", ubuntu)
+        self.assertIn("container: fedora:latest", fedora)
+        self.assertIn("runs-on: macos-15", mac)
+        self.assertIn("package: false", win5)
+        self.assertIn("run_tests: true", win5)
+        self.assertIn("package: false", win6)
+        self.assertIn("ccache", (root / "windows-msvc-qt6-profile.yml").read_text())
+        self.assertIn("ccache", (root / "windows-msys2-qt5-profile.yml").read_text())
+        for name in ("mam-native-integration.yml", "mam-prosody-runtime.yml",
+                     "psimedia-integration.yml"):
+            content = (root / name).read_text()
+            self.assertIn("workflow_dispatch:", content)
+            self.assertNotIn("pull_request:", content)
+            self.assertNotIn("  push:", content)
+
     def test_iris_release_requires_a_versioned_tag_without_a_second_sha(self):
         for tag in ("master", "v1.3/other", "../v1.3", "v1.3^{commit}", ""):
             with self.subTest(tag=tag):
