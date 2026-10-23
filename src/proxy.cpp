@@ -22,6 +22,7 @@
 #include "common.h"
 #include "iconwidget.h"
 #include "iris/xmpp_xmlcommon.h"
+#include "iris/proxysrvresolver.h"
 #include "psioptions.h"
 
 #include <QApplication>
@@ -29,6 +30,10 @@
 #include <QComboBox>
 #include <QDomElement>
 #include <QHBoxLayout>
+#include <QInputDialog>
+#include <QMessageBox>
+#include <QNetworkProxy>
+#include <QUrl>
 #include <QLabel>
 #include <QLayout>
 #include <QLineEdit>
@@ -45,6 +50,10 @@ ProxySettings::ProxySettings()
 {
     port    = 0;
     useAuth = false;
+    dnsMode = QStringLiteral("doh");
+    dohUrl = QStringLiteral("https://cloudflare-dns.com/dns-query");
+    dnsHost = QStringLiteral("1.1.1.1");
+    dnsPort = 53;
 }
 
 void ProxySettings::toOptions(OptionsTree *o, QString base) const
@@ -55,6 +64,10 @@ void ProxySettings::toOptions(OptionsTree *o, QString base) const
     o->setOption(base + ".useAuth", useAuth);
     o->setOption(base + ".user", user);
     o->setOption(base + ".pass", encodePassword(pass, PASSWORDKEY));
+    o->setOption(base + ".dnsMode", dnsMode);
+    o->setOption(base + ".dohUrl", dohUrl);
+    o->setOption(base + ".dnsHost", dnsHost);
+    o->setOption(base + ".dnsPort", dnsPort);
 }
 
 void ProxySettings::fromOptions(OptionsTree *o, QString base)
@@ -65,6 +78,12 @@ void ProxySettings::fromOptions(OptionsTree *o, QString base)
     useAuth = o->getOption(base + ".useAuth").toBool();
     user    = o->getOption(base + ".user").toString();
     pass    = decodePassword(o->getOption(base + ".pass").toString(), PASSWORDKEY);
+    // Old profiles keep local SRV lookup; newly created profiles default to DoH.
+    const QVariant mode = o->getOption(base + ".dnsMode");
+    dnsMode = mode.isValid() ? mode.toString() : QStringLiteral("local");
+    dohUrl = o->getOption(base + ".dohUrl", QStringLiteral("https://cloudflare-dns.com/dns-query")).toString();
+    dnsHost = o->getOption(base + ".dnsHost", QStringLiteral("1.1.1.1")).toString();
+    dnsPort = o->getOption(base + ".dnsPort", 53).toInt();
 }
 
 QDomElement ProxySettings::toXml(QDomDocument *doc) const
@@ -76,6 +95,10 @@ QDomElement ProxySettings::toXml(QDomDocument *doc) const
     e.appendChild(XMLHelper::textTag(*doc, "useAuth", useAuth));
     e.appendChild(XMLHelper::textTag(*doc, "user", user));
     e.appendChild(XMLHelper::textTag(*doc, "pass", pass));
+    e.appendChild(XMLHelper::textTag(*doc, "dnsMode", dnsMode));
+    e.appendChild(XMLHelper::textTag(*doc, "dohUrl", dohUrl));
+    e.appendChild(XMLHelper::textTag(*doc, "dnsHost", dnsHost));
+    e.appendChild(XMLHelper::textTag(*doc, "dnsPort", QString::number(dnsPort)));
     return e;
 }
 
@@ -87,6 +110,18 @@ bool ProxySettings::fromXml(const QDomElement &e)
     useAuth = XMLHelper::subTagText(e, "useAuth") == "true";
     user    = XMLHelper::subTagText(e, "user");
     pass    = XMLHelper::subTagText(e, "pass");
+    dnsMode = XMLHelper::subTagText(e, "dnsMode");
+    if (dnsMode.isEmpty())
+        dnsMode = QStringLiteral("local");
+    dohUrl = XMLHelper::subTagText(e, "dohUrl");
+    if (dohUrl.isEmpty())
+        dohUrl = QStringLiteral("https://cloudflare-dns.com/dns-query");
+    dnsHost = XMLHelper::subTagText(e, "dnsHost");
+    if (dnsHost.isEmpty())
+        dnsHost = QStringLiteral("1.1.1.1");
+    dnsPort = XMLHelper::subTagText(e, "dnsPort").toInt();
+    if (dnsPort <= 0 || dnsPort > 65535)
+        dnsPort = 53;
     return true;
 }
 
