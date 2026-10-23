@@ -22,6 +22,7 @@
 #include "common.h"
 #include "iconwidget.h"
 #include "iris/xmpp_xmlcommon.h"
+#include "iris/proxysrvresolver.h"
 #include "psioptions.h"
 
 #include <QApplication>
@@ -29,6 +30,10 @@
 #include <QComboBox>
 #include <QDomElement>
 #include <QHBoxLayout>
+#include <QInputDialog>
+#include <QMessageBox>
+#include <QNetworkProxy>
+#include <QUrl>
 #include <QLabel>
 #include <QLayout>
 #include <QLineEdit>
@@ -45,6 +50,10 @@ ProxySettings::ProxySettings()
 {
     port    = 0;
     useAuth = false;
+    dnsMode = QStringLiteral("doh");
+    dohUrl = QStringLiteral("https://cloudflare-dns.com/dns-query");
+    dnsHost = QStringLiteral("1.1.1.1");
+    dnsPort = 53;
 }
 
 void ProxySettings::toOptions(OptionsTree *o, QString base) const
@@ -55,6 +64,10 @@ void ProxySettings::toOptions(OptionsTree *o, QString base) const
     o->setOption(base + ".useAuth", useAuth);
     o->setOption(base + ".user", user);
     o->setOption(base + ".pass", encodePassword(pass, PASSWORDKEY));
+    o->setOption(base + ".dnsMode", dnsMode);
+    o->setOption(base + ".dohUrl", dohUrl);
+    o->setOption(base + ".dnsHost", dnsHost);
+    o->setOption(base + ".dnsPort", dnsPort);
 }
 
 void ProxySettings::fromOptions(OptionsTree *o, QString base)
@@ -65,6 +78,12 @@ void ProxySettings::fromOptions(OptionsTree *o, QString base)
     useAuth = o->getOption(base + ".useAuth").toBool();
     user    = o->getOption(base + ".user").toString();
     pass    = decodePassword(o->getOption(base + ".pass").toString(), PASSWORDKEY);
+    // Old profiles keep local SRV lookup; newly created profiles default to DoH.
+    const QVariant mode = o->getOption(base + ".dnsMode");
+    dnsMode = mode.isValid() ? mode.toString() : QStringLiteral("local");
+    dohUrl = o->getOption(base + ".dohUrl", QStringLiteral("https://cloudflare-dns.com/dns-query")).toString();
+    dnsHost = o->getOption(base + ".dnsHost", QStringLiteral("1.1.1.1")).toString();
+    dnsPort = o->getOption(base + ".dnsPort", 53).toInt();
 }
 
 QDomElement ProxySettings::toXml(QDomDocument *doc) const
@@ -76,6 +95,10 @@ QDomElement ProxySettings::toXml(QDomDocument *doc) const
     e.appendChild(XMLHelper::textTag(*doc, "useAuth", useAuth));
     e.appendChild(XMLHelper::textTag(*doc, "user", user));
     e.appendChild(XMLHelper::textTag(*doc, "pass", pass));
+    e.appendChild(XMLHelper::textTag(*doc, "dnsMode", dnsMode));
+    e.appendChild(XMLHelper::textTag(*doc, "dohUrl", dohUrl));
+    e.appendChild(XMLHelper::textTag(*doc, "dnsHost", dnsHost));
+    e.appendChild(XMLHelper::textTag(*doc, "dnsPort", QString::number(dnsPort)));
     return e;
 }
 
@@ -87,6 +110,18 @@ bool ProxySettings::fromXml(const QDomElement &e)
     useAuth = XMLHelper::subTagText(e, "useAuth") == "true";
     user    = XMLHelper::subTagText(e, "user");
     pass    = XMLHelper::subTagText(e, "pass");
+    dnsMode = XMLHelper::subTagText(e, "dnsMode");
+    if (dnsMode.isEmpty())
+        dnsMode = QStringLiteral("local");
+    dohUrl = XMLHelper::subTagText(e, "dohUrl");
+    if (dohUrl.isEmpty())
+        dohUrl = QStringLiteral("https://cloudflare-dns.com/dns-query");
+    dnsHost = XMLHelper::subTagText(e, "dnsHost");
+    if (dnsHost.isEmpty())
+        dnsHost = QStringLiteral("1.1.1.1");
+    dnsPort = XMLHelper::subTagText(e, "dnsPort").toInt();
+    if (dnsPort <= 0 || dnsPort > 65535)
+        dnsPort = 53;
     return true;
 }
 
@@ -104,7 +139,11 @@ public:
         UserRole = Qt::UserRole + 5,
         PassRole = Qt::UserRole + 6,
         IdRole   = Qt::UserRole + 7,
-        TypeRole = Qt::UserRole + 8
+        TypeRole = Qt::UserRole + 8,
+        DnsModeRole = Qt::UserRole + 9,
+        DohUrlRole = Qt::UserRole + 10,
+        DnsHostRole = Qt::UserRole + 11,
+        DnsPortRole = Qt::UserRole + 12
     };
 
     ProxyDlg     *q;
@@ -134,6 +173,11 @@ public:
         connect(q->ui_.le_pass, SIGNAL(textEdited(const QString &)), SLOT(updateCurrentItem()));
         connect(q->ui_.gr_auth, SIGNAL(toggled(bool)), SLOT(updateCurrentItem()));
         connect(q->ui_.cb_type, SIGNAL(activated(int)), SLOT(updateCurrentItem()));
+        connect(q->ui_.cb_dns_mode, SIGNAL(activated(int)), SLOT(updateCurrentItem()));
+        connect(q->ui_.le_doh_url, SIGNAL(textEdited(const QString &)), SLOT(updateCurrentItem()));
+        connect(q->ui_.le_dns_host, SIGNAL(textEdited(const QString &)), SLOT(updateCurrentItem()));
+        connect(q->ui_.le_dns_port, SIGNAL(textEdited(const QString &)), SLOT(updateCurrentItem()));
+        connect(q->ui_.pb_test_dns, SIGNAL(clicked()), SLOT(testDns()));
     }
 
 public slots:
@@ -155,6 +199,10 @@ public slots:
             item->setData(PassRole, QVariant(i.settings.pass));
             item->setData(AuthRole, QVariant(i.settings.useAuth));
             item->setData(UrlRole, QVariant(i.settings.url));
+            item->setData(DnsModeRole, i.settings.dnsMode);
+            item->setData(DohUrlRole, i.settings.dohUrl);
+            item->setData(DnsHostRole, i.settings.dnsHost);
+            item->setData(DnsPortRole, i.settings.dnsPort);
 
             if (!firstItem) {
                 firstItem = item;
@@ -191,6 +239,10 @@ public slots:
             pi.settings.pass    = item->data(PassRole).toString();
             pi.settings.useAuth = item->data(AuthRole).toBool();
             pi.settings.url     = item->data(UrlRole).toString();
+            pi.settings.dnsMode = item->data(DnsModeRole).toString();
+            pi.settings.dohUrl  = item->data(DohUrlRole).toString();
+            pi.settings.dnsHost = item->data(DnsHostRole).toString();
+            pi.settings.dnsPort = item->data(DnsPortRole).toInt();
             list << pi;
         }
     }
@@ -209,7 +261,8 @@ public slots:
 
         QList<QWidget *> editors = QList<QWidget *>()
             << q->ui_.cb_type << q->ui_.le_host << q->ui_.le_port << q->ui_.le_user << q->ui_.le_pass << q->ui_.le_url
-            << q->ui_.gr_auth;
+            << q->ui_.gr_auth << q->ui_.gr_dns << q->ui_.cb_dns_mode << q->ui_.le_doh_url
+            << q->ui_.le_dns_host << q->ui_.le_dns_port << q->ui_.pb_test_dns;
         for (QWidget *w : std::as_const(editors)) {
             w->blockSignals(true);
             w->setEnabled(bool(current));
@@ -227,6 +280,11 @@ public slots:
             q->ui_.le_user->setText(current->data(UserRole).toString());
             q->ui_.le_pass->setText(current->data(PassRole).toString());
             q->ui_.le_url->setText(current->data(UrlRole).toString());
+            int mode = q->ui_.cb_dns_mode->findData(current->data(DnsModeRole).toString());
+            q->ui_.cb_dns_mode->setCurrentIndex(mode < 0 ? 0 : mode);
+            q->ui_.le_doh_url->setText(current->data(DohUrlRole).toString());
+            q->ui_.le_dns_host->setText(current->data(DnsHostRole).toString());
+            q->ui_.le_dns_port->setText(current->data(DnsPortRole).toString());
             q->ui_.gr_auth->setChecked(true); // make sure gr_auth disables its children if AuthRole is false
             q->ui_.gr_auth->setChecked(current->data(AuthRole).toBool());
         }
@@ -252,8 +310,80 @@ public slots:
         item->setData(PassRole, q->ui_.le_pass->text());
         item->setData(UrlRole, q->ui_.le_url->text());
         item->setData(AuthRole, q->ui_.gr_auth->isChecked());
+        const QString dnsMode = q->ui_.cb_dns_mode->currentData().toString();
+        item->setData(DnsModeRole, dnsMode);
+        item->setData(DohUrlRole, q->ui_.le_doh_url->text());
+        item->setData(DnsHostRole, q->ui_.le_dns_host->text());
+        item->setData(DnsPortRole, q->ui_.le_dns_port->text().toInt());
+
+        const bool supportsDns = type == QLatin1String("socks") || type == QLatin1String("http");
+        q->ui_.gr_dns->setVisible(supportsDns);
+        q->ui_.lb_doh_url->setVisible(dnsMode == QLatin1String("doh"));
+        q->ui_.le_doh_url->setVisible(dnsMode == QLatin1String("doh"));
+        q->ui_.lb_dns_host->setVisible(dnsMode == QLatin1String("tcp"));
+        q->ui_.le_dns_host->setVisible(dnsMode == QLatin1String("tcp"));
+        q->ui_.lb_dns_port->setVisible(dnsMode == QLatin1String("tcp"));
+        q->ui_.le_dns_port->setVisible(dnsMode == QLatin1String("tcp"));
+        q->ui_.pb_test_dns->setEnabled(supportsDns);
 
         q->ui_.le_url->setEnabled(type == "poll");
+    }
+
+    void testDns()
+    {
+        QListWidgetItem *item = q->ui_.lbx_proxy->currentItem();
+        if (!item)
+            return;
+
+        bool ok = false;
+        QString domain = QInputDialog::getText(
+            q, tr("Test proxy DNS"), tr("XMPP domain to query SRV records for:"),
+            QLineEdit::Normal, QStringLiteral("spectrum.im"), &ok).trimmed();
+        if (!ok || domain.isEmpty())
+            return;
+
+        const int proxyPort = q->ui_.le_port->text().toInt();
+        if (proxyPort <= 0 || proxyPort > 65535 || q->ui_.le_host->text().isEmpty()) {
+            QMessageBox::warning(q, tr("Test proxy DNS"), tr("Invalid proxy host or port."));
+            return;
+        }
+        const QString type = item->data(TypeRole).toString();
+        QNetworkProxy proxy(type == QLatin1String("socks") ? QNetworkProxy::Socks5Proxy : QNetworkProxy::HttpProxy,
+                            q->ui_.le_host->text(), quint16(proxyPort));
+        if (q->ui_.gr_auth->isChecked()) {
+            proxy.setUser(q->ui_.le_user->text());
+            proxy.setPassword(q->ui_.le_pass->text());
+        }
+
+        const QString mode = q->ui_.cb_dns_mode->currentData().toString();
+        const auto dnsMode = mode == QLatin1String("tcp") ? ProxySrvResolver::Mode::Tcp
+                           : mode == QLatin1String("doh") ? ProxySrvResolver::Mode::Doh
+                                                          : ProxySrvResolver::Mode::Local;
+        const int dnsPort = q->ui_.le_dns_port->text().toInt();
+        if (dnsMode == ProxySrvResolver::Mode::Tcp && (dnsPort <= 0 || dnsPort > 65535)) {
+            QMessageBox::warning(q, tr("Test proxy DNS"), tr("Invalid DNS server port."));
+            return;
+        }
+
+        auto *resolver = new ProxySrvResolver(q);
+        connect(resolver, &ProxySrvResolver::finished, q, [q = q, resolver]() {
+            const auto targets = resolver->targets();
+            QStringList lines;
+            for (const auto &t : targets) {
+                const QString label = t.service.isEmpty() ? tr("Fallback") : t.service;
+                lines << QStringLiteral("%1:%2 (%3)").arg(t.host).arg(t.port).arg(label);
+            }
+            QMessageBox::information(q, tr("Test proxy DNS"), lines.join(QLatin1Char('\n')));
+            resolver->deleteLater();
+        });
+        connect(resolver, &ProxySrvResolver::failed, q, [q = q, resolver](const QString &reason) {
+            QMessageBox::warning(q, tr("Test proxy DNS"), reason);
+            resolver->deleteLater();
+        });
+        resolver->start(domain, { QStringLiteral("xmpps-client"), QStringLiteral("xmpp-client") }, 5222,
+                        dnsMode, dnsMode == ProxySrvResolver::Mode::Doh ? q->ui_.le_doh_url->text()
+                                                                         : q->ui_.le_dns_host->text(),
+                        quint16(dnsPort > 0 && dnsPort <= 65535 ? dnsPort : 53), proxy);
     }
 
     void closeEditor(QWidget *editor, QAbstractItemDelegate::EndEditHint hint)
@@ -277,6 +407,10 @@ public slots:
         QListWidgetItem *item = new QListWidgetItem(tr("Unnamed"));
         addItem(item);
         q->ui_.lbx_proxy->reset(); // ensure that open editors won't get in our way
+        item->setData(DnsModeRole, QStringLiteral("doh"));
+        item->setData(DohUrlRole, QStringLiteral("https://cloudflare-dns.com/dns-query"));
+        item->setData(DnsHostRole, QStringLiteral("1.1.1.1"));
+        item->setData(DnsPortRole, 53);
         q->ui_.lbx_proxy->setCurrentItem(item);
         q->ui_.lbx_proxy->editItem(item);
     }
@@ -302,6 +436,10 @@ ProxyDlg::ProxyDlg(const ProxyItemList &list, const QString &def, QWidget *paren
     ui_.cb_type->addItem("HTTP \"Connect\"", "http");
     ui_.cb_type->addItem("SOCKS Version 5", "socks");
     ui_.cb_type->addItem("HTTP Polling", "poll");
+    ui_.cb_dns_mode->addItem(tr("Locally (system DNS)"), QStringLiteral("local"));
+    ui_.cb_dns_mode->addItem(tr("DNS-over-HTTPS (through proxy)"), QStringLiteral("doh"));
+    ui_.cb_dns_mode->addItem(tr("DNS-over-TCP (through proxy)"), QStringLiteral("tcp"));
+    ui_.cb_dns_mode->setToolTip(tr("Only SRV service discovery uses this setting. A/AAAA names in CONNECT are resolved by the proxy."));
 
     ui_.le_host->setToolTip(tr("Enter the hostname and port of your proxy server.") + "  "
                             + tr("Consult your network administrator if necessary."));

@@ -222,6 +222,17 @@ static AdvancedConnector::Proxy convert_proxy(const UserAccount &acc, const Jid 
 
         if (pi.settings.useAuth)
             p.setUserPass(pi.settings.user, pi.settings.pass);
+
+        if (pi.type == "socks" || pi.type == "http") {
+            const auto mode = pi.settings.dnsMode == QLatin1String("doh")
+                                  ? AdvancedConnector::Proxy::DnsDoh
+                              : pi.settings.dnsMode == QLatin1String("tcp")
+                                  ? AdvancedConnector::Proxy::DnsTcp
+                                  : AdvancedConnector::Proxy::DnsLocal;
+            p.setDnsResolution(mode, mode == AdvancedConnector::Proxy::DnsDoh ? pi.settings.dohUrl
+                                                                             : pi.settings.dnsHost,
+                               quint16(pi.settings.dnsPort));
+        }
     }
     return p;
 }
