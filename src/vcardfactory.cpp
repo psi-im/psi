@@ -18,6 +18,7 @@
  */
 
 #include "vcardfactory.h"
+#include "vcarddiskcache.h"
 
 #include "applicationinfo.h"
 #include "iris/xmpp_client.h"
@@ -195,33 +196,13 @@ VCard4::VCard VCardFactory::vcard(const Jid &j, Flags flags)
         return vcardDict_[j.bare()];
     }
 
-    // then try to load from cache on disk
-    QFile file(ApplicationInfo::vCardDir() + '/' + JIDUtil::encode(j.bare()).toLower() + ".xml");
-    if (!file.open(QIODevice::ReadOnly)) {
-        // REVIEW we can cache which files were really missed. or maybe set a flag for the contact
-        return {};
-    }
-
-    VCard4::VCard v4 = VCard4::VCard::fromDevice(&file);
-    if (!v4) {
-        file.seek(0);
-        QDomDocument doc;
-#if QT_VERSION < QT_VERSION_CHECK(6, 8, 0)
-        if (doc.setContent(&file, false)) {
-#else
-        if (doc.setContent(&file)) {
-#endif
-            VCard vcard = VCard::fromXml(doc.documentElement());
-            if (!vcard.isNull()) {
-                v4.fromVCardTemp(vcard);
-            }
-        }
-    }
-    if (v4) {
-        checkLimit(j.bare(), v4);
-    }
-
-    return {};
+    // Load from disk and immediately return the parsed vCard on the first
+    // successful lookup. The runtime cache retains the same eviction policy.
+    const auto fileName = ApplicationInfo::vCardDir() + '/' + JIDUtil::encode(j.bare()).toLower() + ".xml";
+    VCard4::VCard card = VCardDiskCache::read(fileName);
+    if (card)
+        checkLimit(j.bare(), card);
+    return card;
 }
 
 /**
