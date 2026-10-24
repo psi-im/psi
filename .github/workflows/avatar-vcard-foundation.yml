@@ -53,5 +53,5 @@ jobs:
       - name: Run first-hit regression
         env:
           QT_QPA_PLATFORM: offscreen
-        run: ctest --test-dir build-vcard --output-on-failure --no-tests=error -R '^(account_vcard_disk_cache|account_vcard_request_merge)
+        run: ctest --test-dir build-vcard --output-on-failure --no-tests=error -R "^(account_vcard_disk_cache|account_vcard_request_merge)$"
 
