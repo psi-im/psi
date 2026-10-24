@@ -172,13 +172,13 @@
      <item>
       <widget class="QGroupBox" name="gr_dns">
        <property name="title">
-        <string>DNS service discovery</string>
+        <string>DNS through the proxy</string>
        </property>
        <layout class="QGridLayout" name="dnsGridLayout">
         <item row="0" column="0">
          <widget class="QLabel" name="lb_dns_mode">
           <property name="text">
-           <string>Resolve SRV records:</string>
+           <string>Remote DNS:</string>
           </property>
          </widget>
         </item>

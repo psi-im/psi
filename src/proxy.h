@@ -26,6 +26,7 @@
 #include <QGroupBox>
 #include <QList>
 #include <QPointer>
+#include <QUrl>
 
 class OptionsTree;
 class ProxyItem;
@@ -43,15 +44,18 @@ public:
     int     port;
     bool    useAuth;
     QString url;
-    QString dnsMode; // local, doh, tcp
+    QString dnsMode; // off, doh or tcp: a DNS server reached through the proxy, for remote SRV lookups
     QString dohUrl;
     QString dnsHost;
-    int dnsPort;
+    int     dnsPort;
 
     void        toOptions(OptionsTree *o, QString base) const;
     void        fromOptions(OptionsTree *o, QString base);
     QDomElement toXml(QDomDocument *) const;
     bool        fromXml(const QDomElement &);
+
+    // The DNS server for XMPP::AdvancedConnector::setRemoteDns(), empty when the proxy resolves the domain
+    QUrl dnsServer() const;
 };
 
 class ProxyDlg : public QDialog {

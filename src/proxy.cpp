@@ -21,8 +21,9 @@
 
 #include "common.h"
 #include "iconwidget.h"
+#include "iris/netnames.h"
+#include "iris/remotenameprovider.h"
 #include "iris/xmpp_xmlcommon.h"
-#include "iris/proxysrvresolver.h"
 #include "psioptions.h"
 
 #include <QApplication>
@@ -30,16 +31,19 @@
 #include <QComboBox>
 #include <QDomElement>
 #include <QHBoxLayout>
+#include <QHostAddress>
 #include <QInputDialog>
-#include <QMessageBox>
-#include <QNetworkProxy>
-#include <QUrl>
 #include <QLabel>
 #include <QLayout>
 #include <QLineEdit>
 #include <QList>
+#include <QMessageBox>
+#include <QNetworkProxy>
 #include <QPointer>
 #include <QPushButton>
+#include <QUrl>
+
+#include <memory>
 
 #define PASSWORDKEY "Cae1voo:ea}fae2OCai|f1il"
 
@@ -50,8 +54,8 @@ ProxySettings::ProxySettings()
 {
     port    = 0;
     useAuth = false;
-    dnsMode = QStringLiteral("doh");
-    dohUrl = QStringLiteral("https://cloudflare-dns.com/dns-query");
+    dnsMode = QStringLiteral("off");
+    dohUrl  = QStringLiteral("https://cloudflare-dns.com/dns-query");
     dnsHost = QStringLiteral("1.1.1.1");
     dnsPort = 53;
 }
@@ -78,10 +82,11 @@ void ProxySettings::fromOptions(OptionsTree *o, QString base)
     useAuth = o->getOption(base + ".useAuth").toBool();
     user    = o->getOption(base + ".user").toString();
     pass    = decodePassword(o->getOption(base + ".pass").toString(), PASSWORDKEY);
-    // Old profiles keep local SRV lookup; newly created profiles default to DoH.
-    const QVariant mode = o->getOption(base + ".dnsMode");
-    dnsMode = mode.isValid() ? mode.toString() : QStringLiteral("local");
-    dohUrl = o->getOption(base + ".dohUrl", QStringLiteral("https://cloudflare-dns.com/dns-query")).toString();
+    // Old profiles have no DNS server; new ones start with DoH (see ProxyDlg).
+    dnsMode = o->getOption(base + ".dnsMode").toString();
+    if (dnsMode != QLatin1String("doh") && dnsMode != QLatin1String("tcp"))
+        dnsMode = QStringLiteral("off");
+    dohUrl  = o->getOption(base + ".dohUrl", QStringLiteral("https://cloudflare-dns.com/dns-query")).toString();
     dnsHost = o->getOption(base + ".dnsHost", QStringLiteral("1.1.1.1")).toString();
     dnsPort = o->getOption(base + ".dnsPort", 53).toInt();
 }
@@ -111,8 +116,8 @@ bool ProxySettings::fromXml(const QDomElement &e)
     user    = XMLHelper::subTagText(e, "user");
     pass    = XMLHelper::subTagText(e, "pass");
     dnsMode = XMLHelper::subTagText(e, "dnsMode");
-    if (dnsMode.isEmpty())
-        dnsMode = QStringLiteral("local");
+    if (dnsMode != QLatin1String("doh") && dnsMode != QLatin1String("tcp"))
+        dnsMode = QStringLiteral("off");
     dohUrl = XMLHelper::subTagText(e, "dohUrl");
     if (dohUrl.isEmpty())
         dohUrl = QStringLiteral("https://cloudflare-dns.com/dns-query");
@@ -125,6 +130,20 @@ bool ProxySettings::fromXml(const QDomElement &e)
     return true;
 }
 
+QUrl ProxySettings::dnsServer() const
+{
+    if (dnsMode == QLatin1String("doh"))
+        return QUrl(dohUrl.trimmed());
+    if (dnsMode != QLatin1String("tcp"))
+        return {};
+    QUrl url;
+    url.setScheme(QStringLiteral("tcp"));
+    url.setHost(dnsHost.trimmed());
+    if (dnsPort != 53)
+        url.setPort(dnsPort);
+    return url;
+}
+
 //----------------------------------------------------------------------------
 // ProxyDlg
 //----------------------------------------------------------------------------
@@ -132,22 +151,24 @@ class ProxyDlg::Private : public QObject {
     Q_OBJECT
 public:
     enum Data {
-        HostRole = Qt::UserRole + 1,
-        PortRole = Qt::UserRole + 2,
-        UrlRole  = Qt::UserRole + 3,
-        AuthRole = Qt::UserRole + 4,
-        UserRole = Qt::UserRole + 5,
-        PassRole = Qt::UserRole + 6,
-        IdRole   = Qt::UserRole + 7,
-        TypeRole = Qt::UserRole + 8,
+        HostRole    = Qt::UserRole + 1,
+        PortRole    = Qt::UserRole + 2,
+        UrlRole     = Qt::UserRole + 3,
+        AuthRole    = Qt::UserRole + 4,
+        UserRole    = Qt::UserRole + 5,
+        PassRole    = Qt::UserRole + 6,
+        IdRole      = Qt::UserRole + 7,
+        TypeRole    = Qt::UserRole + 8,
         DnsModeRole = Qt::UserRole + 9,
-        DohUrlRole = Qt::UserRole + 10,
+        DohUrlRole  = Qt::UserRole + 10,
         DnsHostRole = Qt::UserRole + 11,
         DnsPortRole = Qt::UserRole + 12
     };
 
     ProxyDlg     *q;
     ProxyItemList list;
+
+    QPointer<XMPP::ServiceResolver> dnsTest; // the running "Test DNS..." lookup
 
     Private(ProxyDlg *dialog) : QObject(dialog), q(dialog)
     {
@@ -261,8 +282,8 @@ public slots:
 
         QList<QWidget *> editors = QList<QWidget *>()
             << q->ui_.cb_type << q->ui_.le_host << q->ui_.le_port << q->ui_.le_user << q->ui_.le_pass << q->ui_.le_url
-            << q->ui_.gr_auth << q->ui_.gr_dns << q->ui_.cb_dns_mode << q->ui_.le_doh_url
-            << q->ui_.le_dns_host << q->ui_.le_dns_port << q->ui_.pb_test_dns;
+            << q->ui_.gr_auth << q->ui_.gr_dns << q->ui_.cb_dns_mode << q->ui_.le_doh_url << q->ui_.le_dns_host
+            << q->ui_.le_dns_port << q->ui_.pb_test_dns;
         for (QWidget *w : std::as_const(editors)) {
             w->blockSignals(true);
             w->setEnabled(bool(current));
@@ -316,7 +337,9 @@ public slots:
         item->setData(DnsHostRole, q->ui_.le_dns_host->text());
         item->setData(DnsPortRole, q->ui_.le_dns_port->text().toInt());
 
-        const bool supportsDns = type == QLatin1String("socks") || type == QLatin1String("http");
+        // Lookups through the proxy need Iris with JDNS and a SOCKS5 or HTTP CONNECT proxy.
+        const bool supportsDns = XMPP::RemoteNameProvider::isSupported()
+            && (type == QLatin1String("socks") || type == QLatin1String("http"));
         q->ui_.gr_dns->setVisible(supportsDns);
         q->ui_.lb_doh_url->setVisible(dnsMode == QLatin1String("doh"));
         q->ui_.le_doh_url->setVisible(dnsMode == QLatin1String("doh"));
@@ -324,7 +347,7 @@ public slots:
         q->ui_.le_dns_host->setVisible(dnsMode == QLatin1String("tcp"));
         q->ui_.lb_dns_port->setVisible(dnsMode == QLatin1String("tcp"));
         q->ui_.le_dns_port->setVisible(dnsMode == QLatin1String("tcp"));
-        q->ui_.pb_test_dns->setEnabled(supportsDns);
+        q->ui_.pb_test_dns->setEnabled(supportsDns && dnsMode != QLatin1String("off"));
 
         q->ui_.le_url->setEnabled(type == "poll");
     }
@@ -332,14 +355,7 @@ public slots:
     void testDns()
     {
         QListWidgetItem *item = q->ui_.lbx_proxy->currentItem();
-        if (!item)
-            return;
-
-        bool ok = false;
-        QString domain = QInputDialog::getText(
-            q, tr("Test proxy DNS"), tr("XMPP domain to query SRV records for:"),
-            QLineEdit::Normal, QStringLiteral("spectrum.im"), &ok).trimmed();
-        if (!ok || domain.isEmpty())
+        if (!item || dnsTest)
             return;
 
         const int proxyPort = q->ui_.le_port->text().toInt();
@@ -347,6 +363,24 @@ public slots:
             QMessageBox::warning(q, tr("Test proxy DNS"), tr("Invalid proxy host or port."));
             return;
         }
+        ProxySettings settings;
+        settings.dnsMode  = q->ui_.cb_dns_mode->currentData().toString();
+        settings.dohUrl   = q->ui_.le_doh_url->text();
+        settings.dnsHost  = q->ui_.le_dns_host->text();
+        settings.dnsPort  = q->ui_.le_dns_port->text().toInt();
+        const QUrl server = settings.dnsServer();
+        if (!XMPP::RemoteNameProvider::isValidServer(server)) {
+            QMessageBox::warning(q, tr("Test proxy DNS"), tr("Invalid DNS server address."));
+            return;
+        }
+
+        bool          ok     = false;
+        const QString domain = QInputDialog::getText(q, tr("Test proxy DNS"), tr("XMPP domain to look up:"),
+                                                     QLineEdit::Normal, QStringLiteral("jabber.org"), &ok)
+                                   .trimmed();
+        if (!ok || domain.isEmpty())
+            return;
+
         const QString type = item->data(TypeRole).toString();
         QNetworkProxy proxy(type == QLatin1String("socks") ? QNetworkProxy::Socks5Proxy : QNetworkProxy::HttpProxy,
                             q->ui_.le_host->text(), quint16(proxyPort));
@@ -355,35 +389,46 @@ public slots:
             proxy.setPassword(q->ui_.le_pass->text());
         }
 
-        const QString mode = q->ui_.cb_dns_mode->currentData().toString();
-        const auto dnsMode = mode == QLatin1String("tcp") ? ProxySrvResolver::Mode::Tcp
-                           : mode == QLatin1String("doh") ? ProxySrvResolver::Mode::Doh
-                                                          : ProxySrvResolver::Mode::Local;
-        const int dnsPort = q->ui_.le_dns_port->text().toInt();
-        if (dnsMode == ProxySrvResolver::Mode::Tcp && (dnsPort <= 0 || dnsPort > 65535)) {
-            QMessageBox::warning(q, tr("Test proxy DNS"), tr("Invalid DNS server port."));
-            return;
-        }
-
-        auto *resolver = new ProxySrvResolver(q);
-        connect(resolver, &ProxySrvResolver::finished, q, [q = q, resolver]() {
-            const auto targets = resolver->targets();
-            QStringList lines;
-            for (const auto &t : targets) {
-                const QString label = t.service.isEmpty() ? tr("Fallback") : t.service;
-                lines << QStringLiteral("%1:%2 (%3)").arg(t.host).arg(t.port).arg(label);
+        // The lookups an XMPP connection through this proxy makes: SRV records,
+        // the addresses of their targets, then the domain itself.
+        auto provider = new XMPP::RemoteNameProvider(server, proxy, this);
+        dnsTest       = new XMPP::ServiceResolver(this);
+        dnsTest->setNameProvider(provider);
+        dnsTest->setProtocol(XMPP::ServiceResolver::IPv4_IPv6);
+        auto found  = std::make_shared<QStringList>();
+        auto finish = [this, provider, found]() {
+            const QString reason = provider->errorString();
+            dnsTest->stop();
+            dnsTest->disconnect(this);
+            dnsTest->deleteLater();
+            provider->deleteLater();
+            if (found->isEmpty()) {
+                QMessageBox::warning(q, tr("Test proxy DNS"),
+                                     reason.isEmpty() ? tr("No XMPP server was found.") : reason);
+            } else {
+                QMessageBox::information(q, tr("Test proxy DNS"), found->join(QLatin1Char('\n')));
             }
-            QMessageBox::information(q, tr("Test proxy DNS"), lines.join(QLatin1Char('\n')));
-            resolver->deleteLater();
-        });
-        connect(resolver, &ProxySrvResolver::failed, q, [q = q, resolver](const QString &reason) {
-            QMessageBox::warning(q, tr("Test proxy DNS"), reason);
-            resolver->deleteLater();
-        });
-        resolver->start(domain, { QStringLiteral("xmpps-client"), QStringLiteral("xmpp-client") }, 5222,
-                        dnsMode, dnsMode == ProxySrvResolver::Mode::Doh ? q->ui_.le_doh_url->text()
-                                                                         : q->ui_.le_dns_host->text(),
-                        quint16(dnsPort > 0 && dnsPort <= 65535 ? dnsPort : 53), proxy);
+        };
+        connect(dnsTest, &XMPP::ServiceResolver::resultReady, this,
+                [this, found, finish](const QHostAddress &address, quint16 port, const QString &host,
+                                      const QString &service) {
+                    const QString endpoint = address.protocol() == QAbstractSocket::IPv6Protocol
+                        ? QStringLiteral("[%1]:%2").arg(address.toString()).arg(port)
+                        : QStringLiteral("%1:%2").arg(address.toString()).arg(port);
+                    *found << QStringLiteral("%1: %2 (%3)")
+                                  .arg(service.isEmpty() ? tr("no SRV record") : service, host, endpoint);
+                    if (found->size() >= 20) {
+                        finish();
+                        return;
+                    }
+                    // the next address, once this signal has returned
+                    QMetaObject::invokeMethod(
+                        dnsTest, [resolver = dnsTest]() { resolver->tryNext(); }, Qt::QueuedConnection);
+                });
+        // NoHostLeft once every address was listed
+        connect(dnsTest, &XMPP::ServiceResolver::error, this, finish);
+        dnsTest->start({ QStringLiteral("xmpps-client"), QStringLiteral("xmpp-client") }, QStringLiteral("tcp"), domain,
+                       5222);
     }
 
     void closeEditor(QWidget *editor, QAbstractItemDelegate::EndEditHint hint)
@@ -407,7 +452,8 @@ public slots:
         QListWidgetItem *item = new QListWidgetItem(tr("Unnamed"));
         addItem(item);
         q->ui_.lbx_proxy->reset(); // ensure that open editors won't get in our way
-        item->setData(DnsModeRole, QStringLiteral("doh"));
+        item->setData(DnsModeRole,
+                      XMPP::RemoteNameProvider::isSupported() ? QStringLiteral("doh") : QStringLiteral("off"));
         item->setData(DohUrlRole, QStringLiteral("https://cloudflare-dns.com/dns-query"));
         item->setData(DnsHostRole, QStringLiteral("1.1.1.1"));
         item->setData(DnsPortRole, 53);
@@ -436,10 +482,12 @@ ProxyDlg::ProxyDlg(const ProxyItemList &list, const QString &def, QWidget *paren
     ui_.cb_type->addItem("HTTP \"Connect\"", "http");
     ui_.cb_type->addItem("SOCKS Version 5", "socks");
     ui_.cb_type->addItem("HTTP Polling", "poll");
-    ui_.cb_dns_mode->addItem(tr("Locally (system DNS)"), QStringLiteral("local"));
-    ui_.cb_dns_mode->addItem(tr("DNS-over-HTTPS (through proxy)"), QStringLiteral("doh"));
-    ui_.cb_dns_mode->addItem(tr("DNS-over-TCP (through proxy)"), QStringLiteral("tcp"));
-    ui_.cb_dns_mode->setToolTip(tr("Only SRV service discovery uses this setting. A/AAAA names in CONNECT are resolved by the proxy."));
+    ui_.cb_dns_mode->addItem(tr("None"), QStringLiteral("off"));
+    ui_.cb_dns_mode->addItem(tr("DNS over HTTPS"), QStringLiteral("doh"));
+    ui_.cb_dns_mode->addItem(tr("DNS over TCP"), QStringLiteral("tcp"));
+    ui_.cb_dns_mode->setToolTip(tr("A DNS server reached through this proxy. Accounts that use the proxy can look up "
+                                   "their server with it (remote SRV lookup), so that no DNS query leaves this "
+                                   "computer."));
 
     ui_.le_host->setToolTip(tr("Enter the hostname and port of your proxy server.") + "  "
                             + tr("Consult your network administrator if necessary."));

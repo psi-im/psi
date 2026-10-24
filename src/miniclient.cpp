@@ -69,7 +69,7 @@ void MiniClient::reset()
 }
 
 void MiniClient::connectToServer(const Jid &jid, bool direct_tls, bool forcessl, const QString &_host, int _port,
-                                 QString proxy, QString *_pass)
+                                 QString proxy, QString *_pass, bool remoteSrvLookup)
 {
     j = jid;
 
@@ -84,6 +84,7 @@ void MiniClient::connectToServer(const Jid &jid, bool direct_tls, bool forcessl,
     }
 
     AdvancedConnector::Proxy p;
+    QUrl                     remoteDns;
     if (!proxy.isEmpty()) {
         const ProxyItem &pi = ProxyManager::instance()->getItem(proxy);
         if (pi.type == "http") // HTTP Connect
@@ -110,16 +111,8 @@ void MiniClient::connectToServer(const Jid &jid, bool direct_tls, bool forcessl,
             p.setUserPass(pi.settings.user, pi.settings.pass);
         }
 
-        if (pi.type == "socks" || pi.type == "http") {
-            const auto mode = pi.settings.dnsMode == QLatin1String("doh")
-                                  ? AdvancedConnector::Proxy::DnsDoh
-                              : pi.settings.dnsMode == QLatin1String("tcp")
-                                  ? AdvancedConnector::Proxy::DnsTcp
-                                  : AdvancedConnector::Proxy::DnsLocal;
-            p.setDnsResolution(mode, mode == AdvancedConnector::Proxy::DnsDoh ? pi.settings.dohUrl
-                                                                             : pi.settings.dnsHost,
-                               quint16(pi.settings.dnsPort));
-        }
+        if (remoteSrvLookup)
+            remoteDns = pi.settings.dnsServer();
     }
 
     conn = new AdvancedConnector;
@@ -132,6 +125,7 @@ void MiniClient::connectToServer(const Jid &jid, bool direct_tls, bool forcessl,
     }
 
     conn->setProxy(p);
+    conn->setRemoteDns(remoteDns);
     if (useHost) {
         conn->setOptHostPort(host, quint16(port));
         conn->setOptSSL(direct_tls);

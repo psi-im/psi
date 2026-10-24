@@ -58,6 +58,7 @@ public:
     int     priority;
     bool opt_enabled, opt_pass, opt_host, opt_auto, opt_keepAlive, opt_log, opt_connectAfterSleep, opt_autoSameStatus,
         opt_reconn, opt_ignoreSSLWarnings, opt_useProxyForUpload, opt_compress, opt_sm;
+    bool opt_remoteSrvLookup; // look up the server with the DNS server of the proxy, when it has one
 
     bool                               req_mutual_auth;
     bool                               opt_automatic_resource, priority_dep_on_status, ignore_global_actions;

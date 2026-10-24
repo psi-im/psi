@@ -84,6 +84,7 @@ void UserAccount::reset()
     opt_sm                    = true;
     allow_plain               = XMPP::ClientStream::AllowPlainOverTLS;
     opt_useProxyForUpload     = true;
+    opt_remoteSrvLookup       = true;
     opt_compress              = true;
     opt_log                   = true;
     opt_reconn                = true;
@@ -135,6 +136,7 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
     opt_keepAlive          = o->getOption(base + ".keep-alive").toBool();
     opt_sm                 = o->getOption(base + ".enable-sm", true).toBool();
     opt_useProxyForUpload  = o->getOption(base + ".use-proxy-for-upload", true).toBool();
+    opt_remoteSrvLookup    = o->getOption(base + ".remote-srv-lookup", true).toBool();
     opt_compress           = o->getOption(base + ".compress").toBool();
     req_mutual_auth        = o->getOption(base + ".require-mutual-auth").toBool();
     opt_automatic_resource = o->getOption(base + ".automatic-resource").toBool();
@@ -302,6 +304,7 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
     o->setOption(base + ".keep-alive", opt_keepAlive);
     o->setOption(base + ".enable-sm", opt_sm);
     o->setOption(base + ".use-proxy-for-upload", opt_useProxyForUpload);
+    o->setOption(base + ".remote-srv-lookup", opt_remoteSrvLookup);
     o->setOption(base + ".compress", opt_compress);
     o->setOption(base + ".require-mutual-auth", req_mutual_auth);
     o->setOption(base + ".automatic-resource", opt_automatic_resource);
