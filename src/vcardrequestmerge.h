@@ -15,6 +15,9 @@ inline void supplement(VCard4::VCard &modern, const VCard4::VCard &legacy)
         modern = legacy;
         return;
     }
+    // Iris vCard4 uses explicitly shared data: its setters do not detach.
+    // Never mutate an unrelated cached copy when supplementing a card.
+    modern.detach();
     if (modern.fullName().isEmpty()) modern.setFullName(legacy.fullName());
     if (modern.names().data.isEmpty()) modern.setNames(legacy.names());
     if (modern.nickName().isEmpty()) modern.setNickName(legacy.nickName());
@@ -44,6 +47,8 @@ inline bool applyLegacyPhoto(VCard4::VCard &cached, const VCard4::VCard &legacy)
     const auto photo = legacy.photo();
     if (photo.isEmpty())
         return false;
+    if (cached)
+        cached.detach();
     cached.setPhoto(photo);
     return true;
 }
