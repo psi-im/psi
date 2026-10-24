@@ -3,6 +3,7 @@
 These rules apply to automated/AI-assisted changes in this repository.
 
 - Treat `master` as release-quality. Do not merge into `master` without an explicit instruction to merge.
+- Write all repository documentation in **English**, including Markdown under `docs/`, READMEs, design plans, audits, and agent instructions. Translate non-English source material before committing it, including text supplied by users or other models; preserve technical meaning, examples, links, tables, figures, and benchmark results. Do not commit an untranslated original alongside the translation. Other languages are acceptable only when required for intentional localization files or multilingual test fixtures.
 - Branches under `ai/**` are development branches. It is fine to use multiple small, reviewable commits while iterating.
 - On `ai/**`, intermediate commits may skip targeted development CI when CI evidence is not useful yet, but do not use GitHub's standard `[skip ci]` / `[ci skip]` markers. Those strings can survive into a squash commit and suppress the required CI run on `master`. Use only repository-specific skip conditions/markers that cannot disable GitHub Actions globally.
 - On ordinary (non-`ai/**`) branches, prefer preparing the complete logical change first and committing it once, unless there is a specific reason to split the history.
