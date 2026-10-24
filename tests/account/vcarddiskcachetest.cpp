@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
-#include "vcarddiskcache.h"
+#include "vcardfactory.h"
 
 #include <QFile>
 #include <QTemporaryDir>
@@ -19,12 +19,12 @@ private slots:
         original.setNickName(QStringList { QStringLiteral("Modern nickname") });
         QVERIFY(original.save(path));
 
-        const auto first = VCardDiskCache::read(path);
+        const auto first = VCardFactory::readCachedVCard(path);
         QVERIFY(first);
         QCOMPARE(first.fullName().preferred().data, QStringLiteral("Modern contact"));
         QCOMPARE(first.nickName().preferred().data.value(0), QStringLiteral("Modern nickname"));
 
-        const auto again = VCardDiskCache::read(path);
+        const auto again = VCardFactory::readCachedVCard(path);
         QVERIFY(again);
         QCOMPARE(again.fullName().preferred().data, QStringLiteral("Modern contact"));
     }
@@ -41,7 +41,7 @@ private slots:
         QCOMPARE(file.write(xml), qint64(xml.size()));
         file.close();
 
-        const auto first = VCardDiskCache::read(path);
+        const auto first = VCardFactory::readCachedVCard(path);
         QVERIFY(first);
         QCOMPARE(first.fullName().preferred().data, QStringLiteral("Legacy contact"));
         QCOMPARE(first.nickName().preferred().data.value(0), QStringLiteral("Legacy nick"));
@@ -56,7 +56,7 @@ private slots:
         original.setPhoto(XMPP::VCard4::UriValue(QStringLiteral("https://example.org/photo.png")));
         QVERIFY(original.save(path));
 
-        const auto card = VCardDiskCache::read(path);
+        const auto card = VCardFactory::readCachedVCard(path);
         QVERIFY(card);
         QVERIFY(!card.photo().isEmpty()); // A reference exists even without embedded bytes.
         QVERIFY(QByteArray(card.photo()).isEmpty());
@@ -67,14 +67,14 @@ private slots:
     {
         QTemporaryDir dir;
         QVERIFY(dir.isValid());
-        QVERIFY(!VCardDiskCache::read(dir.filePath(QStringLiteral("missing.xml"))));
+        QVERIFY(!VCardFactory::readCachedVCard(dir.filePath(QStringLiteral("missing.xml"))));
 
         const QString path = dir.filePath(QStringLiteral("invalid.xml"));
         QFile file(path);
         QVERIFY(file.open(QIODevice::WriteOnly));
         QVERIFY(file.write("<broken") > 0);
         file.close();
-        QVERIFY(!VCardDiskCache::read(path));
+        QVERIFY(!VCardFactory::readCachedVCard(path));
     }
 };
 
