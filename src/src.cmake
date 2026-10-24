@@ -274,6 +274,9 @@ list(APPEND HEADERS
     userlist.h
     varlist.h
     vcardfactory.h
+    vcarddiskcache.h
+    vcardrequestmerge.h
+    vcardrequestpolicy.h
     vcardphotodlg.h
     voicecalldlg.h
     voicecaller.h
