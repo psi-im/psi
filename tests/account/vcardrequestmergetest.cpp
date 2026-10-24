@@ -3,6 +3,7 @@
 #include "iris/xmpp_vcard.h"
 
 #include <QtTest/QtTest>
+#include <QDomDocument>
 
 class VCardRequestMergeTest final : public QObject {
     Q_OBJECT
@@ -54,7 +55,13 @@ private slots:
         cached.setNickName(QStringList { QStringLiteral("Nick") });
         cached.setPhoto(XMPP::VCard4::UriValue(QByteArray("old-photo"), QStringLiteral("image/jpeg")));
 
-        XMPP::VCard temp;
+        // XMPP::VCard's default constructor creates a null card; its setters
+        // require initialized data. Parse the same legacy XML as a real IQ.
+        QDomDocument doc;
+        const QDomElement root = doc.createElementNS(QStringLiteral("vcard-temp"), QStringLiteral("vCard"));
+        doc.appendChild(root);
+        XMPP::VCard temp = XMPP::VCard::fromXml(root);
+        QVERIFY(!temp.isNull());
         temp.setFullName(QStringLiteral("Stale old name"));
         temp.setPhoto(QByteArray("new-photo"));
         XMPP::VCard4::VCard incoming;
