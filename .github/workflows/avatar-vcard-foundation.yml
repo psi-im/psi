@@ -4,7 +4,8 @@ on:
   pull_request:
     paths:
       - 'src/vcardfactory.cpp'
-      - 'src/vcarddiskcache.h'
+      - 'src/vcardfactory_disk.cpp'
+      - 'src/vcardfactory.h'
       - 'src/src.cmake'
       - 'tests/account/vcarddiskcachetest.cpp'
       - 'tests/account/CMakeLists.txt'
