@@ -274,7 +274,6 @@ list(APPEND HEADERS
     userlist.h
     varlist.h
     vcardfactory.h
-    vcarddiskcache.h
     vcardrequestmerge.h
     vcardrequestpolicy.h
     vcardphotodlg.h
@@ -550,6 +549,7 @@ list(APPEND SOURCES
     userlist.cpp
     varlist.cpp
     vcardfactory.cpp
+    vcardfactory_disk.cpp
     vcardphotodlg.cpp
     voicecalldlg.cpp
     xdata_widget.cpp
