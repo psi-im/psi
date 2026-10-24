@@ -18,7 +18,6 @@
  */
 
 #include "vcardfactory.h"
-#include "vcarddiskcache.h"
 
 #include "applicationinfo.h"
 #include "iris/xmpp_client.h"
@@ -210,7 +209,7 @@ VCard4::VCard VCardFactory::vcard(const Jid &j, Flags flags)
     // The first successful disk lookup must return the parsed card now,
     // not only after the object has been inserted into the RAM cache.
     const auto fileName = ApplicationInfo::vCardDir() + '/' + JIDUtil::encode(j.bare()).toLower() + ".xml";
-    VCard4::VCard card = VCardDiskCache::read(fileName);
+    VCard4::VCard card = readCachedVCard(fileName);
     if (card)
         checkLimit(j.bare(), card);
     return card;
