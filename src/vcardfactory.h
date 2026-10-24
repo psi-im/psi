@@ -80,6 +80,11 @@ private:
     friend class VCardRequest;
     void saveVCard(const Jid &, const VCard4::VCard &, VCardFactory::Flags flags);
 
+    // Keep the disk parser out of headers; tests call the same production
+    // reader without needing to link all of PsiAccount and PEPManager.
+    static VCard4::VCard readCachedVCard(const QString &fileName);
+    friend class VCardDiskCacheTest;
+
     static VCardFactory         *instance_;
     const int                    dictSize_;
     QStringList                  vcardList_;
