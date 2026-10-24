@@ -3,6 +3,7 @@
 **Status:** approved design direction; implementation in stages, **do not remove the native-chat memo yet**.
 **Target:** option **C**, a unified, account-scoped `AvatarCache` with bounded negative-result memoization.
 **Source:** detailed audit supplied 2026-10-24, performed against Psi `master` at `d709963e`.
+**Audited report:** [English translation of the original Russian-language audit](avatar-cache-audit-source-2026-10-24.md), preserving its measurements and findings; the original source-language text is not stored in the repository.
 **Not a performance promise:** the existing per-window QPixmap memo (option A) is demonstrably faster in isolated lookups; option C primarily improves correctness, ownership, bounded state and consistency between consumers.
 
 ## 0. Rules and safety constraints
