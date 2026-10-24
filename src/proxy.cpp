@@ -29,7 +29,10 @@
 #include <QApplication>
 #include <QCheckBox>
 #include <QComboBox>
+#include <QDialog>
+#include <QDialogButtonBox>
 #include <QDomElement>
+#include <QFormLayout>
 #include <QHBoxLayout>
 #include <QHostAddress>
 #include <QInputDialog>
@@ -395,7 +398,14 @@ public slots:
         dnsTest       = new XMPP::ServiceResolver(this);
         dnsTest->setNameProvider(provider);
         dnsTest->setProtocol(XMPP::ServiceResolver::IPv4_IPv6);
-        auto found  = std::make_shared<QStringList>();
+        // Candidates in the order a connection tries them: SRV targets, then the domain itself.
+        struct Target {
+            QString             service; // empty for the domain itself
+            QString             host;
+            quint16             port;
+            QList<QHostAddress> addresses;
+        };
+        auto found  = std::make_shared<QList<Target>>();
         auto finish = [this, provider, found]() {
             const QString reason = provider->errorString();
             dnsTest->stop();
@@ -405,19 +415,41 @@ public slots:
             if (found->isEmpty()) {
                 QMessageBox::warning(q, tr("Test proxy DNS"),
                                      reason.isEmpty() ? tr("No XMPP server was found.") : reason);
-            } else {
-                QMessageBox::information(q, tr("Test proxy DNS"), found->join(QLatin1Char('\n')));
+                return;
             }
+            QDialog dlg(q);
+            dlg.setWindowTitle(tr("Test proxy DNS"));
+            auto form   = new QFormLayout(&dlg);
+            auto addRow = [&dlg, form](const QString &label, const QString &value) {
+                auto field = new QLabel(value, &dlg);
+                field->setTextInteractionFlags(Qt::TextSelectableByMouse);
+                form->addRow(label, field);
+            };
+            for (const Target &target : std::as_const(*found)) {
+                const QString hostPort = QStringLiteral("%1:%2").arg(target.host).arg(target.port);
+                addRow(target.service.isEmpty() ? tr("No SRV, the domain:") : tr("SRV %1:").arg(target.service),
+                       hostPort);
+                for (const QHostAddress &address : target.addresses)
+                    addRow(address.protocol() == QAbstractSocket::IPv6Protocol ? QStringLiteral("AAAA:")
+                                                                               : QStringLiteral("A:"),
+                           address.toString());
+            }
+            auto buttons = new QDialogButtonBox(QDialogButtonBox::Ok, &dlg);
+            connect(buttons, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
+            form->addRow(buttons);
+            dlg.exec();
         };
         connect(dnsTest, &XMPP::ServiceResolver::resultReady, this,
                 [this, found, finish](const QHostAddress &address, quint16 port, const QString &host,
                                       const QString &service) {
-                    const QString endpoint = address.protocol() == QAbstractSocket::IPv6Protocol
-                        ? QStringLiteral("[%1]:%2").arg(address.toString()).arg(port)
-                        : QStringLiteral("%1:%2").arg(address.toString()).arg(port);
-                    *found << QStringLiteral("%1: %2 (%3)")
-                                  .arg(service.isEmpty() ? tr("no SRV record") : service, host, endpoint);
-                    if (found->size() >= 20) {
+                    if (found->isEmpty() || found->last().host != host || found->last().port != port
+                        || found->last().service != service)
+                        found->append({ service, host, port, {} });
+                    found->last().addresses << address;
+                    int count = 0;
+                    for (const Target &target : std::as_const(*found))
+                        count += target.addresses.size();
+                    if (count >= 20) {
                         finish();
                         return;
                     }
