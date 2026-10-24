@@ -53,7 +53,7 @@ if(ACCOUNT_IRIS_TARGET)
     endif()
     # Disk-cache reader uses real Iris modern and legacy vCard parsers.
     find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Xml)
-    add_executable(account_vcard_disk_cache_test vcarddiskcachetest.cpp)
+    add_executable(account_vcard_disk_cache_test vcarddiskcachetest.cpp ../../src/vcardfactory_disk.cpp)
     set_target_properties(account_vcard_disk_cache_test PROPERTIES AUTOMOC ON CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
     target_include_directories(account_vcard_disk_cache_test PRIVATE ../../src)
     target_link_libraries(account_vcard_disk_cache_test PRIVATE ${ACCOUNT_IRIS_TARGET}
