@@ -43,6 +43,21 @@ if(ACCOUNT_IRIS_TARGET)
     if(TARGET iris AND TARGET irisnet)
         set(ACCOUNT_IRIS_STATIC_CYCLE $<TARGET_FILE:irisnet> $<TARGET_FILE:iris>)
     endif()
+    # Production vCard XML reader with the *real* Iris vCard4/temp parsers.
+    # Iris's public vCard4 headers require C++20 (`std::ranges`).
+    find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Xml)
+    add_executable(account_vcard_disk_cache_test vcarddiskcachetest.cpp)
+    set_target_properties(account_vcard_disk_cache_test PROPERTIES
+        AUTOMOC ON CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
+    target_include_directories(account_vcard_disk_cache_test PRIVATE ../../src)
+    target_link_libraries(account_vcard_disk_cache_test PRIVATE ${ACCOUNT_IRIS_TARGET}
+        ${ACCOUNT_IRIS_STATIC_CYCLE}
+        Qt${QT_DEFAULT_MAJOR_VERSION}::Core
+        Qt${QT_DEFAULT_MAJOR_VERSION}::Xml
+        Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+    add_test(NAME account_vcard_disk_cache COMMAND account_vcard_disk_cache_test)
+    set_tests_properties(account_vcard_disk_cache PROPERTIES TIMEOUT 15)
+
     target_link_libraries(account_native_chat_avatars_test PRIVATE ${ACCOUNT_IRIS_TARGET}
         ${ACCOUNT_IRIS_STATIC_CYCLE} Qt${QT_DEFAULT_MAJOR_VERSION}::Gui Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
     add_test(NAME account_native_chat_avatars COMMAND account_native_chat_avatars_test)
