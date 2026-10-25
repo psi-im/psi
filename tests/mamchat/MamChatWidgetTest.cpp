@@ -69,6 +69,13 @@ MessageView message(const QString &id, const QString &body, int seconds = 0, boo
 class MamChatWidgetTest final : public QObject {
     Q_OBJECT
 private slots:
+    void chatTimelineHasNoFrame()
+    {
+        MamChatWidget chat;
+        QCOMPARE(chat.frameShape(), QFrame::NoFrame);
+        QCOMPARE(chat.frameWidth(), 0);
+    }
+
     void nativeMessageMenuCopiesQuotesSelectsAndForwards()
     {
         MamChatWidget chat;
