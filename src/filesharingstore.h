@@ -23,6 +23,11 @@ public:
     bool                  remember(const QString &account, const XMPP::Reference &, const XMPP::Jid &peer,
                                    const QString &trustedLocalPath = {});
     std::optional<Record> find(const QString &account, const XMPP::Hash &hash) const;
+    // An OOB address identity is NOT a content checksum. Keep its lookup in
+    // a separate table, referencing only verified downloaded content hashes.
+    std::optional<XMPP::Hash> contentForUrl(const QString &account, const XMPP::Hash &urlIdentity) const;
+    bool rememberUrlContent(const QString &account, const XMPP::Hash &urlIdentity,
+                            const XMPP::Hash &contentHash);
 
 private:
     QString      name_;
