@@ -170,7 +170,7 @@ public:
     quint64 requestedRoomEpoch() const;
     bool currentEpoch() const;
     bool wasQueuedFor(PsiAccount *account, const Jid &occupant) const;
-    void invalidate();
+    void invalidate(bool notifyPending = false);
 
     QString       errorString() const;
 
