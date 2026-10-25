@@ -83,7 +83,6 @@ public:
 
     bool        isInactive() const;
     void        reactivate();
-    void        setJid(const Jid &j);
     void        appendSysMsg(const QString &, bool alert = false);
     void        dispatchMessage(const MessageView &mv);
     QStringList mucRosterContent() const;
