@@ -229,17 +229,7 @@ void VCardFactory::saveVCard(PsiAccount *account, const Jid &j,
         ? accountCacheKey(account->id(), j, {}) : j.bare();
 
     if (flags & MucUser) {
-        auto &nick2vcard = mucVcardDict_[roomKey];
-        auto  nickIt = nick2vcard.find(j.resource());
-        if (nickIt == nick2vcard.end()) {
-            nick2vcard.insert(j.resource(), vcard);
-            auto &resQueue = lastMucVcards_[roomKey];
-            resQueue.enqueue(j.resource());
-            while (resQueue.size() > 3)
-                nick2vcard.remove(resQueue.dequeue());
-        } else {
-            *nickIt = vcard;
-        }
+        rememberMucCard(mucVcardDict_, lastMucVcards_, roomKey, j.resource(), vcard);
     } else {
         const QString cacheKey = account
             ? accountCacheKey(account->id(), j, flags) : j.bare();
