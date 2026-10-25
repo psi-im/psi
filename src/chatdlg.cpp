@@ -25,7 +25,6 @@
 #include "eventdb.h"
 #include "filesharedlg.h"
 #include "filesharingmanager.h"
-#include "filesharingnormalizer.h"
 #include "filesharingpublication.h"
 #include "iconaction.h"
 #include "iconselect.h"
@@ -986,9 +985,8 @@ void ChatDlg::appendMessage(const Message &m, bool local, qint64 historyId, cons
 
     dispatchMessage(mv);
 
-    const UrlList links = FileSharingNormalizer::remainingLinks(dm);
-    if (!links.isEmpty()) {
-        const UrlList &urls = links;
+    if (!dm.urlList().isEmpty()) {
+        const UrlList urls = dm.urlList();
         QMap<QString, QString> urlsMap;
         for (const Url &u : std::as_const(urls))
             urlsMap.insert(u.url(), u.desc());
