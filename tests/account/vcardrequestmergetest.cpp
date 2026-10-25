@@ -116,6 +116,26 @@ private slots:
         QVERIFY(pa != F::sourceCardFile(dir, QStringLiteral("account-a"), peer, {}, false));
     }
 
+    void avatarOnlyRefreshCanReuseCompatibleFullCardIq()
+    {
+        using F = VCardFactory;
+        const XMPP::Jid contact(QStringLiteral("contact@example.org/mobile"));
+        const F::Flags photo = F::PhotoOnly | F::ForceVCardTemp | F::Cache;
+        const F::Flags fullMode = photo & ~(F::PhotoOnly | F::ForceVCardTemp);
+        const auto fullKey = F::requestQueueKey(QStringLiteral("alice"), 123, contact, fullMode);
+        const auto explicitFull = F::requestQueueKey(QStringLiteral("alice"), 123,
+            XMPP::Jid(QStringLiteral("contact@example.org/desktop")), {});
+        QCOMPARE(fullKey, explicitFull); // One legacy IQ, not two.
+        const auto photoOnly = F::requestQueueKey(QStringLiteral("alice"), 123, contact, photo);
+        QVERIFY(fullKey != photoOnly); // Do not silently rewrite full flags.
+        QVERIFY(fullKey != F::requestQueueKey(QStringLiteral("bob"), 123, contact, {}));
+        QVERIFY(fullKey != F::requestQueueKey(QStringLiteral("alice"), 124, contact, {}));
+
+        const F::Flags silentPhoto = photo | F::Silent;
+        const F::Flags silentFullMode = silentPhoto & ~(F::PhotoOnly | F::ForceVCardTemp);
+        QVERIFY(F::requestQueueKey(QStringLiteral("alice"), 123, contact, silentFullMode) != fullKey);
+    }
+
     void requestsNeverCoalesceAcrossAccountsOrSessions()
     {
         using F = VCardFactory;
