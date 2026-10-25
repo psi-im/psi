@@ -242,6 +242,9 @@ private:
 
 MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(parent)
 {
+    // Native chat logs should meet the splitter edge without the default
+    // QAbstractScrollArea frame, in both private and group conversations.
+    setFrameShape(QFrame::NoFrame);
     qRegisterMetaType<ChatReply>();
     qRegisterMetaType<MamHistorySource::Request>();
     theme_.layout = NativeChatTheme::Modern;
