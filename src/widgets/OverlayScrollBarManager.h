@@ -14,6 +14,7 @@
 #include <QHash>
 #include <QObject>
 
+class QApplication;
 class QAbstractScrollArea;
 class QEvent;
 class QWidget;
