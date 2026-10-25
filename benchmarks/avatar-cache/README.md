@@ -6,8 +6,9 @@ model from the old migration plan. It invokes the actual
 `iconset_`, `jidToIcons`, `FileCache`, and `VCardFactory` lookup path.
 
 For comparison, it uses a single `QHash<QString,QPixmap>` keyed by occupant
-nick, corresponding to the current `NativeChatAvatars` hot lookup. It does
-not instantiate that UI helper or include message-widget painting.
+nick, modeling the **former** per-window `NativeChatAvatars` memo that was
+removed after the centralized negative PHOTO cache was introduced. This is a
+historical baseline, not a live Psi path. No message-widget painting occurs.
 
 ## Run
 
@@ -35,7 +36,9 @@ The program exits after printing results (without starting an XMPP session).
   without any avatar.
 - Successful images are installed through the actual `setIcon()` and warmed
   through `getMucAvatar()`, so subsequent calls hit the real decoded iconset.
-- Missing entries traverse the real negative path through `VCardFactory`.
+- Missing entries warm the session-only, bounded negative PHOTO cache in the
+  real `AvatarCache`. The separate cold path through `VCardFactory` is not
+  timed, nor is disk I/O.
 - Each case performs 32 passes, repeated 7 times; reports median
   microseconds per lookup for central vs local, including JID construction
   on the central path. Setup, image decoding, and disk writes are excluded.
