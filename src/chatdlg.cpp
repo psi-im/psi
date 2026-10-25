@@ -25,6 +25,7 @@
 #include "eventdb.h"
 #include "filesharedlg.h"
 #include "filesharingmanager.h"
+#include "filesharingnormalizer.h"
 #include "filesharingpublication.h"
 #include "iconaction.h"
 #include "iconselect.h"
@@ -796,6 +797,10 @@ void ChatDlg::doneSend()
     if (auto *composer = qobject_cast<ChatEditProxy *>(chatEdit()->parentWidget()))
         composer->clearReply();
     historyState = false;
+    // A local echo can bypass MessageEvent entirely if history logging is
+    // disabled. Normalize only after aSend has delivered the original stanza.
+    auto localDisplay = m_.displayMessage();
+    FileSharingNormalizer::normalize(localDisplay);
     appendMessage(m_, true);
     disconnect(chatEdit(), SIGNAL(textChanged()), this, SLOT(setComposing()));
     chatEdit()->clear();
