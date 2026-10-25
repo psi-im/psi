@@ -6,6 +6,7 @@
 
 #include <QDomDocument>
 #include <QFile>
+#include <QMimeDatabase>
 
 // Keep cache read and vCard field merging in one translation unit. Tests use
 // these production private methods with real Iris without linking all of Psi.
@@ -85,5 +86,35 @@ bool VCardFactory::applyLegacyPhoto(XMPP::VCard4::VCard &cached, const XMPP::VCa
     if (cached)
         cached.detach();
     cached.setPhoto(photo);
+    return true;
+}
+
+// Install actual image bytes in the vCard cache. Iris's VCard4 is explicitly
+// shared and its setters do not detach, so never modify another cached copy.
+bool VCardFactory::setEmbeddedPhoto(XMPP::VCard4::VCard &card, const QByteArray &data)
+{
+    if (data.isEmpty())
+        return clearPhoto(card);
+
+    const QString mime = QMimeDatabase().mimeTypeForData(data).name();
+    if (!mime.startsWith(QLatin1String("image/")))
+        return false;
+
+    if (!card.photo().isEmpty() && QByteArray(card.photo()) == data)
+        return false;
+
+    if (card)
+        card.detach();
+    card.setPhoto(XMPP::VCard4::UriValue(data, mime));
+    return true;
+}
+
+bool VCardFactory::clearPhoto(XMPP::VCard4::VCard &card)
+{
+    if (!card || card.photo().isEmpty())
+        return false;
+    card.detach();
+    // A zero-valued UriValue would still create a PHOTO property.
+    card.setPhoto(XMPP::VCard4::PAdvUris {});
     return true;
 }
