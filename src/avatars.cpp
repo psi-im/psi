@@ -581,8 +581,7 @@ private:
         iconset_.addToFactory(); // the factory will own the iconset
         updateJids();
 
-        connect(VCardFactory::instance(), &VCardFactory::vcardChanged, this,
-                [this](const Jid &j, VCardFactory::Flags flags) {
+        const auto applyVCardPhoto = [this](const Jid &j, VCardFactory::Flags flags) {
                     QByteArray ba;
                     QString    fullJid;
                     auto       vcard = VCardFactory::instance()->vcard(j, flags);
@@ -614,7 +613,11 @@ private:
                         iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(fullJid));
                         emit avatarChanged(j);
                     }
-                });
+                };
+        connect(VCardFactory::instance(), &VCardFactory::vcardChanged, this, applyVCardPhoto);
+        // setPhoto/deletePhoto use Silent during server-assisted self-avatar
+        // conversion, but changing the avatar must still invalidate its cache.
+        connect(VCardFactory::instance(), &VCardFactory::photoChanged, this, applyVCardPhoto);
     }
 
     bool areIconsEmpty(const JidIcons &icons) const { return !icons.avatar && !icons.vcard && !icons.customAvatar; }
@@ -1020,10 +1023,20 @@ void AvatarFactory::ensureVCardUpdated(const Jid &jid, const QByteArray &hash, F
     if (!(flags & MucUser)) {
         xj = jid.withResource({});
     }
+    const auto vcardFlags = flags2AvatarFlags(flags);
+    if (hash.isEmpty()) {
+        // XEP-0153 explicitly removed the PHOTO: erase its cached source
+        // before AvatarCache invalidates the image and notifies the UI.
+        // Otherwise the next getter could re-import the stale cached PHOTO.
+        VCardFactory::instance()->ensureVCardPhotoUpdated(d->pa_, xj, vcardFlags, hash);
+    }
+
     auto result = AvatarCache::instance()->ensureVCardUpdated(xj, hash, flags);
 
-    if (result == AvatarCache::NoData) {
-        VCardFactory::instance()->ensureVCardPhotoUpdated(d->pa_, xj, flags2AvatarFlags(flags), hash);
+    if (hash.isEmpty()) {
+        AvatarCache::instance()->removeHash(xj);
+    } else if (result == AvatarCache::NoData) {
+        VCardFactory::instance()->ensureVCardPhotoUpdated(d->pa_, xj, vcardFlags, hash);
     } else {
         AvatarCache::instance()->rememberHash(xj, hash);
     }
