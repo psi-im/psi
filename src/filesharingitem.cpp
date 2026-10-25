@@ -94,7 +94,7 @@ FileSharingItem::FileSharingItem(const MediaSharing &ms, const Jid &from, PsiAcc
  // never a content digest. It must not enter checksum verification or the
  // verified content cache. Only the actual downloaded bytes can create one.
 FileSharingItem::FileSharingItem(const QUrl &url, const XMPP::Hash &identity, PsiAccount *acc,
-                                 FileSharingManager *manager) :
+                                 FileSharingManager *manager, const QString &description) :
     QObject(manager), _urlOnly(true), _acc(acc), _manager(manager), _fileType(FileType::RemoteFile)
 {
     _sums.append(identity);
@@ -103,6 +103,7 @@ FileSharingItem::FileSharingItem(const QUrl &url, const XMPP::Hash &identity, Ps
     if (_fileName.isEmpty())
         _fileName = QStringLiteral("download");
     _urlDisplayName = _fileName;
+    _description = description;
     _mimeType = QMimeDatabase().mimeTypeForFile(_fileName, QMimeDatabase::MatchExtension).name();
 }
 
