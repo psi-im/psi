@@ -25,6 +25,7 @@
  */
 
 #include "avatars.h"
+#include "avatarblobfetchpolicy.h"
 
 #include "applicationinfo.h"
 #include "filecache.h"
@@ -33,6 +34,7 @@
 #include "iris/xmpp_client.h"
 #include "iris/xmpp_hash.h"
 #include "iris/xmpp_pubsubitem.h"
+#include "iris/xmpp_pubsubretraction.h"
 #include "iris/xmpp_resource.h"
 #include "iris/xmpp_tasks.h"
 #include "iris/xmpp_vcard4.h"
@@ -45,6 +47,7 @@
 #include <QBuffer>
 #include <QDateTime>
 #include <QDir>
+#include <QElapsedTimer>
 #include <QDomElement>
 #include <QFile>
 #include <QFileInfo>
@@ -166,31 +169,42 @@ public:
 
     void itemPublished(PsiAccount *pa, const Jid &jid, const QString &n, const PubSubItem &item)
     {
-        QString               jidFull = jid.full(); // it's always bare
+        QString               jidFull = jid.bare();
+        const QString         accountId = pa->id();
         AvatarCache::OpResult result  = AvatarCache::Changed;
 
         if (n == PEP_AVATAR_DATA_NS) {
             if (item.payload().tagName() == PEP_AVATAR_DATA_TN) {
                 auto hash = QByteArray::fromHex(item.id().toLatin1());
-                if (hash.size() < 20)
-                    return; // doesn't look like sha1 hash. just ignore it
-                            // try append user first. since data may be unexpected and we want to save some cpu cycles.
+                // A late response is not allowed to restore a previous image.
+                if (hash.size() != 20 || !blobFetches_.expects(accountId, jidFull, hash))
+                    return;
+                // Try the existing content-hash cache before decoding the payload.
 #ifdef AVATAR_EDBUG
                 qDebug() << "append user " << jidFull << AvatarCache::AvatarType;
 #endif
                 result = appendUser(hash, AvatarCache::AvatarType, jidFull);
                 if (result == AvatarCache::NoData) {
                     QByteArray ba = QByteArray::fromBase64(item.payload().text().toLatin1());
-                    if (!ba.isEmpty()) {
+                    // XEP-0084 item IDs identify the raw blob, not its
+                    // base64 text. Reject mismatches before caching bytes.
+                    if (!ba.isEmpty()
+                        && QCryptographicHash::hash(ba, QCryptographicHash::Sha1) == hash)
                         result = setIcon(AvatarCache::AvatarType, jidFull, ba, hash);
-                    }
                 }
+                // Any invalid/absent blob enters a retry cooldown. The
+                // cooldown never itself starts an IQ or an avatar refresh.
+                blobFetches_.finish(accountId, jidFull, hash, result != NoData,
+                                   blobClock_.elapsed());
             } else {
                 qWarning("avatars.cpp: Unexpected item payload");
             }
         } else if (n == PEP_AVATAR_METADATA_NS && item.payload().tagName() == QLatin1String(PEP_AVATAR_METADATA_TN)) {
             auto info = item.payload().firstChildElement(QLatin1String("info"));
             if (info.isNull()) {
+                // Empty metadata announces no PEP avatar. Invalidate the
+                // desired hash first, so a pending blob reply is discarded.
+                blobFetches_.announce(accountId, jidFull, {}, item.id());
 #ifdef AVATAR_EDBUG
                 qDebug() << "removeIcon AvatarType " << jidFull << AvatarCache::AvatarType;
 #endif
@@ -228,10 +242,21 @@ public:
 #ifdef AVATAR_EDBUG
                     qDebug() << "appendUser AvatarType " << jidFull;
 #endif
-                    // found in-band png (by xep84 hash is for png) avatar. So we can make request
+                    // Metadata is small. Content bytes are shared by SHA-1
+                    // in FileCache; fetch them only on a genuine cache miss.
+                    blobFetches_.announce(accountId, jidFull, hash, item.id());
                     result = appendUser(hash, AvatarCache::AvatarType, jidFull);
                     if (result == AvatarCache::NoData) {
-                        pa->pepManager()->get(jid, PEP_AVATAR_DATA_NS, item.id());
+                        if (blobFetches_.beginFetch(accountId, jidFull, hash, blobClock_.elapsed())) {
+                            auto *task = pa->pepManager()->get(jid, PEP_AVATAR_DATA_NS, item.id());
+                            // PEPManager dispatches a valid result through
+                            // itemPublished() before the task's later listeners.
+                            // If no validated blob arrived, retain a retryable
+                            // error, not a permanent "no avatar" state.
+                            connect(task, &Task::finished, this, [this, accountId, jidFull, hash]() {
+                                blobFetches_.finish(accountId, jidFull, hash, false, blobClock_.elapsed());
+                            });
+                        }
                         return;
                     }
                     break;
@@ -247,6 +272,28 @@ public:
             emit avatarChanged(jidFull);
         }
     }
+
+    void itemRetracted(PsiAccount *pa, const Jid &jid, const QString &node, const QString &itemId)
+    {
+        const QString bare = jid.bare();
+        bool activeRetracted = false;
+        if (node == QLatin1String(PEP_AVATAR_METADATA_NS)) {
+            activeRetracted = blobFetches_.retractMetadata(pa->id(), bare, itemId);
+        } else if (node == QLatin1String(PEP_AVATAR_DATA_NS)) {
+            activeRetracted = blobFetches_.retractData(pa->id(), bare,
+                                                     QByteArray::fromHex(itemId.toLatin1()));
+        }
+        if (!activeRetracted)
+            return; // Retraction of an old item must not remove the new avatar.
+
+        // The remaining vcard/custom sources stay intact and may become
+        // visible as soon as the PEP source is gone.
+        removeIcon(AvatarType, bare);
+        iconset_.removeIcon(QStringLiteral("avatars/%1").arg(bare));
+        emit avatarChanged(bare);
+    }
+
+    void forgetAccount(const QString &accountId) { blobFetches_.forgetAccount(accountId); }
 
     OpResult ensureVCardUpdated(const Jid &jid, const QByteArray &hash, AvatarFactory::Flags flags)
     {
@@ -579,6 +626,7 @@ private:
         // Register iconset
         iconset_.setName(QLatin1String("Avatars"));
         iconset_.addToFactory(); // the factory will own the iconset
+        blobClock_.start();
         updateJids();
 
         const auto applyVCardPhoto = [this](const Jid &j, VCardFactory::Flags flags) {
@@ -862,6 +910,8 @@ private:
     QHash<QString, JidIcons> jidToIcons;
     QHash<Jid, QByteArray>   jid2hash;
     Iconset                  iconset_;
+    AvatarBlobFetchPolicy    blobFetches_;
+    QElapsedTimer            blobClock_;
 
     static AvatarCache *_instance;
 };
@@ -899,10 +949,18 @@ AvatarFactory::AvatarFactory(PsiAccount *pa) : d(new Private)
             [this](const Jid &jid, const QString &n, const PubSubItem &item) {
                 AvatarCache::instance()->itemPublished(d->pa_, jid, n, item);
             });
+    connect(d->pa_->pepManager(), &PEPManager::itemRetracted, this,
+            [this](const Jid &jid, const QString &node, const PubSubRetraction &item) {
+                AvatarCache::instance()->itemRetracted(d->pa_, jid, node, item.id());
+            });
     connect(d->pa_->pepManager(), &PEPManager::publish_success, this, &AvatarFactory::publish_success);
 }
 
-AvatarFactory::~AvatarFactory() { delete d; }
+AvatarFactory::~AvatarFactory()
+{
+    AvatarCache::instance()->forgetAccount(d->pa_->id());
+    delete d;
+}
 
 PsiAccount *AvatarFactory::account() const { return d->pa_; }
 
