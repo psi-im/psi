@@ -87,7 +87,7 @@ private slots:
             HistoryMessageExtras::restore(query.value(0).toString(), restored);
         }
         QSqlDatabase::removeDatabase("history-test");
-        QCOMPARE(restored.references().size(), 1);
+        QCOMPARE(restored.references().size(), 2);
         const auto reference = restored.references().first();
         QCOMPARE(reference.mediaSharing().file.size().value(), 9007199254740993ULL);
         QCOMPARE(reference.begin(), 3);
@@ -98,7 +98,9 @@ private slots:
         QCOMPARE(restored.to().full(), original.to().full());
         QCOMPARE(restored.id(), original.id());
         QCOMPARE(restored.body(), QString("unchanged body"));
-        QCOMPARE(restored.urlList().size(), 1);
+        QVERIFY(restored.urlList().isEmpty());
+        QCOMPARE(restored.references().last().uri(), QString("https://example.org/movie"));
+        QCOMPARE(restored.references().last().anchor(), QString("movie"));
         QVERIFY(restored.spooled());
     }
     void edbMigrationPreservesSimsAndLegacyOob()
@@ -148,11 +150,13 @@ private slots:
             QCOMPARE(restored.id(), original.id());
             QCOMPARE(restored.from().full(), original.from().full());
             QCOMPARE(restored.to().full(), original.to().full());
-            QCOMPARE(restored.references().size(), 1);
+            QCOMPARE(restored.references().size(), 2);
             QCOMPARE(restored.references().first().mediaSharing().file.size().value(), quint64(9007199254740993ULL));
             QCOMPARE(restored.references().first().mediaSharing().sources,
                      original.references().first().mediaSharing().sources);
-            QCOMPARE(restored.urlList().size(), 1);
+            QVERIFY(restored.urlList().isEmpty());
+            QCOMPARE(restored.references().last().uri(), QString("https://example.org/movie"));
+            QCOMPARE(restored.references().last().anchor(), QString("movie"));
             QVERIFY(query.next());
             QCOMPARE(query.value(0).toInt(), 43);
             QCOMPARE(query.value(2).toString(), legacy);
@@ -163,6 +167,56 @@ private slots:
         }
         QSqlDatabase::removeDatabase(name);
     }
+    void newHistoryNormalizesOobWithoutModifyingIncomingMessage()
+    {
+        Message incoming;
+        const QString url = QStringLiteral("https://example.org/photo.png?size=2");
+        incoming.setBody(QStringLiteral("View: ") + url);
+        incoming.urlAdd(Url(url + QStringLiteral("#fragment"), QStringLiteral("Original image")));
+        incoming.urlAdd(Url(url, QStringLiteral("Duplicate")));
+        incoming.urlAdd(Url(QStringLiteral("ftp://example.org/archive"), QStringLiteral("FTP description")));
+        const QString encoded = HistoryMessageExtras::encode(incoming);
+        QCOMPARE(incoming.urlList().size(), 3);
+        QVERIFY(incoming.references().isEmpty());
+
+        Message restored;
+        restored.setBody(incoming.body());
+        HistoryMessageExtras::restore(encoded, restored);
+        QCOMPARE(restored.references().size(), 1);
+        QCOMPARE(restored.references().first().uri(), url);
+        QCOMPARE(restored.references().first().anchor(), QStringLiteral("Original image"));
+        QCOMPARE(restored.references().first().begin(), incoming.body().indexOf(url));
+        QCOMPARE(restored.urlList().size(), 1);
+        QCOMPARE(restored.urlList().first().url(), QStringLiteral("ftp://example.org/archive"));
+        QCOMPARE(restored.urlList().first().desc(), QStringLiteral("FTP description"));
+        // Re-encoding already normalized SQLite history never creates a second attachment.
+        const QString again = HistoryMessageExtras::encode(restored);
+        Message twice;
+        twice.setBody(restored.body());
+        HistoryMessageExtras::restore(again, twice);
+        QCOMPARE(twice.references().size(), 1);
+        QCOMPARE(twice.urlList().size(), 1);
+    }
+
+    void redundantSimsOobRetainsDescriptionInSavedReference()
+    {
+        auto reference = sample(7);
+        auto media = reference.mediaSharing();
+        media.sources = { QStringLiteral("https://example.org/image.png") };
+        reference.setMediaSharing(media);
+        reference.setAnchor(QString());
+        Message incoming;
+        incoming.setReferences({ reference });
+        incoming.urlAdd(Url(QStringLiteral("https://example.org/image.png#fragment"),
+                            QStringLiteral("A useful description")));
+        Message restored;
+        HistoryMessageExtras::restore(HistoryMessageExtras::encode(incoming), restored);
+        QCOMPARE(restored.references().size(), 1);
+        QCOMPARE(restored.references().first().anchor(), QStringLiteral("A useful description"));
+        QVERIFY(restored.urlList().isEmpty());
+        QCOMPARE(incoming.references().first().anchor(), QString()); // shared Message must remain untouched
+    }
+
     void plainMessageIdentity()
     {
         Message original;
