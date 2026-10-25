@@ -10,6 +10,16 @@
 
 namespace FileSharingNormalizer {
 
+XMPP::UrlList remainingLinks(const XMPP::Message &message)
+{
+    XMPP::UrlList links;
+    for (const auto &url : message.urlList()) {
+        if (!OobMediaPolicy::normalizedHttpSource(url.url()).isValid())
+            links.append(url);
+    }
+    return links;
+}
+
 PreparedMedia prepareForDisplay(const XMPP::Message &message)
 {
     PreparedMedia result { message.references(), {} };
@@ -74,8 +84,8 @@ PreparedMedia prepareForDisplay(const XMPP::Message &message)
             continue;
         }
 
-        // A display-only reference without SIMS metadata. The share backend
-        // recognizes its HTTP URL and constructs a URL-only FileSharingItem.
+        // A canonical URL-only reference. The share backend resolves it
+        // without confusing its address identity with a content checksum.
         XMPP::Reference reference(XMPP::Reference::Data, canonical);
         if (!oob.desc().isEmpty())
             reference.setAnchor(oob.desc());
