@@ -337,11 +337,11 @@ Task *VCardFactory::setVCard(PsiAccount *account, const VCard4::VCard &v, const 
     if ((flags & MucRoom) || (flags & ForceVCardTemp)) {
         // || !account->client()->serverInfoManager()->hasPersistentStorage()) {
         JT_VCard *jtVCard_ = new JT_VCard(account->client()->rootTask());
-        connect(jtVCard_, &JT_VCard::finished, this, [this, v, jtVCard_, flags]() {
-            if (jtVCard_->success()) {
-                saveVCard(jtVCard_->jid(), v, flags);
-            }
-        });
+        connect(jtVCard_, &JT_VCard::finished, this,
+                [this, account = QPointer<PsiAccount>(account), v, jtVCard_, flags]() {
+                    if (account && jtVCard_->success())
+                        saveVCard(account, jtVCard_->jid(), v, flags);
+                });
         jtVCard_->set(targetJid.isNull() ? account->jid() : targetJid, v.toVCardTemp(), !targetJid.isNull());
         jtVCard_->go(true);
         return jtVCard_;
