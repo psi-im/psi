@@ -6,7 +6,7 @@
 #include <QStringList>
 #include <QUrl>
 
-// Rendering policy only. A URL is never a checksum for the referenced bytes.
+// Message normalization policy. A URL is never a checksum for the referenced bytes.
 namespace OobMediaPolicy {
 
 inline QUrl normalizedHttpSource(const QString &source)
