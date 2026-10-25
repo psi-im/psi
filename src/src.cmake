@@ -369,6 +369,8 @@ list(APPEND SOURCES
     avatarblobfetchpolicy.cpp
     avatarepochpolicy.h
     avatarepochpolicy.cpp
+    avatarnegativememo.h
+    avatarnegativememo.cpp
     bobfilecache.cpp
     bookmarkmanagedlg.cpp
     bookmarkmanager.cpp
