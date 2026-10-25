@@ -26,6 +26,7 @@
 
 #include "avatars.h"
 #include "avatarblobinflight.h"
+#include "avatarnegativepolicy.h"
 
 #include "applicationinfo.h"
 #include "filecache.h"
@@ -47,6 +48,7 @@
 #include <QDateTime>
 #include <QDir>
 #include <QDomElement>
+#include <QElapsedTimer>
 #include <QFile>
 #include <QFileInfo>
 #include <QImageReader>
@@ -54,12 +56,8 @@
 #include <QPainterPath>
 #include <QPixmap>
 #include <QtCrypto>
-
-#ifdef PSI_AVATAR_CACHE_BENCHMARK
-#include <QElapsedTimer>
 #include <QVector>
 #include <algorithm>
-#endif
 
 // we have retine nowdays and various other huge resolutions.96px is not that big already.
 // it would be better to scale images according to monitor properties
@@ -133,11 +131,8 @@ inline QPixmap ensureSquareAvatar(const QPixmap &original)
 //  - keeps together with each icon a list of its users.
 //  - disables icon deletion if in use
 //
-// Known problems:
-//  - If we start changing nicknames in muc, items metadata will grow and never
-//    released, while this picture is still in use by someone in your mucs
-//  - MUC, if someone else enters the room with your nick w/o hash in presence,
-//    he will take your picture as well.
+// MUC occupant departure releases the old nick's avatar bindings, so the next
+// occupant does not inherit images from a previous occupant with that nick.
 //------------------------------------------------------------------------------
 class AvatarCache : public FileCache {
     Q_OBJECT
@@ -158,6 +153,10 @@ public:
         FileCacheItem *avatar          = nullptr; // pubsub or vcard avatar (64x64 or less. TODO consider retina)
         FileCacheItem *customAvatar    = nullptr; // set by you
         bool           avatarFromVCard = false;
+        // Session-only negative result for the vCard PHOTO source. A zero
+        // stamp means unknown. Monotonic access time and decayed usage heat
+        // share one 64-bit word; no extra per-chat QPixmap table is needed.
+        quint64        noVCardPhotoStamp = 0;
     };
 
     static AvatarCache *instance()
@@ -170,6 +169,21 @@ public:
 
     void rememberHash(const Jid &j, const QByteArray &hash) { jid2hash[j] = hash; }
     void removeHash(const Jid &j) { jid2hash.remove(j); }
+
+    // A MUC full JID is not a permanent identity: a different occupant can
+    // reuse room@service/nick. Discard both positive and negative state when
+    // the original occupant leaves, including decoded iconset pixmaps.
+    void forgetMucOccupant(const Jid &jid)
+    {
+        const QString fullJid = jid.full();
+        jid2hash.remove(jid);
+        blobFlights_.supersede(fullJid, {});
+        clearNegative(fullJid);
+        removeIcon(VCardType, fullJid);
+        removeIcon(AvatarType, fullJid);
+        iconset_.removeIcon(QStringLiteral("avatars/%1").arg(fullJid));
+        emit avatarChanged(jid);
+    }
 
     void itemPublished(PsiAccount *pa, const Jid &jid, const QString &n, const PubSubItem &item)
     {
@@ -409,14 +423,24 @@ public:
         }
 
         if (img.isNull()) {
+            // No vCard photo is a useful cached result too: in particular it
+            // avoids repeatedly trying to open a missing vCard file on disk.
+            // Never infer absence from a failed decode or a URI-only PHOTO.
+            if (icons.noVCardPhotoStamp) {
+                touchNegative(bareJid);
+                return {};
+            }
 #ifdef AVATAR_EDBUG
             qDebug() << "return from vcardfactory for jid " << _jid.full();
 #endif
             auto vcard = VCardFactory::instance()->vcard(_jid);
-            if (vcard.isNull() || QByteArray(vcard.photo()).isNull()) {
-                return QPixmap();
+            if (!vcard || vcard.photo().isEmpty()) {
+                markNegative(bareJid);
+                return {};
             }
             QByteArray data = vcard.photo();
+            if (data.isEmpty())
+                return {}; // URI-only PHOTO is not confirmed absence.
             if (setIcon(AvatarCache::VCardType, bareJid, data) != AvatarCache::NoData) {
                 auto item = this->icons(bareJid).avatar;
                 if (!item)
@@ -457,11 +481,18 @@ public:
         auto       icons = AvatarCache::instance()->icons(fullJid);
         QByteArray data;
         if (!icons.avatar) {
+            if (icons.noVCardPhotoStamp) {
+                touchNegative(fullJid);
+                return {};
+            }
             auto vcard = VCardFactory::instance()->mucVcard(_jid);
-            if (vcard.isNull() || QByteArray(vcard.photo()).isNull()) {
-                return QPixmap();
+            if (!vcard || vcard.photo().isEmpty()) {
+                markNegative(fullJid);
+                return {};
             }
             data = vcard.photo();
+            if (data.isEmpty())
+                return {}; // URI-only PHOTO; keep the state unknown.
             AvatarCache::instance()->setIcon(AvatarCache::VCardType, _jid.full(), data);
             icons = AvatarCache::instance()->icons(fullJid); // should return scaled copy
         }
@@ -565,6 +596,7 @@ public:
         }
 
         // so we have a new image.
+        clearNegative(jid);
         FileCacheItem *oldActiveItem = activeAvatarIcon(icons);
 
         QVariantMap md;
@@ -619,7 +651,7 @@ public:
             newActiveIcon = ensureHasAvatar(*it, jid);
         }
 
-        if (!keepEmptyIcons && areIconsEmpty(*it)) {
+        if (!keepEmptyIcons && areIconsEmpty(*it) && !it->noVCardPhotoStamp) {
             jidToIcons.erase(it);
         }
 
@@ -652,7 +684,7 @@ protected:
             setIconItem(it.value(), nullptr, itype);
 
             // if hashes for icon are empty, then it's useless.
-            if (areIconsEmpty(*it)) {
+            if (areIconsEmpty(*it) && !it->noVCardPhotoStamp) {
                 jidToIcons.erase(it);
             }
         }
@@ -660,6 +692,63 @@ protected:
     }
 
 private:
+    quint32 negativeNow() const { return quint32(negativeClock_.elapsed() / 1000); }
+
+    void clearNegative(const QString &jid)
+    {
+        auto it = jidToIcons.find(jid);
+        if (it == jidToIcons.end() || !it->noVCardPhotoStamp)
+            return;
+        it->noVCardPhotoStamp = 0;
+        --negativeCount_;
+        // Retain genuine positive FileCache bindings as before.
+        if (areIconsEmpty(*it))
+            jidToIcons.erase(it);
+    }
+
+    void touchNegative(const QString &jid)
+    {
+        auto it = jidToIcons.find(jid);
+        if (it != jidToIcons.end() && it->noVCardPhotoStamp)
+            it->noVCardPhotoStamp = AvatarNegativePolicy::touch(it->noVCardPhotoStamp, negativeNow());
+    }
+
+    void markNegative(const QString &jid)
+    {
+        auto &icons = jidToIcons[jid];
+        if (!icons.noVCardPhotoStamp)
+            ++negativeCount_;
+        icons.noVCardPhotoStamp = AvatarNegativePolicy::touch(icons.noVCardPhotoStamp, negativeNow());
+        if (negativeCount_ > AvatarNegativePolicy::MaxEntries)
+            trimNegatives();
+    }
+
+    void trimNegatives()
+    {
+        struct Candidate {
+            QString jid;
+            quint64 stamp;
+        };
+        QVector<Candidate> candidates;
+        candidates.reserve(negativeCount_);
+        for (auto it = jidToIcons.cbegin(); it != jidToIcons.cend(); ++it)
+            if (it->noVCardPhotoStamp)
+                candidates.push_back({ it.key(), it->noVCardPhotoStamp });
+        const quint32 now = negativeNow();
+        std::sort(candidates.begin(), candidates.end(), [now](const Candidate &a, const Candidate &b) {
+            return AvatarNegativePolicy::lessUseful(a.stamp, b.stamp, now);
+        });
+        // Batch eviction amortizes the scan and sort. Positive FileCache
+        // entries survive even when their negative PHOTO hint is discarded.
+        const int count = qMax(0, int(candidates.size()) - AvatarNegativePolicy::TrimToEntries);
+        for (int i = 0; i < count; ++i)
+            clearNegative(candidates.at(i).jid);
+#ifdef AVATAR_EDBUG
+        qDebug() << "AvatarCache: evicted negative PHOTO hints" << count
+                 << "remaining" << negativeCount_;
+#endif
+    }
+
     void fetchAvatarBlob(PsiAccount *account, const Jid &jid, const QString &itemId,
                          const QByteArray &hash, quint64 token)
     {
@@ -697,20 +786,22 @@ private:
         iconset_.addToFactory(); // the factory will own the iconset
         updateJids();
 
+        negativeClock_.start();
         connect(VCardFactory::instance(), &VCardFactory::vcardChanged, this,
                 [this](const Jid &j, VCardFactory::Flags flags) {
                     QByteArray ba;
                     QString    fullJid;
-                    auto       vcard = VCardFactory::instance()->vcard(j, flags);
                     if (flags & VCardFactory::MucUser) {
                         fullJid = j.full();
                     } else {
                         fullJid = j.bare();
                     }
-                    if (!vcard) {
-                        return; // wtf??
-                    }
-                    ba = vcard.photo();
+                    // Always invalidate a negative result, even when the new
+                    // vCard is empty or removed. Source changes may turn
+                    // a formerly absent PHOTO into a valid image.
+                    clearNegative(fullJid);
+                    auto vcard = VCardFactory::instance()->vcard(j, flags);
+                    ba = vcard ? QByteArray(vcard.photo()) : QByteArray();
                     OpResult result;
                     if (ba.isEmpty()) {
 #ifdef AVATAR_EDBUG
@@ -843,6 +934,8 @@ private:
             return NotChanged;
         }
 
+        // A newly resolved image supersedes the cached negative lookup.
+        clearNegative(jid);
         FileCacheItem *oldActiveIcon = activeAvatarIcon(icons);
         FileCacheItem *prevIcon      = setIconItem(icons, item, iconType);
         if (prevIcon == item) {
@@ -973,6 +1066,8 @@ private:
     }
 
     QHash<QString, JidIcons> jidToIcons;
+    QElapsedTimer            negativeClock_;
+    int                      negativeCount_ = 0;
     QHash<Jid, QByteArray>   jid2hash;
     AvatarBlobInFlight      blobFlights_;
     Iconset                  iconset_;
@@ -1213,7 +1308,10 @@ bool AvatarFactory::hasManualAvatar(const Jid &j)
 void AvatarFactory::statusUpdate(const Jid &jid, const XMPP::Status &status, Flags flags)
 {
     if (status.type() == Status::Offline) {
-        AvatarCache::instance()->removeHash((flags & MucUser) ? jid : jid.withResource({}));
+        if (flags & MucUser)
+            AvatarCache::instance()->forgetMucOccupant(jid);
+        else
+            AvatarCache::instance()->removeHash(jid.withResource({}));
     } else {
         if (status.photoHash()) { // even if it's empty. user adretises something.
             auto hash = *status.photoHash();
