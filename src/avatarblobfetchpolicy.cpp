@@ -26,6 +26,21 @@ QString AvatarBlobFetchPolicy::key(const QString &accountId, const QString &bare
     return accountId + QChar(0x1f) + bareJid;
 }
 
+QString AvatarBlobFetchPolicy::flightKey(const QString &accountId, const QByteArray &hash)
+{
+    return accountId + QChar(0x1f) + QString::fromLatin1(hash.toHex());
+}
+
+void AvatarBlobFetchPolicy::releaseFlight(const QString &accountId, const QString &bareJid,
+                                          const QByteArray &hash)
+{
+    if (hash.isEmpty())
+        return;
+    const QString flight = flightKey(accountId, hash);
+    if (inFlightByHash_.value(flight) == bareJid)
+        inFlightByHash_.remove(flight);
+}
+
 bool AvatarBlobFetchPolicy::ensureCapacity()
 {
     if (entries_.size() < capacity_)
@@ -64,8 +79,9 @@ void AvatarBlobFetchPolicy::announce(const QString &accountId, const QString &ba
     }
     Entry &entry = it.value();
     if (entry.hash != hash) {
+        releaseFlight(accountId, bareJid, entry.inFlight);
         entry.hash = hash;
-        entry.inFlight.clear(); // The old reply must not revive a new avatar.
+        entry.inFlight.clear(); // Old IQ cannot restore a superseded avatar.
         entry.waitingForSharedHash = false;
         entry.retryNotBeforeMs = 0;
     }
@@ -80,17 +96,15 @@ bool AvatarBlobFetchPolicy::beginFetch(const QString &accountId, const QString &
     if (!entry || hash.size() != 20 || entry->hash != hash
         || !entry->inFlight.isEmpty() || nowMs < entry->retryNotBeforeMs)
         return false;
-    const QString prefix = accountId + QChar(0x1f);
-    // A single downloaded blob is reusable by all contacts that advertise
-    // its SHA-1. Coalesce concurrent requests, not just repeats of one JID.
-    for (auto it = entries_.cbegin(); it != entries_.cend(); ++it) {
-        if (it.key().startsWith(prefix) && it.key() != key(accountId, bareJid)
-            && it->inFlight == hash) {
-            entry->waitingForSharedHash = true;
-            entry->touched = ++serial_;
-            return false;
-        }
+    // FileCache already deduplicates completed blobs. Only outstanding IQ
+    // requests need a second (small) index to avoid simultaneous transfers.
+    const QString flight = flightKey(accountId, hash);
+    if (inFlightByHash_.contains(flight)) {
+        entry->waitingForSharedHash = true;
+        entry->touched = ++serial_;
+        return false;
     }
+    inFlightByHash_.insert(flight, bareJid);
     entry->waitingForSharedHash = false;
     entry->inFlight = hash;
     entry->touched = ++serial_;
@@ -103,6 +117,7 @@ QStringList AvatarBlobFetchPolicy::finish(const QString &accountId, const QStrin
     Entry *entry = lookup(accountId, bareJid);
     if (!entry || entry->hash != hash || entry->inFlight != hash)
         return {}; // An obsolete reply must not revive any waiter.
+    releaseFlight(accountId, bareJid, hash);
     entry->inFlight.clear();
     entry->retryNotBeforeMs = validData ? 0 : nowMs + retryDelayMs_;
     entry->touched = ++serial_;
@@ -134,7 +149,9 @@ bool AvatarBlobFetchPolicy::retractMetadata(const QString &accountId, const QStr
     Entry *entry = lookup(accountId, bareJid);
     if (!entry || itemId.isEmpty() || entry->metadataItemId != itemId)
         return false;
+    releaseFlight(accountId, bareJid, entry->inFlight);
     entry->metadataItemId.clear();
+    releaseFlight(accountId, bareJid, entry->inFlight);
     entry->hash.clear();
     entry->inFlight.clear();
     entry->waitingForSharedHash = false;
@@ -159,12 +176,20 @@ bool AvatarBlobFetchPolicy::retractData(const QString &accountId, const QString 
 
 void AvatarBlobFetchPolicy::forgetEntity(const QString &accountId, const QString &bareJid)
 {
+    if (const Entry *entry = lookup(accountId, bareJid))
+        releaseFlight(accountId, bareJid, entry->inFlight);
     entries_.remove(key(accountId, bareJid));
 }
 
 void AvatarBlobFetchPolicy::forgetAccount(const QString &accountId)
 {
     const QString prefix = accountId + QChar(0x1f);
+    for (auto it = inFlightByHash_.begin(); it != inFlightByHash_.end();) {
+        if (it.key().startsWith(prefix))
+            it = inFlightByHash_.erase(it);
+        else
+            ++it;
+    }
     for (auto it = entries_.begin(); it != entries_.end();) {
         if (it.key().startsWith(prefix))
             it = entries_.erase(it);
