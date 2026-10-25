@@ -206,8 +206,22 @@ public:
                 }
                 // Any invalid/absent blob enters a retry cooldown. The
                 // cooldown never itself starts an IQ or an avatar refresh.
-                blobFetches_.finish(accountId, bareJid, hash, result != NoData,
-                                   blobClock_.elapsed());
+                const auto waitingContacts = blobFetches_.finish(
+                    accountId, bareJid, hash, result != NoData, blobClock_.elapsed());
+                // All of these contacts announced the exact same SHA-1 and
+                // waited for one shared IQ. FileCache now owns the validated
+                // bytes: locally bind and notify, never download them again.
+                for (const QString &waitingBareJid : waitingContacts) {
+                    const QString waitingKey = AvatarIdentity::bindingKey(
+                        accountId, waitingBareJid, false);
+                    const auto waitingResult = appendUser(hash, AvatarType, waitingKey);
+                    if (waitingResult == UserUpdateRequired) {
+                        iconset_.removeIcon(QStringLiteral("avatars/%1").arg(waitingKey));
+                        const Jid waitingJid(waitingBareJid);
+                        emit avatarChanged(waitingJid);
+                        emit avatarChangedScoped(pa, waitingJid);
+                    }
+                }
             } else {
                 qWarning("avatars.cpp: Unexpected item payload");
             }
