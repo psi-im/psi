@@ -4,10 +4,11 @@ on:
   pull_request:
     paths:
       - 'src/vcardfactory.cpp'
-      - 'src/vcardfactory_disk.cpp'
+      - 'src/vcardfactory_data.cpp'
       - 'src/vcardfactory.h'
       - 'src/src.cmake'
       - 'tests/account/vcarddiskcachetest.cpp'
+      - 'tests/account/vcardrequestmergetest.cpp'
       - 'tests/account/CMakeLists.txt'
       - '.github/workflows/avatar-vcard-foundation.yml'
   workflow_dispatch:
