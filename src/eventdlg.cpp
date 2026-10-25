@@ -70,6 +70,7 @@
 #include <QStringList>
 #include <QTextDocumentFragment>
 #include <QTimer>
+#include <QUrl>
 #include <QVBoxLayout>
 
 static const QString geometryOption = "options.ui.message.size";
