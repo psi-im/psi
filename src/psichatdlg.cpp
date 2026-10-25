@@ -32,33 +32,33 @@
 #include "avatars.h"
 #include "avcall/avcall.h"
 #include "coloropt.h"
+#include "eventdb.h"
 #include "fancylabel.h"
 #include "filesharingmanager.h"
+#include "historysync.h"
 #include "iconaction.h"
 #include "iconlabel.h"
 #include "iconselect.h"
 #include "iconwidget.h"
 #include "iris/xmpp_caps.h"
 #include "iris/xmpp_encryption.h"
+#include "iris/xmpp_forwarding.h"
+#include "iris/xmpp_mammanager.h"
 #include "iris/xmpp_tasks.h"
+#include "iris/xmpp_xmlcommon.h"
 #include "jidutil.h"
 #include "lastactivitytask.h"
 #include "messageview.h"
-#include "historysync.h"
-#include "eventdb.h"
+#include "msgmle.h"
 #include "nativechathistory.h"
 #include "nativechattheme.h"
-#include "widgets/MamChatWidget.h"
-#include "widgets/MamHistorySourcePolicy.h"
-#include "widgets/MamArchivePeerPolicy.h"
-#include "widgets/OverlayScrollBarManager.h"
-#include "iris/xmpp_mammanager.h"
-#include "iris/xmpp_forwarding.h"
-#include "iris/xmpp_xmlcommon.h"
-#include "msgmle.h"
 #include "pgputil.h"
 #include "psiaccount.h"
 #include "psiencryptioncontroller.h"
+#include "widgets/MamArchivePeerPolicy.h"
+#include "widgets/MamChatWidget.h"
+#include "widgets/MamHistorySourcePolicy.h"
+#include "widgets/OverlayScrollBarManager.h"
 #ifdef IRIS_ENABLE_OMEMO
 #include "iris/xmpp_omemo.h"
 #endif
@@ -79,11 +79,8 @@
 #include "pluginmanager.h"
 #endif
 
-#include <QClipboard>
 #include <QApplication>
-#include <QScrollBar>
-#include <QTimer>
-#include <algorithm>
+#include <QClipboard>
 #include <QCloseEvent>
 #include <QColor>
 #include <QContextMenuEvent>
@@ -98,10 +95,13 @@
 #include <QMessageBox>
 #include <QPixmap>
 #include <QResizeEvent>
+#include <QScrollBar>
 #include <QSplitter>
+#include <QTimer>
 #include <QToolBar>
 #include <QToolButton>
 #include <QVBoxLayout>
+#include <algorithm>
 
 #define MCMDCHAT "https://psi-im.org/ids/mcmd#chatmain"
 
@@ -225,8 +225,7 @@ private:
 };
 
 PsiChatDlg::PsiChatDlg(const Jid &jid, PsiAccount *pa, TabManager *tabManager) :
-    ChatDlg(jid, pa, tabManager), actions_(new ActionList("", 0, false)),
-    mCmdManager_(&mCmdSite_),
+    ChatDlg(jid, pa, tabManager), actions_(new ActionList("", 0, false)), mCmdManager_(&mCmdSite_),
     tabCompletion(&mCmdManager_)
 {
     encryptionMenu_ = new QMenu(this);
@@ -248,7 +247,6 @@ PsiChatDlg::PsiChatDlg(const Jid &jid, PsiAccount *pa, TabManager *tabManager) :
         rebuildEncryptionSession();
     }
 }
-
 
 bool PsiChatDlg::displayNativeMessage(const MessageView &mv)
 {
@@ -279,10 +277,10 @@ void PsiChatDlg::clearNativeHistory()
         nativeTimeline_->clearMessages();
     resetLocalHistorySource();
     mamBeforeId_.clear();
-    mamRefreshTail_ = false;
-    localBeforeId_ = 0;
-    localExhausted_ = true;
-    mamExhausted_ = true; // Clearing the view must not immediately reload saved rows.
+    mamRefreshTail_        = false;
+    localBeforeId_         = 0;
+    localExhausted_        = true;
+    mamExhausted_          = true; // Clearing the view must not immediately reload saved rows.
     mamResumeAfterConnect_ = false;
 }
 
@@ -294,19 +292,20 @@ void PsiChatDlg::loadOlderMamMessages()
 
     nativeTimeline_->setHistoryLoading(true);
     const bool atEndBeforeLocal = nativeTimeline_->isAtEnd();
-    const bool occupantPrivate = account()->findGCContact(jid());
+    const bool occupantPrivate  = account()->findGCContact(jid());
     prependLocalChatHistory(nativeTimeline_, account(), occupantPrivate ? jid().full() : jid().bare(), false,
                             account()->nick(), localBeforeId_, localExhausted_);
-    if (occupantPrivate)
+    const bool localOnly = occupantPrivate || account()->isServerless();
+    if (localOnly)
         mamExhausted_ = true; // Occupant private messages keep their existing local-only history path.
     if (atEndBeforeLocal && mamBeforeId_.isEmpty())
         nativeTimeline_->scrollToEnd();
-    if (occupantPrivate || (mamExhausted_ && !(mamRefreshTail_ && account()->isConnected()))) {
+    if (localOnly || (mamExhausted_ && !(mamRefreshTail_ && account()->isConnected()))) {
         nativeTimeline_->setHistoryLoading(false);
         nativeTimeline_->setHistoryExhausted(localExhausted_);
         return;
     }
-    const bool refreshTail = mamRefreshTail_ && account()->isConnected();
+    const bool    refreshTail     = mamRefreshTail_ && account()->isConnected();
     const QString requestedBefore = refreshTail ? QString() : mamBeforeId_;
     if (account()->isConnected())
         mamRefreshTail_ = false;
@@ -314,9 +313,9 @@ void PsiChatDlg::loadOlderMamMessages()
         mamSeenBeforeIds_.clear();
     auto *task                = new HistorySync(account(), jid().bare(), false, requestedBefore, this,
                                                 nativeTimeline_->suggestedOlderHistoryPageSize());
-    mamTask_ = task;
-    const QString peer = jid().bare();
-    const bool initialPage = requestedBefore.isEmpty();
+    mamTask_                  = task;
+    const QString peer        = jid().bare();
+    const bool    initialPage = requestedBefore.isEmpty();
     connect(task, &HistorySync::finished, this, [this, task, peer, initialPage, requestedBefore] {
         if (mamTask_ != task)
             return;
@@ -360,7 +359,7 @@ void PsiChatDlg::loadOlderMamMessages()
             mamBeforeId_ = oldestId;
         }
         if (initialPage && !account()->isConnected()) {
-            mamRefreshTail_ = true;
+            mamRefreshTail_        = true;
             mamResumeAfterConnect_ = true;
         }
         const bool wasAtEnd = nativeTimeline_->isAtEnd();
@@ -368,8 +367,7 @@ void PsiChatDlg::loadOlderMamMessages()
         nativeTimeline_->restoreArchiveSnapshot(task->archiveSnapshot().resultCount, task->archiveSnapshot().lastUid);
         nativeTimeline_->observeArchivePage(loaded.uids, task->resultCount(), task->firstResultIndex(), requestedBefore,
                                             {}, true, task->isStable());
-        if (initialPage && page.isEmpty() && mamExhausted_
-            && nativeTimeline_->messageCount() == 0)
+        if (initialPage && page.isEmpty() && mamExhausted_ && nativeTimeline_->messageCount() == 0)
             preloadHistory(true); // Empty/textless server archive: show saved local history.
         if (initialPage && wasAtEnd)
             nativeTimeline_->scrollToEnd();
@@ -475,8 +473,7 @@ void PsiChatDlg::updateAvatar(const Jid &jid)
     ChatDlg::updateAvatar(jid);
     // Unlike the old per-window QPixmap memo, the central AvatarCache has
     // already invalidated its state. Only redraw the relevant sender.
-    const bool peerChanged = roomOccupantChat_ ? jid.compare(this->jid())
-                                              : jid.compare(this->jid(), false);
+    const bool peerChanged = roomOccupantChat_ ? jid.compare(this->jid()) : jid.compare(this->jid(), false);
     if (nativeTimeline_ && (peerChanged || jid.compare(account()->jid(), false)))
         nativeTimeline_->refreshAvatars();
 }
@@ -567,18 +564,14 @@ void PsiChatDlg::initUi()
     connect(nativeTimeline_, &MamChatWidget::replyRequested, ui_.mle, &ChatEditProxy::setReply);
     connect(nativeTimeline_, &MamChatWidget::forwardMessageRequested, this,
             [this](const QString &id, const QString &sender, const QString &text) {
-        account()->psi()->invokeForwardMessage(id, sender.isEmpty() ? jid() : XMPP::Jid(sender), text);
-    });
+                account()->psi()->invokeForwardMessage(id, sender.isEmpty() ? jid() : XMPP::Jid(sender), text);
+            });
     connect(nativeTimeline_, &Mattermost::LongListWidget::visibleRangeChanged, this,
-            [this](int, int) {
-        QTimer::singleShot(0, this, [this] { sendDisplayedMarkerForVisibleMessage(); });
-    });
+            [this](int, int) { QTimer::singleShot(0, this, [this] { sendDisplayedMarkerForVisibleMessage(); }); });
     connect(nativeTimeline_, &MamChatWidget::avatarClicked, this,
-            [this](const QString &, bool local) {
-        account()->actionInfo(local ? account()->jid() : jid());
-    });
-    connect(nativeTimeline_, &MamChatWidget::olderMessagesRequested,
-            this, &PsiChatDlg::loadOlderMamMessages, Qt::QueuedConnection);
+            [this](const QString &, bool local) { account()->actionInfo(local ? account()->jid() : jid()); });
+    connect(nativeTimeline_, &MamChatWidget::olderMessagesRequested, this, &PsiChatDlg::loadOlderMamMessages,
+            Qt::QueuedConnection);
     connect(nativeTimeline_, &MamChatWidget::archiveRangeRequested, this, &PsiChatDlg::loadMamRange,
             Qt::QueuedConnection);
     connect(nativeTimeline_, &MamChatWidget::archiveRangeCancelled, this, [this] {
@@ -595,7 +588,7 @@ void PsiChatDlg::initUi()
     // so a stale pointer cannot suppress pagination after reconnection.
     connect(account(), &PsiAccount::disconnected, this, [this] {
         nativeTimeline_->cancelArchiveRanges();
-        mamRefreshTail_ = true;
+        mamRefreshTail_        = true;
         mamResumeAfterConnect_ = true;
         // The currently visible portion must survive transient disconnects.
         // Remember an interrupted page even when earlier pages are present,
@@ -625,9 +618,7 @@ void PsiChatDlg::initUi()
     });
     // Finish the EDB preload before merging the initial archive page.
     connect(this, &ChatDlg::localHistoryPreloadFinished, this, [this] {
-        if (nativeTimeline_ && !mamTask_
-            && !mamExhausted_ && mamBeforeId_.isEmpty()
-            && !localHistoryPreloadPending())
+        if (nativeTimeline_ && !mamTask_ && !mamExhausted_ && mamBeforeId_.isEmpty() && !localHistoryPreloadPending())
             loadOlderMamMessages();
     });
     QTimer::singleShot(0, this, [this] { loadOlderMamMessages(); });
@@ -911,7 +902,7 @@ void PsiChatDlg::updateCallAction()
     // A whiteboard without audio is offered next to the call when both are possible. The menu belongs to
     // the buttons only: a menu on the action would make it a submenu of an action list.
     const bool split = media && whiteboard;
-    const auto mode = split ? QToolButton::MenuButtonPopup : QToolButton::DelayedPopup;
+    const auto mode  = split ? QToolButton::MenuButtonPopup : QToolButton::DelayedPopup;
     if (auto button = qobject_cast<QToolButton *>(ui_.toolbar->widgetForAction(action))) {
         button->setMenu(split ? callMenu_ : nullptr);
         button->setPopupMode(mode);

@@ -119,6 +119,7 @@ public:
     bool           isAvailable() const;
     bool           isActive() const;
     bool           isConnected() const;
+    bool           isServerless() const;
     const QString &name() const;
     const QString &id() const;
 
@@ -539,6 +540,7 @@ private:
     void handleEvent(const PsiEvent::Ptr &e, ActivationType activationType);
 
     void login();
+    void loginServerless();
     void logout(bool fast, const Status &s);
 
     void          deleteAllDialogs();

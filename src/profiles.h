@@ -38,6 +38,11 @@ class OptionsTree;
 
 class UserAccount {
 public:
+    enum class Type { Xmpp, Serverless };
+    Type    type = Type::Xmpp;
+    QString serverlessName;
+    QString serverlessInterface; // Empty means automatic selection at login.
+    quint16 serverlessPort = 0;
     UserAccount();
     ~UserAccount();
 

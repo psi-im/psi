@@ -501,7 +501,20 @@ OptionsDlgBase::~OptionsDlgBase()
 
 PsiCon *OptionsDlgBase::psi() const { return d->psi; }
 
-void OptionsDlgBase::openTab(const QString &id) { d->openTab(id); }
+void OptionsDlgBase::openTab(const QString &id)
+{
+    const int separator = id.indexOf('/');
+    if (separator < 0) {
+        d->openTab(id);
+        return;
+    }
+    const auto parent = id.left(separator);
+    d->openTab(parent);
+    for (auto *tab : std::as_const(d->tabs))
+        if (tab->id() == parent.toUtf8())
+            if (auto *meta = qobject_cast<MetaOptionsTab *>(tab))
+                meta->selectTab(id.mid(separator + 1).toUtf8());
+}
 
 void OptionsDlgBase::removeTab(const QString &id) { d->removeTab(id); }
 

@@ -220,6 +220,18 @@ void MetaOptionsTab::enableOtherTabs(bool enable)
     static_cast<OptionsTabWidget *>(w)->enableOtherTabs(enable);
 }
 
+bool MetaOptionsTab::selectTab(const QByteArray &id)
+{
+    for (int index = 0; index < tabs.size(); ++index) {
+        if (tabs.at(index)->id() == id) {
+            auto *view = static_cast<QTabWidget *>(widget());
+            view->setCurrentIndex(index);
+            return true;
+        }
+    }
+    return false;
+}
+
 QWidget *MetaOptionsTab::widget()
 {
     if (w)

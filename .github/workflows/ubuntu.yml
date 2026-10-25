@@ -35,7 +35,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            ccache cmake ninja-build g++ pkg-config \
+            ccache cmake ninja-build g++ pkg-config dbus \
             qt6-base-dev qt6-multimedia-dev qt6-svg-dev libqt6sql6-sqlite \
             libhttp-parser-dev libhunspell-dev libminizip-dev libomemo-c-dev \
             libotr5-dev libprotobuf-c-dev libsm-dev libssl-dev \
@@ -76,12 +76,12 @@ jobs:
             -DCHAT_TYPE=BASIC -DENABLE_AVATAR_CACHE_BENCHMARK=ON \
             -DENABLE_PLUGINS=OFF -DBUILD_PSIMEDIA=OFF \
             -DUSE_KEYCHAIN=OFF -DUSE_HUNSPELL=ON \
-            -DBUILD_TESTING=ON
+            -DBUILD_TESTING=ON -DPSI_ENABLE_SERVERLESS_UI_TEST=ON
           cmake --build build --parallel 4
       - name: Run native regressions
         env:
           QT_QPA_PLATFORM: offscreen
-        run: ctest --test-dir build --output-on-failure --no-tests=error -R "account_vcard_disk_cache|account_vcard_request_merge|account_avatar_blob_inflight|account_avatar_negative_policy|avcall(policy|audiodirection)_test"
+        run: ctest --test-dir build --output-on-failure --no-tests=error -R "serverless_ui|account_vcard_disk_cache|account_vcard_request_merge|account_avatar_blob_inflight|account_avatar_negative_policy|avcall(policy|audiodirection)_test"
       - name: Benchmark actual MUC AvatarCache (non-gating timings)
         env:
           QT_QPA_PLATFORM: offscreen

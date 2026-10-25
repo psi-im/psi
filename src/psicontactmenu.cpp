@@ -318,8 +318,8 @@ void PsiContactMenu::Private::updateActions()
     const bool callMedia = contact_->account()->callUsesMedia(contact_->jid());
     voiceCallAction_->setPsiIcon(callMedia ? QStringLiteral("psi/avcall") : QStringLiteral("psi/whiteboard"));
     voiceCallAction_->setText(callMedia ? tr("Voice Call") : tr("&Whiteboard"));
-    voiceCallAction_->setVisible(!contact_->isAgent()
-                                 && (AvCallManager::isSupported() || contact_->account()->canWhiteboard(contact_->jid())));
+    voiceCallAction_->setVisible(
+        !contact_->isAgent() && (AvCallManager::isSupported() || contact_->account()->canWhiteboard(contact_->jid())));
     voiceCallAction_->setEnabled(contact_->account()->isAvailable());
     voiceCallToMenu_->menuAction()->setVisible(voiceCallAction_->isVisible());
     voiceCallToMenu_->setEnabled(contact_->account()->isAvailable() && !voiceCallToMenu_->isEmpty());
@@ -365,6 +365,20 @@ void PsiContactMenu::Private::updateActions()
     removeAction_->setEnabled(contact_->removeAvailable());
     if (!PsiOptions::instance()->getOption("options.ui.menu.contact.custom-picture").toBool()) {
         pictureMenu_->menuAction()->setVisible(false);
+    }
+    if (contact_->account()->isServerless()) {
+        addAuthAction_->setVisible(false);
+        renameAction_->setVisible(false);
+        removeAction_->setVisible(false);
+        customStatusAction_->setVisible(false);
+        groupMenu_->menuAction()->setVisible(false);
+        inviteToGroupchatMenu_->menuAction()->setVisible(false);
+        if (authMenu_)
+            authMenu_->menuAction()->setVisible(false);
+        authResendAction_->setVisible(false);
+        authRerequestAction_->setVisible(false);
+        authRemoveAction_->setVisible(false);
+        blockAction_->setVisible(false);
     }
 }
 

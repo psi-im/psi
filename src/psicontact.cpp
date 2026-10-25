@@ -253,7 +253,7 @@ bool PsiContact::isFake() const { return false; }
  */
 bool PsiContact::isEditable() const
 {
-    if (d->isSelf || !account())
+    if (d->isSelf || !account() || account()->isServerless())
         return false;
 
     return account()->isAvailable() && inList();
