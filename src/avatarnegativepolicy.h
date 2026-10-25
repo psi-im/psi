@@ -56,28 +56,24 @@ struct AvatarNegativePolicy {
         return (quint64(current) << 32) | boundedHeat;
     }
 
-    static bool lessUseful(quint64 lhs, quint64 rhs, quint32 nowSeconds)
-    {
-        const double a = heat(lhs, nowSeconds);
-        const double b = heat(rhs, nowSeconds);
-        // Tie-break by recency, then by the numeric stamp, for determinism.
-        if (a != b)
-            return a < b;
-        return lastAccess(lhs) < lastAccess(rhs);
-    }
-
     struct Candidate {
         QString jid;
         quint64 stamp;
+        double decayedHeat = 0;
     };
 
     static void sortByUsefulness(QVector<Candidate> &items, quint32 nowSeconds)
     {
-        std::sort(items.begin(), items.end(), [nowSeconds](const Candidate &a, const Candidate &b) {
-            if (lessUseful(a.stamp, b.stamp, nowSeconds))
-                return true;
-            if (lessUseful(b.stamp, a.stamp, nowSeconds))
-                return false;
+        // Evaluate the exponential once per candidate, not during every
+        // comparison in std::sort: a 2048-entry eviction runs on the GUI
+        // thread and should not repeatedly calculate an expensive score.
+        for (auto &candidate : items)
+            candidate.decayedHeat = heat(candidate.stamp, nowSeconds);
+        std::sort(items.begin(), items.end(), [](const Candidate &a, const Candidate &b) {
+            if (a.decayedHeat != b.decayedHeat)
+                return a.decayedHeat < b.decayedHeat;
+            if (lastAccess(a.stamp) != lastAccess(b.stamp))
+                return lastAccess(a.stamp) < lastAccess(b.stamp);
             return a.jid < b.jid;
         });
     }
