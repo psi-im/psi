@@ -21,4 +21,7 @@ struct PreparedMedia {
 };
 
 PreparedMedia prepareForDisplay(const XMPP::Message &message);
+// Non-HTTP OOB links are ordinary hyperlinks, not file attachments.
+// Extract them without rebuilding the entire media projection.
+XMPP::UrlList remainingLinks(const XMPP::Message &message);
 }
