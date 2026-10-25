@@ -35,7 +35,7 @@ bool AvatarBlobFetchPolicy::ensureCapacity()
     // launch a duplicate blob request, and its late result could be accepted.
     auto oldest = entries_.end();
     for (auto it = entries_.begin(); it != entries_.end(); ++it) {
-        if (!it->inFlight.isEmpty())
+        if (!it->inFlight.isEmpty() || it->waitingForSharedHash)
             continue;
         if (oldest == entries_.end() || it->touched < oldest->touched)
             oldest = it;
@@ -66,6 +66,7 @@ void AvatarBlobFetchPolicy::announce(const QString &accountId, const QString &ba
     if (entry.hash != hash) {
         entry.hash = hash;
         entry.inFlight.clear(); // The old reply must not revive a new avatar.
+        entry.waitingForSharedHash = false;
         entry.retryNotBeforeMs = 0;
     }
     entry.metadataItemId = metadataItemId;
@@ -79,20 +80,45 @@ bool AvatarBlobFetchPolicy::beginFetch(const QString &accountId, const QString &
     if (!entry || hash.size() != 20 || entry->hash != hash
         || !entry->inFlight.isEmpty() || nowMs < entry->retryNotBeforeMs)
         return false;
+    const QString prefix = accountId + QChar(0x1f);
+    // A single downloaded blob is reusable by all contacts that advertise
+    // its SHA-1. Coalesce concurrent requests, not just repeats of one JID.
+    for (auto it = entries_.cbegin(); it != entries_.cend(); ++it) {
+        if (it.key().startsWith(prefix) && it.key() != key(accountId, bareJid)
+            && it->inFlight == hash) {
+            entry->waitingForSharedHash = true;
+            entry->touched = ++serial_;
+            return false;
+        }
+    }
+    entry->waitingForSharedHash = false;
     entry->inFlight = hash;
     entry->touched = ++serial_;
     return true;
 }
 
-void AvatarBlobFetchPolicy::finish(const QString &accountId, const QString &bareJid,
-                                   const QByteArray &hash, bool validData, qint64 nowMs)
+QStringList AvatarBlobFetchPolicy::finish(const QString &accountId, const QString &bareJid,
+                                         const QByteArray &hash, bool validData, qint64 nowMs)
 {
     Entry *entry = lookup(accountId, bareJid);
     if (!entry || entry->hash != hash || entry->inFlight != hash)
-        return; // A response to an obsolete metadata generation.
+        return {}; // An obsolete reply must not revive any waiter.
     entry->inFlight.clear();
     entry->retryNotBeforeMs = validData ? 0 : nowMs + retryDelayMs_;
     entry->touched = ++serial_;
+
+    QStringList waiters;
+    const QString prefix = accountId + QChar(0x1f);
+    for (auto it = entries_.begin(); it != entries_.end(); ++it) {
+        if (!it.key().startsWith(prefix) || !it->waitingForSharedHash || it->hash != hash)
+            continue;
+        it->waitingForSharedHash = false;
+        it->retryNotBeforeMs = validData ? 0 : nowMs + retryDelayMs_;
+        it->touched = ++serial_;
+        if (validData)
+            waiters.append(it.key().mid(prefix.size()));
+    }
+    return waiters;
 }
 
 bool AvatarBlobFetchPolicy::expects(const QString &accountId, const QString &bareJid,
@@ -111,6 +137,7 @@ bool AvatarBlobFetchPolicy::retractMetadata(const QString &accountId, const QStr
     entry->metadataItemId.clear();
     entry->hash.clear();
     entry->inFlight.clear();
+    entry->waitingForSharedHash = false;
     entry->retryNotBeforeMs = 0;
     entry->touched = ++serial_;
     return true;
@@ -124,6 +151,7 @@ bool AvatarBlobFetchPolicy::retractData(const QString &accountId, const QString 
         return false;
     entry->hash.clear();
     entry->inFlight.clear();
+    entry->waitingForSharedHash = false;
     entry->retryNotBeforeMs = 0;
     entry->touched = ++serial_;
     return true;
