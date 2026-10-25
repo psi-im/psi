@@ -673,11 +673,8 @@ private:
             QByteArray ba;
             QString    fullJid;
             auto       vcard = VCardFactory::instance()->vcard(account, j, flags);
-            if (flags & VCardFactory::MucUser) {
-                fullJid = j.full();
-            } else {
-                fullJid = j.bare();
-            }
+            fullJid = AvatarIdentity::bindingKey(account->id(),
+                (flags & VCardFactory::MucUser) ? j.full() : j.bare(), flags & VCardFactory::MucUser);
             if (!vcard) {
                 return; // wtf??
             }
@@ -700,6 +697,7 @@ private:
 #endif
                 iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(fullJid));
                 emit avatarChanged(j);
+                emit avatarChangedScoped(account, j);
             }
         };
         connect(VCardFactory::instance(), &VCardFactory::vcardChangedScoped, this, applyVCardPhoto);
@@ -975,7 +973,11 @@ AvatarFactory::AvatarFactory(PsiAccount *pa) : d(new Private)
     d->pa_ = pa;
 
     // Connect signals
-    connect(AvatarCache::instance(), &AvatarCache::avatarChanged, this, &AvatarFactory::avatarChanged);
+    connect(AvatarCache::instance(), &AvatarCache::avatarChangedScoped, this,
+            [this](PsiAccount *source, const Jid &jid) {
+                if (source == d->pa_)
+                    emit avatarChanged(jid);
+            });
 
     connect(d->pa_->client(), &XMPP::Client::resourceAvailable, this, [this](const Jid &jid, const Resource &r) {
         if (jid.compare(d->pa_->jid(), false)) {
@@ -1007,6 +1009,12 @@ PsiAccount *AvatarFactory::account() const { return d->pa_; }
 QPixmap AvatarFactory::getAvatar(const Jid &_jid) { return AvatarCache::instance()->getAvatar(d->pa_, _jid); }
 QPixmap AvatarFactory::getMucAvatar(const Jid &_jid) { return AvatarCache::instance()->getMucAvatar(d->pa_, _jid); }
 
+QString AvatarFactory::avatarIconName(const Jid &jid, bool occupant) const
+{
+    return QStringLiteral("avatars/") + AvatarIdentity::bindingKey(
+        d->pa_->id(), occupant ? jid.full() : jid.bare(), occupant);
+}
+
 #if 0
 QPixmap AvatarFactory::getAvatarByHash(const QString &hash)
 {
@@ -1036,15 +1044,18 @@ AvatarFactory::AvatarData AvatarFactory::avatarDataByHash(const QByteArray &hash
  */
 AvatarFactory::UserHashes AvatarFactory::userHashes(const Jid &jid) const
 {
-    auto icons = AvatarCache::instance()->icons(jid.full());
+    const bool occupant = !jid.resource().isEmpty();
+    const QString key = AvatarIdentity::bindingKey(d->pa_->id(),
+        occupant ? jid.full() : jid.bare(), occupant);
+    auto icons = AvatarCache::instance()->icons(key);
     if (!icons.vcard) { // hm try to get from vcard factory then
         // we don't call this method often. so it's fine to query vcard factory every time.
         auto flags = jid.resource().isEmpty() ? VCardFactory::Flags {} : VCardFactory::MucUser;
         auto vcard = VCardFactory::instance()->vcard(d->pa_, jid, flags);
         if (vcard && !QByteArray(vcard.photo()).isEmpty()) {
-            if (AvatarCache::instance()->setIcon(AvatarCache::VCardType, jid.full(), vcard.photo())
+            if (AvatarCache::instance()->setIcon(AvatarCache::VCardType, key, vcard.photo())
                 != AvatarCache::NoData) {
-                icons = AvatarCache::instance()->icons(jid.full());
+                icons = AvatarCache::instance()->icons(key);
             }
         }
     }
@@ -1093,20 +1104,22 @@ void AvatarFactory::setSelfAvatar(const QImage &image)
 
 void AvatarFactory::importManualAvatar(const Jid &j, const QString &fileName)
 {
-    AvatarCache::instance()->importManualAvatar(j, fileName);
+    AvatarCache::instance()->importManualAvatar(d->pa_, j, fileName);
 }
 
-void AvatarFactory::removeManualAvatar(const Jid &j) { AvatarCache::instance()->removeManualAvatar(j); }
+void AvatarFactory::removeManualAvatar(const Jid &j) { AvatarCache::instance()->removeManualAvatar(d->pa_, j); }
 
 bool AvatarFactory::hasManualAvatar(const Jid &j)
 {
-    return bool(AvatarCache::instance()->icons(j.bare()).customAvatar);
+    return bool(AvatarCache::instance()->icons(
+        AvatarIdentity::bindingKey(d->pa_->id(), j.bare(), false)).customAvatar);
 }
 
 void AvatarFactory::statusUpdate(const Jid &jid, const XMPP::Status &status, Flags flags)
 {
     if (status.type() == Status::Offline) {
-        AvatarCache::instance()->removeHash((flags & MucUser) ? jid : jid.withResource({}));
+        AvatarCache::instance()->removeHash(d->pa_, (flags & MucUser) ? jid : jid.withResource({}),
+                                            flags & MucUser);
     } else {
         if (status.photoHash()) { // even if it's empty. user adretises something.
             auto hash = *status.photoHash();
@@ -1129,14 +1142,14 @@ void AvatarFactory::ensureVCardUpdated(const Jid &jid, const QByteArray &hash, F
         VCardFactory::instance()->ensureVCardPhotoUpdated(d->pa_, xj, vcardFlags, hash);
     }
 
-    auto result = AvatarCache::instance()->ensureVCardUpdated(xj, hash, flags);
+    auto result = AvatarCache::instance()->ensureVCardUpdated(d->pa_, xj, hash, flags);
 
     if (hash.isEmpty()) {
-        AvatarCache::instance()->removeHash(xj);
+        AvatarCache::instance()->removeHash(d->pa_, xj, flags & MucUser);
     } else if (result == AvatarCache::NoData) {
         VCardFactory::instance()->ensureVCardPhotoUpdated(d->pa_, xj, vcardFlags, hash);
     } else {
-        AvatarCache::instance()->rememberHash(xj, hash);
+        AvatarCache::instance()->rememberHash(d->pa_, xj, flags & MucUser, hash);
     }
 }
 
