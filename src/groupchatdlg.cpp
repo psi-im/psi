@@ -1933,24 +1933,6 @@ void GCMainDlg::reactivate()
     goConn();
 }
 
-void GCMainDlg::setJid(const Jid &j)
-{
-    const QString oldRoom = jid().bare();
-    TabbableWidget::setJid(j);
-    if (oldRoom != jid().bare()) {
-        doClear();
-        localExhausted_ = false;
-        mamExhausted_ = false;
-        mamArchiveReady_ = false;
-        if (nativeTimeline_)
-            nativeTimeline_->setHistoryExhausted(false);
-    }
-    if (nativeTimeline_ && oldRoom != jid().bare())
-        nativeTimeline_->refreshAvatars();
-    d->self = d->prev_self = j.resource();
-    ui_.log->setLocalNickname(d->self);
-}
-
 void GCMainDlg::goConn()
 {
     if (d->state == Private::Idle) {
