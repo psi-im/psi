@@ -27,6 +27,42 @@ class OverlayScrollBarManagerTest : public QObject
     Q_OBJECT
 
 private slots:
+    void attachIsIdempotentAndKeepsTheOriginalScrollModel()
+    {
+        QAbstractScrollArea area;
+        QScrollBar *source = area.verticalScrollBar();
+        source->setRange(0, 100);
+        Mattermost::OverlayScrollBarManager::attach(area);
+        Mattermost::OverlayScrollBarManager::attach(area);
+
+        auto overlays = area.findChildren<QScrollBar *>(
+            QStringLiteral("mattermostOverlayVerticalScrollBar"));
+        QCOMPARE(overlays.size(), 1);
+        QCOMPARE(area.verticalScrollBar(), source);
+        QCOMPARE(area.verticalScrollBarPolicy(), Qt::ScrollBarAlwaysOff);
+
+        source->setValue(42);
+        QCOMPARE(overlays.first()->value(), 42);
+    }
+
+    void attachAfterAreaIsAlreadyVisible()
+    {
+        QAbstractScrollArea area;
+        area.resize(240, 140);
+        area.verticalScrollBar()->setRange(0, 100);
+        area.show();
+        settleEvents();
+        QVERIFY(!area.findChild<QScrollBar *>(
+            QStringLiteral("mattermostOverlayVerticalScrollBar")));
+
+        Mattermost::OverlayScrollBarManager::attach(area);
+        auto *overlay = area.findChild<QScrollBar *>(
+            QStringLiteral("mattermostOverlayVerticalScrollBar"));
+        QVERIFY(overlay);
+        QCOMPARE(overlay->maximum(), 100);
+        QVERIFY(overlay->isVisible());
+    }
+
     void optedInRostersGetOverlayWithoutAffectingOtherScrollAreas()
     {
         QTreeView roster;
