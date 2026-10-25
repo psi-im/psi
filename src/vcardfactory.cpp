@@ -265,9 +265,12 @@ void VCardFactory::setPhoto(const Jid &j, const QByteArray &photo, Flags flags)
         sj = j.withResource({});
         vc = vcard(sj);
     }
-    if (vc && vc.photo() != photo) {
-        vc.setPhoto(VCard4::UriValue {});
+    if (setEmbeddedPhoto(vc, photo)) {
         saveVCard(sj, vc, flags);
+        // Silent only suppresses ordinary vCard notifications. AvatarCache
+        // must still see our own avatar changes after the cache is updated.
+        if (flags & Silent)
+            emit photoChanged(sj, flags);
     }
 }
 
@@ -282,9 +285,10 @@ void VCardFactory::deletePhoto(const Jid &j, Flags flags)
         sj = j.withResource({});
         vc = vcard(sj);
     }
-    if (vc && !vc.photo().isEmpty()) {
-        vc.setPhoto(VCard4::UriValue {});
+    if (clearPhoto(vc)) {
         saveVCard(sj, vc, flags);
+        if (flags & Silent)
+            emit photoChanged(sj, flags);
     }
 }
 
@@ -297,12 +301,8 @@ void VCardFactory::ensureVCardPhotoUpdated(PsiAccount *acc, const Jid &jid, Flag
         vc = vcard(jid);
     }
     if (newPhotoHash.isEmpty()) {
-        if (!vc || vc.photo().isEmpty()) { // we didn't have it and still don't
-            return;
-        }
-        vc.setPhoto(VCard4::PAdvUris {}); // reset photo;
-        saveVCard(jid, vc, flags);
-
+        if (clearPhoto(vc))
+            saveVCard(jid, vc, flags);
         return;
     }
     auto oldHash = vc ? QCryptographicHash::hash(QByteArray(vc.photo()), QCryptographicHash::Sha1) : QByteArray();
