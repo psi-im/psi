@@ -18,6 +18,7 @@
  */
 
 #include "filesharingmanager.h"
+#include "filesharingnormalizer.h"
 
 #include "applicationinfo.h"
 #include "filecache.h"
@@ -318,13 +319,15 @@ QList<FileSharingItem *> FileSharingManager::fromFilesList(const QStringList &fi
     return ret;
 }
 
-void FileSharingManager::fillMessageView(MessageView &mv, const Message &m,
-                                         const QList<Reference> &references, PsiAccount *acc)
+void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiAccount *acc)
 {
     if (!acc)
         return;
     rememberMessage(m, acc);
-    auto refs = references;
+    // Legacy SQLite rows can still contain raw HTTP OOB links. New rows are
+    // already normalized by HistoryMessageExtras::encode(), so this is
+    // idempotent without changing the Message or writing back to history.
+    auto refs = FileSharingNormalizer::prepareForDisplay(m).references;
 
     if (refs.count()) {
         QString tailReferences;
@@ -373,9 +376,8 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m,
                     item->mergeSources(ms, m.from());
                 d->rememberItem(item);
             } else if (!ms.isValid() && r.type() == Reference::Data) {
-                // Synthetic URL-only references are prepared on the decoded
-                // Message, before MessageView construction. The rendering
-                // stage only maps each reference to its shared item backend.
+                // HTTP OOB is represented as a URL-only reference, either
+                // restored from SQLite or prepared for an incoming/legacy message.
                 const QUrl source = OobMediaPolicy::normalizedHttpSource(r.uri());
                 if (!source.isValid())
                     continue;
