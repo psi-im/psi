@@ -62,6 +62,28 @@ private slots:
         QCOMPARE(candidates[2].jid, QStringLiteral("fresh"));
     }
 
+    void capacityAndBatchedVictims()
+    {
+        using Policy = AvatarNegativePolicy;
+        QCOMPARE(Policy::trimCount(Policy::MaxEntries), 0);
+        QCOMPARE(Policy::trimCount(Policy::MaxEntries + 1),
+                 Policy::MaxEntries + 1 - Policy::TrimToEntries);
+
+        QVector<Policy::Candidate> entries;
+        entries.reserve(Policy::MaxEntries + 1);
+        for (int i = 0; i < Policy::MaxEntries + 1; ++i) {
+            const auto stamp = Policy::touch(0, quint32(i * 600));
+            entries.push_back({ QString::number(i), stamp });
+        }
+        const quint32 now = quint32((Policy::MaxEntries + 1) * 600);
+        Policy::sortByUsefulness(entries, now);
+        const int evicted = Policy::trimCount(entries.size());
+        QCOMPARE(entries.size() - evicted, Policy::TrimToEntries);
+        QCOMPARE(entries.front().jid, QStringLiteral("0"));
+        QCOMPARE(entries.at(evicted - 1).jid, QString::number(evicted - 1));
+        QCOMPARE(entries.back().jid, QString::number(Policy::MaxEntries));
+    }
+
     void scoreSaturatesWithoutWraparound()
     {
         // A near-full Q16.16 score remains valid after decay and another
