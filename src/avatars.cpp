@@ -173,41 +173,76 @@ public:
         if (n == PEP_AVATAR_DATA_NS) {
             if (item.payload().tagName() == PEP_AVATAR_DATA_TN) {
                 const auto hash = QByteArray::fromHex(item.id().toLatin1());
-                if (hash.size() != 20)
+                if (hash.size() != 20) {
+#ifdef AVATAR_EDBUG
+                    qDebug() << "Ignoring PEP avatar:data with invalid SHA-1 item ID" << jidFull << item.id();
+#endif
                     return;
+                }
 
                 // A returned IQ may belong to an obsolete metadata
                 // announcement. Bind bytes only to still-interested JIDs.
                 const bool pending = blobFlights_.hasFlight(hash);
                 const QStringList recipients = pending ? blobFlights_.waiters(hash) : QStringList { jidFull };
-                if (recipients.isEmpty())
+                if (recipients.isEmpty()) {
+#ifdef AVATAR_EDBUG
+                    qDebug() << "Discard PEP avatar:data: no interested JIDs" << jidFull << hash.toHex();
+#endif
                     return;
+                }
 
+                // setIcon() creates the shared FileCache entry *and* binds its
+                // first JID. Start with any current waiter, then bind the
+                // remaining recipients to those same bytes below. The QSet
+                // iteration order does not indicate which JID issued the IQ.
                 const QString &first = recipients.first();
+#ifdef AVATAR_EDBUG
+                qDebug() << "append user " << first << AvatarCache::AvatarType;
+#endif
                 result = appendUser(hash, AvatarType, first);
                 if (result == NoData) {
                     const auto bytes = QByteArray::fromBase64(item.payload().text().toLatin1());
                     // XEP-0084 item ID identifies the original blob bytes.
+                    // Never feed an incorrect blob into the shared FileCache.
                     if (bytes.isEmpty()
-                        || QCryptographicHash::hash(bytes, QCryptographicHash::Sha1) != hash)
+                        || QCryptographicHash::hash(bytes, QCryptographicHash::Sha1) != hash) {
+#ifdef AVATAR_EDBUG
+                        qDebug() << "Discard PEP avatar:data: empty or SHA-1 mismatch" << jidFull << hash.toHex();
+#endif
                         return;
+                    }
                     result = setIcon(AvatarType, first, bytes, hash);
                 }
-                if (result == NoData)
+                if (result == NoData) {
+#ifdef AVATAR_EDBUG
+                    qDebug() << "Cannot cache PEP avatar:data image" << first << hash.toHex();
+#endif
                     return;
+                }
 
                 if (result == UserUpdateRequired) {
+#ifdef AVATAR_EDBUG
+                    qDebug() << "remove from iconset and emit avatarChanged on PEP avatar:data" << first;
+#endif
                     iconset_.removeIcon(QStringLiteral("avatars/%1").arg(first));
                     emit avatarChanged(Jid(first));
                 }
                 // FileCache has the blob now. Rebind all waiting contacts
-                // from it, without starting another download.
+                // from it, without starting another download. This must run
+                // even when the first recipient's avatar did not change.
                 if (pending) {
+#ifdef AVATAR_EDBUG
+                    qDebug() << "PEP avatar:data resolved shared flight" << hash.toHex()
+                             << "recipients" << recipients.size();
+#endif
                     for (const QString &waitingJid : blobFlights_.complete(hash)) {
                         if (waitingJid == first)
                             continue;
                         const auto waitingResult = appendUser(hash, AvatarType, waitingJid);
                         if (waitingResult == UserUpdateRequired) {
+#ifdef AVATAR_EDBUG
+                            qDebug() << "remove from iconset and emit avatarChanged on shared PEP blob" << waitingJid;
+#endif
                             iconset_.removeIcon(QStringLiteral("avatars/%1").arg(waitingJid));
                             emit avatarChanged(Jid(waitingJid));
                         }
@@ -264,8 +299,15 @@ public:
                     result = appendUser(hash, AvatarCache::AvatarType, jidFull);
                     if (result == AvatarCache::NoData) {
                         const auto decision = blobFlights_.join(jidFull, hash, pa, item.id());
-                        if (decision.request)
+                        if (decision.request) {
                             fetchAvatarBlob(pa, jid, item.id(), hash, decision.token);
+                        } else {
+                            // This SHA-1 is already being fetched; the JID
+                            // will be bound when that IQ populates FileCache.
+#ifdef AVATAR_EDBUG
+                            qDebug() << "Joined in-flight PEP avatar:data" << jidFull << hash.toHex();
+#endif
+                        }
                         return;
                     }
                     break;
@@ -611,6 +653,10 @@ private:
     void fetchAvatarBlob(PsiAccount *account, const Jid &jid, const QString &itemId,
                          const QByteArray &hash, quint64 token)
     {
+#ifdef AVATAR_EDBUG
+        qDebug() << "Requesting PEP avatar:data" << jid.full() << hash.toHex()
+                 << "flight token" << token;
+#endif
         auto *task = account->pepManager()->get(jid, PEP_AVATAR_DATA_NS, itemId);
         const auto onFinished = [this, hash, token]() {
             // PEPManager emits itemPublished() before its task-finished
@@ -619,10 +665,17 @@ private:
             // available account: PEP access policies may differ.
             const auto retry = blobFlights_.fail(hash, token);
             if (retry.request) {
+#ifdef AVATAR_EDBUG
+                qDebug() << "PEP avatar:data unavailable from previous source; trying waiting source"
+                         << retry.jid << hash.toHex() << "flight token" << retry.token;
+#endif
                 auto *next = static_cast<PsiAccount *>(retry.transport.data());
                 fetchAvatarBlob(next, Jid(retry.jid), retry.itemId, hash, retry.token);
             }
         };
+        // PEPManager reports successful items before Task::finished. The
+        // destroyed handler covers cancelled tasks that never emit finished;
+        // generation tokens make the second callback harmless.
         connect(task, &Task::finished, this, onFinished);
         connect(task, &QObject::destroyed, this, onFinished);
     }
