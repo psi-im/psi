@@ -25,6 +25,11 @@ struct AvatarNegativePolicy {
     static constexpr int MaxEntries = 2048;
     static constexpr int TrimToEntries = 1536;
 
+    static int trimCount(int count)
+    {
+        return count > MaxEntries ? count - TrimToEntries : 0;
+    }
+
     static quint32 lastAccess(quint64 stamp) { return quint32(stamp >> 32); }
 
     static double heat(quint64 stamp, quint32 nowSeconds)
