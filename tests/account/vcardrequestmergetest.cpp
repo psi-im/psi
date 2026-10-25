@@ -9,6 +9,18 @@
 class VCardRequestMergeTest final : public QObject {
     Q_OBJECT
 private slots:
+    void fullAndPhotoOnlyRequestModes()
+    {
+        using F = VCardFactory;
+        QVERIFY(F::shouldFetchModern({}));
+        QVERIFY(F::shouldFetchModern(F::Cache));
+        QVERIFY(F::shouldFetchModern(F::Silent));
+        QVERIFY(!F::shouldFetchModern(F::PhotoOnly));
+        QVERIFY(!F::shouldFetchModern(F::ForceVCardTemp));
+        QVERIFY(!F::shouldFetchModern(F::MucRoom));
+        QVERIFY(!F::shouldFetchModern(F::MucUser));
+        QVERIFY(!F::shouldFetchModern(F::PhotoOnly | F::Silent));
+    }
     void modernFieldsWinAndLegacyFillsGaps()
     {
         XMPP::VCard4::VCard modern;
