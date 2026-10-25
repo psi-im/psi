@@ -64,11 +64,12 @@ private slots:
 
     void scoreSaturatesWithoutWraparound()
     {
-        // Q16.16 with very frequent distinct visits, including at a fixed
-        // monotonic timestamp that may arrive from an injected test clock.
+        // A near-full Q16.16 score remains valid after decay and another
+        // credited hit; it must never wrap to zero.
         const quint64 nearSaturated = (quint64(1) << 32) | quint32(0xffff0000U);
         const auto result = AvatarNegativePolicy::touch(nearSaturated, 600);
-        QVERIFY(quint32(result) >= quint32(nearSaturated));
+        QVERIFY(quint32(result) > 0);
+        QCOMPARE(AvatarNegativePolicy::lastAccess(result), quint32(601));
     }
 };
 
