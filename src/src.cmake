@@ -142,7 +142,6 @@ list(APPEND HEADERS
     desktoputil.h
     discodlg.h
     dummystream.h
-    edbflatfile.h
     edbsqlite.h
     eventdb.h
     eventdlg.h
@@ -172,7 +171,7 @@ list(APPEND HEADERS
     groupmenu.h
     historycontactlistmodel.h
     historydlg.h
-    historyimp.h
+    historyupgrade.h
     hoverabletreeview.h
     htmltextcontroller.h
     httpauthmanager.h
@@ -410,7 +409,6 @@ list(APPEND SOURCES
     desktoputil.cpp
     discodlg.cpp
     dummystream.cpp
-    edbflatfile.cpp
     historyarchive.cpp
     historysync.cpp
     historysyncaccount.cpp
@@ -455,7 +453,7 @@ list(APPEND SOURCES
     groupmenu.cpp
     historycontactlistmodel.cpp
     historydlg.cpp
-    historyimp.cpp
+    historyupgrade.cpp
     hoverabletreeview.cpp
     htmltextcontroller.cpp
     httpauthmanager.cpp
