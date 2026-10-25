@@ -20,7 +20,6 @@
 #ifndef EDBSQLITE_H
 #define EDBSQLITE_H
 
-#include "edbflatfile.h"
 #include "eventdb.h"
 #include "iris/xmpp_jid.h"
 #include "psievent.h"
@@ -99,8 +98,6 @@ class EDBSqLite : public EDB {
     //--------
 
 public:
-    enum InsertMode { Normal, Import };
-
     EDBSqLite(PsiCon *psi);
     ~EDBSqLite();
     bool init();
@@ -127,10 +124,6 @@ public:
     bool                 mergeArchiveIsland(const HistoryArchive::Key &, int, HistoryArchive::Page &) override;
     bool mergeArchivePage(const HistoryArchive::Key &, const QString &, int, HistoryArchive::Page &) override;
 
-    void         setInsertingMode(InsertMode mode);
-    void         setMirror(EDBFlatFile *mirr);
-    EDBFlatFile *mirror() const;
-
 private:
     enum { NotActive, NotCommited, Commited };
     struct item_query_req {
@@ -155,7 +148,6 @@ private:
     int                     maxUncommitedSecs;
     unsigned int            commitByTimeoutSecs;
     QTimer                 *commitTimer;
-    EDBFlatFile            *mirror_;
     QList<item_query_req *> rlist;
     QHash<QString, qint64>  jidsCache;
     QueryStorage            queryes;
@@ -170,7 +162,6 @@ private:
     bool          rollback();
     void          startAutocommitTimer();
     void          stopAutocommitTimer();
-    bool          importExecute();
 
 private slots:
     void performRequests();
