@@ -24,6 +24,24 @@
 - **In progress:** Phase 1 PHOTO consistency — self-avatar publication currently discards bytes, clearing PHOTO can leave a zero-valued URI property, and explicit XEP-0153 removal may notify before the cached PHOTO is erased. Correct these and test the real Iris mutators; do **not** treat that as completion of the full real-AvatarCache integration gate.
 - **Next:** Phase 2 source invalidation (including PEP retractions and failed manual-avatar imports), followed by account identity scoping. Do not start centralized negative caching or remove per-window QPixmap caches beforehand.
 
+### Network-budget invariants for this migration
+
+- **Avatar getters must remain pure local lookups.** Neither a cache miss, an expired negative memo nor a new materialized chat message starts a network IQ.
+- Use XEP-0084 metadata and XEP-0153 hashes to decide whether content-hash bytes are already cached. Do not download avatar blobs already present in FileCache.
+- At most one outstanding avatar-data IQ per account/contact/SHA-1; stale blob replies must not restore superseded metadata. A failed request is retryable only on subsequent protocol-driven events, after a bounded cooldown, **never via polling**.
+- XEP-0153 avatar refresh retrieves only the legacy vcard-temp store, never the full vCard4 PEP store; if PHOTO is removed, update existing sources locally with **zero** network requests.
+- Full vCard4+vcard-temp IQs remain explicit, not a side effect of rendering; coalesce compatible requests within one account/session but never across accounts or incompatible query modes.
+- These rules require deterministic tests counting network-request decisions, explicit checks that in-flight IDs remain unique, and scenario tests after disconnect/reconnect and stale replies. Unnecessary requests carrying the avatar **blob** are a release blocker.
+
+### In-flight staged PRs
+
+- [#1042](https://github.com/psi-im/psi/pull/1042): PHOTO mutation, empty-hash consistency, Silent notifications, and Iris vCard nullness.
+- [#1044](https://github.com/psi-im/psi/pull/1044): stateful bounded avatar-data request coalescing, retry cooldown, hash verification, retractions and stale replies, with real Qt5/Qt6 policy tests.
+- [#1045](https://github.com/psi-im/psi/pull/1045): account/session/mode-scoped vCard IQ queue, preserving coalescing within an account.
+- [#1046](https://github.com/psi-im/psi/pull/1046): independent account-scoped vCard4 and vcard-temp source sidecars, preserving modern PHOTO when a legacy PHOTO is removed. The displayed merged-card cache remains globally keyed and **is not yet account-isolated**.
+
+The preceding PRs are **stacked, not merged**. MUC epochs, full account-scoped bindings, bounded negative memo and removal of the per-window pixmap memo remain gated on real integration tests.
+
 ## 1. Audited architecture / baseline (2026-10-24)
 
 | Layer | Contents and lifetime | Risk / constraint |
