@@ -13,6 +13,16 @@ target_link_libraries(account_connection_guard_test PRIVATE
     Qt${QT_DEFAULT_MAJOR_VERSION}::Core Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
 add_test(NAME account_connection_guard COMMAND account_connection_guard_test)
 
+# Pure network-policy regression with real Qt: no timers, XMPP server or mocks.
+add_executable(account_avatar_blob_fetch_policy_test
+    avatarblobfetchpolicytest.cpp ../../src/avatarblobfetchpolicy.cpp)
+set_target_properties(account_avatar_blob_fetch_policy_test PROPERTIES AUTOMOC ON)
+target_include_directories(account_avatar_blob_fetch_policy_test PRIVATE ../../src)
+target_link_libraries(account_avatar_blob_fetch_policy_test PRIVATE
+    Qt${QT_DEFAULT_MAJOR_VERSION}::Core Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+add_test(NAME account_avatar_blob_fetch_policy COMMAND account_avatar_blob_fetch_policy_test)
+set_tests_properties(account_avatar_blob_fetch_policy PROPERTIES TIMEOUT 10)
+
 set_tests_properties(account_connection_guard PROPERTIES TIMEOUT 10)
 
 if(TARGET iris)
