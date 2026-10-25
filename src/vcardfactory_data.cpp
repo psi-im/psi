@@ -9,6 +9,13 @@
 
 // Keep cache read and vCard field merging in one translation unit. Tests use
 // these production private methods with real Iris without linking all of Psi.
+// Only full, non-MUC requests consult the account's modern PEP vCard store.
+// Caps advertised by a client's resources say nothing about that store.
+bool VCardFactory::shouldFetchModern(Flags flags)
+{
+    return !(flags & (PhotoOnly | ForceVCardTemp | MucRoom | MucUser));
+}
+
 XMPP::VCard4::VCard VCardFactory::readCachedVCard(const QString &fileName)
 {
     QFile file(fileName);
