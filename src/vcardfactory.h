@@ -93,6 +93,15 @@ private:
                                    const Jid &jid, Flags flags);
     static void supplementFromLegacy(VCard4::VCard &modern, const VCard4::VCard &legacy);
     static bool applyLegacyPhoto(VCard4::VCard &cached, const VCard4::VCard &legacy);
+    // The merged display card cannot establish whether PHOTO originated from
+    // PEP vCard4 or legacy vcard-temp. Store the sources independently.
+    static QString sourceCardFile(const QString &dir, const QString &accountId,
+                                  const Jid &jid, Flags flags, bool modern);
+    static VCard4::VCard mergeSourceCards(VCard4::VCard modern, const VCard4::VCard &legacy);
+    void saveSourceCard(const QString &accountId, const Jid &jid, Flags flags,
+                        bool modern, const VCard4::VCard &card);
+    VCard4::VCard readSourceCard(const QString &accountId, const Jid &jid, Flags flags, bool modern);
+
     static bool setEmbeddedPhoto(VCard4::VCard &card, const QByteArray &data);
     static bool clearPhoto(VCard4::VCard &card);
     friend class VCardDiskCacheTest;
@@ -130,6 +139,11 @@ public:
     // result stuff
     bool          success() const; // item-not-found is considered success but vcard will be null
     VCard4::VCard vcard() const;
+    const QString &accountId() const;
+    VCard4::VCard modernVcard() const;
+    VCard4::VCard legacyVcard() const;
+    bool modernAnswered() const;
+    bool legacyAnswered() const;
     QString       errorString() const;
 
 signals:
