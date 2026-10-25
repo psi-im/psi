@@ -29,6 +29,7 @@
 #include "chatview.h"
 #include "eventdb.h"
 #include "filesharingmanager.h"
+#include "filesharingnormalizer.h"
 #include "filesharingpublication.h"
 #include "gcuserview.h"
 #include "groupchattopicdlg.h"
@@ -2410,7 +2411,9 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
         return;
     }
 
-    if (dm.body().isEmpty())
+    // An attachment-only SIMS or jabber:x:oob stanza is still a
+    // visible message, even with no ordinary <body>.
+    if (dm.body().isEmpty() && dm.references().isEmpty() && dm.urlList().isEmpty())
         return;
 
     // code to determine if the speaker was addressing this client in chat
@@ -2713,7 +2716,8 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
     mv.setSpooled(dm.spooled());
     mv.setDateTime(dm.timeStamp());
     mv.setReplaceId(dm.replaceId());
-    account()->psi()->fileSharingManager()->fillMessageView(mv, dm, account());
+    const auto preparedMedia = FileSharingNormalizer::prepareForDisplay(dm);
+    account()->psi()->fileSharingManager()->fillMessageView(mv, dm, preparedMedia.references, account());
     mv.setReplyMetadata(dm);
 
     dispatchMessage(mv);
