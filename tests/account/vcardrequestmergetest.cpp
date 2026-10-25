@@ -116,6 +116,35 @@ private slots:
         QVERIFY(pa != F::sourceCardFile(dir, QStringLiteral("account-a"), peer, {}, false));
     }
 
+    void fourthMucVCardEvictsOldestNotOtherRoomsOrAccounts()
+    {
+        using F = VCardFactory;
+        QMap<QString, QHash<QString, XMPP::VCard4::VCard>> cards;
+        QMap<QString, QQueue<QString>> order;
+        const QString accountA = QStringLiteral("account-a\x1froom@example.org");
+        const QString accountB = QStringLiteral("account-b\x1froom@example.org");
+        auto make = [](const QString &name) {
+            XMPP::VCard4::VCard v;
+            v.setFullName(name);
+            return v;
+        };
+        F::rememberMucCard(cards, order, accountA, "alice", make("A"));
+        F::rememberMucCard(cards, order, accountA, "bob", make("B"));
+        F::rememberMucCard(cards, order, accountA, "carol", make("C"));
+        F::rememberMucCard(cards, order, accountB, "alice", make("Other account"));
+        F::rememberMucCard(cards, order, accountA, "alice", make("A refreshed"));
+        F::rememberMucCard(cards, order, accountA, "dave", make("D"));
+
+        QCOMPARE(cards[accountA].size(), 3);
+        QVERIFY(!cards[accountA].contains("alice"));
+        QVERIFY(cards[accountA].contains("bob"));
+        QVERIFY(cards[accountA].contains("carol"));
+        QVERIFY(cards[accountA].contains("dave"));
+        QCOMPARE(order[accountA].size(), 3);
+        QCOMPARE(cards[accountB].size(), 1);
+        QVERIFY(cards[accountB].contains("alice"));
+    }
+
     void avatarOnlyRefreshCanReuseCompatibleFullCardIq()
     {
         using F = VCardFactory;
