@@ -582,38 +582,38 @@ private:
         updateJids();
 
         const auto applyVCardPhoto = [this](const Jid &j, VCardFactory::Flags flags) {
-                    QByteArray ba;
-                    QString    fullJid;
-                    auto       vcard = VCardFactory::instance()->vcard(j, flags);
-                    if (flags & VCardFactory::MucUser) {
-                        fullJid = j.full();
-                    } else {
-                        fullJid = j.bare();
-                    }
-                    if (!vcard) {
-                        return; // wtf??
-                    }
-                    ba = vcard.photo();
-                    OpResult result;
-                    if (ba.isEmpty()) {
+            QByteArray ba;
+            QString    fullJid;
+            auto       vcard = VCardFactory::instance()->vcard(j, flags);
+            if (flags & VCardFactory::MucUser) {
+                fullJid = j.full();
+            } else {
+                fullJid = j.bare();
+            }
+            if (!vcard) {
+                return; // wtf??
+            }
+            ba = vcard.photo();
+            OpResult result;
+            if (ba.isEmpty()) {
 #ifdef AVATAR_EDBUG
-                        qDebug() << "removeIcon VCardType from cache for " << fullJid;
+                qDebug() << "removeIcon VCardType from cache for " << fullJid;
 #endif
-                        result = AvatarCache::instance()->removeIcon(AvatarCache::VCardType, fullJid);
-                    } else {
+                result = AvatarCache::instance()->removeIcon(AvatarCache::VCardType, fullJid);
+            } else {
 #ifdef AVATAR_EDBUG
-                        qDebug() << "setIcon VCardType to cache for " << fullJid;
+                qDebug() << "setIcon VCardType to cache for " << fullJid;
 #endif
-                        result = AvatarCache::instance()->setIcon(AvatarCache::VCardType, fullJid, ba);
-                    }
-                    if (result == UserUpdateRequired) {
+                result = AvatarCache::instance()->setIcon(AvatarCache::VCardType, fullJid, ba);
+            }
+            if (result == UserUpdateRequired) {
 #ifdef AVATAR_EDBUG
-                        qDebug() << "removing icon from iconset:" << QString(QLatin1String("avatars/%1")).arg(fullJid);
+                qDebug() << "removing icon from iconset:" << QString(QLatin1String("avatars/%1")).arg(fullJid);
 #endif
-                        iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(fullJid));
-                        emit avatarChanged(j);
-                    }
-                };
+                iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(fullJid));
+                emit avatarChanged(j);
+            }
+        };
         connect(VCardFactory::instance(), &VCardFactory::vcardChanged, this, applyVCardPhoto);
         // setPhoto/deletePhoto use Silent during server-assisted self-avatar
         // conversion, but changing the avatar must still invalidate its cache.
