@@ -208,50 +208,49 @@ VCard4::VCard VCardFactory::readSourceCard(const QString &accountId, const Jid &
 
 void VCardFactory::saveVCard(const Jid &j, const VCard4::VCard &vcard, Flags flags)
 {
+    saveVCard(nullptr, j, vcard, flags); // Compatibility with unscoped callers.
+}
+
+void VCardFactory::saveVCard(PsiAccount *account, const Jid &j,
+                            const VCard4::VCard &vcard, Flags flags)
+{
 #ifdef VCF_DEBUG
     qDebug() << "VCardFactory::saveVCard" << j.full();
 #endif
-    if (flags & MucUser) {
+    const QString roomKey = account
+        ? accountCacheKey(account->id(), j, {}) : j.bare();
 
-        auto &nick2vcard = mucVcardDict_[j.bare()];
-        auto  nickIt     = nick2vcard.find(j.resource());
+    if (flags & MucUser) {
+        auto &nick2vcard = mucVcardDict_[roomKey];
+        auto  nickIt = nick2vcard.find(j.resource());
         if (nickIt == nick2vcard.end()) {
             nick2vcard.insert(j.resource(), vcard);
-            auto &resQueue = lastMucVcards_[j.bare()];
+            auto &resQueue = lastMucVcards_[roomKey];
             resQueue.enqueue(j.resource());
-            while (resQueue.size() > 3) { // keep max 3 vcards per muc
+            while (resQueue.size() > 3)
                 nick2vcard.remove(resQueue.dequeue());
-            }
         } else {
             *nickIt = vcard;
         }
-
-        if (!(flags & Silent)) {
-            emit vcardChanged(j, flags);
-        }
-        return;
-    }
-
-    checkLimit(j.bare(), vcard);
-
-    // save vCard to disk
-
-    // ensure that there's a vcard directory to save into
-    QDir p(pathToProfile(activeProfile, ApplicationInfo::CacheLocation));
-    QDir v(pathToProfile(activeProfile, ApplicationInfo::CacheLocation) + "/vcard");
-    if (!v.exists())
-        p.mkdir("vcard");
-
-    auto filename = ApplicationInfo::vCardDir() + '/' + JIDUtil::encode(j.bare()).toLower() + ".xml";
-    if (vcard) {
-        vcard.save(filename);
     } else {
-        QFile::remove(filename);
-    }
+        const QString cacheKey = account
+            ? accountCacheKey(account->id(), j, flags) : j.bare();
+        checkLimit(cacheKey, vcard);
 
-    Jid jid = j;
+        const QString dir = ApplicationInfo::vCardDir();
+        QDir().mkpath(dir);
+        const QString fileName = account
+            ? mergedCardFile(dir, account->id(), j, flags)
+            : dir + '/' + JIDUtil::encode(j.bare()).toLower() + ".xml";
+        if (vcard)
+            vcard.save(fileName);
+        else
+            QFile::remove(fileName);
+    }
     if (!(flags & Silent)) {
-        emit vcardChanged(jid, flags);
+        emit vcardChanged(j, flags); // Retain existing signal ABI.
+        if (account)
+            emit vcardChangedScoped(account, j, flags);
     }
 }
 
