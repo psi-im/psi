@@ -95,6 +95,7 @@ public:
 
     void statusUpdate(const Jid &jid, const XMPP::Status &status, Flags flags = {});
     void ensureVCardUpdated(const Jid &jid, const QByteArray &hash, Flags flags = {});
+    void resetMucRoom(const Jid &room);
 signals:
     void avatarChanged(const XMPP::Jid &);
 
