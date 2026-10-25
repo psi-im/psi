@@ -174,7 +174,7 @@ cached independently of decoding: `psi:decoded=false` lets subsequent replay
 retry decryption without downloading the same archive events again. This flag
 uses the existing options map and does not change EncryptionContext's object layout.
 
-Database upgrades with existing history run through HistoryImport's startup
+Database upgrades with existing history run through HistoryUpgrade's startup
 gate: explicit consent, a modal progress window, a worker-owned SQL connection,
 and an atomic transaction. Declining stops startup; a failure rolls back. New
 empty databases are initialized directly. Normal page SQL is still bounded
@@ -194,13 +194,13 @@ Iris cache interface is not implemented by this change.
 has a 40-result limit. It checks the persistent EDB cache first, authenticates
 conversation/room ownership again when reading cached XML, and merges successful
 server pages directly into EDB. Replays never enter the live notification/event
-queue or the legacy flat-file mirror. Both direct and room native timelines use
+queue or any file-based history mirror. Both direct and room native timelines use
 this adapter; the WebKit chat path continues to use the existing EDB preload.
 
 SQLite schema **0.2** adds `events.history_state` and `history_date_ms`, plus
 `archive_items`, `archive_pages` and `archive_page_items`. Migration is one
 transaction, keeps all original event IDs, payloads, dates and `extra_data`, and
-does not set `import_start` or restart HistoryImport. UTC millisecond ordering
+does not run legacy flat-file history import. UTC millisecond ordering
 keys are filled in batches, preserving original date strings. This avoids
 lexically misordering MAM UTC stamps and old desktop-local timestamps. Rows
 written by an older client after downgrade receive their ordering keys at the
