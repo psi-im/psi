@@ -7,6 +7,7 @@
 
 #include <QDomDocument>
 #include <QFile>
+#include <QCryptographicHash>
 #include <QMimeDatabase>
 
 // Keep cache read and vCard field merging in one translation unit. Tests use
@@ -51,6 +52,27 @@ XMPP::VCard4::VCard VCardFactory::readCachedVCard(const QString &fileName)
         }
     }
     return card;
+}
+
+// Stable, short and account-specific sidecar names; the merged legacy disk
+// path remains unchanged for compatibility. This path is not used on getters
+// and does not trigger any network traffic.
+QString VCardFactory::sourceCardFile(const QString &dir, const QString &accountId,
+                                      const Jid &jid, Flags flags, bool modern)
+{
+    QByteArray identity = accountId.toUtf8();
+    identity.append('\0');
+    identity.append((flags & MucUser ? jid.full() : jid.bare()).toUtf8());
+    const QByteArray digest = QCryptographicHash::hash(identity, QCryptographicHash::Sha256).toHex();
+    return dir + QLatin1String("/source-") + QString::fromLatin1(digest)
+        + (modern ? QLatin1String("-modern.xml") : QLatin1String("-legacy.xml"));
+}
+
+XMPP::VCard4::VCard VCardFactory::mergeSourceCards(XMPP::VCard4::VCard modern,
+                                                    const XMPP::VCard4::VCard &legacy)
+{
+    supplementFromLegacy(modern, legacy);
+    return modern;
 }
 
 // XEP-0292 and XEP-0054 expose separate account-level stores. Modern
