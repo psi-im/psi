@@ -295,6 +295,32 @@ private slots:
         QVERIFY(record);
         QCOMPARE(record->reference.uri(), media.sources.first());
     }
+    void urlContentMappingSurvivesRestartWithoutBecomingContentChecksum()
+    {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString path = dir.filePath(QStringLiteral("shared-files.sqlite"));
+        const Hash address(Hash::Sha256,
+                           QCryptographicHash::hash("psi-oob-url-v1:https://example.org/file",
+                                                    QCryptographicHash::Sha256));
+        const Hash actual(Hash::Sha256, QCryptographicHash::hash("bytes", QCryptographicHash::Sha256));
+        QVERIFY(address != actual);
+        {
+            FileSharingStore store(path);
+            QVERIFY(!store.contentForUrl(QStringLiteral("account-a"), address).has_value());
+            QVERIFY(store.rememberUrlContent(QStringLiteral("account-a"), address, actual));
+            QCOMPARE(store.contentForUrl(QStringLiteral("account-a"), address).value(), actual);
+            QVERIFY(!store.contentForUrl(QStringLiteral("account-b"), address));
+            QVERIFY(!store.find(QStringLiteral("account-a"), address));
+        }
+        {
+            FileSharingStore reopened(path);
+            QCOMPARE(reopened.contentForUrl(QStringLiteral("account-a"), address).value(), actual);
+            QVERIFY(!reopened.contentForUrl(QStringLiteral("account-b"), address));
+            QVERIFY(!reopened.find(QStringLiteral("account-a"), address));
+        }
+    }
+
     void catalogReopen()
     {
         QTemporaryDir dir;
