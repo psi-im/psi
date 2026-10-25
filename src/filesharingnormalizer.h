@@ -10,9 +10,10 @@ namespace XMPP {
 class Message;
 }
 
-// A display-only projection. XMPP::Message is explicitly shared in Iris;
-// mutating a 'copy' via setReferences()/setUrlList() would also mutate the
-// received/persisted message. Keep normalization wholly outside Message.
+// Canonical attachment projection shared by live rendering and SQLite
+// serialization (including MAM). Iris Message uses explicitly shared data:
+// mutating a shallow copy changes the received stanza. Never modify it here.
+// Encoding persists the projected references/remaining links instead.
 namespace FileSharingNormalizer {
 struct PreparedMedia {
     QList<XMPP::Reference> references;
