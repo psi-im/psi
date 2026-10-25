@@ -1,6 +1,6 @@
 # Avatar cache centralization: correctness-first migration plan
 
-**Status:** approved design direction; implementation in stages, **do not remove the native-chat memo yet**.
+**Status:** staged implementation in progress; **do not remove the native-chat memo yet**.
 **Target:** option **C**, a unified, account-scoped `AvatarCache` with bounded negative-result memoization.
 **Source:** detailed audit supplied 2026-10-24, performed against Psi `master` at `d709963e`.
 **Audited report:** [English translation of the original Russian-language audit](avatar-cache-audit-source-2026-10-24.md), preserving its measurements and findings; the original source-language text is not stored in the repository.
@@ -16,7 +16,13 @@
 6. Keep shared `FileCache` image **bytes by hash**, but scope JID bindings, decoded resolution state, negative memo and vCard request lifecycles to **account ID + contact/MUC identity + normalized bare/full JID**. The same JID on two accounts must never cross-contaminate an avatar.
 7. Keep the semantics of ordinary contact vs MUC private chat; **do not move `isRoomOccupantChat()` into the per-message callback**. It scans the roster and is currently evaluated when configuring the peer (`psichatdlg.cpp`, around line 460 of the audited revision).
 8. Ship compatible Qt5 and Qt6 builds and behavior-based tests against **real** `AvatarCache` and `VCardFactory`, not only `tests/account/nativechatavatars.cpp` doubles. Merge stages only after relevant checks are green.
-9. Do not conflate the separate vCard4/vcard-temp **retrieval** project with avatar cache identity. vCard storage is server-owned, and client resource caps do not establish server vCard availability. Coordinate with pending [Psi PR #1034](https://github.com/psi-im/psi/pull/1034); avoid duplicating or inadvertently overwriting its disk-cache fix. The audit predates that unmerged work.
+9. Do not conflate the separate vCard4/vcard-temp **retrieval** project with avatar cache identity. vCard storage is server-owned, and client resource caps do not establish server vCard availability. The retrieval and first disk-cache fixes were **merged in [Psi PR #1034](https://github.com/psi-im/psi/pull/1034)**. The audit predates those fixes.
+
+## Implementation progress (2026-10-25)
+
+- **Merged:** [#1034](https://github.com/psi-im/psi/pull/1034) — independent modern/legacy vCard retrieval, PHOTO-only requests, preservation of modern fields, first disk-cache hit, real-Iris regressions.
+- **In progress:** Phase 1 PHOTO consistency — self-avatar publication currently discards bytes, clearing PHOTO can leave a zero-valued URI property, and explicit XEP-0153 removal may notify before the cached PHOTO is erased. Correct these and test the real Iris mutators; do **not** treat that as completion of the full real-AvatarCache integration gate.
+- **Next:** Phase 2 source invalidation (including PEP retractions and failed manual-avatar imports), followed by account identity scoping. Do not start centralized negative caching or remove per-window QPixmap caches beforehand.
 
 ## 1. Audited architecture / baseline (2026-10-24)
 
@@ -76,7 +82,7 @@ Consumers beyond native chat: roster, MUC-user model, tooltip, notifications, In
 
 ## 3. Defects to fix before enabling centralized negative cache
 
-- [ ] **First vCard disk read:** in the audited `src/vcardfactory.cpp`, `vcard()` calls `checkLimit()` after successfully parsing XML, then returns `{}` unconditionally (around line 224). Return the parsed `VCard4::VCard` immediately, on the **first** call. Test both native vCard4 XML and legacy vcard-temp XML, plus missing/corrupt files. **Also present in the pending PR #1034 fix; avoid double merges.**
+- [x] **First vCard disk read:** fixed in [#1034](https://github.com/psi-im/psi/pull/1034), with real-Iris Qt5/Qt6 regressions for modern vCard4 XML, legacy vcard-temp XML, URI-only PHOTO, and missing/corrupt files.
 - [ ] **Deleted PHOTO resurrected:** clearing a hash in `avatars.cpp` while `VCardFactory` still retains PHOTO can cause the next getter to re-import old pixels. Clear the right source before publishing invalidation; test the real AvatarCache/VCardFactory and both hash/PEP paths.
 - [ ] **Cross-account contamination:** `jidToIcons`, `iconset_`, MUC vCard cache and vCard request queue lack account identity. Queue merges requests from different accounts and executes on whichever is connected. Scope these without breaking the public API, shared bytes or existing consumers.
 - [ ] **`VCardFactory::setPhoto()` bytes discarded:** at audited line ~275, compares to the supplied bytes but sets `UriValue{}` instead. The API is invoked on the **Silent self-avatar publication** path when the server supports avatar conversion. Fix the behavior with a targeted test and a carefully chosen media type (or document why null is intentionally required), not by silently changing caller behavior.
@@ -93,7 +99,7 @@ Work in order; split large changes into reviewable, revertible PRs. Prefer tests
 
 - [ ] Repair first disk hit; distinguish absent XML from parsed vCard with no PHOTO.
 - [ ] Test PHOTO with embedded bytes, PHOTO URI-only, missing PHOTO, malformed payload, missing/corrupt disk file.
-- [ ] Reconcile vCard4/vcard-temp full-card and photo-only semantics against [#1034](https://github.com/psi-im/psi/pull/1034). Do not allow a PHOTO-only refresh to overwrite non-PHOTO fields. Note that XEP-0054 IQ cannot request only a field: the API must constrain **what we use**, not the stanza payload.
+- [x] Reconcile vCard4/vcard-temp full-card and photo-only semantics in [#1034](https://github.com/psi-im/psi/pull/1034). PHOTO-only refresh preserves non-PHOTO fields. XEP-0054 IQ still fetches the complete legacy payload; only its PHOTO is applied.
 - [ ] Fix/test `setPhoto()` and `deletePhoto()`, especially Silent publication and account avatar conversion.
 - [ ] Record unknown vs successfully fetched-without-PHOTO vs URI-only vs failed fetch. Never treat a null pixel object as authoritative absence.
 
@@ -215,7 +221,7 @@ At the current ~**160 materialized rows**, that difference is on the order of **
 ## 7. Tracking and coordination
 
 - **Source report:** external high-reasoning audit of `master d709963e`, supplied by project maintainer 2026-10-24. Its protocol conclusions and measurements are *audit findings*, not yet end-to-end server-verified facts.
-- **Existing concurrent work:** [PR #1034](https://github.com/psi-im/psi/pull/1034), “Fetch both vCard stores; use vcard-temp only for avatar refresh”, touches `VCardFactory`, its caching and photo-only requests. On 2026-10-25 it was **open, not merged** and had one failed MAM native-chat integration workflow on its then-current head. Resolve and rebase rather than silently reimplement its scope in this migration.
+- **Completed foundation:** [PR #1034](https://github.com/psi-im/psi/pull/1034) merged on 2026-10-25 with independent vCard4/vcard-temp retrieval, PHOTO-only refresh, first disk-cache read, and Qt5/Qt6 regression coverage. Its then-pending CI status in the original audit is historical.
 - **First safe action:** preserve this plan, add/verify the one-call disk cache regression, and resolve test coverage before enabling negative memo or removing `NativeChatAvatars` caches.
 - **Stage progress:** use the checkboxes in this document as the source of truth. A code-only fix without real-factory regression remains **in progress**, not “done”.
 - **Review strategy:** one PR per coherent dependency-bound stage, explicit rollback point, Qt5 and Qt6 verification, source/package/ABI-compatible behavior.
