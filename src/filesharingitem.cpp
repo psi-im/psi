@@ -20,6 +20,7 @@
 #include "filesharingitem.h"
 #include "filecache.h"
 #include "filesharingchunksource.h"
+#include "filesharinghashjob.h"
 #include "filesharingmanager.h"
 #include "filesharingpublication.h"
 #include "fileutil.h"
@@ -32,13 +33,13 @@
 #include "userlist.h"
 
 #include <QBuffer>
-#include <QCryptographicHash>
 #include <QDir>
 #include <QFileIconProvider>
 #include <QImageReader>
 #include <QMimeDatabase>
 #include <QPainter>
 #include <QTemporaryFile>
+#include <QUrl>
 
 #define TEMP_TTL (7 * 24 * 3600)
 #define FILE_TTL (365 * 24 * 3600)
@@ -87,6 +88,22 @@ FileSharingItem::FileSharingItem(const MediaSharing &ms, const Jid &from, PsiAcc
 
     if (_fileType == FileType::RemoteFile)
         FileSharingChunkSource::configure(this);
+}
+
+// OOB supplies only an HTTP URL: this SHA-256 is an address-routing key,
+ // never a content digest. It must not enter checksum verification or the
+ // verified content cache. Only the actual downloaded bytes can create one.
+FileSharingItem::FileSharingItem(const QUrl &url, const XMPP::Hash &identity, PsiAccount *acc,
+                                 FileSharingManager *manager) :
+    QObject(manager), _urlOnly(true), _acc(acc), _manager(manager), _fileType(FileType::RemoteFile)
+{
+    _sums.append(identity);
+    _uris.append(url.toString(QUrl::FullyEncoded | QUrl::RemoveFragment));
+    _fileName = QFileInfo(url.path()).fileName();
+    if (_fileName.isEmpty())
+        _fileName = QStringLiteral("download");
+    _urlDisplayName = _fileName;
+    _mimeType = QMimeDatabase().mimeTypeForFile(_fileName, QMimeDatabase::MatchExtension).name();
 }
 
 FileSharingItem::FileSharingItem(const QImage &image, PsiAccount *acc, FileSharingManager *manager) :
@@ -204,6 +221,10 @@ bool FileSharingItem::initFromCache(FileCacheItem *cache)
 
 Reference FileSharingItem::toReference() const
 {
+    // The URL identity is not an XEP-0300 checksum; don't advertise it
+    // as a verified SIMS file hash when forwarding/sending files.
+    if (_urlOnly)
+        return {};
     auto uris = sortSourcesByPriority(_uris);
     uris.removeDuplicates();
     std::reverse(uris.begin(), uris.end());
@@ -223,8 +244,8 @@ Jingle::FileTransfer::File FileSharingItem::fileInfo() const
     Jingle::FileTransfer::File jfile;
     QFileInfo                  fi(_fileName);
     jfile.setDate(fi.lastModified());
-    for (auto const &h : _sums)
-        jfile.addHash(h);
+    for (int i = _urlOnly ? 1 : 0; i < _sums.size(); ++i)
+        jfile.addHash(_sums.at(i));
     jfile.setName(fi.fileName());
     jfile.setSize(quint64(fi.size()));
     jfile.setMediaType(_mimeType);
@@ -284,6 +305,8 @@ QImage FileSharingItem::preview(const QSize &maxSize) const
 
 QString FileSharingItem::displayName() const
 {
+    if (_urlOnly && !_urlDisplayName.isEmpty())
+        return _urlDisplayName;
     if (_fileName.isEmpty()) {
         auto ext = FileUtil::mimeToFileExt(_mimeType);
         return QString("psi-%1.%2").arg(QString::fromLatin1(_sums[0].toHex()), ext).replace("/", "");
@@ -330,8 +353,8 @@ FileCacheItem *FileSharingItem::cache(bool reborn) const
 {
     if (!FileSharingChunkSource::error(const_cast<FileSharingItem *>(this)).isEmpty())
         return nullptr;
-    for (const auto &h : _sums) {
-        auto c = _manager->cacheItem(h, reborn);
+    for (int i = _urlOnly ? 1 : 0; i < _sums.size(); ++i) {
+        auto c = _manager->cacheItem(_sums.at(i), reborn);
         if (c)
             return c;
     }
@@ -427,9 +450,9 @@ FileShareDownloader *FileSharingItem::download(std::optional<Range> range, const
     file.setName(_fileName);
     if (_fileSize)
         file.setSize(*_fileSize);
-    for (auto const &h : std::as_const(_sums)) {
-        file.addHash(h);
-    }
+    if (!_urlOnly)
+        for (auto const &h : std::as_const(_sums))
+            file.addHash(h);
 
     auto downloaderRange = std::optional<FileShareDownloader::Range> {};
     if (range) {
@@ -441,7 +464,7 @@ FileShareDownloader *FileSharingItem::download(std::optional<Range> range, const
     //     return _downloader;
     // }
 
-    auto downloader = new FileShareDownloader(_acc, _sums, file, _jids, _uris, this);
+    auto downloader = new FileShareDownloader(_acc, _urlOnly ? HashSums() : _sums, file, _jids, _uris, this);
     if (!preferredSource.isEmpty())
         downloader->preferSource(preferredSource);
     if (downloaderRange) {
@@ -471,14 +494,35 @@ FileShareDownloader *FileSharingItem::download(std::optional<Range> range, const
             vm.insert(QString::fromLatin1("amplitudes"), amplitudes);
         }
 
-        auto cache = _manager->moveToCache(_sums, QFileInfo(dlFileName), vm, FILE_TTL);
-        if (cache) {
-            // TODO set some item flags?
-            _fileType = FileType::LocalFile;
-            _fileName = _manager->cacheDir() + "/" + cache->fileName();
+        // Cache insertion and item state changes are confined to this object's
+        // thread, even when hashing multi-gigabyte URL-only downloads.
+        const auto completeCache = [this, dlFileName, vm = std::move(vm)](const HashSums &actualHashes) {
+            if (!actualHashes.isEmpty()) {
+                auto *cache = _manager->moveToCache(actualHashes, QFileInfo(dlFileName), vm, FILE_TTL);
+                if (cache) {
+                    if (_urlOnly) {
+                        for (const auto &hash : actualHashes)
+                            if (!_sums.contains(hash))
+                                _sums.append(hash);
+                        _fileSize = QFileInfo(_manager->cacheDir() + "/" + cache->fileName()).size();
+                    }
+                    _fileType = FileType::LocalFile;
+                    _fileName = _manager->cacheDir() + "/" + cache->fileName();
+                }
+            }
+            emit downloadFinished();
+        };
+        if (_urlOnly) {
+            // Hashing the whole payload on the GUI thread would stall Psi for
+            // multi-gigabyte OOB files. The temporary file is kept alive until
+            // the worker finishes, and cleaned up if this item is destroyed.
+            FileSharingHashJob::sha256TemporaryFile(
+                dlFileName, this, [completeCache](const XMPP::Hash &hash) {
+                    completeCache(hash.isValid() ? HashSums { hash } : HashSums {});
+                });
+        } else {
+            completeCache(_sums);
         }
-
-        emit downloadFinished();
     });
 
     connect(downloader, &FileShareDownloader::failed, this, [downloader, this]() {
