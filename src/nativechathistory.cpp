@@ -2,7 +2,6 @@
 #include "nativechathistory.h"
 #include "eventdb.h"
 #include "filesharingmanager.h"
-#include "filesharingnormalizer.h"
 #include "historysync.h"
 #include "iris/xmpp_htmlelement.h"
 #include "messageview.h"
@@ -27,15 +26,11 @@ MessageView nativeHistoryMessage(PsiAccount *account, const XMPP::Jid &peer, con
             html.setBody(element);
     }
 #endif
-    if (body.isEmpty() && html.body().isNull()) {
-        // New SQLite rows already have normalized HTTP file references;
-        // only non-HTTP OOB links belong in the textual fallback.
-        const auto links = FileSharingNormalizer::remainingLinks(message);
+    if (body.isEmpty() && html.body().isNull() && !message.urlList().isEmpty()) {
         QStringList urls;
-        for (const auto &url : links)
+        for (const auto &url : message.urlList())
             urls.append(url.url());
-        if (!urls.isEmpty())
-            body = urls.join(QLatin1Char('\n'));
+        body = urls.join(QLatin1Char('\n'));
     }
     auto view = MessageView::fromPlainText(body, subject ? MessageView::Subject : MessageView::Message);
     if (PsiOptions::instance()->getOption("options.html.chat.render").toBool() && !html.body().isNull())
