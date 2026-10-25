@@ -81,6 +81,6 @@ jobs:
       - name: Run native regressions
         env:
           QT_QPA_PLATFORM: offscreen
-        run: ctest --test-dir build --output-on-failure --no-tests=error -R "account_vcard_disk_cache|account_vcard_request_merge|account_avatar_blob_fetch_policy|avcall(policy|audiodirection)_test"
+        run: ctest --test-dir build --output-on-failure --no-tests=error -R "account_vcard_disk_cache|account_vcard_request_merge|account_avatar_blob_fetch_policy|account_avatar_epoch_policy|avcall(policy|audiodirection)_test"
       - name: Cache statistics
         run: ccache --show-stats
