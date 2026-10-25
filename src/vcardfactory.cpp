@@ -345,8 +345,13 @@ VCardFactory *VCardFactory::instance_ = nullptr;
 class VCardRequest::Private {
 public:
     QList<QPointer<PsiAccount>> accounts;
+    QString                     accountId;
     Jid                         jid;
     VCardFactory::Flags         flags;
+    VCard4::VCard               modern;
+    VCard4::VCard               legacy;
+    bool                        modernAnswered = false;
+    bool                        legacyAnswered = false;
 
     using ErrorPtr = std::unique_ptr<XMPP::Stanza::Error>;
     VCard4::VCard vcard;
@@ -355,7 +360,7 @@ public:
     bool          storeAnswered = false;
 
     Private(PsiAccount *pa, const Jid &jid, VCardFactory::Flags flags) :
-        accounts({ { pa } }), jid(jid), flags(flags) { }
+        accounts({ { pa } }), accountId(pa ? pa->id() : QString()), jid(jid), flags(flags) { }
 };
 
 VCardRequest::VCardRequest(PsiAccount *account, const Jid &jid, VCardFactory::Flags flags) :
@@ -387,13 +392,14 @@ void VCardRequest::executeVCardTemp(PsiAccount *pa)
     JT_VCard *task = new JT_VCard(pa->client()->rootTask());
     task->connect(task, &JT_VCard::finished, this, [this, task]() {
         if (task->success()) {
-            VCard4::VCard legacy;
-            legacy.fromVCardTemp(task->vcard());
-            VCardFactory::supplementFromLegacy(d->vcard, legacy);
+            d->legacy.fromVCardTemp(task->vcard());
+            d->legacyAnswered = true;
+            VCardFactory::supplementFromLegacy(d->vcard, d->legacy);
             d->storeAnswered = true;
             d->error.reset();
             d->statusString.clear();
         } else if (task->error().condition == Stanza::Error::ErrorCond::ItemNotFound) {
+            d->legacyAnswered = true;
             d->storeAnswered = true;
             d->error.reset();
             d->statusString.clear();
@@ -414,10 +420,14 @@ void VCardRequest::executePubSub(PsiAccount *pa)
     auto task = pa->pepManager()->get(d->jid, QLatin1String(PEP_VCARD4_NODE), QLatin1String("current"));
     task->connect(task, &PEPGetTask::finished, this, [this, task, ppa = QPointer<PsiAccount>(pa)]() {
         if (task->success()) {
+            d->modernAnswered = true;
             d->storeAnswered = true;
-            if (!task->items().empty())
-                d->vcard = VCard4::VCard(task->items().last().payload());
+            if (!task->items().empty()) {
+                d->modern = VCard4::VCard(task->items().last().payload());
+                d->vcard = d->modern;
+            }
         } else if (task->error().condition == Stanza::Error::ErrorCond::ItemNotFound) {
+            d->modernAnswered = true;
             d->storeAnswered = true;
         } else {
             d->error.reset(new Stanza::Error(task->error()));
@@ -444,6 +454,12 @@ void VCardRequest::merge(PsiAccount *account, const Jid &, VCardFactory::Flags f
 bool VCardRequest::success() const { return d->error == nullptr; }
 
 VCard4::VCard VCardRequest::vcard() const { return d->vcard; }
+
+const QString &VCardRequest::accountId() const { return d->accountId; }
+VCard4::VCard VCardRequest::modernVcard() const { return d->modern; }
+VCard4::VCard VCardRequest::legacyVcard() const { return d->legacy; }
+bool VCardRequest::modernAnswered() const { return d->modernAnswered; }
+bool VCardRequest::legacyAnswered() const { return d->legacyAnswered; }
 
 QString VCardRequest::errorString() const { return d->statusString.isEmpty() ? d->error->toString() : d->statusString; }
 
