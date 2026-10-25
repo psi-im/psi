@@ -151,7 +151,6 @@ bool AvatarBlobFetchPolicy::retractMetadata(const QString &accountId, const QStr
         return false;
     releaseFlight(accountId, bareJid, entry->inFlight);
     entry->metadataItemId.clear();
-    releaseFlight(accountId, bareJid, entry->inFlight);
     entry->hash.clear();
     entry->inFlight.clear();
     entry->waitingForSharedHash = false;
@@ -166,6 +165,7 @@ bool AvatarBlobFetchPolicy::retractData(const QString &accountId, const QString 
     Entry *entry = lookup(accountId, bareJid);
     if (!entry || entry->hash != hash || hash.isEmpty())
         return false;
+    releaseFlight(accountId, bareJid, entry->inFlight);
     entry->hash.clear();
     entry->inFlight.clear();
     entry->waitingForSharedHash = false;
