@@ -65,6 +65,30 @@ private slots:
         QCOMPARE(account.factory.contactLookups, 0);
     }
 
+    void rejoiningSameRoomDropsPositiveAndNegativeOccupantMemo()
+    {
+        PsiAccount account;
+        const XMPP::Jid room(QStringLiteral("room@muc.example.org/me"));
+        NativeChatAvatars avatars(&account, true);
+        QVERIFY(avatars.setPeer(room));
+
+        avatars.avatar(MessageView(false, QStringLiteral("alice"))); // null, memoized
+        account.factory.occupants.insert(QStringLiteral("room@muc.example.org/bob"), pixmap(Qt::red));
+        const auto previousBob = avatars.avatar(MessageView(false, QStringLiteral("bob")));
+        QVERIFY(!previousBob.isNull());
+        QCOMPARE(account.factory.occupantLookups, 2);
+        QVERIFY(!avatars.setPeer(room)); // Same room: setPeer alone cannot detect rejoin.
+
+        account.factory.occupants.insert(QStringLiteral("room@muc.example.org/alice"), pixmap(Qt::green));
+        account.factory.occupants.insert(QStringLiteral("room@muc.example.org/bob"), pixmap(Qt::blue));
+        QVERIFY(avatars.resetRoom());
+        QVERIFY(!avatars.resetRoom()); // Idempotent; no repaint required.
+        QVERIFY(!avatars.avatar(MessageView(false, QStringLiteral("alice"))).isNull());
+        QCOMPARE(avatars.avatar(MessageView(false, QStringLiteral("bob"))).toImage().pixelColor(0, 0),
+                 QColor(Qt::blue));
+        QCOMPARE(account.factory.occupantLookups, 4);
+    }
+
     void groupChatCachesOccupantsByNick()
     {
         PsiAccount        account;
