@@ -6,6 +6,8 @@
 #include <QGraphicsOpacityEffect>
 #include <QScrollBar>
 #include <QToolButton>
+#include <QStandardItemModel>
+#include <QTreeView>
 
 #include "widgets/OverlayScrollBarManager.h"
 
@@ -28,6 +30,37 @@ private slots:
     void initTestCase()
     {
         Mattermost::OverlayScrollBarManager::install(*qApp);
+    }
+
+    void optedInRostersGetOverlayWithoutAffectingOtherScrollAreas()
+    {
+        QTreeView roster;
+        QStandardItemModel model;
+        for (int row = 0; row < 50; ++row)
+            model.appendRow(new QStandardItem(QString::number(row)));
+        roster.setModel(&model);
+        roster.resize(220, 170);
+        roster.setProperty("psiOverlayScrollBar", true);
+        roster.setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        roster.show();
+
+        QTreeView unrelated;
+        unrelated.setModel(&model);
+        unrelated.resize(220, 170);
+        unrelated.show();
+        settleEvents();
+
+        auto *overlay = roster.findChild<QScrollBar *>(
+            QStringLiteral("mattermostOverlayVerticalScrollBar"));
+        QVERIFY(overlay);
+        QCOMPARE(roster.verticalScrollBarPolicy(), Qt::ScrollBarAlwaysOff);
+        QVERIFY(roster.verticalScrollBar()->maximum() > 0);
+        QVERIFY(!unrelated.findChild<QScrollBar *>(
+            QStringLiteral("mattermostOverlayVerticalScrollBar")));
+
+        roster.verticalScrollBar()->setValue(10);
+        settleEvents();
+        QCOMPARE(overlay->value(), 10);
     }
 
     void leavingDuringRevealCancelsTheRevealAnimation()
