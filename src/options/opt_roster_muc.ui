@@ -30,16 +30,6 @@
     <number>9</number>
    </property>
    <item>
-    <widget class="QCheckBox" name="ck_disableScrollbar">
-     <property name="toolTip">
-      <string>Hides scrollbar in the roster widget.</string>
-     </property>
-     <property name="text">
-      <string>Disable scrollbar</string>
-     </property>
-    </widget>
-   </item>
-   <item>
     <widget class="QCheckBox" name="ck_rosterAtLeft">
      <property name="text">
       <string>Place groupchat roster at left</string>
