@@ -327,7 +327,7 @@ public:
             qDebug() << "return from vcardfactory for jid " << _jid.full();
 #endif
             auto vcard = VCardFactory::instance()->vcard(_jid);
-            if (vcard.isNull() || QByteArray(vcard.photo()).isNull()) {
+            if (!vcard || QByteArray(vcard.photo()).isEmpty()) {
                 return QPixmap();
             }
             QByteArray data = vcard.photo();
@@ -372,7 +372,7 @@ public:
         QByteArray data;
         if (!icons.avatar) {
             auto vcard = VCardFactory::instance()->mucVcard(_jid);
-            if (vcard.isNull() || QByteArray(vcard.photo()).isNull()) {
+            if (!vcard || QByteArray(vcard.photo()).isEmpty()) {
                 return QPixmap();
             }
             data = vcard.photo();
@@ -943,7 +943,7 @@ AvatarFactory::UserHashes AvatarFactory::userHashes(const Jid &jid) const
         // we don't call this method often. so it's fine to query vcard factory every time.
         auto flags = jid.resource().isEmpty() ? VCardFactory::Flags {} : VCardFactory::MucUser;
         auto vcard = VCardFactory::instance()->vcard(jid, flags);
-        if (!vcard.isNull() && !QByteArray(vcard.photo()).isNull()) {
+        if (vcard && !QByteArray(vcard.photo()).isEmpty()) {
             if (AvatarCache::instance()->setIcon(AvatarCache::VCardType, jid.full(), vcard.photo())
                 != AvatarCache::NoData) {
                 icons = AvatarCache::instance()->icons(jid.full());
