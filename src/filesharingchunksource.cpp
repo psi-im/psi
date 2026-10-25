@@ -208,7 +208,7 @@ QString FileSharingChunkSource::identity(FileSharingItem *item)
 }
 void FileSharingChunkSource::addMetadata(FileSharingItem *item, const XMPP::Jingle::FileTransfer::File &file)
 {
-    if (!item || !item->account() || !item->fileSize())
+    if (!item || !item->account() || !item->fileSize() || item->isUrlOnly())
         return;
     const auto               size = *item->fileSize();
     QList<MediaFileChecksum> hashes;
@@ -237,14 +237,14 @@ void FileSharingChunkSource::addMetadata(FileSharingItem *item, const XMPP::Jing
 }
 MediaChunkCache *FileSharingChunkSource::configure(FileSharingItem *item)
 {
-    if (!item || !item->account() || !item->fileSize())
+    if (!item || !item->account() || !item->fileSize() || item->isUrlOnly())
         return nullptr;
     addMetadata(item, item->fileMetadata());
     return item->account()->psi()->fileSharingManager()->mediaChunkCache();
 }
 QString FileSharingChunkSource::localFile(FileSharingItem *item)
 {
-    if (!item || !item->account() || !item->fileSize())
+    if (!item || !item->account() || !item->fileSize() || item->isUrlOnly())
         return { };
     auto       cache = item->account()->psi()->fileSharingManager()->mediaChunkCache();
     const auto state = cache->fileState(identity(item), *item->fileSize());
@@ -253,7 +253,7 @@ QString FileSharingChunkSource::localFile(FileSharingItem *item)
 
 QString FileSharingChunkSource::error(FileSharingItem *item)
 {
-    if (!item || !item->account() || !item->fileSize())
+    if (!item || !item->account() || !item->fileSize() || item->isUrlOnly())
         return { };
     auto cache = item->account()->psi()->fileSharingManager()->mediaChunkCache();
     return cache->fileState(identity(item), *item->fileSize()).error;
@@ -262,7 +262,7 @@ QString FileSharingChunkSource::error(FileSharingItem *item)
 MediaChunkAbort FileSharingChunkSource::fetch(FileSharingItem *item, quint64 offset, quint64 length,
                                               MediaChunkCompletion done, QObject *owner)
 {
-    if (!item || !item->account() || !item->fileSize()) {
+    if (!item || !item->account() || !item->fileSize() || item->isUrlOnly()) {
         QTimer::singleShot(0, owner, [done] { done({ }, QStringLiteral("Media source unavailable")); });
         return { };
     }
