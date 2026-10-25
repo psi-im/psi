@@ -373,7 +373,7 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m,
                 const Hash identity(Hash::Sha256, QCryptographicHash::hash(key, QCryptographicHash::Sha256));
                 item = d->accountItems.value(acc->id()).value(identity, nullptr);
                 if (!item || item->account() != acc || !item->isUrlOnly()) {
-                    item = new FileSharingItem(source, identity, acc, this);
+                    item = new FileSharingItem(source, identity, acc, this, r.anchor());
                     d->rememberItem(item);
                 }
             } else {
