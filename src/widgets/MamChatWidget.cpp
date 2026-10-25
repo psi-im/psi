@@ -244,7 +244,6 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
 {
     qRegisterMetaType<ChatReply>();
     qRegisterMetaType<MamHistorySource::Request>();
-    setProperty("psiOverlayScrollBar", true);
     theme_.layout = NativeChatTheme::Modern;
     // Coalesced single-shot timer: no updates while a chat is hidden and
     // no per-second activity. Only the next visible relative-time boundary
