@@ -309,13 +309,15 @@ private slots:
             FileSharingStore store(path);
             QVERIFY(!store.contentForUrl(QStringLiteral("account-a"), address).has_value());
             QVERIFY(store.rememberUrlContent(QStringLiteral("account-a"), address, actual));
-            QCOMPARE(store.contentForUrl(QStringLiteral("account-a"), address).value(), actual);
+            QVERIFY(store.contentForUrl(QStringLiteral("account-a"), address).has_value());
+            QVERIFY(store.contentForUrl(QStringLiteral("account-a"), address).value() == actual);
             QVERIFY(!store.contentForUrl(QStringLiteral("account-b"), address));
             QVERIFY(!store.find(QStringLiteral("account-a"), address));
         }
         {
             FileSharingStore reopened(path);
-            QCOMPARE(reopened.contentForUrl(QStringLiteral("account-a"), address).value(), actual);
+            QVERIFY(reopened.contentForUrl(QStringLiteral("account-a"), address).has_value());
+            QVERIFY(reopened.contentForUrl(QStringLiteral("account-a"), address).value() == actual);
             QVERIFY(!reopened.contentForUrl(QStringLiteral("account-b"), address));
             QVERIFY(!reopened.find(QStringLiteral("account-a"), address));
         }
