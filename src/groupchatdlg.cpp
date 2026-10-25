@@ -1589,7 +1589,7 @@ void GCMainDlg::setMucSelfAvatar()
 
 void GCMainDlg::updateGCVCard()
 {
-    const auto vcard = VCardFactory::instance()->vcard(jid());
+    const auto vcard = VCardFactory::instance()->vcard(account(), jid());
     QPixmap    avatar;
     if (vcard) {
         d->vcardMucName = vcard.nickName().preferred().data.value(0);
@@ -1753,7 +1753,7 @@ void GCMainDlg::doShowInfo()
 
     {
         QVBoxLayout *layout = new QVBoxLayout;
-        const auto   vcard  = VCardFactory::instance()->vcard(jid());
+        const auto   vcard  = VCardFactory::instance()->vcard(account(), jid());
         auto         info   = new InfoWidget(InfoWidget::MucView, jid(), vcard, account());
         layout->addWidget(info);
         ui.tab_vcard->setLayout(layout);
