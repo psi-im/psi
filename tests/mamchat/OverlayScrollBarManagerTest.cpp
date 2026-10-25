@@ -27,11 +27,6 @@ class OverlayScrollBarManagerTest : public QObject
     Q_OBJECT
 
 private slots:
-    void initTestCase()
-    {
-        Mattermost::OverlayScrollBarManager::install(*qApp);
-    }
-
     void optedInRostersGetOverlayWithoutAffectingOtherScrollAreas()
     {
         QTreeView roster;
@@ -40,8 +35,8 @@ private slots:
             model.appendRow(new QStandardItem(QString::number(row)));
         roster.setModel(&model);
         roster.resize(220, 170);
-        roster.setProperty("psiOverlayScrollBar", true);
         roster.setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        Mattermost::OverlayScrollBarManager::attach(roster);
         roster.show();
 
         QTreeView unrelated;
@@ -66,7 +61,7 @@ private slots:
     void leavingDuringRevealCancelsTheRevealAnimation()
     {
         QAbstractScrollArea area;
-        area.setProperty("psiOverlayScrollBar", true);
+        Mattermost::OverlayScrollBarManager::attach(area);
         area.resize(320, 240);
         area.move(200, 200);
         QCursor::setPos(50, 50);
@@ -90,7 +85,7 @@ private slots:
     void lostLeaveDoesNotKeepOverlayVisible()
     {
         QAbstractScrollArea area;
-        area.setProperty("psiOverlayScrollBar", true);
+        Mattermost::OverlayScrollBarManager::attach(area);
         area.resize(320, 240);
         area.move(200, 200);
         area.verticalScrollBar()->setRange(0, 100);
@@ -119,7 +114,7 @@ private slots:
     void edgeButtonsTrackPositionAndTriggerRealSliderActions()
     {
         QAbstractScrollArea area;
-        area.setProperty("psiOverlayScrollBar", true);
+        Mattermost::OverlayScrollBarManager::attach(area);
         area.resize(320, 240);
         area.verticalScrollBar()->setRange(0, 100);
         area.verticalScrollBar()->setPageStep(20);
@@ -159,7 +154,7 @@ private slots:
     void edgeNavigationButtonsCanBeDisabledTogether()
     {
         QAbstractScrollArea area;
-        area.setProperty("psiOverlayScrollBar", true);
+        Mattermost::OverlayScrollBarManager::attach(area);
         area.resize(320, 240);
         area.verticalScrollBar()->setRange(0, 100);
         area.verticalScrollBar()->setValue(50);
@@ -192,7 +187,7 @@ private slots:
     void startActionCanBeDisabledWithoutAffectingEndAction()
     {
         QAbstractScrollArea area;
-        area.setProperty("psiOverlayScrollBar", true);
+        Mattermost::OverlayScrollBarManager::attach(area);
         area.resize(320, 240);
         area.verticalScrollBar()->setRange(0, 100);
         area.verticalScrollBar()->setValue(50);
