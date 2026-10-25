@@ -57,15 +57,34 @@ XMPP::VCard4::VCard VCardFactory::readCachedVCard(const QString &fileName)
 // Stable, short and account-specific sidecar names; the merged legacy disk
 // path remains unchanged for compatibility. This path is not used on getters
 // and does not trigger any network traffic.
-QString VCardFactory::sourceCardFile(const QString &dir, const QString &accountId,
-                                      const Jid &jid, Flags flags, bool modern)
+namespace {
+QString scopedCardFile(const QString &dir, const QString &accountId,
+                       const Jid &jid, bool occupant, const QString &suffix)
 {
     QByteArray identity = accountId.toUtf8();
     identity.append('\0');
-    identity.append((flags & MucUser ? jid.full() : jid.bare()).toUtf8());
+    identity.append((occupant ? jid.full() : jid.bare()).toUtf8());
     const QByteArray digest = QCryptographicHash::hash(identity, QCryptographicHash::Sha256).toHex();
-    return dir + QLatin1String("/source-") + QString::fromLatin1(digest)
-        + (modern ? QLatin1String("-modern.xml") : QLatin1String("-legacy.xml"));
+    return dir + QLatin1String("/source-") + QString::fromLatin1(digest) + suffix;
+}
+} // namespace
+
+QString VCardFactory::accountCacheKey(const QString &accountId, const Jid &jid, Flags flags)
+{
+    return accountId + QChar(0x1f) + (flags & MucUser ? jid.full() : jid.bare());
+}
+
+QString VCardFactory::mergedCardFile(const QString &dir, const QString &accountId,
+                                    const Jid &jid, Flags flags)
+{
+    return scopedCardFile(dir, accountId, jid, flags & MucUser, QStringLiteral("-merged.xml"));
+}
+
+QString VCardFactory::sourceCardFile(const QString &dir, const QString &accountId,
+                                    const Jid &jid, Flags flags, bool modern)
+{
+    return scopedCardFile(dir, accountId, jid, flags & MucUser,
+                          modern ? QStringLiteral("-modern.xml") : QStringLiteral("-legacy.xml"));
 }
 
 XMPP::VCard4::VCard VCardFactory::mergeSourceCards(XMPP::VCard4::VCard modern,
