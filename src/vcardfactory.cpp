@@ -367,39 +367,40 @@ VCardRequest *VCardFactory::getVCardPhoto(PsiAccount *account, const Jid &jid, F
 
 void VCardFactory::setPhoto(const Jid &j, const QByteArray &photo, Flags flags)
 {
-    VCard4::VCard vc;
-    Jid           sj;
-    if (flags & MucUser) {
-        sj = j;
-        vc = mucVcard(j);
-    } else {
-        sj = j.withResource({});
-        vc = vcard(sj);
-    }
+    setPhoto(nullptr, j, photo, flags);
+}
+
+void VCardFactory::setPhoto(PsiAccount *account, const Jid &j,
+                            const QByteArray &photo, Flags flags)
+{
+    const Jid sj = flags & MucUser ? j : j.withResource({});
+    VCard4::VCard vc = flags & MucUser ? mucVcard(account, sj) : vcard(account, sj);
     if (setEmbeddedPhoto(vc, photo)) {
-        saveVCard(sj, vc, flags);
-        // Silent only suppresses ordinary vCard notifications. AvatarCache
-        // must still see our own avatar changes after the cache is updated.
-        if (flags & Silent)
+        saveVCard(account, sj, vc, flags);
+        if (flags & Silent) {
             emit photoChanged(sj, flags);
+            if (account)
+                emit photoChangedScoped(account, sj, flags);
+        }
     }
 }
 
 void VCardFactory::deletePhoto(const Jid &j, Flags flags)
 {
-    VCard4::VCard vc;
-    Jid           sj;
-    if (flags & MucUser) {
-        sj = j;
-        vc = mucVcard(j);
-    } else {
-        sj = j.withResource({});
-        vc = vcard(sj);
-    }
+    deletePhoto(nullptr, j, flags);
+}
+
+void VCardFactory::deletePhoto(PsiAccount *account, const Jid &j, Flags flags)
+{
+    const Jid sj = flags & MucUser ? j : j.withResource({});
+    VCard4::VCard vc = flags & MucUser ? mucVcard(account, sj) : vcard(account, sj);
     if (clearPhoto(vc)) {
-        saveVCard(sj, vc, flags);
-        if (flags & Silent)
+        saveVCard(account, sj, vc, flags);
+        if (flags & Silent) {
             emit photoChanged(sj, flags);
+            if (account)
+                emit photoChangedScoped(account, sj, flags);
+        }
     }
 }
 
@@ -407,9 +408,9 @@ void VCardFactory::ensureVCardPhotoUpdated(PsiAccount *acc, const Jid &jid, Flag
 {
     VCard4::VCard vc;
     if (flags & MucUser) {
-        vc = mucVcard(jid);
+        vc = mucVcard(acc, jid);
     } else {
-        vc = vcard(jid);
+        vc = vcard(acc, jid);
     }
     if (newPhotoHash.isEmpty()) {
         if (acc && !(flags & MucUser)) {
@@ -427,11 +428,11 @@ void VCardFactory::ensureVCardPhotoUpdated(PsiAccount *acc, const Jid &jid, Flag
                 if (modern) {
                     // The modern card is independent. Only the legacy PHOTO
                     // was revoked; no IQ/blob fetch is required.
-                    saveVCard(jid, mergeSourceCards(modern, legacy), flags);
+                    saveVCard(acc, jid, mergeSourceCards(modern, legacy), flags);
                 } else if (clearPhoto(vc)) {
                     // Preserve existing non-PHOTO fields when a PHOTO-only
                     // legacy source has no independent modern card.
-                    saveVCard(jid, vc, flags);
+                    saveVCard(acc, jid, vc, flags);
                 }
                 return;
             }
@@ -440,7 +441,7 @@ void VCardFactory::ensureVCardPhotoUpdated(PsiAccount *acc, const Jid &jid, Flag
         // legacy fallback as before; the next full request establishes both
         // sources separately. Never issue network requests on empty hashes.
         if (clearPhoto(vc))
-            saveVCard(jid, vc, flags);
+            saveVCard(acc, jid, vc, flags);
         return;
     }
     auto oldHash = vc ? QCryptographicHash::hash(QByteArray(vc.photo()), QCryptographicHash::Sha1) : QByteArray();
