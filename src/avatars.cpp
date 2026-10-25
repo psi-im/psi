@@ -56,6 +56,8 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QPixmap>
+#include <QPointer>
+#include <QSet>
 #include <QtCrypto>
 
 // we have retine nowdays and various other huge resolutions.96px is not that big already.
@@ -341,8 +343,14 @@ public:
         emit avatarChangedScoped(account, room);
     }
 
+    void registerAccount(PsiAccount *account)
+    {
+        accountOwners_.insert(account->id(), QPointer<PsiAccount>(account));
+    }
+
     void forgetAccount(const QString &accountId)
     {
+        accountOwners_.remove(accountId);
         blobFetches_.forgetAccount(accountId);
         const QString prefix = AvatarIdentity::accountPrefix(accountId);
         negativeMemo_.invalidatePrefix(prefix);
@@ -702,6 +710,7 @@ protected:
     void removeItem(FileCacheItem *item, bool needSync)
     {
         QStringList jids = item->metadata().value(QLatin1String("jids")).toStringList();
+        QSet<QString> changedBindings;
         // weh have user of this icon. And this users can use other icons as well. so we have to properly update
         // them
         for (const QString &j : std::as_const(jids)) {
@@ -713,7 +722,12 @@ protected:
             if (it == jidToIcons.end()) { // never happens if we maintain cache properly
                 continue;
             }
+            const FileCacheItem *oldActive = activeAvatarIcon(it.value());
             setIconItem(it.value(), nullptr, itype);
+            negativeMemo_.invalidate(jid);
+            iconset_.removeIcon(QStringLiteral("avatars/%1").arg(jid));
+            if (oldActive != activeAvatarIcon(it.value()))
+                changedBindings.insert(jid);
 
             // if hashes for icon are empty, then it's useless.
             if (areIconsEmpty(*it)) {
@@ -721,6 +735,28 @@ protected:
             }
         }
         FileCache::removeItem(item, needSync);
+        // Publish after all bindings and decoded images have been removed.
+        // Notify only the owning account; no network fetch is initiated.
+        for (const QString &key : std::as_const(changedBindings)) {
+            for (auto it = accountOwners_.cbegin(); it != accountOwners_.cend(); ++it) {
+                PsiAccount *account = it.value().data();
+                if (!account)
+                    continue;
+                const QString prefix = AvatarIdentity::accountPrefix(it.key());
+                QString peer;
+                if (key.startsWith(prefix + QLatin1String("contact/")))
+                    peer = key.mid(prefix.size() + 8);
+                else if (key.startsWith(prefix + QLatin1String("occupant/")))
+                    peer = key.mid(prefix.size() + 9);
+                else
+                    continue;
+                const Jid jid(peer);
+                if (!jid.isValid())
+                    continue;
+                emit avatarChangedScoped(account, jid);
+                break;
+            }
+        }
     }
 
 private:
@@ -1015,6 +1051,7 @@ private:
     AvatarBlobFetchPolicy    blobFetches_;
     AvatarNegativeMemo       negativeMemo_;
     QElapsedTimer            blobClock_;
+    QHash<QString, QPointer<PsiAccount>> accountOwners_;
 
     static AvatarCache *_instance;
 };
