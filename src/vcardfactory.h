@@ -83,6 +83,7 @@ private:
     // Keep the disk parser out of headers; tests call the same production
     // reader without needing to link all of PsiAccount and PEPManager.
     static VCard4::VCard readCachedVCard(const QString &fileName);
+    static bool shouldFetchModern(Flags flags);
     static void supplementFromLegacy(VCard4::VCard &modern, const VCard4::VCard &legacy);
     static bool applyLegacyPhoto(VCard4::VCard &cached, const VCard4::VCard &legacy);
     friend class VCardDiskCacheTest;
