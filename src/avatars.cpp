@@ -1089,6 +1089,14 @@ AvatarFactory::AvatarFactory(PsiAccount *pa) : d(new Private)
 {
     d->pa_ = pa;
     AvatarCache::instance()->registerAccount(pa);
+    // Session-generation reset is independent of the stable account ID.
+    // In-flight old PEP/vCard replies cannot revive a previous connection;
+    // shared FileCache blob bytes remain available by SHA-1 after reconnect.
+    connect(pa, &PsiAccount::disconnected, this, [this]() {
+        VCardFactory::instance()->invalidateAccountSession(d->pa_);
+        AvatarCache::instance()->forgetAccount(d->pa_->id());
+        AvatarCache::instance()->registerAccount(d->pa_);
+    });
 
     // Connect signals
     connect(AvatarCache::instance(), &AvatarCache::avatarChangedScoped, this,
