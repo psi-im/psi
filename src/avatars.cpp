@@ -178,13 +178,21 @@ public:
     void forgetMucOccupant(const Jid &jid)
     {
         const QString fullJid = jid.full();
+        const auto cached = jidToIcons.constFind(fullJid);
+        // A bare negative-to-unknown transition cannot change the displayed
+        // pixmap. Do not repaint an entire MUC timeline for every participant
+        // leaving without an avatar (e.g. mass room disconnects).
+        const bool hadImage = cached != jidToIcons.constEnd() && !areIconsEmpty(*cached);
+        const QString iconName = QStringLiteral("avatars/%1").arg(fullJid);
+        const bool hadDecoded = iconset_.icon(iconName) != nullptr;
         jid2hash.remove(jid);
         blobFlights_.supersede(fullJid, {});
         clearNegative(fullJid);
         removeIcon(VCardType, fullJid);
         removeIcon(AvatarType, fullJid);
-        iconset_.removeIcon(QStringLiteral("avatars/%1").arg(fullJid));
-        emit avatarChanged(jid);
+        iconset_.removeIcon(iconName);
+        if (hadImage || hadDecoded)
+            emit avatarChanged(jid);
     }
 
     void itemPublished(PsiAccount *pa, const Jid &jid, const QString &n, const PubSubItem &item)
