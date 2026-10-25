@@ -342,7 +342,7 @@ public:
         }
     }
 
-    QPixmap getAvatar(const Jid &_jid)
+    QPixmap getAvatar(PsiAccount *account, const Jid &_jid)
     {
         QString bareJid  = _jid.bare();
         QString iconName = QString("avatars/%1").arg(bareJid);
@@ -373,7 +373,7 @@ public:
 #ifdef AVATAR_EDBUG
             qDebug() << "return from vcardfactory for jid " << _jid.full();
 #endif
-            auto vcard = VCardFactory::instance()->vcard(_jid);
+            auto vcard = VCardFactory::instance()->vcard(account, _jid);
             if (!vcard || QByteArray(vcard.photo()).isEmpty()) {
                 return QPixmap();
             }
@@ -405,7 +405,7 @@ public:
         return pm;
     }
 
-    QPixmap getMucAvatar(const Jid &_jid)
+    QPixmap getMucAvatar(PsiAccount *account, const Jid &_jid)
     {
         QString fullJid = _jid.full();
 
@@ -418,7 +418,7 @@ public:
         auto       icons = AvatarCache::instance()->icons(fullJid);
         QByteArray data;
         if (!icons.avatar) {
-            auto vcard = VCardFactory::instance()->mucVcard(_jid);
+            auto vcard = VCardFactory::instance()->mucVcard(account, _jid);
             if (!vcard || QByteArray(vcard.photo()).isEmpty()) {
                 return QPixmap();
             }
@@ -629,10 +629,10 @@ private:
         blobClock_.start();
         updateJids();
 
-        const auto applyVCardPhoto = [this](const Jid &j, VCardFactory::Flags flags) {
+        const auto applyVCardPhoto = [this](PsiAccount *account, const Jid &j, VCardFactory::Flags flags) {
             QByteArray ba;
             QString    fullJid;
-            auto       vcard = VCardFactory::instance()->vcard(j, flags);
+            auto       vcard = VCardFactory::instance()->vcard(account, j, flags);
             if (flags & VCardFactory::MucUser) {
                 fullJid = j.full();
             } else {
@@ -662,10 +662,10 @@ private:
                 emit avatarChanged(j);
             }
         };
-        connect(VCardFactory::instance(), &VCardFactory::vcardChanged, this, applyVCardPhoto);
+        connect(VCardFactory::instance(), &VCardFactory::vcardChangedScoped, this, applyVCardPhoto);
         // setPhoto/deletePhoto use Silent during server-assisted self-avatar
         // conversion, but changing the avatar must still invalidate its cache.
-        connect(VCardFactory::instance(), &VCardFactory::photoChanged, this, applyVCardPhoto);
+        connect(VCardFactory::instance(), &VCardFactory::photoChangedScoped, this, applyVCardPhoto);
     }
 
     bool areIconsEmpty(const JidIcons &icons) const { return !icons.avatar && !icons.vcard && !icons.customAvatar; }
@@ -964,8 +964,8 @@ AvatarFactory::~AvatarFactory()
 
 PsiAccount *AvatarFactory::account() const { return d->pa_; }
 
-QPixmap AvatarFactory::getAvatar(const Jid &_jid) { return AvatarCache::instance()->getAvatar(_jid); }
-QPixmap AvatarFactory::getMucAvatar(const Jid &_jid) { return AvatarCache::instance()->getMucAvatar(_jid); }
+QPixmap AvatarFactory::getAvatar(const Jid &_jid) { return AvatarCache::instance()->getAvatar(d->pa_, _jid); }
+QPixmap AvatarFactory::getMucAvatar(const Jid &_jid) { return AvatarCache::instance()->getMucAvatar(d->pa_, _jid); }
 
 #if 0
 QPixmap AvatarFactory::getAvatarByHash(const QString &hash)
@@ -1000,7 +1000,7 @@ AvatarFactory::UserHashes AvatarFactory::userHashes(const Jid &jid) const
     if (!icons.vcard) { // hm try to get from vcard factory then
         // we don't call this method often. so it's fine to query vcard factory every time.
         auto flags = jid.resource().isEmpty() ? VCardFactory::Flags {} : VCardFactory::MucUser;
-        auto vcard = VCardFactory::instance()->vcard(jid, flags);
+        auto vcard = VCardFactory::instance()->vcard(d->pa_, jid, flags);
         if (vcard && !QByteArray(vcard.photo()).isEmpty()) {
             if (AvatarCache::instance()->setIcon(AvatarCache::VCardType, jid.full(), vcard.photo())
                 != AvatarCache::NoData) {
@@ -1165,13 +1165,13 @@ void AvatarFactory::publish_success(const QString &n, const PubSubItem &item)
         account()->pepManager()->publish(PEP_AVATAR_METADATA_NS, PubSubItem(d->selfAvatarHash_, meta_el),
                                          PEPManager::Access::Open);
         if (account()->client()->serverInfoManager()->accountFeatures().hasAvatarConversion()) {
-            VCardFactory::instance()->setPhoto(account()->jid(), d->selfAvatarData_, VCardFactory::Silent);
+            VCardFactory::instance()->setPhoto(account(), account()->jid(), d->selfAvatarData_, VCardFactory::Silent);
         }
         d->selfAvatarData_.clear(); // we don't need it anymore
     } else if (n == PEP_AVATAR_METADATA_NS) {
         bool removed = item.payload().firstChildElement("metadata").firstChildElement("info").isNull();
         if (account()->client()->serverInfoManager()->accountFeatures().hasAvatarConversion() && removed) {
-            VCardFactory::instance()->deletePhoto(account()->jid(), VCardFactory::Silent);
+            VCardFactory::instance()->deletePhoto(account(), account()->jid(), VCardFactory::Silent);
         }
     }
 }
