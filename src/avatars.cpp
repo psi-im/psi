@@ -362,6 +362,30 @@ public:
         accountOwners_.insert(account->id(), QPointer<PsiAccount>(account));
     }
 
+    void resetConnection(const QString &accountId)
+    {
+        // Keep contact/manual-avatar bindings and all SHA-1 bytes across an
+        // ordinary reconnect. Only MUC occupants belong to the vanished
+        // session; no PEP/vCard IQ is needed just to redraw a known contact.
+        blobFetches_.forgetAccount(accountId);
+        negativeMemo_.invalidatePrefix(AvatarIdentity::accountPrefix(accountId));
+        const QString occupantPrefix = AvatarIdentity::accountPrefix(accountId)
+            + QStringLiteral("occupant/");
+        for (const QString &key : jidToIcons.keys()) {
+            if (!key.startsWith(occupantPrefix))
+                continue;
+            removeIcon(AvatarType, key);
+            removeIcon(VCardType, key);
+            iconset_.removeIcon(QStringLiteral("avatars/%1").arg(key));
+        }
+        for (auto it = jid2hash.begin(); it != jid2hash.end();) {
+            if (it.key().startsWith(occupantPrefix))
+                it = jid2hash.erase(it);
+            else
+                ++it;
+        }
+    }
+
     void forgetAccount(const QString &accountId)
     {
         accountOwners_.remove(accountId);
@@ -1094,8 +1118,7 @@ AvatarFactory::AvatarFactory(PsiAccount *pa) : d(new Private)
     // shared FileCache blob bytes remain available by SHA-1 after reconnect.
     connect(pa, &PsiAccount::disconnected, this, [this]() {
         VCardFactory::instance()->invalidateAccountSession(d->pa_);
-        AvatarCache::instance()->forgetAccount(d->pa_->id());
-        AvatarCache::instance()->registerAccount(d->pa_);
+        AvatarCache::instance()->resetConnection(d->pa_->id());
     });
 
     // Connect signals
