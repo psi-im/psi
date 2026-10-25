@@ -67,6 +67,31 @@ private slots:
         QVERIFY(!memo.lookup("account/a/contact/a", 1));
         QVERIFY(memo.lookup("account/b/contact/b", 1));
     }
+    void roomGenerationDoesNotEraseUnrelatedNegatives()
+    {
+        AvatarNegativeMemo memo;
+        const QString room1 = QStringLiteral("account/a/occupant/room1@example.org/");
+        const QString room2 = QStringLiteral("account/a/occupant/room2@example.org/");
+        const QString contact = QStringLiteral("account/a/contact/alice@example.org");
+        memo.record(room1 + "nick", AvatarNegativeMemo::State::Unknown, 0);
+        memo.record(room2 + "nick", AvatarNegativeMemo::State::KnownAbsent, 0);
+        memo.record(contact, AvatarNegativeMemo::State::Unknown, 0);
+        memo.invalidatePrefix(room1);
+        QVERIFY(!memo.lookup(room1 + "nick", 1));
+        QVERIFY(memo.lookup(room2 + "nick", 1));
+        QVERIFY(memo.lookup(contact, 1));
+    }
+    void sameJidOnOtherAccountRemainsIndependent()
+    {
+        AvatarNegativeMemo memo;
+        const QString a = QStringLiteral("account/a/contact/bob@example.org");
+        const QString b = QStringLiteral("account/b/contact/bob@example.org");
+        memo.record(a, AvatarNegativeMemo::State::Fetching, 10);
+        memo.record(b, AvatarNegativeMemo::State::UriOnly, 10);
+        memo.invalidatePrefix(QStringLiteral("account/a/"));
+        QVERIFY(!memo.lookup(a, 11));
+        QCOMPARE(*memo.lookup(b, 11), AvatarNegativeMemo::State::UriOnly);
+    }
     void timerRollbackExpiresEntry()
     {
         AvatarNegativeMemo memo;
