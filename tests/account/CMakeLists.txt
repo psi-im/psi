@@ -13,13 +13,6 @@ target_link_libraries(account_connection_guard_test PRIVATE
     Qt${QT_DEFAULT_MAJOR_VERSION}::Core Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
 add_test(NAME account_connection_guard COMMAND account_connection_guard_test)
 
-# Small, dependency-free test of the dual-store vs. legacy-photo request plan.
-add_executable(account_vcard_request_policy_test vcardrequestpolicytest.cpp)
-set_target_properties(account_vcard_request_policy_test PROPERTIES AUTOMOC ON)
-target_include_directories(account_vcard_request_policy_test PRIVATE ../../src)
-target_link_libraries(account_vcard_request_policy_test PRIVATE
-    Qt${QT_DEFAULT_MAJOR_VERSION}::Core Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
-add_test(NAME account_vcard_request_policy COMMAND account_vcard_request_policy_test)
 set_tests_properties(account_connection_guard PROPERTIES TIMEOUT 10)
 
 if(TARGET iris)
@@ -53,7 +46,7 @@ if(ACCOUNT_IRIS_TARGET)
     endif()
     # Disk-cache reader uses real Iris modern and legacy vCard parsers.
     find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Xml)
-    add_executable(account_vcard_disk_cache_test vcarddiskcachetest.cpp ../../src/vcardfactory_disk.cpp)
+    add_executable(account_vcard_disk_cache_test vcarddiskcachetest.cpp ../../src/vcardfactory_data.cpp)
     set_target_properties(account_vcard_disk_cache_test PROPERTIES AUTOMOC ON CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
     target_include_directories(account_vcard_disk_cache_test PRIVATE ../../src)
     target_link_libraries(account_vcard_disk_cache_test PRIVATE ${ACCOUNT_IRIS_TARGET}
@@ -61,7 +54,7 @@ if(ACCOUNT_IRIS_TARGET)
     add_test(NAME account_vcard_disk_cache COMMAND account_vcard_disk_cache_test)
     set_tests_properties(account_vcard_disk_cache PROPERTIES TIMEOUT 15)
 
-    add_executable(account_vcard_request_merge_test vcardrequestmergetest.cpp)
+    add_executable(account_vcard_request_merge_test vcardrequestmergetest.cpp ../../src/vcardfactory_data.cpp)
     set_target_properties(account_vcard_request_merge_test PROPERTIES AUTOMOC ON CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
     target_include_directories(account_vcard_request_merge_test PRIVATE ../../src)
     target_link_libraries(account_vcard_request_merge_test PRIVATE ${ACCOUNT_IRIS_TARGET}
