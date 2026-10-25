@@ -25,6 +25,7 @@
 #include "eventdb.h"
 #include "filesharedlg.h"
 #include "filesharingmanager.h"
+#include "filesharingnormalizer.h"
 #include "filesharingpublication.h"
 #include "iconaction.h"
 #include "iconselect.h"
@@ -846,7 +847,8 @@ void ChatDlg::incomingMessage(const Message &m)
 {
     Message dm   = m.displayMessage();
     historyState = false;
-    if (dm.body().isEmpty() && dm.subject().isEmpty() && dm.urlList().isEmpty()) {
+    if (dm.body().isEmpty() && dm.subject().isEmpty() && dm.urlList().isEmpty()
+        && dm.references().isEmpty()) {
         // Event message
         if (dm.containsEvent(CancelEvent)) {
             setContactChatState(XMPP::StatePaused);
@@ -979,20 +981,21 @@ void ChatDlg::appendMessage(const Message &m, bool local, qint64 historyId, cons
     mv.setAwaitingReceipt(local && dm.messageReceipt() == ReceiptRequest);
     mv.setMarkable(dm.isMarkable());
     mv.setReplaceId(dm.replaceId());
-    account()->psi()->fileSharingManager()->fillMessageView(mv, dm, account());
+    const auto preparedMedia = FileSharingNormalizer::prepareForDisplay(dm);
+    account()->psi()->fileSharingManager()->fillMessageView(mv, dm, preparedMedia.references, account());
     mv.setReplyMetadata(dm);
 
     dispatchMessage(mv);
 
-    if (!dm.urlList().isEmpty()) {
-        UrlList                urls = dm.urlList();
+    if (!preparedMedia.remainingOob.isEmpty()) {
+        UrlList                urls = preparedMedia.remainingOob;
         QMap<QString, QString> urlsMap;
-        for (const Url &u : std::as_const(urls)) {
+        for (const Url &u : std::as_const(urls))
             urlsMap.insert(u.url(), u.desc());
-        }
         // Some XMPP clients send links to HTTP uploaded files both in body and in jabber:x:oob.
         // It's convenient to show only body if OOB data brings no additional information.
-        if (!(urlsMap.size() == 1 && urlsMap.contains(body) && urlsMap.value(body).isEmpty())) {
+        if (!urlsMap.isEmpty()
+            && !(urlsMap.size() == 1 && urlsMap.contains(body) && urlsMap.value(body).isEmpty())) {
             MessageView umv = MessageView::urlsMessage(urlsMap);
             umv.setSpooled(historyState);
             dispatchMessage(umv);
