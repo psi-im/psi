@@ -62,6 +62,7 @@ public:
     void invalidateMucOccupant(PsiAccount *account, const Jid &occupant);
     void resetMucRoom(PsiAccount *account, const Jid &room);
     quint64 mucGeneration(PsiAccount *account, const Jid &occupant) const;
+    quint64 mucRoomGeneration(PsiAccount *account, const Jid &room) const;
 
 
     Task *setVCard(PsiAccount *account, const VCard4::VCard &v, const Jid &targetJid, VCardFactory::Flags flags);
@@ -166,6 +167,11 @@ public:
     bool modernAnswered() const;
     bool legacyAnswered() const;
     quint64 requestedOccupantEpoch() const;
+    quint64 requestedRoomEpoch() const;
+    bool currentEpoch() const;
+    bool wasQueuedFor(PsiAccount *account, const Jid &occupant) const;
+    void invalidate();
+
     QString       errorString() const;
 
 signals:
