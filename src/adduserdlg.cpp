@@ -293,7 +293,7 @@ void AddUserDlg::errorGateway(const QString &str, const QString &err)
 
 void AddUserDlg::getVCardActivated()
 {
-    const auto vcard = VCardFactory::instance()->vcard(jid());
+    const auto vcard = VCardFactory::instance()->vcard(d->pa, jid());
 
     InfoDlg *w = new InfoDlg(InfoWidget::Contact, jid(), vcard, d->pa, nullptr);
     w->show();
