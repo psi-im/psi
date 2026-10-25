@@ -131,8 +131,13 @@ inline QPixmap ensureSquareAvatar(const QPixmap &original)
 //  - keeps together with each icon a list of its users.
 //  - disables icon deletion if in use
 //
-// MUC occupant departure releases the old nick's avatar bindings, so the next
-// occupant does not inherit images from a previous occupant with that nick.
+// Known problems (partly mitigated by forgetMucOccupant()):
+//  - If we start changing nicknames in MUC, items' FileCache metadata may grow
+//    while a picture is still in use by another occupant.
+//  - A new participant reusing a nick without an avatar hash may inherit old
+//    imagery if no unavailable presence was observed (disconnect/reconnect).
+// Observed departures now invalidate the old nickname's bindings and vCard;
+// full room/occupant generations still need separate lifecycle handling.
 //------------------------------------------------------------------------------
 class AvatarCache : public FileCache {
     Q_OBJECT
