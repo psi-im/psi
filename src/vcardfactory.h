@@ -20,6 +20,8 @@
 #ifndef VCARDFACTORY_H
 #define VCARDFACTORY_H
 
+#include "avatarepochpolicy.h"
+
 #include <QHash>
 #include <QMap>
 #include <QObject>
@@ -55,6 +57,12 @@ public:
     // Account-aware lookups never read another account's card or disk cache.
     VCard4::VCard        vcard(PsiAccount *account, const Jid &, Flags flags = {});
     VCard4::VCard        mucVcard(PsiAccount *account, const Jid &j) const;
+    // Called on MUC occupant departure and every room rejoin. Pending
+    // pre-reset IQs are fenced off by generation, never replayed into cache.
+    void invalidateMucOccupant(PsiAccount *account, const Jid &occupant);
+    void resetMucRoom(PsiAccount *account, const Jid &room);
+    quint64 mucGeneration(PsiAccount *account, const Jid &occupant) const;
+
 
     Task *setVCard(PsiAccount *account, const VCard4::VCard &v, const Jid &targetJid, VCardFactory::Flags flags);
     VCardRequest *getVCard(PsiAccount *account, const Jid &, VCardFactory::Flags flags = {});
@@ -128,6 +136,7 @@ private:
 
     // to limit the hash above. this one keeps ordered resource. mucBareJid => resource_list
     QMap<QString, QQueue<QString>> lastMucVcards_;
+    AvatarEpochPolicy             occupantEpochs_;
 
     class QueuedLoader;
     QueuedLoader *queuedLoader_;
@@ -156,6 +165,7 @@ public:
     VCard4::VCard legacyVcard() const;
     bool modernAnswered() const;
     bool legacyAnswered() const;
+    quint64 requestedOccupantEpoch() const;
     QString       errorString() const;
 
 signals:
