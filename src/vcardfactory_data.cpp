@@ -17,6 +17,17 @@ bool VCardFactory::shouldFetchModern(Flags flags)
     return !(flags & (PhotoOnly | ForceVCardTemp | MucRoom | MucUser));
 }
 
+QString VCardFactory::requestQueueKey(const QString &accountId, quintptr instance,
+                                      const Jid &jid, Flags flags)
+{
+    const auto mode = flags & (PhotoOnly | ForceVCardTemp | MucUser | MucRoom | Silent);
+    const QString peer = flags & MucUser ? jid.full() : jid.bare();
+    // Account ID is stable; the instance distinguishes an old disconnected
+    // account from a replacement during reconnect.
+    return accountId + QChar(0x1f) + QString::number(qulonglong(instance), 16)
+        + QChar(0x1f) + QString::number(int(mode)) + QChar(0x1f) + peer;
+}
+
 XMPP::VCard4::VCard VCardFactory::readCachedVCard(const QString &fileName)
 {
     QFile file(fileName);
