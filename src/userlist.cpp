@@ -436,7 +436,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 
     if (useAvatar) {
         str += QString("<td width=\"64\">");
-        str += QString(R"(<icon name="avatars/%1" max-width="64">)").arg(mucItem ? jid().full() : jid().bare());
+        str += QString(R"(<icon name="%1" max-width="64">)").arg(v_avatarFactory->avatarIconName(jid(), mucItem));
         str += "</td><td width=\"5\"></td>";
     }
     str += "<td>";
