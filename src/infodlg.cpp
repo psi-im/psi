@@ -335,10 +335,10 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard4::VCard &vcard, PsiAc
     connect(d->pa->client(), SIGNAL(resourceUnavailable(const Jid &, const Resource &)),
             SLOT(contactUnavailable(const Jid &, const Resource &)));
     connect(d->pa, SIGNAL(updateContact(const Jid &)), SLOT(contactUpdated(const Jid &)));
-    connect(VCardFactory::instance(), &VCardFactory::vcardChanged, this,
-            [this](const Jid &j, VCardFactory::Flags flags) {
-                if (d->jid.compare(j, flags & VCardFactory::MucUser)) {
-                    auto vcard = VCardFactory::instance()->vcard(j, flags);
+    connect(VCardFactory::instance(), &VCardFactory::vcardChangedScoped, this,
+            [this](PsiAccount *source, const Jid &j, VCardFactory::Flags flags) {
+                if (source == d->pa && d->jid.compare(j, flags & VCardFactory::MucUser)) {
+                    auto vcard = VCardFactory::instance()->vcard(d->pa, j, flags);
                     if (vcard) {
                         d->vcard = vcard;
                         setData(d->vcard);
