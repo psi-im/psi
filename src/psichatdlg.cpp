@@ -484,23 +484,25 @@ void PsiChatDlg::updateAvatar(const Jid &jid)
 void PsiChatDlg::setJid(const Jid &newJid)
 {
     const Jid oldJid = jid();
+    // A direct chat (including a MUC PM) retains its bare peer identity.
+    // Changing the resource selects a different endpoint/occupant, but
+    // must not reset the conversation's history or MAM cursor.
+    if (oldJid.bare() != newJid.bare()) {
+        qWarning() << "PsiChatDlg::setJid refused a different bare peer:" << oldJid.full() << newJid.full();
+        return;
+    }
+
     ChatDlg::setJid(newJid);
     if (oldJid == jid())
         return;
-    // Detect MUC PMs once on peer changes, never on individual messages.
+
+    // Detect MUC PMs on resource changes, never on individual messages.
     roomOccupantChat_ = isRoomOccupantChat();
     if (nativeTimeline_)
         nativeTimeline_->refreshAvatars();
 
-    if (oldJid.bare() != jid().bare()) {
-        clearNativeHistory();
-        localExhausted_ = false;
-        mamExhausted_ = false;
-        if (nativeTimeline_)
-            QTimer::singleShot(0, this, [this] { loadOlderMamMessages(); });
-        if (auto *controller = account()->encryptionController())
-            selectedEncryptionMethod_ = controller->selectedMethod(jid());
-    }
+    // An encryption session can be resource-specific even when the
+    // conversation and archive belong to the same bare JID.
     rebuildEncryptionSession();
     updateEncryption();
 }
