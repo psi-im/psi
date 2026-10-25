@@ -27,7 +27,6 @@
 #include "pepmanager.h"
 #include "profiles.h"
 #include "psiaccount.h"
-#include "vcardrequestpolicy.h"
 
 #include "iris/xmpp-im/xmpp_pubsubitem.h"
 #include "iris/xmpp-im/xmpp_serverinfomanager.h"
@@ -351,15 +350,10 @@ bool VCardRequest::execute()
     if (paIt == d->accounts.end())
         return false;
 
-    const auto plan = VCardRequestPolicy::plan(
-        d->flags & VCardFactory::PhotoOnly,
-        d->flags & VCardFactory::ForceVCardTemp,
-        (d->flags & VCardFactory::MucRoom) || (d->flags & VCardFactory::MucUser));
-
-    // Both stores belong to the account's server, not individual resources.
-    // Entity caps advertise client support and are irrelevant here.
-    if (plan.fetchModern)
-        executePubSub(*paIt); // Always proceeds to vcard-temp after PEP.
+    // Client resource capabilities do not describe the account's server-side
+    // vCard stores. Only explicit request modes determine which to query.
+    if (VCardFactory::shouldFetchModern(d->flags))
+        executePubSub(*paIt); // Continues with vcard-temp after PEP.
     else
         executeVCardTemp(*paIt);
     return true;
