@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "vcardfactory.h"
+#include "iris/xmpp_jid.h"
 
 #include "iris/xmpp_vcard.h"
 #include "iris/xmpp_vcard4.h"
