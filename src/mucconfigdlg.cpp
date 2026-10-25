@@ -158,7 +158,7 @@ void MUCConfigDlg::refreshVcard()
     if (!ui_.tab_vcard->layout()) {
         QVBoxLayout *layout = new QVBoxLayout;
 
-        const auto vcard = VCardFactory::instance()->vcard(manager_->room());
+        const auto vcard = VCardFactory::instance()->vcard(manager_->account(), manager_->room());
         vcard_           = new InfoWidget(InfoWidget::MucAdm, manager_->room(), vcard, manager_->account());
         layout->addWidget(vcard_);
         ui_.tab_vcard->setLayout(layout);
