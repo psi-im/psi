@@ -20,7 +20,6 @@
 #ifndef GROUPCHATDLG_H
 #define GROUPCHATDLG_H
 
-#include "nativechatavatars.h"
 #include "advwidget.h"
 #include "languagemanager.h"
 #include "mucmanager.h"
@@ -53,7 +52,6 @@ using namespace XMPP;
 class GCMainDlg : public TabbableWidget {
     Q_OBJECT
     MamChatWidget *nativeTimeline_ = nullptr;
-    NativeChatAvatars nativeAvatars_;
     QHash<QString, XMPP::Jid> formerParticipantAddresses_;
     void showContactContextMenu(const QString &nick, const QPoint &globalPosition);
     QPointer<HistorySync> mamTask_;
