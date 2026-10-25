@@ -26,6 +26,7 @@
 #include <QNetworkReply>
 #include <QObject>
 #include <functional>
+#include <optional>
 
 class FileCache;
 class FileCacheItem;
@@ -82,6 +83,8 @@ public:
                                unsigned int maxAge);
     FileCacheItem *moveToCache(const QList<XMPP::Hash> &sums, const QFileInfo &data, const QVariantMap &metadata,
                                unsigned int maxAge);
+    std::optional<XMPP::Hash> contentForUrl(const QString &account, const XMPP::Hash &urlIdentity) const;
+    bool rememberUrlContent(const QString &account, const XMPP::Hash &urlIdentity, const XMPP::Hash &contentHash);
 
     FileSharingItem *item(const XMPP::Hash &id, PsiAccount *account = nullptr);
     void             rememberMessage(const XMPP::Message &message, PsiAccount *account);
@@ -89,7 +92,8 @@ public:
     QList<FileSharingItem *> createFromMimeData(const QMimeData *data, PsiAccount *acc);
     QList<FileSharingItem *> fromFilesList(const QStringList &fileList, PsiAccount *acc);
 
-    // registers source for file and returns share id for future access to the source
+    // Handle SIMS and HTTP OOB consistently for live messages and old SQLite
+    // records. Newly persisted history already has normalized references.
     void fillMessageView(MessageView &mv, const XMPP::Message &m, PsiAccount *acc);
 
     // returns false if unable to accept automatically

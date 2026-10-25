@@ -2410,7 +2410,9 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
         return;
     }
 
-    if (dm.body().isEmpty())
+    // An attachment-only SIMS or jabber:x:oob stanza is still a
+    // visible message, even with no ordinary <body>.
+    if (dm.body().isEmpty() && dm.references().isEmpty() && dm.urlList().isEmpty())
         return;
 
     // code to determine if the speaker was addressing this client in chat

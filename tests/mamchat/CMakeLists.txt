@@ -33,6 +33,13 @@ target_link_libraries(mam_identity_test PRIVATE
     Qt${QT_DEFAULT_MAJOR_VERSION}::Widgets Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
 add_test(NAME mam_identity COMMAND mam_identity_test)
 
+# OOB/SIMS media classification is shared by live and MAM message rendering.
+add_executable(mam_oob_media_policy_test ../filesharing/oobmedia.cpp)
+target_include_directories(mam_oob_media_policy_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../src)
+target_link_libraries(mam_oob_media_policy_test PRIVATE
+    Qt${QT_DEFAULT_MAJOR_VERSION}::Core Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+add_test(NAME mam_oob_media_policy COMMAND mam_oob_media_policy_test)
+
 add_executable(mam_history_source_policy_test MamHistorySourcePolicyTest.cpp)
 target_include_directories(mam_history_source_policy_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../src)
 target_link_libraries(mam_history_source_policy_test PRIVATE

@@ -39,6 +39,7 @@
 #include <QNetworkReply>
 #include <QPointer>
 #include <QTimer>
+#include <QUuid>
 #include <QUrlQuery>
 #include <QVariant>
 
@@ -533,7 +534,15 @@ public:
 
     void checkCacheReady()
     {
-        if (bytesLeft.has_value() && !*bytesLeft) {
+        // A hashless HTTP OOB source may use chunked transfer encoding and
+        // therefore have no Content-Length. It becomes complete only after
+        // the transport reports success and disconnects normally.
+        const bool unknownLengthComplete = sums.isEmpty() && !requestRange
+            && !bytesLeft.has_value() && success && tmpFile
+            && (!downloader || downloader->bytesAvailable() == 0);
+        const bool knownLengthComplete = bytesLeft.has_value() && !*bytesLeft
+            && (!sums.isEmpty() || success);
+        if (knownLengthComplete || unknownLengthComplete) {
             if (tmpFile) {
                 tmpFile->close();
                 tmpFile.reset();
@@ -614,10 +623,27 @@ public:
                 // then we are going to cache it as well. TODO: review caching when size is unknown
                 auto partDir = QDir(acc->psi()->fileSharingManager()->cacheDir() + "/partial");
                 partDir.mkpath(".");
-                dstFileName = partDir.absoluteFilePath(QString::fromLatin1(sums.value(0).data().toHex()));
+                // Hashless OOB URLs must never share the same empty-name partial
+                // file. Download in isolation and hash the actual bytes on completion.
+                const QString fileKey = sums.isEmpty()
+                    ? QUuid::createUuid().toString(QUuid::WithoutBraces)
+                    : QString::fromLatin1(sums.first().data().toHex());
+                dstFileName = partDir.absoluteFilePath(fileKey);
 
                 tmpFile.reset(new QFile(dstFileName));
                 if (!tmpFile->open(QIODevice::WriteOnly | QIODevice::Truncate)) { // TODO complete unfinished downloads
+                    downloader->abort();
+                    finishWithError(tmpFile->errorString());
+                    return;
+                }
+            } else if (sums.isEmpty() && !requestRange && !responseRange) {
+                // HTTP without Content-Length. Accumulate to a unique
+                // temporary file; it is promoted only after normal EOF.
+                auto partDir = QDir(acc->psi()->fileSharingManager()->cacheDir() + "/partial");
+                partDir.mkpath(".");
+                dstFileName = partDir.absoluteFilePath(QUuid::createUuid().toString(QUuid::WithoutBraces));
+                tmpFile.reset(new QFile(dstFileName));
+                if (!tmpFile->open(QIODevice::WriteOnly | QIODevice::Truncate)) {
                     downloader->abort();
                     finishWithError(tmpFile->errorString());
                     return;
