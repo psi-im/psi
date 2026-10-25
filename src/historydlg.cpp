@@ -22,6 +22,7 @@
 #include "coloropt.h"
 #include "common.h"
 #include "filesharingmanager.h"
+#include "filesharingnormalizer.h"
 #include "fileutil.h"
 #include "jidutil.h"
 #include "messageview.h"
@@ -570,10 +571,14 @@ void DisplayProxy::displayResult(const EDBResult &r, int dir)
             if (formatting)
                 msg = TextUtil::legacyFormat(msg);
 
-            if (pa && !me->message().references().isEmpty()) {
-                auto view = MessageView::fromPlainText(me->message().body(), MessageView::Message);
-                pa->psi()->fileSharingManager()->fillMessageView(view, me->message(), pa);
-                msg = view.text();
+            if (pa && (!me->message().references().isEmpty() || !me->message().urlList().isEmpty())) {
+                const auto displayMessage = me->message().displayMessage();
+                const auto preparedMedia = FileSharingNormalizer::prepareForDisplay(displayMessage);
+                if (!preparedMedia.references.isEmpty()) {
+                    auto view = MessageView::fromPlainText(displayMessage.body(), MessageView::Message);
+                    pa->psi()->fileSharingManager()->fillMessageView(view, displayMessage, preparedMedia.references, pa);
+                    msg = view.text();
+                }
             }
             if (me->originLocal()) {
                 if (!me->message().to().isEmpty())
