@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "historymessageextras.h"
+#include "filesharingnormalizer.h"
 #include "iris/xmpp_htmlelement.h"
 #include "iris/xmpp_reference.h"
 #include <QJsonArray>
@@ -45,13 +46,17 @@ QString HistoryMessageExtras::encode(const XMPP::Message &message)
 {
     if (message.isNull())
         return {};
+    // Normalize the serialized SQLite representation, not a shallow copy of
+    // Iris Message (which shares mutable data with the original stanza).
+    // Both live EDB writes and MAM page writes use this encoder.
+    const auto normalized = FileSharingNormalizer::prepareForDisplay(message);
     QJsonObject extra;
     extra.insert("psi:decoded", true);
     if (message.reply().isValid())
         extra.insert(QStringLiteral("urn:xmpp:reply:0"),
                      QJsonObject {{"id", message.reply().id}, {"to", message.reply().to.full()}});
     QJsonArray urls;
-    for (const auto &url : message.urlList()) {
+    for (const auto &url : normalized.remainingOob) {
         if (url.url().isEmpty())
             continue;
         QJsonArray pair;
@@ -63,7 +68,7 @@ QString HistoryMessageExtras::encode(const XMPP::Message &message)
     if (!urls.isEmpty())
         extra.insert(QStringLiteral("jabber:x:oob"), urls);
     QJsonArray references;
-    for (const auto &reference : message.references()) {
+    for (const auto &reference : normalized.references) {
         if (!reference.isValid())
             continue;
         QDomDocument doc;
