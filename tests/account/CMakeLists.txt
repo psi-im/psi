@@ -20,6 +20,15 @@ set_target_properties(account_avatar_blob_fetch_policy_test PROPERTIES AUTOMOC O
 target_include_directories(account_avatar_blob_fetch_policy_test PRIVATE ../../src)
 target_link_libraries(account_avatar_blob_fetch_policy_test PRIVATE
     Qt${QT_DEFAULT_MAJOR_VERSION}::Core Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+add_executable(account_avatar_epoch_policy_test
+    avatarepochpolicytest.cpp ../../src/avatarepochpolicy.cpp ../../src/avatarblobfetchpolicy.cpp)
+set_target_properties(account_avatar_epoch_policy_test PROPERTIES AUTOMOC ON)
+target_include_directories(account_avatar_epoch_policy_test PRIVATE ../../src)
+target_link_libraries(account_avatar_epoch_policy_test PRIVATE
+    Qt${QT_DEFAULT_MAJOR_VERSION}::Core Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+add_test(NAME account_avatar_epoch_policy COMMAND account_avatar_epoch_policy_test)
+set_tests_properties(account_avatar_epoch_policy PROPERTIES TIMEOUT 10)
+
 add_test(NAME account_avatar_blob_fetch_policy COMMAND account_avatar_blob_fetch_policy_test)
 set_tests_properties(account_avatar_blob_fetch_policy PROPERTIES TIMEOUT 10)
 
