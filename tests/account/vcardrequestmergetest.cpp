@@ -95,6 +95,27 @@ private slots:
         QVERIFY(empty.photo().isEmpty());
     }
 
+    void mergedCacheIdentityIsAccountScoped()
+    {
+        using F = VCardFactory;
+        const XMPP::Jid peer(QStringLiteral("contact@example.org/laptop"));
+        const XMPP::Jid otherResource(QStringLiteral("contact@example.org/phone"));
+        const auto a = F::accountCacheKey(QStringLiteral("account-a"), peer, {});
+        const auto b = F::accountCacheKey(QStringLiteral("account-b"), peer, {});
+        QVERIFY(a != b);
+        QCOMPARE(a, F::accountCacheKey(QStringLiteral("account-a"), otherResource, {}));
+        QVERIFY(F::accountCacheKey(QStringLiteral("account-a"), peer, F::MucUser)
+             != F::accountCacheKey(QStringLiteral("account-a"), otherResource, F::MucUser));
+
+        const QString dir = QStringLiteral("/tmp/test-vcards");
+        const auto pa = F::mergedCardFile(dir, QStringLiteral("account-a"), peer, {});
+        const auto pb = F::mergedCardFile(dir, QStringLiteral("account-b"), peer, {});
+        QVERIFY(pa != pb);
+        QCOMPARE(pa, F::mergedCardFile(dir, QStringLiteral("account-a"), otherResource, {}));
+        QVERIFY(pa != F::sourceCardFile(dir, QStringLiteral("account-a"), peer, {}, true));
+        QVERIFY(pa != F::sourceCardFile(dir, QStringLiteral("account-a"), peer, {}, false));
+    }
+
     void requestsNeverCoalesceAcrossAccountsOrSessions()
     {
         using F = VCardFactory;
