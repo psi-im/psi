@@ -15,9 +15,8 @@
 
 MessageView nativeHistoryMessage(PsiAccount *account, const XMPP::Jid &peer, const XMPP::Message &message, bool local)
 {
-    const auto preparedMedia = FileSharingNormalizer::prepareForDisplay(message);
-    const bool subject = message.body().isEmpty() && !message.subject().isNull() && preparedMedia.references.isEmpty()
-        && preparedMedia.remainingOob.isEmpty() && message.html().body().isNull();
+    const bool subject = message.body().isEmpty() && !message.subject().isNull() && message.references().isEmpty()
+        && message.urlList().isEmpty() && message.html().body().isNull();
     QString body = subject ? message.subject() : message.body();
     auto    html = message.html();
 #ifdef PSI_PLUGINS
@@ -28,16 +27,20 @@ MessageView nativeHistoryMessage(PsiAccount *account, const XMPP::Jid &peer, con
             html.setBody(element);
     }
 #endif
-    if (body.isEmpty() && html.body().isNull() && !preparedMedia.remainingOob.isEmpty()) {
+    if (body.isEmpty() && html.body().isNull()) {
+        // New SQLite rows already have normalized HTTP file references;
+        // only non-HTTP OOB links belong in the textual fallback.
+        const auto links = FileSharingNormalizer::remainingLinks(message);
         QStringList urls;
-        for (const auto &url : preparedMedia.remainingOob)
+        for (const auto &url : links)
             urls.append(url.url());
-        body = urls.join(QLatin1Char('\n'));
+        if (!urls.isEmpty())
+            body = urls.join(QLatin1Char('\n'));
     }
     auto view = MessageView::fromPlainText(body, subject ? MessageView::Subject : MessageView::Message);
     if (PsiOptions::instance()->getOption("options.html.chat.render").toBool() && !html.body().isNull())
         view.setHtml(html.toString("span"));
-    account->psi()->fileSharingManager()->fillMessageView(view, message, preparedMedia.references, account);
+    account->psi()->fileSharingManager()->fillMessageView(view, message, account);
     view.setMarkable(message.isMarkable());
     view.setReplyMetadata(message);
     return view;
