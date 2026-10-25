@@ -7,6 +7,8 @@
 #include <QString>
 #include <QStringList>
 
+#include <utility>
+
 // Only tracks unfinished XEP-0084 blob requests. FileCache remains the
 // authoritative content-addressed store; there is no extra blob/negative cache.
 // A SHA-1 identifies the same bytes regardless of who announced them.
