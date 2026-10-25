@@ -298,12 +298,33 @@ public:
 
         // The remaining vcard/custom sources stay intact and may become
         // visible as soon as the PEP source is gone.
-        removeIcon(AvatarType, bare);
-        iconset_.removeIcon(QStringLiteral("avatars/%1").arg(bare));
-        emit avatarChanged(bare);
+        const QString key = AvatarIdentity::bindingKey(pa->id(), bare, false);
+        removeIcon(AvatarType, key);
+        iconset_.removeIcon(QStringLiteral("avatars/%1").arg(key));
+        emit avatarChanged(jid.withResource({}));
+        emit avatarChangedScoped(pa, jid.withResource({}));
     }
 
-    void forgetAccount(const QString &accountId) { blobFetches_.forgetAccount(accountId); }
+    void forgetAccount(const QString &accountId)
+    {
+        blobFetches_.forgetAccount(accountId);
+        const QString prefix = AvatarIdentity::accountPrefix(accountId);
+        const auto keys = jidToIcons.keys();
+        for (const auto &key : keys) {
+            if (!key.startsWith(prefix))
+                continue;
+            removeIcon(CustomType, key);
+            removeIcon(AvatarType, key);
+            removeIcon(VCardType, key);
+            iconset_.removeIcon(QStringLiteral("avatars/%1").arg(key));
+        }
+        for (auto it = jid2hash.begin(); it != jid2hash.end();) {
+            if (it.key().startsWith(prefix))
+                it = jid2hash.erase(it);
+            else
+                ++it;
+        }
+    }
 
     OpResult ensureVCardUpdated(PsiAccount *account, const Jid &jid, const QByteArray &hash,
                                AvatarFactory::Flags flags)
@@ -324,7 +345,8 @@ public:
                      << fullJid;
 #endif
             iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(fullJid));
-            emit avatarChanged(fullJid);
+            emit avatarChanged(jid);
+            emit avatarChangedScoped(account, jid);
         }
 
         return result;
@@ -335,14 +357,15 @@ public:
         const QString key = AvatarIdentity::bindingKey(account->id(), j.bare(), false);
         QFile f(fileName);
         if (!(f.open(QIODevice::ReadOnly)
-              && AvatarCache::instance()->setIcon(AvatarCache::CustomType, j.bare(), f.readAll()))) {
+              && AvatarCache::instance()->setIcon(AvatarCache::CustomType, key, f.readAll()))) {
             qWarning("Failed to set manual avatar");
         }
 #ifdef AVATAR_EDBUG
         qDebug() << "remove from iconset and emit avatarChanged. importManualAvatar" << j.bare();
 #endif
-        iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(j.bare()));
+        iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(key));
         emit avatarChanged(j);
+        emit avatarChangedScoped(account, j);
     }
 
     void removeManualAvatar(PsiAccount *account, const Jid &j)
@@ -352,8 +375,9 @@ public:
 #ifdef AVATAR_EDBUG
             qDebug() << "remove from iconset and emit avatarChanged. removeManualAvatar" << j.bare();
 #endif
-            iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(j.bare()));
+            iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(key));
             emit avatarChanged(j);
+            emit avatarChangedScoped(account, j);
         }
     }
 
@@ -438,7 +462,7 @@ public:
                 return QPixmap();
             }
             data = vcard.photo();
-            AvatarCache::instance()->setIcon(AvatarCache::VCardType, _jid.full(), data);
+            AvatarCache::instance()->setIcon(AvatarCache::VCardType, fullJid, data);
             icons = AvatarCache::instance()->icons(fullJid); // should return scaled copy
         }
 
