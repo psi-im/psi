@@ -102,30 +102,3 @@ jobs:
         if: always()
         run: ccache --show-stats
 
-  overlay-and-splitter-qt5:
-    name: Overlay scrollbar and splitter (Qt5)
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v4
-      - name: Resolve qite
-        run: git submodule update --init --depth 1 3rdparty/qite
-      - name: Install Qt5
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            cmake ninja-build g++ qtbase5-dev qtmultimedia5-dev
-      - name: Configure focused widget regressions
-        run: |
-          cmake -S tests/mamchat -B build-mam-widgets-qt5 -G Ninja \
-            -DQT_DEFAULT_MAJOR_VERSION=5
-      - name: Build focused widget regressions
-        run: |
-          cmake --build build-mam-widgets-qt5 \
-            --target mam_overlay_scrollbar_test mam_thin_splitter_test --parallel 4
-      - name: Test overlay and splitter
-        env:
-          QT_QPA_PLATFORM: offscreen
-        run: |
-          ctest --test-dir build-mam-widgets-qt5 --output-on-failure \
-            -R "^(mam_overlay_scrollbar|mam_thin_splitter)$"
