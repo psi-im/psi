@@ -68,6 +68,8 @@ public:
     QueuedLoader(VCardFactory *vcf);
     ~QueuedLoader();
     VCardRequest *enqueue(PsiAccount *acc, const Jid &jid, Flags flags, Priority prio);
+    void invalidateOccupant(PsiAccount *account, const Jid &occupant);
+    void invalidateRoom(PsiAccount *account, const Jid &room);
 };
 
 /**
@@ -82,8 +84,7 @@ VCardFactory::VCardFactory() : QObject(qApp), dictSize_(5), queuedLoader_(new Qu
                 return; // Disconnected/destroyed account: never publish stale data.
             const auto jid = request->jid();
             const auto flags = request->flags();
-            if ((flags & MucUser)
-                && request->requestedOccupantEpoch() != mucGeneration(account, jid))
+            if ((flags & MucUser) && !request->currentEpoch())
                 return; // Obsolete response from a departed/replaced occupant.
             if (flags & MucUser) {
                 // Transient occupant cards are never written to disk.
@@ -303,6 +304,13 @@ quint64 VCardFactory::mucGeneration(PsiAccount *account, const Jid &occupant) co
     return occupantEpochs_.generation(accountCacheKey(account->id(), occupant, MucUser));
 }
 
+quint64 VCardFactory::mucRoomGeneration(PsiAccount *account, const Jid &room) const
+{
+    if (!account)
+        return 0;
+    return occupantEpochs_.generation(accountCacheKey(account->id(), room, {}));
+}
+
 void VCardFactory::invalidateMucOccupant(PsiAccount *account, const Jid &occupant)
 {
     if (!account || occupant.resource().isEmpty())
@@ -310,6 +318,7 @@ void VCardFactory::invalidateMucOccupant(PsiAccount *account, const Jid &occupan
     const QString roomKey = accountCacheKey(account->id(), occupant, {});
     const QString key = accountCacheKey(account->id(), occupant, MucUser);
     occupantEpochs_.advance(key);
+    queuedLoader_->invalidateOccupant(account, occupant);
 
     auto roomIt = mucVcardDict_.find(roomKey);
     if (roomIt != mucVcardDict_.end()) {
@@ -330,6 +339,9 @@ void VCardFactory::resetMucRoom(PsiAccount *account, const Jid &room)
     if (!account)
         return;
     const QString roomKey = accountCacheKey(account->id(), room, {});
+    // Also fence replies for nicks that had no cached vCard at room exit.
+    occupantEpochs_.advance(roomKey);
+    queuedLoader_->invalidateRoom(account, room);
     const auto occupants = mucVcardDict_.value(roomKey).keys();
     for (const auto &nick : occupants)
         invalidateMucOccupant(account, room.withResource(nick));
@@ -514,6 +526,8 @@ public:
     bool                        modernAnswered = false;
     bool                        legacyAnswered = false;
     quint64                     occupantEpoch = 0;
+    quint64                     roomEpoch = 0;
+    bool                        invalidated = false;
 
     using ErrorPtr = std::unique_ptr<XMPP::Stanza::Error>;
     VCard4::VCard vcard;
@@ -522,7 +536,14 @@ public:
     bool          storeAnswered = false;
 
     Private(PsiAccount *pa, const Jid &jid, VCardFactory::Flags flags) :
-        accounts({ { pa } }), accountId(pa ? pa->id() : QString()), jid(jid), flags(flags) { }
+        accounts({ { pa } }), accountId(pa ? pa->id() : QString()), jid(jid), flags(flags)
+    {
+        if (pa && (flags & VCardFactory::MucUser)) {
+            auto *vcf = VCardFactory::instance();
+            occupantEpoch = vcf->mucGeneration(pa, jid);
+            roomEpoch = vcf->mucRoomGeneration(pa, jid);
+        }
+    }
 };
 
 VCardRequest::VCardRequest(PsiAccount *account, const Jid &jid, VCardFactory::Flags flags) :
@@ -540,8 +561,8 @@ bool VCardRequest::execute()
     if (paIt == d->accounts.end())
         return false;
     d->activeAccount = *paIt;
-    if (d->flags & VCardFactory::MucUser)
-        d->occupantEpoch = VCardFactory::instance()->mucGeneration(d->activeAccount, d->jid);
+    if (!currentEpoch())
+        return false; // Stale queued request: do not send an unnecessary IQ.
 
     // Client resource capabilities do not describe the account's server-side
     // vCard stores. Only explicit request modes determine which to query.
@@ -616,7 +637,7 @@ void VCardRequest::merge(PsiAccount *account, const Jid &, VCardFactory::Flags f
     }
 }
 
-bool VCardRequest::success() const { return d->error == nullptr; }
+bool VCardRequest::success() const { return !d->invalidated && d->error == nullptr; }
 
 VCard4::VCard VCardRequest::vcard() const { return d->vcard; }
 
@@ -627,6 +648,36 @@ VCard4::VCard VCardRequest::legacyVcard() const { return d->legacy; }
 bool VCardRequest::modernAnswered() const { return d->modernAnswered; }
 bool VCardRequest::legacyAnswered() const { return d->legacyAnswered; }
 quint64 VCardRequest::requestedOccupantEpoch() const { return d->occupantEpoch; }
+quint64 VCardRequest::requestedRoomEpoch() const { return d->roomEpoch; }
+
+bool VCardRequest::currentEpoch() const
+{
+    if (d->invalidated)
+        return false;
+    if (!(d->flags & VCardFactory::MucUser))
+        return true;
+    auto *account = d->accounts.isEmpty() ? nullptr : d->accounts.first().data();
+    if (!account)
+        return false;
+    auto *vcf = VCardFactory::instance();
+    return d->occupantEpoch == vcf->mucGeneration(account, d->jid)
+        && d->roomEpoch == vcf->mucRoomGeneration(account, d->jid);
+}
+
+bool VCardRequest::wasQueuedFor(PsiAccount *account, const Jid &occupant) const
+{
+    return (d->flags & VCardFactory::MucUser) && d->jid.compare(occupant, true)
+        && std::any_of(d->accounts.cbegin(), d->accounts.cend(),
+                       [account](const auto &p) { return p == account; });
+}
+
+void VCardRequest::invalidate(bool notifyPending)
+{
+    d->invalidated = true;
+    d->statusString = QStringLiteral("MUC occupant generation changed");
+    if (notifyPending)
+        emit finished();
+}
 
 QString VCardRequest::errorString() const { return d->statusString.isEmpty() ? d->error->toString() : d->statusString; }
 
@@ -648,13 +699,17 @@ VCardFactory::QueuedLoader::QueuedLoader(VCardFactory *vcf) : QObject(vcf)
 #endif
             emit vcardReceived(request);
             const QString key = requestKeys_.take(request);
-            (request->flags() & PhotoOnly ? photoReqs_ : jid2req).remove(key);
+            auto &map = (request->flags() & PhotoOnly ? photoReqs_ : jid2req);
+            if (map.value(key) == request)
+                map.remove(key);
             request->deleteLater();
         });
         auto started = request->execute();
         if (!started) {
             const QString key = requestKeys_.take(request);
-            (request->flags() & PhotoOnly ? photoReqs_ : jid2req).remove(key);
+            auto &map = (request->flags() & PhotoOnly ? photoReqs_ : jid2req);
+            if (map.value(key) == request)
+                map.remove(key);
             request->deleteLater();
         }
         if (queue_.isEmpty()) {
@@ -711,6 +766,45 @@ VCardRequest *VCardFactory::QueuedLoader::enqueue(PsiAccount *acc, const Jid &ji
         timer_.start();
     }
     return req;
+}
+
+
+void VCardFactory::QueuedLoader::invalidateOccupant(PsiAccount *account, const Jid &occupant)
+{
+    auto invalidate = [this, account, &occupant](QHash<QString, VCardRequest *> &requests) {
+        for (auto it = requests.begin(); it != requests.end();) {
+            VCardRequest *request = it.value();
+            if (!request->wasQueuedFor(account, occupant)) {
+                ++it;
+                continue;
+            }
+            const bool pending = queue_.removeAll(request) != 0;
+            requestKeys_.remove(request);
+            it = requests.erase(it);
+            // A queued request has no network task or loader callback yet.
+            // An in-flight request completes normally but cannot populate cache.
+            request->invalidate(pending);
+            if (pending)
+                request->deleteLater();
+        }
+    };
+    invalidate(jid2req);
+    invalidate(photoReqs_);
+}
+
+void VCardFactory::QueuedLoader::invalidateRoom(PsiAccount *account, const Jid &room)
+{
+    // Iterate only pending/in-flight IQs for this exact account and room.
+    // Removal is synchronous, making a new occupant eligible for a fresh IQ.
+    QList<Jid> occupants;
+    for (auto *request : std::as_const(requestKeys_)) {
+        if ((request->flags() & MucUser) && request->jid().compare(room, false)
+            && request->wasQueuedFor(account, request->jid())) {
+            occupants.append(request->jid());
+        }
+    }
+    for (const Jid &occupant : occupants)
+        invalidateOccupant(account, occupant);
 }
 
 #include "vcardfactory.moc"
