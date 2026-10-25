@@ -77,15 +77,70 @@ VCardFactory::VCardFactory() : QObject(qApp), dictSize_(5), queuedLoader_(new Qu
 {
     connect(queuedLoader_, &QueuedLoader::vcardReceived, this, [this](const VCardRequest *request) {
         if (request->success()) {
-            if (request->flags() & PhotoOnly) {
-                // The server returns the whole vcard-temp stanza, but the
-                // photo request may update only the cached PHOTO field.
-                VCard4::VCard cached = (request->flags() & MucUser)
-                    ? mucVcard(request->jid()) : vcard(request->jid());
-                if (applyLegacyPhoto(cached, request->vcard()))
-                    saveVCard(request->jid(), cached, request->flags() & ~PhotoOnly);
+            const auto jid = request->jid();
+            const auto flags = request->flags();
+            if (flags & MucUser) {
+                // Transient occupant cards are never written to disk.
+                if (flags & PhotoOnly) {
+                    auto cached = mucVcard(jid);
+                    if (request->legacyVcard().photo().isEmpty()) {
+                        if (clearPhoto(cached))
+                            saveVCard(jid, cached, flags & ~PhotoOnly);
+                    } else if (applyLegacyPhoto(cached, request->legacyVcard())) {
+                        saveVCard(jid, cached, flags & ~PhotoOnly);
+                    }
+                } else {
+                    saveVCard(jid, request->vcard(), flags);
+                }
+                return;
+            }
+
+            const QString accountId = request->accountId();
+            if (flags & PhotoOnly) {
+                if (!request->legacyAnswered())
+                    return; // A failed IQ must never erase a cached source.
+
+                const QString legacyPath = sourceCardFile(
+                    ApplicationInfo::vCardDir(), accountId, jid, flags, false);
+                const bool hadLegacySource = QFile::exists(legacyPath);
+                auto legacy = readSourceCard(accountId, jid, flags, false);
+                const auto newLegacy = request->legacyVcard();
+                if (newLegacy.photo().isEmpty())
+                    clearPhoto(legacy);
+                else
+                    applyLegacyPhoto(legacy, newLegacy);
+                saveSourceCard(accountId, jid, flags, false, legacy);
+
+                auto modern = readSourceCard(accountId, jid, flags, true);
+                auto cached = vcard(jid);
+                if (modern) {
+                    // Provenance is known: deleting vcard-temp PHOTO cannot
+                    // erase a separately published PEP vCard4 image.
+                    cached = mergeSourceCards(modern, legacy);
+                } else if (newLegacy.photo().isEmpty()) {
+                    // Only remove an old embedded image when we know it came
+                    // from the legacy source. An unknown old cache may instead
+                    // contain a modern image and must not be destroyed.
+                    if (hadLegacySource)
+                        clearPhoto(cached);
+                } else {
+                    applyLegacyPhoto(cached, newLegacy);
+                }
+                saveVCard(jid, cached, flags & ~PhotoOnly);
             } else {
-                saveVCard(request->jid(), request->vcard(), request->flags());
+                // A transient failure of one source cannot erase the last
+                // confirmed contents of that source; a successful empty
+                // response, by contrast, removes its sidecar.
+                if (request->modernAnswered())
+                    saveSourceCard(accountId, jid, flags, true, request->modernVcard());
+                if (request->legacyAnswered())
+                    saveSourceCard(accountId, jid, flags, false, request->legacyVcard());
+
+                const auto modern = readSourceCard(accountId, jid, flags, true);
+                const auto legacy = readSourceCard(accountId, jid, flags, false);
+                const auto merged = (modern || legacy)
+                    ? mergeSourceCards(modern, legacy) : request->vcard();
+                saveVCard(jid, merged, flags);
             }
         }
 #ifdef VCF_DEBUG
