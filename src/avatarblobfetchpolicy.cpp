@@ -172,3 +172,30 @@ void AvatarBlobFetchPolicy::forgetAccount(const QString &accountId)
             ++it;
     }
 }
+
+void AvatarLegacyAliasPolicy::observe(const QString &accountId, const QString &legacyJid)
+{
+    owners_[legacyJid].insert(accountId);
+}
+
+bool AvatarLegacyAliasPolicy::allows(const QString &accountId, const QString &legacyJid) const
+{
+    const auto it = owners_.constFind(legacyJid);
+    return it != owners_.cend() && it->size() == 1 && it->contains(accountId);
+}
+
+bool AvatarLegacyAliasPolicy::ambiguous(const QString &legacyJid) const
+{
+    return owners_.value(legacyJid).size() > 1;
+}
+
+void AvatarLegacyAliasPolicy::forgetAccount(const QString &accountId)
+{
+    for (auto it = owners_.begin(); it != owners_.end();) {
+        it->remove(accountId);
+        if (it->isEmpty())
+            it = owners_.erase(it);
+        else
+            ++it;
+    }
+}
