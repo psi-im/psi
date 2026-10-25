@@ -2,6 +2,9 @@
 #pragma once
 
 #include <QtGlobal>
+#include <QString>
+#include <QVector>
+#include <algorithm>
 #include <cmath>
 #include <limits>
 
@@ -56,5 +59,21 @@ struct AvatarNegativePolicy {
         if (a != b)
             return a < b;
         return lastAccess(lhs) < lastAccess(rhs);
+    }
+
+    struct Candidate {
+        QString jid;
+        quint64 stamp;
+    };
+
+    static void sortByUsefulness(QVector<Candidate> &items, quint32 nowSeconds)
+    {
+        std::sort(items.begin(), items.end(), [nowSeconds](const Candidate &a, const Candidate &b) {
+            if (lessUseful(a.stamp, b.stamp, nowSeconds))
+                return true;
+            if (lessUseful(b.stamp, a.stamp, nowSeconds))
+                return false;
+            return a.jid < b.jid;
+        });
     }
 };
