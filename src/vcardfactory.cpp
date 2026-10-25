@@ -290,6 +290,37 @@ VCard4::VCard VCardFactory::vcard(const Jid &j, Flags flags)
     return card;
 }
 
+VCard4::VCard VCardFactory::mucVcard(PsiAccount *account, const Jid &j) const
+{
+    if (!account)
+        return mucVcard(j);
+    const QString roomKey = accountCacheKey(account->id(), j, {});
+    const auto room = mucVcardDict_.constFind(roomKey);
+    if (room == mucVcardDict_.cend())
+        return {};
+    return room.value().value(j.resource());
+}
+
+VCard4::VCard VCardFactory::vcard(PsiAccount *account, const Jid &j, Flags flags)
+{
+    if (!account)
+        return vcard(j, flags);
+    if (flags & MucUser)
+        return mucVcard(account, j);
+
+    const QString key = accountCacheKey(account->id(), j, flags);
+    const auto it = vcardDict_.constFind(key);
+    if (it != vcardDict_.cend())
+        return it.value();
+
+    const QString fileName = mergedCardFile(
+        ApplicationInfo::vCardDir(), account->id(), j, flags);
+    const auto card = readCachedVCard(fileName);
+    if (card)
+        checkLimit(key, card);
+    return card;
+}
+
 /**
  * \brief Call this when you need to update vCard in cache.
  */
