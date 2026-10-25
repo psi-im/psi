@@ -773,7 +773,7 @@ public slots:
     {
         // our own vcard?
         if (j.compare(jid, false)) {
-            const auto vcard = VCardFactory::instance()->vcard(j);
+            const auto vcard = VCardFactory::instance()->vcard(account, j);
             if (vcard) {
                 vcardPhotoUpdate(vcard.photo());
             }
@@ -1236,7 +1236,11 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
     d->avatarFactory = new AvatarFactory(this);
     d->self.setAvatarFactory(avatarFactory());
 
-    connect(VCardFactory::instance(), &VCardFactory::vcardChanged, d, &Private::vcardChanged);
+    connect(VCardFactory::instance(), &VCardFactory::vcardChangedScoped, d,
+            [this](PsiAccount *source, const Jid &j, VCardFactory::Flags flags) {
+                if (source == this)
+                    d->vcardChanged(j, flags);
+            });
 
     // Bookmarks
     d->bookmarkManager = new BookmarkManager(this);
@@ -2559,7 +2563,7 @@ void PsiAccount::serverFeaturesChanged()
 
     if (d->client->serverInfoManager()->serverFeatures().hasVCard() && !d->vcardChecked) {
         // Get the vcard
-        const auto vcard = VCardFactory::instance()->vcard(d->jid);
+        const auto vcard = VCardFactory::instance()->vcard(this, d->jid);
 #if 0 // feels not needed with pubsub vcards. commented out on 2024-06-13. TODO remove options?
         if (PsiOptions::instance()->getOption("options.vcard.query-own-vcard-on-login").toBool() || vcard.isEmpty()
             || (vcard.nickName().isEmpty() && vcard.fullName().isEmpty())) {
@@ -4812,9 +4816,9 @@ void PsiAccount::actionInfo(const Jid &_j, bool showStatusInfo)
     } else {
         VCard4::VCard vcard;
         if (isMucMember) {
-            vcard = VCardFactory::instance()->mucVcard(j);
+            vcard = VCardFactory::instance()->mucVcard(this, j);
         } else {
-            vcard = VCardFactory::instance()->vcard(j);
+            vcard = VCardFactory::instance()->vcard(this, j);
         }
         w = new InfoDlg(isSelf            ? InfoWidget::Self
                             : isMucMember ? InfoWidget::MucContact
