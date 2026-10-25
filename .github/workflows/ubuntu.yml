@@ -73,7 +73,7 @@ jobs:
             -DBUNDLED_IRIS="$IRIS_BUNDLED" \
             -DIRIS_BUNDLED_QCA=OFF -DIRIS_SYSTEM_QCA=3 \
             -DIRIS_BUNDLED_USRSCTP=OFF -DIRIS_BUNDLED_OMEMO_C=OFF \
-            -DCHAT_TYPE=BASIC \
+            -DCHAT_TYPE=BASIC -DENABLE_AVATAR_CACHE_BENCHMARK=ON \
             -DENABLE_PLUGINS=OFF -DBUILD_PSIMEDIA=OFF \
             -DUSE_KEYCHAIN=OFF -DUSE_HUNSPELL=ON \
             -DBUILD_TESTING=ON
@@ -82,5 +82,13 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
         run: ctest --test-dir build --output-on-failure --no-tests=error -R "account_vcard_disk_cache|account_vcard_request_merge|account_avatar_blob_inflight|avcall(policy|audiodirection)_test"
+      - name: Benchmark actual MUC AvatarCache (non-gating timings)
+        env:
+          QT_QPA_PLATFORM: offscreen
+          PSI_AVATAR_CACHE_BENCHMARK: '1'
+        run: |
+          # Do not populate the runner's regular Psi profile with fixture data.
+          export HOME="$(mktemp -d)"
+          ./build/psi/psi
       - name: Cache statistics
         run: ccache --show-stats
