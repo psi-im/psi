@@ -77,20 +77,23 @@ VCardFactory::VCardFactory() : QObject(qApp), dictSize_(5), queuedLoader_(new Qu
 {
     connect(queuedLoader_, &QueuedLoader::vcardReceived, this, [this](const VCardRequest *request) {
         if (request->success()) {
+            PsiAccount *account = request->account();
+            if (!account)
+                return; // Disconnected/destroyed account: never publish stale data.
             const auto jid = request->jid();
             const auto flags = request->flags();
             if (flags & MucUser) {
                 // Transient occupant cards are never written to disk.
                 if (flags & PhotoOnly) {
-                    auto cached = mucVcard(jid);
+                    auto cached = mucVcard(account, jid);
                     if (request->legacyVcard().photo().isEmpty()) {
                         if (clearPhoto(cached))
-                            saveVCard(jid, cached, flags & ~PhotoOnly);
+                            saveVCard(account, jid, cached, flags & ~PhotoOnly);
                     } else if (applyLegacyPhoto(cached, request->legacyVcard())) {
-                        saveVCard(jid, cached, flags & ~PhotoOnly);
+                        saveVCard(account, jid, cached, flags & ~PhotoOnly);
                     }
                 } else {
-                    saveVCard(jid, request->vcard(), flags);
+                    saveVCard(account, jid, request->vcard(), flags);
                 }
                 return;
             }
@@ -112,7 +115,7 @@ VCardFactory::VCardFactory() : QObject(qApp), dictSize_(5), queuedLoader_(new Qu
                 saveSourceCard(accountId, jid, flags, false, legacy);
 
                 auto modern = readSourceCard(accountId, jid, flags, true);
-                auto cached = vcard(jid);
+                auto cached = vcard(account, jid);
                 if (modern) {
                     // Provenance is known: deleting vcard-temp PHOTO cannot
                     // erase a separately published PEP vCard4 image.
@@ -126,7 +129,7 @@ VCardFactory::VCardFactory() : QObject(qApp), dictSize_(5), queuedLoader_(new Qu
                 } else {
                     applyLegacyPhoto(cached, newLegacy);
                 }
-                saveVCard(jid, cached, flags & ~PhotoOnly);
+                saveVCard(account, jid, cached, flags & ~PhotoOnly);
             } else {
                 // A transient failure of one source cannot erase the last
                 // confirmed contents of that source; a successful empty
@@ -140,7 +143,7 @@ VCardFactory::VCardFactory() : QObject(qApp), dictSize_(5), queuedLoader_(new Qu
                 const auto legacy = readSourceCard(accountId, jid, flags, false);
                 const auto merged = (modern || legacy)
                     ? mergeSourceCards(modern, legacy) : request->vcard();
-                saveVCard(jid, merged, flags);
+                saveVCard(account, jid, merged, flags);
             }
         }
 #ifdef VCF_DEBUG
@@ -457,6 +460,7 @@ VCardFactory *VCardFactory::instance_ = nullptr;
 class VCardRequest::Private {
 public:
     QList<QPointer<PsiAccount>> accounts;
+    QPointer<PsiAccount>        activeAccount;
     QString                     accountId;
     Jid                         jid;
     VCardFactory::Flags         flags;
@@ -489,6 +493,7 @@ bool VCardRequest::execute()
     auto paIt = std::ranges::find_if(d->accounts, [](auto pa) { return pa && pa->isConnected(); });
     if (paIt == d->accounts.end())
         return false;
+    d->activeAccount = *paIt;
 
     // Client resource capabilities do not describe the account's server-side
     // vCard stores. Only explicit request modes determine which to query.
@@ -568,6 +573,7 @@ bool VCardRequest::success() const { return d->error == nullptr; }
 VCard4::VCard VCardRequest::vcard() const { return d->vcard; }
 
 const QString &VCardRequest::accountId() const { return d->accountId; }
+PsiAccount *VCardRequest::account() const { return d->activeAccount.data(); }
 VCard4::VCard VCardRequest::modernVcard() const { return d->modern; }
 VCard4::VCard VCardRequest::legacyVcard() const { return d->legacy; }
 bool VCardRequest::modernAnswered() const { return d->modernAnswered; }
