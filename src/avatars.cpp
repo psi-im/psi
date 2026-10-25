@@ -966,14 +966,15 @@ private:
             jids.removeOne(typedJid(AvatarFromVCardType, jid));
         }
 
-        if (jids.empty()) {
-            item->setUndeletable(false); // it's not necessary actually
-            FileCache::removeItem(item, true);
-        } else {
-            md.insert(QLatin1String("jids"), jids);
-            item->setMetadata(md);
-            lazySync();
-        }
+        if (jids.empty())
+            item->setUndeletable(false);
+        // Keep already validated image bytes addressable by SHA-1 for the
+        // FileCache TTL/budget. Removing the last JID binding must not eagerly
+        // delete a potentially large blob that another contact may announce
+        // again, causing a redundant avatar:data IQ.
+        md.insert(QLatin1String("jids"), jids);
+        item->setMetadata(md);
+        lazySync();
     }
 
     IconType extractIconType(const QString &jid)
@@ -1016,9 +1017,9 @@ private:
             it.next();
             QVariantMap md(it.value()->metadata());
             QStringList jids = md.value(QLatin1String("jids")).toStringList();
-            if (jids.count() == 0) {
-                // no users of the icon
-                FileCache::removeItem(it.value(), true);
+            if (jids.isEmpty()) {
+                // Unbound bytes are retained until FileCache's normal age/
+                // space GC. They remain reusable by SHA-1 without any IQ.
                 continue;
             }
             QMutableStringListIterator jIt(jids);
