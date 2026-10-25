@@ -56,7 +56,6 @@ void OptionsTabRosterMain::applyOptions()
                                       d->ck_autoRosterSize->isChecked());
     PsiOptions::instance()->setOption("options.ui.contactlist.use-left-click", d->ck_useleft->isChecked());
     PsiOptions::instance()->setOption("options.ui.contactlist.show-menubar", d->ck_showMenubar->isChecked());
-    PsiOptions::instance()->setOption("options.ui.contactlist.disable-scrollbar", d->ck_disableScrollbar->isChecked());
     PsiOptions::instance()->setOption("options.ui.contactlist.show-avatar-frame", d->ck_roster_avatar->isChecked());
     PsiOptions::instance()->setOption("options.contactlist.autohide-interval", d->sb_hideInterval->value());
 
@@ -94,8 +93,6 @@ void OptionsTabRosterMain::restoreOptions()
     d->ck_useleft->setChecked(PsiOptions::instance()->getOption("options.ui.contactlist.use-left-click").toBool());
     d->ck_useleft->setVisible(false);
     d->ck_showMenubar->setChecked(PsiOptions::instance()->getOption("options.ui.contactlist.show-menubar").toBool());
-    d->ck_disableScrollbar->setChecked(
-        PsiOptions::instance()->getOption("options.ui.contactlist.disable-scrollbar").toBool());
     d->ck_roster_avatar->setChecked(
         PsiOptions::instance()->getOption("options.ui.contactlist.show-avatar-frame").toBool());
     d->sb_hideInterval->setValue(PsiOptions::instance()->getOption("options.contactlist.autohide-interval").toInt());
