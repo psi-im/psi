@@ -28,6 +28,6 @@ private:
 };
 
 // Application options (theme, fonts, colours, emoji picker) stay outside the
-// presentation widget. Sender avatars are chat-window policy: see
-// NativeChatAvatars.
+// presentation widget. Chat windows choose the sender JID; AvatarCache
+// centralizes decoded and negative avatar results.
 void configureNativeChat(MamChatWidget *view, PsiAccount *account, bool groupChat);

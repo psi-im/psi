@@ -26,7 +26,6 @@
 #ifndef PSICHATDLG_H
 #define PSICHATDLG_H
 
-#include "nativechatavatars.h"
 #include "actionlist.h"
 #include "applicationinfo.h"
 #include "chatdlg.h"
@@ -138,7 +137,7 @@ private:
 private:
     Ui::ChatDlg ui_;
     MamChatWidget *nativeTimeline_ = nullptr;
-    NativeChatAvatars nativeAvatars_;
+    bool              roomOccupantChat_ = false;
     bool              isRoomOccupantChat() const;
     QPointer<HistorySync> mamTask_;
     QString mamBeforeId_;

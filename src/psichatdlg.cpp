@@ -225,7 +225,7 @@ private:
 };
 
 PsiChatDlg::PsiChatDlg(const Jid &jid, PsiAccount *pa, TabManager *tabManager) :
-    ChatDlg(jid, pa, tabManager), nativeAvatars_(pa, false), actions_(new ActionList("", 0, false)),
+    ChatDlg(jid, pa, tabManager), actions_(new ActionList("", 0, false)),
     mCmdManager_(&mCmdSite_),
     tabCompletion(&mCmdManager_)
 {
@@ -473,28 +473,36 @@ bool PsiChatDlg::isRoomOccupantChat() const
 void PsiChatDlg::updateAvatar(const Jid &jid)
 {
     ChatDlg::updateAvatar(jid);
-    if (nativeTimeline_ && nativeAvatars_.invalidate(jid))
+    // Unlike the old per-window QPixmap memo, the central AvatarCache has
+    // already invalidated its state. Only redraw the relevant sender.
+    const bool peerChanged = roomOccupantChat_ ? jid.compare(this->jid())
+                                              : jid.compare(this->jid(), false);
+    if (nativeTimeline_ && (peerChanged || jid.compare(account()->jid(), false)))
         nativeTimeline_->refreshAvatars();
 }
 
 void PsiChatDlg::setJid(const Jid &newJid)
 {
     const Jid oldJid = jid();
+    // A direct chat (including a MUC PM) retains its bare peer identity.
+    // Changing the resource selects a different endpoint/occupant, but
+    // must not reset the conversation's history or MAM cursor.
+    if (oldJid.bare() != newJid.bare()) {
+        qWarning() << "PsiChatDlg::setJid refused a different bare peer:" << oldJid.full() << newJid.full();
+        return;
+    }
+
     ChatDlg::setJid(newJid);
     if (oldJid == jid())
         return;
-    if (nativeTimeline_ && nativeAvatars_.setPeer(jid(), isRoomOccupantChat()))
+
+    // Detect MUC PMs on resource changes, never on individual messages.
+    roomOccupantChat_ = isRoomOccupantChat();
+    if (nativeTimeline_)
         nativeTimeline_->refreshAvatars();
 
-    if (oldJid.bare() != jid().bare()) {
-        clearNativeHistory();
-        localExhausted_ = false;
-        mamExhausted_ = false;
-        if (nativeTimeline_)
-            QTimer::singleShot(0, this, [this] { loadOlderMamMessages(); });
-        if (auto *controller = account()->encryptionController())
-            selectedEncryptionMethod_ = controller->selectedMethod(jid());
-    }
+    // An encryption session can be resource-specific even when the
+    // conversation and archive belong to the same bare JID.
     rebuildEncryptionSession();
     updateEncryption();
 }
@@ -547,8 +555,13 @@ void PsiChatDlg::initUi()
     delete ui_.topFrame->layout()->replaceWidget(ui_.log, nativeTimeline_);
     ui_.log->hide();
     configureNativeChat(nativeTimeline_, account(), false);
-    nativeAvatars_.setPeer(jid(), isRoomOccupantChat());
-    nativeTimeline_->setAvatarResolver([this](const MessageView &message) { return nativeAvatars_.avatar(message); });
+    roomOccupantChat_ = isRoomOccupantChat();
+    nativeTimeline_->setAvatarResolver([this](const MessageView &message) {
+        auto *avatars = account()->avatarFactory();
+        if (message.isLocal())
+            return avatars->getAvatar(account()->jid().withResource({}));
+        return roomOccupantChat_ ? avatars->getMucAvatar(jid()) : avatars->getAvatar(jid());
+    });
     connect(nativeTimeline_, &MamChatWidget::outgoingReactions, this, &PsiChatDlg::sendOutgoingReactions);
     connect(nativeTimeline_, &MamChatWidget::outgoingMessageRetraction, this, &PsiChatDlg::sendMessageRetraction);
     connect(nativeTimeline_, &MamChatWidget::replyRequested, ui_.mle, &ChatEditProxy::setReply);

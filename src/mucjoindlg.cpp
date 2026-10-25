@@ -322,8 +322,8 @@ void MUCJoinDlg::doJoin(MucJoinReason r)
             gc->ensureTabbedCorrectly();
         gc->bringToFront();
         if (gc->isInactive()) {
-            if (gc->jid() != j.bare())
-                gc->setJid(j.bare());
+            // The tab belongs to this bare room JID for its entire lifetime.
+            // Its own nickname is maintained separately by GCMainDlg.
             gc->reactivate();
         }
         joined();

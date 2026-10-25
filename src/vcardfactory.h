@@ -52,6 +52,9 @@ public:
     static VCardFactory *instance();
     VCard4::VCard        vcard(const Jid &, Flags flags = {});
     const VCard4::VCard  mucVcard(const Jid &j) const;
+    // MUC occupant nicks are reusable; discard a departed occupant's
+    // runtime-only vCard before the same full JID can identify someone else.
+    void forgetMucVCard(const Jid &j);
 
     Task *setVCard(PsiAccount *account, const VCard4::VCard &v, const Jid &targetJid, VCardFactory::Flags flags);
     VCardRequest *getVCard(PsiAccount *account, const Jid &, VCardFactory::Flags flags = {});
