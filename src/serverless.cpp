@@ -6,14 +6,14 @@
 #include <algorithm>
 
 namespace Serverless {
-QHostAddress addressForInterface(const QNetworkInterface &interface)
+QHostAddress addressForInterface(const QNetworkInterface &networkInterface)
 {
-    const auto flags = interface.flags();
+    const auto flags = networkInterface.flags();
     if (!flags.testFlag(QNetworkInterface::IsUp) || !flags.testFlag(QNetworkInterface::IsRunning)
         || (!flags.testFlag(QNetworkInterface::CanMulticast) && !flags.testFlag(QNetworkInterface::IsLoopBack)))
         return {};
     QHostAddress ipv6;
-    for (const auto &entry : interface.addressEntries()) {
+    for (const auto &entry : networkInterface.addressEntries()) {
         const auto address = entry.ip();
         if (address.isNull() || address.isMulticast())
             continue;
@@ -23,7 +23,7 @@ QHostAddress addressForInterface(const QNetworkInterface &interface)
             ipv6             = address;
             const auto bytes = ipv6.toIPv6Address();
             if (bytes[0] == 0xfe && (bytes[1] & 0xc0) == 0x80)
-                ipv6.setScopeId(interface.name());
+                ipv6.setScopeId(networkInterface.name());
         }
     }
     return ipv6;
@@ -36,17 +36,17 @@ QHostAddress addressForInterface(const QString &name)
     auto         interfaces = QNetworkInterface::allInterfaces();
 #if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
     std::stable_sort(interfaces.begin(), interfaces.end(), [](const auto &a, const auto &b) {
-        const auto physical = [](const auto &interface) {
-            return interface.type() == QNetworkInterface::Ethernet || interface.type() == QNetworkInterface::Wifi;
+        const auto physical = [](const auto &networkInterface) {
+            return networkInterface.type() == QNetworkInterface::Ethernet || networkInterface.type() == QNetworkInterface::Wifi;
         };
         return physical(a) && !physical(b);
     });
 #endif
-    for (const auto &interface : interfaces) {
-        if (interface.flags().testFlag(QNetworkInterface::IsLoopBack)
-            || interface.flags().testFlag(QNetworkInterface::IsPointToPoint))
+    for (const auto &networkInterface : interfaces) {
+        if (networkInterface.flags().testFlag(QNetworkInterface::IsLoopBack)
+            || networkInterface.flags().testFlag(QNetworkInterface::IsPointToPoint))
             continue;
-        const auto address = addressForInterface(interface);
+        const auto address = addressForInterface(networkInterface);
         if (address.protocol() == QAbstractSocket::IPv4Protocol)
             return address;
         if (ipv6.isNull())
