@@ -2477,6 +2477,9 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
 void GCMainDlg::joined()
 {
     if (d->state == Private::Connecting) {
+        // The same room JID may now represent different occupants and
+        // previously queued vCard IQs must not restore old nick avatars.
+        account()->avatarFactory()->resetMucRoom(jid());
         d->usersModel->clear();
         d->state = Private::Connected;
         d->actions->action("gchat_set_topic")->setEnabled(true);
