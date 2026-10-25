@@ -1,7 +1,7 @@
 # Avatar cache centralization: correctness-first migration plan
 
-**Status:** approved design direction; implementation in stages, **do not remove the native-chat memo yet**.
-**Target:** option **C**, a unified, account-scoped `AvatarCache` with bounded negative-result memoization.
+**Status:** historical staged migration plan, originally approved 2026-10-24. The native-chat pixmap memo was subsequently removed in favor of a bounded, per-JID negative PHOTO hint in `AvatarCache`. The remaining uncompleted audit items are not claimed as solved.
+**Updated direction (2026-10-25):** keep the existing globally keyed `AvatarCache` and shared SHA-1 file cache; maintain only a bounded negative PHOTO hint (time-decayed heat) in existing `jidToIcons`. Do not introduce account-scoped avatar keys solely for this optimization.
 **Source:** detailed audit supplied 2026-10-24, performed against Psi `master` at `d709963e`.
 **Audited report:** [English translation of the original Russian-language audit](avatar-cache-audit-source-2026-10-24.md), preserving its measurements and findings; the original source-language text is not stored in the repository.
 **Not a performance promise:** the existing per-window QPixmap memo (option A) is demonstrably faster in isolated lookups; option C primarily improves correctness, ownership, bounded state and consistency between consumers.
