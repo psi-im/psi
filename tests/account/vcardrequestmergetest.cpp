@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
-#include "vcardrequestmerge.h"
+#include "vcardfactory.h"
+#include "iris/xmpp_vcard4.h"
 #include "iris/xmpp_vcard.h"
 
 #include <QtTest/QtTest>
@@ -19,7 +20,7 @@ private slots:
         legacy.setPhoto(XMPP::VCard4::UriValue(QByteArray("photo-pixels"), QStringLiteral("image/png")));
 
         const auto original = modern;
-        VCardRequestMerge::supplement(modern, legacy);
+        VCardFactory::supplementFromLegacy(modern, legacy);
         QCOMPARE(modern.fullName().preferred().data, QStringLiteral("Modern"));
         QCOMPARE(modern.nickName().preferred().data.value(0), QStringLiteral("Old nickname"));
         QCOMPARE(modern.emails().preferred().data, QStringLiteral("old@example.org"));
@@ -32,7 +33,7 @@ private slots:
         XMPP::VCard4::VCard modern;
         XMPP::VCard4::VCard legacy;
         legacy.setFullName(QStringLiteral("Legacy only"));
-        VCardRequestMerge::supplement(modern, legacy);
+        VCardFactory::supplementFromLegacy(modern, legacy);
         QCOMPARE(modern.fullName().preferred().data, QStringLiteral("Legacy only"));
     }
 
@@ -43,7 +44,7 @@ private slots:
         modern.setPhoto(XMPP::VCard4::UriValue(QStringLiteral("https://example.org/photo")));
         XMPP::VCard4::VCard legacy;
         legacy.setPhoto(XMPP::VCard4::UriValue(QByteArray("embedded"), QStringLiteral("image/jpeg")));
-        VCardRequestMerge::supplement(modern, legacy);
+        VCardFactory::supplementFromLegacy(modern, legacy);
         QCOMPARE(modern.fullName().preferred().data, QStringLiteral("Modern"));
         QCOMPARE(QByteArray(modern.photo()), QByteArray("embedded"));
     }
@@ -67,7 +68,7 @@ private slots:
         XMPP::VCard4::VCard incoming;
         incoming.fromVCardTemp(temp);
 
-        QVERIFY(VCardRequestMerge::applyLegacyPhoto(cached, incoming));
+        QVERIFY(VCardFactory::applyLegacyPhoto(cached, incoming));
         QCOMPARE(cached.fullName().preferred().data, QStringLiteral("Still modern"));
         QCOMPARE(cached.nickName().preferred().data.value(0), QStringLiteral("Nick"));
         QCOMPARE(QByteArray(cached.photo()), QByteArray("new-photo"));
@@ -80,7 +81,7 @@ private slots:
         cached.setPhoto(XMPP::VCard4::UriValue(QByteArray("original"), QStringLiteral("image/jpeg")));
         XMPP::VCard4::VCard legacy;
         legacy.setFullName(QStringLiteral("Legacy no photo"));
-        QVERIFY(!VCardRequestMerge::applyLegacyPhoto(cached, legacy));
+        QVERIFY(!VCardFactory::applyLegacyPhoto(cached, legacy));
         QCOMPARE(cached.fullName().preferred().data, QStringLiteral("Modern"));
         QCOMPARE(QByteArray(cached.photo()), QByteArray("original"));
     }
