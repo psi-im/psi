@@ -37,13 +37,12 @@ private slots:
         incoming.urlAdd(Url("https://EXAMPLE.org/picture.png?a=1#ignored", "duplicate"));
         incoming.urlAdd(Url("xmpp:bob@example.org", "unrelated"));
 
-        const auto display = FileSharingNormalizer::prepareForDisplay(incoming);
-        QCOMPARE(incoming.urlList().size(), 2); // Never change the wire/history data.
+        FileSharingNormalizer::normalize(incoming);
+        QCOMPARE(incoming.urlList().size(), 1); // OOB HTTP moved into references.
         QCOMPARE(incoming.references().size(), 1);
-        QCOMPARE(display.references.size(), 1);
-        QCOMPARE(display.remainingOob.size(), 1);
-        QCOMPARE(display.remainingOob.first().url(), QString("xmpp:bob@example.org"));
-        QCOMPARE(display.references.first().mediaSharing().sources.first(),
+        QCOMPARE(incoming.urlList().size(), 1);
+        QCOMPARE(incoming.urlList().first().url(), QString("xmpp:bob@example.org"));
+        QCOMPARE(incoming.references().first().mediaSharing().sources.first(),
                  QString("https://example.org/picture.png?a=1"));
     }
 
@@ -53,12 +52,10 @@ private slots:
         const QString url = "https://example.org/photo.png?version=2";
         incoming.setBody(QString("Look: %1 !").arg(url));
         incoming.urlAdd(Url(url, "photo"));
-        const auto display = FileSharingNormalizer::prepareForDisplay(incoming);
-        QCOMPARE(incoming.urlList().size(), 1);
-        QVERIFY(incoming.references().isEmpty());
-        QVERIFY(display.remainingOob.isEmpty());
-        QCOMPARE(display.references.size(), 1);
-        const auto ref = display.references.first();
+        FileSharingNormalizer::normalize(incoming);
+        QVERIFY(incoming.urlList().isEmpty());
+        QCOMPARE(incoming.references().size(), 1);
+        const auto ref = incoming.references().first();
         QCOMPARE(ref.uri(), url);
         QCOMPARE(ref.begin(), incoming.body().indexOf(url));
         QCOMPARE(ref.end(), ref.begin() + url.size() - 1);
@@ -70,15 +67,15 @@ private slots:
         Message incoming;
         incoming.urlAdd(Url("https://example.org/photo.png#one"));
         incoming.urlAdd(Url("https://example.org/photo.png#two"));
-        const auto display = FileSharingNormalizer::prepareForDisplay(incoming);
-        QVERIFY(display.remainingOob.isEmpty());
-        QCOMPARE(display.references.size(), 1);
-        QCOMPARE(display.references.first().uri(), QString("https://example.org/photo.png"));
-        QVERIFY(display.references.first().begin() < 0);
-        QCOMPARE(incoming.urlList().size(), 2);
-        QCOMPARE(incoming.references().size(), 0);
-        const auto second = FileSharingNormalizer::prepareForDisplay(incoming);
-        QCOMPARE(second.references.size(), 1);
+        FileSharingNormalizer::normalize(incoming);
+        QVERIFY(incoming.urlList().isEmpty());
+        QCOMPARE(incoming.references().size(), 1);
+        QCOMPARE(incoming.references().first().uri(), QString("https://example.org/photo.png"));
+        QVERIFY(incoming.references().first().begin() < 0);
+        QVERIFY(incoming.urlList().isEmpty());
+        QCOMPARE(incoming.references().size(), 1);
+        FileSharingNormalizer::normalize(incoming);
+        QCOMPARE(incoming.references().size(), 1);
     }
 
     void avoidOverwritingExistingSimsBodyRanges()
@@ -90,33 +87,27 @@ private slots:
         ref.setRange(0, url.size() - 1);
         incoming.setReferences({ ref });
         incoming.urlAdd(Url(url));
-        const auto display = FileSharingNormalizer::prepareForDisplay(incoming);
-        QCOMPARE(incoming.references().size(), 1);
-        QCOMPARE(display.references.size(), 2);
-        QCOMPARE(display.references.at(1).begin(), url.size() + 1);
-        QCOMPARE(display.references.at(1).end(), 2 * url.size());
+        FileSharingNormalizer::normalize(incoming);
+        QCOMPARE(incoming.references().size(), 2);
+        QCOMPARE(incoming.references().at(1).begin(), url.size() + 1);
+        QCOMPARE(incoming.references().at(1).end(), 2 * url.size());
     }
 
-    void separateLinkProjectionDoesNotCreateMediaReferences()
+    void normalizationLeavesNonHttpLinksUntouched()
     {
         Message incoming;
         incoming.urlAdd(Url(QStringLiteral("https://example.org/photo.png"), QStringLiteral("photo")));
         incoming.urlAdd(Url(QStringLiteral("xmpp:contact@example.org"), QStringLiteral("contact")));
         incoming.urlAdd(Url(QStringLiteral("ftp://example.org/archive"), QStringLiteral("archive")));
 
-        const auto links = FileSharingNormalizer::remainingLinks(incoming);
-        QCOMPARE(links.size(), 2);
-        QCOMPARE(links.at(0).url(), QStringLiteral("xmpp:contact@example.org"));
-        QCOMPARE(links.at(0).desc(), QStringLiteral("contact"));
-        QCOMPARE(links.at(1).url(), QStringLiteral("ftp://example.org/archive"));
-        QCOMPARE(incoming.urlList().size(), 3);
-        QVERIFY(incoming.references().isEmpty());
-
-        // Legacy SQLite rows remain renderable even without an explicit
-        // migration: the view backend prepares their HTTP OOB on read.
-        const auto prepared = FileSharingNormalizer::prepareForDisplay(incoming);
-        QCOMPARE(prepared.references.size(), 1);
-        QCOMPARE(prepared.remainingOob.size(), links.size());
+        FileSharingNormalizer::normalize(incoming);
+        QCOMPARE(incoming.urlList().size(), 2);
+        QCOMPARE(incoming.urlList().at(0).url(), QStringLiteral("xmpp:contact@example.org"));
+        QCOMPARE(incoming.urlList().at(0).desc(), QStringLiteral("contact"));
+        QCOMPARE(incoming.urlList().at(1).url(), QStringLiteral("ftp://example.org/archive"));
+        QCOMPARE(incoming.references().size(), 1);
+        FileSharingNormalizer::normalize(incoming); // idempotent at the ingestion boundary
+        QCOMPARE(incoming.references().size(), 1);
     }
 
     void nonHttpEntriesRemainOriginalLinks()
@@ -125,12 +116,11 @@ private slots:
         incoming.urlAdd(Url("ftp://example.org/photo.png", "FTP"));
         incoming.urlAdd(Url("javascript:alert(1)", "unsafe"));
         incoming.urlAdd(Url("https://example.org/photo.png", "attachment"));
-        const auto display = FileSharingNormalizer::prepareForDisplay(incoming);
-        QCOMPARE(incoming.urlList().size(), 3);
-        QCOMPARE(display.remainingOob.size(), 2);
-        QCOMPARE(display.remainingOob.first().desc(), QString("FTP"));
-        QCOMPARE(display.remainingOob.last().url(), QString("javascript:alert(1)"));
-        QCOMPARE(display.references.size(), 1);
+        FileSharingNormalizer::normalize(incoming);
+        QCOMPARE(incoming.urlList().size(), 2);
+        QCOMPARE(incoming.urlList().first().desc(), QString("FTP"));
+        QCOMPARE(incoming.urlList().last().url(), QString("javascript:alert(1)"));
+        QCOMPARE(incoming.references().size(), 1);
     }
 };
 
