@@ -65,7 +65,7 @@ private slots:
         memo.record("account/b/contact/b", AvatarNegativeMemo::State::Unknown, 0);
         memo.invalidatePrefix("account/a/");
         QVERIFY(!memo.lookup("account/a/contact/a", 1));
-        QVERIFY(!memo.lookup("account/b/contact/b", 1));
+        QVERIFY(memo.lookup("account/b/contact/b", 1));
     }
     void timerRollbackExpiresEntry()
     {
