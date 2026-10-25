@@ -106,7 +106,6 @@ list(APPEND HEADERS
     widgets/LongListWidget.h
     widgets/OverlayScrollBarManager.h
     widgets/NativeChatThemeRegistry.h
-    nativechatavatars.h
     nativechattheme.h
     widgets/ChatMessageText.h
     widgets/MessagePreview.h
@@ -366,6 +365,7 @@ list(APPEND SOURCES
     applicationinfo.cpp
     avatars.cpp
     avatarblobinflight.h
+    avatarnegativepolicy.h
     bobfilecache.cpp
     bookmarkmanagedlg.cpp
     bookmarkmanager.cpp
@@ -378,7 +378,6 @@ list(APPEND SOURCES
     widgets/LongListWidgetLayout.cpp
     widgets/OverlayScrollBarManager.cpp
     widgets/NativeChatThemeRegistry.cpp
-    nativechatavatars.cpp
     nativechattheme.cpp
     widgets/ChatMessageText.cpp
     widgets/MessagePreview.cpp
