@@ -4,6 +4,7 @@
 #include <QByteArray>
 #include <QHash>
 #include <QString>
+#include <QStringList>
 
 // FileCache stores shared bytes by hash. Only JID bindings and decoded
 // pixmaps need an account/entity-scoped key.
@@ -27,8 +28,10 @@ public:
     bool beginFetch(const QString &accountId, const QString &bareJid, const QByteArray &hash, qint64 nowMs);
     // Mark a response successful only after the expected bytes were validated.
     // Unsuccessful responses establish a bounded retry cooldown, not NoPhoto.
-    void finish(const QString &accountId, const QString &bareJid, const QByteArray &hash,
-                bool validData, qint64 nowMs);
+    // Returns the other contacts awaiting these same bytes after a validated
+    // success. Caller must bind them from FileCache by hash; no more IQs.
+    QStringList finish(const QString &accountId, const QString &bareJid, const QByteArray &hash,
+                       bool validData, qint64 nowMs);
     bool expects(const QString &accountId, const QString &bareJid, const QByteArray &hash) const;
     bool retractMetadata(const QString &accountId, const QString &bareJid, const QString &itemId);
     bool retractData(const QString &accountId, const QString &bareJid, const QByteArray &hash);
@@ -41,6 +44,7 @@ private:
     struct Entry {
         QByteArray hash;
         QByteArray inFlight;
+        bool       waitingForSharedHash = false;
         QString    metadataItemId;
         qint64     retryNotBeforeMs = 0;
         quint64    touched = 0;
