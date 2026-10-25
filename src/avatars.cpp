@@ -25,6 +25,7 @@
  */
 
 #include "avatars.h"
+#include "avatarblobinflight.h"
 
 #include "applicationinfo.h"
 #include "filecache.h"
@@ -171,26 +172,55 @@ public:
 
         if (n == PEP_AVATAR_DATA_NS) {
             if (item.payload().tagName() == PEP_AVATAR_DATA_TN) {
-                auto hash = QByteArray::fromHex(item.id().toLatin1());
-                if (hash.size() < 20)
-                    return; // doesn't look like sha1 hash. just ignore it
-                            // try append user first. since data may be unexpected and we want to save some cpu cycles.
-#ifdef AVATAR_EDBUG
-                qDebug() << "append user " << jidFull << AvatarCache::AvatarType;
-#endif
-                result = appendUser(hash, AvatarCache::AvatarType, jidFull);
-                if (result == AvatarCache::NoData) {
-                    QByteArray ba = QByteArray::fromBase64(item.payload().text().toLatin1());
-                    if (!ba.isEmpty()) {
-                        result = setIcon(AvatarCache::AvatarType, jidFull, ba, hash);
+                const auto hash = QByteArray::fromHex(item.id().toLatin1());
+                if (hash.size() != 20)
+                    return;
+
+                // A returned IQ may belong to an obsolete metadata
+                // announcement. Bind bytes only to still-interested JIDs.
+                const bool pending = blobFlights_.hasFlight(hash);
+                const QStringList recipients = pending ? blobFlights_.waiters(hash) : QStringList { jidFull };
+                if (recipients.isEmpty())
+                    return;
+
+                const QString &first = recipients.first();
+                result = appendUser(hash, AvatarType, first);
+                if (result == NoData) {
+                    const auto bytes = QByteArray::fromBase64(item.payload().text().toLatin1());
+                    // XEP-0084 item ID identifies the original blob bytes.
+                    if (bytes.isEmpty()
+                        || QCryptographicHash::hash(bytes, QCryptographicHash::Sha1) != hash)
+                        return;
+                    result = setIcon(AvatarType, first, bytes, hash);
+                }
+                if (result == NoData)
+                    return;
+
+                if (result == UserUpdateRequired) {
+                    iconset_.removeIcon(QStringLiteral("avatars/%1").arg(first));
+                    emit avatarChanged(Jid(first));
+                }
+                // FileCache has the blob now. Rebind all waiting contacts
+                // from it, without starting another download.
+                if (pending) {
+                    for (const QString &waitingJid : blobFlights_.complete(hash)) {
+                        if (waitingJid == first)
+                            continue;
+                        const auto waitingResult = appendUser(hash, AvatarType, waitingJid);
+                        if (waitingResult == UserUpdateRequired) {
+                            iconset_.removeIcon(QStringLiteral("avatars/%1").arg(waitingJid));
+                            emit avatarChanged(Jid(waitingJid));
+                        }
                     }
                 }
+                return;
             } else {
                 qWarning("avatars.cpp: Unexpected item payload");
             }
         } else if (n == PEP_AVATAR_METADATA_NS && item.payload().tagName() == QLatin1String(PEP_AVATAR_METADATA_TN)) {
             auto info = item.payload().firstChildElement(QLatin1String("info"));
             if (info.isNull()) {
+                blobFlights_.supersede(jidFull, {});
 #ifdef AVATAR_EDBUG
                 qDebug() << "removeIcon AvatarType " << jidFull << AvatarCache::AvatarType;
 #endif
@@ -228,10 +258,24 @@ public:
 #ifdef AVATAR_EDBUG
                     qDebug() << "appendUser AvatarType " << jidFull;
 #endif
-                    // found in-band png (by xep84 hash is for png) avatar. So we can make request
+                    // Existing FileCache already deduplicates completed
+                    // image bytes by SHA-1; only coalesce unfinished IQs.
+                    blobFlights_.supersede(jidFull, hash);
                     result = appendUser(hash, AvatarCache::AvatarType, jidFull);
                     if (result == AvatarCache::NoData) {
-                        pa->pepManager()->get(jid, PEP_AVATAR_DATA_NS, item.id());
+                        const auto decision = blobFlights_.join(jidFull, hash);
+                        if (decision.request) {
+                            auto *task = pa->pepManager()->get(jid, PEP_AVATAR_DATA_NS, item.id());
+                            connect(task, &Task::finished, this, [this, hash, token = decision.token]() {
+                                // PEPManager emits itemPublished() before
+                                // this callback on a successful IQ.
+                                blobFlights_.finish(hash, token);
+                            });
+                            connect(task, &QObject::destroyed, this, [this, hash, token = decision.token]() {
+                                // Covers disconnect/cancellation without finished().
+                                blobFlights_.finish(hash, token);
+                            });
+                        }
                         return;
                     }
                     break;
@@ -858,6 +902,7 @@ private:
 
     QHash<QString, JidIcons> jidToIcons;
     QHash<Jid, QByteArray>   jid2hash;
+    AvatarBlobInFlight      blobFlights_;
     Iconset                  iconset_;
 
     static AvatarCache *_instance;
