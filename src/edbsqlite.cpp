@@ -21,7 +21,7 @@
 // #include "common.h"
 #include "edbsqlite.h"
 #include "filesharingmanager.h"
-#include "historyimp.h"
+#include "historyupgrade.h"
 #include "historymessageextras.h"
 #include "iris/xmpp_forwarding.h"
 #include "jidutil.h"
@@ -83,8 +83,7 @@ bool protocolOnlyRecord(const QSqlRecord &record)
 //----------------------------------------------------------------------------
 
 EDBSqLite::EDBSqLite(PsiCon *psi) :
-    EDB(psi), transactionsCounter(0), lastCommitTime(QDateTime::currentDateTime()), commitTimer(nullptr),
-    mirror_(nullptr)
+    EDB(psi), transactionsCounter(0), lastCommitTime(QDateTime::currentDateTime()), commitTimer(nullptr)
 {
     status            = NotActive;
     QString      path = ApplicationInfo::historyDir() + "/history.db";
@@ -96,7 +95,9 @@ EDBSqLite::EDBSqLite(PsiCon *psi) :
     }
     QSqlQuery query(db);
     query.exec("PRAGMA foreign_keys = ON;");
-    setInsertingMode(Normal);
+    maxUncommitedRecs = 3;
+    maxUncommitedSecs = 1;
+    commitByTimeoutSecs = 1;
     if (db.tables(QSql::Tables).size() == 0) {
         // no tables found.
         if (db.transaction()) {
@@ -134,7 +135,6 @@ EDBSqLite::EDBSqLite(PsiCon *psi) :
             if (db.commit()) {
                 status = Commited;
                 setStorageParam("version", "0.1");
-                setStorageParam("import_start", "yes");
             }
         }
     } else
@@ -151,7 +151,6 @@ EDBSqLite::~EDBSqLite()
             db.close();
     }
     QSqlDatabase::removeDatabase("history");
-    delete mirror_;
 }
 
 EDBResult EDBSqLite::localHistoryPage(const QString &account, const Jid &peer, qint64 before, int limit)
@@ -312,21 +311,13 @@ bool EDBSqLite::init()
         QSqlQuery  count(db);
         const bool empty = count.exec("SELECT 1 FROM events LIMIT 1") && !count.next();
         count.finish();
-        const bool migrated = empty ? HistoryArchive::migrate(db) : HistoryImport::upgradeDatabase(db.databaseName());
+        const bool migrated = empty ? HistoryArchive::migrate(db) : HistoryUpgrade::upgradeDatabase(db.databaseName());
         if (!migrated) {
             status = NotActive;
             return false;
         }
     }
 
-    if (!getStorageParam("import_start").isEmpty()) {
-        if (!importExecute()) {
-            status = NotActive;
-            return false;
-        }
-    }
-
-    setMirror(new EDBFlatFile(psi()));
     return true;
 }
 
@@ -384,18 +375,6 @@ int EDBSqLite::append(const QString &accId, const XMPP::Jid &jid, const PsiEvent
 
     QTimer::singleShot(FAKEDELAY, this, SLOT(performRequests()));
 
-    bool protocolEvent = false;
-    if (e->type() == PsiEvent::Message) {
-        const auto message = e.staticCast<MessageEvent>()->message().displayMessage();
-        protocolEvent      = message.messageReceipt() == ReceiptReceived || !message.displayedMarkerId().isEmpty()
-            || !message.reactions().targetId.isEmpty()
-            || !message.retraction().isEmpty();
-    }
-    // The legacy text mirror cannot represent protocol attributes. Keep its
-    // user-message history unchanged rather than writing blank receipt lines.
-    if (mirror_ && !protocolEvent)
-        mirror_->append(accId, jid, e, type);
-
     return r->id;
 }
 
@@ -409,9 +388,6 @@ int EDBSqLite::erase(const QString &accId, const XMPP::Jid &jid)
     rlist.append(r);
 
     QTimer::singleShot(FAKEDELAY, this, SLOT(performRequests()));
-
-    if (mirror_)
-        mirror_->erase(accId, jid);
 
     return r->id;
 }
@@ -486,35 +462,6 @@ void EDBSqLite::setStorageParam(const QString &key, const QString &val)
     }
     commit();
 }
-
-void EDBSqLite::setInsertingMode(InsertMode mode)
-{
-    // in the case of a flow of new records
-    if (mode == Import) {
-        // Commit after 10000 inserts and every 5 seconds
-        maxUncommitedRecs = 10000;
-        maxUncommitedSecs = 5;
-    } else {
-        // Commit after 3 inserts and every 1 second
-        maxUncommitedRecs = 3;
-        maxUncommitedSecs = 1;
-    }
-    // Commit if there were no new additions for 1 second
-    commitByTimeoutSecs = 1;
-    //--
-    commit();
-}
-
-void EDBSqLite::setMirror(EDBFlatFile *mirr)
-{
-    if (mirr != mirror_) {
-        if (mirror_)
-            delete mirror_;
-        mirror_ = mirr;
-    }
-}
-
-EDBFlatFile *EDBSqLite::mirror() const { return mirror_; }
 
 void EDBSqLite::performRequests()
 {
@@ -965,19 +912,6 @@ void EDBSqLite::stopAutocommitTimer()
 {
     if (commitTimer && commitTimer->isActive())
         commitTimer->stop();
-}
-
-bool EDBSqLite::importExecute()
-{
-    bool           res = true;
-    HistoryImport *imp = new HistoryImport(psi());
-    if (imp->isNeeded()) {
-        if (imp->exec() != HistoryImport::ResultNormal) {
-            res = false;
-        }
-    }
-    delete imp;
-    return res;
 }
 
 // ****************** class PreparedQueryes ********************
