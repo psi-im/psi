@@ -725,19 +725,12 @@ private:
 
     void trimNegatives()
     {
-        struct Candidate {
-            QString jid;
-            quint64 stamp;
-        };
-        QVector<Candidate> candidates;
+        QVector<AvatarNegativePolicy::Candidate> candidates;
         candidates.reserve(negativeCount_);
         for (auto it = jidToIcons.cbegin(); it != jidToIcons.cend(); ++it)
             if (it->noVCardPhotoStamp)
                 candidates.push_back({ it.key(), it->noVCardPhotoStamp });
-        const quint32 now = negativeNow();
-        std::sort(candidates.begin(), candidates.end(), [now](const Candidate &a, const Candidate &b) {
-            return AvatarNegativePolicy::lessUseful(a.stamp, b.stamp, now);
-        });
+        AvatarNegativePolicy::sortByUsefulness(candidates, negativeNow());
         // Batch eviction amortizes the scan and sort. Positive FileCache
         // entries survive even when their negative PHOTO hint is discarded.
         const int count = qMax(0, int(candidates.size()) - AvatarNegativePolicy::TrimToEntries);
