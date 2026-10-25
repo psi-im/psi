@@ -25,6 +25,12 @@
 - **Priority now:** validate actual AvatarCache/VCardFactory integration and all external consumers under two accounts, reconnect and live PEP/vCard events, and obtain a representative whole-timeline benchmark. Existing Qt5/Qt6 policy and real-Iris vCard tests do **not** substitute for this exit gate.
 - **Network budget:** no getter-side IQ or polling; the same SHA-1 blob is downloaded at most once concurrently per account and reused from FileCache even after the last JID binding disappears. PHOTO-only requests reuse a compatible in-flight full-card request instead of fetching the legacy blob twice.
 
+### Existing SHA-1 deduplication vs. new in-flight IQ guard
+
+**Already implemented before this migration:** `AvatarCache::appendUser()` looks up each advertised SHA-1 using `FileCache::get()`. A hit rebinds the cached bytes to another contact without calling `PEPManager::get()`. `FileCache` is the sole owner of cached blob bytes; no new image-content cache is needed.
+
+**The actual new gap:** `PEPManager::get()` creates a new `PEPGetTask` per call, so two metadata events with an identical SHA-1 can trigger duplicate IQs **before either result enters FileCache**. The narrowly scoped `AvatarBlobFetchPolicy` tracks only desired metadata, in-flight network operations, obsolete replies, and event-driven retry cooldowns. An account/SHA-1 index makes the in-flight lookup O(1); it does not cache the blob. Tests cover one IQ for concurrent same-hash metadata, metadata replacement, release on retraction, and account teardown.
+
 ### Network-budget invariants for this migration
 
 - **Avatar getters must remain pure local lookups.** Neither a cache miss, an expired negative memo nor a new materialized chat message starts a network IQ.
