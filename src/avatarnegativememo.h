@@ -2,6 +2,7 @@
 #pragma once
 
 #include <QCache>
+#include <QHash>
 #include <QString>
 
 #include <optional>
@@ -23,7 +24,12 @@ private:
     struct Entry {
         State state;
         qint64 recordedMs;
+        quint64 accountEpoch;
+        quint64 roomEpoch;
     };
+    static QString accountPrefix(const QString &key);
+    static QString roomPrefix(const QString &key);
     QCache<QString, Entry> entries_;
+    QHash<QString, quint64> prefixEpochs_;
     const qint64 ttlMs_;
 };
