@@ -105,6 +105,19 @@ FileSharingItem::FileSharingItem(const QUrl &url, const XMPP::Hash &identity, Ps
     _urlDisplayName = _fileName;
     _description = description;
     _mimeType = QMimeDatabase().mimeTypeForFile(_fileName, QMimeDatabase::MatchExtension).name();
+    // The URL identity never enters FileCache as a claimed checksum. Resolve
+    // its separate persistent catalog mapping only if the verified payload
+    // still exists in the content-addressed cache.
+    if (_acc && _manager) {
+        const auto verified = _manager->contentForUrl(_acc->id(), identity);
+        QString cachedPath;
+        if (verified && _manager->cacheItem(*verified, false, &cachedPath)) {
+            _sums.append(*verified);
+            _fileName = cachedPath;
+            _fileSize = quint64(QFileInfo(cachedPath).size());
+            _fileType = FileType::LocalFile;
+        }
+    }
 }
 
 FileSharingItem::FileSharingItem(const QImage &image, PsiAccount *acc, FileSharingManager *manager) :
@@ -506,6 +519,7 @@ FileShareDownloader *FileSharingItem::download(std::optional<Range> range, const
                             if (!_sums.contains(hash))
                                 _sums.append(hash);
                         _fileSize = QFileInfo(_manager->cacheDir() + "/" + cache->fileName()).size();
+                        _manager->rememberUrlContent(_acc->id(), _sums.first(), actualHashes.first());
                     }
                     _fileType = FileType::LocalFile;
                     _fileName = _manager->cacheDir() + "/" + cache->fileName();
