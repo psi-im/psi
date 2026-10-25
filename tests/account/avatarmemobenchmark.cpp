@@ -3,7 +3,7 @@
 // No network, disk I/O, image decoding, compositing, text or avatar painting.
 #include "avatarnegativememo.h"
 
-#include <QApplication>
+#include <QGuiApplication>
 #include <QElapsedTimer>
 #include <QHash>
 #include <QPixmap>
@@ -53,7 +53,7 @@ private slots:
                 negative.record(id, AvatarNegativeMemo::State::Unknown, 0);
         }
 
-        volatile qint64 checksum = 0; // Force all warm lookups to be observed.
+        qint64 checksum = 0; // Force all warm lookups to be observed.
         const auto perWindow = [&]() {
             for (int p = 0; p < passes; ++p)
                 for (const auto &id : identities)
