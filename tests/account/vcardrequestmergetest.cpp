@@ -9,6 +9,66 @@
 class VCardRequestMergeTest final : public QObject {
     Q_OBJECT
 private slots:
+    void selfPhotoPublicationUsesBytesAndPreservesFields()
+    {
+        const QByteArray png = QByteArray::fromBase64(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aLk8AAAAASUVORK5CYII=");
+        QVERIFY(!png.isEmpty());
+
+        XMPP::VCard4::VCard card;
+        card.setFullName(QStringLiteral("Existing modern full name"));
+        const XMPP::VCard4::VCard original = card;
+
+        QVERIFY(VCardFactory::setEmbeddedPhoto(card, png));
+        QCOMPARE(QByteArray(card.photo()), png);
+        QCOMPARE(card.photo().first().data.mediaType, QStringLiteral("image/png"));
+        QCOMPARE(card.fullName().preferred().data, QStringLiteral("Existing modern full name"));
+        QVERIFY(original.photo().isEmpty()); // Do not mutate shared Iris vCard data.
+        QVERIFY(!VCardFactory::setEmbeddedPhoto(card, png)); // Duplicate is a no-op.
+
+        QVERIFY(!VCardFactory::setEmbeddedPhoto(card, QByteArrayLiteral("not an image")));
+        QCOMPARE(QByteArray(card.photo()), png);
+    }
+
+    void explicitPhotoRemovalCannotResurrectOldBytes()
+    {
+        const QByteArray png = QByteArray::fromBase64(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aLk8AAAAASUVORK5CYII=");
+        XMPP::VCard4::VCard card;
+        card.setFullName(QStringLiteral("Kept modern name"));
+        QVERIFY(VCardFactory::setEmbeddedPhoto(card, png));
+
+        const XMPP::VCard4::VCard oldSnapshot = card;
+        QVERIFY(VCardFactory::clearPhoto(card));
+        QVERIFY(card.photo().isEmpty()); // Not a list containing an empty URI.
+        QCOMPARE(card.fullName().preferred().data, QStringLiteral("Kept modern name"));
+        QCOMPARE(QByteArray(oldSnapshot.photo()), png);
+        QVERIFY(!VCardFactory::clearPhoto(card));
+    }
+
+    void uriOnlyPhotoIsRemovedAsAnEntireProperty()
+    {
+        XMPP::VCard4::VCard card;
+        card.setPhoto(XMPP::VCard4::UriValue(QStringLiteral("https://example.org/photo.png")));
+        QVERIFY(!card.photo().isEmpty());
+        QVERIFY(QByteArray(card.photo()).isEmpty());
+        QVERIFY(VCardFactory::clearPhoto(card));
+        QVERIFY(card.photo().isEmpty());
+    }
+
+    void publicationWithoutCachedVCardCanStartWithPhoto()
+    {
+        const QByteArray png = QByteArray::fromBase64(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aLk8AAAAASUVORK5CYII=");
+        XMPP::VCard4::VCard empty;
+        QVERIFY(!empty);
+        QVERIFY(VCardFactory::setEmbeddedPhoto(empty, png));
+        QVERIFY(empty);
+        QCOMPARE(QByteArray(empty.photo()), png);
+        QVERIFY(VCardFactory::clearPhoto(empty));
+        QVERIFY(empty.photo().isEmpty());
+    }
+
     void fullAndPhotoOnlyRequestModes()
     {
         using F = VCardFactory;
