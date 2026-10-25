@@ -304,7 +304,7 @@ private slots:
                            QCryptographicHash::hash("psi-oob-url-v1:https://example.org/file",
                                                     QCryptographicHash::Sha256));
         const Hash actual(Hash::Sha256, QCryptographicHash::hash("bytes", QCryptographicHash::Sha256));
-        QVERIFY(address != actual);
+        QVERIFY(!(address == actual));
         {
             FileSharingStore store(path);
             QVERIFY(!store.contentForUrl(QStringLiteral("account-a"), address).has_value());
