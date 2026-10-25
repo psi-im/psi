@@ -937,7 +937,7 @@ void GCMainDlg::showContactContextMenu(const QString &nick, const QPoint &global
 }
 
 GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
-    TabbableWidget(j.bare(), pa, tabManager), nativeAvatars_(pa, true)
+    TabbableWidget(j.bare(), pa, tabManager)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     d       = new Private(this);
@@ -979,8 +979,12 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
     ui_.log->setParent(ui_.topFrame);
     ui_.log->hide();
     configureNativeChat(nativeTimeline_, account(), true);
-    nativeAvatars_.setPeer(jid());
-    nativeTimeline_->setAvatarResolver([this](const MessageView &message) { return nativeAvatars_.avatar(message); });
+    // AvatarCache owns both decoded pixmaps and negative PHOTO lookups.
+    // The chat supplies only the sender identity; never memoize a QPixmap
+    // (including a null one) inside the timeline.
+    nativeTimeline_->setAvatarResolver([this](const MessageView &message) {
+        return account()->avatarFactory()->getMucAvatar(jid().withResource(message.nick()));
+    });
     connect(nativeTimeline_, &MamChatWidget::outgoingReactions, this, &GCMainDlg::outgoingReactions);
     connect(nativeTimeline_, &MamChatWidget::outgoingMessageRetraction, this, &GCMainDlg::sendMessageRetraction);
     connect(nativeTimeline_, &MamChatWidget::contactMenuRequested, this, &GCMainDlg::showContactContextMenu);
@@ -1941,7 +1945,7 @@ void GCMainDlg::setJid(const Jid &j)
         if (nativeTimeline_)
             nativeTimeline_->setHistoryExhausted(false);
     }
-    if (nativeTimeline_ && nativeAvatars_.setPeer(jid()))
+    if (nativeTimeline_ && oldRoom != jid().bare())
         nativeTimeline_->refreshAvatars();
     d->self = d->prev_self = j.resource();
     ui_.log->setLocalNickname(d->self);
@@ -2327,7 +2331,7 @@ XMPP::Jid GCMainDlg::jidForNick(const QString &nick) const { return Jid(jid()).w
 void GCMainDlg::avatarUpdated(const Jid &jid_)
 {
     if (jid_.compare(jid(), false)) {
-        if (nativeTimeline_ && nativeAvatars_.invalidate(jid_))
+        if (nativeTimeline_ && !jid_.resource().isEmpty())
             nativeTimeline_->refreshAvatars();
         if (jid_.resource().isEmpty()) {
             ui_.log->updateAvatar(jid_, ChatViewCommon::RemoteParty);
