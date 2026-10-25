@@ -1,27 +1,15 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #pragma once
 
-#include "iris/xmpp_reference.h"
-#include "iris/xmpp_url.h"
-
-#include <QList>
-
 namespace XMPP {
 class Message;
 }
 
-// Canonical attachment projection shared by live rendering and SQLite
-// serialization (including MAM). Iris Message uses explicitly shared data:
-// mutating a shallow copy changes the received stanza. Never modify it here.
-// Encoding persists the projected references/remaining links instead.
+// Normalize an application-owned, decoded message in place, before it enters
+// the event/history/view pipeline. In Iris Message is explicitly shared, so
+// changing displayMessage() also changes its shared backing data (including
+// the inner forwarded message of a Carbon). Never call this on a wire message
+// before it has been processed/sent.
 namespace FileSharingNormalizer {
-struct PreparedMedia {
-    QList<XMPP::Reference> references;
-    XMPP::UrlList          remainingOob;
-};
-
-PreparedMedia prepareForDisplay(const XMPP::Message &message);
-// Non-HTTP OOB links are ordinary hyperlinks, not file attachments.
-// Extract them without rebuilding the entire media projection.
-XMPP::UrlList remainingLinks(const XMPP::Message &message);
+void normalize(XMPP::Message &message);
 }
