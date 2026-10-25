@@ -981,14 +981,14 @@ void ChatDlg::appendMessage(const Message &m, bool local, qint64 historyId, cons
     mv.setAwaitingReceipt(local && dm.messageReceipt() == ReceiptRequest);
     mv.setMarkable(dm.isMarkable());
     mv.setReplaceId(dm.replaceId());
-    const auto preparedMedia = FileSharingNormalizer::prepareForDisplay(dm);
-    account()->psi()->fileSharingManager()->fillMessageView(mv, dm, preparedMedia.references, account());
+    account()->psi()->fileSharingManager()->fillMessageView(mv, dm, account());
     mv.setReplyMetadata(dm);
 
     dispatchMessage(mv);
 
-    if (!preparedMedia.remainingOob.isEmpty()) {
-        UrlList                urls = preparedMedia.remainingOob;
+    const UrlList links = FileSharingNormalizer::remainingLinks(dm);
+    if (!links.isEmpty()) {
+        const UrlList &urls = links;
         QMap<QString, QString> urlsMap;
         for (const Url &u : std::as_const(urls))
             urlsMap.insert(u.url(), u.desc());
