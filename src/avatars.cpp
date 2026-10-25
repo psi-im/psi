@@ -174,9 +174,8 @@ public:
             if (item.payload().tagName() == PEP_AVATAR_DATA_TN) {
                 const auto hash = QByteArray::fromHex(item.id().toLatin1());
                 if (hash.size() != 20) {
-#ifdef AVATAR_EDBUG
-                    qDebug() << "Ignoring PEP avatar:data with invalid SHA-1 item ID" << jidFull << item.id();
-#endif
+                    qWarning() << "Discarding PEP avatar:data: invalid SHA-1 item ID"
+                               << "from" << jidFull << "item ID" << item.id();
                     return;
                 }
 
