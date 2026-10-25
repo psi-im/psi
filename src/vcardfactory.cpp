@@ -54,8 +54,9 @@ class VCardFactory::QueuedLoader : public QObject {
     static const int VcardReqInterval = 500; // query vcards
 
     VCardRequestQueue          queue_;
-    QHash<Jid, VCardRequest *> jid2req;
-    QHash<Jid, VCardRequest *> photoReqs_; // independent of full-card requests
+    QHash<QString, VCardRequest *> jid2req;
+    QHash<QString, VCardRequest *> photoReqs_; // independent of full-card requests
+    QHash<VCardRequest *, QString> requestKeys_; // exact queued/in-flight identity
     QTimer                     timer_;
 
 signals:
@@ -441,12 +442,14 @@ VCardFactory::QueuedLoader::QueuedLoader(VCardFactory *vcf) : QObject(vcf)
             qDebug() << "received VCardRequest" << request->jid().full();
 #endif
             emit vcardReceived(request);
-            (request->flags() & PhotoOnly ? photoReqs_ : jid2req).remove(request->jid());
+            const QString key = requestKeys_.take(request);
+            (request->flags() & PhotoOnly ? photoReqs_ : jid2req).remove(key);
             request->deleteLater();
         });
         auto started = request->execute();
         if (!started) {
-            (request->flags() & PhotoOnly ? photoReqs_ : jid2req).remove(request->jid());
+            const QString key = requestKeys_.take(request);
+            (request->flags() & PhotoOnly ? photoReqs_ : jid2req).remove(key);
             request->deleteLater();
         }
         if (queue_.isEmpty()) {
@@ -467,14 +470,17 @@ VCardRequest *VCardFactory::QueuedLoader::enqueue(PsiAccount *acc, const Jid &ji
     if (!(flags & MucUser)) {
         sanitized_jid = jid.withResource({});
     }
+    const QString key = VCardFactory::requestQueueKey(
+        acc->id(), reinterpret_cast<quintptr>(acc), sanitized_jid, flags);
     auto &requests = flags & PhotoOnly ? photoReqs_ : jid2req;
-    auto req = requests.value(sanitized_jid);
+    auto req = requests.value(key);
     if (!req) {
 #ifdef VCF_DEBUG
         qDebug() << "new VCardRequest" << sanitized_jid.full() << flags;
 #endif
         req                    = new VCardRequest(acc, sanitized_jid, flags);
-        requests.insert(sanitized_jid, req);
+        requests.insert(key, req);
+        requestKeys_.insert(req, key);
         if (prio == HighPriority) {
             queue_.prepend(req);
         } else {
@@ -485,6 +491,15 @@ VCardRequest *VCardFactory::QueuedLoader::enqueue(PsiAccount *acc, const Jid &ji
         qDebug() << "merge VCardRequest" << sanitized_jid.full() << flags;
 #endif
         req->merge(acc, sanitized_jid, flags);
+        // A previously queued low-priority photo refresh should not delay
+        // an explicit high-priority request with the same identity.
+        if (prio == HighPriority) {
+            const int index = queue_.indexOf(req);
+            if (index > 0) {
+                queue_.removeAt(index);
+                queue_.prepend(req);
+            }
+        }
     }
 
     if (!timer_.isActive()) {
