@@ -1,6 +1,6 @@
 # Avatar cache centralization: correctness-first migration plan
 
-**Status:** staged implementation in progress; **do not remove the native-chat memo yet**.
+**Status:** staged PR chain implemented in development branches; Phase 8 real-runtime integration, consumer audit and whole-timeline benchmark gates remain **open**. Do not merge or claim completion until those gates pass.
 **Target:** option **C**, a unified, account-scoped `AvatarCache` with bounded negative-result memoization.
 **Source:** detailed audit supplied 2026-10-24, performed against Psi `master` at `d709963e`.
 **Audited report:** [English translation of the original Russian-language audit](avatar-cache-audit-source-2026-10-24.md), preserving its measurements and findings; the original source-language text is not stored in the repository.
@@ -21,26 +21,38 @@
 ## Implementation progress (2026-10-25)
 
 - **Merged:** [#1034](https://github.com/psi-im/psi/pull/1034) — independent modern/legacy vCard retrieval, PHOTO-only requests, preservation of modern fields, first disk-cache hit, real-Iris regressions.
-- **In progress:** Phase 1 PHOTO consistency — self-avatar publication currently discards bytes, clearing PHOTO can leave a zero-valued URI property, and explicit XEP-0153 removal may notify before the cached PHOTO is erased. Correct these and test the real Iris mutators; do **not** treat that as completion of the full real-AvatarCache integration gate.
-- **Next:** Phase 2 source invalidation (including PEP retractions and failed manual-avatar imports), followed by account identity scoping. Do not start centralized negative caching or remove per-window QPixmap caches beforehand.
+- **In review (stacked, not merged):** #1042–#1055 implement PHOTO storage/removal, source provenance, PEP retractions, account-scoped bindings and requests, MUC and reconnect generations, bounded negative memo, network deduplication by SHA-1, native-chat memo removal and synthetic benchmarks.
+- **Priority now:** validate actual AvatarCache/VCardFactory integration and all external consumers under two accounts, reconnect and live PEP/vCard events, and obtain a representative whole-timeline benchmark. Existing Qt5/Qt6 policy and real-Iris vCard tests do **not** substitute for this exit gate.
+- **Network budget:** no getter-side IQ or polling; the same SHA-1 blob is downloaded at most once concurrently per account and reused from FileCache even after the last JID binding disappears. PHOTO-only requests reuse a compatible in-flight full-card request instead of fetching the legacy blob twice.
 
 ### Network-budget invariants for this migration
 
 - **Avatar getters must remain pure local lookups.** Neither a cache miss, an expired negative memo nor a new materialized chat message starts a network IQ.
 - Use XEP-0084 metadata and XEP-0153 hashes to decide whether content-hash bytes are already cached. Do not download avatar blobs already present in FileCache.
-- At most one outstanding avatar-data IQ per account/contact/SHA-1; stale blob replies must not restore superseded metadata. A failed request is retryable only on subsequent protocol-driven events, after a bounded cooldown, **never via polling**.
+- At most one outstanding avatar-data IQ per account/SHA-1 **across all contacts**; stale blob replies must not restore superseded metadata. A failed request is retryable only on subsequent protocol-driven events, after a bounded cooldown, **never via polling**.
 - XEP-0153 avatar refresh retrieves only the legacy vcard-temp store, never the full vCard4 PEP store; if PHOTO is removed, update existing sources locally with **zero** network requests.
 - Full vCard4+vcard-temp IQs remain explicit, not a side effect of rendering; coalesce compatible requests within one account/session but never across accounts or incompatible query modes.
 - These rules require deterministic tests counting network-request decisions, explicit checks that in-flight IDs remain unique, and scenario tests after disconnect/reconnect and stale replies. Unnecessary requests carrying the avatar **blob** are a release blocker.
 
-### In-flight staged PRs
+### In-flight staged PR chain (all unmerged)
 
-- [#1042](https://github.com/psi-im/psi/pull/1042): PHOTO mutation, empty-hash consistency, Silent notifications, and Iris vCard nullness.
-- [#1044](https://github.com/psi-im/psi/pull/1044): stateful bounded avatar-data request coalescing, retry cooldown, hash verification, retractions and stale replies, with real Qt5/Qt6 policy tests.
-- [#1045](https://github.com/psi-im/psi/pull/1045): account/session/mode-scoped vCard IQ queue, preserving coalescing within an account.
-- [#1046](https://github.com/psi-im/psi/pull/1046): independent account-scoped vCard4 and vcard-temp source sidecars, preserving modern PHOTO when a legacy PHOTO is removed. The displayed merged-card cache remains globally keyed and **is not yet account-isolated**.
+| PR | Scope | Verified in isolation | Remaining validation |
+|---|---|---|---|
+| [#1042](https://github.com/psi-im/psi/pull/1042) | PHOTO bytes/removal, Silent signals, Iris vCard semantics | Qt5/Qt6 builds and real-Iris mutator tests | Actual AvatarCache callbacks |
+| [#1044](https://github.com/psi-im/psi/pull/1044) | PEP blobs, stale replies/retractions, event-based cooldown | Qt5/Qt6 policy tests | Real PEP task/result ordering |
+| [#1045](https://github.com/psi-im/psi/pull/1045) | Account/session/mode-scoped vCard IQ queue | Qt5/Qt6 key tests | Two active XMPP streams |
+| [#1046](https://github.com/psi-im/psi/pull/1046) | Source-aware vCard4 and legacy sidecars | Qt5/Qt6 real-Iris source tests | Live vCard4 vs XEP-0054 discrepancies |
+| [#1047](https://github.com/psi-im/psi/pull/1047) | Account-scoped merged/occupant cards and UI callers | Qt5/Qt6 builds/tests | App-level account switching |
+| [#1048](https://github.com/psi-im/psi/pull/1048) | Account-scoped AvatarCache bindings/icon names | Qt6 builds and Qt5 policy inherited | Real iconset and plugin consumers |
+| [#1049](https://github.com/psi-im/psi/pull/1049) | MUC epochs/rejoin, queued IQ cancellation | Qt5/Qt6 epoch/router tests | Race and multi-room integration |
+| [#1050](https://github.com/psi-im/psi/pull/1050) | 4096-entry QCache, 30s TTL, invalidation | Qt5/Qt6 deterministic state tests | Actual first-null→image |
+| [#1051](https://github.com/psi-im/psi/pull/1051) | One network blob IQ per account/SHA-1, fanout by cached hash | Qt5/Qt6 decision-count tests | Live simultaneous metadata |
+| [#1052](https://github.com/psi-im/psi/pull/1052) | Native chat routing without per-window QPixmap/null memo | Qt5/Qt6 router tests | Whole-timeline render behavior |
+| [#1053](https://github.com/psi-im/psi/pull/1053) | Reconnect fences, preserve unbound SHA-1 bytes | Qt5/Qt6 epoch tests | Real disconnect/late replies |
+| [#1054](https://github.com/psi-im/psi/pull/1054) | Versioned A/B/C synthetic performance harness | CI running | Representative timeline/render benchmark |
+| [#1055](https://github.com/psi-im/psi/pull/1055) | PHOTO-only piggyback on full-card legacy IQ | CI running | Real queue coalescing and response signals |
 
-The preceding PRs are **stacked, not merged**. MUC epochs, full account-scoped bindings, bounded negative memo and removal of the per-window pixmap memo remain gated on real integration tests.
+**Merge gate:** All rows are development-stage work and remain unmerged. CI builds and unit/policy tests alone do not complete the roadmap's mandatory real-runtime tests and consumer audit. Review actual runtime races and benchmark impact before graduating any stacked PR to `master`.
 
 ## 1. Audited architecture / baseline (2026-10-24)
 
