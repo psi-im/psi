@@ -144,6 +144,24 @@ bool VCardFactory::applyLegacyPhoto(XMPP::VCard4::VCard &cached, const XMPP::VCa
 
 // Install actual image bytes in the vCard cache. Iris's VCard4 is explicitly
 // shared and its setters do not detach, so never modify another cached copy.
+void VCardFactory::rememberMucCard(
+    QMap<QString, QHash<QString, VCard4::VCard>> &cards,
+    QMap<QString, QQueue<QString>> &order,
+    const QString &roomKey, const QString &nick, const VCard4::VCard &vcard)
+{
+    auto &byNick = cards[roomKey];
+    auto it = byNick.find(nick);
+    if (it != byNick.end()) {
+        *it = vcard; // Refreshing the current occupant does not reorder FIFO.
+        return;
+    }
+    byNick.insert(nick, vcard);
+    auto &nicks = order[roomKey];
+    nicks.enqueue(nick);
+    while (nicks.size() > 3)
+        byNick.remove(nicks.dequeue());
+}
+
 bool VCardFactory::setEmbeddedPhoto(XMPP::VCard4::VCard &card, const QByteArray &data)
 {
     if (data.isEmpty())
