@@ -8,6 +8,24 @@ class AvatarBlobFetchPolicyTest final : public QObject {
 private:
     static QByteArray hash(char c) { return QByteArray(20, c); }
 private slots:
+    void accountAndEntityKeysAreIsolated()
+    {
+        const auto a = AvatarIdentity::bindingKey(
+            QStringLiteral("account A"), QStringLiteral("contact@example.net"), false);
+        const auto b = AvatarIdentity::bindingKey(
+            QStringLiteral("account B"), QStringLiteral("contact@example.net"), false);
+        const auto room = AvatarIdentity::bindingKey(
+            QStringLiteral("account A"), QStringLiteral("contact@example.net/nick"), true);
+        const auto otherNick = AvatarIdentity::bindingKey(
+            QStringLiteral("account A"), QStringLiteral("contact@example.net/other"), true);
+        QVERIFY(a != b);
+        QVERIFY(a != room);
+        QVERIFY(room != otherNick);
+        QVERIFY(a.startsWith(AvatarIdentity::accountPrefix(QStringLiteral("account A"))));
+        QVERIFY(!b.startsWith(AvatarIdentity::accountPrefix(QStringLiteral("account A"))));
+        QVERIFY(!a.contains(QLatin1Char(' '))); // Safe in icon names and FileCache metadata.
+    }
+
     void onlyOneRequestWhileBlobIsPending()
     {
         AvatarBlobFetchPolicy policy;
