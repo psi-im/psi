@@ -61,16 +61,6 @@
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_disableScrollbar">
-     <property name="toolTip">
-      <string>Disables scrollbar in the application window.</string>
-     </property>
-     <property name="text">
-      <string>Disable scrollbar</string>
-     </property>
-    </widget>
-   </item>
-   <item>
     <widget class="QCheckBox" name="ck_roster_avatar">
      <property name="toolTip">
       <string>Enables avatar frame at the top of roster</string>

@@ -32,6 +32,7 @@
 #include "psifilteredcontactlistview.h"
 #include "psioptions.h"
 #include "widgets/actionlineedit.h"
+#include "widgets/OverlayScrollBarManager.h"
 #include "widgets/iconaction.h"
 
 #include <QKeyEvent>
@@ -49,7 +50,6 @@ static const QString showAgentsOptionPath         = "options.ui.contactlist.show
 static const QString showSelfOptionPath           = "options.ui.contactlist.show.self-contact";
 static const QString showStatusMessagesOptionPath = "options.ui.contactlist.status-messages.show";
 static const QString allowAutoResizeOptionPath    = "options.ui.contactlist.automatically-resize-roster";
-static const QString showScrollBarOptionPath      = "options.ui.contactlist.disable-scrollbar";
 static const QString enableGroupsOptionPath       = "options.ui.contactlist.enable-groups";
 
 //----------------------------------------------------------------------------
@@ -125,6 +125,7 @@ PsiRosterWidget::PsiRosterWidget(QWidget *parent) :
     QVBoxLayout *contactListPageLayout = new QVBoxLayout(contactListPage_);
     contactListPageLayout->setContentsMargins(0, 0, 0, 0);
     contactListPageView_ = new PsiContactListView(contactListPage_);
+    Mattermost::OverlayScrollBarManager::attach(*contactListPageView_);
     contactListPageView_->installEventFilter(this);
     contactListPageView_->setObjectName("contactListView");
     contactListPageLayout->addWidget(contactListPageView_);
@@ -148,6 +149,7 @@ PsiRosterWidget::PsiRosterWidget(QWidget *parent) :
     filterPageLayout->addWidget(filterEdit_);
 
     filterPageView_ = new PsiFilteredContactListView(filterPage_);
+    Mattermost::OverlayScrollBarManager::attach(*filterPageView_);
     connect(filterPageView_, SIGNAL(quitFilteringMode()), SLOT(quitFilteringMode()));
     filterPageView_->installEventFilter(this);
     filterPageLayout->addWidget(filterPageView_);
@@ -173,7 +175,6 @@ void PsiRosterWidget::setContactList(PsiContactList *contactList)
     optionChanged(showOfflineOptionPath);
     optionChanged(contactSortStyleOptionPath);
     optionChanged(allowAutoResizeOptionPath);
-    optionChanged(showScrollBarOptionPath);
 
     contactListModel_ = new ContactListDragModel(contactList_, this);
     contactListModel_->invalidateLayout();
@@ -210,10 +211,6 @@ void PsiRosterWidget::optionChanged(const QString &option)
     } else if (option == allowAutoResizeOptionPath) {
         contactListPageView_->setAutoResizeEnabled(
             PsiOptions::instance()->getOption(allowAutoResizeOptionPath).toBool());
-    } else if (option == showScrollBarOptionPath) {
-        contactListPageView_->setVerticalScrollBarPolicy(
-            PsiOptions::instance()->getOption(showScrollBarOptionPath).toBool() ? Qt::ScrollBarAlwaysOff
-                                                                                : Qt::ScrollBarAsNeeded);
     } else if (option == enableGroupsOptionPath) {
         contactListModel_->setGroupsEnabled(PsiOptions::instance()->getOption(enableGroupsOptionPath).toBool());
     }

@@ -70,6 +70,7 @@
 #include <QShortcut>
 #include <QSignalMapper>
 #include <QSplitter>
+#include "widgets/ThinSplitter.h"
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QtAlgorithms>
@@ -340,7 +341,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
         && PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString().contains('A');
 
     if (d->allInOne) {
-        d->splitter = new QSplitter(this);
+        d->splitter = new ThinSplitter(Qt::Horizontal, this);
         d->splitter->setObjectName("onewindowsplitter");
         connect(d->splitter, SIGNAL(splitterMoved(int, int)), this, SLOT(splitterMoved()));
         setCentralWidget(d->splitter);

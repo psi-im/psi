@@ -105,6 +105,7 @@ list(APPEND HEADERS
     chatdlg.h
     widgets/LongListWidget.h
     widgets/OverlayScrollBarManager.h
+    widgets/ThinSplitter.h
     widgets/NativeChatThemeRegistry.h
     nativechattheme.h
     widgets/ChatMessageText.h
@@ -377,6 +378,7 @@ list(APPEND SOURCES
     widgets/LongListWidget.cpp
     widgets/LongListWidgetLayout.cpp
     widgets/OverlayScrollBarManager.cpp
+    widgets/ThinSplitter.cpp
     widgets/NativeChatThemeRegistry.cpp
     nativechattheme.cpp
     widgets/ChatMessageText.cpp

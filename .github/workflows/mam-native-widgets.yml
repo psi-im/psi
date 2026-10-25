@@ -5,6 +5,7 @@ on:
     paths:
       - 'src/widgets/LongListWidget.*'
       - 'src/widgets/OverlayScrollBarManager.*'
+      - 'src/widgets/ThinSplitter.*'
       - 'src/widgets/MamChatWidget.*'
       - 'src/widgets/ChatMessageText.*'
       - 'src/widgets/MessagePreview.*'
@@ -25,6 +26,7 @@ on:
     paths:
       - 'src/widgets/LongListWidget.*'
       - 'src/widgets/OverlayScrollBarManager.*'
+      - 'src/widgets/ThinSplitter.*'
       - 'src/widgets/MamChatWidget.*'
       - 'src/widgets/ChatMessageText.*'
       - 'src/widgets/MessagePreview.*'
@@ -99,3 +101,4 @@ jobs:
       - name: Compiler cache statistics
         if: always()
         run: ccache --show-stats
+

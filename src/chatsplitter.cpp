@@ -20,6 +20,7 @@
 #include "chatsplitter.h"
 
 #include "psioptions.h"
+#include "widgets/ThinSplitter.h"
 
 #include <QChildEvent>
 #include <QSplitter>
@@ -125,7 +126,7 @@ void ChatSplitter::updateLayout()
 
     delete splitter_;
     delete layout_;
-    splitter_ = new QSplitter(this);
+    splitter_ = new ThinSplitter(Qt::Vertical, this);
     layout_   = new QVBoxLayout(this);
     layout_->setContentsMargins(0, 0, 0, 0);
     layout_->addWidget(splitter_);

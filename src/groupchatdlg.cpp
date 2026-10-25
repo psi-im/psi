@@ -2802,10 +2802,6 @@ void GCMainDlg::setLooks()
     // update the widget icon
     setWindowIcon(IconsetFactory::icon("psi/start-chat").icon());
 
-    ui_.lv_users->setVerticalScrollBarPolicy(
-        PsiOptions::instance()->getOption("options.ui.muc.userlist.disable-scrollbar").toBool()
-            ? Qt::ScrollBarAlwaysOff
-            : Qt::ScrollBarAsNeeded);
     ui_.lv_users->setLooks();
     setMucSelfAvatar();
     updateIdentityVisibility();

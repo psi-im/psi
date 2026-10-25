@@ -30,7 +30,12 @@ namespace Mattermost {
 class OverlayScrollBarManager final : public QObject
 {
 public:
-    static void install(QApplication& application);
+    /**
+     * Explicitly enable the overlay on this scroll area. Safe to call more
+     * than once; attaching never changes unrelated QAbstractScrollArea widgets.
+     * The manager is created lazily and owned by QApplication.
+     */
+    static void attach(QAbstractScrollArea& area);
 
     /**
      * Briefly reveal the overlay for an already-populated scroll area.
@@ -62,7 +67,7 @@ private:
 
     explicit OverlayScrollBarManager(QApplication& application);
 
-    void registerArea(QAbstractScrollArea* area);
+    void attachArea(QAbstractScrollArea& area);
     State* stateForWidget(QWidget* widget) const;
     void sync(State& state);
     void layout(State& state);
