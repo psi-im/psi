@@ -172,6 +172,17 @@ FileCacheItem *FileSharingManager::moveToCache(const QList<XMPP::Hash> &sums, co
     return d->cache->moveToCache(sums, file, metadata, maxAge);
 }
 
+std::optional<Hash> FileSharingManager::contentForUrl(const QString &account, const Hash &urlIdentity) const
+{
+    return d->store->contentForUrl(account, urlIdentity);
+}
+
+bool FileSharingManager::rememberUrlContent(const QString &account, const Hash &urlIdentity,
+                                            const Hash &contentHash)
+{
+    return d->store->rememberUrlContent(account, urlIdentity, contentHash);
+}
+
 FileSharingItem *FileSharingManager::item(const Hash &id, PsiAccount *account)
 {
     if (!account)
