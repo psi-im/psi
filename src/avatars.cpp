@@ -749,7 +749,7 @@ private:
         AvatarNegativePolicy::sortByUsefulness(candidates, negativeNow());
         // Batch eviction amortizes the scan and sort. Positive FileCache
         // entries survive even when their negative PHOTO hint is discarded.
-        const int count = qMax(0, int(candidates.size()) - AvatarNegativePolicy::TrimToEntries);
+        const int count = AvatarNegativePolicy::trimCount(candidates.size());
         for (int i = 0; i < count; ++i)
             clearNegative(candidates.at(i).jid);
 #ifdef AVATAR_EDBUG
