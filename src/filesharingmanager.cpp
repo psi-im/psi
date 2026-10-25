@@ -30,6 +30,7 @@
 #include "fileutil.h"
 #include "httputil.h"
 #include "mediachunkcache.h"
+#include "oobmediapolicy.h"
 #include "psiaccount.h"
 #include "psicon.h"
 #include "psicontactlist.h"
@@ -50,6 +51,8 @@
 #include "textutil.h"
 
 #include <QDir>
+#include <QCryptographicHash>
+#include <QUrl>
 #include <QMimeData>
 
 // ======================================================================
@@ -304,12 +307,14 @@ QList<FileSharingItem *> FileSharingManager::fromFilesList(const QStringList &fi
     return ret;
 }
 
-void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiAccount *acc)
+void FileSharingManager::fillMessageView(MessageView &mv, const Message &m,
+                                         const QList<Reference> &references, PsiAccount *acc)
 {
     if (!acc)
         return;
     rememberMessage(m, acc);
-    auto refs = m.references();
+    auto refs = references;
+
     if (refs.count()) {
         QString tailReferences;
         QString desc = m.body();
@@ -348,14 +353,32 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
             // qDebug() << "BEGIN:" << r.begin() << "END:" << r.end();
             // Every SIMS attachment needs a share object, not only inline media.
             // Non-media files can have an unknown size (streaming sources).
-            if (!ms.isValid() || !ms.file.hasComputedHashes())
+            FileSharingItem *item = nullptr;
+            if (ms.isValid() && ms.file.hasComputedHashes()) {
+                item = this->item(ms.file.computedHashes().first(), acc);
+                if (!item)
+                    item = new FileSharingItem(ms, m.from(), acc, this);
+                else
+                    item->mergeSources(ms, m.from());
+                d->rememberItem(item);
+            } else if (!ms.isValid() && r.type() == Reference::Data) {
+                // Synthetic URL-only references are prepared on the decoded
+                // Message, before MessageView construction. The rendering
+                // stage only maps each reference to its shared item backend.
+                const QUrl source = OobMediaPolicy::normalizedHttpSource(r.uri());
+                if (!source.isValid())
+                    continue;
+                const QString canonical = source.toString(QUrl::FullyEncoded);
+                const QByteArray key = QByteArrayLiteral("psi-oob-url-v1:") + canonical.toUtf8();
+                const Hash identity(Hash::Sha256, QCryptographicHash::hash(key, QCryptographicHash::Sha256));
+                item = d->accountItems.value(acc->id()).value(identity, nullptr);
+                if (!item || item->account() != acc || !item->isUrlOnly()) {
+                    item = new FileSharingItem(source, identity, acc, this);
+                    d->rememberItem(item);
+                }
+            } else {
                 continue;
-            auto item = this->item(ms.file.computedHashes().first(), acc);
-            if (!item)
-                item = new FileSharingItem(ms, m.from(), acc, this);
-            else
-                item->mergeSources(ms, m.from());
-            d->rememberItem(item);
+            }
             mv.addReference(item);
 
             if (r.begin() >= lastEnd && r.end() >= r.begin() && r.end() < desc.size()) {
@@ -506,6 +529,16 @@ QIODevice *FileSharingDeviceOpener::open(QUrl &url)
     if (item->isCached()) {
         qInfo() << "[media] opening cached file" << sourceId.toString() << "type=" << item->mimeType();
         url = QUrl::fromLocalFile(item->fileName());
+        return nullptr;
+    }
+    if (item->isUrlOnly()) {
+        // Hashless OOB shares cannot use a verified chunk stream. The existing
+        // media player can open their HTTP origin directly, without creating
+        // a second backend or treating the URL identity as a checksum.
+        const QUrl direct = item->simpleSource();
+        if (!direct.isValid())
+            return nullptr;
+        url = direct;
         return nullptr;
     }
     FileSharingChunkSource::configure(item);
@@ -659,7 +692,7 @@ bool FileSharingDeviceOpener::saveTo(const QUrl &url, const QString &path, const
         auto file = new QFile(localFile);
         size      = quint64(file->size());
         input     = file;
-    } else if (size && *size) {
+    } else if (size && *size && !item->isUrlOnly()) {
         auto cache = FileSharingChunkSource::configure(item);
         cache->configure(FileSharingChunkSource::identity(item), *size, { },
                          { { QStringLiteral("retain-partial"), true } });
