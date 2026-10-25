@@ -27,6 +27,38 @@ private slots:
         epochs.advance(key); // New occupant reuses the same nickname.
         QVERIFY(epochs.generation(key) > previous);
     }
+    void disconnectedAccountInvalidatesQueuedContactGeneration()
+    {
+        AvatarEpochPolicy policy;
+        const QString key(QStringLiteral("account-1/session/first-instance"));
+        const quint64 requestGeneration = policy.generation(key);
+        policy.advance(key); // disconnected; a new connection starts.
+        QVERIFY(policy.generation(key) != requestGeneration);
+        QVERIFY(policy.generation(key) > requestGeneration);
+    }
+    void sameBareJidOnOtherAccountIsNotInvalidated()
+    {
+        AvatarEpochPolicy policy;
+        const QString a(QStringLiteral("account-1/session"));
+        const QString b(QStringLiteral("account-2/session"));
+        policy.advance(a);
+        const quint64 otherRequest = policy.generation(b);
+        policy.advance(a);
+        QCOMPARE(policy.generation(b), otherRequest);
+    }
+    void roomRejoinFencesUncachedOccupant()
+    {
+        AvatarEpochPolicy policy;
+        const QString room = AvatarIdentity::accountPrefix("a")
+            + QStringLiteral("occupant/room@example.org/");
+        const QString occupant = room + QStringLiteral("new-nick");
+        // No occupant entry was ever created, yet its queued request must
+        // become stale after the room generation advances.
+        const quint64 requestRoomGeneration = policy.generation(room);
+        QCOMPARE(policy.generation(occupant), quint64(0));
+        policy.advance(room);
+        QVERIFY(policy.generation(room) != requestRoomGeneration);
+    }
     void roomAndAccountKeysRemainIndependent()
     {
         AvatarEpochPolicy epochs;
