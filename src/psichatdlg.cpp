@@ -225,7 +225,7 @@ private:
 };
 
 PsiChatDlg::PsiChatDlg(const Jid &jid, PsiAccount *pa, TabManager *tabManager) :
-    ChatDlg(jid, pa, tabManager), nativeAvatars_(pa, false), actions_(new ActionList("", 0, false)),
+    ChatDlg(jid, pa, tabManager), actions_(new ActionList("", 0, false)),
     mCmdManager_(&mCmdSite_),
     tabCompletion(&mCmdManager_)
 {
@@ -473,7 +473,11 @@ bool PsiChatDlg::isRoomOccupantChat() const
 void PsiChatDlg::updateAvatar(const Jid &jid)
 {
     ChatDlg::updateAvatar(jid);
-    if (nativeTimeline_ && nativeAvatars_.invalidate(jid))
+    // Unlike the old per-window QPixmap memo, the central AvatarCache has
+    // already invalidated its state. Only redraw the relevant sender.
+    const bool peerChanged = roomOccupantChat_ ? jid.compare(this->jid())
+                                              : jid.compare(this->jid(), false);
+    if (nativeTimeline_ && (peerChanged || jid.compare(account()->jid(), false)))
         nativeTimeline_->refreshAvatars();
 }
 
@@ -483,7 +487,9 @@ void PsiChatDlg::setJid(const Jid &newJid)
     ChatDlg::setJid(newJid);
     if (oldJid == jid())
         return;
-    if (nativeTimeline_ && nativeAvatars_.setPeer(jid(), isRoomOccupantChat()))
+    // Detect MUC PMs once on peer changes, never on individual messages.
+    roomOccupantChat_ = isRoomOccupantChat();
+    if (nativeTimeline_)
         nativeTimeline_->refreshAvatars();
 
     if (oldJid.bare() != jid().bare()) {
@@ -547,8 +553,13 @@ void PsiChatDlg::initUi()
     delete ui_.topFrame->layout()->replaceWidget(ui_.log, nativeTimeline_);
     ui_.log->hide();
     configureNativeChat(nativeTimeline_, account(), false);
-    nativeAvatars_.setPeer(jid(), isRoomOccupantChat());
-    nativeTimeline_->setAvatarResolver([this](const MessageView &message) { return nativeAvatars_.avatar(message); });
+    roomOccupantChat_ = isRoomOccupantChat();
+    nativeTimeline_->setAvatarResolver([this](const MessageView &message) {
+        auto *avatars = account()->avatarFactory();
+        if (message.isLocal())
+            return avatars->getAvatar(account()->jid().withResource({}));
+        return roomOccupantChat_ ? avatars->getMucAvatar(jid()) : avatars->getAvatar(jid());
+    });
     connect(nativeTimeline_, &MamChatWidget::outgoingReactions, this, &PsiChatDlg::sendOutgoingReactions);
     connect(nativeTimeline_, &MamChatWidget::outgoingMessageRetraction, this, &PsiChatDlg::sendMessageRetraction);
     connect(nativeTimeline_, &MamChatWidget::replyRequested, ui_.mle, &ChatEditProxy::setReply);
