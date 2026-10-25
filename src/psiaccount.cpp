@@ -3491,8 +3491,11 @@ void PsiAccount::setStatus(const Status &_s, bool withPriority, bool isManualSta
         // if we are in the process of disconnecting, then do nothing.
         //   the desired status will be noted in loginStatus for
         //   reconnect
-        if (isDisconnecting)
+        if (isDisconnecting) {
+            if (isServerless())
+                d->serverlessRestartStatus = s;
             return;
+        }
 
         // if client is not active then attempt to login
         if (!isActive()) {

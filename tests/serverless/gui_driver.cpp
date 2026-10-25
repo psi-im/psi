@@ -23,7 +23,8 @@ class Driver : public QObject {
 public:
     QTimer            timer;
     QElapsedTimer     elapsed;
-    int               stage = 0;
+    int               stage   = 0;
+    bool              bounced = false;
     QPointer<QWidget> options, chat;
     explicit Driver(QObject *parent) : QObject(parent)
     {
@@ -66,8 +67,16 @@ public:
     }
     void disable()
     {
-        options->findChild<QCheckBox *>("serverlessEnabled")->setChecked(false);
-        QMetaObject::invokeMethod(options, "doApply", Qt::QueuedConnection);
+        auto *enabled = options->findChild<QCheckBox *>("serverlessEnabled");
+        enabled->setChecked(false);
+        QMetaObject::invokeMethod(options, "doApply", Qt::DirectConnection);
+        if (!bounced) {
+            bounced = true;
+            enabled->setChecked(true);
+            QMetaObject::invokeMethod(options, "doApply", Qt::DirectConnection);
+            stage = 7;
+            return;
+        }
         stage = 6;
     }
     void step()
@@ -200,6 +209,12 @@ public:
             if (copies < 2)
                 return;
             qInfo("UI-PROBE MESSAGES: outgoing and echoed message rendered in the native chat");
+            disable();
+        } else if (stage == 7) {
+            auto *status = options->findChild<QLabel *>("serverlessStatus");
+            if (!status || status->text() != "Online on the local network")
+                return;
+            qInfo("UI-PROBE RESTART: a quick disable/enable waits for shutdown and reconnects");
             disable();
         } else if (stage == 6) {
             auto *status = options->findChild<QLabel *>("serverlessStatus");
