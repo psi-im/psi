@@ -144,6 +144,6 @@ void configureNativeChat(MamChatWidget *view, PsiAccount *account, bool groupCha
             applyColors();
     });
     QObject::connect(view, &MamChatWidget::paletteChanged, view, applyColors);
-    Mattermost::OverlayScrollBarManager::install(*qApp);
     Mattermost::OverlayScrollBarManager::setScrollToStartButtonEnabled(*view, false);
+    Mattermost::OverlayScrollBarManager::attach(*view);
 }
