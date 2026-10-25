@@ -125,11 +125,11 @@ void OptionsTabServerless::refreshInterfaces()
     const QSignalBlocker block(interface_);
     interface_->clear();
     interface_->addItem(tr("Automatic (active local network)"), QString());
-    for (const auto &interface : QNetworkInterface::allInterfaces()) {
-        const auto address = Serverless::addressForInterface(interface);
+    for (const auto &networkInterface : QNetworkInterface::allInterfaces()) {
+        const auto address = Serverless::addressForInterface(networkInterface);
         if (address.isNull())
             continue;
-        interface_->addItem(tr("%1 (%2)").arg(interface.humanReadableName(), address.toString()), interface.name());
+        interface_->addItem(tr("%1 (%2)").arg(networkInterface.humanReadableName(), address.toString()), networkInterface.name());
     }
     int index = interface_->findData(selected);
     if (index < 0) {
