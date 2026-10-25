@@ -66,13 +66,6 @@ jobs:
         run: |
           cmake -S . -B build-mam-chat -DBUILD_TESTING=ON
           cmake --build build-mam-chat --target account_message_receipt_test account_vcard_request_merge_test account_vcard_disk_cache_test history_sync_test history_archive_test filesharing_sims_history_test filesharing_media_normalizer_test filesharing_hash_job_test chat_reply_test --parallel 4
-          ctest --test-dir build-mam-chat --output-on-failure -R '^(account_message_receipt|account_vcard_request_merge|account_vcard_disk_cache|history_sync|history_archive|filesharing_sims_history|filesharing_media_normalizer|filesharing_hash_job|chat_reply)
-
-      - name: Compiler cache statistics
-        if: always()
-        run: ccache --show-stats
-
-
-      - name: Compiler cache statistics
+          ctest --test-dir build-mam-chat --output-on-failure -R '^(account_message_receipt|account_vcard_request_merge|account_vcard_disk_cache|history_sync|history_archive|filesharing_sims_history|filesharing_media_normalizer|filesharing_hash_job|chat_reply)      - name: Compiler cache statistics
         if: always()
         run: ccache --show-stats
