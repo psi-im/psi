@@ -821,17 +821,15 @@ VCardRequest *VCardFactory::QueuedLoader::enqueue(PsiAccount *acc, const Jid &ji
 void VCardFactory::QueuedLoader::invalidateOccupant(PsiAccount *account, const Jid &occupant)
 {
     auto invalidate = [this, account, &occupant](QHash<QString, VCardRequest *> &requests) {
-        for (auto it = requests.begin(); it != requests.end();) {
-            VCardRequest *request = it.value();
-            if (!request->wasQueuedFor(account, occupant)) {
-                ++it;
+        // Snapshot keys: user completion handlers may enqueue another request
+        // synchronously when a pending stale request emits finished().
+        for (const QString &key : requests.keys()) {
+            VCardRequest *request = requests.value(key);
+            if (!request || !request->wasQueuedFor(account, occupant))
                 continue;
-            }
             const bool pending = queue_.removeAll(request) != 0;
             requestKeys_.remove(request);
-            it = requests.erase(it);
-            // A queued request has no network task or loader callback yet.
-            // An in-flight request completes normally but cannot populate cache.
+            requests.remove(key);
             request->invalidate(pending);
             if (pending)
                 request->deleteLater();
