@@ -5,6 +5,7 @@
 
 #include <QtTest/QtTest>
 #include <QDomDocument>
+#include <QTemporaryDir>
 
 class VCardRequestMergeTest final : public QObject {
     Q_OBJECT
@@ -44,6 +45,30 @@ private slots:
         QCOMPARE(card.fullName().preferred().data, QStringLiteral("Kept modern name"));
         QCOMPARE(QByteArray(oldSnapshot.photo()), png);
         QVERIFY(!VCardFactory::clearPhoto(card));
+    }
+
+    void explicitDeletionSurvivesDiskCacheReload()
+    {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString path = dir.filePath(QStringLiteral("contact.xml"));
+        const QByteArray png = QByteArray::fromBase64(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aLk8AAAAASUVORK5CYII=");
+
+        XMPP::VCard4::VCard original;
+        original.setFullName(QStringLiteral("Stay in cache"));
+        QVERIFY(VCardFactory::setEmbeddedPhoto(original, png));
+        QVERIFY(original.save(path));
+        auto cached = VCardFactory::readCachedVCard(path);
+        QVERIFY(cached);
+        QCOMPARE(QByteArray(cached.photo()), png);
+
+        QVERIFY(VCardFactory::clearPhoto(cached));
+        QVERIFY(cached.save(path));
+        const auto reloaded = VCardFactory::readCachedVCard(path);
+        QVERIFY(reloaded);
+        QVERIFY(reloaded.photo().isEmpty()); // An old PHOTO cannot be reimported.
+        QCOMPARE(reloaded.fullName().preferred().data, QStringLiteral("Stay in cache"));
     }
 
     void uriOnlyPhotoIsRemovedAsAnEntireProperty()
