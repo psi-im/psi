@@ -94,6 +94,28 @@ private slots:
         QVERIFY(empty.photo().isEmpty());
     }
 
+    void requestsNeverCoalesceAcrossAccountsOrSessions()
+    {
+        using F = VCardFactory;
+        const XMPP::Jid peer(QStringLiteral("contact@example.org/laptop"));
+        const auto base = F::requestQueueKey(QStringLiteral("alice"), 1, peer, {});
+        QCOMPARE(base, F::requestQueueKey(QStringLiteral("alice"), 1,
+                                          XMPP::Jid(QStringLiteral("contact@example.org/phone")), {}));
+        QCOMPARE(base, F::requestQueueKey(QStringLiteral("alice"), 1, peer, F::Cache));
+        QVERIFY(base != F::requestQueueKey(QStringLiteral("bob"), 1, peer, {}));
+        QVERIFY(base != F::requestQueueKey(QStringLiteral("alice"), 2, peer, {}));
+        QVERIFY(base != F::requestQueueKey(QStringLiteral("alice"), 1, peer, F::PhotoOnly));
+        QVERIFY(base != F::requestQueueKey(QStringLiteral("alice"), 1, peer, F::ForceVCardTemp));
+        QVERIFY(base != F::requestQueueKey(QStringLiteral("alice"), 1, peer, F::Silent));
+        QVERIFY(base != F::requestQueueKey(QStringLiteral("alice"), 1, peer, F::MucUser));
+        QVERIFY(base != F::requestQueueKey(QStringLiteral("alice"), 1,
+                                           XMPP::Jid(QStringLiteral("other@example.org")), {}));
+        const auto muc1 = F::requestQueueKey(QStringLiteral("alice"), 1, peer, F::MucUser);
+        const auto muc2 = F::requestQueueKey(QStringLiteral("alice"), 1,
+                                             XMPP::Jid(QStringLiteral("contact@example.org/other")), F::MucUser);
+        QVERIFY(muc1 != muc2); // Occupants, unlike ordinary contacts, need full JIDs.
+    }
+
     void fullAndPhotoOnlyRequestModes()
     {
         using F = VCardFactory;
