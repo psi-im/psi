@@ -278,9 +278,9 @@ OverlayScrollBarManager::OverlayScrollBarManager(QApplication& application)
 
 void OverlayScrollBarManager::registerArea(QAbstractScrollArea* area)
 {
-    // Psi activates the overlay only for widget timelines, never for the
-    // unrelated legacy text views and embedded scrolling controls.
-    if (area && !area->property("psiMamOverlay").toBool())
+    // Psi explicitly opts in native timelines and the two contact rosters.
+    // Keep unrelated legacy text views and embedded editors unchanged.
+    if (area && !area->property("psiOverlayScrollBar").toBool())
         return;
     if (!area || states.contains(area)) {
         return;
