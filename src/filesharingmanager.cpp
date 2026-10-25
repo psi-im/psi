@@ -18,7 +18,6 @@
  */
 
 #include "filesharingmanager.h"
-#include "filesharingnormalizer.h"
 
 #include "applicationinfo.h"
 #include "filecache.h"
@@ -324,10 +323,9 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
     if (!acc)
         return;
     rememberMessage(m, acc);
-    // Legacy SQLite rows can still contain raw HTTP OOB links. New rows are
-    // already normalized by HistoryMessageExtras::encode(), so this is
-    // idempotent without changing the Message or writing back to history.
-    auto refs = FileSharingNormalizer::prepareForDisplay(m).references;
+    // The owning MessageEvent/MAM ingestion path already normalized HTTP OOB.
+    // Rendering only maps existing references to FileSharingItem widgets.
+    auto refs = m.references();
 
     if (refs.count()) {
         QString tailReferences;
