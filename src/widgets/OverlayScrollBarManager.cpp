@@ -30,6 +30,7 @@
 #include <QFontMetrics>
 #include <QGraphicsOpacityEffect>
 #include <QPalette>
+#include <QPointer>
 #include <QPropertyAnimation>
 #include <QScrollBar>
 #include <QSignalBlocker>
@@ -57,7 +58,6 @@ constexpr int EdgeButtonGap = 2;
 constexpr qreal EdgeGlyphScale = 1.5;
 constexpr qreal EdgeButtonIdleOpacity = 0.58;
 constexpr qreal EdgeButtonHoverOpacity = 1.0;
-constexpr char InstalledProperty[] = "mattermostOverlayScrollBarsInstalled";
 constexpr char ScrollToStartEnabledProperty[] = "mattermostOverlayScrollToStartEnabled";
 constexpr char EdgeButtonsEnabledProperty[] = "mattermostOverlayEdgeButtonsEnabled";
 constexpr char VerticalObjectName[] = "mattermostOverlayVerticalScrollBar";
@@ -240,13 +240,17 @@ struct OverlayScrollBarManager::State {
     bool cursorInside = false;
 };
 
-void OverlayScrollBarManager::install(QApplication& application)
+void OverlayScrollBarManager::attach(QAbstractScrollArea& area)
 {
-    if (application.property(InstalledProperty).toBool()) {
-        return;
+    // Register only explicitly requested areas. Keep the application filter
+    // for viewport/child hover events, but never discover scroll areas from
+    // unrelated Polish/Show events.
+    static QPointer<OverlayScrollBarManager> manager;
+    if (!manager) {
+        Q_ASSERT(qApp);
+        manager = new OverlayScrollBarManager(*qApp);
     }
-    application.setProperty(InstalledProperty, true);
-    new OverlayScrollBarManager(application);
+    manager->attachArea(area);
 }
 
 void OverlayScrollBarManager::setScrollToStartButtonEnabled(QAbstractScrollArea& area,
@@ -266,25 +270,13 @@ OverlayScrollBarManager::OverlayScrollBarManager(QApplication& application)
     : QObject(&application)
 {
     application.installEventFilter(this);
-
-    // Usually the manager is installed before any windows are constructed, but
-    // keep late installation deterministic for tests and embedded use.
-    for (QWidget* widget : QApplication::allWidgets()) {
-        if (auto* area = qobject_cast<QAbstractScrollArea*>(widget)) {
-            registerArea(area);
-        }
-    }
 }
 
-void OverlayScrollBarManager::registerArea(QAbstractScrollArea* area)
+void OverlayScrollBarManager::attachArea(QAbstractScrollArea& target)
 {
-    // Psi explicitly opts in native timelines and the two contact rosters.
-    // Keep unrelated legacy text views and embedded editors unchanged.
-    if (area && !area->property("psiOverlayScrollBar").toBool())
+    QAbstractScrollArea* area = &target;
+    if (states.contains(area))
         return;
-    if (!area || states.contains(area)) {
-        return;
-    }
 
     auto* state = new State;
     state->area = area;
@@ -668,11 +660,6 @@ bool OverlayScrollBarManager::eventFilter(QObject* watched, QEvent* event)
     }
 
     if (auto* area = qobject_cast<QAbstractScrollArea*>(watched)) {
-        if ((event->type() == QEvent::Polish || event->type() == QEvent::Show)
-            && !states.contains(area)) {
-            registerArea(area);
-        }
-
         const auto it = states.constFind(area);
         if (it != states.cend()) {
             State& state = *it.value();
