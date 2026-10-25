@@ -177,15 +177,16 @@ public:
 
     void itemPublished(PsiAccount *pa, const Jid &jid, const QString &n, const PubSubItem &item)
     {
-        QString               jidFull = jid.bare();
-        const QString         accountId = pa->id();
+        const QString accountId = pa->id();
+        const QString bareJid = jid.bare();
+        const QString jidFull = AvatarIdentity::bindingKey(accountId, bareJid, false);
         AvatarCache::OpResult result  = AvatarCache::Changed;
 
         if (n == PEP_AVATAR_DATA_NS) {
             if (item.payload().tagName() == PEP_AVATAR_DATA_TN) {
                 auto hash = QByteArray::fromHex(item.id().toLatin1());
                 // A late response is not allowed to restore a previous image.
-                if (hash.size() != 20 || !blobFetches_.expects(accountId, jidFull, hash))
+                if (hash.size() != 20 || !blobFetches_.expects(accountId, bareJid, hash))
                     return;
                 // Try the existing content-hash cache before decoding the payload.
 #ifdef AVATAR_EDBUG
@@ -202,7 +203,7 @@ public:
                 }
                 // Any invalid/absent blob enters a retry cooldown. The
                 // cooldown never itself starts an IQ or an avatar refresh.
-                blobFetches_.finish(accountId, jidFull, hash, result != NoData,
+                blobFetches_.finish(accountId, bareJid, hash, result != NoData,
                                    blobClock_.elapsed());
             } else {
                 qWarning("avatars.cpp: Unexpected item payload");
@@ -212,12 +213,12 @@ public:
             if (info.isNull()) {
                 // Empty metadata announces no PEP avatar. Invalidate the
                 // desired hash first, so a pending blob reply is discarded.
-                blobFetches_.announce(accountId, jidFull, {}, item.id());
+                blobFetches_.announce(accountId, bareJid, {}, item.id());
 #ifdef AVATAR_EDBUG
                 qDebug() << "removeIcon AvatarType " << jidFull << AvatarCache::AvatarType;
 #endif
                 result  = AvatarCache::instance()->removeIcon(AvatarCache::AvatarType, jidFull);
-                auto it = jid2hash.find(jid);
+                auto it = jid2hash.find(jidFull);
                 if (it != jid2hash.end()) {
                     auto vcard_hash = it.value();
                     jid2hash.erase(it);
@@ -252,17 +253,17 @@ public:
 #endif
                     // Metadata is small. Content bytes are shared by SHA-1
                     // in FileCache; fetch them only on a genuine cache miss.
-                    blobFetches_.announce(accountId, jidFull, hash, item.id());
+                    blobFetches_.announce(accountId, bareJid, hash, item.id());
                     result = appendUser(hash, AvatarCache::AvatarType, jidFull);
                     if (result == AvatarCache::NoData) {
-                        if (blobFetches_.beginFetch(accountId, jidFull, hash, blobClock_.elapsed())) {
+                        if (blobFetches_.beginFetch(accountId, bareJid, hash, blobClock_.elapsed())) {
                             auto *task = pa->pepManager()->get(jid, PEP_AVATAR_DATA_NS, item.id());
                             // PEPManager dispatches a valid result through
                             // itemPublished() before the task's later listeners.
                             // If no validated blob arrived, retain a retryable
                             // error, not a permanent "no avatar" state.
-                            connect(task, &Task::finished, this, [this, accountId, jidFull, hash]() {
-                                blobFetches_.finish(accountId, jidFull, hash, false, blobClock_.elapsed());
+                            connect(task, &Task::finished, this, [this, accountId, bareJid, hash]() {
+                                blobFetches_.finish(accountId, bareJid, hash, false, blobClock_.elapsed());
                             });
                         }
                         return;
@@ -277,7 +278,8 @@ public:
             qDebug() << "remove from iconset and emit avatarChanged on itemPublished" << jidFull;
 #endif
             iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(jidFull));
-            emit avatarChanged(jidFull);
+            emit avatarChanged(jid.withResource({}));
+            emit avatarChangedScoped(pa, jid.withResource({}));
         }
     }
 
