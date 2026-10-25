@@ -39,6 +39,8 @@ class MediaSharing;
 class Reference;
 }
 
+class QUrl;
+
 class FileSharingItem : public QObject {
     Q_OBJECT
 
@@ -80,6 +82,8 @@ public:
     QString                             localFilePath() const;
     inline const QString               &mimeType() const { return _mimeType; }
     inline const HashSums              &sums() const { return _sums; }
+    // An OOB-only URL has an address identity, not a content checksum.
+    bool isUrlOnly() const { return _urlOnly; }
     inline QVariantMap                  metaData() const { return _metaData; }
     inline std::optional<std::uint64_t> fileSize() const { return _fileSize; }
     inline const QStringList           &uris() const { return _uris; }
@@ -114,11 +118,13 @@ public:
 
 private:
     friend class FileSharingManager;
+    FileSharingItem(const QUrl &url, const XMPP::Hash &identity, PsiAccount *acc, FileSharingManager *manager);
     void                             mergeSources(const XMPP::MediaSharing &, const XMPP::Jid &);
     bool                             savePublishedFile();
     XMPP::Jingle::FileTransfer::File fileInfo() const;
     QPointer<FileSharingPublication> _publication;
     bool                             _published = false;
+    bool                             _urlOnly = false;
     bool                             initFromCache(FileCacheItem *cache = nullptr);
 
 signals:
@@ -136,6 +142,7 @@ private:
     QDateTime                    _modifyTime; // utc
     QStringList                  _uris;
     QString                      _fileName; // file name with path
+    QString                      _urlDisplayName; // original filename, even after caching by content hash
     HashSums                     _sums;
     QString                      _mimeType;
     QString                      _description;
