@@ -668,18 +668,13 @@ QStringList GCUserModel::nickList() const
 
 GCUserView::GCUserView(QWidget *parent) : QTreeView(parent)
 {
-    // Keep the standard QTreeView scroll model; only replace its chrome.
-    // Opt in before the manager sees the first polish/show event.
-    setProperty("psiOverlayScrollBar", true);
+    // Keep QTreeView's scroll model; only replace its chrome.
     header()->hide();
     setRootIsDecorated(false);
     sortByColumn(0, Qt::AscendingOrder);
     setIndentation(0);
     setContextMenuPolicy(Qt::DefaultContextMenu);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    // install() may scan already-created scroll areas, so finish the
-    // scrollbar policies first; MUC roster never needs horizontal chrome.
-    Mattermost::OverlayScrollBarManager::install(*qApp);
     setDragDropMode(QAbstractItemView::DragOnly);
 
     setItemDelegate(new GCUserViewDelegate(this));
@@ -688,6 +683,7 @@ GCUserView::GCUserView(QWidget *parent) : QTreeView(parent)
     connect(this, SIGNAL(doubleClicked(QModelIndex)), SLOT(qlv_doubleClicked(QModelIndex)));
     if (auto *app = qobject_cast<PsiApplication *>(qApp))
         connect(app, &PsiApplication::applicationPaletteChanged, this, &GCUserView::setLooks);
+    Mattermost::OverlayScrollBarManager::attach(*this);
 }
 
 GCUserView::~GCUserView() { }
