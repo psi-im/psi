@@ -24,6 +24,8 @@ public:
     QPixmap avatar(const MessageView &message);
     // Returns true if a cached sender of this timeline was dropped.
     bool invalidate(const XMPP::Jid &jid);
+    // Clear all cached occupant results (including negative pixmaps) on rejoin.
+    bool resetRoom();
 
 private:
     PsiAccount             *account_;
