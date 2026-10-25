@@ -63,6 +63,8 @@ public:
     void resetMucRoom(PsiAccount *account, const Jid &room);
     quint64 mucGeneration(PsiAccount *account, const Jid &occupant) const;
     quint64 mucRoomGeneration(PsiAccount *account, const Jid &room) const;
+    quint64 accountGeneration(PsiAccount *account) const;
+    void invalidateAccountSession(PsiAccount *account);
 
 
     Task *setVCard(PsiAccount *account, const VCard4::VCard &v, const Jid &targetJid, VCardFactory::Flags flags);
@@ -138,6 +140,7 @@ private:
     // to limit the hash above. this one keeps ordered resource. mucBareJid => resource_list
     QMap<QString, QQueue<QString>> lastMucVcards_;
     AvatarEpochPolicy             occupantEpochs_;
+    AvatarEpochPolicy             accountEpochs_;
 
     class QueuedLoader;
     QueuedLoader *queuedLoader_;
@@ -168,6 +171,8 @@ public:
     bool legacyAnswered() const;
     quint64 requestedOccupantEpoch() const;
     quint64 requestedRoomEpoch() const;
+    quint64 requestedAccountEpoch() const;
+    bool wasQueuedForAccount(PsiAccount *account) const;
     bool currentEpoch() const;
     bool wasQueuedFor(PsiAccount *account, const Jid &occupant) const;
     void invalidate(bool notifyPending = false);
