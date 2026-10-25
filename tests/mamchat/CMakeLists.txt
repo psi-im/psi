@@ -20,6 +20,13 @@ target_link_libraries(mam_overlay_scrollbar_test PRIVATE
     Qt${QT_DEFAULT_MAJOR_VERSION}::Widgets Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
 add_test(NAME mam_overlay_scrollbar COMMAND mam_overlay_scrollbar_test)
 
+add_executable(mam_thin_splitter_test ThinSplitterTest.cpp
+    ${PSI_WIDGETS}/ThinSplitter.cpp ${PSI_WIDGETS}/ThinSplitter.h)
+target_include_directories(mam_thin_splitter_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../src)
+target_link_libraries(mam_thin_splitter_test PRIVATE
+    Qt${QT_DEFAULT_MAJOR_VERSION}::Widgets Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+add_test(NAME mam_thin_splitter COMMAND mam_thin_splitter_test)
+
 add_executable(mam_identity_test MamIdentityTest.cpp)
 target_include_directories(mam_identity_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../src)
 target_link_libraries(mam_identity_test PRIVATE
