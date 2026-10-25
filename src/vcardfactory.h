@@ -24,6 +24,7 @@
 
 #include <QHash>
 #include <QMap>
+#include <QQueue>
 #include <QObject>
 #include <QStringList>
 
@@ -126,6 +127,11 @@ private:
 
     static bool setEmbeddedPhoto(VCard4::VCard &card, const QByteArray &data);
     static bool clearPhoto(VCard4::VCard &card);
+    static void rememberMucCard(
+        QMap<QString, QHash<QString, VCard4::VCard>> &cards,
+        QMap<QString, QQueue<QString>> &order,
+        const QString &roomKey, const QString &nick, const VCard4::VCard &vcard);
+
     friend class VCardDiskCacheTest;
     friend class VCardRequestMergeTest;
 
