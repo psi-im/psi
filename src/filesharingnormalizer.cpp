@@ -10,24 +10,13 @@
 
 namespace FileSharingNormalizer {
 
-XMPP::UrlList remainingLinks(const XMPP::Message &message)
+void normalize(XMPP::Message &message)
 {
-    XMPP::UrlList links;
-    for (const auto &url : message.urlList()) {
-        if (!OobMediaPolicy::normalizedHttpSource(url.url()).isValid())
-            links.append(url);
-    }
-    return links;
-}
-
-PreparedMedia prepareForDisplay(const XMPP::Message &message)
-{
-    PreparedMedia result { message.references(), {} };
     const auto originalUrls = message.urlList();
     if (originalUrls.isEmpty())
-        return result;
-
-    auto &refs = result.references;
+        return;
+    auto refs = message.references();
+    XMPP::UrlList remainingOob;
     const QString body = message.body();
     QSet<QString> simsSources;
     for (const auto &reference : refs) {
@@ -58,7 +47,7 @@ PreparedMedia prepareForDisplay(const XMPP::Message &message)
         const auto &oob = originalUrls.at(i);
         const auto &candidate = classified.at(i);
         if (!candidate.source.isValid()) {
-            result.remainingOob.append(oob); // Non-HTTP OOB stays a link.
+            remainingOob.append(oob); // Non-HTTP OOB stays a link.
             continue;
         }
         const QString canonical = candidate.source.toString(QUrl::FullyEncoded);
@@ -114,7 +103,8 @@ PreparedMedia prepareForDisplay(const XMPP::Message &message)
         refs.append(reference);
     }
 
-    return result;
+    message.setReferences(refs);
+    message.setUrlList(remainingOob);
 }
 
 } // namespace FileSharingNormalizer
