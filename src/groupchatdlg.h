@@ -29,6 +29,7 @@
 #include "widgets/MamHistorySource.h"
 
 #include <QDialog>
+#include <QHash>
 #include <QPointer>
 #include <QSet>
 #include <QWidget>
