@@ -1,0 +1,59 @@
+name: Avatar vCard foundation (Qt5)
+
+on:
+  pull_request:
+    paths:
+      - 'src/vcardfactory.cpp'
+      - 'src/vcardfactory_data.cpp'
+      - 'src/vcardfactory.h'
+      - 'src/src.cmake'
+      - 'tests/account/vcarddiskcachetest.cpp'
+      - 'tests/account/vcardrequestmergetest.cpp'
+      - 'tests/account/CMakeLists.txt'
+      - '.github/workflows/avatar-vcard-foundation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: avatar-vcard-qt5-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
+
+jobs:
+  qt5-first-hit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - name: Initialize pinned submodules
+        run: |
+          git submodule update --init --depth 1 \
+            3rdparty/http-parser 3rdparty/qhttp 3rdparty/qite iris
+      - name: Install Qt5 and Iris build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ccache cmake ninja-build g++ pkg-config zlib1g-dev \
+            qtbase5-dev libqt5svg5-dev libqt5x11extras5-dev qtmultimedia5-dev \
+            libqca-qt5-2-dev libotr5-dev libhttp-parser-dev \
+            libminizip-dev libsm-dev libssl-dev libusrsctp-dev \
+            libsrtp2-dev libtidy-dev libxss-dev libqt5sql5-sqlite
+      - name: Configure bundled Iris and focused test
+        run: |
+          cmake -S . -B build-vcard -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DCHAT_TYPE=BASIC \
+            -DBUNDLED_IRIS=ON -DBUNDLED_IRIS_ALL=OFF \
+            -DIRIS_SYSTEM_QCA=2 -DIRIS_ENABLE_OMEMO=OFF \
+            -DENABLE_OMEMO=OFF -DENABLE_PLUGINS=OFF \
+            -DUSE_KEYCHAIN=OFF -DUSE_HUNSPELL=OFF -DUSE_SPARKLE=OFF \
+            -DBUILD_TESTING=ON
+      - name: Build real Iris and vCard disk-cache regression
+        run: cmake --build build-vcard --target account_vcard_disk_cache_test account_vcard_request_merge_test --parallel 4
+      - name: Run first-hit regression
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: ctest --test-dir build-vcard --output-on-failure --no-tests=error -R "^(account_vcard_disk_cache|account_vcard_request_merge)$"
+

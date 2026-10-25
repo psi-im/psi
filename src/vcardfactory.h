@@ -46,7 +46,7 @@ class VCardFactory : public QObject {
     Q_OBJECT
 
 public:
-    enum Flag { MucRoom = 0x1, MucUser = 0x2, Cache = 0x4, ForceVCardTemp = 0x8, Silent = 0x10 };
+    enum Flag { MucRoom = 0x1, MucUser = 0x2, Cache = 0x4, ForceVCardTemp = 0x8, Silent = 0x10, PhotoOnly = 0x20 };
     Q_DECLARE_FLAGS(Flags, Flag);
 
     static VCardFactory *instance();
@@ -55,6 +55,10 @@ public:
 
     Task *setVCard(PsiAccount *account, const VCard4::VCard &v, const Jid &targetJid, VCardFactory::Flags flags);
     VCardRequest *getVCard(PsiAccount *account, const Jid &, VCardFactory::Flags flags = {});
+    // Fetch only the legacy vcard-temp store, which owns XEP-0153 photo hashes.
+    // The caller still receives the full vcard-temp IQ payload; only the
+    // photo field is applied to the cached vCard4 representation.
+    VCardRequest *getVCardPhoto(PsiAccount *account, const Jid &, VCardFactory::Flags flags = {});
 
     void setPhoto(const Jid &j, const QByteArray &photo, Flags flags);
     void deletePhoto(const Jid &j, Flags flags);
@@ -75,6 +79,15 @@ private:
     ~VCardFactory();
     friend class VCardRequest;
     void saveVCard(const Jid &, const VCard4::VCard &, VCardFactory::Flags flags);
+
+    // Keep the disk parser out of headers; tests call the same production
+    // reader without needing to link all of PsiAccount and PEPManager.
+    static VCard4::VCard readCachedVCard(const QString &fileName);
+    static bool shouldFetchModern(Flags flags);
+    static void supplementFromLegacy(VCard4::VCard &modern, const VCard4::VCard &legacy);
+    static bool applyLegacyPhoto(VCard4::VCard &cached, const VCard4::VCard &legacy);
+    friend class VCardDiskCacheTest;
+    friend class VCardRequestMergeTest;
 
     static VCardFactory         *instance_;
     const int                    dictSize_;
