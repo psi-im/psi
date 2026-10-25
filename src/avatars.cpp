@@ -596,7 +596,7 @@ public:
         }
 
         // so we have a new image.
-        clearNegative(jid);
+        clearNegative(jid, false);
         FileCacheItem *oldActiveItem = activeAvatarIcon(icons);
 
         QVariantMap md;
@@ -694,7 +694,7 @@ protected:
 private:
     quint32 negativeNow() const { return quint32(negativeClock_.elapsed() / 1000); }
 
-    void clearNegative(const QString &jid)
+    void clearNegative(const QString &jid, bool eraseEmpty = true)
     {
         auto it = jidToIcons.find(jid);
         if (it == jidToIcons.end() || !it->noVCardPhotoStamp)
@@ -702,7 +702,7 @@ private:
         it->noVCardPhotoStamp = 0;
         --negativeCount_;
         // Retain genuine positive FileCache bindings as before.
-        if (areIconsEmpty(*it))
+        if (eraseEmpty && areIconsEmpty(*it))
             jidToIcons.erase(it);
     }
 
@@ -934,8 +934,9 @@ private:
             return NotChanged;
         }
 
-        // A newly resolved image supersedes the cached negative lookup.
-        clearNegative(jid);
+        // Keep the JidIcons entry alive while binding a new positive item.
+        // Otherwise clearing a negative-only record would invalidate icons.
+        clearNegative(jid, false);
         FileCacheItem *oldActiveIcon = activeAvatarIcon(icons);
         FileCacheItem *prevIcon      = setIconItem(icons, item, iconType);
         if (prevIcon == item) {
