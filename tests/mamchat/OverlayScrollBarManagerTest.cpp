@@ -33,7 +33,7 @@ private slots:
     void leavingDuringRevealCancelsTheRevealAnimation()
     {
         QAbstractScrollArea area;
-        area.setProperty("psiMamOverlay", true);
+        area.setProperty("psiOverlayScrollBar", true);
         area.resize(320, 240);
         area.move(200, 200);
         QCursor::setPos(50, 50);
@@ -57,7 +57,7 @@ private slots:
     void lostLeaveDoesNotKeepOverlayVisible()
     {
         QAbstractScrollArea area;
-        area.setProperty("psiMamOverlay", true);
+        area.setProperty("psiOverlayScrollBar", true);
         area.resize(320, 240);
         area.move(200, 200);
         area.verticalScrollBar()->setRange(0, 100);
@@ -86,7 +86,7 @@ private slots:
     void edgeButtonsTrackPositionAndTriggerRealSliderActions()
     {
         QAbstractScrollArea area;
-        area.setProperty("psiMamOverlay", true);
+        area.setProperty("psiOverlayScrollBar", true);
         area.resize(320, 240);
         area.verticalScrollBar()->setRange(0, 100);
         area.verticalScrollBar()->setPageStep(20);
@@ -126,7 +126,7 @@ private slots:
     void edgeNavigationButtonsCanBeDisabledTogether()
     {
         QAbstractScrollArea area;
-        area.setProperty("psiMamOverlay", true);
+        area.setProperty("psiOverlayScrollBar", true);
         area.resize(320, 240);
         area.verticalScrollBar()->setRange(0, 100);
         area.verticalScrollBar()->setValue(50);
@@ -159,7 +159,7 @@ private slots:
     void startActionCanBeDisabledWithoutAffectingEndAction()
     {
         QAbstractScrollArea area;
-        area.setProperty("psiMamOverlay", true);
+        area.setProperty("psiOverlayScrollBar", true);
         area.resize(320, 240);
         area.verticalScrollBar()->setRange(0, 100);
         area.verticalScrollBar()->setValue(50);
