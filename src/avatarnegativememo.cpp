@@ -19,8 +19,8 @@ QString AvatarNegativeMemo::roomPrefix(const QString &key)
     const QString account = accountPrefix(key);
     if (account.isEmpty() || !key.mid(account.size()).startsWith(QLatin1String("occupant/")))
         return {};
-    const int end = key.lastIndexOf(QLatin1Char('/'));
-    return end < account.size() + 9 ? QString() : key.left(end + 1);
+    const int end = key.indexOf(QLatin1Char('/'), account.size() + 9);
+    return end < 0 ? QString() : key.left(end + 1);
 }
 
 std::optional<AvatarNegativeMemo::State> AvatarNegativeMemo::lookup(const QString &key, qint64 nowMs)
