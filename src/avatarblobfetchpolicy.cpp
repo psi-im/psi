@@ -9,11 +9,11 @@ QString AvatarIdentity::accountPrefix(const QString &accountId)
         + QString::fromLatin1(QUrl::toPercentEncoding(accountId)) + QLatin1Char('/');
 }
 
-QString AvatarIdentity::bindingKey(const QString &accountId, const XMPP::Jid &jid, bool occupant)
+QString AvatarIdentity::bindingKey(const QString &accountId, const QString &normalizedJid, bool occupant)
 {
     return accountPrefix(accountId)
         + (occupant ? QStringLiteral("occupant/") : QStringLiteral("contact/"))
-        + (occupant ? jid.full() : jid.bare());
+        + normalizedJid;
 }
 
 AvatarBlobFetchPolicy::AvatarBlobFetchPolicy(int retryDelayMs, int capacity) :
