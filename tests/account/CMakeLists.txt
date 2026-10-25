@@ -13,6 +13,14 @@ target_link_libraries(account_connection_guard_test PRIVATE
     Qt${QT_DEFAULT_MAJOR_VERSION}::Core Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
 add_test(NAME account_connection_guard COMMAND account_connection_guard_test)
 
+add_executable(account_avatar_blob_inflight_test avatarblobinflighttest.cpp)
+set_target_properties(account_avatar_blob_inflight_test PROPERTIES AUTOMOC ON)
+target_include_directories(account_avatar_blob_inflight_test PRIVATE ../../src)
+target_link_libraries(account_avatar_blob_inflight_test PRIVATE
+    Qt${QT_DEFAULT_MAJOR_VERSION}::Core Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+add_test(NAME account_avatar_blob_inflight COMMAND account_avatar_blob_inflight_test)
+set_tests_properties(account_avatar_blob_inflight PROPERTIES TIMEOUT 10)
+
 set_tests_properties(account_connection_guard PROPERTIES TIMEOUT 10)
 
 if(TARGET iris)

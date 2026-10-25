@@ -7,9 +7,12 @@ on:
       - 'src/vcardfactory_data.cpp'
       - 'src/vcardfactory.h'
       - 'src/src.cmake'
+      - 'src/avatarblobinflight.h'
+      - 'src/avatars.cpp'
       - 'tests/account/vcarddiskcachetest.cpp'
       - 'tests/account/vcardrequestmergetest.cpp'
       - 'tests/account/CMakeLists.txt'
+      - 'tests/account/avatarblobinflighttest.cpp'
       - '.github/workflows/avatar-vcard-foundation.yml'
   workflow_dispatch:
 
@@ -51,9 +54,9 @@ jobs:
             -DUSE_KEYCHAIN=OFF -DUSE_HUNSPELL=OFF -DUSE_SPARKLE=OFF \
             -DBUILD_TESTING=ON
       - name: Build real Iris and vCard disk-cache regression
-        run: cmake --build build-vcard --target account_vcard_disk_cache_test account_vcard_request_merge_test --parallel 4
+        run: cmake --build build-vcard --target account_vcard_disk_cache_test account_vcard_request_merge_test account_avatar_blob_inflight_test --parallel 4
       - name: Run first-hit regression
         env:
           QT_QPA_PLATFORM: offscreen
-        run: ctest --test-dir build-vcard --output-on-failure --no-tests=error -R "^(account_vcard_disk_cache|account_vcard_request_merge)$"
+        run: ctest --test-dir build-vcard --output-on-failure --no-tests=error -R "^(account_vcard_disk_cache|account_vcard_request_merge|account_avatar_blob_inflight)$"
 

@@ -365,6 +365,7 @@ list(APPEND SOURCES
     alertmanager.cpp
     applicationinfo.cpp
     avatars.cpp
+    avatarblobinflight.h
     bobfilecache.cpp
     bookmarkmanagedlg.cpp
     bookmarkmanager.cpp
