@@ -60,6 +60,18 @@ if(ACCOUNT_IRIS_TARGET)
     find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Gui)
     # Compile a copy outside src/, so its quoted includes resolve to the doubles.
     configure_file(../../src/nativechatavatars.cpp ${CMAKE_CURRENT_BINARY_DIR}/nativechatavatars_impl.cpp COPYONLY)
+    # Stable, synthetic Qt microbenchmark: reports timings without gating on
+    # runner performance or claiming a whole-chat/paint/network speedup.
+    add_executable(account_avatar_cache_benchmark
+        avatarmemobenchmark.cpp ../../src/avatarnegativememo.cpp)
+    set_target_properties(account_avatar_cache_benchmark PROPERTIES AUTOMOC ON)
+    target_include_directories(account_avatar_cache_benchmark PRIVATE ../../src)
+    target_link_libraries(account_avatar_cache_benchmark PRIVATE
+        Qt${QT_DEFAULT_MAJOR_VERSION}::Gui Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+    add_test(NAME account_avatar_cache_benchmark COMMAND account_avatar_cache_benchmark)
+    set_tests_properties(account_avatar_cache_benchmark PROPERTIES TIMEOUT 20
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
     add_executable(account_native_chat_avatars_test nativechatavatars.cpp
         ${CMAKE_CURRENT_BINARY_DIR}/nativechatavatars_impl.cpp)
     set_target_properties(account_native_chat_avatars_test PROPERTIES AUTOMOC ON)
