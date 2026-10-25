@@ -305,6 +305,39 @@ public:
         emit avatarChangedScoped(pa, jid.withResource({}));
     }
 
+    void clearOccupant(PsiAccount *account, const Jid &jid)
+    {
+        const QString key = AvatarIdentity::bindingKey(account->id(), jid.full(), true);
+        removeIcon(AvatarType, key);
+        removeIcon(VCardType, key);
+        iconset_.removeIcon(QStringLiteral("avatars/%1").arg(key));
+        removeHash(account, jid, true);
+        emit avatarChanged(jid);
+        emit avatarChangedScoped(account, jid);
+    }
+
+    void resetRoom(PsiAccount *account, const Jid &room)
+    {
+        const QString prefix = AvatarIdentity::accountPrefix(account->id())
+            + QStringLiteral("occupant/") + room.bare() + QLatin1Char('/');
+        const auto keys = jidToIcons.keys();
+        for (const auto &key : keys) {
+            if (!key.startsWith(prefix))
+                continue;
+            removeIcon(AvatarType, key);
+            removeIcon(VCardType, key);
+            iconset_.removeIcon(QStringLiteral("avatars/%1").arg(key));
+        }
+        for (auto it = jid2hash.begin(); it != jid2hash.end();) {
+            if (it.key().startsWith(prefix))
+                it = jid2hash.erase(it);
+            else
+                ++it;
+        }
+        emit avatarChanged(room);
+        emit avatarChangedScoped(account, room);
+    }
+
     void forgetAccount(const QString &accountId)
     {
         blobFetches_.forgetAccount(accountId);
@@ -1125,14 +1158,25 @@ bool AvatarFactory::hasManualAvatar(const Jid &j)
 void AvatarFactory::statusUpdate(const Jid &jid, const XMPP::Status &status, Flags flags)
 {
     if (status.type() == Status::Offline) {
-        AvatarCache::instance()->removeHash(d->pa_, (flags & MucUser) ? jid : jid.withResource({}),
-                                            flags & MucUser);
+        if (flags & MucUser) {
+            // Treat room occupants as ephemeral, even if they reuse a nick.
+            VCardFactory::instance()->invalidateMucOccupant(d->pa_, jid);
+            AvatarCache::instance()->clearOccupant(d->pa_, jid);
+        } else {
+            AvatarCache::instance()->removeHash(d->pa_, jid.withResource({}), false);
+        }
     } else {
         if (status.photoHash()) { // even if it's empty. user adretises something.
             auto hash = *status.photoHash();
             ensureVCardUpdated(jid, hash, flags);
         }
     }
+}
+
+void AvatarFactory::resetMucRoom(const Jid &room)
+{
+    VCardFactory::instance()->resetMucRoom(d->pa_, room);
+    AvatarCache::instance()->resetRoom(d->pa_, room);
 }
 
 void AvatarFactory::ensureVCardUpdated(const Jid &jid, const QByteArray &hash, Flags flags)
