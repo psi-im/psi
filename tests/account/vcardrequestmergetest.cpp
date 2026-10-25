@@ -117,6 +117,71 @@ private slots:
         QVERIFY(muc1 != muc2); // Occupants, unlike ordinary contacts, need full JIDs.
     }
 
+    void legacyPhotoRemovalPreservesModernImageWithoutNetwork()
+    {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const XMPP::Jid jid(QStringLiteral("contact@example.org/mobile"));
+        const QString modernFile = VCardFactory::sourceCardFile(
+            dir.path(), QStringLiteral("account-a"), jid, {}, true);
+        const QString legacyFile = VCardFactory::sourceCardFile(
+            dir.path(), QStringLiteral("account-a"), jid, {}, false);
+        XMPP::VCard4::VCard modern;
+        modern.setFullName(QStringLiteral("Modern name"));
+        modern.setPhoto(XMPP::VCard4::UriValue(
+            QByteArrayLiteral("modern-photo"), QStringLiteral("image/png")));
+        XMPP::VCard4::VCard legacy;
+        legacy.setPhoto(XMPP::VCard4::UriValue(
+            QByteArrayLiteral("legacy-photo"), QStringLiteral("image/jpeg")));
+
+        QVERIFY(modern.save(modernFile));
+        QVERIFY(legacy.save(legacyFile));
+        auto restoredModern = VCardFactory::readCachedVCard(modernFile);
+        auto restoredLegacy = VCardFactory::readCachedVCard(legacyFile);
+        const auto both = VCardFactory::mergeSourceCards(restoredModern, restoredLegacy);
+        QCOMPARE(QByteArray(both.photo()), QByteArrayLiteral("modern-photo"));
+
+        QVERIFY(VCardFactory::clearPhoto(restoredLegacy));
+        QVERIFY(restoredLegacy.save(legacyFile));
+        restoredModern = VCardFactory::readCachedVCard(modernFile);
+        restoredLegacy = VCardFactory::readCachedVCard(legacyFile);
+        const auto afterRemoval = VCardFactory::mergeSourceCards(restoredModern, restoredLegacy);
+        QCOMPARE(QByteArray(afterRemoval.photo()), QByteArrayLiteral("modern-photo"));
+        QCOMPARE(afterRemoval.fullName().preferred().data, QStringLiteral("Modern name"));
+        QVERIFY(restoredLegacy.photo().isEmpty());
+    }
+
+    void sourceFileNamesAreAccountIsolatedAndModeSensitive()
+    {
+        const QString dir = QStringLiteral("/tmp/cache");
+        const XMPP::Jid jid(QStringLiteral("room@example.org/alice"));
+        const auto a = VCardFactory::sourceCardFile(dir, QStringLiteral("acc-a"), jid, {}, true);
+        const auto b = VCardFactory::sourceCardFile(dir, QStringLiteral("acc-b"), jid, {}, true);
+        const auto legacy = VCardFactory::sourceCardFile(dir, QStringLiteral("acc-a"), jid, {}, false);
+        const auto occupant = VCardFactory::sourceCardFile(
+            dir, QStringLiteral("acc-a"), jid, VCardFactory::MucUser, true);
+        QVERIFY(a != b);
+        QVERIFY(a != legacy);
+        QVERIFY(a != occupant);
+        QCOMPARE(a, VCardFactory::sourceCardFile(dir, QStringLiteral("acc-a"),
+            XMPP::Jid(QStringLiteral("room@example.org/other")), {}, true));
+    }
+
+    void legacyOnlySourceCanClearPhotoWithoutNetwork()
+    {
+        XMPP::VCard4::VCard modern;
+        XMPP::VCard4::VCard legacy;
+        legacy.setFullName(QStringLiteral("Legacy name"));
+        legacy.setPhoto(XMPP::VCard4::UriValue(
+            QByteArrayLiteral("legacy-photo"), QStringLiteral("image/jpeg")));
+        auto merged = VCardFactory::mergeSourceCards(modern, legacy);
+        QCOMPARE(QByteArray(merged.photo()), QByteArrayLiteral("legacy-photo"));
+        QVERIFY(VCardFactory::clearPhoto(legacy));
+        merged = VCardFactory::mergeSourceCards(modern, legacy);
+        QVERIFY(merged.photo().isEmpty());
+        QCOMPARE(merged.fullName().preferred().data, QStringLiteral("Legacy name"));
+    }
+
     void fullAndPhotoOnlyRequestModes()
     {
         using F = VCardFactory;
