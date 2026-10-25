@@ -14,9 +14,11 @@ QString accountPrefix(const QString &accountId);
 QString bindingKey(const QString &accountId, const QString &normalizedJid, bool occupant);
 } // namespace AvatarIdentity
 
-// Tracks avatar metadata identities, concurrent blob retrievals and temporary
-// failures. The caller owns the actual image bytes (FileCache) and performs
-// I/O only when beginFetch() allows it. No timers, polling or implicit fetches.
+// In-flight IQ guard and current-metadata generation checks ONLY.
+// FileCache/AvatarCache already deduplicate *stored* avatar bytes by SHA-1:
+// this class must never hold blobs or replace the existing content hash cache.
+// It prevents parallel IQs for the same account/SHA-1 and suppresses retries
+// to missing/failed requests. No timers, polling or implicit fetches.
 //
 // All time arguments are monotonic milliseconds, so tests can advance time
 // without sleeping and production can use a single QElapsedTimer.
@@ -52,6 +54,8 @@ private:
     };
 
     static QString key(const QString &accountId, const QString &bareJid);
+    static QString flightKey(const QString &accountId, const QByteArray &hash);
+    void releaseFlight(const QString &accountId, const QString &bareJid, const QByteArray &hash);
     bool ensureCapacity();
     Entry *lookup(const QString &accountId, const QString &bareJid);
 
@@ -59,6 +63,8 @@ private:
     const int capacity_;
     quint64 serial_ = 0;
     QHash<QString, Entry> entries_;
+    // O(1) index for concurrent IQ deduplication; values are owner JIDs, not blobs.
+    QHash<QString, QString> inFlightByHash_;
 };
 
 // The old avatars/<JID> icon API has no account context. Publish a legacy
