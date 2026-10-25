@@ -190,6 +190,25 @@ const VCard4::VCard VCardFactory::mucVcard(const Jid &j) const
     return {};
 }
 
+void VCardFactory::forgetMucVCard(const Jid &j)
+{
+    // MUC vCards are keyed by room and nickname, not a stable occupant ID.
+    // An unavailable presence makes the stored PHOTO unsafe for a later
+    // participant who happens to reuse the same nickname.
+    auto room = mucVcardDict_.find(j.bare());
+    if (room != mucVcardDict_.end()) {
+        room.value().remove(j.resource());
+        if (room.value().isEmpty())
+            mucVcardDict_.erase(room);
+    }
+    auto ordered = lastMucVcards_.find(j.bare());
+    if (ordered != lastMucVcards_.end()) {
+        ordered.value().removeAll(j.resource());
+        if (ordered.value().isEmpty())
+            lastMucVcards_.erase(ordered);
+    }
+}
+
 /**
  * \brief Call this, when you need a cached vCard.
  */
