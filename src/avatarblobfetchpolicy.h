@@ -3,6 +3,7 @@
 
 #include <QByteArray>
 #include <QHash>
+#include <QSet>
 #include <QString>
 #include <QStringList>
 
@@ -58,4 +59,17 @@ private:
     const int capacity_;
     quint64 serial_ = 0;
     QHash<QString, Entry> entries_;
+};
+
+// The old avatars/<JID> icon API has no account context. Publish a legacy
+// alias only when the JID has been observed from exactly one account.
+// A collision must produce no legacy icon, never another account's image.
+class AvatarLegacyAliasPolicy {
+public:
+    void observe(const QString &accountId, const QString &legacyJid);
+    bool allows(const QString &accountId, const QString &legacyJid) const;
+    bool ambiguous(const QString &legacyJid) const;
+    void forgetAccount(const QString &accountId);
+private:
+    QHash<QString, QSet<QString>> owners_;
 };
