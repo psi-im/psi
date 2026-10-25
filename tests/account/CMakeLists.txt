@@ -26,6 +26,14 @@ set_target_properties(account_avatar_epoch_policy_test PROPERTIES AUTOMOC ON)
 target_include_directories(account_avatar_epoch_policy_test PRIVATE ../../src)
 target_link_libraries(account_avatar_epoch_policy_test PRIVATE
     Qt${QT_DEFAULT_MAJOR_VERSION}::Core Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+add_executable(account_avatar_negative_memo_test
+    avatarnegativememotest.cpp ../../src/avatarnegativememo.cpp)
+set_target_properties(account_avatar_negative_memo_test PROPERTIES AUTOMOC ON)
+target_include_directories(account_avatar_negative_memo_test PRIVATE ../../src)
+target_link_libraries(account_avatar_negative_memo_test PRIVATE
+    Qt${QT_DEFAULT_MAJOR_VERSION}::Core Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+add_test(NAME account_avatar_negative_memo COMMAND account_avatar_negative_memo_test)
+set_tests_properties(account_avatar_negative_memo PROPERTIES TIMEOUT 10)
 add_test(NAME account_avatar_epoch_policy COMMAND account_avatar_epoch_policy_test)
 set_tests_properties(account_avatar_epoch_policy PROPERTIES TIMEOUT 10)
 
