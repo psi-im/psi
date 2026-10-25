@@ -28,7 +28,6 @@
 #include "profiles.h"
 #include "psiaccount.h"
 #include "vcardrequestpolicy.h"
-#include "vcardrequestmerge.h"
 
 #include "iris/xmpp-im/xmpp_pubsubitem.h"
 #include "iris/xmpp-im/xmpp_serverinfomanager.h"
@@ -83,7 +82,7 @@ VCardFactory::VCardFactory() : QObject(qApp), dictSize_(5), queuedLoader_(new Qu
                 // photo request may update only the cached PHOTO field.
                 VCard4::VCard cached = (request->flags() & MucUser)
                     ? mucVcard(request->jid()) : vcard(request->jid());
-                if (VCardRequestMerge::applyLegacyPhoto(cached, request->vcard()))
+                if (applyLegacyPhoto(cached, request->vcard()))
                     saveVCard(request->jid(), cached, request->flags() & ~PhotoOnly);
             } else {
                 saveVCard(request->jid(), request->vcard(), request->flags());
@@ -373,7 +372,7 @@ void VCardRequest::executeVCardTemp(PsiAccount *pa)
         if (task->success()) {
             VCard4::VCard legacy;
             legacy.fromVCardTemp(task->vcard());
-            VCardRequestMerge::supplement(d->vcard, legacy);
+            VCardFactory::supplementFromLegacy(d->vcard, legacy);
             d->storeAnswered = true;
             d->error.reset();
             d->statusString.clear();
