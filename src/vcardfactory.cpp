@@ -797,7 +797,7 @@ void VCardFactory::QueuedLoader::invalidateRoom(PsiAccount *account, const Jid &
     // Iterate only pending/in-flight IQs for this exact account and room.
     // Removal is synchronous, making a new occupant eligible for a fresh IQ.
     QList<Jid> occupants;
-    for (auto *request : std::as_const(requestKeys_)) {
+    for (auto *request : requestKeys_.keys()) {
         if ((request->flags() & MucUser) && request->jid().compare(room, false)
             && request->wasQueuedFor(account, request->jid())) {
             occupants.append(request->jid());
