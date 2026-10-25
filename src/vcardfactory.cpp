@@ -82,6 +82,9 @@ VCardFactory::VCardFactory() : QObject(qApp), dictSize_(5), queuedLoader_(new Qu
                 return; // Disconnected/destroyed account: never publish stale data.
             const auto jid = request->jid();
             const auto flags = request->flags();
+            if ((flags & MucUser)
+                && request->requestedOccupantEpoch() != mucGeneration(account, jid))
+                return; // Obsolete response from a departed/replaced occupant.
             if (flags & MucUser) {
                 // Transient occupant cards are never written to disk.
                 if (flags & PhotoOnly) {
@@ -293,6 +296,47 @@ VCard4::VCard VCardFactory::vcard(const Jid &j, Flags flags)
     return card;
 }
 
+quint64 VCardFactory::mucGeneration(PsiAccount *account, const Jid &occupant) const
+{
+    if (!account)
+        return 0;
+    return occupantEpochs_.generation(accountCacheKey(account->id(), occupant, MucUser));
+}
+
+void VCardFactory::invalidateMucOccupant(PsiAccount *account, const Jid &occupant)
+{
+    if (!account || occupant.resource().isEmpty())
+        return;
+    const QString roomKey = accountCacheKey(account->id(), occupant, {});
+    const QString key = accountCacheKey(account->id(), occupant, MucUser);
+    occupantEpochs_.advance(key);
+
+    auto roomIt = mucVcardDict_.find(roomKey);
+    if (roomIt != mucVcardDict_.end()) {
+        roomIt.value().remove(occupant.resource());
+        if (roomIt.value().isEmpty())
+            mucVcardDict_.erase(roomIt);
+    }
+    auto queueIt = lastMucVcards_.find(roomKey);
+    if (queueIt != lastMucVcards_.end()) {
+        queueIt.value().removeAll(occupant.resource());
+        if (queueIt.value().isEmpty())
+            lastMucVcards_.erase(queueIt);
+    }
+}
+
+void VCardFactory::resetMucRoom(PsiAccount *account, const Jid &room)
+{
+    if (!account)
+        return;
+    const QString roomKey = accountCacheKey(account->id(), room, {});
+    const auto occupants = mucVcardDict_.value(roomKey).keys();
+    for (const auto &nick : occupants)
+        invalidateMucOccupant(account, room.withResource(nick));
+    mucVcardDict_.remove(roomKey);
+    lastMucVcards_.remove(roomKey);
+}
+
 VCard4::VCard VCardFactory::mucVcard(PsiAccount *account, const Jid &j) const
 {
     if (!account)
@@ -469,6 +513,7 @@ public:
     VCard4::VCard               legacy;
     bool                        modernAnswered = false;
     bool                        legacyAnswered = false;
+    quint64                     occupantEpoch = 0;
 
     using ErrorPtr = std::unique_ptr<XMPP::Stanza::Error>;
     VCard4::VCard vcard;
@@ -495,6 +540,8 @@ bool VCardRequest::execute()
     if (paIt == d->accounts.end())
         return false;
     d->activeAccount = *paIt;
+    if (d->flags & VCardFactory::MucUser)
+        d->occupantEpoch = VCardFactory::instance()->mucGeneration(d->activeAccount, d->jid);
 
     // Client resource capabilities do not describe the account's server-side
     // vCard stores. Only explicit request modes determine which to query.
@@ -579,6 +626,7 @@ VCard4::VCard VCardRequest::modernVcard() const { return d->modern; }
 VCard4::VCard VCardRequest::legacyVcard() const { return d->legacy; }
 bool VCardRequest::modernAnswered() const { return d->modernAnswered; }
 bool VCardRequest::legacyAnswered() const { return d->legacyAnswered; }
+quint64 VCardRequest::requestedOccupantEpoch() const { return d->occupantEpoch; }
 
 QString VCardRequest::errorString() const { return d->statusString.isEmpty() ? d->error->toString() : d->statusString; }
 
