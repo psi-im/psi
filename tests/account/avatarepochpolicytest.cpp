@@ -34,8 +34,9 @@ private slots:
         const auto two = AvatarIdentity::bindingKey("b", "room@example.org/nick", true);
         epochs.advance(one);
         QCOMPARE(epochs.generation(two), quint64(0));
+        const auto before = epochs.generation(one);
         epochs.forgetPrefix(AvatarIdentity::accountPrefix("a"));
-        QCOMPARE(epochs.generation(one), quint64(0));
+        QVERIFY(epochs.generation(one) > before);
         QCOMPARE(epochs.generation(two), quint64(0));
     }
     void resetOfOneRoomDoesNotInvalidateOther()
