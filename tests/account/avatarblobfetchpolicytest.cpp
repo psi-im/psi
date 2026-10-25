@@ -26,6 +26,62 @@ private slots:
         QVERIFY(!a.contains(QLatin1Char(' '))); // Safe in icon names and FileCache metadata.
     }
 
+    void oneSharedHashIssuesOneBlobIqAcrossContacts()
+    {
+        AvatarBlobFetchPolicy policy;
+        const auto sha = hash('a');
+        policy.announce("account", "alice@example.org", sha, "data-a");
+        policy.announce("account", "bob@example.org", sha, "data-b");
+        policy.announce("account", "carol@example.org", sha, "data-c");
+        int iqCount = 0;
+        iqCount += policy.beginFetch("account", "alice@example.org", sha, 10) ? 1 : 0;
+        iqCount += policy.beginFetch("account", "bob@example.org", sha, 11) ? 1 : 0;
+        iqCount += policy.beginFetch("account", "carol@example.org", sha, 12) ? 1 : 0;
+        QCOMPARE(iqCount, 1); // Potentially large blobs transferred just once.
+
+        const auto waiting = policy.finish("account", "alice@example.org", sha, true, 20);
+        QCOMPARE(waiting.size(), 2);
+        QVERIFY(waiting.contains("bob@example.org"));
+        QVERIFY(waiting.contains("carol@example.org"));
+        QVERIFY(policy.finish("account", "alice@example.org", sha, true, 21).isEmpty());
+    }
+    void staleMetadataRetractionDoesNotReceiveOldSharedImage()
+    {
+        AvatarBlobFetchPolicy policy;
+        const auto sha = hash('a'), newer = hash('b');
+        policy.announce("account", "alice@example.org", sha, "data-a");
+        policy.announce("account", "bob@example.org", sha, "data-b");
+        QVERIFY(policy.beginFetch("account", "alice@example.org", sha, 1));
+        QVERIFY(!policy.beginFetch("account", "bob@example.org", sha, 1));
+        policy.announce("account", "bob@example.org", newer, "data-new");
+        QVERIFY(policy.finish("account", "alice@example.org", sha, true, 2).isEmpty());
+        QVERIFY(policy.expects("account", "bob@example.org", newer));
+        QVERIFY(!policy.expects("account", "bob@example.org", sha));
+    }
+    void failedSharedIqAllowsFutureEventDrivenRetryFromOtherContact()
+    {
+        AvatarBlobFetchPolicy policy(100, 4096);
+        const auto sha = hash('a');
+        policy.announce("account", "alice@example.org", sha, "a");
+        policy.announce("account", "bob@example.org", sha, "b");
+        QVERIFY(policy.beginFetch("account", "alice@example.org", sha, 1));
+        QVERIFY(!policy.beginFetch("account", "bob@example.org", sha, 2));
+        QVERIFY(policy.finish("account", "alice@example.org", sha, false, 10).isEmpty());
+        QVERIFY(!policy.beginFetch("account", "bob@example.org", sha, 109));
+        QVERIFY(policy.beginFetch("account", "bob@example.org", sha, 110));
+    }
+    void sameHashOnSeparateAccountsCannotShareLiveNetworkPermission()
+    {
+        AvatarBlobFetchPolicy policy;
+        const auto sha = hash('x');
+        policy.announce("account-a", "alice@example.org", sha, "a");
+        policy.announce("account-b", "bob@example.org", sha, "b");
+        QVERIFY(policy.beginFetch("account-a", "alice@example.org", sha, 1));
+        QVERIFY(policy.beginFetch("account-b", "bob@example.org", sha, 1));
+        QVERIFY(policy.finish("account-a", "alice@example.org", sha, true, 3).isEmpty());
+        QVERIFY(policy.finish("account-b", "bob@example.org", sha, true, 3).isEmpty());
+    }
+
     void onlyOneRequestWhileBlobIsPending()
     {
         AvatarBlobFetchPolicy policy;
