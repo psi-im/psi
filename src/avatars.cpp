@@ -356,10 +356,17 @@ public:
     {
         const QString key = AvatarIdentity::bindingKey(account->id(), j.bare(), false);
         QFile f(fileName);
-        if (!(f.open(QIODevice::ReadOnly)
-              && AvatarCache::instance()->setIcon(AvatarCache::CustomType, key, f.readAll()))) {
-            qWarning("Failed to set manual avatar");
+        if (!f.open(QIODevice::ReadOnly)) {
+            qWarning("Failed to open manual avatar file");
+            return;
         }
+        const auto result = AvatarCache::instance()->setIcon(AvatarCache::CustomType, key, f.readAll());
+        if (result == AvatarCache::NoData) {
+            qWarning("Failed to decode manual avatar");
+            return;
+        }
+        if (result == AvatarCache::NotChanged)
+            return;
 #ifdef AVATAR_EDBUG
         qDebug() << "remove from iconset and emit avatarChanged. importManualAvatar" << j.bare();
 #endif
