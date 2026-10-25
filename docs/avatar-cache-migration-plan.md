@@ -109,7 +109,7 @@ Work in order; split large changes into reviewable, revertible PRs. Prefer tests
 
 **Files:** `src/avatars.cpp`, VCardFactory callbacks, PEP itemPublished/retraction and AvatarFactory signals.
 
-- [ ] Resolve stale VCardFactory PHOTO vs removed hash; model per-source removal vs absence across all sources.
+- [ ] Resolve stale VCardFactory PHOTO vs removed hash; model per-source removal vs absence across all sources. **Important:** an empty XEP-0153 legacy photo hash must not erase a separate vCard4 PHOTO; the existing merged vCard cache lacks PHOTO provenance, so a source-aware representation or equivalent restoration rule is still required before declaring this gate complete.
 - [ ] Cover PEP metadata deletion/retraction (including vCard fallback), manual import failure/success, `Silent` mutation, own avatar publish/delete.
 - [ ] Update authoritative source, bindings, decoded icons and memo **before** one coherent `avatarChanged` notification.
 - [ ] Notify when a formerly **negative** result gains content, even if no old active icon existed.
