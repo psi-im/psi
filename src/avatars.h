@@ -85,6 +85,9 @@ public:
     bool hasManualAvatar(const Jid &j);
 
     QPixmap getMucAvatar(const Jid &jid);
+    // Account-qualified icon name for tooltip/theming consumers; unlike the
+    // old avatars/<JID> alias it cannot collide across simultaneous accounts.
+    QString avatarIconName(const Jid &jid, bool occupant) const;
 
     static QString getCacheDir();
     static int     maxAvatarSize();
