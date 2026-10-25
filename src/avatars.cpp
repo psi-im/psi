@@ -263,19 +263,9 @@ public:
                     blobFlights_.supersede(jidFull, hash);
                     result = appendUser(hash, AvatarCache::AvatarType, jidFull);
                     if (result == AvatarCache::NoData) {
-                        const auto decision = blobFlights_.join(jidFull, hash);
-                        if (decision.request) {
-                            auto *task = pa->pepManager()->get(jid, PEP_AVATAR_DATA_NS, item.id());
-                            connect(task, &Task::finished, this, [this, hash, token = decision.token]() {
-                                // PEPManager emits itemPublished() before
-                                // this callback on a successful IQ.
-                                blobFlights_.finish(hash, token);
-                            });
-                            connect(task, &QObject::destroyed, this, [this, hash, token = decision.token]() {
-                                // Covers disconnect/cancellation without finished().
-                                blobFlights_.finish(hash, token);
-                            });
-                        }
+                        const auto decision = blobFlights_.join(jidFull, hash, pa, item.id());
+                        if (decision.request)
+                            fetchAvatarBlob(pa, jid, item.id(), hash, decision.token);
                         return;
                     }
                     break;
@@ -618,6 +608,25 @@ protected:
     }
 
 private:
+    void fetchAvatarBlob(PsiAccount *account, const Jid &jid, const QString &itemId,
+                         const QByteArray &hash, quint64 token)
+    {
+        auto *task = account->pepManager()->get(jid, PEP_AVATAR_DATA_NS, itemId);
+        const auto onFinished = [this, hash, token]() {
+            // PEPManager emits itemPublished() before its task-finished
+            // observers. A valid blob has already completed the flight.
+            // If this source failed, try another interested contact's
+            // available account: PEP access policies may differ.
+            const auto retry = blobFlights_.fail(hash, token);
+            if (retry.request) {
+                auto *next = static_cast<PsiAccount *>(retry.transport.data());
+                fetchAvatarBlob(next, Jid(retry.jid), retry.itemId, hash, retry.token);
+            }
+        };
+        connect(task, &Task::finished, this, onFinished);
+        connect(task, &QObject::destroyed, this, onFinished);
+    }
+
     AvatarCache() : FileCache(AvatarFactory::getCacheDir())
     {
         // Register iconset
