@@ -21,14 +21,19 @@ PreparedMedia prepareForDisplay(const XMPP::Message &message)
     const QString body = message.body();
     QSet<QString> simsSources;
     for (const auto &reference : refs) {
-        const auto &media = reference.mediaSharing();
-        // Only a renderable SIMS share can replace an OOB fallback. When
-        // metadata lacks computed hashes the current file backend cannot
-        // resolve it, so keep the OOB URL as its working download source.
-        if (!media.isValid() || !media.file.hasComputedHashes())
+        if (!reference.isValid() || reference.type() != XMPP::Reference::Data)
             continue;
-        for (const auto &source : media.sources) {
-            const QUrl http = OobMediaPolicy::normalizedHttpSource(source);
+        const auto &media = reference.mediaSharing();
+        // Incomplete SIMS cannot replace an OOB fallback. A previously
+        // normalized URL-only reference can, so encoding is idempotent.
+        if (media.isValid() && media.file.hasComputedHashes()) {
+            for (const auto &source : media.sources) {
+                const QUrl http = OobMediaPolicy::normalizedHttpSource(source);
+                if (http.isValid())
+                    simsSources.insert(http.toString(QUrl::FullyEncoded));
+            }
+        } else if (!media.isValid()) {
+            const QUrl http = OobMediaPolicy::normalizedHttpSource(reference.uri());
             if (http.isValid())
                 simsSources.insert(http.toString(QUrl::FullyEncoded));
         }
@@ -46,13 +51,34 @@ PreparedMedia prepareForDisplay(const XMPP::Message &message)
             result.remainingOob.append(oob); // Non-HTTP OOB stays a link.
             continue;
         }
-        if (candidate.redundant)
-            continue;
         const QString canonical = candidate.source.toString(QUrl::FullyEncoded);
+        if (candidate.redundant) {
+            // Preserve descriptions of OOB fallbacks even when their URLs
+            // already exist as media references.
+            if (!oob.desc().isEmpty()) {
+                for (auto &existing : refs) {
+                    if (!existing.isValid() || existing.type() != XMPP::Reference::Data
+                        || !existing.anchor().isEmpty())
+                        continue;
+                    bool matches = OobMediaPolicy::normalizedHttpSource(existing.uri()).toString(QUrl::FullyEncoded)
+                        == canonical;
+                    for (const auto &source : existing.mediaSharing().sources)
+                        matches |= OobMediaPolicy::normalizedHttpSource(source).toString(QUrl::FullyEncoded)
+                            == canonical;
+                    if (matches) {
+                        existing.setAnchor(oob.desc());
+                        break;
+                    }
+                }
+            }
+            continue;
+        }
 
         // A display-only reference without SIMS metadata. The share backend
         // recognizes its HTTP URL and constructs a URL-only FileSharingItem.
         XMPP::Reference reference(XMPP::Reference::Data, canonical);
+        if (!oob.desc().isEmpty())
+            reference.setAnchor(oob.desc());
 
         // An exact URL in the body can be replaced in place, unless a
         // pre-existing SIMS reference already owns those character positions.
