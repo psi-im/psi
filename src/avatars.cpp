@@ -1073,6 +1073,7 @@ public:
 AvatarFactory::AvatarFactory(PsiAccount *pa) : d(new Private)
 {
     d->pa_ = pa;
+    AvatarCache::instance()->registerAccount(pa);
 
     // Connect signals
     connect(AvatarCache::instance(), &AvatarCache::avatarChangedScoped, this,
