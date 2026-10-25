@@ -70,6 +70,9 @@ public:
 
 signals:
     void vcardChanged(const Jid &, VCardFactory::Flags);
+    // Internal cache notification when a PHOTO is changed with Silent: other
+    // vCard consumers still only receive vcardChanged for non-Silent writes.
+    void photoChanged(const Jid &, VCardFactory::Flags);
 
 protected:
     void checkLimit(const QString &jid, const VCard4::VCard &vcard);
@@ -86,6 +89,8 @@ private:
     static bool shouldFetchModern(Flags flags);
     static void supplementFromLegacy(VCard4::VCard &modern, const VCard4::VCard &legacy);
     static bool applyLegacyPhoto(VCard4::VCard &cached, const VCard4::VCard &legacy);
+    static bool setEmbeddedPhoto(VCard4::VCard &card, const QByteArray &data);
+    static bool clearPhoto(VCard4::VCard &card);
     friend class VCardDiskCacheTest;
     friend class VCardRequestMergeTest;
 
