@@ -10,7 +10,7 @@ HistorySync::Context accountContext(PsiAccount *account)
     context.accountId = account->id();
     context.owner     = account->jid();
     context.client    = account->client();
-    context.connected = [account] { return account->isConnected(); };
+    context.connected = [account] { return !account->isServerless() && account->isConnected(); };
     context.logging
         = [account] { return account->userAccount().opt_log && (account->edb()->features() & EDB::ArchiveCache); };
     context.read = [account](const HistoryArchive::Key &key, const QString &before, int limit) {
@@ -21,8 +21,8 @@ HistorySync::Context accountContext(PsiAccount *account)
               return page.checkpoint ? account->edb()->mergeArchivePage(key, before, limit, page)
                                      : account->edb()->mergeArchiveIsland(key, limit, page);
           };
-    context.readSnapshot  = [account](const HistoryArchive::Key &key) { return account->edb()->archiveSnapshot(key); };
-    context.readIndex = [account](const HistoryArchive::Key &key, int index, int limit, int snapshot) {
+    context.readSnapshot = [account](const HistoryArchive::Key &key) { return account->edb()->archiveSnapshot(key); };
+    context.readIndex    = [account](const HistoryArchive::Key &key, int index, int limit, int snapshot) {
         return account->edb()->archivePageAtIndex(key, index, limit, snapshot);
     };
     context.readAfter = [account](const HistoryArchive::Key &key, const QString &after, int limit, int snapshot) {
@@ -54,8 +54,8 @@ HistorySync::Context accountContext(PsiAccount *account)
 }
 }
 
-HistorySync::HistorySync(PsiAccount *account, const QString &peer, bool room, const QString &before, QObject *parent, int pageSize) :
-    HistorySync(accountContext(account), peer, room, before, parent, pageSize)
+HistorySync::HistorySync(PsiAccount *account, const QString &peer, bool room, const QString &before, QObject *parent,
+                         int pageSize) : HistorySync(accountContext(account), peer, room, before, parent, pageSize)
 {
 }
 

@@ -53,6 +53,10 @@ UserAccount::UserAccount() : lastStatus(XMPP::Status::Online) { reset(); }
 
 void UserAccount::reset()
 {
+    type = Type::Xmpp;
+    serverlessName.clear();
+    serverlessInterface.clear();
+    serverlessPort            = 0;
     id                        = QUuid::createUuid().toString();
     name                      = "Default";
     opt_enabled               = true;
@@ -130,6 +134,14 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
     reset();
 
     QStringList allSetOptions = o->getChildOptionNames(base, true, true);
+
+    type                = o->getOption(base + ".type", QStringLiteral("xmpp")).toString() == QLatin1String("serverless")
+                       ? Type::Serverless
+                       : Type::Xmpp;
+    serverlessName      = o->getOption(base + ".serverless.name", QString()).toString();
+    serverlessInterface = o->getOption(base + ".serverless.interface", QString()).toString();
+    const int listenPort = o->getOption(base + ".serverless.port", 0).toInt();
+    serverlessPort       = listenPort >= 0 && listenPort <= 65535 ? quint16(listenPort) : 0;
 
     opt_enabled            = o->getOption(base + ".enabled").toBool();
     opt_auto               = o->getOption(base + ".auto").toBool();
@@ -298,6 +310,13 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
     }
     // clear old data away
     o->removeOption(base, true);
+
+    o->setOption(base + ".type", type == Type::Serverless ? QStringLiteral("serverless") : QStringLiteral("xmpp"));
+    if (type == Type::Serverless) {
+        o->setOption(base + ".serverless.name", serverlessName);
+        o->setOption(base + ".serverless.interface", serverlessInterface);
+        o->setOption(base + ".serverless.port", serverlessPort);
+    }
 
     o->setOption(base + ".enabled", opt_enabled);
     o->setOption(base + ".auto", opt_auto);

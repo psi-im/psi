@@ -33,13 +33,13 @@
 #include "psiiconset.h"
 #include "psioptions.h"
 
-#include <QPointer>
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QInputDialog>
-#include <QLineEdit>
 #include <QLabel>
+#include <QLineEdit>
 #include <QListWidget>
+#include <QPointer>
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <ranges>
@@ -246,9 +246,8 @@ private slots:
         contactManagerAction_->setEnabled(account->isAvailable());
         privacyListsAction_->setEnabled(account->isAvailable());
         auto *privacy = dynamic_cast<PsiPrivacyManager *>(account->privacyManager());
-        privacyListsAction_->setText(privacy && privacy->usesBlockingCommand()
-                                        ? tr("Blocked Contacts...")
-                                        : tr("Privacy Lists"));
+        privacyListsAction_->setText(privacy && privacy->usesBlockingCommand() ? tr("Blocked Contacts...")
+                                                                               : tr("Privacy Lists"));
         if (!PsiOptions::instance()->getOption("options.ui.menu.account.admin").toBool()) {
             adminMenu_->menuAction()->setVisible(false);
         }
@@ -257,6 +256,18 @@ private slots:
         adminSetMotdAction_->setVisible(newMessageAction_->isVisible());
         adminUpdateMotdAction_->setVisible(newMessageAction_->isVisible());
         adminDeleteMotdAction_->setVisible(newMessageAction_->isVisible());
+        if (account->isServerless()) {
+            moodAction_->setVisible(false);
+            activityAction_->setVisible(false);
+            geolocationAction_->setVisible(false);
+            avatarMenu_->menuAction()->setVisible(false);
+            bookmarksMenu_->menuAction()->setVisible(false);
+            addContactAction_->setVisible(false);
+            serviceDiscoveryAction_->setVisible(false);
+            contactManagerAction_->setVisible(false);
+            privacyListsAction_->setVisible(false);
+            adminMenu_->menuAction()->setVisible(false);
+        }
 
 #ifdef PSI_PLUGINS
         if (pluginsMenu_->isEmpty())
@@ -370,8 +381,8 @@ private slots:
             auto *list = new QListWidget(dialog);
             layout->addWidget(list);
             auto *controls = new QHBoxLayout();
-            auto *add = new QPushButton(tr("Block JID..."), dialog);
-            auto *remove = new QPushButton(tr("Unblock"), dialog);
+            auto *add      = new QPushButton(tr("Block JID..."), dialog);
+            auto *remove   = new QPushButton(tr("Unblock"), dialog);
             controls->addWidget(add);
             controls->addWidget(remove);
             layout->addLayout(controls);
@@ -379,7 +390,7 @@ private slots:
             layout->addWidget(buttons);
             connect(buttons, &QDialogButtonBox::rejected, dialog, &QDialog::close);
             const QPointer<PsiPrivacyManager> manager(privacy);
-            const auto refresh = [manager, list, remove] {
+            const auto                        refresh = [manager, list, remove] {
                 if (!manager)
                     return;
                 const QString selected = list->currentItem() ? list->currentItem()->text() : QString();
@@ -398,9 +409,9 @@ private slots:
             connect(add, &QPushButton::clicked, dialog, [manager, dialog] {
                 if (!manager)
                     return;
-                bool ok = false;
-                const QString value = QInputDialog::getText(dialog, tr("Block JID"),
-                    tr("XMPP address:"), QLineEdit::Normal, QString(), &ok);
+                bool            ok    = false;
+                const QString   value = QInputDialog::getText(dialog, tr("Block JID"), tr("XMPP address:"),
+                                                              QLineEdit::Normal, QString(), &ok);
                 const XMPP::Jid jid(value.trimmed());
                 if (ok && jid.isValid() && !jid.isEmpty())
                     manager->setContactBlocked(jid, true);

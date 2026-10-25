@@ -339,7 +339,7 @@ AccountManageDlg::AccountManageDlg(PsiCon *_psi) : QWidget(nullptr)
     lv_accs->sortByColumn(-1, Qt::AscendingOrder);
 
     for (PsiAccount *pa : psi->contactList()->accounts())
-        new AccountManageItem(lv_accs, pa);
+        accountAdded(pa);
 
     if (lv_accs->topLevelItemCount())
         lv_accs->setCurrentItem(lv_accs->topLevelItem(0));
@@ -413,7 +413,11 @@ void AccountManageDlg::remove()
     lv_accs->setFocus();
 }
 
-void AccountManageDlg::accountAdded(PsiAccount *pa) { new AccountManageItem(lv_accs, pa); }
+void AccountManageDlg::accountAdded(PsiAccount *pa)
+{
+    if (!pa->isServerless())
+        new AccountManageItem(lv_accs, pa);
+}
 
 void AccountManageDlg::accountRemoved(PsiAccount *pa)
 {

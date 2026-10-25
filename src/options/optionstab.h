@@ -64,6 +64,7 @@ public:
     bool stretchable() const { return true; }
 
     void addTab(OptionsTab *);
+    bool selectTab(const QByteArray &id);
 
 public slots:
     void enableOtherTabs(bool);

@@ -387,6 +387,10 @@ PsiEncryptionController::PsiEncryptionController(PsiAccount *account, XMPP::Clie
         emit methodsChanged();
     });
 
+    // A local-network identity has no server PEP service for OMEMO bundles.
+    // Leave the normal plugin method registration available to direct transports.
+    if (account_->isServerless())
+        return;
 #ifdef IRIS_ENABLE_OMEMO
     omemoStorage_ = std::make_unique<PsiOmemoStorage>(profileDataPath, accountId);
     if (omemoStorage_->isOpen()) {
@@ -496,6 +500,8 @@ PsiEncryptionController::methods(XMPP::EncryptionMethod::Capabilities capabiliti
 
     const auto nativeMethods = client_->encryptionManager()->methods(capabilities);
     for (const auto &[id, name] : nativeMethods) {
+        if (account_->isServerless() && id == QLatin1String("omemo"))
+            continue;
         MethodInfo info;
         info.id           = id;
         info.name         = name;
@@ -523,6 +529,10 @@ bool PsiEncryptionController::hasMethod(const QString &methodId) const
 {
     if (methodId.isEmpty())
         return true;
+    // OMEMO device/bundle discovery requires server PEP. Direct transports
+    // still support separately registered encryption methods such as OTR.
+    if (account_->isServerless() && methodId == QLatin1String("omemo"))
+        return false;
     if (methodId == QLatin1String(OpenPgpMethodId))
         return account_->hasPgp() && PsiOptions::instance()->getOption("plugins.auto-load.openpgp", false).toBool();
     return client_->encryptionManager()->method(methodId) != nullptr;
@@ -556,7 +566,7 @@ QString PsiEncryptionController::selectedMethod(const XMPP::Jid &jid) const
     }
 
 #ifdef IRIS_ENABLE_OMEMO
-    if (omemo_ && omemoStorage_) {
+    if (!account_->isServerless() && omemo_ && omemoStorage_) {
         const bool alwaysEnabled
             = PsiOptions::instance()->getOption("plugins.options.omemo.always-enabled", false).toBool();
         const bool enabledByDefault

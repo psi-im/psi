@@ -59,7 +59,10 @@
 #include "geolocationdlg.h"
 #include "iris/bsocket.h"
 #include "iris/xmpp-im/xmpp_vcard4.h"
+#include "options/optionsdlg.h"
 #include "psithememanager.h"
+#include "serverless.h"
+#include <iris/xmpp_linklocalservice.h>
 #ifdef GOOGLE_FT
 #include "googleftmanager.h"
 #endif
@@ -394,39 +397,41 @@ public:
         });
     }
 
-    PsiContactList          *contactList          = nullptr;
-    PsiContact              *selfContact          = nullptr;
-    PsiCon                  *psi                  = nullptr;
-    PsiAccount              *account              = nullptr;
-    Client                  *client               = nullptr;
-    PsiEncryptionController *encryptionController = nullptr;
-    QVariantMap              clientVersionInfo;
-    FileSharingDeviceOpener *fileSharingDeviceOpener = nullptr;
-    UserAccount              acc;
-    Jid                      jid, nextJid;
-    Status                   loginStatus;
-    QMetaObject::Connection  reconnectConnection;
-    quint64                  connectionGeneration = 0;
-    bool                     loginInProgress      = false;
-    bool                     loginWithPriority = false;
+    PsiContactList            *contactList = nullptr;
+    PsiContact                *selfContact = nullptr;
+    PsiCon                    *psi         = nullptr;
+    PsiAccount                *account     = nullptr;
+    Client                    *client      = nullptr;
+    QPointer<LinkLocalService> serverless;
+    std::optional<Status>      serverlessRestartStatus;
+    PsiEncryptionController   *encryptionController = nullptr;
+    QVariantMap                clientVersionInfo;
+    FileSharingDeviceOpener   *fileSharingDeviceOpener = nullptr;
+    UserAccount                acc;
+    Jid                        jid, nextJid;
+    Status                     loginStatus;
+    QMetaObject::Connection    reconnectConnection;
+    quint64                    connectionGeneration = 0;
+    bool                       loginInProgress      = false;
+    bool                       loginWithPriority    = false;
     // bool reconnectingOnce;
-    bool                     nickFromVCard = false;
-    bool                     pepAvailable  = false;
-    bool                     vcardChecked  = false;
-    EventQueue              *eventQueue    = nullptr;
-    XmlConsole              *xmlConsole    = nullptr;
-    UserList                 userList;
-    UserListItem             self;
-    QString                  cur_pgpSecretKey;
+    bool                          nickFromVCard = false;
+    bool                          pepAvailable  = false;
+    bool                          vcardChecked  = false;
+    EventQueue                   *eventQueue    = nullptr;
+    XmlConsole                   *xmlConsole    = nullptr;
+    UserList                      userList;
+    UserListItem                  self;
+    QString                       cur_pgpSecretKey;
     QList<AccountIncomingMessage> messageQueue;
-    BlockTransportPopupList *blockTransportPopupList = nullptr;
-    int                      userCounter             = 0;
-    PsiPrivacyManager       *privacyManager          = nullptr;
-    RosterItemExchangeTask  *rosterItemExchangeTask  = nullptr;
-    QString                  currentConnectionError;
-    int                      currentConnectionErrorCondition = -1;
-    QTimer                  *updateOnlineContactsCountTimer_ = nullptr;
-    QTimer                  *logoutTimer                     = nullptr;
+    BlockTransportPopupList      *blockTransportPopupList = nullptr;
+    int                           userCounter             = 0;
+    PsiPrivacyManager            *privacyManager          = nullptr;
+    RosterItemExchangeTask       *rosterItemExchangeTask  = nullptr;
+    QString                       currentConnectionError;
+    int                           currentConnectionErrorCondition = -1;
+    QTimer                       *updateOnlineContactsCountTimer_ = nullptr;
+    QTimer                       *logoutTimer                     = nullptr;
 
     // Tune
     Tune lastTune;
@@ -897,6 +902,12 @@ private slots:
 public slots:
     void doModify()
     {
+        if (account->isServerless()) {
+            psi->doOptions();
+            if (auto *options = qobject_cast<OptionsDlg *>(psi->dialogFind("OptionsDlg")))
+                options->openTab(QStringLiteral("accounts/accounts-serverless"));
+            return;
+        }
         AccountModifyDlg *w = account->findDialog<AccountModifyDlg *>();
         if (!w) {
             w = new AccountModifyDlg(account, nullptr);
@@ -1075,12 +1086,12 @@ private slots:
     }
 
 public:
-    QDateTime reconnectScheduledAt_;
-    QTimer   *reconnectDelayTimer_   = nullptr;
-    QTimer   *reconnectTimeoutTimer_ = nullptr;
+    QDateTime               reconnectScheduledAt_;
+    QTimer                 *reconnectDelayTimer_   = nullptr;
+    QTimer                 *reconnectTimeoutTimer_ = nullptr;
     QMetaObject::Connection reconnectTimeoutConnection_;
-    int       reconnectData_         = -1;
-    bool      reconnectInfrequently_ = false;
+    int                     reconnectData_         = -1;
+    bool                    reconnectInfrequently_ = false;
 };
 
 PsiAccount *PsiAccount::create(const UserAccount &acc, PsiContactList *parent, TabManager *tabManager)
@@ -1120,6 +1131,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
 
     // we need to copy groupState, because later initialization will depend on that
     d->acc.groupState = acc.groupState;
+    d->acc.type       = acc.type;
 
     // create XMPP::Client
     d->client = new Client;
@@ -1243,29 +1255,29 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
     connect(d->bookmarkManager, &BookmarkManager::availabilityChanged, this, &PsiAccount::bookmarksAvailabilityChanged);
     connect(d->bookmarkManager, &BookmarkManager::syncError, this, [this](const QString &message) {
         psi()->popupManager()->doPopup(this, jid(), IconsetFactory::iconPtr("status/error"),
-            tr("Bookmark synchronization failed"), QPixmap(), nullptr, message, false,
-            PopupManager::AlertCustom);
+                                       tr("Bookmark synchronization failed"), QPixmap(), nullptr, message, false,
+                                       PopupManager::AlertCustom);
     });
 #ifdef GROUPCHAT
     connect(d->bookmarkManager, &BookmarkManager::remoteConferenceChanged, this,
             [this](const Jid &room, bool autoJoin, bool removed) {
-        // PEP push is different from initial data loading: its autojoin
-        // transition should affect the room immediately, not just at login.
-        // Defer until the bookmark adapter has published its updated list.
-        QTimer::singleShot(0, this, [this, room, autoJoin, removed] {
-            if (!isAvailable()
-                || !PsiOptions::instance()->getOption("options.muc.bookmarks.auto-join").toBool())
-                return;
-            const Jid bare(room.bare());
-            if (autoJoin && !removed) {
-                const int index = d->bookmarkManager->indexOfConference(bare);
-                if (index >= 0 && d->bookmarkManager->conferences().at(index).needJoin())
-                    bookmarksAvailabilityChanged(); // Checks existing MUC dialogs.
-            } else if (findDialog<GCMainDlg *>(bare)) {
-                groupChatLeave(bare.domain(), bare.node());
-            }
-        });
-    });
+                // PEP push is different from initial data loading: its autojoin
+                // transition should affect the room immediately, not just at login.
+                // Defer until the bookmark adapter has published its updated list.
+                QTimer::singleShot(0, this, [this, room, autoJoin, removed] {
+                    if (!isAvailable()
+                        || !PsiOptions::instance()->getOption("options.muc.bookmarks.auto-join").toBool())
+                        return;
+                    const Jid bare(room.bare());
+                    if (autoJoin && !removed) {
+                        const int index = d->bookmarkManager->indexOfConference(bare);
+                        if (index >= 0 && d->bookmarkManager->conferences().at(index).needJoin())
+                            bookmarksAvailabilityChanged(); // Checks existing MUC dialogs.
+                    } else if (findDialog<GCMainDlg *>(bare)) {
+                        groupChatLeave(bare.domain(), bare.node());
+                    }
+                });
+            });
 #endif
 
 #ifdef USE_PEP
@@ -1387,9 +1399,9 @@ PsiAccount::~PsiAccount()
     delete d->wbManager;
 #endif
     delete d->bookmarkManager;
+    cleanupStream();
     delete d->client;
     delete d->httpAuthManager;
-    cleanupStream();
     delete d->eventQueue;
     delete d->avatarFactory;
 
@@ -1406,13 +1418,19 @@ PsiAccount::~PsiAccount()
 
 void PsiAccount::cleanupStream()
 {
+    if (d->serverless) {
+        d->serverless->disconnect(this);
+        d->client->close(true);
+        delete d->serverless.data();
+        d->serverless = nullptr;
+    }
     // Invalidate queued stream signals and pending credential lookups before
     // deleting anything: teardown may itself emit signals.
     ++d->connectionGeneration;
     d->reconnectDelayTimer_->stop();
     d->reconnectTimeoutTimer_->stop();
     d->reconnectScheduledAt_ = QDateTime();
-    doReconnect = false;
+    doReconnect              = false;
     // GSOC: Get SM state out of stream
     delete d->stream;
 
@@ -1465,7 +1483,12 @@ void PsiAccount::setEnabled(bool e)
 
 bool PsiAccount::isActive() const { return v_isActive; }
 
-bool PsiAccount::isConnected() const { return (d->stream && d->stream->isAuthenticated()); }
+bool PsiAccount::isConnected() const
+{
+    return isServerless() ? d->serverless && d->serverless->isOnline() : d->stream && d->stream->isAuthenticated();
+}
+
+bool PsiAccount::isServerless() const { return d->acc.type == UserAccount::Type::Serverless; }
 
 /**
  * This function returns true when the account is connected to the server,
@@ -1564,7 +1587,13 @@ void PsiAccount::removeKnownPgpKey(const QString &jid)
 
 void PsiAccount::setUserAccount(const UserAccount &_acc)
 {
-    UserAccount acc = _acc;
+    UserAccount acc          = _acc;
+    const bool  restartLocal = isServerless() && d->serverless
+        && (acc.serverlessInterface != d->acc.serverlessInterface || acc.serverlessPort != d->acc.serverlessPort);
+    if (restartLocal && acc.opt_enabled && !isDisconnecting)
+        d->serverlessRestartStatus = d->loginStatus;
+    if (!acc.opt_enabled)
+        d->serverlessRestartStatus.reset();
 
     bool    renamed = false;
     QString oldfname;
@@ -1605,7 +1634,12 @@ void PsiAccount::setUserAccount(const UserAccount &_acc)
         profileUpdateEntry(d->self);
     }
     if (!d->nickFromVCard)
-        setNick(j.node());
+        setNick(isServerless() ? acc.serverlessName : j.node());
+    if (d->serverless) {
+        d->serverless->setDisplayName(acc.serverlessName);
+        if (restartLocal || !acc.opt_enabled)
+            logout(false, loggedOutStatus());
+    }
 
     d->self.setPublicKeyID(d->acc.pgpSecretKey);
 #ifdef HAVE_PGPUTIL
@@ -1750,9 +1784,76 @@ void PsiAccount::reconnectOnce()
     }
 }
 
+void PsiAccount::loginServerless()
+{
+    if (!enabled() || isDisconnecting || d->serverless)
+        return;
+    clearCurrentConnectionError();
+    v_isActive    = true;
+    rosterDone    = false;
+    presenceSent  = false;
+    auto *service = new LinkLocalService(this);
+    d->serverless = service;
+    d->client->connectToStream(service, d->jid);
+    connect(service, &LinkLocalService::identityChanged, this, [this, service](const Jid &identity) {
+        if (d->serverless != service)
+            return;
+        d->jid = identity;
+        d->self.setJid(identity);
+        profileUpdateEntry(d->self);
+        emit updatedAccount();
+    });
+    connect(service, &LinkLocalService::online, this, [this, service] {
+        if (d->serverless != service || isDisconnecting)
+            return;
+        rosterDone = true;
+        setNick(d->acc.serverlessName);
+        setStatusActual(d->loginStatus);
+    });
+    connect(service, &LinkLocalService::error, this, [this, service](int) {
+        if (d->serverless != service)
+            return;
+        d->currentConnectionError = service->errorText();
+        emit connectionError(d->currentConnectionError);
+    });
+    connect(service, &LinkLocalService::peerError, this, [this](const Jid &peer, const QString &error) {
+        psi()->popupManager()->doPopup(this, peer, IconsetFactory::iconPtr("status/error"),
+                                       tr("Serverless delivery failed"), QPixmap(), nullptr, error, false,
+                                       PopupManager::AlertCustom);
+    });
+    connect(service, &LinkLocalService::connectionClosed, this, [this, service] {
+        if (d->serverless != service)
+            return;
+        if (d->client->hasStream())
+            d->client->close(true);
+        d->serverless = nullptr;
+        service->deleteLater();
+        d->localAddress = QHostAddress();
+        v_isActive = presenceSent = rosterDone = isDisconnecting = false;
+        d->loginStatus                                           = Status(Status::Offline);
+        simulateRosterOffline();
+        stateChanged();
+        emit disconnected();
+        if (d->serverlessRestartStatus && enabled()) {
+            const auto status = *d->serverlessRestartStatus;
+            d->serverlessRestartStatus.reset();
+            setStatus(status);
+        }
+    });
+    const auto address = Serverless::addressForInterface(d->acc.serverlessInterface);
+    d->localAddress    = address;
+    service->setStatus(d->loginStatus);
+    service->start(d->jid, address, d->acc.serverlessName, d->acc.serverlessPort);
+    stateChanged();
+}
+
 // logs on with the active account settings
 void PsiAccount::login()
 {
+    if (isServerless()) {
+        loginServerless();
+        return;
+    }
     // Only cleanupStream() may retire an attempt. Never overwrite its stream,
     // even if a reconnect timer or a nested event loop asks us to log in again.
     if (isDisconnecting || d->loginInProgress || d->stream || (isActive() && !doReconnect))
@@ -1793,8 +1894,8 @@ void PsiAccount::login()
     d->reconnectDelayTimer_->stop();
     d->reconnectTimeoutTimer_->stop();
     d->reconnectScheduledAt_ = QDateTime();
-    doReconnect = false;
-    const auto generation = ++d->connectionGeneration;
+    doReconnect              = false;
+    const auto generation    = ++d->connectionGeneration;
 
 #ifdef PSI_PLUGINS
     PluginManager::instance()->startLogin(this);
@@ -1837,8 +1938,7 @@ void PsiAccount::login()
         d->tlsHandler = new QCATLSHandler(d->tls);
         d->tlsHandler->setXMPPCertCheck(true);
         const AccountConnectionGuard<QCATLSHandler> guard(d->tlsHandler.data(), d->connectionGeneration);
-        connect(d->tlsHandler, &QCATLSHandler::tlsHandshaken, this,
-                guard.callback(this, &PsiAccount::tls_handshaken));
+        connect(d->tlsHandler, &QCATLSHandler::tlsHandshaken, this, guard.callback(this, &PsiAccount::tls_handshaken));
     }
     d->conn->setProxy(p);
     if (!d->acc.proxyID.isEmpty() && d->acc.opt_remoteSrvLookup)
@@ -1887,6 +1987,18 @@ void PsiAccount::fastLogout() { logout(true, loggedOutStatus()); }
 //        finalize connection as fast as possible. Even so xmpp connection must be closed properly.
 void PsiAccount::logout(bool fast, const Status &s)
 {
+    if (isServerless()) {
+        if (!d->serverless || isDisconnecting)
+            return;
+        isDisconnecting = true;
+        v_isActive      = false;
+        presenceSent    = false;
+        d->loginStatus  = Status(Status::Offline);
+        simulateRosterOffline();
+        d->serverless->close();
+        stateChanged();
+        return;
+    }
     if (!isActive())
         return;
 
@@ -1943,7 +2055,7 @@ bool PsiAccount::loggedIn() const { return (v_isActive && presenceSent); }
 void PsiAccount::tls_handshaken()
 {
     const AccountConnectionGuard<QCATLSHandler> guard(d->tlsHandler.data(), d->connectionGeneration);
-    bool certificateOk = CertificateHelpers::checkCertificate(
+    bool                                        certificateOk = CertificateHelpers::checkCertificate(
         d->tls, d->tlsHandler, d->acc.tlsOverrideDomain, d->acc.tlsOverrideCert, this,
         (d->psi->contactList()->enabledAccounts().count() > 1 ? QString("%1: ").arg(name()) : "")
             + tr("Server Authentication"),
@@ -2133,7 +2245,7 @@ void PsiAccount::cs_authenticated()
 
     d->client->start(d->jid.domain(), d->jid.node(), d->acc.pass, resource);
     if (d->client->isSessionRequired()) {
-        JT_Session *j = new JT_Session(d->client->rootTask());
+        JT_Session                                *j = new JT_Session(d->client->rootTask());
         const AccountConnectionGuard<ClientStream> guard(d->stream.data(), d->connectionGeneration);
         connect(j, &JT_Session::finished, this, guard.callback(this, &PsiAccount::sessionStart_finished));
         j->go(true);
@@ -2944,8 +3056,8 @@ void PsiAccount::client_presenceError(const Jid &j, int, const QString &str)
 
 void PsiAccount::client_messageReceived(const Message &m)
 {
-    Message _m(m);
-    Message dm = _m.displayMessage();
+    Message                      _m(m);
+    Message                      dm = _m.displayMessage();
     const AccountIncomingMessage incoming(_m, d->client->currentEncryptionMetadata());
 
     // check if it's a server message without a from, and set the from appropriately
@@ -3040,16 +3152,15 @@ void PsiAccount::wbRequest(const Jid &j, int id)
  */
 void PsiAccount::processIncomingMessage(const AccountIncomingMessage &incoming)
 {
-    const Message &_m = incoming.message;
-    bool    selfMessage = _m.forwarded().type() == Forwarding::ForwardedCarbonsSent;
-    Message dm          = _m.displayMessage();
+    const Message &_m          = incoming.message;
+    bool           selfMessage = _m.forwarded().type() == Forwarding::ForwardedCarbonsSent;
+    Message        dm          = _m.displayMessage();
     // skip empty messages, but not if the message contains a data form
     if (dm.type() != Message::Type::Error && dm.body().isEmpty() && dm.urlList().isEmpty() && dm.invite().isEmpty()
         && !dm.containsEvents() && dm.chatState() == StateNone && dm.subject().isNull()
         && dm.rosterExchangeItems().isEmpty() && dm.mucInvites().isEmpty() && dm.getForm().fields().empty()
-        && dm.messageReceipt() == ReceiptNone && dm.displayedMarkerId().isEmpty()
-        && dm.getMUCStatuses().isEmpty() && dm.reactions().targetId.isEmpty()
-        && dm.retraction().isEmpty())
+        && dm.messageReceipt() == ReceiptNone && dm.displayedMarkerId().isEmpty() && dm.getMUCStatuses().isEmpty()
+        && dm.reactions().targetId.isEmpty() && dm.retraction().isEmpty())
         return;
 
     // skip headlines?
@@ -3156,12 +3267,9 @@ void PsiAccount::processIncomingMessage(const AccountIncomingMessage &incoming)
         // outgoing per-contact encryption method is a separate operation.
         // Scope this to genuine inbound direct plaintext, excluding MUC
         // private messages and traffic from this account's other resources.
-        if (!selfMessage && incoming.isPlaintextDirectMessage()
-            && _m.invite().isEmpty() && _m.mucInvites().isEmpty()
-            && _m.rosterExchangeItems().isEmpty()
-            && !groupchats().contains(dj.bare()) && dj.bare() != jid().bare()
-            && d->encryptionController
-            && !d->encryptionController->selectedMethod(dj).isEmpty())
+        if (!selfMessage && incoming.isPlaintextDirectMessage() && _m.invite().isEmpty() && _m.mucInvites().isEmpty()
+            && _m.rosterExchangeItems().isEmpty() && !groupchats().contains(dj.bare()) && dj.bare() != jid().bare()
+            && d->encryptionController && !d->encryptionController->selectedMethod(dj).isEmpty())
             d->encryptionController->setSelectedMethod(dj, {});
 
         // Roster item exchange
@@ -3335,7 +3443,7 @@ void PsiAccount::reconnect()
     if (doReconnect && !d->stream && !d->loginInProgress && !isDisconnecting) {
         // printf("PsiAccount: [%s] reconnecting...\n", name().latin1());
         const auto generation = d->connectionGeneration;
-        emit reconnecting();
+        emit       reconnecting();
         // A reconnecting handler can cancel the retry or start it itself.
         if (generation == d->connectionGeneration && doReconnect && !d->stream && !isDisconnecting)
             login();
@@ -3349,6 +3457,10 @@ Status PsiAccount::loggedOutStatus() { return Status(Status::Offline, tr("Logged
 void PsiAccount::setStatus(const Status &_s, bool withPriority, bool isManualStatus)
 {
     Status s = _s;
+    if (isServerless() && (!s.isAvailable() || s.isInvisible())) {
+        d->serverlessRestartStatus.reset();
+        s = Status(Status::Offline);
+    }
     if (!withPriority)
         s.setPriority(d->acc.defaultPriority(s));
 
@@ -3379,8 +3491,11 @@ void PsiAccount::setStatus(const Status &_s, bool withPriority, bool isManualSta
         // if we are in the process of disconnecting, then do nothing.
         //   the desired status will be noted in loginStatus for
         //   reconnect
-        if (isDisconnecting)
+        if (isDisconnecting) {
+            if (isServerless())
+                d->serverlessRestartStatus = s;
             return;
+        }
 
         // if client is not active then attempt to login
         if (!isActive()) {
@@ -3394,6 +3509,10 @@ void PsiAccount::setStatus(const Status &_s, bool withPriority, bool isManualSta
 
         // change status
         else {
+            if (isServerless() && d->serverless) {
+                setStatusActual(s);
+                return;
+            }
             if (!isConnected()) {
                 cleanupStream();
                 v_isActive = false;
@@ -3444,8 +3563,7 @@ bool PsiAccount::passwordPrompt()
     PassDialog dialog(d->jid.full());
     dialog.setSavePassword(d->acc.opt_pass);
 
-    if (dialog.exec() == QDialog::Accepted && generation == d->connectionGeneration
-        && !dialog.password().isEmpty()) {
+    if (dialog.exec() == QDialog::Accepted && generation == d->connectionGeneration && !dialog.password().isEmpty()) {
         d->acc.pass     = dialog.password();
         d->acc.opt_pass = dialog.savePassword();
         savePassword();
@@ -3519,6 +3637,22 @@ void PsiAccount::setStatusDirect(const Status &_s, bool withPriority)
 
 void PsiAccount::setStatusActual(const Status &_s)
 {
+    if (isServerless()) {
+        if (!_s.isAvailable() || _s.isInvisible()) {
+            logout(false, loggedOutStatus());
+            return;
+        }
+        d->loginStatus = _s;
+        d->client->setPresence(_s);
+        if (isConnected()) {
+            const bool initial = !presenceSent;
+            presenceSent       = true;
+            stateChanged();
+            if (initial)
+                sentInitialPresence();
+        }
+        return;
+    }
     Status s = _s;
 
     if (!presenceSent) {
@@ -5115,8 +5249,8 @@ void PsiAccount::finishSentMessage(const Message &sent, bool log)
 
     // don't log groupchat or OpenPGP-wrapped messages
     if (log && sent.type() != Message::Type::Groupchat && sent.xencrypted().isEmpty()) {
-        int               type = findGCContact(sent.to()) ? EDB::GroupChatContact : EDB::Contact;
-        Message           recorded = sent;
+        int     type     = findGCContact(sent.to()) ? EDB::GroupChatContact : EDB::Contact;
+        Message recorded = sent;
         if (recorded.from().isEmpty())
             recorded.setFrom(jid());
         MessageEvent::Ptr me(new MessageEvent(recorded, this));
@@ -6647,6 +6781,9 @@ void PsiAccount::optionsUpdate()
 
 void PsiAccount::setRCEnabled(bool b)
 {
+    // DNS-SD identities are not authenticated. Do not inherit remote-control
+    // permissions intended for authenticated server accounts.
+    b = b && !isServerless();
     if (b && !d->rcSetStatusServer) {
         d->rcSetStatusServer  = new RCSetStatusServer(d->ahcManager);
         d->rcForwardServer    = new RCForwardServer(d->ahcManager);

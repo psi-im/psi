@@ -500,6 +500,7 @@ list(APPEND SOURCES
     proxy.cpp
     psi_profiles.cpp
     psiaccount.cpp
+    serverless.cpp
     psiactionlist.cpp
     psiapplication.cpp
     psicapsregsitry.cpp

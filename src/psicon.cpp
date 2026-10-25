@@ -73,10 +73,10 @@
 #include "psimng.h"
 #endif
 #include "iris/s5b.h"
+#include "nativechattheme.h"
 #include "psioptions.h"
 #include "psirichtext.h"
 #include "psithememanager.h"
-#include "nativechattheme.h"
 #include "psitoolbar.h"
 #include "shortcutmanager.h"
 #include "spellchecker/spellchecker.h"
@@ -696,6 +696,8 @@ bool PsiCon::init()
         if (single || !domain.isEmpty()) {
             bool haveEnabled = false;
             for (UserAccountList::Iterator it = accs.begin(); it != accs.end(); ++it) {
+                if (it->type == UserAccount::Type::Serverless)
+                    continue;
                 // With single accounts, only modify the first account
                 if (single) {
                     if (!haveEnabled) {
@@ -719,8 +721,9 @@ bool PsiCon::init()
 
     checkAccountsEmpty();
 
-    // Import for SQLite history
-    if (d->contactList->defaultAccount()) {
+    // History belongs to the profile, including when every account starts
+    // disabled. An account enabled/created later must be able to open a chat.
+    {
         EDBSqLite *edb = new EDBSqLite(this);
         d->edb         = edb;
         if (!edb->init())

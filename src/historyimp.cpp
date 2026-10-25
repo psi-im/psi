@@ -145,6 +145,15 @@ void HistoryImport::clear()
 
 int HistoryImport::exec()
 {
+    // The SQLite store is initialized even for profiles without accounts.
+    // Legacy files require an account mapping before any import can erase/write
+    // database records. Keep import_start intact if that mapping is unavailable.
+    if (psi_->contactList()->accounts().isEmpty()) {
+        QMessageBox::information(nullptr, tr("Import history"),
+                                 tr("An account is needed to import existing history. Add an account before "
+                                    "continuing the history import."));
+        return ResultError;
+    }
     active = true;
 
     dstEdb = psi_->edb();
@@ -168,6 +177,16 @@ int HistoryImport::exec()
         }
         if (accIds.isEmpty()) {
             PsiAccount *pa = psi_->contactList()->defaultAccount();
+            // Old server history must not acquire the new local-network
+            // account merely because it is the only account currently online.
+            if (!pa || pa->isServerless()) {
+                for (auto *candidate : psi_->contactList()->accounts()) {
+                    if (!candidate->isServerless()) {
+                        pa = candidate;
+                        break;
+                    }
+                }
+            }
             if (pa)
                 accIds.append(pa->id());
             else
