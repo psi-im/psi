@@ -87,6 +87,10 @@ private:
     // reader without needing to link all of PsiAccount and PEPManager.
     static VCard4::VCard readCachedVCard(const QString &fileName);
     static bool shouldFetchModern(Flags flags);
+    // Queue keys separate accounts, reconnecting instances and protocol
+    // modes. This prevents one account's requests from using another's IQ.
+    static QString requestQueueKey(const QString &accountId, quintptr instance,
+                                   const Jid &jid, Flags flags);
     static void supplementFromLegacy(VCard4::VCard &modern, const VCard4::VCard &legacy);
     static bool applyLegacyPhoto(VCard4::VCard &cached, const VCard4::VCard &legacy);
     static bool setEmbeddedPhoto(VCard4::VCard &card, const QByteArray &data);
