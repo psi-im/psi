@@ -379,6 +379,33 @@ void VCardFactory::ensureVCardPhotoUpdated(PsiAccount *acc, const Jid &jid, Flag
         vc = vcard(jid);
     }
     if (newPhotoHash.isEmpty()) {
+        if (acc && !(flags & MucUser)) {
+            const QString accountId = acc->id();
+            const bool modernKnown = QFile::exists(
+                sourceCardFile(ApplicationInfo::vCardDir(), accountId, jid, flags, true));
+            const bool legacyKnown = QFile::exists(
+                sourceCardFile(ApplicationInfo::vCardDir(), accountId, jid, flags, false));
+            if (modernKnown || legacyKnown) {
+                auto modern = readSourceCard(accountId, jid, flags, true);
+                auto legacy = readSourceCard(accountId, jid, flags, false);
+                if (clearPhoto(legacy))
+                    saveSourceCard(accountId, jid, flags, false, legacy);
+
+                if (modern) {
+                    // The modern card is independent. Only the legacy PHOTO
+                    // was revoked; no IQ/blob fetch is required.
+                    saveVCard(jid, mergeSourceCards(modern, legacy), flags);
+                } else if (clearPhoto(vc)) {
+                    // Preserve existing non-PHOTO fields when a PHOTO-only
+                    // legacy source has no independent modern card.
+                    saveVCard(jid, vc, flags);
+                }
+                return;
+            }
+        }
+        // A pre-migration merged cache has no provenance. Remove the stale
+        // legacy fallback as before; the next full request establishes both
+        // sources separately. Never issue network requests on empty hashes.
         if (clearPhoto(vc))
             saveVCard(jid, vc, flags);
         return;
