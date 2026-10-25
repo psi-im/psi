@@ -4,13 +4,12 @@
 #include <QByteArray>
 #include <QHash>
 #include <QString>
-#include "iris/xmpp_jid.h"
 
 // FileCache stores shared bytes by hash. Only JID bindings and decoded
 // pixmaps need an account/entity-scoped key.
 namespace AvatarIdentity {
 QString accountPrefix(const QString &accountId);
-QString bindingKey(const QString &accountId, const XMPP::Jid &jid, bool occupant);
+QString bindingKey(const QString &accountId, const QString &normalizedJid, bool occupant);
 } // namespace AvatarIdentity
 
 // Tracks avatar metadata identities, concurrent blob retrievals and temporary
