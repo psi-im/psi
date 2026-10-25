@@ -1,7 +1,20 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "avatarblobfetchpolicy.h"
 
-#include <limits>
+#include <QUrl>
+
+QString AvatarIdentity::accountPrefix(const QString &accountId)
+{
+    return QStringLiteral("account/")
+        + QString::fromLatin1(QUrl::toPercentEncoding(accountId)) + QLatin1Char('/');
+}
+
+QString AvatarIdentity::bindingKey(const QString &accountId, const XMPP::Jid &jid, bool occupant)
+{
+    return accountPrefix(accountId)
+        + (occupant ? QStringLiteral("occupant/") : QStringLiteral("contact/"))
+        + (occupant ? jid.full() : jid.bare());
+}
 
 AvatarBlobFetchPolicy::AvatarBlobFetchPolicy(int retryDelayMs, int capacity) :
     retryDelayMs_(qMax(0, retryDelayMs)), capacity_(qMax(1, capacity))
