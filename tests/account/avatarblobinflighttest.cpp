@@ -78,6 +78,54 @@ private slots:
         QCOMPARE(flights.complete(hash).size(), 2);
     }
 
+    void unavailableFirstContactFallsBackToSecond()
+    {
+        AvatarBlobInFlight flights;
+        QObject aliceAccount, bobAccount;
+        const auto hash = sha('a');
+        const auto first = flights.join("alice@example.org", hash, &aliceAccount, "sha-a");
+        QVERIFY(first.request);
+        QVERIFY(!flights.join("bob@example.org", hash, &bobAccount, "sha-a").request);
+        const auto retry = flights.fail(hash, first.token);
+        QVERIFY(retry.request);
+        QCOMPARE(retry.jid, QStringLiteral("bob@example.org"));
+        QCOMPARE(retry.itemId, QStringLiteral("sha-a"));
+        QCOMPARE(retry.transport.data(), static_cast<QObject *>(&bobAccount));
+        QVERIFY(retry.token != first.token);
+        QCOMPARE(flights.count(), 1);
+        QVERIFY(!flights.fail(hash, first.token).request);
+        QCOMPARE(flights.complete(hash).size(), 2);
+        QVERIFY(!flights.fail(hash, retry.token).request);
+    }
+
+    void sameContactOnTwoAccountsMayUseOtherTransport()
+    {
+        AvatarBlobInFlight flights;
+        QObject a, b;
+        const auto hash = sha('x');
+        const auto first = flights.join("same@example.org", hash, &a, "hash");
+        QVERIFY(first.request);
+        QVERIFY(!flights.join("same@example.org", hash, &b, "hash").request);
+        const auto retry = flights.fail(hash, first.token);
+        QVERIFY(retry.request);
+        QCOMPARE(retry.jid, QStringLiteral("same@example.org"));
+        QCOMPARE(retry.transport.data(), static_cast<QObject *>(&b));
+        QCOMPARE(flights.waiters(hash).size(), 1);
+    }
+
+    void destroyedTransportIsNotUsedForRetry()
+    {
+        AvatarBlobInFlight flights;
+        QObject firstAccount;
+        const auto hash = sha('a');
+        const auto first = flights.join("one@example.org", hash, &firstAccount, "a");
+        auto *secondAccount = new QObject;
+        flights.join("two@example.org", hash, secondAccount, "a");
+        delete secondAccount;
+        QVERIFY(!flights.fail(hash, first.token).request);
+        QCOMPARE(flights.count(), 0);
+    }
+
     void invalidHashDoesNotCreateFlight()
     {
         AvatarBlobInFlight flights;
