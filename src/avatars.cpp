@@ -202,21 +202,26 @@ public:
                 result = appendUser(hash, AvatarType, first);
                 if (result == NoData) {
                     const auto bytes = QByteArray::fromBase64(item.payload().text().toLatin1());
-                    // XEP-0084 item ID identifies the original blob bytes.
-                    // Never feed an incorrect blob into the shared FileCache.
-                    if (bytes.isEmpty()
-                        || QCryptographicHash::hash(bytes, QCryptographicHash::Sha1) != hash) {
-#ifdef AVATAR_EDBUG
-                        qDebug() << "Discard PEP avatar:data: empty or SHA-1 mismatch" << jidFull << hash.toHex();
-#endif
+                    if (bytes.isEmpty()) {
+                        qWarning() << "Discarding PEP avatar:data: empty or undecodable payload"
+                                   << "from" << jidFull << "item ID" << item.id();
+                        return;
+                    }
+
+                    // XEP-0084 item IDs identify the original bytes by SHA-1.
+                    // Do not attach corrupted data to the shared FileCache.
+                    const auto actualHash = QCryptographicHash::hash(bytes, QCryptographicHash::Sha1);
+                    if (actualHash != hash) {
+                        qWarning() << "Discarding PEP avatar:data: SHA-1 mismatch"
+                                   << "from" << jidFull << "expected" << hash.toHex()
+                                   << "actual" << actualHash.toHex() << "bytes" << bytes.size();
                         return;
                     }
                     result = setIcon(AvatarType, first, bytes, hash);
                 }
                 if (result == NoData) {
-#ifdef AVATAR_EDBUG
-                    qDebug() << "Cannot cache PEP avatar:data image" << first << hash.toHex();
-#endif
+                    qWarning() << "Discarding PEP avatar:data: image could not be cached"
+                               << "from" << jidFull << "recipient" << first << "SHA-1" << hash.toHex();
                     return;
                 }
 
