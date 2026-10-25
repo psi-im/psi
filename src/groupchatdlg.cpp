@@ -29,7 +29,6 @@
 #include "chatview.h"
 #include "eventdb.h"
 #include "filesharingmanager.h"
-#include "filesharingnormalizer.h"
 #include "filesharingpublication.h"
 #include "gcuserview.h"
 #include "groupchattopicdlg.h"
@@ -2716,8 +2715,7 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
     mv.setSpooled(dm.spooled());
     mv.setDateTime(dm.timeStamp());
     mv.setReplaceId(dm.replaceId());
-    const auto preparedMedia = FileSharingNormalizer::prepareForDisplay(dm);
-    account()->psi()->fileSharingManager()->fillMessageView(mv, dm, preparedMedia.references, account());
+    account()->psi()->fileSharingManager()->fillMessageView(mv, dm, account());
     mv.setReplyMetadata(dm);
 
     dispatchMessage(mv);
