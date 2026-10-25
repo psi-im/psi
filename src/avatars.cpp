@@ -173,6 +173,8 @@ public:
     // A MUC full JID is not a permanent identity: a different occupant can
     // reuse room@service/nick. Discard both positive and negative state when
     // the original occupant leaves, including decoded iconset pixmaps.
+    void clearMucNegative(const Jid &jid) { clearNegative(jid.full()); }
+
     void forgetMucOccupant(const Jid &jid)
     {
         const QString fullJid = jid.full();
@@ -1302,11 +1304,20 @@ bool AvatarFactory::hasManualAvatar(const Jid &j)
 void AvatarFactory::statusUpdate(const Jid &jid, const XMPP::Status &status, Flags flags)
 {
     if (status.type() == Status::Offline) {
-        if (flags & MucUser)
+        if (flags & MucUser) {
+            // Drop the vCard first. The avatarChanged signal emitted by
+            // forgetMucOccupant can immediately cause a UI lookup.
+            VCardFactory::instance()->forgetMucVCard(jid);
             AvatarCache::instance()->forgetMucOccupant(jid);
-        else
+        } else {
             AvatarCache::instance()->removeHash(jid.withResource({}));
+        }
     } else {
+        // A fresh occupant presence may represent a different user of the
+        // same room/nick even if no photo hash was advertised. Do not reuse
+        // a stale negative lookup made while this nick was unoccupied.
+        if (flags & MucUser)
+            AvatarCache::instance()->clearMucNegative(jid);
         if (status.photoHash()) { // even if it's empty. user adretises something.
             auto hash = *status.photoHash();
             ensureVCardUpdated(jid, hash, flags);
