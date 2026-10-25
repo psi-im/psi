@@ -35,7 +35,6 @@
 #include "widgets/OverlayScrollBarManager.h"
 #include "widgets/iconaction.h"
 
-#include <QApplication>
 #include <QKeyEvent>
 #include <QLineEdit>
 #include <QMessageBox>
@@ -110,8 +109,6 @@ PsiRosterWidget::PsiRosterWidget(QWidget *parent) :
     QWidget(parent), stackedWidget_(nullptr), contactListPage_(nullptr), filterPage_(nullptr),
     contactListPageView_(nullptr), filterPageView_(nullptr), contactListModel_(nullptr), filterModel_(nullptr)
 {
-    Mattermost::OverlayScrollBarManager::install(*qApp);
-
     QVBoxLayout *layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
@@ -128,7 +125,7 @@ PsiRosterWidget::PsiRosterWidget(QWidget *parent) :
     QVBoxLayout *contactListPageLayout = new QVBoxLayout(contactListPage_);
     contactListPageLayout->setContentsMargins(0, 0, 0, 0);
     contactListPageView_ = new PsiContactListView(contactListPage_);
-    contactListPageView_->setProperty("psiOverlayScrollBar", true);
+    Mattermost::OverlayScrollBarManager::attach(*contactListPageView_);
     contactListPageView_->installEventFilter(this);
     contactListPageView_->setObjectName("contactListView");
     contactListPageLayout->addWidget(contactListPageView_);
@@ -152,7 +149,7 @@ PsiRosterWidget::PsiRosterWidget(QWidget *parent) :
     filterPageLayout->addWidget(filterEdit_);
 
     filterPageView_ = new PsiFilteredContactListView(filterPage_);
-    filterPageView_->setProperty("psiOverlayScrollBar", true);
+    Mattermost::OverlayScrollBarManager::attach(*filterPageView_);
     connect(filterPageView_, SIGNAL(quitFilteringMode()), SLOT(quitFilteringMode()));
     filterPageView_->installEventFilter(this);
     filterPageLayout->addWidget(filterPageView_);
