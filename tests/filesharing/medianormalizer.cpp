@@ -97,6 +97,28 @@ private slots:
         QCOMPARE(display.references.at(1).end(), 2 * url.size());
     }
 
+    void separateLinkProjectionDoesNotCreateMediaReferences()
+    {
+        Message incoming;
+        incoming.urlAdd(Url(QStringLiteral("https://example.org/photo.png"), QStringLiteral("photo")));
+        incoming.urlAdd(Url(QStringLiteral("xmpp:contact@example.org"), QStringLiteral("contact")));
+        incoming.urlAdd(Url(QStringLiteral("ftp://example.org/archive"), QStringLiteral("archive")));
+
+        const auto links = FileSharingNormalizer::remainingLinks(incoming);
+        QCOMPARE(links.size(), 2);
+        QCOMPARE(links.at(0).url(), QStringLiteral("xmpp:contact@example.org"));
+        QCOMPARE(links.at(0).desc(), QStringLiteral("contact"));
+        QCOMPARE(links.at(1).url(), QStringLiteral("ftp://example.org/archive"));
+        QCOMPARE(incoming.urlList().size(), 3);
+        QVERIFY(incoming.references().isEmpty());
+
+        // Legacy SQLite rows remain renderable even without an explicit
+        // migration: the view backend prepares their HTTP OOB on read.
+        const auto prepared = FileSharingNormalizer::prepareForDisplay(incoming);
+        QCOMPARE(prepared.references.size(), 1);
+        QCOMPARE(prepared.remainingOob.size(), links.size());
+    }
+
     void nonHttpEntriesRemainOriginalLinks()
     {
         Message incoming;
