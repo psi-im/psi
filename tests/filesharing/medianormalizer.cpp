@@ -40,7 +40,6 @@ private slots:
         FileSharingNormalizer::normalize(incoming);
         QCOMPARE(incoming.urlList().size(), 1); // OOB HTTP moved into references.
         QCOMPARE(incoming.references().size(), 1);
-        QCOMPARE(incoming.urlList().size(), 1);
         QCOMPARE(incoming.urlList().first().url(), QString("xmpp:bob@example.org"));
         QCOMPARE(incoming.references().first().mediaSharing().sources.first(),
                  QString("https://example.org/picture.png?a=1"));
@@ -72,8 +71,6 @@ private slots:
         QCOMPARE(incoming.references().size(), 1);
         QCOMPARE(incoming.references().first().uri(), QString("https://example.org/photo.png"));
         QVERIFY(incoming.references().first().begin() < 0);
-        QVERIFY(incoming.urlList().isEmpty());
-        QCOMPARE(incoming.references().size(), 1);
         FileSharingNormalizer::normalize(incoming);
         QCOMPARE(incoming.references().size(), 1);
     }
@@ -91,6 +88,20 @@ private slots:
         QCOMPARE(incoming.references().size(), 2);
         QCOMPARE(incoming.references().at(1).begin(), url.size() + 1);
         QCOMPARE(incoming.references().at(1).end(), 2 * url.size());
+    }
+
+    void explicitlySharedMessageIsModifiedAtIngestion()
+    {
+        Message event;
+        event.urlAdd(Url(QStringLiteral("https://example.org/media.png"), QStringLiteral("Image")));
+        Message display = event; // Iris Message uses QExplicitlySharedDataPointer.
+        FileSharingNormalizer::normalize(display);
+        QCOMPARE(event.references().size(), 1);
+        QCOMPARE(event.references().first().uri(), QStringLiteral("https://example.org/media.png"));
+        QCOMPARE(event.references().first().anchor(), QStringLiteral("Image"));
+        QVERIFY(event.urlList().isEmpty());
+        FileSharingNormalizer::normalize(display);
+        QCOMPARE(event.references().size(), 1);
     }
 
     void normalizationLeavesNonHttpLinksUntouched()
