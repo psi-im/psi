@@ -47,6 +47,14 @@ QPixmap NativeChatAvatars::avatar(const MessageView &message)
     return *peerAvatar_;
 }
 
+bool NativeChatAvatars::resetRoom()
+{
+    if (!groupChat_ || occupants_.isEmpty())
+        return false;
+    occupants_.clear();
+    return true;
+}
+
 bool NativeChatAvatars::invalidate(const XMPP::Jid &jid)
 {
     if (groupChat_) // Occupant avatars are reported for room@service/nick.
