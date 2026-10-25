@@ -70,6 +70,7 @@ public:
     VCardRequest *enqueue(PsiAccount *acc, const Jid &jid, Flags flags, Priority prio);
     void invalidateOccupant(PsiAccount *account, const Jid &occupant);
     void invalidateRoom(PsiAccount *account, const Jid &room);
+    void invalidateAccount(PsiAccount *account);
 };
 
 /**
@@ -295,6 +296,42 @@ VCard4::VCard VCardFactory::vcard(const Jid &j, Flags flags)
     if (card)
         checkLimit(j.bare(), card);
     return card;
+}
+
+namespace {
+QString avatarAccountSessionKey(PsiAccount *account)
+{
+    return account->id() + QChar(0x1f) + QStringLiteral("session/")
+        + QString::number(qulonglong(reinterpret_cast<quintptr>(account)), 16);
+}
+} // namespace
+
+quint64 VCardFactory::accountGeneration(PsiAccount *account) const
+{
+    return account ? accountEpochs_.generation(avatarAccountSessionKey(account)) : 0;
+}
+
+void VCardFactory::invalidateAccountSession(PsiAccount *account)
+{
+    if (!account)
+        return;
+    // Advance before cancelling requests, including contacts with no cache.
+    accountEpochs_.advance(avatarAccountSessionKey(account));
+    queuedLoader_->invalidateAccount(account);
+    const QString prefix = account->id() + QChar(0x1f);
+    for (auto it = mucVcardDict_.begin(); it != mucVcardDict_.end();) {
+        if (it.key().startsWith(prefix))
+            it = mucVcardDict_.erase(it);
+        else
+            ++it;
+    }
+    for (auto it = lastMucVcards_.begin(); it != lastMucVcards_.end();) {
+        if (it.key().startsWith(prefix))
+            it = lastMucVcards_.erase(it);
+        else
+            ++it;
+    }
+    occupantEpochs_.forgetPrefix(prefix);
 }
 
 quint64 VCardFactory::mucGeneration(PsiAccount *account, const Jid &occupant) const
@@ -527,6 +564,7 @@ public:
     bool                        legacyAnswered = false;
     quint64                     occupantEpoch = 0;
     quint64                     roomEpoch = 0;
+    quint64                     accountEpoch = 0;
     bool                        invalidated = false;
 
     using ErrorPtr = std::unique_ptr<XMPP::Stanza::Error>;
@@ -538,10 +576,13 @@ public:
     Private(PsiAccount *pa, const Jid &jid, VCardFactory::Flags flags) :
         accounts({ { pa } }), accountId(pa ? pa->id() : QString()), jid(jid), flags(flags)
     {
-        if (pa && (flags & VCardFactory::MucUser)) {
+        if (pa) {
             auto *vcf = VCardFactory::instance();
-            occupantEpoch = vcf->mucGeneration(pa, jid);
-            roomEpoch = vcf->mucRoomGeneration(pa, jid);
+            accountEpoch = vcf->accountGeneration(pa);
+            if (flags & VCardFactory::MucUser) {
+                occupantEpoch = vcf->mucGeneration(pa, jid);
+                roomEpoch = vcf->mucRoomGeneration(pa, jid);
+            }
         }
     }
 };
@@ -649,17 +690,26 @@ bool VCardRequest::modernAnswered() const { return d->modernAnswered; }
 bool VCardRequest::legacyAnswered() const { return d->legacyAnswered; }
 quint64 VCardRequest::requestedOccupantEpoch() const { return d->occupantEpoch; }
 quint64 VCardRequest::requestedRoomEpoch() const { return d->roomEpoch; }
+quint64 VCardRequest::requestedAccountEpoch() const { return d->accountEpoch; }
+
+bool VCardRequest::wasQueuedForAccount(PsiAccount *account) const
+{
+    return std::any_of(d->accounts.cbegin(), d->accounts.cend(),
+                       [account](const auto &p) { return p == account; });
+}
 
 bool VCardRequest::currentEpoch() const
 {
     if (d->invalidated)
         return false;
-    if (!(d->flags & VCardFactory::MucUser))
-        return true;
     auto *account = d->accounts.isEmpty() ? nullptr : d->accounts.first().data();
     if (!account)
         return false;
     auto *vcf = VCardFactory::instance();
+    if (d->accountEpoch != vcf->accountGeneration(account))
+        return false;
+    if (!(d->flags & VCardFactory::MucUser))
+        return true;
     return d->occupantEpoch == vcf->mucGeneration(account, d->jid)
         && d->roomEpoch == vcf->mucRoomGeneration(account, d->jid);
 }
@@ -667,8 +717,7 @@ bool VCardRequest::currentEpoch() const
 bool VCardRequest::wasQueuedFor(PsiAccount *account, const Jid &occupant) const
 {
     return (d->flags & VCardFactory::MucUser) && d->jid.compare(occupant, true)
-        && std::any_of(d->accounts.cbegin(), d->accounts.cend(),
-                       [account](const auto &p) { return p == account; });
+        && wasQueuedForAccount(account);
 }
 
 void VCardRequest::invalidate(bool notifyPending)
@@ -783,6 +832,25 @@ void VCardFactory::QueuedLoader::invalidateOccupant(PsiAccount *account, const J
             it = requests.erase(it);
             // A queued request has no network task or loader callback yet.
             // An in-flight request completes normally but cannot populate cache.
+            request->invalidate(pending);
+            if (pending)
+                request->deleteLater();
+        }
+    };
+    invalidate(jid2req);
+    invalidate(photoReqs_);
+}
+
+void VCardFactory::QueuedLoader::invalidateAccount(PsiAccount *account)
+{
+    auto invalidate = [this, account](QHash<QString, VCardRequest *> &requests) {
+        for (const QString &key : requests.keys()) {
+            VCardRequest *request = requests.value(key);
+            if (!request || !request->wasQueuedForAccount(account))
+                continue;
+            const bool pending = queue_.removeAll(request) != 0;
+            requestKeys_.remove(request);
+            requests.remove(key);
             request->invalidate(pending);
             if (pending)
                 request->deleteLater();
