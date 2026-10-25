@@ -202,7 +202,7 @@ private slots:
     {
         auto reference = sample(7);
         auto media = reference.mediaSharing();
-        media.sources = { QStringLiteral("https://example.org/image.png") };
+        media.sources = QStringList { QStringLiteral("https://example.org/image.png") };
         reference.setMediaSharing(media);
         reference.setAnchor(QString());
         Message incoming;
