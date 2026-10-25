@@ -164,8 +164,16 @@ public:
         return _instance;
     }
 
-    void rememberHash(const Jid &j, const QByteArray &hash) { jid2hash[j] = hash; }
-    void removeHash(const Jid &j) { jid2hash.remove(j); }
+    void rememberHash(PsiAccount *account, const Jid &j, bool occupant, const QByteArray &hash)
+    {
+        jid2hash[AvatarIdentity::bindingKey(account->id(),
+                occupant ? j.full() : j.bare(), occupant)] = hash;
+    }
+    void removeHash(PsiAccount *account, const Jid &j, bool occupant)
+    {
+        jid2hash.remove(AvatarIdentity::bindingKey(account->id(),
+                occupant ? j.full() : j.bare(), occupant));
+    }
 
     void itemPublished(PsiAccount *pa, const Jid &jid, const QString &n, const PubSubItem &item)
     {
@@ -295,9 +303,12 @@ public:
 
     void forgetAccount(const QString &accountId) { blobFetches_.forgetAccount(accountId); }
 
-    OpResult ensureVCardUpdated(const Jid &jid, const QByteArray &hash, AvatarFactory::Flags flags)
+    OpResult ensureVCardUpdated(PsiAccount *account, const Jid &jid, const QByteArray &hash,
+                               AvatarFactory::Flags flags)
     {
-        QString  fullJid = (flags & AvatarFactory::MucUser) ? jid.full() : jid.bare();
+        QString fullJid = AvatarIdentity::bindingKey(account->id(),
+            (flags & AvatarFactory::MucUser) ? jid.full() : jid.bare(),
+            flags & AvatarFactory::MucUser);
         OpResult result;
 
         if (hash.isEmpty()) { // photo removal
@@ -317,8 +328,9 @@ public:
         return result;
     }
 
-    void importManualAvatar(const Jid &j, const QString &fileName)
+    void importManualAvatar(PsiAccount *account, const Jid &j, const QString &fileName)
     {
+        const QString key = AvatarIdentity::bindingKey(account->id(), j.bare(), false);
         QFile f(fileName);
         if (!(f.open(QIODevice::ReadOnly)
               && AvatarCache::instance()->setIcon(AvatarCache::CustomType, j.bare(), f.readAll()))) {
@@ -331,9 +343,10 @@ public:
         emit avatarChanged(j);
     }
 
-    void removeManualAvatar(const Jid &j)
+    void removeManualAvatar(PsiAccount *account, const Jid &j)
     {
-        if (AvatarCache::instance()->removeIcon(AvatarCache::CustomType, j.bare()) == AvatarCache::UserUpdateRequired) {
+        const QString key = AvatarIdentity::bindingKey(account->id(), j.bare(), false);
+        if (AvatarCache::instance()->removeIcon(AvatarCache::CustomType, key) == AvatarCache::UserUpdateRequired) {
 #ifdef AVATAR_EDBUG
             qDebug() << "remove from iconset and emit avatarChanged. removeManualAvatar" << j.bare();
 #endif
@@ -344,7 +357,7 @@ public:
 
     QPixmap getAvatar(PsiAccount *account, const Jid &_jid)
     {
-        QString bareJid  = _jid.bare();
+        QString bareJid = AvatarIdentity::bindingKey(account->id(), _jid.bare(), false);
         QString iconName = QString("avatars/%1").arg(bareJid);
         auto    iconp    = iconset_.icon(iconName);
         if (iconp) {
@@ -407,7 +420,7 @@ public:
 
     QPixmap getMucAvatar(PsiAccount *account, const Jid &_jid)
     {
-        QString fullJid = _jid.full();
+        QString fullJid = AvatarIdentity::bindingKey(account->id(), _jid.full(), true);
 
         QString iconName = QString("avatars/%1").arg(fullJid);
         auto    iconp    = iconset_.icon(iconName);
@@ -592,7 +605,8 @@ public:
     }
 
 signals:
-    void avatarChanged(const Jid &);
+    void avatarChanged(const Jid &); // Source compatibility for legacy listeners.
+    void avatarChangedScoped(PsiAccount *, const Jid &);
 
 protected:
     // all the active items are protected (undeletabe) during session. so it's fine to not update user of changes.
@@ -908,7 +922,7 @@ private:
     }
 
     QHash<QString, JidIcons> jidToIcons;
-    QHash<Jid, QByteArray>   jid2hash;
+    QHash<QString, QByteArray> jid2hash;
     Iconset                  iconset_;
     AvatarBlobFetchPolicy    blobFetches_;
     QElapsedTimer            blobClock_;
