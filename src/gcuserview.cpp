@@ -19,6 +19,7 @@
  */
 
 #include "gcuserview.h"
+#include "widgets/OverlayScrollBarManager.h"
 
 #include "avatars.h"
 #include "coloropt.h"
@@ -667,6 +668,10 @@ QStringList GCUserModel::nickList() const
 
 GCUserView::GCUserView(QWidget *parent) : QTreeView(parent)
 {
+    // Keep the standard QTreeView scroll model; only replace its chrome.
+    // Opt in before the manager sees the first polish/show event.
+    setProperty("psiOverlayScrollBar", true);
+    Mattermost::OverlayScrollBarManager::install(*qApp);
     header()->hide();
     setRootIsDecorated(false);
     sortByColumn(0, Qt::AscendingOrder);
