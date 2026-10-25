@@ -157,7 +157,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QSplitter" name="hsplitter">
+        <widget class="ThinSplitter" name="hsplitter">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -303,6 +303,12 @@
   </layout>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>ThinSplitter</class>
+   <extends>QSplitter</extends>
+   <header>widgets/ThinSplitter.h</header>
+   <container>1</container>
+  </customwidget>
   <customwidget>
    <class>ChatView</class>
    <extends>QFrame</extends>
