@@ -779,8 +779,25 @@ VCardRequest *VCardFactory::QueuedLoader::enqueue(PsiAccount *acc, const Jid &ji
     if (!(flags & MucUser)) {
         sanitized_jid = jid.withResource({});
     }
+    const quintptr session = reinterpret_cast<quintptr>(acc);
+    if (flags & PhotoOnly) {
+        // A full vCard request already retrieves vcard-temp after vCard4.
+        // Reuse its legacy PHOTO instead of sending another potentially
+        // blob-heavy XEP-0054 IQ. Do not alter the full request's flags:
+        // that would accidentally turn a full-card result into PhotoOnly.
+        const Flags fullMode = flags & ~(PhotoOnly | ForceVCardTemp);
+        const QString fullKey = VCardFactory::requestQueueKey(acc->id(), session, sanitized_jid, fullMode);
+        auto full = jid2req.value(fullKey);
+        if (!full) {
+            const QString tempKey = VCardFactory::requestQueueKey(
+                acc->id(), session, sanitized_jid, fullMode | ForceVCardTemp);
+            full = jid2req.value(tempKey);
+        }
+        if (full)
+            return full;
+    }
     const QString key = VCardFactory::requestQueueKey(
-        acc->id(), reinterpret_cast<quintptr>(acc), sanitized_jid, flags);
+        acc->id(), session, sanitized_jid, flags);
     auto &requests = flags & PhotoOnly ? photoReqs_ : jid2req;
     auto req = requests.value(key);
     if (!req) {
