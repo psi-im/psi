@@ -638,6 +638,33 @@
         </layout>
        </item>
        <item>
+        <layout class="QHBoxLayout" name="hboxSrvLookup">
+         <item>
+          <widget class="QLabel" name="lb_srvLookup">
+           <property name="text">
+            <string>SRV lookup:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="cb_srvLookup"/>
+         </item>
+         <item>
+          <spacer name="spacerSrvLookup">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+       <item>
         <widget class="QCheckBox" name="ck_useProxyForUpload">
          <property name="text">
           <string>Use this proxy server for HTTP file upload</string>
@@ -1204,6 +1231,7 @@
   <tabstop>pb_addBlock</tabstop>
   <tabstop>pb_removeBlock</tabstop>
   <tabstop>pb_privacy</tabstop>
+  <tabstop>cb_srvLookup</tabstop>
   <tabstop>ck_useProxyForUpload</tabstop>
   <tabstop>ck_compress</tabstop>
   <tabstop>ck_keepAlive</tabstop>

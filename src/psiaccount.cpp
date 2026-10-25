@@ -1841,6 +1841,8 @@ void PsiAccount::login()
                 guard.callback(this, &PsiAccount::tls_handshaken));
     }
     d->conn->setProxy(p);
+    if (!d->acc.proxyID.isEmpty() && d->acc.opt_remoteSrvLookup)
+        d->conn->setRemoteDns(ProxyManager::instance()->getItem(d->acc.proxyID).settings.dnsServer());
     d->conn->setOptTlsSrv(d->acc.ssl == UserAccount::TLS_Auto || d->acc.ssl == UserAccount::TLS_Yes);
     if (useHost) {
         d->conn->setOptHostPort(host, quint16(port));

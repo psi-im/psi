@@ -75,12 +75,14 @@ private slots:
 
 private:
     bool checkSSL();
+    void updateSrvLookup(bool proxyChanged);
 
 private:
     PsiCon       *psi;
     PsiAccount   *pa;
     ProxyChooser *pc;
     UserAccount   acc;
+    bool          remoteSrvLookup; // the choice for proxies with a DNS server, see UserAccount::opt_remoteSrvLookup
 
     // Privacy
     PrivacyListModel        privacyModel;

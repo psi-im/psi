@@ -22,6 +22,7 @@
 #include "actionlineedit.h"
 #include "iconaction.h"
 #include "iconset.h"
+#include "iris/remotenameprovider.h"
 #include "jidutil.h"
 #include "privacydlg.h"
 #include "privacymanager.h"
@@ -192,6 +193,14 @@ void AccountModifyDlg::init()
     replaceWidget(lb_proxychooser, pc);
     pc->setCurrentItem(acc.proxyID);
 
+    // Behind a proxy with a DNS server, the server may be looked up through the proxy.
+    remoteSrvLookup = acc.opt_remoteSrvLookup;
+    connect(pc, &ProxyChooser::itemChanged, this, [this]() { updateSrvLookup(true); });
+    connect(ProxyManager::instance(), &ProxyManager::settingsChanged, this, [this]() { updateSrvLookup(true); });
+    connect(cb_srvLookup, QOverload<int>::of(&QComboBox::activated), this,
+            [this]() { remoteSrvLookup = cb_srvLookup->currentData().toBool(); });
+    updateSrvLookup(false);
+
     // Security level
     cb_security_level->addItem(tr("None"), QCA::SL_None);
     cb_security_level->addItem(tr("Integrity"), QCA::SL_Integrity);
@@ -260,6 +269,9 @@ void AccountModifyDlg::init()
                           "Psi homepage."));
     ck_useProxyForUpload->setToolTip(tr("Use the same proxy for HTTP upload as one configured for XMPP connection."
                                         " Otherwise use application default proxy."));
+    cb_srvLookup->setToolTip(tr("Where the SRV records of the server are looked up when connecting through the "
+                                "proxy: locally, or with the DNS server set in the proxy settings, so that no DNS "
+                                "query leaves this computer."));
     ck_compress->setToolTip(tr("Check this option to use a compressed connection to "
                                "the XMPP server, if the server supports it."));
     ck_host->setToolTip(tr("Use this option for manual configuration of your XMPP host "
@@ -302,6 +314,8 @@ void AccountModifyDlg::init()
     if (!PsiOptions::instance()->getOption("options.ui.account.proxy.show").toBool()) {
         lb_proxy->hide();
         pc->hide();
+        lb_srvLookup->hide();
+        cb_srvLookup->hide();
     }
 
     if (!PsiOptions::instance()->getOption("options.ui.account.manual-host").toBool()) {
@@ -390,6 +404,29 @@ void AccountModifyDlg::sslActivated(int i)
                               tr("Direct TLS is only available in combination with manual host/port."));
         cb_ssl->setCurrentIndex(cb_ssl->findData(UserAccount::TLS_Auto));
     }
+}
+
+void AccountModifyDlg::updateSrvLookup(bool proxyChanged)
+{
+    const QString   id      = pc->currentItem();
+    const ProxyItem pi      = id.isEmpty() ? ProxyItem() : ProxyManager::instance()->getItem(id);
+    const bool      proxied = pi.type == QLatin1String("socks") || pi.type == QLatin1String("http");
+    // Remote lookups need Iris with JDNS and a DNS server in the proxy settings.
+    const bool remote = proxied && XMPP::RemoteNameProvider::isSupported() && !pi.settings.dnsServer().isEmpty();
+    if (proxyChanged)
+        remoteSrvLookup = true; // prefer the DNS server of the proxy once there is one; the user may switch back
+
+    cb_srvLookup->clear();
+    cb_srvLookup->addItem(tr("Local"), false);
+    if (remote)
+        cb_srvLookup->addItem(tr("Remote, with the DNS server of the proxy"), true);
+    cb_srvLookup->setCurrentIndex(remote && remoteSrvLookup ? 1 : 0);
+    cb_srvLookup->setEnabled(remote);
+
+    // Without a proxy the server is always looked up locally.
+    const bool shown = proxied && PsiOptions::instance()->getOption("options.ui.account.proxy.show").toBool();
+    lb_srvLookup->setVisible(shown);
+    cb_srvLookup->setVisible(shown);
 }
 
 bool AccountModifyDlg::checkSSL()
@@ -526,6 +563,7 @@ void AccountModifyDlg::save()
 
     acc.storeSaltedHashedPassword = ck_scram_salted_password->isChecked();
     acc.proxyID                   = pc->currentItem();
+    acc.opt_remoteSrvLookup       = remoteSrvLookup;
 
     if (pa) {
         pa->setUserAccount(acc);
