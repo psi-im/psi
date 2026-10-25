@@ -115,8 +115,8 @@ public:
         } else if (stage == 2) {
             auto *enabled   = options->findChild<QCheckBox *>("serverlessEnabled");
             auto *name      = options->findChild<QLineEdit *>("serverlessName");
-            auto *interface = options->findChild<QComboBox *>("serverlessInterface");
-            if (!enabled || !name || !interface) {
+            auto *networkInterface = options->findChild<QComboBox *>("serverlessInterface");
+            if (!enabled || !name || !networkInterface) {
                 fail("Settings fields missing");
                 return;
             }
@@ -128,13 +128,13 @@ public:
                 fail("Name not restored from profile");
                 return;
             }
-            const int index = interface->findData("lo");
+            const int index = networkInterface->findData("lo");
             if (index < 0) {
                 fail("Loopback test interface missing");
                 return;
             }
             name->setText("UI Alice");
-            interface->setCurrentIndex(index);
+            networkInterface->setCurrentIndex(index);
             enabled->setChecked(true);
             QMetaObject::invokeMethod(options, "doApply", Qt::QueuedConnection);
             stage = 3;
