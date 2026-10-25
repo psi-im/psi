@@ -90,7 +90,10 @@ public:
     QList<FileSharingItem *> fromFilesList(const QStringList &fileList, PsiAccount *acc);
 
     // registers source for file and returns share id for future access to the source
-    void fillMessageView(MessageView &mv, const XMPP::Message &m, PsiAccount *acc);
+    // Render pre-normalized SIMS / URL-only references without interpreting
+    // any OOB links. The original Message is needed for sender and body data.
+    void fillMessageView(MessageView &mv, const XMPP::Message &m,
+                         const QList<XMPP::Reference> &references, PsiAccount *acc);
 
     // returns false if unable to accept automatically
     bool jingleAutoAcceptIncomingDownloadRequest(XMPP::Jingle::Session *session);
