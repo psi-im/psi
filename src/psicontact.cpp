@@ -119,9 +119,9 @@ PsiContact::PsiContact(const UserListItem &u, PsiAccount *account, bool isSelf) 
     if (d->account_) {
         connect(d->account_->avatarFactory(), &AvatarFactory::avatarChanged, this, &PsiContact::avatarChanged);
     }
-    connect(VCardFactory::instance(), &VCardFactory::vcardChanged, this,
-            [this](const Jid &j, VCardFactory::Flags flags) {
-                if (!j.compare(jid(), flags & VCardFactory::MucUser))
+    connect(VCardFactory::instance(), &VCardFactory::vcardChangedScoped, this,
+            [this](PsiAccount *source, const Jid &j, VCardFactory::Flags flags) {
+                if (source != d->account_ || !j.compare(jid(), flags & VCardFactory::MucUser))
                     return;
 
                 emit updated();
