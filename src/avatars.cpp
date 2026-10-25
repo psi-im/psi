@@ -174,6 +174,7 @@ public:
     // reuse room@service/nick. Discard both positive and negative state when
     // the original occupant leaves, including decoded iconset pixmaps.
     void clearMucNegative(const Jid &jid) { clearNegative(jid.full()); }
+    void clearContactNegative(const Jid &jid) { clearNegative(jid.bare()); }
 
     void forgetMucOccupant(const Jid &jid)
     {
@@ -1414,12 +1415,16 @@ void AvatarFactory::publish_success(const QString &n, const PubSubItem &item)
                                          PEPManager::Access::Open);
         if (account()->client()->serverInfoManager()->accountFeatures().hasAvatarConversion()) {
             VCardFactory::instance()->setPhoto(account()->jid(), d->selfAvatarData_, VCardFactory::Silent);
+            // Silent does not emit vcardChanged. Keep the central no-photo
+            // hint coherent when the server converts our published avatar.
+            AvatarCache::instance()->clearContactNegative(account()->jid());
         }
         d->selfAvatarData_.clear(); // we don't need it anymore
     } else if (n == PEP_AVATAR_METADATA_NS) {
         bool removed = item.payload().firstChildElement("metadata").firstChildElement("info").isNull();
         if (account()->client()->serverInfoManager()->accountFeatures().hasAvatarConversion() && removed) {
             VCardFactory::instance()->deletePhoto(account()->jid(), VCardFactory::Silent);
+            AvatarCache::instance()->clearContactNegative(account()->jid());
         }
     }
 }
