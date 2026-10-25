@@ -26,6 +26,7 @@
 #include <QNetworkReply>
 #include <QObject>
 #include <functional>
+#include <optional>
 
 class FileCache;
 class FileCacheItem;
@@ -82,6 +83,8 @@ public:
                                unsigned int maxAge);
     FileCacheItem *moveToCache(const QList<XMPP::Hash> &sums, const QFileInfo &data, const QVariantMap &metadata,
                                unsigned int maxAge);
+    std::optional<XMPP::Hash> contentForUrl(const QString &account, const XMPP::Hash &urlIdentity) const;
+    bool rememberUrlContent(const QString &account, const XMPP::Hash &urlIdentity, const XMPP::Hash &contentHash);
 
     FileSharingItem *item(const XMPP::Hash &id, PsiAccount *account = nullptr);
     void             rememberMessage(const XMPP::Message &message, PsiAccount *account);
