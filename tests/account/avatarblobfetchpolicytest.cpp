@@ -26,6 +26,34 @@ private slots:
         QVERIFY(!a.contains(QLatin1Char(' '))); // Safe in icon names and FileCache metadata.
     }
 
+    void changedOwnerHashReleasesOldInFlightIndex()
+    {
+        AvatarBlobFetchPolicy policy;
+        const auto oldHash = hash('a');
+        const auto newHash = hash('b');
+        policy.announce("account", "owner@example.org", oldHash, "old");
+        policy.announce("account", "waiter@example.org", oldHash, "old");
+        QVERIFY(policy.beginFetch("account", "owner@example.org", oldHash, 0));
+        QVERIFY(!policy.beginFetch("account", "waiter@example.org", oldHash, 0));
+        policy.announce("account", "owner@example.org", newHash, "new");
+        // A stale owner must not lock this SHA-1 until an obsolete IQ times out.
+        QVERIFY(policy.beginFetch("account", "waiter@example.org", oldHash, 1));
+        QVERIFY(policy.beginFetch("account", "owner@example.org", newHash, 1));
+        QVERIFY(policy.finish("account", "owner@example.org", oldHash, true, 2).isEmpty());
+    }
+    void retractionAndAccountTeardownReleaseInFlightIndex()
+    {
+        AvatarBlobFetchPolicy policy;
+        const auto sha = hash('x');
+        policy.announce("account", "one@example.org", sha, "one");
+        QVERIFY(policy.beginFetch("account", "one@example.org", sha, 0));
+        QVERIFY(policy.retractData("account", "one@example.org", sha));
+        policy.announce("account", "two@example.org", sha, "two");
+        QVERIFY(policy.beginFetch("account", "two@example.org", sha, 1));
+        policy.forgetAccount("account");
+        policy.announce("account", "three@example.org", sha, "three");
+        QVERIFY(policy.beginFetch("account", "three@example.org", sha, 2));
+    }
     void oneSharedHashIssuesOneBlobIqAcrossContacts()
     {
         AvatarBlobFetchPolicy policy;
