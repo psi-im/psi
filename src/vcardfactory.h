@@ -50,8 +50,11 @@ public:
     Q_DECLARE_FLAGS(Flags, Flag);
 
     static VCardFactory *instance();
-    VCard4::VCard        vcard(const Jid &, Flags flags = {});
+    VCard4::VCard        vcard(const Jid &, Flags flags = {}); // Legacy unscoped compatibility
     const VCard4::VCard  mucVcard(const Jid &j) const;
+    // Account-aware lookups never read another account's card or disk cache.
+    VCard4::VCard        vcard(PsiAccount *account, const Jid &, Flags flags = {});
+    VCard4::VCard        mucVcard(PsiAccount *account, const Jid &j) const;
 
     Task *setVCard(PsiAccount *account, const VCard4::VCard &v, const Jid &targetJid, VCardFactory::Flags flags);
     VCardRequest *getVCard(PsiAccount *account, const Jid &, VCardFactory::Flags flags = {});
@@ -62,6 +65,8 @@ public:
 
     void setPhoto(const Jid &j, const QByteArray &photo, Flags flags);
     void deletePhoto(const Jid &j, Flags flags);
+    void setPhoto(PsiAccount *account, const Jid &j, const QByteArray &photo, Flags flags);
+    void deletePhoto(PsiAccount *account, const Jid &j, Flags flags);
 
     // 1. check if it's needed to do a request,
     // 2. enqueue request if necessary (no vcard, or if hash doesn't match)
@@ -73,6 +78,8 @@ signals:
     // Internal cache notification when a PHOTO is changed with Silent: other
     // vCard consumers still only receive vcardChanged for non-Silent writes.
     void photoChanged(const Jid &, VCardFactory::Flags);
+    void vcardChangedScoped(PsiAccount *, const Jid &, VCardFactory::Flags);
+    void photoChangedScoped(PsiAccount *, const Jid &, VCardFactory::Flags);
 
 protected:
     void checkLimit(const QString &jid, const VCard4::VCard &vcard);
@@ -82,6 +89,10 @@ private:
     ~VCardFactory();
     friend class VCardRequest;
     void saveVCard(const Jid &, const VCard4::VCard &, VCardFactory::Flags flags);
+    void saveVCard(PsiAccount *account, const Jid &, const VCard4::VCard &, Flags flags);
+    static QString accountCacheKey(const QString &accountId, const Jid &, Flags flags);
+    static QString mergedCardFile(const QString &dir, const QString &accountId,
+                                  const Jid &, Flags flags);
 
     // Keep the disk parser out of headers; tests call the same production
     // reader without needing to link all of PsiAccount and PEPManager.
@@ -140,6 +151,7 @@ public:
     bool          success() const; // item-not-found is considered success but vcard will be null
     VCard4::VCard vcard() const;
     const QString &accountId() const;
+    PsiAccount *account() const;
     VCard4::VCard modernVcard() const;
     VCard4::VCard legacyVcard() const;
     bool modernAnswered() const;
