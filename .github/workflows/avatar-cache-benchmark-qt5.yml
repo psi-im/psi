@@ -1,0 +1,58 @@
+name: AvatarCache real lookup benchmark (Qt5)
+
+on:
+  pull_request:
+    paths:
+      - 'src/avatars.cpp'
+      - 'src/main.cpp'
+      - 'CMakeLists.txt'
+      - 'benchmarks/avatar-cache/**'
+      - '.github/workflows/avatar-cache-benchmark-qt5.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: avatar-real-benchmark-qt5-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    name: Ubuntu 24.04 / Qt5 / real AvatarCache
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - name: Initialize pinned submodules
+        run: |
+          git submodule update --init --depth 1 \
+            3rdparty/http-parser 3rdparty/qhttp 3rdparty/qite iris
+      - name: Install Qt5 and Psi dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ccache cmake ninja-build g++ pkg-config zlib1g-dev \
+            qtbase5-dev libqt5svg5-dev libqt5x11extras5-dev qtmultimedia5-dev \
+            libqca-qt5-2-dev libotr5-dev libhttp-parser-dev \
+            libminizip-dev libsm-dev libssl-dev libusrsctp-dev \
+            libsrtp2-dev libtidy-dev libxss-dev libqt5sql5-sqlite
+      - name: Configure and build BASIC Psi with real benchmark
+        run: |
+          cmake -S . -B build-benchmark -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DCHAT_TYPE=BASIC \
+            -DENABLE_AVATAR_CACHE_BENCHMARK=ON \
+            -DBUNDLED_IRIS=ON -DBUNDLED_IRIS_ALL=OFF \
+            -DIRIS_SYSTEM_QCA=2 -DIRIS_ENABLE_OMEMO=OFF \
+            -DENABLE_OMEMO=OFF -DENABLE_PLUGINS=OFF \
+            -DUSE_KEYCHAIN=OFF -DUSE_HUNSPELL=OFF -DUSE_SPARKLE=OFF
+          cmake --build build-benchmark --target psi --parallel 4
+      - name: Benchmark actual MUC AvatarCache (non-gating timings)
+        env:
+          QT_QPA_PLATFORM: offscreen
+          PSI_AVATAR_CACHE_BENCHMARK: '1'
+        run: |
+          export HOME="$(mktemp -d)"
+          ./build-benchmark/psi/psi

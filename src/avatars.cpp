@@ -55,6 +55,12 @@
 #include <QPixmap>
 #include <QtCrypto>
 
+#ifdef PSI_AVATAR_CACHE_BENCHMARK
+#include <QElapsedTimer>
+#include <QVector>
+#include <algorithm>
+#endif
+
 // we have retine nowdays and various other huge resolutions.96px is not that big already.
 // it would be better to scale images according to monitor properties
 #define MAX_AVATAR_SIZE 96
@@ -975,6 +981,97 @@ private:
 };
 
 AvatarCache *AvatarCache::_instance = nullptr;
+
+#ifdef PSI_AVATAR_CACHE_BENCHMARK
+// Optional standalone runtime benchmark. This calls the *real* AvatarCache
+// getMucAvatar() path; only the current per-window memo is modeled as the
+// equivalent QHash<nick,QPixmap> hot lookup. No network requests are made.
+int runAvatarCacheLookupBenchmark()
+{
+    constexpr int samples = 1000;
+    constexpr int passes = 32;
+    constexpr int repetitions = 7;
+
+    auto *cache = AvatarCache::instance();
+    const Jid room(QStringLiteral("avatar-benchmark.invalid"));
+    QImage image(96, 96, QImage::Format_ARGB32_Premultiplied);
+    image.fill(Qt::blue);
+    QByteArray png;
+    QBuffer buffer(&png);
+    buffer.open(QIODevice::WriteOnly);
+    if (!image.save(&buffer, "PNG")) {
+        qCritical("avatar benchmark: cannot encode fixture PNG");
+        return 1;
+    }
+
+    QHash<QString, QPixmap> local;
+    local.reserve(samples);
+    QStringList positive, negative;
+    for (int i = 0; i < samples; ++i) {
+        const QString nick = QStringLiteral("bench-%1").arg(i);
+        const Jid full = room.withResource(nick);
+        const bool photo = (i % 5) == 0;
+        if (photo && cache->setIcon(AvatarCache::AvatarType, full.full(), png) == AvatarCache::NoData) {
+            qCritical("avatar benchmark: cannot prepare fixture");
+            return 1;
+        }
+        const QPixmap result = cache->getMucAvatar(full); // warm iconset_ / real resolver
+        if (result.isNull() == photo) {
+            qCritical("avatar benchmark: fixture mismatch");
+            return 1;
+        }
+        local.insert(nick, result);
+        (photo ? positive : negative).append(nick);
+    }
+
+    quint64 checksum = 0;
+    const auto measure = [&](const QStringList &nicks, bool localMemo) {
+        QVector<qint64> timings;
+        timings.reserve(repetitions);
+        const auto read = [&](const QString &nick) {
+            if (localMemo) {
+                const auto it = local.constFind(nick);
+                // NativeChatAvatars::avatar() returns QPixmap by value.
+                const QPixmap avatar = it == local.constEnd() ? QPixmap() : it.value();
+                checksum += avatar.isNull() ? 0 : 1;
+            } else {
+                checksum += cache->getMucAvatar(room.withResource(nick)).isNull() ? 0 : 1;
+            }
+        };
+        for (int run = 0; run < repetitions; ++run) {
+            QElapsedTimer timer;
+            timer.start();
+            for (int pass = 0; pass < passes; ++pass)
+                for (const auto &nick : nicks)
+                    read(nick);
+            timings.append(timer.nsecsElapsed());
+        }
+        std::sort(timings.begin(), timings.end());
+        return double(timings.at(repetitions / 2)) / double(passes * nicks.size() * 1000);
+    };
+
+    // Alternate measurement order for each case to reduce thermal/cache bias.
+    for (const auto &group : { positive, negative }) {
+        const double central = measure(group, false);
+        const double memo = measure(group, true);
+        qInfo().noquote() << QStringLiteral(
+            "AVATAR REAL CACHE: Qt %1, %2, %3 JIDs, %4 passes, median of %5, "
+            "microseconds/lookup: AvatarCache::getMucAvatar=%6; "
+            "local QHash<nick,QPixmap>=%7; ratio=%8")
+            .arg(QLatin1String(QT_VERSION_STR))
+            .arg(group.size() == positive.size() ? QStringLiteral("positive (decoded iconset hit)")
+                                                   : QStringLiteral("negative (missing PHOTO)"))
+            .arg(group.size()).arg(passes).arg(repetitions)
+            .arg(central, 0, 'f', 4).arg(memo, 0, 'f', 4)
+            .arg(central / memo, 0, 'f', 2);
+    }
+    qInfo() << "Avatar benchmark checksum:" << checksum;
+    return 0;
+}
+#endif
+
+
+
 
 //------------------------------------------------------------------------------
 // Avatar factory
