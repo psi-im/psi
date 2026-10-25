@@ -118,7 +118,8 @@ public:
 
 private:
     friend class FileSharingManager;
-    FileSharingItem(const QUrl &url, const XMPP::Hash &identity, PsiAccount *acc, FileSharingManager *manager);
+    FileSharingItem(const QUrl &url, const XMPP::Hash &identity, PsiAccount *acc, FileSharingManager *manager,
+                    const QString &description);
     void                             mergeSources(const XMPP::MediaSharing &, const XMPP::Jid &);
     bool                             savePublishedFile();
     XMPP::Jingle::FileTransfer::File fileInfo() const;
