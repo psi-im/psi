@@ -579,6 +579,13 @@ PSI_EXPORT_FUNC int main(int argc, char *argv[])
         Crash::registerSigsegvHandler(argv[0]);
 #endif
 
+#ifdef PSI_AVATAR_CACHE_BENCHMARK
+    if (qEnvironmentVariableIsSet("PSI_AVATAR_CACHE_BENCHMARK")) {
+        extern int runAvatarCacheLookupBenchmark();
+        return runAvatarCacheLookupBenchmark();
+    }
+#endif
+
     // seed the random number generator
     srand(uint(time(nullptr)));
 
