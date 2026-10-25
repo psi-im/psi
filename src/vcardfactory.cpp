@@ -129,6 +129,28 @@ void VCardFactory::checkLimit(const QString &jid, const VCard4::VCard &vcard)
     vcardList_.push_front(jid);
 }
 
+void VCardFactory::saveSourceCard(const QString &accountId, const Jid &jid, Flags flags,
+                                  bool modern, const VCard4::VCard &card)
+{
+    if (flags & MucUser)
+        return; // Occupant cards live only while the room is active.
+    const QString dir = ApplicationInfo::vCardDir();
+    QDir().mkpath(dir);
+    const QString fileName = sourceCardFile(dir, accountId, jid, flags, modern);
+    if (card)
+        card.save(fileName);
+    else
+        QFile::remove(fileName);
+}
+
+VCard4::VCard VCardFactory::readSourceCard(const QString &accountId, const Jid &jid,
+                                            Flags flags, bool modern)
+{
+    if (flags & MucUser)
+        return {};
+    return readCachedVCard(sourceCardFile(ApplicationInfo::vCardDir(), accountId, jid, flags, modern));
+}
+
 void VCardFactory::saveVCard(const Jid &j, const VCard4::VCard &vcard, Flags flags)
 {
 #ifdef VCF_DEBUG
