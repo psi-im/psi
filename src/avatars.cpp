@@ -26,6 +26,7 @@
 
 #include "avatars.h"
 #include "avatarblobfetchpolicy.h"
+#include "avatarnegativememo.h"
 
 #include "applicationinfo.h"
 #include "filecache.h"
@@ -308,6 +309,7 @@ public:
     void clearOccupant(PsiAccount *account, const Jid &jid)
     {
         const QString key = AvatarIdentity::bindingKey(account->id(), jid.full(), true);
+        negativeMemo_.invalidate(key);
         removeIcon(AvatarType, key);
         removeIcon(VCardType, key);
         iconset_.removeIcon(QStringLiteral("avatars/%1").arg(key));
@@ -320,6 +322,7 @@ public:
     {
         const QString prefix = AvatarIdentity::accountPrefix(account->id())
             + QStringLiteral("occupant/") + room.bare() + QLatin1Char('/');
+        negativeMemo_.invalidatePrefix(prefix);
         const auto keys = jidToIcons.keys();
         for (const auto &key : keys) {
             if (!key.startsWith(prefix))
@@ -342,6 +345,7 @@ public:
     {
         blobFetches_.forgetAccount(accountId);
         const QString prefix = AvatarIdentity::accountPrefix(accountId);
+        negativeMemo_.invalidatePrefix(prefix);
         const auto keys = jidToIcons.keys();
         for (const auto &key : keys) {
             if (!key.startsWith(prefix))
@@ -432,6 +436,11 @@ public:
 #endif
             return iconp->pixmap();
         }
+        // A cached null result avoids repeated local file opens/decodes.
+        // It is not proof that a network source has no avatar; only an
+        // explicit PEP/presence event may initiate a fetch elsewhere.
+        if (negativeMemo_.lookup(bareJid, blobClock_.elapsed()))
+            return {};
 
         auto   icons = this->icons(bareJid);
         QImage img;
@@ -454,7 +463,10 @@ public:
 #endif
             auto vcard = VCardFactory::instance()->vcard(account, _jid);
             if (!vcard || QByteArray(vcard.photo()).isEmpty()) {
-                return QPixmap();
+                const auto state = (vcard && !vcard.photo().isEmpty())
+                    ? AvatarNegativeMemo::State::UriOnly : AvatarNegativeMemo::State::Unknown;
+                negativeMemo_.record(bareJid, state, blobClock_.elapsed());
+                return {};
             }
             QByteArray data = vcard.photo();
             if (setIcon(AvatarCache::VCardType, bareJid, data) != AvatarCache::NoData) {
@@ -467,7 +479,8 @@ public:
         }
 
         if (img.isNull()) {
-            return QPixmap();
+            negativeMemo_.record(bareJid, AvatarNegativeMemo::State::InvalidImage, blobClock_.elapsed());
+            return {};
         }
 
         QPixmap pm = QPixmap::fromImage(std::move(img));
@@ -493,13 +506,18 @@ public:
         if (iconp) {
             return iconp->pixmap();
         }
+        if (negativeMemo_.lookup(fullJid, blobClock_.elapsed()))
+            return {};
 
         auto       icons = AvatarCache::instance()->icons(fullJid);
         QByteArray data;
         if (!icons.avatar) {
             auto vcard = VCardFactory::instance()->mucVcard(account, _jid);
             if (!vcard || QByteArray(vcard.photo()).isEmpty()) {
-                return QPixmap();
+                const auto state = (vcard && !vcard.photo().isEmpty())
+                    ? AvatarNegativeMemo::State::UriOnly : AvatarNegativeMemo::State::Unknown;
+                negativeMemo_.record(fullJid, state, blobClock_.elapsed());
+                return {};
             }
             data = vcard.photo();
             AvatarCache::instance()->setIcon(AvatarCache::VCardType, fullJid, data);
@@ -514,7 +532,8 @@ public:
         QImage img(QImage::fromData(data));
 
         if (img.isNull()) {
-            return QPixmap();
+            negativeMemo_.record(fullJid, AvatarNegativeMemo::State::InvalidImage, blobClock_.elapsed());
+            return {};
         }
 
         QPixmap pm = QPixmap::fromImage(std::move(img));
@@ -588,6 +607,7 @@ public:
         if (newData.isNull())
             return NoData;
 
+        negativeMemo_.invalidate(jid);
         auto &icons
             = jidToIcons[jid]; // it's fine to make new icons-item here. it's anyway required after all the checks
         if (!canAdd(icons, iconType)) { // for new icons-item we definitely can
@@ -632,6 +652,7 @@ public:
     // keepEmptyIcons - don't remove from jidToIcons even if all icons associated with jid are empty.
     OpResult removeIcon(IconType iconType, const QString &jid, bool keepEmptyIcons = false)
     {
+        negativeMemo_.invalidate(jid);
         auto it = jidToIcons.find(jid);
         if (it == jidToIcons.end()) {
             return NoData; // wtf?
@@ -686,6 +707,8 @@ protected:
         for (const QString &j : std::as_const(jids)) {
             IconType itype = extractIconType(j);
             QString  jid   = extractIconJid(j);
+            negativeMemo_.invalidate(jid);
+            iconset_.removeIcon(QStringLiteral("avatars/%1").arg(jid));
             auto     it    = jidToIcons.find(jid);
             if (it == jidToIcons.end()) { // never happens if we maintain cache properly
                 continue;
@@ -851,6 +874,7 @@ private:
             return NoData;
         }
 
+        negativeMemo_.invalidate(jid);
         auto &icons = jidToIcons[jid];
         if (!canAdd(icons, iconType)) { // for new icons-item we definitely can
             return NotChanged;
@@ -989,6 +1013,7 @@ private:
     QHash<QString, QByteArray> jid2hash;
     Iconset                  iconset_;
     AvatarBlobFetchPolicy    blobFetches_;
+    AvatarNegativeMemo       negativeMemo_;
     QElapsedTimer            blobClock_;
 
     static AvatarCache *_instance;
