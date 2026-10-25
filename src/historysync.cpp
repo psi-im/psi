@@ -3,6 +3,7 @@
 #include "widgets/MamHistoryLog.h"
 
 #include "historymessageextras.h"
+#include "filesharingnormalizer.h"
 #include "iris/xmpp_encryption.h"
 #include "iris/xmpp_forwarding.h"
 #include "iris/xmpp_mammanager.h"
@@ -101,7 +102,10 @@ bool HistorySync::parseResults(const QList<QDomElement> &results, HistoryArchive
         if (entry.uid.isEmpty() || ids.contains(entry.uid) || !wrapper.fromXml(forwarded, context_.client))
             return false; // Never certify a page with missing/invalid results.
         ids.insert(entry.uid);
-        const auto message = decoded_.contains(entry.uid) ? decoded_.value(entry.uid) : wrapper.message();
+        auto message = decoded_.contains(entry.uid) ? decoded_.value(entry.uid) : wrapper.message();
+        // Keep raw MAM XML untouched, but normalize the decoded application
+        // Message before saving its SQLite projection and serving the page.
+        FileSharingNormalizer::normalize(message);
         if (key_.room) {
             if (message.type() != XMPP::Message::Type::Groupchat || message.from().bare() != key_.peer)
                 return false;
@@ -170,11 +174,17 @@ XMPP::Message HistorySync::message(const QString &uid) const
         if (!plain.isNull()
             && (!plain.body().isEmpty() || saved.protocolOnly || plain.messageReceipt() == XMPP::ReceiptReceived
                 || !plain.displayedMarkerId().isEmpty()
-                || !plain.reactions().targetId.isEmpty() || !plain.retraction().isEmpty()))
-            return plain;
+                || !plain.reactions().targetId.isEmpty() || !plain.retraction().isEmpty())) {
+            auto rendered = plain;
+            FileSharingNormalizer::normalize(rendered);
+            return rendered;
+        }
         XMPP::Forwarding wrapper;
-        if (wrapper.fromXml(element.firstChildElement("forwarded"), context_.client))
-            return wrapper.message();
+        if (wrapper.fromXml(element.firstChildElement("forwarded"), context_.client)) {
+            auto rendered = wrapper.message();
+            FileSharingNormalizer::normalize(rendered);
+            return rendered;
+        }
     }
     return {};
 }
