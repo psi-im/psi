@@ -98,7 +98,8 @@ FileSharingItem::FileSharingItem(const QUrl &url, const XMPP::Hash &identity, Ps
     QObject(manager), _urlOnly(true), _acc(acc), _manager(manager), _fileType(FileType::RemoteFile)
 {
     _sums.append(identity);
-    _uris.append(url.toString(QUrl::FullyEncoded | QUrl::RemoveFragment));
+    // Keep the fragment for opening the URL; HTTP requests never send it.
+    _uris.append(url.toString(QUrl::FullyEncoded));
     _fileName = QFileInfo(url.path()).fileName();
     if (_fileName.isEmpty())
         _fileName = QStringLiteral("download");
@@ -116,6 +117,8 @@ FileSharingItem::FileSharingItem(const QUrl &url, const XMPP::Hash &identity, Ps
             _fileName = cachedPath;
             _fileSize = quint64(QFileInfo(cachedPath).size());
             _fileType = FileType::LocalFile;
+        } else if (verified) {
+            _manager->forgetUrlContent(_acc->id(), identity); // the cached file expired
         }
     }
 }

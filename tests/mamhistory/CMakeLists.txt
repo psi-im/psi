@@ -12,15 +12,13 @@ target_include_directories(history_archive_test PRIVATE ../../src)
 target_link_libraries(history_archive_test PRIVATE Qt${QT_DEFAULT_MAJOR_VERSION}::Sql Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
 add_test(NAME history_archive COMMAND history_archive_test)
 if(TARGET iris)
-    add_executable(chat_reply_test ChatReplyTest.cpp ../../src/chatreply.cpp ../../src/historymessageextras.cpp
-        ../../src/filesharingnormalizer.cpp)
+    add_executable(chat_reply_test ChatReplyTest.cpp ../../src/chatreply.cpp ../../src/historymessageextras.cpp)
     set_target_properties(chat_reply_test PROPERTIES AUTOMOC ON)
     target_include_directories(chat_reply_test PRIVATE ../../src)
     target_link_libraries(chat_reply_test PRIVATE iris Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
     add_test(NAME chat_reply COMMAND chat_reply_test)
     add_executable(history_sync_test HistorySyncTest.cpp ../../src/historysync.cpp ../../src/historysync.h
-        ../../src/historyarchive.cpp ../../src/historymessageextras.cpp
-        ../../src/filesharingnormalizer.cpp)
+        ../../src/historyarchive.cpp ../../src/historymessageextras.cpp)
     set_target_properties(history_sync_test PROPERTIES AUTOMOC ON)
     target_include_directories(history_sync_test PRIVATE ../../src)
     target_link_libraries(history_sync_test PRIVATE iris Qt${QT_DEFAULT_MAJOR_VERSION}::Sql Qt${QT_DEFAULT_MAJOR_VERSION}::Test)

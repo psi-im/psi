@@ -23,7 +23,6 @@
 #include "atomicxmlfile/atomicxmlfile.h"
 #include "avcall/avcall.h"
 #include "dummystream.h"
-#include "filesharingnormalizer.h"
 #include "iris/filetransfer.h"
 #include "iris/jingle-session.h"
 #include "iris/xmpp_xmlcommon.h"
@@ -209,10 +208,6 @@ void MessageEvent::setSentToChatWindow(bool b) { v_sentToChatWindow = b; }
 void MessageEvent::setMessage(const XMPP::Message &m)
 {
     v_m = m;
-    // Event creation is the ingestion boundary shared by EDB and the UI.
-    // displayMessage() refers to the Carbon payload where applicable.
-    auto display = v_m.displayMessage();
-    FileSharingNormalizer::normalize(display);
     setTimeStamp(v_m.timeStamp());
     setLate(v_m.spooled());
 }
@@ -238,8 +233,6 @@ bool MessageEvent::fromXml(PsiCon *psi, PsiAccount *account, const QDomElement *
         DummyStream stream;
         Stanza      s = stream.createStanza(addCorrectNS(msg));
         v_m.fromStanza(s);
-        auto display = v_m.displayMessage();
-        FileSharingNormalizer::normalize(display); // pre-normalizer event queues
 
         // if message was not spooled, it will be initialized with the
         // current datetime. we want to reset it back to the original

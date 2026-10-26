@@ -92,7 +92,6 @@ protected:
     void renderSysMessage(const MessageView &);
     void renderSubject(const MessageView &);
     void renderMucSubject(const MessageView &);
-    void renderUrls(const MessageView &);
     void scheduleAutomaticTextRecolor();
     void recolorAutomaticText();
 

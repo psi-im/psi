@@ -93,18 +93,18 @@ if(TARGET iris)
     add_test(NAME filesharing_hash_job COMMAND filesharing_hash_job_test)
     set_tests_properties(filesharing_hash_job PROPERTIES TIMEOUT 45)
 
-    add_executable(filesharing_media_normalizer_test medianormalizer.cpp
-        ../../src/filesharingnormalizer.cpp)
-    set_target_properties(filesharing_media_normalizer_test PROPERTIES AUTOMOC ON)
-    target_include_directories(filesharing_media_normalizer_test PRIVATE ../../src)
-    target_link_libraries(filesharing_media_normalizer_test PRIVATE
+    add_executable(filesharing_message_attachments_test messageattachments.cpp
+        ../../src/messageattachments.cpp)
+    set_target_properties(filesharing_message_attachments_test PROPERTIES AUTOMOC ON)
+    target_include_directories(filesharing_message_attachments_test PRIVATE ../../src)
+    target_link_libraries(filesharing_message_attachments_test PRIVATE
         iris Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
-    add_test(NAME filesharing_media_normalizer COMMAND filesharing_media_normalizer_test)
-    set_tests_properties(filesharing_media_normalizer PROPERTIES TIMEOUT 20)
+    add_test(NAME filesharing_message_attachments COMMAND filesharing_message_attachments_test)
+    set_tests_properties(filesharing_message_attachments PROPERTIES TIMEOUT 20)
 
     find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Sql)
     add_executable(filesharing_sims_history_test simshistory.cpp
-        ../../src/historymessageextras.cpp ../../src/filesharingnormalizer.cpp
+        ../../src/historymessageextras.cpp ../../src/messageattachments.cpp
         ../../src/historyarchive.cpp ../../src/filesharingstore.cpp)
     set_target_properties(filesharing_sims_history_test PROPERTIES AUTOMOC ON)
     target_include_directories(filesharing_sims_history_test PRIVATE ../../src)

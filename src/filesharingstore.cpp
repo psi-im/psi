@@ -40,11 +40,27 @@ FileSharingStore::FileSharingStore(const QString &path) :
         ready_ = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS shared_files ("
                                            "account_id TEXT NOT NULL, hash TEXT NOT NULL, descriptor TEXT NOT NULL, "
                                            "PRIMARY KEY(account_id, hash))"));
+        // URL-to-content mappings are a cache: the first catalog version had
+        // no timestamps, so its rows are dropped rather than migrated.
+        if (ready_ && query.exec(QStringLiteral("PRAGMA table_info(url_content)"))) {
+            bool exists = false, stamped = false;
+            while (query.next()) {
+                exists = true;
+                stamped |= query.value(1).toString() == QLatin1String("updated");
+            }
+            if (exists && !stamped)
+                ready_ = query.exec(QStringLiteral("DROP TABLE url_content"));
+        }
         if (ready_)
             ready_ = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS url_content ("
                                                "account_id TEXT NOT NULL, url_key TEXT NOT NULL, "
-                                               "content_hash TEXT NOT NULL, "
+                                               "content_hash TEXT NOT NULL, updated INTEGER NOT NULL, "
                                                "PRIMARY KEY(account_id, url_key))"));
+        if (ready_) {
+            query.prepare(QStringLiteral("DELETE FROM url_content WHERE updated < :cutoff"));
+            query.bindValue(QStringLiteral(":cutoff"), QDateTime::currentSecsSinceEpoch() - UrlContentTtl);
+            ready_ = query.exec();
+        }
     }
     if (!ready_)
         qWarning() << "Cannot open shared file catalog:" << db_.lastError().text();
@@ -108,12 +124,24 @@ bool FileSharingStore::rememberUrlContent(const QString &account, const XMPP::Ha
     if (!ready_ || account.isEmpty() || !urlIdentity.isValid() || !contentHash.isValid())
         return false;
     QSqlQuery query(db_);
-    query.prepare("INSERT OR REPLACE INTO url_content(account_id,url_key,content_hash) "
-                  "VALUES(:account,:url_key,:content_hash)");
+    query.prepare("INSERT OR REPLACE INTO url_content(account_id,url_key,content_hash,updated) "
+                  "VALUES(:account,:url_key,:content_hash,:updated)");
     query.bindValue(":account", account);
     query.bindValue(":url_key", urlIdentity.toString());
     query.bindValue(":content_hash", contentHash.toString());
+    query.bindValue(":updated", QDateTime::currentSecsSinceEpoch());
     return query.exec();
+}
+
+void FileSharingStore::forgetUrlContent(const QString &account, const XMPP::Hash &urlIdentity)
+{
+    if (!ready_ || account.isEmpty() || !urlIdentity.isValid())
+        return;
+    QSqlQuery query(db_);
+    query.prepare("DELETE FROM url_content WHERE account_id=:account AND url_key=:url_key");
+    query.bindValue(":account", account);
+    query.bindValue(":url_key", urlIdentity.toString());
+    query.exec();
 }
 
 bool FileSharingStore::remember(const QString &account, const XMPP::Reference &reference, const XMPP::Jid &peer,

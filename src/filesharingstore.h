@@ -28,6 +28,11 @@ public:
     std::optional<XMPP::Hash> contentForUrl(const QString &account, const XMPP::Hash &urlIdentity) const;
     bool rememberUrlContent(const QString &account, const XMPP::Hash &urlIdentity,
                             const XMPP::Hash &contentHash);
+    // For a mapping whose content left the file cache.
+    void forgetUrlContent(const QString &account, const XMPP::Hash &urlIdentity);
+
+    // Mappings older than this are dropped when the catalog opens, like the cached files they name.
+    static constexpr qint64 UrlContentTtl = 365 * 24 * 3600;
 
 private:
     QString      name_;

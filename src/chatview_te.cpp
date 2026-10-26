@@ -472,9 +472,6 @@ void ChatView::dispatchMessage(const MessageView &mv)
             renderSubject(mv);
         }
         break;
-    case MessageView::Urls:
-        renderUrls(mv);
-        break;
     case MessageView::MUCJoin:
     case MessageView::MUCPart:
     case MessageView::FileTransferRequest:
@@ -721,17 +718,6 @@ void ChatView::renderMucSubject(const MessageView &mv)
         auto userText = insertTextFragmentWithRange(
             QString("<span style=\"color:%1;font-weight:bold\">%2</span>").arg(userTextColor, ut), continuation);
         markOptionColor(userText, "options.ui.look.colors.messages.usertext");
-    }
-}
-
-void ChatView::renderUrls(const MessageView &mv)
-{
-    QMap<QString, QString> urls = mv.urls();
-    for (const QString &key : urls.keys()) {
-        appendText(QString("<b>") + tr("URL:") + "</b> " + QString("%1").arg(TextUtil::linkify(TextUtil::escape(key))));
-        if (!urls.value(key).isEmpty()) {
-            appendText(QString("<b>") + tr("Desc:") + "</b> " + QString("%1").arg(urls.value(key)));
-        }
     }
 }
 

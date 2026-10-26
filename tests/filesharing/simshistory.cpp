@@ -1,9 +1,10 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "filesharingstore.h"
-#include "filesharingnormalizer.h"
 #include "historyarchive.h"
 #include "historymessageextras.h"
+#include "messageattachments.h"
 #include <QCryptographicHash>
+#include <QDateTime>
 #include <QFile>
 #include <QSqlQuery>
 #include <QTemporaryDir>
@@ -63,7 +64,6 @@ private slots:
         original.setTo(Jid("bob@example.org/laptop"));
         original.setReferences({ sample(9007199254740993ULL) });
         original.urlAdd(Url("https://example.org/movie", "movie"));
-        FileSharingNormalizer::normalize(original);
         const auto path = dir.filePath("history.db");
         {
             auto db = QSqlDatabase::addDatabase("QSQLITE", "history-test");
@@ -89,7 +89,7 @@ private slots:
             HistoryMessageExtras::restore(query.value(0).toString(), restored);
         }
         QSqlDatabase::removeDatabase("history-test");
-        QCOMPARE(restored.references().size(), 2);
+        QCOMPARE(restored.references().size(), 1);
         const auto reference = restored.references().first();
         QCOMPARE(reference.mediaSharing().file.size().value(), 9007199254740993ULL);
         QCOMPARE(reference.begin(), 3);
@@ -100,9 +100,9 @@ private slots:
         QCOMPARE(restored.to().full(), original.to().full());
         QCOMPARE(restored.id(), original.id());
         QCOMPARE(restored.body(), QString("unchanged body"));
-        QVERIFY(restored.urlList().isEmpty());
-        QCOMPARE(restored.references().last().uri(), QString("https://example.org/movie"));
-        QCOMPARE(restored.references().last().anchor(), QString("movie"));
+        QCOMPARE(restored.urlList().size(), 1);
+        QCOMPARE(restored.urlList().first().url(), QString("https://example.org/movie"));
+        QCOMPARE(restored.urlList().first().desc(), QString("movie"));
         QVERIFY(restored.spooled());
     }
     void edbMigrationPreservesSimsAndLegacyOob()
@@ -129,7 +129,6 @@ private slots:
             original.setTo(Jid("bob@example.org/laptop"));
             original.setReferences({ sample(9007199254740993ULL) });
             original.urlAdd(Url("https://example.org/movie", "movie"));
-            FileSharingNormalizer::normalize(original);
             const QString encoded = HistoryMessageExtras::encode(original);
             const QString legacy  = QStringLiteral("{\"jabber:x:oob\":[[\"https://example.org/old\",\"Old\"]]}");
             query.prepare("INSERT INTO events(id,contact_id,date,type,direction,m_text,extra_data) "
@@ -153,13 +152,13 @@ private slots:
             QCOMPARE(restored.id(), original.id());
             QCOMPARE(restored.from().full(), original.from().full());
             QCOMPARE(restored.to().full(), original.to().full());
-            QCOMPARE(restored.references().size(), 2);
+            QCOMPARE(restored.references().size(), 1);
             QCOMPARE(restored.references().first().mediaSharing().file.size().value(), quint64(9007199254740993ULL));
             QCOMPARE(restored.references().first().mediaSharing().sources,
                      original.references().first().mediaSharing().sources);
-            QVERIFY(restored.urlList().isEmpty());
-            QCOMPARE(restored.references().last().uri(), QString("https://example.org/movie"));
-            QCOMPARE(restored.references().last().anchor(), QString("movie"));
+            QCOMPARE(restored.urlList().size(), 1);
+            QCOMPARE(restored.urlList().first().url(), QString("https://example.org/movie"));
+            QCOMPARE(restored.urlList().first().desc(), QString("movie"));
             QVERIFY(query.next());
             QCOMPARE(query.value(0).toInt(), 43);
             QCOMPARE(query.value(2).toString(), legacy);
@@ -170,56 +169,52 @@ private slots:
         }
         QSqlDatabase::removeDatabase(name);
     }
-    void normalizedMessageRoundTripsThroughHistory() 
+    void oobRoundTripsThroughHistoryUnchanged()
     {
-        Message incoming;
+        Message       incoming;
         const QString url = QStringLiteral("https://example.org/photo.png?size=2");
         incoming.setBody(QStringLiteral("View: ") + url);
         incoming.urlAdd(Url(url + QStringLiteral("#fragment"), QStringLiteral("Original image")));
         incoming.urlAdd(Url(url, QStringLiteral("Duplicate")));
         incoming.urlAdd(Url(QStringLiteral("ftp://example.org/archive"), QStringLiteral("FTP description")));
-        FileSharingNormalizer::normalize(incoming); // before EDB serialization
         const QString encoded = HistoryMessageExtras::encode(incoming);
-        QCOMPARE(incoming.urlList().size(), 1);
-        QCOMPARE(incoming.references().size(), 1);
 
         Message restored;
         restored.setBody(incoming.body());
         HistoryMessageExtras::restore(encoded, restored);
-        QCOMPARE(restored.references().size(), 1);
-        QCOMPARE(restored.references().first().uri(), url);
-        QCOMPARE(restored.references().first().anchor(), QStringLiteral("Original image"));
-        QCOMPARE(restored.references().first().begin(), incoming.body().indexOf(url));
-        QCOMPARE(restored.urlList().size(), 1);
-        QCOMPARE(restored.urlList().first().url(), QStringLiteral("ftp://example.org/archive"));
-        QCOMPARE(restored.urlList().first().desc(), QStringLiteral("FTP description"));
-        // Re-encoding already normalized SQLite history never creates a second attachment.
-        const QString again = HistoryMessageExtras::encode(restored);
-        Message twice;
-        twice.setBody(restored.body());
-        HistoryMessageExtras::restore(again, twice);
-        QCOMPARE(twice.references().size(), 1);
-        QCOMPARE(twice.urlList().size(), 1);
+        QVERIFY(restored.references().isEmpty());
+        QCOMPARE(restored.urlList().size(), 3);
+        QCOMPARE(restored.urlList().at(0).url(), url + QStringLiteral("#fragment"));
+        QCOMPARE(restored.urlList().at(0).desc(), QStringLiteral("Original image"));
+        QCOMPARE(restored.urlList().at(2).desc(), QStringLiteral("FTP description"));
+
+        // Shown from history as when it arrived: the URL in the text stays a link.
+        const auto shown = MessageAttachments::collect(restored);
+        QVERIFY(shown.attachments.isEmpty());
+        QCOMPARE(shown.links.size(), 1);
+        QCOMPARE(shown.links.first().url(), QStringLiteral("ftp://example.org/archive"));
     }
 
-    void redundantSimsOobRetainsDescriptionInSavedReference()
+    void simsOobDescriptionSurvivesHistory()
     {
         auto reference = sample(7);
-        auto media = reference.mediaSharing();
-        media.sources = QStringList { QStringLiteral("https://example.org/image.png") };
+        auto media     = reference.mediaSharing();
+        media.sources  = QStringList { QStringLiteral("https://example.org/image.png") };
         reference.setMediaSharing(media);
         reference.setAnchor(QString());
         Message incoming;
         incoming.setReferences({ reference });
-        incoming.urlAdd(Url(QStringLiteral("https://example.org/image.png#fragment"),
-                            QStringLiteral("A useful description")));
-        FileSharingNormalizer::normalize(incoming);
+        incoming.urlAdd(
+            Url(QStringLiteral("https://example.org/image.png#fragment"), QStringLiteral("A useful description")));
+
         Message restored;
         HistoryMessageExtras::restore(HistoryMessageExtras::encode(incoming), restored);
         QCOMPARE(restored.references().size(), 1);
-        QCOMPARE(restored.references().first().anchor(), QStringLiteral("A useful description"));
-        QVERIFY(restored.urlList().isEmpty());
-        QCOMPARE(incoming.references().first().anchor(), QStringLiteral("A useful description"));
+        QCOMPARE(restored.urlList().size(), 1);
+        QVERIFY(restored.references().first().anchor().isEmpty());
+        const auto shown = MessageAttachments::collect(restored);
+        QCOMPARE(shown.attachments.size(), 1);
+        QCOMPARE(shown.attachments.first().description, QStringLiteral("A useful description"));
     }
 
     void plainMessageIdentity()
@@ -325,6 +320,49 @@ private slots:
             QVERIFY(reopened.contentForUrl(QStringLiteral("account-a"), address).value() == actual);
             QVERIFY(!reopened.contentForUrl(QStringLiteral("account-b"), address));
             QVERIFY(!reopened.find(QStringLiteral("account-a"), address));
+        }
+    }
+
+    void urlContentMappingsExpire()
+    {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString path = dir.filePath(QStringLiteral("shared-files.sqlite"));
+        const Hash    address(Hash::Sha256, QCryptographicHash::hash("url", QCryptographicHash::Sha256));
+        const Hash    actual(Hash::Sha256, QCryptographicHash::hash("bytes", QCryptographicHash::Sha256));
+        const QString name = QStringLiteral("url-content-expiry");
+        {
+            // A catalog from before mappings had timestamps.
+            auto db = QSqlDatabase::addDatabase("QSQLITE", name);
+            db.setDatabaseName(path);
+            QVERIFY(db.open());
+            QSqlQuery query(db);
+            QVERIFY(query.exec("CREATE TABLE url_content(account_id TEXT NOT NULL, url_key TEXT NOT NULL, "
+                               "content_hash TEXT NOT NULL, PRIMARY KEY(account_id, url_key))"));
+            query.prepare("INSERT INTO url_content VALUES('account-a', :key, :hash)");
+            query.bindValue(":key", address.toString());
+            query.bindValue(":hash", actual.toString());
+            QVERIFY(query.exec());
+        }
+        QSqlDatabase::removeDatabase(name);
+        {
+            FileSharingStore store(path);
+            QVERIFY(!store.contentForUrl(QStringLiteral("account-a"), address));
+            QVERIFY(store.rememberUrlContent(QStringLiteral("account-a"), address, actual));
+        }
+        {
+            auto db = QSqlDatabase::addDatabase("QSQLITE", name);
+            db.setDatabaseName(path);
+            QVERIFY(db.open());
+            QSqlQuery query(db);
+            query.prepare("UPDATE url_content SET updated = :old");
+            query.bindValue(":old", QDateTime::currentSecsSinceEpoch() - FileSharingStore::UrlContentTtl - 1);
+            QVERIFY(query.exec());
+        }
+        QSqlDatabase::removeDatabase(name);
+        {
+            FileSharingStore store(path);
+            QVERIFY(!store.contentForUrl(QStringLiteral("account-a"), address));
         }
     }
 

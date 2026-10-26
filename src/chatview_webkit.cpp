@@ -751,7 +751,6 @@ void ChatView::dispatchMessage(const MessageView &mv)
         types.insert(MessageView::System, "system");
         types.insert(MessageView::Status, "status");
         types.insert(MessageView::Subject, "subject");
-        types.insert(MessageView::Urls, "urls");
         types.insert(MessageView::MUCJoin, "join");
         types.insert(MessageView::MUCPart, "part");
         types.insert(MessageView::FileTransferRequest, "ftreq");
@@ -811,14 +810,6 @@ void ChatView::dispatchMessage(const MessageView &mv)
         m["message"]  = ChatViewPrivate::closeIconTags(mv.formattedText());
         m["usertext"] = ChatViewPrivate::closeIconTags(mv.formattedUserText());
         break;
-    case MessageView::Urls: {
-        QVariantMap vmUrls;
-        for (auto it = mv.urls().constBegin(); it != mv.urls().constEnd(); ++it) {
-            vmUrls.insert(it.key(), it.value());
-        }
-        m["urls"] = vmUrls;
-        break;
-    }
     case MessageView::Reactions: {
         auto n = d->isMuc_ ? mv.nick() : QString::fromLatin1(mv.isLocal() ? "l" : "r");
         d->sendReactionsToUI(n, mv.reactionsId(), mv.reactions());

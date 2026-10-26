@@ -204,12 +204,16 @@ span.emojis {
                           QTimer::singleShot(0, this, &PsiTextView::scrollToBottom);
                       setTextCursor(prevCur);
                   });
-                  auto downloader = item->download();
-                  downloader->setSelfDelete(true);
-                  // read just for cache
-                  connect(downloader, &FileShareDownloader::readyRead, this,
-                          [downloader]() { downloader->read(downloader->bytesAvailable()); });
-                  downloader->open();
+                  // A bare OOB URL is fetched only when the user asks: anyone
+                  // can send one, and nothing tells its size in advance.
+                  if (!item->isUrlOnly()) {
+                      auto downloader = item->download();
+                      downloader->setSelfDelete(true);
+                      // read just for cache
+                      connect(downloader, &FileShareDownloader::readyRead, this,
+                              [downloader]() { downloader->read(downloader->bytesAvailable()); });
+                      downloader->open();
+                  }
 
                   QString sizeStr;
                   if (item->fileSize()) {
@@ -232,7 +236,15 @@ span.emojis {
                            QString("<marker id=\"%1/start\">Shared media is downloading (%2, %3)<marker id=\"%4/end\">")
                                .arg(anchorName, item->mimeType(), sizeStr, anchorName) };
               }
-              return { QTextCharFormat(), "" };
+
+              // Other files: a link to the source, or at least the name.
+              const QUrl    simpleUrl = item->simpleSource();
+              const QString name      = TextUtil::escape(item->displayName());
+              if (simpleUrl.isValid())
+                  return { QTextCharFormat(),
+                           QString("<a href=\"%1\">%2</a>")
+                               .arg(TextUtil::escape(simpleUrl.toString(QUrl::FullyEncoded)), name) };
+              return { QTextCharFormat(), name };
           } },
         { "marker",
           [this](const QStringView &html, int) -> PsiRichText::ParserRet {

@@ -1748,14 +1748,14 @@ void EventDlg::updateEvent(const PsiEvent::Ptr &e)
 
         d->attachView->clear();
         auto attachments = dm.urlList();
-        // HTTP OOB is normalized into references when a MessageEvent is
-        // created. The classic message window still represents these as URLs.
+        // URL-only data references (some clients, and history saved by Psi
+        // builds that rewrote OOB) are attachments of this window too.
         for (const auto &ref : dm.references()) {
             if (ref.isValid() && ref.type() == Reference::Data && !ref.mediaSharing().isValid()) {
                 const QUrl source(ref.uri());
                 if (source.isValid() && !source.host().isEmpty()
                     && (source.scheme() == QLatin1String("https") || source.scheme() == QLatin1String("http")))
-                    attachments.append(Url(ref.uri(), ref.anchor()));
+                    attachments.append(Url(ref.uri()));
             }
         }
         d->attachView->addUrlList(attachments);

@@ -157,7 +157,7 @@ list(APPEND HEADERS
     filesharinghashjob.h
     filesharingmanager.h
     oobmediapolicy.h
-    filesharingnormalizer.h
+    messageattachments.h
     filesharingproxy.h
     filesharingurl.h
     filetransdlg.h
@@ -440,7 +440,7 @@ list(APPEND SOURCES
     filesharingpublication.cpp
     accountincomingmessage.cpp
     filesharingmanager.cpp
-    filesharingnormalizer.cpp
+    messageattachments.cpp
     filesharingmediasave.cpp
     filesharingmediasave.h
     filesharingproxy.cpp

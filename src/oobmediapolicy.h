@@ -6,7 +6,7 @@
 #include <QStringList>
 #include <QUrl>
 
-// Message normalization policy. A URL is never a checksum for the referenced bytes.
+// Which out-of-band URLs become attachments. A URL is never a checksum for the referenced bytes.
 namespace OobMediaPolicy {
 
 inline QUrl normalizedHttpSource(const QString &source)
@@ -21,7 +21,7 @@ inline QUrl normalizedHttpSource(const QString &source)
 
 struct Candidate {
     QString original;
-    QUrl    source; // Invalid for non-HTTP URLs, retained by the normalizer
+    QUrl    source;    // invalid for non-HTTP URLs, which stay plain links
     bool    redundant; // already a SIMS source or repeated in OOB
 };
 
