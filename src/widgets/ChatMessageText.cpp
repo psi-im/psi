@@ -10,8 +10,8 @@
 #include <QTextCursor>
 #include <QTextFragment>
 #include <QTextImageFormat>
-#include <QTextObjectInterface>
 #include <QTimer>
+#include <QUrl>
 #include <QVector>
 #include <QApplication>
 #include <QMouseEvent>
