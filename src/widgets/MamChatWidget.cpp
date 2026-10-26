@@ -1795,16 +1795,15 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
         quint64 autoLimit; // see FileSharingManager::autoDownloadLimit()
     };
     QList<BinaryAttachment> files;
-    // Redraws this row, e.g. once a share is checked or downloaded. Connect it
-    // queued to item signals, which can come while the row is being built.
-    const auto rowChanged = [self = QPointer<MamChatWidget>(this), key = items_.at(index).key] {
+    // Builds this row again where a share's state decides between a card and
+    // the text. Connect it queued to item signals, which can come while the
+    // row is being built.
+    const auto rowRebuilt = [self = QPointer<MamChatWidget>(this), key = items_.at(index).key] {
         if (!self)
             return;
         const int at = self->indexOfKey(key);
-        if (at >= 0) {
-            const int logical = self->historySource_.logicalIndex(at);
-            self->itemsChanged(logical, logical);
-        }
+        if (at >= 0)
+            self->replaceRow(at);
     };
     if (!retracted && mediaOpener_) {
         static const QRegularExpression tagRx(QStringLiteral(R"(<share\s+([^<>]*?)/>)"));
@@ -1837,8 +1836,14 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
             if (mime.startsWith(QLatin1String("audio/")) || mime.startsWith(QLatin1String("video/"))
                 || (image && (item->isCached() || item->downloadsItself(autoLimit)))) {
                 if (image && !item->isCached()) {
-                    connect(item, &FileSharingItem::remoteChecked, body, rowChanged, Qt::QueuedConnection);
-                    connect(item, &FileSharingItem::downloadFinished, body, rowChanged, Qt::QueuedConnection);
+                    // The text draws the image once downloaded. A file that
+                    // turns out too large, or fails, becomes a card instead.
+                    const auto toCard = [guard = QPointer<FileSharingItem>(item), autoLimit, rowRebuilt] {
+                        if (guard && !guard->isCached() && !guard->downloadsItself(autoLimit))
+                            rowRebuilt();
+                    };
+                    connect(item, &FileSharingItem::remoteChecked, body, toCard, Qt::QueuedConnection);
+                    connect(item, &FileSharingItem::downloadFinished, body, toCard, Qt::QueuedConnection);
                 }
                 continue;
             }
@@ -1929,7 +1934,7 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
             // Where the message lets files download by themselves, ask the
             // server what this one is; the card shows the answer.
             if (file.item->isUrlOnly() && file.autoLimit && !file.item->isRemoteChecked()) {
-                connect(file.item.data(), &FileSharingItem::remoteChecked, preview, rowChanged, Qt::QueuedConnection);
+                connect(file.item.data(), &FileSharingItem::remoteChecked, preview, rowRebuilt, Qt::QueuedConnection);
                 file.item->checkRemote();
             }
 
@@ -1943,9 +1948,20 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
             const QUrl source = file.url;
             const QString accountId = file.account;
             const QPointer<FileSharingItem> item = file.item;
+            const QPointer<MamChatWidget> self(this);
             const QPointer<QLabel> statusGuard(status);
-            const QPointer<QToolButton> downloadGuard(download), openGuard(open), revealGuard(reveal), copyGuard(copy),
-                cancelGuard(cancel);
+            const QPointer<QToolButton> downloadGuard(download), openGuard(open), revealGuard(reveal),
+                copyGuard(copy), cancelGuard(cancel);
+            const QString rowKey = items_.at(index).key;
+            const auto rowChanged = [self, rowKey] {
+                if (!self)
+                    return;
+                const int at = self->indexOfKey(rowKey);
+                if (at >= 0) {
+                    const int logical = self->historySource_.logicalIndex(at);
+                    self->itemsChanged(logical, logical);
+                }
+            };
             const auto finished = [item, statusGuard, downloadGuard, openGuard, revealGuard, copyGuard,
                                    cancelGuard, rowChanged](const QString &path, const QString &error,
                                                              bool permanent) {

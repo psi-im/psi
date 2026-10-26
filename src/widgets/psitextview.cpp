@@ -184,6 +184,8 @@ span.emojis {
 
                   // otherwise we have to download it
                   connect(item, &FileSharingItem::downloadFinished, this, [this, anchorName, url, item, insertAfter]() {
+                      if (!item->isCached())
+                          return; // failed; the link stays until a download succeeds
                       item->disconnect(this);
                       document()->addResource(QTextDocument::ImageResource, url, item->preview(QSize(640, 480)));
                       auto        prevCur = textCursor();

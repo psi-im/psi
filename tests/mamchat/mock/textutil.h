@@ -8,4 +8,5 @@ inline QString sizeUnit(qlonglong, qlonglong *div)
     return QStringLiteral("B");
 }
 inline QString roundedNumber(qint64 size, qlonglong div) { return QString::number(size / div); }
+inline QString escape(const QString &plain) { return plain.toHtmlEscaped(); }
 }
