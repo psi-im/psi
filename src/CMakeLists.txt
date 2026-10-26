@@ -432,9 +432,6 @@ add_executable(${PROJECT_NAME}
     ${RC_FILE}
 )
 
-# qite's QTextFormat properties must not overlap Psi's rich-text properties.
-target_compile_definitions(${PROJECT_NAME} PRIVATE QITE_FIRST_USER_PROPERTY=0x1000)
-
 #Generate .rc file for windows with Qt6
 #[[if(WIN32 AND (${QT_DEFAULT_MAJOR_VERSION} GREATER_EQUAL 6))
     set_target_properties(${PROJECT_NAME} PROPERTIES

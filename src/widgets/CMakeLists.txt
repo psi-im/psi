@@ -5,6 +5,17 @@ unset(UI_FORMS)
 unset(EXTRA_LDFLAGS)
 
 set(SOURCES
+    LongListWidget.cpp
+    OverlayScrollBarManager.cpp
+    ThinSplitter.cpp
+    NativeChatThemeRegistry.cpp
+    ChatMessageText.cpp
+    MessagePreview.cpp
+    LinkButton.cpp
+    MamChatWidget.cpp
+    MamImageViewer.cpp
+    MamHistorySource.cpp
+    LongListWidgetLayout.cpp
     busywidget.cpp
     emojiregistry.cpp
     eventnotifier.cpp
@@ -30,6 +41,16 @@ set(SOURCES
 )
 
 set(HEADERS
+    LongListWidget.h
+    OverlayScrollBarManager.h
+    ThinSplitter.h
+    NativeChatThemeRegistry.h
+    ChatMessageText.h
+    MessagePreview.h
+    LinkButton.h
+    MamChatWidget.h
+    MamImageViewer.h
+    MamHistorySource.h
     actionlineedit.h
     busywidget.h
     emojiregistry.h
@@ -79,6 +100,9 @@ set(FORMS
 
 qt_wrap_ui(UI_FORMS ${FORMS})
 add_library(widgets STATIC ${SOURCES} ${HEADERS} ${UI_FORMS})
+# Share qite's property range with the application, which builds qite itself.
+# Its QTextFormat properties must not overlap Psi's rich-text properties.
+target_compile_definitions(widgets PUBLIC QITE_FIRST_USER_PROPERTY=0x1000)
 if(WIN32)
 target_link_libraries(widgets shlwapi)
 endif()

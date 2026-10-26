@@ -103,18 +103,8 @@ list(APPEND HEADERS
     captchadlg.h
     changepwdlg.h
     chatdlg.h
-    widgets/LongListWidget.h
-    widgets/OverlayScrollBarManager.h
-    widgets/ThinSplitter.h
-    widgets/NativeChatThemeRegistry.h
     nativechattheme.h
-    widgets/ChatMessageText.h
-    widgets/MessagePreview.h
-    widgets/LinkButton.h
     chatreply.h
-    widgets/MamChatWidget.h
-    widgets/MamImageViewer.h
-    widgets/MamHistorySource.h
     chateditproxy.h
     chatsplitter.h
     chatview.h
@@ -378,19 +368,8 @@ list(APPEND SOURCES
     captchadlg.cpp
     changepwdlg.cpp
     chatdlg.cpp
-    widgets/LongListWidget.cpp
-    widgets/LongListWidgetLayout.cpp
-    widgets/OverlayScrollBarManager.cpp
-    widgets/ThinSplitter.cpp
-    widgets/NativeChatThemeRegistry.cpp
     nativechattheme.cpp
-    widgets/ChatMessageText.cpp
-    widgets/MessagePreview.cpp
-    widgets/LinkButton.cpp
     chatreply.cpp
-    widgets/MamChatWidget.cpp
-    widgets/MamImageViewer.cpp
-    widgets/MamHistorySource.cpp
     chateditproxy.cpp
     chatsplitter.cpp
     chatviewcommon.cpp
