@@ -411,12 +411,14 @@ public:
 
     Q_INVOKABLE void replyMessage(const QString &messageId, const QString &quotedHtml)
     {
+        Q_UNUSED(messageId);
         auto plainText = TextUtil::rich2plain(quotedHtml);
         emit _view->quote(plainText);
     }
 
     Q_INVOKABLE void copyMessage(const QString &messageId, const QString &html)
     {
+        Q_UNUSED(messageId);
         auto plainText = TextUtil::rich2plain(html);
         QApplication::clipboard()->setText(plainText);
     }
@@ -485,6 +487,8 @@ protected:
     using QWebEnginePage::QWebEnginePage;
     bool acceptNavigationRequest(const QUrl &url, NavigationType type, bool isMainFrame)
     {
+        Q_UNUSED(type);
+        Q_UNUSED(isMainFrame);
         DesktopUtil::openUrl(url);
         deleteLater();
         return false;
@@ -505,7 +509,7 @@ protected:
         return true;
     }
 
-    QWebEnginePage *createWindow(WebWindowType type) { return new ExtBrowserPage(); }
+    QWebEnginePage *createWindow(WebWindowType) { return new ExtBrowserPage(); }
 };
 #else
 
@@ -514,6 +518,8 @@ protected:
     using QWebPage::QWebPage;
     bool acceptNavigationRequest(const QUrl &url, NavigationType type, bool isMainFrame)
     {
+        Q_UNUSED(type);
+        Q_UNUSED(isMainFrame);
         DesktopUtil::openUrl(url);
         deleteLater();
         return false;
@@ -551,7 +557,7 @@ protected:
         return true;
     }
 
-    QWebPage *createWindow(WebWindowType type) { return new ExtBrowserPage(); }
+    QWebPage *createWindow(WebWindowType) { return new ExtBrowserPage(); }
 };
 
 #endif
