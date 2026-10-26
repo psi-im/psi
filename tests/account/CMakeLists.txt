@@ -52,6 +52,30 @@ if(ACCOUNT_IRIS_TARGET)
     if(TARGET iris AND TARGET irisnet)
         set(ACCOUNT_IRIS_STATIC_CYCLE $<TARGET_FILE:irisnet> $<TARGET_FILE:iris>)
     endif()
+
+    if(IRIS_ENABLE_OMEMO)
+        find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Sql)
+        add_executable(account_omemo_storage_test omemostoragetest.cpp ../../src/psiomemostorage.cpp)
+        target_compile_definitions(account_omemo_storage_test PRIVATE IRIS_ENABLE_OMEMO)
+        set_target_properties(account_omemo_storage_test PROPERTIES AUTOMOC ON)
+        target_include_directories(account_omemo_storage_test PRIVATE ../../src)
+        target_link_libraries(account_omemo_storage_test PRIVATE ${ACCOUNT_IRIS_TARGET}
+            ${ACCOUNT_IRIS_STATIC_CYCLE} Qt${QT_DEFAULT_MAJOR_VERSION}::Sql Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+        add_test(NAME account_omemo_storage COMMAND account_omemo_storage_test)
+        set_tests_properties(account_omemo_storage PROPERTIES TIMEOUT 15)
+
+        # Reuse Iris's network-free PEP fixture when its sources are available.
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../iris/tests/jingle/omemoelement.cpp")
+            add_executable(account_omemo_exchange_test omemostorageexchange.cpp ../../src/psiomemostorage.cpp)
+            target_compile_definitions(account_omemo_exchange_test PRIVATE IRIS_ENABLE_OMEMO)
+            target_include_directories(account_omemo_exchange_test PRIVATE ../../src)
+            target_link_libraries(account_omemo_exchange_test PRIVATE ${ACCOUNT_IRIS_TARGET}
+                ${ACCOUNT_IRIS_STATIC_CYCLE} Qt${QT_DEFAULT_MAJOR_VERSION}::Sql)
+            add_test(NAME account_omemo_exchange COMMAND account_omemo_exchange_test)
+            set_tests_properties(account_omemo_exchange PROPERTIES TIMEOUT 30)
+        endif()
+    endif()
+
     # Disk-cache reader uses real Iris modern and legacy vCard parsers.
     find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Xml)
     add_executable(account_vcard_disk_cache_test vcarddiskcachetest.cpp ../../src/vcardfactory_data.cpp)

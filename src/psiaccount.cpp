@@ -3078,8 +3078,9 @@ void PsiAccount::client_messageReceived(const Message &m)
     // plaintext message. The prompt itself is queued by the controller.
     if (d->encryptionController) {
         if (const auto *metadata = d->client->currentEncryptionMetadata(); metadata && !metadata->methodId.isEmpty()) {
-            d->encryptionController->requestTrustDecision(metadata->methodId, metadata->sender, false,
-                                                          findChatDialog(metadata->sender));
+            d->encryptionController->requestTrustDecision(
+                metadata->methodId, metadata->sender, false, findChatDialog(metadata->sender), {},
+                metadata->senderDeviceId, metadata->details.value(QStringLiteral("omemoProtocol")).toString());
         }
     }
 
