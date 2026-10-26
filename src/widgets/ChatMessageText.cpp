@@ -109,12 +109,15 @@ void ChatMessageText::isolateLargeMedia()
                     if (height <= 0) {
                         const auto resource = doc->resource(QTextDocument::ImageResource, QUrl(image.name()));
                         const auto bitmap = resource.value<QImage>();
-                        if (!bitmap.isNull())
-                            height = bitmap.height();
+                        if (!bitmap.isNull()) {
+                            height = image.width() > 0 && bitmap.width() > 0
+                                ? qreal(bitmap.height()) * image.width() / bitmap.width()
+                                : bitmap.height();
+                        }
                     }
                 } else if (auto *handler = doc->documentLayout()->handlerForObject(format.objectType())) {
-                    if (auto *object = qobject_cast<QTextObjectInterface *>(handler))
-                        height = object->intrinsicSize(doc, position, format).height();
+                    // handlerForObject already returns QTextObjectInterface* in Qt5/Qt6.
+                    height = handler->intrinsicSize(doc, position, format).height();
                 }
                 if (height > threshold)
                     mediaPositions.append(position);
