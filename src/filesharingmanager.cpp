@@ -30,11 +30,14 @@
 #include "fileutil.h"
 #include "httputil.h"
 #include "mediachunkcache.h"
+#include "mediadownloadpolicy.h"
 #include "messageattachments.h"
 #include "oobmediapolicy.h"
 #include "psiaccount.h"
 #include "psicon.h"
+#include "psicontact.h"
 #include "psicontactlist.h"
+#include "psioptions.h"
 #include "qitemedia.h"
 #include <QFile>
 
@@ -335,6 +338,9 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
     auto       attachments = collected.attachments;
     if (attachments.isEmpty() && collected.links.isEmpty())
         return;
+    // Views may download attachments by themselves only up to this size.
+    const quint64 autoLimit = autoDownloadLimit(m, acc);
+    const QString autoAttr  = autoLimit ? QString::fromLatin1(" auto=\"%1\"").arg(autoLimit) : QString();
 
     QString tailReferences;
     QString desc = m.body();
@@ -412,16 +418,16 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
                 refText = url.toString(QUrl::FullyEncoded);
 
             QString shareStr(
-                QString::fromLatin1("<share id=\"%1\" account=\"%2\" text=\"%3\"/>")
-                    .arg(item->sums()[0].toString(), TextUtil::escape(acc->id()), TextUtil::escape(refText)));
+                QString::fromLatin1("<share id=\"%1\" account=\"%2\" text=\"%3\"%4/>")
+                    .arg(item->sums()[0].toString(), TextUtil::escape(acc->id()), TextUtil::escape(refText), autoAttr));
 
             // add text before reference
             htmlDesc += TextUtil::linkify(TextUtil::plain2rich(desc.mid(lastEnd, r.begin() - lastEnd)));
             htmlDesc += shareStr; // something instead of link
             lastEnd = r.end() + 1;
         } else {
-            tailReferences += QString::fromLatin1("<share id=\"%1\" account=\"%2\"/>")
-                                  .arg(item->sums()[0].toString(), TextUtil::escape(acc->id()));
+            tailReferences += QString::fromLatin1("<share id=\"%1\" account=\"%2\"%3/>")
+                                  .arg(item->sums()[0].toString(), TextUtil::escape(acc->id()), autoAttr);
         }
     }
     if (lastEnd < desc.size()) {
@@ -438,6 +444,27 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
     }
     // qDebug() << "HTML:" << htmlDesc;
     mv.setHtml(htmlDesc);
+}
+
+quint64 FileSharingManager::autoDownloadLimit(const Message &m, PsiAccount *acc) const
+{
+    if (!acc)
+        return 0;
+    auto                         *o = PsiOptions::instance();
+    MediaDownloadPolicy::Settings settings;
+    settings.previews  = o->getOption("options.ui.chat.show-previews").toBool();
+    settings.chatLimit = quint64(qMax<qlonglong>(0, o->getOption("options.ui.chat.auto-download-size").toLongLong()));
+    settings.groupchatLimit
+        = quint64(qMax<qlonglong>(0, o->getOption("options.ui.chat.groupchat-auto-download-size").toLongLong()));
+
+    const bool groupchat = m.type() == Message::Type::Groupchat;
+    // Our own messages, sent from here or another device, and roster contacts.
+    bool trusted = m.from().isEmpty() || m.from().bare() == acc->jid().bare();
+    if (!trusted && !groupchat) {
+        const PsiContact *contact = acc->findContact(m.from().withResource({}));
+        trusted                   = contact && contact->inList() && !contact->isPrivate();
+    }
+    return MediaDownloadPolicy::limit(settings, groupchat, trusted);
 }
 
 bool FileSharingManager::jingleAutoAcceptIncomingDownloadRequest(Jingle::Session *session)
@@ -561,22 +588,17 @@ QIODevice *FileSharingDeviceOpener::open(QUrl &url)
         url = QUrl::fromLocalFile(item->fileName());
         return nullptr;
     }
-    if (item->isUrlOnly()) {
-        // Hashless OOB shares cannot use a verified chunk stream. The existing
-        // media player can open their HTTP origin directly, without creating
-        // a second backend or treating the URL identity as a checksum.
-        const QUrl direct = item->simpleSource();
-        if (!direct.isValid())
+    // Hashless OOB shares have no verified chunk stream. They are streamed
+    // through Psi's network access and its proxy like other shares, never
+    // handed to the player as their remote origin.
+    if (!item->isUrlOnly()) {
+        FileSharingChunkSource::configure(item);
+        const auto localFile = FileSharingChunkSource::localFile(item);
+        if (!localFile.isEmpty()) {
+            qInfo() << "[media] opening completed shared file" << sourceId.toString();
+            url = QUrl::fromLocalFile(localFile);
             return nullptr;
-        url = direct;
-        return nullptr;
-    }
-    FileSharingChunkSource::configure(item);
-    const auto localFile = FileSharingChunkSource::localFile(item);
-    if (!localFile.isEmpty()) {
-        qInfo() << "[media] opening completed shared file" << sourceId.toString();
-        url = QUrl::fromLocalFile(localFile);
-        return nullptr;
+        }
     }
 
 #ifdef HAVE_WEBSERVER
@@ -592,7 +614,7 @@ QIODevice *FileSharingDeviceOpener::open(QUrl &url)
     return nullptr;
 #else
 #ifndef Q_OS_WIN
-    QUrl simplelUrl = item->simpleSource();
+    QUrl simplelUrl = item->isUrlOnly() ? QUrl() : item->simpleSource();
     if (simplelUrl.isValid()) {
         url = simplelUrl;
         return nullptr;

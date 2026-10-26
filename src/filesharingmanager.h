@@ -97,6 +97,9 @@ public:
     // objects, other OOB URLs as links) in its view. The message is not changed.
     void fillMessageView(MessageView &mv, const XMPP::Message &m, PsiAccount *acc);
 
+    // The largest attachment of the message the view may download by itself, 0 for none.
+    quint64 autoDownloadLimit(const XMPP::Message &m, PsiAccount *acc) const;
+
     // returns false if unable to accept automatically
     bool jingleAutoAcceptIncomingDownloadRequest(XMPP::Jingle::Session *session);
 

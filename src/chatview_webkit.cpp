@@ -105,7 +105,8 @@ public:
 
     QString prepareShares(const QString &msg)
     {
-        static QRegularExpression re("<share id=\"([^\"]+)\"(?: +account=\"[^\"]*\")?(?: +text=\"([^\"]+)\")?/>");
+        static QRegularExpression re(
+            "<share id=\"([^\"]+)\"(?: +account=\"[^\"]*\")?(?: +text=\"([^\"]*)\")?(?: +auto=\"(\\d+)\")?/>");
         int                       post = 0;
         QString                   ret;
         auto                      it = re.globalMatch(msg);
@@ -117,7 +118,19 @@ public:
             auto item  = account_->psi()->fileSharingManager()->item(id, account_);
 
             ret.append(QStringView { msg }.mid(post, match.capturedStart(0) - post));
-            if (item) {
+            // The page loads what a <share> names by itself, without a size
+            // limit. What may not download by itself here stays a link.
+            const quint64 autoLimit = match.captured(3).toULongLong();
+            if (item && !item->isCached()
+                && (item->isUrlOnly()
+                    || (item->mimeType().startsWith(QLatin1String("image/")) && !item->downloadsItself(autoLimit)))) {
+                const QUrl    web  = item->simpleSource();
+                const QString name = TextUtil::escape(item->displayName());
+                ret.append(
+                    web.isValid()
+                        ? QString("<a href=\"%1\">%2</a>").arg(TextUtil::escape(web.toString(QUrl::FullyEncoded)), name)
+                        : name);
+            } else if (item) {
                 auto    vm = item->metaData();
                 QString attrs;
                 attrs += QString(" id=\"%1\"").arg(idStr);

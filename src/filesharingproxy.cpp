@@ -144,7 +144,9 @@ public:
     {
         const auto size = item->fileSize();
         const auto hash = item->sums().value(0);
-        if (!size || !*size || *size > quint64(std::numeric_limits<qint64>::max()) || hash.data().isEmpty()
+        // A URL-only share's first sum names its address, not its content.
+        if (item->isUrlOnly() || !size || !*size || *size > quint64(std::numeric_limits<qint64>::max())
+            || hash.data().isEmpty()
             || (!item->mimeType().startsWith(QLatin1String("video/"))
                 && !item->mimeType().startsWith(QLatin1String("audio/"))))
             return false;

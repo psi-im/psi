@@ -116,6 +116,18 @@ public:
 
     QUrl simpleSource() const;
 
+    // The type and size of a URL-only file, asked from its server once with a
+    // HEAD request; remoteChecked() tells when the answer is in.
+    void checkRemote();
+    bool isRemoteChecked() const { return _remoteCheck == RemoteCheck::Done; }
+    // Downloads into the cache what is known to fit within limit: by its
+    // declared size or, for URL-only files, by checkRemote(). The transfer
+    // stops if the file turns out larger. Without a known size nothing is
+    // downloaded, and after a failure nothing is tried again unasked.
+    void autoDownload(quint64 limit);
+    // Whether autoDownload(limit) brings, or may still bring, the file into the cache.
+    bool downloadsItself(quint64 limit) const;
+
 private:
     friend class FileSharingManager;
     FileSharingItem(const QUrl &url, const XMPP::Hash &identity, PsiAccount *acc, FileSharingManager *manager,
@@ -126,12 +138,18 @@ private:
     QPointer<FileSharingPublication> _publication;
     bool                             _published = false;
     bool                             _urlOnly = false;
+    enum class RemoteCheck { NotStarted, Running, Done };
+    RemoteCheck                      _remoteCheck      = RemoteCheck::NotStarted;
+    quint64                          _pendingAutoLimit = 0; // autoDownload() waiting for checkRemote()
+    bool                             _autoDownloading  = false;
+    bool                             _autoFailed       = false;
     bool                             initFromCache(FileCacheItem *cache = nullptr);
 
 signals:
     void publishFinished();
     void publishProgress(size_t transferredBytes);
     void downloadFinished();
+    void remoteChecked();
     void logChanged();
 
 private:

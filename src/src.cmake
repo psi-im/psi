@@ -157,6 +157,7 @@ list(APPEND HEADERS
     filesharinghashjob.h
     filesharingmanager.h
     oobmediapolicy.h
+    mediadownloadpolicy.h
     messageattachments.h
     filesharingproxy.h
     filesharingurl.h

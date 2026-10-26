@@ -1784,24 +1784,38 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     if (!retracted && !mv.formattedUserText().isEmpty())
         richText += (richText.isEmpty() ? QString() : QStringLiteral(" — ")) + mv.formattedUserText();
     // The rich-text document can paint inline media, but not arbitrary QWidget
-    // attachments. Extract *only* non-media SIMS shares into native cards.
-    // Keep unknown shares in the text so an unavailable account/item does not
-    // silently erase the sender's fallback text.
+    // attachments. Extract non-media shares, and images that are not going to
+    // be downloaded by themselves, into native cards. Keep unknown shares in
+    // the text so an unavailable account/item does not silently erase the
+    // sender's fallback text.
     struct BinaryAttachment {
         QPointer<FileSharingItem> item;
         QUrl url;
         QString account;
+        quint64 autoLimit; // see FileSharingManager::autoDownloadLimit()
     };
     QList<BinaryAttachment> files;
+    // Redraws this row, e.g. once a share is checked or downloaded. Connect it
+    // queued to item signals, which can come while the row is being built.
+    const auto rowChanged = [self = QPointer<MamChatWidget>(this), key = items_.at(index).key] {
+        if (!self)
+            return;
+        const int at = self->indexOfKey(key);
+        if (at >= 0) {
+            const int logical = self->historySource_.logicalIndex(at);
+            self->itemsChanged(logical, logical);
+        }
+    };
     if (!retracted && mediaOpener_) {
         static const QRegularExpression tagRx(QStringLiteral(R"(<share\s+([^<>]*?)/>)"));
-        static const QRegularExpression attrRx(QStringLiteral(R"attr((id|account)\s*=\s*"([^"]*)")attr"));
+        static const QRegularExpression attrRx(QStringLiteral(R"attr((id|account|auto)\s*=\s*"([^"]*)")attr"));
         auto matches = tagRx.globalMatch(richText);
         QString stripped;
         int consumed = 0;
         while (matches.hasNext()) {
             const auto match = matches.next();
             QString id, account;
+            quint64 autoLimit = 0;
             auto attributes = attrRx.globalMatch(match.captured(1));
             while (attributes.hasNext()) {
                 const auto attr = attributes.next();
@@ -1809,13 +1823,25 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
                     id = attr.captured(2);
                 else if (attr.captured(1) == QLatin1String("account"))
                     account = attr.captured(2);
+                else if (attr.captured(1) == QLatin1String("auto"))
+                    autoLimit = attr.captured(2).toULongLong();
             }
             FileSharingDeviceOpener *opener = id.isEmpty() ? nullptr : mediaOpener_->forAccount(account);
             FileSharingItem *item = opener ? opener->sharedItem(id) : nullptr;
-            if (!item || item->mimeType().startsWith(QLatin1String("audio/"))
-                || item->mimeType().startsWith(QLatin1String("video/"))
-                || item->mimeType().startsWith(QLatin1String("image/")))
+            if (!item)
                 continue;
+            // Audio and video have their players in the text. An image is drawn
+            // there once cached, or while it downloads by itself.
+            const QString mime = item->mimeType();
+            const bool image = mime.startsWith(QLatin1String("image/"));
+            if (mime.startsWith(QLatin1String("audio/")) || mime.startsWith(QLatin1String("video/"))
+                || (image && (item->isCached() || item->downloadsItself(autoLimit)))) {
+                if (image && !item->isCached()) {
+                    connect(item, &FileSharingItem::remoteChecked, body, rowChanged, Qt::QueuedConnection);
+                    connect(item, &FileSharingItem::downloadFinished, body, rowChanged, Qt::QueuedConnection);
+                }
+                continue;
+            }
             stripped += richText.mid(consumed, match.capturedStart() - consumed);
             consumed = match.capturedEnd();
             QUrl source(QStringLiteral("share:") + id);
@@ -1824,7 +1850,7 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
                 query.addQueryItem(QStringLiteral("account"), account);
                 source.setQuery(query);
             }
-            files.append({ item, source, account });
+            files.append({ item, source, account, autoLimit });
         }
         if (!files.isEmpty()) {
             stripped += richText.mid(consumed);
@@ -1881,6 +1907,13 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
             auto *open = button(QStyle::SP_DialogOpenButton, tr("Open file"));
             auto *reveal = button(QStyle::SP_DirOpenIcon, tr("Show in file manager"));
             auto *copy = button(QStyle::SP_FileDialogDetailedView, tr("Copy file path"));
+            // An HTTP(S) source opens in the browser without downloading here.
+            const QUrl web = file.item->simpleSource();
+            if (web.scheme() == QLatin1String("http") || web.scheme() == QLatin1String("https")) {
+                auto *browser = button(QStyle::SP_DirLinkIcon, tr("Open in browser"));
+                browser->setIcon(QIcon::fromTheme(QStringLiteral("internet-web-browser"), browser->icon()));
+                connect(browser, &QToolButton::clicked, this, [web] { QDesktopServices::openUrl(web); });
+            }
             auto *cancel = button(QStyle::SP_DialogCancelButton, tr("Cancel download"));
             cancel->hide();
             controls->addStretch();
@@ -1893,6 +1926,12 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
             status->setWordWrap(true);
             actions->addWidget(status);
             preview->setFooter(footer);
+            // Where the message lets files download by themselves, ask the
+            // server what this one is; the card shows the answer.
+            if (file.item->isUrlOnly() && file.autoLimit && !file.item->isRemoteChecked()) {
+                connect(file.item.data(), &FileSharingItem::remoteChecked, preview, rowChanged, Qt::QueuedConnection);
+                file.item->checkRemote();
+            }
 
             QString saved = file.item->property("_psiSavedFilePath").toString();
             if (!QFileInfo(saved).isFile())
@@ -1904,20 +1943,9 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
             const QUrl source = file.url;
             const QString accountId = file.account;
             const QPointer<FileSharingItem> item = file.item;
-            const QPointer<MamChatWidget> self(this);
             const QPointer<QLabel> statusGuard(status);
-            const QPointer<QToolButton> downloadGuard(download), openGuard(open), revealGuard(reveal),
-                copyGuard(copy), cancelGuard(cancel);
-            const QString rowKey = items_.at(index).key;
-            const auto rowChanged = [self, rowKey] {
-                if (!self)
-                    return;
-                const int at = self->indexOfKey(rowKey);
-                if (at >= 0) {
-                    const int logical = self->historySource_.logicalIndex(at);
-                    self->itemsChanged(logical, logical);
-                }
-            };
+            const QPointer<QToolButton> downloadGuard(download), openGuard(open), revealGuard(reveal), copyGuard(copy),
+                cancelGuard(cancel);
             const auto finished = [item, statusGuard, downloadGuard, openGuard, revealGuard, copyGuard,
                                    cancelGuard, rowChanged](const QString &path, const QString &error,
                                                              bool permanent) {

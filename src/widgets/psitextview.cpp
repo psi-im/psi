@@ -146,12 +146,17 @@ span.emojis {
               auto item = opener->sharedItem(id);
               if (!item)
                   return { QTextCharFormat(), "" };
+              // Downloaded by itself only as far as the message allows,
+              // see FileSharingManager::autoDownloadLimit().
+              const quint64 autoLimit = attrs.value(QLatin1String("auto")).toULongLong();
 
               if (item->mimeType().startsWith(QLatin1String("audio/"))) {
+                  item->autoDownload(autoLimit);
                   return { d->voiceMsgCtrl->makeFormat(source, opener, true), "" };
               }
 
               if (item->mimeType().startsWith(QLatin1String("video/"))) {
+                  item->autoDownload(autoLimit);
                   return { d->videoCtrl->makeFormat(source, opener, QSize(320, 220), true), "" };
               }
 
@@ -204,16 +209,7 @@ span.emojis {
                           QTimer::singleShot(0, this, &PsiTextView::scrollToBottom);
                       setTextCursor(prevCur);
                   });
-                  // A bare OOB URL is fetched only when the user asks: anyone
-                  // can send one, and nothing tells its size in advance.
-                  if (!item->isUrlOnly()) {
-                      auto downloader = item->download();
-                      downloader->setSelfDelete(true);
-                      // read just for cache
-                      connect(downloader, &FileShareDownloader::readyRead, this,
-                              [downloader]() { downloader->read(downloader->bytesAvailable()); });
-                      downloader->open();
-                  }
+                  item->autoDownload(autoLimit);
 
                   QString sizeStr;
                   if (item->fileSize()) {
@@ -221,20 +217,28 @@ span.emojis {
                       QString   unit = TextUtil::sizeUnit(qlonglong(*item->fileSize()), &div);
                       sizeStr        = TextUtil::roundedNumber(qint64(*item->fileSize()), div) + unit;
                   } else {
-                      sizeStr = QLatin1String("stream");
+                      sizeStr = item->isUrlOnly() ? tr("unknown size") : QStringLiteral("stream");
                   }
 
+                  const QString label
+                      = QString("%1 (%2, %3)")
+                            .arg(TextUtil::escape(item->displayName()), TextUtil::escape(item->mimeType()), sizeStr);
                   QUrl simpleUrl = item->simpleSource();
                   if (simpleUrl.isValid()) {
                       return { QTextCharFormat(),
-                               QString("<marker id=\"%1/start\"><a href=\"%2\">%3 (%4, %5)</a><marker id=\"%6/end\">")
-                                   .arg(anchorName, simpleUrl.toString(QUrl::FullyEncoded), simpleUrl.toString(),
-                                        item->mimeType(), sizeStr, anchorName) };
+                               QString("<marker id=\"%1/start\"><a href=\"%2\">%3</a><marker id=\"%4/end\">")
+                                   .arg(anchorName, TextUtil::escape(simpleUrl.toString(QUrl::FullyEncoded)), label,
+                                        anchorName) };
                   }
 
                   return { QTextCharFormat(),
-                           QString("<marker id=\"%1/start\">Shared media is downloading (%2, %3)<marker id=\"%4/end\">")
-                               .arg(anchorName, item->mimeType(), sizeStr, anchorName) };
+                           QString("<marker id=\"%1/start\">%2<marker id=\"%3/end\">")
+                               .arg(anchorName,
+                                    item->downloadsItself(autoLimit)
+                                        ? tr("Shared media is downloading (%1, %2)")
+                                              .arg(TextUtil::escape(item->mimeType()), sizeStr)
+                                        : label,
+                                    anchorName) };
               }
 
               // Other files: a link to the source, or at least the name.

@@ -1,11 +1,23 @@
 #include "opt_messages_common.h"
 
+#include "mediadownloadpolicy.h"
+
 #include "psioptions.h"
 #include "ui_opt_messages_common.h"
 
+#include <QLocale>
 #include <QWidget>
 
 static const QStringList clickActList = { "none", "hide", "close", "detach" };
+
+static QString autoDownloadText(quint64 size)
+{
+    if (!size)
+        return OptionsTabMsgCommon::tr("Never, only when asked");
+    // Whole units for the offered sizes, exact ones for a size set by hand.
+    const int precision = MediaDownloadPolicy::choices().contains(size) ? 0 : 2;
+    return OptionsTabMsgCommon::tr("Up to %1").arg(QLocale().formattedDataSize(qint64(size), precision));
+}
 
 class OptMsgCommonUI : public QWidget, public Ui::OptMsgCommon {
 public:
@@ -39,6 +51,20 @@ QWidget *OptionsTabMsgCommon::widget()
     d->ck_tabChats->setToolTip(tr("Makes Psi open chats in a tabbed window."));
     d->ck_showPreviews->setToolTip(tr("Show under links to some media content preview of the content."
                                       " It's also possible to play audio and video right in chat."));
+    for (auto *combo : { d->cb_autoDownloadChats, d->cb_autoDownloadGroupchats }) {
+        for (const quint64 size : MediaDownloadPolicy::choices())
+            combo->addItem(autoDownloadText(size), qulonglong(size));
+        connect(d->ck_showPreviews, &QCheckBox::toggled, combo, &QComboBox::setEnabled);
+    }
+    connect(d->ck_showPreviews, &QCheckBox::toggled, d->lb_autoDownloadChats, &QLabel::setEnabled);
+    connect(d->ck_showPreviews, &QCheckBox::toggled, d->lb_autoDownloadGroupchats, &QLabel::setEnabled);
+    d->cb_autoDownloadChats->setToolTip(
+        tr("Pictures, voice messages and other media from contacts in your roster, and from your own other"
+           " devices, are downloaded and shown right away up to this size. Larger files and files from"
+           " anyone else are downloaded only when you ask."));
+    d->cb_autoDownloadGroupchats->setToolTip(
+        tr("Media in group chats is downloaded and shown right away up to this size, whoever sent it."
+           " Larger files are downloaded only when you ask."));
     d->ck_showCounter->setToolTip(tr("Makes Psi show message length counter."
                                      " Check this if you want to know how long is your message."
                                      " Can be useful when you're using SMS transport."));
@@ -101,6 +127,9 @@ void OptionsTabMsgCommon::applyOptions()
     if (d->ck_tabShortcuts->isEnabled())
         o->setOption("options.ui.tabs.use-tab-shortcuts", d->ck_tabShortcuts->isChecked());
     o->setOption("options.ui.chat.show-previews", d->ck_showPreviews->isChecked());
+    // The options tree stores these as int, as declared in default.xml
+    o->setOption("options.ui.chat.auto-download-size", d->cb_autoDownloadChats->currentData().toInt());
+    o->setOption("options.ui.chat.groupchat-auto-download-size", d->cb_autoDownloadGroupchats->currentData().toInt());
     if (d->cb_tabMdlClick->isEnabled())
         o->setOption("options.ui.tabs.mouse-middle-button", d->cb_tabMdlClick->currentText());
     if (d->cb_tabDblClick->isEnabled())
@@ -147,6 +176,22 @@ void OptionsTabMsgCommon::restoreOptions()
     }
     d->ck_tabShortcuts->setChecked(o->getOption("options.ui.tabs.use-tab-shortcuts").toBool());
     d->ck_showPreviews->setChecked(o->getOption("options.ui.chat.show-previews").toBool());
+    const auto selectSize = [](QComboBox *combo, qulonglong size) {
+        int at = combo->findData(size);
+        if (at < 0) { // a size set by hand in the options tree
+            combo->addItem(autoDownloadText(size), size);
+            at = combo->count() - 1;
+        }
+        combo->setCurrentIndex(at);
+    };
+    selectSize(d->cb_autoDownloadChats, o->getOption("options.ui.chat.auto-download-size").toULongLong());
+    selectSize(d->cb_autoDownloadGroupchats,
+               o->getOption("options.ui.chat.groupchat-auto-download-size").toULongLong());
+    const bool previews = d->ck_showPreviews->isChecked();
+    d->lb_autoDownloadChats->setEnabled(previews);
+    d->cb_autoDownloadChats->setEnabled(previews);
+    d->lb_autoDownloadGroupchats->setEnabled(previews);
+    d->cb_autoDownloadGroupchats->setEnabled(previews);
 
     QString clickAct = o->getOption("options.ui.tabs.mouse-middle-button").toString();
     if (clickActList.contains(clickAct))
