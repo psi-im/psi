@@ -1285,42 +1285,74 @@ private slots:
 
     void multipleLargeMediaObjectsGetIndependentParagraphs()
     {
+        FileSharingDeviceOpener opener;
+        opener.accounts.insert(QStringLiteral("account-a"), &opener);
+        FileSharingItem first(QStringLiteral("image/png"));
+        FileSharingItem second(QStringLiteral("image/png"));
+        first.preview_ = QImage(240, 140, QImage::Format_RGB32);
+        second.preview_ = QImage(180, 120, QImage::Format_RGB32);
+        first.preview_.fill(Qt::green);
+        second.preview_.fill(Qt::blue);
+        opener.items.insert(QStringLiteral("first"), &first);
+        opener.items.insert(QStringLiteral("second"), &second);
+
         ChatMessageText body;
-        const int height = qCeil(2.0 * QFontMetricsF(body.font()).height()) + 20;
-        const QString html = QStringLiteral("Before <img src=\"first\" width=\"100\" height=\"%1\"/>"
-                                            "<img src=\"second\" width=\"100\" height=\"%1\"/> after")
-                                 .arg(height);
-        body.setRichText(html);
+        body.setMediaOpener(&opener);
+        body.setRichText(QStringLiteral("Before <share id=\"first\" account=\"account-a\"/>"
+                                        "<share id=\"second\" account=\"account-a\"/> after"));
         const QTextDocument *doc = body.document();
         QCOMPARE(doc->blockCount(), 4);
         QCOMPARE(doc->begin().text(), QStringLiteral("Before "));
-        QCOMPARE(doc->begin().next().text(), QString(QChar::ObjectReplacementCharacter));
-        QCOMPARE(doc->begin().next().next().text(), QString(QChar::ObjectReplacementCharacter));
-        QCOMPARE(doc->begin().next().next().next().text(), QStringLiteral(" after"));
+        const auto firstBlock = doc->begin().next();
+        const auto secondBlock = firstBlock.next();
+        QCOMPARE(firstBlock.text(), QString(QChar::ObjectReplacementCharacter));
+        QCOMPARE(secondBlock.text(), QString(QChar::ObjectReplacementCharacter));
+        QCOMPARE(firstBlock.begin().fragment().charFormat().toImageFormat().name(),
+                 QStringLiteral("share:first"));
+        QCOMPARE(secondBlock.begin().fragment().charFormat().toImageFormat().name(),
+                 QStringLiteral("share:second"));
+        QCOMPARE(secondBlock.next().text(), QStringLiteral(" after"));
     }
 
     void smallInlineMediaStaysWithTextAtDoubleFontThreshold()
     {
+        FileSharingDeviceOpener opener;
+        opener.accounts.insert(QStringLiteral("account-a"), &opener);
+        FileSharingItem image(QStringLiteral("image/png"));
+        image.preview_ = QImage(12, 12, QImage::Format_RGB32);
+        image.preview_.fill(Qt::red);
+        opener.items.insert(QStringLiteral("tiny"), &image);
+
         ChatMessageText body;
-        const int fontLineHeight = body.fontMetrics().height();
-        body.setRichText(QStringLiteral("Before <img src=\"tiny\" width=\"12\" height=\"%1\"/> after")
-                             .arg(fontLineHeight));
+        body.setMediaOpener(&opener);
+        body.setRichText(QStringLiteral("Before <share id=\"tiny\" account=\"account-a\"/> after"));
         QCOMPARE(body.document()->blockCount(), 1);
-        QVERIFY(body.document()->begin().text().startsWith(QStringLiteral("Before ")));
-        QVERIFY(body.document()->begin().text().endsWith(QStringLiteral(" after")));
+        const auto text = body.document()->begin().text();
+        QVERIFY(text.startsWith(QStringLiteral("Before ")));
+        QVERIFY(text.contains(QChar::ObjectReplacementCharacter));
+        QVERIFY(text.endsWith(QStringLiteral(" after")));
     }
 
     void mediaInsertedAfterInitialRenderingAlsoGetsParagraph()
     {
+        FileSharingDeviceOpener opener;
+        opener.accounts.insert(QStringLiteral("account-a"), &opener);
+        FileSharingItem image(QStringLiteral("image/png"));
+        image.preview_ = QImage(12, 12, QImage::Format_RGB32);
+        image.preview_.fill(Qt::red);
+        opener.items.insert(QStringLiteral("tiny"), &image);
+
         ChatMessageText body;
-        body.setRichText(QStringLiteral("Prefix <img src=\"small\" width=\"12\" height=\"12\"/> suffix"));
+        body.setMediaOpener(&opener);
+        body.setRichText(QStringLiteral("Prefix <share id=\"tiny\" account=\"account-a\"/> suffix"));
         QCOMPARE(body.document()->blockCount(), 1);
-        auto fragment = body.document()->begin().begin().fragment();
-        Q_UNUSED(fragment);
-        QTextCursor cursor(body.document());
+
+        // Like PsiTextView's async download callback, replace an existing inline
+        // image object with a bigger decoded preview after initial layout.
         const auto first = body.document()->begin().text();
         const int at = first.indexOf(QChar::ObjectReplacementCharacter);
         QVERIFY(at >= 0);
+        QTextCursor cursor(body.document());
         cursor.setPosition(at);
         cursor.setPosition(at + 1, QTextCursor::KeepAnchor);
         QTextImageFormat largeImage;
@@ -1328,6 +1360,7 @@ private slots:
         largeImage.setWidth(260);
         largeImage.setHeight(150);
         cursor.insertImage(largeImage);
+
         QTRY_COMPARE(body.document()->blockCount(), 3);
         QCOMPARE(body.document()->begin().text(), QStringLiteral("Prefix "));
         QCOMPARE(body.document()->begin().next().text(), QString(QChar::ObjectReplacementCharacter));
