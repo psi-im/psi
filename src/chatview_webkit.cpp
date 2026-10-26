@@ -807,6 +807,7 @@ void ChatView::dispatchMessage(const MessageView &mv)
         m["avatar"]    = ChatViewJSObject::avatarUrl(d->account_->avatarFactory()->userHashes(j).avatar);
         m["nickcolor"] = getMucNickColor(mv.nick(), mv.isLocal());
     }
+        PSI_FALLSTHROUGH; // Join and part share status fields.
     case MessageView::MUCPart:
         m["nopartjoin"] = mv.isJoinLeaveHidden();
         PSI_FALLSTHROUGH; // falls through
@@ -834,6 +835,11 @@ void ChatView::dispatchMessage(const MessageView &mv)
     case MessageView::FileTransferRequest:
     case MessageView::FileTransferFinished:
         break;
+    case MessageView::DeliveryReceipt:
+    case MessageView::DisplayedMarker:
+    case MessageView::MessageSecurity:
+        // These event-only updates have no WebKit message row representation.
+        return;
     }
 
     m["time"]         = mv.dateTime();
