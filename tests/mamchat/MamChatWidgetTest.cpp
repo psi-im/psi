@@ -2051,17 +2051,17 @@ private slots:
         auto *body = list.itemWidget(0)->findChild<ChatMessageText *>();
         auto *target = body->viewport();
         const QPointF start(2, 7);
-        QMouseEvent press(QEvent::MouseButtonPress, start, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+        QMouseEvent press(QEvent::MouseButtonPress, start, target->mapTo(target->window(), (start).toPoint()), target->mapToGlobal((start).toPoint()), Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
         QApplication::sendEvent(target, &press);
-        QMouseEvent inside(QEvent::MouseMove, QPointF(60, 7), Qt::NoButton, Qt::LeftButton, Qt::NoModifier);
+        QMouseEvent inside(QEvent::MouseMove, QPointF(60, 7), target->mapTo(target->window(), (QPointF(60, 7)).toPoint()), target->mapToGlobal((QPointF(60, 7)).toPoint()), Qt::NoButton, Qt::LeftButton, Qt::NoModifier);
         QApplication::sendEvent(target, &inside);
         QVERIFY(body->textCursor().hasSelection());
         const auto third = target->mapFromGlobal(list.itemWidget(2)->mapToGlobal(QPoint(60, 20)));
-        QMouseEvent outside(QEvent::MouseMove, QPointF(third), Qt::NoButton, Qt::LeftButton, Qt::NoModifier);
+        QMouseEvent outside(QEvent::MouseMove, QPointF(third), target->mapTo(target->window(), (QPointF(third)).toPoint()), target->mapToGlobal((QPointF(third)).toPoint()), Qt::NoButton, Qt::LeftButton, Qt::NoModifier);
         QApplication::sendEvent(target, &outside);
         QCOMPARE(list.selectedMessageCount(), 3);
         QVERIFY(!body->textCursor().hasSelection());
-        QMouseEvent release(QEvent::MouseButtonRelease, QPointF(third), Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+        QMouseEvent release(QEvent::MouseButtonRelease, QPointF(third), target->mapTo(target->window(), (QPointF(third)).toPoint()), target->mapToGlobal((QPointF(third)).toPoint()), Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
         QApplication::sendEvent(target, &release);
         QVERIFY(!body->textCursor().hasSelection());
         list.cancelMessageSelection();
@@ -2904,20 +2904,16 @@ private slots:
         // Qt5 and Qt6 QTest::mouseMove differ in whether a held mouse button
         // is reflected in the synthetic event. Deliver the same real gesture
         // sequence with explicit button state in both Qt versions.
-        QMouseEvent press(QEvent::MouseButtonPress, QPointF(3, 3),
-                          Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+        QMouseEvent press(QEvent::MouseButtonPress, QPointF(3, 3), first->mapTo(first->window(), (QPointF(3, 3)).toPoint()), first->mapToGlobal((QPointF(3, 3)).toPoint()), Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
         QApplication::sendEvent(first, &press);
-        QMouseEvent inside(QEvent::MouseMove, QPointF(30, 3),
-                           Qt::NoButton, Qt::LeftButton, Qt::NoModifier);
+        QMouseEvent inside(QEvent::MouseMove, QPointF(30, 3), first->mapTo(first->window(), (QPointF(30, 3)).toPoint()), first->mapToGlobal((QPointF(30, 3)).toPoint()), Qt::NoButton, Qt::LeftButton, Qt::NoModifier);
         QApplication::sendEvent(first, &inside);
         QCOMPARE(list.selectedMessageCount(), 0);
 
         // Leaving the originating message row switches to whole-post range.
-        QMouseEvent outside(QEvent::MouseMove, QPointF(dragTarget),
-                            Qt::NoButton, Qt::LeftButton, Qt::NoModifier);
+        QMouseEvent outside(QEvent::MouseMove, QPointF(dragTarget), first->mapTo(first->window(), (QPointF(dragTarget)).toPoint()), first->mapToGlobal((QPointF(dragTarget)).toPoint()), Qt::NoButton, Qt::LeftButton, Qt::NoModifier);
         QApplication::sendEvent(first, &outside);
-        QMouseEvent release(QEvent::MouseButtonRelease, QPointF(dragTarget),
-                            Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+        QMouseEvent release(QEvent::MouseButtonRelease, QPointF(dragTarget), first->mapTo(first->window(), (QPointF(dragTarget)).toPoint()), first->mapToGlobal((QPointF(dragTarget)).toPoint()), Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
         QApplication::sendEvent(first, &release);
         QCOMPARE(list.selectedMessageCount(), 3);
         list.copySelectedMessages();
