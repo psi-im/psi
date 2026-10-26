@@ -8,6 +8,7 @@
 #include <QSqlError>
 #include <QSqlField>
 #include <QSqlQuery>
+#include <QTimeZone>
 #include <QVariant>
 #include <QXmlStreamReader>
 
@@ -480,7 +481,7 @@ Snapshot readSnapshot(QSqlDatabase db, const Key &key)
     if (!q.exec() || !q.next())
         return {};
     return { q.value(0).toInt(), q.value(1).toString(),
-             QDateTime::fromMSecsSinceEpoch(q.value(2).toLongLong(), Qt::UTC), q.value(3).toBool() };
+             QDateTime::fromMSecsSinceEpoch(q.value(2).toLongLong(), QTimeZone(0)), q.value(3).toBool() };
 }
 
 bool storeSnapshot(QSqlDatabase db, const Key &key, const Snapshot &snapshot)
