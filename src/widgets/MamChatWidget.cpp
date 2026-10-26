@@ -330,7 +330,7 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
         connect(button, &QPushButton::clicked, this, [this, value] {
             const int at = indexOfKey(actionKey_);
             if (at >= 0)
-                toggleReaction(reactionTarget(items_.at(at).message), value);
+                toggleReaction(reactionKey(items_.at(at)), value);
             setQuickReactionsExpanded(false);
         });
     }
@@ -363,7 +363,7 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
     connect(chooseReaction_, &QPushButton::clicked, this, [this] {
         const int at = indexOfKey(actionKey_);
         if (at >= 0)
-            emit emojiChooserRequested(reactionTarget(items_.at(at).message),
+            emit emojiChooserRequested(reactionKey(items_.at(at)),
                                        chooseReaction_->mapToGlobal(QPoint(0, chooseReaction_->height())));
     });
 
@@ -1055,6 +1055,58 @@ QString MamChatWidget::reactionTarget(const MessageView &view) const
     return !view.reactionTargetId().isEmpty() ? view.reactionTargetId() : groupChat_ ? QString() : view.messageId();
 }
 
+namespace {
+// Rooms on servers without XEP-0359 stanza-ids (e.g. old ejabberd without MAM)
+// give no XEP-0444 reaction target. As a deliberate, bounded deviation we let
+// reactions address message@id, but only within the last few messages, where
+// both sides can disambiguate it the same way. Such rows store their reactions
+// under a local key, never sent on the wire.
+const QString LegacyReactionPrefix = QStringLiteral("legacy-row:");
+constexpr int LegacyReactionWindow = 10;
+}
+
+QString MamChatWidget::reactionKey(const Row &row) const
+{
+    const QString target = reactionTarget(row.message);
+    if (!target.isEmpty() || !groupChat_ || row.message.type() != MessageView::Message
+        || row.message.messageId().isEmpty())
+        return target;
+    return LegacyReactionPrefix + row.key;
+}
+
+int MamChatWidget::legacyReactionTarget(const QString &messageId, const QDateTime &before) const
+{
+    if (!groupChat_ || messageId.isEmpty())
+        return -1;
+    // Walk back from the newest message. The first message@id match wins, so
+    // a reused id further up can never be addressed by mistake. Messages newer
+    // than the reaction itself (e.g. when history is replayed) do not count.
+    int seen = 0;
+    for (int i = items_.size() - 1; i >= 0 && seen < LegacyReactionWindow; --i) {
+        const auto &message = items_.at(i).message;
+        if (message.type() != MessageView::Message)
+            continue;
+        if (before.isValid() && message.dateTime().isValid() && message.dateTime() > before)
+            continue;
+        ++seen;
+        if (message.messageId() == messageId)
+            return reactionTarget(message).isEmpty() ? i : -1;
+    }
+    return -1;
+}
+
+bool MamChatWidget::canSendLegacyReaction(int index) const
+{
+    if (!groupChat_ || index < 0 || index >= items_.size())
+        return false;
+    const auto &message = items_.at(index).message;
+    if (message.type() != MessageView::Message || !reactionTarget(message).isEmpty())
+        return false;
+    // Only when receivers walking back from their newest message will find
+    // this very row first: within the window, and no newer message reuses its id.
+    return legacyReactionTarget(message.messageId(), {}) == index;
+}
+
 QString MamChatWidget::retractionTarget(const MessageView &view) const
 {
     // XEP-0424: a direct chat retracts message@id, which may differ from the
@@ -1243,7 +1295,23 @@ bool MamChatWidget::applyProtocolEvent(const MessageView &event)
         resolveDisplayedMarkers();
         return true;
     } else if (event.type() == MessageView::Reactions) {
-        target              = event.reactionsId();
+        target = event.reactionsId();
+        if (groupChat_ && !target.isEmpty()) {
+            // Row::stanzaIds also holds message@id values, so only the
+            // room-assigned reaction target counts as a regular match here.
+            bool known = false;
+            for (const auto &row : items_) {
+                if (reactionTarget(row.message) == target) {
+                    known = true;
+                    break;
+                }
+            }
+            if (!known) {
+                const int at = legacyReactionTarget(target, event.dateTime());
+                if (at >= 0)
+                    target = reactionKey(items_.at(at));
+            }
+        }
         const QString actor = event.isLocal() ? QStringLiteral("self")
             : groupChat_                      ? event.userId().isEmpty() ? event.nick() : event.userId()
                                               : QStringLiteral("peer");
@@ -1260,7 +1328,7 @@ bool MamChatWidget::applyProtocolEvent(const MessageView &event)
         return false;
     hideMessageActions();
     for (int i = 0; i < items_.size(); ++i)
-        if (reactionTarget(items_.at(i).message) == target || retractionTarget(items_.at(i).message) == target
+        if (reactionKey(items_.at(i)) == target || retractionTarget(items_.at(i).message) == target
             || items_.at(i).stanzaIds.contains(target))
             replaceRow(i);
     if (event.type() == MessageView::MessageRetraction)
@@ -1272,6 +1340,14 @@ void MamChatWidget::toggleReaction(const QString &target, const QString &emoji)
 {
     if (target.isEmpty() || emoji.isEmpty())
         return;
+    QString wireTarget = target;
+    if (target.startsWith(LegacyReactionPrefix)) {
+        // The row may have left the legacy window since its actions were shown.
+        const int at = indexOfKey(target.mid(LegacyReactionPrefix.size()));
+        if (!canSendLegacyReaction(at))
+            return;
+        wireTarget = items_.at(at).message.messageId();
+    }
     auto set = reactionEvents_.value(target).value(QStringLiteral("self")).message.reactions();
     if (set.contains(emoji))
         set.remove(emoji);
@@ -1279,9 +1355,9 @@ void MamChatWidget::toggleReaction(const QString &target, const QString &emoji)
         set.insert(emoji);
     MessageView event(MessageView::Reactions);
     event.setLocal(true);
-    event.setReactionsId(target);
+    event.setReactionsId(wireTarget);
     event.setReactions(set);
-    emit outgoingReactions(target, set);
+    emit outgoingReactions(wireTarget, set);
     appendMessage(event);
 }
 
@@ -1310,7 +1386,7 @@ void MamChatWidget::showMessageActions(QFrame *row)
     if (at < 0 || items_.at(at).message.type() != MessageView::Message || isRetracted(items_.at(at)))
         return;
     const auto &message    = items_.at(at).message;
-    const bool  canReact   = !reactionTarget(message).isEmpty();
+    const bool  canReact   = !reactionTarget(message).isEmpty() || canSendLegacyReaction(at);
     const bool  canRetract = message.isLocal() && !retractionTarget(message).isEmpty();
     if (!canReact && !canRetract)
         return;
@@ -2193,7 +2269,7 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
 
     // As in Bubble, each actor sends its entire current set, not an add/remove
     // delta. Chips aggregate actors and toggling a chip updates our own set.
-    const QString              target = reactionTarget(mv);
+    const QString              target = reactionKey(items_.at(index));
     QMap<QString, QStringList> counts;
     for (const auto &event : reactionEvents_.value(target))
         for (const auto &emoji : event.message.reactions())
@@ -2849,7 +2925,10 @@ QMenu *MamChatWidget::createMessageContextMenu(const QString &key, QWidget *targ
     });
     auto *quote = menu->addAction(tr("Quote"));
     quote->setObjectName(QStringLiteral("mamQuoteMessage"));
-    quote->setEnabled(!reactionTarget(items_.at(at).message).isEmpty() && !isRetracted(items_.at(at)));
+    // Group chats without stanza-ids still allow a plain-text quote (no reply
+    // reference); see applyMessageReply().
+    quote->setEnabled((groupChat_ || !reactionTarget(items_.at(at).message).isEmpty())
+                      && !isRetracted(items_.at(at)));
     if (!quote->isEnabled())
         quote->setToolTip(tr("The message has no reply identifier assigned by its sender or room."));
     connect(quote, &QAction::triggered, this, [this, key] {

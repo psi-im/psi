@@ -333,19 +333,29 @@ private slots:
             QApplication::sendEvent(row, &event);
             return chat.findChild<QMenu *>("mamMessageContextMenu");
         };
+        // Without a room-assigned id (old servers without stanza-ids) the
+        // quote is still offered, but carries no reply reference.
+        QSignalSpy quote(&chat, &MamChatWidget::replyRequested);
         auto *menu = openMenu();
         QVERIFY(menu);
-        QVERIFY(!menu->findChild<QAction *>("mamQuoteMessage")->isEnabled());
+        QVERIFY(menu->findChild<QAction *>("mamQuoteMessage")->isEnabled());
+        menu->findChild<QAction *>("mamQuoteMessage")->trigger();
+        QCOMPARE(quote.size(), 1);
+        const auto plain = qvariant_cast<ChatReply>(quote.last().first());
+        QVERIFY(plain.isValid());
+        QVERIFY(!plain.hasReference());
+        QCOMPARE(plain.author, QString("Peer"));
+        QCOMPARE(plain.text, QString("MUC message"));
         delete menu;
         original.setReactionTargetId("room-assigned-id");
         original.setArchiveId("room-assigned-id");
         chat.appendMessage(original);
-        QSignalSpy quote(&chat, &MamChatWidget::replyRequested);
         menu = openMenu();
         QVERIFY(menu);
         QVERIFY(menu->findChild<QAction *>("mamQuoteMessage")->isEnabled());
         menu->findChild<QAction *>("mamQuoteMessage")->trigger();
-        QCOMPARE(qvariant_cast<ChatReply>(quote.first().first()).id, QString("room-assigned-id"));
+        QCOMPARE(quote.size(), 2);
+        QCOMPARE(qvariant_cast<ChatReply>(quote.last().first()).id, QString("room-assigned-id"));
         delete menu;
     }
 
@@ -961,14 +971,19 @@ private slots:
         room.setGroupChat(true);
         room.resize(500, 250);
         room.setHistoryLoading(true);
-        // Live copy without a room-assigned stanza-id: nothing to react to.
+        // Live copy without a room-assigned stanza-id: only the bounded
+        // legacy message@id fallback, addressed through a local row key.
         room.appendMessage(message("client-id", "hello"));
         room.show();
         QTRY_VERIFY(room.itemWidget(0));
         QEvent enter(QEvent::Enter);
         QApplication::sendEvent(room.itemWidget(0), &enter);
         auto *bar = room.findChild<QFrame *>("mamMessageActions");
-        QVERIFY(!bar->isVisible());
+        QTRY_VERIFY(bar->isVisible());
+        QSignalSpy chooser(&room, &MamChatWidget::emojiChooserRequested);
+        bar->findChild<QPushButton *>("mamChooseReaction")->click();
+        QCOMPARE(chooser.size(), 1);
+        QVERIFY(chooser.last().first().toString().startsWith(QStringLiteral("legacy-row:")));
 
         // The archived copy of the same message carries the stanza-id.
         auto archived = message("client-id", "hello");
@@ -980,10 +995,76 @@ private slots:
         QTRY_VERIFY(room.itemWidget(0));
         QApplication::sendEvent(room.itemWidget(0), &enter);
         QTRY_VERIFY(bar->isVisible());
-        QSignalSpy chooser(&room, &MamChatWidget::emojiChooserRequested);
         bar->findChild<QPushButton *>("mamChooseReaction")->click();
-        QCOMPARE(chooser.size(), 1);
-        QCOMPARE(chooser.first().first().toString(), QString("room-stanza-id"));
+        QCOMPARE(chooser.size(), 2);
+        QCOMPARE(chooser.last().first().toString(), QString("room-stanza-id"));
+    }
+
+    void legacyMucReactionsUseBoundedMessageIdWindow()
+    {
+        // A room without stanza-ids (old ejabberd, no MAM). Twelve messages;
+        // rows 9 and 10 reuse the same message@id.
+        MamChatWidget room;
+        room.setGroupChat(true);
+        room.resize(500, 1800);
+        room.setHistoryLoading(true);
+        const auto base = QDateTime::fromString(QStringLiteral("2026-10-18T10:00:00Z"), Qt::ISODate);
+        for (int i = 0; i < 12; ++i) {
+            const QString id = (i == 9 || i == 10) ? QStringLiteral("dup") : QStringLiteral("m%1").arg(i);
+            auto row = message(id, QStringLiteral("body %1").arg(i), i);
+            row.setUserId(QStringLiteral("room@example.org/Peer"));
+            room.appendMessage(row);
+        }
+        room.show();
+        for (int i = 0; i < 12; ++i)
+            QTRY_VERIFY(room.itemWidget(i));
+        const auto legacyKey = [&room](int index) {
+            return QStringLiteral("legacy-row:") + room.itemWidget(index)->property("_psiMamRowKey").toString();
+        };
+        const auto chips = [&room](int index) {
+            auto *row = room.itemWidget(index);
+            return row ? row->findChildren<QPushButton *>("mamReactionChip").size() : -1;
+        };
+        const auto incoming = [&](const QString &id, int seconds) {
+            MessageView event(MessageView::Reactions);
+            event.setReactionsId(id);
+            event.setReactions({ QString::fromUtf8("🔥") });
+            event.setNick(QStringLiteral("Other"));
+            event.setUserId(QStringLiteral("room@example.org/Other"));
+            event.setDateTime(base.addSecs(seconds));
+            room.appendMessage(event);
+        };
+
+        // Sending: message@id goes on the wire, the row key never does.
+        QSignalSpy outgoing(&room, &MamChatWidget::outgoingReactions);
+        room.toggleReaction(legacyKey(11), QString::fromUtf8("👍"));
+        QCOMPARE(outgoing.size(), 1);
+        QCOMPARE(outgoing.last().first().toString(), QString("m11"));
+        QTRY_COMPARE(chips(11), 1);
+
+        // Row 1 is outside the last ten messages; row 9 is shadowed by the
+        // newer row 10 with the same id. Neither may be addressed.
+        room.toggleReaction(legacyKey(1), QString::fromUtf8("👍"));
+        room.toggleReaction(legacyKey(9), QString::fromUtf8("👍"));
+        QCOMPARE(outgoing.size(), 1);
+        room.toggleReaction(legacyKey(10), QString::fromUtf8("👍"));
+        QCOMPARE(outgoing.size(), 2);
+        QCOMPARE(outgoing.last().first().toString(), QString("dup"));
+
+        // Receiving: walk back at most ten messages; the newest match wins.
+        incoming(QStringLiteral("m2"), 100);
+        QTRY_COMPARE(chips(2), 1);
+        incoming(QStringLiteral("m1"), 100);
+        incoming(QStringLiteral("dup"), 100);
+        QTRY_COMPARE(chips(10), 2); // Our 👍 and their 🔥.
+        QCOMPARE(chips(1), 0);
+        QCOMPARE(chips(9), 0);
+
+        // Replayed history: messages newer than the reaction do not count.
+        incoming(QStringLiteral("m11"), 5);
+        incoming(QStringLiteral("m0"), 5);
+        QTRY_COMPARE(chips(0), 1);
+        QCOMPARE(chips(11), 1);
     }
 
     void olderArchiveReactionCannotReplaceNewLiveSet()

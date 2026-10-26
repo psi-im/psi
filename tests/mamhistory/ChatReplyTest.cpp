@@ -56,6 +56,41 @@ private slots:
         QCOMPARE(oldHistory.urlList().size(), 1);
     }
 
+    void quoteWithoutRoomStanzaIdIsPlainBodyText()
+    {
+        // Rooms without XEP-0359 stanza-ids give nothing to reference: send the
+        // name and quote in the body only, with neither <reply/> nor <fallback/>.
+        ReplyConnector connector;
+        ClientStream   stream(&connector);
+        Message        outgoing(Jid("room@example.org"));
+        outgoing.setType(Message::Type::Groupchat);
+        outgoing.setId("new-message");
+        outgoing.setBody("Answer");
+        const ChatReply quote { {}, "room@example.org/Peer", "Peer", "first\nsecond" };
+        QVERIFY(quote.isValid());
+        QVERIFY(!quote.hasReference());
+        applyMessageReply(outgoing, quote);
+        QCOMPARE(outgoing.body(), QString("> Peer:\n> first\n> second\nAnswer"));
+
+        Message received;
+        QVERIFY(received.fromStanza(outgoing.toStanza(&stream)));
+        QVERIFY(!received.reply().isValid());
+        QVERIFY(received.fallbacks().isEmpty());
+        QCOMPARE(received.body(), outgoing.body());
+        QVERIFY(!messageReply(received).isValid());
+        QCOMPARE(messageReplyBody(received), outgoing.body());
+
+        // Existing ranges of another feature must not be shifted.
+        Message media;
+        media.setBody("media description");
+        media.setFallbacks({ { "urn:example:media", { { 0, 5 } }, {} } });
+        applyMessageReply(media, quote);
+        QCOMPARE(media.body(), QString("media description"));
+        QVERIFY(!media.reply().isValid());
+
+        QVERIFY(!ChatReply {}.isValid());
+    }
+
     void invalidFallbackDoesNotEraseMessageAndOverlapsAreMerged()
     {
         Message message;

@@ -14,7 +14,11 @@ struct ChatReply {
     QString to;
     QString author;
     QString text;
-    bool    isValid() const { return !id.isEmpty(); }
+    // A reply normally references the quoted message by id (XEP-0461). In
+    // rooms that do not assign stanza-ids (e.g. old ejabberd without MAM) a
+    // quote may have no usable id; it is then sent as plain quoted body text.
+    bool hasReference() const { return !id.isEmpty(); }
+    bool isValid() const { return hasReference() || !text.isEmpty(); }
 };
 Q_DECLARE_METATYPE(ChatReply)
 

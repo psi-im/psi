@@ -63,9 +63,13 @@ void applyMessageReply(XMPP::Message &message, const ChatReply &reply)
     if (!reply.isValid())
         return;
     const XMPP::Message::Reply reference { XMPP::Jid(reply.to), reply.id };
-    if (!reference.isValid())
+    // Without a referenceable id (a room without stanza-ids) send neither
+    // <reply/> nor <fallback/>: the quote is ordinary body text.
+    const bool referenced = reply.hasReference() && reference.isValid();
+    if (referenced)
+        message.setReply(reference);
+    else if (reply.hasReference())
         return;
-    message.setReply(reference);
     // The fallback is optional. Do not move existing reference/fallback ranges
     // in media messages by prepending a second feature's compatibility text.
     if (!message.references().isEmpty() || !message.fallbacks().isEmpty())
@@ -75,6 +79,10 @@ void applyMessageReply(XMPP::Message &message, const ChatReply &reply)
         fallback = QStringLiteral("> %1:\n").arg(reply.author);
     for (const auto &line : reply.text.split(QLatin1Char('\n')))
         fallback += QStringLiteral("> %1\n").arg(line);
+    if (!referenced) {
+        message.setBody(fallback + message.body());
+        return;
+    }
     auto fallbacks = message.fallbacks();
     fallbacks.append({ replyNamespace, { { 0, int(fallback.toUcs4().size()) } }, {} });
     message.setFallbacks(fallbacks);
