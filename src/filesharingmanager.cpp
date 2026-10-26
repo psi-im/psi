@@ -30,10 +30,14 @@
 #include "fileutil.h"
 #include "httputil.h"
 #include "mediachunkcache.h"
+#include "mediadownloadpolicy.h"
+#include "messageattachments.h"
 #include "oobmediapolicy.h"
 #include "psiaccount.h"
 #include "psicon.h"
+#include "psicontact.h"
 #include "psicontactlist.h"
+#include "psioptions.h"
 #include "qitemedia.h"
 #include <QFile>
 
@@ -183,6 +187,11 @@ bool FileSharingManager::rememberUrlContent(const QString &account, const Hash &
     return d->store->rememberUrlContent(account, urlIdentity, contentHash);
 }
 
+void FileSharingManager::forgetUrlContent(const QString &account, const Hash &urlIdentity)
+{
+    d->store->forgetUrlContent(account, urlIdentity);
+}
+
 FileSharingItem *FileSharingManager::item(const Hash &id, PsiAccount *account)
 {
     if (!account)
@@ -323,102 +332,139 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
     if (!acc)
         return;
     rememberMessage(m, acc);
-    // The owning MessageEvent/MAM ingestion path already normalized HTTP OOB.
-    // Rendering only maps existing references to FileSharingItem widgets.
-    auto refs = m.references();
+    // Everything a message attaches is shown in its one view: SIMS and HTTP(S)
+    // OOB as share objects, other OOB URLs as links. The message is not changed.
+    const auto collected   = MessageAttachments::collect(m);
+    auto       attachments = collected.attachments;
+    if (attachments.isEmpty() && collected.links.isEmpty())
+        return;
+    // Views may download attachments by themselves only up to this size.
+    const quint64 autoLimit = autoDownloadLimit(m, acc);
+    const QString autoAttr  = autoLimit ? QString::fromLatin1(" auto=\"%1\"").arg(autoLimit) : QString();
 
-    if (refs.count()) {
-        QString tailReferences;
-        QString desc = m.body();
-        // qDebug() << "INIT TEXT:" << desc;
-        QString htmlDesc;
-        htmlDesc.reserve(desc.size() + refs.count() * 64);
+    QString tailReferences;
+    QString desc = m.body();
+    // qDebug() << "INIT TEXT:" << desc;
+    QString htmlDesc;
+    htmlDesc.reserve(desc.size() + attachments.count() * 64);
 
-        // XEP-0385 senders may locate a share's body text with XEP-0428
-        // fallbacks instead of reference begin/end. Assign those ranges, in
-        // body order, to the media shares that have no range of their own.
-        QList<QPair<int, int>> fallbackRanges; // UTF-16 [from, to)
-        for (const auto &ns : { QStringLiteral("urn:xmpp:sims:1"), QStringLiteral("jabber:x:oob") }) {
-            for (const auto &range : m.bodyFallbacks(ns)) {
-                int from = -1, to = -1;
-                if (range.toUtf16(desc, from, to) && to > from && !fallbackRanges.contains({ from, to }))
-                    fallbackRanges.append({ from, to });
-            }
-            if (!fallbackRanges.isEmpty())
-                break; // SIMS ranges take precedence; OOB ranges are a fallback for them.
+    // XEP-0385 senders may locate a share's body text with XEP-0428
+    // fallbacks instead of reference begin/end. Assign those ranges, in
+    // body order, to the media shares that have no range of their own.
+    QList<QPair<int, int>> fallbackRanges; // UTF-16 [from, to)
+    for (const auto &ns : { QStringLiteral("urn:xmpp:sims:1"), QStringLiteral("jabber:x:oob") }) {
+        for (const auto &range : m.bodyFallbacks(ns)) {
+            int from = -1, to = -1;
+            if (range.toUtf16(desc, from, to) && to > from && !fallbackRanges.contains({ from, to }))
+                fallbackRanges.append({ from, to });
         }
-        std::sort(fallbackRanges.begin(), fallbackRanges.end());
-        for (auto &r : refs) {
-            if (fallbackRanges.isEmpty())
-                break;
-            if (r.begin() < 0 && r.mediaSharing().isValid()) {
-                const auto range = fallbackRanges.takeFirst();
-                r.setRange(range.first, range.second - 1); // Psi treats 'end' as inclusive
-            }
-        }
-
-        std::sort(refs.begin(), refs.end(), [](auto &a, auto &b) { return a.begin() < b.begin(); });
-
-        int         lastEnd = 0;
-        for (auto const &r : refs) {
-            MediaSharing ms = r.mediaSharing();
-            // qDebug() << "BEGIN:" << r.begin() << "END:" << r.end();
-            // Every SIMS attachment needs a share object, not only inline media.
-            // Non-media files can have an unknown size (streaming sources).
-            FileSharingItem *item = nullptr;
-            if (ms.isValid() && ms.file.hasComputedHashes()) {
-                item = this->item(ms.file.computedHashes().first(), acc);
-                if (!item)
-                    item = new FileSharingItem(ms, m.from(), acc, this);
-                else
-                    item->mergeSources(ms, m.from());
-                d->rememberItem(item);
-            } else if (!ms.isValid() && r.type() == Reference::Data) {
-                // HTTP OOB is represented as a URL-only reference, either
-                // restored from SQLite or prepared for an incoming/legacy message.
-                const QUrl source = OobMediaPolicy::normalizedHttpSource(r.uri());
-                if (!source.isValid())
-                    continue;
-                const QString canonical = source.toString(QUrl::FullyEncoded);
-                const QByteArray key = QByteArrayLiteral("psi-oob-url-v1:") + canonical.toUtf8();
-                const Hash identity(Hash::Sha256, QCryptographicHash::hash(key, QCryptographicHash::Sha256));
-                item = d->accountItems.value(acc->id()).value(identity, nullptr);
-                if (!item || item->account() != acc || !item->isUrlOnly()) {
-                    item = new FileSharingItem(source, identity, acc, this, r.anchor());
-                    d->rememberItem(item);
-                }
-            } else {
-                continue;
-            }
-            mv.addReference(item);
-
-            if (r.begin() >= lastEnd && r.end() >= r.begin() && r.end() < desc.size()) {
-                auto refText = desc.mid(r.begin(), r.end() - r.begin() + 1);
-
-                QUrl url(refText.trimmed());
-                if (url.isValid())
-                    refText = url.toString(QUrl::FullyEncoded);
-
-                QString shareStr(
-                    QString::fromLatin1("<share id=\"%1\" account=\"%2\" text=\"%3\"/>")
-                        .arg(item->sums()[0].toString(), TextUtil::escape(acc->id()), TextUtil::escape(refText)));
-
-                // add text before reference
-                htmlDesc += TextUtil::linkify(TextUtil::plain2rich(desc.mid(lastEnd, r.begin() - lastEnd)));
-                htmlDesc += shareStr; // something instead of link
-                lastEnd = r.end() + 1;
-            } else {
-                tailReferences += QString::fromLatin1("<share id=\"%1\" account=\"%2\"/>")
-                                      .arg(item->sums()[0].toString(), TextUtil::escape(acc->id()));
-            }
-        }
-        if (lastEnd < desc.size()) {
-            htmlDesc += TextUtil::linkify(TextUtil::plain2rich(desc.mid(lastEnd, desc.size() - lastEnd)));
-        }
-        htmlDesc += tailReferences;
-        // qDebug() << "HTML:" << htmlDesc;
-        mv.setHtml(htmlDesc);
+        if (!fallbackRanges.isEmpty())
+            break; // SIMS ranges take precedence; OOB ranges are a fallback for them.
     }
+    std::sort(fallbackRanges.begin(), fallbackRanges.end());
+    for (auto &attachment : attachments) {
+        if (fallbackRanges.isEmpty())
+            break;
+        auto &r = attachment.reference;
+        if (r.begin() < 0 && r.mediaSharing().isValid()) {
+            const auto range = fallbackRanges.takeFirst();
+            r.setRange(range.first, range.second - 1); // Psi treats 'end' as inclusive
+        }
+    }
+
+    std::sort(attachments.begin(), attachments.end(),
+              [](const auto &a, const auto &b) { return a.reference.begin() < b.reference.begin(); });
+
+    int lastEnd = 0;
+    for (const auto &attachment : attachments) {
+        const auto  &r  = attachment.reference;
+        MediaSharing ms = r.mediaSharing();
+        // qDebug() << "BEGIN:" << r.begin() << "END:" << r.end();
+        // Every SIMS attachment needs a share object, not only inline media.
+        // Non-media files can have an unknown size (streaming sources).
+        FileSharingItem *item = nullptr;
+        if (ms.isValid() && ms.file.hasComputedHashes()) {
+            item = this->item(ms.file.computedHashes().first(), acc);
+            if (!item)
+                item = new FileSharingItem(ms, m.from(), acc, this);
+            else
+                item->mergeSources(ms, m.from());
+            d->rememberItem(item);
+        } else if (!ms.isValid() && r.type() == Reference::Data) {
+            // An HTTP(S) URL without SIMS metadata, usually from OOB. Shares of
+            // the same URL are one item; the item keeps the full URL to open.
+            const QUrl source = OobMediaPolicy::normalizedHttpSource(r.uri());
+            if (!source.isValid())
+                continue;
+            const QString    canonical = source.toString(QUrl::FullyEncoded);
+            const QByteArray key       = QByteArrayLiteral("psi-oob-url-v1:") + canonical.toUtf8();
+            const Hash       identity(Hash::Sha256, QCryptographicHash::hash(key, QCryptographicHash::Sha256));
+            item = d->accountItems.value(acc->id()).value(identity, nullptr);
+            if (!item || item->account() != acc || !item->isUrlOnly()) {
+                item = new FileSharingItem(QUrl::fromEncoded(r.uri().toUtf8()), identity, acc, this,
+                                           attachment.description);
+                d->rememberItem(item);
+            }
+        } else {
+            continue;
+        }
+        mv.addReference(item);
+
+        if (r.begin() >= lastEnd && r.end() >= r.begin() && r.end() < desc.size()) {
+            auto refText = desc.mid(r.begin(), r.end() - r.begin() + 1);
+
+            QUrl url(refText.trimmed());
+            if (url.isValid())
+                refText = url.toString(QUrl::FullyEncoded);
+
+            QString shareStr(
+                QString::fromLatin1("<share id=\"%1\" account=\"%2\" text=\"%3\"%4/>")
+                    .arg(item->sums()[0].toString(), TextUtil::escape(acc->id()), TextUtil::escape(refText), autoAttr));
+
+            // add text before reference
+            htmlDesc += TextUtil::linkify(TextUtil::plain2rich(desc.mid(lastEnd, r.begin() - lastEnd)));
+            htmlDesc += shareStr; // something instead of link
+            lastEnd = r.end() + 1;
+        } else {
+            tailReferences += QString::fromLatin1("<share id=\"%1\" account=\"%2\"%3/>")
+                                  .arg(item->sums()[0].toString(), TextUtil::escape(acc->id()), autoAttr);
+        }
+    }
+    if (lastEnd < desc.size()) {
+        htmlDesc += TextUtil::linkify(TextUtil::plain2rich(desc.mid(lastEnd, desc.size() - lastEnd)));
+    }
+    htmlDesc += tailReferences;
+    // OOB links that are not files (xmpp:, ftp: ...). Only known schemes become clickable.
+    for (const auto &link : collected.links) {
+        if (!htmlDesc.isEmpty())
+            htmlDesc += QLatin1String("<br/>");
+        htmlDesc += TextUtil::linkify(TextUtil::escape(link.url()));
+        if (!link.desc().isEmpty())
+            htmlDesc += QLatin1String(" &mdash; ") + TextUtil::escape(link.desc());
+    }
+    // qDebug() << "HTML:" << htmlDesc;
+    mv.setHtml(htmlDesc);
+}
+
+quint64 FileSharingManager::autoDownloadLimit(const Message &m, PsiAccount *acc) const
+{
+    if (!acc)
+        return 0;
+    auto                         *o = PsiOptions::instance();
+    MediaDownloadPolicy::Settings settings;
+    settings.previews  = o->getOption("options.ui.chat.show-previews").toBool();
+    settings.chatLimit = quint64(qMax<qlonglong>(0, o->getOption("options.ui.chat.auto-download-size").toLongLong()));
+    settings.groupchatLimit
+        = quint64(qMax<qlonglong>(0, o->getOption("options.ui.chat.groupchat-auto-download-size").toLongLong()));
+
+    const bool groupchat = m.type() == Message::Type::Groupchat;
+    // Our own messages, sent from here or another device, and roster contacts.
+    bool trusted = m.from().isEmpty() || m.from().bare() == acc->jid().bare();
+    if (!trusted && !groupchat) {
+        const PsiContact *contact = acc->findContact(m.from().withResource({}));
+        trusted                   = contact && contact->inList() && !contact->isPrivate();
+    }
+    return MediaDownloadPolicy::limit(settings, groupchat, trusted);
 }
 
 bool FileSharingManager::jingleAutoAcceptIncomingDownloadRequest(Jingle::Session *session)
@@ -542,22 +588,17 @@ QIODevice *FileSharingDeviceOpener::open(QUrl &url)
         url = QUrl::fromLocalFile(item->fileName());
         return nullptr;
     }
-    if (item->isUrlOnly()) {
-        // Hashless OOB shares cannot use a verified chunk stream. The existing
-        // media player can open their HTTP origin directly, without creating
-        // a second backend or treating the URL identity as a checksum.
-        const QUrl direct = item->simpleSource();
-        if (!direct.isValid())
+    // Hashless OOB shares have no verified chunk stream. They are streamed
+    // through Psi's network access and its proxy like other shares, never
+    // handed to the player as their remote origin.
+    if (!item->isUrlOnly()) {
+        FileSharingChunkSource::configure(item);
+        const auto localFile = FileSharingChunkSource::localFile(item);
+        if (!localFile.isEmpty()) {
+            qInfo() << "[media] opening completed shared file" << sourceId.toString();
+            url = QUrl::fromLocalFile(localFile);
             return nullptr;
-        url = direct;
-        return nullptr;
-    }
-    FileSharingChunkSource::configure(item);
-    const auto localFile = FileSharingChunkSource::localFile(item);
-    if (!localFile.isEmpty()) {
-        qInfo() << "[media] opening completed shared file" << sourceId.toString();
-        url = QUrl::fromLocalFile(localFile);
-        return nullptr;
+        }
     }
 
 #ifdef HAVE_WEBSERVER
@@ -573,7 +614,7 @@ QIODevice *FileSharingDeviceOpener::open(QUrl &url)
     return nullptr;
 #else
 #ifndef Q_OS_WIN
-    QUrl simplelUrl = item->simpleSource();
+    QUrl simplelUrl = item->isUrlOnly() ? QUrl() : item->simpleSource();
     if (simplelUrl.isValid()) {
         url = simplelUrl;
         return nullptr;

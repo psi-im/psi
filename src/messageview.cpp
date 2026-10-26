@@ -49,14 +49,6 @@ MessageView MessageView::fromHtml(const QString &text, Type type)
     return mv;
 }
 
-MessageView MessageView::urlsMessage(const QMap<QString, QString> &urls)
-{
-    MessageView mv(Urls);
-    mv._type = Urls;
-    mv._urls = urls;
-    return mv;
-}
-
 MessageView MessageView::subjectMessage(const QString &subject, const QString &prefix)
 {
     MessageView mv(Subject);

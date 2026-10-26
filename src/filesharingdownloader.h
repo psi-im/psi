@@ -70,6 +70,9 @@ public:
     qint64 bytesAvailable() const override;
 
     void setSelfDelete(bool enable);
+    // Fails the transfer once the file turns out to be larger, by its declared
+    // size or by the bytes received. For downloads the user did not ask for.
+    void setMaximumSize(quint64 bytes);
     void preferSource(const QString &uri);
 
 protected:

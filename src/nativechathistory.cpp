@@ -26,12 +26,6 @@ MessageView nativeHistoryMessage(PsiAccount *account, const XMPP::Jid &peer, con
             html.setBody(element);
     }
 #endif
-    if (body.isEmpty() && html.body().isNull() && !message.urlList().isEmpty()) {
-        QStringList urls;
-        for (const auto &url : message.urlList())
-            urls.append(url.url());
-        body = urls.join(QLatin1Char('\n'));
-    }
     auto view = MessageView::fromPlainText(body, subject ? MessageView::Subject : MessageView::Message);
     if (PsiOptions::instance()->getOption("options.html.chat.render").toBool() && !html.body().isNull())
         view.setHtml(html.toString("span"));

@@ -35,6 +35,52 @@
     </widget>
    </item>
    <item>
+    <layout class="QGridLayout" name="gl_autoDownload">
+     <property name="leftMargin">
+      <number>20</number>
+     </property>
+     <item row="0" column="0">
+      <widget class="QLabel" name="lb_autoDownloadChats">
+       <property name="text">
+        <string>Download automatically in chats:</string>
+       </property>
+       <property name="buddy">
+        <cstring>cb_autoDownloadChats</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QComboBox" name="cb_autoDownloadChats"/>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="lb_autoDownloadGroupchats">
+       <property name="text">
+        <string>Download automatically in group chats:</string>
+       </property>
+       <property name="buddy">
+        <cstring>cb_autoDownloadGroupchats</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QComboBox" name="cb_autoDownloadGroupchats"/>
+     </item>
+     <item row="0" column="2" rowspan="2">
+      <spacer name="sp_autoDownload">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
     <widget class="QCheckBox" name="ck_contactsMessageFormatting">
      <property name="text">
       <string>Display received messages in deprecated XHTML-IM formatting (XEP-0071)</string>

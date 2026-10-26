@@ -29,7 +29,9 @@
 #include "iris/xmpp_reference.h"
 #include "iris/xmpp_thumbs.h"
 #include "mediachunkcache.h"
+#include "networkaccessmanager.h"
 #include "psiaccount.h"
+#include "psicon.h"
 #include "userlist.h"
 
 #include <QBuffer>
@@ -37,9 +39,14 @@
 #include <QFileIconProvider>
 #include <QImageReader>
 #include <QMimeDatabase>
+#include <QNetworkReply>
+#include <QNetworkRequest>
 #include <QPainter>
 #include <QTemporaryFile>
 #include <QUrl>
+
+#include <algorithm>
+#include <utility>
 
 #define TEMP_TTL (7 * 24 * 3600)
 #define FILE_TTL (365 * 24 * 3600)
@@ -98,7 +105,8 @@ FileSharingItem::FileSharingItem(const QUrl &url, const XMPP::Hash &identity, Ps
     QObject(manager), _urlOnly(true), _acc(acc), _manager(manager), _fileType(FileType::RemoteFile)
 {
     _sums.append(identity);
-    _uris.append(url.toString(QUrl::FullyEncoded | QUrl::RemoveFragment));
+    // Keep the fragment for opening the URL; HTTP requests never send it.
+    _uris.append(url.toString(QUrl::FullyEncoded));
     _fileName = QFileInfo(url.path()).fileName();
     if (_fileName.isEmpty())
         _fileName = QStringLiteral("download");
@@ -116,6 +124,8 @@ FileSharingItem::FileSharingItem(const QUrl &url, const XMPP::Hash &identity, Ps
             _fileName = cachedPath;
             _fileSize = quint64(QFileInfo(cachedPath).size());
             _fileType = FileType::LocalFile;
+        } else if (verified) {
+            _manager->forgetUrlContent(_acc->id(), identity); // the cached file expired
         }
     }
 }
@@ -511,19 +521,21 @@ FileShareDownloader *FileSharingItem::download(std::optional<Range> range, const
         // Cache insertion and item state changes are confined to this object's
         // thread, even when hashing multi-gigabyte URL-only downloads.
         const auto completeCache = [this, dlFileName, vm = std::move(vm)](const HashSums &actualHashes) {
-            if (!actualHashes.isEmpty()) {
-                auto *cache = _manager->moveToCache(actualHashes, QFileInfo(dlFileName), vm, FILE_TTL);
-                if (cache) {
-                    if (_urlOnly) {
-                        for (const auto &hash : actualHashes)
-                            if (!_sums.contains(hash))
-                                _sums.append(hash);
-                        _fileSize = QFileInfo(_manager->cacheDir() + "/" + cache->fileName()).size();
-                        _manager->rememberUrlContent(_acc->id(), _sums.first(), actualHashes.first());
-                    }
-                    _fileType = FileType::LocalFile;
-                    _fileName = _manager->cacheDir() + "/" + cache->fileName();
+            const bool     automatic = std::exchange(_autoDownloading, false);
+            FileCacheItem *cache     = nullptr;
+            if (!actualHashes.isEmpty())
+                cache = _manager->moveToCache(actualHashes, QFileInfo(dlFileName), vm, FILE_TTL);
+            _autoFailed |= automatic && !cache; // never retry unasked
+            if (cache) {
+                if (_urlOnly) {
+                    for (const auto &hash : actualHashes)
+                        if (!_sums.contains(hash))
+                            _sums.append(hash);
+                    _fileSize = QFileInfo(_manager->cacheDir() + "/" + cache->fileName()).size();
+                    _manager->rememberUrlContent(_acc->id(), _sums.first(), actualHashes.first());
                 }
+                _fileType = FileType::LocalFile;
+                _fileName = _manager->cacheDir() + "/" + cache->fileName();
             }
             emit downloadFinished();
         };
@@ -543,6 +555,7 @@ FileShareDownloader *FileSharingItem::download(std::optional<Range> range, const
     connect(downloader, &FileShareDownloader::failed, this, [downloader, this]() {
         downloader->disconnect(this);
         // downloader = nullptr;
+        _autoFailed |= std::exchange(_autoDownloading, false);
         emit downloadFinished();
     });
 
@@ -576,6 +589,77 @@ QStringList FileSharingItem::sortSourcesByPriority(const QStringList &uris)
     }
 
     return sorted.values();
+}
+
+void FileSharingItem::checkRemote()
+{
+    if (!_urlOnly || _remoteCheck != RemoteCheck::NotStarted || !_acc || isCached())
+        return;
+    const QUrl url = simpleSource();
+    if (!url.isValid())
+        return;
+    _remoteCheck = RemoteCheck::Running;
+    QNetworkRequest request(url.adjusted(QUrl::RemoveFragment));
+    // As in Conversations: the size of the stored bytes, not of an encoding.
+    request.setRawHeader("Accept-Encoding", "identity");
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    request.setTransferTimeout(30000);
+#endif
+    auto *reply = _acc->psi()->networkAccessManager()->head(request);
+    connect(reply, &QNetworkReply::finished, reply, &QObject::deleteLater);
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        _remoteCheck     = RemoteCheck::Done;
+        const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        if (reply->error() == QNetworkReply::NoError && status >= 200 && status < 300) {
+            bool       ok   = false;
+            const auto size = reply->rawHeader("Content-Length").trimmed().toULongLong(&ok);
+            if (ok && size && !_fileSize) // a zero length tells nothing of a file
+                _fileSize = size;
+            // The extension of the file name in the URL wins over the server's type.
+            const QString type
+                = QString::fromLatin1(reply->rawHeader("Content-Type")).section(QLatin1Char(';'), 0, 0).trimmed();
+            if (!type.isEmpty() && QFileInfo(_urlDisplayName).suffix().isEmpty())
+                _mimeType = type.toLower();
+        }
+        emit remoteChecked();
+        if (_pendingAutoLimit)
+            autoDownload(std::exchange(_pendingAutoLimit, 0));
+    });
+}
+
+bool FileSharingItem::downloadsItself(quint64 limit) const
+{
+    if (!limit || _autoFailed)
+        return false;
+    if (_fileSize)
+        return *_fileSize <= limit;
+    return _urlOnly && _remoteCheck != RemoteCheck::Done;
+}
+
+void FileSharingItem::autoDownload(quint64 limit)
+{
+    if (!limit || _autoDownloading || _autoFailed || isCached())
+        return;
+    if (_urlOnly && !_fileSize) {
+        if (_remoteCheck != RemoteCheck::Done) {
+            _pendingAutoLimit = std::max(_pendingAutoLimit, limit);
+            checkRemote();
+        }
+        return;
+    }
+    if (!_fileSize || *_fileSize > limit)
+        return;
+    auto *downloader = download();
+    if (!downloader)
+        return;
+    _autoDownloading = true;
+    downloader->setMaximumSize(limit);
+    downloader->setSelfDelete(true);
+    // read just for cache
+    connect(downloader, &FileShareDownloader::readyRead, this,
+            [downloader]() { downloader->read(downloader->bytesAvailable()); });
+    downloader->open();
 }
 
 // try take http or ftp source to be passed directly to media backend

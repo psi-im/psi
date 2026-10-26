@@ -500,6 +500,8 @@ public:
     std::optional<FileShareDownloader::Range> responseRange;
     std::optional<quint64>                    bytesLeft;
     std::optional<quint64>                    actualSize;
+    std::optional<quint64>                    maximumSize;
+    quint64                                   bytesReceived    = 0;
     AbstractFileShareDownloader              *downloader       = nullptr;
     bool                                      metaReady        = false;
     bool                                      finished         = false;
@@ -606,6 +608,12 @@ public:
             metaReady     = true;
             responseRange = downloader->responseRange();
             actualSize    = downloader->fileSize();
+            if (maximumSize && actualSize && *actualSize > *maximumSize) {
+                // Fail first, so the aborted source reports nothing of its own.
+                finishWithError(FileShareDownloader::tr("The file is larger than the automatic download limit"));
+                downloader->abort();
+                return;
+            }
             if (actualSize)
                 file.setSize(*actualSize);
             if (responseRange && !responseRange->size && file.size() && responseRange->start <= *file.size())
@@ -763,6 +771,13 @@ qint64 FileShareDownloader::readData(char *data, qint64 maxSize)
     if (d->bytesLeft.has_value()) {
         *d->bytesLeft -= bytesRead;
     }
+    d->bytesReceived += quint64(bytesRead);
+    if (d->maximumSize && d->bytesReceived > *d->maximumSize) {
+        // A response without a declared size ran past the limit.
+        d->finishWithError(tr("The file is larger than the automatic download limit"));
+        d->downloader->abort();
+        return -1;
+    }
 
     d->checkCacheReady();
 
@@ -782,6 +797,8 @@ qint64 FileShareDownloader::bytesAvailable() const
 }
 
 void FileShareDownloader::setSelfDelete(bool enable) { d->selfDelete = enable; }
+
+void FileShareDownloader::setMaximumSize(quint64 bytes) { d->maximumSize = bytes; }
 
 void FileShareDownloader::preferSource(const QString &uri)
 {

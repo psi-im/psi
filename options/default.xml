@@ -124,6 +124,8 @@
                 <scaled-message-icons type="bool">false</scaled-message-icons>
                 <show-status-changes type="bool">true</show-status-changes>
                 <show-previews type="bool">true</show-previews>
+                <auto-download-size type="int">5242880</auto-download-size>
+                <groupchat-auto-download-size type="int">1048576</groupchat-auto-download-size>
                 <warn-before-clear type="bool">true</warn-before-clear>
                 <only-paste-template type="bool">false</only-paste-template>
                 <css type="QString">/*Last message correction*/

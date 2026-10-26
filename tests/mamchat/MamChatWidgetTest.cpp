@@ -1367,6 +1367,63 @@ private slots:
         QCOMPARE(list.itemWidget(0)->findChildren<MessagePreview *>(QStringLiteral("mamFilePreview")).size(), 1);
     }
 
+    void sharesFollowTheAutomaticDownloadLimit()
+    {
+        FileSharingDeviceOpener opener;
+        opener.accounts.insert(QStringLiteral("account-a"), &opener);
+        FileSharingItem unasked(QStringLiteral("image/png")); // e.g. from a stranger
+        unasked.cached_ = false;
+        FileSharingItem allowed(QStringLiteral("image/png")); // within the message's limit
+        allowed.cached_ = false;
+        allowed.downloadsItself_ = true;
+        FileSharingItem bare(QStringLiteral("application/pdf")); // a bare OOB URL, not checked yet
+        bare.cached_ = false;
+        bare.urlOnly_ = true;
+        opener.items.insert(QStringLiteral("unasked"), &unasked);
+        opener.items.insert(QStringLiteral("allowed"), &allowed);
+        opener.items.insert(QStringLiteral("bare"), &bare);
+
+        MamChatWidget list;
+        list.resize(550, 700);
+        list.setHistoryLoading(true);
+        list.setMediaOpener(&opener);
+        list.appendMessage(message(QStringLiteral("limits"), QStringLiteral(
+            "<share id=\"unasked\" account=\"account-a\"/> "
+            "<share id=\"allowed\" account=\"account-a\" auto=\"1048576\"/> "
+            "<share id=\"bare\" account=\"account-a\" auto=\"1048576\"/>")));
+        list.show();
+        QTRY_VERIFY(list.itemWidget(0));
+        const auto cards = [&list] {
+            return list.itemWidget(0)->findChildren<MessagePreview *>(QStringLiteral("mamFilePreview")).size();
+        };
+        QCOMPARE(cards(), 2); // The image that downloads by itself stays in the text.
+        QCOMPARE(allowed.autoLimits_.size(), 1);
+        QCOMPARE(allowed.autoLimits_.first(), quint64(1048576));
+        QVERIFY(unasked.autoLimits_.isEmpty());
+        QCOMPARE(bare.remoteChecks_, 1);
+        int browserButtons = 0;
+        for (auto *button : list.itemWidget(0)->findChildren<QToolButton *>())
+            browserButtons += button->toolTip() == QStringLiteral("Open in browser");
+        QCOMPARE(browserButtons, 2);
+
+        // The server's answer builds the row again, without asking twice.
+        QPointer<QWidget> row = list.itemWidget(0);
+        bare.remoteChecked_ = true;
+        emit bare.remoteChecked();
+        QTRY_VERIFY(!row);
+        QTRY_VERIFY(list.itemWidget(0));
+        QCOMPARE(bare.remoteChecks_, 1);
+        QCOMPARE(cards(), 2);
+
+        // An image that fails to download by itself becomes a card.
+        row = list.itemWidget(0);
+        allowed.downloadsItself_ = false;
+        emit allowed.downloadFinished();
+        QTRY_VERIFY(!row);
+        QTRY_VERIFY(list.itemWidget(0));
+        QCOMPARE(cards(), 3);
+    }
+
     void virtualRowsReceiveMediaOpenerAndRecreateAttachments()
     {
         FileSharingDeviceOpener opener;

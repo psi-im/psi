@@ -6,6 +6,7 @@
 #include "qite.h"
 #include <QHash>
 #include <QImage>
+#include <QList>
 #include <QUrl>
 #include <optional>
 #include <functional>
@@ -17,16 +18,29 @@ public:
     QString                mimeType() const { return mime_; }
     QString                displayName() const { return QStringLiteral("test.7z"); }
     QString                fileName() const { return cachedPath_; }
-    bool                   isCached() const { return true; }
+    bool                   isCached() const { return cached_; }
+    bool                   isUrlOnly() const { return urlOnly_; }
     QImage                 preview(const QSize &) const { return preview_; }
     std::optional<quint64> fileSize() const { return 100; }
     QUrl                   simpleSource() const { return source_; }
     QUrl                   source_ = QUrl(QStringLiteral("https://example.org/file"));
     FileShareDownloader   *download() { return new FileShareDownloader(this); }
+    // The download policy is reduced to the answers the views ask for.
+    void                   autoDownload(quint64 limit) { autoLimits_.append(limit); }
+    bool                   downloadsItself(quint64 limit) const { return limit && downloadsItself_; }
+    void                   checkRemote() { ++remoteChecks_; }
+    bool                   isRemoteChecked() const { return remoteChecked_; }
     QImage                 preview_;
     QString                cachedPath_;
+    bool                   cached_          = true;
+    bool                   urlOnly_         = false;
+    bool                   downloadsItself_ = false;
+    bool                   remoteChecked_   = false;
+    int                    remoteChecks_    = 0;
+    QList<quint64>         autoLimits_;
 signals:
     void downloadFinished();
+    void remoteChecked();
 
 private:
     QString mime_;

@@ -35,7 +35,6 @@ public:
         System,
         Status,
         Subject,
-        Urls,
         MUCJoin,
         MUCPart,
         NickChange,
@@ -68,7 +67,6 @@ public:
     static MessageView fromHtml(const QString &, Type);
 
     static MessageView systemMessage(const QString &message) { return fromPlainText(message, System); }
-    static MessageView urlsMessage(const QMap<QString, QString> &);
     static MessageView subjectMessage(const QString &subject, const QString &prefix = QString());
 
     // accepts plain/text nick, plain/text status and rich/text statusText
@@ -181,7 +179,6 @@ public:
     inline const QString                  &userId() const { return _userId; }
     inline void                            setDateTime(const QDateTime &dt) { _dateTime = dt; }
     inline const QDateTime                &dateTime() const { return _dateTime; }
-    inline QMap<QString, QString>          urls() const { return _urls; }
     inline void                            setReplaceId(const QString &id)
     {
         _replaceId = id;
@@ -216,7 +213,6 @@ private:
     QDateTime                _revisionTime;
     QString                  _reactionTargetId;
     QString                  _retractionTargetId;
-    QMap<QString, QString>   _urls;
     QString                  _replaceId;
     QString                  _quoteId;
     QString                  _retractionId;

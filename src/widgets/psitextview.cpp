@@ -146,12 +146,17 @@ span.emojis {
               auto item = opener->sharedItem(id);
               if (!item)
                   return { QTextCharFormat(), "" };
+              // Downloaded by itself only as far as the message allows,
+              // see FileSharingManager::autoDownloadLimit().
+              const quint64 autoLimit = attrs.value(QLatin1String("auto")).toULongLong();
 
               if (item->mimeType().startsWith(QLatin1String("audio/"))) {
+                  item->autoDownload(autoLimit);
                   return { d->voiceMsgCtrl->makeFormat(source, opener, true), "" };
               }
 
               if (item->mimeType().startsWith(QLatin1String("video/"))) {
+                  item->autoDownload(autoLimit);
                   return { d->videoCtrl->makeFormat(source, opener, QSize(320, 220), true), "" };
               }
 
@@ -179,6 +184,8 @@ span.emojis {
 
                   // otherwise we have to download it
                   connect(item, &FileSharingItem::downloadFinished, this, [this, anchorName, url, item, insertAfter]() {
+                      if (!item->isCached())
+                          return; // failed; the link stays until a download succeeds
                       item->disconnect(this);
                       document()->addResource(QTextDocument::ImageResource, url, item->preview(QSize(640, 480)));
                       auto        prevCur = textCursor();
@@ -204,12 +211,7 @@ span.emojis {
                           QTimer::singleShot(0, this, &PsiTextView::scrollToBottom);
                       setTextCursor(prevCur);
                   });
-                  auto downloader = item->download();
-                  downloader->setSelfDelete(true);
-                  // read just for cache
-                  connect(downloader, &FileShareDownloader::readyRead, this,
-                          [downloader]() { downloader->read(downloader->bytesAvailable()); });
-                  downloader->open();
+                  item->autoDownload(autoLimit);
 
                   QString sizeStr;
                   if (item->fileSize()) {
@@ -217,22 +219,38 @@ span.emojis {
                       QString   unit = TextUtil::sizeUnit(qlonglong(*item->fileSize()), &div);
                       sizeStr        = TextUtil::roundedNumber(qint64(*item->fileSize()), div) + unit;
                   } else {
-                      sizeStr = QLatin1String("stream");
+                      sizeStr = item->isUrlOnly() ? tr("unknown size") : QStringLiteral("stream");
                   }
 
+                  const QString label
+                      = QString("%1 (%2, %3)")
+                            .arg(TextUtil::escape(item->displayName()), TextUtil::escape(item->mimeType()), sizeStr);
                   QUrl simpleUrl = item->simpleSource();
                   if (simpleUrl.isValid()) {
                       return { QTextCharFormat(),
-                               QString("<marker id=\"%1/start\"><a href=\"%2\">%3 (%4, %5)</a><marker id=\"%6/end\">")
-                                   .arg(anchorName, simpleUrl.toString(QUrl::FullyEncoded), simpleUrl.toString(),
-                                        item->mimeType(), sizeStr, anchorName) };
+                               QString("<marker id=\"%1/start\"><a href=\"%2\">%3</a><marker id=\"%4/end\">")
+                                   .arg(anchorName, TextUtil::escape(simpleUrl.toString(QUrl::FullyEncoded)), label,
+                                        anchorName) };
                   }
 
                   return { QTextCharFormat(),
-                           QString("<marker id=\"%1/start\">Shared media is downloading (%2, %3)<marker id=\"%4/end\">")
-                               .arg(anchorName, item->mimeType(), sizeStr, anchorName) };
+                           QString("<marker id=\"%1/start\">%2<marker id=\"%3/end\">")
+                               .arg(anchorName,
+                                    item->downloadsItself(autoLimit)
+                                        ? tr("Shared media is downloading (%1, %2)")
+                                              .arg(TextUtil::escape(item->mimeType()), sizeStr)
+                                        : label,
+                                    anchorName) };
               }
-              return { QTextCharFormat(), "" };
+
+              // Other files: a link to the source, or at least the name.
+              const QUrl    simpleUrl = item->simpleSource();
+              const QString name      = TextUtil::escape(item->displayName());
+              if (simpleUrl.isValid())
+                  return { QTextCharFormat(),
+                           QString("<a href=\"%1\">%2</a>")
+                               .arg(TextUtil::escape(simpleUrl.toString(QUrl::FullyEncoded)), name) };
+              return { QTextCharFormat(), name };
           } },
         { "marker",
           [this](const QStringView &html, int) -> PsiRichText::ParserRet {

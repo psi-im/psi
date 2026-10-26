@@ -25,7 +25,6 @@
 #include "eventdb.h"
 #include "filesharedlg.h"
 #include "filesharingmanager.h"
-#include "filesharingnormalizer.h"
 #include "filesharingpublication.h"
 #include "iconaction.h"
 #include "iconselect.h"
@@ -797,10 +796,6 @@ void ChatDlg::doneSend()
     if (auto *composer = qobject_cast<ChatEditProxy *>(chatEdit()->parentWidget()))
         composer->clearReply();
     historyState = false;
-    // A local echo can bypass MessageEvent entirely if history logging is
-    // disabled. Normalize only after aSend has delivered the original stanza.
-    auto localDisplay = m_.displayMessage();
-    FileSharingNormalizer::normalize(localDisplay);
     appendMessage(m_, true);
     disconnect(chatEdit(), SIGNAL(textChanged()), this, SLOT(setComposing()));
     chatEdit()->clear();
@@ -989,21 +984,6 @@ void ChatDlg::appendMessage(const Message &m, bool local, qint64 historyId, cons
     mv.setReplyMetadata(dm);
 
     dispatchMessage(mv);
-
-    if (!dm.urlList().isEmpty()) {
-        const UrlList urls = dm.urlList();
-        QMap<QString, QString> urlsMap;
-        for (const Url &u : std::as_const(urls))
-            urlsMap.insert(u.url(), u.desc());
-        // Some XMPP clients send links to HTTP uploaded files both in body and in jabber:x:oob.
-        // It's convenient to show only body if OOB data brings no additional information.
-        if (!urlsMap.isEmpty()
-            && !(urlsMap.size() == 1 && urlsMap.contains(body) && urlsMap.value(body).isEmpty())) {
-            MessageView umv = MessageView::urlsMessage(urlsMap);
-            umv.setSpooled(historyState);
-            dispatchMessage(umv);
-        }
-    }
     emit messageAppended(body, chatView()->textWidget());
 }
 

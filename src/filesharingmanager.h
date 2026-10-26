@@ -85,6 +85,7 @@ public:
                                unsigned int maxAge);
     std::optional<XMPP::Hash> contentForUrl(const QString &account, const XMPP::Hash &urlIdentity) const;
     bool rememberUrlContent(const QString &account, const XMPP::Hash &urlIdentity, const XMPP::Hash &contentHash);
+    void forgetUrlContent(const QString &account, const XMPP::Hash &urlIdentity);
 
     FileSharingItem *item(const XMPP::Hash &id, PsiAccount *account = nullptr);
     void             rememberMessage(const XMPP::Message &message, PsiAccount *account);
@@ -92,9 +93,12 @@ public:
     QList<FileSharingItem *> createFromMimeData(const QMimeData *data, PsiAccount *acc);
     QList<FileSharingItem *> fromFilesList(const QStringList &fileList, PsiAccount *acc);
 
-    // Handle SIMS and HTTP OOB consistently for live messages and old SQLite
-    // records. Newly persisted history already has normalized references.
+    // Show what the message attaches (SIMS references, HTTP(S) OOB URLs as share
+    // objects, other OOB URLs as links) in its view. The message is not changed.
     void fillMessageView(MessageView &mv, const XMPP::Message &m, PsiAccount *acc);
+
+    // The largest attachment of the message the view may download by itself, 0 for none.
+    quint64 autoDownloadLimit(const XMPP::Message &m, PsiAccount *acc) const;
 
     // returns false if unable to accept automatically
     bool jingleAutoAcceptIncomingDownloadRequest(XMPP::Jingle::Session *session);
