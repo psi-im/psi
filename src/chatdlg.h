@@ -89,7 +89,8 @@ public:
     bool                            localHistoryPopulated() const { return localHistoryPopulated_; }
     void                            dispatchMessage(const MessageView &mv);
     virtual void                    appendSysMsg(const QString &txt) = 0;
-    void appendMessage(const Message &, bool local = false, qint64 historyId = 0, const QString &archiveId = {});
+    void appendMessage(const Message &, bool local = false, qint64 historyId = 0, const QString &archiveId = {},
+                       MessageState::Flags messageState = {});
     // The encryption outcome of a sent message, known once its job finishes.
     void                            outgoingMessageSecurity(const QString &messageId, bool encrypted,
                                                             const QString &protocol);

@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #pragma once
 #include "chatreply.h"
+#include "messagestate.h"
 
 // Test-only MessageView contract. Keeps this widget test independent from
 // PsiAccount, PsiOptions and the full application while compiling the actual
@@ -72,7 +73,9 @@ public:
     bool           isSecurityKnown() const { return securityKnown_; }
     bool           isEncrypted() const { return encrypted_; }
     const QString &encryptionProtocol() const { return encryptionProtocol_; }
-    bool             isEdited() const { return edited_; }
+    bool             isEdited() const { return edited_ || messageState_.testFlag(MessageState::Edited); }
+    void setMessageState(MessageState::Flags state) { messageState_ = state; }
+    MessageState::Flags messageState() const { return messageState_; }
     const QString   &retractionId() const { return retractionId_; }
     void             setRetractionId(const QString &id) { retractionId_ = id; }
     bool             isLocal() const { return local_; }
@@ -103,6 +106,7 @@ private:
     QString       target_, retractTarget_, userId_, reactionsId_;
     QSet<QString> reactions_;
     qint64        historyId_ = 0;
+    MessageState::Flags messageState_;
     Type          type_;
     QString       id_;
     QString       archiveId_;

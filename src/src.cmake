@@ -67,6 +67,8 @@ list(APPEND FORMS
     )
 
 list(APPEND HEADERS
+    messagestate.h
+    historyarchive.h
     aboutdlg.h
     abstracttreeitem.h
     abstracttreemodel.h
@@ -393,6 +395,7 @@ list(APPEND SOURCES
     discodlg.cpp
     dummystream.cpp
     historyarchive.cpp
+    historymessagestate.cpp
     historysync.cpp
     historysyncaccount.cpp
     nativechathistory.cpp

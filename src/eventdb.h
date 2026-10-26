@@ -35,7 +35,7 @@ class EDBItem {
 public:
     EDBItem(const PsiEvent::Ptr &, const QString &id, int historyState = HistoryArchive::Unverified,
             const QString &archiveId = {}, const QDateTime &revisionTime = {}, bool protocolOnly = false,
-            const QString &reactionTarget = {}, const QString &retractionTarget = {});
+            const QString &reactionTarget = {}, const QString &retractionTarget = {}, MessageState::Flags messageFlags = {});
     ~EDBItem();
 
     PsiEvent::Ptr  event() const;
@@ -46,6 +46,7 @@ public:
     bool           protocolOnly() const { return protocolOnly_; }
     QString        reactionTarget() const { return reactionTarget_; }
     QString        retractionTarget() const { return retractionTarget_; }
+    MessageState::Flags messageFlags() const { return messageFlags_; }
 
 private:
     int           historyState_;
@@ -54,6 +55,7 @@ private:
     bool          protocolOnly_ = false;
     QString       reactionTarget_;
     QString       retractionTarget_;
+    MessageState::Flags messageFlags_;
     QString       v_id;
     PsiEvent::Ptr e;
 };
@@ -119,6 +121,7 @@ public:
     virtual void               setStorageParam(const QString &key, const QString &val) = 0;
 
     virtual EDBResult localHistoryPage(const QString &, const XMPP::Jid &, qint64, int) { return {}; }
+    virtual HistoryArchive::DisplayedCursor sentDisplayedCursor(const QString &, const XMPP::Jid &) { return {}; }
     // Resolve any archived revision to its original anchored position and
     // latest known text, including corrections outside the requested page.
     virtual EDBItemPtr resolvedHistoryEvent(qint64) { return {}; }

@@ -108,6 +108,8 @@ QString HistoryMessageExtras::encode(const XMPP::Message &message)
         extra.insert("psi:ids", stanzaIds);
     if (!message.originId().isEmpty())
         extra.insert("psi:origin", message.originId());
+    if (message.type() == XMPP::Message::Type::Groupchat || !message.occupantId().isEmpty())
+        extra.insert("psi:occupant", message.occupantId());
     if (message.wasEncrypted()) {
         extra.insert("psi:encrypted", true);
         extra.insert("psi:encryption-protocol", message.encryptionProtocol());
@@ -203,4 +205,6 @@ void HistoryMessageExtras::restore(const QString &json, XMPP::Message &message)
     // only after restoring the stanza ID.
     if (extra.contains("psi:origin"))
         message.setOriginId(extra.value("psi:origin").toString());
+    if (extra.contains("psi:occupant"))
+        message.setOccupantId(extra.value("psi:occupant").toString());
 }

@@ -74,6 +74,7 @@ public:
     static QString fullTimestamp(const QDateTime &when);
     // Most recent actually visible incoming message requesting a read marker.
     QString takeVisibleMarkableIncomingId();
+    void    restoreDisplayedIncoming(const QString &id, const QDateTime &time = {}, qint64 historyId = 0);
 
     // Whole-message selection uses logical model keys, not materialized QWidget pointers.
     int  selectedMessageCount() const { return selectedKeys_.size(); }
@@ -149,9 +150,13 @@ private:
     // Stable row identity, not an index: prepending MAM pages shifts indices.
     QString                                       lastDisplayedRowKey_;
     QString                                       lastMarkedIncomingRowKey_;
+    QDateTime                                     lastMarkedIncomingTime_;
+    qint64                                        lastMarkedIncomingHistoryId_ = 0;
+    QSet<QString>                                 unresolvedSentDisplayedIds_;
     QList<QString>                                unresolvedDisplayedIds_;
     int                                           displayedTargetIndex() const;
     void                                          resolveDisplayedMarkers();
+    void                                          rememberDisplayedIncoming(int index);
     void                                          updateTimestamps();
     void                                          updateTimestampAppearance(QLabel *label);
     void                                          updateRowSelection(QFrame *row, bool selected);

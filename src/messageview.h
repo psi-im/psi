@@ -20,6 +20,7 @@
 #ifndef MESSAGEVIEW_H
 #define MESSAGEVIEW_H
 #include "chatreply.h"
+#include "messagestate.h"
 
 #include "filesharingitem.h"
 #include "iris/xmpp_message.h"
@@ -145,7 +146,9 @@ public:
         mv.setEncrypted(encrypted, protocol);
         return mv;
     }
-    inline bool isEdited() const { return bool(_flags & Edited); }
+    inline bool isEdited() const { return bool(_flags & Edited) || _messageState.testFlag(MessageState::Edited); }
+    void setMessageState(MessageState::Flags state) { _messageState = state; }
+    MessageState::Flags messageState() const { return _messageState; }
     inline void setAwaitingReceipt(bool b = true) { _flags.setFlag(AwaitingReceipt, b); }
     inline bool isAwaitingReceipt() const { return bool(_flags & AwaitingReceipt); }
     inline void setMarkable(bool markable = true) { _markable = markable; }
@@ -200,6 +203,7 @@ public:
 private:
     Type                     _type;
     Flags                    _flags;
+    MessageState::Flags      _messageState;
     int                      _status;
     int                      _statusPriority;
     QString                  _messageId;

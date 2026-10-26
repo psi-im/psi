@@ -1,6 +1,6 @@
 # Psi history and XEP-0313 MAM: architecture and cache policy
 
-Status: **adaptive native history with sparse archive navigation** (2026-10-20).
+Status: **adaptive native history with sparse navigation and durable message state** (2026-10-26).
 The native timelines share the existing SQLite EDB with the history window and
 legacy importer. The initial architecture analysis and longer-term retention
 plans below are retained as design context; the implementation section describes
@@ -136,6 +136,43 @@ Before-UID checkpoints remain independent of ordinal cache pages. Indexed pages
 are keyed by scoped count snapshot and can serve smaller adaptive requests;
 a different count invalidates ordinal cache reuse without deleting messages.
 Archive erasure invalidates snapshots and both checkpoint kinds.
+
+### Materialized message state and schema 0.5
+
+`events.message_flags` stores the state of the canonical original message,
+independently of `history_state` (archive provenance and adjacency):
+
+| Bit | Meaning |
+| --- | --- |
+| `0x1` | Displayed: an incoming message was acknowledged by us, or an outgoing message by the peer. |
+| `0x2` | Delivered: the recipient sent a delivery receipt. |
+| `0x4` | Edited: the logical message has a known correction. |
+| `0x8` | Retracted: a matching author requested retraction. |
+
+`message_state_refs` indexes content identities and protocol targets within
+one contact/account. Pending references remain available when the target has
+not been downloaded yet. Effects on corrections resolve to their original row;
+`resolvedHistoryEvent()` returns the latest text and that row's materialized
+mask together. Consequently, an indexed page can render read/edit/retraction
+state without loading the pages containing the corresponding protocol events.
+MessageView carries this state through row replacement and QWidget eviction.
+
+Live EDB appends and MAM page merges update the index and mask in the same
+transaction as the payload/revision writes. Displayed markers update a prefix
+of logical messages; subsequently loaded older messages inherit that prefix.
+New markers extend only the unacknowledged interval. Reused ambiguous IDs do
+not certify a target. An identity repair or a moved revision root rebuilds the
+affected contact's projection without changing archive coverage or source data.
+Direct-chat state is scoped by direction; MUC retractions additionally require
+the same full sender and matching occupant IDs when available. MUC displayed
+state needs per-reader data and is not collapsed into a single shared bit.
+
+The additive 0.1–0.4 to 0.5 migration uses the existing startup consent/progress
+gate and worker-owned transaction. It indexes existing envelopes and plaintext
+legacy MAM references, preserving original event IDs, bodies, SIMS data, raw XML
+and certified pages. Failed ciphertext is not treated as a protocol effect.
+Unresolved references remain pending. No remote history fetch is required for
+migration; effects never received by this client still require normal sync.
 
 ## Incremental tail and protocol replay
 

@@ -847,6 +847,7 @@ void MamChatWidget::mergeMessage(int index, const MessageView &incoming, const Q
     const auto previous = row.message;
     const bool edited   = previous.isEdited() || incoming.isEdited() || !previous.replaceId().isEmpty()
         || !incoming.replaceId().isEmpty();
+    const auto messageState = previous.messageState() | incoming.messageState();
     if (!previous.messageId().isEmpty())
         row.stanzaIds.insert(previous.messageId());
     if (!previous.replaceId().isEmpty())
@@ -884,6 +885,7 @@ void MamChatWidget::mergeMessage(int index, const MessageView &incoming, const Q
         if (!updated.isSecurityKnown() && previous.isSecurityKnown())
             updated.setEncrypted(previous.isEncrypted(), previous.encryptionProtocol());
         updated.setEdited(edited);
+        updated.setMessageState(messageState);
         if (!updated.reply().isValid() && previous.reply().isValid())
             updated.setReply(previous.reply());
         if (!groupChat_ && !previous.nick().isEmpty())
@@ -894,12 +896,13 @@ void MamChatWidget::mergeMessage(int index, const MessageView &incoming, const Q
             updated.setHistoryId(previous.historyId());
         row.message = updated;
         replaceRow(index);
-    } else if ((edited && !previous.isEdited()) || reactionId != previous.reactionTargetId()
+    } else if (messageState != previous.messageState() || (edited && !previous.isEdited()) || reactionId != previous.reactionTargetId()
                || retractionId != previous.retractionTargetId()
                || (!previous.isSecurityKnown() && incoming.isSecurityKnown())) {
         if (!previous.isSecurityKnown() && incoming.isSecurityKnown())
             row.message.setEncrypted(incoming.isEncrypted(), incoming.encryptionProtocol());
         row.message.setEdited(edited);
+        row.message.setMessageState(messageState);
         row.message.setReactionTargetId(reactionId);
         row.message.setRetractionTargetId(retractionId);
         replaceRow(index);
@@ -954,6 +957,7 @@ void MamChatWidget::coalesceRevisionRows()
         const QString survivingKey   = items_.at(keeper).key;
         const QString removedKey     = candidate.key;
         Row           merged         = items_.at(keeper);
+        const auto    messageState   = merged.message.messageState() | candidate.message.messageState();
         const auto    originalTime   = merged.message.dateTime();
         const auto    originalTarget = !merged.message.reactionTargetId().isEmpty()
                ? merged.message.reactionTargetId()
@@ -971,6 +975,7 @@ void MamChatWidget::coalesceRevisionRows()
         merged.message.setReactionTargetId(originalTarget);
         merged.message.setRetractionTargetId(retractTarget);
         merged.message.setEdited();
+        merged.message.setMessageState(messageState);
         items_[keeper] = merged;
 
         for (auto it = sourceAliases_.begin(); it != sourceAliases_.end(); ++it)
@@ -1010,6 +1015,8 @@ QString MamChatWidget::retractionTarget(const MessageView &view) const
 
 bool MamChatWidget::isRetracted(const Row &row) const
 {
+    if (row.message.messageState().testFlag(MessageState::Retracted))
+        return true;
     // Also accept the reaction target: earlier XEP-0424 revisions and some
     // clients address retractions by origin-id.
     auto events = retractions_.value(retractionTarget(row.message));
@@ -1038,6 +1045,25 @@ int MamChatWidget::displayedTargetIndex() const
 
 void MamChatWidget::resolveDisplayedMarkers()
 {
+    for (auto it = unresolvedSentDisplayedIds_.begin(); it != unresolvedSentDisplayedIds_.end();) {
+        int target = -1;
+        for (int i = 0; i < items_.size(); ++i) {
+            const auto &message = items_.at(i).message;
+            if (message.type() == MessageView::Message && !message.isLocal() && items_.at(i).stanzaIds.contains(*it)) {
+                if (target >= 0) {
+                    target = -1; // An ambiguous peer ID is not a read position.
+                    break;
+                }
+                target = i;
+            }
+        }
+        if (target < 0) {
+            ++it;
+            continue;
+        }
+        rememberDisplayedIncoming(target);
+        it = unresolvedSentDisplayedIds_.erase(it);
+    }
     if (unresolvedDisplayedIds_.isEmpty())
         return;
 
@@ -1070,6 +1096,34 @@ void MamChatWidget::resolveDisplayedMarkers()
     }
 }
 
+void MamChatWidget::restoreDisplayedIncoming(const QString &id, const QDateTime &time, qint64 historyId)
+{
+    if (groupChat_ || id.isEmpty())
+        return;
+    if (time.isValid()
+        && (!lastMarkedIncomingTime_.isValid() || time > lastMarkedIncomingTime_
+            || (time == lastMarkedIncomingTime_ && historyId > lastMarkedIncomingHistoryId_))) {
+        lastMarkedIncomingTime_      = time;
+        lastMarkedIncomingHistoryId_ = historyId;
+    }
+    unresolvedSentDisplayedIds_.insert(id);
+    resolveDisplayedMarkers();
+}
+
+void MamChatWidget::rememberDisplayedIncoming(int index)
+{
+    const int previous = lastMarkedIncomingRowKey_.isEmpty() ? -1 : indexOfKey(lastMarkedIncomingRowKey_);
+    if (index > previous)
+        lastMarkedIncomingRowKey_ = items_.at(index).key;
+    const auto &message = items_.at(index).message;
+    if (message.dateTime().isValid()
+        && (!lastMarkedIncomingTime_.isValid() || message.dateTime() > lastMarkedIncomingTime_
+            || (message.dateTime() == lastMarkedIncomingTime_ && message.historyId() > lastMarkedIncomingHistoryId_))) {
+        lastMarkedIncomingTime_      = message.dateTime();
+        lastMarkedIncomingHistoryId_ = message.historyId();
+    }
+}
+
 QString MamChatWidget::takeVisibleMarkableIncomingId()
 {
     if (!isVisible() || window()->isMinimized() || groupChat_)
@@ -1079,17 +1133,27 @@ QString MamChatWidget::takeVisibleMarkableIncomingId()
         return {};
     const int previouslyMarked = lastMarkedIncomingRowKey_.isEmpty() ? -1 : indexOfKey(lastMarkedIncomingRowKey_);
     for (int i = range.last; i >= range.first; --i) {
-        if (previouslyMarked >= i)
-            break; // XEP-0333 markers advance only.
         const auto &message = items_.at(i).message;
         if (message.type() != MessageView::Message || message.isLocal() || !message.isMarkable()
-            || message.messageId().isEmpty())
+            || message.messageId().isEmpty() || message.messageState().testFlag(MessageState::Displayed))
+            continue;
+        // Independently loaded pages can insert equal-timestamp rows before
+        // the current row. Prefer their durable EDB order when it is known.
+        const bool newerHistory = lastMarkedIncomingTime_.isValid() && message.dateTime() == lastMarkedIncomingTime_
+            && lastMarkedIncomingHistoryId_ > 0 && message.historyId() > lastMarkedIncomingHistoryId_;
+        if (previouslyMarked >= i && !newerHistory)
+            continue; // XEP-0333 markers advance only.
+        if (unresolvedSentDisplayedIds_.contains(message.messageId())
+            || (lastMarkedIncomingTime_.isValid() && message.dateTime().isValid()
+                && (message.dateTime() < lastMarkedIncomingTime_
+                    || (message.dateTime() == lastMarkedIncomingTime_ && message.historyId() > 0
+                        && message.historyId() <= lastMarkedIncomingHistoryId_))))
             continue;
         auto *row = rowWidget(i);
         if (row && row->isVisibleTo(viewport())
             && QRect(row->mapTo(viewport(), QPoint()), row->size()).intersects(viewport()->rect()))
         {
-            lastMarkedIncomingRowKey_ = items_.at(i).key;
+            rememberDisplayedIncoming(i);
             return message.messageId();
         }
     }
@@ -1111,8 +1175,12 @@ bool MamChatWidget::applyProtocolEvent(const MessageView &event)
         target = event.messageId();
         receipts_.insert(target);
     } else if (event.type() == MessageView::DisplayedMarker) {
-        if (event.isLocal() || groupChat_ || event.messageId().isEmpty())
+        if (groupChat_ || event.messageId().isEmpty())
             return true;
+        if (event.isLocal()) {
+            restoreDisplayedIncoming(event.messageId());
+            return true;
+        }
         // MAM can deliver a marker before the referenced older page. Do not
         // claim any message was read until its id is actually known. Keep only
         // a small bounded set of unresolved references for later pages.
@@ -1396,6 +1464,9 @@ void MamChatWidget::clearMessages()
     security_.clear();
     lastDisplayedRowKey_.clear();
     lastMarkedIncomingRowKey_.clear();
+    lastMarkedIncomingTime_      = {};
+    lastMarkedIncomingHistoryId_ = 0;
+    unresolvedSentDisplayedIds_.clear();
     unresolvedDisplayedIds_.clear();
     cancelMessageSelection();
     historySource_.clear();
@@ -1679,8 +1750,9 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
                          content);
         time->setObjectName(QStringLiteral("mamTimestamp"));
         time->setTextFormat(Qt::PlainText);
-        const bool read = mv.isLocal() && !groupChat_ && displayedTargetIndex() >= index;
-        bool delivered = false;
+        const bool read = mv.isLocal() && !groupChat_
+            && (mv.messageState().testFlag(MessageState::Displayed) || displayedTargetIndex() >= index);
+        bool delivered = mv.isLocal() && mv.messageState().testFlag(MessageState::Delivered);
         if (mv.isLocal() && !groupChat_) {
             // A receipt may reference any revision of a corrected message.
             // The visible row represents one logical message, not only the

@@ -34,7 +34,8 @@ HistorySync::Context accountContext(PsiAccount *account)
             if (saved->event()->type() == PsiEvent::Message) {
                 cached.message      = saved->event().staticCast<MessageEvent>()->message();
                 cached.protocolOnly = saved->protocolOnly() || cached.message.messageReceipt() == XMPP::ReceiptReceived
-                    || !cached.message.reactions().targetId.isEmpty() || !cached.message.retraction().isEmpty();
+                    || !cached.message.displayedMarkerId().isEmpty() || !cached.message.reactions().targetId.isEmpty()
+                    || !cached.message.retraction().isEmpty();
             }
         return cached;
     };
@@ -47,6 +48,10 @@ HistorySync::Context accountContext(PsiAccount *account)
                       // Legacy outgoing EDB records may lack their envelope sender.
                       cached.message.setFrom(XMPP::Jid(sender));
                       cached.message.setTo(XMPP::Jid(key.peer));
+                      cached.protocolOnly = saved->protocolOnly()
+                          || cached.message.messageReceipt() == XMPP::ReceiptReceived
+                          || !cached.message.displayedMarkerId().isEmpty()
+                          || !cached.message.reactions().targetId.isEmpty() || !cached.message.retraction().isEmpty();
                   }
               return cached;
           };

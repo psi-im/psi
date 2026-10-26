@@ -368,9 +368,14 @@ void HistorySync::decodeNext()
             continue;
         }
         // OMEMO does not encrypt a sent message for the sending device. Only
-        // our own current resource may use its uniquely recorded plaintext
-        // delivery as a fallback; peers' unverified client IDs never do.
-        if (!key_.room && XMPP::Jid(stanza.attribute("from")).compare(context_.owner, true) && context_.ownPlaintext) {
+        // an archived sender belonging to our account may use its uniquely
+        // recorded outgoing plaintext. The account JID is bare, and a restart
+        // can bind a different resource. Storage checks the recorded sender;
+        // peers' unverified client IDs must never use this fallback.
+        if (!key_.room && XMPP::Jid(stanza.attribute("from")).compare(context_.owner, false) && context_.ownPlaintext
+            && PsiMam::belongsToConversation(context_.owner.bare(), key_.peer,
+                                             XMPP::Jid(stanza.attribute("from")).bare(),
+                                             XMPP::Jid(stanza.attribute("to")).bare())) {
             const auto time
                 = QDateTime::fromString(forwarded.firstChildElement("delay").attribute("stamp"), Qt::ISODate);
             const auto own = context_.ownPlaintext(key_, stanza.attribute("id"), stanza.attribute("from"), time);
