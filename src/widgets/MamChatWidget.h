@@ -122,6 +122,9 @@ private:
     bool paletteRefreshPending_ = false;
     using Row                     = MamHistorySource::Row;
     QString             reactionTarget(const MessageView &) const;
+    QString             reactionKey(const Row &) const;
+    int                 legacyReactionTarget(const QString &messageId, const QDateTime &before) const;
+    bool                canSendLegacyReaction(int index) const;
     QString             retractionTarget(const MessageView &) const;
     bool                applyProtocolEvent(const MessageView &);
     bool                isRetracted(const Row &) const;

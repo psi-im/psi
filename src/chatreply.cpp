@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "chatreply.h"
 #include "iris/xmpp_message.h"
+#include <QStringList>
 #include <algorithm>
 
 namespace {
@@ -63,9 +64,13 @@ void applyMessageReply(XMPP::Message &message, const ChatReply &reply)
     if (!reply.isValid())
         return;
     const XMPP::Message::Reply reference { XMPP::Jid(reply.to), reply.id };
-    if (!reference.isValid())
+    // Without a referenceable id (a room without stanza-ids) send neither
+    // <reply/> nor <fallback/>: the quote is ordinary body text.
+    const bool referenced = reply.hasReference() && reference.isValid();
+    if (referenced)
+        message.setReply(reference);
+    else if (reply.hasReference())
         return;
-    message.setReply(reference);
     // The fallback is optional. Do not move existing reference/fallback ranges
     // in media messages by prepending a second feature's compatibility text.
     if (!message.references().isEmpty() || !message.fallbacks().isEmpty())
@@ -75,8 +80,43 @@ void applyMessageReply(XMPP::Message &message, const ChatReply &reply)
         fallback = QStringLiteral("> %1:\n").arg(reply.author);
     for (const auto &line : reply.text.split(QLatin1Char('\n')))
         fallback += QStringLiteral("> %1\n").arg(line);
+    if (!referenced) {
+        message.setBody(fallback + message.body());
+        return;
+    }
     auto fallbacks = message.fallbacks();
     fallbacks.append({ replyNamespace, { { 0, int(fallback.toUcs4().size()) } }, {} });
     message.setFallbacks(fallbacks);
     message.setBody(fallback + message.body());
+}
+
+int plainQuotePrefix(const QString &body, ChatReply *reply)
+{
+    QStringList lines;
+    int         end = 0;
+    while (end < body.size() && body.at(end) == QLatin1Char('>')) {
+        const int newline = body.indexOf(QLatin1Char('\n'), end);
+        if (newline < 0)
+            break; // A quote must be followed by the answer itself.
+        QString line = body.mid(end + 1, newline - end - 1);
+        if (line.endsWith(QLatin1Char('\r')))
+            line.chop(1);
+        if (line.startsWith(QLatin1Char(' ')))
+            line.remove(0, 1);
+        lines.append(line);
+        end = newline + 1;
+    }
+    if (lines.isEmpty() || body.mid(end).trimmed().isEmpty())
+        return 0;
+    QString author;
+    if (lines.size() > 1 && lines.first().endsWith(QLatin1Char(':'))) {
+        author = lines.first().chopped(1).trimmed();
+        lines.removeFirst();
+    }
+    const QString text = lines.join(QLatin1Char('\n')).trimmed();
+    if (text.isEmpty())
+        return 0;
+    if (reply)
+        *reply = ChatReply { {}, {}, author, text };
+    return end;
 }

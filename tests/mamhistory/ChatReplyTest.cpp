@@ -56,6 +56,82 @@ private slots:
         QCOMPARE(oldHistory.urlList().size(), 1);
     }
 
+    void quoteWithoutRoomStanzaIdIsPlainBodyText()
+    {
+        // Rooms without XEP-0359 stanza-ids give nothing to reference: send the
+        // name and quote in the body only, with neither <reply/> nor <fallback/>.
+        ReplyConnector connector;
+        ClientStream   stream(&connector);
+        Message        outgoing(Jid("room@example.org"));
+        outgoing.setType(Message::Type::Groupchat);
+        outgoing.setId("new-message");
+        outgoing.setBody("Answer");
+        const ChatReply quote { {}, "room@example.org/Peer", "Peer", "first\nsecond" };
+        QVERIFY(quote.isValid());
+        QVERIFY(!quote.hasReference());
+        applyMessageReply(outgoing, quote);
+        QCOMPARE(outgoing.body(), QString("> Peer:\n> first\n> second\nAnswer"));
+
+        Message received;
+        QVERIFY(received.fromStanza(outgoing.toStanza(&stream)));
+        QVERIFY(!received.reply().isValid());
+        QVERIFY(received.fallbacks().isEmpty());
+        QCOMPARE(received.body(), outgoing.body());
+        QVERIFY(!messageReply(received).isValid());
+        QCOMPARE(messageReplyBody(received), outgoing.body());
+
+        // Existing ranges of another feature must not be shifted.
+        Message media;
+        media.setBody("media description");
+        media.setFallbacks({ { "urn:example:media", { { 0, 5 } }, {} } });
+        applyMessageReply(media, quote);
+        QCOMPARE(media.body(), QString("media description"));
+        QVERIFY(!media.reply().isValid());
+
+        QVERIFY(!ChatReply {}.isValid());
+    }
+
+    void leadingPlainTextQuoteIsRecognized()
+    {
+        // Exactly what applyMessageReply() sends without a reference id.
+        const QString sent = QString::fromUtf8("> Vitozz:\n> У меня сейчас света нет\nа ещё вернул реакции");
+        ChatReply     quote;
+        const int     end = plainQuotePrefix(sent, &quote);
+        QCOMPARE(sent.mid(end), QString::fromUtf8("а ещё вернул реакции"));
+        QVERIFY(quote.isValid());
+        QVERIFY(!quote.hasReference());
+        QCOMPARE(quote.author, QString("Vitozz"));
+        QCOMPARE(quote.text, QString::fromUtf8("У меня сейчас света нет"));
+
+        // Several lines, no author line, CRLF and missing space after '>'.
+        const QString multi = QStringLiteral(">first\r\n> second\nanswer");
+        QCOMPARE(multi.mid(plainQuotePrefix(multi, &quote)), QString("answer"));
+        QVERIFY(quote.author.isEmpty());
+        QCOMPARE(quote.text, QString("first\nsecond"));
+
+        // A lone "> Nick:" line is the quoted text itself, not an author.
+        const QString single = QStringLiteral("> Note:\nanswer");
+        QVERIFY(plainQuotePrefix(single, &quote) > 0);
+        QVERIFY(quote.author.isEmpty());
+        QCOMPARE(quote.text, QString("Note:"));
+
+        // Not a reply: no answer after the quote, a quote not at the start,
+        // or ordinary text.
+        QCOMPARE(plainQuotePrefix(QStringLiteral("> only a quote")), 0);
+        QCOMPARE(plainQuotePrefix(QStringLiteral("> Nick:\n> quote\n  \n")), 0);
+        QCOMPARE(plainQuotePrefix(QStringLiteral("text\n> later quote\nmore")), 0);
+        QCOMPARE(plainQuotePrefix(QStringLiteral("a > b\nc")), 0);
+
+        // Round trip through applyMessageReply().
+        Message outgoing;
+        outgoing.setBody("Answer");
+        applyMessageReply(outgoing, { {}, {}, "Peer", "first\nsecond" });
+        const int prefix = plainQuotePrefix(outgoing.body(), &quote);
+        QCOMPARE(outgoing.body().mid(prefix), QString("Answer"));
+        QCOMPARE(quote.author, QString("Peer"));
+        QCOMPARE(quote.text, QString("first\nsecond"));
+    }
+
     void invalidFallbackDoesNotEraseMessageAndOverlapsAreMerged()
     {
         Message message;
