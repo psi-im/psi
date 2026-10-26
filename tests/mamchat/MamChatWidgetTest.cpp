@@ -1260,6 +1260,80 @@ private slots:
         }
     }
 
+    void largeSimsImageGetsItsOwnParagraphEvenWithCaption()
+    {
+        FileSharingDeviceOpener opener;
+        opener.accounts.insert(QStringLiteral("account-a"), &opener);
+        FileSharingItem image(QStringLiteral("image/png"));
+        image.preview_ = QImage(240, 140, QImage::Format_RGB32);
+        image.preview_.fill(Qt::green);
+        opener.items.insert(QStringLiteral("photo"), &image);
+
+        ChatMessageText body;
+        body.setMediaOpener(&opener);
+        body.setRichText(QStringLiteral("Short comment <share id=\"photo\" account=\"account-a\"/> continued"));
+        const auto doc = body.document();
+        QCOMPARE(doc->blockCount(), 3);
+        QCOMPARE(doc->begin().text(), QStringLiteral("Short comment "));
+        const auto media = doc->begin().next();
+        QCOMPARE(media.text(), QString(QChar::ObjectReplacementCharacter));
+        QVERIFY(media.begin().fragment().charFormat().isImageFormat());
+        QCOMPARE(media.begin().fragment().charFormat().toImageFormat().name(), QStringLiteral("share:photo"));
+        QCOMPARE(media.next().text(), QStringLiteral(" continued"));
+        QVERIFY(body.heightForWidth(500) >= 140 + 2 * body.fontMetrics().height());
+    }
+
+    void multipleLargeMediaObjectsGetIndependentParagraphs()
+    {
+        ChatMessageText body;
+        const int height = qCeil(2.0 * QFontMetricsF(body.font()).height()) + 20;
+        const QString html = QStringLiteral("Before <img src=\"first\" width=\"100\" height=\"%1\"/>"
+                                            "<img src=\"second\" width=\"100\" height=\"%1\"/> after")
+                                 .arg(height);
+        body.setRichText(html);
+        const QTextDocument *doc = body.document();
+        QCOMPARE(doc->blockCount(), 4);
+        QCOMPARE(doc->begin().text(), QStringLiteral("Before "));
+        QCOMPARE(doc->begin().next().text(), QString(QChar::ObjectReplacementCharacter));
+        QCOMPARE(doc->begin().next().next().text(), QString(QChar::ObjectReplacementCharacter));
+        QCOMPARE(doc->begin().next().next().next().text(), QStringLiteral(" after"));
+    }
+
+    void smallInlineMediaStaysWithTextAtDoubleFontThreshold()
+    {
+        ChatMessageText body;
+        const int fontLineHeight = body.fontMetrics().height();
+        body.setRichText(QStringLiteral("Before <img src=\"tiny\" width=\"12\" height=\"%1\"/> after")
+                             .arg(fontLineHeight));
+        QCOMPARE(body.document()->blockCount(), 1);
+        QVERIFY(body.document()->begin().text().startsWith(QStringLiteral("Before ")));
+        QVERIFY(body.document()->begin().text().endsWith(QStringLiteral(" after")));
+    }
+
+    void mediaInsertedAfterInitialRenderingAlsoGetsParagraph()
+    {
+        ChatMessageText body;
+        body.setRichText(QStringLiteral("Prefix <img src=\"small\" width=\"12\" height=\"12\"/> suffix"));
+        QCOMPARE(body.document()->blockCount(), 1);
+        auto fragment = body.document()->begin().begin().fragment();
+        Q_UNUSED(fragment);
+        QTextCursor cursor(body.document());
+        const auto first = body.document()->begin().text();
+        const int at = first.indexOf(QChar::ObjectReplacementCharacter);
+        QVERIFY(at >= 0);
+        cursor.setPosition(at);
+        cursor.setPosition(at + 1, QTextCursor::KeepAnchor);
+        QTextImageFormat largeImage;
+        largeImage.setName(QStringLiteral("async-large"));
+        largeImage.setWidth(260);
+        largeImage.setHeight(150);
+        cursor.insertImage(largeImage);
+        QTRY_COMPARE(body.document()->blockCount(), 3);
+        QCOMPARE(body.document()->begin().text(), QStringLiteral("Prefix "));
+        QCOMPARE(body.document()->begin().next().text(), QString(QChar::ObjectReplacementCharacter));
+        QCOMPARE(body.document()->begin().next().next().text(), QStringLiteral(" suffix"));
+    }
+
     void simsMediaUsesExistingPsiTextViewObjects()
     {
         FileSharingDeviceOpener opener;
