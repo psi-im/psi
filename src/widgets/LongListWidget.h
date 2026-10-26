@@ -484,6 +484,7 @@ private:
     bool committingGeometry = false;
     bool internalScrollChange = false;
     bool wheelInProgress = false;
+    qreal wheelRemainder = 0.0; // Sub-pixel wheel travel carried between events.
     bool userScrollActionPending = false;
     bool scrollAnimationApplying = false;
     bool hoverHighlightEnabled = true;

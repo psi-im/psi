@@ -8,6 +8,7 @@
 #include <QToolButton>
 #include <QStandardItemModel>
 #include <QTreeView>
+#include <QWheelEvent>
 
 #include "widgets/OverlayScrollBarManager.h"
 
@@ -19,6 +20,21 @@ void settleEvents(int rounds = 6)
         QCoreApplication::processEvents();
     }
 }
+
+class WheelCountingArea : public QAbstractScrollArea
+{
+public:
+    int wheels = 0;
+    QPoint lastAngleDelta;
+
+protected:
+    void wheelEvent(QWheelEvent *event) override
+    {
+        ++wheels;
+        lastAngleDelta = event->angleDelta();
+        event->accept();
+    }
+};
 
 } // namespace
 
@@ -243,6 +259,32 @@ private slots:
         Mattermost::OverlayScrollBarManager::setScrollToStartButtonEnabled(area, true);
         settleEvents();
         QVERIFY(toStart->isVisible());
+    }
+
+    void wheelOverOverlayIsHandledByTheAreaItself()
+    {
+        WheelCountingArea area;
+        area.resize(240, 140);
+        area.verticalScrollBar()->setRange(0, 1000);
+        Mattermost::OverlayScrollBarManager::attach(area);
+        area.show();
+        settleEvents();
+        auto *overlay = area.findChild<QScrollBar *>(
+            QStringLiteral("mattermostOverlayVerticalScrollBar"));
+        QVERIFY(overlay);
+        QVERIFY(overlay->isVisible());
+
+        const QPoint local(overlay->width() / 2, overlay->height() / 2);
+        QWheelEvent wheel(QPointF(local), QPointF(overlay->mapToGlobal(local)), QPoint(),
+                          QPoint(0, -120), Qt::NoButton, Qt::NoModifier, Qt::NoScrollPhase, false);
+        QCoreApplication::sendEvent(overlay, &wheel);
+
+        // The area's own wheel handling decides the distance; the overlay's
+        // QScrollBar wheel step (singleStep * wheelScrollLines) is bypassed.
+        QCOMPARE(area.wheels, 1);
+        QCOMPARE(area.lastAngleDelta, QPoint(0, -120));
+        QCOMPARE(area.verticalScrollBar()->value(), 0);
+        QVERIFY(wheel.isAccepted());
     }
 };
 
