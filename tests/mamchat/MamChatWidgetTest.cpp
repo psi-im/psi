@@ -3131,13 +3131,33 @@ private slots:
         QTRY_VERIFY(list.selectedMessageCount() > 1);
         const int selected = list.selectedMessageCount();
 
-        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, local);
-        QCOMPARE(list.selectedMessageCount(), selected);
-
-        // Once the button is up, further scrolling must not extend it.
-        bar->setValue(bar->value() - scrolled);
+        // Scroll far enough that the pressed row is evicted (hidden and
+        // deleted). The gesture must survive losing Qt's implicit grab.
+        bar->setValue(bar->minimum());
         QCoreApplication::processEvents();
-        QCOMPARE(list.selectedMessageCount(), selected);
+        QTRY_VERIFY(list.selectedMessageCount() > selected);
+        QTRY_VERIFY(!list.itemWidget(39));
+        const int afterJump = list.selectedMessageCount();
+
+        // Continue the same gesture by moving the pointer further up.
+        const QPoint higher(local.x(), qMax(5, local.y() - scrolled));
+        QVERIFY(higher.y() < local.y());
+        QCursor::setPos(list.window()->mapToGlobal(higher));
+        QTest::mouseMove(window, higher);
+        QTRY_VERIFY(list.selectedMessageCount() > afterJump);
+
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, higher);
+        const int finalCount = list.selectedMessageCount();
+        QVERIFY(QWidget::mouseGrabber() != list.viewport());
+
+        // Once the button is up, neither scrolling nor hovering extends it.
+        bar->setValue(bar->value() + scrolled);
+        QCoreApplication::processEvents();
+        QCOMPARE(list.selectedMessageCount(), finalCount);
+        QCursor::setPos(global);
+        QTest::mouseMove(window, local);
+        QCoreApplication::processEvents();
+        QCOMPARE(list.selectedMessageCount(), finalCount);
     }
 
     void clearingConversationDiscardsPlainClickSelectionAnchor()
