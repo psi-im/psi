@@ -110,10 +110,25 @@ QString MessageView::reactionTarget(const XMPP::Message &message)
 
 void MessageView::setReplyMetadata(const XMPP::Message &message)
 {
-    setReply(messageReply(message));
+    // XEP-0461 replies mark their compatibility quote with XEP-0428 ranges.
+    // Without <reply/> (rooms without stanza-ids, older clients) recognize a
+    // leading plain-text quote instead; it simply has no reference id.
+    ChatReply              parsed = messageReply(message);
+    QList<QPair<int, int>> ranges;
+    if (message.reply().isValid()) {
+        for (const auto &range : message.bodyFallbacks(QStringLiteral("urn:xmpp:reply:0"))) {
+            int first, last;
+            if (range.toUtf16(message.body(), first, last))
+                ranges.append({ first, last });
+        }
+    } else if (const int quoteEnd = plainQuotePrefix(message.body(), &parsed)) {
+        ranges.append({ 0, quoteEnd });
+    }
+    setReply(parsed);
     if (!reply().isValid())
         return;
-    _replyData->hasFallback = messageReplyBody(message) != message.body();
+    _replyData->hasFallback = message.reply().isValid() ? messageReplyBody(message) != message.body()
+                                                        : !ranges.isEmpty();
     _replyData->formatted = formattedText();
     if (_replyData->hasFallback) {
         // Preserve XHTML and plugin-provided rendering. Only apply the wire
@@ -123,10 +138,9 @@ void MessageView::setReplyMetadata(const XMPP::Message &message)
         // rest of the message instead of round-tripping them through Qt HTML.
         QString rich = _text;
         int prefixEnd = 0;
-        for (const auto &range : message.bodyFallbacks(QStringLiteral("urn:xmpp:reply:0"))) {
-            int first, last;
-            if (range.toUtf16(message.body(), first, last) && first == 0)
-                prefixEnd = qMax(prefixEnd, last);
+        for (const auto &range : ranges) {
+            if (range.first == 0)
+                prefixEnd = qMax(prefixEnd, range.second);
         }
         const QString prefix = TextUtil::linkify(TextUtil::plain2rich(message.body().left(prefixEnd)));
         if (prefixEnd > 0 && rich.startsWith(prefix)) {
@@ -139,12 +153,6 @@ void MessageView::setReplyMetadata(const XMPP::Message &message)
         QTextDocument document;
         document.setHtml(_text);
         if (document.toPlainText().startsWith(message.body())) {
-            QList<QPair<int, int>> ranges;
-            for (const auto &range : message.bodyFallbacks(QStringLiteral("urn:xmpp:reply:0"))) {
-                int first, last;
-                if (range.toUtf16(message.body(), first, last))
-                    ranges.append({first, last});
-            }
             std::sort(ranges.begin(), ranges.end());
             QList<QPair<int, int>> merged;
             for (const auto &range : ranges) {

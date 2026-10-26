@@ -1000,6 +1000,30 @@ private slots:
         QCOMPARE(chooser.last().first().toString(), QString("room-stanza-id"));
     }
 
+    void plainTextQuoteIsNotResolvedToAnIdLessRoomRow()
+    {
+        // In a room without stanza-ids every row's reaction target is empty;
+        // an id-less quote must keep its own author and text, not "resolve"
+        // to whichever row happens to be the only candidate.
+        MamChatWidget room;
+        room.setGroupChat(true);
+        room.resize(500, 300);
+        room.setHistoryLoading(true);
+        auto other = message("m1", "unrelated message", 1);
+        other.setUserId(QStringLiteral("room@example.org/Peer"));
+        room.appendMessage(other);
+        auto answer = message("m2", "> Vitozz:\n> quoted\nanswer", 2);
+        answer.setUserId(QStringLiteral("room@example.org/Me"));
+        answer.setReply({ {}, {}, "Vitozz", "quoted" }, "answer", true);
+        room.appendMessage(answer);
+        room.show();
+        QTRY_VERIFY(room.itemWidget(1));
+        auto *preview = room.itemWidget(1)->findChild<MessagePreview *>("mamReplyPreview");
+        QVERIFY(preview);
+        QCOMPARE(preview->property("replyResolved").toBool(), false);
+        QCOMPARE(room.itemWidget(1)->findChild<ChatMessageText *>()->toPlainText(), QString("answer"));
+    }
+
     void legacyMucReactionsUseBoundedMessageIdWindow()
     {
         // A room without stanza-ids (old ejabberd, no MAM). Twelve messages;

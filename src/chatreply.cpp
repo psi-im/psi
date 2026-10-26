@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "chatreply.h"
 #include "iris/xmpp_message.h"
+#include <QStringList>
 #include <algorithm>
 
 namespace {
@@ -87,4 +88,35 @@ void applyMessageReply(XMPP::Message &message, const ChatReply &reply)
     fallbacks.append({ replyNamespace, { { 0, int(fallback.toUcs4().size()) } }, {} });
     message.setFallbacks(fallbacks);
     message.setBody(fallback + message.body());
+}
+
+int plainQuotePrefix(const QString &body, ChatReply *reply)
+{
+    QStringList lines;
+    int         end = 0;
+    while (end < body.size() && body.at(end) == QLatin1Char('>')) {
+        const int newline = body.indexOf(QLatin1Char('\n'), end);
+        if (newline < 0)
+            break; // A quote must be followed by the answer itself.
+        QString line = body.mid(end + 1, newline - end - 1);
+        if (line.endsWith(QLatin1Char('\r')))
+            line.chop(1);
+        if (line.startsWith(QLatin1Char(' ')))
+            line.remove(0, 1);
+        lines.append(line);
+        end = newline + 1;
+    }
+    if (lines.isEmpty() || body.mid(end).trimmed().isEmpty())
+        return 0;
+    QString author;
+    if (lines.size() > 1 && lines.first().endsWith(QLatin1Char(':'))) {
+        author = lines.first().chopped(1).trimmed();
+        lines.removeFirst();
+    }
+    const QString text = lines.join(QLatin1Char('\n')).trimmed();
+    if (text.isEmpty())
+        return 0;
+    if (reply)
+        *reply = ChatReply { {}, {}, author, text };
+    return end;
 }

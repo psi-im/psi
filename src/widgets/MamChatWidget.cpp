@@ -2757,6 +2757,10 @@ QString MamChatWidget::copiedMessage(const Row &row) const
 
 bool MamChatWidget::resolveReply(const ChatReply &reply, QString &author, QString &text) const
 {
+    // A plain-text quote has no id: never match it to a row, whose own
+    // reaction target may be just as empty in a room without stanza-ids.
+    if (!reply.hasReference())
+        return false;
     const Row *match = nullptr;
     for (const auto &candidate : items_) {
         const QString sender = candidate.message.userId();
