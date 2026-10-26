@@ -12,6 +12,7 @@
 #define PSIENCRYPTIONCONTROLLER_H
 
 #include "encryptionmethodprovider.h"
+#include "omemodevicedecision.h"
 #include "iris/xmpp_encryption.h"
 
 #include <QHash>
@@ -108,14 +109,15 @@ public:
      * Ask the user to resolve identities that currently block an encrypted
      * operation.  The callback receives true only when the operation can be
      * retried without another pending trust decision. A non-zero deviceId
-     * requests explicit approval to repair that device's broken session even
-     * when its identity was already trusted. profile is an optional
-     * method-specific wire-profile discriminator used to avoid conflating
-     * equal numeric device ids from different protocol generations.
+     * restricts the decision to one sending device. RepairSession requests
+     * explicit approval to repair its session even when its key is trusted.
+     * The optional profile discriminator keeps equal numeric device ids
+     * from different protocol generations independent.
      */
     bool requestTrustDecision(const QString &methodId, const XMPP::Jid &peer, bool includeOwnDevices,
                               QWidget *parent = nullptr, std::function<void(bool)> completion = {},
-                              quint32 deviceId = 0, const QString &profile = {});
+                              quint32 deviceId = 0, const QString &profile = {},
+                              PsiOmemo::DeviceDecision purpose = PsiOmemo::DeviceDecision::VerifyIdentity);
 
 #ifdef IRIS_ENABLE_OMEMO
     XMPP::OmemoEncryption *omemoEncryption() const;

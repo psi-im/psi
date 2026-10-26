@@ -259,11 +259,13 @@ list(APPEND SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/psiencryptioncontroller.cpp
 )
 list(APPEND HEADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/omemodevicedecision.h
     ${CMAKE_CURRENT_SOURCE_DIR}/psiencryptioncontroller.h
 )
 
 if(ENABLE_OMEMO)
     list(APPEND SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/omemodevicedecision.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/psiomemostorage.cpp
     )
     list(APPEND HEADERS
