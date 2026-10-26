@@ -4,6 +4,15 @@
 #include "urlobject.h"
 
 #include <QAbstractTextDocumentLayout>
+#include <QFontMetrics>
+#include <QImage>
+#include <QTextBlock>
+#include <QTextCursor>
+#include <QTextFragment>
+#include <QTextImageFormat>
+#include <QTimer>
+#include <QUrl>
+#include <QVector>
 #include <QApplication>
 #include <QMouseEvent>
 #include <QCoreApplication>
@@ -33,14 +42,115 @@ ChatMessageText::ChatMessageText(QWidget *parent) : PsiTextView(parent)
     document()->setDefaultTextOption(option);
     connect(document()->documentLayout(), &QAbstractTextDocumentLayout::documentSizeChanged, this,
             [this] { updateGeometry(); });
+    // Cached SIMS media is present at parse time; uncached images are inserted
+    // later by PsiTextView after their downloads finish. Normalize both paths.
+    connect(document(), &QTextDocument::contentsChanged, this, [this] {
+        if (!hasMediaMarkup_ || isolatingMedia_ || mediaLayoutScheduled_)
+            return;
+        mediaLayoutScheduled_ = true;
+        QTimer::singleShot(0, this, [this] {
+            mediaLayoutScheduled_ = false;
+            isolateLargeMedia();
+        });
+    });
 }
 
 void ChatMessageText::setRichText(const QString &text)
 {
+    hasMediaMarkup_ = text.contains(QLatin1String("<share"))
+        || text.contains(QLatin1String("<img"))
+        || text.contains(QLatin1String("<icon"));
+    isolatingMedia_ = true;
     document()->setDefaultFont(font());
     PsiTextView::setRichText(text);
     applyDocumentFont();
     PsiRichText::recolorLinks(document(), palette().color(QPalette::Link));
+    isolatingMedia_ = false;
+    isolateLargeMedia();
+}
+
+// Postprocess the *rendered* QTextDocument, not its HTML source: native SIMS
+// images, embedded players and <icon> objects have already received their
+// actual QTextCharFormats from PsiRichText's object parsers. A media object's
+// intrinsic height is compared to the text line height, so ordinary smileys
+// remain inline, but large media never shares a line with a short caption.
+//
+// Iterate backwards to keep positions stable when inserting paragraph breaks.
+// No image/link/object formats are recreated, and normal text selection,
+// image-copy and per-account SIMS resources remain attached to the same object.
+void ChatMessageText::isolateLargeMedia()
+{
+    if (!hasMediaMarkup_ || isolatingMedia_)
+        return;
+
+    QTextDocument *doc = document();
+    const qreal threshold = 2.0 * QFontMetricsF(font()).height();
+    QVector<int> mediaPositions;
+
+    for (QTextBlock block = doc->begin(); block.isValid(); block = block.next()) {
+        for (auto it = block.begin(); !it.atEnd(); ++it) {
+            const QTextFragment fragment = it.fragment();
+            if (!fragment.isValid())
+                continue;
+            const QTextCharFormat format = fragment.charFormat();
+            if (format.objectType() == QTextFormat::NoObject)
+                continue;
+
+            const QString fragmentText = fragment.text();
+            for (int offset = 0; offset < fragmentText.size(); ++offset) {
+                if (fragmentText.at(offset) != QChar::ObjectReplacementCharacter)
+                    continue;
+
+                const int position = fragment.position() + offset;
+                qreal height = 0;
+                if (format.isImageFormat()) {
+                    const QTextImageFormat image = format.toImageFormat();
+                    height = image.height();
+                    if (height <= 0) {
+                        const auto resource = doc->resource(QTextDocument::ImageResource, QUrl(image.name()));
+                        const auto bitmap = resource.value<QImage>();
+                        if (!bitmap.isNull()) {
+                            height = image.width() > 0 && bitmap.width() > 0
+                                ? qreal(bitmap.height()) * image.width() / bitmap.width()
+                                : bitmap.height();
+                        }
+                    }
+                } else if (auto *handler = doc->documentLayout()->handlerForObject(format.objectType())) {
+                    // handlerForObject already returns QTextObjectInterface* in Qt5/Qt6.
+                    height = handler->intrinsicSize(doc, position, format).height();
+                }
+                if (height > threshold)
+                    mediaPositions.append(position);
+            }
+        }
+    }
+
+    if (mediaPositions.isEmpty())
+        return;
+
+    isolatingMedia_ = true;
+    QTextCursor edit(doc);
+    edit.beginEditBlock();
+    for (int positionIndex = mediaPositions.size() - 1; positionIndex >= 0; --positionIndex) {
+        const int position = mediaPositions.at(positionIndex);
+        QTextBlock block = doc->findBlock(position);
+        if (!block.isValid())
+            continue;
+        // Put following text (or another media object) into a new paragraph.
+        if (position + 1 < block.position() + block.text().size()) {
+            edit.setPosition(position + 1);
+            edit.insertBlock();
+        }
+        // Put preceding text (or another media object) into its own paragraph.
+        block = doc->findBlock(position);
+        if (position > block.position()) {
+            edit.setPosition(position);
+            edit.insertBlock();
+        }
+    }
+    edit.endEditBlock();
+    isolatingMedia_ = false;
+    updateGeometry();
 }
 
 void ChatMessageText::setWholeMessageSelectionMode(bool active)

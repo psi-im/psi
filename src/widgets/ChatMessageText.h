@@ -28,6 +28,12 @@ protected:
 
 private:
     void applyDocumentFont();
+    void isolateLargeMedia();
+
+    // Only media-rich messages need rescanning when async SIMS previews arrive.
+    bool hasMediaMarkup_ = false;
+    bool isolatingMedia_ = false;
+    bool mediaLayoutScheduled_ = false;
 
     QString pressedLink_;
     QPoint  pressedLinkPosition_;
