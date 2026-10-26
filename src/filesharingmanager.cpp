@@ -626,6 +626,10 @@ QIODevice *FileSharingDeviceOpener::open(QUrl &url)
     if (!downloader)
         return nullptr;
 
+    // Detached media windows may outlive their chat, but the source still
+    // belongs to this account. qite stops its decoder when the opener dies,
+    // before QObject releases these stream devices.
+    downloader->setParent(this);
     downloader->open(QIODevice::ReadOnly);
     return downloader;
 #endif
