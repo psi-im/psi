@@ -55,7 +55,8 @@ if(ACCOUNT_IRIS_TARGET)
 
     if(IRIS_ENABLE_OMEMO)
         find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Sql)
-        add_executable(account_omemo_storage_test omemostoragetest.cpp ../../src/psiomemostorage.cpp)
+        add_executable(account_omemo_storage_test omemostoragetest.cpp
+            ../../src/omemodevicedecision.cpp ../../src/psiomemostorage.cpp)
         target_compile_definitions(account_omemo_storage_test PRIVATE IRIS_ENABLE_OMEMO)
         set_target_properties(account_omemo_storage_test PROPERTIES AUTOMOC ON)
         target_include_directories(account_omemo_storage_test PRIVATE ../../src)
