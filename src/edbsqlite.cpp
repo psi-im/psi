@@ -275,6 +275,12 @@ bool EDBSqLite::mergeArchiveIsland(const HistoryArchive::Key &key, int limit, Hi
     return mergeArchivePage(key, QString(), limit, page);
 }
 
+HistoryArchive::DisplayedCursor EDBSqLite::sentDisplayedCursor(const QString &account, const XMPP::Jid &peer)
+{
+    return commit() ? HistoryArchive::sentDisplayedCursor(QSqlDatabase::database("history"), account, peer.full())
+                    : HistoryArchive::DisplayedCursor {};
+}
+
 EDBItemPtr EDBSqLite::ownPlaintext(const HistoryArchive::Key &key, const QString &id, const QString &sender,
                                    const QDateTime &time)
 {

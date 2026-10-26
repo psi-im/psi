@@ -147,6 +147,7 @@ private:
     bool localExhausted_ = false;
     bool mamExhausted_ = false;
     bool mamResumeAfterConnect_ = false;
+    bool                  displayedCursorRestored_ = false;
 
     QMenu *pm_settings_;
     QMenu *encryptionMenu_ = nullptr;

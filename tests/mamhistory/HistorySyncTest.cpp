@@ -175,7 +175,7 @@ struct Fixture {
               };
         return c;
     }
-    bool logOwnMessage(bool marker)
+    bool logOwnMessage(bool marker, const QString &target = QStringLiteral("previous-message"))
     {
         QSqlQuery q(db);
         if (!q.exec("INSERT OR IGNORE INTO contacts VALUES(1,'account',1,'bob@example.test',-1)"))
@@ -187,7 +187,7 @@ struct Fixture {
         message.setTo(Jid(key.peer));
         message.setWasEncrypted(true);
         if (marker)
-            message.setDisplayedMarkerId("previous-message");
+            message.setDisplayedMarkerId(target);
         else
             message.setBody("sent before restart");
         q.prepare("INSERT INTO events(contact_id,date,history_date_ms,type,direction,m_text,extra_data) "
@@ -693,6 +693,37 @@ private slots:
         QVERIFY(cached.success());
         QCOMPARE(cipher->decryptions, 1);
         QCOMPARE(cached.message("cipher").body(), QString("decrypted"));
+    }
+
+    void sentDisplayedCursorSurvivesRestartOutsideThePreloadedPage()
+    {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const auto path = dir.filePath("history.db");
+        {
+            Fixture f(path);
+            f.seed();
+            QVERIFY(f.logOwnMessage(true, "seed")); // Legacy marker has no timestamp.
+            QVERIFY(f.db.transaction());
+            QSqlQuery q(f.db);
+            q.prepare("INSERT INTO events(contact_id,type,direction,date,history_date_ms,m_text,extra_data) "
+                      "VALUES(1,1,2,:date,:time,'','{}')");
+            for (int i = 0; i < 200; ++i) {
+                const auto time = QDateTime::fromString("2026-10-18T10:00:00Z", Qt::ISODate).addSecs(100 + i);
+                q.bindValue(":date", time);
+                q.bindValue(":time", time.toMSecsSinceEpoch());
+                QVERIFY(q.exec());
+            }
+            QVERIFY(f.db.commit());
+        }
+        {
+            Fixture f(path);
+            QCOMPARE(HistoryArchive::localRecords(f.db, f.key.account, f.key.peer, 0, 40).size(), 40);
+            const auto cursor = HistoryArchive::sentDisplayedCursor(f.db, f.key.account, f.key.peer);
+            QCOMPARE(cursor.messageId, QString("seed"));
+            QCOMPARE(cursor.time, QDateTime::fromString("2026-10-18T10:00:00Z", Qt::ISODate));
+            QVERIFY(cursor.eventId > 0);
+        }
     }
 
     void receivedPlaintextSurvivesDatabaseAndClientRestart()

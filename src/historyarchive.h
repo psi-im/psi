@@ -34,6 +34,13 @@ struct Snapshot {
     QDateTime observedAt;
     bool      stable = false;
 };
+// Last known incoming position acknowledged by one of our stored displayed
+// markers. Derived from history, not a second persistent read-state store.
+struct DisplayedCursor {
+    QString   messageId;
+    QDateTime time;
+    qint64    eventId = 0;
+};
 struct Page {
     Snapshot     snapshot;
     QList<Entry> entries;
@@ -59,6 +66,7 @@ bool recordRevision(QSqlDatabase db, qint64 eventId, qint64 contactId, int type,
                     const QString &messageId, const QString &replaceId);
 QSqlRecord        resolvedRecord(QSqlDatabase db, qint64 eventId);
 QList<QSqlRecord> localRecords(QSqlDatabase db, const QString &account, const QString &peer, qint64 before, int limit);
+DisplayedCursor   sentDisplayedCursor(QSqlDatabase db, const QString &account, const QString &peer);
 qint64            matchingDelivery(QSqlDatabase db, qint64 contact, const Entry &, bool archived);
 qint64 matchingOwnPlaintext(QSqlDatabase db, const Key &, const QString &id, const QString &sender, const QDateTime &);
 Snapshot          readSnapshot(QSqlDatabase db, const Key &);

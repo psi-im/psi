@@ -103,6 +103,7 @@ public:
     bool init();
     EDBItemPtr archivedEvent(const HistoryArchive::Key &, const QString &, const QDateTime & = {}) override;
     EDBItemPtr ownPlaintext(const HistoryArchive::Key &, const QString &, const QString &, const QDateTime &) override;
+    HistoryArchive::DisplayedCursor sentDisplayedCursor(const QString &, const XMPP::Jid &) override;
 
     int features() const override;
     int get(const QString &accId, const XMPP::Jid &jid, const QDateTime date, int direction, int start, int len) override;

@@ -441,6 +441,49 @@ QList<QSqlRecord> localRecords(QSqlDatabase db, const QString &account, const QS
     return result;
 }
 
+DisplayedCursor sentDisplayedCursor(QSqlDatabase db, const QString &account, const QString &peer)
+{
+    DisplayedCursor cursor;
+    if (account.isEmpty() || peer.isEmpty())
+        return cursor;
+    QSqlQuery markers(db);
+    markers.prepare("SELECT e.extra_data,e.contact_id FROM events e JOIN contacts c ON c.id=e.contact_id "
+                    "WHERE c.acc_id=:account AND c.jid=:peer AND e.direction=1 AND e.type IN (0,1) "
+                    "AND e.extra_data LIKE '%\"displayed\"%'");
+    markers.bindValue(":account", account);
+    markers.bindValue(":peer", peer);
+    if (!markers.exec())
+        return cursor;
+    QSet<QString> seen;
+    QSqlQuery     target(db);
+    // The revision index resolves a marker naming an earlier correction to
+    // the original row, whose timestamp/order remains stable after edits.
+    target.prepare("SELECT DISTINCT e.id,e.date FROM message_revisions r "
+                   "JOIN events e ON e.id=r.root_id WHERE r.contact_id=:contact AND r.type IN (0,1) "
+                   "AND r.direction=2 AND r.sender='direct' AND r.stanza_id=:id");
+    while (markers.next()) {
+        const auto extra = QJsonDocument::fromJson(markers.value(0).toString().toUtf8()).object();
+        if (extra.value("psi:decryption-error").toBool()
+            || (extra.contains("psi:decoded") && !extra.value("psi:decoded").toBool()))
+            continue;
+        const auto id = extra.value("psi:events").toObject().value("displayed").toString();
+        if (id.isEmpty() || seen.contains(id))
+            continue;
+        seen.insert(id);
+        target.bindValue(":contact", markers.value(1));
+        target.bindValue(":id", id);
+        if (!target.exec() || !target.next())
+            continue;
+        const auto eventId = target.value(0).toLongLong();
+        const auto time    = target.value(1).toDateTime();
+        if (!time.isValid() || target.next())
+            continue; // Reused peer IDs must not acknowledge unrelated rows.
+        if (!cursor.time.isValid() || time > cursor.time || (time == cursor.time && eventId > cursor.eventId))
+            cursor = { id, time, eventId };
+    }
+    return cursor;
+}
+
 qint64 matchingDelivery(QSqlDatabase db, qint64 contact, const Entry &entry, bool archived)
 {
     if (entry.messageId.isEmpty() || entry.sender.isEmpty() || !entry.timestamp.isValid())

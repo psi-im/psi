@@ -326,6 +326,67 @@ private slots:
         QTest::newRow("provisional-live-marker") << false << true << false;
         QTest::newRow("provisional-archived-marker") << true << true << false;
     }
+
+    void sentDisplayedCursorUsesIncomingOrderAndRejectsOtherScopes()
+    {
+        QVERIFY(migrate(db));
+        auto messages                 = page({ "first", "second", "outgoing" });
+        messages.entries[1].timestamp = messages.entries[0].timestamp.addSecs(10);
+        messages.entries[2].direction = 1;
+        QVERIFY(storePage(db, key, "message-edge", 3, messages));
+        auto              markers = page({ "read-second", "read-first-later", "wrong-target", "peer-marker" });
+        const QStringList targets { "second-client", "first-client", "outgoing-client", "outgoing-client" };
+        for (int i = 0; i < markers.entries.size(); ++i) {
+            auto &e     = markers.entries[i];
+            e.direction = i == 3 ? 2 : 1;
+            e.timestamp = messages.entries.first().timestamp.addSecs(100 + i);
+            e.body      = QStringLiteral("");
+            auto extra  = QJsonDocument::fromJson(e.extra.toUtf8()).object();
+            extra.insert("psi:decoded", true);
+            extra.insert("psi:events", QJsonObject { { "displayed", targets[i] } });
+            e.extra = QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact));
+        }
+        QVERIFY(storePage(db, key, "marker-edge", 4, markers));
+        const auto cursor = sentDisplayedCursor(db, key.account, key.peer);
+        QCOMPARE(cursor.messageId, QString("second-client"));
+        QCOMPARE(cursor.eventId, messages.entries[1].eventId);
+        QCOMPARE(cursor.time, messages.entries[1].timestamp);
+        QVERIFY(sentDisplayedCursor(db, "other-account", key.peer).messageId.isEmpty());
+        QVERIFY(sentDisplayedCursor(db, key.account, "other-peer").messageId.isEmpty());
+
+        // A peer reusing an ID for independent messages makes that target
+        // ambiguous. It must not turn either unrelated row into "already read".
+        auto duplicate                 = page({ "duplicate" });
+        duplicate.entries[0].messageId = "second-client";
+        duplicate.entries[0].extra     = messages.entries[1].extra;
+        duplicate.entries[0].body      = "independent message";
+        QVERIFY(storePage(db, key, "duplicate-edge", 1, duplicate));
+        QCOMPARE(sentDisplayedCursor(db, key.account, key.peer).messageId, QString("first-client"));
+    }
+
+    void sentDisplayedCursorOnCorrectionKeepsTheOriginalReadPosition()
+    {
+        QVERIFY(migrate(db));
+        auto messages = page({ "original", "unread-next", "correction" });
+        messages.entries[2].replaceId = messages.entries[0].messageId;
+        QVERIFY(storePage(db, key, "message-edge", 3, messages));
+        auto &edited = messages.entries[2];
+        auto marker = page({ "own-displayed" });
+        auto &entry = marker.entries[0];
+        entry.direction = 1;
+        entry.body = QStringLiteral("");
+        entry.extra = QString::fromUtf8(QJsonDocument(QJsonObject {
+            { "psi:events", QJsonObject { { "displayed", edited.messageId } } }
+        }).toJson(QJsonDocument::Compact));
+        QVERIFY(storePage(db, key, "marker-edge", 1, marker));
+        const auto cursor = sentDisplayedCursor(db, key.account, key.peer);
+        QCOMPARE(cursor.messageId, edited.messageId);
+        QCOMPARE(cursor.eventId, messages.entries[0].eventId);
+        QCOMPARE(cursor.time, messages.entries[0].timestamp);
+        QVERIFY(cursor.time < messages.entries[1].timestamp);
+        QCOMPARE(resolvedRecord(db, edited.eventId).value("id").toLongLong(), cursor.eventId);
+    }
+
     void failedReplayNeverReplacesSuccessfulProjection()
     {
         QFETCH(bool, stable);

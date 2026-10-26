@@ -100,6 +100,7 @@ NativeHistoryPage nativeArchivePage(PsiAccount *account, HistorySync *task, cons
         if (stamp.isValid())
             archived.setTimeStamp(stamp);
         QDateTime revisionTime;
+        qint64    historyId        = task->eventId(uid);
         QString   reactionTarget   = MessageView::reactionTarget(archived);
         QString   retractionTarget = MessageView::retractionTarget(archived);
         if (reactionTarget.isEmpty())
@@ -109,6 +110,7 @@ NativeHistoryPage nativeArchivePage(PsiAccount *account, HistorySync *task, cons
         if (auto resolved = account->edb()->resolvedHistoryEvent(task->eventId(uid))) {
             if (resolved->event()->type() == PsiEvent::Message) {
                 archived     = resolved->event().staticCast<MessageEvent>()->message().displayMessage();
+                historyId    = resolved->id().toLongLong(); // Same original position as the local EDB projection.
                 revisionTime = resolved->revisionTime();
                 if (!resolved->reactionTarget().isEmpty())
                     reactionTarget = resolved->reactionTarget();
@@ -134,7 +136,7 @@ NativeHistoryPage nativeArchivePage(PsiAccount *account, HistorySync *task, cons
         if (room && archived.from().resource().isEmpty() && view.type() == MessageView::Message)
             view = MessageView::fromPlainText(archived.body(), MessageView::System);
         view.setArchiveId(uid);
-        view.setHistoryId(task->eventId(uid));
+        view.setHistoryId(historyId);
         view.setRevisionTime(revisionTime);
         view.setReactionTargetId(reactionTarget);
         view.setRetractionTargetId(retractionTarget);

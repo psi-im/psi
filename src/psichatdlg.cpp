@@ -275,6 +275,7 @@ void PsiChatDlg::clearNativeHistory()
     }
     if (nativeTimeline_)
         nativeTimeline_->clearMessages();
+    displayedCursorRestored_ = false;
     resetLocalHistorySource();
     mamBeforeId_.clear();
     mamRefreshTail_        = false;
@@ -303,6 +304,7 @@ void PsiChatDlg::loadOlderMamMessages()
     if (localOnly || (mamExhausted_ && !(mamRefreshTail_ && account()->isConnected()))) {
         nativeTimeline_->setHistoryLoading(false);
         nativeTimeline_->setHistoryExhausted(localExhausted_);
+        sendDisplayedMarkerForVisibleMessage();
         return;
     }
     const bool    refreshTail     = mamRefreshTail_ && account()->isConnected();
@@ -338,6 +340,7 @@ void PsiChatDlg::loadOlderMamMessages()
                 nativeTimeline_->setHistoryExhausted(localExhausted_);
                 if (initialPage && nativeTimeline_->messageCount() == 0 && !localHistoryPopulated())
                     preloadHistory(true);
+                sendDisplayedMarkerForVisibleMessage();
             }
             return;
         }
@@ -375,6 +378,7 @@ void PsiChatDlg::loadOlderMamMessages()
         nativeTimeline_->setHistoryLoading(false);
         nativeTimeline_->maybeContinueInitialHistoryFill();
         task->deleteLater();
+        sendDisplayedMarkerForVisibleMessage();
     });
     task->go();
 }
@@ -1023,6 +1027,17 @@ void PsiChatDlg::sendDisplayedMarkerForVisibleMessage()
         || window()->isMinimized()
         || !PsiOptions::instance()->getOption("options.ui.notifications.send-receipts").toBool())
         return;
+
+    // The initial tail may carry our own earlier marker. Finish that replay
+    // before deciding that a visible historical message needs a new one.
+    if (mamBeforeId_.isEmpty() && !mamExhausted_)
+        return;
+    if (!displayedCursorRestored_) {
+        const auto peer   = roomOccupantChat_ ? jid() : XMPP::Jid(jid().bare());
+        const auto cursor = account()->edb()->sentDisplayedCursor(account()->id(), peer);
+        nativeTimeline_->restoreDisplayedIncoming(cursor.messageId, cursor.time, cursor.eventId);
+        displayedCursorRestored_ = true;
+    }
 
     // Read markers reveal that we're present. For ordinary 1:1 conversations
     // send only to peers authorized to see our presence, even if someone else
