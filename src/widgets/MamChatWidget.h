@@ -186,6 +186,8 @@ private:
     MamHistorySource historySource_;
     QList<Row>      &items_ = historySource_.rows_;
     QWidget         *rowWidget(int knownIndex) const;
+    bool             updateDragSelection(const QPoint &viewportPos);
+    void             finishDragSelection();
     QVector<int>     materializedRows() const;
     Range            knownVisibleRange() const;
     void             replaceRow(int knownIndex);

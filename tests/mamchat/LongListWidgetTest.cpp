@@ -1,8 +1,11 @@
 #include <QtTest>
 
 #include <algorithm>
+#include <cstdlib>
 
 #include <QEvent>
+#include <QFontMetricsF>
+#include <QWheelEvent>
 #include <QScrollBar>
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QEnterEvent>
@@ -1586,6 +1589,53 @@ private slots:
         QVERIFY(concrete.contains(visible.first));
         QVERIFY(concrete.contains(visible.last));
         QVERIFY(visible.contains(9999));
+    }
+
+    void wheelNotchScrollsThreeTextLines()
+    {
+        TestLongListWidget list;
+        QFont font = list.font();
+        font.setPixelSize(17);
+        list.setFont(font);
+        list.resize(420, 300);
+        list.setDefaultItemHeight(60);
+        list.setItemCount(200);
+        list.setRangeAvailable(0, 199);
+        list.show();
+        list.scrollToIndex(100, Mattermost::LongListWidget::Alignment::Top);
+        settleEvents(16);
+
+        QScrollBar* bar = list.verticalScrollBar();
+        const int expected = static_cast<int>(3.0 * QFontMetricsF(list.font()).lineSpacing());
+        QVERIFY(expected > 0);
+        const auto wheel = [&list](QPoint pixelDelta, QPoint angleDelta, Qt::ScrollPhase phase) {
+            QWheelEvent event(QPointF(5, 5), QPointF(list.viewport()->mapToGlobal(QPoint(5, 5))),
+                              pixelDelta, angleDelta, Qt::NoButton, Qt::NoModifier, phase, false);
+            QCoreApplication::sendEvent(list.viewport(), &event);
+            QVERIFY(event.isAccepted());
+        };
+
+        // Classic notched wheel.
+        int before = bar->value();
+        wheel(QPoint(), QPoint(0, -120), Qt::NoScrollPhase);
+        QCOMPARE(bar->value() - before, expected);
+
+        // High-resolution wheel: three partial events add up to one notch.
+        before = bar->value();
+        for (int i = 0; i < 3; ++i)
+            wheel(QPoint(), QPoint(0, -40), Qt::NoScrollPhase);
+        QVERIFY(std::abs(bar->value() - before - expected) <= 1);
+
+        // A notched wheel reporting a small pixelDelta (as on Wayland) still
+        // travels three text lines rather than the tiny pixel amount.
+        before = bar->value();
+        wheel(QPoint(0, -15), QPoint(0, -120), Qt::NoScrollPhase);
+        QVERIFY(std::abs(bar->value() - before - expected) <= 1);
+
+        // Touchpad gestures keep their precise 1:1 pixel deltas.
+        before = bar->value();
+        wheel(QPoint(0, -7), QPoint(0, -56), Qt::ScrollUpdate);
+        QCOMPARE(bar->value() - before, 7);
     }
 };
 

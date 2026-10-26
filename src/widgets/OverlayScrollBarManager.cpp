@@ -37,6 +37,7 @@
 #include <QTimer>
 #include <QToolButton>
 #include <QVariant>
+#include <QWheelEvent>
 #include <QWidget>
 
 namespace Mattermost {
@@ -722,6 +723,36 @@ bool OverlayScrollBarManager::eventFilter(QObject* watched, QEvent* event)
 
     QWidget* widget = qobject_cast<QWidget*>(watched);
     State* state = widget ? stateForWidget(widget) : nullptr;
+    if (state && event->type() == QEvent::Wheel && widget == state->overlayVertical
+        && state->area && state->area->viewport()) {
+        // The overlay is a plain QScrollBar whose own wheel step is
+        // singleStep * wheelScrollLines(). Route the wheel to the viewport so it
+        // scrolls exactly as it does over the content (the area's own
+        // wheelEvent decides the distance, e.g. LongListWidget's text lines).
+        auto* wheel = static_cast<QWheelEvent*>(event);
+        QWidget* viewport = state->area->viewport();
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+        const QPointF global = wheel->globalPosition();
+#else
+        const QPointF global = wheel->globalPosF();
+#endif
+        QWheelEvent forwarded(QPointF(viewport->mapFromGlobal(global.toPoint())),
+                              global,
+                              wheel->pixelDelta(),
+                              wheel->angleDelta(),
+                              wheel->buttons(),
+                              wheel->modifiers(),
+                              wheel->phase(),
+                              wheel->inverted(),
+                              wheel->source()
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+                              , wheel->pointingDevice()
+#endif
+        );
+        QCoreApplication::sendEvent(viewport, &forwarded);
+        wheel->setAccepted(forwarded.isAccepted());
+        return true;
+    }
     if (state) {
         const bool overlayWidget = widget == state->overlayVertical
             || widget == state->overlayHorizontal

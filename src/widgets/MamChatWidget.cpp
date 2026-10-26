@@ -7,6 +7,7 @@
 #include "fileutil.h"
 #include "urlobject.h"
 #include <QContextMenuEvent>
+#include <QCursor>
 #include "MamHistoryLog.h"
 #include "MamMessageIdentity.h"
 #include "iconset.h"
@@ -25,6 +26,7 @@
 #include <QFrame>
 #include <QFontMetrics>
 #include <QGraphicsOpacityEffect>
+#include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QHash>
 #include <QHideEvent>
@@ -424,6 +426,16 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
     escapeShortcut->setContext(Qt::WidgetWithChildrenShortcut);
     connect(escapeShortcut, &QShortcut::activated, this, &MamChatWidget::cancelMessageSelection);
 
+    // Scrolling (e.g. with the wheel) while the left button is held moves rows
+    // under a stationary pointer without any MouseMove. Re-evaluate the drag
+    // selection so the rows scrolled under the cursor are selected too. This
+    // runs after LongListWidget has laid out the new scroll position.
+    connect(verticalScrollBar(), &QScrollBar::valueChanged, this, [this](int) {
+        if (!mousePressed_ || !QGuiApplication::mouseButtons().testFlag(Qt::LeftButton))
+            return;
+        updateDragSelection(viewport()->mapFromGlobal(QCursor::pos()));
+    });
+
     connect(this, &Mattermost::LongListWidget::userScrollStarted, this, [this] {
         ++archiveIntentSerial_;
         followingInitialTail_ = false;
@@ -462,6 +474,45 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
         updateTimestamps();
         scheduleInitialHistoryFillCheck();
     });
+}
+
+bool MamChatWidget::updateDragSelection(const QPoint &where)
+{
+    const int anchor = indexOfKey(pressedKey_);
+    if (anchor < 0)
+        return false;
+    // Until the pointer leaves the pressed row, the drag belongs to text
+    // selection inside that message.
+    if (!selectingByDrag_) {
+        if (QWidget *row = rowWidget(anchor)) {
+            const QRect rect(row->mapTo(viewport(), QPoint()), row->size());
+            if (where.y() >= rect.top() && where.y() <= rect.bottom())
+                return false;
+        }
+    }
+    const int now = historySource_.knownIndex(indexAtViewportPosition(where.y()));
+    if (now < 0)
+        return false;
+    if (!selectingByDrag_) {
+        selectingByDrag_ = true;
+        // The pressed row holds Qt's implicit mouse grab, but scrolling can
+        // evict (hide and delete) it. Its moves and the final release would
+        // then be lost. Hold an explicit grab on the viewport for the rest of
+        // the gesture instead.
+        if (viewport()->isVisible())
+            viewport()->grabMouse();
+    }
+    selectMessageRange(anchor, now);
+    return true;
+}
+
+void MamChatWidget::finishDragSelection()
+{
+    mousePressed_        = false;
+    selectingByDrag_     = false;
+    swallowMouseRelease_ = false;
+    if (QWidget::mouseGrabber() == viewport())
+        viewport()->releaseMouse();
 }
 
 QWidget *MamChatWidget::rowWidget(int at) const
@@ -1479,9 +1530,7 @@ void MamChatWidget::clearMessages()
     // A plain click may leave an anchor without a selected range. Reset it
     // when changing conversations, including keys reused by the next model.
     selectionAnchorKey_.clear();
-    mousePressed_        = false;
-    selectingByDrag_     = false;
-    swallowMouseRelease_ = false;
+    finishDragSelection();
     pressedKey_.clear();
     generatedKey_         = 0;
     followingInitialTail_ = true;
@@ -2583,7 +2632,7 @@ void MamChatWidget::cancelMessageSelection()
         return;
     selectedKeys_.clear();
     selectionAnchorKey_.clear();
-    selectingByDrag_ = false;
+    finishDragSelection();
     refreshSelection();
 }
 
@@ -3025,6 +3074,24 @@ void MamChatWidget::hideEvent(QHideEvent *event)
 
 bool MamChatWidget::eventFilter(QObject *target, QEvent *event)
 {
+    if (target == viewport() && selectingByDrag_ && QWidget::mouseGrabber() == viewport()) {
+        // Whole-message drag selection owns the pointer (see updateDragSelection).
+        auto *mouse = static_cast<QMouseEvent *>(event);
+        if (event->type() == QEvent::MouseMove) {
+            if (event->spontaneous() && !mouse->buttons().testFlag(Qt::LeftButton)
+                && !QGuiApplication::mouseButtons().testFlag(Qt::LeftButton))
+                finishDragSelection(); // The release was lost; do not keep selecting.
+            else
+                updateDragSelection(mouse->pos());
+            return true;
+        }
+        if (event->type() == QEvent::MouseButtonRelease && mouse->button() == Qt::LeftButton) {
+            finishDragSelection();
+            return true;
+        }
+        if (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseButtonDblClick)
+            return true;
+    }
     if (event->type() == QEvent::ContextMenu) {
         if (auto *row = eventRow(target)) {
             auto *context = static_cast<QContextMenuEvent *>(event);
@@ -3169,23 +3236,24 @@ bool MamChatWidget::eventFilter(QObject *target, QEvent *event)
                     // synthetic mouse-move delivery can omit buttons() even
                     // while the row holds a live left-button press.
 
+                    // A real (spontaneous) move with no button held means the
+                    // release went elsewhere; end the gesture instead of
+                    // selecting on hover.
+                    if (event->spontaneous() && !mouse->buttons().testFlag(Qt::LeftButton)
+                        && !QGuiApplication::mouseButtons().testFlag(Qt::LeftButton)) {
+                        const bool wasSelecting = selectingByDrag_;
+                        finishDragSelection();
+                        if (wasSelecting)
+                            return true;
+                        return Mattermost::LongListWidget::eventFilter(target, event);
+                    }
                     auto        *source = qobject_cast<QWidget *>(target);
                     const QPoint where  = source->mapTo(viewport(), mouse->pos());
-                    const QRect  rect(row->mapTo(viewport(), QPoint()), row->size());
-                    if (!selectingByDrag_ && where.y() >= rect.top() && where.y() <= rect.bottom())
-                        return Mattermost::LongListWidget::eventFilter(target, event);
-                    const int anchor = indexOfKey(pressedKey_);
-                    const int now    = historySource_.knownIndex(indexAtViewportPosition(where.y()));
-                    if (anchor >= 0 && now >= 0) {
-                        selectingByDrag_ = true;
-                        selectMessageRange(anchor, now);
+                    if (updateDragSelection(where))
                         return true;
-                    }
                 } else if (event->type() == QEvent::MouseButtonRelease && mouse->button() == Qt::LeftButton) {
-                    mousePressed_        = false;
-                    const bool consumed  = selectingByDrag_ || swallowMouseRelease_;
-                    selectingByDrag_     = false;
-                    swallowMouseRelease_ = false;
+                    const bool consumed = selectingByDrag_ || swallowMouseRelease_;
+                    finishDragSelection();
                     if (consumed)
                         return true;
                     if (selectedKeys_.isEmpty() && target->objectName() == QLatin1String("mamAvatar")) {

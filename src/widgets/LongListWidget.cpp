@@ -6,6 +6,7 @@
 #include <utility>
 
 #include <QEvent>
+#include <QFontMetricsF>
 #include <QLayout>
 #include <QPainter>
 #include <QPalette>
@@ -1421,14 +1422,51 @@ void LongListWidget::settleVisibleWidthGeometry(const ResizeAnchor& anchor,
     }
 }
 
+namespace {
+
+// One standard wheel notch (angleDelta 120) scrolls this many text lines of the
+// list's own font, independent of the platform's wheelScrollLines() setting.
+constexpr qreal WheelNotchTextLines = 3.0;
+
+// True when the event carries precise pixel deltas from a touchpad-like device
+// (finger gesture or kinetic momentum) that must be applied 1:1. A notched
+// mouse wheel may also report pixelDelta (notably on Wayland, where it is
+// typically only 10-15 px per notch); those are scaled from angleDelta instead.
+bool usesPrecisePixelDelta(const QWheelEvent& event)
+{
+    if (event.pixelDelta().y() == 0)
+        return false;
+    if (event.angleDelta().y() == 0 || event.phase() != Qt::NoScrollPhase)
+        return true;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    if (const QPointingDevice* device = event.pointingDevice())
+        return device->type() == QInputDevice::DeviceType::TouchPad;
+#endif
+    return false;
+}
+
+} // namespace
+
 void LongListWidget::wheelEvent(QWheelEvent* event)
 {
     clearSeek();
-    const QPoint pixelDelta = event->pixelDelta();
-    int delta = pixelDelta.y();
-    if (delta == 0) {
-        const QPoint angleDelta = event->angleDelta();
-        delta = angleDelta.y() / 120 * std::max(24, defaultHeight / 2);
+    int delta = 0;
+    if (usesPrecisePixelDelta(*event)) {
+        wheelRemainder = 0.0;
+        delta = event->pixelDelta().y();
+    } else if (const int angle = event->angleDelta().y(); angle != 0) {
+        // Accumulate fractions so high-resolution wheels (angleDelta < 120 per
+        // event) travel exactly as far as classic notched wheels.
+        if ((angle > 0) != (wheelRemainder > 0.0))
+            wheelRemainder = 0.0;
+        const qreal lineStep = QFontMetricsF(font()).lineSpacing();
+        wheelRemainder += angle / 120.0 * WheelNotchTextLines * lineStep;
+        delta = static_cast<int>(wheelRemainder); // Truncates toward zero.
+        wheelRemainder -= delta;
+        if (delta == 0) {
+            event->accept(); // Sub-pixel step; the remainder carries over.
+            return;
+        }
     }
 
     if (delta != 0) {

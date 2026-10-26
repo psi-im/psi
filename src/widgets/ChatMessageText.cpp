@@ -270,7 +270,11 @@ void ChatMessageText::wheelEvent(QWheelEvent *event)
 #endif
             QWheelEvent forwarded(QPointF(area->viewport()->mapFromGlobal(global.toPoint())), global,
                                   event->pixelDelta(), event->angleDelta(), event->buttons(), event->modifiers(),
-                                  event->phase(), event->inverted(), event->source());
+                                  event->phase(), event->inverted(), event->source()
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+                                  , event->pointingDevice()
+#endif
+            );
             QCoreApplication::sendEvent(area->viewport(), &forwarded);
             event->accept();
             return;

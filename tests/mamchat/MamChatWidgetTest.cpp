@@ -5,6 +5,7 @@
 #include "widgets/MessagePreview.h"
 #include "widgets/LinkButton.h"
 #include <QContextMenuEvent>
+#include <QCursor>
 #include <QTextBrowser>
 #include <QVBoxLayout>
 #include "widgets/urlobject.h"
@@ -34,6 +35,7 @@
 #include <QTimer>
 #include <QUrlQuery>
 #include <QWheelEvent>
+#include <QWindow>
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QEnterEvent>
 #endif
@@ -3098,6 +3100,64 @@ private slots:
         QVERIFY(full.contains(QStringLiteral("body-0")));
         QVERIFY(full.contains(QStringLiteral("body-1")));
         QVERIFY(full.contains(QStringLiteral("body-2")));
+    }
+
+    void wheelScrollingDuringDragExtendsMessageSelection()
+    {
+        MamChatWidget list;
+        list.resize(430, 300);
+        list.setHistoryLoading(true);
+        for (int i = 0; i < 40; ++i)
+            list.appendMessage(message(QString::number(i), QStringLiteral("body-%1").arg(i), i));
+        list.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&list));
+        QTRY_VERIFY(list.itemWidget(39));
+
+        // Press through the window system so QGuiApplication::mouseButtons()
+        // reflects the held button, exactly as during a real drag.
+        QWidget *row = list.itemWidget(39);
+        const QPoint global = row->mapToGlobal(QPoint(row->width() / 3, row->height() / 2));
+        QWindow *window = list.window()->windowHandle();
+        QVERIFY(window);
+        const QPoint local = list.window()->mapFromGlobal(global);
+        QCursor::setPos(global);
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, local);
+        QCOMPARE(list.selectedMessageCount(), 0);
+
+        // Scroll older rows under the stationary pointer, with no MouseMove.
+        QScrollBar *bar = list.verticalScrollBar();
+        const int scrolled = 3 * row->height();
+        bar->setValue(bar->value() - scrolled);
+        QTRY_VERIFY(list.selectedMessageCount() > 1);
+        const int selected = list.selectedMessageCount();
+
+        // Scroll far enough that the pressed row is evicted (hidden and
+        // deleted). The gesture must survive losing Qt's implicit grab.
+        bar->setValue(bar->minimum());
+        QCoreApplication::processEvents();
+        QTRY_VERIFY(list.selectedMessageCount() > selected);
+        QTRY_VERIFY(!list.itemWidget(39));
+        const int afterJump = list.selectedMessageCount();
+
+        // Continue the same gesture by moving the pointer further up.
+        const QPoint higher(local.x(), qMax(5, local.y() - scrolled));
+        QVERIFY(higher.y() < local.y());
+        QCursor::setPos(list.window()->mapToGlobal(higher));
+        QTest::mouseMove(window, higher);
+        QTRY_VERIFY(list.selectedMessageCount() > afterJump);
+
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, higher);
+        const int finalCount = list.selectedMessageCount();
+        QVERIFY(QWidget::mouseGrabber() != list.viewport());
+
+        // Once the button is up, neither scrolling nor hovering extends it.
+        bar->setValue(bar->value() + scrolled);
+        QCoreApplication::processEvents();
+        QCOMPARE(list.selectedMessageCount(), finalCount);
+        QCursor::setPos(global);
+        QTest::mouseMove(window, local);
+        QCoreApplication::processEvents();
+        QCOMPARE(list.selectedMessageCount(), finalCount);
     }
 
     void clearingConversationDiscardsPlainClickSelectionAnchor()
