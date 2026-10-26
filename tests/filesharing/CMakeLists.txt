@@ -110,7 +110,7 @@ if(TARGET iris)
     find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Sql)
     add_executable(filesharing_sims_history_test simshistory.cpp
         ../../src/historymessageextras.cpp ../../src/messageattachments.cpp
-        ../../src/historyarchive.cpp ../../src/filesharingstore.cpp)
+        ../../src/historyarchive.cpp ../../src/historymessagestate.cpp ../../src/filesharingstore.cpp)
     set_target_properties(filesharing_sims_history_test PROPERTIES AUTOMOC ON)
     target_include_directories(filesharing_sims_history_test PRIVATE ../../src)
     target_link_libraries(filesharing_sims_history_test PRIVATE iris

@@ -479,7 +479,7 @@ void ChatDlg::getHistory()
                 }
                 if (item->protocolOnly())
                     continue;
-                appendMessage(me->message(), me->originLocal(), item->id().toLongLong(), item->archiveId());
+                appendMessage(me->message(), me->originLocal(), item->id().toLongLong(), item->archiveId(), item->messageFlags());
             }
         }
     }
@@ -890,7 +890,8 @@ QString ChatDlg::whoNick(bool local) const
     return result;
 }
 
-void ChatDlg::appendMessage(const Message &m, bool local, qint64 historyId, const QString &archiveId)
+void ChatDlg::appendMessage(const Message &m, bool local, qint64 historyId, const QString &archiveId,
+                            MessageState::Flags messageState)
 {
     Message dm = m.displayMessage();
     MessageView protocol(MessageView::System);
@@ -970,6 +971,7 @@ void ChatDlg::appendMessage(const Message &m, bool local, qint64 historyId, cons
     if (!local || historyId > 0 || !archiveId.isEmpty())
         mv.setEncrypted(dm.wasEncrypted(), dm.encryptionProtocol());
     mv.setHistoryId(historyId);
+    mv.setMessageState(messageState);
     mv.setArchiveId(archiveId);
     mv.setLocal(local);
     mv.setNick(whoNick(local));

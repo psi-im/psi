@@ -46,6 +46,18 @@ class HistoryArchiveTest : public QObject {
             p.entries.append(entry(uid, i++));
         return p;
     }
+    Entry effect(const QString &id, const QString &kind, const QString &target, int direction)
+    {
+        auto e = entry(id, 100);
+        e.direction = direction;
+        e.body = QStringLiteral("");
+        auto extra = QJsonDocument::fromJson(e.extra.toUtf8()).object();
+        extra.insert("psi:decoded", true);
+        extra.insert("psi:events", QJsonObject { { kind, target } });
+        e.extra = QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact));
+        return e;
+    }
+    int flags(qint64 id) { return resolvedRecord(db, id).value("message_flags").toInt(); }
 private slots:
     void init()
     {
@@ -380,11 +392,171 @@ private slots:
         }).toJson(QJsonDocument::Compact));
         QVERIFY(storePage(db, key, "marker-edge", 1, marker));
         const auto cursor = sentDisplayedCursor(db, key.account, key.peer);
-        QCOMPARE(cursor.messageId, edited.messageId);
+        QCOMPARE(cursor.messageId, messages.entries[0].messageId);
         QCOMPARE(cursor.eventId, messages.entries[0].eventId);
         QCOMPARE(cursor.time, messages.entries[0].timestamp);
         QVERIFY(cursor.time < messages.entries[1].timestamp);
         QCOMPARE(resolvedRecord(db, edited.eventId).value("id").toLongLong(), cursor.eventId);
+    }
+
+    void messageMasksAreIndependentOfRequestedPage_data()
+    {
+        QTest::addColumn<bool>("effectsFirst");
+        QTest::newRow("events-before-target") << true;
+        QTest::newRow("events-after-target") << false;
+    }
+    void messageMasksAreIndependentOfRequestedPage()
+    {
+        QFETCH(bool, effectsFirst);
+        QVERIFY(migrate(db));
+        auto original = page({ "original" });
+        original.entries[0].direction = 1;
+        original.requestIndex = original.firstIndex = 123;
+        original.resultCount = 1000;
+        auto controls = page({});
+        controls.entries = { effect("read", "displayed", "original-client", 2),
+                             effect("delivered", "receipt", "original-client", 2),
+                             effect("retracted", "retract", "original-client", 1) };
+        if (effectsFirst)
+            QVERIFY(storePage(db, key, "control-edge", 3, controls));
+        QVERIFY(storePage(db, key, "original-edge", 1, original));
+        auto other = page({ "unread" });
+        other.entries[0].direction = 1;
+        other.entries[0].timestamp = original.entries[0].timestamp.addSecs(5);
+        QVERIFY(storePage(db, key, "other-edge", 1, other));
+        auto edit = page({ "edit" });
+        edit.entries[0].direction = 1;
+        edit.entries[0].replaceId = "original-client";
+        edit.entries[0].timestamp = original.entries[0].timestamp.addSecs(10);
+        edit.entries[0].body = "edited text";
+        QVERIFY(storePage(db, key, "edit-edge", 1, edit));
+        if (!effectsFirst)
+            QVERIFY(storePage(db, key, "control-edge", 3, controls));
+
+        const auto isolated = readIndex(db, key, 123, 1, 1000);
+        QVERIFY(isolated.found);
+        QCOMPARE(isolated.entries.size(), 1);
+        QCOMPARE(isolated.entries[0].uid, QString("original"));
+        QCOMPARE(flags(isolated.entries[0].eventId),
+                 int(MessageState::Displayed | MessageState::Delivered | MessageState::Edited | MessageState::Retracted));
+        QCOMPARE(resolvedRecord(db, isolated.entries[0].eventId).value("m_text").toString(), QString("edited text"));
+        QCOMPARE(flags(other.entries[0].eventId), 0);
+        // Derived state does not alter original text or archive coverage.
+        QCOMPARE(scalar("SELECT m_text FROM events WHERE id=" + QString::number(original.entries[0].eventId)).toString(),
+                 QString("hello"));
+        QVERIFY(!needsMigration(db));
+    }
+
+    void displayedMaskCoversNewlyLoadedOlderPagesButNotUnreadMessages()
+    {
+        QVERIFY(migrate(db));
+        auto anchor = page({ "anchor" });
+        anchor.entries[0].timestamp = anchor.entries[0].timestamp.addSecs(50);
+        QVERIFY(storePage(db, key, "anchor-edge", 1, anchor));
+        auto marker = page({});
+        marker.entries = { effect("own-marker", "displayed", "anchor-client", 1) };
+        QVERIFY(storePage(db, key, "marker-edge", 1, marker));
+        auto older = page({ "older" });
+        QVERIFY(storePage(db, key, "older-edge", 1, older));
+        auto newer = page({ "newer" });
+        newer.entries[0].timestamp = anchor.entries[0].timestamp.addSecs(10);
+        QVERIFY(storePage(db, key, "newer-edge", 1, newer));
+        QVERIFY(flags(anchor.entries[0].eventId) & MessageState::Displayed);
+        QVERIFY(flags(older.entries[0].eventId) & MessageState::Displayed);
+        QCOMPARE(flags(newer.entries[0].eventId), 0);
+        // Identical peer/IDs on another account have independent state.
+        auto otherKey = key;
+        otherKey.account = "other-account";
+        auto duplicate = anchor;
+        QVERIFY(storePage(db, otherKey, "anchor-edge", 1, duplicate));
+        QCOMPARE(flags(duplicate.entries[0].eventId), 0);
+    }
+
+    void lateOriginalMovesDisplayedPrefixBackToTheLogicalPosition()
+    {
+        QVERIFY(migrate(db));
+        auto edit = page({ "correction" });
+        edit.entries[0].timestamp = edit.entries[0].timestamp.addSecs(10);
+        edit.entries[0].replaceId = "original-client";
+        QVERIFY(storePage(db, key, "edit-edge", 1, edit));
+        auto other = page({ "unread" });
+        other.entries[0].timestamp = other.entries[0].timestamp.addSecs(5);
+        QVERIFY(storePage(db, key, "other-edge", 1, other));
+        auto marker = page({});
+        marker.entries = { effect("read-correction", "displayed", "correction-client", 1) };
+        QVERIFY(storePage(db, key, "marker-edge", 1, marker));
+        QVERIFY(flags(other.entries[0].eventId) & MessageState::Displayed);
+        auto original = page({ "original" });
+        QVERIFY(storePage(db, key, "original-edge", 1, original));
+        QCOMPARE(flags(original.entries[0].eventId), int(MessageState::Displayed | MessageState::Edited));
+        QCOMPARE(flags(edit.entries[0].eventId), flags(original.entries[0].eventId));
+        QCOMPARE(flags(other.entries[0].eventId), 0);
+    }
+
+    void mucRetractionMaskRequiresTheSameAuthorAndOccupant()
+    {
+        QVERIFY(migrate(db));
+        Key roomKey { key.account, "room@example.org", "room@example.org", true };
+        auto original = page({ "room-uid" });
+        auto &message = original.entries[0];
+        message.type = 9;
+        message.direction = 1; // MAM and older live logging need not classify our MUC echo alike.
+        message.sender = "room@example.org/Alice";
+        auto extra = QJsonDocument::fromJson(message.extra.toUtf8()).object();
+        extra.insert("psi:occupant", "alice-1");
+        message.extra = QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact));
+        QVERIFY(storePage(db, roomKey, "original-edge", 1, original));
+        const auto retract = [&](const QString &uid, const QString &sender, const QString &occupant) {
+            auto p = page({});
+            auto e = effect(uid, "retract", "room-uid", 2);
+            e.type = 9;
+            e.sender = sender;
+            auto extra = QJsonDocument::fromJson(e.extra.toUtf8()).object();
+            extra.insert("psi:occupant", occupant);
+            e.extra = QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact));
+            p.entries.append(e);
+            return storePage(db, roomKey, uid + "-edge", 1, p);
+        };
+        QVERIFY(retract("wrong-author", "room@example.org/Bob", "bob-1"));
+        QCOMPARE(flags(message.eventId), 0);
+        QVERIFY(retract("reused-nickname", "room@example.org/Alice", "alice-2"));
+        QCOMPARE(flags(message.eventId), 0);
+        QVERIFY(retract("correct-author", "room@example.org/Alice", "alice-1"));
+        QCOMPARE(flags(message.eventId), int(MessageState::Retracted));
+    }
+
+    void failedReplayCannotEraseMaterializedMessageState()
+    {
+        QVERIFY(migrate(db));
+        auto original = page({ "original" });
+        QVERIFY(storePage(db, key, "message-edge", 1, original));
+        auto marker = page({});
+        marker.entries = { effect("read", "displayed", "original-client", 1),
+                           effect("retract", "retract", "original-client", 2) };
+        QVERIFY(storePage(db, key, "marker-edge", 2, marker));
+        auto failed = original;
+        failed.entries[0].extra = "{\"psi:decoded\":false,\"psi:decryption-error\":true}";
+        failed.entries[0].body.clear();
+        QVERIFY(storePage(db, key, "message-edge", 1, failed));
+        QCOMPARE(flags(original.entries[0].eventId), int(MessageState::Displayed | MessageState::Retracted));
+    }
+
+    void messageStateFailureRollsBackTheWholeArchivePage()
+    {
+        QVERIFY(migrate(db));
+        auto original = page({ "original" });
+        QVERIFY(storePage(db, key, "message-edge", 1, original));
+        QSqlQuery query(db);
+        QVERIFY(query.exec("CREATE TRIGGER reject_effect BEFORE INSERT ON message_state_refs WHEN new.kind=6 "
+                           "BEGIN SELECT RAISE(ABORT,'simulated state write failure'); END"));
+        auto retract = page({});
+        retract.entries = { effect("retract", "retract", "original-client", 2) };
+        QVERIFY(!storePage(db, key, "retract-edge", 1, retract));
+        QCOMPARE(retract.entries[0].eventId, qint64(0));
+        QCOMPARE(flags(original.entries[0].eventId), 0);
+        QCOMPARE(scalar("SELECT COUNT(*) FROM events").toInt(), 1);
+        QVERIFY(readPage(db, key, "message-edge", 1).found);
+        QVERIFY(!readPage(db, key, "retract-edge", 1).found);
     }
 
     void failedReplayNeverReplacesSuccessfulProjection()
@@ -439,9 +611,62 @@ private slots:
         QCOMPARE(scalar("SELECT m_text FROM events WHERE id=17").toString(), QString("original"));
         QCOMPARE(scalar("SELECT extra_data FROM events WHERE id=17").toString(),
                  QString("{\"jabber:x:oob\":[[\"https://example.org/file\"]]}"));
-        QCOMPARE(scalar("SELECT value FROM system WHERE key='version'").toString(), QString("0.4"));
+        QCOMPARE(scalar("SELECT value FROM system WHERE key='version'").toString(), QString("0.5"));
         QVERIFY(migrate(db));
         QCOMPARE(scalar("SELECT count(*) FROM events").toInt(), 1);
+    }
+
+    void migrationFrom04BackfillsMasksAndPlainXmlReferencesAtomically()
+    {
+        QSqlQuery query(db);
+        QVERIFY(query.exec("UPDATE system SET value='0.4' WHERE key='version'"));
+        QVERIFY(query.exec("ALTER TABLE events ADD COLUMN history_state INTEGER NOT NULL DEFAULT 0"));
+        QVERIFY(query.exec("ALTER TABLE events ADD COLUMN history_date_ms INTEGER"));
+        QVERIFY(query.exec("CREATE TABLE archive_items(account TEXT,archive TEXT,peer TEXT,uid TEXT,event_id INTEGER,"
+                           "xml TEXT,previous_uid TEXT,next_uid TEXT,stable INTEGER,PRIMARY KEY(account,archive,peer,uid))"));
+        QVERIFY(query.exec("INSERT INTO contacts VALUES(1,'account-a',1,'you@example.org',-1)"));
+        auto original = entry("original");
+        auto edited = entry("edited", 10);
+        edited.replaceId = "original-client";
+        auto extra = QJsonDocument::fromJson(edited.extra.toUtf8()).object();
+        auto envelope = extra.value("psi:message").toObject();
+        envelope.insert("replace", edited.replaceId);
+        extra.insert("psi:message", envelope);
+        edited.extra = QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact));
+        auto retracted = effect("retracted", "retract", "original-client", 2);
+        query.prepare("INSERT INTO events(id,contact_id,date,history_date_ms,type,direction,m_text,extra_data) "
+                      "VALUES(:id,1,:date,:time,1,:direction,:body,:extra)");
+        const QList<Entry> rows { original, edited, effect("read", "displayed", "original-client", 1), retracted };
+        for (int i = 0; i < rows.size(); ++i) {
+            query.bindValue(":id", i + 1);
+            query.bindValue(":date", rows[i].timestamp);
+            query.bindValue(":time", rows[i].timestamp.toMSecsSinceEpoch());
+            query.bindValue(":direction", rows[i].direction);
+            query.bindValue(":body", rows[i].body);
+            query.bindValue(":extra", i == 2 ? QStringLiteral("{}") : rows[i].extra);
+            QVERIFY(query.exec());
+        }
+        // Older MAM caches sometimes lacked psi:events, retaining only XML.
+        const QString raw = "<result><forwarded><message id='read-client' from='me@example.org/desktop'>"
+                            "<displayed xmlns='urn:xmpp:chat-markers:0' id='original-client'/>"
+                            "</message></forwarded></result>";
+        query.prepare("INSERT INTO archive_items(account,archive,peer,uid,event_id,xml,stable) "
+                      "VALUES('account-a','me@example.org','you@example.org','read',3,:xml,1)");
+        query.bindValue(":xml", raw);
+        QVERIFY(query.exec());
+        QVERIFY(needsMigration(db));
+        QVERIFY(migrate(db));
+        QVERIFY(!needsMigration(db));
+        QCOMPARE(flags(1), int(MessageState::Displayed | MessageState::Edited | MessageState::Retracted));
+        QCOMPARE(flags(2), flags(1));
+        QCOMPARE(scalar("SELECT extra_data FROM events WHERE id=1").toString(), original.extra);
+        QCOMPARE(scalar("SELECT m_text FROM events WHERE id=1").toString(), original.body);
+        QCOMPARE(scalar("SELECT xml FROM archive_items WHERE event_id=3").toString(), raw);
+        QCOMPARE(scalar("SELECT COUNT(*) FROM events").toInt(), 4);
+        QCOMPARE(sentDisplayedCursor(db, key.account, key.peer).eventId, qint64(1));
+        QVERIFY(query.exec("UPDATE events SET message_flags=message_flags | 128 WHERE id=1"));
+        QVERIFY(migrate(db));
+        QCOMPARE(flags(1), int(MessageState::Displayed | MessageState::Edited | MessageState::Retracted) | 128);
     }
     void timeZonesAndEqualTimestampsUseSafeLocalPages()
     {

@@ -35,7 +35,7 @@ class EDBItem {
 public:
     EDBItem(const PsiEvent::Ptr &, const QString &id, int historyState = HistoryArchive::Unverified,
             const QString &archiveId = {}, const QDateTime &revisionTime = {}, bool protocolOnly = false,
-            const QString &reactionTarget = {}, const QString &retractionTarget = {});
+            const QString &reactionTarget = {}, const QString &retractionTarget = {}, MessageState::Flags messageFlags = {});
     ~EDBItem();
 
     PsiEvent::Ptr  event() const;
@@ -46,6 +46,7 @@ public:
     bool           protocolOnly() const { return protocolOnly_; }
     QString        reactionTarget() const { return reactionTarget_; }
     QString        retractionTarget() const { return retractionTarget_; }
+    MessageState::Flags messageFlags() const { return messageFlags_; }
 
 private:
     int           historyState_;
@@ -54,6 +55,7 @@ private:
     bool          protocolOnly_ = false;
     QString       reactionTarget_;
     QString       retractionTarget_;
+    MessageState::Flags messageFlags_;
     QString       v_id;
     PsiEvent::Ptr e;
 };

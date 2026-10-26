@@ -197,7 +197,11 @@ struct Fixture {
         q.bindValue(":time", marker ? qint64(0) : time.toMSecsSinceEpoch());
         q.bindValue(":body", marker ? QStringLiteral("") : message.body());
         q.bindValue(":extra", HistoryMessageExtras::encode(message));
-        return q.exec();
+        if (!q.exec())
+            return false;
+        const auto id = q.lastInsertId().toLongLong();
+        return HistoryArchive::recordRevision(db, id, 1, 1, 1, message.from().full(), message.id(), {})
+            && HistoryArchive::recordMessageStates(db, { id });
     }
     bool reply(const QDomElement &request, const QList<QDomElement> &results, bool complete = true, int firstIndex = -1,
                int count = -1)
@@ -723,6 +727,50 @@ private slots:
             QCOMPARE(cursor.messageId, QString("seed"));
             QCOMPARE(cursor.time, QDateTime::fromString("2026-10-18T10:00:00Z", Qt::ISODate));
             QVERIFY(cursor.eventId > 0);
+        }
+    }
+
+    void indexedPageRetainsMessageStateAfterDatabaseAndClientRestart()
+    {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const auto path = dir.filePath("history.db");
+        HistorySync::Query seek { HistorySync::Query::Index, {}, 400, 1, 1000 };
+        {
+            Fixture f(path);
+            HistorySync original(f.context(), seek, f.key.peer, false);
+            QSignalSpy originalDone(&original, &HistorySync::finished);
+            original.go();
+            QTRY_COMPARE(f.wire.sent.size(), 1);
+            QVERIFY(f.reply(f.wire.sent.last(), { f.result("original-uid", 400, "<body>old text</body>", "original") },
+                            false, 400, 1000));
+            QTRY_COMPARE(originalDone.size(), 1);
+            QVERIFY(original.success());
+            HistorySync tail(f.context(), f.key.peer, false, {}, nullptr, 2);
+            QSignalSpy tailDone(&tail, &HistorySync::finished);
+            tail.go();
+            QTRY_COMPARE(f.wire.sent.size(), 2);
+            QVERIFY(f.reply(f.wire.sent.last(), {
+                f.result("edit-uid", 415, "<body>edited text</body><replace xmlns='urn:xmpp:message-correct:0' id='original'/>", "edit"),
+                f.result("retraction-uid", 420, "<retract xmlns='urn:xmpp:message-retract:1' id='original'/>", "retraction")
+            }, false));
+            QTRY_COMPARE(tailDone.size(), 1);
+            QVERIFY(tail.success());
+            QVERIFY(f.logOwnMessage(true, "original"));
+        }
+        {
+            Fixture f(path);
+            HistorySync reopened(f.context(), seek, f.key.peer, false);
+            QSignalSpy done(&reopened, &HistorySync::finished);
+            reopened.go();
+            QTRY_COMPARE(done.size(), 1);
+            QVERIFY(reopened.success() && reopened.fromCache());
+            QVERIFY(f.wire.sent.isEmpty());
+            QCOMPARE(reopened.archive().size(), 1); // No correction/retraction/marker on this page.
+            const auto row = HistoryArchive::resolvedRecord(f.db, reopened.eventId("original-uid"));
+            QCOMPARE(row.value("m_text").toString(), QString("edited text"));
+            QCOMPARE(row.value("message_flags").toInt(),
+                     int(MessageState::Displayed | MessageState::Edited | MessageState::Retracted));
         }
     }
 

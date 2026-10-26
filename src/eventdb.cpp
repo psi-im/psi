@@ -36,9 +36,9 @@ using namespace XMPP;
 //----------------------------------------------------------------------------
 EDBItem::EDBItem(const PsiEvent::Ptr &event, const QString &id, int historyState, const QString &archiveId,
                  const QDateTime &revisionTime, bool protocolOnly, const QString &reactionTarget,
-                 const QString &retractionTarget) :
+                 const QString &retractionTarget, MessageState::Flags messageFlags) :
     historyState_(historyState), archiveId_(archiveId), revisionTime_(revisionTime), protocolOnly_(protocolOnly),
-    reactionTarget_(reactionTarget), retractionTarget_(retractionTarget)
+    reactionTarget_(reactionTarget), retractionTarget_(retractionTarget), messageFlags_(messageFlags)
 {
     e    = event;
     v_id = id;

@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #pragma once
 
+#include "messagestate.h"
+
 #include <QDateTime>
 #include <QList>
 #include <QSqlDatabase>
@@ -35,7 +37,7 @@ struct Snapshot {
     bool      stable = false;
 };
 // Last known incoming position acknowledged by one of our stored displayed
-// markers. Derived from history, not a second persistent read-state store.
+// markers. Read directly from the materialized message-state mask.
 struct DisplayedCursor {
     QString   messageId;
     QDateTime time;
@@ -64,6 +66,10 @@ bool migrate(QSqlDatabase db, const std::function<void(qint64)> &progress = {});
 // known child supplies text regardless of requested page boundaries.
 bool recordRevision(QSqlDatabase db, qint64 eventId, qint64 contactId, int type, int direction, const QString &sender,
                     const QString &messageId, const QString &replaceId);
+// Called inside the same transaction as event/revision writes. References
+// survive unloaded targets; the materialized mask belongs to the root row.
+bool recordMessageStates(QSqlDatabase db, const QList<qint64> &eventIds);
+bool backfillMessageStates(QSqlDatabase db, const std::function<void(qint64)> &progress = {});
 QSqlRecord        resolvedRecord(QSqlDatabase db, qint64 eventId);
 QList<QSqlRecord> localRecords(QSqlDatabase db, const QString &account, const QString &peer, qint64 before, int limit);
 DisplayedCursor   sentDisplayedCursor(QSqlDatabase db, const QString &account, const QString &peer);

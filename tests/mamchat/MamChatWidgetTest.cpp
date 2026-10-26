@@ -1293,6 +1293,70 @@ private slots:
         QCOMPARE(chat.takeVisibleMarkableIncomingId(), QString("older"));
     }
 
+    void storedMessageMaskNeedsNoProtocolEventsInTheVisiblePage()
+    {
+        MamChatWidget chat;
+        chat.resize(520, 320);
+        chat.setHistoryLoading(true);
+        auto incoming = message("read-incoming", "already read", 1);
+        incoming.setMarkable(true);
+        incoming.setHistoryId(10);
+        incoming.setMessageState(MessageState::Displayed);
+        auto outgoing = message("edited-outgoing", "retracted original text", 2, true);
+        outgoing.setHistoryId(20);
+        outgoing.setMessageState(MessageState::Displayed | MessageState::Delivered | MessageState::Edited | MessageState::Retracted);
+        chat.prependArchivePage({ { "incoming-uid", incoming }, { "outgoing-uid", outgoing } });
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(1));
+        QCOMPARE(chat.takeVisibleMarkableIncomingId(), QString());
+        const auto verifyOutgoing = [&chat] {
+            auto *row = chat.itemWidget(1);
+            QVERIFY(row);
+            auto *indicator = row->findChild<QWidget *>("mamDeliveryIndicator");
+            QVERIFY(indicator);
+            QCOMPARE(indicator->property("deliveryState").toString(), QString("read"));
+            QVERIFY(row->findChild<QWidget *>("mamEditedIndicator"));
+            auto *body = row->findChild<ChatMessageText *>();
+            QVERIFY(body);
+            QCOMPARE(body->toPlainText(), QString("Message retracted"));
+        };
+        verifyOutgoing();
+        chat.selectMessageRange(1, 1);
+        chat.copySelectedMessages();
+        QVERIFY(!QApplication::clipboard()->text().contains("retracted original text"));
+        chat.cancelMessageSelection();
+
+        for (int i = 0; i < 150; ++i)
+            chat.appendMessage(message(QString::number(i), "newer message", i + 3));
+        chat.scrollToEnd();
+        QTRY_VERIFY(!chat.itemWidget(1));
+        chat.scrollToIndex(0, Mattermost::LongListWidget::Alignment::Top);
+        QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(1));
+        verifyOutgoing(); // Recreated QWidgets inherit state from the message.
+        QCOMPARE(chat.takeVisibleMarkableIncomingId(), QString());
+    }
+
+    void staleRevisionCannotResurrectAStoredRetraction()
+    {
+        MamChatWidget chat;
+        chat.resize(520, 320);
+        chat.setHistoryLoading(true);
+        auto original = message("original", "hidden text", 1);
+        original.setHistoryId(10);
+        original.setMessageState(MessageState::Retracted);
+        chat.prependArchivePage({ { "original-uid", original } });
+        auto edit = message("edit", "also hidden", 2);
+        edit.setReplaceId("original");
+        chat.appendMessage(edit); // Live events have no persisted-state mask.
+        chat.show();
+        QCOMPARE(chat.messageCount(), 1);
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *body = chat.itemWidget(0)->findChild<ChatMessageText *>();
+        QVERIFY(body);
+        QCOMPARE(body->toPlainText(), QString("Message retracted"));
+        QVERIFY(chat.itemWidget(0)->findChild<QWidget *>("mamEditedIndicator"));
+    }
+
     void directLinkClickOpensOnceWithoutStealingDragSelection()
     {
         ChatMessageText body;
@@ -2791,14 +2855,23 @@ private slots:
                      QStringLiteral("7"));
     }
 
+    void intermediateEditUnifiesPreviouslySeparateEDBAndLiveRows_data()
+    {
+        QTest::addColumn<bool>("retracted");
+        QTest::newRow("ordinary") << false;
+        QTest::newRow("stored-retraction") << true;
+    }
     void intermediateEditUnifiesPreviouslySeparateEDBAndLiveRows()
     {
+        QFETCH(bool, retracted);
         MamChatWidget list;
         list.resize(480, 260);
         list.setHistoryLoading(true);
         list.show();
         auto original = message(QStringLiteral("id-6"), QStringLiteral("6"), 1);
         original.setHistoryId(42);
+        if (retracted)
+            original.setMessageState(MessageState::Retracted);
         list.appendMessage(original); // Local EDB supplied the older version.
         auto edit8 = message(QStringLiteral("id-8"), QStringLiteral("8"), 3);
         edit8.setReplaceId(QStringLiteral("id-7"));
@@ -2815,7 +2888,7 @@ private slots:
         QCOMPARE(list.messageCount(), 1);
         QTRY_VERIFY(list.itemWidget(0));
         QCOMPARE(list.itemWidget(0)->findChild<ChatMessageText *>()->toPlainText(),
-                 QStringLiteral("8"));
+                 retracted ? QStringLiteral("Message retracted") : QStringLiteral("8"));
         QCOMPARE(list.itemWidget(0)->property("_psiMamRowKey").toString(),
                  QStringLiteral("edb:42"));
         QVERIFY(list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamEditedIndicator")));

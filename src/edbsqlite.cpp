@@ -166,7 +166,8 @@ EDBResult EDBSqLite::localHistoryPage(const QString &account, const Jid &peer, q
                 EDBItemPtr(new EDBItem(event, row.value("id").toString(), row.value("history_state").toInt(),
                                        row.value("archive_uid").toString(), row.value("revision_date").toDateTime(),
                                        protocolOnlyRecord(row), row.value("reaction_target").toString(),
-                                       row.value("retraction_target").toString())));
+                                       row.value("retraction_target").toString(),
+                                       MessageState::Flags(row.value("message_flags").toInt()))));
     }
     return result;
 }
@@ -182,7 +183,8 @@ EDBItemPtr EDBSqLite::resolvedHistoryEvent(qint64 eventId)
     return event ? EDBItemPtr(new EDBItem(event, row.value("id").toString(), row.value("history_state").toInt(),
                                           row.value("archive_uid").toString(), row.value("revision_date").toDateTime(),
                                           protocolOnlyRecord(row), row.value("reaction_target").toString(),
-                                          row.value("retraction_target").toString()))
+                                          row.value("retraction_target").toString(),
+                                          MessageState::Flags(row.value("message_flags").toInt())))
                  : EDBItemPtr();
 }
 
@@ -515,7 +517,8 @@ void EDBSqLite::performRequests()
                     QString id = query->record().value("id").toString();
                     result.append(EDBItemPtr(new EDBItem(e, id, query->record().value("history_state").toInt(),
                                                          query->record().value("archive_uid").toString(), {},
-                                                         protocolOnlyRecord(query->record()))));
+                                                         protocolOnlyRecord(query->record()), {}, {},
+                                                         MessageState::Flags(query->record().value("message_flags").toInt()))));
                 }
             }
             query->freeResult();
@@ -555,7 +558,9 @@ void EDBSqLite::performRequests()
                 if (e) {
                     QString    id  = rec.value("id").toString();
                     EDBItemPtr eip = EDBItemPtr(new EDBItem(e, id, query->record().value("history_state").toInt(),
-                                                            query->record().value("archive_uid").toString()));
+                                                            query->record().value("archive_uid").toString(), {},
+                                                            protocolOnlyRecord(query->record()), {}, {},
+                                                            MessageState::Flags(query->record().value("message_flags").toInt())));
                     result.append(eip);
                 }
             }
@@ -665,7 +670,8 @@ bool EDBSqLite::appendEvent(const QString &accId, const XMPP::Jid &jid, const Ps
         const Message &m = e.staticCast<MessageEvent>()->message().displayMessage();
         if (!HistoryArchive::recordRevision(db,query->lastInsertId().toLongLong(),
                                              contactId,nType,nDirection,m.from().full(),
-                                             m.id(),m.replaceId())) {
+                                             m.id(),m.replaceId())
+            || !HistoryArchive::recordMessageStates(db, { query->lastInsertId().toLongLong() })) {
             rollback();
             return false;
         }
@@ -965,6 +971,8 @@ QString EDBSqLite::QueryStorage::getQueryString(QueryType type, bool allAccounts
     case QueryDateForward:
         queryStr = "SELECT `acc_id`, `events`.`id`, `jid`, `date`, `events`.`type`, `direction`, `subject`, `m_text`, "
                    "`lang`, `extra_data`, `history_state`, "
+                   "COALESCE((SELECT root.message_flags FROM message_revisions r JOIN events root ON root.id=r.root_id "
+                   "WHERE r.event_id=events.id),events.message_flags) AS message_flags, "
                    "(SELECT uid FROM archive_items WHERE event_id=events.id LIMIT 1) AS archive_uid, "
                    "(SELECT xml FROM archive_items WHERE event_id=events.id LIMIT 1) AS archive_xml"
                    " FROM `events`, `contacts`"
@@ -1002,6 +1010,8 @@ QString EDBSqLite::QueryStorage::getQueryString(QueryType type, bool allAccounts
     case QueryFindText:
         queryStr = "SELECT `acc_id`, `events`.`id`, `jid`, `date`, `events`.`type`, `direction`, `subject`, `m_text`, "
                    "`lang`, `extra_data`, `history_state`, "
+                   "COALESCE((SELECT root.message_flags FROM message_revisions r JOIN events root ON root.id=r.root_id "
+                   "WHERE r.event_id=events.id),events.message_flags) AS message_flags, "
                    "(SELECT uid FROM archive_items WHERE event_id=events.id LIMIT 1) AS archive_uid, "
                    "(SELECT xml FROM archive_items WHERE event_id=events.id LIMIT 1) AS archive_xml"
                    " FROM `events`, `contacts`"

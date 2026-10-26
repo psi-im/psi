@@ -62,6 +62,7 @@ void prependLocalChatHistory(MamChatWidget *timeline, PsiAccount *account, const
             continue;
         auto mv = nativeHistoryMessage(account, XMPP::Jid(peer), message, local);
         mv.setHistoryId(entry->id().toLongLong());
+        mv.setMessageState(entry->messageFlags());
         mv.setRevisionTime(entry->revisionTime());
         mv.setReactionTargetId(MessageView::reactionTarget(message));
         if (!entry->reactionTarget().isEmpty())
@@ -101,6 +102,7 @@ NativeHistoryPage nativeArchivePage(PsiAccount *account, HistorySync *task, cons
             archived.setTimeStamp(stamp);
         QDateTime revisionTime;
         qint64    historyId        = task->eventId(uid);
+        MessageState::Flags messageState;
         QString   reactionTarget   = MessageView::reactionTarget(archived);
         QString   retractionTarget = MessageView::retractionTarget(archived);
         if (reactionTarget.isEmpty())
@@ -111,6 +113,7 @@ NativeHistoryPage nativeArchivePage(PsiAccount *account, HistorySync *task, cons
             if (resolved->event()->type() == PsiEvent::Message) {
                 archived     = resolved->event().staticCast<MessageEvent>()->message().displayMessage();
                 historyId    = resolved->id().toLongLong(); // Same original position as the local EDB projection.
+                messageState = resolved->messageFlags();
                 revisionTime = resolved->revisionTime();
                 if (!resolved->reactionTarget().isEmpty())
                     reactionTarget = resolved->reactionTarget();
@@ -137,6 +140,7 @@ NativeHistoryPage nativeArchivePage(PsiAccount *account, HistorySync *task, cons
             view = MessageView::fromPlainText(archived.body(), MessageView::System);
         view.setArchiveId(uid);
         view.setHistoryId(historyId);
+        view.setMessageState(messageState);
         view.setRevisionTime(revisionTime);
         view.setReactionTargetId(reactionTarget);
         view.setRetractionTargetId(retractionTarget);

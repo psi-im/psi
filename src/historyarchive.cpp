@@ -57,9 +57,10 @@ namespace {
 bool needsMigration(QSqlDatabase db)
 {
     QSqlQuery q(db);
-    if (!q.exec("SELECT value FROM system WHERE key='version'") || !q.next() || q.value(0).toString() != "0.4"
+    if (!q.exec("SELECT value FROM system WHERE key='version'") || !q.next() || q.value(0).toString() != "0.5"
         || !revisionsExist(db) || !db.tables().contains(QStringLiteral("archive_index_pages"))
-        || !db.tables().contains(QStringLiteral("archive_snapshots")))
+        || !db.tables().contains(QStringLiteral("archive_snapshots"))
+        || !db.tables().contains(QStringLiteral("message_state_refs")))
         return true;
     return !q.exec("SELECT 1 FROM events WHERE history_date_ms IS NULL LIMIT 1") || q.next();
 }
@@ -71,7 +72,8 @@ bool migrate(QSqlDatabase db, const std::function<void(qint64)> &progress)
         return false;
     const QString originalVersion = version.next() ? version.value(0).toString() : QString();
     if (!originalVersion.isEmpty() && originalVersion != QLatin1String("0.1") && originalVersion != QLatin1String("0.2")
-        && originalVersion != QLatin1String("0.3") && originalVersion != QLatin1String("0.4")) {
+        && originalVersion != QLatin1String("0.3") && originalVersion != QLatin1String("0.4")
+        && originalVersion != QLatin1String("0.5")) {
         qWarning("[history-cache] Unsupported history schema version");
         return false; // Never downgrade a database created by a future client.
     }
@@ -79,7 +81,9 @@ bool migrate(QSqlDatabase db, const std::function<void(qint64)> &progress)
     if (!db.transaction())
         return false;
     QSqlQuery columns(db);
-    bool      hasState = false, hasTime = false;
+    bool      hasState = false, hasTime = false, hasMessageFlags = false;
+    bool      backfillStates = originalVersion != QLatin1String("0.5")
+        || !db.tables().contains(QStringLiteral("message_state_refs"));
     if (!columns.exec("PRAGMA table_info(events)")) {
         db.rollback();
         return false;
@@ -87,10 +91,13 @@ bool migrate(QSqlDatabase db, const std::function<void(qint64)> &progress)
     while (columns.next()) {
         hasState |= columns.value(1).toString() == QLatin1String("history_state");
         hasTime |= columns.value(1).toString() == QLatin1String("history_date_ms");
+        hasMessageFlags |= columns.value(1).toString() == QLatin1String("message_flags");
     }
     columns.finish();
+    backfillStates |= !hasMessageFlags;
     bool ok = hasState || exec(db, "ALTER TABLE events ADD COLUMN history_state INTEGER NOT NULL DEFAULT 0");
     ok      = ok && (hasTime || exec(db, "ALTER TABLE events ADD COLUMN history_date_ms INTEGER"));
+    ok = ok && (hasMessageFlags || exec(db, "ALTER TABLE events ADD COLUMN message_flags INTEGER NOT NULL DEFAULT 0"));
     // Keep the original date text for lossless compatibility. SQLite's lexical
     // ISO date order is wrong when local and MAM timestamps use different UTC
     // offsets; use a separate UTC millisecond ordering key. NULL also covers
@@ -112,6 +119,7 @@ bool migrate(QSqlDatabase db, const std::function<void(qint64)> &progress)
         dates.finish();
         if (batch.isEmpty())
             break;
+        backfillStates = true;
         QSqlQuery update(db);
         update.prepare("UPDATE events SET history_date_ms=:time WHERE id=:id");
         for (const auto &row : batch) {
@@ -172,7 +180,14 @@ bool migrate(QSqlDatabase db, const std::function<void(qint64)> &progress)
         "contact_id,type,direction,sender,stanza_id)",
         "CREATE INDEX IF NOT EXISTS revision_replace ON message_revisions("
         "contact_id,type,direction,sender,replace_id)",
-        "CREATE INDEX IF NOT EXISTS revision_root ON message_revisions(root_id)"
+        "CREATE INDEX IF NOT EXISTS revision_root ON message_revisions(root_id)",
+        "CREATE TABLE IF NOT EXISTS message_state_refs ("
+        "event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,"
+        "contact_id INTEGER NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,"
+        "kind INTEGER NOT NULL,target TEXT NOT NULL,PRIMARY KEY(event_id,kind,target))",
+        "CREATE INDEX IF NOT EXISTS message_state_target ON message_state_refs(contact_id,target,kind)",
+        "CREATE INDEX IF NOT EXISTS message_displayed_position ON events(contact_id,direction,history_date_ms,id) "
+        "WHERE (message_flags & 1)<>0"
     };
     for (const auto &sql : statements)
         if (ok)
@@ -192,10 +207,10 @@ bool migrate(QSqlDatabase db, const std::function<void(qint64)> &progress)
     // Authentication/old client system records are provably local events.
     if (ok && !hasState)
         ok = exec(db, "UPDATE events SET history_state=2 WHERE history_state=0 AND type IN (2,3,6,7,8)");
-    if (ok && originalVersion != QLatin1String("0.4")) {
+    if (ok && originalVersion != QLatin1String("0.5")) {
         QSqlQuery version(db);
         ok = version.exec("DELETE FROM system WHERE key='version'")
-            && version.exec("INSERT INTO system(key,value) VALUES('version','0.4')");
+            && version.exec("INSERT INTO system(key,value) VALUES('version','0.5')");
     }
     // Index old EDB identity metadata and previously cached MAM correction
     // XML once. Never rewrite the user's original event payloads.
@@ -247,6 +262,8 @@ bool migrate(QSqlDatabase db, const std::function<void(qint64)> &progress)
                 break;
         }
     }
+    if (ok && backfillStates)
+        ok = backfillMessageStates(db, progress);
     if (ok && db.commit())
         return true;
     db.rollback();
@@ -443,45 +460,18 @@ QList<QSqlRecord> localRecords(QSqlDatabase db, const QString &account, const QS
 
 DisplayedCursor sentDisplayedCursor(QSqlDatabase db, const QString &account, const QString &peer)
 {
-    DisplayedCursor cursor;
     if (account.isEmpty() || peer.isEmpty())
-        return cursor;
-    QSqlQuery markers(db);
-    markers.prepare("SELECT e.extra_data,e.contact_id FROM events e JOIN contacts c ON c.id=e.contact_id "
-                    "WHERE c.acc_id=:account AND c.jid=:peer AND e.direction=1 AND e.type IN (0,1) "
-                    "AND e.extra_data LIKE '%\"displayed\"%'");
-    markers.bindValue(":account", account);
-    markers.bindValue(":peer", peer);
-    if (!markers.exec())
-        return cursor;
-    QSet<QString> seen;
-    QSqlQuery     target(db);
-    // The revision index resolves a marker naming an earlier correction to
-    // the original row, whose timestamp/order remains stable after edits.
-    target.prepare("SELECT DISTINCT e.id,e.date FROM message_revisions r "
-                   "JOIN events e ON e.id=r.root_id WHERE r.contact_id=:contact AND r.type IN (0,1) "
-                   "AND r.direction=2 AND r.sender='direct' AND r.stanza_id=:id");
-    while (markers.next()) {
-        const auto extra = QJsonDocument::fromJson(markers.value(0).toString().toUtf8()).object();
-        if (extra.value("psi:decryption-error").toBool()
-            || (extra.contains("psi:decoded") && !extra.value("psi:decoded").toBool()))
-            continue;
-        const auto id = extra.value("psi:events").toObject().value("displayed").toString();
-        if (id.isEmpty() || seen.contains(id))
-            continue;
-        seen.insert(id);
-        target.bindValue(":contact", markers.value(1));
-        target.bindValue(":id", id);
-        if (!target.exec() || !target.next())
-            continue;
-        const auto eventId = target.value(0).toLongLong();
-        const auto time    = target.value(1).toDateTime();
-        if (!time.isValid() || target.next())
-            continue; // Reused peer IDs must not acknowledge unrelated rows.
-        if (!cursor.time.isValid() || time > cursor.time || (time == cursor.time && eventId > cursor.eventId))
-            cursor = { id, time, eventId };
-    }
-    return cursor;
+        return {};
+    QSqlQuery query(db);
+    query.prepare("SELECT e.id,e.date,s.target FROM events e JOIN contacts c ON c.id=e.contact_id "
+                  "JOIN message_state_refs s ON s.event_id=e.id AND s.kind=1 "
+                  "WHERE c.acc_id=:account AND c.jid=:peer AND e.direction=2 AND e.type IN (0,1) "
+                  "AND (e.message_flags & 1)<>0 ORDER BY e.history_date_ms DESC,e.id DESC LIMIT 1");
+    query.bindValue(":account", account);
+    query.bindValue(":peer", peer);
+    if (!query.exec() || !query.next())
+        return {};
+    return { query.value(2).toString(), query.value(1).toDateTime(), query.value(0).toLongLong() };
 }
 
 qint64 matchingDelivery(QSqlDatabase db, qint64 contact, const Entry &entry, bool archived)
@@ -841,6 +831,7 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
         contact = q.lastInsertId().toLongLong();
     }
     QSet<QString> seen;
+    QList<qint64> stateEvents;
     bool          reusable = page.stable;
     for (auto &entry : page.entries) {
         entry.eventId = 0;
@@ -962,7 +953,10 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
         q.bindValue(":stable", page.stable);
         if (!q.exec())
             return fail();
+        stateEvents.append(eventId);
     }
+    if (!recordMessageStates(db, stateEvents))
+        return fail();
     if (page.checkpoint) {
         // Failed/unstable queries cannot leave an older reusable checkpoint behind.
         q.prepare("DELETE FROM archive_pages WHERE " + scope + " AND before_uid=:before AND page_size=:limit");
