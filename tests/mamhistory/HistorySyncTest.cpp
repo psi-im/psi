@@ -5,6 +5,7 @@
 #include <QJsonObject>
 #include <QSignalSpy>
 #include <QSqlQuery>
+#include <QTemporaryDir>
 #include <QtCrypto>
 #include <QtTest>
 #include <iris/xmpp.h>
@@ -35,15 +36,19 @@ struct Fixture {
     QList<QDomDocument> documents;
     bool                online = true;
     HistoryArchive::Key key { "account", "alice@example.test", "bob@example.test", false };
-    Fixture()
+    explicit Fixture(const QString &path = QStringLiteral(":memory:"))
     {
         client.start("example.test", "alice", {}, "desktop");
         client.connectToServer(&wire, Jid("alice@example.test/desktop"));
         db = QSqlDatabase::addDatabase("QSQLITE", "sync-test");
-        db.setDatabaseName(":memory:");
+        db.setDatabaseName(path);
         if (!db.open())
             qFatal("Cannot open test database");
         QSqlQuery q(db);
+        if (!q.exec("PRAGMA foreign_keys=ON"))
+            qFatal("Cannot enable database integrity checks");
+        if (!db.tables().isEmpty())
+            return;
         for (const auto &sql :
              { "PRAGMA foreign_keys=ON", "CREATE TABLE system(key TEXT,value TEXT)",
                "INSERT INTO system VALUES('version','0.1')",
@@ -113,7 +118,7 @@ struct Fixture {
     {
         HistorySync::Context c;
         c.accountId = key.account;
-        c.owner     = client.jid();
+        c.owner     = Jid(client.jid().bare()); // PsiAccount::jid() has no resource.
         c.client    = &client;
         c.connected = [this] { return online; };
         c.logging   = [] { return true; };
@@ -150,7 +155,49 @@ struct Fixture {
             }
             return cached;
         };
+        c.ownPlaintext
+            = [this](const HistoryArchive::Key &k, const QString &id, const QString &sender, const QDateTime &time) {
+                  HistorySync::CachedMessage cached;
+                  const auto                 eventId = HistoryArchive::matchingOwnPlaintext(db, k, id, sender, time);
+                  QSqlQuery                  q(db);
+                  q.prepare("SELECT m_text,extra_data FROM events WHERE id=:id");
+                  q.bindValue(":id", eventId);
+                  if (eventId && q.exec() && q.next()) {
+                      cached.message.setType(Message::Type::Chat);
+                      cached.message.setBody(q.value(0).toString());
+                      HistoryMessageExtras::restore(q.value(1).toString(), cached.message);
+                      cached.message.setFrom(Jid(sender));
+                      cached.message.setTo(Jid(k.peer));
+                      cached.message.setTimeStamp(time);
+                      cached.protocolOnly = !cached.message.displayedMarkerId().isEmpty();
+                  }
+                  return cached;
+              };
         return c;
+    }
+    bool logOwnMessage(bool marker)
+    {
+        QSqlQuery q(db);
+        if (!q.exec("INSERT OR IGNORE INTO contacts VALUES(1,'account',1,'bob@example.test',-1)"))
+            return false;
+        Message message;
+        message.setId("own-id");
+        message.setType(Message::Type::Chat);
+        message.setFrom(Jid(client.jid().bare())); // Legacy outgoing logging.
+        message.setTo(Jid(key.peer));
+        message.setWasEncrypted(true);
+        if (marker)
+            message.setDisplayedMarkerId("previous-message");
+        else
+            message.setBody("sent before restart");
+        q.prepare("INSERT INTO events(contact_id,date,history_date_ms,type,direction,m_text,extra_data) "
+                  "VALUES(1,:date,:time,1,1,:body,:extra)");
+        const auto time = QDateTime::fromString("2026-10-18T10:00:01Z", Qt::ISODate);
+        q.bindValue(":date", marker ? QDateTime() : time);
+        q.bindValue(":time", marker ? qint64(0) : time.toMSecsSinceEpoch());
+        q.bindValue(":body", marker ? QStringLiteral("") : message.body());
+        q.bindValue(":extra", HistoryMessageExtras::encode(message));
+        return q.exec();
     }
     bool reply(const QDomElement &request, const QList<QDomElement> &results, bool complete = true, int firstIndex = -1,
                int count = -1)
@@ -569,6 +616,58 @@ private slots:
         QCOMPARE(f.wire.sent.size(), 1);
     }
 
+    void peersClientIdCannotSelectOurOwnPlaintext()
+    {
+        Fixture f;
+        auto   *cipher = new ArchiveCipher;
+        cipher->fail   = true;
+        cipher->setParent(&f.client);
+        QVERIFY(f.client.encryptionManager()->registerMethod(cipher));
+        auto context = f.context();
+        int  lookups = 0;
+        context.ownPlaintext
+            = [&lookups](const HistoryArchive::Key &, const QString &, const QString &, const QDateTime &) {
+                  ++lookups;
+                  return HistorySync::CachedMessage {};
+              };
+        HistorySync sync(context, f.key.peer, false, {});
+        QSignalSpy  done(&sync, &HistorySync::finished);
+        sync.go();
+        QTRY_COMPARE(f.wire.sent.size(), 1);
+        QVERIFY(f.reply(f.wire.sent.last(),
+                        { f.result("peer-cipher", 1, "<encrypted xmlns='urn:psi:test:cipher'/>", "own-id") }));
+        QTRY_COMPARE(done.size(), 1);
+        QVERIFY(sync.success());
+        QCOMPARE(lookups, 0);
+        QCOMPARE(cipher->decryptions, 1);
+    }
+
+    void outgoingPlaintextCannotBeAppliedToAnotherConversation()
+    {
+        Fixture f;
+        QVERIFY(f.logOwnMessage(false));
+        auto *cipher = new ArchiveCipher;
+        cipher->fail = true;
+        cipher->setParent(&f.client);
+        QVERIFY(f.client.encryptionManager()->registerMethod(cipher));
+        HistorySync sync(f.context(), f.key.peer, false, {});
+        QSignalSpy  done(&sync, &HistorySync::finished);
+        sync.go();
+        QTRY_COMPARE(f.wire.sent.size(), 1);
+        auto raw    = f.result("wrong-peer", 1, "<encrypted xmlns='urn:psi:test:cipher'/>", "own-id");
+        auto stanza = raw.firstChildElement("forwarded").firstChildElement("message");
+        stanza.setAttribute("from", f.client.jid().full());
+        stanza.setAttribute("to", "charlie@example.test");
+        QVERIFY(f.reply(f.wire.sent.last(), { raw }));
+        QTRY_COMPARE(done.size(), 1);
+        QVERIFY(!sync.success());
+        QVERIFY(sync.archive().isEmpty());
+        QSqlQuery q(f.db);
+        QVERIFY(q.exec("SELECT count(*) FROM archive_items"));
+        QVERIFY(q.next());
+        QCOMPARE(q.value(0).toInt(), 0);
+    }
+
     void archiveDecryptionUsesReplayAndCachedPlaintext()
     {
         Fixture f;
@@ -594,6 +693,135 @@ private slots:
         QVERIFY(cached.success());
         QCOMPARE(cipher->decryptions, 1);
         QCOMPARE(cached.message("cipher").body(), QString("decrypted"));
+    }
+
+    void receivedPlaintextSurvivesDatabaseAndClientRestart()
+    {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const auto path = dir.filePath("history.db");
+        {
+            Fixture f(path);
+            auto   *cipher = new ArchiveCipher;
+            cipher->setParent(&f.client);
+            QVERIFY(f.client.encryptionManager()->registerMethod(cipher));
+            HistorySync sync(f.context(), f.key.peer, false, {});
+            QSignalSpy  done(&sync, &HistorySync::finished);
+            sync.go();
+            QTRY_COMPARE(f.wire.sent.size(), 1);
+            QVERIFY(f.reply(f.wire.sent.last(), { f.result("cipher", 1, "<encrypted xmlns='urn:psi:test:cipher'/>") }));
+            QTRY_COMPARE(done.size(), 1);
+            QVERIFY(sync.success());
+            QCOMPARE(cipher->decryptions, 1);
+        }
+        {
+            Fixture f(path);
+            auto   *cipher = new ArchiveCipher;
+            cipher->fail   = true; // A consumed ratchet key is no longer usable.
+            cipher->setParent(&f.client);
+            QVERIFY(f.client.encryptionManager()->registerMethod(cipher));
+            f.online = false;
+            HistorySync sync(f.context(), f.key.peer, false, {});
+            QSignalSpy  done(&sync, &HistorySync::finished);
+            sync.go();
+            QTRY_COMPARE(done.size(), 1);
+            QVERIFY(sync.success() && sync.fromCache());
+            QCOMPARE(sync.message("cipher").body(), QString("decrypted"));
+            QCOMPARE(cipher->decryptions, 0);
+            QVERIFY(f.wire.sent.isEmpty());
+        }
+    }
+
+    void outgoingPlaintextAndMarkersSurviveDatabaseAndClientRestart_data()
+    {
+        QTest::addColumn<bool>("marker");
+        QTest::addColumn<bool>("failedCache");
+        QTest::newRow("outgoing-text") << false << false;
+        QTest::newRow("outgoing-displayed") << true << false;
+        QTest::newRow("repair-text") << false << true;
+        QTest::newRow("repair-displayed") << true << true;
+    }
+    void outgoingPlaintextAndMarkersSurviveDatabaseAndClientRestart()
+    {
+        QFETCH(bool, marker);
+        QFETCH(bool, failedCache);
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const auto path = dir.filePath("history.db");
+        {
+            Fixture f(path);
+            if (failedCache) {
+                auto *cipher = new ArchiveCipher;
+                cipher->fail = true;
+                cipher->setParent(&f.client);
+                QVERIFY(f.client.encryptionManager()->registerMethod(cipher));
+                HistorySync sync(f.context(), f.key.peer, false, {});
+                QSignalSpy  done(&sync, &HistorySync::finished);
+                sync.go();
+                QTRY_COMPARE(f.wire.sent.size(), 1);
+                auto raw    = f.result("own-cipher", 1, "<encrypted xmlns='urn:psi:test:cipher'/>", "own-id");
+                auto stanza = raw.firstChildElement("forwarded").firstChildElement("message");
+                stanza.setAttribute("from", "alice@example.test/previous-resource");
+                stanza.setAttribute("to", f.key.peer);
+                QVERIFY(f.reply(f.wire.sent.last(), { raw }));
+                QTRY_COMPARE(done.size(), 1);
+                QVERIFY(sync.success());
+            }
+            // Reproduce a separately logged successful outgoing delivery,
+            // alongside the existing failed archive projection when present.
+            QVERIFY(f.logOwnMessage(marker));
+        }
+        {
+            Fixture f(path);
+            if (failedCache) {
+                // Local preload runs before HistorySync. It must also find
+                // the saved plaintext, rather than showing an error row for
+                // a protocol event that the MAM replay will later recover.
+                const auto records = HistoryArchive::localRecords(f.db, f.key.account, f.key.peer, 0, 40);
+                QCOMPARE(records.size(), 2);
+                for (const auto &record : records) {
+                    const auto extra = QJsonDocument::fromJson(record.value("extra_data").toString().toUtf8()).object();
+                    QVERIFY(!extra.value("psi:decryption-error").toBool());
+                    if (marker)
+                        QCOMPARE(extra.value("psi:events").toObject().value("displayed").toString(),
+                                 QString("previous-message"));
+                    else
+                        QCOMPARE(record.value("m_text").toString(), QString("sent before restart"));
+                }
+            }
+            auto *cipher = new ArchiveCipher;
+            cipher->fail = true; // The sending device cannot decrypt its own ciphertext.
+            cipher->setParent(&f.client);
+            QVERIFY(f.client.encryptionManager()->registerMethod(cipher));
+            f.online = !failedCache;
+            HistorySync sync(f.context(), f.key.peer, false, {});
+            QSignalSpy  done(&sync, &HistorySync::finished);
+            sync.go();
+            if (!failedCache) {
+                QTRY_COMPARE(f.wire.sent.size(), 1);
+                auto raw    = f.result("own-cipher", 1, "<encrypted xmlns='urn:psi:test:cipher'/>", "own-id");
+                auto stanza = raw.firstChildElement("forwarded").firstChildElement("message");
+                stanza.setAttribute("from", f.client.jid().full());
+                stanza.setAttribute("to", f.key.peer);
+                QVERIFY(f.reply(f.wire.sent.last(), { raw }));
+            }
+            QTRY_COMPARE(done.size(), 1);
+            QVERIFY(sync.success());
+            QCOMPARE(cipher->decryptions, 0);
+            QCOMPARE(sync.protocolOnly("own-cipher"), marker);
+            if (marker)
+                QCOMPARE(sync.message("own-cipher").displayedMarkerId(), QString("previous-message"));
+            else
+                QCOMPARE(sync.message("own-cipher").body(), QString("sent before restart"));
+            if (failedCache)
+                QVERIFY(f.wire.sent.isEmpty());
+            QSqlQuery q(f.db);
+            QVERIFY(q.exec("SELECT e.extra_data FROM archive_items i JOIN events e ON e.id=i.event_id"));
+            QVERIFY(q.next());
+            const auto extra = QJsonDocument::fromJson(q.value(0).toString().toUtf8()).object();
+            QVERIFY(extra.value("psi:decoded").toBool());
+            QVERIFY(!extra.value("psi:decryption-error").toBool());
+        }
     }
 };
 int main(int argc, char **argv)

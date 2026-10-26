@@ -30,6 +30,12 @@ namespace {
     }
     const QString scope = QStringLiteral("account=:account AND archive=:archive AND peer=:peer");
     QString       nonNull(const QString &s) { return s.isNull() ? QStringLiteral("") : s; }
+    bool          ownSenderMatches(const QString &recorded, const QString &sender)
+    {
+        // Older outgoing EDB records stored the bare account JID (or no
+        // sender). A recorded full JID must still match the exact resource.
+        return recorded.isEmpty() || recorded == sender || recorded == sender.section(QLatin1Char('/'), 0, 0);
+    }
     bool          revisionsExist(QSqlDatabase db)
     {
         QSqlQuery q(db);
@@ -325,6 +331,7 @@ QSqlRecord resolvedRecord(QSqlDatabase db, qint64 eventId)
     q.finish();
     q.prepare("SELECT e.*,c.acc_id,c.jid,"
               "(SELECT uid FROM archive_items WHERE event_id=e.id LIMIT 1) AS archive_uid, "
+              "(SELECT archive FROM archive_items WHERE event_id=e.id LIMIT 1) AS archive_jid, "
               "(SELECT xml FROM archive_items WHERE event_id=e.id LIMIT 1) AS archive_xml"
               " FROM events e JOIN contacts c ON c.id=e.contact_id WHERE e.id=:id");
     q.bindValue(":id", root);
@@ -371,6 +378,31 @@ QSqlRecord resolvedRecord(QSqlDatabase db, qint64 eventId)
             const int col = record.indexOf("archive_uid");
             if (col >= 0)
                 record.setValue(col, q.value(4));
+        }
+    }
+    q.finish();
+    const auto extra = QJsonDocument::fromJson(record.value("extra_data").toString().toUtf8()).object();
+    if (record.value("direction").toInt() == 1 && record.value("type").toInt() != 9
+        && extra.value("psi:decryption-error").toBool()) {
+        // A local preload precedes MAM replay. Recover an old failed outgoing
+        // projection here as well, so an encrypted marker does not first
+        // appear as an error message. The subsequent replay persists the
+        // repaired projection; this read never changes archive coverage.
+        const Key  key { record.value("acc_id").toString(), record.value("archive_jid").toString(),
+                        record.value("jid").toString(), false };
+        const auto envelope     = extra.value("psi:message").toObject();
+        const auto revisionTime = record.value("revision_date").toDateTime();
+        const auto saved
+            = matchingOwnPlaintext(db, key, envelope.value("id").toString(), envelope.value("from").toString(),
+                                   revisionTime.isValid() ? revisionTime : record.value("date").toDateTime());
+        if (saved) {
+            q.prepare("SELECT m_text,subject,lang,extra_data FROM events WHERE id=:id");
+            q.bindValue(":id", saved);
+            if (q.exec() && q.next()) {
+                const char *names[] = { "m_text", "subject", "lang", "extra_data" };
+                for (int i = 0; i < 4; ++i)
+                    record.setValue(QLatin1String(names[i]), q.value(i));
+            }
         }
     }
     return record;
@@ -426,12 +458,15 @@ qint64 matchingDelivery(QSqlDatabase db, qint64 contact, const Entry &entry, boo
         return 0;
     qint64 match = 0;
     while (q.next()) {
-        const auto envelope
-            = QJsonDocument::fromJson(q.value(2).toString().toUtf8()).object().value("psi:message").toObject();
+        const auto    extra        = QJsonDocument::fromJson(q.value(2).toString().toUtf8()).object();
+        const auto    envelope     = extra.value("psi:message").toObject();
         const QString sender = envelope.value("from").toString();
+        const auto    timestamp    = q.value(1).toDateTime();
+        const bool undatedOwnEvent = entry.direction == 1 && entry.body.isEmpty() && extra.value("psi:decoded").toBool()
+            && !extra.value("psi:events").toObject().isEmpty();
         if (envelope.value("id").toString() != entry.messageId
-            || (sender != entry.sender && !(entry.direction == 1 && sender.isEmpty()))
-            || !q.value(1).toDateTime().isValid() || qAbs(q.value(1).toDateTime().msecsTo(entry.timestamp)) > 300000)
+            || (sender != entry.sender && !(entry.direction == 1 && ownSenderMatches(sender, entry.sender)))
+            || (timestamp.isValid() ? qAbs(timestamp.msecsTo(entry.timestamp)) > 300000 : !undatedOwnEvent))
             continue;
         if (match)
             return 0;
@@ -443,12 +478,13 @@ qint64 matchingDelivery(QSqlDatabase db, qint64 contact, const Entry &entry, boo
 qint64 matchingOwnPlaintext(QSqlDatabase db, const Key &key, const QString &id, const QString &sender,
                             const QDateTime &time)
 {
-    if (key.room || id.isEmpty() || sender.isEmpty() || !time.isValid())
+    if (key.room || id.isEmpty() || sender.isEmpty() || !time.isValid()
+        || sender.section(QLatin1Char('/'), 0, 0) != key.archive)
         return 0;
     QSqlQuery q(db);
-    q.prepare("SELECT e.id,e.extra_data,e.m_text FROM events e JOIN contacts c ON c.id=e.contact_id "
+    q.prepare("SELECT e.id,e.extra_data,e.m_text,e.history_date_ms FROM events e JOIN contacts c ON c.id=e.contact_id "
               "WHERE c.acc_id=:account AND c.jid=:peer AND e.direction=1 "
-              "AND e.history_date_ms BETWEEN :start AND :end");
+              "AND (e.history_date_ms BETWEEN :start AND :end OR e.history_date_ms=0 OR e.history_date_ms IS NULL)");
     q.bindValue(":account", key.account);
     q.bindValue(":peer", key.peer);
     q.bindValue(":start", time.toMSecsSinceEpoch() - 300000);
@@ -458,13 +494,20 @@ qint64 matchingOwnPlaintext(QSqlDatabase db, const Key &key, const QString &id, 
         return 0;
     while (q.next()) {
         const auto extra = QJsonDocument::fromJson(q.value(1).toString().toUtf8()).object();
-        if (q.value(2).toString().isEmpty() && extra.value("psi:events").toObject().isEmpty())
+        const bool protocolEvent = !extra.value("psi:events").toObject().isEmpty();
+        if ((extra.contains("psi:decoded") && !extra.value("psi:decoded").toBool())
+            || extra.value("psi:decryption-error").toBool() || (q.value(2).toString().isEmpty() && !protocolEvent))
+            continue;
+        // Only known outgoing protocol events suffered from the missing
+        // Message timestamp bug. Do not relax time matching for user text.
+        if (q.value(3).toLongLong() == 0
+            && (!protocolEvent || !q.value(2).toString().isEmpty() || !extra.value("psi:decoded").toBool()))
             continue;
         const auto envelope = extra.value("psi:message").toObject();
         if (envelope.value("id").toString() != id)
             continue;
         const auto from = envelope.value("from").toString();
-        if (!from.isEmpty() && from != sender)
+        if (!ownSenderMatches(from, sender))
             continue;
         if (found)
             return 0; // A reused ID is ambiguous even among our own records.
@@ -723,13 +766,15 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
     if (key.account.isEmpty() || key.archive.isEmpty() || key.peer.isEmpty() || limit <= 0
         || page.entries.size() > limit || !db.transaction())
         return false;
-    const auto fail = [&db, &page] {
+    QSqlQuery  q(db);
+    const auto fail = [&db, &page, &q] {
+        if (q.lastError().isValid())
+            qWarning().noquote() << "[history-cache] Could not store archive page:" << q.lastError().text();
         db.rollback();
         for (auto &entry : page.entries)
             entry.eventId = 0;
         return false;
     };
-    QSqlQuery q(db);
     q.prepare("SELECT id,type FROM contacts WHERE acc_id=:account AND jid=:peer");
     q.bindValue(":account", key.account);
     q.bindValue(":peer", key.peer);
@@ -775,6 +820,7 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
         if (!eventId)
             eventId = matchingDelivery(db, contact, entry, false);
         const bool existingEvent = eventId > 0;
+        bool       preserveProjection = existingEvent && !page.stable;
         if (!eventId) {
             q.prepare("INSERT INTO "
                       "events(contact_id,resource,date,history_date_ms,type,direction,subject,m_text,lang,extra_data,"
@@ -796,50 +842,68 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
         }
         entry.eventId = eventId;
         if (existingEvent && page.stable) {
-            q.prepare("SELECT extra_data FROM events WHERE id=:id");
+            q.prepare("SELECT extra_data,m_text FROM events WHERE id=:id");
             q.bindValue(":id", eventId);
             if (!q.exec() || !q.next())
                 return fail();
             const QString originalExtra    = q.value(0).toString();
             auto          merged           = QJsonDocument::fromJson(originalExtra.toUtf8()).object();
             const bool    repairProjection = !merged.value("psi:decoded").toBool();
+            const auto    incoming         = QJsonDocument::fromJson(entry.extra.toUtf8()).object();
+            const bool    failedReplay = (incoming.contains("psi:decoded") && !incoming.value("psi:decoded").toBool())
+                || incoming.value("psi:decryption-error").toBool();
+            const bool savedPlaintext = merged.value("psi:decoded").toBool()
+                || (!merged.contains("psi:decoded") && !q.value(1).toString().isEmpty());
+            preserveProjection = failedReplay && savedPlaintext;
             q.finish();
-            if (merged.isEmpty() && !originalExtra.isEmpty() && originalExtra != "{}")
-                merged.insert("psi:legacy-extra", originalExtra);
-            // Replace known protocol fields, retaining extension/plugin data.
-            for (const auto &name : { "psi:message", "psi:events", "psi:html", "psi:ids", "psi:origin", "psi:encrypted",
-                                      "psi:encryption-protocol", "psi:decoded", "psi:has-body", "psi:decryption-error",
-                                      "psi:protocol-only", "urn:xmpp:reference:0", "jabber:x:oob" })
-                merged.remove(QLatin1String(name));
-            const auto incoming = QJsonDocument::fromJson(entry.extra.toUtf8()).object();
-            for (auto it = incoming.begin(); it != incoming.end(); ++it)
-                merged.insert(it.key(), it.value());
-            const QString combinedExtra = QString::fromUtf8(QJsonDocument(merged).toJson(QJsonDocument::Compact));
-            // An unverified/provisional projection is repaired by a confirmed
-            // server result. A trusted local plaintext body is not replaced
-            // by a failed decryption's empty projection.
-            q.prepare(
-                "UPDATE events SET m_text=CASE WHEN :repair OR (history_state & 3)=0 OR (m_text='' AND :body<>'') THEN "
-                ":body ELSE m_text END,"
-                "subject=CASE WHEN (history_state & 3)=0 THEN :subject ELSE subject END,"
-                "lang=CASE WHEN (history_state & 3)=0 THEN :lang ELSE lang END,extra_data=:extra WHERE id=:id");
-            q.bindValue(":id", eventId);
-            q.bindValue(":repair", repairProjection);
-            q.bindValue(":body", nonNull(entry.body));
-            q.bindValue(":subject", nonNull(entry.subject));
-            q.bindValue(":lang", nonNull(entry.language));
-            q.bindValue(":extra", combinedExtra);
-            if (!q.exec())
-                return fail();
+            // Archive connectivity and plaintext availability are independent.
+            // Even an unverified live row can contain successfully decrypted
+            // text or protocol events. A replay failure must preserve both
+            // its body and its metadata, including the decoded flag.
+            if (!preserveProjection) {
+                if (merged.isEmpty() && !originalExtra.isEmpty() && originalExtra != "{}")
+                    merged.insert("psi:legacy-extra", originalExtra);
+                // Replace known protocol fields, retaining extension/plugin data.
+                for (const auto &name :
+                     { "psi:message", "psi:events", "psi:html", "psi:ids", "psi:origin", "psi:encrypted",
+                       "psi:encryption-protocol", "psi:decoded", "psi:has-body", "psi:decryption-error",
+                       "psi:protocol-only", "urn:xmpp:reference:0", "jabber:x:oob" })
+                    merged.remove(QLatin1String(name));
+                for (auto it = incoming.begin(); it != incoming.end(); ++it)
+                    merged.insert(it.key(), it.value());
+                const QString combinedExtra = QString::fromUtf8(QJsonDocument(merged).toJson(QJsonDocument::Compact));
+                // An unverified/provisional projection is repaired by a confirmed
+                // server result. A trusted local plaintext body is not replaced
+                // by a failed decryption's empty projection.
+                q.prepare(
+                    "UPDATE events SET m_text=CASE WHEN :repair OR (history_state & 3)=0 OR "
+                    "(m_text='' AND :body<>'') THEN :body ELSE m_text END,"
+                    "subject=CASE WHEN (history_state & 3)=0 THEN :subject ELSE subject END,"
+                    "lang=CASE WHEN (history_state & 3)=0 THEN :lang ELSE lang END,extra_data=:extra WHERE id=:id");
+                q.bindValue(":id", eventId);
+                q.bindValue(":repair", repairProjection);
+                q.bindValue(":body", nonNull(entry.body));
+                q.bindValue(":subject", nonNull(entry.subject));
+                q.bindValue(":lang", nonNull(entry.language));
+                q.bindValue(":extra", combinedExtra);
+                if (!q.exec())
+                    return fail();
+            }
         }
         if (page.stable) {
-            q.prepare("UPDATE events SET history_state=(history_state & ~3) | 1 WHERE id=:id");
+            q.prepare("UPDATE events SET history_state=(history_state & ~3) | 1,"
+                      "date=CASE WHEN date IS NULL THEN :date ELSE date END,"
+                      "history_date_ms=CASE WHEN history_date_ms IS NULL OR history_date_ms=0 THEN :time "
+                      "ELSE history_date_ms END WHERE id=:id");
             q.bindValue(":id", eventId);
+            q.bindValue(":date", entry.timestamp);
+            q.bindValue(":time", entry.timestamp.toMSecsSinceEpoch());
             if (!q.exec())
                 return fail();
         }
-        if (!recordRevision(db, eventId, contact, entry.type, entry.direction, entry.sender, entry.messageId,
-                            entry.replaceId))
+        if (!preserveProjection
+            && !recordRevision(db, eventId, contact, entry.type, entry.direction, entry.sender, entry.messageId,
+                               entry.replaceId))
             return fail();
         // Never overwrite an already stable payload with a provisional result.
         q.prepare(

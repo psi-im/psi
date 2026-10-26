@@ -247,10 +247,123 @@ private slots:
         auto other    = key;
         other.account = "other";
         QCOMPARE(matchingOwnPlaintext(db, other, "own-id", "me@example.org/desktop", time), qint64(0));
+        other      = key;
+        other.peer = "someone@example.org";
+        QCOMPARE(matchingOwnPlaintext(db, other, "own-id", "me@example.org/desktop", time), qint64(0));
+        QCOMPARE(matchingOwnPlaintext(db, key, "own-id", "me@example.org/other-device", time), qint64(0));
+        QCOMPARE(matchingOwnPlaintext(db, key, "own-id", "me@example.org/desktop", time.addSecs(301)), qint64(0));
         p.entries.first().uid  = "different-delivery";
         p.entries.first().body = "different body";
         QVERIFY(storePage(db, key, "", 1, p));
         QCOMPARE(matchingOwnPlaintext(db, key, "own-id", "me@example.org/desktop", time), qint64(0));
+    }
+
+    void ownPlaintextRecoversLegacyBareSenderAndUndatedMarker()
+    {
+        QVERIFY(migrate(db));
+        auto  p     = page({ "own" }, true);
+        auto &e     = p.entries.first();
+        e.direction = 1;
+        e.sender    = "me@example.org/desktop";
+        e.messageId = "own-id";
+        e.extra     = "{\"psi:decoded\":true,\"psi:message\":{\"version\":1,\"id\":\"own-id\","
+                      "\"from\":\"me@example.org\"}}";
+        QVERIFY(storePage(db, key, "", 1, p));
+        QCOMPARE(matchingOwnPlaintext(db, key, e.messageId, e.sender, e.timestamp), e.eventId);
+        QCOMPARE(matchingOwnPlaintext(db, key, e.messageId, "someone@example.org/desktop", e.timestamp), qint64(0));
+
+        // finishSentMessage used to log encrypted protocol events with a bare
+        // sender and no Message timestamp, despite having an event timestamp.
+        QSqlQuery q(db);
+        auto      extra = QJsonDocument::fromJson(e.extra.toUtf8()).object();
+        extra.insert("psi:events", QJsonObject { { "displayed", "previous-message" } });
+        q.prepare("UPDATE events SET date=NULL,history_date_ms=0,m_text='',extra_data=:extra");
+        q.bindValue(":extra", QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact)));
+        QVERIFY(q.exec());
+        QCOMPARE(matchingOwnPlaintext(db, key, e.messageId, e.sender, e.timestamp), e.eventId);
+        extra.insert("psi:decoded", false);
+        q.bindValue(":extra", QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact)));
+        QVERIFY(q.exec());
+        QCOMPARE(matchingOwnPlaintext(db, key, e.messageId, e.sender, e.timestamp), qint64(0));
+    }
+
+    void archivedMarkerAdoptsLegacyUndatedOutgoingDelivery()
+    {
+        QVERIFY(migrate(db));
+        QSqlQuery q(db);
+        QVERIFY(q.exec("INSERT INTO contacts VALUES(1,'account-a',1,'you@example.org',-1)"));
+        const QString extra = "{\"psi:decoded\":true,\"psi:events\":{\"displayed\":\"previous\"},"
+                              "\"psi:message\":{\"version\":1,\"id\":\"own-marker\",\"from\":\"me@example.org\"}}";
+        q.prepare("INSERT INTO events(id,contact_id,date,history_date_ms,type,direction,m_text,extra_data) "
+                  "VALUES(42,1,NULL,0,1,1,'',:extra)");
+        q.bindValue(":extra", extra);
+        QVERIFY(q.exec());
+        auto  p     = page({ "marker-uid" }, true);
+        auto &e     = p.entries.first();
+        e.messageId = "own-marker";
+        e.sender    = "me@example.org/desktop";
+        e.body      = QStringLiteral("");
+        e.extra     = extra;
+        e.direction = 1;
+        QVERIFY(storePage(db, key, "", 1, p));
+        QCOMPARE(e.eventId, qint64(42));
+        QCOMPARE(scalar("SELECT count(*) FROM events").toInt(), 1);
+        QCOMPARE(scalar("SELECT history_date_ms FROM events").toLongLong(), e.timestamp.toMSecsSinceEpoch());
+        QVERIFY(scalar("SELECT date FROM events").toDateTime().isValid());
+    }
+
+    void failedReplayNeverReplacesSuccessfulProjection_data()
+    {
+        QTest::addColumn<bool>("stable");
+        QTest::addColumn<bool>("marker");
+        QTest::addColumn<bool>("replayStable");
+        QTest::newRow("live-body") << false << false << true;
+        QTest::newRow("archived-body") << true << false << true;
+        QTest::newRow("live-marker") << false << true << true;
+        QTest::newRow("archived-marker") << true << true << true;
+        QTest::newRow("provisional-live-body") << false << false << false;
+        QTest::newRow("provisional-archived-body") << true << false << false;
+        QTest::newRow("provisional-live-marker") << false << true << false;
+        QTest::newRow("provisional-archived-marker") << true << true << false;
+    }
+    void failedReplayNeverReplacesSuccessfulProjection()
+    {
+        QFETCH(bool, stable);
+        QFETCH(bool, marker);
+        QFETCH(bool, replayStable);
+        QVERIFY(migrate(db));
+        auto  p     = page({ "decoded" }, true, stable);
+        auto &e     = p.entries.first();
+        auto  extra = QJsonDocument::fromJson(e.extra.toUtf8()).object();
+        extra.insert("psi:decoded", true);
+        extra.insert("plugin-data", "retained");
+        e.replaceId = "original-message";
+        if (marker) {
+            e.body = QStringLiteral("");
+            extra.insert("psi:events", QJsonObject { { "displayed", "previous-message" } });
+            extra.insert("psi:protocol-only", true);
+        }
+        e.extra = QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact));
+        QVERIFY(storePage(db, key, "", 1, p));
+        const auto body   = e.body;
+        auto       failed = extra;
+        failed.remove("psi:events");
+        failed.remove("psi:protocol-only");
+        failed.insert("psi:decoded", false);
+        failed.insert("psi:decryption-error", true);
+        e.body = QStringLiteral("");
+        e.replaceId.clear(); // Failed ciphertext does not expose correction edges.
+        e.extra  = QString::fromUtf8(QJsonDocument(failed).toJson(QJsonDocument::Compact));
+        p.stable = replayStable;
+        QVERIFY(storePage(db, key, "", 1, p));
+        const auto saved
+            = QJsonDocument::fromJson(scalar("SELECT extra_data FROM events").toString().toUtf8()).object();
+        QCOMPARE(scalar("SELECT m_text FROM events").toString(), body);
+        QVERIFY(saved.value("psi:decoded").toBool());
+        QVERIFY(!saved.value("psi:decryption-error").toBool());
+        QCOMPARE(saved.value("psi:events"), extra.value("psi:events"));
+        QCOMPARE(saved.value("plugin-data").toString(), QString("retained"));
+        QCOMPARE(scalar("SELECT replace_id FROM message_revisions").toString(), QString("original-message"));
     }
 
     void migrationKeepsLegacyData()

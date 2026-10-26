@@ -5254,10 +5254,12 @@ void PsiAccount::finishSentMessage(const Message &sent, bool log)
         int     type     = findGCContact(sent.to()) ? EDB::GroupChatContact : EDB::Contact;
         Message recorded = sent;
         if (recorded.from().isEmpty())
-            recorded.setFrom(jid());
+            recorded.setFrom(d->client->jid().isEmpty() ? jid() : d->client->jid());
+        if (!recorded.timeStamp().isValid())
+            recorded.setTimeStamp(QDateTime::currentDateTime());
         MessageEvent::Ptr me(new MessageEvent(recorded, this));
         me->setOriginLocal(true);
-        me->setTimeStamp(QDateTime::currentDateTime());
+        me->setTimeStamp(recorded.timeStamp());
         const AddressList al = sent.addresses();
         if (al.isEmpty())
             logEvent(sent.to(), me, type);

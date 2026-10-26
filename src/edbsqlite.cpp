@@ -577,7 +577,7 @@ bool EDBSqLite::appendEvent(const QString &accId, const XMPP::Jid &jid, const Ps
     if (e->type() == PsiEvent::Message) {
         MessageEvent::Ptr me = e.staticCast<MessageEvent>();
         const Message    &m  = me->message().displayMessage();
-        dTime                = m.timeStamp();
+        dTime                = m.timeStamp().isValid() ? m.timeStamp() : me->timeStamp();
         if (m.type() == Message::Type::Chat)
             nType = 1;
         else if (m.type() == Message::Type::Error)
