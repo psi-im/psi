@@ -100,6 +100,9 @@ public:
     static QString reactionTarget(const XMPP::Message &);
     static QString retractionTarget(const XMPP::Message &);
     void setReplyMetadata(const XMPP::Message &);
+    // XEP-0393 sender-requested suppression of styling.
+    bool stylingDisabled() const { return _stylingDisabled; }
+    void setStylingDisabled(bool disabled) { _stylingDisabled = disabled; }
     const ChatReply &reply() const;
     void setReply(const ChatReply &);
     const QString &replyFormattedText() const;
@@ -232,6 +235,7 @@ private:
     };
     QSharedDataPointer<ReplyData> _replyData;
     bool                     _markable = false;
+    bool                     _stylingDisabled = false;
     QString                  _encryptionProtocol;
 };
 
