@@ -156,6 +156,22 @@ private slots:
         QVERIFY(quoted.isQuotedBlock(quoted.document()->begin()));
     }
 
+    void xep0393UnstyledMessageRemainsLiteralInNativeTimeline()
+    {
+        MamChatWidget chat;
+        chat.resize(500, 300);
+        chat.setHistoryLoading(true);
+        auto unstyled = message(QStringLiteral("unstyled"), QStringLiteral("&gt; _ &lt;"));
+        unstyled.setStylingDisabled(true);
+        chat.appendMessage(unstyled);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *body = chat.itemWidget(0)->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+        QVERIFY(body);
+        QCOMPARE(body->document()->toPlainText(), QStringLiteral("> _ <"));
+        QVERIFY(!body->isQuotedBlock(body->document()->begin()));
+    }
+
     void chatTimelineHasNoFrame()
     {
         MamChatWidget chat;
