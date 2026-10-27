@@ -19,6 +19,6 @@ const NativeChatMessageRenderer *bubble();
 
 // The bubble's text area is limited to this many average characters of the
 // chat font, whatever the width of the log.
-constexpr int BubbleMaxTextColumns = 80;
+constexpr int BubbleMaxTextColumns = 60;
 
 }

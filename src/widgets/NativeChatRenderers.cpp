@@ -208,22 +208,30 @@ QColor mix(const QColor &from, const QColor &to, qreal amount)
                             from.blueF() + (to.blueF() - from.blueF()) * amount);
 }
 
-// A rounded frame with a tail at its top, pointing sideways at the avatar.
+// A rounded frame, for messages with a tail at its top pointing sideways at
+// the avatar.
 class BubbleFrame final : public QWidget {
 public:
-    enum Side { Left, Right };
+    enum Side { Left, Right, NoTail };
+    enum Tone { Incoming, Own, Notice };
     static constexpr int TailWidth  = 9;
     static constexpr int TailTop    = 11; // From the top of the bubble to where the tail leaves it.
     static constexpr int TailHeight = 16; // Along the bubble's edge.
     static constexpr int Radius     = 10;
 
-    BubbleFrame(Side tail, bool local, QWidget *parent) : QWidget(parent), tail_(tail), local_(local)
+    BubbleFrame(Side tail, Tone tone, QWidget *parent) : QWidget(parent), tail_(tail), tone_(tone)
     {
         setObjectName(QStringLiteral("mamBubble"));
-        setProperty("tailSide", tail == Left ? QStringLiteral("left") : QStringLiteral("right"));
+        setProperty("tailSide", tail == Left    ? QStringLiteral("left")
+                                : tail == Right ? QStringLiteral("right")
+                                                : QStringLiteral("none"));
         setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
         auto *column = new QVBoxLayout(this);
-        column->setContentsMargins(12 + (tail == Left ? TailWidth : 0), 6, 12 + (tail == Right ? TailWidth : 0), 7);
+        if (tone == Notice)
+            column->setContentsMargins(14, 5, 14, 6);
+        else
+            column->setContentsMargins(12 + (tail == Left ? TailWidth : 0), 6, 12 + (tail == Right ? TailWidth : 0),
+                                       7);
         column->setSpacing(3);
         updateMaximumWidth();
     }
@@ -252,8 +260,10 @@ protected:
         }
         const QColor surface = colors.color(QPalette::Base);
         const QColor text    = colors.color(QPalette::Text);
-        const QColor fill    = local_ ? mix(surface, colors.color(QPalette::Highlight), 0.18) : mix(surface, text, 0.07);
-        const QColor border  = mix(surface, text, local_ ? 0.20 : 0.16);
+        const QColor fill    = tone_ == Own ? mix(surface, colors.color(QPalette::Highlight), 0.18)
+               : tone_ == Notice            ? mix(surface, text, 0.035)
+                                            : mix(surface, text, 0.07);
+        const QColor border = mix(surface, text, tone_ == Own ? 0.20 : tone_ == Notice ? 0.12 : 0.16);
 
         QPainter painter(this);
         painter.setRenderHint(QPainter::Antialiasing);
@@ -266,7 +276,13 @@ private:
     // Drawn for a tail on the left, then mirrored for the right.
     QPainterPath outline() const
     {
-        const qreal  w = width(), h = height();
+        const qreal w = width(), h = height();
+        if (tail_ == NoTail) {
+            QPainterPath shape;
+            const qreal  radius = qMin<qreal>(Radius + 2, (h - 1.0) / 2.0);
+            shape.addRoundedRect(QRectF(0.5, 0.5, w - 1.0, h - 1.0), radius, radius);
+            return shape;
+        }
         const QRectF box(TailWidth + 0.5, 0.5, w - TailWidth - 1.0, h - 1.0);
         QPainterPath shape;
         shape.addRoundedRect(box, Radius, Radius);
@@ -298,7 +314,7 @@ private:
     }
 
     Side tail_;
-    bool local_;
+    Tone tone_;
 };
 
 // Messages in speech bubbles, based on Modern. Incoming messages sit on the
@@ -319,14 +335,20 @@ public:
     void arrange(Canvas &canvas, const NativeChatMessageInfo &info) const override
     {
         if (info.kind != NativeChatMessageInfo::Message) {
-            // Notices and the subject stay plain, centred lines between bubbles.
-            auto *outer = rowLayout(canvas, QMargins(12, 4, 12, 4), 8);
-            outer->addWidget(canvas.take(Canvas::Body), 1, Qt::AlignTop);
+            // Notices and the subject: a centred bubble without a tail.
+            auto *outer  = rowLayout(canvas, QMargins(12, 4, 12, 4), 6);
+            auto *bubble = new BubbleFrame(BubbleFrame::NoTail, BubbleFrame::Notice, canvas.row());
+            bubble->column()->addWidget(canvas.take(Canvas::Body), 0, Qt::AlignTop);
+            outer->addStretch(1);
+            outer->addWidget(bubble, 0, Qt::AlignTop);
+            outer->addStretch(1);
+            canvas.setActionAnchor(bubble);
             return;
         }
         auto *outer  = rowLayout(canvas, QMargins(12, 4, 12, 4), 6);
         auto *avatar = canvas.take(Canvas::Avatar);
-        auto *bubble = new BubbleFrame(info.local ? BubbleFrame::Right : BubbleFrame::Left, info.local, canvas.row());
+        auto *bubble = new BubbleFrame(info.local ? BubbleFrame::Right : BubbleFrame::Left,
+                                       info.local ? BubbleFrame::Own : BubbleFrame::Incoming, canvas.row());
         bubble->column()->addWidget(messageHeader(canvas, bubble), 0, Qt::AlignTop);
         bubble->column()->addWidget(canvas.take(Canvas::Body), 0, Qt::AlignTop);
         if (info.local) {

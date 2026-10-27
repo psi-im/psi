@@ -126,10 +126,11 @@ must stay valid until the plugin object is destroyed, not only until
 - **Classic**: the legacy text log on one line, `[HH:mm:ss] nick: text`, the
   time painted in the nickname colour in group chats.
 - **Bubble**: based on Modern. Each message is a speech bubble whose text area
-  is limited to about 80 average characters of the chat font, whatever the
+  is limited to about 60 average characters of the chat font, whatever the
   width of the log, and which shrinks to short messages. Incoming messages sit
   on the left and our own on the right, each with the avatar on its outer side
-  and the bubble's tail near its top pointing at the avatar. Notices stay plain
-  centred lines.
+  and the bubble's tail near its top pointing at the avatar. Notices and the
+  group chat subject are centred bubbles without a tail, as in the WebKit
+  Bubble theme.
 
 The renderers are in `src/widgets/NativeChatRenderers.cpp`.

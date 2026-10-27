@@ -2095,7 +2095,7 @@ private slots:
         QVERIFY(outBubble->mapTo(outRow, QPoint(outBubble->width(), 0)).x() > outRow->width() * 3 / 4);
         QVERIFY(outBubble->width() < outRow->width() / 3);
 
-        // A long message is limited to about 80 characters of the chat font,
+        // A long message is limited to about 60 characters of the chat font,
         // whatever the width of the log.
         auto [longRow, longBubble, longAvatar] = parts(2);
         QVERIFY(longBubble);
@@ -2112,8 +2112,15 @@ private slots:
         QTRY_COMPARE(list.itemWidget(2)->findChild<QWidget *>(QStringLiteral("mamBubble"))->width(),
                      longBubble->maximumWidth());
 
-        // Notices stay plain lines between the bubbles.
-        QVERIFY(!list.itemWidget(3)->findChild<QWidget *>(QStringLiteral("mamBubble")));
+        // Notices are centred bubbles without a tail, shrunk to their text.
+        auto *noticeRow    = list.itemWidget(3);
+        auto *noticeBubble = noticeRow->findChild<QWidget *>(QStringLiteral("mamBubble"));
+        QVERIFY(noticeBubble);
+        QCOMPARE(noticeBubble->property("tailSide").toString(), QStringLiteral("none"));
+        QVERIFY(!noticeRow->findChild<QLabel *>(QStringLiteral("mamAvatar")));
+        const int noticeCentre = noticeBubble->mapTo(noticeRow, QPoint(noticeBubble->width() / 2, 0)).x();
+        QVERIFY(qAbs(noticeCentre - noticeRow->width() / 2) <= 2);
+        QVERIFY(noticeBubble->width() < noticeRow->width() / 3);
 
         // The hover actions sit on the bubble, not on the far end of the row.
         QEvent enter(QEvent::Enter);
