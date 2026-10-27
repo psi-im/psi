@@ -2531,6 +2531,13 @@ private slots:
             const QPoint centre(qRound(body->viewport()->width() / 2.0 * shot.devicePixelRatio()),
                                 qRound(scaled / 2.0 * shot.devicePixelRatio()));
             QCOMPARE(shot.pixelColor(centre), QColor(0, 170, 0));
+            // The row is as tall as the scaled picture, not as the picture at
+            // its full size: no gap below it.
+            auto *row = list.itemWidget(0);
+            QTRY_COMPARE(row->height(), row->heightForWidth(row->width()));
+            const int bodyBottom = body->mapTo(row, QPoint(0, body->height())).y();
+            QVERIFY2(row->height() - bodyBottom <= 16,
+                     qPrintable(QStringLiteral("row %1, text ends at %2").arg(row->height()).arg(bodyBottom)));
         }
     }
 

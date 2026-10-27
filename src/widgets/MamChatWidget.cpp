@@ -815,7 +815,10 @@ public:
     {
         setObjectName(QStringLiteral("mamBodyPart"));
         // As ChatMessageText: the row measures heights with heightForWidth().
-        auto policy = QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+        // The height may shrink below the size hint, which is the height at
+        // the natural width: a large picture is scaled down to the row, and
+        // a minimum height taken from its full size would leave a gap below.
+        auto policy = QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
         policy.setHeightForWidth(true);
         setSizePolicy(policy);
         column_ = new QVBoxLayout(this);
