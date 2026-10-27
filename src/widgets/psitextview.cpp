@@ -50,9 +50,7 @@ constexpr int QuoteIndent        = 10; // A bar and the gap after it, as in Mess
 // length of its markers including one space after them.
 int quoteMarkers(const QString &line, int *length = nullptr)
 {
-    int at = 0;
-    while (at < line.size() && line.at(at) == QLatin1Char(' '))
-        ++at;
+    int at = 0; // XEP-0393 requires '>' at the beginning of a line.
     int level = 0;
     while (at < line.size() && line.at(at) == QLatin1Char('>')) {
         ++level;
@@ -383,6 +381,15 @@ void PsiTextView::markQuotedLines()
     if (!quoteStylingEnabled_)
         return;
     QTextDocument *doc = document();
+    // A '>' inside a preformatted XEP-0393 block is literal text.
+    const auto preformattedAt = [doc](int pos) {
+        QTextCursor probe(doc);
+        probe.setPosition(qBound(0, pos, doc->characterCount() - 1));
+        if (!probe.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor))
+            return false;
+        return PsiRichText::isMonospace(probe.charFormat());
+    };
+
     // Give every quoted line a block of its own: turn the line breaks around
     // it into paragraph breaks. Each replacement keeps the positions.
     QList<int> breaks;
@@ -394,7 +401,7 @@ void PsiTextView::markQuotedLines()
         while (stop < end && doc->characterAt(stop) != QChar::ParagraphSeparator
                && doc->characterAt(stop) != QChar::LineSeparator)
             line += doc->characterAt(stop++);
-        if (quoteMarkers(line)) {
+        if (quoteMarkers(line) && !preformattedAt(start)) {
             if (start > 0 && doc->characterAt(start - 1) == QChar::LineSeparator)
                 breaks.append(start - 1);
             if (stop < end && doc->characterAt(stop) == QChar::LineSeparator)
@@ -416,7 +423,7 @@ void PsiTextView::markQuotedLines()
     for (QTextBlock block = doc->begin(); block.isValid(); block = block.next()) {
         int       length = 0;
         const int level  = quoteMarkers(block.text(), &length);
-        if (!level)
+        if (!level || preformattedAt(block.position()))
             continue;
         cursor.setPosition(block.position());
         cursor.setPosition(block.position() + length, QTextCursor::KeepAnchor);
