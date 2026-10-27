@@ -7,8 +7,7 @@ set(QT_DEFAULT_MAJOR_VERSION 6 CACHE STRING "Qt major version")
 find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Core Widgets Test Multimedia Network)
 set(PSI_WIDGETS ${CMAKE_CURRENT_LIST_DIR}/../../src/widgets)
 if(NOT TARGET qsourcehighlite)
-    add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../../3rdparty/QSourceHighlite
-                     ${CMAKE_CURRENT_BINARY_DIR}/qsourcehighlite)
+    include(${CMAKE_CURRENT_LIST_DIR}/../../3rdparty/qsourcehighlite.cmake)
 endif()
 add_executable(mam_long_list_test LongListWidgetTest.cpp
     ${PSI_WIDGETS}/LongListWidget.cpp ${PSI_WIDGETS}/LongListWidgetLayout.cpp ${PSI_WIDGETS}/LongListWidget.h)

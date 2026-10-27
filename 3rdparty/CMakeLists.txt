@@ -4,5 +4,5 @@ cmake_minimum_required(VERSION 3.10.0)
 # including Windows BASIC builds with Qt's FFmpeg multimedia backend.
 include(qhttp.cmake)
 
-# XEP-0393 code fences share MatterLeast's vendored syntax highlighter.
-add_subdirectory(QSourceHighlite)
+# QSourceHighlite is pinned as the same upstream git submodule used in MatterLeast.
+include(qsourcehighlite.cmake)
