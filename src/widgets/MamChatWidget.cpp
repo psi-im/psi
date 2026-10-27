@@ -2328,7 +2328,8 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
         QString text = mv.reply().text;
         const bool resolved = resolveReply(mv.reply(), author, text);
         preview->setProperty("replyResolved", resolved);
-        preview->setContent(author.isEmpty() ? tr("Quoted message") : author,
+        // An unknown author gets no title: the quote styling says enough.
+        preview->setContent(author,
                             text.isEmpty() ? tr("Referenced message is not available locally") : text);
         connect(preview, &MessagePreview::heightChanged, this, [this, key = items_.at(index).key] {
             const int at = indexOfKey(key);

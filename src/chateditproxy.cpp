@@ -71,7 +71,8 @@ void ChatEditProxy::setReply(const ChatReply &reply)
     if (!reply.isValid())
         return;
     reply_ = reply;
-    replyPreview_->setContent(tr("Reply to %1").arg(reply.author), reply.text);
+    replyPreview_->setContent(reply.author.isEmpty() ? tr("Reply") : tr("Reply to %1").arg(reply.author),
+                              reply.text);
     replyPreview_->show();
     chatEdit()->resetCorrection();
     chatEdit()->setFocus();
