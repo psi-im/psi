@@ -2081,6 +2081,11 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     }
 
     body->setRichText(richText);
+    if (message) {
+        // Quotes within the message, after the one shown as its reply preview.
+        body->setQuoteColor(quoteColor_);
+        body->markQuotedLines();
+    }
     bodyPart->column()->addWidget(body);
     if (!files.isEmpty()) {
         if (richText.trimmed().isEmpty())
@@ -3127,9 +3132,12 @@ void MamChatWidget::setQuoteColor(const QColor &color)
 {
     quoteColor_ = color;
     for (int index : materializedRows())
-        if (auto *row = rowWidget(index))
+        if (auto *row = rowWidget(index)) {
             if (auto *preview = row->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview")))
                 preview->setColors(color, color);
+            if (auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody")))
+                body->setQuoteColor(color);
+        }
 }
 
 void MamChatWidget::updateRowSelection(QFrame *row, bool selected)

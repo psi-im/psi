@@ -526,6 +526,56 @@ private slots:
         QCOMPARE(fallbackText->height(), fallbackText->heightForWidth(fallbackText->width()));
     }
 
+    void quotesWithinAMessageAreShownAsQuotes()
+    {
+        MamChatWidget chat;
+        chat.resize(560, 400);
+        chat.setHistoryLoading(true);
+        chat.setQuoteColor(QColor("#707070"));
+        QPalette colors = chat.palette();
+        colors.setColor(QPalette::Text, QColor("#101010"));
+        colors.setColor(QPalette::Link, QColor("#2a6fb0"));
+        chat.setPalette(colors);
+        chat.appendMessage(message(QStringLiteral("quotes"),
+                                   QStringLiteral("Top<br>&gt; first with <a href=\"https://psi-im.org\">a link</a><br>"
+                                                  "&gt; &gt; second<br>&gt;&gt; also second<br>Answer")));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *body = chat.itemWidget(0)->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+        QVERIFY(body);
+        // The markers are gone; each quoted line is a block of its own.
+        QCOMPARE(body->toPlainText(), QStringLiteral("Top\nfirst with a link\nsecond\nalso second\nAnswer"));
+        const auto blockOf = [body](const QString &text) { return body->document()->find(text).block(); };
+        QCOMPARE(blockOf(QStringLiteral("Top")).blockFormat().leftMargin(), 0.0);
+        QCOMPARE(blockOf(QStringLiteral("first")).blockFormat().leftMargin(), 10.0);
+        QCOMPARE(blockOf(QStringLiteral("second")).blockFormat().leftMargin(), 20.0);
+        QCOMPARE(blockOf(QStringLiteral("also second")).blockFormat().leftMargin(), 20.0);
+        QCOMPARE(blockOf(QStringLiteral("Answer")).blockFormat().leftMargin(), 0.0);
+        // Quoted text in the quote colour, links in theirs, the rest as usual.
+        QCOMPARE(body->document()->find(QStringLiteral("first")).charFormat().foreground().color(), QColor("#707070"));
+        QCOMPARE(body->document()->find(QStringLiteral("a link")).charFormat().foreground().color(), QColor("#2a6fb0"));
+        QVERIFY(body->document()->find(QStringLiteral("Answer")).charFormat().foreground().color() != QColor("#707070"));
+        // A bar per level beside the quoted lines.
+        QTRY_VERIFY(body->height() >= body->heightForWidth(body->width()));
+        const QImage shot  = body->viewport()->grab().toImage();
+        const auto   barAt = [&](const QString &text, int x) {
+            const QRect line = body->cursorRect(body->document()->find(text));
+            return shot.pixelColor(x, line.center().y()) == QColor("#707070");
+        };
+        QVERIFY(barAt(QStringLiteral("first"), 1));
+        QVERIFY(!barAt(QStringLiteral("first"), 11));
+        QVERIFY(barAt(QStringLiteral("second"), 1) && barAt(QStringLiteral("second"), 11));
+        QVERIFY(!barAt(QStringLiteral("Top"), 1));
+        // Copying gives the markers back.
+        body->selectAll();
+        body->copy();
+        QCOMPARE(QApplication::clipboard()->text(),
+                 QStringLiteral("Top\n> first with a link\n>> second\n>> also second\nAnswer"));
+        // The quote colour follows the option.
+        chat.setQuoteColor(QColor("#a0a4a8"));
+        QCOMPARE(body->document()->find(QStringLiteral("first")).charFormat().foreground().color(), QColor("#a0a4a8"));
+    }
+
     void inlineReplyPreviewContributesToRowHeight_data()
     {
         QTest::addColumn<bool>("classic");
