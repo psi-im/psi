@@ -8,6 +8,7 @@
 #include <QTextCursor>
 #include <QTextDocument>
 #include <QTextLayout>
+#include <QStringList>
 
 #include <algorithm>
 #include <optional>
