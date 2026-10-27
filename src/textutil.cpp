@@ -9,6 +9,9 @@
 #include <QApplication>
 #include <QTextDocument> // for escape()
 
+#include <QMap>
+#include <algorithm>
+
 QString TextUtil::escape(const QString &plain) { return plain.toHtmlEscaped(); }
 
 /**
@@ -645,27 +648,184 @@ QString TextUtil::img2title(const QString &in)
     return ret;
 }
 
-/**
- * Format XEP-0393 Message Styling to HTML.
- * Additional formatting for Markdown (**bold**), and Discord __underline__.
- * But they rendered without styling directives i.e. <b>bold</b>, not <b>**bold**</b>.
- * FIXME: formatting must ignore `code block` that may be a code i.e `volume=length*width*height`
- */
+// XEP-0393 is not Markdown. Parse visible text, preserving existing HTML
+// (linkification, icons, XHTML-IM) and styling directive characters.
+namespace {
+struct StylingGlyph {
+    QChar ch;
+    int begin;
+    int end;
+    bool protectedText;
+};
+struct StylingRange {
+    int begin;
+    int end;
+    QString open;
+    QString close;
+};
+static bool isDirective(QChar c)
+{
+    return c == QLatin1Char('*') || c == QLatin1Char('_') || c == QLatin1Char('~') || c == QChar(0x60);
+}
+static QList<StylingGlyph> stylingGlyphs(const QString &html)
+{
+    QList<StylingGlyph> glyphs;
+    int protectedDepth = 0;
+    for (int i = 0; i < html.size();) {
+        const int start = i;
+        if (html.at(i) == QLatin1Char('<')) {
+            const int end = html.indexOf(QLatin1Char('>'), i + 1);
+            if (end >= 0) {
+                const QStringView tag = QStringView(html).mid(i, end - i + 1);
+                if (tag.startsWith(QLatin1String("<br"), Qt::CaseInsensitive))
+                    glyphs.append({ QLatin1Char('\n'), start, end + 1, false });
+                else if (tag.startsWith(QLatin1String("</pre"), Qt::CaseInsensitive)
+                         || tag.startsWith(QLatin1String("</code"), Qt::CaseInsensitive))
+                    protectedDepth = qMax(0, protectedDepth - 1);
+                else if (tag.startsWith(QLatin1String("<pre"), Qt::CaseInsensitive)
+                         || tag.startsWith(QLatin1String("<code"), Qt::CaseInsensitive))
+                    ++protectedDepth;
+                i = end + 1;
+                continue;
+            }
+        }
+        if (html.at(i) == QLatin1Char('&')) {
+            const int end = html.indexOf(QLatin1Char(';'), i + 1);
+            if (end >= 0 && end - i <= 12) {
+                const QString decoded = TextUtil::resolveEntities(QStringView(html).mid(i, end - i + 1));
+                if (decoded.size() == 1) {
+                    glyphs.append({ decoded.at(0), i, end + 1, protectedDepth > 0 });
+                    i = end + 1;
+                    continue;
+                }
+            }
+        }
+        glyphs.append({ html.at(i), i, i + 1, protectedDepth > 0 });
+        ++i;
+    }
+    return glyphs;
+}
+static int quotePrefix(const QList<StylingGlyph> &g, int at, int end, int *depth)
+{
+    int nesting = 0;
+    while (at < end && g.at(at).ch == QLatin1Char('>')) {
+        ++nesting;
+        ++at;
+        if (at < end && g.at(at).ch == QLatin1Char(' '))
+            ++at;
+    }
+    *depth = nesting;
+    return at;
+}
+static void parseStylingSpans(const QList<StylingGlyph> &g, int first, int last,
+                             QList<StylingRange> &ranges, int depth = 0)
+{
+    if (depth > 32)
+        return;
+    for (int i = first; i < last; ++i) {
+        const QChar c = g.at(i).ch;
+        if (!isDirective(c) || g.at(i).protectedText || i + 1 >= last || g.at(i + 1).ch.isSpace())
+            continue;
+        if (i > first && !g.at(i - 1).ch.isSpace() && !isDirective(g.at(i - 1).ch))
+            continue;
+        // Repeated punctuation is not an XEP-0393 directive.
+        if ((i + 1 < last && g.at(i + 1).ch == c) || (i > first && g.at(i - 1).ch == c))
+            continue;
+        int closing = -1;
+        for (int j = i + 2; j < last; ++j) {
+            if (g.at(j).ch == c && !g.at(j).protectedText && !g.at(j - 1).ch.isSpace()
+                && (j + 1 == last || g.at(j + 1).ch != c)) {
+                closing = j;
+                break;
+            }
+        }
+        if (closing < 0)
+            continue;
+        QString element;
+        if (c == QLatin1Char('*')) element = QLatin1String("b");
+        else if (c == QLatin1Char('_')) element = QLatin1String("i");
+        else if (c == QLatin1Char('~')) element = QLatin1String("s");
+        else element = QLatin1String("code");
+        ranges.append({ g.at(i).begin, g.at(closing).end,
+                        QLatin1Char('<') + element + QLatin1Char('>'),
+                        QLatin1String("</") + element + QLatin1Char('>') });
+        if (c != QChar(0x60))
+            parseStylingSpans(g, i + 1, closing, ranges, depth + 1);
+        i = closing;
+    }
+}
+static bool isFence(const QList<StylingGlyph> &g, int at, int end)
+{
+    return at + 2 < end && g.at(at).ch == QChar(0x60)
+        && g.at(at + 1).ch == QChar(0x60) && g.at(at + 2).ch == QChar(0x60);
+}
+}
+
 QString TextUtil::legacyFormat(const QString &in)
 {
-    QString out = in;
-    out = out.replace(QRegularExpression("(^|\\s|>)\\*\\*\\*(\\S+)\\*\\*\\*(?=<|\\s|$)"), "\\1<b><i>\\2</i></b>"); // MD ***bold italic***
-    out = out.replace(QRegularExpression("(^|\\s|>)\\*\\*(\\S+)\\*\\*(?=<|\\s|$)"), "\\1<b>\\2</b>"); // MD **bold**
-    out = out.replace(QRegularExpression("(^|\\s|>)\\*(\\S+)\\*(?=<|\\s|$)"), "\\1<b>*\\2*</b>"); // bold *text*
-    out = out.replace(QRegularExpression("(^|\\s|>)__(\\S+)__(?=<|\\s|$)"), "\\1<u>\\2</u>"); // TG,Discord __underline__
-    out = out.replace(QRegularExpression("(^|\\s|>)_(\\S+)_(?=<|\\s|$)"), "\\1<u>_\\2_</u>"); // _underline_
-    out = out.replace(QRegularExpression("(^|\\s|>)\\/(\\S+)\\/(?=<|\\s|$)"), "\\1<i>/\\2/</i>"); // italic /text/
-    out = out.replace(QRegularExpression("(^|\\s|>)\\~\\~(\\S+)\\~\\~(?=<|\\s|$)"), "\\1<s>\\2</s>"); // MD ~~striked~~
-    out = out.replace(QRegularExpression("(^|\\s|>)\\~(\\S+)\\~(?=<|\\s|$)"), "\\1<s>~\\2~</s>"); // ~striked~
-    out = out.replace(QRegularExpression("(^|\\s|>)```(\\S+)```(?=<|\\s|$)"), "\\1<pre>\n\\2\n</pre>\n"); // ```code block```
-    out = out.replace(QRegularExpression("(^|\\s|>)`(\\S+)`(?=<|\\s|$)"), "\\1<code>\\2</code>"); // `preformatted`
-
-    return out;
+    const auto glyphs = stylingGlyphs(in);
+    QList<StylingRange> ranges;
+    int line = 0;
+    while (line < glyphs.size()) {
+        int end = line;
+        while (end < glyphs.size() && glyphs.at(end).ch != QLatin1Char('\n'))
+            ++end;
+        int quoteDepth = 0;
+        const int content = quotePrefix(glyphs, line, end, &quoteDepth);
+        if (isFence(glyphs, content, end) && !glyphs.at(content).protectedText) {
+            // Fence blocks end at the first bare closing fence, quote boundary,
+            // or end of the message. Their children must remain unparsed.
+            const int start = content;
+            int fenceEnd = end;
+            int next = end < glyphs.size() ? end + 1 : end;
+            while (next < glyphs.size()) {
+                int stop = next;
+                while (stop < glyphs.size() && glyphs.at(stop).ch != QLatin1Char('\n'))
+                    ++stop;
+                int childDepth = 0;
+                const int child = quotePrefix(glyphs, next, stop, &childDepth);
+                if (childDepth != quoteDepth)
+                    break;
+                fenceEnd = stop;
+                next = stop < glyphs.size() ? stop + 1 : stop;
+                if (isFence(glyphs, child, stop) && child + 3 == stop)
+                    break;
+            }
+            if (fenceEnd > start) {
+                ranges.append({ glyphs.at(start).begin, glyphs.at(fenceEnd - 1).end,
+                                QLatin1String("<span style=\"font-family:monospace; white-space:pre-wrap\">"),
+                                QLatin1String("</span>") });
+            }
+            line = next;
+            continue;
+        }
+        parseStylingSpans(glyphs, content, end, ranges);
+        line = end + 1;
+    }
+    QMap<int, QList<StylingRange>> openings, closings;
+    for (const auto &range : std::as_const(ranges)) {
+        openings[range.begin].append(range);
+        closings[range.end].append(range);
+    }
+    QString result;
+    result.reserve(in.size() + ranges.size() * 40);
+    for (int pos = 0; pos <= in.size(); ++pos) {
+        auto close = closings.value(pos);
+        std::sort(close.begin(), close.end(), [](const StylingRange &a, const StylingRange &b) {
+            return a.begin > b.begin;
+        });
+        for (const auto &range : std::as_const(close))
+            result += range.close;
+        auto open = openings.value(pos);
+        std::sort(open.begin(), open.end(), [](const StylingRange &a, const StylingRange &b) {
+            return a.end > b.end;
+        });
+        for (const auto &range : std::as_const(open))
+            result += range.open;
+        if (pos < in.size())
+            result += in.at(pos);
+    }
+    return result;
 }
 
 QString TextUtil::sizeUnit(qlonglong n, qlonglong *div)
