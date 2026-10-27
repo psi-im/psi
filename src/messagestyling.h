@@ -88,38 +88,51 @@ static int quotePrefix(const QList<StylingGlyph> &g, int at, int end, int *depth
 static void parseStylingSpans(const QList<StylingGlyph> &g, int first, int last,
                              QList<StylingRange> &ranges, int depth = 0)
 {
+    // The byte stream is lazily consumed from left to right within its
+    // containing line. Adjacent opening directives can form nested spans.
+    // A pair of backticks is also a valid preformatted span (XEP-0393 §6.2.5).
     if (depth > 32)
         return;
     for (int i = first; i < last; ++i) {
-        const QChar c = g.at(i).ch;
-        if (!isDirective(c) || g.at(i).protectedText || i + 1 >= last || g.at(i + 1).ch.isSpace())
+        const QChar ch = g.at(i).ch;
+        if (!isDirective(ch) || g.at(i).protectedText)
+            continue;
+        const bool code = ch == QChar(0x60);
+        const int run = code && i + 1 < last && g.at(i + 1).ch == ch ? 2 : 1;
+        if (i + run >= last || g.at(i + run).ch.isSpace())
             continue;
         if (i > first && !g.at(i - 1).ch.isSpace() && !isDirective(g.at(i - 1).ch))
             continue;
-        // Repeated punctuation is not an XEP-0393 directive.
-        if ((i + 1 < last && g.at(i + 1).ch == c) || (i > first && g.at(i - 1).ch == c))
+        if ((i > first && g.at(i - 1).ch == ch) || (i + run < last && g.at(i + run).ch == ch))
             continue;
         int closing = -1;
-        for (int j = i + 2; j < last; ++j) {
-            if (g.at(j).ch == c && !g.at(j).protectedText && !g.at(j - 1).ch.isSpace()
-                && (j + 1 == last || g.at(j + 1).ch != c)) {
-                closing = j;
-                break;
-            }
+        for (int j = i + run + 1; j < last; ++j) {
+            if (g.at(j).ch != ch || g.at(j).protectedText
+                || g.at(j - 1).ch.isSpace()
+                || (j > i + run + 1 && g.at(j - 1).ch == ch))
+                continue;
+            bool matches = true;
+            for (int k = 1; k < run; ++k)
+                if (j + k >= last || g.at(j + k).ch != ch)
+                    matches = false;
+            if (!matches || (j + run < last && g.at(j + run).ch == ch))
+                continue;
+            closing = j;
+            break;
         }
         if (closing < 0)
             continue;
         QString element;
-        if (c == QLatin1Char('*')) element = QLatin1String("b");
-        else if (c == QLatin1Char('_')) element = QLatin1String("i");
-        else if (c == QLatin1Char('~')) element = QLatin1String("s");
+        if (ch == QLatin1Char('*')) element = QLatin1String("b");
+        else if (ch == QLatin1Char('_')) element = QLatin1String("i");
+        else if (ch == QLatin1Char('~')) element = QLatin1String("s");
         else element = QLatin1String("code");
-        ranges.append({ g.at(i).begin, g.at(closing).end,
+        ranges.append({ g.at(i).begin, g.at(closing + run - 1).end,
                         QLatin1Char('<') + element + QLatin1Char('>'),
                         QLatin1String("</") + element + QLatin1Char('>') });
-        if (c != QChar(0x60))
-            parseStylingSpans(g, i + 1, closing, ranges, depth + 1);
-        i = closing;
+        if (!code)
+            parseStylingSpans(g, i + run, closing, ranges, depth + 1);
+        i = closing + run - 1;
     }
 }
 static bool isFence(const QList<StylingGlyph> &g, int at, int end)
