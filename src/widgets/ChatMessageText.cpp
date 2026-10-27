@@ -17,6 +17,7 @@
 #include <QMouseEvent>
 #include <QCoreApplication>
 #include <QMimeData>
+#include <QSet>
 #include <QSignalBlocker>
 #include <QTextDocumentFragment>
 #include <QTextOption>
@@ -105,7 +106,7 @@ ChatMessageText::ChatMessageText(QWidget *parent) : PsiTextView(parent)
     document()->setDefaultTextOption(option);
     connect(document()->documentLayout(), &QAbstractTextDocumentLayout::documentSizeChanged, this,
             [this] { updateGeometry(); });
-    connect(document(), &QTextDocument::contentsChanged, this, [this] { naturalWidth_ = -1; });
+    connect(document(), &QTextDocument::contentsChanged, this, [this] { resetMeasuring(); });
     // Cached SIMS media is present at parse time; uncached images are inserted
     // later by PsiTextView after their downloads finish. Normalize both paths.
     connect(document(), &QTextDocument::contentsChanged, this, [this] {
@@ -232,7 +233,7 @@ void ChatMessageText::setWholeMessageSelectionMode(bool active)
 
 void ChatMessageText::applyDocumentFont()
 {
-    naturalWidth_ = -1;
+    resetMeasuring();
     document()->setDefaultFont(font());
     // PsiRichText stores a font on inserted fragments. Updating the widget's
     // inherited font alone leaves those old fragments at the previous size.
@@ -266,28 +267,49 @@ void ChatMessageText::changeEvent(QEvent *event)
     }
 }
 
+QTextDocument *ChatMessageText::measuringDocument() const
+{
+    if (!measuring_) {
+        measuring_.reset(document()->clone());
+        // clone() keeps the root frame's margins but not this setting.
+        measuring_->setDocumentMargin(document()->documentMargin());
+        measuring_->setUseDesignMetrics(document()->useDesignMetrics());
+        // The same object handlers, so images, icons and players measure as
+        // they are drawn.
+        QSet<int> types { QTextFormat::ImageObject };
+        for (const QTextFormat &format : document()->allFormats())
+            if (format.isCharFormat() && format.objectType() != QTextFormat::NoObject)
+                types.insert(format.objectType());
+        QAbstractTextDocumentLayout *shown = document()->documentLayout();
+        for (int type : std::as_const(types))
+            if (auto *handler = dynamic_cast<QObject *>(shown->handlerForObject(type)))
+                measuring_->documentLayout()->registerHandler(type, handler);
+    }
+    return measuring_.get();
+}
+
+void ChatMessageText::resetMeasuring() const
+{
+    measuring_.reset();
+    naturalWidth_ = -1;
+}
+
 int ChatMessageText::heightForWidth(int width) const
 {
     // Layouts also ask about hypothetical widths while computing size hints.
-    // Measure those without changing the document currently painted/selected.
-    const QSignalBlocker blocker(document()->documentLayout());
-    const qreal          previousWidth = document()->textWidth();
-    document()->setTextWidth(qMax(1, width));
-    const int height = int(std::ceil(document()->documentLayout()->documentSize().height()));
-    document()->setTextWidth(previousWidth);
+    // Measure a copy, never the document QTextEdit lays out and paints.
+    QTextDocument *doc = measuringDocument();
+    doc->setTextWidth(qMax(1, width));
+    const int height = int(std::ceil(doc->documentLayout()->documentSize().height()));
     return qMax(fontMetrics().height(), height);
 }
 
 int ChatMessageText::naturalWidth() const
 {
     if (naturalWidth_ < 0) {
-        // Measured like heightForWidth(): without disturbing the document
-        // currently painted at the row's width.
-        const QSignalBlocker blocker(document()->documentLayout());
-        const qreal          previousWidth = document()->textWidth();
-        document()->setTextWidth(-1);
-        naturalWidth_ = int(std::ceil(document()->idealWidth())) + 1;
-        document()->setTextWidth(previousWidth);
+        QTextDocument *doc = measuringDocument();
+        doc->setTextWidth(-1);
+        naturalWidth_ = int(std::ceil(doc->idealWidth())) + 1;
     }
     return naturalWidth_;
 }
@@ -334,6 +356,12 @@ void ChatMessageText::mouseReleaseEvent(QMouseEvent *event)
 void ChatMessageText::resizeEvent(QResizeEvent *event)
 {
     PsiTextView::resizeEvent(event);
+    // QTextEdit lays the document out again only when its width changes. Make
+    // sure the shown document always matches the viewport, so a row that only
+    // changes height never keeps a layout made for another width.
+    if (lineWrapMode() == QTextEdit::WidgetWidth && viewport()->width() > 0
+        && qAbs(document()->textWidth() - viewport()->width()) > 0.5)
+        document()->setTextWidth(viewport()->width());
     updateGeometry();
 }
 void ChatMessageText::wheelEvent(QWheelEvent *event)
