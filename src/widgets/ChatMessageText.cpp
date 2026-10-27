@@ -24,8 +24,15 @@
 #include <QPainter>
 #include <QPixmap>
 #include <QTextObjectInterface>
+#include <QLoggingCategory>
+#include <QPaintEvent>
+#include <QScrollBar>
 #include <QWheelEvent>
 #include <cmath>
+
+// Diagnostics for message layout and inline images:
+// QT_LOGGING_RULES="psi.chat.text.debug=true"
+Q_LOGGING_CATEGORY(lcChatText, "psi.chat.text", QtWarningMsg)
 
 namespace {
 // Draws images as Qt does, but never wider than the text: a picture wider than
@@ -56,12 +63,17 @@ public:
         const qreal available = doc->textWidth() - 2 * doc->documentMargin();
         if (doc->textWidth() > 0 && available > 0 && size.width() > available)
             size = QSizeF(available, size.height() * available / size.width());
+        qCDebug(lcChatText) << "image size" << image.name() << "format" << image.width() << image.height()
+                            << "doc" << doc << "textWidth" << doc->textWidth() << "->" << size;
         return size;
     }
 
     void drawObject(QPainter *painter, const QRectF &rect, QTextDocument *doc, int, const QTextFormat &format) override
     {
         const QImage bitmap = load(doc, format.toImageFormat());
+        qCDebug(lcChatText) << "image draw" << format.toImageFormat().name() << "doc" << doc << "rect" << rect
+                            << "bitmap" << bitmap.size() << "device" << painter->device()
+                            << "clip" << (painter->hasClipping() ? painter->clipBoundingRect() : QRectF());
         if (bitmap.isNull())
             return;
         painter->save();
@@ -353,8 +365,22 @@ void ChatMessageText::mouseReleaseEvent(QMouseEvent *event)
     }
 }
 
+void ChatMessageText::paintEvent(QPaintEvent *event)
+{
+    if (lcChatText().isDebugEnabled() && hasMediaMarkup_)
+        qCDebug(lcChatText) << "paint" << this << "region" << event->rect() << "viewport" << viewport()->size()
+                            << "textWidth" << document()->textWidth() << "pageSize" << document()->pageSize()
+                            << "scroll" << horizontalScrollBar()->value() << "/" << horizontalScrollBar()->maximum()
+                            << verticalScrollBar()->value() << "/" << verticalScrollBar()->maximum()
+                            << "visible" << isVisible() << viewport()->isVisible();
+    PsiTextView::paintEvent(event);
+}
+
 void ChatMessageText::resizeEvent(QResizeEvent *event)
 {
+    if (hasMediaMarkup_)
+        qCDebug(lcChatText) << "resize" << this << event->oldSize() << "->" << event->size() << "textWidth"
+                            << document()->textWidth();
     PsiTextView::resizeEvent(event);
     // QTextEdit lays the document out again only when its width changes. Make
     // sure the shown document always matches the viewport, so a row that only
