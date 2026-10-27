@@ -7,6 +7,9 @@ surrounds them. The built-in themes (Modern, Classic and Bubble) are renderers
 written against the same public API that plugins use:
 `plugins/include/nativechatrenderer.h`.
 
+For customizing themes with a style sheet and for themes described without
+code, see [native-chat-themes.md](native-chat-themes.md).
+
 ## Parts built by Psi
 
 | Part        | Widget                                    | Present for                     |
@@ -126,11 +129,22 @@ must stay valid until the plugin object is destroyed, not only until
 - **Classic**: the legacy text log on one line, `[HH:mm:ss] nick: text`, the
   time painted in the nickname colour in group chats.
 - **Bubble**: based on Modern. Each message is a speech bubble whose text area
-  is limited to about 60 average characters of the chat font, whatever the
-  width of the log, and which shrinks to short messages. Incoming messages sit
+  is limited to about 60 average characters of the chat font (by default),
+  whatever the width of the log, and which shrinks to short messages. Incoming messages sit
   on the left and our own on the right, each with the avatar on its outer side
   and the bubble's tail near its top pointing at the avatar. Notices and the
   group chat subject are centred bubbles without a tail, as in the WebKit
-  Bubble theme.
+  Bubble theme. Style sheets restyle the bubbles through
+  `#mamBubble[tone=...]` and its `fillColor`, `borderColor`, `radius` and
+  `textColumns` properties.
 
 The renderers are in `src/widgets/NativeChatRenderers.cpp`.
+
+## Style sheets
+
+Rows built by a renderer are restyled by the chat window's style sheet
+(`options.ui.chat.css`) and the theme's `styleSheet` like any other. A rule
+that colours a part wins over the colours Psi computes for it, also after
+Psi recomputes them. Give the widgets a renderer creates object names and
+dynamic properties, and declare `Q_PROPERTY`s for what it paints itself, so
+users can restyle them with selectors and `qproperty-` declarations.

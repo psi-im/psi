@@ -2138,6 +2138,123 @@ private slots:
         QTRY_VERIFY(list.itemWidget(2)->findChild<QWidget *>(QStringLiteral("mamBubble"))->maximumWidth() > before);
     }
 
+    void styleSheetColoursOverridePsiColours_data()
+    {
+        QTest::addColumn<bool>("bubble");
+        QTest::addColumn<bool>("themeSheet");
+        QTest::newRow("modern, chat window sheet") << false << false;
+        QTest::newRow("modern, theme sheet") << false << true;
+        QTest::newRow("bubble, chat window sheet") << true << false;
+        QTest::newRow("bubble, theme sheet") << true << true;
+    }
+    void styleSheetColoursOverridePsiColours()
+    {
+        // options.ui.chat.css is the chat window's style sheet; a theme's
+        // style sheet is set on each row. Either kind of rule must win over
+        // the colours Psi computes, whatever makes Psi recompute them.
+        QFETCH(bool, bubble);
+        QFETCH(bool, themeSheet);
+        const QString sheet = QStringLiteral(
+            "QLabel#mamAuthor { color: #cc0000; font-style: italic; }"
+            "QLabel#mamTimestamp { color: #0000cc; }"
+            "QLabel#mamDeliveryIndicator { color: #00aaff; }"
+            "QTextEdit#mamBody { color: #008800; padding: 6px; border: 1px solid #999999; }"
+            "#mamBubble[tone=\"own\"] { qproperty-fillColor: #dcf8c6; qproperty-textColumns: 25; }"
+            "#mamBubble[tone=\"own\"] QTextEdit#mamBody { color: #004400; }");
+        QWidget window;
+        auto   *layout = new QVBoxLayout(&window);
+        auto   *list   = new MamChatWidget(&window);
+        layout->addWidget(list);
+        if (!themeSheet)
+            window.setStyleSheet(sheet);
+        list->setHistoryLoading(true);
+        list->setTheme({ QStringLiteral("test"), QStringLiteral("Test"), NativeChatTheme::Modern, 40, 6,
+                         themeSheet ? sheet : QString() },
+                       bubble ? NativeChatRenderers::bubble() : nullptr);
+        list->setNicknameColorResolver([](const MessageView &) { return QColor(0x88, 0x44, 0x00); });
+        list->appendMessage(message(QStringLiteral("in"), QStringLiteral("Hi")));
+        auto own = message(QStringLiteral("own"), QStringLiteral("A longer reply that wraps in a narrow bubble"), 1,
+                           true);
+        own.setMessageState(MessageState::Delivered);
+        list->appendMessage(own);
+        window.resize(900, 500);
+        window.show();
+        QTRY_VERIFY(list->itemWidget(0) && list->itemWidget(1));
+
+        const auto check = [&](const char *step) {
+            for (int index : { 0, 1 }) {
+                auto *row  = list->itemWidget(index);
+                auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+                const QByteArray where = QByteArray(step) + " row " + QByteArray::number(index);
+                QVERIFY2(row->findChild<QLabel *>(QStringLiteral("mamAuthor"))->palette().color(QPalette::WindowText)
+                             == QColor(0xcc, 0x00, 0x00),
+                         where);
+                QVERIFY2(row->findChild<QLabel *>(QStringLiteral("mamAuthor"))->font().italic(), where);
+                QVERIFY2(row->findChild<QLabel *>(QStringLiteral("mamTimestamp"))
+                                 ->palette()
+                                 .color(QPalette::WindowText)
+                             == QColor(0x00, 0x00, 0xcc),
+                         where);
+                const QColor bodyColor = bubble && index == 1 ? QColor(0x00, 0x44, 0x00) : QColor(0x00, 0x88, 0x00);
+                QVERIFY2(body->palette().color(QPalette::Text) == bodyColor, where);
+                // Border and padding are measured: the whole text is shown.
+                QVERIFY2(body->viewport()->height() >= qCeil(body->document()->size().height()), where);
+                QVERIFY2(body->contentsMargins().top() >= 7, where);
+                // The surface stays Psi's: hover and selection tint it.
+                QVERIFY2(body->palette().color(QPalette::Base) == row->palette().color(QPalette::Base), where);
+            }
+            auto *checks = list->itemWidget(1)->findChild<QLabel *>(QStringLiteral("mamDeliveryIndicator"));
+            QVERIFY2(checks && checks->palette().color(QPalette::Text) == QColor(0x00, 0xaa, 0xff), step);
+        };
+        check("shown");
+        list->setNicknameColorResolver([](const MessageView &) { return QColor(0x00, 0x66, 0x66); });
+        check("nickname colours");
+        QPalette colors = list->palette();
+        colors.setColor(QPalette::Base, QColor(0xf0, 0xf0, 0xf0));
+        colors.setColor(QPalette::Text, QColor(0x22, 0x22, 0x22));
+        list->setPalette(colors);
+        QCoreApplication::processEvents();
+        QCOMPARE(list->itemWidget(0)->palette().color(QPalette::Base), QColor(0xf0, 0xf0, 0xf0));
+        check("palette");
+        QEvent enter(QEvent::Enter);
+        QApplication::sendEvent(list->itemWidget(1), &enter);
+        QTRY_VERIFY(list->itemWidget(1)->palette().color(QPalette::Base) != QColor(0xf0, 0xf0, 0xf0));
+        check("hover");
+        window.setStyleSheet(window.styleSheet()); // As when options.ui.chat.css is edited.
+        QCoreApplication::processEvents();
+        check("repolish");
+        list->setMessageSelected(0, true);
+        check("selection");
+
+        if (bubble) {
+            auto *own   = list->itemWidget(1)->findChild<QWidget *>(QStringLiteral("mamBubble"));
+            auto *other = list->itemWidget(0)->findChild<QWidget *>(QStringLiteral("mamBubble"));
+            QCOMPARE(own->property("tone").toString(), QStringLiteral("own"));
+            QCOMPARE(other->property("tone").toString(), QStringLiteral("incoming"));
+            QCOMPARE(own->property("fillColor").value<QColor>(), QColor(0xdc, 0xf8, 0xc6));
+            QVERIFY(!other->property("fillColor").value<QColor>().isValid()); // Follows the palette.
+            const QMargins margins = own->layout()->contentsMargins();
+            QCOMPARE(own->maximumWidth(),
+                     qCeil(QFontMetricsF(own->font()).averageCharWidth() * 25) + margins.left() + margins.right());
+            QCOMPARE(own->width(), own->maximumWidth());
+            // The row is as tall as the narrower, wrapped bubble.
+            QVERIFY(own->mapTo(list->itemWidget(1), QPoint(0, own->height())).y() <= list->itemWidget(1)->height());
+        }
+
+        if (!themeSheet) {
+            // Without the rules, the parts take Psi's colours again.
+            window.setStyleSheet(QString());
+            QCoreApplication::processEvents();
+            auto *row = list->itemWidget(0);
+            QTRY_COMPARE(row->findChild<QLabel *>(QStringLiteral("mamAuthor"))->palette().color(QPalette::WindowText),
+                         QColor(0x00, 0x66, 0x66));
+            // Qt restores the log's own palette as it was before the sheet;
+            // Psi reapplies its chat colours to the log on paletteChanged().
+            QCOMPARE(row->findChild<ChatMessageText *>(QStringLiteral("mamBody"))->palette().color(QPalette::Text),
+                     list->palette().color(QPalette::Text));
+        }
+    }
+
     void oversizedImagesScaleToTheMessageWidth()
     {
         FileSharingDeviceOpener opener;

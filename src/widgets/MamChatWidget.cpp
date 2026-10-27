@@ -71,6 +71,33 @@
 
 namespace {
 
+// Psi's colours for the parts of a message are defaults: a style sheet rule
+// that colours a part, in the chat window's style sheet or the theme's, keeps
+// winning however often Psi recomputes them. QStyleSheetStyle applies rule
+// colours over the palette a widget has when it is polished, and restores
+// that palette before polishing the widget again. So once a widget has been
+// polished, change its palette between an unpolish and a polish.
+template <typename Change> void changePartPalette(QWidget *widget, Change change)
+{
+    QStyle    *style  = widget->style();
+    const bool styled = widget->testAttribute(Qt::WA_WState_Polished) && style->inherits("QStyleSheetStyle");
+    if (styled)
+        style->unpolish(widget);
+    QPalette palette = widget->palette();
+    change(palette);
+    widget->setPalette(palette);
+    if (styled)
+        style->polish(widget);
+}
+
+void setPartTextColor(QWidget *widget, const QColor &color)
+{
+    changePartPalette(widget, [&color](QPalette &palette) {
+        palette.setColor(QPalette::Text, color);
+        palette.setColor(QPalette::WindowText, color);
+    });
+}
+
 // Base for the marks beside a timestamp (delivery checks, edit pencil). They
 // share one height and sit on the timestamp's text baseline.
 class TimestampMark : public QLabel {
@@ -772,6 +799,8 @@ public:
     quint64               rendererGeneration = 0;
     QPointer<QWidget>     actionAnchor;
     QColor                bodyTextColor;
+    // The body's palette as Psi last set it, apart from the surface.
+    std::optional<QPalette> bodyDefaults;
 };
 
 ChatMessageRow *messageRow(QWidget *widget) { return dynamic_cast<ChatMessageRow *>(widget); }
@@ -2403,10 +2432,7 @@ void MamChatWidget::applyPartStyle(QWidget *rowWidget, int index)
         QFont authorFont = font();
         authorFont.setBold(options.boldAuthor);
         author->setFont(authorFont);
-        QPalette colors = author->palette();
-        colors.setColor(QPalette::Text, nickColor.isValid() ? nickColor : palette().color(QPalette::Text));
-        colors.setColor(QPalette::WindowText, colors.color(QPalette::Text));
-        author->setPalette(colors);
+        setPartTextColor(author, nickColor.isValid() ? nickColor : palette().color(QPalette::Text));
     }
     auto *label = row->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
     if (!label)
@@ -2424,15 +2450,12 @@ void MamChatWidget::applyPartStyle(QWidget *rowWidget, int index)
     label->setFont(timeFont);
     QColor color = options.timeInNickColor && nickColor.isValid() ? nickColor : palette().color(QPalette::Text);
     color.setAlpha(qBound(0, options.timeAlpha, 255));
-    QPalette colors = label->palette();
-    colors.setColor(QPalette::Text, color);
-    colors.setColor(QPalette::WindowText, color);
-    label->setPalette(colors);
+    setPartTextColor(label, color);
     // Timestamp marks have no Q_OBJECT, so Qt6's findChild<T>() rejects
     // them; find the sibling QLabels and cast with RTTI instead.
     for (auto *sibling : label->parentWidget()->findChildren<QLabel *>(QString(), Qt::FindDirectChildrenOnly)) {
         if (auto *mark = dynamic_cast<TimestampMark *>(sibling)) {
-            mark->setPalette(colors);
+            setPartTextColor(mark, color);
             mark->setTimestampFont(timeFont);
         }
     }
@@ -3056,7 +3079,22 @@ void MamChatWidget::updateRowPalette(QFrame *row, bool selected)
         else if (row->property("_psiMamInformational").toBool())
             textPalette.setColor(QPalette::Text,
                                  informationalColor_.isValid() ? informationalColor_ : palette.color(QPalette::Link));
-        body->setPalette(textPalette);
+        // Hover and selection change only the surface: keep that cheap, and
+        // keep any style sheet colours of the body. Other changes are new
+        // defaults under the style sheet.
+        QPalette defaults = textPalette;
+        defaults.setColor(QPalette::Window, base);
+        defaults.setColor(QPalette::Base, base);
+        if (message && message->bodyDefaults && *message->bodyDefaults == defaults) {
+            QPalette current = body->palette();
+            current.setColor(QPalette::Window, surface);
+            current.setColor(QPalette::Base, surface);
+            body->setPalette(current);
+        } else {
+            if (message)
+                message->bodyDefaults = defaults;
+            changePartPalette(body, [&textPalette](QPalette &colors) { colors = textPalette; });
+        }
     }
     row->update();
 }

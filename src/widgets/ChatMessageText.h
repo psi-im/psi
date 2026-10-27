@@ -36,6 +36,7 @@ private:
     // width QTextEdit does not know about until its own width changes.
     QTextDocument *measuringDocument() const;
     void           resetMeasuring() const;
+    QMargins       textChrome() const;
     void isolateLargeMedia();
 
     // Only media-rich messages need rescanning when async SIMS previews arrive.
