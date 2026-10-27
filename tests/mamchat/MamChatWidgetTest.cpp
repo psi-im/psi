@@ -2799,7 +2799,7 @@ private slots:
         QTRY_VERIFY(list.itemWidget(1) && icons(1).isEmpty());
     }
 
-    void classicConversationColoursSentAndReceivedHeaders()
+    void conversationHeadersUseSentAndReceivedColours()
     {
         MamChatWidget list;
         list.setHistoryLoading(true);
@@ -2833,6 +2833,22 @@ private slots:
         list.setDirectionColors(QColor("#aa0000"), QColor("#0000aa"));
         QCOMPARE(list.itemWidget(0), row);
         QCOMPARE(colourOf(0, QStringLiteral("<Peer>")), QColor("#0000aa"));
+
+        // Modern colours the nickname the same way; Bubble, whose bubbles
+        // already tell sent from received, does not.
+        list.setTheme({ QStringLiteral("modern"), QStringLiteral("Modern"), NativeChatTheme::Modern, 40, 10, {} });
+        const auto author = [&list](int index) {
+            auto *row = list.itemWidget(index);
+            return row ? row->findChild<QLabel *>(QStringLiteral("mamAuthor")) : nullptr;
+        };
+        QTRY_VERIFY(author(0) && author(1));
+        QCOMPARE(author(0)->palette().color(QPalette::WindowText), QColor("#0000aa"));
+        QCOMPARE(author(1)->palette().color(QPalette::WindowText), QColor("#aa0000"));
+        list.setTheme({ QStringLiteral("bubble"), QStringLiteral("Bubble"), NativeChatTheme::Modern, 40, 6, {} },
+                      NativeChatRenderers::bubble());
+        QTRY_VERIFY(list.itemWidget(0) && list.itemWidget(0)->findChild<QWidget *>(QStringLiteral("mamBubble"))
+                    && author(0));
+        QCOMPARE(author(0)->palette().color(QPalette::WindowText), list.palette().color(QPalette::Text));
     }
 
     void localIdentityMergesWithoutClientStanzaId()

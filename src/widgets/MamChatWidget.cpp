@@ -2539,7 +2539,11 @@ void MamChatWidget::applyPartStyle(QWidget *rowWidget, int index)
         QFont authorFont = font();
         authorFont.setBold(options.boldAuthor);
         author->setFont(authorFont);
-        setPartTextColor(author, nickColor.isValid() ? nickColor : palette().color(QPalette::Text));
+        const QColor direction = items_.at(index).message.isLocal() ? sentColor_ : receivedColor_;
+        if (!groupChat_ && options.directionColors && direction.isValid())
+            setPartTextColor(author, direction);
+        else
+            setPartTextColor(author, nickColor.isValid() ? nickColor : palette().color(QPalette::Text));
     }
     auto *label = row->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
     if (!label)
@@ -2725,7 +2729,7 @@ std::pair<QColor, QColor> MamChatWidget::inTextHeaderColors(const MessageView &m
     // As in the legacy text log: in a group chat the nickname colour, in a
     // conversation the colour of sent or received messages for the time and
     // the nickname together.
-    if (!groupChat_) {
+    if (!groupChat_ && options.directionColors) {
         const QColor direction = message.isLocal() ? sentColor_ : receivedColor_;
         if (direction.isValid())
             return { direction, direction };

@@ -74,6 +74,11 @@ public:
   `authorSuffix`, makes it insert itself into the composer when clicked,
   and recolours it in place. The time is not refreshed there: give a clock
   `timeFormat`. Notices get an information icon instead.
+- `directionColors` paints the nickname, in a conversation (not a group
+  chat), in the colour of sent or received messages from Psi's options, as
+  the legacy text log did; with the header in the text, the time too.
+  Modern and Classic use it; Bubble, whose bubbles already tell sent from
+  received, does not.
 - `arrange()` gives `canvas.row()` a layout and places the parts taken with
   `take()`. Parts that are not taken are hidden. Rows are measured with
   `heightForWidth()`, so use layouts (or widgets) that support it.

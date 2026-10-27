@@ -64,6 +64,10 @@ struct NativeChatPartOptions {
     enum Header { HeaderParts, HeaderInText };
     Header  header = HeaderParts;
     QString authorPrefix; // Put before the nickname, e.g. "<".
+    // In a conversation (not a group chat), paint the nickname in the colour
+    // of sent or received messages from Psi's options, as the legacy text
+    // log did. With the header in the text, the time takes it too.
+    bool directionColors = false;
 };
 
 // The row being built. Implemented by Psi; valid only during arrange().

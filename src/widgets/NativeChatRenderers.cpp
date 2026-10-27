@@ -140,6 +140,7 @@ public:
     NativeChatPartOptions partOptions(const NativeChatMessageInfo &info) const override
     {
         NativeChatPartOptions options;
+        options.directionColors = true;
         // Modern's own arrangement always shows the avatar; a slot tree only
         // if it names it.
         const bool avatar  = !textLog_ && (tree_.isEmpty() || slots_.contains(QStringLiteral("avatar")));

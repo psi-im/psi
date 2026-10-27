@@ -15,8 +15,10 @@ MessageView nativeHistoryMessage(PsiAccount *, const XMPP::Jid &peer, const XMPP
 
 // Presentation adapter for the existing EDB, with a separate local keyset
 // cursor. Local-only originals remain reachable after MAM reaches its start.
+// In a conversation, `nickname` names the sender as the dialog does (its own
+// nick or the contact's name); without it, the peer's address is used.
 void prependLocalChatHistory(MamChatWidget *, PsiAccount *, const QString &peer, bool room, const QString &ownNick,
-                             qint64 &before, bool &exhausted);
+                             qint64 &before, bool &exhausted, const std::function<QString(bool)> &nickname = {});
 
 #include "messageview.h"
 #include <QStringList>

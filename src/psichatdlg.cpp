@@ -295,7 +295,8 @@ void PsiChatDlg::loadOlderMamMessages()
     const bool atEndBeforeLocal = nativeTimeline_->isAtEnd();
     const bool occupantPrivate  = account()->findGCContact(jid());
     prependLocalChatHistory(nativeTimeline_, account(), occupantPrivate ? jid().full() : jid().bare(), false,
-                            account()->nick(), localBeforeId_, localExhausted_);
+                            account()->nick(), localBeforeId_, localExhausted_,
+                            [this](bool local) { return whoNick(local); });
     const bool localOnly = occupantPrivate || account()->isServerless();
     if (localOnly)
         mamExhausted_ = true; // Occupant private messages keep their existing local-only history path.
