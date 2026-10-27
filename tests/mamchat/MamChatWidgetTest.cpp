@@ -4,6 +4,7 @@
 #include "widgets/ChatMessageText.h"
 #include "widgets/MessagePreview.h"
 #include "widgets/LinkButton.h"
+#include "widgets/NativeChatRenderers.h"
 #include <QContextMenuEvent>
 #include <QCursor>
 #include <QTextBrowser>
@@ -27,6 +28,7 @@
 #include <QPushButton>
 #include <QToolButton>
 #include <QScopeGuard>
+#include <QScreen>
 #include <QScrollBar>
 #include <QSignalSpy>
 #include <QTextBlock>
@@ -40,8 +42,10 @@
 #include <QEnterEvent>
 #endif
 #include <QtTest/QtTest>
+#include <QtMath>
 #include <cmath>
 #include <memory>
+#include <tuple>
 
 namespace {
 void enterWidget(QWidget *widget)
@@ -67,6 +71,48 @@ MessageView message(const QString &id, const QString &body, int seconds = 0, boo
     return view;
 }
 }
+
+// A plugin-style renderer: its own frame, the body above the nickname, no
+// timestamp and no avatar.
+class FramedRenderer final : public NativeChatMessageRenderer {
+public:
+    mutable int restyled = 0;
+
+    NativeChatPartOptions partOptions(const NativeChatMessageInfo &) const override
+    {
+        NativeChatPartOptions options;
+        options.avatarSize   = 24;
+        options.timeFormat   = QStringLiteral("HH:mm");
+        options.authorSuffix = QStringLiteral(" says");
+        options.boldAuthor   = false;
+        return options;
+    }
+
+    void arrange(NativeChatMessageCanvas &canvas, const NativeChatMessageInfo &info) const override
+    {
+        auto *outer = new QVBoxLayout(canvas.row());
+        outer->setContentsMargins(4, 4, 4, 4);
+        if (auto *selection = canvas.take(NativeChatMessageCanvas::Selection))
+            outer->addWidget(selection);
+        auto *frame = new QFrame(canvas.row());
+        frame->setObjectName(QStringLiteral("pluginFrame"));
+        frame->setMaximumWidth(260);
+        auto *column = new QVBoxLayout(frame);
+        column->addWidget(canvas.take(NativeChatMessageCanvas::Body));
+        if (auto *author = canvas.take(NativeChatMessageCanvas::Author))
+            column->addWidget(author);
+        outer->addWidget(frame, 0, Qt::AlignLeft);
+        canvas.setActionAnchor(frame);
+        if (info.local)
+            canvas.setBodyTextColor(QColor(200, 0, 0));
+    }
+
+    void restyle(QWidget *row, const NativeChatMessageInfo &) const override
+    {
+        ++restyled;
+        row->setProperty("restyled", restyled);
+    }
+};
 
 class MamChatWidgetTest final : public QObject {
     Q_OBJECT
@@ -1939,6 +1985,324 @@ private slots:
         QTRY_COMPARE(timestamp()->font().pointSizeF(), 12.0);
         list.setTheme(modern);
         QTRY_COMPARE(timestamp()->font().pointSizeF(), 11.0);
+    }
+
+    void pluginRendererArrangesPsiParts()
+    {
+        FramedRenderer renderer;
+        MamChatWidget  list;
+        list.resize(700, 500);
+        list.setHistoryLoading(true);
+        list.setTheme({ QStringLiteral("org.example.framed"), QStringLiteral("Framed"), NativeChatTheme::Modern, 40, 10, {} },
+                      &renderer);
+        auto incoming = message(QStringLiteral("in"), QStringLiteral("Incoming text"));
+        incoming.setReactionTargetId(QStringLiteral("in-origin"));
+        list.appendMessage(incoming);
+        list.appendMessage(message(QStringLiteral("out"), QStringLiteral("Own text"), 1, true));
+        list.show();
+        QTRY_VERIFY(list.itemWidget(0) && list.itemWidget(1));
+
+        auto *row    = list.itemWidget(0);
+        auto *frame  = row->findChild<QFrame *>(QStringLiteral("pluginFrame"));
+        auto *body   = row->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+        auto *author = row->findChild<QLabel *>(QStringLiteral("mamAuthor"));
+        QVERIFY(frame && body && author);
+        QVERIFY(frame->isAncestorOf(body) && frame->isAncestorOf(author));
+        QCOMPARE(author->text(), QStringLiteral("Peer says"));
+        QVERIFY(!author->font().bold());
+        QVERIFY(body->mapTo(row, QPoint()).y() < author->mapTo(row, QPoint()).y());
+        // Parts the renderer left out exist but stay hidden.
+        auto *time   = row->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
+        auto *avatar = row->findChild<QLabel *>(QStringLiteral("mamAvatar"));
+        QVERIFY(time && avatar);
+        QVERIFY(time->isHidden() && avatar->isHidden());
+        QCOMPARE(avatar->width(), 24);
+        const QString clock = incoming.dateTime().toLocalTime().toString(QStringLiteral("HH:mm"));
+        QCOMPARE(time->text(), clock);
+        // A clock time needs no relative-time refresh.
+        QVERIFY(!list.findChild<QTimer *>(QStringLiteral("mamTimestampRefresh"))->isActive());
+
+        // Body colour override for our own message only.
+        QCOMPARE(list.itemWidget(1)->findChild<ChatMessageText *>()->palette().color(QPalette::Text), QColor(200, 0, 0));
+        QVERIFY(body->palette().color(QPalette::Text) != QColor(200, 0, 0));
+
+        // Hover actions float at the top-right corner of the anchor.
+        QEvent enter(QEvent::Enter);
+        QApplication::sendEvent(row, &enter);
+        auto *bar = list.findChild<QFrame *>(QStringLiteral("mamMessageActions"));
+        QTRY_VERIFY(bar->isVisible());
+        const QPoint frameTopRight = frame->mapTo(list.viewport(), QPoint(frame->width(), 0));
+        QCOMPARE(bar->x() + bar->width() + 8, frameTopRight.x());
+        QVERIFY(frameTopRight.x() < row->width() - 100);
+
+        // Palette changes restyle rows in place and give the renderer its turn.
+        const int restyledBefore = renderer.restyled;
+        QPalette  palette        = list.palette();
+        palette.setColor(QPalette::Text, QColor(10, 20, 30));
+        list.setPalette(palette);
+        QTRY_VERIFY(renderer.restyled > restyledBefore);
+        QCOMPARE(list.itemWidget(0), row);
+        QVERIFY(row->property("restyled").toInt() > 0);
+        QCOMPARE(author->palette().color(QPalette::Text), QColor(10, 20, 30));
+
+        // Switching to a description theme drops the renderer for new rows.
+        list.setTheme({ QStringLiteral("modern"), QStringLiteral("Modern"), NativeChatTheme::Modern, 40, 10, {} });
+        QTRY_VERIFY(list.itemWidget(0) && !list.itemWidget(0)->findChild<QFrame *>(QStringLiteral("pluginFrame")));
+        const int restyledAfterSwitch = renderer.restyled;
+        palette.setColor(QPalette::Text, QColor(30, 20, 10));
+        list.setPalette(palette);
+        QCoreApplication::processEvents();
+        QCOMPARE(renderer.restyled, restyledAfterSwitch);
+    }
+
+    void bubbleThemeAlignsOwnMessagesAndLimitsWidth()
+    {
+        MamChatWidget list;
+        list.resize(1300, 700);
+        list.setHistoryLoading(true);
+        list.setTheme({ QStringLiteral("bubble"), QStringLiteral("Bubble"), NativeChatTheme::Modern, 40, 6, {} },
+                      NativeChatRenderers::bubble());
+        auto incoming = message(QStringLiteral("short-in"), QStringLiteral("Hi"));
+        incoming.setReactionTargetId(QStringLiteral("short-in-origin"));
+        list.appendMessage(incoming);
+        auto own = message(QStringLiteral("short-out"), QStringLiteral("Hello"), 1, true);
+        own.setReactionTargetId(QStringLiteral("short-out-origin"));
+        list.appendMessage(own);
+        list.appendMessage(message(QStringLiteral("long"), QStringLiteral("A long line of text. ").repeated(30), 2));
+        MessageView notice(MessageView::Status);
+        notice.setPlainText(QStringLiteral("Peer is away"));
+        list.appendMessage(notice);
+        list.show();
+        QTRY_VERIFY(list.itemWidget(0) && list.itemWidget(1) && list.itemWidget(2) && list.itemWidget(3));
+
+        const auto parts = [&list](int index) {
+            auto *row = list.itemWidget(index);
+            return std::make_tuple(row, row->findChild<QWidget *>(QStringLiteral("mamBubble")),
+                                   row->findChild<QLabel *>(QStringLiteral("mamAvatar")));
+        };
+        auto [inRow, inBubble, inAvatar] = parts(0);
+        QVERIFY(inBubble && inAvatar);
+        QCOMPARE(inBubble->property("tailSide").toString(), QStringLiteral("left"));
+        QVERIFY(inAvatar->mapTo(inRow, QPoint()).x() < inBubble->mapTo(inRow, QPoint()).x());
+        QVERIFY(inBubble->mapTo(inRow, QPoint()).x() < inRow->width() / 4);
+        QCOMPARE(inBubble->mapTo(inRow, QPoint()).y(), inAvatar->mapTo(inRow, QPoint()).y());
+        // A short message gets a small bubble, not a full-width one.
+        QVERIFY(inBubble->width() < inRow->width() / 3);
+
+        auto [outRow, outBubble, outAvatar] = parts(1);
+        QVERIFY(outBubble && outAvatar);
+        QCOMPARE(outBubble->property("tailSide").toString(), QStringLiteral("right"));
+        QVERIFY(outAvatar->mapTo(outRow, QPoint()).x() > outBubble->mapTo(outRow, QPoint()).x());
+        QVERIFY(outBubble->mapTo(outRow, QPoint(outBubble->width(), 0)).x() > outRow->width() * 3 / 4);
+        QVERIFY(outBubble->width() < outRow->width() / 3);
+
+        // A long message is limited to about 60 characters of the chat font,
+        // whatever the width of the log.
+        auto [longRow, longBubble, longAvatar] = parts(2);
+        QVERIFY(longBubble);
+        const int textLimit = qCeil(QFontMetricsF(longBubble->font()).averageCharWidth()
+                                    * NativeChatRenderers::BubbleMaxTextColumns);
+        const QMargins margins = longBubble->layout()->contentsMargins();
+        QCOMPARE(longBubble->maximumWidth(), textLimit + margins.left() + margins.right());
+        QCOMPARE(longBubble->width(), longBubble->maximumWidth());
+        QVERIFY(longBubble->width() < longRow->width() - 200);
+        auto *longBody = longRow->findChild<ChatMessageText *>();
+        QVERIFY(longBody->width() <= textLimit);
+        QVERIFY(longBody->height() > 2 * longBody->fontMetrics().height()); // Wrapped.
+        list.resize(1600, 700);
+        QTRY_COMPARE(list.itemWidget(2)->findChild<QWidget *>(QStringLiteral("mamBubble"))->width(),
+                     longBubble->maximumWidth());
+
+        // Notices are centred bubbles without a tail, shrunk to their text.
+        auto *noticeRow    = list.itemWidget(3);
+        auto *noticeBubble = noticeRow->findChild<QWidget *>(QStringLiteral("mamBubble"));
+        QVERIFY(noticeBubble);
+        QCOMPARE(noticeBubble->property("tailSide").toString(), QStringLiteral("none"));
+        QVERIFY(!noticeRow->findChild<QLabel *>(QStringLiteral("mamAvatar")));
+        const int noticeCentre = noticeBubble->mapTo(noticeRow, QPoint(noticeBubble->width() / 2, 0)).x();
+        QVERIFY(qAbs(noticeCentre - noticeRow->width() / 2) <= 2);
+        QVERIFY(noticeBubble->width() < noticeRow->width() / 3);
+
+        // The hover actions sit on the bubble, not on the far end of the row.
+        QEvent enter(QEvent::Enter);
+        QApplication::sendEvent(inRow, &enter);
+        auto *bar = list.findChild<QFrame *>(QStringLiteral("mamMessageActions"));
+        QTRY_VERIFY(bar->isVisible());
+        QCOMPARE(bar->x() + bar->width() + 8, inBubble->mapTo(list.viewport(), QPoint(inBubble->width(), 0)).x());
+
+        // A larger chat font widens the limit with it.
+        const int before = longBubble->maximumWidth();
+        QFont     larger = list.font();
+        larger.setPointSizeF(larger.pointSizeF() > 0 ? larger.pointSizeF() + 4 : 16);
+        list.setFont(larger);
+        QTRY_VERIFY(list.itemWidget(2)->findChild<QWidget *>(QStringLiteral("mamBubble"))->maximumWidth() > before);
+    }
+
+    void oversizedImagesScaleToTheMessageWidth()
+    {
+        FileSharingDeviceOpener opener;
+        FileSharingDeviceOpener account;
+        opener.accounts.insert(QStringLiteral("account-a"), &account);
+        FileSharingItem image(QStringLiteral("image/png"));
+        image.preview_ = QImage(900, 300, QImage::Format_RGB32);
+        image.preview_.fill(QColor(0, 170, 0));
+        account.items.insert(QStringLiteral("wide"), &image);
+
+        for (bool bubble : { false, true }) {
+            MamChatWidget list;
+            list.resize(520, 600);
+            list.setHistoryLoading(true);
+            list.setMediaOpener(&opener);
+            if (bubble)
+                list.setTheme({ QStringLiteral("bubble"), QStringLiteral("Bubble"), NativeChatTheme::Modern, 40, 6, {} },
+                              NativeChatRenderers::bubble());
+            list.appendMessage(
+                message(QStringLiteral("wide"), QStringLiteral("<share id=\"wide\" account=\"account-a\"/>"), 0, true));
+            list.show();
+            QTRY_VERIFY(list.itemWidget(0));
+            auto *body = list.itemWidget(0)->findChild<ChatMessageText *>();
+            QVERIFY(body);
+            QTRY_VERIFY(body->width() > 100);
+            QVERIFY(body->width() < 900);
+            // The whole picture fits the text: no overflow into a view that
+            // cannot scroll sideways.
+            QTRY_VERIFY(body->document()->size().width() <= body->viewport()->width() + 1);
+            QCOMPARE(body->horizontalScrollBar()->value(), 0);
+            const int scaled = qRound(300.0 * body->viewport()->width() / 900.0);
+            const int height = body->heightForWidth(body->width());
+            QVERIFY2(height >= scaled - 1 && height <= scaled + body->fontMetrics().height(),
+                     qPrintable(QStringLiteral("height %1, scaled image %2").arg(height).arg(scaled)));
+            // And it is painted where it is laid out.
+            const QImage shot = body->viewport()->grab().toImage();
+            const QPoint centre(qRound(body->viewport()->width() / 2.0 * shot.devicePixelRatio()),
+                                qRound(scaled / 2.0 * shot.devicePixelRatio()));
+            QCOMPARE(shot.pixelColor(centre), QColor(0, 170, 0));
+        }
+    }
+
+    void messageTextNeverScrollsItsOwnContent()
+    {
+        // The sequence seen on Qt 6.10: laid out at width 0 and scrolled to
+        // the end, then given its real width together with a height that fits
+        // the document. QTextEdit's layout-loop guard then skips adjusting the
+        // scroll bars, which used to keep the picture scrolled out of view.
+        QWidget window;
+        window.resize(700, 600);
+        auto  *body = new ChatMessageText(&window);
+        QImage picture(1148, 898, QImage::Format_RGB32);
+        picture.fill(QColor(0, 170, 0));
+        body->setRichText(QStringLiteral("<img src=\"share:wide\" width=\"1148\" height=\"898\"/>"));
+        // After the text: setting it clears the document's resources.
+        body->document()->addResource(QTextDocument::ImageResource, QUrl(QStringLiteral("share:wide")), picture);
+        window.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&window));
+        body->resize(0, 148);
+        QCoreApplication::processEvents();
+        body->moveCursor(QTextCursor::End);
+        body->ensureCursorVisible();
+        body->resize(520, body->heightForWidth(520));
+        QCoreApplication::processEvents();
+        QCOMPARE(body->horizontalScrollBar()->value(), 0);
+        QCOMPARE(body->verticalScrollBar()->value(), 0);
+        QVERIFY(body->document()->size().width() <= body->viewport()->width() + 1);
+        const auto onScreen = [&window, body] {
+            const QPoint at = body->viewport()->mapTo(&window, QPoint(body->viewport()->width() / 2, 100));
+            const QImage screen = QGuiApplication::primaryScreen()->grabWindow(window.winId()).toImage();
+            return screen.pixelColor(QPoint(qRound(at.x() * screen.devicePixelRatio()),
+                                            qRound(at.y() * screen.devicePixelRatio())));
+        };
+        QTRY_COMPARE(onScreen(), QColor(0, 170, 0));
+        // Nothing scrolls it later either, e.g. a selection drag past its edge.
+        body->horizontalScrollBar()->setValue(body->horizontalScrollBar()->maximum());
+        body->verticalScrollBar()->setValue(body->verticalScrollBar()->maximum());
+        QCOMPARE(body->horizontalScrollBar()->value(), 0);
+        QCOMPARE(body->verticalScrollBar()->value(), 0);
+    }
+
+    void scaledImagesAreOnScreenWithoutAResize_data()
+    {
+        QTest::addColumn<QString>("flow");
+        QTest::newRow("cached-before-show") << QStringLiteral("cached-before-show");
+        QTest::newRow("cached-after-show") << QStringLiteral("cached-after-show");
+        QTest::newRow("downloaded") << QStringLiteral("downloaded");
+        QTest::newRow("rebuilt") << QStringLiteral("rebuilt");
+    }
+
+    void scaledImagesAreOnScreenWithoutAResize()
+    {
+        // A picture wider than the bubble must be visible as soon as its row
+        // is, not only after a resize relays out the text. Check what is on
+        // the screen (the backing store), not a fresh rendering of the widget.
+        QFETCH(QString, flow);
+        FileSharingDeviceOpener opener;
+        FileSharingDeviceOpener account;
+        opener.accounts.insert(QStringLiteral("account-a"), &account);
+        FileSharingItem image(QStringLiteral("image/png"));
+        image.preview_ = QImage(640, 480, QImage::Format_RGB32);
+        image.preview_.fill(QColor(0, 170, 0));
+        image.cached_          = flow != QLatin1String("downloaded");
+        image.downloadsItself_ = true;
+        account.items.insert(QStringLiteral("picture"), &image);
+
+        MamChatWidget list;
+        QFont         small = list.font();
+        small.setPointSizeF(8); // Keeps the bubble narrower than the picture.
+        list.setFont(small);
+        list.resize(900, 700);
+        list.setHistoryLoading(true);
+        list.setMediaOpener(&opener);
+        list.setTheme({ QStringLiteral("bubble"), QStringLiteral("Bubble"), NativeChatTheme::Modern, 40, 6, {} },
+                      NativeChatRenderers::bubble());
+        for (int i = 0; i < 5; ++i)
+            list.appendMessage(message(QString::number(i), QStringLiteral("Earlier message"), i, i % 2));
+        const auto picture = message(QStringLiteral("picture"),
+                                     QStringLiteral("<share id=\"picture\" account=\"account-a\" auto=\"1048576\"/>"),
+                                     100, true);
+        if (flow == QLatin1String("cached-before-show"))
+            list.appendMessage(picture);
+        list.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&list));
+        if (flow != QLatin1String("cached-before-show"))
+            list.appendMessage(picture);
+        const int index = list.messageCount() - 1;
+        QTRY_VERIFY(list.itemWidget(index) && list.itemWidget(index)->isVisible());
+        if (flow == QLatin1String("downloaded")) {
+            QTest::qWait(100);
+            image.cached_ = true;
+            emit image.downloadFinished();
+        } else if (flow == QLatin1String("rebuilt")) {
+            QTest::qWait(100);
+            list.setTheme({ QStringLiteral("bubble"), QStringLiteral("Bubble"), NativeChatTheme::Modern, 40, 6, {} },
+                          NativeChatRenderers::bubble());
+        }
+        const auto onScreen = [&list, index]() -> QColor {
+            auto *row  = list.itemWidget(index);
+            auto *body = row ? row->findChild<ChatMessageText *>() : nullptr;
+            if (!body || !body->isVisible() || body->viewport()->height() < 20)
+                return {};
+            const QPoint at = body->viewport()->mapTo(
+                list.window(), QPoint(body->viewport()->width() / 2, qMin(body->viewport()->height() / 2, 100)));
+            const QImage screen = QGuiApplication::primaryScreen()->grabWindow(list.window()->winId()).toImage();
+            const QPoint pixel(qRound(at.x() * screen.devicePixelRatio()), qRound(at.y() * screen.devicePixelRatio()));
+            return screen.rect().contains(pixel) ? screen.pixelColor(pixel) : QColor();
+        };
+        const auto state = [&list, index]() {
+            auto *body = list.itemWidget(index)->findChild<ChatMessageText *>();
+            return QStringLiteral("viewport %1x%2, text width %3, document %4x%5, scroll %6/%7 %8/%9")
+                .arg(body->viewport()->width())
+                .arg(body->viewport()->height())
+                .arg(body->document()->textWidth())
+                .arg(body->document()->size().width())
+                .arg(body->document()->size().height())
+                .arg(body->horizontalScrollBar()->value())
+                .arg(body->horizontalScrollBar()->maximum())
+                .arg(body->verticalScrollBar()->value())
+                .arg(body->verticalScrollBar()->maximum());
+        };
+        QTRY_VERIFY2(onScreen() == QColor(0, 170, 0), qPrintable(state()));
+        auto *body = list.itemWidget(index)->findChild<ChatMessageText *>();
+        QVERIFY2(body->document()->size().width() <= body->viewport()->width() + 1, qPrintable(state()));
+        QVERIFY2(qAbs(body->document()->textWidth() - body->viewport()->width()) <= 1, qPrintable(state()));
     }
 
     void nativeModernClassicAndPluginPlacement()

@@ -17,11 +17,78 @@
 #include <QMouseEvent>
 #include <QCoreApplication>
 #include <QMimeData>
+#include <QSet>
 #include <QSignalBlocker>
 #include <QTextDocumentFragment>
 #include <QTextOption>
+#include <QPainter>
+#include <QPixmap>
+#include <QTextObjectInterface>
+#include <QScrollBar>
 #include <QWheelEvent>
 #include <cmath>
+
+namespace {
+// Draws images as Qt does, but never wider than the text: a picture wider than
+// the message (a narrow window, or a speech bubble) is scaled down to fit,
+// instead of overflowing a view that has no horizontal scrolling. The size is
+// derived from the document's current text width, so heightForWidth() and
+// painting agree for any width.
+class FittingImageHandler final : public QObject, public QTextObjectInterface {
+    Q_OBJECT
+    Q_INTERFACES(QTextObjectInterface)
+public:
+    using QObject::QObject;
+
+    QSizeF intrinsicSize(QTextDocument *doc, int, const QTextFormat &format) override
+    {
+        const QTextImageFormat image = format.toImageFormat();
+        QSizeF                 size(image.width(), image.height());
+        if (size.width() <= 0 || size.height() <= 0) {
+            const QImage bitmap  = load(doc, image);
+            const QSizeF natural = bitmap.isNull() ? QSizeF(16, 16) : QSizeF(bitmap.size()) / bitmap.devicePixelRatio();
+            if (size.width() > 0)
+                size.setHeight(natural.width() > 0 ? natural.height() * size.width() / natural.width() : natural.height());
+            else if (size.height() > 0)
+                size.setWidth(natural.height() > 0 ? natural.width() * size.height() / natural.height() : natural.width());
+            else
+                size = natural;
+        }
+        // A negative text width means no limit (natural width); a zero width
+        // (a widget not laid out yet) is a limit too.
+        if (doc->textWidth() >= 0) {
+            const qreal available = qMax<qreal>(1, doc->textWidth() - 2 * doc->documentMargin());
+            if (size.width() > available)
+                size = QSizeF(available, size.height() * available / size.width());
+        }
+        return size;
+    }
+
+    void drawObject(QPainter *painter, const QRectF &rect, QTextDocument *doc, int, const QTextFormat &format) override
+    {
+        const QImage bitmap = load(doc, format.toImageFormat());
+        if (bitmap.isNull())
+            return;
+        painter->save();
+        painter->setRenderHint(QPainter::SmoothPixmapTransform);
+        painter->drawImage(rect, bitmap);
+        painter->restore();
+    }
+
+private:
+    static QImage load(QTextDocument *doc, const QTextImageFormat &format)
+    {
+        const QVariant data = doc->resource(QTextDocument::ImageResource, QUrl(format.name()));
+        if (data.userType() == QMetaType::QImage)
+            return qvariant_cast<QImage>(data);
+        if (data.userType() == QMetaType::QPixmap)
+            return qvariant_cast<QPixmap>(data).toImage();
+        if (data.userType() == QMetaType::QByteArray)
+            return QImage::fromData(data.toByteArray());
+        return {};
+    }
+};
+}
 
 ChatMessageText::ChatMessageText(QWidget *parent) : PsiTextView(parent)
 {
@@ -32,6 +99,20 @@ ChatMessageText::ChatMessageText(QWidget *parent) : PsiTextView(parent)
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setContentsMargins(0, 0, 0, 0);
     viewport()->setAutoFillBackground(false);
+    // The surrounding timeline scrolls; this view always shows its whole
+    // document from the top left. QTextEdit can keep stale scroll ranges and
+    // offsets: after a layout at width 0 that scrolled to the end, Qt's
+    // layout-loop guard in QTextEdit's relayoutDocument() may skip adjusting
+    // the scroll bars when the real width arrives together with a height that
+    // fits the document, leaving the content scrolled out of view until the
+    // next width change.
+    for (QScrollBar *bar : { horizontalScrollBar(), verticalScrollBar() })
+        connect(bar, &QAbstractSlider::valueChanged, this, [bar](int value) {
+            if (value != 0)
+                bar->setValue(0);
+        });
+    static auto *images = new FittingImageHandler(qApp);
+    document()->documentLayout()->registerHandler(QTextFormat::ImageObject, images);
     auto policy = QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     policy.setHeightForWidth(true);
     setSizePolicy(policy);
@@ -42,6 +123,7 @@ ChatMessageText::ChatMessageText(QWidget *parent) : PsiTextView(parent)
     document()->setDefaultTextOption(option);
     connect(document()->documentLayout(), &QAbstractTextDocumentLayout::documentSizeChanged, this,
             [this] { updateGeometry(); });
+    connect(document(), &QTextDocument::contentsChanged, this, [this] { resetMeasuring(); });
     // Cached SIMS media is present at parse time; uncached images are inserted
     // later by PsiTextView after their downloads finish. Normalize both paths.
     connect(document(), &QTextDocument::contentsChanged, this, [this] {
@@ -168,6 +250,7 @@ void ChatMessageText::setWholeMessageSelectionMode(bool active)
 
 void ChatMessageText::applyDocumentFont()
 {
+    resetMeasuring();
     document()->setDefaultFont(font());
     // PsiRichText stores a font on inserted fragments. Updating the widget's
     // inherited font alone leaves those old fragments at the previous size.
@@ -201,16 +284,51 @@ void ChatMessageText::changeEvent(QEvent *event)
     }
 }
 
+QTextDocument *ChatMessageText::measuringDocument() const
+{
+    if (!measuring_) {
+        measuring_.reset(document()->clone());
+        // clone() keeps the root frame's margins but not this setting.
+        measuring_->setDocumentMargin(document()->documentMargin());
+        measuring_->setUseDesignMetrics(document()->useDesignMetrics());
+        // The same object handlers, so images, icons and players measure as
+        // they are drawn.
+        QSet<int> types { QTextFormat::ImageObject };
+        for (const QTextFormat &format : document()->allFormats())
+            if (format.isCharFormat() && format.objectType() != QTextFormat::NoObject)
+                types.insert(format.objectType());
+        QAbstractTextDocumentLayout *shown = document()->documentLayout();
+        for (int type : std::as_const(types))
+            if (auto *handler = dynamic_cast<QObject *>(shown->handlerForObject(type)))
+                measuring_->documentLayout()->registerHandler(type, handler);
+    }
+    return measuring_.get();
+}
+
+void ChatMessageText::resetMeasuring() const
+{
+    measuring_.reset();
+    naturalWidth_ = -1;
+}
+
 int ChatMessageText::heightForWidth(int width) const
 {
     // Layouts also ask about hypothetical widths while computing size hints.
-    // Measure those without changing the document currently painted/selected.
-    const QSignalBlocker blocker(document()->documentLayout());
-    const qreal          previousWidth = document()->textWidth();
-    document()->setTextWidth(qMax(1, width));
-    const int height = int(std::ceil(document()->documentLayout()->documentSize().height()));
-    document()->setTextWidth(previousWidth);
+    // Measure a copy, never the document QTextEdit lays out and paints.
+    QTextDocument *doc = measuringDocument();
+    doc->setTextWidth(qMax(1, width));
+    const int height = int(std::ceil(doc->documentLayout()->documentSize().height()));
     return qMax(fontMetrics().height(), height);
+}
+
+int ChatMessageText::naturalWidth() const
+{
+    if (naturalWidth_ < 0) {
+        QTextDocument *doc = measuringDocument();
+        doc->setTextWidth(-1);
+        naturalWidth_ = int(std::ceil(doc->idealWidth())) + 1;
+    }
+    return naturalWidth_;
 }
 
 QSize ChatMessageText::sizeHint() const
@@ -293,3 +411,5 @@ QMimeData *ChatMessageText::createMimeDataFromSelection() const
     data->setHtml(Qt::convertFromPlainText(plain));
     return data;
 }
+
+#include "ChatMessageText.moc"

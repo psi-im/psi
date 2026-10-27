@@ -4,6 +4,7 @@
 #include "psitextview.h"
 #include <QTextDocument>
 #include <QPoint>
+#include <memory>
 
 // An inline Psi rich-text document. The surrounding timeline owns scrolling;
 // this widget reports the complete document height at the available width.
@@ -15,6 +16,8 @@ public:
     QString toPlainText() const { return document()->toPlainText(); }
     void    setWholeMessageSelectionMode(bool active);
     int     heightForWidth(int width) const override;
+    // Width of the content laid out without wrapping, e.g. to fit a bubble.
+    int     naturalWidth() const;
     QSize   sizeHint() const override;
     QSize   minimumSizeHint() const override;
 
@@ -28,12 +31,19 @@ protected:
 
 private:
     void applyDocumentFont();
+    // A copy of the document for measuring other widths. Changing the width of
+    // the shown document behind QTextEdit's back can leave it laid out at a
+    // width QTextEdit does not know about until its own width changes.
+    QTextDocument *measuringDocument() const;
+    void           resetMeasuring() const;
     void isolateLargeMedia();
 
     // Only media-rich messages need rescanning when async SIMS previews arrive.
     bool hasMediaMarkup_ = false;
     bool isolatingMedia_ = false;
     bool mediaLayoutScheduled_ = false;
+    mutable int                            naturalWidth_ = -1;
+    mutable std::unique_ptr<QTextDocument> measuring_;
 
     QString pressedLink_;
     QPoint  pressedLinkPosition_;

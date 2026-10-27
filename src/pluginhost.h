@@ -303,6 +303,7 @@ private:
     bool    valid_     = false;
     bool    connected_ = false;
     bool    enabled_   = false;
+    bool    keepResident_ = false; // Provides native chat renderers; never unloaded.
     bool    hasInfo_   = false;
     QString infoString_;
 

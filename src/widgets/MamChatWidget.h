@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #pragma once
 
+#include "../../plugins/include/nativechatrenderer.h"
 #include "../../plugins/include/nativechatthemeprovider.h"
 #include "LongListWidget.h"
 #include "MamHistorySource.h"
@@ -62,7 +63,9 @@ public:
                        = Mattermost::LongListWidget::Alignment::EnsureVisible);
 
     void           setGroupChat(bool enabled) { groupChat_ = enabled; }
-    void           setTheme(const NativeChatTheme &theme);
+    // Without a renderer, the theme is laid out from its description alone.
+    // A renderer must outlive the rows it builds (see nativechatrenderer.h).
+    void           setTheme(const NativeChatTheme &theme, const NativeChatMessageRenderer *renderer = nullptr);
     void           setAvatarResolver(std::function<QPixmap(const MessageView &)> resolver);
     void           setNicknameColorResolver(std::function<QColor(const MessageView &)> resolver);
     void           refreshNicknameColors();
@@ -71,6 +74,8 @@ public:
     void           setInformationalColor(const QColor &color);
     void           setQuoteColor(const QColor &color);
     static QString displayTime(const QDateTime &when, const QDateTime &now = QDateTime::currentDateTime());
+    static QString timestampText(const QDateTime &when, const NativeChatPartOptions &options,
+                                 const QDateTime &now = QDateTime::currentDateTime());
     static QString fullTimestamp(const QDateTime &when);
     // Most recent actually visible incoming message requesting a read marker.
     QString takeVisibleMarkableIncomingId();
@@ -161,7 +166,10 @@ private:
     void                                          resolveDisplayedMarkers();
     void                                          rememberDisplayedIncoming(int index);
     void                                          updateTimestamps();
-    void                                          updateTimestampAppearance(QLabel *label);
+    NativeChatMessageInfo                         messageInfo(int index) const;
+    // Fonts and colours of Psi's own parts, from the row's NativeChatPartOptions.
+    void                                          applyPartStyle(QWidget *row, int index);
+    void                                          restyleRows();
     void                                          updateRowSelection(QFrame *row, bool selected);
     void                                          updateRowPalette(QFrame *row, bool selected);
     QString plainMessage(const Row &) const;
@@ -173,8 +181,12 @@ private:
     QColor                                        informationalColor_;
     QColor                                        quoteColor_;
     void                                          updateAvatar(QLabel *label, const MessageView &message);
-    void                                          updateNicknameColor(QLabel *label, const MessageView &message);
     NativeChatTheme                               theme_;
+    const NativeChatMessageRenderer              *renderer_ = nullptr;
+    std::unique_ptr<NativeChatMessageRenderer>    ownedRenderer_;
+    // Rows remember the generation that built them; only those of the current
+    // renderer are passed back to it.
+    quint64                                       rendererGeneration_ = 0;
     bool                                          groupChat_   = false;
     FileSharingDeviceOpener                      *mediaOpener_ = nullptr;
     // Keep opened temporary attachments on disk for the lifetime of this chat.

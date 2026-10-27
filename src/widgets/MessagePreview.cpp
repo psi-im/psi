@@ -3,6 +3,7 @@
 #include "LinkButton.h"
 #include <QAbstractTextDocumentLayout>
 #include <QEvent>
+#include <QFontMetrics>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
@@ -153,6 +154,25 @@ void MessagePreview::setFooter(QWidget *widget)
     }
     updateGeometry();
     emit heightChanged();
+}
+
+int MessagePreview::naturalWidth() const
+{
+    int content = 0;
+    if (!title_->isHidden() && !title_->text().isEmpty())
+        content = QFontMetrics(title_->font()).horizontalAdvance(title_->text())
+            + (close_->isHidden() ? 0 : close_->width() + 6);
+    QTextDocument measure;
+    measure.setDefaultFont(font());
+    measure.setDocumentMargin(0);
+    measure.setPlainText(text_->toPlainText());
+    content = qMax(content, int(std::ceil(measure.idealWidth())) + 1);
+    if (!toggle_->isHidden())
+        content = qMax(content, toggle_->sizeHint().width());
+    if (footer_)
+        content = qMax(content, footer_->sizeHint().width());
+    const QMargins margins = layout()->contentsMargins();
+    return margins.left() + margins.right() + bar_->width() + layout()->spacing() + content;
 }
 
 void MessagePreview::updatePreview()

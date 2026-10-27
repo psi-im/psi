@@ -22,6 +22,8 @@ public:
     // Optional controls below the preview text, owned by the preview.
     void setFooter(QWidget *widget);
     bool isExpanded() const { return expanded_; }
+    // Width of the title, text and footer laid out without wrapping.
+    int naturalWidth() const;
 signals:
     void dismissed();
     void heightChanged();
