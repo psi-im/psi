@@ -119,6 +119,12 @@ public:
     QString backgroundImage() const { return backgroundImagePath_; }
     QString backgroundImageMode() const;
     void    setStyleHoverHighlight(bool enabled);
+    // Classic message icons (direction, delivery, encryption) before the
+    // time, for themes that put the header in the text.
+    void    setMessageIconsEnabled(bool enabled);
+    // The legacy text log's colours for the header of sent and received
+    // messages in a conversation (not a group chat).
+    void    setDirectionColors(const QColor &sent, const QColor &received);
     void    setStyleBackgroundColor(const QColor &color);
     void    setStyleBackgroundImage(const QString &path);
     void    setStyleBackgroundImageMode(const QString &mode);
@@ -150,6 +156,11 @@ private:
     QPixmap                   backgroundImage_;
     NativeChatTheme::ImageMode backgroundImageMode_ = NativeChatTheme::Tile;
     QPixmap                   scaledBackground_;
+    bool                      messageIcons_ = true;
+    QColor                    sentColor_;
+    QColor                    receivedColor_;
+    std::pair<QColor, QColor> inTextHeaderColors(const MessageView &message,
+                                                 const NativeChatPartOptions &options) const;
 
     void requestOlderMessages(const char *gesture);
     void scheduleInitialHistoryFillCheck();

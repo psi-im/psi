@@ -36,7 +36,8 @@ MessageView nativeHistoryMessage(PsiAccount *account, const XMPP::Jid &peer, con
 }
 
 void prependLocalChatHistory(MamChatWidget *timeline, PsiAccount *account, const QString &peer, bool room,
-                             const QString &ownNick, qint64 &before, bool &exhausted)
+                             const QString &ownNick, qint64 &before, bool &exhausted,
+                             const std::function<QString(bool)> &nickname)
 {
     if (exhausted)
         return;
@@ -75,7 +76,10 @@ void prependLocalChatHistory(MamChatWidget *timeline, PsiAccount *account, const
         mv.setMessageId(message.id());
         mv.setReplaceId(message.replaceId());
         mv.setUserId(message.from().full());
-        mv.setNick(room ? message.from().resource() : me->originLocal() ? ownNick : peer);
+        mv.setNick(room             ? message.from().resource()
+                       : nickname   ? nickname(me->originLocal())
+                       : me->originLocal() ? ownNick
+                                           : peer);
         mv.setLocal(room ? mv.nick() == ownNick : me->originLocal());
         mv.setDateTime(message.timeStamp());
         mv.setSpooled(true);

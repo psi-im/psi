@@ -55,6 +55,19 @@ struct NativeChatPartOptions {
     qreal   timePointDelta = 0;  // Timestamp size relative to the chat font, in points.
     int     timeAlpha      = 255; // Opacity of the timestamp text colour.
     bool    timeInNickColor = false; // Paint the timestamp in the nickname colour.
+
+    // Where the time and the nickname go. As parts of their own (Author,
+    // Timestamp), or at the start of the message text, in one document with
+    // it: wrapped lines then start at the left edge, as in Psi's classic text
+    // log, and the message icon (direction, delivery, encryption) goes before
+    // the time. In the text, the time is not refreshed: give a clock format.
+    enum Header { HeaderParts, HeaderInText };
+    Header  header = HeaderParts;
+    QString authorPrefix; // Put before the nickname, e.g. "<".
+    // In a conversation (not a group chat), paint the nickname in the colour
+    // of sent or received messages from Psi's options, as the legacy text
+    // log did. With the header in the text, the time takes it too.
+    bool directionColors = false;
 };
 
 // The row being built. Implemented by Psi; valid only during arrange().
@@ -63,8 +76,8 @@ public:
     enum Part {
         Selection, // Check box shown while messages are selected.
         Avatar,    // Present when NativeChatPartOptions::avatarSize > 0 and kind == Message.
-        Author,    // QLabel with the nickname. Messages only.
-        Timestamp, // The time with its delivery/encryption/edit marks. Messages only.
+        Author,    // QLabel with the nickname. Messages with HeaderParts only.
+        Timestamp, // The time with its delivery/encryption/edit marks. Messages with HeaderParts only.
         Body,      // Text with reply preview, file cards and reactions. Always present.
     };
 
@@ -124,6 +137,6 @@ public:
     // nullptr: Psi lays the theme out from its NativeChatTheme description.
     virtual const NativeChatMessageRenderer *nativeChatRenderer(const QString &themeId) const = 0;
 };
-Q_DECLARE_INTERFACE(NativeChatRendererProvider, "org.psi-im.NativeChatRendererProvider/1.0")
+Q_DECLARE_INTERFACE(NativeChatRendererProvider, "org.psi-im.NativeChatRendererProvider/1.1")
 
 #endif
