@@ -29,33 +29,6 @@
 #include <cmath>
 
 namespace {
-// Quoted lines ("> text", XEP-0393 block quotes) become blocks with this
-// property, their nesting level, indented and drawn with bars as in a quote.
-constexpr int QuoteLevelProperty = QTextFormat::UserProperty + 0x51;
-constexpr int QuoteBarWidth      = 3;
-constexpr int QuoteIndent        = 10; // A bar and the gap after it, as in MessagePreview.
-
-// The nesting level of a line quoted with '>' (also "> >" and ">>"), and the
-// length of its markers including one space after them.
-int quoteMarkers(const QString &line, int *length = nullptr)
-{
-    int at = 0;
-    while (at < line.size() && line.at(at) == QLatin1Char(' '))
-        ++at;
-    int level = 0;
-    while (at < line.size() && line.at(at) == QLatin1Char('>')) {
-        ++level;
-        ++at;
-        if (at + 1 < line.size() && line.at(at) == QLatin1Char(' ') && line.at(at + 1) == QLatin1Char('>'))
-            ++at;
-    }
-    if (level && at < line.size() && line.at(at) == QLatin1Char(' '))
-        ++at;
-    if (length)
-        *length = at;
-    return level;
-}
-
 // Draws images as Qt does, but never wider than the text: a picture wider than
 // the message (a narrow window, or a speech bubble) is scaled down to fit,
 // instead of overflowing a view that has no horizontal scrolling. The size is
@@ -178,7 +151,6 @@ void ChatMessageText::setRichText(const QString &text)
         || text.contains(QLatin1String("<img"))
         || text.contains(QLatin1String("<icon"));
     isolatingMedia_ = true;
-    hasQuotes_      = false;
     document()->setDefaultFont(font());
     PsiTextView::setRichText(text);
     applyDocumentFont();
@@ -426,8 +398,8 @@ void ChatMessageText::resizeEvent(QResizeEvent *event)
 void ChatMessageText::setPlainMessage(const QString &text)
 {
     hasMediaMarkup_ = false;
-    hasQuotes_      = false;
     document()->setPlainText(text);
+    clearQuoteFormatting();
     applyDocumentFont();
 }
 
@@ -462,111 +434,6 @@ void ChatMessageText::setScrollable(bool scrollable)
     setVerticalScrollBarPolicy(scrollable ? Qt::ScrollBarAsNeeded : Qt::ScrollBarAlwaysOff);
     if (!scrollable)
         verticalScrollBar()->setValue(0);
-}
-
-void ChatMessageText::markQuotedLines()
-{
-    QTextDocument *doc = document();
-    // Give every quoted line a block of its own: turn the line breaks around
-    // it into paragraph breaks. Each replacement keeps the positions.
-    QList<int> breaks;
-    const int  end   = doc->characterCount() - 1;
-    int        start = 0;
-    while (start <= end) {
-        int stop = start;
-        QString line;
-        while (stop < end && doc->characterAt(stop) != QChar::ParagraphSeparator
-               && doc->characterAt(stop) != QChar::LineSeparator)
-            line += doc->characterAt(stop++);
-        if (quoteMarkers(line)) {
-            if (start > 0 && doc->characterAt(start - 1) == QChar::LineSeparator)
-                breaks.append(start - 1);
-            if (stop < end && doc->characterAt(stop) == QChar::LineSeparator)
-                breaks.append(stop);
-        }
-        start = stop + 1;
-    }
-    if (breaks.isEmpty() && !quoteMarkers(doc->begin().text()))
-        return;
-    QTextCursor cursor(doc);
-    cursor.beginEditBlock();
-    for (int at : std::as_const(breaks)) {
-        cursor.setPosition(at);
-        cursor.setPosition(at + 1, QTextCursor::KeepAnchor);
-        cursor.removeSelectedText();
-        cursor.insertBlock();
-    }
-    // Then drop the markers and indent each quoted block by its level.
-    for (QTextBlock block = doc->begin(); block.isValid(); block = block.next()) {
-        int       length = 0;
-        const int level  = quoteMarkers(block.text(), &length);
-        if (!level)
-            continue;
-        cursor.setPosition(block.position());
-        cursor.setPosition(block.position() + length, QTextCursor::KeepAnchor);
-        cursor.removeSelectedText();
-        QTextBlockFormat format;
-        format.setLeftMargin(level * QuoteIndent);
-        format.setProperty(QuoteLevelProperty, level);
-        cursor.mergeBlockFormat(format);
-        hasQuotes_ = true;
-    }
-    cursor.endEditBlock();
-    applyQuoteColor();
-}
-
-void ChatMessageText::setQuoteColor(const QColor &color)
-{
-    if (quoteColor_ == color)
-        return;
-    quoteColor_ = color;
-    applyQuoteColor();
-}
-
-void ChatMessageText::applyQuoteColor()
-{
-    if (!hasQuotes_ || !quoteColor_.isValid())
-        return;
-    // The text of quoted blocks in the quote colour; links keep theirs.
-    QTextCursor cursor(document());
-    cursor.beginEditBlock();
-    for (QTextBlock block = document()->begin(); block.isValid(); block = block.next()) {
-        if (!block.blockFormat().hasProperty(QuoteLevelProperty))
-            continue;
-        for (auto it = block.begin(); !it.atEnd(); ++it) {
-            const QTextFragment fragment = it.fragment();
-            if (!fragment.isValid() || fragment.charFormat().isAnchor() || fragment.charFormat().isImageFormat())
-                continue;
-            cursor.setPosition(fragment.position());
-            cursor.setPosition(fragment.position() + fragment.length(), QTextCursor::KeepAnchor);
-            QTextCharFormat format;
-            format.setForeground(quoteColor_);
-            cursor.mergeCharFormat(format);
-        }
-    }
-    cursor.endEditBlock();
-    viewport()->update();
-}
-
-void ChatMessageText::paintEvent(QPaintEvent *event)
-{
-    PsiTextView::paintEvent(event);
-    if (!hasQuotes_)
-        return;
-    QPainter     painter(viewport());
-    const QColor color  = quoteColor_.isValid() ? quoteColor_ : palette().color(QPalette::Mid);
-    const qreal  left   = document()->documentMargin() - horizontalScrollBar()->value();
-    const qreal  scroll = verticalScrollBar()->value();
-    for (QTextBlock block = document()->begin(); block.isValid(); block = block.next()) {
-        const int level = block.blockFormat().property(QuoteLevelProperty).toInt();
-        if (!level)
-            continue;
-        const QRectF rect = document()->documentLayout()->blockBoundingRect(block).translated(0, -scroll);
-        if (rect.bottom() < event->rect().top() || rect.top() > event->rect().bottom())
-            continue;
-        for (int i = 0; i < level; ++i)
-            painter.fillRect(QRectF(left + i * QuoteIndent, rect.top(), QuoteBarWidth, rect.height()), color);
-    }
 }
 
 void ChatMessageText::removeQuotedLines()
@@ -657,21 +524,5 @@ void ChatMessageText::wheelEvent(QWheelEvent *event)
     event->ignore();
 }
 
-QMimeData *ChatMessageText::createMimeDataFromSelection() const
-{
-    QTextDocument selected;
-    QTextCursor(&selected).insertFragment(textCursor().selection());
-    // Quoted blocks are copied with their markers again.
-    for (QTextBlock block = selected.begin(); block.isValid(); block = block.next()) {
-        const int level = block.blockFormat().property(QuoteLevelProperty).toInt();
-        if (level)
-            QTextCursor(block).insertText(QString(level, QLatin1Char('>')) + QLatin1Char(' '));
-    }
-    const QString plain = PsiRichText::convertToPlainText(&selected);
-    auto         *data  = new QMimeData;
-    data->setText(plain);
-    data->setHtml(Qt::convertFromPlainText(plain));
-    return data;
-}
 
 #include "ChatMessageText.moc"
