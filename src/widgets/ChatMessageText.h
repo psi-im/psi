@@ -25,7 +25,6 @@ protected:
     void       mousePressEvent(QMouseEvent *event) override;
     void       mouseReleaseEvent(QMouseEvent *event) override;
     void       resizeEvent(QResizeEvent *event) override;
-    void       paintEvent(QPaintEvent *event) override;
     void       changeEvent(QEvent *event) override;
     void       wheelEvent(QWheelEvent *event) override;
     QMimeData *createMimeDataFromSelection() const override;
