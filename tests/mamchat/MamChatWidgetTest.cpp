@@ -14,6 +14,7 @@
 #include "filesharingmanager.h"
 #include "qiteaudio.h"
 #include "qitevideo.h"
+#include "messagestyling.h"
 
 #include <QAbstractTextDocumentLayout>
 #include <QApplication>
@@ -117,6 +118,44 @@ public:
 class MamChatWidgetTest final : public QObject {
     Q_OBJECT
 private slots:
+    void xep0393StyledTextSurvivesBubbleFontAndQuotes()
+    {
+        ChatMessageText body;
+        body.setFont(QFont(QStringLiteral("Sans Serif"), 12));
+        body.setRichText(MessageStyling::toHtml(
+            QStringLiteral("*strong* _emphasis_ ~deleted~ ") + QChar(0x60)
+            + QStringLiteral("literal") + QChar(0x60)));
+        auto *doc = body.document();
+        QVERIFY(doc->find(QStringLiteral("strong")).charFormat().fontWeight() >= QFont::Bold);
+        QVERIFY(doc->find(QStringLiteral("emphasis")).charFormat().fontItalic());
+        QVERIFY(doc->find(QStringLiteral("deleted")).charFormat().fontStrikeOut());
+        const auto codeFont = doc->find(QStringLiteral("literal")).charFormat().font();
+        QVERIFY(codeFont.styleHint() == QFont::Monospace
+                || codeFont.family().contains(QLatin1String("mono"), Qt::CaseInsensitive)
+                || codeFont.fixedPitch());
+
+        // Bubble themes (and theme switches) reapply their chat font. Code
+        // remains monospace, while the rest inherits the new family and size.
+        QFont bigger(QStringLiteral("Serif"));
+        bigger.setPixelSize(22);
+        body.setFont(bigger);
+        const auto codeAfter = doc->find(QStringLiteral("literal")).charFormat().font();
+        QVERIFY(codeAfter.styleHint() == QFont::Monospace
+                || codeAfter.family().contains(QLatin1String("mono"), Qt::CaseInsensitive)
+                || codeAfter.fixedPitch());
+        QVERIFY(doc->find(QStringLiteral("strong")).charFormat().fontWeight() >= QFont::Bold);
+        QVERIFY(doc->find(QStringLiteral("emphasis")).charFormat().fontItalic());
+
+        ChatMessageText noStyling;
+        noStyling.setQuoteStylingEnabled(false);
+        noStyling.setRichText(QStringLiteral("&gt; literal quote"));
+        QCOMPARE(noStyling.document()->toPlainText(), QStringLiteral("> literal quote"));
+        ChatMessageText quoted;
+        quoted.setRichText(QStringLiteral("&gt; actual quote"));
+        QCOMPARE(quoted.document()->toPlainText(), QStringLiteral("actual quote"));
+        QVERIFY(quoted.isQuotedBlock(quoted.document()->begin()));
+    }
+
     void chatTimelineHasNoFrame()
     {
         MamChatWidget chat;
