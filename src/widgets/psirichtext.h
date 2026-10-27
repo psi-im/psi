@@ -40,6 +40,8 @@ public:
     // Reapply a theme font without overwriting explicit code/monospace families.
     static void applyBaseFont(QTextDocument *doc, const QFont &font);
     static bool isMonospace(const QTextCharFormat &format);
+    // Apply syntax colors to fenced code within an existing shared QTextDocument.
+    static void highlightCodeBlocks(QTextDocument *doc);
     static void ensureTextLayouted(QTextDocument *doc, int documentWidth, Qt::Alignment align = Qt::AlignLeft,
                                    Qt::LayoutDirection layoutDirection = Qt::LeftToRight, bool textWordWrap = true);
     static void setText(QTextDocument *doc, const QString &text, const ParsersMap &parsers = ParsersMap());

@@ -539,6 +539,8 @@ QTextCursor PsiTextView::appendTextWithRange(const QString &text)
     setTextCursor(cursor);
     if (quoteStylingEnabled_ && containsQuotedLine(inserted.selectedText()))
         markQuotedLines();
+    if (text.contains(QLatin1String("```")))
+        PsiRichText::highlightCodeBlocks(document());
     return inserted;
 }
 
@@ -562,6 +564,8 @@ QTextCursor PsiTextView::insertTextWithRange(const QString &text, QTextCursor &c
     setTextCursor(selCursor);
     if (quoteStylingEnabled_ && containsQuotedLine(inserted.selectedText()))
         markQuotedLines();
+    if (text.contains(QLatin1String("```")))
+        PsiRichText::highlightCodeBlocks(document());
     return inserted;
 }
 
@@ -578,6 +582,8 @@ QTextCursor PsiTextView::insertTextFragmentWithRange(const QString &text, QTextC
     setTextCursor(selCursor);
     if (quoteStylingEnabled_ && containsQuotedLine(inserted.selectedText()))
         markQuotedLines();
+    if (text.contains(QLatin1String("```")))
+        PsiRichText::highlightCodeBlocks(document());
     return inserted;
 }
 

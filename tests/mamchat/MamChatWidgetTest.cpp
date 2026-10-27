@@ -156,6 +156,36 @@ private slots:
         QVERIFY(quoted.isQuotedBlock(quoted.document()->begin()));
     }
 
+    void xep0393CodeHighlightKeepsContiguousDocumentSelection()
+    {
+        ChatMessageText body;
+        const QString original = QStringLiteral("before\\n```cpp\\nint number = 42;\\n```\\nafter")
+                                     .replace(QStringLiteral("\\n"), QStringLiteral("\n"));
+        body.setRichText(MessageStyling::toHtml(
+            original.toHtmlEscaped().replace(QLatin1Char('\n'), QStringLiteral("<br>"))));
+        QTextDocument *doc = body.document();
+        QCOMPARE(body.toPlainText(), original);
+        const auto code = doc->find(QStringLiteral("int number"));
+        QVERIFY(!code.isNull());
+        const auto format = code.charFormat();
+        QVERIFY(format.fontFixedPitch() || PsiRichText::isMonospace(format));
+        QCOMPARE(format.background().color(), QColor(39, 40, 34));
+        // QSourceHighlite Monokai highlights C++ keywords but leaves the
+        // content in the original document, not in a separate text widget.
+        const auto keyword = doc->find(QStringLiteral("int"));
+        QVERIFY(!keyword.isNull());
+        QCOMPARE(keyword.charFormat().foreground().color(), QColor(249, 38, 114));
+        QTextCursor selected(doc);
+        selected.setPosition(0);
+        selected.setPosition(doc->characterCount() - 1, QTextCursor::KeepAnchor);
+        QString copied = selected.selectedText();
+        copied.replace(QChar::ParagraphSeparator, QLatin1Char('\n'));
+        copied.replace(QChar::LineSeparator, QLatin1Char('\n'));
+        QCOMPARE(copied, original);
+        body.setTextCursor(selected);
+        QCOMPARE(body.textCursor().selectedText(), selected.selectedText());
+    }
+
     void xep0393UnstyledMessageRemainsLiteralInNativeTimeline()
     {
         MamChatWidget chat;

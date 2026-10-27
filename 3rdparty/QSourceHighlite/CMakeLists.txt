@@ -1,4 +1,5 @@
 # QSourceHighlite (MIT), vendored from upstream d78f0d4171580a18646b15425c449db3f2bb240a
+find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Gui)
 add_library(qsourcehighlite STATIC
     qsourcehighliter.cpp
     qsourcehighliterthemes.cpp
