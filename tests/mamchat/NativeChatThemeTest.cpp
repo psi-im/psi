@@ -36,6 +36,10 @@ private slots:
                                  -10,
                                  QStringLiteral("QLabel { color: palette(text); }") };
         plugin.layoutSpec = QStringLiteral(R"({"direction":"horizontal","items":["body","author"]})");
+        plugin.hoverHighlight      = false;
+        plugin.background          = QColor(0x10, 0x20, 0x30);
+        plugin.backgroundImage     = QStringLiteral(":/example/paper.png");
+        plugin.backgroundImageMode = NativeChatTheme::Scale;
         registry->add(&owner, { plugin, plugin, registry->themes().first() });
         QCOMPARE(changed.count(), 1);
         QCOMPARE(registry->themes().size(), 4);
@@ -49,6 +53,11 @@ private slots:
         QVERIFY(copied.name.constData() != plugin.name.constData());
         QVERIFY(copied.styleSheet.constData() != plugin.styleSheet.constData());
         QVERIFY(copied.layoutSpec.constData() != plugin.layoutSpec.constData());
+        QVERIFY(copied.backgroundImage.constData() != plugin.backgroundImage.constData());
+        QCOMPARE(copied.backgroundImage, plugin.backgroundImage);
+        QVERIFY(!copied.hoverHighlight);
+        QCOMPARE(copied.background, plugin.background);
+        QCOMPARE(copied.backgroundImageMode, NativeChatTheme::Scale);
         registry->remove(&owner);
         QCOMPARE(changed.count(), 2);
         QCOMPARE(registry->themes().size(), 3);
@@ -66,6 +75,10 @@ private slots:
         QCOMPARE(registry->renderer(QStringLiteral("bubble")), NativeChatRenderers::bubble());
         QVERIFY(!registry->renderer(QStringLiteral("modern")));
         QVERIFY(!registry->renderer(QStringLiteral("classic")));
+        // Bubbles set messages apart without tinting the one under the pointer.
+        QVERIFY(!registry->theme(QStringLiteral("bubble")).hoverHighlight);
+        QVERIFY(registry->theme(QStringLiteral("modern")).hoverHighlight);
+        QVERIFY(registry->theme(QStringLiteral("classic")).hoverHighlight);
         // Built-in IDs are reserved.
         QObject owner;
         registry->add(&owner, { { QStringLiteral("bubble"), QStringLiteral("Mine"), NativeChatTheme::Modern, 40, 10, {} } });

@@ -2577,7 +2577,7 @@ void MamChatWidget::refreshPalette()
 {
     // With a stylesheet, the viewport need not inherit the configured chat
     // colors. Resolve rows from the chat palette, including custom link colors.
-    viewport()->setPalette(palette());
+    viewport()->setPalette(logPalette());
     refreshSelection();
     restyleRows();
     refreshAvatars();
@@ -2606,9 +2606,104 @@ void MamChatWidget::setTheme(const NativeChatTheme &theme, const NativeChatMessa
         renderer_      = ownedRenderer_.get();
     }
     ++rendererGeneration_;
+    applyLogLook();
     for (int index : materializedRows())
         replaceRow(index);
     updateTimestamps();
+}
+
+QColor MamChatWidget::backgroundColor() const
+{
+    return styleBackgroundColor_.isValid() ? styleBackgroundColor_ : theme_.background;
+}
+
+QString MamChatWidget::backgroundImageMode() const
+{
+    return backgroundImageMode_ == NativeChatTheme::Scale ? QStringLiteral("scale") : QStringLiteral("tile");
+}
+
+void MamChatWidget::setStyleHoverHighlight(bool enabled)
+{
+    styleHoverHighlight_ = enabled;
+    applyLogLook();
+}
+
+void MamChatWidget::setStyleBackgroundColor(const QColor &color)
+{
+    styleBackgroundColor_ = color;
+    applyLogLook();
+}
+
+void MamChatWidget::setStyleBackgroundImage(const QString &path)
+{
+    styleBackgroundImage_ = path.trimmed();
+    applyLogLook();
+}
+
+void MamChatWidget::setStyleBackgroundImageMode(const QString &mode)
+{
+    styleBackgroundImageMode_ = mode.trimmed().toLower();
+    applyLogLook();
+}
+
+void MamChatWidget::applyLogLook()
+{
+    setHoverHighlightEnabled(styleHoverHighlight_.value_or(theme_.hoverHighlight));
+
+    QString path = styleBackgroundImage_.isEmpty() ? theme_.backgroundImage : styleBackgroundImage_;
+    // Style sheets may pass url(...) or a quoted string through unparsed.
+    if (path.startsWith(QLatin1String("url("), Qt::CaseInsensitive) && path.endsWith(QLatin1Char(')')))
+        path = path.mid(4, path.size() - 5).trimmed();
+    if (path.size() >= 2 && (path.startsWith(QLatin1Char('"')) || path.startsWith(QLatin1Char('\''))))
+        path = path.mid(1, path.size() - 2);
+    if (path.compare(QLatin1String("none"), Qt::CaseInsensitive) == 0)
+        path.clear();
+    if (path != backgroundImagePath_) {
+        backgroundImagePath_ = path;
+        backgroundImage_     = path.isEmpty() ? QPixmap() : QPixmap(path);
+        scaledBackground_    = QPixmap();
+    }
+    backgroundImageMode_ = styleBackgroundImageMode_ == QLatin1String("scale") ? NativeChatTheme::Scale
+        : styleBackgroundImageMode_ == QLatin1String("tile")                  ? NativeChatTheme::Tile
+                                                                                  : theme_.backgroundImageMode;
+    refreshPalette();
+    viewport()->update();
+}
+
+QPalette MamChatWidget::logPalette() const
+{
+    QPalette colors = palette();
+    const QColor background = backgroundColor();
+    if (background.isValid()) {
+        colors.setColor(QPalette::Base, background);
+        colors.setColor(QPalette::Window, background);
+    }
+    return colors;
+}
+
+void MamChatWidget::paintEvent(QPaintEvent *event)
+{
+    if (!backgroundImage_.isNull()) {
+        // Fixed behind the scrolling messages.
+        QPainter painter(viewport());
+        if (backgroundImageMode_ == NativeChatTheme::Scale) {
+            const qreal ratio  = viewport()->devicePixelRatioF();
+            const QSize target = viewport()->size() * ratio;
+            if (scaledBackground_.size() != target && !target.isEmpty()) {
+                // Cover the log, keeping the aspect ratio, and centre the crop.
+                const QPixmap scaled
+                    = backgroundImage_.scaled(target, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+                scaledBackground_ = scaled.copy((scaled.width() - target.width()) / 2,
+                                                (scaled.height() - target.height()) / 2, target.width(),
+                                                target.height());
+                scaledBackground_.setDevicePixelRatio(ratio);
+            }
+            painter.drawPixmap(0, 0, scaledBackground_);
+        } else {
+            painter.drawTiledPixmap(viewport()->rect(), backgroundImage_);
+        }
+    }
+    Mattermost::LongListWidget::paintEvent(event);
 }
 
 void MamChatWidget::setNicknameColorResolver(std::function<QColor(const MessageView &)> resolver)
@@ -3070,7 +3165,8 @@ void MamChatWidget::updateRowPalette(QFrame *row, bool selected)
     palette.setColor(QPalette::Window, surface);
     palette.setColor(QPalette::Base, surface); // QTextDocument's surface, too.
     row->setPalette(palette);
-    row->setAutoFillBackground(true);
+    // Over a background image, only a tinted row paints its surface.
+    row->setAutoFillBackground(backgroundImage_.isNull() || surface != base);
     if (auto *body = row->findChild<ChatMessageText *>()) {
         QPalette textPalette = palette;
         auto    *message     = messageRow(row);

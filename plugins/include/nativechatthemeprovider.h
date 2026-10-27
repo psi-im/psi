@@ -2,6 +2,7 @@
 #ifndef NATIVECHATTHEMEPROVIDER_H
 #define NATIVECHATTHEMEPROVIDER_H
 
+#include <QColor>
 #include <QList>
 #include <QString>
 #include <QtPlugin>
@@ -19,6 +20,14 @@ struct NativeChatTheme {
     // Optional JSON layout tree: direction = horizontal/vertical; items are nested
     // groups or the author, timestamp, avatar, body slots. No plugin-owned widgets.
     QString layoutSpec;
+
+    // The chat log behind the messages.
+    bool   hoverHighlight = true; // Tint the message under the pointer.
+    QColor background;            // Invalid: the chat background colour from Psi's options.
+    // A file or Qt resource path (":/..."), loaded when the theme is applied.
+    QString backgroundImage;
+    enum ImageMode { Tile, Scale }; // Scale covers the log, keeping the aspect ratio.
+    ImageMode backgroundImageMode = Tile;
 };
 
 class NativeChatThemeProvider {
@@ -26,5 +35,5 @@ public:
     virtual ~NativeChatThemeProvider()                      = default;
     virtual QList<NativeChatTheme> nativeChatThemes() const = 0;
 };
-Q_DECLARE_INTERFACE(NativeChatThemeProvider, "org.psi-im.NativeChatThemeProvider/1.0")
+Q_DECLARE_INTERFACE(NativeChatThemeProvider, "org.psi-im.NativeChatThemeProvider/1.1")
 #endif
