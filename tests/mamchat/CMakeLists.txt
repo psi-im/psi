@@ -105,3 +105,10 @@ target_include_directories(mam_sparse_history_source_test BEFORE PRIVATE
 target_link_libraries(mam_sparse_history_source_test PRIVATE
     Qt${QT_DEFAULT_MAJOR_VERSION}::Widgets Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
 add_test(NAME mam_sparse_history_source COMMAND mam_sparse_history_source_test)
+
+# The XEP-0393 parser is intentionally Qt-only and shared by all Psi views.
+add_executable(mam_message_styling_test MessageStylingTest.cpp)
+target_include_directories(mam_message_styling_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../src)
+target_link_libraries(mam_message_styling_test PRIVATE
+    Qt${QT_DEFAULT_MAJOR_VERSION}::Core Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+add_test(NAME mam_message_styling COMMAND mam_message_styling_test)
