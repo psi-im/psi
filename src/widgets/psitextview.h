@@ -39,6 +39,9 @@ public:
     bool atBottom();
 
     void setRichText(const QString &text); // Full replacement through the same icon/media parsers.
+    // Shared XEP-0393 quotation treatment for native chat, legacy chat, and notifications.
+    void markQuotedLines();
+    void setQuoteColor(const QColor &color);
     virtual void appendText(const QString &text);
     virtual void insertText(const QString &text, QTextCursor &cursor);
     QTextCursor  appendTextWithRange(const QString &text);
@@ -72,6 +75,8 @@ protected:
     void       mouseReleaseEvent(QMouseEvent *e);
     QMimeData *createMimeDataFromSelection() const;
     void       resizeEvent(QResizeEvent *);
+    void       paintEvent(QPaintEvent *event) override;
+    void       clearQuoteFormatting();
 
     QString getTextHelper(bool html) const;
 
@@ -79,6 +84,9 @@ protected:
 
 private:
     Private *d;
+    bool     hasQuotes_ = false;
+    QColor   quoteColor_;
+    void applyQuoteColor();
     bool     isSelectedBlock();
 };
 
