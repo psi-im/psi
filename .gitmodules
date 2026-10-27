@@ -10,3 +10,6 @@
 [submodule "3rdparty/qite"]
 	path = 3rdparty/qite
 	url = https://github.com/Ri0n/qite.git
+[submodule "3rdparty/qsourcehighlite"]
+	path = 3rdparty/qsourcehighlite
+	url = https://github.com/Waqar144/QSourceHighlite.git
