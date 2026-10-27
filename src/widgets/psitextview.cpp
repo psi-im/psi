@@ -373,8 +373,15 @@ void PsiTextView::clearQuoteFormatting()
     hasQuotes_ = false;
 }
 
+bool PsiTextView::isQuotedBlock(const QTextBlock &block) const
+{
+    return block.isValid() && block.blockFormat().property(QuoteLevelProperty).toInt() > 0;
+}
+
 void PsiTextView::markQuotedLines()
 {
+    if (!quoteStylingEnabled_)
+        return;
     QTextDocument *doc = document();
     // Give every quoted line a block of its own: turn the line breaks around
     // it into paragraph breaks. Each replacement keeps the positions.
