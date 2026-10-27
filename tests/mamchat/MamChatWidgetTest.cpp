@@ -174,7 +174,7 @@ private slots:
         // content in the original document, not in a separate text widget.
         const auto keyword = doc->find(QStringLiteral("int"));
         QVERIFY(!keyword.isNull());
-        QCOMPARE(keyword.charFormat().foreground().color(), QColor(249, 38, 114));
+        QCOMPARE(keyword.charFormat().foreground().color(), QColor(102, 217, 239));
         QTextCursor selected(doc);
         selected.setPosition(0);
         selected.setPosition(doc->characterCount() - 1, QTextCursor::KeepAnchor);
