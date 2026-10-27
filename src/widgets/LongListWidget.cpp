@@ -795,10 +795,10 @@ QColor LongListWidget::hoverHighlightSurfaceColor() const
 {
     const QColor base =
         viewport()->palette().color(viewport()->backgroundRole());
-    const QColor highlight = palette().color(QPalette::Highlight);
-    const qreal alpha = static_cast<qreal>(HoverHighlightAlpha) / 255.0;
+    const QColor highlight = hoverHighlightColor();
+    const qreal alpha = highlight.alphaF();
 
-    // paintEvent() applies Highlight with HoverHighlightAlpha over the viewport.
+    // paintEvent() applies hoverHighlightColor() over the viewport.
     // Return that final opaque color so an overlay widget does not apply the
     // alpha a second time over an already-highlighted row.
     return QColor::fromRgbF(
@@ -1347,10 +1347,15 @@ void LongListWidget::paintEvent(QPaintEvent* event)
         return;
     }
 
-    QColor background = palette().color(QPalette::Highlight);
-    background.setAlpha(HoverHighlightAlpha);
     QPainter painter(viewport());
-    painter.fillRect(highlightWidget->geometry(), background);
+    painter.fillRect(highlightWidget->geometry(), hoverHighlightColor());
+}
+
+QColor LongListWidget::hoverHighlightColor() const
+{
+    QColor color = palette().color(QPalette::Highlight);
+    color.setAlpha(HoverHighlightAlpha);
+    return color;
 }
 
 void LongListWidget::resizeEvent(QResizeEvent* event)

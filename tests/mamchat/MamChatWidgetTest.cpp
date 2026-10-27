@@ -2441,21 +2441,30 @@ private slots:
         QCOMPARE(pixel(10, 11), QColor(255, 0, 0));
         QCOMPARE(pixel(11, 11), QColor(0, 0, 255));
 
-        // Rows leave the image visible; only the row under the pointer or a
-        // selected row paints its surface.
+        // Rows leave the image visible. The row under the pointer is tinted
+        // with the text colour, nearly transparent, so the image still shows
+        // through; only a selected row paints its surface.
         list->appendMessage(message(QStringLiteral("one"), QStringLiteral("Hello")));
         list->appendMessage(message(QStringLiteral("two"), QStringLiteral("World"), 1));
         QTRY_VERIFY(list->itemWidget(0) && list->itemWidget(1) && list->itemWidget(1)->isVisible());
         auto *row = list->itemWidget(0);
         QVERIFY(!row->autoFillBackground());
         QVERIFY(list->isHoverHighlightEnabled());
+        const QPoint margin = row->geometry().topLeft() + QPoint(2, 2); // An even column: red.
+        QCOMPARE(pixel(margin.x(), margin.y()), QColor(255, 0, 0));
         QEvent enter(QEvent::Enter);
         QApplication::sendEvent(row, &enter);
-        QTRY_VERIFY(row->autoFillBackground());
+        QTRY_VERIFY(pixel(margin.x(), margin.y()) != QColor(255, 0, 0));
+        QVERIFY(!row->autoFillBackground());
+        const QColor text   = list->viewport()->palette().color(QPalette::Text);
+        const QColor tinted = pixel(margin.x(), margin.y());
+        QVERIFY2(qAbs(tinted.red() - qRound(255 * 0.88 + text.red() * 0.12)) <= 2
+                     && qAbs(tinted.blue() - qRound(text.blue() * 0.12)) <= 2,
+                 qPrintable(tinted.name()));
         QEvent leave(QEvent::Leave);
         QApplication::sendEvent(row, &leave);
         QApplication::sendEvent(list->itemWidget(1), &enter);
-        QTRY_VERIFY(!row->autoFillBackground());
+        QTRY_COMPARE(pixel(margin.x(), margin.y()), QColor(255, 0, 0));
         list->setMessageSelected(0, true);
         QVERIFY(row->autoFillBackground());
         list->setMessageSelected(0, false);
@@ -2483,7 +2492,9 @@ private slots:
         QVERIFY2(list->property("backgroundImage").toString().isEmpty(), qPrintable(list->property("backgroundImage").toString()));
         list->setTheme(theme); // Still overridden after a theme change.
         QVERIFY(list->isHoverHighlightEnabled());
-        QTRY_VERIFY(list->itemWidget(0) && list->itemWidget(0)->autoFillBackground());
+        QTRY_VERIFY(list->itemWidget(0) && list->itemWidget(1));
+        const QPoint corner = list->itemWidget(1)->geometry().topLeft() + QPoint(2, 2);
+        QTRY_COMPARE(pixel(corner.x(), corner.y()), QColor(0x10, 0x20, 0x30));
         window.setStyleSheet(QStringLiteral("MamChatWidget { qproperty-backgroundImage: url(%1);"
                                             " qproperty-backgroundImageMode: scale; }")
                                  .arg(widePath));
