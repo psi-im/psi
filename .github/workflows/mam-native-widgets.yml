@@ -110,3 +110,50 @@ jobs:
         if: always()
         run: ccache --show-stats
 
+
+  widget-regressions-current-qt:
+    # Ubuntu 24.04 ships Qt 6.4. Run the same widget tests against the
+    # current Qt 6 release, where text layout and painting details differ.
+    name: widget-regressions (Fedora latest Qt6)
+    runs-on: ubuntu-24.04
+    container: fedora:latest
+    timeout-minutes: 45
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+    steps:
+      - name: Install Qt6
+        run: |
+          dnf install -y git-core gcc gcc-c++ cmake ninja-build ccache \
+            qt6-qtbase-devel qt6-qtbase-gui qt6-qtmultimedia-devel
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - name: Resolve qite
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git submodule update --init --depth 1 3rdparty/qite
+      - name: Restore compiler cache
+        uses: actions/cache@v4
+        with:
+          path: .ccache
+          key: psi-mam-widgets-fedora-qt6-${{ github.head_ref || github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            psi-mam-widgets-fedora-qt6-${{ github.head_ref || github.ref_name }}-
+            psi-mam-widgets-fedora-qt6-
+      - name: Configure
+        run: |
+          ccache --max-size=400M
+          ccache --zero-stats
+          qmake6 -query QT_VERSION || true
+          cmake -S tests/mamchat -B build-mam-widgets -G Ninja \
+            -DQT_DEFAULT_MAJOR_VERSION=6 \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+      - name: Build
+        run: cmake --build build-mam-widgets --parallel 4
+      - name: Test
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: ctest --test-dir build-mam-widgets --output-on-failure
+      - name: Compiler cache statistics
+        if: always()
+        run: ccache --show-stats
