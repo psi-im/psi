@@ -14,6 +14,12 @@ private slots:
         QTest::newRow("strike") << QString("~deleted~") << QString("<s>~deleted~</s>");
         QTest::newRow("code") << QString("a ") + QChar(0x60) + QString("*literal*") + QChar(0x60)
                                << QString("a <code>") + QChar(0x60) + QString("*literal*") + QChar(0x60) + QString("</code>");
+        QTest::newRow("double-backtick") << QString("Here ") + QString(2, QChar(0x60))
+                                           + QString("*literal*") + QString(2, QChar(0x60))
+                                           << QString("Here <code>") + QString(2, QChar(0x60))
+                                           + QString("*literal*") + QString(2, QChar(0x60)) + QString("</code>");
+        QTest::newRow("xep-adjacent") << QString("*_both_*")
+                                      << QString("<b>*<i>_both_</i>*</b>");
         QTest::newRow("nested") << QString("*strong _italic_*")
                                   << QString("<b>*strong <i>_italic_</i>*</b>");
         QTest::newRow("consecutive") << QString("*strong*plain*")
@@ -41,6 +47,7 @@ private slots:
         QTest::newRow("three") << QString("***");
         QTest::newRow("four") << QString("****");
         QTest::newRow("markdown") << QString("**bold**");
+        QTest::newRow("double-strike") << QString("~~strike~~");
         QTest::newRow("whitespace-open") << QString("* not strong*");
         QTest::newRow("whitespace-close") << QString("*not strong *");
         QTest::newRow("no-close") << QString("*not strong");
