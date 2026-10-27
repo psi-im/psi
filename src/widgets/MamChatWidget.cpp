@@ -2664,6 +2664,15 @@ void MamChatWidget::applyLogLook()
     viewport()->update();
 }
 
+QColor MamChatWidget::hoverHighlightColor() const
+{
+    // The text colour, nearly transparent: a light shade on any background,
+    // also over a background image.
+    QColor color = viewport()->palette().color(QPalette::Text);
+    color.setAlphaF(0.12);
+    return color;
+}
+
 QPalette MamChatWidget::logPalette() const
 {
     QPalette colors = palette();
@@ -3184,8 +3193,9 @@ void MamChatWidget::updateRowPalette(QFrame *row, bool selected)
     palette.setColor(QPalette::Window, surface);
     palette.setColor(QPalette::Base, surface); // QTextDocument's surface, too.
     row->setPalette(palette);
-    // Over a background image, only a tinted row paints its surface.
-    row->setAutoFillBackground(backgroundImage_.isNull() || surface != base);
+    // Rows are transparent: the hover tint is painted under them, over the
+    // log's background or image. Only a selected row paints its surface.
+    row->setAutoFillBackground(selected);
     if (auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody"))) {
         QPalette textPalette = palette;
         auto    *message     = messageRow(row);

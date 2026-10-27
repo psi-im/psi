@@ -136,6 +136,7 @@ protected:
     void     hideEvent(QHideEvent *event) override;
     void     changeEvent(QEvent *event) override;
     void     paintEvent(QPaintEvent *event) override;
+    QColor   hoverHighlightColor() const override;
 
 private:
     // Theme values, unless a style sheet overrides them.

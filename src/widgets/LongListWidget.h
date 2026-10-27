@@ -163,6 +163,11 @@ public:
      * instead of duplicating hover alpha/palette rules.
      */
     QColor hoverHighlightSurfaceColor() const;
+    /**
+     * The translucent color painted over the hovered row. Highlight at a low
+     * alpha by default.
+     */
+    virtual QColor hoverHighlightColor() const;
 
     void setRangeAvailable(int first, int last, bool available = true);
     bool isItemAvailable(int index) const;
