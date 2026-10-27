@@ -2799,6 +2799,42 @@ private slots:
         QTRY_VERIFY(list.itemWidget(1) && icons(1).isEmpty());
     }
 
+    void classicConversationColoursSentAndReceivedHeaders()
+    {
+        MamChatWidget list;
+        list.setHistoryLoading(true);
+        list.resize(420, 400);
+        NativeChatTheme classic;
+        classic.layout     = NativeChatTheme::Classic;
+        classic.avatarSize = 0;
+        list.setTheme(classic);
+        list.setDirectionColors(QColor("#ff0000"), QColor("#0000ff"));
+        list.appendMessage(message(QStringLiteral("in"), QStringLiteral("Hello")));
+        list.appendMessage(message(QStringLiteral("out"), QStringLiteral("Hi"), 1, true));
+        list.show();
+        QTRY_VERIFY(list.itemWidget(0) && list.itemWidget(1));
+        // As in the legacy text log: time and nickname in the colour of
+        // received or sent messages, the text in the text colour.
+        const auto colourOf = [&list](int index, const QString &text) {
+            return list.itemWidget(index)
+                ->findChild<ChatMessageText *>(QStringLiteral("mamBody"))
+                ->document()
+                ->find(text)
+                .charFormat()
+                .foreground()
+                .color();
+        };
+        QCOMPARE(colourOf(0, QStringLiteral("<Peer>")), QColor("#0000ff"));
+        QCOMPARE(colourOf(0, QStringLiteral("[")), QColor("#0000ff"));
+        QCOMPARE(colourOf(1, QStringLiteral("[")), QColor("#ff0000"));
+        QVERIFY(colourOf(0, QStringLiteral("Hello")) != QColor("#0000ff"));
+        // The colours follow the options, in place.
+        auto *row = list.itemWidget(0);
+        list.setDirectionColors(QColor("#aa0000"), QColor("#0000aa"));
+        QCOMPARE(list.itemWidget(0), row);
+        QCOMPARE(colourOf(0, QStringLiteral("<Peer>")), QColor("#0000aa"));
+    }
+
     void localIdentityMergesWithoutClientStanzaId()
     {
         MamChatWidget list;

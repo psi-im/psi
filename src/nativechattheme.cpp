@@ -147,11 +147,15 @@ void configureNativeChat(MamChatWidget *view, PsiAccount *account, bool groupCha
             ColorOpt::instance()->color(QStringLiteral("options.ui.look.colors.messages.informational")),
             view->palette().color(QPalette::Base), view->palette().color(QPalette::Text)));
         view->setQuoteColor(ColorOpt::instance()->color(QStringLiteral("options.ui.look.colors.messages.quote")));
+        view->setDirectionColors(ColorOpt::instance()->color(QStringLiteral("options.ui.look.colors.messages.sent")),
+                                 ColorOpt::instance()->color(QStringLiteral("options.ui.look.colors.messages.received")));
     };
     applyColors();
     QObject::connect(ColorOpt::instance(), &ColorOpt::changed, view, [applyColors](const QString &name) {
         if (name == QLatin1String("options.ui.look.colors.messages.informational")
             || name == QLatin1String("options.ui.look.colors.messages.quote")
+            || name == QLatin1String("options.ui.look.colors.messages.sent")
+            || name == QLatin1String("options.ui.look.colors.messages.received")
             || name.startsWith(QLatin1String("options.ui.look.colors.chat."))
             || name.startsWith(QLatin1String("options.ui.look.colors.messages.link")))
             applyColors();

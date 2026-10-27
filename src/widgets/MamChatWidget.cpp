@@ -2049,16 +2049,13 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
                                                     : tr("Encrypted with %1").arg(protocol));
                 header += icon(name, toolTip) + QLatin1Char(' ');
             }
-            const QColor nickColor = nicknameColorResolver_ ? nicknameColorResolver_(mv) : QColor();
-            QColor       timeColor = row->options.timeInNickColor && nickColor.isValid() ? nickColor
-                                                                                         : palette().color(QPalette::Text);
-            timeColor.setAlpha(qBound(0, row->options.timeAlpha, 255));
+            const auto [nickColor, timeColor] = inTextHeaderColors(mv, row->options);
             header += QStringLiteral("<a name=\"psi-time\" style=\"color:%1\">%2</a> ")
                           .arg(timeColor.name(QColor::HexArgb),
                                timestampText(mv.dateTime(), row->options).toHtmlEscaped());
             // An emote already starts with "*nick".
             if (!mv.isEmote() || retracted) {
-                const QColor color = nickColor.isValid() ? nickColor : palette().color(QPalette::Text);
+                const QColor color = nickColor;
                 QString      label = (row->options.authorPrefix + nick + row->options.authorSuffix).toHtmlEscaped();
                 if (row->options.boldAuthor)
                     label = QStringLiteral("<b>") + label + QStringLiteral("</b>");
@@ -2518,9 +2515,7 @@ void MamChatWidget::applyPartStyle(QWidget *rowWidget, int index)
         auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
         if (!body)
             return;
-        QColor timeColor = options.timeInNickColor && nickColor.isValid() ? nickColor : palette().color(QPalette::Text);
-        timeColor.setAlpha(qBound(0, options.timeAlpha, 255));
-        const QColor authorColor = nickColor.isValid() ? nickColor : palette().color(QPalette::Text);
+        const auto [authorColor, timeColor] = inTextHeaderColors(items_.at(index).message, options);
         QTextCursor  cursor(body->document());
         for (auto it = body->document()->begin().begin(); !it.atEnd(); ++it) {
             const QTextFragment   fragment = it.fragment();
@@ -2722,6 +2717,33 @@ void MamChatWidget::setTheme(const NativeChatTheme &theme, const NativeChatMessa
     for (int index : materializedRows())
         replaceRow(index);
     updateTimestamps();
+}
+
+std::pair<QColor, QColor> MamChatWidget::inTextHeaderColors(const MessageView &message,
+                                                            const NativeChatPartOptions &options) const
+{
+    // As in the legacy text log: in a group chat the nickname colour, in a
+    // conversation the colour of sent or received messages for the time and
+    // the nickname together.
+    if (!groupChat_) {
+        const QColor direction = message.isLocal() ? sentColor_ : receivedColor_;
+        if (direction.isValid())
+            return { direction, direction };
+    }
+    const QColor nickColor = nicknameColorResolver_ ? nicknameColorResolver_(message) : QColor();
+    QColor       timeColor
+        = options.timeInNickColor && nickColor.isValid() ? nickColor : palette().color(QPalette::Text);
+    timeColor.setAlpha(qBound(0, options.timeAlpha, 255));
+    return { nickColor.isValid() ? nickColor : palette().color(QPalette::Text), timeColor };
+}
+
+void MamChatWidget::setDirectionColors(const QColor &sent, const QColor &received)
+{
+    if (sentColor_ == sent && receivedColor_ == received)
+        return;
+    sentColor_     = sent;
+    receivedColor_ = received;
+    restyleRows();
 }
 
 void MamChatWidget::setMessageIconsEnabled(bool enabled)
