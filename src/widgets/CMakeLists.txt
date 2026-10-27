@@ -9,6 +9,7 @@ set(SOURCES
     OverlayScrollBarManager.cpp
     ThinSplitter.cpp
     NativeChatThemeRegistry.cpp
+    NativeChatRenderers.cpp
     ChatMessageText.cpp
     MessagePreview.cpp
     LinkButton.cpp
@@ -45,6 +46,7 @@ set(HEADERS
     OverlayScrollBarManager.h
     ThinSplitter.h
     NativeChatThemeRegistry.h
+    NativeChatRenderers.h
     ChatMessageText.h
     MessagePreview.h
     LinkButton.h

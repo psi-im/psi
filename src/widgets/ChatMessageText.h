@@ -15,6 +15,8 @@ public:
     QString toPlainText() const { return document()->toPlainText(); }
     void    setWholeMessageSelectionMode(bool active);
     int     heightForWidth(int width) const override;
+    // Width of the content laid out without wrapping, e.g. to fit a bubble.
+    int     naturalWidth() const;
     QSize   sizeHint() const override;
     QSize   minimumSizeHint() const override;
 
@@ -34,6 +36,7 @@ private:
     bool hasMediaMarkup_ = false;
     bool isolatingMedia_ = false;
     bool mediaLayoutScheduled_ = false;
+    mutable int naturalWidth_ = -1;
 
     QString pressedLink_;
     QPoint  pressedLinkPosition_;

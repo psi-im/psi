@@ -678,15 +678,18 @@ nested JSON `layoutSpec`) into the native
 theme registry. A layout tree has `direction` (`horizontal`/`vertical`)
 and `items` (nested groups or any ordering of `author`, `timestamp`,
 `avatar`, `body`). Each leaf is unique and `body` is required; invalid
-definitions fall back to the native Modern/Classic layout. The tree is copied
-on plugin registration and creates only Psi-owned widgets, remaining safe
-after a plugin unload. IDs `modern` and `classic` are reserved; duplicate IDs are
-ignored. Stylesheets may target `mamMessageRow`, `mamAvatar`, `mamAuthor`,
-`mamTimestamp` and `mamBody`. Use palette colours to support light/dark desktops.
-Descriptions contain no callbacks or plugin-owned widgets. String data is
-explicitly detached from plugin static storage. Disable/unload removes the
-plugin's themes, refreshes open settings and views, and falls back to Modern if
-the selected theme disappeared. The saved ID is retained for the next enable.
+definitions fall back to the native Modern/Classic layout. IDs `modern`,
+`classic` and `bubble` are reserved; duplicate IDs are ignored. Stylesheets may
+target `mamMessageRow`, `mamAvatar`, `mamAuthor`, `mamTimestamp` and `mamBody`.
+Use palette colours to support light/dark desktops. String data is explicitly
+detached from plugin static storage. Disable/unload removes the plugin's
+themes, refreshes open settings and views, and falls back to Modern if the
+selected theme disappeared. The saved ID is retained for the next enable.
+
+For full control over the appearance of each message, a plugin can also
+implement `NativeChatRendererProvider` and arrange Psi-built message parts with
+its own widgets; see [native-chat-renderers.md](native-chat-renderers.md). The
+built-in Modern, Classic and Bubble themes are renderers on the same API.
 
 Conference MAM requests start after joining and address the room's bare JID,
 without a `with` filter, as required by [XEP-0313](https://xmpp.org/extensions/xep-0313.html).

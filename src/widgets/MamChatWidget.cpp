@@ -3,6 +3,7 @@
 #include "MamImageViewer.h"
 #include "ChatMessageText.h"
 #include "MessagePreview.h"
+#include "NativeChatRenderers.h"
 #include "filesharingmanager.h"
 #include "fileutil.h"
 #include "urlobject.h"
@@ -249,7 +250,9 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
     setFrameShape(QFrame::NoFrame);
     qRegisterMetaType<ChatReply>();
     qRegisterMetaType<MamHistorySource::Request>();
-    theme_.layout = NativeChatTheme::Modern;
+    theme_.layout  = NativeChatTheme::Modern;
+    ownedRenderer_ = NativeChatRenderers::forDescription(theme_);
+    renderer_      = ownedRenderer_.get();
     // Coalesced single-shot timer: no updates while a chat is hidden and
     // no per-second activity. Only the next visible relative-time boundary
     // schedules a wake-up.
@@ -762,86 +765,90 @@ namespace {
 class ChatMessageRow : public QFrame {
 public:
     QSize sizeHint() const override { return QSize(0, qMax(1, heightForWidth(qMax(1, width())))); }
+
+    // What the renderer was told and asked for when this row was built.
+    NativeChatMessageInfo info;
+    NativeChatPartOptions options;
+    quint64               rendererGeneration = 0;
+    QPointer<QWidget>     actionAnchor;
+    QColor                bodyTextColor;
 };
 
-bool validateLayout(const QJsonValue &node, QSet<QString> &seen, int depth = 0)
-{
-    if (depth > 8)
-        return false;
-    if (node.isString()) {
-        const QString slot = node.toString();
-        if (slot != QLatin1String("author") && slot != QLatin1String("timestamp") && slot != QLatin1String("avatar")
-            && slot != QLatin1String("body"))
-            return false;
-        if (seen.contains(slot))
-            return false;
-        seen.insert(slot);
-        return true;
-    }
-    if (!node.isObject())
-        return false;
-    const QJsonObject group     = node.toObject();
-    const QString     direction = group.value(QStringLiteral("direction")).toString();
-    const QJsonArray  items     = group.value(QStringLiteral("items")).toArray();
-    if ((direction != QLatin1String("horizontal") && direction != QLatin1String("vertical")) || items.isEmpty()
-        || items.size() > 12)
-        return false;
-    for (const auto &child : items)
-        if (!validateLayout(child, seen, depth + 1))
-            return false;
-    return true;
-}
+ChatMessageRow *messageRow(QWidget *widget) { return dynamic_cast<ChatMessageRow *>(widget); }
 
-QJsonObject resolvedLayout(const NativeChatTheme &theme)
-{
-    if (!theme.layoutSpec.isEmpty()) {
-        const auto    custom = QJsonDocument::fromJson(theme.layoutSpec.toUtf8());
-        QSet<QString> seen;
-        if (custom.isObject() && validateLayout(custom.object(), seen) && seen.contains(QStringLiteral("body")))
-            return custom.object();
+// The message body handed to renderers: reply preview, text, file cards and
+// reactions in one column. Its size hint reports the natural width of the
+// content, so a renderer can shrink a bubble to the text with ordinary layouts.
+class MessageBodyPart final : public QWidget {
+public:
+    explicit MessageBodyPart(QWidget *parent) : QWidget(parent)
+    {
+        setObjectName(QStringLiteral("mamBodyPart"));
+        auto policy = QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+        policy.setHeightForWidth(true);
+        setSizePolicy(policy);
+        column_ = new QVBoxLayout(this);
+        column_->setContentsMargins(0, 0, 0, 0);
+        column_->setSpacing(4);
     }
-    static const auto modern
-        = QJsonDocument::fromJson(
-              R"({"direction":"horizontal","items":["avatar",{"direction":"vertical","items":[{"direction":"horizontal","items":["author","timestamp"]},"body"]}]})")
-              .object();
-    static const auto classic
-        = QJsonDocument::fromJson(R"({"direction":"horizontal","items":["timestamp","author","body"]})").object();
-    return theme.layout == NativeChatTheme::Classic ? classic : modern;
-}
 
-QBoxLayout *buildThemeLayout(const QJsonObject &node, const QHash<QString, QWidget *> &elements,
-                             const NativeChatTheme &theme)
-{
-    const bool  horizontal = node.value(QStringLiteral("direction")).toString() == QLatin1String("horizontal");
-    QBoxLayout *layout
-        = horizontal ? static_cast<QBoxLayout *>(new QHBoxLayout) : static_cast<QBoxLayout *>(new QVBoxLayout);
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(horizontal ? (theme.layout == NativeChatTheme::Classic ? 4 : 10) : 3);
-    for (const auto &item : node.value(QStringLiteral("items")).toArray()) {
-        if (item.isObject()) {
-            auto *nested = buildThemeLayout(item.toObject(), elements, theme);
-            if (!horizontal && item.toObject().value(QStringLiteral("direction")) == QLatin1String("horizontal")) {
-                // A horizontal header inside a vertical message column needs
-                // its own height-for-width boundary. Qt6 otherwise distributes
-                // available height inside the nested layout, leaving a large
-                // blank gap between the header and the message document.
-                auto *header = new QWidget;
-                header->setObjectName(QStringLiteral("mamHeaderGroup"));
-                header->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
-                header->setLayout(nested);
-                layout->addWidget(header, 0, Qt::AlignTop);
-            } else {
-                layout->addLayout(nested, horizontal ? 1 : 0);
-                if (!horizontal)
-                    layout->setAlignment(nested, Qt::AlignTop);
-            }
-        } else if (auto *widget = elements.value(item.toString(), nullptr)) {
-            const bool bodyOnLine = horizontal && item.toString() == QLatin1String("body");
-            layout->addWidget(widget, bodyOnLine ? 1 : 0, Qt::AlignTop);
+    QVBoxLayout *column() const { return column_; }
+
+    QSize sizeHint() const override
+    {
+        int width = 0;
+        for (int i = 0; i < column_->count(); ++i) {
+            QLayoutItem *item   = column_->itemAt(i);
+            QWidget     *widget = item->widget();
+            if (widget && widget->isHidden())
+                continue;
+            if (auto *text = qobject_cast<ChatMessageText *>(widget))
+                width = qMax(width, text->naturalWidth());
+            else if (auto *preview = qobject_cast<MessagePreview *>(widget))
+                width = qMax(width, preview->naturalWidth());
+            else
+                width = qMax(width, item->sizeHint().width());
         }
+        const QMargins margins = column_->contentsMargins();
+        width += margins.left() + margins.right();
+        return QSize(width, hasHeightForWidth() ? heightForWidth(width) : QWidget::sizeHint().height());
     }
-    return layout;
-}
+
+private:
+    QVBoxLayout *column_ = nullptr;
+};
+
+// The row under construction, as seen by a NativeChatMessageRenderer.
+class RowCanvas final : public NativeChatMessageCanvas {
+public:
+    explicit RowCanvas(ChatMessageRow *row) : row_(row) { }
+    void     add(Part part, QWidget *widget) { parts_.insert(part, widget); }
+    QWidget *row() const override { return row_; }
+    QWidget *take(Part part) override
+    {
+        QWidget *widget = parts_.value(part, nullptr);
+        if (widget)
+            taken_.insert(part);
+        return widget;
+    }
+    void setActionAnchor(QWidget *anchor) override { row_->actionAnchor = anchor; }
+    void setBodyTextColor(const QColor &color) override { row_->bodyTextColor = color; }
+    // Parts left out of the renderer's layout stay hidden children of the
+    // row, also when Psi would otherwise show them (the selection check box).
+    void hideUntaken()
+    {
+        for (auto it = parts_.cbegin(); it != parts_.cend(); ++it)
+            if (!taken_.contains(it.key())) {
+                it.value()->setProperty("_psiMamUnplaced", true);
+                it.value()->hide();
+            }
+    }
+
+private:
+    ChatMessageRow                *row_;
+    QHash<int, QWidget *>          parts_;
+    QSet<int>                      taken_;
+};
 
 }
 
@@ -1420,13 +1427,17 @@ void MamChatWidget::positionMessageActions()
     auto     *row = at >= 0 ? rowWidget(at) : nullptr;
     if (!row)
         return;
+    // The renderer may anchor the actions to e.g. a bubble instead of the row.
+    QWidget *anchor = row;
+    if (auto *message = messageRow(row); message && message->actionAnchor && !message->actionAnchor->isHidden())
+        anchor = message->actionAnchor;
     messageActions_->adjustSize();
-    // Float across the row's top edge at its right side, clamped to the view.
-    const QPoint rowTopLeft = row->mapTo(viewport(), QPoint(0, 0));
-    const int    maxX       = qMax(0, viewport()->width() - messageActions_->width() - 4);
-    const int    maxY       = qMax(0, viewport()->height() - messageActions_->height());
-    messageActions_->move(qBound(0, rowTopLeft.x() + row->width() - messageActions_->width() - 8, maxX),
-                          qBound(0, rowTopLeft.y() - messageActions_->height() / 2, maxY));
+    // Float across the anchor's top edge at its right side, clamped to the view.
+    const QPoint topLeft = anchor->mapTo(viewport(), QPoint(0, 0));
+    const int    maxX    = qMax(0, viewport()->width() - messageActions_->width() - 4);
+    const int    maxY    = qMax(0, viewport()->height() - messageActions_->height());
+    messageActions_->move(qBound(0, topLeft.x() + anchor->width() - messageActions_->width() - 8, maxX),
+                          qBound(0, topLeft.y() - messageActions_->height() / 2, maxY));
 }
 
 void MamChatWidget::setQuickReactionsExpanded(bool expanded)
@@ -1825,20 +1836,20 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     row->setProperty("_psiMamInformational", mv.type() != MessageView::Message);
     // Only the timestamp owns the full date/time tooltip.
     row->installEventFilter(this);
-
     row->setStyleSheet(theme_.styleSheet);
-    auto      *outer   = new QHBoxLayout(row);
-    const bool modern  = theme_.layout == NativeChatTheme::Modern;
-    const bool message = mv.type() == MessageView::Message;
-    outer->setContentsMargins(12, modern ? 8 : 2, 12, modern ? 8 : 2);
-    outer->setSpacing(theme_.spacing);
+    row->info               = messageInfo(index);
+    row->options            = renderer_->partOptions(row->info);
+    row->rendererGeneration = rendererGeneration_;
+    const bool message      = mv.type() == MessageView::Message;
+    RowCanvas  canvas(row);
+
     auto *selection = new QCheckBox(row);
     selection->setObjectName(QStringLiteral("mamMessageSelection"));
     selection->setToolTip(tr("Select message"));
     selection->setAccessibleName(tr("Select message"));
     selection->setVisible(!selectedKeys_.isEmpty());
     selection->setChecked(selectedKeys_.contains(items_.at(index).key));
-    outer->addWidget(selection, 0, Qt::AlignTop);
+    canvas.add(NativeChatMessageCanvas::Selection, selection);
     connect(selection, &QCheckBox::toggled, this, [this, row](bool checked) {
         // A prepend shifts indices, and a MAM overlap can adopt a new key.
         // Resolve the row's current identity at the time of the click.
@@ -1851,28 +1862,16 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
         }
     });
 
-    auto *content = new QWidget(row);
-    content->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    outer->addWidget(content, 1, Qt::AlignTop);
-    QHash<QString, QWidget *> elements;
-
     if (message) {
         const QString nick   = mv.nick().isEmpty() ? (mv.isLocal() ? tr("Me") : tr("Message")) : mv.nick();
-        auto         *author = new QLabel(modern ? nick : nick + QLatin1Char(':'), content);
+        auto         *author = new QLabel(nick + row->options.authorSuffix, row);
         author->setObjectName(QStringLiteral("mamAuthor"));
         author->setTextFormat(Qt::PlainText);
         author->setTextInteractionFlags(Qt::TextSelectableByMouse);
         author->setForegroundRole(QPalette::Text);
-        QFont nameFont = author->font();
-        nameFont.setBold(modern);
-        author->setFont(nameFont);
-        elements.insert(QStringLiteral("author"), author);
+        canvas.add(NativeChatMessageCanvas::Author, author);
         author->installEventFilter(this);
-        auto *time
-            = new QLabel(modern ? displayTime(mv.dateTime())
-                                : QStringLiteral("[") + mv.dateTime().toLocalTime().toString(QStringLiteral("HH:mm:ss"))
-                                 + QStringLiteral("]"),
-                         content);
+        auto *time = new QLabel(timestampText(mv.dateTime(), row->options), row);
         time->setObjectName(QStringLiteral("mamTimestamp"));
         time->setTextFormat(Qt::PlainText);
         const bool read = mv.isLocal() && !groupChat_
@@ -1912,7 +1911,7 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
             // One semantic timestamp slot: time, delivery/read state, edit mark.
             // Do not append glyphs to the time QLabel itself: its text is
             // refreshed for relative-time display and themes can reposition it.
-            auto *timeGroup = new QWidget(content);
+            auto *timeGroup = new QWidget(row);
             timeGroup->setObjectName(QStringLiteral("mamTimestampGroup"));
             auto *timeLayout = new QHBoxLayout(timeGroup);
             timeLayout->setContentsMargins(0, 0, 0, 0);
@@ -1938,31 +1937,32 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
                 timeLayout->addWidget(lock, 0, Qt::AlignVCenter);
             }
             if (mv.isEdited()) {
-            // Psi's edit icon at the shared timestamp-mark size and baseline.
-            auto *pencil = new IconMark(QStringLiteral("psi/action_templates_edit"), time, timeGroup);
-            pencil->setObjectName(QStringLiteral("mamEditedIndicator"));
-            pencil->setToolTip(tr("The message was corrected"));
-            pencil->setAccessibleName(tr("Edited message"));
-            timeLayout->addWidget(pencil, 0, Qt::AlignVCenter);
+                // Psi's edit icon at the shared timestamp-mark size and baseline.
+                auto *pencil = new IconMark(QStringLiteral("psi/action_templates_edit"), time, timeGroup);
+                pencil->setObjectName(QStringLiteral("mamEditedIndicator"));
+                pencil->setToolTip(tr("The message was corrected"));
+                pencil->setAccessibleName(tr("Edited message"));
+                timeLayout->addWidget(pencil, 0, Qt::AlignVCenter);
             }
-            elements.insert(QStringLiteral("timestamp"), timeGroup);
+            canvas.add(NativeChatMessageCanvas::Timestamp, timeGroup);
         } else {
-            elements.insert(QStringLiteral("timestamp"), time);
+            canvas.add(NativeChatMessageCanvas::Timestamp, time);
         }
-        if (theme_.avatarSize > 0) {
-            auto *avatar = new QLabel(content);
+        if (row->options.avatarSize > 0) {
+            const int size   = qBound(8, row->options.avatarSize, 256);
+            auto     *avatar = new QLabel(row);
             avatar->setObjectName(QStringLiteral("mamAvatar"));
             avatar->setCursor(Qt::PointingHandCursor);
-            avatar->setFixedSize(theme_.avatarSize, theme_.avatarSize);
+            avatar->setFixedSize(size, size);
             updateAvatar(avatar, mv);
-            elements.insert(QStringLiteral("avatar"), avatar);
+            canvas.add(NativeChatMessageCanvas::Avatar, avatar);
             avatar->installEventFilter(this);
         }
-        updateNicknameColor(author, mv);
-        updateTimestampAppearance(time);
     }
 
-    auto *body = new ChatMessageText(content);
+    auto *bodyPart = new MessageBodyPart(row);
+    canvas.add(NativeChatMessageCanvas::Body, bodyPart);
+    auto *body = new ChatMessageText(bodyPart);
     body->setObjectName(QStringLiteral("mamBody"));
     body->setMediaOpener(mediaOpener_);
     body->setFont(font());
@@ -2061,21 +2061,15 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     }
 
     body->setRichText(richText);
-    elements.insert(QStringLiteral("body"), body);
+    bodyPart->column()->addWidget(body);
     if (!files.isEmpty()) {
-        auto *attachmentGroup = new QWidget(content);
-        auto *column = new QVBoxLayout(attachmentGroup);
-        column->setContentsMargins(0, 0, 0, 0);
-        column->setSpacing(5);
-        if (!richText.trimmed().isEmpty())
-            column->addWidget(body);
-        else
+        if (richText.trimmed().isEmpty())
             body->hide();
 
         for (const auto &file : files) {
             if (!file.item)
                 continue;
-            auto *preview = new MessagePreview(palette().color(QPalette::Link), {}, attachmentGroup);
+            auto *preview = new MessagePreview(palette().color(QPalette::Link), {}, bodyPart);
             preview->setObjectName(QStringLiteral("mamFilePreview"));
             preview->setLinkColor(palette().color(QPalette::Link));
             const QString name = file.item->displayName();
@@ -2257,12 +2251,11 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
                 if (QFileInfo(path).isFile())
                     QApplication::clipboard()->setText(path);
             });
-            column->addWidget(preview);
+            bodyPart->column()->addWidget(preview);
             preview->installEventFilter(this);
             for (auto *child : preview->findChildren<QWidget *>())
                 child->installEventFilter(this);
         }
-        elements[QStringLiteral("body")] = attachmentGroup;
     }
     body->installEventFilter(this);
     body->viewport()->installEventFilter(this);
@@ -2277,12 +2270,7 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
                                      : event.message.nick().isEmpty() ? tr("Contact")
                                                                       : event.message.nick());
     if (!retracted && !counts.isEmpty()) {
-        auto *group  = new QWidget(content);
-        auto *column = new QVBoxLayout(group);
-        column->setContentsMargins(0, 0, 0, 0);
-        column->setSpacing(4);
-        column->addWidget(body);
-        auto *chips = new QWidget(group);
+        auto *chips = new QWidget(bodyPart);
         chips->setObjectName(QStringLiteral("mamReactions"));
         auto *strip = new QHBoxLayout(chips);
         strip->setContentsMargins(0, 0, 0, 0);
@@ -2312,16 +2300,11 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
             strip->addWidget(chip);
         }
         strip->addStretch();
-        column->addWidget(chips);
-        elements[QStringLiteral("body")] = group;
+        bodyPart->column()->addWidget(chips);
     }
 
     if (!retracted && mv.reply().isValid()) {
-        auto *group = new QWidget(content);
-        auto *column = new QVBoxLayout(group);
-        column->setContentsMargins(0, 0, 0, 0);
-        column->setSpacing(4);
-        auto *preview = new MessagePreview(quoteColor_, quoteColor_, group);
+        auto *preview = new MessagePreview(quoteColor_, quoteColor_, bodyPart);
         preview->setLinkColor(palette().color(QPalette::Link));
         preview->setObjectName(QStringLiteral("mamReplyPreview"));
         QString author = mv.reply().author;
@@ -2338,46 +2321,12 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
                 itemsChanged(logical, logical);
             }
         });
-        column->addWidget(preview);
+        bodyPart->column()->insertWidget(0, preview);
         preview->installEventFilter(this);
         for (auto *child : preview->findChildren<QWidget *>())
             child->installEventFilter(this);
-        column->addWidget(elements.value(QStringLiteral("body")));
-        elements[QStringLiteral("body")] = group;
     }
 
-    if (modern && theme_.layoutSpec.isEmpty()) {
-        // Keep Psi's original Modern presentation geometry intact. Qt6 treats
-        // nested QBoxLayouts differently from Qt5 when the body has a custom
-        // height-for-width and the header is not a separate QWidget.
-        if (auto *avatar = elements.value(QStringLiteral("avatar"), nullptr))
-            outer->insertWidget(1, avatar, 0, Qt::AlignTop);
-        auto *column = new QVBoxLayout(content);
-        column->setContentsMargins(0, 0, 0, 0);
-        column->setSpacing(3);
-        if (message) {
-            auto *header = new QWidget(content);
-            header->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-            auto *headerLayout = new QHBoxLayout(header);
-            headerLayout->setContentsMargins(0, 0, 0, 0);
-            headerLayout->setSpacing(10);
-            headerLayout->addWidget(elements.value(QStringLiteral("author")));
-            headerLayout->addWidget(elements.value(QStringLiteral("timestamp")));
-            headerLayout->addStretch();
-            column->addWidget(header, 0, Qt::AlignTop);
-        }
-        column->addWidget(elements.value(QStringLiteral("body")), 0, Qt::AlignTop);
-    } else {
-        // Classic and plugin themes can choose any nested row/column
-        // arrangement without owning or replacing the message widget.
-        const QJsonObject layout = resolvedLayout(theme_);
-        content->setLayout(buildThemeLayout(layout, elements, theme_));
-        QSet<QString> used;
-        validateLayout(layout, used);
-        for (auto it = elements.cbegin(); it != elements.cend(); ++it)
-            if (!used.contains(it.key()))
-                it.value()->hide();
-    }
     if (!message) {
         QTextCursor cursor(body->document());
         cursor.select(QTextCursor::Document);
@@ -2385,8 +2334,35 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
         format.setAlignment(mv.type() == MessageView::Subject ? Qt::AlignLeft : Qt::AlignHCenter);
         cursor.mergeBlockFormat(format);
     }
+    // Psi styles its parts first, so that a renderer may refine them.
+    applyPartStyle(row, index);
+    renderer_->arrange(canvas, row->info);
+    canvas.hideUntaken();
     updateRowSelection(row, selectedKeys_.contains(items_.at(index).key));
     return row;
+}
+
+NativeChatMessageInfo MamChatWidget::messageInfo(int index) const
+{
+    const auto           &mv = items_.at(index).message;
+    NativeChatMessageInfo info;
+    info.kind = mv.type() == MessageView::Message ? NativeChatMessageInfo::Message
+        : mv.type() == MessageView::Subject       ? NativeChatMessageInfo::Subject
+                                                  : NativeChatMessageInfo::Notice;
+    info.local     = mv.isLocal();
+    info.groupChat = groupChat_;
+    info.emote     = mv.isEmote();
+    info.retracted = isRetracted(items_.at(index));
+    info.nick      = mv.nick();
+    info.time      = mv.dateTime();
+    return info;
+}
+
+QString MamChatWidget::timestampText(const QDateTime &when, const NativeChatPartOptions &options, const QDateTime &now)
+{
+    if (options.timeFormat.isEmpty())
+        return displayTime(when, now);
+    return when.isValid() ? when.toLocalTime().toString(options.timeFormat) : QString();
 }
 
 QString MamChatWidget::displayTime(const QDateTime &when, const QDateTime &now)
@@ -2413,30 +2389,40 @@ QString MamChatWidget::fullTimestamp(const QDateTime &when)
         + local.toString(QStringLiteral("HH:mm:ss t"));
 }
 
-void MamChatWidget::updateTimestampAppearance(QLabel *label)
+void MamChatWidget::applyPartStyle(QWidget *rowWidget, int index)
 {
+    auto *row = messageRow(rowWidget);
+    if (!row || index < 0 || index >= items_.size())
+        return;
+    const NativeChatPartOptions &options = row->options;
+    // Even an uncoloured nickname needs an explicit refresh: a style sheet on
+    // the chat window can leave nested labels with their old resolved palette.
+    const QColor nickColor = nicknameColorResolver_ ? nicknameColorResolver_(items_.at(index).message) : QColor();
+    if (auto *author = row->findChild<QLabel *>(QStringLiteral("mamAuthor"))) {
+        QFont authorFont = font();
+        authorFont.setBold(options.boldAuthor);
+        author->setFont(authorFont);
+        QPalette colors = author->palette();
+        colors.setColor(QPalette::Text, nickColor.isValid() ? nickColor : palette().color(QPalette::Text));
+        colors.setColor(QPalette::WindowText, colors.color(QPalette::Text));
+        author->setPalette(colors);
+    }
+    auto *label = row->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
+    if (!label)
+        return;
     // Always derive the timestamp font from the CHAT font, never the label's
-    // previous font: recreating a row or switching themes must not progressively
-    // shrink it. Classic keeps the full-size legacy [HH:mm:ss] presentation.
-    QFont      timeFont = font();
-    const bool classic  = theme_.layout == NativeChatTheme::Classic;
-    if (!classic) {
+    // previous font: recreating a row or switching themes must not
+    // progressively shrink it.
+    QFont timeFont = font();
+    if (!qFuzzyIsNull(options.timePointDelta)) {
         if (timeFont.pointSizeF() > 0)
-            timeFont.setPointSizeF(qMax(7.0, timeFont.pointSizeF() - 1.0));
+            timeFont.setPointSizeF(qMax(7.0, timeFont.pointSizeF() + options.timePointDelta));
         else if (timeFont.pixelSize() > 0)
-            timeFont.setPixelSize(qMax(9, timeFont.pixelSize() - 1));
+            timeFont.setPixelSize(qMax(9, timeFont.pixelSize() + qRound(options.timePointDelta)));
     }
     label->setFont(timeFont);
-
-    QColor color = palette().color(QPalette::Text);
-    if (classic && groupChat_) {
-        // The QTextEdit-based MUC Classic painted [time] and nickname with
-        // the SAME nick color, including informational/uncolored history.
-        if (auto *author = label->parentWidget()->findChild<QLabel *>(QStringLiteral("mamAuthor")))
-            color = author->palette().color(QPalette::Text);
-    } else if (!classic) {
-        color.setAlpha(188); // The Modern time stays legible but unobtrusive.
-    }
+    QColor color = options.timeInNickColor && nickColor.isValid() ? nickColor : palette().color(QPalette::Text);
+    color.setAlpha(qBound(0, options.timeAlpha, 255));
     QPalette colors = label->palette();
     colors.setColor(QPalette::Text, color);
     colors.setColor(QPalette::WindowText, color);
@@ -2451,11 +2437,23 @@ void MamChatWidget::updateTimestampAppearance(QLabel *label)
     }
 }
 
+void MamChatWidget::restyleRows()
+{
+    for (int index : materializedRows()) {
+        auto *row = messageRow(rowWidget(index));
+        if (!row)
+            continue;
+        applyPartStyle(row, index);
+        if (row->rendererGeneration == rendererGeneration_)
+            renderer_->restyle(row, row->info);
+    }
+}
+
 void MamChatWidget::updateTimestamps()
 {
     timestampTimer_->stop();
-    // Hidden tabs/windows and Classic's absolute timestamps require no clock.
-    if (!isVisible() || window()->isMinimized() || theme_.layout == NativeChatTheme::Classic)
+    // Hidden tabs/windows require no clock, nor do themes with clock times.
+    if (!isVisible() || window()->isMinimized())
         return;
 
     const auto range = knownVisibleRange();
@@ -2474,15 +2472,22 @@ void MamChatWidget::updateTimestamps()
         if (!row || !row->isVisibleTo(viewport())
             || !QRect(row->mapTo(viewport(), QPoint()), row->size()).intersects(viewport()->rect()))
             continue;
+        // Ask the current renderer: rows being rebuilt for a new theme may
+        // still show the previous one.
+        if (!renderer_->partOptions(messageInfo(i)).timeFormat.isEmpty())
+            continue;
         auto *label = row->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
         if (!label)
             continue;
         const auto when = items_.at(i).message.dateTime();
         if (!when.isValid())
             continue;
-        const auto text = displayTime(when, now);
-        if (label->text() != text)
-            label->setText(text);
+        auto *message = messageRow(row);
+        if (message && message->options.timeFormat.isEmpty()) {
+            const auto text = displayTime(when, now);
+            if (label->text() != text)
+                label->setText(text);
+        }
 
         const qint64 age       = when.msecsTo(now);
         qint64       untilNext = 0;
@@ -2515,16 +2520,10 @@ void MamChatWidget::changeEvent(QEvent *event)
             if (!row)
                 continue;
             row->setFont(font());
-            if (auto *author = row->findChild<QLabel *>(QStringLiteral("mamAuthor"))) {
-                QFont authorFont = font();
-                authorFont.setBold(theme_.layout == NativeChatTheme::Modern);
-                author->setFont(authorFont);
-            }
-            if (auto *time = row->findChild<QLabel *>(QStringLiteral("mamTimestamp")))
-                updateTimestampAppearance(time);
             if (auto *body = row->findChild<ChatMessageText *>())
                 body->setFont(font());
         }
+        restyleRows();
         if (!items_.isEmpty())
             for (int at : materializedRows()) {
                 const int logical = historySource_.logicalIndex(at);
@@ -2556,12 +2555,10 @@ void MamChatWidget::refreshPalette()
     // colors. Resolve rows from the chat palette, including custom link colors.
     viewport()->setPalette(palette());
     refreshSelection();
-    refreshNicknameColors();
+    restyleRows();
     refreshAvatars();
     for (int index : materializedRows())
         if (auto *row = rowWidget(index)) {
-            if (auto *time = row->findChild<QLabel *>(QStringLiteral("mamTimestamp")))
-                updateTimestampAppearance(time);
             if (auto *preview = row->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview")))
                 preview->setLinkColor(palette().color(QPalette::Link));
             for (auto *fileCard : row->findChildren<MessagePreview *>(QStringLiteral("mamFilePreview"))) {
@@ -2571,10 +2568,20 @@ void MamChatWidget::refreshPalette()
         }
 }
 
-void MamChatWidget::setTheme(const NativeChatTheme &theme)
+void MamChatWidget::setTheme(const NativeChatTheme &theme, const NativeChatMessageRenderer *renderer)
 {
     measuredMessageHeights_.clear();
     theme_ = theme;
+    // Rows built earlier keep their parts and options until they are replaced
+    // below; nothing calls back into the previous renderer.
+    if (renderer) {
+        ownedRenderer_.reset();
+        renderer_ = renderer;
+    } else {
+        ownedRenderer_ = NativeChatRenderers::forDescription(theme);
+        renderer_      = ownedRenderer_.get();
+    }
+    ++rendererGeneration_;
     for (int index : materializedRows())
         replaceRow(index);
     updateTimestamps();
@@ -2586,27 +2593,7 @@ void MamChatWidget::setNicknameColorResolver(std::function<QColor(const MessageV
     refreshNicknameColors();
 }
 
-void MamChatWidget::refreshNicknameColors()
-{
-    for (int index : materializedRows()) {
-        if (auto *row = rowWidget(index))
-            if (auto *author = row->findChild<QLabel *>(QStringLiteral("mamAuthor")))
-                updateNicknameColor(author, items_.at(index).message);
-    }
-}
-
-void MamChatWidget::updateNicknameColor(QLabel *author, const MessageView &message)
-{
-    // Even an uncolored nickname needs an explicit refresh: a stylesheet on
-    // the chat window can leave this nested QLabel with its old resolved palette.
-    const QColor color   = nicknameColorResolver_ ? nicknameColorResolver_(message) : QColor();
-    QPalette     palette = author->palette();
-    palette.setColor(QPalette::Text, color.isValid() ? color : this->palette().color(QPalette::Text));
-    palette.setColor(QPalette::WindowText, palette.color(QPalette::Text));
-    author->setPalette(palette);
-    if (auto *time = author->parentWidget()->findChild<QLabel *>(QStringLiteral("mamTimestamp")))
-        updateTimestampAppearance(time);
-}
+void MamChatWidget::refreshNicknameColors() { restyleRows(); }
 
 void MamChatWidget::setAvatarResolver(std::function<QPixmap(const MessageView &)> resolver)
 {
@@ -3024,7 +3011,7 @@ void MamChatWidget::updateRowSelection(QFrame *row, bool selected)
     if (auto *check = row->findChild<QCheckBox *>(QStringLiteral("mamMessageSelection"))) {
         const QSignalBlocker blocker(check);
         check->setChecked(selected);
-        check->setVisible(selecting);
+        check->setVisible(selecting && !check->property("_psiMamUnplaced").toBool());
     }
     updateRowPalette(row, selected);
     if (auto *author = row->findChild<QLabel *>(QStringLiteral("mamAuthor"))) {
@@ -3062,7 +3049,10 @@ void MamChatWidget::updateRowPalette(QFrame *row, bool selected)
     row->setAutoFillBackground(true);
     if (auto *body = row->findChild<ChatMessageText *>()) {
         QPalette textPalette = palette;
-        if (row->property("_psiMamInformational").toBool())
+        auto    *message     = messageRow(row);
+        if (message && message->bodyTextColor.isValid())
+            textPalette.setColor(QPalette::Text, message->bodyTextColor);
+        else if (row->property("_psiMamInformational").toBool())
             textPalette.setColor(QPalette::Text,
                                  informationalColor_.isValid() ? informationalColor_ : palette.color(QPalette::Link));
         body->setPalette(textPalette);

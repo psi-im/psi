@@ -5,6 +5,7 @@
 
 #include "pluginhost.h"
 #include "nativechattheme.h"
+#include "../plugins/include/nativechatrenderer.h"
 #include "../plugins/include/nativechatthemeprovider.h"
 
 #include "../avcall/mediadevicewatcher.h"
@@ -328,6 +329,12 @@ bool PluginHost::load()
 bool PluginHost::unload()
 {
     if (plugin_ && disable()) {
+        if (keepResident_) {
+            // Disabled, but its library stays loaded until Psi exits: chat
+            // rows built by its renderer may still be alive (see
+            // nativechatrenderer.h). Enabling it again needs no reload.
+            return true;
+        }
         if (!loader_) {
             qWarning("Plugin %s's loader wasn't found when trying to unload", qPrintable(name_));
             return false;
@@ -527,8 +534,14 @@ bool PluginHost::enable()
         enableHandler = new QObject(this);
         enabled_      = qobject_cast<PsiPlugin *>(plugin_)->enable();
         if (enabled_) {
-            if (auto *themes = qobject_cast<NativeChatThemeProvider *>(plugin_))
-                NativeChatThemes::instance()->add(this, themes->nativeChatThemes());
+            if (auto *themes = qobject_cast<NativeChatThemeProvider *>(plugin_)) {
+                NativeChatThemes::instance()->add(this, themes->nativeChatThemes(),
+                                                  qobject_cast<NativeChatRendererProvider *>(plugin_));
+                // Chat rows built by the plugin's renderers run its code and
+                // are destroyed later than the plugin is disabled.
+                if (NativeChatThemes::instance()->hasRenderers(this))
+                    keepResident_ = true;
+            }
             emit enabled();
         } else {
             manager_->unregisterEncryptionMethods(this);

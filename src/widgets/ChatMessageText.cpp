@@ -42,6 +42,7 @@ ChatMessageText::ChatMessageText(QWidget *parent) : PsiTextView(parent)
     document()->setDefaultTextOption(option);
     connect(document()->documentLayout(), &QAbstractTextDocumentLayout::documentSizeChanged, this,
             [this] { updateGeometry(); });
+    connect(document(), &QTextDocument::contentsChanged, this, [this] { naturalWidth_ = -1; });
     // Cached SIMS media is present at parse time; uncached images are inserted
     // later by PsiTextView after their downloads finish. Normalize both paths.
     connect(document(), &QTextDocument::contentsChanged, this, [this] {
@@ -168,6 +169,7 @@ void ChatMessageText::setWholeMessageSelectionMode(bool active)
 
 void ChatMessageText::applyDocumentFont()
 {
+    naturalWidth_ = -1;
     document()->setDefaultFont(font());
     // PsiRichText stores a font on inserted fragments. Updating the widget's
     // inherited font alone leaves those old fragments at the previous size.
@@ -211,6 +213,20 @@ int ChatMessageText::heightForWidth(int width) const
     const int height = int(std::ceil(document()->documentLayout()->documentSize().height()));
     document()->setTextWidth(previousWidth);
     return qMax(fontMetrics().height(), height);
+}
+
+int ChatMessageText::naturalWidth() const
+{
+    if (naturalWidth_ < 0) {
+        // Measured like heightForWidth(): without disturbing the document
+        // currently painted at the row's width.
+        const QSignalBlocker blocker(document()->documentLayout());
+        const qreal          previousWidth = document()->textWidth();
+        document()->setTextWidth(-1);
+        naturalWidth_ = int(std::ceil(document()->idealWidth())) + 1;
+        document()->setTextWidth(previousWidth);
+    }
+    return naturalWidth_;
 }
 
 QSize ChatMessageText::sizeHint() const
