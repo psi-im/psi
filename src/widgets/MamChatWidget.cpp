@@ -2152,6 +2152,8 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
         }
     }
 
+    // The sender may explicitly forbid XEP-0393 styling, including quotes.
+    body->setQuoteStylingEnabled(!mv.stylingDisabled());
     body->setRichText(richText);
     // After the text: setting it clears the document's resources.
     if (!inlineIcons.isEmpty()) {
