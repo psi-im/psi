@@ -480,7 +480,11 @@ void ChatMessageText::removeQuotedLines()
         lines.append({ start, stop });
         start = stop + 1;
     }
-    const auto quoted = [doc](const QPair<int, int> &line) {
+    const auto quoted = [this, doc](const QPair<int, int> &line) {
+        // A styled quote has had its leading > markers removed; the block
+        // format keeps the semantic quote level even for later previews.
+        if (isQuotedBlock(doc->findBlock(line.first)))
+            return true;
         for (int at = line.first; at < line.second; ++at) {
             const QChar c = doc->characterAt(at);
             if (c == QLatin1Char('>'))
