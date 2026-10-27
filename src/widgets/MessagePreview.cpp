@@ -131,6 +131,9 @@ void MessagePreview::setContent(const QString &title, const QString &text)
         return;
     expanded_ = false;
     title_->setText(title);
+    // No placeholder heading: without a title the header row collapses
+    // (unless it still holds the dismiss button).
+    title_->setVisible(!title.isEmpty());
     text_->setPlainText(text);
     updatePreview();
 }

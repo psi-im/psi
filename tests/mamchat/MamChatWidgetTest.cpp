@@ -1022,6 +1022,23 @@ private slots:
         QVERIFY(preview);
         QCOMPARE(preview->property("replyResolved").toBool(), false);
         QCOMPARE(room.itemWidget(1)->findChild<ChatMessageText *>()->toPlainText(), QString("answer"));
+        auto *title = preview->findChild<QLabel *>("previewTitle");
+        QVERIFY(title);
+        QCOMPARE(title->text(), QString("Vitozz"));
+        QVERIFY(!title->isHidden());
+
+        // A quote without an author shows no placeholder heading at all.
+        auto anonymous = message("m3", "> quoted\nanswer", 3);
+        anonymous.setUserId(QStringLiteral("room@example.org/Me"));
+        anonymous.setReply({ {}, {}, {}, "quoted" }, "answer", true);
+        room.appendMessage(anonymous);
+        QTRY_VERIFY(room.itemWidget(2));
+        auto *bare = room.itemWidget(2)->findChild<MessagePreview *>("mamReplyPreview");
+        QVERIFY(bare);
+        auto *bareTitle = bare->findChild<QLabel *>("previewTitle");
+        QVERIFY(bareTitle);
+        QVERIFY(bareTitle->text().isEmpty());
+        QVERIFY(bareTitle->isHidden());
     }
 
     void legacyMucReactionsUseBoundedMessageIdWindow()
