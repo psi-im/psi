@@ -27,6 +27,9 @@
 #include <QScrollBar>
 #include <QTextDocumentFragment>
 #include <QTextFragment>
+#include <QTextBlock>
+#include <QPainter>
+#include <QVector>
 #include <QTimer>
 
 #include "filesharingdownloader.h"
@@ -36,6 +39,33 @@
 #include "qitevideo.h"
 #include "textutil.h"
 #include "urlobject.h"
+
+// Quoted lines ("> text", XEP-0393 block quotes) become blocks with this
+// property, their nesting level, indented and drawn with bars as in a quote.
+constexpr int QuoteLevelProperty = QTextFormat::UserProperty + 0x51;
+constexpr int QuoteBarWidth      = 3;
+constexpr int QuoteIndent        = 10; // A bar and the gap after it, as in MessagePreview.
+
+// The nesting level of a line quoted with '>' (also "> >" and ">>"), and the
+// length of its markers including one space after them.
+int quoteMarkers(const QString &line, int *length = nullptr)
+{
+    int at = 0;
+    while (at < line.size() && line.at(at) == QLatin1Char(' '))
+        ++at;
+    int level = 0;
+    while (at < line.size() && line.at(at) == QLatin1Char('>')) {
+        ++level;
+        ++at;
+        if (at + 1 < line.size() && line.at(at) == QLatin1Char(' ') && line.at(at + 1) == QLatin1Char('>'))
+            ++at;
+    }
+    if (level && at < line.size() && line.at(at) == QLatin1Char(' '))
+        ++at;
+    if (length)
+        *length = at;
+    return level;
+}
 
 //----------------------------------------------------------------------------
 // PsiTextView::Private
@@ -338,6 +368,117 @@ bool PsiTextView::atBottom()
 /**
  * Scrolls the vertical scroll bar to its maximum position i.e. to the bottom.
  */
+void PsiTextView::clearQuoteFormatting()
+{
+    hasQuotes_ = false;
+}
+
+void PsiTextView::markQuotedLines()
+{
+    QTextDocument *doc = document();
+    // Give every quoted line a block of its own: turn the line breaks around
+    // it into paragraph breaks. Each replacement keeps the positions.
+    QList<int> breaks;
+    const int  end   = doc->characterCount() - 1;
+    int        start = 0;
+    while (start <= end) {
+        int stop = start;
+        QString line;
+        while (stop < end && doc->characterAt(stop) != QChar::ParagraphSeparator
+               && doc->characterAt(stop) != QChar::LineSeparator)
+            line += doc->characterAt(stop++);
+        if (quoteMarkers(line)) {
+            if (start > 0 && doc->characterAt(start - 1) == QChar::LineSeparator)
+                breaks.append(start - 1);
+            if (stop < end && doc->characterAt(stop) == QChar::LineSeparator)
+                breaks.append(stop);
+        }
+        start = stop + 1;
+    }
+    if (breaks.isEmpty() && !quoteMarkers(doc->begin().text()))
+        return;
+    QTextCursor cursor(doc);
+    cursor.beginEditBlock();
+    for (int at : std::as_const(breaks)) {
+        cursor.setPosition(at);
+        cursor.setPosition(at + 1, QTextCursor::KeepAnchor);
+        cursor.removeSelectedText();
+        cursor.insertBlock();
+    }
+    // Then drop the markers and indent each quoted block by its level.
+    for (QTextBlock block = doc->begin(); block.isValid(); block = block.next()) {
+        int       length = 0;
+        const int level  = quoteMarkers(block.text(), &length);
+        if (!level)
+            continue;
+        cursor.setPosition(block.position());
+        cursor.setPosition(block.position() + length, QTextCursor::KeepAnchor);
+        cursor.removeSelectedText();
+        QTextBlockFormat format;
+        format.setLeftMargin(level * QuoteIndent);
+        format.setProperty(QuoteLevelProperty, level);
+        cursor.mergeBlockFormat(format);
+        hasQuotes_ = true;
+    }
+    cursor.endEditBlock();
+    applyQuoteColor();
+}
+
+void PsiTextView::setQuoteColor(const QColor &color)
+{
+    if (quoteColor_ == color)
+        return;
+    quoteColor_ = color;
+    applyQuoteColor();
+}
+
+void PsiTextView::applyQuoteColor()
+{
+    if (!hasQuotes_ || !quoteColor_.isValid())
+        return;
+    // The text of quoted blocks in the quote colour; links keep theirs.
+    QTextCursor cursor(document());
+    cursor.beginEditBlock();
+    for (QTextBlock block = document()->begin(); block.isValid(); block = block.next()) {
+        if (!block.blockFormat().hasProperty(QuoteLevelProperty))
+            continue;
+        for (auto it = block.begin(); !it.atEnd(); ++it) {
+            const QTextFragment fragment = it.fragment();
+            if (!fragment.isValid() || fragment.charFormat().isAnchor() || fragment.charFormat().isImageFormat())
+                continue;
+            cursor.setPosition(fragment.position());
+            cursor.setPosition(fragment.position() + fragment.length(), QTextCursor::KeepAnchor);
+            QTextCharFormat format;
+            format.setForeground(quoteColor_);
+            cursor.mergeCharFormat(format);
+        }
+    }
+    cursor.endEditBlock();
+    viewport()->update();
+}
+
+void PsiTextView::paintEvent(QPaintEvent *event)
+{
+    QTextEdit::paintEvent(event);
+    if (!hasQuotes_)
+        return;
+    QPainter     painter(viewport());
+    const QColor color  = quoteColor_.isValid() ? quoteColor_ : palette().color(QPalette::Mid);
+    const qreal  left   = document()->documentMargin() - horizontalScrollBar()->value();
+    const qreal  scroll = verticalScrollBar()->value();
+    for (QTextBlock block = document()->begin(); block.isValid(); block = block.next()) {
+        const int level = block.blockFormat().property(QuoteLevelProperty).toInt();
+        if (!level)
+            continue;
+        const QRectF rect = document()->documentLayout()->blockBoundingRect(block).translated(0, -scroll);
+        if (rect.bottom() < event->rect().top() || rect.top() > event->rect().bottom())
+            continue;
+        for (int i = 0; i < level; ++i)
+            painter.fillRect(QRectF(left + i * QuoteIndent, rect.top(), QuoteBarWidth, rect.height()), color);
+    }
+}
+
+
 void PsiTextView::scrollToBottom() { verticalScrollBar()->setValue(verticalScrollBar()->maximum()); }
 
 /**
@@ -347,7 +488,9 @@ void PsiTextView::scrollToTop() { verticalScrollBar()->setValue(verticalScrollBa
 
 void PsiTextView::setRichText(const QString &text)
 {
+    clearQuoteFormatting();
     PsiRichText::setText(document(), text, d->objectParsers);
+    markQuotedLines();
 }
 
 /**
@@ -505,17 +648,21 @@ void PsiTextView::mouseReleaseEvent(QMouseEvent *e)
  */
 QMimeData *PsiTextView::createMimeDataFromSelection() const
 {
-    QTextDocument *doc = new QTextDocument();
-    QTextCursor    cursor(doc);
-    cursor.insertFragment(textCursor().selection());
-    QString text = PsiRichText::convertToPlainText(doc);
-    delete doc;
-
-    QMimeData *data = new QMimeData;
-    data->setText(text);
-    data->setHtml(Qt::convertFromPlainText(text));
+    QTextDocument selected;
+    QTextCursor(&selected).insertFragment(textCursor().selection());
+    // Quoted blocks are copied with their markers again.
+    for (QTextBlock block = selected.begin(); block.isValid(); block = block.next()) {
+        const int level = block.blockFormat().property(QuoteLevelProperty).toInt();
+        if (level)
+            QTextCursor(block).insertText(QString(level, QLatin1Char('>')) + QLatin1Char(' '));
+    }
+    const QString plain = PsiRichText::convertToPlainText(&selected);
+    auto         *data  = new QMimeData;
+    data->setText(plain);
+    data->setHtml(Qt::convertFromPlainText(plain));
     return data;
 }
+
 
 /**
  * Ensures that if PsiTextView was scrolled to bottom when resize
