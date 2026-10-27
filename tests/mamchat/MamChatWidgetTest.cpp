@@ -5,6 +5,7 @@
 #include "widgets/MessagePreview.h"
 #include "widgets/LinkButton.h"
 #include "widgets/NativeChatRenderers.h"
+#include "widgets/psirichtext.h"
 #include <QContextMenuEvent>
 #include <QCursor>
 #include <QTextBrowser>
