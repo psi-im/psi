@@ -2140,6 +2140,48 @@ private slots:
         QTRY_VERIFY(list.itemWidget(2)->findChild<QWidget *>(QStringLiteral("mamBubble"))->maximumWidth() > before);
     }
 
+    void oversizedImagesScaleToTheMessageWidth()
+    {
+        FileSharingDeviceOpener opener;
+        FileSharingDeviceOpener account;
+        opener.accounts.insert(QStringLiteral("account-a"), &account);
+        FileSharingItem image(QStringLiteral("image/png"));
+        image.preview_ = QImage(900, 300, QImage::Format_RGB32);
+        image.preview_.fill(QColor(0, 170, 0));
+        account.items.insert(QStringLiteral("wide"), &image);
+
+        for (bool bubble : { false, true }) {
+            MamChatWidget list;
+            list.resize(520, 600);
+            list.setHistoryLoading(true);
+            list.setMediaOpener(&opener);
+            if (bubble)
+                list.setTheme({ QStringLiteral("bubble"), QStringLiteral("Bubble"), NativeChatTheme::Modern, 40, 6, {} },
+                              NativeChatRenderers::bubble());
+            list.appendMessage(
+                message(QStringLiteral("wide"), QStringLiteral("<share id=\"wide\" account=\"account-a\"/>"), 0, true));
+            list.show();
+            QTRY_VERIFY(list.itemWidget(0));
+            auto *body = list.itemWidget(0)->findChild<ChatMessageText *>();
+            QVERIFY(body);
+            QTRY_VERIFY(body->width() > 100);
+            QVERIFY(body->width() < 900);
+            // The whole picture fits the text: no overflow into a view that
+            // cannot scroll sideways.
+            QTRY_VERIFY(body->document()->size().width() <= body->viewport()->width() + 1);
+            QCOMPARE(body->horizontalScrollBar()->value(), 0);
+            const int scaled = qRound(300.0 * body->viewport()->width() / 900.0);
+            const int height = body->heightForWidth(body->width());
+            QVERIFY2(height >= scaled - 1 && height <= scaled + body->fontMetrics().height(),
+                     qPrintable(QStringLiteral("height %1, scaled image %2").arg(height).arg(scaled)));
+            // And it is painted where it is laid out.
+            const QImage shot = body->viewport()->grab().toImage();
+            const QPoint centre(qRound(body->viewport()->width() / 2.0 * shot.devicePixelRatio()),
+                                qRound(scaled / 2.0 * shot.devicePixelRatio()));
+            QCOMPARE(shot.pixelColor(centre), QColor(0, 170, 0));
+        }
+    }
+
     void nativeModernClassicAndPluginPlacement()
     {
         MamChatWidget list;

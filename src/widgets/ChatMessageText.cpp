@@ -20,8 +20,69 @@
 #include <QSignalBlocker>
 #include <QTextDocumentFragment>
 #include <QTextOption>
+#include <QPainter>
+#include <QPixmap>
+#include <QTextObjectInterface>
 #include <QWheelEvent>
 #include <cmath>
+
+namespace {
+// Draws images as Qt does, but never wider than the text: a picture wider than
+// the message (a narrow window, or a speech bubble) is scaled down to fit,
+// instead of overflowing a view that has no horizontal scrolling. The size is
+// derived from the document's current text width, so heightForWidth() and
+// painting agree for any width.
+class FittingImageHandler final : public QObject, public QTextObjectInterface {
+    Q_OBJECT
+    Q_INTERFACES(QTextObjectInterface)
+public:
+    using QObject::QObject;
+
+    QSizeF intrinsicSize(QTextDocument *doc, int, const QTextFormat &format) override
+    {
+        const QTextImageFormat image = format.toImageFormat();
+        QSizeF                 size(image.width(), image.height());
+        if (size.width() <= 0 || size.height() <= 0) {
+            const QImage bitmap  = load(doc, image);
+            const QSizeF natural = bitmap.isNull() ? QSizeF(16, 16) : QSizeF(bitmap.size()) / bitmap.devicePixelRatio();
+            if (size.width() > 0)
+                size.setHeight(natural.width() > 0 ? natural.height() * size.width() / natural.width() : natural.height());
+            else if (size.height() > 0)
+                size.setWidth(natural.height() > 0 ? natural.width() * size.height() / natural.height() : natural.width());
+            else
+                size = natural;
+        }
+        const qreal available = doc->textWidth() - 2 * doc->documentMargin();
+        if (doc->textWidth() > 0 && available > 0 && size.width() > available)
+            size = QSizeF(available, size.height() * available / size.width());
+        return size;
+    }
+
+    void drawObject(QPainter *painter, const QRectF &rect, QTextDocument *doc, int, const QTextFormat &format) override
+    {
+        const QImage bitmap = load(doc, format.toImageFormat());
+        if (bitmap.isNull())
+            return;
+        painter->save();
+        painter->setRenderHint(QPainter::SmoothPixmapTransform);
+        painter->drawImage(rect, bitmap);
+        painter->restore();
+    }
+
+private:
+    static QImage load(QTextDocument *doc, const QTextImageFormat &format)
+    {
+        const QVariant data = doc->resource(QTextDocument::ImageResource, QUrl(format.name()));
+        if (data.userType() == QMetaType::QImage)
+            return qvariant_cast<QImage>(data);
+        if (data.userType() == QMetaType::QPixmap)
+            return qvariant_cast<QPixmap>(data).toImage();
+        if (data.userType() == QMetaType::QByteArray)
+            return QImage::fromData(data.toByteArray());
+        return {};
+    }
+};
+}
 
 ChatMessageText::ChatMessageText(QWidget *parent) : PsiTextView(parent)
 {
@@ -32,6 +93,8 @@ ChatMessageText::ChatMessageText(QWidget *parent) : PsiTextView(parent)
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setContentsMargins(0, 0, 0, 0);
     viewport()->setAutoFillBackground(false);
+    static auto *images = new FittingImageHandler(qApp);
+    document()->documentLayout()->registerHandler(QTextFormat::ImageObject, images);
     auto policy = QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     policy.setHeightForWidth(true);
     setSizePolicy(policy);
@@ -309,3 +372,5 @@ QMimeData *ChatMessageText::createMimeDataFromSelection() const
     data->setHtml(Qt::convertFromPlainText(plain));
     return data;
 }
+
+#include "ChatMessageText.moc"
