@@ -315,10 +315,19 @@ int ChatMessageText::heightForWidth(int width) const
 {
     // Layouts also ask about hypothetical widths while computing size hints.
     // Measure a copy, never the document QTextEdit lays out and paints.
-    QTextDocument *doc = measuringDocument();
-    doc->setTextWidth(qMax(1, width));
+    // A style sheet border or padding sits between the widget and the text.
+    const QMargins chrome = textChrome();
+    QTextDocument *doc    = measuringDocument();
+    doc->setTextWidth(qMax(1, width - chrome.left() - chrome.right()));
     const int height = int(std::ceil(doc->documentLayout()->documentSize().height()));
-    return qMax(fontMetrics().height(), height);
+    return qMax(fontMetrics().height(), height) + chrome.top() + chrome.bottom();
+}
+
+QMargins ChatMessageText::textChrome() const
+{
+    // QFrame keeps its frame, including a style sheet's border and padding,
+    // in the contents margins.
+    return contentsMargins() + viewportMargins();
 }
 
 int ChatMessageText::naturalWidth() const
@@ -328,7 +337,8 @@ int ChatMessageText::naturalWidth() const
         doc->setTextWidth(-1);
         naturalWidth_ = int(std::ceil(doc->idealWidth())) + 1;
     }
-    return naturalWidth_;
+    const QMargins chrome = textChrome();
+    return naturalWidth_ + chrome.left() + chrome.right();
 }
 
 QSize ChatMessageText::sizeHint() const

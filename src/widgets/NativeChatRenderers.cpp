@@ -208,16 +208,26 @@ QColor mix(const QColor &from, const QColor &to, qreal amount)
                             from.blueF() + (to.blueF() - from.blueF()) * amount);
 }
 
+}
+
+namespace NativeChatRenderers {
+
 // A rounded frame, for messages with a tail at its top pointing sideways at
-// the avatar.
+// the avatar. Style sheets select it as #mamBubble by its tone and tailSide
+// properties and can set its colours, corner radius and text width.
 class BubbleFrame final : public QWidget {
+    Q_OBJECT
+    Q_PROPERTY(QColor fillColor READ fillColor WRITE setFillColor)
+    Q_PROPERTY(QColor borderColor READ borderColor WRITE setBorderColor)
+    Q_PROPERTY(int radius READ radius WRITE setRadius)
+    Q_PROPERTY(int textColumns READ textColumns WRITE setTextColumns)
+
 public:
     enum Side { Left, Right, NoTail };
     enum Tone { Incoming, Own, Notice };
     static constexpr int TailWidth  = 9;
     static constexpr int TailTop    = 11; // From the top of the bubble to where the tail leaves it.
     static constexpr int TailHeight = 16; // Along the bubble's edge.
-    static constexpr int Radius     = 10;
 
     BubbleFrame(Side tail, Tone tone, QWidget *parent) : QWidget(parent), tail_(tail), tone_(tone)
     {
@@ -225,6 +235,9 @@ public:
         setProperty("tailSide", tail == Left    ? QStringLiteral("left")
                                 : tail == Right ? QStringLiteral("right")
                                                 : QStringLiteral("none"));
+        setProperty("tone", tone == Own    ? QStringLiteral("own")
+                            : tone == Notice ? QStringLiteral("notice")
+                                             : QStringLiteral("incoming"));
         setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
         auto *column = new QVBoxLayout(this);
         if (tone == Notice)
@@ -237,6 +250,32 @@ public:
     }
 
     QVBoxLayout *column() const { return static_cast<QVBoxLayout *>(layout()); }
+
+    // Invalid colours follow the palette.
+    QColor fillColor() const { return fillColor_; }
+    void   setFillColor(const QColor &color)
+    {
+        fillColor_ = color;
+        update();
+    }
+    QColor borderColor() const { return borderColor_; }
+    void   setBorderColor(const QColor &color)
+    {
+        borderColor_ = color;
+        update();
+    }
+    int  radius() const { return radius_; }
+    void setRadius(int radius)
+    {
+        radius_ = qBound(0, radius, 30);
+        update();
+    }
+    int  textColumns() const { return textColumns_; }
+    void setTextColumns(int columns)
+    {
+        textColumns_ = qBound(10, columns, 1000);
+        updateMaximumWidth();
+    }
 
 protected:
     void changeEvent(QEvent *event) override
@@ -260,14 +299,17 @@ protected:
         }
         const QColor surface = colors.color(QPalette::Base);
         const QColor text    = colors.color(QPalette::Text);
-        const QColor fill    = tone_ == Own ? mix(surface, colors.color(QPalette::Highlight), 0.18)
-               : tone_ == Notice            ? mix(surface, text, 0.035)
-                                            : mix(surface, text, 0.07);
-        const QColor border = mix(surface, text, tone_ == Own ? 0.20 : tone_ == Notice ? 0.12 : 0.16);
+        const QColor fill    = fillColor_.isValid() ? fillColor_
+               : tone_ == Own                       ? mix(surface, colors.color(QPalette::Highlight), 0.18)
+               : tone_ == Notice                    ? mix(surface, text, 0.035)
+                                                    : mix(surface, text, 0.07);
+        const QColor border  = borderColor_.isValid()
+             ? borderColor_
+             : mix(surface, text, tone_ == Own ? 0.20 : tone_ == Notice ? 0.12 : 0.16);
 
         QPainter painter(this);
         painter.setRenderHint(QPainter::Antialiasing);
-        painter.setPen(QPen(border, 1.0));
+        painter.setPen(border.alpha() ? QPen(border, 1.0) : QPen(Qt::NoPen));
         painter.setBrush(fill);
         painter.drawPath(outline());
     }
@@ -279,25 +321,26 @@ private:
         const qreal w = width(), h = height();
         if (tail_ == NoTail) {
             QPainterPath shape;
-            const qreal  radius = qMin<qreal>(Radius + 2, (h - 1.0) / 2.0);
+            const qreal  radius = qMin<qreal>(radius_ + 2, (h - 1.0) / 2.0);
             shape.addRoundedRect(QRectF(0.5, 0.5, w - 1.0, h - 1.0), radius, radius);
             return shape;
         }
         const QRectF box(TailWidth + 0.5, 0.5, w - TailWidth - 1.0, h - 1.0);
         QPainterPath shape;
-        shape.addRoundedRect(box, Radius, Radius);
+        shape.addRoundedRect(box, radius_, radius_);
 
         // A hooked tail: a nearly level upper edge out to the tip, which sits
         // beside the upper part of the avatar, and a concave lower edge back.
-        const qreal  edge = box.left();
-        const qreal  top  = box.top() + TailTop;
-        const qreal  tipY = top + 3.0;
+        const qreal  edge  = box.left();
+        const qreal  top   = box.top() + TailTop;
+        const qreal  tipY  = top + 3.0;
+        const qreal  inset = qMax<qreal>(radius_, 2.0) / 2.0;
         QPainterPath tail;
-        tail.moveTo(edge + Radius / 2.0, top);
+        tail.moveTo(edge + inset, top);
         tail.lineTo(edge, top);
         tail.quadTo(edge - TailWidth * 0.45, top + 0.5, 0.5, tipY);
         tail.quadTo(edge - 1.0, tipY + 2.0, edge, top + TailHeight);
-        tail.lineTo(edge + Radius / 2.0, top + TailHeight);
+        tail.lineTo(edge + inset, top + TailHeight);
         tail.closeSubpath();
         shape = shape.united(tail).simplified();
 
@@ -309,13 +352,23 @@ private:
     void updateMaximumWidth()
     {
         const QMargins margins = layout() ? layout()->contentsMargins() : QMargins();
-        setMaximumWidth(qCeil(QFontMetricsF(font()).averageCharWidth() * NativeChatRenderers::BubbleMaxTextColumns)
-                        + margins.left() + margins.right());
+        setMaximumWidth(qCeil(QFontMetricsF(font()).averageCharWidth() * textColumns_) + margins.left()
+                        + margins.right());
     }
 
-    Side tail_;
-    Tone tone_;
+    Side   tail_;
+    Tone   tone_;
+    QColor fillColor_;
+    QColor borderColor_;
+    int    radius_      = 10;
+    int    textColumns_ = BubbleMaxTextColumns;
 };
+
+}
+
+namespace {
+
+using NativeChatRenderers::BubbleFrame;
 
 // Messages in speech bubbles, based on Modern. Incoming messages sit on the
 // left and our own on the right, each with the avatar on its outer side and
@@ -382,3 +435,5 @@ const NativeChatMessageRenderer *bubble()
 }
 
 }
+
+#include "NativeChatRenderers.moc"

@@ -17,8 +17,9 @@ std::unique_ptr<NativeChatMessageRenderer> forDescription(const NativeChatTheme 
 // The built-in speech bubble renderer ("bubble" theme).
 const NativeChatMessageRenderer *bubble();
 
-// The bubble's text area is limited to this many average characters of the
-// chat font, whatever the width of the log.
+// By default, the bubble's text area is limited to this many average
+// characters of the chat font, whatever the width of the log. A style sheet
+// can change it: #mamBubble { qproperty-textColumns: 80; }
 constexpr int BubbleMaxTextColumns = 60;
 
 }
