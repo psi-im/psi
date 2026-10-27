@@ -500,6 +500,20 @@ void PsiTextView::setRichText(const QString &text)
     markQuotedLines();
 }
 
+// Legacy text logs append fragments rather than replacing the whole document.
+// Only revisit existing blocks when the new fragment contains a possible
+// beginning-of-line quote marker. This avoids walking a long chat log for
+// virtually every ordinary incoming message.
+static bool containsQuotedLine(const QString &text)
+{
+    return text.startsWith(QLatin1Char('>'))
+        || text.contains(QString(QChar::LineSeparator) + QLatin1Char('>'))
+        || text.contains(QString(QChar::ParagraphSeparator) + QLatin1Char('>'))
+        || text.contains(QStringLiteral("\n>"));
+}
+
+
+
 /**
  * This function is provided for convenience. Please see
  * PsiRichText::appendText() documentation for usage details.
@@ -516,6 +530,8 @@ QTextCursor PsiTextView::appendTextWithRange(const QString &text)
 
     PsiRichText::restoreSelection(this, cursor, selection);
     setTextCursor(cursor);
+    if (quoteStylingEnabled_ && containsQuotedLine(inserted.selectedText()))
+        markQuotedLines();
     return inserted;
 }
 
@@ -537,6 +553,8 @@ QTextCursor PsiTextView::insertTextWithRange(const QString &text, QTextCursor &c
 
     PsiRichText::restoreSelection(this, selCursor, selection);
     setTextCursor(selCursor);
+    if (quoteStylingEnabled_ && containsQuotedLine(inserted.selectedText()))
+        markQuotedLines();
     return inserted;
 }
 
@@ -551,6 +569,8 @@ QTextCursor PsiTextView::insertTextFragmentWithRange(const QString &text, QTextC
 
     PsiRichText::restoreSelection(this, selCursor, selection);
     setTextCursor(selCursor);
+    if (quoteStylingEnabled_ && containsQuotedLine(inserted.selectedText()))
+        markQuotedLines();
     return inserted;
 }
 
