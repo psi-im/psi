@@ -28,6 +28,7 @@
 #include <QPushButton>
 #include <QToolButton>
 #include <QScopeGuard>
+#include <QScreen>
 #include <QScrollBar>
 #include <QSignalSpy>
 #include <QTextBlock>
@@ -2180,6 +2181,92 @@ private slots:
                                 qRound(scaled / 2.0 * shot.devicePixelRatio()));
             QCOMPARE(shot.pixelColor(centre), QColor(0, 170, 0));
         }
+    }
+
+    void scaledImagesAreOnScreenWithoutAResize_data()
+    {
+        QTest::addColumn<QString>("flow");
+        QTest::newRow("cached-before-show") << QStringLiteral("cached-before-show");
+        QTest::newRow("cached-after-show") << QStringLiteral("cached-after-show");
+        QTest::newRow("downloaded") << QStringLiteral("downloaded");
+        QTest::newRow("rebuilt") << QStringLiteral("rebuilt");
+    }
+
+    void scaledImagesAreOnScreenWithoutAResize()
+    {
+        // A picture wider than the bubble must be visible as soon as its row
+        // is, not only after a resize relays out the text. Check what is on
+        // the screen (the backing store), not a fresh rendering of the widget.
+        QFETCH(QString, flow);
+        FileSharingDeviceOpener opener;
+        FileSharingDeviceOpener account;
+        opener.accounts.insert(QStringLiteral("account-a"), &account);
+        FileSharingItem image(QStringLiteral("image/png"));
+        image.preview_ = QImage(640, 480, QImage::Format_RGB32);
+        image.preview_.fill(QColor(0, 170, 0));
+        image.cached_          = flow != QLatin1String("downloaded");
+        image.downloadsItself_ = true;
+        account.items.insert(QStringLiteral("picture"), &image);
+
+        MamChatWidget list;
+        QFont         small = list.font();
+        small.setPointSizeF(8); // Keeps the bubble narrower than the picture.
+        list.setFont(small);
+        list.resize(900, 700);
+        list.setHistoryLoading(true);
+        list.setMediaOpener(&opener);
+        list.setTheme({ QStringLiteral("bubble"), QStringLiteral("Bubble"), NativeChatTheme::Modern, 40, 6, {} },
+                      NativeChatRenderers::bubble());
+        for (int i = 0; i < 5; ++i)
+            list.appendMessage(message(QString::number(i), QStringLiteral("Earlier message"), i, i % 2));
+        const auto picture = message(QStringLiteral("picture"),
+                                     QStringLiteral("<share id=\"picture\" account=\"account-a\" auto=\"1048576\"/>"),
+                                     100, true);
+        if (flow == QLatin1String("cached-before-show"))
+            list.appendMessage(picture);
+        list.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&list));
+        if (flow != QLatin1String("cached-before-show"))
+            list.appendMessage(picture);
+        const int index = list.messageCount() - 1;
+        QTRY_VERIFY(list.itemWidget(index) && list.itemWidget(index)->isVisible());
+        if (flow == QLatin1String("downloaded")) {
+            QTest::qWait(100);
+            image.cached_ = true;
+            emit image.downloadFinished();
+        } else if (flow == QLatin1String("rebuilt")) {
+            QTest::qWait(100);
+            list.setTheme({ QStringLiteral("bubble"), QStringLiteral("Bubble"), NativeChatTheme::Modern, 40, 6, {} },
+                          NativeChatRenderers::bubble());
+        }
+        const auto onScreen = [&list, index]() -> QColor {
+            auto *row  = list.itemWidget(index);
+            auto *body = row ? row->findChild<ChatMessageText *>() : nullptr;
+            if (!body || !body->isVisible() || body->viewport()->height() < 20)
+                return {};
+            const QPoint at = body->viewport()->mapTo(
+                list.window(), QPoint(body->viewport()->width() / 2, qMin(body->viewport()->height() / 2, 100)));
+            const QImage screen = QGuiApplication::primaryScreen()->grabWindow(list.window()->winId()).toImage();
+            const QPoint pixel(qRound(at.x() * screen.devicePixelRatio()), qRound(at.y() * screen.devicePixelRatio()));
+            return screen.rect().contains(pixel) ? screen.pixelColor(pixel) : QColor();
+        };
+        const auto state = [&list, index]() {
+            auto *body = list.itemWidget(index)->findChild<ChatMessageText *>();
+            return QStringLiteral("viewport %1x%2, text width %3, document %4x%5, scroll %6/%7 %8/%9")
+                .arg(body->viewport()->width())
+                .arg(body->viewport()->height())
+                .arg(body->document()->textWidth())
+                .arg(body->document()->size().width())
+                .arg(body->document()->size().height())
+                .arg(body->horizontalScrollBar()->value())
+                .arg(body->horizontalScrollBar()->maximum())
+                .arg(body->verticalScrollBar()->value())
+                .arg(body->verticalScrollBar()->maximum());
+        };
+        QTRY_VERIFY2(onScreen() == QColor(0, 170, 0), qPrintable(state()));
+        auto *body = list.itemWidget(index)->findChild<ChatMessageText *>();
+        QVERIFY2(body->document()->size().width() <= body->viewport()->width() + 1, qPrintable(state()));
+        QVERIFY2(qAbs(body->document()->textWidth() - body->viewport()->width()) <= 1, qPrintable(state()));
     }
 
     void nativeModernClassicAndPluginPlacement()
