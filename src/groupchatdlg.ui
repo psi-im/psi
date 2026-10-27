@@ -124,6 +124,25 @@
            </widget>
           </item>
           <item>
+           <widget class="QToolButton" name="tb_users">
+            <property name="toolTip">
+             <string>Hide participants</string>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>16</width>
+              <height>16</height>
+             </size>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+            <property name="autoRaise">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QToolButton" name="tb_actions">
             <property name="font">
              <font>

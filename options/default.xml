@@ -330,6 +330,7 @@ QLineEdit#le_status_text {
                 <show-technical-kicks comment="Show technical MUC kicks (a result of connection loss for example)" type="bool">false</show-technical-kicks>
                 <log-width type="int">500</log-width>
                 <roster-width type="int">150</roster-width>
+                <roster-restore-width comment="Width the participant list is shown at again after it was hidden" type="int">150</roster-restore-width>
                 <roster-at-left type="bool">false</roster-at-left>
                 <native-theme type="QString">modern</native-theme>
                 <theme comment="The theme used for groupchat messages rendering" type="QString">psi/new_classic</theme>

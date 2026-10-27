@@ -159,6 +159,7 @@ private slots:
     void sendTemp(const QString &);
     void psButtonEnabled();
     void horizSplitterMoved();
+    void setUserListVisible(bool visible);
     void verticalSplitterMoved(int, int);
     void doMinimize();
     void avatarUpdated(const Jid &jid);
@@ -181,6 +182,7 @@ private:
     void appendMessage(const Message &, bool);
     void setLooks();
     void setToolbuttons();
+    void updateUserListButton();
 
     void mucKickMsgHelper(const QString &nick, const Status &s, const QString &nickJid, const QString &title,
                           const QString &youSimple, const QString &youBy, const QString &someoneSimple,

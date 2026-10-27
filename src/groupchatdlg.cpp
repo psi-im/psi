@@ -266,6 +266,7 @@ public:
 
     int logSize;
     int rosterSize;
+    int rosterRestoreSize = 150; // The participant list's width before it was hidden.
 
     int logHeight;
     int chateditHeight;
@@ -1222,6 +1223,11 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
     connect(d->pm_settings, SIGNAL(aboutToShow()), SLOT(buildMenu()));
     ui_.tb_actions->setMenu(d->pm_settings);
 
+    // Shows or hides the participant list by moving the splitter.
+    ui_.tb_users->setIcon(IconsetFactory::icon("psi/groupChat").icon());
+    connect(ui_.tb_users, &QToolButton::clicked, this, &GCMainDlg::setUserListVisible);
+    d->rosterRestoreSize = PsiOptions::instance()->getOption("options.ui.muc.roster-restore-width", 150).toInt();
+
     connect(ui_.hsplitter, SIGNAL(splitterMoved(int, int)), this, SLOT(horizSplitterMoved()));
     connect(ui_.vsplitter, SIGNAL(splitterMoved(int, int)), this, SLOT(verticalSplitterMoved(int, int)));
 
@@ -1239,6 +1245,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
 
     if (leftRoster)
         ui_.hsplitter->insertWidget(0, ui_.lv_users); // Swap widgets
+    updateUserListButton();
 
     // resize the vertical splitter
     d->logHeight      = PsiOptions::instance()->getOption("options.ui.chat.log-height").toInt();
@@ -1318,6 +1325,40 @@ void GCMainDlg::horizSplitterMoved()
 
     PsiOptions::instance()->setOption("options.ui.muc.log-width", d->logSize);
     PsiOptions::instance()->setOption("options.ui.muc.roster-width", d->rosterSize);
+    if (d->rosterSize > 0 && d->rosterSize != d->rosterRestoreSize) {
+        d->rosterRestoreSize = d->rosterSize;
+        PsiOptions::instance()->setOption("options.ui.muc.roster-restore-width", d->rosterRestoreSize);
+    }
+    updateUserListButton();
+}
+
+void GCMainDlg::setUserListVisible(bool visible)
+{
+    QList<int> sizes = ui_.hsplitter->sizes();
+    if (sizes.size() != 2)
+        return;
+    const bool leftRoster = PsiOptions::instance()->getOption("options.ui.muc.roster-at-left").toBool();
+    const int  total      = sizes.first() + sizes.last();
+    // Shown again where the splitter was before, but never wider than the log.
+    const int roster = visible ? qBound(ui_.lv_users->minimumWidth(), d->rosterRestoreSize, qMax(1, total / 2)) : 0;
+    if (leftRoster)
+        sizes = { roster, total - roster };
+    else
+        sizes = { total - roster, roster };
+    ui_.hsplitter->setSizes(sizes);
+    horizSplitterMoved();
+}
+
+void GCMainDlg::updateUserListButton()
+{
+    const QList<int> sizes      = ui_.hsplitter->sizes();
+    const bool       leftRoster = PsiOptions::instance()->getOption("options.ui.muc.roster-at-left").toBool();
+    // Before the first layout the splitter has no sizes yet; use the saved one.
+    const int  roster  = sizes.size() == 2 && (sizes.first() + sizes.last()) > 0 ? (leftRoster ? sizes.first() : sizes.last())
+                                                                            : d->rosterSize;
+    const bool visible = roster > 0;
+    ui_.tb_users->setChecked(visible);
+    ui_.tb_users->setToolTip(visible ? tr("Hide participants") : tr("Show participants"));
 }
 
 void GCMainDlg::verticalSplitterMoved(int, int)
@@ -1358,6 +1399,7 @@ void GCMainDlg::ensureTabbedCorrectly()
         list << d->logSize << d->rosterSize;
     ui_.hsplitter->setSizes(QList<int>() << 0);
     ui_.hsplitter->setSizes(list);
+    updateUserListButton();
     UserListItem *u = account()->find(jid().bare());
     if (u) {
         setTabIcon(PsiIconset::instance()->statusPtr(u)->icon());
