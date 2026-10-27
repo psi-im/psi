@@ -212,9 +212,9 @@ QColor mix(const QColor &from, const QColor &to, qreal amount)
 class BubbleFrame final : public QWidget {
 public:
     enum Side { Left, Right };
-    static constexpr int TailWidth  = 7;
-    static constexpr int TailTop    = 10; // From the top of the bubble to the tail's upper edge.
-    static constexpr int TailHeight = 12;
+    static constexpr int TailWidth  = 9;
+    static constexpr int TailTop    = 11; // From the top of the bubble to where the tail leaves it.
+    static constexpr int TailHeight = 16; // Along the bubble's edge.
     static constexpr int Radius     = 10;
 
     BubbleFrame(Side tail, bool local, QWidget *parent) : QWidget(parent), tail_(tail), local_(local)
@@ -271,12 +271,16 @@ private:
         QPainterPath shape;
         shape.addRoundedRect(box, Radius, Radius);
 
+        // A hooked tail: a nearly level upper edge out to the tip, which sits
+        // beside the upper part of the avatar, and a concave lower edge back.
         const qreal  edge = box.left();
         const qreal  top  = box.top() + TailTop;
+        const qreal  tipY = top + 3.0;
         QPainterPath tail;
         tail.moveTo(edge + Radius / 2.0, top);
-        tail.lineTo(0.5, top); // The tip, level with the upper edge.
-        tail.cubicTo(edge - TailWidth * 0.35, top + 1.5, edge, top + TailHeight * 0.45, edge, top + TailHeight);
+        tail.lineTo(edge, top);
+        tail.quadTo(edge - TailWidth * 0.45, top + 0.5, 0.5, tipY);
+        tail.quadTo(edge - 1.0, tipY + 2.0, edge, top + TailHeight);
         tail.lineTo(edge + Radius / 2.0, top + TailHeight);
         tail.closeSubpath();
         shape = shape.united(tail).simplified();

@@ -784,7 +784,8 @@ public:
     explicit MessageBodyPart(QWidget *parent) : QWidget(parent)
     {
         setObjectName(QStringLiteral("mamBodyPart"));
-        auto policy = QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+        // As ChatMessageText: the row measures heights with heightForWidth().
+        auto policy = QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
         policy.setHeightForWidth(true);
         setSizePolicy(policy);
         column_ = new QVBoxLayout(this);

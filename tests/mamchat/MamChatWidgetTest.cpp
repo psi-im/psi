@@ -2122,6 +2122,9 @@ private slots:
         QTRY_VERIFY(bar->isVisible());
         QCOMPARE(bar->x() + bar->width() + 8, inBubble->mapTo(list.viewport(), QPoint(inBubble->width(), 0)).x());
 
+        if (!qEnvironmentVariableIsEmpty("PSI_NATIVE_CHAT_BUBBLE_SCREENSHOT"))
+            list.grab().save(qEnvironmentVariable("PSI_NATIVE_CHAT_BUBBLE_SCREENSHOT"));
+
         // A larger chat font widens the limit with it.
         const int before = longBubble->maximumWidth();
         QFont     larger = list.font();
