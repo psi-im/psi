@@ -134,7 +134,8 @@ must stay valid until the plugin object is destroyed, not only until
   on the left and our own on the right, each with the avatar on its outer side
   and the bubble's tail near its top pointing at the avatar. Notices and the
   group chat subject are centred bubbles without a tail, as in the WebKit
-  Bubble theme. Style sheets restyle the bubbles through
+  Bubble theme. The message under the pointer is not tinted: the bubbles
+  already set each message apart. Style sheets restyle the bubbles through
   `#mamBubble[tone=...]` and its `fillColor`, `borderColor`, `radius` and
   `textColumns` properties.
 

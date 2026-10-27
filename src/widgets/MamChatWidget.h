@@ -10,6 +10,7 @@
 #include <QPointer>
 #include <functional>
 #include <memory>
+#include <optional>
 
 #include <QHash>
 #include <QList>
@@ -33,6 +34,14 @@ class QGraphicsOpacityEffect;
 
 class MamChatWidget final : public Mattermost::LongListWidget {
     Q_OBJECT
+    // The log around the messages comes from the theme. A style sheet can
+    // override it: MamChatWidget { qproperty-hoverHighlight: true; }
+    Q_PROPERTY(bool hoverHighlight READ hoverHighlight WRITE setStyleHoverHighlight)
+    Q_PROPERTY(QColor backgroundColor READ backgroundColor WRITE setStyleBackgroundColor)
+    // A file or resource path, or "none" to drop the theme's image.
+    Q_PROPERTY(QString backgroundImage READ backgroundImage WRITE setStyleBackgroundImage)
+    // "tile" or "scale".
+    Q_PROPERTY(QString backgroundImageMode READ backgroundImageMode WRITE setStyleBackgroundImageMode)
 public:
     explicit MamChatWidget(QWidget *parent = nullptr);
 
@@ -104,6 +113,16 @@ signals:
     void outgoingMessageRetraction(const QString &messageId);
     void emojiChooserRequested(const QString &messageId, const QPoint &globalPosition);
 
+public:
+    bool    hoverHighlight() const { return isHoverHighlightEnabled(); }
+    QColor  backgroundColor() const;
+    QString backgroundImage() const { return backgroundImagePath_; }
+    QString backgroundImageMode() const;
+    void    setStyleHoverHighlight(bool enabled);
+    void    setStyleBackgroundColor(const QColor &color);
+    void    setStyleBackgroundImage(const QString &path);
+    void    setStyleBackgroundImageMode(const QString &mode);
+
 protected:
     QWidget *createItemWidget(int index) override;
     QString  itemIdentity(const QWidget *widget) const override;
@@ -116,8 +135,21 @@ protected:
     void     showEvent(QShowEvent *event) override;
     void     hideEvent(QHideEvent *event) override;
     void     changeEvent(QEvent *event) override;
+    void     paintEvent(QPaintEvent *event) override;
 
 private:
+    // Theme values, unless a style sheet overrides them.
+    void                      applyLogLook();
+    QPalette                  logPalette() const;
+    std::optional<bool>       styleHoverHighlight_;
+    QColor                    styleBackgroundColor_;
+    QString                   styleBackgroundImage_;
+    QString                   styleBackgroundImageMode_;
+    QString                   backgroundImagePath_;
+    QPixmap                   backgroundImage_;
+    NativeChatTheme::ImageMode backgroundImageMode_ = NativeChatTheme::Tile;
+    QPixmap                   scaledBackground_;
+
     void requestOlderMessages(const char *gesture);
     void scheduleInitialHistoryFillCheck();
     qint64 estimatedMessagePixels() const;

@@ -79,6 +79,23 @@ Fixed colours do not follow a switch between light and dark palettes. Use
 `palette(...)` values where possible, or give your own and incoming bubbles
 colours that work with the chat background you use.
 
+### The chat log
+
+The log itself is `MamChatWidget`. Its background and hover behaviour come
+from the theme (section 3); these properties override the theme, also after
+a theme switch:
+
+| Property | Meaning |
+|----------|---------|
+| `qproperty-hoverHighlight` | `true` or `false`: tint the message under the pointer. Off in Bubble. |
+| `qproperty-backgroundColor` | Background colour instead of the chat background colour option. |
+| `qproperty-backgroundImage` | `url(/path/to/image.png)` or a resource `url(:/...)`, fixed behind the scrolling messages; `"none"` (quoted) drops the theme's image. |
+| `qproperty-backgroundImageMode` | `tile` (default) or `scale`, which covers the log and keeps the aspect ratio. |
+
+Over an image, rows are transparent except while the pointer is over them or
+they are selected. The chat background colour still matters: Bubble tints its
+bubbles from it, and it shows through transparent parts of the image.
+
 ### Examples
 
 ```css
@@ -99,6 +116,13 @@ QLabel#mamDeliveryIndicator[deliveryState="read"] { color: #3d9be9; }
 
 /* Bubble: square-ish notices. */
 #mamBubble[tone="notice"] { qproperty-radius: 3; }
+
+/* Wallpaper behind any theme, and hover tinting back on in Bubble. */
+MamChatWidget {
+    qproperty-backgroundImage: url(/home/me/Pictures/chat-paper.png);
+    qproperty-backgroundImageMode: tile;
+    qproperty-hoverHighlight: true;
+}
 ```
 
 ### How rules combine with Psi's colours
@@ -114,15 +138,16 @@ QLabel#mamDeliveryIndicator[deliveryState="read"] { color: #3d9be9; }
 
 ### Limitations
 
-- The row surface belongs to Psi: it is the chat background colour, tinted
+- The row surface belongs to Psi: it is the log's background colour, tinted
   while the pointer is over a message and while messages are selected. Do not
-  set `background` on `#mamMessageRow`; change the chat background colour
-  option instead.
+  set `background` on `#mamMessageRow`; use the chat log properties above or
+  the chat background colour option instead.
 - Reaction chips (`#mamReactionChip`) and the hover action toolbar
   (`#mamMessageActions`) have style sheets of their own, which win over
   `options.ui.chat.css` for the declarations they make.
-- A `qproperty-` value stays on existing bubbles after its rule is removed;
-  rebuilt rows (a theme switch, a reopened chat) take the defaults again.
+- A `qproperty-` value stays after its rule is removed: on existing bubbles
+  until their rows are rebuilt (a theme switch, a reopened chat), and on the
+  log until the chat is reopened.
 - Layout (where the parts are, which ones are shown, their order) is not a
   style sheet matter. It is defined by the theme.
 
@@ -171,7 +196,15 @@ public:
         irc.spacing    = 4;
         irc.layoutSpec = QStringLiteral(
             R"({"direction":"horizontal","items":["timestamp","author","body"]})");
-        return { compact, irc };
+
+        NativeChatTheme paper = compact;
+        paper.id                  = QStringLiteral("org.example.paper");
+        paper.name                = tr("Paper");
+        paper.hoverHighlight      = false;
+        paper.background          = QColor(0xf4, 0xef, 0xe4);
+        paper.backgroundImage     = QStringLiteral(":/compactthemes/paper.png"); // In the plugin's resources.
+        paper.backgroundImageMode = NativeChatTheme::Tile;
+        return { compact, irc, paper };
     }
 };
 ```
@@ -191,6 +224,22 @@ The fields:
   follows light and dark palettes.
 - `layoutSpec`: optional JSON that arranges the parts instead of the base
   layout.
+- `hoverHighlight`: whether the message under the pointer is tinted (default
+  `true`). The hover actions appear either way.
+- `background`: the log's background colour; invalid (the default) uses the
+  chat background colour option, which may itself follow the system palette.
+  Choose it together with text colours that stay readable on it.
+- `backgroundImage`, `backgroundImageMode`: an image file or Qt resource path
+  painted behind the messages, tiled (`Tile`, the default) or scaled to cover
+  the log (`Scale`). Psi loads it when the theme is applied, so an image in
+  the plugin's resources stays shown after the plugin is unloaded.
+
+Users can override the log properties and restyle the parts with
+`options.ui.chat.css` (section 2).
+
+The description structure is part of the plugin interface
+`org.psi-im.NativeChatThemeProvider/1.1`. Plugins built against 1.0, before
+the log fields existed, must be rebuilt.
 
 ### `layoutSpec`
 

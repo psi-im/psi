@@ -2255,6 +2255,112 @@ private slots:
         }
     }
 
+    void themeSetsHoverHighlightAndLogBackground()
+    {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        // Tiles: a red column and a blue column. Wide: red left, blue right.
+        QImage tile(2, 2, QImage::Format_RGB32);
+        tile.setPixel(0, 0, qRgb(255, 0, 0));
+        tile.setPixel(0, 1, qRgb(255, 0, 0));
+        tile.setPixel(1, 0, qRgb(0, 0, 255));
+        tile.setPixel(1, 1, qRgb(0, 0, 255));
+        const QString tilePath = dir.filePath(QStringLiteral("tile.png"));
+        QVERIFY(tile.save(tilePath));
+        QImage wide(4, 2, QImage::Format_RGB32);
+        for (int x = 0; x < 4; ++x)
+            for (int y = 0; y < 2; ++y)
+                wide.setPixel(x, y, x < 2 ? qRgb(255, 0, 0) : qRgb(0, 0, 255));
+        const QString widePath = dir.filePath(QStringLiteral("wide.png"));
+        QVERIFY(wide.save(widePath));
+
+        QWidget window;
+        auto   *layout = new QVBoxLayout(&window);
+        layout->setContentsMargins(0, 0, 0, 0);
+        auto *list = new MamChatWidget(&window);
+        layout->addWidget(list);
+        list->setHistoryLoading(true);
+        window.resize(400, 300);
+        window.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&window));
+        const auto pixel = [list](int x, int y) {
+            return list->viewport()->grab().toImage().pixelColor(x, y);
+        };
+
+        // A theme colour replaces the chat background, for rows too.
+        NativeChatTheme theme { QStringLiteral("t"), QStringLiteral("T"), NativeChatTheme::Modern, 40, 10, {}, {} };
+        theme.background = QColor(0x20, 0x40, 0x60);
+        list->setTheme(theme);
+        QCOMPARE(list->viewport()->palette().color(QPalette::Base), theme.background);
+        QCOMPARE(pixel(200, 150), theme.background);
+
+        // A scaled image covers the log and keeps its aspect ratio: 4x2
+        // becomes 600x300, centred, so red ends in the middle.
+        theme.backgroundImage     = widePath;
+        theme.backgroundImageMode = NativeChatTheme::Scale;
+        list->setTheme(theme);
+        QCOMPARE(pixel(20, 150), QColor(255, 0, 0));
+        QCOMPARE(pixel(380, 150), QColor(0, 0, 255));
+        QCOMPARE(list->property("backgroundImageMode").toString(), QStringLiteral("scale"));
+
+        // Tiled, the pattern repeats from the top left.
+        theme.backgroundImage     = tilePath;
+        theme.backgroundImageMode = NativeChatTheme::Tile;
+        list->setTheme(theme);
+        QCOMPARE(pixel(10, 11), QColor(255, 0, 0));
+        QCOMPARE(pixel(11, 11), QColor(0, 0, 255));
+
+        // Rows leave the image visible; only the row under the pointer or a
+        // selected row paints its surface.
+        list->appendMessage(message(QStringLiteral("one"), QStringLiteral("Hello")));
+        list->appendMessage(message(QStringLiteral("two"), QStringLiteral("World"), 1));
+        QTRY_VERIFY(list->itemWidget(0) && list->itemWidget(1) && list->itemWidget(1)->isVisible());
+        auto *row = list->itemWidget(0);
+        QVERIFY(!row->autoFillBackground());
+        QVERIFY(list->isHoverHighlightEnabled());
+        QEvent enter(QEvent::Enter);
+        QApplication::sendEvent(row, &enter);
+        QTRY_VERIFY(row->autoFillBackground());
+        QEvent leave(QEvent::Leave);
+        QApplication::sendEvent(row, &leave);
+        QApplication::sendEvent(list->itemWidget(1), &enter);
+        QTRY_VERIFY(!row->autoFillBackground());
+        list->setMessageSelected(0, true);
+        QVERIFY(row->autoFillBackground());
+        list->setMessageSelected(0, false);
+
+        // A theme without hover highlight keeps the hover actions.
+        theme.hoverHighlight = false;
+        list->setTheme(theme);
+        QVERIFY(!list->isHoverHighlightEnabled());
+        QTRY_VERIFY(list->itemWidget(0));
+        row = list->itemWidget(0);
+        const QColor surface = row->palette().color(QPalette::Base);
+        QApplication::sendEvent(row, &enter);
+        auto *actions = list->findChild<QFrame *>(QStringLiteral("mamMessageActions"));
+        QTRY_VERIFY(actions->isVisible());
+        QCOMPARE(row->palette().color(QPalette::Base), surface);
+        QVERIFY(!row->autoFillBackground());
+
+        // The chat window's style sheet overrides the theme.
+        window.setStyleSheet(QStringLiteral("MamChatWidget { qproperty-hoverHighlight: true;"
+                                            " qproperty-backgroundColor: #102030;"
+                                            " qproperty-backgroundImage: \"none\"; }"));
+        QCoreApplication::processEvents();
+        QVERIFY(list->isHoverHighlightEnabled());
+        QCOMPARE(list->viewport()->palette().color(QPalette::Base), QColor(0x10, 0x20, 0x30));
+        QVERIFY2(list->property("backgroundImage").toString().isEmpty(), qPrintable(list->property("backgroundImage").toString()));
+        list->setTheme(theme); // Still overridden after a theme change.
+        QVERIFY(list->isHoverHighlightEnabled());
+        QTRY_VERIFY(list->itemWidget(0) && list->itemWidget(0)->autoFillBackground());
+        window.setStyleSheet(QStringLiteral("MamChatWidget { qproperty-backgroundImage: url(%1);"
+                                            " qproperty-backgroundImageMode: scale; }")
+                                 .arg(widePath));
+        QCoreApplication::processEvents();
+        QCOMPARE(list->property("backgroundImage").toString(), widePath);
+        QCOMPARE(list->property("backgroundImageMode").toString(), QStringLiteral("scale"));
+    }
+
     void oversizedImagesScaleToTheMessageWidth()
     {
         FileSharingDeviceOpener opener;

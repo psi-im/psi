@@ -12,11 +12,14 @@ NativeChatThemes *NativeChatThemes::instance()
 }
 QList<NativeChatTheme> NativeChatThemes::themes() const
 {
+    // Bubble is laid out by NativeChatRenderers::bubble(); the description is
+    // what plugins and settings see. Its bubbles already set each message
+    // apart, so it does not tint the message under the pointer.
+    NativeChatTheme bubble { QStringLiteral("bubble"), tr("Bubble"), NativeChatTheme::Modern, 40, 6, {}, {} };
+    bubble.hoverHighlight = false;
     QList<NativeChatTheme> result { { QStringLiteral("modern"), tr("Modern"), NativeChatTheme::Modern, 40, 10, {}, {} },
                                     { QStringLiteral("classic"), tr("Classic"), NativeChatTheme::Classic, 0, 4, {}, {} },
-                                    // Laid out by NativeChatRenderers::bubble(); the description is
-                                    // what plugins and settings see.
-                                    { QStringLiteral("bubble"), tr("Bubble"), NativeChatTheme::Modern, 40, 6, {}, {} } };
+                                    bubble };
     for (const auto &plugin : plugins_)
         result.append(plugin.themes);
     return result;
@@ -57,6 +60,7 @@ void NativeChatThemes::add(QObject *owner, const QList<NativeChatTheme> &themes,
         theme.name.detach();
         theme.styleSheet.detach();
         theme.layoutSpec.detach();
+        theme.backgroundImage.detach();
         theme.avatarSize = qBound(0, theme.avatarSize, 96);
         theme.spacing    = qBound(0, theme.spacing, 32);
         accepted.themes.append(theme);
