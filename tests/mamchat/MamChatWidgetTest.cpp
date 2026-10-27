@@ -2103,19 +2103,28 @@ private slots:
         classic.layout = NativeChatTheme::Classic;
         classic.avatarSize = 0;
         list.setTheme(classic);
-        QTRY_COMPARE(timestamp()->font().pointSizeF(), 12.0);
-        QCOMPARE(timestamp()->palette().color(QPalette::Text),
-                 QColor(60, 95, 150));
+        // Classic has the time in the message text, at the chat font size and
+        // in the nickname colour in group chats.
+        const auto classicTime = [&]() -> QTextCharFormat {
+            auto *body = list.itemWidget(0)->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+            for (auto it = body->document()->begin().begin(); !it.atEnd(); ++it)
+                if (it.fragment().charFormat().anchorNames().contains(QStringLiteral("psi-time")))
+                    return it.fragment().charFormat();
+            return {};
+        };
+        QTRY_VERIFY(list.itemWidget(0) && !timestamp() && classicTime().isValid());
+        QCOMPARE(classicTime().font().pointSizeF(), 12.0);
+        QCOMPARE(classicTime().foreground().color(), QColor(60, 95, 150));
         NativeChatTheme modern;
         modern.layout = NativeChatTheme::Modern;
         modern.avatarSize = 40;
         list.setTheme(modern);
-        QTRY_COMPARE(timestamp()->font().pointSizeF(), 11.0);
+        QTRY_VERIFY(timestamp() && qFuzzyCompare(timestamp()->font().pointSizeF(), 11.0));
         QCOMPARE(timestamp()->palette().color(QPalette::Text).alpha(), 188);
         list.setTheme(classic);
-        QTRY_COMPARE(timestamp()->font().pointSizeF(), 12.0);
+        QTRY_VERIFY(list.itemWidget(0) && !timestamp() && classicTime().isValid());
         list.setTheme(modern);
-        QTRY_COMPARE(timestamp()->font().pointSizeF(), 11.0);
+        QTRY_VERIFY(timestamp() && qFuzzyCompare(timestamp()->font().pointSizeF(), 11.0));
     }
 
     void pluginRendererArrangesPsiParts()
@@ -2685,39 +2694,109 @@ private slots:
         classic.avatarSize = 0;
         list.setTheme(classic);
         // Virtual rows stage replacement until Qt's rich-text height settles.
-        QTRY_COMPARE(list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamAuthor"))->text(),
-                     QStringLiteral("Peer:"));
+        // Classic is the legacy text log: icon, time and nickname in the text.
+        QTRY_VERIFY(list.itemWidget(0) && !list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamAuthor")));
         auto *row = list.itemWidget(0);
-        auto *nick = row->findChild<QLabel *>(QStringLiteral("mamAuthor"));
-        auto *time = row->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
+        QVERIFY(!row->findChild<QLabel *>(QStringLiteral("mamTimestamp")));
         auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
-        QCOMPARE(nick->text(), QStringLiteral("Peer:"));
         const QString hhmmss = QDateTime::fromString(QStringLiteral("2026-10-18T10:00:00Z"),
                                                       Qt::ISODate).toLocalTime().toString(QStringLiteral("HH:mm:ss"));
-        QCOMPARE(time->text(), QStringLiteral("[") + hhmmss + QStringLiteral("]"));
-        QVERIFY(time->mapTo(row, QPoint()).x() < nick->mapTo(row, QPoint()).x());
-        QVERIFY(nick->mapTo(row, QPoint()).x() < body->mapTo(row, QPoint()).x());
+        QCOMPARE(body->toPlainText(), QString(QChar::ObjectReplacementCharacter) + QStringLiteral(" [") + hhmmss
+                     + QStringLiteral("] <Peer> Message body"));
 
         NativeChatTheme plugin;
         plugin.layout = NativeChatTheme::Modern;
         plugin.avatarSize = 0;
         plugin.layoutSpec = QStringLiteral(R"({"direction":"vertical","items":["body",{"direction":"horizontal","items":["timestamp","author"]}]})");
         list.setTheme(plugin);
+        QTRY_VERIFY(list.itemWidget(0) && list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamAuthor")));
         QTRY_VERIFY(list.itemWidget(0)->findChild<ChatMessageText *>(QStringLiteral("mamBody"))
                         ->mapTo(list.itemWidget(0), QPoint()).y()
                     <= list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamAuthor"))
                         ->mapTo(list.itemWidget(0), QPoint()).y());
-        row = list.itemWidget(0);
-        nick = row->findChild<QLabel *>(QStringLiteral("mamAuthor"));
-        time = row->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
-        body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+        row        = list.itemWidget(0);
+        auto *nick = row->findChild<QLabel *>(QStringLiteral("mamAuthor"));
+        auto *time = row->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
+        body       = row->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
         QVERIFY(body->mapTo(row, QPoint()).y() <= nick->mapTo(row, QPoint()).y());
         QVERIFY(time->mapTo(row, QPoint()).x() < nick->mapTo(row, QPoint()).x());
         list.setNicknameColorResolver([](const MessageView &) { return QColor(Qt::red); });
         QCOMPARE(nick->palette().color(QPalette::Text), QColor(Qt::red));
         list.setTheme(classic);
-        QTRY_COMPARE(list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamAuthor"))
-                         ->palette().color(QPalette::Text), QColor(Qt::red));
+        QTRY_VERIFY(list.itemWidget(0) && !list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamAuthor")));
+        body = list.itemWidget(0)->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+        QCOMPARE(body->document()->find(QStringLiteral("<Peer>")).charFormat().foreground().color(), QColor(Qt::red));
+    }
+
+    void classicTextLogFlowsLikeTheLegacyLog()
+    {
+        MamChatWidget list;
+        list.setGroupChat(true);
+        list.setHistoryLoading(true);
+        list.resize(420, 600);
+        NativeChatTheme classic;
+        classic.layout     = NativeChatTheme::Classic;
+        classic.avatarSize = 0;
+        list.setTheme(classic);
+        list.setNicknameColorResolver([](const MessageView &) { return QColor(60, 95, 150); });
+        auto incoming = message(QStringLiteral("in"), QStringLiteral("A long message ").repeated(12));
+        incoming.setNick(QStringLiteral("a rather long nickname"));
+        list.appendMessage(incoming);
+        auto own = message(QStringLiteral("own"), QStringLiteral("Mine"), 1, true);
+        own.setEncrypted(true);
+        list.appendMessage(own);
+        auto spooled = message(QStringLiteral("old"), QStringLiteral("From history"), 2);
+        spooled.setSpooled(true);
+        list.appendMessage(spooled);
+        MessageView status(MessageView::Status);
+        status.setPlainText(QStringLiteral("Peer is away"));
+        list.appendMessage(status);
+        list.show();
+        QTRY_VERIFY(list.itemWidget(0) && list.itemWidget(1) && list.itemWidget(2) && list.itemWidget(3));
+        const auto bodyOf = [&list](int index) {
+            return list.itemWidget(index)->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+        };
+        const auto icons = [&](int index) {
+            QStringList names;
+            for (auto block = bodyOf(index)->document()->begin(); block.isValid(); block = block.next())
+                for (auto it = block.begin(); !it.atEnd(); ++it)
+                    if (it.fragment().charFormat().isImageFormat())
+                        names << it.fragment().charFormat().toImageFormat().name();
+            return names;
+        };
+        // The message icon before the time, as in the legacy chat view.
+        QCOMPARE(icons(0), QStringList { QStringLiteral("psi-icon:psi/notification_chat_receive") });
+        QCOMPARE(icons(1), QStringList { QStringLiteral("psi-icon:psi/notification_chat_delivery_ok_encrypted") });
+        QCOMPARE(icons(2), QStringList { QStringLiteral("psi-icon:psi/history") });
+        QCOMPARE(icons(3), QStringList { QStringLiteral("psi-icon:psi/notification_chat_info") });
+        // No lock or check marks beside it.
+        QVERIFY(!list.itemWidget(1)->findChild<QLabel *>(QStringLiteral("mamEncryptionIndicator")));
+
+        // Wrapped lines start at the left edge, not under the nickname's end.
+        auto *body = bodyOf(0);
+        QTRY_VERIFY(body->document()->begin().layout()->lineCount() > 2);
+        QTextLayout *layout = body->document()->begin().layout();
+        QCOMPARE(layout->lineAt(1).x(), layout->lineAt(0).x());
+        // The nickname is in its colour and inserts it when clicked.
+        const QTextCursor nick = body->document()->find(QStringLiteral("<a rather long nickname>"));
+        QCOMPARE(nick.charFormat().foreground().color(), QColor(60, 95, 150));
+        QSignalSpy clicked(&list, &MamChatWidget::nicknameClicked);
+        QTextCursor middle(nick);
+        middle.setPosition(nick.selectionStart() + 3);
+        const QPoint point = body->cursorRect(middle).center();
+        QTest::mouseClick(body->viewport(), Qt::LeftButton, Qt::NoModifier, point);
+        QTRY_COMPARE(clicked.size(), 1);
+        QCOMPARE(clicked.first().first().toString(), QStringLiteral("a rather long nickname"));
+        // Nickname colours change in place.
+        auto *row = list.itemWidget(0);
+        list.setNicknameColorResolver([](const MessageView &) { return QColor(150, 60, 60); });
+        QCOMPARE(list.itemWidget(0), row);
+        QCOMPARE(body->document()->find(QStringLiteral("<a rather long nickname>")).charFormat().foreground().color(),
+                 QColor(150, 60, 60));
+        QCOMPARE(body->document()->find(QStringLiteral("[")).charFormat().foreground().color(), QColor(150, 60, 60));
+        // Without message icons, as with the legacy option off.
+        list.setMessageIconsEnabled(false);
+        QTRY_VERIFY(list.itemWidget(1) && icons(1).isEmpty());
     }
 
     void localIdentityMergesWithoutClientStanzaId()
@@ -2969,18 +3048,25 @@ private slots:
             QCOMPARE(body->palette().color(QPalette::Text), palette.color(QPalette::Text));
             QCOMPARE(body->viewport()->palette().color(QPalette::Base), palette.color(QPalette::Base));
             QCOMPARE(body->viewport()->palette().color(QPalette::Text), palette.color(QPalette::Text));
-            QCOMPARE(row->findChild<QLabel *>("mamAuthor")->palette().color(QPalette::Text),
-                     groupChat ? nickColor : palette.color(QPalette::Text));
             QColor timeColor = classic && groupChat ? nickColor : palette.color(QPalette::Text);
             if (!classic)
                 timeColor.setAlpha(188);
-            QCOMPARE(row->findChild<QLabel *>("mamTimestamp")->palette().color(QPalette::Text), timeColor);
+            if (classic) {
+                // The legacy text log has the time and nickname in the text.
+                QCOMPARE(document->find(QStringLiteral("<Peer>")).charFormat().foreground().color(),
+                         groupChat ? nickColor : palette.color(QPalette::Text));
+                QCOMPARE(document->find(QStringLiteral("[")).charFormat().foreground().color(), timeColor);
+            } else {
+                QCOMPARE(row->findChild<QLabel *>("mamAuthor")->palette().color(QPalette::Text),
+                         groupChat ? nickColor : palette.color(QPalette::Text));
+                QCOMPARE(row->findChild<QLabel *>("mamTimestamp")->palette().color(QPalette::Text), timeColor);
+            }
             auto *subjectBody = list.itemWidget(1)->findChild<ChatMessageText *>();
             QCOMPARE(subjectBody->palette().color(QPalette::Base), palette.color(QPalette::Base));
             QCOMPARE(subjectBody->palette().color(QPalette::Text),
                      palette.color(QPalette::Base).lightness() < 128 ? QColor("#8bd58b") : QColor("#008000"));
             QCOMPARE(body->document(), document);
-            QCOMPARE(body->textCursor().selectedText(), QString("Existing text link red"));
+            QVERIFY(body->textCursor().selectedText().endsWith(QString("Existing text link red")));
             QCOMPARE(document->find("link").charFormat().foreground().color(), palette.color(QPalette::Link));
             QCOMPARE(document->find("red").charFormat().foreground().color(), QColor(Qt::red));
             QCOMPARE(document->find("Existing").charFormat().fontWeight(), int(QFont::Bold));
@@ -3101,9 +3187,11 @@ private slots:
             }
             list.show();
             QTRY_VERIFY(list.itemWidget(types.size()));
-            auto *stamp = list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
-            QVERIFY(stamp);
-            QCOMPARE(stamp->toolTip(), MamChatWidget::fullTimestamp(ordinary.dateTime()));
+            if (!classic) {
+                auto *stamp = list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
+                QVERIFY(stamp);
+                QCOMPARE(stamp->toolTip(), MamChatWidget::fullTimestamp(ordinary.dateTime()));
+            }
             for (int i = 1; i <= types.size(); ++i) {
                 auto *row = list.itemWidget(i);
                 auto *body = row->findChild<ChatMessageText *>();
@@ -3114,7 +3202,8 @@ private slots:
                 QVERIFY(body->viewport()->toolTip().isEmpty());
                 QVERIFY(row->toolTip().isEmpty());
                 QCOMPARE(body->document()->begin().blockFormat().alignment() & Qt::AlignHorizontal_Mask,
-                         Qt::Alignment(types.at(i - 1) == MessageView::Subject ? Qt::AlignLeft : Qt::AlignHCenter));
+                         Qt::Alignment(types.at(i - 1) == MessageView::Subject || classic ? Qt::AlignLeft
+                                                                                          : Qt::AlignHCenter));
             }
             if (!classic && !qEnvironmentVariableIsEmpty("PSI_NATIVE_CHAT_SYSTEM_SCREENSHOT"))
                 list.grab().save(qEnvironmentVariable("PSI_NATIVE_CHAT_SYSTEM_SCREENSHOT"));
@@ -3209,23 +3298,24 @@ private slots:
         auto *row = list.itemWidget(0);
         auto *body = row->findChild<ChatMessageText *>();
         auto *author = row->findChild<QLabel *>(QStringLiteral("mamAuthor"));
-        QVERIFY(body && author);
-        const int authorBottom = author->mapTo(row, QPoint(0, author->height())).y();
-        const int bodyTop = body->mapTo(row, QPoint()).y();
-        if (modern)
+        // Classic has the nickname in the text.
+        QVERIFY(body && (author || !modern));
+        if (modern) {
+            const int authorBottom = author->mapTo(row, QPoint(0, author->height())).y();
+            const int bodyTop      = body->mapTo(row, QPoint()).y();
             QVERIFY2(bodyTop - authorBottom <= 6, "Header/body spacing must not absorb excess row height");
-        else
-            QVERIFY(qAbs(bodyTop - author->mapTo(row, QPoint()).y()) <= 1);
+        }
+        const int authorHeight = author ? author->height() : 0;
         // Rich QTextDocument height-for-width settles after materialization.
         // Also count the avatar: on Qt6 a 40px avatar can be taller than the
         // combined author/body text, and determines the minimum row height.
         auto *avatar = row->findChild<QLabel *>(QStringLiteral("mamAvatar"));
         const int avatarHeight = avatar ? avatar->height() : 0;
         QTRY_VERIFY2(row->height() <= qMax(avatarHeight,
-                                           author->height() + body->heightForWidth(body->width()) + 3)
+                                           authorHeight + body->heightForWidth(body->width()) + 3)
                                             + 18,
                      qPrintable(QStringLiteral("row=%1 avatar=%2 author=%3 body=%4 width=%5")
-                                    .arg(row->height()).arg(avatarHeight).arg(author->height())
+                                    .arg(row->height()).arg(avatarHeight).arg(authorHeight)
                                     .arg(body->heightForWidth(body->width())).arg(body->width())));
         auto *wrapped = list.itemWidget(1)->findChild<ChatMessageText *>();
         QVERIFY(wrapped);

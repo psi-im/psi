@@ -412,7 +412,8 @@ void ChatMessageText::mouseReleaseEvent(QMouseEvent *event)
         && (event->pos() - pressedLinkPosition_).manhattanLength() <= QApplication::startDragDistance()
         && anchorAt(event->pos()) == pressedLink;
     if (clicked) {
-        URLObject::getInstance()->popupAction(pressedLink);
+        if (!linkHandler_ || !linkHandler_(pressedLink))
+            URLObject::getInstance()->popupAction(pressedLink);
         event->accept();
     }
 }

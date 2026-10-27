@@ -64,6 +64,16 @@ public:
   timestamp's size, opacity and colour. Psi applies these when the row is
   built and again, in place, whenever the chat font, palette or nickname
   colours change.
+- `header` decides where the time and the nickname go. `HeaderParts` (the
+  default) builds the `Author` and `Timestamp` parts. `HeaderInText` puts
+  them at the start of the message text, in one document with it, as in
+  Psi's legacy text log: wrapped lines start at the left edge instead of
+  under the end of the nickname. In the text, Psi puts the message icon
+  (direction, delivery and encryption, following the "use message icons"
+  option) before the time, wraps the nickname in `authorPrefix` and
+  `authorSuffix`, makes it insert itself into the composer when clicked,
+  and recolours it in place. The time is not refreshed there: give a clock
+  `timeFormat`. Notices get an information icon instead.
 - `arrange()` gives `canvas.row()` a layout and places the parts taken with
   `take()`. Parts that are not taken are hidden. Rows are measured with
   `heightForWidth()`, so use layouts (or widgets) that support it.
@@ -111,6 +121,10 @@ private:
 };
 ```
 
+The renderer interface is `org.psi-im.NativeChatRendererProvider/1.1`;
+plugins built against 1.0, before the header options existed, must be
+rebuilt.
+
 ### Lifetime
 
 Rows built by a renderer contain the plugin's code: its widget classes, and any
@@ -126,8 +140,10 @@ must stay valid until the plugin object is destroyed, not only until
 
 - **Modern**: avatar, a bold nickname with a smaller relative time, and the
   body below them.
-- **Classic**: the legacy text log on one line, `[HH:mm:ss] nick: text`, the
-  time painted in the nickname colour in group chats.
+- **Classic**: the legacy text log, `[HH:mm:ss] <nick> text` in one document
+  (`HeaderInText`), with the legacy message icons before the time, the
+  time painted in the nickname colour in group chats, and notices left
+  aligned after an information icon.
 - **Bubble**: based on Modern. Each message is a speech bubble whose text area
   is limited to about 60 average characters of the chat font (by default),
   whatever the width of the log, and which shrinks to short messages. Incoming messages sit

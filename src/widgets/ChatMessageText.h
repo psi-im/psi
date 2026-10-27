@@ -5,6 +5,7 @@
 #include <QColor>
 #include <QTextDocument>
 #include <QPoint>
+#include <functional>
 #include <memory>
 
 // An inline Psi rich-text document. The surrounding timeline owns scrolling;
@@ -27,6 +28,8 @@ public:
     // wheel input to the enclosing scroll area. A scrollable view scrolls its
     // own document vertically instead.
     void    setScrollable(bool scrollable);
+    // Gets clicked links first; returning true keeps Psi's link menu away.
+    void    setLinkHandler(std::function<bool(const QString &link)> handler) { linkHandler_ = std::move(handler); }
     // Images are scaled down to the text width and, if given, to this height.
     void    setMaximumImageHeight(int height);
     bool    hasImagesTallerThan(int height, int width) const;
@@ -66,6 +69,7 @@ private:
     mutable int                            naturalWidth_ = -1;
     mutable std::unique_ptr<QTextDocument> measuring_;
 
-    QString pressedLink_;
+    std::function<bool(const QString &)> linkHandler_;
+    QString                              pressedLink_;
     QPoint  pressedLinkPosition_;
 };

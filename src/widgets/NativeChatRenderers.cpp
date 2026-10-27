@@ -131,11 +131,10 @@ public:
                 slots_ = seen;
             }
         }
-        if (tree_.isEmpty() && !modern_) {
-            tree_ = QJsonDocument::fromJson(R"({"direction":"horizontal","items":["timestamp","author","body"]})")
-                        .object();
-            slots_ = { QStringLiteral("timestamp"), QStringLiteral("author"), QStringLiteral("body") };
-        }
+        // Classic without a tree of its own is the legacy text log: the time
+        // and nickname are in the message text, so wrapped lines start at the
+        // left edge instead of under the end of the nickname.
+        textLog_ = tree_.isEmpty() && !modern_;
     }
 
     NativeChatPartOptions partOptions(const NativeChatMessageInfo &info) const override
@@ -143,19 +142,25 @@ public:
         NativeChatPartOptions options;
         // Modern's own arrangement always shows the avatar; a slot tree only
         // if it names it.
-        const bool avatar  = tree_.isEmpty() || slots_.contains(QStringLiteral("avatar"));
+        const bool avatar  = !textLog_ && (tree_.isEmpty() || slots_.contains(QStringLiteral("avatar")));
         options.avatarSize = avatar ? theme_.avatarSize : 0;
         if (modern_) {
             options.boldAuthor     = true;
             options.timePointDelta = -1.0;
             options.timeAlpha      = 188; // Legible but unobtrusive.
         } else {
-            // The legacy text log: full-size [HH:mm:ss] and "nick:". Group
-            // chats painted the time in the same colour as the nickname.
+            // The legacy text log: "[HH:mm:ss] <nick> text" at full size.
+            // Group chats painted the time in the same colour as the nickname.
             options.timeFormat      = QStringLiteral("[HH:mm:ss]");
-            options.authorSuffix    = QStringLiteral(":");
             options.boldAuthor      = false;
             options.timeInNickColor = info.groupChat;
+            if (textLog_) {
+                options.header       = NativeChatPartOptions::HeaderInText;
+                options.authorPrefix = QStringLiteral("<");
+                options.authorSuffix = QStringLiteral(">");
+            } else {
+                options.authorSuffix = QStringLiteral(":");
+            }
         }
         return options;
     }
@@ -164,6 +169,10 @@ public:
     {
         const int   vertical = modern_ ? 8 : 2;
         auto       *outer    = rowLayout(canvas, QMargins(12, vertical, 12, vertical), theme_.spacing);
+        if (textLog_) {
+            outer->addWidget(canvas.take(Canvas::Body), 1, Qt::AlignTop);
+            return;
+        }
         auto       *content  = new QWidget(canvas.row());
         content->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
         if (!tree_.isEmpty()) {
@@ -196,6 +205,7 @@ private:
     bool            modern_;
     QJsonObject     tree_;
     QSet<QString>   slots_;
+    bool            textLog_ = false;
 };
 
 // ---------------------------------------------------------------------------

@@ -42,7 +42,10 @@ editor, so append your rules rather than replacing it. Clearing the option
 takes effect in newly opened windows only.
 
 Rules reach every message in the log, whichever theme is selected. The
-selectors below are stable names Psi gives to the parts of a message.
+selectors below are stable names Psi gives to the parts of a message. The
+Classic theme has the time and the nickname in the message text, so it has
+no `mamAuthor` or `mamTimestamp` labels; style its text through
+`QTextEdit#mamBody`.
 
 ### Selectors
 
@@ -215,9 +218,11 @@ The fields:
   Use a reverse domain name. Themes whose id is taken are ignored.
 - `name`: shown in the theme list.
 - `layout`: the built-in theme to start from. `Modern` (avatar, bold nickname
-  with a small relative time, text below) or `Classic` (`[HH:mm:ss] nick:
-  text` on one line, times in the nickname colour in group chats). It also
-  decides the nickname and time styles.
+  with a small relative time, text below) or `Classic` (`[HH:mm:ss] <nick>
+  text` in the message text, as in the legacy text log, times in the
+  nickname colour in group chats). It also decides the nickname and time
+  styles. A `Classic` theme with a `layoutSpec` arranges the nickname and
+  time as parts instead (`[HH:mm:ss] nick: text`).
 - `avatarSize`, `spacing`: in pixels.
 - `styleSheet`: a Qt style sheet set on every message row of the theme, with
   the selectors from section 2. Prefer `palette(...)` colours so the theme

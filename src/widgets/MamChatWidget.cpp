@@ -1896,9 +1896,41 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
         }
     });
 
-    if (message) {
-        const QString nick   = mv.nick().isEmpty() ? (mv.isLocal() ? tr("Me") : tr("Message")) : mv.nick();
-        auto         *author = new QLabel(nick + row->options.authorSuffix, row);
+    const bool    inText = row->options.header == NativeChatPartOptions::HeaderInText;
+    const QString nick   = mv.nick().isEmpty() ? (mv.isLocal() ? tr("Me") : tr("Message")) : mv.nick();
+    const bool    read   = message && mv.isLocal() && !groupChat_
+        && (mv.messageState().testFlag(MessageState::Displayed) || displayedTargetIndex() >= index);
+    bool delivered = message && mv.isLocal() && mv.messageState().testFlag(MessageState::Delivered);
+    if (message && mv.isLocal() && !groupChat_) {
+        // A receipt may reference any revision of a corrected message.
+        // The visible row represents one logical message, not only the
+        // latest revision's stanza id.
+        for (const auto &id : items_.at(index).stanzaIds) {
+            if (receipts_.contains(id)) {
+                delivered = true;
+                break;
+            }
+        }
+    }
+    // Encryption state of the message, possibly learnt after it was
+    // sent (the encryption job finishes asynchronously).
+    bool    securityKnown = mv.isSecurityKnown();
+    bool    encrypted     = mv.isEncrypted();
+    QString protocol      = mv.encryptionProtocol();
+    if (!securityKnown) {
+        for (const auto &id : items_.at(index).stanzaIds) {
+            const auto it = security_.constFind(id);
+            if (it != security_.cend()) {
+                securityKnown = true;
+                encrypted     = it->first;
+                protocol      = it->second;
+                break;
+            }
+        }
+    }
+
+    if (message && !inText) {
+        auto *author = new QLabel(row->options.authorPrefix + nick + row->options.authorSuffix, row);
         author->setObjectName(QStringLiteral("mamAuthor"));
         author->setTextFormat(Qt::PlainText);
         author->setTextInteractionFlags(Qt::TextSelectableByMouse);
@@ -1908,39 +1940,9 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
         auto *time = new QLabel(timestampText(mv.dateTime(), row->options), row);
         time->setObjectName(QStringLiteral("mamTimestamp"));
         time->setTextFormat(Qt::PlainText);
-        const bool read = mv.isLocal() && !groupChat_
-            && (mv.messageState().testFlag(MessageState::Displayed) || displayedTargetIndex() >= index);
-        bool delivered = mv.isLocal() && mv.messageState().testFlag(MessageState::Delivered);
-        if (mv.isLocal() && !groupChat_) {
-            // A receipt may reference any revision of a corrected message.
-            // The visible row represents one logical message, not only the
-            // latest revision's stanza id.
-            for (const auto &id : items_.at(index).stanzaIds) {
-                if (receipts_.contains(id)) {
-                    delivered = true;
-                    break;
-                }
-            }
-        }
         time->setToolTip(fullTimestamp(mv.dateTime()));
         time->setForegroundRole(QPalette::Text);
         time->installEventFilter(this);
-        // Encryption state of the message, possibly learnt after it was
-        // sent (the encryption job finishes asynchronously).
-        bool    securityKnown = mv.isSecurityKnown();
-        bool    encrypted     = mv.isEncrypted();
-        QString protocol      = mv.encryptionProtocol();
-        if (!securityKnown) {
-            for (const auto &id : items_.at(index).stanzaIds) {
-                const auto it = security_.constFind(id);
-                if (it != security_.cend()) {
-                    securityKnown = true;
-                    encrypted     = it->first;
-                    protocol      = it->second;
-                    break;
-                }
-            }
-        }
         if (mv.isEdited() || read || delivered || securityKnown) {
             // One semantic timestamp slot: time, delivery/read state, edit mark.
             // Do not append glyphs to the time QLabel itself: its text is
@@ -1982,6 +1984,8 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
         } else {
             canvas.add(NativeChatMessageCanvas::Timestamp, time);
         }
+    }
+    if (message) {
         if (row->options.avatarSize > 0) {
             const int size   = qBound(8, row->options.avatarSize, 256);
             auto     *avatar = new QLabel(row);
@@ -2003,6 +2007,74 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     body->setForegroundRole(QPalette::Text);
     const bool retracted = isRetracted(items_.at(index));
     QString    richText  = richMessage(items_.at(index));
+    // The legacy text log: icon, time and nickname at the start of the text,
+    // so that wrapped lines start at the left edge.
+    QHash<QString, QString> inlineIcons; // Resource URL -> iconset name.
+    if (inText) {
+        const int  iconSize = qMax(10, QFontInfo(font()).pixelSize());
+        const auto icon     = [&](const QString &name, const QString &toolTip) {
+            const QString url = QStringLiteral("psi-icon:") + name;
+            inlineIcons.insert(url, name);
+            return QStringLiteral("<img src=\"%1\" width=\"%2\" height=\"%2\" align=\"middle\" title=\"%3\"/>")
+                .arg(url)
+                .arg(iconSize)
+                .arg(toolTip.toHtmlEscaped());
+        };
+        QString header, trailer;
+        if (!message) {
+            if (messageIcons_)
+                header = icon(QStringLiteral("psi/notification_chat_info"), {}) + QLatin1Char(' ');
+        } else {
+            if (messageIcons_) {
+                // As in Psi's classic chat view: the direction, and whether a
+                // sent message was delivered, in the colours of encryption.
+                const QString suffix = securityKnown && encrypted ? QStringLiteral("_encrypted") : QString();
+                QString       name, toolTip;
+                if (mv.isSpooled()) {
+                    name = QStringLiteral("psi/history");
+                } else if (!mv.isLocal()) {
+                    name    = QStringLiteral("psi/notification_chat_receive") + suffix;
+                    toolTip = tr("Received");
+                } else if (groupChat_ || delivered || read) {
+                    name    = QStringLiteral("psi/notification_chat_delivery_ok") + suffix;
+                    toolTip = read ? tr("Read") : tr("Delivered");
+                } else {
+                    name    = QStringLiteral("psi/notification_chat_send") + suffix;
+                    toolTip = tr("Sent");
+                }
+                if (securityKnown)
+                    toolTip += (toolTip.isEmpty() ? QString() : QStringLiteral(", "))
+                        + (!encrypted         ? tr("Not encrypted")
+                               : protocol.isEmpty() ? tr("Encrypted")
+                                                    : tr("Encrypted with %1").arg(protocol));
+                header += icon(name, toolTip) + QLatin1Char(' ');
+            }
+            const QColor nickColor = nicknameColorResolver_ ? nicknameColorResolver_(mv) : QColor();
+            QColor       timeColor = row->options.timeInNickColor && nickColor.isValid() ? nickColor
+                                                                                         : palette().color(QPalette::Text);
+            timeColor.setAlpha(qBound(0, row->options.timeAlpha, 255));
+            header += QStringLiteral("<a name=\"psi-time\" style=\"color:%1\">%2</a> ")
+                          .arg(timeColor.name(QColor::HexArgb),
+                               timestampText(mv.dateTime(), row->options).toHtmlEscaped());
+            // An emote already starts with "*nick".
+            if (!mv.isEmote() || retracted) {
+                const QColor color = nickColor.isValid() ? nickColor : palette().color(QPalette::Text);
+                QString      label = (row->options.authorPrefix + nick + row->options.authorSuffix).toHtmlEscaped();
+                if (row->options.boldAuthor)
+                    label = QStringLiteral("<b>") + label + QStringLiteral("</b>");
+                header += QStringLiteral("<a href=\"addnick://psi/%1\" style=\"color:%2; text-decoration:none\">%3</a> ")
+                              .arg(QString::fromLatin1(QUrl::toPercentEncoding(nick)), color.name(), label);
+            }
+            if (mv.isEdited())
+                trailer = QLatin1Char(' ')
+                    + icon(QStringLiteral("psi/action_templates_edit"), tr("The message was corrected"));
+        }
+        // A message that starts with a quote starts it on a line of its own,
+        // where it is shown as a quote.
+        if (message && richText.trimmed().startsWith(QLatin1String("&gt;")))
+            header += QStringLiteral("<br>");
+        richText = header + richText + trailer;
+    }
     // The rich-text document can paint inline media, but not arbitrary QWidget
     // attachments. Extract non-media shares, and images that are not going to
     // be downloaded by themselves, into native cards. Keep unknown shares in
@@ -2084,6 +2156,24 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     }
 
     body->setRichText(richText);
+    // After the text: setting it clears the document's resources.
+    if (!inlineIcons.isEmpty()) {
+        const int   iconSize = qMax(10, QFontInfo(font()).pixelSize());
+        const qreal ratio    = devicePixelRatioF();
+        for (auto it = inlineIcons.cbegin(); it != inlineIcons.cend(); ++it) {
+            QPixmap pixmap = IconsetFactory::iconPixmap(
+                it.value(), QSize(qRound(iconSize * ratio), qRound(iconSize * ratio)));
+            pixmap.setDevicePixelRatio(ratio);
+            body->document()->addResource(QTextDocument::ImageResource, QUrl(it.key()), pixmap);
+        }
+    }
+    if (inText && message)
+        body->setLinkHandler([this](const QString &link) {
+            if (!link.startsWith(QLatin1String("addnick://psi/")))
+                return false;
+            emit nicknameClicked(QUrl::fromPercentEncoding(link.mid(14).toUtf8()));
+            return true;
+        });
     if (message) {
         // Quotes within the message, after the one shown as its reply preview.
         body->setQuoteColor(quoteColor_);
@@ -2355,7 +2445,8 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
         QTextCursor cursor(body->document());
         cursor.select(QTextCursor::Document);
         QTextBlockFormat format;
-        format.setAlignment(mv.type() == MessageView::Subject ? Qt::AlignLeft : Qt::AlignHCenter);
+        // The legacy text log keeps notices in the flow, after their icon.
+        format.setAlignment(mv.type() == MessageView::Subject || inText ? Qt::AlignLeft : Qt::AlignHCenter);
         cursor.mergeBlockFormat(format);
     }
     // Psi styles its parts first, so that a renderer may refine them.
@@ -2422,6 +2513,33 @@ void MamChatWidget::applyPartStyle(QWidget *rowWidget, int index)
     // Even an uncoloured nickname needs an explicit refresh: a style sheet on
     // the chat window can leave nested labels with their old resolved palette.
     const QColor nickColor = nicknameColorResolver_ ? nicknameColorResolver_(items_.at(index).message) : QColor();
+    if (options.header == NativeChatPartOptions::HeaderInText) {
+        // The time and the nickname are in the message text: recolour them.
+        auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+        if (!body)
+            return;
+        QColor timeColor = options.timeInNickColor && nickColor.isValid() ? nickColor : palette().color(QPalette::Text);
+        timeColor.setAlpha(qBound(0, options.timeAlpha, 255));
+        const QColor authorColor = nickColor.isValid() ? nickColor : palette().color(QPalette::Text);
+        QTextCursor  cursor(body->document());
+        for (auto it = body->document()->begin().begin(); !it.atEnd(); ++it) {
+            const QTextFragment   fragment = it.fragment();
+            const QTextCharFormat current  = fragment.charFormat();
+            QColor                color;
+            if (current.anchorHref().startsWith(QLatin1String("addnick://psi/")))
+                color = authorColor;
+            else if (current.anchorNames().contains(QStringLiteral("psi-time")))
+                color = timeColor;
+            if (!color.isValid() || current.foreground().color() == color)
+                continue;
+            cursor.setPosition(fragment.position());
+            cursor.setPosition(fragment.position() + fragment.length(), QTextCursor::KeepAnchor);
+            QTextCharFormat format;
+            format.setForeground(color);
+            cursor.mergeCharFormat(format);
+        }
+        return;
+    }
     if (auto *author = row->findChild<QLabel *>(QStringLiteral("mamAuthor"))) {
         QFont authorFont = font();
         authorFont.setBold(options.boldAuthor);
@@ -2604,6 +2722,15 @@ void MamChatWidget::setTheme(const NativeChatTheme &theme, const NativeChatMessa
     for (int index : materializedRows())
         replaceRow(index);
     updateTimestamps();
+}
+
+void MamChatWidget::setMessageIconsEnabled(bool enabled)
+{
+    if (messageIcons_ == enabled)
+        return;
+    messageIcons_ = enabled;
+    for (int index : materializedRows())
+        replaceRow(index);
 }
 
 QColor MamChatWidget::backgroundColor() const

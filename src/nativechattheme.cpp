@@ -120,6 +120,13 @@ void configureNativeChat(MamChatWidget *view, PsiAccount *account, bool groupCha
             applyFont();
     });
     QObject::connect(NativeChatThemes::instance(), &NativeChatThemes::changed, view, apply);
+    // The classic text log's message icons, as in the legacy chat view.
+    const QString icons = QStringLiteral("options.ui.chat.use-message-icons");
+    view->setMessageIconsEnabled(PsiOptions::instance()->getOption(icons).toBool());
+    QObject::connect(PsiOptions::instance(), &PsiOptions::optionChanged, view, [view, icons](const QString &name) {
+        if (name == icons)
+            view->setMessageIconsEnabled(PsiOptions::instance()->getOption(icons).toBool());
+    });
     auto applyColors = [view] {
         QPalette palette = QApplication::palette();
         palette.setColor(QPalette::Base,

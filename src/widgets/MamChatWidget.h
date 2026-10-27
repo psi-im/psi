@@ -119,6 +119,9 @@ public:
     QString backgroundImage() const { return backgroundImagePath_; }
     QString backgroundImageMode() const;
     void    setStyleHoverHighlight(bool enabled);
+    // Classic message icons (direction, delivery, encryption) before the
+    // time, for themes that put the header in the text.
+    void    setMessageIconsEnabled(bool enabled);
     void    setStyleBackgroundColor(const QColor &color);
     void    setStyleBackgroundImage(const QString &path);
     void    setStyleBackgroundImageMode(const QString &mode);
@@ -149,6 +152,7 @@ private:
     QPixmap                   backgroundImage_;
     NativeChatTheme::ImageMode backgroundImageMode_ = NativeChatTheme::Tile;
     QPixmap                   scaledBackground_;
+    bool                      messageIcons_ = true;
 
     void requestOlderMessages(const char *gesture);
     void scheduleInitialHistoryFillCheck();
