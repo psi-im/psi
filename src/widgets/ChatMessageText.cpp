@@ -60,9 +60,13 @@ public:
             else
                 size = natural;
         }
-        const qreal available = doc->textWidth() - 2 * doc->documentMargin();
-        if (doc->textWidth() > 0 && available > 0 && size.width() > available)
-            size = QSizeF(available, size.height() * available / size.width());
+        // A negative text width means no limit (natural width); a zero width
+        // (a widget not laid out yet) is a limit too.
+        if (doc->textWidth() >= 0) {
+            const qreal available = qMax<qreal>(1, doc->textWidth() - 2 * doc->documentMargin());
+            if (size.width() > available)
+                size = QSizeF(available, size.height() * available / size.width());
+        }
         qCDebug(lcChatText) << "image size" << image.name() << "format" << image.width() << image.height()
                             << "doc" << doc << "textWidth" << doc->textWidth() << "->" << size;
         return size;
@@ -106,6 +110,18 @@ ChatMessageText::ChatMessageText(QWidget *parent) : PsiTextView(parent)
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setContentsMargins(0, 0, 0, 0);
     viewport()->setAutoFillBackground(false);
+    // The surrounding timeline scrolls; this view always shows its whole
+    // document from the top left. QTextEdit can keep stale scroll ranges and
+    // offsets: after a layout at width 0 that scrolled to the end, Qt's
+    // layout-loop guard in QTextEdit's relayoutDocument() may skip adjusting
+    // the scroll bars when the real width arrives together with a height that
+    // fits the document, leaving the content scrolled out of view until the
+    // next width change.
+    for (QScrollBar *bar : { horizontalScrollBar(), verticalScrollBar() })
+        connect(bar, &QAbstractSlider::valueChanged, this, [bar](int value) {
+            if (value != 0)
+                bar->setValue(0);
+        });
     static auto *images = new FittingImageHandler(qApp);
     document()->documentLayout()->registerHandler(QTextFormat::ImageObject, images);
     auto policy = QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);

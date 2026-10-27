@@ -2183,6 +2183,45 @@ private slots:
         }
     }
 
+    void messageTextNeverScrollsItsOwnContent()
+    {
+        // The sequence seen on Qt 6.10: laid out at width 0 and scrolled to
+        // the end, then given its real width together with a height that fits
+        // the document. QTextEdit's layout-loop guard then skips adjusting the
+        // scroll bars, which used to keep the picture scrolled out of view.
+        QWidget window;
+        window.resize(700, 600);
+        auto  *body = new ChatMessageText(&window);
+        QImage picture(1148, 898, QImage::Format_RGB32);
+        picture.fill(QColor(0, 170, 0));
+        body->setRichText(QStringLiteral("<img src=\"share:wide\" width=\"1148\" height=\"898\"/>"));
+        // After the text: setting it clears the document's resources.
+        body->document()->addResource(QTextDocument::ImageResource, QUrl(QStringLiteral("share:wide")), picture);
+        window.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&window));
+        body->resize(0, 148);
+        QCoreApplication::processEvents();
+        body->moveCursor(QTextCursor::End);
+        body->ensureCursorVisible();
+        body->resize(520, body->heightForWidth(520));
+        QCoreApplication::processEvents();
+        QCOMPARE(body->horizontalScrollBar()->value(), 0);
+        QCOMPARE(body->verticalScrollBar()->value(), 0);
+        QVERIFY(body->document()->size().width() <= body->viewport()->width() + 1);
+        const auto onScreen = [&window, body] {
+            const QPoint at = body->viewport()->mapTo(&window, QPoint(body->viewport()->width() / 2, 100));
+            const QImage screen = QGuiApplication::primaryScreen()->grabWindow(window.winId()).toImage();
+            return screen.pixelColor(QPoint(qRound(at.x() * screen.devicePixelRatio()),
+                                            qRound(at.y() * screen.devicePixelRatio())));
+        };
+        QTRY_COMPARE(onScreen(), QColor(0, 170, 0));
+        // Nothing scrolls it later either, e.g. a selection drag past its edge.
+        body->horizontalScrollBar()->setValue(body->horizontalScrollBar()->maximum());
+        body->verticalScrollBar()->setValue(body->verticalScrollBar()->maximum());
+        QCOMPARE(body->horizontalScrollBar()->value(), 0);
+        QCOMPARE(body->verticalScrollBar()->value(), 0);
+    }
+
     void scaledImagesAreOnScreenWithoutAResize_data()
     {
         QTest::addColumn<QString>("flow");
