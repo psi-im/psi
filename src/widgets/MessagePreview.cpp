@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "MessagePreview.h"
+#include "ChatMessageText.h"
 #include "LinkButton.h"
 #include <QAbstractTextDocumentLayout>
 #include <QEvent>
@@ -9,27 +10,9 @@
 #include <QPushButton>
 #include <QResizeEvent>
 #include <QScrollBar>
-#include <QTextBrowser>
 #include <QTextDocument>
+#include <QTimer>
 #include <QVBoxLayout>
-#include <QWheelEvent>
-#include <cmath>
-
-namespace {
-class PreviewText : public QTextBrowser {
-public:
-    using QTextBrowser::QTextBrowser;
-
-protected:
-    void wheelEvent(QWheelEvent *event) override
-    {
-        if (verticalScrollBarPolicy() == Qt::ScrollBarAlwaysOff)
-            event->ignore();
-        else
-            QTextBrowser::wheelEvent(event);
-    }
-};
-}
 
 MessagePreview::MessagePreview(const QColor &barColor, const QColor &textColor, QWidget *parent) :
     QFrame(parent), barColor_(barColor), textColor_(textColor)
@@ -71,20 +54,19 @@ MessagePreview::MessagePreview(const QColor &barColor, const QColor &textColor, 
     header->addWidget(close_);
     connect(close_, &QPushButton::clicked, this, &MessagePreview::dismissed);
     column_->addLayout(header);
-    text_ = new PreviewText(this);
+    // The same view as a message's text: rich text, links, emoticons and media.
+    text_ = new ChatMessageText(this);
     text_->setObjectName(QStringLiteral("previewText"));
-    text_->setFrameShape(QFrame::NoFrame);
-    text_->setReadOnly(true);
-    text_->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::LinksAccessibleByMouse);
-    text_->setOpenLinks(false);
-    text_->setOpenExternalLinks(false);
-    text_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    text_->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    text_->viewport()->setAutoFillBackground(false);
-    text_->document()->setDocumentMargin(0);
-    connect(text_->verticalScrollBar(), &QScrollBar::valueChanged, text_, [browser = text_](int value) {
-        if (value && browser->verticalScrollBarPolicy() == Qt::ScrollBarAlwaysOff)
-            browser->verticalScrollBar()->setValue(0);
+    text_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed); // updatePreview() sets the height.
+    // Media that arrives later (a downloaded image) changes the height.
+    connect(text_->document()->documentLayout(), &QAbstractTextDocumentLayout::documentSizeChanged, this, [this] {
+        if (updateScheduled_)
+            return;
+        updateScheduled_ = true;
+        QTimer::singleShot(0, this, [this] {
+            updateScheduled_ = false;
+            updatePreview();
+        });
     });
     column_->addWidget(text_);
     toggle_ = new LinkButton(this);
@@ -128,15 +110,37 @@ void MessagePreview::refreshColors()
 
 void MessagePreview::setContent(const QString &title, const QString &text)
 {
-    if (title_->text() == title && text_->toPlainText() == text)
+    if (richText_.isNull() && title_->text() == title && text_->toPlainText() == text)
         return;
+    richText_.clear();
+    setTitle(title);
+    text_->setPlainMessage(text);
+    updatePreview();
+}
+
+void MessagePreview::setRichContent(const QString &title, const QString &html, bool withoutQuotedLines)
+{
+    // Keep the expanded state and selection when the same content comes again.
+    const QString key = (withoutQuotedLines ? QStringLiteral("q") : QStringLiteral("r")) + html;
+    if (richText_ == key && title_->text() == title)
+        return;
+    richText_ = key;
+    setTitle(title);
+    text_->setRichText(html);
+    if (withoutQuotedLines)
+        text_->removeQuotedLines();
+    updatePreview();
+}
+
+void MessagePreview::setMediaOpener(FileSharingDeviceOpener *opener) { text_->setMediaOpener(opener); }
+
+void MessagePreview::setTitle(const QString &title)
+{
     expanded_ = false;
     title_->setText(title);
     // No placeholder heading: without a title the header row collapses
     // (unless it still holds the dismiss button).
     title_->setVisible(!title.isEmpty());
-    text_->setPlainText(text);
-    updatePreview();
 }
 
 void MessagePreview::setClosable(bool enabled) { close_->setVisible(enabled); }
@@ -162,11 +166,7 @@ int MessagePreview::naturalWidth() const
     if (!title_->isHidden() && !title_->text().isEmpty())
         content = QFontMetrics(title_->font()).horizontalAdvance(title_->text())
             + (close_->isHidden() ? 0 : close_->width() + 6);
-    QTextDocument measure;
-    measure.setDefaultFont(font());
-    measure.setDocumentMargin(0);
-    measure.setPlainText(text_->toPlainText());
-    content = qMax(content, int(std::ceil(measure.idealWidth())) + 1);
+    content = qMax(content, text_->naturalWidth());
     if (!toggle_->isHidden())
         content = qMax(content, toggle_->sizeHint().width());
     if (footer_)
@@ -177,26 +177,23 @@ int MessagePreview::naturalWidth() const
 
 void MessagePreview::updatePreview()
 {
-    QTextDocument measure;
-    measure.setDefaultFont(font());
-    measure.setDocumentMargin(0);
-    measure.setPlainText(text_->toPlainText());
-    const int cap   = qMax(fontMetrics().lineSpacing(), window()->height() / 2);
-    int       width = qMax(1, this->width() - 12);
-    measure.setTextWidth(width);
-    int fullHeight = qMax(fontMetrics().height(), int(std::ceil(measure.size().height())));
-    if (expanded_ && fullHeight > cap) {
-        width = qMax(1, width - text_->verticalScrollBar()->sizeHint().width());
-        measure.setTextWidth(width);
-        fullHeight = qMax(fullHeight, int(std::ceil(measure.size().height())));
-    }
+    const int cap             = qMax(fontMetrics().lineSpacing(), window()->height() / 2);
     const int collapsedHeight = qMin(cap, fontMetrics().lineSpacing() * 3);
-    const int height          = qMin(fullHeight, expanded_ ? cap : collapsedHeight);
-    text_->setVerticalScrollBarPolicy(expanded_ && fullHeight > cap ? Qt::ScrollBarAsNeeded : Qt::ScrollBarAlwaysOff);
-    if (!expanded_)
-        text_->verticalScrollBar()->setValue(0);
+    // Collapsed, an image is shown whole at the height of the collapsed text.
+    text_->setMaximumImageHeight(expanded_ ? 0 : collapsedHeight);
+    const QMargins margins    = layout()->contentsMargins();
+    int            width      = qMax(1, this->width() - margins.left() - margins.right() - bar_->width()
+                                            - layout()->spacing());
+    int            fullHeight = text_->heightForWidth(width);
+    if (expanded_ && fullHeight > cap) {
+        width      = qMax(1, width - text_->verticalScrollBar()->sizeHint().width());
+        fullHeight = qMax(fullHeight, text_->heightForWidth(width));
+    }
+    const int height = qMin(fullHeight, expanded_ ? cap : collapsedHeight);
+    text_->setScrollable(expanded_ && fullHeight > cap);
     toggle_->setText(expanded_ ? tr("Show less") : tr("Show more…"));
-    const bool toggleVisible = fullHeight > collapsedHeight;
+    const bool toggleVisible
+        = fullHeight > collapsedHeight || (!expanded_ && text_->hasImagesTallerThan(collapsedHeight, width));
     const bool changed       = text_->height() != height || toggle_->isHidden() == toggleVisible;
     text_->setFixedHeight(height);
     toggle_->setVisible(toggleVisible);

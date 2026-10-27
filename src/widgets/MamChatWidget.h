@@ -207,7 +207,10 @@ private:
     QString plainMessage(const Row &) const;
     QString copiedMessage(const Row &) const;
     QMenu *createMessageContextMenu(const QString &key, QWidget *target, const QPoint &globalPosition);
-    bool resolveReply(const ChatReply &, QString &author, QString &text) const;
+    bool resolveReply(const ChatReply &, QString &author, QString &html) const;
+    void showReply(MessagePreview *preview, const ChatReply &reply) const;
+    // A message's text as its row shows it, as rich text.
+    QString richMessage(const Row &row) const;
     void refreshReplyPreviews(bool force = false);
     void                                          setHoveredRow(QFrame *row);
     QColor                                        informationalColor_;

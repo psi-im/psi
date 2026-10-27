@@ -15,6 +15,16 @@ public:
     void    setRichText(const QString &text);
     QString toPlainText() const { return document()->toPlainText(); }
     void    setWholeMessageSelectionMode(bool active);
+    void    setPlainMessage(const QString &text);
+    // Removes every line that starts with '>', i.e. quotes within a quote.
+    void    removeQuotedLines();
+    // By default the view always shows its document from the top and passes
+    // wheel input to the enclosing scroll area. A scrollable view scrolls its
+    // own document vertically instead.
+    void    setScrollable(bool scrollable);
+    // Images are scaled down to the text width and, if given, to this height.
+    void    setMaximumImageHeight(int height);
+    bool    hasImagesTallerThan(int height, int width) const;
     int     heightForWidth(int width) const override;
     // Width of the content laid out without wrapping, e.g. to fit a bubble.
     int     naturalWidth() const;
@@ -39,6 +49,7 @@ private:
     QMargins       textChrome() const;
     void isolateLargeMedia();
 
+    bool scrollable_ = false;
     // Only media-rich messages need rescanning when async SIMS previews arrive.
     bool hasMediaMarkup_ = false;
     bool isolatingMedia_ = false;

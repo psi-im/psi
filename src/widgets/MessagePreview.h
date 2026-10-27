@@ -5,7 +5,8 @@
 #include <QFrame>
 class QLabel;
 class QPushButton;
-class QTextBrowser;
+class ChatMessageText;
+class FileSharingDeviceOpener;
 class LinkButton;
 class QVBoxLayout;
 
@@ -18,6 +19,10 @@ public:
     void setColors(const QColor &barColor, const QColor &textColor = {});
     void setLinkColor(const QColor &color);
     void setContent(const QString &title, const QString &text);
+    // Rich text as in a message: links, emoticons and media, with the
+    // preview's text colour. Optionally without lines starting with '>'.
+    void setRichContent(const QString &title, const QString &html, bool withoutQuotedLines = false);
+    void setMediaOpener(FileSharingDeviceOpener *opener);
     void setClosable(bool);
     // Optional controls below the preview text, owned by the preview.
     void setFooter(QWidget *widget);
@@ -34,6 +39,7 @@ protected:
 
 private:
     void          updatePreview();
+    void          setTitle(const QString &title);
     void          refreshColors();
     QColor        barColor_;
     QColor        textColor_;
@@ -41,7 +47,9 @@ private:
     QFrame       *bar_ = nullptr;
     QVBoxLayout  *column_ = nullptr;
     QWidget      *footer_ = nullptr;
-    QTextBrowser *text_ = nullptr;
+    ChatMessageText *text_ = nullptr;
+    QString          richText_; // Null for plain content.
+    bool             updateScheduled_ = false;
     LinkButton   *toggle_ = nullptr;
     QPushButton  *close_ = nullptr;
     bool          expanded_ = false;
