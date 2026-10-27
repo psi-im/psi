@@ -427,6 +427,16 @@ void PsiRichText::install(QTextDocument *doc)
 #endif
 }
 
+bool PsiRichText::isMonospace(const QTextCharFormat &style)
+{
+    const QFont formatted = style.font();
+    const QString family = formatted.family();
+    return style.fontFixedPitch() || formatted.styleHint() == QFont::Monospace
+        || family.contains(QLatin1String("mono"), Qt::CaseInsensitive)
+        || family.contains(QLatin1String("courier"), Qt::CaseInsensitive)
+        || family.contains(QLatin1String("consolas"), Qt::CaseInsensitive);
+}
+
 void PsiRichText::applyBaseFont(QTextDocument *doc, const QFont &font)
 {
     doc->setDefaultFont(font);
@@ -445,14 +455,7 @@ void PsiRichText::applyBaseFont(QTextDocument *doc, const QFont &font)
             const QTextFragment fragment = it.fragment();
             if (!fragment.isValid())
                 continue;
-            const QTextCharFormat style = fragment.charFormat();
-            const QFont formatted = style.font();
-            const QString family = formatted.family();
-            const bool monospace = style.fontFixedPitch() || formatted.styleHint() == QFont::Monospace
-                || family.contains(QLatin1String("mono"), Qt::CaseInsensitive)
-                || family.contains(QLatin1String("courier"), Qt::CaseInsensitive)
-                || family.contains(QLatin1String("consolas"), Qt::CaseInsensitive);
-            if (!monospace)
+            if (!isMonospace(fragment.charFormat()))
                 regularText.append({ fragment.position(), fragment.length() });
         }
     }
