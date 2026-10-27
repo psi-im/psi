@@ -6,6 +6,7 @@
 #include "NativeChatRenderers.h"
 #include "filesharingmanager.h"
 #include "fileutil.h"
+#include "textutil.h"
 #include "urlobject.h"
 #include <QContextMenuEvent>
 #include <QCursor>
@@ -1998,18 +1999,7 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     body->setFont(font());
     body->setForegroundRole(QPalette::Text);
     const bool retracted = isRetracted(items_.at(index));
-    QString    richText  = retracted ? tr("Message retracted")
-        : mv.hasReplyFallback() ? mv.replyFormattedText()
-                                : mv.formattedText();
-    // XEP-0245 is a presentation rule, not a wire transformation. MessageView
-    // has already stripped "/me " but retains isEmote(); restore the sender
-    // prefix for the native widget log, just as the legacy ChatView did.
-    if (!retracted && mv.isEmote()) {
-        const QString actor = mv.nick().isEmpty() ? tr("Contact") : mv.nick();
-        richText = QStringLiteral("*") + actor.toHtmlEscaped() + QStringLiteral(" ") + richText;
-    }
-    if (!retracted && !mv.formattedUserText().isEmpty())
-        richText += (richText.isEmpty() ? QString() : QStringLiteral(" — ")) + mv.formattedUserText();
+    QString    richText  = richMessage(items_.at(index));
     // The rich-text document can paint inline media, but not arbitrary QWidget
     // attachments. Extract non-media shares, and images that are not going to
     // be downloaded by themselves, into native cards. Keep unknown shares in
@@ -2091,6 +2081,11 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     }
 
     body->setRichText(richText);
+    if (message) {
+        // Quotes within the message, after the one shown as its reply preview.
+        body->setQuoteColor(quoteColor_);
+        body->markQuotedLines();
+    }
     bodyPart->column()->addWidget(body);
     if (!files.isEmpty()) {
         if (richText.trimmed().isEmpty())
@@ -2337,13 +2332,9 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
         auto *preview = new MessagePreview(quoteColor_, quoteColor_, bodyPart);
         preview->setLinkColor(palette().color(QPalette::Link));
         preview->setObjectName(QStringLiteral("mamReplyPreview"));
-        QString author = mv.reply().author;
-        QString text = mv.reply().text;
-        const bool resolved = resolveReply(mv.reply(), author, text);
-        preview->setProperty("replyResolved", resolved);
-        // An unknown author gets no title: the quote styling says enough.
-        preview->setContent(author,
-                            text.isEmpty() ? tr("Referenced message is not available locally") : text);
+        preview->setFont(font());
+        preview->setMediaOpener(mediaOpener_);
+        showReply(preview, mv.reply());
         connect(preview, &MessagePreview::heightChanged, this, [this, key = items_.at(index).key] {
             const int at = indexOfKey(key);
             if (at >= 0) {
@@ -2544,7 +2535,7 @@ void MamChatWidget::changeEvent(QEvent *event)
             if (!row)
                 continue;
             row->setFont(font());
-            if (auto *body = row->findChild<ChatMessageText *>())
+            if (auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody")))
                 body->setFont(font());
         }
         restyleRows();
@@ -2834,21 +2825,29 @@ void MamChatWidget::copySelectedMessages()
         QApplication::clipboard()->setText(blocks.join(QStringLiteral("\n\n")));
 }
 
-QString MamChatWidget::plainMessage(const Row &row) const
+QString MamChatWidget::richMessage(const Row &row) const
 {
-    const auto   &message = row.message;
-    QTextDocument document;
-    const bool    retracted = isRetracted(row);
-    QString       rich      = retracted         ? tr("Message retracted")
-                   : message.hasReplyFallback() ? message.replyFormattedText()
-                                                : message.formattedText();
-    if (!retracted && message.isEmote()) {
+    const auto &message = row.message;
+    if (isRetracted(row))
+        return tr("Message retracted");
+    // Without its own quote: that is shown as the row's reply preview.
+    QString rich = message.hasReplyFallback() ? message.replyFormattedText() : message.formattedText();
+    // XEP-0245 is a presentation rule, not a wire transformation. MessageView
+    // has already stripped "/me " but retains isEmote(); restore the sender
+    // prefix for the native widget log, just as the legacy ChatView did.
+    if (message.isEmote()) {
         const QString actor = message.nick().isEmpty() ? tr("Contact") : message.nick();
         rich                = QStringLiteral("*") + actor.toHtmlEscaped() + QStringLiteral(" ") + rich;
     }
-    if (!retracted && !message.formattedUserText().isEmpty())
+    if (!message.formattedUserText().isEmpty())
         rich += (rich.isEmpty() ? QString() : QStringLiteral(" — ")) + message.formattedUserText();
-    PsiRichText::setText(&document, rich);
+    return rich;
+}
+
+QString MamChatWidget::plainMessage(const Row &row) const
+{
+    QTextDocument document;
+    PsiRichText::setText(&document, richMessage(row));
     return PsiRichText::convertToPlainText(&document).trimmed();
 }
 
@@ -2862,7 +2861,23 @@ QString MamChatWidget::copiedMessage(const Row &row) const
     return QStringLiteral("%1\t[%2]\n%3").arg(nick, timestamp, plainMessage(row));
 }
 
-bool MamChatWidget::resolveReply(const ChatReply &reply, QString &author, QString &text) const
+void MamChatWidget::showReply(MessagePreview *preview, const ChatReply &reply) const
+{
+    // The quoted message as it is shown in its own row, but without quotes of
+    // its own: no chain of quotes. Without the message itself, the quoting
+    // client's fallback text.
+    QString    author = reply.author;
+    QString    html;
+    const bool resolved = resolveReply(reply, author, html);
+    if (!resolved)
+        html = reply.text.isEmpty() ? tr("Referenced message is not available locally").toHtmlEscaped()
+                                    : TextUtil::linkify(TextUtil::plain2rich(reply.text));
+    preview->setProperty("replyResolved", resolved);
+    // An unknown author gets no title: the quote styling says enough.
+    preview->setRichContent(author, html, true);
+}
+
+bool MamChatWidget::resolveReply(const ChatReply &reply, QString &author, QString &html) const
 {
     // A plain-text quote has no id: never match it to a row, whose own
     // reaction target may be just as empty in a room without stanza-ids.
@@ -2884,7 +2899,7 @@ bool MamChatWidget::resolveReply(const ChatReply &reply, QString &author, QStrin
     if (!match)
         return false;
     author = match->message.nick();
-    text = plainMessage(*match);
+    html   = richMessage(*match);
     return true;
 }
 
@@ -2895,11 +2910,9 @@ void MamChatWidget::refreshReplyPreviews(bool force)
         auto *preview = row ? row->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview")) : nullptr;
         if (!preview || (!force && preview->property("replyResolved").toBool()))
             continue;
-        QString author, text;
-        if (resolveReply(items_.at(index).message.reply(), author, text)) {
-            preview->setProperty("replyResolved", true);
-            preview->setContent(author, text);
-        }
+        QString author, html;
+        if (resolveReply(items_.at(index).message.reply(), author, html))
+            showReply(preview, items_.at(index).message.reply());
     }
 }
 
@@ -3013,7 +3026,7 @@ QMenu *MamChatWidget::createMessageContextMenu(const QString &key, QWidget *targ
     menu->setToolTipsVisible(true);
     menu->setAttribute(Qt::WA_DeleteOnClose);
     auto *row = rowWidget(at);
-    QPointer<ChatMessageText> body = row ? row->findChild<ChatMessageText *>() : nullptr;
+    QPointer<ChatMessageText> body = row ? row->findChild<ChatMessageText *>(QStringLiteral("mamBody")) : nullptr;
     QPointer<QTextEdit> selectedTextView = body.data();
     QPointer<QLabel> selectedLabel = qobject_cast<QLabel *>(target);
     for (auto *child = target; child && child != row; child = child->parentWidget())
@@ -3119,9 +3132,12 @@ void MamChatWidget::setQuoteColor(const QColor &color)
 {
     quoteColor_ = color;
     for (int index : materializedRows())
-        if (auto *row = rowWidget(index))
+        if (auto *row = rowWidget(index)) {
             if (auto *preview = row->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview")))
                 preview->setColors(color, color);
+            if (auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody")))
+                body->setQuoteColor(color);
+        }
 }
 
 void MamChatWidget::updateRowSelection(QFrame *row, bool selected)
@@ -3138,7 +3154,7 @@ void MamChatWidget::updateRowSelection(QFrame *row, bool selected)
         if (selecting)
             author->setSelection(0, 0);
     }
-    if (auto *body = row->findChild<ChatMessageText *>())
+    if (auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody")))
         body->setWholeMessageSelectionMode(selecting);
 }
 
@@ -3167,7 +3183,7 @@ void MamChatWidget::updateRowPalette(QFrame *row, bool selected)
     row->setPalette(palette);
     // Over a background image, only a tinted row paints its surface.
     row->setAutoFillBackground(backgroundImage_.isNull() || surface != base);
-    if (auto *body = row->findChild<ChatMessageText *>()) {
+    if (auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody"))) {
         QPalette textPalette = palette;
         auto    *message     = messageRow(row);
         if (message && message->bodyTextColor.isValid())

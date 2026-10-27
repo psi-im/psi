@@ -2,6 +2,7 @@
 #pragma once
 
 #include "psitextview.h"
+#include <QColor>
 #include <QTextDocument>
 #include <QPoint>
 #include <memory>
@@ -15,6 +16,20 @@ public:
     void    setRichText(const QString &text);
     QString toPlainText() const { return document()->toPlainText(); }
     void    setWholeMessageSelectionMode(bool active);
+    void    setPlainMessage(const QString &text);
+    // Removes every line that starts with '>', i.e. quotes within a quote.
+    void    removeQuotedLines();
+    // Shows lines that start with '>' as quotes: indented, with a bar per
+    // level, in the quote colour. Copying restores the markers.
+    void    markQuotedLines();
+    void    setQuoteColor(const QColor &color);
+    // By default the view always shows its document from the top and passes
+    // wheel input to the enclosing scroll area. A scrollable view scrolls its
+    // own document vertically instead.
+    void    setScrollable(bool scrollable);
+    // Images are scaled down to the text width and, if given, to this height.
+    void    setMaximumImageHeight(int height);
+    bool    hasImagesTallerThan(int height, int width) const;
     int     heightForWidth(int width) const override;
     // Width of the content laid out without wrapping, e.g. to fit a bubble.
     int     naturalWidth() const;
@@ -27,6 +42,7 @@ protected:
     void       resizeEvent(QResizeEvent *event) override;
     void       changeEvent(QEvent *event) override;
     void       wheelEvent(QWheelEvent *event) override;
+    void       paintEvent(QPaintEvent *event) override;
     QMimeData *createMimeDataFromSelection() const override;
 
 private:
@@ -38,7 +54,11 @@ private:
     void           resetMeasuring() const;
     QMargins       textChrome() const;
     void isolateLargeMedia();
+    void applyQuoteColor();
 
+    bool   scrollable_ = false;
+    bool   hasQuotes_  = false;
+    QColor quoteColor_;
     // Only media-rich messages need rescanning when async SIMS previews arrive.
     bool hasMediaMarkup_ = false;
     bool isolatingMedia_ = false;

@@ -29,11 +29,74 @@
 #include <cmath>
 
 namespace {
+// Quoted lines ("> text", XEP-0393 block quotes) become blocks with this
+// property, their nesting level, indented and drawn with bars as in a quote.
+constexpr int QuoteLevelProperty = QTextFormat::UserProperty + 0x51;
+constexpr int QuoteBarWidth      = 3;
+constexpr int QuoteIndent        = 10; // A bar and the gap after it, as in MessagePreview.
+
+// The nesting level of a line quoted with '>' (also "> >" and ">>"), and the
+// length of its markers including one space after them.
+int quoteMarkers(const QString &line, int *length = nullptr)
+{
+    int at = 0;
+    while (at < line.size() && line.at(at) == QLatin1Char(' '))
+        ++at;
+    int level = 0;
+    while (at < line.size() && line.at(at) == QLatin1Char('>')) {
+        ++level;
+        ++at;
+        if (at + 1 < line.size() && line.at(at) == QLatin1Char(' ') && line.at(at + 1) == QLatin1Char('>'))
+            ++at;
+    }
+    if (level && at < line.size() && line.at(at) == QLatin1Char(' '))
+        ++at;
+    if (length)
+        *length = at;
+    return level;
+}
+
 // Draws images as Qt does, but never wider than the text: a picture wider than
 // the message (a narrow window, or a speech bubble) is scaled down to fit,
 // instead of overflowing a view that has no horizontal scrolling. The size is
 // derived from the document's current text width, so heightForWidth() and
 // painting agree for any width.
+const char *const MaximumImageHeight = "_psiMaximumImageHeight";
+
+QImage loadImage(QTextDocument *doc, const QTextImageFormat &format)
+{
+    const QVariant data = doc->resource(QTextDocument::ImageResource, QUrl(format.name()));
+    if (data.userType() == QMetaType::QImage)
+        return qvariant_cast<QImage>(data);
+    if (data.userType() == QMetaType::QPixmap)
+        return qvariant_cast<QPixmap>(data).toImage();
+    if (data.userType() == QMetaType::QByteArray)
+        return QImage::fromData(data.toByteArray());
+    return {};
+}
+
+// An image's size in a text that is `available` wide (negative: no limit),
+// at most `maximumHeight` high (0: no limit), keeping its aspect ratio.
+QSizeF fittedImageSize(QTextDocument *doc, const QTextImageFormat &image, qreal available, qreal maximumHeight)
+{
+    QSizeF size(image.width(), image.height());
+    if (size.width() <= 0 || size.height() <= 0) {
+        const QImage bitmap  = loadImage(doc, image);
+        const QSizeF natural = bitmap.isNull() ? QSizeF(16, 16) : QSizeF(bitmap.size()) / bitmap.devicePixelRatio();
+        if (size.width() > 0)
+            size.setHeight(natural.width() > 0 ? natural.height() * size.width() / natural.width() : natural.height());
+        else if (size.height() > 0)
+            size.setWidth(natural.height() > 0 ? natural.width() * size.height() / natural.height() : natural.width());
+        else
+            size = natural;
+    }
+    if (available >= 0 && size.width() > available)
+        size = QSizeF(available, size.height() * available / size.width());
+    if (maximumHeight > 0 && size.height() > maximumHeight)
+        size = QSizeF(size.width() * maximumHeight / size.height(), maximumHeight);
+    return size;
+}
+
 class FittingImageHandler final : public QObject, public QTextObjectInterface {
     Q_OBJECT
     Q_INTERFACES(QTextObjectInterface)
@@ -42,50 +105,22 @@ public:
 
     QSizeF intrinsicSize(QTextDocument *doc, int, const QTextFormat &format) override
     {
-        const QTextImageFormat image = format.toImageFormat();
-        QSizeF                 size(image.width(), image.height());
-        if (size.width() <= 0 || size.height() <= 0) {
-            const QImage bitmap  = load(doc, image);
-            const QSizeF natural = bitmap.isNull() ? QSizeF(16, 16) : QSizeF(bitmap.size()) / bitmap.devicePixelRatio();
-            if (size.width() > 0)
-                size.setHeight(natural.width() > 0 ? natural.height() * size.width() / natural.width() : natural.height());
-            else if (size.height() > 0)
-                size.setWidth(natural.height() > 0 ? natural.width() * size.height() / natural.height() : natural.width());
-            else
-                size = natural;
-        }
         // A negative text width means no limit (natural width); a zero width
         // (a widget not laid out yet) is a limit too.
-        if (doc->textWidth() >= 0) {
-            const qreal available = qMax<qreal>(1, doc->textWidth() - 2 * doc->documentMargin());
-            if (size.width() > available)
-                size = QSizeF(available, size.height() * available / size.width());
-        }
-        return size;
+        const qreal available
+            = doc->textWidth() >= 0 ? qMax<qreal>(1, doc->textWidth() - 2 * doc->documentMargin()) : -1.0;
+        return fittedImageSize(doc, format.toImageFormat(), available, doc->property(MaximumImageHeight).toReal());
     }
 
     void drawObject(QPainter *painter, const QRectF &rect, QTextDocument *doc, int, const QTextFormat &format) override
     {
-        const QImage bitmap = load(doc, format.toImageFormat());
+        const QImage bitmap = loadImage(doc, format.toImageFormat());
         if (bitmap.isNull())
             return;
         painter->save();
         painter->setRenderHint(QPainter::SmoothPixmapTransform);
         painter->drawImage(rect, bitmap);
         painter->restore();
-    }
-
-private:
-    static QImage load(QTextDocument *doc, const QTextImageFormat &format)
-    {
-        const QVariant data = doc->resource(QTextDocument::ImageResource, QUrl(format.name()));
-        if (data.userType() == QMetaType::QImage)
-            return qvariant_cast<QImage>(data);
-        if (data.userType() == QMetaType::QPixmap)
-            return qvariant_cast<QPixmap>(data).toImage();
-        if (data.userType() == QMetaType::QByteArray)
-            return QImage::fromData(data.toByteArray());
-        return {};
     }
 };
 }
@@ -107,8 +142,8 @@ ChatMessageText::ChatMessageText(QWidget *parent) : PsiTextView(parent)
     // fits the document, leaving the content scrolled out of view until the
     // next width change.
     for (QScrollBar *bar : { horizontalScrollBar(), verticalScrollBar() })
-        connect(bar, &QAbstractSlider::valueChanged, this, [bar](int value) {
-            if (value != 0)
+        connect(bar, &QAbstractSlider::valueChanged, this, [this, bar](int value) {
+            if (value != 0 && !(scrollable_ && bar == verticalScrollBar()))
                 bar->setValue(0);
         });
     static auto *images = new FittingImageHandler(qApp);
@@ -143,6 +178,7 @@ void ChatMessageText::setRichText(const QString &text)
         || text.contains(QLatin1String("<img"))
         || text.contains(QLatin1String("<icon"));
     isolatingMedia_ = true;
+    hasQuotes_      = false;
     document()->setDefaultFont(font());
     PsiTextView::setRichText(text);
     applyDocumentFont();
@@ -291,6 +327,7 @@ QTextDocument *ChatMessageText::measuringDocument() const
         // clone() keeps the root frame's margins but not this setting.
         measuring_->setDocumentMargin(document()->documentMargin());
         measuring_->setUseDesignMetrics(document()->useDesignMetrics());
+        measuring_->setProperty(MaximumImageHeight, document()->property(MaximumImageHeight));
         // The same object handlers, so images, icons and players measure as
         // they are drawn.
         QSet<int> types { QTextFormat::ImageObject };
@@ -385,8 +422,216 @@ void ChatMessageText::resizeEvent(QResizeEvent *event)
     PsiTextView::resizeEvent(event);
     updateGeometry();
 }
+void ChatMessageText::setPlainMessage(const QString &text)
+{
+    hasMediaMarkup_ = false;
+    hasQuotes_      = false;
+    document()->setPlainText(text);
+    applyDocumentFont();
+}
+
+void ChatMessageText::setMaximumImageHeight(int height)
+{
+    height = qMax(0, height);
+    if (document()->property(MaximumImageHeight).toInt() == height)
+        return;
+    document()->setProperty(MaximumImageHeight, height);
+    resetMeasuring();
+    document()->markContentsDirty(0, document()->characterCount());
+    updateGeometry();
+}
+
+bool ChatMessageText::hasImagesTallerThan(int height, int width) const
+{
+    const QMargins chrome    = textChrome();
+    const qreal    available = qMax(1, width - chrome.left() - chrome.right()) - 2 * document()->documentMargin();
+    for (auto block = document()->begin(); block.isValid(); block = block.next())
+        for (auto it = block.begin(); !it.atEnd(); ++it) {
+            const QTextCharFormat format = it.fragment().charFormat();
+            if (format.isImageFormat()
+                && fittedImageSize(document(), format.toImageFormat(), qMax<qreal>(1, available), 0).height() > height)
+                return true;
+        }
+    return false;
+}
+
+void ChatMessageText::setScrollable(bool scrollable)
+{
+    scrollable_ = scrollable;
+    setVerticalScrollBarPolicy(scrollable ? Qt::ScrollBarAsNeeded : Qt::ScrollBarAlwaysOff);
+    if (!scrollable)
+        verticalScrollBar()->setValue(0);
+}
+
+void ChatMessageText::markQuotedLines()
+{
+    QTextDocument *doc = document();
+    // Give every quoted line a block of its own: turn the line breaks around
+    // it into paragraph breaks. Each replacement keeps the positions.
+    QList<int> breaks;
+    const int  end   = doc->characterCount() - 1;
+    int        start = 0;
+    while (start <= end) {
+        int stop = start;
+        QString line;
+        while (stop < end && doc->characterAt(stop) != QChar::ParagraphSeparator
+               && doc->characterAt(stop) != QChar::LineSeparator)
+            line += doc->characterAt(stop++);
+        if (quoteMarkers(line)) {
+            if (start > 0 && doc->characterAt(start - 1) == QChar::LineSeparator)
+                breaks.append(start - 1);
+            if (stop < end && doc->characterAt(stop) == QChar::LineSeparator)
+                breaks.append(stop);
+        }
+        start = stop + 1;
+    }
+    if (breaks.isEmpty() && !quoteMarkers(doc->begin().text()))
+        return;
+    QTextCursor cursor(doc);
+    cursor.beginEditBlock();
+    for (int at : std::as_const(breaks)) {
+        cursor.setPosition(at);
+        cursor.setPosition(at + 1, QTextCursor::KeepAnchor);
+        cursor.removeSelectedText();
+        cursor.insertBlock();
+    }
+    // Then drop the markers and indent each quoted block by its level.
+    for (QTextBlock block = doc->begin(); block.isValid(); block = block.next()) {
+        int       length = 0;
+        const int level  = quoteMarkers(block.text(), &length);
+        if (!level)
+            continue;
+        cursor.setPosition(block.position());
+        cursor.setPosition(block.position() + length, QTextCursor::KeepAnchor);
+        cursor.removeSelectedText();
+        QTextBlockFormat format;
+        format.setLeftMargin(level * QuoteIndent);
+        format.setProperty(QuoteLevelProperty, level);
+        cursor.mergeBlockFormat(format);
+        hasQuotes_ = true;
+    }
+    cursor.endEditBlock();
+    applyQuoteColor();
+}
+
+void ChatMessageText::setQuoteColor(const QColor &color)
+{
+    if (quoteColor_ == color)
+        return;
+    quoteColor_ = color;
+    applyQuoteColor();
+}
+
+void ChatMessageText::applyQuoteColor()
+{
+    if (!hasQuotes_ || !quoteColor_.isValid())
+        return;
+    // The text of quoted blocks in the quote colour; links keep theirs.
+    QTextCursor cursor(document());
+    cursor.beginEditBlock();
+    for (QTextBlock block = document()->begin(); block.isValid(); block = block.next()) {
+        if (!block.blockFormat().hasProperty(QuoteLevelProperty))
+            continue;
+        for (auto it = block.begin(); !it.atEnd(); ++it) {
+            const QTextFragment fragment = it.fragment();
+            if (!fragment.isValid() || fragment.charFormat().isAnchor() || fragment.charFormat().isImageFormat())
+                continue;
+            cursor.setPosition(fragment.position());
+            cursor.setPosition(fragment.position() + fragment.length(), QTextCursor::KeepAnchor);
+            QTextCharFormat format;
+            format.setForeground(quoteColor_);
+            cursor.mergeCharFormat(format);
+        }
+    }
+    cursor.endEditBlock();
+    viewport()->update();
+}
+
+void ChatMessageText::paintEvent(QPaintEvent *event)
+{
+    PsiTextView::paintEvent(event);
+    if (!hasQuotes_)
+        return;
+    QPainter     painter(viewport());
+    const QColor color  = quoteColor_.isValid() ? quoteColor_ : palette().color(QPalette::Mid);
+    const qreal  left   = document()->documentMargin() - horizontalScrollBar()->value();
+    const qreal  scroll = verticalScrollBar()->value();
+    for (QTextBlock block = document()->begin(); block.isValid(); block = block.next()) {
+        const int level = block.blockFormat().property(QuoteLevelProperty).toInt();
+        if (!level)
+            continue;
+        const QRectF rect = document()->documentLayout()->blockBoundingRect(block).translated(0, -scroll);
+        if (rect.bottom() < event->rect().top() || rect.top() > event->rect().bottom())
+            continue;
+        for (int i = 0; i < level; ++i)
+            painter.fillRect(QRectF(left + i * QuoteIndent, rect.top(), QuoteBarWidth, rect.height()), color);
+    }
+}
+
+void ChatMessageText::removeQuotedLines()
+{
+    // Lines are separated by paragraphs or by line breaks within one. Remove
+    // each line that starts with '>' together with the break before it (or
+    // after it, for the first line), then trim blank lines at either end.
+    QTextDocument *doc = document();
+    const auto     isBreak
+        = [](QChar c) { return c == QChar::ParagraphSeparator || c == QChar::LineSeparator || c == QLatin1Char('\n'); };
+    QList<QPair<int, int>> lines;
+    const int              end = doc->characterCount() - 1; // The final paragraph separator is not removable.
+    for (int start = 0; start <= end;) {
+        int stop = start;
+        while (stop < end && !isBreak(doc->characterAt(stop)))
+            ++stop;
+        lines.append({ start, stop });
+        start = stop + 1;
+    }
+    const auto quoted = [doc](const QPair<int, int> &line) {
+        for (int at = line.first; at < line.second; ++at) {
+            const QChar c = doc->characterAt(at);
+            if (c == QLatin1Char('>'))
+                return true;
+            if (!c.isSpace())
+                return false;
+        }
+        return false;
+    };
+    const auto blank = [doc](const QPair<int, int> &line) {
+        for (int at = line.first; at < line.second; ++at)
+            if (!doc->characterAt(at).isSpace())
+                return false;
+        return true;
+    };
+    QVector<bool> remove(lines.size());
+    for (int i = 0; i < lines.size(); ++i)
+        remove[i] = quoted(lines.at(i));
+    for (int i = 0; i < lines.size() && (remove.at(i) || blank(lines.at(i))); ++i)
+        remove[i] = true;
+    for (int i = lines.size() - 1; i >= 0 && (remove.at(i) || blank(lines.at(i))); --i)
+        remove[i] = true;
+    if (!remove.contains(true))
+        return;
+    QTextCursor cursor(doc);
+    cursor.beginEditBlock();
+    for (int i = lines.size() - 1; i >= 0; --i) {
+        if (!remove.at(i))
+            continue;
+        const auto line = lines.at(i);
+        // Take the break before the line, or the one after the first line.
+        const int from = i > 0 ? line.first - 1 : line.first;
+        const int to   = i > 0 ? line.second : qMin(line.second + 1, end);
+        cursor.setPosition(from);
+        cursor.setPosition(to, QTextCursor::KeepAnchor);
+        cursor.removeSelectedText();
+    }
+    cursor.endEditBlock();
+}
+
 void ChatMessageText::wheelEvent(QWheelEvent *event)
 {
+    if (scrollable_) {
+        PsiTextView::wheelEvent(event);
+        return;
+    }
     // The text editor is a scroll area itself. Route wheel input to the enclosing
     // timeline, rather than scrolling a document with hidden scrollbars.
     for (QWidget *parent = parentWidget(); parent; parent = parent->parentWidget()) {
@@ -415,6 +660,12 @@ QMimeData *ChatMessageText::createMimeDataFromSelection() const
 {
     QTextDocument selected;
     QTextCursor(&selected).insertFragment(textCursor().selection());
+    // Quoted blocks are copied with their markers again.
+    for (QTextBlock block = selected.begin(); block.isValid(); block = block.next()) {
+        const int level = block.blockFormat().property(QuoteLevelProperty).toInt();
+        if (level)
+            QTextCursor(block).insertText(QString(level, QLatin1Char('>')) + QLatin1Char(' '));
+    }
     const QString plain = PsiRichText::convertToPlainText(&selected);
     auto         *data  = new QMimeData;
     data->setText(plain);

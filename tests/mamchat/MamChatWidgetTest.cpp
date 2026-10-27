@@ -419,14 +419,14 @@ private slots:
         QCOMPARE(row->findChild<ChatMessageText *>()->toPlainText(), QString("Answer"));
         auto *preview = row->findChild<MessagePreview *>("mamReplyPreview");
         QVERIFY(preview);
-        QCOMPARE(preview->findChild<QTextBrowser *>("previewText")->toPlainText(), QString("old fallback"));
+        QCOMPARE(preview->findChild<QTextEdit *>("previewText")->toPlainText(), QString("old fallback"));
         auto original = message("client", "The original message");
         original.setUserId("peer@example.org/phone");
         original.setReactionTargetId("origin");
         chat.prependArchivePage({qMakePair(QString("archive-original"), original)});
-        QTRY_COMPARE(preview->findChild<QTextBrowser *>("previewText")->toPlainText(), QString("The original message"));
+        QTRY_COMPARE(preview->findChild<QTextEdit *>("previewText")->toPlainText(), QString("The original message"));
         QCOMPARE(chat.messageCount(), 2);
-        auto *excerpt = preview->findChild<QTextBrowser *>("previewText");
+        auto *excerpt = preview->findChild<QTextEdit *>("previewText");
         excerpt->selectAll();
         QContextMenuEvent event(QContextMenuEvent::Mouse, QPoint(2, 2), excerpt->viewport()->mapToGlobal(QPoint(2, 2)));
         QApplication::sendEvent(excerpt->viewport(), &event);
@@ -443,6 +443,137 @@ private slots:
         corrected.setRevisionTime(original.dateTime().addSecs(20));
         chat.appendMessage(corrected);
         QTRY_COMPARE(excerpt->toPlainText(), QString("Updated original"));
+    }
+
+    void replyPreviewShowsTheQuotedMessageWithoutNestedQuotes()
+    {
+        FileSharingDeviceOpener opener;
+        FileSharingDeviceOpener account;
+        opener.accounts.insert(QStringLiteral("account-a"), &account);
+        FileSharingItem image(QStringLiteral("image/png"));
+        image.preview_ = QImage(600, 400, QImage::Format_RGB32);
+        image.preview_.fill(QColor(0, 170, 0));
+        account.items.insert(QStringLiteral("picture"), &image);
+
+        MamChatWidget chat;
+        chat.resize(560, 700);
+        chat.setHistoryLoading(true);
+        chat.setMediaOpener(&opener);
+        chat.setQuoteColor(QColor("#707070"));
+        QPalette colors = chat.palette();
+        colors.setColor(QPalette::Link, QColor("#2a6fb0"));
+        chat.setPalette(colors);
+        auto original = message(QStringLiteral("original"),
+                                QStringLiteral("&gt; Someone:<br>&gt; an older quote<br>Look at "
+                                               "<a href=\"https://psi-im.org\">psi-im.org</a><br>"
+                                               "&gt; an interleaved quote<br>"
+                                               "<share id=\"picture\" account=\"account-a\"/><br>The end"));
+        original.setReactionTargetId(QStringLiteral("original-id"));
+        chat.appendMessage(original);
+        auto reply = message(QStringLiteral("reply"), QStringLiteral("Answer"), 1, true);
+        reply.setReply({ QStringLiteral("original-id"), {}, QStringLiteral("Peer"), QStringLiteral("fallback") });
+        chat.appendMessage(reply);
+        // The quoted message is not here: the quoting client's fallback text.
+        auto orphan = message(QStringLiteral("orphan"), QStringLiteral("Another answer"), 2, true);
+        orphan.setReply({ QStringLiteral("missing-id"), {}, QStringLiteral("Peer"),
+                          QStringLiteral("> a deeper quote\nVisit https://example.org now\n> skipped\ntail") });
+        chat.appendMessage(orphan);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(1) && chat.itemWidget(2));
+
+        auto *preview = chat.itemWidget(1)->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview"));
+        QVERIFY(preview && preview->property("replyResolved").toBool());
+        auto *text = preview->findChild<ChatMessageText *>(QStringLiteral("previewText"));
+        QVERIFY(text);
+        // The row's own text is still the message, not its quote.
+        QCOMPARE(chat.itemWidget(1)->findChild<ChatMessageText *>(QStringLiteral("mamBody"))->toPlainText(),
+                 QStringLiteral("Answer"));
+        const QString shown = text->toPlainText();
+        QVERIFY2(shown.startsWith(QStringLiteral("Look at psi-im.org")), qPrintable(shown));
+        QVERIFY2(shown.endsWith(QStringLiteral("The end")), qPrintable(shown));
+        for (const char *hidden : { "Someone", "an older quote", "an interleaved quote", ">" })
+            QVERIFY2(!shown.contains(QLatin1String(hidden)), qPrintable(shown));
+        // Rich content as in the message: the link and the picture.
+        const QTextCursor link = text->document()->find(QStringLiteral("psi-im.org"));
+        QCOMPARE(link.charFormat().anchorHref(), QStringLiteral("https://psi-im.org"));
+        QCOMPARE(link.charFormat().foreground().color(), QColor("#2a6fb0"));
+        bool picture = false;
+        for (auto block = text->document()->begin(); block.isValid(); block = block.next())
+            for (auto it = block.begin(); !it.atEnd(); ++it)
+                picture = picture || it.fragment().charFormat().isImageFormat();
+        QVERIFY(picture);
+        // Everything else in the quote's colour.
+        QCOMPARE(text->palette().color(QPalette::Text), QColor("#707070"));
+
+        // Collapsed, the picture is a thumbnail as high as three lines;
+        // expanded, it is as large as in the message.
+        auto *more = preview->findChild<LinkButton *>(QStringLiteral("previewShowMore"));
+        QTRY_VERIFY(more->isVisible());
+        const int collapsed = text->height();
+        QVERIFY(collapsed <= 3 * text->fontMetrics().lineSpacing() + 1);
+        QTest::mouseClick(more, Qt::LeftButton);
+        QTRY_VERIFY(text->height() > collapsed + 100);
+        QTRY_VERIFY(preview->rect().contains(QRect(text->mapTo(preview, QPoint()), text->size())));
+
+        auto *fallback = chat.itemWidget(2)->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview"));
+        QVERIFY(fallback && !fallback->property("replyResolved").toBool());
+        auto *fallbackText = fallback->findChild<ChatMessageText *>(QStringLiteral("previewText"));
+        QCOMPARE(fallbackText->toPlainText(), QStringLiteral("Visit https://example.org now\ntail"));
+        QCOMPARE(fallbackText->document()->find(QStringLiteral("https://example.org")).charFormat().anchorHref(),
+                 QStringLiteral("https://example.org"));
+        // Two short lines fit: nothing more to show.
+        QTRY_VERIFY(!fallback->findChild<LinkButton *>(QStringLiteral("previewShowMore"))->isVisible());
+        QCOMPARE(fallbackText->height(), fallbackText->heightForWidth(fallbackText->width()));
+    }
+
+    void quotesWithinAMessageAreShownAsQuotes()
+    {
+        MamChatWidget chat;
+        chat.resize(560, 400);
+        chat.setHistoryLoading(true);
+        chat.setQuoteColor(QColor("#707070"));
+        QPalette colors = chat.palette();
+        colors.setColor(QPalette::Text, QColor("#101010"));
+        colors.setColor(QPalette::Link, QColor("#2a6fb0"));
+        chat.setPalette(colors);
+        chat.appendMessage(message(QStringLiteral("quotes"),
+                                   QStringLiteral("Top<br>&gt; first with <a href=\"https://psi-im.org\">a link</a><br>"
+                                                  "&gt; &gt; second<br>&gt;&gt; also second<br>Answer")));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *body = chat.itemWidget(0)->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+        QVERIFY(body);
+        // The markers are gone; each quoted line is a block of its own.
+        QCOMPARE(body->toPlainText(), QStringLiteral("Top\nfirst with a link\nsecond\nalso second\nAnswer"));
+        const auto blockOf = [body](const QString &text) { return body->document()->find(text).block(); };
+        QCOMPARE(blockOf(QStringLiteral("Top")).blockFormat().leftMargin(), 0.0);
+        QCOMPARE(blockOf(QStringLiteral("first")).blockFormat().leftMargin(), 10.0);
+        QCOMPARE(blockOf(QStringLiteral("second")).blockFormat().leftMargin(), 20.0);
+        QCOMPARE(blockOf(QStringLiteral("also second")).blockFormat().leftMargin(), 20.0);
+        QCOMPARE(blockOf(QStringLiteral("Answer")).blockFormat().leftMargin(), 0.0);
+        // Quoted text in the quote colour, links in theirs, the rest as usual.
+        QCOMPARE(body->document()->find(QStringLiteral("first")).charFormat().foreground().color(), QColor("#707070"));
+        QCOMPARE(body->document()->find(QStringLiteral("a link")).charFormat().foreground().color(), QColor("#2a6fb0"));
+        QVERIFY(body->document()->find(QStringLiteral("Answer")).charFormat().foreground().color() != QColor("#707070"));
+        // A bar per level beside the quoted lines.
+        QTRY_VERIFY(body->height() >= body->heightForWidth(body->width()));
+        const QImage shot  = body->viewport()->grab().toImage();
+        const auto   barAt = [&](const QString &text, int x) {
+            const QRect line = body->cursorRect(body->document()->find(text));
+            return shot.pixelColor(x, line.center().y()) == QColor("#707070");
+        };
+        QVERIFY(barAt(QStringLiteral("first"), 1));
+        QVERIFY(!barAt(QStringLiteral("first"), 11));
+        QVERIFY(barAt(QStringLiteral("second"), 1) && barAt(QStringLiteral("second"), 11));
+        QVERIFY(!barAt(QStringLiteral("Top"), 1));
+        // Copying gives the markers back.
+        body->selectAll();
+        body->copy();
+        QCOMPARE(QApplication::clipboard()->text(),
+                 QStringLiteral("Top\n> first with a link\n>> second\n>> also second\nAnswer"));
+        // The quote colour follows the option.
+        chat.setQuoteColor(QColor("#a0a4a8"));
+        QCOMPARE(body->document()->find(QStringLiteral("first")).charFormat().foreground().color(), QColor("#a0a4a8"));
     }
 
     void inlineReplyPreviewContributesToRowHeight_data()
@@ -477,7 +608,7 @@ private slots:
         auto *row = chat.itemWidget(0);
         auto *preview = row->findChild<MessagePreview *>("mamReplyPreview");
         QVERIFY(preview);
-        auto *excerpt = preview->findChild<QTextBrowser *>("previewText");
+        auto *excerpt = preview->findChild<QTextEdit *>("previewText");
         auto *title = preview->findChild<QLabel *>("previewTitle");
         auto *body = row->findChild<ChatMessageText *>();
         QVERIFY(excerpt && title && body);
@@ -575,7 +706,7 @@ private slots:
         window.show();
         auto *bar = preview->findChild<QFrame *>("previewBar");
         auto *title = preview->findChild<QLabel *>("previewTitle");
-        auto *excerpt = preview->findChild<QTextBrowser *>("previewText");
+        auto *excerpt = preview->findChild<QTextEdit *>("previewText");
         QVERIFY(bar && title && excerpt);
         QTRY_VERIFY(bar->height() >= excerpt->height());
         QCOMPARE(excerpt->palette().color(QPalette::Text),
@@ -682,7 +813,7 @@ private slots:
         preview->setContent("Author", text);
         preview->setClosable(true);
         window.show();
-        auto *browser = preview->findChild<QTextBrowser *>("previewText");
+        auto *browser = preview->findChild<QTextEdit *>("previewText");
         auto *more = preview->findChild<LinkButton *>("previewShowMore");
         QTRY_VERIFY(more->isVisible());
         const int collapsedHeight = browser->height();
