@@ -259,49 +259,7 @@ void ChatMessageText::setWholeMessageSelectionMode(bool active)
 void ChatMessageText::applyDocumentFont()
 {
     resetMeasuring();
-    document()->setDefaultFont(font());
-    // A full-document family override destroys explicit monospace styling
-    // from XEP-0393 code spans/fences. Update size for every fragment, but
-    // preserve the family on code and other explicitly fixed-pitch fragments.
-    QTextCharFormat sizeFormat;
-    if (font().pointSizeF() > 0)
-        sizeFormat.setFontPointSize(font().pointSizeF());
-    else
-        sizeFormat.setProperty(QTextFormat::FontPixelSize, font().pixelSize());
-
-    QList<QPair<int, int>> regularText;
-    for (QTextBlock block = document()->begin(); block.isValid(); block = block.next()) {
-        for (auto it = block.begin(); !it.atEnd(); ++it) {
-            const QTextFragment fragment = it.fragment();
-            if (!fragment.isValid())
-                continue;
-            const QTextCharFormat style = fragment.charFormat();
-            const QFont formatted = style.font();
-            const QString family = formatted.family();
-            const bool monospace = style.fontFixedPitch() || formatted.styleHint() == QFont::Monospace
-                || family.contains(QLatin1String("mono"), Qt::CaseInsensitive)
-                || family.contains(QLatin1String("courier"), Qt::CaseInsensitive)
-                || family.contains(QLatin1String("consolas"), Qt::CaseInsensitive);
-            if (!monospace)
-                regularText.append({ fragment.position(), fragment.length() });
-        }
-    }
-    QTextCursor cursor(document());
-    cursor.beginEditBlock();
-    cursor.select(QTextCursor::Document);
-    cursor.mergeCharFormat(sizeFormat);
-    QTextCharFormat familyFormat;
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    familyFormat.setFontFamilies({ font().family() });
-#else
-    familyFormat.setFontFamily(font().family());
-#endif
-    for (const auto &[start, length] : std::as_const(regularText)) {
-        cursor.setPosition(start);
-        cursor.setPosition(start + length, QTextCursor::KeepAnchor);
-        cursor.mergeCharFormat(familyFormat);
-    }
-    cursor.endEditBlock();
+    PsiRichText::applyBaseFont(document(), font());
     updateGeometry();
 }
 
