@@ -26,7 +26,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Resolve qite
-        run: git submodule update --init --depth 1 3rdparty/qite
+        run: git submodule update --init --depth 1 3rdparty/qite 3rdparty/qsourcehighlite
       - name: Install Qt5
         run: |
           sudo apt-get update

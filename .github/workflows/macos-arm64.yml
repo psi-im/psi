@@ -25,7 +25,7 @@ jobs:
       - name: Initialize non-Iris source submodules
         run: |
           git submodule update --init --depth 1 \
-            3rdparty/http-parser 3rdparty/qhttp 3rdparty/qite
+            3rdparty/http-parser 3rdparty/qhttp 3rdparty/qite 3rdparty/qsourcehighlite
       - name: Initialize exact Iris gitlink
         run: |
           git submodule update --init --depth 1 iris

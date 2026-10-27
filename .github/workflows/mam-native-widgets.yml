@@ -68,7 +68,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Resolve qite
-        run: git submodule update --init --depth 1 3rdparty/qite
+        run: git submodule update --init --depth 1 3rdparty/qite 3rdparty/qsourcehighlite
       - name: Install Qt6
         run: |
           sudo apt-get update
@@ -131,7 +131,7 @@ jobs:
       - name: Resolve qite
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git submodule update --init --depth 1 3rdparty/qite
+          git submodule update --init --depth 1 3rdparty/qite 3rdparty/qsourcehighlite
       - name: Restore compiler cache
         uses: actions/cache@v4
         with:
