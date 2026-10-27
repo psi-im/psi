@@ -1729,6 +1729,8 @@ void PsiAccount::updateFeatures()
     }
 
     features << QLatin1String("jabber:x:conference"); // allow direct invites
+    if (PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool())
+        features << QLatin1String("urn:xmpp:styling:0");
 #ifndef WEBKIT
     features << QLatin1String("urn:xmpp:reply:0");
 #endif
