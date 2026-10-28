@@ -63,6 +63,47 @@ void applyRange(QTextCursor &cursor, int from, int to, const QTextCharFormat &fo
 
 } // namespace
 
+QList<PsiRichText::CodeBlock> PsiRichText::codeBlocks(const QTextDocument *doc)
+{
+    QList<CodeBlock> result;
+    if (!doc)
+        return result;
+    const QString text = doc->toPlainText();
+    if (!text.contains(QString(3, QChar(0x60))) || text.size() != doc->characterCount() - 1)
+        return result;
+
+    const auto lines = sourceLines(text);
+    QTextCursor marker(const_cast<QTextDocument *>(doc));
+    for (size_t first = 0; first < lines.size(); ++first) {
+        const auto &opening = lines[first];
+        if (!isFence(opening.text))
+            continue;
+        marker.setPosition(opening.start);
+        if (!marker.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor)
+            || !isMonospace(marker.charFormat()))
+            continue;
+        marker.clearSelection();
+
+        size_t closing = first + 1;
+        for (; closing < lines.size(); ++closing)
+            if (isClosingFence(lines[closing].text))
+                break;
+        // A separate widget needs a completed fence. Incomplete or oddly
+        // structured messages remain rendered by the shared QTextDocument.
+        if (closing >= lines.size())
+            continue;
+        QStringList code;
+        code.reserve(int(closing - first - 1));
+        for (size_t line = first + 1; line < closing; ++line)
+            code.append(lines[line].text);
+        result.append({ opening.start, lines[closing].end,
+                        opening.text.mid(3).trimmed(),
+                        code.join(QLatin1Char('\n')) });
+        first = closing;
+    }
+    return result;
+}
+
 void PsiRichText::highlightCodeBlocks(QTextDocument *doc)
 {
     if (!doc)
