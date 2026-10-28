@@ -3389,7 +3389,7 @@ void MamChatWidget::setQuoteColor(const QColor &color)
         if (auto *row = rowWidget(index)) {
             if (auto *preview = row->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview")))
                 preview->setColors(color, color);
-            if (auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody")))
+            for (auto *body : row->findChildren<ChatMessageText *>())
                 body->setQuoteColor(color);
         }
 }
@@ -3408,7 +3408,7 @@ void MamChatWidget::updateRowSelection(QFrame *row, bool selected)
         if (selecting)
             author->setSelection(0, 0);
     }
-    if (auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody")))
+    for (auto *body : row->findChildren<ChatMessageText *>())
         body->setWholeMessageSelectionMode(selecting);
 }
 
@@ -3461,6 +3461,13 @@ void MamChatWidget::updateRowPalette(QFrame *row, bool selected)
             if (message)
                 message->bodyDefaults = defaults;
             changePartPalette(body, [&textPalette](QPalette &colors) { colors = textPalette; });
+        }
+        // Split fenced code leaves ordinary prose in independent text views.
+        // Give every segment the same palette and selection affordances.
+        for (auto *segment : row->findChildren<ChatMessageText *>()) {
+            if (segment == body)
+                continue;
+            changePartPalette(segment, [&textPalette](QPalette &colors) { colors = textPalette; });
         }
     }
     row->update();
