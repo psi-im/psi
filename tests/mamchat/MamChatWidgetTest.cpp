@@ -226,12 +226,10 @@ private slots:
         MamChatWidget chat;
         chat.resize(520, 400);
         chat.setHistoryLoading(true);
-        auto styled = MessageView::fromHtml(MessageStyling::toHtml(
+        auto styled = message(QStringLiteral("fenced"), MessageStyling::toHtml(
             QStringLiteral("before<br>") + QString(3, QChar(0x60))
             + QStringLiteral("cpp<br>int number = 42;<br>")
             + QString(3, QChar(0x60)) + QStringLiteral("<br>after")));
-        styled.setMessageId(QStringLiteral("fenced"));
-        styled.setNick(QStringLiteral("Peer"));
         chat.appendMessage(styled);
         chat.show();
         QTRY_VERIFY(chat.itemWidget(0));
@@ -256,11 +254,9 @@ private slots:
                         NativeChatTheme::Modern, 40, 6, {} },
                       NativeChatRenderers::bubble());
         const QString longLine(1200, QLatin1Char('x'));
-        auto styled = MessageView::fromHtml(MessageStyling::toHtml(
+        auto styled = message(QStringLiteral("wide-code"), MessageStyling::toHtml(
             QString(3, QChar(0x60)) + QStringLiteral("cpp<br>")
             + longLine + QStringLiteral("<br>") + QString(3, QChar(0x60))));
-        styled.setMessageId(QStringLiteral("wide-code"));
-        styled.setNick(QStringLiteral("Peer"));
         chat.appendMessage(styled);
         chat.show();
         QTRY_VERIFY(chat.itemWidget(0));
@@ -285,11 +281,9 @@ private slots:
                         NativeChatTheme::Classic, 0, 4, {} });
         chat.setMessageIconsEnabled(true);
         chat.setHistoryLoading(true);
-        auto styled = MessageView::fromHtml(MessageStyling::toHtml(
+        auto styled = message(QStringLiteral("classic-code"), MessageStyling::toHtml(
             QString(3, QChar(0x60)) + QStringLiteral("python<br>print(42)<br>")
             + QString(3, QChar(0x60))));
-        styled.setMessageId(QStringLiteral("classic-code"));
-        styled.setNick(QStringLiteral("Peer"));
         chat.appendMessage(styled);
         chat.show();
         QTRY_VERIFY(chat.itemWidget(0));
