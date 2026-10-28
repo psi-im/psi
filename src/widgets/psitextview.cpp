@@ -509,6 +509,9 @@ void PsiTextView::setRichText(const QString &text)
     // color XEP-0393 fenced code in the shared text view.
     if (text.contains(QLatin1String("```")))
         PsiRichText::highlightCodeBlocks(document());
+    if (text.contains(QChar(0x60)))
+        PsiRichText::decorateInlineCode(document(), palette().color(QPalette::Base),
+                                        palette().color(QPalette::Text));
 }
 
 // Legacy text logs append fragments rather than replacing the whole document.
@@ -545,6 +548,9 @@ QTextCursor PsiTextView::appendTextWithRange(const QString &text)
         markQuotedLines();
     if (text.contains(QLatin1String("```")))
         PsiRichText::highlightCodeBlocks(document());
+    if (text.contains(QChar(0x60)))
+        PsiRichText::decorateInlineCode(document(), palette().color(QPalette::Base),
+                                        palette().color(QPalette::Text));
     return inserted;
 }
 
@@ -570,6 +576,9 @@ QTextCursor PsiTextView::insertTextWithRange(const QString &text, QTextCursor &c
         markQuotedLines();
     if (text.contains(QLatin1String("```")))
         PsiRichText::highlightCodeBlocks(document());
+    if (text.contains(QChar(0x60)))
+        PsiRichText::decorateInlineCode(document(), palette().color(QPalette::Base),
+                                        palette().color(QPalette::Text));
     return inserted;
 }
 
@@ -588,6 +597,9 @@ QTextCursor PsiTextView::insertTextFragmentWithRange(const QString &text, QTextC
         markQuotedLines();
     if (text.contains(QLatin1String("```")))
         PsiRichText::highlightCodeBlocks(document());
+    if (text.contains(QChar(0x60)))
+        PsiRichText::decorateInlineCode(document(), palette().color(QPalette::Base),
+                                        palette().color(QPalette::Text));
     return inserted;
 }
 
