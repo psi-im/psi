@@ -26,6 +26,7 @@
 #include <QPointer>
 #include <QPushButton>
 #include <QScrollBar>
+#include <QStringList>
 #include <QSyntaxHighlighter>
 #include <QTextBlock>
 #include <QTextCursor>
@@ -95,6 +96,17 @@ QString prettyJson(const QString &source)
     if (error.error != QJsonParseError::NoError || doc.isNull())
         return {};
     QString formatted = QString::fromUtf8(doc.toJson(QJsonDocument::Indented));
+    // Qt's Indented format uses four spaces per nesting level. Use two for
+    // compact reading inside bubbles, without changing JSON string values.
+    QStringList lines = formatted.split(QLatin1Char('\n'));
+    for (QString &line : lines) {
+        int count = 0;
+        while (count < line.size() && line.at(count) == QLatin1Char(' '))
+            ++count;
+        if (count && count % 4 == 0)
+            line.replace(0, count, QString(count / 2, QLatin1Char(' ')));
+    }
+    formatted = lines.join(QLatin1Char('\n'));
     if (formatted.endsWith(QLatin1Char('\n')))
         formatted.chop(1);
     return formatted;
