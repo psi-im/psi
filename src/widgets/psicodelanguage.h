@@ -3,6 +3,7 @@
 
 #include "qsourcehighliter.h"
 #include <QString>
+#include <QList>
 #include <algorithm>
 #include <optional>
 
@@ -10,6 +11,26 @@
 namespace PsiCodeLanguage {
 
 using SourceLanguage = QSourceHighlite::QSourceHighliter::Language;
+
+// UI choices use the same language IDs as fromName(). The first entry
+// intentionally disables syntax highlighting for unknown/unspecified code.
+struct Choice { const char *id; const char *label; };
+inline const QList<Choice> &choices()
+{
+    static const QList<Choice> result {
+        { "", "Plain text" }, { "cpp", "C++" }, { "c", "C" },
+        { "python", "Python" }, { "js", "JavaScript" },
+        { "typescript", "TypeScript" }, { "json", "JSON" },
+        { "xml", "XML" }, { "css", "CSS" }, { "bash", "Bash" },
+        { "go", "Go" }, { "rust", "Rust" }, { "java", "Java" },
+        { "csharp", "C#" }, { "php", "PHP" }, { "qml", "QML" },
+        { "sql", "SQL" }, { "yaml", "YAML" }, { "ini", "INI" },
+        { "cmake", "CMake" }, { "make", "Makefile" },
+        { "asm", "Assembly" }, { "lua", "Lua" },
+        { "v", "V" }, { "vex", "VEX" }, { "rhai", "Rhai" }
+    };
+    return result;
+}
 
 inline std::optional<SourceLanguage> fromName(QString language)
 {
