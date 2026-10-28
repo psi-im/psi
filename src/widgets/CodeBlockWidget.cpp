@@ -130,6 +130,17 @@ CodeBlockWidget::CodeBlockWidget(QWidget *parent) : QWidget(parent)
     setCode(QString(), QString());
 }
 
+CodeBlockWidget::~CodeBlockWidget()
+{
+    // CodeBlockWidget's members (including actionButtons_) are destroyed
+    // before QWidget::~QWidget deletes its QObject children. In particular,
+    // the Copy QAction emits destroyed() *after* actionButtons_ is gone.
+    // Disconnect our cleanup callbacks while the map and actions are alive.
+    // Plugin-owned actions may outlive this widget, so do not delete them.
+    for (QAction *action : actionButtons_.keys())
+        disconnect(action, &QObject::destroyed, this, nullptr);
+}
+
 void CodeBlockWidget::addCodeAction(QAction *action)
 {
     if (!action || actionButtons_.contains(action))
