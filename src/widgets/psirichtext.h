@@ -40,6 +40,8 @@ public:
     // Reapply a theme font without overwriting explicit code/monospace families.
     static void applyBaseFont(QTextDocument *doc, const QFont &font);
     static bool isMonospace(const QTextCharFormat &format);
+    // Subtle palette-relative backing for inline XEP-0393 code; do not recolor text.
+    static void decorateInlineCode(QTextDocument *doc, const QColor &base, const QColor &text);
     // Character offsets refer to the original QTextDocument. Code excludes
     // the visible fence lines, and end is the exclusive end of the close fence.
     struct CodeBlock { int begin; int end; QString language; QString code; };
