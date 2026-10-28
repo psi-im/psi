@@ -2158,17 +2158,21 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     // The sender may explicitly forbid XEP-0393 styling, including quotes.
     body->setQuoteStylingEnabled(!mv.stylingDisabled());
     body->setRichText(richText);
-    // After the text: setting it clears the document's resources.
-    if (!inlineIcons.isEmpty()) {
+    // Reinstall Classic header images whenever the document is replaced or
+    // split into prose pieces. setRichText() clears its resource table.
+    const auto installInlineIcons = [this, &inlineIcons](ChatMessageText *text) {
+        if (inlineIcons.isEmpty())
+            return;
         const int   iconSize = qMax(10, QFontInfo(font()).pixelSize());
         const qreal ratio    = devicePixelRatioF();
         for (auto it = inlineIcons.cbegin(); it != inlineIcons.cend(); ++it) {
             QPixmap pixmap = IconsetFactory::iconPixmap(
                 it.value(), QSize(qRound(iconSize * ratio), qRound(iconSize * ratio)));
             pixmap.setDevicePixelRatio(ratio);
-            body->document()->addResource(QTextDocument::ImageResource, QUrl(it.key()), pixmap);
+            text->document()->addResource(QTextDocument::ImageResource, QUrl(it.key()), pixmap);
         }
-    }
+    };
+    installInlineIcons(body);
     if (inText && message)
         body->setLinkHandler([this](const QString &link) {
             if (!link.startsWith(QLatin1String("addnick://psi/")))
@@ -2186,11 +2190,30 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     // one rounded surface, bounded height, independent overlay scrollbars
     // and extensible actions. Only split ordinary text, not media/inline
     // object documents (which must retain their shared resource mappings).
-    const bool canUseCodeWidgets = message && !mv.stylingDisabled() && !inText && files.isEmpty()
+    // Classic embeds a direction icon into its text header. Those known icons
+    // are safe to carry to the prose fragments; actual media stays unsplit.
+    bool hasNonHeaderImage = false;
+    const QRegularExpression imageTag(QStringLiteral(R"(<img\\b[^>]*>)"),
+                                       QRegularExpression::CaseInsensitiveOption);
+    auto imageMatches = imageTag.globalMatch(richText);
+    while (imageMatches.hasNext()) {
+        const QString tag = imageMatches.next().captured();
+        bool headerImage = false;
+        for (auto it = inlineIcons.cbegin(); it != inlineIcons.cend(); ++it)
+            if (tag.contains(it.key())) {
+                headerImage = true;
+                break;
+            }
+        if (!headerImage) {
+            hasNonHeaderImage = true;
+            break;
+        }
+    }
+    const bool canUseCodeWidgets = message && !mv.stylingDisabled() && files.isEmpty()
         && richText.contains(QString(3, QChar(0x60)))
         && !richText.contains(QLatin1String("<share"))
-        && !richText.contains(QLatin1String("<img"))
-        && !richText.contains(QLatin1String("<icon"));
+        && !richText.contains(QLatin1String("<icon"))
+        && !hasNonHeaderImage;
     const auto codeBlocks = canUseCodeWidgets ? PsiRichText::codeBlocks(body->document())
                                              : QList<PsiRichText::CodeBlock>();
     if (codeBlocks.isEmpty()) {
@@ -2261,6 +2284,7 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
             }
             text->setQuoteStylingEnabled(!mv.stylingDisabled());
             text->setRichText(piece.text);
+            installInlineIcons(text);
             text->setQuoteColor(quoteColor_);
             firstPiece = false;
         }
