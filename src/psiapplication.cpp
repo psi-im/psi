@@ -22,7 +22,6 @@
 #ifdef Q_OS_MACOS
 #include "CocoaUtilities/CocoaTrayClick.h"
 #endif
-#include "resourcemenu.h"
 #ifdef Q_OS_WIN
 #include "systemwatch/systemwatch_win.h"
 #endif
