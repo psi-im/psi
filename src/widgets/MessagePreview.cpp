@@ -95,7 +95,9 @@ void MessagePreview::refreshColors()
         return;
     // Only resolve the roles we own. Copying the resolved parent palette here
     // would freeze normal text/selection colors when the desktop theme changes.
-    QPalette foreground;
+    // Start from the inherited chat palette. A fresh default QPalette would
+    // force black text whenever no explicit preview text color is supplied.
+    QPalette foreground = palette();
     if (textColor_.isValid()) {
         foreground.setColor(QPalette::Text, textColor_);
         foreground.setColor(QPalette::WindowText, textColor_);
