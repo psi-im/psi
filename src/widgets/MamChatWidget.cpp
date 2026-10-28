@@ -48,6 +48,7 @@
 #include <QPointer>
 #include <QPropertyAnimation>
 #include <QPushButton>
+#include <QPlainTextEdit>
 #include <QResizeEvent>
 #include <QRegularExpression>
 #include <QScrollBar>
@@ -3282,17 +3283,25 @@ QMenu *MamChatWidget::createMessageContextMenu(const QString &key, QWidget *targ
     auto *row = rowWidget(at);
     QPointer<ChatMessageText> body = row ? row->findChild<ChatMessageText *>(QStringLiteral("mamBody")) : nullptr;
     QPointer<QTextEdit> selectedTextView = body.data();
+    QPointer<QPlainTextEdit> selectedCodeView;
     QPointer<QLabel> selectedLabel = qobject_cast<QLabel *>(target);
-    for (auto *child = target; child && child != row; child = child->parentWidget())
+    for (auto *child = target; child && child != row; child = child->parentWidget()) {
+        if (auto *code = qobject_cast<QPlainTextEdit *>(child)) {
+            selectedCodeView = code;
+            break;
+        }
         if (auto *text = qobject_cast<QTextEdit *>(child)) {
             selectedTextView = text;
             break;
         }
+    }
     auto *copy = menu->addAction(tr("Copy"));
     copy->setObjectName(QStringLiteral("mamCopyMessage"));
-    connect(copy, &QAction::triggered, this, [this, key, selectedTextView, selectedLabel] {
+    connect(copy, &QAction::triggered, this, [this, key, selectedTextView, selectedCodeView, selectedLabel] {
         if (selectedLabel && selectedLabel->hasSelectedText())
             QApplication::clipboard()->setText(selectedLabel->selectedText());
+        else if (selectedCodeView && selectedCodeView->textCursor().hasSelection())
+            selectedCodeView->copy();
         else if (selectedTextView && selectedTextView->textCursor().hasSelection())
             selectedTextView->copy();
         else {
