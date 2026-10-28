@@ -244,6 +244,14 @@ private slots:
             QVERIFY(externalDestroyed.isValid());
         }
 
+        // Removing an action while it is still owned by the widget also
+        // disconnects its destroyed() callback, even though the action
+        // itself will be destroyed only after CodeBlockWidget's members.
+        auto *withoutCopy = new CodeBlockWidget;
+        QAction *copy = withoutCopy->copyAction();
+        withoutCopy->removeCodeAction(copy);
+        delete withoutCopy;
+
         // When a plugin action dies first, the registered button disappears
         // normally, and a later destruction of the code widget stays safe.
         auto *block = new CodeBlockWidget;
