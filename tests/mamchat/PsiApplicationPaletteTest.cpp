@@ -2,6 +2,9 @@
 #include "psiapplication.h"
 
 #include <QEvent>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+#include <QStyleHints>
+#endif
 #include <QSignalSpy>
 #include <QtTest/QtTest>
 
