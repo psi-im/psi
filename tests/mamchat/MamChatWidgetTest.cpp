@@ -2,6 +2,7 @@
 #include "widgets/MamChatWidget.h"
 #include "widgets/MamImageViewer.h"
 #include "widgets/ChatMessageText.h"
+#include "widgets/CodeBlockWidget.h"
 #include "widgets/MessagePreview.h"
 #include "widgets/LinkButton.h"
 #include "widgets/NativeChatRenderers.h"
@@ -28,6 +29,7 @@
 #include <QMenu>
 #include <QMouseEvent>
 #include <QPushButton>
+#include <QPlainTextEdit>
 #include <QToolButton>
 #include <QScopeGuard>
 #include <QScreen>
@@ -185,6 +187,63 @@ private slots:
         QCOMPARE(copied, original);
         body.setTextCursor(selected);
         QCOMPARE(body.textCursor().selectedText(), selected.selectedText());
+    }
+
+    void codeBlockWidgetBoundsScrollsCopiesAndAcceptsPluginActions()
+    {
+        CodeBlockWidget block;
+        const QString longLine(280, QLatin1Char('x'));
+        QStringList lines;
+        for (int i = 0; i < 100; ++i)
+            lines.append(i == 0 ? longLine : QStringLiteral("int value = %1;").arg(i));
+        const QString code = lines.join(QLatin1Char('\n'));
+        block.setCode(code, QStringLiteral("cpp"));
+        QVERIFY(block.naturalWidth() >= 400);
+        const QSize hint = block.sizeHint();
+        // The editor is bounded to 25 lines, without truncating its contents.
+        QVERIFY(hint.height() < block.editor()->fontMetrics().lineSpacing() * 30 + 100);
+        QCOMPARE(block.editor()->document()->blockCount(), 100);
+        block.resize(360, hint.height());
+        block.show();
+        QTRY_VERIFY(block.editor()->horizontalScrollBar()->maximum() > 0);
+        QTRY_VERIFY(block.editor()->verticalScrollBar()->maximum() > 0);
+        block.copyAction()->trigger();
+        QCOMPARE(QApplication::clipboard()->text(), code);
+
+        QAction formatAction(QStringLiteral("Format"), &block);
+        int invoked = 0;
+        connect(&formatAction, &QAction::triggered, &block, [&invoked] { ++invoked; });
+        block.addCodeAction(&formatAction);
+        formatAction.trigger();
+        QCOMPARE(invoked, 1);
+        block.removeCodeAction(&formatAction);
+        block.setCode(QStringLiteral("x"), QStringLiteral("cpp"));
+        QVERIFY(block.sizeHint().height() < hint.height());
+    }
+
+    void xep0393NativeFencesBecomeIndependentCodeBlocks()
+    {
+        MamChatWidget chat;
+        chat.resize(520, 400);
+        chat.setHistoryLoading(true);
+        auto styled = message(QStringLiteral("fenced"), QStringLiteral("placeholder"));
+        styled.setHtml(MessageStyling::toHtml(
+            QStringLiteral("before<br>") + QString(3, QChar(0x60))
+            + QStringLiteral("cpp<br>int number = 42;<br>")
+            + QString(3, QChar(0x60)) + QStringLiteral("<br>after")));
+        chat.appendMessage(styled);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *row = chat.itemWidget(0);
+        const auto blocks = row->findChildren<CodeBlockWidget *>();
+        QCOMPARE(blocks.size(), 1);
+        QCOMPARE(blocks.first()->language(), QStringLiteral("cpp"));
+        QCOMPARE(blocks.first()->code(), QStringLiteral("int number = 42;"));
+        QVERIFY(blocks.first()->width() <= row->width());
+        const auto parts = row->findChildren<ChatMessageText *>();
+        QVERIFY(parts.size() >= 2);
+        blocks.first()->copyAction()->trigger();
+        QCOMPARE(QApplication::clipboard()->text(), QStringLiteral("int number = 42;"));
     }
 
     void xep0393UnstyledMessageRemainsLiteralInNativeTimeline()
