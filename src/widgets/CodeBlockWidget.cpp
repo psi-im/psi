@@ -163,6 +163,11 @@ void CodeBlockWidget::addCodeAction(QAction *action)
 
 void CodeBlockWidget::removeCodeAction(QAction *action)
 {
+    // Removed actions no longer appear in actionButtons_, so they also need
+    // their destroyed() callback disconnected explicitly. Otherwise an action
+    // still parented to this widget could call back after member destruction.
+    if (action)
+        disconnect(action, &QObject::destroyed, this, nullptr);
     auto *button = actionButtons_.take(action);
     if (!button)
         return;
