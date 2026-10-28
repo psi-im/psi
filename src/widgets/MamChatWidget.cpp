@@ -2261,6 +2261,10 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
                 auto *code = new CodeBlockWidget(bodyPart);
                 code->setFont(font());
                 code->setCode(piece.text, piece.language);
+                // Message encryption alone does not prove the sender's OMEMO
+                // fingerprint was verified. Until verified provenance is
+                // exposed by the message model, require the risk checkbox.
+                code->setExecutionProvenance(mv.isEncrypted(), false);
                 bodyPart->column()->addWidget(code);
                 code->installEventFilter(this);
                 for (auto *child : code->findChildren<QWidget *>())
