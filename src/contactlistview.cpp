@@ -104,8 +104,10 @@ void ContactListView::updatePalette()
 
 void ContactListView::schedulePaletteReconciliation(bool force)
 {
+    if (paletteUpdateInProgress_)
+        return;
     forcePaletteRefresh_ = forcePaletteRefresh_ || force;
-    if (paletteUpdateInProgress_ || paletteRefreshScheduled_)
+    if (paletteRefreshScheduled_)
         return;
     paletteRefreshScheduled_ = true;
     QTimer::singleShot(0, this, [this] {
