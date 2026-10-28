@@ -11,6 +11,9 @@
 #include <QClipboard>
 #include <QFontDatabase>
 #include <QFontMetrics>
+#include <QEvent>
+#include <QFrame>
+#include <QIcon>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPainter>
@@ -19,6 +22,8 @@
 #include <QStyle>
 #include <QSyntaxHighlighter>
 #include <QTextBlock>
+#include <QTextCursor>
+#include <QStringList>
 #include <QTextDocument>
 #include <QTextOption>
 #include <QToolButton>
