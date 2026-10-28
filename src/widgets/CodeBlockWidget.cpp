@@ -363,7 +363,8 @@ void CodeBlockWidget::updateLanguageSelector()
     }
     if (label.size() > 24)
         label = label.left(23) + QChar(0x2026);
-    languageSelector_->setText(label + QChar(0x25be));
+    // InstantPopup QToolButton already paints its own drop-down arrow.
+    languageSelector_->setText(label);
     languageSelector_->setToolTip(tr("Syntax highlighting: %1. Click to choose another language.").arg(label));
 }
 
