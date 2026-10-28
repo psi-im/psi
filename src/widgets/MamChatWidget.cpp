@@ -2193,7 +2193,7 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     // Classic embeds a direction icon into its text header. Those known icons
     // are safe to carry to the prose fragments; actual media stays unsplit.
     bool hasNonHeaderImage = false;
-    const QRegularExpression imageTag(QStringLiteral(R"(<img\\b[^>]*>)"),
+    const QRegularExpression imageTag(QStringLiteral(R"(<img\b[^>]*>)"),
                                        QRegularExpression::CaseInsensitiveOption);
     auto imageMatches = imageTag.globalMatch(richText);
     while (imageMatches.hasNext()) {
