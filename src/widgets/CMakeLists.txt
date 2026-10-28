@@ -11,6 +11,7 @@ set(SOURCES
     NativeChatThemeRegistry.cpp
     NativeChatRenderers.cpp
     ChatMessageText.cpp
+    CodeBlockWidget.cpp
     MessagePreview.cpp
     LinkButton.cpp
     MamChatWidget.cpp
@@ -49,6 +50,8 @@ set(HEADERS
     NativeChatThemeRegistry.h
     NativeChatRenderers.h
     ChatMessageText.h
+    CodeBlockWidget.h
+    psicodelanguage.h
     MessagePreview.h
     LinkButton.h
     MamChatWidget.h
