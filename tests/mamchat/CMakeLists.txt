@@ -23,6 +23,21 @@ target_link_libraries(mam_overlay_scrollbar_test PRIVATE
     Qt${QT_DEFAULT_MAJOR_VERSION}::Widgets Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
 add_test(NAME mam_overlay_scrollbar COMMAND mam_overlay_scrollbar_test)
 
+# Tests the actual PsiApplication event bridge, including Qt's theme-change
+# ordering and coalesced notification to palette-dependent widgets.
+# macOS PsiApplication additionally links CocoaTrayClick; the existing widget
+# regression CI runs this Qt-only fixture on Linux.
+if(NOT APPLE)
+    add_executable(mam_psi_application_palette_test PsiApplicationPaletteTest.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/../../src/psiapplication.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/../../src/psiapplication.h)
+    target_include_directories(mam_psi_application_palette_test PRIVATE
+        ${CMAKE_CURRENT_LIST_DIR}/../../src)
+    target_link_libraries(mam_psi_application_palette_test PRIVATE
+        Qt${QT_DEFAULT_MAJOR_VERSION}::Widgets Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+    add_test(NAME mam_psi_application_palette COMMAND mam_psi_application_palette_test)
+endif()
+
 add_executable(mam_thin_splitter_test ThinSplitterTest.cpp
     ${PSI_WIDGETS}/ThinSplitter.cpp ${PSI_WIDGETS}/ThinSplitter.h)
 target_include_directories(mam_thin_splitter_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../src)
