@@ -38,6 +38,8 @@ public:
     // must be true to omit the explicit risk-acceptance checkbox.
     void setExecutionProvenance(bool messageEncrypted, bool verifiedOmemo);
     QAction *copyAction() const { return copyAction_; }
+    QAction *openWindowAction() const { return openWindowAction_; }
+    bool isExpandedViewer() const { return expandedViewer_; }
     QAction *formatAction() const { return formatAction_; }
     QAction *runAction() const { return runAction_; }
     QToolButton *languageSelector() const { return languageSelector_; }
@@ -58,12 +60,15 @@ private:
     void updateFormatAction();
     void updateDisplayedCode();
     void confirmRun();
+    void openInWindow();
+    void setExpandedViewer(bool expanded);
 
     QPlainTextEdit *editor_ = nullptr;
     QToolButton *languageSelector_ = nullptr;
     QMenu *languageMenu_ = nullptr;
     QHBoxLayout *actionsLayout_ = nullptr;
     QAction *copyAction_ = nullptr;
+    QAction *openWindowAction_ = nullptr;
     QAction *formatAction_ = nullptr;
     QAction *runAction_ = nullptr;
     QPointer<QAction> runTarget_;
@@ -73,6 +78,7 @@ private:
     QString language_;
     QString sourceLanguage_;
     QString formattedCode_;
+    bool expandedViewer_ = false;
     bool messageEncrypted_ = false;
     bool verifiedOmemo_ = false;
     int preferredWidth_ = 140;
