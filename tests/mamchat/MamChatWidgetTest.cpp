@@ -226,11 +226,12 @@ private slots:
         MamChatWidget chat;
         chat.resize(520, 400);
         chat.setHistoryLoading(true);
-        auto styled = message(QStringLiteral("fenced"), QStringLiteral("placeholder"));
-        styled.setHtml(MessageStyling::toHtml(
+        auto styled = MessageView::fromHtml(MessageStyling::toHtml(
             QStringLiteral("before<br>") + QString(3, QChar(0x60))
             + QStringLiteral("cpp<br>int number = 42;<br>")
             + QString(3, QChar(0x60)) + QStringLiteral("<br>after")));
+        styled.setMessageId(QStringLiteral("fenced"));
+        styled.setNick(QStringLiteral("Peer"));
         chat.appendMessage(styled);
         chat.show();
         QTRY_VERIFY(chat.itemWidget(0));
@@ -254,10 +255,11 @@ private slots:
                         NativeChatTheme::Classic, 0, 4, {} });
         chat.setMessageIconsEnabled(true);
         chat.setHistoryLoading(true);
-        auto styled = message(QStringLiteral("classic-code"), QStringLiteral("placeholder"));
-        styled.setHtml(MessageStyling::toHtml(
+        auto styled = MessageView::fromHtml(MessageStyling::toHtml(
             QString(3, QChar(0x60)) + QStringLiteral("python<br>print(42)<br>")
             + QString(3, QChar(0x60))));
+        styled.setMessageId(QStringLiteral("classic-code"));
+        styled.setNick(QStringLiteral("Peer"));
         chat.appendMessage(styled);
         chat.show();
         QTRY_VERIFY(chat.itemWidget(0));
