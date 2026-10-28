@@ -211,12 +211,18 @@ void CodeBlockWidget::updateHeight()
     updateGeometry();
 }
 
-int CodeBlockWidget::naturalWidth() const { return preferredWidth_; }
+int CodeBlockWidget::naturalWidth() const
+{
+    // A plugin can add actions after setCode(). Grow the natural width for
+    // their buttons without letting any toolbar force an unbounded bubble.
+    return std::min(MaximumPreferredWidth,
+                    std::max(preferredWidth_, actionsLayout_->sizeHint().width() + 2 * HorizontalInset));
+}
 
 QSize CodeBlockWidget::sizeHint() const
 {
     const QMargins margins = layout()->contentsMargins();
-    return QSize(preferredWidth_,
+    return QSize(naturalWidth(),
                  margins.top() + margins.bottom() + actionsLayout_->sizeHint().height()
                  + layout()->spacing() * 2 + editorHeight_ + closingFence_->sizeHint().height());
 }
