@@ -30,6 +30,7 @@
 #include <QMouseEvent>
 #include <QPushButton>
 #include <QPlainTextEdit>
+#include <QPointer>
 #include <QToolButton>
 #include <QScopeGuard>
 #include <QScreen>
@@ -219,6 +220,37 @@ private slots:
         block.removeCodeAction(&formatAction);
         block.setCode(QStringLiteral("x"), QStringLiteral("cpp"));
         QVERIFY(block.sizeHint().height() < hint.height());
+    }
+
+    void codeBlockDestructionDoesNotAccessDestroyedActionMap()
+    {
+        // The built-in Copy action is a child of CodeBlockWidget. Its
+        // destroyed() signal occurs during QWidget::~QWidget(), after the
+        // derived class fields have already been destroyed. Previously the
+        // cleanup lambda called actionButtons_.take() at that point.
+        for (int i = 0; i < 8; ++i) {
+            QWidget row;
+            auto *block = new CodeBlockWidget(&row);
+            block->setCode(QStringLiteral("int value = 42;"), QStringLiteral("cpp"));
+            QPointer<QAction> copy = block->copyAction();
+
+            QAction external(QStringLiteral("Run"), &row);
+            block->addCodeAction(&external);
+            delete block; // Reproduces virtualization/row eviction.
+            QVERIFY(copy.isNull());
+
+            // External/plugin actions are not owned by the code widget.
+            QSignalSpy externalDestroyed(&external, &QObject::destroyed);
+            QVERIFY(externalDestroyed.isValid());
+        }
+
+        // When a plugin action dies first, the registered button disappears
+        // normally, and a later destruction of the code widget stays safe.
+        auto *block = new CodeBlockWidget;
+        auto *external = new QAction(QStringLiteral("Format"));
+        block->addCodeAction(external);
+        delete external;
+        delete block;
     }
 
     void xep0393NativeFencesBecomeIndependentCodeBlocks()
