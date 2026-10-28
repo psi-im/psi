@@ -2,6 +2,7 @@
 #include "MamChatWidget.h"
 #include "MamImageViewer.h"
 #include "ChatMessageText.h"
+#include "CodeBlockWidget.h"
 #include "MessagePreview.h"
 #include "NativeChatRenderers.h"
 #include "filesharingmanager.h"
@@ -60,6 +61,7 @@
 #include <QUrlQuery>
 #include <QTextBlockFormat>
 #include <QTextImageFormat>
+#include <QTextDocumentFragment>
 #include <QTextFragment>
 #include <QTextDocument>
 #include <QWheelEvent>
@@ -2178,7 +2180,89 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
         body->setQuoteColor(quoteColor_);
         body->markQuotedLines();
     }
-    bodyPart->column()->addWidget(body);
+    // The rich-text document still handles inline code, quotes and media.
+    // A completed XEP-0393 fenced block is a block-level control instead:
+    // one rounded surface, bounded height, independent overlay scrollbars
+    // and extensible actions. Only split ordinary text, not media/inline
+    // object documents (which must retain their shared resource mappings).
+    const bool canUseCodeWidgets = message && !mv.stylingDisabled() && !inText && files.isEmpty()
+        && richText.contains(QString(3, QChar(0x60)))
+        && !richText.contains(QLatin1String("<share"))
+        && !richText.contains(QLatin1String("<img"))
+        && !richText.contains(QLatin1String("<icon"));
+    const auto codeBlocks = canUseCodeWidgets ? PsiRichText::codeBlocks(body->document())
+                                             : QList<PsiRichText::CodeBlock>();
+    if (codeBlocks.isEmpty()) {
+        bodyPart->column()->addWidget(body);
+    } else {
+        struct Piece {
+            bool codeBlock = false;
+            QString text;
+            QString language;
+        };
+        QList<Piece> pieces;
+        QTextDocument *source = body->document();
+        const int documentEnd = source->characterCount() - 1;
+        const auto addProse = [&pieces, source](int begin, int end) {
+            if (begin >= end)
+                return;
+            QTextCursor cursor(source);
+            cursor.setPosition(begin);
+            cursor.setPosition(end, QTextCursor::KeepAnchor);
+            pieces.append({ false, QTextDocumentFragment(cursor).toHtml(), {} });
+        };
+        int position = 0;
+        for (const auto &block : codeBlocks) {
+            int proseEnd = block.begin;
+            // The line separator on either side belongs to the layout
+            // boundary between the prose widget and the code widget.
+            if (proseEnd > position && (source->characterAt(proseEnd - 1) == QChar::ParagraphSeparator
+                                         || source->characterAt(proseEnd - 1) == QChar::LineSeparator))
+                --proseEnd;
+            addProse(position, proseEnd);
+            pieces.append({ true, block.code, block.language });
+            position = block.end;
+            if (position < documentEnd
+                && (source->characterAt(position) == QChar::ParagraphSeparator
+                    || source->characterAt(position) == QChar::LineSeparator))
+                ++position;
+        }
+        addProse(position, documentEnd);
+
+        bool reusedBody = false;
+        bodyPart->column()->addWidget(body);
+        for (const auto &piece : pieces) {
+            if (piece.codeBlock) {
+                auto *code = new CodeBlockWidget(bodyPart);
+                code->setFont(font());
+                code->setCode(piece.text, piece.language);
+                bodyPart->column()->addWidget(code);
+                code->installEventFilter(this);
+                for (auto *child : code->findChildren<QWidget *>())
+                    child->installEventFilter(this);
+                continue;
+            }
+            ChatMessageText *text = nullptr;
+            if (!reusedBody) {
+                text = body;
+                reusedBody = true;
+            } else {
+                text = new ChatMessageText(bodyPart);
+                text->setObjectName(QStringLiteral("mamBodySegment"));
+                text->setMediaOpener(mediaOpener_);
+                text->setFont(font());
+                text->setForegroundRole(QPalette::Text);
+                bodyPart->column()->addWidget(text);
+                text->installEventFilter(this);
+                text->viewport()->installEventFilter(this);
+            }
+            text->setQuoteStylingEnabled(!mv.stylingDisabled());
+            text->setRichText(piece.text);
+            text->setQuoteColor(quoteColor_);
+        }
+        if (!reusedBody)
+            body->hide();
+    }
     if (!files.isEmpty()) {
         if (richText.trimmed().isEmpty())
             body->hide();
