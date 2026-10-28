@@ -291,6 +291,8 @@ void CodeBlockWidget::setRunAction(QAction *action)
     // The passed action cannot be added directly as a button: its triggered()
     // signal would bypass the mandatory confirmation. Only the guarded proxy
     // is exposed in the header.
+    if (runTarget_)
+        disconnect(runTarget_, nullptr, runAction_, nullptr);
     runTarget_ = action;
     auto *button = actionButtons_.value(runAction_);
     button->setVisible(action != nullptr);
@@ -385,12 +387,15 @@ void CodeBlockWidget::setCode(const QString &code, const QString &language)
 {
     code_ = code;
     sourceLanguage_ = language.trimmed().toLower();
-    language_ = QString(); // Force a fresh choice even for consecutive messages.
+    language_ = sourceLanguage_;
     delete highlighter_;
     highlighter_ = nullptr;
-    editor_->setPlainText(code_);
     formatAction_->setChecked(false);
-    setHighlightLanguage(sourceLanguage_);
+    formattedCode_.clear();
+    editor_->setPlainText(code_);
+    updateLanguageSelector();
+    updateFormatAction();
+    applyHighlightLanguage();
     editor_->moveCursor(QTextCursor::Start);
     editor_->horizontalScrollBar()->setValue(0);
     editor_->verticalScrollBar()->setValue(0);
