@@ -3434,7 +3434,9 @@ void MamChatWidget::setQuoteColor(const QColor &color)
             if (auto *preview = row->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview")))
                 preview->setColors(color, color);
             for (auto *body : row->findChildren<ChatMessageText *>())
-                body->setQuoteColor(color);
+                if (body->objectName() == QLatin1String("mamBody")
+                    || body->objectName() == QLatin1String("mamBodySegment"))
+                    body->setQuoteColor(color);
         }
 }
 
@@ -3453,7 +3455,9 @@ void MamChatWidget::updateRowSelection(QFrame *row, bool selected)
             author->setSelection(0, 0);
     }
     for (auto *body : row->findChildren<ChatMessageText *>())
-        body->setWholeMessageSelectionMode(selecting);
+        if (body->objectName() == QLatin1String("mamBody")
+            || body->objectName() == QLatin1String("mamBodySegment"))
+            body->setWholeMessageSelectionMode(selecting);
 }
 
 void MamChatWidget::setHoveredRow(QFrame *row)
@@ -3509,7 +3513,10 @@ void MamChatWidget::updateRowPalette(QFrame *row, bool selected)
         // Split fenced code leaves ordinary prose in independent text views.
         // Give every segment the same palette and selection affordances.
         for (auto *segment : row->findChildren<ChatMessageText *>()) {
-            if (segment == body)
+            // Reply previews also contain ChatMessageText, but their quote
+            // palette belongs to MessagePreview. Only style prose fragments
+            // of the message itself.
+            if (segment == body || segment->objectName() != QLatin1String("mamBodySegment"))
                 continue;
             changePartPalette(segment, [&textPalette](QPalette &colors) { colors = textPalette; });
         }
