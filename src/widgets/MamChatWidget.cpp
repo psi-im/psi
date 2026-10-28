@@ -2071,7 +2071,14 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
         }
         // A message that starts with a quote starts it on a line of its own,
         // where it is shown as a quote.
-        if (message && richText.trimmed().startsWith(QLatin1String("&gt;")))
+        const QString trimmedBody = richText.trimmed();
+        // A Classic in-text header must not share the first line of a fenced
+        // block. Otherwise the opening fence is no longer at column zero and
+        // the native code renderer cannot recognize it.
+        const bool fencedAtStart = trimmedBody.startsWith(QString(3, QChar(0x60)))
+            || (trimmedBody.startsWith(QLatin1String("<span style=\"font-family:monospace"))
+                && trimmedBody.contains(QString(3, QChar(0x60))));
+        if (message && (trimmedBody.startsWith(QLatin1String("&gt;")) || fencedAtStart))
             header += QStringLiteral("<br>");
         richText = header + richText + trailer;
     }
