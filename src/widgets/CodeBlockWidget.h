@@ -18,6 +18,7 @@ class CodeBlockWidget final : public QWidget {
     Q_OBJECT
 public:
     explicit CodeBlockWidget(QWidget *parent = nullptr);
+    ~CodeBlockWidget() override;
 
     void setCode(const QString &code, const QString &language = QString());
     QString code() const { return code_; }
