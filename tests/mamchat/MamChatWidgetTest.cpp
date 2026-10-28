@@ -247,6 +247,36 @@ private slots:
         QCOMPARE(QApplication::clipboard()->text(), QStringLiteral("int number = 42;"));
     }
 
+    void xep0393WideCodeUsesBubbleMaximumBeforeHorizontalScroll()
+    {
+        MamChatWidget chat;
+        chat.resize(1300, 350);
+        chat.setHistoryLoading(true);
+        chat.setTheme({ QStringLiteral("bubble"), QStringLiteral("Bubble"),
+                        NativeChatTheme::Modern, 40, 6, {} },
+                      NativeChatRenderers::bubble());
+        const QString longLine(1200, QLatin1Char('x'));
+        auto styled = MessageView::fromHtml(MessageStyling::toHtml(
+            QString(3, QChar(0x60)) + QStringLiteral("cpp<br>")
+            + longLine + QStringLiteral("<br>") + QString(3, QChar(0x60))));
+        styled.setMessageId(QStringLiteral("wide-code"));
+        styled.setNick(QStringLiteral("Peer"));
+        chat.appendMessage(styled);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *row = chat.itemWidget(0);
+        auto *bubble = row->findChild<QWidget *>(QStringLiteral("mamBubble"));
+        auto *code = row->findChild<CodeBlockWidget *>();
+        QVERIFY(bubble && code);
+        QTRY_VERIFY(code->width() > 0);
+        // The code is much wider than the theme's maximum. The bubble still
+        // uses that maximum rather than shrinking to a narrow scroll viewport.
+        QVERIFY(bubble->width() <= bubble->maximumWidth());
+        QVERIFY(bubble->width() >= bubble->maximumWidth() - 12);
+        QVERIFY(code->width() >= bubble->width() - 80);
+        QTRY_VERIFY(code->editor()->horizontalScrollBar()->maximum() > 0);
+    }
+
     void xep0393CodeBlockWorksWithClassicInTextHeader()
     {
         MamChatWidget chat;
