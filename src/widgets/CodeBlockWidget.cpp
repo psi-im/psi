@@ -11,6 +11,8 @@
 #include <QApplication>
 #include <QCheckBox>
 #include <QClipboard>
+#include <QCursor>
+#include <QGuiApplication>
 #include <QEvent>
 #include <QFontDatabase>
 #include <QFontMetrics>
@@ -26,6 +28,7 @@
 #include <QPointer>
 #include <QPushButton>
 #include <QScrollBar>
+#include <QScreen>
 #include <QStringList>
 #include <QSyntaxHighlighter>
 #include <QTextBlock>
@@ -33,6 +36,7 @@
 #include <QTextDocument>
 #include <QTextOption>
 #include <QToolButton>
+#include <QSizePolicy>
 #include <QVBoxLayout>
 #include <QWheelEvent>
 #include <QXmlStreamReader>
@@ -65,6 +69,22 @@ QIcon copyIcon()
     painter.drawLine(QPointF(4, 13), QPointF(3, 13));
     painter.drawLine(QPointF(3, 13), QPointF(3, 3));
     painter.drawLine(QPointF(3, 3), QPointF(12, 3));
+    return QIcon(pixmap);
+}
+
+QIcon openWindowIcon()
+{
+    // Always visible on dark backgrounds even without a matching theme icon.
+    QPixmap pixmap(20, 20);
+    pixmap.fill(Qt::transparent);
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setPen(QPen(QColor(245, 248, 242), 1.6));
+    painter.setBrush(Qt::NoBrush);
+    painter.drawRoundedRect(QRectF(2.5, 7, 12, 10), 1.5, 1.5);
+    painter.drawLine(QPointF(10, 10), QPointF(17, 3));
+    painter.drawLine(QPointF(11, 3), QPointF(17, 3));
+    painter.drawLine(QPointF(17, 3), QPointF(17, 9));
     return QIcon(pixmap);
 }
 
@@ -234,6 +254,13 @@ CodeBlockWidget::CodeBlockWidget(QWidget *parent) : QWidget(parent)
         QApplication::clipboard()->setText(displayedCode());
     });
     addCodeAction(copyAction_);
+
+    openWindowAction_ = new QAction(tr("Open code in window"), this);
+    openWindowAction_->setObjectName(QStringLiteral("mamCodeBlockOpenWindow"));
+    openWindowAction_->setToolTip(tr("Open code in a separate window"));
+    openWindowAction_->setIcon(openWindowIcon());
+    connect(openWindowAction_, &QAction::triggered, this, &CodeBlockWidget::openInWindow);
+    addCodeAction(openWindowAction_);
 
     formatAction_ = new QAction(tr("Format"), this);
     formatAction_->setObjectName(QStringLiteral("mamCodeBlockFormat"));
@@ -457,9 +484,15 @@ void CodeBlockWidget::updateDisplayedCode()
 
 void CodeBlockWidget::updateHeight()
 {
-    const int visibleLines = std::min(MaximumVisibleLines, std::max(1, editor_->document()->blockCount()));
-    editorHeight_ = visibleLines * QFontMetrics(editor_->font()).lineSpacing() + 3;
-    editor_->setFixedHeight(editorHeight_);
+    if (expandedViewer_) {
+        // Unlike an embedded bubble, the detached viewer gives the editor all
+        // available window height, without an arbitrary 25-line restriction.
+        editorHeight_ = 0;
+    } else {
+        const int visibleLines = std::min(MaximumVisibleLines, std::max(1, editor_->document()->blockCount()));
+        editorHeight_ = visibleLines * QFontMetrics(editor_->font()).lineSpacing() + 3;
+        editor_->setFixedHeight(editorHeight_);
+    }
     int widest = 0;
     const QFontMetrics metrics(editor_->font());
     for (QTextBlock block = editor_->document()->begin(); block.isValid(); block = block.next()) {
@@ -485,6 +518,8 @@ int CodeBlockWidget::naturalWidth() const
 
 QSize CodeBlockWidget::sizeHint() const
 {
+    if (expandedViewer_)
+        return QSize(qMin(naturalWidth(), 900), 600);
     return QSize(naturalWidth(), HeaderHeight + 3 + editorHeight_ + VerticalInset);
 }
 
@@ -492,6 +527,52 @@ QSize CodeBlockWidget::minimumSizeHint() const
 {
     const QSize preferred = sizeHint();
     return QSize(std::min(100, preferred.width()), preferred.height());
+}
+
+void CodeBlockWidget::setExpandedViewer(bool expanded)
+{
+    if (expandedViewer_ == expanded)
+        return;
+    expandedViewer_ = expanded;
+    if (auto *button = actionButtons_.value(openWindowAction_))
+        button->setVisible(!expanded);
+    if (expanded) {
+        editor_->setMinimumHeight(0);
+        editor_->setMaximumHeight(QWIDGETSIZE_MAX);
+        editor_->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Expanding);
+        setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    } else {
+        editor_->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
+        setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    }
+    updateHeight();
+    layout()->invalidate();
+    updateGeometry();
+}
+
+void CodeBlockWidget::openInWindow()
+{
+    // An independent top-level window must not depend on the virtualized chat
+    // row remaining alive. Copy only the immutable message source and local
+    // display options. Never copy plugin actions or execution authority.
+    auto *viewer = new CodeBlockWidget;
+    viewer->setObjectName(QStringLiteral("mamCodeBlockViewer"));
+    viewer->setWindowFlags(Qt::Window);
+    viewer->setAttribute(Qt::WA_DeleteOnClose);
+    viewer->setWindowTitle(tr("Code"));
+    viewer->setExpandedViewer(true);
+    viewer->setCode(code_, sourceLanguage_);
+    viewer->setHighlightLanguage(language_);
+    if (formatAction_->isChecked() && viewer->formatAction()->isEnabled())
+        viewer->formatAction()->setChecked(true);
+
+    const QScreen *screen = QGuiApplication::screenAt(QCursor::pos());
+    if (!screen)
+        screen = QGuiApplication::primaryScreen();
+    const QSize available = screen ? screen->availableGeometry().size() : QSize(1024, 768);
+    viewer->resize(qMin(900, qMax(1, qRound(available.width() * 0.85))),
+                   qMin(700, qMax(1, qRound(available.height() * 0.85))));
+    viewer->show();
 }
 
 void CodeBlockWidget::changeEvent(QEvent *event)
