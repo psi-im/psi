@@ -27,6 +27,8 @@
 #include <QLabel>
 #include <QLayout>
 #include <QMenu>
+#include <QMessageBox>
+#include <QCheckBox>
 #include <QMouseEvent>
 #include <QPushButton>
 #include <QPlainTextEdit>
@@ -220,6 +222,131 @@ private slots:
         block.removeCodeAction(&formatAction);
         block.setCode(QStringLiteral("x"), QStringLiteral("cpp"));
         QVERIFY(block.sizeHint().height() < hint.height());
+    }
+
+    void codeBlockLanguageMenuRehighlightsWithoutChangingReceivedText()
+    {
+        CodeBlockWidget block;
+        block.setCode(QStringLiteral("int answer = 42;"), QString());
+        block.resize(320, block.sizeHint().height());
+        block.show();
+        QCOMPARE(block.sourceLanguage(), QString());
+        QCOMPARE(block.language(), QString());
+        QCOMPARE(block.editor()->toPlainText(), QStringLiteral("int answer = 42;"));
+        QVERIFY(!block.languageSelector()->text().contains(QString(3, QChar(0x60))));
+        const auto menu = block.languageSelector()->menu();
+        QVERIFY(menu);
+        QAction *cpp = nullptr;
+        for (QAction *option : menu->actions()) {
+            if (option->data().toString() == QLatin1String("cpp"))
+                cpp = option;
+        }
+        QVERIFY(cpp);
+        cpp->trigger();
+        QCOMPARE(block.language(), QStringLiteral("cpp"));
+        QCOMPARE(block.sourceLanguage(), QString());
+        QCOMPARE(block.code(), QStringLiteral("int answer = 42;"));
+        QVERIFY(block.languageSelector()->text().contains(QStringLiteral("C++")));
+        const auto colored = block.editor()->document()->find(QStringLiteral("int"));
+        QVERIFY(!colored.isNull());
+        // Switching the language does not replace the received text.
+        QCOMPARE(block.editor()->toPlainText(), block.code());
+        QVERIFY(block.formatAction() && !block.formatAction()->isEnabled());
+
+        auto *header = block.findChild<QWidget *>(QStringLiteral("mamCodeBlockHeader"));
+        QVERIFY(header);
+        QCOMPARE(block.languageSelector()->mapTo(&block, QPoint(0, 0)).x()
+                 + block.languageSelector()->width(), block.width());
+    }
+
+    void codeBlockPrettyJsonAndXmlAreReversible()
+    {
+        CodeBlockWidget block;
+        const QString json = QStringLiteral("{\"a\":1,\"b\":[1,2]}");
+        block.setCode(json, QStringLiteral("json"));
+        QVERIFY(block.formatAction()->isEnabled());
+        block.formatAction()->trigger();
+        QVERIFY(block.displayedCode().contains(QStringLiteral("\n  \"a\": 1")));
+        QCOMPARE(block.code(), json);
+        block.copyAction()->trigger();
+        QCOMPARE(QApplication::clipboard()->text(), block.displayedCode());
+        block.formatAction()->trigger();
+        QCOMPARE(block.displayedCode(), json);
+
+        const QString xml = QStringLiteral("<root><item id=\"x\">ok</item></root>");
+        block.setCode(xml, QStringLiteral("xml"));
+        QVERIFY(block.formatAction()->isEnabled());
+        block.formatAction()->trigger();
+        QVERIFY(block.displayedCode().contains(QStringLiteral("\n  <item")));
+        QCOMPARE(block.code(), xml);
+        block.setCode(QStringLiteral("<!DOCTYPE root><root/>"), QStringLiteral("xml"));
+        QVERIFY(!block.formatAction()->isEnabled());
+        block.setCode(QStringLiteral("{invalid"), QStringLiteral("json"));
+        QVERIFY(!block.formatAction()->isEnabled());
+        block.setCode(QStringLiteral("{}"), QString());
+        QVERIFY(!block.formatAction()->isEnabled());
+    }
+
+    void codeBlockRunRequiresConfirmationAndExplicitRiskAcceptance()
+    {
+        CodeBlockWidget block;
+        QAction pluginRun(QStringLiteral("Execute"), &block);
+        int executed = 0;
+        connect(&pluginRun, &QAction::triggered, &block, [&executed] { ++executed; });
+        block.setRunAction(&pluginRun);
+        QVERIFY(block.runAction()->isEnabled());
+
+        // No backend is invoked for Cancel.
+        bool sawConfirmation = false;
+        QTimer::singleShot(0, &block, [&] {
+            if (auto *dialog = qobject_cast<QMessageBox *>(QApplication::activeModalWidget())) {
+                sawConfirmation = dialog->checkBox() != nullptr;
+                dialog->button(QMessageBox::Cancel)->click();
+            }
+        });
+        block.runAction()->trigger();
+        QVERIFY(sawConfirmation);
+        QCOMPARE(executed, 0);
+
+        // Unencrypted and/or not explicitly OMEMO-verified requires a second
+        // affirmative checkbox before the Run button can be enabled.
+        bool riskWasRequired = false;
+        QTimer::singleShot(0, &block, [&] {
+            auto *dialog = qobject_cast<QMessageBox *>(QApplication::activeModalWidget());
+            if (!dialog)
+                return;
+            auto *checkbox = dialog->checkBox();
+            QPushButton *run = nullptr;
+            for (auto *button : dialog->buttons())
+                if (dialog->buttonRole(button) == QMessageBox::AcceptRole)
+                    run = qobject_cast<QPushButton *>(button);
+            if (!checkbox || !run)
+                return;
+            riskWasRequired = !run->isEnabled();
+            checkbox->setChecked(true);
+            run->click();
+        });
+        block.runAction()->trigger();
+        QVERIFY(riskWasRequired);
+        QCOMPARE(executed, 1);
+
+        // A trusted case still asks to run, but does not require the checkbox.
+        block.setExecutionProvenance(true, true);
+        bool trustedWasConfirmed = false;
+        QTimer::singleShot(0, &block, [&] {
+            auto *dialog = qobject_cast<QMessageBox *>(QApplication::activeModalWidget());
+            if (!dialog)
+                return;
+            trustedWasConfirmed = dialog->checkBox() == nullptr;
+            for (auto *button : dialog->buttons())
+                if (dialog->buttonRole(button) == QMessageBox::AcceptRole) {
+                    button->click();
+                    break;
+                }
+        });
+        block.runAction()->trigger();
+        QVERIFY(trustedWasConfirmed);
+        QCOMPARE(executed, 2);
     }
 
     void codeBlockDestructionDoesNotAccessDestroyedActionMap()
