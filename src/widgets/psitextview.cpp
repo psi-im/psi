@@ -505,6 +505,10 @@ void PsiTextView::setRichText(const QString &text)
     clearQuoteFormatting();
     PsiRichText::setText(document(), text, d->objectParsers);
     markQuotedLines();
+    // Match append/insert rendering: whole-message replacements must also
+    // color XEP-0393 fenced code in the shared text view.
+    if (text.contains(QLatin1String("```")))
+        PsiRichText::highlightCodeBlocks(document());
 }
 
 // Legacy text logs append fragments rather than replacing the whole document.
