@@ -349,6 +349,79 @@ private slots:
         QCOMPARE(executed, 2);
     }
 
+    void codeBlockOpensIndependentSyntaxHighlightedWindow()
+    {
+        CodeBlockWidget source;
+        const QString original = QStringLiteral("{\"a\":1,\"b\":[1,2]}");
+        source.setCode(original, QStringLiteral("json"));
+        source.formatAction()->trigger();
+        const QString formatted = source.displayedCode();
+        QVERIFY(formatted != original);
+
+        source.openWindowAction()->trigger();
+        CodeBlockWidget *viewer = nullptr;
+        for (auto *window : QApplication::topLevelWidgets()) {
+            if (window->objectName() == QLatin1String("mamCodeBlockViewer"))
+                viewer = qobject_cast<CodeBlockWidget *>(window);
+        }
+        QVERIFY(viewer);
+        QVERIFY(viewer->isWindow());
+        QCOMPARE(viewer->parentWidget(), static_cast<QWidget *>(nullptr));
+        QVERIFY(viewer->testAttribute(Qt::WA_DeleteOnClose));
+        QVERIFY(viewer->isExpandedViewer());
+        QVERIFY(viewer->isVisible());
+        QVERIFY(viewer->editor()->isReadOnly());
+        QCOMPARE(viewer->sourceLanguage(), QStringLiteral("json"));
+        QCOMPARE(viewer->language(), QStringLiteral("json"));
+        QCOMPARE(viewer->code(), original);
+        QCOMPARE(viewer->displayedCode(), formatted);
+        QCOMPARE(viewer->editor()->sizePolicy().verticalPolicy(), QSizePolicy::Expanding);
+        QCOMPARE(viewer->editor()->maximumHeight(), QWIDGETSIZE_MAX);
+
+        // The viewer has no recursive "open" button, and its language and
+        // formatting changes must not affect the original chat row.
+        QToolButton *viewerOpen = nullptr;
+        for (auto *button : viewer->findChildren<QToolButton *>())
+            if (button->defaultAction() == viewer->openWindowAction())
+                viewerOpen = button;
+        QVERIFY(viewerOpen);
+        QVERIFY(!viewerOpen->isVisible());
+        viewer->setHighlightLanguage(QStringLiteral("cpp"));
+        QCOMPARE(viewer->language(), QStringLiteral("cpp"));
+        QCOMPARE(viewer->displayedCode(), original);
+        QCOMPARE(source.language(), QStringLiteral("json"));
+        QCOMPARE(source.displayedCode(), formatted);
+
+        QPointer<CodeBlockWidget> guard(viewer);
+        viewer->close();
+        QTRY_VERIFY(guard.isNull());
+        QCOMPARE(source.code(), original);
+    }
+
+    void detachedCodeViewerIsNotLimitedTo25Lines()
+    {
+        CodeBlockWidget source;
+        QStringList lines;
+        for (int i = 0; i < 150; ++i)
+            lines.append(QStringLiteral("int value%1 = %1;").arg(i));
+        const QString content = lines.join(QLatin1Char('\n'));
+        source.setCode(content, QStringLiteral("cpp"));
+        source.openWindowAction()->trigger();
+        CodeBlockWidget *viewer = nullptr;
+        for (auto *window : QApplication::topLevelWidgets())
+            if (window->objectName() == QLatin1String("mamCodeBlockViewer"))
+                viewer = qobject_cast<CodeBlockWidget *>(window);
+        QVERIFY(viewer);
+        QCOMPARE(viewer->editor()->document()->blockCount(), 150);
+        QCOMPARE(viewer->editor()->sizePolicy().verticalPolicy(), QSizePolicy::Expanding);
+        QTRY_VERIFY(viewer->editor()->verticalScrollBar()->maximum() > 0);
+
+        // The detached window owns the text: deleting the virtualized row
+        // cannot destroy it, nor invalidate its Copy action.
+        delete viewer; // The standalone viewer can also be closed by users.
+        QCOMPARE(source.code(), content);
+    }
+
     void codeBlockDestructionDoesNotAccessDestroyedActionMap()
     {
         // The built-in Copy action is a child of CodeBlockWidget. Its
