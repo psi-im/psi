@@ -37,7 +37,8 @@ namespace {
 constexpr int HorizontalInset = 10;
 constexpr int VerticalInset = 7;
 constexpr int MaximumVisibleLines = 25;
-constexpr int MaximumPreferredWidth = 1200;
+// Large enough to let BubbleFrame's theme-defined maximum decide the width.
+constexpr int MaximumPreferredWidth = 16384;
 
 // A nested code editor must let the enclosing chat log consume wheel events
 // when it cannot scroll further in the requested direction.
@@ -91,7 +92,6 @@ CodeBlockWidget::CodeBlockWidget(QWidget *parent) : QWidget(parent)
     editor_->setReadOnly(true);
     editor_->setUndoRedoEnabled(false);
     editor_->setWordWrapMode(QTextOption::NoWrap);
-    editor_->setTabStopDistance(QFontMetricsF(editor_->font()).horizontalAdvance(QLatin1Char(' ')) * 4.0);
     editor_->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     editor_->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     editor_->document()->setDocumentMargin(0);
@@ -104,6 +104,7 @@ CodeBlockWidget::CodeBlockWidget(QWidget *parent) : QWidget(parent)
     QFont mono = QFontDatabase::systemFont(QFontDatabase::FixedFont);
     mono.setStyleHint(QFont::Monospace);
     editor_->setFont(mono);
+    editor_->setTabStopDistance(QFontMetricsF(mono).horizontalAdvance(QLatin1Char(' ')) * 4.0);
     column->addWidget(editor_);
 
     closingFence_ = new QLabel(QString(3, QChar(0x60)), this);
@@ -163,7 +164,8 @@ void CodeBlockWidget::updateLanguageLabel()
 {
     // XEP-0393 keeps the literal opening and closing styling directives
     // visible. The source itself remains selectable independently.
-    languageLabel_->setText(QString(3, QChar(0x60)) + language_);
+    const QString displayed = language_.size() > 48 ? language_.left(47) + QChar(0x2026) : language_;
+    languageLabel_->setText(QString(3, QChar(0x60)) + displayed);
     languageLabel_->setFont(editor_->font());
 }
 
@@ -190,7 +192,7 @@ void CodeBlockWidget::setCode(const QString &code, const QString &language)
     const QFontMetrics metrics(editor_->font());
     for (QTextBlock block = editor_->document()->begin(); block.isValid(); block = block.next()) {
         const QString line = block.text();
-        const int advance = metrics.horizontalAdvance(line.left(256));
+        const int advance = metrics.horizontalAdvance(QString(line.left(2048)).replace(QLatin1Char('\t'), QStringLiteral("    ")));
         widest = std::max(widest, advance);
         if (widest >= MaximumPreferredWidth)
             break;
