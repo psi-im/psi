@@ -40,6 +40,10 @@ public:
     // Reapply a theme font without overwriting explicit code/monospace families.
     static void applyBaseFont(QTextDocument *doc, const QFont &font);
     static bool isMonospace(const QTextCharFormat &format);
+    // Character offsets refer to the original QTextDocument. Code excludes
+    // the visible fence lines, and end is the exclusive end of the close fence.
+    struct CodeBlock { int begin; int end; QString language; QString code; };
+    static QList<CodeBlock> codeBlocks(const QTextDocument *doc);
     // Apply syntax colors to fenced code within an existing shared QTextDocument.
     static void highlightCodeBlocks(QTextDocument *doc);
     static void ensureTextLayouted(QTextDocument *doc, int documentWidth, Qt::Alignment align = Qt::AlignLeft,
