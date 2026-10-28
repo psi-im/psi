@@ -6,6 +6,9 @@ enable_testing()
 set(QT_DEFAULT_MAJOR_VERSION 6 CACHE STRING "Qt major version")
 find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Core Widgets Test Multimedia Network)
 set(PSI_WIDGETS ${CMAKE_CURRENT_LIST_DIR}/../../src/widgets)
+if(NOT TARGET qsourcehighlite)
+    include(${CMAKE_CURRENT_LIST_DIR}/../../3rdparty/qsourcehighlite.cmake)
+endif()
 add_executable(mam_long_list_test LongListWidgetTest.cpp
     ${PSI_WIDGETS}/LongListWidget.cpp ${PSI_WIDGETS}/LongListWidgetLayout.cpp ${PSI_WIDGETS}/LongListWidget.h)
 target_include_directories(mam_long_list_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../src)
@@ -62,9 +65,12 @@ add_executable(mam_chat_widget_test MamChatWidgetTest.cpp
     ${PSI_WIDGETS}/MamImageViewer.cpp ${PSI_WIDGETS}/MamImageViewer.h
     ${PSI_WIDGETS}/MamHistorySource.cpp ${PSI_WIDGETS}/MamHistorySource.h
     ${PSI_WIDGETS}/ChatMessageText.cpp ${PSI_WIDGETS}/ChatMessageText.h
+    ${PSI_WIDGETS}/CodeBlockWidget.cpp ${PSI_WIDGETS}/CodeBlockWidget.h
+    ${PSI_WIDGETS}/OverlayScrollBarManager.cpp ${PSI_WIDGETS}/OverlayScrollBarManager.h
     ${PSI_WIDGETS}/MessagePreview.cpp ${PSI_WIDGETS}/MessagePreview.h
     ${PSI_WIDGETS}/LinkButton.cpp ${PSI_WIDGETS}/LinkButton.h
     ${PSI_WIDGETS}/psirichtext.cpp
+    ${PSI_WIDGETS}/psicodehighlight.cpp
     ${PSI_WIDGETS}/psitextview.cpp ${PSI_WIDGETS}/psitextview.h
     ${PSI_WIDGETS}/urlobject.h mock/urlobject.cpp
     mock/filesharingmanager.h mock/filesharingdownloader.h
@@ -78,7 +84,7 @@ target_include_directories(mam_chat_widget_test BEFORE PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/mock
     ${CMAKE_CURRENT_LIST_DIR}/../../src
     ${CMAKE_CURRENT_LIST_DIR}/../../3rdparty/qite/libqite)
-target_link_libraries(mam_chat_widget_test PRIVATE
+target_link_libraries(mam_chat_widget_test PRIVATE qsourcehighlite
     Qt${QT_DEFAULT_MAJOR_VERSION}::Widgets Qt${QT_DEFAULT_MAJOR_VERSION}::Test
     Qt${QT_DEFAULT_MAJOR_VERSION}::Multimedia Qt${QT_DEFAULT_MAJOR_VERSION}::Network)
 add_test(NAME mam_chat_widget COMMAND mam_chat_widget_test)
@@ -105,3 +111,10 @@ target_include_directories(mam_sparse_history_source_test BEFORE PRIVATE
 target_link_libraries(mam_sparse_history_source_test PRIVATE
     Qt${QT_DEFAULT_MAJOR_VERSION}::Widgets Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
 add_test(NAME mam_sparse_history_source COMMAND mam_sparse_history_source_test)
+
+# The XEP-0393 parser is intentionally Qt-only and shared by all Psi views.
+add_executable(mam_message_styling_test MessageStylingTest.cpp)
+target_include_directories(mam_message_styling_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../src)
+target_link_libraries(mam_message_styling_test PRIVATE
+    Qt${QT_DEFAULT_MAJOR_VERSION}::Core Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+add_test(NAME mam_message_styling COMMAND mam_message_styling_test)

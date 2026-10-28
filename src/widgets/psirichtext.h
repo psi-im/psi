@@ -24,6 +24,7 @@
 #include <functional>
 
 class QTextEdit;
+class QFont;
 class ITEMediaOpener;
 
 class PsiRichText {
@@ -36,6 +37,17 @@ public:
 
     static void install(QTextDocument *doc);
     static void recolorLinks(QTextDocument *doc, const QColor &color);
+    // Reapply a theme font without overwriting explicit code/monospace families.
+    static void applyBaseFont(QTextDocument *doc, const QFont &font);
+    static bool isMonospace(const QTextCharFormat &format);
+    // Subtle palette-relative backing for inline XEP-0393 code; do not recolor text.
+    static void decorateInlineCode(QTextDocument *doc, const QColor &base, const QColor &text);
+    // Character offsets refer to the original QTextDocument. Code excludes
+    // the visible fence lines, and end is the exclusive end of the close fence.
+    struct CodeBlock { int begin; int end; QString language; QString code; };
+    static QList<CodeBlock> codeBlocks(const QTextDocument *doc);
+    // Apply syntax colors to fenced code within an existing shared QTextDocument.
+    static void highlightCodeBlocks(QTextDocument *doc);
     static void ensureTextLayouted(QTextDocument *doc, int documentWidth, Qt::Alignment align = Qt::AlignLeft,
                                    Qt::LayoutDirection layoutDirection = Qt::LeftToRight, bool textWordWrap = true);
     static void setText(QTextDocument *doc, const QString &text, const ParsersMap &parsers = ParsersMap());

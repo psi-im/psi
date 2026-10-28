@@ -2,12 +2,16 @@
 
 #include "coloropt.h"
 #include "emojiregistry.h"
+#include "messagestyling.h"
 #include "psiiconset.h"
 #include "psioptions.h"
 #include "rtparse.h"
 
 #include <QApplication>
 #include <QTextDocument> // for escape()
+
+#include <QMap>
+#include <algorithm>
 
 QString TextUtil::escape(const QString &plain) { return plain.toHtmlEscaped(); }
 
@@ -645,27 +649,9 @@ QString TextUtil::img2title(const QString &in)
     return ret;
 }
 
-/**
- * Format XEP-0393 Message Styling to HTML.
- * Additional formatting for Markdown (**bold**), and Discord __underline__.
- * But they rendered without styling directives i.e. <b>bold</b>, not <b>**bold**</b>.
- * FIXME: formatting must ignore `code block` that may be a code i.e `volume=length*width*height`
- */
 QString TextUtil::legacyFormat(const QString &in)
 {
-    QString out = in;
-    out = out.replace(QRegularExpression("(^|\\s|>)\\*\\*\\*(\\S+)\\*\\*\\*(?=<|\\s|$)"), "\\1<b><i>\\2</i></b>"); // MD ***bold italic***
-    out = out.replace(QRegularExpression("(^|\\s|>)\\*\\*(\\S+)\\*\\*(?=<|\\s|$)"), "\\1<b>\\2</b>"); // MD **bold**
-    out = out.replace(QRegularExpression("(^|\\s|>)\\*(\\S+)\\*(?=<|\\s|$)"), "\\1<b>*\\2*</b>"); // bold *text*
-    out = out.replace(QRegularExpression("(^|\\s|>)__(\\S+)__(?=<|\\s|$)"), "\\1<u>\\2</u>"); // TG,Discord __underline__
-    out = out.replace(QRegularExpression("(^|\\s|>)_(\\S+)_(?=<|\\s|$)"), "\\1<u>_\\2_</u>"); // _underline_
-    out = out.replace(QRegularExpression("(^|\\s|>)\\/(\\S+)\\/(?=<|\\s|$)"), "\\1<i>/\\2/</i>"); // italic /text/
-    out = out.replace(QRegularExpression("(^|\\s|>)\\~\\~(\\S+)\\~\\~(?=<|\\s|$)"), "\\1<s>\\2</s>"); // MD ~~striked~~
-    out = out.replace(QRegularExpression("(^|\\s|>)\\~(\\S+)\\~(?=<|\\s|$)"), "\\1<s>~\\2~</s>"); // ~striked~
-    out = out.replace(QRegularExpression("(^|\\s|>)```(\\S+)```(?=<|\\s|$)"), "\\1<pre>\n\\2\n</pre>\n"); // ```code block```
-    out = out.replace(QRegularExpression("(^|\\s|>)`(\\S+)`(?=<|\\s|$)"), "\\1<code>\\2</code>"); // `preformatted`
-
-    return out;
+    return MessageStyling::toHtml(in);
 }
 
 QString TextUtil::sizeUnit(qlonglong n, qlonglong *div)

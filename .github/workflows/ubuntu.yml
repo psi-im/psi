@@ -43,7 +43,7 @@ jobs:
       - name: Initialize pinned sources
         run: |
           git submodule update --init --depth 1 \
-            3rdparty/http-parser 3rdparty/qhttp 3rdparty/qite
+            3rdparty/http-parser 3rdparty/qhttp 3rdparty/qite 3rdparty/qsourcehighlite
           git submodule update --init --depth 1 iris
       - name: Install locked QCA3 Qt6
         uses: ./.github/actions/load-dependencies

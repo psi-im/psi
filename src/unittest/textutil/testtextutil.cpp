@@ -101,14 +101,9 @@ class TextUtilTest : public QObject {
     Q_OBJECT
 
 private slots:
-    // legacyFormat tests (XEP-0393 & Markdown formatting)
+    // XEP-0393 is deliberately distinct from Markdown.
     void testLegacyFormat_data();
     void testLegacyFormat();
-    void testLegacyFormat_underlineXep();
-    void testLegacyFormat_italicXep();
-    void testLegacyFormat_strikethroughXep();
-    void testLegacyFormat_multipleStyles();
-    void testLegacyFormat_noMatchNonBoundary();
     void testLegacyFormat_AdditionalMD();
 
     // escape and unescape tests
@@ -140,123 +135,61 @@ void TextUtilTest::testLegacyFormat_data()
 {
     QTest::addColumn<QString>("input");
     QTest::addColumn<QString>("expected");
-
-    // Empty and plain text
-    QTest::newRow("empty") << QString("") << QString("");
-    QTest::newRow("plain") << QString("Hello World") << QString("Hello World");
-    QTest::newRow("url") << QString("https://example.com/path/to/resource/")
-                         << QString("https://example.com/path/to/resource/");
-
-    // Markdown bold italic (***text***)
-    QTest::newRow("md_bold_italic_start") << QString("***text***") << QString("<b>text</b>");
-    QTest::newRow("md_bold_italic_space") << QString("word ***text*** word") << QString("word <b>text</b> word");
-    QTest::newRow("md_bold_italic_quote") << QString(">***text***") << QString("><b>text</b>");
-    QTest::newRow("md_bold_italic_tag") << QString("***text***<br>") << QString("<b>text</b><br>");
-
-    // Markdown bold (**text**)
-    QTest::newRow("md_bold_start") << QString("**text**") << QString("<b>text</b>");
-    QTest::newRow("md_bold_space") << QString("word **text** word") << QString("word <b>text</b> word");
-    QTest::newRow("md_bold_quote") << QString(">**text**") << QString("><b>text</b>");
-    QTest::newRow("md_bold_tag") << QString("**text**<br>") << QString("<b>text</b><br>");
-
-    // XEP-0393 bold (*text*)
-    QTest::newRow("xep_bold_start") << QString("*text*") << QString("<b>*text*</b>");
-    QTest::newRow("xep_bold_space") << QString("word *text* word") << QString("word <b>*text*</b> word");
-    QTest::newRow("xep_bold_quote") << QString(">*text*") << QString("><b>*text*</b>");
-    QTest::newRow("xep_bold_tag") << QString("*text*<br>") << QString("<b>*text*</b><br>");
-
-    // XEP-0393 underline (_text_)
-    QTest::newRow("xep_underline_start") << QString("_text_") << QString("<u>_text_</u>");
-    QTest::newRow("xep_underline_space") << QString("word _text_ word") << QString("word <u>_text_</u> word");
-    QTest::newRow("xep_underline_quote") << QString(">_text_") << QString("><u>_text_</u>");
-    QTest::newRow("xep_underline_tag") << QString("_text_<br>") << QString("<u>_text_</u><br>");
-
-    // XEP-0393 italic (/text/)
-    QTest::newRow("xep_italic_start") << QString("/text/") << QString("<i>/text/</i>");
-    QTest::newRow("xep_italic_space") << QString("word /text/ word") << QString("word <i>/text/</i> word");
-    QTest::newRow("xep_italic_quote") << QString(">/text/") << QString("><i>/text/</i>");
-    QTest::newRow("xep_italic_tag") << QString("/text/<br>") << QString("<i>/text/</i><br>");
-
-    // XEP-0393 strikethrough (~text~)
-    QTest::newRow("xep_strike_start") << QString("~text~") << QString("<s>~text~</s>");
-    QTest::newRow("xep_strike_space") << QString("word ~text~ word") << QString("word <s>~text~</s> word");
-    QTest::newRow("xep_strike_quote") << QString(">~text~") << QString("><s>~text~</s>");
-    QTest::newRow("xep_strike_tag") << QString("~text~<br>") << QString("<s>~text~</s><br>");
-
-    // Combined formatting in one string
-    QTest::newRow("combined_styles")
-        << QString("*bold* and _under_ and /italic/ and ~strike~ and **mdbold** and ***mditalic***")
-        << QString("<b>*bold*</b> and <u>_under_</u> and <i>/italic/</i> and <s>~strike~</s> and <b>mdbold</b> and "
-                   "<b>mditalic</b>");
-
-    // Non-matching embedded punctuation
-    QTest::newRow("embedded_asterisk") << QString("word*text*word") << QString("word*text*word");
-    QTest::newRow("embedded_underscore") << QString("word_text_word") << QString("word_text_word");
-    QTest::newRow("embedded_slash") << QString("word/text/word") << QString("word/text/word");
-    QTest::newRow("embedded_tilde") << QString("word~text~word") << QString("word~text~word");
-    QTest::newRow("embedded_double_asterisk") << QString("word**text**word") << QString("word**text**word");
+    QTest::newRow("empty") << QString() << QString();
+    QTest::newRow("plain") << QStringLiteral("Hello world") << QStringLiteral("Hello world");
+    QTest::newRow("strong") << QStringLiteral("before *bold* after")
+                              << QStringLiteral("before <b>*bold*</b> after");
+    QTest::newRow("emphasis") << QStringLiteral("before _italic_ after")
+                                << QStringLiteral("before <i>_italic_</i> after");
+    QTest::newRow("strike") << QStringLiteral("~gone~")
+                              << QStringLiteral("<s>~gone~</s>");
+    QTest::newRow("code") << QStringLiteral("a ") + QChar(0x60) + QStringLiteral("*literal*") + QChar(0x60)
+                            << QStringLiteral("a <code>") + QChar(0x60) + QStringLiteral("*literal*") + QChar(0x60) + QStringLiteral("</code>");
+    QTest::newRow("nested") << QStringLiteral("*bold _italic_*")
+                              << QStringLiteral("<b>*bold <i>_italic_</i>*</b>");
+    QTest::newRow("adjacent-nesting") << QStringLiteral("*_both_*")
+                                        << QStringLiteral("<b>*<i>_both_</i>*</b>");
+    QTest::newRow("line-break") << QStringLiteral("a<br>*strong*")
+                                  << QStringLiteral("a<br><b>*strong*</b>");
+    QTest::newRow("quoted") << QStringLiteral("&gt; *strong*")
+                              << QStringLiteral("&gt; <b>*strong*</b>");
+    QTest::newRow("link") << QStringLiteral("*<a href=\"https://psi-im.org\">Psi</a>*")
+                            << QStringLiteral("<b>*<a href=\"https://psi-im.org\">Psi</a>*</b>");
+    QTest::newRow("html attributes") << QStringLiteral("<a href=\"https://psi-im.org/a_b*c~d\">plain</a>")
+                                       << QStringLiteral("<a href=\"https://psi-im.org/a_b*c~d\">plain</a>");
+    QTest::newRow("spaces") << QStringLiteral("* invalid*") << QStringLiteral("* invalid*");
+    QTest::newRow("span cannot cross lines") << QStringLiteral("*before<br>after*")
+                                               << QStringLiteral("*before<br>after*");
+    QTest::newRow("embedded") << QStringLiteral("word*strong*word")
+                                << QStringLiteral("word*strong*word");
+    QTest::newRow("markdown strong") << QStringLiteral("**bold**")
+                                       << QStringLiteral("**bold**");
+    QTest::newRow("slash") << QStringLiteral("/italic/") << QStringLiteral("/italic/");
+    QTest::newRow("URL") << QStringLiteral("https://example.org/foo_bar/")
+                            << QStringLiteral("https://example.org/foo_bar/");
 }
 
 void TextUtilTest::testLegacyFormat()
 {
     QFETCH(QString, input);
     QFETCH(QString, expected);
-
     QCOMPARE(TextUtil::legacyFormat(input), expected);
-}
-
-void TextUtilTest::testLegacyFormat_boldXep()
-{
-    QCOMPARE(TextUtil::legacyFormat("*bold*"), QString("<b>*bold*</b>"));
-    QCOMPARE(TextUtil::legacyFormat("before *bold* after"), QString("before <b>*bold*</b> after"));
-    QCOMPARE(TextUtil::legacyFormat(">*bold*"), QString("><b>*bold*</b>"));
-}
-
-void TextUtilTest::testLegacyFormat_underlineXep()
-{
-    QCOMPARE(TextUtil::legacyFormat("_underline_"), QString("<u>_underline_</u>"));
-    QCOMPARE(TextUtil::legacyFormat("before _underline_ after"), QString("before <u>_underline_</u> after"));
-    QCOMPARE(TextUtil::legacyFormat(">_underline_"), QString("><u>_underline_</u>"));
-}
-
-void TextUtilTest::testLegacyFormat_italicXep()
-{
-    QCOMPARE(TextUtil::legacyFormat("/italic/"), QString("<i>/italic/</i>"));
-    QCOMPARE(TextUtil::legacyFormat("before /italic/ after"), QString("before <i>/italic/</i> after"));
-    QCOMPARE(TextUtil::legacyFormat(">/italic/"), QString("><i>/italic/</i>"));
-}
-
-void TextUtilTest::testLegacyFormat_strikethroughXep()
-{
-    QCOMPARE(TextUtil::legacyFormat("~strike~"), QString("<s>~strike~</s>"));
-    QCOMPARE(TextUtil::legacyFormat("before ~strike~ after"), QString("before <s>~strike~</s> after"));
-    QCOMPARE(TextUtil::legacyFormat(">~strike~"), QString("><s>~strike~</s>"));
-}
-
-void TextUtilTest::testLegacyFormat_multipleStyles()
-{
-    const QString input = "*bold* _underline_ /italic/ ~strike~";
-    const QString expected = "<b>*bold*</b> <u>_underline_</u> <i>/italic/</i> <s>~strike~</s>";
-    QCOMPARE(TextUtil::legacyFormat(input), expected);
-}
-
-void TextUtilTest::testLegacyFormat_noMatchNonBoundary()
-{
-    QCOMPARE(TextUtil::legacyFormat("prefix*bold*suffix"), QString("prefix*bold*suffix"));
-    QCOMPARE(TextUtil::legacyFormat("prefix_underline_suffix"), QString("prefix_underline_suffix"));
-    QCOMPARE(TextUtil::legacyFormat("prefix/italic/suffix"), QString("prefix/italic/suffix"));
-    QCOMPARE(TextUtil::legacyFormat("prefix~strike~suffix"), QString("prefix~strike~suffix"));
 }
 
 void TextUtilTest::testLegacyFormat_AdditionalMD()
 {
-    QCOMPARE(TextUtil::legacyFormat("***bold italic***"), QString("<b><i>bold italic</i></b>"));
-    QCOMPARE(TextUtil::legacyFormat("before ***bold italic*** after"), QString("before <b><i>bold italic</i></b> after"));
-    QCOMPARE(TextUtil::legacyFormat(">***bold italic***"), QString("><b><i>bold italic</i></b>"));
-    QCOMPARE(TextUtil::legacyFormat("**bold**"), QString("<b>bold</b>"));
+    // Markdown/Discord extensions are not XEP-0393.
+    for (const QString &plain : { QStringLiteral("***strong italic***"), QStringLiteral("**strong**"),
+                                  QStringLiteral("__underline__"), QStringLiteral("/italic/"),
+                                  QStringLiteral("~~strike~~") })
+        QCOMPARE(TextUtil::legacyFormat(plain), plain);
 
-    QCOMPARE(TextUtil::legacyFormat("before **bold** after"), QString("before <b>bold</b> after"));
-    QCOMPARE(TextUtil::legacyFormat(">**bold**"), QString("><b>bold</b>"));
+    const QString fence(3, QChar(0x60));
+    const QString pre = fence + QStringLiteral("sh<br>*not strong*<br>") + fence + QStringLiteral("<br>*strong*");
+    const QString out = TextUtil::legacyFormat(pre);
+    QVERIFY(out.contains(QStringLiteral("*not strong*")));
+    QVERIFY(!out.contains(QStringLiteral("<b>*not strong*</b>")));
+    QVERIFY(out.endsWith(QStringLiteral("<br><b>*strong*</b>")));
 }
 
 void TextUtilTest::testEscape()

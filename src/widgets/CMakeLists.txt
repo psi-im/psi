@@ -11,6 +11,7 @@ set(SOURCES
     NativeChatThemeRegistry.cpp
     NativeChatRenderers.cpp
     ChatMessageText.cpp
+    CodeBlockWidget.cpp
     MessagePreview.cpp
     LinkButton.cpp
     MamChatWidget.cpp
@@ -27,6 +28,7 @@ set(SOURCES
     iconselect.cpp
     iconwidget.cpp
     psirichtext.cpp
+    psicodehighlight.cpp
     psitextview.cpp
     psitooltip.cpp
     tabbar.cpp
@@ -48,6 +50,8 @@ set(HEADERS
     NativeChatThemeRegistry.h
     NativeChatRenderers.h
     ChatMessageText.h
+    CodeBlockWidget.h
+    psicodelanguage.h
     MessagePreview.h
     LinkButton.h
     MamChatWidget.h
@@ -108,7 +112,7 @@ target_compile_definitions(widgets PUBLIC QITE_FIRST_USER_PROPERTY=0x1000)
 if(WIN32)
 target_link_libraries(widgets shlwapi)
 endif()
-target_link_libraries(widgets ${QT_LIBRARIES} ${iris_LIB} tools)
+target_link_libraries(widgets ${QT_LIBRARIES} ${iris_LIB} tools qsourcehighlite)
 target_include_directories(widgets PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_LIST_DIR})
 if(IS_WEBKIT OR IS_WEBENGINE)
     target_compile_definitions(widgets PRIVATE WEBKIT)

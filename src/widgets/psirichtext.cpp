@@ -427,6 +427,95 @@ void PsiRichText::install(QTextDocument *doc)
 #endif
 }
 
+bool PsiRichText::isMonospace(const QTextCharFormat &style)
+{
+    const QFont formatted = style.font();
+    const QString family = formatted.family();
+    return style.fontFixedPitch() || formatted.styleHint() == QFont::Monospace
+        || family.contains(QLatin1String("mono"), Qt::CaseInsensitive)
+        || family.contains(QLatin1String("courier"), Qt::CaseInsensitive)
+        || family.contains(QLatin1String("consolas"), Qt::CaseInsensitive);
+}
+
+void PsiRichText::decorateInlineCode(QTextDocument *doc, const QColor &base, const QColor &text)
+{
+    if (!doc)
+        return;
+    // A faint neutral backing gives inline monospace spans a boundary without
+    // replacing the conversation's text color with a bright code-theme color.
+    const QColor fill((base.red() * 91 + text.red() * 9) / 100,
+                      (base.green() * 91 + text.green() * 9) / 100,
+                      (base.blue() * 91 + text.blue() * 9) / 100);
+    QList<QPair<int, int>> ranges;
+    for (QTextBlock block = doc->begin(); block.isValid(); block = block.next())
+        for (auto it = block.begin(); !it.atEnd(); ++it) {
+            const QTextFragment fragment = it.fragment();
+            if (!fragment.isValid() || !isMonospace(fragment.charFormat()))
+                continue;
+            // XEP-0393 code directives stay in the rendered rich text. The
+            // single/double backtick pairs distinguish inline code from triple
+            // fenced code and arbitrary fixed-width text.
+            const QString value = fragment.text();
+            const int firstTick = value.indexOf(QChar(0x60));
+            if (firstTick < 0 || value.indexOf(QChar(0x60), firstTick + 1) < 0
+                || value.contains(QString(3, QChar(0x60))))
+                continue;
+            ranges.append({ fragment.position(), fragment.length() });
+        }
+    if (ranges.isEmpty())
+        return;
+    QTextCursor cursor(doc);
+    QTextCharFormat format;
+    format.setBackground(fill);
+    cursor.beginEditBlock();
+    for (const auto &range : ranges) {
+        cursor.setPosition(range.first);
+        cursor.setPosition(range.first + range.second, QTextCursor::KeepAnchor);
+        cursor.mergeCharFormat(format);
+    }
+    cursor.endEditBlock();
+}
+
+void PsiRichText::applyBaseFont(QTextDocument *doc, const QFont &font)
+{
+    doc->setDefaultFont(font);
+    // A full-document family override destroys explicit monospace styling
+    // from XEP-0393 code spans/fences. Update size for every fragment, but
+    // preserve the family on code and other explicitly fixed-pitch fragments.
+    QTextCharFormat sizeFormat;
+    if (font.pointSizeF() > 0)
+        sizeFormat.setFontPointSize(font.pointSizeF());
+    else
+        sizeFormat.setProperty(QTextFormat::FontPixelSize, font.pixelSize());
+
+    QList<QPair<int, int>> regularText;
+    for (QTextBlock block = doc->begin(); block.isValid(); block = block.next()) {
+        for (auto it = block.begin(); !it.atEnd(); ++it) {
+            const QTextFragment fragment = it.fragment();
+            if (!fragment.isValid())
+                continue;
+            if (!isMonospace(fragment.charFormat()))
+                regularText.append({ fragment.position(), fragment.length() });
+        }
+    }
+    QTextCursor cursor(doc);
+    cursor.beginEditBlock();
+    cursor.select(QTextCursor::Document);
+    cursor.mergeCharFormat(sizeFormat);
+    QTextCharFormat familyFormat;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    familyFormat.setFontFamilies({ font.family() });
+#else
+    familyFormat.setFontFamily(font.family());
+#endif
+    for (const auto &[start, length] : std::as_const(regularText)) {
+        cursor.setPosition(start);
+        cursor.setPosition(start + length, QTextCursor::KeepAnchor);
+        cursor.mergeCharFormat(familyFormat);
+    }
+    cursor.endEditBlock();
+}
+
 // Keep existing links readable after palette changes without reparsing messages.
 void PsiRichText::recolorLinks(QTextDocument *document, const QColor &color)
 {

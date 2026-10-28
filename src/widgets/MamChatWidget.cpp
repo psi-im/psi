@@ -2,6 +2,7 @@
 #include "MamChatWidget.h"
 #include "MamImageViewer.h"
 #include "ChatMessageText.h"
+#include "CodeBlockWidget.h"
 #include "MessagePreview.h"
 #include "NativeChatRenderers.h"
 #include "filesharingmanager.h"
@@ -47,6 +48,7 @@
 #include <QPointer>
 #include <QPropertyAnimation>
 #include <QPushButton>
+#include <QPlainTextEdit>
 #include <QResizeEvent>
 #include <QRegularExpression>
 #include <QScrollBar>
@@ -60,6 +62,7 @@
 #include <QUrlQuery>
 #include <QTextBlockFormat>
 #include <QTextImageFormat>
+#include <QTextDocumentFragment>
 #include <QTextFragment>
 #include <QTextDocument>
 #include <QWheelEvent>
@@ -2068,7 +2071,14 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
         }
         // A message that starts with a quote starts it on a line of its own,
         // where it is shown as a quote.
-        if (message && richText.trimmed().startsWith(QLatin1String("&gt;")))
+        const QString trimmedBody = richText.trimmed();
+        // A Classic in-text header must not share the first line of a fenced
+        // block. Otherwise the opening fence is no longer at column zero and
+        // the native code renderer cannot recognize it.
+        const bool fencedAtStart = trimmedBody.startsWith(QString(3, QChar(0x60)))
+            || (trimmedBody.startsWith(QLatin1String("<span style=\"font-family:monospace"))
+                && trimmedBody.contains(QString(3, QChar(0x60))));
+        if (message && (trimmedBody.startsWith(QLatin1String("&gt;")) || fencedAtStart))
             header += QStringLiteral("<br>");
         richText = header + richText + trailer;
     }
@@ -2152,18 +2162,24 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
         }
     }
 
+    // The sender may explicitly forbid XEP-0393 styling, including quotes.
+    body->setQuoteStylingEnabled(!mv.stylingDisabled());
     body->setRichText(richText);
-    // After the text: setting it clears the document's resources.
-    if (!inlineIcons.isEmpty()) {
+    // Reinstall Classic header images whenever the document is replaced or
+    // split into prose pieces. setRichText() clears its resource table.
+    const auto installInlineIcons = [this, &inlineIcons](ChatMessageText *text) {
+        if (inlineIcons.isEmpty())
+            return;
         const int   iconSize = qMax(10, QFontInfo(font()).pixelSize());
         const qreal ratio    = devicePixelRatioF();
         for (auto it = inlineIcons.cbegin(); it != inlineIcons.cend(); ++it) {
             QPixmap pixmap = IconsetFactory::iconPixmap(
                 it.value(), QSize(qRound(iconSize * ratio), qRound(iconSize * ratio)));
             pixmap.setDevicePixelRatio(ratio);
-            body->document()->addResource(QTextDocument::ImageResource, QUrl(it.key()), pixmap);
+            text->document()->addResource(QTextDocument::ImageResource, QUrl(it.key()), pixmap);
         }
-    }
+    };
+    installInlineIcons(body);
     if (inText && message)
         body->setLinkHandler([this](const QString &link) {
             if (!link.startsWith(QLatin1String("addnick://psi/")))
@@ -2176,7 +2192,116 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
         body->setQuoteColor(quoteColor_);
         body->markQuotedLines();
     }
-    bodyPart->column()->addWidget(body);
+    // The rich-text document still handles inline code, quotes and media.
+    // A completed XEP-0393 fenced block is a block-level control instead:
+    // one rounded surface, bounded height, independent overlay scrollbars
+    // and extensible actions. Only split ordinary text, not media/inline
+    // object documents (which must retain their shared resource mappings).
+    // Classic embeds a direction icon into its text header. Those known icons
+    // are safe to carry to the prose fragments; actual media stays unsplit.
+    bool hasNonHeaderImage = false;
+    const QRegularExpression imageTag(QStringLiteral(R"(<img\b[^>]*>)"),
+                                       QRegularExpression::CaseInsensitiveOption);
+    auto imageMatches = imageTag.globalMatch(richText);
+    while (imageMatches.hasNext()) {
+        const QString tag = imageMatches.next().captured();
+        bool headerImage = false;
+        for (auto it = inlineIcons.cbegin(); it != inlineIcons.cend(); ++it)
+            if (tag.contains(it.key())) {
+                headerImage = true;
+                break;
+            }
+        if (!headerImage) {
+            hasNonHeaderImage = true;
+            break;
+        }
+    }
+    const bool canUseCodeWidgets = message && !mv.stylingDisabled() && files.isEmpty()
+        && richText.contains(QString(3, QChar(0x60)))
+        && !richText.contains(QLatin1String("<share"))
+        && !richText.contains(QLatin1String("<icon"))
+        && !hasNonHeaderImage;
+    const auto codeBlocks = canUseCodeWidgets ? PsiRichText::codeBlocks(body->document())
+                                             : QList<PsiRichText::CodeBlock>();
+    if (codeBlocks.isEmpty()) {
+        bodyPart->column()->addWidget(body);
+    } else {
+        struct Piece {
+            bool codeBlock = false;
+            QString text;
+            QString language;
+        };
+        QList<Piece> pieces;
+        QTextDocument *source = body->document();
+        const int documentEnd = source->characterCount() - 1;
+        const auto addProse = [&pieces, source](int begin, int end) {
+            if (begin >= end)
+                return;
+            QTextCursor cursor(source);
+            cursor.setPosition(begin);
+            cursor.setPosition(end, QTextCursor::KeepAnchor);
+            pieces.append({ false, QTextDocumentFragment(cursor).toHtml(), {} });
+        };
+        int position = 0;
+        for (const auto &block : codeBlocks) {
+            int proseEnd = block.begin;
+            // The line separator on either side belongs to the layout
+            // boundary between the prose widget and the code widget.
+            if (proseEnd > position && (source->characterAt(proseEnd - 1) == QChar::ParagraphSeparator
+                                         || source->characterAt(proseEnd - 1) == QChar::LineSeparator))
+                --proseEnd;
+            addProse(position, proseEnd);
+            pieces.append({ true, block.code, block.language });
+            position = block.end;
+            if (position < documentEnd
+                && (source->characterAt(position) == QChar::ParagraphSeparator
+                    || source->characterAt(position) == QChar::LineSeparator))
+                ++position;
+        }
+        addProse(position, documentEnd);
+
+        bool reusedBody = false;
+        bool firstPiece = true;
+        bodyPart->column()->addWidget(body);
+        for (const auto &piece : pieces) {
+            if (piece.codeBlock) {
+                auto *code = new CodeBlockWidget(bodyPart);
+                code->setFont(font());
+                code->setCode(piece.text, piece.language);
+                // Message encryption alone does not prove the sender's OMEMO
+                // fingerprint was verified. Until verified provenance is
+                // exposed by the message model, require the risk checkbox.
+                code->setExecutionProvenance(mv.isEncrypted(), false);
+                bodyPart->column()->addWidget(code);
+                code->installEventFilter(this);
+                for (auto *child : code->findChildren<QWidget *>())
+                    child->installEventFilter(this);
+                firstPiece = false;
+                continue;
+            }
+            ChatMessageText *text = nullptr;
+            if (firstPiece && !reusedBody) {
+                text = body;
+                reusedBody = true;
+            } else {
+                text = new ChatMessageText(bodyPart);
+                text->setObjectName(QStringLiteral("mamBodySegment"));
+                text->setMediaOpener(mediaOpener_);
+                text->setFont(font());
+                text->setForegroundRole(QPalette::Text);
+                bodyPart->column()->addWidget(text);
+                text->installEventFilter(this);
+                text->viewport()->installEventFilter(this);
+            }
+            text->setQuoteStylingEnabled(!mv.stylingDisabled());
+            text->setRichText(piece.text);
+            installInlineIcons(text);
+            text->setQuoteColor(quoteColor_);
+            firstPiece = false;
+        }
+        if (!reusedBody)
+            body->hide();
+    }
     if (!files.isEmpty()) {
         if (richText.trimmed().isEmpty())
             body->hide();
@@ -3193,17 +3318,25 @@ QMenu *MamChatWidget::createMessageContextMenu(const QString &key, QWidget *targ
     auto *row = rowWidget(at);
     QPointer<ChatMessageText> body = row ? row->findChild<ChatMessageText *>(QStringLiteral("mamBody")) : nullptr;
     QPointer<QTextEdit> selectedTextView = body.data();
+    QPointer<QPlainTextEdit> selectedCodeView;
     QPointer<QLabel> selectedLabel = qobject_cast<QLabel *>(target);
-    for (auto *child = target; child && child != row; child = child->parentWidget())
+    for (auto *child = target; child && child != row; child = child->parentWidget()) {
+        if (auto *code = qobject_cast<QPlainTextEdit *>(child)) {
+            selectedCodeView = code;
+            break;
+        }
         if (auto *text = qobject_cast<QTextEdit *>(child)) {
             selectedTextView = text;
             break;
         }
+    }
     auto *copy = menu->addAction(tr("Copy"));
     copy->setObjectName(QStringLiteral("mamCopyMessage"));
-    connect(copy, &QAction::triggered, this, [this, key, selectedTextView, selectedLabel] {
+    connect(copy, &QAction::triggered, this, [this, key, selectedTextView, selectedCodeView, selectedLabel] {
         if (selectedLabel && selectedLabel->hasSelectedText())
             QApplication::clipboard()->setText(selectedLabel->selectedText());
+        else if (selectedCodeView && selectedCodeView->textCursor().hasSelection())
+            selectedCodeView->copy();
         else if (selectedTextView && selectedTextView->textCursor().hasSelection())
             selectedTextView->copy();
         else {
@@ -3300,8 +3433,10 @@ void MamChatWidget::setQuoteColor(const QColor &color)
         if (auto *row = rowWidget(index)) {
             if (auto *preview = row->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview")))
                 preview->setColors(color, color);
-            if (auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody")))
-                body->setQuoteColor(color);
+            for (auto *body : row->findChildren<ChatMessageText *>())
+                if (body->objectName() == QLatin1String("mamBody")
+                    || body->objectName() == QLatin1String("mamBodySegment"))
+                    body->setQuoteColor(color);
         }
 }
 
@@ -3319,8 +3454,10 @@ void MamChatWidget::updateRowSelection(QFrame *row, bool selected)
         if (selecting)
             author->setSelection(0, 0);
     }
-    if (auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody")))
-        body->setWholeMessageSelectionMode(selecting);
+    for (auto *body : row->findChildren<ChatMessageText *>())
+        if (body->objectName() == QLatin1String("mamBody")
+            || body->objectName() == QLatin1String("mamBodySegment"))
+            body->setWholeMessageSelectionMode(selecting);
 }
 
 void MamChatWidget::setHoveredRow(QFrame *row)
@@ -3372,6 +3509,16 @@ void MamChatWidget::updateRowPalette(QFrame *row, bool selected)
             if (message)
                 message->bodyDefaults = defaults;
             changePartPalette(body, [&textPalette](QPalette &colors) { colors = textPalette; });
+        }
+        // Split fenced code leaves ordinary prose in independent text views.
+        // Give every segment the same palette and selection affordances.
+        for (auto *segment : row->findChildren<ChatMessageText *>()) {
+            // Reply previews also contain ChatMessageText, but their quote
+            // palette belongs to MessagePreview. Only style prose fragments
+            // of the message itself.
+            if (segment == body || segment->objectName() != QLatin1String("mamBodySegment"))
+                continue;
+            changePartPalette(segment, [&textPalette](QPalette &colors) { colors = textPalette; });
         }
     }
     row->update();

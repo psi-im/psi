@@ -110,6 +110,7 @@ QString MessageView::reactionTarget(const XMPP::Message &message)
 
 void MessageView::setReplyMetadata(const XMPP::Message &message)
 {
+    setStylingDisabled(message.stylingDisabled());
     // XEP-0461 replies mark their compatibility quote with XEP-0428 ranges.
     // Without <reply/> (rooms without stanza-ids, older clients) recognize a
     // leading plain-text quote instead; it simply has no reference id.
@@ -277,7 +278,7 @@ QString MessageView::formattedText() const
     }
     if (PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool())
         txt = TextUtil::emoticonify(txt);
-    if (PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool())
+    if (!_stylingDisabled && PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool())
         txt = TextUtil::legacyFormat(txt);
 
     return txt;
@@ -290,7 +291,7 @@ QString MessageView::formattedUserText() const
         text         = TextUtil::linkify(text);
         if (PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool())
             text = TextUtil::emoticonify(text);
-        if (PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool())
+        if (!_stylingDisabled && PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool())
             text = TextUtil::legacyFormat(text);
         return text;
     }

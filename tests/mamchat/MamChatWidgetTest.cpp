@@ -2,9 +2,11 @@
 #include "widgets/MamChatWidget.h"
 #include "widgets/MamImageViewer.h"
 #include "widgets/ChatMessageText.h"
+#include "widgets/CodeBlockWidget.h"
 #include "widgets/MessagePreview.h"
 #include "widgets/LinkButton.h"
 #include "widgets/NativeChatRenderers.h"
+#include "widgets/psirichtext.h"
 #include <QContextMenuEvent>
 #include <QCursor>
 #include <QTextBrowser>
@@ -14,6 +16,7 @@
 #include "filesharingmanager.h"
 #include "qiteaudio.h"
 #include "qitevideo.h"
+#include "messagestyling.h"
 
 #include <QAbstractTextDocumentLayout>
 #include <QApplication>
@@ -24,8 +27,12 @@
 #include <QLabel>
 #include <QLayout>
 #include <QMenu>
+#include <QMessageBox>
+#include <QCheckBox>
 #include <QMouseEvent>
 #include <QPushButton>
+#include <QPlainTextEdit>
+#include <QPointer>
 #include <QToolButton>
 #include <QScopeGuard>
 #include <QScreen>
@@ -117,6 +124,446 @@ public:
 class MamChatWidgetTest final : public QObject {
     Q_OBJECT
 private slots:
+    void xep0393StyledTextSurvivesBubbleFontAndQuotes()
+    {
+        ChatMessageText body;
+        body.setFont(QFont(QStringLiteral("Sans Serif"), 12));
+        body.setRichText(MessageStyling::toHtml(
+            QStringLiteral("*strong* _emphasis_ ~deleted~ ") + QChar(0x60)
+            + QStringLiteral("literal") + QChar(0x60)));
+        auto *doc = body.document();
+        QVERIFY(doc->find(QStringLiteral("strong")).charFormat().fontWeight() >= QFont::Bold);
+        QVERIFY(doc->find(QStringLiteral("emphasis")).charFormat().fontItalic());
+        QVERIFY(doc->find(QStringLiteral("deleted")).charFormat().fontStrikeOut());
+        const auto codeFont = doc->find(QStringLiteral("literal")).charFormat().font();
+        QVERIFY(codeFont.styleHint() == QFont::Monospace
+                || codeFont.family().contains(QLatin1String("mono"), Qt::CaseInsensitive)
+                || codeFont.fixedPitch());
+
+        // Bubble themes (and theme switches) reapply their chat font. Code
+        // remains monospace, while the rest inherits the new family and size.
+        QFont bigger(QStringLiteral("Serif"));
+        bigger.setPixelSize(22);
+        body.setFont(bigger);
+        const auto codeAfter = doc->find(QStringLiteral("literal")).charFormat().font();
+        QVERIFY(codeAfter.styleHint() == QFont::Monospace
+                || codeAfter.family().contains(QLatin1String("mono"), Qt::CaseInsensitive)
+                || codeAfter.fixedPitch());
+        QVERIFY(doc->find(QStringLiteral("strong")).charFormat().fontWeight() >= QFont::Bold);
+        QVERIFY(doc->find(QStringLiteral("emphasis")).charFormat().fontItalic());
+
+        ChatMessageText noStyling;
+        noStyling.setQuoteStylingEnabled(false);
+        noStyling.setRichText(QStringLiteral("&gt; literal quote"));
+        QCOMPARE(noStyling.document()->toPlainText(), QStringLiteral("> literal quote"));
+        ChatMessageText quoted;
+        quoted.setRichText(QStringLiteral("&gt; actual quote"));
+        QCOMPARE(quoted.document()->toPlainText(), QStringLiteral("actual quote"));
+        QVERIFY(quoted.isQuotedBlock(quoted.document()->begin()));
+    }
+
+    void xep0393CodeHighlightKeepsContiguousDocumentSelection()
+    {
+        ChatMessageText body;
+        const QString original = QStringLiteral("before\\n```cpp\\nint number = 42;\\n```\\nafter")
+                                     .replace(QStringLiteral("\\n"), QStringLiteral("\n"));
+        body.setRichText(MessageStyling::toHtml(
+            original.toHtmlEscaped().replace(QLatin1Char('\n'), QStringLiteral("<br>"))));
+        QTextDocument *doc = body.document();
+        QCOMPARE(body.toPlainText(), original);
+        const auto code = doc->find(QStringLiteral("int number"));
+        QVERIFY(!code.isNull());
+        const auto format = code.charFormat();
+        QVERIFY(format.fontFixedPitch() || PsiRichText::isMonospace(format));
+        QCOMPARE(format.background().color(), QColor(39, 40, 34));
+        // QSourceHighlite Monokai highlights C++ keywords but leaves the
+        // content in the original document, not in a separate text widget.
+        const auto keyword = doc->find(QStringLiteral("int"));
+        QVERIFY(!keyword.isNull());
+        QCOMPARE(keyword.charFormat().foreground().color(), QColor(102, 217, 239));
+        QTextCursor selected(doc);
+        selected.setPosition(0);
+        selected.setPosition(doc->characterCount() - 1, QTextCursor::KeepAnchor);
+        QString copied = selected.selectedText();
+        copied.replace(QChar::ParagraphSeparator, QLatin1Char('\n'));
+        copied.replace(QChar::LineSeparator, QLatin1Char('\n'));
+        QCOMPARE(copied, original);
+        body.setTextCursor(selected);
+        QCOMPARE(body.textCursor().selectedText(), selected.selectedText());
+    }
+
+    void codeBlockWidgetBoundsScrollsCopiesAndAcceptsPluginActions()
+    {
+        CodeBlockWidget block;
+        const QString longLine(280, QLatin1Char('x'));
+        QStringList lines;
+        for (int i = 0; i < 100; ++i)
+            lines.append(i == 0 ? longLine : QStringLiteral("int value = %1;").arg(i));
+        const QString code = lines.join(QLatin1Char('\n'));
+        block.setCode(code, QStringLiteral("cpp"));
+        QVERIFY(block.naturalWidth() >= 400);
+        const QSize hint = block.sizeHint();
+        // The editor is bounded to 25 lines, without truncating its contents.
+        QVERIFY(hint.height() < block.editor()->fontMetrics().lineSpacing() * 30 + 100);
+        QCOMPARE(block.editor()->document()->blockCount(), 100);
+        block.resize(360, hint.height());
+        block.show();
+        QTRY_VERIFY(block.editor()->horizontalScrollBar()->maximum() > 0);
+        QTRY_VERIFY(block.editor()->verticalScrollBar()->maximum() > 0);
+        block.copyAction()->trigger();
+        QCOMPARE(QApplication::clipboard()->text(), code);
+
+        QAction formatAction(QStringLiteral("Format"), &block);
+        int invoked = 0;
+        connect(&formatAction, &QAction::triggered, &block, [&invoked] { ++invoked; });
+        block.addCodeAction(&formatAction);
+        formatAction.trigger();
+        QCOMPARE(invoked, 1);
+        block.removeCodeAction(&formatAction);
+        block.setCode(QStringLiteral("x"), QStringLiteral("cpp"));
+        QVERIFY(block.sizeHint().height() < hint.height());
+    }
+
+    void codeBlockLanguageMenuRehighlightsWithoutChangingReceivedText()
+    {
+        CodeBlockWidget block;
+        block.setCode(QStringLiteral("int answer = 42;"), QString());
+        block.resize(320, block.sizeHint().height());
+        block.show();
+        QCOMPARE(block.sourceLanguage(), QString());
+        QCOMPARE(block.language(), QString());
+        QCOMPARE(block.editor()->toPlainText(), QStringLiteral("int answer = 42;"));
+        QVERIFY(!block.languageSelector()->text().contains(QString(3, QChar(0x60))));
+        const auto menu = block.languageSelector()->menu();
+        QVERIFY(menu);
+        QAction *cpp = nullptr;
+        for (QAction *option : menu->actions()) {
+            if (option->data().toString() == QLatin1String("cpp"))
+                cpp = option;
+        }
+        QVERIFY(cpp);
+        cpp->trigger();
+        QCOMPARE(block.language(), QStringLiteral("cpp"));
+        QCOMPARE(block.sourceLanguage(), QString());
+        QCOMPARE(block.code(), QStringLiteral("int answer = 42;"));
+        QVERIFY(block.languageSelector()->text().contains(QStringLiteral("C++")));
+        const auto colored = block.editor()->document()->find(QStringLiteral("int"));
+        QVERIFY(!colored.isNull());
+        // Switching the language does not replace the received text.
+        QCOMPARE(block.editor()->toPlainText(), block.code());
+        QVERIFY(block.formatAction() && !block.formatAction()->isEnabled());
+
+        auto *header = block.findChild<QWidget *>(QStringLiteral("mamCodeBlockHeader"));
+        QVERIFY(header);
+        QCOMPARE(block.languageSelector()->mapTo(&block, QPoint(0, 0)).x()
+                 + block.languageSelector()->width(), block.width());
+    }
+
+    void codeBlockPrettyJsonAndXmlAreReversible()
+    {
+        CodeBlockWidget block;
+        const QString json = QStringLiteral("{\"a\":1,\"b\":[1,2]}");
+        block.setCode(json, QStringLiteral("json"));
+        QVERIFY(block.formatAction()->isEnabled());
+        block.formatAction()->trigger();
+        QVERIFY(block.displayedCode().contains(QStringLiteral("\n  \"a\": 1")));
+        QCOMPARE(block.code(), json);
+        block.copyAction()->trigger();
+        QCOMPARE(QApplication::clipboard()->text(), block.displayedCode());
+        block.formatAction()->trigger();
+        QCOMPARE(block.displayedCode(), json);
+
+        const QString xml = QStringLiteral("<root><item id=\"x\">ok</item></root>");
+        block.setCode(xml, QStringLiteral("xml"));
+        QVERIFY(block.formatAction()->isEnabled());
+        block.formatAction()->trigger();
+        QVERIFY(block.displayedCode().contains(QStringLiteral("\n  <item")));
+        QCOMPARE(block.code(), xml);
+        block.setCode(QStringLiteral("<!DOCTYPE root><root/>"), QStringLiteral("xml"));
+        QVERIFY(!block.formatAction()->isEnabled());
+        block.setCode(QStringLiteral("{invalid"), QStringLiteral("json"));
+        QVERIFY(!block.formatAction()->isEnabled());
+        block.setCode(QStringLiteral("{}"), QString());
+        QVERIFY(!block.formatAction()->isEnabled());
+    }
+
+    void codeBlockRunRequiresConfirmationAndExplicitRiskAcceptance()
+    {
+        CodeBlockWidget block;
+        QAction pluginRun(QStringLiteral("Execute"), &block);
+        int executed = 0;
+        connect(&pluginRun, &QAction::triggered, &block, [&executed] { ++executed; });
+        block.setRunAction(&pluginRun);
+        QVERIFY(block.runAction()->isEnabled());
+
+        // No backend is invoked for Cancel.
+        bool sawConfirmation = false;
+        QTimer::singleShot(0, &block, [&] {
+            if (auto *dialog = qobject_cast<QMessageBox *>(QApplication::activeModalWidget())) {
+                sawConfirmation = dialog->checkBox() != nullptr;
+                dialog->button(QMessageBox::Cancel)->click();
+            }
+        });
+        block.runAction()->trigger();
+        QVERIFY(sawConfirmation);
+        QCOMPARE(executed, 0);
+
+        // Unencrypted and/or not explicitly OMEMO-verified requires a second
+        // affirmative checkbox before the Run button can be enabled.
+        bool riskWasRequired = false;
+        QTimer::singleShot(0, &block, [&] {
+            auto *dialog = qobject_cast<QMessageBox *>(QApplication::activeModalWidget());
+            if (!dialog)
+                return;
+            auto *checkbox = dialog->checkBox();
+            QPushButton *run = nullptr;
+            for (auto *button : dialog->buttons())
+                if (dialog->buttonRole(button) == QMessageBox::AcceptRole)
+                    run = qobject_cast<QPushButton *>(button);
+            if (!checkbox || !run)
+                return;
+            riskWasRequired = !run->isEnabled();
+            checkbox->setChecked(true);
+            run->click();
+        });
+        block.runAction()->trigger();
+        QVERIFY(riskWasRequired);
+        QCOMPARE(executed, 1);
+
+        // A trusted case still asks to run, but does not require the checkbox.
+        block.setExecutionProvenance(true, true);
+        bool trustedWasConfirmed = false;
+        QTimer::singleShot(0, &block, [&] {
+            auto *dialog = qobject_cast<QMessageBox *>(QApplication::activeModalWidget());
+            if (!dialog)
+                return;
+            trustedWasConfirmed = dialog->checkBox() == nullptr;
+            for (auto *button : dialog->buttons())
+                if (dialog->buttonRole(button) == QMessageBox::AcceptRole) {
+                    button->click();
+                    break;
+                }
+        });
+        block.runAction()->trigger();
+        QVERIFY(trustedWasConfirmed);
+        QCOMPARE(executed, 2);
+    }
+
+    void codeBlockOpensIndependentSyntaxHighlightedWindow()
+    {
+        CodeBlockWidget source;
+        const QString original = QStringLiteral("{\"a\":1,\"b\":[1,2]}");
+        source.setCode(original, QStringLiteral("json"));
+        source.formatAction()->trigger();
+        const QString formatted = source.displayedCode();
+        QVERIFY(formatted != original);
+
+        source.openWindowAction()->trigger();
+        CodeBlockWidget *viewer = nullptr;
+        for (auto *window : QApplication::topLevelWidgets()) {
+            if (window->objectName() == QLatin1String("mamCodeBlockViewer"))
+                viewer = qobject_cast<CodeBlockWidget *>(window);
+        }
+        QVERIFY(viewer);
+        QVERIFY(viewer->isWindow());
+        QCOMPARE(viewer->parentWidget(), static_cast<QWidget *>(nullptr));
+        QVERIFY(viewer->testAttribute(Qt::WA_DeleteOnClose));
+        QVERIFY(viewer->isExpandedViewer());
+        QVERIFY(viewer->isVisible());
+        QVERIFY(viewer->editor()->isReadOnly());
+        QCOMPARE(viewer->sourceLanguage(), QStringLiteral("json"));
+        QCOMPARE(viewer->language(), QStringLiteral("json"));
+        QCOMPARE(viewer->code(), original);
+        QCOMPARE(viewer->displayedCode(), formatted);
+        QCOMPARE(viewer->editor()->sizePolicy().verticalPolicy(), QSizePolicy::Expanding);
+        QCOMPARE(viewer->editor()->maximumHeight(), QWIDGETSIZE_MAX);
+
+        // The viewer has no recursive "open" button, and its language and
+        // formatting changes must not affect the original chat row.
+        QToolButton *viewerOpen = nullptr;
+        for (auto *button : viewer->findChildren<QToolButton *>())
+            if (button->defaultAction() == viewer->openWindowAction())
+                viewerOpen = button;
+        QVERIFY(viewerOpen);
+        QVERIFY(!viewerOpen->isVisible());
+        viewer->setHighlightLanguage(QStringLiteral("cpp"));
+        QCOMPARE(viewer->language(), QStringLiteral("cpp"));
+        QCOMPARE(viewer->displayedCode(), original);
+        QCOMPARE(source.language(), QStringLiteral("json"));
+        QCOMPARE(source.displayedCode(), formatted);
+
+        QPointer<CodeBlockWidget> guard(viewer);
+        viewer->close();
+        QTRY_VERIFY(guard.isNull());
+        QCOMPARE(source.code(), original);
+    }
+
+    void detachedCodeViewerIsNotLimitedTo25Lines()
+    {
+        QWidget row;
+        auto *source = new CodeBlockWidget(&row);
+        QStringList lines;
+        for (int i = 0; i < 150; ++i)
+            lines.append(QStringLiteral("int value%1 = %1;").arg(i));
+        const QString content = lines.join(QLatin1Char('\n'));
+        source->setCode(content, QStringLiteral("cpp"));
+        source->openWindowAction()->trigger();
+        CodeBlockWidget *viewer = nullptr;
+        for (auto *window : QApplication::topLevelWidgets())
+            if (window->objectName() == QLatin1String("mamCodeBlockViewer"))
+                viewer = qobject_cast<CodeBlockWidget *>(window);
+        QVERIFY(viewer);
+        QCOMPARE(viewer->editor()->document()->blockCount(), 150);
+        QCOMPARE(viewer->editor()->sizePolicy().verticalPolicy(), QSizePolicy::Expanding);
+        QTRY_VERIFY(viewer->editor()->verticalScrollBar()->maximum() > 0);
+
+        // Evict the source row while the viewer remains open. All text,
+        // highlighting and actions must survive independently.
+        delete source;
+        QVERIFY(viewer->isVisible());
+        QCOMPARE(viewer->code(), content);
+        QCOMPARE(viewer->language(), QStringLiteral("cpp"));
+        viewer->copyAction()->trigger();
+        QCOMPARE(QApplication::clipboard()->text(), content);
+
+        QPointer<CodeBlockWidget> guard(viewer);
+        viewer->close();
+        QTRY_VERIFY(guard.isNull());
+    }
+
+    void codeBlockDestructionDoesNotAccessDestroyedActionMap()
+    {
+        // The built-in Copy action is a child of CodeBlockWidget. Its
+        // destroyed() signal occurs during QWidget::~QWidget(), after the
+        // derived class fields have already been destroyed. Previously the
+        // cleanup lambda called actionButtons_.take() at that point.
+        for (int i = 0; i < 8; ++i) {
+            QWidget row;
+            auto *block = new CodeBlockWidget(&row);
+            block->setCode(QStringLiteral("int value = 42;"), QStringLiteral("cpp"));
+            QPointer<QAction> copy = block->copyAction();
+
+            QAction external(QStringLiteral("Run"), &row);
+            block->addCodeAction(&external);
+            delete block; // Reproduces virtualization/row eviction.
+            QVERIFY(copy.isNull());
+
+            // External/plugin actions are not owned by the code widget.
+            QSignalSpy externalDestroyed(&external, &QObject::destroyed);
+            QVERIFY(externalDestroyed.isValid());
+        }
+
+        // Removing an action while it is still owned by the widget also
+        // disconnects its destroyed() callback, even though the action
+        // itself will be destroyed only after CodeBlockWidget's members.
+        auto *withoutCopy = new CodeBlockWidget;
+        QAction *copy = withoutCopy->copyAction();
+        withoutCopy->removeCodeAction(copy);
+        delete withoutCopy;
+
+        // When a plugin action dies first, the registered button disappears
+        // normally, and a later destruction of the code widget stays safe.
+        auto *block = new CodeBlockWidget;
+        auto *external = new QAction(QStringLiteral("Format"));
+        block->addCodeAction(external);
+        delete external;
+        delete block;
+    }
+
+    void xep0393NativeFencesBecomeIndependentCodeBlocks()
+    {
+        MamChatWidget chat;
+        chat.resize(520, 400);
+        chat.setHistoryLoading(true);
+        auto styled = message(QStringLiteral("fenced"), MessageStyling::toHtml(
+            QStringLiteral("before<br>") + QString(3, QChar(0x60))
+            + QStringLiteral("cpp<br>int number = 42;<br>")
+            + QString(3, QChar(0x60)) + QStringLiteral("<br>after")));
+        chat.appendMessage(styled);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *row = chat.itemWidget(0);
+        const auto blocks = row->findChildren<CodeBlockWidget *>();
+        QCOMPARE(blocks.size(), 1);
+        QCOMPARE(blocks.first()->language(), QStringLiteral("cpp"));
+        QCOMPARE(blocks.first()->code(), QStringLiteral("int number = 42;"));
+        QVERIFY(blocks.first()->width() <= row->width());
+        const auto parts = row->findChildren<ChatMessageText *>();
+        QVERIFY(parts.size() >= 2);
+        blocks.first()->copyAction()->trigger();
+        QCOMPARE(QApplication::clipboard()->text(), QStringLiteral("int number = 42;"));
+    }
+
+    void xep0393WideCodeUsesBubbleMaximumBeforeHorizontalScroll()
+    {
+        MamChatWidget chat;
+        chat.resize(1300, 350);
+        chat.setHistoryLoading(true);
+        chat.setTheme({ QStringLiteral("bubble"), QStringLiteral("Bubble"),
+                        NativeChatTheme::Modern, 40, 6, {} },
+                      NativeChatRenderers::bubble());
+        const QString longLine(1200, QLatin1Char('x'));
+        auto styled = message(QStringLiteral("wide-code"), MessageStyling::toHtml(
+            QString(3, QChar(0x60)) + QStringLiteral("cpp<br>")
+            + longLine + QStringLiteral("<br>") + QString(3, QChar(0x60))));
+        chat.appendMessage(styled);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *row = chat.itemWidget(0);
+        auto *bubble = row->findChild<QWidget *>(QStringLiteral("mamBubble"));
+        auto *code = row->findChild<CodeBlockWidget *>();
+        QVERIFY(bubble && code);
+        QTRY_VERIFY(code->width() > 0);
+        // The code is much wider than the theme's maximum. The bubble still
+        // uses that maximum rather than shrinking to a narrow scroll viewport.
+        QVERIFY(bubble->width() <= bubble->maximumWidth());
+        QVERIFY(bubble->width() >= bubble->maximumWidth() - 12);
+        QVERIFY(code->width() >= bubble->width() - 80);
+        QTRY_VERIFY(code->editor()->horizontalScrollBar()->maximum() > 0);
+    }
+
+    void xep0393CodeBlockWorksWithClassicInTextHeader()
+    {
+        MamChatWidget chat;
+        chat.resize(600, 300);
+        chat.setTheme({ QStringLiteral("classic"), QStringLiteral("Classic"),
+                        NativeChatTheme::Classic, 0, 4, {} });
+        chat.setMessageIconsEnabled(true);
+        chat.setHistoryLoading(true);
+        auto styled = message(QStringLiteral("classic-code"), MessageStyling::toHtml(
+            QString(3, QChar(0x60)) + QStringLiteral("python<br>print(42)<br>")
+            + QString(3, QChar(0x60))));
+        chat.appendMessage(styled);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *row = chat.itemWidget(0);
+        auto *code = row->findChild<CodeBlockWidget *>();
+        QVERIFY(code);
+        QCOMPARE(code->code(), QStringLiteral("print(42)"));
+        // The Classic timestamp, nickname and message-direction icon remain
+        // in the prose view preceding the code block.
+        auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+        QVERIFY(body);
+        QVERIFY(body->toPlainText().contains(QStringLiteral("Peer")));
+        QVERIFY(!body->isHidden());
+    }
+
+    void xep0393UnstyledMessageRemainsLiteralInNativeTimeline()
+    {
+        MamChatWidget chat;
+        chat.resize(500, 300);
+        chat.setHistoryLoading(true);
+        auto unstyled = message(QStringLiteral("unstyled"), QStringLiteral("&gt; _ &lt;"));
+        unstyled.setStylingDisabled(true);
+        chat.appendMessage(unstyled);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *body = chat.itemWidget(0)->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+        QVERIFY(body);
+        QCOMPARE(body->document()->toPlainText(), QStringLiteral("> _ <"));
+        QVERIFY(!body->isQuotedBlock(body->document()->begin()));
+    }
+
     void chatTimelineHasNoFrame()
     {
         MamChatWidget chat;
