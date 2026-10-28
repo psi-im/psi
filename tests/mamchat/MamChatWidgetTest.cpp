@@ -400,13 +400,14 @@ private slots:
 
     void detachedCodeViewerIsNotLimitedTo25Lines()
     {
-        CodeBlockWidget source;
+        QWidget row;
+        auto *source = new CodeBlockWidget(&row);
         QStringList lines;
         for (int i = 0; i < 150; ++i)
             lines.append(QStringLiteral("int value%1 = %1;").arg(i));
         const QString content = lines.join(QLatin1Char('\n'));
-        source.setCode(content, QStringLiteral("cpp"));
-        source.openWindowAction()->trigger();
+        source->setCode(content, QStringLiteral("cpp"));
+        source->openWindowAction()->trigger();
         CodeBlockWidget *viewer = nullptr;
         for (auto *window : QApplication::topLevelWidgets())
             if (window->objectName() == QLatin1String("mamCodeBlockViewer"))
@@ -416,10 +417,18 @@ private slots:
         QCOMPARE(viewer->editor()->sizePolicy().verticalPolicy(), QSizePolicy::Expanding);
         QTRY_VERIFY(viewer->editor()->verticalScrollBar()->maximum() > 0);
 
-        // The detached window owns the text: deleting the virtualized row
-        // cannot destroy it, nor invalidate its Copy action.
-        delete viewer; // The standalone viewer can also be closed by users.
-        QCOMPARE(source.code(), content);
+        // Evict the source row while the viewer remains open. All text,
+        // highlighting and actions must survive independently.
+        delete source;
+        QVERIFY(viewer->isVisible());
+        QCOMPARE(viewer->code(), content);
+        QCOMPARE(viewer->language(), QStringLiteral("cpp"));
+        viewer->copyAction()->trigger();
+        QCOMPARE(QApplication::clipboard()->text(), content);
+
+        QPointer<CodeBlockWidget> guard(viewer);
+        viewer->close();
+        QTRY_VERIFY(guard.isNull());
     }
 
     void codeBlockDestructionDoesNotAccessDestroyedActionMap()
