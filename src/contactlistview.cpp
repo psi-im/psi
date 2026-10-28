@@ -37,6 +37,9 @@
 #include <QLinearGradient>
 #include <QPainter>
 #include <QScrollBar>
+#include <QScopedValueRollback>
+#include <QShowEvent>
+#include <QTimer>
 #include <QSortFilterProxyModel>
 #include <QTreeView>
 #include <QWindow>
@@ -78,17 +81,57 @@ ContactListView::ContactListView(QWidget *parent) : HoverableTreeView(parent), c
 
 void ContactListView::updatePalette()
 {
+    if (paletteUpdateInProgress_)
+        return;
+    QScopedValueRollback<bool> guard(paletteUpdateInProgress_, true);
+
+    // Snapshot the palette *before* setPalette(): Qt can synchronously send
+    // PaletteChange from that call. A later genuine desktop change will have
+    // a different snapshot and can be reconciled independently.
+    lastDesktopPalette_ = QApplication::palette();
+    lastRosterBackground_ = ColorOpt::instance()->color(contactListBackgroundOptionPath);
     QPalette palette;
-    palette.setColor(QPalette::Base, ColorOpt::instance()->color(contactListBackgroundOptionPath));
+    palette.setColor(QPalette::Base, lastRosterBackground_);
     setPalette(palette);
 
-    // Drop palettes cached by QAbstractScrollArea children. Their class-specific
-    // roles must be resolved again after a desktop theme change, while Base is
-    // inherited from the contact-list palette above.
+    // QAbstractScrollArea may keep the viewport's old palette even after the
+    // parent inherits a new desktop palette. Reset these local overrides.
     viewport()->setPalette({});
     horizontalScrollBar()->setPalette({});
     verticalScrollBar()->setPalette({});
     viewport()->update();
+}
+
+void ContactListView::schedulePaletteReconciliation(bool force)
+{
+    forcePaletteRefresh_ = forcePaletteRefresh_ || force;
+    if (paletteUpdateInProgress_ || paletteRefreshScheduled_)
+        return;
+    paletteRefreshScheduled_ = true;
+    QTimer::singleShot(0, this, [this] {
+        paletteRefreshScheduled_ = false;
+        const bool force = forcePaletteRefresh_;
+        forcePaletteRefresh_ = false;
+        // Not every platform delivers ApplicationPaletteChange to the app.
+        // PaletteChange on the tree or a subsequent show must also repair a
+        // stale Base/viewport palette, including after a stylesheet repolish.
+        if (force || lastDesktopPalette_ != QApplication::palette()
+            || lastRosterBackground_ != ColorOpt::instance()->color(contactListBackgroundOptionPath))
+            updatePalette();
+    });
+}
+
+void ContactListView::changeEvent(QEvent *event)
+{
+    HoverableTreeView::changeEvent(event);
+    if (event->type() == QEvent::PaletteChange || event->type() == QEvent::StyleChange)
+        schedulePaletteReconciliation(event->type() == QEvent::StyleChange);
+}
+
+void ContactListView::showEvent(QShowEvent *event)
+{
+    HoverableTreeView::showEvent(event);
+    schedulePaletteReconciliation();
 }
 
 static void setExpandedState(QTreeView *view, QAbstractItemModel *model, const QModelIndex &parent)
