@@ -2230,6 +2230,7 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
         addProse(position, documentEnd);
 
         bool reusedBody = false;
+        bool firstPiece = true;
         bodyPart->column()->addWidget(body);
         for (const auto &piece : pieces) {
             if (piece.codeBlock) {
@@ -2240,10 +2241,11 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
                 code->installEventFilter(this);
                 for (auto *child : code->findChildren<QWidget *>())
                     child->installEventFilter(this);
+                firstPiece = false;
                 continue;
             }
             ChatMessageText *text = nullptr;
-            if (!reusedBody) {
+            if (firstPiece && !reusedBody) {
                 text = body;
                 reusedBody = true;
             } else {
@@ -2259,6 +2261,7 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
             text->setQuoteStylingEnabled(!mv.stylingDisabled());
             text->setRichText(piece.text);
             text->setQuoteColor(quoteColor_);
+            firstPiece = false;
         }
         if (!reusedBody)
             body->hide();
