@@ -246,6 +246,33 @@ private slots:
         QCOMPARE(QApplication::clipboard()->text(), QStringLiteral("int number = 42;"));
     }
 
+    void xep0393CodeBlockWorksWithClassicInTextHeader()
+    {
+        MamChatWidget chat;
+        chat.resize(600, 300);
+        chat.setTheme({ QStringLiteral("classic"), QStringLiteral("Classic"),
+                        NativeChatTheme::Classic, 0, 4, {} });
+        chat.setMessageIconsEnabled(true);
+        chat.setHistoryLoading(true);
+        auto styled = message(QStringLiteral("classic-code"), QStringLiteral("placeholder"));
+        styled.setHtml(MessageStyling::toHtml(
+            QString(3, QChar(0x60)) + QStringLiteral("python<br>print(42)<br>")
+            + QString(3, QChar(0x60))));
+        chat.appendMessage(styled);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *row = chat.itemWidget(0);
+        auto *code = row->findChild<CodeBlockWidget *>();
+        QVERIFY(code);
+        QCOMPARE(code->code(), QStringLiteral("print(42)"));
+        // The Classic timestamp, nickname and message-direction icon remain
+        // in the prose view preceding the code block.
+        auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+        QVERIFY(body);
+        QVERIFY(body->toPlainText().contains(QStringLiteral("Peer")));
+        QVERIFY(!body->isHidden());
+    }
+
     void xep0393UnstyledMessageRemainsLiteralInNativeTimeline()
     {
         MamChatWidget chat;
