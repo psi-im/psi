@@ -94,7 +94,6 @@ CodeBlockWidget::CodeBlockWidget(QWidget *parent) : QWidget(parent)
     editor_->setTabStopDistance(QFontMetricsF(editor_->font()).horizontalAdvance(QLatin1Char(' ')) * 4.0);
     editor_->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     editor_->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    editor_->setViewportMargins(0, 0, 0, 0);
     editor_->document()->setDocumentMargin(0);
     editor_->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
     editor_->setMinimumWidth(0);
