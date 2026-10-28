@@ -437,6 +437,45 @@ bool PsiRichText::isMonospace(const QTextCharFormat &style)
         || family.contains(QLatin1String("consolas"), Qt::CaseInsensitive);
 }
 
+void PsiRichText::decorateInlineCode(QTextDocument *doc, const QColor &base, const QColor &text)
+{
+    if (!doc)
+        return;
+    // A faint neutral backing gives inline monospace spans a boundary without
+    // replacing the conversation's text color with a bright code-theme color.
+    const QColor fill((base.red() * 91 + text.red() * 9) / 100,
+                      (base.green() * 91 + text.green() * 9) / 100,
+                      (base.blue() * 91 + text.blue() * 9) / 100);
+    QList<QPair<int, int>> ranges;
+    for (QTextBlock block = doc->begin(); block.isValid(); block = block.next())
+        for (auto it = block.begin(); !it.atEnd(); ++it) {
+            const QTextFragment fragment = it.fragment();
+            if (!fragment.isValid() || !isMonospace(fragment.charFormat()))
+                continue;
+            // XEP-0393 code directives stay in the rendered rich text. The
+            // single/double backtick pairs distinguish inline code from triple
+            // fenced code and arbitrary fixed-width text.
+            const QString value = fragment.text();
+            const int firstTick = value.indexOf(QChar(0x60));
+            if (firstTick < 0 || value.indexOf(QChar(0x60), firstTick + 1) < 0
+                || value.contains(QString(3, QChar(0x60))))
+                continue;
+            ranges.append({ fragment.position(), fragment.length() });
+        }
+    if (ranges.isEmpty())
+        return;
+    QTextCursor cursor(doc);
+    QTextCharFormat format;
+    format.setBackground(fill);
+    cursor.beginEditBlock();
+    for (const auto &range : ranges) {
+        cursor.setPosition(range.first);
+        cursor.setPosition(range.first + range.second, QTextCursor::KeepAnchor);
+        cursor.mergeCharFormat(format);
+    }
+    cursor.endEditBlock();
+}
+
 void PsiRichText::applyBaseFont(QTextDocument *doc, const QFont &font)
 {
     doc->setDefaultFont(font);
