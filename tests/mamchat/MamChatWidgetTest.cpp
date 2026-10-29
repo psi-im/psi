@@ -1023,6 +1023,79 @@ private slots:
         QCOMPARE(body->document()->find(QStringLiteral("first")).charFormat().foreground().color(), QColor("#a0a4a8"));
     }
 
+    void imageOnlyReplyKeepsQuotedPreview_data()
+    {
+        QTest::addColumn<bool>("bubble");
+        QTest::addColumn<bool>("cached");
+        QTest::addColumn<bool>("idless");
+        QTest::newRow("modern-inline") << false << true << false;
+        QTest::newRow("bubble-inline") << true << true << false;
+        QTest::newRow("modern-card") << false << false << false;
+        QTest::newRow("bubble-card") << true << false << false;
+        QTest::newRow("modern-inline-idless") << false << true << true;
+        QTest::newRow("bubble-card-idless") << true << false << true;
+    }
+
+    void imageOnlyReplyKeepsQuotedPreview()
+    {
+        QFETCH(bool, bubble);
+        QFETCH(bool, cached);
+        QFETCH(bool, idless);
+
+        FileSharingDeviceOpener opener;
+        opener.accounts.insert(QStringLiteral("account-a"), &opener);
+        FileSharingItem image(QStringLiteral("image/png"));
+        image.cached_ = cached;
+        if (cached) {
+            image.preview_ = QImage(640, 420, QImage::Format_RGB32);
+            image.preview_.fill(Qt::green);
+        }
+        opener.items.insert(QStringLiteral("photo"), &image);
+
+        MamChatWidget chat;
+        chat.resize(520, 600);
+        chat.setHistoryLoading(true);
+        chat.setMediaOpener(&opener);
+        if (bubble)
+            chat.setTheme({ QStringLiteral("bubble"), QStringLiteral("Bubble"), NativeChatTheme::Modern, 40, 6, {} },
+                          NativeChatRenderers::bubble());
+        auto reply = message(QStringLiteral("photo-reply"),
+                             QStringLiteral("<share id=\"photo\" account=\"account-a\"/>"));
+        reply.setReply({ idless ? QString() : QStringLiteral("missing-target"), {},
+                         QStringLiteral("Peer"), QStringLiteral("This is the quoted message") });
+        chat.appendMessage(reply);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *row = chat.itemWidget(0);
+        auto *quote = row->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview"));
+        QVERIFY2(quote, "A reply with an image-only body must still render its quoted message.");
+        auto *quotedText = quote->findChild<ChatMessageText *>(QStringLiteral("previewText"));
+        QVERIFY(quotedText);
+        QCOMPARE(quotedText->toPlainText(), QStringLiteral("This is the quoted message"));
+        QTRY_VERIFY2(quote->isVisible() && quote->height() > quotedText->fontMetrics().height(),
+                     "Image-only replies must keep the quote preview visible.");
+
+        auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+        QVERIFY(body);
+        QWidget *attachment = nullptr;
+        if (cached) {
+            QVERIFY(body->toPlainText().contains(QChar::ObjectReplacementCharacter));
+            attachment = body;
+        } else {
+            attachment = row->findChild<MessagePreview *>(QStringLiteral("mamFilePreview"));
+            QVERIFY(attachment);
+        }
+        QTRY_VERIFY(attachment->isVisible());
+        const QRect quoteRect(quote->mapTo(row, QPoint()), quote->size());
+        const QRect attachmentRect(attachment->mapTo(row, QPoint()), attachment->size());
+        QTRY_VERIFY2(row->rect().contains(quoteRect), "Quoted preview must not be clipped by the row.");
+        QTRY_VERIFY2(row->rect().contains(attachmentRect), "Image must not be clipped by the row.");
+        QVERIFY2(quoteRect.bottom() < attachmentRect.top(),
+                 qPrintable(QStringLiteral("Quote y=%1..%2 image y=%3..%4")
+                                .arg(quoteRect.top()).arg(quoteRect.bottom())
+                                .arg(attachmentRect.top()).arg(attachmentRect.bottom())));
+    }
+
     void inlineReplyPreviewContributesToRowHeight_data()
     {
         QTest::addColumn<bool>("classic");

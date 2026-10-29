@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "chatreply.h"
 #include "iris/xmpp_message.h"
+#include "iris/xmpp_reference.h"
 #include <QStringList>
 #include <algorithm>
 
@@ -71,9 +72,20 @@ void applyMessageReply(XMPP::Message &message, const ChatReply &reply)
         message.setReply(reference);
     else if (reply.hasReference())
         return;
-    // The fallback is optional. Do not move existing reference/fallback ranges
-    // in media messages by prepending a second feature's compatibility text.
-    if (!message.references().isEmpty() || !message.fallbacks().isEmpty())
+    // Do not shift existing body-relative media references or fallback ranges
+    // when adding the compatibility quote. An attachment-only message is the
+    // exception: it has no body offsets to shift, and unpositioned references
+    // can safely follow the new quote prefix.
+    bool hasPositionedReferences = false;
+    for (const auto &item : message.references()) {
+        if (item.isValid() && item.begin() >= 0) {
+            hasPositionedReferences = true;
+            break;
+        }
+    }
+    if (!message.fallbacks().isEmpty()
+        || (!message.references().isEmpty()
+            && (!message.body().isEmpty() || hasPositionedReferences)))
         return;
     QString fallback;
     if (!reply.author.isEmpty())
@@ -90,7 +102,7 @@ void applyMessageReply(XMPP::Message &message, const ChatReply &reply)
     message.setBody(fallback + message.body());
 }
 
-int plainQuotePrefix(const QString &body, ChatReply *reply)
+int plainQuotePrefix(const QString &body, ChatReply *reply, bool hasMediaPayload)
 {
     QStringList lines;
     int         end = 0;
@@ -106,7 +118,7 @@ int plainQuotePrefix(const QString &body, ChatReply *reply)
         lines.append(line);
         end = newline + 1;
     }
-    if (lines.isEmpty() || body.mid(end).trimmed().isEmpty())
+    if (lines.isEmpty() || (body.mid(end).trimmed().isEmpty() && !hasMediaPayload))
         return 0;
     QString author;
     if (lines.size() > 1 && lines.first().endsWith(QLatin1Char(':'))) {
