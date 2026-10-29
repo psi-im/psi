@@ -119,11 +119,6 @@ cd psi && ./psi-plus && cd .. #для Psi+
   Использовать проверку орфографии `Hunspell`.
   (по-умолчанию `ON`)
 
-> -DCHAT_TYPE=BASIC
-
-  Выбрать тип движка истории бесед. Возможные значения: `WEBKIT`, `WEBENGINE`, `BASIC`.
-  Значение по-умолчанию: `BASIC`.
-
 > -DPSI_VERSION=${version}
 
   Задать версию Psi вручную.
@@ -145,13 +140,6 @@ cd psi && ./psi-plus && cd .. #для Psi+
   Включает поддержку `MXE` ("M cross environment").
   Выключает флаг `USE_CCACHE` и добавляет новые зависимости, если флаг `PRODUCTION` включен.
   Данный флаг ставить не обязательно, т.к. скрипт умеет определять `MXE` автоматически.
-  (по-умолчанию `OFF`)
-
-> -DVERBOSE_PROGRAM_NAME=ON
-
-  Использовать развернутое имя для бинарного файла.
-  Экспериментальный флаг. После компиляции будет создан бинарный файл не с
-  именем `psi` или `psi-plus`, а например `psi-webkit` или `psi-plus-webengine`.
   (по-умолчанию `OFF`)
 
 > -DPRODUCTION=ON
@@ -263,7 +251,6 @@ cd psi && ./psi-plus && cd .. #для Psi+
    - `jabberdiskplugin`
    - `juickplugin`
    - `messagefilterplugin`
-   - `omemoplugin`
    - `openpgpplugin`
    - `otrplugin`
    - `pepchangenotifyplugin`
@@ -315,8 +302,7 @@ cd psi && ./psi-plus && cd .. #для Psi+
 > -DENABLE_PORTABLE=ON
 
   Для сборки портативной версии (сделано для удобства, чтобы не переименовывать бинарник вручную).
-  На выходе получим "имя-бинарника-portable.exe", а если `VERBOSE_PROGRAM_NAME=ON`,
-  то "расширенное-имя-бинарника-portable.exe".
+  На выходе получим "имя-бинарника-portable.exe".
   При включении этого флага автоматически становится доступна цель сборки `prepare-bin-libs`.
   (по-умолчанию - `OFF`).
 
@@ -336,34 +322,6 @@ cd psi && ./psi-plus && cd .. #для Psi+
 
   Отключить оптимизации компилятора при сборке. Только для Windows.
   (по-умолчанию `OFF`)
-
-### Для сборки плагина OTR в OS WINDOWS возможно понадобятся дополнительные флаги:
-
-> -DLIBGCRYPT_ROOT=%LIBGCRYPT_ROOT%
-
-  Задать корневой каталог с библиотекой `LIBGCRYPT`.
-
-> -DLIBGPGERROR_ROOT=%LIBGPGERROR_ROOT%
-
-  Задать корневой каталог с библиотекой `LIBGPG-ERROR`.
-
-> -DLIBOTR_ROOT=%LIBOTR_ROOT%
-
-  Задать корневой каталог с библиотекой `LIBOTR`.
-
-> -DLIBTIDY_ROOT=%LIBTIDY_ROOT%
-
-  Задать корневой каталог с библиотекой `LIBTIDY`.
-
-  Например:
-
-  `-DLIBGCRYPT_ROOT=C:\libgcrypt -DLIBGPGERROR_ROOT=C:\libgpg-error -DLIBOTR_ROOT=C:\libotr -DLIBTIDY_ROOT=C:\libtidy`
-
-> -DNO_DEBUG_OPTIMIZATION=OFF
-
-  Отключить оптимизации компилятора при сборке дебаг-версии.
-  (по-умолчанию `OFF`)
-
 
 ### Если при сборке Psi используется SDK, нужно задать путь SDK_PATH:
 
