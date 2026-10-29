@@ -346,6 +346,11 @@ QSqlRecord resolvedRecord(QSqlDatabase db, qint64 eventId)
         return {};
     const qint64 root = q.value(0).toLongLong();
     q.finish();
+    q.prepare("SELECT message_flags FROM events WHERE id=:id");
+    q.bindValue(":id", root);
+    if (!q.exec() || !q.next() || (q.value(0).toInt() & MessageState::LocalDeleted))
+        return {};
+    q.finish();
     q.prepare("SELECT e.*,c.acc_id,c.jid,"
               "(SELECT uid FROM archive_items WHERE event_id=e.id LIMIT 1) AS archive_uid, "
               "(SELECT archive FROM archive_items WHERE event_id=e.id LIMIT 1) AS archive_jid, "
@@ -434,7 +439,8 @@ QList<QSqlRecord> localRecords(QSqlDatabase db, const QString &account, const QS
     QString   sql = "SELECT e.id FROM events e JOIN contacts c ON c.id=e.contact_id "
                     "LEFT JOIN message_revisions r ON r.event_id=e.id "
                     "WHERE c.acc_id=:account AND c.jid=:peer "
-                    "AND (r.event_id IS NULL OR r.root_id=e.id)";
+                    "AND (r.event_id IS NULL OR r.root_id=e.id) "
+                    "AND (e.message_flags & 16)=0";
     if (before > 0)
         sql += " AND (e.history_date_ms,e.id) < (SELECT history_date_ms,id FROM events WHERE id=:before AND "
                "contact_id=c.id)";
@@ -854,7 +860,17 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
         if (!eventId)
             eventId = matchingDelivery(db, contact, entry, false);
         const bool existingEvent = eventId > 0;
-        bool       preserveProjection = existingEvent && !page.stable;
+        bool       locallyDeleted = false;
+        if (existingEvent) {
+            q.prepare("SELECT (message_flags & :deleted)<>0 FROM events WHERE id=:id");
+            q.bindValue(":deleted", int(MessageState::LocalDeleted));
+            q.bindValue(":id", eventId);
+            if (!q.exec() || !q.next())
+                return fail();
+            locallyDeleted = q.value(0).toBool();
+            q.finish();
+        }
+        bool preserveProjection = locallyDeleted || (existingEvent && !page.stable);
         if (!eventId) {
             q.prepare("INSERT INTO "
                       "events(contact_id,resource,date,history_date_ms,type,direction,subject,m_text,lang,extra_data,"
@@ -875,7 +891,7 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
             eventId = q.lastInsertId().toLongLong();
         }
         entry.eventId = eventId;
-        if (existingEvent && page.stable) {
+        if (existingEvent && page.stable && !locallyDeleted) {
             q.prepare("SELECT extra_data,m_text FROM events WHERE id=:id");
             q.bindValue(":id", eventId);
             if (!q.exec() || !q.next())
@@ -949,7 +965,9 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
         bindKey(q, key);
         q.bindValue(":uid", entry.uid);
         q.bindValue(":event", eventId);
-        q.bindValue(":xml", entry.xml);
+        // A MAM replay may confirm archive connectivity, but may never
+        // repopulate plaintext or raw XML for a locally deleted event.
+        q.bindValue(":xml", locallyDeleted ? QString() : entry.xml);
         q.bindValue(":stable", page.stable);
         if (!q.exec())
             return fail();
@@ -1089,6 +1107,55 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
     if (!db.commit())
         return fail();
     return true;
+}
+
+bool locallyDelete(QSqlDatabase db, qint64 eventId)
+{
+    if (eventId <= 0 || !db.transaction())
+        return false;
+    const auto fail = [&db] {
+        db.rollback();
+        return false;
+    };
+
+    QSqlQuery q(db);
+    q.prepare("SELECT COALESCE(r.root_id,e.id),e.type FROM events e "
+              "LEFT JOIN message_revisions r ON r.event_id=e.id WHERE e.id=:id");
+    q.bindValue(":id", eventId);
+    if (!q.exec() || !q.next())
+        return fail();
+    const qint64 root = q.value(0).toLongLong();
+    const int type = q.value(1).toInt();
+    q.finish();
+    if (type != 0 && type != 1 && type != 4 && type != 5 && type != 9)
+        return fail(); // Authentication, presence and other events are not chat messages.
+
+    q.prepare("SELECT e.id FROM events e LEFT JOIN message_revisions r ON r.event_id=e.id "
+              "WHERE e.id=:root OR r.root_id=:root ORDER BY e.id");
+    q.bindValue(":root", root);
+    if (!q.exec())
+        return fail();
+    QList<qint64> ids;
+    while (q.next())
+        ids.append(q.value(0).toLongLong());
+    q.finish();
+    if (ids.isEmpty())
+        return fail();
+
+    QSqlQuery scrub(db), archive(db);
+    scrub.prepare("UPDATE events SET m_text='',subject='',lang='',extra_data='',resource='',"
+                  "message_flags=message_flags | :deleted WHERE id=:id");
+    archive.prepare("UPDATE archive_items SET xml='' WHERE event_id=:id");
+    for (const qint64 id : ids) {
+        scrub.bindValue(":deleted", int(MessageState::LocalDeleted));
+        scrub.bindValue(":id", id);
+        archive.bindValue(":id", id);
+        if (!scrub.exec() || !archive.exec())
+            return fail();
+    }
+    if (db.commit())
+        return true;
+    return fail();
 }
 
 bool invalidate(QSqlDatabase db, const QString &account, const QString &peer)
