@@ -26,8 +26,9 @@ ChatReply messageReply(const XMPP::Message &);
 QString   messageReplyBody(const XMPP::Message &);
 void      applyMessageReply(XMPP::Message &, const ChatReply &);
 // Recognizes a leading plain-text quote ("> Nick:" then "> line"...), as sent
-// for rooms without stanza-ids or by clients without XEP-0461. It must be
-// followed by the actual answer. Returns the quote's UTF-16 length including
-// its last newline, or 0; fills an id-less reply when one is given.
-int plainQuotePrefix(const QString &body, ChatReply *reply = nullptr);
+// for rooms without stanza-ids or by clients without XEP-0461. Normally it
+// must be followed by text; hasMediaPayload also accepts a reply consisting
+// of the quoted prefix followed only by a SIMS/OOB media attachment.
+// Returns the quote's UTF-16 length including its last newline, or 0.
+int plainQuotePrefix(const QString &body, ChatReply *reply = nullptr, bool hasMediaPayload = false);
 #endif

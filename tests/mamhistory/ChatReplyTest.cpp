@@ -56,6 +56,88 @@ private slots:
         QCOMPARE(oldHistory.urlList().size(), 1);
     }
 
+    void imageOnlyReplyKeepsSafeFallbackAndHistory()
+    {
+        ReplyConnector connector;
+        ClientStream   stream(&connector);
+
+        const auto attachment = Reference(Reference::Data, QStringLiteral("https://example.org/photo.png"));
+        const ChatReply quote { QStringLiteral("quoted-stanza"), QStringLiteral("peer@example.org"),
+                                QStringLiteral("Peer"), QStringLiteral("Quoted text") };
+
+        Message outgoing(Jid(QStringLiteral("peer@example.org")));
+        outgoing.setType(Message::Type::Chat);
+        outgoing.setId(QStringLiteral("photo-reply"));
+        outgoing.setBody(QStringLiteral("")); // A single image, no caption.
+        outgoing.setReferences({ attachment });
+        applyMessageReply(outgoing, quote);
+
+        QCOMPARE(outgoing.reply().id, quote.id);
+        QVERIFY(outgoing.body().startsWith(QStringLiteral("> Peer:\n> Quoted text\n")));
+        QCOMPARE(messageReplyBody(outgoing), QStringLiteral(""));
+        QCOMPARE(outgoing.references().size(), 1);
+        QCOMPARE(outgoing.references().first().begin(), -1); // Still unpositioned.
+        QCOMPARE(outgoing.bodyFallbacks(QStringLiteral("urn:xmpp:reply:0")).size(), 1);
+
+        Message wire;
+        QVERIFY(wire.fromStanza(outgoing.toStanza(&stream)));
+        QCOMPARE(wire.reply().id, quote.id);
+        QCOMPARE(wire.references().size(), 1);
+        QCOMPARE(messageReplyBody(wire), QStringLiteral(""));
+        QCOMPARE(messageReply(wire).id, quote.id);
+
+        Message archived;
+        archived.setBody(wire.body());
+        HistoryMessageExtras::restore(HistoryMessageExtras::encode(wire), archived);
+        QCOMPARE(archived.reply().id, quote.id);
+        QCOMPARE(archived.references().size(), 1);
+        QCOMPARE(messageReplyBody(archived), QStringLiteral(""));
+        QCOMPARE(messageReply(archived).id, quote.id);
+
+        // A room without stanza IDs cannot use <reply/>. Its media-only
+        // message still needs a plain-text quote; the attachment supplies
+        // the answer that follows it, even when the body has no caption.
+        Message legacy(Jid(QStringLiteral("room@example.org")));
+        legacy.setType(Message::Type::Groupchat);
+        legacy.setReferences({ attachment });
+        applyMessageReply(legacy, { {}, {}, QStringLiteral("Peer"), QStringLiteral("Quoted text") });
+        QVERIFY(!legacy.reply().isValid());
+        QCOMPARE(legacy.references().size(), 1);
+        QVERIFY(legacy.body().startsWith(QStringLiteral("> Peer:\n> Quoted text\n")));
+        ChatReply parsed;
+        QVERIFY(plainQuotePrefix(legacy.body(), &parsed, true) > 0);
+        QCOMPARE(parsed.author, QStringLiteral("Peer"));
+        QCOMPARE(parsed.text, QStringLiteral("Quoted text"));
+        QCOMPARE(plainQuotePrefix(legacy.body(), &parsed), 0);
+
+        Message legacyWire;
+        QVERIFY(legacyWire.fromStanza(legacy.toStanza(&stream)));
+        QVERIFY(!legacyWire.reply().isValid());
+        QVERIFY(plainQuotePrefix(legacyWire.body(), &parsed, !legacyWire.references().isEmpty()) > 0);
+        QCOMPARE(legacyWire.references().size(), 1);
+
+        Message legacyHistory;
+        legacyHistory.setBody(legacyWire.body());
+        HistoryMessageExtras::restore(HistoryMessageExtras::encode(legacyWire), legacyHistory);
+        QCOMPARE(legacyHistory.references().size(), 1);
+        QVERIFY(plainQuotePrefix(legacyHistory.body(), &parsed, true) > 0);
+        QCOMPARE(parsed.text, QStringLiteral("Quoted text"));
+
+        // A media reference actually anchored to body characters cannot be
+        // moved just to prepend a quote. Preserve its original offsets.
+        Message positioned;
+        positioned.setBody(QStringLiteral("photo"));
+        Reference anchored(Reference::Data, QStringLiteral("https://example.org/photo.png"));
+        anchored.setRange(0, 4);
+        positioned.setReferences({ anchored });
+        applyMessageReply(positioned, quote);
+        QCOMPARE(positioned.body(), QStringLiteral("photo"));
+        QCOMPARE(positioned.references().first().begin(), 0);
+        QCOMPARE(positioned.references().first().end(), 4);
+        QVERIFY(positioned.bodyFallbacks(QStringLiteral("urn:xmpp:reply:0")).isEmpty());
+        QCOMPARE(positioned.reply().id, quote.id);
+    }
+
     void quoteWithoutRoomStanzaIdIsPlainBodyText()
     {
         // Rooms without XEP-0359 stanza-ids give nothing to reference: send the
@@ -119,6 +201,8 @@ private slots:
         // or ordinary text.
         QCOMPARE(plainQuotePrefix(QStringLiteral("> only a quote")), 0);
         QCOMPARE(plainQuotePrefix(QStringLiteral("> Nick:\n> quote\n  \n")), 0);
+        QCOMPARE(plainQuotePrefix(QStringLiteral("> Nick:\n> quote\n"), nullptr, true),
+                 QStringLiteral("> Nick:\n> quote\n").size());
         QCOMPARE(plainQuotePrefix(QStringLiteral("text\n> later quote\nmore")), 0);
         QCOMPARE(plainQuotePrefix(QStringLiteral("a > b\nc")), 0);
 

@@ -24,6 +24,7 @@
 
 #include "common.h"
 #include "psioptions.h"
+#include "iris/xmpp_reference.h"
 #include "textutil.h"
 
 #include <QTextDocument>
@@ -122,8 +123,24 @@ void MessageView::setReplyMetadata(const XMPP::Message &message)
             if (range.toUtf16(message.body(), first, last))
                 ranges.append({ first, last });
         }
-    } else if (const int quoteEnd = plainQuotePrefix(message.body(), &parsed)) {
-        ranges.append({ 0, quoteEnd });
+    } else {
+        // An image/file share may be the entire reply, with no caption after
+        // the id-less compatibility quote. The media itself counts as the
+        // reply's content; otherwise the plainQuotePrefix check would reject
+        // the quote as a stand-alone block and leave it in the message body.
+        bool mediaPayload = !message.urlList().isEmpty() || !message.fileSharings().isEmpty();
+        for (const auto &reference : message.references()) {
+            // Positioned references can belong to the quoted text itself.
+            // Only an independent, unpositioned share proves there is media
+            // content after a prefix occupying the entire plain-text body.
+            if (reference.isValid() && reference.begin() < 0
+                && (reference.type() == XMPP::Reference::Data || reference.mediaSharing().isValid())) {
+                mediaPayload = true;
+                break;
+            }
+        }
+        if (const int quoteEnd = plainQuotePrefix(message.body(), &parsed, mediaPayload))
+            ranges.append({ 0, quoteEnd });
     }
     setReply(parsed);
     if (!reply().isValid())
