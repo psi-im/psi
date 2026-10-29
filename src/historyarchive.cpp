@@ -967,7 +967,7 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
         q.bindValue(":event", eventId);
         // A MAM replay may confirm archive connectivity, but may never
         // repopulate plaintext or raw XML for a locally deleted event.
-        q.bindValue(":xml", locallyDeleted ? QString() : entry.xml);
+        q.bindValue(":xml", locallyDeleted ? QStringLiteral("") : entry.xml);
         q.bindValue(":stable", page.stable);
         if (!q.exec())
             return fail();
