@@ -126,9 +126,36 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Install compiler tools
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          choco install ccache ninja --no-progress -y
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          # Windows images already include Ninja. Only use Chocolatey for the
+          # fallback: its community V2 feed can reject ccache with HTTP 406.
+          if (-not (Get-Command ninja.exe -ErrorAction SilentlyContinue)) {
+            choco install ninja --no-progress -y
+            if ($LASTEXITCODE -ne 0) { throw 'Could not install Ninja' }
+          }
+
+          # Download an official, versioned ccache build and verify its digest.
+          # Unlike Chocolatey's mutable package feed this is reproducible.
+          $version = '4.14.2'
+          $archive = "ccache-$version-windows-x86_64.zip"
+          $expectedSha256 = '6993ce645e53192cec592ee23186200b574ac4c59097ecde8d9cfd681b47ae84'
+          New-Item -ItemType Directory -Force tools/ccache-download, tools/ccache-unpacked, tools/ccache | Out-Null
+          gh release download "v$version" --repo ccache/ccache --pattern $archive --dir tools/ccache-download
+          if ($LASTEXITCODE -ne 0) { throw 'Could not download official ccache release' }
+          $archivePath = Join-Path 'tools/ccache-download' $archive
+          $sha256 = (Get-FileHash -Path $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($sha256 -ne $expectedSha256) {
+            throw "ccache archive digest mismatch: $sha256"
+          }
+          Expand-Archive -Path $archivePath -DestinationPath tools/ccache-unpacked -Force
+          $binary = Get-ChildItem tools/ccache-unpacked -Filter ccache.exe -File -Recurse | Select-Object -First 1
+          if (-not $binary) { throw 'The ccache archive contains no ccache.exe' }
+          Copy-Item $binary.FullName tools/ccache/ccache.exe
+          "$(Resolve-Path tools/ccache)" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          & tools/ccache/ccache.exe --version
+          if ($LASTEXITCODE -ne 0) { throw 'ccache binary could not start' }
 
       - name: Install NSIS for packaging
         if: inputs.package
