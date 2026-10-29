@@ -124,6 +124,59 @@ private slots:
         QCOMPARE(readPage(db, key, "edge", 1).entries.first().uid, QString("sims-body"));
         QCOMPARE(scalar("SELECT count(*) FROM events").toInt(), 1);
     }
+    void localDeletionScrubsEveryRevisionAndPreventsMamReplay()
+    {
+        QVERIFY(migrate(db));
+        auto messages = page({ "original", "correction" }, true);
+        messages.entries[0].body = QStringLiteral("secret original");
+        messages.entries[1].body = QStringLiteral("secret correction");
+        messages.entries[1].replaceId = QStringLiteral("original-client");
+        QVERIFY(storePage(db, key, "", 2, messages));
+
+        const auto root = messages.entries[0].eventId;
+        QCOMPARE(resolvedRecord(db, messages.entries[1].eventId).value("m_text").toString(),
+                 QStringLiteral("secret correction"));
+        QCOMPARE(localRecords(db, key.account, key.peer, 0, 20).size(), 1);
+        QVERIFY(locallyDelete(db, root));
+        QCOMPARE(localRecords(db, key.account, key.peer, 0, 20).size(), 0);
+        QVERIFY(resolvedRecord(db, root).isEmpty());
+        QVERIFY(resolvedRecord(db, messages.entries[1].eventId).isEmpty());
+        QCOMPARE(scalar("SELECT count(*) FROM events WHERE (message_flags & 16)<>0").toInt(), 2);
+        QCOMPARE(scalar("SELECT count(*) FROM events WHERE m_text='' AND extra_data='' "
+                        "AND subject='' AND lang='' AND resource=''").toInt(), 2);
+        QCOMPARE(scalar("SELECT count(*) FROM archive_items WHERE xml=''").toInt(), 2);
+        QCOMPARE(scalar("SELECT count(*) FROM message_revisions").toInt(), 2);
+        // Do not discard structural archive indices when hiding content.
+        QCOMPARE(scalar("SELECT count(*) FROM archive_page_items").toInt(), 2);
+
+        // A confirmed server replay may refresh ordering metadata but cannot
+        // reinsert either version's body or retained raw forwarded stanza.
+        messages.entries[0].body = QStringLiteral("resurrected original");
+        messages.entries[1].body = QStringLiteral("resurrected correction");
+        messages.entries[0].xml  = QStringLiteral("<result>original sensitive XML</result>");
+        messages.entries[1].xml  = QStringLiteral("<result>correction sensitive XML</result>");
+        QVERIFY(storePage(db, key, "", 2, messages));
+        QCOMPARE(scalar("SELECT count(*) FROM events WHERE m_text='' AND extra_data=''").toInt(), 2);
+        QCOMPARE(scalar("SELECT count(*) FROM archive_items WHERE xml=''").toInt(), 2);
+        QCOMPARE(scalar("SELECT count(*) FROM events WHERE (message_flags & 16)<>0").toInt(), 2);
+    }
+
+    void localDeletionDoesNotAffectOtherAccounts()
+    {
+        QVERIFY(migrate(db));
+        auto mine = page({ "same-uid" }, true);
+        auto otherKey = key;
+        otherKey.account = QStringLiteral("account-b");
+        auto other = page({ "same-uid" }, true);
+        other.entries[0].body = QStringLiteral("other account's content");
+        QVERIFY(storePage(db, key, "", 1, mine));
+        QVERIFY(storePage(db, otherKey, "", 1, other));
+        QVERIFY(locallyDelete(db, mine.entries.first().eventId));
+        QCOMPARE(resolvedRecord(db, other.entries.first().eventId).value("m_text").toString(),
+                 QStringLiteral("other account's content"));
+        QCOMPARE(localRecords(db, otherKey.account, otherKey.peer, 0, 10).size(), 1);
+    }
+
     void confirmedResultRepairsAnUnverifiedProjection()
     {
         QVERIFY(migrate(db));
