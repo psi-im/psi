@@ -1,0 +1,28 @@
+# Upgrades must not retain the former provider next to the native one.
+if(NOT DEFINED PLUGIN_DIRECTORY OR NOT IS_ABSOLUTE "${PLUGIN_DIRECTORY}")
+    message(FATAL_ERROR "An absolute QCA plugin deployment directory is required")
+endif()
+if(NOT EXISTS "${PLUGIN_DIRECTORY}/qca-wincrypto.dll"
+   AND NOT EXISTS "${PLUGIN_DIRECTORY}/qca-wincryptod.dll"
+   AND NOT EXISTS "${PLUGIN_DIRECTORY}/libqca-wincrypto.dll"
+   AND NOT EXISTS "${PLUGIN_DIRECTORY}/libqca-wincryptod.dll")
+    return()
+endif()
+set(_obsolete_directories "${PLUGIN_DIRECTORY}")
+if(DEFINED LEGACY_PLUGIN_DIRECTORY)
+    if(NOT IS_ABSOLUTE "${LEGACY_PLUGIN_DIRECTORY}")
+        message(FATAL_ERROR "The legacy QCA plugin directory must be absolute")
+    endif()
+    list(APPEND _obsolete_directories "${LEGACY_PLUGIN_DIRECTORY}")
+endif()
+foreach(_directory IN LISTS _obsolete_directories)
+    foreach(_prefix IN ITEMS "" "lib")
+        foreach(_name IN ITEMS qca-ossl qca-ossld qca3-ossl qca3-ossld)
+            set(_obsolete "${_directory}/${_prefix}${_name}.dll")
+            file(REMOVE "${_obsolete}")
+            if(EXISTS "${_obsolete}")
+                message(FATAL_ERROR "Cannot remove obsolete QCA provider: ${_obsolete}")
+            endif()
+        endforeach()
+    endforeach()
+endforeach()

@@ -388,3 +388,26 @@ No program installation is required for assembly under Windows OS!!!
 
   Use macOS dock.
   (default `OFF`)
+
+## Native Windows cryptography
+
+Windows builds use QCA 3.1.0 with `qca-wincrypto` (Windows 10 or later).
+The shared SDK/package includes the native provider and excludes `qca-ossl`.
+Dependency deployment removes stale ossl provider DLLs from the output crypto
+folder after installing wincrypto. Keep external QCA plugin search directories
+native-only as well; `crypto_native_provider` verifies provider selection and
+checks that no ossl provider DLL is loaded.
+
+For static QCA, Psi imports `qca_wincrypto` and links its Windows system
+libraries. Bundled Iris builds the same native provider; other platforms keep
+their existing backend. Qt Network and media dependencies choose their own TLS
+or cryptographic implementations independently of QCA.
+
+With `BUILD_TESTING=ON`, run the provider and OMEMO checks with:
+
+```sh
+ctest --test-dir <build-directory> --output-on-failure -R 'crypto_native_provider|account_omemo'
+```
+
+`tests/crypto` can also be configured separately against a shared or static
+native-only QCA SDK using `CMAKE_PREFIX_PATH` and `QCA_PLUGIN_PATH`.

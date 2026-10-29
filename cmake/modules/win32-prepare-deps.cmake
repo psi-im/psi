@@ -472,12 +472,18 @@ if(WIN32)
         # qca and plugins
         set(QCA_PLUGINS
             ${CMAKE_SHARED_LIBRARY_PREFIX}qca-gnupg${D}.dll
-            ${CMAKE_SHARED_LIBRARY_PREFIX}qca-ossl${D}.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}qca-wincrypto${D}.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}qca3-gnupg${D}.dll
-            ${CMAKE_SHARED_LIBRARY_PREFIX}qca3-ossl${D}.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}qca3-wincrypto${D}.dll
             )
         find_psi_lib("${QCA_LIB}" "${PATHES}" "${PSI_LIBS_OUTPUT}/")
         find_psi_lib("${QCA_PLUGINS}" "${PATHES}" "${QT_PLUGINS_OUTPUT}/crypto/")
+        add_custom_command(TARGET ${LIBS_TARGET} POST_BUILD
+            COMMAND ${CMAKE_COMMAND}
+                "-DPLUGIN_DIRECTORY=${QT_PLUGINS_OUTPUT}/crypto"
+                "-DLEGACY_PLUGIN_DIRECTORY=${DEPS_INSTALL_PREFIX}/crypto"
+                -P "${CMAKE_CURRENT_LIST_DIR}/remove-obsolete-qca-ossl.cmake"
+            VERBATIM)
     endif()
     if (NOT IRIS_BUNDLED_USRSCTP)
         set(USRSCTP_LIB *usrsctp${D}.dll)

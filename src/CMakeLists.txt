@@ -142,7 +142,7 @@ else()
     find_package(Qca REQUIRED)
     set(PSI_QCA_TARGET Qca::Qca)
 endif()
-list(APPEND EXTRA_LIBS ${PSI_QCA_TARGET})
+include(PsiQCA)
 
 if(IRIS_ENABLE_JINGLE_SCTP)
     if(NOT IRIS_BUNDLED_USRSCTP)
@@ -431,6 +431,8 @@ add_executable(${PROJECT_NAME}
     ${QRC_SOURCES}
     ${RC_FILE}
 )
+
+psi_link_qca(${PROJECT_NAME})
 
 #Generate .rc file for windows with Qt6
 #[[if(WIN32 AND (${QT_DEFAULT_MAJOR_VERSION} GREATER_EQUAL 6))
