@@ -93,6 +93,10 @@ Page readIndex(QSqlDatabase db, const Key &, int index, int limit, int snapshotC
 // identities, adjacency and the page checkpoint, or rolls all of them back.
 bool storePage(QSqlDatabase db, const Key &, const QString &before, int limit, Page &,
                const std::function<bool(qint64)> &eventStored = {});
+// Device-only deletion of one logical message, including any corrections.
+// Scrubs local plaintext and saved MAM XML while retaining structural IDs.
+// The caller must not send XEP-0424; UI/history integration is separate.
+bool locallyDelete(QSqlDatabase db, qint64 eventId);
 // Erasure must invalidate coverage, including empty boundary pages.
 bool invalidate(QSqlDatabase db, const QString &account, const QString &peer);
 }
