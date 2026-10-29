@@ -22,7 +22,6 @@
 #ifdef Q_OS_MACOS
 #include "CocoaUtilities/CocoaTrayClick.h"
 #endif
-#include "resourcemenu.h"
 #ifdef Q_OS_WIN
 #include "systemwatch/systemwatch_win.h"
 #endif
@@ -31,6 +30,9 @@
 #include <Carbon/Carbon.h>
 #endif
 #include <QEvent>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+#include <QStyleHints>
+#endif
 #include <QSessionManager>
 #include <QTimer>
 
@@ -41,6 +43,16 @@
 PsiApplication::PsiApplication(int &argc, char **argv, bool GUIenabled) : QApplication(argc, argv, GUIenabled)
 {
     init(GUIenabled);
+    paletteSettledTimer_.setSingleShot(true);
+    paletteSettledTimer_.setInterval(250);
+    connect(&paletteSettledTimer_, &QTimer::timeout, this, [this] { schedulePaletteNotification(); });
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+    // A system's automatic dusk/dawn switch can report a new color scheme
+    // before Qt has installed its corresponding application palette. This
+    // signal complements (rather than replaces) ApplicationPaletteChange.
+    connect(QGuiApplication::styleHints(), &QStyleHints::colorSchemeChanged, this,
+            [this](Qt::ColorScheme) { schedulePaletteNotification(true); });
+#endif
 #ifdef Q_OS_MACOS
     connect(CocoaTrayClick::instance(), SIGNAL(trayClicked()), this, SIGNAL(dockActivated()));
 #endif
@@ -51,14 +63,31 @@ PsiApplication::~PsiApplication() { }
 bool PsiApplication::event(QEvent *event)
 {
     const bool handled = QApplication::event(event);
-    if (event->type() == QEvent::ApplicationPaletteChange && !paletteChangeScheduled_) {
+    if (event->type() == QEvent::ApplicationPaletteChange) {
+        schedulePaletteNotification();
+    } else if (event->type() == QEvent::ThemeChange) {
+        // Some platforms deliver ThemeChange without a matching
+        // ApplicationPaletteChange (or deliver the palette change later).
+        schedulePaletteNotification(true);
+    }
+    return handled;
+}
+
+void PsiApplication::schedulePaletteNotification(bool afterSystemThemeChange)
+{
+    if (!paletteChangeScheduled_) {
         paletteChangeScheduled_ = true;
-        QTimer::singleShot(0, this, [this]() {
+        QTimer::singleShot(0, this, [this] {
             paletteChangeScheduled_ = false;
             emit applicationPaletteChanged();
         });
     }
-    return handled;
+    if (afterSystemThemeChange) {
+        // Qt documents that colorSchemeChanged can precede the new palette.
+        // Restarting this one-shot timer coalesces rapid platform events and
+        // reapplies custom UI colors after the palette/style has settled.
+        paletteSettledTimer_.start();
+    }
 }
 
 void PsiApplication::init(bool GUIenabled)

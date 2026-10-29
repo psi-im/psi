@@ -23,6 +23,7 @@
 #include "hoverabletreeview.h"
 
 #include <QPointer>
+#include <QPalette>
 
 class ContactListItem;
 class ContactListItemMenu;
@@ -67,6 +68,8 @@ signals:
 protected:
     // reimplemented
     bool viewportEvent(QEvent *event) override;
+    void changeEvent(QEvent *event) override;
+    void showEvent(QShowEvent *event) override;
     void closeEditor(QWidget *editor, QAbstractItemDelegate::EndEditHint hint) override;
 
     virtual void showToolTip(const QModelIndex &index, const QPoint &globalPos) const;
@@ -102,6 +105,13 @@ protected:
 
 private:
     void updatePalette();
+    void schedulePaletteReconciliation(bool force = false);
+
+    QPalette lastDesktopPalette_;
+    QColor lastRosterBackground_;
+    bool paletteUpdateInProgress_ = false;
+    bool paletteRefreshScheduled_ = false;
+    bool forcePaletteRefresh_ = false;
 
     QPointer<ContactListItemMenu> contextMenu_;
     bool                          contextMenuActive_;

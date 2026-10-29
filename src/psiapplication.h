@@ -21,6 +21,7 @@
 #define PSIAPPLICATION_H
 
 #include <QApplication>
+#include <QTimer>
 #ifdef Q_OS_MACOS
 #include <Carbon/Carbon.h>
 #endif
@@ -46,7 +47,9 @@ protected:
 
 private:
     void init(bool GUIenabled);
+    void schedulePaletteNotification(bool afterSystemThemeChange = false);
 
+    QTimer paletteSettledTimer_;
     bool paletteChangeScheduled_ = false;
 };
 
