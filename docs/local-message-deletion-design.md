@@ -34,28 +34,56 @@ Introduce an account/chat scoped, identity-only tombstone table:
 
 SQLite UPDATE/DELETE does not ensure secure erasure of old page, journal, WAL, snapshot, or backup bytes. Evaluate PRAGMA secure_delete and a controlled WAL checkpoint/VACUUM in a separate cleanup operation. Do not claim physical secure erase from SSD or backups.
 
-## Unified cache target: FileCache is the only owner of completed media
+## Storage and transfer: strict separation of responsibilities
 
-**Decision:** eliminate MediaChunkCache **as a second persistent file cache**, but keep its streaming responsibilities during the refactor. FileCache remains authoritative for verified completed payloads, hash aliases, metadata, retention, file ownership and garbage collection. FileSharingStore remains the *descriptor and source* catalog, not a payload cache.
+**Decision:** there is one durable *file cache* — FileCache. Download management, streaming and resumable staging are **not** caching and must not live in the same class. Remove MediaChunkCache as an independent persistent cache; do **not** merely rename it.
 
-The current MediaChunkCache is **not just a cache**: it wraps MediaChunkScheduler (deduplicated/cancellable range requests and limits), MediaChunkReader (64-KiB consumer buffer and bounded prefetch), and MediaChunkStore's worker (off-thread sparse writes, crash-safe range accounting, hash verification, retry and pinning). Preserve these properties in a renamed FileSharingStreamManager/PartialDownloadStore (names provisional), not another content registry.
+Responsibilities:
 
-### Partial file staging
+| Component | Responsible for | Must not do |
+| --- | --- | --- |
+| FileCache | Own verified completed payloads, checksum aliases, canonical file locations, metadata, retention, disk quota and safe GC | Schedule network requests, track active downloads or maintain a second range cache |
+| FileSharingStore | Resolve account-specific SIMS/OOB descriptors, sources and verified URL-to-content mappings | Own another payload copy or decide physical deletion |
+| MediaDownloadController (new) | Select source, coalesce in-flight requests for the same ranges, enforce limits/priorities, retry, cancel, prefetch and notify consumers | Register finished payloads or decide filesystem lifecycle and cache eviction |
+| PartialDownloadStore (new) | Own exactly one staging file and an atomic sidecar containing which byte ranges have been received/validated. Serve available ranges through bounded background I/O | Keep a second registry of **completed** files, duplicate FileCache metadata or implement network scheduling |
+| MediaStreamReader | Expose asynchronous QIODevice-style reads/seeks with backpressure and per-reader cancellation | Persist content metadata or control its lifetime in FileCache |
+| MediaCleanupCoordinator (new) | Consult message-to-media reference ownership and in-flight readers, then request safe deletion of unreferenced managed content | Delete arbitrary paths or parse/own file data |
 
-1. Until the entire content is verified, write to one managed staging data file and an atomic sidecar containing completed/verified ranges, expected size, known checksums, and transient error/transfer state. Keep bounded reads and writes off the UI thread. Never expose an incomplete file via FileCache's ordinary content-hash lookup.
-2. A sidecar's **presence alone does not indicate incomplete download in today's code**: MediaChunkStore currently writes a JSON sidecar even for fully completed files, and it creates a .data file on configuration before downloading any bytes. Change the *new format's* convention so a specific partial sidecar exists **only while staging**; complete state is declared only after verified coverage and successful promotion into FileCache.
-3. On verified completion, atomically adopt/move the staged file into FileCache (ideally a cheap same-filesystem rename), record its hashes + aliases/metadata, and remove the partial sidecar only after the FileCache registry is durably committed. Handle crashes at each boundary idempotently; recover orphans on startup without double-registering or silently discarding bytes.
-4. Continue validating actual available ranges and checksums before reading, especially after restart, checksum changes, truncated files, corruption or failed network transfers. A disk file's apparent length may contain holes or invalid bytes. For whole-file checksums, also verify that the transport finished successfully. Preserve HTTP/Jingle offset/range semantics.
-5. Prevent overwriting or moving a staged file while active streaming readers or publishers hold it. Explicitly define pin counts and draining/cancellation; do not rely on Windows permitting renames of open files.
-6. Make FileCache support **file-backed, streamed** payload access without calling FileCacheItem::data() on multi-gigabyte media (today that reads the whole file into RAM). Keep worker-thread I/O and a small bounded in-memory read-through cache. Existing FileCache::moveToCache and linked-metadata records are not sufficient as-is.
-7. Unify disk quota/accounting. Currently FileCache defaults to 50 MiB and MediaChunkCache to 256 MiB: dropping the latter without revisiting the quota would regress large media storage. Keep explicitly protected published files and user-approved partial downloads, and avoid double-counting hash aliases.
-8. Migrate persisted shares/media-files-v2 safely: scan sidecars, recover verified ranges/checksums, register completed payloads into FileCache, and leave incomplete downloads in staging. Treat references from old FileCache metadata links carefully. Retain read compatibility until successful migration; never just delete the old directory on startup.
+A logical download may move through these states:
 
-### Ownership and cleanup
+```text
+FileSharingStore descriptor
+          |
+          v
+MediaDownloadController -----> MediaStreamReader (reads available ranges)
+          |
+          v
+PartialDownloadStore: data.part + ranges sidecar
+          |
+          | complete, validated, transfer finalized
+          v
+FileCache: canonical payload + verified hashes / aliases
+          |
+          v
+MediaCleanupCoordinator: remove only after all references are gone
+```
 
-Track the live logical-message-to-content relationships independently of FileCache, in the history database. FileCache must then offer one safe removal path for **managed** completed payloads, and the staging store one removal path for unfinished payload/sidecar pairs. Cross-account reference checking is essential because FileCache keys content globally while streamed identities are account-scoped. Never unlink an arbitrary FileSharingStore localPath or the user's saved/downloaded file.
+### Partial staging and transition to FileCache
 
-This consolidates final payload ownership into **one** FileCache rather than maintaining the two disk caches and inventing two parallel GC implementations. Scheduler/stream/read logic may keep separate classes for concurrency, but not a second persistent completed-file catalog.
+1. While downloading, keep the payload in a staging file and record *only transfer-specific state* (received/verified intervals, expected length/identity, error and resumption state) in an atomically written sidecar. Refer to checksum/source metadata through the existing file metadata catalog; avoid copying entire SIMS descriptors or URL lists into the sidecar. All range writes and validation run on a worker thread.
+2. A sidecar's presence does **not** currently distinguish incomplete files: today's MediaChunkStore persists JSON for complete files too and creates its data file before any download. Establish a new unambiguous `.part`/sidecar lifecycle for unfinished downloads only. On startup, verify the sidecar, file length and recorded ranges; do not confuse a sparse file's size with downloaded bytes.
+3. Once complete and **verified**, adopt the staged file into FileCache by a same-filesystem move where possible, preserve hash aliases and metadata, then remove the staging sidecar **after** the cache registry has been committed. Make the transition crash-recoverable and idempotent. For checksum-less OOB, compute SHA-256 from actual bytes before registration.
+4. Do not serve a partial staging file as an ordinary completed FileCache item. Stream only recorded valid spans. Preserve HTTP/Jingle range integrity, exact-read semantics, checksum mismatch handling, resume and transport-completion checks. An interrupted download must never be presented as a verified complete file.
+5. Respect active readers/publishers when transitioning files. On Windows an open file may not be renameable: drain/cancel readers or use a managed promotion strategy rather than silently breaking playback.
+6. Extend FileCache with **file-backed bounded reads**, not FileCacheItem::data() for large files (which presently reads the entire file into memory). Keep decoding, range I/O and checksum verification off the GUI thread.
+7. Unify quota accounting. Today FileCache defaults to 50 MiB and MediaChunkCache to 256 MiB; consolidating under FileCache must not unexpectedly evict large media. Continue honoring pinned published files and explicitly retained partial downloads without double counting aliases.
+8. Migrate existing `shares/media-files-v2` data safely: completed verified files become FileCache items, unfinished files become staging entries, and existing FileCache external links/published files remain valid. Keep a read-only migration path until verified. **Never delete the old directory just because the new code builds.**
+
+### Media cleanup and ownership
+
+The durable message-media ownership ledger lives with history, independently of transfer state. FileCache exclusively removes completed *managed* files; PartialDownloadStore removes incomplete staging and its sidecar. MediaDownloadController must cancel or drain requests and release readers before physical cleanup. Check references across all accounts and chats, hashes/aliases, and retained/published items. Do not unlink an arbitrary FileSharingStore localPath or a file the user saved with Save As.
+
+This leaves **one persistent completed-file cache** and **one temporary incomplete-download store**. The controller may use MediaChunkScheduler internally, but it may not become another cache.
 
 ## Durable media ownership ledger
 
@@ -71,7 +99,7 @@ Record references *as attachments are learned*, before the first message deletio
 After the history transaction commits, a worker consumes candidates and rechecks current ownership:
 1. Skip shared or pinned media, with distinct retained-versus-failed status.
 2. For FileCache, remove the canonical cache item through its API, not one arbitrary hash alias or filesystem path.
-3. Add an explicit asynchronous MediaChunkStore erase(source,size) operation (currently absent): cancel or await active readers, respect pins, delete managed payload + validated sidecar, and update memory indices and availability signals on its own worker thread.
+3. For incomplete downloads, add asynchronous PartialDownloadStore cleanup: cancel or await active readers, respect pins and remove the managed staging file plus its sidecar. Finished media is removed through FileCache only.
 4. Remove stale FileSharingStore descriptors and URL mappings only when unreferenced. **Never delete externally owned localPath**, such as a user Downloads file. Never trust an arbitrary path from a message.
 5. Retry transient file sharing violations after restart; deletion failure must not resurrect a message.
 
@@ -82,7 +110,7 @@ Default UX: Delete locally (no file cleanup), plus a deliberate checkbox 'Also d
 1. SQLite schema migration; atomic tombstones/scrub across corrections; no-resurrection on stable/unstable/live MAM and restart; indexed page geometry and local history/search filtering.
 2. Native MAM menu and multi-selection UI, with persistence-first row removal; legacy UI later. Ensure this does not send XEP-0424.
 3. Media ledger on live, MAM and verified downloads, plus incremental backfill and account-scoped cross-message ownership tests.
-4. Replace the duplicate completed-file cache with FileCache-backed verified payloads + a partial-download staging worker. Migrate old media-files-v2 safely, then add one durable GC queue with reader/pin protections and optional attachment cleanup UI.
+4. Strictly split MediaDownloadController (requests, retries, scheduling), PartialDownloadStore (unfinished payload and verified ranges), MediaStreamReader (bounded asynchronous reads), and FileCache (the only finished-file cache). Migrate old media-files-v2 safely; add one durable GC queue with reader/pin protections and optional attachment cleanup UI.
 5. Integration tests for duplicate IDs, correction-before-original, cross-account collisions, sparse MAM, OOB URL mapping, one blob referenced twice, external localPath, concurrent streaming and interrupted transactions.
 
 Do not ship Delete locally until stage 1 is complete. Do not offer cached-file deletion until ownership and GC are verified.
