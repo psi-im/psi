@@ -34,11 +34,28 @@ Introduce an account/chat scoped, identity-only tombstone table:
 
 SQLite UPDATE/DELETE does not ensure secure erasure of old page, journal, WAL, snapshot, or backup bytes. Evaluate PRAGMA secure_delete and a controlled WAL checkpoint/VACUUM in a separate cleanup operation. Do not claim physical secure erase from SSD or backups.
 
-## Media playback/download sequence: strict separation
+## Media file lifecycle: register at first sight, one FileCache for partial and complete files
 
-**Target architecture (not yet implemented):** FileCache is the only owner of completed, verified files. Rename the existing FileShareDownloader to **FileShareTransport** *after* moving all temporary-file I/O and cacheReady/takeFile logic out of it. The transport is a QIODevice offering HTTP/FTP, Jingle FT and BoB, source fallback, range/response metadata, completion and errors; **no disk writes or FileCache references**. A new universal MediaDownloadController would duplicate existing functionality and is not needed.
+**Architecture decision:** FileCache registers and owns a file **immediately**, before any chunks have arrived. The presence of a managed, per-file *incomplete-download sidecar* means that byte ranges must be checked before a read. When there is no sidecar, FileCache may serve the entire file, **but only if** its registry has a durable, verified-complete state. Removing or losing a sidecar must never accidentally upgrade an unfinished file to a complete one. This supersedes the earlier "stage first, then promote/register into FileCache" design.
 
-The five externally meaningful lifelines are the remote source, local transport, local media player, local chunk entities and FileCache. The remote source may be a peer for Jingle or an HTTP media server; the protocol details remain behind FileShareTransport.
+The existing MediaChunkStore already persists a sidecar with downloaded ranges via QSaveFile, but it currently writes one after every chunk and keeps a sidecar even for complete files. Its durable tracking and verification code should migrate inside **FileCache** (possibly with a private disk-I/O worker). Eliminate its *second* disk cache and completed-file registry; do not create another persistent PartialDownloadStore competing with FileCache.
+
+### Exact ownership boundaries
+
+| Component | Responsibility |
+| --- | --- |
+| **FileCache** | Register partial or complete files; own the single canonical managed payload, size, checksum aliases/metadata, current available/validated ranges, sidecar and quota; answer range reads and explicit cache misses; persist chunk data and compact sidecar; verify full file; GC complete and partial files safely |
+| **FileShareTransport** (rename FileShareDownloader) | HTTP/FTP, Jingle FT and BoB transport, per-source failure fallback, actual Content-Range/size checks, bounded network QIODevice and transport success/failure. **Never writes to disk** |
+| **MediaChunkScheduler** | Deduplicate demand for missing ranges, prioritize reads, limit concurrent transfers and cancel waiters |
+| **MediaChunkTransfer** | Validate boundaries, exact byte counts and transport completion before committing fetched data |
+| **MediaChunkReader** (later rename if needed) | Consumer-facing asynchronous QIODevice with bounded buffering, lookahead, cancellation and backpressure |
+| **FileSharingStore / FileSharingItem** | Source and descriptor metadata, account+URL resolution and the file identity needed to find/register the corresponding FileCache item; no payload ownership |
+
+**FileSharingChunkSource** should not survive as a separate manager. Today it combines identity/configure/metadata lookup, source-health selection, Jingle session-pool hookup, transfer validation and fallback to a shared sequential transfer when Range is unsupported. Redistribute these pieces to FileSharingItem/Store (identity/descriptor), FileShareTransport (transport/source selection and pool), scheduler/chunk request logic (shared sequential demand), and FileCache (available ranges/metadata/storage). Remove it only when the tests cover Jingle verification, source fallback, sequential non-Range HTTP, cancellation and multiple media readers.
+
+### Five-party read/download sequence
+
+The lifelines intentionally reflect responsibilities, **not** a chain of classes. The "chunk entities" participant includes MediaChunkScheduler, MediaChunkReader and transfer validation, but no persistent payload storage.
 
 ```mermaid
 sequenceDiagram
@@ -48,77 +65,58 @@ sequenceDiagram
     participant C as Local party chunk entities
     participant F as FileCache
 
+    Note over F: Register canonical entry on first reference, BEFORE downloading
     P->>C: read(offset, length)
-    C->>F: lookup(content identity)
-    alt Complete verified file already in FileCache
-        F-->>C: Canonical file handle/path
-        C-->>P: Requested bytes
-    else Cache miss
-        F-->>C: Not found
-        C->>C: Consult temporary file + ranges sidecar
-        alt Requested range is locally verified
-            C-->>P: Requested bytes
-        else Missing range
-            C->>C: Schedule/deduplicate the request
-            C->>T: fetch(offset, length, available sources)
-            T->>R: HTTP Range / Jingle FT / BoB
-            R-->>T: Bytes + protocol metadata
-            T-->>C: Data, actual range and transfer outcome
-            C->>C: Validate, write range and update sidecar
-            C-->>P: Requested bytes
-            opt All ranges complete and whole file verified
-                C->>F: Promote completed file + verified hashes
-                F-->>C: Registered in FileCache
-                C->>C: Remove partial-download sidecar
-            end
+    C->>F: readRange(fileId, offset, length)
+    alt Complete cache hit
+        F-->>C: bytes / managed complete-file handle
+        C-->>P: bytes
+    else Partial hit / cache miss
+        F-->>C: available bytes + exact missing ranges
+        C-->>P: already available bytes
+        C->>C: schedule/deduplicate missing ranges
+        C->>T: fetch(missing offset, length, sources)
+        T->>R: HTTP Range / Jingle FT / BoB
+        R-->>T: data + protocol result
+        T-->>C: bounded bytes + actual response metadata
+        C->>C: validate range, transfer and known checksums
+        C->>F: writeAcceptedRange(fileId, offset, bytes)
+        F->>F: write data; update RAM range map
+        F-->>C: range now available
+        C-->>P: deliver requested bytes
+        opt Batched checkpoint
+            F->>F: atomic sidecar flush, throttled to ~5s
+        end
+        opt Full coverage, final hash and transport validation
+            C->>F: finalize(fileId)
+            F->>F: sync payload and complete registry; remove sidecar
+            F-->>C: complete in FileCache (same registered entry)
         end
     end
 ```
 
-This is the logical request sequence. Reader backpressure/prefetch and network traffic can overlap; data MUST NOT be advertised as verified before the required integrity/transport validation. For an already cached file, FileSharingDeviceOpener may optimize by giving the player FileCache's managed path directly, bypassing chunk scheduling, without creating a new storage authority.
+The FileCache item is **not re-registered or moved into a second cache at completion**. Only its state changes from Partial to Complete and the sidecar disappears. On a complete-file hit, FileSharingDeviceOpener may pass the canonical FileCache path directly to the player. On a partial hit, the player must get only bytes FileCache marks available, never the raw sparse file path without range validation.
 
-### Existing class responsibilities and redistribution
+### Sidecar format, in-memory updates and 5-second checkpointing
 
-| Component | Responsibility in the target |
-| --- | --- |
-| **FileShareTransport** (rename FileShareDownloader) | Transport selection and per-request fallback; HTTP/FTP, Jingle FT and BoB; stream, range response and success/error signals. No file writes, cacheReady or takeFile |
-| **MediaChunkScheduler** (keep) | Deduplicate identical in-flight range requests, cancellation, lane concurrency and priority |
-| **MediaChunkTransfer** (keep or simplify) | Check actual size/range and transfer completion before a request is accepted; not another downloader |
-| **PartialDownloadStore** (extract) | Temporary payload, verified/received ranges sidecar, background bounded reads/writes, recovery; not a completed-file cache |
-| **MediaChunkReader** (decouple/rename optional) | Expose requested ranges as QIODevice with backpressure and bounded prefetch |
-| **FileCache** (extend) | Finished file ownership, metadata, hash aliases, retention, shared disk quota, file-backed reads and deletion |
-| **FileSharingStore** (keep) | File descriptors, SIMS/OOB source metadata and URL-to-content mapping; no payload ownership |
+- FileCache keeps the authoritative **live range map in memory**, updated after every successfully persisted/accepted chunk, and reports cache hits and misses directly to callers. The existing per-file metadata sidecar (migrated from MediaChunkStore) records the durable available ranges, expected file size, partial/validation state and whatever checksum information is needed to recover safely.
+- **At most one ordinary sidecar write per ~5 seconds per dirty file**, using a coalesced timer and atomic replacement (QSaveFile). This reduces sidecar rewrite frequency. Force a checkpoint on normal close/shutdown, explicit pause and before finalizing completion. If updates arrive continuously, the timer still flushes periodically; do not postpone them indefinitely.
+- Disk/sidecar ordering is essential: write and flush chunk data *before* advertising it as durable in the sidecar. A crash may lose up to the most recent uncheckpointed range-map updates, resulting in harmless re-fetch of already written bytes; it must **never** mark unwritten bytes as available. On restart, load only persisted ranges and check payload size and integrity.
+- **Overwrites and invalidations are exceptional and must be durable before mutating bytes.** If an already persisted range is to be overwritten, withdrawn or invalidated because of checksum/transport failure, flush a sidecar checkpoint that first removes that range, *then* change file contents. Otherwise a crash could restore obsolete sidecar coverage over invalid bytes. New, nonoverlapping chunk writes can use the ordinary 5-second batching.
+- Completion is a synchronous durability boundary on the storage worker: full range coverage plus required hashes and transport completion (including Jingle receipts) must be checked; the completed FileCache registry state and payload must be committed before removing the sidecar. Recovery treats any missing-sidecar file without a durable Complete registry marker as **unverified/incomplete**, not as a full cache hit. Never invent valid bytes by examining sparse file length alone.
+- Some protocols only provide a **whole-file checksum**, not a cryptographic hash for each chunk. Distinguish "received and bounds/transport-validated" from "content-hash-verified" ranges in API/state; a player may stream accepted bytes according to policy, while full trusted completion still requires the final digest. An integrity failure invalidates the affected range or whole file as appropriate.
+- Registry insertion itself must be durable before the first chunk becomes visible and must support an account-scoped *provisional identity* if no content hash is available (e.g. hashless OOB). After downloading, compute the real content SHA-256, register verified aliases and merge the provisional entry without losing active readers. Never pretend an OOB URL hash is a content digest.
+- Expose a range-capable API conceptually equivalent to `readRange(fileId, offset, length) -> {availableBytes, missingRanges, state}` plus change notifications. The cache does **not** initiate HTTP/Jingle requests; its callers schedule only exact missing ranges via MediaChunkScheduler / FileShareTransport. The API must also accommodate zero-copy/bounded file-backed reads without calling FileCacheItem::data() on large media.
+- Account for in-flight readers/pins and completion GC safely; unify existing 50-MiB FileCache and 256-MiB MediaChunkCache quotas without unexpected eviction. Managed payloads and sidecars both belong to FileCache; user-exported files referenced from metadata must never be deleted.
+- Migrate old `shares/media-files-v2` entries (including complete files with JSON sidecars) safely. Only after verifying the persisted data and associating identities should FileCache adopt them. Preserve partial data/ranges and account-scoped source identities across restarts; do not remove the old directory blindly.
 
-**FileSharingChunkSource is not needed as a long-lived intermediary in the target design.** Today the namespace mixes several unrelated services:
+### Why there is no separate PartialDownloadStore
 
-- `identity()`: a stable account-scoped content key; move close to FileSharingItem and use for staging identity (FileCache itself uses verified content hashes).
-- `configure()` and `addMetadata()`: mix complete file descriptors, checksums and staging state; let FileSharingStore/Item retain file metadata, and let PartialDownloadStore know expected sizes, checksum spans and valid ranges.
-- `localFile()` and `error()`: routing/status query; resolve against FileCache first, then staging.
-- `fetch()`: currently selects a healthy source with FileSourceSelector, obtains a FileShareDownloader, wires Jingle pool and MediaChunkTransfer, handles RangeUnsupported and cancellation. Move source selection and per-request fallback into FileShareTransport; retain request deduplication in MediaChunkScheduler; keep protocol-independent range validation at the chunk request boundary.
-- The internal `SequentialDownload` class shares one non-Range transfer among range waiters and writes it through the chunk store. Replace it with a deliberate sequential-download fallback in the chunk layer using **the same FileShareTransport and PartialDownloadStore**. Do not implement another HTTP/Jingle downloader.
+A private storage worker for asynchronous file writes and sidecar checkpointing is an implementation detail of FileCache, not a second logical owner of partial media. It may retain the verified-range algorithms from MediaChunkStore and continue to use its existing test cases, but FileCache is the only public interface for partial/full lookups, byte availability, aliases, retention and deletion. This also makes history-driven cache reclamation a single ownership operation.
 
-This avoids a replacement controller class; the existing FileShareTransport + MediaChunkScheduler already cover transport and shared demand. For backwards compatibility, keep thin call-site adapters temporarily and remove FileSharingChunkSource only after tests cover range-less HTTP, shared sequential demand, pooled Jingle receipt ordering and multi-source fallback.
+### Media cleanup
 
-### Existing overlap to remove
-
-FileShareDownloader presently writes partial data to FileCache's partial directory, emits cacheReady and passes takeFile() to FileSharingItem for eventual promotion. MediaChunkStore independently writes partial ranged payloads and maintains a *second completed-file registry*. Move disk persistence to PartialDownloadStore and final promotion to FileCache, rather than retaining two ownership models.
-
-### Partial staging and transition to FileCache
-
-1. While downloading, keep the payload in a staging file and record *only transfer-specific state* (received/verified intervals, expected length/identity, error and resumption state) in an atomically written sidecar. Refer to checksum/source metadata through the existing file metadata catalog; avoid copying entire SIMS descriptors or URL lists into the sidecar. All range writes and validation run on a worker thread.
-2. A sidecar's presence does **not** currently distinguish incomplete files: today's MediaChunkStore persists JSON for complete files too and creates its data file before any download. Establish a new unambiguous `.part`/sidecar lifecycle for unfinished downloads only. On startup, verify the sidecar, file length and recorded ranges; do not confuse a sparse file's size with downloaded bytes.
-3. Once complete and **verified**, adopt the staged file into FileCache by a same-filesystem move where possible, preserve hash aliases and metadata, then remove the staging sidecar **after** the cache registry has been committed. Make the transition crash-recoverable and idempotent. For checksum-less OOB, compute SHA-256 from actual bytes before registration.
-4. Do not serve a partial staging file as an ordinary completed FileCache item. Stream only recorded valid spans. Preserve HTTP/Jingle range integrity, exact-read semantics, checksum mismatch handling, resume and transport-completion checks. An interrupted download must never be presented as a verified complete file.
-5. Respect active readers/publishers when transitioning files. On Windows an open file may not be renameable: drain/cancel readers or use a managed promotion strategy rather than silently breaking playback.
-6. Extend FileCache with **file-backed bounded reads**, not FileCacheItem::data() for large files (which presently reads the entire file into memory). Keep decoding, range I/O and checksum verification off the GUI thread.
-7. Unify quota accounting. Today FileCache defaults to 50 MiB and MediaChunkCache to 256 MiB; consolidating under FileCache must not unexpectedly evict large media. Continue honoring pinned published files and explicitly retained partial downloads without double counting aliases.
-8. Migrate existing `shares/media-files-v2` data safely: completed verified files become FileCache items, unfinished files become staging entries, and existing FileCache external links/published files remain valid. Keep a read-only migration path until verified. **Never delete the old directory just because the new code builds.**
-
-### Media cleanup and ownership
-
-The durable message-media ownership ledger lives with history, independently of transfer state. FileCache exclusively removes completed *managed* files; PartialDownloadStore removes incomplete staging and its sidecar. MediaChunkScheduler must cancel or drain requests, FileShareTransport must stop transport work, and active readers must release the staged file before physical cleanup. Check references across all accounts and chats, hashes/aliases, and retained/published items. Do not unlink an arbitrary FileSharingStore localPath or a file the user saved with Save As.
-
-This leaves **one persistent completed-file cache** and **one temporary incomplete-download store**. FileShareDownloader and MediaChunkScheduler remain separate, existing transfer services. FileSharingChunkSource bridges them; no new MediaDownloadController is needed.
+The durable message-media reference ledger lives with history, independently of downloading. On local message deletion, collect candidate identities **before** scrubbing the message, and enqueue candidates transactionally. After commit, GC checks ownership across all accounts/chats, active readers, published items and in-flight downloads before asking FileCache to remove its managed payload and sidecar **together**. A removal must never unlink an arbitrary external FileSharingStore localPath, user's Save As copy or file held by another message.
 
 ## Durable media ownership ledger
 
@@ -134,7 +132,7 @@ Record references *as attachments are learned*, before the first message deletio
 After the history transaction commits, a worker consumes candidates and rechecks current ownership:
 1. Skip shared or pinned media, with distinct retained-versus-failed status.
 2. For FileCache, remove the canonical cache item through its API, not one arbitrary hash alias or filesystem path.
-3. For incomplete downloads, add asynchronous PartialDownloadStore cleanup: cancel or await active readers, respect pins and remove the managed staging file plus its sidecar. Finished media is removed through FileCache only.
+3. Use FileCache for both complete and incomplete managed entries. Before removal, cancel or drain transport/stream readers, respect pins and remove the canonical payload plus any incomplete-download sidecar together.
 4. Remove stale FileSharingStore descriptors and URL mappings only when unreferenced. **Never delete externally owned localPath**, such as a user Downloads file. Never trust an arbitrary path from a message.
 5. Retry transient file sharing violations after restart; deletion failure must not resurrect a message.
 
@@ -145,7 +143,7 @@ Default UX: Delete locally (no file cleanup), plus a deliberate checkbox 'Also d
 1. SQLite schema migration; atomic tombstones/scrub across corrections; no-resurrection on stable/unstable/live MAM and restart; indexed page geometry and local history/search filtering.
 2. Native MAM menu and multi-selection UI, with persistence-first row removal; legacy UI later. Ensure this does not send XEP-0424.
 3. Media ledger on live, MAM and verified downloads, plus incremental backfill and account-scoped cross-message ownership tests.
-4. Rename FileShareDownloader to FileShareTransport only once its disk I/O is extracted. Keep MediaChunkScheduler for shared range demand; redistribute and remove FileSharingChunkSource; use PartialDownloadStore for incomplete payloads/ranges and FileCache for finished files. Preserve range-less sequential fallback and Jingle success sequencing. Migrate old media-files-v2 safely and add durable GC, active-reader protection and optional attachment cleanup UI.
+4. Extend FileCache to register files immediately and own partial/complete range state, disk worker and a coalesced ~5-second sidecar checkpoint. Remove the second MediaChunkStore cache; rename FileShareDownloader to transport-only FileShareTransport; retain MediaChunkScheduler and MediaChunkTransfer, redistribute and remove FileSharingChunkSource. Preserve sequential non-Range fallback and Jingle success sequencing; migrate old media-files-v2 safely and test cache-miss reads, restart recovery, concurrent readers and GC.
 5. Integration tests for duplicate IDs, correction-before-original, cross-account collisions, sparse MAM, OOB URL mapping, one blob referenced twice, external localPath, concurrent streaming and interrupted transactions.
 
 Do not ship Delete locally until stage 1 is complete. Do not offer cached-file deletion until ownership and GC are verified.
