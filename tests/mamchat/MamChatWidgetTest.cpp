@@ -1001,8 +1001,13 @@ private slots:
         QTest::mouseRelease(excerpt->viewport(), Qt::LeftButton, Qt::NoModifier, to);
         QCOMPARE(activated.size(), 0);
 
-        const auto linkCursor = excerpt->document()->find(QStringLiteral("a link"));
+        auto linkCursor = excerpt->document()->find(QStringLiteral("a link"));
+        QVERIFY(!linkCursor.isNull());
+        // QTextDocument::find() leaves the cursor at the end of the match.
+        // Position it inside the anchor, not after the closing tag.
+        linkCursor.setPosition(linkCursor.selectionStart() + 2);
         const QPoint linkPoint = excerpt->cursorRect(linkCursor).center();
+        QCOMPARE(excerpt->anchorAt(linkPoint), QStringLiteral("https://example.org"));
         QTest::mouseClick(excerpt->viewport(), Qt::LeftButton, Qt::NoModifier, linkPoint);
         QCOMPARE(activated.size(), 0);
         QCOMPARE(linksOpened, 1);
