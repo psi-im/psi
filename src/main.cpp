@@ -33,6 +33,7 @@
 #include "psicon.h"
 #include "psiiconset.h"
 #include "psioptions.h"
+#include "qcaproviderpolicy.h"
 #include "translationmanager.h"
 
 #include <QBitmap>
@@ -545,6 +546,9 @@ PSI_EXPORT_FUNC int main(int argc, char *argv[])
     QApplication::setApplicationName(ApplicationInfo::name());
     QApplication::setApplicationVersion(ApplicationInfo::version());
     QApplication::addLibraryPath(ApplicationInfo::resourcesDir());
+#ifdef Q_OS_WIN
+    QApplication::addLibraryPath(QCoreApplication::applicationDirPath() + QStringLiteral("/qtplugins"));
+#endif
     QApplication::addLibraryPath(ApplicationInfo::homeDir(ApplicationInfo::DataLocation));
     QApplication::setQuitOnLastWindowClosed(false);
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0) && QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
@@ -561,7 +565,8 @@ PSI_EXPORT_FUNC int main(int argc, char *argv[])
     // Initialize QCA
     QCA::setProperty("pgp-always-trust", true);
     QCA::KeyStoreManager keystoremgr;
-    QCA::KeyStoreManager::start("qca-ossl");
+    if (!PsiCrypto::preferNativeProvider())
+        QCA::KeyStoreManager::start("qca-ossl");
 #ifndef BUNDLED_QCA
     // non-bundled has a bug which causes hard-lock w/o gnupg
     QCA::KeyStoreManager::start("qca-gnupg");
@@ -638,7 +643,11 @@ PSI_EXPORT_FUNC int main(int argc, char *argv[])
 
 #ifdef QCA_STATIC
 #include <QtPlugin>
+#ifdef Q_OS_WIN
+Q_IMPORT_PLUGIN(qca_wincrypto)
+#else
 Q_IMPORT_PLUGIN(qca_ossl)
+#endif
 #endif
 
 // #if defined(Q_OS_WIN) && defined(QT_STATICPLUGIN)

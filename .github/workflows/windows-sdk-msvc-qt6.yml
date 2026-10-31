@@ -197,22 +197,29 @@ jobs:
 
       - name: Stage shared QCA
         run: |
-          # The SDK's vcpkg OpenSSL stays authoritative; only QCA itself and
-          # its OpenSSL provider are taken from the QCA release.
+          # Deploy the shared QCA core, native crypto and the provider with embedded Cyrus SASL.
+          # Other SDK dependencies may independently use vcpkg OpenSSL.
           New-Item -ItemType Directory -Force sdk\lib\cmake, sdk\lib\qca3-qt6\crypto | Out-Null
           Copy-Item qca-release\bin\qca3-qt6.dll sdk\bin -Force
           Copy-Item qca-release\lib\qca3-qt6.lib sdk\lib -Force
           Copy-Item qca-release\lib\cmake\Qca3-qt6 sdk\lib\cmake -Recurse -Force
           Copy-Item qca-release\include\Qca3-qt6 sdk\include -Recurse -Force
-          Copy-Item qca-release\lib\qca3-qt6\crypto\qca-ossl.dll sdk\lib\qca3-qt6\crypto -Force
+          Copy-Item qca-release\lib\qca3-qt6\crypto\qca-wincrypto.dll sdk\lib\qca3-qt6\crypto -Force
+          Copy-Item qca-release\lib\qca3-qt6\crypto\qca-cyrus-sasl.dll sdk\lib\qca3-qt6\crypto -Force
 
           foreach ($required in @(
               'sdk\bin\qca3-qt6.dll',
               'sdk\lib\qca3-qt6.lib',
               'sdk\lib\cmake\Qca3-qt6\Qca3-qt6Config.cmake',
               'sdk\include\Qca3-qt6\QtCrypto\qca.h',
-              'sdk\lib\qca3-qt6\crypto\qca-ossl.dll')) {
+              'sdk\lib\qca3-qt6\crypto\qca-wincrypto.dll',
+              'sdk\lib\qca3-qt6\crypto\qca-cyrus-sasl.dll')) {
             if (-not (Test-Path $required)) { throw "Shared QCA file missing from SDK: $required" }
+          }
+          $saslImports = (dumpbin /DEPENDENTS sdk\lib\qca3-qt6\crypto\qca-cyrus-sasl.dll) | Out-String
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect the QCA Cyrus SASL provider' }
+          if ($saslImports -match '(?im)^\s*(?:(?:lib)?sasl\S*|libcrypto\S*|libssl\S*)\.dll\s*$') {
+              throw 'The QCA Cyrus provider must embed SASL and use native cryptography'
           }
 
       - name: Build static Qt6Keychain
@@ -281,10 +288,12 @@ jobs:
               QCA::Initializer init;
               QCoreApplication app(argc, argv);
               QKeychain::ReadPasswordJob job(QStringLiteral("psi-sdk-test"));
-              // The shared OpenSSL provider must load against the SDK's OpenSSL.
-              const bool dtls = QCA::isSupported("dtls");
+              const bool dtls = QCA::isSupported("dtls", QStringLiteral("qca-wincrypto"))
+                  && QCA::findProvider(QStringLiteral("qca-wincrypto"))
+                  && !QCA::findProvider(QStringLiteral("qca-ossl"));
+              const bool sasl = QCA::isSupported("sasl", QStringLiteral("qca-cyrus-sasl"));
               return (OpenSSL_version_num() != 0 && zlibVersion()[0] != '\0'
-                      && !job.service().isEmpty() && dtls) ? 0 : 1;
+                      && !job.service().isEmpty() && dtls && sasl) ? 0 : 1;
           }
           '@ | Set-Content consumer\main.cpp -Encoding utf8
 
@@ -302,6 +311,14 @@ jobs:
           $env:QCA_PLUGIN_PATH = "$pwd\relocated-sdk\lib\qca3-qt6"
           & "$pwd\consumer-build\psi-sdk-consumer.exe"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake -S tests/crypto -B crypto-tests -G Ninja `
+            -DCMAKE_BUILD_TYPE=Release `
+            "-DCMAKE_PREFIX_PATH=$pwd/relocated-sdk;$env:QT_ROOT_DIR"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake --build crypto-tests --parallel 2
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ctest --test-dir crypto-tests --output-on-failure
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Move-Item relocated-sdk sdk
 
       - name: Write SDK manifest and archive
@@ -314,7 +331,7 @@ jobs:
           Build environment: MSVC 2022 / Qt $qtVersion
           Target: Windows x64
           QtKeychain source: frankosterfeld/qtkeychain $env:QTKEYCHAIN_TAG (static)
-          QCA: psi-im/qca $env:QCA_TAG release qca3-qt6-windows-x64 (shared, with qca-ossl)
+          QCA: psi-im/qca $env:QCA_TAG release qca3-qt6-windows-x64 (shared, with qca-wincrypto and qca-cyrus-sasl; Cyrus SASL and mechanisms linked statically)
           vcpkg revision: $vcpkgRevision
           vcpkg packages: openssl, zlib, hunspell, minizip, libsrtp[openssl] and transitive runtime dependencies
           SDK purpose: non-Qt development/runtime dependencies for the modern Psi MSVC/Qt6 build
@@ -367,5 +384,5 @@ jobs:
               --repo "$GITHUB_REPOSITORY" \
               --target infra/windows-sdk-releases \
               --title "Psi Windows SDK (MSVC 2022 / Qt6)" \
-              --notes "Development/runtime SDK for the modern Windows build. Qt itself is installed from the official Qt binary repository; this SDK contains shared QCA with qca-ossl, OpenSSL, libSRTP, zlib, Hunspell, minizip and static Qt6Keychain."
+              --notes "Development/runtime SDK for the modern Windows build. Qt itself is installed from the official Qt binary repository; this SDK contains shared QCA with qca-wincrypto and qca-cyrus-sasl (embedded Cyrus SASL/mechanisms), OpenSSL, libSRTP, zlib, Hunspell, minizip and static Qt6Keychain."
           fi

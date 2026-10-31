@@ -153,7 +153,8 @@ jobs:
             -DBUILD_SHARED_LIBS=ON \
             -DBUILD_TESTS=OFF \
             -DBUILD_TOOLS=OFF \
-            -DBUILD_PLUGINS=ossl \
+            -DBUILD_PLUGINS=wincrypto \
+            -DCMAKE_DISABLE_FIND_PACKAGE_OpenSSL=TRUE \
             -DLOAD_SHARED_PLUGINS=ON \
             -DQCA_SUFFIX=qt5 \
             -DUSE_RELATIVE_PATHS=ON
@@ -164,7 +165,7 @@ jobs:
           test -f sdk/lib/cmake/Qca3-qt5/Qca3-qt5Config.cmake
           test -n "$(find sdk/include -type f -name qca.h -print -quit)"
           test -n "$(find sdk/bin -type f -iname '*qca3-qt5*.dll' -print -quit)"
-          test -n "$(find sdk -type f -iname '*qca-ossl*.dll' -print -quit)"
+          test -n "$(find sdk -type f -iname '*qca-wincrypto*.dll' -print -quit)"
 
       - name: Build and install Qt5Keychain SDK
         shell: msys2 {0}
@@ -208,14 +209,18 @@ jobs:
           target_link_libraries(psi-sdk-consumer PRIVATE Qca3::Qca ${QTKEYCHAIN_LIBRARIES})
           CMAKE
           cat > consumer/main.cpp <<'CPP'
+          #include <QCoreApplication>
           #include <QtCrypto>
           #include <qt5keychain/keychain.h>
 
-          int main()
+          int main(int argc, char **argv)
           {
               QCA::Initializer init;
+              QCoreApplication app(argc, argv);
               QKeychain::ReadPasswordJob job(QStringLiteral("psi-sdk-test"));
-              return job.service().isEmpty() ? 1 : 0;
+              const bool native = QCA::isSupported("dtls-srtp", QStringLiteral("qca-wincrypto"))
+                  && !QCA::findProvider(QStringLiteral("qca-ossl"));
+              return !job.service().isEmpty() && native ? 0 : 1;
           }
           CPP
 
@@ -225,7 +230,8 @@ jobs:
             "-DQca3-qt5_DIR=$PWD/relocated-sdk/lib/cmake/Qca3-qt5" \
             "-DQt5Keychain_DIR=$PWD/relocated-sdk/lib/cmake/Qt5Keychain"
           cmake --build consumer-build --parallel 2
-          PATH="$PWD/relocated-sdk/bin:/mingw64/bin:$PATH" ./consumer-build/psi-sdk-consumer.exe
+          QCA_PLUGIN_PATH="$PWD/relocated-sdk/lib/qca3-qt5" \
+            PATH="$PWD/relocated-sdk/bin:/mingw64/bin:$PATH" ./consumer-build/psi-sdk-consumer.exe
           mv relocated-sdk sdk
 
       - name: Write SDK manifest and archive
@@ -236,7 +242,7 @@ jobs:
             echo 'Psi Windows SDK'
             echo '================='
             echo 'Build environment: MSYS2 MINGW64 / Qt5'
-            echo 'Target baseline: Windows 7 (_WIN32_WINNT=0x0601, WINVER=0x0601)'
+            echo 'Compile baseline: _WIN32_WINNT=0x0601, WINVER=0x0601; native QCA requires Windows 10 or later'
             echo "QCA source: psi-im/qca $QCA_TAG"
             echo "QtKeychain source: frankosterfeld/qtkeychain $QTKEYCHAIN_TAG (Qt5)"
             echo 'SDK contents: QCA3 Qt5 and Qt5Keychain development/runtime files not provided by current MSYS2 MINGW64 packages'

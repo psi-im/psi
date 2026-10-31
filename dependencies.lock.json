@@ -18,19 +18,19 @@
   },
   "windows_sdks": {
     "msvc_qt6": {
-      "tag": "windows-sdk-msvc-qt6-v4",
+      "tag": "windows-sdk-msvc-qt6-v5",
       "archive": "psi-windows-sdk-msvc-qt6.zip"
     },
     "msys2_qt5": {
-      "tag": "windows-sdk-msys2-qt5-v3",
+      "tag": "windows-sdk-msys2-qt5-v4",
       "archive": "psi-windows-sdk-msys2-qt5.zip"
     }
   },
   "qca": {
     "repository": "psi-im/qca",
     "source": "released-sdk-shared-with-iris",
-    "tag": "v3.0.12",
-    "commit": "96c88f9ee127d206691ff688e68676c022f505f8"
+    "tag": "v3.1.1",
+    "commit": "3059e31c96fa5e4409555e4d49b80d20eb3e3046"
   },
   "plugins": {
     "repository": "psi-im/plugins",
