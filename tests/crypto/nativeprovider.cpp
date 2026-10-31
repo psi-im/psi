@@ -2,7 +2,6 @@
 #include "qcaproviderpolicy.h"
 #include <QSignalSpy>
 #include <QTest>
-#include <cstdio>
 #include <iterator>
 #include <windows.h>
 #ifdef QCA_STATIC
@@ -12,25 +11,7 @@ Q_IMPORT_PLUGIN(qca_wincrypto)
 
 class NativeProviderTest : public QObject {
     Q_OBJECT
-public:
-    NativeProviderTest()
-    {
-        // Keep the last completed test visible if the process crashes on Windows.
-        std::setvbuf(stdout, nullptr, _IONBF, 0);
-    }
 private Q_SLOTS:
-    void init()
-    {
-        std::fprintf(stderr, "Running %s (%s)\n", QTest::currentTestFunction(),
-                     QTest::currentDataTag() ? QTest::currentDataTag() : "");
-        std::fflush(stderr);
-    }
-    void cleanup()
-    {
-        std::fprintf(stderr, "Completed %s (%s)\n", QTest::currentTestFunction(),
-                     QTest::currentDataTag() ? QTest::currentDataTag() : "");
-        std::fflush(stderr);
-    }
     void nativeOnly()
     {
         QVERIFY(PsiCrypto::preferNativeProvider());
@@ -77,17 +58,22 @@ private Q_SLOTS:
     void staticSaslMechanisms_data()
     {
         QTest::addColumn<QString>("mechanism");
-        for (const auto *name :
-             { "PLAIN", "SCRAM-SHA-1", "SCRAM-SHA-256", "SCRAM-SHA-384", "SCRAM-SHA-512", "SCRAM-SHA-1-PLUS",
-               "SCRAM-SHA-256-PLUS", "SCRAM-SHA-384-PLUS", "SCRAM-SHA-512-PLUS" })
-            QTest::newRow(name) << QString::fromLatin1(name);
+        QTest::addColumn<QString>("provider");
+        for (const auto *provider : { "qca-cyrus-sasl", "qca-wingss" }) {
+            for (const auto *name :
+                 { "PLAIN", "SCRAM-SHA-1", "SCRAM-SHA-256", "SCRAM-SHA-384", "SCRAM-SHA-512", "SCRAM-SHA-1-PLUS",
+                   "SCRAM-SHA-256-PLUS", "SCRAM-SHA-384-PLUS", "SCRAM-SHA-512-PLUS" }) {
+                const QByteArray row = QByteArray(provider) + '/' + name;
+                QTest::newRow(row.constData()) << QString::fromLatin1(name) << QString::fromLatin1(provider);
+            }
+        }
     }
     void staticSaslMechanisms()
     {
         QFETCH(QString, mechanism);
-        const QString provider = QStringLiteral("qca-cyrus-sasl");
+        QFETCH(QString, provider);
         if (!QCA::isSupported("sasl", provider))
-            QSKIP("This QCA configuration does not include the Cyrus SASL provider");
+            QSKIP("This QCA configuration does not include the selected SASL provider");
         QCA::SASL sasl(nullptr, provider);
         sasl.setConstraints(QCA::SASL::AllowPlain);
         sasl.setUsername(QStringLiteral("user"));

@@ -17,6 +17,5 @@ if(WIN32)
     target_link_libraries(crypto_native_provider_test Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
     psi_link_qca(crypto_native_provider_test)
     add_test(NAME crypto_native_provider COMMAND crypto_native_provider_test)
-    set_tests_properties(crypto_native_provider PROPERTIES TIMEOUT 30
-        ENVIRONMENT "SASL_PATH=${CMAKE_CURRENT_BINARY_DIR}/no-dynamic-sasl-plugins")
+    set_tests_properties(crypto_native_provider PROPERTIES TIMEOUT 30)
 endif()
