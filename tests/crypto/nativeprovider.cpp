@@ -18,6 +18,18 @@ public:
         std::setvbuf(stdout, nullptr, _IONBF, 0);
     }
 private Q_SLOTS:
+    void init()
+    {
+        std::fprintf(stderr, "Running %s (%s)\n", QTest::currentTestFunction(),
+                     QTest::currentDataTag() ? QTest::currentDataTag() : "");
+        std::fflush(stderr);
+    }
+    void cleanup()
+    {
+        std::fprintf(stderr, "Completed %s (%s)\n", QTest::currentTestFunction(),
+                     QTest::currentDataTag() ? QTest::currentDataTag() : "");
+        std::fflush(stderr);
+    }
     void nativeOnly()
     {
         QVERIFY(PsiCrypto::preferNativeProvider());

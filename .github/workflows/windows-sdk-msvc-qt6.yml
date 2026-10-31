@@ -90,6 +90,7 @@ jobs:
     env:
       SDK_ARCHIVE: ${{ needs.check.outputs.sdk_archive }}
       QT_SERIES: ${{ needs.check.outputs.qt6_version }}
+      QT_FORCE_STDERR_LOGGING: '1'
     defaults:
       run:
         shell: pwsh
