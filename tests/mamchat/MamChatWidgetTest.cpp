@@ -892,6 +892,145 @@ private slots:
         QTRY_COMPARE(excerpt->toPlainText(), QString("Updated original"));
     }
 
+    void replyPreviewClickNavigatesToOriginalMessage()
+    {
+        MamChatWidget chat;
+        chat.resize(480, 230);
+        chat.setHistoryLoading(true);
+        auto original = message(QStringLiteral("original"), QStringLiteral("This is the original message."));
+        original.setUserId(QStringLiteral("peer@example.org/phone"));
+        original.setReactionTargetId(QStringLiteral("origin-id"));
+        chat.appendMessage(original);
+        for (int i = 1; i < 35; ++i)
+            chat.appendMessage(message(QStringLiteral("intermediate-%1").arg(i),
+                                       QStringLiteral("Ordinary conversation message"), i));
+
+        auto reply = message(QStringLiteral("reply"), QStringLiteral("I agree with that."), 36, true);
+        reply.setReply({ QStringLiteral("origin-id"), QStringLiteral("peer@example.org"),
+                         QStringLiteral("Peer"), QStringLiteral("Fallback text") });
+        chat.appendMessage(reply);
+        chat.show();
+        chat.scrollToEnd();
+        QTRY_VERIFY(chat.itemWidget(35));
+        auto *preview = chat.itemWidget(35)->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview"));
+        QVERIFY(preview && preview->property("replyResolved").toBool());
+        QVERIFY(preview->navigationEnabled());
+        QTRY_VERIFY(chat.visibleRange().contains(35));
+        QVERIFY(!chat.visibleRange().contains(0));
+
+        // A click inside the quoted excerpt navigates, without selecting a
+        // whole message or relying on the quoted row's current index.
+        auto *excerpt = preview->findChild<ChatMessageText *>(QStringLiteral("previewText"));
+        QVERIFY(excerpt);
+        QTest::mouseClick(excerpt->viewport(), Qt::LeftButton, Qt::NoModifier, QPoint(6, 6));
+        QTRY_VERIFY(chat.visibleRange().contains(0));
+        QCOMPARE(chat.selectedMessageCount(), 0);
+
+        chat.scrollToEnd();
+        QTRY_VERIFY(chat.itemWidget(35));
+        preview = chat.itemWidget(35)->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview"));
+        QTest::mouseClick(preview->findChild<QLabel *>(QStringLiteral("previewTitle")), Qt::LeftButton);
+        QTRY_VERIFY(chat.visibleRange().contains(0));
+    }
+
+    void replyPreviewDoesNotNavigateOnShowMoreOrUnknownTarget()
+    {
+        MamChatWidget chat;
+        chat.resize(480, 250);
+        chat.setHistoryLoading(true);
+        auto original = message(QStringLiteral("original"),
+                                QStringLiteral("First line of the quote\\nSecond line\\nThird line\\n"
+                                               "Fourth line\\nFifth line\\nSixth line"));
+        original.setReactionTargetId(QStringLiteral("origin-id"));
+        chat.appendMessage(original);
+        for (int i = 1; i < 30; ++i)
+            chat.appendMessage(message(QStringLiteral("middle-%1").arg(i),
+                                       QStringLiteral("Another message"), i));
+        auto reply = message(QStringLiteral("reply"), QStringLiteral("New message"), 30, true);
+        reply.setReply({ QStringLiteral("origin-id"), {}, QStringLiteral("Peer"),
+                         QStringLiteral("Fallback") });
+        chat.appendMessage(reply);
+        auto orphan = message(QStringLiteral("orphan"), QStringLiteral("Latest message"), 31, true);
+        orphan.setReply({ QStringLiteral("missing-id"), {}, QStringLiteral("Peer"),
+                          QStringLiteral("Not available") });
+        chat.appendMessage(orphan);
+        chat.show();
+        chat.scrollToEnd();
+        QTRY_VERIFY(chat.itemWidget(30) && chat.itemWidget(31));
+        auto *preview = chat.itemWidget(30)->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview"));
+        QVERIFY(preview && preview->navigationEnabled());
+        auto *more = preview->findChild<LinkButton *>(QStringLiteral("previewShowMore"));
+        QTRY_VERIFY(more->isVisible());
+        QVERIFY(!chat.visibleRange().contains(0));
+        QTest::mouseClick(more, Qt::LeftButton);
+        QVERIFY(preview->isExpanded());
+        QVERIFY(!chat.visibleRange().contains(0));
+
+        auto *missing = chat.itemWidget(31)->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview"));
+        QVERIFY(missing && !missing->navigationEnabled());
+        QTest::mouseClick(missing->findChild<QLabel *>(QStringLiteral("previewTitle")), Qt::LeftButton);
+        QCoreApplication::processEvents();
+        QVERIFY(!chat.visibleRange().contains(0));
+    }
+
+    void clickablePreviewPreservesSelectionAndLinks()
+    {
+        QWidget window;
+        window.resize(480, 280);
+        auto *layout = new QVBoxLayout(&window);
+        auto *preview = new MessagePreview(Qt::gray, {}, &window);
+        layout->addWidget(preview);
+        layout->addStretch();
+        preview->setRichContent(QStringLiteral("Author"),
+                                QStringLiteral("Some selectable text and "
+                                               "<a href='https://example.org'>a link</a>."));
+        preview->setNavigationEnabled(true);
+        QSignalSpy activated(preview, &MessagePreview::activated);
+        auto *excerpt = preview->findChild<ChatMessageText *>(QStringLiteral("previewText"));
+        int linksOpened = 0;
+        excerpt->setLinkHandler([&](const QString &) {
+            ++linksOpened;
+            return true;
+        });
+        window.show();
+        QTRY_VERIFY(excerpt->height() > 0);
+        const QPoint from(4, excerpt->fontMetrics().height() / 2);
+        const QPoint to(from.x() + QApplication::startDragDistance() + 70, from.y());
+        QTest::mousePress(excerpt->viewport(), Qt::LeftButton, Qt::NoModifier, from);
+        QTest::mouseMove(excerpt->viewport(), to);
+        QTest::mouseRelease(excerpt->viewport(), Qt::LeftButton, Qt::NoModifier, to);
+        QCOMPARE(activated.size(), 0);
+
+        auto linkCursor = excerpt->document()->find(QStringLiteral("a link"));
+        QVERIFY(!linkCursor.isNull());
+        // QTextDocument::find() leaves the cursor at the end of the match.
+        // Position it inside the anchor, not after the closing tag.
+        linkCursor.setPosition(linkCursor.selectionStart() + 2);
+        const QPoint linkPoint = excerpt->cursorRect(linkCursor).center();
+        QCOMPARE(excerpt->anchorAt(linkPoint), QStringLiteral("https://example.org"));
+        QTest::mouseClick(excerpt->viewport(), Qt::LeftButton, Qt::NoModifier, linkPoint);
+        QCOMPARE(activated.size(), 0);
+        QCOMPARE(linksOpened, 1);
+
+        QTest::mouseClick(preview->findChild<QLabel *>(QStringLiteral("previewTitle")), Qt::LeftButton);
+        QCOMPARE(activated.size(), 1);
+        // A child button handles its own click. It must never bubble up as
+        // activation, even when the preview itself is navigable.
+        auto *footer = new QWidget(preview);
+        auto *controls = new QHBoxLayout(footer);
+        auto *action = new QPushButton(QStringLiteral("Download"), footer);
+        controls->addWidget(action);
+        preview->setFooter(footer);
+        QSignalSpy actionClicked(action, &QPushButton::clicked);
+        QTest::mouseClick(action, Qt::LeftButton);
+        QCOMPARE(actionClicked.size(), 1);
+        QCOMPARE(activated.size(), 1);
+
+        preview->setNavigationEnabled(false);
+        QTest::mouseClick(preview->findChild<QLabel *>(QStringLiteral("previewTitle")), Qt::LeftButton);
+        QCOMPARE(activated.size(), 1);
+    }
+
     void replyPreviewShowsTheQuotedMessageWithoutNestedQuotes()
     {
         FileSharingDeviceOpener opener;

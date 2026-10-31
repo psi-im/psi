@@ -3,16 +3,87 @@
 #include "ChatMessageText.h"
 #include "LinkButton.h"
 #include <QAbstractTextDocumentLayout>
+#include <QApplication>
 #include <QEvent>
 #include <QFontMetrics>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QMouseEvent>
+#include <QTextCursor>
+#include <QTextImageFormat>
 #include <QPushButton>
 #include <QResizeEvent>
 #include <QScrollBar>
 #include <QTextDocument>
 #include <QTimer>
 #include <QVBoxLayout>
+
+// Ordinary mouse clicks should reach the preview only when its child controls
+// have nothing interactive to handle. Text selection and links stay native.
+namespace {
+class PreviewTitle final : public QLabel {
+public:
+    explicit PreviewTitle(QWidget *parent) : QLabel(parent) { }
+    void setNavigateOnClick(bool enabled) { navigateOnClick_ = enabled; }
+protected:
+    void mouseReleaseEvent(QMouseEvent *event) override
+    {
+        QLabel::mouseReleaseEvent(event);
+        if (navigateOnClick_ && event->button() == Qt::LeftButton && event->modifiers() == Qt::NoModifier
+            && !hasSelectedText())
+            event->ignore(); // An unselected ordinary click propagates to the frame.
+    }
+private:
+    bool navigateOnClick_ = false;
+};
+
+class PreviewText final : public ChatMessageText {
+public:
+    explicit PreviewText(QWidget *parent) : ChatMessageText(parent) { }
+    void setNavigateOnClick(bool enabled) { navigateOnClick_ = enabled; }
+protected:
+    bool imageAtPoint(const QPoint &point) const
+    {
+        for (auto block = document()->begin(); block.isValid(); block = block.next()) {
+            for (auto it = block.begin(); !it.atEnd(); ++it) {
+                const auto fragment = it.fragment();
+                if (!fragment.isValid() || !fragment.charFormat().isImageFormat())
+                    continue;
+                const QTextImageFormat format = fragment.charFormat().toImageFormat();
+                QTextCursor cursor(document());
+                cursor.setPosition(fragment.position());
+                const QSize size(qRound(format.width()), qRound(format.height()));
+                if (size.isValid() && QRect(cursorRect(cursor).topLeft(), size).contains(point))
+                    return true;
+            }
+        }
+        return false;
+    }
+    void mousePressEvent(QMouseEvent *event) override
+    {
+        ordinaryPress_ = navigateOnClick_ && event->button() == Qt::LeftButton
+            && event->modifiers() == Qt::NoModifier && anchorAt(event->pos()).isEmpty()
+            && !imageAtPoint(event->pos());
+        pressPos_ = event->pos();
+        ChatMessageText::mousePressEvent(event);
+    }
+    void mouseReleaseEvent(QMouseEvent *event) override
+    {
+        const bool unclaimed = ordinaryPress_ && event->button() == Qt::LeftButton
+            && event->modifiers() == Qt::NoModifier
+            && (event->pos() - pressPos_).manhattanLength() <= QApplication::startDragDistance()
+            && anchorAt(event->pos()).isEmpty() && !imageAtPoint(event->pos());
+        ordinaryPress_ = false;
+        ChatMessageText::mouseReleaseEvent(event);
+        if (unclaimed && !textCursor().hasSelection())
+            event->ignore(); // Only then can Qt propagate to MessagePreview.
+    }
+private:
+    bool navigateOnClick_ = false;
+    bool ordinaryPress_ = false;
+    QPoint pressPos_;
+};
+}
 
 MessagePreview::MessagePreview(const QColor &barColor, const QColor &textColor, QWidget *parent) :
     QFrame(parent), barColor_(barColor), textColor_(textColor)
@@ -35,7 +106,7 @@ MessagePreview::MessagePreview(const QColor &barColor, const QColor &textColor, 
     column_->setSpacing(0);
     layout->addLayout(column_, 1);
     auto *header = new QHBoxLayout;
-    title_       = new QLabel(this);
+    title_       = new PreviewTitle(this);
     title_->setObjectName(QStringLiteral("previewTitle"));
     title_->setTextFormat(Qt::PlainText);
     title_->setTextInteractionFlags(Qt::TextSelectableByMouse);
@@ -55,7 +126,7 @@ MessagePreview::MessagePreview(const QColor &barColor, const QColor &textColor, 
     connect(close_, &QPushButton::clicked, this, &MessagePreview::dismissed);
     column_->addLayout(header);
     // The same view as a message's text: rich text, links, emoticons and media.
-    text_ = new ChatMessageText(this);
+    text_ = new PreviewText(this);
     text_->setObjectName(QStringLiteral("previewText"));
     text_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed); // updatePreview() sets the height.
     // Media that arrives later (a downloaded image) changes the height.
@@ -69,6 +140,10 @@ MessagePreview::MessagePreview(const QColor &barColor, const QColor &textColor, 
         });
     });
     column_->addWidget(text_);
+    // Track the press for drag detection, but never activate a preview before
+    // the child has had a chance to consume its mouse release.
+    title_->installEventFilter(this);
+    text_->viewport()->installEventFilter(this);
     toggle_ = new LinkButton(this);
     toggle_->setObjectName(QStringLiteral("previewShowMore"));
     column_->addWidget(toggle_, 0, Qt::AlignLeft);
@@ -146,6 +221,73 @@ void MessagePreview::setTitle(const QString &title)
 }
 
 void MessagePreview::setClosable(bool enabled) { close_->setVisible(enabled); }
+
+void MessagePreview::setNavigationEnabled(bool enabled)
+{
+    if (navigationEnabled_ == enabled)
+        return;
+    navigationEnabled_ = enabled;
+    pressedTarget_ = nullptr;
+    static_cast<PreviewTitle *>(title_)->setNavigateOnClick(enabled);
+    static_cast<PreviewText *>(text_)->setNavigateOnClick(enabled);
+    if (enabled) {
+        setCursor(Qt::PointingHandCursor);
+        title_->setCursor(Qt::PointingHandCursor);
+    } else {
+        unsetCursor();
+        title_->unsetCursor();
+    }
+}
+
+bool MessagePreview::eventFilter(QObject *target, QEvent *event)
+{
+    if (!navigationEnabled_ || (target != title_ && target != text_->viewport()))
+        return QFrame::eventFilter(target, event);
+    if (event->type() == QEvent::MouseButtonPress) {
+        auto *mouse = static_cast<QMouseEvent *>(event);
+        pressedTarget_ = nullptr;
+        if (mouse->button() == Qt::LeftButton && mouse->modifiers() == Qt::NoModifier
+            && (target != text_->viewport() || text_->anchorAt(mouse->pos()).isEmpty())) {
+            pressedTarget_ = target;
+            pressedPosition_ = static_cast<QWidget *>(target)->mapTo(this, mouse->pos());
+        }
+    } else if (event->type() == QEvent::MouseMove && pressedTarget_) {
+        auto *mouse = static_cast<QMouseEvent *>(event);
+        const QPoint at = static_cast<QWidget *>(target)->mapTo(this, mouse->pos());
+        if ((at - pressedPosition_).manhattanLength() > QApplication::startDragDistance())
+            pressedTarget_ = nullptr;
+    }
+    return QFrame::eventFilter(target, event);
+}
+
+void MessagePreview::mousePressEvent(QMouseEvent *event)
+{
+    if (navigationEnabled_ && event->button() == Qt::LeftButton && event->modifiers() == Qt::NoModifier
+        && !pressedTarget_) {
+        const QWidget *hit = childAt(event->pos());
+        if (!hit || hit == bar_) {
+            pressedTarget_ = this;
+            pressedPosition_ = event->pos();
+        }
+    }
+    QFrame::mousePressEvent(event);
+}
+
+void MessagePreview::mouseReleaseEvent(QMouseEvent *event)
+{
+    const bool activate = navigationEnabled_ && pressedTarget_ && event->button() == Qt::LeftButton
+        && event->modifiers() == Qt::NoModifier && rect().contains(event->pos())
+        && (event->pos() - pressedPosition_).manhattanLength() <= QApplication::startDragDistance()
+        && (pressedTarget_ != text_->viewport() || !text_->textCursor().hasSelection())
+        && (pressedTarget_ != title_ || !title_->hasSelectedText());
+    pressedTarget_ = nullptr;
+    if (activate) {
+        emit activated();
+        event->accept();
+        return;
+    }
+    QFrame::mouseReleaseEvent(event);
+}
 
 void MessagePreview::setFooter(QWidget *widget)
 {

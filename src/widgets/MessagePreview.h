@@ -3,6 +3,7 @@
 #define MESSAGEPREVIEW_H
 #include <QColor>
 #include <QFrame>
+#include <QPoint>
 class QLabel;
 class QPushButton;
 class ChatMessageText;
@@ -24,6 +25,10 @@ public:
     void setRichContent(const QString &title, const QString &html, bool withoutQuotedLines = false);
     void setMediaOpener(FileSharingDeviceOpener *opener);
     void setClosable(bool);
+    // Reply previews can navigate to their referenced message. Other preview
+    // uses (attachments, links, composer) remain non-navigable.
+    void setNavigationEnabled(bool enabled);
+    bool navigationEnabled() const { return navigationEnabled_; }
     // Optional controls below the preview text, owned by the preview.
     void setFooter(QWidget *widget);
     bool isExpanded() const { return expanded_; }
@@ -32,8 +37,12 @@ public:
 signals:
     void dismissed();
     void heightChanged();
+    void activated();
 
 protected:
+    bool eventFilter(QObject *target, QEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
     void resizeEvent(QResizeEvent *) override;
     void changeEvent(QEvent *) override;
 
@@ -53,5 +62,8 @@ private:
     LinkButton   *toggle_ = nullptr;
     QPushButton  *close_ = nullptr;
     bool          expanded_ = false;
+    bool          navigationEnabled_ = false;
+    QObject      *pressedTarget_ = nullptr;
+    QPoint        pressedPosition_;
 };
 #endif
