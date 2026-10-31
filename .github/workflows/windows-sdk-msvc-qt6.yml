@@ -127,6 +127,23 @@ jobs:
         with:
           arch: x64
 
+      - name: Verify released native QCA before building dependencies
+        run: |
+          New-Item -ItemType Directory -Force native-qca-runtime\crypto | Out-Null
+          Copy-Item qca-release\bin\qca3-qt6.dll native-qca-runtime -Force
+          Copy-Item qca-release\lib\qca3-qt6\crypto\qca-wincrypto.dll native-qca-runtime\crypto -Force
+          Copy-Item qca-release\lib\qca3-qt6\crypto\qca-cyrus-sasl.dll native-qca-runtime\crypto -Force
+          cmake -S tests/crypto -B crypto-preflight -G Ninja `
+            -DCMAKE_BUILD_TYPE=Release `
+            "-DCMAKE_PREFIX_PATH=$pwd/qca-release;$env:QT_ROOT_DIR"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake --build crypto-preflight --parallel 2
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $env:PATH = "$pwd\native-qca-runtime;$env:QT_ROOT_DIR\bin;$env:PATH"
+          $env:QCA_PLUGIN_PATH = "$pwd\native-qca-runtime"
+          ctest --test-dir crypto-preflight --verbose --output-on-failure
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Resolve vcpkg cache key
         id: vcpkg-key
         run: |

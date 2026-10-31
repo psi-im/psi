@@ -2,6 +2,7 @@
 #include "qcaproviderpolicy.h"
 #include <QSignalSpy>
 #include <QTest>
+#include <cstdio>
 #include <windows.h>
 #ifdef QCA_STATIC
 #include <QtPlugin>
@@ -10,6 +11,12 @@ Q_IMPORT_PLUGIN(qca_wincrypto)
 
 class NativeProviderTest : public QObject {
     Q_OBJECT
+public:
+    NativeProviderTest()
+    {
+        // Keep the last completed test visible if the process crashes on Windows.
+        std::setvbuf(stdout, nullptr, _IONBF, 0);
+    }
 private Q_SLOTS:
     void nativeOnly()
     {
