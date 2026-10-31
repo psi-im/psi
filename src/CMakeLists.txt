@@ -32,16 +32,6 @@ set(REQUIRED_QT_COMPONENTS Widgets Core Gui Xml Network Concurrent Multimedia Sv
 if(QT_DEFAULT_MAJOR_VERSION GREATER_EQUAL 6)
     list(APPEND REQUIRED_QT_COMPONENTS SvgWidgets)
 endif()
-if(IS_WEBKIT)
-    list(APPEND REQUIRED_QT_COMPONENTS WebKit WebKitWidgets)
-    set(WEBKIT_LIBS Qt${QT_DEFAULT_MAJOR_VERSION}::WebKit Qt${QT_DEFAULT_MAJOR_VERSION}::WebKitWidgets)
-elseif(IS_WEBENGINE)
-    if(QT_DEFAULT_MAJOR_VERSION GREATER_EQUAL 6)
-        set(CORE_SUFFIX Core)
-    endif()
-    list(APPEND REQUIRED_QT_COMPONENTS WebEngine${CORE_SUFFIX} WebEngineWidgets WebChannel)
-    list(APPEND WEBKIT_LIBS Qt${QT_DEFAULT_MAJOR_VERSION}::WebEngine${CORE_SUFFIX} Qt${QT_DEFAULT_MAJOR_VERSION}::WebEngineWidgets Qt${QT_DEFAULT_MAJOR_VERSION}::WebChannel)
-endif()
 
 if(LINUX)
     if(USE_DBUS)
@@ -98,7 +88,6 @@ set(QT_LIBRARIES
     Qt${QT_DEFAULT_MAJOR_VERSION}::Core
     Qt${QT_DEFAULT_MAJOR_VERSION}::Network
     Qt${QT_DEFAULT_MAJOR_VERSION}::Xml
-    ${WEBKIT_LIBS}
     Qt${QT_DEFAULT_MAJOR_VERSION}::Concurrent
     Qt${QT_DEFAULT_MAJOR_VERSION}::Multimedia
     Qt${QT_DEFAULT_MAJOR_VERSION}::Svg
@@ -198,12 +187,6 @@ endif()
 #Prepare and generate config.h file
 string(TIMESTAMP PSI_COMPILATION_DATE "%Y-%m-%d" UTC)
 string(TIMESTAMP PSI_COMPILATION_TIME "%H:%M:%S" UTC)
-
-if(IS_WEBKIT)
-    set(PSI_VER_SUFFIX ", webkit")
-elseif(IS_WEBENGINE)
-    set(PSI_VER_SUFFIX ", webengine")
-endif()
 
 set(CLIENT_CAPS_NODE "https://psi-im.org")
 if( NOT PSI_PLUS )
@@ -384,9 +367,6 @@ set(RESOURCES
     ${PROJECT_SOURCE_DIR}/psi.qrc
     ${ICONSETSQRC_OUTPUT_FILE}
 )
-if(IS_WEBKIT OR IS_WEBENGINE)
-    list(APPEND RESOURCES ${PROJECT_SOURCE_DIR}/themes/chatview.qrc)
-endif()
 
 Qt_add_resources(QRC_SOURCES ${RESOURCES})
 qt_wrap_ui(UI_FORMS ${FORMS})
@@ -432,39 +412,12 @@ add_executable(${PROJECT_NAME}
     ${RC_FILE}
 )
 
-#Generate .rc file for windows with Qt6
-#[[if(WIN32 AND (${QT_DEFAULT_MAJOR_VERSION} GREATER_EQUAL 6))
-    set_target_properties(${PROJECT_NAME} PROPERTIES
-        WIN32_EXECUTABLE TRUE
-        QT_TARGET_VERSION "${APP_VERSION}"
-        QT_TARGET_COMPANY_NAME "${COMPANY_NAME}"
-        QT_TARGET_DESCRIPTION "${APP_DESCRIPTION}"
-        QT_TARGET_COPYRIGHT "${APP_COPYRIGHT}"
-        QT_TARGET_PRODUCT_NAME "${APP_NAME}"
-        QT_TARGET_COMMENTS "${APP_COMMENTS}"
-        QT_TARGET_INTERNALNAME "${APP_NAME}"
-        QT_TARGET_RC_ICONS "${PROJECT_SOURCE_DIR}/win32/${APP_ICON}"
-    )
-    _qt_internal_generate_win32_rc_file(${PROJECT_NAME})
-endif()]]
-
 include(fix-codestyle)
 
-#Add webkit/webengine suffix to output binary name
-if(VERBOSE_PROGRAM_NAME)
-    if(IS_WEBKIT)
-        set(VERBOSE_SUFFIX "-webkit")
-    elseif(IS_WEBENGINE)
-        set(VERBOSE_SUFFIX "-webengine")
-    endif()
-endif()
-
 #Add portable suffix to output binary name
-if(ENABLE_PORTABLE OR VERBOSE_PROGRAM_NAME)
-    if(ENABLE_PORTABLE)
-        set(PORTABLE_SUFFIX "-portable")
-    endif()
-    set(VERBOSED_NAME "${PROJECT_NAME}${VERBOSE_SUFFIX}${PORTABLE_SUFFIX}")
+if(ENABLE_PORTABLE)
+    set(PORTABLE_SUFFIX "-portable")
+    set(VERBOSED_NAME "${PROJECT_NAME}${PORTABLE_SUFFIX}")
     set_target_properties(${PROJECT_NAME}
         PROPERTIES
         OUTPUT_NAME
@@ -493,11 +446,6 @@ if(WIN32 AND MSVC)
         gdi32
         advapi32
     )
-    if(IS_WEBENGINE)
-        list(APPEND EXTRA_LIBS
-            imm32
-        )
-    endif()
 endif()
 
 target_link_libraries(${PROJECT_NAME}
@@ -554,12 +502,6 @@ if(LINUX AND USE_X11)
     target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_X11)
     if(LIMIT_X11_USAGE)
         target_compile_definitions(${PROJECT_NAME} PRIVATE LIMIT_X11_USAGE)
-    endif()
-endif()
-if(IS_WEBKIT OR IS_WEBENGINE)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE WEBKIT)
-    if(IS_WEBENGINE)
-        target_compile_definitions(${PROJECT_NAME} PRIVATE WEBENGINE)
     endif()
 endif()
 if(ISDEBUG AND CHATVIEW_CORRECTION_DEBUG)
@@ -624,9 +566,6 @@ if(LINUX)
     set(MAIN_COMPONENT im)
     install(TARGETS ${PROJECT_NAME} DESTINATION ${BIN_INSTALL_DIR} COMPONENT ${MAIN_COMPONENT})
     if(NOT ONLY_BINARY)
-        if(NOT VERBOSED_NAME)
-            set(VERBOSED_NAME ${PROJECT_NAME})
-        endif()
         #Generate .desktop file
         include(generate_desktopfile)
         install(FILES ${OUT_DESK_FILE} DESTINATION ${APPS_INSTALL_DIR} COMPONENT ${MAIN_COMPONENT})
@@ -727,16 +666,7 @@ elseif(APPLE)
     endif()
     # end of qca hack
 
-    # Special hack for QtWebEngineProcess executable from Homebrew
-    if(IS_WEBENGINE AND HOMEBREW)
-        set(QtWebEngineProcess_path "Versions/5/Helpers/QtWebEngineProcess.app")
-        set(QtWebEngineProcess_file "${QtWebEngineProcess_path}/Contents/MacOS/QtWebEngineProcess")
-        set(QtWebEngineCore_path "${CLIENT_NAME}.app/Contents/Frameworks/QtWebEngineCore.framework")
-        set(MACDEPLOYQT_EXTRA_OPTS "-executable=${QtWebEngineCore_path}/${QtWebEngineProcess_file}")
-    else()
-        set(MACDEPLOYQT_EXTRA_OPTS "")
-    endif()
-    # end of QtWebEngineProcess hack
+    set(MACDEPLOYQT_EXTRA_OPTS "")
 
     # Simple and smart hack for using of macdeployqt to fix Psi plugins
     if(ENABLE_PLUGINS AND (NOT ONLY_BINARY))
@@ -766,9 +696,6 @@ elseif(APPLE)
             install(FILES ${PROJECT_SOURCE_DIR}/client_icons.txt DESTINATION "${PROJECT_OUTPUT_DATA_DIR}")
             install(DIRECTORY ${OTHER_FILES} DESTINATION "${PROJECT_OUTPUT_DATA_DIR}")
             install(DIRECTORY ${PROJECT_SOURCE_DIR}/iconsets DESTINATION ${PROJECT_OUTPUT_DATA_DIR} REGEX ${EXCLUDE_REGEXP} EXCLUDE)
-            if(IS_WEBKIT OR IS_WEBENGINE)
-                install(DIRECTORY ${PROJECT_SOURCE_DIR}/themes DESTINATION "${PROJECT_OUTPUT_DATA_DIR}")
-            endif()
             if(LANGS_EXISTS)
                 install(FILES ${QM} DESTINATION "${PROJECT_OUTPUT_DATA_DIR}/translations")
             endif()

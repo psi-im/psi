@@ -111,6 +111,7 @@ list(APPEND HEADERS
     chatsplitter.h
     chatview.h
     chatviewcommon.h
+    chatview_te.h
     desktopcolorpalette.h
     coloropt.h
     common.h
@@ -375,6 +376,7 @@ list(APPEND SOURCES
     chateditproxy.cpp
     chatsplitter.cpp
     chatviewcommon.cpp
+    chatview_te.cpp
     coloropt.cpp
     common.cpp
     conferencebookmark.cpp
@@ -546,33 +548,3 @@ list(APPEND SOURCES
 include(${PROJECT_SOURCE_DIR}/3rdparty/qite/libqite/libqite.cmake)
 list(APPEND HEADERS ${qite_HEADERS})
 list(APPEND SOURCES ${qite_SOURCES})
-
-if(IS_WEBKIT OR IS_WEBENGINE)
-    if(BUNDLED_IRIS)
-        include_directories(${PROJECT_SOURCE_DIR}/iris/include/iris)
-    endif()
-    list(APPEND HEADERS
-        chatview_webkit.h
-        chatviewtheme.h
-        chatviewtheme_p.h
-        chatviewthemeprovider.h
-        chatviewthemeprovider_priv.h
-        jsutil.h
-        webview.h
-        )
-    list(APPEND SOURCES
-        chatview_webkit.cpp
-        chatviewtheme.cpp
-        chatviewthemeprovider.cpp
-        chatviewthemeprovider_priv.cpp
-        jsutil.cpp
-        webview.cpp
-        )
-else()
-    list(APPEND HEADERS
-        chatview_te.h
-        )
-    list(APPEND SOURCES
-        chatview_te.cpp
-        )
-endif()
