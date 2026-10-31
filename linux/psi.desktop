@@ -1,5 +1,5 @@
 [Desktop Entry]
-# This is the spec version, not the application version
+# This is the spec version, *not* the application version
 Version=1.1
 Type=Application
 Name=Psi
