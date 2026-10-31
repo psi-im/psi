@@ -2550,6 +2550,11 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
         preview->setFont(font());
         preview->setMediaOpener(mediaOpener_);
         showReply(preview, mv.reply());
+        connect(preview, &MessagePreview::activated, this, [this, reply = mv.reply()] {
+            // Navigation can evict the clicked widget. Defer it until the mouse
+            // release has completed, and resolve the stable ID again then.
+            QTimer::singleShot(0, this, [this, reply] { navigateToReply(reply); });
+        });
         connect(preview, &MessagePreview::heightChanged, this, [this, key = items_.at(index).key] {
             const int at = indexOfKey(key);
             if (at >= 0) {
@@ -3163,34 +3168,54 @@ void MamChatWidget::showReply(MessagePreview *preview, const ChatReply &reply) c
         html = reply.text.isEmpty() ? tr("Referenced message is not available locally").toHtmlEscaped()
                                     : TextUtil::linkify(TextUtil::plain2rich(reply.text));
     preview->setProperty("replyResolved", resolved);
+    preview->setNavigationEnabled(resolved);
     // An unknown author gets no title: the quote styling says enough.
     preview->setRichContent(author, html, true);
 }
 
-bool MamChatWidget::resolveReply(const ChatReply &reply, QString &author, QString &html) const
+int MamChatWidget::replyTargetIndex(const ChatReply &reply) const
 {
-    // A plain-text quote has no id: never match it to a row, whose own
-    // reaction target may be just as empty in a room without stanza-ids.
+    // Only XEP-0461 references with an unambiguous, sender-verified identity
+    // may navigate. Plain-text fallback quotes cannot identify a target.
     if (!reply.hasReference())
-        return false;
-    const Row *match = nullptr;
-    for (const auto &candidate : items_) {
+        return -1;
+    int match = -1;
+    for (int i = 0; i < items_.size(); ++i) {
+        const auto &candidate = items_.at(i);
         const QString sender = candidate.message.userId();
         const bool sameSender = reply.to.isEmpty() || sender == reply.to
             || (!groupChat_ && !reply.to.contains(QLatin1Char('/')) && sender.section(QLatin1Char('/'), 0, 0) == reply.to);
         if (candidate.message.type() != MessageView::Message || !sameSender)
             continue;
         if (reactionTarget(candidate.message) == reply.id || (!groupChat_ && candidate.stanzaIds.contains(reply.id))) {
-            if (match)
-                return false; // Reused IDs are ambiguous; keep the explicit fallback.
-            match = &candidate;
+            if (match >= 0)
+                return -1; // Reused IDs are ambiguous; do not guess.
+            match = i;
         }
     }
-    if (!match)
+    return match;
+}
+
+bool MamChatWidget::resolveReply(const ChatReply &reply, QString &author, QString &html) const
+{
+    const int at = replyTargetIndex(reply);
+    if (at < 0)
         return false;
-    author = match->message.nick();
-    html   = richMessage(*match);
+    author = items_.at(at).message.nick();
+    html   = richMessage(items_.at(at));
     return true;
+}
+
+void MamChatWidget::navigateToReply(const ChatReply &reply)
+{
+    const int at = replyTargetIndex(reply);
+    if (at < 0)
+        return; // Not loaded (or ambiguous): never jump to an unrelated row.
+    const int logical = historySource_.logicalIndex(at);
+    if (logical < 0)
+        return;
+    scrollToIndex(logical, Alignment::Center);
+    lockViewportToItem(logical, Alignment::Center, 1500);
 }
 
 void MamChatWidget::refreshReplyPreviews(bool force)
