@@ -31,7 +31,7 @@ jobs:
       - name: Initialize pinned submodules
         run: |
           git submodule update --init --depth 1 \
-            3rdparty/http-parser 3rdparty/qhttp 3rdparty/qite iris
+            3rdparty/http-parser 3rdparty/qhttp 3rdparty/qite 3rdparty/qsourcehighlite iris
       - name: Install Qt5 and Psi dependencies
         run: |
           sudo apt-get update
