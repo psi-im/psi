@@ -3,10 +3,12 @@
 #include "ChatMessageText.h"
 #include "LinkButton.h"
 #include <QAbstractTextDocumentLayout>
+#include <QApplication>
 #include <QEvent>
 #include <QFontMetrics>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QMouseEvent>
 #include <QPushButton>
 #include <QResizeEvent>
 #include <QScrollBar>
@@ -69,6 +71,11 @@ MessagePreview::MessagePreview(const QColor &barColor, const QColor &textColor, 
         });
     });
     column_->addWidget(text_);
+    // Observe only the preview surface, author and excerpt. In particular the
+    // Show more/less button and optional footer are never navigation targets.
+    installEventFilter(this);
+    title_->installEventFilter(this);
+    text_->viewport()->installEventFilter(this);
     toggle_ = new LinkButton(this);
     toggle_->setObjectName(QStringLiteral("previewShowMore"));
     column_->addWidget(toggle_, 0, Qt::AlignLeft);
@@ -146,6 +153,56 @@ void MessagePreview::setTitle(const QString &title)
 }
 
 void MessagePreview::setClosable(bool enabled) { close_->setVisible(enabled); }
+
+void MessagePreview::setNavigationEnabled(bool enabled)
+{
+    if (navigationEnabled_ == enabled)
+        return;
+    navigationEnabled_ = enabled;
+    pressedTarget_ = nullptr;
+    if (enabled) {
+        setCursor(Qt::PointingHandCursor);
+        title_->setCursor(Qt::PointingHandCursor);
+    } else {
+        unsetCursor();
+        title_->unsetCursor();
+    }
+}
+
+bool MessagePreview::eventFilter(QObject *target, QEvent *event)
+{
+    if (!navigationEnabled_)
+        return QFrame::eventFilter(target, event);
+    const bool excerpt = target == text_->viewport();
+    if (target != this && target != title_ && !excerpt)
+        return QFrame::eventFilter(target, event);
+    if (event->type() == QEvent::MouseButtonPress) {
+        auto *mouse = static_cast<QMouseEvent *>(event);
+        pressedTarget_ = nullptr;
+        if (mouse->button() == Qt::LeftButton && mouse->modifiers() == Qt::NoModifier
+            && (!excerpt || text_->anchorAt(mouse->pos()).isEmpty())) {
+            pressedTarget_ = target;
+            pressedPosition_ = mouse->pos();
+        }
+    } else if (event->type() == QEvent::MouseMove && pressedTarget_ == target) {
+        const auto *mouse = static_cast<QMouseEvent *>(event);
+        if ((mouse->pos() - pressedPosition_).manhattanLength() > QApplication::startDragDistance())
+            pressedTarget_ = nullptr;
+    } else if (event->type() == QEvent::MouseButtonRelease) {
+        const auto *mouse = static_cast<QMouseEvent *>(event);
+        const bool clicked = mouse->button() == Qt::LeftButton && pressedTarget_ == target
+            && mouse->modifiers() == Qt::NoModifier
+            && (mouse->pos() - pressedPosition_).manhattanLength() <= QApplication::startDragDistance()
+            && (!excerpt || (text_->anchorAt(mouse->pos()).isEmpty()
+                             && !text_->textCursor().hasSelection()))
+            && (target != title_ || !title_->hasSelectedText());
+        pressedTarget_ = nullptr;
+        if (clicked)
+            emit activated();
+    }
+    // Always let QLabel/QTextEdit handle selection, links, and context menus.
+    return QFrame::eventFilter(target, event);
+}
 
 void MessagePreview::setFooter(QWidget *widget)
 {
