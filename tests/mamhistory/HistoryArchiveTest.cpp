@@ -137,7 +137,7 @@ private slots:
         QCOMPARE(resolvedRecord(db, messages.entries[1].eventId).value("m_text").toString(),
                  QStringLiteral("secret correction"));
         QCOMPARE(localRecords(db, key.account, key.peer, 0, 20).size(), 1);
-        QVERIFY(locallyDelete(db, root));
+        QVERIFY(scrubStoredMessage(db, key, root));
         QCOMPARE(localRecords(db, key.account, key.peer, 0, 20).size(), 0);
         QVERIFY(resolvedRecord(db, root).isEmpty());
         QVERIFY(resolvedRecord(db, messages.entries[1].eventId).isEmpty());
@@ -171,10 +171,104 @@ private slots:
         other.entries[0].body = QStringLiteral("other account's content");
         QVERIFY(storePage(db, key, "", 1, mine));
         QVERIFY(storePage(db, otherKey, "", 1, other));
-        QVERIFY(locallyDelete(db, mine.entries.first().eventId));
+        QVERIFY(scrubStoredMessage(db, key, mine.entries.first().eventId));
         QCOMPARE(resolvedRecord(db, other.entries.first().eventId).value("m_text").toString(),
                  QStringLiteral("other account's content"));
         QCOMPARE(localRecords(db, otherKey.account, otherKey.peer, 0, 10).size(), 1);
+    }
+
+    void scrubbedMessageRetainsIdentityAliases_data()
+    {
+        QTest::addColumn<bool>("replay");
+        QTest::newRow("state-reindex") << false;
+        QTest::newRow("MAM-replay") << true;
+    }
+    void scrubbedMessageRetainsIdentityAliases()
+    {
+        QFETCH(bool, replay);
+        QVERIFY(migrate(db));
+        auto messages = page({ "secret" }, true);
+        auto extra    = QJsonDocument::fromJson(messages.entries[0].extra.toUtf8()).object();
+        extra.insert("psi:origin", QStringLiteral("origin-alias"));
+        messages.entries[0].extra = QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact));
+        QVERIFY(storePage(db, key, "", 1, messages));
+        QCOMPARE(scalar("SELECT count(*) FROM message_state_refs WHERE kind=2 AND target='origin-alias'").toInt(), 1);
+        QVERIFY(scrubStoredMessage(db, key, messages.entries[0].eventId));
+        if (replay)
+            QVERIFY(storePage(db, key, "", 1, messages));
+        else
+            QVERIFY(backfillMessageStates(db));
+        QCOMPARE(scalar("SELECT count(*) FROM message_state_refs WHERE kind=2 AND target='origin-alias'").toInt(), 1);
+        QCOMPARE(scalar("SELECT count(*) FROM events WHERE m_text='' AND extra_data=''").toInt(), 1);
+        QCOMPARE(scalar("SELECT count(*) FROM archive_items WHERE xml=''").toInt(), 1);
+        QVERIFY(resolvedRecord(db, messages.entries[0].eventId).isEmpty());
+    }
+
+    void scrubbingRejectsWrongScopeAndProtocolEvents()
+    {
+        QVERIFY(migrate(db));
+        auto messages = page({ "message" }, true);
+        QVERIFY(storePage(db, key, "", 1, messages));
+        const auto id    = messages.entries[0].eventId;
+        auto       wrong = key;
+        wrong.account    = QStringLiteral("other-account");
+        QVERIFY(!scrubStoredMessage(db, wrong, id));
+        wrong      = key;
+        wrong.peer = QStringLiteral("other@example.org");
+        QVERIFY(!scrubStoredMessage(db, wrong, id));
+        wrong      = key;
+        wrong.room = true;
+        QVERIFY(!scrubStoredMessage(db, wrong, id));
+        QVERIFY(!scrubStoredMessage(db, key, 0));
+        QVERIFY(!scrubStoredMessage(db, key, id + 100));
+        QCOMPARE(resolvedRecord(db, id).value("m_text").toString(), QStringLiteral("hello"));
+
+        auto marker    = page({ });
+        marker.entries = { effect("read", "displayed", "message-client", 1) };
+        QVERIFY(storePage(db, key, "marker-edge", 1, marker));
+        QVERIFY(!scrubStoredMessage(db, key, marker.entries[0].eventId));
+        QCOMPARE(flags(id), int(MessageState::Displayed));
+        // A failed request must also release the transaction for a valid one.
+        QVERIFY(scrubStoredMessage(db, key, id));
+        QVERIFY(scrubStoredMessage(db, key, id));
+        QCOMPARE(scalar(QStringLiteral("SELECT message_flags FROM events WHERE id=%1").arg(id)).toInt(),
+                 int(MessageState::Displayed | MessageState::LocalDeleted));
+    }
+
+    void scrubbingRefusesAmbiguousCorrectionTargets()
+    {
+        QVERIFY(migrate(db));
+        auto messages                 = page({ "first", "second", "correction" }, true);
+        messages.entries[1].messageId = messages.entries[0].messageId;
+        messages.entries[1].extra     = messages.entries[0].extra;
+        messages.entries[2].replaceId = messages.entries[0].messageId;
+        QVERIFY(storePage(db, key, "", 3, messages));
+        QCOMPARE(scalar("SELECT count(*) FROM events").toInt(), 3);
+        QVERIFY(!scrubStoredMessage(db, key, messages.entries[2].eventId));
+        QCOMPARE(scalar("SELECT count(*) FROM events WHERE m_text='hello'").toInt(), 3);
+        QCOMPARE(scalar("SELECT count(*) FROM events WHERE (message_flags & 16)<>0").toInt(), 0);
+        QCOMPARE(scalar("SELECT count(*) FROM archive_items WHERE xml<>''").toInt(), 3);
+    }
+
+    void scrubbingFailureRollsBackEveryRevision()
+    {
+        QVERIFY(migrate(db));
+        auto messages                 = page({ "original", "correction" }, true);
+        messages.entries[1].replaceId = messages.entries[0].messageId;
+        QVERIFY(storePage(db, key, "", 2, messages));
+        QSqlQuery query(db);
+        QVERIFY(query.exec("CREATE TRIGGER reject_scrub BEFORE UPDATE OF xml ON archive_items "
+                           "WHEN old.uid='correction' AND new.xml='' "
+                           "BEGIN SELECT RAISE(ABORT,'simulated scrub failure'); END"));
+        QVERIFY(!scrubStoredMessage(db, key, messages.entries[1].eventId));
+        QCOMPARE(scalar("SELECT count(*) FROM events WHERE m_text='hello'").toInt(), 2);
+        QCOMPARE(scalar("SELECT count(*) FROM events WHERE (message_flags & 16)<>0").toInt(), 0);
+        QCOMPARE(scalar("SELECT count(*) FROM archive_items WHERE xml<>''").toInt(), 2);
+        QVERIFY(query.exec("DROP TRIGGER reject_scrub"));
+        QVERIFY(scrubStoredMessage(db, key, messages.entries[1].eventId));
+        QCOMPARE(scalar("SELECT count(*) FROM events WHERE m_text='' AND extra_data=''").toInt(), 2);
+        QCOMPARE(scalar("SELECT count(*) FROM archive_items WHERE xml=''").toInt(), 2);
+        QCOMPARE(scalar("SELECT count(*) FROM archive_page_items").toInt(), 2);
     }
 
     void confirmedResultRepairsAnUnverifiedProjection()
