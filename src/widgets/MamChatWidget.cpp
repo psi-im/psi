@@ -3681,7 +3681,11 @@ bool MamChatWidget::eventFilter(QObject *target, QEvent *event)
         pressedImageBody_.clear();
         auto *widget = qobject_cast<QWidget *>(target);
         auto *body = widget ? qobject_cast<ChatMessageText *>(widget->parentWidget()) : nullptr;
-        if (body && widget == body->viewport() && selectedKeys_.isEmpty()) {
+        // In a reply preview, clicking the quoted image navigates to the
+        // original message. Do not also open it in a separate image viewer.
+        const bool replyImage = body && body->parentWidget()
+            && body->parentWidget()->objectName() == QLatin1String("mamReplyPreview");
+        if (body && !replyImage && widget == body->viewport() && selectedKeys_.isEmpty()) {
             auto *mouse = static_cast<QMouseEvent *>(event);
             if (mouse->button() == Qt::LeftButton && mouse->modifiers() == Qt::NoModifier
                 && imageAt(body, mouse->pos())) {
