@@ -133,6 +133,7 @@ list(APPEND HEADERS
     debug.h
     desktoputil.h
     discodlg.h
+    discoitems_p.h
     dummystream.h
     edbsqlite.h
     eventdb.h
@@ -393,6 +394,7 @@ list(APPEND SOURCES
     debug.cpp
     desktoputil.cpp
     discodlg.cpp
+    discoitems.cpp
     dummystream.cpp
     historyarchive.cpp
     historymessagestate.cpp

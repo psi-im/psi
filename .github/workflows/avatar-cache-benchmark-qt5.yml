@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - 'src/avatars.cpp'
+      - 'src/disco*'
+      - 'tests/disco/**'
       - 'src/main.cpp'
       - 'CMakeLists.txt'
       - 'benchmarks/avatar-cache/**'
@@ -43,12 +45,16 @@ jobs:
         run: |
           cmake -S . -B build-benchmark -G Ninja \
             -DCMAKE_BUILD_TYPE=Release -DCHAT_TYPE=BASIC \
-            -DENABLE_AVATAR_CACHE_BENCHMARK=ON \
+            -DENABLE_AVATAR_CACHE_BENCHMARK=ON -DBUILD_TESTING=ON \
             -DBUNDLED_IRIS=ON -DBUNDLED_IRIS_ALL=OFF \
             -DIRIS_SYSTEM_QCA=2 -DIRIS_ENABLE_OMEMO=OFF \
             -DENABLE_OMEMO=OFF -DENABLE_PLUGINS=OFF \
             -DUSE_KEYCHAIN=OFF -DUSE_HUNSPELL=OFF -DUSE_SPARKLE=OFF
-          cmake --build build-benchmark --target psi --parallel 4
+          cmake --build build-benchmark --target psi discovery_items_test --parallel 4
+      - name: Test discovery items with Qt5
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: ctest --test-dir build-benchmark --output-on-failure --no-tests=error -R '^discovery_items$'
       - name: Benchmark actual MUC AvatarCache (non-gating timings)
         env:
           QT_QPA_PLATFORM: offscreen
