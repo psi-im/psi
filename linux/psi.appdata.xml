@@ -5,27 +5,32 @@
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-2.0+</project_license>
   <name>Psi</name>
-  <name xml:lang="ru">Psi</name>
-  <summary>The cross-platform XMPP client designed for experienced users</summary>
-  <summary xml:lang="ru">Кроссплатформенный XMPP клиент для опытных пользователей</summary>
+  <summary>Cross-platform XMPP messenger with calls and file sharing</summary>
+  <summary xml:lang="ru">Кроссплатформенный XMPP-мессенджер со звонками и передачей файлов</summary>
   <description>
     <p>
-      Psi is an XMPP client designed for experienced users. It is highly portable and runs on GNU/Linux, MS Windows, macOS, FreeBSD and Haiku.
+      Psi is a cross-platform XMPP messenger for direct and group chats.
+      It runs on GNU/Linux, Windows, macOS, FreeBSD and Haiku.
     </p>
     <p xml:lang="ru">
-      Psi - это стильный XMPP клиент для опытных пользователей. Он легко переносим на различные платформы и успешно работает на GNU/Linux, MS Windows, macOS, FreeBSD и Haiku.
+      Psi — кроссплатформенный XMPP-мессенджер для личных и групповых чатов.
+      Он работает в GNU/Linux, Windows, macOS, FreeBSD и Haiku.
     </p>
     <p>Features:</p>
-    <p xml:lang="ru">Особенности:</p>
+    <p xml:lang="ru">Возможности:</p>
     <ul>
       <li>Native look and feel on all supported systems</li>
       <li xml:lang="ru">Программа выглядит как влитая на поддерживаемых системах</li>
       <li>Highly customizable user interface</li>
       <li xml:lang="ru">Широкие возможности по настройке внешнего вида программы</li>
+      <li>Voice and video calls with Psimedia</li>
+      <li xml:lang="ru">Голосовые и видеозвонки с Psimedia</li>
+      <li>File sharing via multiple transfer methods</li>
+      <li xml:lang="ru">Передача файлов различными способами</li>
       <li>Secure connections and end-to-end encryption</li>
       <li xml:lang="ru">Поддержка шифрованных подключений и сквозного шифрования</li>
-      <li>User interface is translated to many languages</li>
-      <li xml:lang="ru">Интерфейс программы переведен на множество языков</li>
+      <li>Interface available in multiple languages</li>
+      <li xml:lang="ru">Интерфейс доступен на многих языках</li>
     </ul>
   </description>
   <url type="homepage">https://psi-im.org/</url>

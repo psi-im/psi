@@ -11,6 +11,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from qca_providers import stage_qca_providers
+
 DLL_LINE_RE = re.compile(r"^\s*([A-Za-z0-9_.+\-]+\.dll)\s*$", re.IGNORECASE)
 MSVC_RUNTIME_RE = re.compile(
     r"^(?:vcruntime\d.*|msvcp\d.*|concrt\d.*)\.dll$",
@@ -95,17 +97,10 @@ def copy_sdk_runtime(sdk: Path, root: Path) -> None:
     if not sdk_bin.is_dir():
         raise SystemExit(f"SDK bin directory is missing: {sdk_bin}")
 
+    stage_qca_providers(sdk, root, required=("wincrypto", "cyrus-sasl", "wingss"))
+
     for dll in sorted(sdk_bin.glob("*.dll")):
         shutil.copy2(dll, root / dll.name)
-
-    # QCA loads providers from <library path>/crypto; qt.conf makes qtplugins
-    # a library path, as in the MSYS2 package.
-    qca_plugin = sdk / "lib" / "qca3-qt6" / "crypto" / "qca-ossl.dll"
-    if not qca_plugin.is_file():
-        raise SystemExit(f"QCA OpenSSL provider DLL was not found in the SDK: {qca_plugin}")
-    crypto_dir = root / "qtplugins" / "crypto"
-    crypto_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(qca_plugin, crypto_dir / qca_plugin.name)
 
 
 def prune_unused_qt_plugins(root: Path, dumpbin: Path) -> None:

@@ -2,9 +2,17 @@
 [Desktop Action SelectProfile]
 Exec=psi --choose-profile
 Name=Start with another profile
+Name[hr]=Pokreni s drugim profilom
+Name[ru]=Запустить под другим профилем
+Name[sr]=Покрени под другим профилом
+Name[uk]=Запустити під іншим профілем
 Icon=psi
 
 [Desktop Action QuitApplication]
 Exec=psi --quit
 Name=Quit the application
+Name[hr]=Zatvori aplikaciju
+Name[ru]=Закрыть приложение
+Name[sr]=Затвори апликацију
+Name[uk]=Завершити програму
 Icon=application-exit

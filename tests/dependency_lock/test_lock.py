@@ -25,7 +25,9 @@ class DependencyLockTests(unittest.TestCase):
         self.lock["iris"]["release_tag"] = "v1.5.1"
         (self.root / "dependencies.lock.json").write_text(json.dumps(self.lock))
 
-    def with_iris(self, tag="v3.0.12", minimum="3.0.10"):
+    def with_iris(self, tag=None, minimum="3.0.10"):
+        if tag is None:
+            tag = self.lock["qca"]["tag"]
         iris_dir = self.root / "iris"
         iris_dir.mkdir()
         (iris_dir / "dependencies.lock.json").write_text(json.dumps({

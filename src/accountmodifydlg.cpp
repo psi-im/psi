@@ -264,8 +264,8 @@ void AccountModifyDlg::init()
                                "this option. To learn more, see XEP-0184."));
     cb_ssl->setToolTip(tr("Check this option to use an encrypted SSL connection to "
                           "the XMPP server.  You may use this option if your "
-                          "server supports it and if you have the necessary qca-ossl "
-                          "plugin installed.  For more information, check the "
+                          "server supports it and a QCA provider with TLS support is "
+                          "installed. For more information, check the "
                           "Psi homepage."));
     ck_useProxyForUpload->setToolTip(tr("Use the same proxy for HTTP upload as one configured for XMPP connection."
                                         " Otherwise use application default proxy."));
