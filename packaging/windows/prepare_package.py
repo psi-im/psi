@@ -11,6 +11,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from qca_providers import stage_qca_providers
+
 DLL_RE = re.compile(r"^\s*DLL Name:\s*(.+?)\s*$", re.IGNORECASE | re.MULTILINE)
 MSVC_RUNTIME_RE = re.compile(
     r"^(?:vcruntime\d.*|msvcp\d.*|concrt\d.*)\.dll$",
@@ -77,18 +79,10 @@ def copy_sdk_runtime(sdk: Path, root: Path) -> None:
     if not sdk_bin.is_dir():
         raise SystemExit(f"SDK bin directory is missing: {sdk_bin}")
 
+    stage_qca_providers(sdk, root)
+
     for dll in sorted(sdk_bin.glob("*.dll")):
         shutil.copy2(dll, root / dll.name)
-
-    crypto_dir = root / "qtplugins" / "crypto"
-    crypto_dir.mkdir(parents=True, exist_ok=True)
-    qca_plugins = sorted(
-        p for p in sdk.rglob("*.dll") if "qca-ossl" in p.name.lower()
-    )
-    if not qca_plugins:
-        raise SystemExit("QCA OpenSSL provider DLL was not found in the SDK")
-    for plugin in qca_plugins:
-        shutil.copy2(plugin, crypto_dir / plugin.name)
 
 
 def copy_runtime_data(source_root: Path, root: Path) -> None:

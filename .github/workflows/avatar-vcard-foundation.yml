@@ -36,14 +36,14 @@ jobs:
       - name: Initialize pinned submodules
         run: |
           git submodule update --init --depth 1 \
-            3rdparty/http-parser 3rdparty/qhttp 3rdparty/qite iris
+            3rdparty/http-parser 3rdparty/qhttp 3rdparty/qite 3rdparty/qsourcehighlite iris
       - name: Install Qt5 and Iris build dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             ccache cmake ninja-build g++ pkg-config zlib1g-dev \
             qtbase5-dev libqt5svg5-dev libqt5x11extras5-dev qtmultimedia5-dev \
-            libqca-qt5-2-dev libotr5-dev libhttp-parser-dev \
+            libqca-qt5-2-dev libqca-qt5-2-plugins libotr5-dev libhttp-parser-dev \
             libminizip-dev libsm-dev libssl-dev libusrsctp-dev \
             libsrtp2-dev libtidy-dev libxss-dev libqt5sql5-sqlite
       - name: Configure bundled Iris and focused test

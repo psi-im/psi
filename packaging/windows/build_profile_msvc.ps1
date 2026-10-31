@@ -76,9 +76,8 @@ if (-not (Test-Path (Join-Path $qcaDir 'Qca3-qt6Config.cmake'))) {
     throw "Shared QCA SDK is missing: $qcaDir"
 }
 $qcaPluginPath = Join-Path $sdkDir 'lib\qca3-qt6'
-if (-not (Test-Path (Join-Path $qcaPluginPath 'crypto\qca-ossl.dll'))) {
-    throw "QCA OpenSSL provider is missing from the SDK: $qcaPluginPath"
-}
+Invoke-Checked python (Join-Path $PSScriptRoot 'qca_providers.py') `
+    --sdk $sdkDir --require wincrypto cyrus-sasl wingss
 
 $configureLog = Join-Path $outputDir 'configure-modern.log'
 $configureArgs = @(
@@ -167,15 +166,20 @@ if ($RunTests) {
     }
     $configureArgs[$testingArg] = '-DBUILD_TESTING=ON'
     Invoke-Checked cmake @configureArgs
-    Invoke-Checked cmake --build $buildDir --target avcallpolicy_test avcall_backend_lifecycle_test avcall_capability_refresh_test --parallel 4
+    $testTargets = @(
+        'avcallpolicy_test', 'avcall_backend_lifecycle_test', 'avcall_capability_refresh_test',
+        'discovery_items_test', 'crypto_native_provider_test'
+    )
+    Invoke-Checked cmake --build $buildDir --target @testTargets --parallel 4
     $testPath = "$(Join-Path $env:QT_ROOT_DIR 'bin');$(Join-Path $sdkDir 'bin');$env:PATH"
-    # The test binaries run from the build tree; point QCA at the SDK provider
+    # The test binaries run from the build tree; point QCA at the SDK providers
     # and fail instead of skipping when DTLS-SRTP is unavailable.
     $testArgs = @(
-        '-E', 'env', "PATH=$testPath", "QCA_PLUGIN_PATH=$qcaPluginPath", 'PSI_TEST_REQUIRE_DTLS=1', 'ctest',
+        '-E', 'env', "PATH=$testPath", "QCA_PLUGIN_PATH=$qcaPluginPath", 'PSI_TEST_REQUIRE_DTLS=1',
+        'QT_FORCE_STDERR_LOGGING=1', 'QT_QPA_PLATFORM=offscreen', 'ctest',
         '--test-dir', $buildDir,
         '--output-on-failure',
-        '-R', '^avcall(policy|_(backend_lifecycle|capability_refresh))_test$',
+        '-R', '^(avcall(policy|_(backend_lifecycle|capability_refresh))_test|discovery_items|crypto_native_provider)$',
         '-j', '1'
     )
     & cmake @testArgs
@@ -188,7 +192,7 @@ if ($RunTests) {
         $env:QCA_PLUGIN_PATH = $qcaPluginPath
         $env:PSI_TEST_REQUIRE_DTLS = '1'
         $env:QT_QPA_PLATFORM = 'offscreen'
-        foreach ($name in @('avcallpolicy_test', 'avcall_backend_lifecycle_test', 'avcall_capability_refresh_test')) {
+        foreach ($name in $testTargets) {
             $exe = Get-ChildItem -Path $buildDir -Recurse -Filter "$name.exe" | Select-Object -First 1
             if (-not $exe) { continue }
             $log = Join-Path $buildDir "$name-qtest.txt"
@@ -200,7 +204,7 @@ if ($RunTests) {
             }
         }
         $env:PATH = $previousPath
-        throw "AvCall regression tests failed with exit code $ctestStatus"
+        throw "Regression tests failed with exit code $ctestStatus"
     }
 }
 # Regular CI stops after compilation and regression tests. No install tree,

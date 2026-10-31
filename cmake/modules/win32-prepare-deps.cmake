@@ -474,9 +474,11 @@ if(WIN32)
             ${CMAKE_SHARED_LIBRARY_PREFIX}qca-cyrus-sasl${D}.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}qca-gnupg${D}.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}qca-wincrypto${D}.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}qca-wingss${D}.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}qca3-cyrus-sasl${D}.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}qca3-gnupg${D}.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}qca3-wincrypto${D}.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}qca3-wingss${D}.dll
             )
         find_psi_lib("${QCA_LIB}" "${PATHES}" "${PSI_LIBS_OUTPUT}/")
         find_psi_lib("${QCA_PLUGINS}" "${PATHES}" "${QT_PLUGINS_OUTPUT}/crypto/")

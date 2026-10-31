@@ -2,6 +2,7 @@
 #include "qcaproviderpolicy.h"
 #include <QSignalSpy>
 #include <QTest>
+#include <iterator>
 #include <windows.h>
 #ifdef QCA_STATIC
 #include <QtPlugin>
@@ -57,17 +58,24 @@ private Q_SLOTS:
     void staticSaslMechanisms_data()
     {
         QTest::addColumn<QString>("mechanism");
-        for (const auto *name :
-             { "PLAIN", "SCRAM-SHA-1", "SCRAM-SHA-256", "SCRAM-SHA-384", "SCRAM-SHA-512", "SCRAM-SHA-1-PLUS",
-               "SCRAM-SHA-256-PLUS", "SCRAM-SHA-384-PLUS", "SCRAM-SHA-512-PLUS" })
-            QTest::newRow(name) << QString::fromLatin1(name);
+        QTest::addColumn<QString>("provider");
+        for (const auto *provider : { "qca-cyrus-sasl", "qca-wingss" }) {
+            for (const auto *name :
+                 { "PLAIN", "SCRAM-SHA-1", "SCRAM-SHA-256", "SCRAM-SHA-384", "SCRAM-SHA-512", "SCRAM-SHA-1-PLUS",
+                   "SCRAM-SHA-256-PLUS", "SCRAM-SHA-384-PLUS", "SCRAM-SHA-512-PLUS" }) {
+                const QByteArray row = QByteArray(provider) + '/' + name;
+                QTest::newRow(row.constData()) << QString::fromLatin1(name) << QString::fromLatin1(provider);
+            }
+        }
     }
     void staticSaslMechanisms()
     {
         QFETCH(QString, mechanism);
-        const QString provider = QStringLiteral("qca-cyrus-sasl");
+        QFETCH(QString, provider);
+        if (!QCA::isSupported("sasl", QStringLiteral("qca-cyrus-sasl")))
+            QSKIP("These embedded mechanism and delegation cases require the Cyrus SASL provider");
         if (!QCA::isSupported("sasl", provider))
-            QSKIP("This QCA configuration does not include the Cyrus SASL provider");
+            QSKIP("This QCA configuration does not include the selected SASL provider");
         QCA::SASL sasl(nullptr, provider);
         sasl.setConstraints(QCA::SASL::AllowPlain);
         sasl.setUsername(QStringLiteral("user"));
@@ -84,7 +92,13 @@ private Q_SLOTS:
         for (const auto *name :
              { L"sasl2.dll", L"sasl2d.dll", L"libsasl.dll", L"libsasld.dll", L"libsasl2.dll", L"libsasl2d.dll",
                L"libsasl2-3.dll", L"saslPLAIN.dll", L"saslSCRAM.dll", L"libplain-3.dll", L"libscram-3.dll" })
-            QVERIFY2(!GetModuleHandleW(name), "Cyrus SASL must be linked into its QCA provider");
+            if (const auto module = GetModuleHandleW(name)) {
+                wchar_t     path[32768];
+                const DWORD length = GetModuleFileNameW(module, path, DWORD(std::size(path)));
+                QFAIL(qPrintable(
+                    QStringLiteral("Unexpected external SASL module: %1")
+                        .arg(length ? QString::fromWCharArray(path, int(length)) : QString::fromWCharArray(name))));
+            }
         QCOMPARE(sasl.mechanism(), mechanism);
         QVERIFY(started.constFirst().at(0).toBool());
         QVERIFY(!started.constFirst().at(1).toByteArray().isEmpty());

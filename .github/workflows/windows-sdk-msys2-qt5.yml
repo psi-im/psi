@@ -153,7 +153,7 @@ jobs:
             -DBUILD_SHARED_LIBS=ON \
             -DBUILD_TESTS=OFF \
             -DBUILD_TOOLS=OFF \
-            -DBUILD_PLUGINS=wincrypto \
+            -DBUILD_PLUGINS='wincrypto;wingss' \
             -DCMAKE_DISABLE_FIND_PACKAGE_OpenSSL=TRUE \
             -DLOAD_SHARED_PLUGINS=ON \
             -DQCA_SUFFIX=qt5 \
@@ -166,6 +166,7 @@ jobs:
           test -n "$(find sdk/include -type f -name qca.h -print -quit)"
           test -n "$(find sdk/bin -type f -iname '*qca3-qt5*.dll' -print -quit)"
           test -n "$(find sdk -type f -iname '*qca-wincrypto*.dll' -print -quit)"
+          test -n "$(find sdk -type f -iname '*qca-wingss*.dll' -print -quit)"
 
       - name: Build and install Qt5Keychain SDK
         shell: msys2 {0}
@@ -219,7 +220,8 @@ jobs:
               QCoreApplication app(argc, argv);
               QKeychain::ReadPasswordJob job(QStringLiteral("psi-sdk-test"));
               const bool native = QCA::isSupported("dtls-srtp", QStringLiteral("qca-wincrypto"))
-                  && !QCA::findProvider(QStringLiteral("qca-ossl"));
+                  && !QCA::findProvider(QStringLiteral("qca-ossl"))
+                  && QCA::isSupported("sasl", QStringLiteral("qca-wingss"));
               return !job.service().isEmpty() && native ? 0 : 1;
           }
           CPP
