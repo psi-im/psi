@@ -29,8 +29,8 @@
   "qca": {
     "repository": "psi-im/qca",
     "source": "released-sdk-shared-with-iris",
-    "tag": "v3.1.0",
-    "commit": "88acd0fc11555ab7f9bcfc17e3384bfcb6a1ad95"
+    "tag": "v3.1.1",
+    "commit": "3059e31c96fa5e4409555e4d49b80d20eb3e3046"
   },
   "plugins": {
     "repository": "psi-im/plugins",

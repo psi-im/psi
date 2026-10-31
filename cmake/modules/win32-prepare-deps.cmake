@@ -417,8 +417,6 @@ if(WIN32)
         *zlib*.dll
         ${CMAKE_SHARED_LIBRARY_PREFIX}zstd.dll
         legacy.dll
-        sasl2.dll
-        libsasl*.dll
         ${CMAKE_SHARED_LIBRARY_PREFIX}protobuf-c${D}.dll
         ${CMAKE_SHARED_LIBRARY_PREFIX}ssleay32.dll
         ${CMAKE_SHARED_LIBRARY_PREFIX}z${D}.dll

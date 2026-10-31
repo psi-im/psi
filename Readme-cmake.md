@@ -391,12 +391,18 @@ No program installation is required for assembly under Windows OS!!!
 
 ## Native Windows cryptography
 
-Windows builds use QCA 3.1.0 with `qca-wincrypto` (Windows 10 or later).
+Windows builds use QCA 3.1.1 with `qca-wincrypto` (Windows 10 or later).
 The shared SDK/package includes the native provider and excludes `qca-ossl`.
 Dependency deployment removes stale ossl provider DLLs from the output crypto
 folder after installing wincrypto. Keep external QCA plugin search directories
 native-only as well; `crypto_native_provider` verifies provider selection and
 checks that no ossl provider DLL is loaded.
+
+The MSVC SDK also includes `qca-cyrus-sasl`. Cyrus SASL and its PLAIN/SCRAM
+mechanisms are statically linked into this QCA provider; standalone SASL
+runtime and mechanism DLLs are not required. The crypto regression starts
+PLAIN and SCRAM (including channel binding) with an unavailable external
+SASL plugin directory and rejects loaded external SASL libraries.
 
 For static QCA, Psi imports `qca_wincrypto` and links its Windows system
 libraries. Bundled Iris builds the same native provider; other platforms keep

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "qcaproviderpolicy.h"
+#include <QSignalSpy>
 #include <QTest>
 #include <windows.h>
 #ifdef QCA_STATIC
@@ -51,6 +52,44 @@ private Q_SLOTS:
                             cipherIV, cipher.tag());
         QCOMPARE(QCA::SecureArray(decrypt.process(encrypted)), message);
         QVERIFY(decrypt.ok());
+    }
+
+    void staticSaslMechanisms_data()
+    {
+        QTest::addColumn<QString>("mechanism");
+        for (const auto *name :
+             { "PLAIN", "SCRAM-SHA-1", "SCRAM-SHA-256", "SCRAM-SHA-384", "SCRAM-SHA-512", "SCRAM-SHA-1-PLUS",
+               "SCRAM-SHA-256-PLUS", "SCRAM-SHA-384-PLUS", "SCRAM-SHA-512-PLUS" })
+            QTest::newRow(name) << QString::fromLatin1(name);
+    }
+    void staticSaslMechanisms()
+    {
+        QFETCH(QString, mechanism);
+        const QString provider = QStringLiteral("qca-cyrus-sasl");
+        if (!QCA::isSupported("sasl", provider))
+            QSKIP("This QCA configuration does not include the Cyrus SASL provider");
+        QCA::SASL sasl(nullptr, provider);
+        sasl.setConstraints(QCA::SASL::AllowPlain);
+        sasl.setUsername(QStringLiteral("user"));
+        sasl.setPassword(QCA::SecureArray("pencil"));
+        if (mechanism.endsWith(QLatin1String("-PLUS"))) {
+            QVERIFY(sasl.supportsChannelBinding());
+            QVERIFY(sasl.setChannelBinding(QStringLiteral("tls-exporter"), QByteArray(32, '\x5a'), true));
+        }
+        QSignalSpy started(&sasl, &QCA::SASL::clientStarted);
+        QSignalSpy errors(&sasl, &QCA::SASL::error);
+        sasl.startClient(QStringLiteral("test"), QStringLiteral("example.test"), { mechanism });
+        QTRY_VERIFY_WITH_TIMEOUT(!started.isEmpty() || !errors.isEmpty(), 5000);
+        QVERIFY2(errors.isEmpty(), "The built-in SASL mechanism could not start without external plugins");
+        for (const auto *name :
+             { L"sasl2.dll", L"sasl2d.dll", L"libsasl.dll", L"libsasld.dll", L"libsasl2.dll", L"libsasl2d.dll",
+               L"libsasl2-3.dll", L"saslPLAIN.dll", L"saslSCRAM.dll", L"libplain-3.dll", L"libscram-3.dll" })
+            QVERIFY2(!GetModuleHandleW(name), "Cyrus SASL must be linked into its QCA provider");
+        QCOMPARE(sasl.mechanism(), mechanism);
+        QVERIFY(started.constFirst().at(0).toBool());
+        QVERIFY(!started.constFirst().at(1).toByteArray().isEmpty());
+        if (mechanism.endsWith(QLatin1String("-PLUS")))
+            QVERIFY(started.constFirst().at(1).toByteArray().startsWith("p=tls-exporter,,"));
     }
 
 private:
