@@ -91,7 +91,11 @@ struct Fixture {
         QDomDocument payload;
         const auto   ns  = request.firstChildElement(QStringLiteral("query")).namespaceURI();
         const auto   xml = error ? body : QStringLiteral("<query xmlns='%1'>%2</query>").arg(ns, body);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+        if (!payload.setContent(xml, QDomDocument::ParseOption::UseNamespaceProcessing))
+#else
         if (!payload.setContent(xml, true))
+#endif
             qFatal("Invalid discovery fixture XML");
         iq.appendChild(doc.importNode(payload.documentElement(), true));
         return client.rootTask()->take(iq);
