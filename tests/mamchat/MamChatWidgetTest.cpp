@@ -1014,6 +1014,18 @@ private slots:
 
         QTest::mouseClick(preview->findChild<QLabel *>(QStringLiteral("previewTitle")), Qt::LeftButton);
         QCOMPARE(activated.size(), 1);
+        // A child button handles its own click. It must never bubble up as
+        // activation, even when the preview itself is navigable.
+        auto *footer = new QWidget(preview);
+        auto *controls = new QHBoxLayout(footer);
+        auto *action = new QPushButton(QStringLiteral("Download"), footer);
+        controls->addWidget(action);
+        preview->setFooter(footer);
+        QSignalSpy actionClicked(action, &QPushButton::clicked);
+        QTest::mouseClick(action, Qt::LeftButton);
+        QCOMPARE(actionClicked.size(), 1);
+        QCOMPARE(activated.size(), 1);
+
         preview->setNavigationEnabled(false);
         QTest::mouseClick(preview->findChild<QLabel *>(QStringLiteral("previewTitle")), Qt::LeftButton);
         QCOMPARE(activated.size(), 1);
