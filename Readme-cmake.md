@@ -122,7 +122,7 @@ cd psi && ./psi-plus && cd .. #For Psi+
 > -DPSI_VERSION=${version}
 
   To set the Psi version manually.
-  Example for Psi+: `1.0.40 (2017-06-05, Psi:a7d2d7b8, Psi+:055e945, webkit)`.
+  Example for Psi+: `1.0.40 (2017-06-05, Psi:a7d2d7b8, Psi+:055e945)`.
   Script sets this flag automatically from `version` file if it exists in sources directory
 
 > -DCMAKE_BUILD_TYPE=Release

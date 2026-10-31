@@ -108,10 +108,6 @@
 #include "filesharingproxy.h"
 #include "pluginmanager.h"
 #endif
-#ifdef WEBKIT
-#include "avatars.h"
-#include "chatviewthemeprovider.h"
-#endif
 #ifdef HAVE_SPARKLE
 #include "AutoUpdater/SparkleAutoUpdater.h"
 #endif
@@ -559,13 +555,8 @@ bool PsiCon::init()
     });
 
     d->themeManager = new PsiThemeManager(this);
-#ifdef WEBKIT
-    d->themeManager->registerProvider(new ChatViewThemeProvider(this), true);
-    d->themeManager->registerProvider(new GroupChatViewThemeProvider(this), true);
-#else
     d->themeManager->registerProvider(new NativeChatViewThemeProvider(this, false), true);
     d->themeManager->registerProvider(new NativeChatViewThemeProvider(this, true), true);
-#endif
 
     const auto reportThemeError = [this]() {
         QMessageBox::critical(nullptr, tr("Error"),
@@ -772,11 +763,6 @@ void PsiCon::deinit()
     // this deletes all dialogs except for mainwin
     deleteAllDialogs();
 
-#ifdef WEBKIT
-    // unload webkit themes early (before realease of webengine profile)
-    delete d->themeManager->unregisterProvider(QString::fromLatin1("groupchatview"));
-    delete d->themeManager->unregisterProvider(QString::fromLatin1("chatview"));
-#endif
 #ifdef HAVE_WEBSERVER
     delete d->webServer;
     d->webServer = nullptr;

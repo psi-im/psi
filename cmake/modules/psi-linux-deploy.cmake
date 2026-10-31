@@ -166,7 +166,7 @@ list(REMOVE_DUPLICATES _plugins_to_scan)
 list(APPEND _scan_targets ${_plugins_to_scan})
 
 
-# First, scan the application to determine whether WebEngine support is required.
+# First, scan the application.
 file(GET_RUNTIME_DEPENDENCIES
     EXECUTABLES "${_executables}"
     RESOLVED_DEPENDENCIES_VAR _app_deps

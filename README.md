@@ -18,15 +18,6 @@ Psi is an XMPP client designed for experienced users. It is highly portable and 
 
 User interface of program is very flexible in customization. For example, there are "multi windows" and "all in one" modes, support of different iconsets and themes. Psi supports file sharing and audio/video calls. Security is also a major consideration, and Psi provides it for both client-to-server (TLS) and client-to-client (OpenPGP, OTR, OMEMO) via appropriate plugins.
 
-WebKit version of Psi has few additional features (in comparing with basic version of Psi): support of animated emoticons, support of (adium) themes in private chats and group chats, support of previewing of images and videos in private chats and group chats, etc. But if you prefer old fashioned plain text chats from era of IRC heyday, then basic version of Psi is your obvious choice.
-
-WebEngine version of Psi is identical to WebKit version of Psi in supporting of extra features, but it has some pros and cons:
-
-* Better work with embedded video (in chats) in MS Windows.
-* Worse integration to system. (It does not use system theme and fonts in GNU/Linux.)
-* Supports less amount of compilers, systems and CPU architectures.
-* Stability issues in macOS.
-
 ## Versions history
 
 See [CHANGELOG](https://github.com/psi-im/psi/blob/master/CHANGELOG) file.

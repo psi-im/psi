@@ -449,12 +449,6 @@ QStringList getQtPluginPathEnvVar()
 
 PSI_EXPORT_FUNC int main(int argc, char *argv[])
 {
-    // Disable Input Method Editor to fix bug with
-    //   third-party keyboard layout switching tools
-#if defined(Q_OS_WIN) && defined(WEBENGINE)
-    ImmDisableIME(-1);
-#endif
-
     // If Psi runs as uri handler the commandline might contain
     // almost arbitary network supplied data after the "--uri" argument.
     // To prevent any potentially dangerous options in Psi or
@@ -510,31 +504,6 @@ PSI_EXPORT_FUNC int main(int argc, char *argv[])
                        "%{message} (%{file}:%{line}, %{function})");
 #ifdef Q_OS_WIN
     QCoreApplication::addLibraryPath(appPath);
-#endif
-
-#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0) && defined(WEBENGINE)
-#ifdef Q_OS_WIN
-    // https://bugreports.qt.io/browse/QTBUG-119221
-    // See also Qt::WA_NativeWindow in WebView::WebView.
-    // Note, it can be highly unstable on some systems. If you enable this, then also remove AA_UseSoftwareOpenGL
-    // below.
-    qputenv("QT_WIDGETS_RHI", "1");
-    qputenv("QT_WIDGETS_RHI_BACKEND", "d3d11"); // macos: metal, linux: opengl
-#else
-#ifdef Q_OS_LINUX
-    if (cmdline.contains("vulkanrender")) {
-        qputenv("QT_WIDGETS_RHI", "1");
-        qputenv("QT_WIDGETS_RHI_BACKEND", "Vulkan");
-    } else if (qEnvironmentVariableIsSet("DISPLAY") && qEnvironmentVariable("WAYLAND_DISPLAY").isEmpty()) {
-        qputenv("QT_QUICK_BACKEND", "software");
-        qputenv("QTWEBENGINE_CHROMIUM_FLAGS", "--disable-gpu --no-sandbox");
-        qputenv("QTWEBENGINE_DISABLE_SANDBOX", "1");
-    }
-#endif
-    if (cmdline.contains("swrender")) {
-        QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
-    }
-#endif
 #endif
 
 #ifdef HAVE_X11

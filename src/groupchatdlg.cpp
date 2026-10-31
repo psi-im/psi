@@ -969,7 +969,6 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
     setAcceptDrops(true);
 
     ui_.setupUi(this);
-#ifndef WEBKIT
     nativeTimeline_ = new MamChatWidget(ui_.topFrame);
     nativeTimeline_->setGroupChat(true);
     const int logIndex = ui_.hsplitter->indexOf(ui_.log);
@@ -1048,16 +1047,11 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
         nativeTimeline_->setHistoryLoading(false);
     });
     QTimer::singleShot(0, this, &GCMainDlg::loadOlderMamMessages);
-#endif
     d->tabmode = PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool();
 
     ui_.log->setSessionData(true, false, jid(), jid().full()); // FIXME change conference name
     ui_.log->setLocalNickname(d->self);
-#ifdef WEBKIT
-    ui_.log->setAccount(account());
-#else
     ui_.log->setMediaOpener(account()->fileSharingDeviceOpener());
-#endif
 
     connect(ui_.log, SIGNAL(showNickMenu(QString)), this, SLOT(doContactContextMenu(QString)));
     connect(URLObject::getInstance(), SIGNAL(openURL(QString)), SLOT(openURL(QString)));

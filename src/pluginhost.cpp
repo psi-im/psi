@@ -1409,15 +1409,7 @@ QVariantMap PluginHost::selfMetadata() const
 
 WebkitAccessingHost::RenderType PluginHost::chatLogRenderType() const
 {
-#ifdef WEBKIT
-#ifdef WEBENGINE
-    return WebkitAccessingHost::RT_WebEngine;
-#else
-    return WebkitAccessingHost::RT_WebKit;
-#endif
-#else
     return WebkitAccessingHost::RT_TextEdit;
-#endif
 }
 
 QString PluginHost::installChatLogJSDataFilter(const QString &js, PsiPlugin::Priority priority)
@@ -1429,18 +1421,8 @@ void PluginHost::uninstallChatLogJSDataFilter(const QString &id) { manager_->uni
 
 void PluginHost::executeChatLogJavaScript(QWidget *log, const QString &js)
 {
-#ifdef WEBKIT
-    auto cv = qobject_cast<ChatView *>(log);
-    if (!cv) {
-        cv = log->findChild<ChatView *>("log");
-    }
-    if (cv) {
-        cv->sendJsCode(js);
-    }
-#else
     Q_UNUSED(log);
     Q_UNUSED(js)
-#endif
 }
 
 void PluginHost::selectMediaDevices(const QString &audioInput, const QString &audioOutput, const QString &videoInput)

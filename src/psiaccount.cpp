@@ -1167,12 +1167,6 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
     connect(MediaDeviceWatcher::instance(), &MediaDeviceWatcher::capabilitiesChanged, this,
             &PsiAccount::updateFeatures);
 
-#ifdef WEBKIT
-    connect(d->psi->themeManager()->provider("chatview"), &PsiThemeProvider::themeChanged, this,
-            &PsiAccount::updateFeatures);
-    connect(d->psi->themeManager()->provider("groupchatview"), &PsiThemeProvider::themeChanged, this,
-            &PsiAccount::updateFeatures);
-#endif
 #ifdef FILETRANSFER
     d->client->setFileTransferEnabled(true);
 #else
@@ -1731,23 +1725,7 @@ void PsiAccount::updateFeatures()
     features << QLatin1String("jabber:x:conference"); // allow direct invites
     if (PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool())
         features << QLatin1String("urn:xmpp:styling:0");
-#ifndef WEBKIT
     features << QLatin1String("urn:xmpp:reply:0");
-#endif
-
-#ifdef WEBKIT
-    auto gcTheme   = psi()->themeManager()->provider("groupchatview")->current();
-    auto chatTheme = psi()->themeManager()->provider("chatview")->current();
-    if (gcTheme && chatTheme) {
-        auto themeFeatures = gcTheme.features() + chatTheme.features();
-        if (themeFeatures.contains(QStringLiteral("reactions"))) {
-            features << QLatin1String("urn:xmpp:reactions:0");
-        }
-        if (themeFeatures.contains(QStringLiteral("message-retract"))) {
-            features << QLatin1String("urn:xmpp:message-retract:1");
-        }
-    }
-#endif
 
     // TODO reset hash
     d->client->setFeatures(Features(features));
