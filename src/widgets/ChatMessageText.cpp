@@ -115,8 +115,8 @@ ChatMessageText::ChatMessageText(QWidget *parent) : PsiTextView(parent)
     // fits the document, leaving the content scrolled out of view until the
     // next width change.
     for (QScrollBar *bar : { horizontalScrollBar(), verticalScrollBar() })
-        connect(bar, &QAbstractSlider::valueChanged, this, [this, bar](int value) {
-            if (value != 0 && !(scrollable_ && bar == verticalScrollBar()))
+        connect(bar, &QAbstractSlider::valueChanged, this, [bar](int value) {
+            if (value != 0)
                 bar->setValue(0);
         });
     static auto *images = new FittingImageHandler(qApp);
@@ -343,13 +343,44 @@ QSize ChatMessageText::sizeHint() const
 }
 QSize ChatMessageText::minimumSizeHint() const { return QSize(0, fontMetrics().height()); }
 
+std::optional<QTextCharFormat> ChatMessageText::objectAt(const QPoint &point) const
+{
+    // A hit is an actual rendered object, not simply a nearby text cursor
+    // (QTextEdit can return the previous character at an object boundary).
+    // Its size comes from the handler the layout itself asks.
+    for (auto block = document()->begin(); block.isValid(); block = block.next()) {
+        for (auto it = block.begin(); !it.atEnd(); ++it) {
+            const auto            fragment = it.fragment();
+            const QTextCharFormat format   = fragment.charFormat();
+            if (format.objectType() == QTextFormat::NoObject)
+                continue;
+            auto *handler = document()->documentLayout()->handlerForObject(format.objectType());
+            if (!handler)
+                continue;
+            QTextCursor cursor(document());
+            cursor.setPosition(fragment.position());
+            const QSizeF size = handler->intrinsicSize(document(), fragment.position(), format);
+            if (QRectF(cursorRect(cursor).topLeft(), size).contains(point))
+                return format;
+        }
+    }
+    return std::nullopt;
+}
+
+std::optional<QTextImageFormat> ChatMessageText::imageAt(const QPoint &point) const
+{
+    const auto object = objectAt(point);
+    if (!object || !object->isImageFormat())
+        return std::nullopt;
+    return object->toImageFormat();
+}
+
 void ChatMessageText::mousePressEvent(QMouseEvent *event)
 {
     pressedLink_.clear();
-    if (event->button() == Qt::LeftButton && (textInteractionFlags() & Qt::LinksAccessibleByMouse)) {
+    pressPosition_ = event->pos();
+    if (event->button() == Qt::LeftButton && (textInteractionFlags() & Qt::LinksAccessibleByMouse))
         pressedLink_ = anchorAt(event->pos());
-        pressedLinkPosition_ = event->pos();
-    }
     PsiTextView::mousePressEvent(event);
 }
 
@@ -357,22 +388,27 @@ void ChatMessageText::mouseReleaseEvent(QMouseEvent *event)
 {
     const QString pressedLink = pressedLink_;
     pressedLink_.clear();
+    const auto pressPosition = pressPosition_;
+    pressPosition_.reset();
 
     // Use QTextEdit's selection behavior but not PsiTextView's generic link
     // handler. That handler can open an anchor when link interaction is disabled
     // (whole-message selection), and does not reliably distinguish selection
     // state during a click inside the virtualized timeline.
     QTextEdit::mouseReleaseEvent(event);
-    const bool clicked = event->button() == Qt::LeftButton
-        && !pressedLink.isEmpty()
-        && (textInteractionFlags() & Qt::LinksAccessibleByMouse)
-        && (event->pos() - pressedLinkPosition_).manhattanLength() <= QApplication::startDragDistance()
-        && anchorAt(event->pos()) == pressedLink;
-    if (clicked) {
-        if (!linkHandler_ || !linkHandler_(pressedLink))
-            URLObject::getInstance()->popupAction(pressedLink);
-        event->accept();
+    if (!pressPosition || event->button() != Qt::LeftButton
+        || (event->pos() - *pressPosition).manhattanLength() > QApplication::startDragDistance())
+        return;
+    if (!pressedLink.isEmpty()) {
+        if ((textInteractionFlags() & Qt::LinksAccessibleByMouse) && anchorAt(event->pos()) == pressedLink) {
+            if (!linkHandler_ || !linkHandler_(pressedLink))
+                URLObject::getInstance()->popupAction(pressedLink);
+            event->accept();
+        }
+        return;
     }
+    if (event->modifiers() == Qt::NoModifier && !textCursor().hasSelection() && !objectAt(event->pos()))
+        emit plainClicked();
 }
 
 void ChatMessageText::resizeEvent(QResizeEvent *event)
@@ -411,14 +447,6 @@ bool ChatMessageText::hasImagesTallerThan(int height, int width) const
                 return true;
         }
     return false;
-}
-
-void ChatMessageText::setScrollable(bool scrollable)
-{
-    scrollable_ = scrollable;
-    setVerticalScrollBarPolicy(scrollable ? Qt::ScrollBarAsNeeded : Qt::ScrollBarAlwaysOff);
-    if (!scrollable)
-        verticalScrollBar()->setValue(0);
 }
 
 void ChatMessageText::removeQuotedLines()
@@ -485,10 +513,6 @@ void ChatMessageText::removeQuotedLines()
 
 void ChatMessageText::wheelEvent(QWheelEvent *event)
 {
-    if (scrollable_) {
-        PsiTextView::wheelEvent(event);
-        return;
-    }
     // The text editor is a scroll area itself. Route wheel input to the enclosing
     // timeline, rather than scrolling a document with hidden scrollbars.
     for (QWidget *parent = parentWidget(); parent; parent = parent->parentWidget()) {

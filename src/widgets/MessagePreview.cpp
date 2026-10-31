@@ -1,18 +1,52 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "MessagePreview.h"
 #include "ChatMessageText.h"
+#include "CodeBlockWidget.h"
 #include "LinkButton.h"
-#include <QAbstractTextDocumentLayout>
+#include "psirichtext.h"
+#include <QApplication>
 #include <QEvent>
 #include <QFontMetrics>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QMouseEvent>
 #include <QPushButton>
 #include <QResizeEvent>
-#include <QScrollBar>
 #include <QTextDocument>
 #include <QTimer>
 #include <QVBoxLayout>
+
+namespace {
+bool isPlainClick(const QMouseEvent *event, const QPoint &pressPosition)
+{
+    return event->button() == Qt::LeftButton && event->modifiers() == Qt::NoModifier
+        && (event->pos() - pressPosition).manhattanLength() <= QApplication::startDragDistance();
+}
+
+// A selectable heading that also reports a plain click on it.
+class PreviewTitle final : public QLabel {
+    Q_OBJECT
+public:
+    explicit PreviewTitle(QWidget *parent) : QLabel(parent) { }
+signals:
+    void plainClicked();
+
+protected:
+    void mousePressEvent(QMouseEvent *event) override
+    {
+        pressPosition_ = event->pos();
+        QLabel::mousePressEvent(event);
+    }
+    void mouseReleaseEvent(QMouseEvent *event) override
+    {
+        QLabel::mouseReleaseEvent(event);
+        if (isPlainClick(event, pressPosition_) && !hasSelectedText())
+            emit plainClicked();
+    }
+private:
+    QPoint pressPosition_;
+};
+}
 
 MessagePreview::MessagePreview(const QColor &barColor, const QColor &textColor, QWidget *parent) :
     QFrame(parent), barColor_(barColor), textColor_(textColor)
@@ -35,7 +69,8 @@ MessagePreview::MessagePreview(const QColor &barColor, const QColor &textColor, 
     column_->setSpacing(0);
     layout->addLayout(column_, 1);
     auto *header = new QHBoxLayout;
-    title_       = new QLabel(this);
+    auto *title  = new PreviewTitle(this);
+    title_       = title;
     title_->setObjectName(QStringLiteral("previewTitle"));
     title_->setTextFormat(Qt::PlainText);
     title_->setTextInteractionFlags(Qt::TextSelectableByMouse);
@@ -43,6 +78,7 @@ MessagePreview::MessagePreview(const QColor &barColor, const QColor &textColor, 
     QFont titleFont = font();
     titleFont.setBold(true);
     title_->setFont(titleFont);
+    connect(title, &PreviewTitle::plainClicked, this, &MessagePreview::handlePlainClick);
     header->addWidget(title_, 1);
     close_ = new QPushButton(QString::fromUtf8("×"), this);
     close_->setObjectName(QStringLiteral("previewDismiss"));
@@ -54,21 +90,24 @@ MessagePreview::MessagePreview(const QColor &barColor, const QColor &textColor, 
     header->addWidget(close_);
     connect(close_, &QPushButton::clicked, this, &MessagePreview::dismissed);
     column_->addLayout(header);
+
+    clip_ = new QWidget(this);
+    clip_->setObjectName(QStringLiteral("previewClip"));
+    clip_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed); // updatePreview() sets the height.
+    column_->addWidget(clip_);
+    content_ = new QWidget(clip_);
+    content_->setObjectName(QStringLiteral("previewContent"));
+    contentLayout_ = new QVBoxLayout(content_);
+    contentLayout_->setContentsMargins(0, 0, 0, 0);
+    contentLayout_->setSpacing(0);
+    // Any part changing its size: media that arrives later, formatted code...
+    content_->installEventFilter(this);
     // The same view as a message's text: rich text, links, emoticons and media.
-    text_ = new ChatMessageText(this);
+    text_ = new ChatMessageText(content_);
     text_->setObjectName(QStringLiteral("previewText"));
-    text_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed); // updatePreview() sets the height.
-    // Media that arrives later (a downloaded image) changes the height.
-    connect(text_->document()->documentLayout(), &QAbstractTextDocumentLayout::documentSizeChanged, this, [this] {
-        if (updateScheduled_)
-            return;
-        updateScheduled_ = true;
-        QTimer::singleShot(0, this, [this] {
-            updateScheduled_ = false;
-            updatePreview();
-        });
-    });
-    column_->addWidget(text_);
+    connect(text_, &ChatMessageText::plainClicked, this, &MessagePreview::handlePlainClick);
+    contentLayout_->addWidget(text_);
+
     toggle_ = new LinkButton(this);
     toggle_->setObjectName(QStringLiteral("previewShowMore"));
     column_->addWidget(toggle_, 0, Qt::AlignLeft);
@@ -78,6 +117,17 @@ MessagePreview::MessagePreview(const QColor &barColor, const QColor &textColor, 
     });
     refreshColors();
     updatePreview();
+}
+
+void MessagePreview::scheduleUpdatePreview()
+{
+    if (updateScheduled_)
+        return;
+    updateScheduled_ = true;
+    QTimer::singleShot(0, this, [this] {
+        updateScheduled_ = false;
+        updatePreview();
+    });
 }
 
 void MessagePreview::setColors(const QColor &barColor, const QColor &textColor)
@@ -104,6 +154,8 @@ void MessagePreview::refreshColors()
     }
     title_->setPalette(foreground);
     text_->setPalette(foreground);
+    for (auto *prose : extraProse_)
+        prose->setPalette(foreground);
     QPalette barPalette;
     if (barColor_.isValid())
         barPalette.setColor(QPalette::Window, barColor_);
@@ -115,6 +167,7 @@ void MessagePreview::setContent(const QString &title, const QString &text)
     if (richText_.isNull() && title_->text() == title && text_->toPlainText() == text)
         return;
     richText_.clear();
+    clearParts();
     setTitle(title);
     text_->setPlainMessage(text);
     updatePreview();
@@ -131,10 +184,67 @@ void MessagePreview::setRichContent(const QString &title, const QString &html, b
     text_->setRichText(html);
     if (withoutQuotedLines)
         text_->removeQuotedLines();
+    rebuildParts(html);
     updatePreview();
 }
 
 void MessagePreview::setMediaOpener(FileSharingDeviceOpener *opener) { text_->setMediaOpener(opener); }
+
+void MessagePreview::clearParts()
+{
+    while (contentLayout_->count() > 1) {
+        auto *item = contentLayout_->takeAt(1);
+        delete item->widget();
+        delete item;
+    }
+    extraProse_.clear();
+    codeBlocks_.clear();
+    text_->show();
+}
+
+void MessagePreview::addPart(QWidget *part)
+{
+    contentLayout_->addWidget(part);
+    filterChild(part);
+}
+
+void MessagePreview::filterChild(QWidget *child)
+{
+    if (!childFilter_)
+        return;
+    child->installEventFilter(childFilter_);
+    for (auto *descendant : child->findChildren<QWidget *>())
+        descendant->installEventFilter(childFilter_);
+}
+
+// Fenced code gets the same real CodeBlockWidget as in the timeline. text_
+// keeps showing the first prose part; only other parts need a widget of their own.
+void MessagePreview::rebuildParts(const QString &html)
+{
+    clearParts();
+    const auto parts = PsiRichText::splitCodeBlocks(text_->document(), html);
+    for (int i = 0; i < parts.size(); ++i) {
+        const auto &part = parts.at(i);
+        if (part.kind == PsiRichText::ContentPart::Code) {
+            auto *code = new CodeBlockWidget(content_);
+            code->setCode(part.text, part.language);
+            codeBlocks_.append(code);
+            addPart(code);
+        } else if (i == 0) {
+            text_->setRichText(part.text);
+        } else {
+            auto *prose = new ChatMessageText(content_);
+            prose->setObjectName(QStringLiteral("previewCodeProse"));
+            prose->setPalette(text_->palette());
+            prose->setRichText(part.text);
+            connect(prose, &ChatMessageText::plainClicked, this, &MessagePreview::handlePlainClick);
+            extraProse_.append(prose);
+            addPart(prose);
+        }
+    }
+    if (!parts.isEmpty() && parts.first().kind == PsiRichText::ContentPart::Code)
+        text_->hide();
+}
 
 void MessagePreview::setTitle(const QString &title)
 {
@@ -147,6 +257,56 @@ void MessagePreview::setTitle(const QString &title)
 
 void MessagePreview::setClosable(bool enabled) { close_->setVisible(enabled); }
 
+void MessagePreview::setChildEventFilter(QObject *filter)
+{
+    childFilter_ = filter;
+    for (auto *child : findChildren<QWidget *>())
+        child->installEventFilter(filter);
+}
+
+void MessagePreview::setActivatable(bool activatable)
+{
+    if (activatable_ == activatable)
+        return;
+    activatable_ = activatable;
+    if (activatable) {
+        setCursor(Qt::PointingHandCursor);
+        title_->setCursor(Qt::PointingHandCursor);
+    } else {
+        unsetCursor();
+        title_->unsetCursor();
+    }
+}
+
+void MessagePreview::handlePlainClick()
+{
+    if (activatable_)
+        emit activated();
+}
+
+bool MessagePreview::eventFilter(QObject *target, QEvent *event)
+{
+    if (target == content_ && event->type() == QEvent::LayoutRequest)
+        scheduleUpdatePreview();
+    return QFrame::eventFilter(target, event);
+}
+
+// The card's own surface: the bar and the gaps. Children report their clicks.
+void MessagePreview::mousePressEvent(QMouseEvent *event)
+{
+    surfacePress_ = childAt(event->pos()) ? std::nullopt : std::make_optional(event->pos());
+    QFrame::mousePressEvent(event);
+}
+
+void MessagePreview::mouseReleaseEvent(QMouseEvent *event)
+{
+    const bool clicked = surfacePress_ && isPlainClick(event, *surfacePress_);
+    surfacePress_.reset();
+    QFrame::mouseReleaseEvent(event);
+    if (clicked)
+        handlePlainClick();
+}
+
 void MessagePreview::setFooter(QWidget *widget)
 {
     if (footer_ == widget)
@@ -157,6 +317,7 @@ void MessagePreview::setFooter(QWidget *widget)
     if (footer_) {
         footer_->setParent(this);
         column_->addWidget(footer_);
+        filterChild(footer_);
     }
     updateGeometry();
     emit heightChanged();
@@ -168,7 +329,12 @@ int MessagePreview::naturalWidth() const
     if (!title_->isHidden() && !title_->text().isEmpty())
         content = QFontMetrics(title_->font()).horizontalAdvance(title_->text())
             + (close_->isHidden() ? 0 : close_->width() + 6);
-    content = qMax(content, text_->naturalWidth());
+    if (!text_->isHidden())
+        content = qMax(content, text_->naturalWidth());
+    for (auto *prose : extraProse_)
+        content = qMax(content, prose->naturalWidth());
+    for (auto *code : codeBlocks_)
+        content = qMax(content, code->naturalWidth());
     if (!toggle_->isHidden())
         content = qMax(content, toggle_->sizeHint().width());
     if (footer_)
@@ -179,25 +345,22 @@ int MessagePreview::naturalWidth() const
 
 void MessagePreview::updatePreview()
 {
-    const int cap             = qMax(fontMetrics().lineSpacing(), window()->height() / 2);
-    const int collapsedHeight = qMin(cap, fontMetrics().lineSpacing() * 3);
+    // Only the collapsed excerpt is clipped. Once expanded, the surrounding
+    // timeline owns scrolling; CodeBlockWidget bounds its own source editor.
+    const int collapsedHeight = fontMetrics().lineSpacing() * 3;
     // Collapsed, an image is shown whole at the height of the collapsed text.
     text_->setMaximumImageHeight(expanded_ ? 0 : collapsedHeight);
-    const QMargins margins    = layout()->contentsMargins();
-    int            width      = qMax(1, this->width() - margins.left() - margins.right() - bar_->width()
-                                            - layout()->spacing());
-    int            fullHeight = text_->heightForWidth(width);
-    if (expanded_ && fullHeight > cap) {
-        width      = qMax(1, width - text_->verticalScrollBar()->sizeHint().width());
-        fullHeight = qMax(fullHeight, text_->heightForWidth(width));
-    }
-    const int height = qMin(fullHeight, expanded_ ? cap : collapsedHeight);
-    text_->setScrollable(expanded_ && fullHeight > cap);
+    const QMargins margins = layout()->contentsMargins();
+    const int width = qMax(1, this->width() - margins.left() - margins.right() - bar_->width() - layout()->spacing());
+    const int fullHeight = contentLayout_->hasHeightForWidth() ? contentLayout_->totalHeightForWidth(width)
+                                                               : contentLayout_->totalSizeHint().height();
+    const int height = expanded_ ? fullHeight : qMin(fullHeight, collapsedHeight);
+    content_->setGeometry(0, 0, width, fullHeight);
     toggle_->setText(expanded_ ? tr("Show less") : tr("Show more…"));
     const bool toggleVisible
         = fullHeight > collapsedHeight || (!expanded_ && text_->hasImagesTallerThan(collapsedHeight, width));
-    const bool changed       = text_->height() != height || toggle_->isHidden() == toggleVisible;
-    text_->setFixedHeight(height);
+    const bool changed = clip_->height() != height || toggle_->isHidden() == toggleVisible;
+    clip_->setFixedHeight(height);
     toggle_->setVisible(toggleVisible);
     if (changed) {
         updateGeometry();
@@ -224,3 +387,5 @@ void MessagePreview::changeEvent(QEvent *event)
     if ((event->type() == QEvent::PaletteChange || event->type() == QEvent::FontChange) && toggle_)
         updatePreview();
 }
+
+#include "MessagePreview.moc"

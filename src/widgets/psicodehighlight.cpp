@@ -5,11 +5,13 @@
 #include "qsourcehighliter.h"
 
 #include <QColor>
+#include <QRegularExpression>
+#include <QStringList>
 #include <QTextBlock>
 #include <QTextCursor>
 #include <QTextDocument>
+#include <QTextDocumentFragment>
 #include <QTextLayout>
-#include <QStringList>
 
 #include <algorithm>
 #include <optional>
@@ -102,6 +104,56 @@ QList<PsiRichText::CodeBlock> PsiRichText::codeBlocks(const QTextDocument *doc)
         first = closing;
     }
     return result;
+}
+
+QList<PsiRichText::ContentPart> PsiRichText::splitCodeBlocks(const QTextDocument *doc, const QString &html,
+                                                             const QStringList &allowedInlineImages)
+{
+    QList<ContentPart> parts;
+    if (!doc || !html.contains(QString(3, QChar(0x60))) || html.contains(QLatin1String("<share"))
+        || html.contains(QLatin1String("<icon")))
+        return parts;
+
+    // QTextDocument fragments cannot safely reconstruct external inline image
+    // resources. A classic header icon is an exception: its resource is
+    // explicitly reinstalled into every prose fragment by the caller.
+    const QRegularExpression imageTag(QStringLiteral(R"(<img\b[^>]*>)"), QRegularExpression::CaseInsensitiveOption);
+    auto                     matches = imageTag.globalMatch(html);
+    while (matches.hasNext()) {
+        const QString tag     = matches.next().captured();
+        const bool    allowed = std::any_of(allowedInlineImages.cbegin(), allowedInlineImages.cend(),
+                                            [&tag](const QString &name) { return tag.contains(name); });
+        if (!allowed)
+            return parts;
+    }
+
+    const auto blocks = codeBlocks(doc);
+    if (blocks.isEmpty())
+        return parts;
+
+    const auto isBreak = [doc](int at) {
+        const QChar c = doc->characterAt(at);
+        return c == QChar::ParagraphSeparator || c == QChar::LineSeparator;
+    };
+    const auto addProse = [&parts, doc](int first, int last) {
+        if (first >= last)
+            return;
+        QTextCursor cursor(const_cast<QTextDocument *>(doc));
+        cursor.setPosition(first);
+        cursor.setPosition(last, QTextCursor::KeepAnchor);
+        parts.append({ ContentPart::Prose, QTextDocumentFragment(cursor).toHtml(), {} });
+    };
+    const int end      = doc->characterCount() - 1;
+    int       position = 0;
+    for (const auto &block : blocks) {
+        // Whitespace between prose and code belongs to the layout boundary.
+        const int proseEnd = block.begin > position && isBreak(block.begin - 1) ? block.begin - 1 : block.begin;
+        addProse(position, proseEnd);
+        parts.append({ ContentPart::Code, block.code, block.language });
+        position = block.end < end && isBreak(block.end) ? block.end + 1 : block.end;
+    }
+    addProse(position, end);
+    return parts;
 }
 
 void PsiRichText::highlightCodeBlocks(QTextDocument *doc)
