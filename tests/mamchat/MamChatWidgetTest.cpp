@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "widgets/MamChatWidget.h"
 #include "widgets/MamImageViewer.h"
+#include "widgets/ChatMessageBody.h"
 #include "widgets/ChatMessageText.h"
 #include "widgets/CodeBlockWidget.h"
 #include "widgets/MessagePreview.h"
@@ -76,6 +77,20 @@ MessageView message(const QString &id, const QString &body, int seconds = 0, boo
     view.setDateTime(QDateTime::fromString(QStringLiteral("2026-10-18T10:00:00Z"),
                                            Qt::ISODate).addSecs(seconds));
     return view;
+}
+
+// Whether a right click shows the message's own menu, rather than that of the view.
+bool opensMessageMenu(MamChatWidget &chat, QWidget *over)
+{
+    // A view's own menu blocks in exec(): do not let a regression hang the test.
+    QTimer::singleShot(100, &chat, [] {
+        if (auto *popup = QApplication::activePopupWidget())
+            popup->close();
+    });
+    QContextMenuEvent event(QContextMenuEvent::Mouse, QPoint(3, 3), over->mapToGlobal(QPoint(3, 3)));
+    QApplication::sendEvent(over, &event);
+    std::unique_ptr<QMenu> menu(chat.findChild<QMenu *>(QStringLiteral("mamMessageContextMenu")));
+    return menu != nullptr;
 }
 
 // QTest::mouseMove() only moves the cursor on Qt 5, without the held button.
@@ -517,6 +532,7 @@ private slots:
         MamChatWidget chat;
         chat.resize(550, 360);
         chat.setHistoryLoading(true);
+        chat.setQuoteColor(QColor("#707070"));
         QStringList sourceLines;
         for (int i = 0; i < 55; ++i)
             sourceLines << QStringLiteral("int value_%1 = %1;").arg(i);
@@ -571,10 +587,17 @@ private slots:
 
         // Ordinary prose around the code is still the quote's activation surface.
         auto *before = preview->findChild<ChatMessageText *>(QStringLiteral("previewText"));
-        auto *after = preview->findChild<ChatMessageText *>(QStringLiteral("previewCodeProse"));
-        QVERIFY(before && after);
+        const auto prose = preview->findChildren<ChatMessageText *>(QStringLiteral("previewText"));
+        QCOMPARE(prose.size(), 2);
+        auto *after = prose.last();
+        QVERIFY(before == prose.first());
         QCOMPARE(before->toPlainText(), QStringLiteral("Before the example"));
         QCOMPARE(after->toPlainText(), QStringLiteral("After the example"));
+        QCOMPARE(before->palette().color(QPalette::Text), QColor("#707070"));
+        QCOMPARE(after->palette().color(QPalette::Text), QColor("#707070"));
+        chat.setQuoteColor(QColor("#a0a4a8"));
+        QCOMPARE(before->palette().color(QPalette::Text), QColor("#a0a4a8"));
+        QCOMPARE(after->palette().color(QPalette::Text), QColor("#a0a4a8"));
         QTest::mouseClick(after->viewport(), Qt::LeftButton, Qt::NoModifier, QPoint(5, 5));
         QCOMPARE(navigated.size(), 1);
         QTest::mouseClick(more, Qt::LeftButton);
@@ -1146,6 +1169,341 @@ private slots:
         QCOMPARE(activated.size(), 2);
     }
 
+    void quotesAroundCodeStayQuotes()
+    {
+        MamChatWidget chat;
+        chat.resize(620, 620);
+        chat.setHistoryLoading(true);
+        chat.setQuoteColor(QColor("#707070"));
+        const QString fence(3, QChar(0x60));
+        chat.appendMessage(message(QStringLiteral("m"), MessageStyling::toHtml(
+            QStringLiteral("&gt; first quote<br>First answer<br>") + fence + QStringLiteral("cpp<br>int a = 1;<br>")
+            + fence + QStringLiteral("<br>&gt; second quote<br>Second answer"))));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *row = chat.itemWidget(0);
+        const auto prose = row->findChildren<ChatMessageText *>(QStringLiteral("mamBody"));
+        QCOMPARE(prose.size(), 2);
+        auto *first = prose.first();
+        auto *second = prose.last();
+        auto *code = row->findChild<CodeBlockWidget *>();
+        QVERIFY(code);
+        QVERIFY(opensMessageMenu(chat, second->viewport()));
+        QVERIFY(opensMessageMenu(chat, code->editor()->viewport()));
+        const auto quoteColor = [](ChatMessageText *text, const QString &quote) {
+            return text->document()->find(quote).charFormat().foreground().color();
+        };
+        for (const auto &[text, quote, answer] :
+             { std::make_tuple(first, QStringLiteral("first quote"), QStringLiteral("First answer")),
+               std::make_tuple(second, QStringLiteral("second quote"), QStringLiteral("Second answer")) }) {
+            QCOMPARE(text->toPlainText(), quote + QLatin1Char('\n') + answer);
+            QVERIFY(text->isQuotedBlock(text->document()->begin()));
+            QCOMPARE(text->document()->begin().blockFormat().leftMargin(), 10.0);
+            QVERIFY(!text->isQuotedBlock(text->document()->begin().next()));
+            QCOMPARE(quoteColor(text, quote), QColor("#707070"));
+        }
+        // The parts are spaced like the rest of the message's column.
+        QTRY_COMPARE(code->y() - first->geometry().bottom() - 1, 4);
+
+        // Later changes reach every part.
+        chat.setQuoteColor(QColor("#a0a4a8"));
+        QCOMPARE(quoteColor(first, QStringLiteral("first quote")), QColor("#a0a4a8"));
+        QCOMPARE(quoteColor(second, QStringLiteral("second quote")), QColor("#a0a4a8"));
+        chat.selectMessageRange(0, 0);
+        QCOMPARE(second->textInteractionFlags(), Qt::TextInteractionFlags(Qt::NoTextInteraction));
+        chat.cancelMessageSelection();
+        QVERIFY(second->textInteractionFlags().testFlag(Qt::TextSelectableByMouse));
+        QPalette colors = chat.palette();
+        colors.setColor(QPalette::Text, QColor("#102030"));
+        chat.setPalette(colors);
+        QTRY_COMPARE(second->palette().color(QPalette::Text), first->palette().color(QPalette::Text));
+        QCOMPARE(second->palette().color(QPalette::Text), QColor("#102030"));
+
+        // A document that cannot be split shows its quotes the same way.
+        FileSharingDeviceOpener opener;
+        FileSharingItem audio(QStringLiteral("audio/ogg"));
+        opener.items.insert(QStringLiteral("audio"), &audio);
+        chat.setMediaOpener(&opener);
+        chat.appendMessage(message(QStringLiteral("whole"), MessageStyling::toHtml(
+            QStringLiteral("&gt; a quote<br><share id=\"audio\"/><br>") + fence + QStringLiteral("<br>code<br>")
+            + fence), 1));
+        QTRY_VERIFY(chat.itemWidget(1));
+        auto *whole = chat.itemWidget(1)->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+        QVERIFY(whole->isQuotedBlock(whole->document()->begin()));
+        QVERIFY(chat.itemWidget(1)->findChildren<CodeBlockWidget *>().isEmpty());
+    }
+
+    void codeKeepsLinesThatLookLikeQuotes()
+    {
+        MamChatWidget chat;
+        chat.resize(620, 620);
+        chat.setHistoryLoading(true);
+        const QString fence(3, QChar(0x60));
+        const QString html = MessageStyling::toHtml(QStringLiteral("Before<br>") + fence
+            + QStringLiteral("sh<br>&gt; ls -l<br>echo ok<br>&gt; cat file<br>") + fence + QStringLiteral("<br>After"));
+        auto original = message(QStringLiteral("original"), html);
+        original.setReactionTargetId(QStringLiteral("original-id"));
+        chat.appendMessage(original);
+        auto reply = message(QStringLiteral("reply"), QStringLiteral("Answer"), 1, true);
+        reply.setReply({ QStringLiteral("original-id"), {}, QStringLiteral("Peer"), QStringLiteral("fallback") });
+        chat.appendMessage(reply);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(1));
+        const QString source = QStringLiteral("> ls -l\necho ok\n> cat file");
+        auto *code = chat.itemWidget(0)->findChild<CodeBlockWidget *>();
+        QVERIFY(code);
+        QCOMPARE(code->code(), source);
+        auto *preview = chat.itemWidget(1)->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview"));
+        auto *quoted = preview ? preview->findChild<CodeBlockWidget *>() : nullptr;
+        QVERIFY(quoted);
+        QCOMPARE(quoted->code(), source);
+
+        // In a document that stays whole they are not quotes either.
+        FileSharingDeviceOpener opener;
+        FileSharingItem audio(QStringLiteral("audio/ogg"));
+        opener.items.insert(QStringLiteral("audio"), &audio);
+        ChatMessageBody whole;
+        whole.text()->setMediaOpener(&opener);
+        whole.setRichText(QStringLiteral("<share id=\"audio\"/><br>") + html, {});
+        QVERIFY(whole.codeBlocks().isEmpty());
+        QVERIFY(whole.text()->toPlainText().contains(QStringLiteral("> ls -l")));
+        ChatMessageBody::RichTextOptions withoutQuotes;
+        withoutQuotes.withoutQuotedLines = true;
+        whole.setRichText(QStringLiteral("<share id=\"audio\"/><br>") + html, withoutQuotes);
+        QVERIFY(whole.text()->toPlainText().contains(QStringLiteral("> ls -l")));
+
+        // A fenced block in a quote is part of that quote.
+        const QString inQuote = MessageStyling::toHtml(QStringLiteral("&gt; ") + fence
+                                                       + QStringLiteral("<br>&gt; old<br>&gt; ") + fence
+                                                       + QStringLiteral("<br>Answer"));
+        ChatMessageBody body;
+        body.setRichText(inQuote, {});
+        QVERIFY(body.codeBlocks().isEmpty());
+        QCOMPARE(body.text()->toPlainText(), fence + QStringLiteral("\nold\n") + fence + QStringLiteral("\nAnswer"));
+        const auto quotedBlock = body.text()->document()->begin();
+        QVERIFY(body.text()->isQuotedBlock(quotedBlock));
+        QVERIFY(body.text()->isQuotedBlock(quotedBlock.next()));
+        QVERIFY(body.text()->isQuotedBlock(quotedBlock.next().next()));
+        body.setRichText(inQuote, withoutQuotes);
+        QCOMPARE(body.text()->toPlainText(), QStringLiteral("Answer"));
+    }
+
+    void fontChangeReachesEveryPartOfTheBody()
+    {
+        MamChatWidget chat;
+        chat.resize(620, 620);
+        chat.setHistoryLoading(true);
+        QFont font = chat.font();
+        font.setPointSizeF(font.pointSizeF() + 2);
+        chat.setFont(font);
+        chat.appendMessage(message(QStringLiteral("m"),
+                                   proseAroundFencedCode(QStringLiteral("cpp"), { QStringLiteral("int a = 1;") })));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *row = chat.itemWidget(0);
+        const auto prose = row->findChildren<ChatMessageText *>(QStringLiteral("mamBody"));
+        QCOMPARE(prose.size(), 2);
+        auto *first = prose.first();
+        auto *second = prose.last();
+        auto *code = row->findChild<CodeBlockWidget *>();
+        QVERIFY(code);
+        font.setPointSizeF(font.pointSizeF() + 6);
+        chat.setFont(font);
+        QTRY_COMPARE(first->font().pointSizeF(), font.pointSizeF());
+        QCOMPARE(second->font().pointSizeF(), font.pointSizeF());
+        QCOMPARE(code->font().pointSizeF(), font.pointSizeF());
+    }
+
+    void rendererTextColorReachesEveryPieceOfMessageText()
+    {
+        FramedRenderer renderer;
+        MamChatWidget chat;
+        chat.resize(620, 620);
+        chat.setHistoryLoading(true);
+        chat.setTheme({ QStringLiteral("framed"), QStringLiteral("Framed"), NativeChatTheme::Modern, 0, 4, {} },
+                      &renderer);
+        const QString html = proseAroundFencedCode(QStringLiteral("cpp"), { QStringLiteral("int a = 1;") });
+        chat.appendMessage(message(QStringLiteral("own"), html, 0, true));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        const auto prose = chat.itemWidget(0)->findChildren<ChatMessageText *>(QStringLiteral("mamBody"));
+        QCOMPARE(prose.size(), 2);
+        QCOMPARE(prose.first()->palette().color(QPalette::Text), QColor(200, 0, 0));
+        QCOMPARE(prose.last()->palette().color(QPalette::Text), QColor(200, 0, 0));
+    }
+
+    void codeWidgetsAreForStyledMessagesOnly()
+    {
+        const QString fence(3, QChar(0x60));
+        const QString html = MessageStyling::toHtml(fence + QStringLiteral("cpp<br>int a = 1;<br>") + fence);
+        MamChatWidget chat;
+        chat.resize(620, 620);
+        chat.setHistoryLoading(true);
+        chat.appendMessage(message(QStringLiteral("styled"), html));
+        auto unstyled = message(QStringLiteral("unstyled"), html, 1);
+        unstyled.setStylingDisabled(true);
+        chat.appendMessage(unstyled);
+        MessageView notice(MessageView::System);
+        notice.setPlainText(html);
+        notice.setDateTime(unstyled.dateTime().addSecs(1));
+        chat.appendMessage(notice);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(1) && chat.itemWidget(2));
+        QCOMPARE(chat.itemWidget(0)->findChildren<CodeBlockWidget *>().size(), 1);
+        QVERIFY(chat.itemWidget(1)->findChildren<CodeBlockWidget *>().isEmpty());
+        QVERIFY(chat.itemWidget(2)->findChildren<CodeBlockWidget *>().isEmpty());
+    }
+
+    void fileCardsNeedNoTextAndAllowCodeBeside()
+    {
+        FileSharingDeviceOpener opener;
+        FileSharingItem archive(QStringLiteral("application/x-7z-compressed"));
+        opener.items.insert(QStringLiteral("archive"), &archive);
+        MamChatWidget chat;
+        chat.resize(620, 620);
+        chat.setHistoryLoading(true);
+        chat.setMediaOpener(&opener);
+        const QString share = QStringLiteral("<share id=\"archive\"/>");
+        const QString fence(3, QChar(0x60));
+        chat.appendMessage(message(QStringLiteral("card"), share));
+        chat.appendMessage(message(QStringLiteral("caption"), MessageStyling::toHtml(
+            share + QStringLiteral("Before<br>") + fence + QStringLiteral("cpp<br>int a = 1;<br>") + fence), 1));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(1));
+        // Only the card: not even the gap of an empty text above it.
+        auto *card = chat.itemWidget(0)->findChild<MessagePreview *>(QStringLiteral("mamFilePreview"));
+        QVERIFY(card);
+        QVERIFY(chat.itemWidget(0)->findChild<ChatMessageBody *>()->isHidden());
+        QTRY_COMPARE(card->y(), 0);
+        // The share is out of the text, so nothing keeps that from being split.
+        QVERIFY(chat.itemWidget(1)->findChild<MessagePreview *>(QStringLiteral("mamFilePreview")));
+        QCOMPARE(chat.itemWidget(1)->findChildren<CodeBlockWidget *>().size(), 1);
+    }
+
+    void themeStylesEveryPieceOfMessageText()
+    {
+        MamChatWidget chat;
+        chat.resize(620, 620);
+        chat.setHistoryLoading(true);
+        NativeChatTheme theme { QStringLiteral("styled"), QStringLiteral("Styled"), NativeChatTheme::Modern, 0, 4, {} };
+        theme.styleSheet = QStringLiteral("QTextEdit#mamBody { padding-left: 7px; }");
+        chat.setTheme(theme);
+        chat.appendMessage(message(QStringLiteral("m"),
+                                   proseAroundFencedCode(QStringLiteral("cpp"), { QStringLiteral("int a = 1;") })));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        const auto prose = chat.itemWidget(0)->findChildren<ChatMessageText *>(QStringLiteral("mamBody"));
+        QCOMPARE(prose.size(), 2);
+        QTRY_VERIFY(prose.first()->contentsMargins().left() >= 7);
+        QTRY_COMPARE(prose.last()->contentsMargins().left(), prose.first()->contentsMargins().left());
+    }
+
+    void bodyAppliesItsOptionsToEveryPart()
+    {
+        const QString fence(3, QChar(0x60));
+        const QString code = fence + QStringLiteral("cpp<br>int a = 1;<br>") + fence;
+        QPixmap pixmap(8, 8);
+        pixmap.fill(Qt::red);
+        const QString image = QStringLiteral("<img src=\"test:icon\" width=\"8\" height=\"8\"/>");
+
+        ChatMessageBody body;
+        ChatMessageBody::RichTextOptions options;
+        options.inlineImages.insert(QStringLiteral("test:icon"), pixmap);
+        body.setRichText(MessageStyling::toHtml(image + QStringLiteral(" Head<br>") + code + QStringLiteral("<br>")
+                                                + image + QStringLiteral(" Tail")), options);
+        QCOMPARE(body.prose().size(), 2);
+        QCOMPARE(body.codeBlocks().size(), 1);
+        const QUrl icon(QStringLiteral("test:icon"));
+        QVERIFY(body.prose().at(0)->document()->resource(QTextDocument::ImageResource, icon).isValid());
+        QVERIFY(body.prose().at(1)->document()->resource(QTextDocument::ImageResource, icon).isValid());
+        // A document staying whole has its images, too.
+        body.setRichText(image + QStringLiteral(" Without any code"), options);
+        QVERIFY(body.text()->document()->resource(QTextDocument::ImageResource, icon).isValid());
+
+        // Without styling, a marker is just text in every part.
+        const QString quotes = MessageStyling::toHtml(QStringLiteral("&gt; one<br>") + code
+                                                      + QStringLiteral("<br>&gt; two"));
+        ChatMessageBody::RichTextOptions unstyled;
+        unstyled.quoteStyling = false;
+        body.setRichText(quotes, unstyled);
+        QCOMPARE(body.prose().size(), 2);
+        QCOMPARE(body.prose().at(0)->toPlainText(), QStringLiteral("> one"));
+        QCOMPARE(body.prose().at(1)->toPlainText(), QStringLiteral("> two"));
+        ChatMessageBody::RichTextOptions whole;
+        whole.splitCode = false;
+        body.setRichText(quotes, whole);
+        QVERIFY(body.codeBlocks().isEmpty());
+        QCOMPARE(body.prose().size(), 1);
+        QVERIFY(body.text()->isQuotedBlock(body.text()->document()->begin()));
+
+        // Code alone measures by that code, not by the document it came from.
+        ChatMessageBody::RichTextOptions trusted;
+        trusted.messageEncrypted = true;
+        trusted.verifiedOmemo = true;
+        body.setRichText(MessageStyling::toHtml(code), trusted);
+        QCOMPARE(body.codeBlocks().size(), 1);
+        QCOMPARE(body.naturalWidth(), body.codeBlocks().first()->naturalWidth());
+        body.setPlainText(QStringLiteral("A very long line of text that is wider than the code would ever need to be"));
+        QVERIFY(body.codeBlocks().isEmpty());
+        QCOMPARE(body.naturalWidth(), body.text()->naturalWidth());
+
+        // Code gets the provenance of its message: a trusted one needs no risk checkbox.
+        body.setRichText(MessageStyling::toHtml(code), trusted);
+        auto *block = body.codeBlocks().first();
+        QAction run(QStringLiteral("Execute"), block);
+        block->setRunAction(&run);
+        bool asked = false;
+        bool riskCheckbox = true;
+        QTimer::singleShot(0, block, [&] {
+            if (auto *dialog = qobject_cast<QMessageBox *>(QApplication::activeModalWidget())) {
+                asked = true;
+                riskCheckbox = dialog->checkBox() != nullptr;
+                dialog->button(QMessageBox::Cancel)->click();
+            }
+        });
+        block->runAction()->trigger();
+        QVERIFY(asked);
+        QVERIFY(!riskCheckbox);
+    }
+
+    void onlyDocumentsWithoutForeignObjectsAreSplit()
+    {
+        const QString fence(3, QChar(0x60));
+        const QString code = fence + QStringLiteral("cpp<br>int a = 1;<br>") + fence;
+        FileSharingDeviceOpener opener;
+        FileSharingItem cached(QStringLiteral("image/png"));
+        cached.cached_ = true;
+        cached.preview_ = QImage(60, 40, QImage::Format_RGB32);
+        cached.preview_.fill(Qt::green);
+        FileSharingItem downloading(QStringLiteral("image/png"));
+        FileSharingItem audio(QStringLiteral("audio/ogg"));
+        opener.items.insert(QStringLiteral("cached"), &cached);
+        opener.items.insert(QStringLiteral("downloading"), &downloading);
+        opener.items.insert(QStringLiteral("audio"), &audio);
+        const auto parts = [&](const QString &html, const QStringList &allowed = {}) {
+            ChatMessageText text;
+            text.setMediaOpener(&opener);
+            text.setRichText(MessageStyling::toHtml(html));
+            return PsiRichText::splitCodeBlocks(text.document(), allowed).size();
+        };
+        QCOMPARE(parts(QStringLiteral("Before<br>") + code + QStringLiteral("<br>After")), 3);
+        QCOMPARE(parts(code), 1);
+        QCOMPARE(parts(QStringLiteral("No fence at all")), 0);
+
+        const QString icon = QStringLiteral("<img src=\"psi-icon:a\" width=\"10\" height=\"10\"/> Head<br>") + code;
+        QCOMPARE(parts(icon), 0);
+        QCOMPARE(parts(icon, { QStringLiteral("psi-icon:a") }), 2);
+        // The resource name decides, not any text in the tag.
+        const QString otherIcon
+            = QStringLiteral("<img src=\"psi-icon:b\" title=\"psi-icon:a\" width=\"10\" height=\"10\"/> Head<br>");
+        QCOMPARE(parts(otherIcon + code, { QStringLiteral("psi-icon:a") }), 0);
+        QCOMPARE(parts(QStringLiteral("<share id=\"cached\"/><br>") + code), 0);
+        QCOMPARE(parts(QStringLiteral("<share id=\"downloading\"/><br>") + code), 0);
+        QCOMPARE(parts(QStringLiteral("<share id=\"audio\"/><br>") + code), 0);
+        // A share that created nothing cannot lose anything either.
+        QCOMPARE(parts(QStringLiteral("<share id=\"unknown\"/>Head<br>") + code), 2);
+    }
+
     void pressTakenByAnEventFilterIsNotAPlainClick()
     {
         // As a media player's control does: it takes the press, not the release.
@@ -1384,6 +1742,7 @@ private slots:
         auto *more = preview->findChild<LinkButton *>(QStringLiteral("previewShowMore"));
         QVERIFY(text && code && clip && more);
         QVERIFY(text->isHidden());
+        QVERIFY(text->toPlainText().isEmpty()); // It does not keep a second copy of the code.
         QTRY_VERIFY(more->isVisible());
         QTest::mouseClick(more, Qt::LeftButton);
         QTRY_COMPARE(clip->height(), code->sizeHint().height());
@@ -1400,6 +1759,7 @@ private slots:
         MamChatWidget chat;
         chat.resize(550, 420);
         chat.setHistoryLoading(true);
+        chat.setQuoteColor(QColor("#707070"));
         auto reply = message(QStringLiteral("reply"), QStringLiteral("Answer"), 100, true);
         reply.setReply({ QStringLiteral("origin"), {}, QStringLiteral("Peer"), QStringLiteral("old fallback") });
         chat.appendMessage(reply);
@@ -1416,22 +1776,13 @@ private slots:
         chat.prependArchivePage({ qMakePair(QStringLiteral("archive-original"), original) });
         QTRY_VERIFY(!preview->findChildren<CodeBlockWidget *>().isEmpty());
         auto *code = preview->findChild<CodeBlockWidget *>();
-        auto *prose = preview->findChild<ChatMessageText *>(QStringLiteral("previewCodeProse"));
-        QVERIFY(prose);
+        auto *prose = preview->findChildren<ChatMessageText *>(QStringLiteral("previewText")).last();
+        QVERIFY(prose != preview->findChild<ChatMessageText *>(QStringLiteral("previewText")));
+        // Nothing has changed the palette since this part was created.
+        QCOMPARE(prose->palette().color(QPalette::Text), QColor("#707070"));
 
-        const auto opensMessageMenu = [&chat](QWidget *over) {
-            // A view's own menu blocks in exec(): do not let a regression hang the test.
-            QTimer::singleShot(100, &chat, [] {
-                if (auto *popup = QApplication::activePopupWidget())
-                    popup->close();
-            });
-            QContextMenuEvent event(QContextMenuEvent::Mouse, QPoint(3, 3), over->mapToGlobal(QPoint(3, 3)));
-            QApplication::sendEvent(over, &event);
-            std::unique_ptr<QMenu> menu(chat.findChild<QMenu *>(QStringLiteral("mamMessageContextMenu")));
-            return menu != nullptr;
-        };
-        QVERIFY(opensMessageMenu(prose->viewport()));
-        QVERIFY(opensMessageMenu(code->editor()->viewport()));
+        QVERIFY(opensMessageMenu(chat, prose->viewport()));
+        QVERIFY(opensMessageMenu(chat, code->editor()->viewport()));
     }
 
     void replyPreviewShowsTheQuotedMessageWithoutNestedQuotes()
