@@ -72,6 +72,8 @@ private Q_SLOTS:
     {
         QFETCH(QString, mechanism);
         QFETCH(QString, provider);
+        if (!QCA::isSupported("sasl", QStringLiteral("qca-cyrus-sasl")))
+            QSKIP("These embedded mechanism and delegation cases require the Cyrus SASL provider");
         if (!QCA::isSupported("sasl", provider))
             QSKIP("This QCA configuration does not include the selected SASL provider");
         QCA::SASL sasl(nullptr, provider);
