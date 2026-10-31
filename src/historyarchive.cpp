@@ -346,11 +346,6 @@ QSqlRecord resolvedRecord(QSqlDatabase db, qint64 eventId)
         return {};
     const qint64 root = q.value(0).toLongLong();
     q.finish();
-    q.prepare("SELECT message_flags FROM events WHERE id=:id");
-    q.bindValue(":id", root);
-    if (!q.exec() || !q.next() || (q.value(0).toInt() & MessageState::LocalDeleted))
-        return {};
-    q.finish();
     q.prepare("SELECT e.*,c.acc_id,c.jid,"
               "(SELECT uid FROM archive_items WHERE event_id=e.id LIMIT 1) AS archive_uid, "
               "(SELECT archive FROM archive_items WHERE event_id=e.id LIMIT 1) AS archive_jid, "
@@ -359,7 +354,9 @@ QSqlRecord resolvedRecord(QSqlDatabase db, qint64 eventId)
     q.bindValue(":id", root);
     if (!q.exec() || !q.next())
         return {};
-    QSqlRecord record   = q.record();
+    QSqlRecord record = q.record();
+    if (record.value("message_flags").toInt() & MessageState::LocalDeleted)
+        return {};
     const auto original = QJsonDocument::fromJson(record.value("extra_data").toString().toUtf8()).object();
     QString    target   = original.value("psi:origin").toString();
     if (record.value("type").toInt() == 9) {
@@ -440,7 +437,7 @@ QList<QSqlRecord> localRecords(QSqlDatabase db, const QString &account, const QS
                     "LEFT JOIN message_revisions r ON r.event_id=e.id "
                     "WHERE c.acc_id=:account AND c.jid=:peer "
                     "AND (r.event_id IS NULL OR r.root_id=e.id) "
-                    "AND (e.message_flags & 16)=0";
+                    "AND (e.message_flags & :deleted)=0";
     if (before > 0)
         sql += " AND (e.history_date_ms,e.id) < (SELECT history_date_ms,id FROM events WHERE id=:before AND "
                "contact_id=c.id)";
@@ -448,6 +445,7 @@ QList<QSqlRecord> localRecords(QSqlDatabase db, const QString &account, const QS
     q.prepare(sql);
     q.bindValue(":account", account);
     q.bindValue(":peer", peer);
+    q.bindValue(":deleted", int(MessageState::LocalDeleted));
     q.bindValue(":limit", limit);
     if (before > 0)
         q.bindValue(":before", before);
@@ -1109,9 +1107,9 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
     return true;
 }
 
-bool locallyDelete(QSqlDatabase db, qint64 eventId)
+bool scrubStoredMessage(QSqlDatabase db, const Key &key, qint64 eventId)
 {
-    if (eventId <= 0 || !db.transaction())
+    if (key.account.isEmpty() || key.peer.isEmpty() || key.room || eventId <= 0 || !db.transaction())
         return false;
     const auto fail = [&db] {
         db.rollback();
@@ -1120,18 +1118,34 @@ bool locallyDelete(QSqlDatabase db, qint64 eventId)
 
     QSqlQuery q(db);
     q.prepare("SELECT COALESCE(r.root_id,e.id),e.type FROM events e "
-              "LEFT JOIN message_revisions r ON r.event_id=e.id WHERE e.id=:id");
+              "JOIN contacts c ON c.id=e.contact_id "
+              "LEFT JOIN message_revisions r ON r.event_id=e.id "
+              "WHERE e.id=:id AND c.acc_id=:account AND c.jid=:peer AND c.type=1 "
+              "AND EXISTS(SELECT 1 FROM message_state_refs s WHERE s.event_id=e.id AND s.kind=0)");
     q.bindValue(":id", eventId);
+    q.bindValue(":account", key.account);
+    q.bindValue(":peer", key.peer);
     if (!q.exec() || !q.next())
         return fail();
     const qint64 root = q.value(0).toLongLong();
-    const int type = q.value(1).toInt();
+    const int    type = q.value(1).toInt();
     q.finish();
-    if (type != 0 && type != 1 && type != 4 && type != 5 && type != 9)
-        return fail(); // Authentication, presence and other events are not chat messages.
+    if (type != 0 && type != 1)
+        return fail(); // This foundation supports direct content messages only.
 
-    q.prepare("SELECT e.id FROM events e LEFT JOIN message_revisions r ON r.event_id=e.id "
-              "WHERE e.id=:root OR r.root_id=:root ORDER BY e.id");
+    // A correction referencing a reused client ID can join unrelated deliveries.
+    // Destructive operations must refuse that component rather than guess.
+    q.prepare("SELECT 1 FROM message_revisions r JOIN message_revisions other "
+              "ON other.contact_id=r.contact_id AND other.type=r.type AND other.direction=r.direction "
+              "AND other.sender=r.sender AND other.stanza_id=r.stanza_id AND other.event_id<>r.event_id "
+              "WHERE r.root_id=:root LIMIT 1");
+    q.bindValue(":root", root);
+    if (!q.exec() || q.next())
+        return fail();
+    q.finish();
+
+    q.prepare("SELECT id FROM events WHERE id=:root UNION "
+              "SELECT event_id AS id FROM message_revisions WHERE root_id=:root ORDER BY id");
     q.bindValue(":root", root);
     if (!q.exec())
         return fail();

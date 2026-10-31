@@ -83,10 +83,12 @@ Page              readIndex(QSqlDatabase db, const Key &, int index, int limit, 
 // Caller has flushed pending EDB writes. This transaction includes events,
 // identities, adjacency and the page checkpoint, or rolls all of them back.
 bool storePage(QSqlDatabase db, const Key &, const QString &before, int limit, Page &);
-// Device-only deletion of one logical message, including any corrections.
-// Scrubs local plaintext and saved MAM XML while retaining structural IDs.
-// The caller must not send XEP-0424; UI/history integration is separate.
-bool locallyDelete(QSqlDatabase db, qint64 eventId);
+// Storage foundation only: atomically scrub an indexed direct message and its
+// currently known revisions in this account/conversation. Keep identity and
+// archive positions. This is NOT the complete local-deletion operation: durable
+// tombstones, ingress suppression, media ownership and UI integration are absent.
+// The caller must flush pending EDB writes first and must not send XEP-0424.
+bool scrubStoredMessage(QSqlDatabase db, const Key &, qint64 eventId);
 // Erasure must invalidate coverage, including empty boundary pages.
 bool invalidate(QSqlDatabase db, const QString &account, const QString &peer);
 }
