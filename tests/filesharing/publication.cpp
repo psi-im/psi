@@ -125,7 +125,11 @@ struct PublicationFixture {
             iq.appendChild(e);
         } else if (!payload.isEmpty()) {
             QDomDocument data;
-            if (!data.setContent(payload, true))
+    #if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+        if (!data.setContent(payload, QDomDocument::ParseOption::UseNamespaceProcessing))
+#else
+        if (!data.setContent(payload, true))
+#endif
                 return false;
             iq.appendChild(doc.importNode(data.documentElement(), true));
         }
