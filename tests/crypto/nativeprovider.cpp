@@ -3,6 +3,7 @@
 #include <QSignalSpy>
 #include <QTest>
 #include <cstdio>
+#include <iterator>
 #include <windows.h>
 #ifdef QCA_STATIC
 #include <QtPlugin>
@@ -103,7 +104,13 @@ private Q_SLOTS:
         for (const auto *name :
              { L"sasl2.dll", L"sasl2d.dll", L"libsasl.dll", L"libsasld.dll", L"libsasl2.dll", L"libsasl2d.dll",
                L"libsasl2-3.dll", L"saslPLAIN.dll", L"saslSCRAM.dll", L"libplain-3.dll", L"libscram-3.dll" })
-            QVERIFY2(!GetModuleHandleW(name), "Cyrus SASL must be linked into its QCA provider");
+            if (const auto module = GetModuleHandleW(name)) {
+                wchar_t     path[32768];
+                const DWORD length = GetModuleFileNameW(module, path, DWORD(std::size(path)));
+                QFAIL(qPrintable(
+                    QStringLiteral("Unexpected external SASL module: %1")
+                        .arg(length ? QString::fromWCharArray(path, int(length)) : QString::fromWCharArray(name))));
+            }
         QCOMPARE(sasl.mechanism(), mechanism);
         QVERIFY(started.constFirst().at(0).toBool());
         QVERIFY(!started.constFirst().at(1).toByteArray().isEmpty());
