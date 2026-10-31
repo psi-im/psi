@@ -278,7 +278,8 @@ void MessagePreview::mouseReleaseEvent(QMouseEvent *event)
     const bool activate = navigationEnabled_ && pressedTarget_ && event->button() == Qt::LeftButton
         && event->modifiers() == Qt::NoModifier && rect().contains(event->pos())
         && (event->pos() - pressedPosition_).manhattanLength() <= QApplication::startDragDistance()
-        && !text_->textCursor().hasSelection() && !title_->hasSelectedText();
+        && (pressedTarget_ != text_->viewport() || !text_->textCursor().hasSelection())
+        && (pressedTarget_ != title_ || !title_->hasSelectedText());
     pressedTarget_ = nullptr;
     if (activate) {
         emit activated();
