@@ -57,7 +57,7 @@ public:
     flushToDisk(); // put data to disk, but not to registry. don't call this directly. FileCache will care about it.
     bool              remove() const; // remove file from disk but not from registry. don't call this directly.
     void              unload();       // drop file to disk, deallocate memory
-    inline bool       inMemory() const;
+    inline bool       inMemory() const { return _data.size() > 0; }
     inline bool       isOnDisk() const { return bool(_flags & OnDisk); }         // data is on disk and not in rgistry
     inline bool       isRegistered() const { return bool(_flags & Registered); } // data is on disk and not in rgistry
     bool              isExpired(bool finishSession = false) const;
@@ -90,7 +90,7 @@ public:
             _flags &= ~SessionUndeletable;
     }
     void        setUndeletable(bool state = true); // survives restarts
-    inline bool isDeletable() const;
+    bool        isDeletable() const;
 
 private:
     friend class FileCache;

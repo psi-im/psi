@@ -49,8 +49,6 @@ FileCacheItem::FileCacheItem(FileCache *parent, const QList<XMPP::Hash> &sums, c
     _fileName        = _sums.value(0).toHex() + (ext.isEmpty() ? "" : "." + ext);
 }
 
-bool FileCacheItem::inMemory() const { return _data.size() > 0; }
-
 void FileCacheItem::flushToDisk()
 {
     if (_flags & OnDisk) {
