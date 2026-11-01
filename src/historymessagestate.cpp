@@ -99,7 +99,7 @@ namespace {
         QSqlQuery query(db);
         query.prepare("SELECT e.contact_id,e.date,e.history_date_ms,e.type,e.direction,e.extra_data,"
                       "e.m_text IS NOT NULL AS has_body,COALESCE(e.subject,'')<>'' AS has_subject,"
-                      "c.jid,COALESCE(r.root_id,e.id) AS root,r.stanza_id,r.replace_id,r.sender "
+                      "c.jid,COALESCE(r.root_id,e.id) AS root,r.stanza_id,r.replace_id,r.sender,e.message_flags "
                       "FROM events e JOIN contacts c ON c.id=e.contact_id "
                       "LEFT JOIN message_revisions r ON r.event_id=e.id WHERE e.id=:id");
         query.bindValue(":id", id);
@@ -116,6 +116,25 @@ namespace {
         event.peer      = row.value("jid").toString();
         event.extra     = QJsonDocument::fromJson(row.value("extra_data").toString().toUtf8()).object();
         query.finish();
+        if (row.value("message_flags").toInt() & MessageState::LocalDeleted) {
+            // Scrubbed payloads cannot reconstruct origin IDs or other aliases.
+            // Keep the existing identity index through replay and state rebuilds;
+            // never decode deleted XML or infer new effects from empty content.
+            event.sender  = row.value("sender").toString();
+            event.stanza  = row.value("stanza_id").toString();
+            event.replace = row.value("replace_id").toString();
+            query.prepare("SELECT kind,target FROM message_state_refs WHERE event_id=:id AND kind<=:last_kind "
+                          "ORDER BY kind,target");
+            query.bindValue(":id", id);
+            query.bindValue(":last_kind", int(RoomId));
+            if (!run(query))
+                return false;
+            while (query.next())
+                event.refs.append({ query.value(0).toInt(), query.value(1).toString() });
+            std::sort(event.refs.begin(), event.refs.end());
+            event.content = event.refs.contains({ Content, QStringLiteral("") });
+            return true;
+        }
         if (event.type != 0 && event.type != 1 && event.type != 9)
             return true;
         if (event.extra.value("psi:decryption-error").toBool()
