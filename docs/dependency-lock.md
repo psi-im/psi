@@ -1,6 +1,6 @@
 # Dependency policy for Psi
 
-Psi uses `dependencies.lock.json` for dependencies managed by the Psi CI. Iris is an exact Git submodule, and its own `iris/dependencies.lock.json` remains the authoritative QCA tag, Git commit and minimum compatible version, and the authority for JDNS. Psi repeats only the QCA tag and commit, for release packaging; `resolve-dependencies.py` rejects a copy that differs from the lock of the pinned Iris, so move the gitlink and this copy together.
+Psi uses `dependencies.lock.json` for dependencies managed by the Psi CI. Do **not** copy QCA's pinned release into this file: Iris is an exact Git submodule, and its own `iris/dependencies.lock.json` is the only authority for the QCA tag, Git commit and minimum compatible version, and for JDNS. Moving QCA takes nothing but moving the `iris` gitlink.
 
 Source gitlinks (`iris`, `3rdparty/*`) pin themselves in Git and are not listed in the lock.
 

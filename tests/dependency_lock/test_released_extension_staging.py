@@ -37,10 +37,12 @@ class ReleasedExtensionsTests(unittest.TestCase):
             "plugins": {"release_tag": "1.6"},
             "psimedia": {"repository": "psi-im/psimedia", "release_tag": "v1.2.1",
                          "commit": "b" * 40},
-            "qca": {"tag": "v3.0.12", "commit": "c" * 40},
         }
         self.lock_path = self.root / "dependencies.lock.json"
         self.lock_path.write_text(json.dumps(self.lock))
+        self.iris_lock = self.root / "iris" / "dependencies.lock.json"
+        self.iris_lock.parent.mkdir()
+        self.iris_lock.write_text(json.dumps({"qca": {"tag": "v3.0.12", "commit": "c" * 40}}))
         files = {}
         for i in range(24):
             name = f"plugins/official-{i:02}.dll"
@@ -83,6 +85,11 @@ class ReleasedExtensionsTests(unittest.TestCase):
         (self.plugins / "plugins" / "official-00.dll").write_bytes(b"tampered")
         with self.assertRaisesRegex(ValueError, "checksum mismatch"):
             self.stage()
+
+    def test_refuses_a_checkout_without_the_iris_lock(self):
+        self.iris_lock.unlink()
+        with self.assertRaisesRegex(ValueError, "dependency lock of the pinned Iris"):
+            staging.stage_extensions(self.psi_stage, self.plugins, self.media, self.lock_path)
 
     def test_refuses_qca_tag_mismatch(self):
         self.manifest["qca_tag"] = "v3.0.11"

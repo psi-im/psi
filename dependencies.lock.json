@@ -21,10 +21,6 @@
       "archive": "psi-windows-sdk-msys2-qt5.zip"
     }
   },
-  "qca": {
-    "tag": "v3.1.2",
-    "commit": "c9c56c2c131c897e807cb417f986c071a9c53ac7"
-  },
   "plugins": {
     "release_tag": "1.6"
   },

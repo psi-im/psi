@@ -22,15 +22,13 @@ class DependencyLockTests(unittest.TestCase):
         self.lock = json.loads((ROOT / "dependencies.lock.json").read_text())
         (self.root / "dependencies.lock.json").write_text(json.dumps(self.lock))
 
-    def with_iris(self, tag=None, minimum="3.0.10"):
-        if tag is None:
-            tag = self.lock["qca"]["tag"]
+    def with_iris(self, tag="v3.1.2", minimum="3.0.10"):
         iris_dir = self.root / "iris"
         iris_dir.mkdir()
         (iris_dir / "dependencies.lock.json").write_text(json.dumps({
             "qca": {
                 "tag": tag,
-                "commit": self.lock["qca"]["commit"],
+                "commit": "c" * 40,
                 "minimum_version": minimum,
             }
         }))
@@ -45,16 +43,13 @@ class DependencyLockTests(unittest.TestCase):
         self.assertEqual(values["PLUGINS_RELEASE_TAG"], self.lock["plugins"]["release_tag"])
         self.assertNotIn("PLUGINS_REF", values)
 
-    def test_psi_qca_pin_matches_iris_and_rejects_divergence(self):
+    def test_qca_comes_only_from_the_pinned_iris(self):
+        self.assertNotIn("qca", self.lock)
         self.with_iris()
         values = resolver.read_dependencies(self.root, require_iris=True)
-        self.assertEqual(values["QCA_TAG"], self.lock["qca"]["tag"])
-        self.assertEqual(values["QCA_COMMIT"], self.lock["qca"]["commit"])
+        self.assertEqual(values["QCA_TAG"], "v3.1.2")
+        self.assertEqual(values["QCA_COMMIT"], "c" * 40)
         self.assertEqual(values["QCA_MIN_VERSION"], "3.0.10")
-        self.lock["qca"]["commit"] = "b" * 40
-        (self.root / "dependencies.lock.json").write_text(json.dumps(self.lock))
-        with self.assertRaisesRegex(ValueError, "differs from Iris"):
-            resolver.read_dependencies(self.root, require_iris=True)
 
     def test_rejects_missing_iris_and_older_qca_than_minimum(self):
         with self.assertRaises(ValueError):

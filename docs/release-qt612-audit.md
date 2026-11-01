@@ -29,7 +29,7 @@ Versions in this section beyond already published tags are **proposed release ta
 
 ## Direct dependency contract for Psi
 
-`dependencies.lock.json` must describe the exact source revision for Iris (via gitlink plus matching release tag), QCA3, PsiMedia, official plugins, QtKeychain, and translations (local source gitlinks pin themselves in Git); it must carry the Qt 6.12 platform target and the correct binary Windows SDK tag. The QCA pin may be redundant with Iris's lock but must be cross-checked automatically rather than allowed to diverge. A source checkout may exist before a release exists; do not label it released prematurely.
+`dependencies.lock.json` must describe the exact source revision for Iris (via gitlink), PsiMedia, official plugins, QtKeychain, and translations (local source gitlinks pin themselves in Git); it must carry the Qt 6.12 platform target and the correct binary Windows SDK tag. QCA3 is pinned by Iris's lock alone. A source checkout may exist before a release exists; do not label it released prematurely.
 
 ## Review of KDE QCA upstream
 

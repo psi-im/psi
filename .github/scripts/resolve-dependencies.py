@@ -3,7 +3,7 @@
 
 Iris itself is pinned by the Psi gitlink, and its release is whatever tag that
 gitlink has. Its QCA build revision is inherited from the checked-out Iris
-dependency lock; the copy in Psi's lock serves release packaging and has to match.
+dependency lock, never copied into Psi's lock.
 """
 import argparse
 import json
@@ -36,12 +36,6 @@ def read_dependencies(root, require_iris=False):
     require(isinstance(iris["minimum_version"], str) and VERSION.fullmatch(iris["minimum_version"]),
             "Invalid Iris minimum version")
 
-    qca_direct = lock["qca"]
-    require(isinstance(qca_direct.get("tag"), str)
-            and re.fullmatch(r"v\d+\.\d+\.\d+", qca_direct["tag"])
-            and isinstance(qca_direct.get("commit"), str)
-            and HEX_SHA.fullmatch(qca_direct["commit"]),
-            "Invalid direct QCA release pin")
     psimedia_entry = lock["psimedia"]
     psimedia = psimedia_entry["commit"]
     require(psimedia_entry.get("repository") == "psi-im/psimedia"
@@ -102,9 +96,6 @@ def read_dependencies(root, require_iris=False):
         selected = tuple(map(int, qca["tag"][1:].split(".")))
         minimum = tuple(map(int, qca["minimum_version"].split(".")))
         require(selected >= minimum, "Iris QCA tag below the minimum supported version")
-        require(qca_direct["tag"] == qca["tag"]
-                and qca_direct["commit"] == qca["commit"],
-                "Psi direct QCA pin differs from Iris transitive QCA lock")
         values.update(QCA_TAG=qca["tag"], QCA_COMMIT=qca["commit"],
                       QCA_MIN_VERSION=qca["minimum_version"])
     return values
