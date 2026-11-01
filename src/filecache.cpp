@@ -112,7 +112,7 @@ QByteArray FileCacheItem::data()
 void FileCacheItem::setUndeletable(bool state)
 {
     if (state) {
-        if (_metadata.contains(FC_META_PERSISTENT)) {
+        if (!_metadata.contains(FC_META_PERSISTENT)) {
             _metadata.insert(FC_META_PERSISTENT, true);
             _flags &= ~Registered; // we have to update registry eventually
         }

@@ -282,6 +282,30 @@ private slots:
         QVERIFY(cache->get(hashOf(newest)));
     }
 
+    void undeletableItemSurvivesEvictionAndRestart()
+    {
+        const QByteArray keep(100, 'a'), other(100, 'b'), newest(100, 'c');
+        {
+            auto  cache = open();
+            auto *item  = cache->append(hashOf(keep), keep);
+            item->setUndeletable();
+            cache->setFileCacheSize(250);
+            QTest::qWait(5);
+            cache->append(hashOf(other), other);
+            QTest::qWait(5);
+            cache->append(hashOf(newest), newest);
+            cache->sync();
+            cache->sync();
+            QVERIFY(cache->get(hashOf(keep)));
+            QVERIFY(!cache->get(hashOf(other)));
+        }
+        auto  cache = open();
+        auto *item  = cache->get(hashOf(keep));
+        QVERIFY(item);
+        item->setUndeletable(false);
+        QVERIFY(!item->metadata().contains(QStringLiteral("fc_persistent")));
+    }
+
     void dataLeavesMemoryOverTheLimit()
     {
         const QByteArray bytes(200, 'a');
