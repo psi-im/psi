@@ -2,8 +2,9 @@
 #include "applicationinfo.h"
 #include "bobfilecache.h"
 #include "filecache.h"
+#include "filedatabase.h"
 #include "fileutil.h"
-#include <QFile>
+#include <QSqlQuery>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QtCrypto>
@@ -14,6 +15,7 @@
 // FileCache needs only this much of two classes that bring in the whole application.
 static QString bobDirectory;
 QString        ApplicationInfo::bobDir() { return bobDirectory; }
+QString        ApplicationInfo::currentProfileDir(HomedirType) { return bobDirectory; }
 QString        ApplicationInfo::version() { return QStringLiteral("test"); }
 QString        ApplicationInfo::fileCacheNS() { return QStringLiteral("https://psi-im.org/test/filecache"); }
 QString        FileUtil::mimeToFileExt(const QString &) { return {}; }
@@ -87,12 +89,14 @@ private slots:
         const auto   data = sample("persistent thumbnail");
         corporate.put(data);
         // Written by the shared cache's sync timer.
-        const auto registered = [this, &data] {
-            QFile registry(dir.filePath(QStringLiteral("cache.xml")));
-            return registry.open(QIODevice::ReadOnly) && registry.readAll().contains(data.hash().toHex());
+        const auto registered = [&data] {
+            QSqlQuery query(FileDatabase::connection());
+            query.prepare(QStringLiteral("SELECT 1 FROM file_hashes WHERE digest=:digest"));
+            query.bindValue(QStringLiteral(":digest"), data.hash().data());
+            return query.exec() && query.next();
         };
         QTRY_VERIFY_WITH_TIMEOUT(registered(), 5000);
-        FileCache reopened(dir.path());
+        FileCache reopened(QStringLiteral("bob"), dir.path());
         auto     *item = reopened.get(data.hash());
         QVERIFY(item);
         QCOMPARE(item->metadata().value(QStringLiteral("accounts")).toStringList(),

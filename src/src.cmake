@@ -143,6 +143,7 @@ list(APPEND HEADERS
     filesharingdownloader.h
     filesharingchunksource.h
     filesourceselector.h
+    filedatabase.h
     filesharingjinglesession.h
     filesharingresponder.h
     mediachunkcache.h
@@ -411,6 +412,7 @@ list(APPEND SOURCES
     filesharedlg.cpp
     filesharingdownloader.cpp
     filesharingchunksource.cpp
+    filedatabase.cpp
     filesharingjinglesession.cpp
     filesharingresponder.cpp
     mediachunkcallback.cpp

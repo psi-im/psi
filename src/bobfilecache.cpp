@@ -29,9 +29,18 @@ using namespace XMPP;
 
 static const QString accountsKey = QStringLiteral("accounts");
 
+// Lives as long as the process, because accounts may use it until they are gone. It must
+// finish its work before the application goes away: the database is not usable after that.
 static FileCache *sharedCache()
 {
-    static FileCache *cache = new FileCache(ApplicationInfo::bobDir(), QCoreApplication::instance());
+    static FileCache *cache = [] {
+        auto *created = new FileCache(QStringLiteral("bob"), ApplicationInfo::bobDir());
+        QObject::connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, created, [created] {
+            created->gc();
+            created->sync(true);
+        });
+        return created;
+    }();
     return cache;
 }
 

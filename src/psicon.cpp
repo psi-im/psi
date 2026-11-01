@@ -26,6 +26,7 @@
 #include "accountregdlg.h"
 #include "accountscombobox.h"
 #include "activeprofiles.h"
+#include "filedatabase.h"
 #include "alerticon.h"
 #include "alertmanager.h"
 #include "anim.h"
@@ -720,6 +721,16 @@ bool PsiCon::init()
     }
 
     checkAccountsEmpty();
+
+    // These lived above the profile. Bits of Binary are only a cache of what peers can send again.
+    const auto profiles = getProfilesList();
+    FileDatabase::retireLegacyDirectory(ApplicationInfo::homeDir(ApplicationInfo::DataLocation)
+                                            + QStringLiteral("/shares"),
+                                        profiles);
+    FileDatabase::retireLegacyDirectory(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation)
+                                            + QStringLiteral("/avatars"),
+                                        profiles);
+    QDir(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation) + QStringLiteral("/bob")).removeRecursively();
 
     // History belongs to the profile, including when every account starts
     // disabled. An account enabled/created later must be able to open a chat.

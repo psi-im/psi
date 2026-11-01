@@ -31,7 +31,6 @@
 #include <memory>
 
 class FileCache;
-class OptionsTree;
 class QTimer;
 
 class FileCacheItem : public QObject {
@@ -58,7 +57,7 @@ public:
     flushToDisk(); // put data to disk, but not to registry. don't call this directly. FileCache will care about it.
     bool              remove() const; // remove file from disk but not from registry. don't call this directly.
     void              unload();       // drop file to disk, deallocate memory
-    inline bool       inMemory() const;
+    inline bool       inMemory() const { return _data.size() > 0; }
     inline bool       isOnDisk() const { return bool(_flags & OnDisk); }         // data is on disk and not in rgistry
     inline bool       isRegistered() const { return bool(_flags & Registered); } // data is on disk and not in rgistry
     bool              isExpired(bool finishSession = false) const;
@@ -91,7 +90,7 @@ public:
             _flags &= ~SessionUndeletable;
     }
     void        setUndeletable(bool state = true); // survives restarts
-    inline bool isDeletable() const;
+    bool        isDeletable() const;
 
 private:
     friend class FileCache;
@@ -103,8 +102,9 @@ private:
     quint64           _size;
     QByteArray        _data;
 
-    quint16 _flags;
-    QString _fileName;
+    quint16    _flags;
+    QString    _fileName;
+    QByteArray _recordId; // Empty until the item has a database record.
 };
 
 class FileCache : public QObject {
@@ -121,8 +121,14 @@ public:
         FlushOverflow // flush to disk only when memory cache limit is exceeded
     };
 
-    FileCache(const QString &cacheDir, QObject *parent = nullptr);
+    // A partition has its own items, payload directory and limits in the profile's database.
+    FileCache(const QString &partition, const QString &cacheDir, QObject *parent = nullptr);
     ~FileCache();
+
+    // Takes over the items of a directory from before caches moved under the profile,
+    // copying their payload. Other profiles may need the same directory, so it stays.
+    // Runs once per partition.
+    void importLegacy(const QString &legacyDir);
 
     void gc();
 
@@ -191,21 +197,23 @@ public slots:
 
 private:
     void toRegistry(FileCacheItem *);
+    void load();
+    void replaceRecord(FileCacheItem *item, const QList<XMPP::Hash> &sums);
 
 protected:
     QHash<XMPP::Hash, FileCacheItem *> _items;
 
 private:
+    QString                            _partition;
     QString                            _cacheDir;
     unsigned int                       _memoryCacheSize;
     unsigned int                       _fileCacheSize;
     unsigned int                       _defaultMaxAge;
     SyncPolicy                         _syncPolicy;
     QTimer                            *_syncTimer;
-    OptionsTree                       *_registry;
     QHash<XMPP::Hash, FileCacheItem *> _pendingRegisterItems;
 
-    bool _registryChanged;
+    bool _inTransaction = false;
 };
 
 #endif // FILECACHE_H
