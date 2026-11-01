@@ -138,6 +138,17 @@ if(TARGET iris)
         Qt${QT_DEFAULT_MAJOR_VERSION}::Gui Qt${QT_DEFAULT_MAJOR_VERSION}::Xml)
     add_test(NAME filesharing_bob_cache COMMAND filesharing_bob_cache_test)
     set_tests_properties(filesharing_bob_cache PROPERTIES TIMEOUT 30)
+
+    add_executable(filesharing_file_cache_test filecache.cpp ../../src/filecache.cpp
+        ../../src/tools/optionstree/optionstree.cpp ../../src/tools/optionstree/optionstreereader.cpp
+        ../../src/tools/optionstree/optionstreewriter.cpp ../../src/tools/optionstree/varianttree.cpp
+        ../../src/tools/atomicxmlfile/atomicxmlfile.cpp)
+    set_target_properties(filesharing_file_cache_test PROPERTIES AUTOMOC ON)
+    target_include_directories(filesharing_file_cache_test PRIVATE ../../src ../../src/tools ../../src/tools/optionstree)
+    target_link_libraries(filesharing_file_cache_test PRIVATE iris Qt${QT_DEFAULT_MAJOR_VERSION}::Test
+        Qt${QT_DEFAULT_MAJOR_VERSION}::Gui Qt${QT_DEFAULT_MAJOR_VERSION}::Xml)
+    add_test(NAME filesharing_file_cache COMMAND filesharing_file_cache_test)
+    set_tests_properties(filesharing_file_cache PROPERTIES TIMEOUT 30)
 endif()
 
 if(TARGET iris)
