@@ -112,22 +112,6 @@ function(install_appimage_runtime_deps)
 
     set(_plugin_dir "${_qt_arch_dir}/plugins")
 
-    # Paths may vary across different Qt builds — check several
-    # common locations for the WebEngine resources directory.
-    set(_qtwebengine_data_candidates
-        "${_qt_install_data}/resources"
-        "${_qt_install_data}/qtwebengine_resources"
-        "${_qt_install_data}/resources/qtwebengine"
-    )
-    set(_qtwebengine_data_dir "")
-    foreach(_candidate IN LISTS _qtwebengine_data_candidates)
-        if(EXISTS "${_candidate}/qtwebengine_resources.pak"
-           OR EXISTS "${_candidate}/icudtl.dat")
-            set(_qtwebengine_data_dir "${_candidate}")
-            break()
-        endif()
-    endforeach()
-
     # Pass values ​​to install(CODE) so that the code executes during installation.
     set(_deploy_code [=[
 if(CMAKE_VERSION GREATER_EQUAL 4.3.0)
@@ -140,7 +124,6 @@ set(_scan_targets "${_executables}")
 set(_plugin_dir "@_plugin_dir@")
 set(_qt_plugin_patterns "@DEPLOY_QT_PLUGIN_PATTERNS@")
 set(_gst_plugin_patterns "@DEPLOY_GSTREAMER_PLUGIN_PATTERNS@")
-set(_webengine_data_dir "@_qtwebengine_data_dir@")
 set(_qt_translations_dir "@_qt_translations_dir@")
 set(_qt_libexec_dir "@_qt_libexec_dir@")
 set(_qt_bins_dir "@_qt_bins_dir@")
@@ -183,7 +166,7 @@ list(REMOVE_DUPLICATES _plugins_to_scan)
 list(APPEND _scan_targets ${_plugins_to_scan})
 
 
-# First, scan the application to determine whether WebEngine support is required.
+# First, scan the application.
 file(GET_RUNTIME_DEPENDENCIES
     EXECUTABLES "${_executables}"
     RESOLVED_DEPENDENCIES_VAR _app_deps
@@ -197,27 +180,6 @@ file(GET_RUNTIME_DEPENDENCIES
         ".*/librt\\.so.*"
 )
 list(APPEND _all_deps ${_app_deps})
-
-set(_needs_webengine FALSE)
-foreach(_dep IN LISTS _app_deps)
-    if(_dep MATCHES "Qt[56]WebEngine(Core)?")
-        set(_needs_webengine TRUE)
-        break()
-    endif()
-endforeach()
-
-# If there is a dependency on QtWebEngine, look for QtWebEngineProcess near Qt.
-# It is usually located in Qt's libexec; also check the Qt bin directory.
-if(_needs_webengine)
-    find_file(_webengine_process
-        NAMES QtWebEngineProcess
-        PATHS "${_qt_libexec_dir}" "${_qt_bins_dir}"
-        NO_DEFAULT_PATH
-        REQUIRED
-    )
-    list(APPEND _executables "${_webengine_process}")
-    list(APPEND _scan_targets "${_webengine_process}")
-endif()
 
 # Supplement the set with executable and library targets.
 # Scan each target individually: LIBRARIES is used for libraries,
@@ -314,34 +276,9 @@ foreach(_dep_plugin IN LISTS _plugins_to_scan)
     file(INSTALL DESTINATION "${_destination_prefix}/${_plugin_subdir}" TYPE FILE FILES "${_dep_plugin}")
 endforeach()
 
-# QtWebEngineProcess is installed alongside the main binary.
-if(_needs_webengine)
-    file(INSTALL DESTINATION "${_bin_dest}" TYPE FILE FILES "${_webengine_process}" PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-endif()
-
-# WebEngine resources and translations are kept separate, under share/${PROJECT_NAME}.
+# Translations are kept separate, under share/${PROJECT_NAME}.
 set(_data_dest
     "${CMAKE_INSTALL_PREFIX}/@CMAKE_INSTALL_DATAROOTDIR@/@PROJECT_NAME@")
-
-if(_needs_webengine)
-    if(_webengine_data_dir AND EXISTS "${_webengine_data_dir}")
-        file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/@CMAKE_INSTALL_DATAROOTDIR@/resources"
-            TYPE DIRECTORY FILES "${_webengine_data_dir}/")
-    else()
-        message(WARNING
-            "QtWebEngine is used, but its resources directory was not found")
-    endif()
-
-    if(_qt_translations_dir AND EXISTS "${_qt_translations_dir}")
-        file(GLOB _webengine_translations
-            "${_qt_translations_dir}/qtwebengine_locales"
-            "${_qt_translations_dir}/qtwebengine_*.qm")
-        if(_webengine_translations)
-            file(INSTALL DESTINATION "${_data_dest}/translations"
-                TYPE FILE FILES ${_webengine_translations})
-        endif()
-    endif()
-endif()
 
 file(GLOB _qt_translations "${_qt_translations_dir}/qt*.qm")
 if(_qt_translations)

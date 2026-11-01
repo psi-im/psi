@@ -119,15 +119,10 @@ cd psi && ./psi-plus && cd .. #For Psi+
   To use `Hunspell` spellchecker.
   (default `ON`)
 
-> -DCHAT_TYPE=BASIC
-
-   To set a type of chatlog engine. Possible values: `WEBKIT`, `WEBENGINE`, `BASIC`.
-   Default value: `BASIC`.
-
 > -DPSI_VERSION=${version}
 
   To set the Psi version manually.
-  Example for Psi+: `1.0.40 (2017-06-05, Psi:a7d2d7b8, Psi+:055e945, webkit)`.
+  Example for Psi+: `1.0.40 (2017-06-05, Psi:a7d2d7b8, Psi+:055e945)`.
   Script sets this flag automatically from `version` file if it exists in sources directory
 
 > -DCMAKE_BUILD_TYPE=Release
@@ -146,13 +141,6 @@ cd psi && ./psi-plus && cd .. #For Psi+
   Disables `USE_CCACHE` and adds new dependencies, if the flag `PRODUCTION` is on.
   Script can automatically detect `MXE`.
   (default: `OFF`)
-
-> -DVERBOSE_PROGRAM_NAME=ON
-
-  Verbose output program name.
-  Experimental flag. After compilation will be created a binary file not with
-  the name `psi` or `psi-plus`, but, for example, `psi-webkit` or `psi-plus-webengine`.
-  (default `OFF`)
 
 > -DPRODUCTION=ON
 
@@ -263,7 +251,6 @@ cd psi && ./psi-plus && cd .. #For Psi+
    - `jabberdiskplugin`
    - `juickplugin`
    - `messagefilterplugin`
-   - `omemoplugin`
    - `openpgpplugin`
    - `otrplugin`
    - `pepchangenotifyplugin`
@@ -315,8 +302,7 @@ No program installation is required for assembly under Windows OS!!!
 > -DENABLE_PORTABLE=ON
 
   To build a portable version (this is done for convenience, so you don't have to rename the binary manually).
-  The output will be "binary-name-portable.exe", and if `VERBOSE_PROGRAM_NAME=ON`,
-  then "extended-binary-name-portable.exe".
+  The output will be "binary-name-portable.exe".
   Enabling this flag automatically makes the `prepare-bin-libs` build target available.
   (The default is `OFF`).
 
@@ -336,34 +322,6 @@ No program installation is required for assembly under Windows OS!!!
 
   Disable optimization for debug builds. Windows only.
   (default `OFF`)
-
-### To build OTR plugin in OS WINDOWS you need to set additional variables
-
-> -DLIBGCRYPT_ROOT=%LIBGCRYPT_ROOT%
-
-  Set path to `LIBGCRYPT` library root directory.
-
-> -DLIBGPGERROR_ROOT=%LIBGPGERROR_ROOT%
-
-  Set path to `LIBGPG-ERROR` library root directory.
-
-> -DLIBOTR_ROOT=%LIBOTR_ROOT%
-
-  Set path to the `LIBOTR` library root directory.
-
-> -DLIBTIDY_ROOT=%LIBTIDY_ROOT%
-
-  Set path to the `LIBTIDY` library root directory.
-
-  For example:
-
-  `-DLIBGCRYPT_ROOT=C:\libgcrypt -DLIBGPGERROR_ROOT=C:\libgpg-error -DLIBOTR_ROOT=C:\libotr -DLIBTIDY_ROOT=C:\libtidy`
-
-> -DNO_DEBUG_OPTIMIZATION=OFF
-
-  Disable compiler optimizations when building the debug version.
-  (default is `OFF`)
-
 
 ### If you are using Psi SDK you need to set SDK_PATH:
 

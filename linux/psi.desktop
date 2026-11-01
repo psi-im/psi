@@ -13,7 +13,7 @@ X-KDE-StartupNotify=true
 StartupWMClass=Psi
 Categories=Network;InstantMessaging;Qt;
 Keywords=XMPP;Jabber;chat;instant messaging;messenger;IM;VoIP;calls;file sharing;
-Actions=SelectProfile;RunWithVulkan;QuitApplication;
+Actions=SelectProfile;QuitApplication;
 
 # Translations
 GenericName[be]=Кліент XMPP

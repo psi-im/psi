@@ -552,7 +552,6 @@ void PsiChatDlg::initUi()
 
     // The historical QTextEdit remains an internal compatibility adapter
     // during this first vertical slice; visible rows are real Qt widgets.
-#ifndef WEBKIT
     nativeTimeline_ = new MamChatWidget(ui_.topFrame);
     delete ui_.topFrame->layout()->replaceWidget(ui_.log, nativeTimeline_);
     ui_.log->hide();
@@ -627,7 +626,6 @@ void PsiChatDlg::initUi()
             loadOlderMamMessages();
     });
     QTimer::singleShot(0, this, [this] { loadOlderMamMessages(); });
-#endif
 
     le_autojid = new ActionLineEdit(ui_.le_jid);
     ui_.le_jid->setLineEdit(le_autojid);

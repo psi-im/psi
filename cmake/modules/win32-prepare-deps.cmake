@@ -177,13 +177,6 @@ if(WIN32)
         if(${QT_DEFAULT_MAJOR_VERSION} LESS 6)
             list(APPEND QT_LIBAS Qt5WinExtras${D}.dll)
         endif()
-        if(IS_WEBENGINE OR IS_WEBKIT)
-            list(APPEND QT_LIBAS
-                Qt${QT_DEFAULT_MAJOR_VERSION}WebKit${D}.dll
-                Qt${QT_DEFAULT_MAJOR_VERSION}WebKitWidgets${D}.dll
-                Qt${QT_DEFAULT_MAJOR_VERSION}WebChannel${D}.dll
-            )
-        endif()
         find_psi_lib("${QT_LIBAS}" "${QT_BIN_DIR}" "${QT_LIBS_OUTPUT}/")
         #AUDIO PLUGINS
         find_psi_lib(qtaudio_windows${D}.dll "${QT_PLUGINS_DIR}/audio" "${QT_PLUGINS_OUTPUT}/audio/")

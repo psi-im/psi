@@ -8,15 +8,6 @@ Name[sr]=Покрени под другим профилом
 Name[uk]=Запустити під іншим профілем
 Icon=psi
 
-[Desktop Action RunWithVulkan]
-Exec=psi --vulkanrender
-Name=Start with Vulkan rendering
-Name[hr]=Pokreni s renderiranjem Vulkan
-Name[ru]=Запустить с отрисовкой через Vulkan
-Name[sr]=Покрени уз рендеровање Vulkan
-Name[uk]=Запустити з рендерингом Vulkan
-Icon=psi
-
 [Desktop Action QuitApplication]
 Exec=psi --quit
 Name=Quit the application

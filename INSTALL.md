@@ -11,8 +11,6 @@ See "Packages and installers" section in [README.md](README.md) or [README.html]
 * ccache (optional)
 * cmake >= 3.10.0
 * Qt >= 5.9.0 && Qt < 6.0
-* QtWebKit (optional)
-* QtWebEngine (optional)
 * QCA (from [upstream](https://api.kde.org/qca/html/) or from our [fork](https://github.com/psi-im/qca))
 * QtKeychain (optional)
 * OpenSSL (required)
@@ -26,8 +24,6 @@ See "Packages and installers" section in [README.md](README.md) or [README.html]
 * Sparkle (optional, macOS only)
 * Growl (optional, macOS only)
 * libhttp-parser (optional, for plugins only)
-* libotr (optional, for plugins only)
-* libtidy (optional, for plugins only)
 * libomemo-c (optional, for plugins only)
 
 ### Common
@@ -58,7 +54,6 @@ sudo apt install -qq \
         libminizip-dev \
         libqca-qt5-2-dev \
         libqt5svg5-dev \
-        libqt5webkit5-dev \
         libqt5x11extras5-dev \
         libsm-dev \
         libssl-dev \
@@ -73,9 +68,7 @@ Plugin build dependencies:
 ```shell
 sudo apt install -qq \
         libhttp-parser-dev \
-        libotr5-dev \
-        libomemo-c-dev \
-        libtidy-dev
+        libomemo-c-dev
 ```
 
 #### openSUSE
@@ -86,7 +79,6 @@ General build dependencies:
 sudo zypper in hunspell-devel \
         libXScrnSaver-devel \
         libidn-devel \
-        libgpg-error-devel \
         libproxy-devel \
         "cmake(Qt5Concurrent)" \
         "cmake(Qt5Core)" \
@@ -98,7 +90,6 @@ sudo zypper in hunspell-devel \
         "cmake(Qt5PrintSupport)" \
         "cmake(Qt5Sql)" \
         "cmake(Qt5Svg)" \
-        "cmake(Qt5WebEngine)" \
         "cmake(Qt5X11Extras)" \
         "cmake(Qt5Xml)" \
         "pkgconfig(qca2-qt5)"
@@ -107,9 +98,7 @@ sudo zypper in hunspell-devel \
 Plugin build dependencies:
 
 ```shell
-sudo zypper in libotr-devel \
-        libomemo-c-devel \
-        libtidy-devel
+sudo zypper in libomemo-c-devel
 ```
 
 
