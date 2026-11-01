@@ -4,17 +4,121 @@
 #include "filesharingjinglesession.h"
 #include "filesharingresponder.h"
 #include "filesharingstore.h"
+#include <QCoreApplication>
+#include <QElapsedTimer>
 #include <QFile>
+#include <QHostAddress>
+#include <QPointer>
 #include <QTemporaryDir>
+#include <QTextStream>
+#include <QThread>
+#include <QtCrypto>
+#include <functional>
 #include <iris/jingle-ft.h>
+#include <iris/jingle-ice.h>
+#include <iris/jingle-session.h>
+#include <iris/tcpportreserver.h>
+#include <iris/xmpp.h>
+#include <iris/xmpp_caps.h>
 #include <iris/xmpp_client.h>
+#include <iris/xmpp_clientstream.h>
+#include <iris/xmpp_hash.h>
+#include <iris/xmpp_task.h>
 #include <optional>
 
-#include "sxeconnectionfixture.h"
-
+using namespace XMPP;
+namespace J  = XMPP::Jingle;
 namespace FT = J::FileTransfer;
 
 namespace {
+void check(bool ok, const char *message)
+{
+    if (!ok)
+        qFatal("%s", message);
+}
+
+class NoNetworkConnector final : public Connector {
+public:
+    void        setOptHostPort(const QString &, quint16) override { }
+    void        connectToServer(const QString &) override { }
+    ByteStream *stream() const override { return nullptr; }
+    void        done() override { }
+};
+
+class RecordingStream final : public ClientStream {
+public:
+    explicit RecordingStream(Connector *connector) : ClientStream(connector) { }
+    void write(const Stanza &stanza) override { written.append(stanza.element().cloneNode(true).toElement()); }
+
+    QList<QDomElement> written;
+};
+
+// A client whose stanzas are carried by pump(). ICE still runs on localhost.
+struct Endpoint {
+    NoNetworkConnector connector;
+    RecordingStream    stream { &connector };
+    Client             client;
+    Jid                jid;
+
+    explicit Endpoint(const QString &user)
+    {
+        jid = Jid(user + QStringLiteral("@example.test/device"));
+        client.start(QStringLiteral("example.test"), user, QString(), QStringLiteral("device"));
+        client.connectToServer(&stream, jid);
+    }
+};
+
+std::function<void(const Endpoint &, QDomElement &)> onStanza;
+
+void pump(Endpoint &a, Endpoint &b)
+{
+    for (int round = 0; round < 200; ++round) {
+        bool moved = false;
+        for (auto [from, to] : { std::pair<Endpoint *, Endpoint *> { &a, &b }, { &b, &a } }) {
+            auto out = std::move(from->stream.written);
+            from->stream.written.clear();
+            for (auto stanza : out) {
+                moved = true;
+                stanza.setAttribute(QStringLiteral("from"), from->jid.full());
+                stanza.setAttribute(QStringLiteral("to"), to->jid.full());
+                if (onStanza)
+                    onStanza(*from, stanza);
+                to->client.rootTask()->take(stanza);
+            }
+        }
+        for (int i = 0; i < 4; ++i)
+            QCoreApplication::processEvents();
+        if (!moved && a.stream.written.isEmpty() && b.stream.written.isEmpty())
+            return;
+    }
+    qFatal("stanza exchange did not settle");
+}
+
+bool pumpUntil(Endpoint &a, Endpoint &b, const std::function<bool()> &done, int timeoutMs = 15000)
+{
+    QElapsedTimer timer;
+    timer.start();
+    while (!done() && timer.elapsed() < timeoutMs) {
+        pump(a, b);
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 10);
+        QThread::msleep(2);
+    }
+    pump(a, b);
+    return done();
+}
+
+void setPeerFeatures(Client &client, const Jid &peer, QStringList features)
+{
+    features.removeDuplicates();
+    DiscoItem disco;
+    disco.setJid(peer);
+    disco.setNode(QStringLiteral("urn:psi:test:file-request"));
+    disco.setFeatures(Features(features));
+    const CapsSpec caps(disco);
+    CapsRegistry::instance()->registerCaps(caps, disco);
+    client.capsManager()->updateCaps(peer, caps);
+}
+
 struct Answer {
     QByteArray received;
     QString    refusal;
@@ -103,7 +207,8 @@ int main(int argc, char **argv)
     QCoreApplication app(argc, argv);
     QCA::Initializer qca;
     Client           probe;
-    if (!probe.jingleManager()->discoFeatures().contains(SXE::NS_CONNECTIONS)) {
+    // Advertised only when the DTLS and SCTP stack is available.
+    if (!probe.jingleManager()->discoFeatures().contains(QStringLiteral("urn:xmpp:sxe:0#connections"))) {
         qInfo("File request test skipped: no DTLS/SCTP backend");
         return 77;
     }

@@ -83,18 +83,6 @@ if(BUNDLED_IRIS AND TARGET iris)
     target_link_libraries(filesharing_jingle_session_test PRIVATE iris Qt${QT_DEFAULT_MAJOR_VERSION}::Core)
     add_test(NAME filesharing_jingle_session COMMAND filesharing_jingle_session_test)
     set_tests_properties(filesharing_jingle_session PROPERTIES TIMEOUT 60 SKIP_RETURN_CODE 77)
-
-    find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Sql)
-    add_executable(filesharing_responder_test responder.cpp ../../src/filesharingresponder.cpp
-        ../../src/filesharingjinglesession.cpp ../../src/filesharingstore.cpp)
-    set_target_properties(filesharing_responder_test PROPERTIES AUTOMOC ON)
-    target_include_directories(filesharing_responder_test PRIVATE ../../src
-        "${PROJECT_SOURCE_DIR}/iris/src/xmpp/xmpp-im"
-        "${PROJECT_SOURCE_DIR}/iris/tests/jingle")
-    target_link_libraries(filesharing_responder_test PRIVATE iris
-        Qt${QT_DEFAULT_MAJOR_VERSION}::Core Qt${QT_DEFAULT_MAJOR_VERSION}::Sql)
-    add_test(NAME filesharing_responder COMMAND filesharing_responder_test)
-    set_tests_properties(filesharing_responder PROPERTIES TIMEOUT 60 SKIP_RETURN_CODE 77)
 elseif(TARGET iris)
     message(STATUS "Skipping source-only shared-media Jingle integration test with external Iris SDK")
 endif()
@@ -129,6 +117,15 @@ if(TARGET iris)
         Qt${QT_DEFAULT_MAJOR_VERSION}::Test Qt${QT_DEFAULT_MAJOR_VERSION}::Sql)
     add_test(NAME filesharing_sims_history COMMAND filesharing_sims_history_test)
     set_tests_properties(filesharing_sims_history PROPERTIES TIMEOUT 30)
+
+    add_executable(filesharing_responder_test responder.cpp ../../src/filesharingresponder.cpp
+        ../../src/filesharingjinglesession.cpp ../../src/filesharingstore.cpp)
+    set_target_properties(filesharing_responder_test PROPERTIES AUTOMOC ON)
+    target_include_directories(filesharing_responder_test PRIVATE ../../src)
+    target_link_libraries(filesharing_responder_test PRIVATE iris
+        Qt${QT_DEFAULT_MAJOR_VERSION}::Core Qt${QT_DEFAULT_MAJOR_VERSION}::Sql)
+    add_test(NAME filesharing_responder COMMAND filesharing_responder_test)
+    set_tests_properties(filesharing_responder PROPERTIES TIMEOUT 60 SKIP_RETURN_CODE 77)
 
     find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Gui Xml)
     add_executable(filesharing_bob_cache_test bobcache.cpp ../../src/bobfilecache.cpp ../../src/filecache.cpp
