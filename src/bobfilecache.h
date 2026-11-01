@@ -26,19 +26,19 @@ class FileCache;
 
 using namespace XMPP;
 
+// One account's view of the cache. All views keep the bytes in one place, but a view
+// answers only for data that came through its own account: BoBManager hands whatever
+// the cache returns to any remote requester.
 class BoBFileCache : public BoBCache {
     Q_OBJECT
 public:
-    static BoBFileCache *instance();
+    explicit BoBFileCache(const QString &accountId, QObject *parent = nullptr);
 
     virtual void    put(const BoBData &) override;
     virtual BoBData get(const Hash &) override;
 
 private:
-    BoBFileCache();
-
-    FileCache           *_fileCache;
-    static BoBFileCache *_instance;
+    QString _accountId;
 };
 
 #endif // BOBFILECACHE_H

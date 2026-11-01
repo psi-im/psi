@@ -1154,7 +1154,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
 #ifdef PSI_PLUGINS
     PluginManager::instance()->addAccount(this, d->client);
 #endif
-    d->client->bobManager()->setCache(BoBFileCache::instance()); // xep-0231
+    d->client->bobManager()->setCache(new BoBFileCache(acc.id, this)); // xep-0231
 
     DiscoItem::Identity identity;
     identity.category = "client";
@@ -1311,6 +1311,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
     setKnownPgpKeys(acc.pgpKnownKeys);
 
     setUserAccount(acc);
+    psi()->fileSharingManager()->importOwnPublications(acc.id, Jid(acc.jid));
     connect(ProxyManager::instance(), &ProxyManager::proxyRemoved, d, &Private::pm_proxyRemoved);
 
     connect(d->psi, &PsiCon::emitOptionsUpdate, this, &PsiAccount::optionsUpdate);
@@ -3422,16 +3423,7 @@ void PsiAccount::client_incomingJingle(Jingle::Session *session)
             return;
         }
 
-        if (!psi()->fileSharingManager()->jingleAutoAcceptIncomingDownloadRequest(session)) {
-            // make sure there are only file offers
-            for (auto const &a : session->contentList()) {
-                if (a->senders() != Jingle::Origin::Initiator) {
-                    session->terminate(XMPP::Jingle::Reason::FailedApplication,
-                                       "file request failed, so expected only file offer");
-                    return;
-                }
-            }
-
+        if (!psi()->fileSharingManager()->answerFileRequest(session, this)) {
             FileEvent::Ptr fe(new FileEvent(session->peer().full(), session, this));
             fe->setTimeStamp(QDateTime::currentDateTime());
             handleEvent(fe, IncomingStanza);

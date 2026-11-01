@@ -22,36 +22,46 @@
 #include "applicationinfo.h"
 #include "filecache.h"
 
-#include <QApplication>
+#include <QCoreApplication>
+#include <QStringList>
 
 using namespace XMPP;
 
-BoBFileCache::BoBFileCache() : BoBCache(nullptr)
+static const QString accountsKey = QStringLiteral("accounts");
+
+static FileCache *sharedCache()
 {
-    setParent(QApplication::instance());
-    _fileCache = new FileCache(ApplicationInfo::bobDir(), this);
+    static FileCache *cache = new FileCache(ApplicationInfo::bobDir(), QCoreApplication::instance());
+    return cache;
 }
 
-BoBFileCache *BoBFileCache::instance()
-{
-    if (!_instance) {
-        _instance = new BoBFileCache;
-    }
-    return _instance;
-}
+BoBFileCache::BoBFileCache(const QString &accountId, QObject *parent) : BoBCache(parent), _accountId(accountId) { }
 
 void BoBFileCache::put(const BoBData &data)
 {
+    // A cid names its content, and the bytes are shared between accounts: a peer
+    // of one account must not be able to replace them for another.
+    if (Hash::from(data.hash().type(), data.data()).data() != data.hash().data()) {
+        qWarning("Ignoring Bits of Binary data that does not match its cid");
+        return;
+    }
+    auto       *cache = sharedCache();
+    QStringList accounts;
+    if (auto *existing = cache->get(data.hash()))
+        accounts = existing->metadata().value(accountsKey).toStringList();
+    if (!accounts.contains(_accountId))
+        accounts.append(_accountId);
     QVariantMap md;
     md.insert(QLatin1String("type"), data.type());
-    _fileCache->append(data.hash(), data.data(), md, data.maxAge());
+    md.insert(accountsKey, accounts);
+    cache->append(data.hash(), data.data(), md, data.maxAge());
 }
 
 BoBData BoBFileCache::get(const Hash &h)
 {
-    FileCacheItem *item = _fileCache->get(h);
+    FileCacheItem *item = sharedCache()->get(h);
     BoBData        bd;
-    if (item) {
+    if (item && item->metadata().value(accountsKey).toStringList().contains(_accountId)) {
         bd.setHash(h);
         bd.setData(item->data());
         bd.setMaxAge(item->maxAge());
@@ -60,5 +70,3 @@ BoBData BoBFileCache::get(const Hash &h)
     }
     return bd;
 }
-
-BoBFileCache *BoBFileCache::_instance = nullptr;
