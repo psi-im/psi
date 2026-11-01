@@ -788,8 +788,10 @@ private:
         connect(task, &QObject::destroyed, this, onFinished);
     }
 
-    AvatarCache() : FileCache(AvatarFactory::getCacheDir())
+    AvatarCache() : FileCache(QStringLiteral("avatars"), AvatarFactory::getCacheDir())
     {
+        importLegacy(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation) + QStringLiteral("/avatars"));
+
         // Register iconset
         iconset_.setName(QLatin1String("Avatars"));
         iconset_.addToFactory(); // the factory will own the iconset
@@ -1356,12 +1358,7 @@ void AvatarFactory::ensureVCardUpdated(const Jid &jid, const QByteArray &hash, F
 
 QString AvatarFactory::getCacheDir()
 {
-    QDir avatars(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation) + "/avatars");
-    if (!avatars.exists()) {
-        QDir home(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation));
-        home.mkdir("avatars");
-    }
-    return avatars.path();
+    return ApplicationInfo::makeSubprofilePath(QStringLiteral("avatars"), ApplicationInfo::CacheLocation);
 }
 
 int AvatarFactory::maxAvatarSize() { return MAX_AVATAR_SIZE; }

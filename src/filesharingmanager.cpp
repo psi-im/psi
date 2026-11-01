@@ -85,8 +85,20 @@ public:
 
 FileSharingManager::FileSharingManager(QObject *parent) : QObject(parent), d(new Private)
 {
-    d->cache = new FileCache(cacheDir(), this);
-    d->store.reset(new FileSharingStore(cacheDir() + QStringLiteral("/shared-files.sqlite")));
+    // Everything used to live above the profile, where two running profiles broke
+    // each other's cache. Each profile copies the catalog and the complete files.
+    // The media cache can be fetched again, so the first profile simply takes it.
+    const auto legacy  = ApplicationInfo::homeDir(ApplicationInfo::DataLocation) + QStringLiteral("/shares");
+    const auto catalog = cacheDir() + QStringLiteral("/shared-files.sqlite");
+    const auto media   = QStringLiteral("/media-files-v2");
+    if (!QFile::exists(catalog))
+        QFile::copy(legacy + QStringLiteral("/shared-files.sqlite"), catalog);
+    if (!QDir(cacheDir() + media).exists())
+        QDir().rename(legacy + media, cacheDir() + media);
+
+    d->cache = new FileCache(QStringLiteral("shares"), cacheDir(), this);
+    d->cache->importLegacy(legacy);
+    d->store.reset(new FileSharingStore(catalog));
 }
 
 FileSharingManager::~FileSharingManager() { delete d->chunkCache; }
@@ -128,12 +140,7 @@ MediaChunkCache *FileSharingManager::mediaChunkCache()
 
 QString FileSharingManager::cacheDir()
 {
-    QDir shares(ApplicationInfo::homeDir(ApplicationInfo::DataLocation) + "/shares");
-    if (!shares.exists()) {
-        QDir home(ApplicationInfo::homeDir(ApplicationInfo::DataLocation));
-        home.mkdir("shares");
-    }
-    return shares.path();
+    return ApplicationInfo::makeSubprofilePath(QStringLiteral("shares"), ApplicationInfo::DataLocation);
 }
 
 FileCacheItem *FileSharingManager::cacheItem(const QList<Hash> &hashes, bool reborn, QString *fileName)

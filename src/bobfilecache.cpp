@@ -31,7 +31,8 @@ static const QString accountsKey = QStringLiteral("accounts");
 
 static FileCache *sharedCache()
 {
-    static FileCache *cache = new FileCache(ApplicationInfo::bobDir(), QCoreApplication::instance());
+    static FileCache *cache
+        = new FileCache(QStringLiteral("bob"), ApplicationInfo::bobDir(), QCoreApplication::instance());
     return cache;
 }
 

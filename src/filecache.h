@@ -31,7 +31,6 @@
 #include <memory>
 
 class FileCache;
-class OptionsTree;
 class QTimer;
 
 class FileCacheItem : public QObject {
@@ -103,8 +102,9 @@ private:
     quint64           _size;
     QByteArray        _data;
 
-    quint16 _flags;
-    QString _fileName;
+    quint16    _flags;
+    QString    _fileName;
+    QByteArray _recordId; // Empty until the item has a database record.
 };
 
 class FileCache : public QObject {
@@ -121,8 +121,14 @@ public:
         FlushOverflow // flush to disk only when memory cache limit is exceeded
     };
 
-    FileCache(const QString &cacheDir, QObject *parent = nullptr);
+    // A partition has its own items, payload directory and limits in the profile's database.
+    FileCache(const QString &partition, const QString &cacheDir, QObject *parent = nullptr);
     ~FileCache();
+
+    // Takes over the items of a directory from before caches moved under the profile,
+    // copying their payload. Other profiles may need the same directory, so it stays.
+    // Runs once per partition.
+    void importLegacy(const QString &legacyDir);
 
     void gc();
 
@@ -191,21 +197,23 @@ public slots:
 
 private:
     void toRegistry(FileCacheItem *);
+    void load();
+    void replaceRecord(FileCacheItem *item, const QList<XMPP::Hash> &sums);
 
 protected:
     QHash<XMPP::Hash, FileCacheItem *> _items;
 
 private:
+    QString                            _partition;
     QString                            _cacheDir;
     unsigned int                       _memoryCacheSize;
     unsigned int                       _fileCacheSize;
     unsigned int                       _defaultMaxAge;
     SyncPolicy                         _syncPolicy;
     QTimer                            *_syncTimer;
-    OptionsTree                       *_registry;
     QHash<XMPP::Hash, FileCacheItem *> _pendingRegisterItems;
 
-    bool _registryChanged;
+    bool _inTransaction = false;
 };
 
 #endif // FILECACHE_H

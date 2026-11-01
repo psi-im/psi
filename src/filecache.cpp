@@ -20,13 +20,18 @@
 #include "filecache.h"
 
 #include "applicationinfo.h"
+#include "filedatabase.h"
 #include "fileutil.h"
 #include "iris/xmpp_hash.h"
 #include "optionstree.h"
 
+#include <QDataStream>
 #include <QDebug>
 #include <QDir>
+#include <QSqlError>
+#include <QSqlQuery>
 #include <QTimer>
+#include <QUuid>
 
 #define FC_META_PERSISTENT QStringLiteral("fc_persistent")
 
@@ -131,63 +136,150 @@ bool FileCacheItem::isDeletable() const
 //------------------------------------------------------------------------------
 // FileCache
 //------------------------------------------------------------------------------
-FileCache::FileCache(const QString &cacheDir, QObject *parent) :
-    QObject(parent), _cacheDir(cacheDir), _memoryCacheSize(FileCache::DefaultMemoryCacheSize),
-    _fileCacheSize(FileCache::DefaultFileCacheSize), _defaultMaxAge(Forever), _syncPolicy(InstantFLush),
-    _registryChanged(false)
+namespace {
+QByteArray encodeMetadata(const QVariantMap &metadata)
 {
-    _registry  = new OptionsTree(this);
+    QByteArray  bytes;
+    QDataStream stream(&bytes, QIODevice::WriteOnly);
+    stream.setVersion(QDataStream::Qt_5_15); // One profile may be used by Qt 5 and Qt 6 builds.
+    stream << metadata;
+    return bytes;
+}
+
+QVariantMap decodeMetadata(const QByteArray &bytes)
+{
+    QVariantMap metadata;
+    QDataStream stream(bytes);
+    stream.setVersion(QDataStream::Qt_5_15);
+    stream >> metadata;
+    return metadata;
+}
+}
+
+FileCache::FileCache(const QString &partition, const QString &cacheDir, QObject *parent) :
+    QObject(parent), _partition(partition), _cacheDir(cacheDir), _memoryCacheSize(FileCache::DefaultMemoryCacheSize),
+    _fileCacheSize(FileCache::DefaultFileCacheSize), _defaultMaxAge(Forever), _syncPolicy(InstantFLush)
+{
     _syncTimer = new QTimer(this);
     _syncTimer->setSingleShot(true);
     _syncTimer->setInterval(1000);
     connect(_syncTimer, SIGNAL(timeout()), SLOT(sync()));
+    load();
+}
 
-    _registry->loadOptions(_cacheDir + "/cache.xml", "items", ApplicationInfo::fileCacheNS());
-
-    bool        needCleanup = false;
-    const auto &prefixes    = _registry->getChildOptionNames("", true, true);
-    for (const QString &prefix : prefixes) {
-        auto       section = prefix.section('.', -1);
-        QByteArray id      = QByteArray::fromHex(QStringView { section }.mid(1).toLatin1());
-        if (id.isEmpty())
+void FileCache::load()
+{
+    auto db = FileDatabase::connection();
+    if (!db.isOpen())
+        return;
+    QHash<QByteArray, QList<XMPP::Hash>> hashes;
+    QSqlQuery                            query(db);
+    query.prepare(QStringLiteral("SELECT h.file_id,h.algorithm,h.digest FROM file_hashes h JOIN files f ON f.id=h.file_id "
+                                 "WHERE f.partition=:partition ORDER BY h.file_id,h.position"));
+    query.bindValue(QStringLiteral(":partition"), _partition);
+    if (!query.exec())
+        qWarning() << "Cannot read file hashes:" << query.lastError().text();
+    while (query.next()) {
+        XMPP::Hash hash(query.value(1).toString());
+        if (!hash.isValid())
             continue;
-        auto hAlgo = _registry->getOption(prefix + ".ha", QString()).toString();
-        auto hash  = XMPP::Hash(hAlgo);
-        if (!hash.isValid()) {
-            needCleanup = true;
+        hash.setData(query.value(2).toByteArray());
+        hashes[query.value(0).toByteArray()].append(hash);
+    }
+    query.prepare(QStringLiteral("SELECT id,size,created,max_age,metadata FROM files WHERE partition=:partition"));
+    query.bindValue(QStringLiteral(":partition"), _partition);
+    if (!query.exec())
+        qWarning() << "Cannot read file records:" << query.lastError().text();
+    QList<FileCacheItem *> items;
+    while (query.next()) {
+        const auto id   = query.value(0).toByteArray();
+        const auto sums = hashes.value(id);
+        if (sums.isEmpty())
             continue;
-        }
-        hash.setData(id);
-
-        auto item = new FileCacheItem(
-            this, hash, _registry->getOption(prefix + ".metadata", QVariantMap()).toMap(),
-            QDateTime::fromString(_registry->getOption(prefix + ".ctime").toString(), Qt::ISODate),
-            _registry->getOption(prefix + ".max-age").toUInt(), _registry->getOption(prefix + ".size").toULongLong());
-
-        const auto aliases = _registry->getOption(prefix + ".aliases").toStringList();
-        for (const auto &s : aliases) {
-            auto ind = s.indexOf('+');
-            if (ind == -1)
-                continue;
-            auto       type = XMPP::Hash::parseType(QStringView { s }.left(ind));
-            auto       ba   = QByteArray::fromHex(QStringView { s }.mid(ind + 1).toLatin1());
-            XMPP::Hash hash(type, ba);
-            if (hash.isValid() && ba.size()) {
-                item->addHashSum(hash);
-            }
-        }
-
+        auto *item = new FileCacheItem(this, sums, decodeMetadata(query.value(4).toByteArray()),
+                                       QDateTime::fromMSecsSinceEpoch(query.value(2).toLongLong()),
+                                       query.value(3).toUInt(), query.value(1).toULongLong());
+        item->_recordId = id;
         item->_flags |= (FileCacheItem::OnDisk | FileCacheItem::Registered);
-        _items.insert(hash, item);
-        if (item->isExpired()) {
+        for (const auto &sum : sums)
+            _items.insert(sum, item);
+        items.append(item);
+    }
+    query.finish();
+    for (auto *item : std::as_const(items))
+        if (item->isExpired())
             remove(item->id());
-        }
-    }
+}
 
-    if (needCleanup) {
-        _registryChanged = true;
-        _syncTimer->start();
+void FileCache::importLegacy(const QString &legacyDir)
+{
+    auto db = FileDatabase::connection();
+    if (!db.isOpen() || !db.transaction())
+        return;
+    QSqlQuery query(db);
+    query.prepare(QStringLiteral("INSERT OR IGNORE INTO file_legacy_imports(partition) VALUES(:partition)"));
+    query.bindValue(QStringLiteral(":partition"), _partition);
+    if (!query.exec() || query.numRowsAffected() < 1) { // Imported earlier, or the insert failed.
+        db.rollback();
+        return;
     }
+    query.finish();
+
+    _inTransaction = true;
+    OptionsTree registry;
+    const auto  registryPath = legacyDir + QStringLiteral("/cache.xml");
+    if (QFile::exists(registryPath))
+        registry.loadOptions(registryPath, "items", ApplicationInfo::fileCacheNS());
+    const auto prefixes = registry.getChildOptionNames("", true, true);
+    for (const QString &prefix : prefixes) {
+        const auto section = prefix.section('.', -1);
+        XMPP::Hash hash(registry.getOption(prefix + ".ha", QString()).toString());
+        if (!hash.isValid())
+            continue;
+        hash.setData(QByteArray::fromHex(QStringView { section }.mid(1).toLatin1()));
+        if (hash.data().isEmpty() || _items.contains(hash))
+            continue;
+        QList<XMPP::Hash> sums { hash };
+        const auto        aliases = registry.getOption(prefix + ".aliases").toStringList();
+        for (const auto &alias : aliases) {
+            const auto separator = alias.indexOf('+');
+            if (separator == -1)
+                continue;
+            XMPP::Hash other(XMPP::Hash::parseType(QStringView { alias }.left(separator)),
+                             QByteArray::fromHex(QStringView { alias }.mid(separator + 1).toLatin1()));
+            if (other.isValid() && !other.data().isEmpty())
+                sums.append(other);
+        }
+        const auto maxAge = registry.getOption(prefix + ".max-age").toUInt();
+        auto      *item   = new FileCacheItem(
+            this, sums, registry.getOption(prefix + ".metadata", QVariantMap()).toMap(),
+            QDateTime::fromString(registry.getOption(prefix + ".ctime").toString(), Qt::ISODate), maxAge,
+            registry.getOption(prefix + ".size").toULongLong());
+        bool usable = maxAge != Session && !item->isExpired();
+        if (usable && item->size()) {
+            const auto source = legacyDir + QLatin1Char('/') + item->fileName();
+            const auto target = _cacheDir + QLatin1Char('/') + item->fileName();
+            if (QFileInfo(target).size() != qint64(item->size()))
+                QFile::remove(target);
+            usable = QFile::exists(target) || (QFile::exists(source) && QFile::copy(source, target));
+        }
+        if (!usable) {
+            delete item;
+            continue;
+        }
+        item->_flags |= FileCacheItem::OnDisk;
+        for (const auto &sum : std::as_const(sums))
+            _items.insert(sum, item);
+        toRegistry(item);
+    }
+    _inTransaction = false;
+    if (!db.commit()) {
+        qWarning() << "Cannot import a legacy file cache:" << db.lastError().text();
+        db.rollback();
+        return;
+    }
+    if (QDir(legacyDir).exists())
+        FileDatabase::markLegacyDirectoryImported(legacyDir);
 }
 
 FileCache::~FileCache()
@@ -221,6 +313,7 @@ FileCacheItem *FileCache::append(const QList<XMPP::Hash> &sums, const QByteArray
 
     FileCacheItem *item
         = new FileCacheItem(this, sums, metadata, QDateTime::currentDateTime(), maxAge, qint64(data.size()), data);
+    replaceRecord(item, sums);
     for (auto const &s : sums)
         _items.insert(s, item);
     _pendingRegisterItems.insert(sums[0], item);
@@ -244,12 +337,26 @@ FileCacheItem *FileCache::moveToCache(const QList<XMPP::Hash> &sums, const QFile
         return nullptr;
     }
     item->_flags |= FileCacheItem::OnDisk;
+    replaceRecord(item, sums);
     for (auto const &s : sums)
         _items.insert(s, item);
     _pendingRegisterItems.insert(sums[0], item);
     _syncTimer->start();
 
     return item;
+}
+
+// An item appended again under a known hash takes over the record of the old one.
+void FileCache::replaceRecord(FileCacheItem *item, const QList<XMPP::Hash> &sums)
+{
+    for (const auto &sum : sums) {
+        auto *old = _items.value(sum);
+        if (old && !old->_recordId.isEmpty()) {
+            item->_recordId = old->_recordId;
+            old->_recordId.clear();
+            return;
+        }
+    }
 }
 
 void FileCache::remove(const XMPP::Hash &id, bool needSync)
@@ -262,9 +369,12 @@ void FileCache::remove(const XMPP::Hash &id, bool needSync)
 
 void FileCache::removeItem(FileCacheItem *item, bool needSync)
 {
-    if (item->isOnDisk()) {
-        _registry->removeOption("h" + item->id().toHex(), true);
-        _registryChanged = true;
+    if (!item->_recordId.isEmpty()) {
+        QSqlQuery query(FileDatabase::connection());
+        query.prepare(QStringLiteral("DELETE FROM files WHERE id=:id"));
+        query.bindValue(QStringLiteral(":id"), item->_recordId);
+        if (!query.exec())
+            qWarning() << "Cannot remove a file record:" << query.lastError().text();
     }
     item->remove();
     for (auto const &a : item->sums()) {
@@ -314,6 +424,12 @@ void FileCache::sync(bool finishSession)
     if (_syncTimer->isActive()) {
         _syncTimer->stop();
     }
+
+    // A batch of record changes commits at once, unless the caller already has a transaction.
+    auto db    = FileDatabase::connection();
+    bool batch = !_inTransaction && db.isOpen() && db.transaction();
+    if (batch)
+        _inTransaction = true;
 
     QList<FileCacheItem *> loadedItems;
     QList<FileCacheItem *> onDiskItems;
@@ -391,32 +507,53 @@ void FileCache::sync(bool finishSession)
         }
     }
 
-    if (_registryChanged) {
-        _registry->saveOptions(_cacheDir + "/cache.xml", "items", ApplicationInfo::fileCacheNS(),
-                               ApplicationInfo::version());
-        _registryChanged = false;
+    if (batch) {
+        _inTransaction = false;
+        if (!db.commit()) {
+            qWarning() << "Cannot save file records:" << db.lastError().text();
+            db.rollback();
+        }
     }
 }
 
 void FileCache::toRegistry(FileCacheItem *item)
 {
-    // TODO build Map/Hash instead and insert it to options
-    QString prefix = QString("h") + QString::fromLatin1(item->id().toHex());
-    _registry->setOption(prefix + ".ha", item->id().stringType());
-    _registry->setOption(prefix + ".metadata", item->metadata());
-    _registry->setOption(prefix + ".ctime", item->created().toString(Qt::ISODate));
-    _registry->setOption(prefix + ".max-age", int(item->maxAge()));
-    _registry->setOption(prefix + ".size", qulonglong(item->size()));
-
-    QStringList aliases;
-    auto        it = item->sums().cbegin() + 1;
-    while (it != item->sums().cend()) {
-        aliases.append(QString("%1+%2").arg(it->stringType(), QString::fromLatin1(it->toHex())));
-        ++it;
-    }
-    _registry->setOption(prefix + ".aliases", aliases);
-
     item->_flags |= FileCacheItem::Registered;
     _pendingRegisterItems.remove(item->id());
-    _registryChanged = true;
+
+    auto db = FileDatabase::connection();
+    if (!db.isOpen())
+        return;
+    if (item->_recordId.isEmpty())
+        item->_recordId = QUuid::createUuid().toRfc4122();
+    const bool transaction = !_inTransaction && db.transaction();
+    QSqlQuery  query(db);
+    query.prepare(QStringLiteral("INSERT INTO files(id,partition,size,created,max_age,metadata) "
+                                 "VALUES(:id,:partition,:size,:created,:max_age,:metadata) "
+                                 "ON CONFLICT(id) DO UPDATE SET size=excluded.size,created=excluded.created,"
+                                 "max_age=excluded.max_age,metadata=excluded.metadata"));
+    query.bindValue(QStringLiteral(":id"), item->_recordId);
+    query.bindValue(QStringLiteral(":partition"), _partition);
+    query.bindValue(QStringLiteral(":size"), qlonglong(item->size()));
+    query.bindValue(QStringLiteral(":created"), item->created().toMSecsSinceEpoch());
+    query.bindValue(QStringLiteral(":max_age"), qlonglong(item->maxAge()));
+    query.bindValue(QStringLiteral(":metadata"), encodeMetadata(item->metadata()));
+    bool ok = query.exec();
+    query.prepare(QStringLiteral("DELETE FROM file_hashes WHERE file_id=:id"));
+    query.bindValue(QStringLiteral(":id"), item->_recordId);
+    ok = ok && query.exec();
+    query.prepare(QStringLiteral("INSERT INTO file_hashes(file_id,position,algorithm,digest) "
+                                 "VALUES(:id,:position,:algorithm,:digest)"));
+    int position = 0;
+    for (const auto &sum : item->sums()) {
+        query.bindValue(QStringLiteral(":id"), item->_recordId);
+        query.bindValue(QStringLiteral(":position"), position++);
+        query.bindValue(QStringLiteral(":algorithm"), sum.stringType());
+        query.bindValue(QStringLiteral(":digest"), sum.data());
+        ok = ok && query.exec();
+    }
+    if (!ok)
+        qWarning() << "Cannot save a file record:" << query.lastError().text();
+    if (transaction && !db.commit())
+        db.rollback();
 }
