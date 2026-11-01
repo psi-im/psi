@@ -579,5 +579,23 @@ private slots:
         QVERIFY(file.exists());
     }
 };
-QTEST_GUILESS_MAIN(FileCacheTest)
+
+int main(int argc, char **argv)
+{
+    int result;
+    {
+        QCoreApplication app(argc, argv);
+        FileCacheTest    test;
+        result = QTest::qExec(&test, argc, argv);
+
+        // A cache destroyed with the application must not touch the database, which
+        // Qt has dropped by then. The Bits of Binary cache used to crash this way.
+        QTemporaryDir last;
+        profileDirectory      = last.path();
+        auto            *late = new FileCache(partitionName, last.path(), &app);
+        const QByteArray bytes("still pending at exit");
+        late->append(hashOf(bytes), bytes);
+    }
+    return result;
+}
 #include "filecache.moc"

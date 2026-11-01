@@ -3,6 +3,7 @@
 
 #include "applicationinfo.h"
 
+#include <QCoreApplication>
 #include <QDebug>
 #include <QDir>
 #include <QFile>
@@ -58,6 +59,8 @@ bool prepare(QSqlDatabase &db)
 
 QSqlDatabase FileDatabase::connection()
 {
+    if (!QCoreApplication::instance())
+        return {};
     const QString directory = ApplicationInfo::currentProfileDir(ApplicationInfo::DataLocation);
     const QString path      = directory + QStringLiteral("/files.sqlite");
     const QString name      = QStringLiteral("psi-files:") + path;
