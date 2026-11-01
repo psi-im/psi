@@ -8,8 +8,9 @@ architecture covers every chat type, playback, downloads, publishing and serving
 ## Decisions
 
 1. **One physical copy per profile, one sharing decision per account.** Bytes are
-   deduplicated across accounts of a profile. Whether a file is shared is decided by
-   each account separately, so corporate data cannot leak through a personal account.
+   deduplicated across accounts of a profile, and profiles share nothing. Whether a file
+   is shared is decided by each account separately, so corporate data cannot leak through
+   a personal account.
 2. **Serve only what this account published or joined.** A remote request is answered
    only if the receiving account published the file, or the user agreed to join the
    publication of a file already downloaded through SIMS or SFS. Everything else is
@@ -21,9 +22,11 @@ architecture covers every chat type, playback, downloads, publishing and serving
    path, is never deleted by the cache and does not count against the quota.
 5. **Large downloads ask where to go.** A non-streaming download larger than half of
    the cache quota asks for a destination first and writes there directly.
-6. **The player consumes a file object.** Scheduling and chunk caching start from the
-   reader the player holds. Loopback HTTP is a second presentation of the same reader
-   and can be switched off where a local server is not allowed.
+6. **The player consumes a file object, without risking playback.** Scheduling and chunk
+   caching start from the reader the player holds. Loopback HTTP is a second presentation
+   of the same reader and can be switched off where a local server is not allowed. It stays
+   the default, because that is what works on master, and a platform moves to the file
+   object only after the probe passes there.
 7. **A file that cannot be removed goes to the trash.** It becomes unreachable at once;
    removal is retried at the next start or at another suitable moment.
 
@@ -40,16 +43,17 @@ user's original or exported file. UI removal follows a successful history commit
 | --- | --- | --- |
 | `FileSharingManager::acceptIncomingDownloadContents` | Looks a requested hash up in the global cache and global item map. `setRemoteJidChecker` is never called, so `isAllowedParty` is always true. | Anyone with a full JID and a hash receives any cached file, including one downloaded by another account. Reads use a raw `QFile`, outside any lifetime control. |
 | `JT_BoBServer`, `BoBFileCache` | One cache singleton behind every account's `BoBManager`; any cached cid is returned. | The same leak for Bits of Binary. |
-| `shares/`, `avatars/`, `bob/` | Located under the home directory, unlike per-profile `history/`. | Instances running different profiles rewrite the same `cache.xml`. The profile lock protects none of these directories. |
+| `shares/`, `avatars/`, `bob/` | Located under the home directory, unlike per-profile `history/`. | Two profiles running at once rewrite the same `cache.xml` and break each other's cache. The profile lock protects none of these directories. |
 | `FileCache` | Hash-keyed; `cache.xml` is rewritten whole on a timer; complete items only; `AvatarCache` subclasses it and walks `_items`. No tests. | Nothing can be transactional. Any change risks avatars and BoB unprotected. |
 | `MediaChunkStore` | A second payload registry and quota. The JSON sidecar is rewritten twice per write; `initialize()` rehashes checksummed files on every start; `verify()` infers completion from coverage. | Two owners of bytes, write and start-up cost, and no proof of transport success. |
 | `FileSharingManager` | Owns all stores, follows `link` across them, builds message HTML, serves peers and creates outgoing items. Its own comment calls it a "magic class". | No answer to "who is responsible for what". |
 | `FileSharingItem` | Creates transfers, promotes files, hashes, publishes, sends HEAD, decides automatic downloads. Parented to the manager and never destroyed. | Unbounded growth, and a UI object that owns shared operations. |
 | `FileShareDownloader` | Contains a good private strategy hierarchy, `AbstractFileShareDownloader`, wrapped by a class that adds source fallback, temporary disk writes and promotion. | Transport is coupled to storage. |
 | `FileSharingChunkSource` | A namespace hiding per-item `Sources` and `SequentialDownload` QObjects behind object names. | Session state with no visible owner. |
+| `FileSourceSelector`, `MediaChunkStore::configure` | The source is chosen per chunk with no record of who sent what. A whole-file mismatch discards everything, and a second source's different range hash sets a file-level "Conflicting checksums" error. | A bad source cannot be identified, retries can fail the same way, and one peer can block a file. |
 | `FileSharingStore`, `fillMessageView`, `appendEvent` | Merge descriptors per hash and write them on display and on log, regardless of `opt_log`. | A deleted URL or peer stays forever, and history-disabled accounts still get a message log. |
 | `FileSharingDeviceOpener`, `FileSharingProxy`, `saveTo` | Independently pick cached paths, chunk readers or raw downloaders. | Three read paths and no shared session. |
-| `ITEMediaOpener` in `3rdparty/qite` | `close()` is called only for devices, and only after the player is destroyed. | No release for paths, and a GUI hang on Qt 6 with a waiting device (see [measurements](#measured-backend-behaviour)). |
+| `ITEMediaOpener` in `3rdparty/qite` | `close()` is called only for devices, and only after the player is destroyed. | No release for paths. A waiting device would hang the GUI on Qt 6 (see [measurements](#measured-backend-behaviour)); builds with the web server never take that path, which is why playback on master works. |
 | `PsiAccount::handleEvent`, `logEvent` | The history write is only queued; the view renders and may auto-download at once. Group chat messages are not logged live, and `opt_log` may disable logging. | A history row cannot be the key for reading. |
 
 ## Vocabulary
@@ -177,6 +181,20 @@ erDiagram
         int max_age "Session, Forever or seconds"
         blob metadata "opaque, complete-item API only"
     }
+    file_ranges {
+        blob file_id FK
+        int offset
+        int length
+        int origin "opaque here, a source row for the download"
+    }
+    file_checksums {
+        blob file_id FK
+        int offset
+        int length
+        text algorithm
+        blob digest
+        int origin "NULL for a claim about the whole file"
+    }
     file_trash {
         text path "managed payload awaiting removal"
     }
@@ -224,11 +242,17 @@ the `publication*` tables; foreign keys point from publications to files, never 
 `publications.file_id` uses `ON DELETE SET NULL`. If the database cannot be opened, the
 cache runs without persistence for the session, as `FileSharingStore` already does.
 
-**Everything moves under the profile.** The store assumes one process per profile.
-`ActiveProfiles` enforces that with its D-Bus and Windows backends, and only for per-profile
-paths, so today's home-level directories do not qualify. The stub backend (macOS, Haiku, Linux
-without D-Bus) enforces nothing. A second instance on one profile there keeps SQLite consistent
-but does not see the first one's leases, and the worst outcome is a refetch.
+**Everything moves under the profile.** Two profiles may run at once, and each gets its own
+database and payload roots, so neither can break the other's cache. The store assumes one
+process per profile. `ActiveProfiles` enforces that with its D-Bus and Windows backends; the
+stub backend (macOS, Haiku, Linux without D-Bus) enforces nothing. A second instance on one
+profile there keeps SQLite consistent but does not see the first one's leases, and the worst
+outcome is a refetch.
+
+**An account is identified by `PsiAccount::id()`, never by its JID.** The same XMPP account
+may exist in several profiles. Those instances are independent: each has its own publications
+and serving decisions and answers for its own resource. They do share one server, so anything
+stored there must not collide; see [publishing](#publishing-and-serving).
 
 **One publication per announcement.** Each attachment of each stored message has its
 own publication row. Deleting a message therefore removes exactly its caption, URL and
@@ -236,6 +260,10 @@ peer without provenance bookkeeping. Siblings are found by query: publications o
 same account claiming the same digest (and the same size, when both declare one), or
 the same `url_key` for hashless OOB. A download takes the union of sibling sources, and
 binding a file updates all siblings in one statement.
+
+**Resolving a publication.** The catalog looks for a sibling's file first, then for a verified
+file with the same strong digest in `file_hashes`. Otherwise `FileCache::create` runs at first
+demand. Either way the result is stored in `file_id`.
 
 **Random identifiers.** A recreated `files.sqlite` cannot make an old history link point
 at a different file. A payload name derived from `FileId` is never reused, so a late
@@ -337,6 +365,8 @@ Rules for `readData()`, derived from the measurements below:
 - **On the reader's own thread it never waits.** A gap returns 0, and `readyRead` follows.
 - **On a foreign thread a gap waits** on a condition variable until the span arrives, the
   download fails or `abort()` is called. It never returns 0 for a gap.
+- **A reader of a complete file reads its payload directly,** so a read returns 0 only at EOF.
+  Serving depends on that: `jingle-ft` treats a 0 read as EOF or failure.
 - **A reader is seekable whenever the size is known.** Unknown size means sequential.
 - **The foreign-thread path touches only state behind the reader's mutex,** and the owner
   does not call cursor methods meanwhile.
@@ -381,7 +411,9 @@ flowchart TD
 ```
 
 Both `reader` and `http` start the same scheduling, because both are one `FileReader`.
-The choice is one function in `FileSharingDeviceOpener`, with one option to force it.
+The choice is one function in `FileSharingDeviceOpener`, with one option to force it. The
+device path starts disabled on every platform, so the default remains the loopback HTTP path
+that works on master.
 
 The qite contract changes in `3rdparty/qite`, so that a path, a URL and a device have the
 same lifetime:
@@ -481,7 +513,7 @@ destination (see [large files](#large-files)).
   and reports an integrity error, without invalidating the file for its siblings.
 - A hash of an OOB URL names an address, not content. A binding is a downloaded snapshot,
   with validators when available.
-- Combining ranges requires a consistent expected digest or a strong representation
+- Combining ranges of one source requires a usable digest or a strong representation
   validator. Otherwise use one sequential attempt. If the representation changes, retire
   that `FileId` and start a new one; a stale attempt cannot write to a retired file.
 - Unknown and zero sizes differ. EOF establishes a size only after protocol success and
@@ -494,8 +526,51 @@ destination (see [large files](#large-files)).
   Socket bytes do not replace verified protocol completion. `FileSharingJingleSession`
   stays the account-scoped pool.
 - BoB payloads are small and complete, and the transport treats them as one attempt.
-- XEP-0448 encrypted sources are consumed through a decrypting transport. AEAD cannot be
-  verified piecewise, so they are sequential.
+- XEP-0448 encrypted sources are whole-file only. Iris's `decryptToDevice` needs seekable
+  ciphertext, because GCM keeps its tag at the end. The ciphertext goes to a temporary managed
+  file and is decrypted on the worker, and readers wait for the verified plaintext. JET also
+  excludes ranges and streaming mode.
+
+### Several sources for one file
+
+A publication may list several sources, and siblings add more. They can disagree: one may
+serve different bytes for some ranges, and a range checksum proves little, because the source
+asserts it about its own bytes. XEP-0300 defines no tree hash, so until a whole file is
+assembled nothing ties a range to the announced digest. The design does not pretend otherwise.
+
+| Evidence | What it proves | Available |
+| --- | --- | --- |
+| Protocol success and exact length | The bytes arrived as this source sent them | Per attempt |
+| XEP-0234 range checksum | The same, against this source's own claim | Per range, Jingle only |
+| Two sources' checksums differ for one span | At least one does not serve this file, but not which | When both are seen |
+| Whole-file digest matches | Every byte is right, whoever sent it | At completion |
+| Whole-file digest fails | At least one contributing source is wrong | At completion |
+
+1. **One source at a time.** `FileDownload` picks a source for the file, and its window and
+   bulk attempts use it. It moves on only when that source fails or stalls, not per chunk as
+   today. Ordinarily a file then has one origin, and a mismatch names the culprit.
+2. **Coverage records its origin.** `file_ranges.origin` is an opaque number to the cache and
+   a source row to the download. Bytes kept across a switch stay attributed, which keeps
+   progress in the common case of honest sources.
+3. **Range checksums apply to their own origin.** A failure withdraws that origin's span and
+   counts against the source. When two sources disagree, the current one continues and the
+   other is not used for this file. This is not a file-level error, so one peer cannot block
+   a file for everyone.
+4. **A whole-file mismatch is resolved by elimination.** With one origin, exclude it, withdraw
+   its ranges and try the next source. With several, take candidates in order, the announcer's
+   sources first: keep only the candidate's ranges, fetch the rest from it alone, and verify.
+   Success finishes the file; failure excludes the candidate. Each source gets one pass, so the
+   extra download is bounded and there is no retry loop. With no source left the file is retired
+   and its publications report an integrity error. Only a user retry starts over.
+5. **`Stream` readers accept this risk explicitly.** Their bytes are unproven, and a wrong span
+   can reach the decoder, as with any single bad source. On a mismatch they fail, and ranges of
+   an excluded origin are withdrawn at once so that later readers do not get them. `WholeFile`
+   readers, Save As, serving and joining see only verified files.
+6. **Without a usable digest nothing is mixed.** Hashless OOB and unsupported algorithms use one
+   source, and a switch restarts the file.
+7. **Conflicting claims are different files.** Publications declaring different digests in one
+   algorithm, or different sizes, are not siblings and share neither sources nor a `FileId`. A
+   later claim cannot affect an existing file.
 
 ### Use cases
 
@@ -507,6 +582,7 @@ destination (see [large files](#large-files)).
 | Sequential transfer reaches a requested span early | Readers wake on availability. `WholeFile` still waits for completion. |
 | Empty file | Explicit zero size and successful protocol and hash checks. |
 | Source failure | Retry unsatisfied work only with compatible identity; on integrity failure withdraw the span. |
+| Two sources disagree | One source at a time, attributed coverage, elimination at completion (see above). |
 | Publish original, paste an image, forward | Originals stay external. Generated payloads are managed from creation and held by their publication. A forward creates a new publication. |
 | Account removal, view close, decoder failure | Callbacks settle once and account capabilities are revoked. Closing a view cancels its demand, not another reader's work. |
 | One file in two messages or accounts | Deleting removes that publication and its sources. Bytes stay while any publication, hold or lease needs them. |
@@ -536,16 +612,18 @@ FileId       create(Placement, std::optional<quint64> size);  // At first demand
 FileId       adoptExternal(const QString &path);              // In-place share.
 Lease        acquire(FileId);
 Ticket       read(const Lease &, quint64 offset, quint64 bounded, RangeCompletion); // Spans and exact gaps.
-Ticket       write(FileId, quint64 offset, QByteArray bytes, Completion);
+QFile       *openComplete(const Lease &);                     // Direct reads of a complete file.
+Ticket       write(FileId, quint64 offset, QByteArray bytes, Origin, Completion);
 void         finalize(FileId, TransferEvidence, FinalizeCompletion);
 FileRanges   ranges(FileId) const;
 RetireResult retire(FileId);
 void         rangesChanged(FileId);                           // Signal.
 ```
 
-Disk reads and cache hits complete asynchronously on the caller's context. `read` and
-`write` always run on the worker; `acquire` and `retire` run on the GUI thread, which makes
-them atomic against each other and against history queries.
+`read` and `write` run on the worker and complete asynchronously on the caller's context, even
+for a hit. `openComplete` reads in bounded blocks on the caller's thread, as `proxyCache` and
+serving do today. `acquire` and `retire` run on the GUI thread, which makes them atomic against
+each other and against history queries.
 
 ### Independent facts
 
@@ -676,6 +754,9 @@ sequenceDiagram
   it only answers hash requests.
 - **Serving.** XEP-0234 hash requests and XEP-0358 publications both go through
   `FileSharingResponder`, and each opens a `FileReader`. Partial files are never served.
+- **Publication IDs on the server.** Own announcements use a private PEP node of the account,
+  which profiles running that account share. Their item IDs come from `PublicationId`, not from
+  the hash as today, so one profile cannot replace or retract another profile's announcement.
 - **Management.** The catalog lists serving publications per account, and a settings view
   publishes, joins and unshares. Unsharing clears the flag, removes the hold and unregisters
   the Jingle publication. Deleting a message does not unshare.
@@ -684,16 +765,14 @@ Security rules:
 
 - **Unknown and not-shared-here are indistinguishable** for the requester: the same Jingle
   reason, and `not-acceptable` for XEP-0358.
-- **An account reads a file only through its own publication.** `file_hashes` is used to
-  deduplicate at finalize, never to grant access. Physical deduplication therefore does not
-  change an account's behaviour: an account fetches a file it has not obtained itself, even
-  if another account already cached the bytes, and the copies become one at completion. A
-  hostile sender on a personal account cannot learn from a missing fetch what a corporate
-  account holds.
+- **Serving is the gate between accounts.** Verified bytes may be reused across accounts of a
+  profile by strong digest without fetching, as XEP-0447 suggests. That shows the file locally
+  and gives no remote party anything; a skipped fetch also proves nothing, since automatic
+  downloads can simply be off.
 - **An unverified partial file** is reachable only through publications of the account
-  filling it.
-- **Only strong digests deduplicate** (initially SHA-256). A weak alias cannot merge files or
-  let one peer poison another's file.
+  filling it. Another account starts its own, and the copies become one at finalize.
+- **Only strong digests reuse or deduplicate** (initially SHA-256). A weak alias cannot merge
+  files or let one peer poison another's file; a weak claim is fetched and verified.
 - **Without usable hashes,** per XEP-0447, ignore sources attached by others and insecure
   sources. Do not fetch `disposition='attachment'` without user interaction. Asking before
   revealing an address to an untrusted party remains caller policy.
@@ -791,7 +870,8 @@ default. BoB thumbnails expire by their own TTL; the first version does not chas
 | `AbstractFileShareDownloader` and its three subclasses | Become `FileShareTransport`. This hierarchy is the correct boundary: one interface, one client. |
 | `FileShareDownloader` | Removed. Source fallback moves to `FileDownload`, temporary files disappear, and nothing is left to wrap. |
 | `FileSharingChunkSource` | Removed: typed members of `FileDownload`, catalog lookups and cache state. |
-| `FileSourceSelector`, `FileSharingJingleSession` | Stay, used by `FileDownload` and the Jingle transport. |
+| `FileSourceSelector` | Stays in `FileDownload`, choosing a source for the file instead of per chunk. |
+| `FileSharingJingleSession` | Stays, used by the Jingle transport. |
 | `FileSharingHashJob` | Used by the worker at finalize. |
 | `FileSharingStore` | Becomes `FileSharingCatalog`. `shared_files` and `url_content` are replaced by publication tables. |
 | `FileSharingItem` | An observer per publication. Loses download, promotion and publishing. The HEAD probe moves to `FileDownload`, and automatic download decisions to caller policy. |
@@ -800,7 +880,7 @@ default. BoB thumbnails expire by their own TTL; the first version does not chas
 | `FileSharingDeviceOpener` | qite adapter and playback source choice. |
 | `FileSharingProxy` | Thin adapter over `FileReader`. Raw download paths go away. |
 | `FileSharingMediaSave` | Save job on a `WholeFile` reader. |
-| `BoBFileCache` | One per account, or per-account answers in `JT_BoBServer`. |
+| `BoBFileCache` | One per account. |
 
 ## Migration
 
@@ -843,9 +923,9 @@ flowchart LR
 ```
 
 0. **Close inbound doors.** Serve only hashes this account published or joined, with a small
-   persistent table that stage 2 absorbs. Stop BoB answers crossing accounts. *Test:* two accounts
-   with one cached hash; published versus merely cached; joined; unknown and not-shared answers
-   identical.
+   persistent table that stage 2 absorbs. Stop BoB answers crossing accounts with one
+   `BoBFileCache` per account. *Test:* two accounts with one cached hash; published versus merely
+   cached; joined; unknown and not-shared answers identical.
 1. **SQLite foundation.** Write characterization tests for `FileCache` first, as it has none. Add
    `FileDatabase`, move persistence and payload roots under the profile, and import `cache.xml`.
    Behaviour is unchanged. *Test:* avatars and BoB across restart, TTL, undeletable items,
@@ -866,13 +946,17 @@ flowchart LR
    boundary, damaged payloads, withdraw before overwrite, quotas, in-place files outside the quota,
    no rehash at start, trash retry, memory and I/O bounds.
 5. **Access layer and player.** `FileDownload`, `FileShareTransport`, `FileReader`; proxies, save
-   and responder as clients; deduplication at finalize; large-file destinations; qite contract;
-   playback source choice; external player tracking. Remove `FileSharingChunkSource`,
-   `MediaChunkCache` and `FileShareDownloader`. *Test:* player plus save on one file, independent
-   cancellation, early delivery from a sequential transfer, HTTP without Range, real Jingle
-   completion, account removal, cross-account fetch followed by one payload. The device probe runs
-   on every CI platform, and the device path is enabled per platform by its result, including
-   `abort()` before teardown.
+   and responder as clients; several-source rules; deduplication at finalize; large-file
+   destinations; qite contract; playback source choice; external player tracking. Remove
+   `FileSharingChunkSource`, `MediaChunkCache` and `FileShareDownloader`. Playback on master is the
+   regression baseline: the proxies move onto `FileReader` first, with loopback HTTP still the
+   default, and the device path comes last. *Test:* audio and video with seek and stop during a
+   stall, before and after; player plus save on one file; independent cancellation; early delivery
+   from a sequential transfer; HTTP without Range; real Jingle completion; account removal; reuse by
+   strong digest across accounts; a weak claim fetched, then one payload; a wrong source identified
+   with one and with several origins; conflicting range checksums not blocking a file; bounded
+   recovery. The device probe runs on every CI platform, and its result enables the device path per
+   platform, including `abort()` before teardown.
 6. **Reclamation and share management.** Optional byte removal at deletion, result reporting,
    settings view for publishing, joining and unsharing. *Test:* shared files across accounts,
    originals untouched, in-use file, sharing violation retried after restart, stale callbacks,
@@ -882,17 +966,45 @@ Keep the existing `HistoryArchiveTest` and the `tests/filesharing` coverage whil
 exist. Helper tests do not prove end-to-end behaviour, so add tests at these boundaries before
 removing old paths.
 
-## Open decisions
+## Impact on Iris
 
-1. **Audience of a publication.** With the rule above, a hash acts as a capability inside the
-   account. Should a publication also be limited to the contact or room it was sent to? XEP-0358
-   provides `forbidden` for that. Proposed: not in the first version.
-2. **Fetching across accounts.** This design fetches again rather than revealing what another account
-   holds, at the cost of bandwidth in a rare case. Relaxing it is one policy check.
-3. **Default playback source.** Proposed: keep loopback HTTP as default until the probe passes on a
-   platform, then switch to the file object there.
-4. **Source attachment for joins.** XEP-0447 relies on XEP-0367 and still marks that section TODO.
-   Proposed: answer hash requests first, and send attachments once that settles.
+The design requires no Iris change. Psi already has what it needs:
+
+| Need | What Iris provides |
+| --- | --- |
+| Deciding who may fetch | The decision is made in Psi, in `client_incomingJingle`. |
+| Publishing, joining, unsharing | `PublicationManager`: register, unregister, announce, retract. Unknown IDs get `not-acceptable`, and the check order avoids leaking which IDs exist. |
+| Fetching ranges with checksums | Streaming mode, `remoteChecksumReceived`, `payloadVerified`, `FileSharingJingleSession`'s BUNDLE reuse. |
+| SFS | `Message::fileSharings`, `attachedFileSources`, `attachToId`. Psi's extractor and `HistoryMessageExtras` still need to use them. |
+| Encrypted sources | `decryptToDevice`, whole-file only. |
+
+Two things Iris constrains rather than changes:
+
+- **Serving reads must not return 0 early.** `jingle-ft` treats a 0 read as EOF or failure, and
+  although its comment says it comes back on `readyRead`, nothing connects that signal for the
+  source device. Complete files are read directly, so serving works as is. Serving partial files
+  would need that fixed first.
+- **JET excludes ranges and streaming mode,** so a JET source can only be a whole-file attempt.
+
+One optional change: `JT_BoBServer` answers from everything cached, including data this account
+merely received. One `BoBFileCache` per account closes the leak between accounts without touching
+Iris. Answering only what this account itself published requires `BoBManager` and `BoBCache` to
+tell the two apart, which is a small API change.
+
+Any Iris commit means a gitlink bump, and Linux CI builds the bundled Iris until that commit is a
+tagged release. A new API also means raising `iris.minimum_version` for builds against an installed
+Iris, so such a change waits for an Iris release.
+
+## Deferred
+
+1. **Audience of a publication.** Today a hash acts as a capability inside the account. Jingle
+   publications do not say who they are for, and an unencrypted HTTP URL can be forwarded to anyone,
+   so limiting a publication to a contact or room needs its own design.
+2. **Source attachment for joins.** XEP-0447 relies on XEP-0367 and still marks that section TODO.
+   Joining first means answering hash requests only.
+3. **Early detection of bad sources.** Comparing a small span already held against a new source at
+   a switch would catch most disagreements before completion. The rules above are correct without it.
+4. **Verified streaming.** It needs a tree hash, which XEP-0300 does not define.
 
 ## Protocol references
 
@@ -906,4 +1018,5 @@ removing old paths.
 [Jingle file transfer (XEP-0234)](https://xmpp.org/extensions/xep-0234.html),
 [Jingle publishing (XEP-0358)](https://xmpp.org/extensions/xep-0358.html) and
 [Bits of Binary (XEP-0231)](https://xmpp.org/extensions/xep-0231.html).
+XEP-0300 lists the hash algorithms.
 Local suppression is client storage policy, not remote retraction.
