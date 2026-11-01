@@ -39,10 +39,17 @@ add_executable(psi-iris-release-probe main.cpp)
 target_link_libraries(psi-iris-release-probe PRIVATE Iris::Iris)
 CMAKE
     cat > "$iris_probe/src/main.cpp" <<'CPP'
+#include <cstdio>
 #include <iris/jid/jid.h>
+#include <iris/xmpp_linklocalservice.h>
 
 int main()
 {
+    // Serverless accounts need JDNS in Iris, and the serverless UI test runs them.
+    if (!XMPP::LinkLocalService::isSupported()) {
+        std::puts("This Iris package has no serverless support");
+        return 2;
+    }
     return XMPP::Jid(QStringLiteral("ci@example.org")).isValid() ? 0 : 1;
 }
 CPP
@@ -54,7 +61,8 @@ CPP
         -DPSI_EXPECTED_IRIS_VERSION="${iris_release_tag#v}" \
         -DPSI_EXPECTED_QT_MAJOR="$IRIS_QT_MAJOR" \
         -DCMAKE_PREFIX_PATH="$IRIS_INSTALL_PREFIX" >/dev/null \
-        && cmake --build "$iris_probe/build" --parallel >/dev/null
+        && cmake --build "$iris_probe/build" --parallel >/dev/null \
+        && "$iris_probe/build/psi-iris-release-probe"
 }
 
 try_release_package() {
@@ -116,7 +124,7 @@ try_release_package() {
     cp -a "$extract_root/usr/." "$IRIS_INSTALL_PREFIX/"
 
     if ! probe_installed_iris; then
-        echo "Release SDK is incompatible with this Linux/Qt environment; using Psi's pinned Iris submodule"
+        echo "Release SDK does not suit this Linux/Qt environment or this job's tests; using Psi's pinned Iris submodule"
         rm -rf "$iris_release" "$iris_probe" "$IRIS_INSTALL_PREFIX"
         return 1
     fi
