@@ -1,6 +1,8 @@
 # Dependency policy for Psi
 
-Psi uses `dependencies.lock.json` for dependencies managed by the Psi CI. Do **not** copy QCA's pinned release into this file: Iris is an exact Git submodule, and its own `iris/dependencies.lock.json` remains the authoritative QCA tag, Git commit and minimum compatible version.
+Psi uses `dependencies.lock.json` for dependencies managed by the Psi CI. Iris is an exact Git submodule, and its own `iris/dependencies.lock.json` remains the authoritative QCA tag, Git commit and minimum compatible version, and the authority for JDNS. Psi repeats only the QCA tag and commit, for release packaging; `resolve-dependencies.py` rejects a copy that differs from the lock of the pinned Iris, so move the gitlink and this copy together.
+
+Source gitlinks (`iris`, `3rdparty/*`) pin themselves in Git and are not listed in the lock.
 
 ## Lock contents
 
@@ -8,34 +10,27 @@ Psi uses `dependencies.lock.json` for dependencies managed by the Psi CI. Do **n
 - `qtkeychain.tag` / `qtkeychain.commit`: the source tag and the resolved Git SHA for Windows Qt5/Qt6 dependency SDK builds. Clones check that the tag resolves to the locked commit.
 - `plugins.release_tag`: the sole selector for official plugin binaries in an explicitly versioned Psi **all-in-one** release. Neither a Plugins source commit nor a Psi Plugin API source commit is pinned in Psi's lock: release tags may move. The released archive's Qt target, platform, QCA **tag**, and each DLL's SHA-256 hash are checked during staging. Ordinary Windows branch/PR CI only compiles and runs regression tests: no installation staging, NSIS, ZIP, or released plugins/PsiMedia. Manual all-in-one packaging and Psi release publishing use the same reusable `.github/workflows/windows-msvc-qt6-packaging.yml` entry point, which performs the installer smoke test before producing artifacts.
 - `windows_sdks.msvc_qt6` and `windows_sdks.msys2_qt5`: release tags and ZIP archive names for Psi's platform-specific SDKs. These releases are artifacts produced by Psi; changing their contents requires changing the release tag in the lock to avoid reusing incompatible binaries.
-- `iris`: describes the submodule, its lock path and `release_tag`, the coordinate of the matching published SDK. Its source revision remains exclusively in the `iris` gitlink, not a duplicated SHA field. Update the gitlink and release tag together when moving to another release.
-  An unreleased development gitlink can use `release_tag: null`. Even if the lock
-  still contains an older tag, the verified SDK coordinate is empty whenever
-  the pinned gitlink is not released under that tag. CI then builds the exact
-  Iris source; it must never substitute the previous release's binaries.
+- `iris.minimum_version`: the API floor for builds against an installed Iris, read by `CMakeLists.txt`. The source revision is the `iris` gitlink, and its release is whatever tag that gitlink has: neither is lock data.
 
 ## Consumption
 
-The shared `.github/actions/load-dependencies` action validates and exports the lock. It publishes `iris_release_tag`, `psimedia_ref`, `qtkeychain_tag`, `qtkeychain_commit`, `msvc_sdk_tag`, `msvc_sdk_archive`, `msys2_sdk_tag`, `msys2_sdk_archive` as step outputs, and their uppercase versions in the job environment.
+The shared `.github/actions/load-dependencies` action validates and exports the lock. It publishes `psimedia_ref`, `qtkeychain_tag`, `qtkeychain_commit`, `msvc_sdk_tag`, `msvc_sdk_archive`, `msys2_sdk_tag`, `msys2_sdk_archive` as step outputs, and their uppercase versions in the job environment.
 
-`resolve-dependencies.py --verify-iris-release` resolves the effective Iris SDK tag
-against the exact gitlink, including peeled annotated tags. On Psi branch and PR
-builds, a stale or unavailable Iris release falls back to the bundled source,
-without failing CI. A tagged Psi build also accepts an unreleased Iris gitlink
-and builds it from source, but rejects a gitlink released under a different tag
-than the lock declares. Failed remote verification on tagged Psi builds is fatal
-rather than risking an unverified SDK. Normal lock resolution remains offline.
+Linux full-client CI selects the Iris provider from the exact gitlink, which
+`resolve-dependencies.py --resolve-iris-release` looks up in the Iris tags,
+including peeled annotated ones. When that gitlink is a release and a compatible
+SDK for the Linux distribution and Qt major is published, Psi uses that SDK with
+BUNDLED_IRIS=OFF. Otherwise, including unreleased commits, a failed lookup, or
+missing/incompatible distro packages, Psi compiles the initialized Iris git
+submodule in-tree with BUNDLED_IRIS=ON. It never substitutes another release's
+binaries, and we never build and install another Iris from the same source in a
+separate CI step. Ubuntu uses the locked shared QCA3/Qt6 package; Fedora builds
+QCA3/Qt6 from Iris's locked QCA source. Fedora currently has no published Iris
+RPM release asset, so its normal path remains bundled until a compatible SDK
+distribution is available.
 
-Linux full-client CI selects the Iris provider from the exact gitlink. When the
-locked release tag resolves to that gitlink and a compatible SDK for the Linux
-distribution and Qt major is published, Psi uses that SDK with BUNDLED_IRIS=OFF.
-Otherwise, including unreleased commits, release lookup failure, or missing/
-incompatible distro packages, Psi compiles the initialized Iris git submodule
-in-tree with BUNDLED_IRIS=ON. We never build and install another Iris from the
-same source in a separate CI step. Ubuntu uses the locked shared QCA3/Qt6
-package; Fedora builds QCA3/Qt6 from Iris's locked QCA source. Fedora currently
-has no published Iris RPM release asset, so its normal path remains bundled
-until a compatible SDK distribution is available.
+JDNS follows from Iris: `iris/dependencies.lock.json` pins it, and Iris uses a
+compatible system QJDns or builds that pinned commit along with itself.
 
 Use the action **after** checkout. If the workflow needs QCA, initialize Iris first, then specify `require-iris: 'true'`. To install a QCA release package, pass `qca-install-mode: apt` and the platform-specific `qca-asset` (for Ubuntu 24.04 this is `qca3-deb-ubuntu-24.04.zip`); the Psi action delegates the installation to Iris's shared action. The version remains defined only by Iris.
 

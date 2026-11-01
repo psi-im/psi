@@ -48,9 +48,8 @@ jobs:
       - name: Verify lock exports
         shell: bash
         run: |
-          test "$IRIS_RELEASE_TAG" = "$(python3 -c 'import json; print(json.load(open("dependencies.lock.json"))["iris"]["release_tag"] or "")')"
           test "$QCA_TAG" = "$(python3 -c 'import json; print(json.load(open("iris/dependencies.lock.json"))["qca"]["tag"])')"
           test "$PSIMEDIA_SRTP_REF" = "$(python3 -c 'import json; print(json.load(open("dependencies.lock.json"))["psimedia"]["commit"])')"
 
-      - name: Verify Iris release matches the pinned gitlink
-        run: python3 .github/scripts/resolve-dependencies.py --verify-iris-release
+      - name: Look up the release of the pinned Iris gitlink
+        run: python3 .github/scripts/resolve-dependencies.py --resolve-iris-release
