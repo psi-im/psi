@@ -25,6 +25,7 @@
 #include "filesharingdownloader.h"
 #include "filesharingjinglesession.h"
 #include "filesharingmediasave.h"
+#include "filesharingresponder.h"
 #include "filesharingstore.h"
 #include "filesharingurl.h"
 #include "fileutil.h"
@@ -467,97 +468,39 @@ quint64 FileSharingManager::autoDownloadLimit(const Message &m, PsiAccount *acc)
     return MediaDownloadPolicy::limit(settings, groupchat, trusted);
 }
 
-bool FileSharingManager::jingleAutoAcceptIncomingDownloadRequest(Jingle::Session *session)
+bool FileSharingManager::answerFileRequest(Jingle::Session *session, PsiAccount *account)
 {
-    if (!acceptIncomingDownloadContents(session))
-        return false;
-    connect(session, &Jingle::Session::newContentReceived, this, [this, session] {
-        if (acceptIncomingDownloadContents(session))
-            return;
-        // Only reject the new proposals. Existing accepted transfers continue.
-        for (auto *app : session->contentList())
-            if (app->isRemote() && app->state() == Jingle::State::Created)
-                app->remove(Jingle::Reason::Decline, QStringLiteral("Shared file unavailable"));
-    });
-    session->accept();
-    return true;
-}
-
-bool FileSharingManager::acceptIncomingDownloadContents(Jingle::Session *session)
-{
-    QVector<QPair<Jingle::FileTransfer::Application *, FileCacheItem *>> toAccept;
-    // check if we can accept the session immediately w/o user interaction
-    for (auto const &a : session->contentList()) {
-        if (!a->isRemote() || a->state() != Jingle::State::Created)
-            continue;
-        if (a->pad()->ns() != Jingle::FileTransfer::NS || a->senders() != session->role())
-            return false;
-        auto ft = static_cast<Jingle::FileTransfer::Application *>(a);
-
-        FileCacheItem *item = cacheItem(ft->file().computedHashes(), true);
-        if (!item) {
-            for (const auto &hash : ft->file().computedHashes()) {
-                auto known = d->items.value(hash);
+    const QPointer<PsiAccount> guard(account);
+    return FileSharingResponder::answer(
+        session, [this, guard](const QList<Hash> &hashes) -> std::optional<FileSharingResponder::ServedFile> {
+            if (!guard || !d->store->isServed(guard->id(), hashes))
+                return {};
+            QString path;
+            if (auto cached = cacheItem(hashes, true, &path))
+                return FileSharingResponder::ServedFile { path, cached->sums() };
+            for (const auto &hash : hashes) {
+                auto known = item(hash, guard);
                 if (!known)
                     continue;
-                const auto path = known->localFilePath();
-                if (path.isEmpty())
-                    continue;
-                QVariantMap metadata { { "type", known->mimeType() }, { "link", path }, { "uris", known->uris() } };
-                saveToCache(known->sums(), { }, metadata, FileCache::Session);
-                item = cacheItem(known->sums(), true);
-                if (item)
-                    break;
+                path = known->localFilePath();
+                if (!path.isEmpty())
+                    return FileSharingResponder::ServedFile { path, known->sums() };
             }
-        }
-        if (!item)
-            return false;
-
-        toAccept.append(qMakePair(ft, item));
-    }
-
-    for (auto const &p : toAccept) {
-        auto ft   = p.first;  // jingle-ft app
-        auto item = p.second; // FileCacheItem
-
-        ft->setKeepTransportUntilReceipt();
-        connect(ft, &Jingle::Application::stateChanged, ft, [ft](Jingle::State state) {
-            if (state == Jingle::State::Finished)
-                ft->deleteLater();
+            return {};
         });
+}
 
-        auto acceptFile = ft->file();
-        acceptFile.setHashes(item->sums());
-        ft->setAcceptFile(acceptFile);
+void FileSharingManager::setServed(PsiAccount *account, const QList<Hash> &hashes, bool served)
+{
+    if (!served)
+        d->store->unmarkServed(account->id(), hashes);
+    else if (!d->store->markServed(account->id(), hashes))
+        qWarning("Could not persist a served file");
+}
 
-        // TODO hashes for ranges
-        // Snapshot the source path before waiting for the transport. Cache
-        // maintenance may retire the FileCacheItem while a content-add waits.
-        QString fileName = item->metadata().value(QStringLiteral("link")).toString();
-        if (fileName.isEmpty())
-            fileName = d->cache->cacheDir() + "/" + item->fileName();
-        connect(ft, &Jingle::FileTransfer::Application::deviceRequested, ft,
-                [ft, fileName](quint64 offset, std::optional<quint64> /*size*/) {
-                    auto f = new QFile(fileName, ft);
-                    if (!f->open(QIODevice::ReadOnly)) {
-                        const auto error = f->errorString();
-                        delete f;
-                        ft->remove(Jingle::Reason::FailedApplication, error);
-                        return;
-                    }
-                    if (offset > quint64(f->size()) || !f->seek(qint64(offset))) {
-                        delete f;
-                        ft->remove(Jingle::Reason::FailedApplication, QStringLiteral("Shared file range unavailable"));
-                        return;
-                    }
-                    ft->setDevice(f);
-                });
-    }
-    if (session->state() != Jingle::State::Created)
-        for (const auto &p : toAccept)
-            p.first->prepare();
-
-    return true;
+void FileSharingManager::importOwnPublications(const QString &accountId, const Jid &self)
+{
+    d->store->importOwnPublications(accountId, self);
 }
 
 XMPP::Hash FileSharingDeviceOpener::urlToSourceId(const QUrl &url)

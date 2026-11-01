@@ -9,6 +9,7 @@
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QUuid>
+#include <algorithm>
 
 namespace {
 bool parseReferenceXml(QDomDocument &doc, const QString &xml)
@@ -61,6 +62,13 @@ FileSharingStore::FileSharingStore(const QString &path) :
             query.bindValue(QStringLiteral(":cutoff"), QDateTime::currentSecsSinceEpoch() - UrlContentTtl);
             ready_ = query.exec();
         }
+        if (ready_)
+            ready_ = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS served_files ("
+                                               "account_id TEXT NOT NULL, hash TEXT NOT NULL, "
+                                               "PRIMARY KEY(account_id, hash))"));
+        if (ready_)
+            ready_ = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS served_files_imported ("
+                                               "account_id TEXT NOT NULL PRIMARY KEY)"));
     }
     if (!ready_)
         qWarning() << "Cannot open shared file catalog:" << db_.lastError().text();
@@ -209,4 +217,98 @@ bool FileSharingStore::remember(const QString &account, const XMPP::Reference &r
         return true;
     db_.rollback();
     return false;
+}
+
+bool FileSharingStore::markServed(const QString &account, const QList<XMPP::Hash> &hashes)
+{
+    if (!ready_ || account.isEmpty() || !db_.transaction())
+        return false;
+    QSqlQuery query(db_);
+    query.prepare("INSERT OR IGNORE INTO served_files(account_id,hash) VALUES(:account,:hash)");
+    for (const auto &hash : hashes) {
+        if (!hash.isValid() || hash.data().isEmpty())
+            continue;
+        query.bindValue(":account", account);
+        query.bindValue(":hash", hash.toString());
+        if (!query.exec()) {
+            db_.rollback();
+            return false;
+        }
+    }
+    if (db_.commit())
+        return true;
+    db_.rollback();
+    return false;
+}
+
+void FileSharingStore::unmarkServed(const QString &account, const QList<XMPP::Hash> &hashes)
+{
+    if (!ready_ || account.isEmpty())
+        return;
+    QSqlQuery query(db_);
+    query.prepare("DELETE FROM served_files WHERE account_id=:account AND hash=:hash");
+    for (const auto &hash : hashes) {
+        query.bindValue(":account", account);
+        query.bindValue(":hash", hash.toString());
+        query.exec();
+    }
+}
+
+bool FileSharingStore::isServed(const QString &account, const QList<XMPP::Hash> &hashes) const
+{
+    if (!ready_ || account.isEmpty())
+        return false;
+    QSqlQuery query(db_);
+    query.prepare("SELECT 1 FROM served_files WHERE account_id=:account AND hash=:hash");
+    for (const auto &hash : hashes) {
+        if (!hash.isValid() || hash.data().isEmpty())
+            continue;
+        query.bindValue(":account", account);
+        query.bindValue(":hash", hash.toString());
+        if (query.exec() && query.next())
+            return true;
+    }
+    return false;
+}
+
+void FileSharingStore::importOwnPublications(const QString &account, const XMPP::Jid &self)
+{
+    if (!ready_ || account.isEmpty() || self.isEmpty() || !db_.transaction())
+        return;
+    QSqlQuery query(db_);
+    query.prepare("INSERT OR IGNORE INTO served_files_imported(account_id) VALUES(:account)");
+    query.bindValue(":account", account);
+    if (!query.exec() || query.numRowsAffected() < 1) { // Imported earlier, or the insert failed.
+        db_.rollback();
+        return;
+    }
+    query.prepare("SELECT hash,descriptor FROM shared_files WHERE account_id=:account");
+    query.bindValue(":account", account);
+    if (!query.exec()) {
+        db_.rollback();
+        return;
+    }
+    QStringList own;
+    while (query.next()) {
+        const auto json = QJsonDocument::fromJson(query.value(1).toString().toUtf8()).object();
+        if (json.value("local").toObject().value("path").toString().isEmpty())
+            continue;
+        const auto peers = json.value("peers").toArray();
+        if (std::any_of(peers.begin(), peers.end(), [&self](const QJsonValue &peer) {
+                return XMPP::Jid(peer.toString()).compare(self, false);
+            }))
+            own.append(query.value(0).toString());
+    }
+    query.finish();
+    query.prepare("INSERT OR IGNORE INTO served_files(account_id,hash) VALUES(:account,:hash)");
+    for (const auto &hash : std::as_const(own)) {
+        query.bindValue(":account", account);
+        query.bindValue(":hash", hash);
+        if (!query.exec()) {
+            db_.rollback();
+            return;
+        }
+    }
+    if (!db_.commit())
+        db_.rollback();
 }

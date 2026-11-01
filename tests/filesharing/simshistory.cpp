@@ -406,6 +406,74 @@ private slots:
             QCOMPARE(record->reference.mediaSharing().file.size().value(), quint64(7));
         }
     }
+    void fileIsServedOnlyByTheAccountThatSharedIt()
+    {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const auto        path   = dir.filePath("shares.sqlite");
+        const auto        hashes = sample().mediaSharing().file.computedHashes();
+        const QList<Hash> unknown { Hash(Hash::Sha256, QCryptographicHash::hash("other", QCryptographicHash::Sha256)) };
+        {
+            FileSharingStore store(path);
+            QVERIFY(store.remember("corporate", sample(), Jid("alice@example.org/desktop")));
+            QVERIFY2(!store.isServed("corporate", hashes), "a remembered descriptor must not be served");
+
+            QVERIFY(store.markServed("corporate", hashes));
+            QVERIFY(store.isServed("corporate", hashes));
+            QVERIFY(store.isServed("corporate", { hashes.last() }));
+            QVERIFY2(!store.isServed("personal", hashes), "serving must not cross accounts");
+            QVERIFY(!store.isServed("corporate", unknown));
+            QVERIFY(!store.isServed("corporate", {}));
+        }
+        FileSharingStore reopened(path);
+        QVERIFY(reopened.isServed("corporate", hashes));
+        QVERIFY(reopened.markServed("personal", hashes));
+        reopened.unmarkServed("corporate", hashes);
+        QVERIFY(!reopened.isServed("corporate", hashes));
+        QVERIFY(reopened.isServed("personal", hashes));
+    }
+    void ownPublicationsAreImportedOnce()
+    {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const auto reference = [&dir](const QByteArray &content) {
+            MediaSharing media;
+            media.file.setName(QString::fromLatin1(content));
+            media.file.setMediaType("application/octet-stream");
+            media.file.setSize(quint64(content.size()));
+            media.file.addHash(Hash(Hash::Sha256, QCryptographicHash::hash(content, QCryptographicHash::Sha256)));
+            media.sources << "xmpp:alice@example.org/desktop?jingle-ft";
+            Reference ref(Reference::Data, media.sources.first());
+            ref.setMediaSharing(media);
+            QFile file(dir.filePath(QString::fromLatin1(content)));
+            if (file.open(QIODevice::WriteOnly))
+                file.write(content);
+            return ref;
+        };
+        const auto served = [](FileSharingStore &store, const QString &account, const Reference &ref) {
+            return store.isServed(account, ref.mediaSharing().file.computedHashes());
+        };
+        const Jid  self("me@example.org/desktop");
+        const auto own = reference("own"), noCopy = reference("no-copy"), received = reference("received"),
+                   later = reference("later");
+
+        FileSharingStore store(dir.filePath("shares.sqlite"));
+        const auto       copy = [&dir](const Reference &ref) { return dir.filePath(ref.mediaSharing().file.name()); };
+        QVERIFY(store.remember("mine", own, Jid("me@example.org/phone"), copy(own)));
+        QVERIFY(store.remember("mine", noCopy, self));
+        QVERIFY(store.remember("mine", received, Jid("alice@example.org/desktop"), copy(received)));
+        QVERIFY(store.remember("other", own, self, copy(own)));
+
+        store.importOwnPublications("mine", self);
+        QVERIFY(served(store, "mine", own));
+        QVERIFY2(!served(store, "mine", noCopy), "nothing to serve without a local copy");
+        QVERIFY2(!served(store, "mine", received), "a received file is merely cached");
+        QVERIFY2(!served(store, "other", own), "the import must not reach another account");
+
+        QVERIFY(store.remember("mine", later, self, copy(later)));
+        store.importOwnPublications("mine", self);
+        QVERIFY2(!served(store, "mine", later), "only publications older than the list are imported");
+    }
 };
 int main(int argc, char **argv)
 {

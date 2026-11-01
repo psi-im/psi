@@ -81,7 +81,7 @@ jobs:
       - name: Run native regressions
         env:
           QT_QPA_PLATFORM: offscreen
-        run: ctest --test-dir build --output-on-failure --no-tests=error -R "filesharing_download_policy|filesharing_hash_job|filesharing_message_attachments|filesharing_oob_media_policy|chat_reply|discovery_items|serverless_ui|account_vcard_disk_cache|account_vcard_request_merge|account_avatar_blob_inflight|account_avatar_negative_policy|avcall(policy|audiodirection)_test"
+        run: ctest --test-dir build --output-on-failure --no-tests=error -R "filesharing_bob_cache|filesharing_responder|filesharing_sims_history|filesharing_download_policy|filesharing_hash_job|filesharing_message_attachments|filesharing_oob_media_policy|chat_reply|discovery_items|serverless_ui|account_vcard_disk_cache|account_vcard_request_merge|account_avatar_blob_inflight|account_avatar_negative_policy|avcall(policy|audiodirection)_test"
       - name: Benchmark actual MUC AvatarCache (non-gating timings)
         env:
           QT_QPA_PLATFORM: offscreen
