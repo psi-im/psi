@@ -5,12 +5,12 @@
 #include "qsourcehighliter.h"
 
 #include <QColor>
-#include <QRegularExpression>
 #include <QStringList>
 #include <QTextBlock>
 #include <QTextCursor>
 #include <QTextDocument>
 #include <QTextDocumentFragment>
+#include <QTextFormat>
 #include <QTextLayout>
 
 #include <algorithm>
@@ -106,30 +106,25 @@ QList<PsiRichText::CodeBlock> PsiRichText::codeBlocks(const QTextDocument *doc)
     return result;
 }
 
-QList<PsiRichText::ContentPart> PsiRichText::splitCodeBlocks(const QTextDocument *doc, const QString &html,
+QList<PsiRichText::ContentPart> PsiRichText::splitCodeBlocks(const QTextDocument *doc,
                                                              const QStringList &allowedInlineImages)
 {
     QList<ContentPart> parts;
-    if (!doc || !html.contains(QString(3, QChar(0x60))) || html.contains(QLatin1String("<share"))
-        || html.contains(QLatin1String("<icon")))
-        return parts;
-
-    // QTextDocument fragments cannot safely reconstruct external inline image
-    // resources. A classic header icon is an exception: its resource is
-    // explicitly reinstalled into every prose fragment by the caller.
-    const QRegularExpression imageTag(QStringLiteral(R"(<img\b[^>]*>)"), QRegularExpression::CaseInsensitiveOption);
-    auto                     matches = imageTag.globalMatch(html);
-    while (matches.hasNext()) {
-        const QString tag     = matches.next().captured();
-        const bool    allowed = std::any_of(allowedInlineImages.cbegin(), allowedInlineImages.cend(),
-                                            [&tag](const QString &name) { return tag.contains(name); });
-        if (!allowed)
-            return parts;
-    }
-
-    const auto blocks = codeBlocks(doc);
+    const auto         blocks = codeBlocks(doc);
     if (blocks.isEmpty())
         return parts;
+
+    // QTextDocument fragments cannot carry an object's resource, handler or
+    // player, nor the markers of an image still downloading. Decide on the
+    // rendered document: its source may refer to objects that were not created.
+    for (auto block = doc->begin(); block.isValid(); block = block.next()) {
+        for (auto it = block.begin(); !it.atEnd(); ++it) {
+            const QTextCharFormat format = it.fragment().charFormat();
+            if (format.objectType() != QTextFormat::NoObject
+                && !(format.isImageFormat() && allowedInlineImages.contains(format.toImageFormat().name())))
+                return parts;
+        }
+    }
 
     const auto isBreak = [doc](int at) {
         const QChar c = doc->characterAt(at);

@@ -45,6 +45,8 @@ public:
     void setQuoteColor(const QColor &color);
     void setQuoteStylingEnabled(bool enabled) { quoteStylingEnabled_ = enabled; }
     bool isQuotedBlock(const QTextBlock &block) const;
+    // Inside a preformatted XEP-0393 block, where a '>' is literal text.
+    bool isPreformattedAt(int position) const;
     virtual void appendText(const QString &text);
     virtual void insertText(const QString &text, QTextCursor &cursor);
     QTextCursor  appendTextWithRange(const QString &text);

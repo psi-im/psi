@@ -1,9 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "MessagePreview.h"
+#include "ChatMessageBody.h"
 #include "ChatMessageText.h"
-#include "CodeBlockWidget.h"
 #include "LinkButton.h"
-#include "psirichtext.h"
 #include <QApplication>
 #include <QEvent>
 #include <QFontMetrics>
@@ -95,18 +94,13 @@ MessagePreview::MessagePreview(const QColor &barColor, const QColor &textColor, 
     clip_->setObjectName(QStringLiteral("previewClip"));
     clip_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed); // updatePreview() sets the height.
     column_->addWidget(clip_);
-    content_ = new QWidget(clip_);
-    content_->setObjectName(QStringLiteral("previewContent"));
-    contentLayout_ = new QVBoxLayout(content_);
-    contentLayout_->setContentsMargins(0, 0, 0, 0);
-    contentLayout_->setSpacing(0);
+    // The same content as a message: rich text, links, emoticons, media and code.
+    body_ = new ChatMessageBody(clip_);
+    body_->setObjectName(QStringLiteral("previewContent"));
+    body_->text()->setObjectName(QStringLiteral("previewText"));
+    connect(body_, &ChatMessageBody::plainClicked, this, &MessagePreview::handlePlainClick);
     // Any part changing its size: media that arrives later, formatted code...
-    content_->installEventFilter(this);
-    // The same view as a message's text: rich text, links, emoticons and media.
-    text_ = new ChatMessageText(content_);
-    text_->setObjectName(QStringLiteral("previewText"));
-    connect(text_, &ChatMessageText::plainClicked, this, &MessagePreview::handlePlainClick);
-    contentLayout_->addWidget(text_);
+    body_->installEventFilter(this);
 
     toggle_ = new LinkButton(this);
     toggle_->setObjectName(QStringLiteral("previewShowMore"));
@@ -141,7 +135,7 @@ void MessagePreview::setLinkColor(const QColor &color) { toggle_->setLinkColor(c
 
 void MessagePreview::refreshColors()
 {
-    if (!title_ || !text_ || !bar_)
+    if (!title_ || !body_ || !bar_)
         return;
     // Only resolve the roles we own. Copying the resolved parent palette here
     // would freeze normal text/selection colors when the desktop theme changes.
@@ -153,8 +147,7 @@ void MessagePreview::refreshColors()
         foreground.setColor(QPalette::WindowText, textColor_);
     }
     title_->setPalette(foreground);
-    text_->setPalette(foreground);
-    for (auto *prose : extraProse_)
+    for (auto *prose : body_->prose())
         prose->setPalette(foreground);
     QPalette barPalette;
     if (barColor_.isValid())
@@ -164,12 +157,11 @@ void MessagePreview::refreshColors()
 
 void MessagePreview::setContent(const QString &title, const QString &text)
 {
-    if (richText_.isNull() && title_->text() == title && text_->toPlainText() == text)
+    if (richText_.isNull() && title_->text() == title && body_->text()->toPlainText() == text)
         return;
     richText_.clear();
-    clearParts();
     setTitle(title);
-    text_->setPlainMessage(text);
+    body_->setPlainText(text);
     updatePreview();
 }
 
@@ -181,70 +173,13 @@ void MessagePreview::setRichContent(const QString &title, const QString &html, b
         return;
     richText_ = key;
     setTitle(title);
-    text_->setRichText(html);
-    if (withoutQuotedLines)
-        text_->removeQuotedLines();
-    rebuildParts(html);
+    ChatMessageBody::RichTextOptions options;
+    options.withoutQuotedLines = withoutQuotedLines;
+    body_->setRichText(html, options);
     updatePreview();
 }
 
-void MessagePreview::setMediaOpener(FileSharingDeviceOpener *opener) { text_->setMediaOpener(opener); }
-
-void MessagePreview::clearParts()
-{
-    while (contentLayout_->count() > 1) {
-        auto *item = contentLayout_->takeAt(1);
-        delete item->widget();
-        delete item;
-    }
-    extraProse_.clear();
-    codeBlocks_.clear();
-    text_->show();
-}
-
-void MessagePreview::addPart(QWidget *part)
-{
-    contentLayout_->addWidget(part);
-    filterChild(part);
-}
-
-void MessagePreview::filterChild(QWidget *child)
-{
-    if (!childFilter_)
-        return;
-    child->installEventFilter(childFilter_);
-    for (auto *descendant : child->findChildren<QWidget *>())
-        descendant->installEventFilter(childFilter_);
-}
-
-// Fenced code gets the same real CodeBlockWidget as in the timeline. text_
-// keeps showing the first prose part; only other parts need a widget of their own.
-void MessagePreview::rebuildParts(const QString &html)
-{
-    clearParts();
-    const auto parts = PsiRichText::splitCodeBlocks(text_->document(), html);
-    for (int i = 0; i < parts.size(); ++i) {
-        const auto &part = parts.at(i);
-        if (part.kind == PsiRichText::ContentPart::Code) {
-            auto *code = new CodeBlockWidget(content_);
-            code->setCode(part.text, part.language);
-            codeBlocks_.append(code);
-            addPart(code);
-        } else if (i == 0) {
-            text_->setRichText(part.text);
-        } else {
-            auto *prose = new ChatMessageText(content_);
-            prose->setObjectName(QStringLiteral("previewCodeProse"));
-            prose->setPalette(text_->palette());
-            prose->setRichText(part.text);
-            connect(prose, &ChatMessageText::plainClicked, this, &MessagePreview::handlePlainClick);
-            extraProse_.append(prose);
-            addPart(prose);
-        }
-    }
-    if (!parts.isEmpty() && parts.first().kind == PsiRichText::ContentPart::Code)
-        text_->hide();
-}
+void MessagePreview::setMediaOpener(FileSharingDeviceOpener *opener) { body_->text()->setMediaOpener(opener); }
 
 void MessagePreview::setTitle(const QString &title)
 {
@@ -259,9 +194,9 @@ void MessagePreview::setClosable(bool enabled) { close_->setVisible(enabled); }
 
 void MessagePreview::setChildEventFilter(QObject *filter)
 {
-    childFilter_ = filter;
     for (auto *child : findChildren<QWidget *>())
         child->installEventFilter(filter);
+    body_->setPartEventFilter(filter);
 }
 
 void MessagePreview::setActivatable(bool activatable)
@@ -286,7 +221,7 @@ void MessagePreview::handlePlainClick()
 
 bool MessagePreview::eventFilter(QObject *target, QEvent *event)
 {
-    if (target == content_ && event->type() == QEvent::LayoutRequest)
+    if (target == body_ && event->type() == QEvent::LayoutRequest)
         scheduleUpdatePreview();
     return QFrame::eventFilter(target, event);
 }
@@ -317,7 +252,6 @@ void MessagePreview::setFooter(QWidget *widget)
     if (footer_) {
         footer_->setParent(this);
         column_->addWidget(footer_);
-        filterChild(footer_);
     }
     updateGeometry();
     emit heightChanged();
@@ -329,12 +263,7 @@ int MessagePreview::naturalWidth() const
     if (!title_->isHidden() && !title_->text().isEmpty())
         content = QFontMetrics(title_->font()).horizontalAdvance(title_->text())
             + (close_->isHidden() ? 0 : close_->width() + 6);
-    if (!text_->isHidden())
-        content = qMax(content, text_->naturalWidth());
-    for (auto *prose : extraProse_)
-        content = qMax(content, prose->naturalWidth());
-    for (auto *code : codeBlocks_)
-        content = qMax(content, code->naturalWidth());
+    content = qMax(content, body_->naturalWidth());
     if (!toggle_->isHidden())
         content = qMax(content, toggle_->sizeHint().width());
     if (footer_)
@@ -349,16 +278,15 @@ void MessagePreview::updatePreview()
     // timeline owns scrolling; CodeBlockWidget bounds its own source editor.
     const int collapsedHeight = fontMetrics().lineSpacing() * 3;
     // Collapsed, an image is shown whole at the height of the collapsed text.
-    text_->setMaximumImageHeight(expanded_ ? 0 : collapsedHeight);
+    body_->text()->setMaximumImageHeight(expanded_ ? 0 : collapsedHeight);
     const QMargins margins = layout()->contentsMargins();
     const int width = qMax(1, this->width() - margins.left() - margins.right() - bar_->width() - layout()->spacing());
-    const int fullHeight = contentLayout_->hasHeightForWidth() ? contentLayout_->totalHeightForWidth(width)
-                                                               : contentLayout_->totalSizeHint().height();
+    const int fullHeight = body_->contentHeight(width);
     const int height = expanded_ ? fullHeight : qMin(fullHeight, collapsedHeight);
-    content_->setGeometry(0, 0, width, fullHeight);
+    body_->setGeometry(0, 0, width, fullHeight);
     toggle_->setText(expanded_ ? tr("Show less") : tr("Show more…"));
     const bool toggleVisible
-        = fullHeight > collapsedHeight || (!expanded_ && text_->hasImagesTallerThan(collapsedHeight, width));
+        = fullHeight > collapsedHeight || (!expanded_ && body_->text()->hasImagesTallerThan(collapsedHeight, width));
     const bool changed = clip_->height() != height || toggle_->isHidden() == toggleVisible;
     clip_->setFixedHeight(height);
     toggle_->setVisible(toggleVisible);

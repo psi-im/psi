@@ -7,6 +7,7 @@
 #include <QStringView>
 
 #include <algorithm>
+#include <limits>
 #include <utility>
 
 // XEP-0393 is not Markdown. Parse visible text, preserving existing HTML
@@ -73,10 +74,11 @@ static QList<StylingGlyph> stylingGlyphs(const QString &html)
     }
     return glyphs;
 }
-static int quotePrefix(const QList<StylingGlyph> &g, int at, int end, int *depth)
+static int quotePrefix(const QList<StylingGlyph> &g, int at, int end, int *depth,
+                       int maximum = std::numeric_limits<int>::max())
 {
     int nesting = 0;
-    while (at < end && g.at(at).ch == QLatin1Char('>')) {
+    while (at < end && nesting < maximum && g.at(at).ch == QLatin1Char('>')) {
         ++nesting;
         ++at;
         if (at < end && g.at(at).ch == QLatin1Char(' '))
@@ -153,29 +155,37 @@ inline QString toHtml(const QString &in)
         int quoteDepth = 0;
         const int content = quotePrefix(glyphs, line, end, &quoteDepth);
         if (isFence(glyphs, content, end) && !glyphs.at(content).protectedText) {
-            // Fence blocks end at the first bare closing fence, quote boundary,
-            // or end of the message. Their children must remain unparsed.
-            const int start = content;
-            int fenceEnd = end;
+            // Fence blocks end at the first bare closing fence or at the end of
+            // their parent: the enclosing quote, or the message. Their contents
+            // remain unparsed, including any further '>' in a line.
+            const auto preformatted = [&glyphs, &ranges](int first, int last) {
+                if (first < last)
+                    ranges.append({ glyphs.at(first).begin, glyphs.at(last - 1).end,
+                                    QLatin1String("<span style=\"font-family:monospace; white-space:pre-wrap\">"),
+                                    QLatin1String("</span>") });
+            };
+            int first = content;
+            int last = end;
             int next = end < glyphs.size() ? end + 1 : end;
             while (next < glyphs.size()) {
                 int stop = next;
                 while (stop < glyphs.size() && glyphs.at(stop).ch != QLatin1Char('\n'))
                     ++stop;
-                int childDepth = 0;
-                const int child = quotePrefix(glyphs, next, stop, &childDepth);
-                if (childDepth != quoteDepth)
+                int parentDepth = 0;
+                const int child = quotePrefix(glyphs, next, stop, &parentDepth, quoteDepth);
+                if (parentDepth < quoteDepth)
                     break;
-                fenceEnd = stop;
+                // The markers of an enclosing quote are not preformatted text.
+                if (quoteDepth > 0) {
+                    preformatted(first, last);
+                    first = child;
+                }
+                last = stop;
                 next = stop < glyphs.size() ? stop + 1 : stop;
                 if (isFence(glyphs, child, stop) && child + 3 == stop)
                     break;
             }
-            if (fenceEnd > start) {
-                ranges.append({ glyphs.at(start).begin, glyphs.at(fenceEnd - 1).end,
-                                QLatin1String("<span style=\"font-family:monospace; white-space:pre-wrap\">"),
-                                QLatin1String("</span>") });
-            }
+            preformatted(first, last);
             line = next;
             continue;
         }

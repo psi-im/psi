@@ -474,7 +474,7 @@ void ChatMessageText::removeQuotedLines()
         for (int at = line.first; at < line.second; ++at) {
             const QChar c = doc->characterAt(at);
             if (c == QLatin1Char('>'))
-                return true;
+                return !isPreformattedAt(at);
             if (!c.isSpace())
                 return false;
         }

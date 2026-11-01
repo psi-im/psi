@@ -10,6 +10,7 @@ set(SOURCES
     ThinSplitter.cpp
     NativeChatThemeRegistry.cpp
     NativeChatRenderers.cpp
+    ChatMessageBody.cpp
     ChatMessageText.cpp
     CodeBlockWidget.cpp
     MessagePreview.cpp
@@ -49,6 +50,7 @@ set(HEADERS
     ThinSplitter.h
     NativeChatThemeRegistry.h
     NativeChatRenderers.h
+    ChatMessageBody.h
     ChatMessageText.h
     CodeBlockWidget.h
     psicodelanguage.h

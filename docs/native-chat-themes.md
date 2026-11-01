@@ -56,7 +56,7 @@ no `mamAuthor` or `mamTimestamp` labels; style its text through
 | `QLabel#mamDeliveryIndicator` | Delivery and read checks | `color` only. `[deliveryState="delivered"]`, `[deliveryState="read"]`. |
 | `QLabel#mamEncryptionIndicator`, `QLabel#mamEditedIndicator` | Lock and pencil icons | Icons; `[encrypted="true"]`/`"false"` on the lock. |
 | `QLabel#mamAvatar` | Avatar picture | Picture and size come from Psi and the theme. |
-| `QTextEdit#mamBody` | Message text | Colour, font, padding, border. |
+| `QTextEdit#mamBody` | Message text, including each piece around a code block | Colour, font, padding, border. |
 | `#mamReplyPreview` | Quoted message above the text | `[replyResolved="true"]` when the quoted message was found. Its colours come from the quote colour option. |
 | `#mamFilePreview` | File and media cards | |
 | `#mamBubble` | A speech bubble (Bubble theme) | `[tone="incoming"]`, `[tone="own"]`, `[tone="notice"]`; `[tailSide="left"]`, `"right"`, `"none"`. Painted by Psi, styled with the properties below. |

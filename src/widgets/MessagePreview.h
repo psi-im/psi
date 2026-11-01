@@ -3,13 +3,11 @@
 #define MESSAGEPREVIEW_H
 #include <QColor>
 #include <QFrame>
-#include <QList>
 #include <QPoint>
 #include <optional>
 class QLabel;
 class QPushButton;
-class ChatMessageText;
-class CodeBlockWidget;
+class ChatMessageBody;
 class FileSharingDeviceOpener;
 class LinkButton;
 class QVBoxLayout;
@@ -33,7 +31,7 @@ public:
     // Clicks that links, selections, media or embedded controls claim never do.
     // The first click of a double click counts too: such text is selected by dragging.
     void setActivatable(bool activatable);
-    // Installed on every child, including those later content creates.
+    // Installed on every child at this point, and on the parts of later content.
     void setChildEventFilter(QObject *filter);
     // Optional controls below the preview text, owned by the preview.
     void setFooter(QWidget *widget);
@@ -55,10 +53,6 @@ protected:
 private:
     void          updatePreview();
     void          scheduleUpdatePreview();
-    void          clearParts();
-    void          rebuildParts(const QString &html);
-    void          addPart(QWidget *part);
-    void          filterChild(QWidget *child);
     void          handlePlainClick();
     void          setTitle(const QString &title);
     void          refreshColors();
@@ -68,14 +62,9 @@ private:
     QFrame       *bar_ = nullptr;
     QVBoxLayout  *column_ = nullptr;
     QWidget      *footer_ = nullptr;
-    // clip_ shows the top of content_; Qt clips children to their parent.
+    // clip_ shows the top of body_; Qt clips children to their parent.
     QWidget      *clip_ = nullptr;
-    QWidget      *content_ = nullptr;
-    QVBoxLayout  *contentLayout_ = nullptr;
-    ChatMessageText *text_ = nullptr; // Always the first item of contentLayout_.
-    QList<ChatMessageText *> extraProse_;
-    QList<CodeBlockWidget *> codeBlocks_;
-    QObject      *childFilter_ = nullptr;
+    ChatMessageBody *body_ = nullptr;
     QString          richText_; // Null for plain content.
     bool             updateScheduled_ = false;
     LinkButton   *toggle_ = nullptr;
