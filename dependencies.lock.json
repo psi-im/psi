@@ -1,10 +1,5 @@
 {
-  "schema_version": 1,
   "iris": {
-    "source": "git-submodule",
-    "path": "iris",
-    "lock_path": "iris/dependencies.lock.json",
-    "release_tag": null,
     "minimum_version": "1.5.1"
   },
   "psimedia": {
@@ -26,33 +21,13 @@
       "archive": "psi-windows-sdk-msys2-qt5.zip"
     }
   },
-  "qca": {
-    "repository": "psi-im/qca",
-    "source": "released-sdk-shared-with-iris",
-    "tag": "v3.1.2",
-    "commit": "c9c56c2c131c897e807cb417f986c071a9c53ac7"
-  },
   "plugins": {
-    "repository": "psi-im/plugins",
     "release_tag": "1.6"
   },
   "qt": {
-    "windows_msvc_qt6": "6.12.0",
-    "macos_qt6": "6.12.0",
-    "android_qt6": "6.12.0",
-    "windows_msys2_qt5": "distribution-managed"
+    "windows_msvc_qt6": "6.12.0"
   },
   "translations": {
-    "repository": "psi-im/psi-l10n",
     "commit": "abce689a3ca86aaf7c77313ba7bc71ef558c5cc6"
-  },
-  "submodules": {
-    "source": "gitlink",
-    "paths": [
-      "iris",
-      "3rdparty/qhttp",
-      "3rdparty/http-parser",
-      "3rdparty/qite"
-    ]
   }
 }

@@ -12,11 +12,9 @@ if [[ ! "$iris_ref" =~ ^[0-9a-f]{40}$ ]]; then
     exit 1
 fi
 
-# Resolve the effective SDK coordinate before downloading packages. A stale
-# lock tag must never cause us to install an SDK for another Iris gitlink.
-# Only a package for the exact gitlink and this Qt/platform can be reused.
-# Otherwise Psi itself builds its initialized Iris git submodule.
-dependency_values=$(GITHUB_ENV= GITHUB_OUTPUT= python3 .github/scripts/resolve-dependencies.py --verify-iris-release)
+# Only a package released for the exact gitlink and this Qt/platform can be
+# reused. Otherwise Psi itself builds its initialized Iris git submodule.
+dependency_values=$(GITHUB_ENV= GITHUB_OUTPUT= python3 .github/scripts/resolve-dependencies.py --resolve-iris-release)
 iris_release_tag=$(awk -F= '$1 == "IRIS_RELEASE_TAG" { print $2 }' <<< "$dependency_values")
 
 work_root="${RUNNER_TEMP:-${TMPDIR:-/tmp}}"
